@@ -1,0 +1,45 @@
+name: 'ci'
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main'
+  workflow_dispatch:
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  unit-test:
+    # let's ignore release commits, otherwise it'll try to run twice
+    if: ${{ !startsWith(github.event.head_commit.message , 'chore(release):') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup cache for Chromium binary
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/puppeteer/chrome
+          key: chromium-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+
+      - name: Set node version to 20
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - run: pnpm install
+
+      - name: Run unit tests
+        run: npm run test -- --package-name '**'
+

@@ -1,0 +1,43 @@
+{
+  "private": true,
+  "version": "1.0.0",
+  "description": "custom helpers",
+  "type": "module",
+  "scripts": {
+    "prepare": "husky install",
+    "init": "npx pnpm install",
+    "init:force": "rm -rf ./node_modules pnpm-lock.yaml ./packages/*/node_modules && npm run init",
+    "lint": "esw packages --ext .js,.ts,.jsx,.tsx,.md --color",
+    "lint:fix": "npm run lint -- --fix",
+    "lint:watch": "npm run lint -- --watch --fix",
+    "link": "ddc link",
+    "dev": "ddc dev",
+    "update": "ddc update",
+    "build": "ddc build --script-formats=es,cjs,umd,iife",
+    "test": "ddc test",
+    "add": "ddc add",
+    "release": "ddc release"
+  },
+  "scripts-info": {
+    "init": "首次安装",
+    "link": "依赖包关联",
+    "add": "创建新包或者给包添加依赖",
+    "dev": "开发模式",
+    "build": "打包模式",
+    "update": "更新 devDependencies 和 dependencies",
+    "test": "执行测试, 可选择单个包或全部"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deot/vc.git"
+  },
+  "author": "deot",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/deot/vc/issues"
+  },
+  "homepage": "https://github.com/deot/vc#readme",
+  "devDependencies": {
+    "@deot/dev": "^2.4.1"
+  }
+}
