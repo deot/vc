@@ -4,13 +4,13 @@
     "baseUrl": ".",
     "paths": {
       "@deot/vc": ["packages/index/src"],
-      "@deot/vc-components": ["packages/components"],
+      "@deot/vc-components": ["packages/components/index.ts"],
       "@deot/vc-*": ["packages/*/src"]
     }
   },
   "include": [
     "packages/shims.d.ts",
-    "packages/components/**/*",
+    "packages/components",
     "packages/*/__tests__",
     "packages/*/examples",
     "packages/*/src"
