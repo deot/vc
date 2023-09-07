@@ -13,7 +13,7 @@
     "link": "ddc link",
     "dev": "ddc dev --vue-package '@deot/vc-components'",
     "update": "ddc update",
-    "build": "ddc build --vue-package '@deot/vc-components' --script-formats=es,cjs,umd,iife",
+    "build": "ddc build --vue-package '@deot/vc-components' --script-formats=es,cjs,umd,iife --external vue",
     "test": "ddc test --vue-package '@deot/vc-components'",
     "add": "ddc add",
     "release": "ddc release"
@@ -38,6 +38,6 @@
   },
   "homepage": "https://github.com/deot/vc#readme",
   "devDependencies": {
-    "@deot/dev": "^2.5.6"
+    "@deot/dev": "^2.5.7"
   }
 }
