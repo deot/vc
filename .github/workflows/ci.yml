@@ -6,7 +6,7 @@ on:
       - '**'
   pull_request:
     branches:
-      - main'
+      - main
   workflow_dispatch:
 
 permissions:
@@ -15,7 +15,9 @@ permissions:
 jobs:
   unit-test:
     # let's ignore release commits, otherwise it'll try to run twice
-    if: ${{ !startsWith(github.event.head_commit.message , 'chore(release):') }}
+    if: |
+      !startsWith(github.event.head_commit.message , 'chore(release):') && 
+      !startsWith(github.event.head_commit.message , 'docs')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -41,5 +43,8 @@ jobs:
       - run: pnpm install
 
       - name: Run unit tests
-        run: npm run test -- --package-name '**'
+        run: npm run test -- --package-name '*'
+
+      - name: Run build
+        run: npm run build
 

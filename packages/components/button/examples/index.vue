@@ -1,7 +1,7 @@
 <template>
 	<Button />
 </template>
-<script lang="tsx" setup>
+<script lang="ts" setup>
 import { Button } from '..';
 
 </script>
