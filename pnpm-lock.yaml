@@ -12,7 +12,18 @@ importers:
         specifier: ^2.5.7
         version: 2.5.7(@babel/eslint-parser@7.22.5)(@vue/compiler-sfc@3.3.4)(eslint@8.48.0)(stylelint@15.10.3)(typescript@5.1.6)(vite@4.4.9)
 
-  packages/components: {}
+  packages/components:
+    dependencies:
+      '@deot/helper':
+        specifier: ^1.1.1
+        version: 1.1.1
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.17.21
+    devDependencies:
+      '@types/lodash-es':
+        specifier: ^4.17.9
+        version: 4.17.9
 
   packages/index:
     dependencies:
@@ -712,6 +723,91 @@ packages:
       - webdriverio
     dev: true
 
+  /@deot/helper-cache@1.1.1:
+    resolution: {integrity: sha512-IxDIXrHifbg5eABGb66QTGH51vEDKARGyNyMBVGxHdcOjuoRoMWEQW5nRXKAndgOclXC/Lz6V7cxyn3JFRzzaQ==}
+    dependencies:
+      '@deot/helper-utils': 1.1.1
+    dev: false
+
+  /@deot/helper-device@1.1.1:
+    resolution: {integrity: sha512-fjG+Q7lsKnwMXIWEA6pyd6rUAbFPrbB2iHaXJZcWCK7QyeopK+hqsNS+vdlWST6aGAn7O3sAWoOVQ+vwItVShA==}
+    dev: false
+
+  /@deot/helper-dom@1.1.1:
+    resolution: {integrity: sha512-f8RqHY/bI2DHjWuvJcO/y7SIUIt0g4X/IgxoSJvRuL7BzmgqCtRX2QwPjKmTs9vd8dzRNI8XSu0I+4AHCjfUyw==}
+    dev: false
+
+  /@deot/helper-emitter@1.1.1:
+    resolution: {integrity: sha512-WI505iw1ry898V7JXVbxmWSxCXcYkVkMDmyiel67nw0ke9ZVFV1vBIdcS76ypPczWozcy3y47l1I9w7YP+WQIw==}
+    dev: false
+
+  /@deot/helper-fp@1.1.1:
+    resolution: {integrity: sha512-GHgkSekrqtxcpJdjn057LRzPbAt4iColXtvgNLeSl6wEkgYvNlLtcgjTWAAQJCiIjjCHZIJAeITkuERUt7AG0g==}
+    dependencies:
+      '@deot/helper-emitter': 1.1.1
+    dev: false
+
+  /@deot/helper-is@1.1.1:
+    resolution: {integrity: sha512-u5X279Kbicqehr3LcFBVzNdBWhz2nTyBYG7mIRcaU64Wc7uawQ6iHnoPqrGqvSqU+I1NUhjmL65HhXWiQtG1jA==}
+    dev: false
+
+  /@deot/helper-load@1.1.1:
+    resolution: {integrity: sha512-jQpCJf9P8lfq+iyzUGAPp/Tr5E9QltSDVJZPxdTYWg+dWyWoz255VUhbcbxXQMqKnAwGz9+javVCAAxXyek3rQ==}
+    dev: false
+
+  /@deot/helper-resize@1.1.1:
+    resolution: {integrity: sha512-xrFsgoY8MtO8gm8Cn6XlHqulr2BY0DGnzv21nkyQ7x4V/ymQGDWggaTZqS1JQL4QY2Cqo/UPb7SKjRnY+hs6rw==}
+    dev: false
+
+  /@deot/helper-route@1.1.1:
+    resolution: {integrity: sha512-DDdeSeNiPjF3OOPp9rscX+mdYQB0qFPr+XfOT6pO3/mGHKvKwtX3V3lTTqURm7u9YjTw7i0Q+U4o9HHgsyK70Q==}
+    dependencies:
+      '@deot/helper-utils': 1.1.1
+    dev: false
+
+  /@deot/helper-shared@1.1.1:
+    resolution: {integrity: sha512-GkTqtpKdWZOKqTx0vgcolVtbkoyjpUT7lpv6GqabasxJDj2nXNOiXLyZC9HGfzl9dDY2dO+3+OqRhnt7ZGnFHw==}
+    dev: false
+
+  /@deot/helper-unicode@1.1.1:
+    resolution: {integrity: sha512-RwiKp1dIJtvh3JFD80mjptyj4HznSzqCSOnVQ2IvAOA1NN57HwZ+ZkpFwOZ19V46YVPFpI1e/sOpy5Wva+gKbA==}
+    dependencies:
+      fflate: 0.8.1
+    dev: false
+
+  /@deot/helper-utils@1.1.1:
+    resolution: {integrity: sha512-ivsCdzw6pEwu3WiUDejxDqC4kOF/oQvpWNw9acUBMO3iGcEtBnrJSQumppghOrvTbtZnXuMz0HcCfgxPkEKkJg==}
+    dev: false
+
+  /@deot/helper-validator@1.1.1:
+    resolution: {integrity: sha512-afC7gqOHtESMamFEOXUwHnFAlR5aipgIraYoMBFFs7IVrSFT/buO55qtNLcP/LpqF8DO5uX4jUX7C06B+tRj1w==}
+    dev: false
+
+  /@deot/helper-wheel@1.1.1:
+    resolution: {integrity: sha512-rwpk5+KXL0ZbPKk1+Sl5ds4eGx2NxzeOM3tYMO1tB2pn/AUrBnH6cR9CtQQrfBFBHPOml8QQOY64ETc5jBiQtg==}
+    dependencies:
+      normalize-wheel: 1.0.1
+    dev: false
+
+  /@deot/helper@1.1.1:
+    resolution: {integrity: sha512-ZvMhKO6Hh8k8frIFMX8ujOuua7PzxqlZOpsAsufjWmNmFHAudP1IRBiefQg7DYA7+O8nt8sWbqeTkzGBweJCsg==}
+    dependencies:
+      '@deot/helper-cache': 1.1.1
+      '@deot/helper-device': 1.1.1
+      '@deot/helper-dom': 1.1.1
+      '@deot/helper-emitter': 1.1.1
+      '@deot/helper-fp': 1.1.1
+      '@deot/helper-is': 1.1.1
+      '@deot/helper-load': 1.1.1
+      '@deot/helper-resize': 1.1.1
+      '@deot/helper-route': 1.1.1
+      '@deot/helper-shared': 1.1.1
+      '@deot/helper-unicode': 1.1.1
+      '@deot/helper-utils': 1.1.1
+      '@deot/helper-validator': 1.1.1
+      '@deot/helper-wheel': 1.1.1
+    dev: false
+
   /@es-joy/jsdoccomment@0.40.1:
     resolution: {integrity: sha512-YORCdZSusAlBrFpZ77pJjc5r1bQs5caPWtAu+WWmiSo+8XaUzseapVrfAtiRFbQWnrBxxLLEwF6f6ZG/UgCQCg==}
     engines: {node: '>=16'}
@@ -1375,6 +1471,16 @@ packages:
 
   /@types/json5@0.0.29:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
+    dev: true
+
+  /@types/lodash-es@4.17.9:
+    resolution: {integrity: sha512-ZTcmhiI3NNU7dEvWLZJkzG6ao49zOIjEgIE0RgV7wbPxU0f2xT3VSAHw2gmst8swH6V0YkLRGp4qPlX/6I90MQ==}
+    dependencies:
+      '@types/lodash': 4.14.199
+    dev: true
+
+  /@types/lodash@4.14.199:
+    resolution: {integrity: sha512-Vrjz5N5Ia4SEzWWgIVwnHNEnb1UE1XMkvY5DGXrAeOGE9imk0hgTHh5GyDjLDJi9OTCn9oo9dXH1uToK1VRfrg==}
     dev: true
 
   /@types/mdast@3.0.11:
@@ -3376,6 +3482,10 @@ packages:
       pend: 1.2.0
     dev: true
 
+  /fflate@0.8.1:
+    resolution: {integrity: sha512-/exOvEuc+/iaUm105QIiOt4LpBdMTWsXxqR0HDF35vx3fmaKzw7354gTilCh5rkzEt8WYyG//ku3h3nRmd7CHQ==}
+    dev: false
+
   /figures@5.0.0:
     resolution: {integrity: sha512-ej8ksPF4x6e5wvK9yevct0UCXh8TTFlWGVLlgjZuoBH1HwjIfKE/IdL5mq89sFA7zELi1VhKpmtDnrs7zWyeyg==}
     engines: {node: '>=14'}
@@ -4428,6 +4538,10 @@ packages:
       p-locate: 5.0.0
     dev: true
 
+  /lodash-es@4.17.21:
+    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
+    dev: false
+
   /lodash.debounce@4.0.8:
     resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
     dev: true
@@ -4818,6 +4932,10 @@ packages:
     resolution: {integrity: sha512-bdok/XvKII3nUpklnV6P2hxtMNrCboOjAcyBuQnWEhO665FwrSNRxU+AqpsyvO6LgGYPspN+lu5CLtw4jPRKNA==}
     engines: {node: '>=0.10.0'}
     dev: true
+
+  /normalize-wheel@1.0.1:
+    resolution: {integrity: sha512-1OnlAPZ3zgrk8B91HyRj+eVv+kS5u+Z0SCsak6Xil/kmgEia50ga7zfkumayonZrImffAxPU/5WcyGhzetHNPA==}
+    dev: false
 
   /npm-run-path@4.0.1:
     resolution: {integrity: sha512-S48WzZW777zhNIrn7gxOlISNAqi9ZC/uQFnRdbeIHhZhCA6UqpkOT8T1G7BvfdgP4Er8gF4sUbaS0i7QvIfCWw==}
