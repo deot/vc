@@ -15,7 +15,7 @@ export const Theme = defineComponent({
 		const setVar = (name?: string) => {
 			if (!name) return '';
 			const globals = VcInstance.options.Theme.variables;
-			return props.variables[name] || globals?.[name] || `var(--${name})`;
+			return props.variables?.[name] || globals?.[name] || `var(--${name})`;
 		};
 
 		const styles = computed(() => {
@@ -56,7 +56,7 @@ export const Theme = defineComponent({
 				const globals = VcInstance.options.Theme.variables;
 				return /:/.test(src) 
 					? src 
-					: props.variables[src] || globals?.[src];
+					: props.variables?.[src] || globals?.[src];
 			}
 		});
 

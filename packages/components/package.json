@@ -23,6 +23,7 @@
     "lodash-es": "^4.17.21"
   },
   "devDependencies": {
+    "@deot/style": "^1.0.2",
     "@types/lodash-es": "^4.17.9"
   }
 }
