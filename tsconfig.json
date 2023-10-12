@@ -2,6 +2,7 @@
   "extends": "@deot/dev/tsconfig.shared.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "allowJs": true,
     "paths": {
       "@deot/vc": ["packages/index/src"],
       "@deot/vc-components": ["packages/components/index.ts"],
