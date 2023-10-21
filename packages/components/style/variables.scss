@@ -1,48 +1,94 @@
+@use 'sass:map';
+@use 'sass:meta';
+
 /**
  * 采用CSS Variables
  * 1. 兼容问题暂不考虑，如需处理引入一段js，强制样式为指定值
  *
  * 如primary-color: *
- * 不要设置--black: black; 这是具体色值，即具体值移入./color.scss
+ * 不要设置--black: black; 这是具体色值，即具体值移入./default.scss
  *
  * 命名规则：新的分类 -> *-default, *-xx
  */
 $theme: (
-	color-default: #f5f6fa,
-	color-highlight: #5495f6,
-	color-info: #0177de,
-	color-success: #00a854,
-	color-error: #f04134,
-	color-warning: #ffbf00,
+	background-color: (light: #f5f6fa, dark: #252b3a),
+	foreground-color: (light: #303133, dark: #f8f8f8),
 
-	// 背景颜色
-	background-color-default: #f5f6fa,
-	background-color-highlight: #5495f6,
+	// 亮色系-亮度
+	color-light: (light: #ffffff, dark: #000000),
+	color-light-deep: (light: #f5f6fa, dark: #252b3a),
+	color-light-deeper: (light: #d9d9d9, dark: #252b3a),
+	color-light-extradeep: (light: #C0C4CC, dark: #252b3a),
+
+	// 暗色系-亮度
+	color-dark: (light: #000000, dark: #ffffff),
+	color-dark-light: (light: #303133, dark: #f8f8f8),
+	color-dark-lighter: (light: #606266, dark: #f8f8f8),
+	color-dark-extralight: (light: #909399, dark: #f8f8f8),
+
+	// 提醒色-亮度
+	color-primary: #5495f6,
+	color-primary-light: #67a4ff,
+
+	color-success: #19be6b,
+	color-success-light: #47cb89,
+
+	color-error: #f04134,
+	color-error-light: #f16643,
+
+	color-warning: #e6a23c,
+	color-warning-light: #ebb563,
+
+	color-disabled: #f4f4f4,
+	color-disabled-light: #f9f9f9,
 
 	// 圆角
-	border-radius-default: 8px,
-	border-shadow-default: 0 0 8px 0 rgba(0, 0, 0, 0.1),
-	border-shadow-default-top: 0 -2px 10px 0 rgba(0, 0, 0, 0.08),
+	border-radius: 8px,
+	border-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.1),
+	border-shadow-top: 0 -2px 10px 0 rgba(0, 0, 0, 0.08),
 
-	// 行高
-	line-height-default: 16px,
-	line-height-limit: 32px, //限高
-
-	// 边框
-	border-color-default: #c9c9c9,
+	// 行高 / 限高
+	line-height: 16px,
+	line-height-limit: 32px,
 
 	// 字体尺寸
-	font-size-default: 14px,
+	font-size: 14px,
 	font-size-large: 16px,
 
-	// 滚动条
-	scrollbar-track-bg-color: rgba(0, 0, 0, 0),
-	scrollbar-thumb-bg-color: rgba(0, 0, 0, 0.2),
-	scrollbar-track-box-shadow: inset 0 0 10px rgba(0, 0, 0, 0)
 ) !default;
 
-*, :after, :before {
-	@each $key, $value in $theme {
-		--vc-#{$key}: #{$value};
+@mixin generate-theme($light: true) {
+	@if $light {
+		@each $key, $value in $theme {
+			--vc-#{$key}: #{if(meta.type-of($value) == 'map', map.get($value, 'light'), $value)};
+		}
+	} @else {
+		@each $key, $value in $theme {
+			--vc-#{$key}: #{if(meta.type-of($value) == 'map', if(map.get($value, 'dark'), map.get($value, 'dark'), map.get($value, 'light')), $value)};
+		}
 	}
 }
+
+// 跟随系统
+@media (prefers-color-scheme: light) {
+	:root {
+		@include generate-theme(true)
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		@include generate-theme(false)
+	}
+}
+
+// 可以在body标签上强制设置
+[data-vc-theme="light"] {
+	@include generate-theme(true)
+}
+
+[data-vc-theme="dark"] {
+	@include generate-theme(false)
+}
+
+
