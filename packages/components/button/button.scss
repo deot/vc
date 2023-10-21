@@ -1,31 +1,32 @@
 @import '../style/helper.scss';
 // 定义默认属性
+$component-name: vc-button;
 
-$primary-color: #5495f6;
-$primary-hover-color: #67a4ff;
+// Dark主题下，默认按钮画过边框颜色为白色
+@include themefix(false) {
+	@include block($component-name) {
+		@include when(default) {
+			&:hover {
+				color: varfix(color-dark);
+				border-color: varfix(color-dark);
+			}
+		}
+	}
+}
 
-$success-color: #19be6b;
-$success-hover-color: #47cb89;
-
-$error-color: #ed4014;
-$error-hover-color: #f16643;
-
-$warning-color: #e6a23c;
-$warning-hover-color: #ebb563;
-
-@include block(vc-button) {
-	padding: 7px 16px;
+@include block($component-name) {
+	padding: unitfix(7) unitfix(16);
 	line-height: 1;
-	font-size: 12px;
-	border-radius: 4px;
-	border: 1px solid transparent;
-	border-color: #d9d9d9;
-	background: white;
+	font-size: unitfix(12);
+	border-radius: unitfix(4);
+	border: unitfix(1) solid transparent;
+	border-color: varfix(color-light-deeper);
+	background: varfix(color-light);
 	user-select: none;
 	cursor: pointer;
 	outline: 0 none !important;
 	/**
-	 * 外部v-show控制
+	 * 外部v-show控制，主题变更会调用
 	 */
 	transition: color .2s linear, 
 		background-color .2s linear,
@@ -35,62 +36,61 @@ $warning-hover-color: #ebb563;
 		vertical-align: middle;
 	}
 	@include when(circle) {
-		border-radius: 32px;
+		border-radius: unitfix(32);
 	}
 	@include when(long) {
 		width: 100%;
 	}
 	@include when(default) {
-		color: #515151;
-		border-color: #d9d9d9;
+		color: varfix(color-dark-light);
+		border-color: varfix(color-light-deeper);
 		&:hover {
-			color: #5495f6;
-			background-color: white;
-			border-color: #5495f6;
+			color: varfix(color-primary);
+			border-color: varfix(color-primary);
 		}
 	}
 	@include when(primary) {
 		color: white;
-		background-color: $primary-color;
-		border-color: $primary-color;
+		background-color: varfix(color-primary);
+		border-color: varfix(color-primary);
 		&:hover {
-			background-color: $primary-hover-color;
-			border-color: $primary-hover-color;
+			background-color: varfix(color-primary-light);
+			border-color: varfix(color-primary-light);
 		}
 	}
 	@include when(text) {
-		color: #515151;
+		color: varfix(color-dark-light);
 		background-color: transparent;
 		border-color: transparent;
 		&:hover {
-			color: $primary-hover-color;
+			color: varfix(color-primary-light);
 		}
 	}
 	@include when(success) {
 		color: white;
-		background-color: $success-color;
-		border-color: $success-color;
+		background-color: varfix(color-success);
+		border-color: varfix(color-success);
 		&:hover {
-			background-color: $success-hover-color;
-			border-color: $success-hover-color;
+			background-color: varfix(color-success-light);
+			border-color: varfix(color-success-light);
 		}
 	}
 	@include when(error) {
 		color: white;
-		background-color: $error-color;
-		border-color: $error-color;
+		background-color: varfix(color-error);
+		border-color: varfix(color-error);
 		&:hover {
-			background-color: $error-hover-color;
-			border-color: $error-hover-color;
+			background-color: varfix(color-error-light);
+			border-color: varfix(color-error-light);
 		}
 	}
 	@include when(warning) {
 		color: white;
-		background-color: $warning-color;
-		border-color: $warning-color;
+		background-color: varfix(color-warning);
+		border-color: varfix(color-warning);
 		&:hover {
-			background: $warning-hover-color;
-			border-color: $warning-hover-color;
+			background: varfix(color-warning-light);
+			border-color: varfix(color-warning-light);
 		}
 	}
 	@include when(disabled) {
@@ -104,46 +104,46 @@ $warning-hover-color: #ebb563;
 		}
 	}
 	@include when(large) {
-		padding: 8px 16px;
-		font-size: 14px;
-		border-radius: 4px;
+		padding: unitfix(8) unitfix(16);
+		font-size: unitfix(14);
+		border-radius: unitfix(4);
 		@include when(circle) {
 			border-radius: 36px;
 		}
 	}
 	@include when(small) {
-		padding: 3px 8px;
-		font-size: 12px;
-		border-radius: 3px;
+		padding: unitfix(3) unitfix(8);
+		font-size: unitfix(12);
+		border-radius: unitfix(3);
 		@include when(circle){
-			border-radius: 24px;
+			border-radius: unitfix(24);
 		}
 	}
 	@include when(alone) {
 		& {
 			@include when(round) {
 				border-radius: 50%;
-				width: 32px;
-				height: 32px;
+				width: unitfix(32);
+				height: unitfix(32);
 				padding: 0;
-				font-size: 12px;
+				font-size: unitfix(12);
 			}
 			@include when(large) {
 				@include when(round) {
 					border-radius: 50%;
-					width: 36px;
-					height: 36px;
+					width: unitfix(36);
+					height: unitfix(36);
 					padding: 0;
-					font-size: 14px;
+					font-size: unitfix(14);
 				}
 			}
 			@include when(small) {
 				@include when(round) {
 					border-radius: 50%;
-					width: 24px;
-					height: 24px;
+					width: unitfix(24);
+					height: unitfix(24);
 					padding: 0;
-					font-size: 12px;
+					font-size: unitfix(12);
 				}
 			}
 		}
