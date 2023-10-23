@@ -11,7 +11,7 @@ export const props = {
 	},
 	background: {
 		type: String,
-		default: '#108ee9'
+		default: 'var(--vc-color-primary)'
 	},
 	/**
 	 * 待开发
