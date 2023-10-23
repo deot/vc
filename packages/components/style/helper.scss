@@ -8,6 +8,7 @@
 @use 'sass:math';
 
 @import "./default.scss";
+@import "./theme.scss";
 @import "../node_modules/@deot/style/src/mixins/bem.scss";
 
 @function merge($rest...) {
@@ -26,8 +27,19 @@
 	@return $options;
 }
 
-@function varfix($value, $rest...) {
-	@return #{'var(--vc-'}#{$value}#{')'};
+@function varfix($value, $component-name: false, $default-color: false) {
+	$theme-value: map.get($theme, $value);
+	$has-component: meta.type-of($component-name) == 'string';
+
+	@if ($has-component and $theme-value) {
+		@return #{'var(--vc-#{$component-name}-#{$value}, var(--vc-'}#{$value}#{'))'};
+	} @else if ($has-component and $default-color) {
+		@return #{'var(--vc-'}#{$component-name}-#{$value}#{','}#{$default-color}#{')'};
+	} @else if ($theme-value) {
+		@return #{'var(--vc-'}#{$value}#{')'};
+	} @else {
+		@error "#{$value} is not a valid value.";
+	}
 }
 
 @function unitfix($value, $rest...) {
@@ -49,6 +61,20 @@
 
 @function percentw($col, $total) {
 	@return math.percentage(math.div($col, $total));
+}
+
+@function themefrozen($key, $light: true) {
+	$value: map.get($theme, $key);
+
+	@if (meta.type-of($value) == 'map') {
+		@return map.get($value, if($light, 'light', 'dark'));
+	}
+
+	@if not ($value) {
+		@error "#{$key} is not a valid value.";	
+	}
+
+	@return $value;
 }
 
 /**

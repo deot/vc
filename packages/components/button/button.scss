@@ -1,14 +1,38 @@
 @import '../style/helper.scss';
-// 定义默认属性
+
 $component-name: vc-button;
+
+/**
+ * 可配制的主题色提取, Button可单独配置，默认使用全局值
+ */
+$color-light: varfix(color-light, button);
+$color-light-deeper: varfix(color-light-deeper, button);
+
+$color-dark: varfix(color-dark, button);
+$color-dark-light: varfix(color-dark-light, button);
+
+$color-primary: varfix(color-primary, button);
+$color-primary-light: varfix(color-primary-light, button);
+
+$color-success: varfix(color-success, button);
+$color-success-light: varfix(color-success-light, button);
+
+$color-error: varfix(color-error, button);
+$color-error-light: varfix(color-error-light, button);
+
+$color-warning: varfix(color-warning, button);
+$color-warning-light: varfix(color-warning-light, button);
+
+$color-disabled: varfix(color-disabled, button);
+$color-disabled-light: varfix(color-disabled-light, button);
 
 // Dark主题下，默认按钮画过边框颜色为白色
 @include themefix(false) {
 	@include block($component-name) {
 		@include when(default) {
 			&:hover {
-				color: varfix(color-dark);
-				border-color: varfix(color-dark);
+				color: $color-dark;
+				border-color: $color-dark;
 			}
 		}
 	}
@@ -20,8 +44,8 @@ $component-name: vc-button;
 	font-size: unitfix(12);
 	border-radius: unitfix(4);
 	border: unitfix(1) solid transparent;
-	border-color: varfix(color-light-deeper);
-	background: varfix(color-light);
+	border-color: $color-light-deeper;
+	background: $color-light;
 	user-select: none;
 	cursor: pointer;
 	outline: 0 none !important;
@@ -42,65 +66,65 @@ $component-name: vc-button;
 		width: 100%;
 	}
 	@include when(default) {
-		color: varfix(color-dark-light);
-		border-color: varfix(color-light-deeper);
+		color: $color-dark-light;
+		border-color: $color-light-deeper;
 		&:hover {
-			color: varfix(color-primary);
-			border-color: varfix(color-primary);
+			color: $color-primary;
+			border-color: $color-primary;
 		}
 	}
 	@include when(primary) {
-		color: white;
-		background-color: varfix(color-primary);
-		border-color: varfix(color-primary);
+		color: themefrozen(color-light);
+		background-color: $color-primary;
+		border-color: $color-primary;
 		&:hover {
-			background-color: varfix(color-primary-light);
-			border-color: varfix(color-primary-light);
+			background-color: $color-primary-light;
+			border-color: $color-primary-light;
 		}
 	}
 	@include when(text) {
-		color: varfix(color-dark-light);
+		color: $color-dark-light;
 		background-color: transparent;
 		border-color: transparent;
 		&:hover {
-			color: varfix(color-primary-light);
+			color: $color-primary-light;
 		}
 	}
 	@include when(success) {
-		color: white;
-		background-color: varfix(color-success);
-		border-color: varfix(color-success);
+		color: themefrozen(color-light);
+		background-color: $color-success;
+		border-color: $color-success;
 		&:hover {
-			background-color: varfix(color-success-light);
-			border-color: varfix(color-success-light);
+			background-color: $color-success-light;
+			border-color: $color-success-light;
 		}
 	}
 	@include when(error) {
-		color: white;
-		background-color: varfix(color-error);
-		border-color: varfix(color-error);
+		color: themefrozen(color-light);
+		background-color: $color-error;
+		border-color: $color-error;
 		&:hover {
-			background-color: varfix(color-error-light);
-			border-color: varfix(color-error-light);
+			background-color: $color-error-light;
+			border-color: $color-error-light;
 		}
 	}
 	@include when(warning) {
-		color: white;
-		background-color: varfix(color-warning);
-		border-color: varfix(color-warning);
+		color: themefrozen(color-light);
+		background-color: $color-warning;
+		border-color: $color-warning;
 		&:hover {
-			background: varfix(color-warning-light);
-			border-color: varfix(color-warning-light);
+			background: $color-warning-light;
+			border-color: $color-warning-light;
 		}
 	}
 	@include when(disabled) {
-		color: #aaa;
-		background-color: #f4f4f4;
-		border-color: #d9d9d9;
+		color: themefrozen(color-dark-extralight);
+		background-color: $color-disabled;
+		border-color: $color-disabled-light;
 		cursor: not-allowed;
 		&:hover {
-			background: #f4f4f4;
-			border-color: #d9d9d9;
+			background: $color-disabled;
+			border-color: $color-disabled-light;
 		}
 	}
 	@include when(large) {
