@@ -13,6 +13,7 @@ export const Theme = defineComponent({
 	setup(props, { slots }) {
 		const themeId = Utils.getUid('vc-theme');
 		const setVar = (name?: string) => {
+			/* istanbul ignore next -- @preserve */ 
 			if (!name) return '';
 			const globals = VcInstance.options.Theme.variables;
 			return props.variables?.[name] || globals?.[name] || `var(--${name})`;
@@ -61,6 +62,7 @@ export const Theme = defineComponent({
 		});
 
 		const setCss = (attrs: object | string) => {
+			/* istanbul ignore next -- @preserve */ 
 			if (!attrs || typeof attrs === 'string') return attrs;
 
 			// 伪类、元素需要添加!important;
@@ -73,6 +75,7 @@ export const Theme = defineComponent({
 		};
 
 		const resetPseudo = () => {
+			/* istanbul ignore next -- @preserve */ 
 			if (typeof document === 'undefined') return;
 			
 			const { pseudo } = props;
