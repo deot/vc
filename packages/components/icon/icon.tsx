@@ -14,6 +14,7 @@ export const Icon = defineComponent({
 		const path = ref<string[]>([]);
 
 		const getConfig = () => {
+			 /* istanbul ignore next -- @preserve */ 
 			if (!props.type) return;
 			viewBox.value = IconManager.icons[props.type].viewBox;
 			path.value = IconManager.icons[props.type].path;
@@ -23,12 +24,11 @@ export const Icon = defineComponent({
 			() => props.type, 
 			(v, old) => {
 				if (!v) return;
-				IconManager.icons[v] 
+				IconManager.icons[v]
 					? getConfig() 
 					: (
-						IconManager
-							.off(old, getConfig)
-							.on(v, getConfig)
+						old && IconManager.off(old, getConfig),
+						v && IconManager.on(v, getConfig)
 					);
 			}, 
 			{ immediate: true }

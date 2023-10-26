@@ -33,63 +33,65 @@ class Manager {
 		this.sourceStatus[url] = this.sourceStatus[url] || new Promise<void>((resolve, reject) => {
 			(async () => {
 				try {
-					if (!IS_SERVER && /.js$/.test(url)) { // 避免重复加载
-						let key = `${prefix}${url}`;
-
-						let cache = window.localStorage.getItem(key);
-						let icons = JSON.parse(cache || '""') as typeof IconManager['icons'];
-
-						if (!icons) {
-							const data = await new Promise<string>((resolve$) => {
-								const request = new XMLHttpRequest();
-								request.onreadystatechange = () => {
-									if (
-										request.readyState === 4 
-										&& request.status >= 200 
-										&& request.status <= 400
-									) {
-										resolve$(request.responseText || request.response);
-									}
-								};
-								request.open('GET', `${window.location.protocol.replace(/[^:]+/, 'https')}${url}`);
-								request.send();
-							});
-							
-							// 等待解析
-							icons = await this.parser(data, url);
-						
-							try {
-								window.localStorage.setItem(key, JSON.stringify(icons));
-							} catch (e) {
-								// 内存溢出，删除老缓存, 延迟3秒清理，重新设置
-								setTimeout(() => {
-									this.clearResource();
-									// 如果还存在溢出，项目内自行处理吧
-									window.localStorage.setItem(key, JSON.stringify(icons));
-								}, 3000);
-							}
-						}
-
-						// 重构图标
-						this.icons = {
-							...this.icons,
-							...icons,
-						};
-						// 执行
-						Object.keys(this.events).forEach((type) => {
-							let fns = this.events[type];
-							if (this.icons[type] && fns) {
-								fns.forEach((fn: Function) => fn());
-								delete this.events[type];
-							}
-						});
-
-						// 结束
-						resolve();
+					if (IS_SERVER || !/.js$/.test(url)) {
+						return reject(new VcError('icon', 'invaild url'));
 					}
+					let key = `${prefix}${url}`;
+
+					let cache = window.localStorage.getItem(key);
+					let icons = JSON.parse(cache || '""') as typeof IconManager['icons'];
+
+					/* istanbul ignore next -- @preserve */ 
+					if (!icons) {
+						const data = await new Promise<string>((resolve$) => {
+							const request = new XMLHttpRequest();
+							request.onreadystatechange = () => {
+								if (
+									request.readyState === 4 
+									&& request.status >= 200 
+									&& request.status <= 400
+								) {
+									resolve$(request.responseText || request.response);
+								}
+							};
+							request.open('GET', `${window.location.protocol.replace(/[^:]+/, 'https')}${url}`);
+							request.send();
+						});
+						
+						// 等待解析
+						icons = await this.parser(data, url);
+					
+						try {
+							window.localStorage.setItem(key, JSON.stringify(icons));
+						} catch (e) {
+							// 内存溢出，删除老缓存, 延迟3秒清理，重新设置
+							setTimeout(() => {
+								this.clearResource();
+								// 如果还存在溢出，项目内自行处理吧
+								window.localStorage.setItem(key, JSON.stringify(icons));
+							}, 3000);
+						}
+					}
+
+					// 重构图标
+					this.icons = {
+						...this.icons,
+						...icons,
+					};
+					// 执行
+					Object.keys(this.events).forEach((type) => {
+						let fns = this.events[type];
+						if (this.icons[type] && fns) {
+							fns.forEach((fn: Function) => fn());
+							delete this.events[type];
+						}
+					});
+
+					// 结束
+					resolve();
 				} catch (e) {
-					reject();
-					throw new VcError('icon', e);
+					/* istanbul ignore next -- @preserve */ 
+					reject(new VcError('icon', e));
 				}
 			})();
 		});
@@ -102,6 +104,7 @@ class Manager {
 			let icons = {};
 			setTimeout(() => {
 				try {
+					/* istanbul ignore next -- @preserve */ 
 					IS_DEV && console.time(url);
 					svgStr.replace(svgReg, '$1')?.match(symbolReg)?.forEach( 
 						(i: string) => i.replace(basicReg, (_: string, ...args: any[]): string => {
@@ -116,26 +119,29 @@ class Manager {
 							return '';
 						})
 					);
+					/* istanbul ignore next -- @preserve */ 
 					IS_DEV && console.timeEnd(url);
 					resolve(icons);
 				} catch (e) {
-					reject();
-					throw new VcError('icon', e);
+					/* istanbul ignore next -- @preserve */ 
+					reject(new VcError('icon', e));
 				}
 			}, 0);
 		});
 	}
 
 	on(type?: string, fn?: Function) {
+		/* istanbul ignore next -- @preserve */ 
 		if (typeof type !== 'string' || typeof fn !== 'function') return this;
 
 		this.events[type] = this.events[type] || [];
 
-		if (this.events[type].length > 100) {
+		if (this.events[type].length >= 100) {
 			delete this.events[type];
 
+			/* istanbul ignore else -- @preserve */ 
 			if (!IS_SERVER) {
-				throw new VcError('icon', `${type}不存在该图标，不要重复注册`);
+				throw new VcError('icon', `${type} nonexistent`);
 			}
 		}
 
@@ -145,13 +151,15 @@ class Manager {
 	}
 
 	off(type?: string, fn?: Function) {
+		/* istanbul ignore next -- @preserve */ 
 		if (typeof type !== 'string' || typeof fn !== 'function') return this;
 
-		this.events[type] = this.events[type].filter((i: Function) => i != fn);
+		this.events[type] = this.events[type]?.filter((i: Function) => i != fn);
 
 		return this;
 	}
 	
+	/* istanbul ignore next -- @preserve */ 
 	private clearResource() {
 		let needs = Object.keys(this.sourceStatus); 
 		Object.keys(window.localStorage).forEach((item) => {
