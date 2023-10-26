@@ -22,6 +22,7 @@ export const Debounce = defineComponent({
 				const eventName = `on${upperFirst(event)}`;
 				const callback = attrs[eventName];
 
+				 /* istanbul ignore else -- @preserve */ 
 				if (typeof callback === 'function') {
 					listener.value = {
 						[eventName]: debounce(callback, wait, {
@@ -29,8 +30,6 @@ export const Debounce = defineComponent({
 							trailing: false
 						})
 					};
-				} else {
-					listener.value = {};
 				}
 			},
 			{
