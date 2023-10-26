@@ -14,7 +14,7 @@ export const Button = defineComponent({
 	emits: ['click'],
 	props: buttonProps,
 	setup(props, { slots }) {
-		const instance = getCurrentInstance();
+		const vm = getCurrentInstance()!;
 		const hasSlot = ref(true);
 		const isLoading = ref(false);
 
@@ -35,8 +35,7 @@ export const Button = defineComponent({
 		}));
 
 		const handleClick = (...args: any[]) => {
-			let { onClick } = (instance as ComponentInternalInstance).vnode.props || {};
-			let fn = onClick && onClick(...args);
+			let fn = vm.vnode.props?.['onClick'](...args);
 
 			if (fn && fn.then) {
 				isLoading.value = true;

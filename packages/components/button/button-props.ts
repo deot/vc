@@ -6,7 +6,7 @@ export const props = {
 		default: 'button'
 	},
 	type: {
-		type: String as PropType<'default' |' primary' |' text' |' success' |' error' |' warning'>,
+		type: String as PropType<'default' | 'primary' | 'text' | 'success' | 'error' | 'warning'>,
 		default: 'default'
 	},
 	size: {
