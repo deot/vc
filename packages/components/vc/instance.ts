@@ -2,12 +2,6 @@ import { reactive } from 'vue';
 import { defaults } from './options';
 import type { Options } from './options';
 
-let globalEvent: MouseEvent;
-
-typeof window !== 'undefined' && document.addEventListener('click', (e: MouseEvent) => {
-	globalEvent = e;
-}, true);
-
 class Instance {
 	/**
 	 * 组件的配置项
@@ -17,7 +11,13 @@ class Instance {
 	/**
 	 * 处理全局捕获的事件, 用于计算位置
 	 */
-	globalEvent: MouseEvent = globalEvent || ({} as MouseEvent);
+	globalEvent: MouseEvent = {} as MouseEvent;
+
+	constructor() {
+		typeof window !== 'undefined' && document.addEventListener('click', (e: MouseEvent) => {
+			this.globalEvent = e;
+		}, true);
+	}
 
 	configure(options?: Options) {
 		if (options) {
