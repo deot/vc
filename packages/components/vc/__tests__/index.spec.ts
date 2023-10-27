@@ -46,7 +46,7 @@ describe('index.ts', () => {
 	it('install', async () => {
 		let app = createApp({});
 
-		install(app, {} as any);
+		install(app, {});
 		expect(app.config.globalProperties.$vc).toBe(VcInstance);
 	});
 });

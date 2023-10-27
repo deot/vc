@@ -8,4 +8,4 @@ export const defaults = {
 	}
 };
 
-export type Options = typeof defaults & { [key: string]: any };
+export type Options = Partial<typeof defaults> & { [key: string]: any };
