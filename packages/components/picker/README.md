@@ -44,7 +44,7 @@
 </template>
 <script setup>
 import { ref } from 'vue';
-import { cloneDeep } from 'lodash.es';
+import { cloneDeep } from 'lodash-es';
 import { MToast, MPicker } from '@deot/vc';
 
 const show = ref(false);
@@ -168,7 +168,7 @@ const handleCancel = () => {
 </template>
 <script setup>
 import { ref } from 'vue';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash-es';
 import { MToast, MPicker, Button } from '@deot/vc';
 
 const dataSource = ref([{
@@ -290,7 +290,7 @@ picker的选择组件，没有弹层。
 </template>
 <script setup>
 import { ref } from 'vue'; 
-import { cloneDeep } from 'lodash.es';
+import { cloneDeep } from 'lodash-es';
 import { MToast, MPicker } from '@deot/vc';
 
 
