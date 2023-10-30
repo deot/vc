@@ -438,8 +438,8 @@ const tableData5 = ref([{
 				fixed="right"
 			>
 				<template #default>
-					<vc-button type="text">编辑</vc-button>
-					<vc-button type="text">查看</vc-button>
+					<Button type="text">编辑</Button>
+					<Button type="text">查看</Button>
 				</template>
 			</TableColumn>
 		</TableItem>

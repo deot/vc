@@ -1,6 +1,3 @@
-## 更新`3.x`注意事项
-- 组件: `ImageProcessing -> vc-image-processing`
-
 ## 图像处理（ImageProcessing）
 图像处理(抠图、置灰、取色等等)
 
@@ -18,7 +15,7 @@
 		<img :src="img" width="100" height="100">
 		<h3>扣掉指定颜色</h3>
 		<ImageProcessing
-			:data-source="img"
+			:value="img"
 			:tolerance="90"
 			:cutout-color="[255, 237, 113, 1]" 
 			processing="cutout"
@@ -29,9 +26,7 @@
 import { ref } from 'vue';
 import { ImageProcessing } from '@deot/vc';
 
-const dataSource = ref({
-	img: 'https://wyatest.oss-cn-hangzhou.aliyuncs.com/image/172/20190812/112918/微信图片_20190624213255.jpg'
-};
+const dataSource = ref('https://*/*.jpg');
 </script>
 ```
 :::

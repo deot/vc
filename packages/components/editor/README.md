@@ -10,14 +10,14 @@
 
 ### 基本用法
 
-在富文本编辑器中编写的内容可用`vc-editor-view`组件展示。
+在富文本编辑器中编写的内容可用`EditorView`组件展示。
 
 :::RUNTIME
 ```vue
 <template>
 	<div class="v-editor-basic">
-		<vc-editor style="height: 200px" v-model="text" />
-        <vc-editor-view :value="text" />
+		<Editor style="height: 200px" v-model="text" />
+        <EditorView :value="text" />
 	</div>
 </template>
 <script setup>

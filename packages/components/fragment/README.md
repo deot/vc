@@ -16,20 +16,20 @@
 ```vue
 <template>
 	<div class="vc-fragment-basic">
-		<vc-fragment>
+		<Fragment>
 			<div class="box">1</div>
 			<div class="box">2</div>
 			<div class="box">3</div>
 			<div class="box">4</div>
 			<div class="box">5</div>
-		</vc-fragment>
+		</Fragment>
 	</div>
 </template>
 <script setup>
 import { Fragment } from '@deot/vc';
 </script>
 <style>
-.vc-fragment-basic{
+.vc-fragment-basic {
 	display: flex
 }
 .vc-fragment-basic .box {

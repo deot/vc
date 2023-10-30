@@ -137,18 +137,18 @@ const visible2 = ref(false);
 <template>
 	<div class="v-dropdown-basic">
 		<div style="margin-bottom: 10px">
-			<vc-button @click="handlePlacement('top')">top</vc-button>
-			<vc-button @click="handlePlacement('left')">left</vc-button>
-			<vc-button @click="handlePlacement('right')">right</vc-button>
-			<vc-button @click="handlePlacement('bottom')">bottom</vc-button>
-			<vc-button @click="handlePlacement('bottom-left')">bottom-left</vc-button>
-			<vc-button @click="handlePlacement('bottom-right')">bottom-right</vc-button>
-			<vc-button @click="handlePlacement('top-left')">top-left</vc-button>
-			<vc-button @click="handlePlacement('top-right')">top-right</vc-button>
-			<vc-button @click="handlePlacement('right-top')">right-top</vc-button>
-			<vc-button @click="handlePlacement('right-bottom')">right-bottom</vc-button>
-			<vc-button @click="handlePlacement('left-top')">left-top</vc-button>
-			<vc-button @click="handlePlacement('left-bottom')">left-bottom</vc-button>
+			<Button @click="handlePlacement('top')">top</Button>
+			<Button @click="handlePlacement('left')">left</Button>
+			<Button @click="handlePlacement('right')">right</Button>
+			<Button @click="handlePlacement('bottom')">bottom</Button>
+			<Button @click="handlePlacement('bottom-left')">bottom-left</Button>
+			<Button @click="handlePlacement('bottom-right')">bottom-right</Button>
+			<Button @click="handlePlacement('top-left')">top-left</Button>
+			<Button @click="handlePlacement('top-right')">top-right</Button>
+			<Button @click="handlePlacement('right-top')">right-top</Button>
+			<Button @click="handlePlacement('right-bottom')">right-bottom</Button>
+			<Button @click="handlePlacement('left-top')">left-top</Button>
+			<Button @click="handlePlacement('left-bottom')">left-bottom</Button>
 		</div>
 		<Dropdown
 			v-model="visible"

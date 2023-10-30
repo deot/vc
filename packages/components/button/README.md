@@ -88,7 +88,7 @@ import { Button, ButtonGroup } from '@deot/vc';
 	<div class="v-button-icon">
 		<Button icon="success" type="primary"></Button>
 		<Button icon="search" type="primary">搜索</Button>
-		<Button type="primary">搜索 <vc-icon type="search"/></Button>
+		<Button type="primary">搜索 <Icon type="search"/></Button>
 	</div>
 </template>
 <script setup>

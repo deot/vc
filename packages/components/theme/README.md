@@ -62,7 +62,7 @@
 </template>
 <script setup>
 import { ref } from 'vue'; 
-import { Theme, ThemeView,ThemeText, ThemeImage, Button } from '@wya/vc';
+import { Theme, ThemeView,ThemeText, ThemeImage, Button } from '@deot/vc';
 
 const current = ref('light');
 const handleChange = () => {

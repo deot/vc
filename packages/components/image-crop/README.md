@@ -1,6 +1,3 @@
-## 更新`3.x`注意事项
-- 组件: `ImageCrop -> vc-image-crop`
-
 ## 图片裁剪（ImageCrop）
 裁剪修改图片
 

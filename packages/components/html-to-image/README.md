@@ -15,7 +15,7 @@ HTML转图片
 		<HTMLToImage ref="target" :parser="parser" crossorigin="anonymous" >
 			<!-- 需要crossorigin加在第一个， 才能处理跨域 -->
 			<img 
-				src="https://wyatest.oss-cn-hangzhou.aliyuncs.com/image/1/20190518/102315/227984.jpg" 
+				src="'https://*/*.jpg'" 
 				class="image"
 			>
 		</HTMLToImage>
