@@ -1,0 +1,6 @@
+@import '../style/helper.scss';
+
+$component-name: vc-textarea;
+
+@include block($component-name) {
+}

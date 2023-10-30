@@ -1,0 +1,6 @@
+@import '../style/helper.scss';
+
+$component-name: vc-artboard;
+
+@include block($component-name) {
+}

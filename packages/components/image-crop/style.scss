@@ -1,0 +1,6 @@
+@import '../style/helper.scss';
+
+$component-name: vc-image-crop;
+
+@include block($component-name) {
+}

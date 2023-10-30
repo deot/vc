@@ -1,0 +1,6 @@
+@import '../style/helper.scss';
+
+$component-name: vc-message;
+
+@include block($component-name) {
+}

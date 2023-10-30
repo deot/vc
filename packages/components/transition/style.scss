@@ -1,0 +1,6 @@
+@import '../style/helper.scss';
+
+$component-name: vc-transition;
+
+@include block($component-name) {
+}

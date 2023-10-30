@@ -1,1 +1,3 @@
-export { default as MButton } from './button.vue';
+import { Button } from '.';
+
+export const MButton = Button;

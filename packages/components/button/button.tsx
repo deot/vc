@@ -1,7 +1,6 @@
 /** @jsxImportSource vue */
 
 import { getCurrentInstance, defineComponent, ref, computed, inject, onMounted } from 'vue';
-import type { ComponentInternalInstance } from 'vue';
 import { Icon } from "../icon";
 import { Spin } from "../spin";
 import { Debounce } from '../debounce';
