@@ -5,4 +5,5 @@
 export * from './global.types';
 import * as Utils from './utils';
 
+export * from './constants';
 export { Utils };

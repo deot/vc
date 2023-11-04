@@ -1,6 +1,7 @@
-import { Portal } from './portal.tsx';
-import "./style.scss";
+import { Portal } from './portal';
+import { PortalView } from './portal-view.tsx';
 
 export {
-	Portal
+	Portal,
+	PortalView
 };
