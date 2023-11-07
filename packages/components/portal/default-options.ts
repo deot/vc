@@ -1,5 +1,4 @@
 import type { App, Plugin, VNodeNormalizedChildren, Component } from 'vue';
-import type { PortalLeaf } from './portal-leaf';
 
 /**
  * Portal配置项
@@ -43,11 +42,6 @@ export type PortalOptions = Partial<{
 	multiple: boolean;
 
 	/**
-	 * promise调用
-	 */
-	promise?: boolean;
-
-	/**
 	 * 点击当前节点不销毁
 	 */
 	aliveRegExp: { 
@@ -58,10 +52,15 @@ export type PortalOptions = Partial<{
 	/**
 	 * 控制实例显示和隐藏的key值
 	 */
-	aliveKey: string;
+	aliveVisibleKey: string;
 
 	/**
-	 * 延迟销毁，单位s
+	 * 控制实例更新后执行的函数
+	 */
+	aliveUpdateKey: string;
+
+	/**
+	 * 延迟销毁，考虑transition动画时间，单位s
 	 */
 	leaveDelay: number;
 
@@ -95,19 +94,21 @@ export type PortalOptions = Partial<{
 	 */
 	parent: object;
 
-	/**
-	 * 获取实例
-	 */
-	getInstance: (instance: PortalLeaf) => any; 
-
 	install: (app: App) => any;
 
 	/**
-	 * 调用前
+	 * 调用成功的回调
 	 */
-	onBefore: <T = Promise<any>>(options: PortalOptions) => T;
-	onFulfilled: (...args: any[]) => void;
-	onRejected: (...args: any[]) => void;
+	onFulfilled: (...args: any[]) => any;
+	/**
+	 * 调用失败的回调
+	 */
+	onRejected: (...args: any[]) => any;
+
+	/**
+	 * 销毁时调用
+	 */
+	onDestoryed: () => any;
 }>;
 
 
@@ -116,9 +117,9 @@ export const defaults: PortalOptions = {
 	el: 'body', 
 	alive: false,
 	multiple: false,
-	promise: true,
 	aliveRegExp: { className: /(vc-hack-alive|vc-hack-cp)/ },
-	aliveKey: 'isVisible',
+	aliveVisibleKey: 'isVisible',
+	aliveUpdateKey: 'update',
 	leaveDelay: 300,
 	autoDestroy: true,
 	components: {},

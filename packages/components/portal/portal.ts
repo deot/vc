@@ -1,30 +1,31 @@
-import { createApp, h, onMounted, onUnmounted } from 'vue';
+/* eslint-disable no-dupe-class-members */
+/* eslint-disable lines-between-class-members */
+
+import { createApp, h, onMounted, onBeforeUnmount, ref } from 'vue';
 import type { Component } from 'vue';
 import * as Utils from '@deot/helper-utils';
 import * as DOM from '@deot/helper-dom';
-import { IS_SERVER, Utils as VcUtils } from '@deot/vc-shared';
-// import { cloneDeep } from 'lodash-es';
+import { Utils as VcUtils } from '@deot/vc-shared';
 import type { PortalOptions } from './default-options';
 
 import { VcInstance, VcError } from '../vc';
 import { defaults } from './default-options';
 import { PortalLeaf } from './portal-leaf';
 
-// 全部
-const leafs = new Map<string, PortalLeaf>();
 
+const COMPONENT_NAME = 'vc-portal';
 
 export class Portal<T extends Component> {
 	/**
 	 * 清理Portals类型组件
-	 * @param  {string | string[]} name 清理的组件名
-	 * @param  {boolean} force 是否强制清理, name 存在会变为true
+	 * @param  {string | string[] | boolean} name 清理的组件名, boolean表示全部leafs是否强制清理
 	 */
-	static clear(name: string | string[], force: boolean = false) {
+	static clear(name?: string | string[] | boolean) {
 		try {
+			let force = false;
 			// 清理对象 
 			let target = new Map<string, any>();
-			if (name) {
+			if (name && typeof name !== 'boolean') {
 				let names: string[] = [];
 				if (typeof name === 'string') {
 					names = [name];
@@ -33,19 +34,19 @@ export class Portal<T extends Component> {
 				}
 
 				names.forEach(i => target.set(i, '')); 
-
-				// 清理
 				force = true;
 			} else {
-				target = leafs;
+				force = !!name;
+				target = Portal.leafs;
 			}
 			for (let key of target.keys()) {
-				const leaf = leafs.get(key);
+				const leaf = Portal.leafs.get(key);
 				if (leaf && (force === true || leaf.autoDestroy === true)) {
 					leaf.destroy();
 				}
 			}
 		} catch (e) {
+			/* istanbul ignore next -- @preserve */ 
 			throw new VcError('instance', e);
 		}
 	}
@@ -55,15 +56,16 @@ export class Portal<T extends Component> {
 	 */
 	static clearAll() {
 		try {
-			leafs.forEach((item) => item[1].destroy());
+			Portal.leafs.forEach((leaf) => leaf.destroy());
 		} catch (e) {
+			/* istanbul ignore next -- @preserve */
 			throw new VcError('instance', e);
 		}
 	}
 
-	wrapper: T;
+	static leafs = new Map<string, PortalLeaf>();
 
-	waiting = false;
+	wrapper: T;
 
 	globalOptions: PortalOptions;
 
@@ -72,33 +74,38 @@ export class Portal<T extends Component> {
 
 		this.globalOptions = {
 			...options,
-			name: options?.name || wrapper.name || Utils.getUid('vc-portal')
+			name: options?.name || wrapper.name || Utils.getUid(COMPONENT_NAME)
 		};
 	}
 
-	popup = (options: PortalOptions) => {
-		const $options = { ...this.getDefaultOptions(), ...options };
-		const { onBefore, onFulfilled, onRejected, promise, ...rest } = $options;
+	popup(): PortalLeaf;
+	popup(options: PortalOptions): PortalLeaf;
+	popup(propsData: Record<string, any>, options: PortalOptions): PortalLeaf;
+	popup(propsData?: Record<string, any>, options?: PortalOptions): PortalLeaf {
+		if (!options) {
+			options = propsData || {};
+		} else {
+			options.propsData = propsData;
+		}
 
-		return promise 
-			? new Promise((resolve, reject) => {
-				(async () => {
-					if (typeof onBefore === 'function' && !this.waiting) {
-						try {
-							this.waiting = true;
-							let response = await onBefore(options);
-							this.render(rest, resolve, reject, response);
-						} catch (res) {
-							this.waiting = false;
-							reject(res);
-						}
-					} else {
-						this.render(rest, resolve, reject);
-					}
-				})();
-			})
-			: this.render(rest, onFulfilled, onRejected);
-	};
+		const $options = { ...this.getDefaultOptions(), ...options };
+		const { onFulfilled, onRejected, ...rest } = $options;
+
+		let onFulfilled$ = /* istanbul ignore next -- @preserve */ () => {};
+		let onRejected$ = /* istanbul ignore next -- @preserve */ () => {};
+		const target = new Promise<any>((resolve, reject) => {
+			onFulfilled$ = (v?: any) => {
+				onFulfilled?.(v);
+				resolve(v);
+			};
+			onRejected$ = (v?: any) => {
+				onRejected?.(v);
+				reject(v);
+			};
+		});
+
+		return this.render(rest, target, onFulfilled$, onRejected$);
+	}
 
 	/**
 	 * 销毁当前Portal下的节点
@@ -109,12 +116,12 @@ export class Portal<T extends Component> {
 		target = target || name;
 		const instance: PortalLeaf = typeof target === 'object' 
 			? target 
-			: (leafs.get(target!) as PortalLeaf);
+			: (Portal.leafs.get(target!) as PortalLeaf);
 
 		if (instance) {
 			instance.destroy();
 		} else if (multiple) {
-			leafs.forEach((item, key) => {
+			Portal.leafs.forEach((item, key) => {
 				if (key.includes(name)) {
 					item.destroy();
 				}
@@ -130,40 +137,42 @@ export class Portal<T extends Component> {
 		};
 	}
 
-	private createCallback(getLeaf: () => PortalLeaf, options: PortalOptions, callback?: any) {
-		const { leaveDelay } = options;
-
-		return (...res: any[]) => {
-			setTimeout(() => {
+	private createCallback(getLeaf: () => PortalLeaf, delay?: number, callback?: any) {
+		return (...args: any[]) => {
+			let done = () => {
 				let leaf = getLeaf();
+				/* istanbul ignore next -- @preserve */
 				if (!leaf) {
 					throw new VcError('portal', '实例不存在或已卸载');
 				}
 
 				leaf.destroy();
-			}, leaveDelay);
-			callback?.(...res);
+			};
+
+			delay ? setTimeout(done, delay) : done();
+			callback?.(...args);
 		};
 	}
 
 	private render(
 		options: PortalOptions, 
-		onFulfilled?: (...args: any[]) => void,
-		onRejected?: (...args: any[]) => void, 
-		response?: any,
-	) {
+		target: Promise<any>,
+		onFulfilled: (v?: any) => any,
+		onRejected: (v?: any) => any
+	): PortalLeaf {
 		let { 
 			el, 
 			tag, 
 			alive,
 			aliveRegExp,
-			aliveKey,
+			aliveVisibleKey,
+			aliveUpdateKey,
 			name,
 			leaveDelay,
 			autoDestroy,
-			getInstance, 
 			multiple,
 			fragment,
+			onDestoryed,
 
 			// 全局注册
 			globalProperties,
@@ -179,101 +188,93 @@ export class Portal<T extends Component> {
 		} = options;
 
 		let useAllNodes = fragment;
-		name = (multiple ? `${name}__${Utils.getUid('vc-portal')}` : name);
+		name = (multiple ? `${name}__${Utils.getUid(COMPONENT_NAME)}` : name);
 
 		const container: HTMLElement & { _children?: HTMLElement[] } = document.createElement(tag as any);
 		const root: HTMLElement | null = typeof el === 'object' ? el : document.querySelector(el || 'body');
 
 		// destroy
-		!alive && leafs.get(name!)?.destroy();
+		!alive && Portal.leafs.get(name!)?.destroy();
 
-		propsData = propsData || rest;
-		if (response && !propsData.dataSource) {
-			propsData.dataSource = response;
-		}
+		const propsData$ = propsData || rest;
 
-		let leaf = new PortalLeaf();
-		const $onDestory = () => {
-			if (!root) return;
-
+		let leaf = new PortalLeaf(target);
+		const $onDestoryed = () => {
+			onDestoryed?.();
 			leaf.app?.unmount();
+
+			/* istanbul ignore else -- @preserve */ 
 			if (useAllNodes) {
-				root.contains(container) && root.removeChild(container);
+				root?.contains(container) && root.removeChild(container);
 			} else if (container && container._children) {
 				container._children.forEach(i => {
-					if (!root) return;
-					root.contains(i) && root.removeChild(i);
+					root?.contains(i) && root.removeChild(i);
 				});
 			}
 
-			leafs.delete(name!);
+			Portal.leafs.delete(name!);
 		};
 
-		const $onRejected = this.createCallback(() => leaf, options, onRejected);
-		const $onFulfilled = this.createCallback(() => leaf, options, onFulfilled);
+		const $onRejected = this.createCallback(() => leaf, leaveDelay, onRejected);
+		const $onFulfilled = this.createCallback(() => leaf, leaveDelay, onFulfilled);
 
-		if (alive && leafs.has(name!)) {
-			leaf = leafs.get(name!) as PortalLeaf;
-
-			for (let key in propsData) {
-				(leaf.wrapper as any)[key] = propsData[key];
-			}
+		if (alive && Portal.leafs.has(name!)) {
+			leaf = Portal.leafs.get(name!) as PortalLeaf;
+			leaf.target = target;
+			leaf.propsData!.value = propsData$;
 
 			// update
-			let fn = leaf.wrapper?.update || leaf.wrapper?.loadData;
-			fn && fn(options);
+			leaf.wrapper?.[aliveUpdateKey!]?.(options);
 		} else {
 			let wrapper = this.wrapper;
-			// if (typeof this.wrapper == 'object') {
-			// 	wrapper = cloneDeep(this.wrapper);
-
-			// 	(wrapper as any).props = wrapper.props || {};
-
-			// 	wrapper.props.onPortalFulfilled = Function;
-			// 	wrapper.props.onPortalRejected = Function;
-			// }
-
 			const app = createApp({
-				name: 'vc-portal',
+				name: COMPONENT_NAME,
 				parent,
 				setup() {
-					const handleExtra = (e: Event) => {
-						// close默认不传，用户可传递参数判断输入自己的触发的close
-						try {
-							let path = (e as any).path || DOM.composedPath(e) || [];
-							if (
-								container 
-								&& e.target
-								&& !container.contains(e.target as HTMLElement) 
-								&& !path.some((item: any) => VcUtils.eleInRegExp(item, aliveRegExp!))
-							) {
+					if (alive) {
+						const handleExtra = (e: Event) => {
+							// close默认不传，用户可传递参数判断输入自己的触发的close
+							try {
+								let path = (e as any).path || DOM.composedPath(e);
+								/* istanbul ignore else -- @preserve */ 
 								if (
-									leaf.wrapper 
-									&& leaf.wrapper?.[aliveKey!]
+									container 
+									&& e.target
+									&& !container.contains(e.target as HTMLElement) 
+									&& !path?.some((item: any) => VcUtils.eleInRegExp(item, aliveRegExp!))
 								) {
-									leaf.wrapper[aliveKey!] = false;
-									setTimeout(() => $onRejected(), leaveDelay!);
-								} else {
-									$onRejected();
+									/* istanbul ignore else -- @preserve */ 
+									if (
+										leaf.wrapper 
+										&& leaf.wrapper?.[aliveVisibleKey!]
+									) {
+										leaf.wrapper[aliveVisibleKey!] = false;
+									}
+
+									// 注意这里`leaf.target`会一直处于pending状态
+									leaveDelay ? setTimeout($onDestoryed, leaveDelay) : $onDestoryed();
 								}
+							} catch (error) {
+								/* istanbul ignore next -- @preserve */ 
+								throw new VcError('portal', error);
 							}
-						} catch (error) {
-							throw new VcError('portal', error);
-						}
-					};
+						};
 
-					onMounted(() => {
-						alive && document.addEventListener('click', handleExtra, true);
-					});
+						onMounted(() => {
+							document.addEventListener('click', handleExtra, true);
+						});
 
-					onUnmounted(() => {
-						alive && document.addEventListener('click', handleExtra, true);
-					});
+						onBeforeUnmount(() => {
+							document.addEventListener('click', handleExtra, true);
+						});
+					}
 
+					const propsData$$ = ref(propsData$);
+					leaf.propsData = propsData$$;
 					return () => h(
 						wrapper, 
 						{
-							...propsData,
+							...propsData$$.value,
 							ref: (vm: any) => (leaf.wrapper = vm),
 							onPortalFulfilled: (...args: any[]) => $onFulfilled(...args),
 							onPortalRejected: (...args: any[]) => $onRejected(...args)
@@ -305,16 +306,13 @@ export class Portal<T extends Component> {
 		}
 
 		// destroy method
-		leaf.destroy = $onDestory;
+		leaf.destroy = $onDestoryed;
 
 		// tag
 		leaf.autoDestroy = !!autoDestroy;
 
-		// 回调leaf实例
-		getInstance?.(leaf);
-
 		// 标记
-		leafs.set(name!, leaf);
+		Portal.leafs.set(name!, leaf);
 
 		/**
 		 * if 
@@ -349,7 +347,6 @@ export class Portal<T extends Component> {
 			);
 		}
 
-		this.waiting = false;
 		return leaf;
 	}
 }

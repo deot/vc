@@ -10,8 +10,6 @@
 	</div>
 </template>
 <script setup lang="jsx">
-import { defineEmits, defineProps } from 'vue';
-
 const emit = defineEmits(['portal-fulfilled', 'portal-rejected']);
 const props = defineProps({
 	title: String
