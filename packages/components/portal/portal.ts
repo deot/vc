@@ -200,6 +200,10 @@ export class Portal<T extends Component> {
 
 		let leaf = new PortalLeaf(target);
 		const $onDestoryed = () => {
+			// 已经销毁，连续执行destory时不在执行
+			if (!Portal.leafs.has(name!)) {
+				return;
+			}
 			onDestoryed?.();
 			leaf.app?.unmount();
 
@@ -265,7 +269,7 @@ export class Portal<T extends Component> {
 						});
 
 						onBeforeUnmount(() => {
-							document.addEventListener('click', handleExtra, true);
+							document.removeEventListener('click', handleExtra, true);
 						});
 					}
 

@@ -93,10 +93,13 @@ describe('index.ts', () => {
 	});
 
 	it('then', async () => {
-		expect.assertions(4);
+		expect.assertions(5);
 		const leaf = Modal.popup({
 			onFulfilled: (e) => {
 				expect(e.status).toBe(1);
+			},
+			onDestoryed: () => {
+				expect(1).toBe(1);
 			}
 		});
 
@@ -127,10 +130,13 @@ describe('index.ts', () => {
 	});
 
 	it('catch', async () => {
-		expect.assertions(4);
+		expect.assertions(5);
 		const leaf = Modal.popup({
 			onRejected: (e) => {
 				expect(e.status).toBe(0);
+			},
+			onDestoryed: () => {
+				expect(1).toBe(1);
 			}
 		});
 
@@ -279,6 +285,14 @@ describe('index.ts', () => {
 
 		document.dispatchEvent(new Event('click'));
 		await Utils.sleep(1);
+		expect(Portal.leafs.size).toBe(0);
+
+		ModalAlive.popup({ title: '789', leaveDelay: 10 });
+		expect(Portal.leafs.size).toBe(1);
+		document.dispatchEvent(new Event('click'));
+		expect(Portal.leafs.size).toBe(1);
+
+		await Utils.sleep(20);
 		expect(Portal.leafs.size).toBe(0);
 	});
 });
