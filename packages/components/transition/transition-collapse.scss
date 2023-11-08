@@ -1,0 +1,9 @@
+@import '../style/helper.scss';
+
+$block: vc-transition-collapse;
+
+@include block($block) {
+	@include when(move) {
+		transition: transform .3s ease-in-out;
+	}
+}

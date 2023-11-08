@@ -1,6 +1,5 @@
-@import '../style/helper.scss';
-
-$component-name: vc-transition;
-
-@include block($component-name) {
-}
+@import './transition-collapse.scss';
+@import './transition-fade.scss';
+@import './transition-scale.scss';
+@import './transition-slide.scss';
+@import './transition-zoom.scss';
