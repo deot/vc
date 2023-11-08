@@ -173,6 +173,7 @@ export class Portal<T extends Component> {
 			multiple,
 			fragment,
 			onDestoryed,
+			onBeforeCreate,
 
 			// 全局注册
 			globalProperties,
@@ -199,12 +200,17 @@ export class Portal<T extends Component> {
 		const propsData$ = propsData || rest;
 
 		let leaf = new PortalLeaf(target);
-		const $onDestoryed = () => {
+
+		const isDestoryed = () => {
+			const leaf$ = Portal.leafs.get(name!);
+			return !leaf$ || leaf$ !== leaf;
+		};
+
+		const $onDestoryed = (...args: any[]) => {
 			// 已经销毁，连续执行destory时不在执行
-			if (!Portal.leafs.has(name!)) {
-				return;
-			}
-			onDestoryed?.();
+			if (isDestoryed()) return;
+
+			onDestoryed?.(...args);
 			leaf.app?.unmount();
 
 			/* istanbul ignore else -- @preserve */ 
@@ -273,12 +279,33 @@ export class Portal<T extends Component> {
 						});
 					}
 
-					const propsData$$ = ref(propsData$);
-					leaf.propsData = propsData$$;
-					return () => h(
+					const propsData1 = ref(propsData$);
+					const propsData2 = ref();
+					leaf.propsData = propsData1;
+
+					const allowMounted = ref(typeof onBeforeCreate !== 'function');
+					if (!allowMounted.value) {
+						let result = onBeforeCreate!(propsData$);
+
+						if (result && result.then) {
+							result.then((response: any) => {
+								if (isDestoryed()) return;
+								allowMounted.value = true;
+								propsData2.value = response;
+							}).catch((error: any) => {
+								$onDestoryed(error); // 直接移除，无需考虑是否用onRejected
+							});
+						} else {
+							allowMounted.value = true;
+							propsData2.value = result;
+						}
+					}
+					
+					return () => allowMounted.value && h(
 						wrapper, 
 						{
-							...propsData$$.value,
+							...propsData1.value,
+							...propsData2.value,
 							ref: (vm: any) => (leaf.wrapper = vm),
 							onPortalFulfilled: (...args: any[]) => $onFulfilled(...args),
 							onPortalRejected: (...args: any[]) => $onRejected(...args)

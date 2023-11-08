@@ -1,17 +1,3 @@
-## 更新`3.x`注意事项
-- 变更方法: `onSure -> onFulfilled`
-- 变更方法: `onClose -> onRejected`
-- 变更事件: `sure -> portal-fulfilled`
-- 变更事件: `close -> portal-rejected`
-- 变更属性 `data -> dataSource`,
-- 变更属性 `$slots -> slots`,
-- 变更属性 `$parent -> parent`,
-- 变更默认值: `aliveKey`, 'visible' -> 'isVisible'`
-- 变更暴露属性 `vm -> app`, `app.wrapper`同`2.x`
-- 变更取值`onBefore: () => response.data -> response`
-- 变更属性: `parent -> uses(TODO)`
-- 新增属性: `fragment: false`
-
 ## 传送门（Portal）
 渲染到组件内改变其他地方的DOM结构。
 
@@ -58,7 +44,7 @@ import { Portal } from '@deot/vc';
 import Wrapper from './wrapper.vue';
 
 export const PModalWithBefore = new Portal(Wrapper, {
-	onBefore() {
+	onBeforeCreate() {
 		return new Promise((resolve) => {
 			setTimeout(resolve, 1000);
 		});
@@ -125,42 +111,48 @@ import { PortalView } from '@deot/vc';
 
 ## API
 
-### new Portal参数
+### Portal参数
 
-| 属性              | 说明     | 类型       | 可选值 | 默认值 |
-| --------------- | ------ | -------- | --- | --- |
-| wrapper         | 要传送的组件 | `object` | -   | -   |
-| registerOptions | 配置项    | `object` | -   | -   |
+| 属性      | 说明     | 类型       | 可选值 | 默认值 |
+| ------- | ------ | -------- | --- | --- |
+| wrapper | 要传送的组件 | `object` | -   | -   |
+| options | 配置项    | `object` | -   | -   |
 
+#### `PortalOptions`参数
 
-#### registerOptions参数
+| 属性              | 说明               | 类型        | 可选值        | 默认值                                           |
+| --------------- | ---------------- | --------- | ---------- | --------------------------------------------- |
+| tag             | 外层标签             | `string`  | -          | `div`                                         |
+| el              | 组件插入的目标元素        | `string`  | -          | `body`                                        |
+| name            | 组件`name`：用于标识卸载  | `string`  | -          | 传入的`wapper`组件`name`                           |
+| alive           | 是否缓存组件不消毁        | `boolean` | -          | `false`                                       |
+| aliveRegExp     | 实例以外且该数组内的, 不销毁  | `object`  | -          | `{ className: /(vc-hack-alive\vc-hack-cp)/ }` |
+| aliveVisibleKey | 控制组件显示隐藏字段       | `string`  | -          | `isVisible`                                   |
+| aliveUpdateKey  | 控制组件重新更新的字段      | `string`  | -          | `update`                                      |
+| multiple        | 多个实例共存           | `boolean` | -          | `false`                                       |
+| leaveDelay      | 延迟关闭，单位`s`       | `Number`  | -          | 0.3                                           |
+| autoDestroy     | 自动销毁             | `boolean` | -          | `true`                                        |
+| parent          | 依赖注入使用           | `object`  | -          | -                                             |
+| components      | 动态注入组件           | `object`  | -          | -                                             |
+| uses            | 动态注入插件           | `object`  | -          | -                                             |
+| slots           | 插槽               | `object`  | -          | -                                             |
+| fragment        | 是否使用片段，即组件没有根节点  | `boolean` | -          | false                                         |
+| install         | 动态注入插件           | `object`  | -          | -                                             |
+| propsData       | props数据          | `object`  | -          | -                                             |
+| onBeforeCreate  | 初始化组件前操作，可以是ajax | -         | `Function` | -                                             |
+| onFulfilled     | 调用成功的回调          | -         | `Function` | -                                             |
+| onRejected      | 调用失败的回调          | -         | `Function` | -                                             |
+| onDestoryed     | 已销毁时调用           | -         | `Function` | -                                             |
 
-| 属性          | 说明                                                          | 类型         | 可选值        | 默认值                                           |
-| ----------- | ----------------------------------------------------------- | ---------- | ---------- | --------------------------------------------- |
-| tag         | 外层标签                                                        | `string`   | -          | `div`                                         |
-| el          | 组件插入的目标元素                                                   | `string`   | -          | `body`                                        |
-| cName       | 组件`name`：用于标识卸载                                             | `string`   | -          | 传入的`wapper`组件`name`                           |
-| alive       | 是否缓存组件不消毁                                                   | `boolean`  | -          | `false`                                       |
-| aliveRegExp | 实例以外且该数组内的, 不销毁                                             | `object`   | -          | `{ className: /(vc-hack-alive\vc-hack-cp)/ }` |
-| multiple    | 多个实例共存                                                      | `boolean`  | -          | `false`                                       |
-| promise     | 使用`promise`形式调用                                             | `boolean`  | -          | `false`                                       |
-| onBefore    | 初始化组件前操作，可以是ajax                                            | -          | `Function` | -                                             |
-| aliveKey    | 控制组件显示隐藏字段                                                  | `string`   | -          | `isVisible`                                   |
-| leaveDelay  | 延迟关闭，单位`s`                                                  | `Number`   | -          | 0.3                                           |
-| autoDestroy | 自动销毁                                                        | `boolean`  | -          | `true`                                        |
-| getInstance | 获取组件实例                                                      | `Function` | -          | -                                             |
-| parent      | 依赖注入使用 like store, router, Life cycle，methods, mixins, .... | `object`   | -          | -                                             |
-| components  | 动态注入组件                                                      | `object`   | -          | -                                             |
-| data        | props数据                                                     | `object`   | -          | -                                             |
+### [Viewer].popup(propsData?, options?)参数
 
+| 属性        | 说明                     | 类型       | 可选值 | 默认值                    |
+| --------- | ---------------------- | -------- | --- | ---------------------- |
+| propsData | 传给组件的参数                | `object` | -   | -                      |
+| options   | 配置参数，同上`PortalOptions` | `object` | -   | 默认字段同`PortalOptions`参数 |
 
-### [Viewer].popup参数
-
-| 属性      | 说明                       | 类型       | 可选值 | 默认值                      |
-| ------- | ------------------------ | -------- | --- | ------------------------ |
-| options | 配置参数，同上`registerOptions` | `object` | -   | 默认字段同`registerOptions`参数 |
+> 当只有一个参数时，`propsData`会作为`options`, 所以可以使用`options.propsData`或者`options`中除配置字段，其他会作为`propsData`给组件
 
 
 ## TODO
 - 支持`SSR`，可以借 `<RootPortals />`; 通知插入以及删除组件
-- HRM

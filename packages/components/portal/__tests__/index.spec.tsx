@@ -92,6 +92,69 @@ describe('index.ts', () => {
 		expect(root.html()).toMatch(`<h1>${title}</h1>`);
 	});
 
+	it('onBeforeCreate, async', async () => {
+		const title = "any";
+		Modal.popup({
+			onBeforeCreate: () => {
+				return Promise.resolve({
+					title
+				});
+			}
+		});
+
+		await Utils.sleep(1);
+		expect(root.html()).toMatch(`<h1>${title}</h1>`);
+	});
+
+	it('onBeforeCreate, pending destory', async () => {
+		const title1 = "any1";
+		const title2 = "any2";
+		Modal.popup({
+			onBeforeCreate: () => {
+				return Promise.resolve({
+					title: title1
+				});
+			}
+		});
+
+		Modal.popup({
+			onBeforeCreate: () => {
+				return Promise.resolve({
+					title: title2
+				});
+			}
+		});
+
+		expect(Portal.leafs.size).toBe(1);
+		await Utils.sleep(1);
+		expect(root.html()).toMatch(`<h1>${title2}</h1>`);
+	});
+
+	it('onBeforeCreate, sync', async () => {
+		const title = "any";
+		Modal.popup({
+			onBeforeCreate: () => {
+				return {
+					title
+				};
+			}
+		});
+
+		expect(root.html()).toMatch(`<h1>${title}</h1>`);
+	});
+
+	it('onBeforeCreate, error', async () => {
+		 Modal.popup({
+			onBeforeCreate: () => {
+				return Promise.reject(new Error('xxx'));
+			}
+		});
+
+		expect(Portal.leafs.size).toBe(1);
+		await Utils.sleep(1);
+		expect(Portal.leafs.size).toBe(0);
+	});
+
 	it('then', async () => {
 		expect.assertions(5);
 		const leaf = Modal.popup({

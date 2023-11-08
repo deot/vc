@@ -21,7 +21,7 @@ export class PortalLeaf {
 	 */
 	autoDestroy: boolean;
 
-	target!: Promise<any>;
+	target: Promise<any>;
 
 	constructor(target: Promise<any>) {
 		this.target = target;

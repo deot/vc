@@ -108,7 +108,12 @@ export type PortalOptions = Partial<{
 	/**
 	 * 销毁时调用
 	 */
-	onDestoryed: () => any;
+	onDestoryed: (...args: any[]) => any;
+
+	/**
+	 * 创建之前调用
+	 */
+	onBeforeCreate: (propsData?: Record<string, any>) => Promise<Record<string, any>> | Record<string, any>;
 }>;
 
 
