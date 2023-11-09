@@ -49,6 +49,10 @@ export const props = {
 	prefix: {
 		type: String,
 		default: ''
+	},
+	mode: {
+		type: String,
+		default: 'none'
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

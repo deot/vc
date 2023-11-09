@@ -7,10 +7,11 @@ const COMPONENT_NAME = 'vc-transition-collapse';
 export const TransitionCollapse = defineComponent({
 	name: COMPONENT_NAME,
 	props: transitionProps,
+	// 当不声明emits的情况下，事件存在于attrs中
 	inheritAttrs: false,
 	setup(props, { slots, attrs: _attrs }) {
 		const attrs = _attrs as any;
-		const { Wrapper, resetStyles, resetAbsolute, its } = useTransition();
+		const { Wrapper, resetStyles, resetAbsolute } = useTransition();
 		const getTransitionStyle = (duration = 0.3) => {
 			let style = `
 				${duration}s height ease-in-out, 
@@ -35,7 +36,6 @@ export const TransitionCollapse = defineComponent({
 			el.style.paddingBottom = '0px';
 			resetStyles(el);
 
-			// emit('before-enter', el);
 			attrs.onBeforeEnter?.(el);
 		};
 
@@ -53,7 +53,6 @@ export const TransitionCollapse = defineComponent({
 
 			el.style.overflow = 'hidden';
 
-			// emit('enter', el);
 			attrs.onEnter?.(el);
 		};
 
@@ -110,14 +109,14 @@ export const TransitionCollapse = defineComponent({
 			attrs.onAfterLeave?.(el);
 		};
 
-		const listeners = {
+		const listeners = toHandlers({
 			'before-enter': handleBeforeEnter,
 			'after-enter': handleAfterEnter,
 			'enter': handleEnter,
 			'before-leave': handleBeforeLeave,
 			'leave': handleLeave,
 			'after-leave': handleAfterLeave
-		};
+		});
 
 		return () => {
 			return h(
@@ -125,12 +124,10 @@ export const TransitionCollapse = defineComponent({
 				mergeProps(
 					{
 						tag: props.tag,
-						moveClass: `vc-transition-collapse is-move`,
-						style: its.value.style,
-						class: its.value.class,
+						moveClass: props.group ? `vc-transition-collapse is-move` : undefined
 					}, 
 					attrs,
-					toHandlers(listeners)
+					listeners
 				), 
 				slots
 			);

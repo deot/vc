@@ -1,4 +1,4 @@
-import { defineComponent, h, toHandlers, mergeProps, computed } from 'vue';
+import { defineComponent, h, mergeProps } from 'vue';
 import type { PropType } from 'vue';
 import { props as transitionProps } from './transition-props';
 import { useTransition } from './use-transition';
@@ -26,12 +26,10 @@ export const TransitionZoom = defineComponent({
 			default: 'vc-transition-zoom'
 		}
 	},
+	// 当不声明emits的情况下，事件存在于attrs中
 	inheritAttrs: false,
 	setup(props, { slots, attrs }) {
-		const { Wrapper, its, listeners } = useTransition();
-		const classes = computed(() => {
-			return props.mode !== 'none' ? `-${props.mode}`.split('-').join(' is-') : '';
-		});
+		const { Wrapper, listeners, classes } = useTransition();
 
 		return () => {
 			return h(
@@ -39,14 +37,10 @@ export const TransitionZoom = defineComponent({
 				mergeProps(
 					{
 						tag: props.tag,
-						enterActiveClass: `${props.prefix} ${classes.value} is-in`,
-						moveClass: `${props.prefix} ${classes.value} is-move`,
-						leaveActiveClass: `${props.prefix} ${classes.value} is-out`,
-						style: its.value.style,
-						class: its.value.class,
 					}, 
+					classes.value,
 					attrs, 
-					toHandlers(listeners)
+					listeners
 				), 
 				slots
 			);

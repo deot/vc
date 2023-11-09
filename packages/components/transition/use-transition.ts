@@ -2,9 +2,9 @@ import {
 	getCurrentInstance,
 	computed,
 	Transition, 
-	TransitionGroup
+	TransitionGroup,
+	toHandlers
 } from 'vue';
-import { useAttrs } from '@deot/vc-hooks';
 import type { ComponentInternalInstance, Component } from 'vue';
 import type { Props } from './transition-props';
 
@@ -13,9 +13,17 @@ export const useTransition = () => {
 	const attrs = instance.attrs as any;
 	const props = instance.props as Props;
 
-	const its = useAttrs({ standard: false });
 	const Wrapper = computed(() => {
 		return (props.group ? TransitionGroup : Transition) as Component;
+	});
+
+	const classes = computed(() => {
+		let modeClass = props.mode !== 'none' ? `-${props.mode}`.split('-').join(' is-') : '';
+		return {
+			enterActiveClass: `${props.prefix} ${modeClass} is-in`,
+			moveClass: `${props.prefix} ${modeClass} is-move`,
+			leaveActiveClass: `${props.prefix} ${modeClass} is-out`
+		};
 	});
 
 	const clearStyles = (el: HTMLElement) => {
@@ -58,19 +66,16 @@ export const useTransition = () => {
 
 		resetStyles(el);
 
-		// emit('before-enter', el);
 		attrs.onBeforeEnter?.(el);
 	};
 
 	const handleEnter = (el: HTMLElement) => {
-		// emit('enter', el);
 		attrs.onEnter?.(el);
 	};
 
 	const handleAfterEnter = (el: HTMLElement) => {
 		clearStyles(el);
 
-		// emit('after-enter', el);
 		attrs.onAfterEnter?.(el);
 	};
 
@@ -83,7 +88,6 @@ export const useTransition = () => {
 
 		resetStyles(el);
 
-		// emit('before-leave', el);
 		attrs.onBeforeLeave?.(el);
 	};
 
@@ -91,14 +95,12 @@ export const useTransition = () => {
 	const handleLeave = (el: HTMLElement) => {
 		resetAbsolute(el);
 		
-		// emit('leave', el);
 		attrs.onLeave?.(el);
 
 	};
 	const handleAfterLeave = (el: HTMLElement) => {
 		clearStyles(el);
 
-		// emit('after-leave', el);
 		attrs.onAfterLeave?.(el);
 	};
 
@@ -106,14 +108,14 @@ export const useTransition = () => {
 		Wrapper,
 		resetStyles,
 		resetAbsolute,
-		its,
-		listeners: {
+		classes,
+		listeners: toHandlers({
 			'before-enter': handleBeforeEnter,
 			'enter': handleEnter,
 			'after-enter': handleAfterEnter,
 			'before-leave': handleBeforeLeave,
 			'leave': handleLeave,
 			'after-leave': handleAfterLeave
-		}
+		})
 	};
 };
