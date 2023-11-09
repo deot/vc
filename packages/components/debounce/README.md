@@ -35,11 +35,12 @@ const handleClick = (e) => {
 
 ### 属性
 
-| 属性    | 说明                   | 类型                | 默认值   |
-| ----- | -------------------- | ----------------- | ----- |
-| wait  | 延迟的时间                | `number`          | 250   |
-| tag   | 外层标签`span / div / *` | `string / object` | div   |
-| event | 事件                   | `string`          | click |
+| 属性      | 说明                   | 类型                | 默认值            |
+| ------- | -------------------- | ----------------- | -------------- |
+| wait    | 延迟的时间                | `number`          | 250            |
+| tag     | 外层标签`span / div / *` | `string / object` | div            |
+| include | 需要防抖的事件              | `Regexp`          | `/^on([A-Z])/` |
+| exclude | 不做防抖的事件              | `Regexp`          | -              |
 
 ### TODO
 

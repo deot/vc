@@ -9,9 +9,10 @@ export const props = {
 		type: [String, Object],
 		default: 'div'
 	},
-	event: {
-		type: String,
-		default: 'click'
-	}
+	include: {
+		type: RegExp,
+		default: () => /^on([A-Z])/
+	},
+	exclude: RegExp
 };
 export type Props = ExtractPropTypes<typeof props>;
