@@ -92,6 +92,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { 
+	Transition as VTransition,
 	TransitionFade,
 	TransitionScale,
 	TransitionSlide,
@@ -103,13 +104,14 @@ let count = 0;
 
 const isVisible = ref(true);
 const isGroup = ref(false);
-const transitionName = ref('collapse');
+const transitionName = ref('fade');
 const transitionOptions = ref([
 	'fade',
 	'scale',
 	'slide',
 	'zoom',
-	'collapse'
+	'collapse',
+	'custom'
 ]);
 const slideModeName = ref('left-part');
 const slideModeOptions = ref(['left-part', 'right-part', 'down-part', 'up-part', 'left', 'right', 'down', 'up']);
@@ -135,7 +137,6 @@ const mode = computed(() => {
 });
 
 const wrapper = computed(() => {
-
 	switch (transitionName.value) {
 		case 'scale':
 			return TransitionScale;
@@ -147,6 +148,8 @@ const wrapper = computed(() => {
 			return TransitionCollapse;
 		case 'fade':
 			return TransitionFade;
+		case 'custom':
+			return VTransition
 		default:
 			return '';
 	}

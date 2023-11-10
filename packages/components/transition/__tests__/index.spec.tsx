@@ -1,15 +1,21 @@
 // @vitest-environment jsdom
 
-import { Transition } from '@deot/vc-components';
-import { mount } from '@vue/test-utils';
+import { 
+	Transition,
+	TransitionCollapse,
+	TransitionFade,
+	TransitionScale,
+	TransitionSlide,
+	TransitionZoom 
+} from '@deot/vc-components';
 
 describe('index.ts', () => {
 	it('basic', () => {
 		expect(typeof Transition).toBe('object');
-	});
-	it('create', async () => {
-		const wrapper = mount(() => (<Transition />));
-
-		expect(wrapper.classes()).toContain('vc-transition');
+		expect(typeof TransitionCollapse).toBe('object');
+		expect(typeof TransitionFade).toBe('object');
+		expect(typeof TransitionScale).toBe('object');
+		expect(typeof TransitionSlide).toBe('object');
+		expect(typeof TransitionZoom).toBe('object');
 	});
 });

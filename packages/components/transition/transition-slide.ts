@@ -1,4 +1,4 @@
-import { defineComponent, h, mergeProps } from 'vue';
+import { defineComponent, h } from 'vue';
 import { props as transitionProps } from './transition-props';
 import { useTransition } from './use-transition';
 
@@ -33,14 +33,12 @@ export const TransitionSlide = defineComponent({
 		return () => {
 			return h(
 				Wrapper.value, 
-				mergeProps(
-					{
-						tag: props.tag,
-					}, 
-					classes.value,
-					attrs, 
-					listeners
-				), 
+				{
+					...attrs,
+					...listeners,
+					...classes.value,
+					tag: props.tag
+				},  
 				slots
 			);
 		};

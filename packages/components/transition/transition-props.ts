@@ -3,11 +3,11 @@ import type { ExtractPropTypes } from 'vue';
 export const props = {
 	/**
 	 * 进入/离开持续时间
-	 * {enter: .3, leave: .3}
+	 * {enter: 300, leave: 300}
 	 */
 	duration: {
 		type: [Number, Object],
-		default: 0.3
+		default: 300
 	},
 	/**
 	 * 进入/离开延迟时间
@@ -48,7 +48,7 @@ export const props = {
 	},
 	prefix: {
 		type: String,
-		default: ''
+		default: 'vc-transition'
 	},
 	mode: {
 		type: String,

@@ -1,4 +1,4 @@
-import { defineComponent, h, mergeProps } from 'vue';
+import { defineComponent, h } from 'vue';
 import { props as transitionProps } from './transition-props';
 import { useTransition } from './use-transition';
 
@@ -13,15 +13,13 @@ export const Transition = defineComponent({
 		const { Wrapper, listeners, classes } = useTransition();
 		return () => {
 			return h(
-				Wrapper, 
-				mergeProps(
-					{
-						tag: props.tag
-					}, 
-					classes.value,
-					attrs, 
-					listeners
-				), 
+				Wrapper.value, 
+				{
+					...attrs,
+					...listeners,
+					...classes.value,
+					tag: props.tag
+				}, 
 				slots
 			);
 		};

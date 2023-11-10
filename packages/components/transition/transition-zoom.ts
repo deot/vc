@@ -1,4 +1,4 @@
-import { defineComponent, h, mergeProps } from 'vue';
+import { defineComponent, h } from 'vue';
 import type { PropType } from 'vue';
 import { props as transitionProps } from './transition-props';
 import { useTransition } from './use-transition';
@@ -10,7 +10,7 @@ export const TransitionZoom = defineComponent({
 	props: {
 		...transitionProps,
 		mode: {
-			type: String as PropType<'x' | 'y' | 'center' | 'none'>,
+			type: String as PropType<'x' | 'y' | 'center' | 'none' | string>,
 			default: 'x',
 			validator: (v: string) => /^(x|y|center|none)$/.test(v)
 		},
@@ -34,14 +34,12 @@ export const TransitionZoom = defineComponent({
 		return () => {
 			return h(
 				Wrapper.value, 
-				mergeProps(
-					{
-						tag: props.tag,
-					}, 
-					classes.value,
-					attrs, 
-					listeners
-				), 
+				{
+					...attrs,
+					...listeners,
+					...classes.value,
+					tag: props.tag
+				}, 
 				slots
 			);
 		};

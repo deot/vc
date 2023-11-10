@@ -2,12 +2,12 @@ import {
 	getCurrentInstance,
 	computed,
 	Transition, 
-	TransitionGroup,
-	toHandlers
+	TransitionGroup
 } from 'vue';
 import type { ComponentInternalInstance, Component } from 'vue';
 import type { Props } from './transition-props';
 
+const trim = (str: string) => str.trim().replace(/\s+/g, " ");
 export const useTransition = () => {
 	const instance = getCurrentInstance() as ComponentInternalInstance;
 	const attrs = instance.attrs as any;
@@ -20,9 +20,9 @@ export const useTransition = () => {
 	const classes = computed(() => {
 		let modeClass = props.mode !== 'none' ? `-${props.mode}`.split('-').join(' is-') : '';
 		return {
-			enterActiveClass: `${props.prefix} ${modeClass} is-in`,
-			moveClass: `${props.prefix} ${modeClass} is-move`,
-			leaveActiveClass: `${props.prefix} ${modeClass} is-out`
+			enterActiveClass: trim(`${attrs.enterActiveClass || ''} ${props.prefix} ${modeClass} is-in`),
+			leaveActiveClass: trim(`${attrs.leaveActiveClass || ''} ${props.prefix} ${modeClass} is-out`),
+			moveClass: props.group ? trim(`${attrs.moveClass || ''} ${props.prefix} ${modeClass} is-move`) : undefined,
 		};
 	});
 
@@ -59,18 +59,30 @@ export const useTransition = () => {
 	// hooks
 	const handleBeforeEnter = (el: HTMLElement) => {
 		let duration = (props.duration as any).enter || props.duration;
-		el.style.animationDuration = `${duration}s`;
+		el.style.animationDuration = `${duration}ms`;
 
 		let delay = (props.delay as any).enter || props.delay;
-		el.style.animationDelay = `${delay}s`;
+		el.style.animationDelay = `${delay}ms`;
 
 		resetStyles(el);
 
 		attrs.onBeforeEnter?.(el);
 	};
 
-	const handleEnter = (el: HTMLElement) => {
-		attrs.onEnter?.(el);
+	const createNext = (callback?: () => any) => {
+		let hasDone = false;
+		return () => {
+			!hasDone && callback?.();
+			hasDone = true;
+		};
+	};
+	const handleEnter = async (el: HTMLElement, done?: () => any) => {
+		let next = createNext(done);
+		try {
+			await attrs.onEnter?.(el, next);
+		} finally {
+			next();
+		}
 	};
 
 	const handleAfterEnter = (el: HTMLElement) => {
@@ -81,22 +93,25 @@ export const useTransition = () => {
 
 	const handleBeforeLeave = (el: HTMLElement) => {
 		let duration = (props.duration as any).leave || props.duration;
-		el.style.animationDuration = `${duration}s`;
+		el.style.animationDuration = `${duration}ms`;
 
 		let delay = (props.delay as any).leave || props.delay;
-		el.style.animationDelay = `${delay}s`;
+		el.style.animationDelay = `${delay}ms`;
 
 		resetStyles(el);
 
 		attrs.onBeforeLeave?.(el);
 	};
 
-	// 特殊处理: 如果第二个参数为done, 且接收的话, 由用户管理结束
-	const handleLeave = (el: HTMLElement) => {
-		resetAbsolute(el);
-		
-		attrs.onLeave?.(el);
-
+	// 如果第二个参数为done, 且接收的话, 由用户管理结束
+	const handleLeave = async (el: HTMLElement, done?: () => any) => {
+		let next = createNext(done);
+		try {
+			resetAbsolute(el);
+			await attrs.onLeave?.(el, next);
+		} finally {
+			next();
+		}
 	};
 	const handleAfterLeave = (el: HTMLElement) => {
 		clearStyles(el);
@@ -109,13 +124,14 @@ export const useTransition = () => {
 		resetStyles,
 		resetAbsolute,
 		classes,
-		listeners: toHandlers({
-			'before-enter': handleBeforeEnter,
-			'enter': handleEnter,
-			'after-enter': handleAfterEnter,
-			'before-leave': handleBeforeLeave,
-			'leave': handleLeave,
-			'after-leave': handleAfterLeave
-		})
+		createNext,
+		listeners: {
+			onBeforeEnter: handleBeforeEnter,
+			onEnter: handleEnter,
+			onAfterEnter: handleAfterEnter,
+			onBeforeLeave: handleBeforeLeave,
+			onLeave: handleLeave,
+			onAfterLeave: handleAfterLeave
+		}
 	};
 };
