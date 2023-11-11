@@ -1,9 +1,9 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, SetupContext, PropType } from 'vue';
 
 export const props = {
-	tag: {
-		type: String,
-		default: 'div'
+	render: {
+		type: Function as PropType<(props: Record<string, unknown>, context: SetupContext) => any>,
+		default: () => null
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

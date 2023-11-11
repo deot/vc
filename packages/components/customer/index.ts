@@ -1,5 +1,4 @@
-import { Customer } from './customer.tsx';
-import "./style.scss";
+import { Customer } from './customer.ts';
 
 export {
 	Customer
