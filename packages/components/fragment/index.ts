@@ -1,5 +1,4 @@
-import { Fragment } from './fragment.tsx';
-import "./style.scss";
+import { Fragment } from './fragment';
 
 export {
 	Fragment

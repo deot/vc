@@ -8,8 +8,8 @@ describe('index.ts', () => {
 		expect(typeof VFragment).toBe('object');
 	});
 	it('create', async () => {
-		const wrapper = mount(() => (<VFragment />));
+		const wrapper = mount(() => (<VFragment><span /></VFragment>));
 
-		expect(wrapper.classes()).toContain('vc-fragment');
+		expect(wrapper.html()).toBe('<span></span>');
 	});
 });
