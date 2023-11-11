@@ -11,10 +11,10 @@
     "lint:fix": "npm run lint -- --fix",
     "lint:watch": "npm run lint -- --watch --fix",
     "link": "ddc link",
-    "dev": "ddc dev --vue-package '@deot/vc-components'",
+    "dev": "ddc dev --vue-package 'components,hooks'",
     "update": "ddc update",
-    "build": "ddc build --vue-package '@deot/vc-components' --script-formats=es,cjs,umd,iife --external vue",
-    "test": "ddc test --vue-package '@deot/vc-components'",
+    "build": "ddc build --vue-package 'components,hooks' --script-formats=es,cjs,umd,iife --external vue",
+    "test": "ddc test --vue-package 'components,hooks'",
     "add": "ddc add",
     "release": "ddc release"
   },
@@ -38,6 +38,6 @@
   },
   "homepage": "https://github.com/deot/vc#readme",
   "devDependencies": {
-    "@deot/dev": "^2.6.1"
+    "@deot/dev": "^2.6.2"
   }
 }

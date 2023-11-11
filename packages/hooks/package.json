@@ -18,8 +18,15 @@
   "publishConfig": {
     "access": "public"
   },
+  "peerDependencies": {
+    "vue": "*"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
   "dependencies": {
-    "lodash-es": "^4.17.21",
-    "vue": "^3.3.8"
+    "lodash-es": "^4.17.21"
   }
 }

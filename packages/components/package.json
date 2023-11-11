@@ -18,6 +18,14 @@
   "publishConfig": {
     "access": "public"
   },
+  "peerDependencies": {
+    "vue": "*"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
   "dependencies": {
     "@deot/helper": "^1.1.1",
     "lodash-es": "^4.17.21"
