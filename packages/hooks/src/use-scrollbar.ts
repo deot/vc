@@ -6,7 +6,7 @@ export const useScrollbar = (visibleRef: Ref<boolean> | ComputedRef) => {
 	let original = '';
 
 	const setScrollBar = (v: boolean) => {
-		if (instance.vnode.props!.scrollable || !instance.isMounted || original === 'hidden') return;
+		if (!instance.isMounted || original === 'hidden') return;
 
 		if (v) {
 			document.body.style.overflow = 'hidden';
