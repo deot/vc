@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, createBlock } from 'vue';
+import { defineComponent, h } from 'vue';
 import { props as customerProps } from './customer-props';
 
 const COMPONENT_NAME = 'vc-customer';
@@ -13,10 +13,8 @@ export const Customer = defineComponent({
 	name: COMPONENT_NAME,
 	props: customerProps,
 	setup(props, context) {
-		const Wrapper = createBlock(() => {
+		return () => h(() => {
 			return props.render(context.attrs, context);
 		});
-
-		return () => Wrapper;
 	}
 });
