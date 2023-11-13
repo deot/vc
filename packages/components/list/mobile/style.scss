@@ -1,0 +1,60 @@
+@import '../../style/helper.scss';
+
+$component-name: vcm-list;
+$component-child-name: vcm-list-item;
+
+@include block($component-name) {
+	@include when(border) {
+		@include border(top);
+		@include border(bottom);
+	}
+
+	background: varfix('color-light');
+}
+
+@include block($component-child-name) {
+	@include element(wrapper) {
+		@include border(bottom);
+		display: flex;
+		font-size: 16px;
+		line-height: 24px;
+		background: varfix('color-light');
+		color: varfix('color-dark');
+		padding-top: 12px;
+		padding-bottom: 12px;
+		padding-right: 12px;
+		// 单行
+		@include when(line) {
+			align-items: center;
+			justify-content: space-between;
+		}
+		// 换行
+		@include when(multi) {
+			flex-direction: column;
+		}
+		@include when(alone) {
+			@include pseudo(after) {
+				display: none
+			}
+			padding-top: unset;
+			padding-bottom: unset;
+			padding-right: unset;
+		}
+	}
+
+	@include element(content) {
+		display: flex;
+		align-items: center;
+	}
+	@include element(extra) {
+		color: varfix(color-dark-extralight);
+	}
+	@include element(icon) {
+		color: varfix(color-dark-extralight);
+		font-size: 13px;
+		margin-left: 5px;
+	}
+	&:last-child .vcm-list-item__wrapper:after {
+		display: none
+	}
+}

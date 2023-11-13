@@ -1,0 +1,280 @@
+@import "./default.scss";
+@import "./theme.scss";
+
+/**
+ * 主题会存在特殊场景，需要强制修改
+ */
+@mixin themefix($light: true) {
+	@if $light {
+		@media (prefers-color-scheme: light) {
+			:root {
+				@content;
+			}
+		}
+		[data-vc-theme="light"] {
+			@content;
+		}
+	} @else {
+		@media (prefers-color-scheme: dark) {
+			:root {
+				@content;
+			}
+		}
+
+		[data-vc-theme="dark"] {
+			@content;
+		}
+	}
+}
+
+@mixin bgLinear($angle: to bottom, $start: #fff, $end: #000) {
+	background: $end;
+	background-image: linear-gradient($angle, $start, $end);
+}
+
+/**
+ * 水平垂直居中
+ */
+
+@mixin flexCc {
+	display: flex;
+	box-sizing: border-box;
+	align-items: center;
+	justify-content: center;
+}
+
+/**
+ * 水平垂直居中
+ */
+
+@mixin flex {
+	display: flex;
+	box-sizing: border-box;
+}
+
+/**
+ * 文字相关
+ */
+
+/**
+ * 一行文字
+ */
+
+@mixin ellipsis {
+	width: auto;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+@mixin textLine($line) {
+	display: -webkit-box;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: $line;
+}
+
+/**
+ * 单词换行
+ */
+
+@mixin break {
+	word-break: break-all;
+	word-wrap: break-word;
+}
+
+/**
+ * [Clearfix 清除浮动]
+ * @return {[type]} [description]
+ */
+
+@mixin clearfix($content: false) {
+	zoom: 1;
+
+	&::before,
+	&::after {
+		display: block; // 父类为flex, 使用table无法撑开
+		clear: both;
+		content: " ";
+
+		@if $content {
+			@content;
+		}
+
+		@else {
+			height: 0;
+			font-size: 0;
+			visibility: hidden;
+		}
+	}
+}
+
+/**
+ * 1px
+ * 已为父元素添加position: relative;
+ * 其他只操作before和after;
+ * 暂时不抽离公用
+ */
+
+@mixin border($direction: '', $color: varfix('color-light-deeper')) {
+	position: relative;
+	transform: translateZ(0);
+
+	& {
+		&::before,
+		&::after {
+			position: absolute;
+			z-index: 1; // 层级应高于其他元素, 否则描边会被遮挡
+			display: block; // 父类为flex, 使用table无法撑开
+			clear: both;
+			pointer-events: none;
+			border-radius: inherit; // 圆角集成
+			content: " ";
+			box-sizing: border-box;
+		}
+
+		@if $direction == 'top' {
+			&::before {
+				top: 0;
+				left: 0;
+				width: 100%;
+				border-top: 1px solid $color;
+				transform-origin: 0 top;
+			}
+		}
+
+		@else if $direction == 'right' {
+			&::after {
+				top: 0;
+				right: 0;
+				height: 100%;
+				border-right: 1px solid $color;
+				transform-origin: right 0;
+			}
+		}
+
+		@else if $direction == 'bottom' {
+			&::after {
+				bottom: 0;
+				left: 0;
+				width: 100%;
+				border-bottom: 1px solid $color;
+				transform-origin: 0 bottom;
+			}
+		}
+
+		@else if $direction == 'left' {
+			&::before {
+				top: 0;
+				left: 0;
+				height: 100%;
+				border-left: 1px solid $color;
+				transform-origin: left 0;
+			}
+		}
+
+		@else {
+			&::after {
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				border: 1px solid $color;
+				transform-origin: 0 0;
+			}
+		}
+	}
+
+	@media (min-resolution: 2dppx) {
+		& {
+			@if $direction == 'top' {
+				&::before {
+					width: 200%;
+					transform: scale(0.5);
+				}
+			}
+
+			@else if $direction == 'right' {
+				&::after {
+					height: 200%;
+					transform: scale(0.5);
+				}
+			}
+
+			@else if $direction == 'bottom' {
+				&::after {
+					width: 200%;
+					transform: scale(0.5);
+				}
+			}
+
+			@else if $direction == 'left' {
+				&::before {
+					height: 200%;
+					transform: scale(0.5);
+				}
+			}
+
+			@else {
+				&::after {
+					width: 200%;
+					height: 200%;
+					transform: scale(0.5);
+				}
+			}
+		}
+	}
+
+	@media (min-resolution: 3dppx) {
+		& {
+			@if $direction == 'top' {
+				&::before {
+					width: 300%;
+					transform: scale(0.33333333);
+				}
+			}
+
+			@else if $direction == 'right' {
+				&::after {
+					height: 300%;
+					transform: scale(0.33333333);
+				}
+			}
+
+			@else if $direction == 'bottom' {
+				&::after {
+					width: 300%;
+					transform: scale(0.33333333);
+				}
+			}
+
+			@else if $direction == 'left' {
+				&::before {
+					height: 300%;
+					transform: scale(0.33333333);
+				}
+			}
+
+			@else {
+				&::after {
+					width: 300%;
+					height: 300%;
+					transform: scale(0.33333333);
+				}
+			}
+		}
+	}
+}
+
+@mixin borderRadius($size: 1) {
+	border-radius: 1px * $size;
+
+	@media (min-resolution: 2dppx) {
+		border-radius: 2px * $size;
+	}
+
+	@media (min-resolution: 3dppx) {
+		border-radius: 3px * $size;
+	}
+}

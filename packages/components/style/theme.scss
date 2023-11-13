@@ -13,15 +13,15 @@ $theme: (
 
 	// 亮色系-亮度
 	color-light: (light: #ffffff, dark: #000000),
-	color-light-deep: (light: #f5f6fa, dark: #252b3a),
-	color-light-deeper: (light: #d9d9d9, dark: #252b3a),
-	color-light-extradeep: (light: #C0C4CC, dark: #252b3a),
+	color-light-deep: (light: #f5f6fa, dark: #c9c9c9),
+	color-light-deeper: (light: #d9d9d9, dark: #e8e8e8),
+	color-light-extradeep: (light: #C0C4CC, dark: #f8f8f8),
 
 	// 暗色系-亮度
 	color-dark: (light: #000000, dark: #ffffff),
-	color-dark-light: (light: #303133, dark: #f8f8f8),
-	color-dark-lighter: (light: #606266, dark: #f8f8f8),
-	color-dark-extralight: (light: #909399, dark: #f8f8f8),
+	color-dark-light: (light: #303133, dark: #e8e8e8),
+	color-dark-lighter: (light: #606266, dark: #d9d9d9),
+	color-dark-extralight: (light: #909399, dark: #c9c9c9),
 
 	// 提醒色-亮度
 	color-primary: #5495f6,

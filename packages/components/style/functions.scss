@@ -1,0 +1,68 @@
+@import "./default.scss";
+@import "./theme.scss";
+
+@function merge($rest...) {
+	$options: ();
+
+	@each $item in $rest {
+		@if (meta.type-of($item) == 'map') {
+			$options: map.merge($options, $item);
+		}
+
+		@else if (meta.type-of($item) == 'list') {
+			$options: map.merge($options, merge($item));
+		}
+	}
+
+	@return $options;
+}
+
+@function varfix($value, $component-name: false, $default-color: false) {
+	$theme-value: map.get($theme, $value);
+	$has-component: meta.type-of($component-name) == 'string';
+
+	@if ($has-component and $theme-value) {
+		@return #{'var(--vc-#{$component-name}-#{$value}, var(--vc-'}#{$value}#{'))'};
+	} @else if ($has-component and $default-color) {
+		@return #{'var(--vc-'}#{$component-name}-#{$value}#{','}#{$default-color}#{')'};
+	} @else if ($theme-value) {
+		@return #{'var(--vc-'}#{$value}#{')'};
+	} @else {
+		@error "#{$value} is not a valid value.";
+	}
+}
+
+@function unitfix($value, $rest...) {
+	$options: merge((unit: $unit, scale: $scale), $rest...);
+
+	$unit: map.get($options, 'unit');
+	$scale: map.get($options, 'scale');
+
+	@if (meta.type-of($value) == 'number') {
+		$value: if(math.is_unitless($value), #{$value * $scale}#{$unit}, #{$value * $scale});
+	}
+
+	@else if (meta.type-of($value) == 'string') {
+		$value: string.unquote($value);
+	}
+
+	@return $value;
+}
+
+@function percentw($col, $total) {
+	@return math.percentage(math.div($col, $total));
+}
+
+@function themefrozen($key, $light: true) {
+	$value: map.get($theme, $key);
+
+	@if (meta.type-of($value) == 'map') {
+		@return map.get($value, if($light, 'light', 'dark'));
+	}
+
+	@if not ($value) {
+		@error "#{$key} is not a valid value.";	
+	}
+
+	@return $value;
+}

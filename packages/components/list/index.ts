@@ -1,6 +1,6 @@
-import { List } from './list.tsx';
-import "./style.scss";
+import { MList as List, MListItem as ListItem } from './index.m';
 
 export {
-	List
+	List,
+	ListItem
 };

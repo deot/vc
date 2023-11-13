@@ -116,7 +116,6 @@ export type PortalOptions = Partial<{
 	onBeforeCreate: (propsData?: Record<string, any>) => Promise<Record<string, any>> | Record<string, any>;
 }>;
 
-
 export const defaults: PortalOptions = {
 	tag: 'div', 
 	el: 'body', 
