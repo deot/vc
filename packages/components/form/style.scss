@@ -1,6 +1,83 @@
 @import '../style/helper.scss';
 
-$component-name: vc-form;
+$component-name: vc-form-item;
 
 @include block($component-name) {
+	margin-bottom: 24px;
+	line-height: 1.5;
+	@include clearfix();
+	@include element(content) { 
+		position: relative;
+		line-height: 28px;
+		font-size: 12px
+	} 
+	@include element(label) { 
+		text-align: right;
+		vertical-align: middle;
+		float: left;
+		color: #333333;
+		font-size: 12px;
+		line-height: 28px;
+		-webkit-box-sizing: border-box;
+		box-sizing: border-box
+	}
+	/**
+	 * -> vc-form-item.is_require
+	 */
+	& {
+		@include when(require) {
+			@include element(label) {
+				&:before {
+					content: '*';
+					display: inline-block;
+					margin-right: 4px;
+					line-height: 1;
+					font-family: SimSun;
+					font-size: 12px;
+					color: red
+				}
+			}
+		}
+		/**
+		 * 不使用is-error
+		 * 影响v-if动画
+		 */
+		@include element(tip) {
+			position: absolute;
+			top: 100%;
+			left: 0;
+			line-height: 1;
+			padding-top: 6px;
+			color: red;
+		}
+		@include when(left) {
+			@include element(label) {
+				text-align: left
+			}
+		}
+		@include when(top) {
+			@include element(label) {
+				float: none;
+				display: inline-block;
+				padding: 0 0 10px 0
+			}
+		}
+		/**
+		 * 此模式下需要删除label
+		 */
+		@include when(inline) {
+			display: inline-block;
+			margin-right: 10px;
+			vertical-align: top
+		}
+	}
+	/**
+	 * 嵌套管理
+	 */
+	@include block(vc-form-item) {
+		margin-bottom: 0;
+		@include element(wrapper, false) {
+			margin-left: 0 !important;
+		}
+	}
 }

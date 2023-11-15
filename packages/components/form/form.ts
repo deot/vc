@@ -1,19 +1,23 @@
 /** @jsxImportSource vue */
 
-import { defineComponent } from 'vue';
+import { defineComponent, h } from 'vue';
 import { props as formProps } from './form-props';
+import { useForm } from './use-form';
 
 const COMPONENT_NAME = 'vc-form';
 
 export const Form = defineComponent({
 	name: COMPONENT_NAME,
 	props: formProps,
-	setup(props, { slots }) {
+	setup(props, { slots, expose }) {
+		useForm(expose);
 		return () => {
-			return (
-				<div class="vc-form">
-					{ slots?.default?.() }
-				</div>
+			return h(
+				props.tag, 
+				{
+					autocomplete: props.autocomplete,
+				},
+				slots
 			);
 		};
 	}

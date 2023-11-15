@@ -1,9 +1,38 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
 
 export const props = {
 	tag: {
 		type: String,
-		default: 'div'
+		default: 'form'
+	},
+	model: {
+		type: Object
+	},
+	rules: {
+		type: Object
+	},
+	labelWidth: {
+		type: Number,
+	},
+	showMessage: {
+		type: Boolean,
+		default: true
+	},
+	inline: {
+		type: Boolean,
+		default: false
+	},
+	labelPosition: {
+		type: String as PropType<'left' | 'right' | 'top'>,
+		default: 'right'
+	},
+	autocomplete: {
+		type: String as PropType<'on' | 'off'>,
+		default: 'off'
+	},
+	styleless: {
+		type: Boolean,
+		default: false
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;
