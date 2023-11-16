@@ -1,33 +1,37 @@
 import { provide, getCurrentInstance } from 'vue';
-import type { VNode, SetupContext } from 'vue';
+import type { VNode, SetupContext, ComponentInternalInstance } from 'vue';
 import { sortBy } from 'lodash';
 import { VcError } from '../vc/index';
-import type { 
-	FormInject, 
-	FormInstance, 
-	FormItemInstance, 
-	FormOptions, 
-	FormValidateOptions 
-} from './types';
+import type { FormProvide } from './types';
+import type { Props } from './form-props';
+
+interface FormOptions {
+	throwToast?: (...args: any[]) => any;
+}
+
+interface FormValidateOptions {
+	scroll?: boolean;
+}
 
 export const useForm = (expose: SetupContext['expose'], options: FormOptions = {}) => {
-	const instance = getCurrentInstance() as FormInstance;
-	const { slots, props } = instance;
+	const instance = getCurrentInstance()!;
+	const { slots } = instance;
+	const props = instance.props as Props;
 
-	const fields: FormItemInstance[] = [];
+	const fields: ComponentInternalInstance[] = [];
 
-	provide('form', {
+	provide<FormProvide>('form', {
 		props,
-		add: (item: FormItemInstance) => {
-			item && fields.push(item);
+		add: (field) => {
+			field && fields.push(field);
 		},
-		remove: (item: FormItemInstance) => {
-			item.props.prop && fields.splice(fields.indexOf(item), 1);
+		remove: (field) => {
+			field && fields.splice(fields.indexOf(field), 1);
 		}
-	} as FormInject);
+	});
 
 	const resetFields = () => {
-		fields.forEach(item => (item.exposed as any).resetField());
+		fields.forEach(field => field.exposed!.resetField());
 	};
 
 	const getField = (prop: string) => {
@@ -38,9 +42,7 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 	};
 
 	const showToast = (msg: string) => {
-		props.showMessage 
-			&& options.throwToast 
-			&& options.throwToast(msg);
+		props.showMessage && options.throwToast?.(msg);
 	};
 
 	// 同时处理嵌套form-item
@@ -102,7 +104,9 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 			fields.map(item => (item.exposed as any).validate(''))
 		);
 
-		let originErrors = results.filter(i => i.status === 'rejected').map(i => (i as PromiseRejectedResult).reason);
+		let originErrors = results
+			.filter(i => i.status === 'rejected')
+			.map(i => (i as PromiseRejectedResult).reason);
 
 		if (!originErrors.length) return;
 
@@ -121,7 +125,7 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 
 		let field = getField(prop);
 		try {
-			(field.exposed as any).validate('');
+			await field.exposed!.validate('');
 		} catch (e: any) {
 			let errorMsg = e.message;
 			showToast(errorMsg);
@@ -131,13 +135,10 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 		}
 	};
 
-	const exposed = {
+	expose({
 		getField,
 		resetFields,
 		validate,
 		validateField
-	};
-	expose(exposed);
-	
-	return exposed;
+	});
 };

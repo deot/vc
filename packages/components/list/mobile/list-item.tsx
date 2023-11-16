@@ -1,7 +1,6 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, inject, computed, getCurrentInstance } from 'vue';
-import type { ComponentInternalInstance } from 'vue';
 import { Icon } from '../../icon';
 import { props as listItemProps } from './list-item-props';
 import { VcInstance } from '../../vc';
@@ -51,7 +50,7 @@ export const MListItem = defineComponent({
 			 */
 			const to = VcInstance.options.MListItem?.to;
 			if (typeof to === 'function') {
-				const vm = getCurrentInstance() as ComponentInternalInstance;
+				const vm = getCurrentInstance()!;
 				if (typeof to(props.to, vm) !== 'undefined') return;
 			}
 

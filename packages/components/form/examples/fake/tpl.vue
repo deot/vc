@@ -1,6 +1,11 @@
 <template>
 	<div>
-		<input :type="type" :value="modelValue" @input="handleInput">
+		<input 
+			:type="type" 
+			:value="modelValue" 
+			@input="handleInput"
+			@blur="handleBlur"
+		>
 		<slot />
 	</div>
 </template>
@@ -23,6 +28,11 @@ const handleInput = (e) => {
 	// form表单
 	formItem.change?.();
 };
+
+const handleBlur = (e) => {
+	// form表单
+	formItem.blur?.();
+}
 </script>
 
 <style lang="scss">

@@ -4,12 +4,12 @@ import {
 	Transition, 
 	TransitionGroup
 } from 'vue';
-import type { ComponentInternalInstance, Component } from 'vue';
+import type { Component } from 'vue';
 import type { Props } from './transition-props';
 
 const trim = (str: string) => str.trim().replace(/\s+/g, " ");
 export const useTransition = () => {
-	const instance = getCurrentInstance() as ComponentInternalInstance;
+	const instance = getCurrentInstance()!;
 	const attrs = instance.attrs as any;
 	const props = instance.props as Props;
 

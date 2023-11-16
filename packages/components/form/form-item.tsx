@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent } from 'vue';
+import { defineComponent, withDirectives, vShow } from 'vue';
 import { props as formItemProps } from './form-item-props';
 import { useFormItem } from './use-form-item';
 import { TransitionFade } from '../transition';
@@ -33,15 +33,27 @@ export const FormItem = defineComponent({
 					<div style={contentStyle.value} class="vc-form-item__wrapper">
 						<div class="vc-form-item__content">
 							{ slots.default?.() }
-							<TransitionFade>
-								{
-									showError && (
-										<div class="vc-form-item__tip">
-											{ validateMessage.value }
-										</div>
+							{
+								slots.error 
+									? slots.error?.({
+										showError: showError.value,
+										message: validateMessage.value,
+									})
+									: (
+										<TransitionFade>
+											{ 
+												withDirectives(
+													(
+														<div class="vc-form-item__tip vc-form-item__error">
+															{ validateMessage.value }
+														</div>
+													), 
+													[[vShow, showError.value]]
+												)
+											}
+										</TransitionFade>
 									)
-								}
-							</TransitionFade>
+							}
 						</div>
 					</div>
 				</div>

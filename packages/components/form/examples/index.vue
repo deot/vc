@@ -7,16 +7,35 @@
 		style="padding-left: 56px; margin-top: 21px"
 		@submit.prevent
 	>
-		<FormItem prop="input1" label="input：">
-			<input v-model="formData.input1" style="width: 300px">
+		<FormItem prop="input" label="input：">
+			<input v-model="formData.input" style="width: 300px">
 		</FormItem>
-		<FormItem>
-			<FormItem prop="input2" label="嵌套input：">
-				<input v-model="formData.input2" style="width: 300px">
+
+		<FormItem prop="nest" label="nest：">
+			<FormItem prop="nest.value1" label="nest1：">
+				<input v-model="formData.nest.value1" style="width: 300px">
+				<template #error="{ message }">
+					{{ message }}
+				</template>
+			</FormItem>
+			<FormItem prop="nest.value2" label="nest2：">
+				<input v-model="formData.nest.value2" style="width: 300px">
+				<template #error="{ message }">
+					{{ message }}
+				</template>
 			</FormItem>
 		</FormItem>
 		<FormItem prop="array" label="array：">
 			<FakeArray v-model="formData.array" />
+		</FormItem>
+		<FormItem prop="required" label="required：" required="必填">
+			<FakeTpl v-model="formData.required" style="width: 300px" />
+		</FormItem>
+		<FormItem prop="blur" label="blur：">
+			<FakeTpl v-model="formData.blur" style="width: 300px" />
+		</FormItem>
+		<FormItem prop="change" label="change：">
+			<FakeTpl v-model="formData.change" style="width: 300px" />
 		</FormItem>
 		<template
 			v-for="(item, index) in formData.items"
@@ -24,7 +43,7 @@
 		>
 			<FormItem 
 				:label="'Item ' + item.index + '：'"
-				:prop="'items.' + index + '.value'"
+				:prop="'items.' + item.index + '.value'"
 				:rules="{
 					required: true, 
 					message: 'Item ' + item.index +' can not be empty', 
@@ -73,23 +92,55 @@ import { Button } from '../../button';
 let index = 0;
 const form = ref(null);
 const formData = reactive({
-	input1: '',
-	input2: '',
+	input: '',
+	nest: {
+		value1: '',
+		value2: ''
+	},
+	blur: '',
+	change: '',
 	array: [],
+	required: '',
 	items: [
 		{
 			id: getUid(),
 			value: '',
-			index: 1
+			index
 		}
 	]
 });
 
 const formRules = reactive({
+	blur: {
+		trigger: 'blur',
+		required: true,
+		message: '必填'
+	},
 
+	change: {
+		trigger: 'change',
+		required: true,
+		message: '必填'
+	},
+
+	nest: {
+		validate(v) {
+			if (!v.value1 || !v.value2) return Promise.reject('value1，value2必填');
+		},
+		value1: {
+			trigger: 'change',
+			required: true,
+			message: '必填'
+		},
+		value2: {
+			trigger: 'change',
+			required: true,
+			message: '必填'
+		}
+	}
 });
 
-watchEffect(() => console.log('*.input1', formData.input1));
+watchEffect(() => console.log('*.input', formData.input));
 watchEffect(() => console.log('*.input2', formData.input2));
 watchEffect(() => console.log('*.array', formData.array));
 
@@ -128,7 +179,7 @@ const handleRemove = (i) => {
 	formData.items.splice(i, 1);
 };
 
-const handleSort = (i) => {
+const handleSort = () => {
 	formData.items = shuffle(formData.items);
 };
 </script>

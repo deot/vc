@@ -1,4 +1,5 @@
 import type { ExtractPropTypes, PropType } from 'vue';
+import type { FormRule } from './types';
 
 export const props = {
 	tag: {
@@ -9,7 +10,7 @@ export const props = {
 		type: Object
 	},
 	rules: {
-		type: Object
+		type: Object as PropType<Record<string, FormRule>> 
 	},
 	labelWidth: {
 		type: Number,

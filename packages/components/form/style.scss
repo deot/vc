@@ -38,23 +38,26 @@ $component-name: vc-form-item;
 				}
 			}
 		}
-		/**
-		 * 不使用is-error
-		 * 影响v-if动画
-		 */
+		
 		@include element(tip) {
 			position: absolute;
 			top: 100%;
 			left: 0;
 			line-height: 1;
 			padding-top: 6px;
+		}
+
+		// 可单独设置颜色
+		@include element(error) {
 			color: red;
 		}
+
 		@include when(left) {
 			@include element(label) {
 				text-align: left
 			}
 		}
+
 		@include when(top) {
 			@include element(label) {
 				float: none;

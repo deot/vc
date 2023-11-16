@@ -567,7 +567,7 @@ const handleReset = (name) => {
 属性 | 说明 | 类型 | 可选值 | 默认值
 ---|---|---|---|---
 model | 表单数据对象 | `Object` | - | -
-rules | 表单验证规则，具体配置查看 [ async-validator](https://github.com/yiminghe/async-validator) | `Object` | - | -
+rules | 表单验证规则，具体配置查看 [validator](https://github.com/deot/helper) | `Object` | - | -
 inline | 是否开启行内表单模式 | `Boolean` | - | `false`
 label-position | 表单域标签的位置 | `String` | `left`、 `right`、 `top` | `right`
 label-width | 表单域标签的宽度，所有的 FormItem 都会继承 Form 组件的 label-width 的值 | `Number` | - | -

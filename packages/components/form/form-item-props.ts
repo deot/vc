@@ -1,4 +1,5 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
+import type { FormRule } from './types';
 
 export const props = {
 	label: {
@@ -12,14 +13,14 @@ export const props = {
 		type: String
 	},
 	required: {
-		type: Boolean,
+		type: [Boolean, String],
 		default: false
 	},
 	error: {
 		type: String
 	},
 	rules: {
-		type: [Array, Object]
+		type: [Array, Object] as PropType<FormRule | FormRule[]>
 	},
 	resetByRulesChanged: {
 		type: Boolean,
@@ -29,9 +30,6 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
-	// validateStatus: {
-	// 	type: String
-	// },
 	labelFor: {
 		type: String
 	},
