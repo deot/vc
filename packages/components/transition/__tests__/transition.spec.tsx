@@ -14,8 +14,10 @@ describe('transition.ts', () => {
 		const isGroup = ref(false);
 		const mode = ref('none');
 		const methods = {
-			onEnter: vi.fn(),
 			onBeforeEnter: vi.fn(),
+			onEnter: vi.fn((_: any, next: any) => {
+				next();
+			}),
 			onAfterEnter: vi.fn(),
 			onBeforeLeave: vi.fn(),
 			onLeave: vi.fn(),
@@ -27,7 +29,7 @@ describe('transition.ts', () => {
 					origin="0"
 					mode={mode.value}
 					group={isGroup.value}
-					duration={10} 
+					duration={1} 
 					{
 						...methods
 					}
@@ -44,7 +46,7 @@ describe('transition.ts', () => {
 		await Utils.sleep(10);
 		let el = root.querySelector('div')!;
 		expect(el.classList.contains('v-enter-from')).toBeTruthy();
-		await Utils.sleep(30);
+		await Utils.sleep(50);
 		expect(el.classList.contains('v-enter-to')).toBeTruthy();
 
 		isGroup.value = true;
@@ -52,7 +54,7 @@ describe('transition.ts', () => {
 		expect(root.innerHTML).toBe(`<div></div>`);
 
 		isVisible.value = false;
-		await Utils.sleep(30);
+		await Utils.sleep(50);
 		expect(methods.onBeforeEnter).toHaveBeenCalledTimes(1);
 		expect(methods.onAfterEnter).toHaveBeenCalledTimes(1);
 		expect(methods.onBeforeLeave).toHaveBeenCalledTimes(1);

@@ -26,7 +26,7 @@ describe('transition.ts', () => {
 					origin="0"
 					mode={mode.value}
 					group={isGroup.value}
-					duration={10} 
+					duration={1} 
 					{
 						...methods
 					}

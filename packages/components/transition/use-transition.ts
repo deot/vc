@@ -18,7 +18,7 @@ export const useTransition = () => {
 	});
 
 	const classes = computed(() => {
-		let modeClass = props.mode !== 'none' ? `-${props.mode}`.split('-').join(' is-') : '';
+		let modeClass = props.mode !== 'none' ? `${props.mode}`.split('-').join(' is-') : '';
 		return {
 			enterActiveClass: trim(`${attrs.enterActiveClass || ''} ${props.prefix} ${modeClass} is-in`),
 			leaveActiveClass: trim(`${attrs.leaveActiveClass || ''} ${props.prefix} ${modeClass} is-out`),
@@ -69,19 +69,24 @@ export const useTransition = () => {
 		attrs.onBeforeEnter?.(el);
 	};
 
-	const createNext = (callback?: () => any) => {
+	const createNext = (callback: () => any, duration: number) => {
 		let hasDone = false;
-		return () => {
-			!hasDone && callback?.();
+		// 是否立即消费回调，外部调用默认立即消费。内部调用next(false), duration后消费
+		return (immediate: boolean = true) => {
+			if (hasDone) return;
 			hasDone = true;
+			let done = () => callback?.();
+
+			immediate ? done() : setTimeout(done, duration);
 		};
 	};
-	const handleEnter = async (el: HTMLElement, done?: () => any) => {
-		let next = createNext(done);
+	const handleEnter = async (el: HTMLElement, done: () => any) => {
+		let duration = (props.duration as any).enter || props.duration;
+		let next = createNext(done, duration);
 		try {
 			await attrs.onEnter?.(el, next);
 		} finally {
-			next();
+			next(false);
 		}
 	};
 
@@ -104,13 +109,14 @@ export const useTransition = () => {
 	};
 
 	// 如果第二个参数为done, 且接收的话, 由用户管理结束
-	const handleLeave = async (el: HTMLElement, done?: () => any) => {
-		let next = createNext(done);
+	const handleLeave = async (el: HTMLElement, done: () => any) => {
+		let duration = (props.duration as any).leave || props.duration;
+		let next = createNext(done, duration);
 		try {
 			resetAbsolute(el);
 			await attrs.onLeave?.(el, next);
 		} finally {
-			next();
+			next(false);
 		}
 	};
 	const handleAfterLeave = (el: HTMLElement) => {

@@ -42,8 +42,9 @@ export const TransitionCollapse = defineComponent({
 			attrs.onBeforeEnter?.(el);
 		};
 
-		const handleEnter = async (el: HTMLElement, done?: () => any) => {
-			let next = createNext(done);
+		const handleEnter = async (el: HTMLElement, done: () => any) => {
+			let duration = (props.duration as any).enter || props.duration;
+			let next = createNext(done, duration);
 			try {
 				el.dataset.oldOverflow = el.style.overflow;
 				/* istanbul ignore next -- @preserve */
@@ -91,8 +92,9 @@ export const TransitionCollapse = defineComponent({
 			attrs.onBeforeLeave?.(el);
 		};
 
-		const handleLeave = (el: HTMLElement, done?: () => any) => {
-			let next = createNext(done);
+		const handleLeave = (el: HTMLElement, done: () => any) => {
+			let duration = (props.duration as any).leave || props.duration;
+			let next = createNext(done, duration);
 			try {
 				let leaveDuration = (props.duration as any).leave || props.duration;
 				/* istanbul ignore next -- @preserve */
