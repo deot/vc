@@ -13,9 +13,10 @@ export const FormItem = defineComponent({
 	setup(props, { slots, expose }) {
 		const it = useFormItem(expose);
 
-		const { isStyleless, classes, labelStyle, contentStyle, showError, validateMessage } = it;
+		const { isStyleless, isNest, classes, labelStyle, contentStyle, showError, validateMessage } = it;
 		const { label, labelFor } = props;
 
+		const errorColorClass = 'vc-form-item__error';
 		return () => {
 			if (isStyleless.value) return slots;
 			return (
@@ -35,16 +36,18 @@ export const FormItem = defineComponent({
 							{ slots.default?.() }
 							{
 								slots.error 
-									? slots.error?.({
-										showError: showError.value,
+									? slots.error({
+										show: showError.value,
+										nest: isNest.value,
 										message: validateMessage.value,
+										class: errorColorClass,
 									})
 									: (
 										<TransitionFade>
 											{ 
 												withDirectives(
 													(
-														<div class="vc-form-item__tip vc-form-item__error">
+														<div class={['vc-form-item__tip', isNest.value ? 'is-nest' : '', errorColorClass]}>
 															{ validateMessage.value }
 														</div>
 													), 

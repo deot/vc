@@ -33,10 +33,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	}
 
 	// 嵌套
-	const formItem = inject<FormItemProvide>('form-item', {
-		blur: () => {},
-		change: () => {},
-	});
+	const formItem = inject('form-item', {} as FormItemProvide);
 
 	const validateState = ref('');
 	const validateMessage = ref('');
@@ -87,12 +84,21 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 			'is-error': validateState.value === 'error',
 			'is-validating': validateState.value === 'validating',
 			'is-inline': form.props.inline,
+			'is-nest': isNest.value,
 			[`is-${form.props.labelPosition}`]: true,
 		};
 	});
 
+	const isNest = computed(() => {
+		return !!formItem.change;
+	});
+
 	const labelStyle = computed(() => {
-		const labelWidth = props.labelWidth === 0 || props.labelWidth ? props.labelWidth : form.props.labelWidth;
+		const labelWidth = props.labelWidth === 0 || props.labelWidth 
+			? props.labelWidth 
+			: isNest.value 
+				? 0
+				: form.props.labelWidth;
 		return {
 			width: labelWidth && labelWidth > 0 ? `${labelWidth}px` : 'auto',
 			textAlign: form.props.labelPosition as any
@@ -192,7 +198,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	const handleFieldBlur = () => {
 		// 嵌套
 		if (!props.prop) {
-			formItem.blur();
+			formItem.blur?.();
 			return;
 		}
 		validate('blur');
@@ -200,7 +206,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	const handleFieldChange = () => {
 		// 嵌套
 		if (!props.prop) {
-			formItem.change();
+			formItem.change?.();
 			return;
 		}
 		if (validateDisabled) {
@@ -239,6 +245,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	});
 
 	return {
+		isNest,
 		isStyleless,
 		validateMessage,
 		classes,

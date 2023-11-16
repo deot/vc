@@ -12,17 +12,12 @@
 		</FormItem>
 
 		<FormItem prop="nest" label="nest：">
+			<input v-model="formData.nest.value" style="width: 300px">
 			<FormItem prop="nest.value1" label="nest1：">
 				<input v-model="formData.nest.value1" style="width: 300px">
-				<template #error="{ message }">
-					{{ message }}
-				</template>
 			</FormItem>
 			<FormItem prop="nest.value2" label="nest2：">
 				<input v-model="formData.nest.value2" style="width: 300px">
-				<template #error="{ message }">
-					{{ message }}
-				</template>
 			</FormItem>
 		</FormItem>
 		<FormItem prop="array" label="array：">
@@ -94,6 +89,7 @@ const form = ref(null);
 const formData = reactive({
 	input: '',
 	nest: {
+		value: '',
 		value1: '',
 		value2: ''
 	},
