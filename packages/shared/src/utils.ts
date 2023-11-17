@@ -1,6 +1,4 @@
-import type { Options } from './global.types';
-
-export const autoCatch = async (impl: any, options: Options = {}) => { 
+export const autoCatch = async (impl: any, options: Record<string, any> = {}) => { 
 	const { onError = console.error } = options;
 
 	let target = impl;
@@ -28,4 +26,34 @@ export const eleInRegExp = (el: HTMLElement, exceptions: Exceptions): boolean =>
 		}
 	}
 	return false;
+};
+
+/**
+ * 合并字符串和对象为一个新的对象, 如
+ * args = ['', 0];
+ * orders = ['message','duration'];
+ * -> 
+ * {
+ * 	message: args[0],
+ * 	duration: args[1]
+ * }
+ * @param args ~
+ * @param orders ~
+ * @param original ~
+ * @returns ~
+ */
+export const toOptions = <T extends {}>(args: any[], orders: Array<keyof T>, original?: T): T => {
+	let result = original || ({} as T);
+	args.map((item, index) => {
+		if (typeof item === 'object' && args.length === index + 1) {
+			result = {
+				...result,
+				...item
+			};
+		} else {
+			result[orders[index]] = item;
+		}
+		return true;
+	});
+	return result;
 };
