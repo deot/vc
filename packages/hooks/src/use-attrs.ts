@@ -29,8 +29,8 @@ type Attrs = ShallowRef<{
 /**
  * 让attrs变为响应式，而非使用onUpdated进行绑定
  * inheritAttrs：false, style, class不是响应式，需要用到此方法
- * @param {Options} options ~
- * @returns {Attrs} ~
+ * @param options ~
+ * @returns ~
  */
 export const useAttrs = (options?: Options): Attrs => {
 	const { standard = true, exclude = [] } = options || {};

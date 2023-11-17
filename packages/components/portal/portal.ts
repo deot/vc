@@ -18,7 +18,7 @@ const COMPONENT_NAME = 'vc-portal';
 export class Portal<T extends Component> {
 	/**
 	 * 清理Portals类型组件
-	 * @param  {string | string[] | boolean} name 清理的组件名, boolean表示全部leafs是否强制清理
+	 * @param name 清理的组件名, boolean表示全部leafs是否强制清理
 	 */
 	static clear(name?: string | string[] | boolean) {
 		try {
@@ -109,7 +109,7 @@ export class Portal<T extends Component> {
 
 	/**
 	 * 销毁当前Portal下的节点
-	 * @param {string | PortalLeaf} target [description]
+	 * @param target [description]
 	 */
 	destroy = (target?: string | PortalLeaf) => {
 		const { multiple, name } = this.getDefaultOptions();
