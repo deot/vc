@@ -14,12 +14,13 @@ const create = (options: Options) => (...params: Array<Options[keyof Options] | 
 	let options$ = Utils.toOptions(
 		params, 
 		['content', 'duration', 'onClose', 'maskClosable'],
-		options
+		// 避免引用
+		{ ...options }
 	);
 
 	// 执行弹窗
 	return MToast.popup({
-		...options,
+		...options$,
 		onFulfilled: options$.onClose,
 		onClose: null
 	});

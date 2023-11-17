@@ -11,6 +11,7 @@ const COMPONENT_NAME = 'vcm-toast';
 
 export const MToastView = defineComponent({
 	name: COMPONENT_NAME,
+	emits: ['close', 'portal-fulfilled'],
 	props: toastProps,
 	setup(props, { emit, expose }) {
 		const isVisible = ref(false);
