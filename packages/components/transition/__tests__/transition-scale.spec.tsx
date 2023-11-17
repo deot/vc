@@ -9,7 +9,7 @@ describe('transition-scale.ts', () => {
 	it('create', async () => {
 		const isVisible = ref(false);
 		const isGroup = ref(false);
-		const mode = ref('none');
+		const mode = ref('x');
 		
 		const wrapper = mount(
 			() => (
@@ -24,12 +24,12 @@ describe('transition-scale.ts', () => {
 			)
 		);
 		let vm = wrapper.getComponent({ name: 'transition' });
-		expect(vm.props('enterActiveClass')).toBe('vc-transition-scale is-in');
-		expect(vm.props('leaveActiveClass')).toBe('vc-transition-scale is-out');
+		expect(vm.props('enterActiveClass')).toBe('vc-transition-scale is-x is-in');
+		expect(vm.props('leaveActiveClass')).toBe('vc-transition-scale is-x is-out');
 
 		isGroup.value = true;
 		await Utils.sleep(1);
 		vm = wrapper.getComponent({ name: 'transition-group' });
-		expect(vm.props('moveClass')).toBe('vc-transition-scale is-move');
+		expect(vm.props('moveClass')).toBe('vc-transition-scale is-x is-move');
 	});
 });

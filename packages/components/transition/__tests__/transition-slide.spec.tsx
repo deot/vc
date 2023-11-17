@@ -9,7 +9,7 @@ describe('transition-slide.ts', () => {
 	it('create', async () => {
 		const isVisible = ref(false);
 		const isGroup = ref(false);
-		const mode = ref('none');
+		const mode = ref('left-part');
 		
 		const wrapper = mount(
 			() => (
@@ -24,12 +24,12 @@ describe('transition-slide.ts', () => {
 			)
 		);
 		let vm = wrapper.getComponent({ name: 'transition' });
-		expect(vm.props('enterActiveClass')).toBe('vc-transition-slide is-in');
-		expect(vm.props('leaveActiveClass')).toBe('vc-transition-slide is-out');
+		expect(vm.props('enterActiveClass')).toBe('vc-transition-slide is-left is-part is-in');
+		expect(vm.props('leaveActiveClass')).toBe('vc-transition-slide is-left is-part is-out');
 
 		isGroup.value = true;
 		await Utils.sleep(1);
 		vm = wrapper.getComponent({ name: 'transition-group' });
-		expect(vm.props('moveClass')).toBe('vc-transition-slide is-move');
+		expect(vm.props('moveClass')).toBe('vc-transition-slide is-left is-part is-move');
 	});
 });

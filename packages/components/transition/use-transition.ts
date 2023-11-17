@@ -18,7 +18,7 @@ export const useTransition = () => {
 	});
 
 	const classes = computed(() => {
-		let modeClass = props.mode !== 'none' ? `${props.mode}`.split('-').join(' is-') : '';
+		let modeClass = props.mode !== 'none' ? `is-${props.mode.replace(/-/g, ' is-')}` : '';
 		return {
 			enterActiveClass: trim(`${attrs.enterActiveClass || ''} ${props.prefix} ${modeClass} is-in`),
 			leaveActiveClass: trim(`${attrs.leaveActiveClass || ''} ${props.prefix} ${modeClass} is-out`),
