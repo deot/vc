@@ -1,0 +1,40 @@
+@import '../../style/helper.scss';
+
+$component-name: vcm-toast;
+
+@include block($component-name) {
+	font-size: unitfix(12);
+	@include element(bg) {
+		position: fixed;
+		// background: $mask-bg-color;
+		z-index: 3999;
+		height: 100%;
+		width: 100%;
+		left: 0;
+		right: 0;
+		margin: 0 auto;
+		bottom: 0;
+		opacity: 0;
+	}
+	@include element(wrapper) {
+		position: fixed;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		z-index: 4001;
+		max-width: 50%;
+		height: auto;
+		background: rgba(58, 58, 58, .75);
+		padding: unitfix(9) unitfix(15);
+		border-radius: unitfix(3);
+		line-height: 1.5;
+		color: white;
+		text-align: center;
+	}
+	@include element(loading) {
+		line-height: unitfix(24);
+	}
+	@include element(content) {
+		word-break: break-all;
+	}
+}

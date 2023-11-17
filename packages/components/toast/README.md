@@ -58,5 +58,5 @@ const handleClick = () => {
 | ------------ | ------------- | ------------------- | ---------------- | ------ |
 | content      | 弹出层内容         | `Function`、`string` | -                | -      |
 | maskClosable | 点击遮罩层关闭       | `boolean`           | -                | `true` |
-| duration     | 弹出层显示时间，单位`s` | `number`            | -                | 3000      |
+| duration     | 弹出层显示时间，单位`ms` | `number`            | -                | 3000      |
 | mode         | 弹出层类型         | `string`            | `info`、`loading` | `info` |

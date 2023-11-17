@@ -1,6 +1,4 @@
-import { Toast } from './toast.tsx';
-import "./style.scss";
+import { MToast, MToastView } from './index.m';
 
-export {
-	Toast
-};
+export const Toast = MToast;
+export const ToastView = MToastView;
