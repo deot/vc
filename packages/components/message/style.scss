@@ -2,5 +2,62 @@
 
 $component-name: vc-message;
 
+$color-success: varfix(color-success, message);
+$color-error: varfix(color-error, message);
+$color-warning: varfix(color-warning, message);
+$color-info: varfix(color-primary, message);
+
 @include block($component-name) {
+	@include element(mask) {
+		position: fixed;
+		background: rgba(0, 0, 0, 0.4);
+		z-index: 3999;
+		height: 100%;
+		width: 100%;
+		left: 0;
+		right: 0;
+		margin: 0 auto;
+		bottom: 0;
+		opacity: 0;
+	}
+	@include element(wrapper) {
+		position: fixed;
+		z-index: 4000;
+		width: 100%;
+		display: flex;
+		justify-content: center;
+	}
+	@include element(container) {
+		display: flex;
+		align-items: center;
+		padding: unitfix(8) unitfix(16);
+		background: white;
+		box-shadow: 0 0 unitfix(8) 0 rgba(0, 0, 0, 0.1);
+		border-radius: unitfix(4);
+		font-size: unitfix(14);
+		@include element(icon) {
+			padding-right: unitfix(5);
+			@include when(success) {
+				color: $color-success;
+			}
+			@include when(error) {
+				color: $color-error;
+			}
+			@include when(warning) {
+				color: $color-warning;
+			}
+			@include when(info) {
+				color: $color-info;
+			}
+		}
+	}
+	@include element(loading) {
+		margin-right: unitfix(5);
+	}
+
+	@include element(close) {
+		padding-left: unitfix(6);
+		font-size: unitfix(12);
+		cursor: pointer;
+	}
 }
