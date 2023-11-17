@@ -1,5 +1,12 @@
 import "./components/style";
 
+// 获取 <meta> 标签
+let metaViewport = document.querySelector('meta[name="viewport"]');
+
+// 设置 viewport 的内容
+metaViewport.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no');
+
+
 document.body.style.background = `var(--vc-background-color)`;
 document.body.style.color = `var(--vc-foreground-color)`;
 

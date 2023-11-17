@@ -3,21 +3,21 @@
 $component-name: vc-form-item;
 
 @include block($component-name) {
-	margin-bottom: 24px;
+	margin-bottom: unitfix(24);
 	line-height: 1.5;
 	@include clearfix();
 	@include element(content) { 
 		position: relative;
-		line-height: 28px;
+		line-height: unitfix(18);
 		font-size: 12px
 	} 
 	@include element(label) { 
 		text-align: right;
 		vertical-align: middle;
 		float: left;
-		color: #333333;
+		color: varfix(color-dark-light);
 		font-size: 12px;
-		line-height: 28px;
+		line-height: unitfix(18);
 		-webkit-box-sizing: border-box;
 		box-sizing: border-box
 	}
@@ -34,7 +34,7 @@ $component-name: vc-form-item;
 					line-height: 1;
 					font-family: SimSun;
 					font-size: 12px;
-					color: red
+					color: varfix(color-error);
 				}
 			}
 		}
@@ -44,7 +44,7 @@ $component-name: vc-form-item;
 			top: 100%;
 			left: 0;
 			line-height: 1;
-			padding-top: 6px;
+			padding-top: unitfix(6);
 
 			@include when(nest) {
 				position: unset;
@@ -53,7 +53,7 @@ $component-name: vc-form-item;
 				line-height: unset;
 				padding-top: unset;
 				display: inline-block;
-				padding-left: 6px;
+				padding-left: unitfix(6);
 			}
 		}
 
@@ -61,7 +61,7 @@ $component-name: vc-form-item;
 
 		// 可单独设置颜色
 		@include element(error) {
-			color: red;
+			color: varfix(color-error);;
 		}
 
 		@include when(left) {
@@ -74,7 +74,7 @@ $component-name: vc-form-item;
 			@include element(label) {
 				float: none;
 				display: inline-block;
-				padding: 0 0 10px 0
+				padding: 0 0 unitfix(10) 0
 			}
 		}
 		/**
@@ -82,7 +82,7 @@ $component-name: vc-form-item;
 		 */
 		@include when(inline) {
 			display: inline-block;
-			margin-right: 10px;
+			margin-right: unitfix(10);
 			vertical-align: top
 		}
 	}

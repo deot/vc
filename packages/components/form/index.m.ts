@@ -1,3 +1,8 @@
-import { Form } from '.';
+import { MForm } from './mobile/form';
+import { MFormItem } from './mobile/form-item.tsx';
+import "./mobile/style.scss";
 
-export const MForm = Form;
+export {
+	MForm,
+	MFormItem
+};
