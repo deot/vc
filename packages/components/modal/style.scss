@@ -2,5 +2,133 @@
 
 $component-name: vc-modal;
 
+$color-success: varfix(color-success, modal);
+$color-error: varfix(color-error, modal);
+$color-warning: varfix(color-warning, modal);
+$color-info: varfix(color-primary, modal);
+
 @include block($component-name) {
+	@include element(mask) {
+		opacity: 1;
+		position: fixed;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		background-color: rgba(0, 0, 0, 0.4);
+		height: 100%;
+		z-index: $popup-zindex; // 与wrapper相同，两个modal同时出现时可以盖上去
+	}
+	@include element(wrapper) {
+		position: fixed;
+		top: 50%;
+		transform: translateY(-50%);
+		left: 0;
+		width: 100%;
+		z-index: $popup-zindex;
+	}
+	@include element(container) {
+		position: relative;
+		background: white;
+		box-shadow: varfix(border-shadow);
+		margin: auto;
+		border-radius: 4px;
+		padding-bottom: 63px;
+		display: flex;
+		flex-direction: column;
+		@include when(no-footer) {
+			padding-bottom: 0;
+		}
+		@include when(drag) {
+			position: absolute;
+		}
+		@include when(large) {
+			@media screen and (max-height: 768px) {
+				min-height: 400px !important;
+			}
+			@media screen and (max-height: 400px) {
+				min-height: 100% !important;
+			}
+		}
+	}
+
+	@include element(header) {
+		position: relative;
+		border-bottom: 1px solid #e8e8e8;
+		padding: 14px 24px;
+		line-height: 1;
+		font-size: 14px;
+		font-weight: 400;
+		display: flex;
+		@include when(confirm) {
+			border-bottom: none;
+			padding: 24px 16px 16px 16px;
+		}
+	}
+	@include element(content) {
+		overflow-y: auto;
+		padding: 16px 24px;
+		flex: 1;
+		// modal下分页器距离table  16px
+		.vc-paging__footer {
+			padding: 16px 0 0 0;
+		}
+		@include when(confirm) {
+			padding: 0;
+			padding-left: 46px;
+			padding-right: 24px;
+		}
+		@include when(padding-none) {
+			padding: 0;
+			padding-left: 0;
+		}
+	}
+	@include element(footer) {
+		position: absolute;
+		bottom: 0;
+		width: 100%;
+		border-top: 1px solid #e8e8e8;
+		padding: 17px 24px;
+		text-align: right;
+		@include when(confirm) {
+			border-top: none;
+			padding: 14px 16px;
+			button {
+				display: inline-block;
+				vertical-align: middle;
+			}
+		}
+	}
+	@include element(title) {
+		width: 100%;
+		line-height: 20px;
+		min-height: 20px;
+		font-size: 14px;
+		color: #333;
+		font-weight: 400;
+		word-wrap: break-word;
+	}
+	@include element(close) {
+		position: absolute;
+		top: 17px;
+		right: 16px;
+		color: #999;
+		cursor: pointer;
+	}
+	@include element(icon) {
+		margin-right: 8px;
+		font-size: 20px;
+		@include when(success) {
+			color: $color-success;
+		}
+		@include when(error) {
+			color: $color-error;
+		}
+		@include when(warning) {
+			color: $color-warning;
+		}
+		@include when(info) {
+			color: $color-info;
+		}
+	}
 }

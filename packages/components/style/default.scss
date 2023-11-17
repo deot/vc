@@ -6,6 +6,10 @@ $scale: 1 !default;
 // 单位
 $unit: px !default;
 
+// z-index
+$popup-zindex: 1002 !default;
+$mask-zindex: 1001 !default;
+
 // Animation
 $ease-out: cubic-bezier(0.215, 0.61, 0.355, 1) !default;
 $ease-in: cubic-bezier(0.55, 0.055, 0.675, 0.19) !default;
