@@ -42,7 +42,7 @@ export const eleInRegExp = (el: HTMLElement, exceptions: Exceptions): boolean =>
  * @param original ~
  * @returns ~
  */
-export const toOptions = <T extends {}>(args: any[], orders: Array<keyof T>, original?: T): T => {
+export const toOptions = <T>(args: any[], orders: Array<keyof T>, original?: T): T => {
 	let result = original || ({} as T);
 	args.map((item, index) => {
 		if (typeof item === 'object' && args.length === index + 1) {
@@ -51,7 +51,7 @@ export const toOptions = <T extends {}>(args: any[], orders: Array<keyof T>, ori
 				...item
 			};
 		} else {
-			result[orders[index]] = item;
+			result[orders[index] as any] = item;
 		}
 		return true;
 	});
