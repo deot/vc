@@ -3,8 +3,13 @@
 $component-name: vcm-form;
 $component-item-name: vcm-form-item;
 
+$color-dark: varfix(color-dark, form);
+$color-error: varfix(color-error, form);
+$background-color-light: varfix(background-color-light, form);
+
 @include block($component-name) {
-	color: varfix(color-dark);
+	background: $background-color-light;
+	color: $color-dark;
 	@include when(border) {
 		@include border(top);
 		@include border(bottom);
@@ -34,7 +39,7 @@ $component-item-name: vcm-form-item;
 		text-align: right;
 		vertical-align: middle;
 		float: left;
-		color: varfix(color-dark);
+		color: $color-dark;
 		font-size: unitfix(16);
 		line-height: unitfix(24);
 		box-sizing: border-box;
@@ -52,7 +57,7 @@ $component-item-name: vcm-form-item;
 					line-height: 1;
 					font-family: SimSun;
 					font-size: unitfix(12);
-					color: varfix(color-error)
+					color: $color-error;
 				}
 			}
 		}

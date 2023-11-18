@@ -1,34 +1,58 @@
 import "./components/style";
 
-// 获取 <meta> 标签
-let metaViewport = document.querySelector('meta[name="viewport"]');
-
 // 设置 viewport 的内容
+let metaViewport = document.querySelector('meta[name="viewport"]');
 metaViewport.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no');
 
 
-document.body.style.background = `var(--vc-background-color)`;
-document.body.style.color = `var(--vc-foreground-color)`;
-
-const el = document.createElement('div');
-
+// 设置主题
+const el = document.createElement('button');
 el.style.position = 'fixed';
 el.style.top = '0';
 el.style.right = '0';
 el.style.cursor = 'pointer';
+el.style.zIndex = '9999999';
 document.body.appendChild(el);
 
-const key = "data-vc-theme";
-let theme = document.body.getAttribute(key) || 'light';
-
-const flip = (v: string) => (v === 'dark' ? 'light' : 'dark');
-const setTheme = () => {
-	document.body.setAttribute(key, theme);
-	el.innerHTML = theme;
-};
-
-setTheme();
 el.addEventListener('click', () => {
-	theme = flip(theme);
-	setTheme();
+	const key = "data-vc-theme";
+	let v = document.body.getAttribute(key);
+	v = !v || v === 'dark' ? 'light' : 'dark';
+
+	document.body.setAttribute(key, v);
+	el.innerHTML = `theme: ${v}`;
 });
+el.dispatchEvent(new Event('click'));
+
+
+// 设置主题值
+const tEl = document.createElement('button');
+tEl.style.position = 'fixed';
+tEl.style.top = '22px';
+tEl.style.right = '0';
+tEl.style.cursor = 'pointer';
+tEl.style.zIndex = '9999999';
+document.body.appendChild(tEl);
+
+tEl.addEventListener('click', () => {
+	let style = {
+		background: `var(--vc-background-color)`,
+		color: `var(--vc-foreground-color)`,
+	};
+
+	const key = "data-vc-value";
+	let v = document.body.getAttribute(key);
+	v = !v || v === 'unset' ? 'set' : 'unset';
+
+	document.body.setAttribute(key, v);
+	tEl.innerHTML = `vars: ${v}`;
+
+	if (v === 'set') {
+		document.body.style.background = style.background;
+		document.body.style.color = style.color;
+	} else {
+		document.body.style.background = '';
+		document.body.style.color = '';
+	}
+});
+tEl.dispatchEvent(new Event('click'));

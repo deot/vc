@@ -1,8 +1,21 @@
 @import '../style/helper.scss';
 
-$component-name: vc-form-item;
+$component-name: vc-form;
+$component-item-name: vc-form-item;
+
+$foreground-color: varfix(foreground-color, form);
+$background-color-light: varfix(background-color-light, form);
+$color-dark-light: varfix(color-dark-light, form);
+$color-error: varfix(color-error, form);
+$color-error: varfix(color-error, form);
 
 @include block($component-name) {
+	padding: unitfix(24) 0;
+	background: $background-color-light;
+	color: $foreground-color;
+}
+
+@include block($component-item-name) {
 	margin-bottom: unitfix(24);
 	line-height: 1.5;
 	@include clearfix();
@@ -15,7 +28,7 @@ $component-name: vc-form-item;
 		text-align: right;
 		vertical-align: middle;
 		float: left;
-		color: varfix(color-dark-light);
+		color: $color-dark-light;
 		font-size: 12px;
 		line-height: unitfix(18);
 		-webkit-box-sizing: border-box;
@@ -34,7 +47,7 @@ $component-name: vc-form-item;
 					line-height: 1;
 					font-family: SimSun;
 					font-size: 12px;
-					color: varfix(color-error);
+					color: $color-error;
 				}
 			}
 		}
@@ -61,7 +74,7 @@ $component-name: vc-form-item;
 
 		// 可单独设置颜色
 		@include element(error) {
-			color: varfix(color-error);;
+			color: $color-error;
 		}
 
 		@include when(left) {

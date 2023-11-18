@@ -8,8 +8,13 @@
  * 命名规则：新的分类 -> *-default, *-xx
  */
 $theme: (
+	// 默认, 用于背景色的反转
 	background-color: (light: #f5f6fa, dark: #252b3a),
+	background-color-light: (light: #fff, dark: #252b3a),
+	
+	// 默认
 	foreground-color: (light: #303133, dark: #f8f8f8),
+	foreground-color-dark: (light: #000, dark: #f8f8f8),
 
 	// 亮色系-亮度
 	color-light: (light: #ffffff, dark: #000000),
@@ -41,8 +46,8 @@ $theme: (
 
 	// 圆角
 	border-radius: 8px,
-	border-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.1),
-	border-shadow-top: 0 -2px 10px 0 rgba(0, 0, 0, 0.08),
+	border-shadow: (light: 0 0 8px 0 rgba(0, 0, 0, .1), dark: 0 0 8px 0 rgba(255, 255, 255, .05)),
+	border-shadow-top: (light: 0 -2px 10px 0 rgba(0, 0, 0, .08), dark: 0 -2px 10px 0 rgba(255, 255, 255, .05)),
 
 	// 行高 / 限高
 	line-height: 16px,

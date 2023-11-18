@@ -34,7 +34,7 @@ export const Button = defineComponent({
 		}));
 
 		const handleClick = (...args: any[]) => {
-			let fn = vm.vnode.props?.['onClick'](...args);
+			let fn = vm.vnode.props?.['onClick']?.(...args);
 
 			if (fn && fn.then) {
 				isLoading.value = true;

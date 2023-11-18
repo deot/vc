@@ -15,6 +15,7 @@ export const Form = defineComponent({
 			return h(
 				props.tag, 
 				{
+					class: 'vc-form',
 					autocomplete: props.autocomplete,
 				},
 				slots

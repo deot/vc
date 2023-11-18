@@ -5,6 +5,8 @@ $component-name: vc-button;
 /**
  * 可配制的主题色提取, Button可单独配置，默认使用全局值
  */
+$background-color-light: varfix(background-color-light, button);
+
 $color-light: varfix(color-light, button);
 $color-light-deeper: varfix(color-light-deeper, button);
 
@@ -67,6 +69,7 @@ $color-disabled-light: varfix(color-disabled-light, button);
 	}
 	@include when(default) {
 		color: $color-dark-light;
+		background-color: $background-color-light;
 		border-color: $color-light-deeper;
 		&:hover {
 			color: $color-primary;

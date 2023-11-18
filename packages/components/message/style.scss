@@ -7,7 +7,12 @@ $color-error: varfix(color-error, message);
 $color-warning: varfix(color-warning, message);
 $color-info: varfix(color-primary, message);
 
+$foreground-color: varfix(foreground-color, message);
+$background-color-light: varfix(background-color-light, message);
+$border-shadow: varfix(border-shadow, message);
+
 @include block($component-name) {
+	color: $foreground-color;
 	@include element(mask) {
 		position: fixed;
 		background: rgba(0, 0, 0, 0.4);
@@ -31,8 +36,8 @@ $color-info: varfix(color-primary, message);
 		display: flex;
 		align-items: center;
 		padding: unitfix(8) unitfix(16);
-		background: white;
-		box-shadow: 0 0 unitfix(8) 0 rgba(0, 0, 0, 0.1);
+		background: $background-color-light;
+		box-shadow: $border-shadow;
 		border-radius: unitfix(4);
 		font-size: unitfix(14);
 		@include element(icon) {

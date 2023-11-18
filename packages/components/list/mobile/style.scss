@@ -3,13 +3,17 @@
 $component-name: vcm-list;
 $component-child-name: vcm-list-item;
 
+$background-color-light: varfix(background-color-light, list);
+$color-dark: varfix(color-dark, list);
+$color-dark-extralight: varfix(color-dark-extralight, list);
+
 @include block($component-name) {
 	@include when(border) {
 		@include border(top);
 		@include border(bottom);
 	}
 
-	background: varfix('color-light');
+	background: $background-color-light;
 }
 
 @include block($component-child-name) {
@@ -18,8 +22,8 @@ $component-child-name: vcm-list-item;
 		display: flex;
 		font-size: 16px;
 		line-height: 24px;
-		background: varfix('color-light');
-		color: varfix('color-dark');
+		background: $background-color-light;
+		color: $color-dark;
 		padding-top: 12px;
 		padding-bottom: 12px;
 		padding-right: 12px;
@@ -47,10 +51,10 @@ $component-child-name: vcm-list-item;
 		align-items: center;
 	}
 	@include element(extra) {
-		color: varfix(color-dark-extralight);
+		color: $color-dark-extralight;
 	}
 	@include element(icon) {
-		color: varfix(color-dark-extralight);
+		color: $color-dark-extralight;
 		font-size: 13px;
 		margin-left: 5px;
 	}
