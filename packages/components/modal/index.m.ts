@@ -1,3 +1,8 @@
-import { Modal } from '.';
+import { MModalView } from './mobile/modal-view.tsx';
+import * as MModal from './mobile/modal';
+import "./mobile/style.scss";
 
-export const MModal = Modal;
+export {
+	MModal,
+	MModalView
+};

@@ -33,6 +33,7 @@ let zIndexNumber = 1002;
 
 export const ModalView = defineComponent({
 	name: COMPONENT_NAME,
+	emits: ['update:modelValue', 'close', 'portal-fulfilled', 'visible-change', 'ok', 'cancel'],
 	props: modalProps,
 	setup(props, { slots, emit, expose }) {
 		const instance = getCurrentInstance()!;

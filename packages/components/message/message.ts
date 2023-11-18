@@ -32,6 +32,7 @@ const create = (options: Options) => (...params: Array<Options[keyof Options] | 
 	return Message.popup({
 		...options$,
 		onFulfilled: options$.onClose,
+		// 当组件内使用emit('close')，避免重复触发
 		onClose: null
 	});
 };
