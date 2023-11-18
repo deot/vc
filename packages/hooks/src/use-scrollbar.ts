@@ -1,13 +1,12 @@
-import { getCurrentInstance, onMounted, onBeforeUnmount, watch } from 'vue';
-import type { Ref, ComputedRef, ComponentInternalInstance } from 'vue';
+import { onMounted, onBeforeUnmount, watch } from 'vue';
+import type { Ref, ComputedRef } from 'vue';
 
 export const useScrollbar = (visibleRef: Ref<boolean> | ComputedRef) => {
-	const instance = getCurrentInstance() as ComponentInternalInstance;
 	let original = '';
+	let isMounted = false;
 
 	const setScrollBar = (v: boolean) => {
-		if (!instance.isMounted || original === 'hidden') return;
-
+		if (!isMounted || original === 'hidden') return;
 		if (v) {
 			document.body.style.overflow = 'hidden';
 		} else {
@@ -24,6 +23,7 @@ export const useScrollbar = (visibleRef: Ref<boolean> | ComputedRef) => {
 	);
 
 	onMounted(() => {
+		isMounted = true;
 		original = document.body.style.overflow;
 
 		// 初始就展示弹层的情况下
