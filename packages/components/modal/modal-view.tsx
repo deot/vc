@@ -104,6 +104,7 @@ export const ModalView = defineComponent({
 
 		let startX = 0;
 		let startY = 0;
+		// Portal调用时，可作为初始值
 		let originX = VcInstance.globalEvent.x;
 		let originY = VcInstance.globalEvent.y;
 
@@ -148,7 +149,6 @@ export const ModalView = defineComponent({
 		const handleBefore = (e: any, hook: any) => {
 			if (!isActive.value) return;
 
-			// 2.x使用的是callback
 			let fn = hook && hook(e);
 			if (fn && fn.then) {
 				return fn
@@ -297,6 +297,7 @@ export const ModalView = defineComponent({
 		});
 
 		expose({
+			isActive, // for portal
 			resetOrigin
 		});
 		return () => {
@@ -364,7 +365,7 @@ export const ModalView = defineComponent({
 													!slots.header 
 														? (
 															<Fragment>
-																<p class="vc-modal__title" innerHTML={props.title} />
+																<div class="vc-modal__title" innerHTML={props.title} />
 																{
 																	props.closable && !props.mode && (
 																		<div
@@ -412,18 +413,16 @@ export const ModalView = defineComponent({
 																				</Button>
 																			)
 																		}
-
 																		{
 																			props.okText && (
 																				<Button
-																					style="margin-right: 8px;"
+																					type="primary"
 																					onClick={(e) => handleBefore(e, handleOk)}
 																				>
 																					{ props.okText }
 																				</Button>
 																			)
 																		}
-																		
 																	</Fragment>
 																)
 																: slots.footer?.()
