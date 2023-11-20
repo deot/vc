@@ -174,6 +174,7 @@ export class Portal<T extends Component> {
 			fragment,
 			onDestoryed,
 			onBeforeCreate,
+			insertion,
 
 			// 全局注册
 			globalProperties,
@@ -345,6 +346,19 @@ export class Portal<T extends Component> {
 		// 标记
 		Portal.leafs.set(name!, leaf);
 
+		const append = (root$: HTMLElement | null, child$?: HTMLElement) => {
+			if (!root$ || !child$) return;
+
+			if (insertion === 'first') {
+				let firstEl = root$.firstElementChild;
+				if (firstEl) {
+					root$.insertBefore(child$, firstEl);
+					return;
+				} 
+			}
+			
+			root$.appendChild(child$);
+		};
 		/**
 		 * if 
 		 * 渲染结果为: <div data-v-app> <wrapper /> </div>
@@ -365,17 +379,20 @@ export class Portal<T extends Component> {
 			) 
 		) {
 			useAllNodes = true;
-			container.parentElement === null && root?.appendChild(container);
-		} else {
-			!container._children && (
-				container._children = [],
-				Array
-					.from(container.children)
-					.forEach(i => {
-						root?.appendChild(i as HTMLElement);
-						container._children?.push?.(i as HTMLElement);
-					})
-			);
+			container.parentElement === null && append(root, container);
+		} else if (!container._children) {
+			container._children = [];
+
+			let childs = Array.from(container.children);
+			
+			if (insertion === 'first') {
+				childs = childs.reverse();
+			}
+
+			childs.forEach(i => {
+				append(root, i as HTMLElement);
+				container._children?.push?.(i as HTMLElement);
+			});
 		}
 
 		return leaf;

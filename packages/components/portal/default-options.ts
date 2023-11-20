@@ -70,6 +70,11 @@ export type PortalOptions = Partial<{
 	autoDestroy: boolean;
 
 	/**
+	 * 默认尾部插入
+	 */
+	insertion: 'first' | 'last';
+
+	/**
 	 * 注入组件
 	 */
 	components: Record<string, Component>;
@@ -129,4 +134,5 @@ export const defaults: PortalOptions = {
 	components: {},
 	uses: {},
 	fragment: false,
+	insertion: 'last'
 };
