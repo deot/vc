@@ -192,7 +192,7 @@ const handleClickrender = () => {
 | ----------- | -------------------- | ------------------------- | ---------------------------------- | ------ |
 | title       | 通知的标题                | `string`、`Function`       | -                                  | -      |
 | content     | 通知的内容                | `string`、`Function`、`jsx` | -                                  | -      |
-| duration    | 自动关闭的延时，单位秒，不关闭可以写 0 | `number`                  | -                                  | 4.5    |
+| duration    | 自动关闭的延时，单位秒，不关闭可以写 0 | `number`                  | -                                  | 450    |
 | closable    | 手动关闭提示               | `Boolean`                 | -                                  | `true` |
 | mode        | 通知的图标类型              | `string`                  | `info`、`success`、`error`、`warning` | -      |
 | beforeClose | 关闭前的回调               | `Function`                | -                                  | -      |

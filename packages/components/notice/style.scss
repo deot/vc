@@ -1,6 +1,88 @@
 @import '../style/helper.scss';
 
 $component-name: vc-notice;
+$component-portals-name: vc-notice-portals;
+
+$color-success: varfix(color-success, notice);
+$color-error: varfix(color-error, notice);
+$color-warning: varfix(color-warning, notice);
+$color-info: varfix(color-primary, notice);
+
+$foreground-color: varfix(foreground-color, notice);
+$background-color-light: varfix(background-color-light, notice);
+$border-shadow: varfix(border-shadow, notice);
+
+
+// 消息加入理应是倒置的
+@include block($component-portals-name) {
+	position: fixed;
+	right: 0;
+	top: unitfix(24);
+	bottom: auto;
+	z-index: 4000;
+}
 
 @include block($component-name) {
+	@include when(fixed) {
+		position: fixed;
+		right: 0;
+		top: unitfix(24);
+		bottom: auto;
+		z-index: 4000;
+	}
+	@include element(wrapper) {
+		width: unitfix(384);
+		margin-right: unitfix(24);
+		box-sizing: border-box; 
+	}
+	@include element(container) {
+		position: relative;
+		margin-bottom: unitfix(16);
+		padding: unitfix(16);
+		overflow: hidden;
+		display: flex;
+		align-items: center;
+		background: $background-color-light;
+		box-shadow: $border-shadow;
+		border-radius: unitfix(4);
+		font-size: unitfix(14);
+		@include element(title) {
+			color: rgba(0, 0, 0, 0.85);
+			padding-right: unitfix(24);
+			font-size: unitfix(16);
+			display: inline-block;
+		}
+		@include element(content) {
+			line-height: 1.5;
+			color: rgba(0, 0, 0, 0.65);
+		}
+		@include element(icon) {
+			padding-right: unitfix(8);
+			font-size: unitfix(22);
+			line-height: unitfix(24);
+			align-self: flex-start;
+			@include when(success) {
+				color: $color-success;
+			}
+			@include when(error) {
+				color: $color-error;
+			}
+			@include when(warning) {
+				color: $color-warning;
+			}
+			@include when(info) {
+				color: $color-info;
+			}
+		}
+	}
+	@include element(close) {
+		position: absolute;
+		top: unitfix(16);
+		right: unitfix(22);
+		font-size: unitfix(12);
+		cursor: pointer;
+		height: unitfix(24);
+		display: inline-flex;
+		align-items: center;
+	}
 }
