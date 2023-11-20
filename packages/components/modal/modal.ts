@@ -3,6 +3,7 @@ import { ModalView } from './modal-view.tsx';
 import type { Props } from './modal-view-props';
 
 const Modal = new Portal(ModalView, {
+	leaveDelay: 0,
 	multiple: true
 });
 
