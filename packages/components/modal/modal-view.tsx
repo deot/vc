@@ -157,7 +157,7 @@ export const ModalView = defineComponent({
 						isActive.value = false;
 						return res;
 					});
-			} else if (!fn) {
+			} else if (!fn || fn === true) {
 				isActive.value = false;
 			}
 		};
