@@ -45,10 +45,18 @@ const handleClick = (type) => {
 	}
 };
 const handleClickClose = () => {
-	Message.info('可关闭的提示', 3000, {
+	Message.info('可关闭的提示', {
 		closable: true,
 		duration: 0,
-		top: 200
+		top: 200,
+		onBeforeClose() {
+			return new Promise((resolve) => {
+				setTimeout(resolve, 1000);
+			});
+		},
+		onClose() {
+			console.log('onBeforeClose: 1s后关闭回调');
+		}
 	});
 };
 

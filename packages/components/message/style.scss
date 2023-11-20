@@ -26,11 +26,13 @@ $border-shadow: varfix(border-shadow, message);
 		opacity: 0;
 	}
 	@include element(wrapper) {
-		position: fixed;
-		z-index: 4000;
 		width: 100%;
 		display: flex;
 		justify-content: center;
+		@include when(fixed) {
+			position: fixed;
+			z-index: 4000;
+		}
 	}
 	@include element(container) {
 		display: flex;

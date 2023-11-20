@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, onMounted, onUnmounted, withDirectives, vShow } from 'vue';
+import { getCurrentInstance, defineComponent, ref, onMounted, onUnmounted, withDirectives, vShow } from 'vue';
 import { props as messageProps } from './message-view-props';
 import { Icon } from "../icon";
 import { Spin } from "../spin";
@@ -11,10 +11,11 @@ const COMPONENT_NAME = 'vc-message';
 
 export const MessageView = defineComponent({
 	name: COMPONENT_NAME,
-	emits: ['close', 'portal-fulfilled'],
+	emits: ['before-close', 'close', 'portal-fulfilled'],
 	props: messageProps,
 	setup(props, { emit, expose }) {
-		const isVisible = ref(false);
+		const instance = getCurrentInstance()!;
+		const isActive = ref(false);
 
 		// 兼容Portal设计
 		const handleRemove = () => {
@@ -22,19 +23,30 @@ export const MessageView = defineComponent({
 			emit('portal-fulfilled');
 		};
 
-		const handleClose = () => {
-			if (props.maskClosable) {
-				isVisible.value = false;
+		const handleClose = async (e: any, closable: boolean) => {
+			if (!isActive.value || closable === false) return;
+
+			let cancel = instance.vnode.props?.onBeforeClose || props.onBeforeClose || (() => {});
+
+			let fn = cancel && cancel(e);
+			if (fn && fn.then) {
+				return fn
+					.then((res: any) => {
+						isActive.value = false;
+						return res;
+					});
+			} else if (!fn || fn === true) {
+				isActive.value = false;
 			}
 		};
 
 		let timer: any;
 		onMounted(() => {
-			isVisible.value = true;
+			isActive.value = true;
 			if (props.duration !== 0) {
 				timer = setTimeout(() => {
 					// 主线程
-					isVisible.value = false;
+					isActive.value = false;
 				}, props.duration * 1000 - 300); // 动画时间
 			}
 		});
@@ -55,10 +67,10 @@ export const MessageView = defineComponent({
 			return (
 				<div class="vc-message">
 					{
-						props.mask && (
+						(props.mask && props.fixed) && (
 							<div 
 								class="vc-message__mask"
-								onClick={handleClose} 
+								onClick={(e) => handleClose(e, props.maskClosable)} 
 							/>
 						)
 					}
@@ -71,8 +83,8 @@ export const MessageView = defineComponent({
 							withDirectives(
 								(
 									<div 
-										style={{ top: `${props.top}px` }}
-										class="vc-message__wrapper"
+										class={["vc-message__wrapper", { 'is-fixed': props.fixed }]}
+										style={props.fixed ? { top: `${props.top}px` } : {}}
 									>
 										<div class="vc-message__container">
 											{
@@ -110,14 +122,14 @@ export const MessageView = defineComponent({
 														type="close"
 														class="vc-message__close"
 														// @ts-ignore
-														onClick={handleClose} 
+														onClick={(e) => handleClose(e, true)} 
 													/>
 												)
 											}
 										</div>
 									</div>
 								),
-								[[vShow, isVisible.value]]
+								[[vShow, isActive.value]]
 							)
 						}
 					</TransitionSlide>

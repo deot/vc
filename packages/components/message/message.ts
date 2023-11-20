@@ -4,6 +4,7 @@ import { MessageView } from './message-view.tsx';
 import type { Props } from './message-view-props';
 
 const Message = new Portal(MessageView, {
+	leaveDelay: 0,
 	multiple: true,
 	autoDestroy: false
 });

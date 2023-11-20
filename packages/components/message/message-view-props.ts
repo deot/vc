@@ -11,13 +11,17 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
+	fixed: {
+		type: Boolean,
+		default: true
+	},
 	duration: {
 		type: Number,
 		default: 1500
 	},
 	top: {
 		type: Number,
-		default: 0,
+		default: 30,
 	},
 	closable: {
 		type: Boolean,
@@ -27,6 +31,8 @@ export const props = {
 		type: String as PropType<'info' | 'loading' | 'success' | 'warning' | 'error'>,
 		default: 'info',
 		validator: (v: string) => /(info|loading|success|error|warning)/.test(v)
-	}
+	},
+	// 这个相当于Modal中的onCancel，支持Promise
+	onBeforeClose: Function
 };
 export type Props = ExtractPropTypes<typeof props>;
