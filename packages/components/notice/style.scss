@@ -7,8 +7,9 @@ $color-success: varfix(color-success, notice);
 $color-error: varfix(color-error, notice);
 $color-warning: varfix(color-warning, notice);
 $color-info: varfix(color-primary, notice);
+$color-dark-light: varfix(color-dark-light, notice);
+$color-dark-lighter: varfix(color-dark-lighter, notice);
 
-$foreground-color: varfix(foreground-color, notice);
 $background-color-light: varfix(background-color-light, notice);
 $border-shadow: varfix(border-shadow, notice);
 
@@ -47,14 +48,14 @@ $border-shadow: varfix(border-shadow, notice);
 		border-radius: unitfix(4);
 		font-size: unitfix(14);
 		@include element(title) {
-			color: rgba(0, 0, 0, 0.85);
+			color: $color-dark-light;
 			padding-right: unitfix(24);
 			font-size: unitfix(16);
 			display: inline-block;
 		}
 		@include element(content) {
 			line-height: 1.5;
-			color: rgba(0, 0, 0, 0.65);
+			color: $color-dark-lighter;
 		}
 		@include element(icon) {
 			padding-right: unitfix(8);
