@@ -1,6 +1,3 @@
-@import '../style/helper.scss';
-
-$component-name: vc-scroller;
-
-@include block($component-name) {
-}
+@import './scroller.scss';
+@import './scroller-wheel.scss';
+@import './bar.scss';

@@ -1,0 +1,18 @@
+@import '../style/helper.scss';
+
+$component-name: vc-scroller;
+
+@include block($component-name) {
+	position: relative;
+
+	@include element(wrapper) {
+		overflow: auto;
+		
+		@include when(hidden) {
+			scrollbar-width: none;
+			&::-webkit-scrollbar {
+				display: none;
+			}
+		}
+	}
+}
