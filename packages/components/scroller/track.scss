@@ -1,35 +1,32 @@
 @import '../style/helper.scss';
 
-$component-name: vc-scroller-bar;
+$component-name: vc-scroller-track;
 
 @include block($component-name) {
-	@include element(track) {
-		position: absolute;
-		z-index: 1;
-		border-radius: unitfix(4);
-		@include when(vertical) {
-			width: unitfix(6);
-			top: 0;
-			right: 0;
-			bottom: 0;
+	position: absolute;
+	z-index: 1;
+	border-radius: unitfix(4);
+	@include when(vertical) {
+		width: unitfix(6);
+		top: 0;
+		right: 0;
+		bottom: 0;
 
-			> div {
-				width: 100%;
-			}
-		}
-
-		@include when(horizontal) {
-			height: unitfix(6);
-			left: 0;
-			right: 0;
-			bottom: 0;
-
-			> div {
-				height: 100%;
-			}
+		> div {
+			width: 100%;
 		}
 	}
 
+	@include when(horizontal) {
+		height: unitfix(6);
+		left: 0;
+		right: 0;
+		bottom: 0;
+
+		> div {
+			height: 100%;
+		}
+	}
 	@include element(thumb) {
 		position: relative;
 		display: block;

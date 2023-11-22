@@ -1,4 +1,4 @@
-let scrollBarWidth;
+let scrollBarWidth: number;
 
 export const getScrollBarWidth = () => {
 	if (scrollBarWidth !== undefined) return scrollBarWidth;
@@ -19,7 +19,7 @@ export const getScrollBarWidth = () => {
 	outer.appendChild(inner);
 
 	const widthWithScroll = inner.offsetWidth;
-	outer.parentNode.removeChild(outer);
+	outer.parentNode?.removeChild?.(outer);
 	scrollBarWidth = widthNoScroll - widthWithScroll;
 
 	return scrollBarWidth;

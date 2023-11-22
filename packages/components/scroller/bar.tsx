@@ -1,254 +1,164 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, inject, onBeforeUnmount, onMounted, ref, watch, withDirectives, vShow } from 'vue';
-import type { Ref } from 'vue';
-import { throttle } from 'lodash-es';
-import * as $ from '@deot/helper-dom';
-import { raf } from '@deot/helper-utils';
-import { TransitionFade } from '../transition';
-
+import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, Teleport, watch } from 'vue';
+import { Resize } from '@deot/helper-resize';
 import { props as barProps } from './bar-props';
+import { Track } from './track';
+import type { TrackExposed } from './track';
 
 const COMPONENT_NAME = 'vc-scroller-bar';
 
-const BAR_MAP = {
-	vertical: {
-		scroll: 'scrollTop',
-		size: 'height',
-		key: 'vertical',
-		axis: 'Y',
-		client: 'clientY',
-		direction: 'top',
-	},
-	horizontal: {
-		scroll: 'scrollLeft',
-		size: 'width',
-		key: 'horizontal',
-		axis: 'X',
-		client: 'clientX',
-		direction: 'left',
-	}
-};
-
-type ScrollerProvide = {
-	getCursorContainer: () => any;
-}
-
 export type BarExposed = {
-	track: HTMLElement;
-	scrollTo: (v: number) => void;
-};
+	refresh: () => void; 
+	refreshSize: () => void; 
+	refreshTrack: () => void;
 
+	trackX: TrackExposed;
+	trackY: TrackExposed;
+};
 export const Bar = defineComponent({
 	name: COMPONENT_NAME,
 	props: barProps,
-	emits: ['refresh-scroll'],
+	emits: ['refresh-size', 'refresh-track'],
 	setup(props, { emit, expose }) {
-		const parent = inject<ScrollerProvide>('scroller')!;
+		const hasTo = ref(true);
+		const wrapperW = ref(0);
+		const wrapperH = ref(0);
 
-		const track = ref<HTMLElement>();
-		const thumb = ref<HTMLElement>();
-		const cursorDown = ref(false);
-		const cursorLeave = ref(false);
-		const isVisible = ref(false);
-		const scrollDistance = ref(0);
-		const barOptions = computed(() => BAR_MAP[props.vertical ? 'vertical' : 'horizontal']);
+		const contentH = ref(0);
+		const contentW = ref(0);
 
-		// 左右距离
-		const trackOffsetSum = computed(() => {
-			return props.trackOffset[0] + props.trackOffset[1];
-		});
+		const trackX = ref<TrackExposed>();
+		const trackY = ref<TrackExposed>();
 
-		// 滚动条的实际容器大小
-		const wrapperFitSize = computed(() => {
-			return props.wrapperSize - trackOffsetSum.value;
-		});
-
-		// thumb的大小
-		const thumbSize = computed(() => {
-			const size = wrapperFitSize.value * (props.wrapperSize / props.contentSize);
-			return size && size < wrapperFitSize.value ? size : 0;
-		});
-
-		const thumbFitSize = computed(() => {
-			return Math.max(thumbSize.value, props.thumbMinSize);
-		});
-
-		// 最大可移动的距离
-		const maxMove = computed(() => {
-			return wrapperFitSize.value - thumbSize.value;
-		});
-
-		// 滚动时均摊Size
-		const averageSize = computed(() => {
-			return (Math.max(props.thumbMinSize - thumbSize.value, 0)) / maxMove.value;
-		});
-
-		// thumb偏移值
-		const thumbMove = computed(() => {
-			// thumb应该在当前bar上的偏移值
-			const currentMove = (scrollDistance.value / props.wrapperSize) * thumbSize.value;
-			// 当前你滚动的距离
-			const thumbFitMove = currentMove * (1 - averageSize.value); 
-			return thumbFitMove > maxMove.value ? maxMove.value : thumbFitMove;
-		});
-
-		// thumb样式
-		const thumbCalcStyle = computed(() => {
-			const { size } = barOptions.value;
+		const trackBinds = computed(() => {
 			return {
-				[size]: thumbFitSize.value + 'px'
+				always: props.always,
+				thumbMinSize: props.thumbMinSize,
+				thumbStyle: props.thumbStyle,
+				thumbClassName: props.thumbClassName,
+				class: props.trackClassName
 			};
 		});
 
-		let originalOnselectstart: any;
-		let startMove = 0;
-		let startThumbMove = 0;
+		// 记录当前容器(wrapper)和内容(content)宽高
+		const refreshSize = () => {
+			if (!props.wrapper) return;
 
-		const scrollTo = (distance: number) => {
-			scrollDistance.value = distance;
+			wrapperW.value = props.wrapper.clientWidth;
+			wrapperH.value = props.wrapper.clientHeight;
+
+			contentH.value = props.wrapper.scrollHeight;
+			contentW.value = props.wrapper.scrollWidth;
+
+			emit('refresh-size', {
+				wrapperW: wrapperW.value,
+				wrapperH: wrapperH.value,
+				contentH: contentH.value,
+				contentW: contentW.value
+			});
 		};
 
-		const scrollFitTo = (thumbFitMove: number) => {
-			const $scrollDistance = ((thumbFitMove / (1 - averageSize.value)) / thumbSize.value) * props.wrapperSize;
+		const refreshTrack = () => {
+			if (!trackY.value || !trackX.value) return;
+			const { scrollTop } = props.wrapper!;
+			const { scrollLeft } = props.wrapper!;
 
-			// 滚动
-			emit('refresh-scroll', $scrollDistance);
+			// 取代当前组件内值变化，避免构建当前组件的虚拟Dom掉帧（解决表格数据多时问题）
+			trackY.value.scrollTo(scrollTop);
+			trackX.value.scrollTo(scrollLeft);
+
+			emit('refresh-track', {
+				scrollTop,
+				scrollLeft
+			});
 		};
 
-		const handleMouseMoveDocument = (e: MouseEvent) => {
-			if (cursorDown.value === false) return;
-			if (!startMove) return;
-
-			const { client } = barOptions.value;
-
-			const thumbFitMove = Math.min(
-				Math.max(0, startThumbMove + e[client] - startMove),
-				maxMove.value
-			);
-
-			scrollFitTo(thumbFitMove);
+		const refresh = () => {
+			refreshSize();
+			refreshTrack();
 		};
 
-		const handleMouseUpDocument = () => {
-			cursorDown.value = false;
-			startMove = 0;
-
-			$.off($.el(document.body), 'mousemove', handleMouseMoveDocument);
-			$.off($.el(document.body), 'mouseup', handleMouseUpDocument);
-
-			document.body.onselectstart = originalOnselectstart;
-			if (cursorLeave.value) {
-				isVisible.value = false;
+		const setBarStatus = () => {
+			if (typeof document !== 'undefined' && props.to) {
+				hasTo.value = !document.querySelector(props.to);
 			}
 		};
-
-		const startDrag = (e: MouseEvent) => {
-			e.stopImmediatePropagation();
-			cursorDown.value = true;
-
-			$.on($.el(document.body), 'mousemove', handleMouseMoveDocument);
-			$.on($.el(document.body), 'mouseup', handleMouseUpDocument);
-
-			originalOnselectstart = document.body.onselectstart;
-			document.body.onselectstart = () => false;
-		};
-
-		// 拖动
-		const handleClickThumb = (e: MouseEvent) => {
-			// 防止中右键点击事件
-			e.stopPropagation();
-			if (e.ctrlKey || [1, 2].includes(e.button)) {
-				return;
-			}
-
-			window.getSelection()?.removeAllRanges();
-
-			startDrag(e);
-
-			const { client } = barOptions.value;
-			
-			startMove = e[client];
-			startThumbMove = thumbMove.value;
-		};
-
-		// 点击滚动轴
-		const handleClickTrack = (e: MouseEvent) => {
-			const { client, direction } = barOptions.value;
-			const thumbFitMove = e[client] - (e.target as HTMLElement).getBoundingClientRect()[direction] - thumbFitSize.value / 2;
-
-			scrollFitTo(thumbFitMove);
-		};
-
-		const handleMouseMove = () => {
-			cursorLeave.value = false;
-			isVisible.value = !!thumbSize.value;
-		};
-
-		const handleLeave = () => {
-			cursorLeave.value = true;
-			isVisible.value = cursorDown.value;
-		};
-
-		const refreshThumb = () => raf(() => { 
-			thumb.value!.style[$.prefixStyle('transform').camel] = `translate${barOptions.value.axis}(${thumbMove.value}px)`;
-		});
-		
-		const refreshThrottleThumb = throttle(refreshThumb, 50);
 
 		onMounted(() => {
-			const parentEl = parent.getCursorContainer();
-			if (!parentEl) return;
-			$.on($.el(parentEl), 'mousemove', handleMouseMove);
-			$.on($.el(parentEl), 'mouseleave', handleLeave);
+			if (!props.native) {
+				nextTick(refresh);
+				nextTick(setBarStatus);
+			}
+			if (props.autoResize) {
+				Resize.on(props.wrapper!, refresh);
+				Resize.on(props.content!, refresh);
+			}
 		});
 
 		onBeforeUnmount(() => {
-			const parentEl = parent.getCursorContainer();
-			if (!parentEl) return;
-			$.off($.el(document.body), 'mousemove', handleMouseMoveDocument);
-			$.off($.el(document.body), 'mouseup', handleMouseUpDocument);
-			$.off($.el(parentEl), 'mousemove', handleMouseMove);
-			$.off($.el(parentEl), 'mouseleave', handleLeave);
+			if (props.autoResize) {
+				Resize.off(props.wrapper!, refresh);
+				Resize.off(props.content!, refresh);
+			}
 		});
 
-
-		// 用throttle优化连续变化的transfrom
 		watch(
-			() => thumbMove.value,
-			() => {
-				if (!thumb.value) return;
-				refreshThrottleThumb();
-			},
-			{ immediate: true }
+			() => props.to,
+			setBarStatus
 		);
 
-		expose({ scrollTo, track });
+		expose({ 
+			refresh, 
+			refreshSize, 
+			refreshTrack,
+
+			// 把这个暴露出去
+			trackX,
+			trackY,
+		});
 
 		return () => {
-			return (
-				<TransitionFade>
-					{
-						withDirectives(
-							(
-								<div
-									ref={track}
-									style={[props.trackStyle!]}
-									class={[props.trackClassName, 'is-' + barOptions.value.key, 'vc-scroller-bar__track']}
-									onMousedown={handleClickTrack}
-								>
-									<div
-										ref={thumb}
-										class={[props.thumbClassName, 'vc-scroller-bar__thumb']}
-										style={[props.thumbStyle!, thumbCalcStyle.value]}
-										onMousedown={handleClickThumb}
-									/>
-								</div>
-							),
-							[[vShow, thumbSize.value && (props.always || isVisible.value)]]
-						)
-					}
-				</TransitionFade>
+			return !props.native && (!hasTo.value || !props.to) && (
+				<Teleport to={props.to} disabled={!props.to}>
+					<Track 
+						ref={trackX}
+						{
+							...trackBinds.value
+						}
+						offset={[props.trackOffsetX[3], props.trackOffsetX[1]]}
+						wrapper-size={wrapperW.value} 
+						content-size={contentW.value} 
+						style={[
+							{
+								left: props.trackOffsetX[3] + 'px',
+								bottom: props.trackOffsetX[2] + 'px'
+							},
+							props.trackStyle
+						]}
+						// @ts-ignore
+						onRefreshScroll={(v: number) => props.wrapper!.scrollLeft = v}
+					/>
+					<Track
+						ref={trackY}
+						{
+							...trackBinds.value
+						}
+						offset={[props.trackOffsetY[0], props.trackOffsetY[2]]}
+						wrapper-size={wrapperH.value} 
+						content-size={contentH.value} 
+						style={[
+							{ 
+								top: props.trackOffsetY[0] + 'px', 
+								right: props.trackOffsetY[1] + 'px'
+							},
+							props.trackStyle
+						]}
+						vertical
+						// @ts-ignore
+						onRefreshScroll={(v: number) => props.wrapper!.scrollTop = v}
+					/>
+				</Teleport>
 			);
 		};
 	}

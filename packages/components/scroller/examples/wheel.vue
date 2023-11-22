@@ -63,6 +63,36 @@
 				</p>
 			</div>
 		</ScrollerWheel>
+
+		<h2>bar-to</h2>
+		<div class="barTo" style="position: relative;">
+			<ScrollerWheel 
+				max-height="200px" 
+				:always="always" 
+				:native="native"
+				:bar-to="`.barTo`"
+			>
+				<div style="display: flex; flex-direction: column;">
+					<p 
+						v-for="item in 20" 
+						:key="item"
+						style="flex: 1"
+					>
+						{{ item }}
+					</p>
+				</div>
+				<div style="display: flex;">
+					<p 
+						v-for="item in 50" 
+						:key="item"
+						class="is-vertical"
+					>
+						{{ item }}
+					</p>
+				</div>
+			</ScrollerWheel>
+		</div>
+		
 		<h2>X+Y+trackOffset</h2>
 		<ScrollerWheel 
 			max-height="200px" 

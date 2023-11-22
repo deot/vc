@@ -22,6 +22,7 @@
 			</h2>
 		</div>
 		<ScrollerWheel 
+			ref="scroller"
 			height="200px" 
 			:always="always" 
 			:native="native"
@@ -42,6 +43,9 @@ import { ScrollerWheel } from '..';
 const always = ref(true);
 const native = ref(false);
 const count = ref(10);
+const scroller = ref();
+
+window.scroller = scroller;
 </script>
 
 <style>
