@@ -1,9 +1,8 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, ref } from 'vue';
+import { defineComponent } from 'vue';
 import { props as scrollerProps } from './scroller-props';
 import { Bar } from './bar';
-import type { BarExposed } from './bar';
 import { useScroller } from './use-scroller';
 
 const COMPONENT_NAME = 'vc-scroller';

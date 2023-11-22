@@ -137,7 +137,7 @@ export const Bar = defineComponent({
 							props.trackStyle
 						]}
 						// @ts-ignore
-						onRefreshScroll={(v: number) => props.wrapper!.scrollLeft = v}
+						onRefresh={(v: number) => props.wrapper!.scrollLeft = v}
 					/>
 					<Track
 						ref={trackY}
@@ -156,7 +156,7 @@ export const Bar = defineComponent({
 						]}
 						vertical
 						// @ts-ignore
-						onRefreshScroll={(v: number) => props.wrapper!.scrollTop = v}
+						onRefresh={(v: number) => props.wrapper!.scrollTop = v}
 					/>
 				</Teleport>
 			);

@@ -36,7 +36,7 @@ export type TrackExposed = {
 export const Track = defineComponent({
 	name: COMPONENT_NAME,
 	props: trackProps,
-	emits: ['refresh-scroll'],
+	emits: ['refresh'],
 	setup(props, { emit, expose }) {
 		const instance = getCurrentInstance()!;
 		const track = ref<HTMLElement>();
@@ -106,7 +106,7 @@ export const Track = defineComponent({
 			const $scrollDistance = ((thumbFitMove / (1 - averageSize.value)) / thumbSize.value) * props.wrapperSize;
 
 			// 滚动
-			emit('refresh-scroll', $scrollDistance);
+			emit('refresh', $scrollDistance);
 		};
 
 		const handleMouseMoveDocument = (e: MouseEvent) => {
