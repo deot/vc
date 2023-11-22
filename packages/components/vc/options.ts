@@ -1,7 +1,7 @@
 import type { ComponentInternalInstance } from 'vue';
 import { VARIABLES } from '../theme/constant';
 
-export type Defaults = Partial<{
+export type Options = Partial<{
 	[key: string]: any;
 	Theme: {
 		variables: Record<string, string>;
@@ -14,7 +14,7 @@ export type Defaults = Partial<{
 /**
  * 组件的配置项
  */
-export const defaults: Defaults = {
+export const defaults: Options = {
 	Theme: {
 		variables: VARIABLES
 	}

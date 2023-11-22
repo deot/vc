@@ -15,7 +15,7 @@ export const Theme = defineComponent({
 		const setVar = (name?: string) => {
 			/* istanbul ignore next -- @preserve */ 
 			if (!name) return '';
-			const globals = VcInstance.options.Theme.variables;
+			const globals = VcInstance.options.Theme?.variables;
 			return props.variables?.[name] || globals?.[name] || `var(--${name})`;
 		};
 
@@ -54,7 +54,7 @@ export const Theme = defineComponent({
 		const src$ = computed(() => {
 			const { src, tag } = props;
 			if (tag === 'img' && src) {
-				const globals = VcInstance.options.Theme.variables;
+				const globals = VcInstance.options.Theme?.variables;
 				return /:/.test(src) 
 					? src 
 					: props.variables?.[src] || globals?.[src];

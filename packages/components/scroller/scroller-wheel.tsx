@@ -172,6 +172,7 @@ export const ScrollerWheel = defineComponent({
 								thumbClassName={props.thumbClassName}
 								trackOffsetX={props.trackOffsetX}
 								trackOffsetY={props.trackOffsetY}
+								// @ts-ignore
 								onRefreshSize={handleRefreshSize}
 								onRefreshTrack={handleRefreshTrack}
 							/>	
