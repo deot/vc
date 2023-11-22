@@ -1,6 +1,6 @@
 import { provide, getCurrentInstance } from 'vue';
 import type { VNode, SetupContext, ComponentInternalInstance } from 'vue';
-import { sortBy } from 'lodash';
+import { sortBy } from 'lodash-es';
 import { VcError } from '../vc/index';
 import type { FormProvide } from './types';
 import type { Props } from './form-props';
