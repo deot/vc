@@ -1,0 +1,165 @@
+@import '../style/helper.scss';
+
+$component-name: vc-input;
+$background-color-light: varfix(background-color-light, input);
+$color-light-extradeep: varfix(color-light-extradeep, input);
+$color-primary: varfix(color-primary, input);
+$color-primary-lighter: varfix(color-primary-lighter, input);
+$color-dark-lighter: varfix(color-dark-lighter, input);
+$color-dark-light: varfix(color-dark-light, input);
+$color-dark-extralight: varfix(color-dark-extralight, input);
+$color-light-deep: varfix(color-light-deep, input);
+$foreground-color: varfix(foreground-color, input);
+$color-disabled: varfix(color-disabled, input);
+
+@include block($component-name) {
+	display: inline-block;
+	position: relative;
+	width: 100%;
+	cursor: text;
+	font-size: unitfix(12);
+	min-height: unitfix(28);
+	line-height: 1.5;
+
+	transition: border .2s ease-in-out, 
+		background .2s ease-in-out, 
+		box-shadow .2s ease-in-out;
+
+	background-color: $background-color-light;
+	border-radius: unitfix(4);
+	overflow: hidden;
+	@include border('', $color-light-extradeep, 4); // 不占边距
+	@include when(focus) {
+		&:after, &:before {
+			border-color: $color-primary;
+		}
+		z-index: 2;
+		box-shadow: 0 0 unitfix(1) unitfix(1) $color-primary-lighter;
+	}
+	&:hover {
+		border-color: $color-primary;
+	}
+	@include when(disabled) {
+		background: $color-disabled;
+	}
+	@include element(wrapper) {
+		display: flex;
+		flex: 1;
+		align-items: center;
+	}
+	@include element(content){
+		flex: 1;
+		input {
+			position: relative;
+			width: 100%;
+
+			outline: 0;
+			border: none;
+			background-color: unset;
+			font-family: inherit;
+			font-size: inherit;
+			line-height: inherit;
+
+			color: $color-dark-light;
+			padding-top: unitfix(4);
+			padding-bottom: unitfix(4); // 18 + 4 + 4 + 2 = 28
+			padding-left: unitfix(7);
+			padding-right: unitfix(7);
+			box-sizing: border-box;
+			&::placeholder {
+				color: $color-dark-extralight;
+			}
+		}
+		@include when(disabled) {
+			opacity: 1;
+			cursor: not-allowed;
+			input {
+				color: $color-dark-extralight;
+				cursor: not-allowed;
+			}
+		}
+	}
+	@include share-rule(icon) {
+		width: unitfix(28);
+		height: unitfix(28);
+		line-height: unitfix(28)!important;
+		font-size: unitfix(13);
+		text-align: left;
+		color: $color-dark-extralight;
+	}
+
+	/**
+	 * clear
+	 */
+	@include element(icon-clear){
+		@include extend-rule(icon);
+		cursor: pointer;
+		display: none;
+	}
+
+	@include pseudo(hover) {
+		@include element(icon-clear){
+			display: inline-block;
+		}
+	}
+	
+	@include share-rule(pend) {
+		height: 100%;
+		text-align: center;
+		font-size: unitfix(13);
+		line-height: unitfix(28);
+		height: unitfix(28);
+		white-space: nowrap;
+		z-index: 0; // 让虚线在下方
+		@include when(icon) {
+			width: unitfix(16);
+			color: $foreground-color;
+			background-color: $background-color-light;
+			font-size: unitfix(12);
+		}
+		@include when(disabled) {
+			cursor: not-allowed;
+			background-color: $color-disabled;
+		}
+		// 让虚线在下方
+		@include when(afloat) {
+			z-index: 3;
+		}
+	}
+	/**
+	 * prepend / append
+	 */
+	@include element(prepend) {
+		@include extend-rule(pend);
+	}
+
+	@include element(append) {
+		@include extend-rule(pend);
+	}
+	@include when(focus) {
+		@include element(prepend) {
+			z-index: 1;
+		}
+
+		@include element(append) {
+			z-index: 1;
+		}
+	}
+
+	// 计数
+	@include element(indicator) {
+		line-height: unitfix(28);
+		color: $color-dark-extralight;
+		font-size: unitfix(12);
+		z-index: 1;
+		top: 0;
+		@include when(in) {
+			margin-right: 8px;
+		}
+		@include when(out) {
+			position: absolute;
+			right: unitfix(-6);
+			transform: translateX(100%);
+		}
+	}
+}

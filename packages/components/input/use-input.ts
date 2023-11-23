@@ -1,0 +1,146 @@
+import { ref, inject, watch, computed, getCurrentInstance } from 'vue';
+import type { Ref } from 'vue'; 
+import type { Props } from './input-props'; 
+import { isPassByMaxlength } from './utils';
+
+export const useInput = (input: Ref<HTMLElement | undefined>) => {
+	const instance = getCurrentInstance()!;
+	const { emit } = instance;
+	const props = instance.props as Props;
+
+	const currentValue = ref(props.modelValue);
+	const isFocus = ref(false);
+	const isOnComposition = ref(false);
+	const formItem: any = inject('form-item', {});
+	/**
+	 * 强制必须使用v-model，所以不需要判断一次
+	 */
+	watch(
+		() => props.modelValue,
+		(v) => {
+			currentValue.value = v;
+			props.allowDispatch && formItem.change?.(v);
+		},
+		{ immediate: false }
+	);
+
+	const classes = computed(() => {
+		return {
+			'is-focus': isFocus.value,
+			'is-disabled': props.disabled
+		};
+	});
+
+	const handleKeydown = (e: any) => {
+		emit('keydown', e);
+	};
+
+	const handleKeypress = (e: any) => {
+		emit('keypress', e);
+	};
+
+	const handleKeyup = (e: any) => {
+		// 数字键盘
+		if (e.keyCode == 13 || e.keyCode == 108) {
+			emit('enter', e);
+		}
+		emit('keyup', e);
+	};
+
+	const handleFocus = (e: any) => {
+		isFocus.value = true;
+		
+		if (props.focusEnd) {
+			let length = String(currentValue.value).length;
+			/**
+			 * hack chrome浏览器的BUG：
+			 * setSelectionRange() for input/textarea during onFocus fails 
+			 * when mouse clicks
+			 */
+			setTimeout(() => {
+				// @ts-ignore: deprecated
+				e.srcElement?.setSelectionRange(length, length);
+			}, 0);
+		}
+		emit('focus', e);
+	};
+
+	const handleBlur = (e: InputEvent) => {
+		isFocus.value = false;
+
+		emit('blur', e);
+		props.allowDispatch && formItem.blur?.(currentValue.value);
+	};
+
+	const handleInput = (e: InputEvent) => {
+		if (isOnComposition.value) return;
+		let value = (e.target as HTMLInputElement).value;
+		// 撤销/重做，deleteContentBackward处理当初始化的值超出maxlength时无法删除的问题
+		if (
+			e.inputType !== 'deleteContentBackward'
+			&& !isPassByMaxlength(value, props.maxlength) 
+		) {
+			e.preventDefault();
+			return;
+		}
+		emit('update:modelValue', value, e);
+		emit('input', value, e);
+
+		emit('change', e);
+	};
+
+	const handleComposition = (e: InputEvent) => {
+		if (e.type === 'compositionstart') {
+			isOnComposition.value = true;
+		}
+
+		if (e.type === 'compositionend') {
+			isOnComposition.value = false;
+			handleInput(e);
+		}
+	};
+
+	const handleChange = (e: InputEvent) => {
+		emit('change', e);
+	};
+
+	const handlePaste = (e: ClipboardEvent) => {
+		emit('paste', e);
+	};
+
+	const handleClear = () => {
+		const e = { target: { value: '' } };
+		
+		emit('update:modelValue', '');
+		emit('input', '');
+
+		emit('change', e);
+		emit('clear', e);
+
+		input.value?.focus?.();
+	};
+
+	// 非响应式
+	const listeners = {
+		onKeyup: handleKeyup,
+		onKeypress: handleKeypress,
+		onKeydown: handleKeydown,
+		onFocus: handleFocus,
+		onBlur: handleBlur,
+		onCompositionstart: handleComposition,
+		onCompositionupdate: handleComposition,
+		onCompositionend: handleComposition,
+		onInput: handleInput,
+		onChange: handleChange,
+		onPaste: handlePaste
+	};
+
+	return {
+		currentValue,
+		isFocus,
+		isOnComposition,
+		classes,
+		listeners,
+		handleClear
+	};
+};

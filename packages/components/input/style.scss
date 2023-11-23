@@ -1,6 +1,1 @@
-@import '../style/helper.scss';
-
-$component-name: vc-input;
-
-@include block($component-name) {
-}
+@import './input.scss'
