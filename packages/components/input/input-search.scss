@@ -1,0 +1,22 @@
+@import '../style/helper.scss';
+
+$component-name: vc-input-search;
+$color-light-extradeep: varfix(color-light-extradeep, input);
+
+@include block($component-name) {
+	@include element(content) {
+		cursor: pointer;
+		font-size: unitfix(14);
+		padding: 0 unitfix(8);
+		color: $color-light-extradeep;
+		transition: all .2s ease-in-out;
+		position: relative;
+		text-align: center;
+		line-height: 28px;
+		white-space: nowrap;
+		@include when(disabled) {
+			cursor: not-allowed;
+			opacity: .4;
+		}
+	}
+}
