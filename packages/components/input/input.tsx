@@ -8,7 +8,6 @@ import { Icon } from '../icon/index';
 import { TransitionFade } from '../transition/index';
 import { useInput } from './use-input';
 import { useInherit } from './use-inherit';
-import { useMaxlength } from './use-maxlength';
 import { useNativeEmitter } from './use-native-emitter';
 import { getBytesLength } from './utils';
 
@@ -36,21 +35,22 @@ export const Input = defineComponent({
 		'keypress',
 		'keyup',
 		'enter',
-		'tip',
-		'cancel'
+		'tip'
 	],
 	setup(props, { slots, expose }) {
 		const input = ref<HTMLElement>();
+		
+		useNativeEmitter(input, expose);
+
 		const { binds } = useInherit();
 		const { 
 			currentValue,
+			currentMaxlength,
 			classes,
 			listeners,
 			handleClear
 		} = useInput(input);
-		const { currentMaxlength, handlePaste } = useMaxlength(currentValue);
-		const { click, focus, blur } = useNativeEmitter(input);
-		
+
 		const indicatorNum = computed(() => {
 			if (typeof props.maxlength === 'undefined') return;
 			let currentLength = (String(props.modelValue) || '').length;
@@ -65,13 +65,6 @@ export const Input = defineComponent({
 			return typeof props.indicator === 'object' && props.indicator.inline;
 		});
 
-		listeners.onPaste = handlePaste;
-
-		expose({
-			click, 
-			focus, 
-			blur
-		});
 		return () => {
 			return (
 				<div 

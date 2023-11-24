@@ -3,7 +3,6 @@
 	<Input
 		v-model="value"
 		:disabled="disabled"
-		style="width: 200px;"
 		clearable
 		placeholder="显示placeholder"
 		@change="handleChange"
@@ -14,7 +13,6 @@
 	<Input 
 		v-model="value"
 		:disabled="disabled"
-		style="width: 200px;"
 		placeholder="显示placeholder"
 		@change="handleChange"
 		@focus="handleFocus"
@@ -72,5 +70,7 @@ const handleEnter = () => {
 <style>
 .vc-input {
 	margin-bottom: 10px;
+	width: 200px;
+	display: block;
 }
 </style>

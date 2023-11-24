@@ -1,7 +1,7 @@
 import { ref, inject, watch, computed, getCurrentInstance } from 'vue';
 import type { Ref } from 'vue'; 
 import type { Props } from './input-props'; 
-import { isPassByMaxlength } from './utils';
+import { isPassByMaxlength, getBytesLength } from './utils';
 
 export const useInput = (input: Ref<HTMLElement | undefined>) => {
 	const instance = getCurrentInstance()!;
@@ -9,6 +9,7 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 	const props = instance.props as Props;
 
 	const currentValue = ref(props.modelValue);
+	const currentMaxlength = ref(props.maxlength);
 	const isFocus = ref(false);
 	const isOnComposition = ref(false);
 	const formItem: any = inject('form-item', {});
@@ -78,7 +79,7 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		// 撤销/重做，deleteContentBackward处理当初始化的值超出maxlength时无法删除的问题
 		if (
 			e.inputType !== 'deleteContentBackward'
-			&& !isPassByMaxlength(value, props.maxlength) 
+			&& (props.bytes && !isPassByMaxlength(value, props.maxlength)) 
 		) {
 			e.preventDefault();
 			return;
@@ -104,7 +105,21 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		emit('change', e);
 	};
 
+	// 输入框内容允许输入的长度
+	const getMaxLength = (value: number | string) => {
+		if (!props.bytes || !props.maxlength) return props.maxlength;
+		let extraLength = getBytesLength(value);
+		return props.maxlength + extraLength;
+	};
+
 	const handlePaste = (e: ClipboardEvent) => {
+		// 只有在bytes下,会需要重新计算maxlength
+		if (props.bytes) {
+			let content = currentValue.value + (e.clipboardData as DataTransfer).getData('text');
+			if (!isPassByMaxlength(content, props.maxlength)) { e.preventDefault(); }
+			currentMaxlength.value = getMaxLength(content);
+		}
+
 		emit('paste', e);
 	};
 
@@ -119,6 +134,28 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 
 		input.value?.focus?.();
 	};
+
+	watch(
+		() => props.modelValue,
+		(v) => {
+			if (Array.isArray(v)) return;
+			currentMaxlength.value = getMaxLength(v);
+		},
+		{ immediate: false }
+	);
+
+	watch(
+		() => props.maxlength,
+		(v) => {
+			if (!v || !props.bytes) {
+				currentMaxlength.value = v;
+			} else {
+				let extraLength = getBytesLength(currentValue.value);
+				currentMaxlength.value = v + extraLength;
+			}
+		},
+		{ immediate: false }
+	);
 
 	// 非响应式
 	const listeners = {
@@ -137,6 +174,7 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 
 	return {
 		currentValue,
+		currentMaxlength,
 		isFocus,
 		isOnComposition,
 		classes,

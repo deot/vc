@@ -1,0 +1,65 @@
+@import '../style/helper.scss';
+
+$component-name: vc-input-number;
+$background-color-light: varfix(background-color-light, input);
+
+$color-light-extradeep: varfix(color-light-extradeep, input);
+$color-primary-light: varfix(color-primary-light, input);
+$color-dark-extralight: varfix(color-dark-extralight, input);
+$color-disabled: varfix(color-disabled, input);
+
+@include block($component-name) {
+	@include pseudo(hover) {
+		.vc-input__append{
+			z-index: 1;
+		}
+		@include element(icon){
+			display: block;
+		}
+	}
+	@include element(icon) {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		font-size: unitfix(12);
+		color: $color-dark-extralight;
+		width: unitfix(20);
+		height: unitfix(28);
+		display: none;
+		&:hover {
+			color: $color-primary-light;
+			cursor: pointer;
+		}
+	}
+	@include share-rule(input-number-icon) {
+		height: unitfix(14);
+		line-height: unitfix(14);
+		background-color: $background-color-light;
+		@include border(left, $color-light-extradeep); // 不占边距
+		&[disabled="disabled"] {
+			background-color: $color-disabled;
+			cursor: not-allowed;
+			pointer-events: none;
+			color: $color-dark-extralight;
+		}
+		@include when(disabled) {
+			display: none;	
+		}
+		> i {
+			transform: scale(0.6);
+		}
+
+	}
+
+	@include element(up) {
+		@include extend-rule(input-number-icon);
+		@include border(bottom); // 不占边距
+	}
+	@include element(down) {
+		@include extend-rule(input-number-icon);
+	}
+
+	.vc-input__append.is-disabled {
+		display: none;
+	}
+}

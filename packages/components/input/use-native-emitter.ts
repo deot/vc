@@ -1,7 +1,10 @@
-import type { Ref } from 'vue'; 
+import type { Ref, SetupContext } from 'vue'; 
 
-export const useNativeEmitter = (input: Ref<HTMLElement | undefined>) => {
-	return {
+export const useNativeEmitter = (
+	input: Ref<HTMLElement | undefined>, 
+	expose?: SetupContext['expose']
+) => {
+	const exposed = {
 		focus() {
 			input.value?.focus?.();
 		},
@@ -10,7 +13,10 @@ export const useNativeEmitter = (input: Ref<HTMLElement | undefined>) => {
 		},
 		click() {
 			input.value?.click?.();
-			this.focus();
+			exposed.focus();
 		}
 	};
+
+	expose?.(exposed);
+	return exposed;
 };
