@@ -71,6 +71,10 @@ export const props = {
 	bytes: {
 		type: Boolean,
 		default: false
+	},
+	styleless: {
+		type: Boolean,
+		default: false
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

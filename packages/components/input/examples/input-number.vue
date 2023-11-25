@@ -1,12 +1,26 @@
 <template>
 	<h1>{{ value }}</h1>
 	<InputNumber 
-		v-model="value" 
+		v-model="value[0]" 
 		:step="1"
 		:precision="0" 
 		:min="1000"
 		:disabled="disabled"
 		clearable
+		@clear="handleClear"
+		@change="handleChange"
+		@focus="handleFocus"
+		@blur="handleBlur"
+		@enter="handleEnter"
+	/>
+	<InputNumber 
+		v-model="value[1]" 
+		:step="1"
+		:precision="0" 
+		:min="1000"
+		:disabled="disabled"
+		clearable
+		styleless
 		@clear="handleClear"
 		@change="handleChange"
 		@focus="handleFocus"
@@ -19,7 +33,7 @@ import { ref } from 'vue';
 import { InputNumber } from '..';
 
 const disabled = ref(false);
-const value = ref(11);
+const value = ref(Array.from({ length: 2 }).map(() => 11));
 
 const handleChange = () => {
 	console.log(value);

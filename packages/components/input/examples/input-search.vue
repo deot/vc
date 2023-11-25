@@ -1,7 +1,7 @@
 <template>
 	<h1>{{ value }}</h1>
 	<InputSearch 
-		v-model="value" 
+		v-model="value[0]" 
 		:disabled="disabled"
 		enter-text="搜索" 
 		clearable
@@ -12,9 +12,22 @@
 		@enter="handleEnter"
 	/>
 	<InputSearch 
-		v-model="value" 
+		v-model="value[1]" 
+		:disabled="disabled"
+		focus-end
+		clearable
+		@clear="handleClear"
+		@change="handleChange"
+		@focus="handleFocus"
+		@blur="handleBlur"
+		@enter="handleEnter"
+	/>
+
+	<InputSearch 
+		v-model="value[2]" 
 		:disabled="disabled"
 		clearable
+		styleless
 		@clear="handleClear"
 		@change="handleChange"
 		@focus="handleFocus"
@@ -27,7 +40,7 @@ import { ref } from 'vue';
 import { InputSearch } from '..';
 
 const disabled = ref(false);
-const value = ref(11);
+const value = ref(Array.from({ length: 3 }).map(() => 'any'));
 
 const handleChange = () => {
 	console.log(value);

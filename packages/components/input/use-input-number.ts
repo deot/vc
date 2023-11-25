@@ -213,10 +213,6 @@ export const useInputNumber = () => {
 	};
 
 	const listeners = {
-		onKeypress: (e: any) => emit('keypress', e),
-		onKeydown: (e: any) => emit('keydown', e),
-		onChange: (e: any) => emit('keyup', e),
-		onFocus: (e: any) => emit('focus', e),
 		onKeyup: handleKeyup,
 		onBlur: handleBlur,
 		onInput: handleInput,

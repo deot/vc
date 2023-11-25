@@ -65,7 +65,24 @@ export const Input = defineComponent({
 			return typeof props.indicator === 'object' && props.indicator.inline;
 		});
 
+		const renderInput = () => {
+			return (
+				// @ts-ignore
+				<input
+					ref={input}
+					{ ...binds.value }
+					value={currentValue.value}
+					maxlength={currentMaxlength.value}
+					style={props.inputStyle}
+					{ 
+						...listeners 
+					}
+				/>
+			);
+		};
+
 		return () => {
+			if (props.styleless) return renderInput();
 			return (
 				<div 
 					class={['vc-input', classes.value]} 
@@ -87,19 +104,7 @@ export const Input = defineComponent({
 						
 						<div class={["vc-input__content", classes.value]}>
 							{
-								slots.content?.() || (
-									// @ts-ignore
-									<input
-										ref={input}
-										{ ...binds.value }
-										value={currentValue.value}
-										maxlength={currentMaxlength.value}
-										style={props.inputStyle}
-										{ 
-											...listeners 
-										}
-									/>
-								)
+								slots.content?.() || renderInput()
 							}
 						</div>
 						{

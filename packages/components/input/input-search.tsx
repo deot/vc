@@ -5,7 +5,6 @@ import { props as inputSearchProps } from './input-search-props';
 
 import { Icon } from '../icon/index';
 import { Input } from './input';
-import { useInputSearch } from './use-input-search';
 import { useInherit } from './use-inherit';
 import { useNativeEmitter } from './use-native-emitter';
 
@@ -14,26 +13,12 @@ const COMPONENT_NAME = 'vc-input-search';
 export const InputSearch = defineComponent({
 	name: COMPONENT_NAME,
 	props: inputSearchProps,
-	// 无需声明clear，因为会直接绑定到Input，以下是当前组件使用到的
-	emits: [
-		'update:modelValue',
-		'input',
-		'change',
-		'focus',
-		'blur',
-		'paste',
-		'keydown',
-		'keypress',
-		'keyup',
-		'enter',
-		'tip'
-	],
-	setup(props, { slots, expose }) {
+	inheritAttrs: false,
+	setup(props, { emit, slots, expose, attrs }) {
 		const input = ref<HTMLElement>();
 		
 		useNativeEmitter(input, expose);
 
-		const { currentValue, listeners, handleSearch } = useInputSearch();
 		const { binds } = useInherit();
 
 		return () => {
@@ -43,27 +28,28 @@ export const InputSearch = defineComponent({
 					{
 						...binds.value
 					}
-					modelValue={currentValue.value}
+					modelValue={props.modelValue}
 					clearable={props.clearable}
 					prepend={props.prepend}
 					append={props.append}
 					type={props.type}
-					class="vc-input-search"
+					styleless={props.styleless}
+					class={{ 'vc-input-search': !props.styleless }}
 					{
-						...listeners
+						// 包含所有on*都会被绑定
+						...attrs
 					}
 				>
 					{{
 						prepend: slots.prepend && (() => slots.prepend?.()),
 						append: (() => slots.append?.() || (
-							<div class={['vc-input-search__content', { 'is-disabled': binds.value.disabled }]}>
+							<div 
+								class={['vc-input-search__content', { 'is-disabled': binds.value.disabled }]}
+								onClick={(e) => emit('enter', e)}
+							>
 								{
 									props.enterText === true 
-										? <Icon 
-											type={props.append || 'search'} 
-											// @ts-ignore
-											onClick={handleSearch}
-										/>
+										? <Icon type={props.append || 'search'} />
 										: props.enterText
 								}
 							</div>

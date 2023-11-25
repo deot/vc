@@ -14,23 +14,9 @@ const COMPONENT_NAME = 'vc-input-number';
 export const InputNumber = defineComponent({
 	name: COMPONENT_NAME,
 	props: inputNumberProps,
-	// 无需声明clear，因为会直接绑定到Input，以下是当前组件使用到的
-	emits: [
-		'update:modelValue',
-		'input',
-		'change',
-		'focus',
-		'blur',
-		'paste',
-		'keydown',
-		'keypress',
-		'keyup',
-		'enter',
-		'tip'
-	],
-	setup(props, { slots, expose }) {
+	inheritAttrs: false,
+	setup(props, { slots, expose, attrs }) {
 		const input = ref<HTMLElement>();
-		
 		useNativeEmitter(input, expose);
 
 		const { formatterValue, listeners, plusDisabled, minusDisabled, handleStepper } = useInputNumber();
@@ -48,9 +34,14 @@ export const InputNumber = defineComponent({
 					prepend={props.prepend}
 					append={props.append}
 					type={props.type}
-					class="vc-input-number"
+					styleless={props.styleless}
+					class={{ 'vc-input-number': !props.styleless }}
 					{
-						...listeners
+						...{
+							// 包含所有on*都会被绑定, 且listeners中覆盖将由listener内触发（inheritAttrs: false）
+							...attrs,
+							...listeners,
+						}
 					}
 				>
 					{{
