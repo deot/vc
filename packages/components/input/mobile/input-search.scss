@@ -1,0 +1,51 @@
+@import '../../style/helper.scss';
+
+$component-name: vcm-input-search;
+$size: 54px;
+
+@include block($component-name) {
+	display: flex;
+	align-items: center;
+	height: $size;
+	padding: 10px;
+	.vcm-input {
+		height: 34px;
+	}
+	.vcm-input__prepend {
+		line-height: 34px;
+	}
+	@include element(content) {
+		background: white;
+		border-radius: 16px;
+		overflow: hidden;
+		padding-right: 14px;
+		input {
+			padding-top: 6px ;
+			padding-bottom: 5px;
+			font-size: 14px;
+			&::placeholder {
+				font-size: 15px;
+				color: #999;
+			}
+		}
+		@include element(icon){
+			font-size: 15px;
+			margin-left: 14px;
+			color: #999;
+		}
+		@include when(focus) {
+			input {
+				text-align: left;
+			}
+		} 
+	}
+	@include element(btn){
+		padding-left: 8px;
+		height: $size;
+		line-height: $size;
+		font-size: 15px;
+		color: #333;
+		text-align: right;
+		white-space: nowrap;
+	}
+}

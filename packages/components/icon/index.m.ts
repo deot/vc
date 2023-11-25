@@ -1,1 +1,3 @@
-export * from './index';
+import { Icon } from './index';
+
+export const MIcon = Icon;

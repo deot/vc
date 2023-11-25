@@ -69,6 +69,9 @@ $color-disabled: varfix(color-disabled, input);
 			&::placeholder {
 				color: $color-dark-extralight;
 			}
+			&::-webkit-search-cancel-button {
+				display: none;
+			}
 		}
 		@include when(disabled) {
 			opacity: 1;
@@ -79,7 +82,7 @@ $color-disabled: varfix(color-disabled, input);
 			}
 		}
 	}
-	@include share-rule(icon) {
+	@include share-rule(input-icon) {
 		width: unitfix(28);
 		height: unitfix(28);
 		line-height: unitfix(28)!important;
@@ -91,14 +94,14 @@ $color-disabled: varfix(color-disabled, input);
 	/**
 	 * clear
 	 */
-	@include element(icon-clear){
-		@include extend-rule(icon);
+	@include element(input-icon-clear){
+		@include extend-rule(input-icon);
 		cursor: pointer;
 		display: none;
 	}
 
 	@include pseudo(hover) {
-		@include element(icon-clear){
+		@include element(input-icon-clear){
 			display: inline-block;
 		}
 	}

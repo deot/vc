@@ -35,6 +35,7 @@ $color-disabled: varfix(color-disabled, input);
 		height: unitfix(14);
 		line-height: unitfix(14);
 		background-color: $background-color-light;
+		user-select: none;
 		@include border(left, $color-light-extradeep); // 不占边距
 		&[disabled="disabled"] {
 			background-color: $color-disabled;

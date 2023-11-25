@@ -51,7 +51,7 @@ export const InputNumber = defineComponent({
 								<div
 									class="vc-input-number__up"
 									// @ts-ignore
-									disabled={plusDisabled.value && props.disabled}
+									disabled={plusDisabled.value ? 'disabled' : undefined}
 									onClick={() => handleStepper(1)}
 								>
 									<Icon type="up" />
@@ -59,7 +59,7 @@ export const InputNumber = defineComponent({
 								<div
 									class="vc-input-number__down"
 									// @ts-ignore
-									disabled={minusDisabled.value && props.disabled}
+									disabled={minusDisabled.value ? 'disabled' : undefined}
 									onClick={() => handleStepper(-1)}
 								>
 									<Icon type="down" />

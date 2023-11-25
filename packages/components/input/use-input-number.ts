@@ -114,6 +114,11 @@ export const useInputNumber = () => {
 		emit('keyup', e);
 	};
 
+	/**
+	 * 其他
+	 * 1. 无法实时边界值计算, 主要矛盾点考虑加入最小值是100, 无法删除到最小值以下
+	 * @param value ~
+	 */
 	const handleInput = (value: string) => {
 		isInput.value = true;
 
@@ -134,11 +139,6 @@ export const useInputNumber = () => {
 			// '0.' -> '.' -> '0.'
 			value = value.charAt(0) === '.' ? `0${value}` : value;
 		}
-
-		// TODO: 实时边界值计算, 矛盾点考虑加入最小值是100, 无法删除到最小值以下
-		// if (this.min <= 1 && value !== '') {
-		// 	value = this.compareWithBoundary({ value, tag: 'input' });
-		// }
 
 		emit('input', value);
 		emit('update:modelValue', value);
