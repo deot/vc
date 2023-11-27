@@ -141,7 +141,7 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 			if (Array.isArray(v)) return;
 			currentMaxlength.value = getMaxLength(v);
 		},
-		{ immediate: false }
+		{ immediate: true }
 	);
 
 	watch(
@@ -154,7 +154,7 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 				currentMaxlength.value = v + extraLength;
 			}
 		},
-		{ immediate: false }
+		{ immediate: true }
 	);
 
 	// 非响应式
