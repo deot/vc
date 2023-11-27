@@ -94,19 +94,19 @@ $color-disabled: varfix(color-disabled, input);
 	/**
 	 * clear
 	 */
-	@include element(input-icon-clear){
+	@include element(icon-clear){
 		@include extend-rule(input-icon);
 		cursor: pointer;
 		display: none;
 	}
 
 	@include pseudo(hover) {
-		@include element(input-icon-clear){
+		@include element(icon-clear){
 			display: inline-block;
 		}
 	}
 	
-	@include share-rule(pend) {
+	@include share-rule(input-pend) {
 		height: 100%;
 		text-align: center;
 		font-size: unitfix(13);
@@ -133,11 +133,11 @@ $color-disabled: varfix(color-disabled, input);
 	 * prepend / append
 	 */
 	@include element(prepend) {
-		@include extend-rule(pend);
+		@include extend-rule(input-pend);
 	}
 
 	@include element(append) {
-		@include extend-rule(pend);
+		@include extend-rule(input-pend);
 	}
 	@include when(focus) {
 		@include element(prepend) {
