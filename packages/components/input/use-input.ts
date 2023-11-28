@@ -1,7 +1,7 @@
 import { ref, inject, watch, computed, getCurrentInstance } from 'vue';
 import type { Ref } from 'vue'; 
 import type { Props } from './input-props'; 
-import { isPassByMaxlength, getBytesLength } from './utils';
+import { getFitValue, getFitMaxLength } from './utils';
 
 export const useInput = (input: Ref<HTMLElement | undefined>) => {
 	const instance = getCurrentInstance()!;
@@ -13,17 +13,6 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 	const isFocus = ref(false);
 	const isOnComposition = ref(false);
 	const formItem: any = inject('form-item', {});
-	/**
-	 * 强制必须使用v-model，所以不需要判断一次
-	 */
-	watch(
-		() => props.modelValue,
-		(v) => {
-			currentValue.value = v;
-			props.allowDispatch && formItem.change?.(v);
-		},
-		{ immediate: false }
-	);
 
 	const classes = computed(() => {
 		return {
@@ -31,6 +20,11 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 			'is-disabled': props.disabled
 		};
 	});
+
+	// Focus时。可以强制刷新输入框内的值
+	const forceUpdate = () => {
+		instance.proxy?.$forceUpdate?.();
+	};
 
 	const handleKeydown = (e: any) => {
 		emit('keydown', e);
@@ -76,18 +70,26 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 	const handleInput = (e: InputEvent) => {
 		if (isOnComposition.value) return;
 		let value = (e.target as HTMLInputElement).value;
-		// 撤销/重做，deleteContentBackward处理当初始化的值超出maxlength时无法删除的问题
-		if (
-			e.inputType !== 'deleteContentBackward'
-			&& (props.bytes && !isPassByMaxlength(value, props.maxlength)) 
-		) {
-			e.preventDefault();
-			return;
+		
+		/**
+		 * 当bytes为true, 初始值就已经超出maxlength的情况
+		 * 1.删除操作时，应不受maxlength的影响(deleteContentBackward)，值会发生改变
+		 * 2.如maxlength为2, 此时值为`abc`, currentMaxlength为4. 
+		 * 	- 不允许输入`abc值`，可以允许输入`abcd`
+		 * 3.当粘帖时，文本太多，要计算fitValue
+		 */
+		if (typeof props.maxlength !== 'undefined' && props.bytes && e.inputType !== 'deleteContentBackward') {
+			let fitValue = getFitValue(value, props.maxlength) as string;
+			if (value !== fitValue) {
+				value = fitValue;
+			}
 		}
+		
 		emit('update:modelValue', value, e);
 		emit('input', value, e);
 
 		emit('change', e);
+		forceUpdate();
 	};
 
 	const handleComposition = (e: InputEvent) => {
@@ -105,22 +107,8 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		emit('change', e);
 	};
 
-	// 输入框内容允许输入的长度
-	const getMaxLength = (value: number | string) => {
-		if (!props.bytes || !props.maxlength) return props.maxlength;
-		let extraLength = getBytesLength(value);
-		return props.maxlength + extraLength;
-	};
-
 	const handlePaste = (e: ClipboardEvent) => {
-		// 只有在bytes下,会需要重新计算maxlength
-		if (props.bytes) {
-			let content = currentValue.value + (e.clipboardData as DataTransfer).getData('text');
-			if (!isPassByMaxlength(content, props.maxlength)) { e.preventDefault(); }
-			currentMaxlength.value = getMaxLength(content);
-		}
-
-		emit('paste', e);
+		emit('paste', e, (e.clipboardData as DataTransfer).getData('text'));
 	};
 
 	const handleClear = () => {
@@ -135,23 +123,25 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		input.value?.focus?.();
 	};
 
+	// 强制必须使用v-model，所以不需要判断一次
 	watch(
 		() => props.modelValue,
 		(v) => {
-			if (Array.isArray(v)) return;
-			currentMaxlength.value = getMaxLength(v);
+			currentValue.value = v;
+			props.allowDispatch && formItem.change?.(v);
 		},
-		{ immediate: true }
+		{ immediate: false }
 	);
 
+	// to computed
 	watch(
-		() => props.maxlength,
-		(v) => {
-			if (!v || !props.bytes) {
-				currentMaxlength.value = v;
+		[() => currentValue.value, () => props.maxlength, () => props.bytes],
+		([value, maxlength]) => {
+			if (Array.isArray(value)) return;
+			if (!maxlength || !props.bytes) {
+				currentMaxlength.value = maxlength;
 			} else {
-				let extraLength = getBytesLength(currentValue.value);
-				currentMaxlength.value = v + extraLength;
+				currentMaxlength.value = getFitMaxLength(value, maxlength);
 			}
 		},
 		{ immediate: true }

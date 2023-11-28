@@ -24,10 +24,8 @@ $color-disabled: varfix(color-disabled, input);
 	transition: border .2s ease-in-out, 
 		background .2s ease-in-out, 
 		box-shadow .2s ease-in-out;
-
-	background-color: $background-color-light;
 	border-radius: unitfix(4);
-	overflow: hidden;
+	background-color: $background-color-light;
 	@include border('', $color-light-extradeep, 4); // 不占边距
 	@include when(focus) {
 		&:after, &:before {

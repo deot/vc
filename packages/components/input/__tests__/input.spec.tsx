@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { ref } from 'vue';
-import { Input, Icon } from '@deot/vc-components';
+import { ref, nextTick } from 'vue';
+import { Input } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 
 describe('index.ts', () => {
@@ -9,9 +9,110 @@ describe('index.ts', () => {
 	});
 
 	it('create', async () => {
-		const wrapper = mount(() => (<Input />));
+		const wrapper = mount(Input);
+		const vm = wrapper.vm as any;
 
-		expect(wrapper.classes()).toContain('vc-input');
+		expect(typeof vm.focus).toBe('function');
+		expect(typeof vm.blur).toBe('function');
+		expect(typeof vm.click).toBe('function');
+		expect(wrapper.classes()).toEqual(['vc-input']);
+
+		await wrapper.find('input').trigger('focus');
+		expect(wrapper.classes()).toEqual(['vc-input', 'is-focus']);
+		await wrapper.setProps({ disabled: true });
+		expect(wrapper.classes()).toEqual(['vc-input', 'is-focus', 'is-disabled']);
+	});
+
+	it('v-model', async () => {
+		const current = ref('');
+		const wrapper = mount(() => <Input v-model={current.value}/>);
+
+		await wrapper.find('input').setValue('abc');
+
+		expect(current.value).toBe('abc');
+	});
+
+	it('indicator:bytes', async () => {
+		const current = ref('abcd');
+		const wrapper = mount(() => (
+			<Input 
+				v-model={current.value} 
+				maxlength={2} 
+				bytes 
+				indicator 
+			/>
+		));
+
+		expect(wrapper.html()).toMatch('2/2');
+	});
+
+	it('indicator:inverted', async () => {
+		const current = ref('abcd');
+		const wrapper = mount(() => (
+			<Input 
+				v-model={current.value} 
+				maxlength={2} 
+				bytes 
+				indicator={{ inverted: true, inline: true }}
+			/>
+		));
+
+		expect(wrapper.html()).toMatch('0/2');
+	});
+
+	it('indicator:normal', async () => {
+		const current = ref('abcd');
+		const wrapper = mount(() => (
+			<Input 
+				v-model={current.value} 
+				maxlength={2} 
+				indicator
+			/>
+		));
+
+		expect(wrapper.html()).toMatch('4/2');
+	});
+
+	it('indicator:normal', async () => {
+		const current = ref('abcd');
+		const wrapper = mount(() => (
+			<Input 
+				v-model={current.value} 
+				indicator
+			/>
+		));
+
+		expect(wrapper.html()).not.toMatch('4/2');
+	});
+
+	it('array', async () => {
+		const current = ref<number[]>([]);
+		const wrapper = mount(() => <Input v-model={current.value} maxlength={10} bytes />);
+
+		current.value = [1, 2, 3];
+		await nextTick();
+		expect(wrapper.find('input').element.value).toBe('1,2,3');
+	});
+
+	it('number', async () => {
+		const current = ref<number>(1);
+		const wrapper = mount(() => <Input v-model={current.value} maxlength={1} bytes />);
+
+		current.value = 223;
+		await nextTick();
+		expect(wrapper.find('input').element.value).toBe('223');
+	});
+
+	it('prepend', async () => {
+		const wrapper = mount(() => <Input prepend="rmb" />);
+
+		expect(wrapper.find('.vc-input__prepend').exists()).toBeTruthy();
+	});
+
+	it('append', async () => {
+		const wrapper = mount(() => <Input append="rmb" />);
+
+		expect(wrapper.find('.vc-input__append').exists()).toBeTruthy();
 	});
 
 	it('styleless', async () => {
@@ -20,7 +121,6 @@ describe('index.ts', () => {
 				styleless: true
 			}
 		});
-
 		expect(wrapper.html()).toMatch(/^<input /);
 	});
 
@@ -40,6 +140,7 @@ describe('index.ts', () => {
 		const handleUpdateModelValue = vi.fn((v) => {
 			current.value = v;
 		});
+		const handleClick = vi.fn();
 		const wrapper = mount(Input, {
 			props: {
 				styleless: true,
@@ -55,6 +156,7 @@ describe('index.ts', () => {
 				onKeypress: handleKeypress,
 				onEnter: handleEnter,
 				onPaste: handlePaste,
+				onClick: handleClick,
 				'onUpdate:modelValue': handleUpdateModelValue
 			}
 		});
@@ -101,6 +203,9 @@ describe('index.ts', () => {
 
 		await wrapper.trigger('paste', { clipboardData: { getData: () => '2' } });
 		expect(handlePaste).toHaveBeenCalledTimes(1);
+
+		await wrapper.trigger('click');
+		expect(handleClick).toHaveBeenCalledTimes(1);
 	});
 
 	it('focusEnd', async () => {
@@ -123,7 +228,7 @@ describe('index.ts', () => {
 		const wrapper = mount(Input, {
 			props: {
 				styleless: true,
-				bytes: true,
+				bytes: false,
 				maxlength: 11,
 				modelValue: '',
 				onFocus: handleFocus
@@ -136,6 +241,8 @@ describe('index.ts', () => {
 		await wrapper.setProps({ maxlength: 12 });
 		expect(el.maxLength).toBe(12);
 
+		await wrapper.setProps({ bytes: true });
+		expect(el.maxLength).toBe(24);
 	});
 
 	it('event:clear', async () => {
@@ -167,22 +274,67 @@ describe('index.ts', () => {
 		expect(current.value).toBe('');
 	});
 
-	it.skip('maxlength invaild', async () => {
+	it('maxlength: deleteContentBackward', async () => {
+		const current = ref('abcd');
+		const handleUpdateModelValue = vi.fn((v) => {
+			current.value = v;
+		});
+
+		const wrapper = mount(Input, {
+			props: {
+				maxlength: 1,
+				modelValue: current.value,
+				'onUpdate:modelValue': handleUpdateModelValue
+			}
+		});
+		const el = wrapper.find('input').element;
+		expect(el.maxLength).toBe(1);
+
+		// 这两步模拟删除
+		el.value = 'abc';
+		await wrapper.find('input').trigger('input', { 
+			inputType: "deleteContentBackward"
+		});
+
+		expect(handleUpdateModelValue).toBeCalledTimes(1);
+		expect(current.value).toBe('abc');
+	});
+
+
+	it('maxlength: bytes', async () => {
 		const handleInput = vi.fn();
 		const current = ref('测试');
+		const handleUpdateModelValue = vi.fn((v) => {
+			current.value = v;
+		});
 
 		const wrapper = mount(Input, {
 			props: {
 				maxlength: 2,
 				bytes: true,
 				modelValue: current.value,
-				onInput: handleInput
+				onInput: handleInput,
+				'onUpdate:modelValue': handleUpdateModelValue
 			}
 		});
 		const el = wrapper.find('input').element;
 		expect(el.maxLength).toBe(2);
 
-		await wrapper.find('input').setValue('abcdfabcdfabcdf');
+		// 由于长度过长, 会被截取
+		await wrapper.find('input').setValue('abcdf');
+		expect(current.value).toBe('abcd');
+		expect(handleInput).toBeCalledTimes(1);
+		expect(handleUpdateModelValue).toBeCalledTimes(1);
+
+		await wrapper.find('input').setValue('测试s');
+		expect(current.value).toBe('测试');
+		expect(handleInput).toBeCalledTimes(2);
+		expect(handleUpdateModelValue).toBeCalledTimes(2);
+
+		await wrapper.find('input').setValue('abcd');
+		expect(current.value).toBe('abcd');
+		expect(handleInput).toBeCalledTimes(3);
+		expect(handleUpdateModelValue).toBeCalledTimes(3);
 	});
 
 	it('event:composition', async () => {
@@ -211,7 +363,7 @@ describe('index.ts', () => {
 
 	it('coverage', async () => {
 		const placeholder = '请输入';
-		const current = ref([]);
+		const current = ref('');
 
 		const handleFocus = vi.fn();
 		const handleBlur = vi.fn();

@@ -9,7 +9,7 @@ import { TransitionFade } from '../transition/index';
 import { useInput } from './use-input';
 import { useInherit } from './use-inherit';
 import { useNativeEmitter } from './use-native-emitter';
-import { getBytesLength } from './utils';
+import { getBytesSize } from './utils';
 
 const COMPONENT_NAME = 'vc-input';
 
@@ -51,18 +51,21 @@ export const Input = defineComponent({
 			handleClear
 		} = useInput(input);
 
-		const indicatorNum = computed(() => {
-			if (typeof props.maxlength === 'undefined') return;
-			let currentLength = (String(props.modelValue) || '').length;
-			let extraLength = props.bytes ? getBytesLength(props.modelValue) || 0 : 0;
-			let length = typeof props.maxlength === 'number' && typeof props.indicator === 'object' && props.indicator.inverted 
-				? props.maxlength + extraLength - currentLength 
-				: currentLength - extraLength;
-			return `${length}/${props.maxlength}`;
-		});
-
 		const showIndicatorInline = computed(() => {
 			return typeof props.indicator === 'object' && props.indicator.inline;
+		});
+
+		const indicatorNum = computed(() => {
+			if (typeof props.maxlength === 'undefined' || Array.isArray(currentValue.value)) return;
+			const { maxlength } = props;
+			const value = String(currentValue.value);
+			const length = props.bytes ? getBytesSize(value) : value.length; 
+			
+			const current = typeof props.indicator === 'object' && props.indicator.inverted
+				? maxlength - length 
+				: length;
+
+			return `${current}/${maxlength}`;
 		});
 
 		const renderInput = () => {
@@ -108,7 +111,7 @@ export const Input = defineComponent({
 							}
 						</div>
 						{
-							!props.disabled && props.clearable && (
+							(!props.disabled && props.clearable) && (
 								<TransitionFade>
 									{
 										withDirectives(
