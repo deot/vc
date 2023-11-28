@@ -11,8 +11,6 @@ import {
 	onBeforeUnmount,
 	onUpdated,
 	getCurrentInstance,
-	withDirectives,
-	vShow,
 	Fragment
 } from 'vue';
 import { debounce } from 'lodash-es';
@@ -305,18 +303,12 @@ export const ModalView = defineComponent({
 			return (
 				<div class="vc-modal">
 					<TransitionFade delay={40}>
-						{ 
-							withDirectives(
-								(
-									<div
-										class="vc-modal__mask"
-										// @ts-ignore
-										onClick={(e) => handleClose(e, props.maskClosable)}
-									/>
-								),
-								[[vShow, props.mask && isActive.value]]
-							)
-						}
+						<div
+							v-show={props.mask && isActive.value}
+							class="vc-modal__mask"
+							// @ts-ignore
+							onClick={(e) => handleClose(e, props.maskClosable)}
+						/>
 					</TransitionFade>
 					<div
 						ref={wrapper}
@@ -331,111 +323,105 @@ export const ModalView = defineComponent({
 							onEnter={handleEnter}
 							onAfterLeave={handleRemove}
 						>
-							{
-								withDirectives(
-									(
-										<div
-											ref={container}
-											class={
-												[
+							<div
+								v-show={isActive.value}
+								ref={container}
+								class={
+									[
+										{
+											'is-drag': props.draggable, 
+											'is-large': props.size === 'large' || props.size === 'medium',
+											'is-no-footer': !props.footer || (!props.cancelText && !props.okText)
+										},
+										'vc-modal__container'
+									]
+								}
+								style={[basicStyle.value, draggableStyle.value]}
+							>
+								<div
+									ref={header}
+									class={[{ 'is-confirm': props.mode }, 'vc-modal__header']}
+									// @ts-ignore
+									onMousedown={handleMouseDown}
+								>
+									{
+										props.mode && (
+											<Icon
+												type={props.mode}
+												class={[`is-${props.mode}`, 'vc-modal__icon']}
+											/>
+										)
+									}
+									{
+										!slots.header 
+											? (
+												<Fragment>
+													<div class="vc-modal__title" innerHTML={props.title} />
 													{
-														'is-drag': props.draggable, 
-														'is-large': props.size === 'large' || props.size === 'medium',
-														'is-no-footer': !props.footer || (!props.cancelText && !props.okText)
-													},
-													'vc-modal__container'
-												]
-											}
-											style={[basicStyle.value, draggableStyle.value]}
-										>
-											<div
-												ref={header}
-												class={[{ 'is-confirm': props.mode }, 'vc-modal__header']}
-												// @ts-ignore
-												onMousedown={handleMouseDown}
-											>
-												{
-													props.mode && (
-														<Icon
-															type={props.mode}
-															class={[`is-${props.mode}`, 'vc-modal__icon']}
-														/>
-													)
-												}
-												{
-													!slots.header 
-														? (
-															<Fragment>
-																<div class="vc-modal__title" innerHTML={props.title} />
-																{
-																	props.closable && !props.mode && (
-																		<div
-																			class="vc-modal__close"
-																			onClick={e => handleClose(e, true)}
-																		>
-																			<Icon type="close" />
-																		</div>
-																	)
-																}
-																
-															</Fragment>
+														props.closable && !props.mode && (
+															<div
+																class="vc-modal__close"
+																onClick={e => handleClose(e, true)}
+															>
+																<Icon type="close" />
+															</div>
 														)
-														: slots.header()
-												}
-											</div>
-											<div 
-												ref={content}
-												class={[{ 'is-confirm': props.mode }, props.portalClassName, 'vc-modal__content']}
-											>
-												{
-													typeof props.content === 'string' 
-														? (<div innerHTML={props.content} />)
-														: typeof props.content === 'function' 
-															? (<Customer render={props.content} />)
-															: null
-												}
-												{ slots.default?.() }
-											</div>
+													}
+													
+												</Fragment>
+											)
+											: slots.header()
+									}
+								</div>
+								<div 
+									ref={content}
+									class={[{ 'is-confirm': props.mode }, props.portalClassName, 'vc-modal__content']}
+								>
+									{
+										typeof props.content === 'string' 
+											? (<div innerHTML={props.content} />)
+											: typeof props.content === 'function' 
+												? (<Customer render={props.content} />)
+												: null
+									}
+									{ slots.default?.() }
+								</div>
+								{
+									(props.footer && (props.cancelText || props.okText)) && (
+										<div class={[{ 'is-confirm': props.mode }, 'vc-modal__footer']}>
+											{ slots['footer-extra']?.() }
 											{
-												(props.footer && (props.cancelText || props.okText)) && (
-													<div class={[{ 'is-confirm': props.mode }, 'vc-modal__footer']}>
-														{ slots['footer-extra']?.() }
-														{
-															!slots.footer 
-																? (
-																	<Fragment>
-																		{
-																			props.cancelText && (
-																				<Button
-																					style="margin-right: 8px;"
-																					onClick={(e) => handleBefore(e, handleCancel)}
-																				>
-																					{ props.cancelText }
-																				</Button>
-																			)
-																		}
-																		{
-																			props.okText && (
-																				<Button
-																					type="primary"
-																					onClick={(e) => handleBefore(e, handleOk)}
-																				>
-																					{ props.okText }
-																				</Button>
-																			)
-																		}
-																	</Fragment>
+												!slots.footer 
+													? (
+														<Fragment>
+															{
+																props.cancelText && (
+																	<Button
+																		style="margin-right: 8px;"
+																		onClick={(e) => handleBefore(e, handleCancel)}
+																	>
+																		{ props.cancelText }
+																	</Button>
 																)
-																: slots.footer?.()
-														}
-													</div>
-												)
+															}
+															{
+																props.okText && (
+																	<Button
+																		type="primary"
+																		onClick={(e) => handleBefore(e, handleOk)}
+																	>
+																		{ props.okText }
+																	</Button>
+																)
+															}
+														</Fragment>
+													)
+													: slots.footer?.()
 											}
 										</div>
-									),
-									[[vShow, isActive.value]]
-								)
-							}
+									)
+								}
+							</div>
 						</TransitionScale>
 					</div>
 				</div>

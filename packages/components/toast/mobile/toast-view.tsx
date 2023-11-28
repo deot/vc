@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, onMounted, onUnmounted, withModifiers, withDirectives, vShow } from 'vue';
+import { defineComponent, ref, onMounted, onUnmounted, withModifiers } from 'vue';
 import { props as toastProps } from './toast-view-props';
 
 import { MCustomer } from "../../customer/index.m";
@@ -64,24 +64,16 @@ export const MToastView = defineComponent({
 						// @ts-ignore
 						onAfterLeave={handleRemove}
 					>
-						{
-							withDirectives(
-								(
-									<div class="vcm-toast__wrapper">
-										{ props.mode === 'loading' && (<MSpin class="vcm-toast__loading" />) }
-										{ 
-											typeof props.content === 'string'
-												? (<div class="vcm-toast__content" innerHTML={props.content} />) 
-												: typeof props.content === 'function' 
-													? (<MCustomer render={props.content} />)
-													: null
-										}
-									</div>
-								),
-								[[vShow, isVisible.value]]
-							)
-						}
-						
+						<div v-show={isVisible.value} class="vcm-toast__wrapper">
+							{ props.mode === 'loading' && (<MSpin class="vcm-toast__loading" />) }
+							{ 
+								typeof props.content === 'string'
+									? (<div class="vcm-toast__content" innerHTML={props.content} />) 
+									: typeof props.content === 'function' 
+										? (<MCustomer render={props.content} />)
+										: null
+							}
+						</div>
 					</MTransitionFade>
 				</div>
 			);

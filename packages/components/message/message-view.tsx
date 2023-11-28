@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { getCurrentInstance, defineComponent, ref, onMounted, onUnmounted, withDirectives, vShow } from 'vue';
+import { getCurrentInstance, defineComponent, ref, onMounted, onUnmounted } from 'vue';
 import { props as messageProps } from './message-view-props';
 import { Icon } from "../icon";
 import { Spin } from "../spin";
@@ -79,59 +79,53 @@ export const MessageView = defineComponent({
 						// @ts-ignore
 						onAfterLeave={handleRemove}
 					>
-						{
-							withDirectives(
-								(
-									<div 
-										class={["vc-message__wrapper", { 'is-fixed': props.fixed }]}
-										style={props.fixed ? { top: `${props.top}px` } : {}}
-									>
-										<div class="vc-message__container">
-											{
-												props.mode === 'loading' 
-													? (
-														<Spin 
-															size={14}
-															class="vc-message__loading" 
-														/>
-													)
-													: (
-														<Icon 
-															type={props.mode} 
-															class={[`is-${props.mode}`, 'vc-message__icon']}
-														/>
-													)
-											}
+						<div 
+							v-show={isActive.value}
+							class={["vc-message__wrapper", { 'is-fixed': props.fixed }]}
+							style={props.fixed ? { top: `${props.top}px` } : {}}
+						>
+							<div class="vc-message__container">
+								{
+									props.mode === 'loading' 
+										? (
+											<Spin 
+												size={14}
+												class="vc-message__loading" 
+											/>
+										)
+										: (
+											<Icon 
+												type={props.mode} 
+												class={[`is-${props.mode}`, 'vc-message__icon']}
+											/>
+										)
+								}
 
-											{
-												typeof props.content === 'string' 
-													? (
-														<div 
-															class="vc-message__content"
-															innerHTML={props.content}
-														/>
-													)
-													: typeof props.content === 'function'
-														? (<Customer render={props.content} />)
-														: null
-											}
+								{
+									typeof props.content === 'string' 
+										? (
+											<div 
+												class="vc-message__content"
+												innerHTML={props.content}
+											/>
+										)
+										: typeof props.content === 'function'
+											? (<Customer render={props.content} />)
+											: null
+								}
 
-											{
-												props.closable && (
-													<Icon 
-														type="close"
-														class="vc-message__close"
-														// @ts-ignore
-														onClick={(e) => handleClose(e, true)} 
-													/>
-												)
-											}
-										</div>
-									</div>
-								),
-								[[vShow, isActive.value]]
-							)
-						}
+								{
+									props.closable && (
+										<Icon 
+											type="close"
+											class="vc-message__close"
+											// @ts-ignore
+											onClick={(e) => handleClose(e, true)} 
+										/>
+									)
+								}
+							</div>
+						</div>
 					</TransitionSlide>
 				</div>
 			);

@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, computed, ref, withDirectives, vShow } from 'vue';
+import { defineComponent, computed, ref } from 'vue';
 import type { PropType } from 'vue';
 import { props as inputProps } from './input-props';
 
@@ -113,19 +113,13 @@ export const Input = defineComponent({
 						{
 							(!props.disabled && props.clearable) && (
 								<TransitionFade>
-									{
-										withDirectives(
-											(
-												<Icon
-													class="vc-input__icon-clear" 
-													type="clear" 
-													// @ts-ignore
-													onClick={handleClear}
-												/>
-											),
-											[[vShow, !!currentValue.value]]
-										)
-									}
+									<Icon
+										v-show={!!currentValue.value}
+										class="vc-input__icon-clear" 
+										type="clear" 
+										// @ts-ignore
+										onClick={handleClear}
+									/>
 								</TransitionFade>
 							)
 						}

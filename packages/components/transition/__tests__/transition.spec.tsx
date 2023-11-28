@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { ref, withDirectives, vShow, createApp } from 'vue';
+import { ref, createApp } from 'vue';
 import { Transition as VTransition } from '@deot/vc-components';
 // import { mount } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
@@ -34,7 +34,7 @@ describe('transition.ts', () => {
 						...methods
 					}
 				>
-					{ withDirectives(<div key="1" />, [[vShow, isVisible.value]])}
+					<div v-show={isVisible.value} key="1" />
 				</VTransition>
 			)
 		);

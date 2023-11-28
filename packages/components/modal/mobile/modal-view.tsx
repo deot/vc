@@ -6,8 +6,6 @@ import {
 	computed,
 	defineComponent,
 	getCurrentInstance,
-	withDirectives,
-	vShow,
 	Fragment
 } from 'vue';
 import { useScrollbar } from '@deot/vc-hooks';
@@ -130,18 +128,12 @@ export const MModalView = defineComponent({
 			return (
 				<div class="vcm-modal">
 					<MTransitionFade duration={200}>
-						{ 
-							withDirectives(
-								(
-									<div
-										class="vcm-modal__mask"
-										// @ts-ignore
-										onClick={(e) => handleClose(e, props.maskClosable)}
-									/>
-								),
-								[[vShow, props.mask && isActive.value]]
-							)
-						}
+						<div
+							v-show={props.mask && isActive.value}
+							class="vcm-modal__mask"
+							// @ts-ignore
+							onClick={(e) => handleClose(e, props.maskClosable)}
+						/>
 					</MTransitionFade>
 					<div
 						style={[props.styles || {}]}
@@ -153,100 +145,97 @@ export const MModalView = defineComponent({
 							// @ts-ignore
 							onAfterLeave={handleRemove}
 						>
-							{
-								withDirectives(
-									(
-										<div style={[basicStyle.value]} class="vcm-modal__container">
-											{
-												props.mode === 'alert'
-													? (
-														<Fragment>
+							<div
+								v-show={isActive.value}
+								style={[basicStyle.value]} 
+								class="vcm-modal__container"
+							>
+								{
+									props.mode === 'alert'
+										? (
+											<Fragment>
+												{
+													(props.title || slots.header) && (
+														<div class="vcm-modal__header">
 															{
-																(props.title || slots.header) && (
-																	<div class="vcm-modal__header">
-																		{
-																			slots.header?.() || (
-																				<div class="vcm-modal__title" innerHTML={props.title as string} />
-																			)
-																		}
-																	</div>
+																slots.header?.() || (
+																	<div class="vcm-modal__title" innerHTML={props.title as string} />
 																)
 															}
+														</div>
+													)
+												}
 
+												{
+													(props.content || slots.default) && (
+														<div 
+															class={[{ 'vcm-modal__no-title': !props.title }, 'vcm-modal__content']}
+														>
 															{
-																(props.content || slots.default) && (
-																	<div 
-																		class={[{ 'vcm-modal__no-title': !props.title }, 'vcm-modal__content']}
-																	>
-																		{
-																			(typeof props.content === 'string' || slots.default) 
-																				? (
-																					<div 
-																						class="vcm-modal__html" 
-																					>	
-																						{ 
-																							typeof props.content === 'string' 
-																								&& (<div innerHTML={props.content} />) 
-																						}
-																						{ slots.default?.() }
-																					</div>
-																				)
-																				: typeof props.content === 'function'
-																					? <MCustomer render={props.content}/>
-																					: null
-																		}
-																	</div>
-																)
+																(typeof props.content === 'string' || slots.default) 
+																	? (
+																		<div 
+																			class="vcm-modal__html" 
+																		>	
+																			{ 
+																				typeof props.content === 'string' 
+																					&& (<div innerHTML={props.content} />) 
+																			}
+																			{ slots.default?.() }
+																		</div>
+																	)
+																	: typeof props.content === 'function'
+																		? <MCustomer render={props.content}/>
+																		: null
 															}
+														</div>
+													)
+												}
+												{
+													(props.footer || slots.footer) && (
+														<div class={[footerClasses.value, 'vcm-modal__footer']}>
 															{
-																(props.footer || slots.footer) && (
-																	<div class={[footerClasses.value, 'vcm-modal__footer']}>
-																		{
-																			slots.footer?.() || (
-																				curentActions.value.map((item: any, index) => {
-																					if (!item.text) return null;
-																					return (
-																						<div
-																							key={index}
-																							style={[item.style]}
-																							class="vcm-modal__button"
-																							onClick={e => handleBefore(e, item.onPress)}
-																							innerHTML={item.text}
-																						/>
-																					);
-																				})
-																			)
-																		}
-																	</div>
-																)
-															}
-														</Fragment>
-													) : props.mode === 'operation'
-														? (
-															<div class="vcm-modal__operation">
-																{
+																slots.footer?.() || (
 																	curentActions.value.map((item: any, index) => {
 																		if (!item.text) return null;
 																		return (
-																			<div 
+																			<div
 																				key={index}
 																				style={[item.style]}
 																				class="vcm-modal__button"
+																				onClick={e => handleBefore(e, item.onPress)}
 																				innerHTML={item.text}
-																				onClick={(e) => handleBefore(e, item.onPress)}
-																			/>	
+																			/>
 																		);
 																	})
-																}
-															</div>
-														)
-														: null
-											}
-										</div>
-									),
-									[[vShow, isActive.value]]
-								)
-							}
+																)
+															}
+														</div>
+													)
+												}
+											</Fragment>
+										) : props.mode === 'operation'
+											? (
+												<div class="vcm-modal__operation">
+													{
+														curentActions.value.map((item: any, index) => {
+															if (!item.text) return null;
+															return (
+																<div 
+																	key={index}
+																	style={[item.style]}
+																	class="vcm-modal__button"
+																	innerHTML={item.text}
+																	onClick={(e) => handleBefore(e, item.onPress)}
+																/>	
+															);
+														})
+													}
+												</div>
+											)
+											: null
+								}
+							</div>
 						</MTransitionZoom>
 					</div>
 				</div>

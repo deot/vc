@@ -66,58 +66,51 @@ export const NoticeView = defineComponent({
 						// @ts-ignore
 						onAfterLeave={handleRemove}
 					>
-						{
-							withDirectives(
-								(
-									<div class="vc-notice__wrapper">
-										<div class="vc-notice__container">
-											{ props.mode && (<Icon type={`o-${props.mode}`} class={[`is-${props.mode}`, 'vc-notice__icon']} />) }
-											
-											<div>
+						<div v-show={isActive.value} class="vc-notice__wrapper">
+							<div class="vc-notice__container">
+								{ props.mode && (<Icon type={`o-${props.mode}`} class={[`is-${props.mode}`, 'vc-notice__icon']} />) }
+								
+								<div>
+									{
+										props.title && (
+											<div style={[{ marginBottom: props.content ? '8px' : '' }]} class="vc-notice__title">
 												{
-													props.title && (
-														<div style={[{ marginBottom: props.content ? '8px' : '' }]} class="vc-notice__title">
-															{
-																typeof props.title === 'string' 
-																	? <div innerHTML={props.title} />
-																	: typeof props.title === 'function'
-																		? <Customer render={props.title} />
-																		: null
-															}
-														</div>
-													)
-												}
-												{
-													props.content && (
-														<div class="vc-notice__content">
-															{
-																typeof props.content === 'string' 
-																	? <div innerHTML={props.content} />
-																	: typeof props.content === 'function'
-																		? <Customer render={props.content} />
-																		: null
-															}
-														</div>
-													)
+													typeof props.title === 'string' 
+														? <div innerHTML={props.title} />
+														: typeof props.title === 'function'
+															? <Customer render={props.title} />
+															: null
 												}
 											</div>
-											{
-												props.closable && (
-													<Icon 
-														type="close"
-														style="font-size: 12px"
-														class="vc-notice__close"
-														// @ts-ignore
-														onClick={handleClose} 
-													/>
-												)
-											}
-										</div>
-									</div>
-								),
-								[[vShow, isActive.value]]
-							)
-						}
+										)
+									}
+									{
+										props.content && (
+											<div class="vc-notice__content">
+												{
+													typeof props.content === 'string' 
+														? <div innerHTML={props.content} />
+														: typeof props.content === 'function'
+															? <Customer render={props.content} />
+															: null
+												}
+											</div>
+										)
+									}
+								</div>
+								{
+									props.closable && (
+										<Icon 
+											type="close"
+											style="font-size: 12px"
+											class="vc-notice__close"
+											// @ts-ignore
+											onClick={handleClose} 
+										/>
+									)
+								}
+							</div>
+						</div>
 					</TransitionSlide>
 				</div>
 			);

@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { getCurrentInstance, computed, defineComponent, onBeforeUnmount, onMounted, ref, watch, withDirectives, vShow } from 'vue';
+import { getCurrentInstance, computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { throttle } from 'lodash-es';
 import * as $ from '@deot/helper-dom';
 import { raf } from '@deot/helper-utils';
@@ -221,25 +221,19 @@ export const Track = defineComponent({
 		return () => {
 			return (
 				<TransitionFade>
-					{
-						withDirectives(
-							(
-								<div
-									ref={track}
-									class={['is-' + barOptions.value.key, 'vc-scroller-track']}
-									onMousedown={handleClickTrack}
-								>
-									<div
-										ref={thumb}
-										class={[props.thumbClassName, 'vc-scroller-track__thumb']}
-										style={[props.thumbStyle!, thumbCalcStyle.value]}
-										onMousedown={handleClickThumb}
-									/>
-								</div>
-							),
-							[[vShow, thumbSize.value && (props.always || isVisible.value)]]
-						)
-					}
+					<div
+						v-show={thumbSize.value && (props.always || isVisible.value)}
+						ref={track}
+						class={['is-' + barOptions.value.key, 'vc-scroller-track']}
+						onMousedown={handleClickTrack}
+					>
+						<div
+							ref={thumb}
+							class={[props.thumbClassName, 'vc-scroller-track__thumb']}
+							style={[props.thumbStyle!, thumbCalcStyle.value]}
+							onMousedown={handleClickThumb}
+						/>
+					</div>
 				</TransitionFade>
 			);
 		};

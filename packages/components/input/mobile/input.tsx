@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, withDirectives, vShow } from 'vue';
+import { defineComponent, ref } from 'vue';
 import { props as inputProps } from '../input-props';
 
 import { MIcon } from '../../icon/index.m';
@@ -93,19 +93,13 @@ export const MInput = defineComponent({
 						{
 							!props.disabled && props.clearable && (
 								<MTransitionFade>
-									{
-										withDirectives(
-											(
-												<MIcon
-													class="vcm-input__icon-clear" 
-													type="clear" 
-													// @ts-ignore
-													onTouchstart={handleClear}
-												/>
-											),
-											[[vShow, !!currentValue.value]]
-										)
-									}
+									<MIcon
+										v-show={!!currentValue.value}
+										class="vcm-input__icon-clear" 
+										type="clear" 
+										// @ts-ignore
+										onTouchstart={handleClear}
+									/>
 								</MTransitionFade>
 							)
 						}
