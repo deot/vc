@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { ref} from 'vue';
+import { ref } from 'vue';
 import { TransitionScale } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';

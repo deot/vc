@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { getCurrentInstance, defineComponent, ref, onMounted, onUnmounted, withDirectives, vShow } from 'vue';
+import { getCurrentInstance, defineComponent, ref, onMounted, onUnmounted } from 'vue';
 import { props as noticeViewProps } from './notice-view-props';
 
 import { Icon } from "../icon";
@@ -57,25 +57,25 @@ export const NoticeView = defineComponent({
 
 		return () => {
 			return (
-				<div 
+				<div
 					class={["vc-notice", { 'is-fixed': props.fixed }]}
 					style={props.fixed ? { top: `${props.top}px` } : {}}
 				>
-					<TransitionSlide 
-						mode="right" 
+					<TransitionSlide
+						mode="right"
 						// @ts-ignore
 						onAfterLeave={handleRemove}
 					>
 						<div v-show={isActive.value} class="vc-notice__wrapper">
 							<div class="vc-notice__container">
 								{ props.mode && (<Icon type={`o-${props.mode}`} class={[`is-${props.mode}`, 'vc-notice__icon']} />) }
-								
+
 								<div>
 									{
 										props.title && (
 											<div style={[{ marginBottom: props.content ? '8px' : '' }]} class="vc-notice__title">
 												{
-													typeof props.title === 'string' 
+													typeof props.title === 'string'
 														? <div innerHTML={props.title} />
 														: typeof props.title === 'function'
 															? <Customer render={props.title} />
@@ -88,7 +88,7 @@ export const NoticeView = defineComponent({
 										props.content && (
 											<div class="vc-notice__content">
 												{
-													typeof props.content === 'string' 
+													typeof props.content === 'string'
 														? <div innerHTML={props.content} />
 														: typeof props.content === 'function'
 															? <Customer render={props.content} />
@@ -100,12 +100,12 @@ export const NoticeView = defineComponent({
 								</div>
 								{
 									props.closable && (
-										<Icon 
+										<Icon
 											type="close"
 											style="font-size: 12px"
 											class="vc-notice__close"
 											// @ts-ignore
-											onClick={handleClose} 
+											onClick={handleClose}
 										/>
 									)
 								}
