@@ -1,18 +1,19 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, ref } from 'vue';
+import { useAttrs } from '@deot/vc-hooks';
 import { props as inputProps } from '../input-props';
 
 import { MIcon } from '../../icon/index.m';
 import { MTransitionFade } from '../../transition/index.m';
 import { useInput } from '../use-input';
-import { useInherit } from '../use-inherit';
 import { useNativeEmitter } from '../use-native-emitter';
 
 const COMPONENT_NAME = 'vcm-input';
 
 export const MInput = defineComponent({
 	name: COMPONENT_NAME,
+	inheritAttrs: false,
 	props: {
 		...inputProps,
 		right: {
@@ -36,10 +37,10 @@ export const MInput = defineComponent({
 	],
 	setup(props, { slots, expose }) {
 		const input = ref<HTMLElement>();
-		
+		const it = useAttrs({ merge: false });
+
 		useNativeEmitter(input, expose);
 
-		const { binds } = useInherit();
 		const { 
 			currentValue,
 			currentMaxlength,
@@ -48,27 +49,41 @@ export const MInput = defineComponent({
 			handleClear
 		} = useInput(input);
 
-		const renderInput = () => {
+		const renderInput = (merge: boolean) => {
+			let binds = merge 
+				? {
+					class: it.value.class,
+					style: [props.inputStyle, it.value.style],
+					...it.value.attrs,
+					...it.value.listeners,
+					...listeners
+				}
+				: {
+					style: props.inputStyle,
+					...it.value.attrs,
+					...it.value.listeners,
+					...listeners
+				};
 			return (
 				// @ts-ignore
 				<input
+					type="text"
 					ref={input}
-					{ ...binds.value }
+					{ ...binds }
+					id={props.inputId}
+					disabled={props.disabled}
 					value={currentValue.value}
 					maxlength={currentMaxlength.value}
-					style={props.inputStyle}
-					{ 
-						...listeners 
-					}
 				/>
 			);
 		};
 
 		return () => {
-			if (props.styleless) return renderInput();
+			if (props.styleless) return renderInput(true);
 			return (
 				<div 
 					class={['vcm-input', classes.value]} 
+					id={props.id}
 				>
 					<div class="vcm-input__wrapper">
 						{
@@ -87,7 +102,7 @@ export const MInput = defineComponent({
 						
 						<div class={["vcm-input__content", { 'is-right': props.right }, classes.value]}>
 							{
-								slots.content?.() || renderInput()
+								slots.content?.() || renderInput(false)
 							}
 						</div>
 						{

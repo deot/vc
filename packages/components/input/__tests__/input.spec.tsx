@@ -208,6 +208,58 @@ describe('index.ts', () => {
 		expect(handleClick).toHaveBeenCalledTimes(1);
 	});
 
+	it('event:clear', async () => {
+		const current = ref('123');
+		const handleClear = vi.fn();
+		const handleInput = vi.fn();
+		const handleChange = vi.fn();
+		const handleUpdateModelValue = vi.fn((v) => {
+			current.value = v;
+		});
+
+		const wrapper = mount(Input, {
+			props: {
+				clearable: true,
+				modelValue: current.value,
+				onClear: handleClear,
+				onInput: handleInput,
+				onChange: handleChange,
+				'onUpdate:modelValue': handleUpdateModelValue
+			}
+		});
+
+		await wrapper.find('.vc-input__icon-clear').trigger('click');
+
+		expect(handleClear).toBeCalledTimes(1);
+		expect(handleInput).toBeCalledTimes(1);
+		expect(handleChange).toBeCalledTimes(1);
+		expect(handleUpdateModelValue).toBeCalledTimes(1);
+		expect(current.value).toBe('');
+	});
+
+	it('event:blur, focusValue', async () => {
+		const current = ref('1');
+		const handleBlur = vi.fn((_, focusValue) => {
+			expect(focusValue).toBe('1');
+			expect(current.value).toBe('123');
+		});
+		const wrapper = mount(Input, {
+			props: {
+				styleless: true,
+				modelValue: current.value,
+				onBlur: handleBlur,
+				'onUpdate:modelValue': (v) => {
+					current.value = v;
+				}
+			}
+		});
+
+		await wrapper.trigger('focus');
+		await wrapper.setValue('123');
+		await wrapper.trigger('blur');
+		expect(handleBlur).toHaveBeenCalledTimes(1);
+	});
+
 	it('focusEnd', async () => {
 		const handleFocus = vi.fn();
 		const wrapper = mount(Input, {
@@ -243,35 +295,6 @@ describe('index.ts', () => {
 
 		await wrapper.setProps({ bytes: true });
 		expect(el.maxLength).toBe(24);
-	});
-
-	it('event:clear', async () => {
-		const current = ref('123');
-		const handleClear = vi.fn();
-		const handleInput = vi.fn();
-		const handleChange = vi.fn();
-		const handleUpdateModelValue = vi.fn((v) => {
-			current.value = v;
-		});
-
-		const wrapper = mount(Input, {
-			props: {
-				clearable: true,
-				modelValue: current.value,
-				onClear: handleClear,
-				onInput: handleInput,
-				onChange: handleChange,
-				'onUpdate:modelValue': handleUpdateModelValue
-			}
-		});
-
-		await wrapper.find('.vc-input__icon-clear').trigger('click');
-
-		expect(handleClear).toBeCalledTimes(1);
-		expect(handleInput).toBeCalledTimes(1);
-		expect(handleChange).toBeCalledTimes(1);
-		expect(handleUpdateModelValue).toBeCalledTimes(1);
-		expect(current.value).toBe('');
 	});
 
 	it('maxlength: deleteContentBackward', async () => {

@@ -5,7 +5,6 @@ import { props as inputNumberProps } from '../input-number-props';
 
 import { MInput } from './input';
 import { useInputNumber } from '../use-input-number';
-import { useInherit } from '../use-inherit';
 import { useNativeEmitter } from '../use-native-emitter';
 
 const COMPONENT_NAME = 'vcm-input-number';
@@ -19,21 +18,15 @@ export const MInputNumber = defineComponent({
 		useNativeEmitter(input, expose);
 
 		const { formatterValue, listeners, plusDisabled, minusDisabled, handleStepper } = useInputNumber();
-		const { binds } = useInherit();
 
 		return () => {
 			return (
 				<MInput
 					ref={input}
 					{
-						...binds.value
+						...props
 					}
 					modelValue={formatterValue.value}
-					clearable={props.clearable}
-					prepend={props.prepend}
-					append={props.append}
-					type={props.type}
-					styleless={props.styleless}
 					class={{ 'vcm-input-number': !props.styleless, 'is-disabled': props.disabled && props.step }}
 					{
 						...{

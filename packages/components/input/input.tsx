@@ -2,12 +2,13 @@
 
 import { defineComponent, computed, ref } from 'vue';
 import type { PropType } from 'vue';
+import { useAttrs } from '@deot/vc-hooks';
+
 import { props as inputProps } from './input-props';
 
 import { Icon } from '../icon/index';
 import { TransitionFade } from '../transition/index';
 import { useInput } from './use-input';
-import { useInherit } from './use-inherit';
 import { useNativeEmitter } from './use-native-emitter';
 import { getBytesSize } from './utils';
 
@@ -15,6 +16,7 @@ const COMPONENT_NAME = 'vc-input';
 
 export const Input = defineComponent({
 	name: COMPONENT_NAME,
+	inheritAttrs: false,
 	props: {
 		...inputProps,
 		indicator: {
@@ -42,7 +44,7 @@ export const Input = defineComponent({
 		
 		useNativeEmitter(input, expose);
 
-		const { binds } = useInherit();
+		const it = useAttrs({ merge: false });
 		const { 
 			currentValue,
 			currentMaxlength,
@@ -68,27 +70,42 @@ export const Input = defineComponent({
 			return `${current}/${maxlength}`;
 		});
 
-		const renderInput = () => {
+		const renderInput = (merge: boolean) => {
+			let binds = merge 
+				? {
+					class: it.value.class,
+					style: [props.inputStyle, it.value.style],
+					...it.value.attrs,
+					...it.value.listeners,
+					...listeners
+				}
+				: {
+					style: props.inputStyle,
+					...it.value.attrs,
+					...it.value.listeners,
+					...listeners
+				};
 			return (
 				// @ts-ignore
 				<input
+					type="text"
 					ref={input}
-					{ ...binds.value }
+					{ ...binds }
+					id={props.inputId}
+					disabled={props.disabled}
 					value={currentValue.value}
 					maxlength={currentMaxlength.value}
-					style={props.inputStyle}
-					{ 
-						...listeners 
-					}
 				/>
 			);
 		};
 
 		return () => {
-			if (props.styleless) return renderInput();
+			if (props.styleless) return renderInput(true);
 			return (
 				<div 
-					class={['vc-input', classes.value]} 
+					class={['vc-input', classes.value, it.value.class]}
+					style={it.value.style} 
+					id={props.id}
 				>
 					<div class="vc-input__wrapper">
 						{
@@ -107,7 +124,7 @@ export const Input = defineComponent({
 						
 						<div class={["vc-input__content", classes.value]}>
 							{
-								slots.content?.() || renderInput()
+								slots.content?.() || renderInput(false)
 							}
 						</div>
 						{

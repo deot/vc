@@ -6,7 +6,6 @@ import { props as inputNumberProps } from './input-number-props';
 import { Icon } from '../icon/index';
 import { Input } from './input';
 import { useInputNumber } from './use-input-number';
-import { useInherit } from './use-inherit';
 import { useNativeEmitter } from './use-native-emitter';
 
 const COMPONENT_NAME = 'vc-input-number';
@@ -20,21 +19,15 @@ export const InputNumber = defineComponent({
 		useNativeEmitter(input, expose);
 
 		const { formatterValue, listeners, plusDisabled, minusDisabled, handleStepper } = useInputNumber();
-		const { binds } = useInherit();
 
 		return () => {
 			return (
 				<Input
 					ref={input}
 					{
-						...binds.value
+						...props
 					}
 					modelValue={formatterValue.value}
-					clearable={props.clearable}
-					prepend={props.prepend}
-					append={props.append}
-					type={props.type}
-					styleless={props.styleless}
 					class={{ 'vc-input-number': !props.styleless }}
 					{
 						...{

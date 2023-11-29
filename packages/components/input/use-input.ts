@@ -9,10 +9,19 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 	const props = instance.props as Props;
 
 	const currentValue = ref(props.modelValue);
-	const currentMaxlength = ref(props.maxlength);
 	const isFocus = ref(false);
 	const isOnComposition = ref(false);
 	const formItem: any = inject('form-item', {});
+
+	// 强制必须使用v-model，所以不需要判断一次
+	watch(
+		() => props.modelValue,
+		(v) => {
+			currentValue.value = v;
+			props.allowDispatch && formItem.change?.(v);
+		},
+		{ immediate: false }
+	);
 
 	const classes = computed(() => {
 		return {
@@ -21,20 +30,28 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		};
 	});
 
+	const currentMaxlength = computed(() => {
+		const value = currentValue.value;
+		const { maxlength, bytes } = props;
+		return Array.isArray(value) || !maxlength || !bytes 
+			? maxlength
+			: getFitMaxLength(value, maxlength);
+	});
+
 	// Focus时。可以强制刷新输入框内的值
 	const forceUpdate = () => {
 		instance.proxy?.$forceUpdate?.();
 	};
 
-	const handleKeydown = (e: any) => {
+	const handleKeydown = (e: KeyboardEvent) => {
 		emit('keydown', e);
 	};
 
-	const handleKeypress = (e: any) => {
+	const handleKeypress = (e: KeyboardEvent) => {
 		emit('keypress', e);
 	};
 
-	const handleKeyup = (e: any) => {
+	const handleKeyup = (e: KeyboardEvent) => {
 		// 数字键盘
 		if (e.keyCode == 13 || e.keyCode == 108) {
 			emit('enter', e);
@@ -42,7 +59,10 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		emit('keyup', e);
 	};
 
-	const handleFocus = (e: any) => {
+	let focusValue: Props['modelValue'];
+	const handleFocus = (e: InputEvent) => {
+		focusValue = currentValue.value;
+
 		isFocus.value = true;
 		
 		if (props.focusEnd) {
@@ -63,7 +83,7 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 	const handleBlur = (e: InputEvent) => {
 		isFocus.value = false;
 
-		emit('blur', e);
+		emit('blur', e, focusValue);
 		props.allowDispatch && formItem.blur?.(currentValue.value);
 	};
 
@@ -122,30 +142,6 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 
 		input.value?.focus?.();
 	};
-
-	// 强制必须使用v-model，所以不需要判断一次
-	watch(
-		() => props.modelValue,
-		(v) => {
-			currentValue.value = v;
-			props.allowDispatch && formItem.change?.(v);
-		},
-		{ immediate: false }
-	);
-
-	// to computed
-	watch(
-		[() => currentValue.value, () => props.maxlength, () => props.bytes],
-		([value, maxlength]) => {
-			if (Array.isArray(value)) return;
-			if (!maxlength || !props.bytes) {
-				currentMaxlength.value = maxlength;
-			} else {
-				currentMaxlength.value = getFitMaxLength(value, maxlength);
-			}
-		},
-		{ immediate: true }
-	);
 
 	// 非响应式
 	const listeners = {

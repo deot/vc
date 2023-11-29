@@ -5,7 +5,6 @@ import { props as inputSearchProps } from './input-search-props';
 
 import { Icon } from '../icon/index';
 import { Input } from './input';
-import { useInherit } from './use-inherit';
 import { useNativeEmitter } from './use-native-emitter';
 
 const COMPONENT_NAME = 'vc-input-search';
@@ -19,21 +18,13 @@ export const InputSearch = defineComponent({
 		
 		useNativeEmitter(input, expose);
 
-		const { binds } = useInherit();
-
 		return () => {
 			return (
 				<Input
 					ref={input}
 					{
-						...binds.value
+						...props
 					}
-					modelValue={props.modelValue}
-					clearable={props.clearable}
-					prepend={props.prepend}
-					append={props.append}
-					type={props.type}
-					styleless={props.styleless}
 					class={{ 'vc-input-search': !props.styleless }}
 					{
 						// 包含所有on*都会被绑定
@@ -44,7 +35,7 @@ export const InputSearch = defineComponent({
 						prepend: slots.prepend && (() => slots.prepend?.()),
 						append: (() => slots.append?.() || (
 							<div 
-								class={['vc-input-search__content', { 'is-disabled': binds.value.disabled }]}
+								class={['vc-input-search__content', { 'is-disabled': props.disabled }]}
 								onClick={(e) => emit('enter', e)}
 							>
 								{

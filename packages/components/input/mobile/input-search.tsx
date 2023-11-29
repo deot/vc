@@ -5,7 +5,6 @@ import { props as inputSearchProps } from '../input-search-props';
 
 import { MIcon } from '../../icon/index.m';
 import { MInput } from './input';
-import { useInherit } from '../use-inherit';
 import { useNativeEmitter } from '../use-native-emitter';
 
 const COMPONENT_NAME = 'vcm-input-search';
@@ -17,10 +16,6 @@ export const MInputSearch = defineComponent({
 		cancelText: {
 			type: String,
 			default: '取消'
-		},
-		type: {
-			type: String as (typeof inputSearchProps.type.type),
-			default: 'search'
 		}
 	},
 	inheritAttrs: false,
@@ -30,8 +25,6 @@ export const MInputSearch = defineComponent({
 		const isFocus = ref(false);
 		useNativeEmitter(input, expose);
 
-		const { binds } = useInherit();
-
 		const handleCancel = () => {
 			// 这里会触发attrs中的函数
 			emit('update:modelValue', '');
@@ -40,22 +33,18 @@ export const MInputSearch = defineComponent({
 		};
 
 		return () => {
+			const { cancelText, ...inputOptions } = props;
 			return (
 				<div class="vcm-input-search">
 					<MInput
 						ref={input}
 						{
-							...binds.value
+							...inputOptions
 						}
-						modelValue={props.modelValue}
-						clearable={props.clearable}
-						prepend={props.prepend}
-						append={props.append}
-						type={props.type}
-						styleless={props.styleless}
 						class={{ 'vcm-input-search__content': !props.styleless }}
 						{
 							...{
+								type: 'search',
 								...attrs,
 								onFocus: (e) => {
 									isFocus.value = true;
@@ -76,12 +65,12 @@ export const MInputSearch = defineComponent({
 						}}
 					</MInput>
 					{
-						isFocus.value && props.cancelText && (
+						isFocus.value && cancelText && (
 							<div 
 								class="vcm-input-search__btn"
 								onTouchend={handleCancel}
 							>
-								{props.cancelText}
+								{cancelText}
 							</div>
 						)
 					}
