@@ -13,27 +13,13 @@
 		@blur="handleBlur"
 		@enter="handleEnter"
 	/>
-	<InputNumber 
-		v-model="value[1]" 
-		:step="1"
-		:precision="0" 
-		:min="1000"
-		:disabled="disabled"
-		clearable
-		styleless
-		@clear="handleClear"
-		@change="handleChange"
-		@focus="handleFocus"
-		@blur="handleBlur"
-		@enter="handleEnter"
-	/>
 </template>
 <script setup>
 import { ref } from 'vue';
 import { InputNumber } from '..';
 
 const disabled = ref(false);
-const value = ref(Array.from({ length: 2 }).map(() => 11));
+const value = ref(Array.from({ length: 2 }).map(() => 'any'));
 
 const handleChange = () => {
 	console.log(value);

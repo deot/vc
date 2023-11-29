@@ -60,7 +60,7 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 	};
 
 	let focusValue: Props['modelValue'];
-	const handleFocus = (e: InputEvent) => {
+	const handleFocus = (e: FocusEvent) => {
 		focusValue = currentValue.value;
 
 		isFocus.value = true;
@@ -80,10 +80,10 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		emit('focus', e);
 	};
 
-	const handleBlur = (e: InputEvent) => {
+	const handleBlur = (e: FocusEvent) => {
 		isFocus.value = false;
 
-		emit('blur', e, focusValue);
+		emit('blur', e, (e.target as HTMLInputElement).value, focusValue);
 		props.allowDispatch && formItem.blur?.(currentValue.value);
 	};
 

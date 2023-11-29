@@ -80,6 +80,15 @@ export const useInputNumber = () => {
 		return $value;
 	};
 
+	const output = (value: string | number): any => {
+		// Number('') -> 0 会赋值，除非添加required，否者这里不修改
+		return typeof props.output === 'function' 
+			? props.output(value) 
+			: props.output === 'number' && value !== ''
+				? Number(value)
+				: value;
+	};
+
 	const composeValue = (value: string, tag: string): any => {
 		// 失焦时，只留一个'-'或为''
 		let $value = /^(-|)$/.test(value)
@@ -89,12 +98,7 @@ export const useInputNumber = () => {
 			? String(props.min)
 			: $value;
 
-		// Number('') -> 0 会赋值，除非添加required，否者这里不修改
-		return typeof props.output === 'function' 
-			? props.output($value) 
-			: props.output === 'number' && $value !== ''
-				? Number($value)
-				: $value;
+		return output($value);
 	};
 
 	const handleKeyup = async (e: KeyboardEvent) => {
@@ -118,8 +122,9 @@ export const useInputNumber = () => {
 	 * 其他
 	 * 1. 无法实时边界值计算, 主要矛盾点考虑加入最小值是100, 无法删除到最小值以下
 	 * @param value ~
+	 * @param e ~
 	 */
-	const handleInput = (value: string) => {
+	const handleInput = (value: string, e: InputEvent) => {
 		isInput.value = true;
 
 		value = value.trim();
@@ -140,11 +145,12 @@ export const useInputNumber = () => {
 			value = value.charAt(0) === '.' ? `0${value}` : value;
 		}
 
-		emit('input', value);
-		emit('update:modelValue', value);
+		console.log(value);
+		emit('update:modelValue', value, e);
+		emit('input', value, e);
 	};
 
-	const handleBlur = async (e: InputEvent) => {
+	const handleBlur = async (e: InputEvent, targetValue: string, focusValue: any) => {
 		isInput.value = false;
 		let value = composeValue(currentValue.value as string, 'input');
 
@@ -152,7 +158,7 @@ export const useInputNumber = () => {
 			let state = await afterHook(value);
 
 			state && (emit('input', value), emit('update:modelValue', value));
-			emit('blur', e, Number((e.target as any).value));
+			emit('blur', e, value, output(focusValue));
 		} catch (error) {
 			throw new VcError('vc-input-number', error);
 		}

@@ -239,7 +239,7 @@ describe('index.ts', () => {
 
 	it('event:blur, focusValue', async () => {
 		const current = ref('1');
-		const handleBlur = vi.fn((_, focusValue) => {
+		const handleBlur = vi.fn((_, targetValue, focusValue) => {
 			expect(focusValue).toBe('1');
 			expect(current.value).toBe('123');
 		});

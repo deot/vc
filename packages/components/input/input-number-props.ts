@@ -26,7 +26,7 @@ export const props = {
 	},
 	formatter: {
 		type: Function,
-		default: (v: string, precision: number) => (/^(-|)$/.test(v) ? '' : Number(v).toFixed(precision))
+		default: (v: string, precision: number) => (isNaN(+v) ? '' : Number(v).toFixed(precision))
 	},
 
 	/**
