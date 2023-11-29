@@ -1,72 +1,49 @@
-import {
-	getCurrentInstance,
-	reactive,
-	shallowRef,
-	watchEffect
-} from 'vue';
-import { kebabCase, camelCase } from 'lodash-es';
-import type { ShallowRef, ComponentInternalInstance } from 'vue';
+import { useAttrs as useRawAttrs, computed } from 'vue';
+import type { StyleValue, ComputedRef } from 'vue';
 
-/**
- * standard: v3的标准(inheritAttrs: false)
- * 	-> class, style, attrs和listeners合并在attrs中
- * 当standard设置为false, attrs, listeners, class, style独立存在
- *
- * Tips: inheritAttrs: true时, attrs中不含class, style, listeners
- */
 type Options = {
-	standard?: boolean;
+	merge?: boolean;
 	exclude?: string[];
 }
 
-type Attrs = ShallowRef<{
-	style?: Record<string, any>;
-	class?: Record<string, any>;
+type Attrs = {
+	[key: string]: any;
+	style?: StyleValue;
+	class?: StyleValue;
 	attrs?: Record<string, any>;
-	listeners?: Record<string, any>;
-}>
+	listeners?: Record<string, (...args: any[]) => any>;
+}
 
 /**
- * 让attrs变为响应式，而非使用onUpdated进行绑定
- * inheritAttrs：false, style, class不是响应式，需要用到此方法
+ * Tips: 
+ * 	1. attrs: 未在emits和props中的值;
+ * 	2. inheritAttrs只是取决于是否作用到根节点上
  * @param options ~
  * @returns ~
  */
-export const useAttrs = (options?: Options): Attrs => {
-	const { standard = true, exclude = [] } = options || {};
-	const instance = getCurrentInstance() as ComponentInternalInstance;
-	const attrs = shallowRef({});
+export const useAttrs = (options?: Options): ComputedRef<Attrs> => {
+	const attrs = useRawAttrs();
+	const { merge = true, exclude = [] } = options || {};
 
-	instance.attrs = reactive(instance.attrs);
+	return computed(() => {
+		if (merge && !exclude.length) return attrs;
+		const result = Object.entries(attrs).reduce((pre, [key, val]) => {
+			if (exclude.includes(key)) return pre;
+			if (!merge && /^on([A-Z])/.test(key)) {
+				pre.listeners[key] = val;	
+			} else if (!merge && /(class|style)/.test(key)) {
+				pre[key] = val;
+			} else {
+				pre.attrs[key] = val;
+			}
+			return pre;
+		}, {
+			style: undefined,
+			class: undefined,
+			attrs: {},
+			listeners: {}
+		});
 
-	watchEffect(() => {
-		const res = Object.entries(instance.attrs)
-			.reduce((pre, [key, val]) => {
-				if (exclude.includes(key)) return pre;
-				if (!standard) {
-					if (/^on([A-Z])/.test(key)) {
-						key = kebabCase(key.replace(/^on([^\s]+)/, "$1"));
-						pre.listeners[key] = val;	
-					} else if (/(class|style)/.test(key)) {
-						pre[key] = val;
-					} else {
-						pre.attrs[key] = val;
-					}
-					return pre;
-				} 
-				// key为小驼峰
-				pre.attrs[camelCase(key)] = val;
-				return pre;
-			}, {
-				style: {},
-				class: {},
-				attrs: {},
-				listeners: {}
-			});
-
-		attrs.value = standard ? res.attrs : res;
+		return merge ? result.attrs : result;
 	});
-
-	// 注意这是一个ref
-	return attrs;
 };

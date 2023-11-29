@@ -1,81 +1,85 @@
-import { h, defineComponent, ref, watch } from 'vue';
-import type { ComponentOptions } from 'vue';
+import { h, defineComponent } from 'vue';
 import { mount } from '@vue/test-utils';
+import { useAttrs } from '@deot/vc-hooks';
 
-// https://github.com/vuejs/core/blob/main/packages/runtime-core/__tests__/rendererAttrsFallthrough.spec.ts
-describe('use-attrs.ts', () => {
-	const ComponentSetup: ComponentOptions['setup'] = (props, { attrs }) => {
-		const count = ref(0);
-		const onClick = () => {
-			count.value++;
-		};
-		/**
-		 * https://cn.vuejs.org/guide/components/attrs.html#accessing-fallthrough-attributes-in-javascript
-		 * 有变化仍然会响应，但文档好像说是不能的，所以暂时不暴露use-attrs.ts文件
-		 */
-		watch(
-			() => attrs.any,
-			() => {
-				count.value++;
-			}
-		);
+describe('use-scrollbar.ts', () => {
+	it('merge: true', async () => {
+		const Wrapper = defineComponent(() => {
+			const it = useAttrs();
+			return () => h('div', h('span', it.value, 'any'));
+		});
 
-		return () => {
-			return h(
-				'div', 
-				{ onClick }, 
-				h('span', attrs, `${(props as any).title}${count.value}`)
-			);
-		};
-	};
-	it('default behavior, inheritAttrs = true', async () => {
-		const Wrapper = defineComponent(ComponentSetup, { props: ['title'] });
-		const root = mount(Wrapper, { 
-			props: {
-				title: 'title',
-			},
+		const handleAny = vi.fn();
+		const root = mount(Wrapper, {
 			attrs: {
+				class: 'any',
 				any: 'any',
-				class: 'class'
+				onAny: handleAny
 			}
 		});
 
-		expect(root.find('span').text()).toMatch(`title0`);
-		expect(root.attributes()).toEqual({ class: 'class', any: 'any' }); // 由于设置了inheritAttrs=true
-		expect(root.find('span').attributes()).toEqual({ class: 'class', any: 'any' }); // 由于使用了attrs
-
-		await root.trigger('click');
-		expect(root.find('span').text()).toMatch(`title1`);
-		
-		await root.setProps({ any: 'any-' });
-		expect(root.find('span').text()).toMatch(`title2`);
-		expect(root.attributes()).toEqual({ class: 'class', any: 'any-' });
-		expect(root.find('span').attributes()).toEqual({ class: 'class', any: 'any-' });
+		expect(root.find('span').attributes()).toEqual({ class: 'any', any: 'any' })
+		await root.find('span').trigger('any');
+		expect(handleAny).toBeCalledTimes(2);
 	});
 
-	it('default behavior, inheritAttrs = false', async () => {
-		const Wrapper = defineComponent(ComponentSetup, { inheritAttrs: false, props: ['title'] });
+	it('merge: false', async () => {
+		const Wrapper = defineComponent(() => {
+			const it = useAttrs({ merge: false });
+			return () => h('div', h('span', it.value.attrs, 'any'));
+		});
 
-		const root = mount(Wrapper, { 
-			props: {
-				title: 'title',
-			},
+		const handleAny = vi.fn();
+		const root = mount(Wrapper, {
 			attrs: {
+				class: 'any',
 				any: 'any',
-				class: 'class'
+				onAny: handleAny
 			}
 		});
 
-		expect(root.find('span').text()).toMatch(`title0`);
-		expect(root.attributes()).toEqual({}); // 由于设置了inheritAttrs=false
-		expect(root.find('span').attributes()).toEqual({ class: 'class', any: 'any' }); // 由于使用了attrs
+		expect(root.find('span').attributes()).toEqual({ any: 'any' })
+		await root.find('span').trigger('any');
+		expect(handleAny).toBeCalledTimes(1);
+	});
 
-		await root.trigger('click');
-		expect(root.find('span').text()).toMatch(`title1`);
+	it('exclude', async () => {
+		const Wrapper = defineComponent(() => {
+			const it = useAttrs({ merge: false, exclude: ['any'] });
+			return () => h('div', h('span', it.value.attrs, 'any'));
+		});
 
-		await root.setProps({ any: 'any-' });
-		expect(root.find('span').text()).toMatch(`title2`);
-		expect(root.attributes()).toEqual({});
-		expect(root.find('span').attributes()).toEqual({ class: 'class', any: 'any-' });
+		const handleAny = vi.fn();
+		const root = mount(Wrapper, {
+			attrs: {
+				class: 'any',
+				any: 'any',
+				onAny: handleAny
+			}
+		});
+
+		expect(root.find('span').attributes()).toEqual({})
+		await root.find('span').trigger('any');
+		expect(handleAny).toBeCalledTimes(1);
+	});
+
+	it('merge, exclude', async () => {
+		const Wrapper = defineComponent(() => {
+			const it = useAttrs({ merge: true, exclude: ['any'] });
+			return () => h('div', h('span', it.value.attrs, 'any'));
+		});
+
+		const handleAny = vi.fn();
+		const root = mount(Wrapper, {
+			attrs: {
+				class: 'any',
+				any: 'any',
+				onAny: handleAny
+			}
+		});
+
+		expect(root.find('span').attributes()).toEqual({})
+		await root.find('span').trigger('any');
+		expect(handleAny).toBeCalledTimes(1);
 	});
 });
