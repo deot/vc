@@ -1,6 +1,5 @@
 import { ref, watch, computed, getCurrentInstance } from 'vue';
 import type { Ref } from 'vue';
-import { VcError } from '../vc/index';
 import type { Props } from './input-number-props';
 
 type Value = Props['modelValue'];
@@ -12,17 +11,16 @@ export const useInputNumber = () => {
 	const currentValue: Ref<Value> = ref('');
 	const isInput = ref(false);
 	
-	let hookValue: Value;
+	let changedBeforeValue: Value;
 	let timer: any;
 
 	watch(
 		() => props.modelValue,
 		(v) => {
-			// hookValue有值后将不再在此处赋值
-			if (!timer && !hookValue && !isInput.value) {
-				hookValue = v;
+			// changedBeforeValue有值后将不再在此处赋值
+			if (!timer && !changedBeforeValue && !isInput.value) {
+				changedBeforeValue = v;
 			}
-			currentValue.value = v;
 		},
 		{ immediate: true }
 	);
@@ -36,26 +34,36 @@ export const useInputNumber = () => {
 	});
 
 	const formatterValue = computed(() => {
-		return isInput.value
-			? currentValue.value
-			: props.formatter(currentValue.value, props.precision);
+		return isInput.value ? currentValue.value : props.modelValue;
 	});
 
-	const afterHook = async (value: Value) => {
+	const sync = (value: string, e: any) => {
+		if (value === props.modelValue) return;
+
+		emit('update:modelValue', value, e);
+		emit('input', value, e);
+		emit('change', value, e);
+	};
+
+	const isAfterAllowChanged = async (e: any, value: Value) => {
 		let onAfter = instance.vnode?.props?.onAfter;
 		if (!onAfter) return true;
-		let state = await onAfter?.(value);
-		if (state) {
-			hookValue = value;
+		let allow = false;
+		try {
+			allow = (await onAfter?.(value)) !== false;
+		} catch { /* empty */ }
+
+		if (allow) {
+			changedBeforeValue = value;
 		} else {
-			emit('update:modelValue', hookValue);
-			emit('input', hookValue);
+			// 回滚数值
+			sync(changedBeforeValue as string, e);
 		}
-		return state;
+		return allow;
 	};
 
 	const compareWithBoundary = (value: number | string, tag: string) => {
-		let $value: number = +value;
+		let $value = value;
 		if (+value > props.max) {
 			$value = props.max;
 
@@ -79,16 +87,6 @@ export const useInputNumber = () => {
 		}
 		return $value;
 	};
-
-	const output = (value: string | number): any => {
-		// Number('') -> 0 会赋值，除非添加required，否者这里不修改
-		return typeof props.output === 'function' 
-			? props.output(value) 
-			: props.output === 'number' && value !== ''
-				? Number(value)
-				: value;
-	};
-
 	const composeValue = (value: string, tag: string): any => {
 		// 失焦时，只留一个'-'或为''
 		let $value = /^(-|)$/.test(value)
@@ -98,7 +96,7 @@ export const useInputNumber = () => {
 			? String(props.min)
 			: $value;
 
-		return output($value);
+		return props.output($value);
 	};
 
 	const handleKeyup = async (e: KeyboardEvent) => {
@@ -106,13 +104,8 @@ export const useInputNumber = () => {
 		if (e.key === 'Enter') {
 			let value = composeValue(currentValue.value as string, 'input');
 
-			try {
-				let state = await afterHook(value);
-				state && (emit('input', value), emit('update:modelValue', value));
-				emit('enter', e);
-			} catch (error) {
-				throw new VcError('vc-input-number', error);
-			}
+			let state = await isAfterAllowChanged(e, value);
+			state && emit('enter', e);
 
 		}
 		emit('keyup', e);
@@ -128,12 +121,30 @@ export const useInputNumber = () => {
 		isInput.value = true;
 
 		value = value.trim();
+		if (Number.isNaN(+value)) { // `[A-Za-z]` -> ''
+			let hasDoubleDot = false;
+			let hasDoubleDash = false;
+			value = value
+				.replace(/[^0-9\.\-]/g, '')
+				.replace(/-/g, function (_, index) {
+					if (hasDoubleDash || index !== 0) {
+						return '';
+					} else {
+						hasDoubleDash = true;
+						return '-';
+					}
+				})
+				.replace(/\./g, () => {
+					if (hasDoubleDot) {
+						return '';
+					} else {
+						hasDoubleDot = true;
+						return '.';
+					}
+				});
+		} 
 
-		if (/[^-]/.test(value) && Number.isNaN(Number(value))) { // `[A-Za-z]` -> ''
-			value = currentValue.value as string;
-		} else if (/[-]{2,}/.test(value)) { // `--` -> `-`
-			value = '-';
-		} else if (value !== '') {
+		if (value !== '') {
 			let regex = props.precision
 				? new RegExp(`(.*\\.[\\d]{${props.precision}})[\\d]+`)
 				: /(.*)\./;
@@ -145,23 +156,17 @@ export const useInputNumber = () => {
 			value = value.charAt(0) === '.' ? `0${value}` : value;
 		}
 
-		console.log(value);
-		emit('update:modelValue', value, e);
-		emit('input', value, e);
+		currentValue.value = value;
+		sync(props.output(value), e);
 	};
 
-	const handleBlur = async (e: InputEvent, targetValue: string, focusValue: any) => {
+	const handleBlur = async (e: FocusEvent, _targetValue: string, focusValue: any) => {
 		isInput.value = false;
 		let value = composeValue(currentValue.value as string, 'input');
+		let allow = await isAfterAllowChanged(e, value);
 
-		try {
-			let state = await afterHook(value);
-
-			state && (emit('input', value), emit('update:modelValue', value));
-			emit('blur', e, value, output(focusValue));
-		} catch (error) {
-			throw new VcError('vc-input-number', error);
-		}
+		allow && sync(value, e);
+		allow && emit('blur', e, value, focusValue);
 	};
 
 	/**
@@ -169,17 +174,18 @@ export const useInputNumber = () => {
 	 * 没有after时，返回true，有外面自己发射input
 	 * 有after时，根据after的返回值，如果是false，则由内部发射input事件，重新赋值value；
 	 * 如果是true，也由外部发射
+	 * @param e ~
 	 * @param value ~
 	 */
-	const afterDebounce = (value: Value) => {
+	const afterDebounce = (e: any, value: Value) => {
 		timer && clearTimeout(timer);
 		timer = setTimeout(() => {
-			afterHook(value);
+			isAfterAllowChanged(e, value);
 			timer = null;
 		}, 500);
 	};
 
-	const handleStepper = async (base: number) => {
+	const handleStepper = async (e: any, base: number) => {
 		let plus = instance.vnode?.props?.['onPlus'];
 		let minus = instance.vnode?.props?.['onMinus'];
 		let before = instance.vnode?.props?.['onBefore'];
@@ -202,30 +208,27 @@ export const useInputNumber = () => {
 		if (base === 1 && plus) { return plus?.(); }
 		if (base === -1 && minus) { return minus?.(); }
 
-		let value: number = +currentValue.value + (props.step as number) * base;
-		value = compareWithBoundary(value, 'button');
+		let value: number = +props.modelValue + (props.step as number) * base;
+		let value$ = props.output(compareWithBoundary(isNaN(value) ? '' : value, 'button'));
 
-		let state = true;
-		try {
-			if (before) {
-				state = await before?.(value);
-			}
+		let state = (await before?.(value$) !== false);
 
-			state && (emit('input', value), emit('update:modelValue', value));
-			afterDebounce(value);
-		} catch (e) {
-			throw new VcError('vc-input-number', e);
-		}
+		state && sync(value$, {});
+		afterDebounce(e, value);
 	};
 
 	const listeners = {
 		onKeyup: handleKeyup,
 		onBlur: handleBlur,
 		onInput: handleInput,
+
+		// 防止通过attrs挂在到Input组件上触发事件
+		onEnter: undefined,
+		onChange: undefined,
+		'onUpdate:modelValue': undefined
 	};
 
 	return {
-		currentValue,
 		listeners,
 		plusDisabled,
 		minusDisabled,

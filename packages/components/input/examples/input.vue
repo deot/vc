@@ -1,13 +1,14 @@
 <template>
-	<h1>{{ value }}</h1>
+	<h1>{{ current }}</h1>
 	<Input
-		v-model="value[0]"
+		v-model="current[0]"
 		:disabled="disabled"
 		:maxlength="2"
 		bytes
 		clearable
 		placeholder="显示placeholder"
 		indicator
+		@input="handleInput"
 		@change="handleChange"
 		@focus="handleFocus"
 		@blur="handleBlur"
@@ -19,22 +20,29 @@ import { ref } from 'vue';
 import { Input } from '..';
 
 const disabled = ref(false);
-const value = ref(Array.from({ length: 6 }).map(() => 'any'));
+const current = ref(Array.from({ length: 6 }).map(() => 'any'));
+
+const handleInput = () => {
+	console.log('input', current.value);
+};
 
 const handleChange = () => {
-	console.log(value);
+	console.log('change', current.value);
 };
 
 const handleFocus = () => {
-	console.log('聚焦的回调');
+	console.log('focus', current.value);
 };
 
-const handleBlur = () => {
-	console.log('失焦的回调');
+const handleBlur = (e, v, old) => {
+	console.log('blur', current.value, v, old);
 };
 
 const handleEnter = () => {
-	console.log('回车键的回调');
+	console.log('enter', current.value);
+};
+const handleClear = () => {
+	console.log('Clear');
 };
 </script>
 

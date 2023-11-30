@@ -131,16 +131,23 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		emit('paste', e, (e.clipboardData as DataTransfer).getData('text'));
 	};
 
+	// 聚焦状态先触发blur，再执行clear
 	const handleClear = () => {
-		const e = { target: { value: '' } };
-		
-		emit('update:modelValue', '');
-		emit('input', '');
+		const done = () => {
+			const e = { target: { value: '' } };
+			
+			emit('update:modelValue', '');
+			emit('input', '');
 
-		emit('change', e);
-		emit('clear', e);
+			emit('change', e);
+			emit('clear', e);
 
-		input.value?.focus?.();
+			input.value?.focus?.();
+		};
+
+		isFocus.value 
+			? setTimeout(done)
+			: done();
 	};
 
 	// 非响应式

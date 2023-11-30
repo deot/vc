@@ -43,7 +43,7 @@ export const MInputNumber = defineComponent({
 									class="vcm-input-number__minus" 
 									// @ts-ignore
 									disabled={minusDisabled.value ? 'disabled' : undefined} 
-									onClick={() => handleStepper(-1)}
+									onClick={(e) => handleStepper(e, -1)}
 								/>
 							))
 							: undefined,
@@ -53,7 +53,7 @@ export const MInputNumber = defineComponent({
 									class="vcm-input-number__plus" 
 									// @ts-ignore
 									disabled={plusDisabled.value ? 'disabled' : undefined} 
-									onClick={() => handleStepper(1)}
+									onClick={(e) => handleStepper(e, 1)}
 								/>
 							))
 							: undefined

@@ -1,13 +1,18 @@
 <template>
-	<h1>{{ value }}</h1>
+	<h1>{{ current }}</h1>
 	<InputNumber 
-		v-model="value[0]" 
+		v-model="current[0]" 
 		:step="1"
-		:precision="0" 
+		:precision="2" 
 		:min="1000"
 		:disabled="disabled"
 		clearable
+		required
+		:output="v => v + ''"
+		@after="handleAfter"
+		placeholder="请输入"
 		@clear="handleClear"
+		@input="handleInput"
 		@change="handleChange"
 		@focus="handleFocus"
 		@blur="handleBlur"
@@ -17,27 +22,46 @@
 <script setup>
 import { ref } from 'vue';
 import { InputNumber } from '..';
+import { Message } from '../../message';
 
 const disabled = ref(false);
-const value = ref(Array.from({ length: 2 }).map(() => 'any'));
+const current = ref(Array.from({ length: 2 }).map(() => 'any'));
+
+const logger = (source, ...rest) => {
+	console.log(`%c [${source}]`, 'color: red; font-weight: bold', ...rest);
+};
+
+const handleInput = () => {
+	logger('input', current.value);
+};
 
 const handleChange = () => {
-	console.log(value);
+	logger('change', current.value);
 };
 
 const handleFocus = () => {
-	console.log('聚焦的回调');
+	logger('focus', current.value);
 };
 
-const handleBlur = () => {
-	console.log('失焦的回调');
+const handleBlur = (_e, v, old) => {
+	logger('blur', current.value, v, old, /blur/);
 };
 
 const handleEnter = () => {
-	console.log('回车键的回调');
+	logger('enter', current.value);
 };
 const handleClear = () => {
-	console.log('Clear');
+	logger('clear');
+};
+
+const handleAfter = (v) => {
+	// Message.loading(`${v}`);
+	return new Promise((resolve, _rejcet) => {
+		setTimeout(() => {
+			resolve();
+			// Message.destroy();
+		}, 300);
+	});
 };
 </script>
 
