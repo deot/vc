@@ -1,4 +1,4 @@
-import { ref, inject, watch, computed, getCurrentInstance } from 'vue';
+import { ref, inject, watch, computed, getCurrentInstance, nextTick } from 'vue';
 import type { Ref } from 'vue'; 
 import type { Props } from './input-props'; 
 import { getFitValue, getFitMaxLength } from './utils';
@@ -10,6 +10,7 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 
 	const currentValue = ref(props.modelValue);
 	const isFocus = ref(false);
+	const isClearing = ref(false);
 	const isOnComposition = ref(false);
 	const formItem: any = inject('form-item', {});
 
@@ -64,7 +65,8 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		focusValue = currentValue.value;
 
 		isFocus.value = true;
-		
+
+		if (isClearing.value) return;
 		if (props.focusEnd) {
 			let length = String(currentValue.value).length;
 			/**
@@ -73,7 +75,7 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 			 * when mouse clicks
 			 */
 			setTimeout(() => {
-				// @ts-ignore: deprecated
+				// @ts-ignore : deprecated
 				e.srcElement?.setSelectionRange(length, length);
 			}, 0);
 		}
@@ -81,6 +83,7 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 	};
 
 	const handleBlur = (e: FocusEvent) => {
+		if (isClearing.value) return;
 		isFocus.value = false;
 
 		emit('blur', e, (e.target as HTMLInputElement).value, focusValue);
@@ -98,17 +101,27 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		 * 	- 不允许输入`abc值`，可以允许输入`abcd`
 		 * 3.当粘帖时，文本太多，要计算fitValue
 		 */
-		if (typeof props.maxlength !== 'undefined' && props.bytes && e.inputType !== 'deleteContentBackward') {
+		if (
+			typeof props.maxlength !== 'undefined' 
+			&& props.bytes 
+			&& e.inputType !== 'deleteContentBackward'
+		) {
 			let fitValue = getFitValue(value, props.maxlength) as string;
 			if (value !== fitValue) {
 				value = fitValue;
 			}
 		}
+		(e.target as HTMLInputElement).value === '测试s' && console.log(props.modelValue, value);
+		/**
+		 * 值相同，不触发事件
+		 * 粘帖事件，允许触发事件
+		 */
+		if (e.inputType !== 'insertFromPaste' && props.modelValue === value) return;
 		
 		emit('update:modelValue', value, e);
 		emit('input', value, e);
 
-		emit('change', e);
+		emit('change', value, e);
 		forceUpdate();
 	};
 
@@ -123,31 +136,26 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		}
 	};
 
-	const handleChange = (e: InputEvent) => {
-		emit('change', e);
-	};
-
 	const handlePaste = (e: ClipboardEvent) => {
 		emit('paste', e, (e.clipboardData as DataTransfer).getData('text'));
 	};
 
-	// 聚焦状态先触发blur，再执行clear
+	// 聚焦状态使用mousedown先触发clear再执行blur
 	const handleClear = () => {
-		const done = () => {
-			const e = { target: { value: '' } };
-			
-			emit('update:modelValue', '');
-			emit('input', '');
+		if (isFocus.value) {
+			isClearing.value = true;
+		}
+		const e = { target: { value: '' } };
+		
+		emit('update:modelValue', '');
+		emit('input', '');
 
-			emit('change', e);
-			emit('clear', e);
+		emit('change', '');
+		emit('clear', e);
 
-			input.value?.focus?.();
-		};
+		input.value?.focus?.();
 
-		isFocus.value 
-			? setTimeout(done)
-			: done();
+		setTimeout(() => (isClearing.value = false), 0);
 	};
 
 	// 非响应式
@@ -160,15 +168,18 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		onCompositionstart: handleComposition,
 		onCompositionupdate: handleComposition,
 		onCompositionend: handleComposition,
+		onPaste: handlePaste,
 		onInput: handleInput,
-		onChange: handleChange,
-		onPaste: handlePaste
+
+		// 原生的change禁止触发
+		onChange: undefined
 	};
 
 	return {
 		currentValue,
 		currentMaxlength,
 		isFocus,
+		isClearing,
 		isOnComposition,
 		classes,
 		listeners,

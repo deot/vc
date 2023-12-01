@@ -15,11 +15,10 @@ export const InputNumber = defineComponent({
 	props: inputNumberProps,
 	inheritAttrs: false,
 	setup(props, { slots, expose, attrs }) {
-		const input = ref<HTMLElement>();
-		useNativeEmitter(input, expose);
-
+		const input = ref<any>();
 		const { formatterValue, listeners, plusDisabled, minusDisabled, handleStepper } = useInputNumber();
 
+		useNativeEmitter(input, expose);
 		return () => {
 			return (
 				<Input

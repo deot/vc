@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, computed, ref } from 'vue';
+import { defineComponent, computed, ref, withModifiers } from 'vue';
 import type { PropType } from 'vue';
 import { useAttrs } from '@deot/vc-hooks';
 
@@ -43,8 +43,8 @@ export const Input = defineComponent({
 		const input = ref<HTMLElement>();
 		
 		useNativeEmitter(input, expose);
-
 		const it = useAttrs({ merge: false });
+
 		const { 
 			currentValue,
 			currentMaxlength,
@@ -131,11 +131,10 @@ export const Input = defineComponent({
 							(!props.disabled && props.clearable) && (
 								<TransitionFade>
 									<Icon
-										v-show={!!currentValue.value}
 										class="vc-input__icon-clear" 
 										type="clear" 
-										// @ts-ignore
-										onClick={handleClear}
+										// @ts-ignore prevent 用于触发focus时，光标聚焦
+										onMousedown={withModifiers(handleClear, ['prevent'])}
 									/>
 								</TransitionFade>
 							)

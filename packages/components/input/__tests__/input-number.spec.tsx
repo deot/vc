@@ -23,39 +23,58 @@ describe('index.ts', () => {
 		expect(wrapper.classes()).toEqual(['vc-input', 'is-focus', 'is-disabled', 'vc-input-number']);
 	});
 
-	it('any', async () => {
+	it('default: invalid value', async () => {
 		const wrapper = mount(InputNumber, {
 			props: {
 				modelValue: 'any'
 			}
 		});
 
-		expect(wrapper.find('input').element.value).toBe('');
+		expect(wrapper.find('input').element.value).toBe('any');
+	});
+
+	it('default: invalid value', async () => {
+		const wrapper = mount(InputNumber, {
+			props: {
+				modelValue: 'any'
+			}
+		});
+
+		expect(wrapper.find('input').element.value).toBe('any');
 	});
 
 	it('min:blur', async () => {
 		const current = ref('1');
-		const handleBlur = vi.fn((_, targetValue, focusValue) => {
-			expect(focusValue).toBe(1);
+		const handleBlur = vi.fn((_, _targetValue, focusValue) => {
+			expect(focusValue).toBe('1');
 			expect(current.value).toBe(1000);
 		});
-		const wrapper = mount(InputNumber, {
-			props: {
-				modelValue: current.value,
-				styleless: true,
-				step: 1,
-				precision: 0,
-				min: 1000,
-				clearable: true,
-				onBlur: handleBlur,
-				'onUpdate:modelValue': (v) => {
-					current.value = v;
-				}
-			}
-		});
+		const wrapper = mount(() => (
+			<InputNumber 
+				v-model={current.value}
+				styleless={true}
+				step={1}
+				precision={0}
+				min={1000}
+				clearable={true}
+				// @ts-ignore
+				onBlur={handleBlur}
+			/>
+		));
 
 		await wrapper.trigger('focus');
 		await wrapper.trigger('blur');
 		expect(handleBlur).toHaveBeenCalledTimes(1);
+	});
+
+	it('event:blur', async () => {
+		const current = ref('');
+		const wrapper = mount(() => (
+			<InputNumber 
+				v-model={current.value}
+			/>
+		));
+
+		await wrapper.trigger('blur');
 	});
 });

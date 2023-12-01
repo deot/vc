@@ -179,7 +179,7 @@ describe('index.ts', () => {
 
 		await wrapper.find('input').setValue('any1');
 		expect(handleUpdateModelValue).toHaveBeenCalledTimes(1);
-		expect(handleChange).toHaveBeenCalledTimes(2);
+		expect(handleChange).toHaveBeenCalledTimes(1);
 		expect(handleInput).toHaveBeenCalledTimes(1);
 		expect(handleBlur).toHaveBeenCalledTimes(0);
 		expect(current.value).toBe('any1');
@@ -228,7 +228,7 @@ describe('index.ts', () => {
 			}
 		});
 
-		await wrapper.find('.vc-input__icon-clear').trigger('click');
+		await wrapper.find('.vc-input__icon-clear').trigger('mousedown');
 
 		expect(handleClear).toBeCalledTimes(1);
 		expect(handleInput).toBeCalledTimes(1);
@@ -237,9 +237,44 @@ describe('index.ts', () => {
 		expect(current.value).toBe('');
 	});
 
+	it('event:clear:focus', async () => {
+		const current = ref('123');
+		const handleClear = vi.fn();
+		const handleFocus = vi.fn();
+		const handleBlur = vi.fn();
+		const handleUpdateModelValue = vi.fn((v) => {
+			current.value = v;
+		});
+
+		const wrapper = mount(Input, {
+			props: {
+				clearable: true,
+				modelValue: current.value,
+				onClear: handleClear,
+				onFocus: handleFocus,
+				onBlur: handleBlur,
+				'onUpdate:modelValue': handleUpdateModelValue
+			}
+		});
+
+		await wrapper.find('input').trigger('focus');
+		expect(wrapper.classes()).toContain('is-focus');
+		await wrapper.find('.vc-input__icon-clear').trigger('mousedown');
+
+		// 模拟强制失焦，由于isCleaning，它不会触发
+		await wrapper.find('input').trigger('blur');
+		await wrapper.find('input').trigger('focus');
+
+		expect(handleClear).toBeCalledTimes(1);
+		expect(handleBlur).toBeCalledTimes(0);
+		expect(handleFocus).toBeCalledTimes(1);
+		expect(handleUpdateModelValue).toBeCalledTimes(1);
+		expect(current.value).toBe('');
+	});
+
 	it('event:blur, focusValue', async () => {
 		const current = ref('1');
-		const handleBlur = vi.fn((_, targetValue, focusValue) => {
+		const handleBlur = vi.fn((_, _targetValue, focusValue) => {
 			expect(focusValue).toBe('1');
 			expect(current.value).toBe('123');
 		});
@@ -331,15 +366,15 @@ describe('index.ts', () => {
 			current.value = v;
 		});
 
-		const wrapper = mount(Input, {
-			props: {
-				maxlength: 2,
-				bytes: true,
-				modelValue: current.value,
-				onInput: handleInput,
-				'onUpdate:modelValue': handleUpdateModelValue
-			}
-		});
+		const wrapper = mount(() => (
+			<Input
+				maxlength={2}
+				bytes={true}
+				modelValue={current.value}
+				onInput={handleInput}
+				onChange={handleUpdateModelValue}
+			/>
+		));
 		const el = wrapper.find('input').element;
 		expect(el.maxLength).toBe(2);
 
@@ -427,5 +462,11 @@ describe('index.ts', () => {
 		await wrapper.trigger('keyup', { keyCode: 108 });
 		expect(handleKeyup).toHaveBeenCalledTimes(2);
 		expect(handleEnter).toHaveBeenCalledTimes(1);
+
+		await wrapper.find('input').setValue('');
+
+		expect(handleInput).toHaveBeenCalledTimes(0);
+		expect(handleChange).toHaveBeenCalledTimes(0);
+		expect(handleUpdateModelValue).toHaveBeenCalledTimes(0);
 	});
 });

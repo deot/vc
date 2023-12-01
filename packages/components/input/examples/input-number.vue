@@ -2,13 +2,13 @@
 	<h1>{{ current }}</h1>
 	<InputNumber 
 		v-model="current[0]" 
+		ref="input"
 		:step="1"
 		:precision="2" 
 		:min="1000"
 		:disabled="disabled"
 		clearable
 		required
-		:output="v => v + ''"
 		@after="handleAfter"
 		placeholder="请输入"
 		@clear="handleClear"
@@ -24,6 +24,7 @@ import { ref } from 'vue';
 import { InputNumber } from '..';
 import { Message } from '../../message';
 
+const input = ref();
 const disabled = ref(false);
 const current = ref(Array.from({ length: 2 }).map(() => 'any'));
 
@@ -44,7 +45,7 @@ const handleFocus = () => {
 };
 
 const handleBlur = (_e, v, old) => {
-	logger('blur', current.value, v, old, /blur/);
+	logger('blur', current.value, v, old, input.value);
 };
 
 const handleEnter = () => {
@@ -55,11 +56,11 @@ const handleClear = () => {
 };
 
 const handleAfter = (v) => {
-	// Message.loading(`${v}`);
+	Message.loading(`${v}`);
 	return new Promise((resolve, _rejcet) => {
 		setTimeout(() => {
 			resolve();
-			// Message.destroy();
+			Message.destroy();
 		}, 300);
 	});
 };

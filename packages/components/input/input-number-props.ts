@@ -27,7 +27,7 @@ export const props = {
 	output: {
 		type: Function,
 		default: (value: string | number) => {
-			return isNaN(+value) ? '' : +value;
+			return isNaN(+value) || value === '' ? '' : +value;
 		}
 	}
 };
