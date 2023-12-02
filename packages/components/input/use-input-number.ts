@@ -37,11 +37,6 @@ export const useInputNumber = () => {
 		return isInput.value ? currentValue.value : props.modelValue;
 	});
 
-	// Focus时。可以强制刷新输入框内的值
-	const forceUpdate = () => {
-		instance.proxy?.$forceUpdate?.();
-	};
-
 	const sync = (value: string, e: any) => {
 		if (value === props.modelValue) return;
 
@@ -118,8 +113,6 @@ export const useInputNumber = () => {
 
 	const handleFocus = (e: FocusEvent) => {
 		currentValue.value = props.modelValue;
-		console.log(props.modelValue, currentValue.value);
-		forceUpdate();
 		emit('focus', e);
 	};
 

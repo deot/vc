@@ -79,7 +79,7 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 				e.srcElement?.setSelectionRange(length, length);
 			}, 0);
 		}
-		emit('focus', e);
+		emit('focus', e, currentValue.value);
 	};
 
 	const handleBlur = (e: FocusEvent) => {
@@ -111,7 +111,6 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 				value = fitValue;
 			}
 		}
-		(e.target as HTMLInputElement).value === '测试s' && console.log(props.modelValue, value);
 		/**
 		 * 值相同，不触发事件
 		 * 粘帖事件，允许触发事件
@@ -153,9 +152,13 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		emit('change', '');
 		emit('clear', e);
 
-		input.value?.focus?.();
-
-		setTimeout(() => (isClearing.value = false), 0);
+		// 非聚焦时清数据，modelValue接收同步后再触发focus(如input-number在focus事件中使用了props.modelValue)
+		nextTick(() => {
+			input.value?.focus?.();
+			setTimeout(() => {
+				isClearing.value = false;
+			}, 0);
+		});
 	};
 
 	// 非响应式

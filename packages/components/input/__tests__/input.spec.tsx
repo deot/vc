@@ -213,31 +213,35 @@ describe('index.ts', () => {
 		const handleClear = vi.fn();
 		const handleInput = vi.fn();
 		const handleChange = vi.fn();
-		const handleUpdateModelValue = vi.fn((v) => {
-			current.value = v;
+		const handleFocus = vi.fn((_, v) => {
+			expect(v).toBe(''); 
+			expect(current.value).toBe('');
 		});
-
-		const wrapper = mount(Input, {
-			props: {
-				clearable: true,
-				modelValue: current.value,
-				onClear: handleClear,
-				onInput: handleInput,
-				onChange: handleChange,
-				'onUpdate:modelValue': handleUpdateModelValue
-			}
+		const wrapper = mount(() => {
+			return (
+				<Input 
+					v-model={current.value}
+					clearable
+					onClear={handleClear}
+					onInput={handleInput}
+					onChange={handleChange}
+					onFocus={handleFocus}
+				/>
+			);
 		});
 
 		await wrapper.find('.vc-input__icon-clear').trigger('mousedown');
+		// 模拟mouse后的强制聚焦
+		await wrapper.find('input').trigger('focus');
 
 		expect(handleClear).toBeCalledTimes(1);
 		expect(handleInput).toBeCalledTimes(1);
 		expect(handleChange).toBeCalledTimes(1);
-		expect(handleUpdateModelValue).toBeCalledTimes(1);
+		expect(handleFocus).toBeCalledTimes(1);
 		expect(current.value).toBe('');
 	});
 
-	it('event:clear:focus', async () => {
+	it('event:focus:clear', async () => {
 		const current = ref('123');
 		const handleClear = vi.fn();
 		const handleFocus = vi.fn();
