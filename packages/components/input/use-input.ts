@@ -3,7 +3,7 @@ import type { Ref } from 'vue';
 import type { Props } from './input-props'; 
 import { getFitValue, getFitMaxLength } from './utils';
 
-export const useInput = (input: Ref<HTMLElement | undefined>) => {
+export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 	const instance = getCurrentInstance()!;
 	const { emit } = instance;
 	const props = instance.props as Props;
@@ -54,7 +54,7 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 
 	const handleKeyup = (e: KeyboardEvent) => {
 		// 数字键盘
-		if (e.keyCode == 13 || e.keyCode == 108) {
+		if (e.code === 'Enter') {
 			emit('enter', e);
 		}
 		emit('keyup', e);
@@ -69,16 +69,11 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		if (isClearing.value) return;
 		if (props.focusEnd) {
 			let length = String(currentValue.value).length;
-			/**
-			 * hack chrome浏览器的BUG：
-			 * setSelectionRange() for input/textarea during onFocus fails 
-			 * when mouse clicks
-			 */
 			setTimeout(() => {
-				// @ts-ignore : deprecated
-				e.srcElement?.setSelectionRange(length, length);
+				input.value!.setSelectionRange(length, length);
 			}, 0);
 		}
+
 		emit('focus', e, currentValue.value);
 	};
 
@@ -86,13 +81,13 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 		if (isClearing.value) return;
 		isFocus.value = false;
 
-		emit('blur', e, (e.target as HTMLInputElement).value, focusValue);
+		emit('blur', e, input.value!.value, focusValue);
 		props.allowDispatch && formItem.blur?.(currentValue.value);
 	};
 
 	const handleInput = (e: InputEvent) => {
 		if (isOnComposition.value) return;
-		let value = (e.target as HTMLInputElement).value;
+		let value = input.value!.value;
 		
 		/**
 		 * 当bytes为true, 初始值就已经超出maxlength的情况
@@ -154,7 +149,7 @@ export const useInput = (input: Ref<HTMLElement | undefined>) => {
 
 		// 非聚焦时清数据，modelValue接收同步后再触发focus(如input-number在focus事件中使用了props.modelValue)
 		nextTick(() => {
-			input.value?.focus?.();
+			input.value!.focus();
 			setTimeout(() => {
 				isClearing.value = false;
 			}, 0);

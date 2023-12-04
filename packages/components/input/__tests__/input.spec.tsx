@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
-import { ref, nextTick } from 'vue';
+import { ref, nextTick, createApp } from 'vue';
 import { Input } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 
 describe('index.ts', () => {
+	const root = document.createElement('div');
+	document.body.appendChild(root);
+
 	it('basic', () => {
 		expect(typeof Input).toBe('object');
 	});
@@ -197,7 +200,7 @@ describe('index.ts', () => {
 		await wrapper.trigger('keypress');
 		expect(handleKeypress).toHaveBeenCalledTimes(1);
 
-		await wrapper.trigger('keyup', { keyCode: 13 });
+		await wrapper.trigger('keyup', { code: 'Enter' });
 		expect(handleKeyup).toHaveBeenCalledTimes(1);
 		expect(handleEnter).toHaveBeenCalledTimes(1);
 
@@ -213,11 +216,9 @@ describe('index.ts', () => {
 		const handleClear = vi.fn();
 		const handleInput = vi.fn();
 		const handleChange = vi.fn();
-		const handleFocus = vi.fn((_, v) => {
-			expect(v).toBe(''); 
-			expect(current.value).toBe('');
-		});
-		const wrapper = mount(() => {
+		const handleFocus = vi.fn();
+		const handleBlur = vi.fn();
+		const app = createApp(() => {
 			return (
 				<Input 
 					v-model={current.value}
@@ -226,19 +227,29 @@ describe('index.ts', () => {
 					onInput={handleInput}
 					onChange={handleChange}
 					onFocus={handleFocus}
+					onBlur={handleBlur}
 				/>
 			);
 		});
+		app.mount(root);
+		let el = document.querySelector('i')!;
 
-		await wrapper.find('.vc-input__icon-clear').trigger('mousedown');
-		// 模拟mouse后的强制聚焦
-		await wrapper.find('input').trigger('focus');
+		el.dispatchEvent(new Event('mousedown'));
+		expect(current.value).toBe('');
+
+		expect(document.activeElement!.nodeName).toBe('BODY');
+		expect(handleFocus).toBeCalledTimes(0);
+		await nextTick();
+		expect(document.activeElement!.nodeName).toBe('INPUT');
 
 		expect(handleClear).toBeCalledTimes(1);
 		expect(handleInput).toBeCalledTimes(1);
 		expect(handleChange).toBeCalledTimes(1);
 		expect(handleFocus).toBeCalledTimes(1);
+		expect(handleBlur).toBeCalledTimes(0);
 		expect(current.value).toBe('');
+
+		app.unmount();
 	});
 
 	it('event:focus:clear', async () => {
@@ -246,34 +257,45 @@ describe('index.ts', () => {
 		const handleClear = vi.fn();
 		const handleFocus = vi.fn();
 		const handleBlur = vi.fn();
-		const handleUpdateModelValue = vi.fn((v) => {
+		const handleChange = vi.fn((v) => {
 			current.value = v;
 		});
 
-		const wrapper = mount(Input, {
-			props: {
-				clearable: true,
-				modelValue: current.value,
-				onClear: handleClear,
-				onFocus: handleFocus,
-				onBlur: handleBlur,
-				'onUpdate:modelValue': handleUpdateModelValue
-			}
+		const app = createApp(() => {
+			return (
+				<Input 
+					clearable
+					modelValue={current.value}
+					onClear={handleClear}
+					onFocus={handleFocus}
+					onBlur={handleBlur}
+					onChange={handleChange}
+				/>
+			);
 		});
 
-		await wrapper.find('input').trigger('focus');
-		expect(wrapper.classes()).toContain('is-focus');
-		await wrapper.find('.vc-input__icon-clear').trigger('mousedown');
+		app.mount(root);
+		let input = document.querySelector('input')!;
+		let wrapper = document.querySelector('.vc-input')!;
+		let icon = document.querySelector('i')!;
 
-		// 模拟强制失焦，由于isCleaning，它不会触发
-		await wrapper.find('input').trigger('blur');
-		await wrapper.find('input').trigger('focus');
+		input.dispatchEvent(new Event('focus'));
+		await nextTick();
+		expect(wrapper.classList.contains('is-focus')).toBeTruthy();
+
+		icon.dispatchEvent(new Event('mousedown'));
+		input.dispatchEvent(new Event('blur')); // 强制执行，不会触发
+
+		await nextTick(); // clear内的nextTick执行完
+		await new Promise(_ => { setTimeout(_, 0); }); // clear内的setTimeout执行完
 
 		expect(handleClear).toBeCalledTimes(1);
 		expect(handleBlur).toBeCalledTimes(0);
 		expect(handleFocus).toBeCalledTimes(1);
-		expect(handleUpdateModelValue).toBeCalledTimes(1);
+		expect(handleChange).toBeCalledTimes(1);
 		expect(current.value).toBe('');
+
+		app.unmount();
 	});
 
 	it('event:blur, focusValue', async () => {
@@ -352,7 +374,6 @@ describe('index.ts', () => {
 		const el = wrapper.find('input').element;
 		expect(el.maxLength).toBe(1);
 
-		// 这两步模拟删除
 		el.value = 'abc';
 		await wrapper.find('input').trigger('input', { 
 			inputType: "deleteContentBackward"
@@ -463,7 +484,7 @@ describe('index.ts', () => {
 		expect(handleKeyup).toHaveBeenCalledTimes(1);
 		expect(handleEnter).toHaveBeenCalledTimes(0);
 
-		await wrapper.trigger('keyup', { keyCode: 108 });
+		await wrapper.trigger('keyup', { code: 'Enter' });
 		expect(handleKeyup).toHaveBeenCalledTimes(2);
 		expect(handleEnter).toHaveBeenCalledTimes(1);
 
