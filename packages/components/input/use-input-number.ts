@@ -26,11 +26,11 @@ export const useInputNumber = () => {
 	);
 
 	const plusDisabled = computed(() => {
-		return props.disabled || (currentValue.value as number) >= props.max;
+		return props.disabled || (props.modelValue as number) >= props.max;
 	});
 
 	const minusDisabled = computed(() => {
-		return props.disabled || (currentValue.value as number) <= props.min;
+		return props.disabled || (props.modelValue as number) <= props.min;
 	});
 
 	const formatterValue = computed(() => {
@@ -99,16 +99,13 @@ export const useInputNumber = () => {
 		return props.output($value);
 	};
 
-	const handleKeyup = async (e: KeyboardEvent) => {
-		// 数字键盘
-		if (e.key === 'Enter') {
-			let value = composeValue(currentValue.value as string, 'input');
+	const handleEnter = async (e: KeyboardEvent) => {
+		let value = composeValue(currentValue.value as string, 'input');
 
-			let state = await isAfterAllowChanged(e, value);
-			state && emit('enter', e);
+		let allow = await isAfterAllowChanged(e, value);
 
-		}
-		emit('keyup', e);
+		allow && sync(value, e);
+		allow && emit('enter', e);
 	};
 
 	const handleFocus = (e: FocusEvent) => {
@@ -153,12 +150,10 @@ export const useInputNumber = () => {
 			let regex = props.precision
 				? new RegExp(`(.*\\.[\\d]{${props.precision}})[\\d]+`)
 				: /(.*)\./;
-
-			value = value.replace(regex, '$1');
-			// 0002 -> 2, 0.2 -> .2
-			value = value === '0' ? '0' : value.replace(/^[0]{1,}/, '');
-			// '0.' -> '.' -> '0.'
-			value = value.charAt(0) === '.' ? `0${value}` : value;
+			value = value
+				.replace(regex, '$1')
+				.replace(/^[0]{2,}/, '0') // 0002 -> 2,
+				.replace(/^\./, `0.`); // '.' -> '0.'
 		}
 
 		currentValue.value = value;
@@ -223,13 +218,12 @@ export const useInputNumber = () => {
 	};
 
 	const listeners = {
-		onKeyup: handleKeyup,
+		onEnter: handleEnter,
 		onFocus: handleFocus,
 		onBlur: handleBlur,
 		onInput: handleInput,
 
 		// 防止通过attrs挂在到Input组件上触发事件
-		onEnter: undefined,
 		onChange: undefined,
 		'onUpdate:modelValue': undefined
 	};

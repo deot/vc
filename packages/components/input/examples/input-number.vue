@@ -4,12 +4,6 @@
 		v-model="current[0]" 
 		ref="input"
 		:step="1"
-		:precision="2" 
-		:min="1000"
-		:disabled="disabled"
-		clearable
-		required
-		@after="handleAfter"
 		placeholder="请输入"
 		@clear="handleClear"
 		@input="handleInput"

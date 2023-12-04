@@ -26,6 +26,7 @@ $color-disabled: varfix(color-disabled, input);
 		box-shadow .2s ease-in-out;
 	border-radius: unitfix(4);
 	background-color: $background-color-light;
+	overflow: hidden;
 	@include border('', $color-light-extradeep, 4); // 不占边距
 	@include when(focus) {
 		&:after, &:before {
