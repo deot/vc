@@ -69,9 +69,9 @@ describe('index.ts', () => {
 		expect(el.value).toBe('0');
 		expect(current.value).toBe(0);
 
-		await input.setValue('abc');
+		await input.setValue('abcd');
 		expect(el.value).toBe('');
-		expect(current.value).toBe(0);
+		expect(current.value).toBe('');
 
 		await input.setValue('123');
 		expect(el.value).toBe('123');
@@ -244,6 +244,6 @@ describe('index.ts', () => {
 		expect(current.value).toBe(1);
 
 		await minusEl.trigger('click');
-		// expect(current.value).toBe(0);
+		expect(current.value).toBe(0);
 	});
 });

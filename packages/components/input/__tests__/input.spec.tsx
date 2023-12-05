@@ -444,6 +444,66 @@ describe('index.ts', () => {
 		expect(handleInput).toBeCalledTimes(1);
 	});
 
+	it('event:composition', async () => {
+		const handleInput = vi.fn();
+		const current = ref('');
+
+		const wrapper = mount(Input, {
+			props: {
+				styleless: true,
+				focusEnd: true,
+				modelValue: current.value,
+				onInput: handleInput
+			}
+		});
+
+		await wrapper.trigger('compositionstart');
+		wrapper.find('input').element.value = '1';
+		await wrapper.trigger('compositionstart');
+		await wrapper.trigger('input');
+		wrapper.find('input').element.value = '2';
+		await wrapper.trigger('compositionupdate');
+		await wrapper.trigger('input');
+		await wrapper.trigger('compositionend');
+		expect(handleInput).toBeCalledTimes(1);
+	});
+
+	it('uncontrolled', async () => {
+		const wrapper = mount(Input, {
+			props: {
+				controllable: false
+			}
+		});
+		await wrapper.find('input').setValue('123');
+		expect(wrapper.find('input').element.value).toBe('123');
+
+		await wrapper.setProps({
+			modelValue: '123'
+		});
+
+		expect(wrapper.find('input').element.value).toBe('123');
+
+		await wrapper.setProps({
+			modelValue: '12'
+		});
+		expect(wrapper.find('input').element.value).toBe('12');
+	});
+
+	it('controlled', async () => {
+		const wrapper = mount(Input, {
+			props: {
+				controllable: true
+			}
+		});
+		await wrapper.find('input').setValue('123');
+		expect(wrapper.find('input').element.value).toBe('');
+
+		await wrapper.setProps({
+			modelValue: '12'
+		});
+		expect(wrapper.find('input').element.value).toBe('12');
+	});
+
 	it('coverage', async () => {
 		const placeholder = '请输入';
 		const current = ref('');

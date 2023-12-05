@@ -8,37 +8,46 @@ export const useInputNumber = () => {
 	const instance = getCurrentInstance()!;
 	const { emit } = instance;
 	const props = instance.props as Props;
+	const typingValue: Ref<Value> = ref('');
 	const currentValue: Ref<Value> = ref('');
-	const isInput = ref(false);
+	const isTyping = ref(false);
 	
-	let changedBeforeValue: Value;
+	let rollBackValue: Value;
 	let timer: any;
 
 	watch(
 		() => props.modelValue,
 		(v) => {
-			// changedBeforeValue有值后将不再在此处赋值
-			if (!timer && !changedBeforeValue && !isInput.value) {
-				changedBeforeValue = v;
+			// rollBackValue有值后将不再在此处赋值
+			if (!timer && !rollBackValue && !isTyping.value) {
+				rollBackValue = v;
+			}
+			if (props.controllable || v !== currentValue.value) {
+				currentValue.value = v;
 			}
 		},
 		{ immediate: true }
 	);
 
 	const plusDisabled = computed(() => {
-		return props.disabled || (props.modelValue as number) >= props.max;
+		return props.disabled || (currentValue.value as number) >= props.max;
 	});
 
 	const minusDisabled = computed(() => {
-		return props.disabled || (props.modelValue as number) <= props.min;
+		return props.disabled || (currentValue.value as number) <= props.min;
 	});
 
-	const formatterValue = computed(() => {
-		return isInput.value ? currentValue.value : props.modelValue;
+	const displayValue = computed(() => {
+		return isTyping.value ? typingValue.value : currentValue.value;
 	});
 
 	const sync = (value: string, e: any) => {
-		if (value === props.modelValue) return;
+		if (value === currentValue.value) return;
+
+		// 非受控组件时
+		if (!props.controllable) {
+			currentValue.value = value;
+		}
 
 		emit('update:modelValue', value, e);
 		emit('input', value, e);
@@ -54,10 +63,10 @@ export const useInputNumber = () => {
 		} catch { /* empty */ }
 
 		if (allow) {
-			changedBeforeValue = value;
+			rollBackValue = value;
 		} else {
 			// 回滚数值
-			sync(changedBeforeValue as string, e);
+			sync(rollBackValue as string, e);
 		}
 		return allow;
 	};
@@ -100,7 +109,7 @@ export const useInputNumber = () => {
 	};
 
 	const handleEnter = async (e: KeyboardEvent) => {
-		let value = composeValue(currentValue.value as string, 'input');
+		let value = composeValue(typingValue.value as string, 'input');
 
 		let allow = await isAfterAllowChanged(e, value);
 
@@ -109,7 +118,7 @@ export const useInputNumber = () => {
 	};
 
 	const handleFocus = (e: FocusEvent) => {
-		currentValue.value = props.modelValue;
+		typingValue.value = currentValue.value;
 		emit('focus', e);
 	};
 
@@ -120,7 +129,7 @@ export const useInputNumber = () => {
 	 * @param e ~
 	 */
 	const handleInput = (value: string, e: InputEvent) => {
-		isInput.value = true;
+		isTyping.value = true;
 
 		value = value.trim();
 		if (Number.isNaN(+value)) { // `[A-Za-z]` -> ''
@@ -156,13 +165,13 @@ export const useInputNumber = () => {
 				.replace(/^\./, `0.`); // '.' -> '0.'
 		}
 
-		currentValue.value = value;
+		typingValue.value = value;
 		sync(props.output(value), e);
 	};
 
 	const handleBlur = async (e: FocusEvent, _targetValue: string, focusValue: any) => {
-		isInput.value = false;
-		let value = composeValue(currentValue.value as string, 'input');
+		isTyping.value = false;
+		let value = composeValue(typingValue.value as string, 'input');
 		let allow = await isAfterAllowChanged(e, value);
 
 		allow && sync(value, e);
@@ -208,7 +217,7 @@ export const useInputNumber = () => {
 		if (base === 1 && plus) { return plus?.(); }
 		if (base === -1 && minus) { return minus?.(); }
 
-		let value: number = +props.modelValue + (props.step as number) * base;
+		let value: number = +currentValue.value + (props.step as number) * base;
 		let value$ = props.output(compareWithBoundary(isNaN(value) ? '' : value, 'button'));
 
 		let state = (await before?.(value$) !== false);
@@ -232,7 +241,7 @@ export const useInputNumber = () => {
 		listeners,
 		plusDisabled,
 		minusDisabled,
-		formatterValue,
+		displayValue,
 		handleStepper
 	};
 };

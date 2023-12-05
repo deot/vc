@@ -36,7 +36,7 @@ export const MInput = defineComponent({
 		'tip'
 	],
 	setup(props, { slots, expose }) {
-		const input = ref<HTMLElement>();
+		const input = ref<HTMLInputElement>();
 		const it = useAttrs({ merge: false });
 
 		useNativeEmitter(input, expose);

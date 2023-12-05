@@ -14,6 +14,21 @@
 		@blur="handleBlur"
 		@enter="handleEnter"
 	/>
+
+	<Input
+		:model-value="current[0]"
+		:disabled="disabled"
+		:maxlength="2"
+		bytes
+		clearable
+		placeholder="显示placeholder"
+		indicator
+		@input="handleInput"
+		@change="handleChange"
+		@focus="handleFocus"
+		@blur="handleBlur"
+		@enter="handleEnter"
+	/>
 </template>
 <script setup>
 import { ref } from 'vue';

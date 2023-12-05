@@ -16,7 +16,7 @@ export const InputNumber = defineComponent({
 	inheritAttrs: false,
 	setup(props, { slots, expose, attrs }) {
 		const input = ref<any>();
-		const { formatterValue, listeners, plusDisabled, minusDisabled, handleStepper } = useInputNumber();
+		const { displayValue, listeners, plusDisabled, minusDisabled, handleStepper } = useInputNumber();
 
 		useNativeEmitter(input, expose);
 		return () => {
@@ -26,7 +26,8 @@ export const InputNumber = defineComponent({
 					{
 						...props
 					}
-					modelValue={formatterValue.value}
+					controllable={true}
+					modelValue={displayValue.value}
 					class={{ 'vc-input-number': !props.styleless }}
 					{
 						...{

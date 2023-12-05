@@ -12,6 +12,19 @@
 		@blur="handleBlur"
 		@enter="handleEnter"
 	/>
+
+	<InputNumber 
+		:model-value="current[0]" 
+		ref="input"
+		:step="1"
+		placeholder="请输入"
+		@clear="handleClear"
+		@input="handleInput"
+		@change="handleChange"
+		@focus="handleFocus"
+		@blur="handleBlur"
+		@enter="handleEnter"
+	/>
 </template>
 <script setup>
 import { ref } from 'vue';

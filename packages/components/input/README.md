@@ -187,7 +187,7 @@ const input = ref('');
 ### 属性
 | 属性                | 说明                                                                                       | 类型                 | 可选值 | 默认值     |
 | ----------------- | ---------------------------------------------------------------------------------------- | ------------------ | --- | ------- |
-| modelValue        | 绑定的值，用v-modal 双向绑定                                                                       | `String`、 `Number` | -   | -       |
+| modelValue        | 绑定的值，用v-model 双向绑定                                                                       | `String`、 `Number` | -   | -       |
 | maxlength         | 最大输入长度                                                                                   | `Number`           | -   | -       |
 | disabled          | 禁用输入框                                                                                    | `Boolean`          | -   | `false` |
 | focusEnd          | 聚焦时光标是否在文字后面                                                                             | `Boolean`          | -   | `false` |
@@ -201,7 +201,7 @@ const input = ref('');
 | inputStyle        | 输入框样式                                                                                    | `Object`、`Array`   | -   | -       |
 | inputId           | input的id属性                                                                               | `String`           | -   | -       |
 | allowDispatch     | 是否能触发`form`更新                                                                            | `Boolean`          | -   | `true`  |
-
+| controllable      | 是否为完全受控组件                                                                                  | `Boolean`          | -   | `false`  |
 
 ### attr属性作用到原生`input`标签中(除了class和style)
 

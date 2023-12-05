@@ -52,6 +52,15 @@ export const props = {
 	styleless: {
 		type: Boolean,
 		default: false
+	},
+
+	/**
+	 * 完全受控组件：输入框内的值为modelValue. 
+	 * 非完全受控时: 输入框内的值就是当前输入的值，modelValue变更，输入框的值也会更改
+	 */
+	controllable: {
+		type: Boolean,
+		default: false
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

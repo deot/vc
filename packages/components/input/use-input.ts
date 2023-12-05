@@ -14,14 +14,20 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 	const isOnComposition = ref(false);
 	const formItem: any = inject('form-item', {});
 
-	// 强制必须使用v-model，所以不需要判断一次
 	watch(
 		() => props.modelValue,
 		(v) => {
-			currentValue.value = v;
+			if (props.controllable || v !== currentValue.value) {
+				currentValue.value = v;
+			}
+		}
+	);
+
+	watch(
+		() => currentValue.value,
+		(v) => {
 			props.allowDispatch && formItem.change?.(v);
-		},
-		{ immediate: false }
+		}
 	);
 
 	const classes = computed(() => {
@@ -38,6 +44,19 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 			? maxlength
 			: getFitMaxLength(value, maxlength);
 	});
+
+	const sync = (value: string, e: any, force?: boolean) => {
+		if (!force && value === currentValue.value) return;
+
+		// 非受控组件时
+		if (!props.controllable) {
+			currentValue.value = value;
+		}
+
+		emit('update:modelValue', value, e);
+		emit('input', value, e);
+		emit('change', value, e);
+	};
 
 	// Focus时。可以强制刷新输入框内的值
 	const forceUpdate = () => {
@@ -106,16 +125,8 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 				value = fitValue;
 			}
 		}
-		/**
-		 * 值相同，不触发事件
-		 * 粘帖事件，允许触发事件
-		 */
-		if (e.inputType !== 'insertFromPaste' && props.modelValue === value) return;
-		
-		emit('update:modelValue', value, e);
-		emit('input', value, e);
 
-		emit('change', value, e);
+		sync(value, e, e.inputType === 'insertFromPaste'); // 粘帖事件，允许触发事件
 		forceUpdate();
 	};
 
@@ -141,10 +152,7 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 		}
 		const e = { target: { value: '' } };
 		
-		emit('update:modelValue', '');
-		emit('input', '');
-
-		emit('change', '');
+		sync('', e);
 		emit('clear', e);
 
 		// 非聚焦时清数据，modelValue接收同步后再触发focus(如input-number在focus事件中使用了props.modelValue)
