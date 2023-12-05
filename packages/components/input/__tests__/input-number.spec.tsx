@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 import { InputNumber } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 
@@ -245,5 +245,123 @@ describe('index.ts', () => {
 
 		await minusEl.trigger('click');
 		expect(current.value).toBe(0);
+	});
+
+	it('event: plus / minus', async () => {
+		const current = ref(1);
+		const wrapper = mount(() => {
+			return (
+				<InputNumber 
+					v-model={current.value}
+					min={0}
+					max={2}
+					// @ts-ignore
+					onPlus={ () => current.value += 2 }
+					onMinus={ () => current.value -= 2 }
+				/>
+			);
+		});
+		let plusEl = wrapper.find('.vc-input-number__up');
+		let minusEl = wrapper.find('.vc-input-number__down');
+
+		// 脱离min的限制
+		await minusEl.trigger('click');
+		expect(current.value).toBe(-1);
+
+		await plusEl.trigger('click');
+		expect(current.value).toBe(1);
+
+		// 脱离max的限制
+		await plusEl.trigger('click');
+		expect(current.value).toBe(3);
+
+		await plusEl.trigger('click');
+		expect(current.value).toBe(5);
+	});
+
+
+
+	it('step: max', async () => {
+		const current = ref(2);
+		const handleTip = vi.fn();
+		const wrapper = mount(() => {
+			return (
+				<InputNumber 
+					v-model={current.value}
+					min={0}
+					max={2}
+					// @ts-ignore
+					onTip={handleTip}
+				/>
+			);
+		});
+		let plusEl = wrapper.find('.vc-input-number__up');
+		await plusEl.trigger('click');
+		expect(current.value).toBe(2);
+		expect(handleTip).toBeCalledTimes(1);
+	});
+
+	it('step: min', async () => {
+		const current = ref(0);
+		const handleTip = vi.fn();
+		const wrapper = mount(() => {
+			return (
+				<InputNumber 
+					v-model={current.value}
+					// @ts-ignore
+					onTip={handleTip}
+				/>
+			);
+		});
+		let minusEl = wrapper.find('.vc-input-number__down');
+		await minusEl.trigger('click');
+		expect(current.value).toBe(0);
+		expect(handleTip).toBeCalledTimes(1);
+	});
+
+	it('step: default invalid', async () => {
+		const current = ref('a');
+		const handleChange = vi.fn((v) => {
+			current.value = v;
+		});
+		const wrapper = mount(InputNumber, {
+			props: {
+				step: 1,
+				modelValue: current.value,
+				onChange: handleChange
+			}
+		});
+		let plusEl = wrapper.find('.vc-input-number__up');
+		let minusEl = wrapper.find('.vc-input-number__down');
+
+		await plusEl.trigger('click');
+		expect(current.value).toBe('');
+
+		// 禁用无法输入
+		await minusEl.trigger('click');
+		expect(current.value).toBe('');
+
+		await plusEl.trigger('click');
+		expect(current.value).toBe(1);
+
+		await minusEl.trigger('click');
+		expect(current.value).toBe(0);
+	});
+
+	it('controlled', async () => {
+		const wrapper = mount(InputNumber, {
+			props: {
+				controllable: true
+			}
+		});
+		await wrapper.find('input').setValue('123');
+		await wrapper.find('input').trigger('blur');
+		expect(wrapper.find('input').element.value).toBe('');
+
+		await wrapper.setProps({
+			modelValue: '12'
+		});
+		await wrapper.find('input').trigger('blur');
+		expect(wrapper.find('input').element.value).toBe('12');
 	});
 });

@@ -15,6 +15,17 @@
 		@enter="handleEnter"
 	/>
 
+	<Input 
+		controllable
+		placeholder="完全受控无法输入,需modelValue"
+		@clear="handleClear"
+		@input="handleInput"
+		@change="handleChange"
+		@focus="handleFocus"
+		@blur="handleBlur"
+		@enter="handleEnter" 
+	/>
+
 	<Input
 		:model-value="current[0]"
 		:disabled="disabled"

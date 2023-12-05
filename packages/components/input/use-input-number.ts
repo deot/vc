@@ -37,8 +37,11 @@ export const useInputNumber = () => {
 		return props.disabled || (currentValue.value as number) <= props.min;
 	});
 
+	// 当controllable为true是，由于input-number特殊性是允许输入，但失焦会显示modelValue
 	const displayValue = computed(() => {
-		return isTyping.value ? typingValue.value : currentValue.value;
+		return isTyping.value
+			? typingValue.value 
+			: currentValue.value;
 	});
 
 	const sync = (value: string, e: any) => {
@@ -55,7 +58,7 @@ export const useInputNumber = () => {
 	};
 
 	const isAfterAllowChanged = async (e: any, value: Value) => {
-		let onAfter = instance.vnode?.props?.onAfter;
+		let onAfter = instance.attrs.onAfter as any;
 		if (!onAfter) return true;
 		let allow = false;
 		try {
@@ -195,9 +198,12 @@ export const useInputNumber = () => {
 	};
 
 	const handleStepper = async (e: any, base: number) => {
-		let plus = instance.vnode?.props?.['onPlus'];
-		let minus = instance.vnode?.props?.['onMinus'];
-		let before = instance.vnode?.props?.['onBefore'];
+		let plus = instance.attrs.onPlus;
+		let minus = instance.attrs.onMinus;
+
+		if (base === 1 && typeof plus === 'function') { return plus(); }
+		if (base === -1 && typeof minus === 'function') { return minus(); }
+
 		if (base === 1 && plusDisabled.value) {
 			emit('tip', {
 				type: 'max',
@@ -214,12 +220,10 @@ export const useInputNumber = () => {
 			return;
 		}
 
-		if (base === 1 && plus) { return plus?.(); }
-		if (base === -1 && minus) { return minus?.(); }
-
 		let value: number = +currentValue.value + (props.step as number) * base;
 		let value$ = props.output(compareWithBoundary(isNaN(value) ? '' : value, 'button'));
 
+		let before = instance.attrs.onBefore as any;
 		let state = (await before?.(value$) !== false);
 
 		state && sync(value$, {});

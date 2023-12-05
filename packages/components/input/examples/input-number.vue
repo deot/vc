@@ -12,7 +12,16 @@
 		@blur="handleBlur"
 		@enter="handleEnter"
 	/>
-
+	<InputNumber 
+		controllable
+		placeholder="完全受控失焦后为modelValue值"
+		@clear="handleClear"
+		@input="handleInput"
+		@change="handleChange"
+		@focus="handleFocus"
+		@blur="handleBlur"
+		@enter="handleEnter" 
+	/>
 	<InputNumber 
 		:model-value="current[0]" 
 		ref="input"
