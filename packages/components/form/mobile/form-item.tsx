@@ -16,7 +16,7 @@ export const MFormItem = defineComponent({
 		const { label, labelFor } = props;
 
 		return () => {
-			if (isStyleless.value) return slots;
+			if (isStyleless.value) return slots.default?.();
 			return (
 				<div 
 					style={{ paddingLeft: `${props.indent}px` }} 

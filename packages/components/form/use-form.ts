@@ -87,7 +87,7 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 
 	const scrollIntoView = (prop: string) => {
 		let field = getField(prop);
-		(field.vnode as VNode)?.el?.scrollIntoView({
+		(field.vnode as VNode)?.el?.scrollIntoView?.({
 			behavior: 'smooth',
 			block: 'center',
 		});

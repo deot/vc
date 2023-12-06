@@ -18,7 +18,7 @@ export const FormItem = defineComponent({
 
 		const errorColorClass = 'vc-form-item__error';
 		return () => {
-			if (isStyleless.value) return slots;
+			if (isStyleless.value) return slots.default?.();
 			return (
 				<div class={['vc-form-item', classes.value]}>
 					<div 
