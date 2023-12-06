@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { ref, nextTick, createApp } from 'vue';
-import { Input } from '@deot/vc-components';
+import { Input, MInput } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 
 describe('index.ts', () => {
@@ -24,6 +24,21 @@ describe('index.ts', () => {
 		expect(wrapper.classes()).toEqual(['vc-input', 'is-focus']);
 		await wrapper.setProps({ disabled: true });
 		expect(wrapper.classes()).toEqual(['vc-input', 'is-focus', 'is-disabled']);
+	});
+
+	it('create, m-input', async () => {
+		const wrapper = mount(MInput);
+		const vm = wrapper.vm as any;
+
+		expect(typeof vm.focus).toBe('function');
+		expect(typeof vm.blur).toBe('function');
+		expect(typeof vm.click).toBe('function');
+		expect(wrapper.classes()).toEqual(['vcm-input']);
+
+		await wrapper.find('input').trigger('focus');
+		expect(wrapper.classes()).toEqual(['vcm-input', 'is-focus']);
+		await wrapper.setProps({ disabled: true });
+		expect(wrapper.classes()).toEqual(['vcm-input', 'is-focus', 'is-disabled']);
 	});
 
 	it('v-model', async () => {
@@ -112,14 +127,35 @@ describe('index.ts', () => {
 		expect(wrapper.find('.vc-input__prepend').exists()).toBeTruthy();
 	});
 
+	it('prepend, m-input', async () => {
+		const wrapper = mount(() => <MInput prepend="rmb" />);
+
+		expect(wrapper.find('.vcm-input__prepend').exists()).toBeTruthy();
+	});
+
 	it('append', async () => {
 		const wrapper = mount(() => <Input append="rmb" />);
 
 		expect(wrapper.find('.vc-input__append').exists()).toBeTruthy();
 	});
 
+	it('append, m-input', async () => {
+		const wrapper = mount(() => <MInput append="rmb" />);
+
+		expect(wrapper.find('.vcm-input__append').exists()).toBeTruthy();
+	});
+
 	it('styleless', async () => {
 		const wrapper = mount(Input, {
+			props: {
+				styleless: true
+			}
+		});
+		expect(wrapper.html()).toMatch(/^<input /);
+	});
+
+	it('styleless, m-input', async () => {
+		const wrapper = mount(MInput, {
 			props: {
 				styleless: true
 			}
@@ -209,6 +245,47 @@ describe('index.ts', () => {
 
 		await wrapper.trigger('click');
 		expect(handleClick).toHaveBeenCalledTimes(1);
+	});
+
+	it('event:clear, m-input', async () => {
+		const current = ref('123');
+		const handleClear = vi.fn();
+		const handleInput = vi.fn();
+		const handleChange = vi.fn();
+		const handleFocus = vi.fn();
+		const handleBlur = vi.fn();
+		const app = createApp(() => {
+			return (
+				<MInput 
+					v-model={current.value}
+					clearable
+					onClear={handleClear}
+					onInput={handleInput}
+					onChange={handleChange}
+					onFocus={handleFocus}
+					onBlur={handleBlur}
+				/>
+			);
+		});
+		app.mount(root);
+		let el = document.querySelector('i')!;
+
+		el.dispatchEvent(new Event('touchstart'));
+		expect(current.value).toBe('');
+
+		expect(document.activeElement!.nodeName).toBe('BODY');
+		expect(handleFocus).toBeCalledTimes(0);
+		await nextTick();
+		expect(document.activeElement!.nodeName).toBe('INPUT');
+
+		expect(handleClear).toBeCalledTimes(1);
+		expect(handleInput).toBeCalledTimes(1);
+		expect(handleChange).toBeCalledTimes(1);
+		expect(handleFocus).toBeCalledTimes(1);
+		expect(handleBlur).toBeCalledTimes(0);
+		expect(current.value).toBe('');
+
+		app.unmount();
 	});
 
 	it('event:clear', async () => {

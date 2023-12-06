@@ -1,26 +1,45 @@
 // @vitest-environment jsdom
-import { ref, nextTick } from 'vue';
-import { InputNumber } from '@deot/vc-components';
+import { ref } from 'vue';
+import { InputNumber, MInputNumber } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 
-describe('index.ts', () => {
+describe('index-number.ts', () => {
 	it('basic', () => {
 		expect(typeof InputNumber).toBe('object');
 	});
 
 	it('create', async () => {
-		const wrapper = mount(InputNumber);
+		const wrapper = mount(InputNumber, {
+			slots: {
+				prepend: () => 'any'
+			}
+		});
 		const vm = wrapper.vm as any;
 
 		expect(typeof vm.focus).toBe('function');
 		expect(typeof vm.blur).toBe('function');
 		expect(typeof vm.click).toBe('function');
 		expect(wrapper.classes()).toEqual(['vc-input', 'vc-input-number']);
-
 		await wrapper.find('input').trigger('focus');
 		expect(wrapper.classes()).toEqual(['vc-input', 'is-focus', 'vc-input-number']);
 		await wrapper.setProps({ disabled: true });
 		expect(wrapper.classes()).toEqual(['vc-input', 'is-focus', 'is-disabled', 'vc-input-number']);
+		expect(wrapper.find('.vc-input__prepend').text()).toBe('any');
+	});
+
+	it('create, m-input-number', async () => {
+		const wrapper = mount(MInputNumber);
+		const vm = wrapper.vm as any;
+
+		expect(typeof vm.focus).toBe('function');
+		expect(typeof vm.blur).toBe('function');
+		expect(typeof vm.click).toBe('function');
+		expect(wrapper.classes()).toEqual(['vcm-input', 'vcm-input-number']);
+
+		await wrapper.find('input').trigger('focus');
+		expect(wrapper.classes()).toEqual(['vcm-input', 'is-focus', 'vcm-input-number']);
+		await wrapper.setProps({ disabled: true });
+		expect(wrapper.classes()).toEqual(['vcm-input', 'is-focus', 'is-disabled', 'vcm-input-number']);
 	});
 
 	it('default: invalid value', async () => {
@@ -225,6 +244,117 @@ describe('index.ts', () => {
 		expect(handleBlur).toHaveBeenCalledTimes(1);
 	});
 
+	it('event:after:reject', async () => {
+		const current = ref('1');
+		const handleAfter = vi.fn(() => {
+			return Promise.reject();
+		});
+		const wrapper = mount(() => (
+			<InputNumber 
+				v-model={current.value}
+				// @ts-ignore
+				onAfter={handleAfter}
+			/>
+		));
+
+		await wrapper.find('input').setValue(123);
+		await wrapper.find('input').trigger('blur');
+		expect(handleAfter).toHaveBeenCalledTimes(1);
+		expect(current.value).toBe('1');
+	});
+
+	it('event:after:resolve', async () => {
+		const current = ref('1');
+		const handleAfter = vi.fn(() => {
+			return Promise.resolve();
+		});
+		const wrapper = mount(() => (
+			<InputNumber 
+				v-model={current.value}
+				// @ts-ignore
+				onAfter={handleAfter}
+			/>
+		));
+
+		await wrapper.find('input').setValue(123);
+		await wrapper.find('input').trigger('blur');
+		expect(handleAfter).toHaveBeenCalledTimes(1);
+		expect(current.value).toBe(123);
+	});
+
+	it('event:after:false', async () => {
+		const current = ref('1');
+		const handleAfter = vi.fn(() => {
+			return false;
+		});
+		const wrapper = mount(() => (
+			<InputNumber 
+				v-model={current.value}
+				// @ts-ignore
+				onAfter={handleAfter}
+			/>
+		));
+
+		await wrapper.find('input').setValue(123);
+		await wrapper.find('input').trigger('blur');
+		expect(handleAfter).toHaveBeenCalledTimes(1);
+		expect(current.value).toBe('1');
+	});
+
+	it('event:after:debounce', async () => {
+		const current = ref('1');
+		const handleAfter = vi.fn(() => {
+			return Promise.resolve();
+		});
+		const wrapper = mount(() => (
+			<InputNumber 
+				v-model={current.value}
+				// @ts-ignore
+				onAfter={handleAfter}
+			/>
+		));
+
+		let plusEl = wrapper.find('.vc-input-number__up');
+
+		await plusEl.trigger('click');
+		await plusEl.trigger('click');
+		await plusEl.trigger('click');
+		await plusEl.trigger('click');
+
+		expect(current.value).toBe(5);
+		await new Promise((_) => { setTimeout(_, 500); });
+
+		expect(handleAfter).toHaveBeenCalledTimes(1);
+		expect(current.value).toBe(5);
+	});
+
+	it('event:after:debounce:reject', async () => {
+		const current = ref('1');
+		const handleAfter = vi.fn(() => {
+			return Promise.reject();
+		});
+		const wrapper = mount(() => (
+			<InputNumber 
+				v-model={current.value}
+				// @ts-ignore
+				onAfter={handleAfter}
+			/>
+		));
+
+		let plusEl = wrapper.find('.vc-input-number__up');
+
+		await plusEl.trigger('click');
+		await plusEl.trigger('click');
+		await plusEl.trigger('click');
+		await plusEl.trigger('click');
+
+		expect(current.value).toBe(5);
+		await new Promise((_) => { setTimeout(_, 500); });
+
+		expect(handleAfter).toHaveBeenCalledTimes(1);
+		expect(current.value).toBe('1');
+	});
+
 	it('step', async () => {
 		const current = ref('');
 		const handleChange = vi.fn((v) => {
@@ -245,6 +375,39 @@ describe('index.ts', () => {
 
 		await minusEl.trigger('click');
 		expect(current.value).toBe(0);
+	});
+
+	it('step, m-input-number', async () => {
+		const current = ref('');
+		const handleChange = vi.fn((v) => {
+			current.value = v;
+		});
+		const wrapper = mount(MInputNumber, {
+			props: {
+				step: 1,
+				max: 1,
+				modelValue: current.value,
+				onChange: handleChange
+			}
+		});
+		let plusEl = wrapper.find('.vcm-input-number__plus');
+		let minusEl = wrapper.find('.vcm-input-number__minus');
+
+		await plusEl.trigger('click');
+		expect(current.value).toBe(1);
+
+		await minusEl.trigger('click');
+		expect(current.value).toBe(0);
+	});
+
+	it('step:0, m-input-number', async () => {
+		const wrapper = mount(MInputNumber, {
+			props: {
+				step: 0,
+			}
+		});
+
+		expect(wrapper.find('.vcm-input-number__plus').exists()).toBeFalsy();
 	});
 
 	it('event: plus / minus', async () => {
@@ -278,8 +441,6 @@ describe('index.ts', () => {
 		await plusEl.trigger('click');
 		expect(current.value).toBe(5);
 	});
-
-
 
 	it('step: max', async () => {
 		const current = ref(2);

@@ -82,7 +82,8 @@ export const MInput = defineComponent({
 			if (props.styleless) return renderInput(true);
 			return (
 				<div 
-					class={['vcm-input', classes.value]} 
+					class={['vcm-input', classes.value, it.value.class]}
+					style={it.value.style} 
 					id={props.id}
 				>
 					<div class="vcm-input__wrapper">
@@ -126,9 +127,7 @@ export const MInput = defineComponent({
 								>
 									{
 										slots.append?.() || (
-											props.append 
-												? <MIcon type={props.append} />
-												: null
+											props.append && <MIcon type={props.append} />
 										)
 									}
 								</div>
