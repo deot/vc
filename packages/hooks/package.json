@@ -22,11 +22,12 @@
     "vue": "*"
   },
   "peerDependenciesMeta": {
-    "typescript": {
+    "vue": {
       "optional": true
     }
   },
-  "dependencies": {
-    "lodash-es": "^4.17.21"
+  "dependencies": {},
+  "devDependencies": {
+    "vue": "^3.3.10"
   }
 }

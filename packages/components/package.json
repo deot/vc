@@ -22,7 +22,7 @@
     "vue": "*"
   },
   "peerDependenciesMeta": {
-    "typescript": {
+    "vue": {
       "optional": true
     }
   },
@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@deot/style": "^1.0.2",
-    "@types/lodash-es": "^4.17.9"
+    "@types/lodash-es": "^4.17.9",
+    "vue": "^3.3.10"
   }
 }
