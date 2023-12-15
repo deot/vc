@@ -19,10 +19,10 @@ describe('index.ts', () => {
 
 	it('ThemeView', async () => {
 		const wrapper = mount(() => (
-			<ThemeView 
+			<ThemeView
 				variables={variables}
 				style="font-size: 30px"
-				backgroundColor="background" 
+				backgroundColor="background"
 				borderColor="border"
 			/>
 		));
@@ -32,10 +32,10 @@ describe('index.ts', () => {
 
 	it('ThemeView, backgroundImage', async () => {
 		const wrapper = mount(() => (
-			<ThemeView 
+			<ThemeView
 				variables={variables}
 				style="font-size: 30px"
-				backgroundImage="image" 
+				backgroundImage="image"
 			/>
 		));
 
@@ -44,9 +44,9 @@ describe('index.ts', () => {
 
 	it('ThemeView, backgroundImage, url', async () => {
 		const wrapper = mount(() => (
-			<ThemeView 
+			<ThemeView
 				style="font-size: 30px"
-				backgroundImage={variables.image} 
+				backgroundImage={variables.image}
 			/>
 		));
 
@@ -55,10 +55,10 @@ describe('index.ts', () => {
 
 	it('ThemeText', async () => {
 		const wrapper = mount(() => (
-			<ThemeText 
+			<ThemeText
 				variables={variables}
 				style="font-size: 30px"
-				backgroundColor="background" 
+				backgroundColor="background"
 				borderColor="border"
 			/>
 		));
@@ -89,19 +89,17 @@ describe('index.ts', () => {
 			}
 		});
 		const wrapper = mount(() => (
-			<ThemeView 
-				backgroundColor="background" 
-				color="color" 
-				pseudo={
-					{
-						'before': {
-							background: 'background'
-						},
-						':hover > span': {
-							color: 'color',
-						}
+			<ThemeView
+				backgroundColor="background"
+				color="color"
+				pseudo={{
+					'before': {
+						background: 'background'
+					},
+					':hover > span': {
+						color: 'color',
 					}
-				}
+				}}
 			/>
 		));
 
@@ -124,5 +122,4 @@ describe('index.ts', () => {
 		// expect(wrapper.html()).toMatch('background-color: var(--none)');
 		// expect(wrapper.html()).toMatch('color: var(--none)');
 	});
-
 });

@@ -1,4 +1,4 @@
-@import '../style/helper.scss';
+@import '../style/helper';
 
 $component-name: vc-button;
 
@@ -6,25 +6,18 @@ $component-name: vc-button;
  * 可配制的主题色提取, Button可单独配置，默认使用全局值
  */
 $background-color-light: varfix(background-color-light, button);
-
 $color-light: varfix(color-light, button);
 $color-light-deeper: varfix(color-light-deeper, button);
-
 $color-dark: varfix(color-dark, button);
 $color-dark-light: varfix(color-dark-light, button);
-
 $color-primary: varfix(color-primary, button);
 $color-primary-light: varfix(color-primary-light, button);
-
 $color-success: varfix(color-success, button);
 $color-success-light: varfix(color-success-light, button);
-
 $color-error: varfix(color-error, button);
 $color-error-light: varfix(color-error-light, button);
-
 $color-warning: varfix(color-warning, button);
 $color-warning-light: varfix(color-warning-light, button);
-
 $color-disabled: varfix(color-disabled, button);
 $color-disabled-light: varfix(color-disabled-light, button);
 
@@ -42,15 +35,15 @@ $color-disabled-light: varfix(color-disabled-light, button);
 
 @include block($component-name) {
 	padding: unitfix(7) unitfix(16);
-	line-height: 1;
 	font-size: unitfix(12);
-	border-radius: unitfix(4);
+	line-height: 1;
+	cursor: pointer;
+	background: $color-light;
 	border: unitfix(1) solid transparent;
 	border-color: $color-light-deeper;
-	background: $color-light;
-	user-select: none;
-	cursor: pointer;
+	border-radius: unitfix(4);
 	outline: 0 none !important;
+
 	/**
 	 * 外部v-show控制，主题变更会调用
 	 */
@@ -58,119 +51,144 @@ $color-disabled-light: varfix(color-disabled-light, button);
 		background-color .2s linear,
 		border .2s linear,
 		box-shadow .2s linear;
+	user-select: none;
+
 	@include element(loading) {
 		vertical-align: middle;
 	}
+
 	@include when(circle) {
 		border-radius: unitfix(32);
 	}
+
 	@include when(long) {
 		width: 100%;
 	}
+
 	@include when(default) {
 		color: $color-dark-light;
 		background-color: $background-color-light;
 		border-color: $color-light-deeper;
+
 		&:hover {
 			color: $color-primary;
 			border-color: $color-primary;
 		}
 	}
+
 	@include when(primary) {
 		color: themefrozen(color-light);
 		background-color: $color-primary;
 		border-color: $color-primary;
+
 		&:hover {
 			background-color: $color-primary-light;
 			border-color: $color-primary-light;
 		}
 	}
+
 	@include when(text) {
 		color: $color-dark-light;
 		background-color: transparent;
 		border-color: transparent;
+
 		&:hover {
 			color: $color-primary-light;
 		}
 	}
+
 	@include when(success) {
 		color: themefrozen(color-light);
 		background-color: $color-success;
 		border-color: $color-success;
+
 		&:hover {
 			background-color: $color-success-light;
 			border-color: $color-success-light;
 		}
 	}
+
 	@include when(error) {
 		color: themefrozen(color-light);
 		background-color: $color-error;
 		border-color: $color-error;
+
 		&:hover {
 			background-color: $color-error-light;
 			border-color: $color-error-light;
 		}
 	}
+
 	@include when(warning) {
 		color: themefrozen(color-light);
 		background-color: $color-warning;
 		border-color: $color-warning;
+
 		&:hover {
 			background: $color-warning-light;
 			border-color: $color-warning-light;
 		}
 	}
+
 	@include when(disabled) {
 		color: themefrozen(color-dark-extralight);
+		cursor: not-allowed;
 		background-color: $color-disabled;
 		border-color: $color-disabled-light;
-		cursor: not-allowed;
+
 		&:hover {
 			background: $color-disabled;
 			border-color: $color-disabled-light;
 		}
 	}
+
 	@include when(large) {
 		padding: unitfix(8) unitfix(16);
 		font-size: unitfix(14);
 		border-radius: unitfix(4);
+
 		@include when(circle) {
 			border-radius: 36px;
 		}
 	}
+
 	@include when(small) {
 		padding: unitfix(3) unitfix(8);
 		font-size: unitfix(12);
 		border-radius: unitfix(3);
+
 		@include when(circle){
 			border-radius: unitfix(24);
 		}
 	}
+
 	@include when(alone) {
 		& {
 			@include when(round) {
-				border-radius: 50%;
 				width: unitfix(32);
 				height: unitfix(32);
 				padding: 0;
 				font-size: unitfix(12);
+				border-radius: 50%;
 			}
+
 			@include when(large) {
 				@include when(round) {
-					border-radius: 50%;
 					width: unitfix(36);
 					height: unitfix(36);
 					padding: 0;
 					font-size: unitfix(14);
+					border-radius: 50%;
 				}
 			}
+
 			@include when(small) {
 				@include when(round) {
-					border-radius: 50%;
 					width: unitfix(24);
 					height: unitfix(24);
 					padding: 0;
 					font-size: unitfix(12);
+					border-radius: 50%;
 				}
 			}
 		}

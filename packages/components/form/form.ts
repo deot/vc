@@ -13,7 +13,7 @@ export const Form = defineComponent({
 		useForm(expose);
 		return () => {
 			return h(
-				props.tag, 
+				props.tag,
 				{
 					class: 'vc-form',
 					autocomplete: props.autocomplete,

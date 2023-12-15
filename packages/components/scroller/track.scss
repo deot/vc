@@ -1,4 +1,4 @@
-@import '../style/helper.scss';
+@import '../style/helper';
 
 $component-name: vc-scroller-track;
 
@@ -6,11 +6,12 @@ $component-name: vc-scroller-track;
 	position: absolute;
 	z-index: 1;
 	border-radius: unitfix(4);
+
 	@include when(vertical) {
-		width: unitfix(6);
 		top: 0;
 		right: 0;
 		bottom: 0;
+		width: unitfix(6);
 
 		> div {
 			width: 100%;
@@ -18,28 +19,29 @@ $component-name: vc-scroller-track;
 	}
 
 	@include when(horizontal) {
-		height: unitfix(6);
-		left: 0;
 		right: 0;
 		bottom: 0;
+		left: 0;
+		height: unitfix(6);
 
 		> div {
 			height: 100%;
 		}
 	}
+
 	@include element(thumb) {
 		position: relative;
 		display: block;
 		width: 0;
 		height: 0;
 		cursor: pointer;
+		background-color: rgb(37 36 36 / 57%);
 		border-radius: inherit;
-		background-color: rgba(37, 36, 36, 0.57);
 		transition: .3s background-color;
 		will-change: transform,  	background-color;
 		
 		&:hover {
-			background-color: rgba(37, 36, 36, 0.7);
+			background-color: rgb(37 36 36 / 70%);
 		}
 	}
 }

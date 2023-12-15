@@ -41,11 +41,11 @@ export const Input = defineComponent({
 	],
 	setup(props, { slots, expose }) {
 		const input = ref<HTMLInputElement>();
-		
+
 		useNativeEmitter(input, expose);
 		const it = useAttrs({ merge: false });
 
-		const { 
+		const {
 			currentValue,
 			currentMaxlength,
 			classes,
@@ -61,36 +61,36 @@ export const Input = defineComponent({
 			if (typeof props.maxlength === 'undefined' || Array.isArray(currentValue.value)) return;
 			const { maxlength } = props;
 			const value = String(currentValue.value);
-			const length = props.bytes ? getBytesSize(value) : value.length; 
-			
+			const length = props.bytes ? getBytesSize(value) : value.length;
+
 			const current = typeof props.indicator === 'object' && props.indicator.inverted
-				? maxlength - length 
+				? maxlength - length
 				: length;
 
 			return `${current}/${maxlength}`;
 		});
 
 		const renderInput = (merge: boolean) => {
-			let binds = merge 
+			const binds = merge
 				? {
-					class: it.value.class,
-					style: [props.inputStyle, it.value.style],
-					...it.value.attrs,
-					...it.value.listeners,
-					...listeners
-				}
+						class: it.value.class,
+						style: [props.inputStyle, it.value.style],
+						...it.value.attrs,
+						...it.value.listeners,
+						...listeners
+					}
 				: {
-					style: props.inputStyle,
-					...it.value.attrs,
-					...it.value.listeners,
-					...listeners
-				};
+						style: props.inputStyle,
+						...it.value.attrs,
+						...it.value.listeners,
+						...listeners
+					};
 			return (
 				// @ts-ignore
 				<input
 					type="text"
 					ref={input}
-					{ ...binds }
+					{...binds}
 					id={props.inputId}
 					disabled={props.disabled}
 					value={currentValue.value}
@@ -102,15 +102,15 @@ export const Input = defineComponent({
 		return () => {
 			if (props.styleless) return renderInput(true);
 			return (
-				<div 
+				<div
 					class={['vc-input', classes.value, it.value.class]}
-					style={it.value.style} 
+					style={it.value.style}
 					id={props.id}
 				>
 					<div class="vc-input__wrapper">
 						{
 							(slots.prepend || props.prepend) && (
-								<div 
+								<div
 									class={['vc-input__prepend', { 'is-icon': props.prepend, 'is-afloat': props.afloat }, classes.value]}
 								>
 									{
@@ -121,8 +121,8 @@ export const Input = defineComponent({
 								</div>
 							)
 						}
-						
-						<div class={["vc-input__content", classes.value]}>
+
+						<div class={['vc-input__content', classes.value]}>
 							{
 								slots.content?.() || renderInput(false)
 							}
@@ -131,15 +131,15 @@ export const Input = defineComponent({
 							(!props.disabled && props.clearable) && (
 								<TransitionFade>
 									<Icon
-										class="vc-input__icon-clear" 
-										type="clear" 
+										class="vc-input__icon-clear"
+										type="clear"
 										// @ts-ignore prevent 用于触发focus时，光标聚焦
 										onMousedown={withModifiers(handleClear, ['prevent'])}
 									/>
 								</TransitionFade>
 							)
 						}
-						
+
 						{
 							(slots.append || props.append || props.indicator) && (
 								<div
@@ -147,16 +147,16 @@ export const Input = defineComponent({
 								>
 									{
 										slots.append?.() || (
-											props.append 
+											props.append
 												? <Icon type={props.append} />
 												: showIndicatorInline.value
 													? (
-														<span 
+														<span
 															class={['vc-input__indicator is-in', props.indicateClassName]}
 														>
 															{ indicatorNum.value }
 														</span>
-													)
+														)
 													: null
 										)
 									}
@@ -166,8 +166,8 @@ export const Input = defineComponent({
 					</div>
 					{
 						props.indicator && !showIndicatorInline.value && (
-							<span 
-								class={["vc-input__indicator is-out", props.indicateClassName]}
+							<span
+								class={['vc-input__indicator is-out', props.indicateClassName]}
 							>
 								{ indicatorNum.value }
 							</span>

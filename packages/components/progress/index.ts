@@ -1,5 +1,5 @@
 import { Progress } from './progress.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Progress

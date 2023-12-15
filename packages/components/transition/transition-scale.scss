@@ -1,4 +1,4 @@
-@import '../style/helper.scss';
+@import '../style/helper';
 
 $block: vc-transition-scale;
 
@@ -7,10 +7,12 @@ $block: vc-transition-scale;
 		will-change: transform, opacity;
 		animation-timing-function: cubic-bezier(.43, .84, .61, .99);
 	}
+
 	@include when(out) {
 		will-change: transform, opacity;
 		animation-timing-function: cubic-bezier(.43, .84, .61, .99);
 	}
+
 	/**
 	 * transition-group下删除元素, 其他元素位置变化动画
 	 */
@@ -25,6 +27,7 @@ $block: vc-transition-scale;
 			@include when(in) {
 				animation-name: vc-scale-#{$mode}-in;
 			}
+
 			@include when(out) {
 				animation-name: vc-scale-#{$mode}-out;
 			}
@@ -43,7 +46,7 @@ $block: vc-transition-scale;
 @keyframes vc-scale-both-in {
 	from {
 		opacity: 0;
-		transform: scale(0)
+		transform: scale(0);
 	}
 
 	to {
@@ -70,12 +73,12 @@ $block: vc-transition-scale;
 @keyframes vc-scale-part-in {
 	from {
 		opacity: 0;
-		transform: scale(0.5)
+		transform: scale(0.5);
 	}
 
 	to {
-		transform: scale(1);
 		opacity: 1;
+		transform: scale(1);
 	}
 }
 
@@ -99,6 +102,7 @@ $block: vc-transition-scale;
 		opacity: 0;
 		transform: scaleY(0.8);
 	}
+
 	100% {
 		opacity: 1;
 		transform: scaleY(1);
@@ -110,6 +114,7 @@ $block: vc-transition-scale;
 		opacity: 1;
 		transform: scaleY(1);
 	}
+
 	100% {
 		opacity: 0;
 		transform: scaleY(0.8);
@@ -124,6 +129,7 @@ $block: vc-transition-scale;
 		opacity: 0;
 		transform: scaleX(0.8);
 	}
+
 	100% {
 		opacity: 1;
 		transform: scaleX(1);
@@ -135,6 +141,7 @@ $block: vc-transition-scale;
 		opacity: 1;
 		transform: scaleX(1);
 	}
+
 	100% {
 		opacity: 0;
 		transform: scaleX(0.8);

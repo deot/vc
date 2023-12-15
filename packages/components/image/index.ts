@@ -1,5 +1,5 @@
 import { Image } from './image.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Image

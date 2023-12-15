@@ -25,11 +25,11 @@ describe('transition.ts', () => {
 		};
 		const app = createApp(
 			() => (
-				<VTransition 
+				<VTransition
 					origin="0"
 					mode={mode.value}
 					group={isGroup.value}
-					duration={1} 
+					duration={1}
 					{
 						...methods
 					}
@@ -39,12 +39,11 @@ describe('transition.ts', () => {
 			)
 		);
 
-
 		app.mount(root);
-		
+
 		isVisible.value = true;
 		await Utils.sleep(10);
-		let el = root.querySelector('div')!;
+		const el = root.querySelector('div')!;
 		expect(el.classList.contains('v-enter-from')).toBeTruthy();
 		await Utils.sleep(50);
 		expect(el.classList.contains('v-enter-to')).toBeTruthy();

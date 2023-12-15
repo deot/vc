@@ -16,7 +16,7 @@ export const MListItem = defineComponent({
 		const list = inject('list', {} as any);
 
 		const classes = computed(() => {
-			let hasList = !!list.props;
+			const hasList = !!list.props;
 
 			return {
 				'is-alone': !hasList || props.alone,
@@ -26,8 +26,8 @@ export const MListItem = defineComponent({
 		});
 
 		const labelStyle = computed(() => {
-			const labelWidth = props.labelWidth === 0 || props.labelWidth 
-				? props.labelWidth 
+			const labelWidth = props.labelWidth === 0 || props.labelWidth
+				? props.labelWidth
 				: list?.props?.labelWidth;
 
 			return {
@@ -38,7 +38,6 @@ export const MListItem = defineComponent({
 		const icon = computed(() => {
 			return typeof props.arrow === 'string' ? props.arrow : 'right';
 		});
-
 
 		const handleLinkTo = (e: Event) => {
 			emit('click', e);
@@ -71,13 +70,13 @@ export const MListItem = defineComponent({
 		};
 		return () => {
 			return (
-				<div 
+				<div
 					class="vcm-list-item"
-					style={{ paddingLeft: `${props.indent}px` }} 
+					style={{ paddingLeft: `${props.indent}px` }}
 					onClick={handleLinkTo}
 				>
-					<div 
-						class={['vcm-list-item__wrapper', classes.value]} 
+					<div
+						class={['vcm-list-item__wrapper', classes.value]}
 					>
 						<div style={labelStyle.value}>
 							{ slots.label?.() || props.label }

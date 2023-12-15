@@ -43,7 +43,7 @@ describe('index.ts', () => {
 
 	it('v-model', async () => {
 		const current = ref('');
-		const wrapper = mount(() => <Input v-model={current.value}/>);
+		const wrapper = mount(() => <Input v-model={current.value} />);
 
 		await wrapper.find('input').setValue('abc');
 
@@ -53,11 +53,11 @@ describe('index.ts', () => {
 	it('indicator:bytes', async () => {
 		const current = ref('abcd');
 		const wrapper = mount(() => (
-			<Input 
-				v-model={current.value} 
-				maxlength={2} 
-				bytes 
-				indicator 
+			<Input
+				v-model={current.value}
+				maxlength={2}
+				bytes
+				indicator
 			/>
 		));
 
@@ -67,10 +67,10 @@ describe('index.ts', () => {
 	it('indicator:inverted', async () => {
 		const current = ref('abcd');
 		const wrapper = mount(() => (
-			<Input 
-				v-model={current.value} 
-				maxlength={2} 
-				bytes 
+			<Input
+				v-model={current.value}
+				maxlength={2}
+				bytes
 				indicator={{ inverted: true, inline: true }}
 			/>
 		));
@@ -81,9 +81,9 @@ describe('index.ts', () => {
 	it('indicator:normal', async () => {
 		const current = ref('abcd');
 		const wrapper = mount(() => (
-			<Input 
-				v-model={current.value} 
-				maxlength={2} 
+			<Input
+				v-model={current.value}
+				maxlength={2}
 				indicator
 			/>
 		));
@@ -94,8 +94,8 @@ describe('index.ts', () => {
 	it('indicator:normal', async () => {
 		const current = ref('abcd');
 		const wrapper = mount(() => (
-			<Input 
-				v-model={current.value} 
+			<Input
+				v-model={current.value}
 				indicator
 			/>
 		));
@@ -182,20 +182,20 @@ describe('index.ts', () => {
 		const handleClick = vi.fn();
 		const wrapper = mount(Input, {
 			props: {
-				styleless: true,
-				bytes: true,
+				'styleless': true,
+				'bytes': true,
 				placeholder,
-				modelValue: current.value,
-				onFocus: handleFocus,
-				onBlur: handleBlur,
-				onInput: handleInput,
-				onChange: handleChange,
-				onKeydown: handleKeydown,
-				onKeyup: handleKeyup,
-				onKeypress: handleKeypress,
-				onEnter: handleEnter,
-				onPaste: handlePaste,
-				onClick: handleClick,
+				'modelValue': current.value,
+				'onFocus': handleFocus,
+				'onBlur': handleBlur,
+				'onInput': handleInput,
+				'onChange': handleChange,
+				'onKeydown': handleKeydown,
+				'onKeyup': handleKeyup,
+				'onKeypress': handleKeypress,
+				'onEnter': handleEnter,
+				'onPaste': handlePaste,
+				'onClick': handleClick,
 				'onUpdate:modelValue': handleUpdateModelValue
 			}
 		});
@@ -256,7 +256,7 @@ describe('index.ts', () => {
 		const handleBlur = vi.fn();
 		const app = createApp(() => {
 			return (
-				<MInput 
+				<MInput
 					v-model={current.value}
 					clearable
 					onClear={handleClear}
@@ -268,7 +268,7 @@ describe('index.ts', () => {
 			);
 		});
 		app.mount(root);
-		let el = document.querySelector('i')!;
+		const el = document.querySelector('i')!;
 
 		el.dispatchEvent(new Event('touchstart'));
 		expect(current.value).toBe('');
@@ -297,7 +297,7 @@ describe('index.ts', () => {
 		const handleBlur = vi.fn();
 		const app = createApp(() => {
 			return (
-				<Input 
+				<Input
 					v-model={current.value}
 					clearable
 					onClear={handleClear}
@@ -309,7 +309,7 @@ describe('index.ts', () => {
 			);
 		});
 		app.mount(root);
-		let el = document.querySelector('i')!;
+		const el = document.querySelector('i')!;
 
 		el.dispatchEvent(new Event('mousedown'));
 		expect(current.value).toBe('');
@@ -340,7 +340,7 @@ describe('index.ts', () => {
 
 		const app = createApp(() => {
 			return (
-				<Input 
+				<Input
 					clearable
 					modelValue={current.value}
 					onClear={handleClear}
@@ -352,9 +352,9 @@ describe('index.ts', () => {
 		});
 
 		app.mount(root);
-		let input = document.querySelector('input')!;
-		let wrapper = document.querySelector('.vc-input')!;
-		let icon = document.querySelector('i')!;
+		const input = document.querySelector('input')!;
+		const wrapper = document.querySelector('.vc-input')!;
+		const icon = document.querySelector('i')!;
 
 		input.dispatchEvent(new Event('focus'));
 		await nextTick();
@@ -364,7 +364,7 @@ describe('index.ts', () => {
 		input.dispatchEvent(new Event('blur')); // 强制执行，不会触发
 
 		await nextTick(); // clear内的nextTick执行完
-		await new Promise(_ => { setTimeout(_, 0); }); // clear内的setTimeout执行完
+		await new Promise((_) => { setTimeout(_, 0); }); // clear内的setTimeout执行完
 
 		expect(handleClear).toBeCalledTimes(1);
 		expect(handleBlur).toBeCalledTimes(0);
@@ -383,9 +383,9 @@ describe('index.ts', () => {
 		});
 		const wrapper = mount(Input, {
 			props: {
-				styleless: true,
-				modelValue: current.value,
-				onBlur: handleBlur,
+				'styleless': true,
+				'modelValue': current.value,
+				'onBlur': handleBlur,
 				'onUpdate:modelValue': (v) => {
 					current.value = v;
 				}
@@ -443,8 +443,8 @@ describe('index.ts', () => {
 
 		const wrapper = mount(Input, {
 			props: {
-				maxlength: 1,
-				modelValue: current.value,
+				'maxlength': 1,
+				'modelValue': current.value,
 				'onUpdate:modelValue': handleUpdateModelValue
 			}
 		});
@@ -452,14 +452,13 @@ describe('index.ts', () => {
 		expect(el.maxLength).toBe(1);
 
 		el.value = 'abc';
-		await wrapper.find('input').trigger('input', { 
-			inputType: "deleteContentBackward"
+		await wrapper.find('input').trigger('input', {
+			inputType: 'deleteContentBackward'
 		});
 
 		expect(handleUpdateModelValue).toBeCalledTimes(1);
 		expect(current.value).toBe('abc');
 	});
-
 
 	it('maxlength: bytes', async () => {
 		const handleInput = vi.fn();
@@ -599,23 +598,22 @@ describe('index.ts', () => {
 		});
 		const wrapper = mount(Input, {
 			props: {
-				styleless: true,
-				bytes: true,
+				'styleless': true,
+				'bytes': true,
 				placeholder,
-				modelValue: current.value,
-				onFocus: handleFocus,
-				onBlur: handleBlur,
-				onInput: handleInput,
-				onChange: handleChange,
-				onKeydown: handleKeydown,
-				onKeyup: handleKeyup,
-				onKeypress: handleKeypress,
-				onEnter: handleEnter,
-				onPaste: handlePaste,
+				'modelValue': current.value,
+				'onFocus': handleFocus,
+				'onBlur': handleBlur,
+				'onInput': handleInput,
+				'onChange': handleChange,
+				'onKeydown': handleKeydown,
+				'onKeyup': handleKeyup,
+				'onKeypress': handleKeypress,
+				'onEnter': handleEnter,
+				'onPaste': handlePaste,
 				'onUpdate:modelValue': handleUpdateModelValue
 			}
 		});
-
 
 		await wrapper.trigger('keyup');
 		expect(handleKeyup).toHaveBeenCalledTimes(1);

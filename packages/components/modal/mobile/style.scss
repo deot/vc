@@ -1,7 +1,6 @@
-@import '../../style/helper.scss';
+@import '../../style/helper';
 
 $component-name: vcm-modal;
-
 $border-shadow: varfix(border-shadow, modal);
 $background-color-light: varfix(background-color-light, modal);
 $color-dark: varfix(color-dark, modal);
@@ -12,124 +11,142 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 
 @include block($component-name) {
 	@include element(mask) {
-		opacity: 1;
 		position: fixed;
-		top: 0;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		background-color: rgba(0, 0, 0, 0.4);
-		height: 100%;
+		inset: 0;
 		z-index: $popup-zindex; // 与wrapper相同，两个modal同时出现时可以盖上去
+		height: 100%;
+		background-color: rgb(0 0 0 / 40%);
+		opacity: 1;
 	}
+
 	@include element(wrapper) {
 		position: fixed;
 		top: 50%;
-		transform: translateY(-50%);
 		left: 0;
-		width: 100%;
 		z-index: $popup-zindex;
+		width: 100%;
+		transform: translateY(-50%);
 	}
+
 	@include element(container) {
 		position: relative;
-		background: $background-color-light;
-		box-shadow: $border-shadow;
-		margin: auto;
-		border-radius: 7px;
 		display: flex;
+		margin: auto;
+		background: $background-color-light;
+		border-radius: 7px;
+		box-shadow: $border-shadow;
 		flex-direction: column;
 	}
 
 	@include element(header) {
 		padding: 24px 15px 12px;
 	}
+
 	@include element(title) {
 		margin: 0;
 		font-size: 17px;
+		font-weight: bold;
 		line-height: 1;
 		color: $color-dark;
 		text-align: center;
 		word-wrap: break-word;
-		font-weight: bold;
 	}
 
-	@include element(content) { 
-		overflow-y: auto;
-		padding: 0 24px 25px;
+	@include element(content) {
 		position: relative;
+		padding: 0 24px 25px; 
+		overflow-y: auto;
 	}
+
 	@include element(no-title) {
 		padding-top: 32px;
 		padding-bottom: 32px;
+
 		.vcm-modal__html {
 			color: $color-dark;
 		}
 	}
+
 	@include element(html) {
 		font-size: 15px;
-		color: $color-dark-lighter;
 		line-height: 1.5;
+		color: $color-dark-lighter;
 		text-align: center;
 		word-break: break-all;
 		word-wrap: break-word;
 	}
+
 	@include element(button) {
 		position: relative;
-		flex: 1;
-		text-align: center;
-		color: $color-primary;
-		font-size: 17px;
-		height: 50px;
-		line-height: 50px;
-		word-wrap: break-word;
 		z-index: 1; // android不添加时可能不显示1px描边
+		height: 50px;
+		font-size: 17px;
+		line-height: 50px;
+		color: $color-primary;
+		text-align: center;
+		word-wrap: break-word;
+		flex: 1;
+
 		&:first-child {
 			color: $color-dark;
+
 			@include border(right, $color-light-deeper);
 		}
 	}
+
 	@include element(footer) {
 		position: relative;
 		display: flex;
+
 		@include border(top, $color-light-deeper);
+
 		@include when(column) {
 			flex-direction: column;
+
 			@include element(button) { 
 				&:first-child {
 					color: $color-primary;
-					&:before, &:after {
+
+					&::before, &::after {
 						border: none;
 					}
 				}
+
 				&:not(:first-child) {
 					@include border(top, $color-light-deeper);
 				}
 			}
 		}
+
 		@include when(alone) {
 			@include element(button) { 
 				color: $color-primary;
+
 				&:first-child {
-					&:before, &:after {
+					&::before, &::after {
 						border: none;
 					}
 				}
 			}
 		}
 	}
+
 	@include element(operation) {
 		position: relative;
 		display: flex;
 		flex-direction: column;
+
 		@include element(button, false) {
+			padding-left: 15px;
 			color: $color-dark-light;
 			text-align: left;
-			padding-left: 15px;
+
 			&:not(:first-child) {
 				@include border(top, $color-light-deeper);
 			}
+
 			&:first-child {
-				&:before, &:after {
+				&::before, &::after {
 					border: none;
 				}
 			}

@@ -55,7 +55,6 @@ describe('index.ts', () => {
 		expect(wrapper.find('.vc-form-item').exists()).toBeFalsy();
 	});
 
-
 	it('styleless, m-form', async () => {
 		expect.hasAssertions();
 		const form = ref();
@@ -77,7 +76,6 @@ describe('index.ts', () => {
 		expect(wrapper.classes()).toContain('vcm-form');
 		expect(wrapper.find('.vcm-form-item').exists()).toBeFalsy();
 	});
-
 
 	it('create, m-form', async () => {
 		expect.hasAssertions();

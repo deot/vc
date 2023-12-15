@@ -1,5 +1,5 @@
 import { Editor } from './editor.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Editor

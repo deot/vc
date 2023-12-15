@@ -1,5 +1,5 @@
 import { Artboard } from './artboard.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Artboard

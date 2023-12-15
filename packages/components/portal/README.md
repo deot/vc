@@ -52,7 +52,6 @@ export const PModalWithBefore = new Portal(Wrapper, {
 });
 
 export const PModal = new Portal(Wrapper, {});
-
 ```
 :::
 

@@ -23,11 +23,11 @@ export const ScrollerWheel = defineComponent({
 	emits: ['scroll'],
 	setup(props, { slots, expose }) {
 		const Content = props.tag;
-		const { 
-			bar, 
-			wrapper, 
-			content, 
-			wrapperStyle, 
+		const {
+			bar,
+			wrapper,
+			content,
+			wrapperStyle,
 			wrapperClassName,
 			handleScroll
 		} = useScroller(expose);
@@ -64,7 +64,7 @@ export const ScrollerWheel = defineComponent({
 			scrollX.value = it.scrollLeft;
 
 			if (!props.barTo) {
-				let key = $.prefixStyle('transform').camel;
+				const key = $.prefixStyle('transform').camel;
 				bar.value!.trackY.target!.style[key] = barPos.value;
 				bar.value!.trackX.target!.style[key] = barPos.value;
 			}
@@ -73,14 +73,13 @@ export const ScrollerWheel = defineComponent({
 		const handleWheel = (deltaX: number, deltaY: number) => {
 			const el = wrapper.value!;
 			if (
-				Math.abs(deltaY) > Math.abs(deltaX) 
+				Math.abs(deltaY) > Math.abs(deltaX)
 				&& contentH.value > wrapperH.value
 			) {
 				el.scrollTop = Math.min(
 					Math.max(0, scrollY.value + deltaY),
 					contentH.value - wrapperH.value
 				);
-				
 			} else if (deltaX && contentW.value > wrapperW.value) {
 				el.scrollLeft = Math.min(
 					Math.max(0, scrollX.value + deltaX),
@@ -103,7 +102,7 @@ export const ScrollerWheel = defineComponent({
 			}
 
 			return (
-				(delta < 0 && scrollX.value > 0) 
+				(delta < 0 && scrollX.value > 0)
 				|| (delta >= 0 && scrollX.value < contentW.value - wrapperW.value)
 			);
 		};
@@ -120,7 +119,7 @@ export const ScrollerWheel = defineComponent({
 			}
 
 			return (
-				(delta < 0 && scrollY.value > 0) 
+				(delta < 0 && scrollY.value > 0)
 				|| (delta >= 0 && scrollY.value < contentH.value - wrapperH.value)
 			);
 		};
@@ -144,10 +143,10 @@ export const ScrollerWheel = defineComponent({
 
 		return () => {
 			return (
-				<div 
-					ref={wrapper} 
+				<div
+					ref={wrapper}
 					class={[wrapperClassName.value, 'vc-scroller-wheel']}
-					style={wrapperStyle.value} 
+					style={wrapperStyle.value}
 					onScroll={handleScroll}
 				>
 					<Content
@@ -160,7 +159,7 @@ export const ScrollerWheel = defineComponent({
 					</Content>
 					{
 						(wrapper.value && content.value) && (
-							<Bar 
+							<Bar
 								ref={bar}
 								wrapper={wrapper.value}
 								content={content.value}
@@ -175,9 +174,9 @@ export const ScrollerWheel = defineComponent({
 								// @ts-ignore
 								onRefreshSize={handleRefreshSize}
 								onRefreshTrack={handleRefreshTrack}
-							/>	
+							/>
 						)
-					}	
+					}
 				</div>
 			);
 		};

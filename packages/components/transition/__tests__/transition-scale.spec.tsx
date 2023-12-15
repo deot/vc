@@ -10,14 +10,14 @@ describe('transition-scale.ts', () => {
 		const isVisible = ref(false);
 		const isGroup = ref(false);
 		const mode = ref('x');
-		
+
 		const wrapper = mount(
 			() => (
-				<TransitionScale 
+				<TransitionScale
 					origin="0"
 					mode={mode.value}
 					group={isGroup.value}
-					duration={1} 
+					duration={1}
 				>
 					<div v-show={isVisible.value} key="1" />
 				</TransitionScale>

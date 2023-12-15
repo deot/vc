@@ -12,7 +12,7 @@ export const Input = defineComponent({
 		const formItem = inject('form-item') as any;
 		return () => {
 			return h(
-				'input', 
+				'input',
 				{
 					value: props.modelValue,
 					onInput: (e: any) => {

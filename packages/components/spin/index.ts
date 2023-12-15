@@ -1,5 +1,5 @@
 import { Spin } from './spin.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Spin

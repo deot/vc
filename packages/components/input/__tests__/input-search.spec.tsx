@@ -42,7 +42,7 @@ describe('index-search.ts', () => {
 		expect(typeof vm.click).toBe('function');
 		expect(wrapper.classes()).toEqual(['vcm-input-search']);
 
-		let content = wrapper.find('.vcm-input-search__content');
+		const content = wrapper.find('.vcm-input-search__content');
 
 		await wrapper.find('input').trigger('focus');
 		expect(content.classes()).toEqual(['vcm-input', 'is-focus', 'vcm-input-search__content']);
@@ -59,13 +59,13 @@ describe('index-search.ts', () => {
 		const handleCancel = vi.fn();
 		const wrapper = mount(() => {
 			return (
-				<MInputSearch 
+				<MInputSearch
 					v-model={current.value}
 					cancelText="any"
 					// @ts-ignore
 					onFocus={handleFocus}
 					onBlur={handleBlur}
-					onCancel={handleCancel} 
+					onCancel={handleCancel}
 				/>
 			);
 		});
@@ -93,7 +93,7 @@ describe('index-search.ts', () => {
 				onEnter: handleEnter
 			}
 		});
-		let el = wrapper.find('.vc-input-search__content');
+		const el = wrapper.find('.vc-input-search__content');
 		expect(el.text()).toBe('搜索');
 
 		await el.trigger('click');
@@ -118,17 +118,17 @@ describe('index-search.ts', () => {
 
 		const wrapper = mount(InputSearch, {
 			props: {
-				modelValue: current.value,
-				onFocus: handleFocus,
-				onBlur: handleBlur,
-				onInput: handleInput,
-				onChange: handleChange,
-				onKeydown: handleKeydown,
-				onKeyup: handleKeyup,
-				onKeypress: handleKeypress,
-				onEnter: handleEnter,
-				onPaste: handlePaste,
-				onClick: handleClick,
+				'modelValue': current.value,
+				'onFocus': handleFocus,
+				'onBlur': handleBlur,
+				'onInput': handleInput,
+				'onChange': handleChange,
+				'onKeydown': handleKeydown,
+				'onKeyup': handleKeyup,
+				'onKeypress': handleKeypress,
+				'onEnter': handleEnter,
+				'onPaste': handlePaste,
+				'onClick': handleClick,
 				'onUpdate:modelValue': handleUpdateModelValue
 			}
 		});

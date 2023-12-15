@@ -1,7 +1,6 @@
 @use 'sass:map';
 @use 'sass:meta';
-
-@import "./theme.scss";
+@import "./theme";
 
 @mixin generate-theme($light: true) {
 	@if $light {
@@ -18,23 +17,19 @@
 // 跟随系统
 @media (prefers-color-scheme: light) {
 	:root {
-		@include generate-theme(true)
-	}
+		@include generate-theme(true); }
 }
 
 @media (prefers-color-scheme: dark) {
 	:root {
-		@include generate-theme(false)
-	}
+		@include generate-theme(false); }
 }
 
 // 可以在body标签上强制设置
 [data-vc-theme="light"] {
-	@include generate-theme(true)
-}
+	@include generate-theme(true); }
 
 [data-vc-theme="dark"] {
-	@include generate-theme(false)
-}
+	@include generate-theme(false); }
 
 

@@ -11,7 +11,7 @@ import {
 import { useScrollbar } from '@deot/vc-hooks';
 
 import { MTransitionZoom, MTransitionFade } from '../../transition/index.m';
-import { MCustomer } from "../../customer/index.m";
+import { MCustomer } from '../../customer/index.m';
 
 import { props as modalProps } from './modal-view-props';
 
@@ -30,7 +30,7 @@ export const MModalView = defineComponent({
 			if (!isActive.value) return;
 
 			// 2.x使用的是callback
-			let fn = hook && hook(e);
+			const fn = hook && hook(e);
 			if (fn && fn.then) {
 				return fn
 					.then((res: any) => {
@@ -44,23 +44,23 @@ export const MModalView = defineComponent({
 
 		// 用户点击确定的回调 兼容portal设计
 		const handleOk = (...rest: any[]) => {
-			let ok = instance.vnode.props?.onOk || props.onOk || (() => {});
+			const ok = instance.vnode.props?.onOk || props.onOk || (() => {});
 
 			return ok(...rest);
 		};
 
 		// 用户点击取消按钮时为取消 兼容portal设计
 		const handleCancel = (...rest: any[]) => {
-			let cancel = instance.vnode.props?.onCancel || props.onCancel || (() => {});
+			const cancel = instance.vnode.props?.onCancel || props.onCancel || (() => {});
 
 			return cancel(...rest);
 		};
 
 		// 关闭事件
 		const handleClose = (e: any, closable: boolean) => {
-			if (closable 
+			if (closable
 				|| (
-					props.maskClosable 
+					props.maskClosable
 					&& e.target.classList.contains('vcm-modal__wrapper')
 				)
 			) {
@@ -105,19 +105,19 @@ export const MModalView = defineComponent({
 		});
 
 		const footerClasses = computed(() => {
-			let len = curentActions.value.filter((i: any) => i.text).length;
-			return { 
-				'is-column': len >= 3,	
+			const len = curentActions.value.filter((i: any) => i.text).length;
+			return {
+				'is-column': len >= 3,
 				'is-alone': len === 1,
 			};
 		});
 
 		useScrollbar(isActive);
 		watch(
-			() => props.modelValue, 
+			() => props.modelValue,
 			(v) => {
 				isActive.value = v;
-			}, 
+			},
 			{ immediate: true }
 		);
 
@@ -132,7 +132,7 @@ export const MModalView = defineComponent({
 							v-show={props.mask && isActive.value}
 							class="vcm-modal__mask"
 							// @ts-ignore
-							onClick={(e) => handleClose(e, props.maskClosable)}
+							onClick={e => handleClose(e, props.maskClosable)}
 						/>
 					</MTransitionFade>
 					<div
@@ -147,7 +147,7 @@ export const MModalView = defineComponent({
 						>
 							<div
 								v-show={isActive.value}
-								style={[basicStyle.value]} 
+								style={[basicStyle.value]}
 								class="vcm-modal__container"
 							>
 								{
@@ -168,24 +168,24 @@ export const MModalView = defineComponent({
 
 												{
 													(props.content || slots.default) && (
-														<div 
+														<div
 															class={[{ 'vcm-modal__no-title': !props.title }, 'vcm-modal__content']}
 														>
 															{
-																(typeof props.content === 'string' || slots.default) 
+																(typeof props.content === 'string' || slots.default)
 																	? (
-																		<div 
-																			class="vcm-modal__html" 
-																		>	
-																			{ 
-																				typeof props.content === 'string' 
-																					&& (<div innerHTML={props.content} />) 
+																		<div
+																			class="vcm-modal__html"
+																		>
+																			{
+																				typeof props.content === 'string'
+																					&& (<div innerHTML={props.content} />)
 																			}
 																			{ slots.default?.() }
 																		</div>
-																	)
+																		)
 																	: typeof props.content === 'function'
-																		? <MCustomer render={props.content}/>
+																		? <MCustomer render={props.content} />
 																		: null
 															}
 														</div>
@@ -214,25 +214,26 @@ export const MModalView = defineComponent({
 													)
 												}
 											</Fragment>
-										) : props.mode === 'operation'
+											)
+										: props.mode === 'operation'
 											? (
 												<div class="vcm-modal__operation">
 													{
 														curentActions.value.map((item: any, index) => {
 															if (!item.text) return null;
 															return (
-																<div 
+																<div
 																	key={index}
 																	style={[item.style]}
 																	class="vcm-modal__button"
 																	innerHTML={item.text}
-																	onClick={(e) => handleBefore(e, item.onPress)}
-																/>	
+																	onClick={e => handleBefore(e, item.onPress)}
+																/>
 															);
 														})
 													}
 												</div>
-											)
+												)
 											: null
 								}
 							</div>

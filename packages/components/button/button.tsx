@@ -1,8 +1,8 @@
 /** @jsxImportSource vue */
 
 import { getCurrentInstance, defineComponent, ref, computed, inject, onMounted } from 'vue';
-import { Icon } from "../icon";
-import { Spin } from "../spin";
+import { Icon } from '../icon';
+import { Spin } from '../spin';
 import { Debounce } from '../debounce';
 import { props as buttonProps } from './button-props';
 
@@ -34,7 +34,7 @@ export const Button = defineComponent({
 		}));
 
 		const handleClick = (...args: any[]) => {
-			let fn = vm.vnode.props?.['onClick']?.(...args);
+			const fn = vm.vnode.props?.['onClick']?.(...args);
 
 			if (fn && fn.then) {
 				isLoading.value = true;
@@ -49,27 +49,27 @@ export const Button = defineComponent({
 		onMounted(() => {
 			hasSlot.value = slots.default !== undefined;
 		});
-		
+
 		return () => {
 			return (
 				<Debounce
 					tag={props.tag}
-					class={{ 'vc-button': true, ...classes.value }} 
+					class={{ 'vc-button': true, ...classes.value }}
 					wait={props.wait}
 					// @ts-ignore
-					disabled={props.disabled} 
+					disabled={props.disabled}
 					type={props.htmlType}
 					onClick={handleClick}
 				>
 					{
-						props.icon 
-							&& (<Icon type={props.icon} />) 
+						props.icon
+						&& (<Icon type={props.icon} />)
 					}
 					{
 						isLoading.value && (
-							<Spin 
-								size={12} 
-								foreground={props.type === 'default' ? '#ccc' : '#fff'} 
+							<Spin
+								size={12}
+								foreground={props.type === 'default' ? '#ccc' : '#fff'}
 								class="vc-button__loading"
 							/>
 						)

@@ -29,7 +29,7 @@ export type PortalOptions = Partial<{
 	/**
 	 * 插入的节点
 	 */
-	el: string | HTMLElement; 
+	el: string | HTMLElement;
 
 	/**
 	 * 再次调用，实例不销毁
@@ -44,7 +44,7 @@ export type PortalOptions = Partial<{
 	/**
 	 * 点击当前节点不销毁
 	 */
-	aliveRegExp: { 
+	aliveRegExp: {
 		className?: RegExp;
 		id?: RegExp;
 	};
@@ -122,8 +122,8 @@ export type PortalOptions = Partial<{
 }>;
 
 export const defaults: PortalOptions = {
-	tag: 'div', 
-	el: 'body', 
+	tag: 'div',
+	el: 'body',
 	alive: false,
 	multiple: false,
 	aliveRegExp: { className: /(vc-hack-alive|vc-hack-cp)/ },

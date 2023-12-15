@@ -13,8 +13,8 @@ describe('index.ts', () => {
 	it('create', async () => {
 		await IconManager.basicStatus;
 		const wrapper = mount(() => (
-			<Icon 
-				type={'search'} 
+			<Icon
+				type="search"
 				inherit
 			/>
 		));
@@ -32,7 +32,7 @@ describe('index.ts', () => {
 
 	it('icon waiting, coverage', async () => {
 		const wrapper = mount(() => (
-			<Icon type="any-need-wait"/>
+			<Icon type="any-need-wait" />
 		));
 
 		expect(wrapper.classes()).toContain('vc-icon');
@@ -47,10 +47,10 @@ describe('index.ts', () => {
 		};
 
 		const wrapper = mount(() => (
-			<Icon 
-				type={icon.value} 
+			<Icon
+				type={icon.value}
 				// @ts-ignore
-				onClick={handler} 
+				onClick={handler}
 			/>
 		));
 
@@ -70,7 +70,7 @@ describe('index.ts', () => {
 		} catch (e: any) {
 			expect(e.message).toMatch('invaild url');
 		}
-	}); 
+	});
 
 	it('IconManager, on/off', async () => {
 		expect.assertions(2);
@@ -91,5 +91,5 @@ describe('index.ts', () => {
 		} catch (e: any) {
 			expect(e.message).toMatch('any nonexistent');
 		}
-	}); 
+	});
 });

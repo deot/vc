@@ -1,4 +1,4 @@
-@import '../style/helper.scss';
+@import '../style/helper';
 
 $block: vc-transition-slide;
 
@@ -7,10 +7,12 @@ $block: vc-transition-slide;
 		will-change: transform, opacity;
 		animation-timing-function: ease-out;
 	}
+
 	@include when(out) {
 		will-change: transform, opacity;
 		animation-timing-function: ease-out;
 	}
+
 	/**
 	 * transition-group下删除元素, 其他元素位置变化动画
 	 */
@@ -22,33 +24,36 @@ $block: vc-transition-slide;
 /**
  * 动画名称
  */
-@mixin slideByMode($mode) {
+@mixin slide-mode($mode) {
 	@include block($block) {
 		@include when(#{$mode}) {
 			@include when(in) {
 				animation-name: vc-slide-#{$mode}-in;
 			}
+
 			@include when(out) {
 				animation-name: vc-slide-#{$mode}-out;
 			}
 		}
 	}
 }
-@include slideByMode(left);
-@include slideByMode(right);
-@include slideByMode(up);
-@include slideByMode(down);
+
+@include slide-mode(left);
+@include slide-mode(right);
+@include slide-mode(up);
+@include slide-mode(down);
 
 /**
  * 动画名称
  */
-@mixin slideBySize($mode, $size) {
+@mixin slide-size($mode, $size) {
 	@include block($block) {
 		@include when(#{$mode}) {
 			@include when(#{$size}) {
 				@include when(in) {
 					animation-name: vc-slide-#{$mode}-#{$size}-in;
 				}
+
 				@include when(out) {
 					animation-name: vc-slide-#{$mode}-#{$size}-out;
 				}
@@ -56,10 +61,11 @@ $block: vc-transition-slide;
 		}
 	}
 }
-@include slideBySize(left, part);
-@include slideBySize(right, part);
-@include slideBySize(up, part);
-@include slideBySize(down, part);
+
+@include slide-size(left, part);
+@include slide-size(right, part);
+@include slide-size(up, part);
+@include slide-size(down, part);
 
 
 

@@ -21,7 +21,7 @@ export const MInputSearch = defineComponent({
 	inheritAttrs: false,
 	setup(props, { emit, slots, expose, attrs }) {
 		const input = ref<HTMLElement>();
-		
+
 		const isFocus = ref(false);
 		useNativeEmitter(input, expose);
 
@@ -58,15 +58,15 @@ export const MInputSearch = defineComponent({
 						}
 					>
 						{{
-							prepend: (() => slots.prepend?.() || (
-								 <MIcon class="vcm-input-search__icon" type={props.prepend || 'search'} />
-							)),
+							prepend: () => slots.prepend?.() || (
+								<MIcon class="vcm-input-search__icon" type={props.prepend || 'search'} />
+							),
 							append: slots.append && (() => slots.append?.()),
 						}}
 					</MInput>
 					{
 						isFocus.value && cancelText && (
-							<div 
+							<div
 								class="vcm-input-search__btn"
 								onTouchend={handleCancel}
 							>

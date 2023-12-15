@@ -11,7 +11,7 @@ export const useInputNumber = () => {
 	const typingValue: Ref<Value> = ref('');
 	const currentValue: Ref<Value> = ref('');
 	const isTyping = ref(false);
-	
+
 	let rollBackValue: Value;
 	let timer: any;
 
@@ -40,7 +40,7 @@ export const useInputNumber = () => {
 	// 当controllable为true是，由于input-number特殊性是允许输入，但失焦会显示modelValue
 	const displayValue = computed(() => {
 		return isTyping.value
-			? typingValue.value 
+			? typingValue.value
 			: currentValue.value;
 	});
 
@@ -58,7 +58,7 @@ export const useInputNumber = () => {
 	};
 
 	const isAfterAllowChanged = async (e: any, value: Value) => {
-		let onAfter = instance.attrs.onAfter as any;
+		const onAfter = instance.attrs.onAfter as any;
 		if (!onAfter) return true;
 		let allow = false;
 		try {
@@ -102,7 +102,7 @@ export const useInputNumber = () => {
 	const composeValue = (value: string, tag: string): any => {
 		// 失焦时，只留一个'-'或为''
 		let $value = /^(-|)$/.test(value)
-			? '' 
+			? ''
 			: compareWithBoundary(value, tag);
 		$value = props.required && !$value
 			? String(props.min)
@@ -112,9 +112,9 @@ export const useInputNumber = () => {
 	};
 
 	const handleEnter = async (e: KeyboardEvent) => {
-		let value = composeValue(typingValue.value as string, 'input');
+		const value = composeValue(typingValue.value as string, 'input');
 
-		let allow = await isAfterAllowChanged(e, value);
+		const allow = await isAfterAllowChanged(e, value);
 
 		allow && sync(value, e);
 		allow && emit('enter', e);
@@ -156,10 +156,10 @@ export const useInputNumber = () => {
 						return '.';
 					}
 				});
-		} 
+		}
 
 		if (value !== '') {
-			let regex = props.precision
+			const regex = props.precision
 				? new RegExp(`(.*\\.[\\d]{${props.precision}})[\\d]+`)
 				: /(.*)\./;
 			value = value
@@ -174,8 +174,8 @@ export const useInputNumber = () => {
 
 	const handleBlur = async (e: FocusEvent, _targetValue: string, focusValue: any) => {
 		isTyping.value = false;
-		let value = composeValue(typingValue.value as string, 'input');
-		let allow = await isAfterAllowChanged(e, value);
+		const value = composeValue(typingValue.value as string, 'input');
+		const allow = await isAfterAllowChanged(e, value);
 
 		allow && sync(value, e);
 		allow && emit('blur', e, value, focusValue);
@@ -198,8 +198,8 @@ export const useInputNumber = () => {
 	};
 
 	const handleStepper = async (e: any, base: number) => {
-		let plus = instance.attrs.onPlus;
-		let minus = instance.attrs.onMinus;
+		const plus = instance.attrs.onPlus;
+		const minus = instance.attrs.onMinus;
 
 		if (base === 1 && typeof plus === 'function') { return plus(); }
 		if (base === -1 && typeof minus === 'function') { return minus(); }
@@ -220,24 +220,24 @@ export const useInputNumber = () => {
 			return;
 		}
 
-		let value: number = +currentValue.value + (props.step as number) * base;
-		let value$ = props.output(compareWithBoundary(isNaN(value) ? '' : value, 'button'));
+		const value: number = +currentValue.value + (props.step as number) * base;
+		const value$ = props.output(compareWithBoundary(isNaN(value) ? '' : value, 'button'));
 
-		let before = instance.attrs.onBefore as any;
-		let state = (await before?.(value$) !== false);
+		const before = instance.attrs.onBefore as any;
+		const state = (await before?.(value$) !== false);
 
 		state && sync(value$, {});
 		afterDebounce(e, value);
 	};
 
 	const listeners = {
-		onEnter: handleEnter,
-		onFocus: handleFocus,
-		onBlur: handleBlur,
-		onInput: handleInput,
+		'onEnter': handleEnter,
+		'onFocus': handleFocus,
+		'onBlur': handleBlur,
+		'onInput': handleInput,
 
 		// 防止通过attrs挂在到Input组件上触发事件
-		onChange: undefined,
+		'onChange': undefined,
 		'onUpdate:modelValue': undefined
 	};
 

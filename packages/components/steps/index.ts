@@ -1,5 +1,5 @@
 import { Steps } from './steps.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Steps

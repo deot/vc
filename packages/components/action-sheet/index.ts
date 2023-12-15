@@ -1,5 +1,5 @@
 import { ActionSheet } from './action-sheet.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	ActionSheet

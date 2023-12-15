@@ -1,5 +1,5 @@
 import { HTMLToImage } from './html-to-image.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	HTMLToImage

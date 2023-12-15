@@ -20,13 +20,13 @@ export const ButtonGroup = defineComponent({
 		));
 
 		return () => {
-			return props.fragment 
-				? slots?.default?.() 
+			return props.fragment
+				? slots?.default?.()
 				: (
 					<div class={{ 'vc-button-group': true, ...classes.value }}>
 						{slots?.default?.()}
 					</div>
-				);
+					);
 		};
 	}
 });

@@ -1,5 +1,5 @@
 import { Marquee } from './marquee.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Marquee

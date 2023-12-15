@@ -1,5 +1,5 @@
 import { Card } from './card.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Card

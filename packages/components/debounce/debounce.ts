@@ -20,12 +20,12 @@ export const Debounce = defineComponent({
 		const listener = ref({});
 		// 这里使用watch, 不使用computed。（computed的话，`@vue/test-utils` 多次click时重置了）
 		watch(
-			[() => props.wait, () => props.exclude, () => props.include], 
+			[() => props.wait, () => props.exclude, () => props.include],
 			() => {
 				const { wait, exclude, include } = props;
 
 				const ons = Object.entries(attrs).reduce((pre, [key, callback]) => {
-					/* istanbul ignore else -- @preserve */ 
+					/* istanbul ignore else -- @preserve */
 					if (
 						(!exclude || !exclude.test(key))
 						&& (!include || include.test(key))
@@ -34,7 +34,7 @@ export const Debounce = defineComponent({
 						pre[key] = debounce(callback as any, wait, {
 							leading: true,
 							trailing: false
-						});	
+						});
 					}
 					return pre;
 				}, {});

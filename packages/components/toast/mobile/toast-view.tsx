@@ -3,9 +3,9 @@
 import { defineComponent, ref, onMounted, onUnmounted, withModifiers } from 'vue';
 import { props as toastProps } from './toast-view-props';
 
-import { MCustomer } from "../../customer/index.m";
-import { MSpin } from "../../spin/index.m";
-import { MTransitionFade } from "../../transition/index.m";
+import { MCustomer } from '../../customer/index.m';
+import { MSpin } from '../../spin/index.m';
+import { MTransitionFade } from '../../transition/index.m';
 
 const COMPONENT_NAME = 'vcm-toast';
 
@@ -43,7 +43,7 @@ export const MToastView = defineComponent({
 			timer && clearTimeout(timer);
 		});
 
-		let exposes = ['destroy', 'remove', 'close', 'hide']
+		const exposes = ['destroy', 'remove', 'close', 'hide']
 			.reduce((pre, key) => {
 				pre[key] = handleRemove;
 				return pre;
@@ -54,22 +54,22 @@ export const MToastView = defineComponent({
 		return () => {
 			return (
 				<div class="vcm-toast">
-					<div 
-						class="vcm-toast__bg" 
+					<div
+						class="vcm-toast__bg"
 						onClick={handleClose}
 						onTouchmove={withModifiers(() => {}, ['prevent'])}
 					/>
-					<MTransitionFade 
+					<MTransitionFade
 						duration={{ enter: 300, leave: 150 }}
 						// @ts-ignore
 						onAfterLeave={handleRemove}
 					>
 						<div v-show={isVisible.value} class="vcm-toast__wrapper">
 							{ props.mode === 'loading' && (<MSpin class="vcm-toast__loading" />) }
-							{ 
+							{
 								typeof props.content === 'string'
-									? (<div class="vcm-toast__content" innerHTML={props.content} />) 
-									: typeof props.content === 'function' 
+									? (<div class="vcm-toast__content" innerHTML={props.content} />)
+									: typeof props.content === 'function'
 										? (<MCustomer render={props.content} />)
 										: null
 							}

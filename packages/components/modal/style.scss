@@ -1,13 +1,11 @@
-@import '../style/helper.scss';
+@import '../style/helper';
 
 $component-name: vc-modal;
-
 $color-success: varfix(color-success, modal);
 $color-error: varfix(color-error, modal);
 $color-warning: varfix(color-warning, modal);
 $color-info: varfix(color-primary, modal);
 $foreground-color: varfix(foreground-color, modal);
-
 $background-color-light: varfix(background-color-light, modal);
 $border-shadow: varfix(border-shadow, modal);
 $color-light-deeper: varfix(color-light-deeper, modal);
@@ -16,46 +14,50 @@ $color-dark-extralight: varfix(color-dark-extralight, modal);
 
 @include block($component-name) {
 	color: $foreground-color;
+
 	@include element(mask) {
-		opacity: 1;
 		position: fixed;
-		top: 0;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		background-color: rgba(0, 0, 0, 0.4);
-		height: 100%;
+		inset: 0;
 		z-index: $popup-zindex; // 与wrapper相同，两个modal同时出现时可以盖上去
+		height: 100%;
+		background-color: rgb(0 0 0 / 40%);
+		opacity: 1;
 	}
+
 	@include element(wrapper) {
 		position: fixed;
 		top: 50%;
-		transform: translateY(-50%);
 		left: 0;
-		width: 100%;
 		z-index: $popup-zindex;
+		width: 100%;
+		transform: translateY(-50%);
 	}
+
 	@include element(container) {
 		position: relative;
-		background: $background-color-light;
-		box-shadow: $border-shadow;
-		margin: auto;
-		border-radius: unitfix(4);
-		padding-bottom: unitfix(63);
 		display: flex;
-		flex-direction: column;
+		padding-bottom: unitfix(63);
+		margin: auto;
+		background: $background-color-light;
+		border-radius: unitfix(4);
+		box-shadow: $border-shadow;
 		box-sizing: border-box;
+		flex-direction: column;
+
 		@include when(no-footer) {
 			padding-bottom: 0;
 		}
+
 		@include when(drag) {
 			position: absolute;
 		}
+
 		@include when(large) {
-			@media screen and (max-height: 768px) {
+			@media screen and (height <= 768px) {
 				min-height: unitfix(400) !important;
 			}
-			@media screen and (max-height: 400px) {
+
+			@media screen and (height <= 400px) {
 				min-height: 100% !important;
 			}
 		}
@@ -63,60 +65,69 @@ $color-dark-extralight: varfix(color-dark-extralight, modal);
 
 	@include element(header) {
 		position: relative;
-		border-bottom: unitfix(1) solid #e8e8e8;
+		display: flex;
 		padding: unitfix(14) unitfix(24);
-		line-height: 1;
 		font-size: unitfix(14);
 		font-weight: 400;
-		display: flex;
+		line-height: 1;
+		border-bottom: unitfix(1) solid #e8e8e8;
 		box-sizing: border-box;
+
 		@include when(confirm) {
-			border-bottom: none;
 			padding: unitfix(24) unitfix(16) unitfix(16) unitfix(16);
+			border-bottom: none;
 		}
 	}
+
 	@include element(content) {
-		overflow-y: auto;
 		padding: unitfix(16) unitfix(24);
-		flex: 1;
+		overflow-y: auto;
 		box-sizing: border-box;
+		flex: 1;
+
 		@include when(confirm) {
 			padding: 0;
-			padding-left: unitfix(46);
 			padding-right: unitfix(24);
+			padding-left: unitfix(46);
 		}
+
 		@include when(padding-none) {
 			padding: 0;
 			padding-left: 0;
 		}
 	}
+
 	@include element(footer) {
 		position: absolute;
 		bottom: 0;
 		width: 100%;
-		border-top: unitfix(1) solid $color-light-deeper;
 		padding: unitfix(17) unitfix(24);
-		text-align: right;
 		font-size: 12px;
+		text-align: right;
+		border-top: unitfix(1) solid $color-light-deeper;
 		box-sizing: border-box;
+
 		@include when(confirm) {
-			border-top: none;
 			padding: unitfix(14) unitfix(16);
+			border-top: none;
+
 			button {
 				display: inline-block;
 				vertical-align: middle;
 			}
 		}
 	}
+
 	@include element(title) {
 		width: 100%;
-		line-height: unitfix(20);
 		min-height: unitfix(20);
 		font-size: unitfix(14);
-		color: $color-dark-light;
 		font-weight: 400;
+		line-height: unitfix(20);
+		color: $color-dark-light;
 		word-wrap: break-word;
 	}
+
 	@include element(close) {
 		position: absolute;
 		top: unitfix(17);
@@ -124,18 +135,23 @@ $color-dark-extralight: varfix(color-dark-extralight, modal);
 		color: $color-dark-extralight;
 		cursor: pointer;
 	}
+
 	@include element(icon) {
 		margin-right: unitfix(8);
 		font-size: unitfix(20);
+
 		@include when(success) {
 			color: $color-success;
 		}
+
 		@include when(error) {
 			color: $color-error;
 		}
+
 		@include when(warning) {
 			color: $color-warning;
 		}
+
 		@include when(info) {
 			color: $color-info;
 		}

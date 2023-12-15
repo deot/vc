@@ -1,6 +1,6 @@
 import { ref, inject, watch, computed, getCurrentInstance, nextTick } from 'vue';
-import type { Ref } from 'vue'; 
-import type { Props } from './input-props'; 
+import type { Ref } from 'vue';
+import type { Props } from './input-props';
 import { getFitValue, getFitMaxLength } from './utils';
 
 export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
@@ -40,7 +40,7 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 	const currentMaxlength = computed(() => {
 		const value = currentValue.value;
 		const { maxlength, bytes } = props;
-		return Array.isArray(value) || !maxlength || !bytes 
+		return Array.isArray(value) || !maxlength || !bytes
 			? maxlength
 			: getFitMaxLength(value, maxlength);
 	});
@@ -87,7 +87,7 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 
 		if (isClearing.value) return;
 		if (props.focusEnd) {
-			let length = String(currentValue.value).length;
+			const length = String(currentValue.value).length;
 			setTimeout(() => {
 				input.value!.setSelectionRange(length, length);
 			}, 0);
@@ -107,20 +107,20 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 	const handleInput = (e: InputEvent) => {
 		if (isOnComposition.value) return;
 		let value = input.value!.value;
-		
+
 		/**
 		 * 当bytes为true, 初始值就已经超出maxlength的情况
 		 * 1.删除操作时，应不受maxlength的影响(deleteContentBackward)，值会发生改变
-		 * 2.如maxlength为2, 此时值为`abc`, currentMaxlength为4. 
+		 * 2.如maxlength为2, 此时值为`abc`, currentMaxlength为4.
 		 * 	- 不允许输入`abc值`，可以允许输入`abcd`
 		 * 3.当粘帖时，文本太多，要计算fitValue
 		 */
 		if (
-			typeof props.maxlength !== 'undefined' 
-			&& props.bytes 
-			&& e.inputType !== 'deleteContentBackward'
+			typeof props.maxlength !== 'undefined'
+				&& props.bytes
+				&& e.inputType !== 'deleteContentBackward'
 		) {
-			let fitValue = getFitValue(value, props.maxlength) as string;
+			const fitValue = getFitValue(value, props.maxlength) as string;
 			if (value !== fitValue) {
 				value = fitValue;
 			}
@@ -151,7 +151,7 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 			isClearing.value = true;
 		}
 		const e = { target: { value: '' } };
-		
+
 		sync('', e);
 		emit('clear', e);
 

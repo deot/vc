@@ -32,13 +32,13 @@ export const TransitionSlide = defineComponent({
 
 		return () => {
 			return h(
-				Wrapper.value, 
+				Wrapper.value,
 				{
 					...attrs,
 					...listeners,
 					...classes.value,
 					tag: props.tag
-				},  
+				},
 				slots
 			);
 		};

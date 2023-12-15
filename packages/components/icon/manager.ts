@@ -36,19 +36,19 @@ class Manager {
 					if (IS_SERVER || !/.js$/.test(url)) {
 						return reject(new VcError('icon', 'invaild url'));
 					}
-					let key = `${prefix}${url}`;
+					const key = `${prefix}${url}`;
 
-					let cache = window.localStorage.getItem(key);
+					const cache = window.localStorage.getItem(key);
 					let icons = JSON.parse(cache || '""') as typeof IconManager['icons'];
 
-					/* istanbul ignore next -- @preserve */ 
+					/* istanbul ignore next -- @preserve */
 					if (!icons) {
 						const data = await new Promise<string>((resolve$) => {
 							const request = new XMLHttpRequest();
 							request.onreadystatechange = () => {
 								if (
-									request.readyState === 4 
-									&& request.status >= 200 
+									request.readyState === 4
+									&& request.status >= 200
 									&& request.status <= 400
 								) {
 									resolve$(request.responseText || request.response);
@@ -57,10 +57,10 @@ class Manager {
 							request.open('GET', `${window.location.protocol.replace(/[^:]+/, 'https')}${url}`);
 							request.send();
 						});
-						
+
 						// 等待解析
 						icons = await this.parser(data, url);
-					
+
 						try {
 							window.localStorage.setItem(key, JSON.stringify(icons));
 						} catch (e) {
@@ -80,7 +80,7 @@ class Manager {
 					};
 					// 执行
 					Object.keys(this.events).forEach((type) => {
-						let fns = this.events[type];
+						const fns = this.events[type];
 						if (this.icons[type] && fns) {
 							fns.forEach((fn: Function) => fn());
 							delete this.events[type];
@@ -90,7 +90,7 @@ class Manager {
 					// 结束
 					resolve();
 				} catch (e) {
-					/* istanbul ignore next -- @preserve */ 
+					/* istanbul ignore next -- @preserve */
 					reject(new VcError('icon', e));
 				}
 			})();
@@ -101,12 +101,12 @@ class Manager {
 
 	parser(svgStr: string, url: string): Promise<typeof IconManager['icons']> {
 		return new Promise((resolve, reject) => {
-			let icons = {};
+			const icons = {};
 			setTimeout(() => {
 				try {
-					/* istanbul ignore next -- @preserve */ 
+					/* istanbul ignore next -- @preserve */
 					IS_DEV && console.time(url);
-					svgStr.replace(svgReg, '$1')?.match(symbolReg)?.forEach( 
+					svgStr.replace(svgReg, '$1')?.match(symbolReg)?.forEach(
 						(i: string) => i.replace(basicReg, (_: string, ...args: any[]): string => {
 							const [$1, $2, $3] = args;
 							icons[`${$1}`] = {
@@ -119,11 +119,11 @@ class Manager {
 							return '';
 						})
 					);
-					/* istanbul ignore next -- @preserve */ 
+					/* istanbul ignore next -- @preserve */
 					IS_DEV && console.timeEnd(url);
 					resolve(icons);
 				} catch (e) {
-					/* istanbul ignore next -- @preserve */ 
+					/* istanbul ignore next -- @preserve */
 					reject(new VcError('icon', e));
 				}
 			}, 0);
@@ -131,7 +131,7 @@ class Manager {
 	}
 
 	on(type?: string, fn?: Function) {
-		/* istanbul ignore next -- @preserve */ 
+		/* istanbul ignore next -- @preserve */
 		if (typeof type !== 'string' || typeof fn !== 'function') return this;
 
 		this.events[type] = this.events[type] || [];
@@ -139,34 +139,34 @@ class Manager {
 		if (this.events[type].length >= 100) {
 			delete this.events[type];
 
-			/* istanbul ignore else -- @preserve */ 
+			/* istanbul ignore else -- @preserve */
 			if (!IS_SERVER) {
 				throw new VcError('icon', `${type} nonexistent`);
 			}
 		}
 
-		this.events[type].push(fn); 
+		this.events[type].push(fn);
 
 		return this;
 	}
 
 	off(type?: string, fn?: Function) {
-		/* istanbul ignore next -- @preserve */ 
+		/* istanbul ignore next -- @preserve */
 		if (typeof type !== 'string' || typeof fn !== 'function') return this;
 
 		this.events[type] = this.events[type]?.filter((i: Function) => i != fn);
 
 		return this;
 	}
-	
-	/* istanbul ignore next -- @preserve */ 
+
+	/* istanbul ignore next -- @preserve */
 	private clearResource() {
-		let needs = Object.keys(this.sourceStatus); 
+		const needs = Object.keys(this.sourceStatus);
 		Object.keys(window.localStorage).forEach((item) => {
 			if (item.includes(prefix)) {
 				const key = item.split(prefix).pop();
-				key && !needs.includes(key) 
-					&& window.localStorage.removeItem(item); // 这里需要使用localStorage
+				key && !needs.includes(key)
+				&& window.localStorage.removeItem(item); // 这里需要使用localStorage
 			}
 		});
 	}

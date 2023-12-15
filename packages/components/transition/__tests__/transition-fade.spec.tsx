@@ -10,14 +10,14 @@ describe('transition-fade.ts', () => {
 		const isVisible = ref(false);
 		const isGroup = ref(false);
 		const mode = ref('none');
-		
+
 		const wrapper = mount(
 			() => (
-				<TransitionFade 
+				<TransitionFade
 					origin="0"
 					mode={mode.value}
 					group={isGroup.value}
-					duration={1} 
+					duration={1}
 				>
 					<div v-show={isVisible.value} key="1" />
 				</TransitionFade>

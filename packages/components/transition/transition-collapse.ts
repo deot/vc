@@ -13,7 +13,7 @@ export const TransitionCollapse = defineComponent({
 		const attrs = _attrs as any;
 		const { Wrapper, resetStyles, resetAbsolute, createNext } = useTransition();
 		const getTransitionStyle = (duration) => {
-			let style = `
+			const style = `
 				${duration}ms height ease-in-out, 
 				${duration}ms padding-top ease-in-out, 
 				${duration}ms padding-bottom ease-in-out
@@ -22,7 +22,7 @@ export const TransitionCollapse = defineComponent({
 		};
 
 		const handleBeforeEnter = (el: HTMLElement) => {
-			let duration = (props.duration as any).enter || props.duration;
+			const duration = (props.duration as any).enter || props.duration;
 
 			el.style.transition = getTransitionStyle(duration);
 			/* istanbul ignore next -- @preserve */
@@ -43,8 +43,8 @@ export const TransitionCollapse = defineComponent({
 		};
 
 		const handleEnter = async (el: HTMLElement, done: () => any) => {
-			let duration = (props.duration as any).enter || props.duration;
-			let next = createNext(done, duration);
+			const duration = (props.duration as any).enter || props.duration;
+			const next = createNext(done, duration);
 			try {
 				el.dataset.oldOverflow = el.style.overflow;
 				/* istanbul ignore next -- @preserve */
@@ -93,14 +93,14 @@ export const TransitionCollapse = defineComponent({
 		};
 
 		const handleLeave = (el: HTMLElement, done: () => any) => {
-			let duration = (props.duration as any).leave || props.duration;
-			let next = createNext(done, duration);
+			const duration = (props.duration as any).leave || props.duration;
+			const next = createNext(done, duration);
 			try {
-				let leaveDuration = (props.duration as any).leave || props.duration;
+				const leaveDuration = (props.duration as any).leave || props.duration;
 				/* istanbul ignore next -- @preserve */
 				if (el.scrollHeight !== 0) {
 					/**
-					 * for safari: 
+					 * for safari:
 					 * 在设置高度之后添加，否则它会突然跳到零高度
 					 */
 					el.style.transition = getTransitionStyle(leaveDuration);
@@ -140,7 +140,7 @@ export const TransitionCollapse = defineComponent({
 
 		return () => {
 			return h(
-				Wrapper.value, 
+				Wrapper.value,
 				{
 					...attrs,
 					...listeners,

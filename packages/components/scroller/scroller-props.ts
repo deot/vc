@@ -44,7 +44,7 @@ export const props = {
 		type: [String, Array, Object] as PropType<StyleValue>,
 		default: '',
 	},
-	
+
 	barTo: barProps.to,
 	...(pick(barProps, barKeys) as Pick<typeof barProps, typeof barKeys[number]>)
 };

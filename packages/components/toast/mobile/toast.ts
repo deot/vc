@@ -11,8 +11,8 @@ const MToast = new Portal(MToastView, {
 type Options = Partial<Props & { onClose: (...args: any[]) => any }>;
 
 const create = (options: Options) => (...params: Array<Options[keyof Options] | Options>) => {
-	let options$ = Utils.toOptions(
-		params, 
+	const options$ = Utils.toOptions(
+		params,
 		['content', 'duration', 'onClose', 'maskClosable'],
 		// 避免引用
 		{ ...options }

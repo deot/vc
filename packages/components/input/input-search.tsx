@@ -15,7 +15,7 @@ export const InputSearch = defineComponent({
 	inheritAttrs: false,
 	setup(props, { emit, slots, expose, attrs }) {
 		const input = ref<HTMLElement>();
-		
+
 		useNativeEmitter(input, expose);
 
 		return () => {
@@ -33,18 +33,18 @@ export const InputSearch = defineComponent({
 				>
 					{{
 						prepend: slots.prepend && (() => slots.prepend?.()),
-						append: (() => slots.append?.() || (
-							<div 
+						append: () => slots.append?.() || (
+							<div
 								class={['vc-input-search__content', { 'is-disabled': props.disabled }]}
-								onClick={(e) => emit('enter', e)}
+								onClick={e => emit('enter', e)}
 							>
 								{
-									props.enterText === true 
+									props.enterText === true
 										? <Icon type={props.append || 'search'} />
 										: props.enterText
 								}
 							</div>
-						))
+						)
 					}}
 				</Input>
 			);

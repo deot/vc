@@ -19,11 +19,11 @@ const create = (options: Options) => (...params: Array<Options[keyof Options] | 
 		}
 	});
 
-	let top = 30 + number * 40;
-	let maxH = window.innerHeight - 100;
+	const top = 30 + number * 40;
+	const maxH = window.innerHeight - 100;
 	options.top = top > maxH ? maxH : top;
-	let options$ = Utils.toOptions(
-		params, 
+	const options$ = Utils.toOptions(
+		params,
 		['content', 'duration', 'onClose'],
 		// 避免引用
 		{ ...options }

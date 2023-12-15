@@ -13,12 +13,12 @@ export const useScroller = (expose: SetupContext['expose']) => {
 	const props = instance.props as Props;
 
 	const wrapperStyle = computed(() => {
-		let style = {} as Record<string, string>;
+		const style = {} as Record<string, string>;
 
 		if (props.height) {
 			style.height = typeof props.height !== 'number' ? props.height : `${props.height}px`;
 		}
-		if (props.maxHeight) { 
+		if (props.maxHeight) {
 			style.maxHeight = typeof props.maxHeight !== 'number' ? props.maxHeight : `${props.maxHeight}px`;
 		}
 

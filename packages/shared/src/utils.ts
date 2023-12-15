@@ -1,4 +1,4 @@
-export const autoCatch = async (impl: any, options: Record<string, any> = {}) => { 
+export const autoCatch = async (impl: any, options: Record<string, any> = {}) => {
 	const { onError = console.error } = options;
 
 	let target = impl;
@@ -20,7 +20,7 @@ interface Exceptions {
 
 // 当前节点是否符合条件
 export const eleInRegExp = (el: HTMLElement, exceptions: Exceptions): boolean => {
-	for (let i in exceptions) {
+	for (const i in exceptions) {
 		if (exceptions[i].test(el[i])) {
 			return true;
 		}
@@ -32,7 +32,7 @@ export const eleInRegExp = (el: HTMLElement, exceptions: Exceptions): boolean =>
  * 合并字符串和对象为一个新的对象, 如
  * args = ['', 0];
  * orders = ['message','duration'];
- * -> 
+ * ->
  * {
  * 	message: args[0],
  * 	duration: args[1]

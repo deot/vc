@@ -1,5 +1,5 @@
 import { RecycleList } from './recycle-list.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	RecycleList

@@ -21,8 +21,8 @@ export const FormItem = defineComponent({
 			if (isStyleless.value) return slots.default?.();
 			return (
 				<div class={['vc-form-item', classes.value]}>
-					<div 
-						style={labelStyle.value} 
+					<div
+						style={labelStyle.value}
 						class="vc-form-item__label"
 						// @ts-ignore
 						for={labelFor}
@@ -35,7 +35,7 @@ export const FormItem = defineComponent({
 						<div class="vc-form-item__content">
 							{ slots.default?.() }
 							{
-								slots.error 
+								slots.error
 									? slots.error({
 										show: showError.value,
 										nest: isNest.value,
@@ -44,14 +44,14 @@ export const FormItem = defineComponent({
 									})
 									: (
 										<TransitionFade>
-											<div 
-												v-show={showError.value} 
+											<div
+												v-show={showError.value}
 												class={['vc-form-item__tip', isNest.value ? 'is-nest' : '', errorColorClass]}
 											>
 												{ validateMessage.value }
 											</div>
 										</TransitionFade>
-									)
+										)
 							}
 						</div>
 					</div>

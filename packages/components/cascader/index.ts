@@ -1,5 +1,5 @@
 import { Cascader } from './cascader.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Cascader

@@ -10,7 +10,7 @@ export const props = {
 		type: Object
 	},
 	rules: {
-		type: Object as PropType<Record<string, FormRule>> 
+		type: Object as PropType<Record<string, FormRule>>
 	},
 	labelWidth: {
 		type: Number,

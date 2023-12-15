@@ -1,5 +1,5 @@
 import { Expand } from './expand.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Expand

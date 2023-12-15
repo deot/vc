@@ -1,5 +1,5 @@
 import { Tree } from './tree.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Tree

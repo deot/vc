@@ -1,5 +1,5 @@
 import { ImageProcessing } from './image-processing.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	ImageProcessing

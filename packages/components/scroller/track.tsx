@@ -82,7 +82,7 @@ export const Track = defineComponent({
 			// thumb应该在当前bar上的偏移值
 			const currentMove = (scrollDistance.value / props.wrapperSize) * thumbSize.value;
 			// 当前你滚动的距离
-			const thumbFitMove = currentMove * (1 - averageSize.value); 
+			const thumbFitMove = currentMove * (1 - averageSize.value);
 			return thumbFitMove > maxMove.value ? maxMove.value : thumbFitMove;
 		});
 
@@ -160,7 +160,7 @@ export const Track = defineComponent({
 			startDrag(e);
 
 			const { client } = barOptions.value;
-			
+
 			startMove = e[client];
 			startThumbMove = thumbMove.value;
 		};
@@ -183,10 +183,10 @@ export const Track = defineComponent({
 			isVisible.value = cursorDown.value;
 		};
 
-		const refreshThumb = () => raf(() => { 
+		const refreshThumb = () => raf(() => {
 			thumb.value!.style[$.prefixStyle('transform').camel] = `translate${barOptions.value.axis}(${thumbMove.value}px)`;
 		});
-		
+
 		const refreshThrottleThumb = throttle(refreshThumb, 50);
 
 		onMounted(() => {
@@ -204,7 +204,6 @@ export const Track = defineComponent({
 			$.off($.el(parentEl), 'mousemove', handleMouseMove);
 			$.off($.el(parentEl), 'mouseleave', handleLeave);
 		});
-
 
 		// 用throttle优化连续变化的transfrom
 		watch(

@@ -18,7 +18,7 @@ describe('use-scrollbar.ts', () => {
 			}
 		});
 
-		expect(root.find('span').attributes()).toEqual({ class: 'any', any: 'any' })
+		expect(root.find('span').attributes()).toEqual({ class: 'any', any: 'any' });
 		await root.find('span').trigger('any');
 		expect(handleAny).toBeCalledTimes(2);
 	});
@@ -38,7 +38,7 @@ describe('use-scrollbar.ts', () => {
 			}
 		});
 
-		expect(root.find('span').attributes()).toEqual({ any: 'any' })
+		expect(root.find('span').attributes()).toEqual({ any: 'any' });
 		await root.find('span').trigger('any');
 		expect(handleAny).toBeCalledTimes(1);
 	});
@@ -58,7 +58,7 @@ describe('use-scrollbar.ts', () => {
 			}
 		});
 
-		expect(root.find('span').attributes()).toEqual({})
+		expect(root.find('span').attributes()).toEqual({});
 		await root.find('span').trigger('any');
 		expect(handleAny).toBeCalledTimes(1);
 	});
@@ -78,7 +78,7 @@ describe('use-scrollbar.ts', () => {
 			}
 		});
 
-		expect(root.find('span').attributes()).toEqual({})
+		expect(root.find('span').attributes()).toEqual({});
 		await root.find('span').trigger('any');
 		expect(handleAny).toBeCalledTimes(1);
 	});

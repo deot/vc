@@ -12,7 +12,6 @@ import { VcInstance, VcError } from '../vc';
 import { defaults } from './default-options';
 import { PortalLeaf } from './portal-leaf';
 
-
 const COMPONENT_NAME = 'vc-portal';
 
 export class Portal<T extends Component> {
@@ -23,7 +22,7 @@ export class Portal<T extends Component> {
 	static clear(name?: string | string[] | boolean) {
 		try {
 			let force = false;
-			// 清理对象 
+			// 清理对象
 			let target = new Map<string, any>();
 			if (name && typeof name !== 'boolean') {
 				let names: string[] = [];
@@ -33,20 +32,20 @@ export class Portal<T extends Component> {
 					names = name;
 				}
 
-				names.forEach(i => target.set(i, '')); 
+				names.forEach(i => target.set(i, ''));
 				force = true;
 			} else {
 				force = !!name;
 				target = Portal.leafs;
 			}
-			for (let key of target.keys()) {
+			for (const key of target.keys()) {
 				const leaf = Portal.leafs.get(key);
 				if (leaf && (force === true || leaf.autoDestroy === true)) {
 					leaf.destroy();
 				}
 			}
 		} catch (e) {
-			/* istanbul ignore next -- @preserve */ 
+			/* istanbul ignore next -- @preserve */
 			throw new VcError('instance', e);
 		}
 	}
@@ -56,7 +55,7 @@ export class Portal<T extends Component> {
 	 */
 	static clearAll() {
 		try {
-			Portal.leafs.forEach((leaf) => leaf.destroy());
+			Portal.leafs.forEach(leaf => leaf.destroy());
 		} catch (e) {
 			/* istanbul ignore next -- @preserve */
 			throw new VcError('instance', e);
@@ -114,8 +113,8 @@ export class Portal<T extends Component> {
 	destroy = (target?: string | PortalLeaf) => {
 		const { multiple, name } = this.getDefaultOptions();
 		target = target || name;
-		const instance: PortalLeaf = typeof target === 'object' 
-			? target 
+		const instance: PortalLeaf = typeof target === 'object'
+			? target
 			: (Portal.leafs.get(target!) as PortalLeaf);
 
 		if (instance) {
@@ -131,7 +130,7 @@ export class Portal<T extends Component> {
 
 	private getDefaultOptions() {
 		return {
-			...defaults, 
+			...defaults,
 			...(VcInstance.options as any).Portal,
 			...this.globalOptions
 		};
@@ -139,8 +138,8 @@ export class Portal<T extends Component> {
 
 	private createCallback(getLeaf: () => PortalLeaf, delay?: number, callback?: any) {
 		return (...args: any[]) => {
-			let done = () => {
-				let leaf = getLeaf();
+			const done = () => {
+				const leaf = getLeaf();
 				/* istanbul ignore next -- @preserve */
 				if (!leaf) {
 					throw new VcError('portal', '实例不存在或已卸载');
@@ -155,19 +154,19 @@ export class Portal<T extends Component> {
 	}
 
 	private render(
-		options: PortalOptions, 
+		options: PortalOptions,
 		target: Promise<any>,
 		onFulfilled: (v?: any) => any,
 		onRejected: (v?: any) => any
 	): PortalLeaf {
-		let { 
-			el, 
-			tag, 
+		const {
+			el,
+			tag,
 			alive,
 			aliveRegExp,
 			aliveVisibleKey,
 			aliveUpdateKey,
-			name,
+			name: name$,
 			leaveDelay,
 			autoDestroy,
 			multiple,
@@ -190,7 +189,7 @@ export class Portal<T extends Component> {
 		} = options;
 
 		let useAllNodes = fragment;
-		name = (multiple ? `${name}__${Utils.getUid(COMPONENT_NAME)}` : name);
+		const name = (multiple ? `${name$}__${Utils.getUid(COMPONENT_NAME)}` : name$);
 
 		const container: HTMLElement & { _children?: HTMLElement[] } = document.createElement(tag as any);
 		const root: HTMLElement | null = typeof el === 'object' ? el : document.querySelector(el || 'body');
@@ -214,11 +213,11 @@ export class Portal<T extends Component> {
 			onDestoryed?.(...args);
 			leaf.app?.unmount();
 
-			/* istanbul ignore else -- @preserve */ 
+			/* istanbul ignore else -- @preserve */
 			if (useAllNodes) {
 				root?.contains(container) && root.removeChild(container);
 			} else if (container && container._children) {
-				container._children.forEach(i => {
+				container._children.forEach((i) => {
 					root?.contains(i) && root.removeChild(i);
 				});
 			}
@@ -237,7 +236,7 @@ export class Portal<T extends Component> {
 			// update
 			leaf.wrapper?.[aliveUpdateKey!]?.(options);
 		} else {
-			let wrapper = this.wrapper;
+			const wrapper = this.wrapper;
 			const app = createApp({
 				name: COMPONENT_NAME,
 				parent,
@@ -246,17 +245,17 @@ export class Portal<T extends Component> {
 						const handleExtra = (e: Event) => {
 							// close默认不传，用户可传递参数判断输入自己的触发的close
 							try {
-								let path = (e as any).path || DOM.composedPath(e);
-								/* istanbul ignore else -- @preserve */ 
+								const path = (e as any).path || DOM.composedPath(e);
+								/* istanbul ignore else -- @preserve */
 								if (
-									container 
+									container
 									&& e.target
-									&& !container.contains(e.target as HTMLElement) 
+									&& !container.contains(e.target as HTMLElement)
 									&& !path?.some((item: any) => VcUtils.eleInRegExp(item, aliveRegExp!))
 								) {
-									/* istanbul ignore else -- @preserve */ 
+									/* istanbul ignore else -- @preserve */
 									if (
-										leaf.wrapper 
+										leaf.wrapper
 										&& leaf.wrapper?.[aliveVisibleKey!]
 									) {
 										leaf.wrapper[aliveVisibleKey!] = false;
@@ -266,7 +265,7 @@ export class Portal<T extends Component> {
 									leaveDelay ? setTimeout($onDestoryed, leaveDelay) : $onDestoryed();
 								}
 							} catch (error) {
-								/* istanbul ignore next -- @preserve */ 
+								/* istanbul ignore next -- @preserve */
 								throw new VcError('portal', error);
 							}
 						};
@@ -286,7 +285,7 @@ export class Portal<T extends Component> {
 
 					const allowMounted = ref(typeof onBeforeCreate !== 'function');
 					if (!allowMounted.value) {
-						let result = onBeforeCreate!(propsData$);
+						const result = onBeforeCreate!(propsData$);
 
 						if (result && result.then) {
 							result.then((response: any) => {
@@ -301,16 +300,16 @@ export class Portal<T extends Component> {
 							propsData2.value = result;
 						}
 					}
-					
+
 					return () => allowMounted.value && h(
-						wrapper, 
+						wrapper,
 						{
 							...propsData1.value,
 							...propsData2.value,
 							ref: (vm: any) => (leaf.wrapper = vm),
 							onPortalFulfilled: (...args: any[]) => $onFulfilled(...args),
 							onPortalRejected: (...args: any[]) => $onRejected(...args)
-						}, 
+						},
 
 						slots || undefined
 					);
@@ -324,16 +323,16 @@ export class Portal<T extends Component> {
 			}
 
 			// store, router等
-			for (let key in components) {
+			for (const key in components) {
 				app.component(key, components[key]);
 			}
 
-			for (let key in uses) {
+			for (const key in uses) {
 				app.use(uses[key]);
 			}
 
 			install?.(app);
-			
+
 			app.mount(container);
 		}
 
@@ -350,33 +349,33 @@ export class Portal<T extends Component> {
 			if (!root$ || !child$) return;
 
 			if (insertion === 'first') {
-				let firstEl = root$.firstElementChild;
+				const firstEl = root$.firstElementChild;
 				if (firstEl) {
 					root$.insertBefore(child$, firstEl);
 					return;
-				} 
+				}
 			}
-			
+
 			root$.appendChild(child$);
 		};
 		/**
-		 * if 
+		 * if
 		 * 渲染结果为: <div data-v-app> <wrapper /> </div>
 		 * 两种情况
 		 * 1. wrapper根节点使用v-if
 		 * 2. fragment: true, 解决渲染问题
-		 * 
+		 *
 		 * （因为wrapper没有根节点, childs中的根节点使用v-if，后续不会渲染出来）
 		 *
 		 * else
-		 * 渲染结果为: <wrapper /> 
+		 * 渲染结果为: <wrapper />
 		 */
 		if (
-			fragment 
+			fragment
 			|| (
 				typeof container._children === 'undefined'
-				&& !Array.from(container.children).length
-			) 
+					&& !Array.from(container.children).length
+			)
 		) {
 			useAllNodes = true;
 			container.parentElement === null && append(root, container);
@@ -384,12 +383,12 @@ export class Portal<T extends Component> {
 			container._children = [];
 
 			let childs = Array.from(container.children);
-			
+
 			if (insertion === 'first') {
 				childs = childs.reverse();
 			}
 
-			childs.forEach(i => {
+			childs.forEach((i) => {
 				append(root, i as HTMLElement);
 				container._children?.push?.(i as HTMLElement);
 			});

@@ -1,16 +1,18 @@
 .vc-spin {
 	display: inline-block;
-	vertical-align: middle;
 	line-height: 0;
+	vertical-align: middle;
 }
+
 .vc-spin svg {
 	width: 1em;
 	height: 1em;
-	vertical-align: -0.15em; // 居中
-	fill: currentColor;
 	overflow: hidden;
+	vertical-align: -0.15em; // 居中
 	animation: vc-spin-circle 1s linear infinite;
+	fill: currentcolor;
 }
+
 @keyframes vc-spin-circle {
 	to {
 		transform: rotate(1turn);

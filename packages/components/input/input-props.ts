@@ -33,7 +33,7 @@ export const props = {
 	afloat: {
 		type: Boolean,
 		default: false
-	},	
+	},
 	inputId: {
 		type: String
 	},
@@ -55,7 +55,7 @@ export const props = {
 	},
 
 	/**
-	 * 完全受控组件：输入框内的值为modelValue. 
+	 * 完全受控组件：输入框内的值为modelValue.
 	 * 非完全受控时: 输入框内的值就是当前输入的值，modelValue变更，输入框的值也会更改
 	 */
 	controllable: {

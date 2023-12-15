@@ -31,9 +31,9 @@ export const Select = defineComponent({
 							if (!v.includes(item)) {
 								v = v.concat([item]);
 							} else {
-								v = v.filter((it) => it !== item);
+								v = v.filter(it => it !== item);
 							}
-							
+
 							emit('update:modelValue', v);
 							formItem.change?.(v);
 						}

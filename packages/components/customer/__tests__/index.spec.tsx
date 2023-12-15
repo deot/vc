@@ -17,11 +17,11 @@ describe('index.ts', () => {
 				current: 0,
 				render: (props, { attrs, slots, emit }) => {
 					return (
-						<ul class="child" onClick={(e) => emit('customer-click', e)}>
-							<li class="attrs">{ attrs.current }</li> 
-							<li class="props">{ props?.current }</li> 
-							<li class="default">{ slots.default?.() }</li> 
-							<li class="content">{ slots.content?.({ current: ((props.current as number) + 1) }) }</li> 
+						<ul class="child" onClick={e => emit('customer-click', e)}>
+							<li class="attrs">{ attrs.current }</li>
+							<li class="props">{ props?.current }</li>
+							<li class="default">{ slots.default?.() }</li>
+							<li class="content">{ slots.content?.({ current: ((props.current as number) + 1) }) }</li>
 						</ul>
 					);
 				}
@@ -33,7 +33,7 @@ describe('index.ts', () => {
 			},
 			slots: {
 				default: () => 'default-slot',
-				content: (scoped) => `content-slot-${scoped.current}`,
+				content: scoped => `content-slot-${scoped.current}`,
 			}
 		});
 

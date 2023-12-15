@@ -12,10 +12,10 @@ describe('index.ts', () => {
 	it('tag', async () => {
 		const link = 'any';
 		const wrapper = mount(() => (
-			<Button 
-				tag="a" 
-				// @ts-ignore 
-				href={link} 
+			<Button
+				tag="a"
+				// @ts-ignore
+				href={link}
 			/>
 		));
 
@@ -65,7 +65,6 @@ describe('index.ts', () => {
 		await wrapper.trigger('click');
 
 		expect(count).toBe(1);
-
 	});
 	it('click, loading', async () => {
 		expect.assertions(4);

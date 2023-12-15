@@ -3,11 +3,10 @@ import { NoticeView } from './notice-view.tsx';
 import type { Props } from './notice-view-props';
 import type { PortalOptions } from '../portal/default-options';
 
-
 let el: HTMLElement;
 if (typeof document !== 'undefined') {
 	el = document.createElement('div');
-	el.classList.add('vc-notice-portals');	
+	el.classList.add('vc-notice-portals');
 }
 
 const Notice = new Portal(NoticeView, {
@@ -17,9 +16,9 @@ const Notice = new Portal(NoticeView, {
 	autoDestroy: false
 });
 
-type Options = Partial<Props & { 
-	insertion: PortalOptions['insertion']; 
-	onClose: (...args: any[]) => any; 
+type Options = Partial<Props & {
+	insertion: PortalOptions['insertion'];
+	onClose: (...args: any[]) => any;
 }>;
 
 const clean = () => {
@@ -38,9 +37,9 @@ const clean = () => {
 const create = (mode?: string) => (options: Options) => {
 	if (!document.body.contains(el)) {
 		document.body.appendChild(el);
-	} 
+	}
 
-	let options$ = {
+	const options$ = {
 		...options,
 		mode,
 		fixed: false

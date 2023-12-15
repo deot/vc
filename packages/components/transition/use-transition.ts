@@ -1,13 +1,13 @@
 import {
 	getCurrentInstance,
 	computed,
-	Transition, 
+	Transition,
 	TransitionGroup
 } from 'vue';
 import type { Component } from 'vue';
 import type { Props } from './transition-props';
 
-const trim = (str: string) => str.trim().replace(/\s+/g, " ");
+const trim = (str: string) => str.trim().replace(/\s+/g, ' ');
 export const useTransition = () => {
 	const instance = getCurrentInstance()!;
 	const attrs = instance.attrs as any;
@@ -18,7 +18,7 @@ export const useTransition = () => {
 	});
 
 	const classes = computed(() => {
-		let modeClass = props.mode !== 'none' ? `is-${props.mode.replace(/-/g, ' is-')}` : '';
+		const modeClass = props.mode !== 'none' ? `is-${props.mode.replace(/-/g, ' is-')}` : '';
 		return {
 			enterActiveClass: trim(`${attrs.enterActiveClass || ''} ${props.prefix} ${modeClass} is-in`),
 			leaveActiveClass: trim(`${attrs.leaveActiveClass || ''} ${props.prefix} ${modeClass} is-out`),
@@ -27,17 +27,17 @@ export const useTransition = () => {
 	});
 
 	const clearStyles = (el: HTMLElement) => {
-		Object.keys(props.styles).forEach(key => {
+		Object.keys(props.styles).forEach((key) => {
 			const v = props.styles[key];
 			v && el.style.removeProperty(
-				key.replace(/([A-Z])/g, "-$1").toLowerCase()
+				key.replace(/([A-Z])/g, '-$1').toLowerCase()
 			);
 		});
-		
-		el.style.removeProperty("animation-duration");
-		el.style.removeProperty("animation-delay");
+
+		el.style.removeProperty('animation-duration');
+		el.style.removeProperty('animation-delay');
 	};
-	
+
 	// 先脱离文档流, 不占用高度;
 	const resetAbsolute = (el: HTMLElement) => {
 		props.group && (el.style.position = 'absolute');
@@ -50,18 +50,18 @@ export const useTransition = () => {
 	const resetStyles = (el: HTMLElement) => {
 		resetOrigin(el);
 
-		Object.keys(props.styles).forEach(key => {
+		Object.keys(props.styles).forEach((key) => {
 			const v = props.styles[key];
 			v && (el.style[key] = v);
 		});
 	};
-	
+
 	// hooks
 	const handleBeforeEnter = (el: HTMLElement) => {
-		let duration = (props.duration as any).enter || props.duration;
+		const duration = (props.duration as any).enter || props.duration;
 		el.style.animationDuration = `${duration}ms`;
 
-		let delay = (props.delay as any).enter || props.delay;
+		const delay = (props.delay as any).enter || props.delay;
 		el.style.animationDelay = `${delay}ms`;
 
 		resetStyles(el);
@@ -75,14 +75,14 @@ export const useTransition = () => {
 		return (immediate: boolean = true) => {
 			if (hasDone) return;
 			hasDone = true;
-			let done = () => callback?.();
+			const done = () => callback?.();
 
 			immediate ? done() : setTimeout(done, duration);
 		};
 	};
 	const handleEnter = async (el: HTMLElement, done: () => any) => {
-		let duration = (props.duration as any).enter || props.duration;
-		let next = createNext(done, duration);
+		const duration = (props.duration as any).enter || props.duration;
+		const next = createNext(done, duration);
 		try {
 			await attrs.onEnter?.(el, next);
 		} finally {
@@ -97,10 +97,10 @@ export const useTransition = () => {
 	};
 
 	const handleBeforeLeave = (el: HTMLElement) => {
-		let duration = (props.duration as any).leave || props.duration;
+		const duration = (props.duration as any).leave || props.duration;
 		el.style.animationDuration = `${duration}ms`;
 
-		let delay = (props.delay as any).leave || props.delay;
+		const delay = (props.delay as any).leave || props.delay;
 		el.style.animationDelay = `${delay}ms`;
 
 		resetStyles(el);
@@ -110,8 +110,8 @@ export const useTransition = () => {
 
 	// 如果第二个参数为done, 且接收的话, 由用户管理结束
 	const handleLeave = async (el: HTMLElement, done: () => any) => {
-		let duration = (props.duration as any).leave || props.duration;
-		let next = createNext(done, duration);
+		const duration = (props.duration as any).leave || props.duration;
+		const next = createNext(done, duration);
 		try {
 			resetAbsolute(el);
 			await attrs.onLeave?.(el, next);

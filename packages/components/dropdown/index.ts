@@ -1,5 +1,5 @@
 import { Dropdown } from './dropdown.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Dropdown

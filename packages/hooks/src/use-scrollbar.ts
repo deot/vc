@@ -10,7 +10,7 @@ export const useScrollbar = (visibleRef: Ref<boolean> | ComputedRef) => {
 		if (v) {
 			document.body.style.overflow = 'hidden';
 		} else {
-			document.body.style.removeProperty("overflow");
+			document.body.style.removeProperty('overflow');
 		}
 	};
 

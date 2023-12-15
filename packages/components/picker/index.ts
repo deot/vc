@@ -1,5 +1,5 @@
 import { Picker } from './picker.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Picker

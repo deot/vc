@@ -1,5 +1,5 @@
 import { Echarts } from './echarts.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Echarts

@@ -1,5 +1,5 @@
 import { ImagePreview } from './image-preview.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	ImagePreview

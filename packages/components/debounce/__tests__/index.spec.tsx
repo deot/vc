@@ -15,8 +15,8 @@ describe('index.ts', () => {
 		};
 
 		const wrapper = mount(() => (
-			<Debounce 
-				wait={300} 
+			<Debounce
+				wait={300}
 				// @ts-ignore
 				click={handler}
 			/>
@@ -33,10 +33,10 @@ describe('index.ts', () => {
 		};
 
 		const wrapper = mount(() => (
-			<Debounce 
-				wait={300} 
+			<Debounce
+				wait={300}
 				// @ts-ignore
-				onClick={handler} 
+				onClick={handler}
 			/>
 		));
 
@@ -46,7 +46,6 @@ describe('index.ts', () => {
 		await wrapper.trigger('click');
 
 		expect(count).toBe(1);
-
 	});
 
 	it('click, exclude', async () => {
@@ -56,11 +55,11 @@ describe('index.ts', () => {
 		};
 
 		const wrapper = mount(() => (
-			<Debounce 
-				wait={300} 
+			<Debounce
+				wait={300}
 				exclude={/^onClick/}
 				// @ts-ignore
-				onClick={handler} 
+				onClick={handler}
 			/>
 		));
 
@@ -70,7 +69,6 @@ describe('index.ts', () => {
 		await wrapper.trigger('click');
 
 		expect(count).toBe(4);
-
 	});
 
 	it('touchend, debounce', async () => {
@@ -80,10 +78,10 @@ describe('index.ts', () => {
 		};
 
 		const wrapper = mount(() => (
-			<Debounce 
-				wait={300} 
+			<Debounce
+				wait={300}
 				// @ts-ignore
-				onTouchend={handler} 
+				onTouchend={handler}
 			/>
 		));
 

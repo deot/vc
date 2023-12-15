@@ -21,7 +21,7 @@ class Instance {
 
 	configure(options?: Options) {
 		if (options) {
-			Object.keys(options).forEach(i => {
+			Object.keys(options).forEach((i) => {
 				this.options[i] = options[i];
 			});
 		}

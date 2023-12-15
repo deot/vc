@@ -10,7 +10,7 @@ const COMPONENT_NAME = 'vc-scroller';
 /**
  * 作为备选方案,目前推荐使用ScrollerWheel
  * 使用原生的滚动（overflow: auto）实现滚动
- * 
+ *
  * 比scroller-wheel存在两个问题
  * 1. scroll效益比wheel高，导致scroll触发的事件操作scroll*和原生的一定延迟
  * 2. 增加了一层嵌套
@@ -21,11 +21,11 @@ export const Scroller = defineComponent({
 	emits: ['scroll'],
 	setup(props, { slots, expose }) {
 		const Content = props.tag;
-		const { 
-			bar, 
-			wrapper, 
-			content, 
-			wrapperStyle, 
+		const {
+			bar,
+			wrapper,
+			content,
+			wrapperStyle,
 			wrapperClassName,
 			handleScroll
 		} = useScroller(expose);
@@ -33,9 +33,9 @@ export const Scroller = defineComponent({
 		return () => {
 			return (
 				<div class="vc-scroller">
-					<div 
-						ref={wrapper} 
-						style={wrapperStyle.value} 
+					<div
+						ref={wrapper}
+						style={wrapperStyle.value}
 						class={wrapperClassName.value}
 						onScroll={handleScroll}
 					>
@@ -50,7 +50,7 @@ export const Scroller = defineComponent({
 					</div>
 					{
 						(wrapper.value && content.value) && (
-							<Bar 
+							<Bar
 								ref={bar}
 								wrapper={wrapper.value}
 								content={content.value}
@@ -62,7 +62,7 @@ export const Scroller = defineComponent({
 								thumbClassName={props.thumbClassName}
 								trackOffsetX={props.trackOffsetX}
 								trackOffsetY={props.trackOffsetY}
-							/>	
+							/>
 						)
 					}
 				</div>

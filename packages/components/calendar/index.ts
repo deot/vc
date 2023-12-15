@@ -1,5 +1,5 @@
 import { Calendar } from './calendar.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Calendar

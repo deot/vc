@@ -1,19 +1,16 @@
 @use 'sass:meta';
 @use 'sass:map';
 @use 'sass:math';
-
-@import "./default.scss";
-@import "./theme.scss";
+@import "./default";
+@import "./theme";
 
 @function merge($rest...) {
 	$options: ();
 
 	@each $item in $rest {
-		@if (meta.type-of($item) == 'map') {
+		@if  meta.type-of($item) == 'map' {
 			$options: map.merge($options, $item);
-		}
-
-		@else if (meta.type-of($item) == 'list') {
+		} @else if meta.type-of($item) == 'list' {
 			$options: map.merge($options, merge($item));
 		}
 	}
@@ -25,11 +22,11 @@
 	$theme-value: map.get($theme, $value);
 	$has-component: meta.type-of($component-name) == 'string';
 
-	@if ($has-component and $theme-value) {
+	@if  $has-component and $theme-value {
 		@return #{'var(--vc-#{$component-name}-#{$value}, var(--vc-'}#{$value}#{'))'};
-	} @else if ($has-component and $default-color) {
+	} @else if $has-component and $default-color {
 		@return #{'var(--vc-'}#{$component-name}-#{$value}#{','}#{$default-color}#{')'};
-	} @else if ($theme-value) {
+	} @else if $theme-value {
 		@return #{'var(--vc-'}#{$value}#{')'};
 	} @else {
 		@error "#{$value} is not a valid value.";
@@ -38,15 +35,12 @@
 
 @function unitfix($value, $rest...) {
 	$options: merge((unit: $unit, scale: $scale), $rest...);
-
 	$unit: map.get($options, 'unit');
 	$scale: map.get($options, 'scale');
 
-	@if (meta.type-of($value) == 'number') {
+	@if meta.type-of($value) == 'number' {
 		$value: if(math.is_unitless($value), #{$value * $scale}#{$unit}, #{$value * $scale});
-	}
-
-	@else if (meta.type-of($value) == 'string') {
+	} @else if meta.type-of($value) == 'string' {
 		$value: string.unquote($value);
 	}
 
@@ -60,7 +54,7 @@
 @function themefrozen($key, $light: true) {
 	$value: map.get($theme, $key);
 
-	@if (meta.type-of($value) == 'map') {
+	@if meta.type-of($value) == 'map' {
 		@return map.get($value, if($light, 'light', 'dark'));
 	}
 

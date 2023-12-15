@@ -1,5 +1,5 @@
 import { Carousel } from './carousel.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Carousel

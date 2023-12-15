@@ -1,5 +1,5 @@
 import { Countdown } from './countdown.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Countdown

@@ -1,4 +1,4 @@
-@import '../../style/helper.scss';
+@import '../../style/helper';
 
 $component-name: vcm-input;
 $background-color-light: varfix(background-color-light, input);
@@ -8,12 +8,11 @@ $foreground-color: varfix(foreground-color, input);
 
 @include block($component-name) {
 	position: relative;
-	width: 100%;
 	display: inline-block;
-	cursor: text;
+	width: 100%;
 	min-height: 24px;
 	line-height: 1.5;
-
+	cursor: text;
 	background-color: $background-color-light;
 
 	@include element(wrapper) {
@@ -21,48 +20,52 @@ $foreground-color: varfix(foreground-color, input);
 		align-items: center;
 		flex: 1;
 	}
+
 	@include element(content) {
 		flex: 1;
+
 		input {
 			position: relative;
 			width: 100%;
-			outline: 0;
-			border: none;
-			background-color: unset;
+			padding-right: 7px;
+			padding-left: 7px;
 			font-family: inherit;
 			font-size: inherit;
-			line-height: inherit;
-			
-			color: $color-dark-light;
 			font-size: 16px;
-			padding-left: 7px;
-			padding-right: 7px;
+			line-height: inherit;
+			color: $color-dark-light;
+			background-color: unset;
+			border: none;
+			outline: 0;
 			box-sizing: border-box;
+
 			&::placeholder {
 				color: $color-dark-extralight;
 			}
+
 			&[disabled] {
-				opacity: 1;
-				cursor: not-allowed;
 				color: $color-dark-extralight;
+				cursor: not-allowed;
+				opacity: 1;
 			}
 
 			&::-webkit-search-cancel-button {
 				display: none;
 			}
 		}
+
 		@include when(right) {
 			input {
-				text-align: right;
 				color: $color-dark-extralight;
+				text-align: right;
 			}
 		}
 	}
 
 	@include share-rule(m-input-icon) {
 		font-size: 16px;
-		text-align: left;
 		color: $color-dark-extralight;
+		text-align: left;
 	}
 
 	/**
@@ -70,9 +73,11 @@ $foreground-color: varfix(foreground-color, input);
 	 */
 	@include element(icon-clear){
 		@include extend-rule(m-input-icon);
+
 		display: none;
 		line-height: inherit;
 	}
+
 	@include pseudo(hover) {
 		@include element(icon-clear){
 			display: block;
@@ -84,11 +89,12 @@ $foreground-color: varfix(foreground-color, input);
 	 */
 	
 	@include share-rule(m-input-pend) {
-		height: 100%;
-		text-align: center;
-		line-height: inherit;
-		white-space: nowrap;
 		z-index: 3;
+		height: 100%;
+		line-height: inherit;
+		text-align: center;
+		white-space: nowrap;
+
 		@include when(icon) {
 			width: 16px;
 			font-size: 12px;

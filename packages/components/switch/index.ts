@@ -1,5 +1,5 @@
 import { Switch } from './switch.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Switch

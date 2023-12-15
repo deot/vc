@@ -128,20 +128,20 @@ const handleChange = () => {
 
 - VcIntance下的配置
 
-```js
+```
 {
 	Theme: {
 		variables: {
 			'main-color': '#fff', // 优先作用，可处理css兼容
 			'main-image-src': 'https:\/\/**', // key可以找到对应的src资源
-			'main-background-image': 'https:' // 同上
+			'main-background-image': 'https:', // 同上
 
 			// 以color为例
 			'main-color-1': 'main', // 不会生效，生效结果为 main 而不是 var(--main), 要具体的值
 			'main-color-2': '' // 结果为 var(--main-color-2)
 		}
 	}
-}
+};
 ```
 
 ### 颜色主题设置

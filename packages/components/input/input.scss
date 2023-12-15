@@ -1,4 +1,4 @@
-@import '../style/helper.scss';
+@import '../style/helper';
 
 $component-name: vc-input;
 $background-color-light: varfix(background-color-light, input);
@@ -13,81 +13,88 @@ $foreground-color: varfix(foreground-color, input);
 $color-disabled: varfix(color-disabled, input);
 
 @include block($component-name) {
-	display: inline-block;
 	position: relative;
+	display: inline-block;
 	width: 100%;
-	cursor: text;
-	font-size: unitfix(12);
 	min-height: unitfix(28);
+	overflow: hidden;
+	font-size: unitfix(12);
 	line-height: 1.5;
-
+	cursor: text;
+	background-color: $background-color-light;
+	border-radius: unitfix(4);
 	transition: border .2s ease-in-out, 
 		background .2s ease-in-out, 
 		box-shadow .2s ease-in-out;
-	border-radius: unitfix(4);
-	background-color: $background-color-light;
-	overflow: hidden;
+
 	@include border('', $color-light-extradeep, 4); // 不占边距
+
 	@include when(focus) {
-		&:after, &:before {
+		&::after, &::before {
 			border-color: $color-primary;
 		}
+
 		z-index: 2;
 		box-shadow: 0 0 unitfix(1) unitfix(1) $color-primary-lighter;
 	}
+
 	&:hover {
 		border-color: $color-primary;
 	}
+
 	@include when(disabled) {
 		background: $color-disabled;
 	}
+
 	@include element(wrapper) {
 		display: flex;
 		flex: 1;
 		align-items: center;
 	}
+
 	@include element(content){
 		flex: 1;
+
 		input {
 			position: relative;
 			width: 100%;
-
-			outline: 0;
-			border: none;
-			background-color: unset;
+			padding: unitfix(5) unitfix(7) unitfix(5) unitfix(7); // 18 + 5 + 5 + 2 = 28
 			font-family: inherit;
 			font-size: inherit;
 			line-height: inherit;
-
 			color: $color-dark-light;
-			padding-top: unitfix(5);
-			padding-bottom: unitfix(5); // 18 + 5 + 5 + 2 = 28
-			padding-left: unitfix(7);
-			padding-right: unitfix(7);
+			background-color: unset;
+			border: none;
+			outline: 0;
 			box-sizing: border-box;
+
 			&::placeholder {
 				color: $color-dark-extralight;
 			}
+
 			&::-webkit-search-cancel-button {
 				display: none;
 			}
 		}
+
 		@include when(disabled) {
-			opacity: 1;
 			cursor: not-allowed;
+			opacity: 1;
+
 			input {
 				color: $color-dark-extralight;
 				cursor: not-allowed;
 			}
 		}
 	}
+
 	@include share-rule(input-icon) {
 		width: unitfix(28);
 		height: unitfix(28);
-		line-height: unitfix(28)!important;
 		font-size: unitfix(13);
-		text-align: left;
+		line-height: unitfix(28)!important;
 		color: $color-dark-extralight;
+		text-align: left;
 	}
 
 	/**
@@ -95,8 +102,9 @@ $color-disabled: varfix(color-disabled, input);
 	 */
 	@include element(icon-clear){
 		@include extend-rule(input-icon);
-		cursor: pointer;
+
 		display: none;
+		cursor: pointer;
 	}
 
 	@include pseudo(hover) {
@@ -106,28 +114,32 @@ $color-disabled: varfix(color-disabled, input);
 	}
 	
 	@include share-rule(input-pend) {
+		z-index: 0; // 让虚线在下方
 		height: 100%;
-		text-align: center;
+		height: unitfix(28);
 		font-size: unitfix(13);
 		line-height: unitfix(28);
-		height: unitfix(28);
+		text-align: center;
 		white-space: nowrap;
-		z-index: 0; // 让虚线在下方
+
 		@include when(icon) {
 			width: unitfix(16);
+			font-size: unitfix(12);
 			color: $foreground-color;
 			background-color: $background-color-light;
-			font-size: unitfix(12);
 		}
+
 		@include when(disabled) {
 			cursor: not-allowed;
 			background-color: $color-disabled;
 		}
+
 		// 让虚线在下方
 		@include when(afloat) {
 			z-index: 3;
 		}
 	}
+
 	/**
 	 * prepend / append
 	 */
@@ -138,6 +150,7 @@ $color-disabled: varfix(color-disabled, input);
 	@include element(append) {
 		@include extend-rule(input-pend);
 	}
+
 	@include when(focus) {
 		@include element(prepend) {
 			z-index: 1;
@@ -150,14 +163,16 @@ $color-disabled: varfix(color-disabled, input);
 
 	// 计数
 	@include element(indicator) {
+		top: 0;
+		z-index: 1;
+		font-size: unitfix(12);
 		line-height: unitfix(28);
 		color: $color-dark-extralight;
-		font-size: unitfix(12);
-		z-index: 1;
-		top: 0;
+
 		@include when(in) {
 			margin-right: 8px;
 		}
+
 		@include when(out) {
 			position: absolute;
 			right: unitfix(-6);

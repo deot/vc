@@ -13,7 +13,7 @@ export const Theme = defineComponent({
 	setup(props, { slots }) {
 		const themeId = Utils.getUid('vc-theme');
 		const setVar = (name?: string) => {
-			/* istanbul ignore next -- @preserve */ 
+			/* istanbul ignore next -- @preserve */
 			if (!name) return '';
 			const globals = VcInstance.options.Theme?.variables;
 			return props.variables?.[name] || globals?.[name] || `var(--${name})`;
@@ -21,8 +21,8 @@ export const Theme = defineComponent({
 
 		const styles = computed(() => {
 			const results = [
-				'color', 
-				'backgroundColor', 
+				'color',
+				'backgroundColor',
 				'borderColor'
 			].reduce((pre, key) => {
 				pre[key] = props[key] && (setVar(props[key]));
@@ -55,14 +55,14 @@ export const Theme = defineComponent({
 			const { src, tag } = props;
 			if (tag === 'img' && src) {
 				const globals = VcInstance.options.Theme?.variables;
-				return /:/.test(src) 
-					? src 
+				return /:/.test(src)
+					? src
 					: props.variables?.[src] || globals?.[src];
 			}
 		});
 
 		const setCss = (attrs: object | string) => {
-			/* istanbul ignore next -- @preserve */ 
+			/* istanbul ignore next -- @preserve */
 			if (!attrs || typeof attrs === 'string') return attrs;
 
 			// 伪类、元素需要添加!important;
@@ -75,9 +75,9 @@ export const Theme = defineComponent({
 		};
 
 		const resetPseudo = () => {
-			/* istanbul ignore next -- @preserve */ 
+			/* istanbul ignore next -- @preserve */
 			if (typeof document === 'undefined') return;
-			
+
 			const { pseudo } = props;
 			if (!pseudo) return Load.removeStyle(themeId);
 
@@ -91,26 +91,25 @@ export const Theme = defineComponent({
 			}
 
 			content && Load.style(content, { id: themeId });
-
 		};
 
 		watch(
 			[
-				() => props.pseudo, 
+				() => props.pseudo,
 				() => VcInstance.options?.Theme?.variables
-			], 
-			resetPseudo, 
+			],
+			resetPseudo,
 			{ immediate: true }
 		);
 
 		return () => {
 			return h(
-				props.tag, 
+				props.tag,
 				{
 					style: styles.value,
 					class: classes.value,
 					src: src$.value
-				}, 
+				},
 				slots
 			);
 		};

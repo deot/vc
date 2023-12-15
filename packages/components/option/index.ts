@@ -1,5 +1,5 @@
 import { Option } from './option.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Option

@@ -105,7 +105,7 @@ describe('index-number.ts', () => {
 			expect(current.value).toBe(1000);
 		});
 		const wrapper = mount(() => (
-			<InputNumber 
+			<InputNumber
 				v-model={current.value}
 				styleless={true}
 				step={1}
@@ -180,17 +180,17 @@ describe('index-number.ts', () => {
 
 		const wrapper = mount(InputNumber, {
 			props: {
-				modelValue: current.value,
-				onFocus: handleFocus,
-				onBlur: handleBlur,
-				onInput: handleInput,
-				onChange: handleChange,
-				onKeydown: handleKeydown,
-				onKeyup: handleKeyup,
-				onKeypress: handleKeypress,
-				onEnter: handleEnter,
-				onPaste: handlePaste,
-				onClick: handleClick,
+				'modelValue': current.value,
+				'onFocus': handleFocus,
+				'onBlur': handleBlur,
+				'onInput': handleInput,
+				'onChange': handleChange,
+				'onKeydown': handleKeydown,
+				'onKeyup': handleKeyup,
+				'onKeypress': handleKeypress,
+				'onEnter': handleEnter,
+				'onPaste': handlePaste,
+				'onClick': handleClick,
 				'onUpdate:modelValue': handleUpdateModelValue
 			}
 		});
@@ -227,7 +227,7 @@ describe('index-number.ts', () => {
 			expect(current.value).toBe(1000);
 		});
 		const wrapper = mount(() => (
-			<InputNumber 
+			<InputNumber
 				v-model={current.value}
 				styleless={true}
 				step={1}
@@ -250,7 +250,7 @@ describe('index-number.ts', () => {
 			return Promise.reject();
 		});
 		const wrapper = mount(() => (
-			<InputNumber 
+			<InputNumber
 				v-model={current.value}
 				// @ts-ignore
 				onAfter={handleAfter}
@@ -269,7 +269,7 @@ describe('index-number.ts', () => {
 			return Promise.resolve();
 		});
 		const wrapper = mount(() => (
-			<InputNumber 
+			<InputNumber
 				v-model={current.value}
 				// @ts-ignore
 				onAfter={handleAfter}
@@ -288,7 +288,7 @@ describe('index-number.ts', () => {
 			return false;
 		});
 		const wrapper = mount(() => (
-			<InputNumber 
+			<InputNumber
 				v-model={current.value}
 				// @ts-ignore
 				onAfter={handleAfter}
@@ -307,14 +307,14 @@ describe('index-number.ts', () => {
 			return Promise.resolve();
 		});
 		const wrapper = mount(() => (
-			<InputNumber 
+			<InputNumber
 				v-model={current.value}
 				// @ts-ignore
 				onAfter={handleAfter}
 			/>
 		));
 
-		let plusEl = wrapper.find('.vc-input-number__up');
+		const plusEl = wrapper.find('.vc-input-number__up');
 
 		await plusEl.trigger('click');
 		await plusEl.trigger('click');
@@ -334,14 +334,14 @@ describe('index-number.ts', () => {
 			return Promise.reject();
 		});
 		const wrapper = mount(() => (
-			<InputNumber 
+			<InputNumber
 				v-model={current.value}
 				// @ts-ignore
 				onAfter={handleAfter}
 			/>
 		));
 
-		let plusEl = wrapper.find('.vc-input-number__up');
+		const plusEl = wrapper.find('.vc-input-number__up');
 
 		await plusEl.trigger('click');
 		await plusEl.trigger('click');
@@ -367,8 +367,8 @@ describe('index-number.ts', () => {
 				onChange: handleChange
 			}
 		});
-		let plusEl = wrapper.find('.vc-input-number__up');
-		let minusEl = wrapper.find('.vc-input-number__down');
+		const plusEl = wrapper.find('.vc-input-number__up');
+		const minusEl = wrapper.find('.vc-input-number__down');
 
 		await plusEl.trigger('click');
 		expect(current.value).toBe(1);
@@ -390,8 +390,8 @@ describe('index-number.ts', () => {
 				onChange: handleChange
 			}
 		});
-		let plusEl = wrapper.find('.vcm-input-number__plus');
-		let minusEl = wrapper.find('.vcm-input-number__minus');
+		const plusEl = wrapper.find('.vcm-input-number__plus');
+		const minusEl = wrapper.find('.vcm-input-number__minus');
 
 		await plusEl.trigger('click');
 		expect(current.value).toBe(1);
@@ -414,18 +414,18 @@ describe('index-number.ts', () => {
 		const current = ref(1);
 		const wrapper = mount(() => {
 			return (
-				<InputNumber 
+				<InputNumber
 					v-model={current.value}
 					min={0}
 					max={2}
 					// @ts-ignore
-					onPlus={ () => current.value += 2 }
-					onMinus={ () => current.value -= 2 }
+					onPlus={() => current.value += 2}
+					onMinus={() => current.value -= 2}
 				/>
 			);
 		});
-		let plusEl = wrapper.find('.vc-input-number__up');
-		let minusEl = wrapper.find('.vc-input-number__down');
+		const plusEl = wrapper.find('.vc-input-number__up');
+		const minusEl = wrapper.find('.vc-input-number__down');
 
 		// 脱离min的限制
 		await minusEl.trigger('click');
@@ -447,7 +447,7 @@ describe('index-number.ts', () => {
 		const handleTip = vi.fn();
 		const wrapper = mount(() => {
 			return (
-				<InputNumber 
+				<InputNumber
 					v-model={current.value}
 					min={0}
 					max={2}
@@ -456,7 +456,7 @@ describe('index-number.ts', () => {
 				/>
 			);
 		});
-		let plusEl = wrapper.find('.vc-input-number__up');
+		const plusEl = wrapper.find('.vc-input-number__up');
 		await plusEl.trigger('click');
 		expect(current.value).toBe(2);
 		expect(handleTip).toBeCalledTimes(1);
@@ -467,14 +467,14 @@ describe('index-number.ts', () => {
 		const handleTip = vi.fn();
 		const wrapper = mount(() => {
 			return (
-				<InputNumber 
+				<InputNumber
 					v-model={current.value}
 					// @ts-ignore
 					onTip={handleTip}
 				/>
 			);
 		});
-		let minusEl = wrapper.find('.vc-input-number__down');
+		const minusEl = wrapper.find('.vc-input-number__down');
 		await minusEl.trigger('click');
 		expect(current.value).toBe(0);
 		expect(handleTip).toBeCalledTimes(1);
@@ -492,8 +492,8 @@ describe('index-number.ts', () => {
 				onChange: handleChange
 			}
 		});
-		let plusEl = wrapper.find('.vc-input-number__up');
-		let minusEl = wrapper.find('.vc-input-number__down');
+		const plusEl = wrapper.find('.vc-input-number__up');
+		const minusEl = wrapper.find('.vc-input-number__down');
 
 		await plusEl.trigger('click');
 		expect(current.value).toBe('');

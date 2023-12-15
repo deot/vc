@@ -41,7 +41,7 @@ export const MInput = defineComponent({
 
 		useNativeEmitter(input, expose);
 
-		const { 
+		const {
 			currentValue,
 			currentMaxlength,
 			classes,
@@ -50,26 +50,26 @@ export const MInput = defineComponent({
 		} = useInput(input);
 
 		const renderInput = (merge: boolean) => {
-			let binds = merge 
+			const binds = merge
 				? {
-					class: it.value.class,
-					style: [props.inputStyle, it.value.style],
-					...it.value.attrs,
-					...it.value.listeners,
-					...listeners
-				}
+						class: it.value.class,
+						style: [props.inputStyle, it.value.style],
+						...it.value.attrs,
+						...it.value.listeners,
+						...listeners
+					}
 				: {
-					style: props.inputStyle,
-					...it.value.attrs,
-					...it.value.listeners,
-					...listeners
-				};
+						style: props.inputStyle,
+						...it.value.attrs,
+						...it.value.listeners,
+						...listeners
+					};
 			return (
 				// @ts-ignore
 				<input
 					type="text"
 					ref={input}
-					{ ...binds }
+					{...binds}
 					id={props.inputId}
 					disabled={props.disabled}
 					value={currentValue.value}
@@ -81,15 +81,15 @@ export const MInput = defineComponent({
 		return () => {
 			if (props.styleless) return renderInput(true);
 			return (
-				<div 
+				<div
 					class={['vcm-input', classes.value, it.value.class]}
-					style={it.value.style} 
+					style={it.value.style}
 					id={props.id}
 				>
 					<div class="vcm-input__wrapper">
 						{
 							(slots.prepend || props.prepend) && (
-								<div 
+								<div
 									class={['vcm-input__prepend', { 'is-icon': props.prepend, 'is-afloat': props.afloat }, classes.value]}
 								>
 									{
@@ -100,8 +100,8 @@ export const MInput = defineComponent({
 								</div>
 							)
 						}
-						
-						<div class={["vcm-input__content", { 'is-right': props.right }, classes.value]}>
+
+						<div class={['vcm-input__content', { 'is-right': props.right }, classes.value]}>
 							{
 								slots.content?.() || renderInput(false)
 							}
@@ -111,15 +111,15 @@ export const MInput = defineComponent({
 								<MTransitionFade>
 									<MIcon
 										v-show={!!currentValue.value}
-										class="vcm-input__icon-clear" 
-										type="clear" 
+										class="vcm-input__icon-clear"
+										type="clear"
 										// @ts-ignore
 										onTouchstart={handleClear}
 									/>
 								</MTransitionFade>
 							)
 						}
-						
+
 						{
 							(slots.append || props.append) && (
 								<div

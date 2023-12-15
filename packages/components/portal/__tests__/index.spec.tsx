@@ -53,7 +53,7 @@ describe('index.ts', () => {
 					</div>
 				);
 			};
-		} 
+		}
 	});
 
 	const uid = 'vc-wrapper';
@@ -85,7 +85,7 @@ describe('index.ts', () => {
 	it('props', async () => {
 		expect(typeof Modal).toBe('object');
 
-		const title = "any";
+		const title = 'any';
 		const leaf = Modal.popup({ title }, {});
 
 		expect(leaf instanceof PortalLeaf).toBeTruthy();
@@ -93,7 +93,7 @@ describe('index.ts', () => {
 	});
 
 	it('onBeforeCreate, async', async () => {
-		const title = "any";
+		const title = 'any';
 		Modal.popup({
 			onBeforeCreate: () => {
 				return Promise.resolve({
@@ -107,8 +107,8 @@ describe('index.ts', () => {
 	});
 
 	it('onBeforeCreate, pending destory', async () => {
-		const title1 = "any1";
-		const title2 = "any2";
+		const title1 = 'any1';
+		const title2 = 'any2';
 		Modal.popup({
 			onBeforeCreate: () => {
 				return Promise.resolve({
@@ -131,7 +131,7 @@ describe('index.ts', () => {
 	});
 
 	it('onBeforeCreate, sync', async () => {
-		const title = "any";
+		const title = 'any';
 		Modal.popup({
 			onBeforeCreate: () => {
 				return {
@@ -144,7 +144,7 @@ describe('index.ts', () => {
 	});
 
 	it('onBeforeCreate, error', async () => {
-		 Modal.popup({
+		Modal.popup({
 			onBeforeCreate: () => {
 				return Promise.reject(new Error('xxx'));
 			}

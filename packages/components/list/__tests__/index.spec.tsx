@@ -19,23 +19,23 @@ describe('index.ts', () => {
 		const wrapper = mount(() => {
 			return (
 				<MList>
-					<MListItem 
+					<MListItem
 						labelWidth={100}
-						class="item-1" 
-						arrow={true} 
-						label={"姓名"} 
+						class="item-1"
+						arrow={true}
+						label="姓名"
 						to={() => {}}
 					/>
-					<MListItem 
-						class="item-2" 
-						label="姓名" 
-						extra="啦啦啦" 
+					<MListItem
+						class="item-2"
+						label="姓名"
+						extra="啦啦啦"
 						arrow="left"
 						href="/"
 						onClick={onClick}
 					/>
-					<MListItem 
-						class="item-3" 
+					<MListItem
+						class="item-3"
 						label="姓名"
 					>
 						{{
@@ -65,7 +65,6 @@ describe('index.ts', () => {
 
 		expect(wrapper.find('.item-label').text()).toBe('custom label');
 		expect(wrapper.find('.item-extra').text()).toBe('custom extra');
-
 	});
 
 	it('VcInstance, to -> undefined', async () => {
@@ -78,11 +77,11 @@ describe('index.ts', () => {
 		const wrapper = mount(() => {
 			return (
 				<MList>
-					<MListItem 
+					<MListItem
 						labelWidth={100}
-						class="item-1" 
-						arrow={false} 
-						label={"姓名"} 
+						class="item-1"
+						arrow={false}
+						label="姓名"
 						to="https://xx.com"
 					/>
 				</MList>
@@ -103,11 +102,11 @@ describe('index.ts', () => {
 		const wrapper = mount(() => {
 			return (
 				<MList>
-					<MListItem 
+					<MListItem
 						labelWidth={100}
-						class="item-1" 
-						arrow={false} 
-						label={"姓名"} 
+						class="item-1"
+						arrow={false}
+						label="姓名"
 					/>
 				</MList>
 			);

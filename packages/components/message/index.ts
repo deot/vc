@@ -1,6 +1,6 @@
 import { MessageView } from './message-view.tsx';
 import * as Message from './message';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Message,

@@ -1,5 +1,5 @@
 import { Touch } from './touch.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Touch

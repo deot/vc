@@ -10,7 +10,7 @@ export const MList = defineComponent({
 		provide('list', { props });
 		return () => {
 			return h(
-				props.tag, 
+				props.tag,
 				{
 					class: [
 						'vcm-list',

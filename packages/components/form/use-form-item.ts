@@ -16,9 +16,9 @@ const filterEmpty = (val: any) => {
 };
 
 const toRules = (rules?: FormRule | FormRule[]) => {
-	return rules instanceof Array 
-		? rules 
-		: rules 
+	return rules instanceof Array
+		? rules
+		: rules
 			? [rules]
 			: [];
 };
@@ -27,7 +27,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	const form = inject<FormProvide>('form');
 	const instance = getCurrentInstance()!;
 	const props = instance.props as Props;
-	
+
 	if (!form?.props) {
 		throw new VcError('form-item', 'form-item需要在form内使用');
 	}
@@ -50,11 +50,11 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		if (!formItemRules.length && formRules && props.prop) {
 			try {
 				// 如果是数组的话 xxx.1.xxx -> xxx.xxx
-				let key = props.prop.replace(/\.[0-9]+\./g, '.');
-				let { v } = getPropByPath(formRules, key);
+				const key = props.prop.replace(/\.[0-9]+\./g, '.');
+				const { v } = getPropByPath(formRules, key);
 				formItemRules = toRules(v);
 			} catch {
-				let rules = formRules[props.prop];
+				const rules = formRules[props.prop];
 				formItemRules = toRules(rules);
 			}
 		}
@@ -69,7 +69,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 
 		let required = false;
 		for (let i = 0; i < currentRules.value.length; i++) {
-			let rule = currentRules.value[i];
+			const rule = currentRules.value[i];
 
 			required = !!rule.required;
 
@@ -94,9 +94,9 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	});
 
 	const labelStyle = computed(() => {
-		const labelWidth = props.labelWidth === 0 || props.labelWidth 
-			? props.labelWidth 
-			: isNest.value 
+		const labelWidth = props.labelWidth === 0 || props.labelWidth
+			? props.labelWidth
+			: isNest.value
 				? 0
 				: form.props.labelWidth;
 		return {
@@ -133,7 +133,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	});
 
 	watch(
-		() => props.error, 
+		() => props.error,
 		(v) => {
 			validateMessage.value = v || '';
 			validateState.value = v === '' ? '' : 'error';
@@ -144,14 +144,14 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		validateState.value = '';
 		validateMessage.value = '';
 
-		let model = form.props.model!;
+		const model = form.props.model!;
 		if (!props.prop) return;
 
-		let k = getPropByPath(model, props.prop).k as string;
+		const k = getPropByPath(model, props.prop).k as string;
 		if (!k) return;
 
 		validateDisabled = true;
-		form.props.model![k] = Array.isArray(fieldValue.value) 
+		form.props.model![k] = Array.isArray(fieldValue.value)
 			? [].concat(initialValue)
 			: initialValue;
 	};
@@ -165,7 +165,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 			if (!props.required) {
 				return;
 			} else {
-				rules = [{ 
+				rules = [{
 					required: true,
 					message: typeof props.required === 'string' ? props.required : undefined
 				}];
@@ -173,11 +173,11 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		}
 
 		validateState.value = 'validating';
-		let descriptor = {};
+		const descriptor = {};
 
 		descriptor[props.prop] = rules;
-		let validator = new Validator(descriptor);
-		let model = {};
+		const validator = new Validator(descriptor);
+		const model = {};
 		model[props.prop] = filterEmpty(fieldValue.value);
 
 		try {

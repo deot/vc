@@ -18,10 +18,10 @@ export const MForm = defineComponent({
 		});
 		return () => {
 			return h(
-				props.tag, 
+				props.tag,
 				{
 					autocomplete: props.autocomplete,
-					class: "vcm-form"
+					class: 'vcm-form'
 				},
 				slots
 			);

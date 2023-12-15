@@ -1,5 +1,5 @@
 import { Radio } from './radio.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Radio

@@ -1,4 +1,4 @@
-@import '../style/helper.scss';
+@import '../style/helper';
 
 $block: vc-transition-fade;
 
@@ -8,11 +8,13 @@ $block: vc-transition-fade;
 		animation-name: vc-fade-in;
 		animation-timing-function: linear;
 	}
+
 	@include when(out) {
 		will-change: opacity;
 		animation-name: vc-fade-out;
 		animation-timing-function: linear;
 	}
+
 	/**
 	 * transition-group下删除元素, 其他元素位置变化动画
 	 */

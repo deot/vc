@@ -3,7 +3,7 @@ import type { Props as CustomerProps } from '../../customer/customer-props';
 
 export const props = {
 	mode: {
-		type: String as PropType<'alert'|'operation'>,
+		type: String as PropType<'alert' | 'operation'>,
 		validator: v => /(alert|operation)/.test(v),
 		default: 'alert'
 	},
@@ -11,7 +11,7 @@ export const props = {
 	content: {
 		type: [String, Function, Boolean] as PropType<boolean | string | CustomerProps['render']>
 	},
-	
+
 	width: {
 		type: Number,
 		default: 270

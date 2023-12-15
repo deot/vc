@@ -14,7 +14,7 @@ export const ThemeText = defineComponent({
 				{
 					...props,
 					tag: 'span'
-				}, 
+				},
 				slots
 			);
 		};

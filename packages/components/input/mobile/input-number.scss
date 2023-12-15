@@ -1,9 +1,7 @@
-@import '../../style/helper.scss';
+@import '../../style/helper';
 
 $component-name: vcm-input-number;
-
 $background-color: varfix(background-color, input);
-
 $color-light-extradeep: varfix(color-light-extradeep, input);
 $color-primary-light: varfix(color-primary-light, input);
 $color-dark-extralight: varfix(color-dark-extralight, input);
@@ -11,31 +9,32 @@ $color-light-deep: varfix(color-light-deep, input);
 
 @include block($component-name) {
 	width: auto;
+
 	@include share-rule(m-input-number-icon) {
+		display: block;
 		width: 28px;
 		height: 28px;
 		line-height: 28px;
 		text-align: center;
-		display: block;
-		background-color: varfix(background-color);
 		cursor: pointer;
+		background-color: varfix(background-color);
+
 		&[disabled] {
 			cursor: not-allowed;
 			opacity: .8;
 		}
+
 		&:active {
-			background-color: rgba(221, 221, 221, 0.616);
+			background-color: rgb(221 221 221 / 61.6%);
 		}
 	}
 	
 	@include share-rule(absolute) {
 		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
+		inset: 0;
 		margin: auto;
 		background-color: #999;
+
 		&[disabled] {
 			background-color: #CBCBCB;
 		}
@@ -44,43 +43,54 @@ $color-light-deep: varfix(color-light-deep, input);
 	@include element(plus) {
 		position: relative;
 		border-radius: 0 2px 2px 0;
+
 		@include extend-rule(m-input-number-icon);
-		&:before {
+
+		&::before {
 			@include extend-rule(absolute);
-			content: '';
+
 			width: 11px;
 			height: 2px;
-		}
-		&:after {
-			@include extend-rule(absolute);
 			content: '';
+		}
+
+		&::after {
+			@include extend-rule(absolute);
+
 			width: 2px;
 			height: 11px;
+			content: '';
 		}
 	}
+
 	@include element(minus) {
 		position: relative;
 		border-radius: 2px 0 0 2px;
+
 		@include extend-rule(m-input-number-icon);
-		&:before {
+
+		&::before {
 			@include extend-rule(absolute);
-			content: '';
+
 			width: 11px;
 			height: 2px;
+			content: '';
 		}
 	}
+
 	@include when(disabled) {
 		opacity: 0.8;
 	}
+
 	input {
 		width: 49px;
 		height: 28px;
-		font-size: 13px;
-		background-color: varfix(background-color);
-		margin: 0 1px;
 		padding: 0 3px;
-		outline: none;
+		margin: 0 1px;
+		font-size: 13px;
 		text-align: center;
+		background-color: varfix(background-color);
 		border-radius: 0; // 不加的话ios端默认带圆角
+		outline: none;
 	}
 }

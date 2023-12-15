@@ -1,5 +1,5 @@
 import { Popover } from './popover.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Popover

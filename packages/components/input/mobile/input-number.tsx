@@ -38,25 +38,25 @@ export const MInputNumber = defineComponent({
 					}
 				>
 					{{
-						prepend: props.step 
-							? (() => slots.prepend?.() || (
-								<span 
-									class="vcm-input-number__minus" 
+						prepend: props.step
+							? () => slots.prepend?.() || (
+								<span
+									class="vcm-input-number__minus"
 									// @ts-ignore
-									disabled={minusDisabled.value ? 'disabled' : undefined} 
-									onClick={(e) => handleStepper(e, -1)}
+									disabled={minusDisabled.value ? 'disabled' : undefined}
+									onClick={e => handleStepper(e, -1)}
 								/>
-							))
+								)
 							: undefined,
-						append: props.step 
-							? (() => slots.append?.() || (
-								<span 
-									class="vcm-input-number__plus" 
+						append: props.step
+							? () => slots.append?.() || (
+								<span
+									class="vcm-input-number__plus"
 									// @ts-ignore
-									disabled={plusDisabled.value ? 'disabled' : undefined} 
-									onClick={(e) => handleStepper(e, 1)}
+									disabled={plusDisabled.value ? 'disabled' : undefined}
+									onClick={e => handleStepper(e, 1)}
 								/>
-							))
+								)
 							: undefined
 					}}
 				</MInput>

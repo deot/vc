@@ -11,17 +11,17 @@ describe('index.ts', () => {
 	});
 
 	it('VcError', () => {
-		let error = new VcError('any component', 'any error');
+		const error = new VcError('any component', 'any error');
 		expect(error.message).toMatch('[@deot/vc - any component]: any error');
 	});
 
 	it('VcError, none', () => {
-		let error = new VcError();
+		const error = new VcError();
 		expect(error.message).toBeFalsy();
 	});
 
 	it('VcInstance', () => {
-		let options = {
+		const options = {
 			Theme: {
 				variables: {
 					background: 'white'
@@ -36,7 +36,7 @@ describe('index.ts', () => {
 	it('VcInstance, globalEvent', async () => {
 		expect(VcInstance.globalEvent).toEqual({});
 
-		let event = new Event('click');
+		const event = new Event('click');
 		document.body.dispatchEvent(event);
 		await Utils.sleep(10);
 
@@ -44,7 +44,7 @@ describe('index.ts', () => {
 	});
 
 	it('install', async () => {
-		let app = createApp({});
+		const app = createApp({});
 
 		install(app, {});
 		expect(app.config.globalProperties.$vc).toBe(VcInstance);

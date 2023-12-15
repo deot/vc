@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
 
-import { 
+import {
 	Transition,
 	TransitionCollapse,
 	TransitionFade,
 	TransitionScale,
 	TransitionSlide,
-	TransitionZoom 
+	TransitionZoom
 } from '@deot/vc-components';
 
 describe('index.ts', () => {

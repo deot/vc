@@ -3,9 +3,9 @@
 import { getCurrentInstance, defineComponent, ref, onMounted, onUnmounted } from 'vue';
 import { props as noticeViewProps } from './notice-view-props';
 
-import { Icon } from "../icon";
+import { Icon } from '../icon';
 import { TransitionSlide } from '../transition';
-import { Customer } from "../customer";
+import { Customer } from '../customer';
 
 const COMPONENT_NAME = 'vc-notice';
 
@@ -41,9 +41,9 @@ export const NoticeView = defineComponent({
 		const handleClose = async (e: any) => {
 			if (!isActive.value) return;
 
-			let cancel = instance.vnode.props?.onBeforeClose || props.onBeforeClose || (() => {});
+			const cancel = instance.vnode.props?.onBeforeClose || props.onBeforeClose || (() => {});
 
-			let fn = cancel && cancel(e);
+			const fn = cancel && cancel(e);
 			if (fn && fn.then) {
 				return fn
 					.then((res: any) => {
@@ -58,7 +58,7 @@ export const NoticeView = defineComponent({
 		return () => {
 			return (
 				<div
-					class={["vc-notice", { 'is-fixed': props.fixed }]}
+					class={['vc-notice', { 'is-fixed': props.fixed }]}
 					style={props.fixed ? { top: `${props.top}px` } : {}}
 				>
 					<TransitionSlide

@@ -1,5 +1,5 @@
 import { Print } from './print.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Print

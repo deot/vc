@@ -1,15 +1,15 @@
-@import '../../style/helper.scss';
+@import '../../style/helper';
 
 $component-name: vcm-form;
 $component-item-name: vcm-form-item;
-
 $color-dark: varfix(color-dark, form);
 $color-error: varfix(color-error, form);
 $background-color-light: varfix(background-color-light, form);
 
 @include block($component-name) {
-	background: $background-color-light;
 	color: $color-dark;
+	background: $background-color-light;
+
 	@include when(border) {
 		@include border(top);
 		@include border(bottom);
@@ -19,58 +19,65 @@ $background-color-light: varfix(background-color-light, form);
 @include block($component-item-name) {
 	@include element(wrapper) {
 		padding-top: unitfix(12);
-		padding-bottom: unitfix(12);
 		padding-right: unitfix(12);
+		padding-bottom: unitfix(12);
+
 		@include border(bottom);
 	}
+
 	@include pseudo(last-child) {
 		@include element(wrapper) {
-			&:after {
-				display: none
+			&::after {
+				display: none;
 			}
 		}
 	}
+
 	@include element(content) { 
 		position: relative;
 		font-size: unitfix(16);
 		line-height: unitfix(24);
 	} 
-	@include element(label) { 
-		text-align: right;
-		vertical-align: middle;
+
+	@include element(label) {
 		float: left;
-		color: $color-dark;
 		font-size: unitfix(16);
 		line-height: unitfix(24);
+		color: $color-dark; 
+		text-align: right;
+		vertical-align: middle;
 		box-sizing: border-box;
 	}
+
 	/**
 	 * -> vc-form-item.is_require
 	 */
 	& {
 		@include when(require) {
 			@include element(label) {
-				&:before {
-					content: '*';
+				&::before {
 					display: inline-block;
 					margin-right: 4px;
-					line-height: 1;
 					font-family: SimSun;
 					font-size: unitfix(12);
+					line-height: 1;
 					color: $color-error;
+					content: '*';
 				}
 			}
 		}
+
 		@include when(left) {
 			@include element(label) {
-				text-align: left
+				text-align: left;
 			}
 		}
+
 		@include when(top) {
 			@include element(label) {
-				float: none;
 				display: inline-block;
-				padding: 0 0 unitfix(10) 0
+				float: none;
+				padding: 0 0 unitfix(10) 0;
 			}
 		}
 	}

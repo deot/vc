@@ -1,5 +1,5 @@
 import { UploadPicker } from './upload-picker.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	UploadPicker

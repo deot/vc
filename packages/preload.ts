@@ -1,9 +1,8 @@
-import "./components/style";
+import './components/style';
 
 // 设置 viewport 的内容
-let metaViewport = document.querySelector('meta[name="viewport"]');
+const metaViewport = document.querySelector('meta[name="viewport"]');
 metaViewport.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no');
-
 
 // 设置主题
 const el = document.createElement('button');
@@ -15,7 +14,7 @@ el.style.zIndex = '9999999';
 document.body.appendChild(el);
 
 el.addEventListener('click', () => {
-	const key = "data-vc-theme";
+	const key = 'data-vc-theme';
 	let v = document.body.getAttribute(key);
 	v = !v || v === 'dark' ? 'light' : 'dark';
 
@@ -23,7 +22,6 @@ el.addEventListener('click', () => {
 	el.innerHTML = `theme: ${v}`;
 });
 el.dispatchEvent(new Event('click'));
-
 
 // 设置主题值
 const tEl = document.createElement('button');
@@ -35,12 +33,12 @@ tEl.style.zIndex = '9999999';
 document.body.appendChild(tEl);
 
 tEl.addEventListener('click', () => {
-	let style = {
+	const style = {
 		background: `var(--vc-background-color)`,
 		color: `var(--vc-foreground-color)`,
 	};
 
-	const key = "data-vc-value";
+	const key = 'data-vc-value';
 	let v = document.body.getAttribute(key);
 	v = !v || v === 'unset' ? 'set' : 'unset';
 

@@ -1,5 +1,5 @@
 import { Page } from './page.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Page

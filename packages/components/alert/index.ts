@@ -1,5 +1,5 @@
 import { Alert } from './alert.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Alert

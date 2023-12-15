@@ -1,5 +1,5 @@
 import { Popup } from './popup.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Popup

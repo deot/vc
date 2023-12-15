@@ -1,4 +1,4 @@
-import { Debounce } from "./debounce"; 
+import { Debounce } from './debounce';
 
 export {
 	Debounce

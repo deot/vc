@@ -22,15 +22,15 @@ describe('use-attrs.ts', () => {
 
 		return () => {
 			return h(
-				'div', 
-				{ onClick }, 
+				'div',
+				{ onClick },
 				h('span', attrs, `${(props as any).title}${count.value}`)
 			);
 		};
 	};
 	it('default behavior, inheritAttrs = true', async () => {
 		const Wrapper = defineComponent(ComponentSetup, { props: ['title'] });
-		const root = mount(Wrapper, { 
+		const root = mount(Wrapper, {
 			props: {
 				title: 'title',
 			},
@@ -46,7 +46,7 @@ describe('use-attrs.ts', () => {
 
 		await root.trigger('click');
 		expect(root.find('span').text()).toMatch(`title1`);
-		
+
 		await root.setProps({ any: 'any-' });
 		expect(root.find('span').text()).toMatch(`title2`);
 		expect(root.attributes()).toEqual({ class: 'class', any: 'any-' });
@@ -56,7 +56,7 @@ describe('use-attrs.ts', () => {
 	it('default behavior, inheritAttrs = false', async () => {
 		const Wrapper = defineComponent(ComponentSetup, { inheritAttrs: false, props: ['title'] });
 
-		const root = mount(Wrapper, { 
+		const root = mount(Wrapper, {
 			props: {
 				title: 'title',
 			},

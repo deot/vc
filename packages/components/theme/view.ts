@@ -14,7 +14,7 @@ export const ThemeView = defineComponent({
 				{
 					...props,
 					tag: 'div'
-				}, 
+				},
 				slots
 			);
 		};

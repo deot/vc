@@ -18,27 +18,27 @@ export const MFormItem = defineComponent({
 		return () => {
 			if (isStyleless.value) return slots.default?.();
 			return (
-				<div 
-					style={{ paddingLeft: `${props.indent}px` }} 
+				<div
+					style={{ paddingLeft: `${props.indent}px` }}
 					class="vcm-form-item"
 				>
-					<div 
-						class={[classes.value, 'vcm-form-item__wrapper']} 
+					<div
+						class={[classes.value, 'vcm-form-item__wrapper']}
 					>
 						{
 							(props.label || slots.label) && (
-								<label 
-									for={labelFor} 
-									style={[labelStyle.value]} 
+								<label
+									for={labelFor}
+									style={[labelStyle.value]}
 									class="vcm-form-item__label"
 								>
 									{ label || slots.label?.() }
 								</label>
 							)
 						}
-						
-						<div 
-							style={[contentStyle.value]} 
+
+						<div
+							style={[contentStyle.value]}
 							class="vcm-form-item__content"
 						>
 							{ slots.default?.() }

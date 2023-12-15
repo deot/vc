@@ -48,19 +48,19 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 	// 同时处理嵌套form-item
 	// TODO: 渲染时计算（使用[form]vnode.el和[formItem]vnode.el）
 	const sortErrors = (errors: any[]) => {
-		let basicSort = {};
+		const basicSort = {};
 		let count = 0;
 
-		let fn = (vnodes: VNode[]) => {
+		const fn = (vnodes: VNode[]) => {
 			vnodes.forEach((vnode: VNode) => {
 				try {
-					let { prop } = vnode.props || {}; 
-					let { children } = vnode;
+					const { prop } = vnode.props || {};
+					const { children } = vnode;
 
 					if (
 						prop
-						&& typeof vnode.type === 'object' 
-						&& (vnode.type as any).name 
+						&& typeof vnode.type === 'object'
+						&& (vnode.type as any).name
 						&& /^vcm?-form-item$/.test((vnode.type as any).name)
 					) {
 						basicSort[prop] = count++;
@@ -69,7 +69,7 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 						try {
 							fn((children as any).default({ row: {}, $index: -1 }));
 						} catch {
-							// any	
+							// any
 						}
 					} else if (children && children instanceof Array) {
 						fn(children as VNode[]);
@@ -86,7 +86,7 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 	};
 
 	const scrollIntoView = (prop: string) => {
-		let field = getField(prop);
+		const field = getField(prop);
 		(field.vnode as VNode)?.el?.scrollIntoView?.({
 			behavior: 'smooth',
 			block: 'center',
@@ -100,17 +100,17 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 			return;
 		}
 
-		let results = await Promise.allSettled(
+		const results = await Promise.allSettled(
 			fields.map(item => (item.exposed as any).validate(''))
 		);
 
-		let originErrors = results
+		const originErrors = results
 			.filter(i => i.status === 'rejected')
 			.map(i => (i as PromiseRejectedResult).reason);
 
 		if (!originErrors.length) return;
 
-		let errors = sortErrors(originErrors);
+		const errors = sortErrors(originErrors);
 
 		// 全部校验完成
 		showToast(errors[0].msg || errors[0].message);
@@ -123,11 +123,11 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 	const validateField = async (prop: string, options$: FormValidateOptions = {}) => {
 		const { scroll = true } = options$;
 
-		let field = getField(prop);
+		const field = getField(prop);
 		try {
 			await field.exposed!.validate('');
 		} catch (e: any) {
-			let errorMsg = e.message;
+			const errorMsg = e.message;
 			showToast(errorMsg);
 			scroll && scrollIntoView(prop);
 

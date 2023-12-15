@@ -1,5 +1,5 @@
 import { Drawer } from './drawer.tsx';
-import "./style.scss";
+import './style.scss';
 
 export {
 	Drawer

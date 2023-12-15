@@ -1,8 +1,7 @@
-@import '../style/helper.scss';
+@import '../style/helper';
 
 $component-name: vc-form;
 $component-item-name: vc-form-item;
-
 $foreground-color: varfix(foreground-color, form);
 $background-color-light: varfix(background-color-light, form);
 $color-dark-light: varfix(color-dark-light, form);
@@ -11,43 +10,46 @@ $color-error: varfix(color-error, form);
 
 @include block($component-name) {
 	padding: unitfix(24) 0;
-	background: $background-color-light;
 	color: $foreground-color;
+	background: $background-color-light;
 }
 
 @include block($component-item-name) {
 	margin-bottom: unitfix(24);
 	line-height: 1.5;
-	@include clearfix();
+
+	@include clearfix;
+
 	@include element(content) { 
 		position: relative;
-		line-height: unitfix(18);
-		font-size: 12px
-	} 
-	@include element(label) { 
-		text-align: right;
-		vertical-align: middle;
-		float: left;
-		color: $color-dark-light;
 		font-size: 12px;
 		line-height: unitfix(18);
-		-webkit-box-sizing: border-box;
-		box-sizing: border-box
+	} 
+
+	@include element(label) {
+		float: left;
+		font-size: 12px;
+		line-height: unitfix(18);
+		color: $color-dark-light; 
+		text-align: right;
+		vertical-align: middle;
+		box-sizing: border-box;
 	}
+
 	/**
 	 * -> vc-form-item.is_require
 	 */
 	& {
 		@include when(require) {
 			@include element(label) {
-				&:before {
-					content: '*';
+				&::before {
 					display: inline-block;
 					margin-right: 4px;
-					line-height: 1;
 					font-family: SimSun;
 					font-size: 12px;
+					line-height: 1;
 					color: $color-error;
+					content: '*';
 				}
 			}
 		}
@@ -56,17 +58,17 @@ $color-error: varfix(color-error, form);
 			position: absolute;
 			top: 100%;
 			left: 0;
-			line-height: 1;
 			padding-top: unitfix(6);
+			line-height: 1;
 
 			@include when(nest) {
 				position: unset;
 				top: unset;
 				left: unset;
-				line-height: unset;
-				padding-top: unset;
 				display: inline-block;
+				padding-top: unset;
 				padding-left: unitfix(6);
+				line-height: unset;
 			}
 		}
 
@@ -79,26 +81,28 @@ $color-error: varfix(color-error, form);
 
 		@include when(left) {
 			@include element(label) {
-				text-align: left
+				text-align: left;
 			}
 		}
 
 		@include when(top) {
 			@include element(label) {
-				float: none;
 				display: inline-block;
-				padding: 0 0 unitfix(10) 0
+				float: none;
+				padding: 0 0 unitfix(10) 0;
 			}
 		}
+
 		/**
 		 * 此模式下需要删除label
 		 */
 		@include when(inline) {
 			display: inline-block;
 			margin-right: unitfix(10);
-			vertical-align: top
+			vertical-align: top;
 		}
 	}
+
 	/**
 	 * 嵌套管理
 	 */
@@ -106,6 +110,7 @@ $color-error: varfix(color-error, form);
 		@include when(nest) {
 			margin-bottom: 0;
 		}
+
 		@include element(wrapper, false) {
 			margin-left: 0 !important;
 		}

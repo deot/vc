@@ -9,8 +9,8 @@ import type { TrackExposed } from './track';
 const COMPONENT_NAME = 'vc-scroller-bar';
 
 export type BarExposed = {
-	refresh: () => void; 
-	refreshSize: () => void; 
+	refresh: () => void;
+	refreshSize: () => void;
 	refreshTrack: () => void;
 
 	trackX: TrackExposed;
@@ -108,9 +108,9 @@ export const Bar = defineComponent({
 			setBarStatus
 		);
 
-		expose({ 
-			refresh, 
-			refreshSize, 
+		expose({
+			refresh,
+			refreshSize,
 			refreshTrack,
 
 			// 把这个暴露出去
@@ -121,14 +121,14 @@ export const Bar = defineComponent({
 		return () => {
 			return !props.native && (!hasTo.value || !props.to) && (
 				<Teleport to={props.to} disabled={!props.to}>
-					<Track 
+					<Track
 						ref={trackX}
 						{
 							...trackBinds.value
 						}
 						offset={[props.trackOffsetX[3], props.trackOffsetX[1]]}
-						wrapper-size={wrapperW.value} 
-						content-size={contentW.value} 
+						wrapper-size={wrapperW.value}
+						content-size={contentW.value}
 						style={[
 							{
 								left: props.trackOffsetX[3] + 'px',
@@ -145,11 +145,11 @@ export const Bar = defineComponent({
 							...trackBinds.value
 						}
 						offset={[props.trackOffsetY[0], props.trackOffsetY[2]]}
-						wrapper-size={wrapperH.value} 
-						content-size={contentH.value} 
+						wrapper-size={wrapperH.value}
+						content-size={contentH.value}
 						style={[
-							{ 
-								top: props.trackOffsetY[0] + 'px', 
+							{
+								top: props.trackOffsetY[0] + 'px',
 								right: props.trackOffsetY[1] + 'px'
 							},
 							props.trackStyle

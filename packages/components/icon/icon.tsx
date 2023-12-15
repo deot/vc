@@ -14,23 +14,23 @@ export const Icon = defineComponent({
 		const path = ref<string[]>([]);
 
 		const getConfig = () => {
-			 /* istanbul ignore next -- @preserve */ 
+			/* istanbul ignore next -- @preserve */
 			if (!props.type) return;
 			viewBox.value = IconManager.icons[props.type].viewBox;
 			path.value = IconManager.icons[props.type].path;
 		};
 
 		watch(
-			() => props.type, 
+			() => props.type,
 			(v, old) => {
 				if (!v) return;
 				IconManager.icons[v]
-					? getConfig() 
+					? getConfig()
 					: (
-						old && IconManager.off(old, getConfig),
-						v && IconManager.on(v, getConfig)
-					);
-			}, 
+							old && IconManager.off(old, getConfig),
+							v && IconManager.on(v, getConfig)
+						);
+			},
 			{ immediate: true }
 		);
 		return () => {
@@ -40,7 +40,7 @@ export const Icon = defineComponent({
 						{
 							path.value.map((it: any, i: number) => {
 								return (
-									<path 
+									<path
 										key={i}
 										d={it.d}
 										fill={props.inherit && it.fill}

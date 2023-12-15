@@ -2,10 +2,10 @@
 
 import { getCurrentInstance, defineComponent, ref, onMounted, onUnmounted } from 'vue';
 import { props as messageProps } from './message-view-props';
-import { Icon } from "../icon";
-import { Spin } from "../spin";
+import { Icon } from '../icon';
+import { Spin } from '../spin';
 import { TransitionSlide } from '../transition';
-import { Customer } from "../customer/index";
+import { Customer } from '../customer/index';
 
 const COMPONENT_NAME = 'vc-message';
 
@@ -26,9 +26,9 @@ export const MessageView = defineComponent({
 		const handleClose = async (e: any, closable: boolean) => {
 			if (!isActive.value || closable === false) return;
 
-			let cancel = instance.vnode.props?.onBeforeClose || props.onBeforeClose || (() => {});
+			const cancel = instance.vnode.props?.onBeforeClose || props.onBeforeClose || (() => {});
 
-			let fn = cancel && cancel(e);
+			const fn = cancel && cancel(e);
 			if (fn && fn.then) {
 				return fn
 					.then((res: any) => {
@@ -55,7 +55,7 @@ export const MessageView = defineComponent({
 			timer && clearTimeout(timer);
 		});
 
-		let exposes = ['destroy', 'remove', 'close', 'hide']
+		const exposes = ['destroy', 'remove', 'close', 'hide']
 			.reduce((pre, key) => {
 				pre[key] = handleRemove;
 				return pre;
@@ -68,47 +68,47 @@ export const MessageView = defineComponent({
 				<div class="vc-message">
 					{
 						(props.mask && props.fixed) && (
-							<div 
+							<div
 								class="vc-message__mask"
-								onClick={(e) => handleClose(e, props.maskClosable)} 
+								onClick={e => handleClose(e, props.maskClosable)}
 							/>
 						)
 					}
-					<TransitionSlide 
-						mode="up" 
+					<TransitionSlide
+						mode="up"
 						// @ts-ignore
 						onAfterLeave={handleRemove}
 					>
-						<div 
+						<div
 							v-show={isActive.value}
-							class={["vc-message__wrapper", { 'is-fixed': props.fixed }]}
+							class={['vc-message__wrapper', { 'is-fixed': props.fixed }]}
 							style={props.fixed ? { top: `${props.top}px` } : {}}
 						>
 							<div class="vc-message__container">
 								{
-									props.mode === 'loading' 
+									props.mode === 'loading'
 										? (
-											<Spin 
+											<Spin
 												size={14}
-												class="vc-message__loading" 
+												class="vc-message__loading"
 											/>
-										)
+											)
 										: (
-											<Icon 
-												type={props.mode} 
+											<Icon
+												type={props.mode}
 												class={[`is-${props.mode}`, 'vc-message__icon']}
 											/>
-										)
+											)
 								}
 
 								{
-									typeof props.content === 'string' 
+									typeof props.content === 'string'
 										? (
-											<div 
+											<div
 												class="vc-message__content"
 												innerHTML={props.content}
 											/>
-										)
+											)
 										: typeof props.content === 'function'
 											? (<Customer render={props.content} />)
 											: null
@@ -116,11 +116,11 @@ export const MessageView = defineComponent({
 
 								{
 									props.closable && (
-										<Icon 
+										<Icon
 											type="close"
 											class="vc-message__close"
 											// @ts-ignore
-											onClick={(e) => handleClose(e, true)} 
+											onClick={e => handleClose(e, true)}
 										/>
 									)
 								}

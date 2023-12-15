@@ -21,8 +21,8 @@ import { useScrollbar } from '@deot/vc-hooks';
 import { Icon } from '../icon';
 import { Button } from '../button';
 import { TransitionScale, TransitionFade } from '../transition';
-import { Customer } from "../customer";
-import { VcInstance } from "../vc";
+import { Customer } from '../customer';
+import { VcInstance } from '../vc';
 
 import { props as modalProps } from './modal-view-props';
 
@@ -83,8 +83,8 @@ export const ModalView = defineComponent({
 		const draggableStyle = computed(() => {
 			if (IS_SERVER || !props.draggable) return {};
 
-			let left = x.value || window.innerWidth / 2 - defaultSize.value.width / 2;
-			let top = y.value || window.innerHeight / 2 - defaultSize.value.height / 2;
+			const left = x.value || window.innerWidth / 2 - defaultSize.value.width / 2;
+			const top = y.value || window.innerHeight / 2 - defaultSize.value.height / 2;
 
 			return {
 				left: `${left}px`,
@@ -111,7 +111,7 @@ export const ModalView = defineComponent({
 		 * 设置原始坐标
 		 */
 		const resetOrigin = debounce(function () {
-			let el = container.value;
+			const el = container.value;
 
 			if (!el) return;
 
@@ -121,8 +121,8 @@ export const ModalView = defineComponent({
 			 * 拖拽使用x, y
 			 * 其他正常的布局
 			 */
-			let modalX = x.value || el.offsetLeft;
-			let modalY = y.value || el.offsetTop || (window.screen.height - el.clientHeight) / 2;
+			const modalX = x.value || el.offsetLeft;
+			const modalY = y.value || el.offsetTop || (window.screen.height - el.clientHeight) / 2;
 
 			$x = originX - modalX;
 			$y = originY - modalY;
@@ -148,7 +148,7 @@ export const ModalView = defineComponent({
 		const handleBefore = (e: any, hook: any) => {
 			if (!isActive.value) return;
 
-			let fn = hook && hook(e);
+			const fn = hook && hook(e);
 			if (fn && fn.then) {
 				return fn
 					.then((res: any) => {
@@ -162,18 +162,18 @@ export const ModalView = defineComponent({
 
 		// 用户点击确定的回调 兼容portal设计
 		const handleOk = (...rest: any[]) => {
-			let ok = instance.vnode.props?.onOk || props.onOk || (() => {});
+			const ok = instance.vnode.props?.onOk || props.onOk || (() => {});
 
 			return ok(...rest);
 		};
 
 		// 用户点击取消按钮时为取消 兼容portal设计
 		const handleCancel = (...rest: any[]) => {
-			let cancel = instance.vnode.props?.onCancel || props.onCancel || (() => {});
+			const cancel = instance.vnode.props?.onCancel || props.onCancel || (() => {});
 
 			return cancel(...rest);
 		};
-		
+
 		// 关闭事件
 		const handleClose = (e: any, closable: boolean) => {
 			if (closable
@@ -200,7 +200,7 @@ export const ModalView = defineComponent({
 		const handleContainerResize = () => {
 			const $container = container.value!;
 			const maxheight = window.innerHeight - 20;
-			let containerHeight = $container.offsetHeight;
+			const containerHeight = $container.offsetHeight;
 			if (containerHeight + 1 > maxheight) {
 				if (maxheight % 2 !== 0) {
 					$container.style.height = `${maxheight - 1}px`;
@@ -228,7 +228,6 @@ export const ModalView = defineComponent({
 			originY = e.y;
 		};
 
-
 		const handleMouseMove = (e: MouseEvent) => {
 			x.value += e.clientX - startX;
 			y.value += e.clientY - startY;
@@ -244,8 +243,8 @@ export const ModalView = defineComponent({
 			 */
 			resetOrigin();
 
-			document.removeEventListener("mousemove", handleMouseMove);
-			document.removeEventListener("mouseup", handleMouseUp);
+			document.removeEventListener('mousemove', handleMouseMove);
+			document.removeEventListener('mouseup', handleMouseUp);
 		};
 
 		const handleMouseDown = (e: MouseEvent) => {
@@ -265,8 +264,8 @@ export const ModalView = defineComponent({
 			startX = e.clientX;
 			startY = e.clientY;
 
-			document.addEventListener("mousemove", handleMouseMove);
-			document.addEventListener("mouseup", handleMouseUp);
+			document.addEventListener('mousemove', handleMouseMove);
+			document.addEventListener('mouseup', handleMouseUp);
 		};
 
 		onMounted(() => {
@@ -291,8 +290,8 @@ export const ModalView = defineComponent({
 		onUnmounted(() => {
 			document.removeEventListener('click', handleClick, true);
 			document.removeEventListener('keydown', handleEscClose);
-			document.removeEventListener("mousemove", handleMouseMove);
-			document.removeEventListener("mouseup", handleMouseUp);
+			document.removeEventListener('mousemove', handleMouseMove);
+			document.removeEventListener('mouseup', handleMouseUp);
 		});
 
 		expose({
@@ -307,7 +306,7 @@ export const ModalView = defineComponent({
 							v-show={props.mask && isActive.value}
 							class="vc-modal__mask"
 							// @ts-ignore
-							onClick={(e) => handleClose(e, props.maskClosable)}
+							onClick={e => handleClose(e, props.maskClosable)}
 						/>
 					</TransitionFade>
 					<div
@@ -315,7 +314,7 @@ export const ModalView = defineComponent({
 						style={[props.styles || {}, props.draggable ? { top: 0 } : {}]}
 						class="vc-modal__wrapper"
 						// @ts-ignore
-						onClick={(e) => handleClose(e, false)}
+						onClick={e => handleClose(e, false)}
 					>
 						<TransitionScale
 							mode="part"
@@ -326,16 +325,14 @@ export const ModalView = defineComponent({
 							<div
 								v-show={isActive.value}
 								ref={container}
-								class={
-									[
-										{
-											'is-drag': props.draggable, 
-											'is-large': props.size === 'large' || props.size === 'medium',
-											'is-no-footer': !props.footer || (!props.cancelText && !props.okText)
-										},
-										'vc-modal__container'
-									]
-								}
+								class={[
+									{
+										'is-drag': props.draggable,
+										'is-large': props.size === 'large' || props.size === 'medium',
+										'is-no-footer': !props.footer || (!props.cancelText && !props.okText)
+									},
+									'vc-modal__container'
+								]}
 								style={[basicStyle.value, draggableStyle.value]}
 							>
 								<div
@@ -353,7 +350,7 @@ export const ModalView = defineComponent({
 										)
 									}
 									{
-										!slots.header 
+										!slots.header
 											? (
 												<Fragment>
 													<div class="vc-modal__title" innerHTML={props.title} />
@@ -367,20 +364,20 @@ export const ModalView = defineComponent({
 															</div>
 														)
 													}
-													
+
 												</Fragment>
-											)
+												)
 											: slots.header()
 									}
 								</div>
-								<div 
+								<div
 									ref={content}
 									class={[{ 'is-confirm': props.mode }, props.portalClassName, 'vc-modal__content']}
 								>
 									{
-										typeof props.content === 'string' 
+										typeof props.content === 'string'
 											? (<div innerHTML={props.content} />)
-											: typeof props.content === 'function' 
+											: typeof props.content === 'function'
 												? (<Customer render={props.content} />)
 												: null
 									}
@@ -391,14 +388,14 @@ export const ModalView = defineComponent({
 										<div class={[{ 'is-confirm': props.mode }, 'vc-modal__footer']}>
 											{ slots['footer-extra']?.() }
 											{
-												!slots.footer 
+												!slots.footer
 													? (
 														<Fragment>
 															{
 																props.cancelText && (
 																	<Button
 																		style="margin-right: 8px;"
-																		onClick={(e) => handleBefore(e, handleCancel)}
+																		onClick={e => handleBefore(e, handleCancel)}
 																	>
 																		{ props.cancelText }
 																	</Button>
@@ -408,14 +405,14 @@ export const ModalView = defineComponent({
 																props.okText && (
 																	<Button
 																		type="primary"
-																		onClick={(e) => handleBefore(e, handleOk)}
+																		onClick={e => handleBefore(e, handleOk)}
 																	>
 																		{ props.okText }
 																	</Button>
 																)
 															}
 														</Fragment>
-													)
+														)
 													: slots.footer?.()
 											}
 										</div>

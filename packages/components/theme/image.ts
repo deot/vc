@@ -14,7 +14,7 @@ export const ThemeImage = defineComponent({
 				{
 					...props,
 					tag: 'img'
-				}, 
+				},
 				slots
 			);
 		};
