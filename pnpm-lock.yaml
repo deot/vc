@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@deot/dev':
-        specifier: ^2.8.5
-        version: 2.8.5(@vue/compiler-sfc@3.3.11)(eslint@8.55.0)(postcss@8.4.32)(stylelint@16.0.2)(typescript@5.3.3)(vite@5.0.9)
+        specifier: ^2.8.7
+        version: 2.8.7(@vue/compiler-sfc@3.3.11)(eslint@8.55.0)(postcss@8.4.32)(stylelint@16.0.2)(typescript@5.3.3)(vite@5.0.9)
 
   packages/components:
     dependencies:
@@ -398,8 +398,8 @@ packages:
       ora: 7.0.1
     dev: true
 
-  /@deot/dev-builder@2.8.1(@vue/compiler-sfc@3.3.11)(typescript@5.3.3):
-    resolution: {integrity: sha512-hVScXQG6j4HzX+XtgC/evKdGk/vDwheBblP8Lx7uBvSdDxv3TvrhD9awO3GLgAQQrcv1Byz6QV2uuYCuIC5TUg==}
+  /@deot/dev-builder@2.8.2(@vue/compiler-sfc@3.3.11)(typescript@5.3.3):
+    resolution: {integrity: sha512-TCTuqFz/qqHv8mFteiBSO5XNBwTjvp3QowmmBysZq1j8UOYjNhgwYFW9ZZ7+FJCEYGAV+aqNjuvCdPCe4TxzeQ==}
     peerDependencies:
       typescript: '*'
     peerDependenciesMeta:
@@ -435,12 +435,12 @@ packages:
       - terser
     dev: true
 
-  /@deot/dev-cli@2.8.1(@vue/compiler-sfc@3.3.11)(typescript@5.3.3)(vite@5.0.9):
-    resolution: {integrity: sha512-hA2Dcet56NnjcKKSzaUuQl8+qmgFr+Khn2jHXSbfd806suQDlAqTZCr57irPYc4t1o221Zx/I38TOkeJzSx5rQ==}
+  /@deot/dev-cli@2.8.2(@vue/compiler-sfc@3.3.11)(typescript@5.3.3)(vite@5.0.9):
+    resolution: {integrity: sha512-spVgVQjFZAPi2GZFhRKNh7sFgVz2qCe43z9G0STzUkOSF/FtKDOTMDlgLfJAxxeLfRJ6vOYZ4ChClVNcjyKQGQ==}
     hasBin: true
     dependencies:
       '@deot/dev-adder': 2.8.0
-      '@deot/dev-builder': 2.8.1(@vue/compiler-sfc@3.3.11)(typescript@5.3.3)
+      '@deot/dev-builder': 2.8.2(@vue/compiler-sfc@3.3.11)(typescript@5.3.3)
       '@deot/dev-linker': 2.8.0
       '@deot/dev-releaser': 2.8.0
       '@deot/dev-shared': 2.8.0
@@ -490,8 +490,8 @@ packages:
       - supports-color
     dev: true
 
-  /@deot/dev-dever@2.8.0(@vue/compiler-sfc@3.3.11)(typescript@5.3.3):
-    resolution: {integrity: sha512-rrWkklVJQ/+EISMCb0nyEFKoE+cawwDw/emfHHLvplzN6eh+89BJxi1YxR7nLp5U2QrSVmYcxcCpO3QuKUHgKg==}
+  /@deot/dev-dever@2.8.1(@vue/compiler-sfc@3.3.11)(typescript@5.3.3):
+    resolution: {integrity: sha512-17ry1peHz5bDGRjMNDCY6KDyme1YE5nQusdXJ8ExO6stVfAzvhk3v8zcJ75DBinpj182ug6yfUI3hMY0JxDBGw==}
     dependencies:
       '@deot/dev-react': 2.8.0(vite@5.0.9)
       '@deot/dev-shared': 2.8.0
@@ -513,8 +513,8 @@ packages:
       - typescript
     dev: true
 
-  /@deot/dev-eslint@2.8.3(eslint@8.55.0)(typescript@5.3.3):
-    resolution: {integrity: sha512-/rYGg1uXorNTWpcYmMEm0ZENaEc/Hhn1p1QFDVI6PVfIwSnoSSVtnIzU5KUPpdscD/gxyyvCrUhtXuIaruM6qA==}
+  /@deot/dev-eslint@2.8.4(eslint@8.55.0)(typescript@5.3.3):
+    resolution: {integrity: sha512-C6AnN5P+3ZWuYxXu7f5+Sm5z2lCPz4PvB2TBScmDiPmJ76Ea7lSzTga8PXdXYZjBMfhutXCzIn9MVzySUxeHDQ==}
     dependencies:
       '@stylistic/eslint-plugin': 1.5.1(eslint@8.55.0)(typescript@5.3.3)
       '@typescript-eslint/eslint-plugin': 6.14.0(@typescript-eslint/parser@6.14.0)(eslint@8.55.0)(typescript@5.3.3)
@@ -660,16 +660,16 @@ packages:
       - typescript
     dev: true
 
-  /@deot/dev@2.8.5(@vue/compiler-sfc@3.3.11)(eslint@8.55.0)(postcss@8.4.32)(stylelint@16.0.2)(typescript@5.3.3)(vite@5.0.9):
-    resolution: {integrity: sha512-BqdccSHLNwcO19O/6Zd5atJGFAOe+Jb4ffk4Sjx9cCnrwwTJf5lVHREIxybEEVX2Q78+nus8UJ4p0v/U5uG7yg==}
+  /@deot/dev@2.8.7(@vue/compiler-sfc@3.3.11)(eslint@8.55.0)(postcss@8.4.32)(stylelint@16.0.2)(typescript@5.3.3)(vite@5.0.9):
+    resolution: {integrity: sha512-MNQA35/T1S0DWqsWAxrxwzJDFsyqG8Xyh5yu0a/6EHrYUNkH3cQ8MRaxsKZ7pzBuK/+rkZoXCGBI+2dpstfC2w==}
     dependencies:
       '@deot/dev-adder': 2.8.0
-      '@deot/dev-builder': 2.8.1(@vue/compiler-sfc@3.3.11)(typescript@5.3.3)
-      '@deot/dev-cli': 2.8.1(@vue/compiler-sfc@3.3.11)(typescript@5.3.3)(vite@5.0.9)
+      '@deot/dev-builder': 2.8.2(@vue/compiler-sfc@3.3.11)(typescript@5.3.3)
+      '@deot/dev-cli': 2.8.2(@vue/compiler-sfc@3.3.11)(typescript@5.3.3)(vite@5.0.9)
       '@deot/dev-commitlint': 2.8.1
       '@deot/dev-deps': 2.8.0
-      '@deot/dev-dever': 2.8.0(@vue/compiler-sfc@3.3.11)(typescript@5.3.3)
-      '@deot/dev-eslint': 2.8.3(eslint@8.55.0)(typescript@5.3.3)
+      '@deot/dev-dever': 2.8.1(@vue/compiler-sfc@3.3.11)(typescript@5.3.3)
+      '@deot/dev-eslint': 2.8.4(eslint@8.55.0)(typescript@5.3.3)
       '@deot/dev-linker': 2.8.0
       '@deot/dev-releaser': 2.8.0
       '@deot/dev-shared': 2.8.0
