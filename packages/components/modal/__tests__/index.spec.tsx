@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Modal } from '@deot/vc-components';
+import { Modal, ModalView } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 
 describe('index.ts', () => {
@@ -8,7 +8,7 @@ describe('index.ts', () => {
 		expect(typeof Modal).toBe('object');
 	});
 	it('create', async () => {
-		const wrapper = mount(() => (<Modal />));
+		const wrapper = mount(() => (<ModalView />));
 
 		expect(wrapper.classes()).toContain('vc-modal');
 	});

@@ -30,7 +30,7 @@ describe('index.ts', () => {
 		};
 		VcInstance.configure();
 		VcInstance.configure(options);
-		expect((VcInstance.options.Theme.variables as any).background).toBe('white');
+		expect((VcInstance.options.Theme!.variables).background).toBe('white');
 	});
 
 	it('VcInstance, globalEvent', async () => {

@@ -16,7 +16,8 @@
     "build": "ddc build --vue-package 'components,hooks' --script-formats=es,cjs,umd,iife --external vue",
     "test": "ddc test --vue-package 'components,hooks'",
     "add": "ddc add",
-    "release": "ddc release"
+    "release": "ddc release",
+    "typecheck": "vue-tsc --noEmit --skipLibCheck"
   },
   "scripts-info": {
     "init": "首次安装",

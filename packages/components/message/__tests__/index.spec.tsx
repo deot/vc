@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Message } from '@deot/vc-components';
+import { Message, MessageView } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 
 describe('index.ts', () => {
@@ -8,7 +8,7 @@ describe('index.ts', () => {
 		expect(typeof Message).toBe('object');
 	});
 	it('create', async () => {
-		const wrapper = mount(() => (<Message />));
+		const wrapper = mount(() => (<MessageView />));
 
 		expect(wrapper.classes()).toContain('vc-message');
 	});

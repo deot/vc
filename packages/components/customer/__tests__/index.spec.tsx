@@ -43,7 +43,7 @@ describe('index.ts', () => {
 		expect(wrapper.find('.default').text()).toBe('default-slot');
 		expect(wrapper.find('.content').text()).toBe('content-slot-1');
 
-		await wrapper.setProps({ current: 1 });
+		await wrapper.setProps({ current: 1 } as any);
 
 		expect(wrapper.classes()).toEqual(['child', 'parent']);
 		expect(wrapper.find('.attrs').text()).toBe('1');

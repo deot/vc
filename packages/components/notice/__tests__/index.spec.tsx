@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Notice } from '@deot/vc-components';
+import { Notice, NoticeView } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 
 describe('index.ts', () => {
@@ -8,7 +8,7 @@ describe('index.ts', () => {
 		expect(typeof Notice).toBe('object');
 	});
 	it('create', async () => {
-		const wrapper = mount(() => (<Notice />));
+		const wrapper = mount(() => (<NoticeView />));
 
 		expect(wrapper.classes()).toContain('vc-notice');
 	});
