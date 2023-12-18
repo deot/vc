@@ -32,7 +32,6 @@
   },
   "devDependencies": {
     "@deot/style": "^1.0.2",
-    "@types/lodash-es": "^4.17.9",
-    "vue": "^3.3.10"
+    "@types/lodash-es": "^4.17.9"
   }
 }
