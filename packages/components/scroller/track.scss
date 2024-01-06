@@ -38,7 +38,6 @@ $component-name: vc-scroller-track;
 		background-color: rgb(37 36 36 / 57%);
 		border-radius: inherit;
 		transition: .3s background-color;
-		will-change: transform,  	background-color;
 		
 		&:hover {
 			background-color: rgb(37 36 36 / 70%);

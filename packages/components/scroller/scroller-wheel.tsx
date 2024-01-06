@@ -11,11 +11,22 @@ const COMPONENT_NAME = 'vc-scroller-wheel';
 
 /**
  * 为减少一层嵌套，为去除滚动bar的抖动，使用wheel模拟
- * 原生scroll事件：不会触发重排和重绘
- * 原生wheel事件设置scrollTop：不会触发重排和重绘
+ * 同时考虑分层（开发者工具打开layers, 需要加上will-change和原生保持一致的分层, TODO: always或hover时设置will-change）
+ *
+ * 以下需要了解浏览器的渲染原理
+ * 渲染主线程：parse, style, layout, layer, paint
+ * 合成线程：tiling, raster, draw
+ *
+ * 原生scroll事件：不会触发reflow和repaint
+ * 原生wheel事件设置scrollTop：不会触发reflow和repaint
+ * 以上只会影响合成线程的draw，此阶段由GPU完成
+ * 改变属性的的reflow是异步的（这样可以合并多个属性的改变），但获取几何信息（如clientWidth）会立即reflow, 然后再执行后续的
+ *
+ * reflow和repaint发生在渲染主线程，不过设置scrollTop会经过渲染主线程
+ *
  * 做抖动优化：
  * 使用scroll原生时，bar(可以没有),thumb都会出现抖动，这里选择用wheel代替解决该问题;
- * 测试时设置scrollTop没有重排重绘，暂不考虑改用transfrom来改变content
+ * 设置scrollTop不会reflow和repaint，不需要考虑transfrom来改变content（transform也只在draw完成）
  */
 export const ScrollerWheel = defineComponent({
 	name: COMPONENT_NAME,

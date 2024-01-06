@@ -5,6 +5,7 @@ $component-name: vc-scroller-wheel;
 @include block($component-name) {
 	position: relative;
 	overflow: hidden;
+	will-change: transform; // 和原生滚动条一样进行分层（开发者工具打开Layers）
 
 	@include when(hidden) {
 		scrollbar-width: none;
@@ -16,5 +17,6 @@ $component-name: vc-scroller-wheel;
 
 	@include when(native) {
 		overflow: auto;
+		will-change: unset;
 	}
 }
