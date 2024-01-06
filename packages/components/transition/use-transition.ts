@@ -38,7 +38,11 @@ export const useTransition = () => {
 		el.style.removeProperty('animation-delay');
 	};
 
-	// 先脱离文档流, 不占用高度;
+	/**
+	 * 先脱离文档流, 不占用高度;
+	 * 配合handleLeave中next(true), group下直接移除，无移除动画
+	 * @param el ~
+	 */
 	const resetAbsolute = (el: HTMLElement) => {
 		props.group && (el.style.position = 'absolute');
 	};
@@ -116,7 +120,8 @@ export const useTransition = () => {
 			resetAbsolute(el);
 			await attrs.onLeave?.(el, next);
 		} finally {
-			next(false);
+			// 当为组合时，立即清理，这样移除时无动画
+			next(props.group ? true : false);
 		}
 	};
 	const handleAfterLeave = (el: HTMLElement) => {

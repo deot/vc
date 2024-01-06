@@ -80,7 +80,7 @@
 				<div 
 					v-for="(item, index) in colors" 
 					:key="item.id" 
-					:style="{ background: `#ff33${item.id}${item.id}` }"
+					:style="{ background: item.color }"
 					style="width: 48px; line-height: 4; color: #e6e6e6; margin: 10px"
 				>
 					{{ index }}: {{ item.id }}
@@ -103,7 +103,7 @@ import {
 let count = 0;
 
 const isVisible = ref(true);
-const isGroup = ref(false);
+const isGroup = ref(true);
 const transitionName = ref('fade');
 const transitionOptions = ref([
 	'fade',
@@ -121,7 +121,12 @@ const zoomModeOptions = ref(['x', 'y', 'center']);
 const scaleModeName = ref('both');
 const scaleModeOptions = ref(['both', 'part']);
 
-const colors = ref(Array.from({ length: 5 }, () => ({ id: count++ })));
+const color = () => {
+	let fn = () => Math.floor(Math.random() * 256);
+	return `rgba(${fn()}, ${fn()}, ${fn()})`;
+}
+
+const colors = ref(Array.from({ length: 5 }, () => ({ id: count++, color: color() })));
 
 const mode = computed(() => {
 	switch (transitionName.value) {
@@ -155,7 +160,7 @@ const wrapper = computed(() => {
 	}
 });
 const handleEnter = (el) => {
-	console.log('enter', el);
+	console.dir(el);
 };
 const handleClick = () => {
 	isVisible.value = !isVisible.value;
@@ -165,9 +170,11 @@ const handleGroup = () => {
 	isGroup.value = !isGroup.value;
 };
 const handleAdd = () => {
-	colors.value.push({ id: count++ });
+	colors.value.push({ id: count++, color: color() });
 };
 const handleDel = () => {
-	colors.value.splice(Math.floor(Math.random() * colors.value.length), 1);
+	const index = Math.floor(Math.random() * colors.value.length);
+	colors.value.splice(index, 1);
+	console.log(`remove ${index}`);
 };
 </script>

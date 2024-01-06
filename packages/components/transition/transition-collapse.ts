@@ -12,7 +12,7 @@ export const TransitionCollapse = defineComponent({
 	setup(props, { slots, attrs: _attrs }) {
 		const attrs = _attrs as any;
 		const { Wrapper, resetStyles, resetAbsolute, createNext } = useTransition();
-		const getTransitionStyle = (duration) => {
+		const getTransitionStyle = (duration: number) => {
 			const style = `
 				${duration}ms height ease-in-out, 
 				${duration}ms padding-top ease-in-out, 
@@ -62,7 +62,7 @@ export const TransitionCollapse = defineComponent({
 
 				attrs.onEnter?.(el);
 			} finally {
-				next();
+				next(false);
 			}
 		};
 
@@ -108,14 +108,13 @@ export const TransitionCollapse = defineComponent({
 					el.style.paddingTop = '0px';
 					el.style.paddingBottom = '0px';
 				}
-				/**
-				 * for group
-				 */
+
 				resetAbsolute(el);
 
 				attrs.onLeave?.(el);
 			} finally {
-				next();
+				// 当为组合时，立即清理，这样移除时无动画（）
+				next(props.group ? true : false);
 			}
 		};
 
