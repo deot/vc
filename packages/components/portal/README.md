@@ -141,7 +141,7 @@ import { PortalView } from '@deot/vc';
 | onBeforeCreate  | 初始化组件前操作，可以是ajax | -         | `Function` | -                                             |
 | onFulfilled     | 调用成功的回调          | -         | `Function` | -                                             |
 | onRejected      | 调用失败的回调          | -         | `Function` | -                                             |
-| onDestoryed     | 已销毁时调用           | -         | `Function` | -                                             |
+| onDestroyed     | 已销毁时调用           | -         | `Function` | -                                             |
 
 ### [Viewer].popup(propsData?, options?)参数
 

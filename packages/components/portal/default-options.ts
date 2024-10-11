@@ -113,7 +113,7 @@ export type PortalOptions = Partial<{
 	/**
 	 * 销毁时调用
 	 */
-	onDestoryed: (...args: any[]) => any;
+	onDestroyed: (...args: any[]) => any;
 
 	/**
 	 * 创建之前调用

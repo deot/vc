@@ -10,11 +10,15 @@ describe('index.ts', () => {
 	afterEach(() => Portal.clear(true));
 
 	const Wrapper = defineComponent({
-		emits: ['portal-fulfilled', 'portal-rejected'],
+		emits: ['portal-fulfilled', 'portal-rejected', 'portal-destroyed'],
 		props: {
 			title: String
 		},
 		setup(props, { emit, expose }) {
+			const handleClose = () => {
+				emit('portal-destroyed');
+			};
+
 			const handleOk = () => {
 				emit('portal-fulfilled', { status: 1, title: props.title });
 			};
@@ -48,6 +52,7 @@ describe('index.ts', () => {
 					<div>
 						<Update />
 						<Title />
+						<button class="close" onClick={handleClose}>关闭</button>
 						<button class="ok" onClick={handleOk}>确定</button>
 						<button class="cancel" onClick={handleCancel}>取消</button>
 					</div>
@@ -106,7 +111,7 @@ describe('index.ts', () => {
 		expect(root.html()).toMatch(`<h1>${title}</h1>`);
 	});
 
-	it('onBeforeCreate, pending destory', async () => {
+	it('onBeforeCreate, pending destroy', async () => {
 		const title1 = 'any1';
 		const title2 = 'any2';
 		Modal.popup({
@@ -161,7 +166,7 @@ describe('index.ts', () => {
 			onFulfilled: (e) => {
 				expect(e.status).toBe(1);
 			},
-			onDestoryed: () => {
+			onDestroyed: () => {
 				expect(1).toBe(1);
 			}
 		});
@@ -198,7 +203,7 @@ describe('index.ts', () => {
 			onRejected: (e) => {
 				expect(e.status).toBe(0);
 			},
-			onDestoryed: () => {
+			onDestroyed: () => {
 				expect(1).toBe(1);
 			}
 		});
@@ -233,6 +238,23 @@ describe('index.ts', () => {
 		} finally {
 			expect(Portal.leafs.size).toBe(0);
 		}
+	});
+
+	it('destroy, event/close', async () => {
+		expect.assertions(3);
+		const leaf = Modal.popup({
+			onDestroyed: () => {
+				expect(1).toBe(1);
+			}
+		});
+
+		leaf.finally(() => {
+			expect(1).toBe(2); // 不会执行
+		});
+
+		expect(Portal.leafs.size).toBe(1);
+		root.find('.close').trigger('click');
+		expect(Portal.leafs.size).toBe(0);
 	});
 
 	it('destroy, any', async () => {

@@ -171,7 +171,7 @@ export class Portal<T extends Component> {
 			autoDestroy,
 			multiple,
 			fragment,
-			onDestoryed,
+			onDestroyed,
 			onBeforeCreate,
 			insertion,
 
@@ -201,16 +201,16 @@ export class Portal<T extends Component> {
 
 		let leaf = new PortalLeaf(target);
 
-		const isDestoryed = () => {
+		const isDestroyed = () => {
 			const leaf$ = Portal.leafs.get(name!);
 			return !leaf$ || leaf$ !== leaf;
 		};
 
-		const $onDestoryed = (...args: any[]) => {
-			// 已经销毁，连续执行destory时不在执行
-			if (isDestoryed()) return;
+		const $onDestroyed = (...args: any[]) => {
+			// 已经销毁，连续执行destroy时不在执行
+			if (isDestroyed()) return;
 
-			onDestoryed?.(...args);
+			onDestroyed?.(...args);
 			leaf.app?.unmount();
 
 			/* istanbul ignore else -- @preserve */
@@ -262,7 +262,7 @@ export class Portal<T extends Component> {
 									}
 
 									// 注意这里`leaf.target`会一直处于pending状态
-									leaveDelay ? setTimeout($onDestoryed, leaveDelay) : $onDestoryed();
+									leaveDelay ? setTimeout($onDestroyed, leaveDelay) : $onDestroyed();
 								}
 							} catch (error) {
 								/* istanbul ignore next -- @preserve */
@@ -289,11 +289,11 @@ export class Portal<T extends Component> {
 
 						if (result && result.then) {
 							result.then((response: any) => {
-								if (isDestoryed()) return;
+								if (isDestroyed()) return;
 								allowMounted.value = true;
 								propsData2.value = response;
 							}).catch((error: any) => {
-								$onDestoryed(error); // 直接移除，无需考虑是否用onRejected
+								$onDestroyed(error); // 直接移除，无需考虑是否用onRejected
 							});
 						} else {
 							allowMounted.value = true;
@@ -308,7 +308,8 @@ export class Portal<T extends Component> {
 							...propsData2.value,
 							ref: (vm: any) => (leaf.wrapper = vm),
 							onPortalFulfilled: (...args: any[]) => $onFulfilled(...args),
-							onPortalRejected: (...args: any[]) => $onRejected(...args)
+							onPortalRejected: (...args: any[]) => $onRejected(...args),
+							onPortalDestroyed: (...args: any[]) => $onDestroyed(...args),
 						},
 
 						slots || undefined
@@ -337,7 +338,7 @@ export class Portal<T extends Component> {
 		}
 
 		// destroy method
-		leaf.destroy = $onDestoryed;
+		leaf.destroy = $onDestroyed;
 
 		// tag
 		leaf.autoDestroy = !!autoDestroy;
