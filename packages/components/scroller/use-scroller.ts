@@ -40,6 +40,7 @@ export const useScroller = (expose: SetupContext['expose']) => {
 
 	// 以下两个暴露scroll事件, 从而触发handleScroll
 	expose({
+		wrapper,
 		refresh: () => {
 			bar.value!.refresh();
 		},
