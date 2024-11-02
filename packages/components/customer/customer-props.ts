@@ -1,8 +1,9 @@
-import type { ExtractPropTypes, SetupContext, PropType } from 'vue';
+import type { ExtractPropTypes } from 'vue';
+import type { Render } from './types';
 
 export const props = {
 	render: {
-		type: Function as PropType<(props: Record<string, unknown>, context: SetupContext) => any>,
+		type: Function as Render,
 		default: () => null
 	}
 };
