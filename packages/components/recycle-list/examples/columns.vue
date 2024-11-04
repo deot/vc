@@ -14,14 +14,14 @@
 					:key="row.id" 
 					class="item" 
 					:style="{
-						background: row.background,
-						height: `${row.height + (dynamicSize || 0) }px`
+						background: row.background
 					}"
 					@click="handleClick(row)"
 				>
-					id: {{ row.id }}
-					page: {{ row.page }}
-					height: {{ row.height + (dynamicSize || 0) }}
+					<div>id: {{ row.id }}</div>
+					<div>page: {{ row.page }}</div>
+					<div :style="`height: ${dynamicSize}px`" />
+					<div>{{ row.text }}</div>
 				</div>
 			</template>
 		</RecycleList>
@@ -31,7 +31,7 @@
 import { ref } from 'vue';
 import { RecycleList } from '..';
 
-const dynamicSize = ref(0);
+const dynamicSize = ref(20);
 const pageSize = ref(30);
 
 let count = 0;
@@ -39,12 +39,22 @@ let total = 5;
 
 const random255 = () => Math.floor(Math.random() * 255);
 const randomColor = () => `rgba(${random255()}, ${random255()}, ${random255()}, ${Math.random()})`;
-const RGBA_MAP = Array
-	.from({ length: pageSize.value * total + 1 })
-	.reduce((colors, _, index) => {
-		colors[index] = randomColor();
-		return colors;
-	}, {});
+const randomLetter = () => {
+	const lowerCase = Math.random() < 0.5; // 50% 的概率获取大写字母，50% 的概率获取小写字母
+	const charCode = lowerCase ? 97 + Math.random() * (122 - 97) : 65 + Math.random() * (90 - 65);
+	return String.fromCharCode(charCode);
+}
+const randomText = (size) => {
+	let v = '';
+	while (size--) {
+		if (!(size % 7)) {
+			v += ' ';
+		}
+		v += randomLetter();
+	}
+	return v;
+};
+
 const loadData = (page, pageSize$) => {
 	console.log('page:', page);
 	let list = [];
@@ -61,8 +71,8 @@ const loadData = (page, pageSize$) => {
 			list.push({
 				id: count++,
 				page,
-				height: ((i % 10) + 1) * Math.floor(Math.random() * 20 + 20),
-				background: RGBA_MAP[count] || randomColor()
+				background: randomColor(),
+				text: randomText(((i % 10) + 1) * 20)
 			});
 		}
 		setTimeout(() => resolve(list), 1000);
@@ -71,7 +81,7 @@ const loadData = (page, pageSize$) => {
 
 const handleClick = (data) => {
 	console.log(data);
-	dynamicSize.value = Math.floor(Math.random() * 20);
+	dynamicSize.value = Math.floor(Math.random() * 20) + 20;
 }
 </script>
 
@@ -99,5 +109,7 @@ const handleClick = (data) => {
 	line-height: 20px;
 	width: 100%;
 	text-align: left;
+	word-break: break-all;
+	flex-direction: column;
 }
 </style>
