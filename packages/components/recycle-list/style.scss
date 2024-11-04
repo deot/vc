@@ -31,7 +31,7 @@ $component-name: vc-recycle-list;
 		-webkit-overflow-scrolling: touch;
 	}
 
-	@include element(hidden) {
+	@include element(pool) {
 		position: absolute;
 		top: -1000px;
 		width: 100%;

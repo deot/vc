@@ -57,8 +57,11 @@ export const RecycleList = defineComponent({
 		});
 		const width = computed(() => {
 			if (props.cols === 1) return;
-			if (props.gutter === 0) return `${100 / props.cols}%`;
-			return `calc((100% - ${props.gutter * (props.cols - 1)}px) / ${props.cols})`;
+			return `${100 / props.cols}%`;
+		});
+
+		const columnOffsetGutter = computed(() => {
+			return props.gutter * (props.cols - 1) / props.cols;
 		});
 
 		// 用于展示的信息
@@ -521,8 +524,8 @@ export const RecycleList = defineComponent({
 										key={columnIndex}
 										style={{
 											width: width.value,
-											paddingLeft: `${(columnIndex == 0 ? 0 : props.gutter) / 2}px`,
-											paddingRight: `${columnIndex + 1 == props.cols ? 0 : props.gutter / 2}px`,
+											paddingLeft: `${columnIndex == 0 ? 0 : (columnOffsetGutter.value / (columnIndex + 1 == props.cols ? 1 : 2))}px`,
+											paddingRight: `${columnIndex + 1 == props.cols ? 0 : (columnOffsetGutter.value / (columnIndex == 0 ? 1 : 2))}px`,
 											transform: 'translate(0,' + (data.value[columnIndex][0]?.top || 0) + 'px)'
 										}}
 										class={[{ 'is-inverted': props.inverted }, 'vc-recycle-list__column']}
@@ -566,40 +569,16 @@ export const RecycleList = defineComponent({
 							}
 							<div
 								class="vc-recycle-list__pool"
+								style={{ width: width.value, paddingLeft: `${columnOffsetGutter.value}px` }}
 							>
 								{
 									preData.value.map(item => (
 										<Fragment
 											key={item.id}
 										>
-											{
-												item.isPlaceholder && hasPlaceholder.value && (
-													<div
-														class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
-														style={{ opacity: +!item.loaded }}
-													>
-														{
-															slots.placeholder?.() || (renderer.value.placeholder && (<Customer render={renderer.value.placeholder} />))
-														}
-													</div>
-												)
-											}
-											{
-												!item.isPlaceholder && (
-													<Item
-														ref={v => curloads.value[item.id] = v}
-														class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
-														style={{ opacity: item.loaded }}
-														onResize={handleResize}
-													>
-														{ slots.default?.({ row: item.data || {} }) }
-													</Item>
-												)
-											}
 											<div
 												ref={v => preloads.value[item.id] = v}
 												class="vc-recycle-list__hidden"
-												style={{ width: width.value }}
 											>
 												{ slots.default?.({ row: item.data || {} }) }
 											</div>
