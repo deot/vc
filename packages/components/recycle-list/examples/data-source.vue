@@ -32,11 +32,11 @@ import { ref } from 'vue';
 import { RecycleList } from '..';
 
 const dynamicSize = ref(20);
-const pageSize = ref(5);
+const pageSize = ref(20);
 const disabled = ref(true);
 
 let count = 0;
-let total = 5;
+let total = 405;
 
 const random255 = () => Math.floor(Math.random() * 255);
 const randomColor = () => `rgba(${random255()}, ${random255()}, ${random255()}, ${Math.random()})`;
@@ -57,7 +57,7 @@ const randomText = (size) => {
 };
 
 const loadData = (page, pageSize$, tag) => {
-	console.log('page:', page);
+	console.log('page:', page, tag);
 	let list = [];
 	return new Promise((resolve) => {
 		if (page == total + 1) {
@@ -87,11 +87,11 @@ const handleClick = (data) => {
 	console.log(data);
 	dynamicSize.value = Math.floor(Math.random() * 20) + 20;
 }
-
-loadData(1, pageSize.value, 'From dataSource').then((data) => {
+loadData(1, Math.max(1, total - 5) * pageSize.value, 'From dataSource').then((data) => {
 	dataSource.value = data;
 	disabled.value = false;
 });
+
 
 </script>
 

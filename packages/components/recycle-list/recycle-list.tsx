@@ -12,6 +12,7 @@ import {
 } from 'vue';
 import { throttle, getUid } from '@deot/helper-utils';
 import { Resize } from '@deot/helper-resize';
+import { Interrupter } from '@deot/helper-scheduler';
 import { props as recycleListProps } from './recycle-list-props';
 import { VcInstance } from '../vc';
 import { Customer } from '../customer';
@@ -51,6 +52,7 @@ export const RecycleList = defineComponent({
 		let promiseStack: Promise<any>[] = []; // 每页数据栈信息
 
 		let originalScrollTop = 0; // 数据load前滚动条位置
+		const interrupter = Interrupter.of();
 
 		const wrapper = computed(() => {
 			return scroller.value?.wrapper;
@@ -228,8 +230,9 @@ export const RecycleList = defineComponent({
 			refreshItemTop();
 			setFirstItemIndex();
 		};
-
+		let isRefreshLayout = 0;
 		const refreshLayout = async (start: number, end: number) => {
+			isRefreshLayout = 1;
 			const promiseTasks = [] as Promise<any>[];
 			let item: any;
 			for (let i = start; i < end; i++) {
@@ -243,11 +246,12 @@ export const RecycleList = defineComponent({
 				setItemData(i, originalData[i]);
 				promiseTasks.push(nextTick(() => refreshItemHeight(i)));
 			}
-
 			await Promise.all(promiseTasks);
-
 			refreshItemTop();
 			setFirstItemIndex();
+
+			interrupter.next();
+			isRefreshLayout = 0;
 		};
 
 		const refreshLayoutByPage = async (page: number) => {
@@ -470,14 +474,13 @@ export const RecycleList = defineComponent({
 					isMounted.value
 					&& oldV === true
 					&& v === false
-					&& (contentH.value === 0 || contentH.value <= wrapper.value?.offsetHeight)
 				) {
-					/**
-					 * nextTick 为了修复watch执行的循序，此watch优先于setDataSource执行(未知原因)
-					 * 切换时可能会设置dataSouce, 需要setDataSource后有promiseStack再执行, 这里使用nextTick规避
-					 */
-					await nextTick();
-					loadData();
+					if (isRefreshLayout) {
+						await interrupter;
+					}
+					if (contentH.value === 0 || contentH.value <= wrapper.value?.offsetHeight) {
+						loadData();
+					}
 				}
 			}
 		);
