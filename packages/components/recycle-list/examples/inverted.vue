@@ -3,7 +3,7 @@
 	<div class="demo">
 		<RecycleList 
 			class="list" 
-			:cols="1"
+			:cols="3"
 			:gutter="10"
 			inverted
 			:page-size="pageSize" 

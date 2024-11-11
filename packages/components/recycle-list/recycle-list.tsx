@@ -174,19 +174,31 @@ export const RecycleList = defineComponent({
 
 		const refreshItemTop = () => {
 			const height = Array.from({ length: props.cols }).map(() => 0);
+			const lastIndex = rebuildData.value.length - 1;
+
 			let current: any;
 			// 循环所有数据以更新item.top和总高度
-			for (let i = 0; i < rebuildData.value.length; i++) {
-				current = rebuildData.value[i];
+			for (let i = 0; i <= lastIndex; i++) {
+				current = rebuildData.value[props.inverted ? lastIndex - i : i];
 
-				// TODO: minIndex挂入current
-				if (rebuildData.value[i]) {
-					const minIndex = height.indexOf(Math.min(...height));
+				if (current) {
+					const minHeight = Math.min(...height);
+					const minIndex = height[props.inverted ? 'findLastIndex' : 'findIndex'](h => h === minHeight);
 
 					current.top = height[minIndex] || 0;
 					current.column = minIndex;
 
 					height[minIndex] += current.height;
+				}
+			}
+
+			if (props.inverted) {
+				for (let i = 0; i <= lastIndex; i++) {
+					current = rebuildData.value[i];
+
+					if (current) {
+						current.top = height[current.column] - current.top - current.height;
+					}
 				}
 			}
 
