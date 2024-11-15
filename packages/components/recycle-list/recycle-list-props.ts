@@ -47,6 +47,12 @@ export const props = {
 		default: false
 	},
 
+	// 默认纵向滚动
+	vertical: {
+		type: Boolean,
+		default: true
+	},
+
 	renderEmpty: Function as Render,
 	renderFinish: Function as Render,
 	renderLoading: Function as Render,

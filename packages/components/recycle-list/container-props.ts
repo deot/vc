@@ -7,12 +7,15 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
-
+	vertical: {
+		type: Boolean,
+		default: true
+	},
 	pullable: {
 		type: Boolean,
 		default: false
 	},
-	pauseY: {
+	pauseOffset: {
 		type: Number,
 		default: 30
 	},

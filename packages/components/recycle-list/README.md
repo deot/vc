@@ -63,6 +63,7 @@ const loadData = (page, pageSize$) => {
 | cols              | 多列，不定高默认支持瀑布流  | `number`   | -   | `1`           |
 | gutter            | 多列时边距          | `number`   | -   | `0`           |
 | inverted          | 倒置             | `boolean`  | -   | `false`       |
+| vertical          | 滚动方向           | `boolean`  | -   | `true`        |
 | renderEmpty       | 渲染空数据          | `function` | -   | -             |
 | renderFinish      | 渲染完成状态         | `function` | -   | -             |
 | renderLoading     | 渲染加载状态         | `function` | -   | -             |

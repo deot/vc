@@ -1,12 +1,12 @@
-<!-- 含默认值dataSource -->
 <template>
+	<!-- 注意横向滚动，宽度是必须的 -->
 	<div class="demo">
 		<RecycleList 
 			class="list" 
 			pullable
-			:cols="3"
-			:disabled="disabled"
-			:data-source="dataSource"
+			:cols="1"
+			:gutter="10"
+			:vertical="false"
 			:page-size="pageSize" 
 			:load-data="loadData"
 		>
@@ -15,13 +15,13 @@
 					:key="row.id" 
 					class="item" 
 					:style="{
-						background: row.background
+						background: row.background,
+						width: dynamicSize ? 'auto': `${Math.max(130, Math.round(row.text.length / 20 * 20))}px`
 					}"
 					@click="handleClick(row)"
 				>
 					<div>id: {{ row.id }}</div>
 					<div>page: {{ row.page }}</div>
-					<div :style="`height: ${dynamicSize}px`">dynamicSize: {{ dynamicSize }}</div>
 					<div>{{ row.text }}</div>
 				</div>
 			</template>
@@ -32,12 +32,11 @@
 import { ref } from 'vue';
 import { RecycleList } from '..';
 
-const dynamicSize = ref(20);
-const pageSize = ref(20);
-const disabled = ref(true);
+const dynamicSize = ref(false);
+const pageSize = ref(50);
 
 let count = 0;
-let total = 405;
+let total = 5;
 
 const random255 = () => Math.floor(Math.random() * 255);
 const randomColor = () => `rgba(${random255()}, ${random255()}, ${random255()}, ${Math.random()})`;
@@ -56,9 +55,8 @@ const randomText = (size) => {
 	}
 	return v;
 };
-
-const loadData = (page, pageSize$, tag) => {
-	console.log('page:', page, tag);
+const loadData = (page, pageSize$) => {
+	console.log('page:', page);
 	let list = [];
 	return new Promise((resolve) => {
 		if (page == total + 1) {
@@ -70,30 +68,21 @@ const loadData = (page, pageSize$, tag) => {
 			pageSize$ = 4;
 		}
 		for (let i = 0; i < pageSize$; i++) {
-			let item = {
-				id: `${count++}${tag || ''}`,
-				name: count,
+			list.push({
+				id: count++,
 				page,
 				background: randomColor(),
 				text: randomText(((i % 10) + 1) * 20)
-			};
-			list.push(item);
+			});
 		}
 		setTimeout(() => resolve(list), 1000);
 	});
 };
-const dataSource = ref(null);
 
 const handleClick = (data) => {
 	console.log(data);
-	dynamicSize.value = Math.floor(Math.random() * 20) + 20;
+	dynamicSize.value = !dynamicSize.value;
 }
-loadData(1, Math.max(1, total - 5) * pageSize.value, 'From dataSource').then((data) => {
-	dataSource.value = data;
-	disabled.value = false;
-});
-
-
 </script>
 
 <style>
@@ -117,9 +106,10 @@ loadData(1, Math.max(1, total - 5) * pageSize.value, 'From dataSource').then((da
 .item {
 	display: flex;
 	line-height: 20px;
-	width: 100%;
+	height: 100%;
 	text-align: left;
-	word-break: break-all;
 	flex-direction: column;
+	word-break: break-all;
+	overflow: hidden;
 }
 </style>

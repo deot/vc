@@ -20,6 +20,7 @@ import { ScrollerWheel } from '../scroller';
 import { ScrollState } from './scroll-state';
 import { Container } from './container';
 import { Item } from './item';
+import { useDirectionKeys } from './use-direction-keys';
 
 const COMPONENT_NAME = 'vc-recycle-list';
 
@@ -27,9 +28,10 @@ export const RecycleList = defineComponent({
 	name: COMPONENT_NAME,
 	props: recycleListProps,
 	setup(props, { slots, expose }) {
+		const K = useDirectionKeys();
 		const offsetPageSize = ref(0);
-		const contentH = ref(0);
-		const columnLevelH = ref<number[]>([]); // 优化inverted多列时用于补齐高度
+		const contentMaxSize = ref(0);
+		const columnFillSize = ref<number[]>([]); // 优化inverted多列时用于补齐高度
 		const firstItemIndex = ref(0);
 		const loadings = ref<string[]>([]);
 		const isEnd = ref(false);
@@ -51,19 +53,30 @@ export const RecycleList = defineComponent({
 		let originalData: any[] = []; // 原始数据
 		let promiseStack: Promise<any>[] = []; // 每页数据栈信息
 
-		let originalScrollTop = 0; // 数据load前滚动条位置
+		let originalScrollPosition = 0; // 数据load前滚动条位置
 		const interrupter = Interrupter.of();
 
 		const wrapper = computed(() => {
 			return scroller.value?.wrapper;
 		});
-		const width = computed(() => {
+		const columnSize = computed(() => {
 			if (props.cols === 1) return;
 			return `${100 / props.cols}%`;
 		});
 
 		const columnOffsetGutter = computed(() => {
 			return props.gutter * (props.cols - 1) / props.cols;
+		});
+		const columns = computed(() => {
+			const v = Array.from({ length: props.cols }).map((_, index) => ({ index, offset: [0, 0] }));
+			v[0].offset = [0, columnOffsetGutter.value];
+			for (let i = 1; i < v.length; i++) {
+				const pre = v[i - 1].offset;
+
+				v[i].offset = [props.gutter - pre[1], columnOffsetGutter.value - props.gutter + pre[1]];
+			}
+
+			return v;
 		});
 
 		// 用于展示的信息
@@ -81,7 +94,7 @@ export const RecycleList = defineComponent({
 
 		const preData = computed(() => {
 			return rebuildData.value.filter((i) => {
-				return i && !i.isPlaceholder && !i.height;
+				return i && !i.isPlaceholder && !i.size;
 			});
 		});
 
@@ -100,8 +113,9 @@ export const RecycleList = defineComponent({
 			return !!slots.placeholder || renderer.value.placeholder;
 		});
 
-		const placeholderH = computed(() => {
-			return hasPlaceholder.value ? placeholder.value.offsetHeight : 0;
+		const placeholderSize = computed(() => {
+			if (!hasPlaceholder.value) return 0;
+			return placeholder.value.offsetWidth;
 		});
 
 		const isLoading = computed(() => {
@@ -111,7 +125,7 @@ export const RecycleList = defineComponent({
 		const scrollTo = (options: any) => {
 			let options$ = { x: 0, y: 0 };
 			if (typeof options === 'number') {
-				options$.y = options;
+				options$[K.axis] = options;
 			} else if (typeof options === 'object') {
 				options$ = Object.assign(options$, options);
 			}
@@ -141,8 +155,8 @@ export const RecycleList = defineComponent({
 			const node = {
 				id: index,
 				data: $data || {},
-				height: 0,
-				top: -1000,
+				size: 0,
+				position: -1000,
 				isPlaceholder: !$data,
 				loaded: $data ? 1 : 0,
 
@@ -156,8 +170,8 @@ export const RecycleList = defineComponent({
 				? rebuildData.value.unshift(node)
 				: (rebuildData.value[index$] = node);
 		};
-		// 更新item.height
-		const refreshItemHeight = (index: number) => {
+		// 更新item.size
+		const refreshItemSize = (index: number) => {
 			const current = props.inverted
 				? rebuildData.value[rebuildDataIndexMap.value[index]]
 				: rebuildData.value[index];
@@ -166,14 +180,14 @@ export const RecycleList = defineComponent({
 
 			const dom = preloads.value[index] || curloads.value[props.inverted ? index : index - firstItemIndex.value];
 			if (dom) {
-				current.height = dom.offsetHeight || placeholderH.value;
+				current.size = dom[K.offsetSize] || placeholderSize.value;
 			} else if (current) {
-				current.height = placeholderH.value;
+				current.size = placeholderSize.value;
 			}
 		};
 
-		const refreshItemTop = () => {
-			const height = Array.from({ length: props.cols }).map(() => 0);
+		const refreshItemPosition = () => {
+			const sizes = Array.from({ length: props.cols }).map(() => 0);
 			const lastIndex = rebuildData.value.length - 1;
 
 			let current: any;
@@ -182,13 +196,13 @@ export const RecycleList = defineComponent({
 				current = rebuildData.value[props.inverted ? lastIndex - i : i];
 
 				if (current) {
-					const minHeight = Math.min(...height);
-					const minIndex = height[props.inverted ? 'findLastIndex' : 'findIndex'](h => h === minHeight);
+					const minSize = Math.min(...sizes);
+					const minIndex = sizes[props.inverted ? 'findLastIndex' : 'findIndex'](v => v === minSize);
 
-					current.top = height[minIndex] || 0;
+					current.position = sizes[minIndex] || 0;
 					current.column = minIndex;
 
-					height[minIndex] += current.height;
+					sizes[minIndex] += current.size;
 				}
 			}
 
@@ -197,22 +211,22 @@ export const RecycleList = defineComponent({
 					current = rebuildData.value[i];
 
 					if (current) {
-						current.top = height[current.column] - current.top - current.height;
+						current.position = sizes[current.column] - current.position - current.size;
 					}
 				}
 			}
 
-			contentH.value = Math.max(...height);
-			columnLevelH.value = height.map(i => contentH.value - i);
+			contentMaxSize.value = Math.max(...sizes);
+			columnFillSize.value = sizes.map(i => contentMaxSize.value - i);
 		};
 
 		// 设置data首个元素的在originalData索引值
 		const setFirstItemIndex = () => {
-			const top = wrapper.value.scrollTop;
+			const position = wrapper.value[K.scrollAxis];
 			let item: any;
 			for (let i = 0; i < rebuildData.value.length; i++) {
 				item = rebuildData.value[i];
-				if (!item || item.top > top) {
+				if (!item || item.position > position) {
 					firstItemIndex.value = Math.max(0, i - props.cols);
 					break;
 				}
@@ -239,7 +253,7 @@ export const RecycleList = defineComponent({
 		const stopScroll = (page: number) => {
 			isEnd.value = true;
 			removeUnusedPlaceholders(rebuildData.value.slice(0), page);
-			refreshItemTop();
+			refreshItemPosition();
 			setFirstItemIndex();
 		};
 		let isRefreshLayout = 0;
@@ -256,10 +270,10 @@ export const RecycleList = defineComponent({
 					continue; // eslint-disable-line
 				}
 				setItemData(i, originalData[i]);
-				promiseTasks.push(nextTick(() => refreshItemHeight(i)));
+				promiseTasks.push(nextTick(() => refreshItemSize(i)));
 			}
 			await Promise.all(promiseTasks);
-			refreshItemTop();
+			refreshItemPosition();
 			setFirstItemIndex();
 
 			interrupter.next();
@@ -270,15 +284,16 @@ export const RecycleList = defineComponent({
 			const el = wrapper.value;
 			const start = (page - 1) * props.pageSize;
 			const end = page * props.pageSize;
-			const originalH = page === 1 ? 0 : contentH.value;
+			const originalSize = page === 1 ? 0 : contentMaxSize.value;
 			await refreshLayout(start, end);
 
 			if (!props.inverted) return;
 
+			const scrollPosition = el[K.scrollAxis];
 			// 当偏移值只是新增加的高度, 提前滚动了则要显示之前的位置
-			const changed = el.scrollTop !== originalScrollTop;
-			const offset = page === 1 ? 0 : changed ? el.scrollTop : 0;
-			scrollTo(contentH.value - originalH + offset);
+			const changed = scrollPosition !== originalScrollPosition;
+			const offset = page === 1 ? 0 : changed ? scrollPosition : 0;
+			scrollTo(contentMaxSize.value - originalSize + offset);
 		};
 
 		const setOriginData = (page: number, res: any) => {
@@ -292,8 +307,8 @@ export const RecycleList = defineComponent({
 		const setOffsetPageSize = () => {
 			if (
 				!isEnd.value
-				&& contentH.value > 0
-				&& contentH.value <= wrapper.value?.offsetHeight
+				&& contentMaxSize.value > 0
+				&& contentMaxSize.value <= wrapper.value?.[K.offsetSize]
 			) {
 				offsetPageSize.value += props.pageSize;
 				return true;
@@ -324,7 +339,7 @@ export const RecycleList = defineComponent({
 
 		const loadData = async (onBeforeSetData?: any) => {
 			if (props.disabled || isEnd.value || isSlientRefresh.value) return;
-			originalScrollTop = wrapper.value.scrollTop;
+			originalScrollPosition = wrapper.value.scrollLeft;
 			if (hasPlaceholder.value) {
 				let start: number;
 				let end: number;
@@ -344,9 +359,9 @@ export const RecycleList = defineComponent({
 					end = rebuildData.value.length;
 				}
 
-				const originalH = contentH.value;
+				const originalSize = contentMaxSize.value;
 				await refreshLayout(start, end);
-				props.inverted && scrollTo(contentH.value - originalH);
+				props.inverted && scrollTo(contentMaxSize.value - originalSize);
 				await loadRemoteData(onBeforeSetData);
 			} else if (!isLoading.value) {
 				await loadRemoteData(onBeforeSetData);
@@ -359,7 +374,7 @@ export const RecycleList = defineComponent({
 		const reset = async (slient = false) => {
 			isEnd.value = false;
 			loadings.value = [];
-			wrapper.value.scrollTop = 0;
+			wrapper.value.scrollLeft = 0;
 
 			originalData = [];
 			promiseStack = [];
@@ -367,8 +382,8 @@ export const RecycleList = defineComponent({
 			const done = () => {
 				rebuildData.value = [];
 				rebuildDataIndexMap.value = {};
-				contentH.value = 0;
-				columnLevelH.value = [];
+				contentMaxSize.value = 0;
+				columnFillSize.value = [];
 				firstItemIndex.value = 0;
 				isSlientRefresh.value = false;
 			};
@@ -389,17 +404,16 @@ export const RecycleList = defineComponent({
 
 		/**
 		 * 最大滚动距离：el.scrollHeight - el.clientHeight
-		 * contentH.value不含loading，以及wrapper的border, padding
+		 * contentMaxSize.value不含loading，以及wrapper的border, padding
 		 */
 		const handleScroll = () => {
 			const el = wrapper.value;
 			if (
-				(!props.inverted && el.scrollTop > el.scrollHeight - el.clientHeight - props.offset)
-				|| (props.inverted && el.scrollTop - props.offset <= 0)
+				(!props.inverted && el[K.scrollAxis] > el[K.scrollSize] - el[K.clientSize] - props.offset)
+				|| (props.inverted && el[K.scrollAxis] - props.offset <= 0)
 			) {
 				loadData();
 			}
-
 			setFirstItemIndex();
 		};
 
@@ -416,14 +430,14 @@ export const RecycleList = defineComponent({
 
 			if (isNeedRefreshLayout) {
 				const oldFirstItemIndex = firstItemIndex.value;
-				const oldTop = rebuildData.value[oldFirstItemIndex]?.top;
+				const oldPosition = rebuildData.value[oldFirstItemIndex]?.position;
 
 				await forceRefreshLayout();
-				const newTop = rebuildData.value[oldFirstItemIndex]?.top;
+				const newPosition = rebuildData.value[oldFirstItemIndex]?.position;
 
 				// 保持原来的位置
 				const el = wrapper.value;
-				el.scrollTop += newTop - oldTop;
+				el[K.scrollAxis] += newPosition - oldPosition;
 			}
 		}, 50, {
 			leading: false,
@@ -490,7 +504,7 @@ export const RecycleList = defineComponent({
 					if (isRefreshLayout) {
 						await interrupter;
 					}
-					if (contentH.value === 0 || contentH.value <= wrapper.value?.offsetHeight) {
+					if (contentMaxSize.value === 0 || contentMaxSize.value <= wrapper.value?.[K.offsetSize]) {
 						loadData();
 					}
 				}
@@ -514,9 +528,10 @@ export const RecycleList = defineComponent({
 		return () => {
 			return (
 				<Container
-					class="vc-recycle-list"
+					class={['vc-recycle-list', { 'is-horizontal': !props.vertical }]}
 					pullable={props.pullable}
 					inverted={props.inverted}
+					vertical={props.vertical}
 					render={renderer.value.refresh}
 					onRefresh={handleRefresh}
 				>
@@ -530,61 +545,67 @@ export const RecycleList = defineComponent({
 						<div
 							ref={content}
 							class="vc-recycle-list__content"
-							style={{ height: contentH.value + 'px' }}
+							style={{ [K.contentSize]: contentMaxSize.value + 'px' }}
 						>
 
 							{
-								Array.from({ length: props.cols }).map((_, columnIndex) => (
-									<div
-										key={columnIndex}
-										style={{
-											width: width.value,
-											paddingLeft: `${columnIndex == 0 ? 0 : (columnOffsetGutter.value / (columnIndex + 1 == props.cols ? 1 : 2))}px`,
-											paddingRight: `${columnIndex + 1 == props.cols ? 0 : (columnOffsetGutter.value / (columnIndex == 0 ? 1 : 2))}px`,
-											transform: 'translate(0,' + (data.value[columnIndex][0]?.top || 0) + 'px)'
-										}}
-										class={[{ 'is-inverted': props.inverted }, 'vc-recycle-list__column']}
-									>
-										{ props.inverted && (<div style={{ height: `${columnLevelH.value[columnIndex]}px` }} />) }
-										{
-											data.value[columnIndex].map((item: any) => (
-												<Fragment
-													key={item.id}
-												>
-													{
-														item.isPlaceholder && hasPlaceholder.value && (
-															<div
-																class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
-																style={{ opacity: +!item.loaded }}
-															>
-																{
-																	slots.placeholder?.() || (renderer.value.placeholder && (<Customer render={renderer.value.placeholder} />))
-																}
-															</div>
-														)
-													}
-													{
-														!item.isPlaceholder && (
-															<Item
-																ref={v => curloads.value[item.id] = v}
-																class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
-																style={{ opacity: item.loaded }}
-																row-index={item.id}
-																onResize={handleResize}
-															>
-																{ slots.default?.({ row: item.data || {} }) }
-															</Item>
-														)
-													}
-												</Fragment>
-											))
-										}
-									</div>
+								columns.value.map((column, columnIndex) => (
+									<Fragment key={columnIndex}>
+										<div
+											style={{
+												[K.columnSize]: columnSize.value,
+												[K.paddingColumnHead]: `${column.offset[0]}px`,
+												[K.paddingColumnTail]: `${column.offset[1]}px`,
+												transform: `${K.translateAxis}(${data.value[columnIndex][0]?.position || 0}px)`
+											}}
+											class={[{ 'is-inverted': props.inverted }, 'vc-recycle-list__column']}
+										>
+											{ props.inverted && (<div style={{ height: `${columnFillSize.value[columnIndex]}px` }} />) }
+											{
+												data.value[columnIndex].map((item: any) => (
+													<Fragment
+														key={item.id}
+													>
+														{
+															item.isPlaceholder && hasPlaceholder.value && (
+																<div
+																	class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
+																	style={{ opacity: +!item.loaded }}
+																>
+																	{
+																		slots.placeholder?.() || (renderer.value.placeholder && (<Customer render={renderer.value.placeholder} />))
+																	}
+																</div>
+															)
+														}
+														{
+															!item.isPlaceholder && (
+																<Item
+																	ref={v => curloads.value[item.id] = v}
+																	class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
+																	style={{ opacity: item.loaded }}
+																	data-row={item.id}
+																	data-column={item.column}
+																	data-size={item.size}
+																	data-position={item.position}
+																	vertical={props.vertical}
+																	onResize={handleResize}
+																>
+																	{ slots.default?.({ row: item.data || {} }) }
+																</Item>
+															)
+														}
+													</Fragment>
+												))
+											}
+										</div>
+										{ !props.vertical && columnIndex < props.cols - 1 && (<br />) }
+									</Fragment>
 								))
 							}
 							<div
 								class="vc-recycle-list__pool"
-								style={{ width: width.value, paddingLeft: `${columnOffsetGutter.value}px` }}
+								style={{ [K.columnSize]: columnSize.value, [K.paddingColumnHead]: `${columnOffsetGutter.value}px` }}
 							>
 								{
 									preData.value.map(item => (

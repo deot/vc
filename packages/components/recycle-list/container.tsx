@@ -5,6 +5,7 @@ import * as $ from '@deot/helper-dom';
 import { props as containerProps } from './container-props';
 import { DEFAULT, PENDING, PULL, REFRESH } from './container-constant';
 import { Customer } from '../customer';
+import { useDirectionKeys } from './use-direction-keys';
 
 const COMPONENT_NAME = 'vc-recycle-list-container';
 
@@ -17,19 +18,25 @@ export const Container = defineComponent({
 	emits: ['refresh'],
 	setup(props, { slots }) {
 		const vm = getCurrentInstance()!;
+		const K = useDirectionKeys();
 		const current = ref();
-		const y = ref(0);
+		const offset = ref(0);
 		const status = ref(0);
 
-		const yStyle = computed(() => {
+		const offsetStyle = computed(() => {
 			if (props.inverted || !props.pullable) return;
 
 			return {
-				[transformKey]: `translateY(${y.value}px)`
+				[transformKey]: `${K.translateAxis}(${offset.value}px)`,
+			};
+		});
+		const pullStyle = computed(() => {
+			return {
+				[K.marginPullHead]: `-${props.pauseOffset}px`
 			};
 		});
 
-		let startY = 0;
+		let start = 0;
 		let isStart = false;
 
 		// TODO: 多个手指同时触发拉动
@@ -38,31 +45,31 @@ export const Container = defineComponent({
 
 			isStart = true;
 
-			if (!startY) {
-				startY = e.touches
-					? e.touches[0].screenY
-					: e.screenY;
+			if (!start) {
+				start = e.touches
+					? e.touches[0][K.screenAxis]
+					: e[K.screenAxis];
 			}
 		};
 
 		const handleMove = (e: any) => {
 			if (!isStart || props.inverted || !props.pullable) return;
-			const allow = current.value.querySelector('.vc-recycle-list__wrapper').scrollTop == 0;
+			const allow = current.value.querySelector('.vc-recycle-list__wrapper')[K.scrollAxis] == 0;
 			if (!allow) return;
 
-			const moveY = e.touches
-				? e.touches[0].screenY
-				: e.screenY;
+			const move = e.touches
+				? e.touches[0][K.screenAxis]
+				: e[K.screenAxis];
 
-			const distanceY = moveY - startY;
+			const distance = move - start;
 			if (
-				distanceY > 0
+				distance > 0
 				&& e.cancelable
 			) {
 				e.preventDefault();
-				y.value = distanceY < props.pauseY * 3 ? distanceY : props.pauseY * 3 + (distanceY - props.pauseY * 3) / 5;
+				offset.value = distance < props.pauseOffset * 3 ? distance : props.pauseOffset * 3 + (distance - props.pauseOffset * 3) / 5;
 				if (status.value == REFRESH) return;
-				if (y.value <= props.pauseY) {
+				if (offset.value <= props.pauseOffset) {
 					status.value = PULL;
 				} else {
 					status.value = PENDING;
@@ -75,20 +82,20 @@ export const Container = defineComponent({
 			if (!('ontouchend' in window) || !e.targetTouches?.length) {
 				isStart = false;
 
-				startY = 0;
+				start = 0;
 				if (status.value == PENDING) {
 					status.value = REFRESH;
-					y.value = props.pauseY;
+					offset.value = props.pauseOffset;
 					try {
 						await vm.vnode.props?.['onRefresh']?.();
 					} finally {
 						status.value = DEFAULT;
-						y.value = 0;
+						offset.value = 0;
 					}
 				} else if (status.value == REFRESH) {
-					y.value = props.pauseY;
+					offset.value = props.pauseOffset;
 				} else {
-					y.value = 0;
+					offset.value = 0;
 					status.value = DEFAULT;
 				}
 			}
@@ -107,20 +114,20 @@ export const Container = defineComponent({
 					{
 						!props.inverted && props.pullable && (
 							<div
-								style={[yStyle.value]}
+								style={[offsetStyle.value, pullStyle.value]}
 								class="vc-recycle-list__pull"
 							>
 								<Customer
 									render={props.render}
 									// @ts-ignore
 									status={status.value}
-									type="DOWN"
+									type={props.vertical ? 'DOWN' : 'RIGHT'}
 								/>
 							</div>
 						)
 					}
 					<div
-						style={[yStyle.value]}
+						style={[offsetStyle.value]}
 						class="vc-recycle-list__container"
 					>
 						{ slots.default?.() }

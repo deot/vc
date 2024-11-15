@@ -1,7 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, onMounted, onBeforeUnmount } from 'vue';
-import { Resize } from '@deot/helper-resize';
+import { defineComponent, ref } from 'vue';
 import { getInstance } from '@deot/vc-hooks';
 import { Customer } from '../customer';
 import { Spin } from '../spin';
@@ -10,32 +9,11 @@ const COMPONENT_NAME = 'vc-recycle-list-scroll-state';
 
 export const ScrollState = defineComponent({
 	name: COMPONENT_NAME,
-	emits: ['resize'],
-	setup(_, { emit, slots }) {
+	setup(_, { slots }) {
 		const instance = getInstance('recycle-list', 'recycleListId')!;
 		const owner = instance.exposed;
 
 		const current = ref();
-		const offsetHeight = ref(0);
-
-		const handleResize = () => {
-			const v = current.value.offsetHeight;
-			const changed = offsetHeight.value != v;
-			if (changed) {
-				offsetHeight.value = v;
-				emit('resize');
-			}
-		};
-
-		onMounted(() => {
-			offsetHeight.value = current.value.offsetHeight;
-			Resize.on(current.value, handleResize);
-		});
-
-		onBeforeUnmount(() => {
-			Resize.off(current.value, handleResize);
-		});
-
 		return () => {
 			if (!owner) return null;
 			return (
@@ -44,7 +22,7 @@ export const ScrollState = defineComponent({
 						!owner.hasPlaceholder.value && !owner.isEnd.value && !owner.isSlientRefresh.value && (
 							<div
 								class="vc-recycle-list__loading"
-								style={{ visibility: owner.isLoading ? 'visible' : 'hidden' }}
+								style={{ visibility: owner.isLoading.value ? 'visible' : 'hidden' }}
 							>
 								{
 									slots.loading?.() || (

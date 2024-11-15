@@ -15,5 +15,17 @@ export const STATUS_MAP = {
 		[PULL]: '↑ 上拉刷新',
 		[PENDING]: '↓ 释放更新',
 		[REFRESH]: '加载中...',
-	}
+	},
+	RIGHT: {
+		[DEFAULT]: '~',
+		[PULL]: '→ 右拉刷新',
+		[PENDING]: '← 释放更新',
+		[REFRESH]: '加载中...',
+	},
+	LEFT: {
+		[DEFAULT]: '~',
+		[PULL]: '← 左拉刷新',
+		[PENDING]: '→ 释放更新',
+		[REFRESH]: '加载中...',
+	},
 };

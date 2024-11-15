@@ -17,7 +17,6 @@ $component-name: vc-recycle-list;
 		top: 0;
 		right: 0;
 		left: 0;
-		margin-top: -30px;
 		line-height: 30px;
 		transition: transform 300ms ease-out;
 	}
@@ -53,6 +52,10 @@ $component-name: vc-recycle-list;
 		box-sizing: border-box;
 	}
 
+	@include element(content) {
+		width: 100%;
+	}
+
 	// scroll-state
 	@include element(loading) {
 		display: flex;
@@ -72,4 +75,56 @@ $component-name: vc-recycle-list;
 	@include element(empty) {
 		padding: 10px 0;
 	}
+
+
+	@include when(horizontal) {
+		text-align: unset !important; // 如果外面设置了center, 会严重影响到内部inline-flex
+
+		@include element(wrapper) {
+			overflow: auto hidden;
+
+			.vc-scroller__content {
+				display: inline-flex;
+				height: 100%;
+			}
+		}
+
+		@include element(pool) {
+			display: flex;
+
+			@include element(hidden) {
+				flex-shrink: 0;
+				height: 100%;
+			}
+		}
+
+		@include element(column) {
+			position: relative;
+			display: inline-flex;
+			width: unset;
+			height: 100%;	
+		}
+
+		@include element(content) {
+			width: unset;
+			height: 100%;
+			flex-shrink: 0;
+		}
+
+		@include element(pull) {
+			top: 0;
+			right: unset;
+			bottom: 0;
+			left: 0;
+			display: flex;
+			justify-content: center;
+			writing-mode: vertical-rl;
+		}
+
+		@include element(scroll-state) {
+			display: flex;
+			padding: 0 10px;
+			align-items: center;
+		}
+	}	
 }

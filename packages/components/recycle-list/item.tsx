@@ -2,26 +2,34 @@
 
 import { defineComponent, ref, onMounted, onBeforeUnmount } from 'vue';
 import { Resize } from '@deot/helper-resize';
+import { useDirectionKeys } from './use-direction-keys';
 
 const COMPONENT_NAME = 'vc-recycle-list-item';
 
 export const Item = defineComponent({
 	name: COMPONENT_NAME,
+	props: {
+		vertical: {
+			type: Boolean,
+			default: true
+		}
+	},
 	emits: ['resize'],
 	setup(_, { emit, slots }) {
+		const K = useDirectionKeys();
 		const current = ref();
-		const offsetHeight = ref(0);
+		const offsetSize = ref(0);
 		const handleResize = () => {
-			const v = current.value.offsetHeight;
-			const changed = offsetHeight.value != v;
+			const v = current.value[K.offsetSize];
+			const changed = offsetSize.value != v;
 			if (changed) {
-				offsetHeight.value = v;
+				offsetSize.value = v;
 				emit('resize');
 			}
 		};
 
 		onMounted(() => {
-			offsetHeight.value = current.value.offsetHeight;
+			offsetSize.value = current.value[K.offsetSize];
 			Resize.on(current.value, handleResize);
 		});
 
