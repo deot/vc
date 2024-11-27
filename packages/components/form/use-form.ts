@@ -1,6 +1,6 @@
 import { provide, getCurrentInstance } from 'vue';
 import type { VNode, SetupContext, ComponentInternalInstance } from 'vue';
-import { sortBy } from 'lodash-es';
+import { getPropByPath } from '@deot/helper-utils';
 import { VcError } from '../vc/index';
 import type { FormProvide } from './types';
 import type { Props } from './form-props';
@@ -11,11 +11,16 @@ interface FormOptions {
 
 interface FormValidateOptions {
 	scroll?: boolean;
+	fields?: string[];
+}
+
+interface FormResetOptions {
+	original?: object;
+	fields?: string[];
 }
 
 export const useForm = (expose: SetupContext['expose'], options: FormOptions = {}) => {
 	const instance = getCurrentInstance()!;
-	const { slots } = instance;
 	const props = instance.props as Props;
 
 	const fields: ComponentInternalInstance[] = [];
@@ -30,8 +35,8 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 		}
 	});
 
-	const resetFields = () => {
-		fields.forEach(field => field.exposed!.resetField());
+	const filterFields = (fields$?: string[]) => {
+		return !fields$ ? fields : fields.filter(item => fields$.includes(item.props.prop as string));
 	};
 
 	const getField = (prop: string) => {
@@ -45,44 +50,22 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 		props.showMessage && options.throwToast?.(msg);
 	};
 
-	// 同时处理嵌套form-item
-	// TODO: 渲染时计算（使用[form]vnode.el和[formItem]vnode.el）
-	const sortErrors = (errors: any[]) => {
-		const basicSort = {};
-		let count = 0;
+	const sortErrors = async (errors: any[]) => {
+		const positions = await Promise.all(fields.map(item => (item.exposed as any).getPosition()));
+		try {
+			return [...errors].toSorted((a, b) => {
+				const aIndex = fields.findIndex(i => i.props.prop === a.prop);
+				const bIndex = fields.findIndex(i => i.props.prop === b.prop);
 
-		const fn = (vnodes: VNode[]) => {
-			vnodes.forEach((vnode: VNode) => {
-				try {
-					const { prop } = vnode.props || {};
-					const { children } = vnode;
+				const aPosition = positions[aIndex];
+				const bPosition = positions[bIndex];
 
-					if (
-						prop
-						&& typeof vnode.type === 'object'
-						&& (vnode.type as any).name
-						&& /^vcm?-form-item$/.test((vnode.type as any).name)
-					) {
-						basicSort[prop] = count++;
-					} else if (children && typeof (children as any).default === 'function') {
-						// 如果children中含 vc-table 且使用了#default="{ row }"，目前暂时先屏蔽报错
-						try {
-							fn((children as any).default({ row: {}, $index: -1 }));
-						} catch {
-							// any
-						}
-					} else if (children && children instanceof Array) {
-						fn(children as VNode[]);
-					}
-				} catch (e) {
-					throw new VcError('form', e);
-				}
+				if (aPosition.top != bPosition.top) return aPosition.top - bPosition.top;
+				return aPosition.left - bPosition.left;
 			});
-		};
-
-		fn(slots.default?.() as VNode[]);
-		errors = sortBy(errors, [(i: any) => basicSort[i.prop]]);
-		return errors;
+		} catch (e) {
+			return errors;
+		}
 	};
 
 	const scrollIntoView = (prop: string) => {
@@ -93,15 +76,28 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 		});
 	};
 
+	const reset = (options$: FormResetOptions = {}) => {
+		const { fields: fields$, original = {} } = options$;
+		filterFields(fields$).forEach((field) => {
+			let v: any;
+
+			try {
+				v = getPropByPath(original, field.props.prop as string).v;
+			} catch (e) { /* empty */ }
+
+			(field.exposed as any).reset(v);
+		});
+	};
+
 	const validate = async (options$: FormValidateOptions = {}) => {
-		const { scroll = true } = options$;
+		const { scroll = true, fields: fields$ } = options$;
 
 		if (!fields.length) {
 			return;
 		}
 
 		const results = await Promise.allSettled(
-			fields.map(item => (item.exposed as any).validate(''))
+			filterFields(fields$).map(item => (item.exposed as any).validate(''))
 		);
 
 		const originErrors = results
@@ -110,8 +106,7 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 
 		if (!originErrors.length) return;
 
-		const errors = sortErrors(originErrors);
-
+		const errors = await sortErrors(originErrors);
 		// 全部校验完成
 		showToast(errors[0].msg || errors[0].message);
 
@@ -121,24 +116,22 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 	};
 
 	const validateField = async (prop: string, options$: FormValidateOptions = {}) => {
-		const { scroll = true } = options$;
-
-		const field = getField(prop);
 		try {
-			await field.exposed!.validate('');
-		} catch (e: any) {
-			const errorMsg = e.message;
-			showToast(errorMsg);
-			scroll && scrollIntoView(prop);
-
-			throw e;
+			await validate({
+				...options$,
+				fields: [prop]
+			});
+		} catch (e) {
+			throw e![0];
 		}
 	};
 
 	expose({
-		getField,
-		resetFields,
+		reset,
 		validate,
+
+		// 单个操作
+		getField,
 		validateField
 	});
 };

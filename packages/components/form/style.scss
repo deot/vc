@@ -18,7 +18,7 @@ $color-error: varfix(color-error, form);
 	margin-bottom: unitfix(24);
 	line-height: 1.5;
 
-	@include clearfix;
+	// @include clearfix;
 
 	@include element(content) { 
 		position: relative;

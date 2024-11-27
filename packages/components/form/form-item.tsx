@@ -18,7 +18,15 @@ export const FormItem = defineComponent({
 
 		const errorColorClass = 'vc-form-item__error';
 		return () => {
-			if (isStyleless.value) return slots.default?.();
+			if (isStyleless.value) return [
+				slots.default?.(),
+				slots.error?.({
+					show: showError.value,
+					nest: isNest.value,
+					message: validateMessage.value,
+					class: errorColorClass
+				})
+			];
 			return (
 				<div class={['vc-form-item', classes.value]}>
 					<div
@@ -31,8 +39,8 @@ export const FormItem = defineComponent({
 							{ label || slots.label?.() }
 						</label>
 					</div>
-					<div style={contentStyle.value} class="vc-form-item__wrapper">
-						<div class="vc-form-item__content">
+					<div class="vc-form-item__wrapper">
+						<div class="vc-form-item__content" style={contentStyle.value}>
 							{ slots.default?.() }
 							{
 								slots.error

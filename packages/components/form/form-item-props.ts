@@ -37,6 +37,12 @@ export const props = {
 	styleless: {
 		type: Boolean,
 		default: false
-	}
+	},
+	labelPosition: {
+		type: String as PropType<'left' | 'right' | 'top'>,
+		default: 'right'
+	},
+
+	contentStyle: String
 };
 export type Props = ExtractPropTypes<typeof props>;

@@ -13,6 +13,7 @@
 
 		<FormItem prop="nest" label="nest：">
 			<input v-model="formData.nest.value" style="width: 300px">
+			<div style="margin-top: 20px;" />
 			<FormItem prop="nest.value1" label="nest1：">
 				<input v-model="formData.nest.value1" style="width: 300px">
 			</FormItem>
@@ -157,7 +158,7 @@ const handleOnly = async () => {
 };
 
 const handleReset = () => {
-	form.value?.resetFields();
+	form.value?.reset();
 };
 
 const handleAdd = () => {

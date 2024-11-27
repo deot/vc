@@ -1,8 +1,10 @@
 <template>
-	<div>
+	<div style="display: flex;">
 		<input 
 			:type="type" 
 			:value="modelValue" 
+			:placeholder="placeholder"
+			style="border: 1rpx solid #d9d9d9;"
 			@input="handleInput"
 			@blur="handleBlur"
 		>
@@ -13,9 +15,14 @@
 <script setup>
 import { inject } from 'vue';
 
-defineProps({
+const props = defineProps({
 	type: String,
-	modelValue: [String, Number]
+	modelValue: [String, Number],
+	placeholder: String,
+	allowDispatch: {
+		type: Boolean,
+		default: true
+	}
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -26,12 +33,12 @@ const handleInput = (e) => {
 	emit('update:modelValue', e.target.value);
 
 	// form表单
-	formItem.change?.();
+	props.allowDispatch && formItem.change?.();
 };
 
 const handleBlur = (e) => {
 	// form表单
-	formItem.blur?.();
+	props.allowDispatch && formItem.blur?.();
 }
 </script>
 

@@ -129,7 +129,7 @@ const handleSubmit = async () => {
 };
 
 const handleReset = (name) => {
-	form.value.resetFields();
+	form.value.reset();
 };
 
 const handleAdd = () => {
@@ -429,7 +429,7 @@ const handleOnly = async () => {
 };
 
 const handleReset = () => {
-	form.value.resetFields();
+	form.value.reset();
 };
 
 const handleAdd = () => {
@@ -550,7 +550,7 @@ const handleSubmit = async (name) => {
 };
 
 const handleReset = (name) => {
-	form.value.resetFields();
+	form.value.reset();
 };
 </script>
 <style>
@@ -579,7 +579,7 @@ autocomplete | 原生的 autocomplete 属性 | `String` | `off`、 `on` | `off`
 ---|---|---
 validate | 对整个表单进行校验，参数为检验完的回调，会返回一个 `Boolean` 表示成功与失败，支持 Promise | -
 validateField | 对部分表单字段进行校验的方法 | `props`: 需校验的 prop; `callback`: 检验完回调，返回错误信息
-resetFields | 对整个表单进行重置，将所有字段值重置为空并移除校验结果 | -
+reset | 对整个表单进行重置，将所有字段值重置为空并移除校验结果 | -
 
 ### Item 属性
 属性 | 说明 | 类型 | 可选值 | 默认值

@@ -13,7 +13,7 @@ export const MForm = defineComponent({
 	setup(props, { slots, expose }) {
 		useForm(expose, {
 			throwToast(message: string) {
-				MToast.info(message);
+				props.showToast && MToast.info(message);
 			}
 		});
 		return () => {

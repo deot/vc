@@ -1,5 +1,5 @@
-import { provide, inject, ref, computed, watch, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue';
-import type { SetupContext } from 'vue';
+import { toRaw, provide, inject, ref, reactive, computed, watch, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue';
+import type { SetupContext, VNode, ComponentInternalInstance } from 'vue';
 import { cloneDeep } from 'lodash-es';
 import { Validator } from '@deot/helper-validator';
 import { getPropByPath } from '@deot/helper-utils';
@@ -27,6 +27,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	const form = inject<FormProvide>('form');
 	const instance = getCurrentInstance()!;
 	const props = instance.props as Props;
+	const { slots } = instance;
 
 	if (!form?.props) {
 		throw new VcError('form-item', 'form-item需要在form内使用');
@@ -78,6 +79,10 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		return required;
 	});
 
+	const labelPosition = computed(() => {
+		return props.labelPosition || form.props.labelPosition;
+	});
+
 	const classes = computed(() => {
 		return {
 			'is-require': isRequired.value,
@@ -85,12 +90,18 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 			'is-validating': validateState.value === 'validating',
 			'is-inline': form.props.inline,
 			'is-nest': isNest.value,
-			[`is-${form.props.labelPosition}`]: true,
+			[`is-${labelPosition.value}`]: true,
 		};
 	});
 
 	const isNest = computed(() => {
 		return !!formItem.change;
+	});
+
+	const isNestLast = ref(false);
+
+	const hasLabel = computed(() => {
+		return !!props.label || slots.label;
 	});
 
 	const labelStyle = computed(() => {
@@ -100,16 +111,20 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 				? 0
 				: form.props.labelWidth;
 		return {
-			width: labelWidth && labelWidth > 0 ? `${labelWidth}px` : 'auto',
-			textAlign: form.props.labelPosition as any
+			width: labelPosition.value !== 'top' && labelWidth && labelWidth > 0 ? `${labelWidth}px` : 'auto',
+			textAlign: labelPosition.value === 'top' ? 'left' : labelPosition.value
 		};
 	});
 
 	const contentStyle = computed(() => {
 		const labelWidth = props.labelWidth === 0 || props.labelWidth ? props.labelWidth : form.props.labelWidth;
-		return {
-			marginLeft: labelWidth && labelWidth > 0 ? `${labelWidth}px` : 'unset'
-		};
+		return [
+			{
+				marginLeft: !hasLabel.value && isNest.value ? 0 : labelWidth && labelWidth > 0 ? `${labelWidth}px` : 'unset',
+				marginBottom: isNest.value && !isNestLast.value ? `20px` : 0
+			},
+			props.contentStyle
+		];
 	});
 
 	const isStyleless = computed(() => {
@@ -140,20 +155,22 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		}
 	);
 
-	const resetField = () => {
+	const reset = (v?: any) => {
 		validateState.value = '';
 		validateMessage.value = '';
 
 		const model = form.props.model!;
 		if (!props.prop) return;
 
-		const k = getPropByPath(model, props.prop).k as string;
+		const { o, k } = getPropByPath(model, props.prop);
 		if (!k) return;
 
 		validateDisabled = true;
-		form.props.model![k] = Array.isArray(fieldValue.value)
-			? [].concat(initialValue)
-			: initialValue;
+		o[k] = v !== null && v !== undefined
+			? v
+			: Array.isArray(fieldValue.value)
+				? [].concat(initialValue)
+				: initialValue;
 	};
 
 	const validate = async (trigger: string) => {
@@ -161,6 +178,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		let rules = currentRules.value
 			.filter(rule => !rule.trigger || rule.trigger.includes(trigger));
 
+		// 注意如果没有指定规则，含required属性，trigger相当于''
 		if (!rules.length) {
 			if (!props.required) {
 				return;
@@ -216,9 +234,35 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		validate('change');
 	};
 
+	const getPosition = async () => {
+		let el = (instance.vnode as VNode).el!;
+		try {
+			while (el && !el.getBoundingClientRect) {
+				el = el!.nextSibling;
+			};
+
+			const rect = el.getBoundingClientRect();
+			return {
+				top: rect.top,
+				left: rect.left
+			};
+		} catch (e) {
+			throw new VcError('form-item', 'form-item位置计算错误');
+		}
+	};
+
+	// 用于判断是否是当前formItem的最后一个
+	const fields = reactive<ComponentInternalInstance[]>([]);
 	provide<FormItemProvide>('form-item', {
 		blur: handleFieldBlur,
-		change: handleFieldChange
+		change: handleFieldChange,
+		fields,
+		add: (field) => {
+			field && fields.push(field);
+		},
+		remove: (field) => {
+			field && fields.splice(fields.indexOf(field), 1);
+		}
 	});
 
 	onMounted(() => {
@@ -226,31 +270,55 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 			form.add?.(instance);
 			initialValue = cloneDeep(fieldValue.value);
 		}
+		formItem.add?.(instance);
 	});
 
 	onBeforeUnmount(() => {
 		form.remove?.(instance);
+		formItem.remove?.(instance);
 	});
 
 	watch(
 		() => props.rules,
 		() => {
-			props.resetByRulesChanged && resetField();
+			props.resetByRulesChanged && reset();
+		}
+	);
+
+	watch(
+		() => formItem.fields?.length,
+		async (v) => {
+			if (!isNest.value || !v) return isNestLast.value = false;
+			const fields$ = [...toRaw(formItem.fields)];
+			const positions = await Promise.all(fields$.map(item => (item.exposed as any).getPosition()));
+			const sortFields = fields$.toSorted((a, b) => {
+				const aIndex = fields$.findIndex(i => i === a);
+				const bIndex = fields$.findIndex(i => i === b);
+				const aPosition = positions[aIndex];
+				const bPosition = positions[bIndex];
+				if (aPosition.top != bPosition.top) return aPosition.top - bPosition.top;
+				return aPosition.left - bPosition.left;
+			});
+
+			isNestLast.value = sortFields[sortFields.length - 1] === instance;
 		}
 	);
 
 	expose({
 		validate,
-		resetField
+		reset,
+		getPosition
 	});
 
 	return {
 		isNest,
 		isStyleless,
+		isNestLast,
 		validateMessage,
 		classes,
 		labelStyle,
 		contentStyle,
-		showError
+		showError,
+		labelPosition
 	};
 };

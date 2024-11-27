@@ -3,9 +3,9 @@ import { props as formProps } from '../form-props';
 
 export const props = {
 	...formProps,
-	showMessage: {
+	showToast: {
 		type: Boolean,
-		default: true
+		default: false
 	},
 	border: {
 		type: Boolean,

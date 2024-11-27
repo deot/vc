@@ -18,9 +18,9 @@ $background-color-light: varfix(background-color-light, form);
 
 @include block($component-item-name) {
 	@include element(wrapper) {
-		padding-top: unitfix(12);
+		padding-top: unitfix(20);
 		padding-right: unitfix(12);
-		padding-bottom: unitfix(12);
+		padding-bottom: unitfix(20);
 
 		@include border(bottom);
 	}
@@ -79,6 +79,32 @@ $background-color-light: varfix(background-color-light, form);
 				float: none;
 				padding: 0 0 unitfix(10) 0;
 			}
+		}
+
+		@include when(nest) {
+			@include element(wrapper) {
+				padding-top: unitfix(0);
+				padding-right: unitfix(0);
+				padding-bottom: unitfix(0);
+
+				&::after {
+					border-bottom: unset;
+				}
+			}
+		}
+	}
+
+	@include element(error) {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		padding-top: 3px;
+		font-size: 13px;
+		line-height: 1;
+		color: $color-error;
+
+		@include when(nest) {
+			display: inline-block;
 		}
 	}
 }
