@@ -27,7 +27,8 @@ const COMPONENT_NAME = 'vc-recycle-list';
 export const RecycleList = defineComponent({
 	name: COMPONENT_NAME,
 	props: recycleListProps,
-	setup(props, { slots, expose }) {
+	emits: ['scroll'],
+	setup(props, { slots, expose, emit }) {
 		const K = useDirectionKeys();
 		const offsetPageSize = ref(0);
 		const contentMaxSize = ref(0);
@@ -405,8 +406,10 @@ export const RecycleList = defineComponent({
 		/**
 		 * 最大滚动距离：el.scrollHeight - el.clientHeight
 		 * contentMaxSize.value不含loading，以及wrapper的border, padding
+		 * @param e ~
+		 * @return ~
 		 */
-		const handleScroll = () => {
+		const handleScroll = (e: UIEvent) => {
 			const el = wrapper.value;
 			if (
 				(!props.inverted && el[K.scrollAxis] > el[K.scrollSize] - el[K.clientSize] - props.offset)
@@ -415,6 +418,7 @@ export const RecycleList = defineComponent({
 				loadData();
 			}
 			setFirstItemIndex();
+			emit('scroll', e);
 		};
 
 		const forceRefreshLayout = async () => {
@@ -538,6 +542,9 @@ export const RecycleList = defineComponent({
 					<ScrollerWheel
 						ref={scroller}
 						class="vc-recycle-list__wrapper"
+						{
+							...props.scrollerOptions
+						}
 						onScroll={handleScroll}
 					>
 						{ props.inverted && (<ScrollState ref={scrollState} />) }
@@ -591,7 +598,7 @@ export const RecycleList = defineComponent({
 																	vertical={props.vertical}
 																	onResize={handleResize}
 																>
-																	{ slots.default?.({ row: item.data || {} }) }
+																	{ slots.default?.({ row: item.data || {}, index: item.id }) }
 																</Item>
 															)
 														}
@@ -616,7 +623,7 @@ export const RecycleList = defineComponent({
 												ref={v => preloads.value[item.id] = v}
 												class="vc-recycle-list__hidden"
 											>
-												{ slots.default?.({ row: item.data || {} }) }
+												{ slots.default?.({ row: item.data || {}, index: item.id }) }
 											</div>
 										</Fragment>
 									))

@@ -1,5 +1,6 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
 import type { Render } from '../customer/types';
+import type { Props as ScrollerProps } from '../scroller/scroller-props';
 
 export const props = {
 	dataSource: {
@@ -52,6 +53,8 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
+
+	scrollerOptions: Object as PropType<ScrollerProps>,
 
 	renderEmpty: Function as Render,
 	renderFinish: Function as Render,

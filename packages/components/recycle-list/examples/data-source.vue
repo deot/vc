@@ -4,11 +4,15 @@
 		<RecycleList 
 			class="list" 
 			pullable
-			:cols="3"
+			:cols="5"
 			:disabled="disabled"
 			:data-source="dataSource"
 			:page-size="pageSize" 
 			:load-data="loadData"
+			:scroller-options="{
+				native: false,
+				always: true
+			}"
 		>
 			<template #default="{ row }">
 				<div 
@@ -33,7 +37,7 @@ import { ref } from 'vue';
 import { RecycleList } from '..';
 
 const dynamicSize = ref(20);
-const pageSize = ref(20);
+const pageSize = ref(50);
 const disabled = ref(true);
 
 let count = 0;
