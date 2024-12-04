@@ -35,14 +35,14 @@ export const useScroller = (expose: SetupContext['expose']) => {
 
 	const handleScroll = (e: UIEvent) => {
 		instance.emit('scroll', e);
-		bar.value!.refreshTrack();
+		bar.value?.refreshTrack?.();
 	};
 
 	// 以下两个暴露scroll事件, 从而触发handleScroll
 	expose({
 		wrapper,
 		refresh: () => {
-			bar.value!.refresh();
+			bar.value?.refresh?.();
 		},
 		setScrollTop: (value: number) => {
 			wrapper.value!.scrollTop = value;

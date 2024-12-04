@@ -74,7 +74,7 @@ export const ScrollerWheel = defineComponent({
 			scrollY.value = it.scrollTop;
 			scrollX.value = it.scrollLeft;
 
-			if (!props.barTo) {
+			if (!props.barTo && props.showBar) {
 				const key = $.prefixStyle('transform').camel;
 				bar.value!.trackY.target!.style[key] = barPos.value;
 				bar.value!.trackX.target!.style[key] = barPos.value;
@@ -98,7 +98,7 @@ export const ScrollerWheel = defineComponent({
 				);
 			}
 
-			bar.value!.refreshTrack();
+			bar.value?.refreshTrack?.();
 		};
 
 		// X轴是否允许滚动
@@ -169,7 +169,7 @@ export const ScrollerWheel = defineComponent({
 						{ slots.default?.() }
 					</Content>
 					{
-						(wrapper.value && content.value) && (
+						(props.showBar && wrapper.value && content.value) && (
 							<Bar
 								ref={bar}
 								wrapper={wrapper.value}

@@ -6,6 +6,7 @@ $component-name: vc-scroller;
 	position: relative;
 
 	@include element(wrapper) {
+		height: 100%;
 		overflow: auto;
 		
 		@include when(hidden) {
