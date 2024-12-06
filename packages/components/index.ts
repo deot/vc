@@ -98,6 +98,8 @@ export * from './rate';
 export * from './rate/index.m';
 export * from './recycle-list';
 export * from './recycle-list/index.m';
+export * from './resizer';
+export * from './resizer/index.m';
 export * from './scroller';
 export * from './scroller/index.m';
 export * from './select';

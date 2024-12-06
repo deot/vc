@@ -1,0 +1,9 @@
+@import '../style/helper';
+
+$component-name: vc-resizer;
+
+@include block($component-name) {
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+}
