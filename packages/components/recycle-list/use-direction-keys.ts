@@ -3,6 +3,7 @@ import { watch, reactive, getCurrentInstance } from 'vue';
 const getKeys = (v: boolean) => {
 	return {
 		// size
+		size: v ? 'width' : 'height',
 		scrollSize: v ? 'scrollHeight' : 'scrollWidth',
 		clientSize: v ? 'clientHeight' : 'clientWidth',
 		offsetSize: v ? 'offsetHeight' : 'offsetWidth',

@@ -19,18 +19,21 @@ export const Item = defineComponent({
 		const K = useDirectionKeys();
 		const current = ref();
 		const offsetSize = ref(0);
+
+		let hasInitial = false;
 		const handleResize = () => {
-			const v = current.value[K.offsetSize];
+			const v = current.value.getBoundingClientRect()[K.size];
 			const changed = offsetSize.value != v;
-			if (changed) {
+			if (hasInitial && changed) {
 				offsetSize.value = v;
 				emit('resize');
 			}
+
+			hasInitial = true;
 		};
 
 		onMounted(() => {
-			offsetSize.value = current.value[K.offsetSize];
-			Resize.on(current.value, handleResize);
+			Resize.on(current.value, handleResize); // 首次会执行一次
 		});
 
 		onBeforeUnmount(() => {
