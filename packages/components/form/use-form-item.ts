@@ -201,6 +201,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		try {
 			await validator.validate(model, { first: false });
 			validateState.value = 'success';
+			validateMessage.value = '';
 		} catch (errors: any) {
 			validateState.value = 'error';
 			validateMessage.value = errors[0].message;
@@ -254,9 +255,10 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	// 用于判断是否是当前formItem的最后一个
 	const fields = reactive<ComponentInternalInstance[]>([]);
 	provide<FormItemProvide>('form-item', {
+		fields,
 		blur: handleFieldBlur,
 		change: handleFieldChange,
-		fields,
+		message: validateMessage,
 		add: (field) => {
 			field && fields.push(field);
 		},

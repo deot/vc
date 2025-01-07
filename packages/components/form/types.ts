@@ -1,4 +1,4 @@
-import type { ComponentInternalInstance, UnwrapNestedRefs } from 'vue';
+import type { ComponentInternalInstance, UnwrapNestedRefs, Ref } from 'vue';
 import type { ValidatorRule } from '@deot/helper-validator';
 import type { Props } from './form-props';
 
@@ -14,6 +14,7 @@ export interface FormItemProvide {
 	add: (item: ComponentInternalInstance) => any;
 	remove: (item: ComponentInternalInstance) => any;
 	fields: UnwrapNestedRefs<ComponentInternalInstance[]>;
+	message: Ref<string>;
 }
 
 export type FormRule = ValidatorRule & {
