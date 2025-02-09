@@ -80,7 +80,13 @@ export const RecycleList = defineComponent({
 			return v;
 		});
 
-		// 用于展示的信息
+		/**
+		 * 用于展示的信息
+		 *
+		 * 这里尽可能的控制好pageSize的长度, 否则会存在性能问题
+		 * 这里存在一个性能瓶颈，当数组中某一个值发生变化时，虚拟树会重新构建，虚拟树的构建耗时长会引起掉帧
+		 * 这是机制所导致的，应该尽可能减少renderList的数量
+		 */
 		const data = computed(() => {
 			const base = Array.from({ length: props.cols }).map(() => []);
 			return rebuildData.value
