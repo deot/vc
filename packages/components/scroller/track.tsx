@@ -69,7 +69,7 @@ export const Track = defineComponent({
 
 		// 最大可移动的距离
 		const maxMove = computed(() => {
-			return wrapperFitSize.value - thumbSize.value;
+			return wrapperFitSize.value - thumbFitSize.value;
 		});
 
 		// 滚动时均摊Size
