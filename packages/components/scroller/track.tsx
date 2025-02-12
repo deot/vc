@@ -2,8 +2,8 @@
 
 import { getCurrentInstance, computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { throttle } from 'lodash-es';
-import * as $ from '@deot/helper-dom';
 import { raf } from '@deot/helper-utils';
+import * as $ from '@deot/helper-dom';
 import { TransitionFade } from '../transition';
 import { props as trackProps } from './track-props';
 
@@ -36,7 +36,7 @@ export type TrackExposed = {
 export const Track = defineComponent({
 	name: COMPONENT_NAME,
 	props: trackProps,
-	emits: ['refresh'],
+	emits: ['change'],
 	setup(props, { emit, expose }) {
 		const instance = getCurrentInstance()!;
 		const track = ref<HTMLElement>();
@@ -103,10 +103,12 @@ export const Track = defineComponent({
 		};
 
 		const scrollFitTo = (thumbFitMove: number) => {
-			const $scrollDistance = ((thumbFitMove / (1 - averageSize.value)) / thumbSize.value) * props.wrapperSize;
+			thumbFitMove = Math.min(Math.max(thumbFitMove, 0), maxMove.value);
+
+			scrollDistance.value = ((thumbFitMove / (1 - averageSize.value)) / thumbSize.value) * props.wrapperSize;
 
 			// 滚动
-			emit('refresh', $scrollDistance);
+			emit('change', scrollDistance.value);
 		};
 
 		const handleMouseMoveDocument = (e: MouseEvent) => {
@@ -187,7 +189,7 @@ export const Track = defineComponent({
 			thumb.value!.style[$.prefixStyle('transform').camel] = `translate${barOptions.value.axis}(${thumbMove.value}px)`;
 		});
 
-		const refreshThrottleThumb = throttle(refreshThumb, 50);
+		const refreshThrottleThumb = throttle(refreshThumb, 10);
 
 		onMounted(() => {
 			const parentEl = instance?.vnode?.el?.parentElement;

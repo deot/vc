@@ -1,8 +1,7 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, onBeforeUnmount, onMounted, ref } from 'vue';
+import { defineComponent, onBeforeUnmount, onMounted } from 'vue';
 import { Wheel } from '@deot/helper-wheel';
-import * as $ from '@deot/helper-dom';
 import { props as scrollerProps } from './scroller-props';
 import { Bar } from './bar';
 import { useScroller } from './use-scroller';
@@ -31,7 +30,7 @@ const COMPONENT_NAME = 'vc-scroller-wheel';
 export const ScrollerWheel = defineComponent({
 	name: COMPONENT_NAME,
 	props: scrollerProps,
-	emits: ['scroll'],
+	emits: ['scroll', 'scroll-delegate'],
 	setup(props, { slots, expose }) {
 		const Content = props.tag;
 		const {
@@ -40,65 +39,34 @@ export const ScrollerWheel = defineComponent({
 			content,
 			wrapperStyle,
 			wrapperClassName,
+			scrollX,
+			scrollY,
+			wrapperW,
+			wrapperH,
+			contentH,
+			contentW,
+			scrollTo,
+			handleBarChange,
 			handleScroll
 		} = useScroller(expose);
 
-		const scrollX = ref(0);
-		const scrollY = ref(0);
-
-		const wrapperW = ref(0);
-		const wrapperH = ref(0);
-
-		const contentH = ref(0);
-		const contentW = ref(0);
-
-		const barPos = computed(() => {
-			const maxMoveX = contentW.value - wrapperW.value;
-			const maxMoveY = contentH.value - wrapperH.value;
-
-			const fitMoveX = scrollX.value >= maxMoveX ? maxMoveX : scrollX.value;
-			const fitMoveY = scrollY.value >= maxMoveY ? maxMoveY : scrollY.value;
-
-			return `translate(${fitMoveX}px, ${fitMoveY}px)`;
-		});
-
-		const handleRefreshSize = (it: any) => {
-			wrapperW.value = it.wrapperW;
-			wrapperH.value = it.wrapperH;
-
-			contentH.value = it.contentH;
-			contentW.value = it.contentW;
-		};
-
-		const handleRefreshTrack = (it: any) => {
-			scrollY.value = it.scrollTop;
-			scrollX.value = it.scrollLeft;
-
-			if (!props.barTo && props.showBar) {
-				const key = $.prefixStyle('transform').camel;
-				bar.value!.trackY.target!.style[key] = barPos.value;
-				bar.value!.trackX.target!.style[key] = barPos.value;
-			}
-		};
-
 		const handleWheel = (deltaX: number, deltaY: number) => {
-			const el = wrapper.value!;
+			const options: any = {};
 			if (
 				Math.abs(deltaY) > Math.abs(deltaX)
 				&& contentH.value > wrapperH.value
 			) {
-				el.scrollTop = Math.min(
+				options.y = Math.min(
 					Math.max(0, scrollY.value + deltaY),
 					contentH.value - wrapperH.value
 				);
 			} else if (deltaX && contentW.value > wrapperW.value) {
-				el.scrollLeft = Math.min(
+				options.x = Math.min(
 					Math.max(0, scrollX.value + deltaX),
 					contentW.value - wrapperW.value
 				);
 			}
-
-			bar.value?.refreshTrack?.();
+			scrollTo(options);
 		};
 
 		// X轴是否允许滚动
@@ -172,8 +140,13 @@ export const ScrollerWheel = defineComponent({
 						(props.showBar && wrapper.value && content.value) && (
 							<Bar
 								ref={bar}
-								wrapper={wrapper.value}
-								content={content.value}
+								fit={true}
+								wrapperW={wrapperW.value}
+								wrapperH={wrapperH.value}
+								contentW={contentW.value}
+								contentH={contentH.value}
+								scrollX={scrollX.value}
+								scrollY={scrollY.value}
 								native={props.native}
 								to={props.barTo}
 								always={props.always}
@@ -182,9 +155,7 @@ export const ScrollerWheel = defineComponent({
 								thumbClassName={props.thumbClassName}
 								trackOffsetX={props.trackOffsetX}
 								trackOffsetY={props.trackOffsetY}
-								// @ts-ignore
-								onRefreshSize={handleRefreshSize}
-								onRefreshTrack={handleRefreshTrack}
+								onChange={handleBarChange}
 							/>
 						)
 					}

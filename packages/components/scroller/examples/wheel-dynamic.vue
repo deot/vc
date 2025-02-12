@@ -26,6 +26,7 @@
 			height="200px" 
 			:always="always" 
 			:native="native"
+			@scroll-delegate="handleScrollDelegate"
 		>
 			<p 
 				v-for="item in count" 
@@ -42,10 +43,14 @@ import { ScrollerWheel } from '..';
 
 const always = ref(true);
 const native = ref(false);
-const count = ref(10);
+const count = ref(100);
 const scroller = ref();
 
 window.scroller = scroller;
+
+const handleScrollDelegate = e => {
+	// do ...
+};
 </script>
 
 <style>

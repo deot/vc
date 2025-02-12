@@ -11,9 +11,6 @@ const barKeys = [
 ] as const;
 
 export const props = {
-	wrapper: Object as PropType<HTMLElement>,
-	content: Object as PropType<HTMLElement>,
-	// 默认情况：
 	// 	如果存在滚动条宽度为false, 不存在则为true
 	// 	为false的情况下才能使用track-offset
 	native: {
@@ -39,6 +36,13 @@ export const props = {
 	to: String,
 	trackStyle: [Object, String, Array] as PropType<StyleValue>,
 	trackClassName: [Object, String, Array] as PropType<StyleValue>,
+	wrapperW: Number,
+	wrapperH: Number,
+	contentH: Number,
+	contentW: Number,
+	scrollX: Number,
+	scrollY: Number,
+	fit: Boolean,
 	...(pick(barProps, barKeys) as Pick<typeof barProps, typeof barKeys[number]>)
 };
 export type Props = ExtractPropTypes<typeof props>;

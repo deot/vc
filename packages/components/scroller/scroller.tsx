@@ -18,7 +18,7 @@ const COMPONENT_NAME = 'vc-scroller';
 export const Scroller = defineComponent({
 	name: COMPONENT_NAME,
 	props: scrollerProps,
-	emits: ['scroll'],
+	emits: ['scroll', 'scroll-delegate'],
 	setup(props, { slots, expose }) {
 		const Content = props.tag;
 		const {
@@ -27,9 +27,15 @@ export const Scroller = defineComponent({
 			content,
 			wrapperStyle,
 			wrapperClassName,
-			handleScroll
+			scrollX,
+			scrollY,
+			wrapperW,
+			wrapperH,
+			contentH,
+			contentW,
+			handleBarChange,
+			handleScrollDelegate
 		} = useScroller(expose);
-
 		return () => {
 			return (
 				<div class="vc-scroller">
@@ -37,7 +43,7 @@ export const Scroller = defineComponent({
 						ref={wrapper}
 						style={wrapperStyle.value}
 						class={wrapperClassName.value}
-						onScroll={handleScroll}
+						onScroll={handleScrollDelegate}
 					>
 						<Content
 							ref={content}
@@ -52,8 +58,12 @@ export const Scroller = defineComponent({
 						(wrapper.value && content.value) && (
 							<Bar
 								ref={bar}
-								wrapper={wrapper.value}
-								content={content.value}
+								wrapperW={wrapperW.value}
+								wrapperH={wrapperH.value}
+								contentW={contentW.value}
+								contentH={contentH.value}
+								scrollX={scrollX.value}
+								scrollY={scrollY.value}
 								native={props.native}
 								to={props.barTo}
 								always={props.always}
@@ -62,6 +72,9 @@ export const Scroller = defineComponent({
 								thumbClassName={props.thumbClassName}
 								trackOffsetX={props.trackOffsetX}
 								trackOffsetY={props.trackOffsetY}
+
+								// @ts-ignore
+								onChange={handleBarChange}
 							/>
 						)
 					}
