@@ -82,7 +82,7 @@ export const useScroller = (expose: SetupContext['expose']) => {
 			scrollHeight: contentH.value,
 		};
 
-		instance.emit('scroll-delegate', {
+		instance.emit('scroll', {
 			target: delegates,
 			currentTarget: delegates
 		});
@@ -102,14 +102,8 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		triggerScrollDelegate(options);
 	};
 
-	const handleScroll = (e: UIEvent) => {
-		instance.emit('scroll', e);
-	};
-
-	const handleScrollDelegate = (e: UIEvent) => {
+	const handleScroll = () => {
 		refreshPosition();
-
-		instance.emit('scroll', e);
 
 		triggerScrollDelegate();
 	};
@@ -157,7 +151,6 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		contentW,
 
 		handleScroll,
-		handleScrollDelegate,
 		handleBarChange: scrollTo,
 
 		refreshPosition

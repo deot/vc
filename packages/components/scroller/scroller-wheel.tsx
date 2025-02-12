@@ -30,7 +30,7 @@ const COMPONENT_NAME = 'vc-scroller-wheel';
 export const ScrollerWheel = defineComponent({
 	name: COMPONENT_NAME,
 	props: scrollerProps,
-	emits: ['scroll', 'scroll-delegate'],
+	emits: ['scroll'],
 	setup(props, { slots, expose }) {
 		const Content = props.tag;
 		const {
@@ -46,8 +46,7 @@ export const ScrollerWheel = defineComponent({
 			contentH,
 			contentW,
 			scrollTo,
-			handleBarChange,
-			handleScroll
+			handleBarChange
 		} = useScroller(expose);
 
 		const handleWheel = (deltaX: number, deltaY: number) => {
@@ -126,7 +125,6 @@ export const ScrollerWheel = defineComponent({
 					ref={wrapper}
 					class={[wrapperClassName.value, 'vc-scroller-wheel']}
 					style={wrapperStyle.value}
-					onScroll={handleScroll}
 				>
 					<Content
 						ref={content}

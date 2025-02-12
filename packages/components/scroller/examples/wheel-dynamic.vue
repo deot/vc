@@ -26,7 +26,7 @@
 			height="200px" 
 			:always="always" 
 			:native="native"
-			@scroll-delegate="handleScrollDelegate"
+			@scroll="handleScrollDelegate"
 		>
 			<p 
 				v-for="item in count" 

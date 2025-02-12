@@ -18,7 +18,7 @@ const COMPONENT_NAME = 'vc-scroller';
 export const Scroller = defineComponent({
 	name: COMPONENT_NAME,
 	props: scrollerProps,
-	emits: ['scroll', 'scroll-delegate'],
+	emits: ['scroll'],
 	setup(props, { slots, expose }) {
 		const Content = props.tag;
 		const {
@@ -34,7 +34,7 @@ export const Scroller = defineComponent({
 			contentH,
 			contentW,
 			handleBarChange,
-			handleScrollDelegate
+			handleScroll
 		} = useScroller(expose);
 		return () => {
 			return (
@@ -43,7 +43,7 @@ export const Scroller = defineComponent({
 						ref={wrapper}
 						style={wrapperStyle.value}
 						class={wrapperClassName.value}
-						onScroll={handleScrollDelegate}
+						onScroll={handleScroll}
 					>
 						<Content
 							ref={content}
