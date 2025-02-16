@@ -1,4 +1,4 @@
-@import '../style/helper';
+@use '../style/helper' as *;
 
 @include block(vc-button-group) {
 	display: inline-block;

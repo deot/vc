@@ -1,8 +1,8 @@
 @use 'sass:meta';
 @use 'sass:map';
 @use 'sass:math';
-@import "./default";
-@import "./theme";
+@use "./default" as *;
+@use "./theme" as *;
 
 @function merge($rest...) {
 	$options: ();

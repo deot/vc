@@ -6,8 +6,8 @@
 @use 'sass:meta';
 @use 'sass:string';
 @use 'sass:math';
-@import "./default";
-@import "./theme";
-@import "./functions";
-@import "./mixins";
-@import "../node_modules/@deot/style/src/mixins/bem";
+@forward "./default";
+@forward "./theme";
+@forward "./functions";
+@forward "./mixins";
+@forward "../node_modules/@deot/style/src/mixins/bem";

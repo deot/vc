@@ -1,4 +1,4 @@
-@import '../../style/helper';
+@use '../../style/helper' as *;
 
 $component-name: vcm-input;
 $background-color-light: varfix(background-color-light, input);

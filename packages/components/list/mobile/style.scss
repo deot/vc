@@ -1,4 +1,4 @@
-@import '../../style/helper';
+@use '../../style/helper' as *;
 
 $component-name: vcm-list;
 $component-child-name: vcm-list-item;
@@ -7,26 +7,30 @@ $color-dark: varfix(color-dark, list);
 $color-dark-extralight: varfix(color-dark-extralight, list);
 
 @include block($component-name) {
+	& {
+		background: $background-color-light;
+	}
+
 	@include when(border) {
 		@include border(top);
 		@include border(bottom);
 	}
-
-	background: $background-color-light;
 }
 
 @include block($component-child-name) {
 	@include element(wrapper) {
 		@include border(bottom);
 
-		display: flex;
-		padding-top: 12px;
-		padding-right: 12px;
-		padding-bottom: 12px;
-		font-size: 16px;
-		line-height: 24px;
-		color: $color-dark;
-		background: $background-color-light;
+		& {
+			display: flex;
+			padding-top: 12px;
+			padding-right: 12px;
+			padding-bottom: 12px;
+			font-size: 16px;
+			line-height: 24px;
+			color: $color-dark;
+			background: $background-color-light;
+		}
 
 		// 单行
 		@include when(line) {

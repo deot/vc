@@ -1,6 +1,6 @@
 @use 'sass:map';
 @use 'sass:meta';
-@import "./theme";
+@use "./theme" as *;
 
 @mixin generate-theme($light: true) {
 	@if $light {

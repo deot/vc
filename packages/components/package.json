@@ -27,11 +27,11 @@
     }
   },
   "dependencies": {
-    "@deot/helper": "^1.1.7",
+    "@deot/helper": "^1.1.9",
     "lodash-es": "^4.17.21"
   },
   "devDependencies": {
-    "@deot/style": "^1.0.8",
+    "@deot/style": "^1.1.0",
     "@types/lodash-es": "^4.17.12"
   }
 }

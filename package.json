@@ -4,7 +4,7 @@
   "description": "custom helpers",
   "type": "module",
   "scripts": {
-    "prepare": "husky install",
+    "prepare": "husky",
     "init": "npx pnpm install",
     "init:force": "rm -rf ./node_modules pnpm-lock.yaml ./packages/*/node_modules && npm run init",
     "lint": "eslint . --color",
@@ -39,6 +39,6 @@
   },
   "homepage": "https://github.com/deot/vc#readme",
   "devDependencies": {
-    "@deot/dev": "^2.8.8"
+    "@deot/dev": "^2.9.1"
   }
 }

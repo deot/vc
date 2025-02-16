@@ -1,4 +1,4 @@
-@import '../style/helper';
+@use '../style/helper' as *;
 
 $component-name: vc-form;
 $component-item-name: vc-form-item;
@@ -89,7 +89,7 @@ $color-error: varfix(color-error, form);
 			@include element(label) {
 				display: inline-block;
 				float: none;
-				padding: 0 0 unitfix(10) 0;
+				padding: 0 0 unitfix(10);
 			}
 		}
 

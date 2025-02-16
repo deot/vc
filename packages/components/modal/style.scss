@@ -1,4 +1,4 @@
-@import '../style/helper';
+@use '../style/helper' as *;
 
 $component-name: vc-modal;
 $color-success: varfix(color-success, modal);
@@ -74,7 +74,7 @@ $color-dark-extralight: varfix(color-dark-extralight, modal);
 		box-sizing: border-box;
 
 		@include when(confirm) {
-			padding: unitfix(24) unitfix(16) unitfix(16) unitfix(16);
+			padding: unitfix(24) unitfix(16) unitfix(16);
 			border-bottom: none;
 		}
 	}

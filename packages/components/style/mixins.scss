@@ -1,7 +1,7 @@
 @use 'sass:meta';
-@import "./default";
-@import "./theme";
-@import "./functions";
+@use "./default" as *;
+@use "./theme" as *;
+@use "./functions" as *;
 
 /**
  * 主题会存在特殊场景，需要强制修改
@@ -119,10 +119,10 @@
  */
 
 @mixin border($direction: '', $color: varfix('color-light-deeper'), $border-radius: 'inherit') {
-	position: relative;
-	transform: translateZ(0);
-
 	& {
+		position: relative;
+		transform: translateZ(0);
+
 		&::before,
 		&::after {
 			position: absolute;
