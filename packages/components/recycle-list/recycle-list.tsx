@@ -274,7 +274,7 @@ export const RecycleList = defineComponent({
 					: rebuildData.value[i];
 
 				if (item && item.loaded) {
-					continue; // eslint-disable-line
+					continue;
 				}
 				setItemData(i, originalData[i]);
 				promiseTasks.push(nextTick(() => refreshItemSize(i)));
@@ -412,11 +412,11 @@ export const RecycleList = defineComponent({
 		/**
 		 * 最大滚动距离：el.scrollHeight - el.clientHeight
 		 * contentMaxSize.value不含loading，以及wrapper的border, padding
-		 * @param e ~
+		 * @param e FakeUIEvent, 避免对dom的属性的获取，该值是提前计算出来的
 		 * @return ~
 		 */
 		const handleScroll = (e: UIEvent) => {
-			const el = wrapper.value;
+			const el = e.target!;
 			if (
 				(!props.inverted && el[K.scrollAxis] > el[K.scrollSize] - el[K.clientSize] - props.offset)
 				|| (props.inverted && el[K.scrollAxis] - props.offset <= 0)
@@ -586,6 +586,7 @@ export const RecycleList = defineComponent({
 																	style={{ opacity: +!item.loaded }}
 																>
 																	{
+																		// eslint-disable-next-line @stylistic/max-len
 																		slots.placeholder?.() || (renderer.value.placeholder && (<Customer render={renderer.value.placeholder} />))
 																	}
 																</div>

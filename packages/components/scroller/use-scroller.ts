@@ -88,14 +88,14 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		});
 	};
 
-	const scrollTo = (options: any) => {
+	const scrollTo = (options?: any) => {
 		refreshPosition(options);
 
-		if (typeof options.x !== 'undefined') {
+		if (options && typeof options.x !== 'undefined') {
 			wrapper.value!.scrollLeft = options.x;
 		}
 
-		if (typeof options.y !== 'undefined') {
+		if (options && typeof options.y !== 'undefined') {
 			wrapper.value!.scrollTop = options.y;
 		};
 

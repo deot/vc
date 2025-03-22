@@ -46,7 +46,8 @@ export const ScrollerWheel = defineComponent({
 			contentH,
 			contentW,
 			scrollTo,
-			handleBarChange
+			handleBarChange,
+			handleScroll
 		} = useScroller(expose);
 
 		const handleWheel = (deltaX: number, deltaY: number) => {
@@ -125,6 +126,7 @@ export const ScrollerWheel = defineComponent({
 					ref={wrapper}
 					class={[wrapperClassName.value, 'vc-scroller-wheel']}
 					style={wrapperStyle.value}
+					onScroll={() => props.native && handleScroll()}
 				>
 					<Content
 						ref={content}
