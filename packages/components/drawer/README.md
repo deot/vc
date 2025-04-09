@@ -118,19 +118,19 @@ const handleDrawer = (res) => {
 
 ### 基础属性
 
-| 属性               | 说明                                 | 类型                        | 可选值                           | 默认值     |
-| ---------------- | ---------------------------------- | ------------------------- | ----------------------------- | ------- |
-| visable          | 抽屉是否显示，可使用 v-model 双向绑定数据          | `boolean`                 | -                             | `false` |
-| title            | 抽屉的标题                              | `string`                  | -                             |         |
-| width            | 抽屉的宽度（placement为`left`和`right`可设置） | `number`                  | -                             | 300     |
-| height           | 抽屉的高度(placement为`top`和`bottom`可设置) | `number`                  | -                             | 300     |
-| mask             | 遮罩是否显示                             | `boolean`                 | -                             | `true`  |
-| mask-style       | 遮罩的样式                              | `Object`                  | -                             | -       |
-| mask-closable    | 是否能够点击遮罩关闭                         | `boolean`                 | -                             | `true`  |
-| scrollable       | 页面是否可以滚动                           | `boolean`                 | -                             | `false` |
-| placement        | 抽屉的方向                              | `string`                  | `top`、`right`、`bottom`、`left` | `right` |
-| wrapperClassName | `Drawer`容器的类名                      | `Object`、`Array`、`string` | -                             | -       |
-| wrapperStyle     | 用于设置 `Drawer` 弹出层的样式               | `Object`、`Array`、`string` | -                             | -       |
+| 属性            | 说明                                 | 类型                        | 可选值                           | 默认值     |
+| ------------- | ---------------------------------- | ------------------------- | ----------------------------- | ------- |
+| visable       | 抽屉是否显示，可使用 v-model 双向绑定数据          | `boolean`                 | -                             | `false` |
+| title         | 抽屉的标题                              | `string`                  | -                             |         |
+| width         | 抽屉的宽度（placement为`left`和`right`可设置） | `number`                  | -                             | 300     |
+| height        | 抽屉的高度(placement为`top`和`bottom`可设置) | `number`                  | -                             | 300     |
+| mask          | 遮罩是否显示                             | `boolean`                 | -                             | `true`  |
+| mask-style    | 遮罩的样式                              | `Object`                  | -                             | -       |
+| mask-closable | 是否能够点击遮罩关闭                         | `boolean`                 | -                             | `true`  |
+| scrollable    | 页面是否可以滚动                           | `boolean`                 | -                             | `false` |
+| placement     | 抽屉的方向                              | `string`                  | `top`、`right`、`bottom`、`left` | `right` |
+| wrapperClass  | `Drawer`容器的类名                      | `Object`、`Array`、`string` | -                             | -       |
+| wrapperStyle  | 用于设置 `Drawer` 弹出层的样式               | `Object`、`Array`、`string` | -                             | -       |
 
 
 ### 事件

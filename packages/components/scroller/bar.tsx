@@ -29,8 +29,8 @@ export const Bar = defineComponent({
 				always: props.always,
 				thumbMinSize: props.thumbMinSize,
 				thumbStyle: props.thumbStyle,
-				thumbClassName: props.thumbClassName,
-				class: props.trackClassName
+				thumbClass: props.thumbClass,
+				class: props.trackClass
 			};
 		});
 

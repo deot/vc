@@ -230,7 +230,7 @@ export const Track = defineComponent({
 					>
 						<div
 							ref={thumb}
-							class={[props.thumbClassName, 'vc-scroller-track__thumb']}
+							class={[props.thumbClass, 'vc-scroller-track__thumb']}
 							style={[props.thumbStyle!, thumbCalcStyle.value]}
 							onMousedown={handleClickThumb}
 						/>

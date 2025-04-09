@@ -273,17 +273,17 @@ const handleClick = (e) => {
 
 ### 属性
 
-| 属性            | 说明             | 类型                               | 可选值 | 默认值 |
-| ------------- | -------------- | -------------------------------- | --- | --- |
-| dataSource    | 源数据            | `array<object>`; `array<String>` | -   | -   |
-| options       | photoSwipe参数   | `object`                         | -   | -   |
-| events        | photoSwipe事件   | `object`                         | -   | -   |
-| actionBar     | 工具栏扩展          | `array`                          | -   | -   |
-| getInstance   | 获取组件实例对象       | `Function`                       | -   | -   |
-| enhancer      | 增强方法           | `Function`                       | -   | -   |
-| itemClassName | item的className | `string`                         | -   | -   |
-| renderRow     | 自定义渲染内容        | `(props, parent) => jsx`         | -   |     |
-| elementId     | 外层标识           | `string`                         | -   | -   |
+| 属性          | 说明             | 类型                               | 可选值 | 默认值 |
+| ----------- | -------------- | -------------------------------- | --- | --- |
+| dataSource  | 源数据            | `array<object>`; `array<String>` | -   | -   |
+| options     | photoSwipe参数   | `object`                         | -   | -   |
+| events      | photoSwipe事件   | `object`                         | -   | -   |
+| actionBar   | 工具栏扩展          | `array`                          | -   | -   |
+| getInstance | 获取组件实例对象       | `Function`                       | -   | -   |
+| enhancer    | 增强方法           | `Function`                       | -   | -   |
+| itemClass   | item的className | `string`                         | -   | -   |
+| renderRow   | 自定义渲染内容        | `(props, parent) => jsx`         | -   |     |
+| elementId   | 外层标识           | `string`                         | -   | -   |
 
 
 ### 事件

@@ -1,4 +1,3 @@
-
 ## TODO 使用`table-layout: fixed`, `position: sticky` 优化重复渲染
 
 ```vue
@@ -260,12 +259,12 @@ const tableData3 = ref([
 :::
 
 ### 带状态表格
-可将表格内容 `highlight` 显示，方便区分「成功、信息、警告、危险」等内容。添加 `rowClassName` 属性返回对应行的类名。
+可将表格内容 `highlight` 显示，方便区分「成功、信息、警告、危险」等内容。添加 `rowClass` 属性返回对应行的类名。
 
 :::RUNTIME
 ```vue
 <template>
-	<Table :data-source="tableData4" :row-class-name="tableRowClassName">
+	<Table :data-source="tableData4" :row-class="tableRowClass">
 		<TableItem>
 			<TableColumn
 				prop="date"
@@ -310,7 +309,7 @@ const tableData4 = ref([
 	}
 ]);
 
-const tableRowClassName = ({ row, rowIndex}) => {
+const tableRowClass = ({ row, rowIndex}) => {
 	if (rowIndex === 1) {
 		return 'warning';
 	} else if (rowIndex === 3) {
@@ -804,37 +803,37 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 ## API
 
 ### Table props
-| 属性                      | 说明                                                                                                                                         | 类型                                                         | 可选值                            | 默认值     |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | ------------------------------ | ------- |
-| data-source             | 显示的数据                                                                                                                                      | `Array`                                                    | -                              | -       |
-| height                  | `Table` 的高度，默认为自动高度。如果 `height` 为 `number` 类型，单位 px；如果 `height` 为 `string` 类型，则这个高度会设置为 `Table` 的 style.height 的值，Table 的高度会受控于外部样式。       | `string`、`number`                                          | -                              | -       |
-| max-height              | `Table` 的最大高度                                                                                                                              | `string`、`number`                                          | -                              | -       |
-| stripe                  | 是否为斑马纹 `table`                                                                                                                             | `boolean`                                                  | -                              | `false` |
-| border                  | 是否带有纵向边框                                                                                                                                   | `boolean`                                                  | -                              | `false` |
-| size                    | `Table` 的尺寸                                                                                                                                | `string`                                                   | `medium` 、 `small` 、 `mini`    | -       |
-| fit                     | 列的宽度是否自撑开                                                                                                                                  | `boolean`                                                  | -                              | `true`  |
-| show-header             | 是否显示表头                                                                                                                                     | `boolean`                                                  | -                              | `true`  |
-| highlight-current-row   | 是否要高亮当前行                                                                                                                                   | `boolean`                                                  | -                              | `false` |
-| current-row-key         | 当前行的 key，只写属性                                                                                                                              | `string`、 `number`                                         | -                              | -       |
-| row-class-name          | 行的 `className` 的回调方法，也可以使用字符串为所有行设置一个固定的 `className`。                                                                                      | `Function({row, rowIndex})`、 `string`                      | -                              | -       |
-| row-style               | 行的 `style` 的回调方法，也可以使用一个固定的 `Object` 为所有行设置一样的 `Style`。                                                                                    | `Function({row, rowIndex})`、 `Object`                      | -                              | -       |
-| cell-class-name         | 单元格的 `className` 的回调方法，也可以使用字符串为所有单元格设置一个固定的 `className`。                                                                                  | `Function({row, column, rowIndex, columnIndex})`、 `string` | -                              | -       |
-| cell-style              | 单元格的 style 的回调方法，也可以使用一个固定的 Object 为所有单元格设置一样的 Style。                                                                                      | `Function({row, column, rowIndex, columnIndex})`、 `Object` | -                              | -       |
-| header-row-class-name   | 表头行的 `className` 的回调方法，也可以使用字符串为所有表头行设置一个固定的 `className`。                                                                                  | `Function({row, rowIndex})`、`string`                       | -                              | -       |
-| header-row-style        | 表头行的 style 的回调方法，也可以使用一个固定的 Object 为所有表头行设置一样的 Style。                                                                                      | `Function({row, rowIndex})`、 `Object`                      | -                              | -       |
-| header-cell-class-name  | 表头单元格的 `className` 的回调方法，也可以使用字符串为所有表头单元格设置一个固定的 `className`。                                                                              | `Function({row, column, rowIndex, columnIndex})`, `string` | -                              | -       |
-| header-cell-style       | 表头单元格的 `style` 的回调方法，也可以使用一个固定的 `Object` 为所有表头单元格设置一样的 `Style`。                                                                            | `Function({row, column, rowIndex, columnIndex})`, `Object` | -                              | -       |
-| row-key                 | 行数据的 Key，用来优化 Table 的渲染；在使用 reserve-selection 功能的情况下，该属性是必填的。类型为 string 时，支持多层访问：`user.info.id`，但不支持 `user.info[0].id`，此种情况请使用 `Function`。 | `Function(row)`、`string`                                   | -                              | -       |
-| empty-text              | 空数据时显示的文本内容，也可以通过 `slot="empty"` 设置                                                                                                        | `string`                                                   | -                              | 暂无数据    |
-| default-expand-all      | 是否默认展开所有行，当 `Table` 中存在 `type="expand"` 的 `Column` 的时候有效                                                                                   | `boolean`                                                  | -                              | false   |
-| expand-row-keys         | 可以通过该属性设置 `Table` 目前的展开行，需要设置 `row-key` 属性才能使用，该属性为展开行的 `keys` 数组。                                                                         | `Array`                                                    | -                              | -       |
-| expand-selectable       | 子节点是否可选择（会被隐藏）                                                                                                                             | `boolean`                                                  | -                              | `true`  |
-| show-summary            | 是否在表尾显示合计行                                                                                                                                 | `boolean`                                                  | -                              | `false` |
-| sum-text                | 合计行第一列的文本                                                                                                                                  | `string`                                                   | -                              | 合计      |
-| get-summary             | 自定义的合计计算方法                                                                                                                                 | `Function({ columns, data })`                              | -                              | -       |
-| get-span                | 合并行或列的计算方法                                                                                                                                 | `Function({ row, column, rowIndex, columnIndex })`         | -                              | -       |
-| select-on-indeterminate | 在多选表格中，当仅有部分行被选中时，点击表头的多选框时的行为。若为 `true`，则选中所有行；若为 `false`，则取消选择所有行                                                                        | `boolean`                                                  | -                              | `true`  |
-| default-sort            | 默认的排序列的 `prop` 和顺序。它的`prop`属性指定默认的排序的列，`order`指定默认排序的顺序                                                                                    | `Object`                                                   | `order`: ascending, descending |         |
+| 属性                      | 说明                                                                                                                                         | 类型                                                         | 可选值                         | 默认值     |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | --------------------------- | ------- |
+| data-source             | 显示的数据                                                                                                                                      | `Array`                                                    | -                           | -       |
+| height                  | `Table` 的高度，默认为自动高度。如果 `height` 为 `number` 类型，单位 px；如果 `height` 为 `string` 类型，则这个高度会设置为 `Table` 的 style.height 的值，Table 的高度会受控于外部样式。       | `string`、`number`                                          | -                           | -       |
+| max-height              | `Table` 的最大高度                                                                                                                              | `string`、`number`                                          | -                           | -       |
+| stripe                  | 是否为斑马纹 `table`                                                                                                                             | `boolean`                                                  | -                           | `false` |
+| border                  | 是否带有纵向边框                                                                                                                                   | `boolean`                                                  | -                           | `false` |
+| size                    | `Table` 的尺寸                                                                                                                                | `string`                                                   | `medium` 、 `small` 、 `mini` | -       |
+| fit                     | 列的宽度是否自撑开                                                                                                                                  | `boolean`                                                  | -                           | `true`  |
+| show-header             | 是否显示表头                                                                                                                                     | `boolean`                                                  | -                           | `true`  |
+| highlight-current-row   | 是否要高亮当前行                                                                                                                                   | `boolean`                                                  | -                           | `false` |
+| current-row-key         | 当前行的 key，只写属性                                                                                                                              | `string`、 `number`                                         | -                           | -       |
+| row-class               | 行的 `className` 的回调方法，也可以使用字符串为所有行设置一个固定的 `className`。                                                                                      | `Function({row, rowIndex})`、 `string`                      | -                           | -       |
+| row-style               | 行的 `style` 的回调方法，也可以使用一个固定的 `Object` 为所有行设置一样的 `Style`。                                                                                    | `Function({row, rowIndex})`、 `Object`                      | -                           | -       |
+| cell-class              | 单元格的 `className` 的回调方法，也可以使用字符串为所有单元格设置一个固定的 `className`。                                                                                  | `Function({row, column, rowIndex, columnIndex})`、 `string` | -                           | -       |
+| cell-style              | 单元格的 style 的回调方法，也可以使用一个固定的 Object 为所有单元格设置一样的 Style。                                                                                      | `Function({row, column, rowIndex, columnIndex})`、 `Object` | -                           | -       |
+| header-row-class        | 表头行的 `className` 的回调方法，也可以使用字符串为所有表头行设置一个固定的 `className`。                                                                                  | `Function({row, rowIndex})`、`string`                       | -                           | -       |
+| header-row-style        | 表头行的 style 的回调方法，也可以使用一个固定的 Object 为所有表头行设置一样的 Style。                                                                                      | `Function({row, rowIndex})`、 `Object`                      | -                           | -       |
+| header-cell-class       | 表头单元格的 `className` 的回调方法，也可以使用字符串为所有表头单元格设置一个固定的 `className`。                                                                              | `Function({row, column, rowIndex, columnIndex})`, `string` | -                           | -       |
+| header-cell-style       | 表头单元格的 `style` 的回调方法，也可以使用一个固定的 `Object` 为所有表头单元格设置一样的 `Style`。                                                                            | `Function({row, column, rowIndex, columnIndex})`, `Object` | -                           | -       |
+| row-key                 | 行数据的 Key，用来优化 Table 的渲染；在使用 reserve-selection 功能的情况下，该属性是必填的。类型为 string 时，支持多层访问：`user.info.id`，但不支持 `user.info[0].id`，此种情况请使用 `Function`。 | `Function(row)`、`string`                                   | -                           | -       |
+| empty-text              | 空数据时显示的文本内容，也可以通过 `slot="empty"` 设置                                                                                                        | `string`                                                   | -                           | 暂无数据    |
+| default-expand-all      | 是否默认展开所有行，当 `Table` 中存在 `type="expand"` 的 `Column` 的时候有效                                                                                   | `boolean`                                                  | -                           | false   |
+| expand-row-keys         | 可以通过该属性设置 `Table` 目前的展开行，需要设置 `row-key` 属性才能使用，该属性为展开行的 `keys` 数组。                                                                         | `Array`                                                    | -                           | -       |
+| expand-selectable       | 子节点是否可选择（会被隐藏）                                                                                                                             | `boolean`                                                  | -                           | `true`  |
+| show-summary            | 是否在表尾显示合计行                                                                                                                                 | `boolean`                                                  | -                           | `false` |
+| sum-text                | 合计行第一列的文本                                                                                                                                  | `string`                                                   | -                           | 合计      |
+| get-summary             | 自定义的合计计算方法                                                                                                                                 | `Function({ columns, data })`                              | -                           | -       |
+| get-span                | 合并行或列的计算方法                                                                                                                                 | `Function({ row, column, rowIndex, columnIndex })`         | -                           | -       |
+| select-on-indeterminate | 在多选表格中，当仅有部分行被选中时，点击表头的多选框时的行为。若为 `true`，则选中所有行；若为 `false`，则取消选择所有行                                                                        | `boolean`                                                  | -                           | `true`  |
+| default-sort            | 默认的排序列的 `prop` 和顺序。它的`prop`属性指定默认的排序的列，`order`指定默认排序的顺序                                                                                    |                                                            |                             |         |
 
 
 ### 事件
@@ -880,32 +879,32 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 
 ### Column props
 
-| 属性                      | 说明                                                                                           | 类型                                             | 可选值                                    | 默认值       |
-| ----------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------- | --------- |
-| type                    | 对应列的类型。如果设置了 `selection` 则显示多选框；如果设置了 `index` 则显示该行的索引（从 1 开始计算）；如果设置了 `expand` 则显示为一个可展开的按钮 | `string`                                       | `selection`、`index`、`expand`、`default` | `default` |
-| index                   | 如果设置了 `type=index`，可以通过传递 `index` 属性来自定义索引                                                   | `number`, `Function(index)`                    | -                                      | -         |
-| column-key              | column 的 key，如果需要使用 `filter-change` 事件，则需要此属性标识是哪个 column 的筛选条件                              | `string`                                       | -                                      | -         |
-| label                   | 显示的标题                                                                                        | `string`                                       | -                                      | -         |
-| prop                    | 对应列内容的字段名                                                                                    | `string`                                       | -                                      | -         |
-| width                   | 对应列的宽度                                                                                       | `string`                                       | -                                      | -         |
-| min-width               | 对应列的最小宽度，与 `width` 的区别是 `width` 是固定的，`min-width`把剩余宽度按比例分配给设置了 `min-width` 的列                | `string`                                       | -                                      | -         |
-| fixed                   | 列是否固定在左侧或者右侧，`true` 表示固定在左侧                                                                  | `string`, `boolean`                            | `true`, `left`, `right`                | -         |
-| render-header           | 列标题 `Label` 区域渲染使用的 `Function`                                                               | Function(h, { column, $index })                | -                                      | -         |
-| resizable               | 对应列是否可以通过拖动改变宽度（需要在 `Table` 上设置 `border` 属性为真）                                               | `boolean`                                      | -                                      | `true`    |
-| formatter               | 用来格式化内容                                                                                      | `Function({ row, column, cellValue, $index })` | -                                      | -         |
-| show-popover            | 当内容过长被隐藏时显示 `popover`                                                                        | `boolean`                                      | -                                      | `false`   |
-| align                   | 对齐方式                                                                                         | `string`                                       | `left`、`center`、`right`                | `left`    |
-| header-align            | 表头对齐方式，若不设置该项，则使用表格的对齐方式                                                                     | `string`                                       | `left`、`center`、`right`                | -         |
-| class-name              | 列的 `className`                                                                               | `string`                                       | -                                      |           |
-| labvc-class-name        | 当前列标题的自定义类名                                                                                  | `string`                                       | -                                      | -         |
-| selectable              | 仅对 t`ype=selection` 的列有效，类型为 `Function`，`Function` 的返回值用来决定这一行的 `CheckBox` 是否可以勾选            | `Function(row, index)`                         | -                                      | -         |
-| reserve-selection       | 仅对 `type=selection` 的列有效，类型为 `boolean`，为 `true` 则会在数据更新之后保留之前选中的数据（需指定 `row-key`）            | `boolean`                                      | -                                      | `false`   |
-| filters                 | 数据过滤的选项，数组格式，数组中的元素需要有 label 和 value 属性。                                                     | `Array[{ label, value }]`                      |                                        |           |
-| filter-multiple         | 数据过滤的选项是否多选                                                                                  | `boolean`                                      | -                                      | `true`    |
-| filter-icon             | 筛选的icon                                                                                      | `string`                                       | -                                      | -         |
-| filter-popup-class-name | 筛选弹框的自定义样式名                                                                                  | `string`                                       | -                                      | -         |
-| filtered-value          | 选中的数据过滤项                                                                                     | `Array`                                        | -                                      | -         |
-| filter                  | 筛选数据调用的方法                                                                                    | `Function`                                     | -                                      | -         |
+| 属性                 | 说明                                                                                           | 类型                                             | 可选值                                    | 默认值       |
+| ------------------ | -------------------------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------- | --------- |
+| type               | 对应列的类型。如果设置了 `selection` 则显示多选框；如果设置了 `index` 则显示该行的索引（从 1 开始计算）；如果设置了 `expand` 则显示为一个可展开的按钮 | `string`                                       | `selection`、`index`、`expand`、`default` | `default` |
+| index              | 如果设置了 `type=index`，可以通过传递 `index` 属性来自定义索引                                                   | `number`, `Function(index)`                    | -                                      | -         |
+| column-key         | column 的 key，如果需要使用 `filter-change` 事件，则需要此属性标识是哪个 column 的筛选条件                              | `string`                                       | -                                      | -         |
+| label              | 显示的标题                                                                                        | `string`                                       | -                                      | -         |
+| prop               | 对应列内容的字段名                                                                                    | `string`                                       | -                                      | -         |
+| width              | 对应列的宽度                                                                                       | `string`                                       | -                                      | -         |
+| min-width          | 对应列的最小宽度，与 `width` 的区别是 `width` 是固定的，`min-width`把剩余宽度按比例分配给设置了 `min-width` 的列                | `string`                                       | -                                      | -         |
+| fixed              | 列是否固定在左侧或者右侧，`true` 表示固定在左侧                                                                  | `string`, `boolean`                            | `true`, `left`, `right`                | -         |
+| render-header      | 列标题 `Label` 区域渲染使用的 `Function`                                                               | Function(h, { column, $index })                | -                                      | -         |
+| resizable          | 对应列是否可以通过拖动改变宽度（需要在 `Table` 上设置 `border` 属性为真）                                               | `boolean`                                      | -                                      | `true`    |
+| formatter          | 用来格式化内容                                                                                      | `Function({ row, column, cellValue, $index })` | -                                      | -         |
+| show-popover       | 当内容过长被隐藏时显示 `popover`                                                                        | `boolean`                                      | -                                      | `false`   |
+| align              | 对齐方式                                                                                         | `string`                                       | `left`、`center`、`right`                | `left`    |
+| header-align       | 表头对齐方式，若不设置该项，则使用表格的对齐方式                                                                     | `string`                                       | `left`、`center`、`right`                | -         |
+| class              | 列的 `className`                                                                               | `string`                                       | -                                      |           |
+| label-class        | 当前列标题的自定义类名                                                                                  | `string`                                       | -                                      | -         |
+| selectable         | 仅对 t`ype=selection` 的列有效，类型为 `Function`，`Function` 的返回值用来决定这一行的 `CheckBox` 是否可以勾选            | `Function(row, index)`                         | -                                      | -         |
+| reserve-selection  | 仅对 `type=selection` 的列有效，类型为 `boolean`，为 `true` 则会在数据更新之后保留之前选中的数据（需指定 `row-key`）            | `boolean`                                      | -                                      | `false`   |
+| filters            | 数据过滤的选项，数组格式，数组中的元素需要有 label 和 value 属性。                                                     | `Array[{ label, value }]`                      |                                        |           |
+| filter-multiple    | 数据过滤的选项是否多选                                                                                  | `boolean`                                      | -                                      | `true`    |
+| filter-icon        | 筛选的icon                                                                                      | `string`                                       | -                                      | -         |
+| filter-popup-class | 筛选弹框的自定义样式名                                                                                  | `string`                                       | -                                      | -         |
+| filtered-value     | 选中的数据过滤项                                                                                     | `Array`                                        | -                                      | -         |
+| filter             | 筛选数据调用的方法                                                                                    | `Function`                                     | -                                      | -         |
 
 
 ### Column Slot

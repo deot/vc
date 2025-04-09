@@ -26,7 +26,7 @@ export const Scroller = defineComponent({
 			wrapper,
 			content,
 			wrapperStyle,
-			wrapperClassName,
+			wrapperClass,
 			scrollX,
 			scrollY,
 			wrapperW,
@@ -42,7 +42,7 @@ export const Scroller = defineComponent({
 					<div
 						ref={wrapper}
 						style={wrapperStyle.value}
-						class={wrapperClassName.value}
+						class={wrapperClass.value}
 						onScroll={handleScroll}
 					>
 						<Content
@@ -69,7 +69,7 @@ export const Scroller = defineComponent({
 								always={props.always}
 								thumbMinSize={props.thumbMinSize}
 								thumbStyle={props.thumbStyle}
-								thumbClassName={props.thumbClassName}
+								thumbClass={props.thumbClass}
 								trackOffsetX={props.trackOffsetX}
 								trackOffsetY={props.trackOffsetY}
 

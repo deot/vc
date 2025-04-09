@@ -7,7 +7,7 @@ const barKeys = [
 	'always',
 	'thumbMinSize',
 	'thumbStyle',
-	'thumbClassName'
+	'thumbClass'
 ] as const;
 
 export const props = {
@@ -35,7 +35,7 @@ export const props = {
 
 	to: String,
 	trackStyle: [Object, String, Array] as PropType<StyleValue>,
-	trackClassName: [Object, String, Array] as PropType<StyleValue>,
+	trackClass: [Object, String, Array] as PropType<StyleValue>,
 	wrapperW: Number,
 	wrapperH: Number,
 	contentH: Number,

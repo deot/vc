@@ -33,9 +33,9 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		return [props.wrapperStyle, style];
 	});
 
-	const wrapperClassName = computed(() => {
+	const wrapperClass = computed(() => {
 		return [
-			props.wrapperClassName,
+			props.wrapperClass,
 			props.native ? 'is-native' : 'is-hidden',
 			'vc-scroller__wrapper'
 		];
@@ -140,7 +140,7 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		wrapper,
 		content,
 		wrapperStyle,
-		wrapperClassName,
+		wrapperClass,
 		scrollTo,
 
 		scrollX,

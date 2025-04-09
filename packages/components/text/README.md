@@ -99,5 +99,5 @@ const text10 = ref(text.repeat(50));
 | suffix          | 后缀，只有在存在显示不完内容时才会出现 | `string`                  | -                                                                                                                                     | '...' |
 | renderRow       | 自定义渲染               | `Function`                | -                                                                                                                                     | -     |
 | placement       | 弹层的位置               | `string`                  | `top`、`left`、`right`、`bottom`、`bottom-left`、`bottom-right`、`top-left`、`top-right`、`right-top`、`right-bottom`、`left-top`、`left-bottom` | `top` |
-| portalClassName | 外层类名                | `object`、`string`、`Array` | -                                                                                                                                     | -     |
+| portalClass | 外层类名                | `object`、`string`、`Array` | -                                                                                                                                     | -     |
 | portalStyle     | 样式                  | `object`                  | -                                                                                                                                     | -     |

@@ -6,9 +6,9 @@ const barKeys = [
 	'always',
 	'thumbMinSize',
 	'thumbStyle',
-	'thumbClassName',
+	'thumbClass',
 	'trackStyle',
-	'trackClassName',
+	'trackClass',
 	'trackOffsetX',
 	'trackOffsetY',
 	'autoResize',
@@ -32,7 +32,7 @@ export const props = {
 		type: [String, Array, Object] as PropType<StyleValue>,
 		default: '',
 	},
-	wrapperClassName: {
+	wrapperClass: {
 		type: [String, Array, Object] as PropType<StyleValue>,
 		default: '',
 	},
@@ -40,7 +40,7 @@ export const props = {
 		type: [String, Array, Object] as PropType<StyleValue>,
 		default: '',
 	},
-	contentClassName: {
+	contentClass: {
 		type: [String, Array, Object] as PropType<StyleValue>,
 		default: '',
 	},

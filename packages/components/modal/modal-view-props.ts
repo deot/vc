@@ -19,7 +19,7 @@ export const props = {
 		validator: (v: string) => /(small|medium|large)/.test(v),
 		default: 'small'
 	},
-	portalClassName: [Object, String],
+	portalClass: [Object, String],
 	width: {
 		type: Number
 	},

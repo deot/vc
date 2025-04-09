@@ -40,7 +40,7 @@ const handleClick = async () => {
 			},
 			{ 
 				name: 'DELETE', 
-				className: 'test',
+				class: 'test',
 				style: { color: '#ff0000' }, 
 				onClick: this.handlePress 
 			}
@@ -63,25 +63,24 @@ const handlePress = () => {
 
 ### 属性
 
-| 属性               | 说明                               | 类型                        | 可选值                                           | 默认值 |
-| ---------------- | -------------------------------- | ------------------------- | --------------------------------------------- | --- |
-| mask             | 是否显示遮罩（只有在position为bottom的时候才有用） | `boolean`                 | true                                          |     |
-| maskClosable     | 是否允许通过点击遮罩关闭弹窗                   | `boolean`                 | true                                          |     |
-| wrapperClassName | -                                | `object`、`array`、`string` | -                                             |     |
-| wrapperStyle     | -                                | `object`、`array`、`string` | -                                             |     |
-| scrollRegExp     | 判断滑动是否在滚动容器内，防止滚动穿透弹层            | `function`                | `(v) => { return /vc-hack-scroll/.test(v); }` |     |
-| actions          | 面板选项列表                           | `array`                   | -                                             |     |
-| description      | 选项上方的描述信息                        | `string`                  | -                                             |     |
-| cancelText       | 取消按钮文字,为空不展示底部取消按钮               | `string`                  | -                                             |     |
+| 属性           | 说明                               | 类型                        | 可选值                                           | 默认值 |
+| ------------ | -------------------------------- | ------------------------- | --------------------------------------------- | --- |
+| mask         | 是否显示遮罩（只有在position为bottom的时候才有用） | `boolean`                 | true                                          |     |
+| maskClosable | 是否允许通过点击遮罩关闭弹窗                   | `boolean`                 | true                                          |     |
+| wrapperClass | -                                | `object`、`array`、`string` | -                                             |     |
+| wrapperStyle | -                                | `object`、`array`、`string` | -                                             |     |
+| scrollRegExp | 判断滑动是否在滚动容器内，防止滚动穿透弹层            | `function`                | `(v) => { return /vc-hack-scroll/.test(v); }` |     |
+| actions      | 面板选项列表                           | `array`                   | -                                             |     |
+| description  | 选项上方的描述信息                        | `string`                  | -                                             |     |
+| cancelText   | 取消按钮文字,为空不展示底部取消按钮               | `string`                  | -                                             |     |
 
 ### Action 数据结构
 
-| 属性        | 说明                           | 类型                          | 可选值 | 默认值 |
-| --------- | ---------------------------- | --------------------------- | --- | --- |
-| name      | 标题                           | `string`                    | -   |     |
-| subName   | 二级标题                         | `string`                    | -   |     |
-| disabled  | 是否为禁用状态                      | `string`                    | -   |     |
-| disabled  | 是否为禁用状态                      | `string`                    | -   |     |
-| className | 为对应列添加额外的 class              | `string`                    | -   |     |
-| style     | 为对应列添加额外的 style              | `string`、`object`           | -   |     |
-| onClick   | 点击事件, 也可支持`Promise`,`cb`回调关闭 | `(action) => Promise<void>` | -   | -   |
+| 属性       | 说明                           | 类型                          | 可选值 | 默认值 |
+| -------- | ---------------------------- | --------------------------- | --- | --- |
+| name     | 标题                           | `string`                    | -   |     |
+| subName  | 二级标题                         | `string`                    | -   |     |
+| disabled | 是否为禁用状态                      | `string`                    | -   |     |
+| class    | 为对应列添加额外的 class              | `string`                    | -   |     |
+| style    | 为对应列添加额外的 style              | `string`、`object`           | -   |     |
+| onClick  | 点击事件, 也可支持`Promise`,`cb`回调关闭 | `(action) => Promise<void>` | -   | -   |

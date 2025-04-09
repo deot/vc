@@ -1,5 +1,5 @@
 ## 更新`3.x`注意事项
-- 变更属性: `imgClassName-> imageClassName`
+- 变更属性: `imgClass-> imageClass`
 
 
 ## 文件上传(UploadPicker)
@@ -54,15 +54,14 @@ const uploadOptions = ref({
 | max                 | 上传数量的最大值                  | `Number`、`object`    | -                        | ` Number.MAX_SAFE_INTEGER`           |
 | disabled            | 是否禁用                      | `boolean`            | -                        | `false`                              |
 | formatter           | 对上传成功后的数据格式化              | `Function`           | -                        | -                                    |
-| boxClassName        | 上传控件的样式                   | `string`             | -                        | -                                    |
+| boxClass            | 上传控件的样式                   | `string`             | -                        | -                                    |
 | imagePreviewOptions | 图片预览的配置                   | `object`             | -                        | -                                    |
-| imageClassName      | 图片item的样式                 | `string`             | -                        | -                                    |
-| videoClassName      | 视频item的样式                 | `string`             | -                        | -                                    |
-| fileClassName       | 文件item的样式                 | `string`             | -                        | -                                    |
+| imageClass          | 图片item的样式                 | `string`             | -                        | -                                    |
+| videoClass          | 视频item的样式                 | `string`             | -                        | -                                    |
+| fileClass           | 文件item的样式                 | `string`             | -                        | -                                    |
 | urlKey              | 上传成功后那远程地址的key            | `string`             | -                        | `url`                                |
 | gallery             | 图片上传调用商品橱窗,仅在PC组件内有效      | `Function`、`boolean` | -                        | `true`                               |
 | compressOptions     | 图片压缩选项参数                  | `object`             | -                        | { compress: false, // 是否开启图片压缩 ... } |
-
 
 ### 事件
 

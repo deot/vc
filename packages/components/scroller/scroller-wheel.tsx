@@ -38,7 +38,7 @@ export const ScrollerWheel = defineComponent({
 			wrapper,
 			content,
 			wrapperStyle,
-			wrapperClassName,
+			wrapperClass,
 			scrollX,
 			scrollY,
 			wrapperW,
@@ -124,7 +124,7 @@ export const ScrollerWheel = defineComponent({
 			return (
 				<div
 					ref={wrapper}
-					class={[wrapperClassName.value, 'vc-scroller-wheel']}
+					class={[wrapperClass.value, 'vc-scroller-wheel']}
 					style={wrapperStyle.value}
 					onScroll={() => props.native && handleScroll()}
 				>
@@ -152,7 +152,7 @@ export const ScrollerWheel = defineComponent({
 								always={props.always}
 								thumbMinSize={props.thumbMinSize}
 								thumbStyle={props.thumbStyle}
-								thumbClassName={props.thumbClassName}
+								thumbClass={props.thumbClass}
 								trackOffsetX={props.trackOffsetX}
 								trackOffsetY={props.trackOffsetY}
 								onChange={handleBarChange}

@@ -20,7 +20,7 @@ export const props = {
 		default: 30
 	},
 	thumbStyle: [Object, String, Array] as PropType<StyleValue>,
-	thumbClassName: [Object, String, Array] as PropType<StyleValue>,
+	thumbClass: [Object, String, Array] as PropType<StyleValue>,
 	// 轨道偏移值（头尾）
 	offset: {
 		type: Array as PropType<number[]>,

@@ -81,7 +81,7 @@ const handleModal4 = () => {
 		mask: true,
 		closeWithCancel: true,
 		maskClosable: true,
-		portalClassName: 'is-padding-none',
+		portalClass: 'is-padding-none',
 		// draggable: true,
 		onOk: (e) => {
 			return new Promise((resolve, reject) => {

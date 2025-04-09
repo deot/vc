@@ -148,25 +148,25 @@ const value = ref('');
 
 ### 属性
 
-| 属性                | 说明                                                                           | 类型                 | 可选值           | 默认值     |
-| ----------------- | ---------------------------------------------------------------------------- | ------------------ | ------------- | ------- |
-| modelValue        | 绑定的值，用v-model 双向绑定                                                           | `string \ number`  | -             | -       |
-| placeholder       | 占位文本                                                                         | `string`           | -             | -       |
-| disabled          | 禁用输入框                                                                        | `boolean`          | -             | `false` |
-| clearable         | 显示清空按钮                                                                       | `boolean`          | -             | `false` |
-| readonly          | 输入框只读                                                                        | `boolean`          | -             | `false` |
-| maxlength         | 最大输入长度                                                                       | `number`           | -             | -       |
-| autofocus         | 自动获取焦点                                                                       | `boolean`          | -             | `false` |
-| autosize          | textarea 自动是适应高度，可传入对象 {maxRows:2; minRows:2}                                | `boolean \ object` | -             | `false` |
-| rows              | textarea 默认行数                                                                | `number`           | -             | 1       |
-| indicator         | `Input`特有，类型为对象是`{inverted: false}`                                          | `boolean \ object` | -             | `false` |
-| indicateClassName | 计数文字的样式                                                                      | `string`           | -             | -       |
-| textareaStyle     | 输入框的样式，如：{ resize: 'none' }                                                  | `object`           | -             | -       |
-| bytes             | 是否2个字节算一个字                                                                   | `boolean`          | -             | `false` |
-| allowDispatch     | 是否向`form`发送事件                                                                | `boolean`          | -             | `false` |
-| autocomplete      | 输入字段是否应该启用自动完成功能                                                             | `boolean`          | -             | `false` |
-| name              | textarea原生属性，用于对表单数据进行引用                                                     | `string`           | -             | -       |
-| wrap              | wrap 属性规定当在表单中提交时，文本区域（text area）中的文本如何换行。`soft`：不换行；`hard`：换行，必须规定 cols 属性。 | `string`           | `soft`、`hard` | `soft`  |
+| 属性            | 说明                                                                           | 类型                 | 可选值           | 默认值     |
+| ------------- | ---------------------------------------------------------------------------- | ------------------ | ------------- | ------- |
+| modelValue    | 绑定的值，用v-model 双向绑定                                                           | `string \ number`  | -             | -       |
+| placeholder   | 占位文本                                                                         | `string`           | -             | -       |
+| disabled      | 禁用输入框                                                                        | `boolean`          | -             | `false` |
+| clearable     | 显示清空按钮                                                                       | `boolean`          | -             | `false` |
+| readonly      | 输入框只读                                                                        | `boolean`          | -             | `false` |
+| maxlength     | 最大输入长度                                                                       | `number`           | -             | -       |
+| autofocus     | 自动获取焦点                                                                       | `boolean`          | -             | `false` |
+| autosize      | textarea 自动是适应高度，可传入对象 {maxRows:2; minRows:2}                                | `boolean \ object` | -             | `false` |
+| rows          | textarea 默认行数                                                                | `number`           | -             | 1       |
+| indicator     | `Input`特有，类型为对象是`{inverted: false}`                                          | `boolean \ object` | -             | `false` |
+| indicateClass | 计数文字的样式                                                                      | `string`           | -             | -       |
+| textareaStyle | 输入框的样式，如：{ resize: 'none' }                                                  | `object`           | -             | -       |
+| bytes         | 是否2个字节算一个字                                                                   | `boolean`          | -             | `false` |
+| allowDispatch | 是否向`form`发送事件                                                                | `boolean`          | -             | `false` |
+| autocomplete  | 输入字段是否应该启用自动完成功能                                                             | `boolean`          | -             | `false` |
+| name          | textarea原生属性，用于对表单数据进行引用                                                     | `string`           | -             | -       |
+| wrap          | wrap 属性规定当在表单中提交时，文本区域（text area）中的文本如何换行。`soft`：不换行；`hard`：换行，必须规定 cols 属性。 | `string`           | `soft`、`hard` | `soft`  |
 
 rows | textarea 的可见高度 | `string` | - | -
 

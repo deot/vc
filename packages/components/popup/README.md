@@ -241,13 +241,13 @@ const handleCloseTwo = () => {
 :::
 
 ### 自定义外层容器样式
-通过`wrapperClassName`属性设置外层容器样式名，通过`wrapperStyle`属性设置外层容器行内样式。
+通过`wrapperClass`属性设置外层容器样式名，通过`wrapperStyle`属性设置外层容器行内样式。
 
 :::RUNTIME
 ```vue
 <template>
 	<div>
-		<MPopup v-model="show1" :wrapper-class-name="classes" >
+		<MPopup v-model="show1" :wrapper-class="classes" >
 			<div style="height: 200px;" >
 				样式一
 			</div>
@@ -257,7 +257,7 @@ const handleCloseTwo = () => {
 				样式二
 			</div>
 		</MPopup>
-		<MPopup v-model="show3" :wrapper-class-name="classes" :wrapper-style="wrapperStyle">
+		<MPopup v-model="show3" :wrapper-class="classes" :wrapper-style="wrapperStyle">
 			<div style="height: 200px;">
 				样式三
 			</div>
@@ -314,7 +314,7 @@ const handleClick = (index) => {
 | theme            | 主题                               | `string`                  | `dark`、`light`、`none`                                        | `light`  |
 | mask             | 是否显示遮罩（只有在position为bottom的时候才有用） | `boolean`                 | -                                                            | `true`   |
 | maskClosable     | 是否允许通过点击遮罩关闭弹窗                   | `boolean`                 | -                                                            | `true`   |
-| wrapperClassName | 外层容器的Class名                      | `object`、`array`、`string` | -                                                            | -        |
+| wrapperClass | 外层容器的Class名                      | `object`、`array`、`string` | -                                                            | -        |
 | wrapperStyle     | 外层容器的样式                          | `object`、`array`、`string` | -                                                            | -        |
 | scrollRegExp     | 判断滑动是否在滚动容器内，防止滚动穿透弹层            | `Function`                | `void: function(v) { return /vc-hack-scroll/.test(v); }` | -        |
 

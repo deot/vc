@@ -392,7 +392,7 @@ const handleModal3 = () => {
 | scrollable        | 页面是否可以滚动                           | `boolean`           | -                                  | false  |
 | draggable         | 是否可以拖拽                             | `boolean`           | -                                  | false  |
 | close-with-cancel | `主动`关闭时出发cancel事件                  | `boolean`           | -                                  | `true` |
-| portalClassName   | 弹框内容区域的className                   | `string`            | -                                  | -      |
+| portalClass       | 弹框内容区域的className                   | `string`            | -                                  | -      |
 | onOk              | 点击确定回调方法                           | `Function`          | -                                  | -      |
 | onCancel          | 点击取消回调方法                           | `Function`          | -                                  | -      |
 
@@ -452,7 +452,6 @@ const handleModal3 = () => {
 
 
 ```javascript
-
 Modal.info({});
 
 Modal.success({});
@@ -464,7 +463,6 @@ Modal.warning({});
 MModal.alert({});
 
 MModal.operation({});
-
 ```
 
 > 方法同上属性值, 事件使用`onOk`, `onCancel`

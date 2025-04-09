@@ -259,7 +259,7 @@ const handlePlacement = (val) => {
 | trigger           | 触发方式                                | `string`  | 可选值为 `hover`（悬停）`click`（点击）`contextMenu`（右键）`custom`（自定义），使用 custom 时，需配合 `visible` 一起使用                                              | `hover`  |
 | arrow             | 是否带三角指向                             | `boolean` | -                                                                                                                                     | `false`  |
 | placement         | 菜单弹出位置                              | `string`  | `top`、`left`、`right`、`bottom`、`bottom-left`、`bottom-right`、`top-left`、`top-right`、`right-top`、`right-bottom`、`left-top`、`left-bottom` | `bottom` |
-| portal-class-name | 开启 portal 时，给浮层添加额外的 class 名称       | `string`  | -                                                                                                                                     | -        |
+| portal-class | 开启 portal 时，给浮层添加额外的 class 名称       | `string`  | -                                                                                                                                     | -        |
 
 ### DropdownItem属性
 属性 | 说明 | 类型 | 可选值 | 默认值

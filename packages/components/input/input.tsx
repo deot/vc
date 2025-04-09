@@ -23,7 +23,7 @@ export const Input = defineComponent({
 			type: [Boolean, Object] as PropType<boolean | ({ inline: boolean; inverted: boolean })>,
 			default: false
 		},
-		indicateClassName: String
+		indicateClass: String
 	},
 	emits: [
 		'update:modelValue',
@@ -151,11 +151,11 @@ export const Input = defineComponent({
 												? <Icon type={props.append} />
 												: showIndicatorInline.value
 													? (
-														<span
-															class={['vc-input__indicator is-in', props.indicateClassName]}
-														>
-															{ indicatorNum.value }
-														</span>
+															<span
+																class={['vc-input__indicator is-in', props.indicateClass]}
+															>
+																{ indicatorNum.value }
+															</span>
 														)
 													: null
 										)
@@ -167,7 +167,7 @@ export const Input = defineComponent({
 					{
 						props.indicator && !showIndicatorInline.value && (
 							<span
-								class={['vc-input__indicator is-out', props.indicateClassName]}
+								class={['vc-input__indicator is-out', props.indicateClass]}
 							>
 								{ indicatorNum.value }
 							</span>

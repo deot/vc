@@ -44,10 +44,10 @@ const handleClick = () => {
 };
 
 const renderRow = (props) => {
-	const { style, className, name, value, date, afterText, onClickShow } = props;
+	const { style, class, name, value, date, afterText, onClickShow } = props;
 
 	return (
-		<div class={className} style={style} onClick={onClickShow}>
+		<div class={class} style={style} onClick={onClickShow}>
 			{date.toString()}:{name}:{value}{afterText}
 		</div>
 	);

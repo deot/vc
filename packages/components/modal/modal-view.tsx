@@ -352,27 +352,27 @@ export const ModalView = defineComponent({
 									{
 										!slots.header
 											? (
-												<Fragment>
-													<div class="vc-modal__title" innerHTML={props.title} />
-													{
-														props.closable && !props.mode && (
-															<div
-																class="vc-modal__close"
-																onClick={e => handleClose(e, true)}
-															>
-																<Icon type="close" />
-															</div>
-														)
-													}
+													<Fragment>
+														<div class="vc-modal__title" innerHTML={props.title} />
+														{
+															props.closable && !props.mode && (
+																<div
+																	class="vc-modal__close"
+																	onClick={e => handleClose(e, true)}
+																>
+																	<Icon type="close" />
+																</div>
+															)
+														}
 
-												</Fragment>
+													</Fragment>
 												)
 											: slots.header()
 									}
 								</div>
 								<div
 									ref={content}
-									class={[{ 'is-confirm': props.mode }, props.portalClassName, 'vc-modal__content']}
+									class={[{ 'is-confirm': props.mode }, props.portalClass, 'vc-modal__content']}
 								>
 									{
 										typeof props.content === 'string'
@@ -390,28 +390,28 @@ export const ModalView = defineComponent({
 											{
 												!slots.footer
 													? (
-														<Fragment>
-															{
-																props.cancelText && (
-																	<Button
-																		style="margin-right: 8px;"
-																		onClick={e => handleBefore(e, handleCancel)}
-																	>
-																		{ props.cancelText }
-																	</Button>
-																)
-															}
-															{
-																props.okText && (
-																	<Button
-																		type="primary"
-																		onClick={e => handleBefore(e, handleOk)}
-																	>
-																		{ props.okText }
-																	</Button>
-																)
-															}
-														</Fragment>
+															<Fragment>
+																{
+																	props.cancelText && (
+																		<Button
+																			style="margin-right: 8px;"
+																			onClick={e => handleBefore(e, handleCancel)}
+																		>
+																			{ props.cancelText }
+																		</Button>
+																	)
+																}
+																{
+																	props.okText && (
+																		<Button
+																			type="primary"
+																			onClick={e => handleBefore(e, handleOk)}
+																		>
+																			{ props.okText }
+																		</Button>
+																	)
+																}
+															</Fragment>
 														)
 													: slots.footer?.()
 											}
