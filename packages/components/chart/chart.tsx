@@ -1,17 +1,17 @@
 /** @jsxImportSource vue */
 
 import { defineComponent } from 'vue';
-import { props as echartsProps } from './echarts-props';
+import { props as chartProps } from './chart-props';
 
-const COMPONENT_NAME = 'vc-echarts';
+const COMPONENT_NAME = 'vc-chart';
 
-export const Echarts = defineComponent({
+export const Chart = defineComponent({
 	name: COMPONENT_NAME,
-	props: echartsProps,
+	props: chartProps,
 	setup(props, { slots }) {
 		return () => {
 			return (
-				<div class="vc-echarts">
+				<div class="vc-chart">
 					{ slots?.default?.() }
 				</div>
 			);

@@ -1,12 +1,12 @@
 [link]: https://www.echartsjs.com/zh/option.html#title
 
-## 功能（Echarts）
-Echarts图表
+## 功能（Chart）
+Chart图表
 
 ### 何时使用
 
 - 展示可视化的图表
-- 参照Echarts官方配置[文档][link]
+- 参照ECharts官方配置[文档][link]
 
 ### 基础用法
 
@@ -16,12 +16,12 @@ Echarts图表
 ```vue
 <template>
 	<div style="height: 320px;">
-		<Echarts :options="options"/>
+		<Chart :options="options"/>
 	</div>
 </template>
 <script setup>
 import { computed } from 'vue';
-import { Echarts, Button } from '@deot/vc';
+import { Chart, Button } from '@deot/vc';
 
 const options = computed(() => {
 	let data = [];
@@ -79,13 +79,13 @@ const options = computed(() => {
 		<p>当前设置autoResize为true<p>
 		<Button @click="handleClick">改变容器大小</Button>
 		<div :style="{height: wrapperHeight}">
-			<Echarts :options="options" :auto-resize="true"/>
+			<Chart :options="options" :auto-resize="true"/>
 		</div>
 	</div>
 </template>
 <script setup>
 import { computed, ref } from 'vue';
-import { Echarts, Button } from '@deot/vc';
+import { Chart, Button } from '@deot/vc';
 
 const wrapperHeight = ref('320px');
 const options = computed(() => {
@@ -142,6 +142,6 @@ const handleClick = () => {
 ### 基础属性
 | 属性          | 说明                                 | 类型        | 可选值 | 默认值     |
 | ----------- | ---------------------------------- | --------- | --- | ------- |
-| options     | 图表配置，参照Echarts官方配置[文档][link]       | `object`  | -   | -       |
+| options     | 图表配置，参照Chart官方配置[文档][link]       | `object`  | -   | -       |
 | auto-resize | 指定 ECharts 实例在组件根元素尺寸变化时是否需要自动进行重绘 | `boolean` | -   | `false` |
 

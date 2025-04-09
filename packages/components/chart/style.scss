@@ -1,6 +1,6 @@
 @use '../style/helper' as *;
 
-$component-name: vc-echarts;
+$component-name: vc-chart;
 
 @include block($component-name) {
 }

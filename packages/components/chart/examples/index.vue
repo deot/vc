@@ -1,11 +1,11 @@
 <template>
 	<div>
-		<Echarts>
+		<Chart>
 			TODO: // ....
-		</Echarts>
+		</Chart>
 	</div>
 </template>
 <script setup>
-import { Echarts } from '..';
+import { Chart } from '..';
 
 </script>
