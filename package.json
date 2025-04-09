@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "custom helpers",
   "type": "module",
+  "packageManager": "pnpm@latest",
   "scripts": {
     "prepare": "husky",
     "init": "npx pnpm install",

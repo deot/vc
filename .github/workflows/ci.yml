@@ -46,7 +46,7 @@ jobs:
         run: npm run typecheck
 
       - name: Run unit tests
-        run: npm run test -- --package-name '*'
+        run: npm run test -- --package-name '*' --no-coverage
 
       - name: Run build
         run: npm run build

@@ -10,6 +10,6 @@ describe('index.ts', () => {
 	it('create', async () => {
 		const wrapper = mount(() => (<ToastView />));
 
-		expect(wrapper.classes()).toContain('vc-toast');
+		expect(wrapper.classes()).toContain('vcm-toast');
 	});
 });
