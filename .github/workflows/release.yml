@@ -9,6 +9,12 @@ on:
         required: true
         type: boolean
 
+      coverage: 
+        description: 'Test Coverage'
+        default: true
+        required: true
+        type: boolean
+
       push: 
         description: 'Allow Git Push'
         default: true
@@ -118,6 +124,7 @@ jobs:
           npm run release --
           --${{ inputs.version }}
           ${{ !inputs.dryRun  && '--no-dry-run' || '' }}
+          ${{ !inputs.coverage  && '--no-coverage' || '' }}
           ${{ !inputs.push && '--no-push' || '' }}
           ${{ !inputs.publish && '--no-publish' || '' }}
           ${{ !inputs.tag && '--no-tag' || '' }}
