@@ -6,7 +6,7 @@
 			pullable
 			:cols="5"
 			:disabled="disabled"
-			:data-source="dataSource"
+			:data="dataSource"
 			:page-size="pageSize" 
 			:load-data="loadData"
 			:scroller-options="{

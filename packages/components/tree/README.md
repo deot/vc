@@ -15,7 +15,7 @@
 <template>
 	<div>
 		<Tree 
-			:data-source="data"
+			:data="data"
 			@node-click="handleNodeClick"  />
 	</div>
 </template>
@@ -76,7 +76,7 @@ const handleNodeClick = (nodeData, node, nodeRef) => {
 <template>
 	<div>
 		<Tree 
-			:data-source="data"
+			:data="data"
 			show-checkbox
 			@check-change="handleCheckChange"  />
 	</div>
@@ -136,7 +136,7 @@ const handleCheckChange = (data, checked, indeterminate) => {
 <template>
 	<div>
 		<Tree 
-			:data-source="data"
+			:data="data"
 			:load-data="loadData"
 			lazy
 			show-checkbox
@@ -217,7 +217,7 @@ const handleCheckChange = (data, checked, indeterminate) => {
 <template>
 	<div>
 		<Tree 
-			:data-source="data"
+			:data="data"
 			show-checkbox/>
 	</div>
 </template>
@@ -275,7 +275,7 @@ const data = ref([{
 	<div>
 		<Tree 
 			ref="tree"
-			:data-source="data"
+			:data="data"
 			:render-content="renderContent"
 			show-checkbox
 			default-expand-all
@@ -378,7 +378,7 @@ const resetChecked = () => {
 <template>
 	<div>
 		<Tree 
-			:data-source="data"
+			:data="data"
 			accordion
 			@node-click="handleNodeClick"  />
 	</div>
@@ -437,7 +437,7 @@ const handleNodeClick = (data) => {
 <template>
 	<div>
 		<Tree 
-			:data-source="data"
+			:data="data"
 			default-expand-all
 			draggable
 			@node-drag-start="handleDragStart"
@@ -526,7 +526,7 @@ const allowDrag = (draggingNode) => {
 ### 属性
 属性 | 说明 | 类型 | 可选值 | 默认值
 ---|---|---|---|---
-data-scource | 展示数据 | `array` | — | —
+data | 展示数据 | `array` | — | —
 empty-text | 内容为空的时候展示的文本 | `string` | — | — 
 tree-props | 配置选项，具体看下表 | `object` | — | —
 render-after-expand | 是否在第一次展开某个树节点后才渲染其子节点 | `boolean` | — | `true` 

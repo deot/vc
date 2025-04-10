@@ -12,7 +12,7 @@
 <template>
 	<div class="vcm-picker-basic">
 		<vcm-picker
-			:data-source="dataSource"
+			:data="dataSource"
 			:cascade="true"
 			:cols="3"
 			v-model="value"
@@ -21,7 +21,7 @@
 			@cancel="handleCancel"
 		/>
 		<vcm-picker
-			:data-source="dataAsyncSource"
+			:data="dataAsyncSource"
 			:cascade="true"
 			:cols="3"
 			:load-data="loadData"
@@ -34,7 +34,7 @@
 			</template>
 		</vcm-picker>
 		<vcm-picker
-			:data-source="dataSeasons"
+			:data="dataSeasons"
 			:cascade="false"
 			:cols="2"
 			v-model="valueSeasons"
@@ -214,7 +214,7 @@ const dataSource = ref([{
 }]);
 const handleClick = () => {
 	MPicker.open({
-		dataSource: dataSource.value,
+		data: dataSource.value,
 		value: ["110000", "110100", "110101"],
 		cols: 3,
 		onOk: (value, label) => {
@@ -279,7 +279,7 @@ picker的选择组件，没有弹层。
 <template>
 	<MPickerView
 		v-model="formData.addr"
-		:data-source="dataSource"
+		:data="dataSource"
 		:cascade="true"
 		:cols="3"
 		@change="handleChange"

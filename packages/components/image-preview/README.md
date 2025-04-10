@@ -16,7 +16,7 @@
 ```vue
 <template>
 	<div>
-		<ImagePreview :data-source="dataSource" />
+		<ImagePreview :data="dataSource" />
 	</div>
 </template>
 <script setup lang="jsx">
@@ -69,11 +69,11 @@ const dataSource = ref([
 	<div>
 		<!-- 自定义 renderRow -->
 		<p>通过renderRow自定义</p>	
-		<ImagePreview :data-source="dataSource" :render-row="renderRow" />
+		<ImagePreview :data="dataSource" :render-row="renderRow" />
 		
 		<!-- 自定义 renderRow -->
 		<p>通过slot自定义</p>	
-		<ImagePreview :data-source="dataSource">
+		<ImagePreview :data="dataSource">
 			<template #row="it">
 				<img 
 					:key="it.index" 
@@ -142,7 +142,7 @@ const renderRow = (props, parent) => {
 <template>
 	<div>
 		<!-- 自定义 operate -->
-		<ImagePreview :data-source="dataSource">
+		<ImagePreview :data="dataSource">
 			<template #operate="it">
 				<div @click="it.show($event, it.index)">
 					{{ it.index }}
@@ -257,7 +257,7 @@ const handleClick = (e) => {
 	}
 	ImagePreview.open({
 		visible: true,
-		dataSource: dataSource.value,
+		data: dataSource.value,
 		options: {
 			index: 2,
 			history: false,
@@ -275,7 +275,7 @@ const handleClick = (e) => {
 
 | 属性          | 说明             | 类型                               | 可选值 | 默认值 |
 | ----------- | -------------- | -------------------------------- | --- | --- |
-| dataSource  | 源数据            | `array<object>`; `array<String>` | -   | -   |
+| data        | 源数据            | `array<object>`; `array<String>` | -   | -   |
 | options     | photoSwipe参数   | `object`                         | -   | -   |
 | events      | photoSwipe事件   | `object`                         | -   | -   |
 | actionBar   | 工具栏扩展          | `array`                          | -   | -   |
@@ -284,6 +284,7 @@ const handleClick = (e) => {
 | itemClass   | item的className | `string`                         | -   | -   |
 | renderRow   | 自定义渲染内容        | `(props, parent) => jsx`         | -   |     |
 | elementId   | 外层标识           | `string`                         | -   | -   |
+
 
 
 ### 事件

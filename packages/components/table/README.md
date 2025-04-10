@@ -93,7 +93,7 @@
 :::RUNTIME
 ```vue
 <template>
-	<Table :data-source="tableData1" @row-click="handleClick">
+	<Table :data="tableData1" @row-click="handleClick">
 		<TableItem>
 			<TableColumn
 				prop="date"
@@ -156,7 +156,7 @@ const handleClick = (row, column, cell, event) => {
 :::RUNTIME
 ```vue
 <template>
-	<Table :data-source="tableData2" stripe >
+	<Table :data="tableData2" stripe >
 		<TableItem>
 			<TableColumn
 				prop="date"
@@ -210,7 +210,7 @@ const tableData2 = ref([
 :::RUNTIME
 ```vue
 <template>
-	<Table :data-source="tableData3" border >
+	<Table :data="tableData3" border >
 		<TableItem>
 			<TableColumn
 				prop="date"
@@ -264,7 +264,7 @@ const tableData3 = ref([
 :::RUNTIME
 ```vue
 <template>
-	<Table :data-source="tableData4" :row-class="tableRowClass">
+	<Table :data="tableData4" :row-class="tableRowClass">
 		<TableItem>
 			<TableColumn
 				prop="date"
@@ -334,7 +334,7 @@ const tableRowClass = ({ row, rowIndex}) => {
 :::RUNTIME
 ```vue
 <template>
-	<Table :data-source="tableData5" border stripe height="250">
+	<Table :data="tableData5" border stripe height="250">
 		<TableItem>
 			<TableColumn
 				prop="date"
@@ -396,7 +396,7 @@ const tableData5 = ref([{
 :::RUNTIME
 ```vue
 <template>
-	<Table :data-source="tableData5" border stripe height="250">
+	<Table :data="tableData5" border stripe height="250">
 		<TableItem>
 			<TableColumn
 				prop="date"
@@ -487,7 +487,7 @@ const tableData5 = ref([{
 :::RUNTIME
 ```vue
 <template>
-	<Table :data-source="tableData" border stripe >
+	<Table :data="tableData" border stripe >
 		<TableItem>
 			<TableColumn
 				type="selection"
@@ -547,7 +547,7 @@ const tableData = ref([
 ```vue
 <template>
 	<Table 
-		:data-source="dataSource"
+		:data="dataSource"
 		:default-sort="defaultSort"
 		@sort-change="handleSort"
 	>
@@ -614,7 +614,7 @@ const handleSort = (sortInfo) => {
 :::RUNTIME
 ```vue
 <template>
-	<Table :data-source="dataSource">
+	<Table :data="dataSource">
 		<TableItem>
 			<TableColumn
 				prop="date"
@@ -684,7 +684,7 @@ const handleFilter = (value) => {
 	<Table
 		ref="table"
 		:key="key"
-		:data-source="dataSource"
+		:data="dataSource"
 		:load-expand="loadExpand"
 		:expand-selectable="true"
 		lazy
@@ -805,7 +805,7 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 ### Table props
 | 属性                      | 说明                                                                                                                                         | 类型                                                         | 可选值                         | 默认值     |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | --------------------------- | ------- |
-| data-source             | 显示的数据                                                                                                                                      | `Array`                                                    | -                           | -       |
+| data                    | 显示的数据                                                                                                                                      | `Array`                                                    | -                           | -       |
 | height                  | `Table` 的高度，默认为自动高度。如果 `height` 为 `number` 类型，单位 px；如果 `height` 为 `string` 类型，则这个高度会设置为 `Table` 的 style.height 的值，Table 的高度会受控于外部样式。       | `string`、`number`                                          | -                           | -       |
 | max-height              | `Table` 的最大高度                                                                                                                              | `string`、`number`                                          | -                           | -       |
 | stripe                  | 是否为斑马纹 `table`                                                                                                                             | `boolean`                                                  | -                           | `false` |

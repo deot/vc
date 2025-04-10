@@ -458,17 +458,17 @@ export const RecycleList = defineComponent({
 		const setDataSource = async (v: any, oldV: any) => {
 			if (!Array.isArray(v) || oldV === v) return;
 
-			if (props.dataSource.length % props.pageSize > 0) {
+			if (props.data.length % props.pageSize > 0) {
 				isEnd.value = true;
 			} else {
 				promiseStack = Array
-					.from({ length: Math.ceil(props.dataSource.length / props.pageSize) })
+					.from({ length: Math.ceil(props.data.length / props.pageSize) })
 					.map(() => Promise.resolve());
 			}
 
 			originalData = [];
-			// 这里不要originalData = toRaw(props.dataSource);
-			props.dataSource.forEach((i, index) => {
+			// 这里不要originalData = toRaw(props.data);
+			props.data.forEach((i, index) => {
 				originalData[index] = i;
 			});
 
@@ -497,7 +497,7 @@ export const RecycleList = defineComponent({
 		);
 
 		watch(
-			() => props.dataSource,
+			() => props.data,
 			setDataSource,
 			{ immediate: true }
 		);

@@ -17,13 +17,13 @@
 			<p style="text-align: center;">默认click触发子菜单</p>	
 			<Cascader 
 				v-model="value" 
-				:data-source="dataSource" />
+				:data="dataSource" />
 		</div>
 		<div>
 			<p style="text-align: center;">hover 触发子菜单</p>	
 			<Cascader 
 				v-model="value" 
-				:data-source="dataSource"
+				:data="dataSource"
 				trigger="hover" />
 		</div>	
 	</div>
@@ -95,7 +95,7 @@ const dataSource = ref([
 		<Cascader 
 			style="width: 200px;"
 			v-model="value" 
-			:data-source="dataSource" 
+			:data="dataSource" 
 			:load-data="loadData"/>
 	</div>
 </template>
@@ -144,7 +144,7 @@ const loadData = () => {
 	<Cascader 
 		style="width: 200px;"
 		v-model="value" 
-		:data-source="dataSource"
+		:data="dataSource"
 		clearable 
 	/>
 </template>
@@ -207,7 +207,7 @@ const dataSource = ref([
 	<Cascader 
 		style="width: 200px;"
 		v-model="value" 
-		:data-source="dataSource"
+		:data="dataSource"
 		:formatter="formatter" 
 	/>
 </template>
@@ -275,7 +275,7 @@ const formatter = (v) => {
 	<Cascader 
 		style="width: 200px;"
 		v-model="value" 
-		:data-source="dataSource"
+		:data="dataSource"
 		changeOnSelect 
 	/>
 </template>
@@ -339,7 +339,7 @@ const formatter = (v) => {
 
 | 属性             | 说明                    | 类型         | 可选值                                                                                                                                   | 默认值                                  |
 | -------------- | --------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| data-source    | 可选项的数据源，格式参照示例说明      | `array`    | -                                                                                                                                     | `[]`                                 |
+| data           | 可选项的数据源，格式参照示例说明      | `array`    | -                                                                                                                                     | `[]`                                 |
 | modelValue     | 当前已选项的数据，格式参照示例说明     | `array`    | -                                                                                                                                     | `[]`                                 |
 | formatter      | 选择后展示的函数，用于自定义显示格式    | `function` | -                                                                                                                                     | `(label: string) => label.join(',')` |
 | disabled       | 是否禁用选择器               | `boolean`  | -                                                                                                                                     | `false`                              |

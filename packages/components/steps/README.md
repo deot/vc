@@ -12,7 +12,7 @@
 	<div style="padding: 20px">
 		<StepsBar 
 			v-model="current"
-			:data-source="dataSource"
+			:data="dataSource"
 			@change="handleChange"
 		/>
 		<Steps :current="2" style="margin-top: 20px">

@@ -3,7 +3,7 @@ import type { Render } from '../customer/types';
 import type { Props as ScrollerProps } from '../scroller/scroller-props';
 
 export const props = {
-	dataSource: {
+	data: {
 		type: Array,
 		default: () => ([])
 	},
