@@ -19,6 +19,16 @@
     "access": "public"
   },
   "dependencies": {
+    "@deot/vc-components": "*",
+    "@deot/vc-hooks": "*",
   	"@deot/vc-shared": "*"
+  },
+  "peerDependencies": {
+    "vue": "*"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    }
   }
 }

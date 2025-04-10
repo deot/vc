@@ -1,1 +1,1 @@
-export * from './index';
+export { Debounce as MDebounce } from './index';

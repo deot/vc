@@ -39,9 +39,18 @@ importers:
 
   packages/index:
     dependencies:
+      '@deot/vc-components':
+        specifier: '*'
+        version: link:../components
+      '@deot/vc-hooks':
+        specifier: '*'
+        version: link:../hooks
       '@deot/vc-shared':
         specifier: '*'
         version: link:../shared
+      vue:
+        specifier: '*'
+        version: 3.5.13(typescript@5.7.3)
 
   packages/shared: {}
 

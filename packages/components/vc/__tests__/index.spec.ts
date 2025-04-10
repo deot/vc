@@ -1,5 +1,4 @@
-import { createApp } from 'vue';
-import { VcError, VcInstance, install } from '@deot/vc-components';
+import { VcError, VcInstance } from '@deot/vc-components';
 import { Utils } from '@deot/dev-test';
 
 // @vitest-environment jsdom
@@ -7,7 +6,6 @@ describe('index.ts', () => {
 	it('basic', () => {
 		expect(typeof VcError).toBe('function');
 		expect(typeof VcInstance).toBe('object');
-		expect(typeof install).toBe('function');
 	});
 
 	it('VcError', () => {
@@ -41,12 +39,5 @@ describe('index.ts', () => {
 		await Utils.sleep(10);
 
 		expect(VcInstance.globalEvent).toBe(event);
-	});
-
-	it('install', async () => {
-		const app = createApp({});
-
-		install(app, {});
-		expect(app.config.globalProperties.$vc).toBe(VcInstance);
 	});
 });
