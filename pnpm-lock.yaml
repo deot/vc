@@ -10,7 +10,7 @@ importers:
     devDependencies:
       '@deot/dev':
         specifier: ^2.9.3
-        version: 2.9.3(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(eslint@9.24.0)(postcss@8.5.3)(sass@1.86.3)(stylelint@16.18.0(typescript@5.8.3))(tsx@4.19.3)(typescript@5.8.3)(vite@6.1.0(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)
+        version: 2.9.3(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(eslint@9.24.0)(postcss@8.5.2)(sass@1.86.3)(stylelint@16.18.0(typescript@5.8.3))(tsx@4.19.3)(typescript@5.8.3)(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)
 
   packages/components:
     dependencies:
@@ -40,13 +40,13 @@ importers:
   packages/index:
     dependencies:
       '@deot/vc-components':
-        specifier: '*'
+        specifier: ^1.0.1
         version: link:../components
       '@deot/vc-hooks':
-        specifier: '*'
+        specifier: ^1.0.1
         version: link:../hooks
       '@deot/vc-shared':
-        specifier: '*'
+        specifier: ^1.0.1
         version: link:../shared
       vue:
         specifier: '*'
@@ -4467,14 +4467,14 @@ snapshots:
       - tsx
       - yaml
 
-  '@deot/dev-cli@2.9.2(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(sass@1.86.3)(tsx@4.19.3)(typescript@5.8.3)(vite@6.1.0(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)':
+  '@deot/dev-cli@2.9.2(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(sass@1.86.3)(tsx@4.19.3)(typescript@5.8.3)(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)':
     dependencies:
       '@deot/dev-adder': 2.9.1(@types/node@22.14.0)
       '@deot/dev-builder': 2.9.1(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.0)
       '@deot/dev-linker': 2.9.1
       '@deot/dev-releaser': 2.9.2(@types/node@22.14.0)
       '@deot/dev-shared': 2.9.1
-      '@deot/dev-tester': 2.9.1(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(sass@1.86.3)(tsx@4.19.3)(typescript@5.8.3)(vite@6.1.0(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)
+      '@deot/dev-tester': 2.9.1(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(sass@1.86.3)(tsx@4.19.3)(typescript@5.8.3)(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)
       '@deot/dev-updater': 2.9.1
       commander: 13.1.0
     transitivePeerDependencies:
@@ -4570,19 +4570,6 @@ snapshots:
       chalk: 5.4.1
       ora: 8.2.0
 
-  '@deot/dev-react@2.9.1(@testing-library/dom@9.3.3)(@types/react-dom@18.2.18)(@types/react@18.2.45)(vite@6.1.0(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))':
-    dependencies:
-      '@testing-library/react': 16.3.0(@testing-library/dom@9.3.3)(@types/react-dom@18.2.18)(@types/react@18.2.45)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      '@vitejs/plugin-react-swc': 3.8.1(vite@6.1.0(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))
-      react: 19.1.0
-      react-dom: 19.1.0(react@19.1.0)
-    transitivePeerDependencies:
-      - '@swc/helpers'
-      - '@testing-library/dom'
-      - '@types/react'
-      - '@types/react-dom'
-      - vite
-
   '@deot/dev-react@2.9.1(@testing-library/dom@9.3.3)(@types/react-dom@18.2.18)(@types/react@18.2.45)(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))':
     dependencies:
       '@testing-library/react': 16.3.0(@testing-library/dom@9.3.3)(@types/react-dom@18.2.18)(@types/react@18.2.45)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -4609,10 +4596,10 @@ snapshots:
 
   '@deot/dev-shared@2.9.1': {}
 
-  '@deot/dev-stylelint@2.9.2(postcss@8.5.3)(stylelint@16.18.0(typescript@5.8.3))':
+  '@deot/dev-stylelint@2.9.2(postcss@8.5.2)(stylelint@16.18.0(typescript@5.8.3))':
     dependencies:
       '@stylistic/stylelint-plugin': 3.1.2(stylelint@16.18.0(typescript@5.8.3))
-      stylelint-config-standard-scss: 14.0.0(postcss@8.5.3)(stylelint@16.18.0(typescript@5.8.3))
+      stylelint-config-standard-scss: 14.0.0(postcss@8.5.2)(stylelint@16.18.0(typescript@5.8.3))
       stylelint-order: 6.0.4(stylelint@16.18.0(typescript@5.8.3))
     transitivePeerDependencies:
       - postcss
@@ -4629,9 +4616,9 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@deot/dev-tester@2.9.1(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(sass@1.86.3)(tsx@4.19.3)(typescript@5.8.3)(vite@6.1.0(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)':
+  '@deot/dev-tester@2.9.1(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(sass@1.86.3)(tsx@4.19.3)(typescript@5.8.3)(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)':
     dependencies:
-      '@deot/dev-react': 2.9.1(@testing-library/dom@9.3.3)(@types/react-dom@18.2.18)(@types/react@18.2.45)(vite@6.1.0(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))
+      '@deot/dev-react': 2.9.1(@testing-library/dom@9.3.3)(@types/react-dom@18.2.18)(@types/react@18.2.45)(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))
       '@deot/dev-shared': 2.9.1
       '@deot/dev-vue': 2.9.1(@types/node@22.14.0)(@vue/compiler-sfc@3.5.13)(sass@1.86.3)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.0)
       '@vitest/coverage-istanbul': 3.1.1(vitest@3.1.1(@types/node@22.14.0)(jsdom@26.0.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))
@@ -4702,11 +4689,11 @@ snapshots:
       - typescript
       - yaml
 
-  '@deot/dev@2.9.3(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(eslint@9.24.0)(postcss@8.5.3)(sass@1.86.3)(stylelint@16.18.0(typescript@5.8.3))(tsx@4.19.3)(typescript@5.8.3)(vite@6.1.0(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)':
+  '@deot/dev@2.9.3(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(eslint@9.24.0)(postcss@8.5.2)(sass@1.86.3)(stylelint@16.18.0(typescript@5.8.3))(tsx@4.19.3)(typescript@5.8.3)(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)':
     dependencies:
       '@deot/dev-adder': 2.9.1(@types/node@22.14.0)
       '@deot/dev-builder': 2.9.1(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.0)
-      '@deot/dev-cli': 2.9.2(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(sass@1.86.3)(tsx@4.19.3)(typescript@5.8.3)(vite@6.1.0(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)
+      '@deot/dev-cli': 2.9.2(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(sass@1.86.3)(tsx@4.19.3)(typescript@5.8.3)(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)
       '@deot/dev-commitlint': 2.9.1
       '@deot/dev-deps': 2.9.1
       '@deot/dev-dever': 2.9.1(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(sass@1.86.3)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.0)
@@ -4714,9 +4701,9 @@ snapshots:
       '@deot/dev-linker': 2.9.1
       '@deot/dev-releaser': 2.9.2(@types/node@22.14.0)
       '@deot/dev-shared': 2.9.1
-      '@deot/dev-stylelint': 2.9.2(postcss@8.5.3)(stylelint@16.18.0(typescript@5.8.3))
+      '@deot/dev-stylelint': 2.9.2(postcss@8.5.2)(stylelint@16.18.0(typescript@5.8.3))
       '@deot/dev-test': 2.9.1(typescript@5.8.3)
-      '@deot/dev-tester': 2.9.1(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(sass@1.86.3)(tsx@4.19.3)(typescript@5.8.3)(vite@6.1.0(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)
+      '@deot/dev-tester': 2.9.1(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(sass@1.86.3)(tsx@4.19.3)(typescript@5.8.3)(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)
       '@deot/dev-updater': 2.9.1
     transitivePeerDependencies:
       - '@edge-runtime/vm'
@@ -5760,13 +5747,6 @@ snapshots:
 
   '@unrs/resolver-binding-win32-x64-msvc@1.4.1':
     optional: true
-
-  '@vitejs/plugin-react-swc@3.8.1(vite@6.1.0(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))':
-    dependencies:
-      '@swc/core': 1.11.18
-      vite: 6.1.0(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0)
-    transitivePeerDependencies:
-      - '@swc/helpers'
 
   '@vitejs/plugin-react-swc@3.8.1(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))':
     dependencies:
@@ -7866,9 +7846,9 @@ snapshots:
     dependencies:
       postcss: 8.5.3
 
-  postcss-scss@4.0.9(postcss@8.5.3):
+  postcss-scss@4.0.9(postcss@8.5.2):
     dependencies:
-      postcss: 8.5.3
+      postcss: 8.5.2
 
   postcss-selector-parser@6.1.2:
     dependencies:
@@ -8239,26 +8219,26 @@ snapshots:
       postcss: 8.5.3
       postcss-selector-parser: 6.1.2
 
-  stylelint-config-recommended-scss@14.1.0(postcss@8.5.3)(stylelint@16.18.0(typescript@5.8.3)):
+  stylelint-config-recommended-scss@14.1.0(postcss@8.5.2)(stylelint@16.18.0(typescript@5.8.3)):
     dependencies:
-      postcss-scss: 4.0.9(postcss@8.5.3)
+      postcss-scss: 4.0.9(postcss@8.5.2)
       stylelint: 16.18.0(typescript@5.8.3)
       stylelint-config-recommended: 14.0.1(stylelint@16.18.0(typescript@5.8.3))
       stylelint-scss: 6.11.0(stylelint@16.18.0(typescript@5.8.3))
     optionalDependencies:
-      postcss: 8.5.3
+      postcss: 8.5.2
 
   stylelint-config-recommended@14.0.1(stylelint@16.18.0(typescript@5.8.3)):
     dependencies:
       stylelint: 16.18.0(typescript@5.8.3)
 
-  stylelint-config-standard-scss@14.0.0(postcss@8.5.3)(stylelint@16.18.0(typescript@5.8.3)):
+  stylelint-config-standard-scss@14.0.0(postcss@8.5.2)(stylelint@16.18.0(typescript@5.8.3)):
     dependencies:
       stylelint: 16.18.0(typescript@5.8.3)
-      stylelint-config-recommended-scss: 14.1.0(postcss@8.5.3)(stylelint@16.18.0(typescript@5.8.3))
+      stylelint-config-recommended-scss: 14.1.0(postcss@8.5.2)(stylelint@16.18.0(typescript@5.8.3))
       stylelint-config-standard: 36.0.1(stylelint@16.18.0(typescript@5.8.3))
     optionalDependencies:
-      postcss: 8.5.3
+      postcss: 8.5.2
 
   stylelint-config-standard@36.0.1(stylelint@16.18.0(typescript@5.8.3)):
     dependencies:
