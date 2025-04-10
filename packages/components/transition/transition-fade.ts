@@ -8,7 +8,8 @@ export const TransitionFade = defineComponent({
 	name: COMPONENT_NAME,
 	props: {
 		...transitionProps,
-		styles: {
+		// inheritAttrs必须是false
+		style: {
 			type: Object,
 			default: () => ({
 				animationFillMode: 'both',

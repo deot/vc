@@ -14,7 +14,8 @@ export const TransitionScale = defineComponent({
 			default: 'both',
 			validator: (v: string) => /(part|both|y|x|none)/.test(v)
 		},
-		styles: {
+		// inheritAttrs必须是false
+		style: {
 			type: Object,
 			default: () => ({
 				animationFillMode: 'both',

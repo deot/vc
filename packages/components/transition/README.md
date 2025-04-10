@@ -206,7 +206,7 @@ const handleDel = () => {
 | delay    | 进入/离开延迟时间                          | `number`、`object` | -   | `{enter: 0.3, leave: 0.3}` |
 | tag      | 同`transition-group` tag            | `string`          | -   | `span`                     |
 | origin   | 变换的初始位置, 可以用style代替, 更短~~          | `string`          | -   | -                          |
-| styles   | 转换期间应用的元素样式                        | `object`          | -   | `{}`                       |
+| style    | 转换期间应用的元素样式                        | `object`          | -   | `{}`                       |
 | appear   | 是否在初始渲染时使用过渡（Vue内置Transition组件的属性） | `boolean`         | -   | `false`                    |
 
 

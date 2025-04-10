@@ -27,8 +27,8 @@ export const useTransition = () => {
 	});
 
 	const clearStyles = (el: HTMLElement) => {
-		Object.keys(props.styles).forEach((key) => {
-			const v = props.styles[key];
+		Object.keys(props.style).forEach((key) => {
+			const v = props.style[key];
 			v && el.style.removeProperty(
 				key.replace(/([A-Z])/g, '-$1').toLowerCase()
 			);
@@ -54,8 +54,8 @@ export const useTransition = () => {
 	const resetStyles = (el: HTMLElement) => {
 		resetOrigin(el);
 
-		Object.keys(props.styles).forEach((key) => {
-			const v = props.styles[key];
+		Object.keys(props.style).forEach((key) => {
+			const v = props.style[key];
 			v && (el.style[key] = v);
 		});
 	};

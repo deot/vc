@@ -14,7 +14,8 @@ export const TransitionZoom = defineComponent({
 			default: 'x',
 			validator: (v: string) => /^(x|y|center|none)$/.test(v)
 		},
-		styles: {
+		// inheritAttrs必须是false
+		style: {
 			type: Object,
 			default: () => ({
 				animationFillMode: 'both',

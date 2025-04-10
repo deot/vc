@@ -41,7 +41,7 @@ export const props = {
 		type: [String, Boolean],
 		default: '取消'
 	},
-	styles: {
+	wrapperStyle: {
 		type: Object
 	},
 	footer: {

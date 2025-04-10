@@ -36,8 +36,9 @@ export const props = {
 	},
 	/**
 	 * 在转换期间应用的元素样式。这些样式应用于@beforeEnter和@beforeLeave钩子
+	 * inheritAttrs必须是false
 	 */
-	styles: {
+	style: {
 		type: Object,
 		default: () => {
 			return {

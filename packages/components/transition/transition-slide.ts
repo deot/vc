@@ -13,7 +13,8 @@ export const TransitionSlide = defineComponent({
 			default: 'left',
 			validator: (v: string) => /^(left|right|down|up|none)(|-part)$/.test(v)
 		},
-		styles: {
+		// inheritAttrs必须是false
+		style: {
 			type: Object,
 			default: () => ({
 				animationFillMode: 'both',

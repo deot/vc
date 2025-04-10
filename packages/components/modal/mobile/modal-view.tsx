@@ -136,7 +136,7 @@ export const MModalView = defineComponent({
 						/>
 					</MTransitionFade>
 					<div
-						style={[props.styles || {}]}
+						style={[props.wrapperStyle || {}]}
 						class="vcm-modal__wrapper"
 					>
 						<MTransitionZoom
