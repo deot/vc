@@ -1,0 +1,6 @@
+@use '../style/helper' as *;
+
+$component-name: vc-popover;
+
+@include block($component-name) {
+}

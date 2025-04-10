@@ -16,6 +16,10 @@ $theme: (
 	foreground-color: (light: #303133, dark: #f8f8f8),
 	foreground-color-dark: (light: #000, dark: #f8f8f8),
 
+	// 蒙层-亮度
+	mask-color: rgba(0, 0, 0, 0.4),
+	mask-color-dark: rgba(0, 0, 0, 0.75),
+
 	// 亮色系-亮度
 	color-light: (light: #ffffff, dark: #000000),
 	color-light-deep: (light: #f5f6fa, dark: #C0C4CC),

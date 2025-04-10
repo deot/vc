@@ -1,0 +1,168 @@
+@use '../style/helper' as *;
+
+$border-shadow: varfix(border-shadow, popover-wrapper);
+$mask-color-dark: varfix(mask-color-dark, popover-wrapper);
+$color-light: varfix(color-light, popover-wrapper);
+
+@include block(vc-popover-wrapper) {
+	position: absolute;
+	z-index: $popup-zindex;
+	box-sizing: border-box;
+	transition: top .02s linear, left .02s linear;
+
+	@include when(top) {
+		padding-bottom: 8px;
+	}
+
+	@include when(bottom) {
+		padding-top: 8px;
+	}
+
+	@include when(right) {
+		padding-left: 8px;
+	}
+
+	@include when(left) {
+		padding-right: 8px;
+	}
+
+	@include element(container) {
+		padding: 5px 12px;
+		border-radius: 4px;
+		box-shadow: $border-shadow;
+
+		@include when(dark) {
+			color: $color-light;
+			background-color: $mask-color-dark;
+		}
+
+		@include when(light) {
+			background-color: $color-light;
+		}
+	}
+
+	@include when(padding-none) {
+		& > .vc-popover-wrapper__container {
+			padding: 0;
+		}
+	}
+
+	@include element(arrow) {
+		position: absolute;
+		display: block;
+		width: 9px;
+		height: 9px;
+		background: transparent;
+		border-color: transparent;
+		border-style: solid;
+		border-width: 4px;
+		transform: rotate(45deg);
+		box-sizing: border-box;
+
+		@include when(top-basic) {
+			bottom: 4px;
+			border-top-color: transparent;
+			border-left-color: transparent;
+			box-shadow: 3px 3px 7px rgb(0 0 0 / 7%);
+
+			@include when(light) {
+				border-right-color: $color-light;
+				border-bottom-color: $color-light;
+			}
+
+			@include when(dark) {
+				border-right-color: $mask-color-dark;
+				border-bottom-color: $mask-color-dark;
+			}
+		}
+
+		@include when(top) {
+			left: 50%;
+			transform: translateX(-50%) rotate(45deg);
+		}
+
+		@include when(top-left) {
+			left: 16px;
+		}
+
+		@include when(top-right) {
+			right: 16px;
+		}
+
+		@include when(bottom-basic) {
+			top: 4px;
+			border-right-color: transparent;
+			border-bottom-color: transparent;
+			box-shadow: -2px -2px 5px rgb(0 0 0 / 6%);
+
+			@include when(light) {
+				border-top-color: $color-light;
+				border-left-color: $color-light;
+			}
+
+			@include when(dark) {
+				border-top-color: $mask-color-dark;
+				border-left-color: $mask-color-dark;
+			}
+			
+		}
+
+		@include when(bottom) {
+			left: 50%;
+			transform: translateX(-50%) rotate(45deg);
+		}
+
+		@include when(bottom-left) {
+			left: 16px;
+		}
+
+		@include when(bottom-right) {
+			right: 16px;
+		}
+
+		@include when(right-basic) {
+			left: 4px;
+			border-top-color: transparent;
+			border-right-color: transparent;
+			box-shadow: -3px 3px 7px rgb(0 0 0 / 7%);
+
+			@include when(light) {
+				border-bottom-color: $color-light;
+				border-left-color: $color-light;
+			}
+
+			@include when(dark) {
+				border-bottom-color: $mask-color-dark;
+				border-left-color: $mask-color-dark;
+			}
+		}
+
+		@include when(left) {
+			top: 50%;
+			transform: translateY(-50%) rotate(45deg);
+		}
+
+		@include when(left-basic) {
+			right: 4px;
+			border-bottom-color: transparent;
+			border-left-color: transparent;
+			box-shadow: 3px -3px 7px rgb(0 0 0 / 7%);
+
+			@include when(light) {
+				border-top-color: $color-light;
+				border-right-color: $color-light;
+			}
+
+			@include when(dark) {
+				border-top-color: $mask-color-dark;
+				border-right-color: $mask-color-dark;
+			}
+		}
+
+
+		@include when(right) {
+			top: 50%;
+			transform: translateY(-50%) rotate(45deg);
+		}
+	}
+}
