@@ -389,8 +389,7 @@ export const createVcPlugin = (options?: VcOptions, transfromComponentKey = (x: 
 		install: (app: App) => {
 			app.config.globalProperties.$vc = VcInstance.configure(options);
 			Object.keys(Components).forEach((key) => {
-				key = transfromComponentKey(key) || key;
-				app.component(key, Components[key]);
+				app.component(transfromComponentKey(key) || key, Components[key]);
 			});
 		}
 	};
