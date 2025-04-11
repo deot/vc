@@ -2,11 +2,13 @@
 
 $border-shadow: varfix(border-shadow, popover-wrapper);
 $mask-color-dark: varfix(mask-color-dark, popover-wrapper);
+$color-dark: varfix(color-dark, popover-wrapper);
 $color-light: varfix(color-light, popover-wrapper);
 
 @include block(vc-popover-wrapper) {
 	position: absolute;
 	z-index: $popup-zindex;
+	color: $color-dark;
 	box-sizing: border-box;
 	transition: top .02s linear, left .02s linear;
 

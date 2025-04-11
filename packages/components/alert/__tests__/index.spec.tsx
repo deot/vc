@@ -9,7 +9,7 @@ describe('index.ts', () => {
 	});
 	it('create', async () => {
 		const wrapper = mount(() => (<Alert />));
-
-		expect(wrapper.classes()).toContain('vc-alert');
+		await new Promise(_ => setTimeout(_, 300));
+		expect(wrapper.html()).toContain('vc-alert');
 	});
 });

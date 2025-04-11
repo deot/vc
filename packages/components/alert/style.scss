@@ -3,4 +3,92 @@
 $component-name: vc-alert;
 
 @include block($component-name) {
+	position: relative;
+	min-height: 32px;
+	padding: 4px 10px;
+	overflow: hidden;
+	font-size: 14px;
+	color: #515151;
+	border-style: solid;
+	border-width: 1px;
+	border-radius: 4px;
+	box-sizing: border-box;
+
+	@include element(icon) {
+		position: absolute;
+		top: 15px;
+		left: 12px;
+		font-size: 16px;
+		transform: translate3d(0, -50%, 0);
+	}
+
+	@include when(icon, true) {
+		padding-left: 38px;
+	}
+
+	@include when(desc, true) {
+		padding-left: 50px;
+
+		@include element(icon) {
+			font-size: 28px;
+		}
+	}
+
+	@include element(content) {
+		display: flex;
+	}
+
+	@include element(message) {
+		flex: 1;
+
+		> em {
+			margin: 0 3px;
+			font-style: normal;
+		}
+	}
+
+	@include element(close) {
+		margin-left: 12px;
+		cursor: pointer;
+	}
+
+	@include when(info) {
+		@include element(message) {
+			> em {
+				color: #5495f6;
+			}
+		}
+	}
+
+	@include when(info) {
+		@include element(message) {
+			> em {
+				color: #5495f6;
+			}
+		}
+	}
+
+	@include when(success) {
+		@include element(message) {
+			> em {
+				color: #52c41a;
+			}
+		}
+	}
+
+	@include when(error) {
+		@include element(message) {
+			> em {
+				color: #ed4014;
+			}
+		}
+	}
+
+	@include when(warning) {
+		@include element(message) {
+			> em {
+				color: #faad14;
+			}
+		}
+	}
 }

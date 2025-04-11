@@ -256,7 +256,7 @@ const handleDynamic = (e) => {
 </script>
 
 <style lang="scss">
-@use "@deot/style/src/mixins/bem" as *;
+@use '../../style/helper' as *;
 
 .g-m-lr-10 {
 	margin-right: 10px;
@@ -279,7 +279,7 @@ const handleDynamic = (e) => {
 	display: flex;
 	align-items: flex-start;
 	justify-content: center;
-	background: #f2f2f2; 
+	background: varfix(background-color); 
 	height: 3000px;
 	@include element(container) {
 		display: flex;
@@ -288,7 +288,7 @@ const handleDynamic = (e) => {
 		margin-top: 200px; 
 		overflow: unset; 
 		position: relative; 
-		background: #666666;
+		background: varfix(background-color-light); 
 		@include element(left) {
 			display: flex;
 			flex-direction: column;

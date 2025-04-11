@@ -1,7 +1,14 @@
 <template>
-	<div>
+	<div style="margin: 40px">
 		<Card>
-			TODO: // ....
+			<template #title>
+				<p>Borderless card</p>
+			</template>
+			<template #extra>
+				<p>Content of card</p>
+			</template>
+			<p>Content of card</p>
+			<p>Content of card</p>
 		</Card>
 	</div>
 </template>

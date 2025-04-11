@@ -11,8 +11,7 @@
 | type       | 警告提示样式                | `string`  | (`info` `success` `error` `warning`) | `info`  |
 | title      | 标题                    | `string`  | -                                    | -       |
 | desc       | 辅助性文字, 也可通过默认 slot 传入 | `string`  | -                                    | -       |
-| icon       | 图表icon                | `string`  | -                                    | -       |
-| showIcon   | 是否显示图标                | `boolean` | -                                    | `true`  |
+| icon       | 图表icon                | `string | boolean`  | -                                    | -       |
 | closable   | 是否可关闭                 | `boolean` | -                                    | `false` |
 
 
