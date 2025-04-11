@@ -26,7 +26,7 @@ export const PopoverWrapper = defineComponent({
 	name: COMPONENT_NAME,
 	props: popoverWrapperProps,
 	emits: ['portal-fulfilled', 'close'],
-	setup(props, { emit, slots }) {
+	setup(props, { emit, slots, expose }) {
 		const {
 			getPopupStyle,
 			getFitPos,
@@ -239,6 +239,8 @@ export const PopoverWrapper = defineComponent({
 
 			props.alone && props.hover && removeEvents();
 		});
+
+		expose({ isActive });
 		return () => {
 			return (
 				<TransitionScale
