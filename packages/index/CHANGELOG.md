@@ -1,5 +1,13 @@
 # @deot/vc ChangeLog
 
+## v1.0.3
+
+_2025-04-15_
+
+### Updates
+
+- chore(shared): force-publish `1.0.2` -> `1.0.3`
+
 ## v1.0.2
 
 _2025-04-11_
