@@ -1,9 +1,12 @@
 import type { ExtractPropTypes } from 'vue';
 
 export const props = {
-	tag: {
-		type: String,
-		default: 'div'
-	}
+	options: Object,
+	pluginOptions: Object,
+	theme: [String, Object],
+	group: String,
+	autoResize: Boolean,
+	watchShallow: Boolean,
+	manualUpdate: Boolean
 };
 export type Props = ExtractPropTypes<typeof props>;

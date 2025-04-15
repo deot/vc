@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@deot/style": "^1.1.0",
-    "@types/lodash-es": "^4.17.12"
+    "@types/lodash-es": "^4.17.12",
+    "echarts": "^5.6.0"
   }
 }
