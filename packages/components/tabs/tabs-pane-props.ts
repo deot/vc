@@ -1,19 +1,18 @@
 import type { ExtractPropTypes } from 'vue';
 
 export const props = {
-	type: {
-		type: String,
-		validator: (v: string) => /^(line|card)$/.test(v),
-		default: 'line'
-	},
-	modelValue: {
+	value: {
 		type: [String, Number]
 	},
-	animated: {
-		type: Boolean,
-		default: false
+	label: {
+		type: [String, Function],
+		default: ''
 	},
-	afloat: {
+	/**
+	 * 服务端渲染时，lazy设置为false，可以把内容渲染出来;
+	 * 不能设置为!IS_SERVER, 会影响客服端激活，不一样会存在问题
+	 */
+	lazy: {
 		type: Boolean,
 		default: true
 	},

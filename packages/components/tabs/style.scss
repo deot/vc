@@ -1,6 +1,2 @@
-@use '../style/helper' as *;
-
-$component-name: vc-tabs;
-
-@include block($component-name) {
-}
+@use "./tabs";
+@use "./tabs-pane";

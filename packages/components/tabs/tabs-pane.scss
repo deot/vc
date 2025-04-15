@@ -1,0 +1,8 @@
+.vc-tabs-pane {
+	flex-shrink: 0;
+	width: 100%;
+}
+.vc-tabs.is-animated .vc-tabs-pane{
+	transition: opacity .3s cubic-bezier(.35, 0, .25, 1);
+	opacity: 1;
+}
