@@ -25,6 +25,7 @@ export const Tabs = defineComponent({
 		 * 刷新是否需要滚动条
 		 */
 		const refreshScroll = () => {
+			if (!scroll.value) return;
 			// 容器
 			const boxWidth = scroll.value.offsetWidth;
 			// 总长度

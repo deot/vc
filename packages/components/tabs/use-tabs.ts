@@ -1,4 +1,4 @@
-import { getCurrentInstance, computed, watch, ref, provide, onMounted, onUnmounted, nextTick } from 'vue';
+import { getCurrentInstance, computed, watch, ref, provide, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import { getUid } from '@deot/helper-utils';
 
@@ -88,7 +88,7 @@ export default (options: any = {}) => {
 		options.scrollToActive && nextTick(options.scrollToActive);
 	});
 
-	onUnmounted(() => {
+	onBeforeUnmount(() => {
 		Resize.off(options.wrapper.value, handleResize);
 		timer.value && clearTimeout(timer.value);
 	});
