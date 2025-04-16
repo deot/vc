@@ -209,25 +209,14 @@ export const Image = defineComponent({
 			return (
 				<div style={its.value.style} class={[its.value.class, 'vc-image']}>
 					{
-						isLoading.value
-						&& slots.placeholder
-							? slots.placeholder()
-							: (
-									<div
-										class={[{ 'is-auto': isAuto.value }, 'vc-image__placeholder']}
-										style={pStyle.value}
-									/>
-								)
+						isLoading.value && (
+							slots.placeholder
+								? slots.placeholder()
+								: (<div class={[{ 'is-auto': isAuto.value }, 'vc-image__placeholder']} style={pStyle.value} />)
+						)
 					}
 					{
-						!isLoading.value && isError.value
-						&& slots.error
-							? slots.error()
-							: (
-									<div class="vc-image__error">
-										加载失败
-									</div>
-								)
+						(!isLoading.value && isError.value) && (slots.error ? slots.error() : (<div class="vc-image__error"> 加载失败</div>))
 					}
 					{
 						!isLoading.value && !isError.value && (

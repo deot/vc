@@ -2,6 +2,7 @@ import type { App } from 'vue';
 
 export { Utils } from '@deot/vc-shared';
 export * from '@deot/vc-hooks';
+export * from '@deot/vc-components';
 import type { VcOptions } from '@deot/vc-components';
 
 import {
@@ -132,6 +133,8 @@ import {
 	MRate,
 	RecycleList,
 	MRecycleList,
+	Resizer,
+	MResizer,
 	Scroller,
 	MScroller,
 	Select,
@@ -321,6 +324,8 @@ export const Components = {
 	MRate,
 	RecycleList,
 	MRecycleList,
+	Resizer,
+	MResizer,
 	Scroller,
 	MScroller,
 	Select,
