@@ -10,7 +10,7 @@ importers:
     devDependencies:
       '@deot/dev':
         specifier: ^2.9.3
-        version: 2.9.3(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(eslint@9.24.0)(postcss@8.5.2)(sass@1.86.3)(stylelint@16.18.0(typescript@5.8.3))(tsx@4.19.3)(typescript@5.8.3)(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)
+        version: 2.9.3(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(eslint@9.24.0)(postcss@8.5.3)(sass@1.86.3)(stylelint@16.18.0(typescript@5.8.3))(tsx@4.19.3)(typescript@5.8.3)(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)
 
   packages/components:
     dependencies:
@@ -43,13 +43,13 @@ importers:
   packages/index:
     dependencies:
       '@deot/vc-components':
-        specifier: ^1.0.5
+        specifier: ^1.0.6
         version: link:../components
       '@deot/vc-hooks':
-        specifier: ^1.0.5
+        specifier: ^1.0.6
         version: link:../hooks
       '@deot/vc-shared':
-        specifier: ^1.0.5
+        specifier: ^1.0.6
         version: link:../shared
       vue:
         specifier: '*'
@@ -4608,10 +4608,10 @@ snapshots:
 
   '@deot/dev-shared@2.9.1': {}
 
-  '@deot/dev-stylelint@2.9.2(postcss@8.5.2)(stylelint@16.18.0(typescript@5.8.3))':
+  '@deot/dev-stylelint@2.9.2(postcss@8.5.3)(stylelint@16.18.0(typescript@5.8.3))':
     dependencies:
       '@stylistic/stylelint-plugin': 3.1.2(stylelint@16.18.0(typescript@5.8.3))
-      stylelint-config-standard-scss: 14.0.0(postcss@8.5.2)(stylelint@16.18.0(typescript@5.8.3))
+      stylelint-config-standard-scss: 14.0.0(postcss@8.5.3)(stylelint@16.18.0(typescript@5.8.3))
       stylelint-order: 6.0.4(stylelint@16.18.0(typescript@5.8.3))
     transitivePeerDependencies:
       - postcss
@@ -4701,7 +4701,7 @@ snapshots:
       - typescript
       - yaml
 
-  '@deot/dev@2.9.3(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(eslint@9.24.0)(postcss@8.5.2)(sass@1.86.3)(stylelint@16.18.0(typescript@5.8.3))(tsx@4.19.3)(typescript@5.8.3)(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)':
+  '@deot/dev@2.9.3(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(eslint@9.24.0)(postcss@8.5.3)(sass@1.86.3)(stylelint@16.18.0(typescript@5.8.3))(tsx@4.19.3)(typescript@5.8.3)(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)':
     dependencies:
       '@deot/dev-adder': 2.9.1(@types/node@22.14.0)
       '@deot/dev-builder': 2.9.1(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(tsx@4.19.3)(typescript@5.8.3)(yaml@2.7.0)
@@ -4713,7 +4713,7 @@ snapshots:
       '@deot/dev-linker': 2.9.1
       '@deot/dev-releaser': 2.9.2(@types/node@22.14.0)
       '@deot/dev-shared': 2.9.1
-      '@deot/dev-stylelint': 2.9.2(postcss@8.5.2)(stylelint@16.18.0(typescript@5.8.3))
+      '@deot/dev-stylelint': 2.9.2(postcss@8.5.3)(stylelint@16.18.0(typescript@5.8.3))
       '@deot/dev-test': 2.9.1(typescript@5.8.3)
       '@deot/dev-tester': 2.9.1(@testing-library/dom@9.3.3)(@types/node@22.14.0)(@types/react-dom@18.2.18)(@types/react@18.2.45)(@vue/compiler-sfc@3.5.13)(sass@1.86.3)(tsx@4.19.3)(typescript@5.8.3)(vite@6.2.6(@types/node@22.14.0)(sass@1.86.3)(tsx@4.19.3)(yaml@2.7.0))(yaml@2.7.0)
       '@deot/dev-updater': 2.9.1
@@ -7863,9 +7863,9 @@ snapshots:
     dependencies:
       postcss: 8.5.3
 
-  postcss-scss@4.0.9(postcss@8.5.2):
+  postcss-scss@4.0.9(postcss@8.5.3):
     dependencies:
-      postcss: 8.5.2
+      postcss: 8.5.3
 
   postcss-selector-parser@6.1.2:
     dependencies:
@@ -8236,26 +8236,26 @@ snapshots:
       postcss: 8.5.3
       postcss-selector-parser: 6.1.2
 
-  stylelint-config-recommended-scss@14.1.0(postcss@8.5.2)(stylelint@16.18.0(typescript@5.8.3)):
+  stylelint-config-recommended-scss@14.1.0(postcss@8.5.3)(stylelint@16.18.0(typescript@5.8.3)):
     dependencies:
-      postcss-scss: 4.0.9(postcss@8.5.2)
+      postcss-scss: 4.0.9(postcss@8.5.3)
       stylelint: 16.18.0(typescript@5.8.3)
       stylelint-config-recommended: 14.0.1(stylelint@16.18.0(typescript@5.8.3))
       stylelint-scss: 6.11.0(stylelint@16.18.0(typescript@5.8.3))
     optionalDependencies:
-      postcss: 8.5.2
+      postcss: 8.5.3
 
   stylelint-config-recommended@14.0.1(stylelint@16.18.0(typescript@5.8.3)):
     dependencies:
       stylelint: 16.18.0(typescript@5.8.3)
 
-  stylelint-config-standard-scss@14.0.0(postcss@8.5.2)(stylelint@16.18.0(typescript@5.8.3)):
+  stylelint-config-standard-scss@14.0.0(postcss@8.5.3)(stylelint@16.18.0(typescript@5.8.3)):
     dependencies:
       stylelint: 16.18.0(typescript@5.8.3)
-      stylelint-config-recommended-scss: 14.1.0(postcss@8.5.2)(stylelint@16.18.0(typescript@5.8.3))
+      stylelint-config-recommended-scss: 14.1.0(postcss@8.5.3)(stylelint@16.18.0(typescript@5.8.3))
       stylelint-config-standard: 36.0.1(stylelint@16.18.0(typescript@5.8.3))
     optionalDependencies:
-      postcss: 8.5.2
+      postcss: 8.5.3
 
   stylelint-config-standard@36.0.1(stylelint@16.18.0(typescript@5.8.3)):
     dependencies:
