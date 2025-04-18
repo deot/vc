@@ -14,11 +14,19 @@ export const NoticeView = defineComponent({
 	name: COMPONENT_NAME,
 	props: noticeViewProps,
 	emits: ['portal-fulfilled', 'close', 'before-close'],
-	setup(props, { emit }) {
+	setup(props, { emit, expose }) {
 		const instance = getCurrentInstance()!;
 		const isActive = ref(false);
 		const currentTitle = ref<NoticeProps['title']>();
 		const currentContent = ref<NoticeProps['content']>();
+
+		let timer: any;
+		const setDuration = (v: number) => {
+			timer && clearTimeout(timer);
+
+			if (v === 0) return;
+			timer = setTimeout(() => (isActive.value = false), v);
+		};
 
 		const setTitle = (v: NoticeProps['title']) => {
 			currentTitle.value = v;
@@ -27,21 +35,6 @@ export const NoticeView = defineComponent({
 		const setContent = (v: NoticeProps['content']) => {
 			currentContent.value = v;
 		};
-
-		watch(() => props.title, setTitle, { immediate: true });
-		watch(() => props.content, setContent, { immediate: true });
-
-		let timer: any;
-		onMounted(() => {
-			isActive.value = true;
-			if (props.duration !== 0) {
-				timer = setTimeout(() => (isActive.value = false), props.duration);
-			}
-		});
-
-		onUnmounted(() => {
-			timer && clearTimeout(timer);
-		});
 
 		// 兼容Portal设计
 		const handleRemove = () => {
@@ -65,6 +58,29 @@ export const NoticeView = defineComponent({
 				isActive.value = false;
 			}
 		};
+
+		watch(() => props.title, setTitle, { immediate: true });
+		watch(() => props.content, setContent, { immediate: true });
+
+		onMounted(() => {
+			isActive.value = true;
+			setDuration(props.duration);
+		});
+
+		onUnmounted(() => {
+			timer && clearTimeout(timer);
+		});
+
+		const exposes = ['destroy', 'remove', 'close', 'hide']
+			.reduce((pre, key) => {
+				pre[key] = handleRemove;
+				return pre;
+			}, {
+				setContent,
+				setDuration
+			});
+
+		expose(exposes);
 
 		return () => {
 			return (

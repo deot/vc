@@ -19,6 +19,14 @@ export const MessageView = defineComponent({
 		const isActive = ref(false);
 		const currentContent = ref<MessageProps['content']>();
 
+		let timer: any;
+		const setDuration = (v: number) => {
+			timer && clearTimeout(timer);
+
+			if (v === 0) return;
+			timer = setTimeout(() => (isActive.value = false), v);
+		};
+
 		const setContent = (v: MessageProps['content']) => {
 			currentContent.value = v;
 		};
@@ -48,12 +56,9 @@ export const MessageView = defineComponent({
 
 		watch(() => props.content, setContent, { immediate: true });
 
-		let timer: any;
 		onMounted(() => {
 			isActive.value = true;
-			if (props.duration !== 0) {
-				timer = setTimeout(() => (isActive.value = false), props.duration);
-			}
+			setDuration(props.duration);
 		});
 
 		onUnmounted(() => {
@@ -65,7 +70,8 @@ export const MessageView = defineComponent({
 				pre[key] = handleRemove;
 				return pre;
 			}, {
-				setContent
+				setContent,
+				setDuration
 			});
 
 		expose(exposes);

@@ -18,6 +18,14 @@ export const MToastView = defineComponent({
 		const isActive = ref(false);
 		const currentContent = ref<ToastProps['content']>();
 
+		let timer: any;
+		const setDuration = (v: number) => {
+			timer && clearTimeout(timer);
+
+			if (v === 0) return;
+			timer = setTimeout(() => (isActive.value = false), v);
+		};
+
 		const setContent = (v: ToastProps['content']) => {
 			currentContent.value = v;
 		};
@@ -36,12 +44,9 @@ export const MToastView = defineComponent({
 
 		watch(() => props.content, setContent, { immediate: true });
 
-		let timer: any;
 		onMounted(() => {
 			isActive.value = true;
-			if (props.duration !== 0) {
-				timer = setTimeout(() => (isActive.value = false), props.duration);
-			}
+			setDuration(props.duration);
 		});
 
 		onUnmounted(() => {
@@ -52,7 +57,10 @@ export const MToastView = defineComponent({
 			.reduce((pre, key) => {
 				pre[key] = handleRemove;
 				return pre;
-			}, {});
+			}, {
+				setContent,
+				setDuration
+			});
 
 		expose(exposes);
 
