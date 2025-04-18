@@ -1,7 +1,8 @@
 /** @jsxImportSource vue */
 
-import { getCurrentInstance, defineComponent, ref, onMounted, onUnmounted } from 'vue';
+import { getCurrentInstance, defineComponent, ref, onMounted, onUnmounted, watch } from 'vue';
 import { props as noticeViewProps } from './notice-view-props';
+import type { Props as NoticeProps } from './notice-view-props';
 
 import { Icon } from '../icon';
 import { TransitionSlide } from '../transition';
@@ -16,15 +17,25 @@ export const NoticeView = defineComponent({
 	setup(props, { emit }) {
 		const instance = getCurrentInstance()!;
 		const isActive = ref(false);
+		const currentTitle = ref<NoticeProps['title']>();
+		const currentContent = ref<NoticeProps['content']>();
+
+		const setTitle = (v: NoticeProps['title']) => {
+			currentTitle.value = v;
+		};
+
+		const setContent = (v: NoticeProps['content']) => {
+			currentContent.value = v;
+		};
+
+		watch(() => props.title, setTitle, { immediate: true });
+		watch(() => props.content, setContent, { immediate: true });
 
 		let timer: any;
 		onMounted(() => {
 			isActive.value = true;
 			if (props.duration !== 0) {
-				timer = setTimeout(() => {
-					// 主线程
-					isActive.value = false;
-				}, props.duration * 1000 - 300); // 动画时间
+				timer = setTimeout(() => (isActive.value = false), props.duration);
 			}
 		});
 
@@ -72,26 +83,26 @@ export const NoticeView = defineComponent({
 
 								<div>
 									{
-										props.title && (
-											<div style={[{ marginBottom: props.content ? '8px' : '' }]} class="vc-notice__title">
+										currentTitle.value && (
+											<div style={[{ marginBottom: currentContent.value ? '8px' : '' }]} class="vc-notice__title">
 												{
-													typeof props.title === 'string'
-														? <div innerHTML={props.title} />
-														: typeof props.title === 'function'
-															? <Customer render={props.title} />
+													typeof currentTitle.value === 'string'
+														? <div innerHTML={currentTitle.value} />
+														: typeof currentTitle.value === 'function'
+															? <Customer render={currentTitle.value} />
 															: null
 												}
 											</div>
 										)
 									}
 									{
-										props.content && (
+										currentContent.value && (
 											<div class="vc-notice__content">
 												{
-													typeof props.content === 'string'
-														? <div innerHTML={props.content} />
-														: typeof props.content === 'function'
-															? <Customer render={props.content} />
+													typeof currentContent.value === 'string'
+														? <div innerHTML={currentContent.value} />
+														: typeof currentContent.value === 'function'
+															? <Customer render={currentContent.value} />
 															: null
 												}
 											</div>

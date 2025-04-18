@@ -72,7 +72,7 @@ import { Button, Message } from '@deot/vc';
 const handleClick = () => {
 	Message.success({
 		content: '成功的提示',
-		duration: 5,
+		duration: 5000,
 	});
 };
 </script>
@@ -177,7 +177,7 @@ const handleClick = () => {
 | content      | 提示的内容                      | `string`、`function` | -                                            | -       |
 | mask         | 是否显示透明遮罩                   | `boolean`           | -                                            | `true`  |
 | maskClosable | 是否可以通过点击透明遮罩层关闭提示          | `boolean`           | -                                            | `true`  |
-| duration     | 自动关闭的延时，单位秒，不关闭可以写 0       | `number`            | -                                            | 1.5     |
+| duration     | 自动关闭的延时，单位`ms`，不关闭可以写 0    | `number`            | -                                            | 1.5     |
 | closable     | 手动关闭提示                     | `boolean`           | -                                            | `false` |
 | render       | 自定义描述内容，使用 Vue 的 Render 函数 | `function`          | -                                            | -       |
 | mode         | 提示主题                       | `string`            | `info`、`loading`、`success`、`error`、`warning` | `info`  |

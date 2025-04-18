@@ -4,9 +4,10 @@ import type { Props as CustomerProps } from '../customer/customer-props';
 export const props = {
 	title: [String, Function] as PropType<string | CustomerProps['render']>,
 	content: [String, Function] as PropType<string | CustomerProps['render']>,
+	// 单位ms
 	duration: {
 		type: Number,
-		default: 450
+		default: 4500
 	},
 	closable: {
 		type: Boolean,

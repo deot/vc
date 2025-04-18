@@ -1,7 +1,8 @@
 /** @jsxImportSource vue */
 
-import { getCurrentInstance, defineComponent, ref, onMounted, onUnmounted } from 'vue';
+import { getCurrentInstance, defineComponent, ref, onMounted, onUnmounted, watch } from 'vue';
 import { props as messageProps } from './message-view-props';
+import type { Props as MessageProps } from './message-view-props';
 import { Icon } from '../icon';
 import { Spin } from '../spin';
 import { TransitionSlide } from '../transition';
@@ -16,6 +17,11 @@ export const MessageView = defineComponent({
 	setup(props, { emit, expose }) {
 		const instance = getCurrentInstance()!;
 		const isActive = ref(false);
+		const currentContent = ref<MessageProps['content']>();
+
+		const setContent = (v: MessageProps['content']) => {
+			currentContent.value = v;
+		};
 
 		// 兼容Portal设计
 		const handleRemove = () => {
@@ -40,14 +46,13 @@ export const MessageView = defineComponent({
 			}
 		};
 
+		watch(() => props.content, setContent, { immediate: true });
+
 		let timer: any;
 		onMounted(() => {
 			isActive.value = true;
 			if (props.duration !== 0) {
-				timer = setTimeout(() => {
-					// 主线程
-					isActive.value = false;
-				}, props.duration * 1000 - 300); // 动画时间
+				timer = setTimeout(() => (isActive.value = false), props.duration);
 			}
 		});
 
@@ -59,7 +64,9 @@ export const MessageView = defineComponent({
 			.reduce((pre, key) => {
 				pre[key] = handleRemove;
 				return pre;
-			}, {});
+			}, {
+				setContent
+			});
 
 		expose(exposes);
 
@@ -88,29 +95,29 @@ export const MessageView = defineComponent({
 								{
 									props.mode === 'loading'
 										? (
-											<Spin
-												size={14}
-												class="vc-message__loading"
-											/>
+												<Spin
+													size={14}
+													class="vc-message__loading"
+												/>
 											)
 										: (
-											<Icon
-												type={props.mode}
-												class={[`is-${props.mode}`, 'vc-message__icon']}
-											/>
+												<Icon
+													type={props.mode}
+													class={[`is-${props.mode}`, 'vc-message__icon']}
+												/>
 											)
 								}
 
 								{
-									typeof props.content === 'string'
+									typeof currentContent.value === 'string'
 										? (
-											<div
-												class="vc-message__content"
-												innerHTML={props.content}
-											/>
+												<div
+													class="vc-message__content"
+													innerHTML={currentContent.value}
+												/>
 											)
-										: typeof props.content === 'function'
-											? (<Customer render={props.content} />)
+										: typeof currentContent.value === 'function'
+											? (<Customer render={currentContent.value} />)
 											: null
 								}
 
@@ -120,7 +127,7 @@ export const MessageView = defineComponent({
 											type="close"
 											class="vc-message__close"
 											// @ts-ignore
-											onClick={e => handleClose(e, true)}
+											onClick={(e: any) => handleClose(e, true)}
 										/>
 									)
 								}

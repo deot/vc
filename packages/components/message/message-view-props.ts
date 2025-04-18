@@ -15,6 +15,7 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
+	// 单位ms
 	duration: {
 		type: Number,
 		default: 1500

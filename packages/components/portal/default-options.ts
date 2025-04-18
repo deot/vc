@@ -60,7 +60,7 @@ export type PortalOptions = Partial<{
 	aliveUpdateKey: string;
 
 	/**
-	 * 延迟销毁，考虑transition动画时间，单位s
+	 * 延迟销毁，考虑transition动画时间，单位ms
 	 */
 	leaveDelay: number;
 

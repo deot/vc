@@ -1,7 +1,8 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, onMounted, onUnmounted, withModifiers } from 'vue';
+import { defineComponent, ref, onMounted, onUnmounted, withModifiers, watch } from 'vue';
 import { props as toastProps } from './toast-view-props';
+import type { Props as ToastProps } from './toast-view-props';
 
 import { MCustomer } from '../../customer/index.m';
 import { MSpin } from '../../spin/index.m';
@@ -14,7 +15,12 @@ export const MToastView = defineComponent({
 	emits: ['close', 'portal-fulfilled'],
 	props: toastProps,
 	setup(props, { emit, expose }) {
-		const isVisible = ref(false);
+		const isActive = ref(false);
+		const currentContent = ref<ToastProps['content']>();
+
+		const setContent = (v: ToastProps['content']) => {
+			currentContent.value = v;
+		};
 
 		// 兼容Portal设计
 		const handleRemove = () => {
@@ -24,18 +30,17 @@ export const MToastView = defineComponent({
 
 		const handleClose = () => {
 			if (props.maskClosable) {
-				isVisible.value = false;
+				isActive.value = false;
 			}
 		};
 
+		watch(() => props.content, setContent, { immediate: true });
+
 		let timer: any;
 		onMounted(() => {
-			isVisible.value = true;
+			isActive.value = true;
 			if (props.duration !== 0) {
-				timer = setTimeout(() => {
-					// 主线程
-					isVisible.value = false;
-				}, props.duration - 300); // 动画时间
+				timer = setTimeout(() => (isActive.value = false), props.duration);
 			}
 		});
 
@@ -64,13 +69,13 @@ export const MToastView = defineComponent({
 						// @ts-ignore
 						onAfterLeave={handleRemove}
 					>
-						<div v-show={isVisible.value} class="vcm-toast__wrapper">
+						<div v-show={isActive.value} class="vcm-toast__wrapper">
 							{ props.mode === 'loading' && (<MSpin class="vcm-toast__loading" />) }
 							{
-								typeof props.content === 'string'
-									? (<div class="vcm-toast__content" innerHTML={props.content} />)
-									: typeof props.content === 'function'
-										? (<MCustomer render={props.content} />)
+								typeof currentContent.value === 'string'
+									? (<div class="vcm-toast__content" innerHTML={currentContent.value} />)
+									: typeof currentContent.value === 'function'
+										? (<MCustomer render={currentContent.value} />)
 										: null
 							}
 						</div>
