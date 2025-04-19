@@ -42,8 +42,9 @@ const handleToggle = () => {
 
 ### 基础属性
 
-| 属性      | 说明           | 类型        | 可选值            | 默认值     |
-| ------- | ------------ | --------- | -------------- | ------- |
-| tag     | 要渲染成的html标签  | `string`  | -              | `div`   |
-| visible | 折叠或展开状态      | `boolean` | `true`、`false` | `false` |
-| remove  | 收起后是否移除DOM节点 | `boolean` | -              | `false` |
+| 属性         | 说明           | 类型        | 可选值            | 默认值     |
+| ---------- | ------------ | --------- | -------------- | ------- |
+| tag        | 要渲染成的html标签  | `string`  | -              | `div`   |
+| modelValue | 折叠或展开状态      | `boolean` | `true`、`false` | `false` |
+| alive      | 收起后是否保留DOM节点 | `boolean` | -              | `true`  |
+

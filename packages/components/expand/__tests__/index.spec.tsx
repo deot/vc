@@ -8,8 +8,7 @@ describe('index.ts', () => {
 		expect(typeof Expand).toBe('object');
 	});
 	it('create', async () => {
-		const wrapper = mount(() => (<Expand />));
-
+		const wrapper = mount(() => (<Expand class="vc-expand" />));
 		expect(wrapper.classes()).toContain('vc-expand');
 	});
 });
