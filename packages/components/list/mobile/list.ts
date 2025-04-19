@@ -7,7 +7,7 @@ export const MList = defineComponent({
 	name: COMPONENT_NAME,
 	props: listProps,
 	setup(props, { slots }) {
-		provide('list', { props });
+		provide('vc-list', { props });
 		return () => {
 			return h(
 				props.tag,

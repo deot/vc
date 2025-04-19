@@ -11,7 +11,7 @@ export const Select = defineComponent({
 	},
 	emits: ['update:modelValue'],
 	setup(props, { emit }) {
-		const formItem = inject('form-item') as any;
+		const formItem = inject('vc-form-item') as any;
 		const items = ['a', 'b', 'c', 'd'];
 
 		return () => {

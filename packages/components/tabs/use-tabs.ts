@@ -130,7 +130,7 @@ export default (options: any = {}) => {
 		list.value.splice(list.value.indexOf(item.props), 1);
 	};
 
-	provide('tabs', {
+	provide('vc-tabs', {
 		props,
 		currentValue,
 		refresh,

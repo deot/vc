@@ -17,7 +17,7 @@ export const Button = defineComponent({
 		const hasSlot = ref(true);
 		const isLoading = ref(false);
 
-		const group = inject('button-group', {
+		const group = inject('vc-button-group', {
 			size: 'medium',
 			vertical: false,
 			circle: false

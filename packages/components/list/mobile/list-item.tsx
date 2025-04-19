@@ -13,7 +13,7 @@ export const MListItem = defineComponent({
 	props: listItemProps,
 	emits: ['click'],
 	setup(props, { slots, emit }) {
-		const list = inject('list', {} as any);
+		const list = inject('vc-list', {} as any);
 
 		const classes = computed(() => {
 			const hasList = !!list.props;

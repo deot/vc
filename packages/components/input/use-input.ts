@@ -12,7 +12,7 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 	const isFocus = ref(false);
 	const isClearing = ref(false);
 	const isOnComposition = ref(false);
-	const formItem: any = inject('form-item', {});
+	const formItem: any = inject('vc-form-item', {});
 
 	watch(
 		() => props.modelValue,
@@ -117,8 +117,8 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 		 */
 		if (
 			typeof props.maxlength !== 'undefined'
-				&& props.bytes
-				&& e.inputType !== 'deleteContentBackward'
+			&& props.bytes
+			&& e.inputType !== 'deleteContentBackward'
 		) {
 			const fitValue = getFitValue(value, props.maxlength) as string;
 			if (value !== fitValue) {

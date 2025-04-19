@@ -6,7 +6,7 @@ export default () => {
 
 	const currentValue = ref<any>(undefined);
 	const isLoaded = ref(false);
-	const tabs = inject('tabs', {}) as any;
+	const tabs = inject('vc-tabs', {}) as any;
 
 	const isActive = computed(() => {
 		const state = tabs.currentValue.value === (props.value || currentValue.value);

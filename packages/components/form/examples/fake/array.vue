@@ -25,7 +25,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 
 const items = ref([1, 2, 3, 4]);
-const formItem = inject('form-item', {});
+const formItem = inject('vc-form-item', {});
 
 const handleClick = (_e, item, _index) => {
 	/**

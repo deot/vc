@@ -9,7 +9,7 @@ export const Input = defineComponent({
 	},
 	emits: ['update:modelValue'],
 	setup(props, { emit }) {
-		const formItem = inject('form-item') as any;
+		const formItem = inject('vc-form-item') as any;
 		return () => {
 			return h(
 				'input',

@@ -27,7 +27,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue']);
 
-const formItem = inject('form-item');
+const formItem = inject('vc-form-item');
 
 const handleInput = (e) => {
 	emit('update:modelValue', e.target.value);

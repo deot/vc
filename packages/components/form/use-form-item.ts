@@ -34,7 +34,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	}
 
 	// 嵌套
-	const formItem = inject('form-item', {} as FormItemProvide);
+	const formItem = inject('vc-form-item', {} as FormItemProvide);
 
 	const validateState = ref('');
 	const validateMessage = ref('');
@@ -205,7 +205,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		} catch (errors: any) {
 			validateState.value = 'error';
 			validateMessage.value = errors[0].message;
-			// eslint-disable-next-line no-throw-literal
+
 			throw ({
 				prop: props.prop,
 				message: validateMessage.value
@@ -254,7 +254,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 
 	// 用于判断是否是当前formItem的最后一个
 	const fields = reactive<ComponentInternalInstance[]>([]);
-	provide<FormItemProvide>('form-item', {
+	provide<FormItemProvide>('vc-form-item', {
 		fields,
 		blur: handleFieldBlur,
 		change: handleFieldChange,

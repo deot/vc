@@ -1,2 +1,2 @@
-export const FROM_KEY = 'form';
-export const FROM_ITEM_KEY = 'form-item';
+export const FROM_KEY = 'vc-form';
+export const FROM_ITEM_KEY = 'vc-form-item';

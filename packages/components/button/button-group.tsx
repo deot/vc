@@ -9,7 +9,7 @@ export const ButtonGroup = defineComponent({
 	name: COMPONENT_NAME,
 	props: buttonGroupProps,
 	setup(props, { slots }) {
-		provide('button-group', props);
+		provide('vc-button-group', props);
 
 		const classes = computed(() => (
 			{
@@ -23,9 +23,9 @@ export const ButtonGroup = defineComponent({
 			return props.fragment
 				? slots?.default?.()
 				: (
-					<div class={{ 'vc-button-group': true, ...classes.value }}>
-						{slots?.default?.()}
-					</div>
+						<div class={{ 'vc-button-group': true, ...classes.value }}>
+							{slots?.default?.()}
+						</div>
 					);
 		};
 	}
