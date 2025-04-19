@@ -1,5 +1,5 @@
 <template>
-	<div style="background: #f7f6f6">
+	<div style="background: var(--vc-background-color)">
 		<Button @click="animated = !animated">
 			animated: {{ animated }}
 		</Button>

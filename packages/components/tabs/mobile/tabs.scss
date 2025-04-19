@@ -1,0 +1,147 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-tabs;
+
+@include block($component-name) {
+	width: 100%;
+	overflow: hidden;
+
+	@include element(step) {
+		display: flex;
+		width: 40px;
+		justify-content: center;
+		align-items: center;
+
+		@include when(left) {
+			box-shadow: 1px 0 5px 1px #eee;
+		}
+
+		@include when(right) {
+			box-shadow: -1px 0 5px 1px #eee;
+		}
+	}
+
+	@include element(bar) {
+		position: relative;
+		display: flex;
+		margin-bottom: 8px;
+		overflow: hidden;
+		align-items: stretch;
+
+		@include when(fixed) {
+			position: fixed;
+			z-index: 999;
+			width: 100%;
+
+			// box-shadow: 0px -5px 5px 5px #999;
+		}
+	}
+
+	/**
+	 * 这里的设计，存在问题，要做到少时自动撑开，多是滚动
+	 * TODO: 用js方式实现;
+	 */
+	@include element(scroll) {
+		// -webkit-overflow-scrolling: touch;
+		width: 100%;
+		overflow: hidden;
+		white-space: nowrap;
+	}
+
+	@include element(nav) {
+		position: relative;
+		display: flex;
+		width: fit-content;
+		min-width: 100%;
+	}
+
+	@include element(item) {
+		position: relative;
+		padding: 15px 10px;
+		font-size: 15px;
+		line-height: 1;
+		text-align: center;
+		transition: color .3s ease-in-out;
+
+		@include when(average) {
+			flex: 1;
+		}
+	}
+
+	@include element(afloat) {
+		position: absolute;
+		left: 0;
+		z-index: 1;
+		height: 2px;
+		box-sizing: border-box;
+
+	}
+
+	@include element(content) {
+		display: flex;
+		flex-direction: row;
+	}
+
+	@include when(animated) {
+		@include element(afloat) {
+			transition: transform .3s ease-in-out;
+			transform-origin: 0 0;
+		}
+
+		@include element(content) {
+			will-change: transform;
+			transition: transform .3s cubic-bezier(.35, 0, .25, 1);
+		}
+	}
+
+	@include when(light) {
+		@include element(bar) {
+			background: white;
+		}
+
+		@include element(item) {
+			color: #666;
+
+			@include when(active) {
+				color: #000;
+			}
+		}
+
+		@include element(afloat) {
+			bottom: 0;
+			background-color: #000;
+		}
+	}
+
+	@include when(dark) {
+		@include element(bar) {
+			background: #333;
+		}
+
+		@include element(item) {
+			color: #E7C083;
+
+			@include when(active) {
+				color: #E7C083;
+			}
+		}
+
+		@include element(afloat) {
+			bottom: 6px;
+			background-color: #E7C083;
+			border-radius: 2px;
+		}
+
+		@include element(step) {
+			color: #E7C083;
+
+			@include when(left) {
+				box-shadow: 1px 0 5px 1px #242421;
+			}
+
+			@include when(right) {
+				box-shadow: -1px 0 5px 1px #242421;
+			}
+		}
+	}
+}

@@ -263,7 +263,7 @@ const renderLabel = (props) => {
 | animated     | 是否使用 CSS3 动画                                | `boolean`         | -                 | `true`         |
 | name         | 当嵌套使用 Tabs，指定 name 区分层级                     | `string`          | -                 | -              |
 | average      | navbar 是否均分                                 | `boolean`         | -                 | `true`         |
-| showAfloat   | 是否显示下划线                                     | `boolean`         | -                 | `true`         |
+| afloat       | 是否显示下划线                                     | `boolean`         | -                 | `true`         |
 | beforeRemove | 关闭前的函数，返回 `Promise` 可阻止标签关闭, 回调参数为当前`index` | `Function`        | -                 | -              |
 | offsetTop    | top的偏移值                                     | `number`          | -                 | 0              |
 | showStep     | 是否在需要滚动时展示左右切换按钮，仅支持移动端                     | `boolean`         | -                 | false          |

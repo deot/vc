@@ -1,4 +1,8 @@
-import { Tabs, TabsPane } from '.';
+import { MTabs } from './mobile/tabs.tsx';
+import { MTabsPane } from './mobile/tabs-pane.tsx';
+import './mobile/style.scss';
 
-export const MTabs = Tabs;
-export const MTabsPane = TabsPane;
+export {
+	MTabs,
+	MTabsPane
+};
