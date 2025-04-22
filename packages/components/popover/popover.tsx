@@ -127,7 +127,7 @@ export const Popover = defineComponent({
 					portalClass
 				}) as PortalLeaf;
 			} else if (popperInstance && popperInstance.wrapper) {
-				popperInstance.wrapper.isActive = false;
+				popperInstance.wrapper.toggle(false);
 			}
 		};
 

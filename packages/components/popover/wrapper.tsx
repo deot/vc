@@ -240,7 +240,13 @@ export const PopoverWrapper = defineComponent({
 			props.alone && props.hover && removeEvents();
 		});
 
-		expose({ isActive });
+		expose({
+			isActive,
+			toggle(v?: boolean) {
+				v = typeof v === 'boolean' ? v : !isActive.value;
+				isActive.value = v;
+			}
+		});
 		return () => {
 			return (
 				<TransitionScale
