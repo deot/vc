@@ -12,15 +12,15 @@
 ```vue
 <template>
 	<div class="v-page-basic">
-		<div>页数较少时效果</div>	
+		<div>页数较少时效果</div>
 		<Page
 			class="page"
-			:count="50" 
+			:count="50"
 		/>
-		<div>大于5页时效果</div>	
+		<div>大于5页时效果</div>
 		<Page
 			class="page"
-			:count="60" 
+			:count="60"
 		/>
 	</div>
 </template>

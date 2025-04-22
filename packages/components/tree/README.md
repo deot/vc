@@ -14,7 +14,7 @@
 ```vue
 <template>
 	<div>
-		<Tree 
+		<Tree
 			:data="data"
 			@node-click="handleNodeClick"  />
 	</div>
@@ -36,12 +36,12 @@ const data = ref([{
 	children: [{
 		label: '二级 2-1',
 		children: [{
-		label: '三级 2-1-1'
+			label: '三级 2-1-1'
 		}]
 	}, {
 		label: '二级 2-2',
 		children: [{
-		label: '三级 2-2-1'
+			label: '三级 2-2-1'
 		}]
 	}]
 }, {
@@ -75,7 +75,7 @@ const handleNodeClick = (nodeData, node, nodeRef) => {
 ```vue
 <template>
 	<div>
-		<Tree 
+		<Tree
 			:data="data"
 			show-checkbox
 			@check-change="handleCheckChange"  />
@@ -98,12 +98,12 @@ const data = ref([{
 	children: [{
 		label: '二级 2-1',
 		children: [{
-		label: '三级 2-1-1'
+			label: '三级 2-1-1'
 		}]
 	}, {
 		label: '二级 2-2',
 		children: [{
-		label: '三级 2-2-1'
+			label: '三级 2-2-1'
 		}]
 	}]
 }, {
@@ -135,7 +135,7 @@ const handleCheckChange = (data, checked, indeterminate) => {
 ```vue
 <template>
 	<div>
-		<Tree 
+		<Tree
 			:data="data"
 			:load-data="loadData"
 			lazy
@@ -160,12 +160,12 @@ const data = ref([{
 	children: [{
 		label: '二级 2-1',
 		children: [{
-		label: '三级 2-1-1'
+			label: '三级 2-1-1'
 		}]
 	}, {
 		label: '二级 2-2',
 		children: [{
-		label: '三级 2-2-1'
+			label: '三级 2-2-1'
 		}]
 	}]
 }, {
@@ -216,7 +216,7 @@ const handleCheckChange = (data, checked, indeterminate) => {
 ```vue
 <template>
 	<div>
-		<Tree 
+		<Tree
 			:data="data"
 			show-checkbox/>
 	</div>
@@ -273,7 +273,7 @@ const data = ref([{
 ```vue
 <template>
 	<div>
-		<Tree 
+		<Tree
 			ref="tree"
 			:data="data"
 			:render-content="renderContent"
@@ -293,7 +293,7 @@ const data = ref([{
 import { ref } from 'vue';
 import { Tree, Button } from '@deot/vc';
 
-const data= ref([{
+const data = ref([{
 	id: 1,
 	label: '一级 1',
 	children: [{
@@ -336,7 +336,11 @@ const getCheckedNodes = () => {
 
 const renderContent = ({ it, node }) => {
 	return (
-		<span>{it.label} 自定义渲染</span>
+		<span>
+			{it.label}
+			{' '}
+			自定义渲染
+		</span>
 	);
 };
 
@@ -377,7 +381,7 @@ const resetChecked = () => {
 ```vue
 <template>
 	<div>
-		<Tree 
+		<Tree
 			:data="data"
 			accordion
 			@node-click="handleNodeClick"  />
@@ -400,12 +404,12 @@ const data = ref([{
 	children: [{
 		label: '二级 2-1',
 		children: [{
-		label: '三级 2-1-1'
+			label: '三级 2-1-1'
 		}]
 	}, {
 		label: '二级 2-2',
 		children: [{
-		label: '三级 2-2-1'
+			label: '三级 2-2-1'
 		}]
 	}]
 }, {
@@ -425,7 +429,6 @@ const data = ref([{
 const handleNodeClick = (data) => {
 	console.log(data);
 };
-
 ```
 :::
 
@@ -436,7 +439,7 @@ const handleNodeClick = (data) => {
 ```vue
 <template>
 	<div>
-		<Tree 
+		<Tree
 			:data="data"
 			default-expand-all
 			draggable
@@ -467,12 +470,12 @@ const data = ref([{
 	children: [{
 		label: '二级 2-1',
 		children: [{
-		label: '三级 2-1-1'
+			label: '三级 2-1-1'
 		}]
 	}, {
 		label: '二级 2-2',
 		children: [{
-		label: '三级 2-2-1'
+			label: '三级 2-2-1'
 		}]
 	}]
 }, {

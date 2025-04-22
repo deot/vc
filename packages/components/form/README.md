@@ -5,7 +5,7 @@
 ### 何时使用
 - 用于创建一个实体或收集信息。
 - 需要对输入的数据类型进行校验时。
-- 注意：当一个 form 元素中只有一个输入框时，在该输入框中按下回车应提交该表单。如果希望阻止这一默认行为，可以在 `<Form>` 标签上添加 `@submit.native.prevent`。
+- 注意：当一个 form 元素中只有一个输入框时，在该输入框中按下回车应提交该表单。如果希望阻止这一默认行为，可以在 `<Form>` 标签上添加 `@submit.prevent`。
 
 ### 典型表单
 包括各种表单项，比如输入框、选择器、开关、单选框、多选框等。
@@ -14,12 +14,12 @@
 :::RUNTIME
 ```vue
 <template>
-	<Form 
-		ref="form" 
-		:model="formData" 
+	<Form
+		ref="form"
+		:model="formData"
 		:label-width="96"
 		style="padding-left: 56px; margin-top: 21px"
-		@submit.native.prevent
+		@submit.prevent
 	>
 		<FormItem label="input：">
 			<Input v-model="formData.input" style="width: 300px" />
@@ -37,11 +37,11 @@
 			<Switch v-model="formData.switch"/>
 		</FormItem>
 		<FormItem label="date：">
-			<DatePicker 
+			<DatePicker
 				v-model="formData.date"
-				type="datetime" 
+				type="datetime"
 				clearable
-				placeholder="Select date" 
+				placeholder="Select date"
 				style="width: 300px"
 			/>
 		</FormItem>
@@ -68,7 +68,6 @@
 		</FormItem>
 		<FormItem
 			v-for="(item, index) in formData.items"
-			v-if="item.status"
 			:key="index"
 			:label="'Item ' + item.index + '：'"
 			:prop="'items.' + index + '.value'"
@@ -122,9 +121,9 @@ const cityList = ref([{
 const form = ref();
 const handleSubmit = async () => {
 	try {
-		await form.value.validate()
+		await form.value.validate();
 	} catch (e) {
-		 console.log(e);
+		console.log(e);
 	}
 };
 
@@ -145,7 +144,7 @@ const handleOnly = async (name) => {
 	try {
 		await form.value.validateField('items.0.value', { scroll: true });
 	} catch (e) {
-		 console.log(e);
+		console.log(e);
 	}
 };
 
@@ -168,12 +167,12 @@ const handleRemove = (index) => {
 :::RUNTIME
 ```vue
 <template>
-	<Form 
-		ref="formData" 
+	<Form
+		ref="formData"
 		:label-width="50"
 		inline
 		style="padding-left: 56px; margin-top: 21px"
-		@submit.native.prevent
+		@submit.prevent
 	>
 		<FormItem label="input：">
 			<Input v-model="formData.input" />
@@ -236,12 +235,12 @@ const handleSubmit = (name) => {
 			<Radio label="right">右对齐</Radio>
 			<Radio label="top">顶部对齐</Radio>
 		</RadioGroup>
-		<Form 
-			ref="form" 
+		<Form
+			ref="form"
 			:label-width="50"
 			:label-position="labelPosition"
 			style="margin-top: 21px"
-			@submit.native.prevent
+			@submit.prevent
 		>
 			<FormItem label="input：">
 				<Input v-model="formData.input" style="width: 200px;" />
@@ -282,13 +281,13 @@ Form 组件提供了表单验证的功能，只需要通过 `rules` 属性传入
 :::RUNTIME
 ```vue
 <template>
-	<Form 
-		ref="form" 
-		:model="formData" 
+	<Form
+		ref="form"
+		:model="formData"
 		:rules="rules"
 		:label-width="96"
 		style="padding-left: 56px; margin-top: 21px"
-		@submit.native.prevent
+		@submit.prevent
 	>
 		<FormItem prop="input" label="input：">
 			<Input v-model="formData.input" style="width: 300px" />
@@ -306,11 +305,11 @@ Form 组件提供了表单验证的功能，只需要通过 `rules` 属性传入
 			<Switch v-model="formData.switch"/>
 		</FormItem>
 		<FormItem prop="date" label="date：">
-			<DatePicker 
+			<DatePicker
 				v-model="formData.date"
-				type="datetime" 
+				type="datetime"
 				clearable
-				placeholder="Select date" 
+				placeholder="Select date"
 				style="width: 300px"
 			/>
 		</FormItem>
@@ -415,7 +414,7 @@ const cityList = ref([
 const form = ref();
 const handleSubmit = async () => {
 	try {
-		await form.valuevalidate()
+		await form.value.valuevalidate();
 	} catch (e) {
 		console.log(e);
 	}
@@ -459,13 +458,13 @@ const handleRemove = (index) => {
 :::RUNTIME
 ```vue
 <template>
-	<Form 
-		ref="formData" 
-		:model="formData" 
+	<Form
+		ref="formData"
+		:model="formData"
 		:rules="rules"
 		:label-width="96"
 		style="padding-left: 56px; margin-top: 21px"
-		@submit.native.prevent
+		@submit.prevent
 	>
 		<FormItem prop="pass" label="密码：">
 			<Input type="password" v-model="formData.pass" style="width: 300px" />
@@ -526,7 +525,7 @@ const validatePass2 = (value) => {
 	if (!value) {
 		return '请再次输入密码';
 	} else if (value !== formData.pass) {
-		return '两次输入密码不一致!'
+		return '两次输入密码不一致!';
 	}
 };
 

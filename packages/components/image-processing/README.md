@@ -17,7 +17,7 @@
 		<ImageProcessing
 			:value="img"
 			:tolerance="90"
-			:cutout-color="[255, 237, 113, 1]" 
+			:cutout-color="[255, 237, 113, 1]"
 			processing="cutout"
 		/>
 	</div>

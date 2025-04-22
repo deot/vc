@@ -352,9 +352,9 @@ export const ModalView = defineComponent({
 									{
 										!slots.header
 											? (
-												<Fragment>
-													<div class="vc-modal__title" innerHTML={props.title} />
-													{
+													<Fragment>
+														<div class="vc-modal__title" innerHTML={props.title} />
+														{
 															props.closable && !props.mode && (
 																<div
 																	class="vc-modal__close"
@@ -365,7 +365,7 @@ export const ModalView = defineComponent({
 															)
 														}
 
-												</Fragment>
+													</Fragment>
 												)
 											: slots.header()
 									}
@@ -390,8 +390,8 @@ export const ModalView = defineComponent({
 											{
 												!slots.footer
 													? (
-														<Fragment>
-															{
+															<Fragment>
+																{
 																	props.cancelText && (
 																		<Button
 																			style="margin-right: 8px;"
@@ -401,7 +401,7 @@ export const ModalView = defineComponent({
 																		</Button>
 																	)
 																}
-															{
+																{
 																	props.okText && (
 																		<Button
 																			type="primary"
@@ -411,7 +411,7 @@ export const ModalView = defineComponent({
 																		</Button>
 																	)
 																}
-														</Fragment>
+															</Fragment>
 														)
 													: slots.footer?.()
 											}

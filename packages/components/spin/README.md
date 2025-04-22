@@ -20,11 +20,12 @@
 </template>
 <script>
 import { Spin } from '@deot/vc';
+
 export default {
 	components: {
-		"Spin": Spin
+		Spin: Spin
 	}
-}
+};
 </script>
 <style>
 .v-spin-basic > div{
@@ -76,10 +77,14 @@ import { Spin } from '@deot/vc';
 			</div>
 		</div>
 		<div>
-			切换显示状态: 
+			切换显示状态:
 			<Switch v-model="showSpin">
-				<span slot="open">开</span>
-				<span slot="close">关</span>
+				<template v-slot:open>
+					<span >开</span>
+				</template>
+				<template v-slot:close>
+					<span >关</span>
+				</template>
 			</Switch>
 		</div>
 	</div>

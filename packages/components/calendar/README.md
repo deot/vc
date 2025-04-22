@@ -56,12 +56,13 @@ import { Calendar, Button } from '@deot/vc';
 	</div>
 </template>
 <script setup lang="jsx">
-import { Calendar } from'@deot/vc';
+import { Calendar } from '@deot/vc';
 
 const renderDate = ({ date, curDateStr }) => {
 	return (
-		<span style={ date.date === curDateStr ? "background: gray;" : ""}>
-			{date.day}号
+		<span style={date.date === curDateStr ? 'background: gray;' : ''}>
+			{date.day}
+			号
 		</span>
 	);
 };
@@ -69,7 +70,7 @@ const renderDate = ({ date, curDateStr }) => {
 const renderMonth = ({ year, month, monthNames }) => {
 	return (
 		<div style="display:flex; justify-content:center">
-			{year + "--" + monthNames[month].en}
+			{year + '--' + monthNames[month].en}
 		</div>
 	);
 };
@@ -140,7 +141,7 @@ import { Calendar, Button } from '@deot/vc';
 
 const lang = ref('ch');
 const handleChangeLang = () => {
-	lang.value = lang.value == "ch" ? "en" : "ch"
+	lang.value = lang.value == 'ch' ? 'en' : 'ch';
 };
 </script>
 <style>

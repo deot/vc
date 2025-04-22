@@ -8,9 +8,9 @@
 		</div>
 		<div ref="parent" class="demo__container">
 			<div class="demo__left" style="margin-top: 32px; margin-bottom: 32px">
-				<Popover 
+				<Popover
 					:get-popup-container="getPopupContainer"
-					:model-value="true" 
+					:model-value="true"
 					:trigger="trigger"
 					always
 					placement="left-top"
@@ -28,11 +28,11 @@
 						</div>
 					</template>
 				</Popover>
-				<Popover 
+				<Popover
 					v-model="isVisible"
 					:portal="false"
-					:trigger="trigger" 
-					placement="left" 
+					:trigger="trigger"
+					placement="left"
 					content="Left"
 				>
 					<Button class="g-btn g-m-tb-10">
@@ -58,10 +58,10 @@
 			</div>
 			<div class="demo__middle">
 				<div class="g-jc-sb">
-					<Popover 
+					<Popover
 						:get-popup-container="getPopupContainer"
-						:trigger="trigger" 
-						placement="top-left" 
+						:trigger="trigger"
+						placement="top-left"
 						content="TopLeft"
 						class=" g-m-lr-10"
 					>
@@ -74,10 +74,10 @@
 							</div>
 						</template>
 					</Popover>
-					<Popover 
+					<Popover
 						:portal="false"
-						:trigger="trigger" 
-						placement="top" 
+						:trigger="trigger"
+						placement="top"
 						content="Top"
 						class=" g-m-lr-10"
 					>
@@ -90,9 +90,9 @@
 							</div>
 						</template>
 					</Popover>
-					<Popover 
-						:trigger="trigger" 
-						placement="top-right" 
+					<Popover
+						:trigger="trigger"
+						placement="top-right"
 						content="TopRight"
 						class=" g-m-lr-10"
 					>
@@ -107,9 +107,9 @@
 					</Popover>
 				</div>
 				<div class="g-jc-sb">
-					<Popover 
+					<Popover
 						:get-popup-container="getPopupContainer"
-						:trigger="trigger" 
+						:trigger="trigger"
 						placement="bottom-left"
 						content="BottomLeft"
 						class=" g-m-lr-10"
@@ -123,10 +123,10 @@
 							</div>
 						</template>
 					</Popover>
-					<Popover 
+					<Popover
 						:portal="false"
-						:trigger="trigger" 
-						placement="bottom" 
+						:trigger="trigger"
+						placement="bottom"
 						content="Bottom"
 						class=" g-m-lr-10"
 					>
@@ -139,8 +139,8 @@
 							</div>
 						</template>
 					</Popover>
-					<Popover 
-						:trigger="trigger" 
+					<Popover
+						:trigger="trigger"
 						placement="bottom-right"
 						content="BottomRight"
 						class=" g-m-lr-10"
@@ -157,10 +157,10 @@
 				</div>
 			</div>
 			<div class="demo__right" style="margin-top: 32px; margin-bottom: 32px">
-				<Popover 
+				<Popover
 					:get-popup-container="getPopupContainer"
-					:trigger="trigger" 
-					placement="right-top" 
+					:trigger="trigger"
+					placement="right-top"
 					content="RightTop"
 				>
 					<Button class="g-btn g-m-tb-10">
@@ -172,10 +172,10 @@
 						</div>
 					</template>
 				</Popover>
-				<Popover 
+				<Popover
 					:portal="false"
-					:trigger="trigger" 
-					placement="right" 
+					:trigger="trigger"
+					placement="right"
 					content="Right"
 				>
 					<Button class="g-btn g-m-tb-10">
@@ -187,9 +187,9 @@
 						</div>
 					</template>
 				</Popover>
-				<Popover 
-					:trigger="trigger" 
-					placement="right-bottom" 
+				<Popover
+					:trigger="trigger"
+					placement="right-bottom"
 					content="RightBottom"
 				>
 					<Button class="g-btn g-m-tb-10">
@@ -208,7 +208,7 @@
 
 <script setup lang="jsx">
 import { ref, computed, onMounted } from 'vue';
-import { Popover } from '..'; 
+import { Popover } from '..';
 import { Button } from '../../button';
 
 const parent = ref(null);
@@ -252,7 +252,7 @@ const handleDynamic = (e) => {
 			);
 		}
 	});
-}
+};
 </script>
 
 <style lang="scss">
@@ -279,16 +279,16 @@ const handleDynamic = (e) => {
 	display: flex;
 	align-items: flex-start;
 	justify-content: center;
-	background: varfix(background-color); 
+	background: varfix(background-color);
 	height: 3000px;
 	@include element(container) {
 		display: flex;
-		height: 400px; 
-		width: auto; 
-		margin-top: 200px; 
-		overflow: unset; 
-		position: relative; 
-		background: varfix(background-color-light); 
+		height: 400px;
+		width: auto;
+		margin-top: 200px;
+		overflow: unset;
+		position: relative;
+		background: varfix(background-color-light);
 		@include element(left) {
 			display: flex;
 			flex-direction: column;
@@ -307,4 +307,3 @@ const handleDynamic = (e) => {
 	}
 }
 </style>
-

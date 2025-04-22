@@ -14,13 +14,14 @@
 <template>
 	<div>
 		<SortList v-model="dataSource">
-			<div
-				slot-scope="{ it }"
-				:style="{ background: `#ff33${it.id}${it.id}` }"
-				style="width: 200px;line-height: 5; color: white"
-			>
-				{{ it.id }}
-			</div>
+			<template v-slot="{ it }">
+				<div
+					:style="{ background: `#ff33${it.id}${it.id}` }"
+					style="width: 200px;line-height: 5; color: white"
+				>
+					{{ it.id }}
+				</div>
+			</template>
 		</SortList>
 		<div style="margin-top: 50px; margin-left: 10px;">
 			<Button @click="handleAdd">
@@ -63,13 +64,14 @@ const handleShuffle = () => {
 <template>
 	<div>
 		<SortList v-model="dataSource" :mask="false">
-			<div
-				slot-scope="{ it }"
-				:style="{ background: `#ff33${it.id}${it.id}` }"
-				style="width: 200px;line-height: 5; color: white"
-			>
-				{{ it.id }}
-			</div>
+			<template v-slot="{ it }">
+				<div
+					:style="{ background: `#ff33${it.id}${it.id}` }"
+					style="width: 200px;line-height: 5; color: white"
+				>
+					{{ it.id }}
+				</div>
+			</template>
 		</SortList>
 		<div style="margin-top: 50px; margin-left: 10px;">
 			<Button @click="handleAdd">

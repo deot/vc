@@ -139,18 +139,17 @@ import { Button, ButtonGroup } from '..';
 const handleClick = (e) => {
 	console.log(e);
 };
-const handlePromise1 = (e, callback) => {
+const handlePromise1 = () => {
 	return new Promise(_ => setTimeout(_, 3000));
 };
 const handlePromise2 = (e, callback) => {
 	return new Promise(_ => setTimeout(_, 3000)).then(() => {
 		console.log(typeof callback);
 	});
-}
+};
 </script>
 <style>
 .box-wrapper{
 	margin: 20px;
 }
 </style>
-

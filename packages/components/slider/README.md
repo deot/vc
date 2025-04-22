@@ -108,10 +108,10 @@ import { Slider } from '@deot/vc';
 const value6 = ref(20);
 const value7 = ref(20);
 const tipFormat = (val) => {
-	 return `Progress: ${val} %`;
+	return `Progress: ${val} %`;
 };
-const hideFormat => (val) {
-	return null
+const hideFormat = (val) => {
+	return null;
 };
 </script>
 ```

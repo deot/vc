@@ -5,7 +5,7 @@
 			更多搜索条件{{ isVisible ? `up` : `down` }}
 		</span>
 		<Icon :type="`triangle-${isVisible ? `up2` : `down2`}`" />
-		<Expand 
+		<Expand
 			ref="expand"
 			v-model="isVisible"
 			:alive="alive"

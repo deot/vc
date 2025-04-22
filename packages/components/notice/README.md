@@ -82,7 +82,7 @@ const handleClick = (type) => {
 			onClose() {
 				console.log('回调');
 			}
-		})
+		});
 	} else if (type === 'success') {
 		Notice.success({
 			title: '成功',
@@ -107,7 +107,7 @@ const handleClick = (type) => {
 				console.log('回调');
 			}
 		});
-	} else if(type === 'open') {
+	} else if (type === 'open') {
 		Notice.open({
 			title: '这是标题',
 			content: '测试无图标的提示',
@@ -149,7 +149,7 @@ const handleClick = (type) => {
 			console.log('回调');
 		}
 	});
-}
+};
 </script>
 ```
 :::
@@ -173,13 +173,17 @@ window.Notice = Notice;
 
 const handleClickrender = () => {
 	Notice.info({
-		content: h => {
-			return <span>
-				使用<span style="color: #5495f6">jsx</span>渲染
-			</span>
+		content: (h) => {
+			return (
+				<span>
+					使用
+					<span style="color: #5495f6">jsx</span>
+					渲染
+				</span>
+			);
 		}
 	});
-}
+};
 </script>
 ```
 :::

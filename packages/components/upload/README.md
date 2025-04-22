@@ -55,7 +55,7 @@ VcInstance.configure({
 				});
 			});
 		},
-		onPostAfter: ({ response, options }) => { // eslint-disable-line
+		onPostAfter: ({ response, options }) => {
 			const { file } = options.param;
 			return new Promise((resolve) => {
 				// 模拟强制返回
@@ -79,13 +79,13 @@ const fileName = ref('');
 const handleFileSuccess = (res, file, opt) => {
 	console.log(`Success：${file.current}, 总数：${file.total}`);
 	console.log(res);
-	console.log('file',file)
-	console.log('opt',opt);
+	console.log('file', file);
+	console.log('opt', opt);
 	Message.destroy();
 	Message.success({
 		content: `上传成功`
 	});
-	fileName.value = res.avatar_url
+	fileName.value = res.avatar_url;
 };
 
 const handleFileError = (res, file) => {
@@ -95,7 +95,7 @@ const handleFileError = (res, file) => {
 	Message.error({
 		content: res.message
 	});
-	fileName.value = res.avatar_url
+	fileName.value = res.avatar_url;
 };
 </script>
 ```
@@ -166,7 +166,7 @@ VcInstance.init({
 				});
 			});
 		},
-		onPostAfter: ({ response, options }) => { // eslint-disable-line
+		onPostAfter: ({ response, options }) => {
 			const { file } = options.param;
 			return new Promise((resolve) => {
 				// 模拟强制返回
@@ -192,6 +192,7 @@ const handleError = (error) => {
 };
 /**
  * 总线
+ * @param files ~
  */
 const handleBegin = (files) => {
 	console.log(`上传中`);
@@ -207,17 +208,20 @@ const handleComplete = (info = {}) => {
 };
 /**
  * 单个文件
+ * @param file ~
+ * @param fileList ~
+ * @returns ~
  */
 const handleFileBefore = (file, fileList) => {
 	console.log(`上传之前`);
-	console.log(file, fileList)
+	console.log(file, fileList);
 	return new Promise((resolve, reject) => {
 		resolve(file);
 	});
 };
 const handleFileStart = (file) => {
 	console.log(`开始上传`);
-	console.log(file)
+	console.log(file);
 };
 const handleFileSuccess = (res, file) => {
 	console.log(`上传成功`);
@@ -240,7 +244,7 @@ const handleFileError = (res, file) => {
 	Message.error({
 		content: res.message || 'test'
 	});
-}
+};
 </script>
 <style lang="scss">
 .v-upload-basic{
@@ -303,7 +307,7 @@ VcInstance.init({
 				});
 			});
 		},
-		onPostAfter: ({ response, options }) => { // eslint-disable-line
+		onPostAfter: ({ response, options }) => {
 			const { file } = options.param;
 			return new Promise((resolve) => {
 				// 模拟强制返回

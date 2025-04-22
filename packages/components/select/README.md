@@ -27,7 +27,7 @@
 import { ref } from 'vue';
 import { Select, Option } from '@deot/vc';
 
-const city = ref("New York");
+const city = ref('New York');
 const cityList = ref([
 	{
 		value: '1',
@@ -61,7 +61,7 @@ const cityList = ref([
 ```vue
 <template>
 	<div class="v-select-basic">
-		<div>全部禁用</div>	
+		<div>全部禁用</div>
 		<Select v-model="model1" disabled clearable style="width: 200px;">
 			<Option
 				v-for="(item, index) in options"
@@ -72,7 +72,7 @@ const cityList = ref([
 		</Select>
 		<br/>
 		<br/>
-		<div>选项禁用</div>	
+		<div>选项禁用</div>
 		<Select v-model="model2" clearable style="width: 200px;">
 			<Option
 				v-for="(item, index) in options"
@@ -94,11 +94,11 @@ const options = ref([
 	{
 		value: '选项1',
 		label: '黄金糕'
-	}, 
+	},
 	{
 		value: '选项2',
 		label: '双皮奶'
-	}, 
+	},
 	{
 		value: '选项3',
 		label: '蚵仔煎'
@@ -106,7 +106,7 @@ const options = ref([
 	{
 		value: '选项4',
 		label: '龙须面'
-	}, 
+	},
 	{
 		value: '选项5',
 		label: '北京烤鸭'

@@ -62,10 +62,10 @@ const isChecked2 = ref(true);
 <template>
 	<div>
 		<CheckboxGroup v-model="checkedFruits">
-			<Checkbox 
+			<Checkbox
 				v-for="fruit in fruits"
 				:key="fruit"
-				:label="fruit" 
+				:label="fruit"
 			/>
 		</CheckboxGroup>
 	</div>
@@ -98,10 +98,10 @@ const checkedFruits = ref(['Apple']);
 			</Checkbox>
 		</div>
 		<CheckboxGroup v-model="checkedFruits" @change="handleChange">
-			<Checkbox 
+			<Checkbox
 				v-for="fruit in fruits"
 				:key="fruit"
-				:label="fruit" 
+				:label="fruit"
 			/>
 		</CheckboxGroup>
 	</div>
@@ -127,7 +127,7 @@ const handleChange = (data) => {
 	const checkedCount = data.length;
 	checkAll.value = checkedCount === fruits.value.length;
 	indeterminate.value = checkedCount > 0 && checkedCount < fruits.value.length;
-}
+};
 </script>
 
 <script>

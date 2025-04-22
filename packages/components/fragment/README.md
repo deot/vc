@@ -42,6 +42,5 @@ import { Fragment } from '@deot/vc';
 	align-items: center;
 }
 </style>
-
 ```
 :::

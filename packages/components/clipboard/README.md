@@ -36,8 +36,8 @@ const msg = ref('我是被复制的内容');
 	<div>
 		<input v-model="msg" type="text">
 		<br>
-		<Clipboard 
-			:value="msg" 
+		<Clipboard
+			:value="msg"
 			tag="span"
 			@before="handleBefore"
 			@after="handleAfter"

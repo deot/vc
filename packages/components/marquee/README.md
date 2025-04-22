@@ -94,7 +94,6 @@ const text = ref('ABCDEFG');
 import { ref } from 'vue';
 import { Marquee, Button } from '@deot/vc';
 
-
 const text = ref('ABCDEFG');
 const animated = ref(true);
 

@@ -1,6 +1,6 @@
 <template>
 	<div style="padding: 100px">
-		<MModalView 
+		<MModalView
 			v-model="visible1"
 			:mask-closable="true"
 			title="标题1"
@@ -9,7 +9,7 @@
 			@cancel="handleCancel"
 			@ok="handleOk"
 		/>
-		<MModalView 
+		<MModalView
 			v-model="visible2"
 			:mode="mode"
 			:mask-closable="true"
@@ -23,7 +23,7 @@
 			</div>
 			<!-- <vcm-input v-model="value" /> -->
 		</MModalView>
-		<MModalView 
+		<MModalView
 			v-model="visible3"
 			:mode="mode"
 			:mask-closable="true"
@@ -34,7 +34,7 @@
 			@cancel="handleCancel"
 			@ok="handleOk"
 		/>
-		<MModalView 
+		<MModalView
 			v-model="visible4"
 			:mask-closable="true"
 			content="账号密码不一致，请重试"
@@ -44,7 +44,7 @@
 		/>
 		<div @click="handleClick1">
 			normal: 基本
-		</div>		
+		</div>
 		<div @click="handleClick2">
 			normal: 自定义slot content
 		</div>
@@ -59,7 +59,7 @@
 		</div>
 		<div @click="handleClick6">
 			portal: operation
-		</div>	
+		</div>
 		<div @click="handleClick7">
 			normal: 无标题
 		</div>
@@ -86,7 +86,7 @@ const handleCancel = () => {
 	console.log('点击取消这个按钮时回调');
 };
 
-const handleOk = (e) => {
+const handleOk = () => {
 	console.log('点击确定这个按钮时回调');
 	return new Promise((resolve) => {
 		setTimeout(resolve, 3000);

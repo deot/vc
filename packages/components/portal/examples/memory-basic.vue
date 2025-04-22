@@ -1,6 +1,6 @@
 <template>
 	<h1>Memory Test in non-trace mode（close vue-devtools）</h1>
-	<button 
+	<button
 		@click="useComponent = !useComponent"
 	>
 		useComponent: {{ useComponent }}
@@ -8,22 +8,21 @@
 	<h3>
 		Current Status：{{ runTip }}
 	</h3>
-	 
+
 	<button @click="start">
 		Start
-	</button>  
+	</button>
 	<br>
 	<br>
 	<button @click="stop">
 		Stop
-	</button> 
+	</button>
 	<div ref="root" />
 </template>
 
 <script setup>
-import { h, ref, createApp, onUnmounted, defineComponent } from "vue";
+import { h, ref, createApp, onUnmounted, defineComponent } from 'vue';
 
-/* eslint-disable-next-line vue/one-component-per-file */
 const WrapperComponent = defineComponent({
 	name: 'vc-wrapper',
 	props: {
@@ -37,13 +36,13 @@ const WrapperComponent = defineComponent({
 				.from({ length: 10000 })
 				.map(
 					() => h(
-						'p', 
-						{ onClick: console.log }, 
+						'p',
+						{ onClick: console.log },
 						slots
 					)
 				)
 		);
-	} 
+	}
 });
 
 const WrapperFunction = (props, { slots }) => h(
@@ -52,8 +51,8 @@ const WrapperFunction = (props, { slots }) => h(
 		.from({ length: 10000 })
 		.map(
 			() => h(
-				'p', 
-				{ onClick: console.log }, 
+				'p',
+				{ onClick: console.log },
 				slots
 			)
 		)
@@ -68,15 +67,15 @@ const start = () => {
 	clearInterval(timer);
 	timer = setInterval(() => {
 		runTip.value = 'Running';
-		
+
 		const container = document.createElement('div');
 		const app = createApp(
 			() => h(
-				useComponent.value ? WrapperComponent : WrapperFunction, 
-				{ 
+				useComponent.value ? WrapperComponent : WrapperFunction,
+				{
 					rootTag: 'h4',
-					onClick: console.log 
-				}, 
+					onClick: console.log
+				},
 				{
 					default: () => `useComponent: ${useComponent.value} - ${Math.random()}`
 				}
@@ -89,10 +88,10 @@ const start = () => {
 		Array
 			.from(container.children)
 			.forEach(i => root.value.appendChild(i));
-		
+
 		// unmount
 		setTimeout(app.unmount, 0);
-		
+
 		/**
 		 * 不需要设置 `container = null`
 		 * 不需要 removeChild，但container.children多个子节点时，unmount是无法卸载的;

@@ -10,7 +10,7 @@
 	</VFragment>
 </template>
 <script setup>
-import { Fragment as VFragment} from '..';
+import { Fragment as VFragment } from '..';
 
 const handleClick = () => {
 	alert('你点击了我');

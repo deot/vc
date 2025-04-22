@@ -14,14 +14,14 @@
 			清除定时器
 		</MButton>
 		<br>
-		<MTabs 
+		<MTabs
 			v-model="value"
-			:animated="animated" 
+			:animated="animated"
 			:theme="theme"
 			:average="false"
 			:sticky="true"
 			:show-step="showStep"
-			closable 
+			closable
 			style="margin-top: 20px;"
 			@click="handleClick"
 			@tab-remove="handleRemove"
@@ -132,6 +132,6 @@ const handleRemove = () => {
 };
 
 const handleClear = () => {
-}
+};
 
 </script>

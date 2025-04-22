@@ -23,9 +23,9 @@
 			</CarouselItem>
 		</Carousel>
 		<p style="margin-top: 10px">不自动切换，Click指示器切换</p>
-		<Carousel 
-			:autoplay="false" 
-			trigger="click" 
+		<Carousel
+			:autoplay="false"
+			trigger="click"
 			:height="150"
 		>
 			<CarouselItem v-for="item in 4" :key="item">
@@ -35,13 +35,13 @@
 	</div>
 </template>
 <script setup>
-import { Carousel, CarouselItem } from '@deot/vc'
+import { Carousel, CarouselItem } from '@deot/vc';
 </script>
 <style>
 .v-carousel-basic .CarouselItem h3{
 	color: #475669;
 	font-size: 14px;
-	opacity: 0.75; 
+	opacity: 0.75;
 	line-height: 150px;
 	margin: 0;
 	text-align: center;
@@ -78,17 +78,17 @@ import { Carousel, CarouselItem } from '@deot/vc'
 	</div>
 </template>
 <script setup>
-import { Carousel, CarouselItem } from '@deot/vc'
+import { Carousel, CarouselItem } from '@deot/vc';
 </script>
 <style>
 .v-carousel-basic li{
-	margin-top: 0 !important; 
+	margin-top: 0 !important;
 	list-style: none;
 }
 .v-carousel-basic .CarouselItem h3{
 	color: #475669;
 	font-size: 14px;
-	opacity: 0.75; 
+	opacity: 0.75;
 	line-height: 150px;
 	margin: 0;
 	text-align: center;
@@ -126,7 +126,7 @@ import { Carousel, CarouselItem } from '@deot/vc'
 	</div>
 </template>
 <script setup>
-import { Carousel, CarouselItem } from '@deot/vc'
+import { Carousel, CarouselItem } from '@deot/vc';
 </script>
 ```
 :::
@@ -146,7 +146,7 @@ import { Carousel, CarouselItem } from '@deot/vc'
 	</div>
 </template>
 <script setup>
-import { Carousel, CarouselItem } from '@deot/vc'
+import { Carousel, CarouselItem } from '@deot/vc';
 </script>
 <style>
 </style>
@@ -168,7 +168,7 @@ import { Carousel, CarouselItem } from '@deot/vc'
 	</div>
 </template>
 <script setup>
-import { Carousel, CarouselItem } from '@deot/vc'
+import { Carousel, CarouselItem } from '@deot/vc';
 </script>
 <style>
 </style>
@@ -189,13 +189,13 @@ import { Carousel, CarouselItem } from '@deot/vc'
 	</div>
 </template>
 <script setup>
-import { MCarousel, MCarouselItem } from '@deot/vc'
+import { MCarousel, MCarouselItem } from '@deot/vc';
 </script>
 <style>
 .v-carousel-basic .MCarouselItem h3{
 	color: #475669;
 	font-size: 14px;
-	opacity: 0.75; 
+	opacity: 0.75;
 	line-height: 150px;
 	margin: 0;
 	text-align: center;
@@ -228,7 +228,7 @@ import { MCarousel, MCarouselItem } from '@deot/vc'
 	</div>
 </template>
 <script setup>
-import { MCarousel, MCarouselItem } from '@deot/vc'
+import { MCarousel, MCarouselItem } from '@deot/vc';
 </script>
 ```
 :::
@@ -249,7 +249,7 @@ import { MCarousel, MCarouselItem } from '@deot/vc'
 	</div>
 </template>
 <script setup>
-import { MCarousel, MCarouselItem } from '@deot/vc'
+import { MCarousel, MCarouselItem } from '@deot/vc';
 </script>
 ```
 :::

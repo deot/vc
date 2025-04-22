@@ -146,15 +146,15 @@ const visible = ref(true);
 			<Button @click="handleAdd">添加</Button>
 			<Button @click="handleDel">删除</Button>
 		</div>
-		<TransitionSlide 
+		<TransitionSlide
 			mode="up-part"
 			tag="div"
 			style="display: flex; flex-wrap: wrap"
 			group
 		>
-			<div 
-				v-for="(item, index) in colors" 
-				:key="item.id" 
+			<div
+				v-for="(item, index) in colors"
+				:key="item.id"
 				:style="{ background: `#ffff${item.id}${item.id}` }"
 				style="width: 48px; height: 48px; text color: #333; margin: 10px"
 				class="_color-item"
@@ -171,14 +171,14 @@ import { Transition, TransitionSlide, Button } from '@deot/vc';
 
 const count = ref(10);
 const visible = ref(true);
-const colors = ref(Array.from({ length: 5 }, () => ({ id: count++ })));
+const colors = ref(Array.from({ length: 5 }, () => ({ id: count.value++ })));
 
 const handleAdd = () => {
-	colors.value.push({ id: count++ })
+	colors.value.push({ id: count.value++ });
 };
 
 const handleDel = () => {
-	colors.value.splice(Math.floor(Math.random() * colors.value.length), 1)
+	colors.value.splice(Math.floor(Math.random() * colors.value.length), 1);
 };
 
 </script>

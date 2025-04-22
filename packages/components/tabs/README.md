@@ -16,9 +16,9 @@
 		<div>Flex布局时，要增加`flex: 1; overflow-x: auto;`</div>
 		<div style="flex: 1; overflow-x: auto;">
 			<Tabs>
-				<TabsPane 
-					v-for="item in 10" 
-					:key="item" 
+				<TabsPane
+					v-for="item in 10"
+					:key="item"
 					:label="`标签${item}`"
 					:name="item"
 				>
@@ -232,7 +232,7 @@ const renderLabel = (props) => {
 				class="_render-icon"
 				style={
 					{
-						color: props.value === 0 ? '#5495f6' : '#666',
+						'color': props.value === 0 ? '#5495f6' : '#666',
 						'font-size': '12px',
 						'margin-right': '5px'
 					}
@@ -240,7 +240,7 @@ const renderLabel = (props) => {
 			/>
 			<span>我是自定义的标签</span>
 		</div>
-	)
+	);
 };
 </script>
 <style>

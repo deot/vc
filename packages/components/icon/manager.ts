@@ -63,7 +63,7 @@ class Manager {
 
 						try {
 							window.localStorage.setItem(key, JSON.stringify(icons));
-						} catch (e) {
+						} catch {
 							// 内存溢出，删除老缓存, 延迟3秒清理，重新设置
 							setTimeout(() => {
 								this.clearResource();

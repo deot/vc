@@ -117,11 +117,12 @@ import { Button, ButtonGroup, Icon } from '@deot/vc';
 </template>
 <script setup>
 import { Button, ButtonGroup } from '@deot/vc';
+
 const handlePromise1 = (e) => {
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			resolve();
-		}, 300000); 
+		}, 300000);
 	});
 };
 </script>
@@ -144,11 +145,12 @@ const handlePromise1 = (e) => {
 </template>
 <script setup>
 import { Button, ButtonGroup } from '@deot/vc';
+
 const handlePromise1 = (e) => {
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			resolve();
-		}, 300000); 
+		}, 300000);
 	});
 };
 </script>

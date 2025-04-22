@@ -121,6 +121,7 @@ const handleClick = () => {
 
 <script setup>
 import { Button, Message } from '@deot/vc';
+
 const handleClick = () => {
 	Message.success({
 		content: '成功的提示',
@@ -153,9 +154,10 @@ const handleClickHasMask = () => {
 
 <script>
 import { Button, Message } from '@deot/vc';
+
 const handleClick = () => {
 	Message.info({
-		content: h => {
+		content: (h) => {
 			return h('span', [
 				'This is created by ',
 				h('a', 'render'),

@@ -14,18 +14,18 @@
 <template>
 	<div class="v-cascader">
 		<div style="margin-right: 50px;">
-			<p style="text-align: center;">默认click触发子菜单</p>	
-			<Cascader 
-				v-model="value" 
+			<p style="text-align: center;">默认click触发子菜单</p>
+			<Cascader
+				v-model="value"
 				:data="dataSource" />
 		</div>
 		<div>
-			<p style="text-align: center;">hover 触发子菜单</p>	
-			<Cascader 
-				v-model="value" 
+			<p style="text-align: center;">hover 触发子菜单</p>
+			<Cascader
+				v-model="value"
 				:data="dataSource"
 				trigger="hover" />
-		</div>	
+		</div>
 	</div>
 </template>
 <script setup>
@@ -51,7 +51,7 @@ const dataSource = ref([
 				label: '王府井'
 			}
 		]
-	}, 
+	},
 	{
 		value: 'jiangsu',
 		label: '江苏',
@@ -76,7 +76,7 @@ const dataSource = ref([
 </script>
 <style>
 .v-cascader {
-	margin: 10px; 
+	margin: 10px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -92,10 +92,10 @@ const dataSource = ref([
 ```vue
 <template>
 	<div>
-		<Cascader 
+		<Cascader
 			style="width: 200px;"
-			v-model="value" 
-			:data="dataSource" 
+			v-model="value"
+			:data="dataSource"
 			:load-data="loadData"/>
 	</div>
 </template>
@@ -141,11 +141,11 @@ const loadData = () => {
 :::RUNTIME
 ```vue
 <template>
-	<Cascader 
+	<Cascader
 		style="width: 200px;"
-		v-model="value" 
+		v-model="value"
 		:data="dataSource"
-		clearable 
+		clearable
 	/>
 </template>
 <script setup>
@@ -172,7 +172,7 @@ const dataSource = ref([
 				label: '王府井'
 			}
 		]
-	}, 
+	},
 	{
 		value: 'jiangsu',
 		label: '江苏',
@@ -204,16 +204,14 @@ const dataSource = ref([
 :::RUNTIME
 ```vue
 <template>
-	<Cascader 
+	<Cascader
 		style="width: 200px;"
-		v-model="value" 
+		v-model="value"
 		:data="dataSource"
-		:formatter="formatter" 
+		:formatter="formatter"
 	/>
 </template>
 <script setup>
-import { Cascader } from '@deot/vc';
-
 import { ref } from 'vue';
 import { Cascader } from '@deot/vc';
 
@@ -236,7 +234,7 @@ const dataSource = ref([
 				label: '王府井'
 			}
 		]
-	}, 
+	},
 	{
 		value: 'jiangsu',
 		label: '江苏',
@@ -272,11 +270,11 @@ const formatter = (v) => {
 :::RUNTIME
 ```vue
 <template>
-	<Cascader 
+	<Cascader
 		style="width: 200px;"
-		v-model="value" 
+		v-model="value"
 		:data="dataSource"
-		changeOnSelect 
+		changeOnSelect
 	/>
 </template>
 <script setup>
@@ -303,7 +301,7 @@ const dataSource = ref([
 				label: '王府井'
 			}
 		]
-	}, 
+	},
 	{
 		value: 'jiangsu',
 		label: '江苏',

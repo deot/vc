@@ -70,5 +70,5 @@ const handleClickrender = () => {
 			]);
 		}
 	});
-}
+};
 </script>

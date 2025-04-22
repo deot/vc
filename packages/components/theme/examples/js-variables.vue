@@ -1,10 +1,10 @@
 <template>
-	<button 
+	<button
 		@click="handleChange"
 	>
 		当前主题：{{ current }}
 	</button>
-	<ThemeView 
+	<ThemeView
 		:pseudo="{
 			before: {
 				background: 'color-before',
@@ -14,7 +14,7 @@
 			}
 		}"
 		style="font-size: 30px"
-		background-color="color-background" 
+		background-color="color-background"
 		border-color="color-border"
 	>
 		<ThemeText color="color-primary">文字颜色：跟随主题</ThemeText>
@@ -40,7 +40,7 @@ const variables = {
 		'color-before': 'yellow',
 		'color-hover': 'orange'
 	}
-}
+};
 const current = ref();
 
 const reset = () => {
@@ -49,15 +49,15 @@ const reset = () => {
 			variables: variables[current.value]
 		}
 	});
-}
+};
 
 const handleChange = () => {
-	current.value = current.value === 'dark' 
+	current.value = current.value === 'dark'
 		? 'light'
 		: 'dark';
 
 	reset();
-}
+};
 
 reset();
 </script>
@@ -65,9 +65,9 @@ reset();
 <style lang="scss">
 
 .v-theme__block {
-	display: inline-block; 
-	padding: 10px 5px; 
-	border-width: 2px; 
+	display: inline-block;
+	padding: 10px 5px;
+	border-width: 2px;
 	border-style: solid;
 	&:before {
 		width: 100%;

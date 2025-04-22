@@ -87,7 +87,7 @@ const handleClick = async () => {
 	} catch (e) {
 		console.log(e);
 	}
-}
+};
 </script>
 ```
 :::

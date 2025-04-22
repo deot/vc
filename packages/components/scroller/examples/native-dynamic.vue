@@ -21,13 +21,13 @@
 				/
 			</h2>
 		</div>
-		<Scroller 
-			height="200px" 
-			:always="always" 
+		<Scroller
+			height="200px"
+			:always="always"
 			:native="native"
 		>
-			<p 
-				v-for="item in count" 
+			<p
+				v-for="item in count"
 				:key="item"
 			>
 				{{ item }}

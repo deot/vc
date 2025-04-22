@@ -1,9 +1,9 @@
 <!-- 骨架屏 -->
 <template>
 	<div class="demo">
-		<RecycleList 
-			class="list" 
-			:page-size="pageSize" 
+		<RecycleList
+			class="list"
+			:page-size="pageSize"
 			:load-data="loadData"
 		>
 			<template #placeholder>
@@ -12,9 +12,9 @@
 				</div>
 			</template>
 			<template #default="{ row }">
-				<div 
-					:key="row.id" 
-					class="item" 
+				<div
+					:key="row.id"
+					class="item"
 					:style="{
 						background: row.background
 					}"
@@ -37,7 +37,7 @@ const dynamicSize = ref(20);
 const pageSize = ref(20);
 
 let count = 0;
-let total = 10;
+const total = 10;
 
 const random255 = () => Math.floor(Math.random() * 255);
 const randomColor = () => `rgba(${random255()}, ${random255()}, ${random255()}, ${Math.random()})`;
@@ -45,7 +45,7 @@ const randomLetter = () => {
 	const lowerCase = Math.random() < 0.5; // 50% 的概率获取大写字母，50% 的概率获取小写字母
 	const charCode = lowerCase ? 97 + Math.random() * (122 - 97) : 65 + Math.random() * (90 - 65);
 	return String.fromCharCode(charCode);
-}
+};
 const randomText = (size) => {
 	let v = '';
 	while (size--) {
@@ -59,7 +59,7 @@ const randomText = (size) => {
 
 const loadData = (page, pageSize$) => {
 	console.log('page:', page);
-	let list = [];
+	const list = [];
 	return new Promise((resolve) => {
 		if (page == total + 1) {
 			resolve(false);

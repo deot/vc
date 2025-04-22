@@ -33,10 +33,9 @@ import { Textarea } from '@deot/vc';
 <template>
 	<div>
 		<vc-textarea
-			style="margin-bottom: 30px"
+			style="margin-bottom: 30px; width: 300px;"
 			v-model="value"
 			disabled
-			style="width: 300px;"
 		/>
 	</div>
 </template>
@@ -88,12 +87,11 @@ import { Textarea } from '@deot/vc';
 <template>
 	<div>
 		<vc-textarea
-			style="margin-bottom: 30px"
+			style="margin-bottom: 30px; width: 300px;"
 			v-model="value"
 			placeholder="请输入内容"
 			:maxlength="100"
 			:indicator="{inverted: true}"
-			style="width: 300px;"
 		/>
 		<vc-textarea
 			v-model="value2"
@@ -103,7 +101,7 @@ import { Textarea } from '@deot/vc';
 			style="width: 300px;"
 		/>
 	</div>
-	
+
 </template>
 
 <script setup>
@@ -124,13 +122,12 @@ const value2 = ref('默认占位');
 <template>
 	<div>
 		<vc-textarea
-			style="margin-bottom: 30px"
+			style="margin-bottom: 30px; width: 300px;"
 			v-model="value"
 			placeholder="请输入内容"
 			:maxlength="100"
 			:indicator="{inverted: true}"
 			bytes
-			style="width: 300px;"
 		/>
 	</div>
 </template>

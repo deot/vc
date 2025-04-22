@@ -15,9 +15,9 @@
 :::RUNTIME
 ```vue
 <template>
-	<RecyleList 
-		class="list" 
-		:style="height: 200px" 
+	<RecyleList
+		class="list"
+		:style="`height: 200px`"
 		:load-data="loadData"
 	>
 		<template #default="{ row }">
@@ -32,7 +32,7 @@ import { RecycleList } from '@deot/vc';
 
 let count = 0;
 const loadData = (page, pageSize$) => {
-	let list = [];
+	const list = [];
 	return new Promise((resolve) => {
 		// 模拟请求 50 条数据，因为 size 设置为 50
 		setTimeout(() => {

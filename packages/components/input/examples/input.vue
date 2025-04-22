@@ -15,7 +15,7 @@
 		@enter="handleEnter"
 	/>
 
-	<Input 
+	<Input
 		controllable
 		placeholder="完全受控无法输入,需modelValue"
 		@clear="handleClear"
@@ -23,7 +23,7 @@
 		@change="handleChange"
 		@focus="handleFocus"
 		@blur="handleBlur"
-		@enter="handleEnter" 
+		@enter="handleEnter"
 	/>
 
 	<Input

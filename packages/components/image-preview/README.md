@@ -68,16 +68,16 @@ const dataSource = ref([
 <template>
 	<div>
 		<!-- 自定义 renderRow -->
-		<p>通过renderRow自定义</p>	
+		<p>通过renderRow自定义</p>
 		<ImagePreview :data="dataSource" :render-row="renderRow" />
-		
+
 		<!-- 自定义 renderRow -->
-		<p>通过slot自定义</p>	
+		<p>通过slot自定义</p>
 		<ImagePreview :data="dataSource">
 			<template #row="it">
-				<img 
-					:key="it.index" 
-					:src="it.src" 
+				<img
+					:key="it.index"
+					:src="it.src"
 					:style="{ width: '100px', height: '100px', borderRadius: '20px' }"
 				>
 			</template>
@@ -121,12 +121,12 @@ const dataSource = ref([
 	}
 ]);
 const renderRow = (props, parent) => {
-	const { src, index } = props; 
+	const { src, index } = props;
 	return (
-		<img 
-			src={src} 
-			key={index} 
-			style={{ width: '100px', height: '100px', borderRadius: '50px' }} 
+		<img
+			src={src}
+			key={index}
+			style={{ width: '100px', height: '100px', borderRadius: '50px' }}
 		/>
 	);
 };
@@ -251,7 +251,6 @@ const handleClick = (e) => {
 		const rect = target.getBoundingClientRect();
 
 		pos = { x: rect.left, y: rect.top + pageYScroll, w: rect.width };
-
 	} catch (e) {
 		console.log(e);
 	}
@@ -261,10 +260,10 @@ const handleClick = (e) => {
 		options: {
 			index: 2,
 			history: false,
-			getThumbBoundsFn: (index) => pos
+			getThumbBoundsFn: index => pos
 		}
 	});
-}
+};
 </script>
 ```
 :::

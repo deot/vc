@@ -55,7 +55,7 @@ const handleClick = (type) => {
 	} else if (type === 'success') {
 		Notice.success({
 			content: '成功的提示',
-			insertion: "last",
+			insertion: 'last',
 			onClose() {
 				console.log('回调');
 			}

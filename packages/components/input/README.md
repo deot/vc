@@ -79,7 +79,7 @@ const input = ref('');
 :::RUNTIME
 ```vue
 <template>
-	<Input v-model="input" placeholder="请输入密码" type="password" style="width:300px" /> 
+	<Input v-model="input" placeholder="请输入密码" type="password" style="width:300px" />
 </template>
 <script setup>
 import { ref } from 'vue';
@@ -96,7 +96,7 @@ const input = ref('');
 :::RUNTIME
 ```vue
 <template>
-	<Input v-model="input" placeholder="请输入内容" indicator  :maxlength="10" style="width:300px" /> 
+	<Input v-model="input" placeholder="请输入内容" indicator  :maxlength="10" style="width:300px" />
 </template>
 
 <script setup>
@@ -120,14 +120,14 @@ const input = ref('');
 			<Input v-model="input1" placeholder="请输入金额" prepend="rmb" style="width:300px" />
 			<Input v-model="input2" placeholder="请输入内容" append="search" style="width:300px" />
 		</div>
-		
+
 		<div style="margin-top: 10px">
 			Slot方式：
 			<Input v-model="input3" placeholder="请输入金额" style="width:300px" >
 				<template #prepend>
-					 <div class="icon-wrapper">
+					<div class="icon-wrapper">
 						<Icon type="rmb" class="icon" />
-					 </div>
+					</div>
 				</template>
 			</Input>
 			<Input v-model="input4" placeholder="请输入内容" style="width:300px" >

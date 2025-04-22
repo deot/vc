@@ -20,10 +20,10 @@
 <script setup >
 import { Switch } from '@deot/vc';
 
-const single =  ref(true);
+const single = ref(true);
 
 const handleChange = (status) => {
-	console.log(status)
+	console.log(status);
 };
 </script>
 ```
@@ -48,7 +48,7 @@ const handleChange = (status) => {
 <script setup >
 import { Switch } from '@deot/vc';
 
-const open =  ref(true);
+const open = ref(true);
 </script>
 ```
 :::
@@ -104,8 +104,12 @@ const handleChange = (status) => {
 <template>
 	<div class="v-switch-basic">
 		<Switch :value="single" @change="handleChange" >
-			<span slot="open">ON</span>
-			<span slot="close">OFF</span>
+			<template v-slot:open>
+				<span >ON</span>
+			</template>
+			<template v-slot:close>
+				<span >OFF</span>
+			</template>
 		</Switch>
 	</div>
 </template>

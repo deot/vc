@@ -17,7 +17,7 @@
 		<Button @click="handleModal">
 			点击出现对话框
 		</Button>
-		<Modal 
+		<Modal
 			v-model="visible"
 			:mask-closable="true"
 			title="标题1"
@@ -86,28 +86,28 @@ const handleOk = (e) => {
 		<Button @click="handleWidth">
 			设置宽度
 		</Button>
-		<Modal 
+		<Modal
 			v-model="visible"
 			title="大弹框"
 			size="large"
 		>
 			<div>Content</div>
 		</Modal>
-		<Modal 
+		<Modal
 			v-model="visible2"
 			title="中弹框"
 			size="medium"
 		>
 			<div>Content</div>
 		</Modal>
-		<Modal 
+		<Modal
 			v-model="visible3"
 			title="小弹框"
 			sizee="small"
 		>
 			<div>Content</div>
 		</Modal>
-		<Modal 
+		<Modal
 			v-model="visible4"
 			:mask-closable="true"
 		>
@@ -119,7 +119,7 @@ const handleOk = (e) => {
 				我是自定义的footer
 			</template>
 		</Modal>
-		<Modal 
+		<Modal
 			v-model="visible5"
 			title="宽度为300的弹框"
 			sizee="small"
@@ -168,7 +168,7 @@ const handleWidth = () => {
 		<Button @click="handleModal">
 			可拖拽的对话框
 		</Button>
-		<Modal 
+		<Modal
 			v-model="visible"
 			:mask-closable="true"
 			title="点击我进行拖拽"
@@ -223,35 +223,35 @@ import { Button, Modal } from '@deot/vc';
 const visible = ref(false);
 
 const handleModal = (type) => {
-	switch(type) {
-		case 'info': 
+	switch (type) {
+		case 'info':
 			Modal.info({
 				title: 'info',
 				content: 'content',
 				okText: '自定义的按钮',
 				loading: true,
 				onOk: () => {
-					console.log('23333')
+					console.log('23333');
 				}
-			})
+			});
 			break;
-		case 'success': 
+		case 'success':
 			Modal.success({
 				title: 'success',
 				content: 'content',
-			})
+			});
 			break;
-		case 'error': 
+		case 'error':
 			Modal.error({
 				title: 'error',
 				content: 'content',
-			})
+			});
 			break;
-		case 'warning': 
+		case 'warning':
 			Modal.warning({
 				title: 'waring',
 				content: 'content',
-			})
+			});
 			break;
 	}
 };
@@ -286,9 +286,9 @@ const handleModal = () => {
 						placeholder="请输入内容"
 					/>
 				</div>
-			)
+			);
 		}
-	})
+	});
 };
 </script>
 ```
@@ -309,7 +309,7 @@ const handleModal = () => {
 		<button @click="handleModal3">
 			移动端弹框（弹框内多个按钮）
 		</button>
-		<MModal 
+		<MModal
 			v-model="visible"
 			:mask-closable="true"
 			title="标题"

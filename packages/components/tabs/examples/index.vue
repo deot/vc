@@ -8,10 +8,10 @@
 		</Button>
 		<br>
 		<br>
-		<Tabs 
+		<Tabs
 			v-model="value"
-			:animated="animated" 
-			:type="type" 
+			:animated="animated"
+			:type="type"
 			@click="handleClick"
 			@tab-remove="handleRemove"
 		>
@@ -96,7 +96,11 @@ const handleRemove = () => {
 
 const renderLabel = ({ it, index }) => {
 	return (
-		<span>{ it.value } { index }</span>
+		<span>
+			{ it.value }
+			{' '}
+			{ index }
+		</span>
 	);
 };
 

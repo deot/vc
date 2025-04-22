@@ -38,11 +38,11 @@ const handleClick = async () => {
 				disabled: true,
 				onClick: this.handlePress
 			},
-			{ 
-				name: 'DELETE', 
+			{
+				name: 'DELETE',
 				class: 'test',
-				style: { color: '#ff0000' }, 
-				onClick: this.handlePress 
+				style: { color: '#ff0000' },
+				onClick: this.handlePress
 			}
 		]
 	});

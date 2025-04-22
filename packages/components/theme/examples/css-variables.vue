@@ -1,10 +1,10 @@
 <template>
-	<button 
+	<button
 		@click="handleChange"
 	>
 		当前主题：{{ current }}
 	</button>
-	<ThemeView 
+	<ThemeView
 		:pseudo="{
 			before: {
 				background: 'color-before',
@@ -14,7 +14,7 @@
 			}
 		}"
 		style="font-size: 30px"
-		background-color="color-background" 
+		background-color="color-background"
 		border-color="color-border"
 	>
 		<ThemeText color="color-primary">文字颜色：跟随主题</ThemeText>
@@ -27,12 +27,12 @@ import { ThemeText, ThemeView } from '..';
 const current = ref('light');
 
 const handleChange = () => {
-	current.value = current.value === 'dark' 
-		? "light"
-		: "dark";
+	current.value = current.value === 'dark'
+		? 'light'
+		: 'dark';
 
-	document.body.setAttribute("data-theme", current.value);
-}
+	document.body.setAttribute('data-theme', current.value);
+};
 </script>
 
 <style lang="scss">
@@ -53,9 +53,9 @@ const handleChange = () => {
 }
 
 .v-theme__block {
-	display: inline-block; 
-	padding: 10px 5px; 
-	border-width: 2px; 
+	display: inline-block;
+	padding: 10px 5px;
+	border-width: 2px;
 	border-style: solid;
 	&:before {
 		width: 100%;

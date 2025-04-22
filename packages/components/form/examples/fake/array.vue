@@ -1,6 +1,6 @@
 <template>
 	<section>
-		<div 
+		<div
 			v-for="(item, index) in items"
 			:key="item"
 			:class="{ 'red': modelValue.includes(item) }"
@@ -27,7 +27,7 @@ const emit = defineEmits(['update:modelValue']);
 const items = ref([1, 2, 3, 4]);
 const formItem = inject('vc-form-item', {});
 
-const handleClick = (_e, item, _index) => {
+const handleClick = (_e, item) => {
 	/**
 	 * 注意：引用对象发生变化UI才会触发更新，值变化，引用不变无法更新，除非由v3内部的钩子（如push才行）
 	 * 不用toRaw可以使用push, 内部有钩子
@@ -37,12 +37,12 @@ const handleClick = (_e, item, _index) => {
 	if (!v.includes(item)) {
 		v = v.concat([item]);
 	} else {
-		v = v.filter((it) => it !== item);
+		v = v.filter(it => it !== item);
 	}
 	// console.log(toRaw(props.modelValue) === v);
 	emit('update:modelValue', v);
 	formItem.change?.(v);
-}
+};
 </script>
 
 <style lang="scss">

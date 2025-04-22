@@ -19,7 +19,7 @@
 import { MToast, Button } from '@deot/vc';
 
 const handleClick = () => {
-	MToast.info('提示语', 1000)
+	MToast.info('提示语', 1000);
 };
 </script>
 ```
@@ -42,9 +42,9 @@ import { MToast, Button } from '@deot/vc';
 const handleClick = () => {
 	MToast.loading({
 		contentL: '提示语',
-		duration:  5000,
+		duration: 5000,
 		maskClosable: true
-	})
+	});
 };
 </script>
 ```

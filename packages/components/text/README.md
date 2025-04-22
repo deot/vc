@@ -67,15 +67,15 @@ const handleClick = () => {
 ```vue
 <template>
 	<div style="width: 500px;">
-		<Text 
-			:value="text10" 
+		<Text
+			:value="text10"
 			:line="2"
 			:indent="1"
 			suffix="我是自定义结尾" />
 	</div>
 </template>
 <script setup>
-	import { ref } from 'vue';
+import { ref } from 'vue';
 import { Text } from '@deot/vc';
 
 const text = 'A2，C,我E,';

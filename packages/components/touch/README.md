@@ -44,7 +44,7 @@
 import { ref, computed } from 'vue';
 import { MTouch } from '@deot/vc';
 
-const eventType = ref("单机，双击，长按，滑动，上滑，下滑，左滑，右滑，旋转，缩放");
+const eventType = ref('单机，双击，长按，滑动，上滑，下滑，左滑，右滑，旋转，缩放');
 const scale = ref(1);
 const angle = ref(0);
 
@@ -52,73 +52,86 @@ const transform = computed(() => {
 	return {
 		transform: `scale(${this.scale}) rotate(${this.angle}deg)`
 	};
-}):
+});
 /**
  * 单击执行
+ * @param e
  */
 const handleTap = (e) => {
-	eventType.value = "单机";
+	eventType.value = '单机';
 };
 /**
  * 双击执行
+ * @param e
  */
 const handleDoubleTap = (e) => {
-	eventType.value = "双击";
+	eventType.value = '双击';
 };
 /**
  * 长按执行
+ * @param e
  */
 const handleLongTap = (e) => {
-	eventType.value = "长按";
+	eventType.value = '长按';
 };
 /**
  * 只要滑动都会执行
+ * @param e
  */
 const handleSwipe = (e) => {
-	eventType.value = "只要滑动都会执行";
+	eventType.value = '只要滑动都会执行';
 };
 /**
  * 上滑
+ * @param e
  */
 const handleSwipeUp = (e) => {
-	eventType.value = "上滑";
+	eventType.value = '上滑';
 };
 /**
  * 右滑
+ * @param e
  */
 const handleSwipeRight = (e) => {
-	eventType.value = "右滑";
+	eventType.value = '右滑';
 };
 /**
  * 下滑
+ * @param e
  */
 const handleSwipeDown = (e) => {
-	eventType.value = "下滑";
+	eventType.value = '下滑';
 };
 /**
  * 左滑
+ * @param e
  */
 const handleSwipeLeft = (e) => {
-	eventType.value = "左滑";
+	eventType.value = '左滑';
 };
 /**
  * 滑动执行的函数
+ * @param e
  */
 const handleMove = (e) => {
 
 };
 /**
  * 缩放
+ * @param root0
+ * @param root0.scale
  */
 const handlePinch = ({ scale }) => {
-	eventType.value = "缩放";
+	eventType.value = '缩放';
 	scale.value += scale;
 };
 /**
  * 旋转
+ * @param root0
+ * @param root0.angle
  */
 const handleRotate = ({ angle }) => {
-	eventType.value = "旋转";
+	eventType.value = '旋转';
 	angle.value += angle;
 };
 </script>

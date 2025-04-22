@@ -8,15 +8,15 @@
 		</h2>
 		<div class="vc-icon-basic">
 			<!-- index 仅用于乱序测试 -->
-			<div 
-				v-for="(item, index) in items" 
-				:key="index" 
+			<div
+				v-for="(item, index) in items"
+				:key="index"
 				:value="`<vc${m}-icon type=&quot;${item}&quot; />`"
 			>
 				<Icon
-					:type="item" 
-					inherit 
-					@click="(e) => handleIconClick(item, e)" 
+					:type="item"
+					inherit
+					@click="(e) => handleIconClick(item, e)"
 				/>
 				<p>{{ item }}</p>
 			</div>
@@ -24,7 +24,7 @@
 	</div>
 </template>
 <script setup>
-import {  onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { shuffle } from 'lodash-es';
 import { Icon, IconManager } from '..';
 

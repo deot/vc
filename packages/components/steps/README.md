@@ -10,7 +10,7 @@
 ```vue
 <template>
 	<div style="padding: 20px">
-		<StepsBar 
+		<StepsBar
 			v-model="current"
 			:data="dataSource"
 			@change="handleChange"
@@ -36,25 +36,25 @@
 import { ref } from 'vue';
 import { Steps, Step, StepsBar } from '@deot/vc';
 
-const current = ref("1");
+const current = ref('1');
 
 const dataSource = ref([
-	{ 
-		value: "1",
+	{
+		value: '1',
 		label: '第1步'
 	},
-	{ 
-		value: "2",
+	{
+		value: '2',
 		label: '第2步'
 	},
-	{ 
-		value: "3",
+	{
+		value: '3',
 		label: '第3步'
 	}
 ]);
 const handleChange = (e) => {
 	console.log(e);
-}
+};
 </script>
 ```
 :::

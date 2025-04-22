@@ -8,9 +8,10 @@
     "prepare": "husky",
     "init": "npx pnpm install",
     "init:force": "rm -rf ./node_modules pnpm-lock.yaml ./packages/*/node_modules && npm run init",
-    "lint": "eslint . --color",
-    "lint:fix": "npm run lint -- --fix",
-    "lint:style": "stylelint --fix '**/*.{css,scss}' --cache --cache-location node_modules/.cache/stylelint/",
+    "lint": "npm run lint:es && npm run lint:style",
+    "lint:fix": "npm run lint:es -- --fix && npm run lint:style -- --fix",
+    "lint:es": "eslint . --color",
+    "lint:style": "stylelint '**/*.{css,scss}' --cache --cache-location node_modules/.cache/stylelint/",
     "link": "ddc link",
     "dev": "ddc dev --vue-package 'components,hooks,index'",
     "update": "ddc update",
@@ -40,6 +41,6 @@
   },
   "homepage": "https://github.com/deot/vc#readme",
   "devDependencies": {
-    "@deot/dev": "^2.9.3"
+    "@deot/dev": "^2.9.5"
   }
 }

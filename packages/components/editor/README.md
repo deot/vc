@@ -17,7 +17,7 @@
 <template>
 	<div class="v-editor-basic">
 		<Editor style="height: 200px" v-model="text" />
-        <EditorView :value="text" />
+		<EditorView :value="text" />
 	</div>
 </template>
 <script setup>

@@ -37,7 +37,7 @@ setInterval(() => {
 
 const handleClickBasic = async () => {
 	try {
-		const e = await Modal.popup({ 
+		const e = await Modal.popup({
 			leaveDelay: 0,
 			title: `Hello world - ${Math.random()}`
 		});
@@ -49,7 +49,7 @@ const handleClickBasic = async () => {
 
 const handleClickMultiple = async () => {
 	try {
-		const e = await Modal.popup({ 
+		const e = await Modal.popup({
 			leaveDelay: 0,
 			multiple: true,
 			title: `Hello world - ${Math.random()}`

@@ -13,7 +13,7 @@
 	</div>
 </template>
 <script setup>
-import { createApp, h, ref, onUnmounted } from "vue";
+import { createApp, h, ref, onUnmounted } from 'vue';
 
 const timer = ref(null);
 const stop = () => {
@@ -29,10 +29,10 @@ const start = () => {
 					.from({ length: 1000 })
 					.map(() => h('div', { onClick: () => {} }))
 			);
-			vm.mount("#root");
+			vm.mount('#root');
 			vm.unmount();
 			vm = null;
-		}, 
+		},
 		10
 	);
 };

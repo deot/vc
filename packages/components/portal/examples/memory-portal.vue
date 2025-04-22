@@ -1,6 +1,6 @@
 <template>
 	<h1>Memory Test in non-trace mode（close vue-devtools）</h1>
-	<button 
+	<button
 		@click="useComponent = !useComponent"
 	>
 		useComponent: {{ useComponent }}
@@ -8,21 +8,20 @@
 	<h3>
 		Current Status：{{ runTip }}
 	</h3>
-	 
+
 	<button @click="handleStart">
 		Start
-	</button>  
+	</button>
 	<br>
 	<br>
 	<button @click="handleStop">
 		Stop
-	</button> 
+	</button>
 </template>
 <script setup>
-import { defineComponent, h, ref } from "vue";
+import { defineComponent, h, ref } from 'vue';
 import { Portal } from '..';
 
-/* eslint-disable-next-line vue/one-component-per-file */
 const WrapperComponent = defineComponent({
 	name: 'vc-wrapper',
 	props: {
@@ -36,13 +35,13 @@ const WrapperComponent = defineComponent({
 				.from({ length: 10000 })
 				.map(
 					() => h(
-						'p', 
-						{ onClick: console.log }, 
+						'p',
+						{ onClick: console.log },
 						slots
 					)
 				)
 		);
-	} 
+	}
 });
 
 const WrapperFunction = (props, { slots }) => h(
@@ -51,8 +50,8 @@ const WrapperFunction = (props, { slots }) => h(
 		.from({ length: 10000 })
 		.map(
 			() => h(
-				'p', 
-				{ onClick: console.log }, 
+				'p',
+				{ onClick: console.log },
 				slots
 			)
 		)

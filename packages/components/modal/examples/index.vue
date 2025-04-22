@@ -13,7 +13,7 @@
 			Modal.methods
 		</Button>
 		<div style="width: 100%; height: 2000px" />
-		<ModalView 
+		<ModalView
 			v-model="visible1"
 			:mask-closable="true"
 			title="标题1"
@@ -28,7 +28,7 @@
 				222
 			</template>
 		</ModalView>
-		<ModalView 
+		<ModalView
 			v-model="visible2"
 			:mask="false"
 			:mask-closable="false"
@@ -58,13 +58,13 @@ const visible1 = ref(true);
 const visible2 = ref(false);
 let hasReject = false;
 
-const handleModal1 = () =>  {
+const handleModal1 = () => {
 	visible1.value = !visible1.value;
 };
-const handleModal2 = () =>  {
+const handleModal2 = () => {
 	visible2.value = !visible2.value;
 };
-const handleModal3 =  async () =>  {
+const handleModal3 = async () => {
 	await AnyModal.popup({});
 };
 const handleModal4 = () => {
@@ -83,14 +83,14 @@ const handleModal4 = () => {
 		maskClosable: true,
 		portalClass: 'is-padding-none',
 		// draggable: true,
-		onOk: (e) => {
-			return new Promise((resolve, reject) => {
+		onOk: () => {
+			return new Promise((resolve) => {
 				setTimeout(() => {
 					resolve();
 				}, 1000);
 			});
 		},
-		onCancel: (e) => {
+		onCancel: () => {
 			setTimeout(() => {
 				console.log('cancel');
 			});
@@ -114,11 +114,11 @@ const handleCancel = () => {
 const handleOk = () => {
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
-			hasReject 
+			hasReject
 				? resolve()
 				: (reject(), (hasReject = true));
 		}, 1000);
-	}).catch(err => {
+	}).catch((err) => {
 		return Promise.reject(err);
 	});
 };

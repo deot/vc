@@ -17,7 +17,7 @@
 	}
 	div {
 		width: 800px;
-		overflow: auto; 
+		overflow: auto;
 		border: 1px solid #333;
 	}
 	table {
@@ -29,7 +29,7 @@
 		width: 200px;
 		background: white;
 		border: 1px solid red!important;
-		position: sticky; 
+		position: sticky;
 		z-index: 2;
 	}
 
@@ -70,9 +70,9 @@
 		<div>Flex布局时，要增加`flex: 1; overflow-x: auto;`</div>
 		<div style="flex: 1; overflow-x: auto;">
 			<Tabs>
-				<TabsPane 
-					v-for="item in 10" 
-					:key="item" 
+				<TabsPane
+					v-for="item in 10"
+					:key="item"
 					:label="`标签${item}`"
 					:name="item"
 				>
@@ -126,12 +126,12 @@ const tableData1 = ref([
 		date: '2011-11-04',
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
-	}, 
+	},
 	{
 		date: '2011-11-01',
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
-	}, 
+	},
 	{
 		date: '2011-11-03',
 		name: '微一案',
@@ -188,12 +188,12 @@ const tableData2 = ref([
 		date: '2011-11-04',
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
-	}, 
+	},
 	{
 		date: '2011-11-01',
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
-	}, 
+	},
 	{
 		date: '2011-11-03',
 		name: '微一案',
@@ -242,12 +242,12 @@ const tableData3 = ref([
 		date: '2011-11-04',
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
-	}, 
+	},
 	{
 		date: '2011-11-01',
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
-	}, 
+	},
 	{
 		date: '2011-11-03',
 		name: '微一案',
@@ -296,12 +296,12 @@ const tableData4 = ref([
 		date: '2011-11-04',
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
-	}, 
+	},
 	{
 		date: '2011-11-01',
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
-	}, 
+	},
 	{
 		date: '2011-11-03',
 		name: '微一案',
@@ -309,7 +309,7 @@ const tableData4 = ref([
 	}
 ]);
 
-const tableRowClass = ({ row, rowIndex}) => {
+const tableRowClass = ({ row, rowIndex }) => {
 	if (rowIndex === 1) {
 		return 'warning';
 	} else if (rowIndex === 3) {
@@ -523,12 +523,12 @@ const tableData = ref([
 		date: '2011-11-04',
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
-	}, 
+	},
 	{
 		date: '2011-11-01',
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
-	}, 
+	},
 	{
 		date: '2011-11-03',
 		name: '微一案',
@@ -546,7 +546,7 @@ const tableData = ref([
 :::RUNTIME
 ```vue
 <template>
-	<Table 
+	<Table
 		:data="dataSource"
 		:default-sort="defaultSort"
 		@sort-change="handleSort"
@@ -587,12 +587,12 @@ const tableData = ref([
 		date: '2011-11-04',
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
-	}, 
+	},
 	{
 		date: '2011-11-01',
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
-	}, 
+	},
 	{
 		date: '2011-11-03',
 		name: '微一案',
@@ -656,12 +656,12 @@ const tableData = ref([
 		date: '2011-11-04',
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
-	}, 
+	},
 	{
 		date: '2011-11-01',
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
-	}, 
+	},
 	{
 		date: '2011-11-03',
 		name: '微一案',
@@ -670,7 +670,7 @@ const tableData = ref([
 ]);
 const handleFilter = (value) => {
 	filteredValue.value = value;
-}
+};
 </script>
 ```
 :::
@@ -730,14 +730,14 @@ const getData = () => {
 			name: `代号 - ${Math.ceil(Math.random() * 1000)}`,
 			address: `祥园路${Math.ceil(Math.random() * 1000)}号`,
 			hasChildren: true
-		}, 
+		},
 		{
 			id: 2,
 			date: `${new Date().getTime()}`,
 			name: `代号 - ${Math.ceil(Math.random() * 1000)}`,
 			address: `祥园路${Math.ceil(Math.random() * 1000)}号`,
 			hasChildren: true
-		}, 
+		},
 		{
 			id: 3,
 			date: `${new Date().getTime()}`,
@@ -749,7 +749,7 @@ const getData = () => {
 					date: `${new Date().getTime()}`,
 					name: `代号 - ${Math.ceil(Math.random() * 1000)}`,
 					address: `祥园路${Math.ceil(Math.random() * 1000)}号`,
-				}, 
+				},
 				{
 					id: 32,
 					date: `${new Date().getTime()}`,
@@ -772,14 +772,14 @@ const loadExpand = (tree, treeNode) => {
 		setTimeout(() => {
 			resolve([
 				{
-					id: Math.ceil(Math.random()*1000),
+					id: Math.ceil(Math.random() * 1000),
 					date: `${new Date().getTime()}`,
 					name: `代号 - ${Math.ceil(Math.random() * 1000)}`,
 					address: `祥园路${Math.ceil(Math.random() * 1000)}号`,
 					hasChildren: !(treeNode.level > 1)
-				}, 
+				},
 				{
-					id: Math.ceil(Math.random()*1000),
+					id: Math.ceil(Math.random() * 1000),
 					date: `${new Date().getTime()}`,
 					name: `代号 - ${Math.ceil(Math.random() * 1000)}`,
 					address: `祥园路${Math.ceil(Math.random() * 1000)}号`,

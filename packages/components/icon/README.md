@@ -48,7 +48,7 @@ import { Icon, Clipboard } from '@deot/vc';
 
 <script setup>
 import { ref } from 'vue';
-import { Icon, Clipboard} from '@deot/vc';
+import { Icon, Clipboard } from '@deot/vc';
 
 const items = ref([]);
 </script>

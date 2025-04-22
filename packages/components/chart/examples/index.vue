@@ -1,6 +1,6 @@
 <template>
 	<div :style="{ width: width, height: height }">
-		<Chart 
+		<Chart
 			:options="polar"
 			:auto-resize="true"
 			@ready="handleReady"
@@ -10,6 +10,7 @@
 <script setup>
 import { ref, onBeforeMount } from 'vue';
 import { Chart } from '..';
+
 const width = ref('400px');
 const height = ref('400px');
 const polar = ref({});
@@ -20,11 +21,11 @@ onBeforeMount(() => {
 		height.value = '800px';
 	}, 3000);
 
-	let data = [];
+	const data = [];
 
 	for (let i = 0; i <= 360; i++) {
-		let t = (i / 180) * Math.PI;
-		let r = Math.sin(2 * t) * Math.cos(2 * t);
+		const t = (i / 180) * Math.PI;
+		const r = Math.sin(2 * t) * Math.cos(2 * t);
 		data.push([r, i]);
 	}
 	polar.value = {

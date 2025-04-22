@@ -119,7 +119,7 @@ const show4 = ref(false);
 const show5 = ref(false);
 
 const handleClick = (index) => {
-	switch(index){
+	switch (index) {
 		case 2:
 			show2.value = true;
 			break;
@@ -176,7 +176,7 @@ const show1 = ref(false);
 const show2 = ref(false);
 const show3 = ref(false);
 const handleClick = (index) => {
-	switch(index){
+	switch (index) {
 		case 2:
 			show2.value = true;
 			break;
@@ -275,12 +275,12 @@ import { MPopup, Button } from '@deot/vc';
 const show1 = ref(false);
 const show2 = ref(false);
 const show3 = ref(false);
-const classes = ref({ 'is-red': true }),
+const classes = ref({ 'is-red': true });
 const wrapperStyle = ref({
-	"background": "orange"
+	background: 'orange'
 });
 const handleClick = (index) => {
-	switch(index){
+	switch (index) {
 		case 2:
 			show2.value = true;
 			break;

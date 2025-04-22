@@ -63,7 +63,7 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 				if (aPosition.top != bPosition.top) return aPosition.top - bPosition.top;
 				return aPosition.left - bPosition.left;
 			});
-		} catch (e) {
+		} catch {
 			return errors;
 		}
 	};
@@ -83,7 +83,7 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 
 			try {
 				v = getPropByPath(original, field.props.prop as string).v;
-			} catch (e) { /* empty */ }
+			} catch { /* empty */ }
 
 			(field.exposed as any).reset(v);
 		});

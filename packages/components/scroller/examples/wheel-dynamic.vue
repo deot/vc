@@ -21,15 +21,15 @@
 				/
 			</h2>
 		</div>
-		<ScrollerWheel 
+		<ScrollerWheel
 			ref="scroller"
-			height="200px" 
-			:always="always" 
+			height="200px"
+			:always="always"
 			:native="native"
 			@scroll="handleScrollDelegate"
 		>
-			<p 
-				v-for="item in count" 
+			<p
+				v-for="item in count"
 				:key="item"
 			>
 				{{ item }}
@@ -48,7 +48,7 @@ const scroller = ref();
 
 window.scroller = scroller;
 
-const handleScrollDelegate = e => {
+const handleScrollDelegate = (e) => {
 	// do ...
 };
 </script>

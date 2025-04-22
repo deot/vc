@@ -24,10 +24,10 @@ import { computed } from 'vue';
 import { Chart, Button } from '@deot/vc';
 
 const options = computed(() => {
-	let data = [];
+	const data = [];
 	for (let i = 0; i <= 360; i++) {
-		let t = i / 180 * Math.PI;
-		let r = Math.sin(2 * t) * Math.cos(2 * t);
+		const t = i / 180 * Math.PI;
+		const r = Math.sin(2 * t) * Math.cos(2 * t);
 		data.push([r, i]);
 	}
 	return {
@@ -77,7 +77,7 @@ const options = computed(() => {
 <template>
 	<div>
 		<p>当前设置autoResize为true<p>
-		<Button @click="handleClick">改变容器大小</Button>
+			<Button @click="handleClick">改变容器大小</Button>
 		<div :style="{height: wrapperHeight}">
 			<Chart :options="options" :auto-resize="true"/>
 		</div>
@@ -89,10 +89,10 @@ import { Chart, Button } from '@deot/vc';
 
 const wrapperHeight = ref('320px');
 const options = computed(() => {
-	let data = [];
+	const data = [];
 	for (let i = 0; i <= 360; i++) {
-		let t = i / 180 * Math.PI;
-		let r = Math.sin(2 * t) * Math.cos(2 * t);
+		const t = i / 180 * Math.PI;
+		const r = Math.sin(2 * t) * Math.cos(2 * t);
 		data.push([r, i]);
 	}
 	return {

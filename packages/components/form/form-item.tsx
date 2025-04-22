@@ -45,20 +45,20 @@ export const FormItem = defineComponent({
 							{
 								slots.error
 									? slots.error({
-										show: showError.value,
-										nest: isNest.value,
-										message: validateMessage.value,
-										class: errorColorClass,
-									})
+											show: showError.value,
+											nest: isNest.value,
+											message: validateMessage.value,
+											class: errorColorClass,
+										})
 									: (
-										<TransitionFade>
-											<div
-												v-show={showError.value}
-												class={['vc-form-item__tip', isNest.value ? 'is-nest' : '', errorColorClass]}
-											>
-												{ validateMessage.value }
-											</div>
-										</TransitionFade>
+											<TransitionFade>
+												<div
+													v-show={showError.value}
+													class={['vc-form-item__tip', isNest.value ? 'is-nest' : '', errorColorClass]}
+												>
+													{ validateMessage.value }
+												</div>
+											</TransitionFade>
 										)
 							}
 						</div>

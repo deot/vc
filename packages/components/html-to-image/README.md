@@ -14,8 +14,8 @@ HTML转图片
 	<div>
 		<HTMLToImage ref="target" :parser="parser" crossorigin="anonymous" >
 			<!-- 需要crossorigin加在第一个， 才能处理跨域 -->
-			<img 
-				src="'https://*/*.jpg'" 
+			<img
+				src="'https://*/*.jpg'"
 				class="image"
 			>
 		</HTMLToImage>
@@ -38,12 +38,12 @@ const src = ref('');
 const target = ref();
 
 const handleClick = async () => {
-	let res = await target.value.getImage();
+	const res = await target.value.getImage();
 	src.value = res.base64Image;
 };
 
 const handleDown = async () => {
-	let res = await target.value.download();
+	const res = await target.value.download();
 	src.value = res.base64Image;
 };
 

@@ -20,17 +20,21 @@
 				<div class="_title">
 					{{ value.includes('1') ? '点我收起' : '点我展开' }}
 				</div>
-				<div slot="content" class="_content">
-					连续7年专注为企业提供软件、培训、咨询等社交新零售解决方案的标杆品牌
-				</div>
+				<template v-slot:content>
+					<div  class="_content">
+						连续7年专注为企业提供软件、培训、咨询等社交新零售解决方案的标杆品牌
+					</div>
+				</template>
 			</CollapseItem>
 			<CollapseItem name="2" class="item">
 				<div class="_title">
 					{{ value.includes('2') ? '点我收起' : '点我展开' }}
 				</div>
-				<div slot="content" class="_content">
-					经典的层级差价方案，多级代理结构,以层级差价为增长源动力
-				</div>
+				<template v-slot:content>
+					<div  class="_content">
+						经典的层级差价方案，多级代理结构,以层级差价为增长源动力
+					</div>
+				</template>
 			</CollapseItem>
 		</Collapse>
 	</div>
@@ -72,17 +76,21 @@ const value = ref('1');
 				<div class="_title">
 					{{ value.includes('1') ? '点我收起' : '点我展开' }}
 				</div>
-				<div slot="content" class="_content">
-					连续7年专注为企业提供软件、培训、咨询等社交新零售解决方案的标杆品牌
-				</div>
+				<template v-slot:content>
+					<div  class="_content">
+						连续7年专注为企业提供软件、培训、咨询等社交新零售解决方案的标杆品牌
+					</div>
+				</template>
 			</CollapseItem>
 			<CollapseItem name="2" class="item">
 				<div class="_title">
 					{{ value.includes('2') ? '点我收起' : '点我展开' }}
 				</div>
-				<div slot="content" class="_content">
-					经典的层级差价方案，多级代理结构,以层级差价为增长源动力
-				</div>
+				<template v-slot:content>
+					<div  class="_content">
+						经典的层级差价方案，多级代理结构,以层级差价为增长源动力
+					</div>
+				</template>
 			</CollapseItem>
 		</Collapse>
 	</div>

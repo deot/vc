@@ -13,7 +13,7 @@
 				@enter="handleEnter"
 			/>
 			<div>
-				<MInput 
+				<MInput
 					v-model="value[1]"
 					clearable
 					placeholder="显示placeholder"
@@ -36,7 +36,7 @@
 			<br>
 			<MForm>
 				<MFormItem>
-					<MInputNumber 
+					<MInputNumber
 						v-model="value[3]"
 						:max="100"
 						@tip="handleTip"
@@ -44,17 +44,17 @@
 					/>
 				</MFormItem>
 				<MFormItem>
-					<MInputNumber 
-						v-model="value[4]" 
-						:step="false" 
+					<MInputNumber
+						v-model="value[4]"
+						:step="false"
 					/>
 				</MFormItem>
 			</MForm>
 			<br>
 			<br>
-			<MInputSearch 
+			<MInputSearch
 				v-model="value[5]"
-				placeholder="搜索" 
+				placeholder="搜索"
 				clearable
 				@cancel="handleCancel"
 			/>
@@ -67,14 +67,15 @@
 import { ref } from 'vue';
 import { MInput, MInputNumber, MInputSearch } from '../index.m';
 import { MForm, MFormItem } from '../../form/index.m';
+
 const value = ref(Array.from({ length: 6 }).map(() => 10));
 
 setTimeout(() => {
-	value[3] = 0;
+	value.value[3] = 0;
 }, 3000);
 
 const handleInput = (e) => {
-	value[2] = e;
+	value.value[2] = e;
 	console.log(e);
 };
 
@@ -99,11 +100,11 @@ const handleCancel = () => {
 	alert('cancel');
 };
 
-const handleChangeAfter = (value) => {
+const handleChangeAfter = () => {
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			reject(true);
 		}, 1000);
-	})
-}
+	});
+};
 </script>

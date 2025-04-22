@@ -22,6 +22,7 @@
 </template>
 <script setup>
 import { Popconfirm, Message } from '@deot/vc';
+
 const handleOk = () => {
 	Message.success('确定删除');
 };

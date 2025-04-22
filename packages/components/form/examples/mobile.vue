@@ -224,7 +224,6 @@ watchEffect(() => console.log('*.input1', formData.input1));
 watchEffect(() => console.log('*.input2', formData.input2));
 watchEffect(() => console.log('*.array', formData.array));
 
-
 const handleSubmit = async () => {
 	try {
 		await form.value?.validate();
@@ -256,7 +255,6 @@ const handleAdd = () => {
 		index
 	});
 };
-
 
 const handleRemove = (i) => {
 	formData.items.splice(i, 1);

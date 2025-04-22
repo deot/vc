@@ -7,13 +7,13 @@
 			native: {{ native }}
 		</h1>
 		<h2>Height</h2>
-		<ScrollerWheel 
-			height="200px" 
-			:always="always" 
+		<ScrollerWheel
+			height="200px"
+			:always="always"
 			:native="native"
 		>
-			<p 
-				v-for="item in 2000" 
+			<p
+				v-for="item in 2000"
 				:key="item"
 			>
 				{{ item }}
@@ -22,8 +22,8 @@
 		<h2>Vertical</h2>
 		<ScrollerWheel :always="always" :native="native">
 			<div style="display: flex;">
-				<p 
-					v-for="item in 50" 
+				<p
+					v-for="item in 50"
 					:key="item"
 					class="is-vertical"
 				>
@@ -34,8 +34,8 @@
 
 		<h2>MaxHeight</h2>
 		<ScrollerWheel max-height="200px" :always="always" :native="native">
-			<p 
-				v-for="item in 20" 
+			<p
+				v-for="item in 20"
 				:key="item"
 			>
 				{{ item }}
@@ -45,8 +45,8 @@
 		<h2>X+Y</h2>
 		<ScrollerWheel max-height="200px" :always="always" :native="native">
 			<div style="display: flex; flex-direction: column;">
-				<p 
-					v-for="item in 20" 
+				<p
+					v-for="item in 20"
 					:key="item"
 					style="flex: 1"
 				>
@@ -54,8 +54,8 @@
 				</p>
 			</div>
 			<div style="display: flex;">
-				<p 
-					v-for="item in 50" 
+				<p
+					v-for="item in 50"
 					:key="item"
 					class="is-vertical"
 				>
@@ -66,15 +66,15 @@
 
 		<h2>bar-to</h2>
 		<div class="barTo" style="position: relative;">
-			<ScrollerWheel 
-				max-height="200px" 
-				:always="always" 
+			<ScrollerWheel
+				max-height="200px"
+				:always="always"
 				:native="native"
 				:bar-to="`.barTo`"
 			>
 				<div style="display: flex; flex-direction: column;">
-					<p 
-						v-for="item in 20" 
+					<p
+						v-for="item in 20"
 						:key="item"
 						style="flex: 1"
 					>
@@ -82,8 +82,8 @@
 					</p>
 				</div>
 				<div style="display: flex;">
-					<p 
-						v-for="item in 50" 
+					<p
+						v-for="item in 50"
 						:key="item"
 						class="is-vertical"
 					>
@@ -92,18 +92,18 @@
 				</div>
 			</ScrollerWheel>
 		</div>
-		
+
 		<h2>X+Y+trackOffset</h2>
-		<ScrollerWheel 
-			max-height="200px" 
-			:always="always" 
-			:native="native" 
+		<ScrollerWheel
+			max-height="200px"
+			:always="always"
+			:native="native"
 			:track-offset-x="[0, 200, 30, 10]"
 			:track-offset-y="[10, 200, 30, 0]"
 		>
 			<div style="display: flex; flex-direction: column;">
-				<p 
-					v-for="item in 2000" 
+				<p
+					v-for="item in 2000"
 					:key="item"
 					style="flex: 1"
 				>
@@ -111,8 +111,8 @@
 				</p>
 			</div>
 			<div style="display: flex;">
-				<p 
-					v-for="item in 500" 
+				<p
+					v-for="item in 500"
 					:key="item"
 					class="is-vertical"
 				>
@@ -122,16 +122,16 @@
 		</ScrollerWheel>
 		<h2>Nested</h2>
 		<ScrollerWheel height="200px" :always="always" :native="native">
-			<p 
-				v-for="item in 20" 
+			<p
+				v-for="item in 20"
 				:key="item"
 			>
 				{{ item }}
 			</p>
 			<div style="padding:0 100px">
 				<ScrollerWheel height="200px" :always="always" :native="native">
-					<p 
-						v-for="item in 20" 
+					<p
+						v-for="item in 20"
 						:key="item"
 					>
 						{{ item }}
@@ -142,8 +142,8 @@
 
 		<h2>Auto</h2>
 		<ScrollerWheel>
-			<p 
-				v-for="item in 20" 
+			<p
+				v-for="item in 20"
 				:key="item"
 			>
 				{{ item }}

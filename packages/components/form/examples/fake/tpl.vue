@@ -1,8 +1,8 @@
 <template>
 	<div style="display: flex;">
-		<input 
-			:type="type" 
-			:value="modelValue" 
+		<input
+			:type="type"
+			:value="modelValue"
 			:placeholder="placeholder"
 			style="border: 1rpx solid #d9d9d9;"
 			@input="handleInput"
@@ -36,10 +36,10 @@ const handleInput = (e) => {
 	props.allowDispatch && formItem.change?.();
 };
 
-const handleBlur = (e) => {
+const handleBlur = () => {
 	// form表单
 	props.allowDispatch && formItem.blur?.();
-}
+};
 </script>
 
 <style lang="scss">

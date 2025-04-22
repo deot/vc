@@ -63,22 +63,22 @@ const radio1 = ref(true);
 :::RUNTIME
 ```vue
 <template>
-<div class="v-radio-group">
-	<div class="group">
-		<RadioGroup v-model="phone" vertical>
-			<Radio label="apple" disabled>
-				<span>Apple</span>
-			</Radio>
-			<Radio label="android">
-				<span>Android</span>
-			</Radio>
-			<Radio label="windows">
-				<span>Windows</span>
-			</Radio>
-		</RadioGroup>
-		<div>{{phone}}</div>
+	<div class="v-radio-group">
+		<div class="group">
+			<RadioGroup v-model="phone" vertical>
+				<Radio label="apple" disabled>
+					<span>Apple</span>
+				</Radio>
+				<Radio label="android">
+					<span>Android</span>
+				</Radio>
+				<Radio label="windows">
+					<span>Windows</span>
+				</Radio>
+			</RadioGroup>
+			<div>{{phone}}</div>
+		</div>
 	</div>
-</div>
 </template>
 <script setup>
 import { ref } from 'vue';
@@ -95,35 +95,35 @@ const phone = ref('apple');
 :::RUNTIME
 ```vue
 <template>
-<div class="v-radio-type">
-	<div class="group">
-		<RadioGroup v-model="button1" type="button">
-			<Radio label="北京"></Radio>
-			<Radio label="上海"></Radio>
-			<Radio label="深圳"></Radio>
-			<Radio label="杭州"></Radio>
-		</RadioGroup>
-		<div>{{button1}}</div>
+	<div class="v-radio-type">
+		<div class="group">
+			<RadioGroup v-model="button1" type="button">
+				<Radio label="北京"></Radio>
+				<Radio label="上海"></Radio>
+				<Radio label="深圳"></Radio>
+				<Radio label="杭州"></Radio>
+			</RadioGroup>
+			<div>{{button1}}</div>
+		</div>
+		<div class="group">
+			<RadioGroup v-model="button2" type="button">
+				<Radio label="北京"></Radio>
+				<Radio label="上海" disabled></Radio>
+				<Radio label="深圳"></Radio>
+				<Radio label="杭州"></Radio>
+			</RadioGroup>
+			<div>{{button2}}</div>
+		</div>
+		<div class="group">
+			<RadioGroup v-model="button3" type="button">
+				<Radio label="北京"></Radio>
+				<Radio label="上海" disabled />
+				<Radio label="深圳" disabled />
+				<Radio label="杭州" disabled />
+			</RadioGroup>
+			<div>{{button3}}</div>
+		</div>
 	</div>
-	<div class="group">
-		<RadioGroup v-model="button2" type="button">
-			<Radio label="北京"></Radio>
-			<Radio label="上海" disabled></Radio>
-			<Radio label="深圳"></Radio>
-			<Radio label="杭州"></Radio>
-		</RadioGroup>
-		<div>{{button2}}</div>
-	</div>
-	<div class="group">
-		<RadioGroup v-model="button3" type="button">
-			<Radio label="北京"></Radio>
-			<Radio label="上海" disabled />
-			<Radio label="深圳" disabled />
-			<Radio label="杭州" disabled />
-		</RadioGroup>
-		<div>{{button3}}</div>
-	</div>
-</div>
 </template>
 <script setup>
 import { ref } from 'vue';
@@ -132,7 +132,7 @@ import { Radio, RadioGroup } from '@deot/vc';
 const button1 = ref('北京');
 const button2 = ref('北京');
 const button3 = ref('北京');
-</script> 
+</script>
 <style lang="scss">
 .v-radio-type{
 	display: flex;

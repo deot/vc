@@ -71,7 +71,7 @@ import { Tag } from '@deot/vc';
 
 const borderTags = ref([{
 	show: true,
-	name:'标签'
+	name: '标签'
 }, {
 	show: true,
 	name: '标签一',
@@ -91,7 +91,7 @@ const borderTags = ref([{
 }]);
 const dotTags = ref([{
 	show: true,
-	name:'点类型标签'
+	name: '点类型标签'
 }, {
 	show: true,
 	name: '点类型标签一',

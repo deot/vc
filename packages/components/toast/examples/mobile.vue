@@ -32,7 +32,6 @@ onMounted(async () => {
 	MToast.destroy();
 });
 
-
 const handleClick = (v, timestamp) => {
 	if (v == 'normal') {
 		MToast.info('测试', timestamp, () => {
@@ -43,5 +42,5 @@ const handleClick = (v, timestamp) => {
 			console.log('回调');
 		});
 	}
-}
+};
 </script>

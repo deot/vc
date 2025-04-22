@@ -40,7 +40,7 @@ import { Dropdown } from '@deot/vc';
 
 export default {
 	components: {
-		"Dropdown": Dropdown
+		Dropdown: Dropdown
 	},
 };
 </script>

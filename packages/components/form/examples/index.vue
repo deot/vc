@@ -1,7 +1,7 @@
 <template>
-	<Form 
+	<Form
 		ref="form"
-		:model="formData" 
+		:model="formData"
 		:rules="formRules"
 		:label-width="96"
 		style="padding-left: 56px; margin-top: 21px"
@@ -37,18 +37,18 @@
 			v-for="(item, index) in formData.items"
 			:key="item.id"
 		>
-			<FormItem 
+			<FormItem
 				:label="'Item ' + item.index + '：'"
 				:prop="'items.' + item.index + '.value'"
 				:rules="{
-					required: true, 
-					message: 'Item ' + item.index +' can not be empty', 
+					required: true,
+					message: 'Item ' + item.index +' can not be empty',
 					trigger: 'change'
 				}"
 			>
-				<FakeTpl 
-					v-model="item.value" 
-					type="text" 
+				<FakeTpl
+					v-model="item.value"
+					type="text"
 					placeholder="Enter something..."
 				>
 					<span @click="handleRemove(index)">Delete - {{ index }}</span>
@@ -151,7 +151,7 @@ const handleSubmit = async () => {
 
 const handleOnly = async () => {
 	try {
-		await form.value?.validateField('items.0.value', { scroll: true })
+		await form.value?.validateField('items.0.value', { scroll: true });
 	} catch (e) {
 		console.log(e);
 	};

@@ -17,7 +17,7 @@
 			更多搜索条件{{ visible ? `up` : `down` }}
 		</span>
 		<Icon :type="`triangle-${visible ? `up2` : `down2`}`" />
-		<Expand 
+		<Expand
 			ref="expand"
 			v-model="visible"
 		>
@@ -26,7 +26,7 @@
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue';	
+import { ref } from 'vue';
 import { Expand, Icon } from '@deot/vc';
 
 const visible = ref(false);

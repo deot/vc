@@ -49,50 +49,50 @@ import { MToast, MPicker } from '@deot/vc';
 
 const show = ref(false);
 const dataSource = ref([{
-	"value": "110000",
-	"label": "北京市",
-	"parent_id": "0",
-	"children": [{
-		"value": "110100",
-		"label": "北京市辖区",
-		"parent_id": "110000",
-		"children": [{
-			"value": "110101",
-			"label": "东城区",
-			"parent_id": "110100",
-			"children": []
+	value: '110000',
+	label: '北京市',
+	parent_id: '0',
+	children: [{
+		value: '110100',
+		label: '北京市辖区',
+		parent_id: '110000',
+		children: [{
+			value: '110101',
+			label: '东城区',
+			parent_id: '110100',
+			children: []
 		}, {
-			"value": "110102",
-			"label": "西城区",
-			"parent_id": "110100",
-			"children": []
+			value: '110102',
+			label: '西城区',
+			parent_id: '110100',
+			children: []
 		}, {
-			"value": "110116",
-			"label": "其他",
-			"parent_id": "110100",
-			"children": []
+			value: '110116',
+			label: '其他',
+			parent_id: '110100',
+			children: []
 		}]
 	}, {
-		"value": "110200",
-		"label": "北京县区",
-		"parent_id": "110000",
-		"children": [{
-			"value": "110228",
-			"label": "密云县",
-			"parent_id": "110200",
-			"children": []
+		value: '110200',
+		label: '北京县区',
+		parent_id: '110000',
+		children: [{
+			value: '110228',
+			label: '密云县',
+			parent_id: '110200',
+			children: []
 		}, {
-			"value": "110229",
-			"label": "延庆县",
-			"parent_id": "110200",
-			"children": []
+			value: '110229',
+			label: '延庆县',
+			parent_id: '110200',
+			children: []
 		}]
 	}]
 }]);
 
 const dataAsyncSource = ref([]);
-const value = ref(["110000", "110100", "110101"]);
-const valueAsync = ref(["110000", "110100", "110101"]);
+const value = ref(['110000', '110100', '110101']);
+const valueAsync = ref(['110000', '110100', '110101']);
 const valueSeasons = ref([]);
 const dataSeasons = ref([
 	[
@@ -128,7 +128,7 @@ const loadData = () => {
 };
 
 const handleChange = (value) => {
-	console.log(value)
+	console.log(value);
 };
 
 const handleOk = () => {
@@ -172,50 +172,50 @@ import { cloneDeep } from 'lodash-es';
 import { MToast, MPicker, Button } from '@deot/vc';
 
 const dataSource = ref([{
-	"value": "110000",
-	"label": "北京市",
-	"parent_id": "0",
-	"children": [{
-		"value": "110100",
-		"label": "北京市辖区",
-		"parent_id": "110000",
-		"children": [{
-			"value": "110101",
-			"label": "东城区",
-			"parent_id": "110100",
-			"children": []
+	value: '110000',
+	label: '北京市',
+	parent_id: '0',
+	children: [{
+		value: '110100',
+		label: '北京市辖区',
+		parent_id: '110000',
+		children: [{
+			value: '110101',
+			label: '东城区',
+			parent_id: '110100',
+			children: []
 		}, {
-			"value": "110102",
-			"label": "西城区",
-			"parent_id": "110100",
-			"children": []
+			value: '110102',
+			label: '西城区',
+			parent_id: '110100',
+			children: []
 		}, {
-			"value": "110116",
-			"label": "其他",
-			"parent_id": "110100",
-			"children": []
+			value: '110116',
+			label: '其他',
+			parent_id: '110100',
+			children: []
 		}]
 	}, {
-		"value": "110200",
-		"label": "北京县区",
-		"parent_id": "110000",
-		"children": [{
-			"value": "110228",
-			"label": "密云县",
-			"parent_id": "110200",
-			"children": []
+		value: '110200',
+		label: '北京县区',
+		parent_id: '110000',
+		children: [{
+			value: '110228',
+			label: '密云县',
+			parent_id: '110200',
+			children: []
 		}, {
-			"value": "110229",
-			"label": "延庆县",
-			"parent_id": "110200",
-			"children": []
+			value: '110229',
+			label: '延庆县',
+			parent_id: '110200',
+			children: []
 		}]
 	}]
 }]);
 const handleClick = () => {
 	MPicker.open({
 		data: dataSource.value,
-		value: ["110000", "110100", "110101"],
+		value: ['110000', '110100', '110101'],
 		cols: 3,
 		onOk: (value, label) => {
 			MToast.info(label.join(','));
@@ -257,15 +257,15 @@ import { MPickerPopup, Button } from '@deot/vc';
 
 const visible = ref(false);
 const handleClick = () => {
-	visible.value = !visible.value
+	visible.value = !visible.value;
 };
 
 const handleClose = () => {
-	visible.value = !visible.value
+	visible.value = !visible.value;
 };
 
 const handleCancel = () => {
-	console.log('cancel')
+	console.log('cancel');
 };
 </script>
 ```
@@ -289,49 +289,48 @@ picker的选择组件，没有弹层。
 	</MPickerView>
 </template>
 <script setup>
-import { ref } from 'vue'; 
+import { ref } from 'vue';
 import { cloneDeep } from 'lodash-es';
 import { MToast, MPicker } from '@deot/vc';
 
-
 const dataSource = ref([{
-	"value": "110000",
-	"label": "北京市",
-	"parent_id": "0",
-	"children": [{
-		"value": "110100",
-		"label": "北京市辖区",
-		"parent_id": "110000",
-		"children": [{
-			"value": "110101",
-			"label": "东城区",
-			"parent_id": "110100",
-			"children": []
+	value: '110000',
+	label: '北京市',
+	parent_id: '0',
+	children: [{
+		value: '110100',
+		label: '北京市辖区',
+		parent_id: '110000',
+		children: [{
+			value: '110101',
+			label: '东城区',
+			parent_id: '110100',
+			children: []
 		}, {
-			"value": "110102",
-			"label": "西城区",
-			"parent_id": "110100",
-			"children": []
+			value: '110102',
+			label: '西城区',
+			parent_id: '110100',
+			children: []
 		}, {
-			"value": "110116",
-			"label": "其他",
-			"parent_id": "110100",
-			"children": []
+			value: '110116',
+			label: '其他',
+			parent_id: '110100',
+			children: []
 		}]
 	}, {
-		"value": "110200",
-		"label": "北京县区",
-		"parent_id": "110000",
-		"children": [{
-			"value": "110228",
-			"label": "密云县",
-			"parent_id": "110200",
-			"children": []
+		value: '110200',
+		label: '北京县区',
+		parent_id: '110000',
+		children: [{
+			value: '110228',
+			label: '密云县',
+			parent_id: '110200',
+			children: []
 		}, {
-			"value": "110229",
-			"label": "延庆县",
-			"parent_id": "110200",
-			"children": []
+			value: '110229',
+			label: '延庆县',
+			parent_id: '110200',
+			children: []
 		}]
 	}]
 }]);
@@ -341,11 +340,11 @@ const formData = ref({
 });
 
 const handleChange = () => {
-	console.log(arguments)
+	console.log(arguments);
 };
 
 const handlePickerChange = () => {
-	console.log(arguments)
+	console.log(arguments);
 };
 </script>
 ```

@@ -89,5 +89,5 @@ import { MList, MListItem } from '../index.m';
 
 const handleCLick = () => {
 	console.log(456);
-}
+};
 </script>

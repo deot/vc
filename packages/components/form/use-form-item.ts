@@ -247,7 +247,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 				top: rect.top,
 				left: rect.left
 			};
-		} catch (e) {
+		} catch {
 			throw new VcError('form-item', 'form-item位置计算错误');
 		}
 	};

@@ -1,7 +1,7 @@
 <template>
 	<h1>{{ current }}</h1>
-	<InputNumber 
-		v-model="current[0]" 
+	<InputNumber
+		v-model="current[0]"
 		ref="input"
 		:step="1"
 		placeholder="请输入"
@@ -12,7 +12,7 @@
 		@blur="handleBlur"
 		@enter="handleEnter"
 	/>
-	<InputNumber 
+	<InputNumber
 		controllable
 		placeholder="完全受控失焦后为modelValue值"
 		@clear="handleClear"
@@ -20,10 +20,10 @@
 		@change="handleChange"
 		@focus="handleFocus"
 		@blur="handleBlur"
-		@enter="handleEnter" 
+		@enter="handleEnter"
 	/>
-	<InputNumber 
-		:model-value="current[0]" 
+	<InputNumber
+		:model-value="current[0]"
 		ref="input"
 		:step="1"
 		placeholder="请输入"
@@ -38,10 +38,8 @@
 <script setup>
 import { ref } from 'vue';
 import { InputNumber } from '..';
-import { Message } from '../../message';
 
 const input = ref();
-const disabled = ref(false);
 const current = ref(Array.from({ length: 2 }).map(() => 'any'));
 
 const logger = (source, ...rest) => {
@@ -69,16 +67,6 @@ const handleEnter = () => {
 };
 const handleClear = () => {
 	logger('clear');
-};
-
-const handleAfter = (v) => {
-	Message.loading(`${v}`);
-	return new Promise((resolve, _rejcet) => {
-		setTimeout(() => {
-			resolve();
-			Message.destroy();
-		}, 300);
-	});
 };
 </script>
 

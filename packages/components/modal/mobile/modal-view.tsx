@@ -153,86 +153,86 @@ export const MModalView = defineComponent({
 								{
 									props.mode === 'alert'
 										? (
-											<Fragment>
-												{
-													(props.title || slots.header) && (
-														<div class="vcm-modal__header">
-															{
-																slots.header?.() || (
-																	<div class="vcm-modal__title" innerHTML={props.title as string} />
-																)
-															}
-														</div>
-													)
-												}
+												<Fragment>
+													{
+														(props.title || slots.header) && (
+															<div class="vcm-modal__header">
+																{
+																	slots.header?.() || (
+																		<div class="vcm-modal__title" innerHTML={props.title as string} />
+																	)
+																}
+															</div>
+														)
+													}
 
-												{
-													(props.content || slots.default) && (
-														<div
-															class={[{ 'vcm-modal__no-title': !props.title }, 'vcm-modal__content']}
-														>
-															{
-																(typeof props.content === 'string' || slots.default)
-																	? (
-																		<div
-																			class="vcm-modal__html"
-																		>
-																			{
-																				typeof props.content === 'string'
-																					&& (<div innerHTML={props.content} />)
-																			}
-																			{ slots.default?.() }
-																		</div>
-																		)
-																	: typeof props.content === 'function'
-																		? <MCustomer render={props.content} />
-																		: null
-															}
-														</div>
-													)
-												}
-												{
-													(props.footer || slots.footer) && (
-														<div class={[footerClasses.value, 'vcm-modal__footer']}>
-															{
-																slots.footer?.() || (
-																	curentActions.value.map((item: any, index) => {
-																		if (!item.text) return null;
-																		return (
-																			<div
-																				key={index}
-																				style={[item.style]}
-																				class="vcm-modal__button"
-																				onClick={e => handleBefore(e, item.onPress)}
-																				innerHTML={item.text}
-																			/>
-																		);
-																	})
-																)
-															}
-														</div>
-													)
-												}
-											</Fragment>
+													{
+														(props.content || slots.default) && (
+															<div
+																class={[{ 'vcm-modal__no-title': !props.title }, 'vcm-modal__content']}
+															>
+																{
+																	(typeof props.content === 'string' || slots.default)
+																		? (
+																				<div
+																					class="vcm-modal__html"
+																				>
+																					{
+																						typeof props.content === 'string'
+																						&& (<div innerHTML={props.content} />)
+																					}
+																					{ slots.default?.() }
+																				</div>
+																			)
+																		: typeof props.content === 'function'
+																			? <MCustomer render={props.content} />
+																			: null
+																}
+															</div>
+														)
+													}
+													{
+														(props.footer || slots.footer) && (
+															<div class={[footerClasses.value, 'vcm-modal__footer']}>
+																{
+																	slots.footer?.() || (
+																		curentActions.value.map((item: any, index) => {
+																			if (!item.text) return null;
+																			return (
+																				<div
+																					key={index}
+																					style={[item.style]}
+																					class="vcm-modal__button"
+																					onClick={e => handleBefore(e, item.onPress)}
+																					innerHTML={item.text}
+																				/>
+																			);
+																		})
+																	)
+																}
+															</div>
+														)
+													}
+												</Fragment>
 											)
 										: props.mode === 'operation'
 											? (
-												<div class="vcm-modal__operation">
-													{
-														curentActions.value.map((item: any, index) => {
-															if (!item.text) return null;
-															return (
-																<div
-																	key={index}
-																	style={[item.style]}
-																	class="vcm-modal__button"
-																	innerHTML={item.text}
-																	onClick={e => handleBefore(e, item.onPress)}
-																/>
-															);
-														})
-													}
-												</div>
+													<div class="vcm-modal__operation">
+														{
+															curentActions.value.map((item: any, index) => {
+																if (!item.text) return null;
+																return (
+																	<div
+																		key={index}
+																		style={[item.style]}
+																		class="vcm-modal__button"
+																		innerHTML={item.text}
+																		onClick={e => handleBefore(e, item.onPress)}
+																	/>
+																);
+															})
+														}
+													</div>
 												)
 											: null
 								}

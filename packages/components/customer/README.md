@@ -12,8 +12,8 @@
 			v-if="true"
 			v-show="show"
 			:render="renderRow"
-			:value="value" 
-			:date="date" 
+			:value="value"
+			:date="date"
 			class="Customer"
 			style="border: 1px solid red"
 			name="time"
@@ -44,11 +44,16 @@ const handleClick = () => {
 };
 
 const renderRow = (props) => {
-	const { style, class, name, value, date, afterText, onClickShow } = props;
+	const { style, class: className, name, value, date, afterText, onClickShow } = props;
 
 	return (
-		<div class={class} style={style} onClick={onClickShow}>
-			{date.toString()}:{name}:{value}{afterText}
+		<div class={className} style={style} onClick={onClickShow}>
+			{date.toString()}
+			:
+			{name}
+			:
+			{value}
+			{afterText}
 		</div>
 	);
 };

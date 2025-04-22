@@ -24,7 +24,7 @@
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue';	
+import { ref } from 'vue';
 import { Print, Button } from '@deot/vc';
 
 const pageTarget = ref();

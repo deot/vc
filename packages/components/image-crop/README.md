@@ -11,11 +11,11 @@
 ```vue
 <template>
 	<div>
-		<ImageCrop 
+		<ImageCrop
 			ref="target"
-			:src="src" 
-			:scale="scale" 
-			:rotate="rotate" 
+			:src="src"
+			:scale="scale"
+			:rotate="rotate"
 			:dest-width="375"
 			:ratio="16 / 9"
 			cross-origin="anonymous"
@@ -28,7 +28,7 @@
 		/>
 		<Slider v-model="scale" :min="0.3" :max="3" :step="0.01" />
 		<Slider v-model="rotate" :min="0" :max="360" />
-		
+
 		<div @click="handleSave">
 			保存
 		</div>
@@ -37,7 +37,7 @@
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue'; 	
+import { ref } from 'vue';
 import { ImageCrop, Slider } from '@deot/vc';
 
 const src = ref('https://github.githubassets.com/favicons/favicon.svg');
@@ -72,9 +72,8 @@ const handleSave = async () => {
 	try {
 		const { file, base64Image } = await target.value.getImage();
 		result.value = base64Image;
-
 	} catch (e) {
-		console.log(e, "跨域问题：需要添加 cors协议头");
+		console.log(e, '跨域问题：需要添加 cors协议头');
 	}
 };
 </script>

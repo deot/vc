@@ -25,12 +25,12 @@
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue' ; 
+import { ref } from 'vue';
 import { UploadPicker } from '@deot/vc';
 
 const dataSource = ref([
-	'https://*/*.mp4', 
-	'https://*/*.jpg', 
+	'https://*/*.mp4',
+	'https://*/*.jpg'
 ]);
 const uploadOptions = ref({
 	image: {},

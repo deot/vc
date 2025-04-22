@@ -11,44 +11,43 @@
 				删除: {{ colors.length }}
 			</h3>
 		</template>
-		
 
 		<h3 @click="handleGroup">
 			切换为组合: {{ isGroup }}
 		</h3>
 		<div style="display: flex; align-items: center">
 			<select v-model="transitionName">
-				<option 
-					v-for="item in transitionOptions" 
-					:key="item" 
-					v-text="item" 
+				<option
+					v-for="item in transitionOptions"
+					:key="item"
+					v-text="item"
 				/>
 			</select>
 			<select v-if="transitionName === 'slide'" v-model="slideModeName">
-				<option 
-					v-for="item in slideModeOptions" 
-					:key="item" 
-					v-text="item" 
+				<option
+					v-for="item in slideModeOptions"
+					:key="item"
+					v-text="item"
 				/>
 			</select>
 			<select v-if="transitionName === 'scale'" v-model="scaleModeName">
-				<option 
-					v-for="item in scaleModeOptions" 
-					:key="item" 
-					v-text="item" 
+				<option
+					v-for="item in scaleModeOptions"
+					:key="item"
+					v-text="item"
 				/>
 			</select>
 			<select v-if="transitionName === 'zoom'" v-model="zoomModeName">
-				<option 
-					v-for="item in zoomModeOptions" 
-					:key="item" 
-					v-text="item" 
+				<option
+					v-for="item in zoomModeOptions"
+					:key="item"
+					v-text="item"
 				/>
 			</select>
 		</div>
 		<div v-if="!isGroup">
-			<component 
-				:is="wrapper" 
+			<component
+				:is="wrapper"
 				:mode="mode"
 				:appear="true"
 				data-x="123"
@@ -69,17 +68,17 @@
 			</component>
 		</div>
 		<div v-else>
-			<component 
-				:is="wrapper" 
+			<component
+				:is="wrapper"
 				:mode="mode"
-				group 
+				group
 				tag="div"
 				style="display: flex; flex-wrap: wrap"
 				@before-enter="handleEnter"
 			>
-				<div 
-					v-for="(item, index) in colors" 
-					:key="item.id" 
+				<div
+					v-for="(item, index) in colors"
+					:key="item.id"
 					:style="{ background: item.color }"
 					style="width: 48px; line-height: 4; color: #e6e6e6; margin: 10px"
 				>
@@ -91,13 +90,13 @@
 </template>
 <script setup>
 import { computed, ref } from 'vue';
-import { 
+import {
 	Transition as VTransition,
 	TransitionFade,
 	TransitionScale,
 	TransitionSlide,
 	TransitionZoom,
-	TransitionCollapse,
+	TransitionCollapse
 } from '..';
 
 let count = 0;
@@ -122,9 +121,9 @@ const scaleModeName = ref('both');
 const scaleModeOptions = ref(['both', 'part']);
 
 const color = () => {
-	let fn = () => Math.floor(Math.random() * 256);
+	const fn = () => Math.floor(Math.random() * 256);
 	return `rgba(${fn()}, ${fn()}, ${fn()})`;
-}
+};
 
 const colors = ref(Array.from({ length: 5 }, () => ({ id: count++, color: color() })));
 
@@ -154,7 +153,7 @@ const wrapper = computed(() => {
 		case 'fade':
 			return TransitionFade;
 		case 'custom':
-			return VTransition
+			return VTransition;
 		default:
 			return '';
 	}

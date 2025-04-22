@@ -44,7 +44,7 @@ import { Progress } from '@deot/vc';
 ```vue
 <template>
 	<div class="v-progress-basic">
-		 <Progress
+		<Progress
 			:percent="100"
 			status="success"
 			:stroke-width="15"
@@ -54,7 +54,7 @@ import { Progress } from '@deot/vc';
 			status="error"
 			:stroke-width="25"
 		/>
-		 <Progress
+		<Progress
 			:percent="50"
 			:stroke-width="35"
 		/>
@@ -82,7 +82,7 @@ import { Progress } from '@deot/vc';
 ```vue
 <template>
 	<div class="v-progress-basic">
-		 <Progress
+		<Progress
 			:percent="percent"
 		/>
 		<Button @click="handleIncrease">增加进度</Button>
@@ -128,14 +128,14 @@ type `circle`控制，stroke-color控制颜色。
 <template>
 	<div class="v-progress-circle">
 		<Progress
-			:stroke-width="10" 
+			:stroke-width="10"
 			:percent="50"
 			stroke-color="#ed4014"
 			type="circle"
 		/>
 		<br/>
 		<Progress
-			:stroke-width="10" 
+			:stroke-width="10"
 			:percent="60"
 			:size="150"
 			type="circle"

@@ -1,13 +1,13 @@
 <!-- 含默认值dataSource -->
 <template>
 	<div class="demo">
-		<RecycleList 
-			class="list" 
+		<RecycleList
+			class="list"
 			pullable
 			:cols="5"
 			:disabled="disabled"
 			:data="dataSource"
-			:page-size="pageSize" 
+			:page-size="pageSize"
 			:load-data="loadData"
 			:scroller-options="{
 				native: false,
@@ -15,9 +15,9 @@
 			}"
 		>
 			<template #default="{ row }">
-				<div 
-					:key="row.id" 
-					class="item" 
+				<div
+					:key="row.id"
+					class="item"
 					:style="{
 						background: row.background
 					}"
@@ -41,7 +41,7 @@ const pageSize = ref(50);
 const disabled = ref(true);
 
 let count = 0;
-let total = 405;
+const total = 405;
 
 const random255 = () => Math.floor(Math.random() * 255);
 const randomColor = () => `rgba(${random255()}, ${random255()}, ${random255()}, ${Math.random()})`;
@@ -49,7 +49,7 @@ const randomLetter = () => {
 	const lowerCase = Math.random() < 0.5; // 50% 的概率获取大写字母，50% 的概率获取小写字母
 	const charCode = lowerCase ? 97 + Math.random() * (122 - 97) : 65 + Math.random() * (90 - 65);
 	return String.fromCharCode(charCode);
-}
+};
 const randomText = (size) => {
 	let v = '';
 	while (size--) {
@@ -63,7 +63,7 @@ const randomText = (size) => {
 
 const loadData = (page, pageSize$, tag) => {
 	console.log('page:', page, tag);
-	let list = [];
+	const list = [];
 	return new Promise((resolve) => {
 		if (page == total + 1) {
 			resolve(false);
@@ -74,7 +74,7 @@ const loadData = (page, pageSize$, tag) => {
 			pageSize$ = 4;
 		}
 		for (let i = 0; i < pageSize$; i++) {
-			let item = {
+			const item = {
 				id: `${count++}${tag || ''}`,
 				name: count,
 				page,
@@ -91,12 +91,11 @@ const dataSource = ref(null);
 const handleClick = (data) => {
 	console.log(data);
 	dynamicSize.value = Math.floor(Math.random() * 20) + 20;
-}
+};
 loadData(1, Math.max(1, total - 5) * pageSize.value, 'From dataSource').then((data) => {
 	dataSource.value = data;
 	disabled.value = false;
 });
-
 
 </script>
 

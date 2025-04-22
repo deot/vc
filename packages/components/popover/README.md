@@ -11,8 +11,8 @@
 ```vue
 <template>
 	<div>
-		<Popover 
-			:trigger="trigger" 
+		<Popover
+			:trigger="trigger"
 			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
 			trigger="hover"
 		>
@@ -20,8 +20,8 @@
 				hover 激活
 			</Button>
 		</Popover>
-		<Popover 
-			:trigger="trigger" 
+		<Popover
+			:trigger="trigger"
 			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
 			trigger="click"
 		>
@@ -29,8 +29,8 @@
 				click 激活
 			</Button>
 		</Popover>
-		<Popover 
-			:trigger="trigger" 
+		<Popover
+			:trigger="trigger"
 			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
 			trigger="focus"
 		>
@@ -54,10 +54,10 @@ import { Popover, Button } from '@deot/vc';
 <template>
 	<div class="v-popover-basic">
 		<div class="top">
-			<Popover 
+			<Popover
 				:get-popup-container="getPopupContainer"
-				:trigger="trigger" 
-				placement="top-left" 
+				:trigger="trigger"
+				placement="top-left"
 				content="TopLeft"
 				class=" g-m-lr-10"
 			>
@@ -70,10 +70,10 @@ import { Popover, Button } from '@deot/vc';
 					</div>
 				</template>
 			</Popover>
-			<Popover 
+			<Popover
 				:portal="false"
-				:trigger="trigger" 
-				placement="top" 
+				:trigger="trigger"
+				placement="top"
 				content="Top"
 				class=" g-m-lr-10"
 			>
@@ -86,9 +86,9 @@ import { Popover, Button } from '@deot/vc';
 					</div>
 				</template>
 			</Popover>
-			<Popover 
-				:trigger="trigger" 
-				placement="top-right" 
+			<Popover
+				:trigger="trigger"
+				placement="top-right"
 				content="TopRight"
 				class=" g-m-lr-10"
 			>
@@ -103,10 +103,10 @@ import { Popover, Button } from '@deot/vc';
 			</Popover>
 		</div>
 		<div class="left">
-			<Popover 
+			<Popover
 				:get-popup-container="getPopupContainer"
-				:trigger="trigger" 
-				placement="left-top" 
+				:trigger="trigger"
+				placement="left-top"
 				content="LeftTop"
 			>
 				<Button class="g-btn g-m-tb-10">
@@ -118,10 +118,10 @@ import { Popover, Button } from '@deot/vc';
 					</div>
 				</template>
 			</Popover>
-			<Popover 
+			<Popover
 				:portal="false"
-				:trigger="trigger" 
-				placement="left" 
+				:trigger="trigger"
+				placement="left"
 				content="Left"
 			>
 				<Button class="g-btn g-m-tb-10">
@@ -133,9 +133,9 @@ import { Popover, Button } from '@deot/vc';
 					</div>
 				</template>
 			</Popover>
-			<Popover 
-				:trigger="trigger" 
-				placement="left-bottom" 
+			<Popover
+				:trigger="trigger"
+				placement="left-bottom"
 				content="leftBottom"
 			>
 				<Button class="g-btn g-m-tb-10">
@@ -149,10 +149,10 @@ import { Popover, Button } from '@deot/vc';
 			</Popover>
 		</div>
 		<div class="right">
-			<Popover 
+			<Popover
 				:get-popup-container="getPopupContainer"
-				:trigger="trigger" 
-				placement="right-top" 
+				:trigger="trigger"
+				placement="right-top"
 				content="RightTop"
 			>
 				<Button class="g-btn g-m-tb-10">
@@ -164,10 +164,10 @@ import { Popover, Button } from '@deot/vc';
 					</div>
 				</template>
 			</Popover>
-			<Popover 
+			<Popover
 				:portal="false"
-				:trigger="trigger" 
-				placement="right" 
+				:trigger="trigger"
+				placement="right"
 				content="Right"
 			>
 				<Button class="g-btn g-m-tb-10">
@@ -179,9 +179,9 @@ import { Popover, Button } from '@deot/vc';
 					</div>
 				</template>
 			</Popover>
-			<Popover 
-				:trigger="trigger" 
-				placement="right-bottom" 
+			<Popover
+				:trigger="trigger"
+				placement="right-bottom"
 				content="RightBottom"
 			>
 				<Button class="g-btn g-m-tb-10">
@@ -195,9 +195,9 @@ import { Popover, Button } from '@deot/vc';
 			</Popover>
 		</div>
 		<div class="bottom">
-			<Popover 
+			<Popover
 				:get-popup-container="getPopupContainer"
-				:trigger="trigger" 
+				:trigger="trigger"
 				placement="bottom-left"
 				content="BottomLeft"
 				class=" g-m-lr-10"
@@ -211,10 +211,10 @@ import { Popover, Button } from '@deot/vc';
 					</div>
 				</template>
 			</Popover>
-			<Popover 
+			<Popover
 				:portal="false"
-				:trigger="trigger" 
-				placement="bottom" 
+				:trigger="trigger"
+				placement="bottom"
 				content="Bottom"
 				class=" g-m-lr-10"
 			>
@@ -227,8 +227,8 @@ import { Popover, Button } from '@deot/vc';
 					</div>
 				</template>
 			</Popover>
-			<Popover 
-				:trigger="trigger" 
+			<Popover
+				:trigger="trigger"
 				placement="bottom-right"
 				content="BottomRight"
 				class=" g-m-lr-10"
@@ -285,8 +285,8 @@ import { Popover, Button } from '@deot/vc';
 ```vue
 <template>
 	<div>
-		<Popover 
-			:trigger="trigger" 
+		<Popover
+			:trigger="trigger"
 			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
 			trigger="click"
 		>
@@ -314,8 +314,8 @@ import { Popover, Button } from '@deot/vc';
 ```vue
 <template>
 	<div>
-		<Popover 
-			:trigger="trigger" 
+		<Popover
+			:trigger="trigger"
 			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
 			trigger="click"
 			theme="dark"
@@ -324,8 +324,8 @@ import { Popover, Button } from '@deot/vc';
 				dark
 			</Button>
 		</Popover>
-		<Popover 
-			:trigger="trigger" 
+		<Popover
+			:trigger="trigger"
 			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
 			trigger="click"
 			theme="light"
@@ -367,7 +367,7 @@ const handleClick = () => {
 		hover: true,
 		alone: true, // 需要开启
 		theme: 'dark',
-		placement: "top",
+		placement: 'top',
 		content: '我是API调用内容',
 	});
 };

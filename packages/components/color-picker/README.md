@@ -12,13 +12,13 @@
 <template>
 	<div class="v-color-picker">
 		<div style="margin-right: 50px;">
-			<p style="text-align: left;">有默认值</p>	
+			<p style="text-align: left;">有默认值</p>
 			<ColorPicker v-model="color" />
 		</div>
 		<div>
-			<p style="text-align: left;">无默认值</p>	
+			<p style="text-align: left;">无默认值</p>
 			<ColorPicker v-model="color1" />
-		</div>	
+		</div>
 	</div>
 </template>
 <script setup>
@@ -45,7 +45,7 @@ ColorPicker 支持普通颜色，也支持带 Alpha 通道的颜色，通过`alp
 ```vue
 <template>
 	<div>
-        <ColorPicker v-model="color" alpha />
+		<ColorPicker v-model="color" alpha />
 	</div>
 </template>
 <script setup>
@@ -64,7 +64,7 @@ ColorPicker 支持预定义颜色，通过`colors`属性预定义颜色。
 ```vue
 <template>
 	<div>
-        <ColorPicker v-model="color" :colors="predefine" />
+		<ColorPicker v-model="color" :colors="predefine" />
 	</div>
 </template>
 
@@ -100,9 +100,9 @@ ColorPicker 支持不同尺寸的选择器，通过`size`属性控制选择器�
 ```vue
 <template>
 	<div class="v-color-picker-diff-size">
-        <ColorPicker v-model="color" size="small" />
-        <ColorPicker v-model="color" size="default" />
-        <ColorPicker v-model="color" size="large" />
+		<ColorPicker v-model="color" size="small" />
+		<ColorPicker v-model="color" size="default" />
+		<ColorPicker v-model="color" size="large" />
 	</div>
 </template>
 <script setup>
@@ -114,7 +114,7 @@ const color = ref('#19be6b');
 
 <style>
 .v-color-picker-diff-size .vc-color-picker {
-    margin-right: 20px;    
+    margin-right: 20px;
 }
 </style>
 ```

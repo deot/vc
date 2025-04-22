@@ -23,7 +23,7 @@
 import { ref } from 'vue';
 import { DatePicker } from '@deot/vc';
 
-const value = ref(new Date);
+const value = ref(new Date());
 </script>
 ```
 :::
@@ -77,7 +77,7 @@ const value = ref(new Date);
 import { ref } from 'vue';
 import { DatePicker } from '@deot/vc';
 
-const value = ref(new Date);
+const value = ref(new Date());
 const year = ref('');
 const month = ref('');
 const quarter = ref('');

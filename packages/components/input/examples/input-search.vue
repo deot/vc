@@ -1,9 +1,9 @@
 <template>
 	<h1>{{ value }}</h1>
-	<InputSearch 
-		v-model="value[0]" 
+	<InputSearch
+		v-model="value[0]"
 		:disabled="disabled"
-		enter-text="搜索" 
+		enter-text="搜索"
 		clearable
 		@clear="handleClear"
 		@change="handleChange"
@@ -11,8 +11,8 @@
 		@blur="handleBlur"
 		@enter="handleEnter"
 	/>
-	<InputSearch 
-		v-model="value[1]" 
+	<InputSearch
+		v-model="value[1]"
 		:disabled="disabled"
 		focus-end
 		clearable
@@ -23,8 +23,8 @@
 		@enter="handleEnter"
 	/>
 
-	<InputSearch 
-		v-model="value[2]" 
+	<InputSearch
+		v-model="value[2]"
 		:disabled="disabled"
 		clearable
 		styleless

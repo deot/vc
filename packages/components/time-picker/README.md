@@ -8,10 +8,10 @@
 ```vue
 <template>
 	<div class="">
-		<TimePicker 
+		<TimePicker
 			v-model="time"
 			clearable
-			placeholder="Select time" 
+			placeholder="Select time"
 			style="width: 168px"
 		/>
 	</div>
@@ -33,10 +33,10 @@ const time = ref('');
 ```vue
 <template>
 	<div class="">
-		<TimePicker 
+		<TimePicker
 			v-model="time1"
 			confirm
-			placeholder="Select time" 
+			placeholder="Select time"
 			style="width: 168px"
 			@ok="handleOk"
 			@clear="handleClear"
@@ -49,7 +49,7 @@ import { TimePicker } from '@deot/vc';
 
 const time = ref('');
 const handleOk = (date) => {
-	console.log(date)
+	console.log(date);
 };
 
 const handleClear = (val) => {
@@ -66,13 +66,13 @@ const handleClear = (val) => {
 ```vue
 <template>
 	<div class="">
-		<TimePicker 
+		<TimePicker
 			v-model="time"
 			:disabled-hours="[1,5,10]"
 			:disabled-minutes="[0,10,20]"
 			:disabled-seconds="[1,10,20]"
 			clearable
-			placeholder="Select time" 
+			placeholder="Select time"
 			style="width: 168px"
 		/>
 	</div>

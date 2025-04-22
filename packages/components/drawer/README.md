@@ -43,7 +43,7 @@ const visible = ref(false);
 const placement = ref('top');
 const handleDrawer = (res) => {
 	visible.value = true;
-	placement.value = res
+	placement.value = res;
 };
 </script>
 ```

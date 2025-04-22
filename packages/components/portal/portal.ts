@@ -1,6 +1,3 @@
-/* eslint-disable no-dupe-class-members */
-/* eslint-disable lines-between-class-members */
-
 import { createApp, h, onMounted, onBeforeUnmount, ref } from 'vue';
 import type { Component } from 'vue';
 import * as Utils from '@deot/helper-utils';
@@ -375,7 +372,7 @@ export class Portal<T extends Component> {
 			fragment
 			|| (
 				typeof container._children === 'undefined'
-					&& !Array.from(container.children).length
+				&& !Array.from(container.children).length
 			)
 		) {
 			useAllNodes = true;

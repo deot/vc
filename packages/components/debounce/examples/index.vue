@@ -1,7 +1,7 @@
 <template>
-	<Debounce 
-		:wait="wait" 
-		tag="button" 
+	<Debounce
+		:wait="wait"
+		tag="button"
 		@click="handleClick"
 	>
 		{{ count }}

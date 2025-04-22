@@ -21,8 +21,8 @@
 import { Resizer } from '..';
 
 const handleResize = (e) => {
-	console.log(e)
-}
+	console.log(e);
+};
 </script>
 <style>
 .demo {

@@ -15,14 +15,14 @@
 <template>
 	<div>
 		<Countdown
-			:target-time="targetTime" 
+			:target-time="targetTime"
 			:server-time="new Date()"
 			@change="handleGetTime"
-		/> 
+		/>
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue';	
+import { ref } from 'vue';
 import { Countdown } from '@deot/vc';
 
 const now = new Date();
@@ -45,13 +45,13 @@ const handleGetTime = (value) => {
 <template>
 	<div>
 		<Countdown
-			:target-time="targetTime" 
+			:target-time="targetTime"
 			:t="2"
-		/> 
+		/>
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue';	
+import { ref } from 'vue';
 import { Countdown } from '@deot/vc';
 
 const now = new Date();
@@ -70,13 +70,13 @@ const targetTime = ref(now);
 <template>
 	<div>
 		<Countdown
-			:target-time="targetTime" 
+			:target-time="targetTime"
 			format="DD:HH:mm:ss"
-		/> 
+		/>
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue';	
+import { ref } from 'vue';
 import { Countdown } from '@deot/vc';
 
 const now = new Date();
