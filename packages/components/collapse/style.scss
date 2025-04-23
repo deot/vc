@@ -1,6 +1,10 @@
 @use '../style/helper' as *;
 
-$component-name: vc-collapse;
+$component-name: vc-collapse-item;
 
 @include block($component-name) {
+	@include element(title) {
+		position: relative;
+		cursor: pointer;
+	}
 }

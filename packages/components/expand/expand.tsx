@@ -27,7 +27,12 @@ export const Expand = defineComponent({
 					{
 						withDirectives(
 							<Content>
-								{ (props.alive || (!props.alive && isActive.value)) && slots.default?.() }
+								{
+									(
+										props.alive
+										|| (!props.alive && isActive.value)
+									) && slots.default?.()
+								}
 							</Content>,
 							[[vShow, isActive.value]]
 						)

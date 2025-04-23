@@ -10,7 +10,7 @@
 			v-model="isVisible"
 			:alive="alive"
 		>
-			<div>
+			<div style="background: red">
 				<div>1</div>
 				<div>2</div>
 				<div>3</div>
@@ -29,7 +29,7 @@ import { Expand } from '..';
 import { Icon } from '../../icon';
 
 const isVisible = ref(false);
-const alive = ref(false);
+const alive = ref(true);
 const handleToggle = () => {
 	isVisible.value = !isVisible.value;
 };

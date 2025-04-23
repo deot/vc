@@ -16,7 +16,7 @@
 <template>
 	<div class="v-collapse-basic">
 		<Collapse class="v-collapse" v-model="value">
-			<CollapseItem name="1" class="item">
+			<CollapseItem value="1" class="item">
 				<div class="_title">
 					{{ value.includes('1') ? '点我收起' : '点我展开' }}
 				</div>
@@ -26,7 +26,7 @@
 					</div>
 				</template>
 			</CollapseItem>
-			<CollapseItem name="2" class="item">
+			<CollapseItem value="2" class="item">
 				<div class="_title">
 					{{ value.includes('2') ? '点我收起' : '点我展开' }}
 				</div>
@@ -72,7 +72,7 @@ const value = ref('1');
 <template>
 	<div class="v-collapse-accordion">
 		<Collapse class="v-collapse" v-model="value" accordion @change="handleChange">
-			<CollapseItem name="1" class="item">
+			<CollapseItem value="1" class="item">
 				<div class="_title">
 					{{ value.includes('1') ? '点我收起' : '点我展开' }}
 				</div>
@@ -82,7 +82,7 @@ const value = ref('1');
 					</div>
 				</template>
 			</CollapseItem>
-			<CollapseItem name="2" class="item">
+			<CollapseItem value="2" class="item">
 				<div class="_title">
 					{{ value.includes('2') ? '点我收起' : '点我展开' }}
 				</div>
@@ -133,14 +133,15 @@ const handleChange = (val) => {
 | accordion | 是否开启手风琴模式，开启后每次至多展开一个面板                       | `boolean`        | -   | `false` |
 | value     | 当前激活的面板(如果是手风琴模式，绑定值类型需要为`string`，否则为`array`) | `array`、`string` | -   | -       |
 | tag       | 外层标签                                          | `string`         | -   | `div`   |
-| remove    | 收起后是否移除DOM节点                                  | `boolean`        | -   | `false` |
+| alive     | 收起后是否保留DOM节点                                  | `boolean`        | -   | `true`  |
+| styleless | 是否含默认样式                                       | `boolean`        | -   | `false` |
 
 
 ### CollapseItem属性
 
 | 属性   | 说明                                            | 类型       | 可选值 | 默认值   |
 | ---- | --------------------------------------------- | -------- | --- | ----- |
-| name | 当前面板的 `name`，与 `Collapse` 的 `value` 对应，不填为索引值 | `string` | -   | -     |
+| value | 当前面板的 `value`，与 `Collapse` 的 `value` 对应，不填为索引值 | `string` | -   | -     |
 | tag  | 外层标签                                          | `string` | -   | `div` |
 
 
