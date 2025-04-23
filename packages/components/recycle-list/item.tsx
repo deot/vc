@@ -14,7 +14,7 @@ export const Item = defineComponent({
 			default: true
 		}
 	},
-	emits: ['resize'],
+	emits: ['resize', 'change'],
 	setup(_, { emit, slots }) {
 		const K = useDirectionKeys();
 		const current = ref();
@@ -24,9 +24,10 @@ export const Item = defineComponent({
 		const handleResize = () => {
 			const v = current.value.getBoundingClientRect()[K.size];
 			const changed = offsetSize.value != v;
-			if (hasInitial && changed) {
+			if (changed) {
 				offsetSize.value = v;
-				emit('resize');
+				hasInitial && emit('resize', v);
+				emit('change', v);
 			}
 
 			hasInitial = true;
