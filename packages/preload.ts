@@ -10,7 +10,7 @@ el.style.position = 'fixed';
 el.style.top = '0';
 el.style.right = '0';
 el.style.cursor = 'pointer';
-el.style.zIndex = '9999999';
+el.style.zIndex = '999';
 document.body.appendChild(el);
 
 el.addEventListener('click', () => {
@@ -29,7 +29,7 @@ tEl.style.position = 'fixed';
 tEl.style.top = '22px';
 tEl.style.right = '0';
 tEl.style.cursor = 'pointer';
-tEl.style.zIndex = '9999999';
+tEl.style.zIndex = '999';
 document.body.appendChild(tEl);
 
 tEl.addEventListener('click', () => {

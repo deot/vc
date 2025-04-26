@@ -1,6 +1,105 @@
 @use '../style/helper' as *;
 
 $component-name: vc-drawer;
+$color-light-deeper: varfix(color-light-deeper, drawer);
+$background-color-light: varfix(background-color-light, drawer);
 
 @include block($component-name) {
+	@include element(mask){
+		position: fixed;
+		inset: 0;
+		z-index: $popup-zindex;
+		height: 100%;
+		background-color: rgb(0 0 0 / 40%);
+	}
+
+	@include element(wrapper) {
+		position: fixed;
+		z-index: $popup-zindex;
+		background-color: $background-color-light;
+		box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+	}
+
+	@include when(bottom) {
+		@include element(wrapper) {
+			right: 0;
+			bottom: 0;
+			left: 0;
+
+			// padding-bottom: env(safe-area-inset-bottom);
+		}
+	}
+
+	@include when(top) {
+		@include element(wrapper) {
+			top: 0;
+			right: 0;
+			left: 0;
+
+			// padding-top: env(safe-area-inset-bottom);
+		}
+	}
+
+	@include when(left) {
+		@include element(wrapper) {
+			top: 0;
+			bottom: 0;
+			left: 0;
+		}
+	}
+
+	@include when(right) {
+		@include element(wrapper) {
+			top: 0;
+			right: 0;
+			bottom: 0;
+		}
+	}
+
+	@include element(container) {
+		position: relative;
+		display: flex;
+		height: 100%;
+		padding-bottom: unitfix(63);
+		background: $background-color-light;
+		box-sizing: border-box;
+		flex-direction: column;
+
+		@include when(no-footer) {
+			padding-bottom: 0;
+		}
+	}
+
+	@include element(header) {
+		position: relative;
+		padding: 14px 16px;
+		font-size: 14px;
+		line-height: 1;
+		border-bottom: 1px solid #e8eaec;
+	}
+
+	@include element(content) {
+		padding: unitfix(16) unitfix(24);
+		overflow-y: auto;
+		box-sizing: border-box;
+		flex: 1;
+	}
+
+	@include element(footer) {
+		position: absolute;
+		bottom: 0;
+		width: 100%;
+		padding: unitfix(17) unitfix(24);
+		font-size: 12px;
+		text-align: right;
+		border-top: unitfix(1) solid $color-light-deeper;
+		box-sizing: border-box;
+	}
+
+	@include element(close) {
+		position: absolute;
+		top: 12px;
+		right: 16px;
+		color: #999;
+	}	
 }

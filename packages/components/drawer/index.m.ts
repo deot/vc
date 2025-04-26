@@ -1,3 +1,3 @@
-import { Drawer } from '.';
+import { DrawerView } from '.';
 
-export const MDrawer = Drawer;
+export const MDrawerView = DrawerView;

@@ -19,7 +19,7 @@ const create = (mode: Options['mode']) => (options: Options) => {
 		onClose: null
 	});
 
-	leaf.wrapper!.isActive = true;
+	leaf.wrapper!.toggle?.(true);
 	return leaf;
 };
 
