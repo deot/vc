@@ -11,7 +11,7 @@ export const TransitionSlide = defineComponent({
 		mode: {
 			type: String,
 			default: 'left',
-			validator: (v: string) => /^(left|right|down|up|none)(|-part)$/.test(v)
+			validator: (v: string) => /^(left|right|top|bottom|none)(|-part)$/.test(v)
 		},
 		// inheritAttrs必须是false
 		style: {

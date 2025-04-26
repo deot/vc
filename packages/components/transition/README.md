@@ -214,7 +214,7 @@ const handleDel = () => {
 
 | 属性   | 说明      | 类型       | 可选值                        | 默认值    |
 | ---- | ------- | -------- | -------------------------- | ------ |
-| mode | slide方向 | `string` | `left`、`right`、`down`、`up` | `left` |
+| mode | slide方向 | `string` | `left`、`right`、`top`、`bottom` | `left` |
 
 
 ### TransitionScale 属性

@@ -113,7 +113,7 @@ const transitionOptions = ref([
 	'custom'
 ]);
 const slideModeName = ref('left-part');
-const slideModeOptions = ref(['left-part', 'right-part', 'down-part', 'up-part', 'left', 'right', 'down', 'up']);
+const slideModeOptions = ref(['left-part', 'right-part', 'top-part', 'bottom-part', 'left', 'right', 'top', 'bottom']);
 const zoomModeName = ref('x');
 const zoomModeOptions = ref(['x', 'y', 'center']);
 
