@@ -88,7 +88,7 @@ export const MessageView = defineComponent({
 						)
 					}
 					<TransitionSlide
-						mode="up"
+						mode="bottom"
 						// @ts-ignore
 						onAfterLeave={handleRemove}
 					>

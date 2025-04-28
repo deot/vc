@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 
-import { Drawer } from '@deot/vc-components';
+import { DrawerView } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 
 describe('index.ts', () => {
 	it('basic', () => {
-		expect(typeof Drawer).toBe('object');
+		expect(typeof DrawerView).toBe('object');
 	});
 	it('create', async () => {
-		const wrapper = mount(() => (<Drawer />));
+		const wrapper = mount(() => (<DrawerView />));
 
 		expect(wrapper.classes()).toContain('vc-drawer');
 	});
