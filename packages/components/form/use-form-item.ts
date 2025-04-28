@@ -85,7 +85,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 
 	const classes = computed(() => {
 		return {
-			'is-require': isRequired.value,
+			'is-require': isRequired.value && props.asterisk,
 			'is-error': validateState.value === 'error',
 			'is-validating': validateState.value === 'validating',
 			'is-inline': form.props.inline,

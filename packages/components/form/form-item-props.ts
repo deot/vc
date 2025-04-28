@@ -16,6 +16,11 @@ export const props = {
 		type: [Boolean, String],
 		default: false
 	},
+	// 控制`*`是否展示
+	asterisk: {
+		type: Boolean,
+		default: true
+	},
 	error: {
 		type: String
 	},
@@ -33,7 +38,6 @@ export const props = {
 	labelFor: {
 		type: String
 	},
-
 	styleless: {
 		type: Boolean,
 		default: false
@@ -42,7 +46,6 @@ export const props = {
 		type: String as PropType<'left' | 'right' | 'top'>,
 		default: 'right'
 	},
-
 	contentStyle: String
 };
 export type Props = ExtractPropTypes<typeof props>;
