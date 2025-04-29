@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, computed, watch, getCurrentInstance, withDirectives, vShow, Fragment } from 'vue';
+import { defineComponent, ref, computed, watch, getCurrentInstance, Fragment } from 'vue';
 import { useScrollbar } from '@deot/vc-hooks';
 import { Button } from '../button';
 import { Icon } from '../icon';
@@ -109,16 +109,12 @@ export const DrawerView = defineComponent({
 			return (
 				<div class={[classes.value, 'vc-drawer']}>
 					<TransitionFade delay={50}>
-						{
-							withDirectives(
-								<div
-									style={props.maskStyle}
-									class="vc-drawer__mask"
-									onClick={e => handleClose(e, props.maskClosable)}
-								/>,
-								[[vShow, props.mask && isActive.value]]
-							)
-						}
+						<div
+							v-show={props.mask && isActive.value}
+							style={props.maskStyle}
+							class="vc-drawer__mask"
+							onClick={e => handleClose(e, props.maskClosable)}
+						/>
 					</TransitionFade>
 
 					<TransitionSlide
@@ -126,83 +122,86 @@ export const DrawerView = defineComponent({
 						// @ts-ignore
 						onAfterLeave={handleRemove}
 					>
-						{
-							withDirectives(
-								<div
-									class={[props.wrapperClass, 'vc-drawer__wrapper']}
-									style={[style.value, props.wrapperStyle]}
-								>
-									<div class="vc-drawer__container">
-										<div class="vc-drawer__header">
-											{
-												slots.header
-													? slots.header()
-													: (
-															typeof props.title === 'string'
-																? <div class="vc-drawer__title" innerHTML={props.title} />
-																: typeof props.title === 'function' && (
-																	<Customer
-																		render={props.title}
-																	/>
-																)
+						<div
+							v-show={isActive.value}
+							class={[props.wrapperClass, 'vc-drawer__wrapper']}
+							style={[style.value, props.wrapperStyle]}
+						>
+							<div
+								class={[
+									{
+										'is-no-footer': !props.footer || (!props.cancelText && !props.okText)
+									},
+									'vc-drawer__container'
+								]}
+							>
+								<div class="vc-drawer__header">
+									{
+										slots.header
+											? slots.header()
+											: (
+													typeof props.title === 'string'
+														? <div class="vc-drawer__title" innerHTML={props.title} />
+														: typeof props.title === 'function' && (
+															<Customer
+																render={props.title}
+															/>
 														)
-											}
-											<a class="vc-drawer__close" onClick={e => handleClose(e, true)}>
-												<Icon type="close" />
-											</a>
-										</div>
-										<div
-											class={['vc-drawer__content']}
-										>
+												)
+									}
+									<a class="vc-drawer__close" onClick={e => handleClose(e, true)}>
+										<Icon type="close" />
+									</a>
+								</div>
+								<div
+									class={['vc-drawer__content']}
+								>
+									{
+										typeof props.content === 'string'
+											? (<div innerHTML={props.content} />)
+											: typeof props.content === 'function'
+												? (<Customer render={props.content} />)
+												: null
+									}
+									{ slots.default?.() }
+								</div>
+								{
+									(props.footer && (props.cancelText || props.okText)) && (
+										<div class={['vc-drawer__footer']}>
+											{ slots['footer-extra']?.() }
 											{
-												typeof props.content === 'string'
-													? (<div innerHTML={props.content} />)
-													: typeof props.content === 'function'
-														? (<Customer render={props.content} />)
-														: null
+												!slots.footer
+													? (
+															<Fragment>
+																{
+																	props.cancelText && (
+																		<Button
+																			style="margin-right: 8px;"
+																			onClick={e => handleBefore(e, handleCancel)}
+																		>
+																			{ props.cancelText }
+																		</Button>
+																	)
+																}
+																{
+																	props.okText && (
+																		<Button
+																			type="primary"
+																			onClick={e => handleBefore(e, handleOk)}
+																		>
+																			{ props.okText }
+																		</Button>
+																	)
+																}
+															</Fragment>
+														)
+													: slots.footer?.()
 											}
-											{ slots.default?.() }
 										</div>
-										{
-											(props.footer && (props.cancelText || props.okText)) && (
-												<div class={['vc-drawer__footer']}>
-													{ slots['footer-extra']?.() }
-													{
-														!slots.footer
-															? (
-																	<Fragment>
-																		{
-																			props.cancelText && (
-																				<Button
-																					style="margin-right: 8px;"
-																					onClick={e => handleBefore(e, handleCancel)}
-																				>
-																					{ props.cancelText }
-																				</Button>
-																			)
-																		}
-																		{
-																			props.okText && (
-																				<Button
-																					type="primary"
-																					onClick={e => handleBefore(e, handleOk)}
-																				>
-																					{ props.okText }
-																				</Button>
-																			)
-																		}
-																	</Fragment>
-																)
-															: slots.footer?.()
-													}
-												</div>
-											)
-										}
-									</div>
-								</div>,
-								[[vShow, isActive.value]]
-							)
-						}
+									)
+								}
+							</div>
+						</div>
 					</TransitionSlide>
 				</div>
 			);
