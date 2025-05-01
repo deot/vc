@@ -47,7 +47,7 @@ describe('use-attrs.ts', () => {
 		await root.trigger('click');
 		expect(root.find('span').text()).toMatch(`title1`);
 
-		await root.setProps({ any: 'any-' });
+		await root.setProps({ any: 'any-' } as any);
 		expect(root.find('span').text()).toMatch(`title2`);
 		expect(root.attributes()).toEqual({ class: 'class', any: 'any-' });
 		expect(root.find('span').attributes()).toEqual({ class: 'class', any: 'any-' });
@@ -73,7 +73,7 @@ describe('use-attrs.ts', () => {
 		await root.trigger('click');
 		expect(root.find('span').text()).toMatch(`title1`);
 
-		await root.setProps({ any: 'any-' });
+		await root.setProps({ any: 'any-' } as any);
 		expect(root.find('span').text()).toMatch(`title2`);
 		expect(root.attributes()).toEqual({});
 		expect(root.find('span').attributes()).toEqual({ class: 'class', any: 'any-' });
