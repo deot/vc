@@ -1,9 +1,13 @@
 <template>
 	<div class="demo">
 		<div @click="isHover = !isHover">
-			{{ trigger }}
+			trigger: {{ trigger }}
 		</div>
-		<div @click="handleDynamic">
+		<div
+			style="cursor: pointer;"
+			@click="e => !isHover && handleDynamic(e)"
+			@mouseenter="e => isHover && handleDynamic(e)"
+		>
 			无需插槽，动态创建
 		</div>
 		<div ref="parent" class="demo__container">
@@ -218,7 +222,6 @@ const isHover = ref(false);
 const trigger = computed(() => {
 	return isHover.value ? 'hover' : 'click';
 });
-let poper;
 
 onMounted(() => {
 	setTimeout(() => {
@@ -238,17 +241,26 @@ const handleClose = () => {
 	console.log('close');
 };
 
+let poper;
 const handleDynamic = (e) => {
-	if (poper && poper.isActive) return;
+	if (
+		!isHover.value
+		&& typeof poper?.wrapper?.isActive === 'boolean'
+	) return;
 	poper = Popover.open({
 		el: document.body,
-		cName: 'only',
+		name: 'only',
 		triggerEl: e.target,
 		hover: isHover.value,
-		alone: true,
 		content: () => {
 			return (
-				<div>222</div>
+				<div>
+					{
+						Array.from({ length: 100 }).map((_, index) => {
+							return (<div key={index}>{ index }</div>);
+						})
+					}
+				</div>
 			);
 		}
 	});

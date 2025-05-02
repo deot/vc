@@ -215,18 +215,14 @@ export const PopoverWrapper = defineComponent({
 
 		onMounted(() => {
 			isActive.value = true;
-			nextTick(() => {
-				setPopupStyle();
-			});
-
 			// 捕获阶段执行
 			!props.hover && document.addEventListener('click', handleClick, true);
 			// 监听body的滚动
 			document.addEventListener('scroll', setPopupStyle);
 			// 监听触发节点的Resize
-			Resize.on(props.triggerEl as any, setPopupStyle);
+			Resize.on(props.triggerEl as any, setPopupStyle); // 首次会执行一次
 			// 监听弹层的Resize
-			Resize.on(vnode.el, handleWrapperResize);
+			Resize.on(vnode.el, handleWrapperResize); // 首次会执行一次
 
 			props.onReady && props.onReady();
 		});

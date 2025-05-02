@@ -46,7 +46,7 @@ export const props = {
 	// 直接传送门标记调用时，hover需要绑定事件
 	alone: {
 		type: Boolean,
-		default: false
+		default: true
 	},
 	hover: Boolean,
 	always: Boolean,

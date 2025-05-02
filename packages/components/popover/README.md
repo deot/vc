@@ -12,7 +12,6 @@
 <template>
 	<div>
 		<Popover
-			:trigger="trigger"
 			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
 			trigger="hover"
 		>
@@ -21,7 +20,6 @@
 			</Button>
 		</Popover>
 		<Popover
-			:trigger="trigger"
 			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
 			trigger="click"
 		>
@@ -30,7 +28,6 @@
 			</Button>
 		</Popover>
 		<Popover
-			:trigger="trigger"
 			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
 			trigger="focus"
 		>
@@ -286,7 +283,6 @@ import { Popover, Button } from '@deot/vc';
 <template>
 	<div>
 		<Popover
-			:trigger="trigger"
 			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
 			trigger="click"
 		>
@@ -315,7 +311,6 @@ import { Popover, Button } from '@deot/vc';
 <template>
 	<div>
 		<Popover
-			:trigger="trigger"
 			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
 			trigger="click"
 			theme="dark"
@@ -325,7 +320,6 @@ import { Popover, Button } from '@deot/vc';
 			</Button>
 		</Popover>
 		<Popover
-			:trigger="trigger"
 			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
 			trigger="click"
 			theme="light"
@@ -365,7 +359,6 @@ const handleClick = () => {
 		cName: 'Popover',
 		triggerEl: btn.value,
 		hover: true,
-		alone: true, // 需要开启
 		theme: 'dark',
 		placement: 'top',
 		content: '我是API调用内容',
@@ -397,7 +390,7 @@ const handleClick = () => {
 | portalClass   | 外层类名                                       | `Object`、`string`、`Array` | -                                                                                                                                     | -        |
 | portalStyle       | 样式                                         | `Object`                  | -                                                                                                                                     | -        |
 | triggerEl         | 触发元素，使用`open`方法调用时必填                       | `Object`、`HTMLElement`    | -                                                                                                                                     | -        |
-| alone             | 直接传送门标记调用时，使用`open`方法调用时必填                 | `boolean`                 | -                                                                                                                                     | `false`  |
+| alone             | 直接传送门标记调用时，使用`open`方法调用时必填                 | `boolean`                 | `true`                                                                                                                                     | `false`  |
 | hover             | 直接传送门标记调用时，hover需要绑定事件                     | `boolean`                 | -                                                                                                                                     | `false`  |
 | outsideClickable  | 点击弹层外面的区域是否关闭弹层，用于其他组件如`date-picker`内部控制弹层 | `boolean`                 | -                                                                                                                                     | `true`   |
 

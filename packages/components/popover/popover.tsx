@@ -101,11 +101,11 @@ export const Popover = defineComponent({
 					? portalClass instanceof Array
 						? portalClass.push(popoverId)
 						: (portalClass[popoverId] = true)
-					: (portalClass += ` ${popoverId}`);
-
+					: (portalClass = `${portalClass || ''} ${popoverId}`);
 				popperInstance = PopoverPortal.popup({
 					el,
-					cName: popoverId,
+					alone: false, // 由当前组件控制hover/click等情况
+					name: popoverId,
 					triggerEl: instance.vnode.el as Element,
 					onChange: handleChange,
 					// @ts-ignore
