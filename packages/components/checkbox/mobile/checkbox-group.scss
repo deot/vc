@@ -1,0 +1,7 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-checkbox-group;
+
+@include block($component-name) {
+	font-size: 16px;
+}

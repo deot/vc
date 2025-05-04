@@ -1,12 +1,12 @@
 /** @jsxImportSource vue */
 
 import { defineComponent } from 'vue';
-import { props as checkboxProps } from './checkbox-props';
-import { useCheckbox } from './use-checkbox';
+import { props as checkboxProps } from '../checkbox-props';
+import { useCheckbox } from '../use-checkbox';
 
-const COMPONENT_NAME = 'vc-checkbox';
+const COMPONENT_NAME = 'vcm-checkbox';
 
-export const Checkbox = defineComponent({
+export const MCheckbox = defineComponent({
 	name: COMPONENT_NAME,
 	props: checkboxProps,
 	emits: ['update:modelValue', 'change'],
@@ -14,10 +14,10 @@ export const Checkbox = defineComponent({
 		const { checked, classes, computedLabel, handleChange, handleFocus, handleBlur } = useCheckbox();
 		return () => {
 			return (
-				<label class={[classes.value, 'vc-checkbox']}>
-					<span class={[{ 'has-sibling': !!(computedLabel.value || slots.default) }, 'vc-checkbox__wrapper']}>
-						<span class="vc-checkbox__border">
-							<span class="vc-checkbox__inner" />
+				<label class={[classes.value, 'vcm-checkbox']}>
+					<span class={[{ 'has-sibling': !!(computedLabel.value || slots.default) }, 'vcm-checkbox__wrapper']}>
+						<span class="vcm-checkbox__border">
+							<span class="vcm-checkbox__inner" />
 						</span>
 						<input
 							checked={checked.value}

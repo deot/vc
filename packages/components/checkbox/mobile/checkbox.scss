@@ -1,0 +1,132 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-checkbox;
+
+@include block($component-name) {
+	display: inline-block;
+	margin-right: 12px;
+	font-size: 16px;
+	cursor: pointer;
+
+	@include element(wrapper) {
+		position: relative;
+		display: inline-block;
+		line-height: 1;
+		white-space: nowrap;
+		vertical-align: middle;
+		cursor: pointer;
+
+		@include when(sibling, true) {
+			margin-right: 12px;
+		}
+
+		input {
+			position: absolute;
+			inset: 0;
+			z-index: 1;
+			width: 100%;
+			height: 100%;
+			cursor: pointer;
+			opacity: 0;
+
+			&[disabled] {
+				cursor: not-allowed;
+			}
+		}
+	}
+
+	@include element(border) {
+		position: relative;
+		top: 0;
+		left: 0;
+		display: inline-block;
+		width: 16px;
+		height: 16px;
+		background-color: #fff;
+
+		@include border('', #d4d7db, 2px);
+
+		&::after, &::before {
+			transition: border-color .2s;
+		}
+	}
+
+	@include element(inner) {
+		position: absolute;
+		top: 2px;
+		left: 5px; // 有效
+		display: table;
+		width: 6px;
+		height: 10px;
+		border: 2px solid #fff;
+		border-collapse: initial;
+		border-top: 0;
+		border-left: 0;
+		content: '';
+		transform: rotate(45deg) scale(0);
+		box-sizing: border-box;
+		transition: all .2s ease-in-out;
+	}
+
+	@include when(checked) {
+		@include element(border){
+			background-color: #26be76;
+
+			&::after, &::before {
+				border-color: #26be76;
+			}
+		}
+
+		@include element(inner) {
+			transform: rotate(45deg) scale(1);
+		}
+	}
+
+	@include when(disabled) {
+		@include element(border){
+			background-color: #f4f4f4;
+
+			&::after, &::before {
+				border-color: #d4d7db;
+			}
+			
+		}
+
+		@include element(inner) {
+			border-color: #f4f4f4;
+			animation-name: none;
+		}
+
+		@include when(checked) {
+			@include element(inner) {
+				border-color: #ccc;
+				animation-name: none;
+			}
+		}
+	}
+
+	@include when(focus) {
+		@include element(border){
+			z-index: 1;
+			box-shadow: 0 0 0 2px rgb(38 190 118 / 20%);
+		}
+	}
+
+	@include when(indeterminate) {
+		@include element(border){
+			background-color: #26be76;
+
+			&::after, &::before {
+				border-color: #26be76;
+			}
+		}
+
+		@include element(inner) {
+			top: 7px;
+			left: 3px;
+			width: 10px;
+			height: 2px;
+			transform: scale(1);
+		}
+	}
+}

@@ -1,48 +1,48 @@
 <template>
 	<div>
-		<Checkbox v-model="single">
+		<MCheckbox v-model="single">
 			{{ single }}
-		</Checkbox>
-		<CheckboxGroup v-model="social">
-			<Checkbox label="twitter">
+		</MCheckbox>
+		<MCheckboxGroup v-model="social">
+			<MCheckbox label="twitter">
 				<span>Twitter</span>
-			</Checkbox>
-			<Checkbox label="facebook">
+			</MCheckbox>
+			<MCheckbox label="facebook">
 				<span>Facebook</span>
-			</Checkbox>
-			<Checkbox label="github" disabled>
+			</MCheckbox>
+			<MCheckbox label="github" disabled>
 				<span>Github</span>
-			</Checkbox>
-			<Checkbox label="snapchat" disabled>
+			</MCheckbox>
+			<MCheckbox label="snapchat" disabled>
 				<span>Snapchat</span>
-			</Checkbox>
-		</CheckboxGroup>
-		<CheckboxGroup v-model="fruit">
-			<Checkbox label="香蕉" />
-			<Checkbox label="苹果" />
-			<Checkbox label="西瓜" />
-		</CheckboxGroup>
+			</MCheckbox>
+		</MCheckboxGroup>
+		<MCheckboxGroup v-model="fruit">
+			<MCheckbox label="香蕉" />
+			<MCheckbox label="苹果" />
+			<MCheckbox label="西瓜" />
+		</MCheckboxGroup>
 
 		<!-- indeterminate -->
 		<div style="border-bottom: 1px solid #e9e9e9;padding-bottom:6px;margin-bottom:6px;">
-			<Checkbox
+			<MCheckbox
 				:indeterminate="indeterminate"
 				:model-value="checkAll"
 				@click.prevent="handleCheckAll"
 			>
 				全选
-			</Checkbox>
+			</MCheckbox>
 		</div>
-		<CheckboxGroup v-model="checkAllGroup" @change="handleChange">
-			<Checkbox label="香蕉" />
-			<Checkbox label="苹果" />
-			<Checkbox label="西瓜" />
-		</CheckboxGroup>
+		<MCheckboxGroup v-model="checkAllGroup" @change="handleChange">
+			<MCheckbox label="香蕉" />
+			<MCheckbox label="苹果" />
+			<MCheckbox label="西瓜" />
+		</MCheckboxGroup>
 	</div>
 </template>
 <script setup>
 import { onUpdated, ref } from 'vue';
-import { Checkbox, CheckboxGroup } from '..';
+import { MCheckbox, MCheckboxGroup } from '../index.m';
 
 const single = ref(true);
 const social = ref(['facebook', 'github']);
