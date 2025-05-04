@@ -1,12 +1,12 @@
 /** @jsxImportSource vue */
 
 import { defineComponent } from 'vue';
-import { props as radioProps } from './radio-props';
-import { useRadio } from './use-radio';
+import { props as radioProps } from '../radio-props';
+import { useRadio } from '../use-radio';
 
-const COMPONENT_NAME = 'vc-radio';
+const COMPONENT_NAME = 'vcm-radio';
 
-export const Radio = defineComponent({
+export const MRadio = defineComponent({
 	name: COMPONENT_NAME,
 	props: radioProps,
 	emits: ['update:modelValue', 'change'],
@@ -14,10 +14,10 @@ export const Radio = defineComponent({
 		const { radioName, checked, classes, computedLabel, handleChange, handleFocus, handleBlur } = useRadio();
 		return () => {
 			return (
-				<label class={[classes.value, 'vc-radio']}>
-					<span class={[{ 'has-sibling': !!(computedLabel.value || slots.default) }, 'vc-radio__wrapper']}>
-						<span class="vc-radio__border">
-							<span class="vc-radio__inner" />
+				<label class={[classes.value, 'vcm-radio']}>
+					<span class={[{ 'has-sibling': !!(computedLabel.value || slots.default) }, 'vcm-radio__wrapper']}>
+						<span class="vcm-radio__border">
+							<span class="vcm-radio__inner" />
 						</span>
 						<input
 							checked={checked.value}

@@ -1,0 +1,96 @@
+@use '../style/helper' as *;
+
+$component-name: vc-radio-group;
+$size: 28px;
+
+@include block($component-name) {
+	display: inline-block;
+	font-size: 12px;
+	line-height: unset;
+
+	@include when(vertical) {
+		.vc-radio {
+			display: block;
+			height: 30px;
+			line-height: 30px;
+		}
+	}
+
+	@include when(button) {
+		font-size: 0; // 去除间距
+		.vc-radio {
+			position: relative;
+			display: inline-block;
+			height: $size;
+			padding: 0 12px;
+			margin: 0;
+			font-size: 12px;
+			line-height: $size;
+			color: #515a6e;
+			cursor: pointer;
+			background: #fff;
+			border: 1px solid #dcdee2;
+			border-left: 0;
+			transition: all .2s ease-in-out;
+
+			&:hover {
+				position: relative;
+				color: #2d8cf0;
+			}
+
+			&.is-disabled {
+				color: #ccc;
+				cursor: not-allowed;
+				background-color: #f7f7f7;
+				border-color: #dcdee2;
+			}
+
+			> span {
+				margin-left: 0;
+			}
+
+			&:first-child {
+				border-left: 1px solid #dcdee2;
+				border-radius: 4px 0 0 4px;
+			}
+
+			&.is-checked:first-child {
+				border-color: #2d8cf0;
+				box-shadow: none;
+			}
+
+			&:last-child {
+				border-radius: 0 4px 4px 0;
+			}
+
+			&.is-checked:last-child {
+				border-color: #2d8cf0;
+				box-shadow: -1px 0 0 0 #2d8cf0;
+			}
+
+			&.is-checked {
+				z-index: 1;
+				color: #2d8cf0;
+				background: #fff;
+				border-color: #2d8cf0;
+				box-shadow: -1px 0 0 0 #2d8cf0;
+			}
+
+			&.is-focus {
+				box-shadow: -1px 0 0 0 #2d8cf0, 0 0 0 2px rgb(45 140 240 / 20%);
+				transition: all .2s ease-in-out;
+			}
+		}
+
+		.vc-radio__border, input {
+			width: 0;
+			height: 0;
+			opacity: 0;
+		}
+
+		.vc-radio__wrapper {
+			width: 0;
+			margin-right: 0;
+		}
+	}
+}

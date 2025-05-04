@@ -1,0 +1,17 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-radio-group;
+
+@include block($component-name) {
+	display: inline-block;
+	font-size: 16px;
+	line-height: unset;
+
+	@include when(vertical) {
+		.vcm-radio {
+			display: block;
+			height: 24px;
+			line-height: 24px;
+		}
+	}
+}

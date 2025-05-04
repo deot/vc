@@ -151,15 +151,15 @@ const button3 = ref('北京');
 
 ### Radio props
 
-| 属性          | 说明                                       | 类型                          | 可选值     | 默认值     |
-| ----------- | ---------------------------------------- | --------------------------- | ------- | ------- |
-| modelValue  | 只在单独使用时有效。可以使用 `v-model` 双向绑定数据          | `string`、`number`、`boolean` | -       | false   |
-| label       | 只在组合使用时有效。指定当前选项的 value 值，组合会自动判断当前选择的项目 | `string`、`number`、`boolean` | -       | -       |
-| disabled    | 是否禁用当前项                                  | `boolean`                   | -       | `false` |
-| true-value  | 选中时的值，当使用类似 1 和 0 来判断是否选中时会很有用           | `string`、`number`、`boolean` | -       | `true`  |
-| false-value | 没有选中时的值，当使用类似 1 和 0 来判断是否选中时会很有用         | `string`、`number`、`boolean` | `false` |         |
-| name        | 原生 `name` 属性                             | `string`                    | -       | -       |
-
+| 属性              | 说明                                       | 类型                          | 可选值     | 默认值     |
+| --------------- | ---------------------------------------- | --------------------------- | ------- | ------- |
+| modelValue      | 只在单独使用时有效。可以使用 `v-model` 双向绑定数据          | `string`、`number`、`boolean` | -       | false   |
+| label           | 只在组合使用时有效。指定当前选项的 label 值，组合会自动判断当前选择的项目 | `string`                    | -       | -       |
+| value           | 只在组合使用时有效。指定当前选项的 value 值，组合会自动判断当前选择的项目 | `string`、`number`、`boolean` | -       | -       |
+| disabled        | 是否禁用当前项                                  | `boolean`                   | -       | `false` |
+| checked-value   | 选中时的值，当使用类似 1 和 0 来判断是否选中时会很有用           | `string`、`number`、`boolean` | -       | `true`  |
+| unchecked-value | 没有选中时的值，当使用类似 1 和 0 来判断是否选中时会很有用         | `string`、`number`、`boolean` | `false` |         |
+| name            | 原生 `name` 属性                             | `string`                    | -       | -       |
 
 ### Radio Events
 
@@ -184,9 +184,3 @@ const button3 = ref('北京');
 | 事件名    | 说明                                   | 回调参数                                                      | 参数说明                    |
 | ------ | ------------------------------------ | --------------------------------------------------------- | ----------------------- |
 | change | 在选项状态发生改变时触发，返回当前状态。通过修改外部的数据改变时不会触发 | `(value: string \ number \ boolean, e: Event ) => void 0` | `value`：当前绑定的值；`e`：事件对象 |
-
-
-
-## TODO 
-
-- label作为了选项的判断，是否改为value
