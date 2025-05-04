@@ -3,4 +3,14 @@
 $component-name: vc-marquee;
 
 @include block($component-name) {
+	overflow: hidden;
+	white-space: nowrap;
+
+	@include element(content) {
+		display: inline-block;
+
+		@include when(paused) {
+			animation-play-state: paused;
+		}
+	}
 }
