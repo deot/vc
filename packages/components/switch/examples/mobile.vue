@@ -1,57 +1,55 @@
 <template>
 	<div>
-		<Switch v-model="single" checked-value="开" unchecked-value="关" @change="handleChange" />
+		<MSwitch v-model="single" checked="开" unchecked="关" @change="handleChange" />
 
-		<Switch :model-value="true" />
-		<Switch :model-value="false" />
-
-		<Switch>
+		<MSwitch :model-value="true" />
+		<MSwitch :model-value="false" />
+		<MSwitch>
 			<template #checked>
 				<span>开</span>
 			</template>
 			<template #unchecked>
 				<span>关</span>
 			</template>
-		</Switch>
+		</MSwitch>
 		<br><br>
-		<Switch size="large">
+		<MSwitch size="large">
 			<template #checked>
 				<span>开启</span>
 			</template>
 			<template #unchecked>
 				<span>关闭</span>
 			</template>
-		</Switch>
-		<Switch size="large">
+		</MSwitch>
+		<MSwitch size="large">
 			<template #checked>
 				<span>ON</span>
 			</template>
 			<template #unchecked>
 				<span>OFF</span>
 			</template>
-		</Switch>
+		</MSwitch>
 
 		<br>
 		<br>
 		<br>
 		<br>
-
 		<!-- 强制设置值 -->
-		<Switch
+		<MSwitch
 			:model-value="value"
 			@change="handleChangeValue"
 		/>
-
 		<!-- loading -->
-		<Switch
+		<MSwitch
 			:v-model="value"
 			@click="handleClick"
 		/>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Switch } from '..';
+import { MSwitch } from '../index.m';
 
 const single = ref(false);
 const value = ref(false);

@@ -1,13 +1,13 @@
 /** @jsxImportSource vue */
 
 import { defineComponent } from 'vue';
-import { props as switchProps } from './switch-props';
-import { useSwitch } from './use-switch';
-import { Spin } from '../spin';
+import { props as switchProps } from '../switch-props';
+import { useSwitch } from '../use-switch';
+import { MSpin } from '../../spin/index.m';
 
-const COMPONENT_NAME = 'vc-switch';
+const COMPONENT_NAME = 'vcm-switch';
 
-export const Switch = defineComponent({
+export const MSwitch = defineComponent({
 	name: COMPONENT_NAME,
 	props: switchProps,
 	// click -> onClick要被拦截，此处不能放置
@@ -17,21 +17,21 @@ export const Switch = defineComponent({
 		return () => {
 			return (
 				<span
-					class={[classes.value, 'vc-switch']}
+					class={[classes.value, 'vcm-switch']}
 					onClick={handleToggle}
 				>
 					<input name={props.name} value={currentValue.value} type="hidden" />
-					<span class="vc-switch__content">
+					<span class="vcm-switch__content">
 						{ currentValue.value === props.checkedValue ? (slots.checked ? slots.checked() : props.checkedText) : null}
 						{ currentValue.value === props.uncheckedValue ? (slots.unchecked ? slots.unchecked() : props.uncheckedText) : null}
 					</span>
-					<span class="vc-switch__inner" />
+					<span class="vcm-switch__inner" />
 					{
 						isLoading.value && (
-							<Spin
+							<MSpin
 								size={14}
 								foreground="#fff"
-								class="vc-switch__loading"
+								class="vcm-switch__loading"
 							/>
 						)
 					}

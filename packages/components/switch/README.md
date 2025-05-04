@@ -23,23 +23,23 @@ import { Switch } from '@deot/vc';
 const single = ref(true);
 
 const handleChange = (status) => {
-	console.log(status);
+
 };
 </script>
 ```
 :::
 
 ### 自定义开关文案
-使用`open-text`、`close-text`自定义开闭文案。
+使用`checked-text`、`unchecked-text`自定义开闭文案。
 
 :::RUNTIME
 ```vue
 <template>
 	<div class="v-switch-basic">
 		<Switch
-			:value="open"
-			open-text="开"
-			close-text="闭"
+			:value="checked"
+			checked-text="开"
+			unchecked-text="闭"
 			@change="handleChange"
 		/>
 
@@ -48,7 +48,7 @@ const handleChange = (status) => {
 <script setup >
 import { Switch } from '@deot/vc';
 
-const open = ref(true);
+const checked = ref(true);
 </script>
 ```
 :::
@@ -87,27 +87,24 @@ import { Switch } from '@deot/vc';
 const single = ref(1);
 
 const handleChange = (status) => {
-	console.log({
-		single: this.single,
-		other: arguments[0]
-	});
+
 };
 </script>
 ```
 :::
 
 ### 自定义开闭显示内容
-使用 slot `open`、`close` 自定义开关内容。
+使用 slot `checked`、`unchecked` 自定义开关内容。
 
 :::RUNTIME
 ```vue
 <template>
 	<div class="v-switch-basic">
 		<Switch :value="single" @change="handleChange" >
-			<template v-slot:open>
+			<template #checked>
 				<span >ON</span>
 			</template>
-			<template v-slot:close>
+			<template #unchecked>
 				<span >OFF</span>
 			</template>
 		</Switch>
@@ -119,7 +116,7 @@ import { Switch } from '@deot/vc';
 const single = ref(true);
 
 const handleChange = (status) => {
-	console.log(status);
+
 };
 </script>
 ```
@@ -132,10 +129,10 @@ const handleChange = (status) => {
 ---|---|---|---|---
 modelValue | 指定当前是否选中，可以使用 v-model 双向绑定数据 | `string`、`number`、`boolean` | - | `false`
 disabled | 禁用开关 | `boolean` | - | `false`
-true-value | 选中时的值，当使用类似 1 和 0 来判断是否选中时会很有用 | `string`、`number`、`boolean` | - | `true`
-false-value | 没有选中时的值，当使用类似 1 和 0 来判断是否选中时会很有用 | `string`、`number`、`boolean` | - | `false`
-open-text | 选中时的文案 | `string` | - | -
-close-text | 没有选中时的文案 | `string` | - | -
+checked-value | 选中时的值，当使用类似 1 和 0 来判断是否选中时会很有用 | `string`、`number`、`boolean` | - | `true`
+unchecked-value | 没有选中时的值，当使用类似 1 和 0 来判断是否选中时会很有用 | `string`、`number`、`boolean` | - | `false`
+checked-text | 选中时的文案 | `string` | - | -
+unchecked-text | 没有选中时的文案 | `string` | - | -
 name | 内部input标签name值 | `string` | - | -
 
 ### 事件
@@ -146,5 +143,5 @@ change | 开关变化时触发，返回当前的状态 | `(value: string | numbe
 ### Slot
 属性 | 说明
 ---|---
-open | 自定义显示打开时的内容
-close | 自定义显示关闭时的内容
+checked | 自定义显示打开时的内容
+unchecked | 自定义显示关闭时的内容

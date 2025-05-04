@@ -1,3 +1,6 @@
-import { Switch } from '.';
+import { MSwitch } from './mobile/switch.tsx';
+import './mobile/style.scss';
 
-export const MSwitch = Switch;
+export {
+	MSwitch
+};
