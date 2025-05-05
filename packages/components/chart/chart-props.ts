@@ -5,7 +5,10 @@ export const props = {
 	pluginOptions: Object,
 	theme: [String, Object],
 	group: String,
-	autoResize: Boolean,
+	resize: {
+		type: [Boolean, Number],
+		default: 100
+	},
 	watchShallow: Boolean,
 	manualUpdate: Boolean
 };

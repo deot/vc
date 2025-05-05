@@ -19,6 +19,10 @@ export const props = {
 		type: Number,
 		default: 0
 	},
+	resize: {
+		type: [Boolean, Number],
+		default: 100
+	},
 	suffix: {
 		type: String,
 		default: '...'
@@ -28,7 +32,7 @@ export const props = {
 		default: 'top'
 	},
 	portalClassName: [Object, String, Array],
-	portalStyle: Object,
+	portalStyle: [Object, String, Array],
 	renderRow: {
 		type: Function,
 		// 函数式可以用于高亮显示

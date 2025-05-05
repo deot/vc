@@ -79,7 +79,7 @@ const options = computed(() => {
 		<p>当前设置autoResize为true<p>
 			<Button @click="handleClick">改变容器大小</Button>
 		<div :style="{height: wrapperHeight}">
-			<Chart :options="options" :auto-resize="true"/>
+			<Chart :options="options" :resize="true"/>
 		</div>
 	</div>
 </template>
@@ -143,5 +143,5 @@ const handleClick = () => {
 | 属性          | 说明                                 | 类型        | 可选值 | 默认值     |
 | ----------- | ---------------------------------- | --------- | --- | ------- |
 | options     | 图表配置，参照Chart官方配置[文档][link]       | `object`  | -   | -       |
-| auto-resize | 指定 ECharts 实例在组件根元素尺寸变化时是否需要自动进行重绘 | `boolean` | -   | `false` |
+| resize | 指定 ECharts 实例在组件根元素尺寸变化时是否需要自动进行重绘 | `boolean`、`boolean` | -   | `100` |
 

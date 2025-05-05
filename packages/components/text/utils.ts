@@ -33,7 +33,8 @@ let hiddenEl;
 
 export const getFitIndex = (options = {}) => {
 	const { el, line, value, suffix, indent } = options as any;
-	const lineHeight = parseInt(getStyle(el, 'line-height'), 10);
+
+	let lineHeight = parseInt(getStyle(el, 'line-height'), 10);
 
 	if (!hiddenEl) {
 		hiddenEl = document.createElement('div');
@@ -53,20 +54,26 @@ export const getFitIndex = (options = {}) => {
 
 	const textIndent = `text-indent: ${parseInt(getStyle(el, 'text-indent'), 10) + indent}px;`;
 	hiddenEl.setAttribute('style', `${sizingStyle};${textIndent};${HIDDEN_TEXT_STYLE}`);
+
+	let sideHeight = paddingSize || 0;
+	// content + padding + border
+	boxSizing === 'border-box' && (sideHeight += borderSize);
+
+	if (Number.isNaN(lineHeight)) {
+		hiddenEl.innerText = '.';
+		lineHeight = hiddenEl.clientHeight - sideHeight;
+	}
+
 	let endIndex = 0;
 	hiddenEl.innerText = suffix;
-	// console.log(value);
+
 	value.split('').forEach((item, i) => {
 		// 后缀必须放入后面计算，前面会造成问题
 		let old = hiddenEl.innerText;
 		old = old.substring(0, old.length - suffix.length);
 		hiddenEl.innerText = old + item + suffix;
 
-		let height = paddingSize || 0;
-		// content + padding + border
-		boxSizing === 'border-box' && (height += borderSize);
-
-		if (hiddenEl.clientHeight - height >= lineHeight * line && endIndex === 0) {
+		if (hiddenEl.clientHeight - sideHeight > lineHeight * line && endIndex === 0) {
 			endIndex = i;
 		}
 	});

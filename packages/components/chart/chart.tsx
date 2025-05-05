@@ -39,6 +39,18 @@ export const Chart = defineComponent({
 			chart.value.setOption(options, notMerge, lazyUpdate);
 		};
 
+		const handleResize = () => {
+			if (lastArea === 0) {
+				// emulate initial render for initially hidden charts
+				mergeOptions({}, true);
+				chart.value.resize();
+				mergeOptions(props.options || manualOptions.value || {}, true);
+			} else {
+				chart.value.resize();
+			}
+			lastArea = getArea();
+		};
+
 		const init = () => {
 			if (chart.value || !echartsInstance.value) {
 				return;
@@ -58,20 +70,10 @@ export const Chart = defineComponent({
 				});
 			});
 
-			if (props.autoResize) {
+			if (props.resize !== false) {
 				lastArea = getArea();
 				resizeHandler && Resize.off(instance.vnode.el as any, resizeHandler);
-				resizeHandler = debounce(() => {
-					if (lastArea === 0) {
-						// emulate initial render for initially hidden charts
-						mergeOptions({}, true);
-						chart.value.resize();
-						mergeOptions(props.options || manualOptions.value || {}, true);
-					} else {
-						chart.value.resize();
-					}
-					lastArea = getArea();
-				}, 100, { leading: true });
+				resizeHandler = props.resize === 0 || props.resize === true ? handleResize : debounce(handleResize, props.resize, { leading: true });
 
 				Resize.on(instance.vnode.el as any, resizeHandler);
 			}
@@ -80,7 +82,7 @@ export const Chart = defineComponent({
 		const destroy = () => {
 			if (!chart.value) return;
 
-			if (props.autoResize) {
+			if (props.resize !== false) {
 				resizeHandler && Resize.off(instance.vnode.el as any, resizeHandler);
 				resizeHandler = null;
 			}
@@ -116,7 +118,7 @@ export const Chart = defineComponent({
 			);
 		}
 
-		const watched = ['theme', 'pluginOptions', 'autoResize', 'manualUpdate', 'watchShallow'];
+		const watched = ['theme', 'pluginOptions', 'resize', 'manualUpdate', 'watchShallow'];
 		watched.forEach(prop => watch(() => props[prop], refresh, { deep: true }));
 
 		onMounted(async () => {

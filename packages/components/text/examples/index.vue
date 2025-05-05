@@ -3,7 +3,7 @@
 		<Button @click="handleClick">
 			切换行数
 		</Button>
-		<div v-if="false" :style="{ width: width + 'px' }">
+		<div :style="{ width: width + 'px' }">
 			<h3>line: {{ line0 }} </h3>
 			<Text :value="text14" :line="line0" />
 			<h3>line: {{ line1 }} </h3>
@@ -13,9 +13,6 @@
 			<h3>line: {{ line3 }} </h3>
 			<Text :value="text30" :line="line3" />
 		</div>
-		<Text :line="line3" :value="text30">
-			{{ text30 }}
-		</Text>
 	</div>
 </template>
 <script setup>
@@ -25,7 +22,7 @@ import { Button } from '../../button';
 
 const text = 'A2，C,我E,';
 // const dataSource = ref(Array.from({ length: 4 }).map(() => ({})));
-const width = ref(window.innerWidth - 40);
+const width = ref(window.innerWidth / 2);
 // const maxWidth = ref(window.innerWidth - 40);
 // const text10 = ref(text.repeat(10));
 // const text12 = ref(text.repeat(12));

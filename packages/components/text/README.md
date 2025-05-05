@@ -90,14 +90,15 @@ const text10 = ref(text.repeat(50));
 
 ### 属性
 
-| 属性              | 说明                  | 类型                        | 可选值                                                                                                                                   | 默认值   |
-| --------------- | ------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| tag             | 渲染的节点类型             | `string`                  | -                                                                                                                                     | div   |
-| value           | 渲染的文本               | `string`                  | -                                                                                                                                     | -     |
-| line            | 行数,为0时默认显示全部        | `Number`                  | -                                                                                                                                     | 0     |
-| indent          | 缩进                  | `Number`                  | -                                                                                                                                     | 0     |
-| suffix          | 后缀，只有在存在显示不完内容时才会出现 | `string`                  | -                                                                                                                                     | '...' |
-| renderRow       | 自定义渲染               | `Function`                | -                                                                                                                                     | -     |
-| placement       | 弹层的位置               | `string`                  | `top`、`left`、`right`、`bottom`、`bottom-left`、`bottom-right`、`top-left`、`top-right`、`right-top`、`right-bottom`、`left-top`、`left-bottom` | `top` |
+| 属性          | 说明                  | 类型                        | 可选值                                                                                                                                   | 默认值   |
+| ----------- | ------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| tag         | 渲染的节点类型             | `string`                  | -                                                                                                                                     | div   |
+| value       | 渲染的文本               | `string`                  | -                                                                                                                                     | -     |
+| line        | 行数,为0时默认显示全部        | `Number`                  | -                                                                                                                                     | 0     |
+| indent      | 缩进                  | `Number`                  | -                                                                                                                                     | 0     |
+| suffix      | 后缀，只有在存在显示不完内容时才会出现 | `string`                  | -                                                                                                                                     | '...' |
+| renderRow   | 自定义渲染               | `Function`                | -                                                                                                                                     | -     |
+| placement   | 弹层的位置               | `string`                  | `top`、`left`、`right`、`bottom`、`bottom-left`、`bottom-right`、`top-left`、`top-right`、`right-top`、`right-bottom`、`left-top`、`left-bottom` | `top` |
 | portalClass | 外层类名                | `object`、`string`、`Array` | -                                                                                                                                     | -     |
-| portalStyle     | 样式                  | `object`                  | -                                                                                                                                     | -     |
+| portalStyle | 样式                  | `object`                  | -                                                                                                                                     | -     |
+| resize      | 是否启用resize          | `number`、`boolean`        | 100                                                                                                                                   | -     |

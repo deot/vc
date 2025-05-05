@@ -2,6 +2,7 @@
 
 import { getCurrentInstance, defineComponent, watch, ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { Resize } from '@deot/helper-resize';
+import { debounce } from 'lodash-es';
 import { props as textProps } from './text-props';
 import { Customer } from '../customer';
 import { Popover } from '../popover';
@@ -22,7 +23,6 @@ export const Text = defineComponent({
 			return { cursor: endIndex.value === 0 ? 'unset' : 'pointer' };
 		});
 
-		let timer: any;
 		const calcPosition = () => {
 			const { suffix, line, value, indent } = props;
 			if (line === 0) {
@@ -41,10 +41,7 @@ export const Text = defineComponent({
 			emit('clip', endIndex.value);
 		};
 
-		const handleResize = () => {
-			timer && clearTimeout(timer);
-			timer = setTimeout(calcPosition, 50);
-		};
+		const handleResize = props.resize === true || props.resize === 0 ? calcPosition : debounce(calcPosition, props.resize || 0);
 
 		const handleMouseOver = (e: any) => {
 			if (endIndex.value > 0) {
@@ -56,7 +53,7 @@ export const Text = defineComponent({
 					theme: 'dark',
 					placement: props.placement,
 					portalClassName: props.portalClassName,
-					portalStyle: props.portalStyle,
+					portalStyle: props.portalStyle || `width: ${e.target.clientWidth}px`,
 					content: props.value,
 				});
 			}
@@ -74,14 +71,11 @@ export const Text = defineComponent({
 		});
 
 		onMounted(() => {
-			setTimeout(calcPosition, 0);
-
-			Resize.on(instance.vnode.el as any, handleResize);
+			props.resize !== false && Resize.on(instance.vnode.el as any, handleResize); // 首次会执行一次
 		});
 
 		onBeforeUnmount(() => {
-			Resize.off(instance.vnode.el as any, handleResize);
-			timer && clearTimeout(timer);
+			props.resize !== false && Resize.off(instance.vnode.el as any, handleResize);
 		});
 
 		const Content = props.tag;
@@ -106,7 +100,6 @@ export const Text = defineComponent({
 								)
 							: null
 					}
-
 				</Content>
 			);
 		};

@@ -2,7 +2,6 @@
 	<div :style="{ width: width, height: height }">
 		<Chart
 			:options="polar"
-			:auto-resize="true"
 			@ready="handleReady"
 		/>
 	</div>
