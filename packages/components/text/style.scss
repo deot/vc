@@ -3,4 +3,14 @@
 $component-name: vc-text;
 
 @include block($component-name) {
+	position: relative;
+	display: inline-block;
+	width: 100%;
+	word-break: break-all;
+	box-sizing: border-box;
+
+	span {
+		display: block;
+		word-break: break-all;
+	}
 }
