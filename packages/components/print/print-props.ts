@@ -1,8 +1,9 @@
 import type { ExtractPropTypes } from 'vue';
 
 export const props = {
+	value: String,
 	tag: {
-		type: String,
+		type: [String, Object, Function],
 		default: 'div'
 	}
 };
