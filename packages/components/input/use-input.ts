@@ -72,8 +72,8 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 	};
 
 	const handleKeyup = (e: KeyboardEvent) => {
-		// 数字键盘
-		if (e.code === 'Enter') {
+		// 键盘Enter / 数字键盘13
+		if (e.code === 'Enter' || e.keyCode === 13) {
 			emit('enter', e);
 		}
 		emit('keyup', e);
