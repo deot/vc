@@ -3,7 +3,7 @@ import { Portal } from '../../portal';
 import { MToastView } from './toast-view.tsx';
 import type { Props } from './toast-view-props';
 
-const MToast = new Portal(MToastView, {
+const MToast$ = new Portal(MToastView, {
 	multiple: true,
 	autoDestroy: false
 });
@@ -19,7 +19,7 @@ const create = (options: Options) => (...params: Array<Options[keyof Options] | 
 	);
 
 	// 执行弹窗
-	return MToast.popup({
+	return MToast$.popup({
 		...options$,
 		onFulfilled: options$.onClose,
 		// 当组件内使用emit('close')，避免重复触发
@@ -27,9 +27,11 @@ const create = (options: Options) => (...params: Array<Options[keyof Options] | 
 	});
 };
 
-export const destroy = () => MToast.destroy();
+export const destroy = () => MToast$.destroy();
 export const info = create({ mode: 'info' });
 export const success = create({ mode: 'success' });
 export const loading = create({ mode: 'loading', duration: 0, maskClosable: false });
 export const warning = create({ mode: 'warning' });
 export const error = create({ mode: 'error' });
+
+export const MToast = Object.assign(MToastView, { destroy, info, success, loading, warning, error });

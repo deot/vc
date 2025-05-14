@@ -1,5 +1,5 @@
 <template>
-	<DrawerView
+	<Drawer
 		ref="target"
 		v-model="isVisible"
 		title="title2"
@@ -10,12 +10,12 @@
 		<div v-for="i in items" :key="i">
 			每2秒后高度随机变化 {{ data }}
 		</div>
-	</DrawerView>
+	</Drawer>
 </template>
 
 <script setup>
 import { onMounted, ref, onUnmounted } from 'vue';
-import { DrawerView } from '../..';
+import { Drawer } from '../..';
 
 defineProps({
 	data: Object

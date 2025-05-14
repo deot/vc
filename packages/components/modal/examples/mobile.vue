@@ -1,6 +1,6 @@
 <template>
 	<div style="padding: 100px">
-		<MModalView
+		<MModal
 			v-model="visible1"
 			:mask-closable="true"
 			title="标题1"
@@ -9,7 +9,7 @@
 			@cancel="handleCancel"
 			@ok="handleOk"
 		/>
-		<MModalView
+		<MModal
 			v-model="visible2"
 			:mode="mode"
 			:mask-closable="true"
@@ -22,8 +22,8 @@
 				portal: 确定，取消
 			</div>
 			<!-- <vcm-input v-model="value" /> -->
-		</MModalView>
-		<MModalView
+		</MModal>
+		<MModal
 			v-model="visible3"
 			:mode="mode"
 			:mask-closable="true"
@@ -34,7 +34,7 @@
 			@cancel="handleCancel"
 			@ok="handleOk"
 		/>
-		<MModalView
+		<MModal
 			v-model="visible4"
 			:mask-closable="true"
 			content="账号密码不一致，请重试"
@@ -67,7 +67,7 @@
 </template>
 <script setup>
 import { ref } from 'vue';
-import { MModal, MModalView } from '../index.m';
+import { MModal } from '../index.m';
 import { VcInstance } from '../../vc/index';
 
 window.vc = VcInstance;

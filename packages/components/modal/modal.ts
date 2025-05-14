@@ -2,7 +2,7 @@ import { Portal } from '../portal';
 import { ModalView } from './modal-view.tsx';
 import type { Props } from './modal-view-props';
 
-const Modal = new Portal(ModalView, {
+const Modal$ = new Portal(ModalView, {
 	leaveDelay: 0,
 	multiple: true
 });
@@ -11,7 +11,7 @@ type Options = Partial<Props & { onClose: (...args: any[]) => any }>;
 
 const create = (mode: Options['mode']) => (options: Options) => {
 	// 执行弹窗
-	const leaf = Modal.popup({
+	const leaf = Modal$.popup({
 		...options,
 		mode,
 		onFulfilled: options.onClose,
@@ -23,8 +23,10 @@ const create = (mode: Options['mode']) => (options: Options) => {
 	return leaf;
 };
 
-export const destroy = () => Modal.destroy();
+export const destroy = () => Modal$.destroy();
 export const info = create('info');
 export const success = create('success');
 export const warning = create('warning');
 export const error = create('error');
+
+export const Modal = Object.assign(ModalView, { destroy, info, success, warning, error });

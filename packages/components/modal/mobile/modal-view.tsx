@@ -122,7 +122,11 @@ export const MModalView = defineComponent({
 		);
 
 		expose({
-			isActive // for portal
+			isActive, // for portal
+			toggle(v?: boolean) {
+				v = typeof v === 'boolean' ? v : !isActive.value;
+				isActive.value = v;
+			},
 		});
 		return () => {
 			return (

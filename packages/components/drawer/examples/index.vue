@@ -13,7 +13,7 @@
 			Drawer.open
 		</Button>
 		<div style="height: 1000px" />
-		<DrawerView
+		<Drawer
 			v-model="isActiveRight"
 			title="Right"
 			:width="500"
@@ -23,8 +23,8 @@
 			<div>
 				我是content2
 			</div>
-		</DrawerView>
-		<DrawerView
+		</Drawer>
+		<Drawer
 			v-model="isActiveBottom"
 			title="Bottom"
 			:height="500"
@@ -32,12 +32,12 @@
 			placement="bottom"
 		>
 			我是content1
-		</DrawerView>
+		</Drawer>
 	</div>
 </template>
 <script setup>
 import { ref, h } from 'vue';
-import { Drawer, DrawerView } from '..';
+import { Drawer } from '..';
 import { Button } from '../../button';
 import { AnyDrawer } from './popup';
 
@@ -50,11 +50,11 @@ const handleDrawerBottom = () => {
 
 const handleDrawerRight = () => {
 	isActiveRight.value = true;
-}
+};
 
 const handleDrawerPortal = () => {
 	AnyDrawer.popup();
-}
+};
 
 const handleDrawerOpen = () => {
 	Drawer.open({

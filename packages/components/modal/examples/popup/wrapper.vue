@@ -1,5 +1,5 @@
 <template>
-	<ModalView
+	<Modal
 		ref="target"
 		v-model="isVisible"
 		title="title2"
@@ -9,12 +9,12 @@
 		<p v-for="i in items" :key="i">
 			每2秒后高度随机变化 {{ data }}
 		</p>
-	</ModalView>
+	</Modal>
 </template>
 
 <script setup>
 import { onMounted, ref, onUnmounted } from 'vue';
-import { ModalView } from '../..';
+import { Modal } from '../..';
 
 defineProps({
 	data: Object

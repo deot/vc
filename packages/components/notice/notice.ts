@@ -9,7 +9,7 @@ if (typeof document !== 'undefined') {
 	el.classList.add('vc-notice-portals');
 }
 
-const Notice = new Portal(NoticeView, {
+const Notice$ = new Portal(NoticeView, {
 	el: el!,
 	leaveDelay: 0,
 	multiple: true,
@@ -24,7 +24,7 @@ type Options = Partial<Props & {
 const clean = () => {
 	let number = 0;
 	Portal.leafs.forEach((_, key) => {
-		if (key.includes(Notice.globalOptions.name!)) {
+		if (key.includes(Notice$.globalOptions.name!)) {
 			number++;
 		}
 	});
@@ -46,7 +46,7 @@ const create = (mode?: string) => (options: Options) => {
 	};
 
 	// 执行弹窗
-	return Notice.popup({
+	return Notice$.popup({
 		insertion: 'first', // 保持最新的在上面
 		...options$,
 		onFulfilled: () => {
@@ -59,7 +59,7 @@ const create = (mode?: string) => (options: Options) => {
 };
 
 export const destroy = () => {
-	Notice.destroy();
+	Notice$.destroy();
 	clean();
 };
 export const open = create();
@@ -67,3 +67,5 @@ export const info = create('info');
 export const success = create('success');
 export const warning = create('warning');
 export const error = create('error');
+
+export const Notice = Object.assign(NoticeView, { destroy, open, info, success, warning, error });
