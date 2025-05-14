@@ -1,6 +1,4 @@
-import { Clipboard } from './clipboard.tsx';
-import './style.scss';
+import { Clipboard as Clipboard$ } from './clipboard';
+import { group } from './utils';
 
-export {
-	Clipboard
-};
+export const Clipboard = Object.assign(Clipboard$, group);
