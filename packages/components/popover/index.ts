@@ -1,6 +1,7 @@
-import { Popover } from './popover.tsx';
+import { Popover as Popover$ } from './popover.tsx';
+import { PopoverPortal } from './wrapper';
 import './style.scss';
 
-export {
-	Popover
-};
+export const Popover = Object.assign(Popover$, {
+	open: PopoverPortal.popup.bind(PopoverPortal)
+});

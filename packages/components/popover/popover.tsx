@@ -14,7 +14,6 @@ export const Popover = defineComponent({
 	name: COMPONENT_NAME,
 	props: popoverProps,
 	emits: ['update:modelValue', 'visible-change', 'ready', 'close'],
-	open: PopoverPortal.popup.bind(PopoverPortal),
 	setup(props, { emit, slots }) {
 		const instance = getCurrentInstance() as ComponentInternalInstance;
 
