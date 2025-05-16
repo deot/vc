@@ -1,4 +1,4 @@
-## 分页 (Page)
+## 分页 (Pagination)
 当数据量较多时，使用分页可以快速进行数据切换。每次只加载一个页面。
 
 ### 何时使用
@@ -11,24 +11,24 @@
 :::RUNTIME
 ```vue
 <template>
-	<div class="v-page-basic">
+	<div class="v-pagination-basic">
 		<div>页数较少时效果</div>
-		<Page
+		<Pagination
 			class="page"
 			:count="50"
 		/>
 		<div>大于5页时效果</div>
-		<Page
+		<Pagination
 			class="page"
 			:count="60"
 		/>
 	</div>
 </template>
 <script setup>
-import { Page } from '@deot/vc';
+import { Pagination } from '@deot/vc';
 </script>
 <style>
-.v-page-basic .page, .v-page-basic div {
+.v-pagination-basic .page, .v-pagination-basic div {
 	margin-bottom: 10px;
 }
 </style>
@@ -41,8 +41,8 @@ import { Page } from '@deot/vc';
 :::RUNTIME
 ```vue
 <template>
-	<div class="v-page-size">
-		<Page
+	<div class="v-pagination-size">
+		<Pagination
 			class="page"
 			:count="100"
 			:show-count="false"
@@ -52,10 +52,10 @@ import { Page } from '@deot/vc';
 	</div>
 </template>
 <script setup>
-import { Page } from '@deot/vc';
+import { Pagination } from '@deot/vc';
 </script>
 <style>
-.v-page-size .page {
+.v-pagination-size .page {
 	margin-bottom: 10px;
 }
 </style>
@@ -68,8 +68,8 @@ import { Page } from '@deot/vc';
 :::RUNTIME
 ```vue
 <template>
-	<div class="v-page-elevator">
-		<Page
+	<div class="v-pagination-elevator">
+		<Pagination
 			class="page"
 			:count="100"
 			show-elevator
@@ -78,10 +78,10 @@ import { Page } from '@deot/vc';
 	</div>
 </template>
 <script setup>
-import { Page } from '@deot/vc';
+import { Pagination } from '@deot/vc';
 </script>
 <style>
-.v-page-elevator .page {
+.v-pagination-elevator .page {
 	margin-bottom: 10px;
 }
 </style>
@@ -94,8 +94,8 @@ import { Page } from '@deot/vc';
 :::RUNTIME
 ```vue
 <template>
-	<div class="v-page-elevator">
-		<Page
+	<div class="v-pagination-elevator">
+		<Pagination
 			ref="page"
 			class="page"
 			:count="100"
@@ -103,12 +103,12 @@ import { Page } from '@deot/vc';
 		/>
 		<Button @click="handlePrev">上一页</Button>
 		<Button @click="handleNext">下一页</Button>
-		<Button @click="handlePage">跳转到第三页</Button>
+		<Button @click="handlePagination">跳转到第三页</Button>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Page, Button } from '@deot/vc';
+import { Pagination, Button } from '@deot/vc';
 
 const page = ref();
 const handlePrev = () => {
@@ -119,13 +119,13 @@ const handleNext = () => {
 	page.value.next();
 };
 
-const handlePage = () => {
+const handlePagination = () => {
 	page.value.resetPage(3);
 };
 
 </script>
 <style>
-.v-page-elevator .page {
+.v-pagination-elevator .page {
 	margin-bottom: 10px;
 }
 </style>
@@ -136,16 +136,16 @@ const handlePage = () => {
 
 ### 属性
 
-| 属性                | 说明                   | 类型        | 可选值            | 默认值              |
-| ----------------- | -------------------- | --------- | -------------- | ---------------- |
-| current           | 当前页码，支持 .sync 修饰符    | `number`  | -              | 1                |
-| count             | 数据总数                 | `number`  | -              | 0                |
-| page-size         | 每页条数                 | `number`  | -              | 10               |
-| page-size-options | 每页条数切换的配置            | `array`   | -              | [10, 20, 30, 40] |
-| placement         | 条数切换弹窗的展开方向          | `string`  | `bottom`、`top` | `bottom`         |
-| show-count        | 显示总数                 | `boolean` | -              | `true`           |
-| show-elevator     | 显示电梯，可以快速切换到某一页      | `boolean` | -              | `false`          |
-| show-sizer        | 显示分页，用来改变`page-size` | `boolean` | -              | `false`          |
+| 属性                | 说明                        | 类型        | 可选值            | 默认值              |
+| ----------------- | ------------------------- | --------- | -------------- | ---------------- |
+| current           | 当前页码，支持 `v-model:current` | `number`  | -              | 1                |
+| count             | 数据总数                      | `number`  | -              | 0                |
+| page-size         | 每页条数                      | `number`  | -              | 10               |
+| page-size-options | 每页条数切换的配置                 | `array`   | -              | [10, 20, 30, 40] |
+| placement         | 条数切换弹窗的展开方向               | `string`  | `bottom`、`top` | `bottom`         |
+| show-count        | 显示总数                      | `boolean` | -              | `true`           |
+| show-elevator     | 显示电梯，可以快速切换到某一页           | `boolean` | -              | `false`          |
+| show-sizer        | 显示分页，用来改变`page-size`      | `boolean` | -              | `false`          |
 
 ### 事件
 
