@@ -30,7 +30,7 @@ let timer;
 onMounted(() => {
 	isVisible.value = true;
 	timer = setInterval(() => {
-		items.value = Array.from({ length: Math.ceil(Math.random() * 30) + 20 }, (e, i) => i);
+		items.value = Array.from({ length: Math.ceil(Math.random() * 30) + 5 }, (e, i) => i);
 		target.value?.resetOrigin();
 	}, 2000);
 });

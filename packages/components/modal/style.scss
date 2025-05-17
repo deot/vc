@@ -79,11 +79,18 @@ $color-dark-extralight: varfix(color-dark-extralight, modal);
 		}
 	}
 
+	@include element(content-container) {
+		overflow: hidden;
+		flex: 1;
+
+		> .vc-scroller {
+			height: 100%;
+		}
+	}
+
 	@include element(content) {
 		padding: unitfix(16) unitfix(24);
-		overflow-y: auto;
 		box-sizing: border-box;
-		flex: 1;
 
 		@include when(confirm) {
 			padding: 0;

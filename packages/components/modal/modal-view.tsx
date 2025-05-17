@@ -22,6 +22,8 @@ import { Icon } from '../icon';
 import { Button } from '../button';
 import { TransitionScale, TransitionFade } from '../transition';
 import { Customer } from '../customer';
+import { Scroller } from '../scroller';
+import { Resizer } from '../resizer';
 import { VcInstance } from '../vc';
 
 import { props as modalProps } from './modal-view-props';
@@ -39,7 +41,8 @@ export const ModalView = defineComponent({
 		const container = shallowRef<HTMLElement>();
 		const wrapper = shallowRef<HTMLElement>();
 		const header = shallowRef<HTMLElement>();
-		const content = shallowRef<HTMLElement>();
+		const scroller = shallowRef<any>();
+		const resizer = shallowRef<any>();
 
 		const x = ref(0);
 		const y = ref(0);
@@ -211,14 +214,16 @@ export const ModalView = defineComponent({
 		};
 
 		/**
-		 * 解决handleContainerResize设置高度后
-		 * content变化，高度无法重写计算的问题，因为content有over-flow-y: auto;
+		 * content变化, 由于容器是maxHeight, 这里需要重匹配高度
 		 *
-		 * 移除后可能会再次触发handleContainerResize
+		 * 这里由于scroller的resize时，render会重置height(实际上就是保留height, 无法移除)
+		 * 1. 改用nextTick, 抖动严重
+		 * 2. resizer.value.refresh, 不抖动
 		 */
 		const handleContentResize = () => {
-			const has = !!container.value!.style.getPropertyValue('height');
-			has && container.value!.style.removeProperty('height');
+			const has = !!scroller.value.wrapper!.style.getPropertyValue('height');
+			has && scroller.value.wrapper!.style.removeProperty('height');
+			has && resizer.value.refresh();
 		};
 
 		const handleClick = (e: MouseEvent) => {
@@ -272,7 +277,7 @@ export const ModalView = defineComponent({
 			document.addEventListener('keydown', handleEscClose);
 			document.addEventListener('click', handleClick, true);
 			Resize.on(container.value!, handleContainerResize);
-			Resize.on(content.value!, handleContentResize);
+			Resize.on(scroller.value!.content, handleContentResize);
 		});
 
 		onUpdated(() => {
@@ -284,7 +289,7 @@ export const ModalView = defineComponent({
 
 		onBeforeUnmount(() => {
 			Resize.off(container.value!, handleContainerResize);
-			Resize.off(content.value!, handleContentResize);
+			Resize.off(scroller.value!.content, handleContentResize);
 		});
 
 		onUnmounted(() => {
@@ -374,19 +379,30 @@ export const ModalView = defineComponent({
 											: slots.header()
 									}
 								</div>
-								<div
-									ref={content}
-									class={[{ 'is-confirm': props.mode }, props.portalClass, 'vc-modal__content']}
-								>
-									{
-										typeof props.content === 'string'
-											? (<div innerHTML={props.content} />)
-											: typeof props.content === 'function'
-												? (<Customer render={props.content} />)
-												: null
-									}
-									{ slots.default?.() }
-								</div>
+								<Resizer ref={resizer} class="vc-modal__content-container">
+									{{
+										default: (row: any) => {
+											return (
+												<Scroller
+													ref={scroller}
+													native={false}
+													always={true}
+													height={row.height}
+													contentClass={[{ 'is-confirm': props.mode }, props.portalClass, 'vc-modal__content']}
+												>
+													{
+														typeof props.content === 'string'
+															? (<div innerHTML={props.content} />)
+															: typeof props.content === 'function'
+																? (<Customer render={props.content} />)
+																: null
+													}
+													{ slots.default?.() }
+												</Scroller>
+											);
+										}
+									}}
+								</Resizer>
 								{
 									(props.footer && (props.cancelText || props.okText)) && (
 										<div class={[{ 'is-confirm': props.mode }, 'vc-modal__footer']}>

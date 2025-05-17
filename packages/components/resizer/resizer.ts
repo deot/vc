@@ -8,7 +8,7 @@ export const Resizer = defineComponent({
 	name: COMPONENT_NAME,
 	props: resizerProps,
 	emit: ['resize', 'change'],
-	setup(props, { emit, slots }) {
+	setup(props, { emit, slots, expose }) {
 		const width = ref(0);
 		const height = ref(0);
 		const current = ref();
@@ -21,8 +21,10 @@ export const Resizer = defineComponent({
 			};
 		});
 
+		let locked = false;
 		let hasInitial = false;
 		const handleResize = () => {
+			if (locked) return;
 			let { width: width$, height: height$ } = current.value.getBoundingClientRect();
 			const { paddingLeft, paddingRight, paddingTop, paddingBottom } = window.getComputedStyle(current.value);
 			const left = Number.parseInt(paddingLeft) || 0;
@@ -47,13 +49,23 @@ export const Resizer = defineComponent({
 			hasInitial = true;
 		};
 
+		let timer: any;
+		const refresh = () => {
+			handleResize();
+			locked = true;
+			// 避免连续触发（下一帧执行完成后16.66，下下帧开始前33.33）
+			timer = setTimeout(() => (locked = false), 20);
+		};
 		onMounted(() => {
 			Resize.on(current.value, handleResize); // 首次会执行一次
 		});
 
 		onBeforeUnmount(() => {
 			Resize.off(current.value, handleResize);
+			timer && clearTimeout(timer);
 		});
+
+		expose({ refresh });
 
 		return () => {
 			return h(

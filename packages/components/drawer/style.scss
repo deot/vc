@@ -78,11 +78,18 @@ $background-color-light: varfix(background-color-light, drawer);
 		border-bottom: 1px solid #e8eaec;
 	}
 
+	@include element(content-container) {
+		overflow: hidden;
+		flex: 1;
+
+		> .vc-scroller {
+			height: 100%;
+		}
+	}
+
 	@include element(content) {
 		padding: unitfix(16) unitfix(24);
-		overflow-y: auto;
 		box-sizing: border-box;
-		flex: 1;
 	}
 
 	@include element(footer) {

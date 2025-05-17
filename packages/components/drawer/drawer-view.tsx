@@ -5,6 +5,7 @@ import { useScrollbar } from '@deot/vc-hooks';
 import { Button } from '../button';
 import { Icon } from '../icon';
 import { Customer } from '../customer';
+import { Scroller } from '../scroller';
 import { TransitionFade, TransitionSlide } from '../transition';
 import { props as drawerProps } from './drawer-view-props';
 
@@ -154,16 +155,21 @@ export const DrawerView = defineComponent({
 									</a>
 								</div>
 								<div
-									class={['vc-drawer__content']}
+									class="vc-drawer__content-container"
 								>
-									{
-										typeof props.content === 'string'
-											? (<div innerHTML={props.content} />)
-											: typeof props.content === 'function'
-												? (<Customer render={props.content} />)
-												: null
-									}
-									{ slots.default?.() }
+									<Scroller
+										native={false}
+										contentClass="vc-drawer__content"
+									>
+										{
+											typeof props.content === 'string'
+												? (<div innerHTML={props.content} />)
+												: typeof props.content === 'function'
+													? (<Customer render={props.content} />)
+													: null
+										}
+										{ slots.default?.() }
+									</Scroller>
 								</div>
 								{
 									(props.footer && (props.cancelText || props.okText)) && (

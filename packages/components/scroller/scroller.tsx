@@ -49,7 +49,7 @@ export const Scroller = defineComponent({
 							ref={content}
 							// @ts-ignore
 							style={props.contentStyle}
-							class="vc-scroller__content"
+							class={props.contentClass}
 						>
 							{ slots.default?.() }
 						</Content>

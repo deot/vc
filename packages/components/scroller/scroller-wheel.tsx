@@ -132,7 +132,7 @@ export const ScrollerWheel = defineComponent({
 						ref={content}
 						// @ts-ignore
 						style={props.contentStyle}
-						class="vc-scroller__content"
+						class={[props.contentClass, 'vc-scroller__content']}
 					>
 						{ slots.default?.() }
 					</Content>

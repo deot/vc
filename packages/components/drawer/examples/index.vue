@@ -31,7 +31,9 @@
 			:footer="false"
 			placement="bottom"
 		>
-			我是content1
+			<div v-for="item in 1000" :key="item">
+				'我是content{{ item }}'
+			</div>
 		</Drawer>
 	</div>
 </template>
@@ -90,5 +92,5 @@ const handleDrawerOpen = () => {
 			console.log('关闭后都会触发');
 		}
 	});
-}
+};
 </script>
