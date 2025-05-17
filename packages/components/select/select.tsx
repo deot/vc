@@ -1,6 +1,18 @@
 /** @jsxImportSource vue */
 
-import { defineComponent } from 'vue';
+import { defineComponent, getCurrentInstance, inject, ref, computed, watch } from 'vue';
+import { debounce, isEqualWith } from 'lodash-es';
+import { useAttrs } from '@deot/vc-hooks';
+import { getUid } from '@deot/helper-utils';
+import { getLabel, escapeString, flattenData } from './utils';
+import { VcError } from '../vc/index';
+import { Input, InputSearch } from '../input/index';
+import { Popover } from '../popover/index';
+import { Spin } from '../spin/index';
+import { Tag } from '../tag/index';
+import { Icon } from '../icon/index';
+import { Option } from './option.tsx';
+import { OptionGroup } from './option-group.tsx';
 import { props as selectProps } from './select-props';
 
 const COMPONENT_NAME = 'vc-select';
@@ -8,12 +20,302 @@ const COMPONENT_NAME = 'vc-select';
 export const Select = defineComponent({
 	name: COMPONENT_NAME,
 	props: selectProps,
-	setup(props, { slots }) {
+	emits: ['ready', 'close', 'visible-change', 'clear', 'change', 'update:modelValue'],
+	setup(props, { emit, slots, expose }) {
+		const instance = getCurrentInstance();
+		const its = useAttrs({ merge: false });
+		const formItem = inject<any>('vc-form-item', {});
+		const selectId = ref(getUid('select'));
+
+		const isHover = ref(false);
+		const isActive = ref(false);
+		const isLoading = ref(false);
+		const searchValue = ref('');
+		const searchRegex = ref(new RegExp(''));
+		const currentValue = ref<any>(props.max > 1 ? [] : '');
+
+		const source = computed(() => {
+			return flattenData(props.data, { parent: true, cascader: true });
+		});
+		const icon = computed(() => {
+			return isActive.value ? 'up' : 'down';
+		});
+
+		const multiple = computed(() => {
+			return props.max > 1;
+		});
+
+		const showClear = computed(() => {
+			const value = !multiple.value ? currentValue.value : currentValue.value.length > 0;
+			const basic = props.clearable && !props.disabled && isHover.value;
+			return (typeof value === 'number' || value) && basic;
+		});
+
+		const classes = computed(() => {
+			return {
+				'is-disabled': props.disabled
+			};
+		});
+
+		const currentLabel = computed(() => {
+			if (!props.data.length) {
+				return multiple.value ? [] : '';
+			}
+
+			return multiple.value
+				? currentValue.value.map(getLabel.bind(null, source.value))
+				: getLabel(source.value, currentValue.value);
+		});
+		/**
+		 * v-model 同步, 外部的数据改变时不会触发
+		 */
+		const sync = () => {
+			emit('update:modelValue', currentValue.value, currentLabel.value);
+			emit('change', currentValue.value, currentLabel.value);
+
+			// form表单
+			formItem?.change?.(currentValue.value);
+		};
+
+		/**
+		 * 默认防抖
+		 */
+		const _loadData = debounce(function () {
+			const remote = props.loadData(searchValue.value, instance);
+
+			if (remote && remote.then) {
+				isLoading.value = true;
+				remote.finally(() => {
+					isLoading.value = false;
+				});
+			} else {
+				throw new VcError('select', 'loadData 返回值需要Promise');
+			}
+		}, 250, { leading: false });
+
+		const add = (v) => {
+			if (!multiple.value) {
+				currentValue.value = v;
+				isActive.value = false;
+			} else {
+				currentValue.value.push(v);
+			}
+
+			sync();
+		};
+
+		const remove = (v) => {
+			const index = currentValue.value.findIndex(i => i == v);
+
+			currentValue.value.splice(index, 1);
+
+			sync();
+		};
+
+		const close = () => {
+			isActive.value = false;
+		};
+
+		const handleClear = (e) => {
+			if (!showClear.value) return;
+			e.stopPropagation();
+
+			emit('clear');
+
+			currentValue.value = multiple.value ? [] : '';
+			isActive.value = false;
+
+			sync();
+		};
+
+		const handleClose = (v) => {
+			remove(v);
+		};
+
+		const handleSearch = (v) => {
+			searchValue.value = v;
+
+			searchRegex.value = new RegExp(escapeString(v.trim()), 'i');
+			props.loadData && _loadData(v);
+		};
+
+		watch(
+			() => props.modelValue,
+			(v) => {
+				if (isEqualWith(v, currentValue.value)) {
+					return;
+				}
+
+				if (multiple.value && !(v instanceof Array)) {
+					if (v) {
+						throw new VcError('select', `多选时初始值应该为数组，当前值是${v}`);
+					} else {
+						v = [];
+					}
+				}
+
+				currentValue.value = v;
+			},
+			{ immediate: true }
+		);
+
+		expose({
+			selectId,
+			add,
+			remove,
+			close,
+			searchRegex,
+			multiple
+		});
 		return () => {
 			return (
-				<div class="vc-select">
-					{ slots?.default?.() }
-				</div>
+				<Popover
+					modelValue={isActive.value}
+					{
+						...its.value.attrs
+					}
+					arrow={props.arrow}
+					trigger={props.trigger}
+					tag={props.tag}
+					placement={props.placement}
+					auto-width={props.autoWidth}
+					disabled={props.disabled}
+					portalClass={[['is-padding-none', props.portalClass]]}
+					class={[classes.value, its.value.class, 'vc-select']}
+					style={its.value.style}
+					animation="y"
+					// @ts-ignore
+					onMouseenter={() => (isHover.value = true)}
+					onMuseleave={() => (isHover.value = false)}
+					onReady={() => emit('ready')}
+					onClose={() => emit('close')}
+					onVisibleChange={() => emit('visible-change', isActive.value)}
+					onUpdtaeModelValue={(v: boolean) => (isActive.value = v)}
+				>
+					{{
+						default: () => {
+							return (
+								<Input
+									element-id={props.elementId}
+									disabled={props.disabled}
+									modelValue={currentLabel.value || props.extra}
+									allow-dispatch={false}
+									class="vc-select__input"
+									// @ts-ignore
+									readonly={true}
+									placeholder={props.placeholder || '请选择'}
+								>
+									{{
+										content: multiple.value && (currentValue.value && currentValue.value.length > 0)
+											? () => {
+													return (
+														<div class={[classes.value, 'vc-select__tags']}>
+															{
+																currentValue.value.map((item: any, index: number) => {
+																	return (
+																		<Tag
+																			key={item}
+																			closable={!props.disabled}
+																			onClose={() => handleClose(item)}
+																		>
+																			{ currentLabel.value[index] || '' }
+																		</Tag>
+																	);
+																})
+															}
+														</div>
+													);
+												}
+											: null,
+										append: () => {
+											return (
+												<div class="vc-select__append">
+													<Icon
+														type={showClear.value ? 'clear' : icon.value}
+														class={[{ 'is-arrow': !showClear }, 'vc-select__icon']}
+														// @ts-ignore
+														onClick={handleClear}
+													/>
+												</div>
+											);
+										}
+									}}
+								</Input>
+							);
+						},
+						content: () => {
+							return (
+								<div class="vc-select__content">
+									{
+										props.searchable && (
+											<div class="vc-select__search">
+												<InputSearch
+													modelValue={searchValue.value}
+													// @ts-ignore
+													placeholder={props.searchPlaceholder}
+													onInput={handleSearch}
+												/>
+											</div>
+										)
+									}
+									{
+										props.isLoading && (
+											<div class="vc-select__loading">
+												<Spin size={16} />
+											</div>
+										)
+									}
+									<div class="vc-select__options">
+										{
+											props.data
+												? (
+														<div>
+															{
+																props.data.map((item: any) => {
+																	return Array.isArray(item.children)
+																		? (
+																				<OptionGroup
+																					value={item.value}
+																					label={item.label}
+																					key={item.value}
+																				>
+
+																					{
+																						item.children.map(($item: any) => {
+																							return (
+																								<Option
+																									key={$item.value}
+																									value={$item.value}
+																									label={$item.label}
+																									disabled={$item.disabled}
+																									filterable={$item.filterable}
+																								/>
+																							);
+																						})
+																					}
+																				</OptionGroup>
+																			)
+																		: (
+																				<Option
+																					key={item.value}
+																					value={item.value}
+																					label={item.label}
+																					disabled={item.disabled}
+																					filterable={item.filterable}
+																				/>
+																			);
+																})
+															}
+														</div>
+													)
+												: slots.default?.()
+										}
+									</div>
+								</div>
+							);
+						}
+					}}
+				</Popover>
 			);
 		};
 	}

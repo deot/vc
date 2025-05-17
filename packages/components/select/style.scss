@@ -1,6 +1,3 @@
-@use '../style/helper' as *;
-
-$component-name: vc-select;
-
-@include block($component-name) {
-}
+@use "./select";
+@use "./option-group";
+@use "./option";

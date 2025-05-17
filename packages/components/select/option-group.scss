@@ -1,0 +1,13 @@
+@use '../style/helper' as *;
+
+$component-name: vc-select-option-group;
+
+@include block($component-name) {
+	@include element(title) {
+		height: 30px;
+		padding-left: 8px;
+		font-size: 12px;
+		line-height: 30px;
+		color: #999;
+	}
+}

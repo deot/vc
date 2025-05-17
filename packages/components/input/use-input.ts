@@ -100,7 +100,7 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 		if (isClearing.value) return;
 		isFocus.value = false;
 
-		emit('blur', e, input.value!.value, focusValue);
+		emit('blur', e, input.value ? input.value.value : currentValue.value, focusValue);
 		props.allowDispatch && formItem.blur?.(currentValue.value);
 	};
 
