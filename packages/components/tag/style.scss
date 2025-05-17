@@ -1,6 +1,189 @@
 @use '../style/helper' as *;
 
 $component-name: vc-tag;
+$color-success: varfix(color-success, tag);
+$color-error: varfix(color-error, tag);
+$color-warning: varfix(color-warning, tag);
+$color-primary: varfix(color-primary, tag);
 
 @include block($component-name) {
+	position: relative;
+	display: inline-block;
+	height: 22px;
+	margin: 2px 4px 2px 0;
+	overflow: hidden;
+	font-size: 12px;
+	line-height: 22px;
+
+	/**
+	 * 居中对齐
+	 * @type {[type]}
+	 */
+	vertical-align: middle;
+	cursor: pointer;
+	background: #f7f7f7;
+	border-radius: 3px;
+	box-sizing: border-box;
+
+	@include border('', varfix('color-light-deeper'), 3);
+
+	@include element(wrapper) {
+		display: flex;
+		padding: 0 8px;
+		align-items: center;
+	}
+
+	@include element(close) {
+		font-size: 12px;
+		line-height: inherit;
+		transform: scale(0.7);
+	}
+
+	@include element(dot) {
+		position: relative;
+		display: flex;
+		width: 10px;
+		height: 10px;
+		margin-right: 6px;
+		background: #e8eaec;
+		border-radius: 50%;
+	}
+	
+	@include when(default) {
+		@include when(success) {
+			color: white;
+			background: $color-success;
+
+			&::after, &::before {
+				border-color: $color-success;
+			}
+		}
+
+		@include when(primary) {
+			color: white;
+			background: $color-primary;
+
+			&::after, &::before {
+				border-color: $color-primary;
+			}
+		}
+
+		@include when(warning) {
+			color: white;
+			background: $color-warning;
+
+			&::after, &::before {
+				border-color: $color-warning;
+			}
+		}
+
+		@include when(error) {
+			color: white;
+			background: $color-error;
+
+			&::after, &::before {
+				border-color: $color-error;
+			}
+		}
+	}
+
+	@include when(border) {
+		height: 24px;
+		line-height: 24px;
+		background: white;
+
+		@include when(success) {
+			color: $color-success;
+
+			&::after, &::before {
+				border-color: $color-success;
+			}
+		}
+
+		@include when(primary) {
+			color: $color-primary;
+
+			&::after, &::before {
+				border-color: $color-primary;
+			}
+		}
+
+		@include when(warning) {
+			color: $color-warning;
+
+			&::after, &::before {
+				border-color: $color-warning;
+			}
+		}
+
+		@include when(error) {
+			color: $color-error;
+
+			&::after, &::before {
+				border-color: $color-error;
+			}
+		}
+
+		@include when(white) {
+			color: #fff;
+
+			&::after, &::before {
+				border-color: #fff;
+			}
+		}
+
+		@include element(close) {
+			margin-left: 18px!important;
+		}
+	}
+
+	@include when(dot) {
+		height: 28px;
+		padding: 0 10px;
+		line-height: 28px;
+		background: #fff;
+
+		@include when(success) {
+			@include element(dot) {
+				background: $color-success;
+			}
+		}
+
+		@include when(primary) {
+			@include element(dot) {
+				background: $color-primary;
+			}
+		}
+
+		@include when(warning) {
+			@include element(dot) {
+				background: $color-warning;
+			}
+		}
+
+		@include when(error) {
+			@include element(dot) {
+				background: $color-error;
+			}
+		}
+
+		@include when(white) {
+			@include element(dot) {
+				background: white;
+			}
+		}
+
+		@include element(close) {
+			margin-left: 12px;
+		}
+	}
+
+	@include when(unchecked) {
+		color: #515a6e !important;
+		background: #fff !important;
+
+		&::after, &::before {
+			border-color: #fff !important;
+		}
+	}
 }

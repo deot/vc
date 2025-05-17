@@ -123,19 +123,19 @@ const handleClose = (tag) => {
 ```vue
 <template>
 	<div class="v-tag-basic">
-		<Tag checkable name="标签" @change="handleChange">
+		<Tag checkable value="标签" @change="handleChange">
 			标签
 		</Tag>
-		<Tag checkable color="primary" name="标签一" @change="handleChange">
+		<Tag checkable color="primary" value="标签一" @change="handleChange">
 			标签一
 		</Tag>
-		<Tag checkable :checked="false" color="success" name="标签二" @change="handleChange">
+		<Tag checkable :checked="false" color="success" value="标签二" @change="handleChange">
 			标签二
 		</Tag>
-		<Tag checkable checked color="error" name="标签三" @change="handleChange">
+		<Tag checkable checked color="error" value="标签三" @change="handleChange">
 			标签三
 		</Tag>
-		<Tag checkable :checked="false" color="warning" name="标签四" @change="handleChange">
+		<Tag checkable :checked="false" color="warning" value="标签四" @change="handleChange">
 			标签四
 		</Tag>
 	</div>
@@ -162,7 +162,7 @@ const handleChange = (isChecked, name) => {
 		<Tag
 			v-for="item in count"
 			:key="item"
-			:name="item"
+			:value="item"
 			closable
 			color="primary"
 			@close="handleClose"
@@ -206,7 +206,7 @@ const handleClose = (event, name) => {
 | checked   | 标签的选中状态                       | `boolean`         | -                                               | `true`    |
 | type      | 标签的样式类型                       | `string`          | `default`、`border`、`dot`                        | `default` |
 | color     | 标签颜色，你也可以自定义颜色值。              | `string`          | `default`、`primary`、`success`、`warning`、`error` | `default` |
-| name      | 当前标签的名称，使用 v-for，并支持关闭时，会比较有用 | `string`、`number` | -                                               | -         |
+| value      | 当前标签的名称，使用 v-for，并支持关闭时，会比较有用 | `string`、`number` | -                                               | -         |
 
 
 ### 事件
