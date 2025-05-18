@@ -24,7 +24,8 @@ export const Tag = defineComponent({
 			emit('close', e, props.value || undefined);
 		};
 
-		const handleCheck = () => {
+		const handleCheck = (e: any) => {
+			e.stopPropagation();
 			if (!props.checkable) return;
 
 			isChecked.value = !isChecked.value;
@@ -44,7 +45,7 @@ export const Tag = defineComponent({
 				<div
 					class={[classes.value, 'vc-tag']}
 					// @ts-ignore
-					onClickStop={handleCheck}
+					onClick={handleCheck}
 				>
 					<div class="vc-tag__wrapper">
 						{

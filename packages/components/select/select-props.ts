@@ -3,19 +3,20 @@ import { pick } from 'lodash-es';
 import { props as inputProps } from '../input/input-props';
 import { props as popoverProps } from '../popover/popover-props';
 
+const inputKeys = [
+	'id',
+	'disabled',
+	'modelValue',
+	'clearable'
+] as const;
+
+const popoverKeys = [
+	'portalClass'
+] as const;
+
 export const props = {
-	...pick(popoverProps, [
-		'portalClassName'
-	]),
-	...pick(inputProps, [
-		'elementId',
-		'readonly',
-		'disabled',
-		'modelValue',
-		'size',
-		'placeholder',
-		'clearable'
-	]),
+	...(pick(popoverProps, popoverKeys) as Pick<typeof popoverProps, typeof popoverKeys[number]>),
+	...(pick(inputProps, inputKeys) as Pick<typeof inputProps, typeof inputKeys[number]>),
 	data: {
 		type: Array
 	},

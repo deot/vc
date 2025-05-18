@@ -91,6 +91,8 @@ export const Pagination = defineComponent({
 		};
 
 		const resetPageSize = (pageSize: number) => {
+			currentPageSize.value = pageSize;
+
 			emit('page-size-change', pageSize);
 
 			// 切换条数时，强制为第一页

@@ -190,20 +190,20 @@ export const Select = defineComponent({
 					onReady={() => emit('ready')}
 					onClose={() => emit('close')}
 					onVisibleChange={() => emit('visible-change', isActive.value)}
-					onUpdtaeModelValue={(v: boolean) => (isActive.value = v)}
+					onUpdate:modelValue={(v: boolean) => (isActive.value = v)}
 				>
 					{{
 						default: () => {
 							return (
 								<Input
-									element-id={props.elementId}
+									id={props.id}
 									disabled={props.disabled}
 									modelValue={currentLabel.value || props.extra}
 									allow-dispatch={false}
 									class="vc-select__input"
 									// @ts-ignore
 									readonly={true}
-									placeholder={props.placeholder || '请选择'}
+									placeholder={its.value.attrs?.placeholder || '请选择'}
 								>
 									{{
 										content: multiple.value && (currentValue.value && currentValue.value.length > 0)
