@@ -1,10 +1,5 @@
 <template>
 	<h1>Memory Test in non-trace mode（close vue-devtools）</h1>
-	<button
-		@click="useComponent = !useComponent"
-	>
-		useComponent: {{ useComponent }}
-	</button>
 	<h3>
 		Current Status：{{ runTip }}
 	</h3>
@@ -19,8 +14,9 @@
 	</button>
 </template>
 <script setup>
-import { defineComponent, h, ref } from 'vue';
+import { defineComponent, h, ref, withDirectives, vShow, onMounted } from 'vue';
 import { Portal } from '..';
+import { TransitionFade } from '../../transition';
 
 const WrapperComponent = defineComponent({
 	name: 'vc-wrapper',
@@ -29,39 +25,37 @@ const WrapperComponent = defineComponent({
 	},
 	emits: ['click'],
 	setup(props, { slots }) {
+		const isActive = ref(false);
+		onMounted(() => isActive.value = true);
 		return () => h(
-			props.rootTag,
-			Array
-				.from({ length: 10000 })
-				.map(
-					() => h(
-						'p',
-						{ onClick: console.log },
-						slots
-					)
-				)
+			TransitionFade,
+			{},
+			{
+				default: () => {
+					return withDirectives(
+						h(
+							props.rootTag,
+							Array
+								.from({ length: 10000 })
+								.map(
+									() => h(
+										'p',
+										{ onClick: console.log },
+										slots
+									)
+								)
+						),
+						[[vShow, isActive.value]]
+					);
+				}
+			}
 		);
 	}
 });
-
-const WrapperFunction = (props, { slots }) => h(
-	props.rootTag,
-	Array
-		.from({ length: 10000 })
-		.map(
-			() => h(
-				'p',
-				{ onClick: console.log },
-				slots
-			)
-		)
-);
-
 let timer;
 const runTip = ref('Not Started');
-const useComponent = ref(true);
 
-const MT = new Portal(useComponent.value ? WrapperComponent : WrapperFunction);
+const MT = new Portal(WrapperComponent);
 
 const handleStart = () => {
 	runTip.value = 'Running';
@@ -71,7 +65,7 @@ const handleStart = () => {
 			rootTag: 'h4',
 			onClick: console.log,
 			slots: {
-				default: () => `useComponent: ${useComponent.value} - ${Math.random()}`
+				default: () => `A - ${Math.random()}`
 			}
 		});
 		setTimeout(MT.destroy, 0);

@@ -40,7 +40,7 @@ export const Popover = defineComponent({
 		};
 
 		let timer: any;
-		let popperInstance: PortalLeaf;
+		let popperInstance: PortalLeaf | null;
 
 		/**
 		 * portal: false
@@ -110,6 +110,7 @@ export const Popover = defineComponent({
 					// @ts-ignore
 					onClose: () => {
 						emit('close');
+						popperInstance = null;
 					},
 					// @ts-ignore
 					onReady: () => {

@@ -1,5 +1,6 @@
 <template>
 	<div style="margin: 40px;">
+		<!-- Tips: components/transition/README.md -->
 		<Button @click="handleTestingStart">
 			内存测试
 		</Button>

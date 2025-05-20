@@ -8,7 +8,7 @@
 	<h3>
 		Current Status：{{ runTip }}
 	</h3>
-
+	<!-- Tips: components/transition/README.md -->
 	<button @click="start">
 		Start
 	</button>

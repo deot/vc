@@ -2,6 +2,9 @@
 
 基于Vue内置Transition组件封装
 
+> 受Transition动画的影响，Chrome DevTools/Performance Monitor（136.0.7103.114@x86_64）关闭再开启，动画的垃圾才会被回收。
+> 如果内存依旧泄漏，请分析自身程序（这里可以注释动画Class或给CSS加权禁用它）
+
 ### 何时使用
 
 - 使用过渡动画来优化用户体验。

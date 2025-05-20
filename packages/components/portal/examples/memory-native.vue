@@ -2,6 +2,7 @@
 	<div style="padding: 20px">
 		<div id="root" />
 		<h1>{{ timer ? 'Running' : '----' }}</h1>
+		<!-- Tips: components/transition/README.md -->
 		<button @click="start">
 			Start Test
 		</button>

@@ -17,6 +17,9 @@ export const useTransition = () => {
 		return (props.group ? TransitionGroup : Transition) as Component;
 	});
 
+	/**
+	 * Tips: components/transition/README.md
+	 */
 	const classes = computed(() => {
 		const modeClass = props.mode !== 'none' ? `is-${props.mode.replace(/-/g, ' is-')}` : '';
 		return {
