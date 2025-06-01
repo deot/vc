@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { InputNumber, MInputNumber } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 
+const NULL_VALUE = void 0;
 describe('index-number.ts', () => {
 	it('basic', () => {
 		expect(typeof InputNumber).toBe('object');
@@ -69,11 +70,11 @@ describe('index-number.ts', () => {
 
 		await input.setValue('--');
 		expect(el.value).toBe('-');
-		expect(current.value).toBe('');
+		expect(current.value).toBe(NULL_VALUE);
 
 		await input.setValue('.');
 		expect(el.value).toBe('');
-		expect(current.value).toBe('');
+		expect(current.value).toBe(NULL_VALUE);
 
 		await wrapper.setProps({ precision: 2 });
 		await input.setValue('.');
@@ -90,7 +91,7 @@ describe('index-number.ts', () => {
 
 		await input.setValue('abcd');
 		expect(el.value).toBe('');
-		expect(current.value).toBe('');
+		expect(current.value).toBe(NULL_VALUE);
 
 		await input.setValue('123');
 		expect(el.value).toBe('123');
@@ -135,7 +136,7 @@ describe('index-number.ts', () => {
 		});
 
 		await wrapper.find('input').trigger('blur');
-		expect(current.value).toBe('');
+		expect(current.value).toBe(NULL_VALUE);
 
 		await wrapper.setProps({
 			required: true
@@ -163,7 +164,7 @@ describe('index-number.ts', () => {
 	});
 
 	it('event:times', async () => {
-		const current = ref('');
+		const current = ref(NULL_VALUE);
 		const handleFocus = vi.fn();
 		const handleBlur = vi.fn();
 		const handleInput = vi.fn();
@@ -496,11 +497,11 @@ describe('index-number.ts', () => {
 		const minusEl = wrapper.find('.vc-input-number__down');
 
 		await plusEl.trigger('click');
-		expect(current.value).toBe('');
+		expect(current.value).toBe(NULL_VALUE);
 
 		// 禁用无法输入
 		await minusEl.trigger('click');
-		expect(current.value).toBe('');
+		expect(current.value).toBe(0);
 
 		await plusEl.trigger('click');
 		expect(current.value).toBe(1);

@@ -8,7 +8,7 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 	const { emit } = instance;
 	const props = instance.props as Props;
 
-	const currentValue = ref(props.modelValue);
+	const currentValue = ref<any>(typeof props.modelValue === 'undefined' ? '' : props.modelValue);
 	const isFocus = ref(false);
 	const isClearing = ref(false);
 	const isOnComposition = ref(false);

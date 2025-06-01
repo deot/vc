@@ -187,21 +187,21 @@ const input = ref('');
 ### 属性
 | 属性            | 说明                                                                                       | 类型                 | 可选值 | 默认值     |
 | ------------- | ---------------------------------------------------------------------------------------- | ------------------ | --- | ------- |
-| modelValue    | 绑定的值，用v-model 双向绑定                                                                       | `String`、 `Number` | -   | -       |
-| maxlength     | 最大输入长度                                                                                   | `Number`           | -   | -       |
-| disabled      | 禁用输入框                                                                                    | `Boolean`          | -   | `false` |
-| focusEnd      | 聚焦时光标是否在文字后面                                                                             | `Boolean`          | -   | `false` |
-| clearable     | 显示清空按钮                                                                                   | `Boolean`          | -   | `false` |
-| indicator     | `Input` 特有，类型为对象是`{inline: false, inverted: false}`,如果`append`为`true`，则`inline`为`true`无效 | `Boolean`、`Object` | -   | `false` |
-| indicateClass | 计数文字的样式                                                                                  | `String`           | -   | -       |
-| bytes         | 是否2个字节算一个字                                                                               | `Boolean`          | -   | `false` |
-| prepend       | 前置`icon`的type值                                                                           | `String`           | -   | -       |
-| append        | 后置`icon`的type值                                                                           | `String`           | -   | -       |
-| afloat        | 显示`icon`背景，在插入了`icon`后才生效                                                                | `String`           | -   | -       |
+| modelValue    | 绑定的值，用v-model 双向绑定                                                                       | `string`、 `number` | -   | -       |
+| maxlength     | 最大输入长度                                                                                   | `number`           | -   | -       |
+| disabled      | 禁用输入框                                                                                    | `boolean`          | -   | `false` |
+| focusEnd      | 聚焦时光标是否在文字后面                                                                             | `boolean`          | -   | `false` |
+| clearable     | 显示清空按钮                                                                                   | `boolean`          | -   | `false` |
+| indicator     | `Input` 特有，类型为对象是`{inline: false, inverted: false}`,如果`append`为`true`，则`inline`为`true`无效 | `boolean`、`Object` | -   | `false` |
+| indicateClass | 计数文字的样式                                                                                  | `string`           | -   | -       |
+| bytes         | 是否2个字节算一个字                                                                               | `boolean`          | -   | `false` |
+| prepend       | 前置`icon`的type值                                                                           | `string`           | -   | -       |
+| append        | 后置`icon`的type值                                                                           | `string`           | -   | -       |
+| afloat        | 显示`icon`背景，在插入了`icon`后才生效                                                                | `string`           | -   | -       |
 | inputStyle    | 输入框样式                                                                                    | `Object`、`Array`   | -   | -       |
-| inputId       | input的id属性                                                                               | `String`           | -   | -       |
-| allowDispatch | 是否能触发`form`更新                                                                            | `Boolean`          | -   | `true`  |
-| controllable  | 是否为完全受控组件                                                                                | `Boolean`          | -   | `false` |
+| inputId       | input的id属性                                                                               | `string`           | -   | -       |
+| allowDispatch | 是否能触发`form`更新                                                                            | `boolean`          | -   | `true`  |
+| controllable  | 是否为完全受控组件                                                                                | `boolean`          | -   | `false` |
 
 ### attr属性作用到原生`input`标签中(除了class和style)
 
@@ -209,40 +209,41 @@ const input = ref('');
 
 | 属性           | 说明                                                                    | 类型        | 可选值                                                            | 默认值     |
 | ------------ | --------------------------------------------------------------------- | --------- | -------------------------------------------------------------- | ------- |
-| type         | 输入框类型                                                                 | `String`  | `text`、`password`、`tel`、`search`、`date`、`number`、`email`、`url` | `text`  |
-| placeholder  | 占位文本                                                                  | `String`  | -                                                              | -       |
-| readonly     | 输入框只读                                                                 | `Boolean` | -                                                              | `false` |
-| name         | `String`                                                              | -         | -                                                              |         |
-| autofocus    | 自动获取焦点                                                                | `Boolean` | -                                                              | `false` |
-| autocomplete | 输入字段是否应该启用自动完成功能，`new-password`在`input`的`type`为`password`时可以阻止密码的默认填充 | `String`  | `on`、`off`、`new-password`                                      | `off`   |
-| spellcheck   | 是否对元素内容进行拼写检查                                                         | `Boolean` | -                                                              | `false` |
+| type         | 输入框类型                                                                 | `string`  | `text`、`password`、`tel`、`search`、`date`、`number`、`email`、`url` | `text`  |
+| placeholder  | 占位文本                                                                  | `string`  | -                                                              | -       |
+| readonly     | 输入框只读                                                                 | `boolean` | -                                                              | `false` |
+| name         | `string`                                                              | -         | -                                                              |         |
+| autofocus    | 自动获取焦点                                                                | `boolean` | -                                                              | `false` |
+| autocomplete | 输入字段是否应该启用自动完成功能，`new-password`在`input`的`type`为`password`时可以阻止密码的默认填充 | `string`  | `on`、`off`、`new-password`                                      | `off`   |
+| spellcheck   | 是否对元素内容进行拼写检查                                                         | `boolean` | -                                                              | `false` |
 
 
 ### number属性
 
 | 属性        | 说明          | 类型                  | 可选值 | 默认值                                                                     |
 | --------- | ----------- | ------------------- | --- | ----------------------------------------------------------------------- |
-| min       | 最小值         | `Number`            | -   | 0                                                                       |
-| max       | 最大值         | `Number`            | -   | Infinity                                                                |
-| step      | 计数器步长       | `Number`、`Boolean`  | -   | 1                                                                       |
-| required  | -           | `Boolean`           | -   | `false`                                                                 |
-| precision | 数值精度        | `Number`            | -   | 0                                                                       |
-| output    | blur时强制转换结果 | `Function`、`String` | -   | ''                                                                      |
-| formatter | 格式化值        | `Function`          | -   | `(v, precision) => (/^-$/.test(v) ? '' : Number(v).toFixed(precision))` |
+| min       | 最小值         | `number`            | -   | 0                                                                       |
+| max       | 最大值         | `number`            | -   | Infinity                                                                |
+| step      | 计数器步长       | `number`、`boolean`  | -   | 1                                                                       |
+| required  | -           | `boolean`           | -   | `false`                                                                 |
+| precision | 数值精度        | `number`            | -   | 0                                                                       |
+| output    | blur时强制转换结果 | `Function`、`string` | -   | 'number'                                                                      |
+| formatter | 格式化值        | `Function`          | -   | `(v, precision) => (/^-$/.test(v) ? '' : number(v).toFixed(precision))` |
+| nullValue | clear后的值        | `number`、`string`、`Object`        | -   | `void 0`、`null`、`''` | `void 0`
 
 
 ### search属性
 
 | 属性        | 说明       | 类型                 | 可选值 | 默认值    |
 | --------- | -------- | ------------------ | --- | ------ |
-| enterText | 后置位的显示内容 | `String`、`Boolean` | -   | `true` |
+| enterText | 后置位的显示内容 | `string`、`boolean` | -   | `true` |
 
 
 ### 事件
 
 | 事件名      | 说明                | 回调参数                      | 参数说明        |
 | -------- | ----------------- | ------------------------- | ----------- |
-| input    | 输入触发              | `(val: String) => void 0` | `val`：输入的内容 |
+| input    | 输入触发              | `(val: string) => void 0` | `val`：输入的内容 |
 | change   | 数据改变时触发           | `(e: Event) => void 0`    | `e`：事件对象    |
 | focus    | 输入框聚焦是触发          | `(e: Event) => void 0`    | `e`：事件对象    |
 | blur     | 输入框失焦时            | `(e: Event) => void 0`    | `e`：事件对象    |
@@ -257,11 +258,11 @@ const input = ref('');
 
 | 事件名    | 说明                    | 回调参数                                                     | 参数说明                                                                         |
 | ------ | --------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| tip    | 触发限制的上下数值             | `({ type: String, mag: String, tag: String }) => void 0` | `type`：触发按钮（`max`或者`min`）；`msg`：提示信息（触发上限时为“不能再多了”，下限时为“不能再少了”）；`tag`：button |
+| tip    | 触发限制的上下数值             | `({ type: string, mag: string, tag: string }) => void 0` | `type`：触发按钮（`max`或者`min`）；`msg`：提示信息（触发上限时为“不能再多了”，下限时为“不能再少了”）；`tag`：button |
 | keyup  | 按下键盘触发                | `(e: Event) => void 0`                                   | `e`：事件对象                                                                     |
 | enter  | 按下回车触发                | `(e: Event) => void 0`                                   | `e`：事件对象                                                                     |
-| before | 点击加减按钮改变value前执行      | `(val: String) => promise`                               | `val`：输入的值                                                                   |
-| after  | 点击加减按钮改变value后或者失焦后执行 | `(val: String) => promise`                               | `val`：输入的值                                                                   |
+| before | 点击加减按钮改变value前执行      | `(val: string) => promise`                               | `val`：输入的值                                                                   |
+| after  | 点击加减按钮改变value后或者失焦后执行 | `(val: string) => promise`                               | `val`：输入的值                                                                   |
 
 
 ### 方法

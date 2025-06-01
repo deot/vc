@@ -2,10 +2,7 @@ import type { ExtractPropTypes, PropType, StyleValue } from 'vue';
 
 export const props = {
 	// Array, 作为select等数组存放临时值
-	modelValue: {
-		type: [String, Number, Array] as PropType<string | number | any[]>,
-		default: ''
-	},
+	modelValue: [String, Number, Array] as PropType<string | number | any[]>,
 	disabled: {
 		type: Boolean,
 		default: false

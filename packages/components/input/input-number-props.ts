@@ -25,10 +25,14 @@ export const props = {
 	},
 
 	output: {
-		type: Function,
-		default: (value: string | number) => {
-			return isNaN(+value) || value === '' ? '' : +value;
-		}
+		type: [Function, String],
+		default: 'number'
+	},
+
+	// 清空值时返回的值
+	nullValue: {
+		type: [Number, String, Object],
+		default: void 0
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

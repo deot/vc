@@ -1,10 +1,12 @@
 <template>
-	<h1>{{ current }}</h1>
+	<h1>value: {{ current }}</h1>
+	<h1>typeof: {{ current.map(i => typeof i) }}</h1>
 	<InputNumber
 		v-model="current[0]"
 		ref="input"
 		:step="1"
 		placeholder="请输入"
+		clearable
 		@clear="handleClear"
 		@input="handleInput"
 		@change="handleChange"
@@ -15,6 +17,7 @@
 	<InputNumber
 		controllable
 		placeholder="完全受控失焦后为modelValue值"
+		clearable
 		@clear="handleClear"
 		@input="handleInput"
 		@change="handleChange"
@@ -27,6 +30,7 @@
 		ref="input"
 		:step="1"
 		placeholder="请输入"
+		clearable
 		@clear="handleClear"
 		@input="handleInput"
 		@change="handleChange"
@@ -40,6 +44,7 @@
 		:step="false"
 		:maxlength="4"
 		placeholder="请输入"
+		clearable
 		@clear="handleClear"
 		@input="handleInput"
 		@change="handleChange"

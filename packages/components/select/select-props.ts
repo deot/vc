@@ -61,6 +61,22 @@ export const props = {
 	extra: {
 		type: String,
 		default: ''
+	},
+	// 当输入为字符串数组('value1,value2')时，用于判断是否单选还是多选
+	separator: {
+		type: String,
+		default: ','
+	},
+	// 当输入为字符串数组时，如果data[].value是数字类型时，请传true
+	numerable: {
+		type: Boolean,
+		default: false
+	},
+
+	// 清空值时返回的值
+	nullValue: {
+		type: [Number, String, Object],
+		default: void 0
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

@@ -19,18 +19,13 @@ export const Option = defineComponent({
 		});
 
 		const isSelect = computed(() => {
-			const { modelValue } = owner.props;
-			const { multiple } = owner.exposed;
-			if (typeof modelValue === 'undefined' || modelValue === '') return;
-			return !multiple.value
-				? modelValue == props.value
-				: modelValue.includes(props.value);
+			const { current } = owner.exposed;
+			return current.value.includes(props.value);
 		});
 
 		const isLast = computed(() => {
-			const { modelValue } = owner.props;
-			const { multiple } = owner.proxy;
-			return !multiple ? true : modelValue.slice(-1)[0] === props.value;
+			const { multiple, current } = owner.exposed;
+			return !multiple.value ? true : current.value.slice(-1)[0] === props.value;
 		});
 
 		const isActive = computed(() => {

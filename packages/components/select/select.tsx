@@ -32,7 +32,7 @@ export const Select = defineComponent({
 		const isLoading = ref(false);
 		const searchValue = ref('');
 		const searchRegex = ref(new RegExp(''));
-		const currentValue = ref<any>(props.max > 1 ? [] : '');
+		const currentValue = ref<Array<string | number>>([]);
 
 		const source = computed(() => {
 			return flattenData(props.data, { parent: true, cascader: true });
@@ -46,7 +46,7 @@ export const Select = defineComponent({
 		});
 
 		const showClear = computed(() => {
-			const value = !multiple.value ? currentValue.value : currentValue.value.length > 0;
+			const value = currentValue.value.length > 0;
 			const basic = props.clearable && !props.disabled && isHover.value;
 			return (typeof value === 'number' || value) && basic;
 		});
@@ -59,19 +59,31 @@ export const Select = defineComponent({
 
 		const currentLabel = computed(() => {
 			if (!props.data.length) {
-				return multiple.value ? [] : '';
+				return [];
 			}
 
-			return multiple.value
-				? currentValue.value.map(getLabel.bind(null, source.value))
-				: getLabel(source.value, currentValue.value);
+			return currentValue.value.map(getLabel.bind(null, source.value));
 		});
+
 		/**
 		 * v-model 同步, 外部的数据改变时不会触发
 		 */
 		const sync = () => {
-			emit('update:modelValue', currentValue.value, currentLabel.value);
-			emit('change', currentValue.value, currentLabel.value);
+			let v: any = currentValue.value;
+			if (!Array.isArray(props.modelValue)) {
+				v = props.max > 1 ? v.join(props.separator) : v[0];
+				// 输入如果是字符串的话，那么输出应该保持一致为字符串
+				if (typeof props.modelValue === 'string' && props.numerable) {
+					v = `${v}`;
+				}
+
+				if (typeof v === 'undefined') {
+					v = props.nullValue;
+				}
+			}
+
+			emit('update:modelValue', v, currentLabel.value);
+			emit('change', v, currentLabel.value);
 
 			// form表单
 			formItem?.change?.(currentValue.value);
@@ -95,7 +107,7 @@ export const Select = defineComponent({
 
 		const add = (v) => {
 			if (!multiple.value) {
-				currentValue.value = v;
+				currentValue.value = [v];
 				isActive.value = false;
 			} else {
 				currentValue.value.push(v);
@@ -122,7 +134,7 @@ export const Select = defineComponent({
 
 			emit('clear');
 
-			currentValue.value = multiple.value ? [] : '';
+			currentValue.value = [];
 			isActive.value = false;
 
 			sync();
@@ -142,17 +154,19 @@ export const Select = defineComponent({
 		watch(
 			() => props.modelValue,
 			(v) => {
-				if (isEqualWith(v, currentValue.value)) {
-					return;
+				if (isEqualWith(v, currentValue.value)) return;
+
+				if (typeof v === 'string') {
+					v = v.split(props.separator).filter(i => !!i);
+					props.numerable && (v = v.map(i => +i));
 				}
 
-				if (multiple.value && !(v instanceof Array)) {
-					if (v) {
-						throw new VcError('select', `多选时初始值应该为数组，当前值是${v}`);
-					} else {
-						v = [];
-					}
-				}
+				v = Array.isArray(v)
+					? v
+					: typeof v !== 'undefined' && v !== null
+						? [v]
+						: []
+				;
 
 				currentValue.value = v;
 			},
@@ -165,7 +179,8 @@ export const Select = defineComponent({
 			remove,
 			close,
 			searchRegex,
-			multiple
+			multiple,
+			current: currentValue
 		});
 		return () => {
 			return (
@@ -198,7 +213,7 @@ export const Select = defineComponent({
 								<Input
 									id={props.id}
 									disabled={props.disabled}
-									modelValue={currentLabel.value || props.extra}
+									modelValue={currentLabel.value[0] || props.extra}
 									allow-dispatch={false}
 									class="vc-select__input"
 									// @ts-ignore

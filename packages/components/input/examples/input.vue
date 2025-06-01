@@ -1,5 +1,6 @@
 <template>
 	<h1>{{ current }}</h1>
+	<h1>typeof: {{ current.map(i => typeof i) }}</h1>
 	<Input
 		v-model="current[0]"
 		:disabled="disabled"

@@ -44,7 +44,22 @@ export const useInputNumber = () => {
 			: currentValue.value;
 	});
 
-	const sync = (value: string, e: any) => {
+	const transformValue = (v: string | number) => {
+		if (typeof props.output === 'function') {
+			return props.output(v);
+		}
+
+		// 默认行为
+		if (props.output === 'number') {
+			return isNaN(+v) || v === '' ? (props.nullValue) : +v;
+		}
+
+		if (props.output === 'string') {
+			return isNaN(+v) || v === '' ? '' : `${v}`;
+		}
+	};
+
+	const sync = (value: string | number, e: any) => {
 		if (value === currentValue.value) return;
 
 		// 非受控组件时
@@ -108,7 +123,7 @@ export const useInputNumber = () => {
 			? String(props.min)
 			: $value;
 
-		return props.output($value);
+		return transformValue($value);
 	};
 
 	const handleEnter = async (e: KeyboardEvent) => {
@@ -169,7 +184,7 @@ export const useInputNumber = () => {
 		}
 
 		typingValue.value = value;
-		sync(props.output(value), e);
+		sync(transformValue(value), e);
 	};
 
 	const handleBlur = async (e: FocusEvent, _targetValue: string, focusValue: any) => {
@@ -220,12 +235,11 @@ export const useInputNumber = () => {
 			return;
 		}
 
-		const value: number = +currentValue.value + (props.step as number) * base;
-		const value$ = props.output(compareWithBoundary(isNaN(value) ? '' : value, 'button'));
+		const value: number = +(currentValue.value || 0) + (props.step as number) * base;
+		const value$ = transformValue(compareWithBoundary(isNaN(value) ? '' : value, 'button'));
 
 		const before = instance.attrs.onBefore as any;
 		const state = (await before?.(value$) !== false);
-
 		state && sync(value$, {});
 		afterDebounce(e, value);
 	};

@@ -13,19 +13,18 @@
 ```vue
 <template>
 	<div class="v-select-basic">
-		<Select v-model="city" style="width: 200px;" size="small">
-			<Option
-				v-for="(item, index) in cityList"
-				:value="item.label"
-				:key="index"
-			>{{ item.label }}</Option>
-		</Select>
+		<Select
+			v-model="city"
+			:data="cityList"
+			style="width: 200px;"
+			size="small"
+		/>
 		<span>{{ city }}</span>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Select, Option } from '@deot/vc';
+import { Select } from '@deot/vc';
 
 const city = ref('New York');
 const cityList = ref([
@@ -62,31 +61,28 @@ const cityList = ref([
 <template>
 	<div class="v-select-basic">
 		<div>全部禁用</div>
-		<Select v-model="model1" disabled clearable style="width: 200px;">
-			<Option
-				v-for="(item, index) in options"
-				:value="item.label"
-				:key="index"
-				:disabled="index == 1"
-			>{{ item.label }}</Option>
-		</Select>
+		<Select
+			v-model="model1"
+			:data="options"
+			style="width: 200px;"
+			disabled
+			clearable
+		/>
 		<br/>
 		<br/>
 		<div>选项禁用</div>
-		<Select v-model="model2" clearable style="width: 200px;">
-			<Option
-				v-for="(item, index) in options"
-				:value="item.label"
-				:key="index"
-				:disabled="index == 1"
-			>{{ item.label }}</Option>
-		</Select>
+		<Select
+			v-model="model2"
+			:data="options.map((i, index) => ({ ...i, disabled: index === 1 }))"
+			style="width: 200px;"
+			clearable
+		/>
 		<span>{{ model2 }}</span>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Select, Option } from '@deot/vc';
+import { Select } from '@deot/vc';
 
 const model1 = ref('');
 const model2 = ref('黄金糕');
@@ -124,20 +120,18 @@ const options = ref([
 <template>
 	<div class="v-select-basic">
 		<div>{{ model1 }}</div>
-		<Select v-model="model1" :max="2" clearable style="width: 200px;">
-			<Option
-				v-for="(item, index) in cityList"
-				:value="item.label"
-				:key="index"
-			>
-				{{ item.label }}
-			</Option>
-		</Select>
+		<Select
+			v-model="model1"
+			:data="cityList"
+			:max="2"
+			clearable
+			style="width: 200px;"
+		/>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Select, Option } from '@deot/vc';
+import { Select } from '@deot/vc';
 
 const model1 = ref([]);
 const cityList = ref([
@@ -171,26 +165,24 @@ const cityList = ref([
 :::
 
 ### 分组
-使用`OptionGroup`可将选项进行分组。
+使用`children`可将选项进行分组。
 
 :::RUNTIME
 ```vue
 <template>
 	<div class="v-select-group">
-		<Select v-model="value1" style="width: 200px" arrow>
-			<OptionGroup label="Hot Cities">
-				<Option v-for="item in cityList1" :value="item.label" :key="item.value">{{ item.label }}</Option>
-			</OptionGroup>
-			<OptionGroup label="Other Cities">
-				<Option v-for="item in cityList2" :value="item.label" :key="item.value">{{ item.label }}</Option>
-			</OptionGroup>
-		</Select>
+		<Select
+			v-model="value1"
+			:data="[{ value: 'Hot Cities', children: cityList1 }, { value: 'Other Citie', children: cityList2 }]"
+			style="width: 200px"
+			arrow
+		/>
 		<span>{{ value1 }}</span>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Select, Option, OptionGroup } from '@deot/vc';
+import { Select } from '@deot/vc';
 
 const value1 = ref('');
 const cityList1 = ref([
@@ -232,15 +224,19 @@ const cityList2 = ref([
 ```vue
 <template>
 	<div class="v-select-group">
-		<Select v-model="value1" style="width: 200px" searchable searchPlaceholder="请输入搜索内容">
-			<Option v-for="item in options" :key="item.value" :value="item.label"> {{ item.label }}</Option>
-		</Select>
+		<Select
+			v-model="value1"
+			:data="options"
+			style="width: 200px"
+			searchable
+			searchPlaceholder="请输入搜索内容"
+		/>
 		<span>{{ value1 }}</span>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Select, Option } from '@deot/vc';
+import { Select } from '@deot/vc';
 
 const value1 = ref([]);
 const options = ref([
@@ -276,6 +272,7 @@ const options = ref([
 | 属性                | 说明                                                                         | 类型                        | 可选值                                                                                                                                       | 默认值           |
 | ----------------- | -------------------------------------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | modelValue        | 指定选中项目的 value 值，可以使用 v-model 双向绑定数据。单选时只接受 string 或 number，多选时只接受 array    | `string`、`number`、`array` | -                                                                                                                                         | -             |
+| data              | 数据源                                                                        | `array`                   | -                                                                                                                                         | `[]`          |
 | max               | 是否支持多选，输入可支持多选的最大数量                                                        | `number`                  | -                                                                                                                                         | 1             |
 | disabled          | 是否禁用，设置在Select上全部禁选，在Option上单个禁选                                           | `boolean`                 | -                                                                                                                                         | `false`       |
 | clearable         | 是否可以清空选项                                                                   | `boolean`                 | -                                                                                                                                         | `false`       |
@@ -288,7 +285,7 @@ const options = ref([
 | placement         | 弹窗的展开方向                                                                    | `string`                  | `bottom`、`bottom-left`、`bottom-right`、`top`、 `top-left`、`top-right`、`right`、`right-top`、 `right-bottom` 、`left`、 `left-top` `left-bottom` | `bottom-left` |
 | portal            | 是否将弹层放置于 body 内，在 Tabs、带有 fixed 的 Table 列内使用时，建议添加此属性，它将不受父级样式影响，从而达到更好的效果 | `boolean`                 | -                                                                                                                                         | `true`        |
 | element-id        | 给表单元素设置 `id`，详见 Form 用法。                                                   | `string`                  | -                                                                                                                                         | -             |
-| portalClass   | 外层类名                                                                       | `object`、`string`、`array` | -                                                                                                                                         | -             |
+| portalClass       | 外层类名                                                                       | `object`、`string`、`array` | -                                                                                                                                         | -             |
 | disabled          | 是否禁用                                                                       | `boolean`                 | -                                                                                                                                         | `false`       |
 | trigger           | 触发的行为                                                                      | `string`                  | `hover`、`click`、`focus`                                                                                                                   | `click`       |
 | tag               | 外层标签                                                                       | `string`                  | -                                                                                                                                         | `div`         |
@@ -296,17 +293,20 @@ const options = ref([
 | arrow             | 弹层有无箭头                                                                     | `boolean`                 | -                                                                                                                                         | `false`       |
 | autoWidth         | 弹层宽度自适应                                                                    | `boolean`                 | -                                                                                                                                         | `true`        |
 | extra             | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |
+| separator         | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |
+| numerable         | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |
+| nullValue         | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |
 
 
-### Option props
+### data props
 
 | 属性         | 说明                                                                                                                              | 类型                | 可选值 | 默认值     |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------- | --- | ------- |
 | value      | 选项值，默认根据此属性值进行筛选，必填                                                                                                             | `string` `number` | -   | -       |
 | label      | 选项显示的内容，默认会读取 slot，无 slot 时，优先读取该 label 值，无 label 时，读取 value。当选中时，选择器会显示 label 为已选文案。大部分情况不需要配置此项，直接写入 slot 即可，在自定义选项时，该属性非常有用。 | `string`          | -   | -       |
 | disabled   | 是否禁用当前项                                                                                                                         | `boolean`         | -   | `false` |
+| children   | 分组数据                                                                                                                            | `array`           | -   | `[]`    |
 | filterable | 是否需要被过滤                                                                                                                         | `boolean`         | -   | `true`  |
-
 
 ### Select events
 
@@ -325,10 +325,3 @@ const options = ref([
 | ------ | ----- | ----------------------------------------- |
 | add    | 添加单选项 | `value`：添加的选项的value值；`label`：添加的选项的label值 |
 | remove | 删除单选项 | `value`：删除的选项的value值                      |
-
-
-### Option Group props
-
-| 属性    | 说明    | 类型       | 可选值 | 默认值 |
-| ----- | ----- | -------- | --- | --- |
-| label | 分组的组名 | `string` | -   | -   |
