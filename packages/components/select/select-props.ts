@@ -11,6 +11,7 @@ const inputKeys = [
 ] as const;
 
 const popoverKeys = [
+	'portal',
 	'portalClass'
 ] as const;
 
@@ -18,7 +19,8 @@ export const props = {
 	...(pick(popoverProps, popoverKeys) as Pick<typeof popoverProps, typeof popoverKeys[number]>),
 	...(pick(inputProps, inputKeys) as Pick<typeof inputProps, typeof inputKeys[number]>),
 	data: {
-		type: Array
+		type: Array,
+		default: () => ([])
 	},
 	searchPlaceholder: {
 		type: String,

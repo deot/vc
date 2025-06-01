@@ -1,5 +1,5 @@
 import { provide, inject, getCurrentInstance, ref, watch, computed } from 'vue';
-import { isEqualWith } from 'lodash';
+import { isEqualWith } from 'lodash-es';
 
 export const useRadioGroup = () => {
 	const { props, emit } = getCurrentInstance()!;

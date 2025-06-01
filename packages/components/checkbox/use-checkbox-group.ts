@@ -1,5 +1,5 @@
 import { provide, inject, getCurrentInstance, ref, watch } from 'vue';
-import { isEqualWith } from 'lodash';
+import { isEqualWith } from 'lodash-es';
 
 export const useCheckboxGroup = () => {
 	const { props, emit } = getCurrentInstance()!;

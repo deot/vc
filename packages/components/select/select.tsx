@@ -81,7 +81,7 @@ export const Select = defineComponent({
 		 * 默认防抖
 		 */
 		const _loadData = debounce(function () {
-			const remote = props.loadData(searchValue.value, instance);
+			const remote = props.loadData?.(searchValue.value, instance);
 
 			if (remote && remote.then) {
 				isLoading.value = true;
@@ -136,7 +136,7 @@ export const Select = defineComponent({
 			searchValue.value = v;
 
 			searchRegex.value = new RegExp(escapeString(v.trim()), 'i');
-			props.loadData && _loadData(v);
+			props.loadData && _loadData();
 		};
 
 		watch(
@@ -259,7 +259,7 @@ export const Select = defineComponent({
 										)
 									}
 									{
-										props.isLoading && (
+										isLoading.value && (
 											<div class="vc-select__loading">
 												<Spin size={16} />
 											</div>
