@@ -130,7 +130,7 @@ export const Upload = defineComponent({
 				emitError(originalResponse, internalMessage);
 				done(vFile);
 				// taskManager
-				taskManager?.setValue(vFile.source, 'error', internalMessage);
+				taskManager?.setValue(vFile.target, 'error', internalMessage);
 			};
 
 			const onSuccess = async (originalResponse: any) => {
@@ -144,7 +144,7 @@ export const Upload = defineComponent({
 					emit('file-success', response, vFile, { ...cycle, }, $mode);
 					done(vFile);
 					// taskManager
-					taskManager?.setValue(vFile.source, 'success');
+					taskManager?.setValue(vFile.target, 'success');
 				} catch (e) {
 					onError(e, '上传远程失败，请重试');
 				}
@@ -155,10 +155,10 @@ export const Upload = defineComponent({
 				headers: props.headers,
 				body: {
 					...props.body,
-					[props.name || VcInstance.options.Upload?.name || 'file']: vFile.source
+					[props.name || VcInstance.options.Upload?.name || 'file']: vFile.target
 				},
 				timeout: null,
-				file: vFile.source
+				file: vFile.target
 			};
 			try {
 				if (size && vFile.size > size * 1024 * 1024) {
@@ -189,13 +189,13 @@ export const Upload = defineComponent({
 				xhr.onerror = (e: any) => onError(e, `调用异常`); // CORS等
 
 				xhr.upload.onprogress = (e: ProgressEvent) => {
-					const percent = (e.loaded / e.total) * 100;
+					const progress = e.loaded / e.total;
 					const result = {
-						percent,
-						safePercent: percent.toFixed(2),
-						source: e,
+						progress,
+						percent: +((progress * 100).toFixed(2)),
+						target: e
 					};
-					taskManager?.setValue(vFile.source, 'percent', result);
+					taskManager?.setValue(vFile.target, 'progress', result);
 					emit('file-progress', result, vFile, $mode);
 				};
 
@@ -228,7 +228,7 @@ export const Upload = defineComponent({
 				post(vFile$);
 			} catch (e: any) {
 				cycle.error++;
-				taskManager?.setValue(vFile.source, 'error', e?.message || '上传失败');
+				taskManager?.setValue(vFile.target, 'error', e?.message || '上传失败');
 				done(vFile);
 			}
 		};
@@ -256,16 +256,14 @@ export const Upload = defineComponent({
 			emit('begin', postFiles);
 
 			cycle.queues = postFiles.map((file, index) => {
-				const vFile = {
+				const vFile: UploadFile = {
 					uploadId: getUid(),
 					current: index + 1,
 					total: length,
 					percent: 0,
-					// File
-					key: 'file', // 表单提交的key
 					size: file.size,
 					name: file.name,
-					source: file
+					target: file
 				};
 				return () => {
 					upload(vFile, postFiles);

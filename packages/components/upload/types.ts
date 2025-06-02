@@ -4,8 +4,7 @@ export interface UploadFile {
 	total: number;
 	percent: number;
 	// File
-	key: string;
 	size: number;
 	name: string;
-	source: File;
+	target: File;
 };
