@@ -132,9 +132,11 @@ const handleFileError = (res, file) => {
 			<div
 				v-for="(item, index) in list"
 				:key="index"
-				:style="{ backgroundImage: `url(${item})` }"
-				class="_image"
-			/>
+				:style="{ backgroundImage: `url(${item.base64})` }"
+				class="image"
+			>
+				{{ item.title }}
+			</div>
 		</div>
 	</div>
 </template>
@@ -142,107 +144,95 @@ const handleFileError = (res, file) => {
 <script setup>
 import { ref } from 'vue';
 import { Upload, Message, Button, VcInstance } from '@deot/vc';
-// 只需要注册一次(项目中已注册无视)
-VcInstance.hasInit = false;
-VcInstance.init({
+
+VcInstance.configure({
 	Upload: {
-		url: 'https://api.github.com/users/deot',
-		onPostBefore: ({ options }) => {
-			return new Promise((resolve, reject) => {
-				if (Math.random(0, 10) > 10) {
-					throw new Error('上传失败');
+		onRequest: (options) => {
+			return new Promise((resolve) => {
+				if (random(0, 10) > 9) {
+					throw new Error('存在异常');
 				}
 				resolve({
 					...options,
-					param: {
-						...options.param,
-						timestamp: new Date()
+					url: 'https://httpbin.org/post',
+					body: {
+						timestamp: new Date().getTime(),
+						...options.body
 					},
-					type: 'GET',
-					credentials: 'omit', //  cors下关闭
-					headers: {
-
-					}
+					headers: {}
 				});
 			});
 		},
-		onPostAfter: ({ response, options }) => {
-			const { file } = options.param;
-			return new Promise((resolve) => {
+		onResponse: (response, options) => {
+			const file = options.file;
+			return new Promise((resolve, reject) => {
+				try {
+					response = JSON.parse(response);
+				} catch (e) {
+					reject(e);
+				};
 				// 模拟强制返回
 				resolve({
-					status: 1,
-					data: {
-						url: 'https://avatars2.githubusercontent.com/u/34465004?v=4',
-						type: `.${file.name.split('.').pop()}`,
-						uid: file.uid,
-						title: file.name,
-						size: file.size
-					},
-					...response
+					base64: response.files.file,
+					type: `.${file.name.split('.').pop()}`,
+					title: file.name,
+					size: file.size
 				});
 			});
 		}
 	}
 });
-
 const list = ref([]);
 const handleError = (error) => {
 	console.error(error.message);
 };
-/**
- * 总线
- * @param files ~
- */
+
 const handleBegin = (files) => {
-	console.log(`上传中`);
 	console.log(files);
 	Message.loading({
 		content: `上传中`
 	});
 };
-const handleComplete = (info = {}) => {
-	console.log(`Error: ${info.error}, Success: ${info.success}, 总数：${info.total}`);
-	console.log(info.imgs);
+
+const handleComplete = (cycle = {}) => {
+	console.log(`Error: ${cycle.error}, Success: ${cycle.success}, 总数：${cycle.total}`);
+	console.log(cycle.responses);
 	Message.destroy();
 };
-/**
- * 单个文件
- * @param file ~
- * @param fileList ~
- * @returns ~
- */
-const handleFileBefore = (file, fileList) => {
+
+const handleFileBefore = (vFile) => {
 	console.log(`上传之前`);
-	console.log(file, fileList);
-	return new Promise((resolve, reject) => {
-		resolve(file);
+	return new Promise((resolve) => {
+		resolve(vFile);
 	});
 };
-const handleFileStart = (file) => {
+
+const handleFileStart = () => {
 	console.log(`开始上传`);
-	console.log(file);
 };
-const handleFileSuccess = (res, file) => {
-	console.log(`上传成功`);
-	console.log(res, file);
+
+const handleFileSuccess = (response, vFile) => {
+	console.log(`Success：${vFile.current}, 总数：${vFile.total}`);
+	console.log(response);
 	Message.destroy();
 	Message.success({
 		content: `上传成功`
 	});
 
-	this.list.push(res.data.url);
+	list.value.push(response);
 };
-const handleFileProgress = (e, file) => {
-	console.log(`file-progress`);
-	console.log(e, file);
+
+const handleFileProgress = (e, vFile) => {
+	console.log(`Progress: 当前：${vFile.current}, 总数：${vFile.total}`);
+	console.log(e);
 };
-const handleFileError = (res, file) => {
-	console.log(`Error: 当前：${file.current}, 总数：${file.total}`);
-	console.log(res, file);
+
+const handleFileError = (e, vFile) => {
+	console.log(`Error: 当前：${vFile.current}, 总数：${vFile.total}`);
+	console.log(e);
 	Message.destroy();
 	Message.error({
-		content: res.message || 'test'
+		content: e.message || 'test'
 	});
 };
 </script>
@@ -255,6 +245,10 @@ const handleFileError = (res, file) => {
 		border-radius: 3px;
 		margin-right: 12px;
 		border: 1px solid #f2f2f2;
+		color: red;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 }
 </style>
@@ -283,44 +277,39 @@ const handleFileError = (res, file) => {
 
 <script setup>
 import { Upload, Message, Button, VcInstance } from '@deot/vc';
-// 只需要注册一次(项目中已注册无视)
-VcInstance.hasInit = false;
-VcInstance.init({
+
+VcInstance.configure({
 	Upload: {
-		url: 'https://api.github.com/users/deot',
-		onPostBefore: ({ options }) => {
-			return new Promise((resolve, reject) => {
-				if (Math.random(0, 10) > 10) {
-					throw new Error('上传失败');
+		onRequest: (options) => {
+			return new Promise((resolve) => {
+				if (random(0, 10) > 9) {
+					throw new Error('存在异常');
 				}
 				resolve({
 					...options,
-					param: {
-						...options.param,
-						timestamp: new Date()
+					url: 'https://httpbin.org/post',
+					body: {
+						timestamp: new Date().getTime(),
+						...options.body
 					},
-					type: 'GET',
-					credentials: 'omit', //  cors下关闭
-					headers: {
-
-					}
+					headers: {}
 				});
 			});
 		},
-		onPostAfter: ({ response, options }) => {
-			const { file } = options.param;
-			return new Promise((resolve) => {
+		onResponse: (response, options) => {
+			const file = options.file;
+			return new Promise((resolve, reject) => {
+				try {
+					response = JSON.parse(response);
+				} catch (e) {
+					reject(e);
+				};
 				// 模拟强制返回
 				resolve({
-					status: 1,
-					data: {
-						url: 'https://avatars2.githubusercontent.com/u/34465004?v=4',
-						type: `.${file.name.split('.').pop()}`,
-						uid: file.uid,
-						title: file.name,
-						size: file.size
-					},
-					...response
+					base64: response.files.file,
+					type: `.${file.name.split('.').pop()}`,
+					title: file.name,
+					size: file.size
 				});
 			});
 		}
@@ -329,8 +318,8 @@ VcInstance.init({
 
 const fileName = ref('');
 const file = ref(null);
-const handleFileBefore = (file) => {
-	file.value = file;
+const handleFileBefore = (vFile) => {
+	file.value = vFile.source;
 	return false;
 };
 </script>
@@ -341,23 +330,23 @@ const handleFileBefore = (file) => {
 
 ### 属性
 
-| 属性        | 说明                                     | 类型                           | 可选值 | 默认值      |
-| --------- | -------------------------------------- | ---------------------------- | --- | -------- |
-| tag       | 外层标签                                   | `string`、`object`、`Function` | -   | `span`   |
-| max       | 一次性最多选择的文件数量                           | `Number`                     | -   | 1        |
-| disabled  | 禁用                                     | `Boolean`                    | -   | `false`  |
-| accept    | 文件格式                                   | `string`                     | -   | -        |
-| mode      | 文件归类（images / file）,提前定位文件类型（内置图片压缩）   | `string`                     | -   | `images` |
-| request   | 请求函数                                   | `() => Promise`              | -   | -        |
-| url       | request:url -> 默认通过`VcInstance.init`注册 | `string`                     | -   | -        |
-| async     | 是否使用异步                                 | `Boolean`                    | -   | `true`   |
-| name      | 上传给后端获取的key                            | `string`                     | -   | -        |
-| size      | 限制上传文件大小, 默认不限制（单位：mb）                 | `Number`                     | -   | 0        |
-| extra     | request需要传递的参数                         | `object`                     | -   | {}       |
-| headers   | request: headers                       | `object`                     | -   | {}       |
-| show-tips | 展示显示进度弹窗                               | `Boolean`                    | -   | `false`  |
-| directory | 是否选取文件夹                                | `Boolean`                    | -   | `false`  |
-| parallel  | 是否并发执行                                 | `Boolean`                    | -   | `true`   |
+| 属性                | 说明                                     | 类型                           | 可选值 | 默认值      |
+| ----------------- | -------------------------------------- | ---------------------------- | --- | -------- |
+| tag               | 外层标签                                   | `string`、`object`、`Function` | -   | `span`   |
+| max               | 一次性最多选择的文件数量                           | `Number`                     | -   | 1        |
+| disabled          | 禁用                                     | `Boolean`                    | -   | `false`  |
+| accept            | 文件格式                                   | `string`                     | -   | -        |
+| mode              | 文件归类（images / file）,提前定位文件类型（内置图片压缩）   | `string`                     | -   | `images` |
+| request           | 请求函数                                   | `() => Promise`              | -   | -        |
+| url               | request:url -> 默认通过`VcInstance.init`注册 | `string`                     | -   | -        |
+| async             | 是否使用异步                                 | `Boolean`                    | -   | `true`   |
+| name              | 上传给后端获取的key                            | `string`                     | -   | -        |
+| size              | 限制上传文件大小, 默认不限制（单位：mb）                 | `Number`                     | -   | 0        |
+| extra             | request需要传递的参数                         | `object`                     | -   | {}       |
+| headers           | request: headers                       | `object`                     | -   | {}       |
+| show-task-manager | 展示显示进度弹窗                               | `Boolean`                    | -   | `false`  |
+| directory         | 是否选取文件夹                                | `Boolean`                    | -   | `false`  |
+| parallel          | 是否并发执行                                 | `Boolean`                    | -   | `true`   |
 
 
 ### 事件

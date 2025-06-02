@@ -1,4 +1,4 @@
-import { Upload } from './upload.tsx';
+import { Upload } from './upload';
 import './style.scss';
 
 export {
