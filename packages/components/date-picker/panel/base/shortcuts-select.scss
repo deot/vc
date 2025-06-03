@@ -1,0 +1,26 @@
+@use '../../../style/helper' as *;
+
+$block: vc-date-shortcuts;
+
+@include block($block) {
+	height: 100%;
+	background: #f8f8f8;
+	border-right: 1px solid #e8eaec;
+	box-sizing: border-box;
+
+	@include element(ul) {
+		padding: 0;
+		margin: 0;
+		list-style: none;
+
+		@include element(li) {
+			padding: 6px 16px;
+			cursor: pointer;
+			transition: .2s;
+
+			&:hover {
+				background: #e4e7e9;
+			}
+		}
+	}
+}

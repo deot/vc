@@ -1,6 +1,2 @@
-@use '../style/helper' as *;
-
-$component-name: vc-date-picker;
-
-@include block($component-name) {
-}
+@use "./panel/style";
+@use "./picker/picker";

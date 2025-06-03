@@ -1,0 +1,65 @@
+@use '../../style/helper' as *;
+
+$block: vc-daterange-panel;
+
+@include block($block) {
+	display: flex;
+
+	@include element(body) {
+		@include when(with-seconds) {
+			.vc-time-select__list {
+				width: 72px;
+
+				ul li {
+					padding: 0 0 0 28px;
+				}
+			}
+		}
+	}
+
+	@include element(content) {
+		// position: relative;
+		.vc-time-select {
+			position: relative;
+
+			&::after {
+				position: absolute;
+				top: 0;
+				right: -2px;
+				bottom: 0;
+				z-index: 1;
+				display: block;
+				width: 2px;
+				background: #e8eaec;
+				content: "";
+			}
+		}
+
+		@include when(left) {
+			.vc-time-select::after {
+				right: -2px;
+				left: auto;
+			}
+		}
+
+		@include when(right) {
+			.vc-time-select::after {
+				right: auto;
+				left: -2px;
+			}
+		}
+	}
+
+	@include element(table) {
+		display: flex;
+	}
+
+	.vc-time-select__list {
+		width: 108px;
+		max-height: 224px;
+
+		ul li {
+			padding: 0 0 0 46px;
+		}
+	}
+}

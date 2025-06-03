@@ -1,0 +1,42 @@
+@use '../../style/helper' as *;
+
+$block: vc-timerange-panel;
+
+@include block($block) {
+	@include element(wrapper) {
+		display: flex; 
+	}
+
+	@include element(content) {
+		// position: relative;
+		.vc-time-select {
+			position: relative;
+
+			&::after {
+				position: absolute;
+				top: 0;
+				right: -2px;
+				bottom: 0;
+				z-index: 1;
+				display: block;
+				width: 2px;
+				background: #e8eaec;
+				content: "";
+			}
+		}
+
+		@include when(left) {
+			.vc-time-select::after {
+				right: -2px;
+				left: auto;
+			}
+		}
+
+		@include when(right) {
+			.vc-time-select::after {
+				right: auto;
+				left: -2px;
+			}
+		}
+	}
+}

@@ -1,0 +1,6 @@
+@use '../../style/helper' as *;
+
+$block: vc-time-panel;
+
+@include block($block) {
+}

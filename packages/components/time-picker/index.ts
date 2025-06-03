@@ -1,5 +1,5 @@
-import { TimePicker } from './time-picker.tsx';
-import './style.scss';
+import { TimePicker } from '../date-picker/picker/time-picker';
+import '../date-picker/style.scss';
 
 export {
 	TimePicker

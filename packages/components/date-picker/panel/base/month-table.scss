@@ -1,0 +1,77 @@
+@use '../../../style/helper' as *;
+
+$block: vc-month-table;
+
+@include block($block) {
+	overflow: auto;
+
+	@include element(wrapper) {
+		margin: 10px;
+		white-space: normal;
+	}
+
+	@include element(cell) {
+		div {
+			position: relative;
+			width: 40px;
+			height: 28px;
+			margin: 8px 9px;
+			line-height: 28px;
+			cursor: pointer;
+			border-radius: 3px;
+
+			span {
+				display: inline-block;
+				width: 40px;
+				height: 28px;
+				margin: 0;
+				line-height: 28px;
+				text-align: center;
+				border-radius: 3px;
+				transition: background .2s ease-in-out;
+			}
+
+			&:hover {
+				background: #e1f0fe;
+			}
+		}
+
+		@include when(selected) {
+			div {
+				color: #fff;
+				background: #2d8cf0;
+			}
+		}
+
+		@include when(range) {
+			div {
+				&::before {
+					position: absolute;
+					inset: 0 -9px;
+					display: block;
+					background: #e1f0fe;
+					border: 0;
+					border-radius: 0;
+					content: "";
+				}
+
+				span {
+					position: relative;
+					z-index: 1;
+				}
+			}
+		}
+
+		@include when(disabled) {
+			div {
+				color: #c5c8ce;
+				cursor: not-allowed;
+				background: #f7f7f7;
+
+				&:hover {
+					background: #f7f7f7;
+				}
+			}
+		}
+	}
+}

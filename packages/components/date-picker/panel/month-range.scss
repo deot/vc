@@ -1,0 +1,17 @@
+@use '../../style/helper' as *;
+
+$block: vc-monthrange-panel;
+
+@include block($block) {
+	display: flex;
+
+	@include element(body) {
+	}
+
+	@include element(content) {
+	}
+
+	@include element(table) {
+		display: flex;
+	}
+}

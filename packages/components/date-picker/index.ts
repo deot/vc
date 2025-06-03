@@ -1,4 +1,4 @@
-import { DatePicker } from './date-picker.tsx';
+import { DatePicker } from './picker/date-picker';
 import './style.scss';
 
 export {

@@ -1,0 +1,14 @@
+@use '../../../style/helper' as *;
+
+$block: vc-date-confirm;
+
+@include block($block) {
+	padding: 8px;
+	clear: both;
+	text-align: right;
+	border-top: 1px solid #e8eaec;
+
+	@include element(time) {
+		float: left;
+	}
+}

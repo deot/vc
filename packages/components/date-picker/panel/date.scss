@@ -1,0 +1,28 @@
+@use '../../style/helper' as *;
+
+$block: vc-date-panel;
+
+@include block($block) {
+	display: flex;
+
+	@include element(body) {
+		@include when(with-seconds) {
+			.vc-time-select__list {
+				width: 72px;
+
+				ul li {
+					padding: 0 0 0 28px;
+				}
+			}
+		}
+	}
+
+	.vc-time-select__list {
+		width: 108px;
+		max-height: 224px;
+
+		ul li {
+			padding: 0 0 0 46px;
+		}
+	}
+}
