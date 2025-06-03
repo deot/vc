@@ -156,7 +156,7 @@ const RANGE_PARSER = (text: string | any[], format: string, RANGE_SEPARATOR: str
 
 export const TYPE_VALUE_RESOLVER_MAP = {
 	default: {
-		formatter(value: any) {
+		formatter(value: Date) {
 			if (!value) return '';
 			return '' + value;
 		},
@@ -175,7 +175,7 @@ export const TYPE_VALUE_RESOLVER_MAP = {
 	},
 	daterange: {
 		formatterText: RANGE_FORMATTER,
-		formatter: (value: any, format: string, RANGE_SEPARATOR: string) => {
+		formatter: (value: Date[], format: string, RANGE_SEPARATOR: string) => {
 			const rangeDate = RANGE_FORMATTER(value, format, RANGE_SEPARATOR);
 			return rangeDate ? rangeDate.split(RANGE_SEPARATOR) : [];
 		},
@@ -183,7 +183,7 @@ export const TYPE_VALUE_RESOLVER_MAP = {
 	},
 	datetimerange: {
 		formatterText: RANGE_FORMATTER,
-		formatter: (value: any, format: string, RANGE_SEPARATOR: string) => {
+		formatter: (value: Date[], format: string, RANGE_SEPARATOR: string) => {
 			const rangeDate = RANGE_FORMATTER(value, format, RANGE_SEPARATOR);
 			return rangeDate ? rangeDate.split(RANGE_SEPARATOR) : [];
 		},
@@ -191,7 +191,7 @@ export const TYPE_VALUE_RESOLVER_MAP = {
 	},
 	timerange: {
 		formatterText: RANGE_FORMATTER,
-		formatter: (value: any, format: string, RANGE_SEPARATOR: string) => {
+		formatter: (value: Date[], format: string, RANGE_SEPARATOR: string) => {
 			const rangeDate = RANGE_FORMATTER(value, format, RANGE_SEPARATOR);
 			return rangeDate ? rangeDate.split(RANGE_SEPARATOR) : [];
 		},
@@ -209,7 +209,7 @@ export const TYPE_VALUE_RESOLVER_MAP = {
 	},
 	monthrange: {
 		formatterText: RANGE_FORMATTER,
-		formatter: (value: any, format: string, RANGE_SEPARATOR: string) => {
+		formatter: (value: Date[], format: string, RANGE_SEPARATOR: string) => {
 			const rangeDate = RANGE_FORMATTER(value, format, RANGE_SEPARATOR);
 			return rangeDate ? rangeDate.split(RANGE_SEPARATOR) : [];
 		},
@@ -222,7 +222,7 @@ export const TYPE_VALUE_RESOLVER_MAP = {
 		}
 	},
 	quarter: {
-		formatterText: (value: any[]) => {
+		formatterText: (value: Date[]) => {
 			const [startDate, endDate] = value;
 			if (startDate && endDate) {
 				const year = startDate.getFullYear();
@@ -248,7 +248,7 @@ export const TYPE_VALUE_RESOLVER_MAP = {
 		}
 	},
 	quarterrange: {
-		formatterText: (value: any, _format: string, RANGE_SEPARATOR: string) => {
+		formatterText: (value: Date[], _format: string, RANGE_SEPARATOR: string) => {
 			const startQuarterMap = {
 				0: '第一季度',
 				3: '第二季度',
@@ -279,10 +279,10 @@ export const TYPE_VALUE_RESOLVER_MAP = {
 		}
 	},
 	multiple: {
-		formatterText: (value: any[], format: string) => {
+		formatterText: (value: Date[], format: string) => {
 			return value.filter(Boolean).map(date => formatDate(date, format)).join(',');
 		},
-		formatter: (value: any[], format: string) => {
+		formatter: (value: Date[], format: string) => {
 			return value.filter(Boolean).map(date => formatDate(date, format));
 		},
 		parser: (value: any[] | string, format: string) => {
@@ -296,7 +296,7 @@ export const TYPE_VALUE_RESOLVER_MAP = {
 		}
 	},
 	number: {
-		formatter(value: any) {
+		formatter(value: Date) {
 			if (!value) return '';
 			return '' + value;
 		},

@@ -1,27 +1,28 @@
 import { getCurrentInstance, ref, watch, computed, inject } from 'vue';
 import { isEqualWith } from 'lodash-es';
 import { useAttrs } from '@deot/vc-hooks';
+import type { Props } from './base-props';
 import { DEFAULT_FORMATS } from '../constants';
 import { TYPE_VALUE_RESOLVER_MAP, isEmpty, value2Array } from '../helper/utils';
 
 export const useBase = () => {
 	const instance = getCurrentInstance()!;
 	const { emit } = instance;
-	const props = instance.props as any;
+	const props = instance.props as Props;
 
 	const isHover = ref(false);
 	const isActive = ref(false);
-	const currentValue = ref<string | string[]>('');
-	const focusedDate = ref(null);
+	const currentValue = ref<Array<string | Date>>([]);
+	const focusedDate = ref<Date>();
 	const formItem = inject<any>('vc-form-item', {});
 	const its = useAttrs({ merge: false });
 	const formatDateText = (value: any) => {
-		const format = DEFAULT_FORMATS[props.type];
+		const format = DEFAULT_FORMATS[props.type!];
 		if (props.multiple) {
 			const formatterText = TYPE_VALUE_RESOLVER_MAP.multiple.formatterText;
 			return formatterText(value, props.format || format);
 		} else {
-			const { formatter, formatterText } = (TYPE_VALUE_RESOLVER_MAP[props.type] || TYPE_VALUE_RESOLVER_MAP.default);
+			const { formatter, formatterText } = (TYPE_VALUE_RESOLVER_MAP[props.type!] || TYPE_VALUE_RESOLVER_MAP.default);
 			const fn = formatterText || formatter;
 			return fn(value, props.format || format, props.separator);
 		}
@@ -40,16 +41,16 @@ export const useBase = () => {
 		return formatDateText(currentValue.value);
 	});
 	const showTime = computed(() => {
-		return ['datetime', 'datetimerange'].includes(props.type);
+		return ['datetime', 'datetimerange'].includes(props.type!);
 	});
 	const isRange = computed(() => {
-		return props.type.includes('range');
+		return props.type!.includes('range');
 	});
 	const isQuarter = computed(() => {
-		return ['quarter'].includes(props.type);
+		return ['quarter'].includes(props.type!);
 	});
 	const isTime = computed(() => {
-		return ['time', 'timerange'].includes(props.type);
+		return ['time', 'timerange'].includes(props.type!);
 	});
 
 	const classes = computed(() => {
@@ -59,51 +60,51 @@ export const useBase = () => {
 		};
 	});
 
-	const formatDate = (value: any) => {
-		const format = DEFAULT_FORMATS[props.type];
+	const formatDate = (value: Date | Date[]) => {
+		const format = DEFAULT_FORMATS[props.type!];
 		if (props.multiple) {
 			const formatter = TYPE_VALUE_RESOLVER_MAP.multiple.formatter;
-			return formatter(value, props.format || format);
+			return formatter(value as Date[], props.format || format);
 		} else {
-			const { formatter } = (TYPE_VALUE_RESOLVER_MAP[props.type] || TYPE_VALUE_RESOLVER_MAP.default);
+			const { formatter } = (TYPE_VALUE_RESOLVER_MAP[props.type!] || TYPE_VALUE_RESOLVER_MAP.default);
 			return formatter(value, props.format || format, props.separator);
 		}
 	};
 
 	const parserDate = (value: any) => {
-		const format = DEFAULT_FORMATS[props.type];
+		const format = DEFAULT_FORMATS[props.type!];
 		if (props.multiple) {
 			const parser = TYPE_VALUE_RESOLVER_MAP.multiple.parser;
 			return parser(value, props.format || format);
 		} else {
-			const { parser } = (TYPE_VALUE_RESOLVER_MAP[props.type] || TYPE_VALUE_RESOLVER_MAP.default);
+			const { parser } = (TYPE_VALUE_RESOLVER_MAP[props.type!] || TYPE_VALUE_RESOLVER_MAP.default);
 			return parser(value, props.format || format, props.separator);
 		}
 	};
 
 	const parseValue = (val: any) => {
 		if (isEmpty(val)) {
-			return isRange.value ? [null, null] : [];
+			return [];
 		}
 		return parserDate(val);
 	};
 
-	const rest = (date: string) => {
-		currentValue.value = date;
+	const reset = (v: string | string[]) => {
+		currentValue.value = value2Array(v);
 	};
 
-	const sync = (eventName: string | string[], value: any) => {
-		const date = isRange.value || isQuarter.value ? value : value[0];
-		const dateString = formatDate(value);
+	const sync = (eventName: string | string[], value: Date[]) => {
+		const formatValue = formatDate(isRange.value || isQuarter.value ? value : value[0]) || props.nullValue;
 
-		emit('input', date);
-		emit('update:modelValue', dateString);
+		emit('update:modelValue', formatValue);
 		eventName = typeof eventName === 'string' ? [eventName] : eventName;
 		eventName.forEach((name) => {
-			emit(name, dateString, rest);
+			emit(name, formatValue, reset);
 		});
 
-		formItem?.change?.(date);
+		formItem?.change?.();
+
+		return formatValue;
 	};
 
 	const executePromise = (promiseFn: any, cb: any, param?: any) => {
@@ -123,7 +124,7 @@ export const useBase = () => {
 		}
 	};
 
-	const handlePick = (value: any, prevDate: any) => {
+	const handlePick = (value: Date[], prevDate: Date) => {
 		// 在panel上点击时，同步focusedDate
 		focusedDate.value = value[0] || prevDate || new Date();
 
@@ -137,22 +138,20 @@ export const useBase = () => {
 
 	const handleClear = () => {
 		const clear = () => {
-			const date = isRange.value ? [] : '';
 			isActive.value = false;
-			currentValue.value = date;
-			sync('change', date);
-			emit('clear', date);
+			currentValue.value = [];
+			emit('clear', sync('change', []));
 		};
 		executePromise(instance.vnode.props?.onBeforeClear, clear);
 	};
 
-	const handleIconClick = (e) => {
+	const handleIconClick = (e: any) => {
 		if (!showClear.value) return;
 		e.stopPropagation();
 		handleClear();
 	};
 
-	const handleOK = (value: any) => {
+	const handleOK = (value: Date[]) => {
 		const ok = () => {
 			isActive.value = false;
 			sync(['change', 'ok'], value);
@@ -161,11 +160,11 @@ export const useBase = () => {
 	};
 
 	const handleClose = () => {
-		const val = parseValue(props.modelValue);
+		const v = parseValue(props.modelValue);
 		// 是否有传value值，如果没传currentValue不回滚
-		const isSetValueProp = instance.props.modelValue;
-		if (!isEqualWith(currentValue.value, val) && isSetValueProp) {
-			currentValue.value = value2Array(val);
+		const isSetValueProp = props.modelValue;
+		if (!isEqualWith(currentValue.value, v) && isSetValueProp) {
+			currentValue.value = value2Array(v);
 		}
 		emit('close');
 	};
@@ -174,7 +173,7 @@ export const useBase = () => {
 		() => props.modelValue,
 		(v) => {
 			v = parseValue(v);
-			focusedDate.value = v[0] || props.startDate || new Date();
+			focusedDate.value = v?.[0] || props.startDate || new Date();
 			currentValue.value = value2Array(v);
 		},
 		{ immediate: true }

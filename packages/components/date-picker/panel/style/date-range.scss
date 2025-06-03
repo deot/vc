@@ -1,10 +1,20 @@
-@use '../../style/helper' as *;
+@use '../../../style/helper' as *;
 
-$block: vc-timerange-panel;
+$block: vc-daterange-panel;
 
 @include block($block) {
-	@include element(wrapper) {
-		display: flex; 
+	display: flex;
+
+	@include element(body) {
+		@include when(with-seconds) {
+			.vc-time-select__list {
+				width: 72px;
+
+				ul li {
+					padding: 0 0 0 28px;
+				}
+			}
+		}
 	}
 
 	@include element(content) {
@@ -37,6 +47,19 @@ $block: vc-timerange-panel;
 				right: auto;
 				left: -2px;
 			}
+		}
+	}
+
+	@include element(table) {
+		display: flex;
+	}
+
+	.vc-time-select__list {
+		width: 108px;
+		max-height: 224px;
+
+		ul li {
+			padding: 0 0 0 46px;
 		}
 	}
 }

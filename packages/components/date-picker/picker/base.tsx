@@ -8,7 +8,7 @@ import { Popover } from '../../popover';
 import { Icon } from '../../icon';
 import { useBase } from './use-base';
 
-const COMPONENT_NAME = 'vc-picker';
+const COMPONENT_NAME = 'vc-date-picker';
 
 export const createPicker = (pickerProps: object, usePicker: Function) => defineComponent({
 	name: COMPONENT_NAME,
@@ -80,7 +80,7 @@ export const createPicker = (pickerProps: object, usePicker: Function) => define
 										disabled={props.disabled}
 										modelValue={visibleValue.value}
 										allowDispatch={false}
-										class="vc-picker__input"
+										class="vc-date-picker__input"
 										// @ts-ignore
 										readonly={true}
 										placeholder={props.placeholder || '请选择'}
@@ -88,7 +88,7 @@ export const createPicker = (pickerProps: object, usePicker: Function) => define
 										{{
 											append: () => {
 												return (
-													<div class={[{ 'is-clear': showClear }, 'vc-picker__append']}>
+													<div class={[{ 'is-clear': showClear }, 'vc-date-picker__append']}>
 														<Icon
 															type={showClear.value ? 'clear' : icon.value}
 															// @ts-ignore

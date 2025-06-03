@@ -1,6 +1,6 @@
-@use '../../../style/helper' as *;
+@use '../../../../style/helper' as *;
 
-$block: vc-month-table;
+$block: vc-quarter-table;
 
 @include block($block) {
 	overflow: auto;
@@ -13,7 +13,7 @@ $block: vc-month-table;
 	@include element(cell) {
 		div {
 			position: relative;
-			width: 40px;
+			width: 60px;
 			height: 28px;
 			margin: 8px 9px;
 			line-height: 28px;
@@ -22,7 +22,7 @@ $block: vc-month-table;
 
 			span {
 				display: inline-block;
-				width: 40px;
+				width: 60px;
 				height: 28px;
 				margin: 0;
 				line-height: 28px;

@@ -260,7 +260,7 @@ const time = ref();
 | time-picker-options     | 可以在 mode 为 `datetime` 和 `datetimerange` 下，配置 `TimePicker` 的属性，比如时间间隔 `:time-picker-options="{steps: [1, 10, 10]}"` | `Object`  | -                                                                                                                                                   | {}           |
 | separator               | 两个日期间的分隔符                                                                                                          | `string`  | -                                                                                                                                                   | `-`          |
 | change-on-select        | 选中即触发`change`时间                                                                                                    | `boolean` | -                                                                                                                                                   |              |
-                                                                                                                              | `false`      |
+| nullValue         | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |                                                                                                                              | `false`      |
 
 ### Options
 

@@ -7,6 +7,7 @@ export const DEFAULT_FORMATS = {
 	datetime: 'YYYY-MM-DD HH:mm:ss',
 	time: 'HH:mm:ss',
 	timerange: 'HH:mm:ss',
+	monthrange: 'YYYY-MM',
 	daterange: 'YYYY-MM-DD',
 	datetimerange: 'YYYY-MM-DD HH:mm:ss'
 };

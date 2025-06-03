@@ -65,6 +65,10 @@ export const props = {
 	changeOnSelect: {
 		type: Boolean,
 		default: false
+	},
+	nullValue: {
+		type: [Number, String, Object],
+		default: ''
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;
