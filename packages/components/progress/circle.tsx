@@ -59,7 +59,7 @@ export const Circle = defineComponent({
 							{
 								slots.default
 									? slots.default()
-									: (<span>{`${props.percent}%`}</span>)
+									: (props.showText && <span>{`${props.percent}%`}</span>)
 							}
 						</div>
 					</div>
