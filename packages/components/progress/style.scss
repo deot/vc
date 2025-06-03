@@ -1,6 +1,111 @@
 @use '../style/helper' as *;
 
-$component-name: vc-progress;
+@include block(vc-progress) {
+	font-size: 12px;
+	color: #515a6e;
+}
 
-@include block($component-name) {
+@include block(vc-progress-line) {
+	@include element(wrapper) {
+		display: inline-block;
+		width: 100%;
+		vertical-align: middle;
+		box-sizing: border-box;
+
+		@include when(text, true) {
+			padding-right: 33px;
+			margin-right: -30px;
+		}
+
+		@include element(box) {
+			width: 100%;
+			overflow: hidden;
+			border-radius: 8px;	
+
+			@include when(error) {
+				border: 1px solid #f5222d;
+			}
+
+			@include element(inner) {
+				position: relative;
+				background-color: #5495f6;
+				border-radius: 8px;
+				transition: width .5s cubic-bezier(.075,.82,.165,1); 
+
+				@include when(success) {
+					background-color: #52c41a;
+				}
+
+				@include when(error) {
+					background-color: #f5222d;
+				}
+
+				@include when(active) {
+					&::before{
+						position: absolute;
+						top: 0;
+						left: 0;
+						height: 100%;
+						background-color: #fff;
+						border-radius: 8px;
+						content: '';
+						animation: vc-progress-line-width 2s infinite;
+					}
+				}
+			}
+		}
+	}
+
+	@include element(percent) {
+		display: inline-block;
+		line-height: 1;
+		vertical-align: middle;
+
+		@include element(icon) {
+			@include when(success) {
+				font-size: 12px;
+				color: #52c41a;
+			}
+
+			@include when(error) {
+				font-size: 12px;
+				color: #f5222d;
+			}
+		}
+	}
+
+	@keyframes vc-progress-line-width {
+		0%{
+			width: 0;
+			opacity: 0;
+		}
+
+		40%{
+			opacity: .2;
+		}
+
+		80%{
+			width: 100%;
+			opacity: 0;
+		}
+
+		100%{
+			width: 100%;
+			opacity: 0;
+		}
+	}
+}
+
+@include block(vc-progress-circle) {
+	@include element(box) {
+		width: 120px;
+		height: 120px;
+
+		@include element(inner){
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+		}
+	}
 }

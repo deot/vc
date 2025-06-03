@@ -1,11 +1,40 @@
 <template>
-	<div>
-		<Progress>
-			TODO: // ....
+	<div style="padding: 40px 0">
+		<div>
+			<Progress
+				:stroke-width="7"
+				:percent="50"
+				animated
+			/>
+		</div>
+		<div>
+			<Progress
+				:stroke-width="7"
+				:percent="50"
+				status="error"
+			/>
+		</div>
+		<div>
+			<Progress
+				:stroke-width="7"
+				:percent="100"
+			/>
+		</div>
+		<Progress
+			:stroke-width="5"
+			:percent="70"
+			type="circle"
+		/>
+		<Progress
+			:stroke-width="10"
+			:percent="50"
+			color="#ed4014"
+			type="circle"
+		>
+			<div>自定义的数据</div>
 		</Progress>
 	</div>
 </template>
 <script setup>
 import { Progress } from '..';
-
 </script>

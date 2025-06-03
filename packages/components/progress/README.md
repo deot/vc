@@ -159,14 +159,14 @@ import { Progress } from '@deot/vc';
 
 ### 基础属性
 
-| 属性           | 说明                                   | 类型                 | 可选值                                 | 默认值                                                           |
-| ------------ | ------------------------------------ | ------------------ | ----------------------------------- | ------------------------------------------------------------- |
-| type         | 进度条类型                                | `string`           | `line`、`circle`                     | `line`                                                        |
-| percent      | 进度百分比                                | `number`、 `string` | -                                   | 0                                                             |
-| status       | 状态                                   | `string`           | `normal`、`success`、`error`、`active` | `normal`                                                      |
-| size         | 环形进度条画布宽度（只有type为`circle`时可用），单位`px` | `number`           | -                                   | 120                                                           |
-| stroke-width | 进度条宽度，单位`px`                         | `number`           | -                                   | 6                                                             |
-| stroke-color | 环形进度条颜色                              | `string`           | -                                   | #2d8cf0                                                       |
-| show-info    | 是否显示进度数值或者状态图标                       | `Boolean`          | -                                   | true                                                          |
-| line-theme   | line的颜色                              | `Object`           | -                                   | `{ normal: '#5495f6', success: '#52c41a', error: '#f5222d' }` |
-
+| 属性           | 说明                                   | 类型                 | 可选值                        | 默认值                                                           |
+| ------------ | ------------------------------------ | ------------------ | -------------------------- | ------------------------------------------------------------- |
+| type         | 进度条                                  | `string`           | `line`、`circle`            | `line`                                                        |
+| percent      | 进度百分比                                | `number`、 `string` | -                          | 0                                                             |
+| status       | 状态                                   | `string`           | `normal`、`success`、`error` | `normal`                                                      |
+| size         | 环形进度条画布宽度（只有type为`circle`时可用），单位`px` | `number`           | -                          | 120                                                           |
+| stroke-width | 进度条宽度，单位`px`                         | `number`           | -                          | 6                                                             |
+| track-color  | 进度条底层颜色                              | `string`           | -                          | #2d8cf0                                                       |
+| color        | 进度条颜色                                | `Object`           | -                          | `{ normal: '#5495f6', success: '#52c41a', error: '#f5222d' }` |
+| show-text    | 是否显示进度数值或者状态图标                       | `Boolean`          | -                          | true                                                          |
+| animated     | 是否使用 CSS3 动画                         | `boolean`          | -                          | `false`                                                       |
