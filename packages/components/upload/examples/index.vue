@@ -56,11 +56,12 @@ VcInstance.configure({
 				});
 			});
 		},
-		onResponse: (response, options) => {
+		onResponse: (request, options) => {
 			const file = options.file;
 			return new Promise((resolve, reject) => {
+				let response;
 				try {
-					response = JSON.parse(response);
+					response = JSON.parse(request.response || request.responseText);
 				} catch (e) {
 					reject(e);
 				};

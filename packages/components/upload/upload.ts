@@ -119,7 +119,7 @@ export const Upload = defineComponent({
 			if (!isMounted) return;
 			const { mode, size } = props;
 			const onRequest = instance.vnode.props?.onRequest || VcInstance.options.Upload?.onRequest || (() => {});
-			const onResponse = instance.vnode.props?.onResponse || VcInstance.options.Upload?.onResponse;
+			const onResponse = instance.vnode.props?.onResponse || VcInstance.options.Upload?.onResponse || (() => {});
 			const $mode = mode.replace(/s$/, '');
 
 			const onError = async (originalResponse: any, internalMessage: string) => {
@@ -133,9 +133,14 @@ export const Upload = defineComponent({
 				taskManager?.setValue(vFile.target, 'error', internalMessage);
 			};
 
-			const onSuccess = async (originalResponse: any) => {
+			const onSuccess = async (request: XMLHttpRequest) => {
 				try {
-					const response = await onResponse(originalResponse, options) || originalResponse;
+					let response = await onResponse(request, options) || request;
+					// 如果没有钩子处理，强制转换
+					if (response === request) {
+						const text = request.responseType ? request.responseText : request.response;
+						try { response = JSON.parse(text); } catch { response = text; }
+					}
 
 					delete requests[vFile.uploadId];
 					cycle.success++;
@@ -178,7 +183,7 @@ export const Upload = defineComponent({
 				xhr.onreadystatechange = () => {
 					if (xhr.readyState !== 4 || (xhr.status === 0)) return;
 					if (xhr.status >= 200 && xhr.status < 300) {
-						onSuccess(!xhr.responseType ? xhr.responseText : xhr.response);
+						onSuccess(xhr);
 					} else {
 						onError({}, `服务异常`); // 服务器返回404等
 					}
