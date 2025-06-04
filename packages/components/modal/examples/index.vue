@@ -42,7 +42,13 @@
 			@cancel="handleCancel"
 			@ok="handleOk"
 		>
-			可以拖拽
+			<div>可以拖拽</div>
+			<div>可以拖拽</div>
+			<div>可以拖拽</div>
+			<div>可以拖拽</div>
+			<div>可以拖拽</div>
+			<div>可以拖拽</div>
+			<div>可以拖拽</div>
 		</ModalView>
 	</div>
 </template>

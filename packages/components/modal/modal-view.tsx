@@ -96,13 +96,6 @@ export const ModalView = defineComponent({
 		});
 
 		useScrollbar(isActive);
-		watch(
-			() => props.modelValue,
-			(v) => {
-				isActive.value = v;
-			},
-			{ immediate: true }
-		);
 
 		let startX = 0;
 		let startY = 0;
@@ -133,7 +126,18 @@ export const ModalView = defineComponent({
 			el.style.transformOrigin = `${$x}px ${$y}px 0`;
 		}, 250, { leading: true });
 
-		const handleEnter = () => resetOrigin();
+		const isTransitionEnd = ref(false);
+		const handleBeforeEnter = () => {
+			isTransitionEnd.value = false;
+		};
+
+		const handleEnter = () => {
+			resetOrigin();
+		};
+		const handleAfterEnter = () => {
+			isTransitionEnd.value = true;
+			resizer.value.refresh();
+		};
 		/**
 		 * 动画执行后关闭, 关闭事件都会被执行
 		 * visible-change 由移除之后触发
@@ -219,11 +223,16 @@ export const ModalView = defineComponent({
 		 * 这里由于scroller的resize时，render会重置height(实际上就是保留height, 无法移除)
 		 * 1. 改用nextTick, 抖动严重
 		 * 2. resizer.value.refresh, 不抖动
+		 *
+		 * container在最大值时，需要移除，宽度才会缩回去
 		 */
 		const handleContentResize = () => {
-			const has = !!scroller.value.wrapper!.style.getPropertyValue('height');
-			has && scroller.value.wrapper!.style.removeProperty('height');
-			has && resizer.value.refresh();
+			const needRefreshScroller = !!scroller.value.wrapper!.style.getPropertyValue('height');
+			const needRefreshContainer = !!container.value!.style.getPropertyValue('height');
+
+			needRefreshContainer && container.value!.style.removeProperty('height');
+			needRefreshScroller && scroller.value.wrapper!.style.removeProperty('height');
+			needRefreshScroller && resizer.value.refresh();
 		};
 
 		const handleClick = (e: MouseEvent) => {
@@ -299,6 +308,14 @@ export const ModalView = defineComponent({
 			document.removeEventListener('mouseup', handleMouseUp);
 		});
 
+		watch(
+			() => props.modelValue,
+			(v) => {
+				isActive.value = v;
+			},
+			{ immediate: true }
+		);
+
 		expose({
 			isActive, // for portal
 			toggle(v?: boolean) {
@@ -328,7 +345,9 @@ export const ModalView = defineComponent({
 						<TransitionScale
 							mode="part"
 							// @ts-ignore
+							onBeforeEnter={handleBeforeEnter}
 							onEnter={handleEnter}
+							onAfterEnter={handleAfterEnter}
 							onAfterLeave={handleRemove}
 						>
 							<div
@@ -386,8 +405,8 @@ export const ModalView = defineComponent({
 												<Scroller
 													ref={scroller}
 													native={false}
-													always={true}
-													height={row.height}
+													always={false}
+													height={isTransitionEnd.value ? row.height : (void 0)}
 													contentClass={[{ 'is-confirm': props.mode }, props.portalClass, 'vc-modal__content']}
 												>
 													{
