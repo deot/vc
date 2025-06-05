@@ -378,7 +378,7 @@ export const Table = defineComponent({
 		);
 
 		watch(
-			() => props.currentRowKey,
+			() => props.currentRowValue,
 			(v) => {
 				if (!props.rowKey) return;
 				store.current.reset(v);
@@ -396,10 +396,10 @@ export const Table = defineComponent({
 		);
 
 		watch(
-			() => props.expandRowKeys,
+			() => props.expandRowValue,
 			(v) => {
 				if (v) {
-					store.setExpandRowKeysAdapter(v);
+					store.setExpandRowValueAdapter(v);
 				}
 			},
 			{ immediate: true }

@@ -676,7 +676,7 @@ const handleFilter = (value) => {
 :::
 
 ### 树形数据与懒加载
-支持树类型的数据的显示。当 `row` 中包含 `children` 字段时，被视为树形数据。渲染树形数据时，必须要指定 `row-key`。支持子节点数据异步加载。设置 `Table` 的 `lazy` 属性为 `true` 与加载函数 `load-expand` 。通过指定 `row` 中的 `hasChildren` 字段来指定哪些行是包含子节点。`children` 与 `hasChildren` 都可以通过 `tree-props` 配置。
+支持树类型的数据的显示。当 `row` 中包含 `children` 字段时，被视为树形数据。渲染树形数据时，必须要指定 `primary-key`。支持子节点数据异步加载。设置 `Table` 的 `lazy` 属性为 `true` 与加载函数 `load-expand` 。通过指定 `row` 中的 `hasChildren` 字段来指定哪些行是包含子节点。`children` 与 `hasChildren` 都可以通过 `tree-map` 配置。
 
 :::RUNTIME
 ```vue
@@ -689,7 +689,7 @@ const handleFilter = (value) => {
 		:expand-selectable="true"
 		lazy
 		style="width: 100%"
-		row-key="id"
+		primary-key="id"
 		@expand-change="handleExpandChange"
 	>
 		<TableItem>
@@ -813,8 +813,8 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 | size                    | `Table` 的尺寸                                                                                                                                | `string`                                                   | `medium` 、 `small` 、 `mini` | -       |
 | fit                     | 列的宽度是否自撑开                                                                                                                                  | `boolean`                                                  | -                           | `true`  |
 | show-header             | 是否显示表头                                                                                                                                     | `boolean`                                                  | -                           | `true`  |
-| highlight-current-row   | 是否要高亮当前行                                                                                                                                   | `boolean`                                                  | -                           | `false` |
-| current-row-key         | 当前行的 key，只写属性                                                                                                                              | `string`、 `number`                                         | -                           | -       |
+| highlight               | 是否要高亮当前行                                                                                                                                   | `boolean`                                                  | -                           | `false` |
+| current-row-value       | 当前行的`[id]/value`唯一值，只写属性                                                                                                                   | `string`、 `number`                                         | -                           | -       |
 | row-class               | 行的 `className` 的回调方法，也可以使用字符串为所有行设置一个固定的 `className`。                                                                                      | `Function({row, rowIndex})`、 `string`                      | -                           | -       |
 | row-style               | 行的 `style` 的回调方法，也可以使用一个固定的 `Object` 为所有行设置一样的 `Style`。                                                                                    | `Function({row, rowIndex})`、 `Object`                      | -                           | -       |
 | cell-class              | 单元格的 `className` 的回调方法，也可以使用字符串为所有单元格设置一个固定的 `className`。                                                                                  | `Function({row, column, rowIndex, columnIndex})`、 `string` | -                           | -       |
@@ -823,10 +823,10 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 | header-row-style        | 表头行的 style 的回调方法，也可以使用一个固定的 Object 为所有表头行设置一样的 Style。                                                                                      | `Function({row, rowIndex})`、 `Object`                      | -                           | -       |
 | header-cell-class       | 表头单元格的 `className` 的回调方法，也可以使用字符串为所有表头单元格设置一个固定的 `className`。                                                                              | `Function({row, column, rowIndex, columnIndex})`, `string` | -                           | -       |
 | header-cell-style       | 表头单元格的 `style` 的回调方法，也可以使用一个固定的 `Object` 为所有表头单元格设置一样的 `Style`。                                                                            | `Function({row, column, rowIndex, columnIndex})`, `Object` | -                           | -       |
-| row-key                 | 行数据的 Key，用来优化 Table 的渲染；在使用 reserve-selection 功能的情况下，该属性是必填的。类型为 string 时，支持多层访问：`user.info.id`，但不支持 `user.info[0].id`，此种情况请使用 `Function`。 | `Function(row)`、`string`                                   | -                           | -       |
+| primary-key             | 行数据的 Key，用来优化 Table 的渲染；在使用 reserve-selection 功能的情况下，该属性是必填的。类型为 string 时，支持多层访问：`user.info.id`，但不支持 `user.info[0].id`，此种情况请使用 `Function`。 | `Function(row)`、`string`                                   | -                           | -       |
 | empty-text              | 空数据时显示的文本内容，也可以通过 `slot="empty"` 设置                                                                                                        | `string`                                                   | -                           | 暂无数据    |
 | default-expand-all      | 是否默认展开所有行，当 `Table` 中存在 `type="expand"` 的 `Column` 的时候有效                                                                                   | `boolean`                                                  | -                           | false   |
-| expand-row-keys         | 可以通过该属性设置 `Table` 目前的展开行，需要设置 `row-key` 属性才能使用，该属性为展开行的 `keys` 数组。                                                                         | `Array`                                                    | -                           | -       |
+| expand-row-value        | 可以通过该属性设置 `Table` 目前的展开行，需要设置 `primary-key` 属性才能使用，该属性为展开行的 `[id]/value` 数组。                                                               | `Array`                                                    | -                           | -       |
 | expand-selectable       | 子节点是否可选择（会被隐藏）                                                                                                                             | `boolean`                                                  | -                           | `true`  |
 | show-summary            | 是否在表尾显示合计行                                                                                                                                 | `boolean`                                                  | -                           | `false` |
 | sum-text                | 合计行第一列的文本                                                                                                                                  | `string`                                                   | -                           | 合计      |
@@ -898,7 +898,7 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 | class              | 列的 `className`                                                                               | `string`                                       | -                                      |           |
 | label-class        | 当前列标题的自定义类名                                                                                  | `string`                                       | -                                      | -         |
 | selectable         | 仅对 t`ype=selection` 的列有效，类型为 `Function`，`Function` 的返回值用来决定这一行的 `CheckBox` 是否可以勾选            | `Function(row, index)`                         | -                                      | -         |
-| reserve-selection  | 仅对 `type=selection` 的列有效，类型为 `boolean`，为 `true` 则会在数据更新之后保留之前选中的数据（需指定 `row-key`）            | `boolean`                                      | -                                      | `false`   |
+| reserve-selection  | 仅对 `type=selection` 的列有效，类型为 `boolean`，为 `true` 则会在数据更新之后保留之前选中的数据（需指定 `primary-key`）            | `boolean`                                      | -                                      | `false`   |
 | filters            | 数据过滤的选项，数组格式，数组中的元素需要有 label 和 value 属性。                                                     | `Array[{ label, value }]`                      |                                        |           |
 | filter-multiple    | 数据过滤的选项是否多选                                                                                  | `boolean`                                      | -                                      | `true`    |
 | filter-icon        | 筛选的icon                                                                                      | `string`                                       | -                                      | -         |

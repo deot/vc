@@ -10,17 +10,18 @@ export class Current {
 
 	reset(id: number | string) {
 		const store = this.store;
+		const { rowKey } = store.table.props;
 		store.checkRowKey();
 
-		const { data = [], rowKey } = store.states;
+		const { data = [] } = store.states;
 		const currentRow = data.find(item => getRowIdentity(item, rowKey) === id);
 		store.states.currentRow = currentRow || null;
 	}
 
 	update() {
 		const store = this.store;
-
-		const { rowKey, data = [], currentRow } = store.states;
+		const { rowKey } = store.table.props;
+		const { data = [], currentRow } = store.states;
 		const oldCurrentRow = currentRow;
 
 		// 当 currentRow 不在 data 中时尝试更新数据

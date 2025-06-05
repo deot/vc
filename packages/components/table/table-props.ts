@@ -40,16 +40,18 @@ export const props = {
 	headerRowStyle: [Object, Function],
 	headerCellClass: [String, Function],
 	headerCellStyle: [Object, Function],
-	highlightCurrentRow: Boolean,
-	currentRowKey: [String, Number],
+	// 当前对应的currentRow是否可高亮
+	highlight: Boolean,
+	// TODO: 支持数组
+	currentRowValue: [String, Number],
 	emptyText: [String, Function],
-	expandRowKeys: Array,
+	expandRowValue: Array,
 	defaultExpandAll: Boolean,
 	/**
 	 * 在多选表格中，当仅有部分行被选中时，点击表头的多选框时的行为。
 	 * 若为 true，则选中所有行；若为 false，则取消选择所有行
 	 */
-	selectOnIndeterminate: {
+	indeterminate: {
 		type: Boolean,
 		default: true
 	},
@@ -59,7 +61,7 @@ export const props = {
 		type: Number,
 		default: 16
 	},
-	treeProps: {
+	treeMap: {
 		type: Object,
 		default: () => {
 			return {

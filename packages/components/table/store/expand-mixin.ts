@@ -45,7 +45,8 @@ export class Expand {
 		const store = this.store;
 		store.checkRowKey();
 
-		const { data, rowKey } = store.states;
+		const { rowKey } = store.table.props;
+		const { data } = store.states;
 		const keysMap = getKeysMap(data, rowKey);
 		store.states.expandRows = ids.reduce((prev, cur) => {
 			const info = keysMap[cur];
@@ -57,7 +58,8 @@ export class Expand {
 	}
 
 	isExpanded(row: any) {
-		const { expandRows = [], rowKey } = this.store.states;
+		const { rowKey } = this.store.table.props;
+		const { expandRows = [] } = this.store.states;
 		if (rowKey) {
 			const expandMap = getKeysMap(expandRows, rowKey);
 			return !!expandMap[getRowIdentity(row, rowKey)];

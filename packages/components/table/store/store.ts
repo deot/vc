@@ -43,8 +43,8 @@ class Store extends BaseWatcher {
 		const { props } = options.table;
 		merge(this.states, {
 			treeLazy: props.lazy || false,
-			treeLazyColumnIdentifier: props.treeProps.hasChildren || 'hasChildren',
-			treeChildrenColumnName: props.treeProps.children || 'children',
+			treeLazyColumnIdentifier: props.treeMap.hasChildren || 'hasChildren',
+			treeChildrenColumnName: props.treeMap.children || 'children',
 		});
 	}
 
@@ -121,7 +121,7 @@ class Store extends BaseWatcher {
 	checkRowKey() {
 		const { rowKey } = this.table.props;
 		if (!rowKey) {
-			// throw new VcError('vc-table', 'row-key 必传');
+			// throw new VcError('vc-table', 'primary-key 必传');
 		}
 	}
 
@@ -322,11 +322,11 @@ class Store extends BaseWatcher {
 	}
 
 	toggleAllSelection = debounce(() => {
-		const { selectOnIndeterminate } = this.table.props;
+		const { indeterminate } = this.table.props;
 		const { selection, isAllSelected, selectable } = this.states;
 
 		// 当只选择某些行(但不是全部)时，根据selectonindefined的值选择或取消选择所有行
-		const value = selectOnIndeterminate
+		const value = indeterminate
 			? !isAllSelected
 			: !(isAllSelected || selection.length);
 
@@ -360,9 +360,9 @@ class Store extends BaseWatcher {
 		}
 	}
 
-	// 适配层，expand-row-keys 在 Expand 与 TreeTable 中都有使用
+	// 适配层，expand-primary-keys 在 Expand 与 TreeTable 中都有使用
 	// 这里会触发额外的计算，但为了兼容性，暂时这么做
-	setExpandRowKeysAdapter(val) {
+	setExpandRowValueAdapter(val) {
 		this.expand.reset(val);
 		this.tree.expand(val);
 	}

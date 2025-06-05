@@ -42,7 +42,7 @@ export class BaseWatcher {
 		expandRows: [] as any[],
 
 		// Tree
-		treeExpandRowKeys: [] as any[],
+		treeExpandRowValue: [] as any[],
 		treeData: {}, // item的状态，比如loading, loaded
 		treeLazy: false,
 		treelazyNodeMap: {}, // 源数据

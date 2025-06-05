@@ -114,7 +114,7 @@ const handleShuffle = () => {
 | ------------ | -------- | ----------------- | --- | ------- |
 | modelValue   | 数据源      | `array`           | -   | -       |
 | tag          | 外层标签     | `string`          |     | - `div` |
-| valueKey     | 主键       | `string`、`Number` | -   | `id`    |
+| primaryKey  | 主键       | `string`、`Number` | -   | `id`    |
 | mask         | 遮罩       | `boolean`         | -   | `true`  |
 | draggable    | 是否可拖拽    | `boolean`         | -   | `true`  |
 | draggableKey | 拖拽的目标key | `string`          | -   | -       |

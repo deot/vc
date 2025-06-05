@@ -1,7 +1,7 @@
 <template>
 	<div style="padding: 30px;">
 		<h1 @click="isActive = !isActive">Brenchmark</h1>
-		<Table v-if="isActive" row-key="id" :rows="6" border stripe show-summary height="600" :data="dataSource">
+		<Table v-if="isActive" primary-key="id" :rows="6" border stripe show-summary height="600" :data="dataSource">
 			<TableColumn
 				type="selection"
 				width="80"
@@ -68,7 +68,7 @@ const genTableData = length => Array.from({ length }).map((_, index) => ({
 	id: `id__${index}`
 }));
 
-const isActive = ref(true);
+const isActive = ref(false);
 const dataSource = ref(genTableData(500));
 
 const columns = ref([

@@ -106,7 +106,7 @@ export const TableBody = defineComponent({
 
 		const getRowClass = (row, rowIndex) => {
 			const classes = ['vc-table__row'];
-			if (table.props.highlightCurrentRow && row === props.store!.states.currentRow) {
+			if (table.props.highlight && row === props.store!.states.currentRow) {
 				classes.push('current-row');
 			}
 
