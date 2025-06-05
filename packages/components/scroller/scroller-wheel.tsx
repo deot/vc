@@ -29,7 +29,12 @@ const COMPONENT_NAME = 'vc-scroller-wheel';
  */
 export const ScrollerWheel = defineComponent({
 	name: COMPONENT_NAME,
-	props: scrollerProps,
+	props: Object.assign(scrollerProps, {
+		stopPropagation: {
+			type: Boolean,
+			default: true
+		}
+	}),
 	emits: ['scroll'],
 	setup(props, { slots, expose }) {
 		const Content = props.tag;
@@ -109,7 +114,10 @@ export const ScrollerWheel = defineComponent({
 				wrapper.value!,
 				{
 					shouldWheelX,
-					shouldWheelY
+					shouldWheelY,
+					stopPropagation: () => {
+						return props.stopPropagation;
+					}
 				}
 			);
 

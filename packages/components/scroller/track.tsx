@@ -37,7 +37,8 @@ export const Track = defineComponent({
 	name: COMPONENT_NAME,
 	props: trackProps,
 	emits: ['change'],
-	setup(props, { emit, expose }) {
+	inheritAttrs: false,
+	setup(props, { emit, expose, attrs }) {
 		const instance = getCurrentInstance()!;
 		const track = ref<HTMLElement>();
 		const thumb = ref<HTMLElement>();
@@ -226,6 +227,8 @@ export const Track = defineComponent({
 						v-show={thumbSize.value && (props.always || isVisible.value)}
 						ref={track}
 						class={['is-' + barOptions.value.key, 'vc-scroller-track']}
+						// @ts-ignore
+						style={attrs.style}
 						onMousedown={handleClickTrack}
 					>
 						<div
