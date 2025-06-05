@@ -3,8 +3,8 @@
 $component-name: vc-recycle-list;
 
 @include block($component-name) {
-	// container
 	position: relative;
+	height: 100%;
 	overflow: hidden; /* 配合vc-scroller让window系统下滚动时，不出现滚动条 */
 
 	@include element(container) {

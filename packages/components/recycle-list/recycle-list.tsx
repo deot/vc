@@ -27,7 +27,7 @@ const COMPONENT_NAME = 'vc-recycle-list';
 export const RecycleList = defineComponent({
 	name: COMPONENT_NAME,
 	props: recycleListProps,
-	emits: ['scroll'],
+	emits: ['scroll', 'row-resize'],
 	setup(props, { slots, expose, emit }) {
 		const K = useDirectionKeys();
 		const offsetPageSize = ref(0);
@@ -129,7 +129,7 @@ export const RecycleList = defineComponent({
 			return loadings.value.length;
 		});
 
-		const scrollTo = (options: any) => {
+		const scrollTo = (options: any, force?: boolean) => {
 			let options$ = { x: 0, y: 0 };
 			if (typeof options === 'number') {
 				options$[K.axis] = options;
@@ -138,11 +138,11 @@ export const RecycleList = defineComponent({
 			}
 
 			const el = wrapper.value;
-			const x = el.scrollLeft;
-			const y = el.scrollTop;
 
-			x !== options$.x && (el.scrollLeft = options$.x);
-			y !== options$.y && (el.scrollTop = options$.y);
+			(force || el.scrollLeft !== options$.x) && (el.scrollLeft = options$.x);
+			(force || el.scrollLeft !== options$.y) && (el.scrollTop = options$.y);
+
+			scroller.value.scrollTo(options);
 		};
 
 		const scrollToIndex = (index: number, offset = 0) => {
@@ -185,11 +185,20 @@ export const RecycleList = defineComponent({
 
 			if (!current) return; // 受到`removeUnusedPlaceholders`影响，无效的会被回收
 
+			const oldSize = current.size;
 			const dom = preloads.value[index] || curloads.value[props.inverted ? index : index - firstItemIndex.value];
 			if (dom) {
 				current.size = dom[K.offsetSize] || placeholderSize.value;
 			} else if (current) {
 				current.size = placeholderSize.value;
+			}
+
+			// 这样的考虑欠佳，待优化
+			if (oldSize !== current.size) {
+				emit('row-resize', {
+					index: current.id,
+					size: current.size
+				});
 			}
 		};
 
