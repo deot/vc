@@ -6,12 +6,13 @@ import { createPicker } from './base';
 
 import { TimePanel, TimeRangePanel } from '../panel';
 
+const COMPONENT_NAME = 'vc-time-picker';
 const getPanel = (type: string) => {
 	const isRange = type === 'timerange';
 	return isRange ? TimeRangePanel : TimePanel;
 };
 
-export const TimePicker = createPicker(timePickerProps, () => {
+export const TimePicker = createPicker(COMPONENT_NAME, timePickerProps, () => {
 	const props = getCurrentInstance()!.props as Props;
 	const icon = ref('icon');
 	const panel = shallowRef({});

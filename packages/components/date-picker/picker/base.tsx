@@ -8,10 +8,8 @@ import { Popover } from '../../popover';
 import { Icon } from '../../icon';
 import { useBase } from './use-base';
 
-const COMPONENT_NAME = 'vc-date-picker';
-
-export const createPicker = (pickerProps: object, usePicker: Function) => defineComponent({
-	name: COMPONENT_NAME,
+export const createPicker = (name: string, pickerProps: object, usePicker: Function) => defineComponent({
+	name,
 	props: Object.assign(baseProps, pickerProps),
 	inheritAttrs: false,
 	emits: [

@@ -5,6 +5,8 @@ import { props as datePickerProps, Props } from './date-picker-props';
 import { createPicker } from './base';
 import { DatePanel, DateRangePanel, QuarterRangePanel, MonthRangePanel } from '../panel';
 
+const COMPONENT_NAME = 'vc-date-picker';
+
 const getPanel = (type: string) => {
 	if (['daterange', 'datetimerange'].includes(type)) {
 		return DateRangePanel;
@@ -16,7 +18,7 @@ const getPanel = (type: string) => {
 	return DatePanel;
 };
 
-export const DatePicker = createPicker(datePickerProps, () => {
+export const DatePicker = createPicker(COMPONENT_NAME, datePickerProps, () => {
 	const props = getCurrentInstance()!.props as Props;
 	const icon = ref('date');
 	const panel = shallowRef({});
