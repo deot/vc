@@ -1,5 +1,13 @@
 # @deot/vc-components ChangeLog
 
+## v1.0.11
+
+_2025-06-06_
+
+### Force Update Package
+
+- `1.0.10` -> `1.0.11`
+
 ## v1.0.10
 
 _2025-06-05_
