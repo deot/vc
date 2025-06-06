@@ -6,6 +6,7 @@ import { raf } from '@deot/helper-utils';
 import { getInstance } from '@deot/vc-hooks';
 import { Popover } from '../popover';
 import { RecycleList } from '../recycle-list';
+import { NormalList } from './normal-list';
 import { getCell, getColumnByCell, getRowIdentity } from './utils';
 
 import { useStates } from './store';
@@ -317,7 +318,17 @@ export const TableBody = defineComponent({
 		const handleMergeRowResize = (v: any) => {
 			states.list[v.index].rows.forEach((row: any) => {
 				row.heightMap[props.fixed! || 'main'] = v.size;
-				row.height = Math.max(row.heightMap.left, row.heightMap.main, row.heightMap.right) || '';
+
+				const heights = [row.heightMap.main];
+				if (states.leftFixedCount) {
+					heights.push(row.heightMap.left);
+				}
+				if (states.rightFixedCount) {
+					heights.push(row.heightMap.right);
+				}
+				if (heights.every(i => !!i)) {
+					row.height = Math.max(row.heightMap.left, row.heightMap.main, row.heightMap.right) || '';
+				}
 			});
 		};
 
@@ -359,7 +370,14 @@ export const TableBody = defineComponent({
 										{({ row, index }) => renderMergeRow(row, index)}
 									</RecycleList>
 								)
-							: states.list.map((row: any, index: number) => renderMergeRow(row, index))
+							: (
+									<NormalList
+										data={states.list}
+										onRowResize={handleMergeRowResize}
+									>
+										{({ row, index }) => renderMergeRow(row, index)}
+									</NormalList>
+								)
 					}
 				</div>
 			);
