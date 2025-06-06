@@ -185,11 +185,11 @@ export class Layout {
 			this.states.bodyWidth = bodyMinWidth;
 		}
 
-		const fixedColumns = this.store.states.fixedColumns;
+		const leftFixedColumns = this.store.states.leftFixedColumns;
 
-		if (fixedColumns.length > 0) {
+		if (leftFixedColumns.length > 0) {
 			let leftFixedWidth = 0;
-			fixedColumns.forEach(function (column) {
+			leftFixedColumns.forEach(function (column) {
 				leftFixedWidth += column.realWidth || column.width;
 			});
 

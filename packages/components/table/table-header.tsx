@@ -96,10 +96,10 @@ export const TableHeader = defineComponent({
 		const states: any = useStates({
 			columns: 'columns',
 			isAllSelected: 'isAllSelected',
-			leftFixedLeafCount: 'fixedLeafColumnsLength',
+			leftFixedLeafCount: 'leftFixedLeafColumnsLength',
 			rightFixedLeafCount: 'rightFixedLeafColumnsLength',
 			columnsCount: $states => $states.columns.length,
-			leftFixedCount: $states => $states.fixedColumns.length,
+			leftFixedCount: $states => $states.leftFixedColumns.length,
 			rightFixedCount: $states => $states.rightFixedColumns.length
 		});
 

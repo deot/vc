@@ -101,8 +101,9 @@ class Store extends BaseWatcher {
 		this.updateAllSelected();
 	}
 
-	setHoverRow(row: any) {
-		this.states.hoverRow = row;
+	// TODO: 合并的多行管理
+	setHoverRow(index: any) {
+		this.states.hoverRowIndex = index;
 	}
 
 	setCurrentRow(row: any) {
@@ -180,43 +181,43 @@ class Store extends BaseWatcher {
 
 	/**
 	 * 更新列
-	 * fixedColumns: 左fixed
+	 * leftFixedColumns: 左fixed
 	 * rightFixedColumns: 右fixed
 	 * originColumns: 中（包括左右）
 	 * columns: 展开以上
 	 * leafColumnsLength
-	 * fixedLeafColumnsLength
+	 * leftFixedLeafColumnsLength
 	 * rightFixedLeafColumnsLength
 	 * isComplex: 是否包含固定列
 	 */
 	updateColumns() {
 		const { states } = this;
 		const _columns = states._columns || [];
-		states.fixedColumns = _columns.filter(column => column.fixed === true || column.fixed === 'left');
+		states.leftFixedColumns = _columns.filter(column => column.fixed === true || column.fixed === 'left');
 		states.rightFixedColumns = _columns.filter(column => column.fixed === 'right');
 
-		if (states.fixedColumns.length > 0 && _columns[0] && _columns[0].type === 'selection' && !_columns[0].fixed) {
+		if (states.leftFixedColumns.length > 0 && _columns[0] && _columns[0].type === 'selection' && !_columns[0].fixed) {
 			_columns[0].fixed = true;
-			states.fixedColumns.unshift(_columns[0]);
+			states.leftFixedColumns.unshift(_columns[0]);
 		}
 
 		const notFixedColumns = _columns.filter(column => !column.fixed);
-		states.originColumns = concat(states.fixedColumns, notFixedColumns, states.rightFixedColumns);
+		states.originColumns = concat(states.leftFixedColumns, notFixedColumns, states.rightFixedColumns);
 
 		/**
 		 * 多级表头，嵌套
 		 */
 		const leafColumns = flattenData(notFixedColumns);
-		const fixedLeafColumns = flattenData(states.fixedColumns);
+		const leftFixedLeafColumns = flattenData(states.leftFixedColumns);
 		const rightFixedLeafColumns = flattenData(states.rightFixedColumns);
 
 		states.leafColumnsLength = leafColumns.length;
-		states.fixedLeafColumnsLength = fixedLeafColumns.length;
+		states.leftFixedLeafColumnsLength = leftFixedLeafColumns.length;
 		states.rightFixedLeafColumnsLength = rightFixedLeafColumns.length;
 
-		states.columns = concat(fixedLeafColumns, leafColumns, rightFixedLeafColumns);
+		states.columns = concat(leftFixedLeafColumns, leafColumns, rightFixedLeafColumns);
 
-		states.isComplex = states.fixedColumns.length > 0 || states.rightFixedColumns.length > 0;
+		states.isComplex = states.leftFixedColumns.length > 0 || states.rightFixedColumns.length > 0;
 	}
 
 	// 选择

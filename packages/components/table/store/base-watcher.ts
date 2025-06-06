@@ -2,9 +2,6 @@ import { reactive } from 'vue';
 
 export class BaseWatcher {
 	states = reactive({
-		// 3.0 版本后要求必须设置该属性
-		rowKey: null,
-
 		// 渲染的数据来源，是对 table 中的 data 过滤排序后的结果
 		_data: [] as any[],
 		data: [] as any[],
@@ -15,15 +12,15 @@ export class BaseWatcher {
 
 		// 列
 		_columns: [] as any[], // 动态收集vc-table-column中的columnConfig
-		originColumns: [] as any[], // fixedColumns, notFixedColumns, rightFixedColumns
-		columns: [] as any[], // 包括 fixedLeafColumns，leafColumns，rightFixedLeafColumns
-		fixedColumns: [] as any[],
+		originColumns: [] as any[], // leftFixedColumns, notFixedColumns, rightFixedColumns
+		columns: [] as any[], // 包括 leftFixedLeafColumns，leafColumns，rightFixedLeafColumns
+		leftFixedColumns: [] as any[],
 		rightFixedColumns: [] as any[],
 		leafColumns: [] as any[],
-		fixedLeafColumns: [] as any[],
+		leftFixedLeafColumns: [] as any[],
 		rightFixedLeafColumns: [] as any[],
 		leafColumnsLength: 0,
-		fixedLeafColumnsLength: 0,
+		leftFixedLeafColumnsLength: 0,
 		rightFixedLeafColumnsLength: 0,
 
 		// 选择
@@ -32,7 +29,7 @@ export class BaseWatcher {
 		reserveSelection: false,
 		selectable: null as any,
 
-		hoverRow: null,
+		hoverRowIndex: null,
 
 		// Current
 		currentRow: null,

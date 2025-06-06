@@ -89,7 +89,7 @@ export const Table = defineComponent({
 
 		const states: any = useStates({
 			columns: 'columns',
-			fixedColumns: 'fixedColumns',
+			leftFixedColumns: 'leftFixedColumns',
 			rightFixedColumns: 'rightFixedColumns'
 		}, store);
 
@@ -120,7 +120,7 @@ export const Table = defineComponent({
 		const shouldUpdateHeight = computed(() => {
 			return props.height
 				|| props.maxHeight
-				|| states.fixedColumns.length > 0
+				|| states.leftFixedColumns.length > 0
 				|| states.rightFixedColumns.length > 0;
 		});
 
@@ -230,8 +230,8 @@ export const Table = defineComponent({
 				scrollPosition.value = 'middle';
 			}
 			if (!props.height) {
-				leftFixedBodyWrapper.value.scrollTop = (bodyXWrapper.value.scrollTop);
-				rightFixedBodyWrapper.value.scrollTop = (bodyXWrapper.value.scrollTop);
+				leftFixedBody.value.getRootElement().scrollTop = (bodyXWrapper.value.scrollTop);
+				rightFixedBody.value.getRootElement().scrollTop = (bodyXWrapper.value.scrollTop);
 			}
 		}, 20);
 
@@ -275,7 +275,7 @@ export const Table = defineComponent({
 			if (hoverState.value) hoverState.value = null;
 		};
 
-		const handleMousewheel = (deltaX, deltaY) => {
+		const handleMousewheel = (deltaX: number, deltaY: number) => {
 			const {
 				scrollWidth: contentW,
 				clientWidth: wrapperW,
@@ -291,7 +291,12 @@ export const Table = defineComponent({
 				Math.abs(deltaY) > Math.abs(deltaX)
 				&& contentH > wrapperH
 			) {
-				body.value.wrapper.scrollTo({ y: scrollY + deltaY });
+				// 虚拟滚动
+				if (props.height) {
+					body.value.wrapper?.scrollTo({ y: scrollY + deltaY });
+				} else {
+					scroller.value.scrollTo({ y: scrollY + deltaY });
+				}
 			} else if (deltaX && contentW > wrapperW) {
 				scroller.value.scrollTo({ x: scrollX + deltaX });
 			}
@@ -494,7 +499,7 @@ export const Table = defineComponent({
 								class={['vc-table__body-wrapper is-scrolling-none']}
 								barTo={`.${tableId}`}
 								native={false}
-								always={true}
+								always={false}
 								track-offset-y={[
 									layout.states.headerHeight,
 									0,
@@ -557,7 +562,7 @@ export const Table = defineComponent({
 						)
 					}
 					{
-						states.fixedColumns.length > 0 && states.columns.length > 0 && (
+						states.leftFixedColumns.length > 0 && states.columns.length > 0 && (
 							<div
 								ref={leftFixedWrapper}
 								style={[{ width: layout.states.leftFixedWidth ? layout.states.leftFixedWidth + 'px' : '' }, fixedHeightStyle.value]}

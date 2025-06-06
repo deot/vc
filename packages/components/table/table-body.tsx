@@ -26,17 +26,17 @@ export const TableBody = defineComponent({
 			data: 'data',
 			list: 'list',
 			columns: 'columns',
-			leftFixedLeafCount: 'fixedLeafColumnsLength',
+			leftFixedLeafCount: 'leftFixedLeafColumnsLength',
 			rightFixedLeafCount: 'rightFixedLeafColumnsLength',
 			columnsCount: states$ => states$.columns.length,
-			leftFixedCount: states$ => states$.fixedColumns.length,
+			leftFixedCount: states$ => states$.leftFixedColumns.length,
 			rightFixedCount: states$ => states$.rightFixedColumns.length,
 			hasExpandColumn: states$ => states$.columns.some(({ type }) => type === 'expand'),
 			firstDefaultColumnIndex: states$ => states$.columns.findIndex(({ type }) => type === 'default')
 		});
 
 		watch(
-			() => props.store!.states.hoverRow,
+			() => props.store!.states.hoverRowIndex,
 			(v, oldV) => {
 				if (!props.store!.states.isComplex || IS_SERVER) return;
 				raf(() => {
@@ -49,7 +49,7 @@ export const TableBody = defineComponent({
 			}
 		);
 
-		const getKeyOfRow = (row, index) => {
+		const getKeyOfRow = (row: any, index: number) => {
 			const { rowKey } = table.props;
 			if (rowKey) {
 				return getRowIdentity(row, rowKey);
@@ -57,7 +57,7 @@ export const TableBody = defineComponent({
 			return index;
 		};
 
-		const isColumnHidden = (index) => {
+		const isColumnHidden = (index: number) => {
 			if (props.fixed === 'left') {
 				return index >= states.leftFixedLeafCount;
 			} else if (props.fixed === 'right') {
@@ -68,7 +68,7 @@ export const TableBody = defineComponent({
 		};
 
 		const columnsHidden = computed(() => {
-			return states.columns.map((_, index) => isColumnHidden(index));
+			return states.columns.map((_: any, index: number) => isColumnHidden(index));
 		});
 
 		const getSpan = (row, column, rowIndex, columnIndex) => {
@@ -93,7 +93,7 @@ export const TableBody = defineComponent({
 			return { rowspan, colspan };
 		};
 
-		const getRowStyle = (row, rowIndex) => {
+		const getRowStyle = (row: any, rowIndex: number) => {
 			const { rowStyle } = table.props;
 			if (typeof rowStyle === 'function') {
 				return rowStyle.call(null, {
@@ -104,7 +104,7 @@ export const TableBody = defineComponent({
 			return rowStyle || null;
 		};
 
-		const getRowClass = (row, rowIndex) => {
+		const getRowClass = (row: any, rowIndex: number) => {
 			const classes = ['vc-table__row'];
 			if (table.props.highlight && row === props.store!.states.currentRow) {
 				classes.push('current-row');
@@ -130,7 +130,7 @@ export const TableBody = defineComponent({
 			return classes;
 		};
 
-		const getCellStyle = (rowIndex, columnIndex, row, column) => {
+		const getCellStyle = (rowIndex: number, columnIndex: number, row: any, column: any) => {
 			const { cellStyle } = table.props;
 			if (typeof cellStyle === 'function') {
 				return cellStyle.call(null, {
@@ -143,7 +143,7 @@ export const TableBody = defineComponent({
 			return cellStyle;
 		};
 
-		const getCellClass = (rowIndex, columnIndex, row, column) => {
+		const getCellClass = (rowIndex: number, columnIndex: number, row: any, column: any) => {
 			const classes = [column.align, column.className];
 
 			if (isColumnHidden(columnIndex)) {
@@ -211,7 +211,7 @@ export const TableBody = defineComponent({
 			}
 		};
 
-		const handleCellMouseLeave = (e) => {
+		const handleCellMouseLeave = (e: any) => {
 			const cell = getCell(e);
 			if (!cell) return;
 
@@ -219,7 +219,7 @@ export const TableBody = defineComponent({
 			table.emit('cell-mouse-leave', oldHoverState.row, oldHoverState.column, oldHoverState.cell, event);
 		};
 
-		const handleMouseEnter = debounce((index) => {
+		const handleMouseEnter = debounce((index: number) => {
 			props.store!.setHoverRow(index);
 		}, 30);
 
@@ -227,7 +227,7 @@ export const TableBody = defineComponent({
 			props.store!.setHoverRow(null);
 		}, 30);
 
-		const handleEvent = (e, row, name) => {
+		const handleEvent = (e: any, row: any, name: string) => {
 			const cell = getCell(e);
 			let column;
 			if (cell) {
@@ -239,20 +239,20 @@ export const TableBody = defineComponent({
 			table.emit(`row-${name}`, row, column, e);
 		};
 
-		const handleContextMenu = (e, row) => {
+		const handleContextMenu = (e: any, row: any) => {
 			handleEvent(e, row, 'contextmenu');
 		};
 
-		const handleDoubleClick = (e, row) => {
+		const handleDoubleClick = (e: any, row: any) => {
 			handleEvent(e, row, 'dblclick');
 		};
 
-		const handleClick = (e, row) => {
+		const handleClick = (e: any, row: any) => {
 			props.store!.setCurrentRow(row);
 			handleEvent(e, row, 'click');
 		};
 
-		const renderRow = (rowData, rowIndex) => {
+		const renderRow = (rowData: any, rowIndex: number) => {
 			const { data: row } = rowData;
 			const { columns } = states;
 			const key = getKeyOfRow(row, rowIndex);
@@ -262,14 +262,14 @@ export const TableBody = defineComponent({
 					key={key}
 					class={[getRowClass(row, rowIndex), 'vc-table__tr']}
 					style={getRowStyle(row, rowIndex)}
-					onDblclick={$event => handleDoubleClick($event, row)}
-					onClick={$event => handleClick($event, row)}
-					onContextmenu={$event => handleContextMenu($event, row)}
+					onDblclick={(e: any) => handleDoubleClick(e, row)}
+					onClick={(e: any) => handleClick(e, row)}
+					onContextmenu={(e: any) => handleContextMenu(e, row)}
 					onMouseenter={() => handleMouseEnter(rowIndex)}
-					onMouseleave={$event => handleMouseLeave($event)}
+					onMouseleave={() => handleMouseLeave()}
 				>
 					{
-						columns.map((column, columnIndex) => {
+						columns.map((column: any, columnIndex: number) => {
 							const { realWidth, renderCell } = column;
 							const sizeStyle = { width: `${realWidth}px`, height: `${rowData.height ? `${rowData.height}px` : 'auto'}` };
 							if (columnsHidden.value[columnIndex]) {
@@ -279,8 +279,8 @@ export const TableBody = defineComponent({
 								<div
 									style={[getCellStyle(rowIndex, columnIndex, row, column), sizeStyle]}
 									class={[getCellClass(rowIndex, columnIndex, row, column), 'vc-table__td']}
-									onMouseenter={$event => handleCellMouseEnter($event, row)}
-									onMouseleave={$event => handleCellMouseLeave($event)}
+									onMouseenter={(e: any) => handleCellMouseEnter(e, row)}
+									onMouseleave={(e: any) => handleCellMouseLeave(e)}
 								>
 									{
 										renderCell(
@@ -301,12 +301,12 @@ export const TableBody = defineComponent({
 			);
 		};
 
-		const renderMergeRow = (mergeData, mergeIndex) => {
+		const renderMergeRow = (mergeData: any, mergeIndex: number) => {
 			const { rows } = mergeData;
 			return (
 				<div class="vc-table__merge-row" key={mergeIndex}>
 					{
-						rows.map((row) => {
+						rows.map((row: any) => {
 							return renderRow(row, row.index);
 						})
 					}
@@ -314,7 +314,7 @@ export const TableBody = defineComponent({
 			);
 		};
 
-		const handleMergeRowResize = (v) => {
+		const handleMergeRowResize = (v: any) => {
 			states.list[v.index].rows.forEach((row: any) => {
 				row.heightMap[props.fixed! || 'main'] = v.size;
 				row.height = Math.max(row.heightMap.left, row.heightMap.main, row.heightMap.right) || '';
@@ -341,7 +341,7 @@ export const TableBody = defineComponent({
 										scrollerOptions={{
 											barTo: `.${table.exposed.tableId}`,
 											native: false,
-											always: true,
+											always: false,
 											showBar: !props.fixed,
 											stopPropagation: !props.fixed,
 											trackOffsetY: [
@@ -352,14 +352,14 @@ export const TableBody = defineComponent({
 											]
 										}}
 										pageSize={table.props.rows}
-										onScroll={e => emit('scroll', e)}
+										onScroll={(e: any) => emit('scroll', e)}
 										onRowResize={handleMergeRowResize}
 										style={props.heightStyle}
 									>
 										{({ row, index }) => renderMergeRow(row, index)}
 									</RecycleList>
 								)
-							: states.list.map((row, index) => renderMergeRow(row, index))
+							: states.list.map((row: any, index: number) => renderMergeRow(row, index))
 					}
 				</div>
 			);
