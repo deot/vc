@@ -9,7 +9,6 @@ import {
 	onBeforeMount,
 	onMounted,
 	onUnmounted,
-	onUpdated,
 	Fragment
 } from 'vue';
 import { hasOwn, getUid } from '@deot/helper-utils';
@@ -30,8 +29,8 @@ export const TableColumn = defineComponent({
 		customClass: String,
 		labelClass: String,
 		prop: String,
-		width: [Number, String],
-		minWidth: [Number, String],
+		width: Number,
+		minWidth: Number,
 		renderHeader: Function,
 		resizable: {
 			type: Boolean,
@@ -112,7 +111,6 @@ export const TableColumn = defineComponent({
 
 			return result;
 		};
-
 		/**
 		 * compose 1
 		 * 对于特定类型的 column，某些属性不允许设置
@@ -120,7 +118,7 @@ export const TableColumn = defineComponent({
 		 * @param column ~
 		 * @returns ~
 		 */
-		const setColumnForcedProps = (column) => {
+		const setColumnForcedProps = (column: any) => {
 			const type = column.type;
 			const source = cellForced[type] || {};
 			Object.keys(source).forEach((prop) => {
@@ -168,7 +166,7 @@ export const TableColumn = defineComponent({
 		 * @param column ~
 		 * @returns ~
 		 */
-		const setColumnRenders = (column) => {
+		const setColumnRenders = (column: any) => {
 			const specialTypes = Object.keys(cellForced);
 			// renderHeader 属性不推荐使用。
 			if (props.renderHeader) {
@@ -186,12 +184,12 @@ export const TableColumn = defineComponent({
 			// TODO: 这里的实现调整
 			if (column.type === 'expand') {
 				// 对于展开行，renderCell 不允许配置的。在上一步中已经设置过，这里需要简单封装一下。
-				column.renderCell = data => (
+				column.renderCell = (data: any) => (
 					<div class="vc-table__cell">
 						{ originRenderCell(data) }
 					</div>
 				);
-				table.exposed.renderExpanded.value = (data) => {
+				table.exposed.renderExpanded.value = (data: any) => {
 					return slots.default
 						? slots.default(data)
 						: slots.default;
@@ -199,7 +197,7 @@ export const TableColumn = defineComponent({
 			} else {
 				originRenderCell = originRenderCell || defaultRenderCell;
 				// 对 renderCell 进行包装
-				column.renderCell = (data) => {
+				column.renderCell = (data: any) => {
 					let children: any = null;
 					if (slots.default) {
 						children = slots?.default?.(data);
@@ -236,34 +234,18 @@ export const TableColumn = defineComponent({
 			return column;
 		};
 
-		const refreshColumnBasicConfig = () => {
+		const registerColumn = () => {
 			const defaults = {
 				...cellStarts[props.type],
-				type: props.type,
 				id: columnId.value,
-				align: realAlign.value,
-				headerAlign: realHeaderAlign.value,
-				prop: props.prop,
-				showPopover: props.showPopover,
-				// index 列
-				index: props.index
+				realAlign,
+				realHeaderAlign
 			};
 
-			const basicProps = ['columnKey', 'label', 'customClass', 'labelClass', 'type', 'renderHeader', 'resizable', 'formatter', 'fixed', 'resizable']; // eslint-disable-line
-			const selectProps = ['selectable', 'reserveSelection'];
-			const sortProps = ['sortable'];
-			const filterProps = ['filters', 'filteredValue', 'filterMultiple', 'filter', 'filterIcon', 'filterPopupClass'];
+			let column = merge(defaults, getPropsData(Object.keys(props)));
 
-			let column = getPropsData(basicProps, selectProps, sortProps, filterProps);
-
-			column = merge(defaults, column);
-
-			// 注意 compose 中函数执行的顺序是从右到左
-			column = compose(
-				setColumnRenders,
-				setColumnWidth,
-				setColumnForcedProps
-			)(column);
+			// minWidth/realWidth/renderHeader
+			column = compose(setColumnRenders, setColumnWidth, setColumnForcedProps)(column);
 
 			for (const key in column) {
 				if (hasOwn(column, key)) {
@@ -272,11 +254,17 @@ export const TableColumn = defineComponent({
 			}
 		};
 
-		const registerComplexWatchers = () => {
+		const registerWatchers = () => {
+			// 赋值
+			Object.keys(props).forEach(k => watch(() => props[k], v => columnConfig[k] = v));
+
+			// 影响布局
 			watch(() => props.fixed, () => {
 				table.exposed.store.scheduleLayout(true);
 			});
-			watch(() => realWidth.value, () => {
+			watch(() => realWidth.value, (v) => {
+				columnConfig['width'] = v;
+				columnConfig['realWidth'] = v;
 				table.exposed.store.scheduleLayout(false);
 			});
 			watch(() => realMinWidth.value, () => {
@@ -285,11 +273,9 @@ export const TableColumn = defineComponent({
 		};
 
 		onBeforeMount(() => {
-			refreshColumnBasicConfig();
-			registerComplexWatchers();
+			registerColumn();
+			registerWatchers();
 		});
-
-		onUpdated(refreshColumnBasicConfig);
 		onMounted(() => {
 			const children = isSubColumn
 				? parent.vnode.el.children
@@ -327,7 +313,7 @@ export const TableColumn = defineComponent({
 			let children: any[] = [];
 
 			try {
-				const renderDefault: any = slots?.default?.({ row: {}, column: {}, $index: -1 });
+				const renderDefault: any = slots?.default?.({ row: {}, column: {}, columnIndex: -1, rowIndex: -1 });
 				if (renderDefault instanceof Array) {
 					for (const childNode of renderDefault) {
 						if (/^vcm?-table-column$/.test(childNode.type?.name)) {

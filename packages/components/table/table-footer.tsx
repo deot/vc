@@ -1,4 +1,4 @@
-import { defineComponent } from 'vue';
+import { defineComponent, computed } from 'vue';
 import { useStates } from './store';
 
 export const TableFooter = defineComponent({
@@ -25,28 +25,30 @@ export const TableFooter = defineComponent({
 			rightFixedCount: $states => $states.rightFixedColumns.length
 		});
 
-		const isCellHidden = (index, columns, column) => {
+		const isColumnHidden = (column: any, index: number) => {
 			if (props.fixed === true || props.fixed === 'left') {
 				return index >= states.leftFixedLeafCount;
 			} else if (props.fixed === 'right') {
 				let before = 0;
 				for (let i = 0; i < index; i++) {
-					before += columns[i].colSpan;
+					before += states.columns[i].colSpan;
 				}
 				return before < states.columnsCount - states.rightFixedLeafCount;
-			} else if (!props.fixed && column.fixed) { // hide cell when footer instance is not fixed and column is fixed
+			} else if (!props.fixed && column.fixed) {
 				return true;
 			} else {
 				return (index < states.leftFixedCount) || (index >= states.columnsCount - states.rightFixedCount);
 			}
 		};
 
-		const getRowClasses = (column, cellIndex) => {
-			const classes = [column.id, column.align, column.labelClass];
+		const columnsHidden = computed(() => states.columns.map(isColumnHidden));
+
+		const getRowClasses = (column: any, columnIndex: number) => {
+			const classes = [column.realAlign, column.labelClass];
 			if (column.className) {
 				classes.push(column.className);
 			}
-			if (isCellHidden(cellIndex, states.columns, column)) {
+			if (columnsHidden.value[columnIndex]) {
 				classes.push('is-hidden');
 			}
 			if (!column.children) {
@@ -55,20 +57,20 @@ export const TableFooter = defineComponent({
 			return classes;
 		};
 
-		return () => {
-			let sums: any[] = [];
+		const sums = computed(() => {
+			let v: any[] = [];
 			if (props.getSummary) {
-				sums = props.getSummary({ columns: states.columns, data: states.data });
+				v = props.getSummary({ columns: states.columns, data: states.data });
 			} else {
-				states.columns.forEach((column, index) => {
+				states.columns.forEach((column: any, index: number) => {
 					if (index === 0) {
-						sums[index] = props.sumText;
+						v[index] = props.sumText;
 						return;
 					}
 					const values = states.data.map(item => Number(item[column.prop]));
 					const precisions: any[] = [];
 					let notNumber = true;
-					values.forEach((value) => {
+					values.forEach((value: any) => {
 						if (!isNaN(value)) {
 							notNumber = false;
 							const decimal = ('' + value).split('.')[1];
@@ -77,7 +79,7 @@ export const TableFooter = defineComponent({
 					});
 					const precision = Math.max.apply(null, precisions);
 					if (!notNumber) {
-						sums[index] = values.reduce((prev, curr) => {
+						v[index] = values.reduce((prev: any, curr: any) => {
 							const value = Number(curr);
 							if (!isNaN(value)) {
 								return parseFloat((prev + curr).toFixed(Math.min(precision, 20)));
@@ -86,11 +88,14 @@ export const TableFooter = defineComponent({
 							}
 						}, 0);
 					} else {
-						sums[index] = '';
+						v[index] = '';
 					}
 				});
 			}
+			return v;
+		});
 
+		return () => {
 			return (
 				<div
 					class="vc-table__footer"
@@ -101,18 +106,14 @@ export const TableFooter = defineComponent({
 					<div class="vc-table__tbody">
 						<div class="vc-table__tr">
 							{
-								states.columns.map((column, cellIndex) => (
+								states.columns.map((column: any, columnIndex: number) => (
 									<div
-										key={cellIndex}
-										colspan={column.colSpan}
-										rowspan={column.rowSpan}
-										class={[getRowClasses(column, cellIndex), 'vc-table__td']}
+										key={columnIndex}
+										class={[getRowClasses(column, columnIndex), 'vc-table__td']}
 										style={[{ width: `${column.realWidth}px` }]}
 									>
 										<div class={['vc-table__cell', column.labelClass]}>
-											{
-												sums[cellIndex]
-											}
+											{ sums.value[columnIndex] }
 										</div>
 									</div>
 								))

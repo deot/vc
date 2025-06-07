@@ -1,4 +1,6 @@
-import { reactive } from 'vue';
+import { reactive, computed } from 'vue';
+import { concat } from 'lodash';
+import { flattenData } from './utils';
 
 export class BaseWatcher {
 	states = reactive({
@@ -7,21 +9,15 @@ export class BaseWatcher {
 		data: [] as any[],
 		list: [] as any[],
 
-		// 是否包含固定列
-		isComplex: false,
+		// 表头数据
+		headerRows: [] as any[],
 
-		// 列
-		_columns: [] as any[], // 动态收集vc-table-column中的columnConfig
-		originColumns: [] as any[], // leftFixedColumns, notFixedColumns, rightFixedColumns
-		columns: [] as any[], // 包括 leftFixedLeafColumns，leafColumns，rightFixedLeafColumns
+		// 列 动态收集vc-table-column中的columnConfig
+		_columns: [] as any[],
+		originColumns: [] as any[],
+		notFixedColumns: [] as any[],
 		leftFixedColumns: [] as any[],
 		rightFixedColumns: [] as any[],
-		leafColumns: [] as any[],
-		leftFixedLeafColumns: [] as any[],
-		rightFixedLeafColumns: [] as any[],
-		leafColumnsLength: 0,
-		leftFixedLeafColumnsLength: 0,
-		rightFixedLeafColumnsLength: 0,
 
 		// 选择
 		isAllSelected: false,
@@ -46,5 +42,17 @@ export class BaseWatcher {
 		treeLazyData: [] as any[], // 源数据展开
 		treeLazyColumnIdentifier: 'hasChildren',
 		treeChildrenColumnName: 'children',
+
+		// compputeds
+		isComplex: computed(() => this.states.leftFixedColumns.length > 0 || this.states.rightFixedColumns.length > 0),
+		isGroup: computed(() => this.states.columns.length > this.states.originColumns.length),
+
+		columns: computed(() => concat(this.states.leftFixedLeafColumns, this.states.leafColumns, this.states.rightFixedLeafColumns)),
+		leafColumns: computed(() => flattenData(this.states.notFixedColumns)),
+		leftFixedLeafColumns: computed(() => flattenData(this.states.leftFixedColumns)),
+		rightFixedLeafColumns: computed(() => flattenData(this.states.rightFixedColumns)),
+		leafColumnsLength: computed(() => this.states.leafColumns.length),
+		leftFixedLeafColumnsLength: computed(() => this.states.leftFixedLeafColumns.length),
+		rightFixedLeafColumnsLength: computed(() => this.states.rightFixedLeafColumns.length),
 	});
 }

@@ -1,4 +1,4 @@
-import { getRowIdentity } from '../utils';
+import { getRowValue } from '../utils';
 import type { Store } from './store';
 
 export class Current {
@@ -14,7 +14,7 @@ export class Current {
 		store.checkRowKey();
 
 		const { data = [] } = store.states;
-		const currentRow = data.find(item => getRowIdentity(item, rowKey) === id);
+		const currentRow = data.find(item => getRowValue(item, rowKey) === id);
 		store.states.currentRow = currentRow || null;
 	}
 
@@ -29,7 +29,7 @@ export class Current {
 			let newCurrentRow = null;
 			if (rowKey) {
 				newCurrentRow = data.find((item: any) => {
-					return getRowIdentity(item, rowKey) === getRowIdentity(oldCurrentRow, rowKey);
+					return getRowValue(item, rowKey) === getRowValue(oldCurrentRow, rowKey);
 				});
 			}
 			store.states.currentRow = newCurrentRow;

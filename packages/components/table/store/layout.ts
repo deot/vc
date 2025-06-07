@@ -1,4 +1,4 @@
-import { reactive, nextTick, onMounted, onUpdated } from 'vue';
+import { reactive, nextTick } from 'vue';
 import { IS_SERVER } from '@deot/vc-shared';
 import { parseHeight } from '../utils';
 import { VcError } from '../../vc';
@@ -31,23 +31,6 @@ export class Layout {
 		if (!this.store) {
 			throw new VcError('table', 'Table Layout 必须包含store实例');
 		}
-
-		this.updateScroller = this.updateScroller.bind(this);
-		this.updateColumns = this.updateColumns.bind(this);
-
-		// TODO: remove
-		onMounted(() => {
-			this.updateColumns();
-			this.updateScroller();
-		});
-
-		let __updated__;
-		onUpdated(() => {
-			if (__updated__) return;
-			this.updateColumns();
-			this.updateScroller();
-			__updated__ = true;
-		});
 	}
 
 	updateScrollY() {
@@ -122,7 +105,6 @@ export class Layout {
 		}
 
 		this.updateScrollY();
-		this.updateScroller();
 	}
 
 	updateColumnsWidth() {
@@ -205,12 +187,5 @@ export class Layout {
 
 			this.states.rightFixedWidth = rightFixedWidth;
 		}
-
-		this.updateColumns();
 	}
-
-	// v2.x中的 notifyObservers
-	updateColumns() {}
-
-	updateScroller() {}
 }

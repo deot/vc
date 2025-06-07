@@ -1,7 +1,8 @@
 import { computed, watch, reactive, nextTick } from 'vue';
 
 import { max } from 'lodash-es';
-import { walkTreeNode, getRowIdentity } from '../utils';
+import { walkTreeNode } from './utils';
+import { getRowValue } from '../utils';
 import { VcError } from '../../vc';
 import type { Store } from './store';
 
@@ -34,7 +35,7 @@ export class Tree {
 			if (treelazyNodeMap[key].length) {
 				const item: any = { children: [] };
 				treelazyNodeMap[key].forEach((row: any) => {
-					const id = getRowIdentity(row, rowKey);
+					const id = getRowValue(row, rowKey);
 					item.children.push(id);
 
 					const hasChildren = row[treeLazyColumnIdentifier] || (row[treeChildrenColumnName] && row[treeChildrenColumnName].length === 0);
@@ -64,10 +65,10 @@ export class Tree {
 		walkTreeNode(
 			data,
 			(parent: any, children: any[], level: number) => {
-				const parentId = getRowIdentity(parent, rowKey);
+				const parentId = getRowValue(parent, rowKey);
 				if (Array.isArray(children)) {
 					res[parentId] = {
-						children: children.map(row => getRowIdentity(row, rowKey)),
+						children: children.map(row => getRowValue(row, rowKey)),
 						level
 					};
 				} else if (treeLazy) {
@@ -102,7 +103,7 @@ export class Tree {
 				}
 			};
 
-			const id = getRowIdentity(item, rowKey);
+			const id = getRowValue(item, rowKey);
 			return traverse(treeData[id]);
 		});
 		return max(levels) || 0;
@@ -174,7 +175,7 @@ export class Tree {
 		const { rowKey } = this.store.table.props;
 		const { treeData } = this.store.states;
 
-		const id = getRowIdentity(row, rowKey);
+		const id = getRowValue(row, rowKey);
 		const data = id && treeData[id];
 		if (id && data && 'expanded' in data) {
 			const oldExpanded = data.expanded;
@@ -191,7 +192,7 @@ export class Tree {
 		this.store.checkRowKey();
 		const { rowKey } = this.store.table.props;
 		const { treeLazy, treeData } = this.store.states;
-		const id = getRowIdentity(row, rowKey);
+		const id = getRowValue(row, rowKey);
 		const data = treeData[id];
 		if (treeLazy && data && 'loaded' in data && !data.loaded) {
 			this.loadData(row, id, data);
@@ -223,7 +224,7 @@ export class Tree {
 				walkTreeNode(
 					data,
 					(parent: any, _: any, level: number) => {
-						const id = getRowIdentity(parent, rowKey);
+						const id = getRowValue(parent, rowKey);
 						Object.defineProperty(parent, '__KEY__', {
 							value: `${level}__${id}`,
 							writable: false

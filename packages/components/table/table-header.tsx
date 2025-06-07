@@ -1,4 +1,4 @@
-import { defineComponent, ref, getCurrentInstance } from 'vue';
+import { defineComponent, ref, getCurrentInstance, computed } from 'vue';
 import { addClass, removeClass, hasClass } from '@deot/helper-dom';
 import { IS_SERVER } from '@deot/vc-shared';
 import { getInstance } from '@deot/vc-hooks';
@@ -10,64 +10,6 @@ import { useStates } from './store';
 
 const TableSort = 'div';
 const TableFilter = 'div';
-
-const getAllColumns = (columns) => {
-	const result: any[] = [];
-	columns.forEach((column) => {
-		if (column.children) {
-			result.push(column);
-			result.push(...getAllColumns(column.children));
-		} else {
-			result.push(column);
-		}
-	});
-	return result;
-};
-
-const convertToRows = (originColumns) => {
-	let maxLevel = 1;
-	const traverse = (column, parent?: any) => {
-		if (parent) {
-			column.level = parent.level + 1;
-			if (maxLevel < column.level) {
-				maxLevel = column.level;
-			}
-		}
-		if (column.children) {
-			let colSpan = 0;
-			column.children.forEach((subColumn) => {
-				traverse(subColumn, column);
-				colSpan += subColumn.colSpan;
-			});
-			column.colSpan = colSpan;
-		} else {
-			column.colSpan = 1;
-		}
-	};
-
-	originColumns.forEach((column) => {
-		column.level = 1;
-		traverse(column);
-	});
-
-	const rows: any[] = [];
-	for (let i = 0; i < maxLevel; i++) {
-		rows.push([]);
-	}
-
-	const allColumns = getAllColumns(originColumns);
-
-	allColumns.forEach((column) => {
-		if (!column.children) {
-			column.rowSpan = maxLevel - column.level + 1;
-		} else {
-			column.rowSpan = 1;
-		}
-		rows[column.level - 1].push(column);
-	});
-
-	return rows;
-};
 
 export const TableHeader = defineComponent({
 	name: 'vc-table-header',
@@ -98,17 +40,19 @@ export const TableHeader = defineComponent({
 			isAllSelected: 'isAllSelected',
 			leftFixedLeafCount: 'leftFixedLeafColumnsLength',
 			rightFixedLeafCount: 'rightFixedLeafColumnsLength',
+			isGroup: 'isGroup',
+			headerRows: 'headerRows',
 			columnsCount: $states => $states.columns.length,
 			leftFixedCount: $states => $states.leftFixedColumns.length,
 			rightFixedCount: $states => $states.rightFixedColumns.length
 		});
 
-		const isCellHidden = (index, columns) => {
+		const isColumnHidden = (index: number) => {
 			let start = 0;
 			for (let i = 0; i < index; i++) {
-				start += columns[i].colSpan;
+				start += states.columns[i].colSpan;
 			}
-			const after = start + columns[index].colSpan - 1;
+			const after = start + states.columns[index].colSpan - 1;
 			if (props.fixed === true || props.fixed === 'left') {
 				return after >= states.leftFixedLeafCount;
 			} else if (props.fixed === 'right') {
@@ -118,7 +62,11 @@ export const TableHeader = defineComponent({
 			}
 		};
 
-		const getHeaderRowStyle = (rowIndex) => {
+		const columnsHidden = computed(() => {
+			return states.columns.map((_: any, index: number) => isColumnHidden(index));
+		});
+
+		const getHeaderRowStyle = (rowIndex: number) => {
 			const { headerRowStyle } = table.props;
 			if (typeof headerRowStyle === 'function') {
 				return headerRowStyle.call(null, { rowIndex });
@@ -126,7 +74,7 @@ export const TableHeader = defineComponent({
 			return headerRowStyle;
 		};
 
-		const getHeaderRowClass = (rowIndex) => {
+		const getHeaderRowClass = (rowIndex: number) => {
 			const classes: any[] = [];
 			const { headerRowClass } = table.props;
 
@@ -139,7 +87,7 @@ export const TableHeader = defineComponent({
 			return classes.join(' ');
 		};
 
-		const getHeaderCellStyle = (rowIndex, columnIndex, row, column) => {
+		const getHeaderCellStyle = (rowIndex: number, columnIndex: number, row: any, column: any) => {
 			const { headerCellStyle } = table.props;
 			if (typeof headerCellStyle === 'function') {
 				return headerCellStyle.call(null, {
@@ -152,10 +100,10 @@ export const TableHeader = defineComponent({
 			return headerCellStyle;
 		};
 
-		const getHeaderCellClass = (rowIndex, columnIndex, row, column) => {
-			const classes = [column.id, column.order, column.headerAlign, column.className, column.labelClass];
+		const getHeaderCellClass = (rowIndex: number, columnIndex: number, row: any, column: any) => {
+			const classes = [column.id, column.order, column.realHeaderAlign, column.className, column.labelClass];
 
-			if (rowIndex === 0 && isCellHidden(columnIndex, row)) {
+			if (rowIndex === 0 && columnsHidden.value[columnIndex]) {
 				classes.push('is-hidden');
 			}
 
@@ -178,15 +126,15 @@ export const TableHeader = defineComponent({
 			return classes.join(' ');
 		};
 
-		const handleHeaderClick = (e, column) => {
+		const handleHeaderClick = (e: any, column: any) => {
 			table.emit('header-click', column, e);
 		};
 
-		const handleHeaderContextMenu = (e, column) => {
+		const handleHeaderContextMenu = (e: any, column: any) => {
 			table.emit('header-contextmenu', column, e);
 		};
 
-		const handleMouseDown = (e, column) => {
+		const handleMouseDown = (e: any, column: any) => {
 			if (IS_SERVER) return;
 			if (column.children && column.children.length > 0) return;
 			/* istanbul ignore if */
@@ -260,7 +208,7 @@ export const TableHeader = defineComponent({
 			}
 		};
 
-		const handleMouseMove = (event, column) => {
+		const handleMouseMove = (event: any, column: any) => {
 			if (column.children && column.children.length > 0) return;
 			let target = event.target;
 			while (target && !target.classList?.contains?.('vc-table__th')) {
@@ -294,16 +242,16 @@ export const TableHeader = defineComponent({
 			document.body.style.cursor = '';
 		};
 
-		const handleSort = (prop, order) => {
+		const handleSort = (prop: string, order: any) => {
 			table.emit('sort-change', { prop, order });
 		};
 
-		const handleFilter = (column, value) => {
+		const handleFilter = (column: any, value: any) => {
 			const { filter } = column;
 			filter && filter(value);
 		};
 
-		const handleCellMouseEnter = (e, column) => {
+		const handleCellMouseEnter = (e: any, column: any) => {
 			Popover.open({
 				el: document.body,
 				name: 'vc-table-header-popover', // 确保不重复创建
@@ -317,37 +265,32 @@ export const TableHeader = defineComponent({
 		};
 
 		return () => {
-			const { originColumns } = props.store.states;
-			const columnRows = convertToRows(originColumns);
-
-			// 是否拥有多级表头
-			const isGroup = columnRows.length > 1;
-			if (isGroup) table.exposed.isGroup.value = true;
-
 			return (
 				<div class="vc-table__header">
-					<div class={[{ 'is-group': isGroup }, 'vc-table__thead']}>
+					<div class={[{ 'is-group': states.isGroup }, 'vc-table__thead']}>
 						{
 							// renderList
-							columnRows.map((columns, rowIndex) => (
+							states.headerRows.map((columns: any[], rowIndex: number) => (
 								<div
 									style={getHeaderRowStyle(rowIndex)}
 									class={[getHeaderRowClass(rowIndex), 'vc-table__tr']}
 								>
 									{
-										columns.map((column, cellIndex) => (
+										columns.map((column: any, columnIndex: number) => (
 											<div
-												// @ts-ignore
-												colspan={column.colSpan}
-												rowspan={column.rowSpan}
-												onMousemove={$event => handleMouseMove($event, column)}
+												onMousemove={(e: any) => handleMouseMove(e, column)}
 												onMouseout={handleMouseOut}
-												onMousedown={$event => handleMouseDown($event, column)}
-												onClick={$event => handleHeaderClick($event, column)}
-												onContextmenu={$event => handleHeaderContextMenu($event, column)}
-
-												style={[getHeaderCellStyle(rowIndex, cellIndex, columns, column), { width: `${column.realWidth}px` }]}
-												class={[getHeaderCellClass(rowIndex, cellIndex, columns, column), 'vc-table__th']}
+												onMousedown={(e: any) => handleMouseDown(e, column)}
+												onClick={(e: any) => handleHeaderClick(e, column)}
+												onContextmenu={(e: any) => handleHeaderContextMenu(e, column)}
+												style={[
+													getHeaderCellStyle(rowIndex, columnIndex, columns, column),
+													{ width: `${column.realWidth}px` }
+												]}
+												class={[
+													getHeaderCellClass(rowIndex, columnIndex, columns, column),
+													'vc-table__th'
+												]}
 												key={column.id}
 											>
 												<div
@@ -364,10 +307,8 @@ export const TableHeader = defineComponent({
 															? column.renderHeader(
 																	{
 																		column,
-																		$index: cellIndex,
-																		// index: cellIndex,
+																		columnIndex,
 																		store: props.store,
-																		_self: instance
 																	}
 																)
 															: column.label
@@ -377,7 +318,7 @@ export const TableHeader = defineComponent({
 															? (
 																	<Icon
 																		type="o-info"
-																		onMouseenter={e => handleCellMouseEnter(e, column)}
+																		onMouseenter={(e: any) => handleCellMouseEnter(e, column)}
 																	/>
 																)
 															: null
@@ -387,7 +328,7 @@ export const TableHeader = defineComponent({
 															? (
 																	<TableSort
 																		order={column.prop === props.defaultSort.prop ? props.defaultSort.order : ''}
-																		onClick={order => handleSort(column.prop, order)}
+																		onClick={(order: any) => handleSort(column.prop, order)}
 																	/>
 																)
 															: null
