@@ -187,7 +187,8 @@ export const Track = defineComponent({
 		};
 
 		const refreshThumb = () => raf(() => {
-			thumb.value!.style[$.prefixStyle('transform').camel] = `translate${barOptions.value.axis}(${thumbMove.value}px)`;
+			if (!thumb.value) return;
+			thumb.value.style[$.prefixStyle('transform').camel] = `translate${barOptions.value.axis}(${thumbMove.value}px)`;
 		});
 
 		const refreshThrottleThumb = throttle(refreshThumb, 10);

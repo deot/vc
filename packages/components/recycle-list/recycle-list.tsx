@@ -238,6 +238,7 @@ export const RecycleList = defineComponent({
 
 		// 设置data首个元素的在originalData索引值
 		const setFirstItemIndex = () => {
+			if (!wrapper.value) return;
 			const position = wrapper.value[K.scrollAxis];
 			let item: any;
 			for (let i = 0; i < rebuildData.value.length; i++) {
@@ -445,6 +446,7 @@ export const RecycleList = defineComponent({
 
 		// 图片撑开时，会影响布局, 节流结束后调用
 		const handleResize = throttle(async () => {
+			if (!wrapper.value) return;
 			const isNeedRefreshLayout = rebuildData.value.some(i => !i.isPlaceholder);
 
 			if (isNeedRefreshLayout) {

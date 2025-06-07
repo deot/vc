@@ -1,6 +1,7 @@
 <!-- 仅展示最基本的用法 -->
 <template>
-	<div class="demo">
+	<div class="demo-status" @click="isActive = !isActive">isActive: {{ isActive }}</div>
+	<div v-if="isActive" class="demo">
 		<RecycleList
 			class="list"
 			pullable
@@ -29,6 +30,7 @@
 import { ref } from 'vue';
 import { RecycleList } from '..';
 
+const isActive = ref(true);
 const dynamicSize = ref(20);
 const pageSize = ref(30);
 
@@ -83,6 +85,15 @@ const handleClick = (data) => {
 </script>
 
 <style>
+.demo-status {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	background: black;
+	z-index: 10;
+	color: white;
+}
 .demo {
 	position: fixed;
 	top: 0;
