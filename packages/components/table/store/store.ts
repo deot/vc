@@ -1,13 +1,14 @@
 import { nextTick, computed } from 'vue';
 import { merge, debounce, concat } from 'lodash';
 import { hasOwn } from '@deot/helper-utils';
-import { getKeysMap, getRowIdentity, flattenData } from '../utils';
+import { getValuesMap, getRowValue } from '../utils';
 import { VcError } from '../../vc';
 import { BaseWatcher } from './base-watcher';
 import { Expand } from './expand-mixin';
 import { Current } from './current-mixin';
 import { Tree } from './tree-mixin';
 import { Layout } from './layout';
+import { columnsToRowsEffect, flattenData } from './utils';
 
 class Store extends BaseWatcher {
 	table: any;
@@ -16,7 +17,7 @@ class Store extends BaseWatcher {
 	tree: Tree;
 	layout: Layout;
 
-	flattenData = computed(() => {
+	flatData = computed(() => {
 		if (this.table.props.expandSelectable) {
 			return concat(
 				flattenData(this.states.data, { parent: true, cascader: true }),
@@ -89,7 +90,7 @@ class Store extends BaseWatcher {
 				this.cleanSelection();
 			}
 		} else {
-			this.checkRowKey();
+			this.checkPrimaryKey();
 			this.updateSelectionByRowKey();
 		}
 		this.updateAllSelected();
@@ -117,11 +118,11 @@ class Store extends BaseWatcher {
 	}
 
 	/**
-	 * 检查 rowKey 是否存在
+	 * 检查 primaryKey 是否存在
 	 */
-	checkRowKey() {
-		const { rowKey } = this.table.props;
-		if (!rowKey) {
+	checkPrimaryKey() {
+		const { primaryKey } = this.table.props;
+		if (!primaryKey) {
 			// throw new VcError('vc-table', 'primary-key 必传');
 		}
 	}
@@ -159,7 +160,7 @@ class Store extends BaseWatcher {
 		}
 
 		if (this.table.exposed.isReady.value) {
-			this.updateColumns(); // hack for dynamics insert column
+			this.updateColumns();
 			this.scheduleLayout();
 		}
 	}
@@ -174,7 +175,7 @@ class Store extends BaseWatcher {
 		}
 
 		if (this.table.exposed.isReady.value) {
-			this.updateColumns(); // hack for dynamics remove column
+			this.updateColumns();
 			this.scheduleLayout();
 		}
 	}
@@ -193,31 +194,24 @@ class Store extends BaseWatcher {
 	updateColumns() {
 		const { states } = this;
 		const _columns = states._columns || [];
-		states.leftFixedColumns = _columns.filter(column => column.fixed === true || column.fixed === 'left');
-		states.rightFixedColumns = _columns.filter(column => column.fixed === 'right');
+		const leftFixedColumns = _columns.filter(column => column.fixed === true || column.fixed === 'left');
+		const rightFixedColumns = _columns.filter(column => column.fixed === 'right');
 
-		if (states.leftFixedColumns.length > 0 && _columns[0] && _columns[0].type === 'selection' && !_columns[0].fixed) {
+		if (leftFixedColumns.length > 0 && _columns[0] && _columns[0].type === 'selection' && !_columns[0].fixed) {
 			_columns[0].fixed = true;
-			states.leftFixedColumns.unshift(_columns[0]);
+			leftFixedColumns.unshift(_columns[0]);
 		}
 
 		const notFixedColumns = _columns.filter(column => !column.fixed);
-		states.originColumns = concat(states.leftFixedColumns, notFixedColumns, states.rightFixedColumns);
+		const originColumns = concat(leftFixedColumns, notFixedColumns, rightFixedColumns);
+		const headerRows = columnsToRowsEffect(originColumns);
 
-		/**
-		 * 多级表头，嵌套
-		 */
-		const leafColumns = flattenData(notFixedColumns);
-		const leftFixedLeafColumns = flattenData(states.leftFixedColumns);
-		const rightFixedLeafColumns = flattenData(states.rightFixedColumns);
-
-		states.leafColumnsLength = leafColumns.length;
-		states.leftFixedLeafColumnsLength = leftFixedLeafColumns.length;
-		states.rightFixedLeafColumnsLength = rightFixedLeafColumns.length;
-
-		states.columns = concat(leftFixedLeafColumns, leafColumns, rightFixedLeafColumns);
-
-		states.isComplex = states.leftFixedColumns.length > 0 || states.rightFixedColumns.length > 0;
+		// set
+		states.leftFixedColumns = leftFixedColumns;
+		states.notFixedColumns = notFixedColumns;
+		states.rightFixedColumns = rightFixedColumns;
+		states.originColumns = originColumns;
+		states.headerRows = headerRows;
 	}
 
 	// 选择
@@ -245,21 +239,21 @@ class Store extends BaseWatcher {
 	 * 清理选择
 	 */
 	cleanSelection() {
-		const { rowKey } = this.table.props;
+		const { primaryKey } = this.table.props;
 		const { selection = [] } = this.states;
 		let deleted: any;
-		if (rowKey) {
+		if (primaryKey) {
 			deleted = [];
-			const selectedMap = getKeysMap(selection, rowKey);
-			const dataMap = getKeysMap(selection, rowKey);
+			const selectedMap = getValuesMap(selection, primaryKey);
+			const dataMap = getValuesMap(selection, primaryKey);
 			for (const key in selectedMap) {
 				if (hasOwn(selectedMap, key) && !dataMap[key]) {
 					deleted.push(selectedMap[key].row);
 				}
 			}
 		} else {
-			deleted = selection.filter((item) => {
-				return !this.flattenData.value.includes(item);
+			deleted = selection.filter((item: any) => {
+				return !this.flatData.value.includes(item);
 			});
 		}
 
@@ -268,7 +262,7 @@ class Store extends BaseWatcher {
 		});
 
 		if (deleted.length) {
-			const newSelection = selection.filter(item => !deleted.includes(item));
+			const newSelection = selection.filter((item: any) => !deleted.includes(item));
 			this.states.selection = newSelection;
 			this.table.emit('selection-change', newSelection.slice());
 		}
@@ -334,7 +328,7 @@ class Store extends BaseWatcher {
 		this.states.isAllSelected = value;
 
 		let selectionChanged = false;
-		this.flattenData.value.forEach((row: any, index: number) => {
+		this.flatData.value.forEach((row: any, index: number) => {
 			if (selectable) {
 				if (selectable.call(null, row, index) && this.toggleRowStatus(selection, row, value)) {
 					selectionChanged = true;
@@ -363,18 +357,18 @@ class Store extends BaseWatcher {
 
 	// 适配层，expand-primary-keys 在 Expand 与 TreeTable 中都有使用
 	// 这里会触发额外的计算，但为了兼容性，暂时这么做
-	setExpandRowValueAdapter(val) {
+	setExpandRowValueAdapter(val: any) {
 		this.expand.reset(val);
 		this.tree.expand(val);
 	}
 
 	updateSelectionByRowKey() {
-		const { rowKey } = this.table.props;
+		const { primaryKey } = this.table.props;
 		const { selection } = this.states;
-		const selectedMap = getKeysMap(selection, rowKey);
+		const selectedMap = getValuesMap(selection, primaryKey);
 		// TODO：这里的代码可以优化
-		this.states.selection = this.flattenData.value.reduce((prev: any[], row: any) => {
-			const rowId = getRowIdentity(row, rowKey);
+		this.states.selection = this.flatData.value.reduce((prev: any[], row: any) => {
+			const rowId = getRowValue(row, primaryKey);
 			const rowInfo = selectedMap[rowId];
 			if (rowInfo) {
 				prev.push(row);
@@ -394,7 +388,7 @@ class Store extends BaseWatcher {
 		let isAllSelected = true;
 		let selectedCount = 0;
 
-		const temp = this.flattenData.value;
+		const temp = this.flatData.value;
 		for (let i = 0, j = temp.length; i < j; i++) {
 			const row = temp[i];
 			const isRowSelectable = selectable && selectable.call(null, row, i);

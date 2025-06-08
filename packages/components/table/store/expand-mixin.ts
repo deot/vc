@@ -1,4 +1,4 @@
-import { getKeysMap, getRowIdentity } from '../utils';
+import { getValuesMap, getRowValue } from '../utils';
 import type { Store } from './store';
 
 export class Expand {
@@ -10,14 +10,14 @@ export class Expand {
 
 	update() {
 		const store = this.store;
-		const { rowKey, defaultExpandAll } = this.store.table.props;
+		const { primaryKey, defaultExpandAll } = this.store.table.props;
 		const { data = [], expandRows } = store.states;
 		if (defaultExpandAll) {
 			store.states.expandRows = data.slice();
-		} else if (rowKey) {
-			const expandRowsMap = getKeysMap(expandRows, rowKey);
+		} else if (primaryKey) {
+			const expandRowsMap = getValuesMap(expandRows, primaryKey);
 			store.states.expandRows = data.reduce((prev: any[], row: any) => {
-				const rowId = getRowIdentity(row, rowKey);
+				const rowId = getRowValue(row, primaryKey);
 				const rowInfo = expandRowsMap[rowId];
 				if (rowInfo) {
 					prev.push(row);
@@ -43,11 +43,11 @@ export class Expand {
 
 	reset(ids: any[]) {
 		const store = this.store;
-		store.checkRowKey();
+		store.checkPrimaryKey();
 
-		const { rowKey } = store.table.props;
+		const { primaryKey } = store.table.props;
 		const { data } = store.states;
-		const keysMap = getKeysMap(data, rowKey);
+		const keysMap = getValuesMap(data, primaryKey);
 		store.states.expandRows = ids.reduce((prev, cur) => {
 			const info = keysMap[cur];
 			if (info) {
@@ -58,11 +58,11 @@ export class Expand {
 	}
 
 	isExpanded(row: any) {
-		const { rowKey } = this.store.table.props;
+		const { primaryKey } = this.store.table.props;
 		const { expandRows = [] } = this.store.states;
-		if (rowKey) {
-			const expandMap = getKeysMap(expandRows, rowKey);
-			return !!expandMap[getRowIdentity(row, rowKey)];
+		if (primaryKey) {
+			const expandMap = getValuesMap(expandRows, primaryKey);
+			return !!expandMap[getRowValue(row, primaryKey)];
 		}
 		return expandRows.indexOf(row) !== -1;
 	}

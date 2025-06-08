@@ -10,22 +10,19 @@ export const cellStarts = {
 		order: ''
 	},
 	selection: {
-		width: 48,
-		minWidth: 48,
-		realWidth: 48,
+		width: 60,
+		minWidth: 60,
 		order: '',
 		className: 'vc-table-column--selection'
 	},
 	expand: {
-		width: 48,
-		minWidth: 48,
-		realWidth: 48,
+		width: 60,
+		minWidth: 60,
 		order: ''
 	},
 	index: {
-		width: 48,
-		minWidth: 48,
-		realWidth: 48,
+		width: 60,
+		minWidth: 60,
 		order: ''
 	}
 };

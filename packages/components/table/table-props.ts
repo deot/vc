@@ -23,7 +23,7 @@ export const props = {
 		type: Number,
 		default: 10
 	},
-	rowKey: [String, Function],
+	primaryKey: [String, Function],
 	// 是否显示表头
 	showHeader: {
 		type: Boolean,

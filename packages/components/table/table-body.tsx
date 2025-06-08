@@ -7,7 +7,7 @@ import { getInstance } from '@deot/vc-hooks';
 import { Popover } from '../popover';
 import { RecycleList } from '../recycle-list';
 import { NormalList } from './normal-list';
-import { getCell, getColumnByCell, getRowIdentity } from './utils';
+import { getCell, getColumnByCell, getRowValue } from './utils';
 
 import { useStates } from './store';
 
@@ -36,6 +36,8 @@ export const TableBody = defineComponent({
 			firstDefaultColumnIndex: states$ => states$.columns.findIndex(({ type }) => type === 'default')
 		});
 
+		const wrapper = ref();
+
 		watch(
 			() => props.store!.states.hoverRowIndex,
 			(v, oldV) => {
@@ -50,10 +52,10 @@ export const TableBody = defineComponent({
 			}
 		);
 
-		const getKeyOfRow = (row: any, index: number) => {
-			const { rowKey } = table.props;
-			if (rowKey) {
-				return getRowIdentity(row, rowKey);
+		const getValueOfRow = (row: any, index: number) => {
+			const { primaryKey } = table.props;
+			if (primaryKey) {
+				return getRowValue(row, primaryKey);
 			}
 			return index;
 		};
@@ -145,7 +147,7 @@ export const TableBody = defineComponent({
 		};
 
 		const getCellClass = (rowIndex: number, columnIndex: number, row: any, column: any) => {
-			const classes = [column.align, column.className];
+			const classes = [column.realAlign, column.className];
 
 			if (isColumnHidden(columnIndex)) {
 				classes.push('is-hidden');
@@ -174,7 +176,7 @@ export const TableBody = defineComponent({
 			return widthArr.reduce((acc, width) => acc + width, -1);
 		};
 
-		const handleCellMouseEnter = (e, row) => {
+		const handleCellMouseEnter = (e: any, row: any) => {
 			const cell = getCell(e);
 
 			if (cell) {
@@ -217,7 +219,7 @@ export const TableBody = defineComponent({
 			if (!cell) return;
 
 			const oldHoverState = table.exposed.hoverState.value || {};
-			table.emit('cell-mouse-leave', oldHoverState.row, oldHoverState.column, oldHoverState.cell, event);
+			table.emit('cell-mouse-leave', oldHoverState.row, oldHoverState.column, oldHoverState.cell, e);
 		};
 
 		const handleMouseEnter = debounce((index: number) => {
@@ -256,8 +258,7 @@ export const TableBody = defineComponent({
 		const renderRow = (rowData: any, rowIndex: number) => {
 			const { data: row } = rowData;
 			const { columns } = states;
-			const key = getKeyOfRow(row, rowIndex);
-
+			const key = getValueOfRow(row, rowIndex);
 			return (
 				<div
 					key={key}
@@ -332,13 +333,12 @@ export const TableBody = defineComponent({
 			});
 		};
 
-		const wrapper = ref();
 		expose({
 			wrapper,
 			getRootElement: () => instance.vnode.el
 		});
+		const layout = table.exposed.layout;
 		return () => {
-			const layout = table.exposed.layout;
 			return (
 				<div class="vc-table__body">
 					{
@@ -367,7 +367,7 @@ export const TableBody = defineComponent({
 										onRowResize={handleMergeRowResize}
 										style={props.heightStyle}
 									>
-										{({ row, index }) => renderMergeRow(row, index)}
+										{{ default: ({ row, index }) => renderMergeRow(row, index) }}
 									</RecycleList>
 								)
 							: (
@@ -375,7 +375,7 @@ export const TableBody = defineComponent({
 										data={states.list}
 										onRowResize={handleMergeRowResize}
 									>
-										{({ row, index }) => renderMergeRow(row, index)}
+										{{ default: ({ row, index }) => renderMergeRow(row, index) }}
 									</NormalList>
 								)
 					}

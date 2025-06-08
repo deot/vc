@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, watch, computed, ref, getCurrentInstance, nextTick, onMounted, onBeforeUnmount } from 'vue';
+import { defineComponent, watch, computed, ref, getCurrentInstance, nextTick, onMounted, onUnmounted } from 'vue';
 import { debounce, throttle } from 'lodash-es';
 import { Resize } from '@deot/helper-resize';
 import { getUid, raf } from '@deot/helper-utils';
@@ -81,8 +81,6 @@ export const Table = defineComponent({
 
 		const resizeProxy = ref(null);
 
-		// 是否拥有多级表头, 由table-header控制
-		const isGroup = ref(false);
 		const scrollPosition = ref('left');
 		const hoverState = ref(null);
 		const isReady = ref(false);
@@ -90,15 +88,16 @@ export const Table = defineComponent({
 		const states: any = useStates({
 			columns: 'columns',
 			leftFixedColumns: 'leftFixedColumns',
-			rightFixedColumns: 'rightFixedColumns'
+			rightFixedColumns: 'rightFixedColumns',
+			isGroup: 'isGroup'
 		}, store);
 
 		const classes = computed(() => {
 			return {
 				'vc-table--fit': props.fit,
 				'vc-table--striped': props.stripe,
-				'vc-table--border': props.border || isGroup.value,
-				'vc-table--group': isGroup.value,
+				'vc-table--border': props.border || states.isGroup,
+				'vc-table--group': states.isGroup,
 				'vc-table--fluid-height': props.maxHeight,
 				'vc-table--scrollable-x': layout.states.scrollX,
 				'vc-table--scrollable-y': layout.states.scrollY,
@@ -200,13 +199,13 @@ export const Table = defineComponent({
 		};
 
 		// 用于多选表格，切换某一行的选中状态，如果使用了第二个参数，则是设置这一行选中与否（selected 为 true 则选中）
-		const toggleRowSelection = (row, selected, emitChange) => {
+		const toggleRowSelection = (row: any, selected?: boolean, emitChange?: boolean) => {
 			store.toggleRowSelection(row, selected, emitChange);
 			store.updateAllSelected();
 		};
 
 		// 用于可展开表格与树形表格，切换某一行的展开状态;如果使用了第二个参数，则是设置这一行展开与否（expanded 为 true 则展开）
-		const toggleRowExpansion = (row, expanded) => {
+		const toggleRowExpansion = (row: any, expanded?: boolean) => {
 			store.toggleRowExpansionAdapter(row, expanded);
 		};
 
@@ -235,7 +234,7 @@ export const Table = defineComponent({
 			}
 		}, 20);
 
-		const handleScollY = (e) => {
+		const handleScollY = (e: any) => {
 			const v = {
 				x: e.target.scrollLeft,
 				y: e.target.scrollTop,
@@ -385,7 +384,7 @@ export const Table = defineComponent({
 		watch(
 			() => props.currentRowValue,
 			(v) => {
-				if (!props.rowKey) return;
+				if (!props.primaryKey) return;
 				store.current.reset(v);
 			},
 			{ immediate: true }
@@ -426,6 +425,7 @@ export const Table = defineComponent({
 			{ immediate: true }
 		);
 
+		const tableId = getUid('table');
 		onMounted(() => {
 			bindEvents();
 			store.updateColumns();
@@ -439,13 +439,14 @@ export const Table = defineComponent({
 			isReady.value = true;
 		});
 
-		onBeforeUnmount(() => {
+		onUnmounted(() => {
 			isUnMount = true;
 			unbindEvents();
 		});
 
-		const tableId = getUid('table');
 		expose({
+			bodyXWrapper,
+			bodyYWrapper,
 			tableId,
 			store,
 			layout,

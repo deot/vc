@@ -68,8 +68,8 @@ const genTableData = length => Array.from({ length }).map((_, index) => ({
 	id: `id__${index}`
 }));
 
-const isActive = ref(false);
-const dataSource = ref(genTableData(500));
+const isActive = ref(true);
+const dataSource = ref(genTableData(20));
 
 const columns = ref([
 	'内部人员',

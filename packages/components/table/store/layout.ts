@@ -1,4 +1,4 @@
-import { reactive, nextTick, onMounted, onUpdated } from 'vue';
+import { reactive, nextTick } from 'vue';
 import { IS_SERVER } from '@deot/vc-shared';
 import { parseHeight } from '../utils';
 import { VcError } from '../../vc';
@@ -31,32 +31,14 @@ export class Layout {
 		if (!this.store) {
 			throw new VcError('table', 'Table Layout 必须包含store实例');
 		}
-
-		this.updateScroller = this.updateScroller.bind(this);
-		this.updateColumns = this.updateColumns.bind(this);
-
-		// TODO: remove
-		onMounted(() => {
-			this.updateColumns();
-			this.updateScroller();
-		});
-
-		let __updated__;
-		onUpdated(() => {
-			if (__updated__) return;
-			this.updateColumns();
-			this.updateScroller();
-			__updated__ = true;
-		});
 	}
 
 	updateScrollY() {
 		const { height, bodyHeight } = this.states;
 		if (height === null || bodyHeight === null) return;
-		const scroller = this.table.exposed.scroller.value;
-		if (this.table.vnode.el && scroller) {
-			const body = scroller.$el.querySelector('.vc-table__body');
-			this.states.scrollY = body.offsetHeight > bodyHeight;
+		const bodyYWrapper = this.table.exposed.bodyYWrapper.value;
+		if (this.table.vnode.el && bodyYWrapper) {
+			this.states.scrollY = bodyYWrapper.offsetHeight > bodyHeight;
 		}
 	}
 
@@ -76,20 +58,6 @@ export class Layout {
 
 	setMaxHeight(value: any) {
 		this.setHeight(value, 'max-height');
-	}
-
-	getFlattenColumns() {
-		const flattenColumns: any[] = [];
-		const columns: any[] = this.store.states.columns;
-		columns.forEach((column) => {
-			if (column.isColumnGroup) {
-				flattenColumns.push(...column.columns);
-			} else {
-				flattenColumns.push(column);
-			}
-		});
-
-		return flattenColumns;
 	}
 
 	updateElsHeight() {
@@ -122,7 +90,6 @@ export class Layout {
 		}
 
 		this.updateScrollY();
-		this.updateScroller();
 	}
 
 	updateColumnsWidth() {
@@ -130,13 +97,13 @@ export class Layout {
 		const bodyWidth = this.table.vnode.el.clientWidth;
 		let bodyMinWidth = 0;
 
-		const flattenColumns = this.getFlattenColumns();
-		const flexColumns = flattenColumns.filter(column => typeof column.width !== 'number');
+		const flattenColumns = this.store.states.columns;
+		const flexColumns = flattenColumns.filter((column: any) => typeof column.width !== 'number');
 
 		const { fit } = this.table.props;
 
 		if (flexColumns.length > 0 && fit) {
-			flattenColumns.forEach((column) => {
+			flattenColumns.forEach((column: any) => {
 				bodyMinWidth += column.width || column.minWidth || 80;
 			});
 
@@ -148,11 +115,11 @@ export class Layout {
 				if (flexColumns.length === 1) {
 					flexColumns[0].realWidth = (flexColumns[0].minWidth || 80) + totalFlexWidth;
 				} else {
-					const allColumnsWidth = flexColumns.reduce((prev, column) => prev + (column.minWidth || 80), 0);
+					const allColumnsWidth = flexColumns.reduce((prev: number, column: any) => prev + (column.minWidth || 80), 0);
 					const flexWidthPerPixel = totalFlexWidth / allColumnsWidth;
 					let noneFirstWidth = 0;
 
-					flexColumns.forEach((column, index) => {
+					flexColumns.forEach((column: any, index: number) => {
 						if (index === 0) return;
 						const flexWidth = Math.floor((column.minWidth || 80) * flexWidthPerPixel);
 						noneFirstWidth += flexWidth;
@@ -163,7 +130,7 @@ export class Layout {
 				}
 			} else { // HAVE HORIZONTAL SCROLL BAR
 				this.states.scrollX = true;
-				flexColumns.forEach(function (column) {
+				flexColumns.forEach((column: any) => {
 					column.realWidth = column.width || column.minWidth;
 				});
 			}
@@ -171,7 +138,7 @@ export class Layout {
 			this.states.bodyWidth = Math.max(bodyMinWidth, bodyWidth);
 			this.table.exposed.resizeState.value.width = this.states.bodyWidth;
 		} else {
-			flattenColumns.forEach((column) => {
+			flattenColumns.forEach((column: any) => {
 				if (!column.width && !column.minWidth) {
 					column.realWidth = 80;
 				} else {
@@ -205,12 +172,5 @@ export class Layout {
 
 			this.states.rightFixedWidth = rightFixedWidth;
 		}
-
-		this.updateColumns();
 	}
-
-	// v2.x中的 notifyObservers
-	updateColumns() {}
-
-	updateScroller() {}
 }
