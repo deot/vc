@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, watch, computed, ref, getCurrentInstance, nextTick, onMounted, onUnmounted } from 'vue';
+import { defineComponent, provide, watch, computed, ref, getCurrentInstance, nextTick, onMounted, onUnmounted } from 'vue';
 import { debounce, throttle } from 'lodash-es';
 import { Resize } from '@deot/helper-resize';
 import { getUid, raf } from '@deot/helper-utils';
@@ -40,7 +40,7 @@ export const Table = defineComponent({
 		'expand-change',
 		'sort-change'
 	],
-	setup(props, { slots, expose }) {
+	setup(props, { slots, expose, emit }) {
 		const instance = getCurrentInstance()!;
 
 		const store: any = new Store({ table: instance });
@@ -391,9 +391,9 @@ export const Table = defineComponent({
 		);
 
 		watch(
-			() => props.data,
-			(v) => {
-				store.setData(v);
+			() => [props.data, props.data.length],
+			() => {
+				store.setData(props.data);
 				isReady.value && nextTick(refreshLayout);
 			},
 			{ immediate: true }
@@ -444,7 +444,7 @@ export const Table = defineComponent({
 			unbindEvents();
 		});
 
-		expose({
+		const exposed = {
 			bodyXWrapper,
 			bodyYWrapper,
 			tableId,
@@ -466,8 +466,12 @@ export const Table = defineComponent({
 			isReady,
 			hoverState,
 			renderExpanded,
-			hiddenColumns
-		});
+			hiddenColumns,
+			props,
+			emit
+		};
+		expose(exposed);
+		provide('vc-table', exposed);
 		return () => {
 			return (
 				<div

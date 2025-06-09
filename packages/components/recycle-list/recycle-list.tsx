@@ -485,6 +485,8 @@ export const RecycleList = defineComponent({
 
 			if (!originalData.length) {
 				rebuildData.value = [];
+			} else {
+				rebuildData.value = originalData.slice();
 			}
 
 			offsetPageSize.value = 0;

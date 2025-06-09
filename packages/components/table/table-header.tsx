@@ -1,7 +1,6 @@
-import { defineComponent, ref, getCurrentInstance, computed } from 'vue';
+import { defineComponent, ref, getCurrentInstance, computed, inject } from 'vue';
 import { addClass, removeClass, hasClass } from '@deot/helper-dom';
 import { IS_SERVER } from '@deot/vc-shared';
-import { getInstance } from '@deot/vc-hooks';
 import { Popover } from '../popover';
 import { Icon } from '../icon';
 import { useStates } from './store';
@@ -28,7 +27,7 @@ export const TableHeader = defineComponent({
 	},
 
 	setup(props) {
-		const table: any = getInstance('table', 'tableId');
+		const table: any = inject('vc-table');
 		const instance = getCurrentInstance()!;
 
 		const draggingColumn = ref(null);
@@ -141,7 +140,7 @@ export const TableHeader = defineComponent({
 			if (draggingColumn.value && props.border) {
 				dragging.value = true;
 
-				table.exposed.resizeProxyVisible.value = true;
+				table.resizeProxyVisible.value = true;
 
 				const tableEl = table.vnode.el;
 				const tableLeft = tableEl.getBoundingClientRect().left;
@@ -158,7 +157,7 @@ export const TableHeader = defineComponent({
 					tableLeft
 				};
 
-				const resizeProxy = table.exposed.resizeProxy.value;
+				const resizeProxy = table.resizeProxy.value;
 				resizeProxy.style.left = dragState.value.startLeft + 'px';
 
 				document.onselectstart = () => false;

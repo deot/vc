@@ -57,17 +57,26 @@ class Store extends BaseWatcher {
 		this.states._data = data;
 		// reset
 		this.states.data = data;
+
+		// 获取历史row的高度，还原
+		const caches = new Map();
+		this.states.list.forEach((item) => {
+			item.rows.forEach((row: any) => {
+				caches.set(row.data, row);
+			});
+		});
 		this.states.list = data.reduce((pre, row, index) => {
+			const cache = caches.get(row) || { heightMap: {} };
 			pre.push({
 				rows: [
 					{
 						index,
 						data: row,
-						height: '',
+						height: cache.height || '',
 						heightMap: {
-							left: '',
-							main: '',
-							right: ''
+							left: cache.heightMap.left || '',
+							main: cache.heightMap.main || '',
+							right: cache.heightMap.right || ''
 						}
 					}
 				],
@@ -75,6 +84,7 @@ class Store extends BaseWatcher {
 			});
 			return pre;
 		}, []);
+		caches.clear();
 
 		/**
 		 * 数据变化，更新部分数据。
@@ -240,12 +250,12 @@ class Store extends BaseWatcher {
 	 */
 	cleanSelection() {
 		const { primaryKey } = this.table.props;
-		const { selection = [] } = this.states;
+		const { selection = [], data } = this.states;
 		let deleted: any;
 		if (primaryKey) {
 			deleted = [];
 			const selectedMap = getValuesMap(selection, primaryKey);
-			const dataMap = getValuesMap(selection, primaryKey);
+			const dataMap = getValuesMap(data, primaryKey);
 			for (const key in selectedMap) {
 				if (hasOwn(selectedMap, key) && !dataMap[key]) {
 					deleted.push(selectedMap[key].row);

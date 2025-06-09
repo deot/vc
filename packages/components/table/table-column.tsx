@@ -9,12 +9,13 @@ import {
 	onBeforeMount,
 	onMounted,
 	onUnmounted,
-	Fragment
+	Fragment,
+	inject,
+	provide
 } from 'vue';
 import { hasOwn, getUid } from '@deot/helper-utils';
 import { merge, isEmpty } from 'lodash-es';
 import { compose } from '@deot/helper-fp';
-import { getInstance } from '@deot/vc-hooks';
 import { cellStarts, cellForced, defaultRenderCell, treeCellPrefix } from './table-column-confg';
 import { parseWidth, parseMinWidth } from './utils';
 
@@ -64,14 +65,14 @@ export const TableColumn = defineComponent({
 
 		tooltip: [String, Function]
 	},
-	setup(props, { slots, expose }) {
+	setup(props, { slots }) {
 		const instance = getCurrentInstance()!;
-		const table: any = getInstance('table', 'tableId');
-		const parent: any = getInstance('table-column', 'columnId') || table;
+		const table: any = inject('vc-table');
+		const parent: any = inject('vc-table-column', table);
 
 		const isSubColumn = table !== parent; // 用于多久表头
 
-		const columnId = ref((parent.exposed.tableId || parent.exposed.columnId) + getUid('column'));
+		const columnId = ref((parent.tableId || parent.columnId) + getUid('column'));
 
 		const realWidth = computed(() => {
 			return parseWidth(props.width);
@@ -189,7 +190,7 @@ export const TableColumn = defineComponent({
 						{ originRenderCell(data) }
 					</div>
 				);
-				table.exposed.renderExpanded.value = (data: any) => {
+				table.renderExpanded.value = (data: any) => {
 					return slots.default
 						? slots.default(data)
 						: slots.default;
@@ -211,7 +212,7 @@ export const TableColumn = defineComponent({
 						style: {}
 					};
 					// 存在树形数组，且当前行无箭头图标且处于当前展开列，表格对齐
-					if (!isEmpty(table.exposed.store.states.treeData) && !prefix && data.isExpandColumn) {
+					if (!isEmpty(table.store.states.treeData) && !prefix && data.isExpandColumn) {
 						prefix = <span class="vc-table-un-expand__indent" />;
 					}
 
@@ -260,15 +261,15 @@ export const TableColumn = defineComponent({
 
 			// 影响布局
 			watch(() => props.fixed, () => {
-				table.exposed.store.scheduleLayout(true);
+				table.store.scheduleLayout(true);
 			});
 			watch(() => realWidth.value, (v) => {
 				columnConfig['width'] = v;
 				columnConfig['realWidth'] = v;
-				table.exposed.store.scheduleLayout(false);
+				table.store.scheduleLayout(false);
 			});
 			watch(() => realMinWidth.value, () => {
-				table.exposed.store.scheduleLayout(false);
+				table.store.scheduleLayout(false);
 			});
 		};
 
@@ -279,27 +280,27 @@ export const TableColumn = defineComponent({
 		onMounted(() => {
 			const children = isSubColumn
 				? parent.vnode.el.children
-				: parent.exposed.hiddenColumns.value.children;
+				: parent.hiddenColumns.value.children;
 
 			// DOM上
 			const columnIndex = [...children].indexOf(instance.vnode.el);
 
-			table.exposed.store.insertColumn(
+			table.store.insertColumn(
 				columnConfig,
 				columnIndex,
-				isSubColumn && parent.exposed.columnConfig
+				isSubColumn && parent.columnConfig
 			);
 		});
 
 		onUnmounted(() => {
 			if (!instance.parent) return;
-			table.exposed.store.removeColumn(
+			table.store.removeColumn(
 				columnConfig,
-				isSubColumn && parent.exposed.columnConfig
+				isSubColumn && parent.columnConfig
 			);
 		});
 
-		expose({
+		provide('vc-table-column', {
 			columnId,
 			columnConfig
 		});

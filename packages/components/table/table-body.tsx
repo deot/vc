@@ -1,9 +1,8 @@
-import { defineComponent, ref, getCurrentInstance, watch, computed } from 'vue';
+import { defineComponent, ref, getCurrentInstance, watch, computed, inject } from 'vue';
 import { debounce } from 'lodash-es';
 import { addClass, removeClass, hasClass } from '@deot/helper-dom';
 import { IS_SERVER } from '@deot/vc-shared';
 import { raf } from '@deot/helper-utils';
-import { getInstance } from '@deot/vc-hooks';
 import { Popover } from '../popover';
 import { RecycleList } from '../recycle-list';
 import { NormalList } from './normal-list';
@@ -21,7 +20,7 @@ export const TableBody = defineComponent({
 	emits: ['scroll'],
 	setup(props, { emit, expose }) {
 		const instance = getCurrentInstance()!;
-		const table: any = getInstance('table', 'tableId');
+		const table: any = inject('vc-table');
 
 		const states: any = useStates({
 			data: 'data',
@@ -182,7 +181,7 @@ export const TableBody = defineComponent({
 			if (cell) {
 				const column = getColumnByCell(states.columns, cell);
 				const hoverState = { cell, column, row };
-				table.exposed.hoverState.value = hoverState;
+				table.hoverState.value = hoverState;
 
 				table.emit('cell-mouse-enter', hoverState.row, hoverState.column, hoverState.cell, e);
 			}
@@ -218,7 +217,7 @@ export const TableBody = defineComponent({
 			const cell = getCell(e);
 			if (!cell) return;
 
-			const oldHoverState = table.exposed.hoverState.value || {};
+			const oldHoverState = table.hoverState.value || {};
 			table.emit('cell-mouse-leave', oldHoverState.row, oldHoverState.column, oldHoverState.cell, e);
 		};
 
@@ -259,6 +258,7 @@ export const TableBody = defineComponent({
 			const { data: row } = rowData;
 			const { columns } = states;
 			const key = getValueOfRow(row, rowIndex);
+			const selected = props.store!.isSelected(row);
 			return (
 				<div
 					key={key}
@@ -275,10 +275,11 @@ export const TableBody = defineComponent({
 							const { realWidth, renderCell } = column;
 							const sizeStyle = { width: `${realWidth}px`, height: `${rowData.height ? `${rowData.height}px` : 'auto'}` };
 							if (columnsHidden.value[columnIndex]) {
-								return <div style={[sizeStyle]}></div>;
+								return <div key={column.id} style={[sizeStyle]}></div>;
 							}
 							return (
 								<div
+									key={column.id}
 									style={[getCellStyle(rowIndex, columnIndex, row, column), sizeStyle]}
 									class={[getCellClass(rowIndex, columnIndex, row, column), 'vc-table__td']}
 									onMouseenter={(e: any) => handleCellMouseEnter(e, row)}
@@ -291,7 +292,8 @@ export const TableBody = defineComponent({
 												column,
 												rowIndex,
 												columnIndex,
-												store: props.store
+												store: props.store,
+												selected
 											}
 										)
 									}
@@ -337,7 +339,7 @@ export const TableBody = defineComponent({
 			wrapper,
 			getRootElement: () => instance.vnode.el
 		});
-		const layout = table.exposed.layout;
+		const layout = table.layout;
 		return () => {
 			return (
 				<div class="vc-table__body">
@@ -350,7 +352,7 @@ export const TableBody = defineComponent({
 										disabled={true}
 										class="vc-table__tbody"
 										scrollerOptions={{
-											barTo: `.${table.exposed.tableId}`,
+											barTo: `.${table.tableId}`,
 											native: false,
 											always: false,
 											showBar: !props.fixed,

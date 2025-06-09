@@ -7,7 +7,17 @@
 			取消测试
 		</Button>
 		<h1 @click="isActive = !isActive">Max-Height</h1>
-		<Table v-if="isActive" primary-key="id" :rows="6" border stripe show-summary max-height="600" :data="dataSource">
+		<Table
+			v-if="isActive"
+			primary-key="id"
+			:rows="6"
+			border
+			stripe
+			show-summary
+			:max-height="600"
+			:data="dataSource"
+			@selection-change="handleChange"
+		>
 			<TableColumn
 				type="selection"
 				:width="80"
@@ -18,8 +28,8 @@
 				label="产品信息"
 				fixed="left"
 			>
-				<template #default="{ rowIndex }">
-					<div>{{ rowIndex }}</div>
+				<template #default="{ rowIndex, selected }">
+					<div>{{ rowIndex }}{{ selected }}</div>
 				</template>
 			</TableColumn>
 
@@ -27,8 +37,8 @@
 				label="款式图片"
 				fixed="left"
 			>
-				<template #default>
-					<div>款式图片</div>
+				<template #default="{ row }">
+					<div>{{ row.id }}</div>
 				</template>
 			</TableColumn>
 
@@ -50,8 +60,8 @@
 				label="操作"
 				fixed="right"
 			>
-				<template #default>
-					<div>操作</div>
+				<template #default="{ rowIndex }">
+					<div @click="handleDelete(rowIndex)">删除</div>
 				</template>
 			</TableColumn>
 		</Table>
@@ -81,5 +91,12 @@ const handleTestingEnd = () => {
 	clearInterval(timer);
 	timer = null;
 	isActive.value = false;
+};
+
+const handleDelete = (rowIndex) => {
+	dataSource.value.splice(rowIndex, 1);
+};
+const handleChange = (section) => {
+	console.log(section.map(i => i.id));
 };
 </script>

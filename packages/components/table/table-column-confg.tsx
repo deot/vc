@@ -44,12 +44,12 @@ export const cellForced = {
 				/>
 			);
 		},
-		renderCell({ row, column, store, rowIndex, level }) {
+		renderCell({ row, column, store, rowIndex, level, selected }) {
 			return (
 				<Checkbox
 					// @ts-ignore
 					vShow={store.table.props.expandSelectable || level === 0}
-					modelValue={store.isSelected(row)}
+					modelValue={selected}
 					disabled={
 						column.selectable
 							? !column.selectable.call(null, row, rowIndex)

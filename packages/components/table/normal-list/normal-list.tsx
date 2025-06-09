@@ -8,8 +8,10 @@ const COMPONENT_NAME = 'vc-table-normal-list';
 export const NormalList = defineComponent({
 	name: COMPONENT_NAME,
 	props: {
-		data: Array,
-		default: () => ([])
+		data: {
+			type: Array,
+			default: () => ([])
+		}
 	},
 	emits: ['row-resize'],
 	setup(props, { emit, slots }) {
