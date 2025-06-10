@@ -43,6 +43,7 @@ class Store extends BaseWatcher {
 
 		const { props } = options.table;
 		merge(this.states, {
+			expandSelectable: props.expandSelectable,
 			treeLazy: props.lazy || false,
 			treeLazyColumnIdentifier: props.treeMap.hasChildren || 'hasChildren',
 			treeChildrenColumnName: props.treeMap.children || 'children',

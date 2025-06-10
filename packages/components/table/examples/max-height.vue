@@ -23,7 +23,7 @@
 				type="selection"
 				fixed="left"
 				prop="abc"
-				width="80"
+				:width="80"
 			/>
 			<TableColumn
 				label="产品信息"

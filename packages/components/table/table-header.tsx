@@ -14,10 +14,6 @@ export const TableHeader = defineComponent({
 	name: 'vc-table-header',
 	props: {
 		fixed: [Boolean, String],
-		store: {
-			type: Object,
-			required: true
-		},
 		border: Boolean,
 		// 排序全部交给外部处理，内部不处理数据，只做交互
 		defaultSort: {
@@ -182,7 +178,7 @@ export const TableHeader = defineComponent({
 						column.realWidth = column.width;
 						table.$emit('header-dragend', column.width, startLeft - startColumnLeft, column, event);
 
-						props.store.scheduleLayout();
+						table.store.scheduleLayout();
 
 						document.body.style.cursor = '';
 						dragging.value = false;
@@ -307,7 +303,7 @@ export const TableHeader = defineComponent({
 																	{
 																		column,
 																		columnIndex,
-																		store: props.store,
+																		store: table.store,
 																	}
 																)
 															: column.label

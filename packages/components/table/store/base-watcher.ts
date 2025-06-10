@@ -24,6 +24,7 @@ export class BaseWatcher {
 		selection: [] as any[],
 		reserveSelection: false,
 		selectable: null as any,
+		expandSelectable: null as any,
 
 		hoverRowIndex: null,
 

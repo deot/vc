@@ -13,7 +13,6 @@ import { useStates } from './store';
 export const TableBody = defineComponent({
 	name: 'vc-table-body',
 	props: {
-		store: Object,
 		fixed: String,
 		heightStyle: [Object, Array, String]
 	},
@@ -39,9 +38,9 @@ export const TableBody = defineComponent({
 		const wrapper = ref();
 
 		watch(
-			() => props.store!.states.hoverRowIndex,
+			() => table.store.states.hoverRowIndex,
 			(v, oldV) => {
-				if (!props.store!.states.isComplex || IS_SERVER) return;
+				if (!table.store.states.isComplex || IS_SERVER) return;
 				raf(() => {
 					const rows = instance.vnode.el!.querySelectorAll('.vc-table__row');
 					const oldRow = rows[oldV];
@@ -109,7 +108,7 @@ export const TableBody = defineComponent({
 
 		const getRowClass = (row: any, rowIndex: number) => {
 			const classes = ['vc-table__row'];
-			if (table.props.highlight && row === props.store!.states.currentRow) {
+			if (table.props.highlight && row === table.store.states.currentRow) {
 				classes.push('current-row');
 			}
 
@@ -126,7 +125,7 @@ export const TableBody = defineComponent({
 				}));
 			}
 
-			if (props.store!.states.expandRows.indexOf(row) > -1) {
+			if (table.store.states.expandRows.indexOf(row) > -1) {
 				classes.push('expanded');
 			}
 
@@ -223,11 +222,11 @@ export const TableBody = defineComponent({
 		};
 
 		const handleMouseEnter = debounce((index: number) => {
-			props.store!.setHoverRow(index);
+			table.store.setHoverRow(index);
 		}, 30);
 
 		const handleMouseLeave = debounce(() => {
-			props.store!.setHoverRow(null);
+			table.store.setHoverRow(null);
 		}, 30);
 
 		const handleEvent = (e: any, row: any, name: string) => {
@@ -251,7 +250,7 @@ export const TableBody = defineComponent({
 		};
 
 		const handleClick = (e: any, row: any) => {
-			props.store!.setCurrentRow(row);
+			table.store.setCurrentRow(row);
 			handleEvent(e, row, 'click');
 		};
 
@@ -260,7 +259,7 @@ export const TableBody = defineComponent({
 			const { data: row } = rowData;
 			const { columns } = states;
 			const key = getValueOfRow(row, rowIndex);
-			const selected = props.store!.isSelected(row);
+			const selected = table.store.isSelected(row);
 			const height = rowHeight || rowData.height;
 			return (
 				<div
@@ -298,7 +297,7 @@ export const TableBody = defineComponent({
 												column,
 												rowIndex,
 												columnIndex,
-												store: props.store,
+												store: table.store,
 												selected
 											}
 										)

@@ -490,7 +490,6 @@ export const Table = defineComponent({
 							>
 								<TableHeader
 									ref={tableHeader}
-									store={store}
 									border={props.border}
 									default-sort={props.defaultSort}
 									style={bodyWidthStyle.value}
@@ -517,7 +516,6 @@ export const Table = defineComponent({
 							>
 								<TableBody
 									ref={body}
-									store={store}
 									style={[bodyWidthStyle.value]}
 									height-style={[bodyHeightStyle.value]}
 									// @ts-ignore
@@ -558,7 +556,6 @@ export const Table = defineComponent({
 								class="vc-table__footer-wrapper"
 							>
 								<TableFooter
-									store={store}
 									border={props.border}
 									sum-text={props.sumText || '合计'}
 									get-summary={props.getSummary}
@@ -582,7 +579,6 @@ export const Table = defineComponent({
 										>
 											<TableHeader
 												ref={leftFixedTableHeader}
-												store={store}
 												border={props.border}
 												default-sort={props.defaultSort}
 												style={bodyWidthStyle.value}
@@ -598,7 +594,6 @@ export const Table = defineComponent({
 								>
 									<TableBody
 										ref={leftFixedBody}
-										store={store}
 										style={[bodyWidthStyle.value, bodyHeightStyle.value]}
 										fixed="left"
 									/>
@@ -622,7 +617,6 @@ export const Table = defineComponent({
 											class="vc-table__fixed-footer-wrapper"
 										>
 											<TableFooter
-												store={store}
 												border={props.border}
 												sum-text={props.sumText || '合计'}
 												get-summary={props.getSummary}
@@ -650,7 +644,6 @@ export const Table = defineComponent({
 										>
 											<TableHeader
 												ref={rightFixedTableHeader}
-												store={store}
 												border={props.border}
 												default-sort={props.defaultSort}
 												style={bodyWidthStyle.value}
@@ -670,7 +663,6 @@ export const Table = defineComponent({
 								>
 									<TableBody
 										ref={rightFixedBody}
-										store={store}
 										style={[bodyWidthStyle.value, bodyHeightStyle.value]}
 										fixed="right"
 									/>
@@ -694,7 +686,6 @@ export const Table = defineComponent({
 											class="vc-table__fixed-footer-wrapper"
 										>
 											<TableFooter
-												store={store}
 												border={props.border}
 												sum-text={props.sumText || '合计'}
 												get-summary={props.getSummary}

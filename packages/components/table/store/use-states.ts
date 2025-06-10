@@ -1,12 +1,11 @@
-import { computed, getCurrentInstance, reactive } from 'vue';
+import { computed, inject, reactive } from 'vue';
 import type { Store } from './store';
 
 type Mapper = {
 	[key: string]: ((states: Store['states']) => any) | string;
 };
 export const useStates = (mapper: Mapper, $store?: Store) => {
-	const instance = getCurrentInstance()!;
-	const store = $store || (instance.proxy as any)?.store;
+	const store = $store || inject<any>('vc-table')?.store;
 
 	// computedRef自动解包
 	const states = reactive({});

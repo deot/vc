@@ -48,7 +48,7 @@ export const cellForced = {
 			return (
 				<Checkbox
 					// @ts-ignore
-					vShow={store.table.props.expandSelectable || level === 0}
+					vShow={store.states.expandSelectable || level === 0}
 					modelValue={selected}
 					disabled={
 						column.selectable

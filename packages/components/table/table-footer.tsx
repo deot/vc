@@ -5,10 +5,6 @@ export const TableFooter = defineComponent({
 	name: 'vc-table-footer',
 	props: {
 		fixed: [String, Boolean],
-		store: {
-			type: Object,
-			required: true
-		},
 		getSummary: Function,
 		sumText: String,
 		border: Boolean,
@@ -31,7 +27,7 @@ export const TableFooter = defineComponent({
 			} else if (props.fixed === 'right') {
 				let before = 0;
 				for (let i = 0; i < index; i++) {
-					before += states.columns[i].colSpan;
+					before += states.columns[i].colspan;
 				}
 				return before < states.columnsCount - states.rightFixedLeafCount;
 			} else if (!props.fixed && column.fixed) {
