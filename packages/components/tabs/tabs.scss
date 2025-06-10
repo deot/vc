@@ -5,6 +5,8 @@ $color-primary: varfix(color-primary, tabs);
 $background-color-light: varfix(background-color-light, tabs);
 
 @include block($component-name) {
+	color: #667383;
+
 	@include element(bar) {
 		position: relative;
 		display: flex;
@@ -36,7 +38,7 @@ $background-color-light: varfix(background-color-light, tabs);
 		bottom: 0;
 		left: 0;
 		z-index: 1;
-		height: 2px;
+		height: 3px;
 		background-color: $color-primary;
 		box-sizing: border-box;
 		
@@ -81,8 +83,10 @@ $background-color-light: varfix(background-color-light, tabs);
 		@include element(item) {
 			position: relative;
 			display: inline-block;
-			padding: 8px 16px;
-			margin-right: 16px;
+			padding: 10px 12px;
+			margin-right: 12px;
+			font-size: 13px;
+			line-height: 20px;
 			text-decoration: none;
 			cursor: pointer;
 			box-sizing: border-box;
@@ -110,7 +114,7 @@ $background-color-light: varfix(background-color-light, tabs);
 			cursor: pointer;
 			background: $background-color-light;
 			border: 1px solid #d9d9d9;
-			border-bottom: 0;
+			box-sizing: border-box;
 			transition: all .3s ease-in-out;
 
 			&:first-child {

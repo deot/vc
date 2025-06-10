@@ -1,9 +1,9 @@
-.vcm-tabs-pane {
+.vc-tabs-pane {
 	flex-shrink: 0;
 	width: 100%;
 }
 
-.vcm-tabs.is-animated .vcm-tabs-pane{
+.vc-tabs.is-animated .vc-tabs-pane {
 	opacity: 1;
 	transition: opacity .3s cubic-bezier(.35, 0, .25, 1);
 }

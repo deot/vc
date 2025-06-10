@@ -58,7 +58,7 @@ export const Tabs = defineComponent({
 				if (!Array.from(items).length) return;
 				let offset = 0;
 				if (index > 0) {
-					const gutter = 16; // margin-right -> 16px
+					const gutter = 12; // margin-right -> 12px
 					for (let i = 0; i < index; i++) {
 						offset += parseFloat(items[i].offsetWidth) + gutter;
 					}
@@ -149,7 +149,7 @@ export const Tabs = defineComponent({
 					<div class="vc-tabs__extra">
 						{ slots.extra?.() }
 					</div>
-					<div ref={wrapper} style={{ padding: tabs.scrollable.value && '0 24px' }} class="vc-tabs__bar">
+					<div ref={wrapper} style={{ padding: tabs.scrollable.value ? '0 24px' : 0 }} class="vc-tabs__bar">
 						{
 							tabs.scrollable.value && (
 								<Icon
