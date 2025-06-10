@@ -4,7 +4,7 @@ $component-name: vc-radio-group;
 $size: 28px;
 
 @include block($component-name) {
-	display: inline-block;
+	display: inline-flex;
 	font-size: 12px;
 	line-height: unset;
 
@@ -20,7 +20,7 @@ $size: 28px;
 		font-size: 0; // 去除间距
 		.vc-radio {
 			position: relative;
-			display: inline-block;
+			display: inline-flex;
 			height: $size;
 			padding: 0 12px;
 			margin: 0;

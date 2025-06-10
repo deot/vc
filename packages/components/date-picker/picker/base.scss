@@ -4,7 +4,7 @@ $component-name: vc-date-picker;
 
 @include block($component-name) {
 	position: relative;
-	display: inline-block;
+	display: inline-flex;
 	width: auto;
 	line-height: 1;
 

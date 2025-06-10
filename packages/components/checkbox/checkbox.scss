@@ -3,14 +3,15 @@
 $component-name: vc-checkbox;
 
 @include block($component-name) {
-	display: inline-block;
+	display: inline-flex;
 	margin-right: 8px;
 	font-size: 12px;
 	cursor: pointer;
+	align-items: center;
 
 	@include element(wrapper) {
 		position: relative;
-		display: inline-block;
+		display: inline-flex;
 		line-height: 1;
 		white-space: nowrap;
 		vertical-align: middle;
@@ -39,7 +40,7 @@ $component-name: vc-checkbox;
 		position: relative;
 		top: 0;
 		left: 0;
-		display: inline-block;
+		display: inline-flex;
 		width: 14px;
 		height: 14px;
 		background-color: #fff;

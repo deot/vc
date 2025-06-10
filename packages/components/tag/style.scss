@@ -8,7 +8,7 @@ $color-primary: varfix(color-primary, tag);
 
 @include block($component-name) {
 	position: relative;
-	display: inline-block;
+	display: inline-flex;
 	height: 22px;
 	margin: 2px 4px 2px 0;
 	overflow: hidden;
