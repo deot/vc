@@ -8,7 +8,7 @@ $color-light-extradeep: varfix(color-light-extradeep, input);
 		position: relative;
 		padding: 0 unitfix(8);
 		font-size: unitfix(14);
-		line-height: 28px;
+		line-height: unitfix(32);
 		color: $color-light-extradeep;
 		text-align: center;
 		white-space: nowrap;

@@ -2,7 +2,7 @@
 
 $component-name: vc-input-number;
 $background-color-light: varfix(background-color-light, input);
-$color-light-extradeep: varfix(color-light-extradeep, input);
+$color-light-deeper: varfix(color-light-deeper, input);
 $color-primary-light: varfix(color-primary-light, input);
 $color-dark-extralight: varfix(color-dark-extralight, input);
 $color-disabled: varfix(color-disabled, input);
@@ -21,7 +21,7 @@ $color-disabled: varfix(color-disabled, input);
 	@include element(icon) {
 		display: none;
 		width: unitfix(20);
-		height: unitfix(28);
+		height: unitfix(32);
 		font-size: unitfix(12);
 		color: $color-dark-extralight;
 		flex-direction: column;
@@ -34,12 +34,12 @@ $color-disabled: varfix(color-disabled, input);
 	}
 
 	@include share-rule(input-number-icon) {
-		height: unitfix(14);
-		line-height: unitfix(14);
+		height: unitfix(16);
+		line-height: unitfix(16);
 		background-color: $background-color-light;
 		user-select: none;
 
-		@include border(left, $color-light-extradeep); // 不占边距
+		@include border(left, $color-light-deeper); // 不占边距
 		&[disabled="disabled"] {
 			color: $color-dark-extralight;
 			pointer-events: none;

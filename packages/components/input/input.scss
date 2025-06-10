@@ -2,7 +2,7 @@
 
 $component-name: vc-input;
 $background-color-light: varfix(background-color-light, input);
-$color-light-extradeep: varfix(color-light-extradeep, input);
+$color-light-deeper: varfix(color-light-deeper, input);
 $color-primary: varfix(color-primary, input);
 $color-primary-lighter: varfix(color-primary-lighter, input);
 $color-dark-lighter: varfix(color-dark-lighter, input);
@@ -16,18 +16,18 @@ $color-disabled: varfix(color-disabled, input);
 	position: relative;
 	display: inline-block;
 	width: 100%;
-	min-height: unitfix(28);
+	min-height: unitfix(32);
 	overflow: hidden;
 	font-size: unitfix(12);
 	line-height: 1.5;
 	cursor: text;
 	background-color: $background-color-light;
-	border-radius: unitfix(4);
+	border-radius: unitfix(8);
 	transition: border .2s ease-in-out, 
 		background .2s ease-in-out, 
 		box-shadow .2s ease-in-out;
 
-	@include border('', $color-light-extradeep, 4); // 不占边距
+	@include border('', $color-light-deeper, 8); // 不占边距
 
 	@include when(focus) {
 		&::after, &::before {
@@ -58,7 +58,7 @@ $color-disabled: varfix(color-disabled, input);
 		input {
 			position: relative;
 			width: 100%;
-			padding: unitfix(5) unitfix(7); // 18 + 5 + 5 + 2 = 28
+			padding: unitfix(7); // 18 + 7 + 7 + 2 = 32
 			font-family: inherit;
 			font-size: inherit;
 			line-height: inherit;
@@ -89,10 +89,10 @@ $color-disabled: varfix(color-disabled, input);
 	}
 
 	@include share-rule(input-icon) {
-		width: unitfix(28);
-		height: unitfix(28);
+		width: unitfix(32);
+		height: unitfix(32);
 		font-size: unitfix(13);
-		line-height: unitfix(28)!important;
+		line-height: unitfix(32)!important;
 		color: $color-dark-extralight;
 		text-align: left;
 	}
@@ -116,9 +116,9 @@ $color-disabled: varfix(color-disabled, input);
 	@include share-rule(input-pend) {
 		z-index: 0; // 让虚线在下方
 		height: 100%;
-		height: unitfix(28);
+		height: unitfix(32);
 		font-size: unitfix(13);
-		line-height: unitfix(28);
+		line-height: unitfix(32);
 		text-align: center;
 		white-space: nowrap;
 
@@ -166,7 +166,7 @@ $color-disabled: varfix(color-disabled, input);
 		top: 0;
 		z-index: 1;
 		font-size: unitfix(12);
-		line-height: unitfix(28);
+		line-height: unitfix(32);
 		color: $color-dark-extralight;
 
 		@include when(in) {
