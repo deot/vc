@@ -19,7 +19,7 @@ export const props = {
 		validator: (v: string) => /(small|medium|large)/.test(v),
 		default: 'small'
 	},
-	portalClass: [Object, String],
+	contentClass: [Object, String],
 	width: {
 		type: Number
 	},
@@ -67,6 +67,10 @@ export const props = {
 	footer: {
 		type: Boolean,
 		default: true
+	},
+	border: {
+		type: Boolean,
+		default: false
 	},
 
 	/**

@@ -357,7 +357,8 @@ export const ModalView = defineComponent({
 									{
 										'is-drag': props.draggable,
 										'is-large': props.size === 'large' || props.size === 'medium',
-										'is-no-footer': !props.footer || (!props.cancelText && !props.okText)
+										'has-footer': props.footer && (props.cancelText || props.okText),
+										'has-border': props.border,
 									},
 									'vc-modal__container'
 								]}
@@ -381,7 +382,10 @@ export const ModalView = defineComponent({
 										!slots.header
 											? (
 													<Fragment>
-														<div class="vc-modal__title" innerHTML={props.title} />
+														<div
+															class="vc-modal__title"
+															innerHTML={props.title}
+														/>
 														{
 															props.closable && !props.mode && (
 																<div
@@ -407,7 +411,7 @@ export const ModalView = defineComponent({
 													native={false}
 													always={false}
 													height={isTransitionEnd.value ? row.height : (void 0)}
-													contentClass={[{ 'is-confirm': props.mode }, props.portalClass, 'vc-modal__content']}
+													contentClass={[{ 'is-confirm': props.mode }, props.contentClass, 'vc-modal__content']}
 												>
 													{
 														typeof props.content === 'string'

@@ -10,9 +10,10 @@ $background-color-light: varfix(background-color-light, modal);
 $border-shadow: varfix(border-shadow, modal);
 $color-light-deeper: varfix(color-light-deeper, modal);
 $color-dark-light: varfix(color-dark-light, modal);
-$color-dark-extralight: varfix(color-dark-extralight, modal);
+$color-dark-lightest: varfix(color-dark-lightest, modal);
 
 @include block($component-name) {
+	font-size: 14px;
 	color: $foreground-color;
 
 	@include element(mask) {
@@ -36,16 +37,16 @@ $color-dark-extralight: varfix(color-dark-extralight, modal);
 	@include element(container) {
 		position: relative;
 		display: flex;
-		padding-bottom: unitfix(63);
+		padding-bottom: 0;
 		margin: auto;
 		background: $background-color-light;
-		border-radius: unitfix(4);
+		border-radius: unitfix(16);
 		box-shadow: $border-shadow;
 		box-sizing: border-box;
 		flex-direction: column;
 
-		@include when(no-footer) {
-			padding-bottom: 0;
+		@include when(footer, true) {
+			padding-bottom: unitfix(63);
 		}
 
 		@include when(drag) {
@@ -61,20 +62,50 @@ $color-dark-extralight: varfix(color-dark-extralight, modal);
 				min-height: 100% !important;
 			}
 		}
+
+		@include when(border, true) {
+			border-radius: unitfix(8);
+
+			@include element(header) {
+				padding: unitfix(14) unitfix(24);
+				font-size: unitfix(14);
+				font-weight: 400;
+				border-bottom: unitfix(1) solid $color-light-deeper;
+			}
+
+			@include element(title) {
+				font-size: unitfix(14);
+				font-weight: 400;
+			}
+
+			@include element(content) {
+				padding: unitfix(16) unitfix(24);
+			}
+
+			@include element(footer) {
+				padding: unitfix(17) unitfix(24);
+				font-size: 12px;
+				border-top: unitfix(1) solid $color-light-deeper;
+			}
+
+			@include element(close) {
+				top: unitfix(17);
+				right: unitfix(16);
+			}
+		}
 	}
 
 	@include element(header) {
 		position: relative;
 		display: flex;
-		padding: unitfix(14) unitfix(24);
-		font-size: unitfix(14);
-		font-weight: 400;
+		padding: unitfix(24) unitfix(28) unitfix(14);
+		font-size: unitfix(16);
+		font-weight: 600;
 		line-height: 1;
-		border-bottom: unitfix(1) solid #e8e8e8;
 		box-sizing: border-box;
 
 		@include when(confirm) {
-			padding: unitfix(24) unitfix(16) unitfix(16);
+			padding: unitfix(32) unitfix(28) unitfix(12);
 			border-bottom: none;
 		}
 	}
@@ -89,13 +120,12 @@ $color-dark-extralight: varfix(color-dark-extralight, modal);
 	}
 
 	@include element(content) {
-		padding: unitfix(16) unitfix(24);
+		padding: unitfix(12) unitfix(28);
 		box-sizing: border-box;
 
 		@include when(confirm) {
-			padding: 0;
-			padding-right: unitfix(24);
-			padding-left: unitfix(46);
+			padding: unitfix(0) unitfix(24) unitfix(32) unitfix(56);
+			font-weight: 400;
 		}
 
 		@include when(padding-none) {
@@ -108,14 +138,12 @@ $color-dark-extralight: varfix(color-dark-extralight, modal);
 		position: absolute;
 		bottom: 0;
 		width: 100%;
-		padding: unitfix(17) unitfix(24);
-		font-size: 12px;
+		padding: unitfix(12) unitfix(24);
 		text-align: right;
-		border-top: unitfix(1) solid $color-light-deeper;
 		box-sizing: border-box;
 
 		@include when(confirm) {
-			padding: unitfix(14) unitfix(16);
+			padding: unitfix(0) unitfix(28) unitfix(32);
 			border-top: none;
 
 			button {
@@ -128,8 +156,8 @@ $color-dark-extralight: varfix(color-dark-extralight, modal);
 	@include element(title) {
 		width: 100%;
 		min-height: unitfix(20);
-		font-size: unitfix(14);
-		font-weight: 400;
+		font-size: unitfix(16);
+		font-weight: 600;
 		line-height: unitfix(20);
 		color: $color-dark-light;
 		word-wrap: break-word;
@@ -137,9 +165,10 @@ $color-dark-extralight: varfix(color-dark-extralight, modal);
 
 	@include element(close) {
 		position: absolute;
-		top: unitfix(17);
-		right: unitfix(16);
-		color: $color-dark-extralight;
+		top: unitfix(24);
+		right: unitfix(28);
+		font-size: unitfix(13);
+		color: $color-dark-lightest;
 		cursor: pointer;
 	}
 

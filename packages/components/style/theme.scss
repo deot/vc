@@ -13,7 +13,7 @@ $theme: (
 	background-color-light: (light: #fff, dark: #252b3a),
 	
 	// 默认
-	foreground-color: (light: #303133, dark: #f8f8f8),
+	foreground-color: (light: #080F20, dark: #f8f8f8),
 	foreground-color-dark: (light: #000, dark: #f8f8f8),
 
 	// 蒙层-亮度
@@ -23,15 +23,15 @@ $theme: (
 	// 亮色系-亮度
 	color-light: (light: #ffffff, dark: #000000),
 	color-light-deep: (light: #F3F4F6, dark: #C0C4CC),
-	color-light-deeper: (light: #D5D9E1, dark: #D5D9E1),
+	color-light-deeper: (light: #EBEDEF, dark: #D5D9E1),
 	color-light-deepest: (light: #C0C4CC, dark: #e8e8e8),
 	color-light-extradeep: (light: #b9b9b9, dark: #f8f8f8),
 
 	// 暗色系-亮度
 	color-dark: (light: #000000, dark: #ffffff),
-	color-dark-light: (light: #303133, dark: #e8e8e8),
+	color-dark-light: (light: #080F20, dark: #e8e8e8),
 	color-dark-lighter: (light: #515151, dark: #d9d9d9),
-	color-dark-lightest: (light: #606266, dark: #c9c9c9),
+	color-dark-lightest: (light: #64758B, dark: #c9c9c9),
 	color-dark-extralight: (light: #909399, dark: #b9b9b9),
 
 	// 提醒色-亮度

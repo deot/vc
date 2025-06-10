@@ -35,6 +35,7 @@
 			:esc-closable="false"
 			scrollable
 			draggable
+			border
 			title="标题2"
 			ok-text="保存2"
 			cancel-text="关闭2"
@@ -76,18 +77,17 @@ const handleModal3 = async () => {
 const handleModal4 = () => {
 	Modal.warning({
 		title: 'warning',
+		width: 500,
 		content: () => {
 			return [
-				h('input', {
-					type: 'textarea',
-				})
+				h('div', '通过审批后数据不能更改，请确认数据无误，再通过审批！')
 			];
 		},
 		okText: '啦啦啦啦',
 		mask: true,
 		closeWithCancel: true,
 		maskClosable: true,
-		portalClass: 'is-padding-none',
+		// contentClass: 'is-padding-none',
 		// draggable: true,
 		onOk: () => {
 			return new Promise((resolve) => {

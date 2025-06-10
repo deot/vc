@@ -2,6 +2,7 @@
 
 $component-name: vc-drawer;
 $color-light-deeper: varfix(color-light-deeper, drawer);
+$color-dark-lightest: varfix(color-dark-lightest, drawer);
 $background-color-light: varfix(background-color-light, drawer);
 
 @include block($component-name) {
@@ -72,10 +73,11 @@ $background-color-light: varfix(background-color-light, drawer);
 
 	@include element(header) {
 		position: relative;
-		padding: 14px 16px;
-		font-size: 14px;
-		line-height: 1;
-		border-bottom: 1px solid #e8eaec;
+		padding: unitfix(16) unitfix(28);
+		font-size: unitfix(16);
+		font-weight: 600;
+		line-height: unitfix(24);
+		border-bottom: 1px solid $color-light-deeper;
 	}
 
 	@include element(content-container) {
@@ -105,9 +107,10 @@ $background-color-light: varfix(background-color-light, drawer);
 
 	@include element(close) {
 		position: absolute;
-		top: 12px;
-		right: 16px;
-		color: #999;
+		top: 16px;
+		right: 28px;
+		font-size: unitfix(13);
+		color: $color-dark-lightest;
 		cursor: pointer;
 	}	
 }
