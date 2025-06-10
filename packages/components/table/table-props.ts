@@ -89,6 +89,9 @@ export const props = {
 	defaultSort: {
 		type: Object,
 		default: () => ({})
-	}
+	},
+
+	// 用于延迟渲染，用于计算高度
+	delay: Number
 };
 export type Props = ExtractPropTypes<typeof props>;

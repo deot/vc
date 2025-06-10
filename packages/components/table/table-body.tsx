@@ -1,4 +1,4 @@
-import { defineComponent, ref, getCurrentInstance, watch, computed, inject } from 'vue';
+import { defineComponent, ref, getCurrentInstance, watch, computed, inject, onBeforeMount, onBeforeUnmount } from 'vue';
 import { debounce } from 'lodash-es';
 import { addClass, removeClass, hasClass } from '@deot/helper-dom';
 import { IS_SERVER } from '@deot/vc-shared';
@@ -22,6 +22,7 @@ export const TableBody = defineComponent({
 		const instance = getCurrentInstance()!;
 		const table: any = inject('vc-table');
 
+		const allowRender = ref(false);
 		const states: any = useStates({
 			data: 'data',
 			list: 'list',
@@ -346,7 +347,18 @@ export const TableBody = defineComponent({
 			getRootElement: () => instance.vnode.el
 		});
 		const layout = table.layout;
+
+		let timer: any;
+		onBeforeMount(() => {
+			if (table.props.delay) {
+				timer = setTimeout(() => allowRender.value = true, table.props.delay);
+			} else {
+				allowRender.value = true;
+			}
+		});
+		onBeforeUnmount(() => (timer && clearTimeout(timer), allowRender.value = false));
 		return () => {
+			if (!allowRender.value) return;
 			return (
 				<div class="vc-table__body">
 					{

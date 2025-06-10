@@ -14,6 +14,7 @@
 			border
 			stripe
 			show-summary
+			:delay="delay"
 			:height="600"
 			:row-height="100"
 			:data="dataSource"
@@ -71,6 +72,8 @@
 import { ref } from 'vue';
 import { Table, TableColumn } from '..';
 import { Button } from '../../button';
+
+defineProps({ delay: Number });
 
 const isActive = ref(true);
 const genTableData = length => Array.from({ length }).map((_, index) => ({

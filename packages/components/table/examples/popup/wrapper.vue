@@ -7,14 +7,14 @@
 		@ok="handleOk"
 		@cancel="handleCancel"
 	>
-		<TableDemo />
+		<TableDemo :delay="350" />
 	</Modal>
 </template>
 
 <script setup>
 import { onMounted, ref, onUnmounted } from 'vue';
 import { Modal } from '../../../modal';
-import TableDemo from '../row-height.vue';
+import TableDemo from '../max-height.vue';
 
 defineProps({
 	data: Object

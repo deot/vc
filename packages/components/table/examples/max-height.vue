@@ -11,6 +11,7 @@
 			v-if="isActive"
 			primary-key="id"
 			:rows="6"
+			:delay="delay"
 			border
 			stripe
 			show-summary
@@ -22,6 +23,7 @@
 				type="selection"
 				fixed="left"
 				prop="abc"
+				width="80"
 			/>
 			<TableColumn
 				label="产品信息"
@@ -71,6 +73,7 @@ import { ref } from 'vue';
 import { Table, TableColumn } from '..';
 import { Button } from '../../button';
 
+defineProps({ delay: Number });
 const isActive = ref(true);
 const genTableData = length => Array.from({ length }).map((_, index) => ({
 	id: `id__${index}`

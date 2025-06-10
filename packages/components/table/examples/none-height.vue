@@ -1,11 +1,12 @@
 <template>
 	<div style="padding: 30px;">
 		<h1>None-Height</h1>
-		<Table primary-key="id" :rows="6" border stripe show-summary :data="dataSource">
+		<Table primary-key="id" :rows="6" :delay="delay" border stripe show-summary :data="dataSource">
 			<TableColumn
 				type="selection"
 				fixed="left"
 				prop="abc"
+				width="80"
 			/>
 			<TableColumn
 				label="产品信息"
@@ -53,6 +54,8 @@
 <script setup>
 import { ref } from 'vue';
 import { Table, TableColumn } from '..';
+
+defineProps({ delay: Number });
 
 const genTableData = length => Array.from({ length }).map((_, index) => ({
 	id: `id__${index}`

@@ -4,6 +4,7 @@
 		<Table
 			v-if="isActive"
 			primary-key="id"
+			:delay="delay"
 			:rows="6"
 			:height="600"
 			:data="dataSource"
@@ -70,6 +71,8 @@
 <script setup>
 import { ref } from 'vue';
 import { Table, TableColumn } from '..';
+
+defineProps({ delay: Number });
 
 const genTableData = length => Array.from({ length }).map((_, index) => ({
 	id: `id__${index}`

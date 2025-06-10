@@ -815,6 +815,7 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 | show-header             | 是否显示表头                                                                                                                                     | `boolean`                                                  | -                           | `true`  |
 | highlight               | 是否要高亮当前行                                                                                                                                   | `boolean`                                                  | -                           | `false` |
 | current-row-value       | 当前行的`[id]/value`唯一值，只写属性                                                                                                                   | `string`、 `number`                                         | -                           | -       |
+| row-height              | 行的固定高度                                                                                                                                     |                                                            |                             |         |
 | row-class               | 行的 `className` 的回调方法，也可以使用字符串为所有行设置一个固定的 `className`。                                                                                      | `Function({row, rowIndex})`、 `string`                      | -                           | -       |
 | row-style               | 行的 `style` 的回调方法，也可以使用一个固定的 `Object` 为所有行设置一样的 `Style`。                                                                                    | `Function({row, rowIndex})`、 `Object`                      | -                           | -       |
 | cell-class              | 单元格的 `className` 的回调方法，也可以使用字符串为所有单元格设置一个固定的 `className`。                                                                                  | `Function({row, column, rowIndex, columnIndex})`、 `string` | -                           | -       |
@@ -834,6 +835,7 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 | get-span                | 合并行或列的计算方法                                                                                                                                 | `Function({ row, column, rowIndex, columnIndex })`         | -                           | -       |
 | select-on-indeterminate | 在多选表格中，当仅有部分行被选中时，点击表头的多选框时的行为。若为 `true`，则选中所有行；若为 `false`，则取消选择所有行                                                                        | `boolean`                                                  | -                           | `true`  |
 | default-sort            | 默认的排序列的 `prop` 和顺序。它的`prop`属性指定默认的排序的列，`order`指定默认排序的顺序                                                                                    |                                                            |                             |         |
+| delay                   | 延迟选择，排除transition的影响                                                                                                                       |                                                            |                             |         |
 
 
 ### 事件
