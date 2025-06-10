@@ -162,7 +162,8 @@ export const Table = defineComponent({
 					};
 				}
 				return {
-					height: layout.states.viewportHeight ? layout.states.viewportHeight + 'px' : ''
+					height: layout.states.viewportHeight ? layout.states.viewportHeight + 'px' : '',
+					bottom: 0
 				};
 			}
 		});
@@ -527,7 +528,7 @@ export const Table = defineComponent({
 										<div
 											ref={emptyBlock}
 											style={bodyWidthStyle.value}
-											class="vc-table__empty-block"
+											class={[{ 'is-absolute': !!props.height }, 'vc-table__empty-wrapper']}
 										>
 											<span class="vc-table__empty-text">
 												{ slots.empty ? slots.empty() : (props.emptyText || '暂无数据') }

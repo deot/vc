@@ -5,9 +5,6 @@
 			v-if="isActive"
 			primary-key="id"
 			:rows="6"
-			border
-			stripe
-			show-summary
 			:height="600"
 			:data="dataSource"
 			@selection-change="handleChange"

@@ -8,7 +8,7 @@ $color-info: varfix(color-primary, modal);
 $foreground-color: varfix(foreground-color, modal);
 $background-color-light: varfix(background-color-light, modal);
 $border-shadow: varfix(border-shadow, modal);
-$color-light-deeper: varfix(color-light-deeper, modal);
+$color-light-deeper: tablevarfix(color-light-deeper, modal);
 $color-dark-light: varfix(color-dark-light, modal);
 $color-dark-lightest: varfix(color-dark-lightest, modal);
 

@@ -1,14 +1,16 @@
 @use '../style/helper' as *;
 
 $component-name: vc-table;
+$foreground-color: varfix(foreground-color, table);
+$f9: #F7F8FA;
 
 @include block($component-name) {
 	position: relative;
 	width: 100%;
 	max-width: 100%;
 	overflow: hidden;
-	font-size: 12px;
-	color: #515151;
+	font-size: 14px;
+	color: $foreground-color;
 	background-color: #fff;
 	box-sizing: border-box;
 	flex: 1;
@@ -47,7 +49,7 @@ $component-name: vc-table;
 	}
 
 	.vc-table__th.is-leaf, .vc-table__td {
-		border-bottom: 1px solid #ebeef5;
+		border-bottom: 1px solid #EDEFF1;
 	}
 
 	.vc-table__td {
@@ -65,12 +67,12 @@ $component-name: vc-table;
 	}
 
 	.vc-table__th {
-		padding: 7px 0;
+		padding: 10px 0;
 		overflow: hidden;
 		white-space: nowrap;
 		background-color: #fff;
-		border-top: 1px solid #ebeef5;
-		border-bottom: 1px solid #ebeef5;
+		border-top: 1px solid #EDEFF1;
+		border-bottom: 1px solid #EDEFF1;
 		user-select: none;
 
 		&:first-child {
@@ -88,7 +90,6 @@ $component-name: vc-table;
 			padding-right: 10px;
 			padding-left: 10px;
 			overflow: hidden;
-			line-height: 30px;
 			text-overflow: ellipsis;
 			word-wrap: normal;
 			white-space: nowrap;
@@ -114,12 +115,12 @@ $component-name: vc-table;
 
 	// 拥有多级表头
 	@include modifier((group, border)) {
-		border: 1px solid #ebeef5;
+		border: 1px solid #EDEFF1;
 
 		@include share-rule(border-pseudo) {
 			position: absolute;
 			z-index: 1;
-			background-color: #ebeef5;
+			background-color: #EDEFF1;
 			content: "";
 		}
 
@@ -145,7 +146,7 @@ $component-name: vc-table;
 	}
 
 	// 数据为空
-	@include element(empty-block) {
+	@include element(empty-wrapper) {
 		display: flex;
 		width: 100%;
 		height: 100%;
@@ -153,6 +154,13 @@ $component-name: vc-table;
 		text-align: center;
 		justify-content: center;
 		align-items: center;
+
+		@include when(absolute) {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+		}
 	}
 
 	@include element(empty-text) {
@@ -262,8 +270,11 @@ $component-name: vc-table;
 
 	@include element(header) {
 		.vc-table__thead .vc-table__tr .vc-table__th {
-			color: #000;
-			background-color: #f4f4f4;
+			font-size: 13px;
+			font-weight: 500;
+			line-height: 20px;
+			color: #667383;
+			background-color: $f9;
 		}
 
 		.vc-table__thead {
@@ -272,7 +283,7 @@ $component-name: vc-table;
 
 			&.is-group {
 				.vc-table__th {
-					background: #f9f9f9;
+					background: $f9;
 				}
 			}
 		}
@@ -287,7 +298,7 @@ $component-name: vc-table;
 
 		& .vc-table__tbody .vc-table__td {
 			color: #606266;
-			background-color: #f9f9f9;
+			background-color: $f9;
 		}
 	}
 
@@ -295,7 +306,7 @@ $component-name: vc-table;
 		margin-top: -1px;
 
 		.vc-table__td {
-			border-top: 1px solid #ebeef5;
+			border-top: 1px solid #EDEFF1;
 		}
 	}
 
@@ -312,14 +323,14 @@ $component-name: vc-table;
 			&, &.vc-table__row--striped {
 				&, &.current-row {
 					> .vc-table__td {
-						background: #f9f9f9;
+						background: $f9;
 					}
 				}
 			}
 		}
 
 		.vc-table__tr.current-row > .vc-table__td {
-			background: #f9f9f9;
+			background: $f9;
 		}
 	}
 
@@ -349,13 +360,13 @@ $component-name: vc-table;
 		.vc-table--border {
 			@include when(scrolling-right) {
 				~ .vc-table__fixed-right {
-					border-left: 1px solid #ebeef5;
+					border-left: 1px solid #EDEFF1;
 				}
 			}
 
 			@include when(scrolling-left) {
 				~ .vc-table__fixed {
-					border-right: 1px solid #ebeef5;
+					border-right: 1px solid #EDEFF1;
 				}
 			}
 		}
@@ -375,7 +386,7 @@ $component-name: vc-table;
 			z-index: 4;
 			width: 100%;
 			height: 1px;
-			background-color: #ebeef5;
+			background-color: #EDEFF1;
 			content: "";
 		}
 	}
@@ -408,8 +419,8 @@ $component-name: vc-table;
 
 		& .vc-table__tbody .vc-table__td {
 			color: #606266;
-			background-color: #f9f9f9;
-			border-top: 1px solid #ebeef5;
+			background-color: $f9;
+			border-top: 1px solid #EDEFF1;
 		}
 	}
 
@@ -428,7 +439,7 @@ $component-name: vc-table;
 		left: 200px;
 		z-index: 10;
 		width: 0;
-		border-left: 1px solid #ebeef5;
+		border-left: 1px solid #EDEFF1;
 	}
 
 
@@ -451,7 +462,7 @@ $component-name: vc-table;
 				}
 
 				&.current-row .vc-table__td {
-					background: #f9f9f9;
+					background: $f9;
 				}
 			}
 		}
@@ -467,7 +478,7 @@ $component-name: vc-table;
 		}
 
 		.vc-table__th, .vc-table__td {
-			border-right: 1px solid #ebeef5;
+			border-right: 1px solid #EDEFF1;
 
 			&:first-child .vc-table__cell {
 				padding-left: 10px;
@@ -475,10 +486,10 @@ $component-name: vc-table;
 		}
 
 		.vc-table__th {
-			border-bottom: 1px solid #ebeef5;
+			border-bottom: 1px solid #EDEFF1;
 
 			&:first-child {
-				border-left: 1px solid #ebeef5;
+				border-left: 1px solid #EDEFF1;
 			}
 		}
 	}
@@ -495,7 +506,7 @@ $component-name: vc-table;
 
 	@include modifier(enable-row-hover) {
 		.vc-table__body .vc-table__tr:hover > .vc-table__td {
-			background-color: #f9f9f9;
+			background-color: $f9;
 		}
 	}
 
