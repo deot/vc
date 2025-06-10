@@ -1,12 +1,12 @@
 @use '../style/helper' as *;
 
-$size: 28px;
+$size: 32px;
 $component-name: vc-pagination;
 
 @include block($component-name) {
 	display: flex;
-	font-size: 12px;
-	color: #515a6e;
+	font-size: 13px;
+	color: #080F20;
 	align-items: center;
 
 	@include clearfix;
@@ -14,21 +14,19 @@ $component-name: vc-pagination;
 	@include element(item) {
 		height: $size;
 		min-width: $size;
-		margin-right: 4px;
+		margin-right: 8px;
 		font-family: Arial;
 		font-weight: 500;
 		line-height: $size;
 		text-align: center;
 		cursor: pointer;
-		background-color: #fff;
+		border-radius: 8px;
 		box-sizing: border-box;
 		user-select: none;
 
-		@include border('', #dcdee2, 4px);
-
 		span {
 			font-family: "Monospaced Number";
-			color: #515a6e;
+			color: #313947;
 		}
 
 		@include when(jump) {
@@ -38,22 +36,26 @@ $component-name: vc-pagination;
 		}
 
 		@include when(active) {
+			background-color: #E8F4FF; 
+
 			span {
-				color: #2d8cf0 !important;
+				color: #4A96FF !important;
 			}
 
 			&::before, &::after {
-				border-color: #2d8cf0;
+				border-color: #E8F4FF;
 			};
 		}
 
 		&:hover {
+			background-color: #E8F4FF; 
+
 			span {
-				color: #2d8cf0 !important;
+				color: #4A96FF !important;
 			}
 
 			&::before, &::after {
-				border-color: #2d8cf0;
+				border-color: #4A96FF;
 			};
 		}
 
@@ -71,7 +73,7 @@ $component-name: vc-pagination;
 			}
 
 			&:hover {
-				color: #2d8cf0 !important;
+				color: #4A96FF !important;
 			}
 
 			@include when(disabled) {
@@ -99,7 +101,6 @@ $component-name: vc-pagination;
 
 	@include element(size) {
 		display: flex;
-		margin-left: 15px;
 		align-items: center;
 	}
 
