@@ -21,7 +21,6 @@
 		>
 			<TableColumn
 				type="selection"
-				:width="80"
 				fixed="left"
 				prop="abc"
 			/>

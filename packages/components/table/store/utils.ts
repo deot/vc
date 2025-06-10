@@ -11,7 +11,7 @@ const getAllColumns = (columns: any[]) => {
 	return result;
 };
 
-// 这是一个不纯的函数，遍历是会被column添加level/colSpan/rowSpan
+// 这是一个不纯的函数，遍历是会被column添加level/colspan/rowspan
 export const columnsToRowsEffect = (v: any[]) => {
 	let maxLevel = 1;
 	const traverse = (column: any, parent?: any) => {
@@ -22,14 +22,14 @@ export const columnsToRowsEffect = (v: any[]) => {
 			}
 		}
 		if (column.children) {
-			let colSpan = 0;
+			let colspan = 0;
 			column.children.forEach((subColumn: any) => {
 				traverse(subColumn, column);
-				colSpan += subColumn.colSpan;
+				colspan += subColumn.colspan;
 			});
-			column.colSpan = colSpan;
+			column.colspan = colspan;
 		} else {
-			column.colSpan = 1;
+			column.colspan = 1;
 		}
 	};
 
@@ -47,9 +47,9 @@ export const columnsToRowsEffect = (v: any[]) => {
 
 	allColumns.forEach((column) => {
 		if (!column.children) {
-			column.rowSpan = maxLevel - column.level + 1;
+			column.rowspan = maxLevel - column.level + 1;
 		} else {
-			column.rowSpan = 1;
+			column.rowspan = 1;
 		}
 		rows[column.level - 1].push(column);
 	});

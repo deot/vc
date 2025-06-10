@@ -4,7 +4,6 @@
 		<Table primary-key="id" :rows="6" border stripe show-summary :data="dataSource">
 			<TableColumn
 				type="selection"
-				width="80"
 				fixed="left"
 				prop="abc"
 			/>

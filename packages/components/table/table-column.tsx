@@ -141,19 +141,11 @@ export const TableColumn = defineComponent({
 		 * @param column ~
 		 * @returns ~
 		 */
-		const setColumnWidth = (column) => {
-			if (realWidth.value) {
-				column.width = realWidth.value;
-			}
-			if (realMinWidth.value) {
-				column.minWidth = realMinWidth.value;
-			}
-			if (!column.minWidth) {
-				column.minWidth = 80;
-			}
-			column.realWidth = column.width === undefined
-				? column.minWidth
-				: column.width;
+		const setColumnWidth = (column: any) => {
+			column.width = realWidth.value || column.width;
+			column.minWidth = realMinWidth.value || column.minWidth || 80;
+
+			column.realWidth = typeof column.width === 'undefined' ? column.minWidth : column.width;
 			return column;
 		};
 
@@ -237,6 +229,8 @@ export const TableColumn = defineComponent({
 
 		const registerColumn = () => {
 			const defaults = {
+				colspan: 1,
+				rowspan: 1,
 				...cellStarts[props.type],
 				id: columnId.value,
 				realAlign,
