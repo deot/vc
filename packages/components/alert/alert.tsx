@@ -9,7 +9,7 @@ const COMPONENT_NAME = 'vc-alert';
 
 // [color, borderColor, backgroundColor], -> CSS
 const THEME_MAP = {
-	info: ['#5495f6', '#91d5ff', '#e6f7ff'],
+	info: ['#2B72FD', '#91d5ff', '#e6f7ff'],
 	success: ['#52c41a', '#b7eb8f', '#f6ffed'],
 	error: ['#ed4014', '#ffb08f', '#fbe9e9'],
 	warning: ['#ffbf00', '#ffe58f', '#fffbe6']

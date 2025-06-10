@@ -7,6 +7,7 @@ $component-name: vc-button;
  */
 $background-color-light: varfix(background-color-light, button);
 $color-light: varfix(color-light, button);
+$color-light-deep: varfix(color-light-deep, button);
 $color-light-deeper: varfix(color-light-deeper, button);
 $color-dark: varfix(color-dark, button);
 $color-dark-light: varfix(color-dark-light, button);
@@ -21,27 +22,17 @@ $color-warning-light: varfix(color-warning-light, button);
 $color-disabled: varfix(color-disabled, button);
 $color-disabled-light: varfix(color-disabled-light, button);
 
-// Dark主题下，默认按钮画过边框颜色为白色
-@include themefix(false) {
-	@include block($component-name) {
-		@include when(default) {
-			&:hover {
-				color: $color-dark;
-				border-color: $color-dark;
-			}
-		}
-	}
-}
 
 @include block($component-name) {
-	padding: unitfix(7) unitfix(16);
-	font-size: unitfix(12);
-	line-height: 1;
+	padding: unitfix(5) unitfix(16);
+	font-size: unitfix(13);
+	font-weight: 400;
+	line-height: unitfix(20);
 	cursor: pointer;
 	background: $color-light;
 	border: unitfix(1) solid transparent;
 	border-color: $color-light-deeper;
-	border-radius: unitfix(4);
+	border-radius: unitfix(8);
 	outline: 0 none !important;
 
 	/**
@@ -58,7 +49,7 @@ $color-disabled-light: varfix(color-disabled-light, button);
 	}
 
 	@include when(circle) {
-		border-radius: unitfix(32);
+		border-radius: unitfix(30);
 	}
 
 	@include when(long) {
@@ -66,9 +57,9 @@ $color-disabled-light: varfix(color-disabled-light, button);
 	}
 
 	@include when(default) {
-		color: $color-dark-light;
-		background-color: $background-color-light;
-		border-color: $color-light-deeper;
+		color: $color-dark;
+		background-color: $color-light-deep;
+		border-color: $color-light-deep;
 
 		&:hover {
 			color: $color-primary;
@@ -131,29 +122,35 @@ $color-disabled-light: varfix(color-disabled-light, button);
 	}
 
 	@include when(disabled) {
-		color: themefrozen(color-dark-extralight);
+		color: #374455;
 		cursor: not-allowed;
-		background-color: $color-disabled;
-		border-color: $color-disabled-light;
+		background-color: #C4C9D2;
+		border-color: #C4C9D2;
 
 		&:hover {
-			background: $color-disabled;
-			border-color: $color-disabled-light;
+			background: #C4C9D2;
+			border-color: #C4C9D2;
+		}
+
+		@include when(primary) {
+			color: themefrozen(color-light);
+			background-color: $color-primary-light;
+			border-color: $color-primary-light;
 		}
 	}
 
 	@include when(large) {
 		padding: unitfix(8) unitfix(16);
 		font-size: unitfix(14);
-		border-radius: unitfix(4);
+		border-radius: unitfix(8);
 
 		@include when(circle) {
-			border-radius: 36px;
+			border-radius: unitfix(36);
 		}
 	}
 
 	@include when(small) {
-		padding: unitfix(3) unitfix(8);
+		padding: unitfix(2) unitfix(8);
 		font-size: unitfix(12);
 		border-radius: unitfix(3);
 
@@ -165,10 +162,10 @@ $color-disabled-light: varfix(color-disabled-light, button);
 	@include when(alone) {
 		& {
 			@include when(round) {
-				width: unitfix(32);
-				height: unitfix(32);
+				width: unitfix(30);
+				height: unitfix(30);
 				padding: 0;
-				font-size: unitfix(12);
+				font-size: unitfix(13);
 				border-radius: 50%;
 			}
 

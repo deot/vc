@@ -19,7 +19,7 @@
 			<Button type="warning">
 				warning
 			</Button>
-			<Button disabled type="primary">
+			<Button disabled>
 				Primary
 			</Button>
 		</div>
@@ -32,7 +32,7 @@
 			<Button type="default" circle>
 				default
 			</Button>
-			<Button type="primary" circle>
+			<Button type="primary" circle disabled>
 				primary
 			</Button>
 			<Button type="success" circle>
@@ -44,7 +44,7 @@
 			<Button type="warning" circle>
 				warning
 			</Button>
-			<Button disabled type="primary" circle>
+			<Button disabled circle>
 				Primary
 			</Button>
 		</div>

@@ -45,7 +45,7 @@ export const props = {
 	color: {
 		type: [Object, String],
 		default: () => ({
-			normal: '#5495f6',
+			normal: '#2B72FD',
 			success: '#52c41a',
 			error: '#f5222d'
 		})

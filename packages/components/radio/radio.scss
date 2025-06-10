@@ -53,7 +53,7 @@ $component-name: vc-radio;
 		display: table;
 		width: 8px;
 		height: 8px;
-		background-color: #5495f6;
+		background-color: #2B72FD;
 		border-top: 0;
 		border-left: 0;
 		border-radius: 6px;
@@ -66,7 +66,7 @@ $component-name: vc-radio;
 	@include when(checked) {
 		@include element(border) {
 			&::before, &::after{
-				border-color: #5495f6;
+				border-color: #2B72FD;
 			}
 		}
 

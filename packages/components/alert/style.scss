@@ -55,7 +55,7 @@ $component-name: vc-alert;
 	@include when(info) {
 		@include element(message) {
 			> em {
-				color: #5495f6;
+				color: #2B72FD;
 			}
 		}
 	}
@@ -63,7 +63,7 @@ $component-name: vc-alert;
 	@include when(info) {
 		@include element(message) {
 			> em {
-				color: #5495f6;
+				color: #2B72FD;
 			}
 		}
 	}

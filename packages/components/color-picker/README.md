@@ -25,7 +25,7 @@
 import { ref } from 'vue';
 import { ColorPicker } from '@deot/vc';
 
-const color = ref('#19be6b');
+const color = ref('#1DB88C');
 const color1 = ref('');
 </script>
 <style>
@@ -109,7 +109,7 @@ ColorPicker 支持不同尺寸的选择器，通过`size`属性控制选择器�
 import { ref } from 'vue';
 import { ColorPicker } from '@deot/vc';
 
-const color = ref('#19be6b');
+const color = ref('#1DB88C');
 </script>
 
 <style>

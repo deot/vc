@@ -17,7 +17,7 @@
 		@ok="handleOk"
 		@cancel="handleCancel"
 	>
-		<a href="javascript:" style="color: #5495f6;">删除</a>
+		<a href="javascript:" style="color: #2B72FD;">删除</a>
 	</Popconfirm>
 </template>
 <script setup>
@@ -45,7 +45,7 @@ const handleCancel = () => {
 		ok-text="Yes"
 		cancel-text="No"
 	>
-		<a href="javascript:" style="color: #5495f6;">自定义按钮文字</a>
+		<a href="javascript:" style="color: #2B72FD;">自定义按钮文字</a>
 	</Popconfirm>
 </template>
 <script setup>
