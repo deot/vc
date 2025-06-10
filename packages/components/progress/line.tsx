@@ -38,7 +38,7 @@ export const Line = defineComponent({
 					</div>
 					{
 						props.showText && (
-							<div class="vc-progress-line__percent">
+							<div class={['vc-progress-line__percent']}>
 								{
 									['error', 'success'].includes(props.status)
 										? (
@@ -48,7 +48,7 @@ export const Line = defineComponent({
 													class={[`is-${props.status}`, 'vc-progress-line__icon']}
 												/>
 											)
-										: (<span>{`${props.percent}%`}</span>)
+										: (<span class={props.textClass} style={props.textStyle}>{`${props.percent}%`}</span>)
 								}
 							</div>
 						)

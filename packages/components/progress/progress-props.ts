@@ -22,6 +22,12 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
+	textStyle: {
+		type: [String, Object]
+	},
+	textClass: {
+		type: [String, Object]
+	},
 	animated: {
 		type: Boolean,
 		default: false

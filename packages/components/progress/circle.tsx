@@ -55,11 +55,11 @@ export const Circle = defineComponent({
 								fill-opacity="0"
 							/>
 						</svg>
-						<div class="vc-progress-circle__inner">
+						<div class={['vc-progress-circle__inner']}>
 							{
 								slots.default
 									? slots.default()
-									: (props.showText && <span>{`${props.percent}%`}</span>)
+									: (props.showText && <span class={props.textClass} style={props.textStyle}>{`${props.percent}%`}</span>)
 							}
 						</div>
 					</div>

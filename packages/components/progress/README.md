@@ -167,6 +167,8 @@ import { Progress } from '@deot/vc';
 | size         | 环形进度条画布宽度（只有type为`circle`时可用），单位`px` | `number`           | -                          | 120                                                           |
 | stroke-width | 进度条宽度，单位`px`                         | `number`           | -                          | 6                                                             |
 | track-color  | 进度条底层颜色                              | `string`           | -                          | #2d8cf0                                                       |
-| color        | 进度条颜色                                | `Object`           | -                          | `{ normal: '#2B72FD', success: '#52c41a', error: '#f5222d' }` |
-| show-text    | 是否显示进度数值或者状态图标                       | `Boolean`          | -                          | true                                                          |
+| color        | 进度条颜色                                | `object`           | -                          | `{ normal: '#2B72FD', success: '#52c41a', error: '#f5222d' }` |
+| show-text    | 是否显示进度数值或者状态图标                       | `oolean`           | -                          | true                                                          |
+| text-style   | 文本样式                                 | `string`、`object`  | -                          | true                                                          |
+| text-class   | 文本样式                                 | `string`、`object`  | -                          | true                                                          |
 | animated     | 是否使用 CSS3 动画                         | `boolean`          | -                          | `false`                                                       |
