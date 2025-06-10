@@ -1,7 +1,7 @@
 /** @jsxImportSource vue */
 
 import { defineComponent } from 'vue';
-import { Item } from '../../recycle-list/item';
+import { Resizer } from '../../resizer';
 
 const COMPONENT_NAME = 'vc-table-normal-list';
 
@@ -15,21 +15,22 @@ export const NormalList = defineComponent({
 	},
 	emits: ['row-resize'],
 	setup(props, { emit, slots }) {
-		const handleResize = (size: any, index: number) => {
+		const handleResize = (e: any, index: number) => {
 			emit('row-resize', {
 				index,
-				size
+				size: e.height
 			});
 		};
 		return () => {
 			return props.data!.map((row: any, index: number) => {
 				return (
-					<Item
-						vertical={false}
+					<Resizer
+						fill={false}
+						// @ts-ignore
 						onChange={(e: any) => handleResize(e, index)}
 					>
 						{slots.default?.({ row, index })}
-					</Item>
+					</Resizer>
 				);
 			});
 		};

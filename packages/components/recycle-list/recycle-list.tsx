@@ -19,7 +19,7 @@ import { Customer } from '../customer';
 import { ScrollerWheel } from '../scroller';
 import { ScrollState } from './scroll-state';
 import { Container } from './container';
-import { Item } from './item';
+import { Resizer } from '../resizer';
 import { useDirectionKeys } from './use-direction-keys';
 
 const COMPONENT_NAME = 'vc-recycle-list';
@@ -607,19 +607,20 @@ export const RecycleList = defineComponent({
 														}
 														{
 															!item.isPlaceholder && (
-																<Item
+																<Resizer
 																	ref={v => curloads.value[item.id] = v}
 																	class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
 																	style={{ opacity: item.loaded }}
+																	fill={false}
 																	data-row={item.id}
 																	data-column={item.column}
 																	data-size={item.size}
 																	data-position={item.position}
-																	vertical={props.vertical}
+																	// @ts-ignore
 																	onResize={handleResize}
 																>
 																	{ slots.default?.({ row: item.data || {}, index: item.id }) }
-																</Item>
+																</Resizer>
 															)
 														}
 													</Fragment>

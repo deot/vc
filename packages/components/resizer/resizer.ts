@@ -65,14 +65,14 @@ export const Resizer = defineComponent({
 			timer && clearTimeout(timer);
 		});
 
-		expose({ refresh });
+		expose({ refresh, offsetHeight: height, offsetWidth: width });
 
 		return () => {
 			return h(
 				props.tag,
 				{
 					ref: current,
-					class: 'vc-resizer'
+					class: ['vc-resizer', { 'is-fill': props.fill }]
 				},
 				slots.default?.(currentExposed.value)
 			);
