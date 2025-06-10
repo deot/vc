@@ -255,10 +255,12 @@ export const TableBody = defineComponent({
 		};
 
 		const renderRow = (rowData: any, rowIndex: number) => {
+			const { rowHeight } = table.props;
 			const { data: row } = rowData;
 			const { columns } = states;
 			const key = getValueOfRow(row, rowIndex);
 			const selected = props.store!.isSelected(row);
+			const height = rowHeight || rowData.height;
 			return (
 				<div
 					key={key}
@@ -273,7 +275,10 @@ export const TableBody = defineComponent({
 					{
 						columns.map((column: any, columnIndex: number) => {
 							const { realWidth, renderCell } = column;
-							const sizeStyle = { width: `${realWidth}px`, height: `${rowData.height ? `${rowData.height}px` : 'auto'}` };
+							const sizeStyle = {
+								width: `${realWidth}px`,
+								height: `${height ? `${height}px` : 'auto'}`
+							};
 							if (columnsHidden.value[columnIndex]) {
 								return <div key={column.id} style={[sizeStyle]}></div>;
 							}
@@ -319,6 +324,7 @@ export const TableBody = defineComponent({
 		};
 
 		const handleMergeRowResize = (v: any) => {
+			if (table.props.rowHeight) return;
 			states.list[v.index].rows.forEach((row: any) => {
 				row.heightMap[props.fixed! || 'main'] = v.size;
 
