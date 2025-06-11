@@ -1,5 +1,11 @@
 <template>
 	<div style="padding: 30px;">
+		<Button @click="handleTestingStart">
+			内存测试
+		</Button>
+		<Button @click="handleTestingEnd">
+			取消测试
+		</Button>
 		<h1 @click="isActive = !isActive">Brenchmark</h1>
 		<Table
 			v-if="isActive"
@@ -71,6 +77,7 @@
 <script setup>
 import { ref } from 'vue';
 import { Table, TableColumn } from '..';
+import { Button } from '../../button';
 
 defineProps({ delay: Number });
 
@@ -79,7 +86,7 @@ const genTableData = length => Array.from({ length }).map((_, index) => ({
 }));
 
 const isActive = ref(true);
-const dataSource = ref(genTableData(20));
+const dataSource = ref(genTableData(50));
 
 const columns = ref([
 	'内部人员',
@@ -126,6 +133,20 @@ const columns = ref([
 	'运营备注',
 	'操作信息'
 ]);
+
+let timer;
+const handleTestingStart = () => {
+	clearInterval(timer);
+	timer = setInterval(() => {
+		isActive.value = !isActive.value;
+	}, 50);
+};
+
+const handleTestingEnd = () => {
+	clearInterval(timer);
+	timer = null;
+	isActive.value = false;
+};
 
 const handleDelete = (rowIndex) => {
 	dataSource.value.splice(rowIndex, 1);
