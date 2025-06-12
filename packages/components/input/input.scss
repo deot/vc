@@ -89,9 +89,9 @@ $color-disabled: varfix(color-disabled, input);
 	}
 
 	@include share-rule(input-icon) {
-		width: unitfix(32);
 		height: unitfix(32);
-		font-size: unitfix(13);
+		padding: 0 unitfix(10) 0 unitfix(2);
+		font-size: unitfix(14);
 		line-height: unitfix(32)!important;
 		color: $color-dark-extralight;
 		text-align: left;
