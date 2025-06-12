@@ -1,3 +1,6 @@
-import { Textarea } from '.';
+import { MTextarea } from './mobile/textarea';
+import './mobile/style.scss';
 
-export const MTextarea = Textarea;
+export {
+	MTextarea
+};

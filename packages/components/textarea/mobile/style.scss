@@ -1,6 +1,6 @@
 @use '../style/helper' as *;
 
-$component-name: vc-textarea;
+$component-name: vcm-textarea;
 $background-color-light: varfix(background-color-light, textarea);
 $color-light-deeper: varfix(color-light-deeper, textarea);
 $color-primary: varfix(color-primary, textarea);
@@ -16,84 +16,51 @@ $color-disabled: varfix(color-disabled, textarea);
 	position: relative;
 	display: inline-flex;
 	width: 100%;
-	min-height: unitfix(32);
-	font-size: unitfix(12);
+	min-height: unitfix(24); // 动态计算
 	line-height: 1.5;
 	cursor: text;
-	background-color: $background-color-light;
-	border-radius: unitfix(8);
-	transition: border .2s ease-in-out, 
-		background .2s ease-in-out, 
-		box-shadow .2s ease-in-out;
-
-	@include border('', $color-light-deeper, 8); // 不占边距
-
-	@include when(focus) {
-		&::after, &::before {
-			border-color: $color-primary;
-		}
-
-		z-index: 2;
-		box-shadow: 0 0 unitfix(1) unitfix(1) $color-primary-lighter;
-	}
-
-	&:hover {
-		border-color: $color-primary;
-	}
 
 	@include element(wrapper) {
-		position: relative;
 		display: flex;
-		border-radius: unitfix(8);
-		flex: 1;
 		align-items: center;
+		flex: 1;
 	}
 
 	@include element(content){
 		flex: 1;
-		align-items: center;
 
 		textarea {
 			position: relative;
+			display: block; // 两个文本框默认情况下上下会有一个间距
 			width: 100%;
-			min-height: unitfix(32);
-			padding: unitfix(7); // 18 + 7 + 7 + 2 = 32
+			min-height: unitfix(24);
+			padding-right: unitfix(7);
+			padding-left: unitfix(7);
 			overflow: auto;
 			font-family: inherit;
 			font-size: inherit;
+			font-size: unitfix(16);
 			line-height: inherit;
-			color: $color-dark-light;
+			background-color: $background-color-light;
 			border: none;
 			outline: 0;
-			box-sizing: border-box;	
-			resize: vertical; // 形式拖拽按钮 
+			resize: none;  // 不形式拖拽按钮
 
 			&::placeholder {
 				color: $color-dark-extralight;
 			}
-		}
-	}
 
-	@include element(indicator) {
-		position: absolute;
-		right: 0;
-		bottom: unitfix(-18);
-		height: unitfix(18);
-		line-height: unitfix(18);
-		color: $color-dark-extralight;
-	}
-
-	@include when(disabled) {
-		@include element(content){
-			cursor: not-allowed;
-			background-color: $color-disabled;
-			opacity: 1;
-
-			// color: #ccc;
-			// hack需要设置
-			textarea {
+			&[disabled] {
 				cursor: not-allowed;
 				background-color: $color-disabled;
+				opacity: 1;
+			}
+		}
+
+		@include when(right) {
+			textarea {
+				color: $color-dark-extralight;
+				text-align: right;
 			}
 		}
 	}
