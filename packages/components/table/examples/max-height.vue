@@ -48,6 +48,17 @@
 				prop="label"
 				:line="1"
 			/>
+			<TableColumn
+				label="产品信息3"
+				prop="id"
+				align="right"
+				:line="1"
+			/>
+			<TableColumn
+				label="产品信息4"
+				prop="id"
+				align="right"
+			/>
 
 			<TableColumn
 				label="货号"

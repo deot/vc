@@ -219,6 +219,7 @@ $f9: #F7F8FA;
 	}
 
 	@include element(cell) {
+		width: 100%;
 		padding-right: 10px;
 		padding-left: 10px;
 		overflow: hidden;
