@@ -52,8 +52,8 @@ export const Text = defineComponent({
 					hover: true,
 					theme: 'dark',
 					placement: props.placement,
-					portalClassName: props.portalClassName,
-					portalStyle: props.portalStyle || `width: ${e.target.clientWidth}px`,
+					portalClass: props.portalClass,
+					portalStyle: [props.portalStyle || `width: ${e.target.clientWidth}px`, 'word-break: break-all'],
 					content: props.value,
 				});
 			}

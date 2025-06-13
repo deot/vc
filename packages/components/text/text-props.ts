@@ -1,4 +1,3 @@
-import { h } from 'vue';
 import type { ExtractPropTypes } from 'vue';
 
 export const props = {
@@ -31,14 +30,12 @@ export const props = {
 		type: String,
 		default: 'top'
 	},
-	portalClassName: [Object, String, Array],
+	portalClass: [Object, String, Array],
 	portalStyle: [Object, String, Array],
 	renderRow: {
 		type: Function,
-		// 函数式可以用于高亮显示
 		default: (props$: any) => {
-			const { value } = props$;
-			return h('span', {}, value);
+			return props$.value;
 		}
 	}
 };
