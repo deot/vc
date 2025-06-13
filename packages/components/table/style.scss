@@ -19,16 +19,14 @@ $f9: #F7F8FA;
 		position: relative;
 
 		// vertical-align: middle;
-		display: inline-flex;
-		min-width: 0;
-		padding: 12px 0;
-		text-align: left;
-		text-overflow: ellipsis;
-		box-sizing: border-box;
-		align-items: center;
 
 		// vertical-align: middle;
 		display: inline-flex;
+		min-width: 0;
+		padding: 10px 0;
+		text-align: left;
+		text-overflow: ellipsis;
+		box-sizing: border-box;
 		align-items: center;
 
 		@include when(center) {
@@ -61,11 +59,11 @@ $f9: #F7F8FA;
 
 	.vc-table__td {
 		&:first-child {
-			padding-left: 12px;
+			padding-left: 10px;
 		}
 
 		&:last-child {
-			padding-right: 12px;
+			padding-right: 10px;
 		}
 	}
 
@@ -81,14 +79,6 @@ $f9: #F7F8FA;
 		border-top: 1px solid #EDEFF1;
 		border-bottom: 1px solid #EDEFF1;
 		user-select: none;
-
-		&:first-child {
-			padding-left: 12px;
-		}
-
-		&:last-child {
-			padding-right: 12px;
-		}
 
 		> .vc-table__cell {
 			position: relative;

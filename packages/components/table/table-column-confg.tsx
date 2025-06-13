@@ -125,6 +125,8 @@ export const defaultRenderCell = (rowData: any = {}) => {
 
 	if (line) {
 		const style = {
+			// 目前左右pading为10
+			// TODO: 含有border还要-1
 			width: (column.realWidth || column.width) - 20 + 'px'
 		};
 		return (<Text style={style} line={line} value={value} />);
