@@ -43,9 +43,10 @@ export const Text = defineComponent({
 
 		const handleResize = props.resize === true || props.resize === 0 ? calcPosition : debounce(calcPosition, props.resize || 0);
 
+		let poper;
 		const handleMouseOver = (e: any) => {
 			if (endIndex.value > 0) {
-				Popover.open({
+				poper = Popover.open({
 					el: document.body,
 					name: 'vc-text-popover', // 确保不重复创建
 					triggerEl: e.target,
@@ -76,6 +77,7 @@ export const Text = defineComponent({
 
 		onBeforeUnmount(() => {
 			props.resize !== false && Resize.off(instance.vnode.el as any, handleResize);
+			poper?.destroy?.();
 		});
 
 		const Content = props.tag;
