@@ -67,7 +67,7 @@ export const getFitIndex = (options = {}) => {
 	let endIndex = 0;
 	hiddenEl.innerText = suffix;
 
-	value.split('').forEach((item, i) => {
+	(value || '').split('').forEach((item, i) => {
 		// 后缀必须放入后面计算，前面会造成问题
 		let old = hiddenEl.innerText;
 		old = old.substring(0, old.length - suffix.length);

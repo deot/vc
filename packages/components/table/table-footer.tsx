@@ -1,4 +1,4 @@
-import { defineComponent, computed } from 'vue';
+import { defineComponent, computed, inject } from 'vue';
 import { useStates } from './store';
 
 export const TableFooter = defineComponent({
@@ -10,6 +10,7 @@ export const TableFooter = defineComponent({
 		border: Boolean,
 	},
 	setup(props) {
+		const table: any = inject('vc-table');
 		const states: any = useStates({
 			data: 'data',
 			columns: 'columns',
@@ -106,7 +107,7 @@ export const TableFooter = defineComponent({
 									<div
 										key={columnIndex}
 										class={[getRowClasses(column, columnIndex), 'vc-table__td']}
-										style={[{ width: `${column.realWidth}px` }]}
+										style={[{ width: `${column.realWidth}px`, height: `44px` }]}
 									>
 										<div class={['vc-table__cell', column.labelClass]}>
 											{ sums.value[columnIndex] }

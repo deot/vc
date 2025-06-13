@@ -123,7 +123,7 @@ export const defaultRenderCell = (rowData: any = {}) => {
 	}
 	const line = column.line || VcInstance.options.TableColumn?.line;
 
-	if (line) {
+	if (line && value) {
 		const style = {
 			// 目前左右pading为10
 			// TODO: 含有border还要-1

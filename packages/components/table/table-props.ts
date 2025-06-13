@@ -80,7 +80,7 @@ export const props = {
 	getSpan: Function,
 	placeholder: {
 		type: [String, Function],
-		default: '--'
+		default: '-'
 	},
 	/**
 	 * 排序全部交给外部处理，内部不处理数据，只做交互

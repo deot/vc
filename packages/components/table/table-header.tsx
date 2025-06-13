@@ -292,7 +292,7 @@ export const TableHeader = defineComponent({
 													class={[
 														'vc-table__cell',
 														// {
-														// 	"highlight": column.filteredValue && column.filteredValue.length > 0
+														// 	"is-highlight": column.filteredValue && column.filteredValue.length > 0
 														// },
 														column.labelClass
 													]}
