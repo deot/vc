@@ -71,18 +71,19 @@ $f9: #F7F8FA;
 		box-sizing: border-box;
 		user-select: none;
 
+		@include when(center) {
+			text-align: center;
+		}
+
+		@include when(right) {
+			text-align: right;
+		}
+
 		> .vc-table__cell {
 			position: relative;
-			display: inline-block;
-			width: 100%;
-			padding-right: 10px;
-			padding-left: 10px;
-			overflow: hidden;
 			text-overflow: ellipsis;
 			word-wrap: normal;
 			white-space: nowrap;
-			vertical-align: middle;
-			box-sizing: border-box;
 
 			&.is-highlight {
 				color: #409eff;
