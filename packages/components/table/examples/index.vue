@@ -11,7 +11,7 @@
 			v-if="isActive"
 			primary-key="id"
 			:delay="delay"
-			:rows="6"
+			:rows="8"
 			:height="600"
 			:data="dataSource"
 			@selection-change="handleChange"

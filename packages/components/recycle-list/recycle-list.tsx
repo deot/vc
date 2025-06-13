@@ -185,11 +185,20 @@ export const RecycleList = defineComponent({
 
 			if (!current) return; // 受到`removeUnusedPlaceholders`影响，无效的会被回收
 
+			const oldSize = current.size;
 			const dom = preloads.value[index] || curloads.value[props.inverted ? index : index - firstItemIndex.value];
 			if (dom) {
 				current.size = dom[K.offsetSize] || placeholderSize.value;
 			} else if (current) {
 				current.size = placeholderSize.value;
+			}
+
+			// 这样的考虑欠佳，待优化
+			if (oldSize !== current.size) {
+				emit('row-resize', {
+					index: current.id,
+					size: current.size
+				});
 			}
 		};
 
@@ -456,14 +465,6 @@ export const RecycleList = defineComponent({
 			trailing: true
 		});
 
-		const handleRowChange = (e, row) => {
-			emit('row-resize', {
-				index: row.id,
-				height: e.height,
-				width: e.width
-			});
-		};
-
 		// 设置初始数据
 		const setDataSource = async (v: any, oldV: any) => {
 			if (!Array.isArray(v) || oldV === v) return;
@@ -617,7 +618,6 @@ export const RecycleList = defineComponent({
 																	data-position={item.position}
 																	// @ts-ignore
 																	onResize={handleResize}
-																	onChange={(e: any) => handleRowChange(e, item)}
 																>
 																	{ slots.default?.({ row: item.data || {}, index: item.id }) }
 																</Resizer>

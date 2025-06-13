@@ -18,8 +18,7 @@ export const NormalList = defineComponent({
 		const handleResize = (e: any, index: any) => {
 			emit('row-resize', {
 				index,
-				height: e.height,
-				width: e.width
+				size: e.height
 			});
 		};
 		return () => {

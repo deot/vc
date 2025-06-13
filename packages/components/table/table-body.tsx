@@ -299,7 +299,10 @@ export const TableBody = defineComponent({
 		const handleMergeRowResize = (v: any) => {
 			if (table.props.rowHeight) return;
 			states.list[v.index].rows.forEach((row: any) => {
-				row.heightMap[props.fixed! || 'main'] = v.height;
+				const old = row.heightMap[props.fixed! || 'main'];
+				if (old === v.size) return;
+
+				row.heightMap[props.fixed! || 'main'] = v.size;
 
 				const heights = [row.heightMap.main];
 				if (states.leftFixedCount) {
