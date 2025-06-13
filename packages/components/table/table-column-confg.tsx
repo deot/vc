@@ -129,7 +129,7 @@ export const defaultRenderCell = (rowData: any = {}) => {
 			// TODO: 含有border还要-1
 			width: (column.realWidth || column.width) - 20 + 'px'
 		};
-		return (<Text style={style} line={line} value={value} />);
+		return (<Text style={style} line={line} value={`${value}`} />);
 	}
 
 	return value;
