@@ -10,6 +10,7 @@ import { Input, InputSearch } from '../input/index';
 import { Popover } from '../popover/index';
 import { Spin } from '../spin/index';
 import { Tag } from '../tag/index';
+import { Scroller } from '../scroller/index';
 import { Icon } from '../icon/index';
 import { Option } from './option.tsx';
 import { OptionGroup } from './option-group.tsx';
@@ -280,7 +281,7 @@ export const Select = defineComponent({
 											</div>
 										)
 									}
-									<div class="vc-select__options">
+									<Scroller class="vc-select__options">
 										{
 											props.data
 												? (
@@ -325,7 +326,7 @@ export const Select = defineComponent({
 													)
 												: slots.default?.()
 										}
-									</div>
+									</Scroller>
 								</div>
 							);
 						}
