@@ -230,8 +230,8 @@ export const Table = defineComponent({
 				scrollPosition.value = 'middle';
 			}
 			if (!props.height) {
-				leftFixedBody.value.getRootElement().scrollTop = (bodyXWrapper.value.scrollTop);
-				rightFixedBody.value.getRootElement().scrollTop = (bodyXWrapper.value.scrollTop);
+				leftFixedBody.value && (leftFixedBody.value.getRootElement().scrollTop = (bodyXWrapper.value.scrollTop));
+				rightFixedBody.value && (rightFixedBody.value.getRootElement().scrollTop = (bodyXWrapper.value.scrollTop));
 			}
 		}, 20);
 

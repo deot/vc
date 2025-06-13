@@ -2,7 +2,10 @@
 
 $component-name: vc-table;
 $foreground-color: varfix(foreground-color, table);
+$border-color: #EDEFF1;
 $f9: #F7F8FA;
+$gap-h: 12px;
+$gap-v: 8px;
 
 @include block($component-name) {
 	position: relative;
@@ -49,15 +52,15 @@ $f9: #F7F8FA;
 	}
 
 	@include element(td) {
-		padding: 8px 0;
-		border-bottom: 1px solid #EDEFF1;
+		padding: $gap-v 0;
+		border-bottom: 1px solid $border-color;
 
 		&:first-child {
-			padding-left: 10px;
+			padding-left: $gap-h;
 		}
 
 		&:last-child {
-			padding-right: 10px;
+			padding-right: $gap-h;
 		}
 	}
 
@@ -66,10 +69,18 @@ $f9: #F7F8FA;
 		overflow: hidden;
 		white-space: nowrap;
 		background-color: #fff;
-		border-top: 1px solid #EDEFF1;
-		border-bottom: 1px solid #EDEFF1;
+		border-top: 1px solid $border-color;
+		border-bottom: 1px solid $border-color;
 		box-sizing: border-box;
 		user-select: none;
+
+		&:first-child {
+			padding-left: $gap-h;
+		}
+
+		&:last-child {
+			padding-right: $gap-h;
+		}
 
 		@include when(center) {
 			text-align: center;
@@ -106,18 +117,18 @@ $f9: #F7F8FA;
 		}
 
 		&.is-leaf {
-			border-bottom: 1px solid #EDEFF1;
+			border-bottom: 1px solid $border-color;
 		}
 	}
 
 	// 拥有多级表头
 	@include modifier((group, border)) {
-		border: 1px solid #EDEFF1;
+		border: 1px solid $border-color;
 
 		@include share-rule(border-pseudo) {
 			position: absolute;
 			z-index: 1;
-			background-color: #EDEFF1;
+			background-color: $border-color;
 			content: "";
 		}
 
@@ -220,8 +231,8 @@ $f9: #F7F8FA;
 
 	@include element(cell) {
 		width: 100%;
-		padding-right: 10px;
-		padding-left: 10px;
+		padding-right: $gap-h;
+		padding-left: $gap-h;
 		overflow: hidden;
 		line-height: 23px;
 		word-break: break-all;
@@ -298,7 +309,7 @@ $f9: #F7F8FA;
 		margin-top: -1px;
 
 		.vc-table__td {
-			border-top: 1px solid #EDEFF1;
+			border-top: 1px solid $border-color;
 		}
 	}
 
@@ -352,13 +363,13 @@ $f9: #F7F8FA;
 		.vc-table--border {
 			@include when(scrolling-right) {
 				~ .vc-table__fixed-right {
-					border-left: 1px solid #EDEFF1;
+					border-left: 1px solid $border-color;
 				}
 			}
 
 			@include when(scrolling-left) {
 				~ .vc-table__fixed {
-					border-right: 1px solid #EDEFF1;
+					border-right: 1px solid $border-color;
 				}
 			}
 		}
@@ -378,7 +389,7 @@ $f9: #F7F8FA;
 			z-index: 4;
 			width: 100%;
 			height: 1px;
-			background-color: #EDEFF1;
+			background-color: $border-color;
 			content: "";
 		}
 	}
@@ -412,7 +423,7 @@ $f9: #F7F8FA;
 		& .vc-table__tbody .vc-table__td {
 			color: #606266;
 			background-color: $f9;
-			border-top: 1px solid #EDEFF1;
+			border-top: 1px solid $border-color;
 		}
 	}
 
@@ -431,7 +442,7 @@ $f9: #F7F8FA;
 		left: 200px;
 		z-index: 10;
 		width: 0;
-		border-left: 1px solid #EDEFF1;
+		border-left: 1px solid $border-color;
 	}
 
 
@@ -470,18 +481,14 @@ $f9: #F7F8FA;
 		}
 
 		.vc-table__th, .vc-table__td {
-			border-right: 1px solid #EDEFF1;
-
-			&:first-child .vc-table__cell {
-				padding-left: 10px;
-			}
+			border-right: 1px solid $border-color;
 		}
 
 		.vc-table__th {
-			border-bottom: 1px solid #EDEFF1;
+			border-bottom: 1px solid $border-color;
 
 			&:first-child {
-				border-left: 1px solid #EDEFF1;
+				border-left: 1px solid $border-color;
 			}
 		}
 	}
@@ -536,7 +543,6 @@ $f9: #F7F8FA;
 	text-overflow: unset!important;
 }
 
-
 .vc-table .vc-recycle-list__scroll-state {
 	display: none;
 }
@@ -545,11 +551,6 @@ $f9: #F7F8FA;
 	z-index: 5;
 }
 
-
 .vc-table .vc-recycle-list__wrapper {
 	overflow: hidden;
-}
-
-.vc-table .vc-table-column--selection.vc-table__th {
-	padding-left: 10px;
 }

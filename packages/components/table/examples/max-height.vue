@@ -77,6 +77,7 @@
 			<TableColumn
 				label="操作"
 				fixed="right"
+				align="right"
 			>
 				<template #default="{ rowIndex }">
 					<div @click="handleDelete(rowIndex)">删除</div>
