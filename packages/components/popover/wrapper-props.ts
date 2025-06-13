@@ -30,9 +30,9 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
-	autoWidth: { // 同宽
+	autoWidth: { // 当为false是，使用triggerEl宽度
 		type: Boolean,
-		default: false
+		default: true
 	},
 	triggerEl: {
 		type: Object,

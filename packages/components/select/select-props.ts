@@ -44,7 +44,7 @@ export const props = {
 	},
 	autoWidth: {
 		type: Boolean,
-		default: true
+		default: false
 	},
 	max: {
 		type: Number,

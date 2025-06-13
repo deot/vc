@@ -115,10 +115,8 @@ export const PopoverWrapper = defineComponent({
 			wrapperStyle.value = $wrapperStyle;
 			arrowStyle.value = $arrowStyle;
 
-			/**
-			 * 自适应高度
-			 */
-			if (!props.autoWidth) return;
+			// 自适应高度
+			if (props.autoWidth) return;
 			wrapperW.value = {
 				width: `${triggerEl!.getBoundingClientRect().width}px`
 			};
