@@ -438,6 +438,7 @@ export const ModalView = defineComponent({
 																	props.cancelText && (
 																		<Button
 																			style="margin-right: 8px;"
+																			disabled={props.cancelDisabled}
 																			onClick={e => handleBefore(e, handleCancel)}
 																		>
 																			{ props.cancelText }
@@ -448,6 +449,7 @@ export const ModalView = defineComponent({
 																	props.okText && (
 																		<Button
 																			type="primary"
+																			disabled={props.okDisabled}
 																			onClick={e => handleBefore(e, handleOk)}
 																		>
 																			{ props.okText }

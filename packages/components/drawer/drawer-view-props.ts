@@ -50,7 +50,14 @@ export const props = {
 		type: [String, Boolean],
 		default: '取消'
 	},
-
+	okDisabled: {
+		type: Boolean,
+		default: false
+	},
+	cancelDisabled: {
+		type: Boolean,
+		default: false
+	},
 	footer: {
 		type: Boolean,
 		default: true

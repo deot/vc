@@ -73,6 +73,15 @@ export const props = {
 		default: false
 	},
 
+	okDisabled: {
+		type: Boolean,
+		default: false
+	},
+	cancelDisabled: {
+		type: Boolean,
+		default: false
+	},
+
 	/**
 	 * 兼容portal设计, 实现Promise方式
 	 */
