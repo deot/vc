@@ -51,6 +51,6 @@ export const props = {
 	hover: Boolean,
 	always: Boolean,
 	portalClass: [Object, String, Array],
-	portalStyle: Object
+	portalStyle: [Object, String]
 };
 export type Props = ExtractPropTypes<typeof props>;

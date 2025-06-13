@@ -26,6 +26,11 @@ export const TableColumn = defineComponent({
 			type: String,
 			default: 'default'
 		},
+		// 默认只展示一行
+		line: {
+			type: Number,
+			default: 0
+		},
 		label: String,
 		customClass: String,
 		labelClass: String,
@@ -40,7 +45,6 @@ export const TableColumn = defineComponent({
 		columnKey: String,
 		align: String,
 		headerAlign: String,
-		showPopover: Boolean,
 		fixed: [Boolean, String],
 		formatter: Function,
 		selectable: Function,
@@ -208,12 +212,6 @@ export const TableColumn = defineComponent({
 						prefix = <span class="vc-table-un-expand__indent" />;
 					}
 
-					if (data.column.showPopover) {
-						$props.class += ' vc-popover';
-						$props.style = {
-							width: (data.column.realWidth || data.column.width) - 1 + 'px'
-						};
-					}
 					const { placeholder } = table.props;
 					const contentPlaceholder = typeof placeholder === 'function' ? placeholder() : placeholder;
 					return (

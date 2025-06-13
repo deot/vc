@@ -17,5 +17,16 @@ export type Options = Partial<{
 export const defaults: Options = {
 	Theme: {
 		variables: VARIABLES
+	},
+	Portal: {
+		install: undefined
+	},
+	Upload: {
+		onRequest: undefined,
+		onResponse: undefined,
+		onMessage: undefined
+	},
+	TableColumn: {
+		line: undefined
 	}
 };

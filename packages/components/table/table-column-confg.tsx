@@ -4,6 +4,8 @@ import { getPropByPath } from '@deot/helper-utils';
 import { Checkbox } from '../checkbox';
 import { Icon } from '../icon';
 import { Spin } from '../spin';
+import { Text } from '../text';
+import { VcInstance } from '../vc';
 
 export const cellStarts = {
 	default: {
@@ -107,17 +109,27 @@ export const cellForced = {
 };
 
 // Cell默认渲染value 或 formatter
-export const defaultRenderCell = ({ row, column = {}, rowIndex }) => {
-	const { prop, formatter } = column as any;
+export const defaultRenderCell = (rowData: any = {}) => {
+	const column = rowData.column as any;
+	const { prop, formatter } = column;
 
 	let value;
 	if (prop) {
-		value = getPropByPath(row, prop).v;
+		value = getPropByPath(rowData.row, prop).v;
 	}
 
 	if (formatter) {
-		return (column as any).formatter({ row, column, value, rowIndex });
+		return column.formatter(rowData);
 	}
+	const line = column.line || VcInstance.options.TableColumn?.line;
+
+	if (line) {
+		const style = {
+			width: (column.realWidth || column.width) - 20 + 'px'
+		};
+		return (<Text style={style} line={line} value={value} />);
+	}
+
 	return value;
 };
 

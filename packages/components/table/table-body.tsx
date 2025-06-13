@@ -1,9 +1,8 @@
 import { defineComponent, ref, getCurrentInstance, watch, computed, inject, onBeforeMount, onBeforeUnmount } from 'vue';
 import { debounce } from 'lodash-es';
-import { addClass, removeClass, hasClass } from '@deot/helper-dom';
+import { addClass, removeClass } from '@deot/helper-dom';
 import { IS_SERVER } from '@deot/vc-shared';
 import { raf } from '@deot/helper-utils';
-import { Popover } from '../popover';
 import { RecycleList } from '../recycle-list';
 import { NormalList } from './normal-list';
 import { getCell, getColumnByCell, getRowValue } from './utils';
@@ -185,32 +184,6 @@ export const TableBody = defineComponent({
 
 				table.emit('cell-mouse-enter', hoverState.row, hoverState.column, hoverState.cell, e);
 			}
-
-			// 判断是否text-overflow, 如果是就显示tooltip
-			const cellChild = e.target.querySelector('.vc-table__cell');
-
-			if (!(hasClass(cellChild, 'vc-popover') && cellChild.childNodes.length)) {
-				return;
-			}
-			// 使用范围宽度而不是滚动宽度来确定文本是否溢出，以解决潜在的FireFox bug
-			// https://bugzilla.mozilla.org/show_bug.cgi?id=1074543#c3
-			const range = document.createRange();
-			range.setStart(cellChild, 0);
-			range.setEnd(cellChild, cellChild.childNodes.length);
-			const rangeWidth = range.getBoundingClientRect().width;
-			const padding = (parseInt(cellChild.style.paddingLeft, 10) || 0) + (parseInt(cellChild.style.paddingRight, 10) || 0);
-			if ((rangeWidth + padding > cellChild.offsetWidth || cellChild.scrollWidth > cellChild.offsetWidth)) {
-				Popover.open({
-					el: document.body,
-					name: 'vc-table-popover', // 确保不重复创建
-					triggerEl: cell,
-					hover: true,
-					theme: 'dark',
-					placement: 'top',
-					content: cell.innerText || cell.textContent,
-					alone: true
-				});
-			}
 		};
 
 		const handleCellMouseLeave = (e: any) => {
@@ -310,10 +283,10 @@ export const TableBody = defineComponent({
 			);
 		};
 
-		const renderMergeRow = (mergeData: any, mergeIndex: number) => {
-			const { rows } = mergeData;
+		const renderMergeRow = (mergeData: any) => {
+			const { rows, id } = mergeData;
 			return (
-				<div class="vc-table__merge-row" key={mergeIndex}>
+				<div class="vc-table__merge-row" key={id}>
 					{
 						rows.map((row: any) => {
 							return renderRow(row, row.index);
@@ -326,7 +299,7 @@ export const TableBody = defineComponent({
 		const handleMergeRowResize = (v: any) => {
 			if (table.props.rowHeight) return;
 			states.list[v.index].rows.forEach((row: any) => {
-				row.heightMap[props.fixed! || 'main'] = v.size;
+				row.heightMap[props.fixed! || 'main'] = v.height;
 
 				const heights = [row.heightMap.main];
 				if (states.leftFixedCount) {
@@ -386,7 +359,7 @@ export const TableBody = defineComponent({
 										onRowResize={handleMergeRowResize}
 										style={props.heightStyle}
 									>
-										{{ default: ({ row, index }) => renderMergeRow(row, index) }}
+										{{ default: ({ row }) => renderMergeRow(row) }}
 									</RecycleList>
 								)
 							: (
@@ -394,7 +367,7 @@ export const TableBody = defineComponent({
 										data={states.list}
 										onRowResize={handleMergeRowResize}
 									>
-										{{ default: ({ row, index }) => renderMergeRow(row, index) }}
+										{{ default: ({ row }) => renderMergeRow(row) }}
 									</NormalList>
 								)
 					}

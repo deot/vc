@@ -44,6 +44,12 @@
 			</TableColumn>
 
 			<TableColumn
+				label="产品信息2"
+				prop="label"
+				:line="1"
+			/>
+
+			<TableColumn
 				label="货号"
 			>
 				<template #default="{ rowIndex }">
@@ -76,7 +82,8 @@ import { Button } from '../../button';
 defineProps({ delay: Number });
 const isActive = ref(true);
 const genTableData = length => Array.from({ length }).map((_, index) => ({
-	id: `id__${index}`
+	id: `id__${index}`,
+	label: '1234 ABC '.repeat(20)
 }));
 
 const dataSource = ref(genTableData(30));

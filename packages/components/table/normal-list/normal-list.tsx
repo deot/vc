@@ -15,21 +15,23 @@ export const NormalList = defineComponent({
 	},
 	emits: ['row-resize'],
 	setup(props, { emit, slots }) {
-		const handleResize = (e: any, index: number) => {
+		const handleResize = (e: any, index: any) => {
 			emit('row-resize', {
 				index,
-				size: e.height
+				height: e.height,
+				width: e.width
 			});
 		};
 		return () => {
-			return props.data!.map((row: any, index: number) => {
+			return props.data!.map((mergeData: any, index: number) => {
 				return (
 					<Resizer
+						key={mergeData.id}
 						fill={false}
 						// @ts-ignore
 						onChange={(e: any) => handleResize(e, index)}
 					>
-						{slots.default?.({ row, index })}
+						{slots.default?.({ row: mergeData, index })}
 					</Resizer>
 				);
 			});

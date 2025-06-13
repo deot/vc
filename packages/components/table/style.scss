@@ -17,12 +17,19 @@ $f9: #F7F8FA;
 
 	.vc-table__th, .vc-table__td {
 		position: relative;
+
+		// vertical-align: middle;
+		display: inline-flex;
 		min-width: 0;
 		padding: 12px 0;
 		text-align: left;
 		text-overflow: ellipsis;
-		vertical-align: middle;
 		box-sizing: border-box;
+		align-items: center;
+
+		// vertical-align: middle;
+		display: inline-flex;
+		align-items: center;
 
 		@include when(center) {
 			text-align: center;
@@ -226,15 +233,9 @@ $f9: #F7F8FA;
 		padding-left: 10px;
 		overflow: hidden;
 		line-height: 23px;
-		text-overflow: ellipsis;
 		word-break: break-all;
 		white-space: normal;
 		box-sizing: border-box;
-
-		&.vc-popover {
-			min-width: 50px;
-			white-space: nowrap;
-		}
 
 		.vc-table-un-expand__indent {
 			padding-left: 23px;

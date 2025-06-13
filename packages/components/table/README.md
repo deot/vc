@@ -894,20 +894,19 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 | render-header      | 列标题 `Label` 区域渲染使用的 `Function`                                                               | Function(h, { column, $index })                | -                                      | -         |
 | resizable          | 对应列是否可以通过拖动改变宽度（需要在 `Table` 上设置 `border` 属性为真）                                               | `boolean`                                      | -                                      | `true`    |
 | formatter          | 用来格式化内容                                                                                      | `Function({ row, column, cellValue, $index })` | -                                      | -         |
-| show-popover       | 当内容过长被隐藏时显示 `popover`                                                                        | `boolean`                                      | -                                      | `false`   |
+| line               | 文本行数                                                                                         | `number`                                       | -                                      | `0`       |
 | align              | 对齐方式                                                                                         | `string`                                       | `left`、`center`、`right`                | `left`    |
 | header-align       | 表头对齐方式，若不设置该项，则使用表格的对齐方式                                                                     | `string`                                       | `left`、`center`、`right`                | -         |
 | class              | 列的 `className`                                                                               | `string`                                       | -                                      |           |
 | label-class        | 当前列标题的自定义类名                                                                                  | `string`                                       | -                                      | -         |
 | selectable         | 仅对 t`ype=selection` 的列有效，类型为 `Function`，`Function` 的返回值用来决定这一行的 `CheckBox` 是否可以勾选            | `Function(row, index)`                         | -                                      | -         |
-| reserve-selection  | 仅对 `type=selection` 的列有效，类型为 `boolean`，为 `true` 则会在数据更新之后保留之前选中的数据（需指定 `primary-key`）            | `boolean`                                      | -                                      | `false`   |
+| reserve-selection  | 仅对 `type=selection` 的列有效，类型为 `boolean`，为 `true` 则会在数据更新之后保留之前选中的数据（需指定 `primary-key`）        | `boolean`                                      | -                                      | `false`   |
 | filters            | 数据过滤的选项，数组格式，数组中的元素需要有 label 和 value 属性。                                                     | `Array[{ label, value }]`                      |                                        |           |
 | filter-multiple    | 数据过滤的选项是否多选                                                                                  | `boolean`                                      | -                                      | `true`    |
 | filter-icon        | 筛选的icon                                                                                      | `string`                                       | -                                      | -         |
 | filter-popup-class | 筛选弹框的自定义样式名                                                                                  | `string`                                       | -                                      | -         |
 | filtered-value     | 选中的数据过滤项                                                                                     | `Array`                                        | -                                      | -         |
 | filter             | 筛选数据调用的方法                                                                                    | `Function`                                     | -                                      | -         |
-
 
 ### Column Slot
 

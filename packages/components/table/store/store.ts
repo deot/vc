@@ -51,6 +51,7 @@ class Store extends BaseWatcher {
 	}
 
 	setData(data: any[]) {
+		const { primaryKey } = this.table.props;
 		// 用户是否修改了数据
 		const dataInstanceChanged = this.states._data !== data;
 
@@ -68,19 +69,24 @@ class Store extends BaseWatcher {
 		});
 		this.states.list = data.reduce((pre, row, index) => {
 			const cache = caches.get(row) || { heightMap: {} };
-			pre.push({
-				rows: [
-					{
-						index,
-						data: row,
-						height: cache.height || '',
-						heightMap: {
-							left: cache.heightMap.left || '',
-							main: cache.heightMap.main || '',
-							right: cache.heightMap.right || ''
-						}
+			const rows = [
+				{
+					index,
+					data: row,
+					height: cache.height || '',
+					heightMap: {
+						left: cache.heightMap.left || '',
+						main: cache.heightMap.main || '',
+						right: cache.heightMap.right || ''
 					}
-				],
+				}
+			];
+			const id = primaryKey
+				? rows.map((rowData: any) => getRowValue(rowData.data, primaryKey)).join(',')
+				: index;
+			pre.push({
+				id: typeof id === 'undefined' ? index : id,
+				rows,
 				expand: false
 			});
 			return pre;
