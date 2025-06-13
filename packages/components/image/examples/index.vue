@@ -1,5 +1,10 @@
 <template>
-	<div style="padding: 20px">
+	<div style="padding: 20px; display: flex; flex-direction: column;">
+		<Image
+			src="https://yayabms-2.oss-cn-hangzhou.aliyuncs.com/common/p/login/decorate.png"
+			fit="contain"
+			style="height: 100px; width: 200px;"
+		/>
 		<h1>Lazy</h1>
 		<div style="height: 400px; overflow-y: auto; display: flex; flex-direction: column; width: 100%">
 			<!-- hack 边距 -->
