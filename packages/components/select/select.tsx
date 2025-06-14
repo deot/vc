@@ -281,7 +281,7 @@ export const Select = defineComponent({
 											</div>
 										)
 									}
-									<Scroller class="vc-select__options">
+									<Scroller class="vc-select__options" max-height="200px">
 										{
 											props.data
 												? (

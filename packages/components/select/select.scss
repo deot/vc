@@ -64,10 +64,6 @@ $component-name: vc-select;
 		padding: 12px 8px;
 	}
 
-	@include element(options) {
-		max-height: 220px;
-	}
-
 	@include element(loading) {
 		padding-bottom: 8px;
 		text-align: center;
