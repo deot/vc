@@ -124,10 +124,11 @@ export const defaultRenderCell = (rowData: any = {}) => {
 	const line = column.line || VcInstance.options.TableColumn?.line;
 
 	if (line && value) {
+		const base = (rowData.isHead || rowData.isTail) ? 30 : 20;
 		const style = {
 			// 目前左右pading为10
 			// TODO: 含有border还要-1
-			width: (column.realWidth || column.width) - 20 + 'px'
+			width: (column.realWidth || column.width) - base + 'px'
 		};
 		return (<Text style={style} line={line} value={`${value}`} />);
 	}

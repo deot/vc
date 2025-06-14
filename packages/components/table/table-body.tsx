@@ -234,6 +234,7 @@ export const TableBody = defineComponent({
 			const key = getValueOfRow(row, rowIndex);
 			const selected = table.store.isSelected(row);
 			const height = rowHeight || rowData.height;
+			const maxColumnIndex = columns.length - 1;
 			return (
 				<div
 					key={key}
@@ -270,8 +271,10 @@ export const TableBody = defineComponent({
 												column,
 												rowIndex,
 												columnIndex,
+												selected,
 												store: table.store,
-												selected
+												isHead: columnIndex === 0,
+												isTail: columnIndex === maxColumnIndex
 											}
 										)
 									}
