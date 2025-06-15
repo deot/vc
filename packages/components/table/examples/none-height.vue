@@ -1,7 +1,7 @@
 <template>
 	<div style="padding: 30px;">
 		<h1>None-Height</h1>
-		<Table primary-key="id" :rows="6" :delay="delay" border stripe show-summary :data="dataSource">
+		<Table primary-key="id" :rows="6" :delay="delay" stripe show-summary :data="dataSource">
 			<TableColumn
 				type="selection"
 				fixed="left"

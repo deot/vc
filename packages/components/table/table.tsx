@@ -97,6 +97,7 @@ export const Table = defineComponent({
 				'vc-table--fit': props.fit,
 				'vc-table--striped': props.stripe,
 				'vc-table--border': props.border || states.isGroup,
+				'vc-table--divider': props.border || props.divider,
 				'vc-table--group': states.isGroup,
 				'vc-table--fluid-height': props.maxHeight,
 				'vc-table--scrollable-x': layout.states.scrollX,

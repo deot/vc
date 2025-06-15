@@ -53,7 +53,6 @@ $gap-v: 8px;
 
 	@include element(td) {
 		padding: $gap-v 0;
-		border-bottom: 1px solid $border-color;
 
 		&:first-child {
 			padding-left: $gap-h;
@@ -69,8 +68,6 @@ $gap-v: 8px;
 		overflow: hidden;
 		white-space: nowrap;
 		background-color: #fff;
-		border-top: 1px solid $border-color;
-		border-bottom: 1px solid $border-color;
 		box-sizing: border-box;
 		user-select: none;
 
@@ -119,38 +116,6 @@ $gap-v: 8px;
 		&.is-leaf {
 			border-bottom: 1px solid $border-color;
 		}
-	}
-
-	// 拥有多级表头
-	@include modifier((group, border)) {
-		border: 1px solid $border-color;
-
-		@include share-rule(border-pseudo) {
-			position: absolute;
-			z-index: 1;
-			background-color: $border-color;
-			content: "";
-		}
-
-		// 表格右部伪 border
-		&::after {
-			@include extend-rule(border-pseudo);
-
-			top: 0;
-			right: 0;
-			width: 1px;
-			height: 100%;
-		}
-	}
-
-	// 表格底部伪 border，总是有的
-	&::before {
-		@include extend-rule(border-pseudo);
-
-		bottom: 0;
-		left: 0;
-		width: 100%;
-		height: 1px;
 	}
 
 	// 数据为空
@@ -381,17 +346,6 @@ $gap-v: 8px;
 		left: 0;
 		overflow: hidden;
 		box-shadow: 0 0 10px rgb(0 0 0 / 12%);
-
-		&::before {
-			position: absolute;
-			bottom: 0;
-			left: 0;
-			z-index: 4;
-			width: 100%;
-			height: 1px;
-			background-color: $border-color;
-			content: "";
-		}
 	}
 
 	@include element(fixed-right) {
@@ -471,10 +425,30 @@ $gap-v: 8px;
 		}
 	}
 
-	// table--border
+	@include share-rule(table-border-pseudo) {
+		position: absolute;
+		z-index: 1;
+		background-color: $border-color;
+		content: "";
+	}
+
+
+	// table--border, group（拥有多级表头）模式必定是border
 	@include modifier(border) {
+		border-top: 1px solid $border-color;
 		border-right: none;
 		border-bottom: none;
+		border-left: 1px solid $border-color;
+
+		// 表格右部伪 border
+		&::after {
+			@include extend-rule(table-border-pseudo);
+
+			top: 0;
+			right: 0;
+			width: 1px;
+			height: 100%;
+		}
 
 		&.vc-loading-parent--relative {
 			border-color: transparent;
@@ -493,12 +467,46 @@ $gap-v: 8px;
 		}
 	}
 
+	@include modifier(divider) {
+		.vc-table__td {
+			border-bottom: 1px solid $border-color;
+		}
+
+		.vc-table__th {
+			border-top: 1px solid $border-color;
+			border-bottom: 1px solid $border-color;
+		}
+
+		// 表格底部伪 border
+		&::before {
+			@include extend-rule(table-border-pseudo);
+
+			bottom: 0;
+			left: 0;
+			width: 100%;
+			height: 1px;
+		}
+
+		@include element((fixed, fixed-right)) {
+			&::before {
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				z-index: 4;
+				width: 100%;
+				height: 1px;
+				background-color: $border-color;
+				content: "";
+			}
+		}
+	}
+
 	@include modifier(hidden) {
 		visibility: hidden;
 	}
 
 	@include modifier(enable-row-transition) {
-		.vc-table__body td {
+		.vc-table__body .vc-table__td {
 			transition: background-color 0.25s ease;
 		}
 	}
