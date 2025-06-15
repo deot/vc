@@ -29,18 +29,22 @@ export const FormItem = defineComponent({
 			];
 			return (
 				<div class={['vc-form-item', classes.value]}>
-					<div
-						style={labelStyle.value}
-						class="vc-form-item__label"
-						// @ts-ignore
-						for={labelFor}
-					>
-						<label>
-							{ label || slots.label?.() }
-						</label>
-					</div>
+					{
+						(label || slots.label) && (
+							<div
+								style={labelStyle.value}
+								class={['vc-form-item__label', props.labelClass]}
+								// @ts-ignore
+								for={labelFor}
+							>
+								<label>
+									{ label || slots.label?.() }
+								</label>
+							</div>
+						)
+					}
 					<div class="vc-form-item__wrapper">
-						<div class="vc-form-item__content" style={contentStyle.value}>
+						<div class={['vc-form-item__content', props.contentClass]} style={contentStyle.value}>
 							{ slots.default?.() }
 							{
 								slots.error

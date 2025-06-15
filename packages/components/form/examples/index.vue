@@ -7,30 +7,36 @@
 		style="padding-left: 56px; margin-top: 21px"
 		@submit.prevent
 	>
-		<FormItem prop="input" label="input：">
-			<input v-model="formData.input" style="width: 300px">
+		<FormItem prop="input" label-width="0">
+			<VInput v-model="formData.input" style="width: 300px" />
+		</FormItem>
+		<FormItem prop="input" label="input" label-width="0">
+			<VInput v-model="formData.input" style="width: 300px" />
+		</FormItem>
+		<FormItem prop="input" label="input">
+			<VInput v-model="formData.input" style="width: 300px" />
 		</FormItem>
 
-		<FormItem prop="nest" label="nest：">
-			<input v-model="formData.nest.value" style="width: 300px">
+		<FormItem prop="nest" label="nest:">
+			<VInput v-model="formData.nest.value" style="width: 300px" />
 			<div style="margin-top: 20px;" />
-			<FormItem prop="nest.value1" label="nest1：">
-				<input v-model="formData.nest.value1" style="width: 300px">
+			<FormItem prop="nest.value1" label="nest1:" label-width="0">
+				<VInput v-model="formData.nest.value1" style="width: 300px" />
 			</FormItem>
-			<FormItem prop="nest.value2" label="nest2：">
-				<input v-model="formData.nest.value2" style="width: 300px">
+			<FormItem prop="nest.value2" label="nest2:" label-width="0">
+				<input v-model="formData.nest.value2" style="width: 300px; padding: 6px 0">
 			</FormItem>
 		</FormItem>
-		<FormItem prop="array" label="array：">
+		<FormItem prop="array" label="array:" label-style="padding: 0 8px">
 			<FakeArray v-model="formData.array" />
 		</FormItem>
-		<FormItem prop="required" label="required：" required="必填">
+		<FormItem prop="required" label="required" required="必填" label-position="top" :label-width="0">
 			<FakeTpl v-model="formData.required" style="width: 300px" />
 		</FormItem>
-		<FormItem prop="blur" label="blur：">
+		<FormItem prop="blur" label="blur" label-position="top" :label-width="0">
 			<FakeTpl v-model="formData.blur" style="width: 300px" />
 		</FormItem>
-		<FormItem prop="change" label="change：">
+		<FormItem prop="change" label="change:" label-style="padding: 0">
 			<FakeTpl v-model="formData.change" style="width: 300px" />
 		</FormItem>
 		<template
@@ -38,7 +44,8 @@
 			:key="item.id"
 		>
 			<FormItem
-				:label="'Item ' + item.index + '：'"
+				label-style="padding: 0"
+				:label="'Item ' + item.index + ':'"
 				:prop="'items.' + item.index + '.value'"
 				:rules="{
 					required: true,
@@ -84,6 +91,7 @@ import { getUid } from '@deot/helper-utils';
 import FakeTpl from './fake/tpl.vue'; // 可以使用trigger
 import FakeArray from './fake/array.vue'; // 可以使用trigger
 import { Button } from '../../button';
+import { Input as VInput } from '../../Input';
 
 let index = 0;
 const form = ref(null);

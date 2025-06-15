@@ -110,10 +110,13 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 			: isNest.value
 				? 0
 				: form.props.labelWidth;
-		return {
-			width: labelPosition.value !== 'top' && labelWidth && labelWidth > 0 ? `${labelWidth}px` : 'auto',
-			textAlign: labelPosition.value === 'top' ? 'left' : labelPosition.value
-		};
+		return [
+			{
+				width: labelPosition.value !== 'top' && labelWidth && labelWidth > 0 ? `${labelWidth}px` : 'auto',
+				textAlign: labelPosition.value === 'top' ? 'left' : labelPosition.value
+			},
+			props.labelStyle
+		];
 	});
 
 	const contentStyle = computed(() => {

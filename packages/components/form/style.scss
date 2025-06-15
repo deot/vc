@@ -23,17 +23,29 @@ $color-error: varfix(color-error, form);
 	@include element(content) { 
 		position: relative;
 		font-size: 12px;
-		line-height: unitfix(18);
+		line-height: unitfix(20);
 	} 
 
 	@include element(label) {
 		float: left;
-		font-size: 12px;
-		line-height: unitfix(18);
+		padding: unitfix(6) unitfix(8) unitfix(6) 0;
+		font-size: 13px;
+		font-weight: 500;
+		line-height: unitfix(20);
 		color: $color-dark-light; 
 		text-align: right;
 		vertical-align: middle;
 		box-sizing: border-box;
+	}
+
+	@include share-rule(form-error-tip) {
+		display: inline-block;
+		margin-right: 4px;
+		font-family: SimSun;
+		font-size: 12px;
+		line-height: 1;
+		color: $color-error;
+		content: '*';
 	}
 
 	/**
@@ -43,13 +55,19 @@ $color-error: varfix(color-error, form);
 		@include when(require) {
 			@include element(label) {
 				&::before {
-					display: inline-block;
-					margin-right: 4px;
-					font-family: SimSun;
-					font-size: 12px;
-					line-height: 1;
-					color: $color-error;
-					content: '*';
+					@include extend-rule(form-error-tip);
+				}
+			}
+
+			@include when(top) {
+				@include element(label) {
+					&::before {
+						display: none;
+					}
+
+					&::after {
+						@include extend-rule(form-error-tip);
+					}
 				}
 			}
 		}
@@ -89,7 +107,7 @@ $color-error: varfix(color-error, form);
 			@include element(label) {
 				display: inline-block;
 				float: none;
-				padding: 0 0 unitfix(10);
+				padding: 0 0 unitfix(6);
 			}
 		}
 

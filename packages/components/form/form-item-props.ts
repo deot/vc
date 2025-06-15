@@ -46,6 +46,9 @@ export const props = {
 		type: String as PropType<'left' | 'right' | 'top'>,
 		default: 'right'
 	},
-	contentStyle: String
+	contentStyle: [Object, String],
+	contentClass: [Object, String],
+	labelStyle: [Object, String],
+	labelClass: [Object, String],
 };
 export type Props = ExtractPropTypes<typeof props>;
