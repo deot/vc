@@ -33,6 +33,7 @@
 			:mask="false"
 			:mask-closable="false"
 			:esc-closable="false"
+			:height="900"
 			scrollable
 			draggable
 			border

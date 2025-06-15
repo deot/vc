@@ -159,7 +159,8 @@ export const DrawerView = defineComponent({
 								>
 									<Scroller
 										native={false}
-										contentClass="vc-drawer__content"
+										contentClass={[props.contentClass, 'vc-drawer__content']}
+										contentStyle={props.contentStyle}
 									>
 										{
 											typeof props.content === 'string'

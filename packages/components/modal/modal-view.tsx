@@ -48,6 +48,8 @@ export const ModalView = defineComponent({
 		const y = ref(0);
 		const isActive = ref(false);
 
+		// 注: 服务端渲染为0, 在客服端激活前，展示端存在问题【高度不定】
+		const MAX_HEIGHT = IS_SERVER ? 0 : window.innerHeight - 20;
 		const defaultSize = computed(() => {
 			let width = 0;
 			let height = 0;
@@ -69,18 +71,23 @@ export const ModalView = defineComponent({
 			}
 			return {
 				width: props.width || width,
-				height
+				height: Math.min(props.height || height, MAX_HEIGHT)
 			};
 		});
 
 		const basicStyle = computed(() => {
-			return {
+			const result: any = {
 				width: `${defaultSize.value.width}px`,
-				minHeight: `${defaultSize.value.height}px`,
-
-				// 注: 服务端渲染为0, 在客服端激活前，展示端存在问题【高度不定】
-				maxHeight: IS_SERVER ? 0 : `${window.innerHeight - 20}px`,
+				maxHeight: `${MAX_HEIGHT}px`,
 			};
+
+			if (props.height) {
+				result.height = `${defaultSize.value.height}px`;
+			} else {
+				result.minHeight = `${defaultSize.value.height}px`;
+			}
+
+			return result;
 		});
 
 		const draggableStyle = computed(() => {
@@ -227,6 +234,7 @@ export const ModalView = defineComponent({
 		 * container在最大值时，需要移除，宽度才会缩回去
 		 */
 		const handleContentResize = () => {
+			if (props.height) return;
 			const needRefreshScroller = !!scroller.value.wrapper!.style.getPropertyValue('height');
 			const needRefreshContainer = !!container.value!.style.getPropertyValue('height');
 
@@ -412,6 +420,7 @@ export const ModalView = defineComponent({
 													always={false}
 													height={isTransitionEnd.value ? row.height : (void 0)}
 													contentClass={[{ 'is-confirm': props.mode }, props.contentClass, 'vc-modal__content']}
+													contentStyle={props.contentStyle}
 												>
 													{
 														typeof props.content === 'string'

@@ -19,8 +19,12 @@ export const props = {
 		validator: (v: string) => /(small|medium|large)/.test(v),
 		default: 'small'
 	},
+	contentStyle: [Object, String],
 	contentClass: [Object, String],
 	width: {
+		type: Number
+	},
+	height: {
 		type: Number
 	},
 	mask: {

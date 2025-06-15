@@ -13,7 +13,7 @@ export const props = {
 	},
 	width: {
 		type: Number,
-		default: 300
+		default: 600
 	},
 	height: {
 		type: Number,
@@ -38,6 +38,8 @@ export const props = {
 	maskStyle: [Object, String],
 	wrapperClass: [Object, String],
 	wrapperStyle: [Object, String],
+	contentStyle: [Object, String],
+	contentClass: [Object, String],
 	closeWithCancel: {
 		type: Boolean,
 		default: true // 如果关闭, cancel只能是取消的按钮
