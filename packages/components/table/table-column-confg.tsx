@@ -124,7 +124,7 @@ export const defaultRenderCell = (rowData: any = {}) => {
 	const line = column.line || VcInstance.options.TableColumn?.line;
 
 	if (line && value) {
-		const base = (rowData.isHead || rowData.isTail) ? 30 : 20;
+		const base = (rowData.isHead || rowData.isTail) ? 36 : 24; // 目前gap是12
 		const style = {
 			// 目前左右pading为10
 			// TODO: 含有border还要-1
