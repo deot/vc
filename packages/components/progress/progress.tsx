@@ -11,8 +11,12 @@ export const Progress = defineComponent({
 	name: COMPONENT_NAME,
 	props: progressProps,
 	setup(props, { slots }) {
+		const currentPercent = computed(() => {
+			const v = Number(props.percent);
+			return v >= 100 ? 100 : v;
+		});
 		const currentStatus = computed(() => {
-			if (Number(props.percent) >= 100) {
+			if (currentPercent.value === 100) {
 				return 'success';
 			}
 			return props.status;
@@ -26,6 +30,7 @@ export const Progress = defineComponent({
 		const binds = computed(() => {
 			return {
 				...props,
+				percent: currentPercent.value,
 				status: currentStatus.value,
 				color: currentColor.value
 			};
