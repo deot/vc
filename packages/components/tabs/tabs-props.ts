@@ -20,6 +20,10 @@ export const props = {
 	closable: {
 		type: Boolean,
 		default: false
-	}
+	},
+	barStyle: [Object, String],
+	contentStyle: [Object, String],
+	barClass: [Object, String],
+	contentClass: [Object, String],
 };
 export type Props = ExtractPropTypes<typeof props>;

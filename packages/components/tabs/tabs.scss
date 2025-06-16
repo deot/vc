@@ -10,7 +10,7 @@ $background-color-light: varfix(background-color-light, tabs);
 	@include element(bar) {
 		position: relative;
 		display: flex;
-		margin-bottom: 16px;
+		margin-bottom: 12px;
 		align-items: center;
 
 		// 不用添加背景色

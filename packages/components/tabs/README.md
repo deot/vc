@@ -267,7 +267,10 @@ const renderLabel = (props) => {
 | beforeRemove | 关闭前的函数，返回 `Promise` 可阻止标签关闭, 回调参数为当前`index` | `Function`        | -                 | -              |
 | offsetTop    | top的偏移值                                     | `number`          | -                 | 0              |
 | showStep     | 是否在需要滚动时展示左右切换按钮，仅支持移动端                     | `boolean`         | -                 | false          |
-
+| contentClass  | 类名                      | `object`、`string` | -                             | -       |
+| contentStyle  | 样式               | `object`、`string` | -                             | -       |
+| barClass  | 类名                      | `object`、`string` | -                             | -       |
+| barStyle  | 样式               | `object`、`string` | -                             | -       |
 
 ### 事件
 

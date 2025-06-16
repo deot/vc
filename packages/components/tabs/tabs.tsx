@@ -149,7 +149,11 @@ export const Tabs = defineComponent({
 					<div class="vc-tabs__extra">
 						{ slots.extra?.() }
 					</div>
-					<div ref={wrapper} style={{ padding: tabs.scrollable.value ? '0 24px' : 0 }} class="vc-tabs__bar">
+					<div
+						ref={wrapper}
+						style={[props.barStyle, { padding: tabs.scrollable.value ? '0 24px' : 0 }]}
+						class={[props.barClass, 'vc-tabs__bar']}
+					>
 						{
 							tabs.scrollable.value && (
 								<Icon
@@ -209,8 +213,8 @@ export const Tabs = defineComponent({
 					</div>
 					<div
 						ref={content}
-						style={tabs.contentStyle.value}
-						class="vc-tabs__content"
+						style={[props.contentStyle, tabs.contentStyle.value]}
+						class={[props.contentClass, 'vc-tabs__content']}
 					>
 						{ slots.default?.() }
 					</div>
