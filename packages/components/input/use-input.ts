@@ -33,7 +33,8 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 	const classes = computed(() => {
 		return {
 			'is-focus': isFocus.value,
-			'is-disabled': props.disabled
+			'is-disabled': props.disabled,
+			'is-error': !!formItem?.message?.value
 		};
 	});
 

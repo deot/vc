@@ -1,7 +1,7 @@
 @use '../style/helper' as *;
 
 $component-name: vc-radio-group;
-$size: 28px;
+$size: 32px;
 
 @include block($component-name) {
 	display: inline-flex;

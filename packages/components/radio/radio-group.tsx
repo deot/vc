@@ -16,8 +16,7 @@ export const RadioGroup = defineComponent({
 			if (props.fragment) return slots.default?.();
 			return (
 				<div
-					class="vc-radio-group"
-					style={classes.value}
+					class={[classes.value, 'vc-radio-group']}
 					// @ts-ignore
 					name={props.name}
 				>

@@ -4,23 +4,23 @@
 			{{ single }}
 		</MCheckbox>
 		<MCheckboxGroup v-model="social">
-			<MCheckbox label="twitter">
+			<MCheckbox value="twitter">
 				<span>Twitter</span>
 			</MCheckbox>
-			<MCheckbox label="facebook">
+			<MCheckbox value="facebook">
 				<span>Facebook</span>
 			</MCheckbox>
-			<MCheckbox label="github" disabled>
+			<MCheckbox value="github" disabled>
 				<span>Github</span>
 			</MCheckbox>
-			<MCheckbox label="snapchat" disabled>
+			<MCheckbox value="snapchat" disabled>
 				<span>Snapchat</span>
 			</MCheckbox>
 		</MCheckboxGroup>
 		<MCheckboxGroup v-model="fruit">
-			<MCheckbox label="香蕉" />
-			<MCheckbox label="苹果" />
-			<MCheckbox label="西瓜" />
+			<MCheckbox value="香蕉" />
+			<MCheckbox value="苹果" />
+			<MCheckbox value="西瓜" />
 		</MCheckboxGroup>
 
 		<!-- indeterminate -->
@@ -34,9 +34,9 @@
 			</MCheckbox>
 		</div>
 		<MCheckboxGroup v-model="checkAllGroup" @change="handleChange">
-			<MCheckbox label="香蕉" />
-			<MCheckbox label="苹果" />
-			<MCheckbox label="西瓜" />
+			<MCheckbox value="香蕉" />
+			<MCheckbox value="苹果" />
+			<MCheckbox value="西瓜" />
 		</MCheckboxGroup>
 	</div>
 </template>

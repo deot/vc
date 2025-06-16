@@ -7,7 +7,7 @@ $component-name: vc-radio;
 	display: inline-flex;
 	margin-right: 8px;
 	font-size: 12px;
-	line-height: 1;
+	line-height: 32px;
 	white-space: nowrap;
 	vertical-align: middle;
 	cursor: pointer;
@@ -16,7 +16,7 @@ $component-name: vc-radio;
 	@include element(wrapper) {
 		position: relative;
 		display: inline-flex;
-		line-height: 1;
+		line-height: inherit;
 		white-space: nowrap;
 		vertical-align: middle;
 		cursor: pointer;
@@ -105,6 +105,14 @@ $component-name: vc-radio;
 				&::before, &::after{
 					border-color: #ccc;
 				}
+			}
+		}
+	}
+
+	@include when(error) {
+		@include element(border) {
+			&::before, &::after{
+				border-color: #f04134;
 			}
 		}
 	}

@@ -141,7 +141,8 @@ export default (textarea: Ref<HTMLTextAreaElement | undefined>, expose?: SetupCo
 	const classes = computed(() => {
 		return {
 			'is-focus': isFocus.value,
-			'is-disabled': props.disabled
+			'is-disabled': props.disabled,
+			'is-error': !!formItem?.message?.value
 		};
 	});
 

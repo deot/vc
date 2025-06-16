@@ -6,13 +6,14 @@ $component-name: vc-checkbox;
 	display: inline-flex;
 	margin-right: 8px;
 	font-size: 12px;
+	line-height: 32px;
 	cursor: pointer;
 	align-items: center;
 
 	@include element(wrapper) {
 		position: relative;
 		display: inline-flex;
-		line-height: 1;
+		line-height: inherit;
 		white-space: nowrap;
 		vertical-align: middle;
 		cursor: pointer;
@@ -111,6 +112,14 @@ $component-name: vc-checkbox;
 		@include element(border){
 			z-index: 1;
 			box-shadow: 0 0 0 2px rgb(45 140 240 / 20%);
+		}
+	}
+
+	@include when(error) {
+		@include element(border){
+			&::after, &::before {
+				border-color: #f04134;
+			}
 		}
 	}
 

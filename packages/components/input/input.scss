@@ -3,6 +3,7 @@
 $component-name: vc-input;
 $background-color-light: varfix(background-color-light, input);
 $color-light-deeper: varfix(color-light-deeper, input);
+$color-error: varfix(color-error, input);
 $color-primary: varfix(color-primary, input);
 $color-primary-lighter: varfix(color-primary-lighter, input);
 $color-dark-lighter: varfix(color-dark-lighter, input);
@@ -44,6 +45,15 @@ $color-disabled: varfix(color-disabled, input);
 
 	@include when(disabled) {
 		background: $color-disabled;
+	}
+
+	@include when(error) {
+		&::after, &::before {
+			border-color: $color-error;
+			box-shadow: none;
+		}
+
+		z-index: 2;
 	}
 
 	@include element(wrapper) {

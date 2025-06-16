@@ -48,6 +48,7 @@ export const useRadio = () => {
 			'is-checked': checked.value,
 			'is-disabled': isDisabled.value,
 			'is-focus': isFocus.value,
+			'is-error': !!formItem?.message?.value
 		};
 	});
 

@@ -8,20 +8,58 @@
 		@submit.prevent
 	>
 		<FormItem prop="input" :label-width="0">
-			<VInput v-model="formData.input" style="width: 300px" />
+			<Input v-model="formData.input" style="width: 300px" />
 		</FormItem>
 		<FormItem prop="input" label="input" :label-width="0">
-			<VInput v-model="formData.input" style="width: 300px" />
+			<Input v-model="formData.input" style="width: 300px" />
 		</FormItem>
 		<FormItem prop="input" label="input">
-			<VInput v-model="formData.input" style="width: 300px" />
+			<Input v-model="formData.input" style="width: 300px" />
+		</FormItem>
+		<FormItem prop="select" label="select" required="必填">
+			<Select v-model="formData.select" style="width: 300px" />
+		</FormItem>
+		<FormItem prop="datepicker" label="datepicker" required="必填">
+			<DatePicker v-model="formData.datepicker" style="width: 300px" />
+		</FormItem>
+		<FormItem prop="textarea" label="textarea" required="必填" label-style="padding-top: 0">
+			<Textarea v-model="formData.textarea" style="width: 300px" />
+		</FormItem>
+		<FormItem prop="radio" label="radio" required="必填">
+			<RadioGroup v-model="formData.radio">
+				<Radio value="apple" disabled>
+					<span>Apple</span>
+				</Radio>
+				<Radio value="android">
+					<span>Android</span>
+				</Radio>
+				<Radio value="windows">
+					<span>Windows</span>
+				</Radio>
+			</RadioGroup>
+		</FormItem>
+		<FormItem prop="checkbox" label="checkbox" required="必填">
+			<CheckboxGroup v-model="formData.checkbox">
+				<Checkbox value="twitter">
+					<span>Twitter</span>
+				</Checkbox>
+				<Checkbox value="facebook">
+					<span>Facebook</span>
+				</Checkbox>
+				<Checkbox value="github" disabled>
+					<span>Github</span>
+				</Checkbox>
+				<Checkbox value="snapchat" disabled>
+					<span>Snapchat</span>
+				</Checkbox>
+			</CheckboxGroup>
 		</FormItem>
 
 		<FormItem prop="nest" label="nest:">
-			<VInput v-model="formData.nest.value" style="width: 300px" />
+			<Input v-model="formData.nest.value" style="width: 300px" />
 			<div style="margin-top: 20px;" />
 			<FormItem prop="nest.value1" label="nest1:" :label-width="0">
-				<VInput v-model="formData.nest.value1" style="width: 300px" />
+				<Input v-model="formData.nest.value1" style="width: 300px" />
 			</FormItem>
 			<FormItem prop="nest.value2" label="nest2:" :label-width="0">
 				<input v-model="formData.nest.value2" style="width: 300px; padding: 6px 0">
@@ -91,12 +129,19 @@ import { getUid } from '@deot/helper-utils';
 import FakeTpl from './fake/tpl.vue'; // 可以使用trigger
 import FakeArray from './fake/array.vue'; // 可以使用trigger
 import { Button } from '../../button';
-import { Input as VInput } from '../../Input';
+import { Select } from '../../select';
+import { Input } from '../../input';
+import { Radio, RadioGroup } from '../../radio';
+import { Checkbox, CheckboxGroup } from '../../checkbox';
+import { Textarea } from '../../textarea';
+import { DatePicker } from '../../date-picker';
 
 let index = 0;
 const form = ref(null);
 const formData = reactive({
 	input: '',
+	radio: '',
+	select: '',
 	nest: {
 		value: '',
 		value1: '',

@@ -3,6 +3,7 @@
 $component-name: vc-textarea;
 $background-color-light: varfix(background-color-light, textarea);
 $color-light-deeper: varfix(color-light-deeper, textarea);
+$color-error: varfix(color-error, textarea);
 $color-primary: varfix(color-primary, textarea);
 $color-primary-lighter: varfix(color-primary-lighter, textarea);
 $color-dark-lighter: varfix(color-dark-lighter, textarea);
@@ -35,6 +36,15 @@ $color-disabled: varfix(color-disabled, textarea);
 
 		z-index: 2;
 		box-shadow: 0 0 unitfix(1) unitfix(1) $color-primary-lighter;
+	}
+
+	@include when(error) {
+		&::after, &::before {
+			border-color: $color-error;
+			box-shadow: none;
+		}
+
+		z-index: 2;
 	}
 
 	&:hover {

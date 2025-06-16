@@ -7,27 +7,27 @@
 
 		<!-- group -->
 		<MRadioGroup v-model="phone">
-			<MRadio label="apple" disabled>
+			<MRadio value="apple" disabled>
 				<span>Apple</span>
 			</MRadio>
-			<MRadio label="android">
+			<MRadio value="android">
 				<span>Android</span>
 			</MRadio>
-			<MRadio label="windows">
+			<MRadio value="windows">
 				<span>Windows</span>
 			</MRadio>
 		</MRadioGroup>
 		<MRadioGroup v-model="animal" vertical>
-			<MRadio label="金斑蝶" />
-			<MRadio label="爪哇犀牛" />
-			<MRadio label="印度黑羚" />
+			<MRadio value="金斑蝶" />
+			<MRadio value="爪哇犀牛" />
+			<MRadio value="印度黑羚" />
 		</MRadioGroup>
 
 		<MRadioGroup v-model="city" type="button" @change="handleChange">
-			<MRadio label="北京" />
-			<MRadio label="上海" disabled />
-			<MRadio label="深圳" />
-			<MRadio label="杭州" />
+			<MRadio value="北京" />
+			<MRadio value="上海" disabled />
+			<MRadio value="深圳" />
+			<MRadio value="杭州" />
 		</MRadioGroup>
 		<MForm
 			ref="formValidate"
@@ -39,13 +39,13 @@
 		>
 			<MFormItem prop="animal" label="动物：">
 				<MRadioGroup v-model="formValidate.animal">
-					<MRadio label="金斑蝶" />
-					<MRadio label="爪哇犀牛" />
-					<MRadio label="印度黑羚" />
+					<MRadio value="金斑蝶" />
+					<MRadio value="爪哇犀牛" />
+					<MRadio value="印度黑羚" />
 				</MRadioGroup>
 			</MFormItem>
 			<MFormItem prop="animal" label="动物：">
-				<MRadio label="金斑蝶" />
+				<MRadio value="金斑蝶" />
 			</MFormItem>
 			<MFormItem prop="input" label="动物：">
 				<MInput style="width: 300px" />

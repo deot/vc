@@ -37,6 +37,7 @@ export const useCheckbox = () => {
 			'is-checked': checked.value,
 			'is-disabled': props.disabled,
 			'is-focus': isFocus.value,
+			'is-error': !!formItem?.message?.value
 		};
 	});
 
