@@ -7,10 +7,10 @@
 		style="padding-left: 56px; margin-top: 21px"
 		@submit.prevent
 	>
-		<FormItem prop="input" label-width="0">
+		<FormItem prop="input" :label-width="0">
 			<VInput v-model="formData.input" style="width: 300px" />
 		</FormItem>
-		<FormItem prop="input" label="input" label-width="0">
+		<FormItem prop="input" label="input" :label-width="0">
 			<VInput v-model="formData.input" style="width: 300px" />
 		</FormItem>
 		<FormItem prop="input" label="input">
@@ -20,10 +20,10 @@
 		<FormItem prop="nest" label="nest:">
 			<VInput v-model="formData.nest.value" style="width: 300px" />
 			<div style="margin-top: 20px;" />
-			<FormItem prop="nest.value1" label="nest1:" label-width="0">
+			<FormItem prop="nest.value1" label="nest1:" :label-width="0">
 				<VInput v-model="formData.nest.value1" style="width: 300px" />
 			</FormItem>
-			<FormItem prop="nest.value2" label="nest2:" label-width="0">
+			<FormItem prop="nest.value2" label="nest2:" :label-width="0">
 				<input v-model="formData.nest.value2" style="width: 300px; padding: 6px 0">
 			</FormItem>
 		</FormItem>

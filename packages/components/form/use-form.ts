@@ -25,7 +25,7 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 
 	const fields: ComponentInternalInstance[] = [];
 
-	provide<FormProvide>('form', {
+	provide<FormProvide>('vc-form', {
 		props,
 		add: (field) => {
 			field && fields.push(field);

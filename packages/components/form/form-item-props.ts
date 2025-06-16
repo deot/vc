@@ -43,8 +43,7 @@ export const props = {
 		default: false
 	},
 	labelPosition: {
-		type: String as PropType<'left' | 'right' | 'top'>,
-		default: 'right'
+		type: String as PropType<'left' | 'right' | 'top'>
 	},
 	contentStyle: [Object, String],
 	contentClass: [Object, String],

@@ -24,7 +24,7 @@ const toRules = (rules?: FormRule | FormRule[]) => {
 };
 
 export const useFormItem = (expose: SetupContext['expose']) => {
-	const form = inject<FormProvide>('form');
+	const form = inject<FormProvide>('vc-form');
 	const instance = getCurrentInstance()!;
 	const props = instance.props as Props;
 	const { slots } = instance;
