@@ -64,9 +64,8 @@ export const props = {
 		type: [String, Boolean],
 		default: '取消'
 	},
-	wrapperStyle: {
-		type: [String, Object]
-	},
+	wrapperStyle: [String, Object],
+	wrapperClass: [String, Object],
 
 	footer: {
 		type: Boolean,

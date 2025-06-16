@@ -50,6 +50,7 @@ export const ModalView = defineComponent({
 
 		// 注: 服务端渲染为0, 在客服端激活前，展示端存在问题【高度不定】
 		const MAX_HEIGHT = IS_SERVER ? 0 : window.innerHeight - 20;
+		const MAX_WIDTH = IS_SERVER ? 0 : window.innerWidth - 20;
 		const defaultSize = computed(() => {
 			let width = 0;
 			let height = 0;
@@ -70,7 +71,7 @@ export const ModalView = defineComponent({
 					break;
 			}
 			return {
-				width: props.width || width,
+				width: Math.min(props.width || width, MAX_WIDTH),
 				height: Math.min(props.height || height, MAX_HEIGHT)
 			};
 		});
@@ -346,7 +347,7 @@ export const ModalView = defineComponent({
 					<div
 						ref={wrapper}
 						style={[props.wrapperStyle || {}, props.draggable ? { top: 0 } : {}]}
-						class="vc-modal__wrapper"
+						class={[props.wrapperClass, 'vc-modal__wrapper']}
 						// @ts-ignore
 						onClick={e => handleClose(e, false)}
 					>

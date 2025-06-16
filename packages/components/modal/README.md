@@ -381,10 +381,14 @@ const handleModal3 = () => {
 | footer            | 是否显示footer                         | `boolean`           | -                                  | -      |
 | title             | 对话框标题，如果使用slot自定义header，则title无效   | `string`            | -                                  | -      |
 | size              | 对话框的三个默认大小                         | `string`            | `small`、`medium`、`large`           | small  |
-| wrapperStyle      | 设置`.-wrap`的style，例如：{top: '100px'} | `object`            | -                                  |        |
+| wrapperStyle      | 设置wrapper的style | `object`、`string`           | -                                  |        |
+| contentStyle      | 设置content的style | `object`、`string`           | -                                  |        |
+| wrapperClass      | 设置wrapper的class | `object`、`string`           | -                                  |        |
+| contentClass      | 设置content的class | `object`、`string`           | -                                  |        |
 | ok-text           | 自定义确定按钮的文案                         | `string`、`boolean`  | -                                  | 确定     |
 | cancel-text       | 自定义取消按钮的文案                         | `string`、`boolean`  | -                                  | 取消     |
 | width             | 对话框的宽度                             | `number`            | -                                  | 400    |
+| height             | 对话框的高度                             | `number`            | -                                  | -    |
 | closable          | 是否显示关闭图标                           | `boolean`           | -                                  | `true` |
 | mask              | 遮罩层是否显示                            | `boolean`           | -                                  | `true` |
 | mask-closable     | 点击遮罩层是否关闭                          | `Booelan`           | -                                  | `true` |
@@ -407,7 +411,7 @@ const handleModal3 = () => {
 | footer            | 是否显示footer                         | `boolean`                     | -                   | -      |
 | visible           | 对话框是否显示，可用v-model双向绑定              | `boolean`                     | -                   | false  |
 | title             | 对话框标题，如果使用slot自定义header，则title无效   | `string`                      | -                   | -      |
-| wrapperStyle      | 设置`.-wrap`的style，例如：{top: '100px'} | `object`                      | -                   |        |
+| wrapperStyle      | 设置wrapper的style | `object`                      | -                   |        |
 | ok-text           | 自定义确定按钮的文案                         | `string`、`boolean`            | -                   | 确定     |
 | cancel-text       | 自定义取消按钮的文案                         | `string`、`boolean`            | -                   | 取消     |
 | width             | 对话框的宽度                             | `number`                      | -                   | 400    |

@@ -131,6 +131,8 @@ const handleDrawer = (res) => {
 | placement     | 抽屉的方向                              | `string`                  | `top`、`right`、`bottom`、`left` | `right` |
 | wrapperClass  | `Drawer`容器的类名                      | `Object`、`Array`、`string` | -                             | -       |
 | wrapperStyle  | 用于设置 `Drawer` 弹出层的样式               | `Object`、`Array`、`string` | -                             | -       |
+| contentClass  | `Drawer`容器的类名                      | `Object`、`Array`、`string` | -                             | -       |
+| contentStyle  | 用于设置 `Drawer` 弹出层的样式               | `Object`、`Array`、`string` | -                             | -       |
 
 
 ### 事件
