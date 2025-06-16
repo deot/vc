@@ -247,3 +247,9 @@ import { Button, ButtonGroup } from '@deot/vc';
 | circle   | 按钮是否圆角    | `boolean` | -                        | `false`  |
 | vertical | 按钮纵向排列    | `boolean` | -                        | `false`  |
 
+### slot
+
+| 名称     | 说明      |
+| ------ | ------- |
+| icon | 图标 |
+| default | 内容 |

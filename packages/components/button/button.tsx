@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { getCurrentInstance, defineComponent, ref, computed, inject, onMounted } from 'vue';
+import { getCurrentInstance, defineComponent, ref, computed, inject } from 'vue';
 import { Icon } from '../icon';
 import { Spin } from '../spin';
 import { Debounce } from '../debounce';
@@ -14,7 +14,7 @@ export const Button = defineComponent({
 	props: buttonProps,
 	setup(props, { slots }) {
 		const vm = getCurrentInstance()!;
-		const hasSlot = ref(true);
+		const isHover = ref(false);
 		const isLoading = ref(false);
 
 		const group = inject('vc-button-group', {
@@ -25,10 +25,11 @@ export const Button = defineComponent({
 
 		const classes = computed(() => ({
 			'is-circle': props.circle || group.circle,
-			'is-alone': !hasSlot.value,
+			'is-alone': !slots?.default,
 			'is-round': props.round,
 			'is-long': props.long,
 			'is-disabled': props.disabled,
+			'is-hover': isHover.value,
 			[`is-${props.size}`]: true,
 			[`is-${props.type}`]: true
 		}));
@@ -46,10 +47,6 @@ export const Button = defineComponent({
 			}
 		};
 
-		onMounted(() => {
-			hasSlot.value = slots.default !== undefined;
-		});
-
 		return () => {
 			return (
 				<Debounce
@@ -60,10 +57,17 @@ export const Button = defineComponent({
 					disabled={props.disabled}
 					type={props.htmlType}
 					onClick={handleClick}
+					onMouseenter={() => isHover.value = true}
+					onMouseleave={() => isHover.value = false}
 				>
 					{
 						props.icon
 						&& (<Icon type={props.icon} />)
+					}
+					{
+						slots.icon && (slots?.icon?.({
+							hover: isHover.value
+						}))
 					}
 					{
 						isLoading.value && (
@@ -76,7 +80,7 @@ export const Button = defineComponent({
 					}
 
 					{
-						hasSlot.value && (
+						slots?.default && (
 							<span>
 								{ slots?.default?.() }
 							</span>
