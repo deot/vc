@@ -5,5 +5,9 @@ export const props = {
 	fit: String,
 	lazy: Boolean,
 	wrapper: [Object, String],
+	previewable: {
+		type: Boolean,
+		default: true
+	}
 };
 export type Props = ExtractPropTypes<typeof props>;

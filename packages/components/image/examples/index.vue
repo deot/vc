@@ -13,6 +13,7 @@
 					:src="url"
 					lazy
 					style="min-height: 200px; width: 200px; height: 200px"
+					previewable
 				/>
 			</div>
 		</div>

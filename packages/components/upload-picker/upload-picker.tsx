@@ -8,7 +8,7 @@ import { VcInstance } from '../vc';
 import { Upload } from '../upload/index';
 import { Icon } from '../icon/index';
 // import SortList from '../sort-list/index';
-// import { ImageItem } from './item/image-item';
+import { ImageItem } from './item/image';
 // import { VideoItem } from './item/video-item';
 // import { AudioItem } from './item/audio-item';
 // import { FileItem } from './item/file-item';
@@ -23,6 +23,8 @@ export const UploadPicker = defineComponent({
 		'update:modelValue',
 		'file-success',
 		'file-start',
+		'file-before',
+		'file-error',
 		'success',
 		'error',
 		'complete',
@@ -37,8 +39,7 @@ export const UploadPicker = defineComponent({
 					case 'image':
 						pre.push({
 							type: cur,
-							item: 'div'
-							// item: ImageItem
+							item: ImageItem
 						});
 						return pre;
 					case 'video':
@@ -92,7 +93,7 @@ export const UploadPicker = defineComponent({
 											return (
 												<Item
 													key={typeof item === 'object' ? item.uid : item}
-													it={item}
+													row={item}
 													disabled={props.disabled}
 													image-preview-options={props.imagePreviewOptions}
 													imageClass={props.imageClass}
@@ -100,21 +101,22 @@ export const UploadPicker = defineComponent({
 													audioClass={props.audioClass}
 													fileClass={props.fileClass}
 													index={index}
-													data={item}
+													keyValue={props.keyValue}
+													data={base.currentValue.value[picker.type]}
 													class="vc-upload-picker__item"
 													onDelete={() => base.handleDelete(index, picker.type)}
 												>
 													{{
-														default: (scopeData: any) => {
-															return slots.default
-																? slots.default({
+														default: slots.default
+															? (scopeData: any) => {
+																	return slots?.default?.({
 																		it: (scopeData)?.it,
 																		current: (scopeData)?.current,
 																		index,
 																		name: picker.type
-																	})
-																: scopeData;
-														}
+																	});
+																}
+															: null
 													}}
 												</Item>
 											);

@@ -1,0 +1,63 @@
+@use '../style/helper' as *;
+
+$component-name: vc-upload-picker;
+
+@include block($component-name) {
+	display: flex;
+	font-size: 12px;
+	box-sizing: border-box;
+	flex-wrap: wrap;
+
+	@include share-rule(box) {
+		width: 64px;
+		height: 64px;
+		cursor: pointer;
+		border-radius: 4px;
+	}
+
+	@include element(item) {
+		margin-right: 12px;
+		margin-bottom: 12px;
+
+		@include extend-rule(box);
+	}
+
+	@include element(delete) {
+		position: absolute;
+		top: -6px;
+		right: -6px;
+		z-index: 1;
+		width: 14px;
+		height: 14px;
+		font-size: 14px;
+		color: #fff;
+		background-color: #5495F6;
+		border-radius: 7px;
+	}
+
+	@include element(upload) {
+		margin-right: 12px;
+		margin-bottom: 12px;
+	}
+
+	@include element(box) {
+		display: flex;
+		line-height: 1;
+		color: #999;
+		background-color: #F5F5F6;
+		border: 1px dashed #D9D9D9;
+		align-items: center;
+		justify-content: center;
+		flex-direction: column;
+
+		@include extend-rule(box);
+	}
+
+	@include element(plus-icon) {
+		font-size: 14px;
+	}
+
+	.vc-sort-list > div {
+		margin: 0;
+	}
+}

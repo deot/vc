@@ -12,6 +12,10 @@ $component-name: vc-image;
 	display: inline-block;
 	overflow: hidden;
 	vertical-align: top;
+
+	@include when(allow-preview) {
+		cursor: pointer;
+	}
 	
 	@include element(placeholder) {
 		@extend %size;

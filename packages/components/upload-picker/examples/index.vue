@@ -3,18 +3,14 @@
 		<UploadPicker
 			v-model="dataSource"
 			:picker="['image', 'video', 'audio', 'file']"
-		>
-			<!-- 限制大小上传以及api -->
-		</UploadPicker>
+		/>
 		<div>图片压缩</div>
 		{{ list }}
 		<UploadPicker
 			v-model="list"
 			:picker="['image']"
-			:compress-opts="{compress: true}"
-		>
-			<!-- 限制大小上传以及api -->
-		</UploadPicker>
+			output="string"
+		/>
 	</div>
 </template>
 <script setup>

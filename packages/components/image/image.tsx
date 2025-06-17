@@ -5,6 +5,7 @@ import { IS_SERVER } from '@deot/vc-shared';
 import { useAttrs } from '@deot/vc-hooks';
 import * as $ from '@deot/helper-dom';
 import { throttle } from 'lodash-es';
+import { ImagePreview } from '../image-preview/index';
 import { props as imageProps } from './image-props';
 import IMGStore from './store';
 
@@ -177,6 +178,15 @@ export const Image = defineComponent({
 			return !isSupportObjectFit && props.fit !== ObjectFit.FILL;
 		});
 
+		const handlePreview = () => {
+			if (!props.previewable) return;
+			ImagePreview.open({
+				current: 0,
+				data: [props.src] as any,
+				onClose() {}
+			});
+		};
+
 		watch(
 			() => props.src,
 			(v) => {
@@ -207,7 +217,7 @@ export const Image = defineComponent({
 		});
 		return () => {
 			return (
-				<div style={its.value.style} class={[its.value.class, 'vc-image']}>
+				<div style={its.value.style} class={[its.value.class, { 'is-allow-preview': props.previewable }, 'vc-image']}>
 					{
 						isLoading.value && (
 							slots.placeholder
@@ -232,6 +242,7 @@ export const Image = defineComponent({
 										...its.value.listeners,
 									}
 								}
+								onClick={handlePreview}
 							/>
 						)
 					}

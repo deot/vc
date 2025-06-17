@@ -1,6 +1,2 @@
-@use '../style/helper' as *;
-
-$component-name: vc-upload-picker;
-
-@include block($component-name) {
-}
+@use "./upload-picker";
+@use "./item/image";
