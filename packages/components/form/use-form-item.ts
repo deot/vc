@@ -90,6 +90,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 			'is-validating': validateState.value === 'validating',
 			'is-inline': form.props.inline,
 			'is-nest': isNest.value,
+			'is-alone': !props.showMessage, // 用于单独去除form-item的默认margin_bottom
 			[`is-${labelPosition.value}`]: true,
 		};
 	});

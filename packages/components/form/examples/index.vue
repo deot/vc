@@ -7,7 +7,7 @@
 		style="padding-left: 56px; margin-top: 21px"
 		@submit.prevent
 	>
-		<FormItem prop="input" :label-width="0">
+		<FormItem prop="input" :label-width="0" :show-message="false">
 			<Input v-model="formData.input" style="width: 300px" />
 		</FormItem>
 		<FormItem prop="input" label="input" :label-width="0">

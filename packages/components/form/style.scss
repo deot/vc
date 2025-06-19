@@ -119,6 +119,10 @@ $color-error: varfix(color-error, form);
 			margin-right: unitfix(10);
 			vertical-align: top;
 		}
+
+		@include when(alone) {
+			margin-bottom: 0;
+		}
 	}
 
 	/**
