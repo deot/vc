@@ -5,7 +5,7 @@
 		<Switch :model-value="true" />
 		<Switch :model-value="false" />
 
-		<Switch>
+		<Switch :width="40">
 			<template #checked>
 				<span>开</span>
 			</template>
@@ -14,7 +14,7 @@
 			</template>
 		</Switch>
 		<br><br>
-		<Switch size="large">
+		<Switch :width="50">
 			<template #checked>
 				<span>开启</span>
 			</template>
@@ -22,7 +22,7 @@
 				<span>关闭</span>
 			</template>
 		</Switch>
-		<Switch size="large">
+		<Switch :width="50">
 			<template #checked>
 				<span>ON</span>
 			</template>

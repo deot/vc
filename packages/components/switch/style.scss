@@ -4,26 +4,36 @@ $component-name: vc-switch;
 $color-primary: varfix(color-primary, switch);
 $background-color-light: varfix(background-color-light, switch);
 
+// 控制在32px
 @include block($component-name) {
-	position: relative;
-	display: inline-block;
-	width: 36px;
-	height: 20px;
+	display: inline-flex;
+	padding-top: 6px;
+	padding-bottom: 6px;
+	font-size: 12px;
 	line-height: 20px;
-	vertical-align: middle;
-	cursor: pointer;
-	background-color: #d9d9d9;
-	border: 1px solid #d9d9d9;
-	border-radius: 20px;
 	box-sizing: border-box;
-	transition: all .2s ease-in-out;
-	user-select: none;;
 
-	@include		 element(content) {
+	@include element(wrapper) {
+		position: relative;
+		display: flex;
+		width: 100%;
+		vertical-align: middle;
+		cursor: pointer;
+		background-color: #d9d9d9;
+		border: 1px solid #d9d9d9;
+		border-radius: 20px;
+		box-sizing: border-box;
+		transition: all .2s ease-in-out;
+		user-select: none;
+	}
+
+	@include element(content) {
 		position: absolute;
-		left: 20px;
-		font-size: 12px;
+		display: flex;
+		font-size: inherit;
 		color: $background-color-light;
+		align-items: center;
+		justify-content: flex-end;
 	}
 
 	@include element(inner) {
@@ -50,19 +60,13 @@ $background-color-light: varfix(background-color-light, switch);
 	}
 
 	@include when(checked) {
-		background-color: $color-primary;
-		border-color: $color-primary;
+		@include element(wrapper) {
+			background-color: $color-primary;
+			border-color: $color-primary;
+		}
 
 		@include element(content) {
-			left: 7px;
-		}
-
-		@include element(inner) {
-			left: 17px;
-		}
-
-		@include element(loading) {
-			left: 18px;
+			justify-content: flex-start;
 		}
 	}
 }

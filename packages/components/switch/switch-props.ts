@@ -27,6 +27,18 @@ export const props = {
 	uncheckedText: {
 		type: String,
 		default: ''
+	},
+	width: {
+		type: Number,
+		default: 36
+	},
+	height: {
+		type: Number,
+		default: 20
+	},
+	borderWidth: {
+		type: Number,
+		default: 1
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

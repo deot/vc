@@ -77,6 +77,9 @@
 		<FormItem prop="change" label="change:" label-style="padding: 0">
 			<FakeTpl v-model="formData.change" style="width: 300px" />
 		</FormItem>
+		<FormItem prop="swicth" label="swicth:">
+			<Switch v-model="formData.swicth" />
+		</FormItem>
 		<template
 			v-for="(item, index) in formData.items"
 			:key="item.id"
@@ -135,10 +138,12 @@ import { Radio, RadioGroup } from '../../radio';
 import { Checkbox, CheckboxGroup } from '../../checkbox';
 import { Textarea } from '../../textarea';
 import { DatePicker } from '../../date-picker';
+import { Switch } from '../../switch';
 
 let index = 0;
 const form = ref(null);
 const formData = reactive({
+	switch: '',
 	input: '',
 	radio: '',
 	select: '',
