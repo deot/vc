@@ -12,7 +12,7 @@ $gap-v: 8px;
 	width: 100%;
 	max-width: 100%;
 	overflow: hidden;
-	font-size: 14px;
+	font-size: 13px;
 	color: $foreground-color;
 	background-color: #fff;
 	box-sizing: border-box;
@@ -549,6 +549,10 @@ $gap-v: 8px;
 
 .vc-table .vc-table-column--selection .vc-table__cell {
 	text-overflow: unset!important;
+
+	.vc-checkbox {
+		padding: 0;
+	}
 }
 
 .vc-table .vc-recycle-list__scroll-state {
