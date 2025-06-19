@@ -5,9 +5,9 @@ $component-name: vc-radio;
 @include block($component-name) {
 	position: relative;
 	display: inline-flex;
-	margin-right: 8px;
+	padding: 6px 8px 6px 0;
 	font-size: 12px;
-	line-height: 32px;
+	line-height: 20px;
 	white-space: nowrap;
 	vertical-align: middle;
 	cursor: pointer;

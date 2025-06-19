@@ -4,10 +4,11 @@ $component-name: vc-checkbox;
 
 @include block($component-name) {
 	display: inline-flex;
-	margin-right: 8px;
+	padding: 6px 8px 6px 0;
 	font-size: 12px;
-	line-height: 32px;
+	line-height: 20px;
 	cursor: pointer;
+	box-sizing: border-box;
 	align-items: center;
 
 	@include element(wrapper) {
