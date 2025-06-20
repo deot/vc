@@ -15,7 +15,6 @@ export const cellStarts = {
 		width: 60,
 		minWidth: 60,
 		order: '',
-		className: 'vc-table-column--selection'
 	},
 	expand: {
 		width: 60,
@@ -63,7 +62,8 @@ export const cellForced = {
 			);
 		},
 		sortable: false,
-		resizable: false
+		resizable: false,
+		class: 'vc-table__selection-column'
 	},
 	index: {
 		renderHeader(h, { column }) {
@@ -104,7 +104,7 @@ export const cellForced = {
 		},
 		sortable: false,
 		resizable: false,
-		className: 'vc-table__expand-column'
+		class: 'vc-table__expand-column'
 	}
 };
 

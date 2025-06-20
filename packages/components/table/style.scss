@@ -2,7 +2,7 @@
 
 $component-name: vc-table;
 $foreground-color: varfix(foreground-color, table);
-$border-color: #EDEFF1;
+$border-color: varfix(border-color, table, #EDEFF1);
 $f9: #F7F8FA;
 $gap-h: 12px;
 $gap-v: 8px;
@@ -142,6 +142,16 @@ $gap-v: 8px;
 		color: #909399;
 	}
 
+	@include element(selection-column) {
+		.vc-table__cell {
+			text-overflow: unset!important;
+
+			.vc-checkbox {
+				padding: 0;
+			}
+		}
+	}
+	
 	// 展开行
 	@include element(expand-column) {
 		.vc-table__cell {
@@ -399,7 +409,6 @@ $gap-v: 8px;
 		border-left: 1px solid $border-color;
 	}
 
-
 	@include modifier(fit) {
 		border-right: 0;
 		border-bottom: 0;
@@ -432,41 +441,6 @@ $gap-v: 8px;
 		content: "";
 	}
 
-
-	// table--border, group（拥有多级表头）模式必定是border
-	@include modifier(border) {
-		border-top: 1px solid $border-color;
-		border-right: none;
-		border-bottom: none;
-		border-left: 1px solid $border-color;
-
-		// 表格右部伪 border
-		&::after {
-			@include extend-rule(table-border-pseudo);
-
-			top: 0;
-			right: 0;
-			width: 1px;
-			height: 100%;
-		}
-
-		&.vc-loading-parent--relative {
-			border-color: transparent;
-		}
-
-		.vc-table__th, .vc-table__td {
-			border-right: 1px solid $border-color;
-		}
-
-		.vc-table__th {
-			border-bottom: 1px solid $border-color;
-
-			&:first-child {
-				border-left: 1px solid $border-color;
-			}
-		}
-	}
-
 	@include modifier(divider) {
 		.vc-table__td {
 			border-bottom: 1px solid $border-color;
@@ -497,6 +471,41 @@ $gap-v: 8px;
 				height: 1px;
 				background-color: $border-color;
 				content: "";
+			}
+		}
+	}
+
+	// table--border, group（拥有多级表头）模式必定是border
+	@include modifier(border) {
+		border-top: 1px solid $border-color;
+		border-right: none;
+		border-bottom: none;
+		border-left: 1px solid $border-color;
+
+		// 表格右部伪 border
+		&::after {
+			@include extend-rule(table-border-pseudo);
+
+			top: 0;
+			right: 0;
+			width: 1px;
+			height: 100%;
+		}
+
+		&.vc-loading-parent--relative {
+			border-color: transparent;
+		}
+
+		.vc-table__th, .vc-table__td {
+			border-right: 1px solid $border-color;
+		}
+
+		.vc-table__th {
+			border-top: none;
+			border-bottom: 1px solid $border-color;
+
+			&:first-child {
+				border-left: none;
 			}
 		}
 	}
@@ -536,33 +545,16 @@ $gap-v: 8px;
 			text-align: center;
 		}
 	}
-}
 
-// border 下去掉边框
-.vc-table.vc-table--border .vc-table__th {
-	border-top: none;
-
-	&:first-child {
-		border-left: none;
+	.vc-recycle-list__scroll-state {
+		display: none;
 	}
-}
 
-.vc-table .vc-table-column--selection .vc-table__cell {
-	text-overflow: unset!important;
-
-	.vc-checkbox {
-		padding: 0;
+	.vc-recycle-list__wrapper {
+		overflow: hidden;
 	}
-}
-
-.vc-table .vc-recycle-list__scroll-state {
-	display: none;
-}
-
-.vc-table > div.vc-scroller-track {
-	z-index: 5;
-}
-
-.vc-table .vc-recycle-list__wrapper {
-	overflow: hidden;
+	
+	> div.vc-scroller-track {
+		z-index: 5;
+	}
 }

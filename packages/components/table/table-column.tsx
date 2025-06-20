@@ -21,6 +21,7 @@ import { parseWidth, parseMinWidth } from './utils';
 
 export const TableColumn = defineComponent({
 	name: 'vc-table-column',
+	inheritAttrs: false,
 	props: {
 		type: {
 			type: String,
@@ -32,7 +33,6 @@ export const TableColumn = defineComponent({
 			default: 0
 		},
 		label: String,
-		customClass: String,
 		labelClass: String,
 		prop: String,
 		width: Number,
@@ -69,7 +69,7 @@ export const TableColumn = defineComponent({
 
 		tooltip: [String, Function]
 	},
-	setup(props, { slots }) {
+	setup(props, { slots, attrs }) {
 		const instance = getCurrentInstance()!;
 		const table: any = inject('vc-table');
 		const parent: any = inject('vc-table-column', table);
@@ -129,8 +129,8 @@ export const TableColumn = defineComponent({
 			Object.keys(source).forEach((prop) => {
 				const value = source[prop];
 				if (value !== undefined) {
-					column[prop] = prop === 'customClass'
-						? `${column[prop]} ${value}`
+					column[prop] = prop === 'class'
+						? `${column[prop] ? `${column[prop]} ` : ''}${value}`
 						: value;
 				}
 			});
@@ -229,6 +229,8 @@ export const TableColumn = defineComponent({
 			const defaults = {
 				colspan: 1,
 				rowspan: 1,
+				class: attrs.class,
+				style: attrs.style,
 				...cellStarts[props.type],
 				id: columnId.value,
 				realAlign,

@@ -141,11 +141,14 @@ export const TableBody = defineComponent({
 					column
 				});
 			}
-			return cellStyle;
+			return {
+				...cellStyle,
+				...column.style
+			};
 		};
 
 		const getCellClass = (rowIndex: number, columnIndex: number, row: any, column: any) => {
-			const classes = [column.realAlign, column.className];
+			const classes = [column.realAlign, column.class];
 
 			if (isColumnHidden(columnIndex)) {
 				classes.push('is-hidden');

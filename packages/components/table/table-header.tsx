@@ -92,11 +92,14 @@ export const TableHeader = defineComponent({
 					column
 				});
 			}
-			return headerCellStyle;
+			return {
+				...headerCellStyle,
+				...column.style
+			};
 		};
 
 		const getHeaderCellClass = (rowIndex: number, columnIndex: number, row: any, column: any) => {
-			const classes = [column.id, column.order, column.realHeaderAlign, column.className, column.labelClass];
+			const classes = [column.id, column.order, column.realHeaderAlign, column.class, column.labelClass];
 
 			if (rowIndex === 0 && columnsHidden.value[columnIndex]) {
 				classes.push('is-hidden');

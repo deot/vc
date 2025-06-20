@@ -28,6 +28,7 @@
 			<TableColumn
 				label="产品信息"
 				fixed="left"
+				class="column-class"
 			>
 				<template #default="{ rowIndex, selected }">
 					<div>{{ rowIndex }}{{ selected }}</div>
@@ -37,6 +38,7 @@
 			<TableColumn
 				label="款式图片"
 				fixed="left"
+				:style="{ color: 'red' }"
 			>
 				<template #default="{ row }">
 					<div>{{ row.id }}</div>
@@ -121,3 +123,12 @@ const handleChange = (section) => {
 	console.log(section.map(i => i.id));
 };
 </script>
+
+<style>
+:root {
+	--vc-table-border-color: red;
+}
+.column-class {
+	color: red!important;;
+}
+</style>
