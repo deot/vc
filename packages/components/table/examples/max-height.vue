@@ -52,9 +52,9 @@
 			/>
 			<TableColumn
 				label="产品信息3"
-				prop="id"
+				prop="label"
 				align="right"
-				:line="1"
+				:line="2"
 			/>
 			<TableColumn
 				label="产品信息4"

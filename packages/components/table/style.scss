@@ -6,6 +6,7 @@ $border-color: varfix(border-color, table, #EDEFF1);
 $f9: #F7F8FA;
 $gap-h: 12px;
 $gap-v: 8px;
+$line-height: 20px;
 
 @include block($component-name) {
 	position: relative;
@@ -17,6 +18,35 @@ $gap-v: 8px;
 	background-color: #fff;
 	box-sizing: border-box;
 	flex: 1;
+
+	@include element(cell) {
+		width: 100%;
+		padding-right: $gap-h;
+		padding-left: $gap-h;
+		overflow: hidden;
+		line-height: $line-height;
+		word-break: break-all;
+		white-space: normal;
+		box-sizing: border-box;
+
+		.vc-table__unexpand__inden {
+			padding-left: 23px;
+		}
+	}
+
+	// 使用原生渲染取代Text动态展示
+	@include element(text-line) {
+		display: -webkit-box;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		word-break: break-all;
+		word-wrap: break-word;
+		-webkit-box-orient: vertical;
+		overflow-wrap: break-word;
+
+		// 动态设置
+		-webkit-line-clamp: 1;
+	}
 
 	@include element((tr, td)) {
 		position: relative;
@@ -165,7 +195,7 @@ $gap-v: 8px;
 		width: 20px;
 		height: 23px;
 		font-size: 12px;
-		line-height: 23px;
+		line-height: $line-height;
 		color: #666;
 		cursor: pointer;
 
@@ -202,43 +232,6 @@ $gap-v: 8px;
 	@include element(append-wrapper) {
 		// 避免外边距重合 https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Box_Model/Mastering_margin_collapsing
 		overflow: hidden;
-	}
-
-	@include element(cell) {
-		width: 100%;
-		padding-right: $gap-h;
-		padding-left: $gap-h;
-		overflow: hidden;
-		line-height: 23px;
-		word-break: break-all;
-		white-space: normal;
-		box-sizing: border-box;
-
-		.vc-table-un-expand__indent {
-			padding-left: 23px;
-		}
-	}
-
-	@include modifier(medium) {
-		.vc-table__th, .vc-table__td {
-			padding: 10px 0;
-		}
-	}
-
-	@include modifier(small) {
-		font-size: 12px;
-
-		.vc-table__th, .vc-table__td {
-			padding: 8px 0;
-		}
-	}
-
-	@include modifier(mini) {
-		font-size: 12px;
-
-		.vc-table__th, .vc-table__td {
-			padding: 6px 0;
-		}
 	}
 
 	@include element((header, body, footer)) {
@@ -531,6 +524,28 @@ $gap-v: 8px;
 		.vc-table__fixed-right {
 			bottom: 0;
 			overflow: hidden;
+		}
+	}
+
+	@include modifier(medium) {
+		.vc-table__th, .vc-table__td {
+			padding: 10px 0;
+		}
+	}
+
+	@include modifier(small) {
+		font-size: 12px;
+
+		.vc-table__th, .vc-table__td {
+			padding: 8px 0;
+		}
+	}
+
+	@include modifier(mini) {
+		font-size: 12px;
+
+		.vc-table__th, .vc-table__td {
+			padding: 6px 0;
 		}
 	}
 

@@ -3,9 +3,11 @@ import { debounce } from 'lodash-es';
 import { addClass, removeClass } from '@deot/helper-dom';
 import { IS_SERVER } from '@deot/vc-shared';
 import { raf } from '@deot/helper-utils';
+import { Popover } from '../popover';
 import { RecycleList } from '../recycle-list';
 import { NormalList } from './normal-list';
 import { getCell, getColumnByCell, getRowValue } from './utils';
+import { getFitIndex } from '../text/utils';
 
 import { useStates } from './store';
 
@@ -177,24 +179,43 @@ export const TableBody = defineComponent({
 			return widthArr.reduce((acc, width) => acc + width, -1);
 		};
 
-		const handleCellMouseEnter = (e: any, row: any) => {
+		let poper;
+		const handleCellMouseEnter = (e: any, row: any, column: any) => {
 			const cell = getCell(e);
+			const hoverState = { cell, column, row };
 
 			if (cell) {
-				const column = getColumnByCell(states.columns, cell);
-				const hoverState = { cell, column, row };
 				table.hoverState.value = hoverState;
-
 				table.emit('cell-mouse-enter', hoverState.row, hoverState.column, hoverState.cell, e);
+			}
+			// 判断是否text-overflow, 如果是就显示tooltip
+			const el = e.target.querySelector('.vc-table__text-line');
+			if (!el) return;
+			const value = `${row[column.prop]}`;
+			const endIndex = getFitIndex({
+				el,
+				value,
+				line: column.line,
+				suffix: '...'
+			});
+			if (endIndex > 0 && endIndex < value.length - 1) {
+				poper && poper.destroy();
+				poper = Popover.open({
+					el: document.body,
+					triggerEl: el,
+					hover: true,
+					alone: true,
+					autoWidth: true,
+					content: value
+				});
 			}
 		};
 
-		const handleCellMouseLeave = (e: any) => {
+		const handleCellMouseLeave = (e: any, row: any, column: any) => {
 			const cell = getCell(e);
 			if (!cell) return;
 
-			const oldHoverState = table.hoverState.value || {};
-			table.emit('cell-mouse-leave', oldHoverState.row, oldHoverState.column, oldHoverState.cell, e);
+			table.emit('cell-mouse-leave', row, column, cell, e);
 		};
 
 		const handleMouseEnter = debounce((index: number) => {
@@ -264,8 +285,8 @@ export const TableBody = defineComponent({
 									key={column.id}
 									style={[getCellStyle(rowIndex, columnIndex, row, column), sizeStyle]}
 									class={[getCellClass(rowIndex, columnIndex, row, column), 'vc-table__td']}
-									onMouseenter={(e: any) => handleCellMouseEnter(e, row)}
-									onMouseleave={(e: any) => handleCellMouseLeave(e)}
+									onMouseenter={(e: any) => handleCellMouseEnter(e, row, column)}
+									onMouseleave={(e: any) => handleCellMouseLeave(e, row, column)}
 								>
 									{
 										renderCell(
@@ -337,7 +358,11 @@ export const TableBody = defineComponent({
 				allowRender.value = true;
 			}
 		});
-		onBeforeUnmount(() => (timer && clearTimeout(timer), allowRender.value = false));
+		onBeforeUnmount(() => {
+			poper && poper.destroy();
+			timer && clearTimeout(timer);
+			allowRender.value = false;
+		});
 		return () => {
 			if (!allowRender.value) return;
 			return (

@@ -209,7 +209,7 @@ export const TableColumn = defineComponent({
 					};
 					// 存在树形数组，且当前行无箭头图标且处于当前展开列，表格对齐
 					if (!isEmpty(table.store.states.treeData) && !prefix && data.isExpandColumn) {
-						prefix = <span class="vc-table-un-expand__indent" />;
+						prefix = <span class="vc-table__unexpand__indent" />;
 					}
 
 					const { placeholder } = table.props;

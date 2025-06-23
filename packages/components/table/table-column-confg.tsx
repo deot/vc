@@ -124,13 +124,10 @@ export const defaultRenderCell = (rowData: any = {}) => {
 	const line = column.line || VcInstance.options.TableColumn?.line;
 
 	if (line && value) {
-		const base = (rowData.isHead || rowData.isTail) ? 36 : 24; // 目前gap是12
 		const style = {
-			// 目前左右pading为10
-			// TODO: 含有border还要-1
-			width: (column.realWidth || column.width) - base + 'px'
+			'-webkit-line-clamp': line,
 		};
-		return (<Text style={style} line={line} value={`${value}`} />);
+		return (<div class="vc-table__text-line" style={style}>{ value }</div>);
 	}
 
 	return value;
