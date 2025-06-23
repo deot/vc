@@ -5,10 +5,10 @@ const HIDDEN_TEXT_STYLE = `
 	position: absolute!important;
 	word-break: break-all!important;
 	overflow: auto!important;
-	opacity: 0!important;
+	opacity: 1!important;
 	z-index: -1000!important;
 	top: 0!important;
-	right: 0!important;
+	right: 100px!important;
 `;
 
 const SIZING_STYLE = [
@@ -32,7 +32,7 @@ const SIZING_STYLE = [
 let hiddenEl;
 
 export const getFitIndex = (options = {}) => {
-	const { el, line, value, suffix, indent } = options as any;
+	const { el, line, value, suffix, indent = 0 } = options as any;
 
 	let lineHeight = parseInt(getStyle(el, 'line-height'), 10);
 
@@ -51,10 +51,8 @@ export const getFitIndex = (options = {}) => {
 		paddingSize, borderSize,
 		boxSizing, sizingStyle,
 	} = Utils.getComputedStyle(el, SIZING_STYLE);
-
 	const textIndent = `text-indent: ${parseInt(getStyle(el, 'text-indent'), 10) + indent}px;`;
 	hiddenEl.setAttribute('style', `${sizingStyle};${textIndent};${HIDDEN_TEXT_STYLE}`);
-
 	let sideHeight = paddingSize || 0;
 	// content + padding + border
 	boxSizing === 'border-box' && (sideHeight += borderSize);
@@ -64,19 +62,29 @@ export const getFitIndex = (options = {}) => {
 		lineHeight = hiddenEl.clientHeight - sideHeight;
 	}
 
-	let endIndex = 0;
-	hiddenEl.innerText = suffix;
+	let endIndex = -1;
 
-	(value || '').split('').forEach((item, i) => {
-		// 后缀必须放入后面计算，前面会造成问题
-		let old = hiddenEl.innerText;
-		old = old.substring(0, old.length - suffix.length);
-		hiddenEl.innerText = old + item + suffix;
-
-		if (hiddenEl.clientHeight - sideHeight > lineHeight * line && endIndex === 0) {
+	const strs = (typeof value === 'number' ? `${value}` : (value || '')).split('');
+	let innerText = '';
+	for (let i = 0; i < strs.length; i++) {
+		innerText += strs[i];
+		hiddenEl.innerText = innerText;
+		if (endIndex === -1 && hiddenEl.clientHeight - sideHeight > lineHeight * line) {
 			endIndex = i;
+			break;
 		}
-	});
+	}
+
+	if (endIndex >= 0 && endIndex <= strs.length - 1) {
+		for (let i = endIndex - 1; i >= 0; i--) {
+			innerText = innerText.substring(0, i);
+			hiddenEl.innerText = innerText + suffix;
+			if (hiddenEl.clientHeight - sideHeight <= lineHeight * line) {
+				endIndex = i;
+				break;
+			}
+		}
+	}
 
 	return endIndex;
 };

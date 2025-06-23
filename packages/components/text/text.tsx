@@ -17,16 +17,16 @@ export const Text = defineComponent({
 		const instance = getCurrentInstance()!;
 
 		const isActive = ref(false);
-		const endIndex = ref(0);
+		const endIndex = ref(-1);
 
 		const styles = computed(() => {
-			return { cursor: endIndex.value === 0 ? 'unset' : 'pointer' };
+			return { cursor: endIndex.value <= 0 ? 'unset' : 'pointer' };
 		});
 
 		const calcPosition = () => {
 			const { suffix, line, value, indent } = props;
 			if (line === 0) {
-				endIndex.value = 0;
+				endIndex.value = -1;
 				isActive.value = true;
 			} else {
 				endIndex.value = getFitIndex({
