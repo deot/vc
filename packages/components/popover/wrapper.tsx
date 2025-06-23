@@ -6,12 +6,10 @@ import {
 	ref,
 	computed,
 	onMounted,
-	nextTick,
-	onUnmounted,
-	vShow,
-	withDirectives
+	onUnmounted
 } from 'vue';
 import { Resize } from '@deot/helper-resize';
+import { debounce } from 'lodash-es';
 import type { ComponentInternalInstance } from 'vue';
 import type { PopoverWrapperStyle } from './types';
 import { props as popoverWrapperProps } from './wrapper-props';
@@ -84,7 +82,11 @@ export const PopoverWrapper = defineComponent({
 			}
 		};
 
-		const setPopupStyle = () => {
+		/**
+		 * 添加debounce解决连续setPopupStyle的情况
+		 * 待排查
+		 */
+		const setPopupStyle = debounce(() => {
 			if (!vnode.el) return;
 
 			const triggerEl = getHackContainer();
@@ -114,13 +116,12 @@ export const PopoverWrapper = defineComponent({
 			fitPos.value = result;
 			wrapperStyle.value = $wrapperStyle;
 			arrowStyle.value = $arrowStyle;
-
 			// 自适应高度
 			if (props.autoWidth) return;
 			wrapperW.value = {
 				width: `${triggerEl!.getBoundingClientRect().width}px`
 			};
-		};
+		}, 50, { leading: true, trailing: false });
 
 		let timer: any;
 		let isPressMouse = false;
@@ -172,7 +173,7 @@ export const PopoverWrapper = defineComponent({
 			switch (direction[0]) {
 				case 'top':
 				case 'bottom':
-					if (left + vnode.el.offsetWidth >= window.innerWidth) {
+					if (left + vnode.el.offsetWidth > window.innerWidth) {
 						wrapperStyle.value = {
 							...wrapperStyle.value,
 							left: `${window.innerWidth - vnode.el.offsetWidth}px`
@@ -250,39 +251,38 @@ export const PopoverWrapper = defineComponent({
 					onAfterLeave={handleRemove}
 				>
 					{
-						withDirectives(
-							<div
-								style={[wrapperStyle.value, wrapperW.value, props.portalStyle]}
-								class={[wrapperClasses.value, props.portalClass, 'vc-popover-wrapper']}
-								onMousedown={() => !props.hover && handleMouseDown()}
-								onMouseenter={e => props.hover && handleChange(e, { visible: true })}
-								onMouseleave={e => props.hover && handleChange(e, { visible: false })}
-							>
-								<div class={[themeClasses.value, 'vc-popover-wrapper__container']}>
-									{
-										props.arrow && (
-											<div
-												style={arrowStyle.value}
-												class={[themeClasses.value, posClasses.value, 'vc-popover-wrapper__arrow']}
-											/>
-										)
-									}
-									{
-										slots.content
-											? slots.content()
-											: typeof props.content === 'function'
-												? (
-														<Customer
-															// @ts-ignore
-															render={props.content}
-														/>
-													)
-												: <div innerHTML={props.content} />
-									}
-								</div>
-							</div>,
-							[[vShow, isActive.value]]
-						)
+						<div
+							// @ts-ignore
+							vShow={isActive.value}
+							style={[wrapperStyle.value, wrapperW.value, props.portalStyle]}
+							class={[wrapperClasses.value, props.portalClass, 'vc-popover-wrapper']}
+							onMousedown={() => !props.hover && handleMouseDown()}
+							onMouseenter={e => props.hover && handleChange(e, { visible: true })}
+							onMouseleave={e => props.hover && handleChange(e, { visible: false })}
+						>
+							<div class={[themeClasses.value, 'vc-popover-wrapper__container']}>
+								{
+									props.arrow && (
+										<div
+											style={arrowStyle.value}
+											class={[themeClasses.value, posClasses.value, 'vc-popover-wrapper__arrow']}
+										/>
+									)
+								}
+								{
+									slots.content
+										? slots.content()
+										: typeof props.content === 'function'
+											? (
+													<Customer
+														// @ts-ignore
+														render={props.content}
+													/>
+												)
+											: <div innerHTML={props.content} />
+								}
+							</div>
+						</div>
 					}
 				</TransitionScale>
 
@@ -291,4 +291,4 @@ export const PopoverWrapper = defineComponent({
 	}
 });
 
-export const PopoverPortal = new Portal(PopoverWrapper);
+export const PopoverPortal = new Portal(PopoverWrapper, { leaveDelay: 0 });
