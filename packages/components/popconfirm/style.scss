@@ -1,6 +1,50 @@
 @use '../style/helper' as *;
 
 $component-name: vc-popconfirm;
+$color-success: varfix(color-success, popconfirm);
+$color-error: varfix(color-error, popconfirm);
+$color-warning: varfix(color-warning, popconfirm);
+$color-info: varfix(color-primary, popconfirm);
+$color-dark-light: varfix(color-dark-light, popconfirm);
 
 @include block($component-name) {
+	@include element(wrapper) {
+		min-width: 218px;
+		padding: 16px;
+		box-sizing: border-box;
+	}
+
+	@include element(title) {
+		position: relative;
+		padding-left: 23px;
+		margin-bottom: 15px;
+		color: $color-dark-light;
+	}
+
+	@include element(icon) {
+		position: absolute;
+		top: 4px;
+		left: 0;
+		font-size: 15px;
+
+		@include when(warning) {
+			color: $color-warning;
+		}
+
+		@include when(info) {
+			color: $color-info;
+		}
+
+		@include when(success) {
+			color: $color-success;
+		}
+
+		@include when(error) {
+			color: $color-error;
+		}
+	}
+
+	@include element(footer) {
+		text-align: right;
+	}
 }

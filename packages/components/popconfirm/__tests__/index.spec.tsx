@@ -8,7 +8,7 @@ describe('index.ts', () => {
 		expect(typeof Popconfirm).toBe('object');
 	});
 	it('create', async () => {
-		const wrapper = mount(() => (<Popconfirm />));
+		const wrapper = mount(() => (<Popconfirm portal={false} />));
 
 		expect(wrapper.classes()).toContain('vc-popconfirm');
 	});

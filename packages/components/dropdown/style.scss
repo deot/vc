@@ -2,5 +2,48 @@
 
 $component-name: vc-dropdown;
 
-@include block($component-name) {
+@include block(vc-dropdown) {
+	display: inline-block;
+}
+
+@include block(vc-dropdown-menu) {
+	min-width: 100px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+@include block(vc-dropdown-item) {
+	position: relative;
+	margin: 0;
+	line-height: normal;
+	padding: 7px 16px;
+	clear: both;
+	color: #666;
+	font-size: 12px !important;
+	white-space: nowrap;
+	list-style: none;
+	cursor: pointer;
+	transition: background .2s ease-in-out;
+	box-sizing: border-box;
+
+
+	&:hover {
+		background-color: #e6f7ff;
+		color: #2B72FD;
+	}
+	@include when(disabled) {
+		color: #c5c8ce;
+		cursor: not-allowed;
+		&:hover {
+			background-color: #fff;
+		}
+	}
+	@include when(selected) {
+		color: #2B72FD;
+	}
+	@include when(divided) {
+		margin-top: 5px;
+		@include border('top', #e8eaec)
+	}
 }

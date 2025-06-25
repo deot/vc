@@ -203,20 +203,19 @@ import { Popconfirm, Button } from '@deot/vc';
 
 ### 属性
 
-| 属性            | 说明                                 | 类型                | 可选值                                                    | 默认值                                                  |
-| ------------- | ---------------------------------- | ----------------- | ------------------------------------------------------ | ---------------------------------------------------- |
-| modelValue    | 是否弹出                               | `boolean`         | -                                                      | `false`                                              |
-| trigger       | 触发的行为                              | `string`          | `hover`、`click`、`focus`                                | `click`                                              |
-| title         | 气泡框的标题                             | `string`          | -                                                      | -                                                    |
-| content       | 气泡框的标题                             | `string`          | -                                                      | -                                                    |
-| okText        | 确定按钮的文字                            | `string`          | -                                                      | `确定`                                                 |
-| cancelText    | 取消按钮的文字                            | `string`          | -                                                      | `取消`                                                 |
-| okType        | 确定按钮的样式类型（其他值参考`button`的`type`）    | `string`          | `default`、`primary`、`text`、`success`、`error`、`warning` | `primary`                                            |
-| cancelType    | 确定按钮的样式类型（其他值参考`button`的`type`）    | `string`          | `default`、`primary`、`text`、`success`、`error`、`warning` | `default`                                            |
-| type          | 类型                                 | `string`          | `warn`、`success`、`info`、`error`                        | `warn`                                               |
-| width         | 气泡框的宽度，最小`218px`, 只需传数字，`px`已在内部添加 | `string`、`Number` | -                                                      | -                                                    |
-| renderTitle   | `title` 自定义                        | `function`        | -                                                      | `(h, props, parent) => (<div>{props.title}</div>)`   |
-| renderContent | `content` 自定义                      | `function`        | -                                                      | `(h, props, parent) => (<div>{props.content}</div>)` |
+| 属性           | 说明                                 | 类型                    | 可选值                                                    | 默认值       |
+| ------------ | ---------------------------------- | --------------------- | ------------------------------------------------------ | --------- |
+| modelValue   | 是否弹出                               | `boolean`             | -                                                      | `false`   |
+| trigger      | 触发的行为                              | `string`              | `hover`、`click`、`focus`                                | `click`   |
+| title        | 气泡框的标题                             | `string` 、 `function` | -                                                      | -         |
+| content      | 气泡框的标题                             | `string` 、 `function` | -                                                      | -         |
+| okText       | 确定按钮的文字                            | `string`              | -                                                      | `确定`      |
+| cancelText   | 取消按钮的文字                            | `string`              | -                                                      | `取消`      |
+| okType       | 确定按钮的样式类型（其他值参考`button`的`type`）    | `string`              | `default`、`primary`、`text`、`success`、`error`、`warning` | `primary` |
+| cancelType   | 确定按钮的样式类型（其他值参考`button`的`type`）    | `string`              | `default`、`primary`、`text`、`success`、`error`、`warning` | `default` |
+| type         | 类型                                 | `string`              | `warn`、`success`、`info`、`error`                        | `warn`    |
+| width        | 气泡框的宽度，最小`218px`, 只需传数字，`px`已在内部添加 | `string`、`number`     | -                                                      | -         |
+| portal-class | 弹层样式                               | `string`、`object`     | -                                                      | -         |
 
 
 ### 事件

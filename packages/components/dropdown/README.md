@@ -16,18 +16,18 @@
 			placement="bottom-left"
 		>
 			<div class="link">下拉菜单</div>
-			<template #list>
+			<template #content>
 				<DropdownMenu>
-					<DropdownItem name="1">
+					<DropdownItem value="1">
 						驴打滚
 					</DropdownItem>
-					<DropdownItem name="2">
+					<DropdownItem value="2">
 						炸酱面
 					</DropdownItem>
-					<DropdownItem name="3">
+					<DropdownItem value="3">
 						豆汁儿
 					</DropdownItem>
-					<DropdownItem name="4">
+					<DropdownItem value="4">
 						臭豆腐
 					</DropdownItem>
 				</DropdownMenu>
@@ -68,18 +68,18 @@ export default {
 			placement="bottom-left"
 		>
 			<div class="link">下拉菜单</div>
-			<template #list>
+			<template #content>
 				<DropdownMenu>
-					<DropdownItem name="1">
+					<DropdownItem value="1">
 						驴打滚
 					</DropdownItem>
-					<DropdownItem name="2">
+					<DropdownItem value="2">
 						炸酱面
 					</DropdownItem>
-					<DropdownItem name="3">
+					<DropdownItem value="3">
 						豆汁儿
 					</DropdownItem>
-					<DropdownItem name="4">
+					<DropdownItem value="4">
 						臭豆腐
 					</DropdownItem>
 				</DropdownMenu>
@@ -92,18 +92,18 @@ export default {
 			trigger="click"
 		>
 			<div class="link">下拉菜单</div>
-			<template #list>
+			<template #content>
 				<DropdownMenu>
-					<DropdownItem name="1">
+					<DropdownItem value="1">
 						驴打滚
 					</DropdownItem>
-					<DropdownItem name="2">
+					<DropdownItem value="2">
 						炸酱面
 					</DropdownItem>
-					<DropdownItem name="3">
+					<DropdownItem value="3">
 						豆汁儿
 					</DropdownItem>
-					<DropdownItem name="4">
+					<DropdownItem value="4">
 						臭豆腐
 					</DropdownItem>
 				</DropdownMenu>
@@ -155,18 +155,18 @@ const visible2 = ref(false);
 			:placement="palcement"
 		>
 			<div class="link">下拉菜单</div>
-			<template #list>
+			<template #content>
 				<DropdownMenu>
-					<DropdownItem name="1">
+					<DropdownItem value="1">
 						驴打滚
 					</DropdownItem>
-					<DropdownItem name="2">
+					<DropdownItem value="2">
 						炸酱面
 					</DropdownItem>
-					<DropdownItem name="3">
+					<DropdownItem value="3">
 						豆汁儿
 					</DropdownItem>
-					<DropdownItem name="4">
+					<DropdownItem value="4">
 						臭豆腐
 					</DropdownItem>
 				</DropdownMenu>
@@ -210,18 +210,18 @@ const handlePlacement = (val) => {
 			arrow
 		>
 			<div class="link">下拉菜单</div>
-			<template #list>
+			<template #content>
 				<DropdownMenu>
-					<DropdownItem name="1" disabled>
+					<DropdownItem value="1" disabled>
 						驴打滚（不可点击）
 					</DropdownItem>
-					<DropdownItem name="2" :closable="false">
+					<DropdownItem value="2" :closable="false">
 						炸酱面（点击菜单不消失）
 					</DropdownItem>
-					<DropdownItem name="3" divided>
+					<DropdownItem value="3" divided>
 						豆汁儿（添加分割线）
 					</DropdownItem>
-					<DropdownItem name="4">
+					<DropdownItem value="4">
 						臭豆腐
 					</DropdownItem>
 				</DropdownMenu>
@@ -285,6 +285,6 @@ divided | 是否需要分割线 | `boolean` | - | `false`
 | 属性   | 说明                             |
 | ---- | ------------------------------ |
 | \-   | 触发下拉列表显示的元素。 注意： 必须是一个元素或者或者组件 |
-| list | 列表内容，一般由 `DropdownMenu` 承担     |
+| content | 列表内容，一般由 `DropdownMenu` 承担     |
 
 
