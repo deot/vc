@@ -39,7 +39,7 @@ export const Input = defineComponent({
 		'enter',
 		'tip'
 	],
-	setup(props, { slots, expose }) {
+	setup(props, { slots, expose, attrs }) {
 		const input = ref<HTMLInputElement>();
 
 		useNativeEmitter(input, expose);
@@ -122,9 +122,14 @@ export const Input = defineComponent({
 							)
 						}
 
-						<div class={['vc-input__content', classes.value]}>
+						<div
+							class={['vc-input__content', classes.value]}
+							{...(slots.content ? it.value.listeners : {})}
+						>
 							{
-								slots.content?.() || renderInput(false)
+								slots.content
+									? slots.content()
+									: renderInput(false)
 							}
 						</div>
 						{

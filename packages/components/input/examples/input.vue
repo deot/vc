@@ -14,6 +14,7 @@
 		@focus="handleFocus"
 		@blur="handleBlur"
 		@enter="handleEnter"
+		@click="handleClick"
 	/>
 
 	<Input
@@ -25,6 +26,7 @@
 		@focus="handleFocus"
 		@blur="handleBlur"
 		@enter="handleEnter"
+		@click="handleClick"
 	/>
 
 	<Input
@@ -40,7 +42,15 @@
 		@focus="handleFocus"
 		@blur="handleBlur"
 		@enter="handleEnter"
+		@click="handleClick"
 	/>
+	<Input :model-value="current[0]" readonly @click="handleClick">
+		<template #content>
+			<div style="display: flex; line-height: 32px; justify-content: center;">
+				readonly: {{ current[0] }}
+			</div>
+		</template>
+	</Input>
 </template>
 <script setup>
 import { ref } from 'vue';
@@ -70,6 +80,10 @@ const handleEnter = () => {
 };
 const handleClear = () => {
 	console.log('Clear');
+};
+
+const handleClick = () => {
+	console.log('click');
 };
 </script>
 
