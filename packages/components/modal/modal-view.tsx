@@ -44,8 +44,8 @@ export const ModalView = defineComponent({
 		const scroller = shallowRef<any>();
 		const resizer = shallowRef<any>();
 
-		const x = ref(0);
-		const y = ref(0);
+		const x = ref(props.x!);
+		const y = ref(props.y!);
 		const isActive = ref(false);
 
 		// 注: 服务端渲染为0, 在客服端激活前，展示端存在问题【高度不定】
@@ -94,8 +94,8 @@ export const ModalView = defineComponent({
 		const draggableStyle = computed(() => {
 			if (IS_SERVER || !props.draggable) return {};
 
-			const left = x.value || window.innerWidth / 2 - defaultSize.value.width / 2;
-			const top = y.value || window.innerHeight / 2 - defaultSize.value.height / 2;
+			const left = typeof x.value === 'undefined' ? window.innerWidth / 2 - defaultSize.value.width / 2 : x.value;
+			const top = typeof y.value === 'undefined' ? window.innerHeight / 2 - defaultSize.value.height / 2 : y.value;
 
 			return {
 				left: `${left}px`,

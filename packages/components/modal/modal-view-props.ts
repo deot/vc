@@ -56,6 +56,9 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
+	// draggable为true时有效
+	x: Number,
+	y: Number,
 	okText: {
 		type: [String, Boolean],
 		default: '确定'

@@ -33,8 +33,8 @@
 			:mask="false"
 			:mask-closable="false"
 			:esc-closable="false"
-			:height="99999"
-			:width="99999"
+			:height="500"
+			:width="500"
 			scrollable
 			draggable
 			border

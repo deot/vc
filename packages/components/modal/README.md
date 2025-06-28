@@ -372,33 +372,35 @@ const handleModal3 = () => {
 
 ### 基础属性
 
-| 属性                | 说明                                 | 类型                  | 可选值                                | 默认值    |
-| ----------------- | ---------------------------------- | ------------------- | ---------------------------------- | ------ |
-| modelValue        | 对话框是否显示，可用v-model双向绑定              | `boolean`           | -                                  | false  |
-| model             | 对话框的类型                             | `string`            | `info`、`success`、`error`、`warning` | -      |
-| title             | 内容标题                               | `string`            | -                                  | -      |
-| content           | 内容,可以是jsx                          | `string`、`Function` | -                                  | -      |
-| footer            | 是否显示footer                         | `boolean`           | -                                  | -      |
-| title             | 对话框标题，如果使用slot自定义header，则title无效   | `string`            | -                                  | -      |
-| size              | 对话框的三个默认大小                         | `string`            | `small`、`medium`、`large`           | small  |
-| wrapperStyle      | 设置wrapper的style | `object`、`string`           | -                                  |        |
-| contentStyle      | 设置content的style | `object`、`string`           | -                                  |        |
-| wrapperClass      | 设置wrapper的class | `object`、`string`           | -                                  |        |
-| contentClass      | 设置content的class | `object`、`string`           | -                                  |        |
-| ok-text           | 自定义确定按钮的文案                         | `string`、`boolean`  | -                                  | 确定     |
-| cancel-text       | 自定义取消按钮的文案                         | `string`、`boolean`  | -                                  | 取消     |
-| width             | 对话框的宽度                             | `number`            | -                                  | 400    |
-| height             | 对话框的高度                             | `number`            | -                                  | -    |
-| closable          | 是否显示关闭图标                           | `boolean`           | -                                  | `true` |
-| mask              | 遮罩层是否显示                            | `boolean`           | -                                  | `true` |
-| mask-closable     | 点击遮罩层是否关闭                          | `Booelan`           | -                                  | `true` |
-| esc-closable      | 点击esc是否关闭                          | `boolean`           | -                                  | `true` |
-| scrollable        | 页面是否可以滚动                           | `boolean`           | -                                  | false  |
-| draggable         | 是否可以拖拽                             | `boolean`           | -                                  | false  |
-| close-with-cancel | `主动`关闭时出发cancel事件                  | `boolean`           | -                                  | `true` |
-| portalClass       | 弹框内容区域的className                   | `string`            | -                                  | -      |
-| onOk              | 点击确定回调方法                           | `Function`          | -                                  | -      |
-| onCancel          | 点击取消回调方法                           | `Function`          | -                                  | -      |
+| 属性                | 说明                               | 类型                  | 可选值                                | 默认值    |
+| ----------------- | -------------------------------- | ------------------- | ---------------------------------- | ------ |
+| modelValue        | 对话框是否显示，可用v-model双向绑定            | `boolean`           | -                                  | false  |
+| model             | 对话框的类型                           | `string`            | `info`、`success`、`error`、`warning` | -      |
+| title             | 内容标题                             | `string`            | -                                  | -      |
+| content           | 内容,可以是jsx                        | `string`、`Function` | -                                  | -      |
+| footer            | 是否显示footer                       | `boolean`           | -                                  | -      |
+| title             | 对话框标题，如果使用slot自定义header，则title无效 | `string`            | -                                  | -      |
+| size              | 对话框的三个默认大小                       | `string`            | `small`、`medium`、`large`           | small  |
+| wrapperStyle      | 设置wrapper的style                  | `object`、`string`   | -                                  |        |
+| contentStyle      | 设置content的style                  | `object`、`string`   | -                                  |        |
+| wrapperClass      | 设置wrapper的class                  | `object`、`string`   | -                                  |        |
+| contentClass      | 设置content的class                  | `object`、`string`   | -                                  |        |
+| ok-text           | 自定义确定按钮的文案                       | `string`、`boolean`  | -                                  | 确定     |
+| cancel-text       | 自定义取消按钮的文案                       | `string`、`boolean`  | -                                  | 取消     |
+| width             | 对话框的宽度                           | `number`            | -                                  | 400    |
+| height            | 对话框的高度                           | `number`            | -                                  | -      |
+| closable          | 是否显示关闭图标                         | `boolean`           | -                                  | `true` |
+| mask              | 遮罩层是否显示                          | `boolean`           | -                                  | `true` |
+| mask-closable     | 点击遮罩层是否关闭                        | `Booelan`           | -                                  | `true` |
+| esc-closable      | 点击esc是否关闭                        | `boolean`           | -                                  | `true` |
+| scrollable        | 页面是否可以滚动                         | `boolean`           | -                                  | false  |
+| draggable         | 是否可以拖拽                           | `boolean`           | -                                  | false  |
+| x                 | 拖拽起始left                         | `number`            | -                                  | -      |
+| y                 | 拖拽起始top                          | `number`            | -                                  | -      |
+| close-with-cancel | `主动`关闭时出发cancel事件                | `boolean`           | -                                  | `true` |
+| portalClass       | 弹框内容区域的className                 | `string`            | -                                  | -      |
+| onOk              | 点击确定回调方法                         | `Function`          | -                                  | -      |
+| onCancel          | 点击取消回调方法                         | `Function`          | -                                  | -      |
 
 
 ### 移动端基础属性
