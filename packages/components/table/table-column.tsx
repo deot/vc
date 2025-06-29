@@ -27,11 +27,7 @@ export const TableColumn = defineComponent({
 			type: String,
 			default: 'default'
 		},
-		// 默认只展示一行
-		line: {
-			type: Number,
-			default: 0
-		},
+		line: Number,
 		label: String,
 		labelClass: String,
 		prop: String,

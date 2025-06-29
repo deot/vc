@@ -5,10 +5,10 @@ const HIDDEN_TEXT_STYLE = `
 	position: absolute!important;
 	word-break: break-all!important;
 	overflow: auto!important;
-	opacity: 1!important;
+	opacity: 0!important;
 	z-index: -1000!important;
 	top: 0!important;
-	right: 100px!important;
+	right: 0!important;
 `;
 
 const SIZING_STYLE = [

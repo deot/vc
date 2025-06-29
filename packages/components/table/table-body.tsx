@@ -8,6 +8,7 @@ import { RecycleList } from '../recycle-list';
 import { NormalList } from './normal-list';
 import { getCell, getColumnByCell, getRowValue } from './utils';
 import { getFitIndex } from '../text/utils';
+import { VcInstance } from '../vc';
 
 import { useStates } from './store';
 
@@ -190,12 +191,15 @@ export const TableBody = defineComponent({
 			}
 			// 判断是否text-overflow, 如果是就显示tooltip
 			const el = e.target.querySelector('.vc-table__text-line');
-			if (!el) return;
+			const line = typeof column.line !== 'undefined'
+				? column.line
+				: VcInstance.options.TableColumn?.line;
+			if (!el || !line) return;
 			const value = `${row[column.prop]}`;
 			const endIndex = getFitIndex({
 				el,
 				value,
-				line: column.line,
+				line,
 				suffix: '...'
 			});
 			if (endIndex > 0 && endIndex < value.length - 1) {

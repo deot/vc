@@ -4,7 +4,6 @@ import { getPropByPath } from '@deot/helper-utils';
 import { Checkbox } from '../checkbox';
 import { Icon } from '../icon';
 import { Spin } from '../spin';
-import { Text } from '../text';
 import { VcInstance } from '../vc';
 
 export const cellStarts = {
@@ -121,7 +120,9 @@ export const defaultRenderCell = (rowData: any = {}) => {
 	if (formatter) {
 		return column.formatter(rowData);
 	}
-	const line = column.line || VcInstance.options.TableColumn?.line;
+	const line = typeof column.line !== 'undefined'
+		? column.line
+		: VcInstance.options.TableColumn?.line;
 
 	if (line && value) {
 		const style = {
