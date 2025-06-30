@@ -210,6 +210,7 @@ export const TableBody = defineComponent({
 					hover: true,
 					alone: true,
 					autoWidth: true,
+					placement: 'top',
 					content: value
 				});
 			}
