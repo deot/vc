@@ -1,4 +1,4 @@
-import { toRaw, provide, inject, ref, reactive, computed, watch, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue';
+import { toRaw, provide, inject, ref, reactive, computed, watch, onMounted, onBeforeUnmount, getCurrentInstance, nextTick } from 'vue';
 import type { SetupContext, VNode, ComponentInternalInstance } from 'vue';
 import { cloneDeep } from 'lodash-es';
 import { Validator } from '@deot/helper-validator';
@@ -178,6 +178,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	};
 
 	const validate = async (trigger: string) => {
+		await nextTick(); // 如果数据变更，等待render之后再验证
 		if (!props.prop) return;
 		let rules = currentRules.value
 			.filter(rule => !rule.trigger || rule.trigger.includes(trigger));
