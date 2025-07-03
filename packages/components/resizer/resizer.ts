@@ -7,7 +7,7 @@ const COMPONENT_NAME = 'vc-resizer';
 export const Resizer = defineComponent({
 	name: COMPONENT_NAME,
 	props: resizerProps,
-	emit: ['resize', 'change'],
+	emits: ['resize'],
 	setup(props, { emit, slots, expose }) {
 		const width = ref(0);
 		const height = ref(0);
@@ -42,8 +42,10 @@ export const Resizer = defineComponent({
 			widthChanged && (width.value = width$);
 
 			if (heightChanged || widthChanged) {
-				hasInitial && emit('resize', currentExposed.value);
-				emit('change', currentExposed.value);
+				emit('resize', {
+					...currentExposed.value,
+					inited: hasInitial
+				});
 			}
 
 			hasInitial = true;

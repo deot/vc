@@ -28,7 +28,7 @@ export const NormalList = defineComponent({
 						key={mergeData.id}
 						fill={false}
 						// @ts-ignore
-						onChange={(e: any) => handleResize(e, index)}
+						onResize={(e: any) => handleResize(e, index)}
 					>
 						{slots.default?.({ row: mergeData, index })}
 					</Resizer>
