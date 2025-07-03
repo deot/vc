@@ -1,5 +1,13 @@
 # @deot/vc-hooks ChangeLog
 
+## v1.0.33
+
+_2025-07-03_
+
+### Force Update Package
+
+- `1.0.32` -> `1.0.33`
+
 ## v1.0.32
 
 _2025-07-02_
