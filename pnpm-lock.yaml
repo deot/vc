@@ -46,13 +46,13 @@ importers:
   packages/index:
     dependencies:
       '@deot/vc-components':
-        specifier: ^1.0.33
+        specifier: ^1.0.34
         version: link:../components
       '@deot/vc-hooks':
-        specifier: ^1.0.33
+        specifier: ^1.0.34
         version: link:../hooks
       '@deot/vc-shared':
-        specifier: ^1.0.33
+        specifier: ^1.0.34
         version: link:../shared
       vue:
         specifier: '*'
