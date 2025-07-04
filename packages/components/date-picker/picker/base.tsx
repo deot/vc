@@ -10,7 +10,7 @@ import { useBase } from './use-base';
 
 export const createPicker = (name: string, pickerProps: object, usePicker: Function) => defineComponent({
 	name,
-	props: Object.assign(baseProps, pickerProps),
+	props: Object.assign({}, baseProps, pickerProps),
 	inheritAttrs: false,
 	emits: [
 		'update:modelValue',

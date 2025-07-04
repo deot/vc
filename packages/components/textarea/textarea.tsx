@@ -9,7 +9,7 @@ const COMPONENT_NAME = 'vc-textarea';
 
 export const Textarea = defineComponent({
 	name: COMPONENT_NAME,
-	props: Object.assign(textareaProps, {
+	props: Object.assign({}, textareaProps, {
 		indicator: {
 			type: [Boolean, Object],
 			default: false

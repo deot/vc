@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, ref } from 'vue';
 import useTextarea from '../use-textarea';
 import { props as textareaProps } from '../textarea-props';
 
@@ -8,7 +8,7 @@ const COMPONENT_NAME = 'vcm-textarea';
 
 export const MTextarea = defineComponent({
 	name: COMPONENT_NAME,
-	props: Object.assign(textareaProps, {
+	props: Object.assign({}, textareaProps, {
 		align: {
 			type: String,
 			default: 'left'
