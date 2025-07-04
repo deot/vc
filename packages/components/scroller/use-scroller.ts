@@ -128,6 +128,12 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		content,
 		scrollTo,
 		refresh,
+		scrollLeft: scrollX,
+		scrollTop: scrollY,
+		clientWidth: wrapperW,
+		clientHeight: wrapperH,
+		scrollHeight: contentH,
+		scrollWidth: contentW,
 		setScrollTop: (value: number) => {
 			scrollTo({ y: value });
 		},
