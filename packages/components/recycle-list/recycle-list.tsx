@@ -445,8 +445,8 @@ export const RecycleList = defineComponent({
 		};
 
 		// 图片撑开时，会影响布局, 节流结束后调用
-		const handleResize = throttle(async (e: any) => {
-			if (!wrapper.value || (e && e.inited === false)) return;
+		const handleResize = throttle(async () => {
+			if (!wrapper.value) return;
 			const isNeedRefreshLayout = rebuildData.value.some(i => !i.isPlaceholder);
 
 			if (isNeedRefreshLayout) {
@@ -617,7 +617,7 @@ export const RecycleList = defineComponent({
 																	data-size={item.size}
 																	data-position={item.position}
 																	// @ts-ignore
-																	onResize={handleResize}
+																	onResize={e => e?.inited === true && handleResize()}
 																>
 																	{ slots.default?.({ row: item.data || {}, index: item.id }) }
 																</Resizer>
