@@ -181,7 +181,13 @@ export const Select = defineComponent({
 			close,
 			searchRegex,
 			multiple,
-			current: currentValue
+			isActive,
+			current: currentValue,
+			// for portal
+			toggle(v?: boolean) {
+				v = typeof v === 'boolean' ? v : !isActive.value;
+				isActive.value = v;
+			}
 		});
 		return () => {
 			return (
