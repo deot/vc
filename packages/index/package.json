@@ -1,6 +1,6 @@
 {
   "name": "@deot/vc",
-  "version": "1.0.37",
+  "version": "1.0.38",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,9 +19,9 @@
     "access": "public"
   },
   "dependencies": {
-    "@deot/vc-components": "^1.0.37",
-    "@deot/vc-hooks": "^1.0.37",
-    "@deot/vc-shared": "^1.0.37"
+    "@deot/vc-components": "^1.0.38",
+    "@deot/vc-hooks": "^1.0.38",
+    "@deot/vc-shared": "^1.0.38"
   },
   "peerDependencies": {
     "vue": "*"
