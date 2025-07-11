@@ -1,5 +1,5 @@
 import { reactive, computed } from 'vue';
-import { concat } from 'lodash';
+import { concat } from 'lodash-es';
 import { flattenData } from './utils';
 
 export class BaseWatcher {

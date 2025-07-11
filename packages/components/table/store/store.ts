@@ -1,5 +1,5 @@
 import { nextTick, computed } from 'vue';
-import { merge, debounce, concat } from 'lodash';
+import { merge, debounce, concat } from 'lodash-es';
 import { hasOwn } from '@deot/helper-utils';
 import { getValuesMap, getRowValue } from '../utils';
 import { VcError } from '../../vc';
