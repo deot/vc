@@ -66,6 +66,12 @@ export const Select = defineComponent({
 			return currentValue.value.map(getLabel.bind(null, source.value));
 		});
 
+		const collapseTagCount = computed(() => {
+			if (!props.maxTags) return 0;
+			const v = currentValue.value.length - props.maxTags;
+			return v < 0 ? 0 : v;
+		});
+
 		/**
 		 * v-model 同步, 外部的数据改变时不会触发
 		 */
@@ -233,7 +239,7 @@ export const Select = defineComponent({
 													return (
 														<div class={[classes.value, 'vc-select__tags']}>
 															{
-																currentValue.value.map((item: any, index: number) => {
+																currentValue.value.slice(0, props.maxTags).map((item: any, index: number) => {
 																	return (
 																		<Tag
 																			key={item}
@@ -245,6 +251,7 @@ export const Select = defineComponent({
 																	);
 																})
 															}
+															{ collapseTagCount.value ? (<Tag>{ `+${collapseTagCount.value}...` }</Tag>) : null }
 														</div>
 													);
 												}

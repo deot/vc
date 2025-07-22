@@ -3,6 +3,7 @@
 		v-model="value"
 		:data="cityList"
 		:max="2"
+		:max-tags="1"
 		clearable
 		searchable
 		style="width: 200px"

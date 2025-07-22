@@ -51,6 +51,7 @@ export const props = {
 		default: 1,
 		validator: (v: any) => v >= 1,
 	},
+	maxTags: Number,
 	searchable: {
 		type: Boolean,
 		default: false
