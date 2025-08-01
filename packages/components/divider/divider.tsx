@@ -11,8 +11,16 @@ export const Divider = defineComponent({
 	setup(props, { slots }) {
 		return () => {
 			return (
-				<div class="vc-divider">
-					{ slots?.default?.() }
+				<div class={['vc-divider', `is-${props.vertical ? 'vertical' : 'horizontal'}`]}>
+					{
+						(slots.default && !props.vertical) && (
+							<div
+								class={['vc-divider__text', `is-${props.placement}`]}
+							>
+								{ slots?.default?.() }
+							</div>
+						)
+					}
 				</div>
 			);
 		};
