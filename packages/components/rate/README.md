@@ -33,16 +33,17 @@ const tooltips = ref(['极差', '差', '一般', '好', '极好']);
 ### 属性
 | 属性         | 说明                          | 类型         | 可选值 | 默认值       |
 | ---------- | --------------------------- | ---------- | --- | --------- |
-| modelValue | 当前star数，可以使用 v-model 双向绑定数据 | `Number`   | -   | 0         |
-| count      | star 总数                     | `Number`   | -   | 5         |
-| color      | 选中的颜色                       | `String`   | -   | `#16a3ff` |
-| icon       | 图标的icon                     | `String`   | -   | `star`    |
-| character  | 自定义的字符                      | `String`   | -   | -         |
-| half       | 是否允许半选                      | `Boolean`  | -   | `false`   |
-| clearable  | 是否可以取消选择                    | `Boolean`  | -   | `false`   |
-| disabled   | 是否只读，无法进行交互                 | `Boolean`  | -   | `false`   |
-| tooltips   | 自定义每项的提示信息                  | `String[]` | -   | -         |
-| iconStyle  | icon的样式                     | `Object`   | -   | -         |
+| modelValue | 当前star数，可以使用 v-model 双向绑定数据 | `number`   | -   | 0         |
+| count      | star 总数                     | `number`   | -   | 5         |
+| color      | 选中的颜色                       | `string`   | -   | `#16a3ff` |
+| icon       | 图标的icon                     | `string`   | -   | `star`    |
+| character  | 自定义的字符                      | `string`   | -   | -         |
+| half       | 是否允许半选                      | `boolean`  | -   | `false`   |
+| clearable  | 是否可以取消选择                    | `boolean`  | -   | `false`   |
+| disabled   | 是否只读，无法进行交互                 | `boolean`  | -   | `false`   |
+| tooltip    | 自定义每项的提示信息                  | `string[]` | -   | -         |
+| iconStyle  | icon的样式                     | `object`   | -   | -         |
+
 
 
 ### 事件
