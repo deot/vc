@@ -46,7 +46,7 @@ const handleGetTime = (value) => {
 	<div>
 		<Countdown
 			:target-time="targetTime"
-			:t="2"
+			:t="2000"
 		/>
 	</div>
 </template>
@@ -91,20 +91,21 @@ const targetTime = ref(now);
 
 ### 属性
 
-| 属性          | 说明                 | 类型                         | 可选值 | 默认值               |
-| ----------- | ------------------ | -------------------------- | --- | ----------------- |
-| t           | 刷新周期，单位秒           | `number`                   | -   | 1                 |
-| render-row  | 自定义渲染              | `function`                 | -   | -                 |
-| target-time | 目标时间               | `string`、 `number`、 `Date` | -   | -                 |
-| server-time | 服务器时间              | `string`、 `number`、 `Date` | -   | 当前时间              |
-| format      | 格式(DD:HH:MM:SS:mm) | `string`                   | -   | `DD天HH小时mm分ss秒ms` |
-| tag         | 外层标签               | `string`                   | -   | `span`            |
+| 属性          | 说明                  | 类型                         | 可选值 | 默认值                |
+| ----------- | ------------------- | -------------------------- | --- | ------------------ |
+| t           | 刷新周期，单位毫秒           | `number`                   | -   | 1000               |
+| render      | 自定义渲染               | `function`                 | -   | -                  |
+| target-time | 目标时间                | `string`、 `number`、 `Date` | -   | -                  |
+| server-time | 服务器时间               | `string`、 `number`、 `Date` | -   | 当前时间               |
+| format      | 格式(DD:HH:mm:ss:SSS) | `string`                   | -   | `DD天HH小时mm分ss秒SSS` |
+| tag         | 外层标签                | `string`                   | -   | `span`             |
+| trim        | 移除零值前缀              | `boolean`                  | -   | `false`            |
 
 
 ### 事件
 
-| 事件名    | 说明   | 回调参数                        | 参数说明                                                                                                         |
-| ------ | ---- | --------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| error  | 警告回调 | `(message: string) => void` | `message`: 警告信息                                                                                              |
-| change | 变化回调 | `(data: object) => void`    | `timestamp`: 离目标时间相差的毫秒数; `days`: 相差的天数; `hours`: 相差的小时数; `minutes`: 相差的分钟数; `seconds`: 相差的秒数; `ms`: 相差的毫秒数, |
-| end    | 结束回调 | -                           | -                                                                                                            |
+| 事件名    | 说明   | 回调参数                        | 参数说明                                                                                                              |
+| ------ | ---- | --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| error  | 警告回调 | `(message: string) => void` | `message`: 警告信息                                                                                                   |
+| change | 变化回调 | `(data: object) => void`    | `timestamp`: 离目标时间相差的毫秒数; `day`: 相差的天数; `hour`: 相差的小时数; `minute`: 相差的分钟数; `second`: 相差的秒数; `millisecond`: 相差的毫秒数, |
+| finish | 结束回调 | -                           | -                                                                                                                 |
