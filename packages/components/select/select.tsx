@@ -4,7 +4,7 @@ import { defineComponent, getCurrentInstance, inject, ref, computed, watch } fro
 import { debounce, isEqualWith } from 'lodash-es';
 import { useAttrs } from '@deot/vc-hooks';
 import { getUid } from '@deot/helper-utils';
-import { getLabel, escapeString, flattenData } from './utils';
+import { getLabel, escapeString, flattenData, toCurrentValue, toModelValue } from './utils';
 import { VcError } from '../vc/index';
 import { Input, InputSearch } from '../input/index';
 import { Popover } from '../popover/index';
@@ -76,18 +76,13 @@ export const Select = defineComponent({
 		 * v-model 同步, 外部的数据改变时不会触发
 		 */
 		const sync = () => {
-			let v: any = currentValue.value;
-			if (!Array.isArray(props.modelValue)) {
-				v = props.max > 1 ? v.join(props.separator) : v[0];
-				// 输入如果是字符串的话，那么输出应该保持一致为字符串
-				if (typeof props.modelValue === 'string' && props.numerable) {
-					v = `${v}`;
-				}
-
-				if (typeof v === 'undefined') {
-					v = props.nullValue;
-				}
-			}
+			const v = toModelValue(currentValue.value, {
+				modelValue: props.modelValue,
+				max: props.max,
+				numerable: props.numerable,
+				separator: props.separator,
+				nullValue: props.nullValue
+			});
 
 			emit('update:modelValue', v, currentLabel.value);
 			emit('change', v, currentLabel.value);
@@ -161,19 +156,11 @@ export const Select = defineComponent({
 		watch(
 			() => props.modelValue,
 			(v) => {
+				v = toCurrentValue(v, {
+					numerable: props.numerable,
+					separator: props.separator
+				});
 				if (isEqualWith(v, currentValue.value)) return;
-
-				if (typeof v === 'string') {
-					v = v.split(props.separator).filter(i => !!i);
-					props.numerable && (v = v.map(i => +i));
-				}
-
-				v = Array.isArray(v)
-					? v
-					: typeof v !== 'undefined' && v !== null
-						? [v]
-						: []
-				;
 
 				currentValue.value = v;
 			},

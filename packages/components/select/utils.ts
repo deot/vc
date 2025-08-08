@@ -75,3 +75,65 @@ export const flattenData = (data: TreeData, options: FlattenDataOptions = {}): T
 	});
 	return result;
 };
+
+type ModelValue = string | number | (number | string | any)[] | undefined;
+interface ModelValueOptions {
+	[key: string]: any;
+	numerable: boolean;
+	separator: string;
+};
+/**
+ * 将输入数据为[]或以,分割的数据统一为[]形势
+ * @param v ~
+ * @param options ~
+ * @returns ~ ~
+ */
+export const toCurrentValue = (v: ModelValue, options: ModelValueOptions) => {
+	if (typeof v === 'string') {
+		v = v.split(options.separator).filter(i => !!i);
+		options.numerable && (v = v.map(i => +i));
+	}
+
+	v = Array.isArray(v)
+		? v
+		: typeof v !== 'undefined' && v !== null
+			? [v]
+			: []
+	;
+
+	return v;
+};
+
+type CurrentValue = (number | string)[];
+interface CurrentValueOptions {
+	[key: string]: any;
+	numerable: boolean;
+	separator: string;
+	modelValue: ModelValue;
+	max: number;
+	nullValue: any;
+};
+/**
+ * 根据原始输入将[]输出为[]或以,分割的形式
+ * @param v ~
+ * @param options ~
+ * @returns ~ ~
+ */
+export const toModelValue = (v: CurrentValue, options: CurrentValueOptions): ModelValue => {
+	let value: ModelValue;
+	if (!Array.isArray(options.modelValue)) {
+		value = options.max > 1 ? v.join(options.separator) : v[0];
+		// 输入如果是字符串的话，那么输出应该保持一致为字符串
+		if (typeof options.modelValue === 'string' && options.numerable) {
+			value = `${v}`;
+		}
+
+		if (typeof v === 'undefined') {
+			value = options.nullValue;
+		}
+	} else {
+		value = v;
+	}
+
+	return value;
+};
