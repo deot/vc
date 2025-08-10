@@ -1,7 +1,7 @@
 import { ref, getCurrentInstance } from 'vue';
 import type { Ref } from 'vue';
 import { addClass, removeClass } from '@deot/helper-dom';
-import type { TreeStore } from './model/tree-store';
+import type { TreeStore } from './store/tree-store';
 
 export default (store: TreeStore, dropIndicator: Ref<HTMLElement | undefined>) => {
 	const { props, emit, vnode } = getCurrentInstance()!;

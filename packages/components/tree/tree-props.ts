@@ -2,7 +2,7 @@ import { pick } from 'lodash-es';
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { Props as CustomerProps } from '../customer/customer-props';
 import { props as selectProps } from '../select/select-props';
-import { KEY_VALUE } from './model/constant';
+import { KEY_VALUE } from './store/constant';
 
 const selectKeys = [
 	'separator',

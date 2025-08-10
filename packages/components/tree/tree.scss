@@ -1,0 +1,126 @@
+@use 'sass:color';
+@use '../style/helper' as *;
+
+$component-name: vc-tree;
+
+@include block($component-name) {
+	position: relative;
+	font-size: 12px;
+	color: #515a6e;
+	cursor: default;
+	background: #fff;
+
+	@include element(empty-block) {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		min-height: 60px;
+		text-align: center;
+	}
+
+	@include element(empty-text) {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		color: #999;
+		transform: translate(-50%, -50%);
+	}
+
+	@include element(drop-indicator) {
+		position: absolute;
+		right: 0;
+		left: 0;
+		height: 1px;
+		background-color: #409eff;
+	}
+}
+
+@include block(vc-tree-node) {
+	white-space: nowrap;
+	outline: none;
+
+	&:focus { /* focus */
+		> .vc-tree-node__content {
+			background-color: #f5f7fa;
+		}
+	}
+
+	@include when(drop-inner) {
+		> .vc-tree-node__content .vc-tree-node__label {
+			color: #fff;
+			background-color: #409eff;
+		}
+	}
+
+	@include element(content) {
+		display: flex;
+		align-items: center;
+		height: 26px;
+		cursor: pointer;
+
+		& > .vc-tree-node__expand-icon {
+			padding: 6px;
+		}
+
+		&:hover {
+			background-color: #f5f7fa;
+		}
+
+		.vc-tree.is-dragging & {
+			cursor: move;
+
+			& * {
+				pointer-events: none;
+			}
+		}
+
+		.vc-tree.is-dragging.is-drop-not-allow & {
+			cursor: not-allowed;
+		}
+	}
+
+	@include element(expand-icon) {
+		font-size: 12px;
+		color: #666;
+		cursor: pointer;
+
+		.vc-icon {
+			transform: rotate(90deg);
+			transition: transform 0.2s ease-in-out;
+		}
+
+		&.is-expand {
+			.vc-icon {
+				transform: rotate(180deg);
+			}
+		}
+
+		&.is-leaf {
+			color: transparent;
+			cursor: default;
+		}
+	}
+
+	@include element(label) {
+		font-size: 14px;
+	}
+
+	@include element(loading-icon) {
+		margin-right: 8px;
+		font-size: 14px;
+		color: #999;
+	}
+
+	& > .vc-tree-node__children {
+		overflow: hidden;
+		background-color: transparent;
+	}
+
+	&.is-expanded > .vc-tree-node__children {
+		display: block;
+	}
+}
+
+.vc-tree--highlight-current .vc-tree-node.is-current > .vc-tree-node__content {
+	background-color: color.mix(#fff, #409eff, 92%);
+}

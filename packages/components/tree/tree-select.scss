@@ -1,0 +1,60 @@
+@use '../style/helper' as *;
+
+$component-name: vc-tree-select;
+
+@include block($component-name) {
+	position: relative;
+	display: inline-block;
+	width: 100%;
+	line-height: 1;
+
+	@include element(input) {
+		cursor: pointer;
+
+		input {
+			cursor: pointer;
+		}
+
+		.vc-input__append {
+			z-index: 0;
+		}
+	}
+
+	@include element(append) {
+		position: relative;
+		padding: 0 10px 0 2px;
+		font-size: 12px;
+		line-height: 28px;
+		color: #808695;
+		text-align: center;
+		white-space: nowrap;
+	}
+
+	@include element(icon) {
+		@include when(arrow) {
+			transform: scale(0.8);
+		}
+	}
+
+	@include element(tags) {
+		padding-left: 4px;
+
+		.vc-tag {
+			margin: 3px 4px 3px 0;
+		}
+	}
+
+	@include element(search) {
+		padding: 12px 8px;
+	}
+
+	@include element(options) {
+		max-height: 220px;
+		overflow: auto;
+	}
+
+	@include element(loading) {
+		padding-bottom: 8px;
+		text-align: center;
+	}
+}

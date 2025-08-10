@@ -23,12 +23,26 @@
 		<div>value: {{ value }}</div>
 		<div>typeof: {{ typeof value }}</div>
 		<div>isArray: {{ Array.isArray(value) }}</div>
+
+		<TreeSelect
+			v-model="value"
+			:data="data"
+			:check-strictly="checkStrictly"
+			clearable
+		/>
+
+		<TreeSelect
+			v-model="valueAsync"
+			:data="dataAsync"
+			:check-strictly="checkStrictly"
+			clearable
+		/>
 	</div>
 </template>
 <script setup lang="jsx">
 import { ref, onMounted } from 'vue';
 import { random, cloneDeep } from 'lodash-es';
-import { Tree } from '..';
+import { Tree, TreeSelect } from '..';
 import { Button } from '../../button';
 
 const DEFAULT_DATA = [

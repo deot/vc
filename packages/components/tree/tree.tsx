@@ -2,7 +2,7 @@
 
 import { defineComponent, provide, ref, computed, watch, getCurrentInstance } from 'vue';
 import type { ComponentInternalInstance } from 'vue';
-import { TreeStore } from './model/tree-store';
+import { TreeStore } from './store/tree-store';
 import { toCurrentValue } from '../select/utils';
 import { TreeNodeContent } from './tree-node-content.tsx';
 import useDragNode from './use-drag-node';

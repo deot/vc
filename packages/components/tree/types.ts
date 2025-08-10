@@ -1,6 +1,6 @@
 import type { ComponentInternalInstance, Ref } from 'vue';
 import type { Props } from './tree-props';
-import type { TreeStore, TreeNode } from './model';
+import type { TreeStore, TreeNode } from './store';
 
 export interface TreeProvide {
 	props: Props;

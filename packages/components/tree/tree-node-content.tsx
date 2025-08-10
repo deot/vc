@@ -2,8 +2,8 @@
 
 import { getCurrentInstance, defineComponent, inject, ref, watch, nextTick, withModifiers } from 'vue';
 import { isEqualWith } from 'lodash-es';
-import type { TreeNode, TreeStore } from './model';
-import { KEY_VALUE } from './model/constant';
+import type { TreeNode, TreeStore } from './store';
+import { KEY_VALUE } from './store/constant';
 import { TransitionCollapse } from '../transition';
 import { Checkbox } from '../checkbox';
 import { Customer } from '../customer';
@@ -76,6 +76,7 @@ export const TreeNodeContent = defineComponent({
 		};
 
 		const handleExpandIconClick = async () => {
+			console.log(props.node.isLeaf, expanded.value);
 			if (props.node.isLeaf) return;
 			if (expanded.value) {
 				tree.emit('node-collapse', props.node.data, props.node, instance);

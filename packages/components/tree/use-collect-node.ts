@@ -1,5 +1,5 @@
 import { inject, provide, getCurrentInstance } from 'vue';
-import type { TreeNode } from './model/tree-node';
+import type { TreeNode } from './store/tree-node';
 
 export default () => {
 	const { props } = getCurrentInstance()!;
