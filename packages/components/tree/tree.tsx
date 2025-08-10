@@ -3,6 +3,7 @@
 import { defineComponent, provide, ref, computed, watch, getCurrentInstance } from 'vue';
 import type { ComponentInternalInstance } from 'vue';
 import { TreeStore } from './model/tree-store';
+import { toCurrentValue } from '../select/utils';
 import { TreeNodeContent } from './tree-node-content.tsx';
 import useDragNode from './use-drag-node';
 import useKeydown from './use-keydown';
@@ -42,7 +43,10 @@ export const Tree = defineComponent({
 			currentNodeValue: props.currentNodeValue,
 			checkStrictly: props.checkStrictly,
 			checkDescendants: props.checkDescendants,
-			checkedValues: [...props.modelValue],
+			checkedValues: toCurrentValue(props.modelValue, {
+				numerable: props.numerable,
+				separator: props.separator
+			}),
 			expandedValues: [...props.expandedValues],
 			autoExpandParent: props.autoExpandParent,
 			defaultExpandAll: props.defaultExpandAll,
@@ -62,7 +66,12 @@ export const Tree = defineComponent({
 
 		watch(
 			() => props.modelValue,
-			(v: any[]) => store.setCheckedValues([...v])
+			(v: any) => store.setCheckedValues(
+				toCurrentValue(v, {
+					numerable: props.numerable,
+					separator: props.separator
+				})
+			)
 		);
 
 		watch(
@@ -259,8 +268,8 @@ export const Tree = defineComponent({
 						)
 					}
 					<div
+						ref={dropIndicator}
 						// @ts-ignore
-						ref={dropIndicator.value}
 						vShow={dragState.showDropIndicator}
 						class="vc-tree__drop-indicator"
 					/>

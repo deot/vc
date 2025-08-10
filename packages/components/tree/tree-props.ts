@@ -1,8 +1,24 @@
+import { pick } from 'lodash-es';
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { Props as CustomerProps } from '../customer/customer-props';
+import { props as selectProps } from '../select/select-props';
 import { KEY_VALUE } from './model/constant';
 
+const selectKeys = [
+	'separator',
+	'numerable',
+	'nullValue'
+] as const;
+
 export const props = {
+	...(pick(selectProps, selectKeys) as Pick<typeof selectProps, typeof selectKeys[number]>),
+	// 暂不支持，仅作为默认值
+	max: {
+		type: Number,
+		default: Infinity,
+		validator: (v: any) => v >= 1,
+	},
+	// 确保所有value是唯一的; 否则会出现问题
 	data: {
 		type: Array,
 		default: () => ([])
@@ -34,10 +50,7 @@ export const props = {
 		default: true
 	},
 	// checkedValues -> modelValue
-	modelValue: {
-		type: Array as PropType<(string | number)[]>,
-		default: () => ([])
-	},
+	modelValue: [String, Number, Array] as PropType<string | number | any[]>,
 	// Value[]
 	expandedValues: {
 		type: Array as PropType<(string | number)[]>,

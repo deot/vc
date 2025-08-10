@@ -9,6 +9,7 @@ import { Checkbox } from '../checkbox';
 import { Customer } from '../customer';
 import { Spin } from '../spin';
 import { Icon } from '../icon';
+import { toModelValue } from '../select/utils';
 import useCollectNode from './use-collect-node';
 import { props as treeNodeProps } from './tree-node-content-props';
 import type { TreeProvide } from './types';
@@ -40,10 +41,17 @@ export const TreeNodeContent = defineComponent({
 				halfCheckedValues: store.getHalfCheckedValues(),
 			};
 
+			const v = toModelValue(data.checkedValues, {
+				modelValue: tree.props.modelValue,
+				max: tree.props.max,
+				numerable: tree.props.numerable,
+				separator: tree.props.separator,
+				nullValue: tree.props.nullValue
+			});
 			// for v-model
-			if (!isEqualWith(data.checkedValues, tree.props.modelValue)) {
-				tree.emit('update:modelValue', data.checkedValues, data);
-				tree.emit('change', data.checkedValues, data);
+			if (!isEqualWith(v, tree.props.modelValue)) {
+				tree.emit('update:modelValue', v, data);
+				tree.emit('change', v, data);
 				props.allowDispatch && formItem?.change?.();
 			}
 
