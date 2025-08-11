@@ -1,6 +1,6 @@
 import { ref, computed, watch, onMounted, onUpdated, getCurrentInstance, onUnmounted } from 'vue';
 
-export default () => {
+export const useKeydown = () => {
 	const { vnode } = getCurrentInstance()!;
 	const treeItems = ref<any>(null);
 	const checkboxItems = ref([]);

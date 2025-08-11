@@ -1,11 +1,11 @@
-import { ref, getCurrentInstance } from 'vue';
+import { reactive, getCurrentInstance } from 'vue';
 import type { Ref } from 'vue';
 import { addClass, removeClass } from '@deot/helper-dom';
-import type { TreeStore } from './store/tree-store';
+import type { TreeStore, TreeNode } from './store';
 
-export default (store: TreeStore, dropIndicator: Ref<HTMLElement | undefined>) => {
+export const useDragNode = (store: TreeStore, dropIndicator: Ref<HTMLElement | undefined>) => {
 	const { props, emit, vnode } = getCurrentInstance()!;
-	const state = ref({
+	const state = reactive({
 		showDropIndicator: false,
 		draggingNode: null as any,
 		dropNode: null as any,
@@ -13,8 +13,8 @@ export default (store: TreeStore, dropIndicator: Ref<HTMLElement | undefined>) =
 		dropType: ''
 	});
 
-	const handleDragStart = (e: any, treeNode: any) => {
-		if (typeof props.allowDrag === 'function' && !props.allowDrag(treeNode.props.node)) {
+	const handleDragStart = (e: any, instance: any) => {
+		if (typeof props.allowDrag === 'function' && !props.allowDrag(instance.props.node)) {
 			e.preventDefault();
 			return false;
 		}
@@ -28,62 +28,62 @@ export default (store: TreeStore, dropIndicator: Ref<HTMLElement | undefined>) =
 		} catch (error) {
 			console.log(error);
 		}
-		state.value.draggingNode = treeNode;
-		emit('node-drag-start', treeNode.props.node, e);
+		state.draggingNode = instance;
+		emit('node-drag-start', instance.props.node, e);
 	};
 
-	const handleDragOver = (e: any, treeNode: any) => {
-		const dropNode = treeNode;
-		const oldDropNode = state.value.dropNode as any;
+	const handleDragOver = (e: any, instance: any) => {
+		const dropNode = instance;
+		const oldDropNode = state.dropNode!;
 
 		if (oldDropNode && oldDropNode !== dropNode) {
-			removeClass(oldDropNode.vnode.el, 'is-drop-inner');
+			removeClass(oldDropNode.vnode.el as any, 'is-drop-inner');
 		}
-		const draggingNode = state.value.draggingNode as any;
+		const draggingNode = state.draggingNode!;
 
-		const { node: $draggingNode } = draggingNode.props;
-		const { node: $dropNode } = dropNode.props;
+		const draggingTreeNode = draggingNode.props.node as TreeNode;
+		const dropTreeNode = dropNode.props.node as TreeNode;
 
-		if (!$draggingNode || !$dropNode) return;
+		if (!draggingTreeNode || !dropTreeNode) return;
 
 		let dropPrev = true;
 		let dropInner = true;
 		let dropNext = true;
 		let userAllowDropInner = true;
 		if (typeof props.allowDrop === 'function') {
-			dropPrev = props.allowDrop($draggingNode, $dropNode, 'prev');
-			userAllowDropInner = props.allowDrop($draggingNode, $dropNode, 'inner');
+			dropPrev = props.allowDrop(draggingTreeNode, dropTreeNode, 'prev');
+			userAllowDropInner = props.allowDrop(draggingTreeNode, dropTreeNode, 'inner');
 			dropInner = userAllowDropInner;
-			dropNext = props.allowDrop($draggingNode, $dropNode, 'next');
+			dropNext = props.allowDrop(draggingTreeNode, dropTreeNode, 'next');
 		}
 		e.dataTransfer.dropEffect = dropInner ? 'move' : 'none';
 		if ((dropPrev || dropInner || dropNext) && oldDropNode !== dropNode) {
 			if (oldDropNode) {
-				emit('node-drag-leave', $draggingNode, oldDropNode.props.node, e);
+				emit('node-drag-leave', draggingTreeNode, oldDropNode.props.node, e);
 			}
-			emit('node-drag-enter', $draggingNode, $dropNode, e);
+			emit('node-drag-enter', draggingTreeNode, dropTreeNode, e);
 		}
 
 		if (dropPrev || dropInner || dropNext) {
-			state.value.dropNode = dropNode;
+			state.dropNode = dropNode;
 		}
 
-		if ($dropNode.nextSibling === $draggingNode) {
+		if (dropTreeNode.getNextSiblingNode() === draggingTreeNode) {
 			dropNext = false;
 		}
-		if ($dropNode.previousSibling === $draggingNode) {
+		if (dropTreeNode.getPreviousSiblingNode() === draggingTreeNode) {
 			dropPrev = false;
 		}
-		if ($dropNode.contains($draggingNode, false)) {
+		if (dropTreeNode.contains(draggingTreeNode, false)) {
 			dropInner = false;
 		}
-		if ($draggingNode === $dropNode || $draggingNode.contains($dropNode)) {
+		if (draggingTreeNode === dropTreeNode || draggingTreeNode.contains(dropTreeNode)) {
 			dropPrev = false;
 			dropInner = false;
 			dropNext = false;
 		}
 
-		const targetPosition = dropNode.vnode.el.getBoundingClientRect();
+		const targetPosition = dropNode.vnode.el!.getBoundingClientRect();
 		const treePosition = vnode.el!.getBoundingClientRect();
 
 		let dropType: string;
@@ -102,7 +102,7 @@ export default (store: TreeStore, dropIndicator: Ref<HTMLElement | undefined>) =
 			dropType = 'none';
 		}
 
-		const iconPosition = dropNode.vnode.el.querySelector('.vc-tree-node__expand-icon').getBoundingClientRect();
+		const iconPosition = dropNode.vnode.el!.querySelector('.vc-tree-node__expand-icon').getBoundingClientRect();
 		if (dropType === 'before') {
 			indicatorTop = iconPosition.top - treePosition.top;
 		} else if (dropType === 'after') {
@@ -112,57 +112,58 @@ export default (store: TreeStore, dropIndicator: Ref<HTMLElement | undefined>) =
 		dropIndicator.value!.style.left = (iconPosition.right - treePosition.left) + 'px';
 
 		if (dropType === 'inner') {
-			addClass(dropNode.vnode.el, 'is-drop-inner');
+			addClass(dropNode.vnode.el as any, 'is-drop-inner');
 		} else {
-			removeClass(dropNode.vnode.el, 'is-drop-inner');
+			removeClass(dropNode.vnode.el as any, 'is-drop-inner');
 		}
 
-		state.value.showDropIndicator = dropType === 'before' || dropType === 'after';
+		state.showDropIndicator = dropType === 'before' || dropType === 'after';
 
-		state.value.allowDrop = state.value.showDropIndicator || userAllowDropInner;
-		state.value.dropType = dropType;
-		emit('node-drag-over', $draggingNode, $dropNode, e);
+		state.allowDrop = state.showDropIndicator || userAllowDropInner;
+		state.dropType = dropType;
+		emit('node-drag-over', draggingTreeNode, dropTreeNode, e);
 	};
 
 	const handleDragEnd = (e) => {
-		const { draggingNode, dropType, dropNode } = state.value;
-		const { node: $draggingNode } = draggingNode.props;
-		const { node: $dropNode } = dropNode.props;
+		const { draggingNode, dropType, dropNode } = state;
+		const draggingTreeNode = draggingNode!.props.node! as TreeNode;
+		const dropTreeNode = dropNode!.props.node! as TreeNode;
 
 		e.preventDefault();
 		e.dataTransfer.dropEffect = 'move';
 
 		if (draggingNode && dropNode) {
-			const draggingNodeCopy = { data: $draggingNode.data };
+			const draggingNodeCopy = { data: draggingTreeNode.states.data };
 			if (dropType !== 'none') {
-				$draggingNode.remove();
+				draggingTreeNode.remove();
 			}
+			let newNode: any;
 			if (dropType === 'before') {
-				$dropNode.parent.insertBefore(draggingNodeCopy, $dropNode);
+				newNode = dropTreeNode.parentNode!.insertBefore(draggingNodeCopy, dropTreeNode);
 			} else if (dropType === 'after') {
-				$dropNode.parent.insertAfter(draggingNodeCopy, $dropNode);
+				newNode = dropTreeNode.parentNode!.insertAfter(draggingNodeCopy, dropTreeNode);
 			} else if (dropType === 'inner') {
-				$dropNode.insertChild(draggingNodeCopy);
+				newNode = dropTreeNode.insertChild(draggingNodeCopy);
 			}
-			if (dropType !== 'none') {
-				store.registerNode(draggingNodeCopy);
+			if (newNode && dropType !== 'none') {
+				store.registerNode(newNode as TreeNode);
 			}
 
-			removeClass(dropNode.vnode.el, 'is-drop-inner');
+			removeClass(dropNode.vnode.el as any, 'is-drop-inner');
 
-			emit('node-drag-end', $draggingNode, $dropNode, dropType, e);
+			emit('node-drag-end', draggingTreeNode, dropTreeNode, dropType, e);
 			if (dropType !== 'none') {
-				emit('node-drop', $draggingNode, $dropNode, dropType, e);
+				emit('node-drop', draggingTreeNode, dropTreeNode, dropType, e);
 			}
 		}
 		if (draggingNode && !dropNode) {
-			emit('node-drag-end', $draggingNode, null, dropType, e);
+			emit('node-drag-end', draggingTreeNode, null, dropType, e);
 		}
 
-		state.value.showDropIndicator = false;
-		state.value.draggingNode = null;
-		state.value.dropNode = null;
-		state.value.allowDrop = true;
+		state.showDropIndicator = false;
+		state.draggingNode = null;
+		state.dropNode = null;
+		state.allowDrop = true;
 	};
 
 	return {

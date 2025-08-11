@@ -10,7 +10,7 @@ import { Customer } from '../customer';
 import { Spin } from '../spin';
 import { Icon } from '../icon';
 import { toModelValue } from '../select/utils';
-import useCollectNode from './use-collect-node';
+import { useCollectNode } from './use-collect-node';
 import { props as treeNodeProps } from './tree-node-content-props';
 import type { TreeProvide } from './types';
 
@@ -27,8 +27,8 @@ export const TreeNodeContent = defineComponent({
 		const tree = inject<TreeProvide>('vc-tree')!;
 		const formItem = inject<any>('vc-form-item', {});
 
-		const expanded = ref(false);
-		const childNodeRendered = ref(false);
+		const expanded = ref(!!props.node.states.expanded);
+		const childNodeRendered = ref(!!props.node.states.expanded);
 		const oldChecked = ref(false);
 		const oldIndeterminate = ref(false);
 
@@ -58,12 +58,12 @@ export const TreeNodeContent = defineComponent({
 			return data;
 		};
 		const getNodeKey = (node: TreeNode) => {
-			return node.data[tree.props.keyValue.value];
+			return node.states.data[tree.props.keyValue.value];
 		};
 
 		const handleSelectChange = (checked: boolean, indeterminate: boolean) => {
 			if (oldChecked.value !== checked && oldIndeterminate.value !== indeterminate) {
-				tree.emit('check-change', props.node.data, checked, indeterminate);
+				tree.emit('check-change', props.node.states.data, checked, indeterminate);
 			}
 			oldChecked.value = checked;
 			oldIndeterminate.value = indeterminate;
@@ -72,39 +72,38 @@ export const TreeNodeContent = defineComponent({
 		const handleCheckChange = async (_: boolean, e: any) => {
 			props.node.setChecked(e.target.checked, !tree.props.checkStrictly);
 			await nextTick();
-			tree.emit('check', props.node.data, sync());
+			tree.emit('check', props.node.states.data, sync());
 		};
 
 		const handleExpandIconClick = async () => {
-			console.log(props.node.isLeaf, expanded.value);
-			if (props.node.isLeaf) return;
+			if (props.node.states.isLeaf) return;
 			if (expanded.value) {
-				tree.emit('node-collapse', props.node.data, props.node, instance);
+				tree.emit('node-collapse', props.node.states.data, props.node, instance);
 				props.node.collapse();
 			} else {
 				await props.node.expand();
 				sync();
-				emit('node-expand', props.node.data, props.node, instance);
+				emit('node-expand', props.node.states.data, props.node, instance);
 			}
 		};
 
 		const handleClick = () => {
 			const store = tree.store;
 			store.setCurrentNode(props.node);
-			tree.emit('current-change', store.currentNode ? store.currentNode.data : null, store.currentNode);
+			tree.emit('current-change', store.currentNode ? store.currentNode.states.data : null, store.currentNode);
 
 			tree.currentNodeInstance.value = instance;
 
 			if (tree.props.expandOnClickNode) {
 				handleExpandIconClick();
 			}
-			if (tree.props.checkOnClickNode && !props.node.disabled) {
-				const checked = !props.node.checked;
+			if (tree.props.checkOnClickNode && !props.node.getter.disabled) {
+				const checked = !props.node.states.checked;
 				handleCheckChange(checked, {
 					target: { checked }
 				});
 			}
-			tree.emit('node-click', props.node.data, props.node, instance);
+			tree.emit('node-click', props.node.states.data, props.node, instance);
 		};
 
 		const handleContextMenu = (e: any) => {
@@ -112,7 +111,7 @@ export const TreeNodeContent = defineComponent({
 				e.stopPropagation();
 				e.preventDefault();
 			}
-			tree.emit('node-contextmenu', e, props.node.data, props.node, instance);
+			tree.emit('node-contextmenu', e, props.node.states.data, props.node, instance);
 		};
 
 		const handleChildNodeExpand = (nodeData: object, node: TreeNode, $instance: any) => {
@@ -143,60 +142,57 @@ export const TreeNodeContent = defineComponent({
 		watch(
 			() => {
 				const childrenKey = tree.props.keyValue.children || KEY_VALUE.children;
-				return props.node.data[childrenKey];
+				return props.node.states.data[childrenKey];
 			},
 			(v) => {
-				handleSelectChange(props.node.checked, v);
+				handleSelectChange(props.node.states.checked, v);
 			}
 		);
 
 		watch(
-			() => props.node.indeterminate,
+			() => props.node.states.indeterminate,
 			(v) => {
-				handleSelectChange(props.node.checked, v);
+				handleSelectChange(props.node.states.checked, v);
 			}
 		);
 
 		watch(
-			() => props.node.checked,
+			() => props.node.states.checked,
 			(v) => {
-				handleSelectChange(v, props.node.indeterminate);
+				handleSelectChange(v, props.node.states.indeterminate);
 			}
 		);
 
 		watch(
-			() => props.node.expanded,
+			() => props.node.states.expanded,
 			(v) => {
-				nextTick(() => expanded.value = v);
 				if (v) {
 					childNodeRendered.value = true;
 				}
-			}
+				nextTick(() => expanded.value = v);
+			},
+			{ deep: true }
 		);
 
-		if (props.node.expanded) {
-			expanded.value = true;
-			childNodeRendered.value = true;
-		}
 		return () => {
 			const { node } = props;
 			return (
 				<div
 					// @ts-ignore
-					vShow={node.visible}
+					vShow={node.states.visible}
 					class={[
 						{
-							'is-expanded': expanded,
-							'is-current': node.isCurrent,
-							'is-hidden': !node.visible,
-							'is-focusable': !node.disabled,
-							'is-checked': !node.disabled && node.checked
+							'is-expanded': expanded.value,
+							'is-current': node.states.isCurrent,
+							'is-hidden': !node.states.visible,
+							'is-focusable': !node.getter.disabled,
+							'is-checked': !node.getter.disabled && node.states.checked
 						},
 						'vc-tree-node'
 					]}
 					aria-expanded={expanded.value}
-					aria-disabled={node.disabled}
-					aria-checked={node.checked}
+					aria-disabled={node.getter.disabled}
+					aria-checked={node.states.checked}
 					draggable={tree.props.draggable}
 					role="treeitem"
 					tabindex="-1"
@@ -208,14 +204,14 @@ export const TreeNodeContent = defineComponent({
 					onDrop={withModifiers(handleDrop, ['stop'])}
 				>
 					<div
-						style={[{ 'padding-left': (node.level - 1) * tree.props.indent + 'px' }]}
+						style={[{ 'padding-left': (node.states.level - 1) * tree.props.indent + 'px' }]}
 						class="vc-tree-node__content"
 					>
 						<span
 							class={[
 								{
-									'is-expand': !node.isLeaf && expanded.value,
-									'is-leaf': node.isLeaf
+									'is-expand': !node.states.isLeaf && expanded.value,
+									'is-leaf': node.states.isLeaf
 								},
 								'vc-tree-node__expand-icon'
 							]}
@@ -226,10 +222,10 @@ export const TreeNodeContent = defineComponent({
 						{
 							props.showCheckbox && (
 								<Checkbox
-									modelValue={node.checked}
-									indeterminate={node.indeterminate}
-									disabled={!!node.disabled}
-									onUpdate:modelValue={v => node.checked = v}
+									modelValue={node.states.checked}
+									indeterminate={node.states.indeterminate}
+									disabled={!!node.getter.disabled}
+									onUpdate:modelValue={v => node.states.checked = v}
 									onChange={handleCheckChange}
 									// @ts-ignore
 									onClick={withModifiers(() => {}, ['stop'])}
@@ -238,7 +234,7 @@ export const TreeNodeContent = defineComponent({
 						}
 
 						{
-							node.loading && (
+							node.states.loading && (
 								<Spin
 									size={12}
 									class="vc-tree-node__loading-icon"
@@ -253,10 +249,10 @@ export const TreeNodeContent = defineComponent({
 											render={props.render}
 											// @ts-ignore
 											store={node}
-											row={node.data}
+											row={node.states.data}
 										/>
 									)
-								: <span>{node.label}</span>
+								: <span>{node.getter.label}</span>
 						}
 					</div>
 					<TransitionCollapse>
@@ -270,7 +266,7 @@ export const TreeNodeContent = defineComponent({
 									role="group"
 								>
 									{
-										node.childNodes.map((child: any) => {
+										node.childNodes.map((child: TreeNode) => {
 											return (
 												<TreeNodeContent
 													key={getNodeKey(child)}

@@ -1,7 +1,7 @@
 import { inject, provide, getCurrentInstance } from 'vue';
 import type { TreeNode } from './store/tree-node';
 
-export default () => {
+export const useCollectNode = () => {
 	const { props } = getCurrentInstance()!;
 	const currentNodeMap: any = {
 		treeNodeExpand: (node: TreeNode) => {

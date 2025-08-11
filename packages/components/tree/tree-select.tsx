@@ -266,7 +266,7 @@ export const TreeSelect = defineComponent({
 											</div>
 										)
 									}
-									<Scroller class="vc-tree-select__options" max-height="400px">
+									<Scroller class="vc-tree-select__options" max-height="200px">
 										<Tree
 											model-value={currentValue.value}
 											expanded-values={currentValue.value}

@@ -1,5 +1,3 @@
-import { reactive } from 'vue';
-import type { Reactive } from 'vue';
 import { isEqualWith, difference } from 'lodash-es';
 import { hasOwn } from '@deot/helper-utils';
 import type { Nullable } from '@deot/helper-shared';
@@ -13,7 +11,7 @@ export class TreeStore {
 	currentNode: Nullable<TreeNode> = null;
 	currentNodeValue?: string | number;
 	nodesMap: Record<string | number, TreeNode> = {};
-	root: Reactive<TreeNode>;
+	root: TreeNode;
 
 	data: any;
 	filterNode: any;
@@ -39,12 +37,12 @@ export class TreeStore {
 		this.primaryKey = this.keyValue.value || this.primaryKey;
 		this.nodesMap = {};
 
-		this.root = reactive(
-			new TreeNode({
-				data: this.data,
-				store: this
-			})
-		);
+		this.root = new TreeNode({
+			store: this,
+			states: {
+				data: this.data
+			}
+		});
 		// 不处理自动加载一次
 		this._initDefaultCheckedNodes();
 	}
@@ -56,24 +54,24 @@ export class TreeStore {
 			const childNodes = node.childNodes;
 
 			childNodes.forEach((child) => {
-				child.visible = filterNode.call(child, value, child.data, child);
+				child.states.visible = filterNode.call(child, value, child.states.data, child);
 
 				traverse(child);
 			});
 
-			if (!node.visible && childNodes.length) {
-				node.visible = childNodes.some(child => child.visible);
+			if (!node.states.visible && childNodes.length) {
+				node.states.visible = childNodes.some(child => child.states.visible);
 			}
 			if (!value) return;
 
-			if (node.visible && !node.isLeaf && !lazy) node.expand();
+			if (node.states.visible && !node.states.isLeaf && !lazy) node.expand();
 		};
 
 		traverse(this.root);
 	}
 
 	setData(newVal: object) {
-		const instanceChanged = newVal !== this.root.data;
+		const instanceChanged = newVal !== this.root.states.data;
 		if (instanceChanged) {
 			this.root.setData(newVal);
 			this._initDefaultCheckedNodes();
@@ -90,22 +88,22 @@ export class TreeStore {
 
 	insertBefore(data: object, refData: object) {
 		const refNode = this.getNode(refData);
-		refNode?.parent?.insertBefore?.({ data }, refNode);
+		refNode?.parentNode?.insertBefore?.({ data }, refNode);
 	}
 
 	insertAfter(data: object, refData: object) {
 		const refNode = this.getNode(refData);
-		refNode?.parent?.insertAfter?.({ data }, refNode);
+		refNode?.parentNode?.insertAfter?.({ data }, refNode);
 	}
 
 	remove(data: object) {
 		const node = this.getNode(data);
 
-		if (node && node.parent) {
+		if (node && node.parentNode) {
 			if (node === this.currentNode) {
 				this.currentNode = null;
 			}
-			node.parent.removeChild(node);
+			node.parentNode.removeChild(node);
 		}
 	}
 
@@ -133,7 +131,8 @@ export class TreeStore {
 	_initDefaultCheckedNode(node: TreeNode) {
 		const checkedValues = this.checkedValues || [];
 
-		if (checkedValues.indexOf(node.value) !== -1) {
+		const nodeValue = node.getter.value;
+		if (checkedValues.indexOf(nodeValue) !== -1) {
 			node.setChecked(true, !this.checkStrictly);
 		}
 	}
@@ -150,23 +149,24 @@ export class TreeStore {
 		}
 	}
 
-	registerNode(node: Partial<TreeNode>) {
+	registerNode(node: TreeNode) {
 		const key = this.primaryKey;
-		if (!key || !node || !node.data) return;
+		if (!key || !node || !node.states.data) return;
 
-		const nodeKey = node.value;
-		if (nodeKey !== undefined) this.nodesMap[node.value] = node as TreeNode;
+		const nodeValue = node.getter.value;
+		if (nodeValue !== undefined) this.nodesMap[nodeValue] = node;
 	}
 
 	deregisterNode(node: TreeNode) {
 		const key = this.primaryKey;
-		if (!key || !node || !node.data) return;
+		if (!key || !node || !node.states.data) return;
 
 		node.childNodes.forEach((child) => {
 			this.deregisterNode(child);
 		});
 
-		delete this.nodesMap[node.value];
+		const nodeValue = node.getter.value;
+		delete this.nodesMap[nodeValue];
 	}
 
 	getCheckedNodes(leafOnly = false, includeHalfChecked = false) {
@@ -175,7 +175,10 @@ export class TreeStore {
 			const childNodes = node.childNodes;
 
 			childNodes.forEach((child: TreeNode) => {
-				if ((child.checked || (includeHalfChecked && child.indeterminate)) && (!leafOnly || (leafOnly && child.isLeaf))) {
+				if (
+					(child.states.checked || (includeHalfChecked && child.states.indeterminate))
+					&& (!leafOnly || (leafOnly && child.states.isLeaf))
+				) {
 					checkedNodes.push(child);
 				}
 
@@ -189,7 +192,7 @@ export class TreeStore {
 	}
 
 	getCheckedValues(leafOnly = false) {
-		return this.getCheckedNodes(leafOnly).map(node => node.data[this.primaryKey]);
+		return this.getCheckedNodes(leafOnly).map(node => node.states.data[this.primaryKey]);
 	}
 
 	getHalfCheckedNodes() {
@@ -198,7 +201,7 @@ export class TreeStore {
 			const childNodes = node.childNodes;
 
 			childNodes.forEach((child) => {
-				if (child.indeterminate) {
+				if (child.states.indeterminate) {
 					nodesData.push(child);
 				}
 
@@ -212,7 +215,7 @@ export class TreeStore {
 	}
 
 	getHalfCheckedValues() {
-		return this.getHalfCheckedNodes().map(node => node.data[this.primaryKey]);
+		return this.getHalfCheckedNodes().map(node => node.states.data[this.primaryKey]);
 	}
 
 	_getAllNodes() {
@@ -233,34 +236,34 @@ export class TreeStore {
 		const childNodes = node.childNodes;
 		for (let i = childNodes.length - 1; i >= 0; i--) {
 			const child = childNodes[i];
-			this.remove(child.data);
+			this.remove(child.states.data);
 		}
 		for (let i = 0, j = data.length; i < j; i++) {
 			const child = data[i];
-			this.append(child, node.data);
+			this.append(child, node.states.data);
 		}
 	}
 
 	_setCheckedValues(key: string | number, leafOnly = false, checkedValues: Record<string | number, boolean>) {
-		const allNodes = this._getAllNodes().sort((a, b) => b.level - a.level);
+		const allNodes = this._getAllNodes().sort((a, b) => b.states.level - a.states.level);
 		const cache = Object.create(null);
 		const keys = Object.keys(checkedValues);
 		allNodes.forEach(node => node.setChecked(false, false));
 		for (let i = 0, j = allNodes.length; i < j; i++) {
 			const node = allNodes[i];
-			const nodeKey = node.data[key].toString();
+			const nodeKey = node.states.data[key].toString();
 			const checked = keys.indexOf(nodeKey) > -1;
 			if (!checked) {
-				if (node.checked && !cache[nodeKey]) {
+				if (node.states.checked && !cache[nodeKey]) {
 					node.setChecked(false, false);
 				}
 			} else {
-				let parent = node.parent;
-				while (parent && parent.level > 0) {
-					cache[parent.data[key]] = true;
-					parent = parent.parent;
+				let parent = node.parentNode;
+				while (parent && parent.states.level > 0) {
+					cache[parent.states.data[key]] = true;
+					parent = parent.parentNode;
 				}
-				if (node.isLeaf || this.checkStrictly) {
+				if (node.states.isLeaf || this.checkStrictly) {
 					node.setChecked(true, false);
 				} else {
 					node.setChecked(true, true);
@@ -270,7 +273,7 @@ export class TreeStore {
 						const traverse = function (node$: TreeNode) {
 							const childNodes = node$.childNodes;
 							childNodes.forEach((child) => {
-								if (!child.isLeaf) {
+								if (!child.states.isLeaf) {
 									child.setChecked(false, false);
 								}
 								traverse(child);
@@ -318,10 +321,10 @@ export class TreeStore {
 	setCurrentNode(currentNode: TreeNode) {
 		const prevCurrentNode = this.currentNode;
 		if (prevCurrentNode) {
-			prevCurrentNode.isCurrent = false;
+			prevCurrentNode.states.isCurrent = false;
 		}
 		this.currentNode = currentNode;
-		this.currentNode.isCurrent = true;
+		this.currentNode.states.isCurrent = true;
 	}
 
 	setUserCurrentNode(node: TreeNode) {
@@ -333,7 +336,7 @@ export class TreeStore {
 	setCurrentNodeByData(data?: object) {
 		if (data === null || data === undefined) {
 			if (this.currentNode) {
-				this.currentNode.isCurrent = false;
+				this.currentNode.states.isCurrent = false;
 				this.currentNode = null;
 				return;
 			}

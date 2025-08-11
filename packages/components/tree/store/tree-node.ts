@@ -1,4 +1,4 @@
-import { reactive } from 'vue';
+import { reactive, computed } from 'vue';
 import { hasOwn } from '@deot/helper-utils';
 import type { Nullable } from '@deot/helper-shared';
 import type { TreeStore } from './tree-store';
@@ -15,19 +15,19 @@ export const markNodeData = (node: TreeNode, data?: object) => {
 	});
 };
 
-export const getChildState = (node: TreeNode[]) => {
+export const getChildState = (nodes: TreeNode[]) => {
 	let all = true;
 	let none = true;
 	let allWithoutDisable = true;
-	for (let i = 0, j = node.length; i < j; i++) {
-		const n = node[i];
-		if (n.checked !== true || n.indeterminate) {
+	for (let i = 0, j = nodes.length; i < j; i++) {
+		const node = nodes[i];
+		if (node.states.checked !== true || node.states.indeterminate) {
 			all = false;
-			if (!n.disabled) {
+			if (!node.getter.disabled) {
 				allWithoutDisable = false;
 			}
 		}
-		if (n.checked !== false || n.indeterminate) {
+		if (node.states.checked !== false || node.states.indeterminate) {
 			none = false;
 		}
 	}
@@ -40,18 +40,18 @@ const reInitChecked = (node: TreeNode) => {
 
 	const { all, none, half } = getChildState(node.childNodes);
 	if (all) {
-		node.checked = true;
-		node.indeterminate = false;
+		node.states.checked = true;
+		node.states.indeterminate = false;
 	} else if (half) {
-		node.checked = false;
-		node.indeterminate = true;
+		node.states.checked = false;
+		node.states.indeterminate = true;
 	} else if (none) {
-		node.checked = false;
-		node.indeterminate = false;
+		node.states.checked = false;
+		node.states.indeterminate = false;
 	}
 
-	const parent = node.parent;
-	if (!parent || parent.level === 0) return;
+	const parent = node.parentNode;
+	if (!parent || parent.states.level === 0) return;
 
 	if (!node.store.checkStrictly) {
 		reInitChecked(parent);
@@ -60,7 +60,7 @@ const reInitChecked = (node: TreeNode) => {
 
 const getPropertyFromData = (node: TreeNode, prop: string) => {
 	const keyValue = node.store.keyValue;
-	const data = node.data || {};
+	const data = node.states.data || {};
 	const config = keyValue[prop];
 
 	if (typeof config === 'function') {
@@ -73,43 +73,56 @@ const getPropertyFromData = (node: TreeNode, prop: string) => {
 	}
 };
 
+type Options = Omit<Partial<TreeNode>, 'states'> & {
+	states?: Partial<TreeNode['states']>;
+};
 let nodeIdSeed = 0;
 
 export class TreeNode {
 	id = nodeIdSeed++;
-	checked = false;
-	indeterminate = false;
-	expanded = false;
-	visible = true;
-	isCurrent = false;
-	isLeaf = false;
-	isLeafByUser = false;
-	level = 0;
+	states = reactive({
+		checked: false,
+		indeterminate: false,
+		expanded: false,
+		visible: true,
+		isCurrent: false,
+		isLeaf: false,
+		isLeafByUser: false,
+		loading: false,
+		level: 0,
+		loaded: false,
+		data: null as any
+	});
 
-	parent: Nullable<TreeNode> = null;
+	getter = reactive({
+		label: computed(() => getPropertyFromData(this, 'label')),
+		value: computed(() => getPropertyFromData(this, 'value')),
+		disabled: computed(() => getPropertyFromData(this, 'disabled')),
+	});
 
-	data!: object;
+	childNodes: TreeNode[] = reactive([]);
+
 	store!: TreeStore;
+	parentNode: Nullable<TreeNode> = null;
 
-	loaded: boolean;
-	childNodes: TreeNode[];
-	loading: boolean;
-
-	constructor(options: Partial<TreeNode>) {
+	constructor(options: Options) {
 		for (const name in options) {
 			if (hasOwn(options, name)) {
-				this[name] = options[name];
+				if (name === 'states') {
+					Object.assign(this.states, options[name]);
+				} else {
+					this[name] = options[name];
+				}
 			}
 		}
-		const { store } = this;
+		const store = this.store;
 		const { keyValue } = store;
 
-		this.loaded = !!(this.data[keyValue.children]);
-		this.childNodes = [];
-		this.loading = false;
+		this.states.loaded = !!(this.states.data[keyValue.children]);
+		this.states.loading = false;
 
-		if (this.parent) {
-			this.level = this.parent.level + 1;
+		if (this.parentNode) {
+			this.states.level = this.parentNode.states.level + 1;
 		}
 
 		if (!store) {
@@ -120,36 +133,36 @@ export class TreeNode {
 		if (keyValue && typeof keyValue.isLeaf !== 'undefined') {
 			const isLeaf = getPropertyFromData(this, keyValue.isLeaf);
 			if (typeof isLeaf === 'boolean') {
-				this.isLeafByUser = isLeaf;
+				this.states.isLeafByUser = isLeaf;
 			}
 		}
 
-		if (this.data) {
-			this.setData(this.data);
-			if (store.defaultExpandAll && this.data[keyValue.children]) {
-				this.expanded = true;
+		if (this.states.data) {
+			this.setData(this.states.data);
+			if (store.defaultExpandAll && this.states.data[keyValue.children]) {
+				this.states.expanded = true;
 			}
 		}
 
 		// 自动加载
-		// if (this.level > 0 && store.lazy && store.defaultExpandAll) {
+		// if (this.states.level > 0 && store.lazy && store.defaultExpandAll) {
 		// 	this.expand();
 		// }
 
-		if (!Array.isArray(this.data)) {
-			markNodeData(this, this.data);
+		if (!Array.isArray(this.states.data)) {
+			markNodeData(this, this.states.data);
 		}
-		if (!this.data) return;
+		if (!this.states.data) return;
 		const expandedValues = store.expandedValues;
 		const key = store.primaryKey;
-		const value = this.data[key];
+		const value = this.states.data[key];
 		if (key && expandedValues && expandedValues.indexOf(value) !== -1) {
 			this.expand(store.autoExpandParent);
 		}
 
 		if (key && store.currentNodeValue !== undefined && value === store.currentNodeValue) {
 			store.currentNode = this;
-			store.currentNode.isCurrent = true;
+			store.currentNode.states.isCurrent = true;
 		}
 
 		if (store.lazy) {
@@ -159,21 +172,8 @@ export class TreeNode {
 		this.updateLeafState();
 	}
 
-	get label() {
-		return getPropertyFromData(this, 'label');
-	}
-
-	get value() {
-		if (this.data) return this.data[this.store.primaryKey];
-		return null;
-	}
-
-	get disabled() {
-		return getPropertyFromData(this, 'disabled');
-	}
-
-	get nextSibling() {
-		const parent = this.parent;
+	getNextSiblingNode() {
+		const parent = this.parentNode;
 		if (parent) {
 			const index = parent.childNodes.indexOf(this);
 			if (index > -1) {
@@ -183,8 +183,8 @@ export class TreeNode {
 		return null;
 	}
 
-	get previousSibling() {
-		const parent = this.parent;
+	getPreviousSiblingNode() {
+		const parent = this.parentNode;
 		if (parent) {
 			const index = parent.childNodes.indexOf(this);
 			if (index > -1) {
@@ -199,12 +199,12 @@ export class TreeNode {
 			markNodeData(this, data);
 		}
 
-		this.data = data;
-		this.childNodes = [];
+		this.states.data = data;
+		this.childNodes.splice(0, this.childNodes.length - 1);
 
 		let children: any[];
-		if (this.level === 0 && this.data instanceof Array) {
-			children = this.data;
+		if (this.states.level === 0 && this.states.data instanceof Array) {
+			children = this.states.data;
 		} else {
 			children = getPropertyFromData(this, 'children') || [];
 		}
@@ -232,34 +232,32 @@ export class TreeNode {
 	}
 
 	remove() {
-		const parent = this.parent;
+		const parent = this.parentNode;
 		if (parent) {
 			parent.removeChild(this);
 		}
 	}
 
-	insertChild(child?: Partial<TreeNode>, index?: number, batch?: any) {
-		if (!child) throw new Error('insertChild error: child is required.');
+	insertChild(states: Partial<TreeNode['states']>, index?: number, batch?: any) {
+		if (!states) throw new Error('insertChild error: states is required.');
 
-		if (!(child instanceof TreeNode)) {
-			if (!batch) {
-				const children = this.getChildren(true);
-				if (children.indexOf(child.data) === -1) {
-					if (typeof index === 'undefined' || index < 0) {
-						children.push(child.data);
-					} else {
-						children.splice(index, 0, child.data);
-					}
+		if (!batch) {
+			const children = this.getChildren(true);
+			if (children?.indexOf(states.data) === -1) {
+				if (typeof index === 'undefined' || index < 0) {
+					children.push(states.data);
+				} else {
+					children.splice(index, 0, states.data);
 				}
 			}
-			Object.assign(child, {
-				parent: this,
-				store: this.store
-			});
-			child = reactive(new TreeNode(child));
 		}
+		const child = new TreeNode({
+			parentNode: this,
+			store: this.store,
+			states: states as any
+		});
 
-		child.level = this.level + 1;
+		child.states.level = this.states.level + 1;
 
 		if (typeof index === 'undefined' || index < 0) {
 			this.childNodes.push(child as TreeNode);
@@ -268,28 +266,30 @@ export class TreeNode {
 		}
 
 		this.updateLeafState();
+
+		return child;
 	}
 
-	insertBefore(child: Partial<TreeNode>, ref?: TreeNode) {
+	insertBefore(states: Partial<TreeNode['states']>, ref?: TreeNode) {
 		let index = -1;
 		if (ref) {
 			index = this.childNodes.indexOf(ref);
 		}
-		this.insertChild(child, index);
+		return this.insertChild(states, index);
 	}
 
-	insertAfter(child: Partial<TreeNode>, ref?: TreeNode) {
+	insertAfter(states: Partial<TreeNode['states']>, ref?: TreeNode) {
 		let index = -1;
 		if (ref) {
 			index = this.childNodes.indexOf(ref);
 			if (index !== -1) index += 1;
 		}
-		this.insertChild(child, index);
+		return this.insertChild(states, index);
 	}
 
 	removeChild(child: TreeNode) {
 		const children = this.getChildren() || [];
-		const dataIndex = children.indexOf(child.data);
+		const dataIndex = children.indexOf(child.states.data);
 		if (dataIndex > -1) {
 			children.splice(dataIndex, 1);
 		}
@@ -298,7 +298,7 @@ export class TreeNode {
 
 		if (index > -1) {
 			this.store && this.store.deregisterNode(child);
-			child.parent = null;
+			child.parentNode = null;
 			this.childNodes.splice(index, 1);
 		}
 
@@ -309,7 +309,7 @@ export class TreeNode {
 		let targetNode: Nullable<TreeNode> = null;
 
 		for (let i = 0; i < this.childNodes.length; i++) {
-			if (this.childNodes[i].data === data) {
+			if (this.childNodes[i].states.data === data) {
 				targetNode = this.childNodes[i];
 				break;
 			}
@@ -323,19 +323,19 @@ export class TreeNode {
 	async expand(expandParent?: boolean) {
 		const done = () => {
 			if (expandParent) {
-				let parent = this.parent;
-				while (parent && parent.level > 0) {
-					parent.expanded = true;
-					parent = parent.parent;
+				let parent = this.parentNode;
+				while (parent && parent.states.level > 0) {
+					parent.states.expanded = true;
+					parent = parent.parentNode;
 				}
 			}
-			this.expanded = true;
+			this.states.expanded = true;
 		};
 
 		if (this.shouldLoadData()) {
 			const data: any = await this.loadData();
 			if (data instanceof Array) {
-				if (this.checked) {
+				if (this.states.checked) {
 					this.setChecked(true, true);
 				} else if (!this.store.checkStrictly) {
 					reInitChecked(this);
@@ -354,42 +354,42 @@ export class TreeNode {
 	}
 
 	collapse() {
-		this.expanded = false;
+		this.states.expanded = false;
 	}
 
 	shouldLoadData() {
 		return this.store.lazy
 			&& this.store.loadData
-			&& !this.loaded;
+			&& !this.states.loaded;
 	}
 
 	updateLeafState() {
 		if (this.store.lazy
-			&& !this.loaded
-			&& typeof this.isLeafByUser !== 'undefined'
+			&& !this.states.loaded
+			&& typeof this.states.isLeafByUser !== 'undefined'
 		) {
-			this.isLeaf = this.isLeafByUser;
+			this.states.isLeaf = this.states.isLeafByUser;
 			return;
 		}
 		const childNodes = this.childNodes;
-		if (!this.store.lazy || (this.store.lazy && this.loaded)) {
-			this.isLeaf = !childNodes || childNodes.length === 0;
+		if (!this.store.lazy || (this.store.lazy && this.states.loaded)) {
+			this.states.isLeaf = !childNodes || childNodes.length === 0;
 			return;
 		}
-		this.isLeaf = false;
+		this.states.isLeaf = false;
 	}
 
 	async setChecked(value: boolean | string, deep?: boolean, recursion?: boolean, passValue?: boolean) {
-		this.indeterminate = value === 'half';
-		this.checked = value === true;
+		this.states.indeterminate = value === 'half';
+		this.states.checked = value === true;
 
 		if (this.store.checkStrictly) return;
 
 		if (!(this.shouldLoadData() && !this.store.checkDescendants)) {
 			const { all, allWithoutDisable } = getChildState(this.childNodes);
 
-			if (!this.isLeaf && (!all && allWithoutDisable)) {
-				this.checked = false;
+			if (!this.states.isLeaf && (!all && allWithoutDisable)) {
+				this.states.checked = false;
 				value = false;
 			}
 
@@ -399,13 +399,13 @@ export class TreeNode {
 					for (let i = 0, j = childNodes.length; i < j; i++) {
 						const child = childNodes[i];
 						passValue = passValue || value !== false;
-						const isCheck = child.disabled ? child.checked : passValue;
+						const isCheck = child.getter.disabled ? child.states.checked : passValue;
 						child.setChecked(isCheck, deep, true, passValue);
 					}
 					const { half, all: $all } = getChildState(childNodes);
 					if (!$all) {
-						this.checked = $all;
-						this.indeterminate = half;
+						this.states.checked = $all;
+						this.states.indeterminate = half;
 					}
 				}
 			};
@@ -421,17 +421,17 @@ export class TreeNode {
 			}
 		}
 
-		const parent = this.parent;
-		if (!parent || parent.level === 0) return;
+		const parent = this.parentNode;
+		if (!parent || parent.states.level === 0) return;
 
 		if (!recursion) {
 			reInitChecked(parent);
 		}
 	}
 
-	getChildren(forceInit = false) { // this is data
-		if (this.level === 0) return this.data;
-		const data = this.data;
+	getChildren(forceInit = false): Nullable<Array<any>> { // this is data
+		if (this.states.level === 0) return this.states.data;
+		const data = this.states.data;
 		if (!data) return null;
 
 		const children = this.store.keyValue?.children || KEY_VALUE.children;
@@ -448,7 +448,7 @@ export class TreeNode {
 
 	updateChildren() {
 		const newData = this.getChildren() || [];
-		const oldData = this.childNodes.map(node => node.data);
+		const oldData = this.childNodes.map(node => node.states.data);
 
 		const newDataMap = {};
 		const newNodes: any[] = [];
@@ -478,13 +478,13 @@ export class TreeNode {
 		if (
 			this.store.lazy
 			&& this.store.loadData
-			&& !this.loaded
-			&& (!this.loading || Object.keys(defaultProps).length)
+			&& !this.states.loaded
+			&& (!this.states.loading || Object.keys(defaultProps).length)
 		) {
-			this.loading = true;
+			this.states.loading = true;
 			const children: any[] = await this.store.loadData(this);
-			this.loaded = true;
-			this.loading = false;
+			this.states.loaded = true;
+			this.states.loading = false;
 			this.childNodes = [];
 
 			this.doCreateChildren(children, defaultProps);

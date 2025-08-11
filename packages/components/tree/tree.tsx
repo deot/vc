@@ -2,12 +2,13 @@
 
 import { defineComponent, provide, ref, computed, watch, getCurrentInstance } from 'vue';
 import type { ComponentInternalInstance } from 'vue';
+import type { TreeNode } from './store/tree-node';
 import { TreeStore } from './store/tree-store';
 import { toCurrentValue } from '../select/utils';
 import { TreeNodeContent } from './tree-node-content.tsx';
-import useDragNode from './use-drag-node';
-import useKeydown from './use-keydown';
-import useCollectNode from './use-collect-node';
+import { useDragNode } from './use-drag-node';
+import { useKeydown } from './use-keydown';
+import { useCollectNode } from './use-collect-node';
 
 import { props as treeProps } from './tree-props';
 
@@ -61,7 +62,7 @@ export const Tree = defineComponent({
 
 		const isEmpty = computed(() => {
 			const { childNodes } = root;
-			return !childNodes || childNodes.length === 0 || childNodes.every(({ visible }) => !visible);
+			return !childNodes || childNodes.length === 0 || childNodes.every(({ states }) => !states.visible);
 		});
 
 		watch(
@@ -96,19 +97,19 @@ export const Tree = defineComponent({
 			store.filter(value);
 		};
 
-		const getNodeKey = (node: any) => {
-			return node.data[props.keyValue.value];
+		const getNodeKey = (node: TreeNode) => {
+			return node.states.data[props.keyValue.value];
 		};
 
 		const getNodePath = (data: any) => {
 			if (!props.keyValue.value) throw new Error('[Tree] keyValue.value is required in getNodePath');
 			const node = store.getNode(data);
 			if (!node) return [];
-			const path = [node.data];
-			let parent = node.parent;
+			const path = [node.states.data];
+			let parent = node.parentNode;
 			while (parent && parent !== root) {
-				path.push(parent.data);
-				parent = parent.parent;
+				path.push(parent.states.data);
+				parent = parent.parentNode;
 			}
 			return path.reverse();
 		};
@@ -123,7 +124,7 @@ export const Tree = defineComponent({
 
 		const getCurrentNode = () => {
 			const $currentNode = store.getCurrentNode();
-			return $currentNode ? $currentNode.data : null;
+			return $currentNode ? $currentNode.states.data : null;
 		};
 
 		const getCurrentKey = () => {
@@ -229,7 +230,7 @@ export const Tree = defineComponent({
 			updateKeyChildren,
 		});
 		return () => {
-			const dragState = drag.state.value;
+			const dragState = drag.state;
 			return (
 				<div
 					class={[
@@ -244,7 +245,7 @@ export const Tree = defineComponent({
 					role="tree"
 				>
 					{
-						root.childNodes.map((child: any) => {
+						root.childNodes.map((child: TreeNode) => {
 							return (
 								<TreeNodeContent
 									key={getNodeKey(child)}

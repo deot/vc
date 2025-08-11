@@ -13,7 +13,7 @@
 			:load-data="loadData"
 			:lazy="lazy"
 			:check-strictly="checkStrictly"
-			:render-content="renderContent"
+			:render="renderContent"
 			show-checkbox
 			accordion
 			draggable
@@ -166,9 +166,9 @@ const handleCheckChange = ($data, checked, indeterminate) => {
 const renderContent = (props) => {
 	return (
 		<span>
-			{props.it.label}
-			{' '}
-			{props.it.value}
+			{props.row.label}
+			#
+			{props.store.id}
 		</span>
 	);
 };
