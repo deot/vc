@@ -1,0 +1,47 @@
+@use '../style/helper' as *;
+
+$component-name: vc-cascader;
+
+@include block($component-name) {
+	position: relative;
+	display: inline-flex;
+	width: 100%;
+	line-height: 1;
+	cursor: text;
+
+	@include element(input) {
+		cursor: pointer;
+
+		input {
+			cursor: pointer;
+		}
+
+		.vc-input__append {
+			z-index: 0;
+		}
+	}
+
+	@include element(append) {
+		position: relative;
+		padding: 0 10px 0 2px;
+		font-size: 12px;
+		line-height: 32px;
+		color: #808695;
+		text-align: center;
+		white-space: nowrap;
+		cursor: pointer;
+		background: white !important;
+	}
+
+	@include element(icon) {
+		@include when(arrow) {
+			transform: scale(0.8);
+		}
+	}
+
+	// 默认不换行
+	@include element(content) {
+		display: flex;
+		flex-wrap: nowrap;
+	}
+}

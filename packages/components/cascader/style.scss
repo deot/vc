@@ -1,6 +1,2 @@
-@use '../style/helper' as *;
-
-$component-name: vc-cascader;
-
-@include block($component-name) {
-}
+@use "./cascader";
+@use "./column";

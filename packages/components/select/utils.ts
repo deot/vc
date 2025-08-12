@@ -6,7 +6,7 @@ export type TreeLabel = string;
 /**
  * 树形value
  */
-export type TreeValue = string | number;
+export type TreeValue = string | number | any;
 
 /**
  * 树形数据

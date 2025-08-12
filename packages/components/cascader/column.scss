@@ -1,0 +1,49 @@
+@use '../style/helper' as *;
+
+$component-name: vc-cascader-column;
+
+@include block($component-name) {
+	display: inline-block;
+	padding: 5px 0!important;
+	margin: 0;
+
+	@include border(right);
+
+	&:last-child {
+		&::before, &::after {
+			display: none;
+		}
+	}
+
+	@include element(wrapper) {
+		height: 180px;
+		min-width: 100px;
+		overflow: auto;
+	}
+
+	@include element(item) {
+		display: flex;
+		padding: 7px 16px;
+		font-size: 12px!important;
+		line-height: normal;
+		line-height: 16px;
+		color: #666;
+		white-space: nowrap;
+		cursor: pointer;
+		justify-content: space-between;
+		align-items: center;
+
+		@include when(select) {
+			color: #5495f6;
+			background-color: #e6f7ff;
+		}
+	}
+
+	@include element(icon) {
+		transform: scale(0.7);
+	}
+
+	@include element(loading) {
+		margin-right: 5px;
+	}
+}
