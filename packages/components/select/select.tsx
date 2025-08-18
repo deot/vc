@@ -288,43 +288,56 @@ export const Select = defineComponent({
 														<div>
 															{
 																props.data.map((item: any) => {
-																	return Array.isArray(item.children)
+																	return Array.isArray(item.children) && item.children.length
 																		? (
 																				<OptionGroup
+																					row={item}
 																					value={item.value}
 																					label={item.label}
 																					key={item.value}
+																					render={props.renderOptionGroup}
 																				>
 
-																					{
-																						item.children.map(($item: any) => {
-																							return (
-																								<Option
-																									key={$item.value}
-																									value={$item.value}
-																									label={$item.label}
-																									disabled={$item.disabled}
-																									filterable={$item.filterable}
-																								/>
-																							);
-																						})
-																					}
+																					{{
+																						title: slots?.optionGroup,
+																						default: () => {
+																							return item.children.map(($item: any) => {
+																								return (
+																									<Option
+																										key={$item.value}
+																										row={$item}
+																										value={$item.value}
+																										label={$item.label}
+																										disabled={$item.disabled}
+																										filterable={$item.filterable}
+																										render={props.renderOption}
+																									>
+																										{{ default: slots?.option }}
+																									</Option>
+																								);
+																							});
+																						}
+																					}}
 																				</OptionGroup>
 																			)
 																		: (
 																				<Option
 																					key={item.value}
+																					row={item}
 																					value={item.value}
 																					label={item.label}
 																					disabled={item.disabled}
 																					filterable={item.filterable}
-																				/>
+																					render={props.renderOption}
+																				>
+																					{{ default: slots?.option }}
+																				</Option>
 																			);
 																})
 															}
 														</div>
 													)
-												: slots.default?.()
+												: slots?.default?.()
 										}
 									</Scroller>
 								</div>

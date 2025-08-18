@@ -2,6 +2,7 @@ import type { ExtractPropTypes } from 'vue';
 import { pick } from 'lodash-es';
 import { props as inputProps } from '../input/input-props';
 import { props as popoverProps } from '../popover/popover-props';
+import type { Render } from '../customer/types';
 
 const inputKeys = [
 	'id',
@@ -18,6 +19,8 @@ const popoverKeys = [
 export const props = {
 	...(pick(popoverProps, popoverKeys) as Pick<typeof popoverProps, typeof popoverKeys[number]>),
 	...(pick(inputProps, inputKeys) as Pick<typeof inputProps, typeof inputKeys[number]>),
+	renderOption: [Function] as Render,
+	renderOptionGroup: [Function] as Render,
 	data: {
 		type: Array,
 		default: () => ([])

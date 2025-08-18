@@ -297,7 +297,8 @@ const options = ref([
 | separator         | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |
 | numerable         | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |
 | nullValue         | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |
-
+| renderOption      | -                                                                          | `function`                | -                                                                                                                                         | -             |
+| renderOptionGroup      | -                                                                          | `function`                | -                                                                                                                                         | -             |
 
 ### data props
 
@@ -326,3 +327,11 @@ const options = ref([
 | ------ | ----- | ----------------------------------------- |
 | add    | 添加单选项 | `value`：添加的选项的value值；`label`：添加的选项的label值 |
 | remove | 删除单选项 | `value`：删除的选项的value值                      |
+
+### Select Slot
+
+| 属性           | 说明                    |
+| ------------ | --------------------- |
+| option       | ~. 参数为 { row, store } |
+| option-group | ~. 参数为 { row }        |
+

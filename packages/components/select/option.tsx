@@ -1,7 +1,8 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, computed } from 'vue';
+import { defineComponent, computed, withModifiers } from 'vue';
 import { getInstance } from '@deot/vc-hooks';
+import { Customer } from '../customer';
 import { Icon } from '../icon';
 import { props as optionProps } from './option-props';
 
@@ -18,7 +19,7 @@ export const Option = defineComponent({
 			return v.trim();
 		});
 
-		const isSelect = computed(() => {
+		const isChecked = computed(() => {
 			const { current } = owner.exposed;
 			return current.value.includes(props.value);
 		});
@@ -33,15 +34,25 @@ export const Option = defineComponent({
 			return regex.test(formatterLabel.value) || !props.filterable;
 		});
 
-		const handleSelect = (e: any) => {
-			e.stopPropagation();
+		const customOptions = computed(() => {
+			return {
+				store: {
+					last: isLast.value,
+					checked: isChecked.value,
+					click: handleClick
+				},
+				row: props.row
+			};
+		});
+
+		const handleClick = () => {
 			// 禁止操作
 			if (props.disabled) return;
 			// 已选中，弹层关闭
-			if (!owner.exposed.multiple.value && isSelect.value) {
+			if (!owner.exposed.multiple.value && isChecked.value) {
 				owner.exposed.close();
 				return;
-			} else if (isSelect.value) {
+			} else if (isChecked.value) {
 				owner.exposed.remove(props.value, formatterLabel.value);
 				return;
 			}
@@ -53,20 +64,22 @@ export const Option = defineComponent({
 		};
 		return () => {
 			if (!isActive.value) return;
-			return (
-				<div
-					// @ts-ignore
-					disabled={props.disabled && 'disabled'}
-					class={[{ 'is-select': isSelect.value, 'is-last': isLast.value }, 'vc-select-option']}
-					onClick={handleSelect}
-					onMousedown={handlePrevent}
-				>
-					{
-						slots.default ? slots.default() : formatterLabel.value
-					}
-					{ isSelect.value && (<Icon type="correct" />) }
-				</div>
-			);
+			return typeof props.render === 'function'
+				? (<Customer render={props.render} {...customOptions.value} />)
+				: slots.default
+					? slots.default(customOptions.value)
+					: (
+							<div
+								// @ts-ignore
+								disabled={props.disabled && 'disabled'}
+								class={[{ 'is-select': isChecked.value, 'is-last': isLast.value }, 'vc-select-option']}
+								onClick={withModifiers(handleClick, ['stop'])}
+								onMousedown={handlePrevent}
+							>
+								{ formatterLabel.value }
+								{ isChecked.value && (<Icon type="correct" />) }
+							</div>
+						);
 		};
 	}
 });
