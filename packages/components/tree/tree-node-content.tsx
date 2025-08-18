@@ -243,10 +243,10 @@ export const TreeNodeContent = defineComponent({
 						}
 
 						{
-							props.render
+							props.renderNodeLabel
 								? (
 										<Customer
-											render={props.render}
+											render={props.renderNodeLabel}
 											// @ts-ignore
 											store={node}
 											row={node.states.data}
@@ -257,7 +257,7 @@ export const TreeNodeContent = defineComponent({
 					</div>
 					<TransitionCollapse>
 						{
-							(!props.renderAfterExpand || childNodeRendered.value) && (
+							(!props.renderNodeAfterExpand || childNodeRendered.value) && (
 								<div
 									// @ts-ignore
 									vShow={expanded.value}
@@ -270,8 +270,8 @@ export const TreeNodeContent = defineComponent({
 											return (
 												<TreeNodeContent
 													key={getNodeKey(child)}
-													render={props.render}
-													renderAfterExpand={props.renderAfterExpand}
+													renderNodeLabel={props.renderNodeLabel}
+													renderNodeAfterExpand={props.renderNodeAfterExpand}
 													showCheckbox={props.showCheckbox}
 													allowDispatch={props.allowDispatch}
 													accordion={props.accordion}

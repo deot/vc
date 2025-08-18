@@ -274,6 +274,7 @@ export const TreeSelect = defineComponent({
 											checkStrictly={props.checkStrictly}
 											allowDispatch={false}
 											showCheckbox={true}
+											renderNodeLabel={props.renderNodeLabel}
 											onChange={handleChange}
 										/>
 									</Scroller>

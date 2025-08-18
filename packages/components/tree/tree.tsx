@@ -249,8 +249,8 @@ export const Tree = defineComponent({
 							return (
 								<TreeNodeContent
 									key={getNodeKey(child)}
-									render={props.render}
-									renderAfterExpand={props.renderAfterExpand}
+									renderNodeLabel={props.renderNodeLabel}
+									renderNodeAfterExpand={props.renderNodeAfterExpand}
 									showCheckbox={props.showCheckbox}
 									allowDispatch={props.allowDispatch}
 									accordion={props.accordion}

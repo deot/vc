@@ -6,7 +6,8 @@ import { props as treeProps } from './tree-props';
 const treeKeys = [
 	'checkStrictly',
 	'data',
-	'max'
+	'max',
+	'renderNodeLabel'
 ] as const;
 
 export const props = {

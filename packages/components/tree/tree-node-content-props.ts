@@ -1,21 +1,28 @@
 import type { ExtractPropTypes, PropType } from 'vue';
-import { pick } from 'lodash-es';
 import type { TreeNode } from './store/tree-node';
-import { props as treeProps } from './tree-props';
-
-const treeKeys = [
-	'render',
-	'renderAfterExpand',
-	'showCheckbox',
-	'accordion',
-	'allowDispatch'
-] as const;
+import type { Render } from '../customer/types';
 
 export const props = {
-	...(pick(treeProps, treeKeys) as Pick<typeof treeProps, typeof treeKeys[number]>),
 	node: {
 		type: Object as PropType<TreeNode>,
 		default: () => ({})
 	},
+	renderNodeLabel: Function as Render,
+	renderNodeAfterExpand: {
+		type: Boolean,
+		default: true
+	},
+	showCheckbox: {
+		type: Boolean,
+		default: false
+	},
+	accordion: {
+		type: Boolean,
+		default: false
+	},
+	allowDispatch: {
+		type: Boolean,
+		default: true
+	}
 };
 export type Props = ExtractPropTypes<typeof props>;
