@@ -125,7 +125,7 @@ import { PortalView } from '@deot/vc';
 | el              | 组件插入的目标元素        | `string`  | -          | `body`                                        |
 | name            | 组件`name`：用于标识卸载  | `string`  | -          | 传入的`wapper`组件`name`                           |
 | alive           | 是否缓存组件不消毁        | `boolean` | -          | `false`                                       |
-| aliveRegExp     | 实例以外且该数组内的, 不销毁  | `object`  | -          | `{ className: /(vc-hack-alive\vc-hack-cp)/ }` |
+| aliveRegExp     | 实例以外且该数组内的, 不销毁  | `object`  | -          | `{ className: /(vc-portal-alive)/ }` |
 | aliveVisibleKey | 控制组件显示隐藏字段       | `string`  | -          | `isVisible`                                   |
 | aliveUpdateKey  | 控制组件重新更新的字段      | `string`  | -          | `update`                                      |
 | multiple        | 多个实例共存           | `boolean` | -          | `false`                                       |

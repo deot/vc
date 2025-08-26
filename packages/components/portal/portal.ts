@@ -255,7 +255,9 @@ export class Portal<T extends Component> {
 										leaf.wrapper
 										&& leaf.wrapper?.[aliveVisibleKey!]
 									) {
-										leaf.wrapper[aliveVisibleKey!] = false;
+										typeof leaf.wrapper[aliveVisibleKey!] === 'function'
+											? leaf.wrapper[aliveVisibleKey!](false)
+											: (leaf.wrapper[aliveVisibleKey!] = false);
 									}
 
 									// 注意这里`leaf.target`会一直处于pending状态

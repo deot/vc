@@ -126,7 +126,7 @@ export const defaults: PortalOptions = {
 	el: 'body',
 	alive: false,
 	multiple: false,
-	aliveRegExp: { className: /(vc-hack-alive|vc-hack-cp)/ },
+	aliveRegExp: { className: /(vc-portal-alive)/ },
 	aliveVisibleKey: 'isVisible',
 	aliveUpdateKey: 'update',
 	leaveDelay: 300,
