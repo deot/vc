@@ -1,4 +1,4 @@
-import { createApp, h, onMounted, onBeforeUnmount, ref } from 'vue';
+import { createApp, h, onMounted, onBeforeUnmount, ref, nextTick } from 'vue';
 import type { Component } from 'vue';
 import * as Utils from '@deot/helper-utils';
 import * as DOM from '@deot/helper-dom';
@@ -229,9 +229,9 @@ export class Portal<T extends Component> {
 			leaf = Portal.leafs.get(name!) as PortalLeaf;
 			leaf.target = target;
 			leaf.propsData!.value = propsData$;
-
-			// update
-			leaf.wrapper?.[aliveUpdateKey!]?.(options);
+			const next = leaf.wrapper?.[aliveUpdateKey!];
+			// update，赋值完成后，避免函数内的props还是上一个传递值
+			next && nextTick(() => next(options));
 		} else {
 			const wrapper = this.wrapper;
 			const app = createApp({

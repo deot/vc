@@ -15,7 +15,8 @@ import { ref, onMounted } from 'vue';
 
 const emit = defineEmits(['portal-fulfilled', 'portal-rejected']);
 const props = defineProps({
-	title: String
+	title: String,
+	id: Number
 });
 
 const isVisible = ref(false);
@@ -32,8 +33,9 @@ onMounted(() => isVisible.value = true);
 
 defineExpose({
 	isVisible,
-	update: () => {
-		console.log('updated', props.title);
+	update: async (options) => {
+		console.log('updated/title', props.title, props.title === options.title);
+		console.log('updated/id', props.id, props.id === options.id);
 	}
 });
 </script>
