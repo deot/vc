@@ -10,6 +10,6 @@ describe('index.ts', () => {
 	it('create', async () => {
 		const wrapper = mount(() => (<Popup />));
 
-		expect(wrapper.classes()).toContain('vc-popup');
+		expect(wrapper.classes()).toContain('vcm-popup');
 	});
 });

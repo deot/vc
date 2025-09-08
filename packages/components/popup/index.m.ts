@@ -1,3 +1,6 @@
-import { Popup } from '.';
+import { MPopup } from './mobile/popup';
+import './mobile/style.scss';
 
-export const MPopup = Popup;
+export {
+	MPopup
+};

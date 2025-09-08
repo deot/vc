@@ -1,6 +1,3 @@
-import { Popup } from './popup.tsx';
-import './style.scss';
+import { MPopup } from './index.m';
 
-export {
-	Popup
-};
+export const Popup = MPopup;

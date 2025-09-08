@@ -1,0 +1,80 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-popup;
+
+@include block($component-name) {
+	@include element(mask) {
+		position: fixed;
+		inset: 0;
+		z-index: 1000;
+		height: 100%;
+		background-color: rgb(0 0 0 / 40%);
+	}
+
+	@include element(wrapper) {
+		z-index: 1000;
+	}
+
+	@include when(bottom) {
+		@include element(wrapper) {
+			right: 0;
+			bottom: 0;
+			left: 0;
+
+			// padding-bottom: env(safe-area-inset-bottom);
+		}
+	}
+
+	@include when(top) {
+		@include element(wrapper) {
+			top: 0;
+			right: 0;
+			left: 0;
+
+			// padding-top: env(safe-area-inset-bottom);
+		}
+	}
+
+	@include when(left) {
+		@include element(wrapper) {
+			top: 0;
+			bottom: 0;
+			left: 0;
+		}
+	}
+
+	@include when(right) {
+		@include element(wrapper) {
+			top: 0;
+			right: 0;
+			bottom: 0;
+		}
+	}
+
+	@include when(center) {
+		@include element(wrapper) {
+			top: 50%;
+			left: 50%;
+			transform: translate3d(-50%, -50%, 0);
+		}
+	}
+
+	@include when(fixed) {
+		@include element(wrapper) {
+			position: fixed;
+		}
+	}
+
+	@include when(dark) {
+		@include element(wrapper) {
+			color: #fff;
+			background: rgb(0 0 0 / 30%);
+		}
+	}
+
+	@include when(light) {
+		@include element(wrapper) {
+			background-color: #fff;
+		}
+	}
+}
