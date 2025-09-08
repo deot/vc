@@ -35,3 +35,25 @@
 绿色部分为 wrapper，也就是父容器，它会有**固定的高度**。
 黄色部分为 content，它是父容器的**第一个子元素**，它的高度会随着内容的大小而撑高。
 那么，当 content 的高度不超过父容器的高度，是不能滚动的，而它一旦超过了父容器的高度，我们就可以滚动内容区了，这就是`Scroller`的滚动原理。
+
+
+## 注意事项
+
+- 滚动时每次构建虚拟dom，`Child`接收到的`value`都是新的对象，这里应当使用`computed`或者`Child`内部监听`value`使用`isEqualWith`对比前后数据
+
+
+❌
+```vue
+<Scroller tag="ul">
+	<Child :value="{ a: 1, b : 1 }" />
+</Scroller>
+```
+
+✅
+```jsx
+<Scroller tag="ul">
+	<Child :value="value" />
+</Scroller>
+
+const value = computed(() => ({}))
+```
