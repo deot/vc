@@ -294,7 +294,7 @@ export const MTabs = defineComponent({
 													>
 														{
 															slots.label
-																? slots.label({ it: item, index, })
+																? slots.label({ row: item, index, })
 																: (
 																		typeof item.label === 'string'
 																			? <span innerHTML={item.label} />

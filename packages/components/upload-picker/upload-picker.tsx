@@ -110,10 +110,11 @@ export const UploadPicker = defineComponent({
 														default: slots.default
 															? (scopeData: any) => {
 																	return slots?.default?.({
-																		it: (scopeData)?.it,
-																		current: (scopeData)?.current,
-																		index,
-																		name: picker.type
+																		row: item,
+																		type: picker.type,
+																		index: (scopeData)?.index,
+																		// 当前分类的index
+																		_index: index
 																	});
 																}
 															: null

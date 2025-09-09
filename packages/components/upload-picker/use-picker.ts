@@ -153,8 +153,8 @@ export const usePicker = (expose: any) => {
 				return {
 					type,
 					[props.keyValue.label]: vFile.name,
-					// 外部需要满足response中带source
-					[props.keyValue.value]: response.source
+					// 外部需要满足response中带value/source
+					[props.keyValue.value]: response.value || response.source
 				};
 			}
 			return item;

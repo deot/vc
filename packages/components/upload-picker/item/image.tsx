@@ -58,7 +58,7 @@ export const ImageItem = defineComponent({
 			let { enhancer } = VcInstance.options.ImagePreview || {};
 
 			enhancer = props.imagePreviewOptions.enhancer || enhancer || (() => false);
-			const images = getPreviewData().map(item => ({ src: item }));
+			const images = getPreviewData().map(item => ({ value: item }));
 			enhancer(current.value, images, instance) || previewByPS(e, current.value);
 		};
 
@@ -74,10 +74,9 @@ export const ImageItem = defineComponent({
 				>
 					{
 						slots.default
-							? slots.default({ it: row, current: current.value })
+							? slots.default({ index: current.value })
 							: (
 									<Fragment>
-										{}
 										{
 											!row.errorFlag && typeof row[props.keyValue!.value] === 'string'
 												? (
@@ -123,7 +122,6 @@ export const ImageItem = defineComponent({
 												/>
 											)
 										}
-
 									</Fragment>
 								)
 					}

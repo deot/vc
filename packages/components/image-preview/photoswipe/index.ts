@@ -48,9 +48,10 @@ export const open = async (options: Options) => {
 				src: i
 			};
 		};
+		// value/label优先原则
 		return {
 			...i,
-			src: i.source || i.src
+			src: i.value || i.source || i.src
 		};
 	});
 	for (let i = 0; i < data.length; i++) {
