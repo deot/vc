@@ -382,7 +382,10 @@ export const Upload = defineComponent({
 		});
 
 		expose({
-			uploadFiles
+			uploadFiles,
+			click: () => {
+				input$.value?.click();
+			}
 		});
 		return () => {
 			return h(

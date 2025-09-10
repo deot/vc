@@ -1,6 +1,5 @@
-import { Upload } from './upload';
+import { Upload as Upload$ } from './upload';
+import { open } from './open';
 import './style.scss';
 
-export {
-	Upload
-};
+export const Upload = Object.assign(Upload$, { open });

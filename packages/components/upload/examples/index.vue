@@ -1,5 +1,7 @@
 <template>
 	<div>
+		<div @click="handleOpen">直传</div>
+		<br>
 		<Upload>简单版上传</Upload>
 		<br>
 		<Upload
@@ -128,6 +130,25 @@ const handleFileError = (e, vFile) => {
 	Message.error({
 		content: e.message || 'test'
 	});
+};
+
+const handleOpen = async () => {
+	const result = await Upload.open({
+		size: 2,
+		max: 8,
+		parallel: false,
+		accept: 'image/*',
+		onError: handleError,
+		onBegin: handleBegin,
+		onComplete: handleComplete,
+		onFileBefore: handleFileBefore,
+		onFileStart: handleFileStart,
+		onFileError: handleFileError,
+		onFileSuccess: handleFileSuccess,
+		onFileProgress: handleFileProgress
+	});
+
+	console.log(result);
 };
 </script>
 
