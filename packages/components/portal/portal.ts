@@ -336,8 +336,10 @@ export class Portal<T extends Component> {
 			app.mount(container);
 		}
 
-		// destroy method
+		// destroy/reject/resolve method
 		leaf.destroy = $onDestroyed;
+		leaf.reject = $onRejected;
+		leaf.resolve = $onFulfilled;
 
 		// tag
 		leaf.autoDestroy = !!autoDestroy;

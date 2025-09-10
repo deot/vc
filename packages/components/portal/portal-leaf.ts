@@ -17,6 +17,16 @@ export class PortalLeaf {
 	destroy: (...args: any[]) => void;
 
 	/**
+	 * 主动rejected，挂载到app上，避免冲突
+	 */
+	reject: (...args: any[]) => void;
+
+	/**
+	 * 主动$fulfilled，挂载到app上，避免冲突
+	 */
+	resolve: (...args: any[]) => void;
+
+	/**
 	 * 自动销毁的标记，挂载到app上，避免冲突
 	 */
 	autoDestroy: boolean;
@@ -28,6 +38,14 @@ export class PortalLeaf {
 		this.autoDestroy = false;
 		this.destroy = /* istanbul ignore next */ () => {
 			throw new VcError('portal', '未注册的destroy方法');
+		};
+
+		this.reject = /* istanbul ignore next */ () => {
+			throw new VcError('portal', '未注册的reject方法');
+		};
+
+		this.resolve = /* istanbul ignore next */ () => {
+			throw new VcError('portal', '未注册的resolve方法');
 		};
 	}
 
