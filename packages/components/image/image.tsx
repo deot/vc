@@ -234,7 +234,7 @@ export const Image = defineComponent({
 								src={props.src}
 								// @ts-ignore
 								style={style.value}
-								class={[{ 'is-center': alignCenter }, 'vc-image__inner']}
+								class={[{ 'is-center': alignCenter.value }, 'vc-image__inner']}
 								{
 									...{
 										// 包含所有on*都会被绑定, 且listeners中覆盖将由listener内触发（inheritAttrs: false）
