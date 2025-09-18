@@ -22,7 +22,7 @@ export default (options: any = {}) => {
 	const timer = ref<any>(null);
 
 	const getTabIndex = (v: any) => {
-		return list.value.findIndex((nav, index) => (nav.value || index) === v);
+		return list.value.findIndex((nav, index) => (nav.value !== undefined ? nav.value : index) === v);
 	};
 
 	const afloatStyle = computed(() => {
@@ -70,7 +70,7 @@ export default (options: any = {}) => {
 		const nav = list.value[index];
 		if (nav.disabled) return;
 
-		currentValue.value = nav.value || index;
+		currentValue.value = nav.value !== undefined ? nav.value : index;
 
 		emit('update:modelValue', currentValue.value);
 		emit('change', currentValue.value);

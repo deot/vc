@@ -282,10 +282,10 @@ export const MTabs = defineComponent({
 												return (
 													<div
 														key={index}
-														data-id={item.value}
+														data-id={item.value !== undefined ? item.value : index}
 														class={[
 															{
-																'is-active': (item.value || index) == tabs.currentValue.value,
+																'is-active': (item.value !== undefined ? item.value : index) == tabs.currentValue.value,
 																'is-average': props.average
 															},
 															'vcm-tabs__item'
