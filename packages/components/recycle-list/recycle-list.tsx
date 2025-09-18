@@ -34,6 +34,7 @@ export const RecycleList = defineComponent({
 		const contentMaxSize = ref(0);
 		const columnFillSize = ref<number[]>([]); // 优化inverted多列时用于补齐高度
 		const firstItemIndex = ref(0);
+		const lastItemIndex = ref(0);
 		const loadings = ref<string[]>([]);
 		const isEnd = ref(false);
 		const isSlientRefresh = ref(false);
@@ -83,17 +84,20 @@ export const RecycleList = defineComponent({
 		/**
 		 * 用于展示的信息
 		 *
-		 * 这里尽可能的控制好pageSize的长度, 否则会存在性能问题
-		 * 这里存在一个性能瓶颈，当数组中某一个值发生变化时，虚拟树会重新构建，虚拟树的构建耗时长会引起掉帧
-		 * 这是机制所导致的，应该尽可能减少renderList的数量
+		 * 基于firstItemIndex和lastItemIndex精确控制可视区域范围，提升滚动性能
+		 * 只渲染真正可见的元素，减少虚拟树构建耗时
 		 */
 		const data = computed(() => {
 			const base = Array.from({ length: props.cols }).map(() => []);
+			const startIndex = Math.max(0, firstItemIndex.value - props.pageSize);
+			const endIndex = Math.min(
+				rebuildData.value.length,
+				Math.max(lastItemIndex.value + props.pageSize, firstItemIndex.value + props.pageSize + offsetPageSize.value)
+			);
+
 			return rebuildData.value
-				.slice(
-					Math.max(0, firstItemIndex.value - props.pageSize),
-					Math.min(rebuildData.value.length, firstItemIndex.value + props.pageSize + offsetPageSize.value)
-				).reduce((pre, cur) => {
+				.slice(startIndex, endIndex)
+				.reduce((pre, cur) => {
 					cur.column >= 0 && pre[cur.column].push(cur);
 					return pre;
 				}, base);
@@ -250,6 +254,26 @@ export const RecycleList = defineComponent({
 			}
 		};
 
+		// 设置data最后一个元素的在originalData索引值
+		const setLastItemIndex = () => {
+			if (!wrapper.value) return;
+			const position = wrapper.value[K.scrollAxis];
+			const viewportSize = wrapper.value[K.offsetSize];
+			const endPosition = position + viewportSize;
+
+			let item: any;
+			for (let i = rebuildData.value.length - 1; i >= 0; i--) {
+				item = rebuildData.value[i];
+				if (item && item.position + item.size <= endPosition) {
+					lastItemIndex.value = Math.min(rebuildData.value.length - 1, i + props.cols);
+					break;
+				}
+			}
+
+			// 确保lastItemIndex不小于firstItemIndex
+			lastItemIndex.value = Math.max(lastItemIndex.value, firstItemIndex.value);
+		};
+
 		const removeUnusedPlaceholders = (copy: any[], page: number) => {
 			const start = (page - 1) * props.pageSize;
 			const end = page * props.pageSize;
@@ -272,6 +296,7 @@ export const RecycleList = defineComponent({
 			removeUnusedPlaceholders(rebuildData.value.slice(0), page);
 			refreshItemPosition();
 			setFirstItemIndex();
+			setLastItemIndex();
 		};
 		let isRefreshLayout = 0;
 		const refreshLayout = async (start: number, end: number) => {
@@ -292,6 +317,7 @@ export const RecycleList = defineComponent({
 			await Promise.all(promiseTasks);
 			refreshItemPosition();
 			setFirstItemIndex();
+			setLastItemIndex();
 
 			interrupter.next();
 			isRefreshLayout = 0;
@@ -402,6 +428,7 @@ export const RecycleList = defineComponent({
 				contentMaxSize.value = 0;
 				columnFillSize.value = [];
 				firstItemIndex.value = 0;
+				lastItemIndex.value = 0;
 				isSlientRefresh.value = false;
 			};
 			if (!slient) {
@@ -434,6 +461,7 @@ export const RecycleList = defineComponent({
 				loadData();
 			}
 			setFirstItemIndex();
+			setLastItemIndex();
 			emit('scroll', e);
 		};
 
@@ -492,6 +520,7 @@ export const RecycleList = defineComponent({
 			offsetPageSize.value = 0;
 			await refreshLayout(0, originalData.length);
 			setOffsetPageSize();
+			setLastItemIndex();
 		};
 
 		onMounted(() => {
@@ -542,6 +571,8 @@ export const RecycleList = defineComponent({
 			isLoading,
 			renderer,
 			data,
+			firstItemIndex,
+			lastItemIndex,
 			// methods
 			reset,
 			scrollTo,
