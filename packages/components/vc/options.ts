@@ -15,6 +15,9 @@ export type Options = Partial<{
  * 组件的配置项
  */
 export const defaults: Options = {
+	Editor: {
+		options: undefined
+	},
 	Theme: {
 		variables: VARIABLES
 	},

@@ -259,7 +259,11 @@ export const usePicker = (expose: any) => {
 		{ immediate: true }
 	);
 
-	expose();
+	expose({
+		add: () => {},
+		remove: () => {},
+		reset: () => {}
+	});
 	return {
 		currentValue,
 		currentUploadOptions,

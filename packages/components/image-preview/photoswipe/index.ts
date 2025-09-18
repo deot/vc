@@ -4,7 +4,7 @@ import { VcInstance } from '../../vc'; // VcInstance.globalEvent.target
 type Options = {
 	current?: number;
 	data: any[];
-	onClose: any;
+	onClose?: any;
 };
 
 const MAX_WIDTH = window.innerWidth;

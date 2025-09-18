@@ -34,6 +34,7 @@
     "@deot/style": "^1.1.0",
     "@types/lodash-es": "^4.17.12",
     "echarts": "^5.6.0",
-    "photoswipe": "^5.4.4"
+    "photoswipe": "^5.4.4",
+    "quill": "^2.0.3"
   }
 }
