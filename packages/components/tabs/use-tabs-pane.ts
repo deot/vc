@@ -9,7 +9,10 @@ export default () => {
 	const tabs = inject('vc-tabs', {}) as any;
 
 	const isActive = computed(() => {
-		const state = tabs.currentValue.value === (props.value || currentValue.value);
+		const paneValue = typeof props.value === 'undefined'
+			? currentValue.value
+			: props.value;
+		const state = tabs.currentValue.value === paneValue;
 
 		// 副作用
 		if (!isLoaded.value && state) {

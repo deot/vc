@@ -183,7 +183,7 @@ export const Tabs = defineComponent({
 										return (
 											<div
 												key={index}
-												class={[{ 'is-active': (item.value || index) == tabs.currentValue.value }, 'vc-tabs__item']}
+												class={[{ 'is-active': tabs.getItemValue(item, index) === tabs.currentValue.value }, 'vc-tabs__item']}
 												onClick={() => tabs.handleChange(index)}
 											>
 												{
