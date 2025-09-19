@@ -2,7 +2,8 @@ import type { ExtractPropTypes } from 'vue';
 
 export const props = {
 	value: {
-		type: [String, Number]
+		type: [String, Number],
+		default: undefined
 	},
 	label: {
 		type: [String, Function],

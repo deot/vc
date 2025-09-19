@@ -7,7 +7,8 @@ export const props = {
 		default: 'line'
 	},
 	modelValue: {
-		type: [String, Number]
+		type: [String, Number],
+		default: undefined
 	},
 	animated: {
 		type: Boolean,

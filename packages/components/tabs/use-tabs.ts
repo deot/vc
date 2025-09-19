@@ -22,7 +22,13 @@ export default (options: any = {}) => {
 	const timer = ref<any>(null);
 
 	const getTabIndex = (v: any) => {
-		return list.value.findIndex((nav, index) => (nav.value || index) === v);
+		return list.value.findIndex((nav, index) => {
+			// 处理空字符串的情况
+			if (v === '') {
+				return nav.value === '';
+			}
+			return (nav.value || index) === v;
+		});
 	};
 
 	const afloatStyle = computed(() => {

@@ -9,7 +9,9 @@ export default () => {
 	const tabs = inject('vc-tabs', {}) as any;
 
 	const isActive = computed(() => {
-		const state = tabs.currentValue.value === (props.value || currentValue.value);
+		// 处理空字符串的情况
+		const paneValue = props.value !== undefined ? props.value : currentValue.value;
+		const state = tabs.currentValue.value === paneValue;
 
 		// 副作用
 		if (!isLoaded.value && state) {
