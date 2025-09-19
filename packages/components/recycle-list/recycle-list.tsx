@@ -34,6 +34,7 @@ export const RecycleList = defineComponent({
 		const contentMaxSize = ref(0);
 		const columnFillSize = ref<number[]>([]); // 优化inverted多列时用于补齐高度
 		const firstItemIndex = ref(0);
+		const lastItemIndex = ref(0);
 		const loadings = ref<string[]>([]);
 		const isEnd = ref(false);
 		const isSlientRefresh = ref(false);
@@ -89,10 +90,31 @@ export const RecycleList = defineComponent({
 		 */
 		const data = computed(() => {
 			const base = Array.from({ length: props.cols }).map(() => []);
+			// 计算lastItemIndex，确保显示合理的内容范围
+			const calculateLastItemIndex = () => {
+				if (!wrapper.value) return 0;
+				const position = wrapper.value[K.scrollAxis];
+				const viewportSize = wrapper.value[K.clientSize];
+				// 计算可见区域的结束位置
+				const endPosition = position + viewportSize;
+				let item: any;
+				// 从firstItemIndex开始查找，直到找到超出可见区域的元素
+				for (let i = firstItemIndex.value; i < rebuildData.value.length; i++) {
+					item = rebuildData.value[props.inverted ? rebuildData.value.length - 1 - i : i];
+					if (!item || item.position + item.size > endPosition) {
+						lastItemIndex.value = Math.min(rebuildData.value.length - 1, i + props.pageSize);
+						break;
+					}
+				}
+			};
+
+			// 在计算数据前更新lastItemIndex
+			calculateLastItemIndex();
+
 			return rebuildData.value
 				.slice(
 					Math.max(0, firstItemIndex.value - props.pageSize),
-					Math.min(rebuildData.value.length, firstItemIndex.value + props.pageSize + offsetPageSize.value)
+					Math.min(rebuildData.value.length, lastItemIndex.value + props.pageSize)
 				).reduce((pre, cur) => {
 					cur.column >= 0 && pre[cur.column].push(cur);
 					return pre;
@@ -242,7 +264,7 @@ export const RecycleList = defineComponent({
 			const position = wrapper.value[K.scrollAxis];
 			let item: any;
 			for (let i = 0; i < rebuildData.value.length; i++) {
-				item = rebuildData.value[i];
+				item = rebuildData.value[props.inverted ? rebuildData.value.length - 1 - i : i];
 				if (!item || item.position > position) {
 					firstItemIndex.value = Math.max(0, i - props.cols);
 					break;
@@ -542,6 +564,8 @@ export const RecycleList = defineComponent({
 			isLoading,
 			renderer,
 			data,
+			// 暴露lastItemIndex
+			lastItemIndex,
 			// methods
 			reset,
 			scrollTo,
