@@ -43,7 +43,7 @@ export const Textarea = defineComponent({
 			currentMaxlength
 		} = useTextarea(textarea, expose);
 		const indicatorNum = computed(() => {
-			const currentLength = (String(props.modelValue) || '').length;
+			const currentLength = (String(props.modelValue || '')).length;
 			const extraLength = props.bytes ? getBytesSize(props.modelValue as any) || 0 : 0;
 			const length = props.indicator && (props.indicator as any).inverted
 				? props.maxlength! + extraLength - currentLength
