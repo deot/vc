@@ -12,11 +12,12 @@ export const recognizer = (url: string) => {
 		: 'file';
 };
 
-export const FILE_ACCEPT_MAP = {
-	DOC_ACCEPTS: '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-	EXCEL_ACCEPTS: '.csv,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-	PPT_ACCEPTS: '.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation',
-	PDF_ACCEPTS: '.pdf,application/pdf',
-	TXT_ACCEPTS: 'text/plain',
-	HTML_ACCEPTS: 'text/html',
-};
+export const IMAGE_ACCEPTS = 'image/gif,image/jpeg,image/jpg,image/png';
+export const VIDEO_ACCEPTS = 'video/*';
+export const AUDIO_ACCEPTS = 'audio/*';
+export const DOC_ACCEPTS = '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+export const EXCEL_ACCEPTS = '.csv,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+export const PPT_ACCEPTS = '.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation';
+export const PDF_ACCEPTS = '.pdf,application/pdf';
+export const TXT_ACCEPTS = 'text/plain';
+export const HTML_ACCEPTS = 'text/html';

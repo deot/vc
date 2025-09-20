@@ -6,7 +6,7 @@ import { Message } from '../message';
 import { MToast } from '../toast/index.m';
 import { attrAccept } from './utils';
 import { getUid } from '@deot/helper-utils';
-import { VcInstance } from '../vc/index';
+import { VcInstance, VcError } from '../vc/index';
 import { props as uploadProps } from './upload-props';
 import type { UploadFile } from './types';
 
@@ -68,6 +68,8 @@ export const Upload = defineComponent({
 			}
 
 			emit('error', e);
+
+			throw new VcError('vc-upload', e);
 		};
 
 		const done = (vFile: UploadFile) => {
@@ -84,6 +86,7 @@ export const Upload = defineComponent({
 
 			// 上传完毕
 			if (cycle.total === vFile.total) {
+				props.showLoading && loadingInstance?.destroy?.();
 				emit('complete', { ...cycle });
 				setDefaultCycle();
 
@@ -238,6 +241,7 @@ export const Upload = defineComponent({
 			}
 		};
 
+		let loadingInstance: any;
 		const uploadFiles = (files: FileList) => {
 			let postFiles: File[] = Array.prototype.slice.call(files);
 
@@ -257,7 +261,7 @@ export const Upload = defineComponent({
 
 			// reset
 			setDefaultCycle();
-
+			props.showLoading && (loadingInstance = Message.loading('上传中...'));
 			emit('begin', postFiles);
 
 			cycle.queues = postFiles.map((file, index) => {

@@ -59,8 +59,7 @@ const uploadOptions = ref({
 | imageClass          | 图片item的样式                 | `string`             | -                        | -                                    |
 | videoClass          | 视频item的样式                 | `string`             | -                        | -                                    |
 | fileClass           | 文件item的样式                 | `string`             | -                        | -                                    |
-| urlKey              | 上传成功后那远程地址的key            | `string`             | -                        | `url`                                |
-| gallery             | 图片上传调用商品橱窗,仅在PC组件内有效      | `Function`、`boolean` | -                        | `true`                               |
+| enhancer            | 图片上传调用商品橱窗,仅在PC组件内有效      | `Function`、`boolean` | -                        | `true`                               |
 | compressOptions     | 图片压缩选项参数                  | `object`             | -                        | { compress: false, // 是否开启图片压缩 ... } |
 
 ### 事件

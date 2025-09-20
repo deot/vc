@@ -70,12 +70,12 @@ export const UploadPicker = defineComponent({
 		});
 		const handleClick = (e, type) => {
 			const options = VcInstance.options.UploadPicker || {};
-			if (typeof props.gallery === 'function' || (props.gallery && options.gallery)) {
-				const fn = typeof props.gallery === 'function'
-					? props.gallery
-					: options.gallery;
+			if (typeof props.enhancer === 'function' || (props.enhancer && options.enhancer)) {
+				const fn = typeof props.enhancer === 'function'
+					? props.enhancer
+					: options.enhancer;
 
-				// 阻止原生事件，如video, file不走gallery, 可以跳过;
+				// 阻止原生事件，如video, file不走enhancer, 可以跳过;
 				fn(instance, type) && e.stopPropagation();
 			}
 		};

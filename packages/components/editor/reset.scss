@@ -1,0 +1,107 @@
+.ql-editor {
+	padding: 0;
+}
+
+.ql-snow .ql-tooltip::before {
+	content: "打开:";
+}
+
+.ql-snow .ql-tooltip a.ql-action::after {
+	content: "编辑";
+}
+
+.ql-snow .ql-tooltip a.ql-remove::before {
+	content: "删除";
+}
+
+.ql-snow .ql-tooltip[data-mode="link"]::before {
+	content: "链接";
+}
+
+.ql-snow .ql-tooltip.ql-editing a.ql-action::after {
+	padding-right: 0;
+	border-right: 0;
+	content: '保存';
+}
+
+.ql-snow .ql-picker.ql-header .ql-picker-label::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item::before {
+	content: '文本';
+}
+
+.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="1"]::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="1"]::before {
+	content: '标题1';
+}
+
+.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="2"]::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="2"]::before {
+	content: '标题2';
+}
+
+.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="3"]::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="3"]::before {
+	content: '标题3';
+}
+
+.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="4"]::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="4"]::before {
+	content: '标题4';
+}
+
+.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="5"]::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="5"]::before {
+	content: '标题5';
+}
+
+.ql-snow .ql-picker.ql-header .ql-picker-label[data-value="6"]::before,
+.ql-snow .ql-picker.ql-header .ql-picker-item[data-value="6"]::before {
+	content: '标题6';
+}
+
+.ql-snow .ql-picker.ql-font-size {
+	width: 60px;
+}
+
+// 行高css
+.ql-snow .ql-line-height::before {
+	position: relative;
+	content: "行高：";
+}
+
+.ql-snow .ql-picker.ql-line-height {
+	display: inline-flex;
+	width: 100px;
+	align-items: center;
+}
+
+.ql-snow .ql-picker.ql-line-height .ql-picker-label {
+	width: 50%;
+}
+
+// 字体间距css
+.ql-snow .ql-letter-spacing::before {
+	position: relative;
+	content: "字间距：";
+}
+
+.ql-snow .ql-picker.ql-letter-spacing {
+	width: 120px;
+}
+
+.ql-snow .ql-picker.ql-letter-spacing .ql-picker-label {
+	width: 50%;
+}
+
+// .ql-snow .ql-picker.ql-font .ql-picker-label::before,
+// .ql-snow .ql-picker.ql-font .ql-picker-item::before {
+// 	content: '标准字体';
+// }
+// .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=serif]::before,
+// .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=serif]::before {
+// 	content: '衬线字体';
+// }
+// .ql-snow .ql-picker.ql-font .ql-picker-label[data-value=monospace]::before,
+// .ql-snow .ql-picker.ql-font .ql-picker-item[data-value=monospace]::before {
+// 	content: '等宽字体';
+// }

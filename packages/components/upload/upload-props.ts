@@ -85,5 +85,9 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
+	showLoading: {
+		type: Boolean,
+		default: false
+	},
 };
 export type Props = ExtractPropTypes<typeof props>;

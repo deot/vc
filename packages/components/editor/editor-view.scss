@@ -1,0 +1,9 @@
+@use '../style/helper' as *;
+
+$component-name: vc-editor-view;
+
+@include block($component-name) {
+	.ql-container {
+		border: none;
+	}
+}

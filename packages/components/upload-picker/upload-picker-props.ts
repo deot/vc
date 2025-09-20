@@ -86,6 +86,6 @@ export const props = {
 		}
 	},
 	showMessage: Boolean,
-	gallery: Boolean
+	enhancer: [Function, Boolean]
 };
 export type Props = ExtractPropTypes<typeof props>;

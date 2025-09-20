@@ -5,11 +5,11 @@ const Upload$ = new Portal(Upload, {
 	leaveDelay: 0
 });
 
-// 直传 TODO: 集成Loading
-export const open = async (options: any) => {
-	const originalOnComplete = options.onComplete || (() => {});
+export const open = (options: any) => {
+	const { slient = false, ...rest } = options;
+	const originalOnComplete = rest.onComplete || (() => {});
 	const leaf = Upload$.popup({
-		...options,
+		...rest,
 		onComplete: async (e: any) => {
 			originalOnComplete(e);
 			if (e.total === e.error) {
@@ -19,7 +19,7 @@ export const open = async (options: any) => {
 			}
 		}
 	});
-	leaf.wrapper?.click();
+	!slient && leaf.wrapper?.click();
 
 	return leaf;
 };

@@ -1,0 +1,43 @@
+@use '../style/helper' as *;
+
+$color-light-deeper: varfix(color-light-deeper, editor);
+$component-name: vc-editor;
+
+@include block($component-name) {
+	position: relative;
+	display: inline-flex;
+	flex-direction: column;
+
+	@include border('', $color-light-deeper, 8); // 不占边距
+
+	@include element(icon) { 
+		line-height: 1;
+		outline: none;
+	}
+
+	@include element(spin) {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		background: #fffa;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.ql-container {
+		flex: 1;
+		overflow: auto;
+		border: none;
+	}
+
+	.ql-toolbar.ql-snow {
+		z-index: 1;
+		border: none;
+
+		@include border('bottom', $color-light-deeper);
+	}
+
+	.ql-picker-options {
+		z-index: 2!important;
+	}
+}

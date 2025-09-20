@@ -1,17 +1,21 @@
 import { getCurrentInstance, ref, computed, watch, inject } from 'vue';
 import type { UploadFile } from '../upload/types';
-import { recognizer, FILE_ACCEPT_MAP } from './utils';
-import type { Props } from './upload-picker-props';
-import { Message } from '../message';
-
-const {
+import { VcError } from '../vc';
+import {
+	recognizer,
+	IMAGE_ACCEPTS,
+	VIDEO_ACCEPTS,
+	AUDIO_ACCEPTS,
 	DOC_ACCEPTS,
 	EXCEL_ACCEPTS,
 	PPT_ACCEPTS,
 	PDF_ACCEPTS,
 	TXT_ACCEPTS,
-	HTML_ACCEPTS,
-} = FILE_ACCEPT_MAP;
+	HTML_ACCEPTS
+} from './utils';
+
+import type { Props } from './upload-picker-props';
+import { Message } from '../message';
 
 export const usePicker = (expose: any) => {
 	const instance = getCurrentInstance()!;
@@ -42,15 +46,15 @@ export const usePicker = (expose: any) => {
 
 	const currentUploadOptions = ref({
 		image: {
-			accept: 'image/gif,image/jpeg,image/jpg,image/png',
+			accept: IMAGE_ACCEPTS,
 			...(props.uploadOptions.image || {}),
 		},
 		video: {
-			accept: 'video/*',
+			accept: VIDEO_ACCEPTS,
 			...(props.uploadOptions.video || {}),
 		},
 		audio: {
-			accept: 'audio/*',
+			accept: AUDIO_ACCEPTS,
 			...(props.uploadOptions.audio || {}),
 		},
 		file: {
@@ -199,8 +203,7 @@ export const usePicker = (expose: any) => {
 		const target = currentValue.value[type];
 		const item = target[index];
 		if (!item) {
-			console.error('【vc-upload-picker】: 没有找到要删除的元素');
-			return;
+			throw new VcError('vc-upload-picker', '没有找到要删除的元素');
 		}
 		if (item.errorFlag) {
 			currentValue.value[type] = target.filter(
@@ -260,9 +263,26 @@ export const usePicker = (expose: any) => {
 	);
 
 	expose({
-		add: () => {},
-		remove: () => {},
-		reset: () => {}
+		// 给enhancer (注意editor也有该方法，后续保持声明type类型)
+		// // item = { value: '上传后的地址', target: '原始文件', type?: '文件类型' }
+		add: (source = []) => {
+			const v = parseModelValue(source);
+			Object.keys(v).forEach((i: string) => {
+				currentValue.value[i] = currentValue.value[i].concat(v[i]);
+			});
+			sync();
+		},
+		remove: (index, type) => {
+			handleDelete(index, type);
+		},
+		reset: (source = []) => {
+			if (!(source instanceof Array)) {
+				throw new VcError('vc-upload-picker', 'reset参数要为字符串数组');
+			}
+			currentValue.value = parseModelValue(source);
+			// form表单
+			formItem.change?.(currentValue.value);
+		}
 	});
 	return {
 		currentValue,

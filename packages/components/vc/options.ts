@@ -1,6 +1,8 @@
 import type { ComponentInternalInstance } from 'vue';
 import { VARIABLES } from '../theme/constant';
 
+const nil = void 0;
+
 export type Options = Partial<{
 	[key: string]: any;
 	Theme: {
@@ -15,21 +17,25 @@ export type Options = Partial<{
  * 组件的配置项
  */
 export const defaults: Options = {
+	UploadPicker: {
+		enhancer: nil
+	},
 	Editor: {
-		options: undefined
+		options: nil,
+		enhancer: nil
 	},
 	Theme: {
 		variables: VARIABLES
 	},
 	Portal: {
-		install: undefined
+		install: nil
 	},
 	Upload: {
-		onRequest: undefined,
-		onResponse: undefined,
-		onMessage: undefined
+		onRequest: nil,
+		onResponse: nil,
+		onMessage: nil
 	},
 	TableColumn: {
-		line: undefined
+		line: nil
 	}
 };

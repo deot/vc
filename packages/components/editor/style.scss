@@ -1,6 +1,4 @@
-@use '../style/helper' as *;
-
-$component-name: vc-editor;
-
-@include block($component-name) {
-}
+@use "./editor";
+@use "./editor-view";
+@use "./third";
+@use "./reset";

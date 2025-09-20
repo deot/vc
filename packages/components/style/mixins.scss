@@ -119,7 +119,7 @@
  * 暂时不抽离公用
  */
 
-@mixin border($direction: '', $color: varfix('color-light-deeper'), $border-radius: 'inherit') {
+@mixin border($direction: '', $color: varfix('color-light-deeper'), $border-radius: inherit) {
 	& {
 		position: relative;
 		transform: translateZ(0);
@@ -131,7 +131,7 @@
 			display: block; // 父类为flex, 使用table无法撑开
 			clear: both;
 			pointer-events: none;
-			border-radius: if(meta.type-of($border-radius) == 'number', unitfix($border-radius), 'inherit');
+			border-radius: if(meta.type-of($border-radius) == 'number', unitfix($border-radius), inherit);
 			content: " ";
 			box-sizing: border-box;
 		}
