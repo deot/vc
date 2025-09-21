@@ -2,7 +2,7 @@ import type Quill from 'quill';
 import { ImagePreview } from '../../image-preview';
 import { Upload } from '../../upload';
 import { EXTENDS_CONTEXT_KEY } from './constant';
-import { recognizer, IMAGE_ACCEPTS, VIDEO_ACCEPTS } from '../../upload-picker/utils';
+import { getFileType, IMAGE_ACCEPTS, VIDEO_ACCEPTS } from '../../upload-picker/utils';
 import type { UploadFile } from '../../upload/types';
 
 const MODULE_NAME = 'modules/EventExtend';
@@ -17,7 +17,7 @@ export const insertFile = (body: any, context: any) => {
 			name: body.value?.replace?.(/^.*\/([^/]+)$/, '$1')
 		};
 	}
-	const fileType = recognizer(body.target.name);
+	const fileType = getFileType(body.target.name);
 	const index = (context.editor.getSelection() || {}).index || context.editor.getLength();
 	switch (fileType) {
 		case 'image':
@@ -27,6 +27,12 @@ export const insertFile = (body: any, context: any) => {
 			context.editor.insertText(index, body.target.name);
 			context.editor.setSelection(index, body.target.name.length);
 			context.editor.format('link', body.value);
+			break;
+		case 'audio':
+			context.editor.insertEmbed(index, 'vc/audio', {
+				src: body.value,
+				poster: context.parent?.poster?.(body.value, fileType) || body.value
+			});
 			break;
 		case 'video':
 			context.editor.insertEmbed(index, 'vc/video', {
@@ -56,7 +62,7 @@ export const uploadFile = (type: File | string, context: any) => {
 	return leaf;
 };
 /**
- * 对图片模块的扩展
+ * 对事件模块的扩展（click/drop/paste）
  * 1. 输入框内可拖入图片文件
  * 2. 输入款内可以粘帖文件
  * 3. 点击图片可预览

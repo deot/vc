@@ -2,7 +2,7 @@ import { getCurrentInstance, ref, computed, watch, inject } from 'vue';
 import type { UploadFile } from '../upload/types';
 import { VcError } from '../vc';
 import {
-	recognizer,
+	getFileType,
 	IMAGE_ACCEPTS,
 	VIDEO_ACCEPTS,
 	AUDIO_ACCEPTS,
@@ -229,7 +229,7 @@ export const usePicker = (expose: any) => {
 		return v.reduce((pre, cur) => {
 			const value = cur[props.keyValue.value] || (typeof cur === 'object' ? '' : cur);
 			const label = cur[props.keyValue.label] || value.replace(/^.*\/([^/]+)$/, '$1');
-			const type = cur.type || (props.picker.length === 1 ? props.picker[0] : recognizer(value)); // 长度为1时，强制类型
+			const type = cur.type || (props.picker.length === 1 ? props.picker[0] : getFileType(value)); // 长度为1时，强制类型
 			switch (type) {
 				case 'image':
 				case 'video':

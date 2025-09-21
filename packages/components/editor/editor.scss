@@ -17,9 +17,10 @@ $component-name: vc-editor;
 
 	@include element(spin) {
 		position: absolute;
-		inset: 0;
+		z-index: 1;
 		display: flex;
 		background: #fffa;
+		inset: 0;
 		align-items: center;
 		justify-content: center;
 	}
