@@ -6,10 +6,8 @@ export const props = {
 		default: 'date',
 		validator: (v: string) => /(year|month|quarter|date|daterange|datetime|datetimerange|quarterrange|monthrange)/.test(v)
 	},
-	options: {
-		type: Object,
-		default: () => ({})
-	},
+	disabledDate: Function,
+	shortcuts: Array,
 	timePickerOptions: {
 		type: Object,
 		default: () => ({})

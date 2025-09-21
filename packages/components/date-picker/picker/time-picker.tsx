@@ -18,10 +18,11 @@ export const TimePicker = createPicker(COMPONENT_NAME, timePickerProps, () => {
 	const panel = shallowRef({});
 	const panelOptions = computed(() => {
 		return {
+			disabledTime: props.disabledTime,
 			disabledHours: props.disabledHours,
 			disabledMinutes: props.disabledMinutes,
 			disabledSeconds: props.disabledSeconds,
-			hideDisabledOptions: props.hideDisabledOptions,
+			filterable: props.filterable,
 		};
 	});
 

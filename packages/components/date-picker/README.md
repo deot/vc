@@ -240,6 +240,8 @@ const time = ref();
 
 ### 基础属性
 
+> Picker
+
 | 属性                      | 说明                                                                                                                 | 类型        | 可选值                                                                                                                                                 | 默认值          |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------ | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | type                    | 显示类型                                                                                                               | `string`  | `date`、`daterange`、`datetime`、`datetimerange`、`year`、`month`、`quarter`、`quarterrange`、`monthrange`                                                  | `date`       |
@@ -247,7 +249,6 @@ const time = ref();
 | format                  | 展示的日期格式                                                                                                            | `Date`    | date, daterange(YYYY-MM-DD), datetime, datetimerange(YYYY-MM-DD, HH:mm:ss), year(YYYY), month(YYYY-MM)                                              | -            |
 | placement               | 日期选择器出现的位置                                                                                                         | `string`  | `top` `top-start` `top-end` `bottom` `bottom-start` `bottom-end` `left` `left-start` `left-end` `right` `right-start` `right-end`，2.12.0 版本开始支持自动识别 | bottom-start |
 | placeholder             | 占位文本                                                                                                               | `string`  | -                                                                                                                                                   | -            |
-| options                 | 选择器额外配置，比如不可选日期与快捷选项，具体项详见下表                                                                                       | `Object`  | -                                                                                                                                                   | -            |
 | split-panels            | 开启后，左右面板不联动，仅在 daterange 和 datetimerange 下可用。                                                                      | `boolean` | -                                                                                                                                                   | `true`       |
 | multiple                | 开启后，可以选择多个日期，仅在 `date` 下可用。                                                                                        | `boolean` | -                                                                                                                                                   | `false`      |
 | show-week-numbers（TODO） | 开启后，可以显示星期数。                                                                                                       | `boolean` | -                                                                                                                                                   | `false`      |
@@ -257,25 +258,27 @@ const time = ref();
 | disabled                | 是否禁用选择器                                                                                                            | `boolean` | -                                                                                                                                                   | `false`      |
 | clearable               | 是否显示清除按钮                                                                                                           | `boolean` | -                                                                                                                                                   | `true`       |
 | portal                  | 是否将弹层放置于 body 内，在 Tabs、带有 fixed 的 Table 列内使用时，建议添加此属性，它将不受父级样式影响，从而达到更好的效果                                         | `boolean` | -                                                                                                                                                   | `true`       |
-| time-picker-options     | 可以在 mode 为 `datetime` 和 `datetimerange` 下，配置 `TimePicker` 的属性，比如时间间隔 `:time-picker-options="{steps: [1, 10, 10]}"` | `Object`  | -                                                                                                                                                   | {}           |
 | separator               | 两个日期间的分隔符                                                                                                          | `string`  | -                                                                                                                                                   | `-`          |
 | change-on-select        | 选中即触发`change`时间                                                                                                    | `boolean` | -                                                                                                                                                   |              |
 | nullValue         | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |                                                                                                                              | `false`      |
 
-### Options
+> DatePicker
 
-| 参数           | 说明                                                                                                                        | 类型         | 可选值 | 默认值 |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------- | ---------- | --- | --- |
-| disabledDate | 设置日期禁用状态，参数为当前日期，要求返回`boolean`                                                                                            | `function` | --- |     |
-| shortcuts    | 设置快捷选项，每项内容`{text: string, value: function, onClick: function}`，`text`显示的文案，`value`返回指定的日期，如需自己控制逻辑，可不设置，并使用 `onClick` 回调 | `array`    | --- |     |
+| 属性                      | 说明                                                                                                                 | 类型        | 可选值                                                                                                                                                 | 默认值          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------ | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| disabledDate            | 设置日期禁用状态，参数为当前日期，要求返回`boolean`                                                                                            | `function` | - |    
+| shortcuts               | 设置快捷选项，每项内容`{text: string, value: function, onClick: function}`，`text`显示的文案，`value`返回指定的日期，如需自己控制逻辑，可不设置，并使用 `onClick` 回调 | `array`    | - |
+| time-picker-options     | 可以在 type 为 `datetime` 和 `datetimerange` 下，配置 `TimePicker` 的属性，比如时间间隔 `:time-picker-options="{steps: [1, 10, 10]}"` | `Object`  | -                                                                                                                                                   | {}           |
 
+> TimePicker
 
-### timePickerOptions
-
-| 参数           | 说明                              | 类型         | 可选值 | 默认值 |
-| ------------ | ------------------------------- | ---------- | --- | --- |
-| disabledTime | 设置时分秒禁用状态，参数为当前日期，要求返回`boolean` | `function` | -   | -   |
-
+| 参数              | 说明                              | 类型         | 可选值 | 默认值   |
+| --------------- | ------------------------------- | ---------- | --- | ----- |
+| disabledTime    | 设置时分秒禁用状态，参数为当前日期，要求返回`boolean` | `function` | -   | -     |
+| disabledHours   | -                               | `array`    | -   | -     |
+| disabledMinutes | -                               | `array`    | -   | -     |
+| disabledSeconds | -                               | `array`    | -   | -     |
+| filterable      | 默认不过来disabled数值                 | `boolen`   | -   | false |
 
 ### 事件
 
@@ -315,7 +318,7 @@ const time = ref();
 | 属性      | 说明           | 类型       | 可选值                      | 默认值              |
 | ------- | ------------ | -------- | ------------------------ | ---------------- |
 | value   | 返回值(v-model) | `Date`   | -                        | -                |
-| mode    | 日期选择器类型      | `string` | `datetime` `date` `time` | -                |
+| type    | 日期选择器类型      | `string` | `datetime` `date` `time` | -                |
 | minDate | 最小日期         | `Date`   | -                        | new Date('1990') |
 | maxDate | 最大日期         | `Date`   | -                        | new Date('2020') |
 

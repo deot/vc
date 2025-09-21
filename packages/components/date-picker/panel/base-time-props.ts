@@ -4,7 +4,7 @@ export const props = {
 	// 面板内的value统一为数组格式
 	value: Array as PropType<Date[]>,
 	format: String,
-	disabledDate: {
+	disabledTime: {
 		type: Function,
 		default: () => false
 	},
@@ -34,7 +34,7 @@ export const props = {
 			return [];
 		}
 	},
-	hideDisabledOptions: {
+	filterable: {
 		type: Boolean,
 		default: false
 	},

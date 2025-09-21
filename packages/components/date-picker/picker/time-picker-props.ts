@@ -6,6 +6,10 @@ export const props = {
 		default: 'time',
 		validator: (v: string) => /(time|timerange)/.test(v)
 	},
+	disabledTime: {
+		type: Function,
+		default: () => false
+	},
 	disabledHours: {
 		type: Array,
 		default: () => {
@@ -24,7 +28,7 @@ export const props = {
 			return [];
 		}
 	},
-	hideDisabledOptions: {
+	filterable: {
 		type: Boolean,
 		default: false
 	}

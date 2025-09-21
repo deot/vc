@@ -51,7 +51,9 @@ export const TimeSelect = defineComponent({
 		},
 		disabledTime: Function,
 		panelDate: Date,
-		hideDisabledOptions: {
+
+		// 默认不过来disabled数值
+		filterable: {
 			type: Boolean,
 			default: false
 		}
@@ -125,7 +127,7 @@ export const TimeSelect = defineComponent({
 		const getScrollIndex = (type: string, index: number) => {
 			const Type = startCase(type);
 			const disabled = props[`disabled${Type}`];
-			if (disabled.length && props.hideDisabledOptions) {
+			if (disabled.length && props.filterable) {
 				let _count = 0;
 				disabled.forEach((item: any) => (item <= index ? _count++ : ''));
 				index -= _count;
@@ -162,7 +164,7 @@ export const TimeSelect = defineComponent({
 					|| getHoursDisabledStatus(i)
 				) {
 					hour.disabled = true;
-					if (props.hideDisabledOptions) hour.hide = true;
+					if (props.filterable) hour.hide = true;
 				}
 				if (props.hours === i) hour.selected = true;
 				hours.push(hour);
@@ -189,7 +191,7 @@ export const TimeSelect = defineComponent({
 					|| getMinutesDisabledStatus(i)
 				) {
 					minute.disabled = true;
-					if (props.hideDisabledOptions) minute.hide = true;
+					if (props.filterable) minute.hide = true;
 				}
 				if (props.minutes === i) minute.selected = true;
 				minutes.push(minute);
@@ -216,7 +218,7 @@ export const TimeSelect = defineComponent({
 					|| getSecondsDisabledStatus(i)
 				) {
 					second.disabled = true;
-					if (props.hideDisabledOptions) second.hide = true;
+					if (props.filterable) second.hide = true;
 				}
 				if (props.seconds === i) second.selected = true;
 				seconds.push(second);

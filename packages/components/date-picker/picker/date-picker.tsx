@@ -24,8 +24,9 @@ export const DatePicker = createPicker(COMPONENT_NAME, datePickerProps, () => {
 	const panel = shallowRef({});
 	const panelOptions = computed(() => {
 		return {
-			...props.options,
-			timePickerOptions: props.timePickerOptions
+			disabledDate: props.disabledDate!,
+			shortcuts: props.shortcuts,
+			timePickerOptions: props.timePickerOptions,
 		};
 	});
 

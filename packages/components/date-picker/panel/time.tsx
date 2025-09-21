@@ -53,10 +53,11 @@ export const TimePanel = defineComponent({
 						minutes={timeSlots.value[1]}
 						seconds={timeSlots.value[2]}
 						showSeconds={showSeconds.value}
+						disabledTime={props.disabledTime}
 						disabledHours={props.disabledHours}
 						disabledMinutes={props.disabledMinutes}
 						disabledSeconds={props.disabledSeconds}
-						hideDisabledOptions={props.hideDisabledOptions}
+						filterable={props.filterable}
 						steps={props.steps}
 						onPick={handlePick}
 					/>

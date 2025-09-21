@@ -92,10 +92,11 @@ export const TimeRangePanel = defineComponent({
 								minutes={timeSlots.value.left.minutes}
 								seconds={timeSlots.value.left.seconds}
 								showSeconds={showSeconds.value}
+								disabledTime={props.disabledTime}
 								disabledHours={props.disabledHours}
 								disabledMinutes={props.disabledMinutes}
 								disabledSeconds={props.disabledSeconds}
-								hideDisabledOptions={props.hideDisabledOptions}
+								filterable={props.filterable}
 								steps={props.steps}
 								onPick={value => handlePick('left', value)}
 							/>
@@ -110,10 +111,11 @@ export const TimeRangePanel = defineComponent({
 								minutes={timeSlots.value.right.minutes}
 								seconds={timeSlots.value.right.seconds}
 								showSeconds={showSeconds.value}
+								disabledTime={props.disabledTime}
 								disabledHours={props.disabledHours}
 								disabledMinutes={props.disabledMinutes}
 								disabledSeconds={props.disabledSeconds}
-								hideDisabledOptions={props.hideDisabledOptions}
+								filterable={props.filterable}
 								steps={props.steps}
 								onPick={value => handlePick('right', value)}
 							/>

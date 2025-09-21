@@ -5,7 +5,7 @@
 		</Button>
 		<DatePicker
 			v-model="value"
-			:options="options"
+			v-bind="options"
 			:start-date="new Date('2019', '10', '11')"
 			:type="type"
 			clearable
@@ -16,7 +16,7 @@
 		/>
 
 		<DatePicker
-			:options="options"
+			v-bind="options"
 			:start-date="new Date('2019', '10', '11')"
 			:type="type"
 			clearable
@@ -27,7 +27,7 @@
 		/>
 		<DatePicker
 			:model-value="valueRange"
-			:options="options"
+			v-bind="options"
 			type="datetimerange"
 			clearable
 			placeholder="Select date"
@@ -102,7 +102,7 @@
 		<DatePicker
 			v-model="formValidate.date"
 			:start-date="new Date()"
-			:options="disableDate"
+			:disabled-date="disabledDate"
 			:time-picker-options="timeOpts"
 			type="datetime"
 			format="YYYY-MM-DD HH:mm:ss"
@@ -142,7 +142,7 @@
 		<h2>beforeOk,拦截小于当前日期的值 beforeClear,并且只能通过确认、清空按钮关闭弹层</h2>
 		<DatePicker
 			v-model="datePromise"
-			:options="options"
+			v-bind="options"
 			:outside-clickable="false"
 			type="date"
 			clearable
@@ -194,11 +194,11 @@ const type = ref('date');
 const dateOpen = ref(false);
 const rangeStart = ref('');
 const rangeEnd = ref('');
-const disableDate = ref({
-	disabledDate(date) {
+const disabledDate = ref(
+	(date) => {
 		return date && (date.valueOf() < Date.now() - 86400000 || date.valueOf() > Date.now() + 864000000);
-	},
-});
+	}
+);
 const disableMonthDate = ref({
 	disabledDate(date) {
 		return date && date.valueOf() < new Date('2020-07-01 00:00');
