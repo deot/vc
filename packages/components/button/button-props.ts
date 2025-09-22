@@ -22,6 +22,8 @@ export const props = {
 	circle: Boolean,
 	round: Boolean,
 	long: Boolean,
+	solid: Boolean,
+	dashed: Boolean,
 	htmlType: {
 		type: String as PropType<'button' | 'submit' | 'reset'>,
 		default: 'button'

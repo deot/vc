@@ -7,6 +7,9 @@
 			<Button type="primary" @click="handleClick">
 				primary
 			</Button>
+			<Button type="primary" solid @click="handleClick">
+				solid
+			</Button>
 			<Button type="text" size="small">
 				text
 			</Button>

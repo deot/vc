@@ -76,6 +76,16 @@ $color-disabled-light: varfix(color-disabled-light, button);
 			background-color: $color-primary-light;
 			border-color: $color-primary-light;
 		}
+
+		@include when(solid) {
+			color: $color-primary;
+			background-color: $color-light;
+
+			&:hover {
+				color: $color-primary-light;
+				border-color: $color-primary-light;
+			}
+		}
 	}
 
 	@include when(text) {

@@ -29,6 +29,8 @@ export const Button = defineComponent({
 			'is-round': props.round,
 			'is-long': props.long,
 			'is-disabled': props.disabled,
+			'is-solid': props.solid,
+			'is-dashed': props.dashed,
 			'is-hover': isHover.value,
 			[`is-${props.size}`]: true,
 			[`is-${props.type}`]: true
