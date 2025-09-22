@@ -18,7 +18,9 @@
 			:height="600"
 			:row-height="100"
 			:data="dataSource"
+			:sort="sort"
 			@selection-change="handleChange"
+			@sort-change="handleSort"
 		>
 			<TableColumn
 				type="selection"
@@ -27,7 +29,10 @@
 			/>
 			<TableColumn
 				label="产品信息"
+				prop="date"
 				fixed="left"
+				tooltip="123"
+				sortable
 			>
 				<template #default="{ rowIndex, selected }">
 					<div>{{ rowIndex }}{{ selected }}</div>
@@ -76,6 +81,7 @@ import { Button } from '../../button';
 defineProps({ delay: Number });
 
 const isActive = ref(true);
+const sort = ref({ prop: 'date', order: 'descending' });
 const genTableData = length => Array.from({ length }).map((_, index) => ({
 	id: `id__${index}`
 }));
@@ -101,5 +107,9 @@ const handleDelete = (rowIndex) => {
 };
 const handleChange = (section) => {
 	console.log(section.map(i => i.id));
+};
+
+const handleSort = (sortInfo) => {
+	sort.value = sortInfo;
 };
 </script>

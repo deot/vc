@@ -38,7 +38,8 @@ export const Table = defineComponent({
 		'current-change',
 		'header-dragend ',
 		'expand-change',
-		'sort-change'
+		'sort-change',
+		'update:sort'
 	],
 	setup(props, { slots, expose, emit }) {
 		const instance = getCurrentInstance()!;
@@ -492,7 +493,7 @@ export const Table = defineComponent({
 								<TableHeader
 									ref={tableHeader}
 									border={props.border}
-									default-sort={props.defaultSort}
+									sort={props.sort}
 									style={bodyWidthStyle.value}
 								/>
 							</div>
@@ -581,7 +582,7 @@ export const Table = defineComponent({
 											<TableHeader
 												ref={leftFixedTableHeader}
 												border={props.border}
-												default-sort={props.defaultSort}
+												sort={props.sort}
 												style={bodyWidthStyle.value}
 												fixed="left"
 											/>
@@ -646,7 +647,7 @@ export const Table = defineComponent({
 											<TableHeader
 												ref={rightFixedTableHeader}
 												border={props.border}
-												default-sort={props.defaultSort}
+												sort={props.sort}
 												style={bodyWidthStyle.value}
 												fixed="right"
 											/>

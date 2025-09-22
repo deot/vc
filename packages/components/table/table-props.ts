@@ -88,7 +88,7 @@ export const props = {
 	 * 排序全部交给外部处理，内部不处理数据，只做交互
 	 * 列与列之间互斥
 	 */
-	defaultSort: {
+	sort: {
 		type: Object,
 		default: () => ({})
 	},

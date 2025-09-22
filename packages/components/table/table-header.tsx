@@ -4,10 +4,9 @@ import { IS_SERVER } from '@deot/vc-shared';
 import { Popover } from '../popover';
 import { Icon } from '../icon';
 import { useStates } from './store';
-// import TableSort from './table-sort';
+import { TableSort } from './table-sort';
 // import TableFilter from './table-filter';
 
-const TableSort = 'div';
 const TableFilter = 'div';
 
 export const TableHeader = defineComponent({
@@ -16,7 +15,7 @@ export const TableHeader = defineComponent({
 		fixed: [Boolean, String],
 		border: Boolean,
 		// 排序全部交给外部处理，内部不处理数据，只做交互
-		defaultSort: {
+		sort: {
 			type: Object,
 			default: () => ({})
 		}
@@ -241,7 +240,9 @@ export const TableHeader = defineComponent({
 		};
 
 		const handleSort = (prop: string, order: any) => {
-			table.emit('sort-change', { prop, order });
+			const v = { prop, order };
+			table.emit('update:sort', v);
+			table.emit('sort-change', v);
 		};
 
 		const handleFilter = (column: any, value: any) => {
@@ -316,6 +317,7 @@ export const TableHeader = defineComponent({
 															? (
 																	<Icon
 																		type="o-info"
+																		class="vc-table__tooltip"
 																		onMouseenter={(e: any) => handleCellMouseEnter(e, column)}
 																	/>
 																)
@@ -325,7 +327,7 @@ export const TableHeader = defineComponent({
 														column.sortable
 															? (
 																	<TableSort
-																		order={column.prop === props.defaultSort.prop ? props.defaultSort.order : ''}
+																		order={column.prop === props.sort.prop ? props.sort.order : ''}
 																		onClick={(order: any) => handleSort(column.prop, order)}
 																	/>
 																)

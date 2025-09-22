@@ -1,0 +1,38 @@
+@use '../style/helper' as *;
+
+$color-primary: varfix(color-primary, table-sort);
+$color-primary-light: varfix(color-primary-light, table-sort);
+$border-color: varfix(border-color, table-sort, #666);
+
+@include block(vc-table-sort) {
+	position: relative;
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	height: 20px;
+	width: 14px;
+	vertical-align: middle;
+	cursor: pointer;
+	overflow: initial;
+	@include element(icon) {
+		width: 0;
+		height: 0;
+		border: 5px solid transparent;
+		position: absolute;
+		left: 3px;
+		@include modifier(ascending) {
+			border-bottom-color: $border-color;
+			top: -2px;
+		}
+		@include modifier(descending) {
+			border-top-color: $border-color;
+			bottom: 0;
+		}
+		@include when(ascending) {
+			border-bottom-color: $color-primary;
+		}
+		@include when(descending) {
+			border-top-color: $color-primary;
+		}
+	}
+}

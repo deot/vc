@@ -1,0 +1,581 @@
+@use '../style/helper' as *;
+
+$component-name: vc-table;
+$foreground-color: varfix(foreground-color, table);
+$border-color: varfix(border-color, table, #EDEFF1);
+$f9: #F7F8FA;
+$gap-h: 12px;
+$gap-v: 8px;
+$line-height: 20px;
+
+@include block($component-name) {
+	position: relative;
+	width: 100%;
+	max-width: 100%;
+	overflow: hidden;
+	font-size: 13px;
+	color: $foreground-color;
+	background-color: #fff;
+	box-sizing: border-box;
+	flex: 1;
+
+	@include element(cell) {
+		width: 100%;
+		padding-right: $gap-h;
+		padding-left: $gap-h;
+		overflow: hidden;
+		line-height: $line-height;
+		word-break: break-all;
+		white-space: normal;
+		box-sizing: border-box;
+
+		.vc-table__unexpand__inden {
+			padding-left: 23px;
+		}
+	}
+
+	// 使用原生渲染取代Text动态展示
+	@include element(text-line) {
+		display: -webkit-box;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		word-break: break-all;
+		word-wrap: break-word;
+		-webkit-box-orient: vertical;
+		overflow-wrap: break-word;
+
+		// 动态设置
+		-webkit-line-clamp: 1;
+	}
+
+	@include element((tr, td)) {
+		position: relative;
+		display: inline-flex;
+		min-width: 0;
+		text-align: left;
+		text-overflow: ellipsis;
+		box-sizing: border-box;
+		align-items: center;
+
+		@include when(center) {
+			text-align: center;
+		}
+
+		@include when(right) {
+			text-align: right;
+		}
+
+		&.is-hidden {
+			> * {
+				visibility: hidden;
+			}
+		}
+	}
+
+	@include element(tr) {
+		display: flex;
+		background-color: #fff;
+
+		input[type="checkbox"] {
+			margin: 0;
+		}
+	}
+
+	@include element(td) {
+		padding: $gap-v 0;
+
+		&:first-child {
+			padding-left: $gap-h;
+		}
+
+		&:last-child {
+			padding-right: $gap-h;
+		}
+	}
+
+	@include element(th) {
+		padding: 10px 0;
+		overflow: hidden;
+		white-space: nowrap;
+		background-color: #fff;
+		box-sizing: border-box;
+		user-select: none;
+
+		&:first-child {
+			padding-left: $gap-h;
+		}
+
+		&:last-child {
+			padding-right: $gap-h;
+		}
+
+		@include when(center) {
+			text-align: center;
+		}
+
+		@include when(right) {
+			text-align: right;
+		}
+
+		> .vc-table__cell {
+			position: relative;
+			text-overflow: ellipsis;
+			word-wrap: normal;
+			white-space: nowrap;
+
+			&.is-highlight {
+				color: #409eff;
+			}
+		}
+
+		&.is-required > div::before {
+			display: inline-block;
+			width: 8px;
+			height: 8px;
+			margin-right: 5px;
+			vertical-align: middle;
+			background: #ff4d51;
+			border-radius: 50%;
+			content: "";
+		}
+
+		&.is-sortable {
+			cursor: pointer;
+		}
+
+		&.is-leaf {
+			border-bottom: 1px solid $border-color;
+		}
+	}
+
+	// 数据为空
+	@include element(empty-wrapper) {
+		display: flex;
+		width: 100%;
+		height: 100%;
+		min-height: 60px;
+		text-align: center;
+		justify-content: center;
+		align-items: center;
+
+		@include when(absolute) {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+		}
+	}
+
+	@include element(empty-text) {
+		width: 50%;
+		line-height: 60px;
+		color: #909399;
+	}
+
+	@include element(selection-column) {
+		.vc-table__cell {
+			text-overflow: unset!important;
+
+			.vc-checkbox {
+				padding: 0;
+			}
+		}
+	}
+	
+	// 展开行
+	@include element(expand-column) {
+		.vc-table__cell {
+			padding: 0;
+			text-align: center;
+		}
+	}
+
+	@include element(expand-icon) {
+		display: inline-block;
+		width: 20px;
+		height: 23px;
+		font-size: 12px;
+		line-height: $line-height;
+		color: #666;
+		cursor: pointer;
+
+		.vc-icon {
+			transform: rotate(90deg);
+			transition: transform 0.2s ease-in-out;
+		}
+
+		@include when(expand) {
+			.vc-icon {
+				transform: rotate(180deg);
+			}
+		}
+	}
+
+	@include element(expanded-cell) {
+		background-color: #fff;
+
+		// 纯属为了增加权重
+		&[class*="cell"] {
+			padding: 20px 50px;
+		}
+
+		&:hover {
+			background-color: transparent !important;
+		}
+	}
+
+	@include element(placeholder) {
+		display: inline-block;
+		width: 23px;
+	}
+	
+	@include element(append-wrapper) {
+		// 避免外边距重合 https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Box_Model/Mastering_margin_collapsing
+		overflow: hidden;
+	}
+
+	@include element((header, body, footer)) {
+		border-collapse: separate;
+		table-layout: fixed;
+	}
+
+	@include element(header) {
+		.vc-table__thead .vc-table__tr .vc-table__th {
+			font-size: 13px;
+			font-weight: 500;
+			line-height: 20px;
+			color: #667383;
+			background-color: $f9;
+		}
+
+		.vc-table__thead {
+			font-weight: 500;
+			box-sizing: border-box;
+
+			&.is-group {
+				.vc-table__th {
+					background: $f9;
+				}
+			}
+		}
+	}
+
+	@include element((header-wrapper, body-wrapper, footer-wrapper)) {
+		width: 100%;
+	}
+
+	@include element((header-wrapper, footer-wrapper)) {
+		overflow: hidden;
+
+		& .vc-table__tbody .vc-table__td {
+			color: #606266;
+			background-color: $f9;
+		}
+	}
+
+	@include element(footer-wrapper) {
+		margin-top: -1px;
+
+		.vc-table__td {
+			border-top: 1px solid $border-color;
+		}
+	}
+
+	@include element(hidden) {
+		position: absolute;
+		z-index: -1;
+		visibility: hidden;
+	}
+
+	@include element(body) {
+		overflow: hidden;
+
+		.vc-table__tr.hover-row {
+			&, &.vc-table__row--striped {
+				&, &.current-row {
+					> .vc-table__td {
+						background: $f9;
+					}
+				}
+			}
+		}
+
+		.vc-table__tr.current-row > .vc-table__td {
+			background: $f9;
+		}
+	}
+
+	@include element(body-wrapper) {
+		position: relative;
+		overflow: hidden;
+
+		@include when(scrolling-none) {
+			~ .vc-table__fixed,
+			~ .vc-table__fixed-right {
+				box-shadow: none;
+			}
+		}
+
+		@include when(scrolling-left) {
+			~ .vc-table__fixed {
+				box-shadow: none;
+			}
+		}
+
+		@include when(scrolling-right) {
+			~ .vc-table__fixed-right {
+				box-shadow: none;
+			}
+		}
+
+		.vc-table--border {
+			@include when(scrolling-right) {
+				~ .vc-table__fixed-right {
+					border-left: 1px solid $border-color;
+				}
+			}
+
+			@include when(scrolling-left) {
+				~ .vc-table__fixed {
+					border-right: 1px solid $border-color;
+				}
+			}
+		}
+	}
+
+	@include element((fixed, fixed-right)) {
+		position: absolute;
+		top: 0;
+		left: 0;
+		overflow: hidden;
+		box-shadow: 0 0 10px rgb(0 0 0 / 12%);
+	}
+
+	@include element(fixed-right) {
+		top: 0;
+		right: 0;
+		left: auto;
+
+		.vc-table__fixed-header-wrapper,
+		.vc-table__fixed-body-wrapper,
+		.vc-table__fixed-footer-wrapper {
+			right: 0;
+			left: auto;
+		}
+	}
+
+	@include element(fixed-header-wrapper) {
+		position: absolute;
+		top: 0;
+		left: 0;
+		z-index: 3;
+	}
+
+	@include element(fixed-footer-wrapper) {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		z-index: 3;
+
+		& .vc-table__tbody .vc-table__td {
+			color: #606266;
+			background-color: $f9;
+			border-top: 1px solid $border-color;
+		}
+	}
+
+	@include element(fixed-body-wrapper) {
+		position: absolute;
+		top: 37px;
+		left: 0;
+		z-index: 3;
+		overflow: hidden;
+	}
+
+	@include element(column-resize-proxy) {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 200px;
+		z-index: 10;
+		width: 0;
+		border-left: 1px solid $border-color;
+	}
+
+
+	@include element(tooltip) {
+		margin-left: 2px;
+		margin-top: -2px;
+	}
+
+	@include modifier(fit) {
+		border-right: 0;
+		border-bottom: 0;
+	}
+
+	@include modifier(scrollable-x) {
+		.vc-table__body-wrapper {
+			overflow: hidden;
+		}
+	}
+
+	@include modifier(striped) {
+		& .vc-table__body {
+			& .vc-table__tr.vc-table__row--striped {
+				.vc-table__td {
+					background: #fafafa;
+				}
+
+				&.current-row .vc-table__td {
+					background: $f9;
+				}
+			}
+		}
+	}
+
+	@include share-rule(table-border-pseudo) {
+		position: absolute;
+		z-index: 1;
+		background-color: $border-color;
+		content: "";
+	}
+
+	@include modifier(divider) {
+		.vc-table__td {
+			border-bottom: 1px solid $border-color;
+		}
+
+		.vc-table__th {
+			border-top: 1px solid $border-color;
+			border-bottom: 1px solid $border-color;
+		}
+
+		// 表格底部伪 border
+		&::before {
+			@include extend-rule(table-border-pseudo);
+
+			bottom: 0;
+			left: 0;
+			width: 100%;
+			height: 1px;
+		}
+
+		@include element((fixed, fixed-right)) {
+			&::before {
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				z-index: 4;
+				width: 100%;
+				height: 1px;
+				background-color: $border-color;
+				content: "";
+			}
+		}
+	}
+
+	// table--border, group（拥有多级表头）模式必定是border
+	@include modifier(border) {
+		border-top: 1px solid $border-color;
+		border-right: none;
+		border-bottom: none;
+		border-left: 1px solid $border-color;
+
+		// 表格右部伪 border
+		&::after {
+			@include extend-rule(table-border-pseudo);
+
+			top: 0;
+			right: 0;
+			width: 1px;
+			height: 100%;
+		}
+
+		&.vc-loading-parent--relative {
+			border-color: transparent;
+		}
+
+		.vc-table__th, .vc-table__td {
+			border-right: 1px solid $border-color;
+		}
+
+		.vc-table__th {
+			border-top: none;
+			border-bottom: 1px solid $border-color;
+
+			&:first-child {
+				border-left: none;
+			}
+		}
+	}
+
+	@include modifier(hidden) {
+		visibility: hidden;
+	}
+
+	@include modifier(enable-row-transition) {
+		.vc-table__body .vc-table__td {
+			transition: background-color 0.25s ease;
+		}
+	}
+
+	@include modifier(enable-row-hover) {
+		.vc-table__body .vc-table__tr:hover > .vc-table__td {
+			background-color: $f9;
+		}
+	}
+
+	@include modifier(fluid-height) {
+		.vc-table__fixed,
+		.vc-table__fixed-right {
+			bottom: 0;
+			overflow: hidden;
+		}
+	}
+
+	@include modifier(medium) {
+		.vc-table__th, .vc-table__td {
+			padding: 10px 0;
+		}
+	}
+
+	@include modifier(small) {
+		font-size: 12px;
+
+		.vc-table__th, .vc-table__td {
+			padding: 8px 0;
+		}
+	}
+
+	@include modifier(mini) {
+		font-size: 12px;
+
+		.vc-table__th, .vc-table__td {
+			padding: 6px 0;
+		}
+	}
+
+	[class*="vc-table__row--level"] {
+		.vc-table__expand-icon {
+			display: inline-block;
+			width: 20px;
+			height: 20px;
+			min-width: 20px;
+			margin-right: 3px;
+			line-height: 20px;
+			text-align: center;
+		}
+	}
+
+	.vc-recycle-list__scroll-state {
+		display: none;
+	}
+
+	.vc-recycle-list__wrapper {
+		overflow: hidden;
+	}
+	
+	> div.vc-scroller-track {
+		z-index: 5;
+	}
+}

@@ -548,7 +548,7 @@ const tableData = ref([
 <template>
 	<Table
 		:data="dataSource"
-		:default-sort="defaultSort"
+		v-model:sort="sort"
 		@sort-change="handleSort"
 	>
 		<TableItem>
@@ -576,7 +576,7 @@ const tableData = ref([
 import { ref } from 'vue';
 import { Table, TableColumn, TableItem } from '@deot/vc';
 
-const defaultSort = ref({ prop: 'date', order: 'descending' });
+const sort = ref({ prop: 'date', order: 'descending' });
 const tableData = ref([
 	{
 		date: '2011-11-02',
@@ -600,8 +600,8 @@ const tableData = ref([
 	}
 ]);
 
-const handleSort = (sortInfo) => {
-	defaultSort.value = sortInfo;
+const handleSort = () => {
+	console.log(sort);
 };
 </script>
 ```
@@ -834,7 +834,7 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 | get-summary             | 自定义的合计计算方法                                                                                                                                 | `Function({ columns, data })`                              | -                           | -       |
 | get-span                | 合并行或列的计算方法                                                                                                                                 | `Function({ row, column, rowIndex, columnIndex })`         | -                           | -       |
 | select-on-indeterminate | 在多选表格中，当仅有部分行被选中时，点击表头的多选框时的行为。若为 `true`，则选中所有行；若为 `false`，则取消选择所有行                                                                        | `boolean`                                                  | -                           | `true`  |
-| default-sort            | 默认的排序列的 `prop` 和顺序。它的`prop`属性指定默认的排序的列，`order`指定默认排序的顺序                                                                                    |                                                            |                             |         |
+| sort                    | 默认的排序列的 `prop` 和顺序。它的`prop`属性指定默认的排序的列，`order`指定默认排序的顺序                                                                                    |                                                            |                             |         |
 | delay                   | 延迟选择，排除transition的影响                                                                                                                       |                                                            |                             |         |
 
 
