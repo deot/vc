@@ -49,13 +49,13 @@ importers:
   packages/index:
     dependencies:
       '@deot/vc-components':
-        specifier: ^1.0.41
+        specifier: ^1.0.42
         version: link:../components
       '@deot/vc-hooks':
-        specifier: ^1.0.41
+        specifier: ^1.0.42
         version: link:../hooks
       '@deot/vc-shared':
-        specifier: ^1.0.41
+        specifier: ^1.0.42
         version: link:../shared
       vue:
         specifier: '*'
@@ -1990,6 +1990,7 @@ packages:
   eslint-plugin-markdown@5.1.0:
     resolution: {integrity: sha512-SJeyKko1K6GwI0AN6xeCDToXDkfKZfXcexA6B+O2Wr2btUS9GrC+YgwSyVli5DJnctUHjFXcQ2cqTaAmVoLi2A==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: Please use @eslint/markdown instead
     peerDependencies:
       eslint: '>=8'
 
@@ -3218,7 +3219,7 @@ packages:
   puppeteer@24.6.1:
     resolution: {integrity: sha512-/4ocGfu8LNvDbWUqJZV2VmwEWpbOdJa69y2Jivd213tV0ekAtUh/bgT1hhW63SDN/CtrEucOPwoomZ+9M+eBEg==}
     engines: {node: '>=18'}
-    deprecated: < 24.9.0 is no longer supported
+    deprecated: < 24.10.2 is no longer supported
     hasBin: true
 
   queue-microtask@1.2.3:
