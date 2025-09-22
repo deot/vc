@@ -4,12 +4,15 @@ export default () => {
 	const instance = getCurrentInstance()!;
 	const { props } = instance;
 
-	const currentValue = ref<any>(undefined);
+	const currentValue = ref<any>(void 0);
 	const isLoaded = ref(false);
 	const tabs = inject('vc-tabs', {}) as any;
 
 	const isActive = computed(() => {
-		const state = tabs.currentValue.value === (props.value || currentValue.value);
+		const paneValue = typeof props.value === 'undefined'
+			? currentValue.value
+			: props.value;
+		const state = tabs.currentValue.value === paneValue;
 
 		// 副作用
 		if (!isLoaded.value && state) {

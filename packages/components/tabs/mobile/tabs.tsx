@@ -285,7 +285,7 @@ export const MTabs = defineComponent({
 														data-id={item.value}
 														class={[
 															{
-																'is-active': (item.value || index) == tabs.currentValue.value,
+																'is-active': tabs.getTabPaneValue(item, index) === tabs.currentValue.value,
 																'is-average': props.average
 															},
 															'vcm-tabs__item'

@@ -21,8 +21,12 @@ export default (options: any = {}) => {
 	// 正在切换
 	const timer = ref<any>(null);
 
+	const getTabPaneValue = (nav: any, index: number) => {
+		return typeof nav?.value === 'undefined' ? index : nav.value;
+	};
+
 	const getTabIndex = (v: any) => {
-		return list.value.findIndex((nav, index) => (nav.value || index) === v);
+		return list.value.findIndex((nav, index) => getTabPaneValue(nav, index) === v);
 	};
 
 	const afloatStyle = computed(() => {
@@ -70,7 +74,7 @@ export default (options: any = {}) => {
 		const nav = list.value[index];
 		if (nav.disabled) return;
 
-		currentValue.value = nav.value || index;
+		currentValue.value = getTabPaneValue(nav, index);
 
 		emit('update:modelValue', currentValue.value);
 		emit('change', currentValue.value);
@@ -98,7 +102,9 @@ export default (options: any = {}) => {
 		// vnode动态时排序
 		nextTick(() => {
 			typeof currentValue.value === 'undefined' && (
-				currentValue.value = item.proxy.currentValue || 0
+				currentValue.value = typeof item.proxy.currentValue === 'undefined'
+					? 0
+					: item.proxy.currentValue
 			);
 
 			if (options.content.value) {
@@ -176,6 +182,7 @@ export default (options: any = {}) => {
 		classes,
 
 		getTabIndex,
+		getTabPaneValue,
 		handleChange
 	};
 };
