@@ -67,7 +67,7 @@ $color-disabled: varfix(color-disabled, textarea);
 			position: relative;
 			width: 100%;
 			min-height: unitfix(32);
-			padding: unitfix(7); // 18 + 7 + 7 + 2 = 32
+			padding: unitfix(7);
 			overflow: auto;
 			font-family: inherit;
 			font-size: inherit;
@@ -91,6 +91,11 @@ $color-disabled: varfix(color-disabled, textarea);
 		height: unitfix(18);
 		line-height: unitfix(18);
 		color: $color-dark-extralight;
+
+		@include when(inline) {
+			right: unitfix(4);
+			bottom: unitfix(0);
+		}
 	}
 
 	@include when(disabled) {
