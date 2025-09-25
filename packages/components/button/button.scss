@@ -13,6 +13,9 @@ $color-dark: varfix(color-dark, button);
 $color-dark-light: varfix(color-dark-light, button);
 $color-primary: varfix(color-primary, button);
 $color-primary-light: varfix(color-primary-light, button);
+$color-primary-disabled: varfix(color-primary-disabled, button, #BEDAFF);
+
+// $color-primary-hover: varfix(color-primary-hover, button, #0E42D2);
 $color-success: varfix(color-success, button);
 $color-success-light: varfix(color-success-light, button);
 $color-error: varfix(color-error, button);
@@ -145,8 +148,8 @@ $color-disabled-light: varfix(color-disabled-light, button);
 
 		@include when(primary) {
 			color: themefrozen(color-light);
-			background-color: $color-primary-light;
-			border-color: $color-primary-light;
+			background-color: $color-primary-disabled;
+			border-color: $color-primary-disabled;
 		}
 	}
 

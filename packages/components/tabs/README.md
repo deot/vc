@@ -232,7 +232,7 @@ const renderLabel = (props) => {
 				class="_render-icon"
 				style={
 					{
-						'color': props.value === 0 ? '#2B72FD' : '#666',
+						'color': props.value === 0 ? '#456CF6' : '#666',
 						'font-size': '12px',
 						'margin-right': '5px'
 					}
@@ -245,7 +245,7 @@ const renderLabel = (props) => {
 </script>
 <style>
 .v-tabs-render .vc-tabs__item:hover ._render-icon{
-	color: #2B72FD !important;
+	color: #456CF6 !important;
 }
 </style>
 ```

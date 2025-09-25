@@ -18,11 +18,11 @@ $component-name: vc-select-option;
 	}
 
 	@include when(select) {
-		color: #2B72FD;
+		color: #456CF6;
 		background-color: #fff;
 
 		.vc-icon {
-			color: #2B72FD;
+			color: #456CF6;
 		}
 
 		@include when(last) {

@@ -8,42 +8,46 @@ $component-name: vc-dropdown;
 
 @include block(vc-dropdown-menu) {
 	min-width: 100px;
-	margin: 0;
 	padding: 0;
+	margin: 0;
 	list-style: none;
 }
 
 @include block(vc-dropdown-item) {
 	position: relative;
-	margin: 0;
-	line-height: normal;
 	padding: 7px 16px;
+	margin: 0;
 	clear: both;
-	color: #666;
 	font-size: 12px !important;
+	line-height: normal;
+	color: #666;
 	white-space: nowrap;
 	list-style: none;
 	cursor: pointer;
-	transition: background .2s ease-in-out;
 	box-sizing: border-box;
+	transition: background .2s ease-in-out;
 
 
 	&:hover {
+		color: #456CF6;
 		background-color: #e6f7ff;
-		color: #2B72FD;
 	}
+
 	@include when(disabled) {
 		color: #c5c8ce;
 		cursor: not-allowed;
+
 		&:hover {
 			background-color: #fff;
 		}
 	}
+
 	@include when(selected) {
-		color: #2B72FD;
+		color: #456CF6;
 	}
+
 	@include when(divided) {
 		margin-top: 5px;
-		@include border('top', #e8eaec)
-	}
+
+		@include border('top', #e8eaec); }
 }

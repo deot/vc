@@ -177,7 +177,7 @@ const handleClickrender = () => {
 			return (
 				<span>
 					使用
-					<span style="color: #2B72FD">jsx</span>
+					<span style="color: #456CF6">jsx</span>
 					渲染
 				</span>
 			);
