@@ -5,6 +5,7 @@ export const props = {
 		type: [Number, String],
 		default: 1
 	},
+	// TODO: left/right
 	placement: {
 		type: String,
 		default: 'top'
@@ -21,8 +22,8 @@ export const props = {
 		type: Number,
 		default: 0
 	},
-	// -> 固钉始终保持在容器内， 超过范围则隐藏(请注意容器避免出现滚动条)
-	to: {
+	// -> 固钉始终保持在容器内， 超过范围则隐藏(请注意容器避免出现滚动条) 仅fixed为true有效
+	target: {
 		type: String
 	}
 };

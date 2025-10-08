@@ -5,7 +5,7 @@
 			height="200px"
 			:always="true"
 			:native="false"
-			style="background: gray; padding: 10px"
+			style="background: gray; padding: 0 10px"
 		>
 			<Customer :render="renderItems" :length="2" />
 			<Affix :fixed="false" :offset="10">
@@ -18,21 +18,22 @@
 			<Customer :render="renderItems" />
 		</Scroller>
 	</div>
-	<div v-if="false" style="padding: 10px 200px">
+	<div style="padding: 0 200px">
 		<ScrollerWheel
 			height="200px"
 			:always="true"
 			:native="false"
-			style="background: gray"
+			style="background: gray; padding: 0 10px"
 		>
 			<Customer :render="renderItems" :length="2" />
 			<Affix :fixed="false" :offset="10">
-				<Button type="error">2. Top(ScrollerWheel)</Button>
+				<Button type="error">1. Top(ScrollerWheel)</Button>
 			</Affix>
 			<Customer :render="renderItems" />
 			<Affix :fixed="false" :offset="10" placement="bottom">
-				<Button type="error">2. Bottom(ScrollerWheel)</Button>
+				<Button type="error">1. Bottom(ScrollerWheel)</Button>
 			</Affix>
+			<Customer :render="renderItems" />
 		</ScrollerWheel>
 	</div>
 </template>

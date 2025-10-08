@@ -1,4 +1,4 @@
-import { getCurrentInstance, computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { getCurrentInstance, computed, onBeforeUnmount, onMounted, ref, provide, reactive } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import type { SetupContext } from 'vue';
 import type { BarExposed } from './bar';
@@ -71,6 +71,7 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		refreshPosition(options);
 	};
 
+	const listeners: any[] = [];
 	// 主动触发
 	const triggerScrollDelegate = (options?: any) => {
 		const delegates = {
@@ -80,12 +81,15 @@ export const useScroller = (expose: SetupContext['expose']) => {
 			clientHeight: wrapperH.value,
 			scrollWidth: contentW.value,
 			scrollHeight: contentH.value,
+			getBoundingClientRect: () => wrapper.value?.getBoundingClientRect()
 		};
-
-		instance.emit('scroll', {
+		const e = {
 			target: delegates,
 			currentTarget: delegates
-		});
+		};
+
+		instance.emit('scroll', e);
+		listeners.forEach(listener => listener(e));
 	};
 
 	const scrollTo = (options?: any) => {
@@ -120,10 +124,11 @@ export const useScroller = (expose: SetupContext['expose']) => {
 			Resize.off(wrapper.value!, refresh);
 			Resize.off(content.value!, refresh);
 		}
+
+		listeners.splice(0, listeners.length);
 	});
 
-	// 以下两个暴露scroll事件, 从而触发handleScroll
-	expose({
+	const exposed = {
 		wrapper,
 		content,
 		scrollTo,
@@ -139,8 +144,18 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		},
 		setScrollLeft: (value: number) => {
 			scrollTo({ x: value });
+		},
+		on: (listener: any) => {
+			listeners.push(listener);
+		},
+		off: (listener: any) => {
+			listeners.splice(listeners.indexOf(listener), 1);
 		}
-	});
+	};
+	// 以下两个暴露scroll事件, 从而触发handleScroll
+	expose(exposed);
+	// reactive: xxx.scrollLeft.value -> xxx.scrollLeft
+	provide('vc-scroller', reactive(exposed));
 
 	return {
 		bar,

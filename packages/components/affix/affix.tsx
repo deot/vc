@@ -1,27 +1,36 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, reactive, shallowRef, computed, onMounted, onBeforeUnmount } from 'vue';
+import { defineComponent, ref, reactive, shallowRef, computed, onMounted, onBeforeUnmount, inject } from 'vue';
 import { getScroller } from '@deot/helper-dom';
 import { props as affixProps } from './affix-props';
 
 const COMPONENT_NAME = 'vc-affix';
 
+const SCROLLER_WHEEL_REG = /vc-scroller-wheel/;
+
 export const Affix = defineComponent({
 	name: COMPONENT_NAME,
 	props: affixProps,
 	setup(props, { slots, expose }) {
+		const scrollerInstance = inject<any>('vc-scroller', null);
 		const scroller = shallowRef<any>(); // 当前元素所在的滚动容器
-		const container = shallowRef<HTMLElement>();
-		const current = shallowRef<HTMLDivElement>();
+		const base = shallowRef<HTMLElement>(); // 当前元素（props.tagret）的参考容器
+		const current = shallowRef<HTMLDivElement>(); // 当前元素
+
 		const currentRect = reactive({
 			top: 0,
 			bottom: 0,
 			width: 0,
 			height: 0
 		});
+
 		const isActive = ref(false);
 		const transformY = ref(0);
 		const windowHeight = ref(window.innerHeight);
+
+		const isVcScrollerWheel = computed(() => {
+			return SCROLLER_WHEEL_REG.test(scroller.value?.className || '');
+		});
 
 		const currentStyle = computed(() => {
 			if (!isActive.value) return {};
@@ -58,29 +67,36 @@ export const Affix = defineComponent({
 			const { placement, offset } = props;
 			const currentHeightOffset = offset + currentRect.height;
 			const containerRect = scroller.value!.getBoundingClientRect();
+			let transformOffsetY = 0;
+
+			// scroller-wheel滚动条偏移
+			if (scrollerInstance && isVcScrollerWheel.value) {
+				const maxMoveY = scrollerInstance.scrollHeight! - scrollerInstance.clientHeight!;
+				transformOffsetY = scrollerInstance.scrollTop! >= maxMoveY ? maxMoveY : scrollerInstance.scrollTop;
+			}
 
 			if (placement === 'top') {
 				isActive.value = currentRect.top - containerRect.top <= props.offset;
-				transformY.value = Math.min(containerRect.bottom - currentHeightOffset, 0);
+				transformY.value = Math.min(containerRect.bottom - currentHeightOffset, 0) + transformOffsetY;
 			} else {
 				isActive.value = currentRect.bottom - containerRect.top >= containerRect.height - props.offset;
-				transformY.value = Math.max(containerRect.height - containerRect.top - currentHeightOffset, 0);
+				transformY.value = Math.max(containerRect.height - containerRect.top - currentHeightOffset, 0) + transformOffsetY;
 			}
 		};
 
 		const setFixedStatus = () => {
-			const { placement, to, offset } = props;
+			const { placement, target, offset } = props;
 			const currentHeightOffset = offset + currentRect.height;
-			const containerRect: any = to && container.value!.getBoundingClientRect();
+			const containerRect: any = target && base.value!.getBoundingClientRect();
 			if (placement === 'top') {
-				if (to) {
+				if (target) {
 					isActive.value = offset > currentRect.top && containerRect.bottom > 0;
 					transformY.value = Math.min(containerRect.bottom - currentHeightOffset, 0);
 				} else {
 					isActive.value = offset > currentRect.top;
 				}
 			} else {
-				if (to) {
+				if (target) {
 					isActive.value = windowHeight.value - offset < currentRect.bottom && windowHeight.value > containerRect.top;
 					transformY.value = -Math.min(windowHeight.value - containerRect.top - currentHeightOffset, 0);
 				} else {
@@ -96,20 +112,29 @@ export const Affix = defineComponent({
 		};
 
 		onMounted(() => {
-			if (typeof props.to === 'string') {
-				container.value = document.querySelector<HTMLElement>(props.to) ?? (void 0);
+			if (typeof props.target === 'string') {
+				base.value = document.querySelector<HTMLElement>(props.target) ?? (void 0);
 			}
 
-			!container.value && (container.value = document.documentElement);
-			// TODO: vc-scroller/wheel
-			scroller.value = getScroller(current.value!);
+			!base.value && (base.value = document.documentElement);
+			scroller.value = getScroller(current.value!, { className: SCROLLER_WHEEL_REG });
 
-			scroller.value?.addEventListener('scroll', refresh);
+			if (isVcScrollerWheel.value) {
+				scrollerInstance?.on(refresh);
+			} else {
+				scroller.value?.addEventListener('scroll', refresh);
+			}
 
 			refresh();
 		});
 
-		onBeforeUnmount(() => scroller.value?.removeEventListener('scroll', refresh));
+		onBeforeUnmount(() => {
+			if (isVcScrollerWheel.value) {
+				scrollerInstance?.off(refresh);
+			} else {
+				scroller.value?.removeEventListener('scroll', refresh);
+			}
+		});
 
 		expose({ refresh });
 
