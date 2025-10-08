@@ -4,6 +4,8 @@ export * from './vc';
 
 export * from './action-sheet';
 export * from './action-sheet/index.m';
+export * from './affix';
+export * from './affix/index.m';
 export * from './alert';
 export * from './alert/index.m';
 export * from './artboard';

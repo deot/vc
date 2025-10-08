@@ -11,6 +11,8 @@ import {
 	// Components
 	ActionSheet,
 	MActionSheet,
+	Affix,
+	MAffix,
 	Alert,
 	MAlert,
 	Artboard,
@@ -206,6 +208,8 @@ import {
 export const Components = {
 	ActionSheet,
 	MActionSheet,
+	Affix,
+	MAffix,
 	Alert,
 	MAlert,
 	Artboard,

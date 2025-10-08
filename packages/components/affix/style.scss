@@ -1,0 +1,12 @@
+@use '../style/helper' as *;
+
+$component-name: vc-affix;
+
+@include block($component-name) {
+	@include element(fixed) {
+		position: fixed;
+	}
+	@include element(absolute) {
+		position: absolute;
+	}
+}
