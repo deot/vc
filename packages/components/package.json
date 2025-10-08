@@ -27,7 +27,7 @@
     }
   },
   "dependencies": {
-    "@deot/helper": "^1.1.13",
+    "@deot/helper": "^1.1.14",
     "lodash-es": "^4.17.21"
   },
   "devDependencies": {
