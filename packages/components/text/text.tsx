@@ -51,7 +51,7 @@ export const Text = defineComponent({
 					name: 'vc-text-popover', // 确保不重复创建
 					triggerEl: e.target,
 					hover: true,
-					theme: 'dark',
+					theme: props.theme,
 					placement: props.placement,
 					portalClass: props.portalClass,
 					portalStyle: [props.portalStyle || `width: ${e.target.clientWidth}px`, 'word-break: break-all'],

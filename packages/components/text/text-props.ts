@@ -37,6 +37,10 @@ export const props = {
 		default: (props$: any) => {
 			return props$.value;
 		}
+	},
+	theme: {
+		type: String,
+		default: 'dark'
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;
