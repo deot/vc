@@ -149,7 +149,7 @@ export const Affix = defineComponent({
 						class={{ [`vc-affix__${props.fixed ? 'fixed' : 'absolute'}`]: isActive.value }}
 						style={contentStyle.value}
 					>
-						{ slots?.default?.() }
+						{ slots?.default?.({ active: isActive.value }) }
 					</div>
 				</div>
 			);
