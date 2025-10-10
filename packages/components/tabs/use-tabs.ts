@@ -79,6 +79,8 @@ export default (options: any = {}) => {
 		emit('update:modelValue', currentValue.value);
 		emit('change', currentValue.value);
 		emit('click', currentValue.value);
+
+		nav.anchor && document.querySelector(nav.anchor)?.scrollIntoView?.({ behavior: 'smooth' });
 	};
 
 	const handleResize = () => {

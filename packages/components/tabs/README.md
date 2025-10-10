@@ -296,6 +296,7 @@ const renderLabel = (props) => {
 | -------- | -------------------------------------- | ------------------- | --- | ------ |
 | value    | 用于标识当前面板，对应 value，默认为其索引值              | `string`            | -   | -      |
 | label    | 选项卡头显示文字，支持 Render 函数。                 | `string`、`Function` | -   | -      |
+| anchor   | 锚点,有值时会触发`scrollIntoView`              | `string`            | -   | -      |
 | lazy     | 标签是否延迟渲染 是否可以关闭页签，仅在 `type="card"` 时有效 | `boolean`           | -   | `null` |
 | closable | 是否可以关闭页签，仅在 type="card" 时有效            | -                   | -   | -      |
 
