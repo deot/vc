@@ -16,6 +16,7 @@ export const useSwitch = (expose: SetupContext['expose']) => {
 
 	const classes = computed(() => {
 		return {
+			'is-disabled': props.disabled,
 			'is-loading': isLoading.value,
 			'is-checked': checked.value
 		};

@@ -5,6 +5,9 @@
 		<Switch :model-value="true" />
 		<Switch :model-value="false" />
 
+		<Switch :model-value="true" disabled />
+		<Switch :model-value="false" disabled />
+
 		<Switch :width="40">
 			<template #checked>
 				<span>开</span>

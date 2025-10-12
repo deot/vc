@@ -11,6 +11,7 @@ $background-color-light: varfix(background-color-light, switch);
 	padding-bottom: 6px;
 	font-size: 12px;
 	line-height: 20px;
+	cursor: pointer;
 	box-sizing: border-box;
 
 	@include element(wrapper) {
@@ -18,7 +19,6 @@ $background-color-light: varfix(background-color-light, switch);
 		display: flex;
 		width: 100%;
 		vertical-align: middle;
-		cursor: pointer;
 		background-color: #d9d9d9;
 		border: 1px solid #d9d9d9;
 		border-radius: 20px;
@@ -42,7 +42,6 @@ $background-color-light: varfix(background-color-light, switch);
 		left: 1px;
 		width: 16px;
 		height: 16px;
-		cursor: pointer;
 		background-color: $background-color-light;
 		border-radius: 18px;
 		content: '';
@@ -67,6 +66,23 @@ $background-color-light: varfix(background-color-light, switch);
 
 		@include element(content) {
 			justify-content: flex-start;
+		}
+	}
+
+	@include when(disabled) {
+		cursor: not-allowed;
+
+		@include element(wrapper) {
+			background-color: #E8E9EB;
+			border-color: #E8E9EB;
+		}
+
+		@include when(checked) {
+			@include element(wrapper) {
+				background-color: #D4DBFF;
+				border-color: #D4DBFF;
+			}
+
 		}
 	}
 }
