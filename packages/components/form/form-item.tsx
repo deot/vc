@@ -13,7 +13,19 @@ export const FormItem = defineComponent({
 	setup(props, { slots, expose }) {
 		const it = useFormItem(expose);
 
-		const { isStyleless, isNest, classes, labelStyle, contentStyle, showError, validateMessage } = it;
+		const {
+			isStyleless,
+			isNest,
+			classes,
+			labelStyle,
+			contentStyle,
+			errorStyle,
+			labelClass,
+			contentClass,
+			errorClass,
+			showError,
+			validateMessage
+		} = it;
 		const { label, labelFor } = props;
 
 		const errorColorClass = 'vc-form-item__error';
@@ -33,7 +45,7 @@ export const FormItem = defineComponent({
 						(label || slots.label) && (
 							<div
 								style={labelStyle.value}
-								class={['vc-form-item__label', props.labelClass]}
+								class={['vc-form-item__label', labelClass.value]}
 								// @ts-ignore
 								for={labelFor}
 							>
@@ -44,7 +56,7 @@ export const FormItem = defineComponent({
 						)
 					}
 					<div class="vc-form-item__wrapper">
-						<div class={['vc-form-item__content', props.contentClass]} style={contentStyle.value}>
+						<div class={['vc-form-item__content', contentClass.value]} style={contentStyle.value}>
 							{ slots.default?.() }
 							{
 								slots.error
@@ -52,13 +64,15 @@ export const FormItem = defineComponent({
 											show: showError.value,
 											nest: isNest.value,
 											message: validateMessage.value,
-											class: errorColorClass,
+											class: [errorColorClass, errorClass.value],
+											style: [errorStyle.value]
 										})
 									: (
 											<TransitionFade>
 												<div
 													v-show={showError.value}
-													class={['vc-form-item__tip', isNest.value ? 'is-nest' : '', errorColorClass]}
+													class={['vc-form-item__tip', isNest.value ? 'is-nest' : '', errorColorClass, errorClass.value]}
+													style={[errorStyle.value]}
 												>
 													{ validateMessage.value }
 												</div>

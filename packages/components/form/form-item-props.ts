@@ -49,5 +49,7 @@ export const props = {
 	contentClass: [Object, String],
 	labelStyle: [Object, String],
 	labelClass: [Object, String],
+	errorStyle: [Object, String],
+	errorClass: [Object, String],
 };
 export type Props = ExtractPropTypes<typeof props>;

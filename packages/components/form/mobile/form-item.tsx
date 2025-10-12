@@ -12,7 +12,19 @@ export const MFormItem = defineComponent({
 	setup(props, { slots, expose }) {
 		const it = useFormItem(expose);
 
-		const { isStyleless, classes, labelStyle, contentStyle, isNest, showError, validateMessage } = it;
+		const {
+			isStyleless,
+			classes,
+			labelStyle,
+			contentStyle,
+			errorStyle,
+			labelClass,
+			contentClass,
+			errorClass,
+			isNest,
+			showError,
+			validateMessage
+		} = it;
 		const { label, labelFor, showMessage } = props;
 
 		const errorColorClass = 'vcm-form-item__error';
@@ -23,7 +35,9 @@ export const MFormItem = defineComponent({
 					show: showError.value,
 					nest: isNest.value,
 					message: validateMessage.value,
-					class: errorColorClass
+					class: [errorColorClass, errorClass.value],
+					style: [errorStyle.value]
+
 				})
 			];
 			return (
@@ -37,7 +51,7 @@ export const MFormItem = defineComponent({
 								<label
 									for={labelFor}
 									style={labelStyle.value}
-									class="vcm-form-item__label"
+									class={['vcm-form-item__label', labelClass.value]}
 								>
 									{ label || slots.label?.() }
 								</label>
@@ -46,13 +60,14 @@ export const MFormItem = defineComponent({
 
 						<div
 							style={contentStyle.value}
-							class="vcm-form-item__content"
+							class={['vcm-form-item__content', contentClass.value]}
 						>
 							{ slots.default?.() }
 							{
 								showMessage && showError.value && (
 									<div
-										class={[{ 'is-nest': isNest.value }, errorColorClass]}
+										class={[{ 'is-nest': isNest.value }, errorColorClass, errorClass.value]}
+										style={[errorStyle.value]}
 									>
 										{
 											slots.error
