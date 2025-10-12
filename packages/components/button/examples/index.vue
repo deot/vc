@@ -4,11 +4,14 @@
 			<Button :wait="5000" type="default" @click="handleClick">
 				default
 			</Button>
+			<Button :wait="5000" type="default" solid @click="handleClick">
+				default/solid
+			</Button>
 			<Button type="primary" @click="handleClick">
 				primary
 			</Button>
 			<Button type="primary" solid @click="handleClick">
-				solid
+				primary/solid
 			</Button>
 			<Button type="text" size="small">
 				text

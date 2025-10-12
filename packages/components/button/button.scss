@@ -15,7 +15,7 @@ $color-primary: varfix(color-primary, button);
 $color-primary-light: varfix(color-primary-light, button);
 $color-primary-disabled: varfix(color-primary-disabled, button, #BEDAFF);
 
-// $color-primary-hover: varfix(color-primary-hover, button, #0E42D2);
+$border-color-light: varfix(border-color-light, button, #C4C9D2);
 $color-success: varfix(color-success, button);
 $color-success-light: varfix(color-success-light, button);
 $color-error: varfix(color-error, button);
@@ -67,6 +67,13 @@ $color-disabled-light: varfix(color-disabled-light, button);
 		&:hover {
 			color: $color-primary;
 			border-color: $color-primary;
+		}
+		@include when(solid) {
+			border-color: $border-color-light;
+
+			&:hover {
+				border-color: $color-primary-light;
+			}
 		}
 	}
 
@@ -137,13 +144,13 @@ $color-disabled-light: varfix(color-disabled-light, button);
 	@include when(disabled) {
 		color: #374455;
 		cursor: not-allowed;
-		background-color: #C4C9D2;
-		border-color: #C4C9D2;
+		background-color: $border-color-light;
+		border-color: $border-color-light;
 
 		&:hover {
 			color: #374455;
-			background: #C4C9D2;
-			border-color: #C4C9D2;
+			background: $border-color-light;
+			border-color: $border-color-light;
 		}
 
 		@include when(primary) {
