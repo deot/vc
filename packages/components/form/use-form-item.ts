@@ -116,7 +116,8 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 				width: labelPosition.value !== 'top' && labelWidth && labelWidth > 0 ? `${labelWidth}px` : 'auto',
 				textAlign: labelPosition.value === 'top' ? 'left' : labelPosition.value
 			},
-			props.labelStyle || form.props.labelStyle
+			form.props.labelStyle,
+			props.labelStyle
 		];
 	});
 
@@ -127,24 +128,25 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 				marginLeft: !hasLabel.value && isNest.value ? 0 : labelWidth && labelWidth > 0 ? `${labelWidth}px` : 'unset',
 				marginBottom: isNest.value && !isNestLast.value ? `20px` : 0
 			},
-			props.contentStyle || form.props.contentStyle
+			form.props.contentStyle,
+			props.contentStyle
 		];
 	});
 
 	const errorStyle = computed(() => {
-		return props.errorStyle || form.props.errorStyle;
+		return [form.props.errorStyle, props.errorStyle];
 	});
 
 	const labelClass = computed(() => {
-		return props.labelClass || form.props.labelClass;
+		return [form.props.labelClass, props.labelClass];
 	});
 
 	const contentClass = computed(() => {
-		return props.contentClass || form.props.contentClass;
+		return [form.props.contentClass, props.contentClass];
 	});
 
 	const errorClass = computed(() => {
-		return props.errorClass || form.props.errorClass;
+		return [form.props.errorClass, props.errorClass];
 	});
 
 	const isStyleless = computed(() => {

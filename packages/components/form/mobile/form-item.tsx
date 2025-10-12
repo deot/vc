@@ -35,8 +35,8 @@ export const MFormItem = defineComponent({
 					show: showError.value,
 					nest: isNest.value,
 					message: validateMessage.value,
-					class: [errorColorClass, errorClass.value],
-					style: [errorStyle.value]
+					class: [errorColorClass, ...errorClass.value],
+					style: errorStyle.value
 
 				})
 			];
@@ -51,7 +51,7 @@ export const MFormItem = defineComponent({
 								<label
 									for={labelFor}
 									style={labelStyle.value}
-									class={['vcm-form-item__label', labelClass.value]}
+									class={['vcm-form-item__label', ...labelClass.value]}
 								>
 									{ label || slots.label?.() }
 								</label>
@@ -60,14 +60,14 @@ export const MFormItem = defineComponent({
 
 						<div
 							style={contentStyle.value}
-							class={['vcm-form-item__content', contentClass.value]}
+							class={['vcm-form-item__content', ...contentClass.value]}
 						>
 							{ slots.default?.() }
 							{
 								showMessage && showError.value && (
 									<div
-										class={[{ 'is-nest': isNest.value }, errorColorClass, errorClass.value]}
-										style={[errorStyle.value]}
+										class={[{ 'is-nest': isNest.value }, errorColorClass, ...errorClass.value]}
+										style={errorStyle.value}
 									>
 										{
 											slots.error
