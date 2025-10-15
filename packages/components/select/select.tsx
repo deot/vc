@@ -221,13 +221,17 @@ export const Select = defineComponent({
 									placeholder={its.value.attrs?.placeholder || '请选择'}
 								>
 									{{
-										prepend: () => {
-											if (slots.prepend) return slots.prepend?.();
-											if (!props.label) return null;
-											return (
-												<span class="vc-select__label">{ props.label }</span>
-											);
-										},
+										prepend: slots.prepend || props.label
+											? () => {
+													slots.prepend
+														? slots.prepend()
+														: (
+																<div class="vc-select__prepend">
+																	<span class="vc-select__label">{ props.label }</span>
+																</div>
+															);
+												}
+											: null,
 										content: multiple.value && (currentValue.value && currentValue.value.length > 0)
 											? () => {
 													return (

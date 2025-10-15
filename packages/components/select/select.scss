@@ -35,7 +35,7 @@ $component-name: vc-select;
 		white-space: nowrap;
 	}
 
-	@include element(label) {
+	@include element(prepend) {
 		padding-right: 5px;
 		padding-left: 12px;
 		font-weight: 400;
