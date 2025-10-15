@@ -201,7 +201,7 @@ export const Select = defineComponent({
 					animation="y"
 					// @ts-ignore
 					onMouseenter={() => (isHover.value = true)}
-					onMuseleave={() => (isHover.value = false)}
+					onMouseleave={() => (isHover.value = false)}
 					onReady={() => emit('ready')}
 					onClose={() => emit('close')}
 					onVisibleChange={() => emit('visible-change', isActive.value)}
@@ -221,6 +221,13 @@ export const Select = defineComponent({
 									placeholder={its.value.attrs?.placeholder || '请选择'}
 								>
 									{{
+										prepend: () => {
+											if (slots.prepend) return slots.prepend?.();
+											if (!props.label) return null;
+											return (
+												<span class="vc-select__label">{ props.label }</span>
+											);
+										},
 										content: multiple.value && (currentValue.value && currentValue.value.length > 0)
 											? () => {
 													return (
@@ -248,7 +255,7 @@ export const Select = defineComponent({
 												<div class="vc-select__append">
 													<Icon
 														type={showClear.value ? 'clear' : icon.value}
-														class={[{ 'is-arrow': !showClear }, 'vc-select__icon']}
+														class={[{ 'is-arrow': !showClear.value }, 'vc-select__icon']}
 														// @ts-ignore
 														onClick={handleClear}
 													/>

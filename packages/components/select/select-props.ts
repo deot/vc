@@ -81,6 +81,7 @@ export const props = {
 	nullValue: {
 		type: [Number, String, Object],
 		default: void 0
-	}
+	},
+	label: String
 };
 export type Props = ExtractPropTypes<typeof props>;

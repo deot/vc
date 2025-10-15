@@ -35,6 +35,13 @@ $component-name: vc-select;
 		white-space: nowrap;
 	}
 
+	@include element(label) {
+		padding-right: 5px;
+		padding-left: 12px;
+		font-weight: 400;
+		color: #4E5969;
+	}
+
 	@include element(icon) {
 		@include when(arrow) {
 			transform: scale(0.8);

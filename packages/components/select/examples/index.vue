@@ -33,6 +33,7 @@
 				v-model="value1"
 				style="width: 200px"
 				searchable
+				label="城市: "
 				:data="[{ value: 'Hot Cities', children: cityList1 }, { value: 'Other Citie', children: cityList2 }]"
 			/>
 		</div>
