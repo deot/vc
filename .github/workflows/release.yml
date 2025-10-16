@@ -3,37 +3,37 @@ name: Release Package
 on:
   workflow_dispatch:
     inputs:
-      dryRun: 
+      dryRun:
         description: 'Dry Run'
         default: true
         required: true
         type: boolean
 
-      push: 
+      push:
         description: 'Allow Git Push'
         default: true
         required: true
         type: boolean
 
-      publish: 
+      publish:
         description: 'Allow Npm Publish'
         default: true
         required: true
         type: boolean
 
-      tag: 
+      tag:
         description: 'Allow Git Tag'
         default: true
         required: true
         type: boolean
 
-      commit: 
+      commit:
         description: 'Allow Git Commit'
         default: true
         required: true
         type: boolean
 
-      keepLastTag: 
+      keepLastTag:
         description: 'Clean Tags & Keep Last'
         default: false
         required: true
@@ -44,7 +44,7 @@ on:
         default: 'patch'
         required: false
         type: choice
-        options: 
+        options:
           - major
           - minor
           - patch
@@ -86,7 +86,7 @@ jobs:
       - name: Set node version to latest
         uses: actions/setup-node@v4
         with:
-          node-version: latest
+          node-version: 24.10.0
           cache: 'pnpm'
 
       - name: Checkout main

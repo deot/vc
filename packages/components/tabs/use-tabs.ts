@@ -1,8 +1,12 @@
-import { getCurrentInstance, computed, watch, ref, provide, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { getCurrentInstance, computed, watch, ref, provide, onMounted, onBeforeUnmount, nextTick, inject } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import { getUid } from '@deot/helper-utils';
+import { scrollIntoView } from '@deot/helper-dom';
+import { getScroller } from '../scroller/utils';
 
 export default (options: any = {}) => {
+	// 目前只支持外置（<Affix><Tabs></Affix>）,后续集成<Tabs affixable affixOptions="{}" />(但这个与锚点无关)
+	const affix = inject('vc-affix', null) as any;
 	const instance = getCurrentInstance()!;
 	const { props, emit } = instance;
 
@@ -59,6 +63,10 @@ export default (options: any = {}) => {
 		};
 	});
 
+	const hasAnchor = computed(() => {
+		return list.value.some(item => !!item.anchor);
+	});
+
 	/**
 	 * 下层值变化：刷新tabs
 	 */
@@ -66,7 +74,65 @@ export default (options: any = {}) => {
 		options?.refreshAfloat?.();
 	};
 
-	const handleChange = (index: number) => {
+	let scrollToAnchorTimer: any;
+	const scrollToAnchor = (anchor: string) => {
+		if (!anchor) return;
+		const el = document.querySelector(anchor);
+		if (!el) return;
+		const scroller = getScroller(instance.vnode.el) as any;
+
+		scrollIntoView(scroller, {
+			duration: 250,
+			from: scroller.scrollTop,
+			to: scroller.scrollTop
+				+ el.getBoundingClientRect().top
+				- scroller.getBoundingClientRect().top
+				- (!affix || affix.props.placement !== 'bottom' ? instance.vnode.el!.offsetHeight : 0)
+				- (affix && affix.props.placement !== 'bottom' ? affix.props.offset : 0)
+		});
+		scrollToAnchorTimer && clearTimeout(scrollToAnchorTimer);
+		scrollToAnchorTimer = setTimeout(() => scrollToAnchorTimer = null, 300);
+	};
+
+	/**
+	 * 遍历所有锚点，找到第一个当前可视区顶部对齐的锚点
+	 * 并切换到当前tab
+	 */
+	const handleAffixScroll = () => {
+		if (!hasAnchor.value || scrollToAnchorTimer) return;
+		const scroller = getScroller(instance.vnode.el) as any;
+		const scrollTop = scroller?.scrollTop;
+		if (typeof scrollTop !== 'number') return;
+
+		for (let i = 0; i < list.value.length; i++) {
+			const nav = list.value[i];
+			const anchor = nav.anchor;
+			if (!anchor) continue;
+			const el = document.querySelector(anchor) as HTMLElement;
+			if (!el) continue;
+			const elTop = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+			const nextNav = list.value[i + 1];
+			let nextElTop: number | undefined;
+			if (nextNav && nextNav.anchor) {
+				const nextEl = document.querySelector(nextNav.anchor) as HTMLElement;
+				if (nextEl) {
+					nextElTop = nextEl.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+				}
+			}
+			const allowDistance = 2; // 允许一点误差
+			if (
+				scrollTop >= elTop - allowDistance
+				&& (typeof nextElTop === 'undefined' || scrollTop < nextElTop - allowDistance)
+			) {
+				if (getTabIndex(currentValue.value) !== i) {
+					handleChange(i, false);
+				}
+				break;
+			}
+		}
+	};
+
+	const handleChange = (index: number, scrollTo = true) => {
 		if (timer.value) return;
 
 		timer.value = setTimeout(() => timer.value = null, 300);
@@ -80,7 +146,7 @@ export default (options: any = {}) => {
 		emit('change', currentValue.value);
 		emit('click', currentValue.value);
 
-		nav.anchor && document.querySelector(nav.anchor)?.scrollIntoView?.({ behavior: 'smooth' });
+		scrollTo && scrollToAnchor(nav.anchor);
 	};
 
 	const handleResize = () => {
@@ -92,11 +158,14 @@ export default (options: any = {}) => {
 	onMounted(() => {
 		Resize.on(options.wrapper.value, handleResize);
 		options.scrollToActive && nextTick(options.scrollToActive);
+		affix?.onScroll?.(handleAffixScroll);
 	});
 
 	onBeforeUnmount(() => {
 		Resize.off(options.wrapper.value, handleResize);
 		timer.value && clearTimeout(timer.value);
+		affix?.offScroll?.(handleAffixScroll);
+		scrollToAnchorTimer && clearTimeout(scrollToAnchorTimer);
 	});
 
 	const add = (item: any, setValue: any) => {

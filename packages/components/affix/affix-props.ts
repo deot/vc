@@ -1,6 +1,10 @@
 import type { ExtractPropTypes } from 'vue';
 
 export const props = {
+	modelValue: {
+		type: Boolean,
+		default: false
+	},
 	zIndex: {
 		type: [Number, String],
 		default: 1

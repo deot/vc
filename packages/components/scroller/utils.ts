@@ -1,3 +1,5 @@
+import { getScroller as getScroller$ } from '@deot/helper-dom';
+
 let scrollBarWidth: number;
 
 export const getScrollBarWidth = () => {
@@ -23,4 +25,12 @@ export const getScrollBarWidth = () => {
 	scrollBarWidth = widthNoScroll - widthWithScroll;
 
 	return scrollBarWidth;
+};
+
+export const SCROLLER_WHEEL_REG = /vc-scroller-wheel/;
+export const getScroller = (el: any) => {
+	return getScroller$(el, { className: SCROLLER_WHEEL_REG });
+};
+export const isWheel = (el: any) => {
+	return SCROLLER_WHEEL_REG.test(el?.className || '');
 };

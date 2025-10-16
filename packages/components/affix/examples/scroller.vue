@@ -1,5 +1,4 @@
 <template>
-	<Customer :render="renderItems" />
 	<div style="padding: 10px 200px">
 		<Scroller
 			height="200px"
@@ -12,7 +11,7 @@
 				<Button type="error">1. Top(Scroller)</Button>
 			</Affix>
 			<Customer :render="renderItems" />
-			<Affix :fixed="false" :offset="10" placement="bottom">
+			<Affix :fixed="false" :offset="30" placement="bottom">
 				<Button type="error">1. Bottom(Scroller)</Button>
 			</Affix>
 			<Customer :render="renderItems" />

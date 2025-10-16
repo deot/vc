@@ -25,5 +25,7 @@ export const props = {
 	contentStyle: [Object, String],
 	barClass: [Object, String],
 	contentClass: [Object, String],
+	affixable: Boolean,
+	affixOptions: Object
 };
 export type Props = ExtractPropTypes<typeof props>;

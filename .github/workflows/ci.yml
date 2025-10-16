@@ -16,7 +16,7 @@ jobs:
   unit-test:
     # let's ignore release commits, otherwise it'll try to run twice
     if: |
-      !startsWith(github.event.head_commit.message , 'chore(release):') && 
+      !startsWith(github.event.head_commit.message , 'chore(release):') &&
       !startsWith(github.event.head_commit.message , 'docs')
     runs-on: ubuntu-latest
     steps:
@@ -36,7 +36,7 @@ jobs:
       - name: Set node version to latest
         uses: actions/setup-node@v4
         with:
-          node-version: latest
+          node-version: 24.10.0
           cache: 'pnpm'
 
       - run: pnpm install
