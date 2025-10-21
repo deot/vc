@@ -85,21 +85,21 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 
 	const classes = computed(() => {
 		return {
-			'is-require': isRequired.value && props.asterisk,
+			'is-required': isRequired.value && props.asterisk,
 			'is-error': validateState.value === 'error',
 			'is-validating': validateState.value === 'validating',
 			'is-inline': form.props.inline,
-			'is-nest': isNest.value,
+			'is-nested': isNested.value,
 			'is-alone': !props.showMessage, // 用于单独去除form-item的默认margin_bottom
 			[`is-${labelPosition.value}`]: true,
 		};
 	});
 
-	const isNest = computed(() => {
+	const isNested = computed(() => {
 		return !!formItem.change;
 	});
 
-	const isNestLast = ref(false);
+	const isNestedLast = ref(false);
 
 	const hasLabel = computed(() => {
 		return !!props.label || slots.label;
@@ -108,7 +108,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	const labelStyle = computed(() => {
 		const labelWidth = props.labelWidth === 0 || props.labelWidth
 			? props.labelWidth
-			: isNest.value
+			: isNested.value
 				? 0
 				: form.props.labelWidth;
 		return [
@@ -117,6 +117,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 				textAlign: labelPosition.value === 'top' ? 'left' : labelPosition.value
 			},
 			form.props.labelStyle,
+			isNested.value && form.props.nestedLabelStyle,
 			props.labelStyle
 		];
 	});
@@ -125,28 +126,31 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		const labelWidth = props.labelWidth === 0 || props.labelWidth ? props.labelWidth : form.props.labelWidth;
 		return [
 			{
-				marginLeft: !hasLabel.value && isNest.value ? 0 : labelWidth && labelWidth > 0 ? `${labelWidth}px` : 'unset',
-				marginBottom: isNest.value && !isNestLast.value ? `20px` : 0
+				marginLeft: labelPosition.value === 'top' || (!hasLabel.value && isNested.value)
+					? 0
+					: labelWidth && labelWidth > 0 ? `${labelWidth}px` : 'unset',
+				marginBottom: isNested.value && !isNestedLast.value ? `20px` : 0
 			},
 			form.props.contentStyle,
+			isNested.value && form.props.nestedContentStyle,
 			props.contentStyle
 		];
 	});
 
 	const errorStyle = computed(() => {
-		return [form.props.errorStyle, props.errorStyle];
+		return [form.props.errorStyle, isNested.value && form.props.nestedErrorStyle, props.errorStyle];
 	});
 
 	const labelClass = computed(() => {
-		return [form.props.labelClass, props.labelClass];
+		return [form.props.labelClass, isNested.value && form.props.nestedLabelClass, props.labelClass];
 	});
 
 	const contentClass = computed(() => {
-		return [form.props.contentClass, props.contentClass];
+		return [form.props.contentClass, isNested.value && form.props.nestedContentClass, props.contentClass];
 	});
 
 	const errorClass = computed(() => {
-		return [form.props.errorClass, props.errorClass];
+		return [form.props.errorClass, isNested.value && form.props.nestedErrorClass, props.errorClass];
 	});
 
 	const isStyleless = computed(() => {
@@ -313,7 +317,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	watch(
 		() => formItem.fields?.length,
 		async (v) => {
-			if (!isNest.value || !v) return isNestLast.value = false;
+			if (!isNested.value || !v) return isNestedLast.value = false;
 			const fields$ = [...toRaw(formItem.fields)];
 			const positions = await Promise.all(fields$.map(item => (item.exposed as any).getPosition()));
 			const sortFields = fields$.toSorted((a, b) => {
@@ -325,7 +329,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 				return aPosition.left - bPosition.left;
 			});
 
-			isNestLast.value = sortFields[sortFields.length - 1] === instance;
+			isNestedLast.value = sortFields[sortFields.length - 1] === instance;
 		}
 	);
 
@@ -336,9 +340,9 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	});
 
 	return {
-		isNest,
+		isNested,
 		isStyleless,
-		isNestLast,
+		isNestedLast,
 		validateMessage,
 		classes,
 		labelStyle,

@@ -20,11 +20,11 @@ $color-error: varfix(color-error, form);
 
 	// @include clearfix;
 
-	@include element(content) { 
+	@include element(content) {
 		position: relative;
 		font-size: 12px;
 		line-height: unitfix(20);
-	} 
+	}
 
 	@include element(label) {
 		float: left;
@@ -32,7 +32,7 @@ $color-error: varfix(color-error, form);
 		font-size: 13px;
 		font-weight: 500;
 		line-height: unitfix(20);
-		color: $color-dark-light; 
+		color: $color-dark-light;
 		text-align: right;
 		vertical-align: middle;
 		box-sizing: border-box;
@@ -48,18 +48,17 @@ $color-error: varfix(color-error, form);
 		content: '*';
 	}
 
-	/**
-	 * -> vc-form-item.is_require
-	 */
-	& {
-		@include when(require) {
+	@include when(required) {
+		> {
 			@include element(label) {
 				&::before {
 					@include extend-rule(form-error-tip);
 				}
 			}
+		}
 
-			@include when(top) {
+		@include when(top) {
+			> {
 				@include element(label) {
 					&::before {
 						display: none;
@@ -71,65 +70,76 @@ $color-error: varfix(color-error, form);
 				}
 			}
 		}
-		
-		@include element(tip) {
-			position: absolute;
-			top: 100%;
-			left: 0;
-			padding-top: unitfix(6);
-			line-height: 1;
+	}
 
-			@include when(nest) {
-				position: unset;
-				top: unset;
-				left: unset;
-				display: inline-block;
-				padding-top: unset;
-				padding-left: unitfix(6);
-				line-height: unset;
-			}
-		}
+	@include element(tip) {
+		position: absolute;
+		top: 100%;
+		left: 0;
+		padding-top: unitfix(6);
+		line-height: 1;
 
-
-
-		// 可单独设置颜色
-		@include element(error) {
-			color: $color-error;
-		}
-
-		@include when(left) {
-			@include element(label) {
-				text-align: left;
-			}
-		}
-
-		@include when(top) {
-			@include element(label) {
-				display: inline-block;
-				float: none;
-				padding: 0 0 unitfix(6);
-			}
-		}
-
-		/**
-		 * 此模式下需要删除label
-		 */
-		@include when(inline) {
+		@include when(nested) {
+			position: unset;
+			top: unset;
+			left: unset;
 			display: inline-block;
-			margin-right: unitfix(10);
-			vertical-align: top;
+			padding-top: unset;
+			padding-left: unitfix(6);
+			line-height: unset;
+		}
+	}
+
+
+
+	// 可单独设置颜色
+	@include element(error) {
+		color: $color-error;
+	}
+
+	@include when(left) {
+		@include element(label) {
+			text-align: left;
+		}
+	}
+
+	@include when(top) {
+		@include element(label) {
+			display: inline-block;
+			float: none;
+			padding: 0 0 unitfix(6);
 		}
 
-		@include when(alone) {
-			margin-bottom: 0;
+		@include when(nested) {
+			@include element(tip) {
+				position: absolute;
+				top: 100%;
+				left: 0;
+				padding-top: 6px;
+				padding-left: 0;
+				line-height: 1;
+			}
 		}
+	}
+
+	/**
+	 * 此模式下需要删除label
+	 */
+	@include when(inline) {
+		display: inline-block;
+		margin-right: unitfix(10);
+		vertical-align: top;
+	}
+
+	@include when(alone) {
+		margin-bottom: 0;
 	}
 
 	/**
 	 * 嵌套管理
 	 */
 	@include block(vc-form-item) {
-		@include when(nest) {
+		@include when(nested) {
 			margin-bottom: 0;
 		}
 

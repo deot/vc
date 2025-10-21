@@ -27,33 +27,30 @@ $background-color-light: varfix(background-color-light, form);
 
 	@include pseudo(last-child) {
 		@include element(wrapper) {
-			&::after {
+			::after {
 				display: none;
 			}
 		}
 	}
 
-	@include element(content) { 
+	@include element(content) {
 		position: relative;
 		font-size: unitfix(16);
 		line-height: unitfix(24);
-	} 
+	}
 
 	@include element(label) {
 		float: left;
 		font-size: unitfix(16);
 		line-height: unitfix(24);
-		color: $color-dark; 
+		color: $color-dark;
 		text-align: right;
 		vertical-align: middle;
 		box-sizing: border-box;
 	}
 
-	/**
-	 * -> vc-form-item.is_require
-	 */
-	& {
-		@include when(require) {
+	@include when(required) {
+		> {
 			@include element(label) {
 				&::before {
 					display: inline-block;
@@ -66,30 +63,30 @@ $background-color-light: varfix(background-color-light, form);
 				}
 			}
 		}
+	}
 
-		@include when(left) {
-			@include element(label) {
-				text-align: left;
-			}
+	@include when(left) {
+		@include element(label) {
+			text-align: left;
 		}
+	}
 
-		@include when(top) {
-			@include element(label) {
-				display: inline-block;
-				float: none;
-				padding: 0 0 unitfix(10);
-			}
+	@include when(top) {
+		@include element(label) {
+			display: inline-block;
+			float: none;
+			padding: 0 0 unitfix(10);
 		}
+	}
 
-		@include when(nest) {
-			@include element(wrapper) {
-				padding-top: unitfix(0);
-				padding-right: unitfix(0);
-				padding-bottom: unitfix(0);
+	@include when(nested) {
+		@include element(wrapper) {
+			padding-top: unitfix(0);
+			padding-right: unitfix(0);
+			padding-bottom: unitfix(0);
 
-				&::after {
-					border-bottom: unset;
-				}
+			::after {
+				border-bottom: unset;
 			}
 		}
 	}
@@ -103,7 +100,7 @@ $background-color-light: varfix(background-color-light, form);
 		line-height: 1;
 		color: $color-error;
 
-		@include when(nest) {
+		@include when(nested) {
 			display: inline-block;
 		}
 	}

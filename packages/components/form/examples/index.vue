@@ -58,12 +58,49 @@
 		<FormItem prop="nest" label="nest:">
 			<Input v-model="formData.nest.value" style="width: 300px" />
 			<div style="margin-top: 20px;" />
-			<FormItem prop="nest.value1" label="nest1:" :label-width="0">
-				<Input v-model="formData.nest.value1" style="width: 300px" />
-			</FormItem>
-			<FormItem prop="nest.value2" label="nest2:" :label-width="0">
-				<input v-model="formData.nest.value2" style="width: 300px; padding: 6px 0">
-			</FormItem>
+			<div style="display: flex; flex-wrap: wrap; background: #faf7f8;">
+				<FormItem prop="nest.value1" label="nest1:" :label-width="0" style="flex: 0 0 100%;">
+					<Input v-model="formData.nest.value1" style="width: 300px;" />
+				</FormItem>
+				<FormItem
+					prop="nest.value2"
+					label="nest2:"
+					:label-width="0"
+					style="flex: 0 0 50%;"
+				>
+					<input v-model="formData.nest.value2" style="width: 300px; padding: 6px 0">
+				</FormItem>
+				<FormItem
+					prop="nest.value3"
+					label="nest3:"
+					:label-width="0"
+					style="flex: 0 0 50%;"
+				>
+					<input v-model="formData.nest.value3" style="width: 300px; padding: 6px 0">
+				</FormItem>
+			</div>
+		</FormItem>
+		<FormItem prop="nestTop" label="nestTop:">
+			<Input v-model="formData.nest.value" style="width: 300px" />
+			<div style="margin-top: 20px;" />
+			<div style="display: flex; flex-wrap: wrap; background: #faf7f8;">
+				<FormItem prop="nestTop.value1" label="nestTop1:" :label-width="0" label-position="top" style="flex: 0 0 50%;">
+					<Input v-model="formData.nestTop.value1" style="width: 300px;" />
+				</FormItem>
+				<FormItem prop="nestTop.value2" label="nestTop2:" :label-width="0" label-position="top" style="flex: 0 0 50%;">
+					<input v-model="formData.nestTop.value2" />
+				</FormItem>
+				<FormItem
+					prop="nestTop.value3"
+					label="nestTop3:"
+					label-position="top"
+					style="flex: 0 0 50%; margin-bottom: 20px;"
+					:label-width="0"
+					:asterisk="false"
+				>
+					<input v-model="formData.nestTop.value3" />
+				</FormItem>
+			</div>
 		</FormItem>
 		<FormItem prop="array" label="array:" label-style="padding: 0 8px">
 			<FakeArray v-model="formData.array" />
@@ -108,20 +145,22 @@
 				Add item
 			</div>
 		</FormItem>
-		<FormItem>
-			<Button type="primary" @click="handleSubmit">
-				Submit
-			</Button>
-			<Button style="margin-left: 8px" @click="handleReset">
-				Reset
-			</Button>
-			<Button style="margin-left: 8px" @click="handleSort">
-				乱序
-			</Button>
-			<Button style="margin-left: 8px" @click="handleOnly">
-				独立验证
-			</Button>
-		</FormItem>
+		<Affix placement="bottom">
+			<FormItem>
+				<Button type="primary" @click="handleSubmit">
+					Submit
+				</Button>
+				<Button style="margin-left: 8px" @click="handleReset">
+					Reset
+				</Button>
+				<Button style="margin-left: 8px" @click="handleSort">
+					乱序
+				</Button>
+				<Button style="margin-left: 8px" @click="handleOnly">
+					独立验证
+				</Button>
+			</FormItem>
+		</Affix>
 	</Form>
 </template>
 <script setup>
@@ -139,6 +178,7 @@ import { Checkbox, CheckboxGroup } from '../../checkbox';
 import { Textarea } from '../../textarea';
 import { DatePicker } from '../../date-picker';
 import { Switch } from '../../switch';
+import { Affix } from '../../affix';
 
 let index = 0;
 const form = ref(null);
@@ -150,7 +190,13 @@ const formData = reactive({
 	nest: {
 		value: '',
 		value1: '',
-		value2: ''
+		value2: '',
+		value3: ''
+	},
+	nestTop: {
+		value1: '',
+		value2: '',
+		value3: ''
 	},
 	blur: '',
 	change: '',
@@ -188,6 +234,28 @@ const formRules = reactive({
 			message: '必填'
 		},
 		value2: {
+			trigger: 'change',
+			required: true,
+			message: '必填'
+		},
+		value3: {
+			trigger: 'change',
+			required: true,
+			message: '必填'
+		}
+	},
+	nestTop: {
+		value1: {
+			trigger: 'change',
+			required: true,
+			message: '必填'
+		},
+		value2: {
+			trigger: 'change',
+			required: true,
+			message: '必填'
+		},
+		value3: {
 			trigger: 'change',
 			required: true,
 			message: '必填'

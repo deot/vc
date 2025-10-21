@@ -15,7 +15,7 @@ export const FormItem = defineComponent({
 
 		const {
 			isStyleless,
-			isNest,
+			isNested,
 			classes,
 			labelStyle,
 			contentStyle,
@@ -26,7 +26,6 @@ export const FormItem = defineComponent({
 			showError,
 			validateMessage
 		} = it;
-		const { label, labelFor } = props;
 
 		const errorColorClass = 'vc-form-item__error';
 		return () => {
@@ -34,7 +33,7 @@ export const FormItem = defineComponent({
 				slots.default?.(),
 				slots.error?.({
 					show: showError.value,
-					nest: isNest.value,
+					nested: isNested.value,
 					message: validateMessage.value,
 					class: [errorColorClass, ...errorClass.value],
 					style: errorStyle.value
@@ -43,15 +42,15 @@ export const FormItem = defineComponent({
 			return (
 				<div class={['vc-form-item', classes.value]}>
 					{
-						(label || slots.label) && (
+						(props.label || slots.label) && (
 							<div
 								style={labelStyle.value}
 								class={['vc-form-item__label', ...labelClass.value]}
 								// @ts-ignore
-								for={labelFor}
+								for={props.labelFor}
 							>
 								<label>
-									{ label || slots.label?.() }
+									{ props.label || slots.label?.() }
 								</label>
 							</div>
 						)
@@ -63,7 +62,7 @@ export const FormItem = defineComponent({
 								slots.error
 									? slots.error({
 											show: showError.value,
-											nest: isNest.value,
+											nest: isNested.value,
 											message: validateMessage.value,
 											class: [errorColorClass, ...errorClass.value],
 											style: errorStyle.value
@@ -72,7 +71,12 @@ export const FormItem = defineComponent({
 											<TransitionFade>
 												<div
 													v-show={showError.value}
-													class={['vc-form-item__tip', isNest.value ? 'is-nest' : '', errorColorClass, ...errorClass.value]}
+													class={[
+														'vc-form-item__tip',
+														isNested.value ? 'is-nested' : '',
+														errorColorClass,
+														...errorClass.value
+													]}
 													style={[errorStyle.value]}
 												>
 													{ validateMessage.value }

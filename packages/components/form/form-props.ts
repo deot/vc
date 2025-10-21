@@ -42,5 +42,12 @@ export const props = {
 	labelClass: [Object, String],
 	errorStyle: [Object, String],
 	errorClass: [Object, String],
+	// 给nestFormItem统一注入
+	nestedContentStyle: [Object, String],
+	nestedContentClass: [Object, String],
+	nestedLabelStyle: [Object, String],
+	nestedLabelClass: [Object, String],
+	nestedErrorStyle: [Object, String],
+	nestedErrorClass: [Object, String]
 };
 export type Props = ExtractPropTypes<typeof props>;
