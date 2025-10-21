@@ -64,9 +64,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	});
 
 	const isRequired = computed(() => {
-		if (!currentRules.value.length) {
-			return !!props.required;
-		}
+		if (props.required) return !!props.required;
 
 		let required = false;
 		for (let i = 0; i < currentRules.value.length; i++) {
