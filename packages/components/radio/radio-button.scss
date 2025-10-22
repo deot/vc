@@ -1,0 +1,74 @@
+@use '../style/helper' as *;
+
+$color-primary: varfix(color-primary, button);
+$color-dark-extralight: varfix(color-dark-extralight, button);
+$color-error: varfix(color-error, button);
+
+$component-name: vc-radio-button;
+
+// 控制高度32px
+@include block($component-name) {
+	position: relative;
+	display: inline-flex;
+	padding: 6px 8px;
+	font-size: 12px;
+	line-height: 20px;
+	white-space: nowrap;
+	vertical-align: middle;
+	cursor: pointer;
+	align-items: center;
+	background: #EDF0F2;
+	border-radius: 6px;
+	@include border('', #EDF0F2, 6);
+
+	input {
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		cursor: pointer;
+		opacity: 0;
+	}
+
+	&:hover {
+		color: $color-primary;
+		&::before, &::after{
+			border-color: $color-primary;
+		}
+	}
+
+	@include when(checked) {
+		color: $color-primary;
+		&::before, &::after{
+			border-color: $color-primary;
+		}
+		font-weight: 500;
+	}
+
+	@include when(disabled) {
+		color: $color-dark-extralight;
+		cursor: not-allowed;
+
+		input {
+			cursor: not-allowed;
+		}
+
+		&::before, &::after{
+			border-color: #EDF0F2;
+		}
+
+		@include when(checked) {
+			color: $color-primary;
+			&::before, &::after{
+				border-color: $color-primary;
+			}
+			font-weight: 500;
+		}
+	}
+
+	@include when(error) {
+		color: $color-error;
+		&::before, &::after{
+			border-color: $color-error;
+		}
+	}
+}

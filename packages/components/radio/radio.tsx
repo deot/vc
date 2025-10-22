@@ -11,10 +11,10 @@ export const Radio = defineComponent({
 	props: radioProps,
 	emits: ['update:modelValue', 'change'],
 	setup(props, { slots }) {
-		const { radioName, checked, classes, computedLabel, handleChange, handleFocus, handleBlur } = useRadio();
+		const { styles, radioName, checked, classes, computedLabel, handleChange, handleFocus, handleBlur } = useRadio();
 		return () => {
 			return (
-				<label class={[classes.value, 'vc-radio']}>
+				<label class={[classes.value, 'vc-radio']} style={styles.value}>
 					<span class={[{ 'has-sibling': !!(computedLabel.value || slots.default) }, 'vc-radio__wrapper']}>
 						<span class="vc-radio__border">
 							<span class="vc-radio__inner" />

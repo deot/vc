@@ -7,10 +7,21 @@
 
 		<!-- group -->
 		<RadioGroup v-model="phone">
-			<Radio label="apple" disabled>
+			<RadioButton label="apple" disabled>
+				<span>Apple</span>
+			</RadioButton>
+			<RadioButton label="android">
+				<span>Android</span>
+			</RadioButton>
+			<Radio label="windows">
+				<span>Windows</span>
+			</Radio>
+		</RadioGroup>
+		<RadioGroup v-model="phone">
+			<Radio label="apple">
 				<span>Apple</span>
 			</Radio>
-			<Radio label="android">
+			<Radio label="android" disabled>
 				<span>Android</span>
 			</Radio>
 			<Radio label="windows">
@@ -55,7 +66,7 @@
 </template>
 <script setup>
 import { onUpdated, ref, reactive } from 'vue';
-import { Radio, RadioGroup } from '..';
+import { Radio, RadioButton, RadioGroup } from '..';
 import { Form, FormItem } from '../../form/index';
 import { Input } from '../../input/index';
 

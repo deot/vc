@@ -11,10 +11,10 @@ export const MRadio = defineComponent({
 	props: radioProps,
 	emits: ['update:modelValue', 'change'],
 	setup(props, { slots }) {
-		const { radioName, checked, classes, computedLabel, handleChange, handleFocus, handleBlur } = useRadio();
+		const { styles, radioName, checked, classes, computedLabel, handleChange, handleFocus, handleBlur } = useRadio();
 		return () => {
 			return (
-				<label class={[classes.value, 'vcm-radio']}>
+				<label class={[classes.value, 'vcm-radio']} style={styles.value}>
 					<span class={[{ 'has-sibling': !!(computedLabel.value || slots.default) }, 'vcm-radio__wrapper']}>
 						<span class="vcm-radio__border">
 							<span class="vcm-radio__inner" />

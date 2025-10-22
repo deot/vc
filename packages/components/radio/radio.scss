@@ -2,10 +2,11 @@
 
 $component-name: vc-radio;
 
+// 控制高度32px
 @include block($component-name) {
 	position: relative;
 	display: inline-flex;
-	padding: 6px 24px 6px 0;
+	padding: 6px 0 6px 0;
 	font-size: 12px;
 	line-height: 20px;
 	white-space: nowrap;

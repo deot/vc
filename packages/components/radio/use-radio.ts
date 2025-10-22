@@ -25,6 +25,10 @@ export const useRadio = () => {
 		return !!group.props;
 	});
 
+	const styles = computed(() => {
+		return { marginRight: `${props.gap}px` };
+	});
+
 	const checked = computed(() => {
 		return hasGroup.value
 			? group.currentValue.value === computedValue.value
@@ -103,6 +107,7 @@ export const useRadio = () => {
 		isDisabled,
 		radioName,
 		classes,
+		styles,
 		hasGroup,
 		checked,
 		handleChange,
