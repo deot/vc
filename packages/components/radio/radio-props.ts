@@ -30,10 +30,6 @@ export const props = {
 	falseValue: {
 		type: [String, Number, Boolean],
 		default: false
-	},
-	gap: {
-		type: Number,
-		default: 24
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

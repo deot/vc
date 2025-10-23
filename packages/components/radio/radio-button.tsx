@@ -8,13 +8,7 @@ const COMPONENT_NAME = 'vc-radio-button';
 
 export const RadioButton = defineComponent({
 	name: COMPONENT_NAME,
-	props: {
-		...radioProps,
-		gap: {
-			type: Number,
-			default: 4
-		}
-	},
+	props: radioProps,
 	emits: ['update:modelValue', 'change'],
 	setup(props, { slots }) {
 		const { styles, radioName, checked, classes, computedLabel, handleChange, handleFocus, handleBlur } = useRadio();

@@ -10,6 +10,7 @@ $component-name: vcm-radio;
 	white-space: nowrap;
 	vertical-align: middle;
 	cursor: pointer;
+	margin-right: 24px;
 
 	@include element(wrapper) {
 		position: relative;

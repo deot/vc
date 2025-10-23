@@ -25,10 +25,6 @@ export const useRadio = () => {
 		return !!group.props;
 	});
 
-	const styles = computed(() => {
-		return { marginRight: `${props.gap}px` };
-	});
-
 	const checked = computed(() => {
 		return hasGroup.value
 			? group.currentValue.value === computedValue.value
@@ -54,6 +50,10 @@ export const useRadio = () => {
 			'is-focus': isFocus.value,
 			'is-error': !!formItem?.message?.value
 		};
+	});
+
+	const styles = computed(() => {
+		return {};
 	});
 
 	watch(
