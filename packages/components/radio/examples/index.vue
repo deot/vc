@@ -28,7 +28,7 @@
 				<span>Windows</span>
 			</Radio>
 		</RadioGroup>
-		<RadioGroup v-model="animal" vertical>
+		<RadioGroup v-model="animal" vertical disabled>
 			<Radio label="金斑蝶" />
 			<Radio label="爪哇犀牛" />
 			<Radio label="印度黑羚" />

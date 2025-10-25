@@ -27,6 +27,12 @@
 		</FormItem>
 		<FormItem prop="radio" label="radio" required="必填">
 			<RadioGroup v-model="formData.radio">
+				<RadioButton value="mac">
+					<span>Mac</span>
+				</RadioButton>
+				<RadioButton value="linux">
+					<span>Linux</span>
+				</RadioButton>
 				<Radio value="apple" disabled>
 					<span>Apple</span>
 				</Radio>
@@ -173,7 +179,7 @@ import FakeArray from './fake/array.vue'; // 可以使用trigger
 import { Button } from '../../button';
 import { Select } from '../../select';
 import { Input } from '../../input';
-import { Radio, RadioGroup } from '../../radio';
+import { Radio, RadioGroup, RadioButton } from '../../radio';
 import { Checkbox, CheckboxGroup } from '../../checkbox';
 import { Textarea } from '../../textarea';
 import { DatePicker } from '../../date-picker';

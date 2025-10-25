@@ -10,18 +10,13 @@ $component-name: vc-radio-button;
 @include block($component-name) {
 	position: relative;
 	display: inline-flex;
-	padding: 6px 8px;
 	margin-right: 4px;
 	font-size: 12px;
 	line-height: 20px;
 	white-space: nowrap;
 	vertical-align: middle;
 	cursor: pointer;
-	align-items: center;
-	background: #EDF0F2;
-	border-radius: 6px;
-	@include border('', #EDF0F2, 6);
-
+	padding: 3px 0;
 	input {
 		position: absolute;
 		inset: 0;
@@ -30,19 +25,34 @@ $component-name: vc-radio-button;
 		opacity: 0;
 	}
 
+	@include element(label) {
+		display: flex;
+		align-items: center;
+		border-radius: 6px;
+		background: #EDF0F2;
+		min-width: none;
+		padding: 0 8px;
+		min-height: 26px;
+		@include border('', #EDF0F2, 6);
+	}
+
 	&:hover {
 		color: $color-primary;
-		&::before, &::after{
-			border-color: $color-primary;
+		@include element(label) {
+			&::before, &::after{
+				border-color: $color-primary;
+			}
 		}
 	}
 
 	@include when(checked) {
 		color: $color-primary;
-		&::before, &::after{
-			border-color: $color-primary;
+		@include element(label) {
+			&::before, &::after{
+				border-color: $color-primary;
+			}
+			font-weight: 500;
 		}
-		font-weight: 500;
 	}
 
 	@include when(disabled) {
@@ -53,23 +63,29 @@ $component-name: vc-radio-button;
 			cursor: not-allowed;
 		}
 
-		&::before, &::after{
-			border-color: #EDF0F2;
+		@include element(label) {
+			&::before, &::after{
+				border-color: #EDF0F2;
+			}
 		}
 
 		@include when(checked) {
-			color: $color-primary;
-			&::before, &::after{
-				border-color: $color-primary;
+			@include element(label) {
+				color: $color-primary;
+				&::before, &::after{
+					border-color: $color-primary;
+				}
+				font-weight: 500;
 			}
-			font-weight: 500;
 		}
 	}
 
 	@include when(error) {
-		color: $color-error;
-		&::before, &::after{
-			border-color: $color-error;
+		@include element(label) {
+			color: $color-error;
+			&::before, &::after{
+				border-color: $color-error;
+			}
 		}
 	}
 }

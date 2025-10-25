@@ -11,7 +11,7 @@ export const Radio = defineComponent({
 	props: radioProps,
 	emits: ['update:modelValue', 'change'],
 	setup(props, { slots }) {
-		const { styles, radioName, checked, classes, computedLabel, handleChange, handleFocus, handleBlur } = useRadio();
+		const { styles, radioName, checked, classes, computedLabel, isDisabled, handleChange, handleFocus, handleBlur } = useRadio();
 		return () => {
 			return (
 				<label class={[classes.value, 'vc-radio']} style={styles.value}>
@@ -22,7 +22,7 @@ export const Radio = defineComponent({
 						<input
 							checked={checked.value}
 							name={radioName.value}
-							disabled={props.disabled}
+							disabled={isDisabled.value}
 							type="radio"
 							onChange={handleChange}
 							onFocus={handleFocus}
