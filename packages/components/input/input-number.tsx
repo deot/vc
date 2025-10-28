@@ -39,34 +39,32 @@ export const InputNumber = defineComponent({
 				>
 					{{
 						prepend: slots.prepend && (() => slots.prepend?.()),
-						append: props.step
-							? (
-									slots.append
-										? () => slots.append?.()
-										: () => {
-												return (
-													<div class="vc-input-number__icon">
-														<div
-															class="vc-input-number__up"
-															// @ts-ignore
-															disabled={plusDisabled.value ? 'disabled' : undefined}
-															onClick={e => handleStepper(e, 1)}
-														>
-															<Icon type="up" />
-														</div>
-														<div
-															class="vc-input-number__down"
-															// @ts-ignore
-															disabled={minusDisabled.value ? 'disabled' : undefined}
-															onClick={e => handleStepper(e, -1)}
-														>
-															<Icon type="down" />
-														</div>
-													</div>
-												);
-											}
-								)
-							: undefined
+						append: slots.append
+							? () => slots.append?.()
+							: props.step
+								? () => {
+										return (
+											<div class="vc-input-number__icon">
+												<div
+													class="vc-input-number__up"
+													// @ts-ignore
+													disabled={plusDisabled.value ? 'disabled' : void 0}
+													onClick={e => handleStepper(e, 1)}
+												>
+													<Icon type="up" />
+												</div>
+												<div
+													class="vc-input-number__down"
+													// @ts-ignore
+													disabled={minusDisabled.value ? 'disabled' : void 0}
+													onClick={e => handleStepper(e, -1)}
+												>
+													<Icon type="down" />
+												</div>
+											</div>
+										);
+									}
+								: (void 0)
 					}}
 				</Input>
 			);
