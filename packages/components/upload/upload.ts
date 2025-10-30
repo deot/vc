@@ -300,14 +300,20 @@ export const Upload = defineComponent({
 			let { enhancer } = VcInstance.options.Upload || {};
 
 			enhancer = props.enhancer || enhancer || (() => false);
-			const allow = enhancer(instance);
-			if (allow && allow.then) {
-				allow.catch(() => {
-					el.click?.();
-				});
+			const skip = enhancer(instance);
+			if (skip && skip.then) {
+				let skip$ = false;
+				skip
+					.then((v: any) => {
+						skip$ = typeof v === 'undefined' ? true : !!v;
+						return v;
+					})
+					.finally(() => {
+						skip$ || el.click?.();
+					});
 				return;
 			}
-			allow || el.click();
+			skip || el.click();
 		};
 
 		const handleChange = (e: InputEvent) => {

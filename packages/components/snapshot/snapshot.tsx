@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, onMounted, getCurrentInstance } from 'vue';
+import { nextTick, defineComponent, ref, onMounted, getCurrentInstance } from 'vue';
 import { props as snapshotProps } from './snapshot-props';
 import { VcInstance, VcError } from '../vc/index';
 
@@ -11,36 +11,16 @@ export const Snapshot = defineComponent({
 	props: snapshotProps,
 	emits: ['ready'],
 	setup(props, { emit, slots, expose }) {
+		let snapDOM;
 		const instance = getCurrentInstance()!;
 		const current = ref<any>();
 		const snapdom = ref();
 
-		// 网络的图片如果没有加上crossOrigin，且没有放在第一个就会出现问题（Safari）
 		const refresh = async () => {
-			if (!props.crossOrigin) return;
-			const transformSource = props.source || VcInstance.options.Snapshot?.source || ((v: any) => v);
+			await nextTick();
+			snapdom.value = await snapDOM(current.value, props.options);
 
-			return Promise.all(Array.from(current.value.querySelectorAll('img')).map((node: any) => {
-				return new Promise<any>((resolve) => {
-					(async () => {
-						let url;
-						try {
-							url = await transformSource(node.src, 'image');
-						} catch (e) {
-							console.error(e);
-						}
-
-						const image = new Image();
-						image.crossOrigin = props.crossOrigin;
-						image.src = `${url}?=${new Date().getTime()}`; // 强制不缓存
-						image.onload = () => {
-							node.src = image.src;
-							resolve(1);
-						};
-						image.onerror = () => resolve(0);
-					})();
-				});
-			}));
+			return snapdom.value;
 		};
 
 		const toDataURL = async () => {
@@ -52,16 +32,22 @@ export const Snapshot = defineComponent({
 			await refresh();
 			const _download = props.download || VcInstance.options.Snapshot?.download || (() => false);
 
-			const allow = _download(instance, options);
+			const skip = _download(instance, options);
 
-			if (allow && allow.then) {
-				allow.catch(() => {
-					snapdom.value.download(options);
-				});
+			if (skip && skip.then) {
+				let skip$ = false;
+				skip
+					.then((v: any) => {
+						skip$ = typeof v === 'undefined' ? true : !!v;
+						return v;
+					})
+					.finally(() => {
+						skip$ || snapdom.value.download(options);
+					});
 				return;
 			}
 
-			allow || snapdom.value.download(options);
+			skip || snapdom.value.download(options);
 		};
 
 		expose({
@@ -73,10 +59,10 @@ export const Snapshot = defineComponent({
 
 		onMounted(async () => {
 			try {
-				let snapDOM = (window as any).snapdom || await import('@zumer/snapdom');
+				snapDOM = (window as any).snapdom || await import('@zumer/snapdom');
 				snapDOM = snapDOM.snapdom || snapDOM;
 
-				snapdom.value = await snapDOM(current.value, props.options);
+				await refresh();
 
 				emit('ready', {
 					instance,
