@@ -68,11 +68,13 @@ const parser = (url) => {
 
 ### 基础属性
 
-| 属性          | 说明   | 类型         | 可选值                           | 默认值         |
-| ----------- | ---- | ---------- | ----------------------------- | ----------- |
-| crossorigin | 处理跨域 | `string`   | `anonymous`、`use-credentials` | `anonymous` |
-| source      | -    | `function` | -                             | -           |
-| download      | -    | `function` | -                             | -           |
+| 属性          | 说明        | 类型         | 可选值                           | 默认值         |
+| ----------- | --------- | ---------- | ----------------------------- | ----------- |
+| crossorigin | 处理跨域      | `string`   | `anonymous`、`use-credentials` | `anonymous` |
+| showLoading | 处理跨域      | `boolean`  | -                             | `true`      |
+| lazy        | 导出时实例化    | `boolean`  | -                             | `true`      |
+| source      | -         | `function` | -                             | -           |
+| download    | 下载（全局可拦截） | `function` | -                             | -           |
 
 
 ### 方法

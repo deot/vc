@@ -36,6 +36,6 @@ const handleClick = async () => {
 };
 
 const handleDownload = async () => {
-	target.value.download({ filename: '', format: 'pdf' });
+	target.value.download();
 };
 </script>
