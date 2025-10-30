@@ -1,4 +1,4 @@
-## 图片生成（HTMLToImage）
+## 图片生成（Snapshot）
 
 HTML转图片
 
@@ -12,13 +12,13 @@ HTML转图片
 ```vue
 <template>
 	<div>
-		<HTMLToImage ref="target" :parser="parser" crossorigin="anonymous" >
+		<Snapshot ref="target" :parser="parser" crossorigin="anonymous" >
 			<!-- 需要crossorigin加在第一个， 才能处理跨域 -->
 			<img
 				src="'https://*/*.jpg'"
 				class="image"
 			>
-		</HTMLToImage>
+		</Snapshot>
 		<p>生成的图片</p>
 		<img :src="src">
 		<Button @click="handleClick">
@@ -32,7 +32,7 @@ HTML转图片
 
 <script setup>
 import { ref } from 'vue';
-import { HTMLToImage, Button } from '@deot/vc';
+import { Snapshot, Button } from '@deot/vc';
 
 const src = ref('');
 const target = ref();
