@@ -12,7 +12,8 @@ export const props = {
 		default: 'anonymous',
 		validator: v => /^(|anonymous|use-credentials)$/.test(v),
 	},
-	transformSource: Function,
+	source: Function,
+	download: Function,
 	// 传递给snap-dom的配置项
 	options: {
 		type: Object,

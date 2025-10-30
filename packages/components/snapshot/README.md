@@ -71,13 +71,14 @@ const parser = (url) => {
 | 属性          | 说明   | 类型         | 可选值                           | 默认值         |
 | ----------- | ---- | ---------- | ----------------------------- | ----------- |
 | crossorigin | 处理跨域 | `string`   | `anonymous`、`use-credentials` | `anonymous` |
-| parser      | -    | `function` | -                             | -           |
+| source      | -    | `function` | -                             | -           |
+| download      | -    | `function` | -                             | -           |
 
 
 ### 方法
 
 | 方法名      | 说明      | 参数                                          |
 | -------- | ------- | ------------------------------------------- |
-| getImage | 生成图片    | `filename`：生成的图片文件名称；`getFile`：是否输出`file`文件 |
+| toDataURL | 生成图片    | `filename`：生成的图片文件名称；`getFile`：是否输出`file`文件 |
 | download | 生成图片并下载 | `filename`：生成的图片文件名称；`getFile`：是否输出`file`文件 |
 

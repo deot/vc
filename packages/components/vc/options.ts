@@ -37,5 +37,9 @@ export const defaults: Options = {
 	},
 	TableColumn: {
 		line: nil
+	},
+	Snapshot: {
+		source: nil,
+		download: nil
 	}
 };

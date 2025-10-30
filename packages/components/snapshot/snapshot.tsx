@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, getCurrentInstance } from 'vue';
 import { props as snapshotProps } from './snapshot-props';
 import { VcInstance, VcError } from '../vc/index';
 
@@ -11,20 +11,21 @@ export const Snapshot = defineComponent({
 	props: snapshotProps,
 	emits: ['ready'],
 	setup(props, { emit, slots, expose }) {
+		const instance = getCurrentInstance()!;
 		const current = ref<any>();
-		const instance = ref();
+		const snapdom = ref();
 
 		// 网络的图片如果没有加上crossOrigin，且没有放在第一个就会出现问题（Safari）
 		const refresh = async () => {
 			if (!props.crossOrigin) return;
-			const transformSource = props.transformSource || VcInstance.options.Snapshot?.transformSource || ((v: any) => v);
+			const transformSource = props.source || VcInstance.options.Snapshot?.source || ((v: any) => v);
 
 			return Promise.all(Array.from(current.value.querySelectorAll('img')).map((node: any) => {
 				return new Promise<any>((resolve) => {
 					(async () => {
 						let url;
 						try {
-							url = await transformSource(node.src);
+							url = await transformSource(node.src, 'image');
 						} catch (e) {
 							console.error(e);
 						}
@@ -44,27 +45,27 @@ export const Snapshot = defineComponent({
 
 		const toDataURL = async () => {
 			await refresh();
-			return instance.value.toRaw();
+			return snapdom.value.toRaw();
 		};
 
 		const download = async (options: any) => {
 			await refresh();
-			const _download = VcInstance.options.Snapshot?.download || (() => false);
+			const _download = props.download || VcInstance.options.Snapshot?.download || (() => false);
 
-			const allow = _download(options);
+			const allow = _download(instance, options);
 
 			if (allow && allow.then) {
 				allow.catch(() => {
-					instance.value.download(options);
+					snapdom.value.download(options);
 				});
 				return;
 			}
 
-			allow || instance.value.download(options);
+			allow || snapdom.value.download(options);
 		};
 
 		expose({
-			instance,
+			snapdom,
 			refresh,
 			toDataURL,
 			download
@@ -75,10 +76,10 @@ export const Snapshot = defineComponent({
 				let snapDOM = (window as any).snapdom || await import('@zumer/snapdom');
 				snapDOM = snapDOM.snapdom || snapDOM;
 
-				instance.value = await snapDOM(current.value, props.options);
+				snapdom.value = await snapDOM(current.value, props.options);
 
 				emit('ready', {
-					instance: instance.value,
+					instance,
 					dependencies: {
 						snapDOM
 					}
