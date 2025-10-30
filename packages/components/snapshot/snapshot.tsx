@@ -12,36 +12,50 @@ export const Snapshot = defineComponent({
 	props: snapshotProps,
 	emits: ['ready'],
 	setup(props, { emit, slots, expose }) {
-		let snapDOM;
+		let snapDOM: any;
 		const instance = getCurrentInstance()!;
 		const current = ref<any>();
-		const snapdom = ref();
+		const snapshot = ref();
 
 		const refresh = async () => {
 			await nextTick();
-			snapdom.value = await snapDOM(
+			snapshot.value = await snapDOM(
 				current.value,
 				{
 					fast: false, // dom太大时会卡死一会儿
+					...VcInstance.options.Snapshot?.options,
 					...props.options
 				}
 			);
 
-			return snapdom.value;
+			return snapshot.value;
+		};
+
+		const onLoad = () => {
+			return props.showLoading && Message.loading('正在生成...');
+		};
+
+		const onLoaded = (ctx: any) => {
+			ctx?.destroy?.();
 		};
 
 		const toDataURL = async () => {
-			await refresh();
-			return snapdom.value.toRaw();
+			const loadContext = onLoad();
+			try {
+				await refresh();
+				return snapshot.value.toRaw();
+			} finally {
+				onLoaded(loadContext);
+			}
 		};
 
 		const downloadByDefault = async (options: any) => {
 			await refresh();
-			return snapdom.value.download(options);
+			return snapshot.value.download(options);
 		};
 
 		const download = async (options: any) => {
-			const loadContext = Message.loading('正在生成...');
+			const loadContext = onLoad();
 			const downloadByUser = props.download || VcInstance.options.Snapshot?.download || (() => false);
 			const skip = downloadByUser(instance, options);
 
@@ -49,7 +63,7 @@ export const Snapshot = defineComponent({
 				try {
 					v || await downloadByDefault(options);
 				} finally {
-					loadContext.destroy();
+					onLoaded(loadContext);
 				}
 			};
 
@@ -68,7 +82,7 @@ export const Snapshot = defineComponent({
 		};
 
 		expose({
-			snapdom,
+			snapshot,
 			refresh,
 			toDataURL,
 			download

@@ -39,6 +39,7 @@ export const defaults: Options = {
 		line: nil
 	},
 	Snapshot: {
+		options: nil,
 		source: nil,
 		download: nil
 	}

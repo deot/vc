@@ -18,6 +18,10 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
+	showLoading: {
+		type: Boolean,
+		default: true
+	},
 	// 传递给snap-dom的配置项
 	options: {
 		type: Object,
