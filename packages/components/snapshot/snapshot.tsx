@@ -3,6 +3,7 @@
 import { nextTick, defineComponent, ref, onMounted, getCurrentInstance } from 'vue';
 import { props as snapshotProps } from './snapshot-props';
 import { VcInstance, VcError } from '../vc/index';
+import { Message } from '../message/index';
 
 const COMPONENT_NAME = 'vc-snapshot';
 
@@ -18,7 +19,13 @@ export const Snapshot = defineComponent({
 
 		const refresh = async () => {
 			await nextTick();
-			snapdom.value = await snapDOM(current.value, props.options);
+			snapdom.value = await snapDOM(
+				current.value,
+				{
+					fast: false, // dom太大时会卡死一会儿
+					...props.options
+				}
+			);
 
 			return snapdom.value;
 		};
@@ -28,11 +35,23 @@ export const Snapshot = defineComponent({
 			return snapdom.value.toRaw();
 		};
 
-		const download = async (options: any) => {
+		const downloadByDefault = async (options: any) => {
 			await refresh();
-			const _download = props.download || VcInstance.options.Snapshot?.download || (() => false);
+			return snapdom.value.download(options);
+		};
 
-			const skip = _download(instance, options);
+		const download = async (options: any) => {
+			const loadContext = Message.loading('正在生成...');
+			const downloadByUser = props.download || VcInstance.options.Snapshot?.download || (() => false);
+			const skip = downloadByUser(instance, options);
+
+			const done = async (v: boolean) => {
+				try {
+					v || await downloadByDefault(options);
+				} finally {
+					loadContext.destroy();
+				}
+			};
 
 			if (skip && skip.then) {
 				let skip$ = false;
@@ -41,13 +60,11 @@ export const Snapshot = defineComponent({
 						skip$ = typeof v === 'undefined' ? true : !!v;
 						return v;
 					})
-					.finally(() => {
-						skip$ || snapdom.value.download(options);
-					});
+					.finally(() => done(skip$));
 				return;
 			}
 
-			skip || snapdom.value.download(options);
+			done(skip);
 		};
 
 		expose({
@@ -62,7 +79,7 @@ export const Snapshot = defineComponent({
 				snapDOM = (window as any).snapdom || await import('@zumer/snapdom');
 				snapDOM = snapDOM.snapdom || snapDOM;
 
-				await refresh();
+				!props.lazy && (await refresh());
 
 				emit('ready', {
 					instance,

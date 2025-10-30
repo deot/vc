@@ -10,10 +10,14 @@ export const props = {
 		type: String,
 		// ''. 'anonymous', 'use-credentials'
 		default: 'anonymous',
-		validator: v => /^(|anonymous|use-credentials)$/.test(v),
+		validator: (v: string) => /^(|anonymous|use-credentials)$/.test(v),
 	},
 	source: Function,
 	download: Function,
+	lazy: {
+		type: Boolean,
+		default: true
+	},
 	// 传递给snap-dom的配置项
 	options: {
 		type: Object,
