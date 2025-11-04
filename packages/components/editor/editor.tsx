@@ -16,6 +16,7 @@ const COMPONENT_NAME = 'vc-editor';
 export const Editor = defineComponent({
 	name: COMPONENT_NAME,
 	props: editorProps,
+	defaults,
 	emits: [
 		'ready',
 		'blur',

@@ -75,8 +75,7 @@ export const EditorToolbar = defineComponent({
 										if (it === 'selected' || !it) {
 											return <option selected={true} />;
 										}
-										const v = key === 'line-height' ? (+it * 10) : it;
-										return <option value={`${v}`} />;
+										return <option value={`${it}`} />;
 									})
 								}
 							</select>
@@ -92,16 +91,18 @@ export const EditorToolbar = defineComponent({
 				if (Array.isArray(item)) {
 					return insertStyle(item);
 				}
+				let key = item;
+				let value = [];
 				if (typeof item === 'object') {
-					const [key, value] = Object.entries<any>(item)[0];
-					const options = (value.length && value) || toolbarDefaultsMap[key];
-					if (key === 'font-size') {
-						insertFontSizeStyle(options, styleId);
-					} else if (key === 'line-height') {
-						insertLineHeightStyle(options, lineHeightStyleId);
-					} else if (key === 'letter-spacing') {
-						insertLetterSpacingStyle(options, letterSpacingStyleId);
-					}
+					[key, value] = Object.entries<any>(item)[0];
+				}
+				value = (value.length && value) || toolbarDefaultsMap[key];
+				if (key === 'font-size' && Array.isArray(value)) {
+					insertFontSizeStyle(value, styleId);
+				} else if (key === 'line-height') {
+					insertLineHeightStyle(value, lineHeightStyleId);
+				} else if (key === 'letter-spacing') {
+					insertLetterSpacingStyle(value, letterSpacingStyleId);
 				}
 			});
 		};

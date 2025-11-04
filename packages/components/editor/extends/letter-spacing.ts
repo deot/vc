@@ -3,9 +3,9 @@ import { toolbarDefaultsMap } from '../default-options';
 
 export const registerLetterSpacing = (quillInstance: typeof Quill) => {
 	const Parchment = quillInstance.import('parchment');
-	const letterSpacingStyle = new Parchment.ClassAttributor(
+	const letterSpacingStyle = new Parchment.StyleAttributor(
 		'letter-spacing',
-		'ql-letter-spacing',
+		'letter-spacing',
 		{
 			scope: Parchment.Scope.INLINE,
 			whitelist: toolbarDefaultsMap['letter-spacing']
