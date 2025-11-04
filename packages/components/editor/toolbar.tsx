@@ -107,6 +107,7 @@ export const EditorToolbar = defineComponent({
 			});
 		};
 
+		const handlePrevent = (e: any) => e.preventDefault();
 		onMounted(() => {
 			insertStyle(buttons.value);
 		});
@@ -119,7 +120,7 @@ export const EditorToolbar = defineComponent({
 
 		return () => {
 			return (
-				<div id={props.elementId}>
+				<div id={props.elementId} onClick={handlePrevent}>
 					{renderButtonGroup(buttons.value)}
 					{slots?.extend?.()}
 				</div>
