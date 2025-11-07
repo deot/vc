@@ -177,13 +177,13 @@ export const RecycleList = defineComponent({
 				? rebuildData.value.unshift(node)
 				: (rebuildData.value[index$] = node);
 		};
-		// 更新item.size
-		const refreshItemSize = (index: number) => {
+		// 更新item.size(内部方法,不触发事件)
+		const refreshItemSize = (index: number, resizeChanges?: Map<number, { oldSize: number; size: number }>) => {
 			const current = props.inverted
 				? rebuildData.value[rebuildDataIndexMap.value[index]]
 				: rebuildData.value[index];
 
-			if (!current) return; // 受到`removeUnusedPlaceholders`影响，无效的会被回收
+			if (!current) return; // 受到`removeUnusedPlaceholders`影响,无效的会被回收
 
 			const oldSize = current.size;
 			const dom = preloads.value[index] || curloads.value[props.inverted ? index : index - firstItemIndex.value];
@@ -193,12 +193,9 @@ export const RecycleList = defineComponent({
 				current.size = placeholderSize.value;
 			}
 
-			// 这样的考虑欠佳，待优化
-			if (oldSize !== current.size) {
-				emit('row-resize', {
-					index: current.id,
-					size: current.size
-				});
+			// 收集尺寸变化信息,不立即触发事件
+			if (resizeChanges && oldSize !== current.size) {
+				resizeChanges.set(current.id, { oldSize, size: current.size });
 			}
 		};
 
@@ -277,6 +274,7 @@ export const RecycleList = defineComponent({
 		const refreshLayout = async (start: number, end: number) => {
 			isRefreshLayout = 1;
 			const promiseTasks = [] as Promise<any>[];
+			const resizeChanges = new Map<number, { oldSize: number; size: number }>();
 			let item: any;
 			for (let i = start; i < end; i++) {
 				item = props.inverted
@@ -287,11 +285,21 @@ export const RecycleList = defineComponent({
 					continue;
 				}
 				setItemData(i, originalData[i]);
-				promiseTasks.push(nextTick(() => refreshItemSize(i)));
+				promiseTasks.push(nextTick(() => refreshItemSize(i, resizeChanges)));
 			}
 			await Promise.all(promiseTasks);
 			refreshItemPosition();
 			setFirstItemIndex();
+
+			// 批量触发 row-resize 事件,避免频繁重绘
+			if (resizeChanges.size > 0) {
+				const changes = Array.from(resizeChanges.entries()).map(([index, { oldSize, size }]) => ({
+					index,
+					oldSize,
+					size
+				}));
+				emit('row-resize', changes);
+			}
 
 			interrupter.next();
 			isRefreshLayout = 0;
