@@ -34,6 +34,7 @@ export const RecycleList = defineComponent({
 		const contentMaxSize = ref(0);
 		const columnFillSize = ref<number[]>([]); // 优化inverted多列时用于补齐高度
 		const firstItemIndex = ref(0);
+		const renderEndIndex = ref(0); // 渲染结束索引
 		const loadings = ref<string[]>([]);
 		const isEnd = ref(false);
 		const isSlientRefresh = ref(false);
@@ -81,19 +82,55 @@ export const RecycleList = defineComponent({
 		});
 
 		/**
+		 * 计算渲染结束索引
+		 * 从firstItemIndex开始，累加高度直到填满视口
+		 */
+		const calculateRenderEndIndex = () => {
+			if (!wrapper.value) {
+				// 未挂载时使用pageSize作为fallback
+				renderEndIndex.value = Math.min(
+					rebuildData.value.length,
+					firstItemIndex.value + props.pageSize
+				);
+				return;
+			}
+
+			const viewportSize = wrapper.value[K.offsetSize];
+			const columnHeights = Array.from({ length: props.cols }).map(() => 0);
+			let endIndex = firstItemIndex.value;
+
+			// 从firstItemIndex开始，逐个累加高度直到填满视口
+			for (let i = firstItemIndex.value; i < rebuildData.value.length; i++) {
+				const item = rebuildData.value[i];
+				if (!item) continue;
+
+				// 获取当前item应该放在哪一列
+				const minHeight = Math.min(...columnHeights);
+				const columnIndex = columnHeights.findIndex(h => h === minHeight);
+
+				// 累加该列的高度
+				columnHeights[columnIndex] += item.size || 0;
+
+				// 检查最矮的列是否已经填满视口
+				if (minHeight >= viewportSize) {
+					endIndex = i;
+					break;
+				}
+				endIndex = i + 1;
+			}
+
+			// 至少渲染一个，最多+1个作为缓冲
+			renderEndIndex.value = Math.min(rebuildData.value.length, endIndex + 1);
+		};
+
+		/**
 		 * 用于展示的信息
-		 *
-		 * 这里尽可能的控制好pageSize的长度, 否则会存在性能问题
-		 * 这里存在一个性能瓶颈，当数组中某一个值发生变化时，虚拟树会重新构建，虚拟树的构建耗时长会引起掉帧
-		 * 这是机制所导致的，应该尽可能减少renderList的数量
 		 */
 		const data = computed(() => {
 			const base = Array.from({ length: props.cols }).map(() => []);
 			return rebuildData.value
-				.slice(
-					Math.max(0, firstItemIndex.value - props.pageSize),
-					Math.min(rebuildData.value.length, firstItemIndex.value + props.pageSize + offsetPageSize.value)
-				).reduce((pre, cur) => {
+				.slice(firstItemIndex.value, renderEndIndex.value)
+				.reduce((pre, cur) => {
 					cur.column >= 0 && pre[cur.column].push(cur);
 					return pre;
 				}, base);
@@ -245,6 +282,8 @@ export const RecycleList = defineComponent({
 					break;
 				}
 			}
+			// 重新计算渲染结束索引
+			calculateRenderEndIndex();
 		};
 
 		const removeUnusedPlaceholders = (copy: any[], page: number) => {
@@ -290,6 +329,8 @@ export const RecycleList = defineComponent({
 			await Promise.all(promiseTasks);
 			refreshItemPosition();
 			setFirstItemIndex();
+			// 数据变化后重新计算渲染范围
+			calculateRenderEndIndex();
 
 			// 批量触发 row-resize 事件,避免频繁重绘
 			if (resizeChanges.size > 0) {
