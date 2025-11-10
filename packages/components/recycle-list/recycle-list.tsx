@@ -177,15 +177,16 @@ export const RecycleList = defineComponent({
 				? rebuildData.value.unshift(node)
 				: (rebuildData.value[index$] = node);
 		};
-		// 更新item.size
+
 		const refreshItemSize = (index: number) => {
 			const current = props.inverted
 				? rebuildData.value[rebuildDataIndexMap.value[index]]
 				: rebuildData.value[index];
 
-			if (!current) return; // 受到`removeUnusedPlaceholders`影响，无效的会被回收
+			// 受到`removeUnusedPlaceholders`影响,无效的会被回收
+			if (!current) return;
 
-			const oldSize = current.size;
+			const original = Object.assign({}, current);
 			const dom = preloads.value[index] || curloads.value[props.inverted ? index : index - firstItemIndex.value];
 			if (dom) {
 				current.size = dom[K.offsetSize] || placeholderSize.value;
@@ -193,13 +194,7 @@ export const RecycleList = defineComponent({
 				current.size = placeholderSize.value;
 			}
 
-			// 这样的考虑欠佳，待优化
-			if (oldSize !== current.size) {
-				emit('row-resize', {
-					index: current.id,
-					size: current.size
-				});
-			}
+			return { original, changed: current };
 		};
 
 		const refreshItemPosition = () => {
@@ -277,21 +272,22 @@ export const RecycleList = defineComponent({
 		const refreshLayout = async (start: number, end: number) => {
 			isRefreshLayout = 1;
 			const promiseTasks = [] as Promise<any>[];
+			const resizeChanges = [] as any[];
 			let item: any;
 			for (let i = start; i < end; i++) {
 				item = props.inverted
 					? rebuildData.value[rebuildDataIndexMap.value[i]]
 					: rebuildData.value[i];
 
-				if (item && item.loaded) {
-					continue;
-				}
+				if (item && item.loaded) continue;
 				setItemData(i, originalData[i]);
-				promiseTasks.push(nextTick(() => refreshItemSize(i)));
+				promiseTasks.push(nextTick(() => { const e = refreshItemSize(i); e && resizeChanges.push(e.changed); }));
 			}
 			await Promise.all(promiseTasks);
 			refreshItemPosition();
 			setFirstItemIndex();
+
+			resizeChanges.length > 0 && emit('row-resize', resizeChanges.map(i => ({ size: i.size, index: i.id })));
 
 			interrupter.next();
 			isRefreshLayout = 0;

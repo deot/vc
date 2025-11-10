@@ -73,7 +73,7 @@
 				label="供应商信息"
 			>
 				<template #default="{ row, rowIndex }">
-					<div>{{ row?.supplierName }} {{ rowIndex }}</div>
+					<div @click="row.count++">{{ row?.count }} {{ rowIndex }}</div>
 				</template>
 			</TableColumn>
 			<TableColumn
@@ -97,10 +97,11 @@ defineProps({ delay: Number });
 const isActive = ref(true);
 const genTableData = length => Array.from({ length }).map((_, index) => ({
 	id: `id__${index}`,
-	label: '1234 ABC '.repeat(20)
+	label: '1234 ABC '.repeat(20),
+	count: 0
 }));
 
-const dataSource = ref(genTableData(30));
+const dataSource = ref(genTableData(100));
 
 let timer;
 const handleTestingStart = () => {

@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent } from 'vue';
+import { defineComponent, nextTick } from 'vue';
 import { Resizer } from '../../resizer';
 
 const COMPONENT_NAME = 'vc-table-normal-list';
@@ -15,12 +15,20 @@ export const NormalList = defineComponent({
 	},
 	emits: ['row-resize'],
 	setup(props, { emit, slots }) {
-		const handleResize = (e: any, index: any) => {
-			emit('row-resize', {
-				index,
-				size: e.height
-			});
+		let resizeChanges: any[] = [];
+
+		const emitChanges = () => {
+			if (resizeChanges.length > 0) {
+				emit('row-resize', resizeChanges);
+				resizeChanges = [];
+			}
 		};
+
+		const handleResize = (e: any, index: number) => {
+			resizeChanges.push({ index, size: e.height });
+			nextTick(emitChanges);
+		};
+
 		return () => {
 			return props.data!.map((mergeData: any, index: number) => {
 				return (
