@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, nextTick } from 'vue';
+import { defineComponent, nextTick, withMemo } from 'vue';
 import { Resizer } from '../../resizer';
 
 const COMPONENT_NAME = 'vc-table-normal-list';
@@ -29,17 +29,24 @@ export const NormalList = defineComponent({
 			nextTick(emitChanges);
 		};
 
-		return () => {
+		return (_: any, _cache: any[]) => {
 			return props.data!.map((mergeData: any, index: number) => {
-				return (
-					<Resizer
-						key={mergeData.id}
-						fill={false}
-						// @ts-ignore
-						onResize={(e: any) => handleResize(e, index)}
-					>
-						{slots.default?.({ row: mergeData, index })}
-					</Resizer>
+				return withMemo(
+					[mergeData.id],
+					() => {
+						return (
+							<Resizer
+								key={mergeData.id}
+								fill={false}
+								// @ts-ignore
+								onResize={(e: any) => handleResize(e, index)}
+							>
+								{slots.default?.({ row: mergeData, index })}
+							</Resizer>
+						);
+					},
+					_cache,
+					index
 				);
 			});
 		};

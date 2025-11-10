@@ -8,7 +8,8 @@ import {
 	onBeforeUnmount,
 	nextTick,
 	watch,
-	Fragment
+	Fragment,
+	withMemo
 } from 'vue';
 import { throttle, getUid } from '@deot/helper-utils';
 import { Resize } from '@deot/helper-resize';
@@ -544,7 +545,7 @@ export const RecycleList = defineComponent({
 			scrollToIndex,
 			refreshLayout: forceRefreshLayout
 		});
-		return () => {
+		return (_: any, _cache: any[]) => {
 			return (
 				<Container
 					class={['vc-recycle-list', { 'is-horizontal': !props.vertical }]}
@@ -584,42 +585,47 @@ export const RecycleList = defineComponent({
 										>
 											{ props.inverted && (<div style={{ height: `${columnFillSize.value[columnIndex]}px` }} />) }
 											{
-												data.value[columnIndex].map((item: any) => (
-													<Fragment
-														key={item.id}
-													>
-														{
-															item.isPlaceholder && hasPlaceholder.value && (
-																<div
-																	class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
-																	style={{ opacity: +!item.loaded }}
-																>
-																	{
-																		// eslint-disable-next-line @stylistic/max-len
-																		slots.placeholder?.() || (renderer.value.placeholder && (<Customer render={renderer.value.placeholder} />))
-																	}
-																</div>
-															)
-														}
-														{
-															!item.isPlaceholder && (
-																<Resizer
-																	ref={v => curloads.value[item.id] = v}
-																	class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
-																	style={{ opacity: item.loaded }}
-																	fill={false}
-																	data-row={item.id}
-																	data-column={item.column}
-																	data-size={item.size}
-																	data-position={item.position}
-																	// @ts-ignore
-																	onResize={e => e?.inited === true && handleResize()}
-																>
-																	{ slots.default?.({ row: item.data || {}, index: item.id }) }
-																</Resizer>
-															)
-														}
-													</Fragment>
+												data.value[columnIndex].map((item: any, index: number) => withMemo(
+													[item.id],
+													() => {
+														return (
+															<Fragment>
+																{
+																	item.isPlaceholder && hasPlaceholder.value && (
+																		<div
+																			class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
+																			style={{ opacity: +!item.loaded }}
+																		>
+																			{
+																				// eslint-disable-next-line @stylistic/max-len
+																				slots.placeholder?.() || (renderer.value.placeholder && (<Customer render={renderer.value.placeholder} />))
+																			}
+																		</div>
+																	)
+																}
+																{
+																	!item.isPlaceholder && (
+																		<Resizer
+																			ref={v => curloads.value[item.id] = v}
+																			class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
+																			style={{ opacity: item.loaded }}
+																			fill={false}
+																			data-row={item.id}
+																			data-column={item.column}
+																			data-size={item.size}
+																			data-position={item.position}
+																			// @ts-ignore
+																			onResize={e => e?.inited === true && handleResize()}
+																		>
+																			{ slots.default?.({ row: item.data || {}, index: item.id }) }
+																		</Resizer>
+																	)
+																}
+															</Fragment>
+														);
+													},
+													_cache,
+													index
 												))
 											}
 										</div>

@@ -1,4 +1,4 @@
-import { defineComponent, ref, getCurrentInstance, watch, computed, inject, onBeforeMount, onBeforeUnmount } from 'vue';
+import { defineComponent, ref, getCurrentInstance, watch, computed, inject, onBeforeMount, onBeforeUnmount, withMemo } from 'vue';
 import { debounce } from 'lodash-es';
 import { addClass, removeClass } from '@deot/helper-dom';
 import { IS_SERVER } from '@deot/vc-shared';
@@ -38,6 +38,7 @@ export const TableBody = defineComponent({
 		});
 
 		const wrapper = ref();
+		const keyPrefix = Math.random();
 
 		watch(
 			() => table.store.states.hoverRowIndex,
@@ -257,16 +258,15 @@ export const TableBody = defineComponent({
 		};
 
 		const renderRow = (rowData: any, rowIndex: number) => {
+			console.log('render row', rowIndex);
 			const { rowHeight } = table.props;
 			const { data: row } = rowData;
 			const { columns } = states;
-			const key = getValueOfRow(row, rowIndex);
 			const selected = table.store.isSelected(row);
 			const height = rowHeight || rowData.height;
 			const maxColumnIndex = columns.length - 1;
 			return (
 				<div
-					key={key}
 					class={[getRowClass(row, rowIndex), 'vc-table__tr']}
 					style={getRowStyle(row, rowIndex)}
 					onDblclick={(e: any) => handleDoubleClick(e, row)}
@@ -315,13 +315,18 @@ export const TableBody = defineComponent({
 			);
 		};
 
-		const renderMergeRow = (mergeData: any) => {
+		const renderMergeRow = (mergeData: any, cache: any[]) => {
 			const { rows, id } = mergeData;
 			return (
 				<div class="vc-table__merge-row" key={id}>
 					{
 						rows.map((row: any) => {
-							return renderRow(row, row.index);
+							return withMemo(
+								[getValueOfRow(row.data, row.index), row.height],
+								() => renderRow(row, row.index),
+								cache,
+								row.index
+							);
 						})
 					}
 				</div>
@@ -371,7 +376,7 @@ export const TableBody = defineComponent({
 			timer && clearTimeout(timer);
 			allowRender.value = false;
 		});
-		return () => {
+		return (_: any, _cache: any[]) => {
 			if (!allowRender.value) return;
 			return (
 				<div class="vc-table__body">
@@ -401,7 +406,7 @@ export const TableBody = defineComponent({
 										onRowResize={handleMergeRowResize}
 										style={props.heightStyle}
 									>
-										{{ default: ({ row }) => renderMergeRow(row) }}
+										{{ default: ({ row }) => renderMergeRow(row, _cache) }}
 									</RecycleList>
 								)
 							: (
@@ -409,7 +414,7 @@ export const TableBody = defineComponent({
 										data={states.list}
 										onRowResize={handleMergeRowResize}
 									>
-										{{ default: ({ row }) => renderMergeRow(row) }}
+										{{ default: ({ row }) => renderMergeRow(row, _cache) }}
 									</NormalList>
 								)
 					}
