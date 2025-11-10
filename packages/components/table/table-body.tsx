@@ -328,24 +328,27 @@ export const TableBody = defineComponent({
 			);
 		};
 
-		const handleMergeRowResize = (v: any) => {
+		const handleMergeRowResize = (changes: any[]) => {
 			if (table.props.rowHeight) return;
-			states.list[v.index].rows.forEach((row: any) => {
-				const old = row.heightMap[props.fixed! || 'main'];
-				if (old === v.size) return;
+			// 批量处理所有尺寸变化
+			changes.forEach((v: any) => {
+				states.list[v.index].rows.forEach((row: any) => {
+					const old = row.heightMap[props.fixed! || 'main'];
+					if (old === v.size) return;
 
-				row.heightMap[props.fixed! || 'main'] = v.size;
+					row.heightMap[props.fixed! || 'main'] = v.size;
 
-				const heights = [row.heightMap.main];
-				if (states.leftFixedCount) {
-					heights.push(row.heightMap.left);
-				}
-				if (states.rightFixedCount) {
-					heights.push(row.heightMap.right);
-				}
-				if (heights.every(i => !!i)) {
-					row.height = Math.max(row.heightMap.left, row.heightMap.main, row.heightMap.right) || '';
-				}
+					const heights = [row.heightMap.main];
+					if (states.leftFixedCount) {
+						heights.push(row.heightMap.left);
+					}
+					if (states.rightFixedCount) {
+						heights.push(row.heightMap.right);
+					}
+					if (heights.every(i => !!i)) {
+						row.height = Math.max(row.heightMap.left, row.heightMap.main, row.heightMap.right) || '';
+					}
+				});
 			});
 		};
 

@@ -51,7 +51,7 @@
 				label="供应商信息"
 			>
 				<template #default="{ row, rowIndex }">
-					<div>{{ row?.supplierName }} {{ rowIndex }}</div>
+					<div @click="row.count++">{{ row?.count }} {{ rowIndex }}</div>
 				</template>
 			</TableColumn>
 			<TableColumn
@@ -82,11 +82,12 @@ import { Button } from '../../button';
 defineProps({ delay: Number });
 
 const genTableData = length => Array.from({ length }).map((_, index) => ({
-	id: `id__${index}`
+	id: `id__${index}`,
+	count: 0
 }));
 
 const isActive = ref(true);
-const dataSource = ref(genTableData(50));
+const dataSource = ref(genTableData(100));
 
 const columns = ref([
 	'内部人员',

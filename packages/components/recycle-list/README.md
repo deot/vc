@@ -74,7 +74,7 @@ const loadData = (page, pageSize$) => {
 
 | 事件名       | 说明   | 回调参数 | 参数说明 |
 | --------- | ---- | ---- | ---- |
-| eventName | 事件说明 | -    | -    |
+| row-resize | 子元素size变化 | -    | -    |
 
 
 ### 方法
