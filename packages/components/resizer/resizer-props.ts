@@ -6,7 +6,7 @@ export const props = {
 		default: 'div'
 	},
 	fill: {
-		type: Boolean,
+		type: [Boolean, Array],
 		default: true
 	}
 };

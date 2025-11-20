@@ -1,10 +1,10 @@
 <template>
 	<Scroller class="demo" :native="false">
-		<div style="height: 100vh; display: flex;">
+		<div style=" display: flex;height: 100vh;">
 			<div style="display: flex; flex: 0 0 200px;">left</div>
-			<div style="display: flex; flex-direction: column; height: 100%; width: 100%;">
+			<div style="display: flex; width: 100%; height: 100%; flex-direction: column;">
 				<div>header</div>
-				<div style="flex: 1; overflow: hidden; min-width: 600px;">
+				<div style=" min-width: 600px; overflow: hidden;flex: 1;">
 					<Resizer style="padding: 40px; background: gray;" @resize="handleResize">
 						<template #default="{ style, height, width }">
 							<Scroller style="border: 1px solid red; box-sizing: border-box;" :style="style">
@@ -43,10 +43,11 @@ const handleResize = (e) => {
 body {
 	margin: 0;
 }
+
 .demo {
-	background: #E8E9EE;
+	position: relative;
 	width: 100vw;
 	height: 100vh;
-	position: relative;
+	background: #E8E9EE;
 }
 </style>

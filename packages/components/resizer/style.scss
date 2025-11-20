@@ -5,8 +5,23 @@ $component-name: vc-resizer;
 @include block($component-name) {
 	box-sizing: border-box;
 
-	@include when(fill) {
+	/**
+	 * <div style="flex: 1; min-height: 0; overflow: hidden">
+	 * 		<div class='vc-resizer' style="height: 100%">
+	 * 			<div style="height: 100%; overflow-y: auto">
+	 * 				// any
+	 * 			</div>
+	 * 		</div>
+	 * </div>
+	 * 
+	 * 父层设置flex: 1，高度撑开+设置height: 100%; 当前vc-resizer撑开的高度就是实际的高度
+	 * min-height: 0 或者 overflow: hidden;（解决flex收缩问题, 为 overflow: auto 创造滚动条件）
+	 */
+	@include when(fill-width) {
 		width: 100%;
+	}
+
+	@include when(fill-height) {
 		height: 100%;
 	}
 }

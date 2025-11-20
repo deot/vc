@@ -1,9 +1,9 @@
 <template>
 	<Scroller class="demo" :native="false">
-		<div style="min-width: 600px; height: 100vh; display: flex;">
+		<div style=" display: flex; height: 100vh;min-width: 600px;">
 			<div style="display: flex; flex: 0 0 200px;">left</div>
-			<div style="display: flex; flex-direction: column; height: 100%; width: 100%;">
-				<div>header</div>
+			<div style="display: flex; width: 100%; height: 100%; flex-direction: column;">
+				<div :style="{ height: `${headerH}px` }" @click="headerH += 20">header</div>
 				<div style="flex: 1; overflow: hidden;">
 					<Resizer style="padding: 40px; background: gray;" @resize="handleResize">
 						<template #default="{ style, height, width }">
@@ -32,8 +32,11 @@
 	</Scroller>
 </template>
 <script setup>
+import { ref } from 'vue';
 import { Resizer } from '..';
 import { Scroller } from '../../scroller';
+
+const headerH = ref(20);
 
 const handleResize = (e) => {
 	console.log(e);
@@ -43,10 +46,11 @@ const handleResize = (e) => {
 body {
 	margin: 0;
 }
+
 .demo {
-	background: #E8E9EE;
+	position: relative;
 	width: 100vw;
 	height: 100vh;
-	position: relative;
+	background: #E8E9EE;
 }
 </style>

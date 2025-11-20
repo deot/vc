@@ -13,6 +13,13 @@ export const Resizer = defineComponent({
 		const height = ref(0);
 		const current = ref();
 
+		const classes = computed(() => {
+			const v = Array.isArray(props.fill) ? props.fill : [props.fill, props.fill];
+			return {
+				'is-fill-width': v[0],
+				'is-fill-height': v[1]
+			};
+		});
 		const currentExposed = computed(() => {
 			return {
 				height: height.value,
@@ -74,7 +81,7 @@ export const Resizer = defineComponent({
 				props.tag,
 				{
 					ref: current,
-					class: ['vc-resizer', { 'is-fill': props.fill }]
+					class: ['vc-resizer', classes.value]
 				},
 				slots.default?.(currentExposed.value)
 			);
