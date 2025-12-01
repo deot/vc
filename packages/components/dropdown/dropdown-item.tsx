@@ -37,7 +37,7 @@ export const DropdownItem = defineComponent({
 		const owner = getInstance('dropdown', 'dropdownId')!;
 
 		const currentValue = computed(() => {
-			const v = typeof props.value === 'undefined' || props.value === ''
+			const v = typeof props.value === 'undefined'
 				? props.label
 				: props.value;
 
