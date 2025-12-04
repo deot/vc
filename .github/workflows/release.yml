@@ -86,7 +86,7 @@ jobs:
       - name: Set node version to latest
         uses: actions/setup-node@v4
         with:
-          node-version: 24.10.0
+          node-version: latest
           cache: 'pnpm'
 
       - name: Checkout main
