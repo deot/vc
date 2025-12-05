@@ -1,67 +1,47 @@
 <template>
 	<div :style="{ width: width, height: height }">
 		<Chart
-			:options="polar"
+			ref="chart"
+			:options="options"
 			@ready="handleReady"
 		/>
+		<Button type="primary" @click="handleRepaint">重绘</Button>
 	</div>
 </template>
 <script setup>
 import { ref, onBeforeMount } from 'vue';
 import { Chart } from '..';
+import { Button } from '../../button';
 
 const width = ref('400px');
 const height = ref('400px');
-const polar = ref({});
+const options = ref({});
+const chart = ref();
 
-onBeforeMount(() => {
-	setTimeout(() => {
-		width.value = '800px';
-		height.value = '800px';
-	}, 3000);
+const handleRepaint = () => {
+	setOptions();
+};
 
-	const data = [];
-
-	for (let i = 0; i <= 360; i++) {
-		const t = (i / 180) * Math.PI;
-		const r = Math.sin(2 * t) * Math.cos(2 * t);
-		data.push([r, i]);
-	}
-	polar.value = {
-		title: {
-			text: '极坐标双数值轴'
+const setOptions = async () => {
+	options.value = {};
+	await new Promise(_ => setTimeout(_, 300));
+	options.value = {
+		xAxis: {
+			type: 'category',
+			data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 		},
-		legend: {
-			data: ['line']
-		},
-		polar: {
-			center: ['50%', '54%']
-		},
-		tooltip: {
-			trigger: 'axis',
-			axisPointer: {
-				type: 'cross'
-			}
-		},
-		angleAxis: {
-			type: 'value',
-			startAngle: 0
-		},
-		radiusAxis: {
-			min: 0
+		yAxis: {
+			type: 'value'
 		},
 		series: [
 			{
-				coordinateSystem: 'polar',
-				name: 'line',
-				type: 'line',
-				showSymbol: false,
-				data
+				data: [150, 230, 224, 218, 135, 147, 260],
+				type: 'line'
 			}
-		],
-		animationDuration: 2000
+		]
 	};
-});
+};
+onBeforeMount(setOptions);
 
 const handleReady = ({ dependencies }) => {
 	console.log(dependencies.echarts);

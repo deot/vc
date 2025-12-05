@@ -15,7 +15,7 @@ export const Chart = defineComponent({
 		...EVENTS,
 		'ready'
 	],
-	setup(props, { emit, slots }) {
+	setup(props, { emit, slots, expose }) {
 		const instance = getCurrentInstance()!;
 
 		const chart = shallowRef<any>(null);
@@ -134,6 +134,11 @@ export const Chart = defineComponent({
 					echarts: echartsInstance.value
 				}
 			});
+		});
+
+		expose({
+			chart,
+			refresh
 		});
 
 		onUnmounted(destroy);
