@@ -1,0 +1,5 @@
+@use '../style/helper' as *;
+
+$component-name: vc-counter;
+
+@include block($component-name) {}

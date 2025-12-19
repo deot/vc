@@ -32,6 +32,8 @@ export * from './color-picker';
 export * from './color-picker/index.m';
 export * from './countdown';
 export * from './countdown/index.m';
+export * from './counter';
+export * from './counter/index.m';
 export * from './customer';
 export * from './customer/index.m';
 export * from './date-picker';
