@@ -12,7 +12,7 @@ const COMPONENT_NAME = 'vc-countdown';
 export const Countdown = defineComponent({
 	name: COMPONENT_NAME,
 	props: countdownProps,
-	emits: ['change', 'finish', 'error'],
+	emits: ['change', 'complete', 'error'],
 	setup(props, { emit, slots }) {
 		const day = ref('');
 		const hour = ref('');
@@ -113,7 +113,7 @@ export const Countdown = defineComponent({
 					millisecond: '00',
 				});
 
-				emit('finish');
+				emit('complete');
 			} else {
 				emit('change', {
 					timestamp,

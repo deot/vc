@@ -6,7 +6,7 @@
 			:t="1000"
 			style="color:blue"
 			format="DD:HH:mm:ss"
-			@finish="handleEnd(1)"
+			@complete="handleEnd(1)"
 		/>
 		<br>
 		<Countdown
@@ -15,7 +15,7 @@
 			target-time="2029-05-22 15:00:00"
 			style="color:blue"
 			format="DD:HH:mm:ss"
-			@finish="handleEnd(2)"
+			@complete="handleEnd(2)"
 		/>
 		<br>
 		<Countdown
@@ -24,7 +24,7 @@
 			:t="10"
 			style="color:blue"
 			format="DD:HH:mm:ss:SSS"
-			@finish="handleEnd(3)"
+			@complete="handleEnd(3)"
 		/>
 		<br>
 		<Countdown
@@ -34,7 +34,7 @@
 			:show-zero="false"
 			style="color:blue"
 			format="DD:HH:mm:ss:SSS"
-			@finish="handleEnd(4)"
+			@complete="handleEnd(4)"
 		/>
 		<br>
 		<Countdown
@@ -43,7 +43,7 @@
 			server-time="2027-10-15 10:10:5"
 			@error="handleError"
 			@change="handleChange(arguments[0], 5)"
-			@finish="handleEnd(5)"
+			@complete="handleEnd(5)"
 		/>
 		<br>
 		<Countdown
@@ -51,7 +51,7 @@
 			server-time="2027-10-15 10:10:5"
 			@error="handleError"
 			@change="handleChange(arguments[0], 6)"
-			@finish="handleEnd(6)"
+			@complete="handleEnd(6)"
 		>
 			<template #default="it">
 				{{ it.second }}
@@ -62,7 +62,7 @@
 			server-time="2027-10-15 10:10:5"
 			@error="handleError"
 			@change="handleChange(arguments[0], 7)"
-			@finish="handleEnd(7)"
+			@complete="handleEnd(7)"
 		>
 			<div>
 				test
