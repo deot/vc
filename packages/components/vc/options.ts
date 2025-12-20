@@ -17,30 +17,37 @@ export type Options = Partial<{
  * 组件的配置项
  */
 export const defaults: Options = {
-	UploadPicker: {
-		enhancer: nil
-	},
 	Editor: {
 		options: nil,
 		enhancer: nil
 	},
-	Theme: {
-		variables: VARIABLES
-	},
 	Portal: {
 		install: nil
+	},
+	RecycleList: {
+		renderRefresh: nil,
+		renderPlaceholder: nil,
+		renderLoading: nil,
+		renderComplete: nil,
+		renderEmpty: nil
+	},
+	Snapshot: {
+		options: nil,
+		source: nil,
+		download: nil
+	},
+	TableColumn: {
+		line: nil
+	},
+	Theme: {
+		variables: VARIABLES
 	},
 	Upload: {
 		onRequest: nil,
 		onResponse: nil,
 		onMessage: nil
 	},
-	TableColumn: {
-		line: nil
+	UploadPicker: {
+		enhancer: nil
 	},
-	Snapshot: {
-		options: nil,
-		source: nil,
-		download: nil
-	}
 };

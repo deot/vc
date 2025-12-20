@@ -111,7 +111,7 @@ export const RecycleList = defineComponent({
 				refresh: props.renderRefresh || globalProps.renderRefresh,
 				placeholder: props.renderPlaceholder || globalProps.renderPlaceholder,
 				loading: props.renderLoading || globalProps.renderLoading,
-				finish: props.renderFinish || globalProps.renderFinish,
+				complete: props.renderComplete || globalProps.renderComplete,
 				empty: props.renderEmpty || globalProps.renderEmpty
 			};
 		});

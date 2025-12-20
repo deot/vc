@@ -65,7 +65,7 @@ const loadData = (page, pageSize$) => {
 | inverted          | 倒置             | `boolean`  | -   | `false`       |
 | vertical          | 滚动方向           | `boolean`  | -   | `true`        |
 | renderEmpty       | 渲染空数据          | `function` | -   | -             |
-| renderFinish      | 渲染完成状态         | `function` | -   | -             |
+| renderComplete    | 渲染完成状态         | `function` | -   | -             |
 | renderLoading     | 渲染加载状态         | `function` | -   | -             |
 | renderPlaceholder | 渲染占位状态         | `function` | -   | -             |
 
@@ -92,7 +92,7 @@ const loadData = (page, pageSize$) => {
 | ----------- | --------------- |
 | placeholder | 未加载数据时占位用的，如骨架屏 |
 | loading     | 加载更多的提示文案的具名插槽  |
-| finish      | 无更多数据的提示文案的具名插槽 |
+| complete    | 无更多数据的提示文案的具名插槽 |
 | empty       | 首次加载后无数据时展示     |
 | header      | 头部              |
 | footer      | 尾部              |

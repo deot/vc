@@ -67,7 +67,7 @@ const handleChange = (e) => {
 | current   | 指定当前步骤，从 1 开始记数。在子 Step 元素中，可以通过 `status` 属性覆盖状态 | `number` | -                                 | 0            |
 | direction | 指定步骤条方向。目前支持水平（`horizontal`）和竖直（`vertical`）两种方向  | `string` | `horizontal` `vertical`           | `horizontal` |
 | size      | 指定大小，目前支持普通（`default`）和迷你（`small`）               | `string` | `default` `small`                 | `default`    |
-| status    | 指定当前步骤的状态                                        | `string` | `wait` `process` `finish` `error` | `process`    |
+| status    | 指定当前步骤的状态                                        | `string` | `wait` `process` `complete` `error` | `process`    |
 
 
 ### Steps Slot
@@ -83,7 +83,7 @@ default | -
 | subtitle    | 子标题       | `string` | -                                 |           |
 | description | 步骤的详情描述   | `string` | -                                 |           |
 | icon        | 步骤图标的类型   | `string` | -                                 |           |
-| status      | 指定当前步骤的状态 | `string` | `wait` `process` `finish` `error` | `process` |
+| status      | 指定当前步骤的状态 | `string` | `wait` `process` `complete` `error` | `process` |
 
 ### Step Slot
 

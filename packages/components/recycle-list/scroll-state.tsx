@@ -42,10 +42,10 @@ export const ScrollState = defineComponent({
 						owner.isEnd.value && (
 							owner.data.length
 								? (
-										<div class="vc-recycle-list__finish">
+										<div class="vc-recycle-list__complete">
 											{
-												slots.finish?.() || owner.renderer.value.finish
-													? (<Customer render={owner.renderer.value.finish} />)
+												slots.complete?.() || owner.renderer.value.complete
+													? (<Customer render={owner.renderer.value.complete} />)
 													: (<div class="vc-recycle-list__center">已全部加载~</div>)
 											}
 										</div>

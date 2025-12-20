@@ -57,7 +57,7 @@ export const props = {
 	scrollerOptions: Object as PropType<ScrollerProps>,
 
 	renderEmpty: Function as Render,
-	renderFinish: Function as Render,
+	renderComplete: Function as Render,
 	renderLoading: Function as Render,
 	renderPlaceholder: Function as Render,
 	renderRefresh: Function as Render

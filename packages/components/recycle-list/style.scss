@@ -68,7 +68,7 @@ $component-name: vc-recycle-list;
 		text-align: center;
 	}
 
-	@include element(finish) {
+	@include element(complete) {
 		padding: 10px 0;
 	}
 
