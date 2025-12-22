@@ -10,7 +10,7 @@ const COMPONENT_NAME = 'vc-counter';
 export const Counter = defineComponent({
 	name: COMPONENT_NAME,
 	props: counterProps,
-	emits: ['begin', 'complete'],
+	emits: ['begin', 'complete', 'change'],
 	setup(props, { emit, expose, slots }) {
 		const startTime = ref<number | null>(null);
 		const duration = ref(props.duration);
@@ -121,6 +121,8 @@ export const Counter = defineComponent({
 
 		const print = (num: number) => {
 			Object.assign(prints, value2separated(num, props));
+
+			emit('change', prints);
 		};
 
 		const resetDuration = () => {

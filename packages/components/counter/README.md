@@ -43,3 +43,4 @@ import { Counter } from '@deot/vc';
 | -------- | ---- | ---- | ---- |
 | begin    | 开始回调 | -    | -    |
 | complete | 结束回调 | -    | -    |
+| change   | 变化回调 | -    | -    |

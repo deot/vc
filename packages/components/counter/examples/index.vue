@@ -15,12 +15,14 @@
 			<button @click="counter.print(10002)">print</button>
 			<button @click="handleUpdate">update</button>
 		</div>
+		{{  print }}
 		<Counter
 			ref="counter"
 			:value="9999.90"
 			:duration="5000"
 			controllable
 			@begin="console.log('begin')"
+			@change="print = $event"
 			@complete="console.log('complete')"
 		/>
 	</div>
@@ -31,6 +33,7 @@ import { ref } from 'vue';
 
 const current = ref(6666);
 const counter = ref();
+const print = ref();
 
 const handleUpdate = () => {
 	current.value = 999999;
