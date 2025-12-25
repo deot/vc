@@ -136,6 +136,7 @@ export const Chart = defineComponent({
 			});
 		});
 
+		// 如果存在内存泄漏，chart.value.getOption() 获取配置项，查看series参数等情况
 		expose({
 			chart,
 			refresh
