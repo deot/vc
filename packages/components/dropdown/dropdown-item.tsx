@@ -7,6 +7,7 @@ const COMPONENT_NAME = 'vc-dropdown-item';
 
 export const DropdownItem = defineComponent({
 	name: COMPONENT_NAME,
+	emits: ['click'],
 	props: {
 		value: {
 			type: [String, Number],
