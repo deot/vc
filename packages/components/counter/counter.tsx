@@ -17,7 +17,7 @@ export const Counter = defineComponent({
 		const remaining = ref(duration.value);
 
 		const startVal = ref(0);
-		const endVal = ref(separated2value(props.value!, props));
+		const endVal = ref(!props.value ? 0 : separated2value(props.value, props));
 		const frameVal = ref(startVal.value);
 		const finalEndVal = ref<number | null>(null);
 
@@ -49,6 +49,7 @@ export const Counter = defineComponent({
 			if (
 				props.value === ''
 				|| (typeof props.value !== 'string' && typeof props.value !== 'number')
+				|| (typeof props.value === 'string' && Number.isNaN(parseFloat(props.value)))
 			) {
 				return props.placeholder;
 			}
