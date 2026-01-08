@@ -193,8 +193,8 @@ export const PopoverWrapper = defineComponent({
 		 */
 		const handleRemove = () => {
 			!instance.isUnmounted && (
-				emit('portal-fulfilled'),
-				emit('close')
+				emit('close'),
+				emit('portal-fulfilled')
 			);
 		};
 
