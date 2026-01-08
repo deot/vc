@@ -242,7 +242,7 @@ export const Cascader = defineComponent({
 				separator: props.separator
 			});
 			if (!isEqualWith(currentValue.value, v)) {
-				currentValue.value = v;
+				currentValue.value = [...v];
 			}
 
 			emit('close');
@@ -267,9 +267,8 @@ export const Cascader = defineComponent({
 					numerable: props.numerable,
 					separator: props.separator
 				});
-				if (!isEqualWith(currentValue.value, v)) {
-					currentValue.value = v;
-				}
+				// 不使用currentValue.value = v; 避免同步修改源数据，这里有取消操作
+				currentValue.value = v && v.length > 0 ? [...v] : [];
 			},
 			{ immediate: true }
 		);
