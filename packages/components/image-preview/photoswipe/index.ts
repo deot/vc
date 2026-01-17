@@ -5,6 +5,8 @@ type Options = {
 	current?: number;
 	data: any[];
 	onClose?: any;
+	// for photoswipe
+	[key: string]: any;
 };
 
 const MAX_WIDTH = window.innerWidth;
@@ -41,8 +43,9 @@ const getFitSize = (src: string) => {
 
 // PhotoSwipe 需要指定宽高（https://photoswipe.com/getting-started/）
 export const open = async (options: Options) => {
+	const { data: originalData, current, ...photoSwipeOptions } = options;
 	const e = VcInstance.globalEvent as any;
-	const data = options.data.map((i) => {
+	const data = originalData.map((i) => {
 		if (typeof i === 'string') {
 			return {
 				src: i
@@ -72,11 +75,20 @@ export const open = async (options: Options) => {
 
 		errorMsg: '网络异常 图片加载失败',
 		indexIndicatorSep: ' / ',
+		wheelToZoom: true,
+
+		// 默认fit展示
 		initialZoomLevel: 'fit',
+		// 最大展示或按钮+最大展示（如果原图size 乘 secondaryZoomLevel 还在屏幕内，不展示+号）
+		secondaryZoomLevel: 4,
+		// 滚轮/手势最大展示
+		maxZoomLevel: 10,
+
+		...photoSwipeOptions
 	});
 	lightbox.init();
 	lightbox.loadAndOpen(
-		options.current || 0,
+		current || 0,
 		data,
 		// 下面无效，需要给官方支持
 		{
