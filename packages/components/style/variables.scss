@@ -5,11 +5,11 @@
 @mixin generate-theme($light: true) {
 	@if $light {
 		@each $key, $value in $theme {
-			--vc-#{$key}: #{if(meta.type-of($value) == 'map', map.get($value, 'light'), $value)};
+			--vc-#{$key}: #{if(sass(meta.type-of($value) == "map"): map.get($value, "light"); else: $value)};
 		}
 	} @else {
 		@each $key, $value in $theme {
-			--vc-#{$key}: #{if(meta.type-of($value) == 'map', if(map.get($value, 'dark'), map.get($value, 'dark'), map.get($value, 'light')), $value)};
+			--vc-#{$key}: #{if(sass(meta.type-of($value) == "map"): if(sass(map.get($value, "dark")): map.get($value, "dark"); else: map.get($value, "light")); else: $value)};
 		}
 	}
 }

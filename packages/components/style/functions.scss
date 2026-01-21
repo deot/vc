@@ -39,7 +39,7 @@
 	$scale: map.get($options, 'scale');
 
 	@if meta.type-of($value) == 'number' {
-		$value: if(math.is_unitless($value), #{$value * $scale}#{$unit}, #{$value * $scale});
+		$value: if(sass(math.is_unitless($value)): #{$value * $scale}#{$unit}; else: #{$value * $scale});
 	} @else if meta.type-of($value) == 'string' {
 		$value: string.unquote($value);
 	}
@@ -55,7 +55,7 @@
 	$value: map.get($theme, $key);
 
 	@if meta.type-of($value) == 'map' {
-		@return map.get($value, if($light, 'light', 'dark'));
+		@return map.get($value, if(sass($light): "light"; else: "dark"));
 	}
 
 	@if not ($value) {
