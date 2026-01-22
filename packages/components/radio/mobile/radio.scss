@@ -5,12 +5,12 @@ $component-name: vcm-radio;
 @include block($component-name) {
 	position: relative;
 	display: inline-block;
+	margin-right: 24px;
 	font-size: 16px;
 	line-height: 1;
 	white-space: nowrap;
 	vertical-align: middle;
 	cursor: pointer;
-	margin-right: 24px;
 
 	@include element(wrapper) {
 		position: relative;

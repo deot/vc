@@ -40,7 +40,6 @@ $line-height: 20px;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		word-break: break-all;
-		word-wrap: break-word;
 		-webkit-box-orient: vertical;
 		overflow-wrap: break-word;
 
@@ -120,7 +119,7 @@ $line-height: 20px;
 		> .vc-table__cell {
 			position: relative;
 			text-overflow: ellipsis;
-			word-wrap: normal;
+			overflow-wrap: normal;
 			white-space: nowrap;
 
 			&.is-highlight {
@@ -404,8 +403,8 @@ $line-height: 20px;
 
 
 	@include element(tooltip) {
-		margin-left: 2px;
 		margin-top: -2px;
+		margin-left: 2px;
 	}
 
 	@include modifier(fit) {

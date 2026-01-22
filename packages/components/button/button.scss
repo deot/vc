@@ -14,7 +14,6 @@ $color-dark-light: varfix(color-dark-light, button);
 $color-primary: varfix(color-primary, button);
 $color-primary-light: varfix(color-primary-light, button);
 $color-primary-disabled: varfix(color-primary-disabled, button, #BEDAFF);
-
 $border-color-light: varfix(border-color-light, button, #C4C9D2);
 $color-success: varfix(color-success, button);
 $color-success-light: varfix(color-success-light, button);
@@ -68,6 +67,7 @@ $color-disabled-light: varfix(color-disabled-light, button);
 			color: $color-primary;
 			border-color: $color-primary;
 		}
+
 		@include when(solid) {
 			border-color: $border-color-light;
 

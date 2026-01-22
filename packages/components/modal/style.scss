@@ -53,12 +53,15 @@ $color-dark-lightest: varfix(color-dark-lightest, modal);
 			position: absolute;
 		}
 
-		@include when(large) {
-			@media screen and (height <= 768px) {
+
+		@media screen and (height <=768px) {
+			@include when(large) {
 				min-height: unitfix(400) !important;
 			}
+		}
 
-			@media screen and (height <= 400px) {
+		@media screen and (height <=400px) {
+			@include when(large) {
 				min-height: 100% !important;
 			}
 		}
@@ -114,7 +117,7 @@ $color-dark-lightest: varfix(color-dark-lightest, modal);
 		overflow: hidden;
 		flex: 1;
 
-		> .vc-scroller {
+		>.vc-scroller {
 			height: 100%;
 		}
 	}
@@ -160,7 +163,7 @@ $color-dark-lightest: varfix(color-dark-lightest, modal);
 		font-weight: 600;
 		line-height: unitfix(20);
 		color: $color-dark-light;
-		word-wrap: break-word;
+		overflow-wrap: break-word;
 	}
 
 	@include element(close) {

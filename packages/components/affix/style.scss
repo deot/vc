@@ -6,6 +6,7 @@ $component-name: vc-affix;
 	@include element(fixed) {
 		position: fixed;
 	}
+
 	@include element(absolute) {
 		position: absolute;
 	}

@@ -49,7 +49,7 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 		line-height: 1;
 		color: $color-dark;
 		text-align: center;
-		word-wrap: break-word;
+		overflow-wrap: break-word;
 	}
 
 	@include element(content) {
@@ -73,7 +73,7 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 		color: $color-dark-lighter;
 		text-align: center;
 		word-break: break-all;
-		word-wrap: break-word;
+		overflow-wrap: break-word;
 	}
 
 	@include element(button) {
@@ -84,7 +84,7 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 		line-height: 50px;
 		color: $color-primary;
 		text-align: center;
-		word-wrap: break-word;
+		overflow-wrap: break-word;
 		flex: 1;
 
 		&:first-child {
