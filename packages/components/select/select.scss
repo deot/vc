@@ -68,7 +68,10 @@ $component-name: vc-select;
 	}
 
 	@include element(search) {
+		display: flex;
 		padding: 12px 8px;
+		justify-content: space-between;
+		align-items: center;
 	}
 
 	@include element(loading) {

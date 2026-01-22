@@ -1,0 +1,18 @@
+@use '../style/helper' as *;
+
+$color-primary: varfix(color-primary, select-all);
+$color-primary-light: varfix(color-primary-light, select-all);
+$component-name: vc-select-all;
+
+@include block($component-name) {
+	padding-left: 4px;
+	font-size: 12px;
+	color: $color-primary;
+	text-align: right;
+	cursor: pointer;
+	text-wrap: nowrap;
+	
+	@include pseudo(selected) {
+		color: $color-primary-light;
+	}
+}

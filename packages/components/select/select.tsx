@@ -15,6 +15,7 @@ import { Icon } from '../icon/index';
 import { Option } from './option.tsx';
 import { OptionGroup } from './option-group.tsx';
 import { props as selectProps } from './select-props';
+import { SelectAll } from './select-all.tsx';
 
 const COMPONENT_NAME = 'vc-select';
 
@@ -32,7 +33,6 @@ export const Select = defineComponent({
 		const isActive = ref(false);
 		const isLoading = ref(false);
 		const searchValue = ref('');
-		const searchRegex = ref(new RegExp(''));
 		const currentValue = ref<Array<string | number>>([]);
 
 		const source = computed(() => {
@@ -71,6 +71,20 @@ export const Select = defineComponent({
 			const v = currentValue.value.length - props.maxTags;
 			return v < 0 ? 0 : v;
 		});
+		const optionMap = ref<any>({});
+		const options = computed(() => {
+			return Object.values(optionMap.value);
+		});
+		const showSelectAll = computed(() => {
+			return props.searchable && multiple.value && searchValue.value.trim().length > 0 && options.value.length > 0;
+		});
+		const setOption = (item: any, el: any) => {
+			if (el) {
+				optionMap.value[item.value] = el;
+			} else {
+				delete optionMap.value[item.value];
+			}
+		};
 
 		/**
 		 * v-model 同步, 外部的数据改变时不会触发
@@ -107,7 +121,7 @@ export const Select = defineComponent({
 			}
 		}, 250, { leading: false });
 
-		const add = (v) => {
+		const add = (v: any) => {
 			if (!multiple.value) {
 				currentValue.value = [v];
 				isActive.value = false;
@@ -118,8 +132,8 @@ export const Select = defineComponent({
 			sync();
 		};
 
-		const remove = (v) => {
-			const index = currentValue.value.findIndex(i => i == v);
+		const remove = (v: any) => {
+			const index = currentValue.value.findIndex(i => i === v);
 
 			currentValue.value.splice(index, 1);
 
@@ -130,7 +144,7 @@ export const Select = defineComponent({
 			isActive.value = false;
 		};
 
-		const handleClear = (e) => {
+		const handleClear = (e: any) => {
 			if (!showClear.value) return;
 			e.stopPropagation();
 
@@ -142,14 +156,12 @@ export const Select = defineComponent({
 			sync();
 		};
 
-		const handleClose = (v) => {
+		const handleClose = (v: any) => {
 			remove(v);
 		};
 
-		const handleSearch = (v) => {
+		const handleSearch = (v: string) => {
 			searchValue.value = v;
-
-			searchRegex.value = new RegExp(escapeString(v.trim()), 'i');
 			props.loadData && _loadData();
 		};
 
@@ -172,7 +184,7 @@ export const Select = defineComponent({
 			add,
 			remove,
 			close,
-			searchRegex,
+			searchValue,
 			multiple,
 			isActive,
 			current: currentValue,
@@ -282,6 +294,11 @@ export const Select = defineComponent({
 													placeholder={props.searchPlaceholder}
 													onInput={handleSearch}
 												/>
+												{
+													showSelectAll.value && (
+														<SelectAll data={options.value} />
+													)
+												}
 											</div>
 										)
 									}
@@ -315,6 +332,7 @@ export const Select = defineComponent({
 																							return item.children.map(($item: any) => {
 																								return (
 																									<Option
+																										ref={el => setOption($item, el)}
 																										key={$item.value}
 																										row={$item}
 																										value={$item.value}
@@ -333,6 +351,7 @@ export const Select = defineComponent({
 																			)
 																		: (
 																				<Option
+																					ref={el => setOption(item, el)}
 																					key={item.value}
 																					row={item}
 																					value={item.value}

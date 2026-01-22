@@ -11,7 +11,7 @@ const COMPONENT_NAME = 'vc-select-option';
 export const Option = defineComponent({
 	name: COMPONENT_NAME,
 	props: optionProps,
-	setup(props, { slots }) {
+	setup(props, { slots, expose }) {
 		const owner = getInstance('select', 'selectId') as any;
 
 		const formatterLabel = computed(() => {
@@ -29,9 +29,20 @@ export const Option = defineComponent({
 			return !multiple.value ? true : current.value.slice(-1)[0] === props.value;
 		});
 
+		const searchRegex = computed(() => {
+			const v = owner
+				.exposed
+				.searchValue
+				.value
+				.trim()
+				.replace(/\s+/g, ' ')
+				.split(/\s|,/);
+
+			return new RegExp(`(${v.join('|')})`, 'i');
+		});
+
 		const isActive = computed(() => {
-			const regex = owner.exposed.searchRegex.value;
-			return regex.test(formatterLabel.value) || !props.filterable;
+			return !!(searchRegex.value.test(formatterLabel.value) || !props.filterable);
 		});
 
 		const customOptions = computed(() => {
@@ -62,6 +73,13 @@ export const Option = defineComponent({
 		const handlePrevent = (e: any) => {
 			e.preventDefault();
 		};
+
+		expose({
+			isActive,
+			isChecked,
+			formatterLabel,
+			props
+		});
 		return () => {
 			if (!isActive.value) return;
 			return typeof props.render === 'function'
