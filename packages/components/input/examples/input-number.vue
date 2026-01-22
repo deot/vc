@@ -52,6 +52,11 @@
 		@blur="handleBlur"
 		@enter="handleEnter"
 	/>
+	<InputNumber disabled afloat>
+		<template #append>
+			<div style="background-color: red;">any</div>
+		</template>
+	</InputNumber>
 </template>
 <script setup>
 import { ref } from 'vue';

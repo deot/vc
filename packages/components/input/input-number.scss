@@ -65,8 +65,4 @@ $color-disabled: varfix(color-disabled, input);
 	@include element(down) {
 		@include extend-rule(input-number-icon);
 	}
-
-	.vc-input__append.is-disabled {
-		display: none;
-	}
 }
