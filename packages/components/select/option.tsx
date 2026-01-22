@@ -29,19 +29,8 @@ export const Option = defineComponent({
 			return !multiple.value ? true : current.value.slice(-1)[0] === props.value;
 		});
 
-		const searchRegex = computed(() => {
-			const v = owner
-				.exposed
-				.searchValue
-				.value
-				.trim()
-				.replace(/\s+/g, ' ')
-				.split(/\s|,/);
-
-			return new RegExp(`(${v.join('|')})`, 'i');
-		});
-
 		const isActive = computed(() => {
+			const { searchRegex } = owner.exposed;
 			return !!(searchRegex.value.test(formatterLabel.value) || !props.filterable);
 		});
 

@@ -71,6 +71,17 @@ export const Select = defineComponent({
 			const v = currentValue.value.length - props.maxTags;
 			return v < 0 ? 0 : v;
 		});
+
+		const searchRegex = computed(() => {
+			const v = searchValue
+				.value
+				.trim()
+				.replace(/\s+/g, ' ')
+				.split(/\s|,/);
+
+			return new RegExp(escapeString(`(${v.join('|')})`), 'i');
+		});
+
 		const optionMap = ref<any>({});
 		const options = computed(() => {
 			return Object.values(optionMap.value);
@@ -184,7 +195,7 @@ export const Select = defineComponent({
 			add,
 			remove,
 			close,
-			searchValue,
+			searchRegex,
 			multiple,
 			isActive,
 			current: currentValue,
