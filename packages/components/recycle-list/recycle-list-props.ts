@@ -1,12 +1,14 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { Render } from '../customer/types';
 import type { Props as ScrollerProps } from '../scroller/scroller-props';
+import type { Store } from './store';
 
 export const props = {
 	data: {
 		type: Array,
 		default: () => ([])
 	},
+	store: Object as PropType<Store>,
 	disabled: {
 		type: Boolean,
 		default: false
