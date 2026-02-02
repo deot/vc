@@ -149,24 +149,23 @@ $line-height: 20px;
 
 	// 数据为空
 	@include element(empty-wrapper) {
+		position: absolute;
+		top: 0;
+		left: 0;
 		display: flex;
 		width: 100%;
 		height: 100%;
-		min-height: 60px;
-		text-align: center;
+		padding-top: 20px;
+		pointer-events: none;
 		justify-content: center;
 		align-items: center;
+	}
 
-		@include when(absolute) {
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			transform: translate(-50%, -50%);
-		}
+	@include element(empty-placeholder) {
+		min-height: 60px;
 	}
 
 	@include element(empty-text) {
-		width: 50%;
 		line-height: 60px;
 		color: #909399;
 	}

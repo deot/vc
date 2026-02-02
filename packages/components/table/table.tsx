@@ -530,16 +530,8 @@ export const Table = defineComponent({
 									onScroll={handleScollY}
 								/>
 								{
-									props.data.length === 0 && (
-										<div
-											ref={emptyBlock}
-											style={bodyWidthStyle.value}
-											class={[{ 'is-absolute': !!props.height }, 'vc-table__empty-wrapper']}
-										>
-											<span class="vc-table__empty-text">
-												{ slots.empty ? slots.empty() : (props.emptyText || '暂无数据') }
-											</span>
-										</div>
+									props.data.length === 0 && !props.height && (
+										<div class="vc-table__empty-placeholder" style={[bodyWidthStyle.value]} />
 									)
 								}
 								{
@@ -704,6 +696,24 @@ export const Table = defineComponent({
 											/>
 										</div>
 									)
+								}
+							</div>
+						)
+					}
+					{
+						props.data.length === 0 && (
+							<div
+								ref={emptyBlock}
+								class={[{ 'has-height': !!props.height }, 'vc-table__empty-wrapper']}
+							>
+								{
+									slots.empty
+										? slots.empty()
+										: (
+												<span class="vc-table__empty-text">
+													{ props.emptyText || '暂无数据' }
+												</span>
+											)
 								}
 							</div>
 						)
