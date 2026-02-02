@@ -18,6 +18,10 @@ export const TableHeader = defineComponent({
 		sort: {
 			type: Object,
 			default: () => ({})
+		},
+		resizable: {
+			type: Boolean,
+			default: void 0
 		}
 	},
 
@@ -28,6 +32,10 @@ export const TableHeader = defineComponent({
 		const draggingColumn = ref(null);
 		const dragging = ref(false);
 		const dragState = ref<any>({});
+
+		const allowDrag = computed(() => {
+			return typeof props.resizable === 'boolean' ? props.resizable : props.border;
+		});
 
 		const states: any = useStates({
 			columns: 'columns',
@@ -135,12 +143,12 @@ export const TableHeader = defineComponent({
 			if (IS_SERVER) return;
 			if (column.children && column.children.length > 0) return;
 			/* istanbul ignore if */
-			if (draggingColumn.value && props.border) {
+			if (draggingColumn.value && allowDrag.value) {
 				dragging.value = true;
 
 				table.resizeProxyVisible.value = true;
 
-				const tableEl = table.vnode.el;
+				const tableEl = table.tableWrapper.value;
 				const tableLeft = tableEl.getBoundingClientRect().left;
 				const columnEl = instance.vnode.el!.querySelector(`.vc-table__th.${column.id}`);
 				const columnRect = columnEl.getBoundingClientRect();
@@ -176,9 +184,8 @@ export const TableHeader = defineComponent({
 						} = dragState.value;
 						const finalLeft = parseInt(resizeProxy.style.left, 10);
 						const columnWidth = finalLeft - startColumnLeft;
-						column.width = columnWidth;
-						column.realWidth = column.width;
-						table.$emit('header-dragend', column.width, startLeft - startColumnLeft, column, event);
+						column.width = column.minWidth = column.realWidth = columnWidth;
+						table.emit('header-dragend', column.width, startLeft - startColumnLeft, column);
 
 						table.store.scheduleLayout();
 
@@ -187,7 +194,7 @@ export const TableHeader = defineComponent({
 						draggingColumn.value = null;
 						dragState.value = {};
 
-						table.resizeProxyVisible = false;
+						table.resizeProxyVisible.value = false;
 					}
 
 					document.removeEventListener('mousemove', handleMouseMove);
@@ -214,7 +221,7 @@ export const TableHeader = defineComponent({
 
 			if (!column || !column.resizable) return;
 
-			if (!dragging.value && props.border) {
+			if (!dragging.value && allowDrag.value) {
 				const rect = target.getBoundingClientRect();
 
 				const bodyStyle = document.body.style;
@@ -241,6 +248,7 @@ export const TableHeader = defineComponent({
 
 		const handleSort = (prop: string, order: any) => {
 			const v = { prop, order };
+
 			table.emit('update:sort', v);
 			table.emit('sort-change', v);
 		};

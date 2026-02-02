@@ -10,6 +10,7 @@
 		<Table
 			v-if="isActive"
 			primary-key="id"
+			resizable
 			:delay="delay"
 			:rows="8"
 			:height="600"

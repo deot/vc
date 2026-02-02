@@ -36,7 +36,7 @@ export const Table = defineComponent({
 		'header-click',
 		'header-contextmenu',
 		'current-change',
-		'header-dragend ',
+		'header-dragend',
 		'expand-change',
 		'sort-change',
 		'update:sort'
@@ -55,6 +55,7 @@ export const Table = defineComponent({
 			height: null
 		});
 
+		const tableWrapper = ref<any>(null);
 		// refs
 		const hiddenColumns = ref<any>(null);
 		const headerWrapper = ref<any>(null);
@@ -461,6 +462,7 @@ export const Table = defineComponent({
 			toggleRowExpansion,
 			clearSelection,
 			scroller,
+			tableWrapper,
 			headerWrapper,
 			appendWrapper,
 			footerWrapper,
@@ -471,13 +473,16 @@ export const Table = defineComponent({
 			renderExpanded,
 			hiddenColumns,
 			props,
-			emit
+			emit,
+			resizeProxy,
+			resizeProxyVisible
 		};
 		expose(exposed);
 		provide('vc-table', exposed);
 		return () => {
 			return (
 				<div
+					ref={tableWrapper}
 					class={[classes.value, tableId, 'vc-table']}
 					onMouseleave={handleMouseLeave}
 				>
@@ -493,6 +498,7 @@ export const Table = defineComponent({
 								<TableHeader
 									ref={tableHeader}
 									border={props.border}
+									resizable={props.resizable}
 									sort={props.sort}
 									style={bodyWidthStyle.value}
 								/>
@@ -582,6 +588,7 @@ export const Table = defineComponent({
 											<TableHeader
 												ref={leftFixedTableHeader}
 												border={props.border}
+												resizable={props.resizable}
 												sort={props.sort}
 												style={bodyWidthStyle.value}
 												fixed="left"
@@ -647,6 +654,7 @@ export const Table = defineComponent({
 											<TableHeader
 												ref={rightFixedTableHeader}
 												border={props.border}
+												resizable={props.resizable}
 												sort={props.sort}
 												style={bodyWidthStyle.value}
 												fixed="right"

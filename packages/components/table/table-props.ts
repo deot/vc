@@ -94,6 +94,10 @@ export const props = {
 	},
 
 	// 用于延迟渲染，用于计算高度
-	delay: Number
+	delay: Number,
+	resizable: {
+		type: Boolean,
+		default: void 0
+	}
 };
 export type Props = ExtractPropTypes<typeof props>;

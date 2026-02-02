@@ -1,4 +1,4 @@
-import { getCurrentInstance, computed, onBeforeUnmount, onMounted, ref, provide, reactive } from 'vue';
+import { getCurrentInstance, computed, onBeforeUnmount, onMounted, ref, provide, reactive, nextTick } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import type { SetupContext } from 'vue';
 import type { BarExposed } from './bar';
@@ -41,12 +41,14 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		];
 	});
 
-	const refreshSize = () => {
+	const refreshSize = async () => {
 		if (!wrapper.value) return;
 
 		wrapperW.value = wrapper.value.clientWidth;
 		wrapperH.value = wrapper.value.clientHeight;
 
+		// 实际测试中发现，不使用nextTick会存在contentW和contentH为上一次值的情况
+		await nextTick();
 		contentH.value = wrapper.value.scrollHeight;
 		contentW.value = wrapper.value.scrollWidth;
 	};
