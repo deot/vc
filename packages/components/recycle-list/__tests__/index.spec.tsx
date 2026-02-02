@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { RecycleList } from '@deot/vc-components';
+import { RecycleList } from '../index';
 import { mount } from '@vue/test-utils';
 
 describe('index.ts', () => {

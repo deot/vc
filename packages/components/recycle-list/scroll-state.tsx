@@ -19,10 +19,10 @@ export const ScrollState = defineComponent({
 			return (
 				<div ref={current} class="vc-recycle-list__scroll-state">
 					{
-						!owner.hasPlaceholder.value && !owner.isEnd.value && !owner.isSlientRefresh.value && (
+						!owner.hasPlaceholder.value && !owner.store.states.isEnd && !owner.store.states.isSlientRefresh && (
 							<div
 								class="vc-recycle-list__loading"
-								style={{ visibility: owner.isLoading.value ? 'visible' : 'hidden' }}
+								style={{ visibility: owner.store.states.isLoading ? 'visible' : 'hidden' }}
 							>
 								{
 									slots.loading?.() || (
@@ -39,8 +39,8 @@ export const ScrollState = defineComponent({
 						)
 					}
 					{
-						owner.isEnd.value && (
-							owner.data.length
+						owner.store.states.isEnd && (
+							owner.store.states.data.length
 								? (
 										<div class="vc-recycle-list__complete">
 											{

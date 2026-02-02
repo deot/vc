@@ -5,10 +5,12 @@ import {
 	ref,
 	computed,
 	onMounted,
+	onBeforeMount,
 	onBeforeUnmount,
 	nextTick,
 	watch,
-	Fragment
+	Fragment,
+	getCurrentInstance
 } from 'vue';
 import { throttle, getUid } from '@deot/helper-utils';
 import { Resize } from '@deot/helper-resize';
@@ -21,7 +23,9 @@ import { ScrollState } from './scroll-state';
 import { Container } from './container';
 import { Resizer } from '../resizer';
 import { useDirectionKeys } from './use-direction-keys';
+import { Store } from './store';
 
+const isTouch = typeof document !== 'undefined' && 'ontouchend' in document;
 const COMPONENT_NAME = 'vc-recycle-list';
 
 export const RecycleList = defineComponent({
@@ -29,14 +33,9 @@ export const RecycleList = defineComponent({
 	props: recycleListProps,
 	emits: ['scroll', 'row-resize'],
 	setup(props, { slots, expose, emit }) {
+		const instance = getCurrentInstance()!;
+		const store = props.store || new Store(props);
 		const K = useDirectionKeys();
-		const offsetPageSize = ref(0);
-		const contentMaxSize = ref(0);
-		const columnFillSize = ref<number[]>([]); // 优化inverted多列时用于补齐高度
-		const firstItemIndex = ref(0);
-		const loadings = ref<string[]>([]);
-		const isEnd = ref(false);
-		const isSlientRefresh = ref(false);
 		const isMounted = ref(false);
 
 		// el
@@ -47,62 +46,11 @@ export const RecycleList = defineComponent({
 		const content = ref();
 		const scrollState = ref();
 
-		// data
-		const rebuildData = ref<any[]>([]); // 封装后的数据，包含位置信息
-		const rebuildDataIndexMap = ref({}); // 优化inverted下的find逻辑
-
-		let originalData: any[] = []; // 原始数据
-		let promiseStack: Promise<any>[] = []; // 每页数据栈信息
-
 		let originalScrollPosition = 0; // 数据load前滚动条位置
 		const interrupter = Interrupter.of();
 
 		const wrapper = computed(() => {
 			return scroller.value?.wrapper;
-		});
-		const columnSize = computed(() => {
-			if (props.cols === 1) return;
-			return `${100 / props.cols}%`;
-		});
-
-		const columnOffsetGutter = computed(() => {
-			return props.gutter * (props.cols - 1) / props.cols;
-		});
-		const columns = computed(() => {
-			const v = Array.from({ length: props.cols }).map((_, index) => ({ index, offset: [0, 0] }));
-			v[0].offset = [0, columnOffsetGutter.value];
-			for (let i = 1; i < v.length; i++) {
-				const pre = v[i - 1].offset;
-
-				v[i].offset = [props.gutter - pre[1], columnOffsetGutter.value - props.gutter + pre[1]];
-			}
-
-			return v;
-		});
-
-		/**
-		 * 用于展示的信息
-		 *
-		 * 这里尽可能的控制好pageSize的长度, 否则会存在性能问题
-		 * 这里存在一个性能瓶颈，当数组中某一个值发生变化时，虚拟树会重新构建，虚拟树的构建耗时长会引起掉帧
-		 * 这是机制所导致的，应该尽可能减少renderList的数量
-		 */
-		const data = computed(() => {
-			const base = Array.from({ length: props.cols }).map(() => []);
-			return rebuildData.value
-				.slice(
-					Math.max(0, firstItemIndex.value - props.pageSize),
-					Math.min(rebuildData.value.length, firstItemIndex.value + props.pageSize + offsetPageSize.value)
-				).reduce((pre, cur) => {
-					cur.column >= 0 && pre[cur.column].push(cur);
-					return pre;
-				}, base);
-		});
-
-		const preData = computed(() => {
-			return rebuildData.value.filter((i) => {
-				return i && !i.isPlaceholder && !i.size;
-			});
 		});
 
 		const renderer = computed(() => {
@@ -125,10 +73,6 @@ export const RecycleList = defineComponent({
 			return placeholder.value.offsetWidth;
 		});
 
-		const isLoading = computed(() => {
-			return loadings.value.length;
-		});
-
 		const scrollTo = (options: any, force?: boolean) => {
 			let options$ = { x: 0, y: 0 };
 			if (typeof options === 'number') {
@@ -140,54 +84,26 @@ export const RecycleList = defineComponent({
 			const el = wrapper.value;
 
 			(force || el.scrollLeft !== options$.x) && (el.scrollLeft = options$.x);
-			(force || el.scrollLeft !== options$.y) && (el.scrollTop = options$.y);
+			(force || el.scrollTop !== options$.y) && (el.scrollTop = options$.y);
 
 			scroller.value.scrollTo(options);
 		};
 
 		const scrollToIndex = (index: number, offset = 0) => {
-			const item = rebuildData.value[index];
+			const item = store.states.rebuildData[index];
 			item?.top && item.top >= 0 && scrollTo(item.top + offset);
 		};
 
-		const setRebuildDataMap = () => {
-			if (!props.inverted) return;
-			rebuildDataIndexMap.value = rebuildData.value.reduce((pre, cur, index) => {
-				pre[cur.id] = index;
-				return pre;
-			}, {});
-		};
-
-		const setItemData = (index: number, $data?: any) => {
-			const node = {
-				id: index,
-				data: $data || {},
-				size: 0,
-				position: -1000,
-				isPlaceholder: !$data,
-				loaded: $data ? 1 : 0,
-
-				// 在第几列渲染
-				column: -1
-			};
-			if (!props.inverted) return (rebuildData.value[index] = node);
-
-			const index$ = rebuildDataIndexMap.value[index];
-			typeof index$ === 'undefined'
-				? rebuildData.value.unshift(node)
-				: (rebuildData.value[index$] = node);
-		};
-
 		const refreshItemSize = (index: number) => {
-			const current = props.inverted
-				? rebuildData.value[rebuildDataIndexMap.value[index]]
-				: rebuildData.value[index];
+			const current = store.props.inverted
+				? store.states.rebuildData[store.states.rebuildDataIndexMap[index]]
+				: store.states.rebuildData[index];
 
-			// 受到`removeUnusedPlaceholders`影响,无效的会被回收
+			// 受到`store.removeUnusedPlaceholders`影响,无效的会被回收
 			if (!current) return;
 
 			const original = Object.assign({}, current);
-			const dom = preloads.value[index] || curloads.value[props.inverted ? index : index - firstItemIndex.value];
+			const dom = preloads.value[index] || curloads.value[store.props.inverted ? index : index - store.states.firstItemIndex];
 			if (dom) {
 				current.size = dom[K.offsetSize] || placeholderSize.value;
 			} else if (current) {
@@ -197,75 +113,24 @@ export const RecycleList = defineComponent({
 			return { original, changed: current };
 		};
 
-		const refreshItemPosition = () => {
-			const sizes = Array.from({ length: props.cols }).map(() => 0);
-			const lastIndex = rebuildData.value.length - 1;
-
-			let current: any;
-			// 循环所有数据以更新item.top和总高度
-			for (let i = 0; i <= lastIndex; i++) {
-				current = rebuildData.value[props.inverted ? lastIndex - i : i];
-
-				if (current) {
-					const minSize = Math.min(...sizes);
-					const minIndex = sizes[props.inverted ? 'findLastIndex' : 'findIndex'](v => v === minSize);
-
-					current.position = sizes[minIndex] || 0;
-					current.column = minIndex;
-
-					sizes[minIndex] += current.size;
-				}
-			}
-
-			if (props.inverted) {
-				for (let i = 0; i <= lastIndex; i++) {
-					current = rebuildData.value[i];
-
-					if (current) {
-						current.position = sizes[current.column] - current.position - current.size;
-					}
-				}
-			}
-
-			contentMaxSize.value = Math.max(...sizes);
-			columnFillSize.value = sizes.map(i => contentMaxSize.value - i);
-		};
-
 		// 设置data首个元素的在originalData索引值
 		const setFirstItemIndex = () => {
 			if (!wrapper.value) return;
 			const position = wrapper.value[K.scrollAxis];
 			let item: any;
-			for (let i = 0; i < rebuildData.value.length; i++) {
-				item = rebuildData.value[i];
+			for (let i = 0; i < store.states.rebuildData.length; i++) {
+				item = store.states.rebuildData[i];
 				if (!item || item.position > position) {
-					firstItemIndex.value = Math.max(0, i - props.cols);
+					store.states.firstItemIndex = Math.max(0, i - store.props.cols);
 					break;
 				}
 			}
 		};
 
-		const removeUnusedPlaceholders = (copy: any[], page: number) => {
-			const start = (page - 1) * props.pageSize;
-			const end = page * props.pageSize;
-			let cursor: number;
-			if (!props.inverted) {
-				for (cursor = start; cursor < end; cursor++) {
-					if (copy[cursor]?.isPlaceholder) break;
-				}
-				rebuildData.value = copy.slice(0, cursor);
-			} else {
-				for (cursor = 0; cursor < end - start; cursor++) {
-					if (!copy[cursor]?.isPlaceholder) break;
-				}
-				rebuildData.value = copy.slice(cursor);
-			}
-		};
-
 		const stopScroll = (page: number) => {
-			isEnd.value = true;
-			removeUnusedPlaceholders(rebuildData.value.slice(0), page);
-			refreshItemPosition();
+			store.states.isEnd = true;
+			store.removeUnusedPlaceholders(store.states.rebuildData.slice(0), page);
+			store.refreshItemPosition();
 			setFirstItemIndex();
 		};
 		let isRefreshLayout = 0;
@@ -275,16 +140,16 @@ export const RecycleList = defineComponent({
 			const resizeChanges = [] as any[];
 			let item: any;
 			for (let i = start; i < end; i++) {
-				item = props.inverted
-					? rebuildData.value[rebuildDataIndexMap.value[i]]
-					: rebuildData.value[i];
+				item = store.props.inverted
+					? store.states.rebuildData[store.states.rebuildDataIndexMap[i]]
+					: store.states.rebuildData[i];
 
 				if (item && item.loaded) continue;
-				setItemData(i, originalData[i]);
+				store.setItemData(i, store.originalData[i]);
 				promiseTasks.push(nextTick(() => { const e = refreshItemSize(i); e && resizeChanges.push(e.changed); }));
 			}
 			await Promise.all(promiseTasks);
-			refreshItemPosition();
+			store.refreshItemPosition();
 			setFirstItemIndex();
 
 			resizeChanges.length > 0 && emit('row-resize', resizeChanges.map(i => ({ size: i.size, index: i.id })));
@@ -295,35 +160,28 @@ export const RecycleList = defineComponent({
 
 		const refreshLayoutByPage = async (page: number) => {
 			const el = wrapper.value;
-			const start = (page - 1) * props.pageSize;
-			const end = page * props.pageSize;
-			const originalSize = page === 1 ? 0 : contentMaxSize.value;
+			const start = (page - 1) * store.props.pageSize;
+			const end = page * store.props.pageSize;
+			const originalSize = page === 1 ? 0 : store.states.contentMaxSize;
 			await refreshLayout(start, end);
 
-			if (!props.inverted) return;
+			if (!store.props.inverted) return;
 
 			const scrollPosition = el[K.scrollAxis];
 			// 当偏移值只是新增加的高度, 提前滚动了则要显示之前的位置
 			const changed = scrollPosition !== originalScrollPosition;
 			const offset = page === 1 ? 0 : changed ? scrollPosition : 0;
-			scrollTo(contentMaxSize.value - originalSize + offset);
-		};
-
-		const setOriginData = (page: number, res: any) => {
-			const baseIndex = (page - 1) * props.pageSize;
-			for (let i = 0; i < res.length; i++) {
-				originalData[baseIndex + i] = res[i];
-			}
+			scrollTo(store.states.contentMaxSize - originalSize + offset);
 		};
 
 		// 用于为加载一屏幕时，自动扩容pageSize
 		const setOffsetPageSize = () => {
 			if (
-				!isEnd.value
-				&& contentMaxSize.value > 0
-				&& contentMaxSize.value <= wrapper.value?.[K.offsetSize]
+				!store.states.isEnd
+				&& store.states.contentMaxSize > 0
+				&& store.states.contentMaxSize <= wrapper.value?.[K.offsetSize]
 			) {
-				offsetPageSize.value += props.pageSize;
+				store.states.offsetPageSize += store.props.pageSize;
 				return true;
 			}
 
@@ -331,52 +189,54 @@ export const RecycleList = defineComponent({
 		};
 
 		const loadRemoteData = async (onBeforeSetData?: any) => {
-			const currentPage = promiseStack.length + 1;
-			const promiseFetch = props.loadData(currentPage, props.pageSize);
-			loadings.value.push('pending');
-			promiseStack.push(promiseFetch);
-			const res = await promiseFetch;
+			const currentPage = store.promiseStack.length + 1;
+			const promiseFetch = store.props.loadData(currentPage, store.props.pageSize);
+			store.states.loadings.push('pending');
+			store.promiseStack.push(promiseFetch);
+			let response = await promiseFetch;
+			if (Array.isArray(response)) {
+				response = { data: response, finished: response.length < store.props.pageSize };
+			}
 			onBeforeSetData && onBeforeSetData();
-			loadings.value.pop();
-			if (!res) {
+			store.states.loadings.pop();
+			if (!response || !response.data) {
 				stopScroll(currentPage);
 			} else {
-				setOriginData(currentPage, res);
+				store.setOriginData(currentPage, response.data);
 				await refreshLayoutByPage(currentPage);
 
-				if (res.length < props.pageSize) {
+				if (response.finished) {
 					stopScroll(currentPage);
 				}
 			}
 		};
 
 		const loadData = async (onBeforeSetData?: any) => {
-			if (props.disabled || isEnd.value || isSlientRefresh.value) return;
-			originalScrollPosition = wrapper.value.scrollLeft;
+			if (props.disabled || store.states.isEnd || store.states.isSlientRefresh) return;
+			originalScrollPosition = wrapper.value[K.scrollAxis];
 			if (hasPlaceholder.value) {
 				let start: number;
 				let end: number;
-				if (props.inverted) {
-					start = rebuildData.value.length;
-					end = start + props.pageSize;
+				if (store.props.inverted) {
+					start = store.states.rebuildData.length;
+					end = start + store.props.pageSize;
 
 					Array
-						.from({ length: props.pageSize })
+						.from({ length: store.props.pageSize })
 						.forEach((_, index) => {
-							setItemData(index + start);
+							store.setItemData(index + start);
 						});
-					setRebuildDataMap();
 				} else {
-					start = rebuildData.value.length;
-					rebuildData.value.length += props.pageSize;
-					end = rebuildData.value.length;
+					start = store.states.rebuildData.length;
+					store.states.rebuildData.length += store.props.pageSize;
+					end = store.states.rebuildData.length;
 				}
 
-				const originalSize = contentMaxSize.value;
+				const originalSize = store.states.contentMaxSize;
 				await refreshLayout(start, end);
-				props.inverted && scrollTo(contentMaxSize.value - originalSize);
+				store.props.inverted && scrollTo(store.states.contentMaxSize - originalSize);
 				await loadRemoteData(onBeforeSetData);
-			} else if (!isLoading.value) {
+			} else if (!store.states.isLoading) {
 				await loadRemoteData(onBeforeSetData);
 			}
 
@@ -385,27 +245,26 @@ export const RecycleList = defineComponent({
 		};
 
 		const reset = async (slient = false) => {
-			isEnd.value = false;
-			loadings.value = [];
-			wrapper.value.scrollLeft = 0;
+			store.states.isEnd = false;
+			store.states.loadings = [];
+			wrapper.value[K.scrollAxis] = 0;
 
-			originalData = [];
-			promiseStack = [];
+			store.originalData = [];
+			store.promiseStack = [];
 
 			const done = () => {
-				rebuildData.value = [];
-				rebuildDataIndexMap.value = {};
-				contentMaxSize.value = 0;
-				columnFillSize.value = [];
-				firstItemIndex.value = 0;
-				isSlientRefresh.value = false;
+				store.setData([]);
+				store.states.contentMaxSize = 0;
+				store.states.columnFillSize = [];
+				store.states.firstItemIndex = 0;
+				store.states.isSlientRefresh = false;
 			};
 			if (!slient) {
 				done();
 				await loadData();
 			} else {
 				const next = loadData(done);
-				isSlientRefresh.value = true;
+				store.states.isSlientRefresh = true;
 				await next;
 			}
 		};
@@ -417,40 +276,42 @@ export const RecycleList = defineComponent({
 
 		/**
 		 * 最大滚动距离：el.scrollHeight - el.clientHeight
-		 * contentMaxSize.value不含loading，以及wrapper的border, padding
+		 * store.states.contentMaxSize不含loading，以及wrapper的border, padding
 		 * @param e FakeUIEvent, 避免对dom的属性的获取，该值是提前计算出来的
 		 * @return ~
 		 */
 		const handleScroll = (e: UIEvent) => {
+			if (store.currentLeaf !== instance) return;
 			const el = e.target!;
 			if (
-				(!props.inverted && el[K.scrollAxis] > el[K.scrollSize] - el[K.clientSize] - props.offset)
-				|| (props.inverted && el[K.scrollAxis] - props.offset <= 0)
+				(!store.props.inverted && el[K.scrollAxis] > el[K.scrollSize] - el[K.clientSize] - props.offset)
+				|| (store.props.inverted && el[K.scrollAxis] - props.offset <= 0)
 			) {
 				loadData();
 			}
 			setFirstItemIndex();
+			store.scrollTo(e);
 			emit('scroll', e);
 		};
 
 		const forceRefreshLayout = async () => {
-			rebuildData.value.forEach((item) => {
+			store.states.rebuildData.forEach((item) => {
 				item.loaded = 0;
 			});
-			await refreshLayout(0, rebuildData.value.length);
+			await refreshLayout(0, store.states.rebuildData.length);
 		};
 
 		// 图片撑开时，会影响布局, 节流结束后调用
 		const handleResize = throttle(async () => {
 			if (!wrapper.value) return;
-			const isNeedRefreshLayout = rebuildData.value.some(i => !i.isPlaceholder);
+			const isNeedRefreshLayout = store.states.rebuildData.some(i => !i.isPlaceholder);
 
 			if (isNeedRefreshLayout) {
-				const oldFirstItemIndex = firstItemIndex.value;
-				const oldPosition = rebuildData.value[oldFirstItemIndex]?.position;
+				const oldFirstItemIndex = store.states.firstItemIndex;
+				const oldPosition = store.states.rebuildData[oldFirstItemIndex]?.position;
 
 				await forceRefreshLayout();
-				const newPosition = rebuildData.value[oldFirstItemIndex]?.position;
+				const newPosition = store.states.rebuildData[oldFirstItemIndex]?.position;
 
 				// 保持原来的位置
 				const el = wrapper.value;
@@ -465,45 +326,34 @@ export const RecycleList = defineComponent({
 		const setDataSource = async (v: any, oldV: any) => {
 			if (!Array.isArray(v) || oldV === v) return;
 
-			if (props.data.length % props.pageSize > 0) {
-				isEnd.value = true;
-			} else {
-				promiseStack = Array
-					.from({ length: Math.ceil(props.data.length / props.pageSize) })
-					.map(() => Promise.resolve());
-			}
+			store.setData(v);
 
-			originalData = [];
-			// 这里不要originalData = toRaw(props.data);
-			props.data.forEach((i, index) => {
-				originalData[index] = i;
-			});
-
-			if (!originalData.length) {
-				rebuildData.value = [];
-			} else {
-				rebuildData.value = originalData.slice();
-			}
-
-			offsetPageSize.value = 0;
-			await refreshLayout(0, originalData.length);
+			store.states.offsetPageSize = 0;
+			await refreshLayout(0, store.originalData.length);
 			setOffsetPageSize();
 		};
 
+		const handleStoreLeafChange = () => {
+			store.currentLeaf = instance;
+		};
+
+		onBeforeMount(() => {
+			store.add(instance);
+		});
+
+		const moveEventName = isTouch ? 'touchstart' : 'mouseenter';
 		onMounted(() => {
 			Resize.on(wrapper.value, handleResize);
 			loadData();
 			isMounted.value = true;
+			wrapper.value.addEventListener(moveEventName, handleStoreLeafChange);
 		});
 
 		onBeforeUnmount(() => {
 			Resize.off(wrapper.value, handleResize);
+			store.remove(instance);
+			wrapper.value.removeEventListener(moveEventName, handleStoreLeafChange);
 		});
-
-		watch(
-			() => rebuildData.value.length,
-			setRebuildDataMap
-		);
 
 		watch(
 			() => props.data,
@@ -523,7 +373,7 @@ export const RecycleList = defineComponent({
 					if (isRefreshLayout) {
 						await interrupter;
 					}
-					if (contentMaxSize.value === 0 || contentMaxSize.value <= wrapper.value?.[K.offsetSize]) {
+					if (store.states.contentMaxSize === 0 || store.states.contentMaxSize <= wrapper.value?.[K.offsetSize]) {
 						loadData();
 					}
 				}
@@ -532,12 +382,9 @@ export const RecycleList = defineComponent({
 
 		expose({
 			recycleListId: getUid('recycle-list'),
+			store,
 			hasPlaceholder,
-			isEnd,
-			isSlientRefresh,
-			isLoading,
 			renderer,
-			data,
 			// methods
 			reset,
 			scrollTo,
@@ -549,7 +396,7 @@ export const RecycleList = defineComponent({
 				<Container
 					class={['vc-recycle-list', { 'is-horizontal': !props.vertical }]}
 					pullable={props.pullable}
-					inverted={props.inverted}
+					inverted={store.props.inverted}
 					vertical={props.vertical}
 					render={renderer.value.refresh}
 					onRefresh={handleRefresh}
@@ -562,29 +409,29 @@ export const RecycleList = defineComponent({
 						}
 						onScroll={handleScroll}
 					>
-						{ props.inverted && (<ScrollState ref={scrollState} />) }
+						{ store.props.inverted && (<ScrollState ref={scrollState} />) }
 						{ slots.header?.() }
 						<div
 							ref={content}
 							class="vc-recycle-list__content"
-							style={{ [K.contentSize]: contentMaxSize.value + 'px' }}
+							style={{ [K.contentSize]: store.states.contentMaxSize + 'px' }}
 						>
 
 							{
-								columns.value.map((column, columnIndex) => (
+								store.states.columns.map((column, columnIndex) => (
 									<Fragment key={columnIndex}>
 										<div
 											style={{
-												[K.columnSize]: columnSize.value,
+												[K.columnSize]: store.states.columnSize,
 												[K.paddingColumnHead]: `${column.offset[0]}px`,
 												[K.paddingColumnTail]: `${column.offset[1]}px`,
-												transform: `${K.translateAxis}(${data.value[columnIndex][0]?.position || 0}px)`
+												transform: `${K.translateAxis}(${store.states.data[columnIndex][0]?.position || 0}px)`
 											}}
-											class={[{ 'is-inverted': props.inverted }, 'vc-recycle-list__column']}
+											class={[{ 'is-inverted': store.props.inverted }, 'vc-recycle-list__column']}
 										>
-											{ props.inverted && (<div style={{ height: `${columnFillSize.value[columnIndex]}px` }} />) }
+											{ store.props.inverted && (<div style={{ height: `${store.states.columnFillSize[columnIndex]}px` }} />) }
 											{
-												data.value[columnIndex].map((item: any) => (
+												store.states.data[columnIndex].map((item: any) => (
 													<Fragment
 														key={item.id}
 													>
@@ -623,16 +470,16 @@ export const RecycleList = defineComponent({
 												))
 											}
 										</div>
-										{ !props.vertical && columnIndex < props.cols - 1 && (<br />) }
+										{ !props.vertical && columnIndex < store.props.cols - 1 && (<br />) }
 									</Fragment>
 								))
 							}
 							<div
 								class="vc-recycle-list__pool"
-								style={{ [K.columnSize]: columnSize.value, [K.paddingColumnHead]: `${columnOffsetGutter.value}px` }}
+								style={{ [K.columnSize]: store.states.columnSize, [K.paddingColumnHead]: `${store.states.columnOffsetGutter}px` }}
 							>
 								{
-									preData.value.map(item => (
+									store.states.preData.map(item => (
 										<Fragment
 											key={item.id}
 										>
@@ -653,7 +500,7 @@ export const RecycleList = defineComponent({
 							</div>
 						</div>
 						{ slots.footer?.() }
-						{ !props.inverted && (<ScrollState ref={scrollState} />) }
+						{ !store.props.inverted && (<ScrollState ref={scrollState} />) }
 					</ScrollerWheel>
 				</Container>
 			);
