@@ -19,6 +19,7 @@ export const Countdown = defineComponent({
 		const minute = ref('');
 		const second = ref('');
 		const millisecond = ref('');
+		const isComplete = ref(false);
 
 		const showResult = computed(() => {
 			return !props.render && !slots.default;
@@ -103,17 +104,18 @@ export const Countdown = defineComponent({
 
 			if (timestamp <= 0) {
 				stop();
-
-				emit('change', {
-					timestamp: 0,
-					day: '00',
-					hour: '00',
-					minute: '00',
-					second: '00',
-					millisecond: '00',
-				});
-
-				emit('complete');
+				if (!isComplete.value) {
+					isComplete.value = true;
+					emit('change', {
+						timestamp: 0,
+						day: '00',
+						hour: '00',
+						minute: '00',
+						second: '00',
+						millisecond: '00',
+					});
+					emit('complete');
+				}
 			} else {
 				emit('change', {
 					timestamp,
@@ -129,6 +131,8 @@ export const Countdown = defineComponent({
 		const start = () => {
 			if (targetTimestamp.value) {
 				timer && clearInterval(timer);
+				isComplete.value = false;
+				run(); // 立即执行一次，界面马上展示当前数值
 				timer = setInterval(run, T.value);
 			}
 		};
