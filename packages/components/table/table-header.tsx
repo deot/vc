@@ -37,6 +37,12 @@ export const TableHeader = defineComponent({
 			return typeof props.resizable === 'boolean' ? props.resizable : props.border;
 		});
 
+		const dragLineClass = computed(() => {
+			if (props.border || !props.resizable) return;
+
+			return 'has-drag-line';
+		});
+
 		const states: any = useStates({
 			columns: 'columns',
 			isAllSelected: 'isAllSelected',
@@ -296,6 +302,7 @@ export const TableHeader = defineComponent({
 												]}
 												class={[
 													getHeaderCellClass(rowIndex, columnIndex, columns, column),
+													column.resizable && dragLineClass.value,
 													'vc-table__th'
 												]}
 												key={column.id}

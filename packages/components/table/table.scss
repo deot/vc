@@ -93,6 +93,7 @@ $line-height: 20px;
 	}
 
 	@include element(th) {
+		position: relative;
 		padding: 10px 0;
 		overflow: hidden;
 		white-space: nowrap;
@@ -144,6 +145,18 @@ $line-height: 20px;
 
 		&.is-leaf {
 			border-bottom: 1px solid $border-color;
+		}
+
+		&.has-drag-line {
+			&::after {
+				position: absolute;
+				right: 0;
+				bottom: 30%;
+				width: 1px;
+				height: 40%;
+				background-color: $border-color;
+				content: "";
+			}
 		}
 	}
 
