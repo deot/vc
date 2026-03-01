@@ -113,25 +113,77 @@ export const RecycleList = defineComponent({
 			return { original, changed: current };
 		};
 
-		// 设置data首个元素的在originalData索引值
-		const setFirstItemIndex = () => {
-			if (!wrapper.value) return;
-			const position = wrapper.value[K.scrollAxis];
-			let item: any;
-			for (let i = 0; i < store.states.rebuildData.length; i++) {
-				item = store.states.rebuildData[i];
-				if (!item || item.position > position) {
-					store.states.firstItemIndex = Math.max(0, i - store.props.cols);
-					break;
+		const setVisibleItemRange = () => {
+			const el = wrapper.value;
+			if (!el) return;
+			const position = el[K.scrollAxis];
+			const clientSize = el[K.clientSize] || 0;
+			const endPosition = position + clientSize;
+			const rebuildData = store.states.rebuildData;
+			const length = rebuildData.length;
+			const cols = store.props.cols;
+
+			if (length === 0) {
+				store.states.firstItemIndex = 0;
+				store.states.lastItemIndex = 0;
+				return;
+			}
+
+			const prevFirst = store.states.firstItemIndex;
+			let lo = 0;
+			let hi = length;
+			if (prevFirst > 0 && prevFirst < length) {
+				const prevItem = rebuildData[prevFirst];
+				if (!prevItem || prevItem.position < position) {
+					lo = prevFirst;
+				} else {
+					hi = prevFirst + 1;
 				}
 			}
+
+			while (lo < hi) {
+				const mid = (lo + hi) >> 1;
+				const item = rebuildData[mid];
+				if (!item || item.position < position) {
+					lo = mid + 1;
+				} else {
+					hi = mid;
+				}
+			}
+			const firstIndex = Math.max(0, (lo - 1) - (cols - 1)); // lo - 1 允许漏一半, 多列补齐边距
+
+			const prevLast = store.states.lastItemIndex;
+			lo = firstIndex;
+			hi = length;
+			if (prevLast > lo && prevLast < length) {
+				const prevItem = rebuildData[prevLast];
+				if (!prevItem || prevItem.position < endPosition) {
+					lo = prevLast;
+				} else {
+					hi = prevLast + 1;
+				}
+			}
+			while (lo < hi) {
+				const mid = (lo + hi) >> 1;
+				const item = rebuildData[mid];
+				if (!item || item.position < endPosition) {
+					lo = mid + 1;
+				} else {
+					hi = mid;
+				}
+			}
+			const lastIndex = Math.min(length - 1, Math.max(0, (lo - 1) + (cols - 1))); // lo - 1 允许漏一半, 多列补齐
+
+			if (firstIndex === prevFirst && lastIndex === prevLast) return;
+			store.states.firstItemIndex = firstIndex;
+			store.states.lastItemIndex = lastIndex;
 		};
 
 		const stopScroll = (page: number) => {
 			store.states.isEnd = true;
 			store.removeUnusedPlaceholders(store.states.rebuildData.slice(0), page);
 			store.refreshItemPosition();
-			setFirstItemIndex();
+			setVisibleItemRange();
 		};
 		let isRefreshLayout = 0;
 		const refreshLayout = async (start: number, end: number) => {
@@ -150,7 +202,7 @@ export const RecycleList = defineComponent({
 			}
 			await Promise.all(promiseTasks);
 			store.refreshItemPosition();
-			setFirstItemIndex();
+			setVisibleItemRange();
 
 			resizeChanges.length > 0 && emit('row-resize', resizeChanges.map(i => ({ size: i.size, index: i.id })));
 
@@ -172,20 +224,6 @@ export const RecycleList = defineComponent({
 			const changed = scrollPosition !== originalScrollPosition;
 			const offset = page === 1 ? 0 : changed ? scrollPosition : 0;
 			scrollTo(store.states.contentMaxSize - originalSize + offset);
-		};
-
-		// 用于为加载一屏幕时，自动扩容pageSize
-		const setOffsetPageSize = () => {
-			if (
-				!store.states.isEnd
-				&& store.states.contentMaxSize > 0
-				&& store.states.contentMaxSize <= wrapper.value?.[K.offsetSize]
-			) {
-				store.states.offsetPageSize += store.props.pageSize;
-				return true;
-			}
-
-			return false;
 		};
 
 		const loadRemoteData = async (onBeforeSetData?: any) => {
@@ -241,7 +279,13 @@ export const RecycleList = defineComponent({
 			}
 
 			// 未加载且小于一屏时，自动加载下一页
-			setOffsetPageSize() && loadData();
+			if (
+				!store.states.isEnd
+				&& store.states.contentMaxSize > 0
+				&& store.states.contentMaxSize <= wrapper.value?.[K.offsetSize]
+			) {
+				loadData();
+			}
 		};
 
 		const reset = async (slient = false) => {
@@ -289,7 +333,7 @@ export const RecycleList = defineComponent({
 			) {
 				loadData();
 			}
-			setFirstItemIndex();
+			setVisibleItemRange();
 			store.scrollTo(e);
 			emit('scroll', e);
 		};
@@ -328,9 +372,7 @@ export const RecycleList = defineComponent({
 
 			store.setData(v);
 
-			store.states.offsetPageSize = 0;
 			await refreshLayout(0, store.originalData.length);
-			setOffsetPageSize();
 		};
 
 		const handleStoreLeafChange = () => {

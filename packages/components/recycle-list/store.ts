@@ -52,21 +52,19 @@ export class Store {
 			return v;
 		}),
 
-		offsetPageSize: 0,
 		firstItemIndex: 0,
+		lastItemIndex: 0,
 		/**
 		 * 用于展示的信息
 		 *
-		 * 这里尽可能的控制好pageSize的长度, 否则会存在性能问题
-		 * 这里存在一个性能瓶颈，当数组中某一个值发生变化时，虚拟树会重新构建，虚拟树的构建耗时长会引起掉帧
-		 * 这是机制所导致的，应该尽可能减少renderList的数量
+		 * 动态计算展示范围以及缓冲
 		 */
 		data: computed(() => {
 			const base = Array.from({ length: this.props.cols }).map(() => []);
 			return this.states.rebuildData
 				.slice(
-					Math.max(0, this.states.firstItemIndex - this.props.pageSize),
-					Math.min(this.states.rebuildData.length, this.states.firstItemIndex + this.props.pageSize + this.states.offsetPageSize)
+					Math.max(0, this.states.firstItemIndex - this.props.bufferSize),
+					Math.min(this.states.rebuildData.length, this.states.lastItemIndex + this.props.bufferSize + 1)
 				).reduce((pre, cur) => {
 					cur.column >= 0 && pre[cur.column].push(cur);
 					return pre;
@@ -81,7 +79,7 @@ export class Store {
 	});
 
 	// 被store劫持的值
-	props = ['pageSize', 'inverted', 'cols', 'gutter', 'loadData'].reduce((pre, cur) => {
+	props = ['pageSize', 'bufferSize', 'inverted', 'cols', 'gutter', 'loadData'].reduce((pre, cur) => {
 		const v = props[cur];
 		if (v.type !== Function && typeof v.default === 'function') {
 			pre[cur] = v.default();
