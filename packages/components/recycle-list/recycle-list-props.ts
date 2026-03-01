@@ -19,6 +19,11 @@ export const props = {
 		default: 20
 	},
 
+	bufferSize: {
+		type: Number,
+		default: 0
+	},
+
 	// 底部拉取更多数据的距离
 	offset: {
 		type: Number,
