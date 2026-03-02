@@ -116,67 +116,10 @@ export const RecycleList = defineComponent({
 		const setVisibleItemRange = () => {
 			const el = wrapper.value;
 			if (!el) return;
-			const position = el[K.scrollAxis];
-			const clientSize = el[K.clientSize] || 0;
-			const endPosition = position + clientSize;
-			const rebuildData = store.states.rebuildData;
-			const length = rebuildData.length;
-			const cols = store.props.cols;
+			const headPosition = el[K.scrollAxis];
+			const tailPosition = headPosition + (el[K.clientSize] || 0);
 
-			if (length === 0) {
-				store.states.firstItemIndex = 0;
-				store.states.lastItemIndex = 0;
-				return;
-			}
-
-			const prevFirst = store.states.firstItemIndex;
-			let lo = 0;
-			let hi = length;
-			if (prevFirst > 0 && prevFirst < length) {
-				const prevItem = rebuildData[prevFirst];
-				if (!prevItem || prevItem.position < position) {
-					lo = prevFirst;
-				} else {
-					hi = prevFirst + 1;
-				}
-			}
-
-			while (lo < hi) {
-				const mid = (lo + hi) >> 1;
-				const item = rebuildData[mid];
-				if (!item || item.position < position) {
-					lo = mid + 1;
-				} else {
-					hi = mid;
-				}
-			}
-			const firstIndex = Math.max(0, (lo - 1) - (cols - 1)); // lo - 1 允许漏一半, 多列补齐边距
-
-			const prevLast = store.states.lastItemIndex;
-			lo = firstIndex;
-			hi = length;
-			if (prevLast > lo && prevLast < length) {
-				const prevItem = rebuildData[prevLast];
-				if (!prevItem || prevItem.position < endPosition) {
-					lo = prevLast;
-				} else {
-					hi = prevLast + 1;
-				}
-			}
-			while (lo < hi) {
-				const mid = (lo + hi) >> 1;
-				const item = rebuildData[mid];
-				if (!item || item.position < endPosition) {
-					lo = mid + 1;
-				} else {
-					hi = mid;
-				}
-			}
-			const lastIndex = Math.min(length - 1, Math.max(0, (lo - 1) + (cols - 1))); // lo - 1 允许漏一半, 多列补齐
-
-			if (firstIndex === prevFirst && lastIndex === prevLast) return;
-			store.states.firstItemIndex = firstIndex;
-			store.states.lastItemIndex = lastIndex;
+			store.setRangeByPosition(headPosition, tailPosition);
 		};
 
 		const stopScroll = (page: number) => {

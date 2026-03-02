@@ -21,6 +21,17 @@ $component-name: vc-recycle-list;
 		transition: transform 300ms ease-out;
 	}
 
+	// 下拉过程中关闭 transition，避免跟手时的 300ms 过渡导致重影/抖动；松手回弹仍用上面 300ms
+	@include when(transition-none) {
+		@include element(container) {
+			transition: none;
+		}
+
+		@include element(pull) {
+			transition: none;
+		}
+	}
+
 	// core
 	@include element(wrapper) {
 		position: relative;
