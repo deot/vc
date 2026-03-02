@@ -12,13 +12,14 @@ import {
 	Fragment,
 	getCurrentInstance
 } from 'vue';
-import { throttle, getUid } from '@deot/helper-utils';
+import { throttle, getUid, raf } from '@deot/helper-utils';
 import { Resize } from '@deot/helper-resize';
 import { Interrupter } from '@deot/helper-scheduler';
 import { props as recycleListProps } from './recycle-list-props';
 import { VcInstance } from '../vc';
 import { Customer } from '../customer';
 import { ScrollerWheel } from '../scroller';
+import { Defer } from '../defer';
 import { ScrollState } from './scroll-state';
 import { Container } from './container';
 import { Resizer } from '../resizer';
@@ -46,8 +47,8 @@ export const RecycleList = defineComponent({
 		const content = ref();
 		const scrollState = ref();
 
-		let originalScrollPosition = 0; // 数据load前滚动条位置
-		const interrupter = Interrupter.of();
+		let isLoadingData = false;
+		const layoutInterrupter = Interrupter.of();
 
 		const wrapper = computed(() => {
 			return scroller.value?.wrapper;
@@ -72,6 +73,34 @@ export const RecycleList = defineComponent({
 			if (!hasPlaceholder.value) return 0;
 			return placeholder.value.offsetWidth;
 		});
+
+		const handleDeferComplete = () => {};
+
+		const getRebuildItem = (index: number) => {
+			return store.props.inverted
+				? store.states.rebuildData[store.states.rebuildDataIndexMap[index]]
+				: store.states.rebuildData[index];
+		};
+
+		const waitPreloadsReady = async (indexes: number[]) => {
+			if (indexes.length === 0) return;
+			let pending = indexes.slice(0);
+			let retry = 0;
+
+			while (pending.length && retry < 60) {
+				await nextTick();
+				pending = pending.filter((index) => {
+					const item = getRebuildItem(index);
+					if (!item || item.isPlaceholder) return false;
+					return !preloads.value[index];
+				});
+				if (!pending.length) return;
+				await new Promise<void>((resolve) => {
+					raf(() => resolve());
+				});
+				retry++;
+			}
+		};
 
 		const scrollTo = (options: any, force?: boolean) => {
 			let options$ = { x: 0, y: 0 };
@@ -103,6 +132,7 @@ export const RecycleList = defineComponent({
 			if (!current) return;
 
 			const original = Object.assign({}, current);
+
 			const dom = preloads.value[index] || curloads.value[store.props.inverted ? index : index - store.states.firstItemIndex];
 			if (dom) {
 				current.size = dom[K.offsetSize] || placeholderSize.value;
@@ -131,16 +161,30 @@ export const RecycleList = defineComponent({
 		let isRefreshLayout = 0;
 		const refreshLayout = async (start: number, end: number) => {
 			isRefreshLayout = 1;
-			const promiseTasks = [] as Promise<any>[];
 			const resizeChanges = [] as any[];
 			let item: any;
+			const waitIndexes: number[] = [];
+
+			// Phase 1: setItemData → preData 更新，触发 Defer 启动新一轮渲染
 			for (let i = start; i < end; i++) {
-				item = store.props.inverted
-					? store.states.rebuildData[store.states.rebuildDataIndexMap[i]]
-					: store.states.rebuildData[i];
+				item = getRebuildItem(i);
 
 				if (item && item.loaded) continue;
 				store.setItemData(i, store.originalData[i]);
+				if (store.originalData[i]) {
+					waitIndexes.push(i);
+				}
+			}
+
+			// Phase 2: 等 Defer 把 preData 里新项全部渲染并挂载 DOM ref
+			await waitPreloadsReady(waitIndexes);
+
+			// Phase 3: 测量（此时 preloads 已全部就位）
+			const promiseTasks = [] as Promise<any>[];
+			for (let i = start; i < end; i++) {
+				item = getRebuildItem(i);
+
+				if (!item) continue;
 				promiseTasks.push(nextTick(() => { const e = refreshItemSize(i); e && resizeChanges.push(e.changed); }));
 			}
 			await Promise.all(promiseTasks);
@@ -149,7 +193,7 @@ export const RecycleList = defineComponent({
 
 			resizeChanges.length > 0 && emit('row-resize', resizeChanges.map(i => ({ size: i.size, index: i.id })));
 
-			interrupter.next();
+			layoutInterrupter.next();
 			isRefreshLayout = 0;
 		};
 
@@ -162,11 +206,11 @@ export const RecycleList = defineComponent({
 
 			if (!store.props.inverted) return;
 
+			// inverted 追加历史数据时应始终保持当前视口锚点：
+			// 新滚动位置 = 当前滚动位置 + 新增内容高度
 			const scrollPosition = el[K.scrollAxis];
-			// 当偏移值只是新增加的高度, 提前滚动了则要显示之前的位置
-			const changed = scrollPosition !== originalScrollPosition;
-			const offset = page === 1 ? 0 : changed ? scrollPosition : 0;
-			scrollTo(store.states.contentMaxSize - originalSize + offset);
+			const addedSize = store.states.contentMaxSize - originalSize;
+			scrollTo((page === 1 ? 0 : scrollPosition) + addedSize);
 		};
 
 		const loadRemoteData = async (onBeforeSetData?: any) => {
@@ -193,40 +237,45 @@ export const RecycleList = defineComponent({
 		};
 
 		const loadData = async (onBeforeSetData?: any) => {
-			if (props.disabled || store.states.isEnd || store.states.isSlientRefresh) return;
-			originalScrollPosition = wrapper.value[K.scrollAxis];
-			if (hasPlaceholder.value) {
-				let start: number;
-				let end: number;
-				if (store.props.inverted) {
-					start = store.states.rebuildData.length;
-					end = start + store.props.pageSize;
+			if (props.disabled || store.states.isEnd || store.states.isSlientRefresh || isLoadingData) return;
+			isLoadingData = true;
+			let shouldLoadNext = false;
+			try {
+				if (hasPlaceholder.value) {
+					let start: number;
+					let end: number;
+					if (store.props.inverted) {
+						start = store.states.rebuildData.length;
+						end = start + store.props.pageSize;
 
-					Array
-						.from({ length: store.props.pageSize })
-						.forEach((_, index) => {
-							store.setItemData(index + start);
-						});
-				} else {
-					start = store.states.rebuildData.length;
-					store.states.rebuildData.length += store.props.pageSize;
-					end = store.states.rebuildData.length;
+						Array
+							.from({ length: store.props.pageSize })
+							.forEach((_, index) => {
+								store.setItemData(index + start);
+							});
+					} else {
+						start = store.states.rebuildData.length;
+						store.states.rebuildData.length += store.props.pageSize;
+						end = store.states.rebuildData.length;
+					}
+
+					await refreshLayout(start, end);
+					await loadRemoteData(onBeforeSetData);
+				} else if (!store.states.isLoading) {
+					await loadRemoteData(onBeforeSetData);
 				}
 
-				const originalSize = store.states.contentMaxSize;
-				await refreshLayout(start, end);
-				store.props.inverted && scrollTo(store.states.contentMaxSize - originalSize);
-				await loadRemoteData(onBeforeSetData);
-			} else if (!store.states.isLoading) {
-				await loadRemoteData(onBeforeSetData);
+				// 未加载且小于一屏时，自动加载下一页
+				shouldLoadNext = (
+					!store.states.isEnd
+					&& store.states.contentMaxSize > 0
+					&& store.states.contentMaxSize <= wrapper.value?.[K.offsetSize]
+				);
+			} finally {
+				isLoadingData = false;
 			}
 
-			// 未加载且小于一屏时，自动加载下一页
-			if (
-				!store.states.isEnd
-				&& store.states.contentMaxSize > 0
-				&& store.states.contentMaxSize <= wrapper.value?.[K.offsetSize]
-			) {
+			if (shouldLoadNext) {
 				loadData();
 			}
 		};
@@ -356,7 +405,7 @@ export const RecycleList = defineComponent({
 					&& v === false
 				) {
 					if (isRefreshLayout) {
-						await interrupter;
+						await layoutInterrupter;
 					}
 					if (store.states.contentMaxSize === 0 || store.states.contentMaxSize <= wrapper.value?.[K.offsetSize]) {
 						loadData();
@@ -463,20 +512,18 @@ export const RecycleList = defineComponent({
 								class="vc-recycle-list__pool"
 								style={{ [K.columnSize]: store.states.columnSize, [K.paddingColumnHead]: `${store.states.columnOffsetGutter}px` }}
 							>
-								{
-									store.states.preData.map(item => (
-										<Fragment
-											key={item.id}
-										>
+								<Defer data={store.states.preData} onComplete={handleDeferComplete}>
+									{{
+										default: ({ row: item }) => (
 											<div
 												ref={v => preloads.value[item.id] = v}
 												class="vc-recycle-list__hidden"
 											>
 												{ slots.default?.({ row: item.data || {}, index: item.id }) }
 											</div>
-										</Fragment>
-									))
-								}
+										)
+									}}
+								</Defer>
 								<div ref={placeholder} class="vc-recycle-list__hidden">
 									{
 										slots.placeholder?.() || (renderer.value.placeholder && (<Customer render={renderer.value.placeholder} />))
