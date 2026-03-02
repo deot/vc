@@ -292,9 +292,10 @@ class Store extends BaseWatcher {
 	 * @param statusArr ~
 	 * @param row ~
 	 * @param newVal ~
+	 * @param batch 为true时，使用delete (批处理使用splice性能差，使用delete后统一再处理)
 	 * @returns ~
 	 */
-	toggleRowStatus(statusArr: any, row: any, newVal: any) {
+	toggleRowStatus(statusArr: any, row: any, newVal: any, batch = false) {
 		let changed = false;
 		const index = statusArr.indexOf(row);
 		const included = index !== -1;
@@ -304,7 +305,11 @@ class Store extends BaseWatcher {
 			changed = true;
 		};
 		const removeRow = () => {
-			statusArr.splice(index, 1);
+			if (!batch) {
+				statusArr.splice(index, 1);
+			} else {
+				delete statusArr[index];
+			}
 			changed = true;
 		};
 
@@ -323,6 +328,7 @@ class Store extends BaseWatcher {
 	toggleRowSelection(row: any, selected?: any, emitChange = true) {
 		const { selection } = this.states;
 		const changed = this.toggleRowStatus(selection, row, selected);
+
 		if (changed) {
 			const newSelection = (this.states.selection || []).slice();
 			// 调用 API 修改选中值，不触发 select 事件
@@ -347,18 +353,20 @@ class Store extends BaseWatcher {
 		let selectionChanged = false;
 		this.flatData.value.forEach((row: any, index: number) => {
 			if (selectable) {
-				if (selectable.call(null, row, index) && this.toggleRowStatus(selection, row, value)) {
+				if (selectable.call(null, row, index) && this.toggleRowStatus(selection, row, value, true)) {
 					selectionChanged = true;
 				}
-			} else if (this.toggleRowStatus(selection, row, value)) {
+			} else if (this.toggleRowStatus(selection, row, value, true)) {
 				selectionChanged = true;
 			}
 		});
 
+		this.states.selection = [...selection].filter(i => typeof i !== 'undefined');
+		const selection$ = this.states.selection.slice();
 		if (selectionChanged) {
-			this.table.emit('selection-change', selection ? selection.slice() : []);
+			this.table.emit('selection-change', selection$);
 		}
-		this.table.emit('select-all', selection);
+		this.table.emit('select-all', selection$);
 	}, 10);
 
 	// 展开行与 TreeTable 都要使用
