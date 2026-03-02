@@ -104,6 +104,7 @@ export const Container = defineComponent({
 			return (
 				<div
 					ref={current}
+					class={{ 'is-transition-none': status.value === PULL || status.value === PENDING }}
 					onMousedown={handleStart}
 					onMousemove={handleMove}
 					onMouseup={handleEnd}

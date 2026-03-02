@@ -196,6 +196,47 @@ export class Store {
 		}
 	}
 
+	setRangeByPosition(headPosition: number, tailPosition: number) {
+		const rebuildData = this.states.rebuildData;
+		const length = rebuildData.length;
+
+		if (length === 0) {
+			this.states.firstItemIndex = 0;
+			this.states.lastItemIndex = 0;
+			return;
+		}
+
+		const prevFirst = this.states.firstItemIndex;
+		const prevLast = this.states.lastItemIndex;
+
+		const isOverlap = (item: any, headPosition$: number) => {
+			const tailPosition$ = this.props.inverted ? item.position - item.size : item.position + item.size;
+			return item.position <= headPosition$ && tailPosition$ >= headPosition$;
+		};
+
+		let firstIndex = 0;
+		for (let i = 0; i < length; i++) {
+			const item = rebuildData[i];
+			if (!item || isOverlap(item, headPosition)) {
+				firstIndex = Math.max(0, i);
+				break;
+			}
+		}
+
+		let lastIndex = length - 1;
+		for (let i = length - 1; i >= 0; i--) {
+			const item = rebuildData[i];
+			if (!item || isOverlap(item, tailPosition)) {
+				lastIndex = Math.min(length - 1, i);
+				break;
+			}
+		}
+
+		if (firstIndex === prevFirst && lastIndex === prevLast) return;
+		this.states.firstItemIndex = firstIndex;
+		this.states.lastItemIndex = lastIndex;
+	}
+
 	add(leaf: any) {
 		if (!this.currentLeaf) {
 			this.currentLeaf = leaf;
