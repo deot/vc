@@ -40,6 +40,8 @@ export * from './date-picker';
 export * from './date-picker/index.m';
 export * from './debounce';
 export * from './debounce/index.m';
+export * from './defer';
+export * from './defer/index.m';
 export * from './divider';
 export * from './divider/index.m';
 export * from './drawer';
