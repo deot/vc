@@ -69,7 +69,7 @@ export const Defer = defineComponent({
 			if (maxCount.value <= 0) return;
 			if (await runByIdleCallback()) {
 				const timestamp = Date.now() - start;
-				console.log('[@deot/vc-defer]:', `${timestamp}ms / ${maxCount.value}`);
+				// console.log('[@deot/vc-defer]:', `${timestamp}ms / ${maxCount.value}`);
 				emit('complete', timestamp);
 			};
 		};

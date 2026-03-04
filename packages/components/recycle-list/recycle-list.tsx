@@ -10,13 +10,15 @@ import {
 	nextTick,
 	watch,
 	Fragment,
-	getCurrentInstance
+	getCurrentInstance,
+	shallowRef
 } from 'vue';
 import { throttle, getUid } from '@deot/helper-utils';
 import { Resize } from '@deot/helper-resize';
 import { Interrupter } from '@deot/helper-scheduler';
 import { props as recycleListProps } from './recycle-list-props';
 import { VcInstance } from '../vc';
+import { Defer } from '../defer';
 import { Customer } from '../customer';
 import { ScrollerWheel } from '../scroller';
 import { ScrollState } from './scroll-state';
@@ -41,13 +43,17 @@ export const RecycleList = defineComponent({
 		// el
 		const curloads = ref({});
 		const preloads = ref({});
-		const placeholder = ref();
-		const scroller = ref();
-		const content = ref();
-		const scrollState = ref();
+		const placeholder = shallowRef();
+		const scroller = shallowRef();
+		const content = shallowRef();
+		const scrollState = shallowRef();
+		const wrapperSize = {
+			[K.clientSize]: 0
+		};
 
 		let originalScrollPosition = 0; // 数据load前滚动条位置
-		const interrupter = Interrupter.of();
+		const layoutInterrupter = Interrupter.of();
+		const deferInterrupter = Interrupter.of();
 
 		const wrapper = computed(() => {
 			return scroller.value?.wrapper;
@@ -72,6 +78,8 @@ export const RecycleList = defineComponent({
 			if (!hasPlaceholder.value) return 0;
 			return placeholder.value.offsetWidth;
 		});
+
+		const handleDeferComplete = () => deferInterrupter.next();
 
 		const scrollTo = (options: any, force?: boolean) => {
 			let options$ = { x: 0, y: 0 };
@@ -117,7 +125,7 @@ export const RecycleList = defineComponent({
 			const el = wrapper.value;
 			if (!el) return;
 			const headPosition = el[K.scrollAxis];
-			const tailPosition = headPosition + (el[K.clientSize] || 0);
+			const tailPosition = headPosition + (wrapperSize[K.clientSize] || 0);
 
 			store.setRangeByPosition(headPosition, tailPosition);
 		};
@@ -130,8 +138,9 @@ export const RecycleList = defineComponent({
 		};
 		let isRefreshLayout = 0;
 		const refreshLayout = async (start: number, end: number) => {
+			if (start === end) return;
 			isRefreshLayout = 1;
-			const promiseTasks = [] as Promise<any>[];
+			const promiseTasks = [] as any[];
 			const resizeChanges = [] as any[];
 			let item: any;
 			for (let i = start; i < end; i++) {
@@ -141,25 +150,35 @@ export const RecycleList = defineComponent({
 
 				if (item && item.loaded) continue;
 				store.setItemData(i, store.originalData[i]);
-				promiseTasks.push(nextTick(() => { const e = refreshItemSize(i); e && resizeChanges.push(e.changed); }));
+				if (store.props.inverted) {
+					store.states.firstItemIndex += 1;
+					store.states.lastItemIndex += 1;
+				}
+				promiseTasks.push(() => nextTick(() => {
+					const e = refreshItemSize(i);
+					e && resizeChanges.push(e.changed);
+				}));
 			}
-			await Promise.all(promiseTasks);
+			await deferInterrupter;
+			await Promise.all(promiseTasks.map(fn => fn()));
 			store.refreshItemPosition();
 			setVisibleItemRange();
-
 			resizeChanges.length > 0 && emit('row-resize', resizeChanges.map(i => ({ size: i.size, index: i.id })));
 
-			interrupter.next();
+			layoutInterrupter.next();
 			isRefreshLayout = 0;
 		};
 
+		let isManualScroll = 0;
 		const refreshLayoutByPage = async (page: number) => {
+			store.props.inverted && (isManualScroll = 1);
+
 			const el = wrapper.value;
 			const start = (page - 1) * store.props.pageSize;
 			const end = page * store.props.pageSize;
 			const originalSize = page === 1 ? 0 : store.states.contentMaxSize;
-			await refreshLayout(start, end);
 
+			await refreshLayout(start, end);
 			if (!store.props.inverted) return;
 
 			const scrollPosition = el[K.scrollAxis];
@@ -167,6 +186,9 @@ export const RecycleList = defineComponent({
 			const changed = scrollPosition !== originalScrollPosition;
 			const offset = page === 1 ? 0 : changed ? scrollPosition : 0;
 			scrollTo(store.states.contentMaxSize - originalSize + offset);
+
+			setVisibleItemRange();
+			setTimeout(() => (isManualScroll = 0), 16.7); // 避免主动滚动时，触发handleScroll的loadData事件
 		};
 
 		const loadRemoteData = async (onBeforeSetData?: any) => {
@@ -268,10 +290,10 @@ export const RecycleList = defineComponent({
 		 * @return ~
 		 */
 		const handleScroll = (e: UIEvent) => {
-			if (store.currentLeaf !== instance) return;
+			if (store.currentLeaf !== instance || isManualScroll) return;
+
 			const el = e.target!;
-			if (
-				(!store.props.inverted && el[K.scrollAxis] > el[K.scrollSize] - el[K.clientSize] - props.offset)
+			if ((!store.props.inverted && el[K.scrollAxis] > el[K.scrollSize] - wrapperSize[K.clientSize] - props.offset)
 				|| (store.props.inverted && el[K.scrollAxis] - props.offset <= 0)
 			) {
 				loadData();
@@ -291,6 +313,9 @@ export const RecycleList = defineComponent({
 		// 图片撑开时，会影响布局, 节流结束后调用
 		const handleResize = throttle(async () => {
 			if (!wrapper.value) return;
+			// 保持原来的位置
+			const el = wrapper.value;
+			wrapperSize[K.clientSize] = el[K.clientSize];
 			const isNeedRefreshLayout = store.states.rebuildData.some(i => !i.isPlaceholder);
 
 			if (isNeedRefreshLayout) {
@@ -300,8 +325,6 @@ export const RecycleList = defineComponent({
 				await forceRefreshLayout();
 				const newPosition = store.states.rebuildData[oldFirstItemIndex]?.position;
 
-				// 保持原来的位置
-				const el = wrapper.value;
 				el[K.scrollAxis] += newPosition - oldPosition;
 			}
 		}, 50, {
@@ -356,7 +379,7 @@ export const RecycleList = defineComponent({
 					&& v === false
 				) {
 					if (isRefreshLayout) {
-						await interrupter;
+						await layoutInterrupter;
 					}
 					if (store.states.contentMaxSize === 0 || store.states.contentMaxSize <= wrapper.value?.[K.offsetSize]) {
 						loadData();
@@ -463,20 +486,18 @@ export const RecycleList = defineComponent({
 								class="vc-recycle-list__pool"
 								style={{ [K.columnSize]: store.states.columnSize, [K.paddingColumnHead]: `${store.states.columnOffsetGutter}px` }}
 							>
-								{
-									store.states.preData.map(item => (
-										<Fragment
-											key={item.id}
-										>
+								<Defer data={store.states.preData} onComplete={handleDeferComplete}>
+									{{
+										default: ({ row: item }) => (
 											<div
 												ref={v => preloads.value[item.id] = v}
 												class="vc-recycle-list__hidden"
 											>
 												{ slots.default?.({ row: item.data || {}, index: item.id }) }
 											</div>
-										</Fragment>
-									))
-								}
+										)
+									}}
+								</Defer>
 								<div ref={placeholder} class="vc-recycle-list__hidden">
 									{
 										slots.placeholder?.() || (renderer.value.placeholder && (<Customer render={renderer.value.placeholder} />))

@@ -148,7 +148,6 @@ export class Store {
 		const { inverted, cols } = this.props;
 		const sizes = Array.from({ length: cols }).map(() => 0);
 		const lastIndex = this.states.rebuildData.length - 1;
-
 		let current: any;
 		// 循环所有数据以更新item.top和总高度
 		for (let i = 0; i <= lastIndex; i++) {
@@ -197,7 +196,8 @@ export class Store {
 	}
 
 	setRangeByPosition(headPosition: number, tailPosition: number) {
-		const rebuildData = this.states.rebuildData;
+		const { inverted } = this.props;
+		const { rebuildData, columnFillSize } = this.states;
 		const length = rebuildData.length;
 
 		if (length === 0) {
@@ -206,63 +206,42 @@ export class Store {
 			return;
 		}
 
+		// 暂时写死（加载更多栏的高度40）
+		if (inverted) {
+			headPosition -= 40;
+			tailPosition -= 40;
+		}
+
 		const prevFirst = this.states.firstItemIndex;
 		const prevLast = this.states.lastItemIndex;
 
-		const isOverlap = (item: any, headPosition$: number) => {
-			const tailPosition$ = this.props.inverted ? item.position - item.size : item.position + item.size;
-			return item.position <= headPosition$ && tailPosition$ >= headPosition$;
+		const offset = (item: any) => {
+			return inverted && item.column > 0 ? (columnFillSize[item.column]) : 0;
 		};
 
-		/**
-		 * 二分查找结合 isOverlap 精确定位
-		 * @param target ~
-		 * @param forward 正向扫描（未找到返回 -1）/反向扫描（未找到返回 length）
-		 * @param hint prevFirst / prevLast）将二分范围从 [0, n-1] 收窄为 [hint, n-1] 或 [0, hint-1]，连续滚动时 O(log δ)
-		 * @returns bound ~
-		 */
-		const upperBound = (target: number, forward?: boolean, hint = -1): number => {
-			let lo = 0;
-			let hi = length - 1;
-			let bound = -1;
-
-			if (hint >= 0 && hint < length) {
-				const item = rebuildData[hint];
-				if (!item || item.position <= target) {
-					bound = hint;
-					lo = hint;
-				} else {
-					hi = hint - 1;
-				}
-			}
-
-			while (lo <= hi) {
-				const mid = (lo + hi) >>> 1;
-				const item = rebuildData[mid];
-				if (!item || item.position <= target) {
-					bound = mid;
-					lo = mid + 1;
-				} else {
-					hi = mid - 1;
-				}
-			}
-
-			if (forward) {
-				const start = hint >= 0 && hint <= bound ? hint : 0; // hint <= bound（向下滚动）时，[0, hint-1] 已确认不满足 isOverlap，从 hint 开始扫描
-				for (let i = start; i <= bound; i++) {
-					if (!rebuildData[i] || isOverlap(rebuildData[i], target)) return i;
-				}
-				return -1;
-			}
-
-			for (let i = bound; i >= 0; i--) {
-				if (!rebuildData[i] || isOverlap(rebuildData[i], target)) return i;
-			}
-			return length;
+		const isOverlap = (item: any, position: number) => {
+			const head = item.position + offset(item);
+			const tail = item.position + item.size + offset(item);
+			return head <= position && tail >= position;
 		};
 
-		const firstIndex = Math.max(0, upperBound(headPosition, true, prevFirst));
-		const lastIndex = Math.min(length - 1, upperBound(tailPosition, false, prevLast));
+		let firstIndex = 0;
+		for (let i = 0; i < length; i++) {
+			const item = rebuildData[i];
+			if (!item || isOverlap(item, headPosition)) {
+				firstIndex = Math.max(0, i);
+				break;
+			}
+		}
+
+		let lastIndex = length - 1;
+		for (let i = length - 1; i >= 0; i--) {
+			const item = rebuildData[i];
+			if (!item || isOverlap(item, tailPosition)) {
+				lastIndex = Math.min(length - 1, i);
+				break;
+			}
+		}
 
 		if (firstIndex === prevFirst && lastIndex === prevLast) return;
 		this.states.firstItemIndex = firstIndex;
