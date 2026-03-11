@@ -69,7 +69,7 @@
 				fixed="right"
 			>
 				<template #default="{ rowIndex }">
-					<div @click="handleDelete(rowIndex)">删除</div>
+					<div @click="handleDelete(rowIndex)">删除 {{ rowIndex }}</div>
 				</template>
 			</TableColumn>
 		</Table>
@@ -88,7 +88,7 @@ const genTableData = length => Array.from({ length }).map((_, index) => ({
 }));
 
 const isActive = ref(true);
-const dataSource = ref(genTableData(2000));
+const dataSource = ref(genTableData(100));
 
 const columns = ref([
 	'内部人员',

@@ -79,7 +79,7 @@ export const RecycleList = defineComponent({
 			return placeholder.value.offsetWidth;
 		});
 
-		const handleDeferComplete = () => deferInterrupter.next();
+		const handleDeferComplete = () => deferInterrupter.finish();
 
 		const scrollTo = (options: any, force?: boolean) => {
 			let options$ = { x: 0, y: 0 };
@@ -125,6 +125,7 @@ export const RecycleList = defineComponent({
 			const el = wrapper.value;
 			if (!el) return;
 			const headPosition = el[K.scrollAxis];
+			headPosition && console.log(el.parentElement.parentElement.parentElement.parentElement.parentElement);
 			const tailPosition = headPosition + (wrapperSize[K.clientSize] || 0);
 
 			store.setRangeByPosition(headPosition, tailPosition);
@@ -162,6 +163,7 @@ export const RecycleList = defineComponent({
 			await deferInterrupter;
 			await Promise.all(promiseTasks.map(fn => fn()));
 			store.refreshItemPosition();
+
 			setVisibleItemRange();
 			resizeChanges.length > 0 && emit('row-resize', resizeChanges.map(i => ({ size: i.size, index: i.id })));
 
