@@ -259,7 +259,7 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 ### 基础属性
 | 属性           | 说明                   | 类型                 | 可选值                        | 默认值     |
 | ------------ | -------------------- | ------------------ | -------------------------- | ------- |
-| t            | 幻灯片切换的时间间隔           | `number`           | -                          | 3       |
+| t            | 幻灯片切换的时间间隔           | `number`           | -                          | 3000       |
 | height       | -                    | `string`、`number`  | -                          | -       |
 | initialIndex | 初始状态激活的幻灯片的索引，从 0 开始 | `number`           | -                          | 0       |
 | trigger      | -                    | `string`           | `hover`、`click`            | `hover` |

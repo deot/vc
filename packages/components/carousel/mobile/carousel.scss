@@ -1,0 +1,136 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-carousel;
+
+@include block($component-name) {
+	position: relative;
+
+	@include when(horizontal) {
+		overflow-x: hidden;
+	}
+
+	@include when(vertical) {
+		overflow-y: hidden;
+	}
+
+	@include element(wrapper) {
+		position: relative;
+		height: 300px;
+	}
+
+	@include element(dots) {
+		position: absolute;
+		z-index: 2;
+		padding: 0;
+		margin: 0;
+		list-style: none;
+
+		@include when(horizontal) {
+			bottom: 0;
+			display: flex;
+			width: 100%;
+			justify-content: center;
+			flex-wrap: wrap;
+		}
+
+		@include when(vertical) {
+			top: 0;
+			right: 0;
+			display: flex;
+			height: 100%;
+			flex-flow: column wrap;
+			justify-content: center;
+		}
+
+		@include when(outside) {
+			position: static;
+			bottom: 26px;
+			text-align: center;
+			transform: none;
+
+			.vcm-carousel__dot:hover button {
+				opacity: 0.64;
+			}
+
+			button {
+				background-color: #C0C4CC;
+				opacity: 0.24;
+			}
+		}
+
+		@include when(labels) {
+			right: 0;
+			left: 0;
+			text-align: center;
+			transform: none;
+
+			.vcm-carousel__button {
+				width: auto;
+				height: auto;
+				padding: 2px 18px;
+				font-size: 12px;
+			}
+
+			.vcm-carousel__dot {
+				padding: 6px 4px;
+			}
+		}
+	}
+
+	@include element(dot) {
+		cursor: pointer;
+		background-color: transparent;
+
+		&:hover button {
+			opacity: 0.72;
+		}
+
+		@include when(horizontal) {
+			display: inline-block;
+			padding: 12px 4px;
+		}
+
+		@include when(vertical) {
+			padding: 4px 12px;
+
+			.vcm-carousel__button {
+				width: 2px;
+				height: 15px;
+			}
+		}
+
+		@include when(active) {
+			button {
+				opacity: 1;
+			}
+		}
+	}
+
+	@include element(button) {
+		display: block;
+		width: 8px;
+		height: 8px;
+		padding: 0;
+		margin: 0 2px;
+		cursor: pointer;
+		background-color: #fff;
+		border: none;
+		border-radius: 50%;
+		outline: none;
+		opacity: 0.48;
+		transition: .3s;
+	}
+
+	@include element(indicator) {
+		position: absolute;
+		right: 10px;
+		bottom: 10px;
+		z-index: 2;
+		height: 20px;
+		padding: 0 10px;
+		line-height: 20px;
+		color: white;
+		background: rgb(0 0 0 / 70%);
+		border-radius: 10px;
+	}
+}

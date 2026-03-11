@@ -1,0 +1,52 @@
+@use '../style/helper' as *;
+
+$component-name: vc-carousel-item;
+
+@include block($component-name) {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 0;
+	display: inline-block;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+
+	@include when(active) {
+		z-index: 2;
+	}
+
+	@include when(animating) {
+		transition: transform .4s ease-in-out;
+	}
+
+	@include when(card) {
+		width: 50%;
+		transition: transform .4s ease-in-out;
+
+		&.is-in-stage {
+			z-index: 1;
+			cursor: pointer;
+
+			&:hover .vc-carousel-item__mask,
+			&.is-hover .vc-carousel-item__mask {
+				opacity: 0.12;
+			}
+		}
+
+		&.is-active {
+			z-index: 2;
+		}
+	}
+
+	@include element(mask) {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: #fff;
+		opacity: 0.24;
+		transition: .2s;
+	}
+}

@@ -1,3 +1,8 @@
-import { Carousel } from '.';
+import { MCarousel } from './mobile/carousel.tsx';
+import { MCarouselItem } from './mobile/carousel-item.tsx';
+import './mobile/style.scss';
 
-export const MCarousel = Carousel;
+export {
+	MCarousel,
+	MCarouselItem
+};
