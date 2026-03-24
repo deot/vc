@@ -31,6 +31,17 @@
 			clearable
 		/>
 
+		<p style="margin-top: 16px;">
+			TreeSelect 级联模式（hover 展开下一级，与树形模式共用 v-model）
+		</p>
+		<TreeSelect
+			v-model="value"
+			:data="data"
+			:check-strictly="checkStrictly"
+			cascader
+			clearable
+		/>
+
 		<TreeSelect
 			v-model="valueAsync"
 			:data="dataAsync"

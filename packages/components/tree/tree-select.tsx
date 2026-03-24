@@ -4,7 +4,8 @@ import { defineComponent, getCurrentInstance, inject, ref, computed, watch } fro
 import { debounce, isEqualWith } from 'lodash-es';
 import { useAttrs } from '@deot/vc-hooks';
 import { getUid } from '@deot/helper-utils';
-import { getLabel, escapeString, flattenData, toCurrentValue, toModelValue } from '../select/utils';
+import { escapeString, flattenData, toCurrentValue, toModelValue } from '../select/utils';
+import type { TreeData } from '../select/utils';
 import { VcError } from '../vc/index';
 import { Input, InputSearch } from '../input/index';
 import { Popover } from '../popover/index';
@@ -12,7 +13,8 @@ import { Spin } from '../spin/index';
 import { Tag } from '../tag/index';
 import { Scroller } from '../scroller/index';
 import { Icon } from '../icon/index';
-import { Tree } from './tree';
+import { TreeSelectContent } from './tree-select-content';
+import { TreeSelectContentCascader } from './tree-select-content-cascader';
 import { props as treeSelectProps } from './tree-select-props';
 
 const COMPONENT_NAME = 'vc-tree-select';
@@ -34,9 +36,45 @@ export const TreeSelect = defineComponent({
 		const searchRegex = ref(new RegExp(''));
 		const currentValue = ref<Array<string | number>>([]);
 
+		const currentValueGroups = computed(() => {
+			if (props.checkStrictly) return;
+			if (!props.data?.length || !Array.isArray(currentValue.value) || !currentValue.value.length) {
+				return [];
+			}
+			const pathMap = new Map<string | number, (string | number)[]>();
+			const traverse = (data: TreeData[], path: (string | number)[] = []) => {
+				data.forEach((item) => {
+					const v = item.value;
+					if (v == null) return;
+					const fullPath = [...path, v];
+					pathMap.set(v, fullPath);
+					if (item.children?.length) traverse(item.children, fullPath);
+				});
+			};
+			traverse(props.data as TreeData[]);
+
+			const allPaths = currentValue.value.map(v => pathMap.get(v)).filter(Boolean) as (string | number)[][];
+
+			return allPaths.filter(path =>
+				!allPaths.some(other =>
+					other !== path
+					&& other.length > path.length
+					&& path.every((v, i) => v === other[i])
+				)
+			);
+		});
+
 		const source = computed(() => {
 			return flattenData(props.data, { parent: true, cascader: true });
 		});
+
+		const labelMap = computed(() => {
+			return source.value.reduce((pre, cur) => {
+				pre[cur.value] = cur.label || '';
+				return pre;
+			}, {});
+		});
+
 		const icon = computed(() => {
 			return isActive.value ? 'up' : 'down';
 		});
@@ -57,18 +95,36 @@ export const TreeSelect = defineComponent({
 			};
 		});
 
-		const currentLabel = computed(() => {
+		const displayTags = computed(() => {
 			if (!props.data.length) {
 				return [];
 			}
+			if (props.checkStrictly) {
+				return currentValue.value.map((v: any) => ({
+					value: v,
+					label: labelMap.value[v] || ''
+				}));
+			}
 
-			return currentValue.value.map(getLabel.bind(null, source.value));
+			return (currentValueGroups.value || []).map((path) => {
+				const value = path[path.length - 1];
+				const label = path.map(v => labelMap.value[v] || '').filter(Boolean).join(' / ');
+				return {
+					path,
+					value,
+					label
+				};
+			});
 		});
 
 		const collapseTagCount = computed(() => {
 			if (!props.maxTags) return 0;
-			const v = currentValue.value.length - props.maxTags;
+			const v = displayTags.value.length - props.maxTags;
 			return v < 0 ? 0 : v;
+		});
+
+		const autoWidth = computed(() => {
+			return typeof props.autoWidth === 'boolean' ? props.autoWidth : !!props.cascader;
 		});
 
 		/**
@@ -83,8 +139,10 @@ export const TreeSelect = defineComponent({
 				nullValue: props.nullValue
 			});
 
-			emit('update:modelValue', v, currentLabel.value);
-			emit('change', v, currentLabel.value);
+			const labels = displayTags.value.map(item => item.label);
+
+			emit('update:modelValue', v, labels);
+			emit('change', v, labels);
 
 			// form表单
 			formItem?.change?.(currentValue.value);
@@ -110,8 +168,17 @@ export const TreeSelect = defineComponent({
 			isActive.value = false;
 		};
 
-		const handleClose = (index: number) => {
-			currentValue.value.splice(index, 1);
+		const handleClose = (item: { value: string | number; path?: (string | number)[] }) => {
+			if (props.checkStrictly) {
+				const index = currentValue.value.findIndex(v => v === item.value);
+				if (index === -1) return;
+				currentValue.value.splice(index, 1);
+			} else if (item.path) {
+				const remaining = (currentValueGroups.value || []).filter(
+					p => !(p.length === item.path!.length && p.every((v, i) => v === item.path![i]))
+				);
+				currentValue.value = [...new Set(remaining.flat())];
+			}
 			sync();
 		};
 
@@ -161,6 +228,7 @@ export const TreeSelect = defineComponent({
 			multiple,
 			isActive,
 			current: currentValue,
+			currentValueGroups,
 			// for portal
 			toggle(v?: boolean) {
 				v = typeof v === 'boolean' ? v : !isActive.value;
@@ -178,7 +246,7 @@ export const TreeSelect = defineComponent({
 					trigger={props.trigger}
 					tag={props.tag}
 					placement={props.placement}
-					auto-width={props.autoWidth}
+					autoWidth={autoWidth.value}
 					disabled={props.disabled}
 					portalClass={[['is-padding-none', props.portalClass]]}
 					class={[classes.value, its.value.class, 'vc-tree-select']}
@@ -198,7 +266,7 @@ export const TreeSelect = defineComponent({
 								<Input
 									id={props.id}
 									disabled={props.disabled}
-									modelValue={currentLabel.value[0] || props.extra}
+									modelValue={displayTags.value[0]?.label || props.extra}
 									allow-dispatch={false}
 									class="vc-tree-select__input"
 									// @ts-ignore
@@ -206,19 +274,19 @@ export const TreeSelect = defineComponent({
 									placeholder={its.value.attrs?.placeholder || '请选择'}
 								>
 									{{
-										content: multiple.value && (currentValue.value && currentValue.value.length > 0)
+										content: multiple.value && displayTags.value.length > 0
 											? () => {
 													return (
 														<div class={[classes.value, 'vc-tree-select__tags']}>
 															{
-																currentValue.value.slice(0, props.maxTags).map((item: any, index: number) => {
+																displayTags.value.slice(0, props.maxTags).map((item: any) => {
 																	return (
 																		<Tag
-																			key={item}
+																			key={item.path ? item.path.join('-') : item.value}
 																			closable={!props.disabled}
-																			onClose={() => handleClose(index)}
+																			onClose={() => handleClose(item)}
 																		>
-																			{ currentLabel.value[index] || '' }
+																			{ item.label }
 																		</Tag>
 																	);
 																})
@@ -266,17 +334,38 @@ export const TreeSelect = defineComponent({
 											</div>
 										)
 									}
-									<Scroller class="vc-tree-select__options" max-height="200px">
-										<Tree
-											model-value={currentValue.value}
-											expanded-values={currentValue.value}
-											data={props.data}
-											checkStrictly={props.checkStrictly}
-											allowDispatch={false}
-											showCheckbox={true}
-											renderNodeLabel={props.renderNodeLabel}
-											onChange={handleChange}
-										/>
+									<Scroller
+										class={[
+											'vc-tree-select__options',
+											props.cascader && 'is-cascader'
+										]}
+										max-height="200px"
+									>
+										{
+											props.cascader
+												? (
+														<TreeSelectContentCascader
+															value={currentValue.value}
+															data={props.data as TreeData[]}
+															checkStrictly={props.checkStrictly}
+															renderNodeLabel={props.renderNodeLabel}
+															numerable={props.numerable}
+															separator={props.separator}
+															max={props.max}
+															nullValue={props.nullValue as never}
+															onChange={handleChange}
+														/>
+													)
+												: (
+														<TreeSelectContent
+															value={currentValue.value}
+															data={props.data}
+															checkStrictly={props.checkStrictly}
+															renderNodeLabel={props.renderNodeLabel}
+															onChange={handleChange}
+														/>
+													)
+										}
 									</Scroller>
 								</div>
 							);

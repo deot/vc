@@ -51,6 +51,93 @@ $component-name: vc-tree-select;
 	@include element(options) {
 		max-height: 220px;
 		overflow: auto;
+
+		&.is-cascader {
+			display: flex;
+			max-height: 200px;
+			overflow: auto hidden;
+			flex-direction: row;
+		}
+	}
+
+	@include element(cascader) {
+		position: relative;
+		display: flex;
+		flex: 1;
+		flex-direction: row;
+		min-width: min-content;
+	}
+
+	@include element(cascader-tree-hidden) {
+		position: absolute;
+		width: 0;
+		height: 0;
+		padding: 0;
+		margin: 0;
+		overflow: hidden;
+		pointer-events: none;
+		opacity: 0;
+	}
+
+	@include element(cascader-columns) {
+		display: flex;
+		flex: 1;
+		flex-direction: row;
+		min-width: min-content;
+	}
+
+	@include element(cascader-column) {
+		display: inline-block;
+		padding: 5px 0 !important;
+		margin: 0;
+
+		@include border(right);
+
+		&:last-child {
+			&::before,
+			&::after {
+				display: none;
+			}
+		}
+	}
+
+	@include element(cascader-column-wrapper) {
+		height: 180px;
+		min-width: 100px;
+		overflow: auto;
+	}
+
+	@include element(cascader-item) {
+		display: flex;
+		padding: 2px 8px;
+		font-size: 12px !important;
+		line-height: 16px;
+		color: #666;
+		white-space: nowrap;
+		cursor: pointer;
+		justify-content: space-between;
+		align-items: center;
+
+		@include when(select) {
+			color: #5495f6;
+			background-color: #e6f7ff;
+		}
+	}
+
+	@include element(cascader-checkbox) {
+		display: inline-flex;
+		align-items: center;
+	}
+
+	@include element(cascader-label) {
+		flex: 1;
+		flex-shrink: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	@include element(cascader-icon) {
+		transform: scale(0.7);
 	}
 
 	@include element(loading) {
