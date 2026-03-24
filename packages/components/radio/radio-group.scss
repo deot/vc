@@ -35,7 +35,7 @@ $size: 32px;
 
 			&:hover {
 				position: relative;
-				color: #2d8cf0;
+				color: #456CF6;
 			}
 
 			&.is-disabled {
@@ -55,7 +55,7 @@ $size: 32px;
 			}
 
 			&.is-checked:first-child {
-				border-color: #2d8cf0;
+				border-color: #456CF6;
 				box-shadow: none;
 			}
 
@@ -64,20 +64,20 @@ $size: 32px;
 			}
 
 			&.is-checked:last-child {
-				border-color: #2d8cf0;
-				box-shadow: -1px 0 0 0 #2d8cf0;
+				border-color: #456CF6;
+				box-shadow: -1px 0 0 0 #456CF6;
 			}
 
 			&.is-checked {
 				z-index: 1;
-				color: #2d8cf0;
+				color: #456CF6;
 				background: #fff;
-				border-color: #2d8cf0;
-				box-shadow: -1px 0 0 0 #2d8cf0;
+				border-color: #456CF6;
+				box-shadow: -1px 0 0 0 #456CF6;
 			}
 
 			&.is-focus {
-				box-shadow: -1px 0 0 0 #2d8cf0, 0 0 0 2px rgb(45 140 240 / 20%);
+				box-shadow: -1px 0 0 0 #456CF6, 0 0 0 2px rgb(45 140 240 / 20%);
 				transition: all .2s ease-in-out;
 			}
 		}

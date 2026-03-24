@@ -23,7 +23,7 @@ $block: vc-date-header;
 		transition: color .2s ease-in-out;
 
 		&:hover {
-			color: #2D8CF0;
+			color: #456CF6;
 		}
 
 		@include when(prev) {
@@ -47,7 +47,7 @@ $block: vc-date-header;
 		cursor: pointer;
 
 		&:hover {
-			color: #2D8CF0;
+			color: #456CF6;
 		}
 	}
 }

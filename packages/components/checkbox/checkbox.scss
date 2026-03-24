@@ -126,10 +126,10 @@ $component-name: vc-checkbox;
 
 	@include when(indeterminate) {
 		@include element(border){
-			background-color: #2d8cf0;
+			background-color: #456CF6;
 
 			&::after, &::before {
-				border-color: #2d8cf0;
+				border-color: #456CF6;
 			}
 		}
 

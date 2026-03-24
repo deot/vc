@@ -38,7 +38,7 @@ export const props = {
 	},
 	strokeColor: {
 		type: String,
-		default: '#2d8cf0'
+		default: '#456CF6'
 	},
 	trackColor: {
 		type: String,

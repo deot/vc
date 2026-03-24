@@ -51,11 +51,11 @@ $block: vc-time-select;
 		}
 
 		@include when(selected) {
-			color: #2d8cf0;
+			color: #456CF6;
 			background: #f3f3f3;
 
 			&:hover {
-				color: #2d8cf0;
+				color: #456CF6;
 				background: #f3f3f3;
 			}
 		}
