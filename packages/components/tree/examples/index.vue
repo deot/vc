@@ -28,8 +28,21 @@
 			v-model="value"
 			:data="data"
 			:check-strictly="checkStrictly"
+			:max="99"
 			clearable
 		/>
+
+		<div style="margin-top: 12px;">
+			<p style="margin: 0 0 8px;">
+				回归：级联且非 strict 时，全选「一级 3」下两条三级后删一个 TreeSelect tag，Tree 勾选应与 value 一致
+			</p>
+			<Button @click="value = ['3', '3-1', '3-1-1', '3-2', '3-2-1']">
+				分支 3 全选
+			</Button>
+			<Button @click="value = ['3', '3-1', '3-1-1']">
+				模拟删 tag（仅左枝）
+			</Button>
+		</div>
 
 		<p style="margin-top: 16px;">
 			TreeSelect 级联模式（hover 展开下一级，与树形模式共用 v-model）
@@ -38,6 +51,7 @@
 			v-model="value"
 			:data="data"
 			:check-strictly="checkStrictly"
+			:max="99"
 			cascader
 			clearable
 		/>

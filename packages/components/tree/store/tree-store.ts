@@ -115,15 +115,58 @@ export class TreeStore {
 		}
 	}
 
+	/**
+	 * 级联非 strict：仅对「选中集合里的最深节点」做 setChecked(true, deep)，
+	 * 避免对祖先逐个 deep 勾选把未出现在 checkedValues 里的兄弟子树再次全选。
+	 * @param checkedValues ~
+	 * @returns ~
+	 */
+	_getCascadeCheckedAnchorIds(checkedValues: (string | number)[]): (string | number)[] {
+		const checkedSet = new Set(checkedValues);
+		const nodesMap = this.nodesMap;
+		const anchors: (string | number)[] = [];
+
+		for (const id of checkedValues) {
+			const node = nodesMap[id];
+			if (!node) continue;
+
+			const hasSelectedChildInSet = node.childNodes.some(child =>
+				checkedSet.has(child.getter.value as string | number)
+			);
+			if (!hasSelectedChildInSet) {
+				anchors.push(id);
+			}
+		}
+
+		anchors.sort((a, b) => {
+			const na = nodesMap[a];
+			const nb = nodesMap[b];
+			if (!na || !nb) return 0;
+			return nb.states.level - na.states.level;
+		});
+
+		return anchors;
+	}
+
 	_initDefaultCheckedNodes() {
 		const checkedValues = this.checkedValues || [];
 		const nodesMap = this.nodesMap;
 
-		checkedValues.forEach((id: string | number) => {
-			const node = nodesMap[id];
+		if (this.checkStrictly) {
+			checkedValues.forEach((id: string | number) => {
+				const node = nodesMap[id];
+				if (node) {
+					node.setChecked(true, false);
+				}
+			});
+			return;
+		}
 
+		const anchorIds = this._getCascadeCheckedAnchorIds(checkedValues);
+		anchorIds.forEach((id) => {
+			const node = nodesMap[id];
 			if (node) {
-				node.setChecked(true, !this.checkStrictly);
+				node.setChecked(true, true);
 			}
 		});
 	}
@@ -132,8 +175,19 @@ export class TreeStore {
 		const checkedValues = this.checkedValues || [];
 
 		const nodeValue = node.getter.value;
-		if (checkedValues.indexOf(nodeValue) !== -1) {
-			node.setChecked(true, !this.checkStrictly);
+		if (checkedValues.indexOf(nodeValue) === -1) return;
+
+		if (this.checkStrictly) {
+			node.setChecked(true, false);
+			return;
+		}
+
+		const checkedSet = new Set(checkedValues);
+		const hasSelectedChildInSet = node.childNodes.some(child =>
+			checkedSet.has(child.getter.value as string | number)
+		);
+		if (!hasSelectedChildInSet) {
+			node.setChecked(true, true);
 		}
 	}
 
