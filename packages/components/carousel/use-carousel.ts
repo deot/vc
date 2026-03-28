@@ -5,6 +5,24 @@ import { getUid } from '@deot/helper-utils';
 import { VcError } from '../vc/index';
 import type { Props } from './carousel-props';
 
+/**
+ * 与切换幻灯片的位移阈值一致；超过则视为拖动，吞掉随后的 click，避免子元素误触
+ */
+const DRAG_CLICK_SUPPRESS_PX = 5;
+const swallowNextClickFromDrag = () => {
+	let invoked = false;
+	const options = { capture: true, once: true };
+	const swallow = (e: Event) => {
+		invoked = true;
+		e.preventDefault();
+		e.stopPropagation();
+		e.stopImmediatePropagation();
+	};
+
+	document.addEventListener('click', swallow, options);
+	setTimeout(() => !invoked && document.removeEventListener('click', swallow, options), 0);
+};
+
 export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLElement | null>, expose: SetupContext['expose']): any => {
 	const instance = getCurrentInstance()!;
 	const props = instance.props as Props;
@@ -18,6 +36,7 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 	const start = ref();
 	const startX = ref();
 	const startY = ref();
+	const dragMovedPastThreshold = ref(false);
 
 	// 主要给slide滑动时1和-1添加转场动画
 	const allowTransition = ref(false);
@@ -112,6 +131,7 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 		pauseTimer();
 
 		start.value = true;
+		dragMovedPastThreshold.value = false;
 		startX.value = e.screenX;
 		startY.value = e.screenY;
 	};
@@ -122,11 +142,17 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 			? (e.screenX - startX.value)
 			: (e.screenY - startY.value);
 
+		if (Math.abs(offset.value) > DRAG_CLICK_SUPPRESS_PX) {
+			dragMovedPastThreshold.value = true;
+		}
+
 		resetItems();
 	};
 
 	const handleEnd = () => {
 		if (!props.draggable) return;
+
+		const shouldSwallowClick = dragMovedPastThreshold.value;
 
 		start.value = false;
 		startTimer();
@@ -139,6 +165,12 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 		} else {
 			resetItems();
 		}
+
+		if (shouldSwallowClick) {
+			swallowNextClickFromDrag();
+		}
+
+		dragMovedPastThreshold.value = false;
 	};
 
 	watch(

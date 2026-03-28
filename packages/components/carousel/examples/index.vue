@@ -5,13 +5,13 @@
 			<span>默认 Hover 指示器触发</span>
 			<Carousel :height="150">
 				<CarouselItem v-if="showFirst">
-					<h3>动态: 应该出现在第一个</h3>
+					<h3 @click="handleClick(1)">动态: 应该出现在第一个</h3>
 				</CarouselItem>
 				<CarouselItem v-for="item in 4" :key="`item_${item}`">
-					<h3>{{ item }}</h3>
+					<h3 @click="handleClick(2)">{{ item }}</h3>
 				</CarouselItem>
 				<CarouselItem v-if="showLast">
-					<h3>动态: 应该出现在最后一个</h3>
+					<h3 @click="handleClick(3)">动态: 应该出现在最后一个</h3>
 				</CarouselItem>
 			</Carousel>
 		</div>
@@ -50,6 +50,9 @@ const showLast = ref(false);
 setTimeout(() => showLast.value = true, 500);
 setTimeout(() => showFirst.value = true, 1000);
 
+const handleClick = (index) => {
+	console.log(index);
+};
 </script>
 <style>
 .vc-carousel-item h3 {

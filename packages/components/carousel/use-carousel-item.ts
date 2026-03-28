@@ -113,7 +113,7 @@ export const useCarouselItem = (expose: SetupContext['expose']) => {
 	 */
 	const calcSlideOffset = (index: number, activeIndex: number, wrapperWidth: number) => {
 		const { length } = carousel.items.value;
-		const offset = wrapperWidth - (instance.vnode?.el?.offsetWidth || 0);
+		const offset = wrapperWidth - (carousel.wrapper?.value?.offsetWidth || 0);
 		const gutter = itemGutter.value;
 
 		if (!gutter || isVertical.value) return 0;
@@ -158,7 +158,7 @@ export const useCarouselItem = (expose: SetupContext['expose']) => {
 	};
 
 	const calcTranslate = (index: number, activeIndex: number) => {
-		const distance = carousel.vnode.el[isVertical.value ? 'offsetHeight' : 'offsetWidth'];
+		const distance = carousel.wrapper.value[isVertical.value ? 'offsetHeight' : 'offsetWidth'];
 		const slideOffset = calcSlideOffset(index, activeIndex, distance);
 
 		return distance * (index - activeIndex) + carousel.offset.value + slideOffset;
