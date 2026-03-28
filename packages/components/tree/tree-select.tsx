@@ -172,7 +172,7 @@ export const TreeSelect = defineComponent({
 			if (props.checkStrictly) {
 				const index = currentValue.value.findIndex(v => v === item.value);
 				if (index === -1) return;
-				currentValue.value.splice(index, 1);
+				currentValue.value = currentValue.value.filter((_, i) => i !== index);
 			} else if (item.path) {
 				const remaining = (currentValueGroups.value || []).filter(
 					p => !(p.length === item.path!.length && p.every((v, i) => v === item.path![i]))
