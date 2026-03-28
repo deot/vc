@@ -1,5 +1,13 @@
 # @deot/vc-shared ChangeLog
 
+## v1.0.64
+
+_2026-03-28_
+
+### Force Update Package
+
+- `1.0.63` -> `1.0.64`
+
 ## v1.0.63
 
 _2026-02-05_
