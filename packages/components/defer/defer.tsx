@@ -23,6 +23,12 @@ export const Defer = defineComponent({
 		disabled: {
 			type: Boolean,
 			default: false
+		},
+
+		// 为true时避免删除/添加时重渲染
+		once: {
+			type: Boolean,
+			default: true
 		}
 	},
 	emits: ['complete'],
@@ -30,8 +36,9 @@ export const Defer = defineComponent({
 		const currentValue = ref<any[]>([]);
 		const currentCount = ref(0);
 		const isUnmount = ref(false);
-
+		const isCompletedOnce = ref(false);
 		const maxCount = computed(() => props.data.length);
+		const disabled = computed(() => props.disabled || (props.once && isCompletedOnce.value));
 
 		let idleId: any;
 
@@ -61,7 +68,7 @@ export const Defer = defineComponent({
 		};
 
 		const run = async () => {
-			if (props.disabled) return;
+			if (disabled.value) return;
 			const start = Date.now();
 			clear();
 			currentCount.value = 0;
@@ -69,7 +76,7 @@ export const Defer = defineComponent({
 			if (maxCount.value <= 0) return;
 			if (await runByIdleCallback()) {
 				const timestamp = Date.now() - start;
-				// console.log('[@deot/vc-defer]:', `${timestamp}ms / ${maxCount.value}`);
+				isCompletedOnce.value = true;
 				emit('complete', timestamp);
 			};
 		};
@@ -84,7 +91,7 @@ export const Defer = defineComponent({
 		);
 
 		watch(
-			() => props.disabled,
+			() => disabled.value,
 			(v) => {
 				if (!v) return;
 				clear();
@@ -99,7 +106,7 @@ export const Defer = defineComponent({
 
 		return () => {
 			return renderList(
-				currentValue.value.slice(0, currentCount.value),
+				disabled.value ? currentValue.value : currentValue.value.slice(0, currentCount.value),
 				(row: any, index: number) =>
 					renderSlot(slots, 'default', {
 						key: row[props.primaryKey],

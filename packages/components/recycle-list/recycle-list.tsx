@@ -79,7 +79,7 @@ export const RecycleList = defineComponent({
 			return placeholder.value.offsetWidth;
 		});
 
-		const handleDeferComplete = () => deferInterrupter.next();
+		const handleDeferComplete = () => deferInterrupter.finish();
 
 		const scrollTo = (options: any, force?: boolean) => {
 			let options$ = { x: 0, y: 0 };
@@ -162,6 +162,7 @@ export const RecycleList = defineComponent({
 			await deferInterrupter;
 			await Promise.all(promiseTasks.map(fn => fn()));
 			store.refreshItemPosition();
+
 			setVisibleItemRange();
 			resizeChanges.length > 0 && emit('row-resize', resizeChanges.map(i => ({ size: i.size, index: i.id })));
 
@@ -321,11 +322,13 @@ export const RecycleList = defineComponent({
 			if (isNeedRefreshLayout) {
 				const oldFirstItemIndex = store.states.firstItemIndex;
 				const oldPosition = store.states.rebuildData[oldFirstItemIndex]?.position;
-
 				await forceRefreshLayout();
 				const newPosition = store.states.rebuildData[oldFirstItemIndex]?.position;
 
-				el[K.scrollAxis] += newPosition - oldPosition;
+				// item 尚未完成初始定位（item.postion = -1000）, 不应执行 scrollTop 补偿
+				if (typeof oldPosition === 'number' && oldPosition >= 0) {
+					el[K.scrollAxis] += newPosition - oldPosition;
+				}
 			}
 		}, 50, {
 			leading: false,

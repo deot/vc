@@ -21,12 +21,16 @@
 					:style="{
 						background: row.background
 					}"
-					@click="handleClick(row)"
 				>
 					<div>id: {{ row.id }}</div>
 					<div>page: {{ row.page }}</div>
-					<div :style="`height: ${dynamicSize}px`">dynamicSize: {{ dynamicSize }}</div>
-					<div>{{ row.text }}</div>
+					<div style="visibility: hidden;">row.text: {{ row.text }}</div>
+					<div
+						:style="`height: ${dynamicSize}px`"
+						@click="handleClick(row)"
+					>{{ dynamicSize }}</div>
+					<div @click="handleDelete(row)">删除</div>
+					<div @click="handleAdd(row)">增加</div>
 				</div>
 			</template>
 		</RecycleList>
@@ -91,6 +95,24 @@ const dataSource = ref(null);
 const handleClick = (data) => {
 	console.log(data);
 	dynamicSize.value = Math.floor(Math.random() * 20) + 20;
+};
+
+const handleDelete = (row) => {
+	dataSource.value = dataSource.value.filter(item => item.id !== row.id);
+};
+
+const handleAdd = (row) => {
+	const index = dataSource.value.findIndex(item => item.id === row.id);
+	const v = dataSource.value.slice();
+	v.splice(index + 1, 0, {
+		id: `${count++}`,
+		name: `add - ${count}`,
+		page: row.page,
+		background: randomColor(),
+		text: randomText(((count % 10) + 1) * 20)
+	});
+
+	dataSource.value = v;
 };
 loadData(1, Math.max(1, total - 5) * pageSize.value, 'From dataSource').then((data) => {
 	dataSource.value = data;

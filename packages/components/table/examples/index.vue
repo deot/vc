@@ -69,7 +69,7 @@
 				fixed="right"
 			>
 				<template #default="{ rowIndex }">
-					<div @click="handleDelete(rowIndex)">删除</div>
+					<div @click="handleDelete(rowIndex)">删除 {{ rowIndex }}</div>
 				</template>
 			</TableColumn>
 		</Table>
