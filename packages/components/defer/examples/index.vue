@@ -30,7 +30,7 @@ const genTableData = length => Array.from({ length }).map((_, index) => ({
 	count: length === index + 1 ? length : (index + 1) % 100
 }));
 
-const count = ref(200000);
+const count = ref(20000);
 const dataSource = computed(() => genTableData(count.value));
 
 const handleComplete = (v) => {

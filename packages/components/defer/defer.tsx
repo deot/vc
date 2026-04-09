@@ -1,7 +1,7 @@
 /** @jsxImportSource vue */
 
-import { ref, computed, defineComponent, renderList, renderSlot, watch, onBeforeUnmount } from 'vue';
-import { ric, cid } from './ric.ts';
+import { ref, shallowRef, computed, defineComponent, renderList, renderSlot, watch, onBeforeUnmount } from 'vue';
+import { ric, cic } from './utils.ts';
 
 const COMPONENT_NAME = 'vc-defer';
 
@@ -33,7 +33,7 @@ export const Defer = defineComponent({
 	},
 	emits: ['complete'],
 	setup(props, { slots, emit }) {
-		const currentValue = ref<any[]>([]);
+		const currentValue = shallowRef<any[]>([]);
 		const currentCount = ref(0);
 		const isUnmount = ref(false);
 		const isCompletedOnce = ref(false);
@@ -43,22 +43,27 @@ export const Defer = defineComponent({
 		let idleId: any;
 
 		const clear = () => {
-			idleId && cid(idleId);
+			idleId && cic(idleId);
 		};
 
 		const runByIdleCallback = () => {
 			return new Promise((resolve) => {
 				const schedule = (deadline: IdleDeadline) => {
+					const max = maxCount.value;
+					const step = props.concurrency;
+					let count = currentCount.value;
+
 					while (
 						!isUnmount.value
-						&& currentCount.value < maxCount.value
+						&& count < max
 						&& (deadline.didTimeout || deadline.timeRemaining() > 0)
 					) {
-						currentCount.value += props.concurrency;
+						count += step;
 					}
+					currentCount.value = count;
 
 					if (isUnmount.value) return resolve(0);
-					if (currentCount.value >= maxCount.value) {
+					if (count >= max) {
 						return resolve(1);
 					}
 					idleId = ric(schedule);
