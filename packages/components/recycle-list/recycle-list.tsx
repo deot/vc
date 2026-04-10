@@ -339,7 +339,7 @@ export const RecycleList = defineComponent({
 		const setDataSource = async (v: any, oldV: any) => {
 			if (!Array.isArray(v) || oldV === v) return;
 
-			store.setData(v);
+			if (!store.setData(v)) return;
 
 			await refreshLayout(0, store.originalData.length);
 		};
