@@ -8,6 +8,7 @@ export class Store {
 	promiseStack: Promise<any>[] = []; // 每页数据栈信息
 	currentLeaf: any = null;
 	leafs: any[] = [];
+	_data: any[] | null = null;
 	states = reactive({
 		version: 0,
 		rebuildData: [] as any[], // 封装后的数据，包含位置信息
@@ -93,7 +94,10 @@ export class Store {
 		merge(this.props, options);
 	}
 
-	setData(data: any[]) {
+	setData(data: any[]): boolean {
+		if (data === this._data) return false;
+		this._data = data;
+
 		if (data.length % this.props.pageSize > 0) {
 			this.states.isEnd = true;
 		} else {
@@ -114,6 +118,7 @@ export class Store {
 			this.states.rebuildData = this.originalData.slice();
 		}
 		this.states.version++;
+		return true;
 	}
 
 	setOriginData(page: number, res: any) {
