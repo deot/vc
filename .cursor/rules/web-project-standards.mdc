@@ -1,0 +1,217 @@
+---
+description: Vue 3 组件库（@deot/vc-*）编码规范：monorepo、TSX 组件骨架、BEM SCSS、测试与命令
+globs: packages/**/*.{vue,ts,tsx,scss}
+alwaysApply: false
+---
+# Vue 3 组件库编码规范
+
+> 所有条目尽量"一条约束 + 一个可验证来源（文件路径或命令）"，便于对照真实代码产出。
+
+## 1. 项目概览
+
+- pnpm monorepo，工作区见 `pnpm-workspace.yaml`，位于 `packages/*`：
+  - `components`（主组件库，对外名 `@deot/vc-components`）
+  - `hooks`（`@deot/vc-hooks`）
+  - `shared`（`@deot/vc-shared`）
+  - `index`（聚合出口 `@deot/vc`）
+- 构建 / 开发 / 测试 / 发布统一走 `@deot/dev` 提供的 `ddc` 命令，详见根 `package.json` 的 `scripts`。
+- TS 路径别名（见 `tsconfig.json`）：`@deot/vc`、`@deot/vc-components`、`@deot/vc-*`。
+
+## 2. 代码组织与命名
+
+- **单一职责**：文件职责清晰、边界明确；文件过大或关注点过多时及时拆分。
+- 文件名统一 **kebab-case**（短横线）。
+
+❌ 错误示例
+```
+xxx/
+├── myUtils.ts
+├── MyComponent.tsx
+└── myComponent.tsx
+```
+
+✅ 正确示例
+```
+xxx/
+├── my-utils.ts
+└── my-component.tsx
+```
+
+- 组件全局前缀统一为 `vc-`，组件文件顶部声明：
+  ```ts
+  const COMPONENT_NAME = 'vc-xxx';
+  ```
+
+## 3. Lint 与格式化
+
+- ESLint 配置：`@deot/dev-eslint`（`eslint.config.js`）；Stylelint 配置：`@deot/dev-stylelint`（`stylelint.config.js`）。IDE 必须开启保存即格式化。
+- 严格遵循 `.editorconfig`：**Tab 缩进**、LF 换行、末尾换行；JSON 使用 2 空格。
+- 常用命令：
+  - `npm run lint`：ESLint + Stylelint 检查
+  - `npm run lint:fix`：自动修复
+
+## 4. 组件骨架
+
+`packages/components/<name>/` 采用统一的目录结构（参考 `card/`、`button/`、`recycle-list/`）。其中 `index.m.ts` 与 `README.md` 按需可选，其余均为必需：
+
+```
+<name>/
+├── <name>.tsx           # [必需] 主组件实现（TSX）
+├── <name>-props.ts      # [必需] props 定义，导出 Props 类型
+├── index.ts             # [必需] 对外导出 + import './style.scss'
+├── style.scss           # [必需] 样式（BEM + @deot/style）
+├── __tests__/
+│   └── index.spec.tsx   # [必需] 组件测试
+├── examples/
+│   └── *.vue            # [必需] 一个或多个示例
+├── index.m.ts           # [可选] 移动端别名（如 MCard = Card）
+└── README.md            # [可选] 使用说明
+```
+
+最小组件模板（对照 `packages/components/card/card.tsx`）：
+
+```tsx
+/** @jsxImportSource vue */
+
+import { defineComponent } from 'vue';
+import { props as demoProps } from './demo-props';
+
+const COMPONENT_NAME = 'vc-demo';
+
+export const Demo = defineComponent({
+	name: COMPONENT_NAME,
+	props: demoProps,
+	emits: ['click'],
+	setup(props, { slots, emit }) {
+		return () => (
+			<div class={['vc-demo', { 'is-active': props.active }]} onClick={() => emit('click')}>
+				{ slots.default?.() }
+			</div>
+		);
+	}
+});
+```
+
+最小 props 模板（对照 `packages/components/card/card-props.ts`）：
+
+```ts
+import type { ExtractPropTypes } from 'vue';
+
+export const props = {
+	active: {
+		type: Boolean,
+		default: false
+	},
+	title: {
+		type: String
+	}
+};
+export type Props = ExtractPropTypes<typeof props>;
+```
+
+`index.ts` / `index.m.ts` 模板：
+
+```ts
+import { Demo } from './demo.tsx';
+import './style.scss';
+
+export { Demo };
+```
+
+```ts
+import { Demo } from '.';
+
+export const MDemo = Demo;
+```
+
+## 5. TypeScript / JavaScript 风格
+
+- 箭头函数优先；`const` 优先，仅在需要重新赋值时使用 `let`；**禁止 `var`**。
+- 异步统一 `async/await`，避免 `.then` 链式嵌套。
+- 仅类型导入一律使用 `import type`：
+  ```ts
+  import type { ExtractPropTypes, PropType } from 'vue';
+  ```
+- 跨包引用优先走别名：`@deot/vc-components`、`@deot/vc-hooks`、`@deot/vc-shared`。组件内部同目录文件使用相对路径。
+- 工具函数优先复用已有生态：`@deot/helper-utils`、`@deot/helper-resize`、`@deot/helper-scheduler`、`lodash-es` 等，不重复造轮子。
+- DOM / 组件实例等非响应式大对象的引用优先使用 `shallowRef`（见 `recycle-list.tsx` 中的 `placeholder`、`scroller` 等）。
+
+## 6. 样式（SCSS + BEM）
+
+- 每个组件 `style.scss` 顶部统一引入：
+  ```scss
+  @use '../style/helper' as *;
+  ```
+- 使用 `@deot/style` 提供的 BEM mixin：`block / element / modifier / when`；状态类以 `is-xxx`（或 `has-xxx`）为准。
+- 主题 token 通过 `varfix(...)` 引用；亮暗主题使用 `[data-vc-theme="light|dark"]` 或 `@include themefix` 覆写。
+
+参考 `packages/components/card/style.scss`：
+
+```scss
+@use '../style/helper' as *;
+
+$component-name: vc-card;
+
+@include block($component-name) {
+	@include when(border) {
+		@include border('', #e8eaec, 4px);
+	}
+
+	@include element(header) {
+		@include border(bottom, #e8eaec);
+	}
+}
+```
+
+## 7. 组件规则（Vue 3）
+
+- 组件实现一律使用 `.tsx`；**仅** `examples/*` 使用 `.vue`（`<script setup>` 语法糖，保持 JS 写法，不加 `lang="ts"`）。
+- 使用 `defineComponent({ name, props, emits, setup })`，`setup` 返回渲染函数（JSX）。
+- props 必须从独立的 `<name>-props.ts` 导入；`emits` 必须显式声明。
+- 动态类名用对象形式，配合 BEM `when` mixin：
+  ```tsx
+  <div class={['vc-card', { 'is-border': props.border, 'is-shadow': props.shadow }]} />
+  ```
+- 对外暴露实例方法通过 `expose({ ... })`（见 `recycle-list.tsx` 中的 `reset` / `scrollTo` / `refreshLayout`）。
+
+## 8. 测试规则（Vitest + @vue/test-utils）
+
+- 测试文件放在组件目录 `__tests__/` 下，命名 `index.spec.tsx`（或 `xxx.spec.tsx`）。
+- **首行必须** 声明 jsdom 环境：
+  ```ts
+  // @vitest-environment jsdom
+  ```
+- 组件引用优先走包别名 `@deot/vc-components`（见 `button/__tests__/index.spec.tsx`）；局部调试可用相对路径（见 `recycle-list/__tests__/index.spec.tsx`）。
+- 异步等待 / 轮询断言 / 属性定义等，统一使用 `@deot/dev-test` 提供的工具，避免重复实现：
+  ```ts
+  import { Utils } from '@deot/dev-test';
+
+  await Utils.sleep(10);                                 // 替代 setTimeout Promise
+  await Utils.expectByPolling(() => wrapper.text(), 'ok'); // 不稳定/异步 UI 的轮询断言
+  Utils.def(window, 'innerWidth', 375);                  // 定义只读/mock 属性
+  ```
+  另外 `@deot/dev-test` 还暴露 `Interrupter`（可中断 Promise）、`E2E` / `Server` / `Launch` / `Operater`（Puppeteer 封装，用于 e2e），按需选用。
+- 常用命令：
+  - 单组件：`npm run test -- --package-name components --subpackage recycle-list`
+  - 单文件：`npm run test -- --include [具体文件路径]`
+  - 全量：`npm run test`
+
+## 9. 常用命令速查
+
+| 命令 | 说明 |
+| --- | --- |
+| `npm run init` | 首次安装 |
+| `npm run init:force` | 清理并重装 |
+| `npm run link` | 工作区包关联 |
+| `npm run add` | 新建包 / 给包加依赖 |
+| `npm run dev` | 开发模式（`ddc dev`） |
+| `npm run build` | 打包（`ddc build`） |
+| `npm run update` | 更新依赖 |
+| `npm run release` | 发布 |
+| `npm run typecheck` | `vue-tsc --noEmit --skipLibCheck` |
+| `npm run lint` / `lint:fix` | 代码检查 / 自动修复 |
+| `npm run test` | 测试 |
+
+## 10. 回复语言
+
+- 始终使用 **简体中文** 回复。
