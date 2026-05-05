@@ -68,8 +68,8 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		});
 	};
 
-	const refresh = (options?: any) => {
-		refreshSize();
+	const refresh = async (options?: any) => {
+		await refreshSize();
 		refreshPosition(options);
 	};
 

@@ -49,13 +49,13 @@ export const Scroller = defineComponent({
 							ref={content}
 							// @ts-ignore
 							style={props.contentStyle}
-							class={props.contentClass}
+							class={[props.contentClass, 'vc-scroller__content']}
 						>
 							{ slots.default?.() }
 						</Content>
 					</div>
 					{
-						(wrapper.value && content.value) && (
+						(props.showBar && wrapper.value && content.value) && (
 							<Bar
 								ref={bar}
 								wrapperW={wrapperW.value}
