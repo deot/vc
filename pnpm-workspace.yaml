@@ -3,4 +3,5 @@ shamefullyHoist: true
 linkWorkspacePackages: true
 
 packages:
-  - 'packages/*'
+  - packages/*
+  

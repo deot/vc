@@ -19,22 +19,44 @@
     "access": "public"
   },
   "peerDependencies": {
+    "@deot/helper": "*",
+    "@zumer/snapdom": "*",
+    "echarts": "*",
+    "lodash-es": "*",
+    "photoswipe": "*",
+    "quill": "*",
     "vue": "*"
   },
   "peerDependenciesMeta": {
+    "@deot/helper": {
+      "optional": true
+    },
+    "@zumer/snapdom": {
+      "optional": true
+    },
+    "echarts": {
+      "optional": true
+    },
+    "lodash-es": {
+      "optional": true
+    },
+    "photoswipe": {
+      "optional": true
+    },
+    "quill": {
+      "optional": true
+    },
     "vue": {
       "optional": true
     }
   },
-  "dependencies": {
-    "@deot/helper": "^1.1.15",
-    "lodash-es": "^4.17.21"
-  },
   "devDependencies": {
+    "@deot/helper": "^1.1.15",
     "@deot/style": "^1.1.0",
     "@types/lodash-es": "^4.17.12",
     "@zumer/snapdom": "^2.0.1",
     "echarts": "^6.0.0",
+    "lodash-es": "^4.17.21",
     "photoswipe": "^5.4.4",
     "quill": "^2.0.3"
   }

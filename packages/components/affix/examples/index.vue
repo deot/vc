@@ -4,7 +4,7 @@
 		<Button type="error">0. Top(window)</Button>
 	</Affix>
 	<Customer :render="renderItems" />
-	<div style="padding: 0 140px" class="no-scroller">
+	<div style="padding: 0 140px;" class="no-scroller">
 		<div style="height: 200px; background: gray;">
 			<div>a</div>
 			<Affix :offset="10" to=".no-scroller">

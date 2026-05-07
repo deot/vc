@@ -9,11 +9,7 @@ describe('index.ts', () => {
 		value: (e: any) => {
 			const v = origialGetComputedStyle(e);
 			const keys = Array.from(v);
-			v[Symbol.iterator] = function* () {
-				for (const key of keys) {
-					yield key;
-				}
-			};
+			v[Symbol.iterator] = keys[Symbol.iterator].bind(keys);
 			return v;
 		}
 	});
