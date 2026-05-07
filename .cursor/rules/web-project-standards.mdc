@@ -191,10 +191,26 @@ $component-name: vc-card;
   Utils.def(window, 'innerWidth', 375);                  // 定义只读/mock 属性
   ```
   另外 `@deot/dev-test` 还暴露 `Interrupter`（可中断 Promise）、`E2E` / `Server` / `Launch` / `Operater`（Puppeteer 封装，用于 e2e），按需选用。
-- 常用命令：
-  - 单组件：`npm run test -- --package-name components --subpackage recycle-list`
-  - 单文件：`npm run test -- --include [具体文件路径]`
-  - 全量：`npm run test`
+
+### 8.1 测试命令
+
+底层为 `ddc test`（见根 `package.json` 的 `--vue-package 'components,hooks,index'`）。参数语义：
+
+- `--package-name`：工作区包名，仅可取 `components` / `hooks` / `index`。
+- `--subpackage`：包内子目录名（如 `recycle-list`），**必须配合 `--package-name` 使用**。
+- `--include`：测试文件，使用相对仓库根的路径或 glob，不可裸文件名。
+
+```bash
+# 全量
+npm run test
+# 单组件（推荐）
+npm run test -- --package-name components --subpackage recycle-list
+# 单文件 / glob
+npm run test -- --include packages/components/recycle-list/__tests__/index.spec.tsx
+npm run test -- --include **/recycle-list/**/*.spec.tsx
+```
+
+❌ 常见错误：`--subpackage` 单独使用、`--package-name recycle-list`（应填工作区包名）、`--include index.spec.tsx`（裸文件名）。
 
 ## 9. 常用命令速查
 
