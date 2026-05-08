@@ -245,15 +245,15 @@ export const Select = defineComponent({
 								>
 									{{
 										prepend: slots.prepend || props.label
-											? () => {
+											? () => (
 													slots.prepend
 														? slots.prepend()
 														: (
 																<div class="vc-select__prepend">
 																	<span class="vc-select__label">{ props.label }</span>
 																</div>
-															);
-												}
+															)
+												)
 											: null,
 										content: multiple.value && (currentValue.value && currentValue.value.length > 0)
 											? () => {
