@@ -46,7 +46,7 @@ export const Countdown = defineComponent({
 		});
 		// 目标时间
 		const targetTimestamp = computed(() => {
-			if (!props.targetTime && getTimestamp(props.targetTime)) {
+			if (props.targetTime && !getTimestamp(props.targetTime)) {
 				emit('error', '请设定时间以及格式');
 				return 0;
 			}
