@@ -1,9 +1,9 @@
 import { defineComponent, ref, getCurrentInstance, computed, inject } from 'vue';
 import { addClass, removeClass, hasClass } from '@deot/helper-dom';
 import { IS_SERVER } from '@deot/vc-shared';
-import { Popover } from '../popover';
-import { Icon } from '../icon';
-import { useStates } from './store';
+import { Popover } from '../../popover';
+import { Icon } from '../../icon';
+import { useStates } from '../store';
 import { TableSort } from './table-sort';
 // import TableFilter from './table-filter';
 

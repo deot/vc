@@ -1,10 +1,10 @@
 /** @jsxImportSource vue */
 
 import { getPropByPath } from '@deot/helper-utils';
-import { Checkbox } from '../checkbox';
-import { Icon } from '../icon';
-import { Spin } from '../spin';
-import { VcInstance } from '../vc';
+import { Checkbox } from '../../checkbox';
+import { Icon } from '../../icon';
+import { Spin } from '../../spin';
+import { VcInstance } from '../../vc';
 
 export const cellStarts = {
 	default: {

@@ -1,5 +1,5 @@
-import { defineComponent, computed, inject } from 'vue';
-import { useStates } from './store';
+import { defineComponent, computed } from 'vue';
+import { useStates } from '../store';
 
 export const TableFooter = defineComponent({
 	name: 'vc-table-footer',
@@ -10,7 +10,6 @@ export const TableFooter = defineComponent({
 		border: Boolean,
 	},
 	setup(props) {
-		const table: any = inject('vc-table');
 		const states: any = useStates({
 			data: 'data',
 			columns: 'columns',

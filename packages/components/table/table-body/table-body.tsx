@@ -3,14 +3,14 @@ import { debounce } from 'lodash-es';
 import { addClass, removeClass } from '@deot/helper-dom';
 import { IS_SERVER } from '@deot/vc-shared';
 import { raf } from '@deot/helper-utils';
-import { Popover } from '../popover';
-import { RecycleList } from '../recycle-list';
+import { Popover } from '../../popover';
+import { RecycleList } from '../../recycle-list';
 import { NormalList } from './normal-list';
-import { getCell, getColumnByCell, getRowValue } from './utils';
-import { getFitIndex } from '../text/utils';
-import { VcInstance } from '../vc';
+import { getCell, getColumnByCell, getRowValue } from '../utils';
+import { getFitIndex } from '../../text/utils';
+import { VcInstance } from '../../vc';
 
-import { useStates } from './store';
+import { useStates } from '../store';
 
 export const TableBody = defineComponent({
 	name: 'vc-table-body',

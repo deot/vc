@@ -1,4 +1,4 @@
-@use '../style/helper' as *;
+@use '../../style/helper' as *;
 
 $color-primary: varfix(color-primary, table-sort);
 $color-primary-light: varfix(color-primary-light, table-sort);

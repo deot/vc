@@ -17,7 +17,7 @@ import { hasOwn, getUid } from '@deot/helper-utils';
 import { merge, isEmpty } from 'lodash-es';
 import { compose } from '@deot/helper-fp';
 import { cellStarts, cellForced, defaultRenderCell, treeCellPrefix } from './table-column-confg';
-import { parseWidth, parseMinWidth } from './utils';
+import { parseWidth, parseMinWidth } from '../utils';
 
 export const TableColumn = defineComponent({
 	name: 'vc-table-column',
