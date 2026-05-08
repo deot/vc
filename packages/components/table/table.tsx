@@ -1,7 +1,7 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, provide, watch, computed, ref, getCurrentInstance, nextTick, onMounted, onUnmounted } from 'vue';
-import { debounce, throttle } from 'lodash-es';
+import { debounce } from 'lodash-es';
 import { Resize } from '@deot/helper-resize';
 import { getUid, raf } from '@deot/helper-utils';
 import { Wheel } from '@deot/helper-wheel';
@@ -219,7 +219,7 @@ export const Table = defineComponent({
 		};
 
 		// 同步滚动
-		const handleScollX = throttle(() => {
+		const handleScollX = () => {
 			if (!bodyXWrapper.value) return;
 			const { scrollLeft, offsetWidth, scrollWidth } = bodyXWrapper.value;
 			if (headerWrapper.value) headerWrapper.value.scrollLeft = scrollLeft;
@@ -236,7 +236,7 @@ export const Table = defineComponent({
 				leftFixedBody.value && (leftFixedBody.value.getRootElement().scrollTop = (bodyXWrapper.value.scrollTop));
 				rightFixedBody.value && (rightFixedBody.value.getRootElement().scrollTop = (bodyXWrapper.value.scrollTop));
 			}
-		}, 20);
+		};
 
 		const handleScollY = (e: any) => {
 			const v = {
