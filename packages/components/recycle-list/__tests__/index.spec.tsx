@@ -1,26 +1,6 @@
 // @vitest-environment jsdom
 
-// 在导入之前补齐 jsdom 缺失的 ResizeObserver
-const resizeObserverInstances: any[] = [];
-class MockResizeObserver {
-	cb: any;
-	targets: Set<Element> = new Set();
-	constructor(cb: any) {
-		this.cb = cb;
-		resizeObserverInstances.push(this);
-	}
-
-	observe(el: Element) { this.targets.add(el); }
-	unobserve(el: Element) { this.targets.delete(el); }
-	disconnect() { this.targets.clear(); }
-	trigger(target: Element) {
-		this.cb([{ target }]);
-	}
-}
-(globalThis as any).ResizeObserver = MockResizeObserver;
-
-import { RecycleList, RecycleListStore } from '@deot/vc-components';
-import { MRecycleList } from '../index.m';
+import { Customer, RecycleList, RecycleListStore, MRecycleList } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi } from 'vitest';
@@ -238,6 +218,108 @@ describe('index.ts', () => {
 			await nextTick();
 
 			expect(wrapper.find('.vc-recycle-list__pool .prop-placeholder').exists()).toBe(true);
+		});
+	});
+
+	describe('render reconciliation', () => {
+		it('does not re-render every renderItem while scrolling', async () => {
+			const data = buildItems(100);
+			const loadData = vi.fn(async () => ({ data: [], finished: true }));
+			const renderCallsById = new Map<number, number>();
+			const renderItem = vi.fn((props: any) => {
+				const id = props.row.id;
+				renderCallsById.set(id, (renderCallsById.get(id) || 0) + 1);
+				return <div class="memo-item">{id}</div>;
+			});
+
+			const wrapper = mount(() => (
+				<RecycleList data={data} pageSize={20} loadData={loadData}>
+					{{
+						default: ({ row }: any) => <Customer row={row} render={renderItem} />
+					}}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await nextTick();
+			await sleep(0);
+
+			const scroller = wrapper.find('.vc-scroller__wrapper');
+			expect(scroller.exists()).toBe(true);
+
+			const scrollerEl = scroller.element as HTMLElement;
+			const restore = mockSize(scrollerEl, {
+				clientWidth: 320,
+				clientHeight: 200,
+				offsetWidth: 320,
+				offsetHeight: 200,
+				scrollWidth: 320,
+				scrollHeight: 4000
+			});
+
+			await nextTick();
+
+			const renderCountBeforeScroll = renderItem.mock.calls.length;
+			expect(renderCountBeforeScroll).toBeGreaterThan(0);
+
+			scrollerEl.scrollTop = 120;
+			scrollerEl.dispatchEvent(new Event('scroll'));
+			await sleep(30);
+			await nextTick();
+
+			scrollerEl.scrollTop = 320;
+			scrollerEl.dispatchEvent(new Event('scroll'));
+			await sleep(30);
+			await nextTick();
+
+			expect(scrollerEl.scrollTop).toBe(320);
+
+			// 滚动后可接受少量新增渲染（新进入可视区），但不能出现全量重渲染
+			const renderCountAfterScroll = renderItem.mock.calls.length;
+			expect(renderCountAfterScroll - renderCountBeforeScroll).toBeLessThan(data.length);
+
+			// 首次已渲染的项不应在滚动中全部被重渲染
+			const reRenderedIds = Array.from(renderCallsById.values()).filter(times => times > 1);
+			expect(reRenderedIds.length).toBeLessThan(renderCountBeforeScroll);
+
+			restore();
+			wrapper.unmount();
+		});
+
+		it('renders only appended item when data grows by one', async () => {
+			const data = ref(buildItems(3));
+			const loadData = vi.fn(async () => ({ data: [], finished: true }));
+			const renderCallsById = new Map<number, number>();
+			const renderItem = vi.fn((props: any) => {
+				const id = props.row.id;
+				renderCallsById.set(id, (renderCallsById.get(id) || 0) + 1);
+				return <div class="memo-item">{id}</div>;
+			});
+
+			const wrapper = mount(() => (
+				<RecycleList data={data.value} pageSize={3} loadData={loadData}>
+					{{
+						default: ({ row }: any) => <Customer row={row} render={renderItem} />
+					}}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await nextTick();
+			await sleep(0);
+
+			const initialRenderCount = renderItem.mock.calls.length;
+			expect(initialRenderCount).toBeGreaterThan(0);
+
+			data.value = [...data.value, buildItem(3, 1)];
+			await nextTick();
+			await nextTick();
+
+			// 只新增一项渲染，而不是触发全部项重渲染
+			expect(renderItem.mock.calls.length).toBe(initialRenderCount + 1);
+			expect(renderCallsById.get(3)).toBe(1);
+
+			wrapper.unmount();
 		});
 	});
 

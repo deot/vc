@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Scroller, ScrollerWheel } from '@deot/vc-components';
+import { Customer, Scroller, ScrollerWheel } from '@deot/vc-components';
 import { getScroller, isWheel } from '../utils';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
@@ -860,6 +860,185 @@ describe('index.ts', () => {
 
 			const thumb = wrapper.find('.vc-scroller-track.is-vertical .vc-scroller-track__thumb').element as HTMLElement;
 			expect(thumb.style.transform || thumb.getAttribute('style') || '').toMatch(/translateY/);
+
+			restore();
+			wrapper.unmount();
+		});
+	});
+
+	describe('render reconciliation', () => {
+		it('Scroller does not re-render renderItem on scroll', async () => {
+			const renderItem = vi.fn((props: any) => <div class="item">{ props.index }</div>);
+			const renderList = vi.fn((props: any) => {
+				const { length } = props;
+				return Array.from({ length }, (_, i) => i + 1).map(item => (
+					<Customer key={item} render={renderItem} index={item} />
+				));
+			});
+
+			const length = ref(100);
+			const scrollerRef = ref<any>();
+			const wrapper = mount(() => (
+				<Scroller ref={scrollerRef} native={false} height="200px">
+					<Customer length={length.value} render={renderList} />
+				</Scroller>
+			), { attachTo: document.body });
+
+			await nextTick();
+
+			expect(renderList).toHaveBeenCalledTimes(1);
+			expect(renderItem).toHaveBeenCalledTimes(100);
+			expect(wrapper.findAll('.item').length).toBe(100);
+
+			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const restore = mockSize(wrapEl, {
+				clientWidth: 200,
+				clientHeight: 200,
+				scrollWidth: 200,
+				scrollHeight: 1000
+			});
+
+			await scrollerRef.value.refresh();
+			await nextTick();
+
+			// 滚动多次, renderItem不应被再次调用
+			await makeScroll(wrapEl, 'scrollTop', 100);
+			await makeScroll(wrapEl, 'scrollTop', 200);
+			await makeScroll(wrapEl, 'scrollTop', 300);
+
+			expect(renderItem).toHaveBeenCalledTimes(100);
+			expect(renderList).toHaveBeenCalledTimes(1);
+
+			// 确保新增1条数据后renderItem只执行1次, 而不是执行101次
+			length.value = 101;
+			await nextTick();
+
+			expect(renderList).toHaveBeenCalledTimes(2);
+			expect(renderItem).toHaveBeenCalledTimes(101);
+			expect(wrapper.findAll('.item').length).toBe(101);
+
+			restore();
+			wrapper.unmount();
+		});
+
+		it('ScrollerWheel does not re-render renderItem on wheel scroll', async () => {
+			const renderItem = vi.fn((props: any) => <div class="item">{ props.index }</div>);
+			const renderList = vi.fn((props: any) => {
+				const { length } = props;
+				return Array.from({ length }, (_, i) => i + 1).map(item => (
+					<Customer key={item} render={renderItem} index={item} />
+				));
+			});
+
+			const length = ref(100);
+			const scrollerRef = ref<any>();
+			const wrapper = mount(() => (
+				<ScrollerWheel ref={scrollerRef} native={false} height="200px">
+					<Customer length={length.value} render={renderList} />
+				</ScrollerWheel>
+			), { attachTo: document.body });
+
+			await nextTick();
+
+			expect(renderList).toHaveBeenCalledTimes(1);
+			expect(renderItem).toHaveBeenCalledTimes(100);
+			expect(wrapper.findAll('.item').length).toBe(100);
+
+			const wrapEl = wrapper.element as HTMLElement;
+			const restore = mockSize(wrapEl, {
+				clientWidth: 200,
+				clientHeight: 200,
+				scrollWidth: 200,
+				scrollHeight: 1000
+			});
+
+			await scrollerRef.value.refresh();
+			await nextTick();
+
+			// wheel滚动多次, renderItem不应被再次调用
+			wrapEl.dispatchEvent(new WheelEvent('wheel', {
+				deltaY: 100,
+				deltaX: 0,
+				deltaMode: 0,
+				bubbles: true,
+				cancelable: true
+			}));
+			await sleep(30);
+
+			wrapEl.dispatchEvent(new WheelEvent('wheel', {
+				deltaY: 200,
+				deltaX: 0,
+				deltaMode: 0,
+				bubbles: true,
+				cancelable: true
+			}));
+			await sleep(30);
+
+			expect(scrollerRef.value.scrollTop).toBeGreaterThan(0);
+			expect(renderItem).toHaveBeenCalledTimes(100);
+			expect(renderList).toHaveBeenCalledTimes(1);
+
+			// 确保新增1条数据后renderItem只执行1次, 而不是执行101次
+			length.value = 101;
+			await nextTick();
+
+			expect(renderList).toHaveBeenCalledTimes(2);
+			expect(renderItem).toHaveBeenCalledTimes(101);
+			expect(wrapper.findAll('.item').length).toBe(101);
+
+			restore();
+			wrapper.unmount();
+		});
+
+		it('ScrollerWheel does not re-render v-for renderItem on wheel scroll', async () => {
+			const renderItem = vi.fn((props: any) => <p class="item">{ props.index }</p>);
+
+			const count = ref(100);
+			const scrollerRef = ref<any>();
+			const wrapper = mount(() => (
+				<ScrollerWheel ref={scrollerRef} native={false} height="200px">
+					{
+						Array.from({ length: count.value }, (_, i) => i + 1).map(item => (
+							<Customer key={item} render={renderItem} index={item} />
+						))
+					}
+				</ScrollerWheel>
+			), { attachTo: document.body });
+
+			await nextTick();
+
+			expect(renderItem).toHaveBeenCalledTimes(100);
+			expect(wrapper.findAll('.item').length).toBe(100);
+
+			const wrapEl = wrapper.element as HTMLElement;
+			const restore = mockSize(wrapEl, {
+				clientWidth: 200,
+				clientHeight: 200,
+				scrollWidth: 200,
+				scrollHeight: 1000
+			});
+
+			await scrollerRef.value.refresh();
+			await nextTick();
+
+			wrapEl.dispatchEvent(new WheelEvent('wheel', {
+				deltaY: 150,
+				deltaX: 0,
+				deltaMode: 0,
+				bubbles: true,
+				cancelable: true
+			}));
+			await sleep(30);
+
+			expect(scrollerRef.value.scrollTop).toBeGreaterThan(0);
+			expect(renderItem).toHaveBeenCalledTimes(100);
+
+			// 新增一条仅触发一次新增项的渲染
+			count.value = 101;
+			await nextTick();
+
+			expect(renderItem).toHaveBeenCalledTimes(101);
+			expect(wrapper.findAll('.item').length).toBe(101);
 
 			restore();
 			wrapper.unmount();
