@@ -4,4 +4,10 @@ linkWorkspacePackages: true
 
 packages:
   - packages/*
-  
+
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  esbuild: true
+  puppeteer: true
+  unrs-resolver: true
