@@ -158,7 +158,7 @@ export const Popover = defineComponent({
 				class: 'vc-popover',
 				style: 'position: relative;',
 				onFocus: (e: any) => isFocus.value && handleChange(e, { visible: true }),
-				onBlur: (e: any) => isFocus && handleChange(e, { visible: false }),
+				onBlur: (e: any) => isFocus.value && handleChange(e, { visible: false }),
 				onMouseenter: (e: any) => (isHover.value || isStrictHover.value) && handleChange(e, { visible: true }),
 				onMouseleave: (e: any) => (isHover.value || isStrictHover.value) && handleChange(e, { visible: false }),
 				onClick: (e: any) => isClick.value && handleChange(e, { visible: !isActive.value })
