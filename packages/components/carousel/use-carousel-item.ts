@@ -201,7 +201,7 @@ export const useCarouselItem = (expose: SetupContext['expose']) => {
 	};
 
 	const handleItemClick = () => {
-		if (parent && isCard.value) {
+		if (isCard.value) {
 			const index = carousel.items.value.indexOf(instance);
 			carousel.setActiveItem(index);
 		}

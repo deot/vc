@@ -19,7 +19,7 @@
 		<br>
 		<br>
 		<div>
-			<Carousel :t="4000" :height="200" type="card">
+			<Carousel :t="4000" :height="200" card>
 				<CarouselItem v-for="item in 6" :key="item">
 					<h3 class="medium">
 						{{ item }}

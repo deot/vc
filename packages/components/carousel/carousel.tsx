@@ -14,6 +14,7 @@ const COMPONENT_NAME = 'vc-carousel';
 export const Carousel = defineComponent({
 	name: COMPONENT_NAME,
 	props: carouselProps,
+	emits: ['change'],
 	setup(props, { slots, expose }) {
 		const isHover = ref(false);
 		const wrapper = ref<HTMLElement | null>(null);

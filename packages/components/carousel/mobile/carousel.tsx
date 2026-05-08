@@ -19,6 +19,7 @@ export const MCarousel = defineComponent({
 			default: true,
 		}
 	},
+	emits: ['change'],
 	setup(props, { slots, expose }) {
 		const wrapper = ref<HTMLElement | null>(null);
 		const content = ref<HTMLElement | null>(null);

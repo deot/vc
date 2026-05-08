@@ -174,13 +174,6 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 	};
 
 	watch(
-		() => items.value,
-		(v) => {
-			if (v.length > 0) setActiveItem(props.initialIndex);
-		}
-	);
-
-	watch(
 		() => activeIndex.value,
 		(v, oldV) => {
 			resetItems(oldV);
@@ -213,8 +206,8 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 	onMounted(() => {
 		nextTick(() => {
 			if (wrapper.value) Resize.on(wrapper.value, resetItems);
-			if (props.initialIndex < items.value.length && props.initialIndex >= 0) {
-				activeIndex.value = props.initialIndex;
+			if (items.value.length > 0) {
+				setActiveItem(props.initialIndex);
 			}
 			startTimer();
 		});
@@ -223,7 +216,6 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 	onBeforeUnmount(() => {
 		if (wrapper.value) Resize.off(wrapper.value, resetItems);
 		pauseTimer();
-		startTimer();
 	});
 
 	const add = (item: ComponentInternalInstance) => {
