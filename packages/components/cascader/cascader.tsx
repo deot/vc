@@ -69,8 +69,8 @@ export const Cascader = defineComponent({
 			return props.format(currentLabel.value) || props.extra;
 		});
 
-		const setColRef = (el: HTMLElement, index: number) => {
-			el && (colRef[index] = el);
+		const setColRef = (el: any, index: number) => {
+			el && (colRef.value[index] = el);
 		};
 
 		/**
@@ -291,7 +291,7 @@ export const Cascader = defineComponent({
 					animation="y"
 					// @ts-ignore
 					onMouseenter={() => (isHover.value = true)}
-					onMuseleave={() => (isHover.value = false)}
+					onMouseleave={() => (isHover.value = false)}
 					onReady={handleReady}
 					onClose={handleClose}
 					onDestroy={handleDestroy}
