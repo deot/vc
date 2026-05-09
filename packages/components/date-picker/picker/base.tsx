@@ -86,7 +86,7 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 										{{
 											append: () => {
 												return (
-													<div class={[{ 'is-clear': showClear }, 'vc-date-picker__append']}>
+													<div class={[{ 'is-clear': showClear.value }, 'vc-date-picker__append']}>
 														<Icon
 															type={showClear.value ? 'clear' : icon.value}
 															// @ts-ignore
