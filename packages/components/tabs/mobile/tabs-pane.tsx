@@ -19,7 +19,7 @@ export const MTabsPane = defineComponent({
 					// @ts-ignore
 					name={tabsPane.currentValue.value}
 				>
-					{ tabsPane.isReady && slots.default?.() }
+					{ tabsPane.isReady.value && slots.default?.() }
 				</div>
 			);
 		};

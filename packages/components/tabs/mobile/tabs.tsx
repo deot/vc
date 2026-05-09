@@ -12,7 +12,7 @@ const COMPONENT_NAME = 'vcm-tabs';
 export const MTabs = defineComponent({
 	name: COMPONENT_NAME,
 	props: tabsProps,
-	emits: ['update:modelValue', 'change', 'click'],
+	emits: ['update:modelValue', 'change', 'click', 'tab-remove'],
 	setup(props, { slots }) {
 		const instance = getCurrentInstance()!;
 		const wrapper = ref<any>(null);
@@ -46,7 +46,8 @@ export const MTabs = defineComponent({
 
 		// TODO: 找到父层滚动条
 		const handleScroll = throttle(() => {
-			isFixed.value = document.scrollingElement!.scrollTop + props.offsetTop > top.value;
+			const scroller = document.scrollingElement || document.documentElement;
+			isFixed.value = (scroller?.scrollTop || 0) + props.offsetTop > top.value;
 		}, 100);
 
 		const handleTouchstart = (e: any) => {
@@ -90,9 +91,10 @@ export const MTabs = defineComponent({
 		 * 使用Resize时, 切换页面失效，换种方案
 		 */
 		const refreshTop = debounce(() => {
-			if (props.sticky) {
-				top.value = content.value!.offsetTop - placeholderH.value;
-				isFixed.value = document.scrollingElement!.scrollTop + props.offsetTop > top.value;
+			if (props.sticky && content.value) {
+				top.value = content.value.offsetTop - placeholderH.value;
+				const scroller = document.scrollingElement || document.documentElement;
+				isFixed.value = (scroller?.scrollTop || 0) + props.offsetTop > top.value;
 			}
 		}, 250, { leading: true, trailing: true });
 
@@ -143,6 +145,7 @@ export const MTabs = defineComponent({
 		 */
 		const refreshScroll = () => {
 			const viewEl = scroll.value;
+			if (!viewEl || !nav.value) return;
 			scrollViewW.value = viewEl.offsetWidth;
 			scrollContentW.value = nav.value.offsetWidth;
 			if (scrollContentW.value > scrollViewW.value) {
@@ -164,7 +167,7 @@ export const MTabs = defineComponent({
 
 			nextTick(() => {
 				const index = tabs.getTabIndex(tabs.currentValue.value);
-				if (instance.isUnmounted) return;
+				if (instance.isUnmounted || !nav.value) return;
 				const items = nav.value.querySelectorAll(`.vcm-tabs__item`);
 
 				const $ = items[index];
@@ -286,7 +289,8 @@ export const MTabs = defineComponent({
 														class={[
 															{
 																'is-active': tabs.getTabPaneValue(item, index) === tabs.currentValue.value,
-																'is-average': props.average
+																'is-average': props.average,
+																'is-disabled': item.disabled
 															},
 															'vcm-tabs__item'
 														]}
@@ -308,7 +312,19 @@ export const MTabs = defineComponent({
 																			)
 																	)
 														}
-
+														{
+															props.closable && item.closable && (
+																<Icon
+																	class="vcm-tabs__close"
+																	type="close"
+																	// @ts-ignore
+																	onClick={(e: MouseEvent) => {
+																		e.stopPropagation();
+																		tabs.handleRemove(index);
+																	}}
+																/>
+															)
+														}
 													</div>
 												);
 											})

@@ -149,6 +149,12 @@ export default (options: any = {}) => {
 		scrollTo && scrollToAnchor(nav.anchor);
 	};
 
+	const handleRemove = (index: number) => {
+		const nav = list.value[index];
+		if (!nav) return;
+		emit('tab-remove', getTabPaneValue(nav, index), index);
+	};
+
 	const handleResize = () => {
 		if (instance.isUnmounted) return;
 		options?.refreshScroll?.();
@@ -156,13 +162,13 @@ export default (options: any = {}) => {
 	};
 
 	onMounted(() => {
-		Resize.on(options.wrapper.value, handleResize);
+		options.wrapper.value && Resize.on(options.wrapper.value, handleResize);
 		options.scrollToActive && nextTick(options.scrollToActive);
 		affix?.onScroll?.(handleAffixScroll);
 	});
 
 	onBeforeUnmount(() => {
-		Resize.off(options.wrapper.value, handleResize);
+		options.wrapper.value && Resize.off(options.wrapper.value, handleResize);
 		timer.value && clearTimeout(timer.value);
 		affix?.offScroll?.(handleAffixScroll);
 		scrollToAnchorTimer && clearTimeout(scrollToAnchorTimer);
@@ -254,6 +260,7 @@ export default (options: any = {}) => {
 
 		getTabIndex,
 		getTabPaneValue,
-		handleChange
+		handleChange,
+		handleRemove
 	};
 };

@@ -11,7 +11,7 @@ const COMPONENT_NAME = 'vc-tabs';
 export const Tabs = defineComponent({
 	name: COMPONENT_NAME,
 	props: tabsProps,
-	emits: ['update:modelValue', 'change', 'click'],
+	emits: ['update:modelValue', 'change', 'click', 'tab-remove'],
 	setup(props, { slots }) {
 		const instance = getCurrentInstance()!;
 		const wrapper = ref<any>(null);
@@ -25,7 +25,7 @@ export const Tabs = defineComponent({
 		 * 刷新是否需要滚动条
 		 */
 		const refreshScroll = () => {
-			if (!scroll.value) return;
+			if (!scroll.value || !nav.value) return;
 			// 容器
 			const boxWidth = scroll.value.offsetWidth;
 			// 总长度
@@ -48,7 +48,7 @@ export const Tabs = defineComponent({
 		const refreshAfloat = () => {
 			nextTick(() => {
 				const index = tabs.getTabIndex(tabs.currentValue.value);
-				if (instance.isUnmounted) return;
+				if (instance.isUnmounted || !nav.value) return;
 				const items = nav.value.querySelectorAll(`.vc-tabs__item`);
 
 				const $ = items[index];
@@ -183,9 +183,12 @@ export const Tabs = defineComponent({
 										return (
 											<div
 												key={index}
+												// @ts-ignore
+												name={tabs.getTabPaneValue(item, index)}
 												class={[
 													{
-														'is-active': tabs.getTabPaneValue(item, index) === tabs.currentValue.value
+														'is-active': tabs.getTabPaneValue(item, index) === tabs.currentValue.value,
+														'is-disabled': item.disabled
 													},
 													'vc-tabs__item'
 												]}
@@ -207,8 +210,19 @@ export const Tabs = defineComponent({
 																	)
 															)
 												}
-												{ /* TODO */ }
-												{ props.closable && item.closable && <Icon type="close" /> }
+												{
+													props.closable && item.closable && (
+														<Icon
+															class="vc-tabs__close"
+															type="close"
+															// @ts-ignore
+															onClick={(e: MouseEvent) => {
+																e.stopPropagation();
+																tabs.handleRemove(index);
+															}}
+														/>
+													)
+												}
 											</div>
 										);
 									})
