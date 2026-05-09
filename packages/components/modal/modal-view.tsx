@@ -140,11 +140,13 @@ export const ModalView = defineComponent({
 		};
 
 		const handleEnter = () => {
+			if (instance.isUnmounted) return;
 			resetOrigin();
 		};
 		const handleAfterEnter = () => {
+			if (instance.isUnmounted) return;
 			isTransitionEnd.value = true;
-			resizer.value.refresh();
+			resizer.value?.refresh();
 		};
 		/**
 		 * 动画执行后关闭, 关闭事件都会被执行
@@ -241,7 +243,7 @@ export const ModalView = defineComponent({
 
 			needRefreshContainer && container.value!.style.removeProperty('height');
 			needRefreshScroller && scroller.value.wrapper!.style.removeProperty('height');
-			needRefreshScroller && resizer.value.refresh();
+			needRefreshScroller && resizer.value?.refresh();
 		};
 
 		const handleClick = (e: MouseEvent) => {
