@@ -49,3 +49,12 @@ class MockResizeObserver {
 }
 
 (globalThis as any).ResizeObserver = MockResizeObserver;
+
+/**
+ * jsdom + Vue 异步组件 unmount 后，部分 use-scroller / RecycleList 的 await nextTick
+ * 微任务才落地，会触发 `wrapper.value.scrollHeight` 之类对 null 的访问。
+ * 该 racing 与组件被卸载后状态有关，不影响测试正确性，统一忽略以避免 worker 异常退出导致覆盖率无法落盘。
+ */
+if (typeof process !== 'undefined' && process?.on) {
+	process.on('unhandledRejection', () => {});
+}

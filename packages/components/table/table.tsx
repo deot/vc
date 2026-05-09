@@ -114,9 +114,9 @@ export const Table = defineComponent({
 		});
 
 		const bodyYWrapper = computed(() => {
-			return !props.height
-				? bodyXWrapper.value
-				: body.value.getRootElement().querySelector('.vc-scroller__wrapper');
+			if (!props.height) return bodyXWrapper.value;
+			const root = body.value?.getRootElement?.();
+			return root ? root.querySelector('.vc-scroller__wrapper') : null;
 		});
 
 		const shouldUpdateHeight = computed(() => {

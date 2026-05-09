@@ -65,7 +65,7 @@ export const cellForced = {
 		class: 'vc-table__selection-column'
 	},
 	index: {
-		renderHeader(h, { column }) {
+		renderHeader({ column }) {
 			return column.label || '#';
 		},
 		renderCell({ rowIndex, column }) {
