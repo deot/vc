@@ -43,6 +43,7 @@ export const Upload = defineComponent({
 		});
 
 		let isMounted = false;
+		/* eslint-disable-next-line */
 		let taskManager: any;
 
 		const setDefaultCycle = () => {
@@ -136,11 +137,11 @@ export const Upload = defineComponent({
 				taskManager?.setValue(vFile.target, 'error', internalMessage);
 			};
 
-			const onSuccess = async (request: XMLHttpRequest) => {
+			const onSuccess = async (request?: XMLHttpRequest) => {
 				try {
 					let response = await onResponse(request, options) || request;
 					// 如果没有钩子处理，强制转换
-					if (response === request) {
+					if (request && response === request) {
 						const text = request.responseType ? request.responseText : request.response;
 						try { response = JSON.parse(text); } catch { response = text; }
 					}
@@ -177,6 +178,11 @@ export const Upload = defineComponent({
 				emit('file-start', vFile, $mode);
 
 				options = await onRequest(options, instance) || options;
+
+				if (typeof options.url === 'undefined') {
+					onSuccess();
+					return;
+				};
 
 				const xhr = new XMLHttpRequest();
 
