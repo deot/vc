@@ -68,17 +68,12 @@ class Store extends BaseWatcher {
 			});
 		});
 		this.states.list = data.reduce((pre, row, index) => {
-			const cache = caches.get(row) || { heightMap: {} };
+			const cache = caches.get(row) || { };
 			const rows = [
 				{
 					index,
 					data: row,
-					height: cache.height || '',
-					heightMap: {
-						left: cache.heightMap.left || '',
-						main: cache.heightMap.main || '',
-						right: cache.heightMap.right || ''
-					}
+					height: cache.height || ''
 				}
 			];
 			const id = primaryKey

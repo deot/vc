@@ -14,7 +14,6 @@ import { TableBody } from './table-body';
 import { TableHeader } from './table-header';
 import { TableFooter } from './table-footer';
 
-import { ScrollerWheel } from '../scroller';
 import { props as tableProps } from './table-props';
 
 const COMPONENT_NAME = 'vc-table';
@@ -59,27 +58,10 @@ export const Table = defineComponent({
 		// refs
 		const hiddenColumns = ref<any>(null);
 		const headerWrapper = ref<any>(null);
-		const tableHeader = ref<any>(null);
-		const scroller = ref<any>(null);
 
 		const body = ref<any>();
-		const emptyBlock = ref<any>(null);
 		const appendWrapper = ref<any>(null);
 		const footerWrapper = ref<any>(null);
-
-		const leftFixedWrapper = ref<any>(null);
-		const leftFixedHeaderWrapper = ref<any>(null);
-		const leftFixedTableHeader = ref<any>(null);
-		const leftFixedBodyWrapper = ref<any>(null);
-		const leftFixedBody = ref<any>(null);
-		const leftFixedFooterWrapper = ref<any>(null);
-
-		const rightFixedWrapper = ref<any>(null);
-		const rightFixedHeaderWrapper = ref<any>(null);
-		const rightFixedTableHeader = ref<any>(null);
-		const rightFixedBodyWrapper = ref<any>(null);
-		const rightFixedBody = ref<any>(null);
-		const rightFixedFooterWrapper = ref<any>(null);
 
 		const resizeProxy = ref(null);
 
@@ -104,20 +86,24 @@ export const Table = defineComponent({
 				'vc-table--fluid-height': props.maxHeight,
 				'vc-table--scrollable-x': layout.states.scrollX,
 				'vc-table--scrollable-y': layout.states.scrollY,
+				'vc-table--sticky-columns': true,
 				'vc-table--enable-row-hover': !store.states.isComplex,
 				'vc-table--enable-row-transition': (store.states.data || []).length !== 0 && (store.states.data || []).length < 100
 			};
 		});
 
+		const scroller = computed(() => {
+			return body.value?.target;
+		});
+
 		const bodyXWrapper = computed(() => {
+			if (props.height) {
+				return scroller.value.scroller.wrapper;
+			}
 			return scroller.value?.wrapper;
 		});
 
-		const bodyYWrapper = computed(() => {
-			if (!props.height) return bodyXWrapper.value;
-			const root = body.value?.getRootElement?.();
-			return root ? root.querySelector('.vc-scroller__wrapper') : null;
-		});
+		const bodyYWrapper = computed(() => bodyXWrapper.value);
 
 		const shouldUpdateHeight = computed(() => {
 			return props.height
@@ -146,29 +132,6 @@ export const Table = defineComponent({
 				}
 			}
 			return {};
-		});
-
-		const fixedHeightStyle = computed(() => {
-			if (props.maxHeight) {
-				if (props.showSummary) {
-					return {
-						bottom: 0
-					};
-				}
-				return {
-					bottom: (layout.states.scrollX && props.data.length) ? 0 : ''
-				};
-			} else {
-				if (props.showSummary) {
-					return {
-						height: layout.states.tableHeight ? layout.states.tableHeight + 'px' : ''
-					};
-				}
-				return {
-					height: layout.states.viewportHeight ? layout.states.viewportHeight + 'px' : '',
-					bottom: 0
-				};
-			}
 		});
 
 		let isUnMount = false;
@@ -218,8 +181,8 @@ export const Table = defineComponent({
 			store.clearSelection();
 		};
 
-		// 同步滚动
-		const handleScollX = () => {
+		// 同步滚动：sticky 模式只剩一份 DOM，仅需保持 header / footer 横向滚动跟随 body
+		const handleScrollX = () => {
 			if (!bodyXWrapper.value) return;
 			const { scrollLeft, offsetWidth, scrollWidth } = bodyXWrapper.value;
 			if (headerWrapper.value) headerWrapper.value.scrollLeft = scrollLeft;
@@ -232,19 +195,6 @@ export const Table = defineComponent({
 			} else {
 				scrollPosition.value = 'middle';
 			}
-			if (!props.height) {
-				leftFixedBody.value && (leftFixedBody.value.getRootElement().scrollTop = (bodyXWrapper.value.scrollTop));
-				rightFixedBody.value && (rightFixedBody.value.getRootElement().scrollTop = (bodyXWrapper.value.scrollTop));
-			}
-		};
-
-		const handleScollY = (e: any) => {
-			const v = {
-				x: e.target.scrollLeft,
-				y: e.target.scrollTop,
-			};
-			rightFixedBody.value?.wrapper.scrollTo(v, true);
-			leftFixedBody.value?.wrapper.scrollTo(v, true);
 		};
 
 		const handleResize = () => {
@@ -279,27 +229,19 @@ export const Table = defineComponent({
 		};
 
 		const handleMousewheel = (deltaX: number, deltaY: number) => {
+			if (!bodyXWrapper.value) return;
 			const {
 				scrollWidth: contentW,
 				clientWidth: wrapperW,
-				scrollLeft: scrollX
-			} = bodyXWrapper.value;
-			const {
+				scrollLeft: scrollX,
 				scrollHeight: contentH,
 				clientHeight: wrapperH,
 				scrollTop: scrollY
-			} = bodyYWrapper.value;
+			} = bodyXWrapper.value;
 
-			if (
-				Math.abs(deltaY) > Math.abs(deltaX)
-				&& contentH > wrapperH
-			) {
-				// 虚拟滚动
-				if (props.height) {
-					body.value.wrapper?.scrollTo({ y: scrollY + deltaY });
-				} else {
-					scroller.value.scrollTo({ y: scrollY + deltaY });
-				}
+			if (!scroller.value) return;
+			if (Math.abs(deltaY) > Math.abs(deltaX) && contentH > wrapperH) {
+				scroller.value.scrollTo({ y: scrollY + deltaY });
 			} else if (deltaX && contentW > wrapperW) {
 				scroller.value.scrollTo({ x: scrollX + deltaX });
 			}
@@ -311,7 +253,7 @@ export const Table = defineComponent({
 				Resize.on(instance.vnode.el as any, handleResize);
 			}
 			nextTick(() => {
-				wheels = [headerWrapper, footerWrapper, leftFixedWrapper, rightFixedWrapper].map((wrapper) => {
+				wheels = [headerWrapper, footerWrapper].map((wrapper) => {
 					if (!wrapper.value) return;
 					const wheel = new Wheel(wrapper.value, {
 						shouldWheelX: (delta) => {
@@ -413,13 +355,15 @@ export const Table = defineComponent({
 			{ immediate: true }
 		);
 
-		// 直接修改className（不使用render函数）, 解决临界值设置修改className时的顿挫
+		// 直接修改className（不使用render函数）, 解决临界值设置修改className时的顿挫。
+		// 挂到 .vc-table 根节点上，让 header / body / footer 三处的 sticky 阴影都能共用同一个状态。
 		watch(
 			() => scrollPosition.value,
 			(v) => {
 				raf(() => {
+					const el = tableWrapper.value;
+					if (!el) return;
 					const className = `is-scrolling-${layout.states.scrollX ? v : 'none'}`;
-					const el = bodyXWrapper.value;
 					el && el.classList.replace(
 						el.classList.item(el.classList.length - 1),
 						className
@@ -483,7 +427,7 @@ export const Table = defineComponent({
 			return (
 				<div
 					ref={tableWrapper}
-					class={[classes.value, tableId, 'vc-table']}
+					class={[classes.value, tableId, 'vc-table is-scrolling-none']}
 					onMouseleave={handleMouseLeave}
 				>
 					<div ref={hiddenColumns} class="vc-table__hidden">
@@ -496,7 +440,6 @@ export const Table = defineComponent({
 								class="vc-table__header-wrapper"
 							>
 								<TableHeader
-									ref={tableHeader}
 									border={props.border}
 									resizable={props.resizable}
 									sort={props.sort}
@@ -507,30 +450,13 @@ export const Table = defineComponent({
 					}
 					{
 						states.columns.length > 0 && (
-							<ScrollerWheel
-								ref={scroller}
-								class={['vc-table__body-wrapper is-scrolling-none']}
-								barTo={`.${tableId}`}
-								native={false}
-								always={false}
-								track-offset-y={[
-									layout.states.headerHeight,
-									0,
-									-layout.states.headerHeight - layout.states.footerHeight,
-									0
-								]}
-								style={[bodyHeightStyle.value]}
-								onScroll={handleScollX}
+							<TableBody
+								ref={body}
+								height-style={[bodyHeightStyle.value]}
+								onScroll={handleScrollX}
 							>
-								<TableBody
-									ref={body}
-									style={[bodyWidthStyle.value]}
-									height-style={[bodyHeightStyle.value]}
-									// @ts-ignore
-									onScroll={handleScollY}
-								/>
 								{
-									props.data.length === 0 && !props.height && (
+									props.data.length === 0 && (
 										<div class="vc-table__empty-placeholder" style={[bodyWidthStyle.value]} />
 									)
 								}
@@ -544,7 +470,7 @@ export const Table = defineComponent({
 										</div>
 									)
 								}
-							</ScrollerWheel>
+							</TableBody>
 						)
 					}
 					{
@@ -565,147 +491,8 @@ export const Table = defineComponent({
 						)
 					}
 					{
-						states.leftFixedColumns.length > 0 && states.columns.length > 0 && (
-							<div
-								ref={leftFixedWrapper}
-								style={[{ width: layout.states.leftFixedWidth ? layout.states.leftFixedWidth + 'px' : '' }, fixedHeightStyle.value]}
-								class="vc-table__fixed"
-							>
-								{
-									props.showHeader && (
-										<div
-											ref={leftFixedHeaderWrapper}
-											class="vc-table__fixed-header-wrapper"
-										>
-											<TableHeader
-												ref={leftFixedTableHeader}
-												border={props.border}
-												resizable={props.resizable}
-												sort={props.sort}
-												style={bodyWidthStyle.value}
-												fixed="left"
-											/>
-										</div>
-									)
-								}
-								<div
-									ref={leftFixedBodyWrapper}
-									style={[{ top: layout.states.headerHeight + 'px' }]}
-									class="vc-table__fixed-body-wrapper"
-								>
-									<TableBody
-										ref={leftFixedBody}
-										style={[bodyWidthStyle.value, bodyHeightStyle.value]}
-										fixed="left"
-									/>
-									{
-										slots.append && (
-											<div
-												style={[{ height: layout.states.appendHeight + 'px' }]}
-												class="vc-table__append-gutter"
-											>
-												{ slots.append() }
-											</div>
-										)
-									}
-								</div>
-								{
-									props.showSummary && (
-										<div
-											// @ts-ignore
-											vShow={props.data && props.data.length > 0}
-											ref={leftFixedFooterWrapper}
-											class="vc-table__fixed-footer-wrapper"
-										>
-											<TableFooter
-												border={props.border}
-												sum-text={props.sumText || '合计'}
-												get-summary={props.getSummary}
-												style={bodyWidthStyle.value}
-												fixed="left"
-											/>
-										</div>
-									)
-								}
-							</div>
-						)
-					}
-					{
-						states.rightFixedColumns.length > 0 && (
-							<div
-								ref={rightFixedWrapper}
-								style={[{ width: layout.states.rightFixedWidth ? layout.states.rightFixedWidth + 'px' : '' }, fixedHeightStyle.value]}
-								class="vc-table__fixed-right"
-							>
-								{
-									props.showHeader && (
-										<div
-											ref={rightFixedHeaderWrapper}
-											class="vc-table__fixed-header-wrapper"
-										>
-											<TableHeader
-												ref={rightFixedTableHeader}
-												border={props.border}
-												resizable={props.resizable}
-												sort={props.sort}
-												style={bodyWidthStyle.value}
-												fixed="right"
-											/>
-										</div>
-									)
-								}
-								<div
-									ref={rightFixedBodyWrapper}
-									style={[
-										{
-											top: layout.states.headerHeight + 'px'
-										}
-									]}
-									class="vc-table__fixed-body-wrapper"
-								>
-									<TableBody
-										ref={rightFixedBody}
-										style={[bodyWidthStyle.value, bodyHeightStyle.value]}
-										fixed="right"
-									/>
-									{
-										slots.append && (
-											<div
-												style={[{ height: layout.states.appendHeight + 'px' }]}
-												class="vc-table__append-gutter"
-											>
-												{ slots.append() }
-											</div>
-										)
-									}
-								</div>
-								{
-									props.showSummary && (
-										<div
-											// @ts-ignore
-											vShow={props.data && props.data.length > 0}
-											ref={rightFixedFooterWrapper}
-											class="vc-table__fixed-footer-wrapper"
-										>
-											<TableFooter
-												border={props.border}
-												sum-text={props.sumText || '合计'}
-												get-summary={props.getSummary}
-												style={bodyWidthStyle.value}
-												fixed="right"
-											/>
-										</div>
-									)
-								}
-							</div>
-						)
-					}
-					{
 						props.data.length === 0 && (
-							<div
-								ref={emptyBlock}
-								class={[{ 'has-height': !!props.height }, 'vc-table__empty-wrapper']}
-							>
+							<div class={[{ 'has-height': !!props.height }, 'vc-table__empty-wrapper']}>
 								{
 									slots.empty
 										? slots.empty()

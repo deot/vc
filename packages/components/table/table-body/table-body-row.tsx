@@ -13,8 +13,7 @@ export const TableBodyRow = defineComponent({
 	props: {
 		data: { type: Object, required: true },
 		index: { type: Number, required: true },
-		height: { type: [Number, String] },
-		columnsHidden: { type: Array, required: true }
+		height: { type: [Number, String] }
 	},
 	setup(props) {
 		const table: any = inject('vc-table');
@@ -70,11 +69,7 @@ export const TableBodyRow = defineComponent({
 		};
 
 		const getCellClass = (rowIndex: number, columnIndex: number, row: any, column: any) => {
-			const classes = [column.realAlign, column.class];
-
-			if (props.columnsHidden[columnIndex]) {
-				classes.push('is-hidden');
-			}
+			const classes = [column.realAlign, column.class, column.stickyClass];
 
 			const cellClass = table.props.cellClass;
 			if (typeof cellClass === 'string') {
@@ -201,13 +196,10 @@ export const TableBodyRow = defineComponent({
 								width: `${realWidth}px`,
 								height: `${props.height ? `${props.height}px` : 'auto'}`
 							};
-							if (props.columnsHidden[columnIndex]) {
-								return <div key={column.id} style={[sizeStyle]}></div>;
-							}
 							return (
 								<div
 									key={column.id}
-									style={[getCellStyle(props.index, columnIndex, props.data, column), sizeStyle]}
+									style={[getCellStyle(props.index, columnIndex, props.data, column), sizeStyle, column.stickyStyle]}
 									class={[getCellClass(props.index, columnIndex, props.data, column), 'vc-table__td']}
 									onMouseenter={(e: any) => handleCellMouseEnter(e, props.data, column)}
 									onMouseleave={(e: any) => handleCellMouseLeave(e, props.data, column)}

@@ -12,8 +12,6 @@ export class Layout {
 		scrollX: false,
 		scrollY: false,
 		bodyWidth: null as any,
-		leftFixedWidth: null as any,
-		rightFixedWidth: null as any,
 		tableHeight: null as any,
 		headerHeight: 44, // Table Header Height
 		appendHeight: 0, // Append Slot Height
@@ -152,25 +150,43 @@ export class Layout {
 			this.states.bodyWidth = bodyMinWidth;
 		}
 
-		const leftFixedColumns = this.store.states.leftFixedColumns;
+		this.syncStickyOffsets();
+	}
 
-		if (leftFixedColumns.length > 0) {
-			let leftFixedWidth = 0;
-			leftFixedColumns.forEach(function (column) {
-				leftFixedWidth += column.realWidth || column.width;
-			});
+	/**
+	 * 提前计算固定列的 sticky 偏移并写到列对象上（包含分组列），渲染层（header /
+	 * body-row / footer）从 column.stickyLeft / column.stickyRight 直接消费即可。
+	 * 非固定列上的 sticky 信息一并清除，避免列从 fixed 切换为非 fixed 时残留。
+	 */
+	syncStickyOffsets() {
+		const { leftFixedColumns = [], rightFixedColumns = [], notFixedColumns = [] } = this.store.states;
 
-			this.states.leftFixedWidth = leftFixedWidth;
-		}
+		leftFixedColumns.reduce((offset: number, column: any, index: number) => {
+			column.stickyOffset = offset;
+			column.stickyStyle = { position: 'sticky', left: `${offset}px` };
+			column.stickyClass = 'is-fixed-left';
+			if (index === leftFixedColumns.length - 1) {
+				column.stickyClass += ' is-fixed-left-tail';
+			}
+			offset += column.realWidth || column.width || 0;
+			return offset;
+		}, 0);
 
-		const rightFixedColumns = this.store.states.rightFixedColumns;
-		if (rightFixedColumns.length > 0) {
-			let rightFixedWidth = 0;
-			rightFixedColumns.forEach(function (column) {
-				rightFixedWidth += column.realWidth || column.width;
-			});
+		rightFixedColumns.reduceRight((offset: number, column: any, index: number) => {
+			column.stickyOffset = offset;
+			column.stickyStyle = { position: 'sticky', right: `${offset}px` };
+			column.stickyClass = 'is-fixed-right';
+			if (index === rightFixedColumns.length - 1) {
+				column.stickyClass += ' is-fixed-right-head';
+			}
+			offset += column.realWidth || column.width || 0;
+			return offset;
+		}, 0);
 
-			this.states.rightFixedWidth = rightFixedWidth;
-		}
+		notFixedColumns.forEach((column) => {
+			delete column.stickyOffset;
+			delete column.stickyStyle;
+			delete column.stickyClass;
+		});
 	}
 }

@@ -393,6 +393,7 @@ export const RecycleList = defineComponent({
 
 		expose({
 			recycleListId: getUid('recycle-list'),
+			scroller,
 			store,
 			hasPlaceholder,
 			renderer,
@@ -400,7 +401,8 @@ export const RecycleList = defineComponent({
 			reset,
 			scrollTo,
 			scrollToIndex,
-			refreshLayout: forceRefreshLayout
+			refreshLayout: forceRefreshLayout,
+
 		});
 		return () => {
 			return (

@@ -4,7 +4,6 @@ import { useStates } from '../store';
 export const TableFooter = defineComponent({
 	name: 'vc-table-footer',
 	props: {
-		fixed: [String, Boolean],
 		getSummary: Function,
 		sumText: String,
 		border: Boolean,
@@ -13,39 +12,19 @@ export const TableFooter = defineComponent({
 		const states: any = useStates({
 			data: 'data',
 			columns: 'columns',
-			isAllSelected: 'isAllSelected',
-			leftFixedLeafCount: 'leftFixedLeafColumnsLength',
-			rightFixedLeafCount: 'rightFixedLeafColumnsLength',
-			columnsCount: $states => $states.columns.length,
-			leftFixedCount: $states => $states.leftFixedColumns.length,
-			rightFixedCount: $states => $states.rightFixedColumns.length
+			isAllSelected: 'isAllSelected'
 		});
 
-		const isColumnHidden = (column: any, index: number) => {
-			if (props.fixed === true || props.fixed === 'left') {
-				return index >= states.leftFixedLeafCount;
-			} else if (props.fixed === 'right') {
-				let before = 0;
-				for (let i = 0; i < index; i++) {
-					before += states.columns[i].colspan;
-				}
-				return before < states.columnsCount - states.rightFixedLeafCount;
-			} else if (!props.fixed && column.fixed) {
-				return true;
-			} else {
-				return (index < states.leftFixedCount) || (index >= states.columnsCount - states.rightFixedCount);
-			}
-		};
-
-		const columnsHidden = computed(() => states.columns.map(isColumnHidden));
-
-		const getRowClasses = (column: any, columnIndex: number) => {
+		const getRowClasses = (column: any) => {
 			const classes = [column.realAlign, column.labelClass];
 			if (column.className) {
 				classes.push(column.className);
 			}
-			if (columnsHidden.value[columnIndex]) {
-				classes.push('is-hidden');
+			// 固定列由 is-fixed-* + position: sticky 表达
+			if (column.fixed === true || column.fixed === 'left') {
+				classes.push('is-fixed-left');
+			} else if (column.fixed === 'right') {
+				classes.push('is-fixed-right');
 			}
 			if (!column.children) {
 				classes.push('is-leaf');
@@ -102,17 +81,19 @@ export const TableFooter = defineComponent({
 					<div class="vc-table__tbody">
 						<div class="vc-table__tr">
 							{
-								states.columns.map((column: any, columnIndex: number) => (
-									<div
-										key={columnIndex}
-										class={[getRowClasses(column, columnIndex), 'vc-table__td']}
-										style={[{ width: `${column.realWidth}px`, height: `44px` }]}
-									>
-										<div class={['vc-table__cell', column.labelClass]}>
-											{ sums.value[columnIndex] }
+								states.columns.map((column: any, columnIndex: number) => {
+									return (
+										<div
+											key={columnIndex}
+											class={[getRowClasses(column), 'vc-table__td']}
+											style={[{ width: `${column.realWidth}px`, height: `44px` }, column.stickyStyle]}
+										>
+											<div class={['vc-table__cell', column.labelClass]}>
+												{ sums.value[columnIndex] }
+											</div>
 										</div>
-									</div>
-								))
+									);
+								})
 							}
 						</div>
 					</div>

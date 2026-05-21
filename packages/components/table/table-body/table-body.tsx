@@ -7,15 +7,15 @@ import { NormalList } from './normal-list';
 
 import { useStates } from '../store';
 import { TableBodyMergeRow } from './table-body-merge-row';
+import { ScrollerWheel } from '../../scroller/scroller-wheel';
 
 export const TableBody = defineComponent({
 	name: 'vc-table-body',
 	props: {
-		fixed: String,
 		heightStyle: [Object, Array, String]
 	},
 	emits: ['scroll'],
-	setup(props, { emit, expose }) {
+	setup(props, { emit, expose, slots }) {
 		const instance = getCurrentInstance()!;
 		const table: any = inject('vc-table');
 
@@ -23,31 +23,10 @@ export const TableBody = defineComponent({
 		const states: any = useStates({
 			data: 'data',
 			list: 'list',
-			columns: 'columns',
-			leftFixedLeafCount: 'leftFixedLeafColumnsLength',
-			rightFixedLeafCount: 'rightFixedLeafColumnsLength',
-			columnsCount: states$ => states$.columns.length,
-			leftFixedCount: states$ => states$.leftFixedColumns.length,
-			rightFixedCount: states$ => states$.rightFixedColumns.length,
-			hasExpandColumn: states$ => states$.columns.some(({ type }) => type === 'expand'),
-			firstDefaultColumnIndex: states$ => states$.columns.findIndex(({ type }) => type === 'default')
+			columns: 'columns'
 		});
 
-		const isColumnHidden = (index: number) => {
-			if (props.fixed === 'left') {
-				return index >= states.leftFixedLeafCount;
-			} else if (props.fixed === 'right') {
-				return index < states.columnsCount - states.rightFixedLeafCount;
-			} else {
-				return (index < states.leftFixedLeafCount) || (index >= states.columnsCount - states.rightFixedLeafCount);
-			}
-		};
-
-		const columnsHidden = computed(() => {
-			return states.columns.map((_: any, index: number) => isColumnHidden(index));
-		});
-
-		const wrapper = ref();
+		const target = ref();
 
 		watch(
 			() => table.store.states.hoverRowIndex,
@@ -64,50 +43,37 @@ export const TableBody = defineComponent({
 
 		const handleMergeRowResize = (changes: any[]) => {
 			if (table.props.rowHeight) return;
-			// 批量处理所有尺寸变化
 			changes.forEach((v: any) => {
 				states.list[v.index].rows.forEach((row: any) => {
-					const old = row.heightMap[props.fixed! || 'main'];
-					if (old === v.size) return;
-
-					row.heightMap[props.fixed! || 'main'] = v.size;
-
-					const heights = [row.heightMap.main];
-					if (states.leftFixedCount) {
-						heights.push(row.heightMap.left);
-					}
-					if (states.rightFixedCount) {
-						heights.push(row.heightMap.right);
-					}
-					if (heights.every(i => !!i)) {
-						row.height = Math.max(row.heightMap.left, row.heightMap.main, row.heightMap.right) || '';
-					}
+					if (row.height === v.size) return;
+					row.height = v.size || '';
 				});
 			});
 		};
 
-		expose({
-			wrapper,
-			getRootElement: () => instance.vnode.el
-		});
+		expose({ target });
 		const layout = table.layout;
 
 		const scrollerOptions = computed(() => ({
 			barTo: `.${table.tableId}`,
 			native: false,
 			always: false,
-			showBar: !props.fixed,
-			stopPropagation: !props.fixed,
+			showBar: true,
+			stopPropagation: true,
+			contentClass: 'vc-table__tbody',
+			contentStyle: {
+				width: layout.states.bodyWidth ? layout.states.bodyWidth + 'px' : ''
+			},
 			trackOffsetY: [
 				layout.states.headerHeight,
 				0,
-				-layout.states.headerHeight - layout.states.footerHeight + 2,
+				-layout.states.headerHeight,
 				0
 			]
 		}));
 
 		const renderers = {
-			default: ({ row }) => <TableBodyMergeRow store={row} columnsHidden={columnsHidden.value} />
+			default: ({ row }) => <TableBodyMergeRow store={row} />
 		};
 
 		let timer: any;
@@ -124,35 +90,43 @@ export const TableBody = defineComponent({
 		});
 		return () => {
 			if (!allowRender.value) return;
+			if (table.props.height) {
+				return (
+					<div class={['vc-table__body-wrapper']}>
+						<RecycleList
+							ref={target}
+							data={states.list}
+							disabled={true}
+							scrollerOptions={scrollerOptions.value}
+							pageSize={table.props.rows}
+							onScroll={(e: any) => emit('scroll', e)}
+							onRowResize={handleMergeRowResize}
+							style={props.heightStyle}
+						>
+							{ renderers }
+						</RecycleList>
+						{slots.default?.()}
+					</div>
+				);
+			}
 			return (
-				<div class="vc-table__body">
+				<ScrollerWheel
+					ref={target}
+					class="vc-table__body-wrapper"
 					{
-						table.props.height
-							? (
-									<RecycleList
-										ref={wrapper}
-										data={states.list}
-										disabled={true}
-										class="vc-table__tbody"
-										scrollerOptions={scrollerOptions.value}
-										pageSize={table.props.rows}
-										onScroll={(e: any) => emit('scroll', e)}
-										onRowResize={handleMergeRowResize}
-										style={props.heightStyle}
-									>
-										{ renderers }
-									</RecycleList>
-								)
-							: (
-									<NormalList
-										data={states.list}
-										onRowResize={handleMergeRowResize}
-									>
-										{ renderers }
-									</NormalList>
-								)
+						...scrollerOptions.value
 					}
-				</div>
+					style={props.heightStyle}
+					onScroll={(e: any) => emit('scroll', e)}
+				>
+					<NormalList
+						data={states.list}
+						onRowResize={handleMergeRowResize}
+					>
+						{ renderers }
+					</NormalList>
+					{slots.default?.()}
+				</ScrollerWheel>
 			);
 		};
 	}

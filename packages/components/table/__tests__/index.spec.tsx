@@ -223,8 +223,13 @@ describe('TableColumn types & rendering', () => {
 		expect(wrapper.findAll('.vc-table__th').length).toBeGreaterThanOrEqual(4);
 		expect(wrapper.findAll('.vc-table-sort').length).toBeGreaterThan(0);
 		expect(wrapper.findAll('.op').length).toBe(2);
-		expect(wrapper.find('.vc-table__fixed').exists()).toBe(true);
-		expect(wrapper.find('.vc-table__fixed-right').exists()).toBe(true);
+		// 阶段一：!height 路径走单一 DOM + sticky，根节点带 vc-table--sticky-columns，
+		// 固定列以 is-fixed-left / is-fixed-right 表示，不再有 .vc-table__fixed* 容器。
+		expect(wrapper.classes()).toContain('vc-table--sticky-columns');
+		expect(wrapper.find('.vc-table__th.is-fixed-left').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__th.is-fixed-right').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__fixed').exists()).toBe(false);
+		expect(wrapper.find('.vc-table__fixed-right').exists()).toBe(false);
 
 		wrapper.unmount();
 	});
@@ -867,7 +872,8 @@ describe('Table virtual + scroll & delay', () => {
 		await flush();
 		await sleep(30);
 		await flush();
-		expect(wrapper.find('.vc-table__body').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__body-wrapper').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__tbody').exists()).toBe(true);
 		expect(wrapper.find('.vc-recycle-list').exists()).toBe(true);
 
 		const scrollWrapper = wrapper.find('.vc-table__body-wrapper').element as HTMLElement;
@@ -898,7 +904,7 @@ describe('Table virtual + scroll & delay', () => {
 		wrapper.unmount();
 	});
 
-	it('virtual TableBody emits scroll → handleScollY syncs left/right fixed bodies', async () => {
+	it('virtual TableBody emits scroll (sticky 模式下不再需要同步左右 fixed body)', async () => {
 		const data = buildData(20);
 		const wrapper = mount(() => (
 			<Table data={data} primaryKey="id" height={200} rows={5}>
@@ -925,10 +931,10 @@ describe('Table virtual + scroll & delay', () => {
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		expect(wrapper.find('.vc-table__body').exists()).toBe(false);
+		expect(wrapper.find('.vc-table__body-wrapper').exists()).toBe(false);
 		await sleep(40);
 		await flush();
-		expect(wrapper.find('.vc-table__body').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__body-wrapper').exists()).toBe(true);
 		wrapper.unmount();
 	});
 });
@@ -1083,8 +1089,12 @@ describe('Additional source-path coverage', () => {
 		await flush();
 		await sleep(30);
 		expect(wrapper.find('.vc-table__footer-wrapper').exists()).toBe(true);
-		expect(wrapper.find('.vc-table__fixed').exists()).toBe(true);
-		expect(wrapper.find('.vc-table__fixed-right').exists()).toBe(true);
+		// 阶段一：maxHeight + 固定列走 sticky 路径，不再渲染 .vc-table__fixed* 容器
+		expect(wrapper.classes()).toContain('vc-table--sticky-columns');
+		expect(wrapper.find('.vc-table__footer .vc-table__td.is-fixed-left').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__footer .vc-table__td.is-fixed-right').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__fixed').exists()).toBe(false);
+		expect(wrapper.find('.vc-table__fixed-right').exists()).toBe(false);
 		wrapper.unmount();
 	});
 
@@ -1248,7 +1258,7 @@ describe('Additional source-path coverage', () => {
 		wrapper.unmount();
 	});
 
-	it('header isColumnHidden branches for fixed=left/right', async () => {
+	it('header renders fixed columns as sticky cells when !height (phase 1)', async () => {
 		const wrapper = mount(() => (
 			<Table data={buildData(2)} border>
 				<TableColumn label="A" prop="name" fixed="left" width={100} />
@@ -1257,8 +1267,14 @@ describe('Additional source-path coverage', () => {
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		expect(wrapper.find('.vc-table__fixed').exists()).toBe(true);
-		expect(wrapper.find('.vc-table__fixed-right').exists()).toBe(true);
+		// 阶段一：!height 时不再渲染 .vc-table__fixed* 容器，固定列改为 sticky cell
+		expect(wrapper.classes()).toContain('vc-table--sticky-columns');
+		expect(wrapper.find('.vc-table__th.is-fixed-left').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__th.is-fixed-right').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__td.is-fixed-left').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__td.is-fixed-right').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__fixed').exists()).toBe(false);
+		expect(wrapper.find('.vc-table__fixed-right').exists()).toBe(false);
 		wrapper.unmount();
 	});
 
@@ -1604,11 +1620,11 @@ describe('Additional source-path coverage', () => {
 		), { attachTo: document.body });
 		await flush();
 		expect(wrapper.find('.vc-table__header').exists()).toBe(false);
-		expect(wrapper.find('.vc-table__body').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__body-wrapper').exists()).toBe(true);
 		wrapper.unmount();
 	});
 
-	it('append slot + height + fixed columns covers append-in-fixed branch', async () => {
+	it('append slot + height + fixed columns: sticky 模式下只渲染单一 append 容器', async () => {
 		const wrapper = mount(() => (
 			<Table data={buildData(2)} height={300}>
 				{{
@@ -1623,9 +1639,10 @@ describe('Additional source-path coverage', () => {
 		await flush();
 		await sleep(20);
 		await flush();
-		// append 同时出现在 normal 与 fixed 容器中
-		expect(wrapper.findAll('.my-append').length).toBeGreaterThanOrEqual(1);
-		expect(wrapper.find('.vc-table__fixed').exists()).toBe(true);
+		// 单 DOM + sticky：append 仅渲染一份；不再出现 .vc-table__fixed* 容器
+		expect(wrapper.findAll('.my-append').length).toBe(1);
+		expect(wrapper.find('.vc-table__fixed').exists()).toBe(false);
+		expect(wrapper.find('.vc-table__fixed-right').exists()).toBe(false);
 		wrapper.unmount();
 	});
 
@@ -2438,6 +2455,224 @@ describe('Table utils', () => {
 		document.body.appendChild(isolated);
 		expect(getCell({ target: isolated })).toBe(null);
 		document.body.removeChild(isolated);
+	});
+
+	it('sticky: syncStickyOffsets writes stickyOffset / stickyStyle onto fixed leaves (and clears non-fixed)', async () => {
+		const data = buildData(2);
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={data}>
+				<TableColumn label="A" prop="name" fixed="left" width={80} />
+				<TableColumn label="B" prop="count" fixed="left" width={120} />
+				<TableColumn label="C" prop="address" width={300} />
+				<TableColumn label="D" prop="name" fixed="right" width={150} />
+				<TableColumn label="E" prop="count" fixed="right" width={50} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const vm = tableRef.value!;
+		const left = vm.store.states.leftFixedLeafColumns;
+		const right = vm.store.states.rightFixedLeafColumns;
+		expect(left[0].stickyOffset).toBe(0);
+		expect(left[0].stickyStyle).toEqual({ position: 'sticky', left: '0px' });
+		expect(left[0].stickyClass).toBe('is-fixed-left');
+		expect(left[1].stickyOffset).toBe(80);
+		expect(left[1].stickyStyle).toEqual({ position: 'sticky', left: '80px' });
+		expect(left[1].stickyClass).toBe('is-fixed-left is-fixed-left-tail');
+		// 从右往左累加
+		expect(right[right.length - 1].stickyOffset).toBe(0);
+		expect(right[right.length - 1].stickyStyle).toEqual({ position: 'sticky', right: '0px' });
+		expect(right[right.length - 1].stickyClass).toBe('is-fixed-right is-fixed-right-head');
+		expect(right[right.length - 2].stickyOffset).toBe(50);
+		expect(right[right.length - 2].stickyStyle).toEqual({ position: 'sticky', right: '50px' });
+		expect(right[right.length - 2].stickyClass).toBe('is-fixed-right');
+		// 非固定列 sticky 字段清空
+		const notFixed = vm.store.states.notFixedColumns;
+		expect(notFixed[0].stickyOffset).toBeUndefined();
+		expect(notFixed[0].stickyStyle).toBeUndefined();
+		expect(notFixed[0].stickyClass).toBeUndefined();
+		wrapper.unmount();
+	});
+
+	it('sticky: header / body / footer 三处固定列都使用 layout 预算的 stickyStyle 应用 position: sticky 样式', async () => {
+		const data = buildData(1);
+		const wrapper = mount(() => (
+			<Table data={data}>
+				<TableColumn label="A" prop="name" fixed="left" width={80} />
+				<TableColumn label="B" prop="count" />
+				<TableColumn label="C" prop="address" fixed="right" width={100} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		// header / body / footer 三处的固定列都通过 sticky 表达
+		const leftTh = wrapper.find('.vc-table__th.is-fixed-left').element as HTMLElement;
+		const rightTh = wrapper.find('.vc-table__th.is-fixed-right').element as HTMLElement;
+		const leftTd = wrapper.find('.vc-table__td.is-fixed-left').element as HTMLElement;
+		const rightTd = wrapper.find('.vc-table__td.is-fixed-right').element as HTMLElement;
+		expect(leftTh.style.position).toBe('sticky');
+		expect(leftTh.style.left).toBe('0px');
+		expect(rightTh.style.position).toBe('sticky');
+		expect(rightTh.style.right).toBe('0px');
+		expect(leftTd.style.position).toBe('sticky');
+		expect(leftTd.style.left).toBe('0px');
+		expect(rightTd.style.position).toBe('sticky');
+		expect(rightTd.style.right).toBe('0px');
+		// 始终不再渲染 .vc-table__fixed* 容器
+		expect(wrapper.find('.vc-table__fixed').exists()).toBe(false);
+		expect(wrapper.find('.vc-table__fixed-right').exists()).toBe(false);
+		wrapper.unmount();
+	});
+
+	it('sticky: 虚拟滚动路径下不渲染外层 ScrollerWheel，body-wrapper 为普通 div，由 RecycleList 内部承担 X/Y 滚动', async () => {
+		const wrapper = mount(() => (
+			<Table data={buildData(20)} primaryKey="id" height={200} rows={5}>
+				<TableColumn label="A" prop="name" fixed="left" width={120} />
+				<TableColumn label="B" prop="count" width={120} />
+				<TableColumn label="C" prop="address" fixed="right" width={120} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(20);
+		await flush();
+		const bodyWrapper = wrapper.find('.vc-table__body-wrapper').element as HTMLElement;
+		// 虚拟路径下 body-wrapper 是普通 div，没有 ScrollerWheel 的 class
+		expect(bodyWrapper.classList.contains('vc-scroller-wheel')).toBe(false);
+		// RecycleList 内部的 ScrollerWheel 提供实际滚动容器
+		expect(wrapper.find('.vc-recycle-list__wrapper.vc-scroller-wheel').exists()).toBe(true);
+		wrapper.unmount();
+	});
+
+	it('sticky: is-scrolling-* 状态类挂在 .vc-table 根节点（驱动 header/body/footer 三处阴影统一）', async () => {
+		const wrapper = mount(() => (
+			<Table data={buildData(2)}>
+				<TableColumn label="A" prop="name" fixed="left" width={80} />
+				<TableColumn label="B" prop="count" />
+				<TableColumn label="C" prop="address" fixed="right" width={80} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(30);
+		await flush();
+		// 初始状态：根节点应有 is-scrolling-{none|left|middle|right} 之一
+		expect(wrapper.classes().some((c: any) => /^is-scrolling-/.test(c))).toBe(true);
+		// body-wrapper 上不再带 is-scrolling-* 类
+		const bodyWrapperCls = wrapper.find('.vc-table__body-wrapper').classes();
+		expect(bodyWrapperCls.some((c: any) => /^is-scrolling-/.test(c))).toBe(false);
+		wrapper.unmount();
+	});
+
+	it('sticky: TableFooter cells consume precomputed stickyStyle when showSummary + maxHeight', async () => {
+		const wrapper = mount(() => (
+			<Table data={buildData(2)} maxHeight={300} showSummary>
+				<TableColumn label="A" prop="name" fixed="left" width={100} />
+				<TableColumn label="B" prop="count" width={500} />
+				<TableColumn label="C" prop="address" fixed="right" width={100} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const footerLeft = wrapper.find('.vc-table__footer .vc-table__td.is-fixed-left').element as HTMLElement;
+		const footerRight = wrapper.find('.vc-table__footer .vc-table__td.is-fixed-right').element as HTMLElement;
+		expect(footerLeft.style.position).toBe('sticky');
+		expect(footerLeft.style.left).toBe('0px');
+		expect(footerRight.style.position).toBe('sticky');
+		expect(footerRight.style.right).toBe('0px');
+		wrapper.unmount();
+	});
+
+	it('sticky: NormalList row-resize 直接采用单 DOM 的尺寸（不再等待 left/right）', async () => {
+		const data = buildData(1);
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={data}>
+				<TableColumn label="A" prop="name" fixed="left" width={80} />
+				<TableColumn label="B" prop="count" />
+				<TableColumn label="C" prop="address" fixed="right" width={80} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.classes()).toContain('vc-table--sticky-columns');
+		const vm = tableRef.value!;
+		const list = vm.store.states.list;
+		// 通过 Resizer 派发 resize 事件 → NormalList emit row-resize
+		const resizer = wrapper.findAllComponents({ name: 'vc-resizer' })[0];
+		expect(resizer).toBeTruthy();
+		resizer.vm.$emit('resize', { height: 42 });
+		await flush();
+		// 单 DOM：row.height 直接取 main，无需等待 left/right
+		expect(list[0].rows[0].height).toBe(42);
+		// 再次相同值 → short-circuit，不应改变
+		resizer.vm.$emit('resize', { height: 42 });
+		await flush();
+		expect(list[0].rows[0].height).toBe(42);
+		wrapper.unmount();
+	});
+
+	it('height + showSummary + fixed columns: sticky 模式下 footer 单元格自身 sticky', async () => {
+		const wrapper = mount(() => (
+			<Table data={buildData(2)} height={300} showSummary>
+				<TableColumn label="A" prop="name" fixed="left" width={100} />
+				<TableColumn label="B" prop="count" />
+				<TableColumn label="C" prop="address" fixed="right" width={100} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(20);
+		// 不再渲染 .vc-table__fixed* 三套 DOM
+		expect(wrapper.find('.vc-table__fixed').exists()).toBe(false);
+		expect(wrapper.find('.vc-table__fixed-right').exists()).toBe(false);
+		expect(wrapper.find('.vc-table__fixed-footer-wrapper').exists()).toBe(false);
+		// footer 的左右固定单元格通过 sticky 表达
+		expect(wrapper.find('.vc-table__footer .vc-table__td.is-fixed-left').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__footer .vc-table__td.is-fixed-right').exists()).toBe(true);
+		wrapper.unmount();
+	});
+
+	it('sticky: syncStickyOffsets applies sticky fields on top-level fixed columns (group parents only)', async () => {
+		const data = buildData(2);
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={data}>
+				<TableColumn label="L" prop="name" fixed="left" width={80} />
+				<TableColumn label="M" prop="address" />
+				<TableColumn label="R" prop="count" fixed="right" width={120} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const vm = tableRef.value!;
+		const leftLeaf1 = { realWidth: 60, width: 60 };
+		const leftLeaf2 = { realWidth: 100, width: 100 };
+		const groupedLeft = { children: [leftLeaf1, leftLeaf2] };
+		const rightLeaf1 = { realWidth: 40, width: 40 };
+		const rightLeaf2 = { realWidth: 70, width: 70 };
+		const groupedRight = { children: [rightLeaf1, rightLeaf2] };
+		vm.store.states.leftFixedColumns = [groupedLeft];
+		vm.store.states.rightFixedColumns = [groupedRight];
+		const notFixedColumn = {
+			realWidth: 200,
+			stickyOffset: 1,
+			stickyStyle: { position: 'sticky', left: '0px' },
+			stickyClass: 'is-fixed-left',
+			children: [{ stickyOffset: 999 }, { stickyOffset: 999 }]
+		};
+		vm.store.states.notFixedColumns = [notFixedColumn];
+		vm.layout.syncStickyOffsets();
+		// 仅对 leftFixedColumns / rightFixedColumns 顶层项写入 sticky
+		expect((groupedLeft as any).stickyOffset).toBe(0);
+		expect((groupedLeft as any).stickyStyle).toEqual({ position: 'sticky', left: '0px' });
+		expect((groupedLeft as any).stickyClass).toBe('is-fixed-left is-fixed-left-tail');
+		expect((leftLeaf1 as any).stickyOffset).toBeUndefined();
+		expect((leftLeaf2 as any).stickyOffset).toBeUndefined();
+		expect((groupedRight as any).stickyOffset).toBe(0);
+		expect((groupedRight as any).stickyStyle).toEqual({ position: 'sticky', right: '0px' });
+		expect((groupedRight as any).stickyClass).toBe('is-fixed-right is-fixed-right-head');
+		expect((rightLeaf1 as any).stickyOffset).toBeUndefined();
+		expect((rightLeaf2 as any).stickyOffset).toBeUndefined();
+		// 非固定列顶层项清除 sticky；子节点不在 syncStickyOffsets 遍历范围内
+		expect((notFixedColumn as any).stickyOffset).toBeUndefined();
+		expect((notFixedColumn as any).stickyStyle).toBeUndefined();
+		expect((notFixedColumn as any).stickyClass).toBeUndefined();
+		expect(notFixedColumn.children[0].stickyOffset).toBe(999);
+		wrapper.unmount();
 	});
 
 	it('columnsToRowsEffect handles nested children + flattenData with parent/cascader + walkTreeNode lazy', () => {

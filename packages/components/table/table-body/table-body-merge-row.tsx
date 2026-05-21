@@ -5,8 +5,7 @@ import { getRowValue } from '../utils';
 export const TableBodyMergeRow = defineComponent({
 	name: 'vc-table-body-merge-row',
 	props: {
-		store: { type: Object, required: true },
-		columnsHidden: { type: Array, required: true }
+		store: { type: Object, required: true }
 	},
 	setup(props) {
 		const table: any = inject('vc-table');
@@ -30,7 +29,6 @@ export const TableBodyMergeRow = defineComponent({
 									data={row.data}
 									index={row.index}
 									height={table.props.rowHeight || row.height}
-									columnsHidden={props.columnsHidden}
 								/>
 							);
 						})

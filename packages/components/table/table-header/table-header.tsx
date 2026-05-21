@@ -12,7 +12,6 @@ const TableFilter = 'div';
 export const TableHeader = defineComponent({
 	name: 'vc-table-header',
 	props: {
-		fixed: [Boolean, String],
 		border: Boolean,
 		// 排序全部交给外部处理，内部不处理数据，只做交互
 		sort: {
@@ -46,32 +45,8 @@ export const TableHeader = defineComponent({
 		const states: any = useStates({
 			columns: 'columns',
 			isAllSelected: 'isAllSelected',
-			leftFixedLeafCount: 'leftFixedLeafColumnsLength',
-			rightFixedLeafCount: 'rightFixedLeafColumnsLength',
 			isGroup: 'isGroup',
-			headerRows: 'headerRows',
-			columnsCount: $states => $states.columns.length,
-			leftFixedCount: $states => $states.leftFixedColumns.length,
-			rightFixedCount: $states => $states.rightFixedColumns.length
-		});
-
-		const isColumnHidden = (index: number) => {
-			let start = 0;
-			for (let i = 0; i < index; i++) {
-				start += states.columns[i].colSpan;
-			}
-			const after = start + states.columns[index].colSpan - 1;
-			if (props.fixed === true || props.fixed === 'left') {
-				return after >= states.leftFixedLeafCount;
-			} else if (props.fixed === 'right') {
-				return start < states.columnsCount - states.rightFixedLeafCount;
-			} else {
-				return (after < states.leftFixedLeafCount) || (start >= states.columnsCount - states.rightFixedLeafCount);
-			}
-		};
-
-		const columnsHidden = computed(() => {
-			return states.columns.map((_: any, index: number) => isColumnHidden(index));
+			headerRows: 'headerRows'
 		});
 
 		const getHeaderRowStyle = (rowIndex: number) => {
@@ -113,10 +88,6 @@ export const TableHeader = defineComponent({
 
 		const getHeaderCellClass = (rowIndex: number, columnIndex: number, row: any, column: any) => {
 			const classes = [column.id, column.order, column.realHeaderAlign, column.class, column.labelClass];
-
-			if (rowIndex === 0 && columnsHidden.value[columnIndex]) {
-				classes.push('is-hidden');
-			}
 
 			if (!column.children) {
 				classes.push('is-leaf');
@@ -289,82 +260,86 @@ export const TableHeader = defineComponent({
 									class={[getHeaderRowClass(rowIndex), 'vc-table__tr']}
 								>
 									{
-										columns.map((column: any, columnIndex: number) => (
-											<div
-												onMousemove={(e: any) => handleMouseMove(e, column)}
-												onMouseout={handleMouseOut}
-												onMousedown={(e: any) => handleMouseDown(e, column)}
-												onClick={(e: any) => handleHeaderClick(e, column)}
-												onContextmenu={(e: any) => handleHeaderContextMenu(e, column)}
-												style={[
-													getHeaderCellStyle(rowIndex, columnIndex, columns, column),
-													{ width: `${column.realWidth}px` }
-												]}
-												class={[
-													getHeaderCellClass(rowIndex, columnIndex, columns, column),
-													column.resizable && dragLineClass.value,
-													'vc-table__th'
-												]}
-												key={column.id}
-											>
+										columns.map((column: any, columnIndex: number) => {
+											return (
 												<div
-													class={[
-														'vc-table__cell',
-														// {
-														// 	"is-highlight": column.filteredValue && column.filteredValue.length > 0
-														// },
-														column.labelClass
+													onMousemove={(e: any) => handleMouseMove(e, column)}
+													onMouseout={handleMouseOut}
+													onMousedown={(e: any) => handleMouseDown(e, column)}
+													onClick={(e: any) => handleHeaderClick(e, column)}
+													onContextmenu={(e: any) => handleHeaderContextMenu(e, column)}
+													style={[
+														getHeaderCellStyle(rowIndex, columnIndex, columns, column),
+														{ width: `${column.realWidth}px` },
+														column.stickyStyle
 													]}
+													class={[
+														getHeaderCellClass(rowIndex, columnIndex, columns, column),
+														column.resizable && dragLineClass.value,
+														column.stickyClass,
+														'vc-table__th'
+													]}
+													key={column.id}
 												>
-													{
-														column.renderHeader
-															? column.renderHeader(
-																	{
-																		column,
-																		columnIndex,
-																		store: table.store,
-																	}
-																)
-															: column.label
-													}
-													{
-														column.tooltip
-															? (
-																	<Icon
-																		type="o-info"
-																		class="vc-table__tooltip"
-																		onMouseenter={(e: any) => handleCellMouseEnter(e, column)}
-																	/>
-																)
-															: null
-													}
-													{
-														column.sortable
-															? (
-																	<TableSort
-																		order={column.prop === props.sort.prop ? props.sort.order : ''}
-																		onClick={(order: any) => handleSort(column.prop, order)}
-																	/>
-																)
-															: null
-													}
-													{
-														column.filters
-															? (
-																	<TableFilter
-																		data={column.filters}
-																		value={column.filteredValue}
-																		icon={column.filterIcon}
-																		portalClass={column.filterPopupClass}
-																		multiple={column.filterMultiple}
-																		onChange={v => handleFilter(column, v)}
-																	/>
-																)
-															: null
-													}
+													<div
+														class={[
+															'vc-table__cell',
+															// {
+															// 	"is-highlight": column.filteredValue && column.filteredValue.length > 0
+															// },
+															column.labelClass
+														]}
+													>
+														{
+															column.renderHeader
+																? column.renderHeader(
+																		{
+																			column,
+																			columnIndex,
+																			store: table.store,
+																		}
+																	)
+																: column.label
+														}
+														{
+															column.tooltip
+																? (
+																		<Icon
+																			type="o-info"
+																			class="vc-table__tooltip"
+																			onMouseenter={(e: any) => handleCellMouseEnter(e, column)}
+																		/>
+																	)
+																: null
+														}
+														{
+															column.sortable
+																? (
+																		<TableSort
+																			order={column.prop === props.sort.prop ? props.sort.order : ''}
+																			onClick={(order: any) => handleSort(column.prop, order)}
+																		/>
+																	)
+																: null
+														}
+														{
+															column.filters
+																? (
+																		<TableFilter
+																			data={column.filters}
+																			value={column.filteredValue}
+																			icon={column.filterIcon}
+																			portalClass={column.filterPopupClass}
+																			multiple={column.filterMultiple}
+																			onChange={v => handleFilter(column, v)}
+																		/>
+																	)
+																: null
+														}
+													</div>
 												</div>
-											</div>
-										))
+											);
+										})
 									}
 								</div>
 							))

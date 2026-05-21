@@ -72,7 +72,6 @@ $line-height: 20px;
 	}
 
 	@include element(tr) {
-		display: flex;
 		background-color: #fff;
 
 		input[type="checkbox"] {
@@ -245,7 +244,7 @@ $line-height: 20px;
 		overflow: hidden;
 	}
 
-	@include element((header, body, footer)) {
+	@include element((header, tbody, footer)) {
 		border-collapse: separate;
 		table-layout: fixed;
 	}
@@ -298,7 +297,41 @@ $line-height: 20px;
 		visibility: hidden;
 	}
 
-	@include element(body) {
+	// 单 DOM + position: sticky 表达固定列（彻底替代旧的 .vc-table__fixed* 三 DOM 方案）
+	@include modifier(sticky-columns) {
+		.vc-table__th,
+		.vc-table__td {
+			&.is-fixed-left,
+			&.is-fixed-right {
+				z-index: 1;
+			}
+		}
+
+		.vc-table__tbody .vc-table__td {
+			&.is-fixed-left,
+			&.is-fixed-right {
+				background-color: #fff;
+			}
+		}
+
+		.vc-table__header .vc-table__th {
+			&.is-fixed-left,
+			&.is-fixed-right {
+				z-index: 1;
+				background-color: $f9;
+			}
+		}
+
+		.vc-table__footer .vc-table__td {
+			&.is-fixed-left,
+			&.is-fixed-right {
+				background-color: $f9;
+			}
+		}
+	}
+
+	@include element(body-wrapper) {
+		position: relative;
 		overflow: hidden;
 
 		.vc-table__tr.hover-row {
@@ -314,93 +347,6 @@ $line-height: 20px;
 		.vc-table__tr.current-row > .vc-table__td {
 			background: $f9;
 		}
-	}
-
-	@include element(body-wrapper) {
-		position: relative;
-		overflow: hidden;
-
-		@include when(scrolling-none) {
-			~ .vc-table__fixed,
-			~ .vc-table__fixed-right {
-				box-shadow: none;
-			}
-		}
-
-		@include when(scrolling-left) {
-			~ .vc-table__fixed {
-				box-shadow: none;
-			}
-		}
-
-		@include when(scrolling-right) {
-			~ .vc-table__fixed-right {
-				box-shadow: none;
-			}
-		}
-
-		.vc-table--border {
-			@include when(scrolling-right) {
-				~ .vc-table__fixed-right {
-					border-left: 1px solid $border-color;
-				}
-			}
-
-			@include when(scrolling-left) {
-				~ .vc-table__fixed {
-					border-right: 1px solid $border-color;
-				}
-			}
-		}
-	}
-
-	@include element((fixed, fixed-right)) {
-		position: absolute;
-		top: 0;
-		left: 0;
-		overflow: hidden;
-		box-shadow: 0 0 10px rgb(0 0 0 / 12%);
-	}
-
-	@include element(fixed-right) {
-		top: 0;
-		right: 0;
-		left: auto;
-
-		.vc-table__fixed-header-wrapper,
-		.vc-table__fixed-body-wrapper,
-		.vc-table__fixed-footer-wrapper {
-			right: 0;
-			left: auto;
-		}
-	}
-
-	@include element(fixed-header-wrapper) {
-		position: absolute;
-		top: 0;
-		left: 0;
-		z-index: 3;
-	}
-
-	@include element(fixed-footer-wrapper) {
-		position: absolute;
-		bottom: 0;
-		left: 0;
-		z-index: 3;
-
-		& .vc-table__tbody .vc-table__td {
-			color: #606266;
-			background-color: $f9;
-			border-top: 1px solid $border-color;
-		}
-	}
-
-	@include element(fixed-body-wrapper) {
-		position: absolute;
-		top: 37px;
-		left: 0;
-		z-index: 3;
-		overflow: hidden;
 	}
 
 	@include element(column-resize-proxy) {
@@ -431,7 +377,7 @@ $line-height: 20px;
 	}
 
 	@include modifier(striped) {
-		& .vc-table__body {
+		& .vc-table__tbody {
 			& .vc-table__tr.vc-table__row--striped {
 				.vc-table__td {
 					background: #fafafa;
@@ -469,19 +415,6 @@ $line-height: 20px;
 			left: 0;
 			width: 100%;
 			height: 1px;
-		}
-
-		@include element((fixed, fixed-right)) {
-			&::before {
-				position: absolute;
-				bottom: 0;
-				left: 0;
-				z-index: 4;
-				width: 100%;
-				height: 1px;
-				background-color: $border-color;
-				content: "";
-			}
 		}
 	}
 
@@ -525,22 +458,80 @@ $line-height: 20px;
 	}
 
 	@include modifier(enable-row-transition) {
-		.vc-table__body .vc-table__td {
+		.vc-table__tbody .vc-table__td {
 			transition: background-color 0.25s ease;
 		}
 	}
 
 	@include modifier(enable-row-hover) {
-		.vc-table__body .vc-table__tr:hover > .vc-table__td {
+		.vc-table__tbody .vc-table__tr:hover > .vc-table__td {
 			background-color: $f9;
 		}
 	}
 
-	@include modifier(fluid-height) {
-		.vc-table__fixed,
-		.vc-table__fixed-right {
-			bottom: 0;
-			overflow: hidden;
+	// 固定列横向滚动阴影：用 ::after 渐变替代 box-shadow，避免单边阴影缺陷
+	@include share-rule(table-fixed-shadow-pseudo) {
+		position: absolute;
+		top: 0;
+		width: 5px;
+		height: 100%;
+		pointer-events: none;
+		content: "";
+	}
+
+	@include share-rule(table-fixed-shadow-pseudo-left) {
+		@include extend-rule(table-fixed-shadow-pseudo);
+
+		right: -5px;
+		background-image: linear-gradient(to right, rgb(0 0 0 / 6%) 0%, transparent);
+	}
+
+	@include share-rule(table-fixed-shadow-pseudo-right) {
+		@include extend-rule(table-fixed-shadow-pseudo);
+
+		left: -5px;
+		background-image: linear-gradient(to left, rgb(0 0 0 / 6%) 0%, transparent);
+	}
+
+	@include share-rule(table-fixed-shadow-left-tail-cell) {
+		overflow: visible;
+
+		&::before {
+			@include extend-rule(table-fixed-shadow-pseudo-left);
+		}
+	}
+
+	@include share-rule(table-fixed-shadow-right-head-cell) {
+		overflow: visible;
+
+		&::before {
+			@include extend-rule(table-fixed-shadow-pseudo-right);
+		}
+	}
+
+	@include when(scrolling-middle) {
+		.vc-table__th.is-fixed-left.is-fixed-left-tail,
+		.vc-table__td.is-fixed-left.is-fixed-left-tail {
+			@include extend-rule(table-fixed-shadow-left-tail-cell);
+		}
+
+		.vc-table__th.is-fixed-right.is-fixed-right-head,
+		.vc-table__td.is-fixed-right.is-fixed-right-head {
+			@include extend-rule(table-fixed-shadow-right-head-cell);
+		}
+	}
+
+	@include when(scrolling-right) {
+		.vc-table__th.is-fixed-left.is-fixed-left-tail,
+		.vc-table__td.is-fixed-left.is-fixed-left-tail {
+			@include extend-rule(table-fixed-shadow-left-tail-cell);
+		}
+	}
+
+	@include when(scrolling-left) {
+		.vc-table__th.is-fixed-right.is-fixed-right-head,
+		.vc-table__td.is-fixed-right.is-fixed-right-head {
+			@include extend-rule(table-fixed-shadow-right-head-cell);
 		}
 	}
 
@@ -582,10 +573,6 @@ $line-height: 20px;
 		display: none;
 	}
 
-	.vc-recycle-list__wrapper {
-		overflow: hidden;
-	}
-	
 	> div.vc-scroller-track {
 		z-index: 5;
 	}
