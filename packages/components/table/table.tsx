@@ -358,16 +358,17 @@ export const Table = defineComponent({
 		// 直接修改className（不使用render函数）, 解决临界值设置修改className时的顿挫。
 		// 挂到 .vc-table 根节点上，让 header / body / footer 三处的 sticky 阴影都能共用同一个状态。
 		watch(
-			() => scrollPosition.value,
-			(v) => {
+			() => [scrollPosition.value, props.data?.length],
+			([v]) => {
 				raf(() => {
 					const el = tableWrapper.value;
 					if (!el) return;
 					const className = `is-scrolling-${layout.states.scrollX ? v : 'none'}`;
-					el && el.classList.replace(
-						el.classList.item(el.classList.length - 1),
-						className
-					);
+
+					if (el.classList.contains(className)) return;
+
+					el.classList.remove(...['left', 'middle', 'right', 'none'].map(i => `is-scrolling-${i}`));
+					el.classList.add(className);
 				});
 			},
 			{ immediate: true }
@@ -427,7 +428,7 @@ export const Table = defineComponent({
 			return (
 				<div
 					ref={tableWrapper}
-					class={[classes.value, tableId, 'vc-table is-scrolling-none']}
+					class={[classes.value, tableId, 'vc-table']}
 					onMouseleave={handleMouseLeave}
 				>
 					<div ref={hiddenColumns} class="vc-table__hidden">
