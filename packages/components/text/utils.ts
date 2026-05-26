@@ -32,7 +32,7 @@ const SIZING_STYLE = [
 let hiddenEl;
 
 export const getFitIndex = (options = {}) => {
-	const { el, line, value, suffix, indent = 0 } = options as any;
+	const { el, line, value, ellipsis, slice, indent = 0 } = options as any;
 
 	let lineHeight = parseInt(getStyle(el, 'line-height'), 10);
 
@@ -64,7 +64,12 @@ export const getFitIndex = (options = {}) => {
 
 	let endIndex = -1;
 
-	const strs = (typeof value === 'number' ? `${value}` : (value || '')).split('');
+	const source = typeof value === 'number' ? `${value}` : (value || '');
+	const hasSlice = slice !== undefined && slice !== null;
+	// 与 String.prototype.slice 语义一致: slice=-5 取末尾 5 字符, slice=0 取整串
+	const sliceText = hasSlice ? source.slice(slice) : '';
+
+	const strs = source.split('');
 	let innerText = '';
 	for (let i = 0; i < strs.length; i++) {
 		innerText += strs[i];
@@ -76,13 +81,20 @@ export const getFitIndex = (options = {}) => {
 	}
 
 	if (endIndex >= 0 && endIndex <= strs.length - 1) {
+		let foundFit = false;
 		for (let i = endIndex - 1; i >= 0; i--) {
 			innerText = innerText.substring(0, i);
-			hiddenEl.innerText = innerText + suffix;
+			hiddenEl.innerText = innerText + ellipsis + sliceText;
 			if (hiddenEl.clientHeight - sideHeight <= lineHeight * line) {
 				endIndex = i;
+				foundFit = true;
 				break;
 			}
+		}
+		// 边界: slice 让 ellipsis+sliceText 始终撑爆 line 行 (典型 slice=0)
+		// 此时强制让 prefix 为空, 渲染端仍按 '' + ellipsis + sliceText 输出
+		if (!foundFit && hasSlice) {
+			endIndex = 0;
 		}
 	}
 

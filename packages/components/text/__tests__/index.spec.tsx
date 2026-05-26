@@ -86,7 +86,7 @@ describe('Text 渲染分支 (line=0 / line>0)', () => {
 		wrapper.unmount();
 	});
 
-	it('line>0 且需要截断: 输出 value.slice(0, N)+suffix, cursor=pointer, clip=N', async () => {
+	it('line>0 且需要截断: 输出 value.slice(0, N)+ellipsis, cursor=pointer, clip=N', async () => {
 		mockedGetFitIndex.mockReturnValue(3);
 		const onClip = vi.fn();
 
@@ -119,10 +119,10 @@ describe('Text 渲染分支 (line=0 / line>0)', () => {
 		wrapper.unmount();
 	});
 
-	it('自定义 suffix 生效 (README 第二个 demo 的用法)', async () => {
+	it('自定义 ellipsis 生效 (README 第二个 demo 的用法)', async () => {
 		mockedGetFitIndex.mockReturnValue(2);
 		const wrapper = mount(() => (
-			<Text value="abcdefghij" line={2} resize={true} suffix="我是自定义结尾" />
+			<Text value="abcdefghij" line={2} resize={true} ellipsis="我是自定义结尾" />
 		), { attachTo: document.body });
 
 		triggerResize(wrapper.element);
@@ -154,10 +154,10 @@ describe('Text 渲染分支 (line=0 / line>0)', () => {
 		wrapper.unmount();
 	});
 
-	it('indent / line / value / suffix / el 透传给 getFitIndex', async () => {
+	it('indent / line / value / ellipsis / slice / el 透传给 getFitIndex', async () => {
 		mockedGetFitIndex.mockReturnValue(-1);
 		const wrapper = mount(() => (
-			<Text value="abc" line={2} indent={42} suffix="…" resize={true} />
+			<Text value="abc" line={2} indent={42} ellipsis="…" slice={-3} resize={true} />
 		), { attachTo: document.body });
 
 		triggerResize(wrapper.element);
@@ -169,8 +169,57 @@ describe('Text 渲染分支 (line=0 / line>0)', () => {
 		expect(arg.indent).toBe(42);
 		expect(arg.line).toBe(2);
 		expect(arg.value).toBe('abc');
-		expect(arg.suffix).toBe('…');
+		expect(arg.ellipsis).toBe('…');
+		expect(arg.slice).toBe(-3);
 		expect(arg.el).toBe(wrapper.element);
+
+		wrapper.unmount();
+	});
+
+	it('slice=-5 渲染串: prefix + ellipsis + value.slice(-5)', async () => {
+		mockedGetFitIndex.mockReturnValue(3);
+		const wrapper = mount(() => (
+			<Text value="abcdefghijklmnop" line={2} resize={true} slice={-5} />
+		), { attachTo: document.body });
+
+		triggerResize(wrapper.element);
+		await flush();
+
+		// 'abc' + '...' + 'lmnop'
+		expect(wrapper.text()).toBe('abc...lmnop');
+		expect(wrapper.attributes('style') || '').toContain('cursor: pointer');
+
+		wrapper.unmount();
+	});
+
+	it('slice=0 + endIndex=0 (边界保护): 渲染 ellipsis + 整串', async () => {
+		mockedGetFitIndex.mockReturnValue(0);
+		const wrapper = mount(() => (
+			<Text value="abcdefghij" line={2} resize={true} slice={0} />
+		), { attachTo: document.body });
+
+		triggerResize(wrapper.element);
+		await flush();
+
+		// '' + '...' + 'abcdefghij'
+		expect(wrapper.text()).toBe('...abcdefghij');
+		// hasSlice + endIndex===0 也算 truncated, cursor=pointer
+		expect(wrapper.attributes('style') || '').toContain('cursor: pointer');
+
+		wrapper.unmount();
+	});
+
+	it('slice 未传 + endIndex=0: 不截断 (保持旧行为, 渲染完整 value)', async () => {
+		mockedGetFitIndex.mockReturnValue(0);
+		const wrapper = mount(() => (
+			<Text value="abcdefghij" line={2} resize={true} />
+		), { attachTo: document.body });
+
+		triggerResize(wrapper.element);
+		await flush();
+
+		expect(wrapper.text()).toBe('abcdefghij');
+		expect(wrapper.attributes('style') || '').toContain('cursor: unset');
 
 		wrapper.unmount();
 	});
@@ -187,12 +236,14 @@ describe('Text 响应式 watch', () => {
 		vi.restoreAllMocks();
 	});
 
-	it('value/line/indent 变化均会重新计算 (走 watch)', async () => {
+	it('value/line/indent/slice/ellipsis 变化均会重新计算 (走 watch)', async () => {
 		mockedGetFitIndex.mockReturnValue(2);
 
 		const value = ref('hello');
 		const line = ref(2);
 		const indent = ref(0);
+		const slice = ref<number | undefined>(undefined);
+		const ellipsis = ref('...');
 		const onClip = vi.fn();
 
 		const wrapper = mount(defineComponent({
@@ -202,6 +253,8 @@ describe('Text 响应式 watch', () => {
 						value={value.value}
 						line={line.value}
 						indent={indent.value}
+						slice={slice.value}
+						ellipsis={ellipsis.value}
 						resize={true}
 						onClip={onClip}
 					/>
@@ -227,6 +280,16 @@ describe('Text 响应式 watch', () => {
 		indent.value = 5;
 		await flush();
 		expect(mockedGetFitIndex.mock.calls.length).toBeGreaterThan(before3);
+
+		const before4 = mockedGetFitIndex.mock.calls.length;
+		slice.value = -2;
+		await flush();
+		expect(mockedGetFitIndex.mock.calls.length).toBeGreaterThan(before4);
+
+		const before5 = mockedGetFitIndex.mock.calls.length;
+		ellipsis.value = '…';
+		await flush();
+		expect(mockedGetFitIndex.mock.calls.length).toBeGreaterThan(before5);
 
 		// 切到 line=0 后, 后续渲染读取的是 props.value (走 line===0 分支)
 		line.value = 0;

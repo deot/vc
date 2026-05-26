@@ -22,9 +22,19 @@ export const props = {
 		type: [Boolean, Number],
 		default: 100
 	},
-	suffix: {
+	ellipsis: {
 		type: String,
 		default: '...'
+	},
+	slice: {
+		type: Number,
+		/**
+		 * 未定义时，尾部a...
+		 * 定义-1，a...b
+		 * 定义N，尾部a...b.slice(N)
+		 * 定义0，...b
+		 */
+		default: void 0
 	},
 	placement: {
 		type: String,

@@ -12,6 +12,13 @@
 			<Text :value="text18" :line="line2" />
 			<h3>line: {{ line3 }} </h3>
 			<Text :value="text30" :line="line3" />
+
+			<h3>slice = -5（保留尾部 5 字符，形如 abc...lmnop）</h3>
+			<Text :value="text30" :line="2" :slice="-5" />
+			<h3>slice = 0（省略号置首：'...' + 整串）</h3>
+			<Text :value="text18" :line="2" :slice="0" />
+			<h3>slice = -8 + 自定义 ellipsis</h3>
+			<Text :value="text30" :line="2" :slice="-8" ellipsis=" ··· " />
 		</div>
 	</div>
 </template>

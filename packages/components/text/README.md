@@ -61,7 +61,7 @@ const handleClick = () => {
 :::
 
 ### 自定义结尾
-通过`suffix`自定义结尾内容。
+通过`ellipsis`自定义结尾内容。
 
 :::RUNTIME
 ```vue
@@ -71,7 +71,7 @@ const handleClick = () => {
 			:value="text10"
 			:line="2"
 			:indent="1"
-			suffix="我是自定义结尾" />
+			ellipsis="我是自定义结尾" />
 	</div>
 </template>
 <script setup>
@@ -86,19 +86,47 @@ const text10 = ref(text.repeat(50));
 ```
 :::
 
+### 保留尾部（slice 模式）
+通过`slice`指定一段固定保留的尾部，语义等价 `value.slice(slice)`：
+- `slice = -5`：保留末尾 5 个字符，渲染如 `abc...lmnop`
+- `slice = 0`：尾部 = 整串，省略号被置于最前 `...完整文本`
+- `slice = N`（正整数）：尾部 = `value.slice(N)`，从指定下标开始保留
+
+:::RUNTIME
+```vue
+<template>
+	<div style="width: 500px;">
+		<h4>slice = -5</h4>
+		<Text :value="text" :line="2" :slice="-5" />
+		<h4>slice = 0</h4>
+		<Text :value="text" :line="2" :slice="0" />
+		<h4>slice = -8 + 自定义 ellipsis</h4>
+		<Text :value="text" :line="2" :slice="-8" ellipsis=" ··· " />
+	</div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Text } from '@deot/vc';
+
+const text = ref(('A2，C,我E,'.repeat(20)) + 'REPEAT_END');
+</script>
+```
+:::
+
 ## API
 
 ### 属性
 
-| 属性          | 说明                  | 类型                        | 可选值                                                                                                                                   | 默认值   |
-| ----------- | ------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| tag         | 渲染的节点类型             | `string`                  | -                                                                                                                                     | div   |
-| value       | 渲染的文本               | `string`                  | -                                                                                                                                     | -     |
-| line        | 行数,为0时默认显示全部        | `Number`                  | -                                                                                                                                     | 0     |
-| indent      | 缩进                  | `Number`                  | -                                                                                                                                     | 0     |
-| suffix      | 后缀，只有在存在显示不完内容时才会出现 | `string`                  | -                                                                                                                                     | '...' |
-| renderRow   | 自定义渲染               | `Function`                | -                                                                                                                                     | -     |
-| placement   | 弹层的位置               | `string`                  | `top`、`left`、`right`、`bottom`、`bottom-left`、`bottom-right`、`top-left`、`top-right`、`right-top`、`right-bottom`、`left-top`、`left-bottom` | `top` |
-| portalClass | 外层类名                | `object`、`string`、`Array` | -                                                                                                                                     | -     |
-| portalStyle | 样式                  | `object`                  | -                                                                                                                                     | -     |
-| resize      | 是否启用resize          | `number`、`boolean`        | 100                                                                                                                                   | -     |
+| 属性          | 说明                                                                                                                                                       | 类型                        | 可选值                                                                                                                                   | 默认值       |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| tag         | 渲染的节点类型                                                                                                                                                  | `string`                  | -                                                                                                                                     | div       |
+| value       | 渲染的文本                                                                                                                                                    | `string`                  | -                                                                                                                                     | -         |
+| line        | 行数,为0时默认显示全部                                                                                                                                             | `Number`                  | -                                                                                                                                     | 0         |
+| indent      | 缩进                                                                                                                                                       | `Number`                  | -                                                                                                                                     | 0         |
+| ellipsis    | 截断时使用的省略符号                                                                                                                                               | `string`                  | -                                                                                                                                     | '...'     |
+| slice       | 尾部固定保留段的起点，等价 `value.slice(slice)`。负数保留末尾 N 个字符（如 `-5` → `abc...lmnop`）；`0` 时整串作为尾部，省略号置首；正数从指定下标开始保留；不传或越界时退化为仅末尾追加 `ellipsis` | `Number`                  | -                                                                                                                                     | undefined |
+| renderRow   | 自定义渲染                                                                                                                                                    | `Function`                | -                                                                                                                                     | -         |
+| placement   | 弹层的位置                                                                                                                                                    | `string`                  | `top`、`left`、`right`、`bottom`、`bottom-left`、`bottom-right`、`top-left`、`top-right`、`right-top`、`right-bottom`、`left-top`、`left-bottom` | `top`     |
+| portalClass | 外层类名                                                                                                                                                     | `object`、`string`、`Array` | -                                                                                                                                     | -         |
+| portalStyle | 样式                                                                                                                                                       | `object`                  | -                                                                                                                                     | -         |
+| resize      | 是否启用resize                                                                                                                                               | `number`、`boolean`        | 100                                                                                                                                   | -         |

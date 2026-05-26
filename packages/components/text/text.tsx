@@ -19,12 +19,18 @@ export const Text = defineComponent({
 		const isActive = ref(false);
 		const endIndex = ref(-1);
 
+		const hasSlice = computed(() => props.slice !== undefined && props.slice !== null);
+		// endIndex===0 在带 slice 场景下也代表"已截断 (前缀为空)"
+		const truncated = computed(() => {
+			return endIndex.value > 0 || (endIndex.value === 0 && hasSlice.value);
+		});
+
 		const styles = computed(() => {
-			return { cursor: endIndex.value <= 0 ? 'unset' : 'pointer' };
+			return { cursor: truncated.value ? 'pointer' : 'unset' };
 		});
 
 		const calcPosition = () => {
-			const { suffix, line, value, indent } = props;
+			const { ellipsis, slice, line, value, indent } = props;
 			if (line === 0) {
 				endIndex.value = -1;
 				isActive.value = true;
@@ -33,7 +39,8 @@ export const Text = defineComponent({
 					el: instance.vnode.el,
 					line,
 					value,
-					suffix,
+					ellipsis,
+					slice,
 					indent
 				});
 				isActive.value = true;
@@ -45,7 +52,7 @@ export const Text = defineComponent({
 
 		let poper;
 		const handleMouseOver = (e: any) => {
-			if (endIndex.value > 0) {
+			if (truncated.value) {
 				poper = Popover.open({
 					el: document.body,
 					name: 'vc-text-popover', // 确保不重复创建
@@ -64,7 +71,7 @@ export const Text = defineComponent({
 			// Do.
 		};
 
-		['value', 'indent', 'line'].forEach((key) => {
+		['value', 'indent', 'line', 'slice', 'ellipsis'].forEach((key) => {
 			watch(
 				() => props[key],
 				calcPosition
@@ -82,6 +89,10 @@ export const Text = defineComponent({
 
 		const Content = props.tag;
 		return () => {
+			const sliceText = hasSlice.value ? props.value.slice(props.slice as number) : '';
+			const displayValue = truncated.value
+				? `${props.value.slice(0, endIndex.value)}${props.ellipsis}${sliceText}`
+				: props.value;
 			return (
 				<Content
 					// @ts-ignore
@@ -94,7 +105,7 @@ export const Text = defineComponent({
 						isActive.value
 							? (
 									<Customer
-										value={endIndex.value > 0 ? `${props.value.slice(0, endIndex.value)}${props.suffix}` : props.value}
+										value={displayValue}
 										index={endIndex.value}
 										// @ts-ignore
 										render={props.renderRow}
