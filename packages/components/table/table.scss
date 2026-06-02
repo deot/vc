@@ -54,7 +54,6 @@ $line-height: 20px;
 		text-align: left;
 		text-overflow: ellipsis;
 		box-sizing: border-box;
-		align-items: center;
 
 		@include when(center) {
 			text-align: center;
@@ -73,7 +72,7 @@ $line-height: 20px;
 
 	@include element(tr) {
 		background-color: #fff;
-
+	
 		input[type="checkbox"] {
 			margin: 0;
 		}
@@ -81,6 +80,7 @@ $line-height: 20px;
 
 	@include element(td) {
 		padding: $gap-v 0;
+		align-items: center;
 
 		&:first-child {
 			padding-left: $gap-h;
