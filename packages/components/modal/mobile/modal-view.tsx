@@ -163,7 +163,13 @@ export const MModalView = defineComponent({
 															<div class="vcm-modal__header">
 																{
 																	slots.header?.() || (
-																		<div class="vcm-modal__title" innerHTML={props.title as string} />
+																		typeof props.title === 'string'
+																			? <div class="vcm-modal__title" innerHTML={props.title} />
+																			: typeof props.title === 'function' && (
+																				<MCustomer
+																					render={props.title}
+																				/>
+																			)
 																	)
 																}
 															</div>

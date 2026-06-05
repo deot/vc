@@ -119,17 +119,11 @@ export const ModalView = defineComponent({
 
 			if (!el) return;
 
-			let $x = 0;
-			let $y = 0;
-			/**
-			 * 拖拽使用x, y
-			 * 其他正常的布局
-			 */
 			const modalX = x.value || el.offsetLeft;
 			const modalY = y.value || el.offsetTop || (window.screen.height - el.clientHeight) / 2;
 
-			$x = originX - modalX;
-			$y = originY - modalY;
+			const $x = originX - modalX;
+			const $y = originY - modalY;
 
 			el.style.transformOrigin = `${$x}px ${$y}px 0`;
 		}, 250, { leading: true });
@@ -393,10 +387,15 @@ export const ModalView = defineComponent({
 										!slots.header
 											? (
 													<Fragment>
-														<div
-															class="vc-modal__title"
-															innerHTML={props.title}
-														/>
+														{
+															typeof props.title === 'string'
+																? <div class="vc-modal__title" innerHTML={props.title} />
+																: typeof props.title === 'function' && (
+																	<Customer
+																		render={props.title}
+																	/>
+																)
+														}
 														{
 															props.closable && !props.mode && (
 																<div

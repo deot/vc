@@ -47,7 +47,9 @@ export const props = {
 		type: Boolean,
 		default: true // 如果关闭, cancel只能是取消的按钮
 	},
-	title: String,
+	title: {
+		type: [String, Function] as PropType<string | CustomerProps['render']>,
+	},
 	scrollable: {
 		type: Boolean,
 		default: false
