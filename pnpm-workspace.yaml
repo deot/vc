@@ -11,3 +11,8 @@ allowBuilds:
   esbuild: true
   puppeteer: true
   unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - '@deot/*'
+  - '@vue/*'
+  - 'vue-tsc'
