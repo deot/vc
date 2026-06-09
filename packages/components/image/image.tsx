@@ -41,6 +41,9 @@ export const Image = defineComponent({
 		const pStyle = ref({});
 		const scroller = ref<any>(null);
 
+		const displaySrc = computed(() => props.thumbnail || props.src);
+		const previewSrc = computed(() => props.src || props.thumbnail);
+
 		const setScroller = () => {
 			const { wrapper } = props;
 
@@ -61,7 +64,7 @@ export const Image = defineComponent({
 
 			if (width && height) return;
 
-			const { w, h } = IMGStore.getSize(props.src!, {
+			const { w, h } = IMGStore.getSize(displaySrc.value!, {
 				clientW: instance.vnode.el!.clientWidth,
 				clientH: instance.vnode.el!.clientHeight,
 				style: {
@@ -111,7 +114,7 @@ export const Image = defineComponent({
 
 			emit('load', e, img, instance);
 
-			IMGStore.add(props.src!, {
+			IMGStore.add(displaySrc.value!, {
 				originW: originW.value,
 				originH: originH.value,
 			});
@@ -124,7 +127,7 @@ export const Image = defineComponent({
 		};
 
 		const loadImage = () => {
-			if (!props.src) return;
+			if (!displaySrc.value) return;
 			// reset status
 			isLoading.value = true;
 			isError.value = false;
@@ -137,7 +140,7 @@ export const Image = defineComponent({
 			Object.keys(its.value.attrs || {})
 				.forEach(key => img.setAttribute(key, its.value.attrs![key]));
 
-			img.src = props.src;
+			img.src = displaySrc.value;
 		};
 
 		const hackFit = (fit: string) => {
@@ -179,16 +182,16 @@ export const Image = defineComponent({
 		});
 
 		const handlePreview = () => {
-			if (!props.previewable) return;
+			if (!props.previewable || !previewSrc.value) return;
 			ImagePreview.open({
 				current: 0,
-				data: [props.src] as any,
+				data: [previewSrc.value] as any,
 				onClose() {}
 			});
 		};
 
 		watch(
-			() => props.src,
+			() => displaySrc.value,
 			(v) => {
 				if (!v && !isLoading.value) {
 					isLoading.value = true;
@@ -231,7 +234,7 @@ export const Image = defineComponent({
 					{
 						!isLoading.value && !isError.value && (
 							<img
-								src={props.src}
+								src={displaySrc.value}
 								// @ts-ignore
 								style={style.value}
 								class={[{ 'is-center': alignCenter.value }, 'vc-image__inner']}

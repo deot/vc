@@ -125,6 +125,7 @@ const handleError = (e, img, instance) => {
 | 属性      | 说明                         | 类型                 | 可选值                                          | 默认值     |
 | ------- | -------------------------- | ------------------ | -------------------------------------------- | ------- |
 | src     | 图片资源                       | `string`           | -                                            | -       |
+| thumbnail     | 缩略图                       | `string`           | -                                            | -       |
 | fit     | 确定图片如何适应容器框，同原生 object-fit | `string`           | `fill`、`contain`、`cover`、`none`、`scale-down` | -       |
 | lazy    | 是否开启懒加载                    | `boolean`          | -                                            | `false` |
 | wrapper | 父容器                        | `object`、 `string` | -                                            | -       |
