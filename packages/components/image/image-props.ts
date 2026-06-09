@@ -9,6 +9,7 @@ export const props = {
 	previewable: {
 		type: Boolean,
 		default: true
-	}
+	},
+	format: Function,
 };
 export type Props = ExtractPropTypes<typeof props>;

@@ -6,6 +6,7 @@ import { useAttrs } from '@deot/vc-hooks';
 import * as $ from '@deot/helper-dom';
 import { throttle } from 'lodash-es';
 import { ImagePreview } from '../image-preview/index';
+import { VcInstance } from '../vc';
 import { props as imageProps } from './image-props';
 import IMGStore from './store';
 
@@ -41,8 +42,22 @@ export const Image = defineComponent({
 		const pStyle = ref({});
 		const scroller = ref<any>(null);
 
-		const displaySrc = computed(() => props.thumbnail || props.src);
-		const previewSrc = computed(() => props.src || props.thumbnail);
+		const resolvePath = (path: string, type: string) => {
+			const fn = props.format || VcInstance.options.Image?.format;
+			if (typeof fn === 'function') {
+				return fn(path, type, instance) || path;
+			}
+			return path;
+		};
+
+		const displaySrc = computed(() => {
+			const raw = props.thumbnail || props.src;
+			return resolvePath(raw!, props.thumbnail ? 'thumbnail' : 'src');
+		});
+		const previewSrc = computed(() => {
+			const raw = props.src || props.thumbnail;
+			return resolvePath(raw!, props.src ? 'src' : 'thumbnail');
+		});
 
 		const setScroller = () => {
 			const { wrapper } = props;

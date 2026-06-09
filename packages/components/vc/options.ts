@@ -11,6 +11,9 @@ export type Options = Partial<{
 	MListItem: {
 		to: (value: any, instance: ComponentInternalInstance) => any;
 	};
+	Image: {
+		format?: (value: any, type: string, instance: ComponentInternalInstance) => string;
+	};
 }>;
 
 /**
@@ -49,5 +52,8 @@ export const defaults: Options = {
 	},
 	UploadPicker: {
 		enhancer: nil
+	},
+	Image: {
+		format: nil
 	},
 };
