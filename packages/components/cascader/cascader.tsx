@@ -66,7 +66,7 @@ export const Cascader = defineComponent({
 		});
 
 		const formatLabel = computed(() => {
-			return props.format(currentLabel.value) || props.extra;
+			return props.formatter(currentLabel.value) || props.extra;
 		});
 
 		const setColRef = (el: any, index: number) => {

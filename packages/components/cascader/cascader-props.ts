@@ -8,7 +8,7 @@ export const props = {
 		type: Array as PropType<TreeData[]>,
 		default: () => ([])
 	},
-	format: {
+	formatter: {
 		type: Function,
 		default: (v: any[]) => (v && v.join(' / '))
 	},

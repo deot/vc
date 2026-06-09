@@ -10,6 +10,6 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
-	format: Function,
+	formatter: Function,
 };
 export type Props = ExtractPropTypes<typeof props>;

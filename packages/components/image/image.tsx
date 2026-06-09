@@ -43,7 +43,7 @@ export const Image = defineComponent({
 		const scroller = ref<any>(null);
 
 		const resolvePath = (path: string, type: string) => {
-			const fn = props.format || VcInstance.options.Image?.format;
+			const fn = props.formatter || VcInstance.options.Image?.formatter;
 			if (typeof fn === 'function') {
 				return fn(path, type, instance) || path;
 			}

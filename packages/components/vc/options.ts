@@ -12,7 +12,7 @@ export type Options = Partial<{
 		to: (value: any, instance: ComponentInternalInstance) => any;
 	};
 	Image: {
-		format?: (value: any, type: string, instance: ComponentInternalInstance) => string;
+		formatter?: (value: any, type: string, instance: ComponentInternalInstance) => string;
 	};
 }>;
 
@@ -54,6 +54,6 @@ export const defaults: Options = {
 		enhancer: nil
 	},
 	Image: {
-		format: nil
+		formatter: nil
 	},
 };

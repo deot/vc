@@ -268,7 +268,7 @@ describe('Cascader interaction', () => {
 			<Cascader
 				v-model={value.value}
 				data={options}
-				format={(v: string[]) => v.join('-')}
+				formatter={(v: string[]) => v.join('-')}
 			/>
 		), { attachTo: document.body });
 		await nextTick();
