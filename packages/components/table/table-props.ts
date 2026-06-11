@@ -98,6 +98,15 @@ export const props = {
 	resizable: {
 		type: Boolean,
 		default: void 0
+	},
+	/**
+	 * v-model:columns
+	 * 暴露内部收集到的全部 leaf 列；外部可按 id 反向重排，
+	 * 并通过每项的 hidden 字段控制该列是否渲染（不影响收集）。
+	 */
+	columns: {
+		type: Array,
+		default: () => ([])
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

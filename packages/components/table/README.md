@@ -1,60 +1,3 @@
-## TODO 使用`table-layout: fixed`, `position: sticky` 优化重复渲染
-
-```vue
-<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8" />
-</head>
-<body>
-	<style>
-	th {
-		background: white;
-		width: 200px;
-		overflow: hidden;
-		border: 1px solid #333;
-		height: 60px;
-	}
-	div {
-		width: 800px;
-		overflow: auto;
-		border: 1px solid #333;
-	}
-	table {
-		width: 100%;
-		table-layout: fixed;
-	}
-
-	.sticky {
-		width: 200px;
-		background: white;
-		border: 1px solid red!important;
-		position: sticky;
-		z-index: 2;
-	}
-
-	</style>
-	<div>
-		<table>
-			<tr>
-				<th class="sticky" style="left: 0px;">Left Fixed</th>
-				<th class="sticky" style="left: 200px;">Left Fixed</th>
-				<th>滚动Start</th>
-				<th>~~~~</th>
-				<th>~~~~</th>
-				<th>~~~~</th>
-				<th>~~~~</th>
-				<th>~~~~</th>
-				<th>~~~~</th>
-				<th>~~~~</th>
-				<th>滚动End</th>
-				<th class="sticky" style="right: 0px;">Right Fixed</th>
-			</tr>
-		</table>
-	</div>
-</body>
-</html>
-```
 ## 表格（Table)
 展示行列数据
 
@@ -94,27 +37,25 @@
 ```vue
 <template>
 	<Table :data="tableData1" @row-click="handleClick">
-		<TableItem>
-			<TableColumn
-				prop="date"
-				label="日期"
-				width="180"
-			/>
-			<TableColumn
-				prop="name"
-				label="姓名"
-			/>
-			<TableColumn
-				prop="address"
-				label="地址"
-				min-width="200"
-			/>
-		</TableItem>
+		<TableColumn
+			prop="date"
+			label="日期"
+			width="180"
+		/>
+		<TableColumn
+			prop="name"
+			label="姓名"
+		/>
+		<TableColumn
+			prop="address"
+			label="地址"
+			min-width="200"
+		/>
 	</Table>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Table, TableColumn, TableItem } from '@deot/vc';
+import { Table, TableColumn } from '@deot/vc';
 
 const tableData1 = ref([
 	{
@@ -140,10 +81,7 @@ const tableData1 = ref([
 ]);
 
 const handleClick = (row, column, cell, event) => {
-	console.log(row);
-	console.log(column);
-	console.log(cell);
-	console.log(event);
+
 };
 
 </script>
@@ -157,26 +95,24 @@ const handleClick = (row, column, cell, event) => {
 ```vue
 <template>
 	<Table :data="tableData2" stripe >
-		<TableItem>
-			<TableColumn
-				prop="date"
-				label="日期"
-				width="180"
-			/>
-			<TableColumn
-				prop="name"
-				label="姓名"
-			/>
-			<TableColumn
-				prop="address"
-				label="地址"
-			/>
-		</TableItem>
+		<TableColumn
+			prop="date"
+			label="日期"
+			width="180"
+		/>
+		<TableColumn
+			prop="name"
+			label="姓名"
+		/>
+		<TableColumn
+			prop="address"
+			label="地址"
+		/>
 	</Table>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Table, TableColumn, TableItem } from '@deot/vc';
+import { Table, TableColumn } from '@deot/vc';
 
 const tableData2 = ref([
 	{
@@ -211,26 +147,24 @@ const tableData2 = ref([
 ```vue
 <template>
 	<Table :data="tableData3" border >
-		<TableItem>
-			<TableColumn
-				prop="date"
-				label="日期"
-				width="180"
-			/>
-			<TableColumn
-				prop="name"
-				label="姓名"
-			/>
-			<TableColumn
-				prop="address"
-				label="地址"
-			/>
-		</TableItem>
+		<TableColumn
+			prop="date"
+			label="日期"
+			width="180"
+		/>
+		<TableColumn
+			prop="name"
+			label="姓名"
+		/>
+		<TableColumn
+			prop="address"
+			label="地址"
+		/>
 	</Table>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Table, TableColumn, TableItem } from '@deot/vc';
+import { Table, TableColumn } from '@deot/vc';
 
 const tableData3 = ref([
 	{
@@ -265,26 +199,24 @@ const tableData3 = ref([
 ```vue
 <template>
 	<Table :data="tableData4" :row-class="tableRowClass">
-		<TableItem>
-			<TableColumn
-				prop="date"
-				label="日期"
-				width="180"
-			/>
-			<TableColumn
-				prop="name"
-				label="姓名"
-			/>
-			<TableColumn
-				prop="address"
-				label="地址"
-			/>
-		</TableItem>
+		<TableColumn
+			prop="date"
+			label="日期"
+			width="180"
+		/>
+		<TableColumn
+			prop="name"
+			label="姓名"
+		/>
+		<TableColumn
+			prop="address"
+			label="地址"
+		/>
 	</Table>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Table, TableColumn, TableItem } from '@deot/vc';
+import { Table, TableColumn } from '@deot/vc';
 
 const tableData4 = ref([
 	{
@@ -335,27 +267,25 @@ const tableRowClass = ({ row, rowIndex }) => {
 ```vue
 <template>
 	<Table :data="tableData5" border stripe height="250">
-		<TableItem>
-			<TableColumn
-				prop="date"
-				label="日期"
-				width="180"
-			/>
-			<TableColumn
-				prop="name"
-				label="姓名"
-				width="180"
-			/>
-			<TableColumn
-				prop="address"
-				label="地址"
-			/>
-		</TableItem>
+		<TableColumn
+			prop="date"
+			label="日期"
+			width="180"
+		/>
+		<TableColumn
+			prop="name"
+			label="姓名"
+			width="180"
+		/>
+		<TableColumn
+			prop="address"
+			label="地址"
+		/>
 	</Table>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Table, TableColumn, TableItem } from '@deot/vc';
+import { Table, TableColumn } from '@deot/vc';
 
 const tableData5 = ref([{
 	date: '2011-11-03',
@@ -397,56 +327,54 @@ const tableData5 = ref([{
 ```vue
 <template>
 	<Table :data="tableData5" border stripe height="250">
-		<TableItem>
-			<TableColumn
-				prop="date"
-				label="日期"
-				width="180"
-				fixed
-			/>
-			<TableColumn
-				prop="name"
-				label="姓名"
-				width="180"
+		<TableColumn
+			prop="date"
+			label="日期"
+			width="180"
+			fixed
+		/>
+		<TableColumn
+			prop="name"
+			label="姓名"
+			width="180"
 
-			/>
-			<TableColumn
-				prop="province"
-				label="省份"
-				width="180"
+		/>
+		<TableColumn
+			prop="province"
+			label="省份"
+			width="180"
 
-			/>
-			<TableColumn
-				prop="city"
-				label="市区"
-				width="180"
-			/>
-			<TableColumn
-				prop="address"
-				label="地址"
-				width="180"
-			/>
-			<TableColumn
-				prop="zip"
-				label="邮编"
-				width="180"
-			/>
-			<TableColumn
-				label="操作"
-				width="180"
-				fixed="right"
-			>
-				<template #default>
-					<Button type="text">编辑</Button>
-					<Button type="text">查看</Button>
-				</template>
-			</TableColumn>
-		</TableItem>
+		/>
+		<TableColumn
+			prop="city"
+			label="市区"
+			width="180"
+		/>
+		<TableColumn
+			prop="address"
+			label="地址"
+			width="180"
+		/>
+		<TableColumn
+			prop="zip"
+			label="邮编"
+			width="180"
+		/>
+		<TableColumn
+			label="操作"
+			width="180"
+			fixed="right"
+		>
+			<template #default>
+				<Button type="text">编辑</Button>
+				<Button type="text">查看</Button>
+			</template>
+		</TableColumn>
 	</Table>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Table, Button, TableColumn, TableItem } from '@deot/vc';
+import { Table, Button, TableColumn } from '@deot/vc';
 
 const tableData5 = ref([{
 	date: '2011-11-02',
@@ -487,31 +415,29 @@ const tableData5 = ref([{
 :::RUNTIME
 ```vue
 <template>
-	<Table :data="tableData" border stripe >
-		<TableItem>
-			<TableColumn
-				type="selection"
-				width="65"
-			/>
-			<TableColumn
-				prop="date"
-				label="日期"
-				width="180"
-			/>
-			<TableColumn
-				prop="name"
-				label="姓名"
-			/>
-			<TableColumn
-				prop="address"
-				label="地址"
-			/>
-		</TableItem>
+	<Table :data="tableData" border stripe>
+		<TableColumn
+			type="selection"
+			width="65"
+		/>
+		<TableColumn
+			prop="date"
+			label="日期"
+			width="180"
+		/>
+		<TableColumn
+			prop="name"
+			label="姓名"
+		/>
+		<TableColumn
+			prop="address"
+			label="地址"
+		/>
 	</Table>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Table, TableColumn, TableItem } from '@deot/vc';
+import { Table, TableColumn } from '@deot/vc';
 
 const tableData = ref([
 	{
@@ -551,30 +477,28 @@ const tableData = ref([
 		v-model:sort="sort"
 		@sort-change="handleSort"
 	>
-		<TableItem>
-			<TableColumn
-				prop="date"
-				label="日期"
-				sortable
-				min-width="180"
-			/>
-			<TableColumn
-				prop="name"
-				label="姓名"
-				width="180"
-				sortable
-			/>
-			<TableColumn
-				prop="address"
-				label="地址"
-				width="880"
-			/>
-		</TableItem>
+		<TableColumn
+			prop="date"
+			label="日期"
+			sortable
+			min-width="180"
+		/>
+		<TableColumn
+			prop="name"
+			label="姓名"
+			width="180"
+			sortable
+		/>
+		<TableColumn
+			prop="address"
+			label="地址"
+			width="880"
+		/>
 	</Table>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Table, TableColumn, TableItem } from '@deot/vc';
+import { Table, TableColumn } from '@deot/vc';
 
 const sort = ref({ prop: 'date', order: 'descending' });
 const tableData = ref([
@@ -600,8 +524,78 @@ const tableData = ref([
 	}
 ]);
 
-const handleSort = () => {
-	console.log(sort);
+const handleSort = () => {};
+</script>
+```
+:::
+
+### 动态列与列显隐
+通过 `v-model:columns` 拿到 Table 内部收集到的全部列，可用于"列管理"：勾选切换 `hidden` 控制某列是否渲染（不影响数据收集），也可以调整数组顺序按 `id` 重排列。
+
+:::RUNTIME
+```vue
+<template>
+	<div>
+		<label
+			v-for="col in columns"
+			:key="col.id"
+			style="margin-right: 12px;"
+		>
+			<input
+				type="checkbox"
+				:checked="!col.hidden"
+				@change="toggle(col)"
+			>
+			{{ col.label || col.type }}
+		</label>
+	</div>
+	<Table v-model:columns="columns" :data="tableData">
+		<TableColumn
+			type="selection"
+			width="55"
+		/>
+		<TableColumn
+			prop="date"
+			label="日期"
+			width="180"
+		/>
+		<TableColumn
+			prop="name"
+			label="姓名"
+		/>
+		<TableColumn
+			prop="address"
+			label="地址"
+		/>
+	</Table>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Table, TableColumn } from '@deot/vc';
+
+const columns = ref([]);
+const tableData = ref([
+	{
+		date: '2011-11-02',
+		name: '微一案',
+		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+	},
+	{
+		date: '2011-11-04',
+		name: '微一案',
+		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+	},
+	{
+		date: '2011-11-01',
+		name: '微一案',
+		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+	}
+]);
+
+const toggle = (col) => {
+	columns.value = columns.value.map(item => (
+		item.id === col.id ? { ...item, hidden: !item.hidden } : item
+	));
 };
 </script>
 ```
@@ -615,31 +609,29 @@ const handleSort = () => {
 ```vue
 <template>
 	<Table :data="dataSource">
-		<TableItem>
-			<TableColumn
-				prop="date"
-				label="日期"
-				:filters="filters"
-				:filtered-value="filteredValue"
-				:filter-multiple="true"
-				:filter="handleFilter"
-				min-width="180"
-			/>
-			<TableColumn
-				prop="name"
-				label="姓名"
-				width="180"
-			/>
-			<TableColumn
-				prop="address"
-				label="地址"
-				width="880"
-			/>
-		</TableItem>
+		<TableColumn
+			prop="date"
+			label="日期"
+			:filters="filters"
+			:filtered-value="filteredValue"
+			:filter-multiple="true"
+			:filter="handleFilter"
+			min-width="180"
+		/>
+		<TableColumn
+			prop="name"
+			label="姓名"
+			width="180"
+		/>
+		<TableColumn
+			prop="address"
+			label="地址"
+			width="880"
+		/>
 	</Table>
 </template>
 <script setup>
-import { Table, TableColumn, TableItem } from '@deot/vc';
+import { Table, TableColumn } from '@deot/vc';
 
 const filters = ref([
 	{ label: '代理升级', value: 1 },
@@ -692,35 +684,30 @@ const handleFilter = (value) => {
 		primary-key="id"
 		@expand-change="handleExpandChange"
 	>
-		<TableItem>
-			<TableColumn
-				type="selection"
-				width="55"
-			/>
-			<TableColumn
-				:width="treeWidth"
-				prop="date"
-				label="日期"
-			/>
-			<TableColumn
-				prop="name"
-				label="姓名"
-				min-width="180"
-			/>
-			<TableColumn
-				:formatter="formatter"
-				prop="address"
-				label="地址"
-			/>
-		</TableItem>
+		<TableColumn
+			type="selection"
+			width="55"
+		/>
+		<TableColumn
+			:width="treeWidth"
+			prop="date"
+			label="日期"
+		/>
+		<TableColumn
+			prop="name"
+			label="姓名"
+			min-width="180"
+		/>
+		<TableColumn
+			:formatter="formatter"
+			prop="address"
+			label="地址"
+		/>
 	</Table>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Table, TableColumn, TableItem } from '@deot/vc';
-
-const dataSource = ref(getData());
-const key = ref(1);
+import { Table, TableColumn } from '@deot/vc';
 
 const getData = () => {
 	return [
@@ -766,6 +753,9 @@ const getData = () => {
 		}
 	];
 };
+
+const dataSource = ref(getData());
+const key = ref(1);
 
 const loadExpand = (tree, treeNode) => {
 	return new Promise((resolve, reject) => {
@@ -837,6 +827,7 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 | sort                    | 默认的排序列的 `prop` 和顺序。它的`prop`属性指定默认的排序的列，`order`指定默认排序的顺序                                                                                    |                                                            |                             |         |
 | delay                   | 延迟选择，排除transition的影响                                                                                                                       |                                                            |                             |         |
 | resizable               | 是否可以伸缩(总开关/单独的column.resizable也可以设置)                                                                                                                                     |                                                            |                             |         |
+| columns                 | `v-model` 暴露 Table 收集到的全部 leaf 列（含 `selection`/`expand`/`index` 等无 `prop` 的结构列），每项含 `{ id, prop, label, type, width, fixed, align, hidden, ... }`。外部可写回两个维度：调整数组顺序（按 `id` 重排）、把某项 `hidden` 置 `true/false`（按 `id` 控制该列是否渲染，被隐藏列仍出现在暴露快照中）。`width`/`fixed` 等其它字段为只读，请用 `TableColumn` 的 props 控制。 | `Array`                                                    | -                           | `[]`    |
 
 
 ### 事件

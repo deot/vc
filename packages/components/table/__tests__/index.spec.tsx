@@ -2709,3 +2709,341 @@ describe('Table utils', () => {
 		expect(cb).toHaveBeenCalled();
 	});
 });
+
+describe('v-model:columns & hidden', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('emits update:columns with all leaf columns (incl. structural columns) on mount', async () => {
+		const onUpdateColumns = vi.fn();
+		const wrapper = mount(() => (
+			<Table
+				data={buildData(2)}
+				primaryKey="id"
+				{...{ 'onUpdate:columns': onUpdateColumns }}
+			>
+				<TableColumn type="selection" />
+				<TableColumn label="日期" prop="date" />
+				<TableColumn label="姓名" prop="name" />
+				<TableColumn label="地址" prop="address" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		expect(onUpdateColumns).toHaveBeenCalled();
+		const payload = onUpdateColumns.mock.calls.at(-1)![0];
+		expect(payload).toHaveLength(4);
+
+		const selectionCol = payload.find((c: any) => c.type === 'selection');
+		expect(selectionCol).toBeTruthy();
+		expect(selectionCol.prop).toBeUndefined();
+		expect(selectionCol.hidden).toBeFalsy(); // undefined
+		expect(payload.map((c: any) => c.prop)).toEqual([undefined, 'date', 'name', 'address']);
+		// 仅暴露可序列化字段，不泄漏内部函数
+		expect(payload.every((c: any) => typeof (c as any).renderCell === 'undefined')).toBe(true);
+
+		wrapper.unmount();
+	});
+
+	it('re-emits update:columns when columns are dynamically added / removed', async () => {
+		const onUpdateColumns = vi.fn();
+		const extra = ref(false);
+		const wrapper = mount(() => (
+			<Table
+				data={buildData(1)}
+				primaryKey="id"
+				{...{ 'onUpdate:columns': onUpdateColumns }}
+			>
+				{{
+					default: () => [
+						<TableColumn label="姓名" prop="name" />,
+						<TableColumn label="计数" prop="count" />,
+						extra.value ? <TableColumn label="地址" prop="address" /> : null
+					]
+				}}
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		expect(onUpdateColumns.mock.calls.at(-1)![0]).toHaveLength(2);
+
+		extra.value = true;
+		await flush();
+		await sleep(60);
+		await flush();
+		expect(onUpdateColumns.mock.calls.at(-1)![0]).toHaveLength(3);
+		expect(onUpdateColumns.mock.calls.at(-1)![0].map((c: any) => c.prop)).toEqual(['name', 'count', 'address']);
+
+		extra.value = false;
+		await flush();
+		await sleep(60);
+		await flush();
+		expect(onUpdateColumns.mock.calls.at(-1)![0]).toHaveLength(2);
+
+		wrapper.unmount();
+	});
+
+	it('external write-back of hidden=true removes column from render but keeps it collected', async () => {
+		const tableRef = ref<any>();
+		const columns = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={buildData(2)}
+				primaryKey="id"
+				columns={columns.value}
+				{...{ 'onUpdate:columns': (v: any[]) => { columns.value = v; } }}
+			>
+				<TableColumn label="姓名" prop="name" />
+				<TableColumn label="计数" prop="count" />
+				<TableColumn label="地址" prop="address" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const vm = tableRef.value!;
+
+		expect(columns.value).toHaveLength(3);
+		expect(vm.store.states.columns).toHaveLength(3);
+		const totalColumns = vm.store.states._columns.length;
+
+		// 写回：隐藏 name 列
+		columns.value = columns.value.map((c: any) => (
+			c.prop === 'name' ? { ...c, hidden: true } : c
+		));
+		await flush();
+		await sleep(60);
+		await flush();
+
+		const visibleProps = vm.store.states.columns.map((c: any) => c.prop);
+		expect(visibleProps).not.toContain('name');
+		expect(visibleProps).toEqual(['count', 'address']);
+		// headerRows 也不含被隐藏列
+		expect(vm.store.states.headerRows.flat().map((c: any) => c.prop)).not.toContain('name');
+		// 列仍被收集，_columns 不变
+		expect(vm.store.states._columns.length).toBe(totalColumns);
+		// 暴露快照仍包含该列且 hidden=true
+		const hiddenInPayload = columns.value.find((c: any) => c.prop === 'name');
+		expect(hiddenInPayload).toBeTruthy();
+		expect(hiddenInPayload.hidden).toBe(true);
+
+		// 写回：恢复 name 列
+		columns.value = columns.value.map((c: any) => (
+			c.prop === 'name' ? { ...c, hidden: false } : c
+		));
+		await flush();
+		await sleep(60);
+		await flush();
+		expect(vm.store.states.columns.map((c: any) => c.prop)).toContain('name');
+
+		wrapper.unmount();
+	});
+
+	it('hidden works for structural columns without prop (matched by id)', async () => {
+		const tableRef = ref<any>();
+		const columns = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={buildData(2)}
+				primaryKey="id"
+				columns={columns.value}
+				{...{ 'onUpdate:columns': (v: any[]) => { columns.value = v; } }}
+			>
+				<TableColumn type="selection" />
+				<TableColumn label="姓名" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const vm = tableRef.value!;
+
+		expect(vm.store.states.columns.some((c: any) => c.type === 'selection')).toBe(true);
+
+		const selectionId = columns.value.find((c: any) => c.type === 'selection').id;
+		columns.value = columns.value.map((c: any) => (
+			c.id === selectionId ? { ...c, hidden: true } : c
+		));
+		await flush();
+		await sleep(60);
+		await flush();
+
+		expect(vm.store.states.columns.some((c: any) => c.type === 'selection')).toBe(false);
+		expect(wrapper.find('.vc-table__selection-column').exists()).toBe(false);
+
+		wrapper.unmount();
+	});
+
+	it('external write-back reorders columns by id (reversed)', async () => {
+		const tableRef = ref<any>();
+		const columns = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={buildData(2)}
+				primaryKey="id"
+				columns={columns.value}
+				{...{ 'onUpdate:columns': (v: any[]) => { columns.value = v; } }}
+			>
+				<TableColumn label="姓名" prop="name" />
+				<TableColumn label="计数" prop="count" />
+				<TableColumn label="地址" prop="address" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const vm = tableRef.value!;
+
+		expect(vm.store.states.originColumns.map((c: any) => c.prop)).toEqual(['name', 'count', 'address']);
+
+		columns.value = [...columns.value].reverse();
+		await flush();
+		await sleep(60);
+		await flush();
+
+		expect(vm.store.states.originColumns.map((c: any) => c.prop)).toEqual(['address', 'count', 'name']);
+
+		wrapper.unmount();
+	});
+
+	it('does not loop indefinitely on external write-back (fingerprint guard)', async () => {
+		const onUpdateColumns = vi.fn();
+		const tableRef = ref<any>();
+		const columns = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={buildData(1)}
+				primaryKey="id"
+				columns={columns.value}
+				{...{ 'onUpdate:columns': (v: any[]) => { columns.value = v; onUpdateColumns(v); } }}
+			>
+				<TableColumn label="姓名" prop="name" />
+				<TableColumn label="计数" prop="count" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(60);
+		await flush();
+
+		const baseline = onUpdateColumns.mock.calls.length;
+
+		// 隐藏一列触发一次写回；应当只产生有限的 emit，而非无限回环
+		columns.value = columns.value.map((c: any) => (
+			c.prop === 'name' ? { ...c, hidden: true } : c
+		));
+		await flush();
+		await sleep(60);
+		await flush();
+
+		const afterToggle = onUpdateColumns.mock.calls.length;
+		expect(afterToggle - baseline).toBeLessThanOrEqual(2);
+
+		// 静置后不应继续增长
+		await sleep(60);
+		await flush();
+		expect(onUpdateColumns.mock.calls.length).toBe(afterToggle);
+
+		wrapper.unmount();
+	});
+
+	it('multi-level header: parent colspan shrinks as leaves are hidden (store-level)', () => {
+		const emit = vi.fn();
+		const store: any = new Store({
+			table: {
+				props: {
+					expandSelectable: true,
+					lazy: false,
+					treeMap: { hasChildren: 'hasChildren', children: 'children' }
+				},
+				emit
+			}
+		});
+
+		store.states._columns = [
+			{
+				id: 'g1',
+				label: '分组',
+				children: [
+					{ id: 'c1', prop: 'a', label: 'A' },
+					{ id: 'c2', prop: 'b', label: 'B' }
+				]
+			},
+			{ id: 'c3', prop: 'c', label: 'C' }
+		];
+		store.updateColumns();
+
+		const group0 = store.states.headerRows[0].find((c: any) => c.id === 'g1');
+		expect(group0.colspan).toBe(2);
+		expect(store.states.columns.map((c: any) => c.prop)).toEqual(['a', 'b', 'c']);
+
+		// 隐藏其中一个子列 -> 父级 colspan 收缩为 1
+		store.states._columns[0].children[0].hidden = true;
+		store.updateColumns();
+		const group1 = store.states.headerRows[0].find((c: any) => c.id === 'g1');
+		expect(group1.colspan).toBe(1);
+		expect(store.states.columns.map((c: any) => c.prop)).toEqual(['b', 'c']);
+
+		// 隐藏全部子列 -> 父分组不再渲染
+		store.states._columns[0].children[1].hidden = true;
+		store.updateColumns();
+		expect(store.states.originColumns.some((c: any) => c.id === 'g1')).toBe(false);
+		expect(store.states.columns.map((c: any) => c.prop)).toEqual(['c']);
+	});
+
+	it('applyExternalColumns: guards, nested hidden, and top-level reorder (store-level)', () => {
+		const emit = vi.fn();
+		const store: any = new Store({
+			table: {
+				props: {
+					expandSelectable: true,
+					lazy: false,
+					treeMap: { hasChildren: 'hasChildren', children: 'children' }
+				},
+				emit
+			}
+		});
+		// 提供 exposed.debouncedUpdateLayout 以便 scheduleLayout 不报错
+		store.table.exposed = { isReady: { value: true }, debouncedUpdateLayout: vi.fn() };
+
+		store.states._columns = [
+			{
+				id: 'g1',
+				label: '分组',
+				children: [
+					{ id: 'c1', prop: 'a', label: 'A' },
+					{ id: 'c2', prop: 'b', label: 'B' }
+				]
+			},
+			{ id: 'c3', prop: 'c', label: 'C' }
+		];
+		store.updateColumns();
+		// 单测直接调用 applyExternalColumns（无父组件消费 emit 回流），
+		// 每次生效的 apply 都会经 updateColumns 重新置位防回环，
+		// 故在每次期望生效的调用前手动清掉置位。
+		const apply = (v: any) => {
+			store._columnsSync.suppressWatch = false;
+			store.applyExternalColumns(v);
+		};
+
+		// guards: 非数组 / 空数组 -> 直接返回，不改动
+		apply('nope' as any);
+		apply([]);
+		expect(store.states._columns.map((c: any) => c.id)).toEqual(['g1', 'c3']);
+
+		// null 项与无 id 项被忽略；无变化时不重排
+		apply([null, { prop: 'x' }]);
+		expect(store.states._columns.map((c: any) => c.id)).toEqual(['g1', 'c3']);
+
+		// 递归隐藏嵌套子列（按 id 命中 children）
+		apply([{ id: 'c1', hidden: true }]);
+		expect(store.states.columns.map((c: any) => c.prop)).toEqual(['b', 'c']);
+		expect(store.states._columns.map((c: any) => c.id)).toEqual(['g1', 'c3']);
+
+		// 顶层按 id 重排
+		apply([{ id: 'c3' }, { id: 'g1' }]);
+		expect(store.states._columns.map((c: any) => c.id)).toEqual(['c3', 'g1']);
+
+		// 同序写回 -> orderChanged=false 且 hiddenChanged=false -> 不再变动
+		apply([{ id: 'c3' }, { id: 'g1' }]);
+		expect(store.states._columns.map((c: any) => c.id)).toEqual(['c3', 'g1']);
+	});
+});

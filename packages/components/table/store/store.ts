@@ -1,5 +1,5 @@
 import { nextTick, computed } from 'vue';
-import { merge, debounce, concat } from 'lodash-es';
+import { merge, debounce, concat, isEqualWith, pick } from 'lodash-es';
 import { hasOwn } from '@deot/helper-utils';
 import { getValuesMap, getRowValue } from '../utils';
 import { VcError } from '../../vc';
@@ -16,6 +16,12 @@ class Store extends BaseWatcher {
 	expand: Expand;
 	tree: Tree;
 	layout: Layout;
+
+	// v-model:columns 同步状态：columns 去重 emit；suppressWatch 防回环
+	_columnsSync = {
+		snapshot: [] as any[],
+		suppressWatch: false
+	};
 
 	flatData = computed(() => {
 		if (this.table.props.expandSelectable) {
@@ -206,15 +212,20 @@ class Store extends BaseWatcher {
 	updateColumns() {
 		const { states } = this;
 		const _columns = states._columns || [];
-		const leftFixedColumns = _columns.filter(column => column.fixed === true || column.fixed === 'left');
-		const rightFixedColumns = _columns.filter(column => column.fixed === 'right');
 
-		if (leftFixedColumns.length > 0 && _columns[0] && _columns[0].type === 'selection' && !_columns[0].fixed) {
-			_columns[0].fixed = true;
-			leftFixedColumns.unshift(_columns[0]);
+		// selection 自动 fixed 的副作用作用在原始 _columns 上
+		if (_columns[0] && _columns[0].type === 'selection' && !_columns[0].fixed) {
+			const anyLeftFixed = _columns.some(column => column.fixed === true || column.fixed === 'left');
+			if (anyLeftFixed) {
+				_columns[0].fixed = true;
+			}
 		}
 
-		const notFixedColumns = _columns.filter(column => !column.fixed);
+		// 基于可见树（剔除 hidden）派生 fixed 分组与 headerRows
+		const visibleColumns = this.cloneVisibleTree(_columns);
+		const leftFixedColumns = visibleColumns.filter(column => column.fixed === true || column.fixed === 'left');
+		const rightFixedColumns = visibleColumns.filter(column => column.fixed === 'right');
+		const notFixedColumns = visibleColumns.filter(column => !column.fixed);
 		const originColumns = concat(leftFixedColumns, notFixedColumns, rightFixedColumns);
 		const headerRows = columnsToRowsEffect(originColumns);
 
@@ -224,6 +235,106 @@ class Store extends BaseWatcher {
 		states.rightFixedColumns = rightFixedColumns;
 		states.originColumns = originColumns;
 		states.headerRows = headerRows;
+
+		this.syncColumnsToParent();
+	}
+
+	/**
+	 * 基于 _columns 生成"可见树"：剔除 hidden 列。
+	 * 仅克隆含 children 的父节点（避免 columnsToRowsEffect 把 colspan/level/rowspan
+	 * 写回原列对象造成残留）；leaf 列保持原引用，以便 Layout 写回 realWidth/stickyStyle/stickyClass。
+	 * @param arr 列集合
+	 * @returns 可见列集合
+	 */
+	cloneVisibleTree(arr: any[]): any[] {
+		const walk = (list: any[]): any[] => {
+			const out: any[] = [];
+			for (const column of list) {
+				if (column.hidden) continue;
+				if (column.children && column.children.length) {
+					const children = walk(column.children);
+					// 子列全隐藏时父分组也不渲染
+					if (children.length === 0) continue;
+					out.push({ ...column, children });
+				} else {
+					out.push(column);
+				}
+			}
+			return out;
+		};
+		return walk(arr);
+	}
+
+	/**
+	 * 向外部 emit update:columns。
+	 * 暴露全部收集到的 leaf 列（含被隐藏的，带 hidden 标记），不做可见性过滤。
+	 * 指纹同时纳入 id 顺序与各列 hidden 状态：
+	 * 	- 外部写回（顺序/hidden）后内部应用，指纹不变 -> 不重复 emit，避免回环；
+	 * 	- 内部列增删导致变化 -> 指纹变化 -> emit 通知外部。
+	 */
+	syncColumnsToParent() {
+		const keys = ['id', 'hidden', 'label', 'prop', 'type'];
+		const flattenColumns = flattenData(this.states._columns);
+		const columns = flattenColumns.map((column: any) => pick(column, keys)) as any[];
+		if (isEqualWith(columns.map(i => pick(i, keys)), this._columnsSync.snapshot.map(i => pick(i, keys)))) return;
+		this._columnsSync.snapshot = columns;
+		// 置位：本次 emit 会回流为外部写回，applyExternalColumns 据此跳过，避免回环
+		this._columnsSync.suppressWatch = true;
+		this.table.emit('update:columns', columns);
+	}
+
+	/**
+	 * 处理外部对 v-model:columns 的写回：
+	 * 	1) 按 id 把 hidden 回写到内部列对象（递归含 children，覆盖多级表头）；
+	 * 	2) 按 id 对齐顺序重排顶层 _columns（缺失项按原相对顺序补在末尾，避免误丢列）。
+	 * @param v 外部写回的列数组
+	 */
+	applyExternalColumns(v: any[]) {
+		if (this._columnsSync.suppressWatch) {
+			this._columnsSync.suppressWatch = false;
+			return;
+		}
+		const _columns = this.states._columns;
+		if (!Array.isArray(v) || !v.length) return;
+
+		// 1) 写 hidden（按 id，递归 children）
+		const hiddenById = v.reduce((pre, e) => (e && e.id != null && pre.set(e.id, !!e.hidden), pre), new Map<string, boolean>());
+		let hiddenChanged = false;
+		const applyHidden = (list: any[]) => {
+			for (const column of list) {
+				if (hiddenById.has(column.id)) {
+					const v1 = hiddenById.get(column.id)!;
+					if (!!column.hidden !== v1) {
+						column.hidden = v1; // 更新原对象
+						hiddenChanged = true;
+					}
+				}
+				if (column.children && column.children.length) applyHidden(column.children);
+			}
+		};
+		applyHidden(_columns);
+
+		// 2) 重排顶层 _columns（多级表头下外部多为 leaf id，匹配不到顶层则跳过）
+		const order = v.map((e: any) => e?.id).filter(Boolean) as string[];
+		const idToCol = _columns.reduce((pre, column) => (pre.set(column.id, column), pre), new Map<string, any>());
+		const used = new Set<any>();
+		const reordered: any[] = [];
+		for (const id of order) {
+			const column = idToCol.get(id);
+			if (column && !used.has(column)) {
+				reordered.push(column);
+				used.add(column);
+			}
+		}
+		for (const column of _columns) if (!used.has(column)) reordered.push(column);
+
+		const orderChanged = !(reordered.length === _columns.length && reordered.every((column, i) => column === _columns[i]));
+		orderChanged && (this.states._columns = reordered); // 更新原对象
+
+		if (orderChanged || hiddenChanged) {
+			this.updateColumns();
+			this.scheduleLayout();
+		}
 	}
 
 	// 选择

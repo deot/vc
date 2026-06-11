@@ -12,8 +12,9 @@ export class BaseWatcher {
 		// 表头数据
 		headerRows: [] as any[],
 
-		// 列 动态收集vc-table-column中的columnConfig
+		// 列 动态收集vc-table-column中的columnConfig, 收集的全部列对象
 		_columns: [] as any[],
+		// 原始列 过滤hidden后的列
 		originColumns: [] as any[],
 		notFixedColumns: [] as any[],
 		leftFixedColumns: [] as any[],

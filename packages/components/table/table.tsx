@@ -38,7 +38,8 @@ export const Table = defineComponent({
 		'header-dragend',
 		'expand-change',
 		'sort-change',
-		'update:sort'
+		'update:sort',
+		'update:columns'
 	],
 	setup(props, { slots, expose, emit }) {
 		const instance = getCurrentInstance()!;
@@ -353,6 +354,18 @@ export const Table = defineComponent({
 				}
 			},
 			{ immediate: true }
+		);
+
+		// v-model:columns 外部写回：按 id 设置 hidden + 按 id 重排
+		// deep 以便外部仅修改某项 hidden 字段（数组引用不变）也能触发
+		// 防回环由 store.applyExternalColumns 内部控制
+		watch(
+			() => props.columns,
+			(v) => {
+				if (!Array.isArray(v) || v.length === 0) return;
+				store.applyExternalColumns(v);
+			},
+			{ deep: true, flush: 'post' }
 		);
 
 		// 直接修改className（不使用render函数）, 解决临界值设置修改className时的顿挫。
