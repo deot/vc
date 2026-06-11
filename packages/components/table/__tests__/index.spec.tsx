@@ -8,7 +8,7 @@ import { vi } from 'vitest';
 import { Store } from '../store/store';
 import { Layout } from '../store/layout';
 import { useStates } from '../store/use-states';
-import { columnsToRowsEffect, flattenData, walkTreeNode } from '../store/utils';
+import { columnsToRowsEffect, computeMergePlan, flattenData, walkTreeNode } from '../store/utils';
 import {
 	getCell,
 	getColumnByCell,
@@ -21,6 +21,7 @@ import {
 	parseWidth
 } from '../utils';
 import { TableSort } from '../table-header/table-sort';
+import { TableMergeLayer } from '../table-merge';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -3045,5 +3046,261 @@ describe('v-model:columns & hidden', () => {
 		// 同序写回 -> orderChanged=false 且 hiddenChanged=false -> 不再变动
 		apply([{ id: 'c3' }, { id: 'g1' }]);
 		expect(store.states._columns.map((c: any) => c.id)).toEqual(['c3', 'g1']);
+	});
+});
+
+describe('TableMergeLayer (getSpan 合并 + grid 表头)', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('computeMergePlan: 切块 / cells / skip / 0 值 / 越界裁剪', () => {
+		const data = buildData(5);
+		const columns = [{ id: 'c0' }, { id: 'c1' }, { id: 'c2' }];
+		// 第 0 列每 2 行合并；row0 的 c1+c2 横向合并；row4 c2 越界 rowspan
+		const getSpan = ({ rowIndex, columnIndex }: any) => {
+			if (columnIndex === 0) return rowIndex % 2 === 0 ? [2, 1] : [0, 0];
+			if (rowIndex === 0 && columnIndex === 1) return { rowspan: 1, colspan: 2 };
+			if (rowIndex === 0 && columnIndex === 2) return [0, 0];
+			if (rowIndex === 4 && columnIndex === 2) return [99, 1];
+			return [1, 1];
+		};
+		const plan = computeMergePlan(data, columns, getSpan);
+
+		// rows: [0,1] 合并、[2,3] 合并、[4] 单行
+		expect(plan.blocks.map((b: any) => [b.start, b.end])).toEqual([[0, 1], [2, 3], [4, 4]]);
+
+		const block0 = plan.blocks[0];
+		expect(block0.cells).toBeTruthy();
+		const anchor = block0.cells.find((c: any) => c.rowIndex === 0 && c.columnIndex === 0);
+		expect(anchor.rowspan).toBe(2);
+		// 被覆盖的 (1,0) 与 (0,2) 不在 cells 中
+		expect(block0.cells.some((c: any) => c.rowIndex === 1 && c.columnIndex === 0)).toBe(false);
+		expect(block0.cells.some((c: any) => c.rowIndex === 0 && c.columnIndex === 2)).toBe(false);
+		// colspan 合并
+		const colspanAnchor = block0.cells.find((c: any) => c.rowIndex === 0 && c.columnIndex === 1);
+		expect(colspanAnchor.colspan).toBe(2);
+
+		// 末行越界 rowspan 被裁剪为 1 -> 单行无合并 -> 无 cells，走原 TableBodyRow 路径
+		expect(plan.blocks[2].cells).toBeUndefined();
+	});
+
+	it('getSpan: 合并块走 grid 渲染（aria-rowspan / data-row / 缓存 / hasMergeCells）', async () => {
+		const tableRef = ref<any>();
+		const data = buildData(4);
+		const getSpan = vi.fn(({ rowIndex, columnIndex }: any) => {
+			if (columnIndex === 0 && rowIndex === 0) return [2, 1];
+			return [1, 1];
+		});
+		const onRowClick = vi.fn();
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={data}
+				primaryKey="id"
+				getSpan={getSpan}
+				// @ts-ignore
+				onRowClick={onRowClick}
+			>
+				<TableColumn label="名称" prop="name" />
+				<TableColumn label="地址" prop="address" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(60);
+		await flush();
+
+		const vm = tableRef.value!;
+		// rows[0,1] 合并为一块，rows[2,3] 单行块
+		expect(vm.store.states.list).toHaveLength(3);
+		expect(vm.store.states.hasMergeCells).toBe(true);
+
+		// body 中存在 grid 合并层；anchor cell 带 aria-rowspan，覆盖格子不渲染
+		const layer = wrapper.find('.vc-table__body-wrapper .vc-table__merge-layer');
+		expect(layer.exists()).toBe(true);
+		const anchor = layer.find('[aria-rowspan="2"]');
+		expect(anchor.exists()).toBe(true);
+		// 2 行 x 2 列 - 1 个被覆盖 = 3 个 cell
+		expect(layer.findAll('.vc-table__merge-cell')).toHaveLength(3);
+		expect(anchor.attributes('data-row')).toBe('0');
+		expect(anchor.classes()).toContain('vc-table__td');
+		expect(anchor.classes()).toContain('is-grid-first');
+
+		// 普通块仍走原有逐行渲染
+		expect(wrapper.findAll('.vc-table__body-wrapper .vc-table__tr').length).toBe(2);
+
+		// 事件：合并 cell 点击 -> row-click + current-row
+		await anchor.trigger('click');
+		await flush();
+		expect(onRowClick).toHaveBeenCalled();
+		expect(vm.store.states.currentRow.id).toBe('id__0');
+
+		// 缓存：data/columns/getSpan 未变时 updateColumns 不触发重复求值
+		const callsBefore = getSpan.mock.calls.length;
+		vm.store.applyMergePlan();
+		expect(getSpan.mock.calls.length).toBe(callsBefore);
+
+		wrapper.unmount();
+	});
+
+	it('多级表头：grid 渲染 + aria-colspan/aria-rowspan + sticky 类保留', async () => {
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(2)} primaryKey="id">
+				<TableColumn label="A" prop="name" fixed="left" width={80} />
+				<TableColumn label="B1" prop="count" width={100} />
+				<TableColumn label="B2" prop="address" width={120} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		// 嵌套 TableColumn 注册在测试环境受限（见上方 skip 用例），store 层手工组装分组列
+		const vm = tableRef.value!;
+		const [a, b1, b2] = vm.store.states._columns;
+		vm.store.states._columns = [a, { id: 'group-1', label: '分组', children: [b1, b2] }];
+		vm.store.updateColumns();
+		await flush();
+		await sleep(60);
+		await flush();
+
+		const thead = wrapper.find('.vc-table__thead');
+		expect(thead.classes()).toContain('vc-table__merge-layer');
+		expect(thead.classes()).toContain('is-group');
+
+		// 分组列 colspan=2；leaf 列 A rowspan=2
+		const group = thead.find('[aria-colspan="2"]');
+		expect(group.exists()).toBe(true);
+		const leafA = thead.find('[aria-rowspan="2"]');
+		expect(leafA.exists()).toBe(true);
+		expect(leafA.classes()).toContain('is-fixed-left');
+		expect((leafA.element as HTMLElement).style.position).toBe('sticky');
+
+		// th 总数 = 1(A) + 1(分组) + 2(B1/B2)
+		expect(thead.findAll('.vc-table__th')).toHaveLength(4);
+
+		wrapper.unmount();
+	});
+
+	it('TableMergeLayer 独立渲染：默认 props + realWidth 兜底 + 最后一列 minmax', () => {
+		const w1 = mount(() => (<TableMergeLayer />));
+		expect(w1.find('.vc-table__merge-layer').exists()).toBe(true);
+		w1.unmount();
+
+		const w2 = mount(() => (
+			<TableMergeLayer
+				columns={[{ width: 100 }, {}] as any}
+				cells={[{ rowIndex: 0, columnIndex: 0 }] as any}
+			/>
+		));
+		const el = w2.find('.vc-table__merge-layer').element as HTMLElement;
+		expect(el.style.gridTemplateColumns).toBe('100px minmax(80px, 1fr)');
+		// 默认 key / span：cell 渲染且无 aria-*（非合并格）
+		const cell = w2.find('.vc-table__merge-cell');
+		expect(cell.exists()).toBe(true);
+		expect(cell.attributes('aria-rowspan')).toBeUndefined();
+		expect(cell.classes()).toContain('is-grid-first');
+		w2.unmount();
+	});
+
+	it('合并块 cell 级行为：row/cell class+style、stripe、highlight、hover、dblclick/contextmenu、rowHeight', async () => {
+		const tableRef = ref<any>();
+		const data = buildData(4);
+		const onCellDblclick = vi.fn();
+		const onRowContextmenu = vi.fn();
+		const onCellMouseEnter = vi.fn();
+		const onCellMouseLeave = vi.fn();
+		const getSpan = ({ rowIndex, columnIndex }: any) => (columnIndex === 0 && rowIndex === 0 ? [2, 1] : [1, 1]);
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={data}
+				primaryKey="id"
+				getSpan={getSpan}
+				stripe
+				highlight
+				rowHeight={40}
+				rowClass={({ rowIndex }: any) => `mr-row-${rowIndex}`}
+				rowStyle={() => ({ color: 'rgb(1, 2, 3)' })}
+				cellClass="mr-cell"
+				cellStyle={({ columnIndex }: any) => (columnIndex === 1 ? { background: 'red' } : {})}
+				{
+					...{
+						onCellDblclick,
+						onRowContextmenu,
+						onCellMouseEnter,
+						onCellMouseLeave
+					} as any
+				}
+			>
+				<TableColumn label="名称" prop="name" line={1} />
+				<TableColumn label="地址" prop="address" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(60);
+		await flush();
+
+		const layer = wrapper.find('.vc-table__body-wrapper .vc-table__merge-layer');
+		const anchor = layer.find('[aria-rowspan="2"]');
+
+		// row/cell 的 class、style 合并到 cell 上
+		expect(anchor.classes()).toContain('mr-row-0');
+		expect(anchor.classes()).toContain('mr-cell');
+		expect((anchor.element as HTMLElement).style.color).toBe('rgb(1, 2, 3)');
+		// stripe：以行号计
+		expect(layer.find('[data-row="1"]').classes()).toContain('is-striped');
+		// rowHeight -> grid-auto-rows
+		expect((layer.element as HTMLElement).style.gridAutoRows).toBe('40px');
+
+		// hover：cell mouseenter -> setHoverRow + hover-row 类作用在 cell 上
+		await anchor.trigger('mouseenter');
+		await sleep(80);
+		await flush();
+		expect(onCellMouseEnter).toHaveBeenCalled();
+		expect(tableRef.value.store.states.hoverRowIndex).toBe(0);
+		expect(layer.find('[data-row="0"].hover-row').exists()).toBe(true);
+
+		await anchor.trigger('mouseleave');
+		await sleep(80);
+		expect(onCellMouseLeave).toHaveBeenCalled();
+		expect(tableRef.value.store.states.hoverRowIndex).toBe(null);
+
+		// highlight：点击后 current-row 类按行作用在 cell 上
+		await anchor.trigger('click');
+		await flush();
+		expect(layer.find('[data-row="0"].current-row').exists()).toBe(true);
+
+		await anchor.trigger('dblclick');
+		await anchor.trigger('contextmenu');
+		expect(onCellDblclick).toHaveBeenCalled();
+		expect(onRowContextmenu).toHaveBeenCalled();
+
+		wrapper.unmount();
+	});
+
+	it('虚拟滚动（height）下合并块作为 RecycleList 最小渲染单位', async () => {
+		const tableRef = ref<any>();
+		const getSpan = ({ rowIndex, columnIndex }: any) => {
+			if (columnIndex === 0 && rowIndex % 2 === 0) return [2, 1];
+			return [1, 1];
+		};
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(20)} primaryKey="id" height={200} rows={5} getSpan={getSpan}>
+				<TableColumn label="名称" prop="name" />
+				<TableColumn label="地址" prop="address" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(60);
+		await flush();
+
+		const vm = tableRef.value!;
+		// 20 行两两合并 -> 10 个合并块
+		expect(vm.store.states.list).toHaveLength(10);
+		expect(vm.store.states.list.every((i: any) => i.cells)).toBe(true);
+		expect(wrapper.find('.vc-recycle-list').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__merge-layer').exists()).toBe(true);
+
+		wrapper.unmount();
 	});
 });

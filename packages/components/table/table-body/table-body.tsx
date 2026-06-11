@@ -31,12 +31,14 @@ export const TableBody = defineComponent({
 		watch(
 			() => table.store.states.hoverRowIndex,
 			(v, oldV) => {
-				if (!table.store.states.isComplex || IS_SERVER) return;
+				// 合并块（grid）没有行容器，hover 高亮按 data-row 作用在 cell 上，也走 JS 控制
+				if ((!table.store.states.isComplex && !table.store.states.hasMergeCells) || IS_SERVER) return;
 				raf(() => {
-					const oldRow = instance.vnode.el!.querySelector(`.vc-table__row[data-row="${oldV}"]`);
-					const newRow = instance.vnode.el!.querySelector(`.vc-table__row[data-row="${v}"]`);
-					oldRow && removeClass(oldRow, 'hover-row');
-					newRow && addClass(newRow, 'hover-row');
+					const select = (index: any) => instance.vnode.el!.querySelectorAll(
+						`.vc-table__row[data-row="${index}"], .vc-table__merge-cell[data-row="${index}"]`
+					);
+					select(oldV).forEach((dom: any) => removeClass(dom, 'hover-row'));
+					select(v).forEach((dom: any) => addClass(dom, 'hover-row'));
 				});
 			}
 		);
@@ -44,7 +46,10 @@ export const TableBody = defineComponent({
 		const handleMergeRowResize = (changes: any[]) => {
 			if (table.props.rowHeight) return;
 			changes.forEach((v: any) => {
-				states.list[v.index].rows.forEach((row: any) => {
+				const block = states.list[v.index];
+				// 合并块由 grid 自行撑开行高，块级尺寸不能回写到单行
+				if (!block || block.cells) return;
+				block.rows.forEach((row: any) => {
 					if (row.height === v.size) return;
 					row.height = v.size || '';
 				});

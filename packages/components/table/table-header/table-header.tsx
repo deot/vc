@@ -4,6 +4,7 @@ import { IS_SERVER } from '@deot/vc-shared';
 import { Popover } from '../../popover';
 import { Icon } from '../../icon';
 import { useStates } from '../store';
+import { TableMergeLayer } from '../table-merge';
 import { TableSort } from './table-sort';
 // import TableFilter from './table-filter';
 
@@ -248,103 +249,134 @@ export const TableHeader = defineComponent({
 			});
 		};
 
+		const renderCellContent = (column: any, columnIndex: number) => {
+			return (
+				<div
+					class={[
+						'vc-table__cell',
+						// {
+						// 	"is-highlight": column.filteredValue && column.filteredValue.length > 0
+						// },
+						column.labelClass
+					]}
+				>
+					{
+						column.renderHeader
+							? column.renderHeader(
+									{
+										column,
+										columnIndex,
+										store: table.store,
+									}
+								)
+							: column.label
+					}
+					{
+						column.tooltip
+							? (
+									<Icon
+										type="o-info"
+										class="vc-table__tooltip"
+										onMouseenter={(e: any) => handleCellMouseEnter(e, column)}
+									/>
+								)
+							: null
+					}
+					{
+						column.sortable
+							? (
+									<TableSort
+										order={column.prop === props.sort.prop ? props.sort.order : ''}
+										onClick={(order: any) => handleSort(column.prop, order)}
+									/>
+								)
+							: null
+					}
+					{
+						column.filters
+							? (
+									<TableFilter
+										data={column.filters}
+										value={column.filteredValue}
+										icon={column.filterIcon}
+										portalClass={column.filterPopupClass}
+										multiple={column.filterMultiple}
+										onChange={v => handleFilter(column, v)}
+									/>
+								)
+							: null
+					}
+				</div>
+			);
+		};
+
+		/**
+		 * 把 states.headerRows（二维，多级表头）推导为 TableMergeLayer 的 cells[]：
+		 * 多级表头本质就是 rowspan/colspan（columnsToRowsEffect 已写在 column 上），
+		 * 这里只需按占位推导每个 cell 的起始叶子列号（grid 列坐标）。
+		 * 注意：headerRowStyle/Class 在 grid 下没有"行容器"，按行合并到该行各 cell 上。
+		 * @returns 表头 cells
+		 */
+		const buildHeaderCells = () => {
+			const rows: any[][] = states.headerRows;
+			const cells: any[] = [];
+			// 占位表：跨行（rowspan）的 cell 会占用后续行的列位
+			const taken: boolean[][] = rows.map(() => []);
+
+			rows.forEach((columns: any[], rowIndex: number) => {
+				let gridColumnIndex = 0;
+				columns.forEach((column: any, columnIndex: number) => {
+					while (taken[rowIndex][gridColumnIndex]) gridColumnIndex++;
+					const rowspan = column.rowspan || 1;
+					const colspan = column.colspan || 1;
+					for (let i = rowIndex; i < rowIndex + rowspan && i < rows.length; i++) {
+						for (let j = gridColumnIndex; j < gridColumnIndex + colspan; j++) {
+							taken[i][j] = true;
+						}
+					}
+
+					cells.push({
+						key: column.id,
+						rowIndex,
+						columnIndex: gridColumnIndex,
+						rowspan,
+						colspan,
+						class: [
+							getHeaderRowClass(rowIndex),
+							getHeaderCellClass(rowIndex, columnIndex, columns, column),
+							column.resizable && dragLineClass.value,
+							column.stickyClass,
+							'vc-table__th'
+						],
+						style: [
+							getHeaderRowStyle(rowIndex),
+							getHeaderCellStyle(rowIndex, columnIndex, columns, column),
+							column.stickyStyle
+						],
+						attrs: {
+							onMousemove: (e: any) => handleMouseMove(e, column),
+							onMouseout: handleMouseOut,
+							onMousedown: (e: any) => handleMouseDown(e, column),
+							onClick: (e: any) => handleHeaderClick(e, column),
+							onContextmenu: (e: any) => handleHeaderContextMenu(e, column)
+						},
+						render: () => renderCellContent(column, columnIndex)
+					});
+					gridColumnIndex += colspan;
+				});
+			});
+			return cells;
+		};
+
 		return () => {
 			return (
 				<div class="vc-table__header">
-					<div class={[{ 'is-group': states.isGroup }, 'vc-table__thead']}>
-						{
-							// renderList
-							states.headerRows.map((columns: any[], rowIndex: number) => (
-								<div
-									style={getHeaderRowStyle(rowIndex)}
-									class={[getHeaderRowClass(rowIndex), 'vc-table__tr']}
-								>
-									{
-										columns.map((column: any, columnIndex: number) => {
-											return (
-												<div
-													onMousemove={(e: any) => handleMouseMove(e, column)}
-													onMouseout={handleMouseOut}
-													onMousedown={(e: any) => handleMouseDown(e, column)}
-													onClick={(e: any) => handleHeaderClick(e, column)}
-													onContextmenu={(e: any) => handleHeaderContextMenu(e, column)}
-													style={[
-														getHeaderCellStyle(rowIndex, columnIndex, columns, column),
-														{ width: `${column.realWidth}px` },
-														column.stickyStyle
-													]}
-													class={[
-														getHeaderCellClass(rowIndex, columnIndex, columns, column),
-														column.resizable && dragLineClass.value,
-														column.stickyClass,
-														'vc-table__th'
-													]}
-													key={column.id}
-												>
-													<div
-														class={[
-															'vc-table__cell',
-															// {
-															// 	"is-highlight": column.filteredValue && column.filteredValue.length > 0
-															// },
-															column.labelClass
-														]}
-													>
-														{
-															column.renderHeader
-																? column.renderHeader(
-																		{
-																			column,
-																			columnIndex,
-																			store: table.store,
-																		}
-																	)
-																: column.label
-														}
-														{
-															column.tooltip
-																? (
-																		<Icon
-																			type="o-info"
-																			class="vc-table__tooltip"
-																			onMouseenter={(e: any) => handleCellMouseEnter(e, column)}
-																		/>
-																	)
-																: null
-														}
-														{
-															column.sortable
-																? (
-																		<TableSort
-																			order={column.prop === props.sort.prop ? props.sort.order : ''}
-																			onClick={(order: any) => handleSort(column.prop, order)}
-																		/>
-																	)
-																: null
-														}
-														{
-															column.filters
-																? (
-																		<TableFilter
-																			data={column.filters}
-																			value={column.filteredValue}
-																			icon={column.filterIcon}
-																			portalClass={column.filterPopupClass}
-																			multiple={column.filterMultiple}
-																			onChange={v => handleFilter(column, v)}
-																		/>
-																	)
-																: null
-														}
-													</div>
-												</div>
-											);
-										})
-									}
-								</div>
-							))
-						}
-					</div>
+					<TableMergeLayer
+						class={[{ 'is-group': states.isGroup }, 'vc-table__thead']}
+						columns={states.columns}
+						cells={buildHeaderCells()}
+						cellRole="columnheader"
+					/>
 				</div>
 			);
 		};

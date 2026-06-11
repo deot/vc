@@ -8,7 +8,7 @@ import { Expand } from './expand-mixin';
 import { Current } from './current-mixin';
 import { Tree } from './tree-mixin';
 import { Layout } from './layout';
-import { columnsToRowsEffect, flattenData } from './utils';
+import { columnsToRowsEffect, flattenData, computeMergePlan } from './utils';
 
 class Store extends BaseWatcher {
 	table: any;
@@ -21,6 +21,15 @@ class Store extends BaseWatcher {
 	_columnsSync = {
 		snapshot: [] as any[],
 		suppressWatch: false
+	};
+
+	// getSpan 合并计划缓存（依赖 data / columns / getSpan，排序过滤由外部完成体现在 data 上）
+	_mergeCache = {
+		data: null as any,
+		length: 0,
+		columnsKey: '',
+		getSpan: null as any,
+		plan: null as any
 	};
 
 	flatData = computed(() => {
@@ -93,6 +102,8 @@ class Store extends BaseWatcher {
 			return pre;
 		}, []);
 		caches.clear();
+
+		this.applyMergePlan();
 
 		/**
 		 * 数据变化，更新部分数据。
@@ -236,7 +247,56 @@ class Store extends BaseWatcher {
 		states.originColumns = originColumns;
 		states.headerRows = headerRows;
 
+		// 列变化（增删/显隐/重排）会影响 getSpan 的 columnIndex 语义，需重算合并块
+		this.applyMergePlan();
+
 		this.syncColumnsToParent();
+	}
+
+	/**
+	 * 合并预处理：根据 getSpan 产出合并计划（cells[] + skip 已在 utils 内消化），
+	 * 并据此把 states.list 重组为"行方向连续合并块"。
+	 * 	- 带缓存：data（引用 + 长度）/ columns（id 序列）/ getSpan 任一变化才重算；
+	 * 	- 复用现有 row 对象，保留 height 缓存；
+	 * 	- 不含合并的块 cells 为空，渲染层继续走原有 TableBodyRow 路径。
+	 */
+	applyMergePlan() {
+		const { getSpan, primaryKey } = this.table.props;
+		const { data, columns, list } = this.states;
+		if (typeof getSpan !== 'function' || !data.length || !columns.length) return;
+
+		const columnsKey = columns.map((column: any) => column.id).join(',');
+		const cache = this._mergeCache;
+		let plan = cache.plan;
+		if (
+			!plan
+			|| cache.data !== data
+			|| cache.length !== data.length
+			|| cache.columnsKey !== columnsKey
+			|| cache.getSpan !== getSpan
+		) {
+			plan = computeMergePlan(data, columns, getSpan);
+			this._mergeCache = { data, length: data.length, columnsKey, getSpan, plan };
+		}
+
+		// list 可能是逐行的（setData 后）也可能已合并（updateColumns 再次触发），统一展平后按计划重组
+		const flatRows = list.reduce((pre: any[], block: any) => (pre.push(...block.rows), pre), []);
+		if (flatRows.length !== data.length) return;
+
+		this.states.list = plan.blocks.map((block: any) => {
+			const rows = flatRows.slice(block.start, block.end + 1);
+			const id = primaryKey
+				? rows.map((row: any) => getRowValue(row.data, primaryKey)).join(',')
+				: block.start;
+			return {
+				id: typeof id === 'undefined' ? block.start : id,
+				rows,
+				expand: false,
+				// 仅含合并的块才有 cells；rowStart 供 TableMergeLayer 映射绝对行号
+				cells: block.cells,
+				rowStart: block.start
+			};
+		});
 	}
 
 	/**

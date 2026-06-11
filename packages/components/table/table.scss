@@ -239,6 +239,29 @@ $line-height: 20px;
 		width: 23px;
 	}
 	
+	// 公共合并渲染层：CSS Grid（separate 语义，边框由 cell 自带的右/下 border 表达，
+	// 与 sticky / grid 兼容；被覆盖的格子不渲染，合并块内部天然无多余边框）
+	@include element(merge-layer) {
+		position: relative;
+		display: grid;
+		gap: 0;
+	}
+
+	@include element(merge-cell) {
+		min-width: 0;
+		background-color: #fff;
+		box-sizing: border-box;
+
+		// grid 下无行容器，:first-child/:last-child 失效，按列坐标补内边距
+		&.is-grid-first {
+			padding-left: $gap-h;
+		}
+
+		&.is-grid-last {
+			padding-right: $gap-h;
+		}
+	}
+
 	@include element(append-wrapper) {
 		// 避免外边距重合 https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Box_Model/Mastering_margin_collapsing
 		overflow: hidden;
@@ -250,7 +273,8 @@ $line-height: 20px;
 	}
 
 	@include element(header) {
-		.vc-table__thead .vc-table__tr .vc-table__th {
+		// grid 模式下 thead 无行容器，直接命中 th
+		.vc-table__thead .vc-table__th {
 			font-size: 13px;
 			font-weight: 500;
 			line-height: 20px;
@@ -347,6 +371,12 @@ $line-height: 20px;
 		.vc-table__tr.current-row > .vc-table__td {
 			background: $f9;
 		}
+
+		// 合并块（grid）：hover/current 直接作用在 cell 上（叠 .vc-table__td 保证盖过 sticky 列底色）
+		.vc-table__td.vc-table__merge-cell.hover-row,
+		.vc-table__td.vc-table__merge-cell.current-row {
+			background: $f9;
+		}
 	}
 
 	@include element(column-resize-proxy) {
@@ -384,6 +414,16 @@ $line-height: 20px;
 				}
 
 				&.current-row .vc-table__td {
+					background: $f9;
+				}
+			}
+
+			// 合并块（grid）：斑马纹以 anchor cell 所在行号计
+			& .vc-table__merge-cell.is-striped {
+				background: #fafafa;
+
+				&.current-row,
+				&.hover-row {
 					background: $f9;
 				}
 			}

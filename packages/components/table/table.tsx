@@ -442,6 +442,7 @@ export const Table = defineComponent({
 				<div
 					ref={tableWrapper}
 					class={[classes.value, tableId, 'vc-table']}
+					role="table"
 					onMouseleave={handleMouseLeave}
 				>
 					<div ref={hiddenColumns} class="vc-table__hidden">
