@@ -39,10 +39,14 @@ export const Snapshot = defineComponent({
 			ctx?.destroy?.();
 		};
 
-		const toDataURL = async () => {
+		const toDataURL = async (type = 'svg') => {
 			const loadContext = onLoad();
 			try {
 				await refresh();
+				if (type === 'png') {
+					const img = await snapshot.value.toPng();
+					return img.src;
+				}
 				return snapshot.value.toRaw();
 			} finally {
 				onLoaded(loadContext);
