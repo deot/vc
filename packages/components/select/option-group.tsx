@@ -17,7 +17,10 @@ export const OptionGroup = defineComponent({
 
 		const customOptions = computed(() => {
 			return {
-				row: props.row
+				row: props.row,
+				store: {
+					group: true
+				}
 			};
 		});
 
@@ -27,11 +30,17 @@ export const OptionGroup = defineComponent({
 					{
 						typeof props.render === 'function'
 							? (<Customer render={props.render} {...customOptions.value} />)
-							: slots.title
-								? slots.title({ row: props.row })
+							: slots.optionGroup
+								? slots.optionGroup(customOptions.value)
 								: (
 										<div class="vc-select-option-group__title">
-											{ formatterLabel.value }
+											{
+												typeof props.renderLabel === 'function'
+													? (<Customer render={props.renderLabel} {...customOptions.value} />)
+													: slots.label
+														? slots.label(customOptions.value)
+														: formatterLabel.value
+											}
 										</div>
 									)
 					}

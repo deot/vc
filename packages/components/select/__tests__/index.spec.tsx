@@ -736,6 +736,75 @@ describe('Select expose & misc', () => {
 		wrapper.unmount();
 	});
 
+	it('renderLabel uses custom renderer', async () => {
+		const renderLabel = vi.fn(({ row }: any) => {
+			return (<div class="custom-label">{ `(${row.label})` }</div>) as any;
+		});
+		const wrapper = mount(() => (
+			<Select data={cityList} renderLabel={renderLabel} />
+		), { attachTo: document.body });
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await flush();
+
+		const labels = document.querySelectorAll('.custom-label');
+		expect(labels.length).toBe(cityList.length);
+		expect(labels[0].textContent).toBe('(New York)');
+
+		wrapper.unmount();
+	});
+
+	it('label slot uses custom renderer', async () => {
+		const label = vi.fn(({ row }: any) => {
+			return (<div class="slot-label">{ `*${row.label}*` }</div>) as any;
+		});
+		const wrapper = mount(() => (
+			<Select data={cityList}>
+				{{ label }}
+			</Select>
+		), { attachTo: document.body });
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await flush();
+
+		const labels = document.querySelectorAll('.slot-label');
+		expect(labels.length).toBe(cityList.length);
+		expect(labels[0].textContent).toBe('*New York*');
+		expect(label).toHaveBeenCalled();
+
+		wrapper.unmount();
+	});
+
+	it('label slot renders custom group title', async () => {
+		const wrapper = mount(() => (
+			<Select data={groupedData}>
+				{{
+					label: ({ row, store }: any) => (
+						store?.group
+							? (<div class="slot-group-label">{ `G:${row.value}` }</div>)
+							: (<span class="slot-opt-label">{ row.label }</span>)
+					)
+				}}
+			</Select>
+		), { attachTo: document.body });
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await flush();
+
+		const groupLabels = document.querySelectorAll('.slot-group-label');
+		expect(groupLabels.length).toBe(2);
+		expect(groupLabels[0].textContent).toBe('G:Hot Cities');
+
+		const optLabels = document.querySelectorAll('.slot-opt-label');
+		expect(optLabels.length).toBe(4);
+		expect(optLabels[0].textContent).toBe('New York');
+
+		wrapper.unmount();
+	});
+
 	it('default option group title uses option-group__title', async () => {
 		const wrapper = mount(() => (
 			<Select data={groupedData} />

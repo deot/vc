@@ -297,6 +297,7 @@ const options = ref([
 | separator         | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |
 | numerable         | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |
 | nullValue         | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |
+| renderLabel      | -                                                                          | `function`                | -                                                                                                                                         | -             |
 | renderOption      | -                                                                          | `function`                | -                                                                                                                                         | -             |
 | renderOptionGroup      | -                                                                          | `function`                | -                                                                                                                                         | -             |
 
@@ -332,6 +333,7 @@ const options = ref([
 
 | 属性           | 说明                    |
 | ------------ | --------------------- |
+| label        | ~. 参数为 { row, store } |
 | option       | ~. 参数为 { row, store } |
 | option-group | ~. 参数为 { row }        |
 

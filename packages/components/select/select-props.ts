@@ -21,6 +21,7 @@ export const props = {
 	...(pick(inputProps, inputKeys) as Pick<typeof inputProps, typeof inputKeys[number]>),
 	renderOption: [Function] as Render,
 	renderOptionGroup: [Function] as Render,
+	renderLabel: [Function] as Render,
 	data: {
 		type: Array,
 		default: () => ([])

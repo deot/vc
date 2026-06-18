@@ -11,5 +11,6 @@ export const props = {
 	},
 	row: Object,
 	render: [Function] as Render,
+	renderLabel: [Function] as Render,
 };
 export type Props = ExtractPropTypes<typeof props>;

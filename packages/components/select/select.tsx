@@ -338,7 +338,8 @@ export const Select = defineComponent({
 																				>
 
 																					{{
-																						title: slots?.optionGroup,
+																						optionGroup: slots?.optionGroup,
+																						label: slots?.label,
 																						default: () => {
 																							return item.children.map(($item: any) => {
 																								return (
@@ -351,8 +352,9 @@ export const Select = defineComponent({
 																										disabled={$item.disabled}
 																										filterable={$item.filterable}
 																										render={props.renderOption}
+																										renderLabel={props.renderLabel}
 																									>
-																										{{ default: slots?.option }}
+																										{{ default: slots?.option, label: slots?.label }}
 																									</Option>
 																								);
 																							});
@@ -370,8 +372,9 @@ export const Select = defineComponent({
 																					disabled={item.disabled}
 																					filterable={item.filterable}
 																					render={props.renderOption}
+																					renderLabel={props.renderLabel}
 																				>
-																					{{ default: slots?.option }}
+																					{{ default: slots?.option, label: slots?.label }}
 																				</Option>
 																			);
 																})

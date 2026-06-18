@@ -83,7 +83,13 @@ export const Option = defineComponent({
 								onClick={withModifiers(handleClick, ['stop'])}
 								onMousedown={handlePrevent}
 							>
-								{ formatterLabel.value }
+								{
+									typeof props.renderLabel === 'function'
+										? (<Customer render={props.renderLabel} {...customOptions.value} />)
+										: slots.label
+											? slots.label(customOptions.value)
+											: formatterLabel.value
+								}
 								{ isChecked.value && (<Icon type="correct" />) }
 							</div>
 						);
