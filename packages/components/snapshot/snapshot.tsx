@@ -79,7 +79,7 @@ export const Snapshot = defineComponent({
 						return v;
 					})
 					.finally(() => done(skip$));
-				return;
+				return skip;
 			}
 
 			done(skip);

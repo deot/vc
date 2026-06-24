@@ -75,6 +75,7 @@ const handleClick = async () => {
 };
 
 const handleDownload = async () => {
-	target.value.download({ format: 'pdf', filename: 'any' });
+	await target.value.download({ format: 'pdf', filename: 'any' });
+	console.log('downloaded');
 };
 </script>
