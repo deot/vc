@@ -100,6 +100,16 @@ export const props = {
 		default: void 0
 	},
 	/**
+	 * 流式高度下（未设置 height/max-height）表头吸顶、合计行吸底
+	 * boolean 时同时作用于表头与合计行；
+	 * array 为 [top, bottom]，每项可为 boolean 或 affix 配置对象；
+	 * object 时同时作用于两端
+	 */
+	affix: {
+		type: [Boolean, Array, Object],
+		default: false
+	},
+	/**
 	 * v-model:columns
 	 * 暴露内部收集到的全部 leaf 列；外部可按 id 反向重排，
 	 * 并通过每项的 hidden 字段控制该列是否渲染（不影响收集）。

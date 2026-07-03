@@ -3046,4 +3046,81 @@ describe('v-model:columns & hidden', () => {
 		apply([{ id: 'c3' }, { id: 'g1' }]);
 		expect(store.states._columns.map((c: any) => c.id)).toEqual(['c3', 'g1']);
 	});
+
+	it('affix: boolean 流式高度下表头/合计行启用吸附', async () => {
+		const data = buildData(20);
+		const wrapper = mount(() => (
+			<Table data={data} primaryKey="id" affix showSummary>
+				<TableColumn label="名称" prop="name" />
+				<TableColumn label="数量" prop="count" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		// 表头 + 合计行两处均被 Affix 包裹
+		expect(wrapper.findAll('.vc-affix').length).toBe(2);
+
+		wrapper.unmount();
+	});
+
+	it('affix: array [top, bottom] 分别控制两端', async () => {
+		const data = buildData(20);
+		const wrapper = mount(() => (
+			<Table data={data} primaryKey="id" affix={[true, false]} showSummary>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		// top=true 表头启用吸附，bottom=false 合计行禁用（透传无 .vc-affix），故仅 1 个
+		expect(wrapper.findAll('.vc-affix').length).toBe(1);
+
+		wrapper.unmount();
+	});
+
+	it('affix: object 同时作用于两端并透传配置', async () => {
+		const data = buildData(20);
+		const wrapper = mount(() => (
+			<Table data={data} primaryKey="id" affix={{ offset: 10 }} showSummary>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		expect(wrapper.findAll('.vc-affix').length).toBe(2);
+
+		wrapper.unmount();
+	});
+
+	it('affix: 设置 height 时强制禁用（不产生吸附态 DOM）', async () => {
+		const data = buildData(20);
+		const wrapper = mount(() => (
+			<Table data={data} primaryKey="id" affix height={200} showSummary>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		// disabled 时 Affix 直接透传 slot，不渲染 .vc-affix 容器
+		expect(wrapper.find('.vc-affix').exists()).toBe(false);
+
+		wrapper.unmount();
+	});
+
+	it('affix: refreshAffix 可调用且不抛错', async () => {
+		const data = buildData(10);
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={data} primaryKey="id" affix showSummary>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		expect(typeof tableRef.value!.refreshAffix).toBe('function');
+		expect(() => tableRef.value!.refreshAffix()).not.toThrow();
+		await flush();
+
+		wrapper.unmount();
+	});
 });

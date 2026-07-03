@@ -827,6 +827,7 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 | sort                    | 默认的排序列的 `prop` 和顺序。它的`prop`属性指定默认的排序的列，`order`指定默认排序的顺序                                                                                    |                                                            |                             |         |
 | delay                   | 延迟选择，排除transition的影响                                                                                                                       |                                                            |                             |         |
 | resizable               | 是否可以伸缩(总开关/单独的column.resizable也可以设置)                                                                                                                                     |                                                            |                             |         |
+| affix                   | 流式高度下（未设置 `height`/`max-height`）表头吸顶、合计行吸底。`boolean` 同时作用于表头与合计行；`array` 为 `[top, bottom]`，每项可为 `boolean` 或 [Affix](../affix) 配置对象；`object` 同时作用于两端。设置了 `height`/`max-height` 时强制失效。 | `boolean`、`array`、`object`                                  | -                           | `false` |
 | columns                 | `v-model` 暴露 Table 收集到的全部 leaf 列（含 `selection`/`expand`/`index` 等无 `prop` 的结构列），每项含 `{ id, prop, label, type, width, fixed, align, hidden, ... }`。外部可写回两个维度：调整数组顺序（按 `id` 重排）、把某项 `hidden` 置 `true/false`（按 `id` 控制该列是否渲染，被隐藏列仍出现在暴露快照中）。`width`/`fixed` 等其它字段为只读，请用 `TableColumn` 的 props 控制。 | `Array`                                                    | -                           | `[]`    |
 
 
@@ -862,6 +863,7 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 | toggleRowExpansion | 用于可展开表格，切换某一行的展开状态，如果使用了第二个参数，则是设置这一行展开与否（expanded 为 true 则展开） | `row`：要展开的行数据；`expanded`：设置该行是否展开                                            |
 | setCurrentRow      | 用于单选表格，设定某一行为选中行，如果调用时不加参数，则会取消目前高亮行的选中状态。                     | `row`：选中的行数据                                                                 |
 | refreshLayout      | 对 Table 进行重新布局。当 Table 或其祖先元素由隐藏切换为显示时，可能需要调用此方法               | -                                                                            |
+| refreshAffix       | 手动刷新表头/合计行的吸附状态（`affix` 生效时）。Affix只有当滚动时才触发，wrapper/content高度变化需手动处理              | -                                                                            |
 
 
 ### Slot

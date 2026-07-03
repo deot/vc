@@ -13,6 +13,7 @@ import { Store, useStates } from './store';
 import { TableBody } from './table-body';
 import { TableHeader } from './table-header';
 import { TableFooter } from './table-footer';
+import { Affix } from '../affix';
 
 import { props as tableProps } from './table-props';
 
@@ -63,6 +64,8 @@ export const Table = defineComponent({
 		const body = ref<any>();
 		const appendWrapper = ref<any>(null);
 		const footerWrapper = ref<any>(null);
+		const affixHeader = ref<any>(null);
+		const affixFooter = ref<any>(null);
 
 		const resizeProxy = ref(null);
 
@@ -135,6 +138,23 @@ export const Table = defineComponent({
 			return {};
 		});
 
+		const affixOptions = computed(() => {
+			const fluidHeight = !props.height && !props.maxHeight;
+			const source = Array.isArray(props.affix)
+				? props.affix
+				: [props.affix, props.affix];
+			return (['top', 'bottom'] as const).map((placement, index) => {
+				const item = source[index];
+				const isObject = !!item && typeof item === 'object';
+				return {
+					placement,
+					fixed: true,
+					...(isObject ? item : {}),
+					disabled: !fluidHeight || !item || (isObject && (item as any).disabled)
+				};
+			});
+		});
+
 		let isUnMount = false;
 		const updateScrollY = () => {
 			if (isUnMount) return;
@@ -146,6 +166,13 @@ export const Table = defineComponent({
 		 * 对 Table 进行重新布局。
 		 * 当 Table 或其祖先元素由隐藏切换为显示时，可能需要调用此方法
 		 */
+		const refreshAffix = () => {
+			nextTick(() => {
+				affixHeader.value?.refresh?.();
+				affixFooter.value?.refresh?.();
+			});
+		};
+
 		const refreshLayout = () => {
 			if (isUnMount) return;
 
@@ -155,6 +182,7 @@ export const Table = defineComponent({
 			}
 
 			scroller.value?.refresh?.();
+			refreshAffix();
 		};
 		// 用于多选表格，切换所有行的选中状态
 		const toggleAllSelection = () => {
@@ -414,6 +442,7 @@ export const Table = defineComponent({
 			layout,
 			updateScrollY,
 			refreshLayout,
+			refreshAffix,
 			toggleAllSelection,
 			setCurrentRow,
 			toggleRowSelection,
@@ -449,17 +478,19 @@ export const Table = defineComponent({
 					</div>
 					{
 						props.showHeader && (
-							<div
-								ref={headerWrapper}
-								class="vc-table__header-wrapper"
-							>
-								<TableHeader
-									border={props.border}
-									resizable={props.resizable}
-									sort={props.sort}
-									style={bodyWidthStyle.value}
-								/>
-							</div>
+							<Affix ref={affixHeader} {...affixOptions.value[0]}>
+								<div
+									ref={headerWrapper}
+									class="vc-table__header-wrapper"
+								>
+									<TableHeader
+										border={props.border}
+										resizable={props.resizable}
+										sort={props.sort}
+										style={bodyWidthStyle.value}
+									/>
+								</div>
+							</Affix>
 						)
 					}
 					{
@@ -489,19 +520,21 @@ export const Table = defineComponent({
 					}
 					{
 						props.showSummary && (
-							<div
-								// @ts-ignore
-								vShow={props.data && props.data.length > 0}
-								ref={footerWrapper}
-								class="vc-table__footer-wrapper"
-							>
-								<TableFooter
-									border={props.border}
-									sum-text={props.sumText || '合计'}
-									get-summary={props.getSummary}
-									style={bodyWidthStyle.value}
-								/>
-							</div>
+							<Affix ref={affixFooter} {...affixOptions.value[1]}>
+								<div
+									// @ts-ignore
+									vShow={props.data && props.data.length > 0}
+									ref={footerWrapper}
+									class="vc-table__footer-wrapper"
+								>
+									<TableFooter
+										border={props.border}
+										sum-text={props.sumText || '合计'}
+										get-summary={props.getSummary}
+										style={bodyWidthStyle.value}
+									/>
+								</div>
+							</Affix>
 						)
 					}
 					{
