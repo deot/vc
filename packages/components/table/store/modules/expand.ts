@@ -1,5 +1,6 @@
-import { getValuesMap, getRowValue } from '../utils';
-import type { Store } from './store';
+import { getValuesMap, getRowValue } from '../../utils';
+import { toggleRowStatus } from '../utils';
+import type { Store } from '../store';
 
 export class Expand {
 	store: Store;
@@ -33,7 +34,7 @@ export class Expand {
 		const store = this.store;
 
 		const { expandRows } = store.states;
-		const changed = store.toggleRowStatus(expandRows, row, expanded);
+		const changed = toggleRowStatus(expandRows, row, expanded);
 		if (changed) {
 			store.table.emit('expand-change', row, expandRows.slice());
 			// @ts-ignore

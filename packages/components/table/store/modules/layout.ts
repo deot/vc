@@ -1,8 +1,8 @@
-import { reactive, nextTick } from 'vue';
+import { reactive, computed, nextTick } from 'vue';
 import { IS_SERVER } from '@deot/vc-shared';
-import { parseHeight } from '../utils';
-import { VcError } from '../../vc';
-import type { Store } from './store';
+import { parseHeight, computeGridTemplateColumns } from '../../utils';
+import { VcError } from '../../../vc';
+import type { Store } from '../store';
 
 export class Layout {
 	table: any;
@@ -18,6 +18,12 @@ export class Layout {
 		footerHeight: 44, // Table Footer Height
 		bodyHeight: null as any, // Table Height - Table Header Height
 	});
+
+	/**
+	 * grid-template-columns 唯一真源：经表根 `--vc-table-columns` CSS 变量下发，
+	 * header / body 的所有 TableGrid 消费 var()，列宽变化只写表根一个节点。
+	 */
+	templateColumns = computed(() => computeGridTemplateColumns(this.store.states.columns));
 
 	constructor(store: Store) {
 		this.store = store;

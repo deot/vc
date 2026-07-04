@@ -6,7 +6,7 @@ import { RecycleList } from '../../recycle-list';
 import { NormalList } from './normal-list';
 
 import { useStates } from '../store';
-import { TableBodyMergeRow } from './table-body-merge-row';
+import { TableBodyBlock } from './table-body-block';
 import { ScrollerWheel } from '../../scroller/scroller-wheel';
 
 export const TableBody = defineComponent({
@@ -28,28 +28,35 @@ export const TableBody = defineComponent({
 
 		const target = ref();
 
+		// hover 高亮走 JS 控制：hover-row 加在 `.vc-table__td[data-row]` cell 上；
+		// 行覆盖高亮：rowspan 覆盖当前行的合并 anchor 追加 hover-related（关联路径亮到第一列）。
 		watch(
 			() => table.store.states.hoverRowIndex,
 			(v, oldV) => {
-				if (!table.store.states.isComplex || IS_SERVER) return;
+				if (IS_SERVER) return;
 				raf(() => {
-					const oldRow = instance.vnode.el!.querySelector(`.vc-table__row[data-row="${oldV}"]`);
-					const newRow = instance.vnode.el!.querySelector(`.vc-table__row[data-row="${v}"]`);
-					oldRow && removeClass(oldRow, 'hover-row');
-					newRow && addClass(newRow, 'hover-row');
+					const el = instance.vnode.el;
+					if (!el) return;
+					const selectRow = (index: any) => el.querySelectorAll(
+						`.vc-table__td[data-row="${index}"]`
+					);
+					const selectAnchors = (index: any) => {
+						if (index == null) return [];
+						return table.store.block.getCoverAnchors(index).reduce((pre: any[], anchor: any) => {
+							const dom = el.querySelector(
+								`.vc-table__td[data-row="${anchor.rowIndex}"][data-column="${anchor.columnIndex}"]`
+							);
+							dom && pre.push(dom);
+							return pre;
+						}, []);
+					};
+					selectRow(oldV).forEach((dom: any) => removeClass(dom, 'hover-row'));
+					selectAnchors(oldV).forEach((dom: any) => removeClass(dom, 'hover-related'));
+					selectRow(v).forEach((dom: any) => addClass(dom, 'hover-row'));
+					selectAnchors(v).forEach((dom: any) => addClass(dom, 'hover-related'));
 				});
 			}
 		);
-
-		const handleMergeRowResize = (changes: any[]) => {
-			if (table.props.rowHeight) return;
-			changes.forEach((v: any) => {
-				states.list[v.index].rows.forEach((row: any) => {
-					if (row.height === v.size) return;
-					row.height = v.size || '';
-				});
-			});
-		};
 
 		expose({ target });
 		const layout = table.layout;
@@ -73,7 +80,7 @@ export const TableBody = defineComponent({
 		}));
 
 		const renderers = {
-			default: ({ row }) => <TableBodyMergeRow store={row} />
+			default: ({ row }) => <TableBodyBlock store={row} />
 		};
 
 		let timer: any;
@@ -100,7 +107,6 @@ export const TableBody = defineComponent({
 							scrollerOptions={scrollerOptions.value}
 							pageSize={table.props.rows}
 							onScroll={(e: any) => emit('scroll', e)}
-							onRowResize={handleMergeRowResize}
 							style={props.heightStyle}
 						>
 							{ renderers }
@@ -119,10 +125,7 @@ export const TableBody = defineComponent({
 					style={props.heightStyle}
 					onScroll={(e: any) => emit('scroll', e)}
 				>
-					<NormalList
-						data={states.list}
-						onRowResize={handleMergeRowResize}
-					>
+					<NormalList data={states.list}>
 						{ renderers }
 					</NormalList>
 					{slots.default?.()}

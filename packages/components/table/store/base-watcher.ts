@@ -29,7 +29,7 @@ export class BaseWatcher {
 
 		hoverRowIndex: null,
 
-		// Current
+		// Row
 		currentRow: null,
 
 		// Expand
@@ -47,6 +47,8 @@ export class BaseWatcher {
 
 		// compputeds
 		isComplex: computed(() => this.states.leftFixedColumns.length > 0 || this.states.rightFixedColumns.length > 0),
+		// 是否存在 getSpan 合并块（grid 渲染），hover 高亮等需要走 JS 控制
+		hasMergeCells: computed(() => this.states.list.some((item: any) => !!item.cells)),
 		isGroup: computed(() => this.states.columns.length > this.states.originColumns.length),
 
 		columns: computed(() => concat(this.states.leftFixedLeafColumns, this.states.leafColumns, this.states.rightFixedLeafColumns)),

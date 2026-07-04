@@ -1,10 +1,10 @@
 import { computed, watch, reactive, nextTick } from 'vue';
 
 import { max } from 'lodash-es';
-import { walkTreeNode } from './utils';
-import { getRowValue } from '../utils';
-import { VcError } from '../../vc';
-import type { Store } from './store';
+import { walkTreeNode } from '../utils';
+import { getRowValue } from '../../utils';
+import { VcError } from '../../../vc';
+import type { Store } from '../store';
 
 export class Tree {
 	store: Store;
@@ -249,12 +249,12 @@ export class Tree {
 				}
 
 				// 对异步过来的数据进行选择
-				if (this.store.isSelected(row)) {
+				if (this.store.selection.isSelected(row)) {
 					data.forEach((i) => {
-						this.store.toggleRowSelection(i);
+						this.store.selection.toggle(i);
 					});
 				}
-				this.store.updateAllSelected();
+				this.store.selection.updateAllSelected();
 
 				/**
 				 * 计算最大的level, 有必要添加$nextTick

@@ -41,17 +41,33 @@ export const parseMinWidth = (v?: number | string): null | number => {
 	if (typeof v !== 'undefined') {
 		v1 = parseWidth(v);
 		if (isNaN(v1)) {
-			v = 80;
+			v1 = 80;
 		}
 	}
 	return v1;
 };
 
 /**
+ * 由叶子列生成 CSS Grid 的 grid-template-columns 值。
+ * 最后一列 minmax 兜底，容器更宽时由其撑满。
+ * @param columns
+ */
+export const computeGridTemplateColumns = (columns: any[] = []) => {
+	return columns
+		.map((column: any, index: number) => {
+			const width = column.realWidth || column.width || 80;
+			return index === columns.length - 1
+				? `minmax(${width}px, 1fr)`
+				: `${width}px`;
+		})
+		.join(' ');
+};
+
+/**
  * 行 -> 唯一key
- * @param row ~
- * @param primaryKey ~
- * @returns ~
+ * @param row 表格行数据
+ * @param primaryKey 行主键字段名或取值函数
+ * @returns 行的唯一标识值
  */
 export const getRowValue = (row: any, primaryKey: any) => {
 	if (row.__KEY__) return row.__KEY__;

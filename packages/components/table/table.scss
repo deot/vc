@@ -239,18 +239,55 @@ $line-height: 20px;
 		width: 23px;
 	}
 	
+	// 公共布局层：CSS Grid（separate 语义，边框由 cell 自带的右/下 border 表达，
+	// 与 sticky 兼容；被覆盖的格子不渲染，合并块内部天然无多余边框）。
+	// 单行块同时携带 vc-table__tr（行语义），display: grid 在此覆盖 tr 的 inline-flex
+	@include element(grid) {
+		position: relative;
+		display: grid;
+		gap: 0;
+
+		// grid 下 cell 无行容器，:first-child/:last-child 失效，按列坐标补内边距
+		> .is-grid-first {
+			padding-left: $gap-h;
+		}
+
+		> .is-grid-last {
+			padding-right: $gap-h;
+		}
+	}
+
+	// 多行合并块：无行容器，默认 cell 底色
+	@include element(tr-group) {
+		> .vc-table__td {
+			background-color: #fff;
+		}
+	}
+
+	// 展开行：块内 grid 的兄弟节点，整行内容
+	@include element(tr) {
+		@include when(expanded) {
+			display: flex;
+
+			> .vc-table__td {
+				flex: 1;
+			}
+		}
+	}
+
 	@include element(append-wrapper) {
 		// 避免外边距重合 https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Box_Model/Mastering_margin_collapsing
 		overflow: hidden;
 	}
 
-	@include element((header, tbody, footer)) {
+	@include element((thead, tbody, footer)) {
 		border-collapse: separate;
 		table-layout: fixed;
 	}
 
-	@include element(header) {
-		.vc-table__thead .vc-table__tr .vc-table__th {
+	@include element(thead) {
+		// grid 行即 vc-table__tr，th 样式直接挂在行下
+		.vc-table__tr .vc-table__th {
 			font-size: 13px;
 			font-weight: 500;
 			line-height: 20px;
@@ -258,14 +295,14 @@ $line-height: 20px;
 			background-color: $f9;
 		}
 
-		.vc-table__thead {
+		.vc-table__tr {
 			font-weight: 500;
 			box-sizing: border-box;
+		}
 
-			&.is-group {
-				.vc-table__th {
-					background: $f9;
-				}
+		&.is-group {
+			.vc-table__th {
+				background: $f9;
 			}
 		}
 	}
@@ -314,7 +351,7 @@ $line-height: 20px;
 			}
 		}
 
-		.vc-table__header .vc-table__th {
+		.vc-table__thead .vc-table__th {
 			&.is-fixed-left,
 			&.is-fixed-right {
 				z-index: 1;
@@ -334,17 +371,14 @@ $line-height: 20px;
 		position: relative;
 		overflow: hidden;
 
-		.vc-table__tr.hover-row {
-			&, &.vc-table__row--striped {
-				&, &.current-row {
-					> .vc-table__td {
-						background: $f9;
-					}
-				}
-			}
+		// hover / highlight：内部行态统一挂 cell（双类保证盖过 sticky 列底色）
+		.vc-table__td.vc-table__td.hover-row,
+		.vc-table__td.vc-table__td.current-row {
+			background: $f9;
 		}
 
-		.vc-table__tr.current-row > .vc-table__td {
+		// 行覆盖高亮：rowspan 覆盖 hover 行的合并 anchor（关联路径亮到第一列）
+		.vc-table__td.vc-table__td.hover-related {
 			background: $f9;
 		}
 	}
@@ -378,12 +412,13 @@ $line-height: 20px;
 
 	@include modifier(striped) {
 		& .vc-table__tbody {
-			& .vc-table__tr.vc-table__row--striped {
-				.vc-table__td {
-					background: #fafafa;
-				}
+			// 斑马纹：内部行态挂 cell，以绝对行号计
+			& .vc-table__td.is-striped {
+				background: #fafafa;
 
-				&.current-row .vc-table__td {
+				&.current-row,
+				&.hover-row,
+				&.hover-related {
 					background: $f9;
 				}
 			}

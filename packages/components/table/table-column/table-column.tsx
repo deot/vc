@@ -191,12 +191,9 @@ export const TableColumn = defineComponent({
 				originRenderCell = originRenderCell || defaultRenderCell;
 				// 对 renderCell 进行包装
 				column.renderCell = (data: any) => {
-					let children: any = null;
-					if (slots.default) {
-						children = slots?.default?.(data);
-					} else {
-						children = originRenderCell(data);
-					}
+					const children = slots.default
+						? slots?.default?.(data)
+						: originRenderCell(data);
 
 					let prefix: any = treeCellPrefix(data);
 					const $props = {
@@ -275,7 +272,7 @@ export const TableColumn = defineComponent({
 			// DOM上
 			const columnIndex = [...children].indexOf(instance.vnode.el);
 
-			table.store.insertColumn(
+			table.store.column.insert(
 				columnConfig,
 				columnIndex,
 				isSubColumn && parent.columnConfig
@@ -284,7 +281,7 @@ export const TableColumn = defineComponent({
 
 		onUnmounted(() => {
 			if (!instance.parent) return;
-			table.store.removeColumn(
+			table.store.column.remove(
 				columnConfig,
 				isSubColumn && parent.columnConfig
 			);

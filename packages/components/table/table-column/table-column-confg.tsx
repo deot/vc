@@ -39,7 +39,7 @@ export const cellForced = {
 					// @ts-ignore
 					onClick={(e: any) => {
 						e.stopPropagation();
-						store.toggleAllSelection();
+						store.selection.toggleAll();
 					}}
 				/>
 			);
@@ -55,7 +55,7 @@ export const cellForced = {
 							? !column.selectable.call(null, row, rowIndex)
 							: false
 					}
-					onChange={() => store.rowSelectedChanged(row)}
+					onChange={() => store.selection.rowChanged(row)}
 					onClick={(e: any) => e.stopPropagation()}
 				/>
 			);

@@ -186,18 +186,18 @@ export const Table = defineComponent({
 		};
 		// 用于多选表格，切换所有行的选中状态
 		const toggleAllSelection = () => {
-			store.toggleAllSelection();
+			store.selection.toggleAll();
 		};
 
 		// 用于单选表格，设定某一行为选中行，如果调用时不加参数，则会取消目前高亮行的选中状态。
 		const setCurrentRow = (row: any) => {
-			store.setCurrentRow(row);
+			store.row.set(row);
 		};
 
 		// 用于多选表格，切换某一行的选中状态，如果使用了第二个参数，则是设置这一行选中与否（selected 为 true 则选中）
 		const toggleRowSelection = (row: any, selected?: boolean, emitChange?: boolean) => {
-			store.toggleRowSelection(row, selected, emitChange);
-			store.updateAllSelected();
+			store.selection.toggle(row, selected, emitChange);
+			store.selection.updateAllSelected();
 		};
 
 		// 用于可展开表格与树形表格，切换某一行的展开状态;如果使用了第二个参数，则是设置这一行展开与否（expanded 为 true 则展开）
@@ -207,7 +207,7 @@ export const Table = defineComponent({
 
 		// 用于多选表格，清空用户的选择
 		const clearSelection = () => {
-			store.clearSelection();
+			store.selection.clear();
 		};
 
 		// 同步滚动：sticky 模式只剩一份 DOM，仅需保持 header / footer 横向滚动跟随 body
@@ -253,7 +253,7 @@ export const Table = defineComponent({
 		};
 
 		const handleMouseLeave = () => {
-			store.setHoverRow(null);
+			store.row.setHoverIndex(null);
 			if (hoverState.value) hoverState.value = null;
 		};
 
@@ -360,7 +360,7 @@ export const Table = defineComponent({
 			() => props.currentRowValue,
 			(v) => {
 				if (!props.primaryKey) return;
-				store.current.reset(v);
+				store.row.setById(v);
 			},
 			{ immediate: true }
 		);
@@ -386,12 +386,12 @@ export const Table = defineComponent({
 
 		// v-model:columns 外部写回：按 id 设置 hidden + 按 id 重排
 		// deep 以便外部仅修改某项 hidden 字段（数组引用不变）也能触发
-		// 防回环由 store.applyExternalColumns 内部控制
+		// 防回环由 store.column.applyExternal 内部控制
 		watch(
 			() => props.columns,
 			(v) => {
 				if (!Array.isArray(v) || v.length === 0) return;
-				store.applyExternalColumns(v);
+				store.column.applyExternal(v);
 			},
 			{ deep: true, flush: 'post' }
 		);
@@ -471,6 +471,8 @@ export const Table = defineComponent({
 				<div
 					ref={tableWrapper}
 					class={[classes.value, tableId, 'vc-table']}
+					style={{ '--vc-table-columns': layout.templateColumns.value }}
+					role="table"
 					onMouseleave={handleMouseLeave}
 				>
 					<div ref={hiddenColumns} class="vc-table__hidden">

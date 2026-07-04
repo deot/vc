@@ -1,10 +1,13 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, nextTick } from 'vue';
-import { Resizer } from '../../resizer';
+import { defineComponent, Fragment } from 'vue';
 
 const COMPONENT_NAME = 'vc-table-normal-list';
 
+/**
+ * 非虚拟化路径：直接渲染块内容。
+ * grid 下行高由内容撑开、同一 grid 行内 cell 高度天然同步，无需测高回写。
+ */
 export const NormalList = defineComponent({
 	name: COMPONENT_NAME,
 	props: {
@@ -13,33 +16,13 @@ export const NormalList = defineComponent({
 			default: () => ([])
 		}
 	},
-	emits: ['row-resize'],
-	setup(props, { emit, slots }) {
-		let resizeChanges: any[] = [];
-
-		const emitChanges = () => {
-			if (resizeChanges.length > 0) {
-				emit('row-resize', resizeChanges);
-				resizeChanges = [];
-			}
-		};
-
-		const handleResize = (e: any, index: number) => {
-			resizeChanges.push({ index, size: e.height });
-			nextTick(emitChanges);
-		};
-
+	setup(props, { slots }) {
 		return () => {
-			return props.data!.map((mergeData: any, index: number) => {
+			return props.data!.map((block: any, index: number) => {
 				return (
-					<Resizer
-						key={mergeData.id}
-						fill={false}
-						// @ts-ignore
-						onResize={(e: any) => handleResize(e, index)}
-					>
-						{slots.default?.({ row: mergeData, index })}
-					</Resizer>
+					<Fragment key={block.id}>
+						{slots.default?.({ row: block, index })}
+					</Fragment>
 				);
 			});
 		};

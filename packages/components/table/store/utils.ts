@@ -1,62 +1,3 @@
-const getAllColumns = (columns: any[]) => {
-	const result: any[] = [];
-	columns.forEach((column: any) => {
-		if (column.children) {
-			result.push(column);
-			result.push(...getAllColumns(column.children));
-		} else {
-			result.push(column);
-		}
-	});
-	return result;
-};
-
-// 这是一个不纯的函数，遍历是会被column添加level/colspan/rowspan
-export const columnsToRowsEffect = (v: any[]) => {
-	let maxLevel = 1;
-	const traverse = (column: any, parent?: any) => {
-		if (parent) {
-			column.level = parent.level + 1;
-			if (maxLevel < column.level) {
-				maxLevel = column.level;
-			}
-		}
-		if (column.children) {
-			let colspan = 0;
-			column.children.forEach((subColumn: any) => {
-				traverse(subColumn, column);
-				colspan += subColumn.colspan;
-			});
-			column.colspan = colspan;
-		} else {
-			column.colspan = 1;
-		}
-	};
-
-	v.forEach((column) => {
-		column.level = 1;
-		traverse(column);
-	});
-
-	const rows: any[] = [];
-	for (let i = 0; i < maxLevel; i++) {
-		rows.push([]);
-	}
-
-	const allColumns = getAllColumns(v);
-
-	allColumns.forEach((column) => {
-		if (!column.children) {
-			column.rowspan = maxLevel - column.level + 1;
-		} else {
-			column.rowspan = 1;
-		}
-		rows[column.level - 1].push(column);
-	});
-
-	return rows;
-};
-
 export const flattenData = (data: any[], opts: any = {}) => {
 	const result: any = [];
 	data.forEach((item: any) => {
@@ -117,4 +58,43 @@ export const walkTreeNode = (root: any, cb: any, opts = {}) => {
 			_walker(item, children, baseLevel);
 		}
 	});
+};
+
+/**
+ * 存在副作用
+ * 对 statusArr 做添加和删除的操作
+ * @param statusArr 状态数组（如 selection / expandRows）
+ * @param row 目标行数据
+ * @param newVal 指定展开/选中与否；省略时切换
+ * @param batch 为 true 时，使用 delete（批处理使用 splice 性能差，使用 delete 后统一再处理）
+ * @returns 是否发生变更
+ */
+export const toggleRowStatus = (statusArr: any, row: any, newVal: any, batch = false) => {
+	let changed = false;
+	const index = statusArr.indexOf(row);
+	const included = index !== -1;
+
+	const addRow = () => {
+		statusArr.push(row);
+		changed = true;
+	};
+	const removeRow = () => {
+		if (!batch) {
+			statusArr.splice(index, 1);
+		} else {
+			delete statusArr[index];
+		}
+		changed = true;
+	};
+
+	if (typeof newVal === 'boolean') {
+		if (newVal && !included) {
+			addRow();
+		} else if (!newVal && included) {
+			removeRow();
+		}
+	} else {
+		included ? removeRow() : addRow();
+	}
+	return changed;
 };

@@ -6,9 +6,9 @@ import { nextTick, ref } from 'vue';
 import { vi } from 'vitest';
 
 import { Store } from '../store/store';
-import { Layout } from '../store/layout';
+import { Layout, computeMergePlan, columnsToRowsEffect } from '../store/modules';
 import { useStates } from '../store/use-states';
-import { columnsToRowsEffect, flattenData, walkTreeNode } from '../store/utils';
+import { flattenData, walkTreeNode } from '../store/utils';
 import {
 	getCell,
 	getColumnByCell,
@@ -21,6 +21,7 @@ import {
 	parseWidth
 } from '../utils';
 import { TableSort } from '../table-header/table-sort';
+import { TableGrid } from '../table-grid';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -317,9 +318,10 @@ describe('Table interaction events', () => {
 		), { attachTo: document.body });
 		await flush();
 
+		// 事件为容器级委托：enter/leave 由 mouseover（冒泡）+ 容器 mouseleave 合成
 		const cell = wrapper.find('.vc-table__td');
-		await cell.trigger('mouseenter');
-		await cell.trigger('mouseleave');
+		await cell.trigger('mouseover');
+		await wrapper.find('.vc-table__body-wrapper .vc-table__tr').trigger('mouseleave');
 		await cell.trigger('click');
 		await cell.trigger('contextmenu');
 		await cell.trigger('dblclick');
@@ -331,7 +333,7 @@ describe('Table interaction events', () => {
 		expect(onCellMouseEnter).toHaveBeenCalled();
 		expect(onCellMouseLeave).toHaveBeenCalled();
 		expect(onCurrentChange).toHaveBeenCalled();
-		expect(wrapper.find('.custom-row').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__body-wrapper .vc-table__tr.custom-row').exists()).toBe(true);
 		expect(wrapper.find('.custom-cell').exists()).toBe(true);
 
 		wrapper.unmount();
@@ -378,9 +380,9 @@ describe('Table interaction events', () => {
 		), { attachTo: document.body });
 		await flush();
 
-		expect(wrapper.find('.fn-row').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__body-wrapper .vc-table__tr.fn-row').exists()).toBe(true);
 		expect(wrapper.find('.str-cell').exists()).toBe(true);
-		expect(wrapper.find('.hd-str').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__thead .vc-table__tr.hd-str').exists()).toBe(true);
 		expect(wrapper.find('.hd-cell-str').exists()).toBe(true);
 
 		wrapper.unmount();
@@ -397,7 +399,7 @@ describe('Table interaction events', () => {
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		expect(w2.find('.hd-fn').exists()).toBe(true);
+		expect(w2.find('.vc-table__thead .vc-table__tr.hd-fn').exists()).toBe(true);
 		expect(w2.find('.hd-cell-fn').exists()).toBe(true);
 		w2.unmount();
 	});
@@ -412,9 +414,9 @@ describe('Table interaction events', () => {
 		await flush();
 		const vm = tableRef.value!;
 
-		// 通过 cell 的 mouseenter 设置 hoverState，再触发表格 mouseleave 让 handleMouseLeave 走非空分支
+		// 通过 cell 的 mouseover（委托）设置 hoverState，再触发表格 mouseleave 让 handleMouseLeave 走非空分支
 		const cell = wrapper.find('.vc-table__td');
-		await cell.trigger('mouseenter');
+		await cell.trigger('mouseover');
 		await flush();
 		await wrapper.trigger('mouseleave');
 		await flush();
@@ -500,7 +502,7 @@ describe('Selection & expose API', () => {
 		), { attachTo: document.body });
 		await flush();
 
-		const headerCheckbox = wrapper.find('.vc-table__header .vc-checkbox');
+		const headerCheckbox = wrapper.find('.vc-table__thead .vc-checkbox');
 		expect(headerCheckbox.exists()).toBe(true);
 		await headerCheckbox.trigger('click');
 		await sleep(30);
@@ -1098,7 +1100,7 @@ describe('Additional source-path coverage', () => {
 		wrapper.unmount();
 	});
 
-	it('Current.update: replaces currentRow when not in new data via primaryKey', async () => {
+	it('Row.update: replaces currentRow when not in new data via primaryKey', async () => {
 		const data = ref([{ id: 1, name: 'a' }, { id: 2, name: 'b' }]);
 		const onCurrentChange = vi.fn();
 		const tableRef = ref<any>();
@@ -1117,7 +1119,7 @@ describe('Additional source-path coverage', () => {
 		const vm = tableRef.value!;
 		vm.setCurrentRow(vm.store.states.data[0]);
 		await flush();
-		// 替换数据为 id=1 的不同对象引用 → Current.update 触发新行查找
+		// 替换数据为 id=1 的不同对象引用 → Row.update 触发新行查找
 		data.value = [{ id: 1, name: 'a-updated' }, { id: 3, name: 'c' }];
 		await flush();
 		await flush();
@@ -1194,8 +1196,8 @@ describe('Additional source-path coverage', () => {
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		const row = wrapper.find('.vc-table__tr');
-		await row.trigger('mouseenter');
+		const row = wrapper.find('.vc-table__body-wrapper .vc-table__tr');
+		await row.find('.vc-table__td').trigger('mouseover');
 		await sleep(40);
 		await row.trigger('mouseleave');
 		await sleep(40);
@@ -1212,14 +1214,14 @@ describe('Additional source-path coverage', () => {
 		), { attachTo: document.body });
 		await flush();
 		const cell = wrapper.find('.vc-table__td');
-		await cell.trigger('mouseenter');
+		await cell.trigger('mouseover');
 		await flush();
-		await cell.trigger('mouseleave');
+		await wrapper.find('.vc-table__body-wrapper .vc-table__tr').trigger('mouseleave');
 		await flush();
 		wrapper.unmount();
 	});
 
-	it('NormalList: handleResize triggers row-resize via Resizer onResize', async () => {
+	it('NormalList: 直接渲染块（grid 行高自撑开，无 Resizer 测高回写）', async () => {
 		const data = buildData(2);
 		const wrapper = mount(() => (
 			<Table data={data}>
@@ -1227,19 +1229,12 @@ describe('Additional source-path coverage', () => {
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		// 直接触发 Resizer 的 onResize emit（通过组件 vm 树查找）
-		const findResizer = (parent: any): any => {
-			if (!parent) return null;
-			const list = parent.findAllComponents({ name: 'vc-resizer' });
-			return list[0];
-		};
-		const resizer = findResizer(wrapper);
-		if (resizer) {
-			resizer.vm.$emit('resize', { height: 25 });
-			await flush();
-			resizer.vm.$emit('resize', { height: 25 }); // 同值，short-circuit
-			await flush();
-		}
+		const norm = wrapper.findComponent({ name: 'vc-table-normal-list' });
+		expect(norm.exists()).toBe(true);
+		// 不再包裹 Resizer
+		expect(norm.findAllComponents({ name: 'vc-resizer' })).toHaveLength(0);
+		// 每行一个 vc-table__tr（grid 容器）
+		expect(wrapper.findAll('.vc-table__body-wrapper .vc-table__tr')).toHaveLength(2);
 		wrapper.unmount();
 	});
 
@@ -1294,7 +1289,7 @@ describe('Additional source-path coverage', () => {
 		wrapper.unmount();
 	});
 
-	it('Current.update directly: replaces stale currentRow when not in data', async () => {
+	it('Row.update directly: replaces stale currentRow when not in data', async () => {
 		const data = buildData(2);
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
@@ -1307,11 +1302,11 @@ describe('Additional source-path coverage', () => {
 		// 强制塞入一个不在 data 中的 currentRow，调用 current.update 走查找分支
 		vm.store.states.currentRow = { id: 999, name: 'gone' } as any;
 		await flush();
-		vm.store.current.update();
+		vm.store.row.update();
 		await flush();
 
-		// reset(id) 边界：找不到 id 则置 null
-		vm.store.current.reset(123);
+		// setById(id) 边界：找不到 id 则置 null
+		vm.store.row.setById(123);
 		expect(vm.store.states.currentRow).toBe(null);
 		wrapper.unmount();
 	});
@@ -1353,7 +1348,7 @@ describe('Additional source-path coverage', () => {
 		vm1.toggleRowSelection(vm1.store.states.data[0], true, false);
 		await flush();
 		// 直接 cleanSelection（同一引用），数据未变 → 选中保留
-		vm1.store.cleanSelection();
+		vm1.store.selection.clean();
 		expect(vm1.store.states.selection.length).toBe(1);
 		w1.unmount();
 
@@ -1619,7 +1614,7 @@ describe('Additional source-path coverage', () => {
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		expect(wrapper.find('.vc-table__header').exists()).toBe(false);
+		expect(wrapper.find('.vc-table__thead').exists()).toBe(false);
 		expect(wrapper.find('.vc-table__body-wrapper').exists()).toBe(true);
 		wrapper.unmount();
 	});
@@ -1863,7 +1858,7 @@ describe('Additional source-path coverage', () => {
 		wrapper.unmount();
 	});
 
-	it('non-complex table: hoverRowIndex change returns early (no fixed columns)', async () => {
+	it('hoverRowIndex change applies hover-row on td (JS 控制)', async () => {
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
 			<Table ref={tableRef} data={buildData(2)}>
@@ -1872,28 +1867,28 @@ describe('Additional source-path coverage', () => {
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		// 直接修改 hoverRowIndex，watch 触发 → !isComplex 命中 if 真分支
 		tableRef.value!.store.states.hoverRowIndex = 0;
 		await flush();
-		await sleep(10);
+		await sleep(30);
 		await flush();
+		expect(wrapper.find('.vc-table__td[data-row="0"].hover-row').exists()).toBe(true);
+		tableRef.value!.store.states.hoverRowIndex = null;
+		await flush();
+		await sleep(30);
+		await flush();
+		expect(wrapper.find('.hover-row').exists()).toBe(false);
 		wrapper.unmount();
 	});
 
-	it('rowHeight prop short-circuits handleMergeRowResize', async () => {
-		const tableRef = ref<any>();
+	it('rowHeight prop -> grid-auto-rows on normal rows', async () => {
 		const wrapper = mount(() => (
-			<Table ref={tableRef} data={buildData(2)} rowHeight={40}>
+			<Table data={buildData(2)} rowHeight={40}>
 				<TableColumn label="A" prop="name" />
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		// 找 NormalList 内部 Resizer 触发 onRowResize 走 rowHeight 早返
-		const norm = wrapper.findComponent({ name: 'vc-table-normal-list' });
-		if (norm.exists()) {
-			norm.vm.$emit('rowResize', [{ index: 0, size: 50 }]);
-			await flush();
-		}
+		const tr = wrapper.find('.vc-table__body-wrapper .vc-table__tr').element as HTMLElement;
+		expect(tr.style.gridAutoRows).toBe('40px');
 		wrapper.unmount();
 	});
 
@@ -1989,12 +1984,12 @@ describe('Additional source-path coverage', () => {
 		), { attachTo: document.body });
 		await flush();
 		// 触发 selection 相关 path → getValuesMap 走 typeof id === 'undefined' 真分支
-		tableRef.value!.store.cleanSelection();
+		tableRef.value!.store.selection.clean();
 		await flush();
 		wrapper.unmount();
 	});
 
-	it('Current.update: no primaryKey + currentRow removed → newCurrentRow=null branch', async () => {
+	it('Row.update: no primaryKey + currentRow removed → newCurrentRow=null branch', async () => {
 		const data = ref<any[]>([{ name: 'a' }, { name: 'b' }]);
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
@@ -2099,13 +2094,13 @@ describe('Additional source-path coverage', () => {
 		await flush();
 		const before = onSelectionChange.mock.calls.length;
 		// 调用 cleanSelection（数据未变更，selected row 仍在 data 中）
-		vm.store.cleanSelection();
+		vm.store.selection.clean();
 		await flush();
 		expect(onSelectionChange.mock.calls.length).toBe(before);
 		wrapper.unmount();
 	});
 
-	it('row mouseenter debounce setHoverRow flushes after timeout', async () => {
+	it('row mouseover debounce setHoverRow flushes after timeout', async () => {
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
 			<Table ref={tableRef} data={buildData(2)}>
@@ -2114,13 +2109,15 @@ describe('Additional source-path coverage', () => {
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		const row = wrapper.find('.vc-table__row');
-		await row.trigger('mouseenter');
+		const row = wrapper.find('.vc-table__body-wrapper .vc-table__tr');
+		await row.find('.vc-table__td').trigger('mouseover');
 		await sleep(50);
 		await flush();
+		expect(tableRef.value!.store.states.hoverRowIndex).toBe(0);
 		await row.trigger('mouseleave');
 		await sleep(50);
 		await flush();
+		expect(tableRef.value!.store.states.hoverRowIndex).toBe(null);
 		wrapper.unmount();
 	});
 
@@ -2579,7 +2576,7 @@ describe('Table utils', () => {
 		wrapper.unmount();
 	});
 
-	it('sticky: NormalList row-resize 直接采用单 DOM 的尺寸（不再等待 left/right）', async () => {
+	it('sticky: grid 下无行高测量回写（rows 不携带 height 字段）', async () => {
 		const data = buildData(1);
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
@@ -2593,17 +2590,8 @@ describe('Table utils', () => {
 		expect(wrapper.classes()).toContain('vc-table--sticky-columns');
 		const vm = tableRef.value!;
 		const list = vm.store.states.list;
-		// 通过 Resizer 派发 resize 事件 → NormalList emit row-resize
-		const resizer = wrapper.findAllComponents({ name: 'vc-resizer' })[0];
-		expect(resizer).toBeTruthy();
-		resizer.vm.$emit('resize', { height: 42 });
-		await flush();
-		// 单 DOM：row.height 直接取 main，无需等待 left/right
-		expect(list[0].rows[0].height).toBe(42);
-		// 再次相同值 → short-circuit，不应改变
-		resizer.vm.$emit('resize', { height: 42 });
-		await flush();
-		expect(list[0].rows[0].height).toBe(42);
+		// 同一 grid 行内的 cell 高度天然同步，行对象不再有 height 缓存
+		expect('height' in list[0].rows[0]).toBe(false);
 		wrapper.unmount();
 	});
 
@@ -3020,8 +3008,8 @@ describe('v-model:columns & hidden', () => {
 		// 每次生效的 apply 都会经 updateColumns 重新置位防回环，
 		// 故在每次期望生效的调用前手动清掉置位。
 		const apply = (v: any) => {
-			store._columnsSync.suppressWatch = false;
-			store.applyExternalColumns(v);
+			store.column._sync.suppressWatch = false;
+			store.column.applyExternal(v);
 		};
 
 		// guards: 非数组 / 空数组 -> 直接返回，不改动
@@ -3121,6 +3109,350 @@ describe('v-model:columns & hidden', () => {
 		expect(() => tableRef.value!.refreshAffix()).not.toThrow();
 		await flush();
 
+		wrapper.unmount();
+	});
+});
+
+describe('TableGrid (getSpan 合并 + grid 表头)', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('computeMergePlan: 切块 / cells / skip / 0 值 / 越界裁剪', () => {
+		const data = buildData(5);
+		const columns = [{ id: 'c0' }, { id: 'c1' }, { id: 'c2' }];
+		// 第 0 列每 2 行合并；row0 的 c1+c2 横向合并；row4 c2 越界 rowspan
+		const getSpan = ({ rowIndex, columnIndex }: any) => {
+			if (columnIndex === 0) return rowIndex % 2 === 0 ? [2, 1] : [0, 0];
+			if (rowIndex === 0 && columnIndex === 1) return { rowspan: 1, colspan: 2 };
+			if (rowIndex === 0 && columnIndex === 2) return [0, 0];
+			if (rowIndex === 4 && columnIndex === 2) return [99, 1];
+			return [1, 1];
+		};
+		const plan = computeMergePlan(data, columns, getSpan);
+
+		// rows: [0,1] 合并、[2,3] 合并、[4] 单行
+		expect(plan.blocks.map((b: any) => [b.start, b.end])).toEqual([[0, 1], [2, 3], [4, 4]]);
+
+		const block0 = plan.blocks[0];
+		expect(block0.cells).toBeTruthy();
+		const anchor = block0.cells.find((c: any) => c.rowIndex === 0 && c.columnIndex === 0);
+		expect(anchor.rowspan).toBe(2);
+		// 被覆盖的 (1,0) 与 (0,2) 不在 cells 中
+		expect(block0.cells.some((c: any) => c.rowIndex === 1 && c.columnIndex === 0)).toBe(false);
+		expect(block0.cells.some((c: any) => c.rowIndex === 0 && c.columnIndex === 2)).toBe(false);
+		// colspan 合并
+		const colspanAnchor = block0.cells.find((c: any) => c.rowIndex === 0 && c.columnIndex === 1);
+		expect(colspanAnchor.colspan).toBe(2);
+
+		// 末行越界 rowspan 被裁剪为 1 -> 单行无合并 -> 无 cells，渲染期合成 1×1
+		expect(plan.blocks[2].cells).toBeUndefined();
+
+		// covers：rowspan 覆盖行 -> anchors（行 1 被 (0,0) 覆盖、行 3 被 (2,0) 覆盖）
+		expect(plan.covers).toBeTruthy();
+		expect(plan.covers!.get(1)).toEqual([{ rowIndex: 0, columnIndex: 0 }]);
+		expect(plan.covers!.get(3)).toEqual([{ rowIndex: 2, columnIndex: 0 }]);
+		expect(plan.covers!.get(0)).toBeUndefined();
+	});
+
+	it('computeMergePlan: 无合并快路径（零分配，每行一块，covers 为 null）', () => {
+		const data = buildData(3);
+		const columns = [{ id: 'c0' }, { id: 'c1' }];
+		const getSpan = vi.fn(() => [1, 1]);
+		const plan = computeMergePlan(data, columns, getSpan);
+		expect(getSpan).toHaveBeenCalledTimes(6);
+		expect(plan.blocks.map((b: any) => [b.start, b.end])).toEqual([[0, 0], [1, 1], [2, 2]]);
+		expect(plan.blocks.every((b: any) => !b.cells)).toBe(true);
+		expect(plan.covers).toBe(null);
+	});
+
+	it('getSpan: 合并块走 grid 渲染（aria-rowspan / data-row / 缓存 / hasMergeCells）', async () => {
+		const tableRef = ref<any>();
+		const data = buildData(4);
+		const getSpan = vi.fn(({ rowIndex, columnIndex }: any) => {
+			if (columnIndex === 0 && rowIndex === 0) return [2, 1];
+			return [1, 1];
+		});
+		const onRowClick = vi.fn();
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={data}
+				primaryKey="id"
+				getSpan={getSpan}
+				// @ts-ignore
+				onRowClick={onRowClick}
+			>
+				<TableColumn label="名称" prop="name" />
+				<TableColumn label="地址" prop="address" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(60);
+		await flush();
+
+		const vm = tableRef.value!;
+		// rows[0,1] 合并为一块，rows[2,3] 单行块
+		expect(vm.store.states.list).toHaveLength(3);
+		expect(vm.store.states.hasMergeCells).toBe(true);
+
+		// body 中存在多行合并块（tr-group）；anchor cell 带 aria-rowspan，覆盖格子不渲染
+		const layer = wrapper.find('.vc-table__body-wrapper .vc-table__tr-group');
+		expect(layer.exists()).toBe(true);
+		expect(layer.classes()).toContain('vc-table__grid');
+		const anchor = layer.find('[aria-rowspan="2"]');
+		expect(anchor.exists()).toBe(true);
+		// 2 行 x 2 列 - 1 个被覆盖 = 3 个 cell
+		expect(layer.findAll('.vc-table__td')).toHaveLength(3);
+		expect(anchor.attributes('data-row')).toBe('0');
+		expect(anchor.classes()).toContain('vc-table__td');
+		expect(anchor.classes()).toContain('is-grid-first');
+
+		// 普通块为单行 grid（vc-table__tr），渲染期合成 1×1 cells
+		const plainRows = wrapper.findAll('.vc-table__body-wrapper .vc-table__tr');
+		expect(plainRows.length).toBe(2);
+		expect(plainRows[0].classes()).toContain('vc-table__grid');
+		expect(plainRows[0].findAll('.vc-table__td')).toHaveLength(2);
+
+		// 事件：合并 cell 点击 -> row-click + current-row
+		await anchor.trigger('click');
+		await flush();
+		expect(onRowClick).toHaveBeenCalled();
+		expect(vm.store.states.currentRow.id).toBe('id__0');
+
+		// 缓存：data/columns/getSpan 未变时 updateColumns 不触发重复求值
+		const callsBefore = getSpan.mock.calls.length;
+		vm.store.block.rebuildMergeList();
+		expect(getSpan.mock.calls.length).toBe(callsBefore);
+
+		wrapper.unmount();
+	});
+
+	it('多级表头：grid 渲染 + aria-colspan/aria-rowspan + sticky 类保留', async () => {
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(2)} primaryKey="id">
+				<TableColumn label="A" prop="name" fixed="left" width={80} />
+				<TableColumn label="B1" prop="count" width={100} />
+				<TableColumn label="B2" prop="address" width={120} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		// 嵌套 TableColumn 注册在测试环境受限（见上方 skip 用例），store 层手工组装分组列
+		const vm = tableRef.value!;
+		const [a, b1, b2] = vm.store.states._columns;
+		vm.store.states._columns = [a, { id: 'group-1', label: '分组', children: [b1, b2] }];
+		vm.store.updateColumns();
+		await flush();
+		await sleep(60);
+		await flush();
+
+		const thead = wrapper.find('.vc-table__thead');
+		expect(thead.classes()).toContain('is-group');
+		const headerRow = wrapper.find('.vc-table__thead .vc-table__tr');
+		expect(headerRow.classes()).toContain('vc-table__grid');
+
+		// 分组列 colspan=2；leaf 列 A rowspan=2
+		const group = headerRow.find('[aria-colspan="2"]');
+		expect(group.exists()).toBe(true);
+		const leafA = headerRow.find('[aria-rowspan="2"]');
+		expect(leafA.exists()).toBe(true);
+		expect(leafA.classes()).toContain('is-fixed-left');
+		expect((leafA.element as HTMLElement).style.position).toBe('sticky');
+
+		// th 总数 = 1(A) + 1(分组) + 2(B1/B2)
+		expect(headerRow.findAll('.vc-table__th')).toHaveLength(4);
+
+		wrapper.unmount();
+	});
+
+	it('TableGrid 独立渲染：默认 props + realWidth 兜底 + 最后一列 minmax（本地模板）', () => {
+		const w1 = mount(() => (<TableGrid />));
+		expect(w1.find('.vc-table__grid').exists()).toBe(true);
+		w1.unmount();
+
+		const w2 = mount(() => (
+			<TableGrid
+				columns={[{ width: 100 }, {}] as any}
+				cells={[{ rowIndex: 0, columnIndex: 0 }] as any}
+			/>
+		));
+		const el = w2.find('.vc-table__grid').element as HTMLElement;
+		// 无表格上下文 -> 本地计算模板
+		expect(el.style.gridTemplateColumns).toBe('100px minmax(80px, 1fr)');
+		// 默认 key / span：cell 渲染且无 aria-*（非合并格）
+		const cell = w2.find('[role="cell"]');
+		expect(cell.exists()).toBe(true);
+		expect(cell.attributes('aria-rowspan')).toBeUndefined();
+		expect(cell.classes()).toContain('is-grid-first');
+		w2.unmount();
+	});
+
+	it('表格内 TableGrid 消费表根 --vc-table-columns CSS 变量（单源模板）', async () => {
+		const wrapper = mount(() => (
+			<Table data={buildData(2)}>
+				<TableColumn label="A" prop="name" width={100} />
+				<TableColumn label="B" prop="count" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		// 表根写入变量
+		const root = wrapper.find('.vc-table').element as HTMLElement;
+		expect(root.style.getPropertyValue('--vc-table-columns')).toContain('100px');
+		// thead / tr 都引用 var()
+		const headerRow = wrapper.find('.vc-table__thead .vc-table__tr').element as HTMLElement;
+		expect(headerRow.style.gridTemplateColumns).toBe('var(--vc-table-columns)');
+		const tr = wrapper.find('.vc-table__body-wrapper .vc-table__tr').element as HTMLElement;
+		expect(tr.style.gridTemplateColumns).toBe('var(--vc-table-columns)');
+		wrapper.unmount();
+	});
+
+	it('合并块 cell 级行为：row/cell class+style、stripe、highlight、hover、dblclick/contextmenu、rowHeight', async () => {
+		const tableRef = ref<any>();
+		const data = buildData(4);
+		const onCellDblclick = vi.fn();
+		const onRowContextmenu = vi.fn();
+		const onCellMouseEnter = vi.fn();
+		const onCellMouseLeave = vi.fn();
+		const getSpan = ({ rowIndex, columnIndex }: any) => (columnIndex === 0 && rowIndex === 0 ? [2, 1] : [1, 1]);
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={data}
+				primaryKey="id"
+				getSpan={getSpan}
+				stripe
+				highlight
+				rowHeight={40}
+				rowClass={() => 'mr-user-row'}
+				rowStyle={() => ({ color: 'rgb(1, 2, 3)' })}
+				cellClass="mr-cell"
+				cellStyle={({ columnIndex }: any) => (columnIndex === 1 ? { background: 'red' } : {})}
+				{
+					...{
+						onCellDblclick,
+						onRowContextmenu,
+						onCellMouseEnter,
+						onCellMouseLeave
+					} as any
+				}
+			>
+				<TableColumn label="名称" prop="name" line={1} />
+				<TableColumn label="地址" prop="address" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(60);
+		await flush();
+
+		const layer = wrapper.find('.vc-table__body-wrapper .vc-table__tr-group');
+		const anchor = layer.find('[aria-rowspan="2"]');
+
+		// 合并块：用户 row-class/row-style 无效；cell-class 与内部行态仍作用在 cell 上
+		expect(anchor.classes()).not.toContain('mr-user-row');
+		expect(anchor.classes()).toContain('mr-cell');
+		expect((anchor.element as HTMLElement).style.color).not.toBe('rgb(1, 2, 3)');
+		expect(layer.classes()).not.toContain('mr-user-row');
+		// stripe：以行号计
+		const stripedCell = layer.find('.vc-table__td[data-row="1"]');
+		expect(stripedCell.exists()).toBe(true);
+		expect(stripedCell.classes()).toContain('is-striped');
+		// rowHeight -> grid-auto-rows
+		expect((layer.element as HTMLElement).style.gridAutoRows).toBe('40px');
+
+		// hover：cell mouseover（委托）-> setHoverRow + hover-row 类作用在 cell 上
+		await anchor.trigger('mouseover');
+		await sleep(80);
+		await flush();
+		expect(onCellMouseEnter).toHaveBeenCalled();
+		expect(tableRef.value.store.states.hoverRowIndex).toBe(0);
+		expect(layer.find('[data-row="0"].hover-row').exists()).toBe(true);
+
+		// 行覆盖高亮：hover 行 1 时，rowspan 覆盖行 1 的 anchor(0,0) 追加 hover-related
+		const coveredCell = layer.find('.vc-table__td[data-row="1"]');
+		await coveredCell.trigger('mouseover');
+		await sleep(80);
+		await flush();
+		expect(tableRef.value.store.states.hoverRowIndex).toBe(1);
+		expect(anchor.classes()).toContain('hover-related');
+
+		await layer.trigger('mouseleave');
+		await sleep(80);
+		await flush();
+		expect(onCellMouseLeave).toHaveBeenCalled();
+		expect(tableRef.value.store.states.hoverRowIndex).toBe(null);
+		expect(anchor.classes()).not.toContain('hover-related');
+
+		// highlight：点击后 current-row 类按行作用在 cell 上
+		await anchor.trigger('click');
+		await flush();
+		expect(layer.find('[data-row="0"].current-row').exists()).toBe(true);
+
+		await anchor.trigger('dblclick');
+		await anchor.trigger('contextmenu');
+		expect(onCellDblclick).toHaveBeenCalled();
+		expect(onRowContextmenu).toHaveBeenCalled();
+
+		wrapper.unmount();
+	});
+
+	it('虚拟滚动（height）下合并块作为 RecycleList 最小渲染单位', async () => {
+		const tableRef = ref<any>();
+		const getSpan = ({ rowIndex, columnIndex }: any) => {
+			if (columnIndex === 0 && rowIndex % 2 === 0) return [2, 1];
+			return [1, 1];
+		};
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(20)} primaryKey="id" height={200} rows={5} getSpan={getSpan}>
+				<TableColumn label="名称" prop="name" />
+				<TableColumn label="地址" prop="address" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(60);
+		await flush();
+
+		const vm = tableRef.value!;
+		// 20 行两两合并 -> 10 个合并块
+		expect(vm.store.states.list).toHaveLength(10);
+		expect(vm.store.states.list.every((i: any) => i.cells)).toBe(true);
+		expect(wrapper.find('.vc-recycle-list').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__tr-group').exists()).toBe(true);
+
+		wrapper.unmount();
+	});
+
+	it('expand: 展开行以 TableGrid + TableExpand 兄弟结构渲染在块内', async () => {
+		const data = buildData(2);
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={data} primaryKey="id">
+				<TableColumn type="expand">
+					{{ default: ({ row }: any) => <div class="my-expand">{row.name}</div> }}
+				</TableColumn>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		const vm = tableRef.value!;
+		expect(wrapper.find('.my-expand').exists()).toBe(false);
+
+		vm.toggleRowExpansion(vm.store.states.data[0], true);
+		await flush();
+
+		// 展开内容渲染在块内、grid 行之后
+		const expanded = wrapper.find('.vc-table__tr.is-expanded');
+		expect(expanded.exists()).toBe(true);
+		expect(expanded.find('.my-expand').text()).toBe(data[0].name);
+		expect(expanded.find('.vc-table__expanded-cell').exists()).toBe(true);
+		// 展开行数据 cell 带 expanded 类（内部行态挂 cell）
+		expect(wrapper.find('.vc-table__td[data-row="0"].expanded').exists()).toBe(true);
+
+		vm.toggleRowExpansion(vm.store.states.data[0], false);
+		await flush();
+		expect(wrapper.find('.vc-table__tr.is-expanded').exists()).toBe(false);
 		wrapper.unmount();
 	});
 });
