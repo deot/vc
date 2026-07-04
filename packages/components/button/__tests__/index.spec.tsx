@@ -45,6 +45,56 @@ describe('index.ts', () => {
 		expect(wrapper.classes()).toContain('is-long');
 	});
 
+	it('solid, dashed', async () => {
+		const wrapper = mount(() => <Button solid dashed />);
+
+		expect(wrapper.classes()).toContain('is-solid');
+		expect(wrapper.classes()).toContain('is-dashed');
+	});
+
+	it('alone', async () => {
+		const wrapper = mount(() => <Button />);
+
+		expect(wrapper.classes()).toContain('is-alone');
+		expect(wrapper.find('span').exists()).toBeFalsy();
+	});
+
+	it('default slot', async () => {
+		const wrapper = mount(() => <Button>text</Button>);
+
+		expect(wrapper.classes()).not.toContain('is-alone');
+		expect(wrapper.find('span').exists()).toBeTruthy();
+		expect(wrapper.find('span').text()).toBe('text');
+	});
+
+	it('hover', async () => {
+		const wrapper = mount(() => <Button />);
+
+		expect(wrapper.classes()).not.toContain('is-hover');
+
+		await wrapper.trigger('mouseenter');
+		expect(wrapper.classes()).toContain('is-hover');
+
+		await wrapper.trigger('mouseleave');
+		expect(wrapper.classes()).not.toContain('is-hover');
+	});
+
+	it('icon slot', async () => {
+		const wrapper = mount(() => (
+			<Button
+				v-slots={{
+					icon: ({ hover }: { hover: boolean }) => <i class="custom-icon">{hover ? 'on' : 'off'}</i>
+				}}
+			/>
+		));
+
+		expect(wrapper.find('.custom-icon').exists()).toBeTruthy();
+		expect(wrapper.find('.custom-icon').text()).toBe('off');
+
+		await wrapper.trigger('mouseenter');
+		expect(wrapper.find('.custom-icon').text()).toBe('on');
+	});
+
 	it('htmlType', async () => {
 		const wrapper = mount(() => <Button htmlType="submit" />);
 
@@ -105,5 +155,27 @@ describe('index.ts', () => {
 		const wrapper = mount(() => <ButtonGroup fragment><Button /></ButtonGroup>);
 
 		expect(wrapper.classes()).not.toContain('vc-button-group');
+	});
+
+	it('group, vertical, circle, size', async () => {
+		const wrapper = mount(() => (
+			<ButtonGroup vertical circle size="large">
+				<Button />
+			</ButtonGroup>
+		));
+
+		expect(wrapper.classes()).toContain('is-vertical');
+		expect(wrapper.classes()).toContain('is-circle');
+		expect(wrapper.classes()).toContain('is-large');
+	});
+
+	it('group, circle inject', async () => {
+		const wrapper = mount(() => (
+			<ButtonGroup circle>
+				<Button />
+			</ButtonGroup>
+		));
+
+		expect(wrapper.findComponent(Button).classes()).toContain('is-circle');
 	});
 });
