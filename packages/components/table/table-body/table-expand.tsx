@@ -20,8 +20,8 @@ export const TableExpand = defineComponent({
 		const table: any = inject('vc-table');
 
 		return () => {
-			const renderExpanded = table.renderExpanded.value;
-			if (!renderExpanded) return null;
+			const renderExpand = table.renderExpand.value;
+			if (!renderExpand) return null;
 			return (props.rows as any[]).map((row: any) => (
 				<div
 					key={`expand-${row.index}`}
@@ -30,7 +30,7 @@ export const TableExpand = defineComponent({
 				>
 					<div class="vc-table__td vc-table__expanded-cell">
 						{
-							renderExpanded({
+							renderExpand({
 								row: row.data,
 								rowIndex: row.index,
 								store: table.store

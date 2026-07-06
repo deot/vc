@@ -22,7 +22,7 @@ export class Row {
 	}
 
 	// v-model currentRowValue 按 primaryKey 同步，不 emit
-	setById(id: number | string) {
+	setById(id?: number | string) {
 		const store = this.store;
 		const { primaryKey } = store.table.props;
 		store.checkPrimaryKey();

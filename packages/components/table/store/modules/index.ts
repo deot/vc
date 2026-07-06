@@ -1,5 +1,6 @@
 export { Block, computeMergePlan, normalizeSpan } from './block';
 export { Column, columnsToRowsEffect } from './column';
+export type { TableColumnSyncItem } from './column';
 export { Expand } from './expand';
 export { Layout } from './layout';
 export { Row } from './row';

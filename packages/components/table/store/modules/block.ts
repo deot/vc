@@ -1,5 +1,10 @@
 import { getRowValue } from '../../utils';
+import type { TableColumnRenderData, TableColumnNode } from '../../table-column/table-column-node';
 import type { Store } from '../store';
+
+type SpanMethod = (
+	data: Pick<TableColumnRenderData, 'row' | 'column' | 'rowIndex' | 'columnIndex'>
+) => number[] | { rowspan?: number; colspan?: number } | undefined;
 
 /**
  * 归一化 getSpan 的返回值：[rowspan, colspan] | { rowspan, colspan } -> { rowspan, colspan }
@@ -27,7 +32,7 @@ export const normalizeSpan = (v: any) => {
  * @param getSpan ({ row, column, rowIndex, columnIndex }) => [rowspan, colspan] | { rowspan, colspan }
  * @returns 合并计划，形如 { blocks: [{ start, end, cells? }], covers }
  */
-export const computeMergePlan = (data: any[], columns: any[], getSpan: any) => {
+export const computeMergePlan = (data: any[], columns: TableColumnNode[], getSpan: SpanMethod) => {
 	const rowCount = data.length;
 	const columnCount = columns.length;
 
@@ -41,7 +46,7 @@ export const computeMergePlan = (data: any[], columns: any[], getSpan: any) => {
 			if (skip && skip.has(key)) continue;
 			const v = normalizeSpan(getSpan({
 				row: data[r],
-				column: columns[c],
+				column: columns[c].states,
 				rowIndex: r,
 				columnIndex: c
 			}));
@@ -166,7 +171,7 @@ export class Block {
 		const { data, columns, list } = this.store.states;
 		if (typeof getSpan !== 'function' || !data.length || !columns.length) return;
 
-		const columnsKey = columns.map((column: any) => column.id).join(',');
+		const columnsKey = columns.map(column => column.states.id).join(',');
 		const cache = this._cache;
 		let plan = cache.plan;
 		if (

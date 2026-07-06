@@ -96,7 +96,7 @@ export class Tree {
 		const levels = data.map((item) => {
 			const traverse = (source: any) => {
 				if (!source) return 0;
-				if (source.expanded && source.children.length > 0) {
+				if (source.expand && source.children.length > 0) {
 					return max([source.level, ...source.children.map((key: any) => traverse(treeData[key]))]);
 				} else {
 					return source.level;
@@ -118,15 +118,15 @@ export class Tree {
 			const { defaultExpandAll } = this.store.table.props;
 			const { treeData: oldTreeData, treeExpandRowValue, treeLazy } = this.store.states;
 			const rootLazyRowValue: any[] = [];
-			const getExpanded = (oldValue: any, key: any) => {
+			const getExpand = (oldValue: any, key: any) => {
 				const included = defaultExpandAll || (treeExpandRowValue && treeExpandRowValue.indexOf(key) !== -1);
-				return !!((oldValue && oldValue.expanded) || included);
+				return !!((oldValue && oldValue.expand) || included);
 			};
-			// 合并 expanded 与 display，确保数据刷新后，状态不变
+			// 合并 expand 与 display，确保数据刷新后，状态不变
 			keys.forEach((key) => {
 				const oldValue = oldTreeData[key];
 				const newValue = { ...nested[key] };
-				newValue.expanded = getExpanded(oldValue, key);
+				newValue.expand = getExpand(oldValue, key);
 				if (newValue.lazy) {
 					const { loaded = false, loading = false } = oldValue || {};
 					newValue.loaded = !!loaded;
@@ -153,7 +153,7 @@ export class Tree {
 							lazy: true,
 							loaded: !!loaded,
 							loading: !!loading,
-							expanded: getExpanded(oldValue, key),
+							expand: getExpand(oldValue, key),
 							children: lazyNodeChildren,
 							level: ''
 						});
@@ -177,11 +177,11 @@ export class Tree {
 
 		const id = getRowValue(row, primaryKey);
 		const data = id && treeData[id];
-		if (id && data && 'expanded' in data) {
-			const oldExpanded = data.expanded;
-			expanded = typeof expanded === 'undefined' ? !data.expanded : expanded;
-			this.store.states.treeData[id].expanded = expanded;
-			if (oldExpanded !== expanded) {
+		if (id && data && 'expand' in data) {
+			const oldExpand = data.expand;
+			expanded = typeof expanded === 'undefined' ? !data.expand : expanded;
+			this.store.states.treeData[id].expand = expanded;
+			if (oldExpand !== expanded) {
 				this.store.table.emit('expand-change', row, expanded, this.getMaxLevel());
 			}
 			this.store.updateTableScrollY();
@@ -216,7 +216,7 @@ export class Tree {
 				}
 				this.store.states.treeData[key].loading = false;
 				this.store.states.treeData[key].loaded = true;
-				this.store.states.treeData[key].expanded = true;
+				this.store.states.treeData[key].expand = true;
 
 				/**
 				 * 处理tree中和返回的数据与首次相同的情况，

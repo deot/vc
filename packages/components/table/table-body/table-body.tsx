@@ -20,7 +20,7 @@ export const TableBody = defineComponent({
 		const table: any = inject('vc-table');
 
 		const allowRender = ref(false);
-		const states: any = useStates({
+		const states = useStates({
 			data: 'data',
 			list: 'list',
 			columns: 'columns'

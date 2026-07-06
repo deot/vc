@@ -10,10 +10,6 @@ import { Layout, computeMergePlan, columnsToRowsEffect } from '../store/modules'
 import { useStates } from '../store/use-states';
 import { flattenData, walkTreeNode } from '../store/utils';
 import {
-	getCell,
-	getColumnByCell,
-	getColumnById,
-	getColumnByKey,
 	getRowValue,
 	getValuesMap,
 	parseHeight,
@@ -22,6 +18,7 @@ import {
 } from '../utils';
 import { TableSort } from '../table-header/table-sort';
 import { TableGrid } from '../table-grid';
+import { TableColumnNode } from '../table-column/table-column-node';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -71,6 +68,13 @@ const buildData = (length: number) => Array.from({ length }).map((_, index) => (
 	count: index,
 	address: `addr-${index}`
 }));
+
+// store 层单测直接组装列节点（组件路径由 vc-table-column 创建）
+const buildColumnNode = (states: any = {}, childNodes: any[] = []): TableColumnNode => {
+	const node = new TableColumnNode({ table: null as any, states });
+	node.childNodes.push(...childNodes);
+	return node;
+};
 
 describe('index.ts', () => {
 	afterEach(() => {
@@ -1482,35 +1486,35 @@ describe('Additional source-path coverage', () => {
 		// 2) indent + expanded=false（无 loading）
 		const r1: any = treeCellPrefix({
 			row: { id: 1 },
-			treeNode: { indent: 20, expanded: false, noLazyChildren: false, loading: false },
+			treeNode: { indent: 20, expand: false, noLazyChildren: false, loading: false },
 			store: fakeStore
 		} as any);
 		expect(Array.isArray(r1)).toBe(true);
 		// 3) indent + expanded=true + loading=true → 渲染 Spin
 		const r2: any = treeCellPrefix({
 			row: { id: 2 },
-			treeNode: { indent: 10, expanded: true, noLazyChildren: false, loading: true },
+			treeNode: { indent: 10, expand: true, noLazyChildren: false, loading: true },
 			store: fakeStore
 		} as any);
 		expect(Array.isArray(r2)).toBe(true);
 		// 4) noLazyChildren=true + expanded boolean → 走 placeholder 分支
 		const r3: any = treeCellPrefix({
 			row: { id: 3 },
-			treeNode: { indent: 0, expanded: true, noLazyChildren: true },
+			treeNode: { indent: 0, expand: true, noLazyChildren: true },
 			store: fakeStore
 		} as any);
 		expect(Array.isArray(r3)).toBe(true);
 		// 5) expanded 非 boolean → 走 placeholder 分支
 		const r4: any = treeCellPrefix({
 			row: { id: 4 },
-			treeNode: { indent: 0, expanded: undefined, noLazyChildren: false },
+			treeNode: { indent: 0, expand: undefined, noLazyChildren: false },
 			store: fakeStore
 		} as any);
 		expect(Array.isArray(r4)).toBe(true);
 		// 6) onClick 调用 store.tree.loadOrToggle
 		const r5: any = treeCellPrefix({
 			row: { id: 5 },
-			treeNode: { indent: 0, expanded: false, noLazyChildren: false, loading: false },
+			treeNode: { indent: 0, expand: false, noLazyChildren: false, loading: false },
 			store: fakeStore
 		} as any);
 		// 遍历 vnode 数组找到带 onClick 的展开 span
@@ -1533,12 +1537,12 @@ describe('Additional source-path coverage', () => {
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		// 直接通过 vue-test-utils 找到 Checkbox 组件，emit change/click 触发 column 上的 onChange/onClick
+		// 通过 DOM 触发 click（attrs fallthrough 到 label）与 input change，覆盖 stopPropagation + rowChanged
 		const checkboxes = wrapper.findAllComponents({ name: 'vc-checkbox' });
 		const bodyCheckbox = checkboxes.find(cb => !cb.element.closest('.vc-table__th'));
 		if (bodyCheckbox) {
-			bodyCheckbox.vm.$emit('click', { stopPropagation: () => {} });
-			bodyCheckbox.vm.$emit('change', true);
+			await bodyCheckbox.trigger('click');
+			await bodyCheckbox.find('input').trigger('change');
 			await flush();
 		}
 		wrapper.unmount();
@@ -2141,7 +2145,7 @@ describe('Additional source-path coverage', () => {
 		), { attachTo: document.body });
 		await flush();
 		const cols1 = measure(r1.value!, 600);
-		expect(cols1.every((c: any) => c.realWidth >= 80)).toBe(true);
+		expect(cols1.every((c: any) => c.states.realWidth >= 80)).toBe(true);
 
 		// 2) fit + 单 flex 列 + 充足 body 宽度 → flex 列吸收剩余空间
 		const r2 = ref<any>();
@@ -2155,8 +2159,8 @@ describe('Additional source-path coverage', () => {
 		await flush();
 		const cols2 = measure(r2.value!, 800);
 		// 唯一 flex 列吃下剩余空间：800 - (100 + 100) = 600
-		const flexCol2 = cols2.find((c: any) => !c.width);
-		expect(flexCol2?.realWidth).toBe(600);
+		const flexCol2 = cols2.find((c: any) => !c.states.width);
+		expect(flexCol2?.states.realWidth).toBe(600);
 
 		// 3) fit + 多 flex 列（≥2）→ multi-flex 分配路径
 		const r3 = ref<any>();
@@ -2170,7 +2174,7 @@ describe('Additional source-path coverage', () => {
 		await flush();
 		const cols3 = measure(r3.value!, 800);
 		// 多 flex 列分配后 realWidth >= minWidth
-		expect(cols3.every((c: any) => c.realWidth >= 80)).toBe(true);
+		expect(cols3.every((c: any) => c.states.realWidth >= 80)).toBe(true);
 
 		// 4) fit + flex 列且 bodyWidth 不足 → 触发 HAVE_SCROLL 分支，每列回落到 minWidth
 		const r4 = ref<any>();
@@ -2183,8 +2187,8 @@ describe('Additional source-path coverage', () => {
 		await flush();
 		const cols4 = measure(r4.value!, 100);
 		// 不足以容纳所有列，flex 列回落 minWidth
-		const flexCol4 = cols4.find((c: any) => !c.width);
-		expect(flexCol4?.realWidth).toBe(500);
+		const flexCol4 = cols4.find((c: any) => !c.states.width);
+		expect(flexCol4?.states.realWidth).toBe(500);
 
 		// 5) fit=false + 列没有 width / minWidth → realWidth=80 fallback
 		const r5 = ref<any>();
@@ -2195,7 +2199,7 @@ describe('Additional source-path coverage', () => {
 		), { attachTo: document.body });
 		await flush();
 		r5.value!.layout.updateColumnsWidth();
-		expect(r5.value!.store.states.columns[0].realWidth).toBe(80);
+		expect(r5.value!.store.states.columns[0].states.realWidth).toBe(80);
 
 		[w1, w2, w3, w4, w5].forEach(w => w.unmount());
 	});
@@ -2225,7 +2229,7 @@ describe('Additional source-path coverage', () => {
 		wrapper.unmount();
 	});
 
-	it('renderExpanded slot renders for expand column when row is expanded', async () => {
+	it('renderExpand slot renders for expand column when row is expanded', async () => {
 		const data = [{ id: 1, name: 'a' }];
 		const wrapper = mount(() => (
 			<Table data={data} primaryKey="id">
@@ -2245,7 +2249,7 @@ describe('Additional source-path coverage', () => {
 		const icon = wrapper.find('.vc-table__expand-icon');
 		await icon.trigger('click');
 		await flush();
-		// renderExpanded slot 被注册（store.states.expandRows 已包含此行）
+		// renderExpand slot 被注册（store.states.expandRows 已包含此行）
 		wrapper.unmount();
 	});
 });
@@ -2330,11 +2334,11 @@ describe('Store unit', () => {
 	});
 
 	it('useStates handles string / function / invalid value', () => {
-		const fakeStore: any = { states: { foo: 'foo-value', bar: 'bar-value' } };
+		const fakeStore: any = { states: { data: 'foo-value', list: 'bar-value' } };
 		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-		const states: any = useStates({
-			a: 'foo',
-			b: (s: any) => s.bar,
+		const states = useStates({
+			a: 'data',
+			b: s => s.list,
 			// @ts-expect-error invalid type
 			c: 123
 		}, fakeStore);
@@ -2426,32 +2430,10 @@ describe('Table utils', () => {
 		expect(getRowValue(r, 'id')).toBe('k');
 	});
 
-	it('getValuesMap / getColumnById / getColumnByKey / getColumnByCell / getCell', () => {
+	it('getValuesMap', () => {
 		const arr = [{ id: 1 }, { id: 2 }];
 		const map = getValuesMap(arr, 'id');
 		expect(map[1].row.id).toBe(1);
-
-		const cols: any[] = [{ id: 'a', columnKey: 'k1' }, { id: 'b', columnKey: 'k2' }];
-		expect((getColumnById(cols, 'b') as any)?.id).toBe('b');
-		expect((getColumnByKey(cols, 'k2') as any)?.id).toBe('b');
-
-		const td = document.createElement('div');
-		td.className = 'vc-table__td vc-table_a';
-		const child = document.createElement('span');
-		td.appendChild(child);
-		document.body.appendChild(td);
-		expect(getCell({ target: child })).toBe(td);
-		expect((getColumnByCell(
-			[{ id: 'vc-table_a' }, { id: 'vc-table_b' }],
-			{ className: 'vc-table_b' }
-		) as any)?.id).toBe('vc-table_b');
-		expect(getColumnByCell([], { className: 'no-match' })).toBe(null);
-		document.body.removeChild(td);
-
-		const isolated = document.createElement('div');
-		document.body.appendChild(isolated);
-		expect(getCell({ target: isolated })).toBe(null);
-		document.body.removeChild(isolated);
 	});
 
 	it('sticky: syncStickyOffsets writes stickyOffset / stickyStyle onto fixed leaves (and clears non-fixed)', async () => {
@@ -2470,24 +2452,24 @@ describe('Table utils', () => {
 		const vm = tableRef.value!;
 		const left = vm.store.states.leftFixedLeafColumns;
 		const right = vm.store.states.rightFixedLeafColumns;
-		expect(left[0].stickyOffset).toBe(0);
-		expect(left[0].stickyStyle).toEqual({ position: 'sticky', left: '0px' });
-		expect(left[0].stickyClass).toBe('is-fixed-left');
-		expect(left[1].stickyOffset).toBe(80);
-		expect(left[1].stickyStyle).toEqual({ position: 'sticky', left: '80px' });
-		expect(left[1].stickyClass).toBe('is-fixed-left is-fixed-left-tail');
+		expect(left[0].states.stickyOffset).toBe(0);
+		expect(left[0].states.stickyStyle).toEqual({ position: 'sticky', left: '0px' });
+		expect(left[0].states.stickyClass).toBe('is-fixed-left');
+		expect(left[1].states.stickyOffset).toBe(80);
+		expect(left[1].states.stickyStyle).toEqual({ position: 'sticky', left: '80px' });
+		expect(left[1].states.stickyClass).toBe('is-fixed-left is-fixed-left-tail');
 		// 从右往左累加
-		expect(right[right.length - 1].stickyOffset).toBe(0);
-		expect(right[right.length - 1].stickyStyle).toEqual({ position: 'sticky', right: '0px' });
-		expect(right[right.length - 1].stickyClass).toBe('is-fixed-right is-fixed-right-head');
-		expect(right[right.length - 2].stickyOffset).toBe(50);
-		expect(right[right.length - 2].stickyStyle).toEqual({ position: 'sticky', right: '50px' });
-		expect(right[right.length - 2].stickyClass).toBe('is-fixed-right');
+		expect(right[right.length - 1].states.stickyOffset).toBe(0);
+		expect(right[right.length - 1].states.stickyStyle).toEqual({ position: 'sticky', right: '0px' });
+		expect(right[right.length - 1].states.stickyClass).toBe('is-fixed-right is-fixed-right-head');
+		expect(right[right.length - 2].states.stickyOffset).toBe(50);
+		expect(right[right.length - 2].states.stickyStyle).toEqual({ position: 'sticky', right: '50px' });
+		expect(right[right.length - 2].states.stickyClass).toBe('is-fixed-right');
 		// 非固定列 sticky 字段清空
 		const notFixed = vm.store.states.notFixedColumns;
-		expect(notFixed[0].stickyOffset).toBeUndefined();
-		expect(notFixed[0].stickyStyle).toBeUndefined();
-		expect(notFixed[0].stickyClass).toBeUndefined();
+		expect(notFixed[0].states.stickyOffset).toBeUndefined();
+		expect(notFixed[0].states.stickyStyle).toBeUndefined();
+		expect(notFixed[0].states.stickyClass).toBeUndefined();
 		wrapper.unmount();
 	});
 
@@ -2627,55 +2609,52 @@ describe('Table utils', () => {
 		), { attachTo: document.body });
 		await flush();
 		const vm = tableRef.value!;
-		const leftLeaf1 = { realWidth: 60, width: 60 };
-		const leftLeaf2 = { realWidth: 100, width: 100 };
-		const groupedLeft = { children: [leftLeaf1, leftLeaf2] };
-		const rightLeaf1 = { realWidth: 40, width: 40 };
-		const rightLeaf2 = { realWidth: 70, width: 70 };
-		const groupedRight = { children: [rightLeaf1, rightLeaf2] };
+		const leftLeaf1 = buildColumnNode({ realWidth: 60, width: 60 });
+		const leftLeaf2 = buildColumnNode({ realWidth: 100, width: 100 });
+		const groupedLeft = buildColumnNode({}, [leftLeaf1, leftLeaf2]);
+		const rightLeaf1 = buildColumnNode({ realWidth: 40, width: 40 });
+		const rightLeaf2 = buildColumnNode({ realWidth: 70, width: 70 });
+		const groupedRight = buildColumnNode({}, [rightLeaf1, rightLeaf2]);
 		vm.store.states.leftFixedColumns = [groupedLeft];
 		vm.store.states.rightFixedColumns = [groupedRight];
-		const notFixedColumn = {
-			realWidth: 200,
-			stickyOffset: 1,
-			stickyStyle: { position: 'sticky', left: '0px' },
-			stickyClass: 'is-fixed-left',
-			children: [{ stickyOffset: 999 }, { stickyOffset: 999 }]
-		};
+		const notFixedColumn = buildColumnNode(
+			{
+				realWidth: 200,
+				stickyOffset: 1,
+				stickyStyle: { position: 'sticky', left: '0px' },
+				stickyClass: 'is-fixed-left'
+			},
+			[buildColumnNode({ stickyOffset: 999 }), buildColumnNode({ stickyOffset: 999 })]
+		);
 		vm.store.states.notFixedColumns = [notFixedColumn];
 		vm.layout.syncStickyOffsets();
 		// 仅对 leftFixedColumns / rightFixedColumns 顶层项写入 sticky
-		expect((groupedLeft as any).stickyOffset).toBe(0);
-		expect((groupedLeft as any).stickyStyle).toEqual({ position: 'sticky', left: '0px' });
-		expect((groupedLeft as any).stickyClass).toBe('is-fixed-left is-fixed-left-tail');
-		expect((leftLeaf1 as any).stickyOffset).toBeUndefined();
-		expect((leftLeaf2 as any).stickyOffset).toBeUndefined();
-		expect((groupedRight as any).stickyOffset).toBe(0);
-		expect((groupedRight as any).stickyStyle).toEqual({ position: 'sticky', right: '0px' });
-		expect((groupedRight as any).stickyClass).toBe('is-fixed-right is-fixed-right-head');
-		expect((rightLeaf1 as any).stickyOffset).toBeUndefined();
-		expect((rightLeaf2 as any).stickyOffset).toBeUndefined();
+		expect(groupedLeft.states.stickyOffset).toBe(0);
+		expect(groupedLeft.states.stickyStyle).toEqual({ position: 'sticky', left: '0px' });
+		expect(groupedLeft.states.stickyClass).toBe('is-fixed-left is-fixed-left-tail');
+		expect(leftLeaf1.states.stickyOffset).toBeUndefined();
+		expect(leftLeaf2.states.stickyOffset).toBeUndefined();
+		expect(groupedRight.states.stickyOffset).toBe(0);
+		expect(groupedRight.states.stickyStyle).toEqual({ position: 'sticky', right: '0px' });
+		expect(groupedRight.states.stickyClass).toBe('is-fixed-right is-fixed-right-head');
+		expect(rightLeaf1.states.stickyOffset).toBeUndefined();
+		expect(rightLeaf2.states.stickyOffset).toBeUndefined();
 		// 非固定列顶层项清除 sticky；子节点不在 syncStickyOffsets 遍历范围内
-		expect((notFixedColumn as any).stickyOffset).toBeUndefined();
-		expect((notFixedColumn as any).stickyStyle).toBeUndefined();
-		expect((notFixedColumn as any).stickyClass).toBeUndefined();
-		expect(notFixedColumn.children[0].stickyOffset).toBe(999);
+		expect(notFixedColumn.states.stickyOffset).toBeUndefined();
+		expect(notFixedColumn.states.stickyStyle).toBeUndefined();
+		expect(notFixedColumn.states.stickyClass).toBeUndefined();
+		expect(notFixedColumn.childNodes[0].states.stickyOffset).toBe(999);
 		wrapper.unmount();
 	});
 
 	it('columnsToRowsEffect handles nested children + flattenData with parent/cascader + walkTreeNode lazy', () => {
-		const cols: any[] = [
-			{
-				children: [
-					{ children: null },
-					{ children: null }
-				]
-			},
-			{ children: null }
+		const cols = [
+			buildColumnNode({}, [buildColumnNode(), buildColumnNode()]),
+			buildColumnNode()
 		];
 		const rows = columnsToRowsEffect(cols);
 		expect(rows.length).toBeGreaterThanOrEqual(1);
-		expect(cols[0].colspan).toBe(2);
+		expect(cols[0].states.colspan).toBe(2);
 
 		const tree = [
 			{ id: 1, children: [{ id: 11 }, { id: 12 }] },
@@ -2803,11 +2782,11 @@ describe('v-model:columns & hidden', () => {
 		await sleep(60);
 		await flush();
 
-		const visibleProps = vm.store.states.columns.map((c: any) => c.prop);
+		const visibleProps = vm.store.states.columns.map((c: any) => c.states.prop);
 		expect(visibleProps).not.toContain('name');
 		expect(visibleProps).toEqual(['count', 'address']);
 		// headerRows 也不含被隐藏列
-		expect(vm.store.states.headerRows.flat().map((c: any) => c.prop)).not.toContain('name');
+		expect(vm.store.states.headerRows.flat().map((c: any) => c.states.prop)).not.toContain('name');
 		// 列仍被收集，_columns 不变
 		expect(vm.store.states._columns.length).toBe(totalColumns);
 		// 暴露快照仍包含该列且 hidden=true
@@ -2822,7 +2801,7 @@ describe('v-model:columns & hidden', () => {
 		await flush();
 		await sleep(60);
 		await flush();
-		expect(vm.store.states.columns.map((c: any) => c.prop)).toContain('name');
+		expect(vm.store.states.columns.map((c: any) => c.states.prop)).toContain('name');
 
 		wrapper.unmount();
 	});
@@ -2845,7 +2824,7 @@ describe('v-model:columns & hidden', () => {
 		await flush();
 		const vm = tableRef.value!;
 
-		expect(vm.store.states.columns.some((c: any) => c.type === 'selection')).toBe(true);
+		expect(vm.store.states.columns.some((c: any) => c.states.type === 'selection')).toBe(true);
 
 		const selectionId = columns.value.find((c: any) => c.type === 'selection').id;
 		columns.value = columns.value.map((c: any) => (
@@ -2855,7 +2834,7 @@ describe('v-model:columns & hidden', () => {
 		await sleep(60);
 		await flush();
 
-		expect(vm.store.states.columns.some((c: any) => c.type === 'selection')).toBe(false);
+		expect(vm.store.states.columns.some((c: any) => c.states.type === 'selection')).toBe(false);
 		expect(wrapper.find('.vc-table__selection-column').exists()).toBe(false);
 
 		wrapper.unmount();
@@ -2880,14 +2859,14 @@ describe('v-model:columns & hidden', () => {
 		await flush();
 		const vm = tableRef.value!;
 
-		expect(vm.store.states.originColumns.map((c: any) => c.prop)).toEqual(['name', 'count', 'address']);
+		expect(vm.store.states.originColumns.map((c: any) => c.states.prop)).toEqual(['name', 'count', 'address']);
 
 		columns.value = [...columns.value].reverse();
 		await flush();
 		await sleep(60);
 		await flush();
 
-		expect(vm.store.states.originColumns.map((c: any) => c.prop)).toEqual(['address', 'count', 'name']);
+		expect(vm.store.states.originColumns.map((c: any) => c.states.prop)).toEqual(['address', 'count', 'name']);
 
 		wrapper.unmount();
 	});
@@ -2947,34 +2926,30 @@ describe('v-model:columns & hidden', () => {
 		});
 
 		store.states._columns = [
-			{
-				id: 'g1',
-				label: '分组',
-				children: [
-					{ id: 'c1', prop: 'a', label: 'A' },
-					{ id: 'c2', prop: 'b', label: 'B' }
-				]
-			},
-			{ id: 'c3', prop: 'c', label: 'C' }
+			buildColumnNode({ id: 'g1', label: '分组' }, [
+				buildColumnNode({ id: 'c1', prop: 'a', label: 'A' }),
+				buildColumnNode({ id: 'c2', prop: 'b', label: 'B' })
+			]),
+			buildColumnNode({ id: 'c3', prop: 'c', label: 'C' })
 		];
 		store.updateColumns();
 
-		const group0 = store.states.headerRows[0].find((c: any) => c.id === 'g1');
-		expect(group0.colspan).toBe(2);
-		expect(store.states.columns.map((c: any) => c.prop)).toEqual(['a', 'b', 'c']);
+		const group0 = store.states.headerRows[0].find((c: any) => c.states.id === 'g1');
+		expect(group0.states.colspan).toBe(2);
+		expect(store.states.columns.map((c: any) => c.states.prop)).toEqual(['a', 'b', 'c']);
 
 		// 隐藏其中一个子列 -> 父级 colspan 收缩为 1
-		store.states._columns[0].children[0].hidden = true;
+		store.states._columns[0].childNodes[0].states.hidden = true;
 		store.updateColumns();
-		const group1 = store.states.headerRows[0].find((c: any) => c.id === 'g1');
-		expect(group1.colspan).toBe(1);
-		expect(store.states.columns.map((c: any) => c.prop)).toEqual(['b', 'c']);
+		const group1 = store.states.headerRows[0].find((c: any) => c.states.id === 'g1');
+		expect(group1.states.colspan).toBe(1);
+		expect(store.states.columns.map((c: any) => c.states.prop)).toEqual(['b', 'c']);
 
 		// 隐藏全部子列 -> 父分组不再渲染
-		store.states._columns[0].children[1].hidden = true;
+		store.states._columns[0].childNodes[1].states.hidden = true;
 		store.updateColumns();
-		expect(store.states.originColumns.some((c: any) => c.id === 'g1')).toBe(false);
-		expect(store.states.columns.map((c: any) => c.prop)).toEqual(['c']);
+		expect(store.states.originColumns.some((c: any) => c.states.id === 'g1')).toBe(false);
+		expect(store.states.columns.map((c: any) => c.states.prop)).toEqual(['c']);
 	});
 
 	it('applyExternalColumns: guards, nested hidden, and top-level reorder (store-level)', () => {
@@ -2993,15 +2968,11 @@ describe('v-model:columns & hidden', () => {
 		store.table.exposed = { isReady: { value: true }, debouncedUpdateLayout: vi.fn() };
 
 		store.states._columns = [
-			{
-				id: 'g1',
-				label: '分组',
-				children: [
-					{ id: 'c1', prop: 'a', label: 'A' },
-					{ id: 'c2', prop: 'b', label: 'B' }
-				]
-			},
-			{ id: 'c3', prop: 'c', label: 'C' }
+			buildColumnNode({ id: 'g1', label: '分组' }, [
+				buildColumnNode({ id: 'c1', prop: 'a', label: 'A' }),
+				buildColumnNode({ id: 'c2', prop: 'b', label: 'B' })
+			]),
+			buildColumnNode({ id: 'c3', prop: 'c', label: 'C' })
 		];
 		store.updateColumns();
 		// 单测直接调用 applyExternalColumns（无父组件消费 emit 回流），
@@ -3015,24 +2986,24 @@ describe('v-model:columns & hidden', () => {
 		// guards: 非数组 / 空数组 -> 直接返回，不改动
 		apply('nope' as any);
 		apply([]);
-		expect(store.states._columns.map((c: any) => c.id)).toEqual(['g1', 'c3']);
+		expect(store.states._columns.map((c: any) => c.states.id)).toEqual(['g1', 'c3']);
 
 		// null 项与无 id 项被忽略；无变化时不重排
 		apply([null, { prop: 'x' }]);
-		expect(store.states._columns.map((c: any) => c.id)).toEqual(['g1', 'c3']);
+		expect(store.states._columns.map((c: any) => c.states.id)).toEqual(['g1', 'c3']);
 
 		// 递归隐藏嵌套子列（按 id 命中 children）
 		apply([{ id: 'c1', hidden: true }]);
-		expect(store.states.columns.map((c: any) => c.prop)).toEqual(['b', 'c']);
-		expect(store.states._columns.map((c: any) => c.id)).toEqual(['g1', 'c3']);
+		expect(store.states.columns.map((c: any) => c.states.prop)).toEqual(['b', 'c']);
+		expect(store.states._columns.map((c: any) => c.states.id)).toEqual(['g1', 'c3']);
 
 		// 顶层按 id 重排
 		apply([{ id: 'c3' }, { id: 'g1' }]);
-		expect(store.states._columns.map((c: any) => c.id)).toEqual(['c3', 'g1']);
+		expect(store.states._columns.map((c: any) => c.states.id)).toEqual(['c3', 'g1']);
 
 		// 同序写回 -> orderChanged=false 且 hiddenChanged=false -> 不再变动
 		apply([{ id: 'c3' }, { id: 'g1' }]);
-		expect(store.states._columns.map((c: any) => c.id)).toEqual(['c3', 'g1']);
+		expect(store.states._columns.map((c: any) => c.states.id)).toEqual(['c3', 'g1']);
 	});
 
 	it('affix: boolean 流式高度下表头/合计行启用吸附', async () => {
@@ -3120,9 +3091,10 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 
 	it('computeMergePlan: 切块 / cells / skip / 0 值 / 越界裁剪', () => {
 		const data = buildData(5);
-		const columns = [{ id: 'c0' }, { id: 'c1' }, { id: 'c2' }];
+		const columns = ['c0', 'c1', 'c2'].map(id => buildColumnNode({ id }));
 		// 第 0 列每 2 行合并；row0 的 c1+c2 横向合并；row4 c2 越界 rowspan
-		const getSpan = ({ rowIndex, columnIndex }: any) => {
+		const getSpan = ({ rowIndex, columnIndex, column }: any) => {
+			expect(column.id).toBe(`c${columnIndex}`);
 			if (columnIndex === 0) return rowIndex % 2 === 0 ? [2, 1] : [0, 0];
 			if (rowIndex === 0 && columnIndex === 1) return { rowspan: 1, colspan: 2 };
 			if (rowIndex === 0 && columnIndex === 2) return [0, 0];
@@ -3157,7 +3129,7 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 
 	it('computeMergePlan: 无合并快路径（零分配，每行一块，covers 为 null）', () => {
 		const data = buildData(3);
-		const columns = [{ id: 'c0' }, { id: 'c1' }];
+		const columns = ['c0', 'c1'].map(id => buildColumnNode({ id }));
 		const getSpan = vi.fn(() => [1, 1]);
 		const plan = computeMergePlan(data, columns, getSpan);
 		expect(getSpan).toHaveBeenCalledTimes(6);
@@ -3242,7 +3214,7 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 		// 嵌套 TableColumn 注册在测试环境受限（见上方 skip 用例），store 层手工组装分组列
 		const vm = tableRef.value!;
 		const [a, b1, b2] = vm.store.states._columns;
-		vm.store.states._columns = [a, { id: 'group-1', label: '分组', children: [b1, b2] }];
+		vm.store.states._columns = [a, buildColumnNode({ id: 'group-1', label: '分组' }, [b1, b2])];
 		vm.store.updateColumns();
 		await flush();
 		await sleep(60);
@@ -3274,7 +3246,7 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 
 		const w2 = mount(() => (
 			<TableGrid
-				columns={[{ width: 100 }, {}] as any}
+				columns={[buildColumnNode({ width: 100, realWidth: 100 }), buildColumnNode()]}
 				cells={[{ rowIndex: 0, columnIndex: 0 }] as any}
 			/>
 		));

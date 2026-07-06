@@ -1,12 +1,14 @@
 /** @jsxImportSource vue */
 
+import type { VNodeChild } from 'vue';
 import { getPropByPath } from '@deot/helper-utils';
 import { Checkbox } from '../../checkbox';
 import { Icon } from '../../icon';
 import { Spin } from '../../spin';
 import { VcInstance } from '../../vc';
+import type { TableColumnRenderData, TableColumnStates } from './table-column-node';
 
-export const cellStarts = {
+export const cellStarts: Record<string, Partial<TableColumnStates>> = {
 	default: {
 		order: ''
 	},
@@ -28,7 +30,7 @@ export const cellStarts = {
 };
 
 // 这些选项不应该被覆盖
-export const cellForced = {
+export const cellForced: Record<string, Partial<TableColumnStates>> = {
 	selection: {
 		renderHeader({ store }) {
 			return (
@@ -37,14 +39,14 @@ export const cellForced = {
 					disabled={store.states.data && store.states.data.length === 0}
 					indeterminate={store.states.selection.length > 0 && !store.states.isAllSelected}
 					// @ts-ignore
-					onClick={(e: any) => {
+					onClick={(e: MouseEvent) => {
 						e.stopPropagation();
 						store.selection.toggleAll();
 					}}
 				/>
 			);
 		},
-		renderCell({ row, column, store, rowIndex, level, selected }) {
+		renderCell({ row, column, store, rowIndex, level, selected }: TableColumnRenderData) {
 			return (
 				<Checkbox
 					// @ts-ignore
@@ -56,7 +58,7 @@ export const cellForced = {
 							: false
 					}
 					onChange={() => store.selection.rowChanged(row)}
-					onClick={(e: any) => e.stopPropagation()}
+					onClick={(e: MouseEvent) => e.stopPropagation()}
 				/>
 			);
 		},
@@ -68,7 +70,7 @@ export const cellForced = {
 		renderHeader({ column }) {
 			return column.label || '#';
 		},
-		renderCell({ rowIndex, column }) {
+		renderCell({ rowIndex, column }: TableColumnRenderData) {
 			let i = rowIndex + 1;
 			const index = column.index;
 
@@ -86,12 +88,12 @@ export const cellForced = {
 		renderHeader({ column }) {
 			return column.label || '';
 		},
-		renderCell({ row, store }) {
+		renderCell({ row, store }: TableColumnRenderData) {
 			const classes = ['vc-table__expand-icon'];
 			if (store.states.expandRows.includes(row)) {
 				classes.push('is-expand');
 			}
-			const handleClick = (e) => {
+			const handleClick = (e: MouseEvent) => {
 				e.stopPropagation();
 				store.expand.toggle(row);
 			};
@@ -108,8 +110,8 @@ export const cellForced = {
 };
 
 // Cell默认渲染value 或 formatter
-export const defaultRenderCell = (rowData: any = {}) => {
-	const column = rowData.column as any;
+export const defaultRenderCell = (rowData: TableColumnRenderData) => {
+	const column = rowData.column;
 	const { prop, formatter } = column;
 
 	let value;
@@ -118,7 +120,7 @@ export const defaultRenderCell = (rowData: any = {}) => {
 	}
 
 	if (formatter) {
-		return column.formatter(rowData);
+		return formatter(rowData);
 	}
 	const line = typeof column.line !== 'undefined'
 		? column.line
@@ -135,10 +137,10 @@ export const defaultRenderCell = (rowData: any = {}) => {
 };
 
 // Cell渲染前缀，如loading, expand
-export const treeCellPrefix = ({ row, treeNode, store }) => {
+export const treeCellPrefix = ({ row, treeNode, store }: Pick<TableColumnRenderData, 'row' | 'treeNode' | 'store'>) => {
 	if (!treeNode) return null;
-	const ele: any[] = [];
-	const handleClick = (e) => {
+	const ele: VNodeChild[] = [];
+	const handleClick = (e: MouseEvent) => {
 		e.stopPropagation();
 		store.tree.loadOrToggle(row);
 	};
@@ -152,10 +154,10 @@ export const treeCellPrefix = ({ row, treeNode, store }) => {
 			/>
 		);
 	}
-	if (typeof treeNode.expanded === 'boolean' && !treeNode.noLazyChildren) {
+	if (typeof treeNode.expand === 'boolean' && !treeNode.noLazyChildren) {
 		const expandClasses = {
 			'vc-table__expand-icon': true,
-			'is-expand': treeNode.expanded
+			'is-expand': treeNode.expand
 		};
 
 		ele.push(

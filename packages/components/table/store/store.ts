@@ -101,7 +101,7 @@ class Store extends BaseWatcher {
 	// 展开行与 TreeTable 都要使用
 	toggleRowExpansionAdapter(row: any, expanded?: boolean) {
 		const { columns } = this.states;
-		const hasExpandColumn = columns.some(({ type }) => type === 'expand');
+		const hasExpandColumn = columns.some(node => node.states.type === 'expand');
 		if (hasExpandColumn) {
 			this.expand.toggle(row, expanded);
 		} else {

@@ -1,4 +1,5 @@
 import { VcError } from '../vc/index';
+import type { TableColumnNode } from './table-column/table-column-node';
 /**
  * 10px -> 10
  * 10 -> 10
@@ -50,12 +51,14 @@ export const parseMinWidth = (v?: number | string): null | number => {
 /**
  * 由叶子列生成 CSS Grid 的 grid-template-columns 值。
  * 最后一列 minmax 兜底，容器更宽时由其撑满。
- * @param columns
+ * @param columns 叶子列
+ * @returns 模板值
  */
-export const computeGridTemplateColumns = (columns: any[] = []) => {
+export const computeGridTemplateColumns = (columns: TableColumnNode[] = []) => {
 	return columns
-		.map((column: any, index: number) => {
-			const width = column.realWidth || column.width || 80;
+		.map((column, index) => {
+			const { states } = column;
+			const width = states.realWidth || states.width || 80;
 			return index === columns.length - 1
 				? `minmax(${width}px, 1fr)`
 				: `${width}px`;
@@ -99,70 +102,4 @@ export const getValuesMap = (array: any[] = [], primaryKey: any) => {
 		arrayMap[getRowValue(row, primaryKey)] = { row, index };
 	});
 	return arrayMap;
-};
-
-/**
- * ~
- * @param columns ~
- * @param columnId ~
- * @returns ~
- */
-export const getColumnById = (columns: any[], columnId: any) => {
-	let column = null;
-	columns.forEach((item) => {
-		if (item.id === columnId) {
-			column = item;
-		}
-	});
-	return column;
-};
-
-/**
- * ~
- * @param columns ~
- * @param columnKey ~
- * @returns ~
- */
-export const getColumnByKey = (columns: any, columnKey: any) => {
-	let column = null;
-	for (let i = 0; i < columns.length; i++) {
-		const item = columns[i];
-		if (item.columnKey === columnKey) {
-			column = item;
-			break;
-		}
-	}
-	return column;
-};
-
-/**
- * ~
- * @param columns ~
- * @param cell ~
- * @returns ~
- */
-export const getColumnByCell = (columns: any, cell: any) => {
-	const matches = (cell.className || '').match(/vc-table_[^\s]+/gm);
-	if (matches) {
-		return getColumnById(columns, matches[0]);
-	}
-	return null;
-};
-
-/**
- * ~
- * @param e ~
- * @returns ~
- */
-export const getCell = (e: any) => {
-	let cell = e.target;
-
-	while (cell && cell.tagName.toUpperCase() !== 'HTML') {
-		if (cell.classList.contains('vc-table__td')) {
-			return cell;
-		}
-		cell = cell.parentNode;
-	}
-
-	return null;
 };

@@ -1,3 +1,22 @@
+import type { TableColumnNode } from '../table-column/table-column-node';
+
+/**
+ * 展开列树为叶子列节点数组
+ * @param nodes 列树
+ * @returns 叶子列节点
+ */
+export const flattenColumnNodes = (nodes: TableColumnNode[]): TableColumnNode[] => {
+	const result: TableColumnNode[] = [];
+	nodes.forEach((node) => {
+		if (node.childNodes.length) {
+			result.push(...flattenColumnNodes(node.childNodes));
+		} else {
+			result.push(node);
+		}
+	});
+	return result;
+};
+
 export const flattenData = (data: any[], opts: any = {}) => {
 	const result: any = [];
 	data.forEach((item: any) => {

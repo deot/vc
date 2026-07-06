@@ -1,6 +1,7 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, inject, onBeforeUnmount, Fragment } from 'vue';
+import type { Nullable } from '@deot/helper-shared';
 import { debounce } from 'lodash-es';
 import { useStates } from '../store';
 import { TableGrid } from '../table-grid';
@@ -9,6 +10,18 @@ import { getRowValue } from '../utils';
 import { getFitIndex } from '../../text/utils';
 import { VcInstance } from '../../vc';
 import { Popover } from '../../popover';
+import type { TableProvide } from '../types';
+import type { TableColumnNode, TableColumnStates } from '../table-column/table-column-node';
+
+type RowData = Record<string, unknown>;
+
+type ResolvedCell = {
+	cellEl: HTMLElement;
+	row: RowData;
+	rowIndex: number;
+	column: TableColumnStates;
+	columnIndex: number;
+};
 
 /**
  * 块渲染（虚拟化最小单位）：
@@ -24,14 +37,14 @@ export const TableBodyBlock = defineComponent({
 		store: { type: Object, required: true }
 	},
 	setup(props) {
-		const table: any = inject('vc-table');
-		const states: any = useStates({
+		const table = inject<TableProvide>('vc-table')!;
+		const states = useStates({
 			columns: 'columns',
 			currentRow: 'currentRow',
 			expandRows: 'expandRows'
 		});
 
-		const getValueOfRow = (row: any, index: number) => {
+		const getValueOfRow = (row: RowData, index: number) => {
 			const { primaryKey } = table.props;
 			if (primaryKey) {
 				return getRowValue(row, primaryKey);
@@ -39,7 +52,7 @@ export const TableBodyBlock = defineComponent({
 			return index;
 		};
 
-		const getCellStyle = (rowIndex: number, columnIndex: number, row: any, column: any) => {
+		const getCellStyle = (rowIndex: number, columnIndex: number, row: RowData, column: TableColumnStates) => {
 			const { cellStyle } = table.props;
 			if (typeof cellStyle === 'function') {
 				return cellStyle.call(null, { rowIndex, columnIndex, row, column });
@@ -50,7 +63,7 @@ export const TableBodyBlock = defineComponent({
 			};
 		};
 
-		const getCellClass = (rowIndex: number, columnIndex: number, row: any, column: any) => {
+		const getCellClass = (rowIndex: number, columnIndex: number, row: RowData, column: TableColumnStates) => {
 			const classes = [column.realAlign, column.class, column.stickyClass];
 
 			const cellClass = table.props.cellClass;
@@ -63,8 +76,8 @@ export const TableBodyBlock = defineComponent({
 			return classes.join(' ');
 		};
 
-		const getInternalCellClass = (row: any, rowIndex: number) => {
-			const classes: any[] = [];
+		const getInternalCellClass = (row: RowData, rowIndex: number) => {
+			const classes: string[] = [];
 			if (table.props.highlight && row === states.currentRow) {
 				classes.push('current-row');
 			}
@@ -77,7 +90,7 @@ export const TableBodyBlock = defineComponent({
 			return classes;
 		};
 
-		const getUserRowClass = (row: any, rowIndex: number) => {
+		const getUserRowClass = (row: RowData, rowIndex: number) => {
 			const { rowClass } = table.props;
 			if (typeof rowClass === 'string') {
 				return rowClass;
@@ -88,7 +101,7 @@ export const TableBodyBlock = defineComponent({
 			return '';
 		};
 
-		const getUserRowStyle = (row: any, rowIndex: number) => {
+		const getUserRowStyle = (row: RowData, rowIndex: number) => {
 			const { rowStyle } = table.props;
 			if (typeof rowStyle === 'function') {
 				return rowStyle.call(null, { row, rowIndex });
@@ -99,9 +112,9 @@ export const TableBodyBlock = defineComponent({
 		// —— 容器级事件委托 ——
 		// cells 为 grid 容器的直接子节点：从 target 向上找到 currentTarget 的直接子级即 cell，
 		// 天然屏蔽 cell 内嵌套表格的干扰（嵌套 td 的父级不是本容器）。
-		const resolveCellEl = (e: any) => {
-			const root = e.currentTarget;
-			let node = e.target;
+		const resolveCellEl = (e: Event): Nullable<HTMLElement> => {
+			const root = e.currentTarget as HTMLElement;
+			let node = e.target as Nullable<HTMLElement>;
 			while (node && node !== root) {
 				if (node.parentElement === root) {
 					return node.classList?.contains?.('vc-table__td') ? node : null;
@@ -111,27 +124,27 @@ export const TableBodyBlock = defineComponent({
 			return null;
 		};
 
-		const resolveCell = (e: any) => {
+		const resolveCell = (e: Event): Nullable<ResolvedCell> => {
 			const cellEl = resolveCellEl(e);
 			if (!cellEl) return null;
 			const rowIndex = Number(cellEl.dataset.row);
 			const columnIndex = Number(cellEl.dataset.column);
 			const rowStart = props.store.rowStart ?? (props.store.rows[0]?.index || 0);
 			const row = props.store.rows[rowIndex - rowStart];
-			const column = states.columns[columnIndex];
-			if (!row || !column) return null;
-			return { cellEl, row: row.data, rowIndex, column, columnIndex };
+			const columnNode = states.columns[columnIndex];
+			if (!row || !columnNode) return null;
+			return { cellEl, row: row.data, rowIndex, column: columnNode.states, columnIndex };
 		};
 
-		let poper: any;
-		const showTextLineTooltip = (cellEl: any, row: any, column: any) => {
+		let poper: Nullable<{ destroy: () => void }>;
+		const showTextLineTooltip = (cellEl: HTMLElement, row: RowData, column: TableColumnStates) => {
 			// 判断是否text-overflow, 如果是就显示tooltip
 			const el = cellEl.querySelector('.vc-table__text-line');
 			const line = typeof column.line !== 'undefined'
 				? column.line
 				: VcInstance.options.TableColumn?.line;
 			if (!el || !line) return;
-			const value = `${row[column.prop]}`;
+			const value = `${row[column.prop!]}`;
 			const endIndex = getFitIndex({
 				el,
 				value,
@@ -160,20 +173,20 @@ export const TableBodyBlock = defineComponent({
 			table.store.row.setHoverIndex(null);
 		}, 30);
 
-		const enterCell = (e: any, cell: any) => {
+		const enterCell = (e: MouseEvent, cell: ResolvedCell) => {
 			handleHoverEnter(cell.rowIndex);
 			table.hoverState.value = { cell: cell.cellEl, column: cell.column, row: cell.row };
 			table.emit('cell-mouse-enter', cell.row, cell.column, cell.cellEl, e);
 			showTextLineTooltip(cell.cellEl, cell.row, cell.column);
 		};
 
-		const leaveCell = (e: any, cell: any) => {
+		const leaveCell = (e: MouseEvent, cell: ResolvedCell) => {
 			table.emit('cell-mouse-leave', cell.row, cell.column, cell.cellEl, e);
 		};
 
 		// mouseover 冒泡 + 前后 cell 比较，合成 enter/leave 语义
-		let activeCell: any = null;
-		const handleMouseOver = (e: any) => {
+		let activeCell: Nullable<ResolvedCell> = null;
+		const handleMouseOver = (e: MouseEvent) => {
 			const cell = resolveCell(e);
 			if (activeCell && cell && activeCell.cellEl === cell.cellEl) return;
 			if (activeCell) leaveCell(e, activeCell);
@@ -181,7 +194,7 @@ export const TableBodyBlock = defineComponent({
 			if (cell) enterCell(e, cell);
 		};
 
-		const handleMouseLeave = (e: any) => {
+		const handleMouseLeave = (e: MouseEvent) => {
 			if (activeCell) {
 				leaveCell(e, activeCell);
 				activeCell = null;
@@ -189,7 +202,7 @@ export const TableBodyBlock = defineComponent({
 			handleHoverLeave();
 		};
 
-		const handleEvent = (e: any, name: string) => {
+		const handleEvent = (e: MouseEvent, name: string) => {
 			const cell = resolveCell(e);
 			if (!cell) return;
 			table.emit(`cell-${name}`, cell.row, cell.column, cell.cellEl, e);
@@ -197,7 +210,7 @@ export const TableBodyBlock = defineComponent({
 			return cell;
 		};
 
-		const handleClick = (e: any) => {
+		const handleClick = (e: MouseEvent) => {
 			const cell = resolveCell(e);
 			if (!cell) return;
 			table.store.row.set(cell.row);
@@ -231,14 +244,16 @@ export const TableBodyBlock = defineComponent({
 			}
 
 			// selected 按行求值；用户 row-class/row-style 仅单行块挂 tr，合并块无效
-			const rowSelected = rows.map((row: any) => table.store.selection.isSelected(row.data));
+			const rowSelected = rows.map((row: { data: RowData }) => table.store.selection.isSelected(row.data));
 			const singleRow = isSingleRow ? rows[0] : null;
 
-			const cells = layoutCells.reduce((pre: any[], cell: any) => {
+			type LayoutCell = { rowIndex: number; columnIndex: number; rowspan: number; colspan: number };
+			const cells = layoutCells.reduce((pre: Record<string, unknown>[], cell: LayoutCell) => {
 				const rowOffset = cell.rowIndex - rowStart;
 				const row = rows[rowOffset];
-				const column = columns[cell.columnIndex];
-				if (!row || !column) return pre;
+				const columnNode = columns[cell.columnIndex];
+				if (!row || !columnNode) return pre;
+				const column = columnNode.states;
 
 				pre.push({
 					key: `${getValueOfRow(row.data, row.index)}-${column.id}`,
@@ -259,7 +274,7 @@ export const TableBodyBlock = defineComponent({
 						'data-row': cell.rowIndex,
 						'data-column': cell.columnIndex
 					},
-					render: () => column.renderCell({
+					render: () => column.renderCell!({
 						row: row.data,
 						rowIndex: cell.rowIndex,
 						column,
@@ -289,18 +304,18 @@ export const TableBodyBlock = defineComponent({
 					// 容器级事件委托（原生事件经 attrs 透传到 grid 根节点）
 					{...({
 						onClick: handleClick,
-						onDblclick: (e: any) => handleEvent(e, 'dblclick'),
-						onContextmenu: (e: any) => handleEvent(e, 'contextmenu'),
+						onDblclick: (e: MouseEvent) => handleEvent(e, 'dblclick'),
+						onContextmenu: (e: MouseEvent) => handleEvent(e, 'contextmenu'),
 						onMouseover: handleMouseOver,
 						onMouseleave: handleMouseLeave
-					} as any)}
+					})}
 				/>
 			);
 
 			// 展开行仅支持单行块（多行合并块内的展开行语义未定义，留作扩展点：
 			// 可用 colspan = 全列的附加 grid 行实现块内展开）
-			const expandedRows = (isSingleRow && table.renderExpanded.value)
-				? rows.filter((row: any) => states.expandRows.indexOf(row.data) > -1)
+			const expandedRows = (isSingleRow && table.renderExpand.value)
+				? rows.filter((row: { data: RowData }) => states.expandRows.indexOf(row.data) > -1)
 				: [];
 
 			if (!expandedRows.length) return grid;

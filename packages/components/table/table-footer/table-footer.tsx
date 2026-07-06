@@ -1,51 +1,50 @@
 import { defineComponent, computed } from 'vue';
+import type { PropType } from 'vue';
 import { useStates } from '../store';
+import type { TableColumnNode, TableColumnStates } from '../table-column/table-column-node';
 
 export const TableFooter = defineComponent({
 	name: 'vc-table-footer',
 	props: {
-		getSummary: Function,
+		getSummary: Function as PropType<(data: { columns: TableColumnStates[]; data: Record<string, unknown>[] }) => (string | number)[]>,
 		sumText: String,
 		border: Boolean,
 	},
 	setup(props) {
-		const states: any = useStates({
+		const states = useStates({
 			data: 'data',
 			columns: 'columns',
 			isAllSelected: 'isAllSelected'
 		});
 
-		const getRowClasses = (column: any) => {
-			const classes = [column.realAlign, column.labelClass];
-			if (column.className) {
-				classes.push(column.className);
-			}
+		const getRowClasses = (column: TableColumnStates) => {
+			const classes: (string | null | undefined)[] = [column.realAlign, column.labelClass];
 			// 固定列由 is-fixed-* + position: sticky 表达
 			if (column.fixed === true || column.fixed === 'left') {
 				classes.push('is-fixed-left');
 			} else if (column.fixed === 'right') {
 				classes.push('is-fixed-right');
 			}
-			if (!column.children) {
-				classes.push('is-leaf');
-			}
+			// columns 为叶子列，恒为 is-leaf
+			classes.push('is-leaf');
 			return classes;
 		};
 
 		const sums = computed(() => {
-			let v: any[] = [];
+			let v: (string | number | undefined)[] = [];
+			const columnStates = states.columns.map(node => node.states);
 			if (props.getSummary) {
-				v = props.getSummary({ columns: states.columns, data: states.data });
+				v = props.getSummary({ columns: columnStates, data: states.data });
 			} else {
-				states.columns.forEach((column: any, index: number) => {
+				columnStates.forEach((column, index) => {
 					if (index === 0) {
 						v[index] = props.sumText;
 						return;
 					}
-					const values = states.data.map(item => Number(item[column.prop]));
-					const precisions: any[] = [];
+					const values = states.data.map(item => Number(item[column.prop!]));
+					const precisions: number[] = [];
 					let notNumber = true;
-					values.forEach((value: any) => {
+					values.forEach((value) => {
 						if (!isNaN(value)) {
 							notNumber = false;
 							const decimal = ('' + value).split('.')[1];
@@ -54,7 +53,7 @@ export const TableFooter = defineComponent({
 					});
 					const precision = Math.max.apply(null, precisions);
 					if (!notNumber) {
-						v[index] = values.reduce((prev: any, curr: any) => {
+						v[index] = values.reduce((prev, curr) => {
 							const value = Number(curr);
 							if (!isNaN(value)) {
 								return parseFloat((prev + curr).toFixed(Math.min(precision, 20)));
@@ -81,7 +80,8 @@ export const TableFooter = defineComponent({
 					<div class="vc-table__tbody">
 						<div class="vc-table__tr">
 							{
-								states.columns.map((column: any, columnIndex: number) => {
+								states.columns.map((node, columnIndex) => {
+									const column = node.states;
 									return (
 										<div
 											key={columnIndex}

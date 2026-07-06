@@ -102,13 +102,13 @@ export class Layout {
 		let bodyMinWidth = 0;
 
 		const flattenColumns = this.store.states.columns;
-		const flexColumns = flattenColumns.filter((column: any) => typeof column.width !== 'number');
+		const flexColumns = flattenColumns.filter(column => typeof column.states.width !== 'number');
 
 		const { fit } = this.table.props;
 
 		if (flexColumns.length > 0 && fit) {
-			flattenColumns.forEach((column: any) => {
-				bodyMinWidth += column.width || column.minWidth || 80;
+			flattenColumns.forEach((column) => {
+				bodyMinWidth += column.states.width || column.states.minWidth || 80;
 			});
 
 			if (bodyMinWidth <= bodyWidth) {
@@ -117,39 +117,39 @@ export class Layout {
 				const totalFlexWidth = bodyWidth - bodyMinWidth;
 
 				if (flexColumns.length === 1) {
-					flexColumns[0].realWidth = (flexColumns[0].minWidth || 80) + totalFlexWidth;
+					flexColumns[0].states.realWidth = (flexColumns[0].states.minWidth || 80) + totalFlexWidth;
 				} else {
-					const allColumnsWidth = flexColumns.reduce((prev: number, column: any) => prev + (column.minWidth || 80), 0);
+					const allColumnsWidth = flexColumns.reduce((prev: number, column) => prev + (column.states.minWidth || 80), 0);
 					const flexWidthPerPixel = totalFlexWidth / allColumnsWidth;
 					let noneFirstWidth = 0;
 
-					flexColumns.forEach((column: any, index: number) => {
+					flexColumns.forEach((column, index) => {
 						if (index === 0) return;
-						const flexWidth = Math.floor((column.minWidth || 80) * flexWidthPerPixel);
+						const flexWidth = Math.floor((column.states.minWidth || 80) * flexWidthPerPixel);
 						noneFirstWidth += flexWidth;
-						column.realWidth = (column.minWidth || 80) + flexWidth;
+						column.states.realWidth = (column.states.minWidth || 80) + flexWidth;
 					});
 
-					flexColumns[0].realWidth = (flexColumns[0].minWidth || 80) + totalFlexWidth - noneFirstWidth;
+					flexColumns[0].states.realWidth = (flexColumns[0].states.minWidth || 80) + totalFlexWidth - noneFirstWidth;
 				}
 			} else { // HAVE HORIZONTAL SCROLL BAR
 				this.states.scrollX = true;
-				flexColumns.forEach((column: any) => {
-					column.realWidth = column.width || column.minWidth;
+				flexColumns.forEach((column) => {
+					column.states.realWidth = column.states.width || column.states.minWidth;
 				});
 			}
 
 			this.states.bodyWidth = Math.max(bodyMinWidth, bodyWidth);
 			this.table.exposed.resizeState.value.width = this.states.bodyWidth;
 		} else {
-			flattenColumns.forEach((column: any) => {
-				if (!column.width && !column.minWidth) {
-					column.realWidth = 80;
+			flattenColumns.forEach((column) => {
+				if (!column.states.width && !column.states.minWidth) {
+					column.states.realWidth = 80;
 				} else {
-					column.realWidth = column.width || column.minWidth;
+					column.states.realWidth = column.states.width || column.states.minWidth;
 				}
 
-				bodyMinWidth += column.realWidth;
+				bodyMinWidth += column.states.realWidth!;
 			});
 
 			this.states.scrollX = bodyMinWidth > bodyWidth;
@@ -160,39 +160,39 @@ export class Layout {
 	}
 
 	/**
-	 * 提前计算固定列的 sticky 偏移并写到列对象上（包含分组列），渲染层（header /
-	 * body-row / footer）从 column.stickyLeft / column.stickyRight 直接消费即可。
+	 * 提前计算固定列的 sticky 偏移并写到列节点 states 上（包含分组列），渲染层（header /
+	 * body-row / footer）从 column.stickyStyle / column.stickyClass 直接消费即可。
 	 * 非固定列上的 sticky 信息一并清除，避免列从 fixed 切换为非 fixed 时残留。
 	 */
 	syncStickyOffsets() {
 		const { leftFixedColumns = [], rightFixedColumns = [], notFixedColumns = [] } = this.store.states;
 
-		leftFixedColumns.reduce((offset: number, column: any, index: number) => {
-			column.stickyOffset = offset;
-			column.stickyStyle = { position: 'sticky', left: `${offset}px` };
-			column.stickyClass = 'is-fixed-left';
+		leftFixedColumns.reduce((offset: number, column, index) => {
+			column.states.stickyOffset = offset;
+			column.states.stickyStyle = { position: 'sticky', left: `${offset}px` };
+			column.states.stickyClass = 'is-fixed-left';
 			if (index === leftFixedColumns.length - 1) {
-				column.stickyClass += ' is-fixed-left-tail';
+				column.states.stickyClass += ' is-fixed-left-tail';
 			}
-			offset += column.realWidth || column.width || 0;
+			offset += column.states.realWidth || column.states.width || 0;
 			return offset;
 		}, 0);
 
-		rightFixedColumns.reduceRight((offset: number, column: any, index: number) => {
-			column.stickyOffset = offset;
-			column.stickyStyle = { position: 'sticky', right: `${offset}px` };
-			column.stickyClass = 'is-fixed-right';
+		rightFixedColumns.reduceRight((offset: number, column, index) => {
+			column.states.stickyOffset = offset;
+			column.states.stickyStyle = { position: 'sticky', right: `${offset}px` };
+			column.states.stickyClass = 'is-fixed-right';
 			if (index === rightFixedColumns.length - 1) {
-				column.stickyClass += ' is-fixed-right-head';
+				column.states.stickyClass += ' is-fixed-right-head';
 			}
-			offset += column.realWidth || column.width || 0;
+			offset += column.states.realWidth || column.states.width || 0;
 			return offset;
 		}, 0);
 
 		notFixedColumns.forEach((column) => {
-			delete column.stickyOffset;
-			delete column.stickyStyle;
-			delete column.stickyClass;
+			column.states.stickyOffset = void 0;
+			column.states.stickyStyle = void 0;
+			column.states.stickyClass = void 0;
 		});
 	}
 }

@@ -1,7 +1,9 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, computed, inject } from 'vue';
+import type { PropType } from 'vue';
 import type { TableGridCell } from './table-grid-cell';
+import type { TableColumnNode } from '../table-column/table-column-node';
 import { parseHeight, computeGridTemplateColumns } from '../utils';
 
 const COMPONENT_NAME = 'vc-table-grid';
@@ -19,7 +21,7 @@ export const TableGrid = defineComponent({
 	props: {
 		// 列对象数组，仅消费 realWidth（表格内仅用于 columnCount，模板走 CSS 变量）
 		columns: {
-			type: Array,
+			type: Array as PropType<TableColumnNode[]>,
 			default: () => ([])
 		},
 		// 一维 cells，坐标 + span + render
@@ -44,16 +46,16 @@ export const TableGrid = defineComponent({
 		}
 	},
 	setup(props) {
-		const table: any = inject('vc-table', null);
+		const table = inject('vc-table', null);
 
 		// 独立使用时本地模板兜底；表格内走 CSS 变量
-		const localTemplateColumns = computed(() => computeGridTemplateColumns(props.columns as any[]));
+		const localTemplateColumns = computed(() => computeGridTemplateColumns(props.columns));
 
 		const gridTemplateColumns = computed(() => table ? 'var(--vc-table-columns)' : localTemplateColumns.value);
-		const rowHeight = computed(() => parseHeight(props.rowHeight as any));
+		const rowHeight = computed(() => parseHeight(props.rowHeight));
 
 		return () => {
-			const columnCount = (props.columns as any[]).length;
+			const columnCount = props.columns.length;
 			return (
 				<div
 					class="vc-table__grid"

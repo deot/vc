@@ -1,4 +1,5 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
+import type { TableColumnSyncItem } from './store/modules/column';
 
 export const props = {
 	data: {
@@ -115,8 +116,9 @@ export const props = {
 	 * 并通过每项的 hidden 字段控制该列是否渲染（不影响收集）。
 	 */
 	columns: {
-		type: Array,
+		type: Array as PropType<TableColumnSyncItem[]>,
 		default: () => ([])
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;
+export type TableProps = Props;

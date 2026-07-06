@@ -16,6 +16,8 @@ import { TableFooter } from './table-footer';
 import { Affix } from '../affix';
 
 import { props as tableProps } from './table-props';
+import type { TableProvide } from './types';
+import type { Nullable } from '@deot/helper-shared';
 
 const COMPONENT_NAME = 'vc-table';
 
@@ -30,6 +32,7 @@ export const Table = defineComponent({
 		'cell-mouse-leave',
 		'cell-click',
 		'cell-dblclick',
+		'cell-contextmenu',
 		'row-click',
 		'row-contextmenu',
 		'row-dblclick',
@@ -45,20 +48,20 @@ export const Table = defineComponent({
 	setup(props, { slots, expose, emit }) {
 		const instance = getCurrentInstance()!;
 
-		const store: any = new Store({ table: instance });
+		const store = new Store({ table: instance });
 		const { layout } = store;
 
 		// 由table-column控制
-		const renderExpanded = ref(null);
+		const renderExpand: TableProvide['renderExpand'] = ref(null);
 		const resizeProxyVisible = ref(false);
 		const resizeState = ref({
 			width: null,
 			height: null
 		});
 
-		const tableWrapper = ref<any>(null);
+		const tableWrapper = ref<Nullable<HTMLElement>>(null);
 		// refs
-		const hiddenColumns = ref<any>(null);
+		const hiddenColumns = ref<Nullable<HTMLElement>>(null);
 		const headerWrapper = ref<any>(null);
 
 		const body = ref<any>();
@@ -67,13 +70,13 @@ export const Table = defineComponent({
 		const affixHeader = ref<any>(null);
 		const affixFooter = ref<any>(null);
 
-		const resizeProxy = ref(null);
+		const resizeProxy = ref<Nullable<HTMLElement>>(null);
 
 		const scrollPosition = ref('left');
-		const hoverState = ref(null);
+		const hoverState: TableProvide['hoverState'] = ref(null);
 		const isReady = ref(false);
 
-		const states: any = useStates({
+		const states = useStates({
 			columns: 'columns',
 			leftFixedColumns: 'leftFixedColumns',
 			rightFixedColumns: 'rightFixedColumns',
@@ -457,7 +460,7 @@ export const Table = defineComponent({
 			debouncedUpdateLayout,
 			isReady,
 			hoverState,
-			renderExpanded,
+			renderExpand,
 			hiddenColumns,
 			props,
 			emit,

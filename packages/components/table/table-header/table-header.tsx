@@ -1,4 +1,5 @@
 import { defineComponent, ref, getCurrentInstance, computed, inject } from 'vue';
+import type { Nullable } from '@deot/helper-shared';
 import { addClass, removeClass, hasClass } from '@deot/helper-dom';
 import { IS_SERVER } from '@deot/vc-shared';
 import { Popover } from '../../popover';
@@ -6,6 +7,8 @@ import { Icon } from '../../icon';
 import { useStates } from '../store';
 import { TableGrid } from '../table-grid';
 import { TableSort } from './table-sort';
+import type { TableProvide } from '../types';
+import type { TableColumnNode, TableColumnStates } from '../table-column/table-column-node';
 // import TableFilter from './table-filter';
 
 const TableFilter = 'div';
@@ -26,12 +29,12 @@ export const TableHeader = defineComponent({
 	},
 
 	setup(props) {
-		const table: any = inject('vc-table');
+		const table = inject<TableProvide>('vc-table')!;
 		const instance = getCurrentInstance()!;
 
-		const draggingColumn = ref(null);
+		const draggingColumn = ref<Nullable<TableColumnNode>>(null);
 		const dragging = ref(false);
-		const dragState = ref<any>({});
+		const dragState = ref<Record<string, number>>({});
 
 		const allowDrag = computed(() => {
 			return typeof props.resizable === 'boolean' ? props.resizable : props.border;
@@ -43,7 +46,7 @@ export const TableHeader = defineComponent({
 			return 'has-drag-line';
 		});
 
-		const states: any = useStates({
+		const states = useStates({
 			columns: 'columns',
 			isAllSelected: 'isAllSelected',
 			isGroup: 'isGroup',
@@ -69,26 +72,27 @@ export const TableHeader = defineComponent({
 			return '';
 		};
 
-		const getHeaderCellStyle = (rowIndex: number, columnIndex: number, row: any, column: any) => {
+		const getHeaderCellStyle = (rowIndex: number, columnIndex: number, row: TableColumnNode[], column: TableColumnNode) => {
 			const { headerCellStyle } = table.props;
 			if (typeof headerCellStyle === 'function') {
 				return headerCellStyle.call(null, {
 					rowIndex,
 					columnIndex,
 					row,
-					column
+					column: column.states
 				});
 			}
 			return {
 				...headerCellStyle,
-				...column.style
+				...column.states.style
 			};
 		};
 
-		const getHeaderCellClass = (rowIndex: number, columnIndex: number, row: any, column: any) => {
-			const classes = [column.id, column.order, column.realHeaderAlign, column.class, column.labelClass];
+		const getHeaderCellClass = (rowIndex: number, columnIndex: number, row: TableColumnNode[], column: TableColumnNode) => {
+			const { states: columnStates } = column;
+			const classes = [columnStates.id, columnStates.order, columnStates.realHeaderAlign, columnStates.class, columnStates.labelClass];
 
-			if (!column.children) {
+			if (!column.childNodes.length) {
 				classes.push('is-leaf');
 			}
 
@@ -100,33 +104,33 @@ export const TableHeader = defineComponent({
 					rowIndex,
 					columnIndex,
 					row,
-					column
+					column: columnStates
 				}));
 			}
 
 			return classes.join(' ');
 		};
 
-		const handleHeaderClick = (e: any, column: any) => {
-			table.emit('header-click', column, e);
+		const handleHeaderClick = (e: MouseEvent, column: TableColumnNode) => {
+			table.emit('header-click', column.states, e);
 		};
 
-		const handleHeaderContextMenu = (e: any, column: any) => {
-			table.emit('header-contextmenu', column, e);
+		const handleHeaderContextMenu = (e: MouseEvent, column: TableColumnNode) => {
+			table.emit('header-contextmenu', column.states, e);
 		};
 
-		const handleMouseDown = (e: any, column: any) => {
+		const handleMouseDown = (e: MouseEvent, column: TableColumnNode) => {
 			if (IS_SERVER) return;
-			if (column.children && column.children.length > 0) return;
+			if (column.childNodes.length > 0) return;
 			/* istanbul ignore if */
 			if (draggingColumn.value && allowDrag.value) {
 				dragging.value = true;
 
 				table.resizeProxyVisible.value = true;
 
-				const tableEl = table.tableWrapper.value;
+				const tableEl = table.tableWrapper.value!;
 				const tableLeft = tableEl.getBoundingClientRect().left;
-				const columnEl = instance.vnode.el!.querySelector(`.vc-table__th.${column.id}`);
+				const columnEl: HTMLElement = instance.vnode.el!.querySelector(`.vc-table__th.${column.states.id}`);
 				const columnRect = columnEl.getBoundingClientRect();
 				const minLeft = columnRect.left - tableLeft + 30;
 
@@ -139,20 +143,20 @@ export const TableHeader = defineComponent({
 					tableLeft
 				};
 
-				const resizeProxy = table.resizeProxy.value;
+				const resizeProxy = table.resizeProxy.value!;
 				resizeProxy.style.left = dragState.value.startLeft + 'px';
 
 				document.onselectstart = () => false;
 				document.ondragstart = () => false;
 
-				const handleMouseMove = ($e) => {
+				const handleDocumentMouseMove = ($e: MouseEvent) => {
 					const deltaLeft = $e.clientX - dragState.value.startMouseLeft;
 					const proxyLeft = dragState.value.startLeft + deltaLeft;
 
 					resizeProxy.style.left = Math.max(minLeft, proxyLeft) + 'px';
 				};
 
-				const handleMouseUp = () => {
+				const handleDocumentMouseUp = () => {
 					if (dragging.value) {
 						const {
 							startColumnLeft,
@@ -160,8 +164,8 @@ export const TableHeader = defineComponent({
 						} = dragState.value;
 						const finalLeft = parseInt(resizeProxy.style.left, 10);
 						const columnWidth = finalLeft - startColumnLeft;
-						column.width = column.minWidth = column.realWidth = columnWidth;
-						table.emit('header-dragend', column.width, startLeft - startColumnLeft, column);
+						column.states.width = column.states.minWidth = column.states.realWidth = columnWidth;
+						table.emit('header-dragend', column.states.width, startLeft - startColumnLeft, column.states);
 
 						table.store.scheduleLayout();
 
@@ -173,8 +177,8 @@ export const TableHeader = defineComponent({
 						table.resizeProxyVisible.value = false;
 					}
 
-					document.removeEventListener('mousemove', handleMouseMove);
-					document.removeEventListener('mouseup', handleMouseUp);
+					document.removeEventListener('mousemove', handleDocumentMouseMove);
+					document.removeEventListener('mouseup', handleDocumentMouseUp);
 					document.onselectstart = null;
 					document.ondragstart = null;
 
@@ -183,19 +187,19 @@ export const TableHeader = defineComponent({
 					}, 0);
 				};
 
-				document.addEventListener('mousemove', handleMouseMove);
-				document.addEventListener('mouseup', handleMouseUp);
+				document.addEventListener('mousemove', handleDocumentMouseMove);
+				document.addEventListener('mouseup', handleDocumentMouseUp);
 			}
 		};
 
-		const handleMouseMove = (event: any, column: any) => {
-			if (column.children && column.children.length > 0) return;
-			let target = event.target;
+		const handleMouseMove = (event: MouseEvent, column: TableColumnNode) => {
+			if (column.childNodes.length > 0) return;
+			let target = event.target as Nullable<HTMLElement>;
 			while (target && !target.classList?.contains?.('vc-table__th')) {
-				target = target.parentNode;
+				target = target.parentNode as Nullable<HTMLElement>;
 			}
 
-			if (!column || !column.resizable) return;
+			if (!column || !column.states.resizable || !target) return;
 
 			if (!dragging.value && allowDrag.value) {
 				const rect = target.getBoundingClientRect();
@@ -222,19 +226,19 @@ export const TableHeader = defineComponent({
 			document.body.style.cursor = '';
 		};
 
-		const handleSort = (prop: string, order: any) => {
+		const handleSort = (prop: string, order: string) => {
 			const v = { prop, order };
 
 			table.emit('update:sort', v);
 			table.emit('sort-change', v);
 		};
 
-		const handleFilter = (column: any, value: any) => {
+		const handleFilter = (column: TableColumnStates, value: unknown) => {
 			const { filter } = column;
 			filter && filter(value);
 		};
 
-		const handleCellMouseEnter = (e: any, column: any) => {
+		const handleCellMouseEnter = (e: MouseEvent, column: TableColumnStates) => {
 			Popover.open({
 				el: document.body,
 				name: 'vc-table-header-popover', // 确保不重复创建
@@ -247,7 +251,8 @@ export const TableHeader = defineComponent({
 			});
 		};
 
-		const renderCellContent = (column: any, columnIndex: number) => {
+		const renderCellContent = (column: TableColumnNode, columnIndex: number) => {
+			const { states: columnStates } = column;
 			return (
 				<div
 					class={[
@@ -255,51 +260,51 @@ export const TableHeader = defineComponent({
 						// {
 						// 	"is-highlight": column.filteredValue && column.filteredValue.length > 0
 						// },
-						column.labelClass
+						columnStates.labelClass
 					]}
 				>
 					{
-						column.renderHeader
-							? column.renderHeader(
+						columnStates.renderHeader
+							? columnStates.renderHeader(
 									{
-										column,
+										column: columnStates,
 										columnIndex,
 										store: table.store,
 									}
 								)
-							: column.label
+							: columnStates.label
 					}
 					{
-						column.tooltip
+						columnStates.tooltip
 							? (
 									<Icon
 										type="o-info"
 										class="vc-table__tooltip"
-										onMouseenter={(e: any) => handleCellMouseEnter(e, column)}
+										onMouseenter={(e: MouseEvent) => handleCellMouseEnter(e, columnStates)}
 									/>
 								)
 							: null
 					}
 					{
-						column.sortable
+						columnStates.sortable
 							? (
 									<TableSort
-										order={column.prop === props.sort.prop ? props.sort.order : ''}
-										onClick={(order: any) => handleSort(column.prop, order)}
+										order={columnStates.prop === props.sort.prop ? props.sort.order : ''}
+										onClick={(order: string) => handleSort(columnStates.prop!, order)}
 									/>
 								)
 							: null
 					}
 					{
-						column.filters
+						columnStates.filters
 							? (
 									<TableFilter
-										data={column.filters}
-										value={column.filteredValue}
-										icon={column.filterIcon}
-										portalClass={column.filterPopupClass}
-										multiple={column.filterMultiple}
-										onChange={v => handleFilter(column, v)}
+										data={columnStates.filters}
+										value={columnStates.filteredValue}
+										icon={columnStates.filterIcon}
+										portalClass={columnStates.filterPopupClass}
+										multiple={columnStates.filterMultiple}
+										onChange={(v: unknown) => handleFilter(columnStates, v)}
 									/>
 								)
 							: null
@@ -310,23 +315,23 @@ export const TableHeader = defineComponent({
 
 		/**
 		 * 把 states.headerRows（二维，多级表头）推导为 TableGrid 的 cells[]：
-		 * 多级表头本质就是 rowspan/colspan（columnsToRowsEffect 已写在 column 上），
+		 * 多级表头本质就是 rowspan/colspan（columnsToRowsEffect 已写在 column.states 上），
 		 * 这里只需按占位推导每个 cell 的起始叶子列号（grid 列坐标）。
 		 * 注意：headerRowStyle/Class 挂在 thead 内唯一 vc-table__tr 上，不再合并到 th。
 		 * @returns 表头 cells
 		 */
 		const buildHeaderCells = () => {
-			const rows: any[][] = states.headerRows;
-			const cells: any[] = [];
+			const rows = states.headerRows;
+			const cells: Record<string, unknown>[] = [];
 			// 占位表：跨行（rowspan）的 cell 会占用后续行的列位
 			const taken: boolean[][] = rows.map(() => []);
 
-			rows.forEach((columns: any[], rowIndex: number) => {
+			rows.forEach((columns, rowIndex) => {
 				let gridColumnIndex = 0;
-				columns.forEach((column: any, columnIndex: number) => {
+				columns.forEach((column, columnIndex) => {
 					while (taken[rowIndex][gridColumnIndex]) gridColumnIndex++;
-					const rowspan = column.rowspan || 1;
-					const colspan = column.colspan || 1;
+					const rowspan = column.states.rowspan || 1;
+					const colspan = column.states.colspan || 1;
 					for (let i = rowIndex; i < rowIndex + rowspan && i < rows.length; i++) {
 						for (let j = gridColumnIndex; j < gridColumnIndex + colspan; j++) {
 							taken[i][j] = true;
@@ -334,27 +339,27 @@ export const TableHeader = defineComponent({
 					}
 
 					cells.push({
-						key: column.id,
+						key: column.states.id,
 						rowIndex,
 						columnIndex: gridColumnIndex,
 						rowspan,
 						colspan,
 						class: [
 							getHeaderCellClass(rowIndex, columnIndex, columns, column),
-							column.resizable && dragLineClass.value,
-							column.stickyClass,
+							column.states.resizable && dragLineClass.value,
+							column.states.stickyClass,
 							'vc-table__th'
 						],
 						style: [
 							getHeaderCellStyle(rowIndex, columnIndex, columns, column),
-							column.stickyStyle
+							column.states.stickyStyle
 						],
 						attrs: {
-							onMousemove: (e: any) => handleMouseMove(e, column),
+							onMousemove: (e: MouseEvent) => handleMouseMove(e, column),
 							onMouseout: handleMouseOut,
-							onMousedown: (e: any) => handleMouseDown(e, column),
-							onClick: (e: any) => handleHeaderClick(e, column),
-							onContextmenu: (e: any) => handleHeaderContextMenu(e, column)
+							onMousedown: (e: MouseEvent) => handleMouseDown(e, column),
+							onClick: (e: MouseEvent) => handleHeaderClick(e, column),
+							onContextmenu: (e: MouseEvent) => handleHeaderContextMenu(e, column)
 						},
 						render: () => renderCellContent(column, columnIndex)
 					});

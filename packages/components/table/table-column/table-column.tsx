@@ -2,9 +2,6 @@ import {
 	getCurrentInstance,
 	h,
 	defineComponent,
-	ref,
-	reactive,
-	watch,
 	computed,
 	onBeforeMount,
 	onMounted,
@@ -13,283 +10,59 @@ import {
 	inject,
 	provide
 } from 'vue';
-import { hasOwn, getUid } from '@deot/helper-utils';
-import { merge, isEmpty } from 'lodash-es';
-import { compose } from '@deot/helper-fp';
-import { cellStarts, cellForced, defaultRenderCell, treeCellPrefix } from './table-column-confg';
-import { parseWidth, parseMinWidth } from '../utils';
+import type { Component, VNode } from 'vue';
+import { getUid } from '@deot/helper-utils';
+import { tableColumnProps } from './table-column-props';
+import { TableColumnNode } from './table-column-node';
+import type { TableColumnProvide, TableProvide } from '../types';
 
 export const TableColumn = defineComponent({
 	name: 'vc-table-column',
 	inheritAttrs: false,
-	props: {
-		type: {
-			type: String,
-			default: 'default'
-		},
-		line: Number,
-		label: String,
-		labelClass: String,
-		prop: String,
-		width: Number,
-		minWidth: Number,
-		renderHeader: Function,
-		resizable: {
-			type: Boolean,
-			default: true
-		},
-		columnKey: String,
-		align: String,
-		headerAlign: String,
-		fixed: [Boolean, String],
-		formatter: Function,
-		selectable: Function,
-		reserveSelection: Boolean,
-		index: [Number, Function],
-		// 头部是否展示排序
-		sortable: Boolean,
-		// 数据过滤的选项
-		filters: Array,
-		// 是否支持多选
-		filterMultiple: {
-			type: Boolean,
-			default: true
-		},
-		filterIcon: String,
-		// 选中的数据过滤项
-		filteredValue: Array,
-		// 筛选弹层的样式
-		filterPopupClass: String,
-		// 筛选的方法
-		filter: Function,
-
-		tooltip: [String, Function]
-	},
+	props: tableColumnProps,
 	setup(props, { slots, attrs }) {
 		const instance = getCurrentInstance()!;
-		const table: any = inject('vc-table');
-		const parent: any = inject('vc-table-column', table);
+		const table = inject<TableProvide>('vc-table')!;
+		const parent = inject<TableColumnProvide | TableProvide>('vc-table-column', table);
 
-		const isSubColumn = table !== parent; // 用于多久表头
+		const isSubColumn = table !== parent; // 用于多级表头
+		const parentNode = 'columnNode' in parent ? parent.columnNode : void 0;
 
-		const columnId = ref((parent.tableId || parent.columnId) + getUid('column'));
+		const id = ('columnId' in parent ? parent.columnId.value : parent.tableId) + getUid('column');
 
-		const realWidth = computed(() => {
-			return parseWidth(props.width);
+		const columnNode = new TableColumnNode({
+			table,
+			parentNode,
+			instance,
+			states: { id }
 		});
-
-		const realMinWidth = computed(() => {
-			return parseMinWidth(props.minWidth);
-		});
-
-		const realAlign = computed(() => {
-			return props.align
-				? 'is-' + props.align
-				: null;
-		});
-
-		const realHeaderAlign = computed(() => {
-			return props.headerAlign
-				? 'is-' + props.headerAlign
-				: realAlign.value;
-		});
-
-		const columnConfig = reactive({});
-		/**
-		 * 获取当前值情况，this[key]
-		 * @param args ~
-		 * @returns ~
-		 */
-		const getPropsData = (...args) => {
-			const result = args.reduce((prev, cur) => {
-				if (Array.isArray(cur)) {
-					cur.forEach((key) => {
-						prev[key] = props[key];
-					});
-				}
-				return prev;
-			}, {});
-
-			return result;
-		};
-		/**
-		 * compose 1
-		 * 对于特定类型的 column，某些属性不允许设置
-		 * 如 type: selection | index | expand
-		 * @param column ~
-		 * @returns ~
-		 */
-		const setColumnForcedProps = (column: any) => {
-			const type = column.type;
-			const source = cellForced[type] || {};
-			Object.keys(source).forEach((prop) => {
-				const value = source[prop];
-				if (value !== undefined) {
-					column[prop] = prop === 'class'
-						? `${column[prop] ? `${column[prop]} ` : ''}${value}`
-						: value;
-				}
-			});
-			return column;
-		};
-
-		/**
-		 * compose 2
-		 * column
-		 * 	 -> width
-		 * 	 -> minWidth
-		 * @param column ~
-		 * @returns ~
-		 */
-		const setColumnWidth = (column: any) => {
-			column.width = realWidth.value || column.width;
-			column.minWidth = realMinWidth.value || column.minWidth || 80;
-
-			column.realWidth = typeof column.width === 'undefined' ? column.minWidth : column.width;
-			return column;
-		};
-
-		/**
-		 * compose 3
-		 * column
-		 *   -> renderHeader: 渲染头部
-		 *   -> renderCell: 渲染单元格
-		 * owner
-		 * 	 -> renderExpanded: 展开
-		 * @param column ~
-		 * @returns ~
-		 */
-		const setColumnRenders = (column: any) => {
-			const specialTypes = Object.keys(cellForced);
-			// renderHeader 属性不推荐使用。
-			if (props.renderHeader) {
-				column.renderHeader = props.renderHeader;
-			} else if (specialTypes.indexOf(column.type) === -1) {
-				column.renderHeader = (data) => {
-					const renderHeader = slots.header;
-					return renderHeader
-						? renderHeader(data)
-						: data?.column?.label;
-				};
-			}
-
-			let originRenderCell = column.renderCell;
-			// TODO: 这里的实现调整
-			if (column.type === 'expand') {
-				// 对于展开行，renderCell 不允许配置的。在上一步中已经设置过，这里需要简单封装一下。
-				column.renderCell = (data: any) => (
-					<div class="vc-table__cell">
-						{ originRenderCell(data) }
-					</div>
-				);
-				table.renderExpanded.value = (data: any) => {
-					return slots.default
-						? slots.default(data)
-						: slots.default;
-				};
-			} else {
-				originRenderCell = originRenderCell || defaultRenderCell;
-				// 对 renderCell 进行包装
-				column.renderCell = (data: any) => {
-					const children = slots.default
-						? slots?.default?.(data)
-						: originRenderCell(data);
-
-					let prefix: any = treeCellPrefix(data);
-					const $props = {
-						class: 'vc-table__cell',
-						style: {}
-					};
-					// 存在树形数组，且当前行无箭头图标且处于当前展开列，表格对齐
-					if (!isEmpty(table.store.states.treeData) && !prefix && data.isExpandColumn) {
-						prefix = <span class="vc-table__unexpand__indent" />;
-					}
-
-					const { placeholder } = table.props;
-					const contentPlaceholder = typeof placeholder === 'function' ? placeholder() : placeholder;
-					return (
-						<div {...$props}>
-							{prefix}
-							{children === undefined || children === '' || children === null ? contentPlaceholder : children}
-						</div>
-					);
-				};
-			}
-			return column;
-		};
-
-		const registerColumn = () => {
-			const defaults = {
-				colspan: 1,
-				rowspan: 1,
-				class: attrs.class,
-				style: attrs.style,
-				...cellStarts[props.type],
-				id: columnId.value,
-				realAlign,
-				realHeaderAlign
-			};
-
-			let column = merge(defaults, getPropsData(Object.keys(props)));
-
-			// minWidth/realWidth/renderHeader
-			column = compose(setColumnRenders, setColumnWidth, setColumnForcedProps)(column);
-
-			for (const key in column) {
-				if (hasOwn(column, key)) {
-					columnConfig[key] = column[key];
-				}
-			}
-		};
-
-		const registerWatchers = () => {
-			// 赋值
-			Object.keys(props).forEach(k => watch(() => props[k], v => columnConfig[k] = v));
-
-			// 影响布局
-			watch(() => props.fixed, () => {
-				table.store.scheduleLayout(true);
-			});
-			watch(() => realWidth.value, (v) => {
-				columnConfig['width'] = v;
-				columnConfig['realWidth'] = v;
-				table.store.scheduleLayout(false);
-			});
-			watch(() => realMinWidth.value, () => {
-				table.store.scheduleLayout(false);
-			});
-		};
 
 		onBeforeMount(() => {
-			registerColumn();
-			registerWatchers();
+			columnNode.init(props, slots, attrs);
 		});
 		onMounted(() => {
 			const children = isSubColumn
-				? parent.vnode.el.children
-				: parent.hiddenColumns.value.children;
+				? parentNode!.instance.vnode.el!.children
+				: table.hiddenColumns.value!.children;
 
 			// DOM上
-			const columnIndex = [...children].indexOf(instance.vnode.el);
+			const columnIndex = [...children].indexOf(instance.vnode.el as Element);
 
 			table.store.column.insert(
-				columnConfig,
+				columnNode,
 				columnIndex,
-				isSubColumn && parent.columnConfig
+				parentNode
 			);
 		});
 
 		onUnmounted(() => {
 			if (!instance.parent) return;
-			table.store.column.remove(
-				columnConfig,
-				isSubColumn && parent.columnConfig
-			);
+			table.store.column.remove(columnNode, parentNode);
 		});
 
-		provide('vc-table-column', {
-			columnId,
-			columnConfig
+		provide<TableColumnProvide>('vc-table-column', {
+			columnId: computed(() => columnNode.states.id),
+			columnNode
 		});
 
 		/**
@@ -298,16 +71,16 @@ export const TableColumn = defineComponent({
 		 * @returns ~
 		 */
 		return () => {
-			let children: any[] = [];
+			let children: VNode[] = [];
 
 			try {
-				const renderDefault: any = slots?.default?.({ row: {}, column: {}, columnIndex: -1, rowIndex: -1 });
+				const renderDefault = slots?.default?.({ row: {}, column: {}, columnIndex: -1, rowIndex: -1 });
 				if (renderDefault instanceof Array) {
 					for (const childNode of renderDefault) {
-						if (/^vcm?-table-column$/.test(childNode.type?.name)) {
+						if (/^vcm?-table-column$/.test((childNode.type as Component)?.name || '')) {
 							children.push(childNode);
 						} else if (childNode.type === Fragment && childNode.children instanceof Array) {
-							renderDefault.push(...childNode.children);
+							renderDefault.push(...(childNode.children as VNode[]));
 						}
 					}
 				}
