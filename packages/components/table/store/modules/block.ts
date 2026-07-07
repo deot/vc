@@ -1,3 +1,4 @@
+import { toRaw } from 'vue';
 import { getRowValue } from '../../utils';
 import type { TableColumnRenderData, TableColumnNode } from '../../table-column/table-column-node';
 import type { Store } from '../store';
@@ -24,13 +25,14 @@ export const normalizeSpan = (v: any) => {
 /**
  * 基于 getSpan 预求值合并信息，产出"合并计划"：
  * 	- 以"行方向连续合并块"为最小单位切块（与虚拟化语义保持一致，块即 RecycleList 的最小渲染单位）；
- * 	- 含合并的块附带 cells[]（坐标 + span 的一维数组，被覆盖的格子已剔除），交给 TableGrid 渲染；
- * 	- 不含合并的块 cells 为空，渲染层按行合成 1×1 cells；
+ * 	- 含合并的块标记 hasMerge，cells 不预构建（由 Block#getCells 在块进入渲染窗口时按 spans/skip 懒构建）；
+ * 	- spans: key(rowIndex * columnCount + columnIndex) -> { rowspan, colspan }，仅含 anchor；
+ * 	- skip: 被合并覆盖（或 span 归零剔除）的格子 key 集合；
  * 	- covers: rowIndex -> 覆盖该行的合并 anchor 坐标（rowspan > 1，不含 anchor 本行），供 hover 关联高亮。
  * @param data 当前数据（外部已完成排序/过滤）
  * @param columns 叶子列
  * @param getSpan ({ row, column, rowIndex, columnIndex }) => [rowspan, colspan] | { rowspan, colspan }
- * @returns 合并计划，形如 { blocks: [{ start, end, cells? }], covers }
+ * @returns 合并计划，形如 { blocks: [{ start, end, hasMerge? }], covers, spans, skip }
  */
 export const computeMergePlan = (data: any[], columns: TableColumnNode[], getSpan: SpanMethod) => {
 	const rowCount = data.length;
@@ -39,6 +41,7 @@ export const computeMergePlan = (data: any[], columns: TableColumnNode[], getSpa
 	let spans: Map<number, { rowspan: number; colspan: number }> | null = null;
 	let skip: Set<number> | null = null;
 	let reach: number[] | null = null;
+	let mergedRows: Set<number> | null = null;
 
 	for (let r = 0; r < rowCount; r++) {
 		for (let c = 0; c < columnCount; c++) {
@@ -55,9 +58,11 @@ export const computeMergePlan = (data: any[], columns: TableColumnNode[], getSpa
 				spans = new Map();
 				skip = new Set();
 				reach = Array.from({ length: rowCount }, (_, i) => i);
+				mergedRows = new Set();
 			}
 			if (v.rowspan < 1 || v.colspan < 1) {
 				skip!.add(key);
+				mergedRows!.add(r);
 				continue;
 			}
 			const rowspan = Math.min(v.rowspan, rowCount - r);
@@ -66,6 +71,7 @@ export const computeMergePlan = (data: any[], columns: TableColumnNode[], getSpa
 
 			spans.set(key, { rowspan, colspan });
 			for (let i = r; i < r + rowspan; i++) {
+				mergedRows!.add(i);
 				for (let j = c; j < c + colspan; j++) {
 					if (i === r && j === c) continue;
 					skip!.add(i * columnCount + j);
@@ -78,7 +84,7 @@ export const computeMergePlan = (data: any[], columns: TableColumnNode[], getSpa
 	if (!spans) {
 		const blocks: any[] = new Array(rowCount);
 		for (let r = 0; r < rowCount; r++) blocks[r] = { start: r, end: r };
-		return { blocks, covers: null };
+		return { blocks, covers: null, spans: null, skip: null };
 	}
 
 	const blocks: any[] = [];
@@ -94,26 +100,12 @@ export const computeMergePlan = (data: any[], columns: TableColumnNode[], getSpa
 	}
 
 	blocks.forEach((block: any) => {
-		let hasMerge = block.end > block.start;
-		const cells: any[] = [];
 		for (let r = block.start; r <= block.end; r++) {
-			for (let c = 0; c < columnCount; c++) {
-				const key = r * columnCount + c;
-				if (skip!.has(key)) {
-					hasMerge = true;
-					continue;
-				}
-				const span = spans!.get(key);
-				if (span) hasMerge = true;
-				cells.push({
-					rowIndex: r,
-					columnIndex: c,
-					rowspan: span?.rowspan || 1,
-					colspan: span?.colspan || 1
-				});
+			if (mergedRows!.has(r)) {
+				block.hasMerge = true;
+				break;
 			}
 		}
-		if (hasMerge) block.cells = cells;
 	});
 
 	const covers = new Map<number, any[]>();
@@ -128,7 +120,7 @@ export const computeMergePlan = (data: any[], columns: TableColumnNode[], getSpa
 		}
 	});
 
-	return { blocks, covers: covers.size ? covers : null };
+	return { blocks, covers: covers.size ? covers : null, spans, skip };
 };
 
 /**
@@ -144,6 +136,9 @@ export class Block {
 		getSpan: null as any,
 		plan: null as any
 	};
+
+	// 块 -> cells 记忆化（key 为 list item 的 raw 对象）；list 重组 / 列变化时整体重置
+	_cells = new WeakMap<object, any[]>();
 
 	constructor(store: Store) {
 		this.store = store;
@@ -163,10 +158,11 @@ export class Block {
 	}
 
 	/**
-	 * 按 getSpan 合并计划重组 states.list：为合并块生成 cells，并写入 rowStart。
-	 * 只有存在合并时，才全量构建cells, 主要目的是一个block内含多少个row数据；（性能后续再优化）
+	 * 按 getSpan 合并计划重组 states.list：为合并块标记 hasMerge，并写入 rowStart。
+	 * cells 不在此处构建，由 getCells 在块进入渲染窗口时按需构建（避免虚拟化前全量构建）。
 	 */
 	rebuildMergeList() {
+		this._cells = new WeakMap();
 		const { getSpan, primaryKey } = this.store.table.props;
 		const { data, columns, list } = this.store.states;
 		if (typeof getSpan !== 'function' || !data.length || !columns.length) return;
@@ -197,10 +193,53 @@ export class Block {
 				id: typeof id === 'undefined' ? block.start : id,
 				rows,
 				expand: false,
-				cells: block.cells,
+				hasMerge: block.hasMerge,
 				rowStart: block.start
 			};
 		});
+	}
+
+	/**
+	 * 块级 cells 懒构建（仅发生在进入渲染窗口的块上），按块记忆化：
+	 * 	- 合并块：按 plan 的 spans/skip 求 rowspan/colspan，被覆盖格子剔除；
+	 * 	- 普通块（含无 getSpan 场景）：合成 1×1。
+	 * @param block states.list 中的块
+	 * @returns 一维 cells（坐标 + span）
+	 */
+	getCells(block: any) {
+		const raw = toRaw(block);
+		let cells = this._cells.get(raw);
+		if (cells) return cells;
+
+		const columnCount = this.store.states.columns.length;
+		const plan = this._cache.plan;
+		cells = [];
+		if (block.hasMerge && plan?.spans) {
+			const start = block.rowStart;
+			const end = start + block.rows.length - 1;
+			for (let r = start; r <= end; r++) {
+				for (let c = 0; c < columnCount; c++) {
+					const key = r * columnCount + c;
+					if (plan.skip.has(key)) continue;
+					const span = plan.spans.get(key);
+					cells.push({
+						rowIndex: r,
+						columnIndex: c,
+						rowspan: span?.rowspan || 1,
+						colspan: span?.colspan || 1
+					});
+				}
+			}
+		} else {
+			const rows = block.rows;
+			for (let i = 0; i < rows.length; i++) {
+				for (let c = 0; c < columnCount; c++) {
+					cells.push({ rowIndex: rows[i].index, columnIndex: c, rowspan: 1, colspan: 1 });
+				}
+			}
+		}
+		this._cells.set(raw, cells);
+		return cells;
 	}
 
 	getCoverAnchors(rowIndex: number) {

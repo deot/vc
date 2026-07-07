@@ -3089,9 +3089,10 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 		document.body.innerHTML = '';
 	});
 
-	it('computeMergePlan: 切块 / cells / skip / 0 值 / 越界裁剪', () => {
+	it('computeMergePlan: 切块 / spans / skip / 0 值 / 越界裁剪（cells 不预构建）', () => {
 		const data = buildData(5);
 		const columns = ['c0', 'c1', 'c2'].map(id => buildColumnNode({ id }));
+		const columnCount = columns.length;
 		// 第 0 列每 2 行合并；row0 的 c1+c2 横向合并；row4 c2 越界 rowspan
 		const getSpan = ({ rowIndex, columnIndex, column }: any) => {
 			expect(column.id).toBe(`c${columnIndex}`);
@@ -3106,19 +3107,21 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 		// rows: [0,1] 合并、[2,3] 合并、[4] 单行
 		expect(plan.blocks.map((b: any) => [b.start, b.end])).toEqual([[0, 1], [2, 3], [4, 4]]);
 
-		const block0 = plan.blocks[0];
-		expect(block0.cells).toBeTruthy();
-		const anchor = block0.cells.find((c: any) => c.rowIndex === 0 && c.columnIndex === 0);
-		expect(anchor.rowspan).toBe(2);
-		// 被覆盖的 (1,0) 与 (0,2) 不在 cells 中
-		expect(block0.cells.some((c: any) => c.rowIndex === 1 && c.columnIndex === 0)).toBe(false);
-		expect(block0.cells.some((c: any) => c.rowIndex === 0 && c.columnIndex === 2)).toBe(false);
-		// colspan 合并
-		const colspanAnchor = block0.cells.find((c: any) => c.rowIndex === 0 && c.columnIndex === 1);
-		expect(colspanAnchor.colspan).toBe(2);
+		// cells 不再预构建，块上仅有 hasMerge 标记
+		expect(plan.blocks.every((b: any) => !b.cells)).toBe(true);
+		expect(plan.blocks[0].hasMerge).toBe(true);
+		expect(plan.blocks[1].hasMerge).toBe(true);
 
-		// 末行越界 rowspan 被裁剪为 1 -> 单行无合并 -> 无 cells，渲染期合成 1×1
-		expect(plan.blocks[2].cells).toBeUndefined();
+		// spans 仅含 anchor；skip 含被覆盖 / 归零剔除的格子
+		const spanAt = (r: number, c: number) => plan.spans!.get(r * columnCount + c);
+		expect(spanAt(0, 0)!.rowspan).toBe(2);
+		expect(plan.skip!.has(1 * columnCount + 0)).toBe(true);
+		expect(plan.skip!.has(0 * columnCount + 2)).toBe(true);
+		// colspan 合并
+		expect(spanAt(0, 1)!.colspan).toBe(2);
+
+		// 末行越界 rowspan 被裁剪为 1 -> 单行无合并 -> 无 hasMerge，渲染期合成 1×1
+		expect(plan.blocks[2].hasMerge).toBeFalsy();
 
 		// covers：rowspan 覆盖行 -> anchors（行 1 被 (0,0) 覆盖、行 3 被 (2,0) 覆盖）
 		expect(plan.covers).toBeTruthy();
@@ -3127,15 +3130,17 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 		expect(plan.covers!.get(0)).toBeUndefined();
 	});
 
-	it('computeMergePlan: 无合并快路径（零分配，每行一块，covers 为 null）', () => {
+	it('computeMergePlan: 无合并快路径（零分配，每行一块，covers/spans/skip 为 null）', () => {
 		const data = buildData(3);
 		const columns = ['c0', 'c1'].map(id => buildColumnNode({ id }));
 		const getSpan = vi.fn(() => [1, 1]);
 		const plan = computeMergePlan(data, columns, getSpan);
 		expect(getSpan).toHaveBeenCalledTimes(6);
 		expect(plan.blocks.map((b: any) => [b.start, b.end])).toEqual([[0, 0], [1, 1], [2, 2]]);
-		expect(plan.blocks.every((b: any) => !b.cells)).toBe(true);
+		expect(plan.blocks.every((b: any) => !b.hasMerge)).toBe(true);
 		expect(plan.covers).toBe(null);
+		expect(plan.spans).toBe(null);
+		expect(plan.skip).toBe(null);
 	});
 
 	it('getSpan: 合并块走 grid 渲染（aria-rowspan / data-row / 缓存 / hasMergeCells）', async () => {
@@ -3388,9 +3393,69 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 		const vm = tableRef.value!;
 		// 20 行两两合并 -> 10 个合并块
 		expect(vm.store.states.list).toHaveLength(10);
-		expect(vm.store.states.list.every((i: any) => i.cells)).toBe(true);
+		expect(vm.store.states.list.every((i: any) => i.hasMerge)).toBe(true);
+		// cells 不在虚拟化前全量构建
+		expect(vm.store.states.list.every((i: any) => !i.cells)).toBe(true);
 		expect(wrapper.find('.vc-recycle-list').exists()).toBe(true);
 		expect(wrapper.find('.vc-table__tr-group').exists()).toBe(true);
+
+		wrapper.unmount();
+	});
+
+	it('getCells: 懒构建 + 记忆化（合并块按 spans/skip，普通块合成 1×1）', async () => {
+		const tableRef = ref<any>();
+		// 每两行合并第 0 列
+		const getSpan = ({ rowIndex, columnIndex }: any) => {
+			if (columnIndex === 0) return rowIndex % 2 === 0 ? [2, 1] : [0, 0];
+			return [1, 1];
+		};
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(6)} primaryKey="id" getSpan={getSpan}>
+				<TableColumn label="名称" prop="name" />
+				<TableColumn label="地址" prop="address" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(60);
+		await flush();
+
+		const vm = tableRef.value!;
+		const list = vm.store.states.list;
+		expect(list).toHaveLength(3);
+		expect(list.every((i: any) => !i.cells)).toBe(true);
+
+		// 合并块：被覆盖格子剔除，anchor 带 rowspan；重复调用返回同一引用（记忆化）
+		const cells = vm.store.block.getCells(list[0]);
+		expect(cells).toHaveLength(3);
+		expect(cells.find((c: any) => c.rowIndex === 0 && c.columnIndex === 0).rowspan).toBe(2);
+		expect(cells.some((c: any) => c.rowIndex === 1 && c.columnIndex === 0)).toBe(false);
+		expect(vm.store.block.getCells(list[0])).toBe(cells);
+
+		// 渲染层消费懒构建结果：2 行 x 2 列 - 1 被覆盖 = 3 个 cell
+		const layer = wrapper.find('.vc-table__body-wrapper .vc-table__tr-group');
+		expect(layer.findAll('.vc-table__td')).toHaveLength(3);
+
+		wrapper.unmount();
+	});
+
+	it('getCells: 无 getSpan 的普通块合成 1×1（plan 为 null）', async () => {
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(2)} primaryKey="id">
+				<TableColumn label="名称" prop="name" />
+				<TableColumn label="地址" prop="address" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		const vm = tableRef.value!;
+		const list = vm.store.states.list;
+		const cells = vm.store.block.getCells(list[1]);
+		expect(cells).toEqual([
+			{ rowIndex: 1, columnIndex: 0, rowspan: 1, colspan: 1 },
+			{ rowIndex: 1, columnIndex: 1, rowspan: 1, colspan: 1 }
+		]);
+		expect(vm.store.block.getCells(list[1])).toBe(cells);
 
 		wrapper.unmount();
 	});

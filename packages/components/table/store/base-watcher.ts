@@ -52,7 +52,7 @@ export class BaseWatcher {
 		// compputeds
 		isComplex: computed(() => this.states.leftFixedColumns.length > 0 || this.states.rightFixedColumns.length > 0),
 		// 是否存在 getSpan 合并块（grid 渲染），hover 高亮等需要走 JS 控制
-		hasMergeCells: computed(() => this.states.list.some((item: any) => !!item.cells)),
+		hasMergeCells: computed(() => this.states.list.some((item: any) => !!item.hasMerge)),
 		isGroup: computed(() => this.states.columns.length > this.states.originColumns.length),
 
 		// 叶子列 flat 视图（元素为 leaf 节点引用；layout 写 node.states，body/footer 读 node.states）

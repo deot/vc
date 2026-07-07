@@ -232,16 +232,8 @@ export const TableBodyBlock = defineComponent({
 			const maxColumnIndex = columns.length - 1;
 			const rowStart = block.rowStart ?? (rows[0]?.index || 0);
 
-			// 合并块使用预计算 cells；普通块渲染期合成 1×1（仅发生在可见块上）
-			let layoutCells = block.cells;
-			if (!layoutCells) {
-				layoutCells = [];
-				for (let i = 0; i < rows.length; i++) {
-					for (let c = 0; c < columns.length; c++) {
-						layoutCells.push({ rowIndex: rows[i].index, columnIndex: c, rowspan: 1, colspan: 1 });
-					}
-				}
-			}
+			// cells 由 store 懒构建（仅发生在可见块上）：合并块查合并计划，普通块合成 1×1
+			const layoutCells = table.store.block.getCells(block);
 
 			// selected 按行求值；用户 row-class/row-style 仅单行块挂 tr，合并块无效
 			const rowSelected = rows.map((row: { data: RowData }) => table.store.selection.isSelected(row.data));
