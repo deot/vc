@@ -5,7 +5,7 @@
 
 # deot/vc
 
-用于Web开发的组件库, 且遵守`tree-shaking`
+A component library for web development with `tree-shaking` support.
 
 ## Monorepo
 
@@ -13,63 +13,63 @@
 
 ## Contributing
 
-这是一个[monorepo](https://en.wikipedia.org/wiki/Monorepo)仓库 ，使用[pnpm](https://pnpm.io/) 管理
+This is a [monorepo](https://en.wikipedia.org/wiki/Monorepo) managed with [pnpm](https://pnpm.io/).
 
-- 安装环境
+- Setup
 
 ```console
 $ npm run init
 ```
 
-- 添加依赖或添加新的包
+- Add dependencies or new packages
 
 ```console
 $ npm run add
 ```
 
-- 关联
+- Link
 
 ```console
 $ npm run link
 ```
 
-- 测试
+- Test
 
 ```console
 $ npm run test
 
-# 或者 直接添加参数
+# Or pass arguments directly
 $ npm run test -- --package-name '**' --watch
 ```
 
-- 开发
+- Development
 
 ```console
 $ npm run dev
 
-# 或者 直接添加参数
+# Or pass arguments directly
 $ npm run dev -- --package-name '**'
 ```
 
-- 打包
+- Build
 
 ```console
 $ npm run build
 ```
 
-- 代码检查
+- Lint
 
 ```console
 $ npm run lint
 ```
 
-- 发布
+- Publish
 
 ```console
 $ npm run pub
 ```
 
-## 关联
+## Links
 
 [CONTRIBUTING](./.github/CONTRIBUTING.md)
 
