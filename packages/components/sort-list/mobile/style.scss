@@ -1,0 +1,25 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-sort-list;
+
+@include block($component-name) {
+	@include flex;
+
+	flex-wrap: wrap;
+
+	@include element(item) {
+		transition: opacity 0.5s;
+
+		&[draggable="true"] {
+			cursor: move;
+		}
+
+		&[draggable="false"] {
+			cursor: no-drop;
+		}
+
+		&.is-move {
+			transition: all 0.5s;
+		}
+	}
+}

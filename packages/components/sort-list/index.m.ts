@@ -1,3 +1,6 @@
-import { SortList } from '.';
+import { MSortList } from './mobile/sort-list.tsx';
+import './mobile/style.scss';
 
-export const MSortList = SortList;
+export {
+	MSortList
+};
