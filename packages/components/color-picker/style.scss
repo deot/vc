@@ -1,6 +1,5 @@
-@use '../style/helper' as *;
-
-$component-name: vc-color-picker;
-
-@include block($component-name) {
-}
+@use './color-picker';
+@use './panel';
+@use './hue-slider';
+@use './alpha';
+@use './predefine';

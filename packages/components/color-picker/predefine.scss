@@ -1,0 +1,38 @@
+@use '../style/helper' as *;
+
+$component-name: vc-color-picker-predefine;
+$alpha-background: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==';
+$color-primary: varfix(color-primary, color-picker);
+
+@include block($component-name) {
+	display: flex;
+	flex: 1;
+	flex-wrap: wrap;
+	width: 100%;
+	margin-top: unitfix(8);
+
+	@include element(block) {
+		width: unitfix(18);
+		height: unitfix(18);
+		margin: 0 0 unitfix(6) unitfix(6);
+		cursor: pointer;
+
+		div {
+			height: 100%;
+			border-radius: unitfix(2);
+			box-shadow: inset 0 0 0 unitfix(1) rgb(0 0 0 / 15%);
+		}
+
+		&:nth-child(10n + 1) {
+			margin-left: unitfix(3);
+		}
+
+		@include when(selected) {
+			box-shadow: 0 0 unitfix(2) unitfix(1) $color-primary;
+		}
+
+		@include when(alpha) {
+			background: url($alpha-background);
+		}
+	}
+}

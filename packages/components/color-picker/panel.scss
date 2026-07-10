@@ -1,0 +1,38 @@
+@use '../style/helper' as *;
+
+$component-name: vc-color-picker-panel;
+
+@include block($component-name) {
+	position: relative;
+	width: 100%;
+	height: unitfix(180);
+	margin: 0 auto;
+	cursor: pointer;
+	box-sizing: initial;
+
+	@include element(white) {
+		position: absolute;
+		inset: 0;
+		cursor: pointer;
+		background: linear-gradient(to right, themefrozen(color-light), rgb(255 255 255 / 0%));
+	}
+
+	@include element(black) {
+		position: absolute;
+		inset: 0;
+		cursor: pointer;
+		background: linear-gradient(to top, themefrozen(color-dark), rgb(0 0 0 / 0%));
+	}
+
+	@include element(cursor) {
+		position: absolute;
+
+		div {
+			width: unitfix(4);
+			height: unitfix(4);
+			border-radius: 50%;
+			transform: translate(unitfix(-2), unitfix(-2));
+			box-shadow: 0 0 0 unitfix(1.5) themefrozen(color-light), inset 0 0 unitfix(1) unitfix(1) rgb(0 0 0 / 30%), 0 0 unitfix(1) unitfix(2) rgb(0 0 0 / 40%);
+		}
+	}
+}

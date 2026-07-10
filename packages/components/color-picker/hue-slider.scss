@@ -1,0 +1,36 @@
+@use '../style/helper' as *;
+
+$component-name: vc-color-picker-hue-slider;
+$color-light: varfix(color-light, color-picker);
+$color-light-deeper: varfix(color-light-deeper, color-picker);
+$mask-color-dark: varfix(mask-color-dark, color-picker);
+
+@include block($component-name) {
+	position: relative;
+	width: 100%;
+	height: unitfix(10);
+	margin-top: unitfix(8);
+	cursor: pointer;
+
+	@include element(bar) {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(to right, #F00 0%, #FF0 17%, #0F0 33%, #0FF 50%, #00F 67%, #F0F 83%, #F00 100%);
+		border-radius: unitfix(2);
+	}
+
+	@include element(thumb) {
+		position: absolute;
+		top: 0;
+		left: unitfix(100);
+		z-index: 1;
+		width: unitfix(4);
+		height: 100%;
+		cursor: pointer;
+		background: $color-light;
+		border: unitfix(1) solid $color-light-deeper;
+		border-radius: unitfix(1);
+		box-shadow: 0 0 unitfix(2) $mask-color-dark;
+		box-sizing: border-box;
+	}
+}
