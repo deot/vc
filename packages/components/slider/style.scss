@@ -1,6 +1,122 @@
 @use '../style/helper' as *;
 
 $component-name: vc-slider;
+$color-light: varfix(color-light, slider);
+$color-light-deeper: varfix(color-light-deeper, slider);
+$color-primary: varfix(color-primary, slider);
+$color-primary-light: varfix(color-primary-light, slider);
+$color-primary-disabled: varfix(color-primary-disabled, slider, #BEDAFF);
+$color-disabled: varfix(color-disabled, slider);
+$border-color-light: varfix(border-color-light, slider, #C4C9D2);
 
 @include block($component-name) {
+	position: relative;
+	display: inline-flex;
+	width: 100%;
+	align-items: center;
+	min-height: 32px;
+
+	@include element(wrapper) {
+		position: relative;
+		width: 100%;
+		height: 4px;
+		vertical-align: middle;
+		background-color: $color-light-deeper;
+		border-radius: 3px;
+
+		@include when(clickable) {
+			cursor: pointer;
+		}
+	}
+
+	@include element(bar) {
+		position: absolute;
+		height: 4px;
+		background: $color-primary;
+		border-radius: 3px;
+	}
+
+	@include element(btn-wrapper) {
+		position: absolute;
+		top: -4px;
+		width: 12px;
+		height: 12px;
+		text-align: center;
+		background-color: transparent;
+		transform: translateX(-50%);
+	}
+
+	@include element(button) {
+		width: 12px;
+		height: 12px;
+		background-color: $color-light;
+		border: 2px solid $color-primary;
+		border-radius: 50%;
+		outline: 0;
+		box-sizing: border-box;
+		transition: border-color .2s linear, transform .2s linear;
+
+		&:hover {
+			cursor: grab;
+			border-color: $color-primary-light;
+			transform: scale(1.5);
+		}
+
+		@include when(dragging) {
+			cursor: grab;
+			border-color: $color-primary-light;
+			transform: scale(1.5);
+
+			&:hover {
+				cursor: grabbing;
+			}
+		}
+	}
+
+	@include element(stop) {
+		position: absolute;
+		width: 4px;
+		height: 4px;
+		background-color: $border-color-light;
+		border-radius: 50%;
+		transform: translateX(-50%);
+	}
+
+	@include when(slider-disabled) {
+		cursor: not-allowed;
+
+		.vc-slider__wrapper {
+			cursor: not-allowed;
+			background-color: $color-disabled;
+		}
+
+		.vc-slider__bar {
+			background-color: $color-primary-disabled;
+		}
+
+		.vc-slider__button {
+			border-color: $color-primary-disabled;
+
+			&:hover {
+				cursor: not-allowed;
+				border-color: $color-primary-disabled;
+			}
+		}
+	}
+
+	@include when(slider-input) {
+		position: relative;
+
+		.vc-slider__wrapper {
+			margin-right: 100px;
+		}
+
+		.vc-input-number {
+			position: absolute;
+			top: 50%;
+			right: 0;
+			width: 80px;
+			transform: translateY(-50%);
+		}
+	}
 }
