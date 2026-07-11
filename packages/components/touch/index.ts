@@ -1,4 +1,4 @@
-import { Touch } from './touch.tsx';
+import { Touch } from './mobile/touch';
 import './style.scss';
 
 export {

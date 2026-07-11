@@ -1,6 +1,1 @@
-@use '../style/helper' as *;
-
-$component-name: vc-touch;
-
-@include block($component-name) {
-}
+@use './mobile/style';

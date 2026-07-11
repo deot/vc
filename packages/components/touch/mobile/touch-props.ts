@@ -4,6 +4,15 @@ export const props = {
 	tag: {
 		type: String,
 		default: 'div'
+	},
+	flickThreshold: {
+		type: Number,
+		default: 0.6
+	},
+	prevent: {
+		type: Boolean,
+		default: true
 	}
 };
+
 export type Props = ExtractPropTypes<typeof props>;

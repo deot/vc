@@ -1,0 +1,6 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-touch;
+
+@include block($component-name) {
+}
