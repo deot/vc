@@ -1,0 +1,35 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-picker-popup;
+$background-color-light: varfix(background-color-light, picker);
+$color-dark: varfix(color-dark, picker);
+$color-primary: varfix(color-primary, picker);
+$color-light-deeper: varfix(color-light-deeper, picker);
+
+@include block($component-name) {
+	@include element(header) {
+		position: relative;
+		display: flex;
+		align-items: center;
+		background-color: $background-color-light;
+		border-bottom: unitfix(1) solid $color-light-deeper;
+		box-sizing: border-box;
+	}
+
+	@include element(item) {
+		height: unitfix(44);
+		padding: 0 unitfix(15);
+		font-size: unitfix(17);
+		line-height: unitfix(44);
+		color: $color-primary;
+
+		@include when(title) {
+			flex: 1;
+			overflow: hidden;
+			color: $color-dark;
+			text-align: center;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+	}
+}

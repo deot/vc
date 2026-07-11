@@ -1,0 +1,13 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-picker;
+$background-color-light: varfix(background-color-light, picker);
+
+@include block($component-name) {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: unitfix(44);
+	cursor: pointer;
+	background: $background-color-light;
+}

@@ -5,15 +5,15 @@
 需要从一组相关联的数据集合进行选择，例如省市区，公司层级，事物分类等。
 
 ### 基础用法
-组件通过cascade属性判断picker是否为层级联动。
+组件通过 `cascader` 属性判断 picker 是否为层级联动。
 
 :::RUNTIME
 ```vue
 <template>
 	<div class="vcm-picker-basic">
 		<vcm-picker
-			:data="dataSource"
-			:cascade="true"
+			:data="data"
+			:cascader="true"
 			:cols="3"
 			v-model="value"
 			@change="handleChange"
@@ -21,8 +21,8 @@
 			@cancel="handleCancel"
 		/>
 		<vcm-picker
-			:data="dataAsyncSource"
-			:cascade="true"
+			:data="asyncData"
+			:cascader="true"
 			:cols="3"
 			:load-data="loadData"
 			v-model="valueAsync"
@@ -35,7 +35,7 @@
 		</vcm-picker>
 		<vcm-picker
 			:data="dataSeasons"
-			:cascade="false"
+			:cascader="false"
 			:cols="2"
 			v-model="valueSeasons"
 			extra="非联动选择"
@@ -48,7 +48,7 @@ import { cloneDeep } from 'lodash-es';
 import { MToast, MPicker } from '@deot/vc';
 
 const show = ref(false);
-const dataSource = ref([{
+const data = ref([{
 	value: '110000',
 	label: '北京市',
 	parent_id: '0',
@@ -90,7 +90,7 @@ const dataSource = ref([{
 	}]
 }]);
 
-const dataAsyncSource = ref([]);
+const asyncData = ref([]);
 const value = ref(['110000', '110100', '110101']);
 const valueAsync = ref(['110000', '110100', '110101']);
 const valueSeasons = ref([]);
@@ -121,7 +121,7 @@ const loadData = () => {
 	MToast.info('异步加载中');
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
-			dataAsyncSource.value = cloneDeep(dataSource.value);
+			asyncData.value = cloneDeep(data.value);
 			resolve();
 		}, 3000);
 	});
@@ -171,7 +171,7 @@ import { ref } from 'vue';
 import { cloneDeep } from 'lodash-es';
 import { MToast, MPicker, Button } from '@deot/vc';
 
-const dataSource = ref([{
+const data = ref([{
 	value: '110000',
 	label: '北京市',
 	parent_id: '0',
@@ -214,7 +214,7 @@ const dataSource = ref([{
 }]);
 const handleClick = () => {
 	MPicker.open({
-		data: dataSource.value,
+		data: data.value,
 		value: ['110000', '110100', '110101'],
 		cols: 3,
 		onOk: (value, label) => {
@@ -279,8 +279,8 @@ picker的选择组件，没有弹层。
 <template>
 	<MPickerView
 		v-model="formData.addr"
-		:data="dataSource"
-		:cascade="true"
+		:data="data"
+		:cascader="true"
 		:cols="3"
 		@change="handleChange"
 		@picker-change="handlePickerChange"
@@ -293,7 +293,7 @@ import { ref } from 'vue';
 import { cloneDeep } from 'lodash-es';
 import { MToast, MPicker } from '@deot/vc';
 
-const dataSource = ref([{
+const data = ref([{
 	value: '110000',
 	label: '北京市',
 	parent_id: '0',
@@ -356,13 +356,13 @@ const handlePickerChange = () => {
 
 | 属性          | 说明                       | 类型                         | 可选值 | 默认值    |
 | ----------- | ------------------------ | -------------------------- | --- | ------ |
-| modelValue  | 控制，可以使用v-model           | `boolean`                  | -   | `true` |
+| modelValue  | 返回值，可以使用v-model，支持数组或按`separator`分隔的字符串 | `array`、`string`、`number` | -   | []     |
 | loadData    | 异步加载数据函数，`() => Promise` | `Function`                 | -   | -      |
 | value       | 返回值(v-model)             | `array`                    | -   | -      |
-| dataSource  | 数据源                      | `array`                    | -   | -      |
+| data        | 数据源                      | `array`                    | -   | []     |
 | cols        | 列数                       | `Number`                   | -   | -      |
 | itemStyle   | 列的样式                     | `object`                   | -   | -      |
-| cascade     | 是否为联动选中                  | `boolean`                  | -   | `true` |
+| cascader    | 是否为联动选中                  | `boolean`                  | -   | `true` |
 | label       | label 内容                 | `string`                   | -   | -      |
 | labelWidth  | `item`内`label`的宽度        | `string`、`Number`          | -   | -      |
 | extra       | 占位符placeholder           | `string`                   | -   | -      |
@@ -371,6 +371,9 @@ const handlePickerChange = () => {
 | cancelText  | 取消文本                     | `string`                   | -   | 取消     |
 | okText      | 确定文本                     | `string`                   | -   | 确定     |
 | showToolbar | 是否显示toolbar              | `boolean`                  | -   | `true` |
+| separator   | `modelValue`为字符串时的分隔符       | `string`                   | -   | `,`    |
+| numerable   | `modelValue`为字符串时是否转成数字数组   | `boolean`                  | -   | `false` |
+| nullValue   | 空值回写值                     | `string`、`number`、`array` | -   | -      |
 | onOk        | 采用`open`方法时使用，点击确定回调     | `Function`                 | -   | -      |
 | onCancel    | 采用`open`方法时使用，点击取消回调     | `Function`                 | -   | -      |
 
@@ -379,16 +382,19 @@ const handlePickerChange = () => {
 
 | 属性            | 说明                 | 类型        | 可选值 | 默认值    |
 | ------------- | ------------------ | --------- | --- | ------ |
-| modelValue    | 返回值(v-model)       | `array`   | -   | -      |
-| dataSource    | 数据源                | `array`   | -   | -      |
+| modelValue    | 返回值(v-model)，支持数组或按`separator`分隔的字符串 | `array`、`string`、`number` | -   | []     |
+| data          | 数据源                | `array`   | -   | []     |
 | cols          | 列数                 | `Number`  | -   | 1      |
 | itemStyle     | 列的样式               | `object`  | -   | -      |
-| cascade       | 是否为联动选中            | `boolean` | -   | `true` |
+| cascader    | 是否为联动选中            | `boolean` | -   | `true` |
 | allowDispatch | 触发`vc-form-item`事件 | `boolean` | -   | `true` |
+| separator     | `modelValue`为字符串时的分隔符 | `string` | -   | `,`    |
+| numerable     | `modelValue`为字符串时是否转成数字数组 | `boolean` | -   | `false` |
+| nullValue     | 空值回写值               | `string`、`number`、`array` | -   | -      |
 
 
-### DataSource数据结构
-> 当传入多列数据时且`cascade`为`false`时，`columns`为一个多维数组。当`cascade`为`ture`时，`columns`为一个对象数组
+### Data数据结构
+> 当传入多列数据时且`cascader`为`false`时，`columns`为一个多维数组。当`cascader`为`true`时，`columns`为一个对象数组
 
 | 键名       | 说明     | 类型       |
 | -------- | ------ | -------- |
@@ -450,4 +456,3 @@ const handlePickerChange = () => {
 | 名称      | 说明     |
 | ------- | ------ |
 | default | 弹出层的内容 |
-
