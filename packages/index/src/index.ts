@@ -56,7 +56,6 @@ import {
 	MCustomer,
 	DatePicker,
 	MDatePicker,
-	// MDatePickerView,
 	Debounce,
 	MDebounce,
 	Defer,
@@ -211,6 +210,8 @@ import {
 	MUploadPicker
 } from '@deot/vc-components';
 
+const MDatePickerView = (MDatePicker as any).View;
+
 export const Components = {
 	ActionSheet,
 	MActionSheet,
@@ -259,7 +260,7 @@ export const Components = {
 	MCustomer,
 	DatePicker,
 	MDatePicker,
-	// MDatePickerView,
+	MDatePickerView,
 	Debounce,
 	MDebounce,
 	Defer,

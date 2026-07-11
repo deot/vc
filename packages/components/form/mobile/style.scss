@@ -18,9 +18,9 @@ $background-color-light: varfix(background-color-light, form);
 
 @include block($component-item-name) {
 	@include element(wrapper) {
-		padding-top: unitfix(20);
+		padding-top: unitfix(12);
 		padding-right: unitfix(12);
-		padding-bottom: unitfix(20);
+		padding-bottom: unitfix(12);
 
 		@include border(bottom);
 	}

@@ -191,7 +191,7 @@ const monthrange = ref('');
 		<MDatePicker
 			v-model="value"
 			:arrow="false"
-			mode="datetime"
+			type="datetime"
 		>
 			<template #default="it">
 				<h2>
@@ -203,7 +203,7 @@ const monthrange = ref('');
 		<MDatePicker
 			v-model="yearmonth"
 			:arrow="false"
-			mode="yearmonth"
+			type="yearmonth"
 		>
 			<template #default="it">
 				<h2>
@@ -215,7 +215,8 @@ const monthrange = ref('');
 		<MDatePicker
 			v-model="time"
 			:arrow="false"
-			mode="time"
+			type="time"
+			format="HH:mm:ss"
 		>
 			<template #default="it">
 				<h2>
@@ -308,7 +309,8 @@ const time = ref();
 
 | 属性        | 说明       | 类型         | 可选值 | 默认值 |
 | --------- | -------- | ---------- | --- | --- |
-| loadData  | 异步加载数据函数 | `function` | -   | -   |
+| type      | 日期选择器类型 | `string` | `datetime` `date` `time` `yearmonth` `year` `month` `quarter` | `datetime` |
+| format    | 输入输出格式，同桌面端 DatePicker | `string` | -   | 依据 type 默认 |
 | extra     | 占位符      | `string`   | -   | -   |
 | formatter | 格式化      | `function` | -   | -   |
 
@@ -318,9 +320,10 @@ const time = ref();
 | 属性      | 说明           | 类型       | 可选值                      | 默认值              |
 | ------- | ------------ | -------- | ------------------------ | ---------------- |
 | value   | 返回值(v-model) | `Date`   | -                        | -                |
-| type    | 日期选择器类型      | `string` | `datetime` `date` `time` | -                |
-| minDate | 最小日期         | `Date`   | -                        | new Date('1990') |
-| maxDate | 最大日期         | `Date`   | -                        | new Date('2020') |
+| type    | 日期选择器类型      | `string` | `datetime` `date` `time` `yearmonth` `year` `month` `quarter` | `datetime` |
+| format  | 输入输出格式，同桌面端 DatePicker | `string` | - | 依据 type 默认 |
+| minDate | 最小日期         | `Date`   | -                        | new Date('1940/01/01 00:00') |
+| maxDate | 最大日期         | `Date`   | -                        | 当前时间 50 年后 |
 
 
 ### 移动端（MDatePicker）事件
@@ -338,4 +341,3 @@ const time = ref();
 | ------------- | -------- | ---- | ---- |
 | change        | 当前值改变触发  | -    | -    |
 | picker-change | 绑定的值改变触发 | -    | -    |
-
