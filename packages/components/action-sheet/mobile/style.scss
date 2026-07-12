@@ -1,0 +1,143 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-action-sheet;
+$background-color-light: varfix(background-color-light, action-sheet);
+$color-dark: varfix(color-dark, action-sheet);
+$color-dark-lightest: varfix(color-dark-lightest, action-sheet);
+$color-light-deep: varfix(color-light-deep, action-sheet);
+$color-light-deeper: varfix(color-light-deeper, action-sheet);
+$color-disabled: varfix(color-disabled, action-sheet);
+$color-disabled-light: varfix(color-disabled-light, action-sheet);
+
+@include block($component-name) {
+	color: $color-dark;
+
+	@include element(wrapper) {
+		overflow: hidden;
+		background: transparent;
+		border-radius: unitfix(12) unitfix(12) 0 0;
+	}
+
+	@include element(container) {
+		overflow: hidden;
+		background: transparent;
+	}
+
+	@include element(group) {
+		overflow: hidden;
+		background: $background-color-light;
+		border-radius: unitfix(12) unitfix(12) 0 0;
+	}
+
+	@include element(title) {
+		position: relative;
+		padding: unitfix(15) unitfix(16);
+		font-size: unitfix(14);
+		line-height: unitfix(20);
+		color: $color-dark-lightest;
+		text-align: center;
+		overflow-wrap: break-word;
+
+		@include border(bottom, $color-light-deeper);
+	}
+
+	@include element(actions) {
+		max-height: 70vh;
+		overflow-y: auto;
+	}
+
+	@include element(item) {
+		position: relative;
+		display: flex;
+		min-height: unitfix(50);
+		padding: unitfix(14) unitfix(16);
+		font-size: unitfix(16);
+		line-height: unitfix(22);
+		text-align: center;
+		cursor: pointer;
+		background: $background-color-light;
+		border: none;
+		box-sizing: border-box;
+		align-items: center;
+		justify-content: center;
+		flex-direction: column;
+
+		&:not(:last-child) {
+			@include border(bottom, $color-light-deeper);
+		}
+
+		&:active {
+			background: $color-light-deep;
+		}
+
+		@include when(disabled) {
+			color: $color-disabled;
+			cursor: not-allowed;
+
+			&:active {
+				background: $background-color-light;
+			}
+		}
+
+		@include when(loading) {
+			cursor: default;
+
+			&:active {
+				background: $background-color-light;
+			}
+		}
+	}
+
+	@include element(content) {
+		width: 100%;
+		overflow-wrap: break-word;
+	}
+
+	@include element(sub-content) {
+		width: 100%;
+		margin-top: unitfix(3);
+		font-size: unitfix(12);
+		line-height: unitfix(18);
+		color: $color-dark-lightest;
+		overflow-wrap: break-word;
+	}
+
+	@include element(item-wrapper) {
+		position: relative;
+		display: flex;
+		align-items: center;
+		max-width: 100%;
+	}
+
+	@include element(loading) {
+		position: absolute;
+		top: 50%;
+		left: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-left: unitfix(6);
+		transform: translateY(-50%);
+	}
+
+	@include element(gap) {
+		height: unitfix(8);
+		background: $color-disabled-light;
+	}
+
+	@include element(cancel) {
+		min-height: unitfix(50);
+		padding: unitfix(14) unitfix(16);
+		font-size: unitfix(16);
+		line-height: unitfix(22);
+		color: $color-dark-lightest;
+		text-align: center;
+		cursor: pointer;
+		background: $background-color-light;
+		box-sizing: border-box;
+
+		&:active {
+			background: $color-light-deep;
+		}
+	}
+}

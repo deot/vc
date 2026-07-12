@@ -26,23 +26,23 @@ import { MActionSheet } from '@deot/vc';
 const handleClick = async () => {
 	await MActionSheet.open({
 		title: '我是标题',
-		description: '我是描述我是描述我是描述我是描述',
 		cancelText: '取消',
-		actions: [
+		data: [
 			{
-				name: '选项一',
-				onClick: this.handlePress
+				content: '选项一',
+				subContent: '我是第二级内容',
+				onClick: handlePress
 			},
 			{
-				name: '选项二',
+				content: '选项二',
 				disabled: true,
-				onClick: this.handlePress
+				onClick: handlePress
 			},
 			{
-				name: 'DELETE',
+				content: 'DELETE',
 				class: 'test',
 				style: { color: '#ff0000' },
-				onClick: this.handlePress
+				onClick: handlePress
 			}
 		]
 	});
@@ -70,17 +70,25 @@ const handlePress = () => {
 | wrapperClass | -                                | `object`、`array`、`string` | -                                             |     |
 | wrapperStyle | -                                | `object`、`array`、`string` | -                                             |     |
 | scrollRegExp | 判断滑动是否在滚动容器内，防止滚动穿透弹层            | `function`                | `(v) => { return /vc-hack-scroll/.test(v); }` |     |
-| actions      | 面板选项列表                           | `array`                   | -                                             |     |
-| description  | 选项上方的描述信息                        | `string`                  | -                                             |     |
+| title        | 选项上方的标题信息                        | `string`、`function`       | -                                             |     |
+| data         | 面板选项列表                           | `array`                   | -                                             |     |
 | cancelText   | 取消按钮文字,为空不展示底部取消按钮               | `string`                  | -                                             |     |
 
-### Action 数据结构
+### Data 数据结构
 
 | 属性       | 说明                           | 类型                          | 可选值 | 默认值 |
 | -------- | ---------------------------- | --------------------------- | --- | --- |
-| name     | 标题                           | `string`                    | -   |     |
-| subName  | 二级标题                         | `string`                    | -   |     |
-| disabled | 是否为禁用状态                      | `string`                    | -   |     |
-| class    | 为对应列添加额外的 class              | `string`                    | -   |     |
-| style    | 为对应列添加额外的 style              | `string`、`object`           | -   |     |
-| onClick  | 点击事件, 也可支持`Promise`,`cb`回调关闭 | `(action) => Promise<void>` | -   | -   |
+| content    | 内容，字符串默认使用 v-html       | `string`、`function`       | -   |     |
+| subContent | 二级内容，字符串默认使用 v-html     | `string`、`function`       | -   |     |
+| disabled   | 是否为禁用状态                  | `boolean`                 | -   |     |
+| class      | 为对应列添加额外的 class          | `string`、`object`、`array` | -   |     |
+| style      | 为对应列添加额外的 style          | `string`、`object`         | -   |     |
+| onClick    | 点击事件，返回 false 或 Promise.reject 阻止关闭 | `(action) => any` | -   | -   |
+
+### 方法
+
+| 方法名  | 说明             | 参数      |
+| ------ | ---------------- | -------- |
+| open   | 打开动作面板       | `options` |
+| popup  | 同 open          | `options` |
+| destroy | 销毁动作面板实例 | -        |
