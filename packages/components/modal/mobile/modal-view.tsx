@@ -84,15 +84,15 @@ export const MModalView = defineComponent({
 			);
 		};
 
-		const curentActions = computed(() => {
-			return props.actions || [
+		const currentData = computed(() => {
+			return props.data || [
 				{
-					text: props.cancelText,
-					onPress: handleCancel
+					content: props.cancelText,
+					onClick: handleCancel
 				},
 				{
-					text: props.okText,
-					onPress: handleOk
+					content: props.okText,
+					onClick: handleOk
 				}
 			];
 		});
@@ -105,7 +105,7 @@ export const MModalView = defineComponent({
 		});
 
 		const footerClasses = computed(() => {
-			const len = curentActions.value.filter((i: any) => i.text).length;
+			const len = currentData.value.filter((i: any) => i.content).length;
 			return {
 				'is-column': len >= 3,
 				'is-alone': len === 1,
@@ -206,15 +206,15 @@ export const MModalView = defineComponent({
 															<div class={[footerClasses.value, 'vcm-modal__footer']}>
 																{
 																	slots.footer?.() || (
-																		curentActions.value.map((item: any, index) => {
-																			if (!item.text) return null;
+																		currentData.value.map((item: any, index) => {
+																			if (!item.content) return null;
 																			return (
 																				<div
 																					key={index}
 																					style={[item.style]}
 																					class="vcm-modal__button"
-																					onClick={e => handleBefore(e, item.onPress)}
-																					innerHTML={item.text}
+																					onClick={e => handleBefore(e, item.onClick)}
+																					innerHTML={item.content}
 																				/>
 																			);
 																		})
@@ -229,15 +229,15 @@ export const MModalView = defineComponent({
 											? (
 													<div class="vcm-modal__operation">
 														{
-															curentActions.value.map((item: any, index) => {
-																if (!item.text) return null;
+															currentData.value.map((item: any, index) => {
+																if (!item.content) return null;
 																return (
 																	<div
 																		key={index}
 																		style={[item.style]}
 																		class="vcm-modal__button"
-																		innerHTML={item.text}
-																		onClick={e => handleBefore(e, item.onPress)}
+																		innerHTML={item.content}
+																		onClick={e => handleBefore(e, item.onClick)}
 																	/>
 																);
 															})

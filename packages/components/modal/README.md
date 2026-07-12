@@ -348,18 +348,18 @@ const handleModal2 = () => {
 
 const handleModal3 = () => {
 	MModal.operation({
-		actions: [
+		data: [
 			{
-				text: '1',
-				onPress: () => console.log(`点击了第1个按钮`)
+				content: '1',
+				onClick: () => console.log(`点击了第1个按钮`)
 			},
 			{
-				text: '2',
-				onPress: () => console.log(`点击了第2个按钮`)
+				content: '2',
+				onClick: () => console.log(`点击了第2个按钮`)
 			},
 			{
-				text: '3',
-				onPress: () => console.log(`点击了第3个按钮`)
+				content: '3',
+				onClick: () => console.log(`点击了第3个按钮`)
 			}
 		]
 	});
@@ -410,6 +410,7 @@ const handleModal3 = () => {
 | model             | 对话框的类型                             | `string`                      | `alert`、`operation` | -      |
 | title             | 内容标题                               | `string`、`boolean`            | -                   | -      |
 | content           | 内容,可以是jsx                          | `string`、`Function`、`boolean` | -                   | -      |
+| data              | 自定义按钮列表                           | `array`                       | -                   | -      |
 | footer            | 是否显示footer                         | `boolean`                     | -                   | -      |
 | visible           | 对话框是否显示，可用v-model双向绑定              | `boolean`                     | -                   | false  |
 | title             | 对话框标题，如果使用slot自定义header，则title无效   | `string`                      | -                   | -      |
@@ -420,6 +421,15 @@ const handleModal3 = () => {
 | mask              | 遮罩层是否显示                            | `boolean`                     | -                   | `true` |
 | mask-closable     | 点击遮罩层是否关闭                          | `Booelan`                     | -                   | `true` |
 | close-with-cancel | `主动`关闭时出发cancel事件                  | `boolean`                     | -                   | `true` |
+
+
+### 移动端 Data 数据结构
+
+| 属性      | 说明                       | 类型               | 可选值 | 默认值 |
+| -------- | -------------------------- | ------------------ | ------ | ------ |
+| content  | 按钮内容，字符串默认使用 v-html | `string`、`boolean` | -      | -      |
+| style    | 按钮样式                   | `object`           | -      | -      |
+| onClick  | 点击事件                   | `Function`         | -      | -      |
 
 
 ### 事件

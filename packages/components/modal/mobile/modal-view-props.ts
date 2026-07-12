@@ -54,7 +54,7 @@ export const props = {
 	/**
 	 * 兼容portal设计, 实现Promise方式
 	 */
-	actions: Array,
+	data: Array,
 	onOk: {
 		type: Function
 	},

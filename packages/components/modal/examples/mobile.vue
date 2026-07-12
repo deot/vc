@@ -128,18 +128,18 @@ const handleClick5 = () => {
 	MModal.alert({
 		title: '标题1',
 		content: '啦啦',
-		actions: [
+		data: [
 			{
-				text: '1',
-				onPress: () => console.log(`点击了第1个按钮`)
+				content: '1',
+				onClick: () => console.log(`点击了第1个按钮`)
 			},
 			{
-				text: '2',
-				onPress: () => console.log(`点击了第2个按钮`)
+				content: '2',
+				onClick: () => console.log(`点击了第2个按钮`)
 			},
 			{
-				text: '3',
-				onPress: () => console.log(`点击了第3个按钮`)
+				content: '3',
+				onClick: () => console.log(`点击了第3个按钮`)
 			}
 		]
 	});
@@ -147,18 +147,18 @@ const handleClick5 = () => {
 
 const handleClick6 = () => {
 	MModal.operation({
-		actions: [
+		data: [
 			{
-				text: '1',
-				onPress: () => console.log(`点击了第1个按钮`)
+				content: '1',
+				onClick: () => console.log(`点击了第1个按钮`)
 			},
 			{
-				text: '2',
-				onPress: () => console.log(`点击了第2个按钮`)
+				content: '2',
+				onClick: () => console.log(`点击了第2个按钮`)
 			},
 			{
-				text: '3',
-				onPress: () => console.log(`点击了第3个按钮`)
+				content: '3',
+				onClick: () => console.log(`点击了第3个按钮`)
 			}
 		]
 	});

@@ -1297,8 +1297,8 @@ describe('MModalView 基础渲染 / props', () => {
 		wrapper.unmount();
 	});
 
-	it('mode=alert: 自定义 actions 单按钮 (is-alone)', async () => {
-		const onPress = vi.fn();
+	it('mode=alert: 自定义 data 单按钮 (is-alone)', async () => {
+		const onClick = vi.fn();
 		const wrapper = mount(MModalView, {
 			attachTo: document.body,
 			props: {
@@ -1306,7 +1306,7 @@ describe('MModalView 基础渲染 / props', () => {
 				mode: 'alert',
 				title: 't',
 				content: 'c',
-				actions: [{ text: '我知道了', onPress }]
+				data: [{ content: '我知道了', onClick }]
 			}
 		});
 		await flush();
@@ -1316,12 +1316,12 @@ describe('MModalView 基础渲染 / props', () => {
 		const buttons = footer.findAll('.vcm-modal__button');
 		expect(buttons.length).toBe(1);
 		await buttons[0].trigger('click');
-		expect(onPress).toHaveBeenCalled();
+		expect(onClick).toHaveBeenCalled();
 
 		wrapper.unmount();
 	});
 
-	it('mode=alert: actions 数量 >=3 时 is-column', async () => {
+	it('mode=alert: data 数量 >=3 时 is-column', async () => {
 		const wrapper = mount(MModalView, {
 			attachTo: document.body,
 			props: {
@@ -1329,10 +1329,10 @@ describe('MModalView 基础渲染 / props', () => {
 				mode: 'alert',
 				title: 't',
 				content: 'c',
-				actions: [
-					{ text: 'A' },
-					{ text: 'B' },
-					{ text: 'C' }
+				data: [
+					{ content: 'A' },
+					{ content: 'B' },
+					{ content: 'C' }
 				]
 			}
 		});
@@ -1341,7 +1341,7 @@ describe('MModalView 基础渲染 / props', () => {
 		wrapper.unmount();
 	});
 
-	it('mode=alert: 单个 action 缺 text 时跳过, 用 slots.footer 替换默认按钮', async () => {
+	it('mode=alert: slots.footer 替换默认按钮', async () => {
 		const wrapper = mount(MModalView, {
 			attachTo: document.body,
 			props: {
@@ -1394,17 +1394,17 @@ describe('MModalView 基础渲染 / props', () => {
 		wrapper.unmount();
 	});
 
-	it('mode=operation: 渲染 actions 列表, 缺 text 跳过', async () => {
+	it('mode=operation: 渲染 data 列表, 缺 content 跳过', async () => {
 		const onA = vi.fn();
 		const wrapper = mount(MModalView, {
 			attachTo: document.body,
 			props: {
 				modelValue: true,
 				mode: 'operation',
-				actions: [
-					{ text: 'A', onPress: onA },
-					{ text: '' },
-					{ text: 'B' }
+				data: [
+					{ content: 'A', onClick: onA },
+					{ content: '' },
+					{ content: 'B' }
 				]
 			}
 		});
@@ -1661,9 +1661,9 @@ describe('MModal 静态方法 (alert / operation / destroy)', () => {
 
 	it('MModal.operation 渲染 operation 模式 modal 到 body', async () => {
 		MModal.operation({
-			actions: [
-				{ text: '操作 1' },
-				{ text: '操作 2' }
+			data: [
+				{ content: '操作 1' },
+				{ content: '操作 2' }
 			]
 		});
 		await flush();
