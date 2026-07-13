@@ -12,14 +12,17 @@ export const getFiniteSize = (value: unknown, fallback: number) => {
 	return Number.isFinite(size) && size > 0 ? size : fallback;
 };
 
-export const normalizeOutputSize = (outputSize: ImageCropOutputSize): [number, number] => {
+export const normalizeOutputSize = (
+	outputSize: ImageCropOutputSize,
+	fallback = DEFAULT_OUTPUT_SIZE
+): [number, number] => {
 	if (Array.isArray(outputSize)) {
-		const width = getFiniteSize(outputSize[0], DEFAULT_OUTPUT_SIZE);
+		const width = getFiniteSize(outputSize[0], fallback);
 		const height = getFiniteSize(outputSize[1], width);
 		return [width, height];
 	}
 
-	const size = getFiniteSize(outputSize, DEFAULT_OUTPUT_SIZE);
+	const size = getFiniteSize(outputSize, fallback);
 	return [size, size];
 };
 
@@ -46,8 +49,10 @@ export const isDataURL = (source: string) => {
 };
 
 export const appendTimestamp = (source: string) => {
-	const separator = source.includes('?') ? '&' : '?';
-	return `${source}${separator}_=${Date.now()}`;
+	const [base, hash = ''] = source.split('#');
+	const separator = base.includes('?') ? '&' : '?';
+
+	return `${base}${separator}_=${Date.now()}${hash ? `#${hash}` : ''}`;
 };
 
 const parseHTML = (value: string) => {

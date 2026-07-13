@@ -1,0 +1,8 @@
+@use '../style/helper' as *;
+
+$component-name: vc-image-processor;
+
+@include block($component-name) {
+	display: inline-block;
+	vertical-align: top;
+}
