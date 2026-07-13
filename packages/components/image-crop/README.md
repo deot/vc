@@ -1,11 +1,14 @@
 ## 图片裁剪（ImageCrop）
-裁剪修改图片
+
+基于 canvas 的图片裁剪组件，支持缩放、旋转、拖动定位、拖拽导入和导出图片。
 
 ### 何时使用
+
 需要调整图片大小或旋转图片。
 
 ### 基础用法
-通过控制`scale`、`rotate`调整图片的缩放和旋转角度。
+
+通过 `scale`、`rotate` 和 `outputSize` 控制裁剪结果。
 
 :::RUNTIME
 ```vue
@@ -16,66 +19,48 @@
 			:src="src"
 			:scale="scale"
 			:rotate="rotate"
-			:dest-width="375"
-			:ratio="16 / 9"
+			:output-size="[750, 500]"
+			:border="40"
 			cross-origin="anonymous"
-			@drop-file="handleDropFile"
-			@load-failure="handleLoadFailure"
-			@load-success="handleLoadSuccess"
-			@image-ready="handleImageReady"
+			style="width: 100%;"
+			@image-load="handleImageLoad"
+			@image-error="handleImageError"
+			@image-drop="handleImageDrop"
 			@image-change="handleImageChange"
 			@position-change="handlePositionChange"
 		/>
 		<Slider v-model="scale" :min="0.3" :max="3" :step="0.01" />
 		<Slider v-model="rotate" :min="0" :max="360" />
-
-		<div @click="handleSave">
+		<Button type="primary" @click="handleSave">
 			保存
-		</div>
-
-		<img :src="result" width="200">
+		</Button>
+		<img v-if="result" :src="result" width="240">
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { ImageCrop, Slider } from '@deot/vc';
+import { Button, ImageCrop, Slider } from '@deot/vc';
 
-const src = ref('https://github.githubassets.com/favicons/favicon.svg');
+const target = ref(null);
+const src = ref('data:image/svg+xml;charset=utf-8,...');
 const scale = ref(1);
 const rotate = ref(0);
-const result = ref(null);
-const handleDropFile = (e) => {
-	console.log('DropFile: ', e);
-};
-
-const handleLoadFailure = (e) => {
-	console.log('LoadFailure: ', e);
-};
-
-const handleLoadSuccess = (imageState) => {
-	console.log('LoadSuccess: ', imageState);
-};
-
-const handleImageReady = () => {
-	console.log('ImageReady');
-};
-
-const handleImageChange = (src) => {
-	console.log('ImageChange: ', src);
-};
-
-const handlePositionChange = (position) => {
-	console.log('PositionChange: ', position);
-};
+const result = ref('');
 
 const handleSave = async () => {
-	try {
-		const { file, base64Image } = await target.value.getImage();
-		result.value = base64Image;
-	} catch (e) {
-		console.log(e, '跨域问题：需要添加 cors协议头');
-	}
+	const { dataURL, file } = await target.value.getImage({
+		filename: 'image-crop',
+		getFile: true
+	});
+
+	result.value = dataURL;
 };
+
+const handleImageLoad = image => image;
+const handleImageError = event => event;
+const handleImageDrop = event => event;
+const handleImageChange = type => type;
+const handlePositionChange = position => position;
 </script>
 ```
 :::
@@ -84,37 +69,47 @@ const handleSave = async () => {
 
 ### 属性
 
-| 属性           | 说明           | 类型                       | 可选值                           | 默认值              |
-| ------------ | ------------ | ------------------------ | ----------------------------- | ---------------- |
-| src          | 图片地址         | `string`、`object`、`File` | -                             | -                |
-| scale        | 缩放值          | `number`                 | -                             | `1`              |
-| rotate       | 旋转角度         | `number`                 | -                             | `0`              |
-| border       | 裁剪的边框 [x, y] | `number`、`array`         | -                             | `20`             |
-| borderRadius | 裁剪的边框圆角      | `number`                 | -                             | `0`              |
-| destWidth    | 裁剪区域宽        | `number`                 | -                             | `750`            |
-| ratio        | 裁剪比例         | `number`                 | -                             | `1`              |
-| position     | 裁剪区域定位       | `object`                 | -                             | -                |
-| color        | 边框的背景色RGBA   | `array`                  | -                             | `[0, 0, 0, 0.5]` |
-| cross-origin | 跨域来源         | `string`                 | `anonymous`、`use-credentials` | `anonymous`      |
-| disableDrop  | 是否支持拖拽图片进来编辑 | `Boolean`                | -                             | `false`          |
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| src | 图片地址或图片文件 | `string \| Blob \| File` | - | - |
+| scale | 缩放值 | `number` | - | `1` |
+| rotate | 旋转角度 | `number` | - | `0` |
+| border | 裁剪遮罩边框，数组为 `[x, y]` | `number \| number[]` | - | `20` |
+| borderRadius | 裁剪区域圆角 | `number` | - | `0` |
+| outputSize | 输出图片尺寸 | `number \| [number] \| [number, number]` | - | `750` |
+| position | 裁剪定位 | `{ x: number; y: number }` | - | - |
+| maskColor | 遮罩颜色 | `string \| number[]` | - | `[0, 0, 0, 0.5]` |
+| cross-origin | 图片跨域属性 | `string` | `''`、`anonymous`、`use-credentials` | `anonymous` |
+| droppable | 是否支持拖拽图片进入组件 | `boolean` | - | `true` |
 
+`outputSize` 归一规则：
+
+| 输入 | 输出 |
+| --- | --- |
+| `750` | `[750, 750]` |
+| `[750]` | `[750, 750]` |
+| `[750, 500]` | `[750, 500]` |
 
 ### 事件
 
-| 事件名             | 说明           | 回调参数                             | 参数说明               |
-| --------------- | ------------ | -------------------------------- | ------------------ |
-| drop-file       | 拖入图片回掉       | `(e: Event) => void 0`           | `e`: 事件对象          |
-| load-fail       | 图片加载失败       | -                                | -                  |
-| load-success    | 图片加载成功       | `(imageState: object) => void 0` | `imageState`: 图片对象 |
-| image-ready     | 图片加载成功，展示后执行 | -                                | -                  |
-| image-change    | 图片信息变化       | -                                | -                  |
-| position-change | 位置变化         | `(position: object) => void 0`   | `position`: 定位信息   |
-
+| 事件名 | 说明 | 回调参数 |
+| --- | --- | --- |
+| image-load | 图片加载成功 | `(imageState) => void` |
+| image-error | 图片加载失败 | `(event) => void` |
+| image-change | 图片信息变化 | `(type) => void` |
+| image-drop | 拖入图片 | `(event) => void` |
+| position-change | 位置变化 | `(position) => void` |
+| mousemove | 拖动移动 | `(event) => void` |
+| mouseup | 拖动结束 | `(event) => void` |
 
 ### 方法
 
-| 方法名                    | 说明                                             | 参数                                                                                                                                                                                                  |
-| ---------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| getImageToCanvas       | 基于原图绘制，返回一个HTMLCanvasElement，在另一个画布上绘制，或添加到DOM | -                                                                                                                                                                                                   |
-| getImageScaledToCanvas | 基于当前画布大小绘制，返回一个HTMLCanvasElement               | -                                                                                                                                                                                                   |
-| getImage               | 获取当前裁剪的图片对象                                    | `opts`：配置对象；默认为：`{ isNormal = true, filename = 'image', getFile = false }`; `isNormal`: 为`true`时采用`getImageToCanvas`方法否则采用`getImageScaledToCanvas`方法获取`canvas`; `filename`：文件名；`getFile`：是否获取图片文件对象 |
+| 方法名 | 说明 | 参数 |
+| --- | --- | --- |
+| getDimensions | 获取当前 canvas 尺寸信息 | - |
+| getCroppingRect | 获取裁剪区域相对坐标 | - |
+| getImageToCanvas | 基于原图绘制，返回 `HTMLCanvasElement` | - |
+| getImageScaledToCanvas | 基于当前画布显示尺寸绘制，返回 `HTMLCanvasElement` | - |
+| getImage | 获取裁剪图片 | `opts`，默认 `{ isNormal: true, filename: 'image', getFile: false }` |
+
+`getImage` 使用 `canvasToImage` 转换，返回 `{ dataURL, file? }`。

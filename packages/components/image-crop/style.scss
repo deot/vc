@@ -3,4 +3,8 @@
 $component-name: vc-image-crop;
 
 @include block($component-name) {
+	display: block;
+	max-width: 100%;
+	touch-action: none;
+	user-select: none;
 }
