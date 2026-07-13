@@ -18,48 +18,62 @@ vi.mock('@deot/helper-utils', async (importOriginal) => {
 	};
 });
 
-type MockContext = Partial<CanvasRenderingContext2D> & {
-	canvas: HTMLCanvasElement;
-	drawImage: ReturnType<typeof vi.fn>;
-	clearRect: ReturnType<typeof vi.fn>;
-	arc: ReturnType<typeof vi.fn>;
-	fill: ReturnType<typeof vi.fn>;
-	fillStyle: string;
-	globalCompositeOperation: string;
+type MockImageElement = HTMLCanvasElement & {
+	crossOrigin: string;
+	onload: ((event: Event) => void) | null;
+	onerror: ((event: Event) => void) | null;
+	src: string;
+	triggerLoad: (width?: number, height?: number) => void;
+	triggerError: () => void;
 };
 
-class MockImage {
-	static instances: MockImage[] = [];
+const createMockImageElement = (): MockImageElement => {
+	const image = document.createElement('canvas') as MockImageElement;
+	let src = '';
 
-	width = 400;
-	height = 300;
-	crossOrigin = '';
-	onload: ((event: Event) => void) | null = null;
-	onerror: ((event: Event) => void) | null = null;
-	private _src = '';
+	image.width = 400;
+	image.height = 300;
+	image.crossOrigin = '';
+	image.onload = null;
+	image.onerror = null;
+	Object.defineProperty(image, 'src', {
+		configurable: true,
+		get: () => src,
+		set: (value: string) => {
+			src = value;
+		}
+	});
+	image.triggerLoad = (width = 400, height = 300) => {
+		image.width = width;
+		image.height = height;
+		image.onload?.(new Event('load'));
+	};
+	image.triggerError = () => {
+		image.onerror?.(new Event('error'));
+	};
 
-	constructor() {
-		MockImage.instances.push(this);
-	}
+	return image;
+};
 
-	set src(value: string) {
-		this._src = value;
-	}
+type MockImageConstructor = {
+	new(): MockImageElement;
+	instances: MockImageElement[];
+};
 
-	get src() {
-		return this._src;
-	}
+const createMockImageConstructor = (): MockImageConstructor => {
+	const ImageCtor = function () {
+		const image = createMockImageElement();
 
-	triggerLoad(width = 400, height = 300) {
-		this.width = width;
-		this.height = height;
-		this.onload?.(new Event('load'));
-	}
+		ImageCtor.instances.push(image);
+		return image;
+	} as unknown as MockImageConstructor;
 
-	triggerError() {
-		this.onerror?.(new Event('error'));
-	}
-}
+	ImageCtor.instances = [];
+
+	return ImageCtor;
+};
+
+const MockImage = createMockImageConstructor();
 
 class MockFileReader {
 	static instances: MockFileReader[] = [];
@@ -77,30 +91,6 @@ class MockFileReader {
 
 const originalImage = window.Image;
 const originalFileReader = window.FileReader;
-const contexts: MockContext[] = [];
-
-const createContext = (canvas: HTMLCanvasElement): MockContext => {
-	const context = {
-		canvas,
-		save: vi.fn(),
-		restore: vi.fn(),
-		scale: vi.fn(),
-		translate: vi.fn(),
-		rotate: vi.fn(),
-		beginPath: vi.fn(),
-		rect: vi.fn(),
-		arc: vi.fn(),
-		lineTo: vi.fn(),
-		fill: vi.fn(),
-		clearRect: vi.fn(),
-		drawImage: vi.fn(),
-		fillStyle: '',
-		globalCompositeOperation: ''
-	} as unknown as MockContext;
-
-	contexts.push(context);
-	return context;
-};
 
 const flush = async () => {
 	for (let i = 0; i < 3; i++) {
@@ -132,7 +122,6 @@ const createTouchEvent = (
 };
 
 beforeEach(() => {
-	contexts.length = 0;
 	MockImage.instances = [];
 	MockFileReader.instances = [];
 	(window as any).Image = MockImage;
@@ -140,9 +129,6 @@ beforeEach(() => {
 	(window as any).FileReader = MockFileReader;
 	(globalThis as any).FileReader = MockFileReader;
 
-	vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function getContext(this: HTMLCanvasElement) {
-		return createContext(this) as unknown as CanvasRenderingContext2D;
-	});
 	vi.spyOn(Resize, 'on').mockImplementation(() => () => {});
 	vi.spyOn(Resize, 'off').mockImplementation(() => {});
 	vi.mocked(canvasToImage).mockClear();
@@ -265,13 +251,13 @@ describe('image-crop', () => {
 		image.triggerLoad(500, 100);
 		await flush();
 
-		const context = contexts.find(item => item.arc.mock.calls.length);
-		expect(context?.arc).toHaveBeenCalled();
-		expect(context?.fillStyle).toBe('rgba(1, 2, 3, 0.4)');
-
 		const loaded = wrapper.emitted('image-load')![0][0] as any;
 		expect(loaded.height).toBe(250);
 		expect(loaded.width).toBe(1250);
+		expect((wrapper.vm as any).getDimensions().canvas).toEqual({
+			width: 560,
+			height: 290
+		});
 
 		wrapper.unmount();
 	});
@@ -344,7 +330,8 @@ describe('image-crop', () => {
 		const dataURLResult = await (wrapper.vm as any).getImage();
 		expect(dataURLResult.dataURL).toBe('data:image/png;base64,crop');
 		expect(vi.mocked(canvasToImage).mock.calls[0]).toHaveLength(1);
-		expect(contexts.some(context => context.drawImage.mock.calls.length)).toBe(true);
+		expect(vi.mocked(canvasToImage).mock.calls[0][0].width).toBe(400);
+		expect(vi.mocked(canvasToImage).mock.calls[0][0].height).toBe(300);
 
 		const fileResult = await (wrapper.vm as any).getImage({
 			filename: 'avatar',

@@ -16,38 +16,13 @@ import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { Utils } from '@deot/dev-test';
 
-const createContextMock = () => ({
-	beginPath: vi.fn(),
-	moveTo: vi.fn(),
-	lineTo: vi.fn(),
-	stroke: vi.fn(),
-	clearRect: vi.fn(),
-	scale: vi.fn(),
-	shadowBlur: 0,
-	shadowColor: '',
-	lineWidth: 0,
-	strokeStyle: '',
-	lineCap: '',
-	lineJoin: ''
-});
-
-let mockContext: ReturnType<typeof createContextMock>;
-let getContextSpy: any;
-
-const mockRect = (el: Element, rect: Partial<DOMRect>) => {
-	return vi.spyOn(el, 'getBoundingClientRect').mockReturnValue({
-		top: 0,
-		bottom: 0,
-		left: 0,
-		right: 0,
-		width: 0,
-		height: 0,
-		x: 0,
-		y: 0,
-		toJSON: () => ({}),
-		...rect
-	} as DOMRect);
+const getExposed = (wrapper: any, key: string) => {
+	const exposed = wrapper.vm?.[key] ?? wrapper.vm?.$?.exposed?.[key];
+	if (exposed?.__v_isRef) return exposed.value;
+	return exposed;
 };
+
+const getContext = (wrapper: any) => getExposed(wrapper, 'context') as CanvasRenderingContext2D;
 
 const fireMouse = (type: string, target: Element, x = 10, y = 10) => {
 	const event = new MouseEvent(type, {
@@ -60,15 +35,7 @@ const fireMouse = (type: string, target: Element, x = 10, y = 10) => {
 	return event;
 };
 
-beforeEach(() => {
-	mockContext = createContextMock();
-	getContextSpy = vi
-		.spyOn(HTMLCanvasElement.prototype, 'getContext')
-		.mockImplementation(() => mockContext as unknown as CanvasRenderingContext2D);
-});
-
 afterEach(() => {
-	getContextSpy.mockRestore();
 	vi.restoreAllMocks();
 });
 
@@ -150,11 +117,12 @@ describe('index.ts', () => {
 
 		await nextTick();
 
-		expect(mockContext.strokeStyle).toBe('red');
-		expect(mockContext.shadowColor).toBe('red');
-		expect(mockContext.lineWidth).toBe(5);
-		expect(mockContext.lineCap).toBe('round');
-		expect(mockContext.lineJoin).toBe('round');
+		const context = getContext(wrapper.findComponent(Artboard));
+		expect(context.strokeStyle).toBe('#ff0000');
+		expect(context.shadowColor).toBe('#ff0000');
+		expect(context.lineWidth).toBe(5);
+		expect(context.lineCap).toBe('round');
+		expect(context.lineJoin).toBe('round');
 
 		wrapper.unmount();
 	});
@@ -164,8 +132,8 @@ describe('index.ts', () => {
 		await nextTick();
 
 		const vm = wrapper.vm as any;
-		expect(vm.canvas).toBeInstanceOf(HTMLCanvasElement);
-		expect(vm.context).toStrictEqual(mockContext);
+		expect(getExposed(wrapper, 'canvas')).toBeInstanceOf(HTMLCanvasElement);
+		expect(getContext(wrapper).canvas).toBe(getExposed(wrapper, 'canvas'));
 		expect(typeof vm.reset).toBe('function');
 		expect(typeof vm.undo).toBe('function');
 		expect(typeof vm.redo).toBe('function');
@@ -182,8 +150,9 @@ describe('index.ts', () => {
 		});
 		await nextTick();
 
+		const clearRect = vi.spyOn(getContext(wrapper), 'clearRect');
 		(wrapper.vm as any).redraw();
-		expect(mockContext.clearRect).toHaveBeenCalledWith(0, 0, 300, 200);
+		expect(clearRect).toHaveBeenCalledWith(0, 0, 300, 200);
 
 		wrapper.unmount();
 	});
@@ -195,6 +164,11 @@ describe('index.ts', () => {
 		});
 		await nextTick();
 
+		const context = getContext(wrapper);
+		const beginPath = vi.spyOn(context, 'beginPath');
+		const moveTo = vi.spyOn(context, 'moveTo');
+		const lineTo = vi.spyOn(context, 'lineTo');
+		const stroke = vi.spyOn(context, 'stroke');
 		const points = [
 			{ x: 1, y: 2 },
 			{ x: 3, y: 4 },
@@ -202,11 +176,11 @@ describe('index.ts', () => {
 		];
 		(wrapper.vm as any).draw(points);
 
-		expect(mockContext.beginPath).toHaveBeenCalledTimes(1);
-		expect(mockContext.moveTo).toHaveBeenCalledWith(1, 2);
-		expect(mockContext.lineTo).toHaveBeenNthCalledWith(1, 3, 4);
-		expect(mockContext.lineTo).toHaveBeenNthCalledWith(2, 5, 6);
-		expect(mockContext.stroke).toHaveBeenCalledTimes(2);
+		expect(beginPath).toHaveBeenCalledTimes(1);
+		expect(moveTo).toHaveBeenCalledWith(1, 2);
+		expect(lineTo).toHaveBeenNthCalledWith(1, 3, 4);
+		expect(lineTo).toHaveBeenNthCalledWith(2, 5, 6);
+		expect(stroke).toHaveBeenCalledTimes(2);
 
 		wrapper.unmount();
 	});
@@ -237,9 +211,10 @@ describe('index.ts', () => {
 		});
 		await nextTick();
 
+		const clearRect = vi.spyOn(getContext(wrapper), 'clearRect');
 		(wrapper.vm as any).reset();
 
-		expect(mockContext.clearRect).toHaveBeenCalledWith(0, 0, 300, 200);
+		expect(clearRect).toHaveBeenCalledWith(0, 0, 300, 200);
 		expect(onChange).toHaveBeenCalledTimes(1);
 		expect(onChange).toHaveBeenCalledWith({
 			snapshots: [],
@@ -260,7 +235,6 @@ describe('index.ts', () => {
 		await nextTick();
 
 		const canvasEl = wrapper.find('canvas').element;
-		mockRect(canvasEl, { top: 0, left: 0, width: 300, height: 200 });
 
 		fireMouse('mousedown', canvasEl, 10, 20);
 		// 等待 raf 回调执行（fallback 为 setTimeout 16ms）
@@ -288,7 +262,6 @@ describe('index.ts', () => {
 		await nextTick();
 
 		const canvasEl = wrapper.find('canvas').element;
-		mockRect(canvasEl, { top: 0, left: 0, width: 300, height: 200 });
 
 		fireMouse('mousedown', canvasEl, 5, 5);
 		await Utils.sleep(32);
@@ -314,7 +287,6 @@ describe('index.ts', () => {
 		await nextTick();
 
 		const canvasEl = wrapper.find('canvas').element;
-		mockRect(canvasEl, { top: 0, left: 0, width: 300, height: 200 });
 
 		fireMouse('mousedown', canvasEl, 10, 20);
 		await Utils.sleep(32);
@@ -325,16 +297,17 @@ describe('index.ts', () => {
 		fireMouse('mouseup', canvasEl);
 
 		onChange.mockClear();
-		mockContext.clearRect.mockClear();
-		mockContext.beginPath.mockClear();
-		mockContext.moveTo.mockClear();
+		const context = getContext(wrapper);
+		const clearRect = vi.spyOn(context, 'clearRect');
+		const beginPath = vi.spyOn(context, 'beginPath');
+		const moveTo = vi.spyOn(context, 'moveTo');
 
 		(wrapper.vm as any).undo();
 
-		expect(mockContext.clearRect).toHaveBeenCalledTimes(1);
+		expect(clearRect).toHaveBeenCalledTimes(1);
 		// 仍有一个快照，需要重绘
-		expect(mockContext.beginPath).toHaveBeenCalledTimes(1);
-		expect(mockContext.moveTo).toHaveBeenCalledWith(10, 20);
+		expect(beginPath).toHaveBeenCalledTimes(1);
+		expect(moveTo).toHaveBeenCalledWith(10, 20);
 
 		expect(onChange).toHaveBeenCalledTimes(1);
 		const payload = onChange.mock.calls[0][0];
@@ -355,7 +328,6 @@ describe('index.ts', () => {
 		await nextTick();
 
 		const canvasEl = wrapper.find('canvas').element;
-		mockRect(canvasEl, { top: 0, left: 0, width: 300, height: 200 });
 
 		fireMouse('mousedown', canvasEl, 10, 20);
 		await Utils.sleep(32);
@@ -364,13 +336,14 @@ describe('index.ts', () => {
 		const vm = wrapper.vm as any;
 		vm.undo();
 		onChange.mockClear();
-		mockContext.beginPath.mockClear();
-		mockContext.moveTo.mockClear();
+		const context = getContext(wrapper);
+		const beginPath = vi.spyOn(context, 'beginPath');
+		const moveTo = vi.spyOn(context, 'moveTo');
 
 		vm.redo();
 
-		expect(mockContext.beginPath).toHaveBeenCalledTimes(1);
-		expect(mockContext.moveTo).toHaveBeenCalledWith(10, 20);
+		expect(beginPath).toHaveBeenCalledTimes(1);
+		expect(moveTo).toHaveBeenCalledWith(10, 20);
 
 		expect(onChange).toHaveBeenCalledTimes(1);
 		const payload = onChange.mock.calls[0][0];
@@ -390,7 +363,6 @@ describe('index.ts', () => {
 		await nextTick();
 
 		const canvasEl = wrapper.find('canvas').element;
-		mockRect(canvasEl, { top: 0, left: 0, width: 300, height: 200 });
 
 		fireMouse('mousedown', canvasEl, 10, 20);
 		await Utils.sleep(32);
