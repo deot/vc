@@ -1,4 +1,4 @@
-import { reactive, computed } from 'vue';
+import { reactive, computed, toRaw } from 'vue';
 import { merge } from 'lodash-es';
 import { props } from './recycle-list-props';
 import type { Props } from './recycle-list-props';
@@ -9,6 +9,11 @@ export class Store {
 	currentLeaf: any = null;
 	leafs: any[] = [];
 	_data: any[] | null = null;
+	localTotal = 0; // 本地数据(data)总条数
+	buildCount = 0; // 本地数据已构建(布局/测量)的条数
+	positionIndex: number[][] = []; // 每列内部位置单调，保存数据索引用于滚动范围二分
+	positionIndexSource: any[] | null = null;
+	positionIndexLength = 0;
 	states = reactive({
 		version: 0,
 		rebuildData: [] as any[], // 封装后的数据，包含位置信息
@@ -80,7 +85,7 @@ export class Store {
 	});
 
 	// 被store劫持的值
-	props = ['pageSize', 'bufferSize', 'inverted', 'cols', 'gutter', 'loadData'].reduce((pre, cur) => {
+	props = ['batchSize', 'bufferSize', 'inverted', 'cols', 'gutter', 'loadData'].reduce((pre, cur) => {
 		const v = props[cur];
 		if (v.type !== Function && typeof v.default === 'function') {
 			pre[cur] = v.default();
@@ -94,17 +99,36 @@ export class Store {
 		merge(this.props, options);
 	}
 
+	get hasMoreLocalData() {
+		return this.buildCount < this.localTotal;
+	}
+
+	// 已构建节点对应的原始索引区间；inverted本地懒构建时不从0开始
+	get builtRange(): [number, number] {
+		const base = this.props.inverted ? this.localTotal - this.buildCount : 0;
+		return [base, base + this.states.rebuildData.length];
+	}
+
+	// 本地数据(data)模拟分页，消费下一批的构建区间
+	consumeLocalPage(): { start: number; end: number; reversed: boolean } | null {
+		if (!this.hasMoreLocalData) return null;
+		const size = Math.min(
+			this.props.batchSize,
+			this.localTotal - this.buildCount
+		);
+		if (!this.props.inverted) {
+			const start = this.buildCount;
+			this.buildCount += size;
+			return { start, end: start + size, reversed: false };
+		}
+		const end = this.localTotal - this.buildCount;
+		this.buildCount += size;
+		return { start: end - size, end, reversed: true };
+	}
+
 	setData(data: any[]): boolean {
 		if (data === this._data) return false;
 		this._data = data;
-
-		if (data.length % this.props.pageSize > 0) {
-			this.states.isEnd = true;
-		} else {
-			this.promiseStack = Array
-				.from({ length: Math.ceil(data.length / this.props.pageSize) })
-				.map(() => Promise.resolve());
-		}
 
 		// 这里不要originalData = toRaw(data);
 		this.originalData = [];
@@ -112,19 +136,25 @@ export class Store {
 			this.originalData[index] = i;
 		});
 
+		this.localTotal = data.length;
+		// 模拟分页，初始只构建一批；数据变更时保留已构建进度，避免深滚动后内容塌缩
+		this.buildCount = Math.min(this.localTotal, Math.max(this.buildCount, this.props.batchSize));
+
 		if (!this.originalData.length) {
 			this.states.rebuildData = [];
 		} else {
-			this.states.rebuildData = this.originalData.slice();
+			// inverted下尾部为视觉底部（初始可见区），已构建区间取尾部切片
+			this.states.rebuildData = this.props.inverted
+				? this.originalData.slice(this.localTotal - this.buildCount)
+				: this.originalData.slice(0, this.buildCount);
 		}
 		this.states.version++;
 		return true;
 	}
 
-	setOriginData(page: number, res: any) {
-		const baseIndex = (page - 1) * this.props.pageSize;
+	setOriginData(start: number, res: any) {
 		for (let i = 0; i < res.length; i++) {
-			this.originalData[baseIndex + i] = res[i];
+			this.originalData[start + i] = res[i];
 		}
 	}
 
@@ -147,6 +177,123 @@ export class Store {
 		typeof index$ === 'undefined'
 			? states.rebuildData.unshift(node)
 			: (states.rebuildData[index$] = node);
+	}
+
+	/**
+	 * 构建[start, end)区间的节点，返回待测量的索引
+	 * @param start ~
+	 * @param end ~
+	 * @param reversed inverted本地翻页时向前补建更早的数据，逆序unshift后头部保持升序
+	 * @returns indices ~
+	 */
+	buildItems(start: number, end: number, reversed = false) {
+		const indices: number[] = [];
+		let item: any;
+		for (let j = start; j < end; j++) {
+			const i = reversed ? end - 1 - (j - start) : j;
+			item = this.props.inverted
+				? this.states.rebuildData[this.states.rebuildDataIndexMap[i]]
+				: this.states.rebuildData[i];
+
+			if (item && item.loaded) continue;
+			this.setItemData(i, this.originalData[i]);
+			if (this.props.inverted) {
+				this.states.firstItemIndex += 1;
+				this.states.lastItemIndex += 1;
+			}
+			indices.push(i);
+		}
+		return indices;
+	}
+
+	// 预分配一批占位节点，返回待构建区间
+	allocatePlaceholders() {
+		const start = this.states.rebuildData.length;
+		const end = start + this.props.batchSize;
+		if (this.props.inverted) {
+			for (let i = start; i < end; i++) {
+				this.setItemData(i);
+			}
+		} else {
+			this.states.rebuildData.length = end;
+		}
+		return { start, end };
+	}
+
+	// 标记全部已构建节点待重新测量
+	invalidate() {
+		this.states.rebuildData.forEach((item) => {
+			item.loaded = 0;
+		});
+	}
+
+	/**
+	 * 拉取下一页远程数据，数据写入originalData
+	 *
+	 * loadData入参为{ current, count }：current为第N次请求(从1开始)；count为已加载总条数(可作偏移)
+	 * 响应归一化为{ data, finished }：裸数组视为{ data }；
+	 * 未显式给finished时按内容推断，空页(data.length为0)才结束
+	 * @param onBeforeResponse ~
+	 * @returns 响应及数据写入的区间[start, end)
+	 */
+	async fetchPage(onBeforeResponse?: () => void) {
+		const current = this.promiseStack.length + 1;
+		const start = this.originalData.length;
+		const promiseFetch = this.props.loadData({ current, count: start });
+		this.states.loadings.push('pending');
+		this.promiseStack.push(promiseFetch);
+		let response = await promiseFetch;
+		if (Array.isArray(response)) {
+			response = { data: response };
+		}
+		if (response && response.data && typeof response.finished === 'undefined') {
+			response = { ...response, finished: !(response.data.length > 0) };
+		}
+		onBeforeResponse && onBeforeResponse();
+		this.states.loadings.pop();
+		if (response && response.data) {
+			this.setOriginData(start, response.data);
+		}
+		return { current, response, start, end: start + (response?.data?.length || 0) };
+	}
+
+	// 终止加载，回收无效占位
+	stop() {
+		this.states.isEnd = true;
+		this.trimPlaceholders();
+		this.refreshItemPosition();
+	}
+
+	// 重置加载状态与数据栈
+	reset() {
+		this.states.isEnd = false;
+		this.states.loadings = [];
+		this.originalData = [];
+		this.promiseStack = [];
+	}
+
+	// 清空列表内容
+	clear() {
+		this.setData([]);
+		this.states.contentMaxSize = 0;
+		this.states.columnFillSize = [];
+		this.states.firstItemIndex = 0;
+		this.states.isSlientRefresh = false;
+	}
+
+	rebuildPositionIndex() {
+		const positionIndex = Array.from({ length: this.props.cols }).map(() => [] as number[]);
+		const rebuildData = toRaw(this.states.rebuildData);
+		for (let index = 0; index < rebuildData.length; index++) {
+			const item = rebuildData[index];
+			if (item && item.column >= 0 && positionIndex[item.column]) {
+				positionIndex[item.column].push(index);
+			}
+		}
+		this.positionIndex = positionIndex;
+		this.positionIndexSource = rebuildData;
+		this.positionIndexLength = rebuildData.length;
+		return positionIndex;
 	}
 
 	refreshItemPosition() {
@@ -178,32 +325,39 @@ export class Store {
 				}
 			}
 		}
+		this.rebuildPositionIndex();
 
 		this.states.contentMaxSize = Math.max(...sizes);
 		this.states.columnFillSize = sizes.map(i => this.states.contentMaxSize - i);
 	}
 
-	removeUnusedPlaceholders(copy: any[], page: number) {
-		const start = (page - 1) * this.props.pageSize;
-		const end = page * this.props.pageSize;
+	// 裁掉尾部(非inverted)/头部(inverted)连续的无效占位节点，返回是否发生裁剪
+	trimPlaceholders(): boolean {
+		const copy = this.states.rebuildData.slice(0);
 		let cursor: number;
 		if (!this.props.inverted) {
-			for (cursor = start; cursor < end; cursor++) {
-				if (copy[cursor]?.isPlaceholder) break;
+			for (cursor = copy.length; cursor > 0; cursor--) {
+				if (copy[cursor - 1] && !copy[cursor - 1].isPlaceholder) break;
 			}
+			if (cursor === copy.length) return false;
 			this.states.rebuildData = copy.slice(0, cursor);
 		} else {
-			for (cursor = 0; cursor < end - start; cursor++) {
-				if (!copy[cursor]?.isPlaceholder) break;
+			for (cursor = 0; cursor < copy.length; cursor++) {
+				if (copy[cursor] && !copy[cursor].isPlaceholder) break;
 			}
+			if (cursor === 0) return false;
 			this.states.rebuildData = copy.slice(cursor);
 		}
+		return true;
 	}
 
 	setRangeByPosition(headPosition: number, tailPosition: number) {
-		const { inverted } = this.props;
+		const { inverted, cols } = this.props;
 		const { rebuildData, columnFillSize } = this.states;
-		const length = rebuildData.length;
+		// 范围查询是命令式只读操作，绕过深层响应式代理可显著降低滚动热路径开销。
+		const rawRebuildData = toRaw(rebuildData);
+		const rawColumnFillSize = toRaw(columnFillSize);
+		const length = rawRebuildData.length;
 
 		if (length === 0) {
 			this.states.firstItemIndex = 0;
@@ -211,74 +365,54 @@ export class Store {
 			return;
 		}
 
-		// 暂时写死（加载更多栏的高度40）
-		if (inverted) {
-			headPosition -= 40;
-			tailPosition -= 40;
-		}
-
 		const prevFirst = this.states.firstItemIndex;
 		const prevLast = this.states.lastItemIndex;
 
-		const offset = (item: any) => {
-			return inverted ? columnFillSize[item.column] : 0;
-		};
+		const sourceChanged = this.positionIndexSource !== rawRebuildData
+			|| this.positionIndexLength !== length
+			|| this.positionIndex.length !== cols;
+		const positionIndex = sourceChanged ? this.rebuildPositionIndex() : this.positionIndex;
+		let firstIndex = length;
+		let lastIndex = -1;
 
-		const isOverlap = (item: any, position: number) => {
-			const head = item.position + offset(item);
-			const tail = item.position + item.size + offset(item);
-			return head <= position && tail >= position;
-		};
-
-		/**
-		 * 二分查找结合 isOverlap 精确定位
-		 * @param target ~
-		 * @param forward 正向扫描（未找到返回 -1）/反向扫描（未找到返回 length）
-		 * @param hint prevFirst / prevLast）将二分范围从 [0, n-1] 收窄为 [hint, n-1] 或 [0, hint-1]，连续滚动时 O(log δ)
-		 * @returns bound ~
-		 */
-		const upperBound = (target: number, forward?: boolean, hint = -1): number => {
+		for (let column = 0; column < positionIndex.length; column++) {
+			const indices = positionIndex[column];
+			const fillSize = inverted ? rawColumnFillSize[column] : 0;
 			let lo = 0;
-			let hi = length - 1;
-			let bound = -1;
-
-			if (hint >= 0 && hint < length) {
-				const item = rebuildData[hint];
-				if (!item || (item.position + offset(item)) <= target) {
-					bound = hint;
-					lo = hint;
+			let hi = indices.length - 1;
+			let first = indices.length;
+			while (lo <= hi) {
+				const mid = (lo + hi) >>> 1;
+				const item = rawRebuildData[indices[mid]];
+				if (item.position + item.size + fillSize >= headPosition) {
+					first = mid;
+					hi = mid - 1;
 				} else {
-					hi = hint - 1;
+					lo = mid + 1;
 				}
 			}
 
+			lo = 0;
+			hi = indices.length - 1;
+			let last = -1;
 			while (lo <= hi) {
 				const mid = (lo + hi) >>> 1;
-				const item = rebuildData[mid];
-				if (!item || (item.position + offset(item)) <= target) {
-					bound = mid;
+				const item = rawRebuildData[indices[mid]];
+				if (item.position + fillSize <= tailPosition) {
+					last = mid;
 					lo = mid + 1;
 				} else {
 					hi = mid - 1;
 				}
 			}
 
-			if (forward) {
-				const start = hint >= 0 && hint <= bound ? hint : 0; // hint <= bound（向下滚动）时，[0, hint-1] 已确认不满足 isOverlap，从 hint 开始扫描
-				for (let i = start; i <= bound; i++) {
-					if (!rebuildData[i] || isOverlap(rebuildData[i], target)) return i;
-				}
-				return -1;
+			if (first <= last) {
+				firstIndex = Math.min(firstIndex, indices[first]);
+				lastIndex = Math.max(lastIndex, indices[last]);
 			}
+		}
 
-			for (let i = bound; i >= 0; i--) {
-				if (!rebuildData[i] || isOverlap(rebuildData[i], target)) return i;
-			}
-			return length;
-		};
-
-		const firstIndex = Math.max(0, upperBound(headPosition, true, prevFirst));
-		const lastIndex = Math.min(length - 1, upperBound(tailPosition, false, prevLast));
+		if (firstIndex === length || lastIndex < 0) return;
 
 		if (firstIndex === prevFirst && lastIndex === prevLast) return;
 		this.states.firstItemIndex = firstIndex;

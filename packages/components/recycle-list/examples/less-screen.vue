@@ -4,7 +4,6 @@
 		<RecycleList
 			class="list"
 			pullable
-			:page-size="pageSize"
 			:load-data="loadData"
 		>
 			<template #default="{ row }">
@@ -30,7 +29,7 @@ import { ref } from 'vue';
 import { RecycleList } from '..';
 
 const dynamicSize = ref(0);
-const pageSize = ref(3);
+const pageSize = 3; // 示例内每页条数（组件不再感知分页大小）
 
 let count = 0;
 const total = 20;
@@ -53,8 +52,8 @@ const randomText = (size) => {
 	return v;
 };
 
-const loadData = (page, pageSize$) => {
-	console.log('page:', page);
+const loadData = ({ current: page, count: loaded }) => {
+	console.log('page:', page, 'loaded:', loaded);
 	const list = [];
 	return new Promise((resolve) => {
 		if (page == total + 1) {
@@ -62,10 +61,8 @@ const loadData = (page, pageSize$) => {
 			return;
 		}
 
-		if (page == total) {
-			pageSize$ = 4;
-		}
-		for (let i = 0; i < pageSize$; i++) {
+		const size = page == total ? 4 : pageSize;
+		for (let i = 0; i < size; i++) {
 			list.push({
 				id: count++,
 				page,

@@ -134,7 +134,6 @@ describe('index.ts', () => {
 				<RecycleList
 					cols={3}
 					data={buildItems(6)}
-					pageSize={6}
 				>
 					{{ default: ({ row }: any) => (
 						<div class="my-item">
@@ -157,7 +156,6 @@ describe('index.ts', () => {
 					vertical={false}
 					cols={3}
 					data={buildItems(3)}
-					pageSize={3}
 				>
 					{{ default: ({ row }: any) => <div class="hr-item">{row.id}</div> }}
 				</RecycleList>
@@ -174,7 +172,6 @@ describe('index.ts', () => {
 			const wrapper = mount(() => (
 				<RecycleList
 					data={data}
-					pageSize={3}
 				>
 					{{ default: ({ row }: any) => (
 						<div class="row-item">
@@ -187,8 +184,11 @@ describe('index.ts', () => {
 
 			await nextTick();
 			await nextTick();
+			await sleep(0);
+			await nextTick();
 
-			const items = wrapper.findAll('.row-item');
+			// 限定可见列，排除隐藏测量池中的副本（jsdom下尺寸恒为0，预测量项不会离开池）
+			const items = wrapper.findAll('.vc-recycle-list__column .row-item');
 			expect(items.length).toBe(3);
 			expect(items[0].text()).toBe('id-0');
 			expect(items[2].text()).toBe('id-2');
@@ -233,7 +233,8 @@ describe('index.ts', () => {
 			});
 
 			const wrapper = mount(() => (
-				<RecycleList data={data} pageSize={20} loadData={loadData}>
+				// batchSize=100: 单页覆盖全部数据，聚焦滚动渲染协调而非懒构建分页
+				<RecycleList data={data} batchSize={100} loadData={loadData}>
 					{{
 						default: ({ row }: any) => <Customer row={row} render={renderItem} />
 					}}
@@ -297,7 +298,8 @@ describe('index.ts', () => {
 			});
 
 			const wrapper = mount(() => (
-				<RecycleList data={data.value} pageSize={3} loadData={loadData}>
+				// batchSize=5: 单页覆盖追加后的数据，聚焦追加渲染协调而非懒构建分页
+				<RecycleList data={data.value} batchSize={5} loadData={loadData}>
 					{{
 						default: ({ row }: any) => <Customer row={row} render={renderItem} />
 					}}
@@ -323,43 +325,72 @@ describe('index.ts', () => {
 		});
 	});
 
-	describe('Props - data / pageSize', () => {
-		it('initializes from data prop and marks isEnd when data length is not multiple of pageSize', async () => {
-			const data = buildItems(3); // 3 % 5 != 0 => isEnd=true
+	describe('Props - data / batchSize', () => {
+		it('uses threshold=100 by default and no longer exposes offset', () => {
+			const defaultWrapper = mount(RecycleList);
+			const customWrapper = mount(RecycleList, { props: { threshold: 240 } });
+
+			expect(defaultWrapper.props('threshold')).toBe(100);
+			expect(customWrapper.props('threshold')).toBe(240);
+			expect('offset' in defaultWrapper.props()).toBe(false);
+			defaultWrapper.unmount();
+			customWrapper.unmount();
+		});
+
+		it('does NOT mark isEnd on setData; default loadData(false) ends it after mount', async () => {
+			const data = buildItems(3);
 			const listRef = ref<any>();
 			mount(() => (
-				<RecycleList ref={listRef} data={data} pageSize={5}>
+				<RecycleList ref={listRef} data={data}>
 					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
 				</RecycleList>
 			));
 
 			await nextTick();
+			await sleep(0);
+			await nextTick();
 
+			// 本地数据不再推断isEnd；挂载后默认loadData(返回false)触发结束
 			expect(listRef.value.store.states.isEnd).toBe(true);
 			expect(listRef.value.store.states.rebuildData.length).toBe(3);
 		});
 
-		it('does NOT mark isEnd when data length is exact multiple of pageSize', async () => {
-			const data = buildItems(10); // 10 % 5 == 0 => not end
+		it('keeps isEnd=false when disabled blocks remote loadData', async () => {
+			const data = buildItems(10);
 			const listRef = ref<any>();
-			// 使用 disabled 避免 onMounted 阶段的 loadData 触发 stopScroll(isEnd=true)
 			mount(() => (
-				<RecycleList ref={listRef} data={data} pageSize={5} disabled>
+				<RecycleList ref={listRef} data={data} disabled>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			));
+
+			await nextTick();
+			await sleep(0);
+
+			expect(listRef.value.store.states.isEnd).toBe(false);
+			expect(listRef.value.store.states.rebuildData.length).toBe(10);
+		});
+
+		it('component lazy-builds local data by batchSize', async () => {
+			const listRef = ref<any>();
+			mount(() => (
+				<RecycleList ref={listRef} data={buildItems(10)} batchSize={4}>
 					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
 				</RecycleList>
 			));
 
 			await nextTick();
 
-			expect(listRef.value.store.states.isEnd).toBe(false);
-			expect(listRef.value.store.states.rebuildData.length).toBe(10);
+			// 初始一页(4) + 挂载时懒构建一页(4)
+			expect(listRef.value.store.buildCount).toBe(8);
+			expect(listRef.value.store.states.rebuildData.length).toBe(8);
 		});
 
 		it('updates data when prop changes', async () => {
 			const data = ref(buildItems(3));
 			const listRef = ref<any>();
 			mount(() => (
-				<RecycleList ref={listRef} data={data.value} pageSize={3}>
+				<RecycleList ref={listRef} data={data.value} batchSize={3}>
 					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
 				</RecycleList>
 			));
@@ -367,11 +398,18 @@ describe('index.ts', () => {
 			await nextTick();
 			const oldLen = listRef.value.store.states.rebuildData.length;
 			expect(oldLen).toBe(3);
+			await sleep(20);
 
 			data.value = buildItems(6, 1, 100);
 			await nextTick();
 			await nextTick();
 
+			// 懒构建：数据变更后立即构建的是已构建区间（一页）
+			expect(listRef.value.store.states.rebuildData.length).toBe(3);
+
+			// 滚动位置处于加载阈值内时自动续建下一页
+			await sleep(20);
+			await nextTick();
 			expect(listRef.value.store.states.rebuildData.length).toBe(6);
 		});
 
@@ -393,15 +431,207 @@ describe('index.ts', () => {
 		});
 	});
 
+	describe('Local data lazy build (paging by batchSize)', () => {
+		it('initially builds only one page for large data', async () => {
+			const data = buildItems(1000);
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} data={data} batchSize={200}>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await sleep(20);
+			await nextTick();
+
+			const store = listRef.value.store;
+			expect(store.localTotal).toBe(1000);
+			// 初始一页 + 挂载时 loadData 预构建一页（与远程模式挂载即拉一页语义一致）
+			expect(store.states.rebuildData.length).toBeLessThan(1000);
+			expect(store.states.rebuildData.length % 200).toBe(0);
+			expect(store.buildCount).toBe(store.states.rebuildData.length);
+			wrapper.unmount();
+		});
+
+		it('scrolling to bottom builds next local page without calling remote loadData', async () => {
+			const data = buildItems(1000);
+			const loadData = vi.fn(async () => false);
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} data={data} batchSize={200} loadData={loadData}>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await sleep(20);
+			await nextTick();
+
+			const before = listRef.value.store.states.rebuildData.length;
+			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+			const restore = mockSize(wrapEl, {
+				clientHeight: 200,
+				offsetHeight: 200,
+				scrollHeight: 1000
+			});
+
+			wrapEl.scrollTop = 950; // > scrollHeight - clientSize - threshold
+			wrapEl.dispatchEvent(new Event('scroll'));
+			await sleep(20);
+			await nextTick();
+
+			expect(listRef.value.store.states.rebuildData.length).toBe(before + 200);
+			expect(loadData).not.toHaveBeenCalled();
+			restore();
+			wrapper.unmount();
+		});
+
+		it('falls through to remote loadData after local data fully built', async () => {
+			const data = buildItems(40);
+			const loadData = vi.fn(async () => false);
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} data={data} batchSize={20} loadData={loadData}>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await sleep(20);
+			await nextTick();
+
+			// 初始一页 + 挂载预构建一页 = 全部构建完
+			expect(listRef.value.store.states.rebuildData.length).toBe(40);
+			expect(loadData).not.toHaveBeenCalled();
+
+			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+			const restore = mockSize(wrapEl, {
+				clientHeight: 200,
+				offsetHeight: 200,
+				scrollHeight: 1000
+			});
+
+			wrapEl.scrollTop = 950;
+			wrapEl.dispatchEvent(new Event('scroll'));
+			await sleep(20);
+			await nextTick();
+
+			expect(loadData).toHaveBeenCalledTimes(1);
+			restore();
+			wrapper.unmount();
+		});
+
+		it('inverted: builds tail slice first and prepends earlier page on scrolling up', async () => {
+			const data = buildItems(600);
+			const loadData = vi.fn(async () => false);
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} inverted data={data} batchSize={200} loadData={loadData}>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			// 等待挂载预构建完成（jsdom下Defer基于idle回调，完成时机不定）
+			for (let i = 0; i < 30 && listRef.value.store.buildCount < 400; i++) {
+				await sleep(20);
+			}
+			await nextTick();
+
+			const store = listRef.value.store;
+			// 初始尾部一页 + 挂载预构建一页 => [200, 600)
+			expect(store.states.rebuildData.length).toBe(400);
+			expect(store.states.rebuildData[0].id).toBe(200);
+			expect(store.states.rebuildData[399].id).toBe(599);
+
+			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+			wrapEl.scrollTop = 0; // inverted: scrollTop - threshold <= 0 触发
+			// 构建期间isManualScroll会拦截scroll（与远程inverted翻页一致），持续滚动直至构建完成
+			for (let i = 0; i < 30 && store.states.rebuildData.length < 600; i++) {
+				wrapEl.dispatchEvent(new Event('scroll'));
+				await sleep(20);
+			}
+			await nextTick();
+
+			expect(store.states.rebuildData.length).toBe(600);
+			// 新块整体位于头部且数组内保持升序
+			expect(store.states.rebuildData.every((item: any, i: number) => item.id === i)).toBe(true);
+			expect(loadData).not.toHaveBeenCalled();
+			wrapper.unmount();
+		});
+
+		it('disabled=true still builds local pages on scroll but never calls remote loadData', async () => {
+			const data = buildItems(600);
+			const loadData = vi.fn(async () => false);
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} disabled data={data} batchSize={200} loadData={loadData}>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await sleep(20);
+			await nextTick();
+
+			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+			const restore = mockSize(wrapEl, {
+				clientHeight: 200,
+				offsetHeight: 200,
+				scrollHeight: 1000
+			});
+
+			// 连续触发直到本地构建完，再触发一次验证远程不被调用
+			for (let i = 0; i < 3; i++) {
+				wrapEl.scrollTop = 950;
+				wrapEl.dispatchEvent(new Event('scroll'));
+				await sleep(20);
+				await nextTick();
+			}
+
+			expect(listRef.value.store.states.rebuildData.length).toBe(600);
+			expect(loadData).not.toHaveBeenCalled();
+			restore();
+			wrapper.unmount();
+		});
+
+		it('keeps built progress when data changes', async () => {
+			const data = ref(buildItems(600));
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} data={data.value} batchSize={200}>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await sleep(20);
+			await nextTick();
+
+			const built = listRef.value.store.buildCount;
+			expect(built).toBeGreaterThanOrEqual(400);
+
+			data.value = [...data.value, buildItem(600)];
+			await nextTick();
+			await nextTick();
+
+			// 已构建进度保留，不回退到一页
+			expect(listRef.value.store.buildCount).toBeGreaterThanOrEqual(built);
+			expect(listRef.value.store.states.rebuildData.length).toBeGreaterThanOrEqual(built);
+			wrapper.unmount();
+		});
+	});
+
 	describe('loadData behaviour', () => {
 		it('auto-loads first page on mount and stores data', async () => {
-			const loadData = vi.fn(async (page: number, pageSize: number) => {
-				return buildItems(pageSize, page);
+			const loadData = vi.fn(async ({ current }: any) => {
+				return buildItems(3, current);
 			});
 
 			const listRef = ref<any>();
 			mount(() => (
-				<RecycleList ref={listRef} loadData={loadData} pageSize={3} />
+				<RecycleList ref={listRef} loadData={loadData} />
 			), { attachTo: document.body });
 
 			// 触发 onMounted -> loadData
@@ -410,9 +640,39 @@ describe('index.ts', () => {
 			await nextTick();
 
 			expect(loadData).toHaveBeenCalledTimes(1);
-			expect(loadData.mock.calls[0][0]).toBe(1); // page = 1
-			expect(loadData.mock.calls[0][1]).toBe(3); // pageSize = 3
+			// current = 第N次请求；count = 当前已加载条数
+			expect(loadData.mock.calls[0][0]).toEqual({ current: 1, count: 0 });
 			expect(listRef.value.store.states.rebuildData.length).toBe(3);
+		});
+
+		it('passes { current, count } to loadData and appends by start', async () => {
+			const loadData = vi.fn(async ({ current }: any) => buildItems(2, current));
+			const store = new RecycleListStore({ loadData });
+
+			let r = await store.fetchPage();
+			expect(loadData).toHaveBeenLastCalledWith({ current: 1, count: 0 });
+			expect([r.start, r.end]).toEqual([0, 2]);
+			// 非空页推断为未结束
+			expect(r.response.finished).toBe(false);
+
+			r = await store.fetchPage();
+			expect(loadData).toHaveBeenLastCalledWith({ current: 2, count: 2 });
+			expect([r.start, r.end]).toEqual([2, 4]);
+			expect(store.originalData.length).toBe(4);
+		});
+
+		it('count passed to loadData includes local data length', async () => {
+			const loadData = vi.fn(async () => false);
+			mount(() => (
+				<RecycleList data={buildItems(4)} loadData={loadData}>
+					{{ default: ({ row }: any) => <div>{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await sleep(0);
+
+			expect(loadData).toHaveBeenCalledWith({ current: 1, count: 4 });
 		});
 
 		it('handles { data, finished } object response and marks isEnd when finished', async () => {
@@ -420,7 +680,7 @@ describe('index.ts', () => {
 
 			const listRef = ref<any>();
 			mount(() => (
-				<RecycleList ref={listRef} loadData={loadData} pageSize={5} />
+				<RecycleList ref={listRef} loadData={loadData} />
 			), { attachTo: document.body });
 
 			await nextTick();
@@ -432,12 +692,12 @@ describe('index.ts', () => {
 			expect(listRef.value.store.states.rebuildData.length).toBe(5);
 		});
 
-		it('treats array shorter than pageSize as finished', async () => {
-			const loadData = vi.fn(async () => buildItems(2)); // less than pageSize
+		it('treats empty array as finished', async () => {
+			const loadData = vi.fn(async () => []);
 
 			const listRef = ref<any>();
 			mount(() => (
-				<RecycleList ref={listRef} loadData={loadData} pageSize={5} />
+				<RecycleList ref={listRef} loadData={loadData} />
 			), { attachTo: document.body });
 
 			await nextTick();
@@ -445,6 +705,23 @@ describe('index.ts', () => {
 			await nextTick();
 
 			expect(listRef.value.store.states.isEnd).toBe(true);
+			expect(listRef.value.store.states.rebuildData.length).toBe(0);
+		});
+
+		it('treats non-empty array as unfinished (ends by empty page or explicit finished)', async () => {
+			const loadData = vi.fn(async () => buildItems(2));
+
+			const listRef = ref<any>();
+			mount(() => (
+				<RecycleList ref={listRef} loadData={loadData} />
+			), { attachTo: document.body });
+
+			await nextTick();
+			await sleep(0);
+			await nextTick();
+
+			expect(listRef.value.store.states.isEnd).toBe(false);
+			expect(listRef.value.store.states.rebuildData.length).toBe(2);
 		});
 
 		it('returns false from loadData triggers stopScroll (isEnd=true)', async () => {
@@ -480,7 +757,7 @@ describe('index.ts', () => {
 			const disabled = ref(true);
 
 			mount(() => (
-				<RecycleList disabled={disabled.value} loadData={loadData} pageSize={3} />
+				<RecycleList disabled={disabled.value} loadData={loadData} />
 			), { attachTo: document.body });
 
 			await nextTick();
@@ -501,7 +778,7 @@ describe('index.ts', () => {
 			const listRef = ref<any>();
 
 			const wrapper = mount(() => (
-				<RecycleList ref={listRef} disabled={disabled.value} loadData={loadData} pageSize={3} />
+				<RecycleList ref={listRef} disabled={disabled.value} loadData={loadData} />
 			), { attachTo: document.body });
 
 			await nextTick();
@@ -578,7 +855,7 @@ describe('index.ts', () => {
 		it('scrollToIndex jumps to the item top', async () => {
 			const listRef = ref<any>();
 			const wrapper = mount(() => (
-				<RecycleList ref={listRef} data={buildItems(3)} pageSize={3}>
+				<RecycleList ref={listRef} data={buildItems(3)}>
 					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
 				</RecycleList>
 			), { attachTo: document.body });
@@ -600,7 +877,7 @@ describe('index.ts', () => {
 			const loadData = vi.fn(async () => buildItems(3));
 			const listRef = ref<any>();
 			mount(() => (
-				<RecycleList ref={listRef} loadData={loadData} pageSize={3} />
+				<RecycleList ref={listRef} loadData={loadData} />
 			), { attachTo: document.body });
 
 			await nextTick();
@@ -616,7 +893,7 @@ describe('index.ts', () => {
 		it('refreshLayout exists and runs without throwing', async () => {
 			const listRef = ref<any>();
 			mount(() => (
-				<RecycleList ref={listRef} data={buildItems(2)} pageSize={2}>
+				<RecycleList ref={listRef} data={buildItems(2)}>
 					{{ default: ({ row }: any) => <div>{row.id}</div> }}
 				</RecycleList>
 			), { attachTo: document.body });
@@ -689,14 +966,16 @@ describe('index.ts', () => {
 
 	describe('ScrollState rendering', () => {
 		it('renders complete when isEnd and has data', async () => {
-			const data = buildItems(3); // 3 % default pageSize(20) !== 0 => isEnd
+			const data = buildItems(3); // 默认loadData返回false => 挂载后isEnd
 			const wrapper = mount(() => (
-				<RecycleList data={data} pageSize={20}>
+				<RecycleList data={data}>
 					{{ default: ({ row }: any) => <div>{row.id}</div> }}
 				</RecycleList>
 			), { attachTo: document.body });
 
 			await nextTick();
+			await nextTick();
+			await sleep(0);
 			await nextTick();
 
 			expect(wrapper.find('.vc-recycle-list__complete').exists()).toBe(true);
@@ -707,7 +986,6 @@ describe('index.ts', () => {
 			const wrapper = mount(() => (
 				<RecycleList
 					data={buildItems(3)}
-					pageSize={20}
 					renderComplete={() => <div class="my-complete">all loaded</div>}
 				>
 					{{ default: ({ row }: any) => <div>{row.id}</div> }}
@@ -715,6 +993,8 @@ describe('index.ts', () => {
 			), { attachTo: document.body });
 
 			await nextTick();
+			await nextTick();
+			await sleep(0);
 			await nextTick();
 
 			expect(wrapper.find('.my-complete').exists()).toBe(true);
@@ -765,8 +1045,8 @@ describe('index.ts', () => {
 
 	describe('Shared store (RecycleListStore)', () => {
 		it('store can be created with options and shared between RecycleList instances', async () => {
-			const loadData = vi.fn(async (_: number, pageSize: number) => buildItems(pageSize));
-			const store = new RecycleListStore({ pageSize: 5, loadData });
+			const loadData = vi.fn(async () => buildItems(5));
+			const store = new RecycleListStore({ loadData });
 
 			const refA = ref<any>();
 			const refB = ref<any>();
@@ -795,23 +1075,42 @@ describe('index.ts', () => {
 		});
 
 		it('Store.setData returns true on first call and false when same array passed again', () => {
-			const store = new RecycleListStore({ pageSize: 5 });
+			const store = new RecycleListStore({});
 			const data = buildItems(3);
 
 			expect(store.setData(data)).toBe(true);
 			expect(store.setData(data)).toBe(false);
 		});
 
-		it('Store.setData with length not multiple of pageSize sets isEnd=true', () => {
-			const store = new RecycleListStore({ pageSize: 5 });
-			const data = buildItems(3);
+		it('batchSize controls local lazy build page size', () => {
+			const store = new RecycleListStore({ batchSize: 8 });
+			store.setData(buildItems(20));
 
-			store.setData(data);
-			expect(store.states.isEnd).toBe(true);
+			// 初始按batchSize构建一页
+			expect(store.states.rebuildData.length).toBe(8);
+			expect(store.consumeLocalPage()).toEqual({ start: 8, end: 16, reversed: false });
+			// 尾页不足batchSize时取剩余量
+			expect(store.consumeLocalPage()).toEqual({ start: 16, end: 20, reversed: false });
+			expect(store.consumeLocalPage()).toBe(null);
+		});
+
+		it('batchSize defaults to 20', () => {
+			const store = new RecycleListStore({});
+			store.setData(buildItems(30));
+
+			expect(store.states.rebuildData.length).toBe(20);
+			expect(store.consumeLocalPage()).toEqual({ start: 20, end: 30, reversed: false });
+		});
+
+		it('Store.setData does NOT mark isEnd', () => {
+			const store = new RecycleListStore({});
+
+			store.setData(buildItems(3));
+			expect(store.states.isEnd).toBe(false);
 		});
 
 		it('Store add / remove updates leafs and currentLeaf', () => {
-			const store = new RecycleListStore({ pageSize: 5 });
+			const store = new RecycleListStore({});
 
 			const a = { id: 'A' };
 			const b = { id: 'B' };
@@ -826,9 +1125,9 @@ describe('index.ts', () => {
 			expect(store.leafs).toEqual([b]);
 		});
 
-		it('Store.setOriginData places items at correct page offset', () => {
-			const store = new RecycleListStore({ pageSize: 3 });
-			store.setOriginData(2, [{ id: 'a' }, { id: 'b' }, { id: 'c' }]);
+		it('Store.setOriginData places items at given start offset', () => {
+			const store = new RecycleListStore({});
+			store.setOriginData(3, [{ id: 'a' }, { id: 'b' }, { id: 'c' }]);
 
 			expect(store.originalData[3]).toEqual({ id: 'a' });
 			expect(store.originalData[4]).toEqual({ id: 'b' });
@@ -853,7 +1152,7 @@ describe('index.ts', () => {
 			const data = buildItems(6);
 			const listRef = ref<any>();
 			mount(() => (
-				<RecycleList ref={listRef} inverted disabled data={data} pageSize={3}>
+				<RecycleList ref={listRef} inverted disabled data={data}>
 					{{ default: ({ row }: any) => <div>{row.id}</div> }}
 				</RecycleList>
 			));
@@ -867,15 +1166,14 @@ describe('index.ts', () => {
 		it('inverted + placeholder triggers loadData (covering setItemData placeholder fill path)', async () => {
 			const loadData = vi.fn(async () => buildItems(3));
 			const listRef = ref<any>();
-			// 提供 data=pageSize 的整数倍，避免 setData 时 isEnd 直接为 true，
-			// 让 onMounted 中的 loadData() 真正进入 hasPlaceholder + inverted 分支
+			// 本地数据构建完后，onMounted 的 loadData() 进入 hasPlaceholder + inverted 分支
 			const wrapper = mount(() => (
 				<RecycleList
 					ref={listRef}
 					inverted
 					data={buildItems(3)}
 					loadData={loadData}
-					pageSize={3}
+					batchSize={3}
 				>
 					{{
 						default: ({ row }: any) => <div>{row.id}</div>,
@@ -895,16 +1193,131 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
+		it('inverted placeholder does not request another page while the current page is pending', async () => {
+			let resolveFn: (v: any) => void = () => {};
+			const loadData = vi.fn(() => new Promise((resolve) => { resolveFn = resolve; }));
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} inverted loadData={loadData as any}>
+					{{
+						default: ({ row }: any) => <div>{row.id}</div>,
+						placeholder: () => <div class="ph">ph</div>
+					}}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			for (let i = 0; i < 10 && loadData.mock.calls.length === 0; i++) {
+				await sleep(0);
+			}
+			for (let i = 0; i < 10; i++) {
+				await sleep(0);
+			}
+			await nextTick();
+
+			expect(loadData).toHaveBeenCalledTimes(1);
+			expect(listRef.value.store.states.rebuildData).toHaveLength(20);
+			expect(wrapper.findAll('.vc-recycle-list__column .ph')).toHaveLength(20);
+
+			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+			for (let i = 0; i < 3; i++) {
+				wrapEl.dispatchEvent(new Event('scroll'));
+				await sleep(20);
+			}
+			expect(loadData).toHaveBeenCalledTimes(1);
+			expect(listRef.value.store.states.rebuildData).toHaveLength(20);
+
+			resolveFn(false);
+			await sleep(0);
+			wrapper.unmount();
+		});
+
+		it('inverted placeholder keeps the current rows rendered while prepending a page', async () => {
+			let resolveSecondPage: (v: any) => void = () => {};
+			const loadData = vi.fn(({ current }: any) => {
+				return current === 1
+					? Promise.resolve(buildItems(20))
+					: new Promise(resolve => (resolveSecondPage = resolve));
+			});
+			const heightSpy = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+				if (!this.classList.contains('vc-recycle-list__hidden')) return 0;
+				if (this.querySelector('.ph')) return 100;
+				if (this.querySelector('.row')) return 60;
+				return 0;
+			});
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} inverted batchSize={20} loadData={loadData}>
+					{{
+						default: ({ row }: any) => <div class="row">{row.id}</div>,
+						placeholder: () => <div class="ph">ph</div>
+					}}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			try {
+				const store = listRef.value.store;
+				for (let i = 0; i < 50 && (store.states.isLoading || store.states.contentMaxSize !== 1200); i++) {
+					await sleep(0);
+				}
+				await sleep(20);
+				await nextTick();
+
+				expect(loadData).toHaveBeenCalledTimes(1);
+				expect(store.states.contentMaxSize).toBe(1200);
+
+				const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+				const triggerPosition = 80;
+				const anchor = store.states.rebuildData.find((item: any) => {
+					const head = item.position + store.states.columnFillSize[item.column];
+					return head <= triggerPosition && head + item.size >= triggerPosition;
+				});
+				expect(anchor).toBeDefined();
+				const anchorOffset = anchor.position
+					+ store.states.columnFillSize[anchor.column]
+					- triggerPosition;
+
+				listRef.value.scrollTo(triggerPosition);
+				for (let i = 0; i < 30 && loadData.mock.calls.length < 2; i++) {
+					await sleep(0);
+				}
+				await nextTick();
+
+				expect(loadData).toHaveBeenCalledTimes(2);
+				expect(store.states.rebuildData.filter((item: any) => item.isPlaceholder)).toHaveLength(20);
+				expect(wrapper.findAll('.vc-recycle-list__column .row').length).toBeGreaterThan(0);
+				expect(wrapEl.scrollTop).toBe(2080);
+				const pendingAnchor = store.states.rebuildData.find((item: any) => item.id === anchor.id);
+				const pendingOffset = pendingAnchor.position
+					+ store.states.columnFillSize[pendingAnchor.column]
+					- wrapEl.scrollTop;
+				expect(pendingOffset).toBe(anchorOffset);
+
+				resolveSecondPage(buildItems(20, 2, 20));
+				for (let i = 0; i < 50 && (store.states.isLoading || store.states.rebuildData.some((item: any) => item.isPlaceholder)); i++) {
+					await sleep(0);
+				}
+				await nextTick();
+
+				const changedAnchor = store.states.rebuildData.find((item: any) => item.id === anchor.id);
+				const changedOffset = changedAnchor.position
+					+ store.states.columnFillSize[changedAnchor.column]
+					- wrapEl.scrollTop;
+				expect(changedOffset).toBe(anchorOffset);
+			} finally {
+				wrapper.unmount();
+				heightSpy.mockRestore();
+			}
+		});
+
 		it('non-inverted loadData with placeholder allocates rebuildData length', async () => {
 			let resolveFn: (v: any) => void = () => {};
-			const loadData = () => new Promise((resolve) => { resolveFn = resolve; });
+			const loadData = vi.fn(() => new Promise((resolve) => { resolveFn = resolve; }));
 
 			const listRef = ref<any>();
-			mount(() => (
+			const wrapper = mount(() => (
 				<RecycleList
 					ref={listRef}
 					loadData={loadData as any}
-					pageSize={4}
 				>
 					{{
 						default: ({ row }: any) => <div>{row.id}</div>,
@@ -915,19 +1328,51 @@ describe('index.ts', () => {
 
 			await nextTick();
 			await nextTick();
-
-			// 还没 resolve 时，rebuildData.length 已经被预扩展到 pageSize
-			expect(listRef.value.store.states.rebuildData.length).toBe(4);
-
-			resolveFn(buildItems(4));
-			await sleep(0);
+			for (let i = 0; i < 10 && loadData.mock.calls.length === 0; i++) {
+				await sleep(0);
+			}
 			await nextTick();
+
+			// 还没 resolve 时，rebuildData.length 已经被预扩展 batchSize 个占位
+			expect(listRef.value.store.states.rebuildData.length).toBe(20);
+			expect(wrapper.findAll('.vc-recycle-list__column .ph')).toHaveLength(20);
+			// 纯占位批次无需等待 Defer；否则 preData 为空，complete 不会触发，请求会永久阻塞
+			expect(loadData).toHaveBeenCalledTimes(1);
+			expect(loadData).toHaveBeenCalledWith({ current: 1, count: 0 });
+
+			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+			const restore = mockSize(wrapEl, {
+				clientHeight: 200,
+				offsetHeight: 200,
+				scrollHeight: 1000
+			});
+			wrapEl.scrollTop = 950;
+			for (let i = 0; i < 3; i++) {
+				wrapEl.dispatchEvent(new Event('scroll'));
+				await sleep(0);
+			}
+			expect(loadData).toHaveBeenCalledTimes(1);
+			expect(listRef.value.store.states.rebuildData).toHaveLength(20);
+
+			resolveFn(buildItems(20));
+			const isLayoutComplete = () => listRef.value.store.states.rebuildData.every((item: any) => {
+				return !item.isPlaceholder && item.position >= 0;
+			});
+			for (let i = 0; i < 20 && !isLayoutComplete(); i++) {
+				await sleep(0);
+			}
+			await nextTick();
+
+			expect(listRef.value.store.states.rebuildData.every((item: any) => !item.isPlaceholder)).toBe(true);
+			expect(listRef.value.store.states.rebuildData.every((item: any) => item.position >= 0)).toBe(true);
+			restore();
+			wrapper.unmount();
 		});
 	});
 
 	describe('Store - setRangeByPosition / refreshItemPosition', () => {
 		it('setRangeByPosition with empty rebuildData resets indexes', () => {
-			const store = new RecycleListStore({ pageSize: 5 });
+			const store = new RecycleListStore({});
 			store.states.rebuildData = [];
 			store.setRangeByPosition(0, 100);
 			expect(store.states.firstItemIndex).toBe(0);
@@ -935,7 +1380,7 @@ describe('index.ts', () => {
 		});
 
 		it('refreshItemPosition computes contentMaxSize and column distribution (cols=2)', () => {
-			const store = new RecycleListStore({ pageSize: 4, cols: 2 });
+			const store = new RecycleListStore({ cols: 2 });
 			store.setData([{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }]);
 			store.states.rebuildData.forEach((it: any, i: number) => {
 				it.size = (i + 1) * 10; // 10, 20, 30, 40
@@ -951,21 +1396,22 @@ describe('index.ts', () => {
 			expect(store.states.columnFillSize[1]).toBe(0); // 最高的 column 不需要填充
 		});
 
-		it('removeUnusedPlaceholders trims trailing placeholders for current page', () => {
-			const store = new RecycleListStore({ pageSize: 3 });
-			const items = [
+		it('trimPlaceholders trims trailing placeholders', () => {
+			const store = new RecycleListStore({});
+			store.states.rebuildData = [
 				{ id: 0, isPlaceholder: false },
 				{ id: 1, isPlaceholder: false },
 				{ id: 2, isPlaceholder: true } // 还没加载到的占位
-			];
-			store.states.rebuildData = items as any;
+			] as any;
 
-			store.removeUnusedPlaceholders(items.slice(0), 1);
+			expect(store.trimPlaceholders()).toBe(true);
 			expect(store.states.rebuildData.length).toBe(2);
+			// 无可裁剪时返回false
+			expect(store.trimPlaceholders()).toBe(false);
 		});
 
 		it('Store.setItemData stores node with data when provided, placeholder otherwise', () => {
-			const store = new RecycleListStore({ pageSize: 3 });
+			const store = new RecycleListStore({});
 			store.setItemData(0, { value: 'a' });
 			store.setItemData(1);
 
@@ -979,7 +1425,7 @@ describe('index.ts', () => {
 		});
 
 		it('Store.scrollTo forwards to all leafs except currentLeaf', () => {
-			const store = new RecycleListStore({ pageSize: 3 });
+			const store = new RecycleListStore({});
 			const a = { exposed: { scrollTo: vi.fn() } };
 			const b = { exposed: { scrollTo: vi.fn() } };
 
@@ -993,12 +1439,12 @@ describe('index.ts', () => {
 		});
 
 		it('Store.scrollTo no-ops when no currentLeaf', () => {
-			const store = new RecycleListStore({ pageSize: 3 });
+			const store = new RecycleListStore({});
 			expect(() => store.scrollTo({ target: { scrollLeft: 10, scrollTop: 20 } })).not.toThrow();
 		});
 
-		it('Store.setRangeByPosition uses hint to walk backwards (hi = hint - 1)', () => {
-			const store = new RecycleListStore({ pageSize: 5, cols: 1, bufferSize: 0 });
+		it('Store.setRangeByPosition updates the range when scrolling back to the top', () => {
+			const store = new RecycleListStore({ cols: 1, bufferSize: 0 });
 			store.states.rebuildData = Array.from({ length: 10 }).map((_, i) => ({
 				id: i,
 				position: i * 100,
@@ -1011,21 +1457,153 @@ describe('index.ts', () => {
 			store.setRangeByPosition(800, 900);
 			expect(store.states.firstItemIndex).toBeGreaterThan(0);
 
-			// 再往回滚到顶部，触发 hint > target 分支（hi = hint - 1）
+			// 再往回滚到顶部
 			store.setRangeByPosition(0, 50);
 			expect(store.states.firstItemIndex).toBe(0);
 		});
 
-		it('Store.setRangeByPosition handles inverted with offset adjustment', () => {
-			const store = new RecycleListStore({ pageSize: 5, cols: 1, inverted: true });
+		it('Store.setRangeByPosition includes the previous item at a shared boundary', () => {
+			const store = new RecycleListStore({ cols: 1, bufferSize: 0 });
+			store.states.rebuildData = [
+				{ id: 0, position: 0, size: 100, column: 0 },
+				{ id: 1, position: 100, size: 100, column: 0 }
+			] as any;
+
+			store.setRangeByPosition(101, 150);
+			expect(store.states.firstItemIndex).toBe(1);
+
+			store.setRangeByPosition(100, 150);
+			expect(store.states.firstItemIndex).toBe(0);
+		});
+
+		it('Store.setRangeByPosition handles non-monotonic inverted multi-column positions', () => {
+			const store = new RecycleListStore({ cols: 2, inverted: true, bufferSize: 0 });
+			store.states.rebuildData = [
+				{ id: 0, position: 0, size: 10, column: 0 },
+				{ id: 1, position: 10, size: 10, column: 0 },
+				{ id: 2, position: 20, size: 10, column: 0 },
+				{ id: 3, position: 0, size: 100, column: 1 }
+			] as any;
+			store.states.columnFillSize = [70, 0];
+
+			store.setRangeByPosition(85, 85);
+
+			expect(store.states.firstItemIndex).toBe(1);
+			expect(store.states.lastItemIndex).toBe(3);
+		});
+
+		it('Store.setRangeByPosition uses content-local coordinates for inverted lists', () => {
+			const store = new RecycleListStore({ cols: 1, inverted: true, bufferSize: 0 });
+			store.states.rebuildData = [
+				{ id: 0, position: 0, size: 100, column: 0 },
+				{ id: 1, position: 100, size: 100, column: 0 }
+			] as any;
+			store.states.columnFillSize = [0];
+
+			store.setRangeByPosition(100, 100);
+
+			expect(store.states.firstItemIndex).toBe(0);
+			expect(store.states.lastItemIndex).toBe(1);
+		});
+
+		it('converts wrapper scroll position to the content-local range', async () => {
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} inverted disabled />
+			), { attachTo: document.body });
+			await nextTick();
+
+			const store = listRef.value.store;
+			store.states.rebuildData = [
+				{ id: 0, position: 0, size: 100, column: 0 },
+				{ id: 1, position: 100, size: 100, column: 0 }
+			] as any;
+			store.states.columnFillSize = [0];
+
+			const contentEl = wrapper.find('.vc-recycle-list__content').element as HTMLElement;
+			const restore = defineGetter(contentEl, 'offsetTop', 60);
+			listRef.value.scrollTo(160);
+
+			expect(store.states.firstItemIndex).toBe(0);
+			expect(store.states.lastItemIndex).toBe(1);
+			restore();
+			wrapper.unmount();
+		});
+
+		it.each([
+			{ overscan: undefined, vertical: true, expected: [0, 2] },
+			{ overscan: 0, vertical: true, expected: [1, 1] },
+			{ overscan: undefined, vertical: false, expected: [0, 2] }
+		])('expands the $vertical range by overscan=$overscan', async ({ overscan, vertical, expected }) => {
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList
+					ref={listRef}
+					disabled
+					vertical={vertical}
+					{...(typeof overscan === 'number' ? { overscan } : {})}
+				/>
+			), { attachTo: document.body });
+			await nextTick();
+
+			const store = listRef.value.store;
+			store.states.rebuildData = [
+				{ id: 0, position: 0, size: 100, column: 0 },
+				{ id: 1, position: 100, size: 100, column: 0 },
+				{ id: 2, position: 200, size: 100, column: 0 }
+			] as any;
+			store.states.columnFillSize = [0];
+			store.states.contentMaxSize = 300;
+
+			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+			const restore = mockSize(wrapEl, vertical
+				? { clientHeight: 80, offsetHeight: 80, scrollHeight: 300 }
+				: { clientWidth: 80, offsetWidth: 80, scrollWidth: 300 });
+			listRef.value.scrollTo(vertical ? 110 : { x: 110 });
+
+			expect([store.states.firstItemIndex, store.states.lastItemIndex]).toEqual(expected);
+			restore();
+			wrapper.unmount();
+		});
+
+		it('Store.setRangeByPosition handles generated inverted positions', () => {
+			const store = new RecycleListStore({ cols: 1, inverted: true });
 			store.setData([{ id: 0 }, { id: 1 }, { id: 2 }]);
 			store.states.rebuildData.forEach((it: any, i: number) => { it.size = 50; it.column = 0; it.position = i * 50; });
 			store.refreshItemPosition();
 			expect(() => store.setRangeByPosition(60, 200)).not.toThrow();
 		});
 
+		it.each([
+			{ cols: 3, inverted: false },
+			{ cols: 1, inverted: true },
+			{ cols: 3, inverted: true }
+		])('Store.setRangeByPosition matches all visible items for $cols columns, inverted=$inverted', ({ cols, inverted }) => {
+			const store = new RecycleListStore({ cols, inverted, batchSize: 12, bufferSize: 0 });
+			store.setData(Array.from({ length: 12 }).map((_, id) => ({ id })));
+			const sizes = [100, 20, 80, 40, 120, 30, 60, 90, 25, 110, 35, 70];
+			store.states.rebuildData.forEach((item: any, index: number) => { item.size = sizes[index]; });
+			store.refreshItemPosition();
+
+			for (let headPosition = 0; headPosition <= store.states.contentMaxSize; headPosition += 10) {
+				const tailPosition = headPosition + 75;
+				const visible = store.states.rebuildData
+					.map((item: any, index: number) => {
+						const offset = inverted ? store.states.columnFillSize[item.column] : 0;
+						const head = item.position + offset;
+						const tail = head + item.size;
+						return head <= tailPosition && tail >= headPosition ? index : -1;
+					})
+					.filter((index: number) => index >= 0);
+
+				store.setRangeByPosition(headPosition, tailPosition);
+				expect(store.states.firstItemIndex).toBe(Math.min(...visible));
+				expect(store.states.lastItemIndex).toBe(Math.max(...visible));
+			}
+		});
+
 		it('Store.setRangeByPosition no-ops when range unchanged', () => {
-			const store = new RecycleListStore({ pageSize: 5, cols: 1 });
+			const store = new RecycleListStore({ cols: 1 });
 			store.states.rebuildData = [
 				{ id: 0, position: 0, size: 100, column: 0 },
 				{ id: 1, position: 100, size: 100, column: 0 }
@@ -1038,8 +1616,49 @@ describe('index.ts', () => {
 			expect(store.states.lastItemIndex).toBe(l);
 		});
 
+		it('Store.setRangeByPosition reads geometry updates from the current reactive source', () => {
+			const store = new RecycleListStore({ cols: 1, bufferSize: 0 });
+			store.states.rebuildData = [
+				{ id: 0, position: 0, size: 100, column: 0 },
+				{ id: 1, position: 100, size: 100, column: 0 }
+			] as any;
+
+			store.setRangeByPosition(150, 150);
+			expect([store.states.firstItemIndex, store.states.lastItemIndex]).toEqual([1, 1]);
+			const positionIndexSource = store.positionIndexSource;
+
+			store.states.rebuildData[0].size = 200;
+			store.states.rebuildData[1].position = 200;
+			store.setRangeByPosition(150, 150);
+
+			expect(store.positionIndexSource).toBe(positionIndexSource);
+			expect([store.states.firstItemIndex, store.states.lastItemIndex]).toEqual([0, 0]);
+		});
+
+		it('Store.setRangeByPosition rebuilds the column index after same-length source replacement', () => {
+			const store = new RecycleListStore({ cols: 2, bufferSize: 0 });
+			store.states.rebuildData = [
+				{ id: 0, position: 0, size: 10, column: 0 },
+				{ id: 1, position: 0, size: 100, column: 1 },
+				{ id: 2, position: 10, size: 10, column: 0 }
+			] as any;
+			store.setRangeByPosition(15, 15);
+			const positionIndexSource = store.positionIndexSource;
+
+			store.states.rebuildData = [
+				{ id: 0, position: 0, size: 100, column: 0 },
+				{ id: 1, position: 0, size: 10, column: 1 },
+				{ id: 2, position: 10, size: 10, column: 1 }
+			] as any;
+			store.setRangeByPosition(15, 15);
+
+			expect(store.positionIndexSource).not.toBe(positionIndexSource);
+			expect(store.positionIndex).toEqual([[0], [1, 2]]);
+			expect([store.states.firstItemIndex, store.states.lastItemIndex]).toEqual([0, 2]);
+		});
+
 		it('Store.refreshItemPosition handles inverted multi-column', () => {
-			const store = new RecycleListStore({ pageSize: 4, cols: 2, inverted: true });
+			const store = new RecycleListStore({ cols: 2, inverted: true });
 			store.setData([{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }]);
 			store.states.rebuildData.forEach((it: any) => { it.size = 50; });
 			store.refreshItemPosition();
@@ -1048,7 +1667,7 @@ describe('index.ts', () => {
 		});
 
 		it('Store.setData with empty array clears rebuildData', () => {
-			const store = new RecycleListStore({ pageSize: 5 });
+			const store = new RecycleListStore({});
 			store.setData([{ id: 0 }, { id: 1 }]);
 			expect(store.states.rebuildData.length).toBe(2);
 
@@ -1056,19 +1675,18 @@ describe('index.ts', () => {
 			expect(store.states.rebuildData.length).toBe(0);
 		});
 
-		it('Store.removeUnusedPlaceholders inverted variant trims leading placeholders', () => {
-			const store = new RecycleListStore({ pageSize: 3, inverted: true });
-			const items = [
+		it('Store.trimPlaceholders inverted variant trims leading placeholders', () => {
+			const store = new RecycleListStore({ inverted: true });
+			store.states.rebuildData = [
 				{ id: 0, isPlaceholder: true },
 				{ id: 1, isPlaceholder: true },
 				{ id: 2, isPlaceholder: false },
 				{ id: 3, isPlaceholder: false }
-			];
-			store.states.rebuildData = items as any;
+			] as any;
 
-			store.removeUnusedPlaceholders(items.slice(0), 1);
 			// 反向模式下，前导 placeholder 应被裁掉
-			expect(store.states.rebuildData.length).toBeLessThan(items.length);
+			expect(store.trimPlaceholders()).toBe(true);
+			expect(store.states.rebuildData.length).toBe(2);
 		});
 	});
 
@@ -1227,11 +1845,11 @@ describe('index.ts', () => {
 	describe('Auto-recursive loadData when content is shorter than viewport', () => {
 		it('triggers recursive loadData when contentMaxSize > 0 and <= offsetHeight', async () => {
 			let callCount = 0;
-			const loadData = vi.fn(async (_p: number, size: number) => {
+			const loadData = vi.fn(async () => {
 				callCount++;
-				// 第一次：返回足量数据
+				// 第一次：返回一页数据
 				if (callCount === 1) {
-					return Array.from({ length: size }).map((_, i) => ({ id: i }));
+					return buildItems(3);
 				}
 				// 第二次：终止
 				return false;
@@ -1239,7 +1857,7 @@ describe('index.ts', () => {
 
 			const listRef = ref<any>();
 			const wrapper = mount(() => (
-				<RecycleList ref={listRef} loadData={loadData} pageSize={3} />
+				<RecycleList ref={listRef} loadData={loadData} />
 			), { attachTo: document.body });
 
 			await nextTick();
@@ -1293,7 +1911,7 @@ describe('index.ts', () => {
 			const data = buildItems(3);
 			const listRef = ref<any>();
 			const wrapper = mount(() => (
-				<RecycleList ref={listRef} data={data} pageSize={3} disabled>
+				<RecycleList ref={listRef} data={data} disabled>
 					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
 				</RecycleList>
 			), { attachTo: document.body });
@@ -1345,7 +1963,7 @@ describe('index.ts', () => {
 		});
 
 		it('mouseenter / touchstart on second wrapper switches currentLeaf in shared store', async () => {
-			const store = new RecycleListStore({ pageSize: 5 });
+			const store = new RecycleListStore({});
 			const wrapper = mount(() => (
 				<>
 					<RecycleList class="list-a" store={store}>

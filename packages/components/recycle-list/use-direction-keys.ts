@@ -21,6 +21,7 @@ const getKeys = (v: boolean) => {
 		axis: v ? 'y' : 'x',
 		translateAxis: v ? 'translateY' : 'translateX',
 		scrollAxis: v ? 'scrollTop' : 'scrollLeft',
+		offsetPosition: v ? 'offsetTop' : 'offsetLeft',
 		screenAxis: v ? 'screenY' : 'screenX',
 	};
 };

@@ -105,7 +105,7 @@ export const TableBody = defineComponent({
 							data={states.list}
 							disabled={true}
 							scrollerOptions={scrollerOptions.value}
-							pageSize={table.props.rows}
+							batchSize={100}
 							onScroll={(e: any) => emit('scroll', e)}
 							style={props.heightStyle}
 						>

@@ -74,9 +74,10 @@ export const RecycleList = defineComponent({
 			return !!slots.placeholder || renderer.value.placeholder;
 		});
 
-		const placeholderSize = computed(() => {
+		// 骨架DOM的实际尺寸，作为测量兜底
+		const placeholderFallbackSize = computed(() => {
 			if (!hasPlaceholder.value) return 0;
-			return placeholder.value.offsetWidth;
+			return placeholder.value[K.offsetSize];
 		});
 
 		const handleDeferComplete = () => deferInterrupter.finish();
@@ -113,9 +114,9 @@ export const RecycleList = defineComponent({
 			const original = Object.assign({}, current);
 			const dom = preloads.value[index] || curloads.value[store.props.inverted ? index : index - store.states.firstItemIndex];
 			if (dom) {
-				current.size = dom[K.offsetSize] || placeholderSize.value;
+				current.size = dom[K.offsetSize] || placeholderFallbackSize.value;
 			} else if (current) {
-				current.size = placeholderSize.value;
+				current.size = placeholderFallbackSize.value;
 			}
 
 			return { original, changed: current };
@@ -124,46 +125,50 @@ export const RecycleList = defineComponent({
 		const setVisibleItemRange = () => {
 			const el = wrapper.value;
 			if (!el) return;
-			const headPosition = el[K.scrollAxis];
-			const tailPosition = headPosition + (wrapperSize[K.clientSize] || 0);
+			const contentPosition = content.value?.[K.offsetPosition] || 0;
+			const overscan = Math.max(0, props.overscan);
+			const headPosition = el[K.scrollAxis] - contentPosition - overscan;
+			const tailPosition = el[K.scrollAxis]
+				- contentPosition
+				+ (el[K.clientSize] || wrapperSize[K.clientSize] || 0)
+				+ overscan;
 
 			store.setRangeByPosition(headPosition, tailPosition);
 		};
 
-		const stopScroll = (page: number) => {
-			store.states.isEnd = true;
-			store.removeUnusedPlaceholders(store.states.rebuildData.slice(0), page);
-			store.refreshItemPosition();
+		// 是否滚动到接近触发加载的边缘（inverted为头部，否则为尾部）
+		const isNearLoadEdge = (el: any) => {
+			return store.props.inverted
+				? el[K.scrollAxis] - props.threshold <= 0
+				: el[K.scrollAxis] > el[K.scrollSize] - wrapperSize[K.clientSize] - props.threshold;
+		};
+
+		const stopScroll = () => {
+			store.stop();
 			setVisibleItemRange();
 		};
 		let isRefreshLayout = 0;
-		const refreshLayout = async (start: number, end: number) => {
+		const refreshLayout = async (start: number, end: number, reversed = false) => {
 			if (start === end) return;
 			isRefreshLayout = 1;
-			const promiseTasks = [] as any[];
 			const resizeChanges = [] as any[];
-			let item: any;
-			for (let i = start; i < end; i++) {
-				item = store.props.inverted
-					? store.states.rebuildData[store.states.rebuildDataIndexMap[i]]
-					: store.states.rebuildData[i];
-
-				if (item && item.loaded) continue;
-				store.setItemData(i, store.originalData[i]);
-				if (store.props.inverted) {
-					store.states.firstItemIndex += 1;
-					store.states.lastItemIndex += 1;
-				}
-				promiseTasks.push(() => nextTick(() => {
-					const e = refreshItemSize(i);
-					e && resizeChanges.push(e.changed);
-				}));
+			const indices = store.buildItems(start, end, reversed);
+			if (store.states.preData.length > 0) {
+				await deferInterrupter;
 			}
-			await deferInterrupter;
-			await Promise.all(promiseTasks.map(fn => fn()));
+			await Promise.all(indices.map(i => nextTick(() => {
+				const e = refreshItemSize(i);
+				e && resizeChanges.push(e.changed);
+			})));
 			store.refreshItemPosition();
 
-			setVisibleItemRange();
+			const isPlaceholderOnly = store.states.rebuildData.every(item => item?.isPlaceholder);
+			if (isPlaceholderOnly) {
+				store.states.firstItemIndex = 0;
+				store.states.lastItemIndex = store.states.rebuildData.length - 1;
+			} else {
+				setVisibleItemRange();
+			}
 			resizeChanges.length > 0 && emit('row-resize', resizeChanges.map(i => ({ size: i.size, index: i.id })));
 
 			layoutInterrupter.next();
@@ -171,104 +176,113 @@ export const RecycleList = defineComponent({
 		};
 
 		let isManualScroll = 0;
-		const refreshLayoutByPage = async (page: number) => {
-			store.props.inverted && (isManualScroll = 1);
-
-			const el = wrapper.value;
-			const start = (page - 1) * store.props.pageSize;
-			const end = page * store.props.pageSize;
-			const originalSize = page === 1 ? 0 : store.states.contentMaxSize;
-
-			await refreshLayout(start, end);
-			if (!store.props.inverted) return;
-
-			const scrollPosition = el[K.scrollAxis];
-			// 当偏移值只是新增加的高度, 提前滚动了则要显示之前的位置
-			const changed = scrollPosition !== originalScrollPosition;
-			const offset = page === 1 ? 0 : changed ? scrollPosition : 0;
-			scrollTo(store.states.contentMaxSize - originalSize + offset);
-
+		// inverted下补建的内容会向上撑开，构建期间锁定滚动，结束后补偿滚动距离保持视口不跳动
+		const refreshInvertedLayout = async (
+			start: number,
+			end: number,
+			options: { reversed?: boolean; originalSize?: number; offset?: () => number } = {}
+		) => {
+			isManualScroll = 1;
+			const originalSize = options.originalSize ?? store.states.contentMaxSize;
+			await refreshLayout(start, end, options.reversed);
+			scrollTo(store.states.contentMaxSize - originalSize + (options.offset?.() || 0));
 			setVisibleItemRange();
 			setTimeout(() => (isManualScroll = 0), 16.7); // 避免主动滚动时，触发handleScroll的loadData事件
 		};
 
+		const refreshLayoutByPage = async (current: number, start: number, end: number) => {
+			if (!store.props.inverted) return refreshLayout(start, end);
+
+			await refreshInvertedLayout(start, end, {
+				originalSize: current === 1 ? 0 : store.states.contentMaxSize,
+				offset: () => {
+					if (current === 1) return 0;
+					const scrollPosition = wrapper.value[K.scrollAxis];
+					// 当偏移值只是新增加的高度, 提前滚动了则要显示之前的位置
+					return scrollPosition !== originalScrollPosition ? scrollPosition : 0;
+				}
+			});
+		};
+
+		// 本地数据(data)按 batchSize 懒构建下一批
+		let isBuildingLocal = 0;
+		const buildLocalPage = async () => {
+			if (isBuildingLocal || !store.hasMoreLocalData) return false;
+			isBuildingLocal = 1;
+			const { start, end, reversed } = store.consumeLocalPage()!;
+			reversed
+				? await refreshInvertedLayout(start, end, {
+						reversed,
+						offset: () => wrapper.value[K.scrollAxis]
+					})
+				: await refreshLayout(start, end);
+			isBuildingLocal = 0;
+			return true;
+		};
+
 		const loadRemoteData = async (onBeforeSetData?: any) => {
-			const currentPage = store.promiseStack.length + 1;
-			const promiseFetch = store.props.loadData(currentPage, store.props.pageSize);
-			store.states.loadings.push('pending');
-			store.promiseStack.push(promiseFetch);
-			let response = await promiseFetch;
-			if (Array.isArray(response)) {
-				response = { data: response, finished: response.length < store.props.pageSize };
-			}
-			onBeforeSetData && onBeforeSetData();
-			store.states.loadings.pop();
+			const { current, response, start, end } = await store.fetchPage(onBeforeSetData);
 			if (!response || !response.data) {
-				stopScroll(currentPage);
+				stopScroll();
 			} else {
-				store.setOriginData(currentPage, response.data);
-				await refreshLayoutByPage(currentPage);
+				await refreshLayoutByPage(current, start, end);
+
+				// 响应条数少于预分配的占位时，回收多余骨架，避免后续id漂移
+				if (store.trimPlaceholders()) {
+					store.refreshItemPosition();
+					setVisibleItemRange();
+				}
 
 				if (response.finished) {
-					stopScroll(currentPage);
+					stopScroll();
 				}
 			}
 		};
 
+		const isContentUnderfilled = () => {
+			return store.states.contentMaxSize > 0
+				&& store.states.contentMaxSize <= wrapper.value?.[K.offsetSize];
+		};
+
 		const loadData = async (onBeforeSetData?: any) => {
-			if (props.disabled || store.states.isEnd || store.states.isSlientRefresh) return;
-			originalScrollPosition = wrapper.value[K.scrollAxis];
-			if (hasPlaceholder.value) {
-				let start: number;
-				let end: number;
-				if (store.props.inverted) {
-					start = store.states.rebuildData.length;
-					end = start + store.props.pageSize;
+			if (store.states.isSlientRefresh) return;
+			let canContinue: boolean;
 
-					Array
-						.from({ length: store.props.pageSize })
-						.forEach((_, index) => {
-							store.setItemData(index + start);
-						});
-				} else {
-					start = store.states.rebuildData.length;
-					store.states.rebuildData.length += store.props.pageSize;
-					end = store.states.rebuildData.length;
+			// 本地数据未构建完时优先懒构建（数据已在本地，不受disabled/isEnd约束）；
+			// onBeforeSetData存在说明是刷新流程（reset slient），直接走远程
+			if (!onBeforeSetData && store.hasMoreLocalData) {
+				canContinue = await buildLocalPage();
+			} else {
+				if (props.disabled || store.states.isEnd || store.states.isLoading) return;
+				originalScrollPosition = wrapper.value[K.scrollAxis];
+				if (hasPlaceholder.value) {
+					const { start, end } = store.allocatePlaceholders();
+					const originalSize = store.states.contentMaxSize;
+					await refreshLayout(start, end);
+					if (store.props.inverted) {
+						isManualScroll = 1;
+						scrollTo(store.states.contentMaxSize - originalSize + originalScrollPosition);
+						if (store.states.rebuildData.some(item => item && !item.isPlaceholder)) {
+							setVisibleItemRange();
+						}
+						setTimeout(() => (isManualScroll = 0), 16.7);
+					}
 				}
-
-				const originalSize = store.states.contentMaxSize;
-				await refreshLayout(start, end);
-				store.props.inverted && scrollTo(store.states.contentMaxSize - originalSize);
 				await loadRemoteData(onBeforeSetData);
-			} else if (!store.states.isLoading) {
-				await loadRemoteData(onBeforeSetData);
+				canContinue = !store.states.isEnd;
 			}
 
-			// 未加载且小于一屏时，自动加载下一页
-			if (
-				!store.states.isEnd
-				&& store.states.contentMaxSize > 0
-				&& store.states.contentMaxSize <= wrapper.value?.[K.offsetSize]
-			) {
+			// 本次构建/加载完成且内容不足一屏时，继续处理下一批
+			if (canContinue && isContentUnderfilled()) {
 				loadData();
 			}
 		};
 
 		const reset = async (slient = false) => {
-			store.states.isEnd = false;
-			store.states.loadings = [];
+			store.reset();
 			wrapper.value[K.scrollAxis] = 0;
 
-			store.originalData = [];
-			store.promiseStack = [];
-
-			const done = () => {
-				store.setData([]);
-				store.states.contentMaxSize = 0;
-				store.states.columnFillSize = [];
-				store.states.firstItemIndex = 0;
-				store.states.isSlientRefresh = false;
-			};
+			const done = () => store.clear();
 			if (!slient) {
 				done();
 				await loadData();
@@ -293,22 +307,15 @@ export const RecycleList = defineComponent({
 		const handleScroll = (e: UIEvent) => {
 			if (store.currentLeaf !== instance || isManualScroll) return;
 
-			const el = e.target!;
-			if ((!store.props.inverted && el[K.scrollAxis] > el[K.scrollSize] - wrapperSize[K.clientSize] - props.offset)
-				|| (store.props.inverted && el[K.scrollAxis] - props.offset <= 0)
-			) {
-				loadData();
-			}
+			isNearLoadEdge(e.target!) && loadData();
 			setVisibleItemRange();
 			store.scrollTo(e);
 			emit('scroll', e);
 		};
 
 		const forceRefreshLayout = async () => {
-			store.states.rebuildData.forEach((item) => {
-				item.loaded = 0;
-			});
-			await refreshLayout(0, store.states.rebuildData.length);
+			store.invalidate();
+			await refreshLayout(...store.builtRange);
 		};
 
 		// 图片撑开时，会影响布局, 节流结束后调用
@@ -335,13 +342,17 @@ export const RecycleList = defineComponent({
 			trailing: true
 		});
 
-		// 设置初始数据
+		// 设置初始数据（模拟分页，只构建已构建区间，剩余部分随滚动构建）
 		const setDataSource = async (v: any, oldV: any) => {
 			if (!Array.isArray(v) || oldV === v) return;
 
 			if (!store.setData(v)) return;
 
-			await refreshLayout(0, store.originalData.length);
+			await refreshLayout(...store.builtRange);
+
+			// 追加数据时若已停在加载阈值内（如列表底部），无需再滚动即继续构建
+			const el = wrapper.value;
+			el && store.hasMoreLocalData && isNearLoadEdge(el) && loadData();
 		};
 
 		const handleStoreLeafChange = () => {

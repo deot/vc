@@ -31,6 +31,7 @@ import { RecycleList, RecycleListStore } from '..';
 const isActive = ref(true);
 const dynamicSize = ref(20);
 
+const pageSize = 30; // 示例内每页条数（组件不再感知分页大小）
 let count = 0;
 const total = 5;
 
@@ -78,8 +79,8 @@ const renderItem = (row) => {
 	);
 };
 
-const loadData = (page, pageSize$) => {
-	console.log('page:', page);
+const loadData = ({ current: page, count: loaded }) => {
+	console.log('page:', page, 'loaded:', loaded);
 	const list = [];
 	return new Promise((resolve) => {
 		if (page == total + 1) {
@@ -87,10 +88,8 @@ const loadData = (page, pageSize$) => {
 			return;
 		}
 
-		if (page == total) {
-			pageSize$ = 4;
-		}
-		for (let i = 0; i < pageSize$; i++) {
+		const size = page == total ? 4 : pageSize;
+		for (let i = 0; i < size; i++) {
 			list.push({
 				id: count++,
 				page,
@@ -108,7 +107,6 @@ const handleClick = (data) => {
 };
 
 const store = new RecycleListStore({
-	pageSize: 30,
 	loadData
 });
 </script>

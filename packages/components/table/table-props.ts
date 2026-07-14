@@ -21,12 +21,6 @@ export const props = {
 	border: Boolean,
 	// 是否分割线
 	divider: Boolean,
-	// 非常影响表格虚拟滚动的性能，按容器的高度手动优化该值
-	// 后续考虑移除，动态计算
-	rows: {
-		type: Number,
-		default: 10
-	},
 	primaryKey: [String, Function],
 	// 是否显示表头
 	showHeader: {

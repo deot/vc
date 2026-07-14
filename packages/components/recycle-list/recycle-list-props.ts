@@ -14,7 +14,8 @@ export const props = {
 		default: false
 	},
 
-	pageSize: {
+	// 每次构建/测量的节点批次大小；有 placeholder 时亦作为预分配占位节点数
+	batchSize: {
 		type: Number,
 		default: 20
 	},
@@ -23,9 +24,14 @@ export const props = {
 		type: Number,
 		default: 0
 	},
+	// 视口外额外预渲染距离（px）
+	overscan: {
+		type: Number,
+		default: 50
+	},
 
-	// 底部拉取更多数据的距离
-	offset: {
+	// 距离加载边缘小于等于该值时触发加载（px）
+	threshold: {
 		type: Number,
 		default: 100
 	},

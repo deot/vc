@@ -7,7 +7,6 @@
 			:cols="5"
 			:disabled="disabled"
 			:data="dataSource"
-			:page-size="pageSize"
 			:load-data="loadData"
 			:scroller-options="{
 				native: false,
@@ -37,7 +36,7 @@ import { ref } from 'vue';
 import { RecycleList } from '..';
 
 const dynamicSize = ref(20);
-const pageSize = ref(50);
+const pageSize = 50; // 示例内每页条数（组件不再感知分页大小）
 const disabled = ref(true);
 
 let count = 0;
@@ -61,29 +60,31 @@ const randomText = (size) => {
 	return v;
 };
 
-const loadData = (page, pageSize$, tag) => {
-	console.log('page:', page, tag);
+const makeItems = (size, page, tag) => {
 	const list = [];
+	for (let i = 0; i < size; i++) {
+		const item = {
+			id: `${count++}${tag || ''}`,
+			name: count,
+			page,
+			background: randomColor(),
+			text: randomText(((i % 10) + 1) * 20)
+		};
+		list.push(item);
+	}
+	return list;
+};
+
+const loadData = ({ current: page, count: loaded }) => {
+	console.log('page:', page, 'loaded:', loaded);
 	return new Promise((resolve) => {
 		if (page == total + 1) {
 			resolve(false);
 			return;
 		}
 
-		if (page == total) {
-			pageSize$ = 4;
-		}
-		for (let i = 0; i < pageSize$; i++) {
-			const item = {
-				id: `${count++}${tag || ''}`,
-				name: count,
-				page,
-				background: randomColor(),
-				text: randomText(((i % 10) + 1) * 20)
-			};
-			list.push(item);
-		}
-		setTimeout(() => resolve(list), 1000);
+		const size = page == total ? 4 : pageSize;
+		setTimeout(() => resolve(makeItems(size, page)), 1000);
 	});
 };
 const dataSource = ref(null);
@@ -92,10 +93,8 @@ const handleClick = (data) => {
 	console.log(data);
 	dynamicSize.value = Math.floor(Math.random() * 20) + 20;
 };
-loadData(1, Math.max(1, total - 5) * pageSize.value, 'From dataSource').then((data) => {
-	dataSource.value = data;
-	disabled.value = false;
-});
+dataSource.value = makeItems(Math.max(1, total - 5) * pageSize, 1, 'From dataSource');
+disabled.value = false;
 
 </script>
 
