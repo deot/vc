@@ -1,9 +1,12 @@
-import { reactive, computed, toRaw } from 'vue';
+import { reactive, toRaw } from 'vue';
 import { merge } from 'lodash-es';
-import { props } from './recycle-list-props';
-import type { Props } from './recycle-list-props';
+import { props } from '../recycle-list-props';
+import type { Props } from '../recycle-list-props';
+import { RecycleListItemNode } from './node';
+import { BaseWatcher } from './base-watcher';
+import type { RecycleListItemNodeRaw } from './base-watcher';
 
-export class Store {
+export class Store extends BaseWatcher {
 	originalData: any[] = []; // 原始数据
 	promiseStack: Promise<any>[] = []; // 每页数据栈信息
 	currentLeaf: any = null;
@@ -14,75 +17,6 @@ export class Store {
 	positionIndex: number[][] = []; // 每列内部位置单调，保存数据索引用于滚动范围二分
 	positionIndexSource: any[] | null = null;
 	positionIndexLength = 0;
-	states = reactive({
-		version: 0,
-		rebuildData: [] as any[], // 封装后的数据，包含位置信息
-		// 优化inverted下的find逻辑
-		rebuildDataIndexMap: computed(() => {
-			if (!this.props.inverted) return;
-			return this.states.rebuildData.reduce((pre, cur, index) => {
-				pre[cur.id] = index;
-				return pre;
-			}, {});
-		}),
-
-		loadings: [] as string[],
-
-		contentMaxSize: 0,
-		columnFillSize: [] as number[], // 优化inverted多列时用于补齐高度
-
-		isEnd: false,
-		isSlientRefresh: false,
-		isLoading: computed(() => {
-			return this.states.loadings.length;
-		}),
-
-		columnSize: computed(() => {
-			if (this.props.cols === 1) return;
-			return `${100 / this.props.cols}%`;
-		}),
-
-		columnOffsetGutter: computed(() => {
-			return this.props.gutter * (this.props.cols - 1) / this.props.cols;
-		}),
-
-		columns: computed(() => {
-			const v = Array.from({ length: this.props.cols }).map((_, index) => ({ index, offset: [0, 0] }));
-			v[0].offset = [0, this.states.columnOffsetGutter];
-			for (let i = 1; i < v.length; i++) {
-				const pre = v[i - 1].offset;
-
-				v[i].offset = [this.props.gutter - pre[1], this.states.columnOffsetGutter - this.props.gutter + pre[1]];
-			}
-
-			return v;
-		}),
-
-		firstItemIndex: 0,
-		lastItemIndex: 0,
-		/**
-		 * 用于展示的信息
-		 *
-		 * 动态计算展示范围以及缓冲
-		 */
-		data: computed(() => {
-			const base = Array.from({ length: this.props.cols }).map(() => []);
-			return this.states.rebuildData
-				.slice(
-					Math.max(0, this.states.firstItemIndex - this.props.bufferSize),
-					Math.min(this.states.rebuildData.length, this.states.lastItemIndex + this.props.bufferSize + 1)
-				).reduce((pre, cur) => {
-					cur.column >= 0 && pre[cur.column].push(cur);
-					return pre;
-				}, base);
-		}),
-
-		preData: computed(() => {
-			return this.states.rebuildData.filter((i) => {
-				return i && !i.isPlaceholder && !i.size;
-			});
-		})
-	});
 
 	// 被store劫持的值
 	props = ['batchSize', 'bufferSize', 'inverted', 'cols', 'gutter', 'loadData'].reduce((pre, cur) => {
@@ -93,9 +27,10 @@ export class Store {
 			pre[cur] = v.type ? v.default : void 0;
 		}
 		return pre;
-	}, reactive({} as Props));
+	}, reactive({} as Props)) as Props;
 
 	constructor(options: Partial<Props>) {
+		super();
 		merge(this.props, options);
 	}
 
@@ -126,6 +61,18 @@ export class Store {
 		return { start: end - size, end, reversed: true };
 	}
 
+	private reuseOrCreateNode(
+		prevByIndex: Map<number, RecycleListItemNodeRaw>,
+		index: number,
+		$data?: any
+	) {
+		const existing = prevByIndex.get(index);
+		if (existing) {
+			return existing.rebind({ index, data: $data, loaded: false });
+		}
+		return RecycleListItemNode.of({ store: this, index, data: $data, loaded: false });
+	}
+
 	setData(data: any[]): boolean {
 		if (data === this._data) return false;
 		this._data = data;
@@ -140,15 +87,21 @@ export class Store {
 		// 模拟分页，初始只构建一批；数据变更时保留已构建进度，避免深滚动后内容塌缩
 		this.buildCount = Math.min(this.localTotal, Math.max(this.buildCount, this.props.batchSize));
 
+		const prevByIndex = this.states.rebuildData.reduce((pre, cur) => {
+			if (cur) pre.set(cur.states.index, cur);
+			return pre;
+		}, new Map<number, RecycleListItemNodeRaw>());
+
 		if (!this.originalData.length) {
 			this.states.rebuildData = [];
 		} else {
 			// inverted下尾部为视觉底部（初始可见区），已构建区间取尾部切片
-			this.states.rebuildData = this.props.inverted
-				? this.originalData.slice(this.localTotal - this.buildCount)
-				: this.originalData.slice(0, this.buildCount);
+			const base = this.props.inverted ? this.localTotal - this.buildCount : 0;
+			this.states.rebuildData = Array.from({ length: this.buildCount }, (_, i) => {
+				const index = base + i;
+				return this.reuseOrCreateNode(prevByIndex, index, this.originalData[index]);
+			});
 		}
-		this.states.version++;
 		return true;
 	}
 
@@ -160,23 +113,20 @@ export class Store {
 
 	setItemData(index: number, $data?: any) {
 		const { states } = this;
-		const node = {
-			id: index,
-			data: $data || {},
-			size: 0,
-			position: -1000,
-			isPlaceholder: !$data,
-			loaded: $data ? 1 : 0,
+		if (!this.props.inverted) {
+			const existing = states.rebuildData[index];
+			return existing
+				? existing.rebind({ index, data: $data })
+				: (states.rebuildData[index] = RecycleListItemNode.of({ store: this, index, data: $data }));
+		}
 
-			// 在第几列渲染
-			column: -1
-		};
-		if (!this.props.inverted) return (states.rebuildData[index] = node);
-
-		const index$ = states.rebuildDataIndexMap[index];
-		typeof index$ === 'undefined'
-			? states.rebuildData.unshift(node)
-			: (states.rebuildData[index$] = node);
+		const index$ = states.rebuildDataIndexMap?.[index];
+		if (typeof index$ === 'undefined') {
+			const node = RecycleListItemNode.of({ store: this, index, data: $data });
+			states.rebuildData.unshift(node);
+			return node;
+		}
+		return states.rebuildData[index$].rebind({ index, data: $data });
 	}
 
 	/**
@@ -188,14 +138,14 @@ export class Store {
 	 */
 	buildItems(start: number, end: number, reversed = false) {
 		const indices: number[] = [];
-		let item: any;
+		let item: RecycleListItemNodeRaw | undefined;
 		for (let j = start; j < end; j++) {
 			const i = reversed ? end - 1 - (j - start) : j;
 			item = this.props.inverted
-				? this.states.rebuildData[this.states.rebuildDataIndexMap[i]]
+				? this.states.rebuildData[this.states.rebuildDataIndexMap![i]]
 				: this.states.rebuildData[i];
 
-			if (item && item.loaded) continue;
+			if (item && item.states.loaded) continue;
 			this.setItemData(i, this.originalData[i]);
 			if (this.props.inverted) {
 				this.states.firstItemIndex += 1;
@@ -222,9 +172,7 @@ export class Store {
 
 	// 标记全部已构建节点待重新测量
 	invalidate() {
-		this.states.rebuildData.forEach((item) => {
-			item.loaded = 0;
-		});
+		this.states.rebuildData.forEach(item => item?.invalidate());
 	}
 
 	/**
@@ -286,8 +234,8 @@ export class Store {
 		const rebuildData = toRaw(this.states.rebuildData);
 		for (let index = 0; index < rebuildData.length; index++) {
 			const item = rebuildData[index];
-			if (item && item.column >= 0 && positionIndex[item.column]) {
-				positionIndex[item.column].push(index);
+			if (item && item.states.column >= 0 && positionIndex[item.states.column]) {
+				positionIndex[item.states.column].push(index);
 			}
 		}
 		this.positionIndex = positionIndex;
@@ -300,8 +248,8 @@ export class Store {
 		const { inverted, cols } = this.props;
 		const sizes = Array.from({ length: cols }).map(() => 0);
 		const lastIndex = this.states.rebuildData.length - 1;
-		let current: any;
-		// 循环所有数据以更新item.top和总高度
+		let current: RecycleListItemNodeRaw | undefined;
+		// 循环所有数据以更新item.position和总高度
 		for (let i = 0; i <= lastIndex; i++) {
 			current = this.states.rebuildData[inverted ? lastIndex - i : i];
 
@@ -309,10 +257,10 @@ export class Store {
 				const minSize = Math.min(...sizes);
 				const minIndex = sizes[inverted ? 'findLastIndex' : 'findIndex'](v => v === minSize);
 
-				current.position = sizes[minIndex] || 0;
-				current.column = minIndex;
+				current.states.position = sizes[minIndex] || 0;
+				current.states.column = minIndex;
 
-				sizes[minIndex] += current.size;
+				sizes[minIndex] += current.states.size;
 			}
 		}
 
@@ -321,7 +269,7 @@ export class Store {
 				current = this.states.rebuildData[i];
 
 				if (current) {
-					current.position = sizes[current.column] - current.position - current.size;
+					current.states.position = sizes[current.states.column] - current.states.position - current.states.size;
 				}
 			}
 		}
@@ -337,13 +285,13 @@ export class Store {
 		let cursor: number;
 		if (!this.props.inverted) {
 			for (cursor = copy.length; cursor > 0; cursor--) {
-				if (copy[cursor - 1] && !copy[cursor - 1].isPlaceholder) break;
+				if (copy[cursor - 1] && !copy[cursor - 1].states.isPlaceholder) break;
 			}
 			if (cursor === copy.length) return false;
 			this.states.rebuildData = copy.slice(0, cursor);
 		} else {
 			for (cursor = 0; cursor < copy.length; cursor++) {
-				if (copy[cursor] && !copy[cursor].isPlaceholder) break;
+				if (copy[cursor] && !copy[cursor].states.isPlaceholder) break;
 			}
 			if (cursor === 0) return false;
 			this.states.rebuildData = copy.slice(cursor);
@@ -384,7 +332,7 @@ export class Store {
 			while (lo <= hi) {
 				const mid = (lo + hi) >>> 1;
 				const item = rawRebuildData[indices[mid]];
-				if (item.position + item.size + fillSize >= headPosition) {
+				if (item.states.position + item.states.size + fillSize >= headPosition) {
 					first = mid;
 					hi = mid - 1;
 				} else {
@@ -398,7 +346,7 @@ export class Store {
 			while (lo <= hi) {
 				const mid = (lo + hi) >>> 1;
 				const item = rawRebuildData[indices[mid]];
-				if (item.position + fillSize <= tailPosition) {
+				if (item.states.position + fillSize <= tailPosition) {
 					last = mid;
 					lo = mid + 1;
 				} else {

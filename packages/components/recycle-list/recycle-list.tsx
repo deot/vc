@@ -100,23 +100,23 @@ export const RecycleList = defineComponent({
 
 		const scrollToIndex = (index: number, offset = 0) => {
 			const item = store.states.rebuildData[index];
-			item?.top && item.top >= 0 && scrollTo(item.top + offset);
+			item?.states.position >= 0 && scrollTo(item.states.position + offset);
 		};
 
 		const refreshItemSize = (index: number) => {
 			const current = store.props.inverted
-				? store.states.rebuildData[store.states.rebuildDataIndexMap[index]]
+				? store.states.rebuildData[store.states.rebuildDataIndexMap![index]]
 				: store.states.rebuildData[index];
 
-			// 受到`store.removeUnusedPlaceholders`影响,无效的会被回收
+			// 受到`store.trimPlaceholders`影响,无效的会被回收
 			if (!current) return;
 
-			const original = Object.assign({}, current);
+			const original = { ...current.states };
 			const dom = preloads.value[index] || curloads.value[store.props.inverted ? index : index - store.states.firstItemIndex];
 			if (dom) {
-				current.size = dom[K.offsetSize] || placeholderFallbackSize.value;
-			} else if (current) {
-				current.size = placeholderFallbackSize.value;
+				current.states.size = dom[K.offsetSize] || placeholderFallbackSize.value;
+			} else {
+				current.states.size = placeholderFallbackSize.value;
 			}
 
 			return { original, changed: current };
@@ -162,14 +162,14 @@ export const RecycleList = defineComponent({
 			})));
 			store.refreshItemPosition();
 
-			const isPlaceholderOnly = store.states.rebuildData.every(item => item?.isPlaceholder);
+			const isPlaceholderOnly = store.states.rebuildData.every(item => item?.states.isPlaceholder);
 			if (isPlaceholderOnly) {
 				store.states.firstItemIndex = 0;
 				store.states.lastItemIndex = store.states.rebuildData.length - 1;
 			} else {
 				setVisibleItemRange();
 			}
-			resizeChanges.length > 0 && emit('row-resize', resizeChanges.map(i => ({ size: i.size, index: i.id })));
+			resizeChanges.length > 0 && emit('row-resize', resizeChanges.map(i => ({ size: i.states.size, index: i.states.index })));
 
 			layoutInterrupter.next();
 			isRefreshLayout = 0;
@@ -262,7 +262,7 @@ export const RecycleList = defineComponent({
 					if (store.props.inverted) {
 						isManualScroll = 1;
 						scrollTo(store.states.contentMaxSize - originalSize + originalScrollPosition);
-						if (store.states.rebuildData.some(item => item && !item.isPlaceholder)) {
+						if (store.states.rebuildData.some(item => item && !item.states.isPlaceholder)) {
 							setVisibleItemRange();
 						}
 						setTimeout(() => (isManualScroll = 0), 16.7);
@@ -324,13 +324,13 @@ export const RecycleList = defineComponent({
 			// 保持原来的位置
 			const el = wrapper.value;
 			wrapperSize[K.clientSize] = el[K.clientSize];
-			const isNeedRefreshLayout = store.states.rebuildData.some(i => !i.isPlaceholder);
+			const isNeedRefreshLayout = store.states.rebuildData.some(i => i && !i.states.isPlaceholder);
 
 			if (isNeedRefreshLayout) {
 				const oldFirstItemIndex = store.states.firstItemIndex;
-				const oldPosition = store.states.rebuildData[oldFirstItemIndex]?.position;
+				const oldPosition = store.states.rebuildData[oldFirstItemIndex]?.states.position;
 				await forceRefreshLayout();
-				const newPosition = store.states.rebuildData[oldFirstItemIndex]?.position;
+				const newPosition = store.states.rebuildData[oldFirstItemIndex]?.states.position;
 
 				// item 尚未完成初始定位（item.postion = -1000）, 不应执行 scrollTop 补偿
 				if (typeof oldPosition === 'number' && oldPosition >= 0) {
@@ -449,7 +449,7 @@ export const RecycleList = defineComponent({
 												[K.columnSize]: store.states.columnSize,
 												[K.paddingColumnHead]: `${column.offset[0]}px`,
 												[K.paddingColumnTail]: `${column.offset[1]}px`,
-												transform: `${K.translateAxis}(${store.states.data[columnIndex][0]?.position || 0}px)`
+												transform: `${K.translateAxis}(${store.states.data[columnIndex][0]?.states.position || 0}px)`
 											}}
 											class={[{ 'is-inverted': store.props.inverted }, 'vc-recycle-list__column']}
 										>
@@ -460,10 +460,10 @@ export const RecycleList = defineComponent({
 														key={item.id}
 													>
 														{
-															item.isPlaceholder && hasPlaceholder.value && (
+															item.states.isPlaceholder && hasPlaceholder.value && (
 																<div
 																	class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
-																	style={{ opacity: +!item.loaded }}
+																	style={{ opacity: +!item.states.loaded }}
 																>
 																	{
 																		// eslint-disable-next-line @stylistic/max-len
@@ -473,20 +473,20 @@ export const RecycleList = defineComponent({
 															)
 														}
 														{
-															!item.isPlaceholder && (
+															!item.states.isPlaceholder && (
 																<Resizer
-																	ref={v => curloads.value[item.id] = v}
+																	ref={v => curloads.value[item.states.index] = v}
 																	class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
-																	style={{ opacity: item.loaded }}
+																	style={{ opacity: +item.states.loaded }}
 																	fill={false}
-																	data-row={item.id}
-																	data-column={item.column}
-																	data-size={item.size}
-																	data-position={item.position}
+																	data-row={item.states.index}
+																	data-column={item.states.column}
+																	data-size={item.states.size}
+																	data-position={item.states.position}
 																	// @ts-ignore
 																	onResize={e => e?.inited === true && handleResize()}
 																>
-																	{ slots.default?.({ row: item.data || {}, index: item.id }) }
+																	{ slots.default?.({ row: item.states.data || {}, index: item.states.index }) }
 																</Resizer>
 															)
 														}
@@ -506,10 +506,10 @@ export const RecycleList = defineComponent({
 									{{
 										default: ({ row: item }) => (
 											<div
-												ref={v => preloads.value[item.id] = v}
+												ref={v => preloads.value[item.states.index] = v}
 												class="vc-recycle-list__hidden"
 											>
-												{ slots.default?.({ row: item.data || {}, index: item.id }) }
+												{ slots.default?.({ row: item.states.data || {}, index: item.states.index }) }
 											</div>
 										)
 									}}
