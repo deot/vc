@@ -4,58 +4,136 @@ import { concat } from 'lodash-es';
 import { flattenColumnNodes } from './utils';
 import type { TableColumnNode, TableColumnStates } from '../table-column/table-column-node';
 
-type TableColumnNodeRaw = Raw<TableColumnNode>;
+export type TableColumnNodeRaw = Raw<TableColumnNode>;
+
+export type TableStates = {
+	/**
+	 * 渲染的数据来源，是对 table 中的 data 过滤排序后的结果
+	 */
+	_data: any[];
+	data: any[];
+	list: any[];
+
+	/**
+	 * 表头数据
+	 */
+	headerRows: TableColumnNodeRaw[][];
+
+	/**
+	 * 列 动态收集vc-table-column中的TableColumnNode, 收集的全部列节点（列树）
+	 */
+	_columns: TableColumnNodeRaw[];
+	/**
+	 * 原始列 过滤hidden后的列（可见树，分组列为克隆节点，leaf 为原引用）
+	 */
+	originColumns: TableColumnNodeRaw[];
+	notFixedColumns: TableColumnNodeRaw[];
+	leftFixedColumns: TableColumnNodeRaw[];
+	rightFixedColumns: TableColumnNodeRaw[];
+
+	/**
+	 * 选择
+	 */
+	isAllSelected: boolean;
+	selection: any[];
+	reserveSelection: boolean;
+	selectable: TableColumnStates['selectable'] | null;
+	expandSelectable: any;
+
+	hoverRowIndex: number | null;
+
+	/**
+	 * Row
+	 */
+	currentRow: any;
+
+	/**
+	 * Expand
+	 */
+	defaultExpandAll: boolean;
+	expandRows: any[];
+
+	/**
+	 * Tree
+	 */
+	treeExpandRowValue: any[];
+	/**
+	 * item的状态，比如loading, loaded
+	 */
+	treeData: Record<string, any>;
+	treeLazy: boolean;
+	/**
+	 * 源数据
+	 */
+	treelazyNodeMap: Record<string, any>;
+	/**
+	 * 源数据展开
+	 */
+	treeLazyData: any[];
+	treeLazyColumnIdentifier: string;
+	treeChildrenColumnName: string;
+
+	/**
+	 * computeds
+	 */
+	isComplex: boolean;
+	/**
+	 * 是否存在 getSpan 合并块（grid 渲染），hover 高亮等需要走 JS 控制
+	 */
+	hasMergeCells: boolean;
+	isGroup: boolean;
+
+	/**
+	 * 叶子列 flat 视图（元素为 leaf 节点引用；layout 写 node.states，body/footer 读 node.states）
+	 */
+	columns: TableColumnNodeRaw[];
+	leafColumns: TableColumnNodeRaw[];
+	leftFixedLeafColumns: TableColumnNodeRaw[];
+	rightFixedLeafColumns: TableColumnNodeRaw[];
+	leafColumnsLength: number;
+	leftFixedLeafColumnsLength: number;
+	rightFixedLeafColumnsLength: number;
+};
 
 export class BaseWatcher {
-	states = reactive({
-		// 渲染的数据来源，是对 table 中的 data 过滤排序后的结果
-		_data: [] as any[],
-		data: [] as any[],
-		list: [] as any[],
+	states: TableStates = reactive({
+		_data: [],
+		data: [],
+		list: [],
 
-		// 表头数据
-		headerRows: [] as TableColumnNodeRaw[][],
+		headerRows: [],
 
-		// 列 动态收集vc-table-column中的TableColumnNode, 收集的全部列节点（列树）
-		_columns: [] as TableColumnNodeRaw[],
-		// 原始列 过滤hidden后的列（可见树，分组列为克隆节点，leaf 为原引用）
-		originColumns: [] as TableColumnNodeRaw[],
-		notFixedColumns: [] as TableColumnNodeRaw[],
-		leftFixedColumns: [] as TableColumnNodeRaw[],
-		rightFixedColumns: [] as TableColumnNodeRaw[],
+		_columns: [],
+		originColumns: [],
+		notFixedColumns: [],
+		leftFixedColumns: [],
+		rightFixedColumns: [],
 
-		// 选择
 		isAllSelected: false,
-		selection: [] as any[],
+		selection: [],
 		reserveSelection: false,
-		selectable: null as TableColumnStates['selectable'] | null,
-		expandSelectable: null as any,
+		selectable: null,
+		expandSelectable: null,
 
 		hoverRowIndex: null,
 
-		// Row
 		currentRow: null,
 
-		// Expand
 		defaultExpandAll: false,
-		expandRows: [] as any[],
+		expandRows: [],
 
-		// Tree
-		treeExpandRowValue: [] as any[],
-		treeData: {}, // item的状态，比如loading, loaded
+		treeExpandRowValue: [],
+		treeData: {},
 		treeLazy: false,
-		treelazyNodeMap: {}, // 源数据
-		treeLazyData: [] as any[], // 源数据展开
+		treelazyNodeMap: {},
+		treeLazyData: [],
 		treeLazyColumnIdentifier: 'hasChildren',
 		treeChildrenColumnName: 'children',
 
-		// compputeds
 		isComplex: computed(() => this.states.leftFixedColumns.length > 0 || this.states.rightFixedColumns.length > 0),
-		// 是否存在 getSpan 合并块（grid 渲染），hover 高亮等需要走 JS 控制
 		hasMergeCells: computed(() => this.states.list.some((item: any) => !!item.hasMerge)),
 		isGroup: computed(() => this.states.columns.length > this.states.originColumns.length),
 
-		// 叶子列 flat 视图（元素为 leaf 节点引用；layout 写 node.states，body/footer 读 node.states）
 		columns: computed(() => {
 			return concat(this.states.leftFixedLeafColumns, this.states.leafColumns, this.states.rightFixedLeafColumns);
 		}),

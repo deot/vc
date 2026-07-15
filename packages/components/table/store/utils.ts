@@ -5,11 +5,11 @@ import type { TableColumnNode } from '../table-column/table-column-node';
  * @param nodes 列树
  * @returns 叶子列节点
  */
-export const flattenColumnNodes = (nodes: TableColumnNode[]): TableColumnNode[] => {
-	const result: TableColumnNode[] = [];
+export const flattenColumnNodes = <T extends TableColumnNode>(nodes: readonly T[]): T[] => {
+	const result: T[] = [];
 	nodes.forEach((node) => {
 		if (node.childNodes.length) {
-			result.push(...flattenColumnNodes(node.childNodes));
+			result.push(...flattenColumnNodes(node.childNodes as T[]));
 		} else {
 			result.push(node);
 		}
