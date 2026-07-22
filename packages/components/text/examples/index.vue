@@ -1,5 +1,5 @@
 <template>
-	<div style="overflow: auto; width: 100%; padding: 20px">
+	<div style=" width: 100%; padding: 20px;overflow: auto;">
 		<Button @click="handleClick">
 			切换行数
 		</Button>
@@ -19,6 +19,13 @@
 			<Text :value="text18" :line="2" :slice="0" />
 			<h3>slice = -8 + 自定义 ellipsis</h3>
 			<Text :value="text30" :line="2" :slice="-8" ellipsis=" ··· " />
+		</div>
+		<div style="width: 258px;">
+			<div style="display: flex; align-items: center;">
+				<div>
+					<Text :value="` https://github.com?v=${'123'.repeat(10)}`" :line="1" />
+				</div>
+			</div>
 		</div>
 	</div>
 </template>
@@ -59,40 +66,38 @@ const handleClick = () => {
 
 <style lang="scss">
 .table {
-	overflow-x: auto;
-	background: #fff;
 	position: relative;
-	padding: 20px;
-	border-collapse: collapse;
 	width: 100%;
+	padding: 20px;
+	overflow-x: auto;
 	text-align: left;
-	-webkit-border-radius: 4px;
-	-moz-border-radius: 4px;
-	border-radius: 4px
+	background: #fff;
+	border-collapse: collapse;
+	border-radius: 4px;
 }
 
 .table thead th {
-	background: #f0f2f7;
+	padding: 9px 15px;
 	font-size: 14px;
 	font-weight: 400;
-	vertical-align: middle;
 	white-space: nowrap;
-	padding: 9px 15px
+	vertical-align: middle;
+	background: #f0f2f7;
 }
 
 .table tbody td {
-	line-height: 22px;
 	padding: 9px 15px;
-	border-bottom: 1px solid #ebebeb !important
+	line-height: 22px;
+	border-bottom: 1px solid #ebebeb !important;
 }
 
-.table tbody td:after {
-	content: "";
+.table tbody td::after {
 	display: block;
-	clear: both;
 	height: 0;
+	clear: both;
 	font-size: 0;
-	visibility: hidden
+	content: "";
+	visibility: hidden;
 }
 
 </style>

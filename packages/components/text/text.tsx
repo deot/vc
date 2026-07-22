@@ -19,14 +19,24 @@ export const Text = defineComponent({
 		const isActive = ref(false);
 		const endIndex = ref(-1);
 
-		const hasSlice = computed(() => props.slice !== undefined && props.slice !== null);
+		const hasSlice = computed(() => props.slice !== void 0 && props.slice !== null);
 		// endIndex===0 在带 slice 场景下也代表"已截断 (前缀为空)"
 		const truncated = computed(() => {
 			return endIndex.value > 0 || (endIndex.value === 0 && hasSlice.value);
 		});
+		const displayValue = computed(() => {
+			const sliceText = hasSlice.value ? props.value.slice(props.slice as number) : '';
+			return truncated.value
+				? `${props.value.slice(0, endIndex.value)}${props.ellipsis}${sliceText}`
+				: props.value;
+		});
+		const isMeasuring = computed(() => !isActive.value && props.resize !== false);
 
 		const styles = computed(() => {
-			return { cursor: truncated.value ? 'pointer' : 'unset' };
+			return {
+				cursor: truncated.value ? 'pointer' : 'unset',
+				visibility: isMeasuring.value ? 'hidden' : void 0
+			};
 		});
 
 		const calcPosition = () => {
@@ -89,10 +99,6 @@ export const Text = defineComponent({
 
 		const Content = props.tag;
 		return () => {
-			const sliceText = hasSlice.value ? props.value.slice(props.slice as number) : '';
-			const displayValue = truncated.value
-				? `${props.value.slice(0, endIndex.value)}${props.ellipsis}${sliceText}`
-				: props.value;
 			return (
 				<Content
 					// @ts-ignore
@@ -105,13 +111,14 @@ export const Text = defineComponent({
 						isActive.value
 							? (
 									<Customer
-										value={displayValue}
+										value={displayValue.value}
 										index={endIndex.value}
 										// @ts-ignore
 										render={props.renderRow}
 									/>
 								)
-							: null
+							// 首次测量前用隐藏全文撑开 intrinsic width，避免 Flex 父级按空内容收缩
+							: (props.resize !== false ? props.value : null)
 					}
 				</Content>
 			);

@@ -68,6 +68,50 @@ describe('Text 渲染分支 (line=0 / line>0)', () => {
 		vi.restoreAllMocks();
 	});
 
+	it.each([
+		'https://github.com?v=123123',
+		' https://github.com?v=123123',
+		'   https://github.com?v=123123',
+		'short'
+	])('首次测量前用隐藏全文参与布局: %s', async (value) => {
+		const wrapper = mount(() => (
+			<Text value={value} line={1} resize={true} />
+		), { attachTo: document.body });
+
+		expect(wrapper.element.textContent).toBe(value);
+		expect(wrapper.attributes('style') || '').toContain('visibility: hidden');
+
+		triggerResize(wrapper.element);
+		await flush();
+
+		expect(wrapper.element.textContent).toBe(value);
+		expect(wrapper.attributes('style') || '').not.toContain('visibility: hidden');
+
+		wrapper.unmount();
+	});
+
+	it('前导空格首次测量完成后正常截断，且测量前不调用 renderRow', async () => {
+		const value = ' https://github.com?v=123123';
+		const renderRow = vi.fn((attrs: any) => attrs.value);
+		mockedGetFitIndex.mockReturnValue(4);
+		const wrapper = mount(() => (
+			<Text value={value} line={1} resize={true} renderRow={renderRow as any} />
+		), { attachTo: document.body });
+
+		expect(wrapper.element.textContent).toBe(value);
+		expect(wrapper.attributes('style') || '').toContain('visibility: hidden');
+		expect(renderRow).not.toHaveBeenCalled();
+
+		triggerResize(wrapper.element);
+		await flush();
+
+		expect(wrapper.element.textContent).toBe(`${value.slice(0, 4)}...`);
+		expect(wrapper.attributes('style') || '').not.toContain('visibility: hidden');
+		expect(renderRow).toHaveBeenCalledTimes(1);
+
+		wrapper.unmount();
+	});
+
 	it('line=0: 渲染完整 value, cursor=unset, clip 事件参数为 -1', async () => {
 		const onClip = vi.fn();
 		const wrapper = mount(() => (
