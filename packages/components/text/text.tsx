@@ -58,7 +58,9 @@ export const Text = defineComponent({
 			emit('clip', endIndex.value);
 		};
 
-		const handleResize = props.resize === true || props.resize === 0 ? calcPosition : debounce(calcPosition, props.resize || 0);
+		const handleResize = props.resize === true || props.resize === 0
+			? calcPosition
+			: debounce(calcPosition, props.resize || 0, { leading: true, trailing: true });
 
 		let poper;
 		const handleMouseOver = (e: any) => {

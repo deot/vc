@@ -3,7 +3,7 @@
 		<Button @click="handleClick">
 			切换行数
 		</Button>
-		<div :style="{ width: width + 'px' }">
+		<div :style="{ width: `50vw` }">
 			<h3>line: {{ line0 }} </h3>
 			<Text :value="text14" :line="line0" />
 			<h3>line: {{ line1 }} </h3>
@@ -27,6 +27,14 @@
 				</div>
 			</div>
 		</div>
+		<div style="width: 192px;">
+			<div style="display: flex;">
+				<div style="display: flex;">
+					<span style="white-space: nowrap; ">占 位</span>
+					<Text :value="`占位占位占位占位占位占位--占位占位`" :line="1" />
+				</div>
+			</div>
+		</div>
 	</div>
 </template>
 <script setup>
@@ -35,11 +43,6 @@ import { Text } from '..';
 import { Button } from '../../button';
 
 const text = 'A2，C,我E,';
-// const dataSource = ref(Array.from({ length: 4 }).map(() => ({})));
-const width = ref(window.innerWidth / 2);
-// const maxWidth = ref(window.innerWidth - 40);
-// const text10 = ref(text.repeat(10));
-// const text12 = ref(text.repeat(12));
 const text14 = ref(text.repeat(14));
 const text16 = ref(text.repeat(16));
 const text18 = ref(text.repeat(18) + 'REPEAT_END_18');

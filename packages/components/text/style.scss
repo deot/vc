@@ -4,8 +4,9 @@ $component-name: vc-text;
 
 @include block($component-name) {
 	position: relative;
-	display: inline-block;
+	display: inline-block; // inline-flex对外层text-align不生效
 	width: 100%;
+	flex-shrink: 0;
 	word-break: break-all;
 	box-sizing: border-box;
 }

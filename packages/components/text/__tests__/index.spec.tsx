@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 
 import { vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const mocks = vi.hoisted(() => ({
 	getFitIndex: vi.fn(() => -1)
@@ -15,6 +17,8 @@ import { Text, Popover } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
 import { defineComponent, nextTick, ref } from 'vue';
+
+const textStyle = readFileSync(resolve('packages/components/text/style.scss'), 'utf8');
 
 const mockedGetFitIndex = mocks.getFitIndex;
 
@@ -54,6 +58,10 @@ describe('index.ts', () => {
 		const wrapper = mount(() => (<Text tag="span" value="hello" line={0} resize={true} />));
 		expect(wrapper.element.tagName.toLowerCase()).toBe('span');
 		expect(wrapper.classes()).toContain('vc-text');
+	});
+
+	it('使用 inline-block 以保留父级 text-align 的文本布局语义', () => {
+		expect(textStyle).toMatch(/display:\s*inline-block/);
 	});
 });
 
@@ -495,25 +503,26 @@ describe('Text resize 选项', () => {
 		wrapper.unmount();
 	});
 
-	it('resize=number: 走 debounce 路径, 等待后才触发', async () => {
+	it('resize=number: 走 debounce 路径, 首次立即触发且单次调用不补 trailing', async () => {
 		const onClip = vi.fn();
 		const wrapper = mount(() => (
 			<Text value="hi" line={0} resize={50} onClip={onClip} />
 		), { attachTo: document.body });
 
 		triggerResize(wrapper.element);
-		// debounce(50, default trailing) 还未到时间
+		// leading=true: 第一次调用立即执行
 		await nextTick();
-		expect(onClip).not.toHaveBeenCalled();
+		expect(onClip).toHaveBeenCalledTimes(1);
 
+		// leading 和 trailing 同时开启时，单次调用不会额外执行 trailing
 		await Utils.sleep(80);
 		await flush();
-		expect(onClip).toHaveBeenCalled();
+		expect(onClip).toHaveBeenCalledTimes(1);
 
 		wrapper.unmount();
 	});
 
-	it('resize 默认 100: 在 debounce 时间窗口内的多次触发只会执行一次', async () => {
+	it('resize 默认 100: 窗口内多次触发分别执行一次 leading 和 trailing', async () => {
 		const onClip = vi.fn();
 		const wrapper = mount(() => (
 			<Text value="hi" line={0} onClip={onClip} />
@@ -527,8 +536,8 @@ describe('Text resize 选项', () => {
 		await Utils.sleep(140);
 		await flush();
 
-		// debounce 合并为一次
-		expect(onClip).toHaveBeenCalledTimes(1);
+		// 第一次立即执行，窗口内其余调用合并为一次尾调用
+		expect(onClip).toHaveBeenCalledTimes(2);
 
 		wrapper.unmount();
 	});
