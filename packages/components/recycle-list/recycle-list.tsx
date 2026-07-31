@@ -40,9 +40,16 @@ export const RecycleList = defineComponent({
 		const K = useDirectionKeys();
 		const isMounted = ref(false);
 
-		// el
-		const curloads = ref({});
-		const preloads = ref({});
+		// el; 仅供测量读取，不参与渲染，因此不需要响应式，卸载时置空避免无限堆积
+		const curloads: Record<number, any> = {};
+		const preloads: Record<number, any> = {};
+		const setLoad = (target: Record<number, any>, key: number, el: any) => {
+			if (el) {
+				target[key] = el;
+			} else {
+				delete target[key];
+			}
+		};
 		const placeholder = shallowRef();
 		const scroller = shallowRef();
 		const content = shallowRef();
@@ -104,20 +111,14 @@ export const RecycleList = defineComponent({
 		};
 
 		const refreshItemSize = (index: number) => {
-			const current = store.props.inverted
-				? store.states.rebuildData[store.states.rebuildDataIndexMap![index]]
-				: store.states.rebuildData[index];
+			const current = store.nodes.get(index);
 
-			// 受到`store.trimPlaceholders`影响,无效的会被回收
+			// 受到`store.nodes.trimPlaceholders`影响,无效的会被回收
 			if (!current) return;
 
 			const original = { ...current.states };
-			const dom = preloads.value[index] || curloads.value[store.props.inverted ? index : index - store.states.firstItemIndex];
-			if (dom) {
-				current.states.size = dom[K.offsetSize] || placeholderFallbackSize.value;
-			} else {
-				current.states.size = placeholderFallbackSize.value;
-			}
+			const dom = preloads[index] || curloads[store.props.inverted ? index : index - store.states.firstItemIndex];
+			store.nodes.setSize(current, (dom && dom[K.offsetSize]) || placeholderFallbackSize.value);
 
 			return { original, changed: current };
 		};
@@ -133,7 +134,7 @@ export const RecycleList = defineComponent({
 				+ (el[K.clientSize] || wrapperSize[K.clientSize] || 0)
 				+ overscan;
 
-			store.setRangeByPosition(headPosition, tailPosition);
+			store.position.updateVisibleRange(headPosition, tailPosition);
 		};
 
 		// 是否滚动到接近触发加载的边缘（inverted为头部，否则为尾部）
@@ -152,7 +153,7 @@ export const RecycleList = defineComponent({
 			if (start === end) return;
 			isRefreshLayout = 1;
 			const resizeChanges = [] as any[];
-			const indices = store.buildItems(start, end, reversed);
+			const indices = store.nodes.build(start, end, reversed);
 			if (store.states.preData.length > 0) {
 				await deferInterrupter;
 			}
@@ -160,9 +161,9 @@ export const RecycleList = defineComponent({
 				const e = refreshItemSize(i);
 				e && resizeChanges.push(e.changed);
 			})));
-			store.refreshItemPosition();
+			store.layout.refresh();
 
-			const isPlaceholderOnly = store.states.rebuildData.every(item => item?.states.isPlaceholder);
+			const isPlaceholderOnly = !store.nodes.real.size;
 			if (isPlaceholderOnly) {
 				store.states.firstItemIndex = 0;
 				store.states.lastItemIndex = store.states.rebuildData.length - 1;
@@ -204,12 +205,12 @@ export const RecycleList = defineComponent({
 			});
 		};
 
-		// 本地数据(data)按 batchSize 懒构建下一批
+		// 本地数据(data)按 batchCount 懒构建下一批
 		let isBuildingLocal = 0;
 		const buildLocalPage = async () => {
-			if (isBuildingLocal || !store.hasMoreLocalData) return false;
+			if (isBuildingLocal || !store.local.hasMore) return false;
 			isBuildingLocal = 1;
-			const { start, end, reversed } = store.consumeLocalPage()!;
+			const { start, end, reversed } = store.local.consumePage()!;
 			reversed
 				? await refreshInvertedLayout(start, end, {
 						reversed,
@@ -228,8 +229,8 @@ export const RecycleList = defineComponent({
 				await refreshLayoutByPage(current, start, end);
 
 				// 响应条数少于预分配的占位时，回收多余骨架，避免后续id漂移
-				if (store.trimPlaceholders()) {
-					store.refreshItemPosition();
+				if (store.nodes.trimPlaceholders()) {
+					store.layout.refresh();
 					setVisibleItemRange();
 				}
 
@@ -245,18 +246,18 @@ export const RecycleList = defineComponent({
 		};
 
 		const loadData = async (onBeforeSetData?: any) => {
-			if (store.states.isSlientRefresh) return;
+			if (store.states.isSilentRefresh) return;
 			let canContinue: boolean;
 
 			// 本地数据未构建完时优先懒构建（数据已在本地，不受disabled/isEnd约束）；
 			// onBeforeSetData存在说明是刷新流程（reset slient），直接走远程
-			if (!onBeforeSetData && store.hasMoreLocalData) {
+			if (!onBeforeSetData && store.local.hasMore) {
 				canContinue = await buildLocalPage();
 			} else {
 				if (props.disabled || store.states.isEnd || store.states.isLoading) return;
 				originalScrollPosition = wrapper.value[K.scrollAxis];
 				if (hasPlaceholder.value) {
-					const { start, end } = store.allocatePlaceholders();
+					const { start, end } = store.nodes.allocatePlaceholders();
 					const originalSize = store.states.contentMaxSize;
 					await refreshLayout(start, end);
 					if (store.props.inverted) {
@@ -288,7 +289,7 @@ export const RecycleList = defineComponent({
 				await loadData();
 			} else {
 				const next = loadData(done);
-				store.states.isSlientRefresh = true;
+				store.states.isSilentRefresh = true;
 				await next;
 			}
 		};
@@ -305,17 +306,17 @@ export const RecycleList = defineComponent({
 		 * @return ~
 		 */
 		const handleScroll = (e: UIEvent) => {
-			if (store.currentLeaf !== instance || isManualScroll) return;
+			if (store.scroll.currentLeaf !== (instance as any) || isManualScroll) return;
 
 			isNearLoadEdge(e.target!) && loadData();
 			setVisibleItemRange();
-			store.scrollTo(e);
+			store.scroll.broadcast(e);
 			emit('scroll', e);
 		};
 
 		const forceRefreshLayout = async () => {
-			store.invalidate();
-			await refreshLayout(...store.builtRange);
+			store.nodes.invalidate();
+			await refreshLayout(...store.local.builtRange);
 		};
 
 		// 图片撑开时，会影响布局, 节流结束后调用
@@ -348,19 +349,19 @@ export const RecycleList = defineComponent({
 
 			if (!store.setData(v)) return;
 
-			await refreshLayout(...store.builtRange);
+			await refreshLayout(...store.local.builtRange);
 
 			// 追加数据时若已停在加载阈值内（如列表底部），无需再滚动即继续构建
 			const el = wrapper.value;
-			el && store.hasMoreLocalData && isNearLoadEdge(el) && loadData();
+			el && store.local.hasMore && isNearLoadEdge(el) && loadData();
 		};
 
 		const handleStoreLeafChange = () => {
-			store.currentLeaf = instance;
+			store.scroll.currentLeaf = instance as any;
 		};
 
 		onBeforeMount(() => {
-			store.add(instance);
+			store.scroll.add(instance as any);
 		});
 
 		const moveEventName = isTouch ? 'touchstart' : 'mouseenter';
@@ -373,7 +374,7 @@ export const RecycleList = defineComponent({
 
 		onBeforeUnmount(() => {
 			Resize.off(wrapper.value, handleResize);
-			store.remove(instance);
+			store.scroll.remove(instance as any);
 			wrapper.value.removeEventListener(moveEventName, handleStoreLeafChange);
 		});
 
@@ -475,7 +476,7 @@ export const RecycleList = defineComponent({
 														{
 															!item.states.isPlaceholder && (
 																<Resizer
-																	ref={v => curloads.value[item.states.index] = v}
+																	ref={v => setLoad(curloads, item.states.index, v)}
 																	class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
 																	style={{ opacity: +item.states.loaded }}
 																	fill={false}
@@ -506,7 +507,7 @@ export const RecycleList = defineComponent({
 									{{
 										default: ({ row: item }) => (
 											<div
-												ref={v => preloads.value[item.states.index] = v}
+												ref={v => setLoad(preloads, item.states.index, v)}
 												class="vc-recycle-list__hidden"
 											>
 												{ slots.default?.({ row: item.states.data || {}, index: item.states.index }) }

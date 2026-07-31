@@ -19,7 +19,7 @@ export const ScrollState = defineComponent({
 			return (
 				<div ref={current} class="vc-recycle-list__scroll-state">
 					{
-						!owner.hasPlaceholder.value && !owner.store.states.isEnd && !owner.store.states.isSlientRefresh && (
+						!owner.hasPlaceholder.value && !owner.store.states.isEnd && !owner.store.states.isSilentRefresh && (
 							<div
 								class="vc-recycle-list__loading"
 								style={{ visibility: owner.store.states.isLoading ? 'visible' : 'hidden' }}

@@ -58,8 +58,8 @@ const loadData = ({ current, count: loaded }) => {
 | 属性                | 说明             | 类型         | 可选值 | 默认值           |
 | ----------------- | -------------- | ---------- | --- | ------------- |
 | disabled          | 是否禁止触发loadData | `boolean`  | -   | false         |
-| batchSize         | 每次构建/测量的节点批次大小；本地 `data` 按批次懒构建；有 placeholder 时亦作为请求期间预分配的占位节点数（大数据量建议调大如 `200`） | `number`   | -   | `20`          |
-| bufferSize        | 在可见数据索引前后额外渲染的节点数量 | `number`   | -   | `0`           |
+| batchCount        | 每次构建/测量的节点批次大小；本地 `data` 按批次懒构建；有 placeholder 时亦作为请求期间预分配的占位节点数（大数据量建议调大如 `200`） | `number`   | -   | `20`          |
+| bufferCount       | 在可见数据索引前后额外渲染的节点数量 | `number`   | -   | `0`           |
 | overscan          | 视口上下（横向时左右）额外预渲染的距离，单位 px | `number`   | -   | `50`          |
 | threshold         | 距离加载边缘小于等于该值时触发加载，单位 px | `number`   | -   | `100`         |
 | loadData          | 获取更多数据，`({ current, count }) => response` | `function` | -   | `() => false` |
@@ -106,7 +106,3 @@ const loadData = ({ current, count: loaded }) => {
 | empty       | 首次加载后无数据时展示     |
 | header      | 头部              |
 | footer      | 尾部              |
-
-
-## TODO
-- 支持横向滚动

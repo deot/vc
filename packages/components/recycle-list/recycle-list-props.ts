@@ -15,12 +15,12 @@ export const props = {
 	},
 
 	// 每次构建/测量的节点批次大小；有 placeholder 时亦作为预分配占位节点数
-	batchSize: {
+	batchCount: {
 		type: Number,
 		default: 20
 	},
 
-	bufferSize: {
+	bufferCount: {
 		type: Number,
 		default: 0
 	},
