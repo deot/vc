@@ -138,4 +138,38 @@ $component-name: vc-recycle-list;
 			align-items: center;
 		}
 	}	
+
+	@include when(external) {
+		overflow: visible;
+
+		&.is-inverted {
+			overflow-anchor: none;
+		}
+
+		&:not(.is-horizontal) {
+			height: auto !important;
+			max-height: none !important;
+
+			@include element(container) {
+				height: auto;
+			}
+
+			@include element(wrapper) {
+				height: auto;
+			}
+		}
+
+		&.is-horizontal {
+			display: inline-block;
+			width: max-content !important;
+
+			@include element(container) {
+				width: max-content;
+			}
+
+			@include element(wrapper) {
+				width: max-content;
+			}
+		}
+	}
 }

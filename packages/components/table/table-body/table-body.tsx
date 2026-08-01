@@ -97,16 +97,23 @@ export const TableBody = defineComponent({
 		});
 		return () => {
 			if (!allowRender.value) return;
-			if (table.props.height) {
+			const externalVirtualized = !table.props.height
+				&& !table.props.maxHeight
+				&& table.props.virtualized;
+			if (table.props.height || externalVirtualized) {
 				return (
 					<div class={['vc-table__body-wrapper']}>
 						<RecycleList
 							ref={target}
 							data={states.list}
 							disabled={true}
+							fill={!externalVirtualized}
 							scrollerOptions={scrollerOptions.value}
 							batchCount={100}
 							onScroll={(e: any) => emit('scroll', e)}
+							onRowResize={externalVirtualized
+								? table.refreshAffix
+								: undefined}
 							style={props.heightStyle}
 						>
 							{ renderers }

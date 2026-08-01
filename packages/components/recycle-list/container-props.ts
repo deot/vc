@@ -1,4 +1,4 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
 import type { Render } from '../customer/types';
 import { STATUS_MAP } from './container-constant';
 
@@ -19,6 +19,7 @@ export const props = {
 		type: Number,
 		default: 30
 	},
+	canPull: Function as PropType<() => boolean>,
 	render: {
 		type: Function as Render,
 		default: ({ status, type }) => STATUS_MAP[type][status]

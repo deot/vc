@@ -102,12 +102,21 @@ export const Table = defineComponent({
 		const scroller = computed(() => {
 			return body.value?.target;
 		});
+		const externalVirtualized = computed(() => {
+			return !props.height && !props.maxHeight && props.virtualized;
+		});
+		const usesRecycleList = computed(() => {
+			return !!props.height || externalVirtualized.value;
+		});
+
+		const bodyScroller = computed(() => {
+			return usesRecycleList.value
+				? scroller.value?.scroller
+				: scroller.value;
+		});
 
 		const bodyXWrapper = computed(() => {
-			if (props.height) {
-				return scroller.value.scroller.wrapper;
-			}
-			return scroller.value?.wrapper;
+			return bodyScroller.value?.wrapper;
 		});
 
 		const bodyYWrapper = computed(() => bodyXWrapper.value);
@@ -184,7 +193,9 @@ export const Table = defineComponent({
 				layout.updateElsHeight();
 			}
 
-			scroller.value?.refresh?.();
+			externalVirtualized.value
+				? scroller.value?.refreshLayout?.()
+				: scroller.value?.refresh?.();
 			refreshAffix();
 		};
 		// 用于多选表格，切换所有行的选中状态
@@ -271,11 +282,11 @@ export const Table = defineComponent({
 				scrollTop: scrollY
 			} = bodyXWrapper.value;
 
-			if (!scroller.value) return;
+			if (!bodyScroller.value) return;
 			if (Math.abs(deltaY) > Math.abs(deltaX) && contentH > wrapperH) {
-				scroller.value.scrollTo({ y: scrollY + deltaY });
+				bodyScroller.value.scrollTo({ y: scrollY + deltaY });
 			} else if (deltaX && contentW > wrapperW) {
-				scroller.value.scrollTo({ x: scrollX + deltaX });
+				bodyScroller.value.scrollTo({ x: scrollX + deltaX });
 			}
 		};
 		let wheels: any[] = [];

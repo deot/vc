@@ -929,6 +929,203 @@ describe('Table virtual + scroll & delay', () => {
 		wrapper.unmount();
 	});
 
+	it('virtualized only enables external RecycleList without height/maxHeight', async () => {
+		const mountTable = (tableProps: Record<string, any> = {}) => mount(() => (
+			<Table data={buildData(20)} primaryKey="id" {...tableProps}>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+
+		const external = mountTable({ virtualized: true });
+		await flush();
+		const externalList = external.findComponent({ name: 'vc-recycle-list' });
+		expect(externalList.exists()).toBe(true);
+		expect(externalList.props('fill')).toBe(false);
+		expect(external.findComponent({ name: 'vc-table-normal-list' }).exists()).toBe(false);
+		external.unmount();
+
+		const fixed = mountTable({ height: 200, virtualized: true });
+		await flush();
+		const fixedList = fixed.findComponent({ name: 'vc-recycle-list' });
+		expect(fixedList.exists()).toBe(true);
+		expect(fixedList.props('fill')).toBe(true);
+		fixed.unmount();
+
+		const maxHeight = mountTable({ maxHeight: 200, virtualized: true });
+		await flush();
+		expect(maxHeight.findComponent({ name: 'vc-recycle-list' }).exists()).toBe(false);
+		expect(maxHeight.findComponent({ name: 'vc-table-normal-list' }).exists()).toBe(true);
+		maxHeight.unmount();
+
+		const fixedWins = mountTable({ height: 200, maxHeight: 400, virtualized: true });
+		await flush();
+		const fixedWinsList = fixedWins.findComponent({ name: 'vc-recycle-list' });
+		expect(fixedWinsList.exists()).toBe(true);
+		expect(fixedWinsList.props('fill')).toBe(true);
+		fixedWins.unmount();
+
+		const normal = mountTable();
+		await flush();
+		expect(normal.findComponent({ name: 'vc-recycle-list' }).exists()).toBe(false);
+		expect(normal.findComponent({ name: 'vc-table-normal-list' }).exists()).toBe(true);
+		normal.unmount();
+	});
+
+	it('external virtualized body keeps append/summary/fixed cells and horizontal sync', async () => {
+		const wrapper = mount(() => (
+			<Table data={buildData(20)} primaryKey="id" virtualized showSummary>
+				{{
+					default: () => [
+						<TableColumn label="A" prop="name" fixed="left" width={120} />,
+						<TableColumn label="B" prop="count" width={240} />,
+						<TableColumn label="C" prop="address" fixed="right" width={120} />
+					],
+					append: () => <div class="external-virtual-append">append</div>
+				}}
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(30);
+		await flush();
+
+		expect(wrapper.find('.external-virtual-append').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__footer-wrapper').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__td.is-fixed-left').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__td.is-fixed-right').exists()).toBe(true);
+
+		const xWrapper = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+		const header = wrapper.find('.vc-table__header-wrapper').element as HTMLElement;
+		const footer = wrapper.find('.vc-table__footer-wrapper').element as HTMLElement;
+		makeWritable(xWrapper, 'scrollLeft', 45);
+		makeWritable(header, 'scrollLeft');
+		makeWritable(footer, 'scrollLeft');
+		Object.defineProperty(xWrapper, 'offsetWidth', { configurable: true, value: 100 });
+		Object.defineProperty(xWrapper, 'scrollWidth', { configurable: true, value: 400 });
+
+		wrapper.findComponent({ name: 'vc-recycle-list' }).vm.$emit('scroll', {
+			target: { scrollLeft: 45, scrollTop: 0 }
+		});
+		await flush();
+		expect(header.scrollLeft).toBe(45);
+		expect(footer.scrollLeft).toBe(45);
+
+		wrapper.unmount();
+	});
+
+	it('external virtualized Affix wheel only scrolls the internal cross axis', async () => {
+		const wrapper = mount(() => (
+			<Table data={buildData(20)} primaryKey="id" virtualized showSummary affix>
+				<TableColumn label="A" prop="name" width={240} />
+				<TableColumn label="B" prop="count" width={240} />
+				<TableColumn label="C" prop="address" width={240} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(30);
+		await flush();
+
+		const list = wrapper.findComponent({ name: 'vc-recycle-list' });
+		const innerScroller = list.findComponent({ name: 'vc-scroller-wheel' });
+		const listScrollTo = vi.fn();
+		const innerScrollTo = vi.fn();
+		(list.vm as any).$!.exposed.scrollTo = listScrollTo;
+		(innerScroller.vm as any).$!.exposed.scrollTo = innerScrollTo;
+
+		const xWrapper = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+		makeWritable(xWrapper, 'scrollLeft');
+		makeWritable(xWrapper, 'scrollTop');
+		const restores = [
+			defineGetter(xWrapper, 'scrollWidth', 720),
+			defineGetter(xWrapper, 'clientWidth', 240),
+			defineGetter(xWrapper, 'scrollHeight', 600),
+			defineGetter(xWrapper, 'clientHeight', 600)
+		];
+
+		const dispatchHorizontalWheel = (selector: string, deltaX: number) => {
+			const el = wrapper.find(selector).element as HTMLElement;
+			el.dispatchEvent(new WheelEvent('wheel', {
+				bubbles: true,
+				cancelable: true,
+				deltaX,
+				deltaY: 0
+			} as any));
+		};
+
+		dispatchHorizontalWheel('.vc-table__header-wrapper', 30);
+		dispatchHorizontalWheel('.vc-table__footer-wrapper', 45);
+		await flush();
+		await sleep(20);
+
+		expect(innerScrollTo).toHaveBeenNthCalledWith(1, { x: 30 });
+		expect(innerScrollTo).toHaveBeenNthCalledWith(2, { x: 45 });
+		expect(listScrollTo).not.toHaveBeenCalled();
+
+		restores.forEach(fn => fn());
+		wrapper.unmount();
+	});
+
+	it('external row resize refreshes Affix while fixed-height row resize does not', async () => {
+		const mountAffixTable = (tableProps: Record<string, any>) => mount(() => (
+			<Table data={buildData(20)} primaryKey="id" affix {...tableProps}>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		const replaceAffixRefresh = (wrapper: any) => {
+			const refresh = vi.fn();
+			const affix = wrapper.findComponent({ name: 'vc-affix' });
+			(affix.vm as any).$!.exposed.refresh = refresh;
+			return refresh;
+		};
+
+		const external = mountAffixTable({ virtualized: true });
+		await flush();
+		const externalRefresh = replaceAffixRefresh(external);
+		external.findComponent({ name: 'vc-recycle-list' }).vm.$emit('row-resize', []);
+		await flush();
+		expect(externalRefresh).toHaveBeenCalledTimes(1);
+		external.unmount();
+
+		const fixed = mountAffixTable({ height: 200, virtualized: true });
+		await flush();
+		const fixedRefresh = replaceAffixRefresh(fixed);
+		fixed.findComponent({ name: 'vc-recycle-list' }).vm.$emit('row-resize', []);
+		await flush();
+		expect(fixedRefresh).not.toHaveBeenCalled();
+		fixed.unmount();
+	});
+
+	it('refreshLayout forwards external virtualized geometry refresh to RecycleList', async () => {
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(20)} primaryKey="id" virtualized>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		const recycleList = wrapper.findComponent({ name: 'vc-recycle-list' });
+		const refreshLayout = vi.fn();
+		(recycleList.vm as any).$!.exposed.refreshLayout = refreshLayout;
+		tableRef.value.refreshLayout();
+
+		expect(refreshLayout).toHaveBeenCalledTimes(1);
+		wrapper.unmount();
+	});
+
+	it('external virtualized table preserves the empty state', async () => {
+		const wrapper = mount(() => (
+			<Table virtualized emptyText="外部虚拟表暂无数据">
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		expect(wrapper.findComponent({ name: 'vc-recycle-list' }).props('fill')).toBe(false);
+		expect(wrapper.find('.vc-table__empty-placeholder').exists()).toBe(true);
+		expect(wrapper.find('.vc-table__empty-text').text()).toBe('外部虚拟表暂无数据');
+		wrapper.unmount();
+	});
+
 	it('delay defers body rendering', async () => {
 		const data = buildData(2);
 		const wrapper = mount(() => (
@@ -3374,14 +3571,17 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 		wrapper.unmount();
 	});
 
-	it('虚拟滚动（height）下合并块作为 RecycleList 最小渲染单位', async () => {
+	it.each([
+		['固定高度', { height: 200 }],
+		['外部视口', { virtualized: true }]
+	])('虚拟滚动（%s）下合并块作为 RecycleList 最小渲染单位', async (_label, modeProps) => {
 		const tableRef = ref<any>();
 		const getSpan = ({ rowIndex, columnIndex }: any) => {
 			if (columnIndex === 0 && rowIndex % 2 === 0) return [2, 1];
 			return [1, 1];
 		};
 		const wrapper = mount(() => (
-			<Table ref={tableRef} data={buildData(20)} primaryKey="id" height={200} rows={5} getSpan={getSpan}>
+			<Table ref={tableRef} data={buildData(20)} primaryKey="id" rows={5} getSpan={getSpan} {...modeProps}>
 				<TableColumn label="名称" prop="name" />
 				<TableColumn label="地址" prop="address" />
 			</Table>

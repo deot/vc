@@ -790,6 +790,67 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 ```
 :::
 
+### 外部视口虚拟化
+
+当 Table 位于页面或已有 Scroller 的正常文档流中，又需要渲染大量数据时，可以在不设置 `height`/`max-height` 的前提下启用 `virtualized`：
+
+```vue
+<template>
+	<section>其他头部内容</section>
+	<Table
+		virtualized
+		primary-key="id"
+		:data="tableData"
+	>
+		<TableColumn prop="name" label="名称" />
+		<TableColumn prop="description" label="说明" />
+	</Table>
+	<section>其他尾部内容</section>
+</template>
+```
+
+纵向主轴由最近的外部 VC Scroller/原生滚动祖先承载，找不到时使用 Window；Table 内部仍承载横向滚动，并继续同步表头、表体、合计行和固定列。
+
+```text
+Window / Scroller
+├── 其他头部内容
+├── TableHeader
+├── 虚拟化 TableBody
+├── TableFooter / Summary
+└── 其他尾部内容
+```
+
+- 前置内容只改变 Table 在外部容器中的绝对位置，不进入虚拟行 position。
+- TableBody 的虚拟占位高度参与正常文档流，后置内容会随数据增长自然后移。
+- 可见范围和加载边界使用 Table 自身区域；外部尾部内容不计入 Table 边界。
+- 动态行高、fixed columns、summary、append、empty、selection、expand、hover 等功能沿用固定高度虚拟表格的现有语义。
+- 外部前置内容发生无法自动观察的位置变化时，可调用现有 `refreshLayout()`；行尺寸变化后可继续使用 `refreshAffix()` 更新吸附状态。
+
+渲染模式优先级如下：
+
+| 配置 | 渲染路径 |
+| --- | --- |
+| 存在 `height` | 现有固定高度 RecycleList；`virtualized` 不改变行为 |
+| 无 `height`、存在 `max-height` | 现有 maxHeight + NormalList；忽略 `virtualized` |
+| 无 `height`/`max-height`、`virtualized=true` | 外部 viewport RecycleList |
+| 无高度且 `virtualized=false` | 现有流式 NormalList |
+
+同时传入 `height` 和 `max-height` 时继续由 `height` 优先。
+
+#### Affix 兼容性
+
+外部虚拟化不会修改 Affix 组件、定位方式、target 或边界释放算法，也不会改用 CSS Sticky：
+
+- Window 下继续使用当前默认的 `fixed: true` 行为。
+- 外层为 VC Scroller 时，按现有能力传入 `:affix="{ fixed: false }"`。
+- `boolean`、`[top, bottom]`、`object` 的解释和 `refreshAffix()` 方法保持不变。
+- Table 设置了 `height`/`max-height` 时，`affix` 仍按原规则强制失效。
+
+完整示例：
+
+- [Window 前置内容—虚拟 Table—后置内容](./examples/virtualized-window.vue)
+- [VC Scroller 中的虚拟 Table](./examples/virtualized-scroller.vue)
+
 ## API
 
 ### Table props
@@ -798,6 +859,7 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 | data                    | 显示的数据                                                                                                                                      | `Array`                                                    | -                           | -       |
 | height                  | `Table` 的高度，默认为自动高度。如果 `height` 为 `number` 类型，单位 px；如果 `height` 为 `string` 类型，则这个高度会设置为 `Table` 的 style.height 的值，Table 的高度会受控于外部样式。       | `string`、`number`                                          | -                           | -       |
 | max-height              | `Table` 的最大高度                                                                                                                              | `string`、`number`                                          | -                           | -       |
+| virtualized             | 无 `height`/`max-height` 时启用外部 viewport 行虚拟化；存在 `height` 或 `max-height` 时不改变原有渲染路径                                                                 | `boolean`                                                   | -                           | `false` |
 | stripe                  | 是否为斑马纹 `table`                                                                                                                             | `boolean`                                                  | -                           | `false` |
 | border                  | 是否带有纵向边框                                                                                                                                   | `boolean`                                                  | -                           | `false` |
 | size                    | `Table` 的尺寸                                                                                                                                | `string`                                                   | `medium` 、 `small` 、 `mini` | -       |
@@ -827,7 +889,7 @@ const handleExpandChange = (row, expandedRows, maxLevel) => {
 | sort                    | 默认的排序列的 `prop` 和顺序。它的`prop`属性指定默认的排序的列，`order`指定默认排序的顺序                                                                                    |                                                            |                             |         |
 | delay                   | 延迟选择，排除transition的影响                                                                                                                       |                                                            |                             |         |
 | resizable               | 是否可以伸缩(总开关/单独的column.resizable也可以设置)                                                                                                                                     |                                                            |                             |         |
-| affix                   | 流式高度下（未设置 `height`/`max-height`）表头吸顶、合计行吸底。`boolean` 同时作用于表头与合计行；`array` 为 `[top, bottom]`，每项可为 `boolean` 或 [Affix](../affix) 配置对象；`object` 同时作用于两端。设置了 `height`/`max-height` 时强制失效。 | `boolean`、`array`、`object`                                  | -                           | `false` |
+| affix                   | 流式高度下（含 `virtualized` 外部虚拟化，未设置 `height`/`max-height`）表头吸顶、合计行吸底。`boolean` 同时作用于表头与合计行；`array` 为 `[top, bottom]`，每项可为 `boolean` 或 [Affix](../affix) 配置对象；`object` 同时作用于两端。设置了 `height`/`max-height` 时强制失效。 | `boolean`、`array`、`object`                                  | -                           | `false` |
 | columns                 | `v-model` 暴露 Table 收集到的全部 leaf 列（含 `selection`/`expand`/`index` 等无 `prop` 的结构列），每项含 `{ id, prop, label, type, width, fixed, align, hidden, ... }`。外部可写回两个维度：调整数组顺序（按 `id` 重排）、把某项 `hidden` 置 `true/false`（按 `id` 控制该列是否渲染，被隐藏列仍出现在暴露快照中）。`width`/`fixed` 等其它字段为只读，请用 `TableColumn` 的 props 控制。 | `Array`                                                    | -                           | `[]`    |
 
 

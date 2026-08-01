@@ -54,7 +54,9 @@ export const Container = defineComponent({
 
 		const handleMove = (e: any) => {
 			if (!isStart || props.inverted || !props.pullable) return;
-			const allow = current.value.querySelector('.vc-recycle-list__wrapper')[K.scrollAxis] == 0;
+			const allow = props.canPull
+				? props.canPull()
+				: current.value.querySelector('.vc-recycle-list__wrapper')[K.scrollAxis] == 0;
 			if (!allow) return;
 
 			const move = e.touches

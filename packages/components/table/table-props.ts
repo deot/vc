@@ -9,6 +9,10 @@ export const props = {
 	width: [String, Number],
 	height: [String, Number],
 	maxHeight: [String, Number],
+	virtualized: {
+		type: Boolean,
+		default: false
+	},
 	rowHeight: [String, Number],
 	// 列的宽度是否自撑开
 	fit: {
