@@ -52,13 +52,13 @@ importers:
   packages/index:
     dependencies:
       '@deot/vc-components':
-        specifier: ^1.0.71
+        specifier: ^1.0.72
         version: link:../components
       '@deot/vc-hooks':
-        specifier: ^1.0.71
+        specifier: ^1.0.72
         version: link:../hooks
       '@deot/vc-shared':
-        specifier: ^1.0.71
+        specifier: ^1.0.72
         version: link:../shared
       vue:
         specifier: '*'
@@ -1563,6 +1563,7 @@ packages:
 
   '@zumer/snapdom@2.15.0':
     resolution: {integrity: sha512-rdayfg832lYhy2v2DRr4LwzhIT0ZMeGKYicVmtzbji95KhUd7Z1g6/5jTsDEU4q32a6ywbIpAixO45hubsEftQ==}
+    deprecated: Old versions have known fidelity bugs (text re-wrap, width freezing, KaTeX clipping). Upgrade to ^2.22 — drop-in for any 2.x. https://github.com/zumerlab/snapdom/releases
 
   abbrev@2.0.0:
     resolution: {integrity: sha512-6/mh1E2u2YgEsCHdY0Yx5oW+61gZU+1vXaoiHHrpKeuRNNgFvS+/jrwHiQhB5apAf5oB7UB7E19ol2R2LKH8hQ==}
