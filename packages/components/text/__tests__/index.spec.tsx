@@ -63,6 +63,21 @@ describe('index.ts', () => {
 	it('使用 inline-block 以保留父级 text-align 的文本布局语义', () => {
 		expect(textStyle).toMatch(/display:\s*inline-block/);
 	});
+
+	it('不在基础样式中强制禁止 flex 收缩', () => {
+		expect(textStyle).not.toMatch(/flex-shrink/);
+	});
+
+	it.each([
+		[void 0, ''],
+		[true, '1'],
+		[false, '0']
+	])('shrink=%s 映射为 flex-shrink=%s', (shrink, expected) => {
+		const wrapper = mount(() => (<Text shrink={shrink} />));
+
+		expect((wrapper.element as HTMLElement).style.flexShrink).toBe(expected);
+		wrapper.unmount();
+	});
 });
 
 describe('Text 渲染分支 (line=0 / line>0)', () => {

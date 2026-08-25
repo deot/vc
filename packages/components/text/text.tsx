@@ -35,7 +35,8 @@ export const Text = defineComponent({
 		const styles = computed(() => {
 			return {
 				cursor: truncated.value ? 'pointer' : 'unset',
-				visibility: isMeasuring.value ? 'hidden' : void 0
+				visibility: isMeasuring.value ? 'hidden' : void 0,
+				flexShrink: props.shrink === void 0 ? void 0 : Number(props.shrink)
 			};
 		});
 

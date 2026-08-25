@@ -22,6 +22,10 @@ export const props = {
 		type: [Boolean, Number],
 		default: 100
 	},
+	shrink: {
+		type: [Boolean, Number],
+		default: void 0
+	},
 	ellipsis: {
 		type: String,
 		default: '...'

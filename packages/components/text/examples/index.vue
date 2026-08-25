@@ -31,7 +31,16 @@
 			<div style="display: flex;">
 				<div style="display: flex;">
 					<span style="white-space: nowrap; ">占 位</span>
-					<Text :value="`占位占位占位占位占位占位--占位占位`" :line="1" />
+					<Text :value="`占位占位占位占位占位占位--占位占位`" :line="1" :shrink="0" />
+				</div>
+			</div>
+		</div>
+		<div style="width: 192px;">
+			<div style="display: flex; align-items: center;">
+				<div>any1</div>
+				<div style="display: flex; align-items: center;">
+					<Text :value="`YE6B700042Y`" :line="1" />
+					<span>any2</span>
 				</div>
 			</div>
 		</div>

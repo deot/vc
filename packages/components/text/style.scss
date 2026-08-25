@@ -6,7 +6,6 @@ $component-name: vc-text;
 	position: relative;
 	display: inline-block; // inline-flex对外层text-align不生效
 	width: 100%;
-	flex-shrink: 0;
 	word-break: break-all;
 	box-sizing: border-box;
 }
