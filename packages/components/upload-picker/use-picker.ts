@@ -11,10 +11,13 @@ import {
 	PPT_ACCEPTS,
 	PDF_ACCEPTS,
 	TXT_ACCEPTS,
-	HTML_ACCEPTS
+	HTML_ACCEPTS,
+	PICKER_ITEM_KEY,
+	withPickerItemKey
 } from './utils';
 
 import type { Props } from './upload-picker-props';
+import type { PickerItem, PickerType } from './types';
 import { Message } from '../message';
 
 export const usePicker = (expose: any) => {
@@ -37,14 +40,14 @@ export const usePicker = (expose: any) => {
 		);
 	});
 
-	const currentValue = ref({
+	const currentValue = ref<Record<PickerType, PickerItem[]>>({
 		image: [],
 		video: [],
 		audio: [],
 		file: [],
 	});
 
-	const currentUploadOptions = ref({
+	const currentUploadOptions = computed(() => ({
 		image: {
 			accept: IMAGE_ACCEPTS,
 			...(props.uploadOptions.image || {}),
@@ -61,7 +64,7 @@ export const usePicker = (expose: any) => {
 			accept: `${DOC_ACCEPTS},${EXCEL_ACCEPTS},${PPT_ACCEPTS},${PDF_ACCEPTS},${TXT_ACCEPTS},${HTML_ACCEPTS}`,
 			...(props.uploadOptions.file || {}),
 		},
-	});
+	}));
 
 	const dynamicMax = computed(() => {
 		const image = currentValue.value.image || [];
@@ -123,7 +126,7 @@ export const usePicker = (expose: any) => {
 		formItem.change?.(v);
 	};
 
-	const handleFileBefore = async (vFile: UploadFile, fileList: File[], type: string) => {
+	const handleFileBefore = async (vFile: UploadFile, fileList: File[], type: PickerType) => {
 		if (props?.compressOptions?.compress && type === 'image') {
 			// 图片是否压缩
 			// TODO: 压缩
@@ -132,41 +135,52 @@ export const usePicker = (expose: any) => {
 		return (await onFileBefore(vFile, fileList, type)) || vFile;
 	};
 
-	const handleFileStart = (vFile: UploadFile, type: string) => {
-		currentValue.value[type].push(vFile);
+	const handleFileStart = (vFile: UploadFile, type: PickerType) => {
+		currentValue.value[type].push(withPickerItemKey({
+			...vFile,
+			type,
+			[props.keyValue.label]: vFile.name
+		}, vFile.uploadId));
 		emit('file-start', vFile, type);
 	};
 
-	const handleFileProgress = (e: any, vFile: UploadFile, type: string) => {
+	const handleFileProgress = (e: any, vFile: UploadFile, type: PickerType) => {
 		if (parseInt(e.percent, 10) <= 100) {
 			currentValue.value[type] = currentValue.value[type].map((item: any) => {
 				if (vFile.uploadId === item.uploadId) {
-					return {
+					return withPickerItemKey({
 						...item,
 						percent: e.percent,
-					};
+					}, item[PICKER_ITEM_KEY]);
 				}
 				return item;
 			});
 		}
 	};
 
-	const handleFileSuccess = (response: any, vFile: UploadFile, cycle: any, type: any) => {
+	const handleFileSuccess = (response: any, vFile: UploadFile, cycle: any, type: PickerType) => {
 		currentValue.value[type] = currentValue.value[type].map((item) => {
 			if (item.uploadId === vFile.uploadId) {
-				return {
+				const defaultItem = {
 					type,
 					[props.keyValue.label]: vFile.name,
 					// 外部需要满足response中带value/source
-					[props.keyValue.value]: response.value || response.source
+					[props.keyValue.value]: response?.value || response?.source
 				};
+				const formatted = props.formatter?.(response, vFile, type);
+				const result = typeof formatted === 'undefined'
+					? defaultItem
+					: typeof formatted === 'object'
+						? { ...defaultItem, ...formatted, type }
+						: { ...defaultItem, [props.keyValue.value]: formatted };
+				return withPickerItemKey(result, item[PICKER_ITEM_KEY]);
 			}
 			return item;
 		});
 		emit('file-success', response, vFile, cycle, type);
 	};
 
-	const handleError = (err, type) => {
+	const handleError = (err, type: PickerType) => {
 		props.showMessage
 		&& err.message
 		&& Message.error(err.message);
@@ -174,29 +188,35 @@ export const usePicker = (expose: any) => {
 	};
 
 	// 内部保存上传失败的文件，不传递给外层
-	const handleFileError = (response, vFile, cycle, type) => {
+	const handleFileError = (response, vFile, cycle, type: PickerType) => {
 		currentValue.value[type] = currentValue.value[type].map((item) => {
 			if (item.uploadId === vFile.uploadId) {
-				return {
+				return withPickerItemKey({
 					...item,
 					...response,
 					// 文件基础信息
 					type,
 					[props.keyValue.label]: vFile.name,
+					status: 0,
 					errorFlag: new Date().getTime(),
-				};
+				}, item[PICKER_ITEM_KEY]);
 			}
 			return item;
 		});
 		emit('file-error', response, vFile, cycle, type);
 	};
 
-	const handleFileComplete = (response, type) => {
+	const handleFileComplete = (response, type: PickerType) => {
 		sync();
 		emit('complete', response, type);
 	};
 
-	const handleDelete = async (index, type) => {
+	const handleSortChange = (value: PickerItem[], type: PickerType) => {
+		currentValue.value[type] = value;
+		sync();
+	};
+
+	const handleRemove = async (index, type: PickerType) => {
 		const onRemoveBefore = instance.vnode.props?.onRemoveBefore || (() => {});
 		await onRemoveBefore(index, type);
 
@@ -217,7 +237,7 @@ export const usePicker = (expose: any) => {
 	};
 
 	const parseModelValue = (v) => {
-		const initialData = { image: [], video: [], audio: [], file: [] };
+		const initialData: Record<PickerType, PickerItem[]> = { image: [], video: [], audio: [], file: [] };
 		if (allowKeepString.value) {
 			v = (props.max === 1 ? [v] : v.split(',')).filter(i => !!i);
 		} else if (allowKeepObject.value) {
@@ -227,15 +247,15 @@ export const usePicker = (expose: any) => {
 		if (!Array.isArray(v) || !v.length) return initialData;
 
 		return v.reduce((pre, cur) => {
-			const value = cur[props.keyValue.value] || (typeof cur === 'object' ? '' : cur);
-			const label = cur[props.keyValue.label] || value.replace(/^.*\/([^/]+)$/, '$1');
+			const value = cur?.[props.keyValue.value] || (typeof cur === 'object' ? '' : cur);
+			const label = cur?.[props.keyValue.label] || value.replace(/^.*\/([^/]+)$/, '$1');
 			const type = cur.type || (props.picker.length === 1 ? props.picker[0] : getFileType(value)); // 长度为1时，强制类型
 			switch (type) {
 				case 'image':
 				case 'video':
 				case 'audio':
 				case 'file':
-					pre[type].push({
+					pre[type].push(withPickerItemKey({
 						// 文件类型
 						type,
 						// 文件名
@@ -246,7 +266,7 @@ export const usePicker = (expose: any) => {
 						percent: null,
 						// 错误标记
 						errorFlag: false,
-					});
+					}));
 					return pre;
 				default:
 					return pre;
@@ -272,9 +292,7 @@ export const usePicker = (expose: any) => {
 			});
 			sync();
 		},
-		remove: (index, type) => {
-			handleDelete(index, type);
-		},
+		remove: (index, type) => handleRemove(index, type),
 		reset: (source = []) => {
 			if (!(source instanceof Array)) {
 				throw new VcError('vc-upload-picker', 'reset参数要为字符串数组');
@@ -289,7 +307,7 @@ export const usePicker = (expose: any) => {
 		currentUploadOptions,
 		dynamicMax,
 
-		handleDelete,
+		handleRemove,
 		handleFileBefore,
 		handleFileStart,
 		handleFileProgress,
@@ -297,5 +315,6 @@ export const usePicker = (expose: any) => {
 		handleFileError,
 		handleError,
 		handleFileComplete,
+		handleSortChange,
 	};
 };

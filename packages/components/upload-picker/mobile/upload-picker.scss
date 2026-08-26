@@ -1,11 +1,10 @@
-@use '../style/helper' as *;
+@use '../../style/helper' as *;
 
-$component-name: vc-upload-picker;
+$component-name: vcm-upload-picker;
 $background-color: varfix(background-color, upload-picker);
 $color-light: varfix(color-light, upload-picker);
-$color-primary-light: varfix(color-primary-light, upload-picker);
 $color-dark-extralight: varfix(color-dark-extralight, upload-picker);
-$border-color-light: varfix(border-color-light, upload-picker, #D9D9D9);
+$mask-color: varfix(mask-color, upload-picker);
 
 @include block($component-name) {
 	display: flex;
@@ -14,55 +13,55 @@ $border-color-light: varfix(border-color-light, upload-picker, #D9D9D9);
 	flex-wrap: wrap;
 
 	@include share-rule(box) {
-		width: 64px;
-		height: 64px;
+		width: 78px;
+		height: 78px;
 		cursor: pointer;
-		border-radius: 4px;
+		border-radius: 2px;
 	}
 
 	@include element(item) {
-		margin-right: 12px;
-		margin-bottom: 12px;
+		margin-right: 8px;
+		margin-bottom: 8px;
 
 		@include extend-rule(box);
 	}
 
 	@include element(delete) {
+		@include flex-cc;
+
 		position: absolute;
-		top: -6px;
-		right: -6px;
-		z-index: 1;
-		width: 14px;
-		height: 14px;
-		font-size: 14px;
+		top: 0;
+		right: 0;
+		z-index: 10;
+		width: 15px;
+		height: 15px;
+		font-size: 7px;
 		color: $color-light;
-		background-color: $color-primary-light;
-		border-radius: 7px;
+		background: $mask-color;
+		border-radius: 2px;
 	}
 
 	@include element(upload) {
-		margin-right: 12px;
-		margin-bottom: 12px;
+		margin-right: 8px;
+		margin-bottom: 8px;
 	}
 
 	@include element(box) {
-		display: flex;
+		@include flex-cc;
+
 		line-height: 1;
 		color: $color-dark-extralight;
 		background-color: $background-color;
-		border: 1px dashed $border-color-light;
-		align-items: center;
-		justify-content: center;
 		flex-direction: column;
 
 		@include extend-rule(box);
 	}
 
 	@include element(plus-icon) {
-		font-size: 14px;
+		font-size: 30px;
 	}
 
-	.vc-sort-list > div {
+	.vcm-sort-list > div {
 		margin: 0;
 	}
 }

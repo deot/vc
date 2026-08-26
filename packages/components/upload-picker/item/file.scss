@@ -1,0 +1,49 @@
+@use '../../style/helper' as *;
+
+$background-color: varfix(background-color, upload-picker);
+$color-error: varfix(color-error, upload-picker);
+$color-dark-lightest: varfix(color-dark-lightest, upload-picker);
+$color-dark-extralight: varfix(color-dark-extralight, upload-picker);
+
+@mixin upload-picker-file-item($component-name, $radius) {
+	@include block($component-name) {
+		position: relative;
+		background-color: $background-color;
+
+		@include when(error) {
+			color: $color-error;
+			border: 1px solid $color-error;
+		}
+
+		@include element(content) {
+			position: relative;
+			display: flex;
+			width: 100%;
+			height: 100%;
+			padding: 4px;
+			overflow: hidden;
+			border-radius: $radius;
+			box-sizing: border-box;
+			flex-wrap: wrap;
+			align-items: center;
+			justify-content: center;
+		}
+
+		@include element(title) {
+			width: 100%;
+			overflow: hidden;
+			font-size: 12px;
+			color: $color-dark-lightest;
+			text-align: center;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		@include element(file-icon) {
+			font-size: 24px;
+			color: $color-dark-extralight;
+		}
+	}
+}
+
+@include upload-picker-file-item(vc-upload-picker-file-item, 4px);

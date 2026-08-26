@@ -1,6 +1,6 @@
-@use '../../style/helper' as *;
+@use '../../../style/helper' as *;
 
-$component-name: vc-upload-image-item;
+$component-name: vcm-upload-image-item;
 $background-color: varfix(background-color, upload-picker);
 $color-error: varfix(color-error, upload-picker);
 
@@ -13,7 +13,6 @@ $color-error: varfix(color-error, upload-picker);
 	flex-wrap: wrap;
 
 	@include when(error) {
-		position: relative;
 		color: $color-error;
 		border: 1px solid $color-error;
 	}
@@ -26,6 +25,6 @@ $color-error: varfix(color-error, upload-picker);
 		overflow: hidden;
 		background-color: $background-color;
 		background-size: cover;
-		border-radius: 4px;
+		border-radius: 2px;
 	}
 }

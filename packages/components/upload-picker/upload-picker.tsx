@@ -7,17 +7,17 @@ import { VcInstance } from '../vc';
 
 import { Upload } from '../upload/index';
 import { Icon } from '../icon/index';
-// import SortList from '../sort-list/index';
 import { ImageItem } from './item/image';
-// import { VideoItem } from './item/video-item';
-// import { AudioItem } from './item/audio-item';
-// import { FileItem } from './item/file-item';
+import { VideoItem } from './item/video';
+import { AudioItem } from './item/audio';
+import { FileItem } from './item/file';
 import { usePicker } from './use-picker';
-
-const COMPONENT_NAME = 'vc-upload-picker';
+import type { PickerItem, PickerType } from './types';
+import { SortList } from '../sort-list';
+import { PICKER_ITEM_KEY } from './utils';
 
 export const UploadPicker = defineComponent({
-	name: COMPONENT_NAME,
+	name: 'vc-upload-picker',
 	props: uploadPickerProps,
 	emits: [
 		'update:modelValue',
@@ -25,7 +25,6 @@ export const UploadPicker = defineComponent({
 		'file-start',
 		'file-before',
 		'file-error',
-		'success',
 		'error',
 		'complete',
 		'change',
@@ -33,42 +32,18 @@ export const UploadPicker = defineComponent({
 	],
 	setup(props, { slots, expose }) {
 		const instance = getCurrentInstance()!;
+		const itemMap = {
+			image: ImageItem,
+			video: VideoItem,
+			audio: AudioItem,
+			file: FileItem
+		};
 		const currentPicker = computed(() => {
-			return props.picker.reduce((pre: any[], cur) => {
-				switch (cur) {
-					case 'image':
-						pre.push({
-							type: cur,
-							item: ImageItem
-						});
-						return pre;
-					case 'video':
-						pre.push({
-							type: cur,
-							item: 'div'
-							// item: VideoItem
-						});
-						return pre;
-					case 'audio':
-						pre.push({
-							type: cur,
-							item: 'div'
-							// item: AudioItem
-						});
-						return pre;
-					case 'file':
-						pre.push({
-							type: cur,
-							item: 'div'
-							// item: FileItem
-						});
-						return pre;
-					default:
-						return pre;
-				}
-			}, []);
+			return props.picker
+				.map(type => ({ type, item: itemMap[type] }))
+				.filter(picker => !!picker.item);
 		});
-		const handleClick = (e, type) => {
+		const handleClick = (e: MouseEvent, type: PickerType) => {
 			const options = VcInstance.options.UploadPicker || {};
 			if (typeof props.enhancer === 'function' || (props.enhancer && options.enhancer)) {
 				const fn = typeof props.enhancer === 'function'
@@ -85,50 +60,61 @@ export const UploadPicker = defineComponent({
 				<div class="vc-upload-picker">
 					{
 						currentPicker.value.map((picker, $index) => {
+							const renderItem = (item: PickerItem, index: number) => {
+								const Item: any = picker.item;
+								return (
+									<Item
+										key={item[PICKER_ITEM_KEY]}
+										row={item}
+										disabled={props.disabled}
+										image-preview-options={props.imagePreviewOptions}
+										imageClass={props.imageClass}
+										videoClass={props.videoClass}
+										audioClass={props.audioClass}
+										fileClass={props.fileClass}
+										index={index}
+										keyValue={props.keyValue}
+										data={base.currentValue.value[picker.type]}
+										class="vc-upload-picker__item"
+										onRemove={() => base.handleRemove(index, picker.type)}
+									>
+										{{
+											default: slots.default
+												? (scopeData: any) => slots.default?.({
+														row: item,
+														type: picker.type,
+														// 过滤上传失败项后的可预览列表索引
+														index: scopeData?.current,
+														// 当前文件类型数组中的原始索引
+														typeIndex: index
+													})
+												: null
+										}}
+									</Item>
+								);
+							};
 							return (
-								<Fragment key={`${picker}-${$index}`}>
+								<Fragment key={`${picker.type}-${$index}`}>
 									{
-										base.currentValue.value[picker.type].map((item, index) => {
-											const Item = picker.item;
-											return (
-												<Item
-													key={typeof item === 'object' ? item.uid : item}
-													row={item}
-													disabled={props.disabled}
-													image-preview-options={props.imagePreviewOptions}
-													imageClass={props.imageClass}
-													videoClass={props.videoClass}
-													audioClass={props.audioClass}
-													fileClass={props.fileClass}
-													index={index}
-													keyValue={props.keyValue}
-													data={base.currentValue.value[picker.type]}
-													class="vc-upload-picker__item"
-													onDelete={() => base.handleDelete(index, picker.type)}
-												>
-													{{
-														default: slots.default
-															? (scopeData: any) => {
-																	return slots?.default?.({
-																		row: item,
-																		type: picker.type,
-																		index: (scopeData)?.index,
-																		// 当前分类的index
-																		_index: index
-																	});
-																}
-															: null
-													}}
-												</Item>
-											);
-										})
+										props.sortable
+											? (
+													<SortList
+														modelValue={base.currentValue.value[picker.type]}
+														primaryKey={PICKER_ITEM_KEY}
+														mask={props.mask}
+														onChange={(value: PickerItem[]) => base.handleSortChange(value, picker.type)}
+													>
+														{({ row, index }) => renderItem(row, index)}
+													</SortList>
+												)
+											: base.currentValue.value[picker.type].map(renderItem)
 									}
 									<Upload
 										v-show={!props.disabled && base.dynamicMax.value[picker.type] >= 1}
 										{
 											...base.currentUploadOptions.value[picker.type]
 										}
-										max={base.dynamicMax[picker.type]}
+										max={base.dynamicMax.value[picker.type]}
 										class="vc-upload-picker__upload"
 										onFileBefore={(vFile, fileList) => base.handleFileBefore(vFile, fileList, picker.type)}
 										onFileStart={vFile => base.handleFileStart(vFile, picker.type)}
@@ -139,8 +125,8 @@ export const UploadPicker = defineComponent({
 										onComplete={response => base.handleFileComplete(response, picker.type)}
 									>
 										{
-											slots?.[`${picker.type}-upload`]
-												? slots[`${picker.type}-upload`]?.()
+											slots.upload
+												? slots.upload({ type: picker.type })
 												: (
 														<div
 															class={[props.boxClass, 'vc-upload-picker__box']}

@@ -1,0 +1,128 @@
+/** @jsxImportSource vue */
+
+import { computed, defineComponent, Fragment } from 'vue';
+import { MUpload } from '../../upload/index.m';
+import { Icon } from '../../icon';
+import { MSortList } from '../../sort-list/index.m';
+import { props as uploadPickerProps } from '../upload-picker-props';
+import { usePicker } from '../use-picker';
+import { MImageItem } from './item/image';
+import { MVideoItem } from './item/video';
+import { MAudioItem } from './item/audio';
+import { MFileItem } from './item/file';
+import type { PickerItem } from '../types';
+import { PICKER_ITEM_KEY } from '../utils';
+
+export const MUploadPicker = defineComponent({
+	name: 'vcm-upload-picker',
+	props: uploadPickerProps,
+	emits: [
+		'update:modelValue',
+		'file-success',
+		'file-start',
+		'file-before',
+		'file-error',
+		'error',
+		'complete',
+		'change',
+		'remove-before'
+	],
+	setup(props, { slots, expose }) {
+		const itemMap = {
+			image: MImageItem,
+			video: MVideoItem,
+			audio: MAudioItem,
+			file: MFileItem
+		};
+		const currentPicker = computed(() => {
+			return props.picker
+				.map(type => ({ type, item: itemMap[type] }))
+				.filter(picker => !!picker.item);
+		});
+		const base = usePicker(expose);
+
+		return () => (
+			<div class="vcm-upload-picker">
+				{
+					currentPicker.value.map((picker, $index) => {
+						const renderItem = (item: PickerItem, index: number) => {
+							const Item: any = picker.item;
+							return (
+								<Item
+									key={item[PICKER_ITEM_KEY]}
+									row={item}
+									disabled={props.disabled}
+									image-preview-options={props.imagePreviewOptions}
+									imageClass={props.imageClass}
+									videoClass={props.videoClass}
+									audioClass={props.audioClass}
+									fileClass={props.fileClass}
+									index={index}
+									keyValue={props.keyValue}
+									data={base.currentValue.value[picker.type]}
+									class="vcm-upload-picker__item"
+									onRemove={() => base.handleRemove(index, picker.type)}
+								>
+									{{
+										default: slots.default
+											? (scopeData: any) => slots.default?.({
+													row: item,
+													type: picker.type,
+													// 过滤上传失败项后的可预览列表索引
+													index: scopeData?.current,
+													// 当前文件类型数组中的原始索引
+													typeIndex: index
+												})
+											: null
+									}}
+								</Item>
+							);
+						};
+
+						return (
+							<Fragment key={`${picker.type}-${$index}`}>
+								{
+									props.sortable
+										? (
+												<MSortList
+													modelValue={base.currentValue.value[picker.type]}
+													primaryKey={PICKER_ITEM_KEY}
+													mask={props.mask}
+													onChange={(value: PickerItem[]) => base.handleSortChange(value, picker.type)}
+												>
+													{({ row, index }) => renderItem(row, index)}
+												</MSortList>
+											)
+										: base.currentValue.value[picker.type].map(renderItem)
+								}
+								<MUpload
+									v-show={!props.disabled && base.dynamicMax.value[picker.type] >= 1}
+									{...base.currentUploadOptions.value[picker.type]}
+									max={base.dynamicMax.value[picker.type]}
+									class="vcm-upload-picker__upload"
+									onFileBefore={(vFile, fileList) => base.handleFileBefore(vFile, fileList, picker.type)}
+									onFileStart={vFile => base.handleFileStart(vFile, picker.type)}
+									onFileProgress={(e, vFile) => base.handleFileProgress(e, vFile, picker.type)}
+									onFileSuccess={(response, vFile, cycle) => base.handleFileSuccess(response, vFile, cycle, picker.type)}
+									onFileError={(response, vFile, cycle) => base.handleFileError(response, vFile, cycle, picker.type)}
+									onError={e => base.handleError(e, picker.type)}
+									onComplete={response => base.handleFileComplete(response, picker.type)}
+								>
+									{
+										slots.upload
+											? slots.upload({ type: picker.type })
+											: (
+													<div class={[props.boxClass, 'vcm-upload-picker__box']}>
+														<Icon type="mini-plus" class="vcm-upload-picker__plus-icon" />
+													</div>
+												)
+									}
+								</MUpload>
+							</Fragment>
+						);
+					})
+				}
+			</div>
+		);
+	}
+});

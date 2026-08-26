@@ -1,0 +1,64 @@
+@use '../../../style/helper' as *;
+
+$component-name: vcm-upload-picker-audio-item;
+$color-dark: varfix(color-dark, upload-picker);
+$color-light: varfix(color-light, upload-picker);
+$color-dark-lightest: varfix(color-dark-lightest, upload-picker);
+$color-error: varfix(color-error, upload-picker);
+
+@include block($component-name) {
+	position: relative;
+	display: flex;
+	color: $color-dark-lightest;
+	background-color: $color-dark;
+	box-sizing: border-box;
+
+	@include when(error) {
+		color: $color-error;
+		border: 1px solid $color-error;
+	}
+
+	@include element(content) {
+		@include flex-cc;
+
+		width: 78px;
+		height: 78px;
+		overflow: hidden;
+		border-radius: 2px;
+
+		> audio {
+			width: 100%;
+			height: 100%;
+		}
+	}
+
+	@include element(play) {
+		@include flex-cc;
+
+		position: absolute;
+		inset: 0;
+		padding: 0;
+		color: $color-light;
+		background: transparent;
+		border: 0;
+
+		&::before {
+			position: absolute;
+			width: 24px;
+			height: 24px;
+			border: 1px solid $color-light;
+			border-radius: 50%;
+			content: '';
+		}
+	}
+
+	@include element(play-icon) {
+		z-index: 1;
+		width: 0;
+		height: 0;
+		margin-left: 2px;
+		border-top: 5px solid transparent;
+		border-bottom: 5px solid transparent;
+		border-left: 7px solid currentcolor;
+	}
+}

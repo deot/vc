@@ -1,8 +1,9 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
+import type { PickerType } from './types';
 
 export const props = {
 	picker: {
-		type: Array,
+		type: Array as PropType<PickerType[]>,
 		default: () => (['image'])
 	},
 	sortable: {
@@ -32,7 +33,7 @@ export const props = {
 	},
 	// 数据字典
 	keyValue: {
-		type: Object,
+		type: Object as PropType<{ label: string; value: string }>,
 		default: () => {
 			return {
 				label: 'label',
@@ -43,7 +44,7 @@ export const props = {
 	output: {
 		type: [String, Function],
 		default: 'object',
-		validator: v => /(string|object)/.test(v),
+		validator: (v: string | Function) => typeof v === 'function' || ['string', 'object'].includes(v),
 	},
 	/**
 	 * 可上传的最大值,跟upload内的Max不同，有可能是对象类型，对应的Upload做限制
@@ -59,7 +60,7 @@ export const props = {
 	/**
 	 * 上传成功后对数据的格式化
 	 */
-	formatter: Function,
+	formatter: Function as PropType<(response: any, file: any, type: PickerType) => any>,
 	// TODO 下面两个重复了，需删除
 	/**
 	 * 盒子className

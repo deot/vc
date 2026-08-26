@@ -1,3 +1,6 @@
-import { UploadPicker } from '.';
+import { MUploadPicker } from './mobile/upload-picker';
+import './style.scss';
 
-export const MUploadPicker = UploadPicker;
+export {
+	MUploadPicker
+};

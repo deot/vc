@@ -1,0 +1,35 @@
+@use '../../style/helper' as *;
+
+$color-dark: varfix(color-dark, upload-picker);
+$color-light: varfix(color-light, upload-picker);
+
+.vc-audio-preview {
+	position: relative;
+	display: flex;
+	width: 100vw;
+	height: 100vh;
+	align-items: center;
+	justify-content: center;
+
+	&__wrapper {
+		inset: 0 !important;
+		max-width: none !important;
+		background-color: $color-dark !important;
+		transform: none !important;
+	}
+
+	&__audio {
+		max-width: 100%;
+		max-height: 100%;
+		outline: none;
+	}
+
+	&__close {
+		position: absolute;
+		top: 20px;
+		right: 20px;
+		font-size: 18px;
+		color: $color-light;
+		cursor: pointer;
+	}
+}

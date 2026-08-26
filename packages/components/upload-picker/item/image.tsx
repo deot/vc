@@ -6,15 +6,19 @@ import { VcInstance } from '../../vc/index';
 import { Icon } from '../../icon/index';
 import { Progress } from '../../progress/index';
 import { Image } from '../../image';
+import { getAvailableIndex, getAvailableValues } from '../utils';
 
-const COMPONENT_NAME = 'vc-steps';
+const COMPONENT_NAME = 'vc-upload-picker-image-item';
 
 export const ImageItem = defineComponent({
 	name: COMPONENT_NAME,
 	props: {
 		imageClass: [String, Object, Array],
 		disabled: Boolean,
-		row: Object,
+		row: {
+			type: Object,
+			default: () => ({})
+		},
 		imagePreviewOptions: {
 			type: Object,
 			default: () => ({})
@@ -26,22 +30,15 @@ export const ImageItem = defineComponent({
 		},
 		keyValue: Object
 	},
-	emits: ['open', 'close', 'delete'],
+	emits: ['open', 'close', 'remove'],
 	setup(props, { slots, emit }) {
 		const instance = getCurrentInstance();
 		const current = computed(() => {
-			if ((props.row as any)?.status === 0) return -1;
-			const v = props.data.filter((i: any) => i.status !== 0);
-
-			return v.findIndex((i: any) => {
-				const a = i[props.keyValue!.value] || i;
-				const b = props.row?.[props.keyValue!.value] || props.row;
-				return a === b;
-			});
+			return getAvailableIndex(props.row, props.data, props.index!, props.keyValue!.value);
 		});
 		// 拿到可预览的图片，供预览组件使用
 		const getPreviewData = () => {
-			return props.data.map((i: any) => i?.[props.keyValue!.value]);
+			return getAvailableValues(props.data, props.keyValue!.value);
 		};
 		const previewByPS = (e: any, index: number) => {
 			emit('open');
@@ -62,27 +59,29 @@ export const ImageItem = defineComponent({
 			enhancer(current.value, images, instance) || previewByPS(e, current.value);
 		};
 
-		const handleDel = () => {
-			emit('delete');
+		const handleRemove = () => {
+			emit('remove');
 		};
 
 		return () => {
-			const row = props.row as any;
+			const row = props.row;
+			const value = row[props.keyValue!.value];
+			const isError = row.status === 0 || !!row.errorFlag;
 			return (
 				<div
-					class={[{ 'is-error': row.status == 0 }, 'vc-upload-image-item']}
+					class={[{ 'is-error': isError }, 'vc-upload-image-item']}
 				>
 					{
 						slots.default
-							? slots.default({ index: current.value })
+							? slots.default({ row, index: props.index, current: current.value })
 							: (
 									<Fragment>
 										{
-											!row.errorFlag && typeof row[props.keyValue!.value] === 'string'
+											!row.errorFlag && typeof value === 'string'
 												? (
 														<Image
-															// @ts-ignore
-															src={row[props.keyValue.value]}
+														// @ts-ignore
+															src={value}
 															class={[props.imageClass, 'vc-upload-image-item__content']}
 															fit="cover"
 															previewable={false}
@@ -102,9 +101,9 @@ export const ImageItem = defineComponent({
 																				style="width: 100%;padding: 0 5px"
 																			/>
 																		)
-																	: !row[props.keyValue!.value] && row.percent === 100 && !row.errorFlag
+																	: !value && row.percent === 100 && !row.errorFlag
 																			? (<p style="line-height: 1; padding: 5px">服务器正在接收...</p>)
-																			: row.status == 0
+																			: isError
 																				? (<div style="padding: 5px">上传失败</div>)
 																				: null
 															}
@@ -118,7 +117,7 @@ export const ImageItem = defineComponent({
 													type="close-small"
 													class="vc-upload-picker__delete"
 													// @ts-ignore
-													onClick={handleDel}
+													onClick={handleRemove}
 												/>
 											)
 										}
