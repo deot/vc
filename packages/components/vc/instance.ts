@@ -22,6 +22,7 @@ class Instance {
 	configure(options?: Options) {
 		if (options) {
 			Object.keys(options).forEach((i) => {
+				if (i === 'locale' && options.locale === undefined) return;
 				this.options[i] = options[i];
 			});
 		}

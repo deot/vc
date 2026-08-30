@@ -1,5 +1,6 @@
 import { VcError, VcInstance } from '@deot/vc-components';
 import { Utils } from '@deot/dev-test';
+import { enUS, zhCN } from '@deot/vc-locale';
 
 // @vitest-environment jsdom
 describe('index.ts', () => {
@@ -29,6 +30,20 @@ describe('index.ts', () => {
 		VcInstance.configure();
 		VcInstance.configure(options);
 		expect((VcInstance.options.Theme!.variables).background).toBe('white');
+	});
+
+	it('VcInstance, locale', () => {
+		VcInstance.configure({ locale: zhCN });
+		expect(VcInstance.options.locale.name).toBe('zh-CN');
+
+		VcInstance.configure({ locale: enUS });
+		expect(VcInstance.options.locale.name).toBe('en-US');
+
+		VcInstance.configure();
+		VcInstance.configure({ locale: undefined });
+		expect(VcInstance.options.locale.name).toBe('en-US');
+
+		VcInstance.configure({ locale: zhCN });
 	});
 
 	it('VcInstance, globalEvent', async () => {

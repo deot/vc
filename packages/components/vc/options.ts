@@ -1,10 +1,13 @@
 import type { ComponentInternalInstance } from 'vue';
+import type { Language } from '@deot/vc-locale';
+import { zhCN } from '@deot/vc-locale';
 import { VARIABLES } from '../theme/constant';
 
 const nil = void 0;
 
 export type Options = Partial<{
 	[key: string]: any;
+	locale: Language;
 	Theme: {
 		variables: Record<string, string>;
 	};
@@ -16,10 +19,15 @@ export type Options = Partial<{
 	};
 }>;
 
+export type ResolvedOptions = Options & {
+	locale: Language;
+};
+
 /**
  * 组件的配置项
  */
-export const defaults: Options = {
+export const defaults: ResolvedOptions = {
+	locale: zhCN,
 	Editor: {
 		options: nil,
 		enhancer: nil

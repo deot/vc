@@ -3,6 +3,7 @@ import type { App } from 'vue';
 export { Utils } from '@deot/vc-shared';
 export * from '@deot/vc-hooks';
 export * from '@deot/vc-components';
+export * from '@deot/vc-locale';
 import type { VcOptions } from '@deot/vc-components';
 
 import {

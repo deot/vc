@@ -14,6 +14,9 @@ importers:
 
   packages/components:
     dependencies:
+      '@deot/vc-locale':
+        specifier: ^1.0.73
+        version: link:../locale
       vue:
         specifier: '*'
         version: 3.5.39(typescript@6.0.3)
@@ -57,12 +60,17 @@ importers:
       '@deot/vc-hooks':
         specifier: ^1.0.73
         version: link:../hooks
+      '@deot/vc-locale':
+        specifier: ^1.0.73
+        version: link:../locale
       '@deot/vc-shared':
         specifier: ^1.0.73
         version: link:../shared
       vue:
         specifier: '*'
         version: 3.5.39(typescript@6.0.3)
+
+  packages/locale: {}
 
   packages/shared: {}
 

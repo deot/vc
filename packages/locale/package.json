@@ -1,5 +1,5 @@
 {
-  "name": "@deot/vc",
+  "name": "@deot/vc-locale",
   "version": "1.0.73",
   "type": "module",
   "main": "dist/index.js",
@@ -14,22 +14,10 @@
   "files": [
     "dist"
   ],
+  "sideEffects": false,
   "license": "MIT",
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    "@deot/vc-components": "^1.0.73",
-    "@deot/vc-hooks": "^1.0.73",
-    "@deot/vc-locale": "^1.0.73",
-    "@deot/vc-shared": "^1.0.73"
-  },
-  "peerDependencies": {
-    "vue": "*"
-  },
-  "peerDependenciesMeta": {
-    "vue": {
-      "optional": true
-    }
-  }
+  "dependencies": {}
 }

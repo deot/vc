@@ -18,6 +18,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "dependencies": {
+    "@deot/vc-locale": "^1.0.73"
+  },
   "peerDependencies": {
     "@deot/helper": "*",
     "@zumer/snapdom": "*",

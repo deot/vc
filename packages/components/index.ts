@@ -1,6 +1,7 @@
 import './style';
 
 export * from './vc';
+export * from './locale';
 
 export * from './action-sheet';
 export * from './action-sheet/index.m';
