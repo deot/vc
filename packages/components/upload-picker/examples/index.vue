@@ -2,6 +2,7 @@
 	<div>
 		<UploadPicker
 			v-model="dataSource"
+			show-error
 			:picker="['image', 'video', 'audio', 'file']"
 		>
 			<template #upload="{ type }">
@@ -20,6 +21,7 @@
 		<div>移动端样式</div>
 		<MUploadPicker
 			v-model="dataSource"
+			show-error
 			:picker="['image', 'video', 'audio', 'file']"
 		>
 			<template #upload="{ type }">
@@ -39,24 +41,26 @@ import { VcInstance } from '../../vc/index';
 
 VcInstance.configure({
 	Upload: {
-		onRequest: (options) => {
+		onRequest: ({ requestOptions }) => {
 			return new Promise((resolve) => {
 				if (random(0, 10) > 9) {
 					throw new Error('存在异常');
 				}
 				resolve({
-					...options,
+					...requestOptions,
 					url: 'https://httpbin.org/post',
 					body: {
 						timestamp: new Date().getTime(),
-						...options.body
+						...requestOptions.body
 					},
 					headers: {}
 				});
 			});
 		},
-		onResponse: (request, options) => {
-			const file = options.file;
+		onResponse: ({ request, requestOptions }) => {
+			if (!request) return;
+
+			const file = requestOptions.file;
 			return new Promise((resolve, reject) => {
 				let response;
 				try {

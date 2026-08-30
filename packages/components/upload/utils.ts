@@ -1,5 +1,19 @@
+import type { UploadError } from './types';
+
 const endsWith = (str: string, suffix: string) => {
 	return str.indexOf(suffix, str.length - suffix.length) !== -1;
+};
+
+export const toUploadError = (value: unknown): UploadError => {
+	if (value && typeof value === 'object') return value as UploadError;
+
+	return {
+		message: typeof value === 'string' ? value : undefined
+	};
+};
+
+export const appendFormValue = (body: FormData, key: string, value: unknown) => {
+	body.append(key, value instanceof Blob ? value : String(value));
 };
 
 /**

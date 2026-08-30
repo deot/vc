@@ -3,7 +3,6 @@ import { ImagePreview } from '../../image-preview';
 import { Upload } from '../../upload';
 import { EXTENDS_CONTEXT_KEY } from './constant';
 import { getFileType, IMAGE_ACCEPTS, VIDEO_ACCEPTS } from '../../upload-picker/utils';
-import type { UploadFile } from '../../upload/types';
 
 const MODULE_NAME = 'modules/EventExtend';
 
@@ -11,6 +10,18 @@ const accepts = {
 	image: IMAGE_ACCEPTS,
 	video: VIDEO_ACCEPTS
 };
+
+const getResponseValue = (response: unknown) => {
+	if (!response || typeof response !== 'object') return;
+
+	const values = [
+		Reflect.get(response, 'value'),
+		Reflect.get(response, 'source'),
+		Reflect.get(response, 'url')
+	];
+	return values.find((value): value is string => typeof value === 'string');
+};
+
 export const insertFile = (body: any, context: any) => {
 	if (!body.target) {
 		body.target = {
@@ -46,19 +57,24 @@ export const insertFile = (body: any, context: any) => {
 	context.editor.setSelection(index + 1);
 };
 export const uploadFile = (type: File | string, context: any) => {
-	const slient = typeof type !== 'string';
+	const silent = typeof type !== 'string';
 	const leaf = Upload.open({
-		slient,
-		accept: slient ? (void 0) : accepts[type],
-		onBegin: context.parent.onLoading,
-		onComplete: context.parent.onLoaded,
-		onFileSuccess: (response: any, vFile: UploadFile) => {
-			const value = response.value || response.source || response.url;
-			insertFile({ value, target: vFile.target as File }, context);
+		silent,
+		accept: silent ? (void 0) : accepts[type],
+		onBegin: () => context.parent.onLoading(),
+		onComplete: () => context.parent.onLoaded(),
+		onFileSuccess: ({ response, file }) => {
+			const value = getResponseValue(response);
+			if (!value) return;
+
+			insertFile({
+				value,
+				target: file.target
+			}, context);
 		}
 	});
 
-	slient && leaf.wrapper?.uploadFiles([type]);
+	silent && leaf.wrapper?.uploadFiles([type]);
 	return leaf;
 };
 /**

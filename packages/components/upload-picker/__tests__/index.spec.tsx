@@ -1,9 +1,17 @@
 // @vitest-environment jsdom
 
-import { ImagePreview, MUploadPicker, Upload, UploadPicker } from '@deot/vc-components';
+import {
+	ImagePreview,
+	MUpload,
+	MUploadPicker,
+	Upload,
+	UploadPicker
+} from '@deot/vc-components';
+import type { UploadPickerCallback } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
+import type { UploadCallback } from '../../upload/types';
 import { getAvailableIndex, getAvailableValues, getFileType } from '../utils';
 import type { PickerType } from '../types';
 import { VideoPreview } from '../preview/video';
@@ -26,8 +34,37 @@ const files = [
 
 describe('UploadPicker', () => {
 	it('exports desktop and mobile components', () => {
+		const onFileStart: UploadPickerCallback['onFileStart'] = ({ type }) => type;
+
 		expect(typeof UploadPicker).toBe('object');
 		expect(typeof MUploadPicker).toBe('object');
+		expect(Reflect.get(UploadPicker, 'props')).not.toHaveProperty('onFileBefore');
+		expect(Reflect.get(MUploadPicker, 'props')).not.toHaveProperty('onFileBefore');
+		expect(Reflect.get(UploadPicker, 'props')).toHaveProperty('showError');
+		expect(Reflect.get(MUploadPicker, 'props')).toHaveProperty('showError');
+		expect(Array.isArray(Reflect.get(UploadPicker, 'emits'))).toBe(true);
+		expect(Array.isArray(Reflect.get(MUploadPicker, 'emits'))).toBe(true);
+		expect(typeof onFileStart).toBe('function');
+	});
+
+	it('将 showError 作为内层 Upload 默认值且允许类型配置覆盖', async () => {
+		const desktop = mount(UploadPicker);
+		const mobile = mount(MUploadPicker);
+
+		expect(desktop.findComponent(Upload).props('showError')).toBe(false);
+		expect(mobile.findComponent(MUpload).props('showError')).toBe(false);
+
+		await desktop.setProps({ showError: true });
+		await mobile.setProps({ showError: true });
+		expect(desktop.findComponent(Upload).props('showError')).toBe(true);
+		expect(mobile.findComponent(MUpload).props('showError')).toBe(true);
+
+		await desktop.setProps({
+			uploadOptions: {
+				image: { showError: false }
+			}
+		});
+		expect(desktop.findComponent(Upload).props('showError')).toBe(false);
 	});
 
 	it('keeps image as the default picker and preserves image model updates', async () => {
@@ -193,7 +230,7 @@ describe('UploadPicker', () => {
 	});
 
 	it('distinguishes preview index from type index on desktop and mobile', async () => {
-		const verify = async (Component: any) => {
+		const verify = async (Component: any, UploadComponent: any) => {
 			const wrapper = mount(Component, {
 				props: {
 					modelValue: [files[2]],
@@ -205,18 +242,25 @@ describe('UploadPicker', () => {
 					)
 				}
 			});
-			const upload = wrapper.findComponent(Upload);
+			const upload = wrapper.findComponent(UploadComponent);
 			const failedFile = { uploadId: 'failed-audio', name: 'failed.mp3', percent: 0 };
 
-			upload.vm.$emit('file-start', failedFile);
-			upload.vm.$emit('file-error', {}, failedFile, { error: 1 });
+			const result = { total: 1, completed: 1, succeeded: 0, failed: 1, responses: [], queues: [] };
+			upload.vm.$emit('file-start', { file: failedFile });
+			upload.vm.$emit('file-error', {
+				stage: 'upload',
+				cause: {},
+				message: '上传失败',
+				file: failedFile,
+				result
+			});
 			await nextTick();
 
 			expect(wrapper.findAll('.custom-index').map(i => i.text())).toEqual(['0:0', '-1:1']);
 		};
 
-		await verify(UploadPicker);
-		await verify(MUploadPicker);
+		await verify(UploadPicker, Upload);
+		await verify(MUploadPicker, MUpload);
 	});
 
 	it('keeps preview indexes correct for pending and duplicate values', () => {
@@ -291,45 +335,83 @@ describe('UploadPicker', () => {
 		const upload = wrapper.findComponent(Upload);
 		const vFile = { uploadId: 'upload-1', name: 'raw.pdf', percent: 0 };
 
-		upload.vm.$emit('file-start', vFile);
+		upload.vm.$emit('file-start', { file: vFile });
 		await nextTick();
 		expect(wrapper.find('.vc-upload-picker-file-item').exists()).toBe(true);
 
-		upload.vm.$emit('file-progress', { percent: 45 }, vFile);
+		upload.vm.$emit('file-progress', {
+			progress: { percent: 45 },
+			file: vFile
+		});
 		await nextTick();
 		expect(wrapper.find('.vc-progress').exists()).toBe(true);
 
-		upload.vm.$emit('file-success', { url: '/formatted.pdf' }, vFile, { success: 1 });
-		upload.vm.$emit('complete', { success: 1 });
+		const result = { total: 1, completed: 1, succeeded: 1, failed: 0, responses: [], queues: [] };
+		upload.vm.$emit('file-success', {
+			response: { url: '/formatted.pdf' },
+			file: vFile,
+			result
+		});
+		upload.vm.$emit('complete', { result });
 		await nextTick();
 
 		expect(formatter).toHaveBeenCalledWith({ url: '/formatted.pdf' }, vFile, 'file');
+		expect(wrapper.emitted('file-start')?.[0][0]).toEqual({ file: vFile, type: 'file' });
+		expect(wrapper.emitted('file-success')?.[0][0]).toEqual({
+			response: { url: '/formatted.pdf' },
+			file: vFile,
+			result,
+			type: 'file'
+		});
+		expect(wrapper.emitted('complete')?.[0][0]).toEqual({ result, type: 'file' });
 		expect(wrapper.emitted('file-success')).toHaveLength(1);
+		expect(wrapper.emitted('file-progress')).toBeUndefined();
 		expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).toEqual([
 			{ type: 'file', label: 'formatted.pdf', value: '/formatted.pdf' }
 		]);
 	});
 
 	it('keeps failed upload internally and excludes it from model value', async () => {
-		const verify = async (Component: any, selector: string) => {
+		const verify = async (Component: any, UploadComponent: any, selector: string) => {
 			const wrapper = mount(Component, {
 				props: { modelValue: [], picker: ['audio'] }
 			});
-			const upload = wrapper.findComponent(Upload);
+			const upload = wrapper.findComponent(UploadComponent);
 			const vFile = { uploadId: `upload-error-${selector}`, name: 'broken.mp3', percent: 0 };
 
-			upload.vm.$emit('file-start', vFile);
-			upload.vm.$emit('file-error', {}, vFile, { error: 1 });
-			upload.vm.$emit('complete', { error: 1 });
+			const result = { total: 1, completed: 1, succeeded: 0, failed: 1, responses: [], queues: [] };
+			upload.vm.$emit('file-start', { file: vFile });
+			upload.vm.$emit('file-error', {
+				stage: 'upload',
+				cause: {},
+				message: '上传失败',
+				file: vFile,
+				result
+			});
+			upload.vm.$emit('error', { cause: { message: '上传异常' } });
+			upload.vm.$emit('complete', { result });
 			await nextTick();
 
 			expect(wrapper.find(selector).classes()).toContain('is-error');
 			expect(wrapper.find(selector).text()).toContain('上传失败');
+			expect(wrapper.emitted('file-error')?.[0][0]).toEqual({
+				stage: 'upload',
+				cause: {},
+				message: '上传失败',
+				file: vFile,
+				result,
+				type: 'audio'
+			});
+			expect(wrapper.emitted('error')?.[0][0]).toEqual({
+				cause: { message: '上传异常' },
+				type: 'audio'
+			});
+			expect(wrapper.emitted('complete')?.[0][0]).toEqual({ result, type: 'audio' });
 			expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).toEqual([]);
 		};
 
-		await verify(UploadPicker, '.vc-upload-picker-audio-item');
-		await verify(MUploadPicker, '.vcm-upload-picker-audio-item');
+		await verify(UploadPicker, Upload, '.vc-upload-picker-audio-item');
+		await verify(MUploadPicker, MUpload, '.vcm-upload-picker-audio-item');
 	});
 
 	it('ignores unsupported picker values at runtime', () => {
@@ -395,18 +477,35 @@ describe('UploadPicker', () => {
 	});
 
 	it('runs file-before and the desktop upload enhancer', async () => {
-		const onFileBefore = vi.fn();
+		const onFileBefore = vi.fn<UploadPickerCallback['onFileBefore']>(() => false);
 		const enhancer = vi.fn(() => true);
 		const wrapper = mount(UploadPicker, {
 			props: { modelValue: [], onFileBefore, enhancer }
 		});
-		const vFile = { uploadId: 'before-image', name: 'before.jpg', percent: 0 };
+		const rawFile = new File(['image'], 'before.jpg', { type: 'image/jpeg' });
+		const vFile = {
+			uploadId: 'before-image',
+			current: 1,
+			total: 1,
+			percent: 0,
+			size: rawFile.size,
+			name: rawFile.name,
+			target: rawFile
+		};
 
-		wrapper.findComponent(Upload).vm.$emit('file-before', vFile, [vFile]);
+		const upload = wrapper.findComponent(Upload);
+		const payload = { file: vFile, rawFiles: [rawFile] };
+		const onBefore = Reflect.get(
+			upload.vm.$.vnode.props || {},
+			'onFileBefore'
+		) as UploadCallback['onFileBefore'] | undefined;
+		if (!onBefore) throw new Error('UploadPicker 未绑定 onFileBefore');
+		const processed = await onBefore(payload);
 		await wrapper.find('.vc-upload-picker__box').trigger('click');
 		await nextTick();
 
-		expect(onFileBefore).toHaveBeenCalledWith(vFile, [vFile], 'image');
+		expect(processed).toBe(false);
+		expect(onFileBefore).toHaveBeenCalledWith({ ...payload, type: 'image' });
 		expect(enhancer).toHaveBeenCalledWith(expect.anything(), 'image');
 	});
 

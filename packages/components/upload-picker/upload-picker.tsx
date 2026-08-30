@@ -116,13 +116,14 @@ export const UploadPicker = defineComponent({
 										}
 										max={base.dynamicMax.value[picker.type]}
 										class="vc-upload-picker__upload"
-										onFileBefore={(vFile, fileList) => base.handleFileBefore(vFile, fileList, picker.type)}
-										onFileStart={vFile => base.handleFileStart(vFile, picker.type)}
-										onFileProgress={(e, vFile) => base.handleFileProgress(e, vFile, picker.type)}
-										onFileSuccess={(response, vFile, cycle) => base.handleFileSuccess(response, vFile, cycle, picker.type)}
-										onFileError={(response, vFile, cycle) => base.handleFileError(response, vFile, cycle, picker.type)}
-										onError={e => base.handleError(e, picker.type)}
-										onComplete={response => base.handleFileComplete(response, picker.type)}
+										// @ts-ignore
+										onFileBefore={payload => base.handleFileBefore(payload, picker.type)}
+										onFileStart={payload => base.handleFileStart(payload, picker.type)}
+										onFileProgress={payload => base.handleFileProgress(payload, picker.type)}
+										onFileSuccess={payload => base.handleFileSuccess(payload, picker.type)}
+										onFileError={payload => base.handleFileError(payload, picker.type)}
+										onError={payload => base.handleError(payload, picker.type)}
+										onComplete={payload => base.handleFileComplete(payload, picker.type)}
 									>
 										{
 											slots.upload

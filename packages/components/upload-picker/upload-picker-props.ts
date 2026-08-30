@@ -86,7 +86,7 @@ export const props = {
 			};
 		}
 	},
-	showMessage: Boolean,
+	showError: Boolean,
 	enhancer: [Function, Boolean]
 };
 export type Props = ExtractPropTypes<typeof props>;

@@ -1,0 +1,124 @@
+@use '../../style/helper' as *;
+
+$component-name: vc-upload-task;
+$color-success: varfix(color-success, upload-task);
+$color-error: varfix(color-error, upload-task);
+$color-primary: varfix(color-primary, upload-task);
+$color-dark: varfix(color-dark, upload-task);
+$color-dark-lighter: varfix(color-dark-lighter, upload-task);
+$background-color-light: varfix(background-color-light, upload-task);
+$border-color: varfix(border-color, upload-task, #e8e8e8);
+$row-height: unitfix(32);
+
+@include block($component-name) {
+	position: fixed;
+	right: unitfix(16);
+	bottom: unitfix(16);
+	z-index: 4000;
+	width: unitfix(600);
+	max-width: calc(100vw - #{unitfix(32)});
+	overflow: hidden;
+	font-size: unitfix(13);
+	color: $color-dark;
+	background: $background-color-light;
+	border-radius: unitfix(4);
+	box-shadow: 0 0 unitfix(50) rgb(0 0 0 / 20%);
+
+	button {
+		padding: 0;
+		font: inherit;
+		color: inherit;
+		cursor: pointer;
+		background: transparent;
+		border: 0;
+	}
+
+	@include element(header) {
+		display: flex;
+		height: unitfix(50);
+		padding: 0 unitfix(20);
+		border-bottom: unitfix(1) solid $border-color;
+		align-items: center;
+		justify-content: space-between;
+
+		button {
+			font-size: unitfix(20);
+		}
+	}
+
+	@include element(result) {
+		display: flex;
+		height: $row-height;
+		padding: 0 unitfix(12);
+		color: #fff;
+		background: $color-primary;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	@include element(list) {
+		height: unitfix(300);
+		padding: 0;
+		margin: 0;
+		overflow: auto;
+		list-style: none;
+
+		li {
+			position: relative;
+			height: $row-height;
+			border-bottom: unitfix(1) solid $border-color;
+		}
+	}
+
+	@include element(columns) {
+		font-weight: 500;
+		color: $color-dark-lighter;
+		border-bottom: unitfix(1) solid $border-color;
+	}
+
+	@include element(row) {
+		position: relative;
+		display: flex;
+		height: $row-height;
+		align-items: center;
+
+		> div {
+			min-width: 0;
+			padding: 0 unitfix(12);
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+
+			&:nth-child(1) {
+				flex: 0 0 45%;
+			}
+
+			&:nth-child(2) {
+				flex: 0 0 20%;
+			}
+
+			&:nth-child(3) {
+				flex: 1;
+			}
+		}
+	}
+
+	@include element(bar) {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		background: rgb(74 150 255 / 8%);
+		transition: width 0.2s ease;
+	}
+
+	@include element(status) {
+		@include when(success) {
+			color: $color-success;
+		}
+
+		@include when(error) {
+			color: $color-error;
+		}
+	}
+}

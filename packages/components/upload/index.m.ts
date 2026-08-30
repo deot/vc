@@ -1,3 +1,13 @@
-import { Upload } from '.';
+import { MToast } from '../toast/index.m';
+import { createOpen } from './open';
+import { createUpload } from './upload';
+import './style.scss';
 
-export const MUpload = Upload;
+const MUpload$ = createUpload({
+	error: (message, duration) => MToast.info(message, duration),
+	loading: message => MToast.loading(message)
+});
+
+export const MUpload = Object.assign(MUpload$, {
+	open: createOpen(MUpload$, 'vcm-upload')
+});

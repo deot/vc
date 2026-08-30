@@ -1,4 +1,13 @@
-import type { ExtractPropTypes } from 'vue';
+import type {
+	ExtractPropTypes,
+	ExtractPublicPropTypes,
+	PropType
+} from 'vue';
+import type {
+	UploadCallback,
+	UploadEnhancer,
+	UploadRequestOptions
+} from './types';
 
 export const props = {
 	// 外层标签
@@ -39,24 +48,18 @@ export const props = {
 
 	// ajax formData
 	body: {
-		type: Object,
+		type: Object as PropType<UploadRequestOptions['body']>,
 		default: () => ({})
 	},
 
 	// ajax headers
 	headers: {
-		type: Object,
+		type: Object as PropType<UploadRequestOptions['headers']>,
 		default: () => ({})
 	},
 
-	// 上传类型为文件
-	mode: {
-		type: String,
-		default: '' // file | image | video | ...
-	},
-
 	// 进度视口弹窗
-	showTaskManager: {
+	showTask: {
 		type: Boolean,
 		default: false
 	},
@@ -68,7 +71,7 @@ export const props = {
 	},
 
 	// 增强器，如：原生选取
-	enhancer: Function,
+	enhancer: Function as PropType<UploadEnhancer>,
 
 	// 并行上传
 	parallel: {
@@ -76,18 +79,19 @@ export const props = {
 		default: true
 	},
 
-	showMessage: {
+	showError: {
 		type: Boolean,
 		default: true
-	},
-
-	showToast: {
-		type: Boolean,
-		default: false
 	},
 	showLoading: {
 		type: Boolean,
 		default: false
-	},
+	}
 };
-export type Props = ExtractPropTypes<typeof props>;
+export type UploadResolvedProps = ExtractPropTypes<typeof props>;
+
+export type UploadProps = ExtractPublicPropTypes<typeof props>;
+
+export type UploadOpenOptions = Partial<UploadProps & UploadCallback> & {
+	silent?: boolean;
+};

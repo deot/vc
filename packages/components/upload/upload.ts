@@ -1,18 +1,25 @@
 /** @jsxImportSource vue */
 
-import { h, defineComponent, ref, reactive, computed, onMounted, onUnmounted, getCurrentInstance } from 'vue';
-import type { AnyFunction } from '@deot/helper-shared';
-import { Message } from '../message';
-import { MToast } from '../toast/index.m';
-import { attrAccept } from './utils';
+import { h, defineComponent, ref, computed, onMounted, onUnmounted, getCurrentInstance } from 'vue';
+import type { ComponentPublicInstance } from 'vue';
+import { appendFormValue, attrAccept, toUploadError } from './utils';
 import { getUid } from '@deot/helper-utils';
 import { VcInstance, VcError } from '../vc/index';
 import { props as uploadProps } from './upload-props';
-import type { UploadFile } from './types';
+import type {
+	UploadCallback,
+	UploadEnhancer,
+	UploadFeedback,
+	UploadFile,
+	UploadProgress,
+	UploadRequestOptions
+} from './types';
+import { UploadCycle } from './cycle';
+import type { UploadCycleLeaf } from './cycle';
 
 const COMPONENT_NAME = 'vc-upload';
 
-export const Upload = defineComponent({
+export const createUpload = (feedback: UploadFeedback) => defineComponent({
 	name: COMPONENT_NAME,
 	props: uploadProps,
 	emits: [
@@ -33,161 +40,113 @@ export const Upload = defineComponent({
 		const input$ = ref<HTMLInputElement>();
 		const refreshKey = ref(getUid()); // 每次上传重置，避免历史
 
-		const requests = reactive<any>({});
-		const cycle = reactive({
-			error: 0,
-			success: 0,
-			total: 0,
-			responses: [] as any[],
-			queues: [] as AnyFunction[]
-		});
-
 		let isMounted = false;
-		/* eslint-disable-next-line */
-		let taskManager: any;
+		const cycle = new UploadCycle(props, { emit }, feedback);
 
-		const setDefaultCycle = () => {
-			Object.assign(cycle, {
-				error: 0,
-				success: 0,
-				total: 0,
-				responses: [],
-				queues: []
-			});
-		};
+		const emitError = async (value: unknown = {}, message: string) => {
+			const cause = toUploadError(value);
+			const onMessage: UploadCallback['onMessage'] = instance.vnode.props?.onMessage
+				|| VcInstance.options.Upload?.onMessage
+				|| (() => {});
 
-		const emitError = async (e: any = {}, internalMessage: string) => {
-			const onMessage = instance.vnode.props?.onMessage || VcInstance.options.Upload?.onMessage || (() => {});
+			const customMessage = await onMessage({ cause, message });
+			const resolvedMessage = typeof customMessage === 'string'
+				? customMessage
+				: cause.message || message;
+			cause.message = resolvedMessage;
 
-			const message = (await onMessage(e, internalMessage));
-			e.message = message || e.message || internalMessage;
-
-			if (props.showMessage) {
-				Message.error(e.message, 2500);
-			} else if (props.showToast) {
-				MToast.info(e.message, 2500);
+			if (props.showError) {
+				feedback.error(resolvedMessage, 2500);
 			}
 
-			emit('error', e);
+			emit('error', { cause });
 
-			throw new VcError('vc-upload', e);
+			throw new VcError('vc-upload', cause);
 		};
 
-		const done = (vFile: UploadFile) => {
-			cycle.total++;
-
-			// 顺序上传
-			if (
-				!props.parallel
-				&& cycle.queues
-				&& cycle.queues.length > 0
-			) {
-				(cycle.queues.shift())!();
-			}
-
-			// 上传完毕
-			if (cycle.total === vFile.total) {
-				props.showLoading && loadingInstance?.destroy?.();
-				emit('complete', { ...cycle });
-				setDefaultCycle();
-
-				// taskManager
-				taskManager?.setTipsStatus(true);
-			}
-		};
-
-		const cancel = (file?: UploadFile | string) => {
-			if (file) {
-				let uid: any;
-				if (typeof file === 'object' && file.uploadId) {
-					uid = file.uploadId;
-				} else if (typeof file === 'string') {
-					uid = file;
-				}
-
-				if (requests[uid]) {
-					requests[uid].cancel();
-					delete requests[uid];
-				}
-			} else {
-				Object.keys(requests).forEach((uid) => {
-					if (requests[uid]) {
-						requests[uid].cancel();
-					}
-					delete requests[uid];
-				});
-			}
-		};
-
-		const post = async (vFile: UploadFile) => {
+		const post = async (file: UploadFile, leaf: UploadCycleLeaf) => {
 			if (!isMounted) return;
-			const { mode, size } = props;
-			const onRequest = instance.vnode.props?.onRequest || VcInstance.options.Upload?.onRequest || (() => {});
-			const onResponse = instance.vnode.props?.onResponse || VcInstance.options.Upload?.onResponse || (() => {});
-			const $mode = mode.replace(/s$/, '');
+			const { size } = props;
+			const onRequest: UploadCallback['onRequest'] = instance.vnode.props?.onRequest
+				|| VcInstance.options.Upload?.onRequest
+				|| (() => {});
+			const onResponse: UploadCallback['onResponse'] = instance.vnode.props?.onResponse
+				|| VcInstance.options.Upload?.onResponse
+				|| (() => {});
 
-			const onError = async (originalResponse: any, internalMessage: string) => {
-				delete requests[vFile.uploadId];
-				cycle.error++;
+			const finishClaimedError = (cause: unknown, message: string) => {
+				if (leaf.canceled) return;
 
-				emit('file-error', originalResponse, vFile, { ...cycle }, $mode);
-				emitError(originalResponse, internalMessage);
-				done(vFile);
-				// taskManager
-				taskManager?.setValue(vFile.target, 'error', internalMessage);
+				leaf.error(file, cause, message);
+				emitError(cause, message);
+			};
+
+			const onError = (cause: unknown, message: string) => {
+				if (!leaf.claimSettlement(file)) return;
+				finishClaimedError(cause, message);
 			};
 
 			const onSuccess = async (request?: XMLHttpRequest) => {
+				if (!leaf.claimSettlement(file)) return;
+
+				let response: unknown;
 				try {
-					let response = await onResponse(request, options) || request;
+					const hookResponse = await onResponse({
+						request,
+						requestOptions
+					});
+					response = typeof hookResponse === 'undefined'
+						? request
+						: hookResponse;
+
 					// 如果没有钩子处理，强制转换
 					if (request && response === request) {
 						const text = request.responseType ? request.responseText : request.response;
 						try { response = JSON.parse(text); } catch { response = text; }
 					}
-
-					delete requests[vFile.uploadId];
-					cycle.success++;
-					cycle.responses = [...cycle.responses, response];
-
-					emit('file-success', response, vFile, { ...cycle, }, $mode);
-					done(vFile);
-					// taskManager
-					taskManager?.setValue(vFile.target, 'success');
 				} catch (e) {
-					onError(e, '上传远程失败，请重试');
+					finishClaimedError(e, '上传远程失败，请重试');
+					return;
 				}
+				if (leaf.canceled) return;
+
+				leaf.success(file, response);
 			};
 
-			let options = {
+			let requestOptions: UploadRequestOptions = {
 				url: props.url,
 				headers: props.headers,
 				body: {
 					...props.body,
-					[props.name || VcInstance.options.Upload?.name || 'file']: vFile.target
+					[props.name || VcInstance.options.Upload?.name || 'file']: file.target
 				},
 				timeout: null,
-				file: vFile.target
+				file: file.target
 			};
 			try {
-				if (size && vFile.size > size * 1024 * 1024) {
+				if (size && file.size > size * 1024 * 1024) {
 					onError({}, `上传失败，大小限制为${size}MB`);
 					return;
 				}
 
-				emit('file-start', vFile, $mode);
+				leaf.emit('file-start', {
+					file
+				});
+				if (!isMounted || leaf.canceled) return;
 
-				options = await onRequest(options, instance) || options;
+				requestOptions = await onRequest({ requestOptions, instance }) || requestOptions;
+				if (!isMounted || leaf.canceled) return;
 
-				if (typeof options.url === 'undefined') {
+				const { url } = requestOptions;
+				if (typeof url === 'undefined') {
 					onSuccess();
 					return;
-				};
+				}
 
 				const xhr = new XMLHttpRequest();
 
-				xhr.open('POST', options.url!);
-				options.timeout && (xhr.timeout = options.timeout);
+				xhr.open('POST', url);
+				requestOptions.timeout && (xhr.timeout = requestOptions.timeout);
 
 				xhr.onreadystatechange = () => {
 					if (xhr.readyState !== 4 || (xhr.status === 0)) return;
@@ -198,64 +157,75 @@ export const Upload = defineComponent({
 					}
 				};
 
-				xhr.onabort = (e: any) => onError(e, `上传取消`);
-				xhr.ontimeout = (e: any) => onError(e, `上传超时`);
-				xhr.onerror = (e: any) => onError(e, `调用异常`); // CORS等
+				xhr.onabort = e => onError(e, `上传取消`);
+				xhr.ontimeout = e => onError(e, `上传超时`);
+				xhr.onerror = e => onError(e, `调用异常`); // CORS等
 
 				xhr.upload.onprogress = (e: ProgressEvent) => {
+					if (leaf.isSettled(file)) return;
+
 					const progress = e.loaded / e.total;
-					const result = {
+					const result: UploadProgress = {
 						progress,
 						percent: +((progress * 100).toFixed(2)),
 						target: e
 					};
-					taskManager?.setValue(vFile.target, 'progress', result);
-					emit('file-progress', result, vFile, $mode);
+					file.percent = result.percent;
+					leaf.emit('file-progress', {
+						progress: result,
+						file
+					});
 				};
 
-				for (const header in options.headers) {
-					xhr.setRequestHeader(header, options.headers[header]);
+				for (const header in requestOptions.headers) {
+					xhr.setRequestHeader(header, requestOptions.headers[header]);
 				}
 
 				const body = new FormData();
-				for (const key in options.body) {
-					body.append(key, options.body[key]);
+				for (const key in requestOptions.body) {
+					appendFormValue(body, key, requestOptions.body[key]);
 				}
 
-				xhr.send(body);
+				if (!leaf.registerRequest(file, {
+					cancel: () => xhr.abort()
+				})) return;
 
-				requests[vFile.uploadId] = {
-					cancel: () => xhr && xhr.abort()
-				};
-			} catch (e) {
+				xhr.send(body);
+			} catch (e: unknown) {
 				console.log(e);
 				onError(e, '上传解析失败，请重试');
 			}
 		};
 
-		const upload = async (vFile: UploadFile, fileList: File[]) => {
-			const { onFileBefore = () => {} } = instance.vnode.props || {};
+		const upload = async (file: UploadFile, rawFiles: File[], leaf: UploadCycleLeaf) => {
+			if (!isMounted || leaf.canceled) return;
+
+			const onFileBefore: UploadCallback['onFileBefore'] = instance.vnode.props?.onFileBefore
+				|| (() => {});
 
 			try {
-				const vFile$ = await onFileBefore(vFile, fileList) || vFile;
+				const processedFile = await onFileBefore({ file, rawFiles });
+				if (!isMounted || leaf.canceled) return;
 
-				post(vFile$);
-			} catch (e: any) {
-				cycle.error++;
-				taskManager?.setValue(vFile.target, 'error', e?.message || '上传失败');
-				done(vFile);
+				const processed = leaf.processFile(file, processedFile);
+				if (processed) post(processed, leaf);
+			} catch (e: unknown) {
+				const message = e
+					&& typeof e === 'object'
+					&& 'message' in e
+					&& typeof e.message === 'string'
+					? e.message
+					: '上传失败';
+				leaf.finishPreflightError(file, message, e);
 			}
 		};
 
-		let loadingInstance: any;
-		const uploadFiles = (files: FileList) => {
-			let postFiles: File[] = Array.prototype.slice.call(files);
-
-			postFiles = postFiles.filter(
+		const uploadFiles = (inputFiles: FileList | File[]) => {
+			const rawFiles = Array.from(inputFiles).filter(
 				file => attrAccept(file, props.accept)
 			);
 
-			const length = postFiles.length;
+			const length = rawFiles.length;
 
 			if (length === 0) {
 				emitError({}, `文件格式限制：${props.accept}`);
@@ -265,52 +235,52 @@ export const Upload = defineComponent({
 				return;
 			}
 
-			// reset
-			setDefaultCycle();
-			props.showLoading && (loadingInstance = Message.loading('上传中...'));
-			emit('begin', postFiles);
-
-			cycle.queues = postFiles.map((file, index) => {
-				const vFile: UploadFile = {
-					uploadId: getUid(),
-					current: index + 1,
-					total: length,
-					percent: 0,
-					size: file.size,
-					name: file.name,
-					target: file
-				};
-				return () => {
-					upload(vFile, postFiles);
-				};
+			const files = rawFiles.map((file, index): UploadFile => ({
+				uploadId: getUid(),
+				current: index + 1,
+				total: length,
+				percent: 0,
+				size: file.size,
+				name: file.name,
+				target: file
+			}));
+			const leaf = cycle.create({
+				rawFiles,
+				files
 			});
+			if (!leaf) return;
 
-			// 是否启用并行操作
-			props.parallel
-				? cycle.queues.forEach(fn => fn())
-				: (cycle.queues.shift())?.();
+			leaf.emit('begin', {
+				rawFiles,
+				files
+			});
+			if (!isMounted || !cycle.has(leaf)) return;
 
-			// taskManager
-			taskManager?.show(postFiles);
+			leaf.setQueues(files.map((file) => {
+				return () => {
+					upload(file, rawFiles, leaf);
+				};
+			}));
+			leaf.start();
 		};
 
 		const handleClick = (e: PointerEvent) => {
-			const el = input$.value!;
-			if ((e.target as any).tagName === 'INPUT' || !el) {
+			const el = input$.value;
+			if (e.target instanceof HTMLInputElement || !el) {
 				return;
 			}
 
 			/**
 			 * 渐进增强
 			 */
-			let { enhancer } = VcInstance.options.Upload || {};
+			let enhancer: UploadEnhancer | undefined = VcInstance.options.Upload?.enhancer;
 
 			enhancer = props.enhancer || enhancer || (() => false);
 			const skip = enhancer(instance);
-			if (skip && skip.then) {
+			if (skip && typeof skip !== 'boolean') {
 				let skip$ = false;
 				skip
-					.then((v: any) => {
+					.then((v) => {
 						skip$ = typeof v === 'undefined' ? true : !!v;
 						return v;
 					})
@@ -345,19 +315,11 @@ export const Upload = defineComponent({
 
 		onMounted(() => {
 			isMounted = true;
-			// if (!props.showTaskManager) return;
-
-			// let app = TaskManager.popup({
-			// 	name: getUid()
-			// });
-
-			// taskManager = app.wrapper;
 		});
 
 		onUnmounted(() => {
 			isMounted = false;
-			taskManager?.$emit('portal-fulfilled');
-			cancel();
+			cycle.destroy();
 		});
 
 		// class
@@ -383,7 +345,9 @@ export const Upload = defineComponent({
 		// 上传
 		const inputProps = computed(() => {
 			const result = {
-				ref: (el: any) => (input$.value = el),
+				ref: (el: Element | ComponentPublicInstance | null) => {
+					input$.value = el instanceof HTMLInputElement ? el : undefined;
+				},
 				key: refreshKey.value,
 				type: 'file',
 				accept: props.accept,

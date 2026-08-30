@@ -1,5 +1,5 @@
 import { getCurrentInstance, ref, computed, watch, inject } from 'vue';
-import type { UploadFile } from '../upload/types';
+import type { UploadEventMap } from '../upload/types';
 import { VcError } from '../vc';
 import {
 	getFileType,
@@ -17,8 +17,11 @@ import {
 } from './utils';
 
 import type { Props } from './upload-picker-props';
-import type { PickerItem, PickerType } from './types';
-import { Message } from '../message';
+import type {
+	PickerItem,
+	PickerType,
+	UploadPickerCallback
+} from './types';
 
 export const usePicker = (expose: any) => {
 	const instance = getCurrentInstance()!;
@@ -50,18 +53,22 @@ export const usePicker = (expose: any) => {
 	const currentUploadOptions = computed(() => ({
 		image: {
 			accept: IMAGE_ACCEPTS,
+			showError: props.showError,
 			...(props.uploadOptions.image || {}),
 		},
 		video: {
 			accept: VIDEO_ACCEPTS,
+			showError: props.showError,
 			...(props.uploadOptions.video || {}),
 		},
 		audio: {
 			accept: AUDIO_ACCEPTS,
+			showError: props.showError,
 			...(props.uploadOptions.audio || {}),
 		},
 		file: {
 			accept: `${DOC_ACCEPTS},${EXCEL_ACCEPTS},${PPT_ACCEPTS},${PDF_ACCEPTS},${TXT_ACCEPTS},${HTML_ACCEPTS}`,
+			showError: props.showError,
 			...(props.uploadOptions.file || {}),
 		},
 	}));
@@ -126,31 +133,42 @@ export const usePicker = (expose: any) => {
 		formItem.change?.(v);
 	};
 
-	const handleFileBefore = async (vFile: UploadFile, fileList: File[], type: PickerType) => {
+	const handleFileBefore = async (
+		payload: UploadEventMap['file-before'],
+		type: PickerType
+	) => {
 		if (props?.compressOptions?.compress && type === 'image') {
 			// 图片是否压缩
 			// TODO: 压缩
 		}
-		const onFileBefore = instance.vnode.props?.onFileBefore || (() => {});
-		return (await onFileBefore(vFile, fileList, type)) || vFile;
+		const onFileBefore: UploadPickerCallback['onFileBefore'] = instance.vnode.props?.onFileBefore
+			|| (() => {});
+		return onFileBefore({ ...payload, type });
 	};
 
-	const handleFileStart = (vFile: UploadFile, type: PickerType) => {
+	const handleFileStart = (
+		payload: UploadEventMap['file-start'],
+		type: PickerType
+	) => {
+		const { file } = payload;
 		currentValue.value[type].push(withPickerItemKey({
-			...vFile,
+			...file,
 			type,
-			[props.keyValue.label]: vFile.name
-		}, vFile.uploadId));
-		emit('file-start', vFile, type);
+			[props.keyValue.label]: file.name
+		}, file.uploadId));
+		emit('file-start', { ...payload, type });
 	};
 
-	const handleFileProgress = (e: any, vFile: UploadFile, type: PickerType) => {
-		if (parseInt(e.percent, 10) <= 100) {
+	const handleFileProgress = (
+		{ progress, file }: UploadEventMap['file-progress'],
+		type: PickerType
+	) => {
+		if (progress.percent <= 100) {
 			currentValue.value[type] = currentValue.value[type].map((item: any) => {
-				if (vFile.uploadId === item.uploadId) {
+				if (file.uploadId === item.uploadId) {
 					return withPickerItemKey({
 						...item,
-						percent: e.percent,
+						percent: progress.percent,
 					}, item[PICKER_ITEM_KEY]);
 				}
 				return item;
@@ -158,16 +176,22 @@ export const usePicker = (expose: any) => {
 		}
 	};
 
-	const handleFileSuccess = (response: any, vFile: UploadFile, cycle: any, type: PickerType) => {
+	const handleFileSuccess = (
+		payload: UploadEventMap['file-success'],
+		type: PickerType
+	) => {
+		const { response, file } = payload;
 		currentValue.value[type] = currentValue.value[type].map((item) => {
-			if (item.uploadId === vFile.uploadId) {
+			if (item.uploadId === file.uploadId) {
 				const defaultItem = {
 					type,
-					[props.keyValue.label]: vFile.name,
+					[props.keyValue.label]: file.name,
 					// 外部需要满足response中带value/source
-					[props.keyValue.value]: response?.value || response?.source
+					[props.keyValue.value]: response && typeof response === 'object'
+						? Reflect.get(response, 'value') || Reflect.get(response, 'source')
+						: undefined
 				};
-				const formatted = props.formatter?.(response, vFile, type);
+				const formatted = props.formatter?.(response, file, type);
 				const result = typeof formatted === 'undefined'
 					? defaultItem
 					: typeof formatted === 'object'
@@ -177,38 +201,44 @@ export const usePicker = (expose: any) => {
 			}
 			return item;
 		});
-		emit('file-success', response, vFile, cycle, type);
+		emit('file-success', { ...payload, type });
 	};
 
-	const handleError = (err, type: PickerType) => {
-		props.showMessage
-		&& err.message
-		&& Message.error(err.message);
-		emit('error', err, type);
+	const handleError = (payload: UploadEventMap['error'], type: PickerType) => {
+		emit('error', { ...payload, type });
 	};
 
 	// 内部保存上传失败的文件，不传递给外层
-	const handleFileError = (response, vFile, cycle, type: PickerType) => {
+	const handleFileError = (
+		payload: UploadEventMap['file-error'],
+		type: PickerType
+	) => {
+		if (payload.stage !== 'upload') return;
+
+		const { cause, file } = payload;
 		currentValue.value[type] = currentValue.value[type].map((item) => {
-			if (item.uploadId === vFile.uploadId) {
+			if (item.uploadId === file.uploadId) {
 				return withPickerItemKey({
 					...item,
-					...response,
+					...(cause && typeof cause === 'object' ? cause : {}),
 					// 文件基础信息
 					type,
-					[props.keyValue.label]: vFile.name,
+					[props.keyValue.label]: file.name,
 					status: 0,
 					errorFlag: new Date().getTime(),
 				}, item[PICKER_ITEM_KEY]);
 			}
 			return item;
 		});
-		emit('file-error', response, vFile, cycle, type);
+		emit('file-error', { ...payload, type });
 	};
 
-	const handleFileComplete = (response, type: PickerType) => {
+	const handleFileComplete = (
+		payload: UploadEventMap['complete'],
+		type: PickerType
+	) => {
 		sync();
-		emit('complete', response, type);
+		emit('complete', { ...payload, type });
 	};
 
 	const handleSortChange = (value: PickerItem[], type: PickerType) => {

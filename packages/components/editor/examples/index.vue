@@ -37,21 +37,23 @@ import { VcInstance } from '../../vc';
 
 VcInstance.configure({
 	Upload: {
-		onRequest: (options) => {
+		onRequest: ({ requestOptions }) => {
 			return new Promise((resolve) => {
 				resolve({
-					...options,
+					...requestOptions,
 					url: 'https://httpbin.org/post',
 					body: {
 						timestamp: new Date().getTime(),
-						...options.body
+						...requestOptions.body
 					},
 					headers: {}
 				});
 			});
 		},
-		onResponse: (request, options) => {
-			const file = options.file;
+		onResponse: ({ request, requestOptions }) => {
+			if (!request) return;
+
+			const file = requestOptions.file;
 			return new Promise((resolve, reject) => {
 				let response;
 				try {

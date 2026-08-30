@@ -5,6 +5,7 @@
 			:max="8"
 			:parallel="false"
 			accept="image/*"
+			show-task
 			@error="handleError"
 			@begin="handleBegin"
 			@complete="handleComplete"
@@ -36,16 +37,16 @@ import { Message } from '../../message';
 
 VcInstance.configure({
 	Upload: {
-		onRequest: (options) => {
+		onRequest: ({ requestOptions }) => {
 			return new Promise((resolve) => {
 				resolve({
-					...options,
+					...requestOptions,
 					url: void 0
 				});
 			});
 		},
-		onResponse: (_, options) => {
-			const file = options.file;
+		onResponse: ({ requestOptions }) => {
+			const file = requestOptions.file;
 			return {
 				source: URL.createObjectURL(file),
 				title: file.name,
@@ -54,27 +55,27 @@ VcInstance.configure({
 	}
 });
 const list = ref([]);
-const handleError = (error) => {
-	console.error(error.message);
+const handleError = ({ cause }) => {
+	console.error(cause.message);
 };
 
-const handleBegin = (files) => {
-	console.log(files);
+const handleBegin = ({ rawFiles, files }) => {
+	console.log(rawFiles, files);
 	Message.loading({
 		content: `上传中`
 	});
 };
 
-const handleComplete = (cycle = {}) => {
-	console.log(`Error: ${cycle.error}, Success: ${cycle.success}, 总数：${cycle.total}`);
-	console.log(cycle.responses);
+const handleComplete = ({ result }) => {
+	console.log(`Failed: ${result.failed}, Succeeded: ${result.succeeded}, Total: ${result.total}`);
+	console.log(result.responses);
 	Message.destroy();
 };
 
-const handleFileBefore = (vFile) => {
+const handleFileBefore = ({ file }) => {
 	console.log(`上传之前`);
 	return new Promise((resolve) => {
-		resolve(vFile);
+		resolve(file);
 	});
 };
 
@@ -82,8 +83,8 @@ const handleFileStart = () => {
 	console.log(`开始上传`);
 };
 
-const handleFileSuccess = (response, vFile) => {
-	console.log(`Success：${vFile.current}, 总数：${vFile.total}`);
+const handleFileSuccess = ({ response, file }) => {
+	console.log(`Success：${file.current}, 总数：${file.total}`);
 	console.log(response);
 	Message.destroy();
 	Message.success({
@@ -93,17 +94,17 @@ const handleFileSuccess = (response, vFile) => {
 	list.value.push(response);
 };
 
-const handleFileProgress = (e, vFile) => {
-	console.log(`Progress: 当前：${vFile.current}, 总数：${vFile.total}`);
-	console.log(e);
+const handleFileProgress = ({ progress, file }) => {
+	console.log(`Progress: 当前：${file.current}, 总数：${file.total}`);
+	console.log(progress);
 };
 
-const handleFileError = (e, vFile) => {
-	console.log(`Error: 当前：${vFile.current}, 总数：${vFile.total}`);
-	console.log(e);
+const handleFileError = ({ cause, message, file }) => {
+	console.log(`Error: 当前：${file.current}, 总数：${file.total}`);
+	console.log(cause);
 	Message.destroy();
 	Message.error({
-		content: e.message || 'test'
+		content: message
 	});
 };
 

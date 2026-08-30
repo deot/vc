@@ -14,6 +14,7 @@
 	<div style="v-upload-picker-basic">
 		<UploadPicker
 			v-model="dataSource"
+			show-error
 			:max="{image: 2, video: 2}"
 			:picker="['image', 'video']"
 			:upload-options="uploadOptions"
@@ -45,6 +46,7 @@ const uploadOptions = ref({
 <template>
 	<MUploadPicker
 		v-model="dataSource"
+		show-error
 		:picker="['image', 'video', 'audio', 'file']"
 		:max="{ image: 3, video: 1, audio: 1, file: 2 }"
 	/>
@@ -81,7 +83,10 @@ const dataSource = ref([]);
 | fileClass           | 文件item的样式                 | `string`             | -                        | -                                    |
 | enhancer            | 桌面端上传入口增强器                   | `Function`、`boolean` | -                        | -                                    |
 | compressOptions     | 图片压缩选项参数                  | `object`             | -                        | { compress: false, // 是否开启图片压缩 ... } |
-| showMessage         | 组件内部错误时是否显示消息提示            | `boolean`            | -                        | `false`                              |
+| showError           | 是否展示上传错误；桌面端使用 Message，移动端使用 MToast | `boolean` | - | `false` |
+
+`showError` 会作为内层 Upload 的默认值；`uploadOptions.<type>.showError` 可以为具体
+文件类型覆盖该值。Picker 自身只转发 `error` 事件，不会再次展示错误，避免重复提示。
 
 ### 事件
 
@@ -89,15 +94,15 @@ const dataSource = ref([]);
 | ---------------- | -------------------- | -------- |
 | update:modelValue | `modelValue` 更新      | `(value) => void` |
 | change             | 文件列表改变            | `(value) => void` |
-| file-before        | 单个文件上传前，可异步返回处理后的文件 | `(file, fileList, type) => UploadFile \| Promise<UploadFile>` |
-| file-start         | 单个文件开始上传         | `(file, type) => void` |
-| file-success       | 单个文件上传成功         | `(response, file, info, type) => void` |
-| file-error         | 单个文件上传失败         | `(response, file, info, type) => void` |
-| error              | 上传组件内部错误         | `(error, type) => void` |
-| complete           | 一个上传周期结束         | `(info, type) => void` |
+| file-before        | 单个文件上传前，可异步返回处理后的文件 | `({ file, rawFiles, type }) => false \| void \| Blob \| Partial<UploadFile> \| Promise` |
+| file-start         | 单个文件开始上传         | `({ file, type }) => void` |
+| file-success       | 单个文件上传成功         | `({ response, file, result, type }) => void` |
+| file-error         | 单个文件上传失败         | `({ stage, cause, message, file, result, type }) => void` |
+| error              | 上传组件内部错误         | `({ cause, type }) => void` |
+| complete           | 一个上传周期结束         | `({ result, type }) => void` |
 | remove-before      | 删除前回调，可返回 Promise 阻止后续操作直至完成 | `(typeIndex, type) => void \| Promise<void>` |
 
-以上事件中的 `type` 均为 `image`、`video`、`audio` 或 `file`。
+以上事件中的 `type` 均为 `image`、`video`、`audio` 或 `file`。上传事件只接收一个对象参数；`file-before` 返回 `false` 会取消当前文件。完整类型可通过 `UploadPickerCallback` 导入。
 
 
 ### 插槽

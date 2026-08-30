@@ -240,9 +240,22 @@ describe('Editor component', () => {
 	it('handles toolbar upload, undo, redo and exposed add', async () => {
 		const uploadFiles = vi.fn();
 		const uploadOpen = vi.spyOn(Upload, 'open').mockImplementation((options: any) => {
-			options.onBegin?.();
-			options.onComplete?.();
-			options.onFileSuccess?.({ value: 'https://site/a.png' }, { target: { name: 'a.png' } });
+			const result = {
+				total: 1,
+				completed: 1,
+				succeeded: 1,
+				failed: 0,
+				responses: [],
+				queues: []
+			};
+			const file = { target: { name: 'a.png' } };
+			options.onBegin?.({ rawFiles: [], files: [file] });
+			options.onFileSuccess?.({
+				response: { value: 'https://site/a.png' },
+				file,
+				result
+			});
+			options.onComplete?.({ result });
 			return { wrapper: { uploadFiles } } as any;
 		});
 		const wrapper = mount(Editor, { attachTo: document.body });
@@ -452,25 +465,39 @@ describe('Editor extends', () => {
 	it('uploads files through Upload.open for picker and silent file modes', () => {
 		const uploadFiles = vi.fn();
 		const uploadOpen = vi.spyOn(Upload, 'open').mockImplementation((options: any) => {
-			options.onBegin();
-			options.onComplete();
-			options.onFileSuccess({ url: 'https://site/a.png' }, { target: { name: 'a.png' } });
+			const result = {
+				total: 1,
+				completed: 1,
+				succeeded: 1,
+				failed: 0,
+				responses: [],
+				queues: []
+			};
+			const file = { target: { name: 'a.png' } };
+			options.onBegin({ rawFiles: [], files: [file] });
+			options.onFileSuccess({
+				response: { url: 'https://site/a.png' },
+				file,
+				result
+			});
+			options.onComplete({ result });
 			return { wrapper: { uploadFiles } } as any;
 		});
 		const context = makeEditorContext();
 
 		uploadFile('image', context);
 		expect(uploadOpen).toHaveBeenCalledWith(expect.objectContaining({
-			slient: false,
+			silent: false,
 			accept: 'image/*'
 		}));
 		expect(context.parent.onLoading).toHaveBeenCalledTimes(1);
 		expect(context.parent.onLoaded).toHaveBeenCalledTimes(1);
+		expect(context.editor.insertEmbed).toHaveBeenCalledWith(2, 'image', 'https://site/a.png');
 
 		const file = new File(['a'], 'a.png', { type: 'image/png' });
 		uploadFile(file, context);
 		expect(uploadOpen).toHaveBeenLastCalledWith(expect.objectContaining({
-			slient: true,
+			silent: true,
 			accept: undefined
 		}));
 		expect(uploadFiles).toHaveBeenCalledWith([file]);
