@@ -3,13 +3,27 @@
 
 [![build status][ci-image]][ci-url]
 
-# deot/vc
+# @deot/vc
 
-A component library for web development with `tree-shaking` support.
+面向 Vue 3 的桌面端与移动端组件库，支持按需引入和 `tree-shaking`。
+
+## 安装
+
+```bash
+pnpm add @deot/vc vue
+```
+
+```ts
+import { Button } from '@deot/vc';
+```
 
 ## Monorepo
 
-// TODO
+- [`@deot/vc`](./packages/index) - 聚合入口。
+- [`@deot/vc-components`](./packages/components) - 桌面端与移动端组件。
+- [`@deot/vc-hooks`](./packages/hooks) - Vue 组合式工具。
+- [`@deot/vc-locale`](./packages/locale) - 内置语言与语言类型。
+- [`@deot/vc-shared`](./packages/shared) - 包间共享能力。
 
 ## Contributing
 
@@ -49,6 +63,12 @@ $ npm run dev
 
 # Or pass arguments directly
 $ npm run dev -- --package-name '**'
+```
+
+- Documentation
+
+```console
+$ npm run docs:dev
 ```
 
 - Build

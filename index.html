@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<title>@deot/vc 文档</title>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-renderer/dist/index.style.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-markdown/dist/index.style.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-playground/dist/index.style.css">
+</head>
+<body>
+	<div id="app"></div>
+	<script>
+		const repositoryRaw = 'https://raw.githubusercontent.com/deot/vc/refs/heads/main/';
+		const repositoryBlob = 'https://github.com/deot/vc/blob/main/';
+		const locales = {
+			'zh-CN': { label: '简体中文' },
+			'en-US': { label: 'English' }
+		};
+		const packageDocuments = [
+			{ label: '@deot/vc', value: 'index', source: 'packages/index/README.md' },
+			{ label: '@deot/vc-components', value: 'components', source: 'packages/components/README.md' },
+			{ label: '@deot/vc-hooks', value: 'hooks', source: 'packages/hooks/README.md' },
+			{ label: '@deot/vc-locale', value: 'locale', source: 'packages/locale/README.md' },
+			{ label: '@deot/vc-shared', value: 'shared', source: 'packages/shared/README.md' }
+		];
+		const componentGroups = [
+			{
+				label: { zh: '配置', en: 'Configuration' },
+				documents: [
+					{
+						label: { zh: 'VcInstance 数据配置', en: 'VcInstance Configuration' },
+						value: '/packages/components#vcinstance'
+					}
+				],
+				items: ['theme']
+			},
+			{
+				label: { zh: '通用', en: 'General' },
+				items: ['button', 'icon', 'scroller', 'text']
+			},
+			{
+				label: { zh: '布局', en: 'Layout' },
+				items: ['affix', 'divider']
+			},
+			{
+				label: { zh: '导航', en: 'Navigation' },
+				items: ['dropdown', 'pagination', 'steps', 'tabs']
+			},
+			{
+				label: { zh: '数据录入', en: 'Data Entry' },
+				items: [
+					'artboard',
+					'cascader',
+					'checkbox',
+					'color-picker',
+					'date-picker',
+					'editor',
+					'form',
+					'image-crop',
+					'input',
+					'picker',
+					'radio',
+					'rate',
+					'select',
+					'slider',
+					'sort-list',
+					'switch',
+					'textarea',
+					'time-picker',
+					'upload',
+					'upload-picker'
+				]
+			},
+			{
+				label: { zh: '数据展示', en: 'Data Display' },
+				items: [
+					'calendar',
+					'card',
+					'carousel',
+					'chart',
+					'collapse',
+					'countdown',
+					'counter',
+					'image',
+					'image-preview',
+					'image-processor',
+					'list',
+					'marquee',
+					'popover',
+					'progress',
+					'recycle-list',
+					'table',
+					'tag',
+					'timeline',
+					'tree'
+				]
+			},
+			{
+				label: { zh: '反馈', en: 'Feedback' },
+				items: [
+					'action-sheet',
+					'alert',
+					'drawer',
+					'message',
+					'modal',
+					'notice',
+					'popconfirm',
+					'spin',
+					'toast'
+				]
+			},
+			{
+				label: { zh: '辅助', en: 'Utilities' },
+				items: [
+					'clipboard',
+					'customer',
+					'debounce',
+					'defer',
+					'expand',
+					'fragment',
+					'popup',
+					'portal',
+					'print',
+					'resizer',
+					'snapshot',
+					'touch',
+					'transition'
+				]
+			}
+		];
+		const componentName = value => value
+			.split('-')
+			.map(part => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+			.join('');
+		const components = componentGroups.flatMap(group => group.items.map(value => ({
+			label: componentName(value),
+			value,
+			source: `packages/components/${value}/README.md`
+		})));
+		const readmes = Object.fromEntries([
+			['guide', 'README.md'],
+			...packageDocuments.map(item => [`package-${item.value}`, item.source]),
+			...components.map(item => [`component-${item.value}`, item.source])
+		]);
+		const readmeRoutes = Object.fromEntries(Object.entries(readmes).flatMap(([value, source]) => {
+			const route = value === 'guide'
+				? '/packages/guide'
+				: value.startsWith('package-')
+					? `/packages/${value.slice('package-'.length)}`
+					: `/components/${value.slice('component-'.length)}`;
+			if (source === 'README.md') return [[source, route]];
+			const directory = source.slice(0, -'/README.md'.length);
+			return [[source, route], [directory, route], [`${directory}/`, route]];
+		}));
+		const localeReadmes = Object.fromEntries(Object.keys(locales).map(lang => [lang, readmes]));
+		const componentItem = value => ({
+			label: componentName(value),
+			value: `/components/${value}`
+		});
+		const sidebars = Object.fromEntries(Object.keys(locales).map(lang => [
+			lang,
+			[
+				{
+					label: lang === 'zh-CN' ? '简介' : 'Introduction',
+					value: '/packages/guide'
+				},
+				{
+					label: lang === 'zh-CN' ? '包' : 'Packages',
+					children: packageDocuments.map(item => ({
+						label: item.label,
+						value: `/packages/${item.value}`
+					}))
+				},
+				{
+					label: lang === 'zh-CN' ? '组件' : 'Components',
+					children: componentGroups.map(group => ({
+						label: lang === 'zh-CN' ? group.label.zh : group.label.en,
+						children: [
+							...(group.documents || []).map(item => ({
+								label: lang === 'zh-CN' ? item.label.zh : item.label.en,
+								value: item.value
+							})),
+							...group.items.map(componentItem)
+						]
+					}))
+				}
+			]
+		]));
+
+		const createHomeDocument = (lang) => {
+			const t = (zh, en) => (lang === 'zh-CN' ? zh : en);
+			const accent = '#2563eb';
+			const accentSecondary = '#14b8a6';
+			const accents = [accent, accentSecondary, '#8b5cf6'];
+			const action = (label, to, variant = 'solid') => ({
+				label,
+				to: `/${lang}${to}`,
+				variant,
+				size: 'large',
+				color: accent,
+				textColor: variant === 'solid' ? '#ffffff' : accent
+			});
+			const stack = {
+				marginTop: 0,
+				marginBottom: 80,
+				paddingTop: 0,
+				paddingBottom: 0,
+				maxWidth: 1200
+			};
+			const block = (id, type, props, appearance = stack) => ({
+				id,
+				module: { type, version: 1, props },
+				appearance
+			});
+			const cards = items => items.map((item, index) => ({
+				...item,
+				accent: item.accent || accents[index]
+			}));
+
+			return {
+				schemaVersion: 2,
+				meta: { id: `vc-home-${lang}`, title: '@deot/vc' },
+				layout: {
+					mode: 'sortable',
+					maxWidth: 1920,
+					minHeight: 600,
+					background: '#ffffff'
+				},
+				blocks: [
+					block('home-hero', 'hero', {
+						eyebrow: '@deot/vc',
+						title: t('面向 Vue 3 的桌面端与移动端组件库', 'Vue 3 components for desktop and mobile'),
+						description: t(
+							'统一导出组件、Hooks、语言包与共享能力，支持按需引入和 tree-shaking。',
+							'Components, hooks, locales and shared utilities with focused imports and tree-shaking.'
+						),
+						align: 'left',
+						accent,
+						accentSecondary,
+						background: '',
+						showVisual: true,
+						minHeight: 500,
+						highlights: [
+							{ value: String(components.length), label: t('组件文档', 'Component docs') },
+							{ value: 'Vue 3', label: t('框架', 'Framework') },
+							{ value: 'Desktop / Mobile', label: t('多端组件', 'Multiple targets') }
+						],
+						actions: [
+							action(t('开始使用', 'Get Started'), '/packages/guide'),
+							action(t('浏览组件', 'Browse Components'), '/components/button', 'outline')
+						]
+					}, { ...stack, marginBottom: 64, fullWidth: true }),
+					block('home-features', 'features', {
+						eyebrow: t('能力', 'Capabilities'),
+						title: t('从基础控件到复杂交互', 'From primitives to rich interactions'),
+						description: t(
+							'组件按使用场景组织，并为桌面端和移动端保留清晰的实现边界。',
+							'Components are organized by use case with clear desktop and mobile variants.'
+						),
+						columns: 3,
+						gap: 24,
+						items: cards([
+							{
+								title: t('完整组件体系', 'Complete component set'),
+								description: t(
+									'覆盖通用、布局、数据录入、展示、导航和反馈场景。',
+									'Covers general, layout, data entry, display, navigation, and feedback.'
+								),
+								badge: 'Components',
+								icon: 'grid'
+							},
+							{
+								title: t('桌面与移动端', 'Desktop and mobile'),
+								description: t('同一包内提供对应的桌面端与 M 前缀移动端能力。', 'Desktop components and M-prefixed mobile variants live in one package.'),
+								badge: 'Desktop / Mobile',
+								icon: 'link'
+							},
+							{
+								title: t('模块化导出', 'Modular exports'),
+								description: t('可使用聚合包，也可按组件、Hooks、语言包分层引入。', 'Use the aggregate package or import components, hooks and locales separately.'),
+								badge: 'ESM',
+								icon: 'filter'
+							}
+						])
+					}),
+					block('home-steps', 'steps', {
+						eyebrow: t('快速开始', 'Quick start'),
+						title: t('三步开始使用组件', 'Start using components in three steps'),
+						columns: 3,
+						items: cards([
+							{ title: t('安装', 'Install'), description: 'pnpm add @deot/vc vue', icon: '01' },
+							{ title: t('引入组件', 'Import'), description: "import { Button } from '@deot/vc'", icon: '02' },
+							{ title: t('使用组件', 'Use'), description: '<Button>确定</Button>', icon: '03' }
+						])
+					}),
+					block('home-cta', 'cta', {
+						eyebrow: t('组件文档', 'Component docs'),
+						title: t('按场景查找所需组件', 'Find the right component by use case'),
+						description: t('从侧栏进入各组件的示例、API 与桌面/移动端说明。', 'Open examples, APIs and desktop/mobile notes from the sidebar.'),
+						align: 'center',
+						accent,
+						accentSecondary,
+						background: '',
+						actions: [action(t('查看 Button', 'Open Button'), '/components/button')]
+					}, { ...stack, marginBottom: 0, fullWidth: true })
+				]
+			};
+		};
+
+		const pathSegments = location.pathname.split('/');
+		const localeIndex = pathSegments.findIndex(segment => Boolean(locales[segment]));
+		const basePath = localeIndex >= 0
+			? `${pathSegments.slice(0, localeIndex).join('/')}/`
+			: location.pathname.endsWith('/')
+				? location.pathname
+				: new URL('./', location.href).pathname;
+		const docsBase = new URL(basePath, location.origin).href;
+
+		window.$docs = {
+			base: docsBase,
+			namespace: '@deot/vc-site',
+			repository: 'https://github.com/deot/vc',
+			theme: { default: 'system' },
+			locales,
+			routes: Object.fromEntries([
+				['/', {
+					content: {
+						'zh-CN': createHomeDocument('zh-CN'),
+						'en-US': createHomeDocument('en-US')
+					}
+				}],
+				...Object.keys(readmes).map(value => [
+					value === 'guide'
+						? '/packages/guide'
+						: value.startsWith('package-')
+							? `/packages/${value.slice('package-'.length)}`
+							: `/components/${value.slice('component-'.length)}`,
+					{
+						value,
+						content: 'default',
+						sidebar: sidebars,
+						header: 'default',
+						footer: 'default',
+						extra: null
+					}
+				]),
+				['*', '/packages/guide']
+			]),
+			resolve: {
+				markdown: ({ lang, value }) => (
+					localeReadmes[lang] || localeReadmes['zh-CN']
+				)[value],
+				resource: ({ source, runtime }) => {
+					if (source === 'README.md' || /^packages\/(?:[^/]+|components\/[^/]+)\/README\.md$/.test(source)) {
+						return runtime.mode === 'development'
+							? `/${source}`
+							: new URL(source, repositoryRaw).href;
+					}
+					return undefined;
+				},
+				link: ({ href, lang, source }) => {
+					const logicalOrigin = 'https://docs.local';
+					let target;
+					try {
+						target = new URL(href, new URL(source, `${logicalOrigin}/`));
+					} catch {
+						return undefined;
+					}
+					if (target.origin !== logicalOrigin) return undefined;
+					const path = target.pathname.replace(/^\//, '');
+					const route = readmeRoutes[path];
+					if (route) return `/${lang}${route}${target.search}${target.hash}`;
+					return `${new URL(path, repositoryBlob).href}${target.search}${target.hash}`;
+				}
+			},
+			modules: {
+				'vue': 'https://cdn.jsdelivr.net/npm/vue@3.5.39/dist/vue.esm-browser.prod.js',
+				'@deot/vc': 'https://cdn.jsdelivr.net/npm/@deot/vc@1.0.73/dist/index.js',
+				'@deot/vc-components': 'https://cdn.jsdelivr.net/npm/@deot/vc-components@1.0.73/dist/index.js',
+				'@deot/vc-hooks': 'https://cdn.jsdelivr.net/npm/@deot/vc-hooks@1.0.73/dist/index.js',
+				'@deot/vc-shared': 'https://cdn.jsdelivr.net/npm/@deot/vc-shared@1.0.73/dist/index.js',
+				'@deot/helper-cache': 'https://cdn.jsdelivr.net/npm/@deot/helper-cache@1.1.10/+esm',
+				'@deot/helper-dom': 'https://cdn.jsdelivr.net/npm/@deot/helper-dom@1.1.5/+esm',
+				'@deot/helper-load': 'https://cdn.jsdelivr.net/npm/@deot/helper-load@1.1.3/+esm',
+				'@deot/helper-resize': 'https://cdn.jsdelivr.net/npm/@deot/helper-resize@1.1.3/+esm',
+				'@deot/helper-scheduler': 'https://cdn.jsdelivr.net/npm/@deot/helper-scheduler@1.1.8/+esm',
+				'@deot/helper-utils': 'https://cdn.jsdelivr.net/npm/@deot/helper-utils@1.1.8/+esm',
+				'@deot/helper-validator': 'https://cdn.jsdelivr.net/npm/@deot/helper-validator@1.1.4/+esm',
+				'@deot/helper-wheel': 'https://cdn.jsdelivr.net/npm/@deot/helper-wheel@1.1.6/+esm',
+				'@zumer/snapdom': 'https://cdn.jsdelivr.net/npm/@zumer/snapdom@2.15.0/+esm',
+				'echarts': 'https://cdn.jsdelivr.net/npm/echarts@6.1.0/+esm',
+				'lodash-es': 'https://cdn.jsdelivr.net/npm/lodash-es@4.18.1/+esm',
+				'photoswipe': 'https://cdn.jsdelivr.net/npm/photoswipe@5.4.4/dist/photoswipe.esm.js',
+				'photoswipe/lightbox': 'https://cdn.jsdelivr.net/npm/photoswipe@5.4.4/dist/photoswipe-lightbox.esm.js',
+				'quill': 'https://cdn.jsdelivr.net/npm/quill@2.0.3/+esm'
+			},
+			styles: {
+				'@deot/style': 'https://cdn.jsdelivr.net/npm/@deot/style@1.1.4/dist/index.css',
+				'@deot/vc-components': 'https://cdn.jsdelivr.net/npm/@deot/vc-components@1.0.73/dist/index.style.css',
+				'photoswipe': 'https://cdn.jsdelivr.net/npm/photoswipe@5.4.4/dist/photoswipe.css',
+				'quill': 'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css'
+			}
+		};
+	</script>
+	<script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm"></script>
+</body>
+</html>

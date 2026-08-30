@@ -13,6 +13,7 @@
     "lint:es": "eslint . --color",
     "lint:style": "stylelint '**/*.{css,scss}' --cache --cache-location node_modules/.cache/stylelint/",
     "link": "ddc link",
+    "docs:dev": "doc dev --workspace .",
     "dev": "ddc dev --vue-package 'components,hooks,index'",
     "update": "ddc update",
     "build": "ddc build --vue-package 'components,hooks,index' --script-formats=es,cjs,umd,iife --external vue",
@@ -41,6 +42,8 @@
   },
   "homepage": "https://github.com/deot/vc#readme",
   "devDependencies": {
-    "@deot/dev": "^2.9.15"
+    "@deot/dev": "^2.9.15",
+    "@deot/docs": "^1.0.9",
+    "@deot/docs-cli": "^1.0.5"
   }
 }
