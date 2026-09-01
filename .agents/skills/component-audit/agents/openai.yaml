@@ -1,0 +1,4 @@
+interface:
+  display_name: "组件审计"
+  short_description: "按源码审计单个 @deot/vc 组件的 locale、theme 与 README"
+  default_prompt: "使用 $component-audit 按当前公开源码审计并按需调整单个 @deot/vc 组件的 locale、theme 与 README。"

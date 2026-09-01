@@ -1,29 +1,29 @@
 # AGENTS.md
 
-## Cursor Cloud specific instructions
+## 说明
 
-This is a **Vue 3 component library** (`@deot/vc`) — a pure frontend monorepo with no backend services or databases.
+这是一个 **Vue 3 组件库**（`@deot/vc`）——纯前端 monorepo，不包含后端服务或数据库。
 
-### Services
+### 服务
 
-| Service | Command | Notes |
+| 服务 | 命令 | 说明 |
 |---------|---------|-------|
-| Dev server | `npm run dev` | Vite-based, serves all component examples at `http://localhost:5173/` |
+| 开发服务器 | `npm run dev` | 基于 Vite，在 `http://localhost:5173/` 提供所有组件示例 |
 
-### Key Commands
+### 主要命令
 
-All commands are defined in the root `package.json`. See `README.md` and `.cursor/rules/web-project-standards.mdc` for full details.
+所有命令都定义在根目录的 `package.json` 中。完整说明请参阅 `README.md` 和 `.cursor/rules/web-project-standards.mdc`。
 
-- **Lint:** `npm run lint` (ESLint + Stylelint); `npm run lint:fix` to auto-fix
-- **Typecheck:** `npm run typecheck` (vue-tsc)
-- **Test:** `npm run test` (Vitest, all packages); use `-- --package-name components --subpackage <name>` for a single component
-- **Build:** `npm run build` (ES/CJS/UMD/IIFE outputs)
-- **Dev:** `npm run dev` (Vite dev server with all component examples)
+- **代码检查：** `npm run lint`（ESLint + Stylelint）；使用 `npm run lint:fix` 自动修复
+- **类型检查：** `npm run typecheck`（vue-tsc）
+- **测试：** `npm run test`（使用 Vitest 测试所有包）；测试单个组件时使用 `-- --package-name components --subpackage <name>`
+- **构建：** `npm run build`（输出 ES/CJS/UMD/IIFE 格式）
+- **开发：** `npm run dev`（运行包含所有组件示例的 Vite 开发服务器）
 
-### Non-obvious caveats
+### 容易忽略的注意事项
 
-- The `pnpm-workspace.yaml` includes an `allowBuilds` section so that native addons (`@swc/core`, `esbuild`, `puppeteer`, etc.) build automatically during `pnpm install` — no separate Puppeteer install step is needed.
-- ESLint reports pre-existing warnings/errors in README.md files and some examples (mostly `no-console`). These are not blockers.
-- The build produces TypeScript warnings from `echarts` and `@vue/runtime-core` typings — these are upstream issues and do not affect the build output.
-- Test commands use `ddc test` under the hood; `--package-name` must be one of `components`, `hooks`, or `index` (not a component name like `button`). Use `--subpackage` for individual components.
-- The project uses **tab indentation** (see `.editorconfig`). Respect this when editing files.
+- `pnpm-workspace.yaml` 包含 `allowBuilds` 配置，因此原生扩展（`@swc/core`、`esbuild`、`puppeteer` 等）会在 `pnpm install` 期间自动构建，无需单独安装 Puppeteer。
+- ESLint 会报告 README.md 文件和部分示例中原本就存在的警告或错误（主要是 `no-console`），这些问题不会阻塞当前工作。
+- 构建时会出现来自 `echarts` 和 `@vue/runtime-core` 类型定义的 TypeScript 警告；这些属于上游问题，不影响构建产物。
+- 测试命令底层使用 `ddc test`；`--package-name` 必须是 `components`、`hooks` 或 `index` 之一，不能使用 `button` 之类的组件名。测试单个组件时使用 `--subpackage`。
+- 项目使用 **Tab 缩进**（参阅 `.editorconfig`），编辑文件时请遵循这一规范。
