@@ -32,6 +32,8 @@ describe('index.ts', () => {
 	it('icon', async () => {
 		const wrapper = mount(() => <Button icon="search" />);
 
+		expect(wrapper.classes()).toContain('is-with-icon');
+		expect(wrapper.find('.vc-button__icon').exists()).toBeTruthy();
 		expect(wrapper.findComponent(Icon).exists()).toBeTruthy();
 	});
 
@@ -89,6 +91,8 @@ describe('index.ts', () => {
 		));
 
 		expect(wrapper.find('.custom-icon').exists()).toBeTruthy();
+		expect(wrapper.find('.vc-button__icon').exists()).toBeTruthy();
+		expect(wrapper.classes()).toContain('is-with-icon');
 		expect(wrapper.find('.custom-icon').text()).toBe('off');
 
 		await wrapper.trigger('mouseenter');
@@ -117,11 +121,14 @@ describe('index.ts', () => {
 		expect(count).toBe(1);
 	});
 	it('click, loading', async () => {
-		expect.assertions(4);
+		expect.assertions(5);
 		const handler = async () => {
 			await Utils.sleep(10);
-			expect(wrapper.html()).toMatch('stroke="#ccc');
-			expect(wrapper.findComponent(Spin).exists()).toBeTruthy();
+			const spin = wrapper.findComponent(Spin);
+
+			expect(spin.exists()).toBeTruthy();
+			expect(spin.props('foreground')).toBe('var(--vc-button-color-loading, #ccc)');
+			expect(spin.props('background')).toBe('var(--vc-button-color-primary, var(--vc-color-primary))');
 		};
 
 		const wrapper = mount(() => <Button onClick={handler} />);
@@ -136,7 +143,7 @@ describe('index.ts', () => {
 		expect.assertions(1);
 		const handler = async () => {
 			await Utils.sleep(10);
-			expect(wrapper.html()).toMatch('stroke="#fff');
+			expect(wrapper.findComponent(Spin).props('foreground')).toBe('currentColor');
 		};
 
 		const wrapper = mount(() => <Button type="primary" onClick={handler} />);

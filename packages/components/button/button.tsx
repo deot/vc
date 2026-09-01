@@ -26,6 +26,7 @@ export const Button = defineComponent({
 		const classes = computed(() => ({
 			'is-circle': props.circle || group.circle,
 			'is-alone': !slots?.default,
+			'is-with-icon': Boolean(props.icon || slots.icon),
 			'is-round': props.round,
 			'is-long': props.long,
 			'is-disabled': props.disabled,
@@ -64,18 +65,33 @@ export const Button = defineComponent({
 				>
 					{
 						props.icon
-						&& (<Icon type={props.icon} />)
+						&& (
+							<span class="vc-button__icon">
+								<Icon type={props.icon} />
+							</span>
+						)
 					}
 					{
-						slots.icon && (slots?.icon?.({
-							hover: isHover.value
-						}))
+						slots.icon && (
+							<span class="vc-button__icon">
+								{
+									slots.icon({
+										hover: isHover.value
+									})
+								}
+							</span>
+						)
 					}
 					{
 						isLoading.value && (
 							<Spin
 								size={12}
-								foreground={props.type === 'default' ? '#ccc' : '#fff'}
+								foreground={
+									props.type === 'default'
+										? 'var(--vc-button-color-loading, #ccc)'
+										: 'currentColor'
+								}
+								background="var(--vc-button-color-primary, var(--vc-color-primary))"
 								class="vc-button__loading"
 							/>
 						)

@@ -1,5 +1,7 @@
 @use '../style/helper' as *;
 
+$border-color-default: varfix(border-color-default, button-group, #d9d9d9);
+
 @include block(vc-button-group) {
 	display: inline-block;
 
@@ -9,6 +11,12 @@
 		float: left;
 		margin-left: -1px;
 		border-radius: 0;
+
+		@include when(with-icon) {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
 
 		&:first-child {
 			border-bottom-left-radius: unitfix(8);
@@ -27,7 +35,7 @@
 
 	@include block(vc-button) {
 		@include when(default) {
-			border-color: #d9d9d9;
+			border-color: $border-color-default;
 		}
 	}
 
