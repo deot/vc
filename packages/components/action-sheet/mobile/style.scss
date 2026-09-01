@@ -1,13 +1,14 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-action-sheet;
+$background-color: varfix(background-color, action-sheet);
 $background-color-light: varfix(background-color-light, action-sheet);
+$color-light: varfix(color-light, action-sheet);
 $color-dark: varfix(color-dark, action-sheet);
 $color-dark-lightest: varfix(color-dark-lightest, action-sheet);
 $color-light-deep: varfix(color-light-deep, action-sheet);
 $color-light-deeper: varfix(color-light-deeper, action-sheet);
 $color-disabled: varfix(color-disabled, action-sheet);
-$color-disabled-light: varfix(color-disabled-light, action-sheet);
 
 @include block($component-name) {
 	color: $color-dark;
@@ -43,7 +44,7 @@ $color-disabled-light: varfix(color-disabled-light, action-sheet);
 
 	@include element(actions) {
 		max-height: 70vh;
-		overflow-y: auto;
+		overflow: hidden auto;
 	}
 
 	@include element(item) {
@@ -121,8 +122,17 @@ $color-disabled-light: varfix(color-disabled-light, action-sheet);
 	}
 
 	@include element(gap) {
+		position: relative;
 		height: unitfix(8);
-		background: $color-disabled-light;
+		background: $background-color;
+
+		&::after {
+			position: absolute;
+			inset: 0;
+			background: $color-light;
+			content: '';
+			opacity: 0.2;
+		}
 	}
 
 	@include element(cancel) {
