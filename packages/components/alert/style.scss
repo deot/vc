@@ -1,36 +1,76 @@
 @use '../style/helper' as *;
 
 $component-name: vc-alert;
+$color-default: varfix(color-default, alert, #515151);
+$color-info: varfix(color-primary, alert);
+$color-success: varfix(color-success, alert);
+$color-error: varfix(color-error, alert);
+$color-warning: varfix(color-warning, alert);
+$border-color-info: varfix(border-color-info, alert, #91d5ff);
+$border-color-success: varfix(border-color-success, alert, #b7eb8f);
+$border-color-error: varfix(border-color-error, alert, #ffb08f);
+$border-color-warning: varfix(border-color-warning, alert, #ffe58f);
+$background-color-info: varfix(background-color-info, alert, #e6f7ff);
+$background-color-success: varfix(background-color-success, alert, #f6ffed);
+$background-color-error: varfix(background-color-error, alert, #fbe9e9);
+$background-color-warning: varfix(background-color-warning, alert, #fffbe6);
+
+@mixin alert-type($type-color, $border-color, $background-color) {
+	background-color: $background-color;
+	border-color: $border-color;
+
+	@include element((icon, desc)) {
+		color: $type-color;
+	}
+
+	@include element(message) {
+		> em {
+			color: $type-color;
+		}
+	}
+
+	@include when(desc, true) {
+		@include element(title) {
+			color: $type-color;
+		}
+	}
+}
 
 @include block($component-name) {
 	position: relative;
-	min-height: 32px;
-	padding: 4px 10px;
+	min-height: unitfix(32);
+	padding: unitfix(4) unitfix(10);
 	overflow: hidden;
-	font-size: 14px;
-	color: #515151;
+	font-size: unitfix(14);
+	color: $color-default;
 	border-style: solid;
-	border-width: 1px;
-	border-radius: 4px;
+	border-width: unitfix(1);
+	border-radius: unitfix(4);
 	box-sizing: border-box;
 
 	@include element(icon) {
 		position: absolute;
-		top: 15px;
-		left: 12px;
-		font-size: 16px;
+		top: unitfix(15);
+		left: unitfix(12);
+		font-size: unitfix(16);
 		transform: translate3d(0, -50%, 0);
 	}
 
 	@include when(icon, true) {
-		padding-left: 38px;
+		padding-left: unitfix(38);
 	}
 
 	@include when(desc, true) {
-		padding-left: 50px;
+		padding: unitfix(6) unitfix(6) unitfix(6) unitfix(44);
 
 		@include element(icon) {
-			font-size: 28px;
+			top: unitfix(16);
+			font-size: unitfix(22);
+		}
+
+		@include element(title) {
+			margin-bottom: unitfix(5);
+			font-size: unitfix(14);
 		}
 	}
 
@@ -42,53 +82,34 @@ $component-name: vc-alert;
 		flex: 1;
 
 		> em {
-			margin: 0 3px;
+			margin: 0 unitfix(3);
 			font-style: normal;
 		}
 	}
 
+	@include element(desc) {
+		opacity: 0.7;
+	}
+
 	@include element(close) {
-		margin-left: 12px;
+		margin: 0 unitfix(4) 0 unitfix(12);
+		font-size: unitfix(12);
 		cursor: pointer;
 	}
 
 	@include when(info) {
-		@include element(message) {
-			> em {
-				color: #456CF6;
-			}
-		}
-	}
-
-	@include when(info) {
-		@include element(message) {
-			> em {
-				color: #456CF6;
-			}
-		}
+		@include alert-type($color-info, $border-color-info, $background-color-info);
 	}
 
 	@include when(success) {
-		@include element(message) {
-			> em {
-				color: #52c41a;
-			}
-		}
+		@include alert-type($color-success, $border-color-success, $background-color-success);
 	}
 
 	@include when(error) {
-		@include element(message) {
-			> em {
-				color: #ed4014;
-			}
-		}
+		@include alert-type($color-error, $border-color-error, $background-color-error);
 	}
 
 	@include when(warning) {
-		@include element(message) {
-			> em {
-				color: #faad14;
-			}
-		}
+		@include alert-type($color-warning, $border-color-warning, $background-color-warning);
 	}
 }

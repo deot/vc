@@ -30,7 +30,7 @@ describe('index.ts', () => {
 		expect(root.exists()).toBe(true);
 		expect(root.classes()).toContain('is-info');
 		expect(root.classes()).toContain('has-icon');
-		expect(root.html()).toContain(TITLE);
+		expect(root.find('.vc-alert__title').text()).toBe(TITLE);
 	});
 
 	it('type', async () => {
@@ -48,7 +48,7 @@ describe('index.ts', () => {
 
 		await waitTransition();
 		expect(wrapper.find('.vc-alert').classes()).toContain('has-desc');
-		expect(wrapper.html()).toContain(DESC);
+		expect(wrapper.find('.vc-alert__desc').text()).toBe(DESC);
 	});
 
 	it('title & desc support innerHTML', async () => {

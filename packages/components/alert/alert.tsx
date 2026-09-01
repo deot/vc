@@ -7,14 +7,6 @@ import { TransitionFade } from '../transition';
 
 const COMPONENT_NAME = 'vc-alert';
 
-// [color, borderColor, backgroundColor], -> CSS
-const THEME_MAP = {
-	info: ['#456CF6', '#91d5ff', '#e6f7ff'],
-	success: ['#52c41a', '#b7eb8f', '#f6ffed'],
-	error: ['#ed4014', '#ffb08f', '#fbe9e9'],
-	warning: ['#ffbf00', '#ffe58f', '#fffbe6']
-};
-
 export const Alert = defineComponent({
 	name: COMPONENT_NAME,
 	props: alertProps,
@@ -22,41 +14,6 @@ export const Alert = defineComponent({
 		const isActive = ref(false);
 
 		const showIcon = computed(() => props.icon !== false);
-		const containerStyle = computed(() => {
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			const [_, borderColor, backgroundColor] = THEME_MAP[props.type];
-			return {
-				borderColor,
-				backgroundColor
-			};
-		});
-
-		const iconStyle = computed(() => {
-			const [color] = THEME_MAP[props.type];
-			return {
-				color
-			};
-		});
-
-		const titleStyle = computed(() => {
-			const [color] = THEME_MAP[props.type];
-			return (props.desc || slots.desc)
-				? {
-						marginBottom: '5px',
-						fontSize: '14px',
-						color
-					}
-				: {};
-		});
-
-		const descStyle = computed(() => {
-			const [color] = THEME_MAP[props.type];
-			return {
-				color,
-				opacity: '.7'
-			};
-		});
-
 		const iconType = computed(() => {
 			return typeof props.icon === 'string' && props.icon ? props.icon : props.type;
 		});
@@ -83,13 +40,11 @@ export const Alert = defineComponent({
 						isActive.value && (
 							<div
 								class={[`is-${props.type}`, { 'has-icon': showIcon.value, 'has-desc': props.desc || slots.desc }, 'vc-alert']}
-								style={containerStyle.value}
 							>
 								{
 									showIcon.value && (
 										<Icon
 											type={iconType.value}
-											style={iconStyle.value}
 											class="vc-alert__icon"
 										/>
 									)
@@ -100,20 +55,20 @@ export const Alert = defineComponent({
 											props.title
 												? (
 														<div
-															style={titleStyle.value}
+															class="vc-alert__title"
 															innerHTML={props.title}
 														/>
 													)
 												: (
-														<div style={titleStyle.value}>
+														<div class="vc-alert__title">
 															{ slots?.default?.() }
 														</div>
 													)
 										}
 										{
 											props.desc
-												? (<div style={descStyle.value} innerHTML={props.desc} />)
-												: (slots.desc && (<div style={descStyle.value}>{ slots.desc?.() }</div>))
+												? (<div class="vc-alert__desc" innerHTML={props.desc} />)
+												: (slots.desc && (<div class="vc-alert__desc">{ slots.desc?.() }</div>))
 										}
 									</div>
 									{
