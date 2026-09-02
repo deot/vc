@@ -2,8 +2,10 @@
 
 import { computed, defineComponent, ref, Transition } from 'vue';
 import { props as calendarProps } from './calendar-props';
-import date2holiday from './date2holiday';
-import { formatDate, getMonthData, sortWeekNames } from './utils';
+import { monthLocaleKeys, weekLocaleKeys } from './constants';
+import { Date2Holiday } from './date2holiday';
+import { useLocale } from '../locale';
+import { formatDate, getMonthData, sortWeekdays } from './utils';
 import type { CalendarAdjacentWeeks, CalendarCell } from './types';
 
 const COMPONENT_NAME = 'vc-calendar';
@@ -18,6 +20,7 @@ export const Calendar = defineComponent({
 	name: COMPONENT_NAME,
 	props: calendarProps,
 	setup(props, { expose, slots }) {
+		const { lang, t } = useLocale();
 		const now = new Date();
 		const currentTarget = ref(now);
 		const currentMonth = ref(now.getMonth());
@@ -53,13 +56,16 @@ export const Calendar = defineComponent({
 
 		const monthSlotData = computed(() => {
 			return {
-				month: props.monthNames[currentMonth.value]?.[props.lang],
+				month: t(monthLocaleKeys[currentMonth.value]),
 				year: currentYear.value
 			};
 		});
 
 		const weekSlotData = computed(() => {
-			return sortWeekNames(props.weekNames, props.firstDayOfWeek);
+			return sortWeekdays(
+				weekLocaleKeys.map(key => t(key)),
+				props.firstDayOfWeek
+			);
 		});
 
 		const next = () => {
@@ -94,8 +100,7 @@ export const Calendar = defineComponent({
 				data: monthSlotData.value,
 				month: currentMonth.value,
 				year: currentYear.value,
-				lang: props.lang,
-				monthNames: props.monthNames
+				lang: lang.value
 			};
 
 			return slots.month
@@ -105,10 +110,9 @@ export const Calendar = defineComponent({
 
 		const renderWeek = () => {
 			const slotProps = {
-				data: weekSlotData.value.map(item => item[props.lang]),
-				date: weekSlotData.value.map(item => item[props.lang]),
-				weekNames: weekSlotData.value,
-				lang: props.lang,
+				data: weekSlotData.value,
+				date: weekSlotData.value,
+				lang: lang.value,
 				firstDayOfWeek: props.firstDayOfWeek
 			};
 
@@ -118,7 +122,7 @@ export const Calendar = defineComponent({
 		};
 
 		const renderDate = (cell: CalendarCell, index: number) => {
-			const holiday = date2holiday(cell.value);
+			const holiday = Date2Holiday.get(cell.value, lang.value);
 			const slotProps = {
 				cell,
 				today: today.value,

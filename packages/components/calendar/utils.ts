@@ -1,5 +1,5 @@
 import { preZero } from '@deot/helper-utils';
-import type { CalendarCell, CalendarCellType, CalendarFirstDayOfWeek, CalendarMonthData, CalendarName } from './types';
+import type { CalendarCell, CalendarCellType, CalendarFirstDayOfWeek, CalendarMonthData } from './types';
 
 export const normalizeFirstDayOfWeek = (firstDayOfWeek: CalendarFirstDayOfWeek = 1): number => {
 	const day = ((Math.trunc(firstDayOfWeek) - 1) % 7 + 7) % 7 + 1;
@@ -7,15 +7,15 @@ export const normalizeFirstDayOfWeek = (firstDayOfWeek: CalendarFirstDayOfWeek =
 	return day === 7 ? 0 : day;
 };
 
-export const sortWeekNames = (
-	weekNames: CalendarName[],
+export const sortWeekdays = <T>(
+	weekdays: T[],
 	firstDayOfWeek: CalendarFirstDayOfWeek = 1
-): CalendarName[] => {
+): T[] => {
 	const start = normalizeFirstDayOfWeek(firstDayOfWeek);
 
 	return [
-		...weekNames.slice(start),
-		...weekNames.slice(0, start)
+		...weekdays.slice(start),
+		...weekdays.slice(0, start)
 	];
 };
 

@@ -1,15 +1,10 @@
 import type { VNodeChild } from 'vue';
+import type { CalendarHoliday } from './date2holiday/types';
 
-export type CalendarLang = 'ch' | 'en' | string;
+export type CalendarLang = string;
 export type CalendarCellType = 'prev' | 'current' | 'next' | string;
 export type CalendarFirstDayOfWeek = number;
 export type CalendarAdjacentWeeks = boolean | [boolean, boolean];
-
-export interface CalendarName {
-	ch: string;
-	en: string;
-	[key: string]: string;
-}
 
 export interface CalendarCell {
 	date: number;
@@ -23,16 +18,6 @@ export interface CalendarMonthData {
 	data: CalendarCell[];
 }
 
-export interface CalendarHoliday {
-	holiday: string;
-	festivals?: Array<{
-		type: string;
-		desc: string;
-		value: string;
-	}>;
-	[key: string]: any;
-}
-
 export interface RenderDateProps {
 	cell: CalendarCell;
 	today: string;
@@ -40,14 +25,18 @@ export interface RenderDateProps {
 }
 
 export interface RenderMonthProps {
+	data: {
+		month: string;
+		year: number;
+	};
 	month: number;
 	year: number;
 	lang: CalendarLang;
-	monthNames: CalendarName[];
 }
 
 export interface RenderWeekProps {
-	weekNames: CalendarName[];
+	data: string[];
+	date: string[];
 	lang: CalendarLang;
 	firstDayOfWeek: CalendarFirstDayOfWeek;
 }

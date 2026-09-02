@@ -2,5 +2,31 @@ import type { Language } from '../types';
 
 export const zhCN: Language = {
 	name: 'zh-CN',
-	vc: {}
+	vc: {
+		Calendar: {
+			months: {
+				january: '一月',
+				february: '二月',
+				march: '三月',
+				april: '四月',
+				may: '五月',
+				june: '六月',
+				july: '七月',
+				august: '八月',
+				september: '九月',
+				october: '十月',
+				november: '十一月',
+				december: '十二月'
+			},
+			weekdays: {
+				sunday: '日',
+				monday: '一',
+				tuesday: '二',
+				wednesday: '三',
+				thursday: '四',
+				friday: '五',
+				saturday: '六'
+			}
+		}
+	}
 };

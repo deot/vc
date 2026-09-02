@@ -7,11 +7,11 @@
 			<Button @click="basic?.next()">
 				下个月
 			</Button>
-			<Button @click="toggleLang">
-				{{ lang === 'ch' ? 'English' : '中文' }}
+			<Button @click="toggleLocale">
+				{{ locale.name === 'zh-CN' ? 'English' : '中文' }}
 			</Button>
 		</div>
-		<Calendar ref="basic" :lang="lang">
+		<Calendar ref="basic">
 			<template #month="{ data }">
 				<div class="v-calendar-example__month">
 					{{ data.month }} {{ data.year }}
@@ -41,16 +41,21 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onBeforeUnmount, ref } from 'vue';
 import { Calendar } from '..';
 import { Button } from '../../button';
+import { VcInstance } from '../../vc';
+import { enUS, zhCN } from '@deot/vc-locale';
 
 const basic = ref();
-const lang = ref('ch');
+const locale = ref(zhCN);
 
-const toggleLang = () => {
-	lang.value = lang.value === 'ch' ? 'en' : 'ch';
+const toggleLocale = () => {
+	locale.value = locale.value.name === 'zh-CN' ? enUS : zhCN;
+	VcInstance.configure({ locale: locale.value });
 };
+
+onBeforeUnmount(() => VcInstance.configure({ locale: zhCN }));
 </script>
 
 <style lang="scss">
@@ -68,16 +73,16 @@ const toggleLang = () => {
 		align-items: center;
 		justify-content: center;
 		height: 56px;
-		color: #2e3136;
+		color: var(--vc-calendar-color-dark-light, var(--vc-color-dark-light));
 		font-size: 22px;
-		background: #f5f6f7;
+		background: var(--vc-calendar-background-color, var(--vc-background-color));
 	}
 
 	&__week {
 		display: grid;
 		grid-template-columns: repeat(7, 1fr);
 		padding: 12px 0;
-		color: #666;
+		color: var(--vc-calendar-color-dark-extralight, var(--vc-color-dark-extralight));
 		text-align: center;
 	}
 
@@ -91,8 +96,8 @@ const toggleLang = () => {
 		border-radius: 22px;
 
 		&.is-selected {
-			color: #fff;
-			background: #2f75ef;
+			color: var(--vc-calendar-color-light, var(--vc-color-light));
+			background: var(--vc-calendar-color-primary, var(--vc-color-primary));
 		}
 
 		small {

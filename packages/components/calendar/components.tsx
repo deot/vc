@@ -6,24 +6,24 @@ export const defaultRenderDate = ({ cell, today }: RenderDateProps) => {
 	return <span class={{ 'is-selected': cell.value === today }}>{ cell.date }</span>;
 };
 
-export const defaultRenderMonth = ({ month, year, lang, monthNames }: RenderMonthProps) => {
+export const defaultRenderMonth = ({ data }: RenderMonthProps) => {
 	return (
 		<div class="vc-calendar__month">
 			<div>
-				{ monthNames[month]?.[lang] }
+				{ data.month }
 				&nbsp;&nbsp;&nbsp;&nbsp;
-				{ year }
+				{ data.year }
 			</div>
 		</div>
 	);
 };
 
-export const defaultRenderWeek = ({ weekNames, lang }: RenderWeekProps) => {
+export const defaultRenderWeek = ({ data }: RenderWeekProps) => {
 	return (
 		<div class="vc-calendar__week">
 			{
-				weekNames.map((item, index) => {
-					return <span key={index}>{ item[lang] }</span>;
+				data.map((item, index) => {
+					return <span key={index}>{ item }</span>;
 				})
 			}
 		</div>

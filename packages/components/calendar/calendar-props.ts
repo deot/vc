@@ -1,10 +1,7 @@
 import type { ExtractPropTypes, PropType } from 'vue';
-import { monthNames, weekNames } from './constants';
 import { defaultRenderDate, defaultRenderMonth, defaultRenderWeek } from './components';
 import type {
 	CalendarAdjacentWeeks,
-	CalendarLang,
-	CalendarName,
 	CalendarRender,
 	RenderDateProps,
 	RenderMonthProps,
@@ -24,10 +21,6 @@ export const props = {
 		type: Function as PropType<CalendarRender<RenderWeekProps>>,
 		default: defaultRenderWeek
 	},
-	lang: {
-		type: String as PropType<CalendarLang>,
-		default: 'ch'
-	},
 	firstDayOfWeek: {
 		type: Number,
 		default: 1,
@@ -40,14 +33,6 @@ export const props = {
 			return typeof value === 'boolean'
 				|| (Array.isArray(value) && value.length === 2 && value.every(item => typeof item === 'boolean'));
 		}
-	},
-	monthNames: {
-		type: Array as PropType<CalendarName[]>,
-		default: () => monthNames
-	},
-	weekNames: {
-		type: Array as PropType<CalendarName[]>,
-		default: () => weekNames
 	}
 };
 
