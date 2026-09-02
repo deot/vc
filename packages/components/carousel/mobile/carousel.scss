@@ -1,5 +1,9 @@
 @use '../../style/helper' as *;
 
+$color-indicator: varfix(color-indicator, carousel, #fff);
+$background-color-indicator: varfix(background-color-indicator, carousel, rgb(0 0 0 / 70%));
+$background-color-dot: varfix(background-color-dot, carousel, #fff);
+$background-color-dot-outside: varfix(background-color-dot-outside, carousel, #C0C4CC);
 $component-name: vcm-carousel;
 
 @include block($component-name) {
@@ -53,7 +57,7 @@ $component-name: vcm-carousel;
 			}
 
 			button {
-				background-color: #C0C4CC;
+				background-color: $background-color-dot-outside;
 				opacity: 0.24;
 			}
 		}
@@ -113,7 +117,7 @@ $component-name: vcm-carousel;
 		padding: 0;
 		margin: 0 2px;
 		cursor: pointer;
-		background-color: #fff;
+		background-color: $background-color-dot;
 		border: none;
 		border-radius: 50%;
 		outline: none;
@@ -129,8 +133,8 @@ $component-name: vcm-carousel;
 		height: 20px;
 		padding: 0 10px;
 		line-height: 20px;
-		color: white;
-		background: rgb(0 0 0 / 70%);
+		color: $color-indicator;
+		background: $background-color-indicator;
 		border-radius: 10px;
 	}
 }

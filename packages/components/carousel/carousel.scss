@@ -1,5 +1,10 @@
 @use '../style/helper' as *;
 
+$color-arrow: varfix(color-arrow, carousel, #fff);
+$background-color-arrow: varfix(background-color-arrow, carousel, rgb(31 45 61 / 11%));
+$background-color-arrow-hover: varfix(background-color-arrow-hover, carousel, rgb(31 45 61 / 23%));
+$background-color-dot: varfix(background-color-dot, carousel, #fff);
+$background-color-dot-outside: varfix(background-color-dot-outside, carousel, #C0C4CC);
 $component-name: vc-carousel;
 
 @include block($component-name) {
@@ -28,10 +33,10 @@ $component-name: vc-carousel;
 		margin: 0;
 		margin-top: -18px;
 		font-size: 12px;
-		color: #fff; 
+		color: $color-arrow;
 		text-align: center;
 		cursor: pointer;
-		background-color: rgb(31 45 61 / 11%);
+		background-color: $background-color-arrow;
 		border: none;
 		border-radius: 50%;
 		outline: none;
@@ -46,7 +51,7 @@ $component-name: vc-carousel;
 		}
 
 		&:hover {
-			background-color: rgb(31 45 61 / 23%);
+			background-color: $background-color-arrow-hover;
 		}
 	}
 
@@ -85,7 +90,7 @@ $component-name: vc-carousel;
 			}
 
 			button {
-				background-color: #C0C4CC;
+				background-color: $background-color-dot-outside;
 				opacity: 0.24;
 			}
 		}
@@ -145,7 +150,7 @@ $component-name: vc-carousel;
 		padding: 0;
 		margin: 0;
 		cursor: pointer;
-		background-color: #fff;
+		background-color: $background-color-dot;
 		border: none;
 		outline: none;
 		opacity: 0.48;

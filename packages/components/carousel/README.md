@@ -1,298 +1,371 @@
 ## 走马灯（Carousel）
 
-在有限空间内，循环播放同一类型的图片、文字等内容
+在有限空间内轮播一组同级的图片、文字或卡片内容。
 
 ### 何时使用
 
-- 当有一组平级的内容。
-- 当内容空间不足时，可以用走马灯的形式进行收纳，进行轮播展现。
-- 常用于一组图片或卡片轮播。
+- 需要依次展示一组同级内容时。
+- 展示空间有限，需要通过自动播放或手动切换收纳内容时。
+- 需要在桌面端或移动端提供横向、纵向或卡片式轮播时。
 
 ### 基础用法
 
-默认是自动播放，并且`hover`切换
+`Carousel` 默认自动播放，桌面端指示器默认在悬停时切换；将 `autoplay` 设为 `false`、`trigger` 设为 `click` 后，仅在点击指示器时切换。
 
-:::RUNTIME
+:::playground
+<!--
+<config lang="json5">
+{
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="v-carousel-basic">
-		<p>自动切换，默认Hover切换</p>
-		<Carousel :height="150">
-			<CarouselItem v-for="item in 4" :key="item">
-				<h3>{{ item }}</h3>
-			</CarouselItem>
-		</Carousel>
-		<p style="margin-top: 10px">不自动切换，Click指示器切换</p>
-		<Carousel
-			:autoplay="false"
-			trigger="click"
-			:height="150"
+	<div class="carousel-demo">
+		<section>
+			<p>自动播放，悬停指示器切换</p>
+			<Carousel :height="160">
+				<CarouselItem v-for="item in 4" :key="item">
+					<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
+						{{ item }}
+					</div>
+				</CarouselItem>
+			</Carousel>
+		</section>
+
+		<section>
+			<p>停止自动播放，点击指示器切换</p>
+			<Carousel :height="160" :autoplay="false" trigger="click">
+				<CarouselItem v-for="item in 4" :key="item">
+					<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
+						{{ item }}
+					</div>
+				</CarouselItem>
+			</Carousel>
+		</section>
+	</div>
+</template>
+
+<script setup>
+import { Carousel, CarouselItem } from '@deot/vc';
+</script>
+
+<style scoped>
+.carousel-demo {
+	display: grid;
+	gap: 24px;
+}
+
+.carousel-demo p {
+	margin: 0 0 8px;
+}
+
+.slide {
+	display: flex;
+	height: 100%;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	font-size: 20px;
+	background: #7c94c3;
+}
+
+.slide.is-even {
+	background: #a6b6d5;
+}
+</style>
+```
+:::
+
+### 指示器与箭头
+
+`dots="outside"` 将指示器放到容器外，`arrow="always"` 让横向桌面轮播始终显示切换箭头。两者都可以通过绑定布尔值 `false` 隐藏。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<Carousel
+		:height="180"
+		:autoplay="false"
+		dots="outside"
+		arrow="always"
+	>
+		<CarouselItem v-for="item in 4" :key="item" :label="`第 ${item} 张`">
+			<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
+				{{ item }}
+			</div>
+		</CarouselItem>
+	</Carousel>
+</template>
+
+<script setup>
+import { Carousel, CarouselItem } from '@deot/vc';
+</script>
+
+<style scoped>
+.slide {
+	display: flex;
+	height: 100%;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	font-size: 20px;
+	background: #7c94c3;
+}
+
+.slide.is-even {
+	background: #a6b6d5;
+}
+</style>
+```
+:::
+
+### 垂直与卡片模式
+
+`vertical` 改为纵向轮播；`card` 展示当前项及相邻项。卡片模式只支持横向。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="carousel-layout">
+		<section>
+			<p>垂直轮播</p>
+			<Carousel vertical :height="180" :autoplay="false">
+				<CarouselItem v-for="item in 4" :key="item">
+					<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
+						{{ item }}
+					</div>
+				</CarouselItem>
+			</Carousel>
+		</section>
+
+		<section>
+			<p>卡片轮播</p>
+			<Carousel card :height="180" :autoplay="false">
+				<CarouselItem v-for="item in 5" :key="item">
+					<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
+						{{ item }}
+					</div>
+				</CarouselItem>
+			</Carousel>
+		</section>
+	</div>
+</template>
+
+<script setup>
+import { Carousel, CarouselItem } from '@deot/vc';
+</script>
+
+<style scoped>
+.carousel-layout {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 24px;
+}
+
+.carousel-layout p {
+	margin: 0 0 8px;
+}
+
+.slide {
+	display: flex;
+	height: 100%;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	font-size: 20px;
+	background: #7c94c3;
+}
+
+.slide.is-even {
+	background: #a6b6d5;
+}
+</style>
+```
+:::
+
+### 移动端用法
+
+`MCarousel` 使用触摸滑动，默认隐藏指示点并显示“当前项 / 总数”计数器。传入 `dots="bottom"` 可以同时显示指示点。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	viewport: [375, 667],
+	viewportOptions: ['auto', 375, [375, 667]],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<MCarousel :height="180" :autoplay="false" dots="bottom">
+		<MCarouselItem v-for="item in 4" :key="item">
+			<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
+				{{ item }}
+			</div>
+		</MCarouselItem>
+	</MCarousel>
+</template>
+
+<script setup>
+import { MCarousel, MCarouselItem } from '@deot/vc';
+</script>
+
+<style scoped>
+.slide {
+	display: flex;
+	height: 100%;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	font-size: 20px;
+	background: #7c94c3;
+}
+
+.slide.is-even {
+	background: #a6b6d5;
+}
+</style>
+```
+:::
+
+### 带间距的滑动
+
+非卡片模式下，为 `CarouselItem` 或 `MCarouselItem` 设置 `gutter` 后可以露出相邻项；此时需要关闭 `loop`，且 `width` 应大于 `50%`。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	viewport: [375, 667],
+	viewportOptions: ['auto', 375, [375, 667]],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<MCarousel
+		:height="180"
+		:autoplay="false"
+		:loop="false"
+		:indicator="false"
+		dots="outside"
+	>
+		<MCarouselItem
+			v-for="item in 4"
+			:key="item"
+			width="calc(100% - 72px)"
+			:gutter="12"
 		>
-			<CarouselItem v-for="item in 4" :key="item">
-				<h3>{{ item }}</h3>
-			</CarouselItem>
-		</Carousel>
-	</div>
+			<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
+				{{ item }}
+			</div>
+		</MCarouselItem>
+	</MCarousel>
 </template>
-<script setup>
-import { Carousel, CarouselItem } from '@deot/vc';
-</script>
-<style>
-.v-carousel-basic .CarouselItem h3{
-	color: #475669;
-	font-size: 14px;
-	opacity: 0.75;
-	line-height: 150px;
-	margin: 0;
-	text-align: center;
-}
-.v-carousel-basic .vc-carousel-item:nth-child(2n) {
-	background-color: #99a9bf;
-}
-.v-carousel-basic .vc-carousel-item:nth-child(2n+1) {
-	background-color: #d3dce6;
-}
-</style>
-```
-:::
 
-### 指示器
-通过`dots`控制指示器
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-carousel-basic">
-		<p>隐藏指示器</p>
-		<Carousel :dots="false" :height="150">
-			<CarouselItem v-for="item in 4" :key="item">
-				<h3>{{ item }}</h3>
-			</CarouselItem>
-		</Carousel>
-		<p style="margin-top: 10px">指示器在容器外显示</p>
-		<Carousel dots="outside" :height="150">
-			<CarouselItem v-for="item in 4" :key="item">
-				<h3>{{ item }}</h3>
-			</CarouselItem>
-		</Carousel>
-	</div>
-</template>
-<script setup>
-import { Carousel, CarouselItem } from '@deot/vc';
-</script>
-<style>
-.v-carousel-basic li{
-	margin-top: 0 !important;
-	list-style: none;
-}
-.v-carousel-basic .CarouselItem h3{
-	color: #475669;
-	font-size: 14px;
-	opacity: 0.75;
-	line-height: 150px;
-	margin: 0;
-	text-align: center;
-}
-.v-carousel-basic .vc-carousel-item:nth-child(2n) {
-	background-color: #99a9bf;
-}
-
-.v-carousel-basic .vc-carousel-item:nth-child(2n+1) {
-	background-color: #d3dce6;
-}
-</style>
-```
-:::
-
-### 切换箭头
-`arrow`属性定义了切换箭头的显示时机。默认情况下，切换箭头只有在鼠标`hover`到走马灯上时才会显示；若将`arrow`设置为`always`，则会一直显示；设置为`false`，则会一直隐藏。（注意：设置为`false`时需要使用v-bind）
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-carousel-basic">
-		<p>隐藏切换箭头</p>
-		<Carousel :arrow="false" :height="150">
-			<CarouselItem v-for="item in 4" :key="item">
-				<h3>{{ item }}</h3>
-			</CarouselItem>
-		</Carousel>
-		<p style="margin-top: 10px">箭头一直显示</p>
-		<Carousel arrow="always" :height="150">
-			<CarouselItem v-for="item in 4" :key="item">
-				<h3>{{ item }}</h3>
-			</CarouselItem>
-		</Carousel>
-	</div>
-</template>
-<script setup>
-import { Carousel, CarouselItem } from '@deot/vc';
-</script>
-```
-:::
-
-### 垂直方向的走马灯
-通过设置`vertical`来让走马灯在垂直方向上显示。
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-carousel-basic">
-		<Carousel vertical :height="150">
-			<CarouselItem v-for="item in 4" :key="item">
-				<h3>{{ item }}</h3>
-			</CarouselItem>
-		</Carousel>
-	</div>
-</template>
-<script setup>
-import { Carousel, CarouselItem } from '@deot/vc';
-</script>
-<style>
-</style>
-```
-:::
-
-### 卡片化
-当页面宽度方向空间空余，但高度方向空间匮乏时，可使用卡片风格。
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-carousel-basic">
-		<Carousel card :height="150">
-			<CarouselItem v-for="item in 4" :key="item">
-				<h3>{{ item }}</h3>
-			</CarouselItem>
-		</Carousel>
-	</div>
-</template>
-<script setup>
-import { Carousel, CarouselItem } from '@deot/vc';
-</script>
-<style>
-</style>
-```
-:::
-
-### H5基础用法
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-carousel-basic">
-		<MCarousel :height="150" :autoplay="true" dots="bottom">
-			<MCarouselItem v-for="item in 4" :key="item">
-				<h3>{{ item }}</h3>
-			</MCarouselItem>
-		</MCarousel>
-	</div>
-</template>
 <script setup>
 import { MCarousel, MCarouselItem } from '@deot/vc';
 </script>
-<style>
-.v-carousel-basic .MCarouselItem h3{
-	color: #475669;
-	font-size: 14px;
-	opacity: 0.75;
-	line-height: 150px;
-	margin: 0;
-	text-align: center;
+
+<style scoped>
+.slide {
+	display: flex;
+	height: 100%;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	font-size: 20px;
+	background: #7c94c3;
 }
 
-.v-carousel-basic .vcm-carousel-item:nth-child(2n) {
-	background-color: #99a9bf;
-}
-
-.v-carousel-basic .vcm-carousel-item:nth-child(2n+1) {
-	background-color: #d3dce6;
+.slide.is-even {
+	background: #a6b6d5;
 }
 </style>
-```
-:::
-
-### H5卡片
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-carousel-basic">
-		<MCarousel :t="4" :height="200" card>
-			<MCarouselItem v-for="item in 6" :key="item">
-				<h3 class="medium">
-					{{ item }}
-				</h3>
-			</MCarouselItem>
-		</MCarousel>
-	</div>
-</template>
-<script setup>
-import { MCarousel, MCarouselItem } from '@deot/vc';
-</script>
-```
-:::
-
-### H5垂直走马灯
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-carousel-basic">
-		<MCarousel :autoplay="false" :height="200" vertical dots="bottom">
-			<MCarouselItem v-for="item in 3" :key="item">
-				<h3 class="medium">
-					{{ item }}
-				</h3>
-			</MCarouselItem>
-		</MCarousel>
-	</div>
-</template>
-<script setup>
-import { MCarousel, MCarouselItem } from '@deot/vc';
-</script>
 ```
 :::
 
 ## API
 
-### 基础属性
-| 属性           | 说明                   | 类型                 | 可选值                        | 默认值     |
-| ------------ | -------------------- | ------------------ | -------------------------- | ------- |
-| t            | 幻灯片切换的时间间隔           | `number`           | -                          | 3000       |
-| height       | -                    | `string`、`number`  | -                          | -       |
-| initialIndex | 初始状态激活的幻灯片的索引，从 0 开始 | `number`           | -                          | 0       |
-| trigger      | -                    | `string`           | `hover`、`click`            | `hover` |
-| autoplay     | 是否自动切换               | `boolean`          | -                          | `true`  |
-| dots         | 是否展示指示器、是否在显示在容器外部   | `string`、`boolean` | `outside`、`bottom`、`false` | true    |
-| arrow        | -                    | `string`、`boolean` | `hover`、`always`、`false`   | `hover` |
-| loop         | 是否循环显示               | `boolean`          | -                          | `true`  |
-| vertical     | 是否垂直                 | `boolean`          | -                          | `false` |
-| draggable    | 是否可以拖拽切换             | `boolean`          | -                          | `true`  |
+### Carousel 与 MCarousel 属性
 
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| t | 自动播放的切换间隔，单位为毫秒 | `number` | - | `3000` |
+| card | 是否启用卡片模式 | `boolean` | - | `false` |
+| gutter | 轮播项的默认间距；`CarouselItem.gutter` 或 `MCarouselItem.gutter` 优先 | `number` | - | `0` |
+| height | 内容区域高度，按 px 设置 | `string \| number` | - | - |
+| initialIndex | 初始激活项索引，从 `0` 开始 | `number` | - | `0` |
+| trigger | 桌面端指示器的切换方式 | `string` | `hover`、`click` | `hover` |
+| autoplay | 是否自动切换 | `boolean` | - | `true` |
+| dots | 指示点位置或是否隐藏指示点 | `string \| boolean` | `bottom`、`outside`、`false` | `Carousel: 'bottom'`；`MCarousel: false` |
+| arrow | 桌面端横向轮播的箭头显示方式 | `string \| boolean` | `hover`、`always`、`false` | `hover` |
+| loop | 是否循环切换 | `boolean` | - | `true` |
+| vertical | 是否使用纵向轮播 | `boolean` | - | `false` |
+| draggable | 是否允许鼠标拖拽或触摸滑动切换 | `boolean` | - | `true` |
+| indicator | 是否显示“当前项 / 总数”计数器，仅 `MCarousel` 支持；卡片模式下始终隐藏 | `boolean` | - | `true` |
 
-### Carousel-Item属性
+`MCarousel` 不渲染切换箭头，指示点只响应点击，因此 `arrow` 和 `trigger` 不改变移动端渲染行为。
 
-| 属性     | 说明            | 类型                | 可选值 | 默认值  |
-| ------ | ------------- | ----------------- | --- | ---- |
-| name   | 幻灯片的名字        | `string`          | -   | -    |
-| label  | 该幻灯片所对应指示器的文本 | `string`、`number` | -   | -    |
-| width  | 卡片形式的大小       | `number`、`string` | -   | 70%  |
-| gutter | 卡片之间的间距       | `number`          | -   | 0    |
-| scale  | 卡片的缩放         | `number`          | -   | 0.83 |
+### Carousel 与 MCarousel 事件
 
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| change | 激活项变化时触发 | `(activeIndex: number, oldIndex: number) => void` | `activeIndex` 为当前索引，`oldIndex` 为变化前的索引 |
 
-### 事件
+### Carousel 与 MCarousel 插槽
 
-| 事件名    | 说明       | 回调参数                              | 参数说明                            |
-| ------ | -------- | --------------------------------- | ------------------------------- |
-| change | 幻灯片切换时触发 | `(activeIndex: number) => void 0` | `activeIndex`：目前激活的幻灯片索引，原幻灯片索引 |
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 放置 `CarouselItem` 或 `MCarouselItem` | - |
 
+### Carousel 与 MCarousel 方法
 
-### 方法
+通过组件 `ref` 调用以下方法。
 
-| 方法名           | 说明        | 参数                                              |
-| ------------- | --------- | ----------------------------------------------- |
-| setActiveItem | 手动切换幻灯片   | 需要切换的幻灯片的索引，从 0 开始；或相应 `CarouselItem`的`name`属性值 |
-| prev          | 切换至上一张幻灯片 | -                                               |
-| next          | 切换至下一张幻灯片 | -                                               |
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| setActiveItem | 切换到指定轮播项 | `index: number \| string`；传入索引或对应轮播项的 `name` | `void` |
+| prev | 切换到上一项 | - | `void` |
+| next | 切换到下一项 | - | `void` |
+
+### CarouselItem 与 MCarouselItem 属性
+
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| name | 轮播项名称，可供 `setActiveItem` 定位 | `string` | - | - |
+| label | 对应指示器的文本 | `string \| number` | - | `''` |
+| width | 卡片宽度；非卡片模式下仅在存在 `gutter` 时生效 | `string \| number` | - | `'70%'` |
+| gutter | 当前轮播项的间距 | `number` | - | `0` |
+| scale | 非激活卡片的缩放比例 | `number` | - | `0.83` |
+
+### CarouselItem 与 MCarouselItem 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 当前轮播项的内容 | - |
+
+### 使用限制
+
+- `card` 与 `vertical` 不能同时启用。
+- 非卡片模式使用非零 `gutter` 时必须将 `loop` 设为 `false`，否则组件会抛出异常。
+- 非卡片模式中，`width` 只在存在非零 `gutter` 时生效；当前位移算法要求宽度大于 `50%`。

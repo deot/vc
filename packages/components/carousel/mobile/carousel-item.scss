@@ -1,5 +1,6 @@
 @use '../../style/helper' as *;
 
+$background-color-mask: varfix(background-color-mask, carousel-item, #fff);
 $component-name: vcm-carousel-item;
 
 @include block($component-name) {
@@ -39,7 +40,7 @@ $component-name: vcm-carousel-item;
 		left: 0;
 		width: 100%;
 		height: 100%;
-		background-color: #fff;
+		background-color: $background-color-mask;
 		opacity: 0.24;
 		transition: .2s;
 	}
