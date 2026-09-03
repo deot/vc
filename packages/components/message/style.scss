@@ -7,6 +7,7 @@ $color-warning: varfix(color-warning, message);
 $color-info: varfix(color-primary, message);
 $foreground-color: varfix(foreground-color, message);
 $background-color-light: varfix(background-color-light, message);
+$mask-color: varfix(mask-color, message);
 $border-shadow: varfix(border-shadow, message);
 
 @include block($component-name) {
@@ -21,7 +22,7 @@ $border-shadow: varfix(border-shadow, message);
 		width: 100%;
 		height: 100%;
 		margin: 0 auto;
-		background: rgb(0 0 0 / 40%);
+		background: $mask-color;
 		opacity: 0;
 	}
 
