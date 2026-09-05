@@ -25,6 +25,7 @@ import { Customer } from '../customer';
 import { Scroller } from '../scroller';
 import { Resizer } from '../resizer';
 import { VcInstance } from '../vc';
+import { useLocale } from '../locale';
 
 import { props as modalProps } from './modal-view-props';
 
@@ -37,6 +38,7 @@ export const ModalView = defineComponent({
 	props: modalProps,
 	setup(props, { slots, emit, expose }) {
 		const instance = getCurrentInstance()!;
+		const { t } = useLocale();
 		// $refs
 		const container = shallowRef<HTMLElement>();
 		const wrapper = shallowRef<HTMLElement>();
@@ -47,6 +49,16 @@ export const ModalView = defineComponent({
 		const x = ref(props.x!);
 		const y = ref(props.y!);
 		const isActive = ref(false);
+		const okText = computed(() => {
+			return typeof props.okText === 'undefined'
+				? t('vc.Modal.okButtonText')
+				: props.okText;
+		});
+		const cancelText = computed(() => {
+			return typeof props.cancelText === 'undefined'
+				? t('vc.Modal.cancelButtonText')
+				: props.cancelText;
+		});
 
 		// 注: 服务端渲染为0, 在客服端激活前，展示端存在问题【高度不定】
 		const MAX_HEIGHT = IS_SERVER ? 0 : window.innerHeight - 20;
@@ -362,7 +374,7 @@ export const ModalView = defineComponent({
 									{
 										'is-drag': props.draggable,
 										'is-large': props.size === 'large' || props.size === 'medium',
-										'has-footer': props.footer && (props.cancelText || props.okText),
+										'has-footer': props.footer && (cancelText.value || okText.value),
 										'has-border': props.border,
 									},
 									'vc-modal__container'
@@ -438,7 +450,7 @@ export const ModalView = defineComponent({
 									}}
 								</Resizer>
 								{
-									(props.footer && (props.cancelText || props.okText)) && (
+									(props.footer && (cancelText.value || okText.value)) && (
 										<div class={[{ 'is-confirm': props.mode }, 'vc-modal__footer']}>
 											{ slots['footer-extra']?.() }
 											{
@@ -446,24 +458,24 @@ export const ModalView = defineComponent({
 													? (
 															<Fragment>
 																{
-																	props.cancelText && (
+																	cancelText.value && (
 																		<Button
-																			style="margin-right: 8px;"
+																			class="vc-modal__cancel-button"
 																			disabled={props.cancelDisabled}
 																			onClick={e => handleBefore(e, handleCancel)}
 																		>
-																			{ props.cancelText }
+																			{ cancelText.value }
 																		</Button>
 																	)
 																}
 																{
-																	props.okText && (
+																	okText.value && (
 																		<Button
 																			type="primary"
 																			disabled={props.okDisabled}
 																			onClick={e => handleBefore(e, handleOk)}
 																		>
-																			{ props.okText }
+																			{ okText.value }
 																		</Button>
 																	)
 																}

@@ -1,487 +1,662 @@
 ## 对话框（Modal）
 
-模态对话框，在浮层中显示，引导用户进行相关操作。Modal提供了两种用法，普通组件使用和封装好的简洁实例调用。
+Modal 在当前页面上方承载需要用户确认或处理的内容。桌面端可使用 `Modal` 组件及其静态方法；移动端声明式组件为 `MModalView`，静态调用入口为 `MModal`。
 
 ### 何时使用
 
-需要用户处理事务，又不希望跳转页面以致打断工作流程时，可以使用 Modal 在当前页面正中打开一个浮层，承载相应的操作。
+- 需要用户在继续当前流程前确认信息或完成一项短任务时。
+- 需要通过 `info`、`success`、`warning`、`error` 等状态快速展示桌面端反馈时。
+- 移动端需要标准确认框或纵向操作列表时。
 
 ### 基础用法
 
-最简单的使用方法，通过控制属性`value`来显示 / 隐藏对话框。可以使用 v-model 实现双向绑定。默认按键盘`ESC`键也可以关闭。
+使用 `v-model` 控制对话框。点击确定、取消、关闭按钮或遮罩后，组件会在离场动画结束时将 `modelValue` 更新为 `false`。
 
-:::RUNTIME
+:::playground
+<!--
+<config lang="json5">
+{
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="v-modal-basic">
-		<Button @click="handleModal">
-			点击出现对话框
+	<div :class="['modal-demo', { 'is-expanded': expanded }]">
+		<Button @click="open">
+			打开对话框
 		</Button>
+		<span>{{ result }}</span>
+
 		<Modal
+			v-if="modalReady"
 			v-model="visible"
-			:mask-closable="true"
-			title="标题1"
-			@close="handleClose"
-			@cancel="handleCancel"
+			title="提交确认"
 			@ok="handleOk"
+			@cancel="handleCancel"
+			@close="handleClose"
 		>
-			<div>Content</div>
+			请确认当前信息是否填写完整。
 		</Modal>
 	</div>
 </template>
+
 <script setup>
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import { Button, Modal } from '@deot/vc';
 
+const expanded = ref(false);
+const modalReady = ref(false);
 const visible = ref(false);
+const result = ref('尚未操作');
 
-const handleModal = () => {
+const waitForViewportHeight = height => new Promise((resolve) => {
+	const check = () => {
+		window.innerHeight >= height ? resolve() : requestAnimationFrame(check);
+	};
+
+	check();
+});
+
+const open = async () => {
+	expanded.value = true;
+	await nextTick();
+	await waitForViewportHeight(480);
+	modalReady.value = true;
+	visible.value = true;
+};
+
+const handleOk = () => {
+	result.value = '已确认提交';
+};
+
+const handleCancel = () => {
+	result.value = '已取消';
+};
+
+const handleClose = () => {
+	modalReady.value = false;
+	expanded.value = false;
+};
+</script>
+
+<style scoped>
+.modal-demo {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.modal-demo.is-expanded {
+	height: 480px;
+}
+</style>
+```
+:::
+
+### 尺寸、边框与拖拽
+
+`size` 提供三档预设尺寸；`width`、`height` 可进一步覆盖尺寸。开启 `draggable` 后可从页头拖动对话框，`border` 则启用带分隔线的紧凑样式。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
+```vue
+<template>
+	<div :class="['modal-demo', { 'is-expanded': expanded }]">
+		<Button
+			v-for="item in sizes"
+			:key="item.value"
+			@click="open(item.value)"
+		>
+			{{ item.label }}
+		</Button>
+
+		<Modal
+			v-if="modalReady"
+			v-model="visible"
+			:size="size"
+			title="可拖拽对话框"
+			border
+			draggable
+			@close="handleClose"
+		>
+			从页头按住并移动鼠标即可拖拽。
+		</Modal>
+	</div>
+</template>
+
+<script setup>
+import { nextTick, ref } from 'vue';
+import { Button, Modal } from '@deot/vc';
+
+const sizes = [
+	{ label: '小尺寸', value: 'small' },
+	{ label: '中尺寸', value: 'medium' },
+	{ label: '大尺寸', value: 'large' }
+];
+const expanded = ref(false);
+const modalReady = ref(false);
+const visible = ref(false);
+const size = ref('small');
+
+const waitForViewportHeight = height => new Promise((resolve) => {
+	const check = () => {
+		window.innerHeight >= height ? resolve() : requestAnimationFrame(check);
+	};
+
+	check();
+});
+
+const open = async (value) => {
+	size.value = value;
+	expanded.value = true;
+	await nextTick();
+	await waitForViewportHeight(720);
+	modalReady.value = true;
 	visible.value = true;
 };
 
 const handleClose = () => {
-	console.log('关闭后都会触发');
+	modalReady.value = false;
+	expanded.value = false;
+};
+</script>
+
+<style scoped>
+.modal-demo {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.modal-demo.is-expanded {
+	height: 720px;
+}
+</style>
+```
+:::
+
+### 静态方法
+
+`Modal.info`、`Modal.success`、`Modal.warning` 和 `Modal.error` 会创建独立对话框。传入的 `mode` 会由所调用的方法确定。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
+```vue
+<template>
+	<div :class="['modal-demo', { 'is-expanded': expanded }]">
+		<Button
+			v-for="item in methods"
+			:key="item.method"
+			@click="open(item.method)"
+		>
+			{{ item.label }}
+		</Button>
+		<span>{{ result }}</span>
+	</div>
+</template>
+
+<script setup>
+import { nextTick, onUnmounted, ref } from 'vue';
+import { Button, Modal } from '@deot/vc';
+
+const methods = [
+	{ label: '消息', method: 'info' },
+	{ label: '成功', method: 'success' },
+	{ label: '警告', method: 'warning' },
+	{ label: '错误', method: 'error' }
+];
+const expanded = ref(false);
+const result = ref('请选择一种状态');
+
+const waitForViewportHeight = height => new Promise((resolve) => {
+	const check = () => {
+		window.innerHeight >= height ? resolve() : requestAnimationFrame(check);
+	};
+
+	check();
+});
+
+const open = async (method) => {
+	expanded.value = true;
+	await nextTick();
+	await waitForViewportHeight(360);
+	Modal[method]({
+		title: methods.find(item => item.method === method)?.label,
+		content: '这是通过静态方法创建的对话框。',
+		onOk: () => {
+			result.value = `已确认 ${method}`;
+		},
+		onClose: () => {
+			expanded.value = false;
+		}
+	});
+};
+
+onUnmounted(() => {
+	Modal.destroy();
+});
+</script>
+
+<style scoped>
+.modal-demo {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.modal-demo.is-expanded {
+	height: 360px;
+}
+</style>
+```
+:::
+
+### 与 Portal 配合
+
+`Portal` 可以把自定义的 Modal 包装组件转换为可调用服务。下面的多文件示例由入口、Portal 实例与 Modal 包装组件组成；包装组件通过 `portal-fulfilled` 和 `portal-rejected` 将操作结果返回给调用方。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	entry: 'App.vue',
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
+```vue App.vue
+<template>
+	<div :class="['portal-modal-demo', { 'is-expanded': expanded }]">
+		<Button @click="open">
+			通过 Portal 打开 Modal
+		</Button>
+		<span>{{ result }}</span>
+	</div>
+</template>
+
+<script setup>
+import { nextTick, onUnmounted, ref } from 'vue';
+import { Button } from '@deot/vc';
+import { PortalModal } from './portal-modal.js';
+
+const expanded = ref(false);
+const result = ref('尚未操作');
+
+const waitForViewportHeight = height => new Promise((resolve) => {
+	const check = () => {
+		window.innerHeight >= height ? resolve() : requestAnimationFrame(check);
+	};
+
+	check();
+});
+
+const open = async () => {
+	expanded.value = true;
+	await nextTick();
+	await waitForViewportHeight(480);
+
+	try {
+		await PortalModal.popup({
+			title: 'Portal 调用',
+			content: '这个对话框由独立的 Portal 服务创建。'
+		});
+		result.value = '已确认';
+	} catch {
+		result.value = '已取消';
+	} finally {
+		expanded.value = false;
+	}
+};
+
+onUnmounted(() => {
+	PortalModal.destroy();
+});
+</script>
+
+<style scoped>
+.portal-modal-demo {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.portal-modal-demo.is-expanded {
+	height: 480px;
+}
+</style>
+```
+
+```js portal-modal.js
+import { Portal } from '@deot/vc';
+import ModalWrapper from './ModalWrapper.vue';
+
+export const PortalModal = new Portal(ModalWrapper, {
+	name: 'portal-modal-demo'
+});
+```
+
+```vue ModalWrapper.vue
+<template>
+	<Modal
+		v-model="visible"
+		:title="title"
+		@ok="handleOk"
+		@cancel="handleCancel"
+	>
+		{{ content }}
+	</Modal>
+</template>
+
+<script setup>
+import { onMounted, ref } from 'vue';
+import { Modal } from '@deot/vc';
+
+defineProps({
+	title: String,
+	content: String
+});
+
+const emit = defineEmits(['portal-fulfilled', 'portal-rejected']);
+const visible = ref(false);
+
+const handleOk = () => {
+	emit('portal-fulfilled');
 };
 
 const handleCancel = () => {
-	console.log('点击取消这个按钮时回调');
+	emit('portal-rejected');
 };
 
-const handleOk = (e) => {
-	return new Promise((resolve, reject) => {
-		setTimeout(resolve, 1000);
-	});
-};
-</script>
-<style>
-.v-modal-basic > button {
-	margin-bottom: 10px;
-}
-.vc-modal__header > p {
-	margin-bottom: 0 !important;
-}
-</style>
-```
-:::
-
-### 自定义样式
-可自由控制Modal的组成部分，比如页头、页脚、按钮、可以根据`size`来切换Modal的大小，也可通过`width`设置Modal宽度
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-modal-basic">
-		<Button @click="handleLarge">
-			大弹框
-		</Button>
-		<Button @click="handleMedium">
-			中弹框
-		</Button>
-		<Button @click="handleSmall">
-			小弹框
-		</Button>
-		<Button @click="handleCustom">
-			自定义header和footer
-		</Button>
-		<Button @click="handleWidth">
-			设置宽度
-		</Button>
-		<Modal
-			v-model="visible"
-			title="大弹框"
-			size="large"
-		>
-			<div>Content</div>
-		</Modal>
-		<Modal
-			v-model="visible2"
-			title="中弹框"
-			size="medium"
-		>
-			<div>Content</div>
-		</Modal>
-		<Modal
-			v-model="visible3"
-			title="小弹框"
-			sizee="small"
-		>
-			<div>Content</div>
-		</Modal>
-		<Modal
-			v-model="visible4"
-			:mask-closable="true"
-		>
-			<template #header>
-				我是自定义的header
-			</template>
-
-			<template #footer>
-				我是自定义的footer
-			</template>
-		</Modal>
-		<Modal
-			v-model="visible5"
-			title="宽度为300的弹框"
-			sizee="small"
-			:width="300"
-		>
-			<div>Content</div>
-		</Modal>
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { Button, Modal } from '@deot/vc';
-
-const visible = ref(false);
-const visible2 = ref(false);
-const visible3 = ref(false);
-const visible4 = ref(false);
-const visible5 = ref(false);
-
-const handleLarge = () => {
+onMounted(() => {
 	visible.value = true;
-};
-const handleMedium = () => {
-	visible2.value = true;
-};
-const handleSmall = () => {
-	visible3.value = true;
-};
-const handleCustom = () => {
-	visible4.value = true;
-};
-const handleWidth = () => {
-	visible5.value = true;
-};
+});
 </script>
 ```
 :::
 
-### 拖拽弹框
-可以拖拽移动弹框
+### 移动端用法
 
-:::RUNTIME
-```vue
-<template>
-	<div class="v-modal-basic">
-		<Button @click="handleModal">
-			可拖拽的对话框
-		</Button>
-		<Modal
-			v-model="visible"
-			:mask-closable="true"
-			title="点击我进行拖拽"
-			draggable
-		>
-			<div>Content</div>
-		</Modal>
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { Button, Modal } from '@deot/vc';
+`MModalView` 用于声明式渲染；`MModal.alert` 创建确认框，`MModal.operation` 创建操作列表。
 
-const visible = ref(false);
-
-const handleModal = () => {
-	visible.value = true;
-};
-</script>
-<style>
-.v-modal-basic > button {
-	margin-bottom: 10px;
+:::playground
+<!--
+<config lang="json5">
+{
+	viewport: 375,
+	viewportOptions: ['auto', 375],
+	previewInset: 16,
+	expandable: true
 }
-</style>
-```
-:::
-
-### 实例化使用方法
-
-:::RUNTIME
+</config>
+-->
 ```vue
 <template>
-	<div class="v-modal-basic">
-		<Button @click="handleModal('info')">
-			消息
+	<div class="mobile-modal-demo">
+		<Button @click="visible = true">
+			声明式确认框
 		</Button>
-		<Button @click="handleModal('success')">
-			成功
+		<Button @click="openAlert">
+			静态确认框
 		</Button>
-		<Button @click="handleModal('error')">
-			错误
+		<Button @click="openOperation">
+			操作列表
 		</Button>
-		<Button @click="handleModal('warning')">
-			警告
-		</Button>
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { Button, Modal } from '@deot/vc';
+		<p>{{ result }}</p>
 
-const visible = ref(false);
-
-const handleModal = (type) => {
-	switch (type) {
-		case 'info':
-			Modal.info({
-				title: 'info',
-				content: 'content',
-				okText: '自定义的按钮',
-				loading: true,
-				onOk: () => {
-					console.log('23333');
-				}
-			});
-			break;
-		case 'success':
-			Modal.success({
-				title: 'success',
-				content: 'content',
-			});
-			break;
-		case 'error':
-			Modal.error({
-				title: 'error',
-				content: 'content',
-			});
-			break;
-		case 'warning':
-			Modal.warning({
-				title: 'waring',
-				content: 'content',
-			});
-			break;
-	}
-};
-</script>
-```
-:::
-
-### 自定义内容
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-modal-basic">
-		<Button @click="handleModal">
-			自定义内容
-		</Button>
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { Button, Modal } from '@deot/vc';
-
-const visible = ref(false);
-
-const handleModal = () => {
-	Modal.info({
-		title: 'info',
-		content: (h) => {
-			return (
-				<div>
-					<textarea
-						placeholder="请输入内容"
-					/>
-				</div>
-			);
-		}
-	});
-};
-</script>
-```
-:::
-
-### 移动端基础用法
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-modal-basic">
-		<button @click="handleModal">
-			移动端弹框
-		</button>
-		<button @click="handleModal2">
-			移动端弹框（实例化使用方法）
-		</button>
-		<button @click="handleModal3">
-			移动端弹框（弹框内多个按钮）
-		</button>
-		<MModal
+		<MModalView
 			v-model="visible"
-			:mask-closable="true"
-			title="标题"
-			content="内容"
+			title="移动端确认"
+			content="是否继续当前操作？"
+			@ok="handleOk"
+			@cancel="handleCancel"
 		/>
 	</div>
 </template>
+
 <script setup>
-import { ref } from 'vue';
-import { Button, MModal } from '@deot/vc';
+import { onUnmounted, ref } from 'vue';
+import { Button, MModal, MModalView } from '@deot/vc';
 
 const visible = ref(false);
+const result = ref('尚未操作');
 
-const handleModal = () => {
-	visible.value = !visible.value;
+const handleOk = () => {
+	result.value = '已确认';
 };
-const handleModal2 = () => {
+
+const handleCancel = () => {
+	result.value = '已取消';
+};
+
+const openAlert = () => {
 	MModal.alert({
-		title: '标题1',
-		content: '啦啦',
-		onOk: () => {
-			console.log('点击确定这个按钮时回调');
-		},
-		onCancel: (e, done) => {
-			setTimeout(() => {
-				done();
-				console.log('点击确定这个按钮时回调');
-			}, 3000);
-			return true;
-		},
-		onClose: () => {
-			console.log('关闭后都会触发');
-		}
+		title: '移动端确认',
+		content: '这是通过 MModal.alert 创建的确认框。',
+		onOk: handleOk,
+		onCancel: handleCancel
 	});
 };
 
-const handleModal3 = () => {
+const openOperation = () => {
 	MModal.operation({
 		data: [
 			{
-				content: '1',
-				onClick: () => console.log(`点击了第1个按钮`)
+				content: '保存草稿',
+				onClick: () => {
+					result.value = '已保存草稿';
+				}
 			},
 			{
-				content: '2',
-				onClick: () => console.log(`点击了第2个按钮`)
-			},
-			{
-				content: '3',
-				onClick: () => console.log(`点击了第3个按钮`)
+				content: '放弃修改',
+				onClick: () => {
+					result.value = '已放弃修改';
+				}
 			}
 		]
 	});
 };
+
+onUnmounted(() => {
+	MModal.destroy();
+});
 </script>
+
+<style scoped>
+.mobile-modal-demo {
+	display: flex;
+	gap: 8px;
+	align-items: flex-start;
+	flex-direction: column;
+}
+
+.mobile-modal-demo p {
+	margin: 4px 0 0;
+}
+</style>
 ```
 :::
 
 ## API
 
-### 基础属性
+### Modal 属性
 
-| 属性                | 说明                               | 类型                  | 可选值                                | 默认值    |
-| ----------------- | -------------------------------- | ------------------- | ---------------------------------- | ------ |
-| modelValue        | 对话框是否显示，可用v-model双向绑定            | `boolean`           | -                                  | false  |
-| model             | 对话框的类型                           | `string`            | `info`、`success`、`error`、`warning` | -      |
-| title             | 内容标题                             | `string`            | -                                  | -      |
-| content           | 内容,可以是jsx                        | `string`、`Function` | -                                  | -      |
-| footer            | 是否显示footer                       | `boolean`           | -                                  | -      |
-| title             | 对话框标题，如果使用slot自定义header，则title无效 | `string`            | -                                  | -      |
-| size              | 对话框的三个默认大小                       | `string`            | `small`、`medium`、`large`           | small  |
-| wrapperStyle      | 设置wrapper的style                  | `object`、`string`   | -                                  |        |
-| contentStyle      | 设置content的style                  | `object`、`string`   | -                                  |        |
-| wrapperClass      | 设置wrapper的class                  | `object`、`string`   | -                                  |        |
-| contentClass      | 设置content的class                  | `object`、`string`   | -                                  |        |
-| ok-text           | 自定义确定按钮的文案                       | `string`、`boolean`  | -                                  | 确定     |
-| cancel-text       | 自定义取消按钮的文案                       | `string`、`boolean`  | -                                  | 取消     |
-| width             | 对话框的宽度                           | `number`            | -                                  | 400    |
-| height            | 对话框的高度                           | `number`            | -                                  | -      |
-| closable          | 是否显示关闭图标                         | `boolean`           | -                                  | `true` |
-| mask              | 遮罩层是否显示                          | `boolean`           | -                                  | `true` |
-| mask-closable     | 点击遮罩层是否关闭                        | `Booelan`           | -                                  | `true` |
-| esc-closable      | 点击esc是否关闭                        | `boolean`           | -                                  | `true` |
-| scrollable        | 页面是否可以滚动                         | `boolean`           | -                                  | false  |
-| draggable         | 是否可以拖拽                           | `boolean`           | -                                  | false  |
-| x                 | 拖拽起始left                         | `number`            | -                                  | -      |
-| y                 | 拖拽起始top                          | `number`            | -                                  | -      |
-| close-with-cancel | `主动`关闭时出发cancel事件                | `boolean`           | -                                  | `true` |
-| portalClass       | 弹框内容区域的className                 | `string`            | -                                  | -      |
-| onOk              | 点击确定回调方法                         | `Function`          | -                                  | -      |
-| onCancel          | 点击取消回调方法                         | `Function`          | -                                  | -      |
+`ModalView` 与 `Modal` 使用同一组属性；通常直接使用同时带有静态方法的 `Modal`。
 
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| modelValue | 是否显示；支持 `v-model` | `boolean` | - | `false` |
+| mode | 状态图标与确认式布局 | `string` | `info`、`success`、`error`、`warning` | - |
+| title | 标题；字符串按 HTML 渲染，也可传渲染函数 | `string \| ((props: Record<string, unknown>, context: SetupContext) => any)` | - | - |
+| content | 内容；字符串按 HTML 渲染，也可传渲染函数 | `string \| ((props: Record<string, unknown>, context: SetupContext) => any)` | - | `''` |
+| size | 预设尺寸 | `string` | `small`、`medium`、`large` | `small` |
+| contentStyle | 内容区域的行内样式 | `object \| string` | - | - |
+| contentClass | 内容区域的 class | `object \| string` | - | - |
+| width | 自定义宽度，单位为 px | `number` | - | 由 `size` 与 `mode` 计算 |
+| height | 自定义高度，单位为 px | `number` | - | - |
+| mask | 是否显示遮罩 | `boolean` | - | `true` |
+| closable | 非 `mode` 布局下是否显示关闭图标 | `boolean` | - | `true` |
+| maskClosable | 是否允许点击遮罩或 wrapper 关闭 | `boolean` | - | `true` |
+| escClosable | 是否允许按 `Escape` 关闭 | `boolean` | - | `true` |
+| closeWithCancel | 主动关闭时是否先执行 `onCancel` / `cancel` | `boolean` | - | `true` |
+| scrollable | 兼容属性；当前实现始终在显示期间锁定页面滚动 | `boolean` | - | `false` |
+| draggable | 是否允许从页头拖动 | `boolean` | - | `false` |
+| x | 可拖动布局的初始 left，单位为 px | `number` | - | - |
+| y | 可拖动布局的初始 top，单位为 px | `number` | - | - |
+| okText | 确定按钮文案；传 `false` 或空字符串时隐藏 | `string \| boolean` | - | 当前 locale 的“确定” |
+| cancelText | 取消按钮文案；传 `false` 或空字符串时隐藏 | `string \| boolean` | - | 当前 locale 的“取消” |
+| wrapperStyle | wrapper 的行内样式 | `object \| string` | - | - |
+| wrapperClass | wrapper 的 class | `object \| string` | - | - |
+| footer | 是否渲染页脚；默认文案或覆盖文案至少有一项为 truthy 时生效 | `boolean` | - | `true` |
+| border | 是否使用带分隔线的紧凑样式 | `boolean` | - | `false` |
+| okDisabled | 是否禁用确定按钮 | `boolean` | - | `false` |
+| cancelDisabled | 是否禁用取消按钮 | `boolean` | - | `false` |
+| onOk | 确定回调；与 `ok` 事件监听器等价 | `Function` | - | - |
+| onCancel | 取消回调；与 `cancel` 事件监听器等价 | `Function` | - | - |
 
-### 移动端基础属性
+桌面端预设尺寸如下。视口较小时，最终尺寸不会超过视口宽高减去 `20px`。
 
-| 属性                | 说明                                 | 类型                            | 可选值                 | 默认值    |
-| ----------------- | ---------------------------------- | ----------------------------- | ------------------- | ------ |
-| model             | 对话框的类型                             | `string`                      | `alert`、`operation` | -      |
-| title             | 内容标题                               | `string`、`boolean`            | -                   | -      |
-| content           | 内容,可以是jsx                          | `string`、`Function`、`boolean` | -                   | -      |
-| data              | 自定义按钮列表                           | `array`                       | -                   | -      |
-| footer            | 是否显示footer                         | `boolean`                     | -                   | -      |
-| visible           | 对话框是否显示，可用v-model双向绑定              | `boolean`                     | -                   | false  |
-| title             | 对话框标题，如果使用slot自定义header，则title无效   | `string`                      | -                   | -      |
-| wrapperStyle      | 设置wrapper的style | `object`                      | -                   |        |
-| ok-text           | 自定义确定按钮的文案                         | `string`、`boolean`            | -                   | 确定     |
-| cancel-text       | 自定义取消按钮的文案                         | `string`、`boolean`            | -                   | 取消     |
-| width             | 对话框的宽度                             | `number`                      | -                   | 400    |
-| mask              | 遮罩层是否显示                            | `boolean`                     | -                   | `true` |
-| mask-closable     | 点击遮罩层是否关闭                          | `Booelan`                     | -                   | `true` |
-| close-with-cancel | `主动`关闭时出发cancel事件                  | `boolean`                     | -                   | `true` |
+| size | 普通布局 | 设置 mode 后 |
+| --- | --- | --- |
+| small | `480 × 296` | `340 × 154` |
+| medium | `640 × 502` | `640 × 502` |
+| large | `864 × 662` | `390 × 198` |
 
+### Modal 事件
 
-### 移动端 Data 数据结构
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue | 离场动画结束后更新显示状态 | `(visible: false) => void` | 始终传 `false` |
+| ok | 点击确定按钮时调用 | `(event: MouseEvent) => unknown` | 返回 Promise 时会在其 resolve 后关闭 |
+| cancel | 点击取消按钮或由关闭动作触发时调用 | `(event: MouseEvent \| KeyboardEvent) => unknown` | 返回 Promise 时会在其 resolve 后关闭 |
+| close | 离场动画结束后触发 | `() => void` | - |
+| visible-change | 离场动画结束后触发 | `(visible: false) => void` | 当前实现仅在关闭后传 `false` |
+| portal-fulfilled | 离场动画结束后触发，供 Portal 调用兼容 | `() => void` | - |
 
-| 属性      | 说明                       | 类型               | 可选值 | 默认值 |
-| -------- | -------------------------- | ------------------ | ------ | ------ |
-| content  | 按钮内容，字符串默认使用 v-html | `string`、`boolean` | -      | -      |
-| style    | 按钮样式                   | `object`           | -      | -      |
-| onClick  | 点击事件                   | `Function`         | -      | -      |
+`ok` / `cancel` 回调返回 Promise 时，对话框会等待 Promise resolve 后关闭；返回除 `true` 以外的 truthy 非 Promise 值会阻止关闭。
 
+### Modal 插槽
 
-### 事件
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 对话框主体内容 | - |
+| header | 自定义页头；使用后默认标题和关闭图标不再渲染 | - |
+| footer | 自定义页脚；使用后默认按钮不再渲染 | - |
+| footer-extra | 页脚起始位置的额外内容 | - |
 
-| 事件名            | 说明                            | 回调参数                           | 参数说明               |
-| -------------- | ----------------------------- | ------------------------------ | ------------------ |
-| ok             | 点击确定的回调, 配合Promise触发loading效果 | -                              | -                  |
-| cancel         | 点击取消的回调                       | -                              | -                  |
-| close          | 弹窗关闭后触发(可作用与portal)           | -                              | -                  |
-| visible-change | 显示状态发生变化时触发                   | `(visible: boolean) => void 0` | `visible`：当前弹窗显示状态 |
+### ModalView 方法与状态
 
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| toggle | 显示、隐藏或切换内部激活状态 | `visible?: boolean` | `void` |
+| resetOrigin | 根据最近一次点击位置重新计算动画原点 | - | `void` |
 
-### 额外事件（兼容portal）
+组件实例还暴露只读使用场景下的当前 `isActive` 状态。
 
-| 事件名              | 说明    | 回调参数 | 参数说明 |
-| ---------------- | ----- | ---- | ---- |
-| portal-fulfilled | 确定时触发 | -    | -    |
-| portal-rejected  | 取消时触发 | -    | -    |
+### Modal 静态方法
 
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| info | 创建 `info` 对话框 | Modal 属性及可选的 `onClose` 回调 | 弹层句柄 |
+| success | 创建 `success` 对话框 | Modal 属性及可选的 `onClose` 回调 | 弹层句柄 |
+| warning | 创建 `warning` 对话框 | Modal 属性及可选的 `onClose` 回调 | 弹层句柄 |
+| error | 创建 `error` 对话框 | Modal 属性及可选的 `onClose` 回调 | 弹层句柄 |
+| destroy | 销毁所有由上述方法创建的 Modal | - | `void` |
 
+静态方法的 `onClose` 会在离场动画结束并开始销毁 Portal 时调用。
 
-### Modal slot
+### MModalView 属性
 
-| 名称           | 说明           |
-| ------------ | ------------ |
-| header       | 自定义页头内容      |
-| footer       | 自定义页脚内容      |
-| footer-extra | 页脚按钮边上可自定义文案 |
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| modelValue | 是否显示；支持 `v-model` | `boolean` | - | `false` |
+| mode | 移动端布局模式 | `string` | `alert`、`operation` | `alert` |
+| title | 标题；`false` 隐藏，字符串按 HTML 渲染，也可传渲染函数 | `boolean \| string \| ((props: Record<string, unknown>, context: SetupContext) => any)` | - | - |
+| content | 内容；`false` 隐藏，字符串按 HTML 渲染，也可传渲染函数 | `boolean \| string \| ((props: Record<string, unknown>, context: SetupContext) => any)` | - | - |
+| width | 对话框宽度，单位为 px | `number` | - | `270` |
+| mask | 是否显示遮罩 | `boolean` | - | `true` |
+| maskClosable | 是否允许点击遮罩关闭 | `boolean` | - | `true` |
+| closeWithCancel | 点击遮罩关闭时是否先执行 `onCancel` / `cancel` | `boolean` | - | `true` |
+| okText | 默认确定按钮文案；传 `false` 或空字符串时隐藏 | `string \| boolean` | - | 当前 locale 的“确定” |
+| cancelText | 默认取消按钮文案；传 `false` 或空字符串时隐藏 | `string \| boolean` | - | 当前 locale 的“取消” |
+| wrapperStyle | wrapper 的行内样式 | `object` | - | - |
+| footer | `alert` 模式下是否渲染页脚 | `boolean` | - | `true` |
+| data | 自定义按钮列表；`operation` 模式的数据源 | `Array<{ content?: string \| boolean; style?: object; onClick?: Function }>` | - | 取消、确定两个默认项 |
+| onOk | 默认确定按钮回调；与 `ok` 事件监听器等价 | `Function` | - | - |
+| onCancel | 默认取消按钮回调；与 `cancel` 事件监听器等价 | `Function` | - | - |
 
+`operation` 模式只渲染 `data` 操作列表，不渲染标题、内容和页脚。
 
-### 方法
+### MModalView data 项
 
-| 方法名        | 说明              | 参数 |
-| ---------- | --------------- | -- |
-| resetOrgin | 重新设置原始坐标, 关系到动画 | -  |
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| content | 按钮内容，字符串按 HTML 渲染；falsy 值不渲染 | `string \| boolean` | - | - |
+| style | 按钮行内样式 | `object` | - | - |
+| onClick | 点击回调 | `(event: MouseEvent) => unknown` | - | - |
 
+### MModalView 事件
 
-```javascript
-Modal.info({});
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue | 离场动画结束后更新显示状态 | `(visible: false) => void` | 始终传 `false` |
+| ok | 点击默认确定按钮时调用 | `(event: MouseEvent) => unknown` | 返回 Promise 时会在其 resolve 后关闭 |
+| cancel | 点击默认取消按钮或由遮罩关闭触发时调用 | `(event: MouseEvent) => unknown` | 返回 Promise 时会在其 resolve 后关闭 |
+| close | 离场动画结束后触发 | `() => void` | - |
+| portal-fulfilled | 离场动画结束后触发，供 Portal 调用兼容 | `() => void` | - |
 
-Modal.success({});
+### MModalView 插槽
 
-Modal.error({});
+以下插槽仅在 `alert` 模式下生效。
 
-Modal.warning({});
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 自定义主体内容 | - |
+| header | 自定义页头 | - |
+| footer | 自定义页脚 | - |
 
-MModal.alert({});
+### MModalView 方法与状态
 
-MModal.operation({});
-```
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| toggle | 显示、隐藏或切换内部激活状态 | `visible?: boolean` | `void` |
 
-> 方法同上属性值, 事件使用`onOk`, `onCancel`
+组件实例还暴露只读使用场景下的当前 `isActive` 状态。
 
-### TODO
-使用`renderHeader`, `renderFooter` 方法式调用`slot`写法
+### MModal 静态方法
+
+`MModal` 是移动端静态调用命名空间；声明式渲染请使用 `MModalView`。
+
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| alert | 创建 `alert` 确认框 | MModalView 属性及可选的 `onClose` 回调 | 弹层句柄 |
+| operation | 创建 `operation` 操作列表 | MModalView 属性及可选的 `onClose` 回调 | 弹层句柄 |
+| destroy | 销毁所有由上述方法创建的移动端 Modal | - | `void` |
+
+### Locale
+
+默认按钮文案来自 `vc.Modal.okButtonText` 与 `vc.Modal.cancelButtonText`，会响应 `VcInstance.configure({ locale })` 的运行时切换。显式传入 `okText`、`cancelText`（包括空字符串）时始终优先使用传入值。
+
+## 注意事项
+
+`title`、`content` 和移动端 `data[].content` 的字符串会通过 `innerHTML` 渲染。只应传入可信内容；展示不可信输入时请使用插槽或渲染函数，由调用方自行创建文本节点。

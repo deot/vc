@@ -1,6 +1,7 @@
 @use '../style/helper' as *;
 
 $component-name: vc-modal;
+$mask-color: varfix(mask-color, modal);
 $color-success: varfix(color-success, modal);
 $color-error: varfix(color-error, modal);
 $color-warning: varfix(color-warning, modal);
@@ -13,7 +14,7 @@ $color-dark-light: varfix(color-dark-light, modal);
 $color-dark-lightest: varfix(color-dark-lightest, modal);
 
 @include block($component-name) {
-	font-size: 14px;
+	font-size: unitfix(14);
 	color: $foreground-color;
 
 	@include element(mask) {
@@ -21,7 +22,7 @@ $color-dark-lightest: varfix(color-dark-lightest, modal);
 		inset: 0;
 		z-index: $popup-zindex; // 与wrapper相同，两个modal同时出现时可以盖上去
 		height: 100%;
-		background-color: rgb(0 0 0 / 40%);
+		background-color: $mask-color;
 		opacity: 1;
 	}
 
@@ -87,7 +88,7 @@ $color-dark-lightest: varfix(color-dark-lightest, modal);
 
 			@include element(footer) {
 				padding: unitfix(17) unitfix(24);
-				font-size: 12px;
+				font-size: unitfix(12);
 				border-top: unitfix(1) solid $color-light-deeper;
 			}
 
@@ -133,7 +134,6 @@ $color-dark-lightest: varfix(color-dark-lightest, modal);
 
 		@include when(padding-none) {
 			padding: 0;
-			padding-left: 0;
 		}
 	}
 
@@ -154,6 +154,10 @@ $color-dark-lightest: varfix(color-dark-lightest, modal);
 				vertical-align: middle;
 			}
 		}
+	}
+
+	@include element(cancel-button) {
+		margin-right: unitfix(8);
 	}
 
 	@include element(title) {

@@ -37,11 +37,11 @@ export const props = {
 	}, // false 不显示头部
 	okText: {
 		type: [String, Boolean],
-		default: '确定'
+		default: undefined
 	},
 	cancelText: {
 		type: [String, Boolean],
-		default: '取消'
+		default: undefined
 	},
 	wrapperStyle: {
 		type: Object

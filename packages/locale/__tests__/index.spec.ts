@@ -42,4 +42,17 @@ describe('locale', () => {
 		expect(getNestedValue(zhCalendar, 'weekdays.sunday')).toBe('日');
 		expect(getNestedValue(enCalendar, 'weekdays.sunday')).toBe('Sun');
 	});
+
+	it('keeps Modal locale keys and leaf types aligned', () => {
+		const zhModal = zhCN.vc.Modal;
+		const enModal = enUS.vc.Modal;
+
+		expect(getLeafPaths(zhModal)).toEqual(getLeafPaths(enModal));
+		expect(allLeavesAreStrings(zhModal)).toBe(true);
+		expect(allLeavesAreStrings(enModal)).toBe(true);
+		expect(getNestedValue(zhModal, 'okButtonText')).toBe('确定');
+		expect(getNestedValue(enModal, 'okButtonText')).toBe('OK');
+		expect(getNestedValue(zhModal, 'cancelButtonText')).toBe('取消');
+		expect(getNestedValue(enModal, 'cancelButtonText')).toBe('Cancel');
+	});
 });

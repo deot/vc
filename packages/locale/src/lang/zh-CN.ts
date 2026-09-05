@@ -27,6 +27,10 @@ export const zhCN: Language = {
 				friday: '五',
 				saturday: '六'
 			}
+		},
+		Modal: {
+			okButtonText: '确定',
+			cancelButtonText: '取消'
 		}
 	}
 };

@@ -27,6 +27,10 @@ export const enUS: Language = {
 				friday: 'Fri',
 				saturday: 'Sat'
 			}
+		},
+		Modal: {
+			okButtonText: 'OK',
+			cancelButtonText: 'Cancel'
 		}
 	}
 };

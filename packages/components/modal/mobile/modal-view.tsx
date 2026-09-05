@@ -12,6 +12,7 @@ import { useScrollbar } from '@deot/vc-hooks';
 
 import { MTransitionZoom, MTransitionFade } from '../../transition/index.m';
 import { MCustomer } from '../../customer/index.m';
+import { useLocale } from '../../locale';
 
 import { props as modalProps } from './modal-view-props';
 
@@ -23,8 +24,19 @@ export const MModalView = defineComponent({
 	props: modalProps,
 	setup(props, { slots, emit, expose }) {
 		const instance = getCurrentInstance()!;
+		const { t } = useLocale();
 
 		const isActive = ref(false);
+		const okText = computed(() => {
+			return typeof props.okText === 'undefined'
+				? t('vc.Modal.okButtonText')
+				: props.okText;
+		});
+		const cancelText = computed(() => {
+			return typeof props.cancelText === 'undefined'
+				? t('vc.Modal.cancelButtonText')
+				: props.cancelText;
+		});
 
 		const handleBefore = (e: any, hook: any) => {
 			if (!isActive.value) return;
@@ -87,11 +99,11 @@ export const MModalView = defineComponent({
 		const currentData = computed(() => {
 			return props.data || [
 				{
-					content: props.cancelText,
+					content: cancelText.value,
 					onClick: handleCancel
 				},
 				{
-					content: props.okText,
+					content: okText.value,
 					onClick: handleOk
 				}
 			];

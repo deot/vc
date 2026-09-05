@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { Modal, ModalView, MModal, MModalView } from '@deot/vc-components';
+import { Modal, ModalView, MModal, MModalView, VcInstance } from '@deot/vc-components';
+import { enUS, zhCN } from '@deot/vc-locale';
 import { mount, config } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
 import { h, nextTick } from 'vue';
@@ -11,6 +12,10 @@ import { vi } from 'vitest';
 // onAfterLeave 不会触发。这里关闭 stub, 走真实 Transition 生命周期。
 config.global.stubs.transition = false;
 config.global.stubs['transition-group'] = false;
+
+afterEach(() => {
+	VcInstance.configure({ locale: zhCN });
+});
 
 const flush = async () => {
 	await nextTick();
@@ -724,6 +729,34 @@ describe('ModalView footer / okText / cancelText', () => {
 		wrapper.unmount();
 	});
 
+	it('默认按钮文案响应 locale 切换，并保留显式空字符串覆盖', async () => {
+		const wrapper = mount(ModalView, {
+			attachTo: document.body,
+			props: { modelValue: true }
+		});
+		await flush();
+
+		let buttons = wrapper.findAll('.vc-modal__footer button');
+		expect(buttons.map(button => button.text())).toEqual(['取消', '确定']);
+
+		VcInstance.configure({ locale: enUS });
+		await flush();
+		buttons = wrapper.findAll('.vc-modal__footer button');
+		expect(buttons.map(button => button.text())).toEqual(['Cancel', 'OK']);
+
+		await wrapper.setProps({ cancelText: 'Back', okText: '' });
+		await flush();
+		buttons = wrapper.findAll('.vc-modal__footer button');
+		expect(buttons.map(button => button.text())).toEqual(['Back']);
+
+		VcInstance.configure({ locale: zhCN });
+		await flush();
+		buttons = wrapper.findAll('.vc-modal__footer button');
+		expect(buttons.map(button => button.text())).toEqual(['Back']);
+
+		wrapper.unmount();
+	});
+
 	it('okDisabled / cancelDisabled 透传到按钮', async () => {
 		const wrapper = mount(ModalView, {
 			attachTo: document.body,
@@ -1277,6 +1310,29 @@ describe('MModalView 基础渲染 / props', () => {
 		expect(wrapper.find('.vcm-modal__content').exists()).toBe(true);
 		expect(wrapper.find('.vcm-modal__html').html()).toContain('内容文案');
 		expect(wrapper.findAll('.vcm-modal__footer .vcm-modal__button').length).toBe(2);
+
+		wrapper.unmount();
+	});
+
+	it('mode=alert: 默认按钮文案响应 locale 切换', async () => {
+		const wrapper = mount(MModalView, {
+			attachTo: document.body,
+			props: {
+				modelValue: true,
+				mode: 'alert',
+				title: 'title',
+				content: 'content'
+			}
+		});
+		await flush();
+
+		let buttons = wrapper.findAll('.vcm-modal__footer .vcm-modal__button');
+		expect(buttons.map(button => button.text())).toEqual(['取消', '确定']);
+
+		VcInstance.configure({ locale: enUS });
+		await flush();
+		buttons = wrapper.findAll('.vcm-modal__footer .vcm-modal__button');
+		expect(buttons.map(button => button.text())).toEqual(['Cancel', 'OK']);
 
 		wrapper.unmount();
 	});

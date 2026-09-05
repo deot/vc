@@ -1,6 +1,7 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-modal;
+$mask-color: varfix(mask-color, modal);
 $border-shadow: varfix(border-shadow, modal);
 $background-color-light: varfix(background-color-light, modal);
 $color-dark: varfix(color-dark, modal);
@@ -15,7 +16,7 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 		inset: 0;
 		z-index: $popup-zindex; // 与wrapper相同，两个modal同时出现时可以盖上去
 		height: 100%;
-		background-color: rgb(0 0 0 / 40%);
+		background-color: $mask-color;
 		opacity: 1;
 	}
 
@@ -33,18 +34,18 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 		display: flex;
 		margin: auto;
 		background: $background-color-light;
-		border-radius: 7px;
+		border-radius: unitfix(7);
 		box-shadow: $border-shadow;
 		flex-direction: column;
 	}
 
 	@include element(header) {
-		padding: 24px 15px 12px;
+		padding: unitfix(24) unitfix(15) unitfix(12);
 	}
 
 	@include element(title) {
 		margin: 0;
-		font-size: 17px;
+		font-size: unitfix(17);
 		font-weight: bold;
 		line-height: 1;
 		color: $color-dark;
@@ -54,13 +55,13 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 
 	@include element(content) {
 		position: relative;
-		padding: 0 24px 25px; 
+		padding: 0 unitfix(24) unitfix(25);
 		overflow-y: auto;
 	}
 
 	@include element(no-title) {
-		padding-top: 32px;
-		padding-bottom: 32px;
+		padding-top: unitfix(32);
+		padding-bottom: unitfix(32);
 
 		.vcm-modal__html {
 			color: $color-dark;
@@ -68,7 +69,7 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 	}
 
 	@include element(html) {
-		font-size: 15px;
+		font-size: unitfix(15);
 		line-height: 1.5;
 		color: $color-dark-lighter;
 		text-align: center;
@@ -79,9 +80,9 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 	@include element(button) {
 		position: relative;
 		z-index: 1; // android不添加时可能不显示1px描边
-		height: 50px;
-		font-size: 17px;
-		line-height: 50px;
+		height: unitfix(50);
+		font-size: unitfix(17);
+		line-height: unitfix(50);
 		color: $color-primary;
 		text-align: center;
 		overflow-wrap: break-word;
@@ -137,7 +138,7 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 		flex-direction: column;
 
 		@include element(button, false) {
-			padding-left: 15px;
+			padding-left: unitfix(15);
 			color: $color-dark-light;
 			text-align: left;
 
