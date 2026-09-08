@@ -7,11 +7,11 @@ export const props = {
 	},
 	foreground: {
 		type: String,
-		default: '#ccc'
+		default: 'var(--vc-spin-foreground-color, #ccc)'
 	},
 	background: {
 		type: String,
-		default: 'var(--vc-color-primary)'
+		default: 'var(--vc-spin-color-primary, var(--vc-color-primary))'
 	},
 	/**
 	 * 待开发
