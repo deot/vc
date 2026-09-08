@@ -5,6 +5,12 @@ $color-success: varfix(color-success, tag);
 $color-error: varfix(color-error, tag);
 $color-warning: varfix(color-warning, tag);
 $color-primary: varfix(color-primary, tag);
+$background-color: varfix(background-color, tag);
+$background-color-light: varfix(background-color-light, tag);
+$foreground-color: varfix(foreground-color, tag);
+$color-on-emphasis: varfix(color-on-emphasis, tag, #fff);
+$border-color: varfix(color-light-deeper, tag);
+$dot-color: varfix(color-light-deepest, tag);
 
 @include block($component-name) {
 	position: relative;
@@ -14,6 +20,7 @@ $color-primary: varfix(color-primary, tag);
 	overflow: hidden;
 	font-size: 12px;
 	line-height: 22px;
+	color: $foreground-color;
 
 	/**
 	 * 居中对齐
@@ -21,11 +28,11 @@ $color-primary: varfix(color-primary, tag);
 	 */
 	vertical-align: middle;
 	cursor: pointer;
-	background: #f7f7f7;
+	background: $background-color;
 	border-radius: 3px;
 	box-sizing: border-box;
 
-	@include border('', varfix('color-light-deeper'), 3);
+	@include border('', $border-color, 3);
 
 	@include element(wrapper) {
 		display: flex;
@@ -45,13 +52,13 @@ $color-primary: varfix(color-primary, tag);
 		width: 10px;
 		height: 10px;
 		margin-right: 6px;
-		background: #e8eaec;
+		background: $dot-color;
 		border-radius: 50%;
 	}
 	
 	@include when(default) {
 		@include when(success) {
-			color: white;
+			color: $color-on-emphasis;
 			background: $color-success;
 
 			&::after, &::before {
@@ -60,7 +67,7 @@ $color-primary: varfix(color-primary, tag);
 		}
 
 		@include when(primary) {
-			color: white;
+			color: $color-on-emphasis;
 			background: $color-primary;
 
 			&::after, &::before {
@@ -69,7 +76,7 @@ $color-primary: varfix(color-primary, tag);
 		}
 
 		@include when(warning) {
-			color: white;
+			color: $color-on-emphasis;
 			background: $color-warning;
 
 			&::after, &::before {
@@ -78,7 +85,7 @@ $color-primary: varfix(color-primary, tag);
 		}
 
 		@include when(error) {
-			color: white;
+			color: $color-on-emphasis;
 			background: $color-error;
 
 			&::after, &::before {
@@ -90,7 +97,7 @@ $color-primary: varfix(color-primary, tag);
 	@include when(border) {
 		height: 24px;
 		line-height: 24px;
-		background: white;
+		background: $background-color-light;
 
 		@include when(success) {
 			color: $color-success;
@@ -125,10 +132,10 @@ $color-primary: varfix(color-primary, tag);
 		}
 
 		@include when(white) {
-			color: #fff;
+			color: $color-on-emphasis;
 
 			&::after, &::before {
-				border-color: #fff;
+				border-color: $color-on-emphasis;
 			}
 		}
 
@@ -141,7 +148,7 @@ $color-primary: varfix(color-primary, tag);
 		height: 28px;
 		padding: 0 10px;
 		line-height: 28px;
-		background: #fff;
+		background: $background-color-light;
 
 		@include when(success) {
 			@include element(dot) {
@@ -169,7 +176,7 @@ $color-primary: varfix(color-primary, tag);
 
 		@include when(white) {
 			@include element(dot) {
-				background: white;
+				background: $color-on-emphasis;
 			}
 		}
 
@@ -179,11 +186,11 @@ $color-primary: varfix(color-primary, tag);
 	}
 
 	@include when(unchecked) {
-		color: #515a6e !important;
-		background: #fff !important;
+		color: $foreground-color !important;
+		background: $background-color-light !important;
 
 		&::after, &::before {
-			border-color: #fff !important;
+			border-color: $background-color-light !important;
 		}
 	}
 }
