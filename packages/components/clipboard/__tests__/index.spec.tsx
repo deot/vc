@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 
 import { vi } from 'vitest';
-import { Clipboard, MClipboard, Message, MToast } from '@deot/vc-components';
+import { Clipboard, MClipboard, Message, MToast, VcInstance } from '@deot/vc-components';
+import { enUS, zhCN } from '@deot/vc-locale';
 import { mount } from '@vue/test-utils';
 import { copyToClipboard, toggleSelection, group } from '../utils';
 
@@ -11,6 +12,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+	VcInstance.configure({ locale: zhCN });
 	vi.restoreAllMocks();
 	// @ts-ignore
 	delete (window as any).clipboardData;
@@ -37,6 +39,30 @@ describe('index.ts', () => {
 });
 
 describe('clipboard.tsx', () => {
+	it.each([Clipboard, MClipboard])('locale: 点击时读取当前语言，after 覆盖默认提示', async (Component) => {
+		const success = vi.spyOn(Message, 'success').mockImplementation(() => ({}) as any);
+		const info = vi.spyOn(MToast, 'info').mockImplementation(() => ({}) as any);
+		const feedback = Component === Clipboard ? success : info;
+		const wrapper = mount(Component, { props: { value: 'hello' } });
+
+		await wrapper.trigger('click');
+		expect(feedback).toHaveBeenLastCalledWith({ content: '复制成功' });
+		VcInstance.configure({ locale: enUS });
+		await wrapper.trigger('click');
+		expect(feedback).toHaveBeenLastCalledWith({ content: 'Copied successfully' });
+		VcInstance.configure({ locale: zhCN });
+		await wrapper.trigger('click');
+		expect(feedback).toHaveBeenLastCalledWith({ content: '复制成功' });
+
+		const onAfter = vi.fn();
+		const custom = mount(Component, { props: { value: 'hello' }, attrs: { onAfter } });
+		await custom.trigger('click');
+		expect(onAfter).toHaveBeenCalledWith('hello');
+		expect(feedback).toHaveBeenCalledTimes(3);
+		wrapper.unmount();
+		custom.unmount();
+	});
+
 	it('tag: 使用自定义标签渲染', () => {
 		const wrapper = mount(() => (<Clipboard tag="span" />));
 

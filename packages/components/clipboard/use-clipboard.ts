@@ -1,7 +1,9 @@
 import { getCurrentInstance, h } from 'vue';
+import { useLocale } from '../locale';
 import { copyToClipboard } from './utils';
 
 export const useClipboard = (done: any) => {
+	const { t } = useLocale();
 	const instance = getCurrentInstance()!;
 	const { props, emit, slots } = instance;
 	const handleClick = async (e: any) => {
@@ -15,7 +17,7 @@ export const useClipboard = (done: any) => {
 
 			if (success) {
 				onAfter && onAfter(value);
-				!onAfter && done(`复制成功`);
+				!onAfter && done(t('vc.Clipboard.copySuccess'));
 			}
 		} catch (error) {
 			emit('error', error);

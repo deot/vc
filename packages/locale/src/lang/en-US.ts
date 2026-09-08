@@ -28,6 +28,9 @@ export const enUS: Language = {
 				saturday: 'Sat'
 			}
 		},
+		Clipboard: {
+			copySuccess: 'Copied successfully'
+		},
 		Modal: {
 			okButtonText: 'OK',
 			cancelButtonText: 'Cancel'

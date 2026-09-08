@@ -28,6 +28,9 @@ export const zhCN: Language = {
 				saturday: '六'
 			}
 		},
+		Clipboard: {
+			copySuccess: '复制成功'
+		},
 		Modal: {
 			okButtonText: '确定',
 			cancelButtonText: '取消'
