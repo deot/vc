@@ -6,7 +6,7 @@ const COMPONENT_NAME = 'vc-collapse';
 export const Collapse = defineComponent({
 	name: COMPONENT_NAME,
 	props: collapseProps,
-	emits: ['update:moodelValue', 'change'],
+	emits: ['update:modelValue', 'change'],
 	setup(props, { slots, emit }) {
 		const instance = getCurrentInstance()!;
 		const currentValue = ref<any>();
@@ -17,7 +17,7 @@ export const Collapse = defineComponent({
 		 */
 		const sync = () => {
 			const v = props.accordion ? currentValue.value[0] : currentValue.value;
-			emit('update:moodelValue', v);
+			emit('update:modelValue', v);
 			emit('change', v);
 		};
 

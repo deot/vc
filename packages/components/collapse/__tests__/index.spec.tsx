@@ -36,6 +36,28 @@ const mountStateful = (template: string, value: any) => {
 const visibles = (wrapper: any) => wrapper.findAll('.icon').map((v: any) => v.text());
 
 describe('index.ts', () => {
+	it('v-model: 手风琴切换及收起时同步父级状态', async () => {
+		const wrapper = mount({
+			components: { Collapse, CollapseItem },
+			data: () => ({ value: 1 as number | undefined }),
+			template: `
+				<Collapse v-model="value" accordion>
+					<CollapseItem :value="1">title1</CollapseItem>
+					<CollapseItem :value="2">title2</CollapseItem>
+				</Collapse>
+			`
+		});
+		await flush();
+		const title = wrapper.findAll('.vc-collapse-item__title')[1];
+		await title.trigger('click');
+		await flush();
+		expect(wrapper.vm.value).toBe(2);
+		await title.trigger('click');
+		await flush();
+		expect(wrapper.vm.value).toBeUndefined();
+		expect(wrapper.findComponent(Collapse).emitted('update:modelValue')).toEqual([[2], [undefined]]);
+	});
+
 	it('basic', () => {
 		expect(typeof Collapse).toBe('object');
 		expect(typeof CollapseItem).toBe('object');
