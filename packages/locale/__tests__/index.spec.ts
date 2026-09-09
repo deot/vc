@@ -55,4 +55,15 @@ describe('locale', () => {
 		expect(getNestedValue(zhModal, 'cancelButtonText')).toBe('取消');
 		expect(getNestedValue(enModal, 'cancelButtonText')).toBe('Cancel');
 	});
+
+	it('keeps Image locale keys and leaf types aligned', () => {
+		const zhImage = zhCN.vc.Image;
+		const enImage = enUS.vc.Image;
+
+		expect(getLeafPaths(zhImage)).toEqual(getLeafPaths(enImage));
+		expect(allLeavesAreStrings(zhImage)).toBe(true);
+		expect(allLeavesAreStrings(enImage)).toBe(true);
+		expect(getNestedValue(zhImage, 'loadError')).toBe('加载失败');
+		expect(getNestedValue(enImage, 'loadError')).toBe('Failed to load image');
+	});
 });

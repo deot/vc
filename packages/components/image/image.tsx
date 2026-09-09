@@ -6,6 +6,7 @@ import { useAttrs } from '@deot/vc-hooks';
 import * as $ from '@deot/helper-dom';
 import { throttle } from 'lodash-es';
 import { ImagePreview } from '../image-preview/index';
+import { useLocale } from '../locale';
 import { VcInstance } from '../vc';
 import { props as imageProps } from './image-props';
 import IMGStore from './store';
@@ -32,6 +33,7 @@ export const Image = defineComponent({
 	props: imageProps,
 	setup(props, { slots, emit }) {
 		const instance = getCurrentInstance()!;
+		const { t } = useLocale();
 		const its = useAttrs({ merge: false, exclude: ['onLoad', 'onError'] });
 		const isLoading = ref(true);
 		const isError = ref(false);
@@ -244,7 +246,11 @@ export const Image = defineComponent({
 						)
 					}
 					{
-						(!isLoading.value && isError.value) && (slots.error ? slots.error() : (<div class="vc-image__error"> 加载失败</div>))
+						(!isLoading.value && isError.value) && (
+							slots.error
+								? slots.error()
+								: (<div class="vc-image__error">{t('vc.Image.loadError')}</div>)
+						)
 					}
 					{
 						!isLoading.value && !isError.value && (

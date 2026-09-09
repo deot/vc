@@ -1,5 +1,5 @@
 ## 图片（Image）
-图片容器，在保留原生img的特性下，支持懒加载，自定义占位、加载失败等
+图片容器，支持懒加载、填充模式、加载占位、失败内容和预览。
 
 ### 何时使用
 
@@ -9,20 +9,15 @@
 
 ### 基础用法
 
-fit的5种模式
-- fill：被替换的内容正好填充元素的内容框。整个对象将完全填充此框。如果对象的宽高比与内容框不相匹配，那么该对象将被拉伸以适应内容框。
-- contain：被替换的内容将被缩放，以在填充元素的内容框时保持其宽高比。 整个对象在填充盒子的同时保留其长宽比，因此如果宽高比与框的宽高比不匹配，该对象将被添加“黑边”。
-- cover：被替换的内容在保持其宽高比的同时填充元素的整个内容框。如果对象的宽高比与内容框不相匹配，该对象将被剪裁以适应内容框。
-- none：被替换的内容将保持其原有的尺寸。
-- scale-down：内容的尺寸与 none 或 contain 中的一个相同，取决于它们两个之间谁得到的对象尺寸会更小一些。
+通过 `fit` 指定图片在容器中的填充方式，取值与原生 `object-fit` 一致。
 
-:::RUNTIME
+:::playground
 ```vue
 <template>
 	<div class="v-img-basic" style="padding: 10px;">
 		<div v-for="fit in fits" :key="fit" class="_img-wrap">
 			<span style="margin-bottom: 10px;">{{ fit }}</span>
-			<Image :src="url" :fit="fit" @load="handleLoad" style="width: 100px; height: 100px" />
+			<Image :src="url" :fit="fit" style="width: 100px; height: 100px" />
 		</div>
 	</div>
 </template>
@@ -33,14 +28,8 @@ import { Image } from '@deot/vc';
 const fits = ref(['fill', 'contain', 'cover', 'none', 'scale-down']);
 const url = ref('https://github.githubassets.com/favicons/favicon.svg');
 
-const handleLoad = (e, img, instance) => {
-	console.log('load');
-	console.log(e);
-	console.log(img);
-	console.log(instance);
-};
 </script>
-<style lang="scss">
+<style>
 .v-img-basic {
 	display: flex;
 }
@@ -57,7 +46,7 @@ const handleLoad = (e, img, instance) => {
 ### 懒加载
 通过设置`lazy`属性设置懒加载，当页面滚动到图片区域时才会加载该图片。
 
-:::RUNTIME
+:::playground
 ```vue
 <template>
 	<div class="v-img-lazy" style="padding: 10px;">
@@ -77,29 +66,24 @@ const handleLoad = (e, img, instance) => {
 import { ref } from 'vue';
 import { Image } from '@deot/vc';
 
-const show = ref(false);
 const urls = ref([
 	'https://github.githubassets.com/favicons/favicon.svg',
 	'https://github.githubassets.com/favicons/favicon.svg',
 	'https://github.githubassets.com/favicons/favicon.svg'
 ]);
 </script>
-<style>
-</style>
 ```
 :::
 
 ### 加载失败
-图片加载失败时展示加载失败文案。
+图片加载失败时展示跟随当前 locale 的默认文案；可通过 `error` 插槽自定义内容。
 
-:::RUNTIME
+:::playground
 ```vue
 <template>
 	<div style="text-align: center;">
 		<Image
-			src="https://github.githubassets.com/favicons/favicon.svg"
-			lazy
-			@error="handleError"
+			src="https://example.invalid/image.png"
 			style="width: 200px; height: 200px; background: #f6f8fa;"
 		/>
 	</div>
@@ -108,12 +92,6 @@ const urls = ref([
 <script setup>
 import { Image } from '@deot/vc';
 
-const handleError = (e, img, instance) => {
-	console.log('error');
-	console.log(e);
-	console.log(img);
-	console.log(instance);
-};
 </script>
 ```
 :::
@@ -122,35 +100,28 @@ const handleError = (e, img, instance) => {
 
 ### 属性
 
-| 属性      | 说明                         | 类型                 | 可选值                                          | 默认值     |
-| ------- | -------------------------- | ------------------ | -------------------------------------------- | ------- |
-| src     | 图片资源                       | `string`           | -                                            | -       |
-| thumbnail     | 缩略图                       | `string`           | -                                            | -       |
-| formatter     | 资源转换                       | `function`           | -                                            | -       |
-| fit     | 确定图片如何适应容器框，同原生 object-fit | `string`           | `fill`、`contain`、`cover`、`none`、`scale-down` | -       |
-| lazy    | 是否开启懒加载                    | `boolean`          | -                                            | `false` |
-| wrapper | 父容器                        | `object`、 `string` | -                                            | -       |
-| previewable | 可预览                        | `boolean` | -                                            | true       |
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| src | 图片地址；未提供时使用 `thumbnail` | `string` | - | - |
+| thumbnail | 加载和显示用的缩略图地址；提供 `src` 时预览仍使用 `src` | `string` | - | - |
+| formatter | 转换图片地址，优先于全局 `VcInstance.configure({ Image: { formatter } })` 配置 | `(path: string, type: 'src' \| 'thumbnail', instance: object) => string` | - | - |
+| fit | 图片如何适应容器，同原生 `object-fit` | `string` | `fill`、`contain`、`cover`、`none`、`scale-down` | - |
+| lazy | 是否在滚动容器中延迟加载 | `boolean` | - | `false` |
+| wrapper | 懒加载时使用的滚动容器元素或选择器；未提供时自动查找 | `HTMLElement \| string` | - | - |
+| previewable | 点击已加载图片时是否打开预览 | `boolean` | - | `true` |
 
 
 ### 事件
 
-| 事件名   | 说明       | 回调参数                                                  | 参数说明                                                |
-| ----- | -------- | ----------------------------------------------------- | --------------------------------------------------- |
-| load  | 图片加载成功触发 | `(e: Event, img: object, instance: object) => void 0` | `e`：img加载失败事件对象；`img`：当前生成的imgDOM对象；`instance`：组件实例 |
-| error | 图片加载失败触发 | `(e: Event, img: object, instance: object) => void 0` | `e`：img加载失败事件对象；`img`：当前生成的imgDOM对象；`instance`：组件实例 |
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| load | 图片加载成功时触发 | `(event: Event, image: HTMLImageElement, instance: object) => void` | `event` 为原生加载事件；`image` 为当前创建的图片元素；`instance` 为组件实例 |
+| error | 图片加载失败时触发 | `(event: Event, image: HTMLImageElement, instance: object) => void` | `event` 为原生失败事件；`image` 为当前创建的图片元素；`instance` 为组件实例 |
 
 
-### Slot
+### 插槽
 
-| 属性          | 说明         |
-| ----------- | ---------- |
-| placeholder | 图片未加载的占位内容 |
-| error       | 加载失败的内容    |
-
-
-## TODO
-1. 自动计算高度（width.isRequired）
-2. 管理资源宽高
-3. cover/fit等效果
-4. 自动压缩展示的图片
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| placeholder | 图片未加载的占位内容 | - |
+| error | 图片加载失败时的内容 | - |

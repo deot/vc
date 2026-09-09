@@ -34,6 +34,9 @@ export const zhCN: Language = {
 		Clipboard: {
 			copySuccess: '复制成功'
 		},
+		Image: {
+			loadError: '加载失败'
+		},
 		Modal: {
 			okButtonText: '确定',
 			cancelButtonText: '取消'

@@ -1,6 +1,8 @@
 @use '../style/helper' as *;
 
 $component-name: vc-image;
+$background-color: varfix(background-color, image);
+$color-dark-extralight: varfix(color-dark-extralight, image);
 
 %size {
 	width: 100%;
@@ -27,7 +29,7 @@ $component-name: vc-image;
 			rgb(255 255 255 / 0%) 40%,
 			rgb(255 255 255 / 50%) 50%,
 			rgb(255 255 255 / 0%) 60%
-		) #f5f7fa;
+		) $background-color;
 		background-size: 400% 100%;
 		animation: vc-image-skeleton 1.4s ease infinite;
 
@@ -50,8 +52,8 @@ $component-name: vc-image;
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		font-size: 14px;
-		color: #c0c4cc;
+		font-size: unitfix(14px);
+		color: $color-dark-extralight;
 		vertical-align: middle;
 	}
 

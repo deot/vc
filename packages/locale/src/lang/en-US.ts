@@ -34,6 +34,9 @@ export const enUS: Language = {
 		Clipboard: {
 			copySuccess: 'Copied successfully'
 		},
+		Image: {
+			loadError: 'Failed to load image'
+		},
 		Modal: {
 			okButtonText: 'OK',
 			cancelButtonText: 'Cancel'
