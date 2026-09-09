@@ -1,46 +1,58 @@
-> vue@3已支持没有root，此组件仅语义化，兼容vue@2迁移代码
-
 ## 空标签（Fragment）
 
-只返回内部元素
+渲染默认插槽中的内容，不增加外层 DOM 元素。
 
 ### 何时使用
 
-当有多个同级标签，但不需要最外层标签包裹时使用。
+需要用组件标签对多个同级节点进行语义分组，同时保留父容器的直接子元素布局时使用。Vue 3 原生支持多根节点，普通多根模板无需额外使用此组件。
 
 ### 基础用法
 
-在最外层`template`里如果直接使用`fragment`包裹多个同级标签依旧会报不能有多个子节点的警告。
+下面三个元素仍是 Flex 容器的直接子元素，`Fragment` 不会生成包裹它们的标签。
 
-:::RUNTIME
+:::playground
+<!--
+<config lang="json5">
+{
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="vc-fragment-basic">
+	<div class="fragment-demo">
 		<Fragment>
-			<div class="box">1</div>
-			<div class="box">2</div>
-			<div class="box">3</div>
-			<div class="box">4</div>
-			<div class="box">5</div>
+			<span>第一个节点</span>
+			<span>第二个节点</span>
+			<span>第三个节点</span>
 		</Fragment>
 	</div>
 </template>
+
 <script setup>
 import { Fragment } from '@deot/vc';
 </script>
-<style>
-.vc-fragment-basic {
-	display: flex
-}
-.vc-fragment-basic .box {
-	width: 120px;
-	height: 120px;
-	background: #f2f2f2;
-	margin-left: 24px;
+
+<style scoped>
+.fragment-demo {
 	display: flex;
-	justify-content:center;
-	align-items: center;
+	flex-wrap: wrap;
+	gap: 16px;
 }
 </style>
 ```
 :::
+
+## API
+
+### 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 要渲染的子节点；未提供时不渲染可见内容 | - |
+
+组件没有自定义属性、事件或公开方法。需要设置样式或监听 DOM 事件时，请将 `class`、`style` 和事件监听器直接绑定到插槽中的实际元素上。
+
+### 移动端
+
+`MFragment` 是 `Fragment` 的别名，使用相同实现和默认插槽，可从 `@deot/vc` 导入。
