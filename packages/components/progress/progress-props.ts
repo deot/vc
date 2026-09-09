@@ -42,7 +42,7 @@ export const props = {
 	},
 	trackColor: {
 		type: String,
-		default: '#eaeef2'
+		default: 'var(--vc-progress-track-color, var(--vc-color-light-deeper))'
 	},
 	size: {
 		type: Number,
@@ -51,9 +51,9 @@ export const props = {
 	color: {
 		type: [Object, String],
 		default: () => ({
-			normal: '#456CF6',
-			success: '#52c41a',
-			error: '#f5222d'
+			normal: 'var(--vc-progress-color-primary, var(--vc-color-primary))',
+			success: 'var(--vc-progress-color-success, var(--vc-color-success))',
+			error: 'var(--vc-progress-color-error, var(--vc-color-error))'
 		})
 	}
 };
