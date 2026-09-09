@@ -3,6 +3,9 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		Countdown: {
+			format: 'DDd HHh mmm sss SSS'
+		},
 		Calendar: {
 			months: {
 				january: 'January',

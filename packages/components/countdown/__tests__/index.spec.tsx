@@ -4,6 +4,8 @@ import { Countdown } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { defineComponent, h, nextTick, ref } from 'vue';
 import { vi } from 'vitest';
+import { enUS } from '@deot/vc-locale';
+import { VcInstance } from '../../vc';
 
 const ms = {
 	second: 1000,
@@ -20,8 +22,38 @@ const useMockedNow = (now = FIXED) => {
 };
 
 describe('index.ts', () => {
+	const originalLocale = VcInstance.options.locale;
 	afterEach(() => {
+		VcInstance.configure({ locale: originalLocale });
 		vi.useRealTimers();
+	});
+
+	it('updates locale while preserving explicit and empty formats', async () => {
+		useMockedNow();
+		const wrapper = mount(Countdown, { props: { targetTime: FIXED + ms.hour } });
+		await nextTick();
+		expect(wrapper.text()).toBe('00天01小时00分00秒0');
+		VcInstance.configure({ locale: enUS });
+		await nextTick();
+		expect(wrapper.text()).toBe('00d 01h 00m 00s 0');
+		await wrapper.setProps({ format: 'HH:mm:ss' });
+		expect(wrapper.text()).toBe('01:00:00');
+		await wrapper.setProps({ format: '' });
+		expect(wrapper.text()).toBe('');
+		wrapper.unmount();
+	});
+
+	it.each(['slot', 'render'])('updates the localized format in %s data', async (mode) => {
+		useMockedNow();
+		const showFormat = (data: any) => h('span', data.format);
+		const wrapper = mount(Countdown, {
+			props: { targetTime: FIXED + ms.hour, ...(mode === 'render' ? { render: showFormat } : {}) },
+			slots: mode === 'slot' ? { default: showFormat } : {}
+		});
+		VcInstance.configure({ locale: enUS });
+		await nextTick();
+		expect(wrapper.text()).toBe('DDd HHh mmm sss SSS');
+		wrapper.unmount();
 	});
 
 	it('basic', () => {

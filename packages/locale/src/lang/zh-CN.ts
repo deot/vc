@@ -3,6 +3,9 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		Countdown: {
+			format: 'DD天HH小时mm分ss秒SSS'
+		},
 		Calendar: {
 			months: {
 				january: '一月',

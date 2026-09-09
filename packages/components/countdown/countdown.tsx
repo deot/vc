@@ -6,6 +6,7 @@ import { debounce } from 'lodash-es';
 import { props as countdownProps } from './countdown-props';
 import { getTimestamp, formatter } from './utils';
 import { Customer } from '../customer';
+import { useLocale } from '../locale';
 
 const COMPONENT_NAME = 'vc-countdown';
 
@@ -14,6 +15,8 @@ export const Countdown = defineComponent({
 	props: countdownProps,
 	emits: ['change', 'complete', 'error'],
 	setup(props, { emit, slots }) {
+		const { t } = useLocale();
+		const format = computed(() => props.format ?? t('vc.Countdown.format'));
 		const day = ref('');
 		const hour = ref('');
 		const minute = ref('');
@@ -58,12 +61,12 @@ export const Countdown = defineComponent({
 			if (!showResult.value) return;
 			let v: string;
 
-			v = formatter(props.format, [day.value, hour.value, minute.value, second.value, millisecond.value]);
+			v = formatter(format.value, [day.value, hour.value, minute.value, second.value, millisecond.value]);
 
 			// 过滤00*
 			if (props.trim) {
 				const regex = new RegExp(
-					`00(${formatter(props.format, Array.from({ length: 5 }, () => '|'))})?`,
+					`00(${formatter(format.value, Array.from({ length: 5 }, () => '|'))})?`,
 					'g'
 				);
 				v = v.replace(regex, '');
@@ -80,7 +83,7 @@ export const Countdown = defineComponent({
 				minute: minute.value,
 				second: second.value,
 				millisecond: millisecond.value,
-				format: props.format,
+				format: format.value,
 				tag: props.tag,
 				trim: props.trim,
 			};

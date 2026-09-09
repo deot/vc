@@ -8,7 +8,7 @@ export const props = {
 	// 只能是String, 函数使用formatter
 	format: {
 		type: String,
-		default: 'DD天HH小时mm分ss秒SSS'
+		default: undefined
 	},
 	t: {
 		type: Number,
