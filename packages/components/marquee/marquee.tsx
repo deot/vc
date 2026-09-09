@@ -64,8 +64,8 @@ export const Marquee = defineComponent({
 						class={[{ 'is-paused': paused.value }, 'vc-marquee__content']}
 					>
 						{
-							slots.defalut
-								? slots.defalut()
+							slots.default
+								? slots.default()
 								: typeof props.content === 'string'
 									? (<div innerHTML={props.content} />)
 									: typeof props.content === 'function'
