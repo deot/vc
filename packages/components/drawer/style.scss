@@ -4,6 +4,8 @@ $component-name: vc-drawer;
 $color-light-deeper: varfix(color-light-deeper, drawer);
 $color-dark-lightest: varfix(color-dark-lightest, drawer);
 $background-color-light: varfix(background-color-light, drawer);
+$mask-color: varfix(mask-color, drawer);
+$box-shadow: varfix(box-shadow, drawer, 0 unitfix(4) unitfix(12) rgb(0 0 0 / 15%));
 
 @include block($component-name) {
 	@include element(mask){
@@ -11,14 +13,14 @@ $background-color-light: varfix(background-color-light, drawer);
 		inset: 0;
 		z-index: $popup-zindex;
 		height: 100%;
-		background-color: rgb(0 0 0 / 40%);
+		background-color: $mask-color;
 	}
 
 	@include element(wrapper) {
 		position: fixed;
 		z-index: $popup-zindex;
 		background-color: $background-color-light;
-		box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+		box-shadow: $box-shadow;
 	}
 
 	@include when(bottom) {
@@ -77,7 +79,7 @@ $background-color-light: varfix(background-color-light, drawer);
 		font-size: unitfix(16);
 		font-weight: 600;
 		line-height: unitfix(24);
-		border-bottom: 1px solid $color-light-deeper;
+		border-bottom: unitfix(1) solid $color-light-deeper;
 	}
 
 	@include element(content-container) {
@@ -99,7 +101,7 @@ $background-color-light: varfix(background-color-light, drawer);
 		bottom: 0;
 		width: 100%;
 		padding: unitfix(12) unitfix(24);
-		font-size: 12px;
+		font-size: unitfix(12);
 		text-align: right;
 		border-top: unitfix(1) solid $color-light-deeper;
 		box-sizing: border-box;
@@ -107,10 +109,14 @@ $background-color-light: varfix(background-color-light, drawer);
 
 	@include element(close) {
 		position: absolute;
-		top: 16px;
-		right: 28px;
+		top: unitfix(16);
+		right: unitfix(28);
 		font-size: unitfix(13);
 		color: $color-dark-lightest;
 		cursor: pointer;
-	}	
+	}
+
+	@include element(cancel) {
+		margin-right: unitfix(8);
+	}
 }

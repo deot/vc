@@ -3,6 +3,10 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		Drawer: {
+			okButtonText: 'OK',
+			cancelButtonText: 'Cancel'
+		},
 		Countdown: {
 			format: 'DDd HHh mmm sss SSS'
 		},

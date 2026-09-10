@@ -6,6 +6,7 @@ import { Button } from '../button';
 import { Icon } from '../icon';
 import { Customer } from '../customer';
 import { Scroller } from '../scroller';
+import { useLocale } from '../locale';
 import { TransitionFade, TransitionSlide } from '../transition';
 import { props as drawerProps } from './drawer-view-props';
 
@@ -14,10 +15,13 @@ const COMPONENT_NAME = 'vc-drawer';
 export const DrawerView = defineComponent({
 	name: COMPONENT_NAME,
 	props: drawerProps,
-	emits: ['close', 'update:modelValue', 'visible-change'],
+	emits: ['close', 'update:modelValue', 'visible-change', 'portal-fulfilled'],
 	setup(props, { emit, slots, expose }) {
 		const instance = getCurrentInstance()!;
 		const isActive = ref(false);
+		const { t } = useLocale();
+		const okText = computed(() => props.okText ?? t('vc.Drawer.okButtonText'));
+		const cancelText = computed(() => props.cancelText ?? t('vc.Drawer.cancelButtonText'));
 
 		const classes = computed(() => {
 			return {
@@ -73,11 +77,12 @@ export const DrawerView = defineComponent({
 		/**
 		 * 动画执行后关闭, 关闭事件都会被执行
 		 * visible-change 由移除之后触发
-		 * 同时close兼容portal设计
+		 * 同时portal-fulfilled兼容portal设计
 		 */
 		const handleRemove = () => {
 			!instance.isUnmounted && (
 				emit('close'),
+				emit('portal-fulfilled'),
 				emit('update:modelValue', false),
 				emit('visible-change', false)
 			);
@@ -131,7 +136,7 @@ export const DrawerView = defineComponent({
 							<div
 								class={[
 									{
-										'is-no-footer': !props.footer || (!props.cancelText && !props.okText)
+										'is-no-footer': !props.footer || (!cancelText.value && !okText.value)
 									},
 									'vc-drawer__container'
 								]}
@@ -173,7 +178,7 @@ export const DrawerView = defineComponent({
 									</Scroller>
 								</div>
 								{
-									(props.footer && (props.cancelText || props.okText)) && (
+									(props.footer && (cancelText.value || okText.value)) && (
 										<div class={['vc-drawer__footer']}>
 											{ slots['footer-extra']?.() }
 											{
@@ -181,24 +186,24 @@ export const DrawerView = defineComponent({
 													? (
 															<Fragment>
 																{
-																	props.cancelText && (
+																	cancelText.value && (
 																		<Button
-																			style="margin-right: 8px;"
+																			class="vc-drawer__cancel"
 																			disabled={props.cancelDisabled}
 																			onClick={e => handleBefore(e, handleCancel)}
 																		>
-																			{ props.cancelText }
+																			{ cancelText.value }
 																		</Button>
 																	)
 																}
 																{
-																	props.okText && (
+																	okText.value && (
 																		<Button
 																			type="primary"
 																			disabled={props.okDisabled}
 																			onClick={e => handleBefore(e, handleOk)}
 																		>
-																			{ props.okText }
+																			{ okText.value }
 																		</Button>
 																	)
 																}

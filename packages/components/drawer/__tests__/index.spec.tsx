@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { Drawer, DrawerView } from '@deot/vc-components';
+import { Drawer, DrawerView, VcInstance } from '@deot/vc-components';
+import { zhCN, enUS } from '@deot/vc-locale';
 import { mount, config } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
 import { h, nextTick } from 'vue';
@@ -505,6 +506,46 @@ describe('DrawerView closeWithCancel / cancel / ok', () => {
 		expect((wrapper.vm as any).isActive).toBe(false);
 
 		wrapper.unmount();
+	});
+});
+
+describe('DrawerView locale', () => {
+	const originalLocale = VcInstance.options.locale;
+	afterEach(() => {
+		VcInstance.configure({ locale: originalLocale });
+		Drawer.destroy();
+	});
+
+	it('默认按钮随语言切换更新，显式文案和隐藏值保持优先', async () => {
+		VcInstance.configure({ locale: zhCN });
+		const wrapper = mount(DrawerView);
+		try {
+			expect(wrapper.findAll('button').map(button => button.text())).toEqual(['取消', '确定']);
+			VcInstance.configure({ locale: enUS });
+			await nextTick();
+			expect(wrapper.findAll('button').map(button => button.text())).toEqual(['Cancel', 'OK']);
+			await wrapper.setProps({ okText: '保存', cancelText: '' });
+			expect(wrapper.findAll('button').map(button => button.text())).toEqual(['保存']);
+			VcInstance.configure({ locale: zhCN });
+			await nextTick();
+			expect(wrapper.findAll('button').map(button => button.text())).toEqual(['保存']);
+			await wrapper.setProps({ okText: false });
+			expect(wrapper.find('.vc-drawer__footer').exists()).toBe(false);
+			await wrapper.setProps({ okText: '', cancelText: false });
+			expect(wrapper.find('.vc-drawer__footer').exists()).toBe(false);
+		} finally {
+			wrapper.unmount();
+		}
+	});
+
+	it('Drawer.open 的默认按钮响应语言切换', async () => {
+		VcInstance.configure({ locale: enUS });
+		Drawer.open({});
+		await flush();
+		expect(document.querySelector('.vc-drawer__footer')?.textContent).toBe('CancelOK');
+		VcInstance.configure({ locale: zhCN });
+		await nextTick();
+		expect(document.querySelector('.vc-drawer__footer')?.textContent).toBe('取消确定');
 	});
 });
 

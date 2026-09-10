@@ -3,6 +3,10 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		Drawer: {
+			okButtonText: '确定',
+			cancelButtonText: '取消'
+		},
 		Countdown: {
 			format: 'DD天HH小时mm分ss秒SSS'
 		},

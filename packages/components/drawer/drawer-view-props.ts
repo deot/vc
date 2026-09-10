@@ -46,11 +46,11 @@ export const props = {
 	},
 	okText: {
 		type: [String, Boolean],
-		default: '确定'
+		default: undefined
 	},
 	cancelText: {
 		type: [String, Boolean],
-		default: '取消'
+		default: undefined
 	},
 	okDisabled: {
 		type: Boolean,
