@@ -39,6 +39,10 @@
 
 Playground 的预览内容应尽量避免紧贴容器边缘；当示例自身没有合适间距时，可通过 `previewInset` 增加留白。需要铺满视口或画布的真实场景不强制增加。
 
+Demo 中相邻的独立按钮应通过 `gap` 或 `margin` 保持清晰、一致的间距；优先在 flex/grid 容器中使用 `gap`，窄屏时允许合理换行，换行后仍保持行列间距。演示连体按钮组时保留组件本身的连接样式。`previewInset` 提供的是预览区外围留白，不能替代按钮之间的间距。
+
+新增或修改 demo 时，同时优化其视觉呈现：合理安排操作区、演示区和结果说明的层次、对齐与留白，保持尺寸协调、文字易读，并适配声明的 viewport。美化样式放在示例自身的 scoped styles 或局部容器中，保持简洁并突出组件真实行为，避免覆盖组件主题或添加无关装饰。
+
 不可运行的代码片段、interfaces、配置片段以及迁移前后对比使用普通 fenced blocks。完整的交互或视觉示例使用 `:::playground`。修改目标 README 时，将该文件内每个 legacy `:::RUNTIME` 容器一一替换为小写的 `:::playground`。
 
 单文件形式：
@@ -60,6 +64,10 @@ import { ComponentName } from '@deot/vc';
 - 单个不带文件名的 fence 是优先采用的最小形式。
 - 每个示例必须能够独立运行：包含全部 imports、local state、handlers 和必要的 scoped layout styles。
 - 导入示例使用的每个 symbol，并移除未使用 imports；不要仅因某个损坏的 legacy example 已经存在就继续保留。
+- Demo 中用于判断状态的布尔字段统一使用 `isXxxx` 形式，例如 `isActive` 或 `isVisible`。
+- Vue template 中通过 `@xxx` 绑定的本地事件入口函数统一使用 `handleXxxx` 形式，例如 `@click="handleClick"` 或 `@change="handleChange"`。
+- `handle` 前缀用于事件入口；入口内部调用的普通逻辑函数按行为命名，例如 `confirm`、`submit` 或 `reset`。避免 `handleSubmit` 调用 `handleConfirm` 这样的连续 `handle` 调用链，应写为 `handleSubmit` 内部调用 `confirm`；多个事件共用的逻辑也使用普通函数名。
+- 上述命名规则只约束新增或实际修改到的 demo 内部代码，不用于更改组件公开 API、组件源码字段或批量整理未处理的历史示例。
 - 使用当前公开的 `@deot/vc` API。不要依赖站点级全局组件注册、其他示例的 state、私有源码路径、真实在线业务接口或未解释的内部数据。
 - 示例应保持聚焦；一个示例只演示一个完整行为。
 - 使用 tab 缩进以匹配本仓库。
@@ -101,4 +109,5 @@ import { ComponentName } from '@deot/vc';
 - 对照公开源码/export surface 核对 README 中所有 API names。
 - 结构或 Playground 发生变化后渲染页面；运行每个有改动的 Playground 并检查 console。
 - 在声明的 viewport 下验证移动端示例，并在两种主题下验证可见 theme 示例。
+- 调整 demo 布局后，检查按钮间距、换行、内容对齐和留白，确认在目标 viewport 下没有拥挤、遮挡或意外横向溢出。
 - 如果 lint 会把有意不可用的 imports 当作真实 modules，则将纯说明性 pseudocode 放在不可解析的 `text` fence 中。
