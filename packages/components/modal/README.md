@@ -24,14 +24,14 @@ Modal 在当前页面上方承载需要用户确认或处理的内容。桌面�
 ```vue
 <template>
 	<div :class="['modal-demo', { 'is-expanded': expanded }]">
-		<Button @click="open">
+		<Button @click="handleOpen">
 			打开对话框
 		</Button>
 		<span>{{ result }}</span>
 
 		<Modal
 			v-if="modalReady"
-			v-model="visible"
+			v-model="isActive"
 			title="提交确认"
 			@ok="handleOk"
 			@cancel="handleCancel"
@@ -43,28 +43,32 @@ Modal 在当前页面上方承载需要用户确认或处理的内容。桌面�
 </template>
 
 <script setup>
-import { nextTick, ref } from 'vue';
+import { nextTick, onUnmounted, ref } from 'vue';
 import { Button, Modal } from '@deot/vc';
 
 const expanded = ref(false);
 const modalReady = ref(false);
-const visible = ref(false);
+const isActive = ref(false);
 const result = ref('尚未操作');
+let disposed = false;
 
-const waitForViewportHeight = height => new Promise((resolve) => {
-	const check = () => {
-		window.innerHeight >= height ? resolve() : requestAnimationFrame(check);
-	};
-
-	check();
-});
-
-const open = async () => {
+const handleOpen = async () => {
 	expanded.value = true;
 	await nextTick();
-	await waitForViewportHeight(480);
+	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
+	await new Promise((resolve) => {
+		const check = () => {
+			disposed || window.innerHeight >= 480 ? resolve() : requestAnimationFrame(check);
+		};
+		check();
+	});
+	if (disposed) return;
+
 	modalReady.value = true;
-	visible.value = true;
+	await nextTick();
+	if (disposed) return;
+
+	isActive.value = true;
 };
 
 const handleOk = () => {
@@ -79,6 +83,10 @@ const handleClose = () => {
 	modalReady.value = false;
 	expanded.value = false;
 };
+
+onUnmounted(() => {
+	disposed = true;
+});
 </script>
 
 <style scoped>
@@ -90,7 +98,7 @@ const handleClose = () => {
 }
 
 .modal-demo.is-expanded {
-	height: 480px;
+	min-height: 500px;
 }
 </style>
 ```
@@ -115,14 +123,14 @@ const handleClose = () => {
 		<Button
 			v-for="item in sizes"
 			:key="item.value"
-			@click="open(item.value)"
+			@click="handleOpen(item.value)"
 		>
 			{{ item.label }}
 		</Button>
 
 		<Modal
 			v-if="modalReady"
-			v-model="visible"
+			v-model="isActive"
 			:size="size"
 			title="可拖拽对话框"
 			border
@@ -135,7 +143,7 @@ const handleClose = () => {
 </template>
 
 <script setup>
-import { nextTick, ref } from 'vue';
+import { nextTick, onUnmounted, ref } from 'vue';
 import { Button, Modal } from '@deot/vc';
 
 const sizes = [
@@ -145,41 +153,50 @@ const sizes = [
 ];
 const expanded = ref(false);
 const modalReady = ref(false);
-const visible = ref(false);
+const isActive = ref(false);
 const size = ref('small');
+let disposed = false;
 
-const waitForViewportHeight = height => new Promise((resolve) => {
-	const check = () => {
-		window.innerHeight >= height ? resolve() : requestAnimationFrame(check);
-	};
-
-	check();
-});
-
-const open = async (value) => {
+const handleOpen = async (value) => {
 	size.value = value;
 	expanded.value = true;
 	await nextTick();
-	await waitForViewportHeight(720);
+	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
+	await new Promise((resolve) => {
+		const check = () => {
+			disposed || window.innerHeight >= 720 ? resolve() : requestAnimationFrame(check);
+		};
+		check();
+	});
+	if (disposed) return;
+
 	modalReady.value = true;
-	visible.value = true;
+	await nextTick();
+	if (disposed) return;
+
+	isActive.value = true;
 };
 
 const handleClose = () => {
 	modalReady.value = false;
 	expanded.value = false;
 };
+
+onUnmounted(() => {
+	disposed = true;
+});
 </script>
 
 <style scoped>
 .modal-demo {
 	display: flex;
 	gap: 8px;
+	align-items: flex-start;
 	flex-wrap: wrap;
 }
 
 .modal-demo.is-expanded {
-	height: 720px;
+	min-height: 740px;
 }
 </style>
 ```
@@ -204,7 +221,7 @@ const handleClose = () => {
 		<Button
 			v-for="item in methods"
 			:key="item.method"
-			@click="open(item.method)"
+			@click="handleOpen(item.method)"
 		>
 			{{ item.label }}
 		</Button>
@@ -224,19 +241,20 @@ const methods = [
 ];
 const expanded = ref(false);
 const result = ref('请选择一种状态');
+let disposed = false;
 
-const waitForViewportHeight = height => new Promise((resolve) => {
-	const check = () => {
-		window.innerHeight >= height ? resolve() : requestAnimationFrame(check);
-	};
-
-	check();
-});
-
-const open = async (method) => {
+const handleOpen = async (method) => {
 	expanded.value = true;
 	await nextTick();
-	await waitForViewportHeight(360);
+	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
+	await new Promise((resolve) => {
+		const check = () => {
+			disposed || window.innerHeight >= 360 ? resolve() : requestAnimationFrame(check);
+		};
+		check();
+	});
+	if (disposed) return;
+
 	Modal[method]({
 		title: methods.find(item => item.method === method)?.label,
 		content: '这是通过静态方法创建的对话框。',
@@ -250,6 +268,7 @@ const open = async (method) => {
 };
 
 onUnmounted(() => {
+	disposed = true;
 	Modal.destroy();
 });
 </script>
@@ -263,7 +282,7 @@ onUnmounted(() => {
 }
 
 .modal-demo.is-expanded {
-	height: 360px;
+	min-height: 380px;
 }
 </style>
 ```
@@ -287,7 +306,7 @@ onUnmounted(() => {
 ```vue App.vue
 <template>
 	<div :class="['portal-modal-demo', { 'is-expanded': expanded }]">
-		<Button @click="open">
+		<Button @click="handleOpen">
 			通过 Portal 打开 Modal
 		</Button>
 		<span>{{ result }}</span>
@@ -301,19 +320,19 @@ import { PortalModal } from './portal-modal.js';
 
 const expanded = ref(false);
 const result = ref('尚未操作');
+let disposed = false;
 
-const waitForViewportHeight = height => new Promise((resolve) => {
-	const check = () => {
-		window.innerHeight >= height ? resolve() : requestAnimationFrame(check);
-	};
-
-	check();
-});
-
-const open = async () => {
+const handleOpen = async () => {
 	expanded.value = true;
 	await nextTick();
-	await waitForViewportHeight(480);
+	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
+	await new Promise((resolve) => {
+		const check = () => {
+			disposed || window.innerHeight >= 480 ? resolve() : requestAnimationFrame(check);
+		};
+		check();
+	});
+	if (disposed) return;
 
 	try {
 		await PortalModal.popup({
@@ -329,6 +348,7 @@ const open = async () => {
 };
 
 onUnmounted(() => {
+	disposed = true;
 	PortalModal.destroy();
 });
 </script>
@@ -342,7 +362,7 @@ onUnmounted(() => {
 }
 
 .portal-modal-demo.is-expanded {
-	height: 480px;
+	min-height: 500px;
 }
 </style>
 ```
@@ -359,7 +379,7 @@ export const PortalModal = new Portal(ModalWrapper, {
 ```vue ModalWrapper.vue
 <template>
 	<Modal
-		v-model="visible"
+		v-model="isActive"
 		:title="title"
 		@ok="handleOk"
 		@cancel="handleCancel"
@@ -378,7 +398,7 @@ defineProps({
 });
 
 const emit = defineEmits(['portal-fulfilled', 'portal-rejected']);
-const visible = ref(false);
+const isActive = ref(false);
 
 const handleOk = () => {
 	emit('portal-fulfilled');
@@ -389,7 +409,7 @@ const handleCancel = () => {
 };
 
 onMounted(() => {
-	visible.value = true;
+	isActive.value = true;
 });
 </script>
 ```
@@ -413,19 +433,19 @@ onMounted(() => {
 ```vue
 <template>
 	<div class="mobile-modal-demo">
-		<Button @click="visible = true">
+		<Button @click="handleOpen">
 			声明式确认框
 		</Button>
-		<Button @click="openAlert">
+		<Button @click="handleOpenAlert">
 			静态确认框
 		</Button>
-		<Button @click="openOperation">
+		<Button @click="handleOpenOperation">
 			操作列表
 		</Button>
 		<p>{{ result }}</p>
 
 		<MModalView
-			v-model="visible"
+			v-model="isActive"
 			title="移动端确认"
 			content="是否继续当前操作？"
 			@ok="handleOk"
@@ -438,7 +458,7 @@ onMounted(() => {
 import { onUnmounted, ref } from 'vue';
 import { Button, MModal, MModalView } from '@deot/vc';
 
-const visible = ref(false);
+const isActive = ref(false);
 const result = ref('尚未操作');
 
 const handleOk = () => {
@@ -449,7 +469,11 @@ const handleCancel = () => {
 	result.value = '已取消';
 };
 
-const openAlert = () => {
+const handleOpen = () => {
+	isActive.value = true;
+};
+
+const handleOpenAlert = () => {
 	MModal.alert({
 		title: '移动端确认',
 		content: '这是通过 MModal.alert 创建的确认框。',
@@ -458,7 +482,7 @@ const openAlert = () => {
 	});
 };
 
-const openOperation = () => {
+const handleOpenOperation = () => {
 	MModal.operation({
 		data: [
 			{
@@ -584,6 +608,42 @@ onUnmounted(() => {
 | destroy | 销毁所有由上述方法创建的 Modal | - | `void` |
 
 静态方法的 `onClose` 会在离场动画结束并开始销毁 Portal 时调用。
+
+### 静态调用的 Promise 与操作回调
+
+`await Modal.info(options)`（以及 `success`、`warning`、`error`）等待的是 **Modal 关闭**，不是用户点击确定。正常交互中，无论通过确定、取消还是关闭操作结束弹层，返回句柄都会在离场结束后 resolve；不能用它判断用户是否确认。
+
+`onOk`、`onCancel` 是操作回调，不是只消费一次的 Promise 结果。它们返回的 Promise resolve 后才会继续关闭；如果返回 rejected Promise，弹层保持打开，用户可以再次操作，因此同一个弹层的回调可能执行多次。
+
+`onClose` 始终表示弹层已经关闭，不表示取消操作；`onCancel` 用于取消按钮操作。注意默认 `closeWithCancel: true` 还会把关闭图标、遮罩和 Escape 等关闭操作关联到 `onCancel`。需要严格区分时，设置 `closeWithCancel: false`。
+
+如果业务需要“确定时 resolve，取消或关闭时 reject”，可以单独包装 Promise：
+
+```js
+import { Modal } from '@deot/vc';
+
+const confirm = () => new Promise((resolve, reject) => {
+	Modal.info({
+		title: '提交确认',
+		content: '是否提交当前信息？',
+		closeWithCancel: false,
+		onOk: resolve,
+		onCancel: reject,
+		onClose: reject
+	});
+});
+
+const handleSubmit = async () => {
+	try {
+		await confirm();
+	} catch {
+		return;
+	}
+	// 用户已确认，在这里执行提交逻辑。
+};
+```
+
+这里的 `reject` 结束的是外层业务 Promise，回调本身返回 `undefined`，因此不会阻止 Modal 关闭；这与回调返回 `Promise.reject(...)` 不同。确定后仍会触发 `onClose`，但外层 Promise 已经 resolve，后续 reject 不会改变结果。外层 Promise 表达的是操作结果，不等待离场动画；调用方需要处理其 rejection。直接调用 `Modal.destroy()` 是强制销毁，不经过正常离场回调，不应依赖它触发上述 `onClose` 或完成等待。
 
 ### MModalView 属性
 
