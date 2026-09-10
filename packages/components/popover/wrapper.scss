@@ -4,6 +4,8 @@ $border-shadow: varfix(border-shadow, popover-wrapper);
 $mask-color-dark: varfix(mask-color-dark, popover-wrapper);
 $color-dark: varfix(color-dark, popover-wrapper);
 $color-light: varfix(color-light, popover-wrapper);
+$arrow-shadow-color: varfix(arrow-shadow-color, popover-wrapper, rgb(0 0 0 / 7%));
+$arrow-shadow-color-light: varfix(arrow-shadow-color-light, popover-wrapper, rgb(0 0 0 / 6%));
 
 @include block(vc-popover-wrapper) {
 	position: absolute;
@@ -65,7 +67,7 @@ $color-light: varfix(color-light, popover-wrapper);
 			bottom: 4px;
 			border-top-color: transparent;
 			border-left-color: transparent;
-			box-shadow: 3px 3px 7px rgb(0 0 0 / 7%);
+			box-shadow: 3px 3px 7px $arrow-shadow-color;
 
 			@include when(light) {
 				border-right-color: $color-light;
@@ -95,7 +97,7 @@ $color-light: varfix(color-light, popover-wrapper);
 			top: 4px;
 			border-right-color: transparent;
 			border-bottom-color: transparent;
-			box-shadow: -2px -2px 5px rgb(0 0 0 / 6%);
+			box-shadow: -2px -2px 5px $arrow-shadow-color-light;
 
 			@include when(light) {
 				border-top-color: $color-light;
@@ -126,7 +128,7 @@ $color-light: varfix(color-light, popover-wrapper);
 			left: 4px;
 			border-top-color: transparent;
 			border-right-color: transparent;
-			box-shadow: -3px 3px 7px rgb(0 0 0 / 7%);
+			box-shadow: -3px 3px 7px $arrow-shadow-color;
 
 			@include when(light) {
 				border-bottom-color: $color-light;
@@ -148,7 +150,7 @@ $color-light: varfix(color-light, popover-wrapper);
 			right: 4px;
 			border-bottom-color: transparent;
 			border-left-color: transparent;
-			box-shadow: 3px -3px 7px rgb(0 0 0 / 7%);
+			box-shadow: 3px -3px 7px $arrow-shadow-color;
 
 			@include when(light) {
 				border-top-color: $color-light;

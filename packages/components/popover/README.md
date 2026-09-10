@@ -1,370 +1,317 @@
 ## 弹出框（Popover）
-点击/鼠标移入元素，弹出气泡式的卡片浮层
+
+依附触发元素展示说明或操作内容的气泡浮层。
 
 ### 何时使用
-当目标元素有进一步的描述和相关操作时，可以收纳到卡片中，根据用户的操作行为进行展现。
+
+当目标元素有进一步的描述或相关操作时，通过悬停、点击或受控状态展示内容。
 
 ### 基础用法
-最简单的用法。
 
-:::RUNTIME
+`hover` 支持移入浮层继续操作；`strictHover` 在离开触发器后延时关闭。`focus` 监听 Popover 根节点的焦点事件，因此示例通过 `tabindex` 让根节点可聚焦。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
 ```vue
 <template>
-	<div>
-		<Popover
-			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
-			trigger="hover"
-		>
-			<Button>
-				hover 激活
-			</Button>
+	<div class="popover-demo">
+		<Popover content="可以将鼠标移入浮层" trigger="hover">
+			<Button>悬停打开</Button>
 		</Popover>
-		<Popover
-			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
-			trigger="click"
-		>
-			<Button>
-				click 激活
-			</Button>
+		<Popover content="再次点击触发器或点击外部关闭" trigger="click">
+			<Button>点击打开</Button>
 		</Popover>
-		<Popover
-			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
-			trigger="focus"
-		>
-			<Button>
-				focus 激活
-			</Button>
+		<Popover class="focus-trigger" content="失去焦点后关闭" trigger="focus" tabindex="0">
+			聚焦打开
 		</Popover>
 	</div>
 </template>
+
 <script setup>
 import { Popover, Button } from '@deot/vc';
 </script>
-```
-:::
 
-### 定位
-在这里我们提供 9 种不同方向的展示方式，可以通过以下完整示例来理解，选择你要的效果。
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-popover-basic">
-		<div class="top">
-			<Popover
-				:get-popup-container="getPopupContainer"
-				:trigger="trigger"
-				placement="top-left"
-				content="TopLeft"
-				class=" g-m-lr-10"
-			>
-				<Button class="g-btn">
-					TL
-				</Button>
-				<template #content>
-					<div style="height: 100px; width: 200px">
-						getPopupContainer
-					</div>
-				</template>
-			</Popover>
-			<Popover
-				:portal="false"
-				:trigger="trigger"
-				placement="top"
-				content="Top"
-				class=" g-m-lr-10"
-			>
-				<Button class="g-btn">
-					Top
-				</Button>
-				<template #content>
-					<div style="height: 100px; width: 200px">
-						portal="false"
-					</div>
-				</template>
-			</Popover>
-			<Popover
-				:trigger="trigger"
-				placement="top-right"
-				content="TopRight"
-				class=" g-m-lr-10"
-			>
-				<Button class="g-btn">
-					TR
-				</Button>
-				<template #content>
-					<div style="height: 100px; width: 200px">
-						Body
-					</div>
-				</template>
-			</Popover>
-		</div>
-		<div class="left">
-			<Popover
-				:get-popup-container="getPopupContainer"
-				:trigger="trigger"
-				placement="left-top"
-				content="LeftTop"
-			>
-				<Button class="g-btn g-m-tb-10">
-					LT
-				</Button>
-				<template #content>
-					<div style="height: 100px; width: 200px">
-						getPopupContainer
-					</div>
-				</template>
-			</Popover>
-			<Popover
-				:portal="false"
-				:trigger="trigger"
-				placement="left"
-				content="Left"
-			>
-				<Button class="g-btn g-m-tb-10">
-					Left
-				</Button>
-				<template #content>
-					<div style="height: 100px; width: 200px">
-						portal="false"
-					</div>
-				</template>
-			</Popover>
-			<Popover
-				:trigger="trigger"
-				placement="left-bottom"
-				content="leftBottom"
-			>
-				<Button class="g-btn g-m-tb-10">
-					LB
-				</Button>
-				<template #content>
-					<div style="height: 100px; width: 200px">
-						Body
-					</div>
-				</template>
-			</Popover>
-		</div>
-		<div class="right">
-			<Popover
-				:get-popup-container="getPopupContainer"
-				:trigger="trigger"
-				placement="right-top"
-				content="RightTop"
-			>
-				<Button class="g-btn g-m-tb-10">
-					RT
-				</Button>
-				<template #content>
-					<div style="height: 100px; width: 200px">
-						getPopupContainer
-					</div>
-				</template>
-			</Popover>
-			<Popover
-				:portal="false"
-				:trigger="trigger"
-				placement="right"
-				content="Right"
-			>
-				<Button class="g-btn g-m-tb-10">
-					Right
-				</Button>
-				<template #content>
-					<div style="height: 100px; width: 200px">
-						portal="false"
-					</div>
-				</template>
-			</Popover>
-			<Popover
-				:trigger="trigger"
-				placement="right-bottom"
-				content="RightBottom"
-			>
-				<Button class="g-btn g-m-tb-10">
-					RB
-				</Button>
-				<template #content>
-					<div style="height: 100px; width: 200px">
-						Body
-					</div>
-				</template>
-			</Popover>
-		</div>
-		<div class="bottom">
-			<Popover
-				:get-popup-container="getPopupContainer"
-				:trigger="trigger"
-				placement="bottom-left"
-				content="BottomLeft"
-				class=" g-m-lr-10"
-			>
-				<Button class="g-btn">
-					BL
-				</Button>
-				<template #content>
-					<div style="height: 100px; width: 200px">
-						getPopupContainer
-					</div>
-				</template>
-			</Popover>
-			<Popover
-				:portal="false"
-				:trigger="trigger"
-				placement="bottom"
-				content="Bottom"
-				class=" g-m-lr-10"
-			>
-				<Button class="g-btn">
-					Bottom
-				</Button>
-				<template #content>
-					<div style="height: 100px; width: 200px">
-						portal="false"
-					</div>
-				</template>
-			</Popover>
-			<Popover
-				:trigger="trigger"
-				placement="bottom-right"
-				content="BottomRight"
-				class=" g-m-lr-10"
-			>
-				<Button class="g-btn">
-					BR
-				</Button>
-				<template #content>
-					<div style="height: 100px; width: 200px">
-						Body
-					</div>
-				</template>
-			</Popover>
-		</div>
-	</div>
-</template>
-<script setup>
-import { Popover, Button } from '@deot/vc';
-</script>
-<style>
-.v-popover-basic {
-    width: 400px;
+<style scoped>
+.popover-demo {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+	gap: 16px;
+	min-height: 160px;
 }
 
-.v-popover-basic .top {
-	text-align: center;
+.focus-trigger {
+	padding: 8px 16px;
+	border: 1px solid var(--vc-color-light-deeper);
+	border-radius: 4px;
+	cursor: pointer;
 }
-
-.v-popover-basic .left {
-	float: left;
-	width: 60px;
-}
-
-.v-popover-basic .right {
-	float: right;
-	width: 60px;
-}
-.v-popover-basic .bottom {
-	clear: both;
-	text-align: center;
-}
-.v-popover-basic .item {
-	margin: 4px;
-}
-
 </style>
 ```
 :::
 
-### 嵌套内容
-通过slot content嵌套内容。
+### 定位
 
-:::RUNTIME
+支持 12 种位置；空间不足时会根据浏览器视口自动调整方向。可展开预览以观察完整浮层。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
 ```vue
 <template>
-	<div>
+	<div class="placement-demo">
 		<Popover
-			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
-			trigger="click"
+			v-for="placement in placements"
+			:key="placement"
+			:class="`placement-demo__${placement}`"
+			:placement="placement"
+			trigger="hover"
 		>
-			<Button>
-				click 激活
-			</Button>
+			<Button>{{ placement }}</Button>
 			<template #content>
-				<div style="height: 100px; width: 200px">
-					我是嵌套的内容
+				<div style="height: 100px;">{{ placement }}</div>
+			</template>
+		</Popover>
+	</div>
+</template>
+
+<script setup>
+import { Popover, Button } from '@deot/vc';
+
+const placements = [
+	'top-left', 'top', 'top-right',
+	'left-top', 'right-top',
+	'left', 'right',
+	'left-bottom', 'right-bottom',
+	'bottom-left', 'bottom', 'bottom-right'
+];
+</script>
+
+<style scoped>
+.placement-demo {
+	display: grid;
+	grid-template-areas:
+		"top-left top top-right"
+		"left-top . right-top"
+		"left . right"
+		"left-bottom . right-bottom"
+		"bottom-left bottom bottom-right";
+	grid-template-columns: repeat(3, 120px);
+	gap: 16px;
+	width: fit-content;
+	margin: 0 auto;
+	padding: 80px 0;
+}
+
+.placement-demo :deep(.vc-button) {
+	width: 120px;
+}
+
+.placement-demo__top-left { grid-area: top-left; }
+.placement-demo__top { grid-area: top; }
+.placement-demo__top-right { grid-area: top-right; }
+.placement-demo__left-top { grid-area: left-top; }
+.placement-demo__left { grid-area: left; }
+.placement-demo__left-bottom { grid-area: left-bottom; }
+.placement-demo__right-top { grid-area: right-top; }
+.placement-demo__right { grid-area: right; }
+.placement-demo__right-bottom { grid-area: right-bottom; }
+.placement-demo__bottom-left { grid-area: bottom-left; }
+.placement-demo__bottom { grid-area: bottom; }
+.placement-demo__bottom-right { grid-area: bottom-right; }
+
+@media (width <= 440px) {
+	.placement-demo {
+		grid-template-columns: repeat(2, 120px);
+		grid-template-areas: none;
+		padding: 64px 0;
+	}
+
+	.placement-demo > :deep(.vc-popover) {
+		grid-area: auto;
+	}
+}
+</style>
+```
+:::
+
+### 自定义内容与受控状态
+
+`content` 插槽优先于同名属性。通过 `trigger="custom"` 和 `v-model` 自行控制显隐；需要禁止外部点击关闭时，设置 `outsideClickable` 为 `false`。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+```vue
+<template>
+	<div class="custom-demo">
+		<Popover v-model="isVisible" trigger="custom" :outside-clickable="false">
+			<Button @click="handleToggle">自定义操作</Button>
+			<template #content>
+				<div class="custom-content">
+					<p>已操作 {{ count }} 次</p>
+					<div class="custom-actions">
+						<Button @click="handleIncrease">增加</Button>
+						<Button @click="handleClose">关闭</Button>
+					</div>
 				</div>
 			</template>
 		</Popover>
 	</div>
 </template>
-<script setup>
-import { Popover, Button } from '@deot/vc';
-</script>
-```
-:::
 
-### 主题
-提供了两个不同的主题：`dark`和`light`。
-
-:::RUNTIME
-```vue
-<template>
-	<div>
-		<Popover
-			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
-			trigger="click"
-			theme="dark"
-		>
-			<Button>
-				dark
-			</Button>
-		</Popover>
-		<Popover
-			content="这是一段内容,这是一段内容,这是一段内容,这是一段内容"
-			trigger="click"
-			theme="light"
-		>
-			<Button>
-				light
-			</Button>
-		</Popover>
-	</div>
-</template>
-<script setup>
-import { Popover, Button } from '@deot/vc';
-</script>
-```
-:::
-
-### API方法调用
-可以通过
-
-:::RUNTIME
-```vue
-<template>
-	<div>
-		<Button ref="btn" @click="handleClick">
-			点我调用
-		</Button>
-	</div>
-</template>
 <script setup>
 import { ref } from 'vue';
 import { Popover, Button } from '@deot/vc';
 
-const btn = ref();
-const handleClick = () => {
-	Popover.open({
-		el: document.body,
-		cName: 'Popover',
-		triggerEl: btn.value,
-		hover: true,
-		theme: 'dark',
-		placement: 'top',
-		content: '我是API调用内容',
-	});
+const isVisible = ref(false);
+const count = ref(0);
+
+const handleToggle = () => {
+	isVisible.value = !isVisible.value;
+};
+const handleIncrease = () => {
+	count.value++;
+};
+const handleClose = () => {
+	isVisible.value = false;
 };
 </script>
+
+<style scoped>
+.custom-demo {
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	min-height: 180px;
+	padding-top: 32px;
+}
+
+.custom-content p {
+	margin: 0 0 12px;
+}
+
+.custom-actions {
+	display: flex;
+	gap: 8px;
+}
+</style>
+```
+:::
+
+### 挂载容器
+
+默认挂载到 `document.body`。`portal="false"` 将浮层挂到 Popover 根节点；`getPopupContainer` 优先指定挂载容器，应返回包含触发器的定位容器。边界判断仍基于浏览器视口，容器的 `overflow` 可能裁剪浮层。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+```vue
+<template>
+	<div ref="container" class="container-demo">
+		<Popover :get-popup-container="getPopupContainer" trigger="click" content="挂载在定位容器内">
+			<Button>指定容器</Button>
+		</Popover>
+		<Popover :portal="false" trigger="click" content="挂载在触发器根节点内">
+			<Button>就地挂载</Button>
+		</Popover>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Popover, Button } from '@deot/vc';
+
+const container = ref();
+const getPopupContainer = () => container.value;
+</script>
+
+<style scoped>
+.container-demo {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	min-height: 180px;
+	padding: 32px 24px;
+	border: 1px dashed var(--vc-color-light-deeper);
+	border-radius: 8px;
+}
+</style>
+```
+:::
+
+### 主题
+
+`theme` 支持 `light`、`dark` 和 `none`；`none` 不设置主题背景，但仍保留容器间距与阴影。颜色跟随共享主题变量，可用 `portalStyle` 覆盖浮层的 `--vc-popover-wrapper-*` 变量。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+```vue
+<template>
+	<div class="theme-demo">
+		<Popover v-for="theme in ['light', 'dark', 'none']" :key="theme" :theme="theme" :content="theme" trigger="click">
+			<Button>{{ theme }}</Button>
+		</Popover>
+	</div>
+</template>
+
+<script setup>
+import { Popover, Button } from '@deot/vc';
+</script>
+
+<style scoped>
+.theme-demo {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	align-items: center;
+	justify-content: center;
+	min-height: 160px;
+}
+</style>
+```
+:::
+
+### 静态方法
+
+`Popover.open` 立即创建浮层，`triggerEl` 必须传真实 DOM 元素。返回的 `PortalLeaf` 可通过 `destroy()` 清理；页面卸载时也应清理仍存在的实例。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+```vue
+<template>
+	<div class="method-demo">
+		<Button @click="handleOpen">调用 Popover.open</Button>
+	</div>
+</template>
+
+<script setup>
+import { onUnmounted } from 'vue';
+import { Popover, Button } from '@deot/vc';
+
+let leaf;
+const handleOpen = (event) => {
+	leaf?.destroy();
+	leaf = Popover.open({
+		triggerEl: event.currentTarget,
+		placement: 'bottom',
+		content: '点击浮层外部关闭'
+	});
+};
+
+onUnmounted(() => leaf?.destroy());
+</script>
+
+<style scoped>
+.method-demo {
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	min-height: 160px;
+	padding-top: 32px;
+}
+</style>
 ```
 :::
 
@@ -372,49 +319,67 @@ const handleClick = () => {
 
 ### 属性
 
-| 属性                | 说明                                         | 类型                        | 可选值                                                                                                                                   | 默认值      |
-| ----------------- | ------------------------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| modelValue        | 显示popover                                  | `boolean`                 | -                                                                                                                                     | `false`  |
-| animation         | 自定义的动画效果                                   | `string`                  | -                                                                                                                                     | 无        |
-| placement         | 弹层的位置                                      | `string`                  | `top`、`left`、`right`、`bottom`、`bottom-left`、`bottom-right`、`top-left`、`top-right`、`right-top`、`right-bottom`、`left-top`、`left-bottom` | `bottom` |
-| trigger           | 触发的行为                                      | `string`                  | `hover`、`click`、`focus`                                                                                                               | `hover`  |
-| content           | 显示的内容                                      | `string`、`Function`       | -                                                                                                                                     | 无        |
-| getPopupContainer | 浮层渲染父节点                                    | `Function`                | -                                                                                                                                     | 无        |
-| portal            | 是否渲染到body上，默认body                          | `boolean`                 | -                                                                                                                                     | `true`   |
-| arrow             | 浮层有无箭头                                     | `boolean`                 | -                                                                                                                                     | `true`   |
-| theme             | 颜色主体                                       | `string`                  | `light`、`dark`、`none`                                                                                                                 | `light`  |
-| always            | 弹层不隐藏                                      | `boolean`                 | -                                                                                                                                     | `false`  |
-| tag               | 渲染的节点类型                                    | `string`                  | -                                                                                                                                     | `span`   |
-| disabled          | 是否禁用                                       | `boolean`                 | -                                                                                                                                     | `false`  |
-| autoWidth         | 宽度自适应                                      | `boolean`                 | -                                                                                                                                     | `false`  |
-| portalClass       | 外层类名                                       | `Object`、`string`、`Array` | -                                                                                                                                     | -        |
-| portalStyle       | 样式                                         | `Object`                  | -                                                                                                                                     | -        |
-| triggerEl         | 触发元素，使用`open`方法调用时必填                       | `Object`、`HTMLElement`    | -                                                                                                                                     | -        |
-| alone             | 直接传送门标记调用时，使用`open`方法调用时必填                 | `boolean`                 | `true`                                                                                                                                | `false`  |
-| hover             | 直接传送门标记调用时，hover需要绑定事件                     | `boolean`                 | -                                                                                                                                     | `false`  |
-| outsideClickable  | 点击弹层外面的区域是否关闭弹层，用于其他组件如`date-picker`内部控制弹层 | `boolean`                 | -                                                                                                                                     |          |
-                                                                                                                                | `true`   |
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| modelValue | 显隐状态，支持 `v-model` | `boolean` | - | `false` |
+| trigger | 触发方式，`custom` 不绑定自动触发行为 | `string` | `hover`、`strictHover`、`click`、`focus`、`custom` | `hover` |
+| placement | 首选位置，空间不足时自动调整 | `string` | `top`、`top-left`、`top-right`、`bottom`、`bottom-left`、`bottom-right`、`left`、`left-top`、`left-bottom`、`right`、`right-top`、`right-bottom` | `bottom` |
+| content | 内容字符串按 HTML 渲染；函数通过 Customer 渲染 | `string \| Function` | - | - |
+| animation | TransitionScale 动画模式，未设置时使用 `part` | `string` | - | - |
+| theme | 浮层主题 | `string` | `light`、`dark`、`none` | `light` |
+| getPopupContainer | 返回浮层挂载容器，优先于 `portal` | `() => HTMLElement` | - | - |
+| portal | 是否挂载到 body，`false` 时挂到 Popover 根节点 | `boolean` | - | `true` |
+| arrow | 是否显示箭头 | `boolean` | - | `true` |
+| autoWidth | `true` 按内容确定宽度，`false` 跟随触发元素宽度 | `boolean` | - | `true` |
+| always | 禁止交互关闭；需配合 `modelValue: true` 初始显示，仍可通过 modelValue 关闭 | `boolean` | - | `false` |
+| tag | 触发器根节点标签 | `string` | - | `span` |
+| disabled | 禁用交互触发，不阻止外部 modelValue 控制 | `boolean` | - | `false` |
+| outsideClickable | 是否允许点击浮层外部关闭 | `boolean` | - | `true` |
+| portalClass | 浮层外层类名 | `string \| object \| unknown[]` | - | - |
+| portalStyle | 浮层外层样式 | `string \| object` | - | - |
 
 ### 事件
 
-| 事件名            | 说明         | 回调参数                           | 参数说明           |
-| -------------- | ---------- | ------------------------------ | -------------- |
-| visible-change | 显示状态改变     | `(visible: boolean) => void 0` | `visible`：显示状态 |
-| close          | 关闭时回调      | -                              | -              |
-| ready          | 弹层节点挂载完成回调 | -                              | -              |
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue | 交互引起的显隐变化 | `(visible: boolean)` | 新的显隐状态 |
+| visible-change | 交互引起的显隐变化；外部直接修改 modelValue 不触发 | `(visible: boolean)` | 新的显隐状态 |
+| ready | 浮层节点挂载完成 | - | - |
+| close | 关闭动画完成 | - | - |
 
+### 插槽
 
-### Slot
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 触发器内容 | - |
+| content | 浮层内容，优先于 content 属性 | - |
 
-| 属性      | 说明   |
-| ------- | ---- |
-| default | 触发器  |
-| content | 弹层内容 |
+### 方法
 
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| Popover.open | 创建独立浮层 | `options`：浮层属性与 Portal 配置 | `PortalLeaf` |
 
-## 注意事项
+`open` 使用独立浮层，支持上述外观属性（`animation`、`placement`、`theme`、`content`、`arrow`、`autoWidth`、`portalClass`、`portalStyle`），以及以下选项。声明式组件的 `trigger`、`disabled`、`outsideClickable` 不控制静态浮层。
 
-| - 不要在引用的地方带有Popover的className                                       |
-| ------------------------------------------------------------------- |
-| - content的slot写法必须采用vue2.6退出的新语法，旧语法在插槽内容更新时不会同步更新                  |
-| - `trigger` 为 `false` 时，`Popover` 包含的内容必须是个节点，且有`focus` 和 `blur`事件。 |
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| triggerEl | 必填，定位与事件绑定使用的真实 DOM | `HTMLElement` | - | - |
+| el | Portal 挂载节点或选择器 | `HTMLElement \| string` | - | `body` |
+| name | Portal 实例标识，同名实例默认替换 | `string` | - | `vc-popover-wrapper` |
+| multiple | 是否允许多个实例共存 | `boolean` | - | `false` |
+| alone | 独立管理显隐，通常保持默认 | `boolean` | - | `true` |
+| hover | 绑定触发器和浮层的悬停事件；为 false 时支持外部点击关闭 | `boolean` | - | `false` |
+| onReady | 浮层挂载回调 | `() => void` | - | - |
+| onClose | 关闭动画完成回调 | `() => void` | - | - |
+| onChange | 触发器或浮层事件回调 | `(event: Event, info: object) => void` | - | 空函数 |
+
+`onChange` 的 `info` 包含 `context`（浮层内部组件实例）；悬停事件另含 `visible: boolean`，外部点击时不包含 `visible`。`leaf.wrapper?.toggle(false)` 可执行关闭动画，`leaf.destroy()` 立即销毁。其他 Portal 通用配置见 Portal 文档。
+
+### 移动端
+
+`MPopover` 是 `Popover` 的别名，使用同一实现与样式；触屏场景建议使用 `trigger="click"` 或 `custom`。
+
+### 注意事项
+
+字符串 `content` 会作为 HTML 插入，避免传入未经处理的不可信内容；普通文本可通过 `content` 插槽插值显示。浮层默认挂载到 body，局部祖先上的主题变量不会自动继承到浮层，可在全局或 `portalStyle` 上设置覆盖值。
