@@ -11,23 +11,45 @@
 通过 `value` 绑定需要复制的内容。未提供 `after` 回调时，成功后显示默认提示，文案跟随当前 locale。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<input v-model="msg" aria-label="复制内容" type="text">
-		<br>
-		<Clipboard :value="msg" tag="button" type="button">
-			点我复制
+	<div class="clipboard-demo">
+		<label>
+			<span>复制内容</span>
+			<Input v-model="msg" aria-label="复制内容" clearable />
+		</label>
+		<Clipboard :value="msg" :tag="Button">
+			复制
 		</Clipboard>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Clipboard } from '@deot/vc';
+import { Button, Clipboard, Input } from '@deot/vc';
 
 const msg = ref('我是被复制的内容');
 </script>
+
+<style scoped>
+.clipboard-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	gap: 12px;
+}
+
+label {
+	display: grid;
+	gap: 6px;
+}
+</style>
 ```
 :::
 
@@ -36,27 +58,36 @@ const msg = ref('我是被复制的内容');
 `before` 的返回值会替换本次复制内容，支持返回 `Promise<string>`，不会修改绑定的 `value`。提供 `after` 后，由调用方处理成功反馈，组件不再显示默认提示。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<input v-model="msg" aria-label="待处理的复制内容" type="text">
-		<br>
+	<div class="clipboard-demo">
+		<label>
+			<span>待处理的内容</span>
+			<Textarea v-model="msg" aria-label="待处理的复制内容" :autosize="{ minRows: 2, maxRows: 4 }" />
+		</label>
 		<Clipboard
 			:value="msg"
-			tag="button"
-			type="button"
+			:tag="Button"
+			type="primary"
 			@before="handleBefore"
 			@after="handleAfter"
 		>
-			点我复制
+			处理后复制
 		</Clipboard>
 		<p role="status">{{ feedback }}</p>
+		<Button type="text" @click="handleApi">调用 Clipboard.set</Button>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Clipboard } from '@deot/vc';
+import { Button, Clipboard, Textarea } from '@deot/vc';
 
 const msg = ref('我是被复制的内容');
 const feedback = ref('等待复制');
@@ -68,7 +99,31 @@ const handleAfter = (value) => {
 const handleBefore = async (e, value) => {
 	return `${value}（已处理）`;
 };
+
+const handleApi = () => {
+	Clipboard.set(msg.value);
+	feedback.value = '已调用 Clipboard.set';
+};
 </script>
+
+<style scoped>
+.clipboard-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	gap: 12px;
+}
+
+label {
+	display: grid;
+	gap: 6px;
+}
+
+[role='status'] {
+	flex-basis: 100%;
+	margin: 0;
+}
+</style>
 ```
 :::
 

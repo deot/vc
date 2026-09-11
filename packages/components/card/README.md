@@ -22,9 +22,11 @@ Card 默认显示边框，主体区域的内边距为 `16px`。
 ```vue
 <template>
 	<Card class="card-demo">
-		<div>列表内容一</div>
-		<div>列表内容二</div>
-		<div>列表内容三</div>
+		<div class="card-demo__content">
+			<strong>本周概览</strong>
+			<span>已完成 24 项任务</span>
+			<span>还有 6 项任务待处理</span>
+		</div>
 	</Card>
 </template>
 
@@ -35,6 +37,15 @@ import { Card } from '@deot/vc';
 <style scoped>
 .card-demo {
 	max-width: 360px;
+}
+
+.card-demo__content {
+	display: grid;
+	gap: 8px;
+}
+
+.card-demo__content span {
+	color: var(--vc-card-color-dark-light, var(--vc-color-dark-light));
 }
 </style>
 ```
@@ -57,7 +68,7 @@ import { Card } from '@deot/vc';
 	<div class="card-demo-list">
 		<Card title="订单信息">
 			<template #extra>
-				<a href="#">查看全部</a>
+				<a class="card-demo-link" href="#">查看全部</a>
 			</template>
 			<div>订单编号：VC-2026</div>
 			<div>订单状态：已完成</div>
@@ -81,6 +92,16 @@ import { Card } from '@deot/vc';
 	max-width: 360px;
 	gap: 12px;
 }
+
+.card-demo-link {
+	color: var(--vc-color-primary);
+	text-decoration: none;
+}
+
+.card-demo-link:hover {
+	color: var(--vc-color-primary-light);
+	text-decoration: underline;
+}
 </style>
 ```
 :::
@@ -99,26 +120,57 @@ import { Card } from '@deot/vc';
 -->
 ```vue
 <template>
-	<div class="card-demo-grid">
-		<Card>默认边框</Card>
-		<Card :border="false">无边框</Card>
-		<Card shadow>边框与阴影</Card>
-		<Card :border="false" shadow>仅阴影</Card>
+	<div class="card-demo-controls">
+		<div class="card-demo-actions">
+			<Button @click="handleToggleBorder">
+				{{ isBorder ? '隐藏边框' : '显示边框' }}
+			</Button>
+			<Button @click="handleToggleShadow">
+				{{ isShadow ? '关闭阴影' : '开启阴影' }}
+			</Button>
+		</div>
+		<Card :border="isBorder" :shadow="isShadow">
+			<div class="card-demo-status">
+				<span>边框：{{ isBorder ? '开启' : '关闭' }}</span>
+				<span>阴影：{{ isShadow ? '开启' : '关闭' }}</span>
+			</div>
+		</Card>
 	</div>
 </template>
 
 <script setup>
-import { Card } from '@deot/vc';
+import { ref } from 'vue';
+import { Button, Card } from '@deot/vc';
+
+const isBorder = ref(true);
+const isShadow = ref(false);
+
+const handleToggleBorder = () => {
+	isBorder.value = !isBorder.value;
+};
+
+const handleToggleShadow = () => {
+	isShadow.value = !isShadow.value;
+};
 </script>
 
 <style scoped>
-.card-demo-grid {
+.card-demo-controls {
+	display: grid;
+	max-width: 360px;
+	gap: 12px;
+}
+
+.card-demo-actions {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 12px;
-	max-width: 520px;
-	padding: 16px;
-	background: var(--vc-background-color);
+	gap: 8px;
+}
+
+.card-demo-status {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 16px;
 }
 </style>
 ```
@@ -138,21 +190,43 @@ import { Card } from '@deot/vc';
 -->
 ```vue
 <template>
-	<div class="card-demo-list">
-		<Card title="默认间距">主体内边距为 16px</Card>
-		<Card title="自定义间距" :padding="30">主体内边距为 30px</Card>
+	<div class="card-demo-controls">
+		<div class="card-demo-actions">
+			<Button @click="handleDecreasePadding" :disabled="padding <= 8">缩小间距</Button>
+			<Button @click="handleIncreasePadding" :disabled="padding >= 40">增大间距</Button>
+		</div>
+		<Card title="可调节间距" :padding="padding">
+			当前主体内边距：{{ padding }}px
+		</Card>
 	</div>
 </template>
 
 <script setup>
-import { Card } from '@deot/vc';
+import { ref } from 'vue';
+import { Button, Card } from '@deot/vc';
+
+const padding = ref(16);
+
+const handleDecreasePadding = () => {
+	padding.value -= 4;
+};
+
+const handleIncreasePadding = () => {
+	padding.value += 4;
+};
 </script>
 
 <style scoped>
-.card-demo-list {
+.card-demo-controls {
 	display: grid;
 	max-width: 360px;
 	gap: 12px;
+}
+
+.card-demo-actions {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px;
 }
 </style>
 ```

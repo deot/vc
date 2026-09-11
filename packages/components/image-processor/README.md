@@ -11,15 +11,27 @@
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center;">
-		<img :src="image" width="100" height="100" alt="原图">
-		<ImageProcessor
-			:src="image"
-			:output-size="100"
-			enhancer="cutout"
-			:options="{ targetColor: [255, 255, 255, 1], tolerance: 16 }"
-		/>
-		<ImageProcessor :src="image" :output-size="100" enhancer="gray" aria-label="置灰结果" />
+	<div class="image-processor-demo">
+		<figure>
+			<figcaption>原图</figcaption>
+			<img :src="image" width="100" height="100" alt="原图">
+		</figure>
+		<figure>
+			<figcaption>抠图</figcaption>
+			<div class="checkerboard">
+				<ImageProcessor
+					:src="image"
+					:output-size="100"
+					enhancer="cutout"
+					:options="{ targetColor: [255, 255, 255, 1], tolerance: 16 }"
+					aria-label="抠图结果"
+				/>
+			</div>
+		</figure>
+		<figure>
+			<figcaption>置灰</figcaption>
+			<ImageProcessor :src="image" :output-size="100" enhancer="gray" aria-label="置灰结果" />
+		</figure>
 	</div>
 </template>
 <script setup>
@@ -30,6 +42,28 @@ const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">'
 	+ '<circle cx="50" cy="50" r="32" fill="#e08040"/></svg>';
 const image = `data:image/svg+xml,${encodeURIComponent(svg)}`;
 </script>
+<style>
+.image-processor-demo {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+figure {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+}
+
+figcaption {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.checkerboard {
+	background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 / 16px 16px;
+}
+</style>
 ```
 :::
 
@@ -40,12 +74,22 @@ const image = `data:image/svg+xml,${encodeURIComponent(svg)}`;
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<ImageProcessor
-		:src="image"
-		:output-size="[120, 80]"
-		:enhancer="enhance"
-		:options="{ channel: 'red' }"
-	/>
+	<div class="image-processor-custom-demo">
+		<figure>
+			<figcaption>原图</figcaption>
+			<img :src="image" width="120" height="80" alt="原图">
+		</figure>
+		<figure>
+			<figcaption>仅保留红色通道</figcaption>
+			<ImageProcessor
+				:src="image"
+				:output-size="[120, 80]"
+				:enhancer="enhance"
+				:options="{ channel: 'red' }"
+				aria-label="红色通道结果"
+			/>
+		</figure>
+	</div>
 </template>
 <script setup>
 import { ImageProcessor } from '@deot/vc';
@@ -66,6 +110,24 @@ const enhance = (imageData, options) => {
 	}
 };
 </script>
+<style>
+.image-processor-custom-demo {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+figure {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+}
+
+figcaption {
+	font-size: 13px;
+	font-weight: 600;
+}
+</style>
 ```
 :::
 

@@ -23,56 +23,124 @@
 ```vue
 <template>
 	<div class="carousel-demo">
-		<section>
-			<p>自动播放，悬停指示器切换</p>
-			<Carousel :height="160">
-				<CarouselItem v-for="item in 4" :key="item">
-					<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
-						{{ item }}
-					</div>
-				</CarouselItem>
-			</Carousel>
-		</section>
+		<div class="carousel-demo__header">
+			<div>
+				<strong>精选内容</strong>
+				<span>第 {{ activeIndex + 1 }} / {{ slides.length }} 张</span>
+			</div>
+			<div class="carousel-demo__actions">
+				<Button type="text" size="small" @click="toggleAutoplay">
+					{{ autoplay ? '暂停自动播放' : '开始自动播放' }}
+				</Button>
+				<Button size="small" @click="goPrev">上一张</Button>
+				<Button type="primary" size="small" @click="goNext">下一张</Button>
+			</div>
+		</div>
 
-		<section>
-			<p>停止自动播放，点击指示器切换</p>
-			<Carousel :height="160" :autoplay="false" trigger="click">
-				<CarouselItem v-for="item in 4" :key="item">
-					<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
-						{{ item }}
-					</div>
-				</CarouselItem>
-			</Carousel>
-		</section>
+		<Carousel
+			ref="carouselRef"
+			:height="184"
+			:autoplay="autoplay"
+			@change="handleChange"
+		>
+			<CarouselItem
+				v-for="(slide, index) in slides"
+				:key="slide.title"
+				:label="slide.title"
+			>
+				<div class="slide" :class="`slide--${index + 1}`">
+					<span class="slide__eyebrow">{{ slide.eyebrow }}</span>
+					<strong>{{ slide.title }}</strong>
+					<span>{{ slide.description }}</span>
+				</div>
+			</CarouselItem>
+		</Carousel>
 	</div>
 </template>
 
 <script setup>
-import { Carousel, CarouselItem } from '@deot/vc';
+import { ref } from 'vue';
+import { Button, Carousel, CarouselItem } from '@deot/vc';
+
+const carouselRef = ref();
+const autoplay = ref(true);
+const activeIndex = ref(0);
+const slides = [
+	{ eyebrow: 'DESIGN', title: '清晰的层次', description: '让内容在有限空间内保持秩序' },
+	{ eyebrow: 'MOTION', title: '自然的过渡', description: '用恰到好处的动效连接每一次切换' },
+	{ eyebrow: 'FOCUS', title: '聚焦重点', description: '把用户注意力留给真正重要的信息' },
+	{ eyebrow: 'BALANCE', title: '舒适的节奏', description: '自动播放与手动浏览由用户掌控' }
+];
+
+const handleChange = (index) => {
+	activeIndex.value = index;
+};
+const toggleAutoplay = () => {
+	autoplay.value = !autoplay.value;
+};
+const goPrev = () => carouselRef.value?.prev();
+const goNext = () => carouselRef.value?.next();
 </script>
 
 <style scoped>
 .carousel-demo {
-	display: grid;
-	gap: 24px;
+	color: #26334d;
 }
 
-.carousel-demo p {
-	margin: 0 0 8px;
+.carousel-demo__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 12px;
+}
+
+.carousel-demo__header div:first-child {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+}
+
+.carousel-demo__header span {
+	color: #7c89a3;
+	font-size: 12px;
+}
+
+.carousel-demo__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
 }
 
 .slide {
 	display: flex;
 	height: 100%;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	color: #fff;
-	font-size: 20px;
-	background: #7c94c3;
+	gap: 8px;
+	padding: 24px;
+	text-align: center;
+	background: linear-gradient(135deg, #536dfe, #8d9bff);
 }
 
-.slide.is-even {
-	background: #a6b6d5;
+.slide--2 {
+	background: linear-gradient(135deg, #00897b, #48b9a9);
+}
+
+.slide--3 {
+	background: linear-gradient(135deg, #ef6c00, #f5a45b);
+}
+
+.slide--4 {
+	background: linear-gradient(135deg, #7b1fa2, #bd72d4);
+}
+
+.slide__eyebrow {
+	font-size: 11px;
+	letter-spacing: 0.16em;
+	opacity: 0.75;
 }
 </style>
 ```
@@ -92,37 +160,89 @@ import { Carousel, CarouselItem } from '@deot/vc';
 -->
 ```vue
 <template>
-	<Carousel
-		:height="180"
-		:autoplay="false"
-		dots="outside"
-		arrow="always"
-	>
-		<CarouselItem v-for="item in 4" :key="item" :label="`第 ${item} 张`">
-			<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
-				{{ item }}
+	<div class="carousel-demo">
+		<div class="carousel-demo__toolbar">
+			<strong>带标签的指示器</strong>
+			<div>
+				<Button size="small" @click="goTo('design')">设计</Button>
+				<Button size="small" @click="goTo('motion')">动效</Button>
+				<Button size="small" @click="goTo('focus')">重点</Button>
 			</div>
-		</CarouselItem>
-	</Carousel>
+		</div>
+		<Carousel
+			ref="carouselRef"
+			:height="180"
+			:autoplay="false"
+			dots="outside"
+			arrow="always"
+		>
+			<CarouselItem name="design" label="设计">
+				<div class="slide slide--1">
+					<strong>设计</strong>
+					<span>用标签让指示器更易理解</span>
+				</div>
+			</CarouselItem>
+			<CarouselItem name="motion" label="动效">
+				<div class="slide slide--2">
+					<strong>动效</strong>
+					<span>箭头始终可见，适合手动浏览</span>
+				</div>
+			</CarouselItem>
+			<CarouselItem name="focus" label="重点">
+				<div class="slide slide--3">
+					<strong>重点</strong>
+					<span>也可以通过 name 精确定位</span>
+				</div>
+			</CarouselItem>
+		</Carousel>
+	</div>
 </template>
 
 <script setup>
-import { Carousel, CarouselItem } from '@deot/vc';
+import { ref } from 'vue';
+import { Button, Carousel, CarouselItem } from '@deot/vc';
+
+const carouselRef = ref();
+const goTo = name => carouselRef.value?.setActiveItem(name);
 </script>
 
 <style scoped>
+.carousel-demo__toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.carousel-demo__toolbar div {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
 .slide {
 	display: flex;
 	height: 100%;
 	align-items: center;
 	justify-content: center;
+	flex-direction: column;
 	color: #fff;
-	font-size: 20px;
-	background: #7c94c3;
+	gap: 8px;
+	background: linear-gradient(135deg, #536dfe, #8d9bff);
 }
 
-.slide.is-even {
-	background: #a6b6d5;
+.slide span {
+	font-size: 13px;
+	opacity: 0.8;
+}
+
+.slide--2 {
+	background: linear-gradient(135deg, #00897b, #48b9a9);
+}
+
+.slide--3 {
+	background: linear-gradient(135deg, #ef6c00, #f5a45b);
 }
 </style>
 ```
@@ -207,8 +327,8 @@ import { Carousel, CarouselItem } from '@deot/vc';
 <!--
 <config lang="json5">
 {
-	viewport: [375, 667],
-	viewportOptions: ['auto', 375, [375, 667]],
+	viewport: 375,
+	viewportOptions: ['auto', 375],
 	previewInset: 16
 }
 </config>
@@ -254,8 +374,8 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 <!--
 <config lang="json5">
 {
-	viewport: [375, 667],
-	viewportOptions: ['auto', 375, [375, 667]],
+	viewport: 375,
+	viewportOptions: ['auto', 375],
 	previewInset: 16
 }
 </config>

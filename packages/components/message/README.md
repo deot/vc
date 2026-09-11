@@ -15,15 +15,16 @@
 <!--
 <config lang="json5">
 {
-	viewport: [375, 240],
-	viewportOptions: ['auto', [375, 240]],
-	previewInset: 16
+	viewport: 375,
+	viewportOptions: ['auto', 375],
+	previewInset: 16,
+	expandable: true
 }
 </config>
 -->
 ```vue
 <template>
-	<div class="message-demo">
+	<div :class="['message-demo', { 'is-expanded': expanded }]">
 		<Button
 			v-for="item in messages"
 			:key="item.mode"
@@ -36,8 +37,11 @@
 </template>
 
 <script setup>
+import { nextTick, onUnmounted, ref } from 'vue';
 import { Button, Message } from '@deot/vc';
 
+const expanded = ref(false);
+let disposed = false;
 const messages = [
 	{ mode: 'info', label: '信息', content: '这是一条信息提示' },
 	{ mode: 'success', label: '成功', content: '操作已成功完成' },
@@ -46,21 +50,44 @@ const messages = [
 	{ mode: 'loading', label: '加载', content: '正在加载中' }
 ];
 
-const handleOpen = (item) => {
+const handleOpen = async (item) => {
+	expanded.value = true;
+	await nextTick();
+	await new Promise((resolve) => {
+		const check = () => {
+			disposed || window.innerHeight >= 180 ? resolve() : requestAnimationFrame(check);
+		};
+		check();
+	});
+	if (disposed) return;
+
+	const onClose = () => {
+		expanded.value = false;
+	};
 	if (item.mode === 'loading') {
-		Message.loading(item.content, 1200);
+		Message.loading({ content: item.content, duration: 1200, onClose });
 		return;
 	}
 
-	Message[item.mode](item.content);
+	Message[item.mode]({ content: item.content, onClose });
 };
+
+onUnmounted(() => {
+	disposed = true;
+	Message.destroy();
+});
 </script>
 
 <style scoped>
 .message-demo {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: flex-start;
 	gap: 8px;
+}
+
+.message-demo.is-expanded {
+	min-height: 220px;
 }
 </style>
 ```
@@ -74,15 +101,16 @@ const handleOpen = (item) => {
 <!--
 <config lang="json5">
 {
-	viewport: [375, 240],
-	viewportOptions: ['auto', [375, 240]],
-	previewInset: 16
+	viewport: 375,
+	viewportOptions: ['auto', 375],
+	previewInset: 16,
+	expandable: true
 }
 </config>
 -->
 ```vue
 <template>
-	<div class="message-close-demo">
+	<div :class="['message-close-demo', { 'is-expanded': expanded }]">
 		<Button :wait="0" @click="handleOpen">
 			显示可关闭提示
 		</Button>
@@ -91,12 +119,24 @@ const handleOpen = (item) => {
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { nextTick, onUnmounted, ref } from 'vue';
 import { Button, Message } from '@deot/vc';
 
+const expanded = ref(false);
 const status = ref('尚未关闭');
+let disposed = false;
 
-const handleOpen = () => {
+const handleOpen = async () => {
+	expanded.value = true;
+	await nextTick();
+	await new Promise((resolve) => {
+		const check = () => {
+			disposed || window.innerHeight >= 180 ? resolve() : requestAnimationFrame(check);
+		};
+		check();
+	});
+	if (disposed) return;
+
 	status.value = '等待关闭';
 	Message.info({
 		content: '点击右侧图标关闭，关闭前等待 500ms',
@@ -105,9 +145,15 @@ const handleOpen = () => {
 		onBeforeClose: () => new Promise(resolve => setTimeout(resolve, 500)),
 		onClose: () => {
 			status.value = '提示已关闭';
+			expanded.value = false;
 		}
 	});
 };
+
+onUnmounted(() => {
+	disposed = true;
+	Message.destroy();
+});
 </script>
 
 <style scoped>
@@ -116,6 +162,10 @@ const handleOpen = () => {
 	align-items: center;
 	gap: 12px;
 	font-size: 14px;
+}
+
+.message-close-demo.is-expanded {
+	min-height: 220px;
 }
 </style>
 ```

@@ -17,7 +17,12 @@
 	<div class="v-img-basic" style="padding: 10px;">
 		<div v-for="fit in fits" :key="fit" class="_img-wrap">
 			<span style="margin-bottom: 10px;">{{ fit }}</span>
-			<Image :src="url" :fit="fit" style="width: 100px; height: 100px" />
+			<Image
+				:src="url"
+				:fit="fit"
+				previewable
+				style="width: 100px; height: 100px"
+			/>
 		</div>
 	</div>
 </template>
@@ -52,7 +57,7 @@ const url = ref('https://github.githubassets.com/favicons/favicon.svg');
 	<div class="v-img-lazy" style="padding: 10px;">
 		<div style="height: 400px; overflow-y: auto; display: flex; flex-direction: column; width: 100%">
 			<!-- hack 边距 -->
-			<div v-for="url in urls" :key="url" style="font-size: 0">
+			<div v-for="(url, index) in urls" :key="index" style="font-size: 0">
 				<Image
 					:src="url"
 					lazy
@@ -67,9 +72,9 @@ import { ref } from 'vue';
 import { Image } from '@deot/vc';
 
 const urls = ref([
-	'https://github.githubassets.com/favicons/favicon.svg',
-	'https://github.githubassets.com/favicons/favicon.svg',
-	'https://github.githubassets.com/favicons/favicon.svg'
+	'https://github.githubassets.com/favicons/favicon.svg?lazy=1',
+	'https://github.githubassets.com/favicons/favicon.svg?lazy=2',
+	'https://github.githubassets.com/favicons/favicon.svg?lazy=3'
 ]);
 </script>
 ```

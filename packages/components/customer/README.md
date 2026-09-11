@@ -18,19 +18,48 @@
 -->
 ```vue
 <template>
-	<div>
-		<button type="button" @click="count++">增加</button>
+	<div class="demo-counter">
 		<Customer :render="renderCount" :count="count" after-text=" 次" />
+		<div class="demo-actions">
+			<Button type="primary" @click="count++">增加</Button>
+			<Button :disabled="count === 0" @click="count--">减少</Button>
+			<Button :disabled="count === 0" @click="count = 0">重置</Button>
+		</div>
 	</div>
 </template>
 
 <script setup>
 import { h, ref } from 'vue';
-import { Customer } from '@deot/vc';
+import { Button, Customer } from '@deot/vc';
 
 const count = ref(0);
-const renderCount = attrs => h('p', `已点击 ${attrs.count}${attrs['after-text']}`);
+const renderCount = attrs => h('p', { 'class': 'demo-count', 'aria-live': 'polite' }, `已点击 ${attrs.count}${attrs['after-text']}`);
 </script>
+
+<style scoped>
+.demo-counter {
+	display: grid;
+	gap: 18px;
+	padding: 18px;
+	border: 1px solid var(--vc-color-border, #e5e7eb);
+	border-radius: 10px;
+	background: var(--vc-color-fill, transparent);
+}
+
+.demo-count {
+	margin: 0;
+	color: var(--vc-color-primary, #409eff);
+	font-size: 22px;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+.demo-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+</style>
 ```
 :::
 
@@ -46,20 +75,20 @@ const renderCount = attrs => h('p', `已点击 ${attrs.count}${attrs['after-text
 -->
 ```vue
 <template>
-	<div>
+	<div class="demo-events">
 		<Customer :render="renderContent" :count="count" @increase="handleIncrease">
-			<p>内容来自默认插槽</p>
+			<p class="demo-slot">内容来自默认插槽</p>
 			<template #content="{ current }">
-				<p>作用域插槽收到的计数：{{ current }}</p>
+				<p class="demo-slot">作用域插槽收到的计数：{{ current }}</p>
 			</template>
 		</Customer>
-		<p>父组件收到的计数：{{ count }}</p>
+		<p class="demo-result" aria-live="polite">父组件收到的计数：{{ count }}</p>
 	</div>
 </template>
 
 <script setup>
 import { h, ref } from 'vue';
-import { Customer } from '@deot/vc';
+import { Button, Customer } from '@deot/vc';
 
 const count = ref(0);
 const handleIncrease = (value) => {
@@ -68,12 +97,38 @@ const handleIncrease = (value) => {
 const renderContent = (attrs, { slots, emit }) => h('div', [
 	slots.default?.(),
 	slots.content?.({ current: attrs.count }),
-	h('button', {
-		type: 'button',
+	h(Button, {
+		type: 'primary',
 		onClick: () => emit('increase', attrs.count + 1)
-	}, '触发自定义事件')
+	}, { default: () => '触发自定义事件' })
 ]);
 </script>
+
+<style scoped>
+.demo-events {
+	display: grid;
+	gap: 14px;
+	padding: 18px;
+	border: 1px solid var(--vc-color-border, #e5e7eb);
+	border-radius: 10px;
+	background: var(--vc-color-fill, transparent);
+}
+
+.demo-slot {
+	margin: 5px 0;
+	padding: 10px 12px;
+	border-radius: 6px;
+	background: var(--vc-color-fill-light, rgba(64, 158, 255, 0.08));
+	line-height: 1.5;
+}
+
+.demo-result {
+	margin: 4px 0 0;
+	padding-top: 12px;
+	border-top: 1px solid var(--vc-color-border, #e5e7eb);
+	font-weight: 600;
+}
+</style>
 ```
 :::
 

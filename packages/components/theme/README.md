@@ -14,7 +14,12 @@
 ```vue
 <template>
 	<div class="theme-demo" :data-mode="dark ? 'dark' : 'light'">
-		<button @click="dark = !dark">切换主题：{{ dark ? '暗色' : '亮色' }}</button>
+		<div class="theme-demo__toolbar">
+			<ThemeText color="demo-text">当前预览：{{ dark ? '暗色' : '亮色' }}</ThemeText>
+			<Button size="small" type="primary" @click="dark = !dark">
+				切换主题
+			</Button>
+		</div>
 		<ThemeView
 			class="theme-demo__card"
 			background-color="demo-surface"
@@ -28,7 +33,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { ThemeView, ThemeText } from '@deot/vc';
+import { Button, ThemeView, ThemeText } from '@deot/vc';
 
 const dark = ref(false);
 </script>
@@ -40,6 +45,12 @@ const dark = ref(false);
 	--demo-border: #b6c2d1;
 	--demo-accent: #245ac2;
 	padding: 20px;
+}
+.theme-demo__toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
 }
 .theme-demo[data-mode="dark"] {
 	--demo-text: #e5eaf2;
@@ -64,28 +75,36 @@ const dark = ref(false);
 ```vue
 <template>
 	<div style="padding: 20px">
-		<button @click="dark = !dark">切换变量表：{{ dark ? '暗色' : '亮色' }}</button>
+		<div class="theme-vars__toolbar">
+			<ThemeText color="text">当前变量表：{{ dark ? '暗色' : '亮色' }}</ThemeText>
+			<Button size="small" type="primary" @click="dark = !dark">
+				切换变量表
+			</Button>
+		</div>
 		<Theme
 			tag="section"
 			:variables="variables"
 			color="text"
 			background-color="surface"
-			style="margin-top: 12px; padding: 16px"
+			class="theme-vars__card"
 		>
-			<p>当前文字和背景来自局部变量表。</p>
-			<ThemeImage :variables="variables" src="image" alt="主题色块" width="64" height="64" />
-			<ThemeView
-				:variables="variables"
-				background-image="image"
-				style="display: inline-block; width: 64px; height: 64px; margin-left: 12px"
-			/>
+			<p class="theme-vars__description">当前文字和背景来自局部变量表。</p>
+			<div class="theme-vars__images">
+				<ThemeImage :variables="variables" src="image" alt="主题色块" width="64" height="64" />
+				<ThemeView
+					:variables="variables"
+					background-image="image"
+					background-size="cover"
+					aria-label="背景主题色块"
+				/>
+			</div>
 		</Theme>
 	</div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue';
-import { Theme, ThemeView, ThemeImage } from '@deot/vc';
+import { Button, Theme, ThemeView, ThemeImage, ThemeText } from '@deot/vc';
 
 const dark = ref(false);
 const variables = computed(() => {
@@ -99,6 +118,32 @@ const variables = computed(() => {
 	};
 });
 </script>
+
+<style scoped>
+.theme-vars__toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+}
+.theme-vars__card {
+	display: block;
+	margin-top: 12px;
+	padding: 20px;
+}
+.theme-vars__description {
+	margin: 0 0 16px;
+}
+.theme-vars__images {
+	display: flex;
+	gap: 12px;
+}
+.theme-vars__images > * {
+	width: 64px;
+	height: 64px;
+	border-radius: 8px;
+}
+</style>
 ```
 :::
 

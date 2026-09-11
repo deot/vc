@@ -14,22 +14,38 @@
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<div>
-		<button type="button" @click="handleToggle">
+	<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px;">
+		<Button type="primary" style="white-space: nowrap;" @click="handleToggle">
 			{{ visible ? '收起' : '展开' }}更多搜索条件
-		</button>
+		</Button>
 		<Expand
 			:model-value="visible"
+			:tag="'section'"
 		>
-			<div style="margin: 20px;">折叠的内容</div>
+			<div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; padding: 12px; border: 1px solid #d9d9d9; border-radius: 4px;">
+				<label style="display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+					关键词
+					<Input placeholder="输入关键词" />
+				</label>
+				<label style="display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+					状态
+					<Select v-model="status" :data="statusOptions" style="width: 100px;" />
+				</label>
+			</div>
 		</Expand>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Expand } from '@deot/vc';
+import { Button, Expand, Input, Select } from '@deot/vc';
 
 const visible = ref(false);
+const status = ref('all');
+const statusOptions = [
+	{ value: 'all', label: '全部' },
+	{ value: 'enabled', label: '启用' },
+	{ value: 'disabled', label: '停用' }
+];
 
 const handleToggle = () => {
 	visible.value = !visible.value;
@@ -48,20 +64,25 @@ const handleToggle = () => {
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<div>
-		<label><input v-model="alive" type="checkbox">保留子内容</label>
-		<button type="button" @click="visible = !visible">
+	<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px;">
+		<Checkbox style="white-space: nowrap;" v-model="alive">保留子内容</Checkbox>
+		<Button type="primary" style="white-space: nowrap;" @click="visible = !visible">
 			{{ visible ? '收起' : '展开' }}输入框
-		</button>
+		</Button>
 	</div>
 	<Expand :model-value="visible" :alive="alive">
-		<p><input aria-label="示例输入" placeholder="输入后收起再展开"></p>
+		<div style="display: flex; align-items: center; gap: 6px; margin-top: 12px; padding: 12px; background: #f7f7f7;">
+			<label style="display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+				备注
+				<Input aria-label="示例输入" placeholder="输入后收起再展开" />
+			</label>
+		</div>
 	</Expand>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { Expand } from '@deot/vc';
+import { Button, Checkbox, Expand, Input } from '@deot/vc';
 
 const visible = ref(true);
 const alive = ref(true);

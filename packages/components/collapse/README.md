@@ -15,16 +15,21 @@
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<Collapse :model-value="value" @change="value = [...$event]">
-		<CollapseItem v-for="id in ['guide', 'details']" :key="id" :value="id">
-			<div class="title">{{ id === 'guide' ? '使用指南' : '详细说明' }}</div>
-			<template #icon="{ visible }">
-				<span class="icon">{{ visible ? '−' : '+' }}</span>
-			</template>
-			<template #content><p>多个面板可以同时保持展开，点击标题收起内容。</p></template>
-		</CollapseItem>
-	</Collapse>
-	<p>展开项：{{ value }}</p>
+	<div class="collapse-demo">
+		<Collapse :model-value="value" @change="value = [...$event]">
+			<CollapseItem v-for="item in items" :key="item.value" :value="item.value">
+				<div class="title">
+					<span>{{ item.title }}</span>
+					<small>{{ item.summary }}</small>
+				</div>
+				<template #icon="{ visible }">
+					<span class="icon">{{ visible ? '−' : '+' }}</span>
+				</template>
+				<template #content><p class="content">{{ item.content }}</p></template>
+			</CollapseItem>
+		</Collapse>
+		<p class="result">已展开 {{ value.length }} 项</p>
+	</div>
 </template>
 
 <script setup>
@@ -32,16 +37,44 @@ import { ref } from 'vue';
 import { Collapse, CollapseItem } from '@deot/vc';
 
 const value = ref(['guide']);
+const items = [
+	{ value: 'guide', title: '使用指南', summary: '快速开始', content: '通过 change 事件同步状态，可以同时展开多个内容面板。' },
+	{ value: 'details', title: '详细说明', summary: '交互细节', content: '标题和内容均可使用插槽自定义，图标插槽可读取 visible 状态。' }
+];
 </script>
 
 <style scoped>
+.collapse-demo {
+	max-width: 560px;
+	margin: 0 auto;
+}
 .title {
-	padding: 12px 28px 12px 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 14px 32px 14px 0;
+	font-weight: 600;
+}
+.title small {
+	font-size: 12px;
+	font-weight: 400;
+	opacity: .65;
 }
 .icon {
 	position: absolute;
-	top: 12px;
+	top: 14px;
 	right: 8px;
+	font-size: 20px;
+}
+.content {
+	margin: 0;
+	padding: 0 0 14px;
+	opacity: .8;
+}
+.result {
+	margin: 12px 0 0;
+	font-size: 13px;
+	opacity: .65;
 }
 </style>
 ```
@@ -55,15 +88,20 @@ const value = ref(['guide']);
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<Collapse :model-value="value" accordion :alive="false" @change="value = $event">
-		<CollapseItem v-for="id in [1, 2]" :key="id" :value="id">
-			<div class="title">面板 {{ id }}（{{ value === id ? '展开' : '收起' }}）</div>
-			<template #content>
-				<p><input :aria-label="'面板 ' + id + ' 的临时备注'" placeholder="收起后此输入内容会清空"></p>
-			</template>
-		</CollapseItem>
-	</Collapse>
-	<p>展开项：{{ value === undefined ? '无' : value }}</p>
+	<div class="accordion-demo">
+		<Collapse :model-value="value" accordion :alive="false" @change="value = $event">
+			<CollapseItem v-for="item in items" :key="item.id" :value="item.id">
+				<div class="title">{{ item.title }}</div>
+				<template #content>
+					<div class="content">
+						<p>{{ item.content }}</p>
+						<input :aria-label="item.title + ' 的临时备注'" placeholder="收起后内容会重置">
+					</div>
+				</template>
+			</CollapseItem>
+		</Collapse>
+		<p class="result">{{ value === undefined ? '当前没有展开项' : `当前展开：${value}` }}</p>
+	</div>
 </template>
 
 <script setup>
@@ -71,11 +109,39 @@ import { ref } from 'vue';
 import { Collapse, CollapseItem } from '@deot/vc';
 
 const value = ref(1);
+const items = [
+	{ id: 1, title: '账户设置', content: '收起后输入框会卸载，重新展开即可看到重置后的内容。' },
+	{ id: 2, title: '通知偏好', content: '手风琴模式下，同一时间只保留一个面板展开。' }
+];
 </script>
 
 <style scoped>
+.accordion-demo {
+	max-width: 560px;
+	margin: 0 auto;
+}
 .title {
-	padding: 12px 0;
+	padding: 14px 0;
+	font-weight: 600;
+}
+.content {
+	padding: 0 0 14px;
+}
+.content p {
+	margin: 0 0 12px;
+	font-size: 13px;
+}
+input {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 8px 10px;
+	border: 1px solid var(--vc-border-color);
+	border-radius: 4px;
+}
+.result {
+	margin: 12px 0 0;
+	font-size: 13px;
+	opacity: .65;
 }
 </style>
 ```

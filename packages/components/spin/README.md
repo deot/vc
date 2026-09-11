@@ -14,15 +14,19 @@
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
 ```vue
 <template>
-	<div style="display: flex; align-items: center; gap: 24px">
-		<Spin :size="18" />
-		<Spin />
-		<Spin :size="40" />
+	<div>
+		<div style="display: flex; align-items: center; gap: 24px; min-height: 48px">
+			<Spin :size="size" />
+			<InputNumber v-model="size" :min="16" :max="56" :step="4" style="width: 96px" />
+		</div>
 	</div>
 </template>
 
 <script setup>
-import { Spin } from '@deot/vc';
+import { ref } from 'vue';
+import { InputNumber, Spin } from '@deot/vc';
+
+const size = ref(28);
 </script>
 ```
 :::
@@ -36,7 +40,9 @@ import { Spin } from '@deot/vc';
 ```vue
 <template>
 	<div>
-		<button type="button" @click="loading = !loading">切换加载状态</button>
+		<Button type="primary" @click="loading = !loading">
+			{{ loading ? '停止加载' : '开始加载' }}
+		</Button>
 		<div style="margin-top: 16px; min-height: 64px">
 			<Spin v-if="loading">
 				<div style="margin-top: 8px; line-height: 20px">加载中，请稍候</div>
@@ -48,7 +54,7 @@ import { Spin } from '@deot/vc';
 
 <script setup>
 import { ref } from 'vue';
-import { Spin } from '@deot/vc';
+import { Button, Spin } from '@deot/vc';
 
 const loading = ref(true);
 </script>
@@ -63,8 +69,14 @@ const loading = ref(true);
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
 ```vue
 <template>
-	<div style="display: flex; align-items: center; gap: 24px">
-		<Spin foreground="var(--vc-color-primary-lighter)" background="var(--vc-color-primary)" />
+	<div style="display: grid; gap: 16px">
+		<div style="display: flex; align-items: center; gap: 12px">
+			<Spin :foreground="foreground" :background="background" />
+			<label>长弧</label>
+			<ColorPicker v-model="foreground" />
+			<label>短弧</label>
+			<ColorPicker v-model="background" />
+		</div>
 		<Spin>
 			<template #loading>
 				<span style="line-height: 24px">正在加载…</span>
@@ -74,7 +86,11 @@ const loading = ref(true);
 </template>
 
 <script setup>
-import { Spin } from '@deot/vc';
+import { ref } from 'vue';
+import { ColorPicker, Spin } from '@deot/vc';
+
+const foreground = ref('#909399');
+const background = ref('#456cf6');
 </script>
 ```
 :::

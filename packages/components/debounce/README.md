@@ -18,14 +18,18 @@
 -->
 ```vue
 <template>
-	<div>
-		<Debounce tag="button" :wait="1000" @click="nativeCount++">
-			原生按钮：{{ nativeCount }} 次
-		</Debounce>
-		<Debounce :tag="Button" :wait="1000" @click="componentCount++">
-			组件按钮：{{ componentCount }} 次
-		</Debounce>
-		<p>快速连续点击，停止点击 1 秒后再试。</p>
+	<div class="demo">
+		<div class="demo__actions">
+			<Debounce :tag="Button" :wait="1000" @click="componentCount++">
+				<span class="demo__button-label">组件按钮</span>
+				<span class="demo__button-count">{{ componentCount }} 次</span>
+			</Debounce>
+			<Debounce tag="button" :wait="1000" @click="nativeCount++">
+				<span class="demo__button-label">原生按钮</span>
+				<span class="demo__button-count">{{ nativeCount }} 次</span>
+			</Debounce>
+		</div>
+		<p class="demo__hint">快速连续点击，停止点击 1 秒后再试。</p>
 	</div>
 </template>
 <script setup>
@@ -35,6 +39,35 @@ import { Debounce, Button } from '@deot/vc';
 const nativeCount = ref(0);
 const componentCount = ref(0);
 </script>
+
+<style scoped>
+.demo {
+	max-width: 420px;
+}
+
+.demo__actions {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+	align-items: start;
+}
+
+.demo__button-label {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.demo__button-count {
+	font-size: 12px;
+	opacity: 0.85;
+}
+
+.demo__hint {
+	margin: 12px 0 0;
+	color: #64748b;
+	font-size: 13px;
+}
+</style>
 ```
 :::
 

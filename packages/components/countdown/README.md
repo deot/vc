@@ -14,21 +14,13 @@
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<div>
-		<Countdown
-			:target-time="targetTime"
-		/>
-	</div>
+	<Countdown :target-time="targetTime" />
 </template>
+
 <script setup>
-import { ref } from 'vue';
 import { Countdown } from '@deot/vc';
 
-const now = new Date();
-now.setDate(now.getDate() + 2);
-
-const targetTime = ref(now);
-
+const targetTime = Date.now() + 2 * 24 * 60 * 60 * 1000;
 </script>
 ```
 :::
@@ -40,21 +32,29 @@ const targetTime = ref(now);
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<div>
+	<div style="display: flex; align-items: center; gap: 12px">
 		<Countdown
 			:target-time="targetTime"
-			:t="2000"
+			:t="refreshInterval"
+			format="HH:mm:ss:SSS"
 		/>
+		<Button @click="switchInterval">
+			切换为 {{ refreshInterval === 1000 ? '50ms' : '1 秒' }} 刷新
+		</Button>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Countdown } from '@deot/vc';
+import { Button, Countdown } from '@deot/vc';
 
-const now = new Date();
-now.setDate(now.getDate() + 2);
+const targetTime = ref(Date.now() + 90 * 1000);
+const refreshInterval = ref(1000);
 
-const targetTime = ref(now);
+const switchInterval = () => {
+	refreshInterval.value = refreshInterval.value === 1000 ? 50 : 1000;
+	targetTime.value = Date.now() + 90 * 1000;
+};
 </script>
 ```
 :::
@@ -66,21 +66,13 @@ const targetTime = ref(now);
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<div>
-		<Countdown
-			:target-time="targetTime"
-			format="DD:HH:mm:ss"
-		/>
-	</div>
+	<Countdown :target-time="targetTime" format="DD 天 HH:mm:ss" />
 </template>
+
 <script setup>
-import { ref } from 'vue';
 import { Countdown } from '@deot/vc';
 
-const now = new Date();
-now.setDate(now.getDate() + 2);
-
-const targetTime = ref(now);
+const targetTime = Date.now() + 26 * 60 * 60 * 1000;
 </script>
 ```
 :::
@@ -93,17 +85,28 @@ const targetTime = ref(now);
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<Countdown :target-time="targetTime">
-		<template #default="{ minute, second }">
-			剩余 {{ minute }} 分 {{ second }} 秒
-		</template>
-	</Countdown>
+	<div style="display: flex; align-items: center; gap: 12px">
+		<Countdown :target-time="targetTime" @complete="completed = true">
+			<template #default="{ minute, second }">
+				剩余 {{ minute }} 分 {{ second }} 秒
+			</template>
+		</Countdown>
+		<span v-if="completed">已结束</span>
+		<Button @click="restart">重新开始</Button>
+	</div>
 </template>
 
 <script setup>
-import { Countdown } from '@deot/vc';
+import { ref } from 'vue';
+import { Button, Countdown } from '@deot/vc';
 
-const targetTime = Date.now() + 30 * 60 * 1000;
+const targetTime = ref(Date.now() + 10 * 1000);
+const completed = ref(false);
+
+const restart = () => {
+	targetTime.value = Date.now() + 10 * 1000;
+	completed.value = false;
+};
 </script>
 ```
 :::

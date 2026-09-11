@@ -20,11 +20,16 @@
 <template>
 	<div>
 		<Print ref="pageTarget">
-			<h3>订单明细</h3>
-			<p>商品：笔记本 × 2</p>
-			<p>合计：20 元</p>
+			<article class="print-card">
+				<header>
+					<strong>订单明细</strong>
+					<span>2026-09-11</span>
+				</header>
+				<p>商品：笔记本 × 2</p>
+				<p>合计：20 元</p>
+			</article>
 		</Print>
-		<Button @click="handlePrint">
+		<Button style="margin-top: 12px;" @click="handlePrint">
 			打印订单
 		</Button>
 	</div>
@@ -39,6 +44,20 @@ const handlePrint = () => {
 	pageTarget.value.print();
 };
 </script>
+
+<style scoped>
+.print-card {
+	padding: 16px;
+	border: 1px solid #d9d9d9;
+	border-radius: 8px;
+}
+
+.print-card header {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 12px;
+}
+</style>
 ```
 :::
 
@@ -56,7 +75,7 @@ const handlePrint = () => {
 <template>
 	<div>
 		<Print ref="pageTarget" :value="content" />
-		<Button @click="handlePrint">
+		<Button style="margin-top: 12px;" @click="handlePrint">
 			打印通知
 		</Button>
 	</div>
@@ -67,7 +86,12 @@ import { ref } from 'vue';
 import { Print, Button } from '@deot/vc';
 
 const pageTarget = ref();
-const content = '<h3>会议通知</h3><p>请于下午三点到会议室参会。</p>';
+const content = `
+	<article style="padding: 16px; border: 1px solid #d9d9d9; border-radius: 8px">
+		<h3 style="margin: 0 0 12px">会议通知</h3>
+		<p style="margin: 0">请于下午三点到会议室参会。</p>
+	</article>
+`;
 const handlePrint = () => {
 	pageTarget.value.print();
 };

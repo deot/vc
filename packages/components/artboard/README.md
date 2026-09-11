@@ -23,17 +23,19 @@
 ```vue
 <template>
 	<div class="artboard-demo">
-		<Artboard
-			ref="artboard"
-			class="artboard-demo__canvas"
-			:options="drawingOptions"
-			@change="handleChange"
-		/>
+		<div class="artboard-demo__surface">
+			<Artboard
+				ref="artboard"
+				class="artboard-demo__canvas"
+				:options="drawingOptions"
+				@change="handleChange"
+			/>
+		</div>
 		<div class="artboard-demo__actions">
-			<Button :disabled="!state.allowUndo" @click="handleUndo">
+			<Button :disabled="!state.undoable" @click="handleUndo">
 				撤销
 			</Button>
-			<Button :disabled="!state.allowRedo" @click="handleRedo">
+			<Button :disabled="!state.redoable" @click="handleRedo">
 				重做
 			</Button>
 			<Button @click="handleReset">
@@ -43,12 +45,14 @@
 				导出图片
 			</Button>
 		</div>
-		<img
-			v-if="imageUrl"
-			class="artboard-demo__preview"
-			:src="imageUrl"
-			alt="导出的画板内容"
-		>
+		<div v-if="imageUrl" class="artboard-demo__result">
+			<div class="artboard-demo__result-title">导出预览</div>
+			<img
+				class="artboard-demo__preview"
+				:src="imageUrl"
+				alt="导出的画板内容"
+			>
+		</div>
 	</div>
 </template>
 
@@ -59,8 +63,8 @@ import { Artboard, Button } from '@deot/vc';
 const artboard = ref(null);
 const imageUrl = ref('');
 const state = reactive({
-	allowUndo: false,
-	allowRedo: false
+	undoable: false,
+	redoable: false
 });
 const drawingOptions = {
 	strokeStyle: '#456cf6',
@@ -68,8 +72,8 @@ const drawingOptions = {
 };
 
 const handleChange = (payload) => {
-	state.allowUndo = payload.allowUndo;
-	state.allowRedo = payload.allowRedo;
+	state.undoable = payload.allowUndo;
+	state.redoable = payload.allowRedo;
 };
 
 const handleUndo = () => artboard.value?.undo();
@@ -86,6 +90,11 @@ const handleExport = () => {
 	max-width: 480px;
 }
 
+.artboard-demo__surface {
+	background: var(--vc-background-color-light, #fff);
+	border-radius: 8px;
+}
+
 .artboard-demo__canvas {
 	height: 240px;
 }
@@ -97,10 +106,19 @@ const handleExport = () => {
 	margin-top: 12px;
 }
 
+.artboard-demo__result {
+	margin-top: 16px;
+}
+
+.artboard-demo__result-title {
+	margin-bottom: 8px;
+	font-size: 13px;
+	color: var(--vc-color-dark-lighter, #515151);
+}
+
 .artboard-demo__preview {
 	display: block;
 	max-width: 100%;
-	margin-top: 12px;
 }
 </style>
 ```

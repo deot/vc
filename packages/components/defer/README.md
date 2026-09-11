@@ -16,11 +16,15 @@ Defer 最终会渲染全部数据，不是虚拟列表。当前实现通过 `Mes
 :::playground
 ```vue
 <template>
-	<div style="padding: 20px;">
-		<button type="button" @click="reload">重新加载</button>
-		<p>完成次数：{{ completed }}；最近调度耗时：{{ elapsed }} ms</p>
-		<ul style="max-height: 240px; overflow: auto;">
-			<Defer :data="data" :once="false" :concurrency="10" @complete="handleComplete">
+	<div style="max-width: 560px; padding: 20px;">
+		<div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
+			<Button type="primary" size="small" @click="reload">重新加载</Button>
+			<Button size="small" @click="disabled = !disabled">{{ disabled ? '启用延迟' : '立即显示全部' }}</Button>
+			<span style="color: #888;">{{ data.length }} 条数据</span>
+		</div>
+		<p style="margin: 0 0 12px; color: #888;">完成 {{ completed }} 次 · 最近耗时 {{ elapsed }} ms</p>
+		<ul style="height: 220px; padding: 8px 16px; margin: 0; overflow: auto; border: 1px solid #e5e7eb; border-radius: 6px;">
+			<Defer :data="data" :disabled="disabled" :once="false" :concurrency="20" @complete="handleComplete">
 				<template #default="{ row, index }">
 					<li>{{ index + 1 }}. {{ row.label }}</li>
 				</template>
@@ -31,13 +35,14 @@ Defer 最终会渲染全部数据，不是虚拟列表。当前实现通过 `Mes
 
 <script setup>
 import { ref } from 'vue';
-import { Defer } from '@deot/vc';
+import { Button, Defer } from '@deot/vc';
 
 const createData = () => Array.from({ length: 200 }, (_, index) => ({
 	id: index,
 	label: `数据 ${index + 1}`
 }));
 const data = ref(createData());
+const disabled = ref(false);
 const completed = ref(0);
 const elapsed = ref(0);
 const reload = () => {

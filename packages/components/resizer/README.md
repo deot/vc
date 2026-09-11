@@ -14,12 +14,14 @@
 ```vue
 <template>
 	<div class="resizer-demo">
-		<label>
-			容器宽度：{{ containerWidth }}px
-			<input v-model.number="containerWidth" type="range" min="200" max="360">
-		</label>
+		<div class="resizer-demo__controls">
+			<label>容器宽度：{{ containerWidth }}px</label>
+			<Slider v-model="containerWidth" :min="200" :max="360" />
+			<label>容器高度：{{ containerHeight }}px</label>
+			<Slider v-model="containerHeight" :min="120" :max="240" />
+		</div>
 		<p>最近测量：{{ measured.width }} × {{ measured.height }}px</p>
-		<div :style="{ width: `${containerWidth}px`, maxWidth: '100%', height: '180px' }">
+		<div :style="{ width: `${containerWidth}px`, height: `${containerHeight}px` }">
 			<Resizer style="padding: 16px;" @resize="measured = $event">
 				<template #default="{ width, height, style }">
 					<div class="resizer-demo__content" :style="style">
@@ -33,15 +35,26 @@
 
 <script setup>
 import { ref } from 'vue';
-import { Resizer } from '@deot/vc';
+import { Resizer, Slider } from '@deot/vc';
 
 const containerWidth = ref(300);
+const containerHeight = ref(180);
 const measured = ref({ width: 0, height: 0 });
 </script>
 
 <style scoped>
 .resizer-demo {
 	padding: 20px;
+}
+
+.resizer-demo__controls {
+	width: 260px;
+	margin-bottom: 12px;
+}
+
+.resizer-demo__controls label {
+	display: block;
+	margin: 8px 0 4px;
 }
 
 .resizer-demo__content {

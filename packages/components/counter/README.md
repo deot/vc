@@ -14,14 +14,19 @@
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<div>
-		<Counter
-			:value="99999"
-		/>
+	<div style="display: grid; gap: 12px;">
+		<Counter :value="value" :duration="800" />
+		<div style="display: flex; gap: 8px;">
+			<Button @click="value -= 1000">减少 1000</Button>
+			<Button type="primary" @click="value += 1000">增加 1000</Button>
+		</div>
 	</div>
 </template>
 <script setup>
-import { Counter } from '@deot/vc';
+import { ref } from 'vue';
+import { Button, Counter } from '@deot/vc';
+
+const value = ref(99999);
 </script>
 ```
 :::
@@ -40,11 +45,18 @@ import { Counter } from '@deot/vc';
 		</Counter>
 		<Counter value="1234.50" :precision="2" zeroless :duration="0" />
 		<Counter placeholder="暂无数据" />
+		<div style="display: flex; gap: 8px;">
+			<Button @click="separator = separator ? '' : ','">切换千位分隔符</Button>
+			<Counter :value="1234567.89" :precision="2" :separator="separator" :duration="0" />
+		</div>
 	</div>
 </template>
 
 <script setup>
-import { Counter } from '@deot/vc';
+import { ref } from 'vue';
+import { Button, Counter } from '@deot/vc';
+
+const separator = ref(',');
 </script>
 ```
 :::
@@ -58,22 +70,31 @@ import { Counter } from '@deot/vc';
 ```vue
 <template>
 	<div style="display: grid; gap: 12px;">
-		<Counter ref="counter" :value="100" :duration="5000" controllable />
+		<Counter ref="counter" :value="target" :duration="5000" controllable @begin="status = '计数中'" @complete="status = '已完成'" />
+		<strong>{{ status }}</strong>
 		<div style="display: flex; flex-wrap: wrap; gap: 8px;">
-			<button @click="counter.start()">开始</button>
-			<button @click="counter.pause()">暂停</button>
-			<button @click="counter.resume()">继续</button>
-			<button @click="counter.end()">结束</button>
-			<button @click="counter.restart()">重新开始</button>
+			<Button @click="counter.start()">开始</Button>
+			<Button @click="counter.pause()">暂停</Button>
+			<Button @click="counter.resume()">继续</Button>
+			<Button @click="counter.end()">结束</Button>
+			<Button @click="counter.restart()">重新开始</Button>
+			<Button type="primary" @click="updateTarget">目标 +100</Button>
 		</div>
 	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { Counter } from '@deot/vc';
+import { Button, Counter } from '@deot/vc';
 
 const counter = ref();
+const target = ref(100);
+const status = ref('尚未开始');
+
+const updateTarget = () => {
+	target.value += 100;
+	counter.value.update(target.value);
+};
 </script>
 ```
 :::

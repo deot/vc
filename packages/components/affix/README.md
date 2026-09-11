@@ -12,12 +12,19 @@
 `fixed` 默认为 `true`，内容固定在视口中。在局部滚动容器内设为 `false`，组件会使用绝对定位。
 
 :::playground
+<!--
+<config lang="json5">
+{
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="affix-demo">
-		<div class="affix-demo__status" :class="{ 'is-active': active }">
-			<span class="affix-demo__status-dot" />
-			当前状态：{{ active ? '已固定' : '未固定' }}
+		<div class="affix-demo__status" :class="{ 'is-active': isActive }">
+			<span class="affix-demo__status-dot" aria-hidden="true" />
+			<span>当前状态：{{ isActive ? '已固定' : '未固定' }}</span>
 		</div>
 		<Scroller
 			class="affix-demo__scroller"
@@ -27,13 +34,16 @@
 		>
 			<div class="affix-demo__content">
 				<div class="affix-demo__spacer">
-					<span>向下滚动查看固定效果 ↓</span>
+					<span>向下滚动查看固定效果</span>
+					<span class="affix-demo__arrow" aria-hidden="true">↓</span>
 				</div>
-				<Affix v-model="active" :fixed="false" :offset="8">
-					<template #default="{ active: current }">
-						<Button type="primary">
-							{{ current ? '已固定在容器顶部' : '等待固定' }}
-						</Button>
+				<Affix v-model="isActive" :fixed="false" :offset="8">
+					<template #default="{ active: isFixed }">
+						<div class="affix-demo__action">
+							<Button type="primary">
+								{{ isFixed ? '已固定在容器顶部' : '等待固定' }}
+							</Button>
+						</div>
 					</template>
 				</Affix>
 				<div class="affix-demo__spacer affix-demo__spacer--after">
@@ -48,7 +58,7 @@
 import { ref } from 'vue';
 import { Affix, Button, Scroller } from '@deot/vc';
 
-const active = ref(false);
+const isActive = ref(false);
 </script>
 
 <style scoped>
@@ -56,7 +66,7 @@ const active = ref(false);
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
-	margin: 12px 0;
+	margin-bottom: 12px;
 	padding: 6px 12px;
 	border-radius: 16px;
 	background: var(--vc-color-primary-lighter);
@@ -80,8 +90,8 @@ const active = ref(false);
 }
 
 .affix-demo__scroller {
-	border: 1px solid var(--vc-color-light-deepest);
-	border-radius: 8px;
+	border: 1px solid var(--vc-color-primary-lighter);
+	border-radius: var(--vc-border-radius);
 	background: var(--vc-background-color-light);
 }
 
@@ -93,9 +103,21 @@ const active = ref(false);
 .affix-demo__spacer {
 	display: flex;
 	align-items: center;
+	justify-content: center;
+	gap: 6px;
 	height: 160px;
 	color: var(--vc-color-dark-lightest);
 	font-size: 13px;
+}
+
+.affix-demo__arrow {
+	color: var(--vc-color-primary);
+	font-size: 16px;
+}
+
+.affix-demo__action {
+	display: flex;
+	justify-content: center;
 }
 
 .affix-demo__spacer--after {

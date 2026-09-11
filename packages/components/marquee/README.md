@@ -37,9 +37,12 @@ const text = ref('ABCDEFG');
 </script>
 <style>
 .v-marquee-basic > ._normal {
-	width: 100px;
+	width: min(100%, 240px);
+	display: block;
+	padding: 8px 12px;
 	background: #f6f8fa;
-	margin-bottom: 10px;
+	margin: 0 0 8px;
+	border-radius: 4px;
 }
 </style>
 ```
@@ -68,9 +71,11 @@ const text = ref('ABCDEFG');
 </script>
 <style>
 .v-marquee-autoplay > ._normal {
-	width: 100px;
+	width: min(100%, 240px);
+	display: block;
+	padding: 8px 12px;
 	background: #f6f8fa;
-	margin-bottom: 10px;
+	border-radius: 4px;
 }
 </style>
 ```
@@ -107,9 +112,12 @@ const handleClick = () => {
 </script>
 <style>
 .v-marquee-animated > ._normal {
-	width: 100px;
+	width: min(100%, 240px);
+	display: block;
+	padding: 8px 12px;
 	background: #f6f8fa;
-	margin-bottom: 10px;
+	margin-bottom: 8px;
+	border-radius: 4px;
 }
 </style>
 ```
@@ -144,9 +152,12 @@ const text = ref('ABCDEFG');
 </script>
 <style>
 .v-marquee-basic > ._normal {
-	width: 100px;
+	width: min(100%, 240px);
+	display: block;
+	padding: 8px 12px;
 	background: #f6f8fa;
-	margin-bottom: 10px;
+	margin: 0 0 8px;
+	border-radius: 4px;
 }
 </style>
 ```

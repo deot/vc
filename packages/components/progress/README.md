@@ -15,10 +15,10 @@
 ```vue
 <template>
 	<div class="progress-demo">
-		<Progress :percent="40" />
-		<Progress :percent="100" />
-		<Progress :percent="30" status="error" />
-		<Progress :percent="60" :stroke-width="16" :show-text="false" />
+		<div class="progress-item"><span>进行中</span><Progress :percent="40" /></div>
+		<div class="progress-item"><span>已完成</span><Progress :percent="100" /></div>
+		<div class="progress-item"><span>失败</span><Progress :percent="30" status="error" /></div>
+		<div class="progress-item"><span>隐藏文本</span><Progress :percent="60" :stroke-width="16" :show-text="false" /></div>
 	</div>
 </template>
 <script setup>
@@ -27,7 +27,13 @@ import { Progress } from '@deot/vc';
 <style scoped>
 .progress-demo {
 	display: grid;
-	gap: 16px;
+	gap: 20px;
+}
+.progress-item {
+	display: grid;
+	grid-template-columns: 72px 1fr;
+	align-items: center;
+	gap: 12px;
 }
 </style>
 ```
@@ -43,7 +49,7 @@ import { Progress } from '@deot/vc';
 <template>
 	<div class="progress-demo">
 		<Progress :percent="percent" animated />
-		<div>
+		<div class="progress-actions">
 			<Button @click="percent = Math.max(0, percent - 10)">减少进度</Button>
 			<Button @click="percent = Math.min(100, percent + 10)">增加进度</Button>
 		</div>
@@ -58,7 +64,11 @@ const percent = ref(30);
 <style scoped>
 .progress-demo {
 	display: grid;
-	gap: 16px;
+	gap: 20px;
+}
+.progress-actions {
+	display: flex;
+	gap: 12px;
 }
 </style>
 ```
@@ -73,7 +83,7 @@ const percent = ref(30);
 ```vue
 <template>
 	<div class="progress-circles">
-		<Progress type="circle" :percent="50" :stroke-width="10" color="#ed4014" />
+		<div class="progress-card"><span>自定义颜色</span><Progress type="circle" :percent="50" :stroke-width="10" color="#ed4014" /></div>
 		<Progress
 			type="circle"
 			:percent="100"
@@ -93,6 +103,11 @@ import { Progress } from '@deot/vc';
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 20px;
+}
+.progress-card {
+	display: grid;
+	justify-items: center;
+	gap: 12px;
 }
 </style>
 ```

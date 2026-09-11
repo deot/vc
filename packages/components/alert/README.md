@@ -12,6 +12,13 @@
 通过 `type` 设置提示类型。传入 `desc` 后，组件会使用带说明文字的布局。
 
 :::playground
+<!--
+<config lang="json5">
+{
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="alert-demo">

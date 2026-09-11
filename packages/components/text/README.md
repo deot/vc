@@ -14,50 +14,50 @@
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<div>
-		<Button @click="handleClick">
-			切换行数
-		</Button>
-		<div style="width: 100%; max-width: 500px;">
-			<h3>line: {{ line0 }} </h3>
-			<Text :value="text14" :line="line0" />
-			<h3>line: {{ line1 }} </h3>
-			<Text :value="text16" :line="line1" />
-			<h3>line: {{ line2 }} </h3>
-			<Text :value="text18" :line="line2" />
-			<h3>line: {{ line3 }} </h3>
-			<Text :value="text30" :line="line3" />
+	<div class="text-demo">
+		<div class="text-demo__toolbar">
+			<span>显示行数</span>
+			<InputNumber v-model="line" :min="1" :max="3" />
 		</div>
+		<label class="text-demo__editor">
+			<span>文本内容</span>
+			<Textarea v-model="content" :rows="4" />
+		</label>
+		<Text :value="content" :line="line" />
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Text, Button } from '@deot/vc';
+import { Text, InputNumber, Textarea } from '@deot/vc';
 
-const text = 'A2，C,我E,';
-const text14 = ref(text.repeat(14));
-const text16 = ref(text.repeat(16));
-const text18 = ref(text.repeat(18) + 'REPEAT_END_18');
-const text30 = ref(text.repeat(30) + 'REPEAT_END_30');
-const line0 = ref(0);
-const line1 = ref(1);
-const line2 = ref(2);
-const line3 = ref(3);
-
-const handleClick = () => {
-	if (line0.value === 0) {
-		line0.value = 3;
-		line1.value = 2;
-		line2.value = 1;
-		line3.value = 0;
-	} else {
-		line0.value = 0;
-		line1.value = 1;
-		line2.value = 2;
-		line3.value = 3;
-	}
-};
+const content = ref('Text 会根据容器宽度和指定行数测量文本，内容超出时自动添加省略符。你可以通过上方输入框调整显示行数，也可以直接编辑这段文案，观察组件如何响应内容变化。悬停截断后的文字，还可以在弹层中查看完整内容。');
+const line = ref(1);
 </script>
+
+<style scoped>
+.text-demo {
+	width: 100%;
+	max-width: 480px;
+}
+
+.text-demo__toolbar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 16px;
+}
+
+.text-demo__toolbar :deep(.vc-input-number) {
+	width: 120px;
+}
+
+.text-demo__editor {
+	display: grid;
+	gap: 8px;
+	margin-bottom: 20px;
+}
+</style>
 ```
 :::
 
@@ -69,22 +69,39 @@ const handleClick = () => {
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<div style="width: 100%; max-width: 500px;">
-		<Text
-			:value="text10"
-			:line="2"
-			:indent="1"
-			ellipsis="我是自定义结尾" />
+	<div class="ellipsis-demo">
+		<div class="ellipsis-demo__item">
+			<span class="ellipsis-demo__label">默认省略符</span>
+			<Text :value="content" :line="1" />
+		</div>
+		<div class="ellipsis-demo__item">
+			<span class="ellipsis-demo__label">自定义省略符</span>
+			<Text :value="content" :line="1" ellipsis=" ··· 查看更多" />
+		</div>
 	</div>
 </template>
+
 <script setup>
-import { ref } from 'vue';
 import { Text } from '@deot/vc';
 
-const text = 'A2，C,我E,';
-
-const text10 = ref(text.repeat(50));
+const content = '这是一段较长的说明文字，用来对比默认省略符和自定义省略符的展示效果。';
 </script>
+
+<style scoped>
+.ellipsis-demo {
+	display: grid;
+	gap: 20px;
+	width: 100%;
+	max-width: 320px;
+}
+
+.ellipsis-demo__label {
+	display: block;
+	margin-bottom: 8px;
+	font-size: 13px;
+	opacity: 0.65;
+}
+</style>
 ```
 :::
 
@@ -102,21 +119,39 @@ const text10 = ref(text.repeat(50));
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<div style="width: 100%; max-width: 500px;">
-		<h4>slice = -5</h4>
-		<Text :value="text" :line="2" :slice="-5" />
-		<h4>slice = 0</h4>
-		<Text :value="text" :line="2" :slice="0" />
-		<h4>slice = -8 + 自定义 ellipsis</h4>
-		<Text :value="text" :line="2" :slice="-8" ellipsis=" ··· " />
+	<div class="slice-demo">
+		<div class="slice-demo__item">
+			<span class="slice-demo__label">普通截断</span>
+			<Text :value="fileName" :line="1" />
+		</div>
+		<div class="slice-demo__item">
+			<span class="slice-demo__label">保留文件后缀</span>
+			<Text :value="fileName" :line="1" :slice="-9" ellipsis="…" />
+		</div>
 	</div>
 </template>
+
 <script setup>
-import { ref } from 'vue';
 import { Text } from '@deot/vc';
 
-const text = ref(('A2，C,我E,'.repeat(20)) + 'REPEAT_END');
+const fileName = '2026年第三季度产品数据分析与复盘报告.final.pdf';
 </script>
+
+<style scoped>
+.slice-demo {
+	display: grid;
+	gap: 20px;
+	width: 100%;
+	max-width: 280px;
+}
+
+.slice-demo__label {
+	display: block;
+	margin-bottom: 8px;
+	font-size: 13px;
+	opacity: 0.65;
+}
+</style>
 ```
 :::
 
