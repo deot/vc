@@ -102,7 +102,7 @@ const iconColor = ref('#456CF6');
 			<span class="icon-gallery-tip">点击图标复制名称</span>
 		</div>
 		<p class="icon-gallery-status" role="status">
-			{{ copiedIcon ? `已复制：${copiedIcon}` : status }}
+			{{ copiedIcon ? '已复制：' + copiedIcon : status }}
 		</p>
 		<div class="icon-gallery">
 			<Clipboard

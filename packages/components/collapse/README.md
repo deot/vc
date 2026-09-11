@@ -100,7 +100,7 @@ const items = [
 				</template>
 			</CollapseItem>
 		</Collapse>
-		<p class="result">{{ value === undefined ? '当前没有展开项' : `当前展开：${value}` }}</p>
+		<p class="result">{{ value === undefined ? '当前没有展开项' : '当前展开：' + value }}</p>
 	</div>
 </template>
 
