@@ -11,16 +11,35 @@ import type { RecycleListItemNodeRaw } from './base-watcher';
 const CHUNK_SIZE = 256;
 
 /**
+ * 贪心选择当前最短的列
+ *
+ * inverted 取最后一个最小列，与旧实现的 findIndex / findLastIndex 保持一致
+ * @param sizes 各列累积高度
+ * @param inverted 是否倒置
+ * @returns 列下标
+ */
+const pickColumn = (sizes: number[], inverted: boolean) => {
+	let column = 0;
+	for (let i = 1; i < sizes.length; i++) {
+		if (inverted ? sizes[i] <= sizes[column] : sizes[i] < sizes[column]) {
+			column = i;
+		}
+	}
+	return column;
+};
+
+/**
  * 贪心最短列排列在扫描序上严格依赖前序结果，因此整表重排是 O(n)，
  * 而按批构建会让它退化成 O(n²)。
  *
  * 这里按扫描序分块，块起点保存"进入该块前的各列累积高度"，
  * 于是任意一次变化只需要从它所属的块重排到末尾：
  * 追加落在扫描序尾部，成本降到 O(批大小)。
+ *
+ * 扫描序：正序即数组下标；inverted 从数组末尾（视觉底部）开始。
+ * 两种模式下新增项都落在扫描序尾部，块快照因此始终可复用
  */
 export class Layout {
-	private store: Store;
-
 	/** 各块起点处的列高快照 */
 	private checkpoints: number[][] = [];
 
@@ -35,9 +54,7 @@ export class Layout {
 	private laidInverted = false;
 	private laidSource: RecycleListItemNodeRaw[] | null = null;
 
-	constructor(store: Store) {
-		this.store = store;
-	}
+	constructor(private store: Store) {}
 
 	/**
 	 * 丢弃全部增量缓存，下次 refresh 从头重排
@@ -53,9 +70,6 @@ export class Layout {
 
 	/**
 	 * 扫描序 -> 数组下标
-	 *
-	 * inverted 时贪心从视觉底部（数组末尾）开始；两种模式下新增项都落在
-	 * 扫描序尾部，块快照因此始终可复用
 	 * 新增（增量分块重排）
 	 * @param length rebuildData 长度
 	 * @param scan 扫描位
@@ -63,6 +77,23 @@ export class Layout {
 	 */
 	private indexAt(length: number, scan: number) {
 		return this.laidInverted ? length - 1 - scan : scan;
+	}
+
+	/**
+	 * 扫描序或数据源整体更换时整体失效
+	 *
+	 * 这两种情况下 size 比较不足以发现变化（新节点 size 同为 0）；
+	 * 数组原地增删不改变身份，仍走增量
+	 * @param rebuildData 当前节点列表（原始对象）
+	 * @param cols 列数
+	 * @param inverted 是否倒置
+	 */
+	private resetIfStale(rebuildData: RecycleListItemNodeRaw[], cols: number, inverted: boolean) {
+		if (this.laidCols === cols && this.laidInverted === inverted && this.laidSource === rebuildData) return;
+		this.reset();
+		this.laidCols = cols;
+		this.laidInverted = inverted;
+		this.laidSource = rebuildData;
 	}
 
 	/**
@@ -91,39 +122,39 @@ export class Layout {
 	}
 
 	/**
-	 * 按扫描序增量重排 column / position
-	 * 并同步 contentMaxSize、columnFillSize、列索引
-	 * 原 Store.refreshItemPosition
+	 * 从脏点所属块的起点恢复列高快照；没有快照则从头开始
+	 * @param dirtyScan 首个脏扫描位
+	 * @param cols 列数
+	 * @returns 重排起点与该处的列高
 	 */
-	refresh() {
-		const { props, states } = this.store;
-		const { inverted, cols } = props;
-		const rebuildData = toRaw(states.rebuildData);
-		const length = rebuildData.length;
-
-		// 扫描序或数据源整体更换时，size 比较不足以发现变化（新节点 size 同为 0），
-		// 只能整体失效；数组原地增删不改变身份，仍走增量
-		if (this.laidCols !== cols || this.laidInverted !== inverted || this.laidSource !== rebuildData) {
-			this.reset();
-			this.laidCols = cols;
-			this.laidInverted = inverted;
-			this.laidSource = rebuildData;
-		}
-
-		const dirtyScan = this.findDirtyScan(rebuildData, length);
+	private restoreCheckpoint(dirtyScan: number, cols: number) {
 		const chunkIndex = Math.floor(dirtyScan / CHUNK_SIZE);
 		const checkpoint = this.checkpoints[chunkIndex];
-		const startScan = checkpoint ? chunkIndex * CHUNK_SIZE : 0;
-		const sizes = checkpoint ? checkpoint.slice() : Array.from({ length: cols }, () => 0);
+		return {
+			startScan: checkpoint ? chunkIndex * CHUNK_SIZE : 0,
+			sizes: checkpoint ? checkpoint.slice() : Array.from({ length: cols }, () => 0)
+		};
+	}
 
-		this.checkpoints.length = Math.floor(startScan / CHUNK_SIZE);
-		this.laidSizes.length = length;
-		this.laidOffsets.length = inverted ? length : 0;
-		this.laidLength = length;
-
-		const { position } = this.store;
-		const columns = inverted ? null : position.truncate(startScan, cols);
-
+	/**
+	 * 从 startScan 起按扫描序贪心放置，写 column（正序同时写 position）并续写列索引
+	 *
+	 * inverted 下此时算出的是"距列底"的偏移，先暂存到 laidOffsets，
+	 * 等总高确定后由 resolveInvertedPositions 换算
+	 * @param rebuildData 当前节点列表
+	 * @param length rebuildData 长度
+	 * @param startScan 重排起始扫描位
+	 * @param sizes 起点处的列高（原地累加）
+	 * @param columns 正序下待续写的列索引；inverted 为 null
+	 */
+	private place(
+		rebuildData: RecycleListItemNodeRaw[],
+		length: number,
+		startScan: number,
+		sizes: number[],
+		columns: number[][] | null
+	) {
+		const inverted = this.laidInverted;
 		for (let scan = startScan; scan < length; scan++) {
 			if (scan % CHUNK_SIZE === 0) {
 				this.checkpoints[scan / CHUNK_SIZE] = sizes.slice();
@@ -136,15 +167,8 @@ export class Layout {
 			}
 
 			const raw = node.raw;
-			let column = 0;
-			let offset = sizes[0];
-			for (let i = 1; i < cols; i++) {
-				// inverted 取最后一个最小列，与正序的 findIndex/findLastIndex 保持一致
-				if (inverted ? sizes[i] <= offset : sizes[i] < offset) {
-					offset = sizes[i];
-					column = i;
-				}
-			}
+			const column = pickColumn(sizes, inverted);
+			const offset = sizes[column];
 
 			if (raw.column !== column) node.states.column = column;
 			if (inverted) {
@@ -157,35 +181,70 @@ export class Layout {
 			this.laidSizes[scan] = raw.size;
 			columns?.[column].push(scan);
 		}
+	}
 
-		const contentMaxSize = cols === 1 ? sizes[0] : Math.max(...sizes);
-
-		// inverted 的贪心结果是"距列底"的距离，需要按最终总高换算成视觉位置；
-		// 总高每次追加都会变，所以这一遍无法增量
-		if (inverted) {
-			for (let index = 0; index < length; index++) {
-				const node = rebuildData[index];
-				if (!node) continue;
-				const raw = node.raw;
-				const _position = sizes[raw.column] - this.laidOffsets[length - 1 - index] - raw.size;
-				if (raw.position !== _position) node.states.position = _position;
-			}
+	/**
+	 * inverted：把"距列底"的偏移换算成视觉位置
+	 *
+	 * 总高每次追加都会变，所以这一遍无法增量
+	 * @param rebuildData 当前节点列表
+	 * @param length rebuildData 长度
+	 * @param sizes 最终列高
+	 */
+	private resolveInvertedPositions(rebuildData: RecycleListItemNodeRaw[], length: number, sizes: number[]) {
+		for (let index = 0; index < length; index++) {
+			const node = rebuildData[index];
+			if (!node) continue;
+			const raw = node.raw;
+			const position = sizes[raw.column] - this.laidOffsets[length - 1 - index] - raw.size;
+			if (raw.position !== position) node.states.position = position;
 		}
+	}
 
+	/**
+	 * 提交 contentMaxSize 与 columnFillSize；仅在实际变化时写入，避免无效触发渲染
+	 * @param sizes 最终列高
+	 */
+	private commit(sizes: number[]) {
+		const { states } = this.store;
+		const contentMaxSize = sizes.length === 1 ? sizes[0] : Math.max(...sizes);
 		states.contentMaxSize = contentMaxSize;
 
 		const columnFillSize = states.columnFillSize;
 		if (
-			columnFillSize.length !== cols
+			columnFillSize.length !== sizes.length
 			|| sizes.some((size, i) => columnFillSize[i] !== contentMaxSize - size)
 		) {
 			states.columnFillSize = sizes.map(size => contentMaxSize - size);
 		}
+	}
 
-		if (columns) {
-			position.set(columns, rebuildData, length);
-		} else {
-			position.rebuild();
-		}
+	/**
+	 * 按扫描序增量重排 column / position，并同步 contentMaxSize、columnFillSize、列索引
+	 * 原 Store.refreshItemPosition
+	 */
+	refresh() {
+		const { props, states, position } = this.store;
+		const { inverted, cols } = props;
+		const rebuildData = toRaw(states.rebuildData);
+		const length = rebuildData.length;
+
+		this.resetIfStale(rebuildData, cols, inverted);
+
+		const { startScan, sizes } = this.restoreCheckpoint(this.findDirtyScan(rebuildData, length), cols);
+		this.checkpoints.length = Math.floor(startScan / CHUNK_SIZE);
+		this.laidSizes.length = length;
+		this.laidOffsets.length = inverted ? length : 0;
+		this.laidLength = length;
+
+		// 正序下扫描位等于数组下标，列索引可以截断后续写；inverted 位置需整体换算，索引只能全量重建
+		const columns = inverted ? null : position.truncate(startScan, cols);
+		this.place(rebuildData, length, startScan, sizes, columns);
+		if (inverted) this.resolveInvertedPositions(rebuildData, length, sizes);
+
+		this.commit(sizes);
+		columns
+			? position.set(columns, rebuildData)
+			: position.rebuild();
 	}
 }

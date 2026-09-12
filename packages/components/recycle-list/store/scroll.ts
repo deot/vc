@@ -1,5 +1,5 @@
 /**
- * 共享同一 Store 的挂载实例最小结构
+ * 共享同一 Store 的挂载实例最小结构（组件内部实例，通过 expose 暴露 scrollTo）
  */
 export type ScrollLeaf = {
 	exposed: {

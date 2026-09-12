@@ -45,11 +45,13 @@ const bisectLast = (length: number, isMatch: (i: number) => boolean) => {
 };
 
 /**
- * 列索引：每列内部位置单调，保存数组下标用于滚动范围二分；
- * source / sourceLength 用于判断相对当前 rebuildData 是否仍有效
+ * 列索引与可见范围查询
+ *
+ * 瀑布流里整表的 position 不单调，但每列内部单调，
+ * 因此按列保存数组下标，滚动时对每列二分再合并
  */
 export class Position {
-	/*
+	/**
 	 * 每列内部位置单调的数组下标列表
 	 */
 	columns: number[][] = [];
@@ -68,13 +70,12 @@ export class Position {
 	 * 写入列索引缓存
 	 * 原 Store.setPositionIndex
 	 * @param columns 每列的数组下标列表
-	 * @param source 构建时的 rebuildData 引用
-	 * @param sourceLength 构建时的 rebuildData 长度
+	 * @param source 构建时的 rebuildData 原始引用
 	 */
-	set(columns: number[][], source: RecycleListItemNodeRaw[], sourceLength: number) {
+	set(columns: number[][], source: RecycleListItemNodeRaw[]) {
 		this.columns = columns;
 		this.source = source;
-		this.sourceLength = sourceLength;
+		this.sourceLength = source.length;
 	}
 
 	/**
@@ -92,21 +93,8 @@ export class Position {
 				columns[item.raw.column].push(index);
 			}
 		}
-		this.set(columns, rebuildData, rebuildData.length);
+		this.set(columns, rebuildData);
 		return columns;
-	}
-
-	/**
-	 * 相对当前 rebuildData 仍有效则复用 columns，否则全量重建
-	 * @param rawRebuildData 当前 rebuildData 的原始引用
-	 * @param cols 列数
-	 * @returns 可用的列索引
-	 */
-	ensure(rawRebuildData: RecycleListItemNodeRaw[], cols: number) {
-		const stale = this.source !== rawRebuildData
-			|| this.sourceLength !== rawRebuildData.length
-			|| this.columns.length !== cols;
-		return stale ? this.rebuild() : this.columns;
 	}
 
 	/**
@@ -131,40 +119,44 @@ export class Position {
 
 	/**
 	 * 按视口位置二分计算可见范围，写入 firstItemIndex / lastItemIndex
+	 *
+	 * rebuildData 可能在两次 layout.refresh 之间被增删（占位预分配、裁剪），
+	 * 此时列索引相对当前数组已失效，先全量重建再查
 	 * 原 Store.setRangeByPosition
-	 * @param headPosition 视口上沿（内容坐标系）
-	 * @param tailPosition 视口下沿（内容坐标系）
+	 * @param headPosition 视口上沿（content 坐标系）
+	 * @param tailPosition 视口下沿（content 坐标系）
 	 */
 	updateVisibleRange(headPosition: number, tailPosition: number) {
 		const { inverted, cols } = this.store.props;
-		const { rebuildData, columnFillSize } = this.store.states;
-		// 范围查询是命令式只读操作，绕过深层响应式代理可显著降低滚动热路径开销。
-		const rawRebuildData = toRaw(rebuildData);
-		const rawColumnFillSize = toRaw(columnFillSize);
-		const length = rawRebuildData.length;
+		const { states } = this.store;
+		// 范围查询是命令式只读操作，绕过深层响应式代理可显著降低滚动热路径开销
+		const rebuildData = toRaw(states.rebuildData);
+		const columnFillSize = toRaw(states.columnFillSize);
+		const length = rebuildData.length;
 
 		if (length === 0) {
-			this.store.states.firstItemIndex = 0;
-			this.store.states.lastItemIndex = 0;
+			states.firstItemIndex = 0;
+			states.lastItemIndex = 0;
 			return;
 		}
 
-		const prevFirst = this.store.states.firstItemIndex;
-		const prevLast = this.store.states.lastItemIndex;
+		const stale = this.source !== rebuildData
+			|| this.sourceLength !== length
+			|| this.columns.length !== cols;
+		const columns = stale ? this.rebuild() : this.columns;
 
-		const columns = this.ensure(rawRebuildData, cols);
 		let firstIndex = length;
 		let lastIndex = -1;
-
 		for (let column = 0; column < columns.length; column++) {
 			const indices = columns[column];
-			const fillSize = inverted ? rawColumnFillSize[column] : 0;
+			// inverted 下每列相对最高列有底部填充，位置需整体下移
+			const fillSize = inverted ? columnFillSize[column] : 0;
 			const first = bisectFirst(indices.length, (i) => {
-				const item = rawRebuildData[indices[i]];
+				const item = rebuildData[indices[i]];
 				return item.raw.position + item.raw.size + fillSize >= headPosition;
 			});
 			const last = bisectLast(indices.length, (i) => {
-				const item = rawRebuildData[indices[i]];
+				const item = rebuildData[indices[i]];
 				return item.raw.position + fillSize <= tailPosition;
 			});
 
@@ -174,10 +166,10 @@ export class Position {
 			}
 		}
 
+		// 视口落在所有内容之外时保持原范围，避免闪空
 		if (firstIndex === length || lastIndex < 0) return;
-
-		if (firstIndex === prevFirst && lastIndex === prevLast) return;
-		this.store.states.firstItemIndex = firstIndex;
-		this.store.states.lastItemIndex = lastIndex;
+		if (firstIndex === states.firstItemIndex && lastIndex === states.lastItemIndex) return;
+		states.firstItemIndex = firstIndex;
+		states.lastItemIndex = lastIndex;
 	}
 }

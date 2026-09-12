@@ -4,8 +4,10 @@ import { RecycleListItemNode } from './node';
 import type { RecycleListItemNodeRaw } from './base-watcher';
 
 /**
- * 节点池：byIndex / pending / real 必须严格同步；
- * 创建与回收路径经 attach / detach，避免跨文件手工三连删
+ * 节点池：管理 rebuildData 中节点的创建、复用与回收
+ *
+ * byIndex / pending / real 三个集合必须与 rebuildData 严格同步；
+ * 所有创建与回收路径都经 attach / detach，避免跨文件手工维护
  */
 export class Nodes {
 	/** 数据索引 -> 节点；inverted 下数组下标与数据索引不对齐，靠它 O(1) 定位 */
@@ -94,48 +96,27 @@ export class Nodes {
 	}
 
 	/**
-	 * 创建新节点并登记
+	 * 创建新节点并登记（不放入 rebuildData，由调用方决定位置）
 	 * @param index 数据索引
 	 * @param data 行数据；缺省则为占位节点
+	 * @param loaded 是否已加载；缺省则 !!data
 	 * @returns 新建的节点
 	 */
-	create(index: number, data?: any) {
-		const node = RecycleListItemNode.of({ index, data });
-		return this.attach(index, node);
+	create(index: number, data?: any, loaded?: boolean) {
+		return this.attach(index, RecycleListItemNode.of({ index, data, loaded }));
 	}
 
 	/**
-	 * 有则 rebind 复用，无则新建（不登记；由调用方 attach）
-	 * @param existing 已有节点；缺省则新建
-	 * @param options 节点选项
-	 * @param options.index 数据索引
-	 * @param options.data 行数据；缺省则为占位
-	 * @param options.loaded 是否已加载；缺省则 !!data
-	 * @returns 复用或新建的节点
-	 */
-	private revive(
-		existing: RecycleListItemNodeRaw | undefined,
-		options: { index: number; data?: any; loaded?: boolean }
-	) {
-		return existing
-			? existing.rebind(options)
-			: RecycleListItemNode.of(options);
-	}
-
-	/**
-	 * 优先复用 prevByIndex 中同索引节点（rebind），否则新建
-	 * 原 Store.reuseOrCreateNode（private）
-	 * @param prevByIndex 重建前的索引映射
+	 * 复用已有节点：更新 index / data、清空几何并重新登记，保持 id 稳定
+	 * 原 Nodes.revive / reuseOrCreate 的复用分支
+	 * @param node 已有节点
 	 * @param index 数据索引
-	 * @param data 行数据
-	 * @returns 复用或新建的节点
+	 * @param data 行数据；缺省则为占位
+	 * @param loaded 是否已加载；缺省则 !!data
+	 * @returns 复用后的节点
 	 */
-	reuseOrCreate(
-		prevByIndex: Map<number, RecycleListItemNodeRaw>,
-		index: number,
-		data?: any
-	) {
-		const node = this.revive(prevByIndex.get(index), { index, data, loaded: false });
+	rebind(node: RecycleListItemNodeRaw, index: number, data?: any, loaded?: boolean) {
+		node.rebind({ index, data, loaded });
 		return this.attach(index, node);
 	}
 
@@ -151,75 +132,80 @@ export class Nodes {
 	}
 
 	/**
-	 * 按数据索引写入行数据：有则 rebind，无则创建
+	 * 按数据索引写入单条行数据：有则 rebind，无则创建并放入 rebuildData
 	 * 原 Store.setItemData
 	 * @param index 数据索引
 	 * @param data 行数据；缺省则为占位
 	 * @returns 更新后的节点
 	 */
 	upsert(index: number, data?: any) {
-		const { states, props } = this.store;
 		const existing = this.get(index);
-		const node = this.revive(existing, { index, data });
-		if (!existing) {
-			props.inverted
-				? states.rebuildData.unshift(node)
-				: (states.rebuildData[index] = node);
-		}
-		return this.attach(index, node);
+		if (existing) return this.rebind(existing, index, data);
+
+		const node = this.create(index, data);
+		this.store.props.inverted
+			? this.store.states.rebuildData.unshift(node)
+			: (this.store.states.rebuildData[index] = node);
+		return node;
 	}
 
 	/**
 	 * 构建 [start, end) 区间的节点，返回待测量的索引
+	 *
+	 * 已加载的节点跳过；未加载的复用 rebind，不存在的新建。
+	 * inverted 下新建节点整批插到头部，并把可见范围下标同步后移
 	 * @param start 区间起点（含）
 	 * @param end 区间终点（不含）
 	 * @param reversed inverted 本地翻页时向前补建更早的数据，逆序后头部保持升序
 	 * @returns 本次构建的数据索引列表
 	 */
 	build(start: number, end: number, reversed = false) {
-		const { inverted } = this.store.props;
-		const { originalData } = this.store.local;
+		const { states, props, local } = this.store;
 		const indices: number[] = [];
 		const created: RecycleListItemNodeRaw[] = [];
-		let item: RecycleListItemNodeRaw | undefined;
-		let shift = 0;
+
 		for (let step = start; step < end; step++) {
 			const index = reversed ? end - 1 - (step - start) : step;
-			item = this.get(index);
+			const existing = this.get(index);
+			if (existing?.raw.loaded) continue;
 
-			if (item && item.raw.loaded) continue;
-			if (inverted && !item) {
-				created.push(this.create(index, originalData[index]));
+			if (existing) {
+				this.rebind(existing, index, local.originalData[index]);
 			} else {
-				this.upsert(index, originalData[index]);
+				const node = this.create(index, local.originalData[index]);
+				props.inverted
+					? created.push(node)
+					: (states.rebuildData[index] = node);
 			}
-			if (inverted) shift += 1;
 			indices.push(index);
 		}
 
-		this.prepend(created);
-		if (shift) {
-			this.store.states.firstItemIndex += shift;
-			this.store.states.lastItemIndex += shift;
+		if (props.inverted && indices.length) {
+			this.prepend(created);
+			states.firstItemIndex += indices.length;
+			states.lastItemIndex += indices.length;
 		}
 		return indices;
 	}
 
 	/**
 	 * 预分配一批占位节点，返回待构建区间
+	 *
+	 * 正序只扩展数组长度（空洞在 build 时补齐），inverted 需要真实节点插到头部
 	 * @returns 占位区间 [start, end)
 	 */
 	allocatePlaceholders() {
-		const start = this.store.states.rebuildData.length;
-		const end = start + this.store.props.batchCount;
-		if (this.store.props.inverted) {
+		const { states, props } = this.store;
+		const start = states.rebuildData.length;
+		const end = start + props.batchCount;
+		if (props.inverted) {
 			const created: RecycleListItemNodeRaw[] = [];
 			for (let i = start; i < end; i++) {
 				created.push(this.create(i));
 			}
 			this.prepend(created);
 		} else {
-			this.store.states.rebuildData.length = end;
+			states.rebuildData.length = end;
 		}
 		return { start, end };
 	}
@@ -238,33 +224,26 @@ export class Nodes {
 	}
 
 	/**
-	 * 裁掉尾部（非 inverted）/ 头部（inverted）连续的无效占位节点
+	 * 裁掉尾部（正序）/ 头部（inverted）连续的无效占位节点
 	 * @returns 是否发生裁剪
 	 */
 	trimPlaceholders(): boolean {
-		const current = this.store.states.rebuildData;
+		const { states, props } = this.store;
+		const current = states.rebuildData;
 		const length = current.length;
-		let cursor: number;
-		let trimmed: RecycleListItemNodeRaw[];
-		if (!this.store.props.inverted) {
-			for (cursor = length; cursor > 0; cursor--) {
-				if (current[cursor - 1] && !current[cursor - 1].raw.isPlaceholder) break;
-			}
-			if (cursor === length) return false;
-			trimmed = current.slice(cursor);
-			this.store.states.rebuildData = current.slice(0, cursor);
-		} else {
-			for (cursor = 0; cursor < length; cursor++) {
-				if (current[cursor] && !current[cursor].raw.isPlaceholder) break;
-			}
-			if (cursor === 0) return false;
-			trimmed = current.slice(0, cursor);
-			this.store.states.rebuildData = current.slice(cursor);
-		}
-		trimmed.forEach((item) => {
-			if (!item) return;
-			this.detach(item);
-		});
+		const isInvalid = (node: RecycleListItemNodeRaw | undefined) => !node || node.raw.isPlaceholder;
+
+		let count = 0;
+		while (count < length && isInvalid(current[props.inverted ? count : length - 1 - count])) count++;
+		if (count === 0) return false;
+
+		const trimmed = props.inverted
+			? current.slice(0, count)
+			: current.slice(length - count);
+		states.rebuildData = props.inverted
+			? current.slice(count)
+			: current.slice(0, length - count);
+		trimmed.forEach(node => node && this.detach(node));
 		return true;
 	}
 
@@ -276,22 +255,24 @@ export class Nodes {
 	}
 
 	/**
-	 * setData 后按已构建区间重建节点；count 为 0 时得到空数组
-	 * 原 Store.setData 的节点重建段
+	 * setData 后按已构建区间重建节点；同索引的旧节点复用以保持 id 稳定，count 为 0 时得到空数组
+	 * 原 Store.setData 的节点重建段；复用/新建的选择原 Store.reuseOrCreateNode（private），此处内联为 existing ? rebind : create
 	 * @param base 已构建区间在 originalData 中的起始下标
 	 * @param count 已构建条数
 	 * @param dataAt 按数据索引取行数据
 	 */
 	rebuild(base: number, count: number, dataAt: (index: number) => any) {
-		const prevByIndex = this.store.states.rebuildData.reduce((pre, cur) => {
-			if (cur) pre.set(cur.raw.index, cur);
-			return pre;
-		}, new Map<number, RecycleListItemNodeRaw>());
+		const previous = new Map<number, RecycleListItemNodeRaw>();
+		this.store.states.rebuildData.forEach(node => node && previous.set(node.raw.index, node));
 
 		this.clear();
 		this.store.states.rebuildData = Array.from({ length: count }, (_, i) => {
 			const index = base + i;
-			return this.reuseOrCreate(prevByIndex, index, dataAt(index));
+			const existing = previous.get(index);
+			// loaded 置 false：数据源已更换，即便复用节点也要重新测量
+			return existing
+				? this.rebind(existing, index, dataAt(index), false)
+				: this.create(index, dataAt(index), false);
 		});
 	}
 }

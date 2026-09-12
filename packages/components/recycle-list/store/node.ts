@@ -7,24 +7,36 @@ type Options = {
 	loaded?: boolean; // 缺省则 !!data
 };
 
+/**
+ * 列表项节点：一条数据在虚拟列表中的几何与加载状态
+ *
+ * 节点本身 markRaw，只有 states 是响应式的；id 在整个生命周期内稳定，
+ * 复用（rebind）时保持不变以避免模板 key 抖动
+ */
 export class RecycleListItemNode {
 	id = getUid('recycle-list-item');
 
 	states = reactive({
+		/** 数据索引（originalData 下标） */
 		index: -1,
 		data: {} as any,
+		/** 主轴实测尺寸；0 表示尚未测量 */
 		size: 0,
+		/** 主轴位置（content 坐标系）；-1000 表示尚未布局 */
 		position: -1000,
+		/** 所属列；-1 表示尚未布局 */
 		column: -1,
+		/** 没有数据的骨架占位 */
 		isPlaceholder: true,
+		/** 已加载：数据与尺寸都就位，build 时跳过 */
 		loaded: false,
 	});
 
 	/**
-	 * states的原始对象，供布局重排的热路径读取几何信息
+	 * states 的原始对象，供布局重排的热路径读取几何信息
 	 *
-	 * 重排每轮都要遍历比较size，走响应式代理的开销会被放大到不可接受；
-	 * 写入仍必须经过states，否则不会触发渲染更新
+	 * 重排每轮都要遍历比较 size，走响应式代理的开销会被放大到不可接受；
+	 * 写入仍必须经过 states，否则不会触发渲染更新
 	 */
 	raw = toRaw(this.states);
 
