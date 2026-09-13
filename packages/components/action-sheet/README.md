@@ -18,6 +18,7 @@
 <config lang="json5">
 {
 	viewport: 375,
+	previewInset: 16,
 	viewportOptions: ['auto', 375],
 	expandable: true
 }
@@ -25,7 +26,7 @@
 -->
 ```vue
 <template>
-	<div :class="['action-sheet-demo', { 'is-expanded': expanded }]">
+	<div class="action-sheet-demo">
 		<MButton type="primary" @click="handleOpen">
 			打开动作面板
 		</MButton>
@@ -34,55 +35,38 @@
 </template>
 
 <script setup>
-import { nextTick, onUnmounted, ref } from 'vue';
+import { inject, onUnmounted, ref } from 'vue';
 import { MActionSheet, MButton } from '@deot/vc';
 
 const result = ref('尚未选择');
-const expanded = ref(false);
+const playground = inject('docs:playground');
 const wait = delay => new Promise(resolve => setTimeout(resolve, delay));
-let disposed = false;
 
-const handleOpen = async () => {
-	expanded.value = true;
-	await nextTick();
-	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
-	await new Promise((resolve) => {
-		const check = () => {
-			disposed || window.innerHeight >= 360 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
+const handleOpen = playground.run(560, async () => {
+	const action = await MActionSheet.open({
+		title: '请选择操作',
+		cancelText: '取消',
+		data: [
+			{
+				content: '保存',
+				subContent: '异步操作完成后关闭',
+				onClick: () => wait(800)
+			},
+			{
+				content: '删除',
+				style: { color: 'var(--vc-color-error)' }
+			},
+			{
+				content: '禁用选项',
+				disabled: true
+			}
+		]
 	});
-	if (disposed) return;
 
-	try {
-		const action = await MActionSheet.open({
-			title: '请选择操作',
-			cancelText: '取消',
-			data: [
-				{
-					content: '保存',
-					subContent: '异步操作完成后关闭',
-					onClick: () => wait(800)
-				},
-				{
-					content: '删除',
-					style: { color: 'var(--vc-color-error)' }
-				},
-				{
-					content: '禁用选项',
-					disabled: true
-				}
-			]
-		});
-
-		result.value = action ? `已选择：${action.content}` : '已取消';
-	} finally {
-		expanded.value = false;
-	}
-};
+	result.value = action ? `已选择：${action.content}` : '已取消';
+});
 
 onUnmounted(() => {
-	disposed = true;
 	MActionSheet.destroy();
 });
 </script>
@@ -92,12 +76,6 @@ onUnmounted(() => {
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	padding: 16px;
-}
-
-.action-sheet-demo.is-expanded {
-	min-height: 560px;
-	align-items: flex-start;
 }
 
 .action-sheet-demo__result {

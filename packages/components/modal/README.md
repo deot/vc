@@ -23,7 +23,7 @@ Modal 在当前页面上方承载需要用户确认或处理的内容。桌面�
 -->
 ```vue
 <template>
-	<div :class="['modal-demo', { 'is-expanded': expanded }]">
+	<div class="modal-demo">
 		<Button @click="handleOpen">
 			打开对话框
 		</Button>
@@ -43,33 +43,20 @@ Modal 在当前页面上方承载需要用户确认或处理的内容。桌面�
 </template>
 
 <script setup>
-import { nextTick, onUnmounted, ref } from 'vue';
+import { inject, nextTick, ref } from 'vue';
 import { Button, Modal } from '@deot/vc';
 
-const expanded = ref(false);
+const playground = inject('docs:playground');
 const modalReady = ref(false);
 const isActive = ref(false);
 const result = ref('尚未操作');
-let disposed = false;
 
-const handleOpen = async () => {
-	expanded.value = true;
-	await nextTick();
-	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
-	await new Promise((resolve) => {
-		const check = () => {
-			disposed || window.innerHeight >= 480 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
-	});
-	if (disposed) return;
-
+const handleOpen = playground.run(500, { visible: modalReady }, async () => {
 	modalReady.value = true;
 	await nextTick();
-	if (disposed) return;
 
 	isActive.value = true;
-};
+});
 
 const handleOk = () => {
 	result.value = '已确认提交';
@@ -81,12 +68,7 @@ const handleCancel = () => {
 
 const handleClose = () => {
 	modalReady.value = false;
-	expanded.value = false;
 };
-
-onUnmounted(() => {
-	disposed = true;
-});
 </script>
 
 <style scoped>
@@ -95,10 +77,6 @@ onUnmounted(() => {
 	gap: 12px;
 	align-items: center;
 	flex-wrap: wrap;
-}
-
-.modal-demo.is-expanded {
-	min-height: 500px;
 }
 </style>
 ```
@@ -119,7 +97,7 @@ onUnmounted(() => {
 -->
 ```vue
 <template>
-	<div :class="['modal-demo', { 'is-expanded': expanded }]">
+	<div class="modal-demo">
 		<Button
 			v-for="item in sizes"
 			:key="item.value"
@@ -143,7 +121,7 @@ onUnmounted(() => {
 </template>
 
 <script setup>
-import { nextTick, onUnmounted, ref } from 'vue';
+import { inject, nextTick, ref } from 'vue';
 import { Button, Modal } from '@deot/vc';
 
 const sizes = [
@@ -151,40 +129,23 @@ const sizes = [
 	{ label: '中尺寸', value: 'medium' },
 	{ label: '大尺寸', value: 'large' }
 ];
-const expanded = ref(false);
+const playground = inject('docs:playground');
 const modalReady = ref(false);
 const isActive = ref(false);
 const size = ref('small');
-let disposed = false;
 
-const handleOpen = async (value) => {
+const handleOpen = playground.run(740, { visible: modalReady }, async (value) => {
 	size.value = value;
-	expanded.value = true;
-	await nextTick();
-	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
-	await new Promise((resolve) => {
-		const check = () => {
-			disposed || window.innerHeight >= 720 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
-	});
-	if (disposed) return;
 
 	modalReady.value = true;
 	await nextTick();
-	if (disposed) return;
 
 	isActive.value = true;
-};
+});
 
 const handleClose = () => {
 	modalReady.value = false;
-	expanded.value = false;
 };
-
-onUnmounted(() => {
-	disposed = true;
-});
 </script>
 
 <style scoped>
@@ -193,10 +154,6 @@ onUnmounted(() => {
 	gap: 8px;
 	align-items: flex-start;
 	flex-wrap: wrap;
-}
-
-.modal-demo.is-expanded {
-	min-height: 740px;
 }
 </style>
 ```
@@ -217,7 +174,7 @@ onUnmounted(() => {
 -->
 ```vue
 <template>
-	<div :class="['modal-demo', { 'is-expanded': expanded }]">
+	<div class="modal-demo">
 		<Button
 			v-for="item in methods"
 			:key="item.method"
@@ -230,7 +187,7 @@ onUnmounted(() => {
 </template>
 
 <script setup>
-import { nextTick, onUnmounted, ref } from 'vue';
+import { inject, onUnmounted, ref } from 'vue';
 import { Button, Modal } from '@deot/vc';
 
 const methods = [
@@ -239,21 +196,12 @@ const methods = [
 	{ label: '警告', method: 'warning' },
 	{ label: '错误', method: 'error' }
 ];
-const expanded = ref(false);
+const playground = inject('docs:playground');
+const visible = ref(false);
 const result = ref('请选择一种状态');
-let disposed = false;
 
-const handleOpen = async (method) => {
-	expanded.value = true;
-	await nextTick();
-	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
-	await new Promise((resolve) => {
-		const check = () => {
-			disposed || window.innerHeight >= 360 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
-	});
-	if (disposed) return;
+const handleOpen = playground.run(380, { visible }, (method) => {
+	visible.value = true;
 
 	Modal[method]({
 		title: methods.find(item => item.method === method)?.label,
@@ -262,13 +210,12 @@ const handleOpen = async (method) => {
 			result.value = `已确认 ${method}`;
 		},
 		onClose: () => {
-			expanded.value = false;
+			visible.value = false;
 		}
 	});
-};
+});
 
 onUnmounted(() => {
-	disposed = true;
 	Modal.destroy();
 });
 </script>
@@ -279,10 +226,6 @@ onUnmounted(() => {
 	gap: 8px;
 	align-items: center;
 	flex-wrap: wrap;
-}
-
-.modal-demo.is-expanded {
-	min-height: 380px;
 }
 </style>
 ```
@@ -305,7 +248,7 @@ onUnmounted(() => {
 -->
 ```vue App.vue
 <template>
-	<div :class="['portal-modal-demo', { 'is-expanded': expanded }]">
+	<div class="portal-modal-demo">
 		<Button @click="handleOpen">
 			通过 Portal 打开 Modal
 		</Button>
@@ -314,26 +257,14 @@ onUnmounted(() => {
 </template>
 
 <script setup>
-import { nextTick, onUnmounted, ref } from 'vue';
+import { inject, onUnmounted, ref } from 'vue';
 import { Button } from '@deot/vc';
 import { PortalModal } from './portal-modal.js';
 
-const expanded = ref(false);
+const playground = inject('docs:playground');
 const result = ref('尚未操作');
-let disposed = false;
 
-const handleOpen = async () => {
-	expanded.value = true;
-	await nextTick();
-	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
-	await new Promise((resolve) => {
-		const check = () => {
-			disposed || window.innerHeight >= 480 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
-	});
-	if (disposed) return;
-
+const handleOpen = playground.run(500, async () => {
 	try {
 		await PortalModal.popup({
 			title: 'Portal 调用',
@@ -342,13 +273,10 @@ const handleOpen = async () => {
 		result.value = '已确认';
 	} catch {
 		result.value = '已取消';
-	} finally {
-		expanded.value = false;
 	}
-};
+});
 
 onUnmounted(() => {
-	disposed = true;
 	PortalModal.destroy();
 });
 </script>
@@ -359,10 +287,6 @@ onUnmounted(() => {
 	gap: 12px;
 	align-items: center;
 	flex-wrap: wrap;
-}
-
-.portal-modal-demo.is-expanded {
-	min-height: 500px;
 }
 </style>
 ```

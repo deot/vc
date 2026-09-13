@@ -15,7 +15,7 @@
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
 ```vue
 <template>
-	<div :class="['v-drawer-basic', { 'is-expanded': expanded }]">
+	<div class="v-drawer-basic">
 		<p class="drawer-description">选择展开方向，在当前页面中查看项目详情。</p>
 		<div class="drawer-actions">
 			<Button @click="handleDrawer('top')">
@@ -35,7 +35,6 @@
 			v-model="isActive"
 			title="基础抽屉"
 			:placement="placement"
-			@visible-change="handleVisibleChange"
 		>
 			<div class="drawer-content">
 				<strong>项目详情</strong>
@@ -46,31 +45,16 @@
 	</div>
 </template>
 <script setup>
-import { nextTick, onUnmounted, ref } from 'vue';
+import { inject, ref } from 'vue';
 import { Button, Drawer } from '@deot/vc';
 
 const isActive = ref(false);
 const placement = ref('top');
-const expanded = ref(false);
-let disposed = false;
-const handleDrawer = async (res) => {
+const playground = inject('docs:playground');
+const handleDrawer = playground.run(500, { visible: isActive }, (res) => {
 	placement.value = res;
-	expanded.value = true;
-	await nextTick();
-	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
-	await new Promise((resolve) => {
-		const check = () => {
-			disposed || window.innerHeight >= 480 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
-	});
-	if (disposed) return;
 	isActive.value = true;
-};
-const handleVisibleChange = (value) => {
-	if (!value) expanded.value = false;
-};
-onUnmounted(() => (disposed = true));
+});
 </script>
 
 <style scoped>
@@ -103,10 +87,6 @@ onUnmounted(() => (disposed = true));
 .drawer-content p {
 	margin: 0;
 }
-
-.v-drawer-basic.is-expanded {
-	min-height: 500px;
-}
 </style>
 ```
 :::
@@ -118,7 +98,7 @@ onUnmounted(() => (disposed = true));
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
 ```vue
 <template>
-	<div :class="['v-drawer-mask', { 'is-expanded': expanded }]">
+	<div class="v-drawer-mask">
 		<p class="drawer-description">对比两种遮罩模式，选择适合当前任务的展示方式。</p>
 		<div class="drawer-actions">
 			<Button type="primary" @click="handleDrawer(true)">
@@ -132,7 +112,6 @@ onUnmounted(() => (disposed = true));
 			v-model="isActive"
 			title="遮罩设置"
 			:mask="mask"
-			@visible-change="handleVisibleChange"
 		>
 			<div class="drawer-content">
 				<strong>{{ mask ? '已显示遮罩' : '已隐藏遮罩' }}</strong>
@@ -142,31 +121,16 @@ onUnmounted(() => (disposed = true));
 	</div>
 </template>
 <script setup>
-import { nextTick, onUnmounted, ref } from 'vue';
+import { inject, ref } from 'vue';
 import { Button, Drawer } from '@deot/vc';
 
 const isActive = ref(false);
 const mask = ref(true);
-const expanded = ref(false);
-let disposed = false;
-const handleDrawer = async (res) => {
+const playground = inject('docs:playground');
+const handleDrawer = playground.run(500, { visible: isActive }, (res) => {
 	mask.value = res;
-	expanded.value = true;
-	await nextTick();
-	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
-	await new Promise((resolve) => {
-		const check = () => {
-			disposed || window.innerHeight >= 480 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
-	});
-	if (disposed) return;
 	isActive.value = true;
-};
-const handleVisibleChange = (value) => {
-	if (!value) expanded.value = false;
-};
-onUnmounted(() => (disposed = true));
+});
 </script>
 
 <style scoped>
@@ -199,10 +163,6 @@ onUnmounted(() => (disposed = true));
 .drawer-content p {
 	margin: 0;
 }
-
-.v-drawer-mask.is-expanded {
-	min-height: 500px;
-}
 </style>
 ```
 :::
@@ -214,7 +174,7 @@ onUnmounted(() => (disposed = true));
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
 ```vue
 <template>
-	<div :class="['v-drawer-close', { 'is-expanded': expanded }]">
+	<div class="v-drawer-close">
 		<p class="drawer-description">填写内容时，可禁止点击遮罩关闭，避免误操作。</p>
 		<div class="drawer-actions">
 			<Button type="primary" @click="handleDrawer">
@@ -225,7 +185,6 @@ onUnmounted(() => (disposed = true));
 			v-model="isActive"
 			title="关闭设置"
 			:mask-closable="false"
-			@visible-change="handleVisibleChange"
 		>
 			<div class="drawer-content">
 				<strong>点击遮罩不会关闭</strong>
@@ -236,29 +195,14 @@ onUnmounted(() => (disposed = true));
 </template>
 
 <script setup>
-import { nextTick, onUnmounted, ref } from 'vue';
+import { inject, ref } from 'vue';
 import { Button, Drawer } from '@deot/vc';
 
 const isActive = ref(false);
-const expanded = ref(false);
-let disposed = false;
-const handleDrawer = async () => {
-	expanded.value = true;
-	await nextTick();
-	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
-	await new Promise((resolve) => {
-		const check = () => {
-			disposed || window.innerHeight >= 480 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
-	});
-	if (disposed) return;
+const playground = inject('docs:playground');
+const handleDrawer = playground.run(500, { visible: isActive }, () => {
 	isActive.value = true;
-};
-const handleVisibleChange = (value) => {
-	if (!value) expanded.value = false;
-};
-onUnmounted(() => (disposed = true));
+});
 </script>
 
 <style scoped>
@@ -291,10 +235,6 @@ onUnmounted(() => (disposed = true));
 .drawer-content p {
 	margin: 0;
 }
-
-.v-drawer-close.is-expanded {
-	min-height: 500px;
-}
 </style>
 ```
 :::
@@ -307,7 +247,7 @@ onUnmounted(() => (disposed = true));
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
 ```vue
 <template>
-	<div :class="['drawer-open-demo', { 'is-expanded': expanded }]">
+	<div class="drawer-open-demo">
 		<p class="drawer-description">模拟异步保存，完成后关闭抽屉并显示操作结果。</p>
 		<div class="drawer-actions">
 			<Button type="primary" @click="handleOpen">异步确认</Button>
@@ -317,12 +257,12 @@ onUnmounted(() => (disposed = true));
 </template>
 
 <script setup>
-import { nextTick, onUnmounted, ref } from 'vue';
+import { inject, onUnmounted, ref } from 'vue';
 import { Button, Drawer } from '@deot/vc';
 
 const status = ref('等待操作');
-const expanded = ref(false);
-let disposed = false;
+const playground = inject('docs:playground');
+const visible = ref(false);
 let leaf;
 let closeTimer;
 const handleClose = () => {
@@ -330,21 +270,12 @@ const handleClose = () => {
 	closeTimer = setTimeout(() => {
 		leaf?.destroy();
 		leaf = undefined;
-		expanded.value = false;
+		visible.value = false;
 	}, 300);
 };
-const handleOpen = async () => {
+const handleOpen = playground.run(500, { visible }, () => {
+	visible.value = true;
 	leaf?.destroy();
-	expanded.value = true;
-	await nextTick();
-	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
-	await new Promise((resolve) => {
-		const check = () => {
-			disposed || window.innerHeight >= 480 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
-	});
-	if (disposed) return;
 
 	leaf = Drawer.open({
 		title: '保存详情',
@@ -363,9 +294,8 @@ const handleOpen = async () => {
 		},
 		onCancel: handleClose
 	});
-};
+});
 onUnmounted(() => {
-	disposed = true;
 	clearTimeout(closeTimer);
 	leaf?.destroy();
 });
@@ -390,10 +320,6 @@ onUnmounted(() => {
 	font-size: 14px;
 	line-height: 1.7;
 	color: var(--vc-color-dark-lightest);
-}
-
-.drawer-open-demo.is-expanded {
-	min-height: 500px;
 }
 </style>
 ```

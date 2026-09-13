@@ -22,7 +22,7 @@
 -->
 ```vue
 <template>
-	<div :class="['toast-demo', { 'is-expanded': expanded }]">
+	<div class="toast-demo">
 		<div class="toast-actions">
 			<Button @click="handleInfo">普通提示</Button>
 			<Button @click="handleSuccess">操作成功</Button>
@@ -32,50 +32,36 @@
 </template>
 
 <script setup>
-import { nextTick, onUnmounted, ref } from 'vue';
+import { inject, onUnmounted, ref } from 'vue';
 import { MToast, Button } from '@deot/vc';
 
 const status = ref('提示将在 3 秒后关闭，也可点击外部区域关闭。');
-const expanded = ref(false);
-let disposed = false;
+const playground = inject('docs:playground');
+const infoVisible = ref(false);
+const successVisible = ref(false);
 
-const prepare = async () => {
-	expanded.value = true;
-	await nextTick();
-	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
-	await new Promise((resolve) => {
-		const check = () => {
-			disposed || window.innerHeight >= 360 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
-	});
-};
-const handleInfo = async () => {
-	await prepare();
-	if (disposed) return;
+const handleInfo = playground.run(360, { visible: infoVisible }, () => {
+	infoVisible.value = true;
 	MToast.info('这是一条提示', 3000, () => {
 		status.value = '提示已关闭';
-		expanded.value = false;
+		infoVisible.value = false;
 	});
-};
-const handleSuccess = async () => {
-	await prepare();
-	if (disposed) return;
+});
+const handleSuccess = playground.run(360, { visible: successVisible }, () => {
+	successVisible.value = true;
 	MToast.success({
 		content: '保存成功',
 		duration: 1500,
-		onClose: () => (expanded.value = false)
+		onClose: () => (successVisible.value = false)
 	});
-};
+});
 onUnmounted(() => {
-	disposed = true;
 	MToast.destroy();
 });
 </script>
 
 <style scoped>
 .toast-demo { padding: 16px; }
-.toast-demo.is-expanded { min-height: 360px; }
 .toast-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .toast-demo p { margin: 12px 0 0; line-height: 1.6; }
 </style>
@@ -98,44 +84,34 @@ onUnmounted(() => {
 -->
 ```vue
 <template>
-	<div :class="['toast-demo', { 'is-expanded': expanded }]">
+	<div class="toast-demo">
 		<Button @click="handleLoading">模拟加载任务</Button>
 		<p class="toast-status">{{ status }}</p>
 	</div>
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, ref } from 'vue';
+import { inject, onBeforeUnmount, ref } from 'vue';
 import { MToast, Button } from '@deot/vc';
 
 const status = ref('加载提示在任务完成后关闭。');
-const expanded = ref(false);
+const playground = inject('docs:playground');
+const visible = ref(false);
 let timer;
 let toast;
-let disposed = false;
-const handleLoading = async () => {
+const handleLoading = playground.run(360, { visible }, () => {
+	visible.value = true;
 	clearTimeout(timer);
 	toast?.destroy();
 	status.value = '正在处理…';
-	expanded.value = true;
-	await nextTick();
-	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
-	await new Promise((resolve) => {
-		const check = () => {
-			disposed || window.innerHeight >= 360 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
-	});
-	if (disposed) return;
 	toast = MToast.loading({ content: '加载中…' });
 	timer = setTimeout(() => {
 		toast.destroy();
 		status.value = '任务完成';
-		expanded.value = false;
+		visible.value = false;
 	}, 2000);
-};
+});
 onBeforeUnmount(() => {
-	disposed = true;
 	clearTimeout(timer);
 	toast?.destroy();
 });
@@ -143,7 +119,6 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .toast-demo { padding: 16px; }
-.toast-demo.is-expanded { min-height: 360px; }
 .toast-status { margin: 12px 0 0; line-height: 1.6; }
 </style>
 ```
@@ -165,43 +140,32 @@ onBeforeUnmount(() => {
 -->
 ```vue
 <template>
-	<div :class="['toast-demo', { 'is-expanded': expanded }]">
+	<div class="toast-demo">
 		<Button @click="handleCustom">显示自定义内容</Button>
 	</div>
 </template>
 
 <script setup>
-import { h, nextTick, onUnmounted, ref } from 'vue';
+import { inject, h, onUnmounted, ref } from 'vue';
 import { MToast, Button } from '@deot/vc';
 
-const expanded = ref(false);
-let disposed = false;
-const handleCustom = async () => {
-	expanded.value = true;
-	await nextTick();
-	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
-	await new Promise((resolve) => {
-		const check = () => {
-			disposed || window.innerHeight >= 360 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
-	});
-	if (disposed) return;
+const playground = inject('docs:playground');
+const visible = ref(false);
+const handleCustom = playground.run(360, { visible }, () => {
+	visible.value = true;
 	MToast.info({
 		content: () => h('div', [h('strong', '已保存'), h('div', '可以继续操作')]),
 		duration: 3000,
-		onClose: () => (expanded.value = false)
+		onClose: () => (visible.value = false)
 	});
-};
+});
 onUnmounted(() => {
-	disposed = true;
 	MToast.destroy();
 });
 </script>
 
 <style scoped>
 .toast-demo { padding: 16px; }
-.toast-demo.is-expanded { min-height: 360px; }
 </style>
 ```
 :::

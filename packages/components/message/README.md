@@ -24,7 +24,7 @@
 -->
 ```vue
 <template>
-	<div :class="['message-demo', { 'is-expanded': expanded }]">
+	<div class="message-demo">
 		<Button
 			v-for="item in messages"
 			:key="item.mode"
@@ -37,11 +37,11 @@
 </template>
 
 <script setup>
-import { nextTick, onUnmounted, ref } from 'vue';
+import { inject, onUnmounted, ref } from 'vue';
 import { Button, Message } from '@deot/vc';
 
-const expanded = ref(false);
-let disposed = false;
+const playground = inject('docs:playground');
+const visible = ref(false);
 const messages = [
 	{ mode: 'info', label: '信息', content: '这是一条信息提示' },
 	{ mode: 'success', label: '成功', content: '操作已成功完成' },
@@ -50,19 +50,11 @@ const messages = [
 	{ mode: 'loading', label: '加载', content: '正在加载中' }
 ];
 
-const handleOpen = async (item) => {
-	expanded.value = true;
-	await nextTick();
-	await new Promise((resolve) => {
-		const check = () => {
-			disposed || window.innerHeight >= 180 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
-	});
-	if (disposed) return;
+const handleOpen = playground.run(220, { visible }, (item) => {
+	visible.value = true;
 
 	const onClose = () => {
-		expanded.value = false;
+		visible.value = false;
 	};
 	if (item.mode === 'loading') {
 		Message.loading({ content: item.content, duration: 1200, onClose });
@@ -70,10 +62,9 @@ const handleOpen = async (item) => {
 	}
 
 	Message[item.mode]({ content: item.content, onClose });
-};
+});
 
 onUnmounted(() => {
-	disposed = true;
 	Message.destroy();
 });
 </script>
@@ -84,10 +75,6 @@ onUnmounted(() => {
 	flex-wrap: wrap;
 	align-items: flex-start;
 	gap: 8px;
-}
-
-.message-demo.is-expanded {
-	min-height: 220px;
 }
 </style>
 ```
@@ -110,7 +97,7 @@ onUnmounted(() => {
 -->
 ```vue
 <template>
-	<div :class="['message-close-demo', { 'is-expanded': expanded }]">
+	<div class="message-close-demo">
 		<Button :wait="0" @click="handleOpen">
 			显示可关闭提示
 		</Button>
@@ -119,23 +106,15 @@ onUnmounted(() => {
 </template>
 
 <script setup>
-import { nextTick, onUnmounted, ref } from 'vue';
+import { inject, onUnmounted, ref } from 'vue';
 import { Button, Message } from '@deot/vc';
 
-const expanded = ref(false);
+const playground = inject('docs:playground');
+const visible = ref(false);
 const status = ref('尚未关闭');
-let disposed = false;
 
-const handleOpen = async () => {
-	expanded.value = true;
-	await nextTick();
-	await new Promise((resolve) => {
-		const check = () => {
-			disposed || window.innerHeight >= 180 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
-	});
-	if (disposed) return;
+const handleOpen = playground.run(220, { visible }, () => {
+	visible.value = true;
 
 	status.value = '等待关闭';
 	Message.info({
@@ -145,13 +124,12 @@ const handleOpen = async () => {
 		onBeforeClose: () => new Promise(resolve => setTimeout(resolve, 500)),
 		onClose: () => {
 			status.value = '提示已关闭';
-			expanded.value = false;
+			visible.value = false;
 		}
 	});
-};
+});
 
 onUnmounted(() => {
-	disposed = true;
 	Message.destroy();
 });
 </script>
@@ -162,10 +140,6 @@ onUnmounted(() => {
 	align-items: center;
 	gap: 12px;
 	font-size: 14px;
-}
-
-.message-close-demo.is-expanded {
-	min-height: 220px;
 }
 </style>
 ```

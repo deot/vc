@@ -48,27 +48,17 @@
 </template>
 
 <script setup>
-import { nextTick, onUnmounted, ref } from 'vue';
+import { nextTick, onUnmounted, ref, inject } from 'vue';
 import { Button, Card } from '@deot/vc';
 import { RecordEditor } from './record-editor.js';
 
+const playground = inject('docs:playground');
 const record = ref({ id: 1, name: '示例项目' });
 const result = ref('尚未编辑');
 const isActive = ref(false);
-let isDisposed = false;
 
-const handleEdit = async () => {
+const handleEdit = playground.run(500, { visible: isActive }, async () => {
 	isActive.value = true;
-	await nextTick();
-	// Playground 的 iframe 需要先完成高度同步，普通业务页面无需此步骤。
-	await new Promise((resolve) => {
-		const check = () => {
-			isDisposed || window.innerHeight >= 480 ? resolve() : requestAnimationFrame(check);
-		};
-		check();
-	});
-	if (isDisposed) return;
-
 	try {
 		const data = await RecordEditor.popup({ record: { ...record.value } }, {
 			onDestroyed: () => (isActive.value = false)
@@ -78,10 +68,9 @@ const handleEdit = async () => {
 	} catch (reason) {
 		result.value = reason === 'cancel' ? '已取消，记录未变更' : '操作失败';
 	}
-};
+});
 
 onUnmounted(() => {
-	isDisposed = true;
 	RecordEditor.destroy();
 });
 </script>
