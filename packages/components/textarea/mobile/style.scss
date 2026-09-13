@@ -11,6 +11,7 @@ $color-dark-extralight: varfix(color-dark-extralight, textarea);
 $color-light-deep: varfix(color-light-deep, textarea);
 $foreground-color: varfix(foreground-color, textarea);
 $color-disabled: varfix(color-disabled, textarea);
+$foreground-color-disabled: varfix(foreground-color-disabled, textarea, #515151);
 
 @include block($component-name) {
 	position: relative;
@@ -41,6 +42,7 @@ $color-disabled: varfix(color-disabled, textarea);
 			font-size: inherit;
 			font-size: unitfix(16);
 			line-height: inherit;
+			color: $color-dark-light;
 			background-color: $background-color-light;
 			border: none;
 			outline: 0;
@@ -51,6 +53,7 @@ $color-disabled: varfix(color-disabled, textarea);
 			}
 
 			&[disabled] {
+				color: $foreground-color-disabled;
 				cursor: not-allowed;
 				background-color: $color-disabled;
 				opacity: 1;
