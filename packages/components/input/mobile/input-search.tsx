@@ -6,6 +6,7 @@ import { props as inputSearchProps } from '../input-search-props';
 import { MIcon } from '../../icon/index.m';
 import { MInput } from './input';
 import { useNativeEmitter } from '../use-native-emitter';
+import { useLocale } from '../../locale';
 
 const COMPONENT_NAME = 'vcm-input-search';
 
@@ -15,11 +16,12 @@ export const MInputSearch = defineComponent({
 		...inputSearchProps,
 		cancelText: {
 			type: String,
-			default: '取消'
+			default: undefined
 		}
 	},
 	inheritAttrs: false,
 	setup(props, { emit, slots, expose, attrs }) {
+		const { t } = useLocale();
 		const input = ref<HTMLElement>();
 
 		const isFocus = ref(false);
@@ -33,7 +35,8 @@ export const MInputSearch = defineComponent({
 		};
 
 		return () => {
-			const { cancelText, ...inputOptions } = props;
+			const { cancelText: customCancelText, ...inputOptions } = props;
+			const cancelText = customCancelText ?? t('vc.MInputSearch.cancelText');
 			return (
 				<div class="vcm-input-search">
 					<MInput

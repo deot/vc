@@ -1,10 +1,40 @@
 // @vitest-environment jsdom
 import { ref } from 'vue';
-import { InputNumber, MInputNumber } from '@deot/vc-components';
+import { InputNumber, MInputNumber, VcInstance } from '@deot/vc-components';
+import { enUS, zhCN } from '@deot/vc-locale';
 import { mount } from '@vue/test-utils';
 
 const NULL_VALUE = void 0;
 describe('index-number.ts', () => {
+	it.each([InputNumber, MInputNumber])('localizes boundary tips using the configured limits: $name', async (component) => {
+		const locale = VcInstance.options.locale;
+		VcInstance.configure({ locale: zhCN });
+		const handleTip = vi.fn();
+		const wrapper = mount(component, { props: { min: 2, max: 5, onTip: handleTip } });
+		try {
+			const input = wrapper.find('input');
+			await input.trigger('focus');
+			await input.setValue('8');
+			await input.trigger('blur');
+			expect(handleTip).toHaveBeenLastCalledWith({ type: 'max', message: '数值不能超过5', value: '8', tag: 'input' });
+			VcInstance.configure({ locale: enUS });
+			await input.trigger('focus');
+			await input.setValue('1');
+			await input.trigger('blur');
+			expect(handleTip).toHaveBeenLastCalledWith({ type: 'min', message: 'Value cannot be less than 2', value: '1', tag: 'input' });
+			const minus = wrapper.find(component === InputNumber ? '.vc-input-number__down' : '.vcm-input-number__minus');
+			await minus.trigger('click');
+			expect(handleTip).toHaveBeenLastCalledWith({ type: 'min', message: 'Cannot decrease further', tag: 'button' });
+			await wrapper.setProps({ modelValue: 5 });
+			const plus = wrapper.find(component === InputNumber ? '.vc-input-number__up' : '.vcm-input-number__plus');
+			await plus.trigger('click');
+			expect(handleTip).toHaveBeenLastCalledWith({ type: 'max', message: 'Cannot increase further', tag: 'button' });
+		} finally {
+			wrapper.unmount();
+			VcInstance.configure({ locale });
+		}
+	});
+
 	it('basic', () => {
 		expect(typeof InputNumber).toBe('object');
 	});

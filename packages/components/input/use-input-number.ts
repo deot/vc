@@ -1,10 +1,12 @@
 import { ref, watch, computed, getCurrentInstance } from 'vue';
 import type { Ref } from 'vue';
 import type { Props } from './input-number-props';
+import { useLocale } from '../locale';
 
 type Value = Props['modelValue'];
 
 export const useInputNumber = () => {
+	const { t } = useLocale();
 	const instance = getCurrentInstance()!;
 	const { emit } = instance;
 	const props = instance.props as Props;
@@ -96,7 +98,7 @@ export const useInputNumber = () => {
 
 			emit('tip', {
 				type: 'max',
-				message: `数值不能超过${value}`,
+				message: t('vc.InputNumber.maxExceeded', { max: props.max }),
 				value,
 				tag
 			});
@@ -107,7 +109,7 @@ export const useInputNumber = () => {
 
 			emit('tip', {
 				type: 'min',
-				message: `数值不能低于${value}`,
+				message: t('vc.InputNumber.minExceeded', { min: props.min }),
 				value,
 				tag
 			});
@@ -222,14 +224,14 @@ export const useInputNumber = () => {
 		if (base === 1 && plusDisabled.value) {
 			emit('tip', {
 				type: 'max',
-				message: '不能再多了',
+				message: t('vc.InputNumber.cannotIncrease'),
 				tag: 'button'
 			});
 			return;
 		} else if (base === -1 && minusDisabled.value) {
 			emit('tip', {
 				type: 'min',
-				message: '不能再少了',
+				message: t('vc.InputNumber.cannotDecrease'),
 				tag: 'button'
 			});
 			return;

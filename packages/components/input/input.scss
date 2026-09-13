@@ -181,7 +181,7 @@ $color-disabled: varfix(color-disabled, input);
 		color: $color-dark-extralight;
 
 		@include when(in) {
-			margin-right: 8px;
+			margin-right: unitfix(8);
 		}
 
 		@include when(out) {

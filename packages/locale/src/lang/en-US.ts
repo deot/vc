@@ -3,6 +3,15 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		InputNumber: {
+			maxExceeded: 'Value cannot exceed {max}',
+			minExceeded: 'Value cannot be less than {min}',
+			cannotIncrease: 'Cannot increase further',
+			cannotDecrease: 'Cannot decrease further'
+		},
+		MInputSearch: {
+			cancelText: 'Cancel'
+		},
 		Snapshot: {
 			generating: 'Generating...'
 		},

@@ -2,6 +2,9 @@
 
 $component-name: vcm-input-search;
 $size: 54px;
+$background-color-light: varfix(background-color-light, input);
+$color-dark-extralight: varfix(color-dark-extralight, input);
+$foreground-color: varfix(foreground-color, input);
 
 @include block($component-name) {
 	display: flex;
@@ -20,7 +23,7 @@ $size: 54px;
 	@include element(content) {
 		padding-right: 14px;
 		overflow: hidden;
-		background: white;
+		background: $background-color-light;
 		border-radius: 16px;
 
 		input {
@@ -30,14 +33,14 @@ $size: 54px;
 
 			&::placeholder {
 				font-size: 15px;
-				color: #999;
+				color: $color-dark-extralight;
 			}
 		}
 
 		@include element(icon){
 			margin-left: 14px;
 			font-size: 15px;
-			color: #999;
+			color: $color-dark-extralight;
 		}
 
 		@include when(focus) {
@@ -52,7 +55,7 @@ $size: 54px;
 		padding-left: 8px;
 		font-size: 15px;
 		line-height: $size;
-		color: #333;
+		color: $foreground-color;
 		text-align: right;
 		white-space: nowrap;
 	}

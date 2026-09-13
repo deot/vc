@@ -1,9 +1,30 @@
 // @vitest-environment jsdom
-import { ref } from 'vue';
-import { InputSearch, MInputSearch } from '@deot/vc-components';
+import { ref, nextTick } from 'vue';
+import { InputSearch, MInputSearch, VcInstance } from '@deot/vc-components';
+import { enUS, zhCN } from '@deot/vc-locale';
 import { mount } from '@vue/test-utils';
 
 describe('index-search.ts', () => {
+	it('cancel text follows locale and preserves explicit overrides', async () => {
+		const locale = VcInstance.options.locale;
+		VcInstance.configure({ locale: zhCN });
+		const wrapper = mount(MInputSearch);
+		try {
+			await wrapper.find('input').trigger('focus');
+			expect(wrapper.find('.vcm-input-search__btn').text()).toBe('取消');
+			VcInstance.configure({ locale: enUS });
+			await nextTick();
+			expect(wrapper.find('.vcm-input-search__btn').text()).toBe('Cancel');
+			await wrapper.setProps({ cancelText: '返回' });
+			expect(wrapper.find('.vcm-input-search__btn').text()).toBe('返回');
+			await wrapper.setProps({ cancelText: '' });
+			expect(wrapper.find('.vcm-input-search__btn').exists()).toBe(false);
+		} finally {
+			wrapper.unmount();
+			VcInstance.configure({ locale });
+		}
+	});
+
 	it('basic', () => {
 		expect(typeof InputSearch).toBe('object');
 		expect(typeof MInputSearch).toBe('object');

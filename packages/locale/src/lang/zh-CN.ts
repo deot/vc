@@ -3,6 +3,15 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		InputNumber: {
+			maxExceeded: '数值不能超过{max}',
+			minExceeded: '数值不能低于{min}',
+			cannotIncrease: '不能再多了',
+			cannotDecrease: '不能再少了'
+		},
+		MInputSearch: {
+			cancelText: '取消'
+		},
 		Snapshot: {
 			generating: '正在生成...'
 		},

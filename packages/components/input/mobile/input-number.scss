@@ -6,6 +6,8 @@ $color-light-extradeep: varfix(color-light-extradeep, input);
 $color-primary-light: varfix(color-primary-light, input);
 $color-dark-extralight: varfix(color-dark-extralight, input);
 $color-light-deep: varfix(color-light-deep, input);
+$background-color-active: varfix(background-color-active, input, varfix(color-primary-lighter, input));
+$foreground-color-disabled: varfix(foreground-color-disabled, input, varfix(color-light-extradeep, input));
 
 @include block($component-name) {
 	width: auto;
@@ -15,17 +17,19 @@ $color-light-deep: varfix(color-light-deep, input);
 		width: 28px;
 		height: 28px;
 		line-height: 28px;
+		color: $color-dark-extralight;
 		text-align: center;
 		cursor: pointer;
-		background-color: varfix(background-color);
+		background-color: $background-color;
 
 		&[disabled] {
+			color: $foreground-color-disabled;
 			cursor: not-allowed;
 			opacity: .8;
 		}
 
 		&:active {
-			background-color: rgb(221 221 221 / 61.6%);
+			background-color: $background-color-active;
 		}
 	}
 	
@@ -33,11 +37,7 @@ $color-light-deep: varfix(color-light-deep, input);
 		position: absolute;
 		inset: 0;
 		margin: auto;
-		background-color: #999;
-
-		&[disabled] {
-			background-color: #CBCBCB;
-		}
+		background-color: currentcolor;
 	}
 
 	@include element(plus) {
@@ -89,7 +89,7 @@ $color-light-deep: varfix(color-light-deep, input);
 		margin: 0 1px;
 		font-size: 13px;
 		text-align: center;
-		background-color: varfix(background-color);
+		background-color: $background-color;
 		border-radius: 0; // 不加的话ios端默认带圆角
 		outline: none;
 	}
