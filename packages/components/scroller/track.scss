@@ -1,6 +1,8 @@
 @use '../style/helper' as *;
 
 $component-name: vc-scroller-track;
+$thumb-color: varfix(color-dark-extralight, scroller-track);
+$thumb-color-hover: varfix(color-dark-lightest, scroller-track);
 
 @include block($component-name) {
 	position: absolute;
@@ -35,12 +37,12 @@ $component-name: vc-scroller-track;
 		width: 0;
 		height: 0;
 		cursor: pointer;
-		background-color: rgb(37 36 36 / 57%);
+		background-color: $thumb-color;
 		border-radius: inherit;
 		transition: .3s background-color;
 		
 		&:hover {
-			background-color: rgb(37 36 36 / 70%);
+			background-color: $thumb-color-hover;
 		}
 	}
 }

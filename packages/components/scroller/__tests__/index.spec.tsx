@@ -652,6 +652,26 @@ describe('index.ts', () => {
 	});
 
 	describe('Track interactions', () => {
+		it.each([Scroller, ScrollerWheel])('passes track styling through %s', async (Component) => {
+			const wrapper = mount(Component, {
+				props: {
+					native: false,
+					trackClass: 'custom-track',
+					trackStyle: { opacity: '0.5' }
+				}
+			});
+			await nextTick();
+			await nextTick();
+
+			const tracks = wrapper.findAll('.vc-scroller-track');
+			expect(tracks).toHaveLength(2);
+			tracks.forEach((track) => {
+				expect(track.classes()).toContain('custom-track');
+				expect((track.element as HTMLElement).style.opacity).toBe('0.5');
+			});
+			wrapper.unmount();
+		});
+
 		it('clicking on vertical track moves scrollTop (handleClickTrack)', async () => {
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (

@@ -227,7 +227,7 @@ export const Track = defineComponent({
 					<div
 						v-show={thumbSize.value && (props.always || isVisible.value)}
 						ref={track}
-						class={['is-' + barOptions.value.key, 'vc-scroller-track']}
+						class={[attrs.class, 'is-' + barOptions.value.key, 'vc-scroller-track']}
 						// @ts-ignore
 						style={attrs.style}
 						onMousedown={handleClickTrack}

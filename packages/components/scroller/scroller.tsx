@@ -70,6 +70,8 @@ export const Scroller = defineComponent({
 								thumbMinSize={props.thumbMinSize}
 								thumbStyle={props.thumbStyle}
 								thumbClass={props.thumbClass}
+								trackStyle={props.trackStyle}
+								trackClass={props.trackClass}
 								trackOffsetX={props.trackOffsetX}
 								trackOffsetY={props.trackOffsetY}
 
