@@ -4,6 +4,7 @@ import { vi } from 'vitest';
 import { Snapshot, VcInstance, Message } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { ref, nextTick } from 'vue';
+import { enUS, zhCN } from '@deot/vc-locale';
 
 const flush = async () => {
 	for (let i = 0; i < 5; i++) {
@@ -35,6 +36,7 @@ describe('index.ts', () => {
 	let snapdom: any;
 	let loadingSpy: any;
 	let loadingContext: { destroy: any };
+	const originalLocale = VcInstance.options.locale;
 
 	// 通过 template ref 访问 expose 出来的方法
 	const mountSnapshot = (props: Record<string, any> = {}, slot?: any) => {
@@ -59,6 +61,7 @@ describe('index.ts', () => {
 	});
 
 	afterEach(() => {
+		VcInstance.configure({ locale: originalLocale });
 		delete (window as any).snapdom;
 		VcInstance.options.Snapshot = { options: undefined, source: undefined, download: undefined };
 		document.body.innerHTML = '';
@@ -169,6 +172,21 @@ describe('index.ts', () => {
 		await target.value.toDataURL();
 
 		expect(loadingSpy).not.toHaveBeenCalled();
+	});
+
+	it('生成和下载提示读取当前语言', async () => {
+		VcInstance.configure({ locale: zhCN });
+		const { wrapper, target } = mountSnapshot({ download: () => true });
+		await flush();
+		await target.value.toDataURL();
+		expect(loadingSpy).toHaveBeenLastCalledWith('正在生成...');
+
+		VcInstance.configure({ locale: enUS });
+		await target.value.toDataURL('png');
+		expect(loadingSpy).toHaveBeenLastCalledWith('Generating...');
+		await target.value.download({ filename: 'example' });
+		expect(loadingSpy).toHaveBeenLastCalledWith('Generating...');
+		wrapper.unmount();
 	});
 
 	it('toDataURL 出错时也会关闭 loading', async () => {

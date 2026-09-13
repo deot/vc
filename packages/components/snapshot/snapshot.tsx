@@ -4,6 +4,7 @@ import { nextTick, defineComponent, ref, onMounted, getCurrentInstance } from 'v
 import { props as snapshotProps } from './snapshot-props';
 import { VcInstance, VcError } from '../vc/index';
 import { Message } from '../message/index';
+import { useLocale } from '../locale';
 
 const COMPONENT_NAME = 'vc-snapshot';
 
@@ -12,6 +13,7 @@ export const Snapshot = defineComponent({
 	props: snapshotProps,
 	emits: ['ready'],
 	setup(props, { emit, slots, expose }) {
+		const { t } = useLocale();
 		let snapDOM: any;
 		const instance = getCurrentInstance()!;
 		const current = ref<any>();
@@ -32,7 +34,7 @@ export const Snapshot = defineComponent({
 		};
 
 		const onLoad = () => {
-			return props.showLoading && Message.loading('正在生成...');
+			return props.showLoading && Message.loading(t('vc.Snapshot.generating'));
 		};
 
 		const onLoaded = (ctx: any) => {

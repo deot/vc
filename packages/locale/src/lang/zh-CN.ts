@@ -3,6 +3,9 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		Snapshot: {
+			generating: '正在生成...'
+		},
 		Drawer: {
 			okButtonText: '确定',
 			cancelButtonText: '取消'

@@ -3,6 +3,9 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		Snapshot: {
+			generating: 'Generating...'
+		},
 		Drawer: {
 			okButtonText: 'OK',
 			cancelButtonText: 'Cancel'
