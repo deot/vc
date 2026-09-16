@@ -54,10 +54,8 @@ export const Container = defineComponent({
 
 		const handleMove = (e: any) => {
 			if (!isStart || props.inverted || !props.pullable) return;
-			const allow = props.canPull
-				? props.canPull()
-				: current.value.querySelector('.vc-recycle-list__wrapper')[K.scrollAxis] == 0;
-			if (!allow) return;
+			// 主轴不在起点时的拖动是普通滚动，不进入下拉
+			if (!props.canPull()) return;
 
 			const move = e.touches
 				? e.touches[0][K.screenAxis]

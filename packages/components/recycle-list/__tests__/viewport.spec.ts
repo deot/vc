@@ -1,11 +1,7 @@
 // @vitest-environment jsdom
 
-import {
-	ExternalViewport,
-	invalidateViewport,
-	registerViewport,
-	resolveExternalViewport
-} from '../viewport';
+import { ExternalCarrier, resolveExternalCarrier } from '../viewport/external/carrier';
+import { invalidateViewport, registerViewport } from '../viewport/external/registry';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const verticalKeys = {
@@ -66,7 +62,7 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-describe('ExternalViewport', () => {
+describe('ExternalCarrier', () => {
 	describe('Window target', () => {
 		it('reads and writes vertical measurements and element coordinates', () => {
 			const scrolling = document.createElement('div');
@@ -75,7 +71,7 @@ describe('ExternalViewport', () => {
 			defineValue(scrolling, 'scrollHeight', 2400);
 			defineValue(window, 'innerHeight', 600);
 
-			const viewport = new ExternalViewport(window, undefined, verticalKeys);
+			const viewport = new ExternalCarrier(window, undefined, verticalKeys);
 			const element = document.createElement('div');
 			mockRect(element, { top: 75, bottom: 155 });
 
@@ -99,7 +95,7 @@ describe('ExternalViewport', () => {
 			defineValue(window, 'innerWidth', 0);
 			defineValue(document.documentElement, 'clientWidth', 880);
 
-			const viewport = new ExternalViewport(window, undefined, horizontalKeys);
+			const viewport = new ExternalCarrier(window, undefined, horizontalKeys);
 			const element = document.createElement('div');
 			const listener = vi.fn();
 			mockRect(element, { left: 30, right: 130 });
@@ -143,8 +139,8 @@ describe('ExternalViewport', () => {
 				right: 190
 			});
 
-			const vertical = new ExternalViewport(target, undefined, verticalKeys);
-			const horizontal = new ExternalViewport(target, undefined, horizontalKeys);
+			const vertical = new ExternalCarrier(target, undefined, verticalKeys);
+			const horizontal = new ExternalCarrier(target, undefined, horizontalKeys);
 
 			expect(vertical.isWindow).toBe(false);
 			expect(vertical.mainOffset).toBe(200);
@@ -166,7 +162,7 @@ describe('ExternalViewport', () => {
 
 		it('adds and removes native scroll listeners', () => {
 			const target = document.createElement('div');
-			const viewport = new ExternalViewport(target, undefined, verticalKeys);
+			const viewport = new ExternalCarrier(target, undefined, verticalKeys);
 			const listener = vi.fn();
 
 			viewport.on(listener);
@@ -185,7 +181,7 @@ describe('ExternalViewport', () => {
 		const on = vi.fn();
 		const off = vi.fn();
 		const scroller = { wrapper: target, scrollTo, on, off };
-		const viewport = new ExternalViewport(target, scroller, horizontalKeys);
+		const viewport = new ExternalCarrier(target, scroller, horizontalKeys);
 		const listener = vi.fn();
 
 		viewport.setMainOffset(95);
@@ -199,7 +195,7 @@ describe('ExternalViewport', () => {
 	});
 });
 
-describe('resolveExternalViewport', () => {
+describe('resolveExternalCarrier', () => {
 	it('uses the closest ordinary scrolling ancestor for the requested axis', () => {
 		const outer = document.createElement('div');
 		const scroller = document.createElement('div');
@@ -213,7 +209,7 @@ describe('resolveExternalViewport', () => {
 		document.body.appendChild(outer);
 
 		const injected = { wrapper: outer, scrollTo: vi.fn() };
-		const viewport = resolveExternalViewport(root, injected, verticalKeys);
+		const viewport = resolveExternalCarrier(root, injected, verticalKeys);
 
 		expect(viewport.target).toBe(scroller);
 		expect(viewport.scroller).toBeUndefined();
@@ -235,7 +231,7 @@ describe('resolveExternalViewport', () => {
 			off: vi.fn()
 		};
 
-		const viewport = resolveExternalViewport(root, injected, verticalKeys);
+		const viewport = resolveExternalCarrier(root, injected, verticalKeys);
 
 		expect(viewport.target).toBe(wrapper);
 		expect(viewport.scroller).toBe(injected);
@@ -249,7 +245,7 @@ describe('resolveExternalViewport', () => {
 		root.style.overflowY = 'auto';
 		document.body.appendChild(root);
 
-		const viewport = resolveExternalViewport(root, undefined, verticalKeys);
+		const viewport = resolveExternalCarrier(root, undefined, verticalKeys);
 
 		expect(viewport.target).toBe(window);
 		expect(viewport.isWindow).toBe(true);

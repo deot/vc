@@ -1126,9 +1126,9 @@ describe('index.ts', () => {
 			expect(store.scroll.leafs).toEqual([b]);
 		});
 
-		it('Local.setOriginalData places items at given start offset', () => {
+		it('Local.write places items at given start offset', () => {
 			const store = new RecycleListStore({});
-			store.local.setOriginalData(3, [{ id: 'a' }, { id: 'b' }, { id: 'c' }]);
+			store.local.write(3, [{ id: 'a' }, { id: 'b' }, { id: 'c' }]);
 
 			expect(store.local.originalData[3]).toEqual({ id: 'a' });
 			expect(store.local.originalData[4]).toEqual({ id: 'b' });

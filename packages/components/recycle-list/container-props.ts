@@ -19,7 +19,11 @@ export const props = {
 		type: Number,
 		default: 30
 	},
-	canPull: Function as PropType<() => boolean>,
+	// 是否允许进入下拉（由使用方判断主轴是否停在起点）
+	canPull: {
+		type: Function as PropType<() => boolean>,
+		default: () => true
+	},
 	render: {
 		type: Function as Render,
 		default: ({ status, type }) => STATUS_MAP[type][status]

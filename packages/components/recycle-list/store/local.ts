@@ -1,7 +1,8 @@
 import type { Store } from './store';
 
 /**
- * 本地数据源与模拟分页游标；
+ * 本地数据源与模拟分页游标
+ *
  * originalData 同时承接远程页落地，total / buildCount / builtBase 都是对它的索引
  */
 export class Local {
@@ -70,10 +71,11 @@ export class Local {
 
 	/**
 	 * 把一批数据写入 originalData 的指定偏移处（远程分页落地）
+	 * 原 Local.setOriginalData / Store.setOriginData
 	 * @param start 写入起始下标
 	 * @param items 待写入的数据项
 	 */
-	setOriginalData(start: number, items: any[]) {
+	write(start: number, items: any[]) {
 		for (let i = 0; i < items.length; i++) {
 			this.originalData[start + i] = items[i];
 		}
@@ -101,8 +103,9 @@ export class Local {
 
 	/**
 	 * 清空 originalData（重置加载栈时调用）
+	 * 原 Local.clearOriginalData
 	 */
-	clearOriginalData() {
+	clear() {
 		this.originalData = [];
 	}
 }
