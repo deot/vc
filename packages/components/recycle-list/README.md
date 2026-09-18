@@ -88,7 +88,7 @@ Window / Scroller
 - 可见范围由外部 viewport 与列表内容区的相对位置计算。外部 viewport 尚在头部或已经进入尾部时，不会因为外部容器滚动而触发无关批次。
 - 后置内容不计入列表尾部边界；接近 RecycleList 自身尾部时就会加载下一批，不必等待外部 Footer 滚动结束。
 - 虚拟占位尺寸参与正常文档流，数据增加时会自然把后置内容向后推。
-- 挂载、列表自身尺寸变化以及 `fill`/方向变化会自动重新测量；外部 viewport 尺寸变化只刷新可见范围，不重新测量节点（节点尺寸只取决于列表自身的交叉轴）。外部前置内容发生无法被观察的位置变化时，调用 `refreshViewport()` 即可，它只刷新几何与已渲染的行。
+- 挂载、列表自身交叉轴尺寸变化以及 `fill`/方向变化会自动重新测量；单行内容变化只校正该行，已渲染的其它行保持不动；外部 viewport 尺寸变化只刷新可见范围，不重新测量节点（节点尺寸只取决于列表自身的交叉轴）。外部前置内容发生无法被观察的位置变化时，调用 `refreshViewport()` 即可，它只刷新几何与已渲染的行。
 - 首次加载、本地数据分批构建、underfill、placeholder/loading/complete/empty 和 `disabled` 的行为与内部模式一致。
 
 ### 外部模式下的方法坐标
@@ -169,7 +169,7 @@ Window / Scroller
 | 事件名 | 说明 | 回调参数 |
 | --- | --- | --- |
 | scroll | 主轴或交叉轴滚动 | `FakeUIEvent`，target 含 `scrollLeft`、`scrollTop` |
-| row-resize | 子元素尺寸变化；行渲染出来时按实际尺寸校正了记录，也会触发 | - |
+| row-resize | 行尺寸变化：已渲染的行内容变化（展开、编辑、图片撑开等），或行渲染出来时按实际尺寸校正了记录；只校正变化的行，不整体重测 | - |
 | load-change | 加载状态变化 | `{ isEnd, isLoading, isSilentRefresh, isEmpty }` |
 
 #### load-change

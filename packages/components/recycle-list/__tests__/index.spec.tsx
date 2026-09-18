@@ -2849,6 +2849,39 @@ describe('index.ts', () => {
 				restore();
 			});
 
+			it('corrects only the resized row when rendered content changes (no full re-measure)', async () => {
+				const { heights, heightOf } = createHeights();
+				const onRowResize = vi.fn();
+				const { list, states, wrapper, measuredIds, restore } = await setup(30, 30, heightOf, { onRowResize });
+				heights[3] = 80;
+				triggerRendered(wrapper, 3, 80);
+				await flushMicrotasks();
+
+				const rows = () => wrapper.findAll('.vc-recycle-list__column .vc-resizer').map((item: any) => item.element);
+				const before = rows();
+				const build = vi.spyOn(list.store.nodes, 'build');
+				measuredIds.length = 0;
+				onRowResize.mockClear();
+
+				// 同一行再次变化（Resizer 已完成首次测量，如展开、编辑、图片撑开）
+				heights[3] = 120;
+				triggerRendered(wrapper, 3, 120);
+				await flushMicrotasks();
+				await sleep(80);
+
+				expectLaidOut(states, heightOf);
+				expect(onRowResize).toHaveBeenCalledTimes(1);
+				expect(onRowResize).toHaveBeenLastCalledWith([{ size: 120, index: 3 }]);
+				// 不整体重建：节点不进隐藏池，已渲染的行原地保留
+				expect(build).not.toHaveBeenCalled();
+				expect(measuredIds).toEqual([]);
+				expect(states.preData.length).toBe(0);
+				// 行变高后视口内的行数可能减少，但仍在的行都是原来的元素
+				expect(rows().length).toBeGreaterThan(0);
+				expect(rows().every((el: Element) => before.includes(el))).toBe(true);
+				restore();
+			});
+
 			it('does nothing when the rendered size matches the record', async () => {
 				const { heightOf } = createHeights();
 				const onRowResize = vi.fn();

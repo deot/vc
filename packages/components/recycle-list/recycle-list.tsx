@@ -627,7 +627,7 @@ export const RecycleList = defineComponent({
 			}
 		};
 
-		// 图片撑开等导致布局变化，节流结束后整体重排并保持首个可见项不跳动
+		// 列表交叉轴尺寸变化会改变所有节点的尺寸：节流结束后整体重排并保持首个可见项不跳动
 		const handleResize = throttle(async () => {
 			if (!wrapper.value) return;
 			const state = viewport.state();
@@ -642,10 +642,11 @@ export const RecycleList = defineComponent({
 		});
 
 		/**
-		 * 行渲染出来后的首次测量：实际尺寸与记录不一致时只修正这些行
+		 * 行的实测尺寸与记录不一致时只修正这些行（增量重排，不重建节点）
 		 *
-		 * 例如在原对象上改了视口外某行影响尺寸的字段：那时它没有 DOM，感知不到变化，渲染出来才能读到真实尺寸。
-		 * 同一个微任务内渲染出来的行合并处理，只重排一次；变化的行在锚点之前时补偿滚动
+		 * 两种来源：行渲染出来时的首次测量（如在原对象上改了视口外某行影响尺寸的字段，渲染出来才能读到真实尺寸），
+		 * 以及已渲染的行自身内容变化（展开、编辑、图片撑开等）。
+		 * 同一个微任务内的变化合并处理，只重排一次；变化的行在锚点之前时补偿滚动
 		 */
 		const renderedRows = new Set<RecycleListItemNodeRaw>();
 		const correctRenderedRows = async () => {
@@ -669,10 +670,10 @@ export const RecycleList = defineComponent({
 		};
 
 		/**
-		 * 行渲染出来（Resizer 首次测量）时登记，留待同一个微任务内统一校正
-		 * @param node 渲染出来的节点
+		 * 行尺寸变化（Resizer 首次测量或内容变化）时登记，留待同一个微任务内统一校正
+		 * @param node 尺寸变化的节点
 		 */
-		const handleRowRendered = (node: RecycleListItemNodeRaw) => {
+		const handleRowResize = (node: RecycleListItemNodeRaw) => {
 			renderedRows.size === 0 && Promise.resolve().then(correctRenderedRows);
 			renderedRows.add(node);
 		};
@@ -684,7 +685,7 @@ export const RecycleList = defineComponent({
 		 */
 		const refreshViewport = async () => {
 			scroller.value?.refresh?.();
-			store.states.data.flat().forEach(handleRowRendered);
+			store.states.data.flat().forEach(handleRowResize);
 			await syncVisibleRange(true);
 		};
 
@@ -917,8 +918,9 @@ export const RecycleList = defineComponent({
 						<Resizer
 							ref={v => trackVisible(item, v)}
 							fill={false}
+							// 单行尺寸变化只校正该行；交叉轴变化引起的整体变化由 handleWrapperResize 负责
 							// @ts-ignore
-							onResize={e => (e?.inited === true ? handleResize() : handleRowRendered(item))}
+							onResize={() => handleRowResize(item)}
 						>
 							{ slots.default?.({ row: item.states.data || {}, index: item.states.index }) }
 						</Resizer>

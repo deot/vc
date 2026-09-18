@@ -63,3 +63,6 @@ package-lock.json
 
 # store
 .pnpm-store
+
+# AI
+.claude
