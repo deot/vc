@@ -668,7 +668,7 @@ const handleFilter = (value) => {
 :::
 
 ### 树形数据与懒加载
-支持树类型的数据的显示。当 `row` 中包含 `children` 字段时，被视为树形数据。渲染树形数据时，必须要指定 `primary-key`。支持子节点数据异步加载。设置 `Table` 的 `lazy` 属性为 `true` 与加载函数 `load-expand` 。通过指定 `row` 中的 `hasChildren` 字段来指定哪些行是包含子节点。`children` 与 `hasChildren` 都可以通过 `tree-map` 配置。
+支持树类型的数据的显示。当 `row` 中包含 `children` 字段时，被视为树形数据。渲染树形数据时，必须要指定 `primary-key`。支持子节点数据异步加载。设置 `Table` 的 `lazy-tree` 属性为 `true` 与加载函数 `load-expand` 。通过指定 `row` 中的 `hasChildren` 字段来指定哪些行是包含子节点。`children` 与 `hasChildren` 都可以通过 `tree-map` 配置。
 
 :::RUNTIME
 ```vue
@@ -679,7 +679,7 @@ const handleFilter = (value) => {
 		:data="dataSource"
 		:load-expand="loadExpand"
 		:expand-selectable="true"
-		lazy
+		lazy-tree
 		style="width: 100%"
 		primary-key="id"
 		@expand-change="handleExpandChange"
@@ -824,7 +824,7 @@ Window / Scroller
 - TableBody 的虚拟占位高度参与正常文档流，后置内容会随数据增长自然后移。
 - 可见范围和加载边界使用 Table 自身区域；外部尾部内容不计入 Table 边界。
 - 动态行高、fixed columns、summary、append、empty、selection、expand、hover 等功能沿用固定高度虚拟表格的现有语义。
-- 外部前置内容发生无法自动观察的位置变化时，可调用现有 `refreshLayout()`；行尺寸变化后可继续使用 `refreshAffix()` 更新吸附状态。
+- 数据变化、行尺寸变化、表格宽度变化都会自动处理：虚拟行由内部 RecycleList 按需测量，吸底合计行随行尺寸变化自动刷新。只有外部前置内容发生无法自动观察的位置变化时，才需要调用 `refreshLayout()`。
 
 渲染模式优先级如下：
 
@@ -846,6 +846,22 @@ Window / Scroller
 - `boolean`、`[top, bottom]`、`object` 的解释和 `refreshAffix()` 方法保持不变。
 - Table 设置了 `height`/`max-height` 时，`affix` 仍按原规则强制失效。
 
+#### 延迟展示尾部内容
+
+表体逐批构建时，`append` 与表格之后的页面内容会被不断往下推。`lazy-tail` 让 `append` 等数据全部进入虚拟列表后再出现；页面上的后置内容可以通过 `load-change` 跟上：
+
+```vue
+<Table virtualized lazy-tail :data="rows" @load-change="loadState = $event">
+	<template #append>…</template>
+</Table>
+
+<section v-show="loadState.isEnd">页面后置内容</section>
+```
+
+- `load-change` 只对外单向推送，没有对应属性。内部虚拟列表以 `disabled` 直接接收 `data`，此时 `isEnd` 表示数据已全部构建并完成布局。
+- 普通表格（未设置 `height` 且未启用 `virtualized`）一次渲染完，挂载即推送 `isEnd: true`，同样的写法依然成立。
+- 合计行不受 `lazy-tail` 影响。
+
 完整示例：
 
 - [Window 前置内容—虚拟 Table—后置内容](./examples/virtualized-window.vue)
@@ -860,6 +876,7 @@ Window / Scroller
 | height                  | `Table` 的高度，默认为自动高度。如果 `height` 为 `number` 类型，单位 px；如果 `height` 为 `string` 类型，则这个高度会设置为 `Table` 的 style.height 的值，Table 的高度会受控于外部样式。       | `string`、`number`                                          | -                           | -       |
 | max-height              | `Table` 的最大高度                                                                                                                              | `string`、`number`                                          | -                           | -       |
 | virtualized             | 无 `height`/`max-height` 时启用外部 viewport 行虚拟化；存在 `height` 或 `max-height` 时不改变原有渲染路径                                                                 | `boolean`                                                   | -                           | `false` |
+| lazy-tail               | 延迟展示 `append` slot，直到数据全部进入虚拟列表；普通表格视为已到末尾，不影响合计行 | `boolean` | - | `false` |
 | stripe                  | 是否为斑马纹 `table`                                                                                                                             | `boolean`                                                  | -                           | `false` |
 | border                  | 是否带有纵向边框                                                                                                                                   | `boolean`                                                  | -                           | `false` |
 | size                    | `Table` 的尺寸                                                                                                                                | `string`                                                   | `medium` 、 `small` 、 `mini` | -       |
@@ -879,6 +896,7 @@ Window / Scroller
 | primary-key             | 行数据的 Key，用来优化 Table 的渲染；在使用 reserve-selection 功能的情况下，该属性是必填的。类型为 string 时，支持多层访问：`user.info.id`，但不支持 `user.info[0].id`，此种情况请使用 `Function`。 | `Function(row)`、`string`                                   | -                           | -       |
 | empty-text              | 空数据时显示的文本内容，也可以通过 `slot="empty"` 设置                                                                                                        | `string`                                                   | -                           | 暂无数据    |
 | default-expand-all      | 是否默认展开所有行，当 `Table` 中存在 `type="expand"` 的 `Column` 的时候有效                                                                                   | `boolean`                                                  | -                           | false   |
+| lazy-tree               | 树形数据的子节点是否懒加载，需配合 `load-expand` 使用；通过 `row` 的 `hasChildren` 标记可加载的节点 | `boolean` | - | `false` |
 | expand-row-value        | 可以通过该属性设置 `Table` 目前的展开行，需要设置 `primary-key` 属性才能使用，该属性为展开行的 `[id]/value` 数组。                                                               | `Array`                                                    | -                           | -       |
 | expand-selectable       | 子节点是否可选择（会被隐藏）                                                                                                                             | `boolean`                                                  | -                           | `true`  |
 | show-summary            | 是否在表尾显示合计行                                                                                                                                 | `boolean`                                                  | -                           | `false` |
@@ -913,6 +931,7 @@ Window / Scroller
 | header-dragend     | 当拖动表头改变了列的宽度的时候会触发该事件                                         | `(newWidth: number, oldWidth: number, column: Object, event: Object) => void 0` | `newWidth`: 拖拽后宽度；`oldWidth`：拖拽前宽度；`column`：当前列数据；`event`：事件对象 |
 | expand-change      | 当用户对某一行展开或者关闭的时候会触发该事件                                        | `(row: Object, expandedRows: Object, maxLevel: number) => void 0`               | `row`：当前行数据；`expandedRows`：展开的行数据；`maxLevel`：当前展开最大的level      |
 | sort-change        | 当表格的排序条件发生变化的时候会触发该事件                                         | { prop, order }                                                                 |                                                                |
+| load-change      | 加载状态变化（单向推送，无对应属性）；挂载即推送一次                                   | `(loadState: { isEnd, isLoading, isSilentRefresh, isEmpty }) => void 0`            | `isEnd`：数据已全部进入虚拟列表（普通表格恒为 `true`）；`isEmpty`：已结束且无数据              |
 
 
 ### 方法
@@ -924,7 +943,7 @@ Window / Scroller
 | togglAllSelection  | 用于多选表格，切换所有行的选中状态                                              | -                                                                            |
 | toggleRowExpansion | 用于可展开表格，切换某一行的展开状态，如果使用了第二个参数，则是设置这一行展开与否（expanded 为 true 则展开） | `row`：要展开的行数据；`expanded`：设置该行是否展开                                            |
 | setCurrentRow      | 用于单选表格，设定某一行为选中行，如果调用时不加参数，则会取消目前高亮行的选中状态。                     | `row`：选中的行数据                                                                 |
-| refreshLayout      | 对 Table 进行重新布局。当 Table 或其祖先元素由隐藏切换为显示时，可能需要调用此方法               | -                                                                            |
+| refreshLayout      | 对 Table 进行重新布局，虚拟化表格（`height` 或 `virtualized`）会同时整体重新测量已构建的行。数据变化、尺寸变化会自动处理（内部的布局更新只刷新虚拟列表的视口），仅在无法自动观察的布局变化后调用 | -                                                                            |
 | refreshAffix       | 手动刷新表头/合计行的吸附状态（`affix` 生效时）。Affix只有当滚动时才触发，wrapper/content高度变化需手动处理              | -                                                                            |
 
 

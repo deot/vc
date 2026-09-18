@@ -3,7 +3,6 @@
 		<header class="demo-header">
 			<h1>VC Scroller 中的外部虚拟化 Table</h1>
 			<p>外层 Scroller 承载 Y 轴，Table 内部承载 X 轴并同步表头、表体、合计行和固定列。</p>
-			<button type="button" @click="tableRef?.refreshAffix()">refreshAffix</button>
 		</header>
 
 		<Scroller
@@ -19,16 +18,17 @@
 			</section>
 
 			<Table
-				ref="tableRef"
 				class="virtualized-table"
 				primary-key="id"
 				virtualized
+				lazy-tail
 				border
 				stripe
 				show-summary
 				:fit="false"
 				:affix="{ fixed: false }"
 				:data="tableData"
+				@load-change="loadState = $event"
 			>
 				<TableColumn type="selection" fixed="left" :width="64" />
 				<TableColumn prop="id" label="ID" fixed="left" :width="100" />
@@ -56,10 +56,12 @@
 				</template>
 			</Table>
 
-			<section class="external-content footer-content">
-				<h2>Footer</h2>
-				<p v-for="item in 5" :key="item">Table 之后的外部内容 {{ item }}</p>
-			</section>
+			<Transition name="reveal">
+				<section v-show="loadState.isEnd" class="external-content footer-content">
+					<h2>Footer</h2>
+					<p v-for="item in 5" :key="item">Table 之后的外部内容 {{ item }}</p>
+				</section>
+			</Transition>
 		</Scroller>
 
 		<p class="note">
@@ -73,7 +75,8 @@ import { ref } from 'vue';
 import { Scroller } from '../../scroller';
 import { Table, TableColumn } from '..';
 
-const tableRef = ref();
+// load-change 是单向的：表格把快照推过来，外层只读
+const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false });
 
 const tableData = Array.from({ length: 1200 }, (_, index) => ({
 	id: index + 1,
@@ -158,5 +161,16 @@ const tableData = Array.from({ length: 1200 }, (_, index) => ({
 .note {
 	margin-top: 14px;
 	color: #66788a;
+}
+/* 延迟展示的内容淡入，避免加载完成的一瞬间直接弹出 */
+.reveal-enter-active,
+.reveal-leave-active {
+	transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.reveal-enter-from,
+.reveal-leave-to {
+	opacity: 0;
+	transform: translateY(8px);
 }
 </style>

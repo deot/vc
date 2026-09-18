@@ -1,10 +1,9 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, provide, watch, computed, ref, getCurrentInstance, nextTick, onMounted, onUnmounted } from 'vue';
+import { defineComponent, provide, computed, ref, getCurrentInstance, nextTick, onMounted, onUnmounted } from 'vue';
 import { debounce } from 'lodash-es';
 import { Resize } from '@deot/helper-resize';
-import { getUid, raf } from '@deot/helper-utils';
-import { Wheel } from '@deot/helper-wheel';
+import { getUid } from '@deot/helper-utils';
 import { parseHeight } from './utils';
 
 import { Store, useStates } from './store';
@@ -16,6 +15,10 @@ import { TableFooter } from './table-footer';
 import { Affix } from '../affix';
 
 import { props as tableProps } from './table-props';
+import { useLazyTail } from './hooks/use-lazy-tail';
+import { usePropsSync } from './hooks/use-props-sync';
+import { useScrollSync } from './hooks/use-scroll-sync';
+import { useWheelForward } from './hooks/use-wheel-forward';
 import type { TableProvide } from './types';
 import type { Nullable } from '@deot/helper-shared';
 
@@ -43,7 +46,8 @@ export const Table = defineComponent({
 		'expand-change',
 		'sort-change',
 		'update:sort',
-		'update:columns'
+		'update:columns',
+		'load-change'
 	],
 	setup(props, { slots, expose, emit }) {
 		const instance = getCurrentInstance()!;
@@ -72,7 +76,6 @@ export const Table = defineComponent({
 
 		const resizeProxy = ref<Nullable<HTMLElement>>(null);
 
-		const scrollPosition = ref('left');
 		const hoverState: TableProvide['hoverState'] = ref(null);
 		const isReady = ref(false);
 
@@ -174,10 +177,7 @@ export const Table = defineComponent({
 			layout.updateColumnsWidth();
 		};
 
-		/**
-		 * 对 Table 进行重新布局。
-		 * 当 Table 或其祖先元素由隐藏切换为显示时，可能需要调用此方法
-		 */
+		// 吸顶表头、吸底合计行重算边界
 		const refreshAffix = () => {
 			nextTick(() => {
 				affixHeader.value?.refresh?.();
@@ -185,7 +185,13 @@ export const Table = defineComponent({
 			});
 		};
 
-		const refreshLayout = () => {
+		/**
+		 * 更新表格自身的布局：列宽、各区域高度、吸附边界
+		 *
+		 * 数据变化、列变化、尺寸变化等自动场景只走这里。虚拟行由内部 RecycleList 自行感知数据与尺寸变化，
+		 * 不能在这里整体重测：那会让每次数据变化都把已构建的行重新渲染、测量一遍
+		 */
+		const updateLayout = () => {
 			if (isUnMount) return;
 
 			layout.updateColumnsWidth();
@@ -193,11 +199,25 @@ export const Table = defineComponent({
 				layout.updateElsHeight();
 			}
 
-			externalVirtualized.value
-				? scroller.value?.refreshLayout?.()
+			// 虚拟行只需刷新视口几何与可见范围；非虚拟表格刷新 Scroller 的滚动条
+			usesRecycleList.value
+				? scroller.value?.refreshViewport?.()
 				: scroller.value?.refresh?.();
 			refreshAffix();
 		};
+
+		/**
+		 * 对 Table 进行重新布局，并强制重新测量虚拟行。
+		 * 当 Table 或其祖先元素由隐藏切换为显示时，可能需要调用此方法
+		 */
+		const refreshLayout = () => {
+			if (isUnMount) return;
+			updateLayout();
+			usesRecycleList.value && scroller.value?.refreshLayout?.();
+		};
+		// append 的延迟展示：记录并转发 load-change
+		const { handleLoadChange, isTailHidden } = useLazyTail(props, usesRecycleList, emit, refreshAffix);
+
 		// 用于多选表格，切换所有行的选中状态
 		const toggleAllSelection = () => {
 			store.selection.toggleAll();
@@ -224,22 +244,6 @@ export const Table = defineComponent({
 			store.selection.clear();
 		};
 
-		// 同步滚动：sticky 模式只剩一份 DOM，仅需保持 header / footer 横向滚动跟随 body
-		const handleScrollX = () => {
-			if (!bodyXWrapper.value) return;
-			const { scrollLeft, offsetWidth, scrollWidth } = bodyXWrapper.value;
-			if (headerWrapper.value) headerWrapper.value.scrollLeft = scrollLeft;
-			if (footerWrapper.value) footerWrapper.value.scrollLeft = scrollLeft;
-			const maxScrollLeftPosition = scrollWidth - offsetWidth - 1;
-			if (scrollLeft >= maxScrollLeftPosition) {
-				scrollPosition.value = 'right';
-			} else if (scrollLeft === 0) {
-				scrollPosition.value = 'left';
-			} else {
-				scrollPosition.value = 'middle';
-			}
-		};
-
 		const handleResize = () => {
 			if (!isReady.value) return;
 			let shouldUpdateLayout = false;
@@ -262,7 +266,7 @@ export const Table = defineComponent({
 					height
 				};
 
-				refreshLayout();
+				updateLayout();
 			}
 		};
 
@@ -271,169 +275,33 @@ export const Table = defineComponent({
 			if (hoverState.value) hoverState.value = null;
 		};
 
-		const handleMousewheel = (deltaX: number, deltaY: number) => {
-			if (!bodyXWrapper.value) return;
-			const {
-				scrollWidth: contentW,
-				clientWidth: wrapperW,
-				scrollLeft: scrollX,
-				scrollHeight: contentH,
-				clientHeight: wrapperH,
-				scrollTop: scrollY
-			} = bodyXWrapper.value;
-
-			if (!bodyScroller.value) return;
-			if (Math.abs(deltaY) > Math.abs(deltaX) && contentH > wrapperH) {
-				bodyScroller.value.scrollTo({ y: scrollY + deltaY });
-			} else if (deltaX && contentW > wrapperW) {
-				bodyScroller.value.scrollTo({ x: scrollX + deltaX });
-			}
-		};
-		let wheels: any[] = [];
+		// 在表头 / 合计行上滚轮时转交给表体滚动；自行管理 Wheel 的挂载与卸载
+		useWheelForward({ headerWrapper, footerWrapper, bodyXWrapper, bodyYWrapper, bodyScroller });
 
 		const bindEvents = () => {
 			if (props.fit) {
 				Resize.on(instance.vnode.el as any, handleResize);
 			}
-			nextTick(() => {
-				wheels = [headerWrapper, footerWrapper].map((wrapper) => {
-					if (!wrapper.value) return;
-					const wheel = new Wheel(wrapper.value, {
-						shouldWheelX: (delta) => {
-							const {
-								scrollWidth: contentW,
-								clientWidth: wrapperW,
-								scrollLeft: scrollX
-							} = bodyXWrapper.value;
-							if (wrapperW === contentW) {
-								return false;
-							}
-
-							delta = Math.round(delta);
-							if (delta === 0) {
-								return false;
-							}
-
-							return (
-								(delta < 0 && scrollX > 0)
-								|| (delta >= 0 && scrollX < contentW - wrapperW)
-							);
-						},
-						shouldWheelY: (delta) => {
-							const {
-								scrollHeight: contentH,
-								clientHeight: wrapperH,
-								scrollTop: scrollY
-							} = bodyYWrapper.value;
-
-							if (wrapperH === contentH) {
-								return false;
-							}
-
-							delta = Math.round(delta);
-							if (delta === 0) {
-								return false;
-							}
-							return (
-								(delta < 0 && scrollY > 0)
-								|| (delta >= 0 && scrollY < contentH - wrapperH)
-							);
-						}
-					});
-					wheel.on(handleMousewheel);
-					return wheel;
-				});
-			});
 		};
 
 		const unbindEvents = () => {
 			if (props.fit) {
 				Resize.off(instance.vnode.el as any, handleResize);
 			}
-			wheels.forEach(wheel => wheel && wheel.off(handleMousewheel));
 		};
-		const debouncedUpdateLayout = debounce(() => refreshLayout(), 50);
+		const debouncedUpdateLayout = debounce(() => updateLayout(), 50);
 
-		watch(
-			() => props.height,
-			(v) => {
-				layout.setHeight(v);
-			},
-			{ immediate: true }
-		);
+		// 把 props 同步进 store / layout；其中 immediate 的 watch 会在此处立即执行，须保持调用位置
+		usePropsSync(props, store, { isReady, updateLayout });
 
-		watch(
-			() => props.maxHeight,
-			(v) => {
-				layout.setMaxHeight(v);
-			},
-			{ immediate: true }
-		);
-
-		watch(
-			() => props.currentRowValue,
-			(v) => {
-				if (!props.primaryKey) return;
-				store.row.setById(v);
-			},
-			{ immediate: true }
-		);
-
-		watch(
-			() => [props.data, props.data.length],
-			() => {
-				store.setData(props.data);
-				isReady.value && nextTick(refreshLayout);
-			},
-			{ immediate: true }
-		);
-
-		watch(
-			() => props.expandRowValue,
-			(v) => {
-				if (v) {
-					store.setExpandRowValueAdapter(v);
-				}
-			},
-			{ immediate: true }
-		);
-
-		// v-model:columns 外部写回：按 id 设置 hidden + 按 id 重排
-		// deep 以便外部仅修改某项 hidden 字段（数组引用不变）也能触发
-		// 防回环由 store.column.applyExternal 内部控制
-		watch(
-			() => props.columns,
-			(v) => {
-				if (!Array.isArray(v) || v.length === 0) return;
-				store.column.applyExternal(v);
-			},
-			{ deep: true, flush: 'post' }
-		);
-
-		// 直接修改className（不使用render函数）, 解决临界值设置修改className时的顿挫。
-		// 挂到 .vc-table 根节点上，让 header / body / footer 三处的 sticky 阴影都能共用同一个状态。
-		watch(
-			() => [scrollPosition.value, props.data?.length],
-			([v]) => {
-				raf(() => {
-					const el = tableWrapper.value;
-					if (!el) return;
-					const className = `is-scrolling-${layout.states.scrollX ? v : 'none'}`;
-
-					if (el.classList.contains(className)) return;
-
-					el.classList.remove(...['left', 'middle', 'right', 'none'].map(i => `is-scrolling-${i}`));
-					el.classList.add(className);
-				});
-			},
-			{ immediate: true }
-		);
+		// 表头 / 合计行横向跟随表体，并维护根节点 is-scrolling-* 类名
+		const { handleScrollX } = useScrollSync({ tableWrapper, headerWrapper, footerWrapper, bodyXWrapper, layout, props });
 
 		const tableId = getUid('table');
 		onMounted(() => {
 			bindEvents();
 			store.updateColumns();
-			refreshLayout();
+			updateLayout();
 
 			resizeState.value = {
 				width: (instance.vnode.el as any).offsetWidth,
@@ -515,6 +383,8 @@ export const Table = defineComponent({
 								ref={body}
 								height-style={[bodyHeightStyle.value]}
 								onScroll={handleScrollX}
+								// @ts-ignore
+								onLoadChange={handleLoadChange}
 							>
 								{
 									props.data.length === 0 && (
@@ -522,7 +392,7 @@ export const Table = defineComponent({
 									)
 								}
 								{
-									slots.append && (
+									slots.append && !isTailHidden.value && (
 										<div
 											ref={appendWrapper}
 											class="vc-table__append-wrapper"

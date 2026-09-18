@@ -44,6 +44,9 @@ export const TableBodyBlock = defineComponent({
 			expandRows: 'expandRows'
 		});
 
+		// ---------------------------------------------------------------------
+		// 样式与类名
+		// ---------------------------------------------------------------------
 		const getValueOfRow = (row: RowData, index: number) => {
 			const { primaryKey } = table.props;
 			if (primaryKey) {
@@ -109,9 +112,17 @@ export const TableBodyBlock = defineComponent({
 			return rowStyle || null;
 		};
 
-		// —— 容器级事件委托 ——
-		// cells 为 grid 容器的直接子节点：从 target 向上找到 currentTarget 的直接子级即 cell，
-		// 天然屏蔽 cell 内嵌套表格的干扰（嵌套 td 的父级不是本容器）。
+		// ---------------------------------------------------------------------
+		// 容器级事件委托
+		// ---------------------------------------------------------------------
+		/**
+		 * 从事件对象找到所属的 cell 元素
+		 *
+		 * cells 为 grid 容器的直接子节点：从 target 向上找到 currentTarget 的直接子级即 cell，
+		 * 天然屏蔽 cell 内嵌套表格的干扰（嵌套 td 的父级不是本容器）
+		 * @param e 委托在容器上的事件
+		 * @returns 命中的 cell 元素；事件不落在 cell 上时为 null
+		 */
 		const resolveCellEl = (e: Event): Nullable<HTMLElement> => {
 			const root = e.currentTarget as HTMLElement;
 			let node = e.target as Nullable<HTMLElement>;

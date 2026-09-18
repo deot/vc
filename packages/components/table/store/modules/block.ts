@@ -1,4 +1,4 @@
-import { toRaw } from 'vue';
+import { reactive, toRaw } from 'vue';
 import { getRowValue } from '../../utils';
 import type { TableColumnRenderData, TableColumnNode } from '../../table-column/table-column-node';
 import type { Store } from '../store';
@@ -140,20 +140,50 @@ export class Block {
 	// 块 -> cells 记忆化（key 为 list item 的 raw 对象）；list 重组 / 列变化时整体重置
 	_cells = new WeakMap<object, any[]>();
 
+	// 行对象（raw）-> 单行块；setData 时同一行对象复用同一个块，见 buildInitialList
+	_blocks = new WeakMap<object, any>();
+
 	constructor(store: Store) {
 		this.store = store;
 	}
 
+	/**
+	 * 构建初始 list：每行一个单行块
+	 *
+	 * 同一个行对象复用上一次的块对象，只原地更新序号：RecycleList 按数据项引用沿用已测尺寸，
+	 * 块对象不变，删除/插入/排序时未变的行就不必重新渲染测量。
+	 * 序号经响应式代理写入，已渲染的块才会随之更新 rowIndex
+	 * @param data 行数据
+	 * @returns 单行块列表
+	 */
 	buildInitialList(data: any[]) {
 		const { primaryKey } = this.store.table.props;
+		const used = new Set<object>();
 		return data.map((row, index) => {
-			const id = primaryKey ? getRowValue(row, primaryKey) : index;
-			return {
-				id: typeof id === 'undefined' ? index : id,
-				rows: [{ index, data: row }],
-				rowStart: index,
-				expand: false
-			};
+			const $id = primaryKey ? getRowValue(row, primaryKey) : index;
+			const id = typeof $id === 'undefined' ? index : $id;
+			const key = toRaw(row);
+			const reusable = !!key && typeof key === 'object';
+			const cached = reusable ? this._blocks.get(key) : undefined;
+
+			// 同一个行对象在数据里出现多次时只复用一次，其余新建，避免多个位置共用一个块
+			if (cached && !used.has(cached)) {
+				used.add(cached);
+				if (cached.id !== id || cached.rowStart !== index) {
+					const proxy = reactive(cached);
+					proxy.id = id;
+					proxy.rowStart = index;
+					proxy.rows[0].index = index;
+				}
+				return cached;
+			}
+
+			const block = { id, rows: [{ index, data: row }], rowStart: index, expand: false };
+			if (reusable && !cached) {
+				this._blocks.set(key, block);
+				used.add(block);
+			}
+			return block;
 		});
 	}
 
@@ -186,6 +216,12 @@ export class Block {
 
 		this.store.states.list = plan.blocks.map((block: any) => {
 			const rows = flatRows.slice(block.start, block.end + 1);
+			// 无合并的单行块与该行的初始块等价，直接沿用，保持块对象不变。
+			// list 可能已是上一次重组的结果（如列变化时重组），按行条目找回初始块，而不是按下标取
+			if (!block.hasMerge && rows.length === 1) {
+				const initial = this._blocks.get(toRaw(rows[0].data));
+				if (initial && initial.rows[0] === toRaw(rows[0])) return initial;
+			}
 			const id = primaryKey
 				? rows.map((row: any) => getRowValue(row.data, primaryKey)).join(',')
 				: block.start;

@@ -14,7 +14,7 @@ export const TableBody = defineComponent({
 	props: {
 		heightStyle: [Object, Array, String]
 	},
-	emits: ['scroll'],
+	emits: ['scroll', 'load-change'],
 	setup(props, { emit, expose, slots }) {
 		const instance = getCurrentInstance()!;
 		const table: any = inject('vc-table');
@@ -111,6 +111,7 @@ export const TableBody = defineComponent({
 							scrollerOptions={scrollerOptions.value}
 							batchCount={100}
 							onScroll={(e: any) => emit('scroll', e)}
+							onLoadChange={(v: any) => emit('load-change', v)}
 							onRowResize={externalVirtualized
 								? table.refreshAffix
 								: undefined}

@@ -13,6 +13,11 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
+	// 延迟展示 append slot，直到数据全部进入虚拟列表；普通表格一次渲染完，视为已到末尾
+	lazyTail: {
+		type: Boolean,
+		default: false
+	},
 	rowHeight: [String, Number],
 	// 列的宽度是否自撑开
 	fit: {
@@ -57,7 +62,8 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
-	lazy: Boolean,
+	// 树形数据的子节点是否懒加载（配合 loadExpand）
+	lazyTree: Boolean,
 	// 展示树形数据时，树节点的缩进
 	indent: {
 		type: Number,

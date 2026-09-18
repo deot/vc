@@ -2,7 +2,7 @@
 
 import { MTable, MTableColumn, Table, TableColumn } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
-import { nextTick, ref } from 'vue';
+import { nextTick, ref, toRaw } from 'vue';
 import { vi } from 'vitest';
 
 import { Store } from '../store/store';
@@ -725,7 +725,7 @@ describe('Tree / Expand row source paths (仅覆盖代码路径，不做业务�
 				ref={tableRef}
 				data={data}
 				primaryKey="id"
-				lazy
+				lazyTree
 				loadExpand={loadExpand}
 			>
 				<TableColumn label="名称" prop="name" />
@@ -760,7 +760,7 @@ describe('Tree / Expand row source paths (仅覆盖代码路径，不做业务�
 
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
-			<Table ref={tableRef} data={data} primaryKey="id" lazy loadExpand={loadExpand}>
+			<Table ref={tableRef} data={data} primaryKey="id" lazyTree loadExpand={loadExpand}>
 				<TableColumn label="名称" prop="name" />
 			</Table>
 		), { attachTo: document.body });
@@ -1094,10 +1094,176 @@ describe('Table virtual + scroll & delay', () => {
 		fixed.unmount();
 	});
 
-	it('refreshLayout forwards external virtualized geometry refresh to RecycleList', async () => {
+	describe('lazyTail / load-change', () => {
+		const settle = async () => {
+			await flush();
+			await sleep(30);
+			await flush();
+		};
+
+		const columns = () => [
+			<TableColumn label="A" prop="name" width={120} />,
+			<TableColumn label="B" prop="count" width={240} />
+		];
+
+		it('virtualized: defers append until all rows are built and forwards load-change', async () => {
+			const seen: any[] = [];
+			const wrapper = mount(() => (
+				<Table
+					data={buildData(20)}
+					primaryKey="id"
+					virtualized
+					lazyTail
+					onLoadChange={(v: any) => seen.push(v)}
+				>
+					{{
+						default: columns,
+						append: () => <div class="lazy-append">append</div>
+					}}
+				</Table>
+			), { attachTo: document.body });
+			await settle();
+
+			expect(wrapper.find('.lazy-append').exists()).toBe(true);
+			expect(seen[seen.length - 1]).toEqual({
+				isEnd: true,
+				isLoading: false,
+				isSilentRefresh: false,
+				isEmpty: false
+			});
+			wrapper.unmount();
+		});
+
+		it('virtualized: keeps append hidden while rows still have unbuilt batches', async () => {
+			const seen: any[] = [];
+			// 内部 batchCount 为 100；挂载阶段最多续建三批，500 行必然还有未构建数据
+			const wrapper = mount(() => (
+				<Table
+					data={buildData(500)}
+					primaryKey="id"
+					virtualized
+					lazyTail
+					onLoadChange={(v: any) => seen.push(v)}
+				>
+					{{
+						default: columns,
+						append: () => <div class="lazy-append">append</div>
+					}}
+				</Table>
+			), { attachTo: document.body });
+			await settle();
+
+			const list = (wrapper.findComponent({ name: 'vc-recycle-list' }).vm as any).$.exposed;
+			expect(list.store.local.hasMore).toBe(true);
+			expect(wrapper.find('.lazy-append').exists()).toBe(false);
+			expect(seen[seen.length - 1].isEnd).toBe(false);
+			wrapper.unmount();
+		});
+
+		it('virtualized: keeps append visible when data is replaced with the same length', async () => {
+			const seen: any[] = [];
+			const data = ref(buildData(20));
+			const wrapper = mount(() => (
+				<Table
+					data={data.value}
+					primaryKey="id"
+					virtualized
+					lazyTail
+					onLoadChange={(v: any) => seen.push(v)}
+				>
+					{{
+						default: columns,
+						append: () => <div class="lazy-append">append</div>
+					}}
+				</Table>
+			), { attachTo: document.body });
+			await settle();
+			expect(wrapper.find('.lazy-append').exists()).toBe(true);
+			const emittedBefore = seen.length;
+
+			// 如排序：整体替换为等长的新数组
+			data.value = buildData(20).map(row => ({ ...row, id: `${row.id}-b`, name: `${row.name}-b` }));
+			await nextTick();
+			expect(wrapper.find('.lazy-append').exists()).toBe(true);
+
+			await settle();
+			expect(wrapper.find('.lazy-append').exists()).toBe(true);
+			expect(seen.slice(emittedBefore).some(v => v.isEnd === false)).toBe(false);
+			wrapper.unmount();
+		});
+
+		it('normal table: renders append immediately and reports isEnd on mount', async () => {
+			const seen: any[] = [];
+			const wrapper = mount(() => (
+				<Table data={buildData(3)} lazyTail onLoadChange={(v: any) => seen.push(v)}>
+					{{
+						default: columns,
+						append: () => <div class="lazy-append">append</div>
+					}}
+				</Table>
+			), { attachTo: document.body });
+
+			expect(seen[0]).toEqual({
+				isEnd: true,
+				isLoading: false,
+				isSilentRefresh: false,
+				isEmpty: false
+			});
+			await settle();
+			expect(wrapper.find('.lazy-append').exists()).toBe(true);
+			wrapper.unmount();
+		});
+
+		it('normal table: reports isEmpty for empty data', async () => {
+			const seen: any[] = [];
+			const wrapper = mount(() => (
+				<Table data={[]} onLoadChange={(v: any) => seen.push(v)}>
+					{{ default: columns }}
+				</Table>
+			), { attachTo: document.body });
+
+			expect(seen[seen.length - 1]).toEqual({
+				isEnd: true,
+				isLoading: false,
+				isSilentRefresh: false,
+				isEmpty: true
+			});
+			wrapper.unmount();
+		});
+	});
+
+	it('automatic layout updates never force the inner RecycleList to re-measure', async () => {
+		const data = ref(buildData(20));
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
-			<Table ref={tableRef} data={buildData(20)} primaryKey="id" virtualized>
+			<Table ref={tableRef} data={data.value} primaryKey="id" virtualized>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		const recycleList = wrapper.findComponent({ name: 'vc-recycle-list' });
+		const refreshLayout = vi.fn();
+		(recycleList.vm as any).$!.exposed.refreshLayout = refreshLayout;
+
+		// 数据变化、列变化触发的布局更新：RecycleList 自己会处理数据与尺寸，不应被整体重测
+		data.value = data.value.slice(1);
+		await flush();
+		tableRef.value.store.scheduleLayout();
+		await sleep(80);
+		await flush();
+
+		expect(refreshLayout).not.toHaveBeenCalled();
+		wrapper.unmount();
+	});
+
+	it.each([
+		['external virtualized', { virtualized: true }],
+		['fixed height', { height: 300 }]
+	])('explicit refreshLayout re-measures the inner RecycleList (%s)', async (_, props) => {
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(20)} primaryKey="id" {...props}>
 				<TableColumn label="名称" prop="name" />
 			</Table>
 		), { attachTo: document.body });
@@ -2409,7 +2575,7 @@ describe('Additional source-path coverage', () => {
 		]);
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
-			<Table ref={tableRef} data={data} primaryKey="id" lazy loadExpand={loadExpand}>
+			<Table ref={tableRef} data={data} primaryKey="id" lazyTree loadExpand={loadExpand}>
 				<TableColumn type="selection" />
 				<TableColumn label="名称" prop="name" />
 			</Table>
@@ -3690,6 +3856,110 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 		vm.toggleRowExpansion(vm.store.states.data[0], false);
 		await flush();
 		expect(wrapper.find('.vc-table__tr.is-expanded').exists()).toBe(false);
+		wrapper.unmount();
+	});
+});
+
+describe('Block reuse on setData', () => {
+	/**
+	 * 挂载一个非虚拟化表格（渲染全部块），返回数据源与读取工具
+	 * @param props 额外的 Table props
+	 * @returns 挂载结果与读取工具
+	 */
+	const setup = async (props: Record<string, any> = {}) => {
+		const data = ref(buildData(5));
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={data.value} {...props}>
+				<TableColumn label="名称" prop="name" />
+				<TableColumn label="地址" prop="address" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		return {
+			data,
+			wrapper,
+			blocks: () => toRaw(tableRef.value.store.states.list).slice(),
+			// 已渲染的行：[data-row, 名称]
+			rendered: () => wrapper.findAll('.vc-table__body-wrapper .vc-table__tr').map(tr => [
+				tr.attributes('data-row'),
+				tr.find('.vc-table__td').text()
+			])
+		};
+	};
+
+	it('reuses the block of a kept row and updates its index in place', async () => {
+		const { data, wrapper, blocks, rendered } = await setup({ primaryKey: 'id' });
+		const before = blocks();
+
+		data.value = data.value.filter(row => row.id !== 'id__1');
+		await flush();
+
+		const after = blocks();
+		expect(after).toHaveLength(4);
+		// 行对象没变，块对象就不变（RecycleList 据此沿用已测尺寸）
+		expect(after[0]).toBe(before[0]);
+		expect(after[1]).toBe(before[2]);
+		expect(after[3]).toBe(before[4]);
+		expect(after.map((block: any) => [block.rowStart, block.rows[0].index])).toEqual([[0, 0], [1, 1], [2, 2], [3, 3]]);
+		// 块对象引用不变，但已渲染的行仍要随序号更新
+		expect(rendered()).toEqual([['0', 'name-0'], ['1', 'name-2'], ['2', 'name-3'], ['3', 'name-4']]);
+
+		wrapper.unmount();
+	});
+
+	it('gives a new row object a new block and keeps index ids in sync without primaryKey', async () => {
+		const { data, wrapper, blocks } = await setup();
+		const before = blocks();
+
+		data.value = [{ ...data.value[0] }, ...data.value.slice(2)];
+		await flush();
+
+		const after = blocks();
+		expect(after[0]).not.toBe(before[0]);
+		expect(after[1]).toBe(before[2]);
+		// 没有 primaryKey 时 id 即序号
+		expect(after.map((block: any) => block.id)).toEqual([0, 1, 2, 3]);
+
+		wrapper.unmount();
+	});
+
+	it('does not share one block between repeated row objects', async () => {
+		const { data, wrapper, blocks } = await setup();
+		const [a, b] = data.value;
+
+		data.value = [a, b, a];
+		await flush();
+
+		const after = blocks();
+		expect(after[0]).not.toBe(after[2]);
+		expect(after.map((block: any) => block.rowStart)).toEqual([0, 1, 2]);
+
+		wrapper.unmount();
+	});
+
+	it('keeps initial blocks for unmerged rows when getSpan regroups the list', async () => {
+		// 只合并第 0、1 行
+		const getSpan = ({ row, columnIndex }: any) => {
+			if (columnIndex !== 0) return [1, 1];
+			if (row.id === 'id__0') return [2, 1];
+			if (row.id === 'id__1') return [0, 0];
+			return [1, 1];
+		};
+		const { data, wrapper, blocks } = await setup({ primaryKey: 'id', getSpan });
+		const before = blocks();
+		expect(before).toHaveLength(4);
+		expect(before[0].hasMerge).toBe(true);
+
+		data.value = data.value.filter(row => row.id !== 'id__3');
+		await flush();
+
+		const after = blocks();
+		expect(after).toHaveLength(3);
+		expect(after[1]).toBe(before[1]);
+		expect(after[2]).toBe(before[3]);
+		expect(after[2].rowStart).toBe(3);
+
 		wrapper.unmount();
 	});
 });

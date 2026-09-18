@@ -53,7 +53,7 @@ class Store extends BaseWatcher {
 		const { props } = options.table;
 		merge(this.states, {
 			expandSelectable: props.expandSelectable,
-			treeLazy: props.lazy || false,
+			treeLazy: props.lazyTree || false,
 			treeLazyColumnIdentifier: props.treeMap.hasChildren || 'hasChildren',
 			treeChildrenColumnName: props.treeMap.children || 'children',
 		});
@@ -119,8 +119,12 @@ class Store extends BaseWatcher {
 		}
 	}
 
-	// 适配层，expand-primary-keys 在 Expand 与 TreeTable 中都有使用
-	// 这里会触发额外的计算，但为了兼容性，暂时这么做
+	/**
+	 * 适配层，expand-primary-keys 在 Expand 与 TreeTable 中都有使用
+	 *
+	 * 这里会触发额外的计算，但为了兼容性，暂时这么做
+	 * @param val 展开行的主键集合
+	 */
 	setExpandRowValueAdapter(val: any) {
 		this.expand.reset(val);
 		this.tree.expand(val);

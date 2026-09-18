@@ -7,10 +7,9 @@
 				Table 未设置 height/max-height，通过 virtualized 使用 Window 纵向滚动；表格内部仍负责横向滚动和固定列。
 			</p>
 			<div class="actions">
-				<button type="button" @click="toggleRowHeight">
+				<button type="button" @click="expanded = !expanded">
 					动态行高：{{ expanded ? '展开' : '收起' }}
 				</button>
-				<button type="button" @click="tableRef?.refreshAffix()">refreshAffix</button>
 			</div>
 		</section>
 
@@ -22,16 +21,17 @@
 		</section>
 
 		<Table
-			ref="tableRef"
 			class="virtualized-table"
 			primary-key="id"
 			virtualized
+			lazy-tail
 			border
 			stripe
 			show-summary
 			:fit="false"
 			:affix="{ offset: 8 }"
 			:data="tableData"
+			@load-change="loadState = $event"
 		>
 			<TableColumn type="selection" fixed="left" :width="64" />
 			<TableColumn prop="id" label="ID" fixed="left" :width="100" />
@@ -57,23 +57,30 @@
 					<a href="javascript:;">查看 {{ rowIndex }}</a>
 				</template>
 			</TableColumn>
+			<template #append>
+				<div class="append-row">Table append slot</div>
+			</template>
 		</Table>
 
-		<section class="page-content after-content">
-			<h2>其他尾部内容</h2>
-			<p v-for="item in 5" :key="item">
-				页面尾部区块 {{ item }}：虚拟表格的尾部边界不会延伸到这里。
-			</p>
-		</section>
+		<Transition name="reveal">
+			<section v-show="loadState.isEnd" class="page-content after-content">
+				<h2>其他尾部内容</h2>
+				<p v-for="item in 5" :key="item">
+					页面尾部区块 {{ item }}：虚拟表格的尾部边界不会延伸到这里。
+				</p>
+			</section>
+		</Transition>
 	</main>
 </template>
 
 <script setup>
-import { nextTick, ref } from 'vue';
+import { ref } from 'vue';
 import { Table, TableColumn } from '..';
 
-const tableRef = ref();
+// 行高变化由虚拟列表自动感知并重新测量，吸底合计行随之刷新，不需要手动调用 refreshLayout / refreshAffix
 const expanded = ref(false);
+// load-change 是单向的：表格把快照推过来，外层只读
+const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false });
 
 const tableData = Array.from({ length: 2000 }, (_, index) => ({
 	id: index + 1,
@@ -85,13 +92,6 @@ const tableData = Array.from({ length: 2000 }, (_, index) => ({
 	updatedAt: `2026-08-${String((index % 28) + 1).padStart(2, '0')} 10:30`,
 	description: `第 ${index + 1} 行使用动态内容高度。切换上方按钮可让已渲染行发生尺寸变化，并继续由虚拟列表测量。`
 }));
-
-const toggleRowHeight = async () => {
-	expanded.value = !expanded.value;
-	await nextTick();
-	tableRef.value?.refreshLayout();
-	tableRef.value?.refreshAffix();
-};
 </script>
 
 <style scoped>
@@ -164,5 +164,23 @@ const toggleRowHeight = async () => {
 
 .after-content {
 	margin-top: 24px;
+}
+
+.append-row {
+	padding: 16px;
+	color: #66788a;
+	text-align: center;
+	background: #f8fafc;
+}
+/* 延迟展示的内容淡入，避免加载完成的一瞬间直接弹出 */
+.reveal-enter-active,
+.reveal-leave-active {
+	transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.reveal-enter-from,
+.reveal-leave-to {
+	opacity: 0;
+	transform: translateY(8px);
 }
 </style>
