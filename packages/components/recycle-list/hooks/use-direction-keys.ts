@@ -31,7 +31,8 @@ const getKeys = (v: boolean) => {
 
 		// 交叉轴（fill=false 时仍由内部 ScrollerWheel 承载）
 		crossAxis: v ? 'x' : 'y',
-		crossScrollAxis: v ? 'scrollLeft' : 'scrollTop'
+		crossScrollAxis: v ? 'scrollLeft' : 'scrollTop',
+		crossClientSize: v ? 'clientWidth' : 'clientHeight'
 	} as const;
 };
 

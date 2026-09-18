@@ -17,7 +17,7 @@
 					:style="{
 						background: row.background
 					}"
-					@click="handleClick(row)"
+					@click="handleClick"
 				>
 					<div>id: {{ row.id }}</div>
 					<div>page: {{ row.page }}</div>
@@ -78,7 +78,7 @@ const loadData = ({ current: page, count: loaded }) => {
 	});
 };
 
-const handleClick = (data) => {
+const handleClick = () => {
 	dynamicSize.value = Math.floor(Math.random() * 20) + 20;
 };
 

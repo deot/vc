@@ -1,4 +1,4 @@
-import type { DirectionKeys } from '../use-direction-keys';
+import type { DirectionKeys } from '../hooks/use-direction-keys';
 
 /**
  * 主轴相关的 DOM 属性名映射（由 useDirectionKeys 按 vertical 生成）

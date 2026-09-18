@@ -1,4 +1,4 @@
-import type { DirectionKeys } from '../use-direction-keys';
+import type { DirectionKeys } from '../hooks/use-direction-keys';
 import { ExternalViewport } from './external';
 import { InnerViewport } from './inner';
 import type {

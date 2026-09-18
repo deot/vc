@@ -40,13 +40,19 @@ const pickColumn = (sizes: number[], inverted: boolean) => {
  * 两种模式下新增项都落在扫描序尾部，块快照因此始终可复用
  */
 export class Layout {
-	/** 各块起点处的列高快照 */
+	/**
+	 * 各块起点处的列高快照
+	 */
 	private checkpoints: number[][] = [];
 
-	/** 上次重排时各扫描位采用的 size，用于定位第一个发生变化的位置 */
+	/**
+	 * 上次重排时各扫描位采用的 size，用于定位第一个发生变化的位置
+	 */
 	private laidSizes: number[] = [];
 
-	/** inverted 下各扫描位"距列底"的原始位置，反转成视觉位置时需要 */
+	/**
+	 * inverted 下各扫描位"距列底"的原始位置，反转成视觉位置时需要
+	 */
 	private laidOffsets: number[] = [];
 
 	private laidLength = 0;

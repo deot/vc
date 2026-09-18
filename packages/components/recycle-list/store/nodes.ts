@@ -10,7 +10,9 @@ import type { RecycleListItemNodeRaw } from './base-watcher';
  * 所有创建与回收路径都经 attach / detach，避免跨文件手工维护
  */
 export class Nodes {
-	/** 数据索引 -> 节点；inverted 下数组下标与数据索引不对齐，靠它 O(1) 定位 */
+	/**
+	 * 数据索引 -> 节点；inverted 下数组下标与数据索引不对齐，靠它 O(1) 定位
+	 */
 	byIndex = new Map<number, RecycleListItemNodeRaw>();
 
 	/**
@@ -99,11 +101,10 @@ export class Nodes {
 	 * 创建新节点并登记（不放入 rebuildData，由调用方决定位置）
 	 * @param index 数据索引
 	 * @param data 行数据；缺省则为占位节点
-	 * @param loaded 是否已加载；缺省则 !!data
 	 * @returns 新建的节点
 	 */
-	create(index: number, data?: any, loaded?: boolean) {
-		return this.attach(index, RecycleListItemNode.of({ index, data, loaded }));
+	create(index: number, data?: any) {
+		return this.attach(index, RecycleListItemNode.of({ index, data }));
 	}
 
 	/**
@@ -112,11 +113,10 @@ export class Nodes {
 	 * @param node 已有节点
 	 * @param index 数据索引
 	 * @param data 行数据；缺省则为占位
-	 * @param loaded 是否已加载；缺省则 !!data
 	 * @returns 复用后的节点
 	 */
-	rebind(node: RecycleListItemNodeRaw, index: number, data?: any, loaded?: boolean) {
-		node.rebind({ index, data, loaded });
+	rebind(node: RecycleListItemNodeRaw, index: number, data?: any) {
+		node.rebind({ index, data });
 		return this.attach(index, node);
 	}
 
@@ -128,6 +128,7 @@ export class Nodes {
 	 */
 	setSize(node: RecycleListItemNodeRaw, size: number) {
 		if (node.raw.size !== size) node.states.size = size;
+		if (size > 0) node.measured = true;
 		this.sync(node);
 	}
 
@@ -150,42 +151,47 @@ export class Nodes {
 	}
 
 	/**
-	 * 构建 [start, end) 区间的节点，返回待测量的索引
+	 * 构建 [start, end) 区间的节点，返回待测量的节点
 	 *
-	 * 已加载的节点跳过；未加载的复用 rebind，不存在的新建。
+	 * 有数据且已测出尺寸的节点跳过（force 时不跳过）；其余的复用 rebind，不存在的新建。
 	 * inverted 下新建节点整批插到头部，并把可见范围下标同步后移
 	 * @param start 区间起点（含）
 	 * @param end 区间终点（不含）
-	 * @param reversed inverted 本地翻页时向前补建更早的数据，逆序后头部保持升序
-	 * @returns 本次构建的数据索引列表
+	 * @param options 构建选项
+	 * @param options.reversed inverted 本地翻页时向前补建更早的数据，逆序后头部保持升序
+	 * @param options.force 已测量的节点也重新构建，用于整体重测
+	 * @returns 本次构建、待测量的节点
 	 */
-	build(start: number, end: number, reversed = false) {
+	build(start: number, end: number, options: { reversed?: boolean; force?: boolean } = {}) {
 		const { states, props, local } = this.store;
-		const indices: number[] = [];
+		const { reversed, force } = options;
+		const nodes: RecycleListItemNodeRaw[] = [];
 		const created: RecycleListItemNodeRaw[] = [];
 
 		for (let step = start; step < end; step++) {
 			const index = reversed ? end - 1 - (step - start) : step;
 			const existing = this.get(index);
-			if (existing?.raw.loaded) continue;
+			// 尺寸为 0 表示还没测出来，不能当成已完成
+			if (!force && existing && !existing.raw.isPlaceholder && existing.raw.size > 0) continue;
 
 			if (existing) {
-				this.rebind(existing, index, local.originalData[index]);
-			} else {
-				const node = this.create(index, local.originalData[index]);
-				props.inverted
-					? created.push(node)
-					: (states.rebuildData[index] = node);
+				nodes.push(this.rebind(existing, index, local.originalData[index]));
+				continue;
 			}
-			indices.push(index);
+			const node = this.create(index, local.originalData[index]);
+			props.inverted
+				? created.push(node)
+				: (states.rebuildData[index] = node);
+			nodes.push(node);
 		}
 
-		if (props.inverted && indices.length) {
+		// 数组下标只因插到头部的新节点而后移，复用的节点不改变数组长度
+		if (props.inverted && created.length) {
 			this.prepend(created);
-			states.firstItemIndex += indices.length;
-			states.lastItemIndex += indices.length;
+			states.firstItemIndex += created.length;
+			states.lastItemIndex += created.length;
 		}
-		return indices;
+		return nodes;
 	}
 
 	/**
@@ -248,31 +254,48 @@ export class Nodes {
 	}
 
 	/**
-	 * 标记全部已构建节点待重新测量
-	 */
-	invalidate() {
-		this.store.states.rebuildData.forEach(item => item?.invalidate());
-	}
-
-	/**
-	 * setData 后按已构建区间重建节点；同索引的旧节点复用以保持 id 稳定，count 为 0 时得到空数组
+	 * setData 后按已构建区间重建节点，count 为 0 时得到空数组
+	 *
+	 * 节点跟着数据项走：与旧数组中引用相同（===）的数据项视为内容未变，认领原来承载它的节点，
+	 * 沿用尺寸与几何、不再重测，id 不变，渲染时只是移动位置；删除、插入、排序因此只需测量新出现的数据项。
+	 * 没有被认领的位置优先复用同索引的旧节点（保持 id 稳定），清空几何重新测量。
 	 * 原 Store.setData 的节点重建段；复用/新建的选择原 Store.reuseOrCreateNode（private），此处内联为 existing ? rebind : create
 	 * @param base 已构建区间在 originalData 中的起始下标
 	 * @param count 已构建条数
 	 * @param dataAt 按数据索引取行数据
 	 */
 	rebuild(base: number, count: number, dataAt: (index: number) => any) {
-		const previous = new Map<number, RecycleListItemNodeRaw>();
-		this.store.states.rebuildData.forEach(node => node && previous.set(node.raw.index, node));
+		// 数据项（raw）-> 原来承载它的节点；raw.data 经响应式写入，存的就是 raw
+		const byData = new Map<any, RecycleListItemNodeRaw>();
+		const byIndex = new Map<number, RecycleListItemNodeRaw>();
+		this.store.states.rebuildData.forEach((node) => {
+			if (!node) return;
+			byIndex.set(node.raw.index, node);
+			!node.raw.isPlaceholder && !byData.has(node.raw.data) && byData.set(node.raw.data, node);
+		});
+
+		// 先认领：同一个数据项出现多次时只有第一次认领到原节点
+		const items = Array.from({ length: count }, (_, i) => dataAt(base + i));
+		const claimed = new Set<RecycleListItemNodeRaw>();
+		const owners = items.map((data) => {
+			const node = data ? byData.get(toRaw(data)) : undefined;
+			if (!node || claimed.has(node)) return;
+			claimed.add(node);
+			return node;
+		});
 
 		this.clear();
-		this.store.states.rebuildData = Array.from({ length: count }, (_, i) => {
+		this.store.states.rebuildData = items.map((data, i) => {
 			const index = base + i;
-			const existing = previous.get(index);
-			// loaded 置 false：数据源已更换，即便复用节点也要重新测量
-			return existing
-				? this.rebind(existing, index, dataAt(index), false)
-				: this.create(index, dataAt(index), false);
+			const owner = owners[i];
+			// 尺寸为 0 的节点仍待测，交给下一次构建
+			if (owner) return this.attach(index, owner.reuse({ index, data }));
+
+			// 新的数据项：清空几何重新测量
+			const existing = byIndex.get(index);
+			if (!existing || claimed.has(existing)) return this.create(index, data);
+			claimed.add(existing);
+			return this.rebind(existing, index, data);
 		});
 	}
 }

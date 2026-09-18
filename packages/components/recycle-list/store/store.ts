@@ -12,7 +12,7 @@ import { Scroll } from './scroll';
 /**
  * 被 store 接管的 props：共享同一 Store 的多个实例以 store.props 为准，而非各自的组件 props
  */
-const STORE_PROP_KEYS = ['batchCount', 'bufferCount', 'inverted', 'cols', 'gutter', 'loadData'] as const;
+export const STORE_PROP_KEYS = ['batchCount', 'bufferCount', 'inverted', 'cols', 'gutter', 'loadData'] as const;
 
 /**
  * 按组件 props 定义生成带默认值的响应式 store.props
@@ -86,7 +86,23 @@ export class Store extends BaseWatcher {
 			this.local.buildCount,
 			index => this.local.originalData[index]
 		);
+		// 沿用尺寸的节点跟着数据项换了位置：立即按已知尺寸重排，等待新项测量期间它们也在正确的位置上
+		this.layout.refresh();
 		return true;
+	}
+
+	/**
+	 * 同步被 store 接管的属性；只覆盖传入的键
+	 *
+	 * 组件自建 store 时由组件属性驱动；共享 store 时以 store.props 为准，由使用方直接改
+	 * @param next 待同步的属性
+	 */
+	syncProps(next: Partial<Props>) {
+		STORE_PROP_KEYS.forEach((key) => {
+			if (typeof next[key] !== 'undefined' && this.props[key] !== next[key]) {
+				(this.props as any)[key] = next[key];
+			}
+		});
 	}
 
 	/**

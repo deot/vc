@@ -5,7 +5,7 @@ import * as $ from '@deot/helper-dom';
 import { props as containerProps } from './container-props';
 import { DEFAULT, PENDING, PULL, REFRESH } from './container-constant';
 import { Customer } from '../customer';
-import { useDirectionKeys } from './use-direction-keys';
+import { useDirectionKeys } from './hooks/use-direction-keys';
 
 const COMPONENT_NAME = 'vc-recycle-list-container';
 

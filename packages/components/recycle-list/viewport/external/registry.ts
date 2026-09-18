@@ -1,12 +1,18 @@
 import { isWindow, getScrollingElement } from './dom';
 
 type ViewportRegistry = {
-	/** 被抑制 overflow-anchor 的元素；普通对象目标没有 */
+	/**
+	 * 被抑制 overflow-anchor 的元素；普通对象目标没有
+	 */
 	anchorElement?: HTMLElement;
-	/** 抑制前的内联 overflow-anchor 值与优先级，最后一个列表解绑时还原 */
+	/**
+	 * 抑制前的内联 overflow-anchor 值与优先级，最后一个列表解绑时还原
+	 */
 	anchorPriority: string;
 	anchorValue: string;
-	/** 共享该承载者的所有列表的失效回调 */
+	/**
+	 * 共享该承载者的所有列表的失效回调
+	 */
 	listeners: Set<() => void>;
 };
 

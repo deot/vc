@@ -6,3 +6,4 @@ export {
 	RecycleList,
 	RecycleListStore
 };
+export type { RecycleListLoadState } from './store';

@@ -73,6 +73,12 @@ export const props = {
 		default: true
 	},
 
+	// 是否延迟展示加载方向末端的 slot（正序 footer / inverted header），直到列表到达末尾（disabled 时为本地数据构建完）
+	lazyTail: {
+		type: Boolean,
+		default: false
+	},
+
 	scrollerOptions: Object as PropType<ScrollerProps>,
 
 	renderEmpty: Function as Render,

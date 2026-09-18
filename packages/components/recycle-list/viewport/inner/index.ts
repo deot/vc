@@ -1,4 +1,4 @@
-import type { DirectionKeys } from '../../use-direction-keys';
+import type { DirectionKeys } from '../../hooks/use-direction-keys';
 import type { Bounds, ScrollSource, ViewportAnchors, ViewportOptions } from '../types';
 
 /**

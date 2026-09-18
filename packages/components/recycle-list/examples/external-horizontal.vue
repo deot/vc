@@ -16,21 +16,25 @@
 
 		<div class="horizontal-viewport">
 			<div class="horizontal-track">
-				<section class="side-content before">
-					<h2>横向前置内容</h2>
-					<p>500px external head</p>
-				</section>
+				<!-- 被不断增长的列表推走的一侧才延迟展示：inverted 数据在头部增长，推走的是前置内容 -->
+				<Transition name="reveal">
+					<section v-show="mode !== 'inverted' || loadState.isEnd" class="side-content before">
+						<h2>横向前置内容</h2>
+						<p>500px external head</p>
+					</section>
+				</Transition>
 
 				<RecycleList
-					:key="mode"
 					ref="listRef"
 					class="horizontal-list"
+					lazy-tail
 					:fill="false"
 					:vertical="false"
 					:pullable="mode === 'pullable'"
 					:inverted="mode === 'inverted'"
 					:batch-count="16"
 					:load-data="loadData"
+					@load-change="loadState = $event"
 				>
 					<template #default="{ row }">
 						<article
@@ -49,12 +53,19 @@
 					<template #complete>
 						<div class="horizontal-state">Complete</div>
 					</template>
+					<template #footer>
+						<Transition name="reveal" appear>
+							<div class="horizontal-state">Footer</div>
+						</Transition>
+					</template>
 				</RecycleList>
 
-				<section class="side-content after">
-					<h2>横向后置内容</h2>
-					<p>600px external footer</p>
-				</section>
+				<Transition name="reveal">
+					<section v-show="mode === 'inverted' || loadState.isEnd" class="side-content after">
+						<h2>横向后置内容</h2>
+						<p>600px external footer</p>
+					</section>
+				</Transition>
 			</div>
 		</div>
 
@@ -77,6 +88,8 @@ const modes = [
 const mode = ref('normal');
 const wide = ref(false);
 const listRef = ref();
+// load-change 是单向的：列表把快照推过来，外层只读
+const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false });
 const pageSize = 16;
 const pageTotal = 5;
 
@@ -203,5 +216,17 @@ const loadData = ({ current }) => new Promise((resolve) => {
 .tip {
 	margin-top: 16px;
 	color: #627d98;
+}
+
+/* 延迟展示的内容淡入，避免加载完成的一瞬间直接弹出；横向沿主轴位移 */
+.reveal-enter-active,
+.reveal-leave-active {
+	transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.reveal-enter-from,
+.reveal-leave-to {
+	opacity: 0;
+	transform: translateX(12px);
 }
 </style>

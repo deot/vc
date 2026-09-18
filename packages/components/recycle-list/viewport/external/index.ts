@@ -1,6 +1,6 @@
 import { nextTick } from 'vue';
 import { Resize } from '@deot/helper-resize';
-import type { DirectionKeys } from '../../use-direction-keys';
+import type { DirectionKeys } from '../../hooks/use-direction-keys';
 import type {
 	Bounds,
 	ScrollEventLike,

@@ -49,13 +49,6 @@ $component-name: vc-recycle-list;
 		box-sizing: border-box;
 	}
 
-	@include element(transition) {
-		width: 100%;
-		opacity: 0;
-		transition-duration: .5s;
-		transition-property: opacity;
-	}
-
 	@include element(column) {
 		display: inline-block;
 		width: 100%;

@@ -7,7 +7,6 @@
 			:cols="5"
 			:disabled="disabled"
 			:data="dataSource"
-			:local-page-size="200"
 			:load-data="loadData"
 			:scroller-options="{
 				native: false,

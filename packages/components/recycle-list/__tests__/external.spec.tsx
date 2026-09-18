@@ -738,4 +738,47 @@ describe('RecycleList fill=false', () => {
 
 		wrapper.unmount();
 	});
+
+	it('gates the tail slot on isEnd rather than on fill', async () => {
+		let resolveFn: (v: any) => void = () => {};
+		const loadData = () => new Promise((resolve) => { resolveFn = resolve; });
+
+		const wrapper = mount(() => (
+			<RecycleList fill={false} lazyTail loadData={loadData as any}>
+				{{
+					header: () => <div class="my-header">HEADER</div>,
+					footer: () => <div class="my-footer">FOOTER</div>
+				}}
+			</RecycleList>
+		), { attachTo: document.body });
+		await flush();
+
+		expect(wrapper.find('.my-footer').exists()).toBe(false);
+		expect(wrapper.find('.my-header').exists()).toBe(true);
+
+		resolveFn(false);
+		await flush();
+
+		expect(wrapper.find('.my-footer').exists()).toBe(true);
+		wrapper.unmount();
+	});
+
+	it('does not re-measure every node when only the external carrier resizes', async () => {
+		const listRef = ref<any>();
+		const wrapper = mount(() => (
+			<RecycleList ref={listRef} fill={false} disabled data={[{ id: 1 }, { id: 2 }]} batchCount={10}>
+				{{ default: ({ row }: any) => <div>{row.id}</div> }}
+			</RecycleList>
+		), { attachTo: document.body });
+		await flush();
+
+		// 节点尺寸只取决于列表自身的交叉轴，承载者（这里是 Window）尺寸变化由列表 wrapper 的观察负责
+		const build = vi.spyOn(listRef.value.store.nodes, 'build');
+		window.dispatchEvent(new Event('resize'));
+		await sleep(80);
+		await flush();
+
+		expect(build).not.toHaveBeenCalled();
+		wrapper.unmount();
+	});
 });

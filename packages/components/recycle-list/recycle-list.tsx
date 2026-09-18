@@ -14,18 +14,21 @@ import {
 	shallowRef,
 	inject
 } from 'vue';
-import { throttle, getUid } from '@deot/helper-utils';
+import { throttle } from '@deot/helper-utils';
 import { Resize } from '@deot/helper-resize';
 import { Interrupter } from '@deot/helper-scheduler';
 import { props as recycleListProps } from './recycle-list-props';
-import { VcInstance } from '../vc';
 import { Defer } from '../defer';
 import { Customer } from '../customer';
 import { ScrollerWheel } from '../scroller';
 import { ScrollState } from './scroll-state';
 import { Container } from './container';
 import { Resizer } from '../resizer';
-import { useDirectionKeys } from './use-direction-keys';
+import { useDirectionKeys } from './hooks/use-direction-keys';
+import { useMeasure } from './hooks/use-measure';
+import { useRenderer } from './hooks/use-renderer';
+import { useScrollLock } from './hooks/use-scroll-lock';
+import { useLoadEmitter, useLoadState } from './hooks/use-load-state';
 import { Store } from './store';
 import type { RecycleListItemNodeRaw, ScrollLeaf } from './store';
 import { Viewport } from './viewport';
@@ -33,16 +36,10 @@ import { Viewport } from './viewport';
 const isTouch = typeof document !== 'undefined' && 'ontouchend' in document;
 const COMPONENT_NAME = 'vc-recycle-list';
 
-/**
- * 程序化滚动后继续屏蔽 handleScroll 的时长（约一帧），
- * 覆盖浏览器异步派发的原生 scroll 事件，避免误触发 loadData / 广播
- */
-const SCROLL_LOCK_MS = 16.7;
-
 export const RecycleList = defineComponent({
 	name: COMPONENT_NAME,
 	props: recycleListProps,
-	emits: ['scroll', 'row-resize'],
+	emits: ['scroll', 'row-resize', 'load-change'],
 	setup(props, { slots, expose, emit }) {
 		const instance = getCurrentInstance()!;
 		const leaf = instance as unknown as ScrollLeaf;
@@ -54,48 +51,20 @@ export const RecycleList = defineComponent({
 		// ---------------------------------------------------------------------
 		// 元素引用
 		// ---------------------------------------------------------------------
-		const placeholder = shallowRef();
 		const scroller = shallowRef();
 		const content = shallowRef();
-		const scrollState = shallowRef();
 		const wrapper = computed(() => scroller.value?.wrapper);
 		const getRoot = () => instance.vnode.el as HTMLElement | undefined;
 
-		// 已渲染项 / 隐藏测量池中的元素，按数据索引存放；
-		// 仅供测量读取，不参与渲染，因此不需要响应式；卸载时删除避免无限堆积
-		const visibleEls: Record<number, any> = {};
-		const pooledEls: Record<number, any> = {};
-		const trackEl = (target: Record<number, any>, index: number, el: any) => {
-			if (el) {
-				target[index] = el;
-			} else {
-				delete target[index];
-			}
-		};
-
 		// ---------------------------------------------------------------------
-		// 渲染器与派生配置
+		// 渲染与测量
 		// ---------------------------------------------------------------------
-		const renderer = computed(() => {
-			const globalProps = VcInstance.options?.RecycleList || {};
-			return {
-				refresh: props.renderRefresh || globalProps.renderRefresh,
-				placeholder: props.renderPlaceholder || globalProps.renderPlaceholder,
-				loading: props.renderLoading || globalProps.renderLoading,
-				complete: props.renderComplete || globalProps.renderComplete,
-				empty: props.renderEmpty || globalProps.renderEmpty
-			};
-		});
 
-		const hasPlaceholder = computed(() => {
-			return !!slots.placeholder || renderer.value.placeholder;
-		});
+		// 加载状态：lazyTail、ScrollState、load-change 共用
+		const loadState = useLoadState(props, store);
 
-		// 骨架 DOM 的实际尺寸，作为测量兜底
-		const placeholderFallbackSize = computed(() => {
-			if (!hasPlaceholder.value) return 0;
-			return placeholder.value[K.offsetSize];
-		});
+		const { renderer, hasPlaceholder, renderEdgeSlot } = useRenderer(props, slots, store, loadState);
+		const { placeholder, trackVisible, trackPooled, isPooled, measure, remeasureVisible } = useMeasure(store, K, hasPlaceholder);
 
 		// fill=false 时主轴交给外部承载者：内部 wrapper 沿主轴随内容展开，不能再被 scrollerOptions 限高/限宽
 		const resolvedScrollerOptions = computed(() => {
@@ -114,6 +83,7 @@ export const RecycleList = defineComponent({
 		// ---------------------------------------------------------------------
 		// 滚动源：fill=true 为内部 ScrollerWheel，fill=false 为外部承载者
 		// ---------------------------------------------------------------------
+
 		// 最近一次有效的视口尺寸；元素被隐藏（clientSize 读到 0）时作为兜底
 		let lastClientSize = 0;
 		const viewport = new Viewport(
@@ -131,20 +101,8 @@ export const RecycleList = defineComponent({
 			K
 		);
 
-		/**
-		 * 程序化滚动锁：lock 后 handleScroll 忽略滚动事件，unlock 在一帧后才真正释放
-		 * 原 isManualScroll = 1 / setTimeout(() => (isManualScroll = 0), 16.7)
-		 */
-		let isManualScroll = false;
-		let unlockTimer: ReturnType<typeof setTimeout> | undefined;
-		const lockScroll = () => {
-			clearTimeout(unlockTimer);
-			isManualScroll = true;
-		};
-		const unlockScroll = () => {
-			clearTimeout(unlockTimer);
-			unlockTimer = setTimeout(() => (isManualScroll = false), SCROLL_LOCK_MS);
-		};
+		// 程序化滚动期间屏蔽滚动处理，避免误触发 loadData / 广播
+		const { isLocked, lock, unlock } = useScrollLock();
 
 		const hasRealNodes = () => store.nodes.real.size > 0;
 
@@ -198,6 +156,23 @@ export const RecycleList = defineComponent({
 			const size = viewport.fillSize;
 			return store.states.contentMaxSize > 0
 				&& store.states.contentMaxSize <= size;
+		};
+
+		/**
+		 * 一批加载完成时视口是否仍停在加载边缘
+		 *
+		 * 例如请求返回前已滚到底，或骨架被等高内容替换后位置不变：此后不会再有滚动事件触发加载，需要主动续载。
+		 * 列表不可见时（wrapper 尺寸为 0）不续载：此时几何全为 0，贴边判断恒为真，会在后台把数据一次拉完；
+		 * 不用 viewport.clientSize 判断可见性，因为内部滚动源读到 0 时会回退到上一次的有效尺寸
+		 * @returns 是否仍停在加载边缘
+		 */
+		const isStillAtLoadEdge = () => {
+			const el = wrapper.value;
+			return !!el
+				&& el.offsetWidth > 0
+				&& el.offsetHeight > 0
+				&& store.states.contentMaxSize > 0
+				&& isNearLoadEdge();
 		};
 
 		// ---------------------------------------------------------------------
@@ -258,50 +233,74 @@ export const RecycleList = defineComponent({
 		};
 
 		// ---------------------------------------------------------------------
-		// 测量与布局
+		// 布局
 		// ---------------------------------------------------------------------
-		/**
-		 * 读取节点 DOM 的实际尺寸写回 store
-		 *
-		 * 待测量节点都在隐藏池中渲染过，优先读池；已可见的节点兜底读列内元素；
-		 * 都读不到（占位节点）则用骨架尺寸
-		 * @param index 数据索引
-		 * @returns 被测量的节点；节点已被回收时为 undefined
-		 */
-		const measureNode = (index: number) => {
-			const node = store.nodes.get(index);
-			// 受到 store.nodes.trimPlaceholders 影响，无效的会被回收
-			if (!node) return;
-			const dom = pooledEls[index] || visibleEls[index];
-			store.nodes.setSize(node, (dom && dom[K.offsetSize]) || placeholderFallbackSize.value);
-			return node;
-		};
 
-		let isLayoutRunning = false;
+		// 进行中的 layoutRange 数量：会并发（例如分批构建期间替换数据），归零才算全部结束
+		let runningLayouts = 0;
 		const layoutInterrupter = Interrupter.of();
+		/**
+		 * 隐藏池是否同步渲染待测节点
+		 *
+		 * 待测集合里有测量过的节点，说明已经展示过的行被重置了（数据替换、尺寸变化后的整体重排）：
+		 * 它们测完之前不会出现在列中，必须在同一个任务里渲染、测量并排版，否则会先白屏再逐片出现。
+		 * 全是从未测量过的新节点（如按批懒构建的下一批）时才分片，避免整批在一个任务里渲染
+		 */
+		const isPoolSync = computed(() => store.states.preData.some(node => node.measured));
+		/**
+		 * 隐藏池每渲染完一片就放行一次等待中的测量
+		 *
+		 * 待测集合每次变化 Defer 都会重新渲染一轮（once=false），因此用 next 反复放行；
+		 * progress 与 complete 接同一个处理：整轮没有任何分片可提交时只有 complete，不能漏掉放行
+		 */
 		const deferInterrupter = Interrupter.of();
-		const handleDeferComplete = () => deferInterrupter.finish();
+		const handlePoolRendered = () => deferInterrupter.next();
+
+		/**
+		 * 隐藏池的数据：一波构建里只增不减，没有待测节点时整批清空
+		 *
+		 * 待测集合是「尚未测量」的节点，测完一批它就少掉一截前缀；直接拿它当池的数据，
+		 * Defer 已渲染的前缀会整体作废，还在排队的下一批被卸载后又重新渲染一遍。
+		 * 改成追加后，已测量的节点留在池里直到这一波结束，下一批始终是已渲染前缀的延续
+		 */
+		let poolNodes: RecycleListItemNodeRaw[] = [];
+		const poolData = computed(() => {
+			const pending = store.states.preData;
+			if (!pending.length) {
+				poolNodes = poolNodes.length ? [] : poolNodes;
+				return poolNodes;
+			}
+			const known = new Set(poolNodes);
+			const added = pending.filter(node => !known.has(node));
+			if (added.length) poolNodes = poolNodes.concat(added);
+			return poolNodes;
+		});
 
 		/**
 		 * 构建 [start, end) 区间的节点，测量后重排并刷新可见范围
 		 * @param start 区间起点（含）
 		 * @param end 区间终点（不含）
-		 * @param reversed inverted 本地翻页时逆序补建更早的数据
+		 * @param options 构建选项，透传给 nodes.build
+		 * @param options.reversed inverted 本地翻页时逆序补建更早的数据
+		 * @param options.force 已测量的节点也重新构建，用于整体重测
 		 */
-		const refreshLayout = async (start: number, end: number, reversed = false) => {
+		const layoutRange = async (start: number, end: number, options: { reversed?: boolean; force?: boolean } = {}) => {
 			if (start === end) {
+				store.states.isBuilt = !store.local.hasMore;
 				syncVisibleRange();
 				return;
 			}
-			isLayoutRunning = true;
-			const indices = store.nodes.build(start, end, reversed);
-			// 等隐藏池把待测量节点渲染出来
-			if (store.states.preData.length > 0) {
+			runningLayouts++;
+			const nodes = store.nodes.build(start, end, options);
+			// 只等自己这批节点进隐藏池：并发构建（挂载时的首批与懒构建的下一批）不该互相拖住，
+			// 谁的节点先进池谁先排版。尺寸一直读到 0 的节点已经在池里，条件为假不会空等；
+			// 骨架占位不进待测集合，同样不必等
+			while (nodes.some(node => store.nodes.pending.has(node) && !isPooled(node))) {
 				await deferInterrupter;
 			}
 			await nextTick();
-			const measured = indices
-				.map(measureNode)
+			const measured = nodes
+				.map(measure)
 				.filter(Boolean) as RecycleListItemNodeRaw[];
 			store.layout.refresh();
 
@@ -321,20 +320,24 @@ export const RecycleList = defineComponent({
 				measured.map(node => ({ size: node.states.size, index: node.states.index }))
 			);
 
-			layoutInterrupter.next();
-			isLayoutRunning = false;
+			// 布局结束时按当时的实际状态写入：重排期间保持原值，数据整体替换时尾部不会闪
+			store.states.isBuilt = !store.local.hasMore;
+
+			// 仍有并发的布局时不放行等待者
+			if (--runningLayouts === 0) layoutInterrupter.next();
 		};
 
-		// 标记全部节点待重新测量后整体重排
-		const forceRefreshLayout = async () => {
+		// 整体重新测量已构建的节点并重排
+		const refreshLayout = async () => {
 			viewport.invalidate();
-			store.nodes.invalidate();
-			await refreshLayout(...store.local.builtRange);
+			const [start, end] = store.local.builtRange;
+			await layoutRange(start, end, { force: true });
 		};
 
 		// ---------------------------------------------------------------------
 		// inverted 滚动补偿
 		// ---------------------------------------------------------------------
+
 		// 外部滚动源下是否已把初始内容贴到列表尾部
 		let invertedAligned = false;
 
@@ -362,10 +365,10 @@ export const RecycleList = defineComponent({
 			) return;
 
 			viewport.invalidate();
-			lockScroll();
+			lock();
 			alignToListEnd();
 			setVisibleItemRange();
-			unlockScroll();
+			unlock();
 		};
 
 		// 数据 load 前的主轴滚动位置，用于判断请求期间用户是否滚动过
@@ -380,16 +383,16 @@ export const RecycleList = defineComponent({
 		 * @param options.originalSize 构建前的内容尺寸，缺省取当前值
 		 * @param options.offset 构建后额外叠加的主轴偏移
 		 */
-		const refreshInvertedLayout = async (
+		const layoutInvertedRange = async (
 			start: number,
 			end: number,
 			options: { reversed?: boolean; originalSize?: number; offset?: () => number } = {}
 		) => {
-			lockScroll();
+			lock();
 			const originalSize = options.originalSize ?? store.states.contentMaxSize;
 			const originalOffset = viewport.offset;
 			const originalContentStart = viewport.state()?.contentStart || 0;
-			await refreshLayout(start, end, options.reversed);
+			await layoutRange(start, end, { reversed: options.reversed });
 			const delta = store.states.contentMaxSize - originalSize;
 
 			if (!viewport.external) {
@@ -409,7 +412,7 @@ export const RecycleList = defineComponent({
 				}
 			}
 			setVisibleItemRange();
-			unlockScroll();
+			unlock();
 		};
 
 		/**
@@ -418,13 +421,13 @@ export const RecycleList = defineComponent({
 		 * @param start 区间起点
 		 * @param end 区间终点
 		 */
-		const refreshLayoutByPage = async (current: number, start: number, end: number) => {
+		const layoutPage = async (current: number, start: number, end: number) => {
 			if (!store.props.inverted) {
-				await refreshLayout(start, end);
+				await layoutRange(start, end);
 				return;
 			}
 
-			await refreshInvertedLayout(start, end, {
+			await layoutInvertedRange(start, end, {
 				originalSize: current === 1 ? 0 : store.states.contentMaxSize,
 				offset: () => {
 					if (current === 1) return 0;
@@ -439,6 +442,7 @@ export const RecycleList = defineComponent({
 		// ---------------------------------------------------------------------
 		// 数据加载
 		// ---------------------------------------------------------------------
+
 		// 本地数据(data)按 batchCount 懒构建下一批
 		let isBuildingLocal = false;
 		const buildLocalPage = async () => {
@@ -446,11 +450,11 @@ export const RecycleList = defineComponent({
 			isBuildingLocal = true;
 			const { start, end, reversed } = store.local.consumePage()!;
 			reversed
-				? await refreshInvertedLayout(start, end, {
+				? await layoutInvertedRange(start, end, {
 						reversed,
 						offset: () => viewport.offset
 					})
-				: await refreshLayout(start, end);
+				: await layoutRange(start, end);
 			isBuildingLocal = false;
 			return true;
 		};
@@ -468,10 +472,10 @@ export const RecycleList = defineComponent({
 		const allocatePlaceholders = async () => {
 			const { start, end } = store.nodes.allocatePlaceholders();
 			const originalSize = store.states.contentMaxSize;
-			await refreshLayout(start, end);
+			await layoutRange(start, end);
 			if (!store.props.inverted) return;
 
-			lockScroll();
+			lock();
 			const position = store.states.contentMaxSize - originalSize + originalScrollPosition;
 			if (viewport.external && originalSize === 0) {
 				const rebound = viewport.mark();
@@ -486,7 +490,7 @@ export const RecycleList = defineComponent({
 			if (hasRealNodes()) {
 				setVisibleItemRange();
 			}
-			unlockScroll();
+			unlock();
 		};
 
 		const loadRemoteData = async (onBeforeCommit?: () => void) => {
@@ -495,7 +499,7 @@ export const RecycleList = defineComponent({
 				stopScroll();
 				return;
 			}
-			await refreshLayoutByPage(current, start, end);
+			await layoutPage(current, start, end);
 
 			// 响应条数少于预分配的占位时，回收多余骨架，避免后续 id 漂移
 			if (store.nodes.trimPlaceholders()) {
@@ -529,8 +533,8 @@ export const RecycleList = defineComponent({
 				canContinue = !store.states.isEnd;
 			}
 
-			// 本次构建/加载完成且内容不足一屏时，继续处理下一批
-			if (canContinue && isContentUnderfilled()) {
+			// 本次构建/加载完成后，内容不足一屏或视口仍停在加载边缘时，继续处理下一批
+			if (canContinue && (isContentUnderfilled() || isStillAtLoadEdge())) {
 				loadData();
 			}
 		};
@@ -570,7 +574,7 @@ export const RecycleList = defineComponent({
 		 * @param e FakeUIEvent，避免读取 DOM 属性，该值是提前计算出来的
 		 */
 		const handleScroll = (e: any) => {
-			if (store.scroll.currentLeaf !== leaf || isManualScroll) return;
+			if (store.scroll.currentLeaf !== leaf || isLocked()) return;
 
 			isNearLoadEdge() && loadData();
 			setVisibleItemRange();
@@ -588,6 +592,41 @@ export const RecycleList = defineComponent({
 			e && handleScroll(e);
 		};
 
+		/**
+		 * 滚动补偿的锚点：渲染范围内第一个起点不早于视口起点的项，找不到时取首个渲染项
+		 *
+		 * 首个渲染项常在视口上方的 overscan 区：它自身变高时位置不变，视口里的内容却被推走，拿它当锚点就补偿不到
+		 * @returns 锚点在 rebuildData 中的下标
+		 */
+		const getAnchorIndex = () => {
+			const { firstItemIndex, lastItemIndex, rebuildData } = store.states;
+			viewport.invalidate();
+			const state = viewport.state();
+			if (!state) return firstItemIndex;
+			const start = state.viewportStart - state.contentStart;
+			for (let i = firstItemIndex; i <= lastItemIndex; i++) {
+				const position = rebuildData[i]?.states.position;
+				if (typeof position === 'number' && position >= start) return i;
+			}
+			return firstItemIndex;
+		};
+
+		/**
+		 * 执行会改变布局的操作，并按锚点的位移补偿滚动，画面保持不动
+		 * @param update 改变布局的操作
+		 */
+		const preserveAnchor = async (update: () => unknown) => {
+			const anchorIndex = getAnchorIndex();
+			const oldPosition = store.states.rebuildData[anchorIndex]?.states.position;
+			await update();
+			const newPosition = store.states.rebuildData[anchorIndex]?.states.position;
+
+			// item 尚未完成初始定位（position = -1000）时不补偿
+			if (typeof oldPosition === 'number' && oldPosition >= 0 && typeof newPosition === 'number') {
+				viewport.scrollTo(viewport.offset + (newPosition - oldPosition));
+			}
+		};
+
 		// 图片撑开等导致布局变化，节流结束后整体重排并保持首个可见项不跳动
 		const handleResize = throttle(async () => {
 			if (!wrapper.value) return;
@@ -596,27 +635,92 @@ export const RecycleList = defineComponent({
 			viewport.invalidate();
 			if (!hasRealNodes()) return;
 
-			const anchorIndex = store.states.firstItemIndex;
-			const oldPosition = store.states.rebuildData[anchorIndex]?.states.position;
-			await forceRefreshLayout();
-			const newPosition = store.states.rebuildData[anchorIndex]?.states.position;
-
-			// item 尚未完成初始定位（position = -1000）时不补偿
-			if (typeof oldPosition === 'number' && oldPosition >= 0 && typeof newPosition === 'number') {
-				viewport.scrollTo(viewport.offset + (newPosition - oldPosition));
-			}
+			await preserveAnchor(refreshLayout);
 		}, 50, {
 			leading: false,
 			trailing: true
 		});
 
-		// 外部承载者尺寸变化
+		/**
+		 * 行渲染出来后的首次测量：实际尺寸与记录不一致时只修正这些行
+		 *
+		 * 例如在原对象上改了视口外某行影响尺寸的字段：那时它没有 DOM，感知不到变化，渲染出来才能读到真实尺寸。
+		 * 同一个微任务内渲染出来的行合并处理，只重排一次；变化的行在锚点之前时补偿滚动
+		 */
+		const renderedRows = new Set<RecycleListItemNodeRaw>();
+		const correctRenderedRows = async () => {
+			while (runningLayouts > 0) {
+				await layoutInterrupter;
+			}
+			const nodes = [...renderedRows];
+			renderedRows.clear();
+			if (!isMounted.value) return;
+
+			const changed = nodes
+				.map(remeasureVisible)
+				.filter(Boolean) as RecycleListItemNodeRaw[];
+			// 常见情况是尺寸一致，什么都不做（也不写滚动位置）
+			if (!changed.length) return;
+
+			// 写回尺寸不改位置，锚点的原位置在重排前读取仍然有效
+			await preserveAnchor(() => store.layout.refresh());
+			syncVisibleRange();
+			emit('row-resize', changed.map(node => ({ size: node.states.size, index: node.states.index })));
+		};
+
+		/**
+		 * 行渲染出来（Resizer 首次测量）时登记，留待同一个微任务内统一校正
+		 * @param node 渲染出来的节点
+		 */
+		const handleRowRendered = (node: RecycleListItemNodeRaw) => {
+			renderedRows.size === 0 && Promise.resolve().then(correctRenderedRows);
+			renderedRows.add(node);
+		};
+
+		/**
+		 * 刷新视口几何与可见范围，并按已渲染行的实际尺寸校正一次
+		 *
+		 * 代价只与当前渲染的行数相关；要重新测量全部已构建的行时用 refreshLayout()
+		 */
+		const refreshViewport = async () => {
+			scroller.value?.refresh?.();
+			store.states.data.flat().forEach(handleRowRendered);
+			await syncVisibleRange(true);
+		};
+
+		/**
+		 * 列表 wrapper 自身尺寸变化
+		 *
+		 * 节点尺寸只受交叉轴（纵向列表为宽度）影响，主轴尺寸变化不会改变任何节点的大小。
+		 * fill=false 时 wrapper 沿主轴随内容增长，每构建一批都会触发这里；若每次都全量重测，
+		 * 就要把所有已构建节点重新放进隐藏池渲染一遍，代价随已构建数量线性增长。
+		 * 因此交叉轴未变时只刷新几何缓存与可见范围；首次回调与交叉轴变化时仍走全量重测
+		 */
+		let lastCrossSize = -1;
+		const handleWrapperResize = () => {
+			const el = wrapper.value;
+			if (!el) return;
+			const crossSize = el[K.crossClientSize];
+			if (crossSize !== lastCrossSize) {
+				lastCrossSize = crossSize;
+				handleResize();
+				return;
+			}
+			lastClientSize = viewport.state()?.clientSize || el[K.clientSize];
+			viewport.invalidate();
+			setVisibleItemRange();
+		};
+
+		/**
+		 * 外部承载者尺寸变化
+		 *
+		 * 只影响视口几何，不影响节点尺寸：节点尺寸取决于列表自身的交叉轴，由 handleWrapperResize 负责
+		 */
 		const handleViewportResize = () => {
 			viewport.invalidate();
 			lastClientSize = viewport.clientSize;
 			setVisibleItemRange();
 			isContentUnderfilled() && loadData();
-			handleResize();
 		};
 
 		/**
@@ -643,11 +747,32 @@ export const RecycleList = defineComponent({
 
 			if (!store.setData(v)) return;
 
-			await refreshLayout(...store.local.builtRange);
+			await layoutRange(...store.local.builtRange);
 			await alignInvertedOnce();
 
 			// 追加数据时若已停在加载阈值内（如列表底部），无需再滚动即继续构建
 			wrapper.value && store.local.hasMore && isNearLoadEdge() && loadData();
+		};
+
+		/**
+		 * 方向变化后按新方向重建列表
+		 *
+		 * 本地数据与远程分页在 inverted 下的排列方式不同，无法原地翻转：保留 data 属性按新方向重建，
+		 * 已请求的远程页丢弃并从第 1 页重新请求
+		 */
+		const rebuildDirection = async () => {
+			if (!isMounted.value) return;
+			lock();
+			store.reset();
+			store.clear();
+			// 同一个 data 数组也要能重新构建
+			store.local.source = null;
+			invertedAligned = false;
+			viewport.scrollTo(0);
+			unlock();
+
+			await setDataSource(props.data, undefined);
+			await loadData();
 		};
 
 		const handleStoreLeafChange = () => {
@@ -663,7 +788,7 @@ export const RecycleList = defineComponent({
 
 		const moveEventName = isTouch ? 'touchstart' : 'mouseenter';
 		onMounted(() => {
-			Resize.on(wrapper.value, handleResize);
+			Resize.on(wrapper.value, handleWrapperResize);
 			rebindViewport();
 			loadData();
 			isMounted.value = true;
@@ -672,9 +797,8 @@ export const RecycleList = defineComponent({
 
 		onBeforeUnmount(() => {
 			isMounted.value = false;
-			clearTimeout(unlockTimer);
 			viewport.unbind();
-			Resize.off(wrapper.value, handleResize);
+			Resize.off(wrapper.value, handleWrapperResize);
 			store.scroll.remove(leaf);
 			wrapper.value.removeEventListener(moveEventName, handleStoreLeafChange);
 		});
@@ -692,17 +816,47 @@ export const RecycleList = defineComponent({
 				await nextTick();
 				if (!isMounted.value) return;
 				rebindViewport();
-				await forceRefreshLayout();
+				await refreshLayout();
 			},
 			{ flush: 'post' }
 		);
+
+		// 组件自建 store 时，被 store 接管的属性随组件属性同步；传入共享 store 时以 store.props 为准
+		if (!props.store) {
+			watch(
+				() => [props.batchCount, props.bufferCount, props.loadData],
+				() => {
+					const { batchCount, bufferCount, loadData: load } = props;
+					store.syncProps({ batchCount, bufferCount, loadData: load });
+				}
+			);
+
+			// 列数 / 列间距变化会改变列宽，行高要重新测量
+			watch(
+				() => [props.cols, props.gutter],
+				async () => {
+					store.syncProps({ cols: props.cols, gutter: props.gutter });
+					if (!isMounted.value) return;
+					await nextTick();
+					isMounted.value && refreshLayout();
+				}
+			);
+
+			watch(
+				() => props.inverted,
+				(v) => {
+					store.syncProps({ inverted: v });
+					rebuildDirection();
+				}
+			);
+		}
 
 		// 从禁用切回启用时，只有内容为空或不足一屏才自动加载
 		watch(
 			() => props.disabled,
 			async (v, oldV) => {
 				if (!isMounted.value || oldV !== true || v !== false) return;
-				if (isLayoutRunning) {
+				while (runningLayouts > 0) {
 					await layoutInterrupter;
 				}
 				if (!isMounted.value) return;
@@ -712,8 +866,10 @@ export const RecycleList = defineComponent({
 			}
 		);
 
+		// 加载状态快照，单向对外
+		useLoadEmitter(loadState, emit);
+
 		expose({
-			recycleListId: getUid('recycle-list'),
 			scroller,
 			store,
 			hasPlaceholder,
@@ -722,7 +878,8 @@ export const RecycleList = defineComponent({
 			reset,
 			scrollTo,
 			scrollToIndex,
-			refreshLayout: forceRefreshLayout
+			refreshViewport,
+			refreshLayout
 		});
 
 		// ---------------------------------------------------------------------
@@ -732,31 +889,36 @@ export const RecycleList = defineComponent({
 			return slots.placeholder?.() || (renderer.value.placeholder && (<Customer render={renderer.value.placeholder} />));
 		};
 
+		// ScrollState 自身没有数据来源，状态与 loading / complete / empty 三个 slot 都由外层传入
+		const renderScrollState = () => (
+			<ScrollState
+				loadState={loadState}
+				disabled={props.disabled}
+				hasPlaceholder={!!hasPlaceholder.value}
+				renderer={renderer.value}
+			>
+				{{
+					loading: slots.loading,
+					complete: slots.complete,
+					empty: slots.empty
+				}}
+			</ScrollState>
+		);
+
 		const renderItem = (item: RecycleListItemNodeRaw) => (
 			<Fragment key={item.id}>
 				{
 					item.states.isPlaceholder && hasPlaceholder.value && (
-						<div
-							class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
-							style={{ opacity: +!item.states.loaded }}
-						>
-							{ renderPlaceholder() }
-						</div>
+						<div>{ renderPlaceholder() }</div>
 					)
 				}
 				{
 					!item.states.isPlaceholder && (
 						<Resizer
-							ref={v => trackEl(visibleEls, item.states.index, v)}
-							class={{ 'vc-recycle-list__transition': hasPlaceholder.value }}
-							style={{ opacity: +item.states.loaded }}
+							ref={v => trackVisible(item, v)}
 							fill={false}
-							data-row={item.states.index}
-							data-column={item.states.column}
-							data-size={item.states.size}
-							data-position={item.states.position}
 							// @ts-ignore
-							onResize={e => e?.inited === true && handleResize()}
+							onResize={e => (e?.inited === true ? handleResize() : handleRowRendered(item))}
 						>
 							{ slots.default?.({ row: item.states.data || {}, index: item.states.index }) }
 						</Resizer>
@@ -790,11 +952,17 @@ export const RecycleList = defineComponent({
 				class="vc-recycle-list__pool"
 				style={{ [K.columnSize]: store.states.columnSize, [K.paddingColumnHead]: `${store.states.columnOffsetGutter}px` }}
 			>
-				<Defer data={store.states.preData} onComplete={handleDeferComplete}>
+				<Defer
+					data={poolData.value}
+					once={false}
+					disabled={isPoolSync.value}
+					onProgress={handlePoolRendered}
+					onComplete={handlePoolRendered}
+				>
 					{{
 						default: ({ row: item }) => (
 							<div
-								ref={v => trackEl(pooledEls, item.states.index, v)}
+								ref={v => trackPooled(item, v)}
 								class="vc-recycle-list__hidden"
 							>
 								{ slots.default?.({ row: item.states.data || {}, index: item.states.index }) }
@@ -830,8 +998,8 @@ export const RecycleList = defineComponent({
 					}
 					onScroll={handleInnerScroll}
 				>
-					{ store.props.inverted && (<ScrollState ref={scrollState} />) }
-					{ slots.header?.() }
+					{ store.props.inverted && renderScrollState() }
+					{ renderEdgeSlot('header') }
 					<div
 						ref={content}
 						class="vc-recycle-list__content"
@@ -840,8 +1008,8 @@ export const RecycleList = defineComponent({
 						{ store.states.columns.map(renderColumn) }
 						{ renderPool() }
 					</div>
-					{ slots.footer?.() }
-					{ !store.props.inverted && (<ScrollState ref={scrollState} />) }
+					{ renderEdgeSlot('footer') }
+					{ !store.props.inverted && renderScrollState() }
 				</ScrollerWheel>
 			</Container>
 		);

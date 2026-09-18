@@ -3,7 +3,7 @@
 import { Customer, RecycleList, RecycleListStore, MRecycleList } from '@deot/vc-components';
 import { RecycleListItemNode } from '../store';
 import { mount } from '@vue/test-utils';
-import { nextTick, ref, toRaw } from 'vue';
+import { defineComponent, getCurrentInstance, nextTick, onMounted, ref, toRaw } from 'vue';
 import { vi } from 'vitest';
 
 const sleep = (time = 0) => new Promise(resolve => setTimeout(resolve, time));
@@ -291,36 +291,41 @@ describe('index.ts', () => {
 		it('renders only appended item when data grows by one', async () => {
 			const data = ref(buildItems(3));
 			const loadData = vi.fn(async () => ({ data: [], finished: true }));
-			const renderCallsById = new Map<number, number>();
-			const renderItem = vi.fn((props: any) => {
-				const id = props.row.id;
-				renderCallsById.set(id, (renderCallsById.get(id) || 0) + 1);
-				return <div class="memo-item">{id}</div>;
+			// 只统计隐藏测量池里的挂载：数据追加后，池中已有条目不应被卸载重建，只有新增的一条挂载。
+			// （可见列的条目会因 setData 重建节点而重新挂载一次，那是 rebuild 既有行为，不在此断言范围）
+			const poolMountsById = new Map<number, number>();
+			const Item = defineComponent({
+				props: { id: Number },
+				setup(props) {
+					const instance = getCurrentInstance()!;
+					onMounted(() => {
+						const el = instance.vnode.el as HTMLElement | null;
+						if (el?.closest?.('.vc-recycle-list__pool')) {
+							poolMountsById.set(props.id!, (poolMountsById.get(props.id!) || 0) + 1);
+						}
+					});
+					return () => <div class="memo-item">{props.id}</div>;
+				}
 			});
 
 			const wrapper = mount(() => (
 				// batchCount=5: 单页覆盖追加后的数据，聚焦追加渲染协调而非懒构建分页
 				<RecycleList data={data.value} batchCount={5} loadData={loadData}>
 					{{
-						default: ({ row }: any) => <Customer row={row} render={renderItem} />
+						default: ({ row }: any) => <Item id={row.id} />
 					}}
 				</RecycleList>
 			), { attachTo: document.body });
 
-			await nextTick();
-			await nextTick();
-			await sleep(0);
-
-			const initialRenderCount = renderItem.mock.calls.length;
-			expect(initialRenderCount).toBeGreaterThan(0);
+			for (let i = 0; i < 8; i++) { await sleep(0); await nextTick(); }
+			const before = [0, 1, 2].map(id => poolMountsById.get(id));
+			expect(before).toEqual([1, 1, 1]);
 
 			data.value = [...data.value, buildItem(3, 1)];
-			await nextTick();
-			await nextTick();
+			for (let i = 0; i < 8; i++) { await sleep(0); await nextTick(); }
 
-			// 只新增一项渲染，而不是触发全部项重渲染
-			expect(renderItem.mock.calls.length).toBe(initialRenderCount + 1);
-			expect(renderCallsById.get(3)).toBe(1);
+			expect([0, 1, 2].map(id => poolMountsById.get(id))).toEqual(before);
+			expect(poolMountsById.get(3)).toBe(1);
 
 			wrapper.unmount();
 		});
@@ -803,8 +808,192 @@ describe('index.ts', () => {
 		});
 	});
 
+	describe('Props owned by the store stay in sync', () => {
+		it('applies batchCount and loadData changes to later builds and requests', async () => {
+			const data = buildItems(30);
+			const first = vi.fn(async () => ({ data: [], finished: false }));
+			const second = vi.fn(async () => ({ data: [], finished: true }));
+			const batchCount = ref(2);
+			const loadData = ref(first);
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} data={data} batchCount={batchCount.value} loadData={loadData.value as any}>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await sleep(20);
+			const built = listRef.value.store.local.buildCount;
+
+			batchCount.value = 10;
+			loadData.value = second;
+			await nextTick();
+			expect(listRef.value.store.props.batchCount).toBe(10);
+
+			// 下一批按新的 batchCount 构建
+			const { start, end } = listRef.value.store.local.consumePage();
+			expect(end - start).toBe(10);
+			expect(listRef.value.store.local.buildCount).toBe(built + 10);
+
+			// 下一次远程请求用新的 loadData
+			await listRef.value.store.fetchPage();
+			expect(first).not.toHaveBeenCalled();
+			expect(second).toHaveBeenCalledTimes(1);
+			wrapper.unmount();
+		});
+
+		it('re-measures and re-lays out when cols changes', async () => {
+			const cols = ref(1);
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} data={buildItems(6)} batchCount={6} cols={cols.value} disabled>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+			await nextTick();
+			await sleep(20);
+
+			cols.value = 3;
+			await nextTick();
+			await sleep(20);
+			await nextTick();
+
+			expect(listRef.value.store.props.cols).toBe(3);
+			expect(listRef.value.store.states.columns.length).toBe(3);
+			expect(wrapper.findAll('.vc-recycle-list__column').length).toBe(3);
+			wrapper.unmount();
+		});
+
+		it('rebuilds the list when inverted changes, matching a list mounted that way', async () => {
+			const data = buildItems(6);
+			const inverted = ref(false);
+			const toggledRef = ref<any>();
+			const invertedRef = ref<any>();
+			const toggled = mount(() => (
+				<RecycleList ref={toggledRef} data={data} batchCount={3} inverted={inverted.value} disabled>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+			await nextTick();
+			await sleep(20);
+
+			inverted.value = true;
+			await nextTick();
+			await sleep(20);
+			await nextTick();
+
+			const fresh = mount(() => (
+				<RecycleList ref={invertedRef} data={data} batchCount={3} inverted disabled>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+			await nextTick();
+			await sleep(20);
+
+			const indices = (listRef: any) => listRef.value.store.states.rebuildData.map((node: any) => node.states.index);
+			expect(toggledRef.value.store.props.inverted).toBe(true);
+			expect(indices(toggledRef)).toEqual(indices(invertedRef));
+			toggled.unmount();
+			fresh.unmount();
+		});
+
+		it('keeps a shared store as the source of truth', async () => {
+			const store = new RecycleListStore({ batchCount: 7 });
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} store={store} data={buildItems(3)} batchCount={3} disabled>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+			await nextTick();
+			await sleep(20);
+
+			expect(store.props.batchCount).toBe(7);
+			wrapper.unmount();
+		});
+	});
+
+	describe('refreshViewport', () => {
+		it('refreshes geometry and corrects rendered rows without re-measuring every node', async () => {
+			const restore = mockSize(HTMLElement.prototype, { offsetHeight: 40, clientHeight: 200, scrollHeight: 1200 });
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} data={buildItems(6)} batchCount={6} disabled>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+			await nextTick();
+			await sleep(20);
+
+			const store = listRef.value.store;
+			const build = vi.spyOn(store.nodes, 'build');
+			// 行的实际尺寸变了（内容原地变化），但没有人通知列表
+			restore();
+			const restoreLarger = mockSize(HTMLElement.prototype, { offsetHeight: 80, clientHeight: 200, scrollHeight: 1200 });
+
+			await listRef.value.refreshViewport();
+			await sleep(20);
+
+			expect(build).not.toHaveBeenCalled();
+			expect(store.states.rebuildData[0].states.size).toBe(80);
+			restoreLarger();
+			wrapper.unmount();
+		});
+	});
+
+	describe('Placeholder fallback size', () => {
+		it('reads the current skeleton size for every batch', async () => {
+			const heights = { value: 30 };
+			const proto = HTMLElement.prototype;
+			const descriptor = Object.getOwnPropertyDescriptor(proto, 'offsetHeight')!;
+			Object.defineProperty(proto, 'offsetHeight', {
+				configurable: true,
+				get(this: HTMLElement) {
+					return this.querySelector(':scope > .ph') ? heights.value : 0;
+				}
+			});
+
+			// 请求由测试控制：借此停在「占位已分配、数据还没到」的时刻
+			let settle: (v: any) => void = () => {};
+			const loadData = vi.fn(() => new Promise<any>((resolve) => { settle = resolve; }));
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} batchCount={2} loadData={loadData as any}>
+					{{
+						default: ({ row }: any) => <div class="x">{row.id}</div>,
+						placeholder: () => <div class="ph">ph</div>
+					}}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await sleep(0);
+			const store = listRef.value.store;
+			const placeholders = () => store.states.rebuildData.filter((node: any) => node.states.isPlaceholder);
+			const firstBatch = new Set(placeholders());
+			expect(placeholders().map((node: any) => node.states.size)).toEqual([30, 30]);
+
+			// 骨架自身尺寸变了（例如列表变宽），下一批占位应按新尺寸测量
+			heights.value = 50;
+			settle({ data: buildItems(2), finished: false });
+			for (let i = 0; i < 10; i++) await sleep(0);
+			// 触发下一页请求（jsdom 里几何为 0，不会自动续载）
+			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+			wrapEl.dispatchEvent(new Event('scroll'));
+			const nextBatch = () => placeholders().filter((node: any) => !firstBatch.has(node));
+			const pending = () => nextBatch().length < 2 || nextBatch().some((node: any) => node.states.size === 0);
+			for (let i = 0; i < 40 && pending(); i++) await sleep(0);
+
+			expect(nextBatch().map((node: any) => node.states.size)).toEqual([50, 50]);
+
+			Object.defineProperty(proto, 'offsetHeight', descriptor);
+			wrapper.unmount();
+		});
+	});
+
 	describe('Exposed API', () => {
-		it('exposes recycleListId / store / hasPlaceholder / renderer / methods', async () => {
+		it('exposes store / hasPlaceholder / renderer / methods', async () => {
 			const listRef = ref<any>();
 			mount(() => (
 				<RecycleList ref={listRef} />
@@ -812,8 +1001,6 @@ describe('index.ts', () => {
 			await nextTick();
 
 			const exposed = listRef.value;
-			expect(typeof exposed.recycleListId).toBe('string');
-			expect(exposed.recycleListId.startsWith('recycle-list')).toBe(true);
 			expect(exposed.store).toBeInstanceOf(RecycleListStore);
 			expect('hasPlaceholder' in exposed).toBe(true);
 			expect(exposed.renderer).toBeDefined();
@@ -931,6 +1118,362 @@ describe('index.ts', () => {
 		});
 	});
 
+	describe('lazyTail', () => {
+		// 默认 false 时立即渲染，已由 Structure 的 'renders header and footer slots' 覆盖
+
+		it('delays the footer slot until isEnd when not inverted', async () => {
+			let resolveFn: (v: any) => void = () => {};
+			const loadData = () => new Promise((resolve) => { resolveFn = resolve; });
+
+			const wrapper = mount(() => (
+				<RecycleList lazyTail loadData={loadData as any}>
+					{{
+						header: () => <div class="my-header">HEADER</div>,
+						footer: () => <div class="my-footer">FOOTER</div>
+					}}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await nextTick();
+
+			// 加载中：末端(footer)隐藏，另一端(header)不受影响
+			expect(wrapper.find('.my-footer').exists()).toBe(false);
+			expect(wrapper.find('.my-header').exists()).toBe(true);
+
+			resolveFn(false);
+			await sleep(0);
+			await nextTick();
+
+			expect(wrapper.find('.my-footer').exists()).toBe(true);
+			wrapper.unmount();
+		});
+
+		it('delays the header slot instead when inverted', async () => {
+			let resolveFn: (v: any) => void = () => {};
+			const loadData = () => new Promise((resolve) => { resolveFn = resolve; });
+
+			const wrapper = mount(() => (
+				<RecycleList lazyTail inverted loadData={loadData as any}>
+					{{
+						header: () => <div class="my-header">HEADER</div>,
+						footer: () => <div class="my-footer">FOOTER</div>
+					}}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await nextTick();
+
+			// inverted 下数据向上生长，末端是 header
+			expect(wrapper.find('.my-header').exists()).toBe(false);
+			expect(wrapper.find('.my-footer').exists()).toBe(true);
+
+			resolveFn(false);
+			await sleep(0);
+			await nextTick();
+
+			expect(wrapper.find('.my-header').exists()).toBe(true);
+			wrapper.unmount();
+		});
+
+		it('keeps both slots when lazyTail is false even before isEnd', async () => {
+			const loadData = () => new Promise(() => {});
+
+			const wrapper = mount(() => (
+				<RecycleList loadData={loadData as any}>
+					{{
+						header: () => <div class="my-header">HEADER</div>,
+						footer: () => <div class="my-footer">FOOTER</div>
+					}}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await nextTick();
+
+			expect(wrapper.find('.my-header').exists()).toBe(true);
+			expect(wrapper.find('.my-footer').exists()).toBe(true);
+			wrapper.unmount();
+		});
+
+		it('hides the tail slot again after reset()', async () => {
+			let resolveFn: (v: any) => void = () => {};
+			const loadData = () => new Promise((resolve) => { resolveFn = resolve; });
+			const listRef = ref<any>();
+
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} lazyTail loadData={loadData as any}>
+					{{ footer: () => <div class="my-footer">FOOTER</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			resolveFn(false);
+			await sleep(0);
+			await nextTick();
+			expect(wrapper.find('.my-footer').exists()).toBe(true);
+
+			const pending = listRef.value.reset();
+			await nextTick();
+			expect(listRef.value.store.states.isEnd).toBe(false);
+			expect(wrapper.find('.my-footer').exists()).toBe(false);
+
+			resolveFn(false);
+			await pending;
+			await nextTick();
+			expect(wrapper.find('.my-footer').exists()).toBe(true);
+			wrapper.unmount();
+		});
+	});
+
+	describe('load-change event', () => {
+		it('emits an immediate snapshot on mount, then tracks isLoading / isEnd', async () => {
+			const onLoadChange = vi.fn();
+			let resolveFn: (v: any) => void = () => {};
+			const loadData = () => new Promise((resolve) => { resolveFn = resolve; });
+
+			const wrapper = mount(() => (
+				<RecycleList onLoadChange={onLoadChange} loadData={loadData as any} />
+			), { attachTo: document.body });
+
+			// immediate: 挂载即有初值，外层不必自己兜
+			expect(onLoadChange).toHaveBeenNthCalledWith(1, {
+				isEnd: false,
+				isLoading: false,
+				isSilentRefresh: false,
+				isEmpty: false
+			});
+
+			await nextTick();
+			await nextTick();
+			expect(onLoadChange).toHaveBeenLastCalledWith(
+				expect.objectContaining({ isLoading: true, isEnd: false })
+			);
+
+			resolveFn(false);
+			await sleep(0);
+			await nextTick();
+
+			// 无数据且已结束 => isEmpty
+			expect(onLoadChange).toHaveBeenLastCalledWith({
+				isEnd: true,
+				isLoading: false,
+				isSilentRefresh: false,
+				isEmpty: true
+			});
+			wrapper.unmount();
+		});
+
+		it('reports isEmpty=false once real nodes exist', async () => {
+			const onLoadChange = vi.fn();
+			const wrapper = mount(() => (
+				<RecycleList data={buildItems(3)} onLoadChange={onLoadChange}>
+					{{ default: ({ row }: any) => <div>{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await sleep(0);
+			await nextTick();
+
+			expect(onLoadChange).toHaveBeenLastCalledWith({
+				isEnd: true,
+				isLoading: false,
+				isSilentRefresh: false,
+				isEmpty: false
+			});
+			wrapper.unmount();
+		});
+
+		it('payload is a one-way snapshot; mutating it does not write back', async () => {
+			const seen: any[] = [];
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList
+					ref={listRef}
+					data={buildItems(3)}
+					onLoadChange={(v: any) => seen.push(v)}
+				>
+					{{ default: ({ row }: any) => <div>{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await sleep(0);
+			await nextTick();
+
+			const last = seen[seen.length - 1];
+			expect(last.isEnd).toBe(true);
+
+			last.isEnd = false;
+			last.isEmpty = true;
+			await nextTick();
+
+			expect(listRef.value.store.states.isEnd).toBe(true);
+			expect(wrapper.find('.vc-recycle-list__complete').exists()).toBe(true);
+			expect(wrapper.find('.vc-recycle-list__empty').exists()).toBe(false);
+			wrapper.unmount();
+		});
+	});
+
+	describe('ScrollState follows the shared load state', () => {
+		it('shows complete for a disabled list once local data is built, without a loading area', async () => {
+			const wrapper = mount(() => (
+				<RecycleList data={buildItems(3)} disabled>
+					{{ default: ({ row }: any) => <div>{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+			await nextTick();
+			await sleep(0);
+			await nextTick();
+
+			// disabled 不会发起远程请求：没有「加载中」区域，本地数据构建完即展示完成
+			expect(wrapper.find('.vc-recycle-list__loading').exists()).toBe(false);
+			expect(wrapper.find('.vc-recycle-list__complete').exists()).toBe(true);
+			wrapper.unmount();
+		});
+
+		it('shows empty for a disabled list without data', async () => {
+			const wrapper = mount(() => (
+				<RecycleList data={[]} disabled>
+					{{ default: ({ row }: any) => <div>{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+			await nextTick();
+			await sleep(0);
+			await nextTick();
+
+			expect(wrapper.find('.vc-recycle-list__empty').exists()).toBe(true);
+			expect(wrapper.find('.vc-recycle-list__complete').exists()).toBe(false);
+			wrapper.unmount();
+		});
+	});
+
+	describe('disabled end signal', () => {
+		// disabled 挡住远程分支，store.states.isEnd 永不置真；
+		// lazyTail 与 load-change 以「本地数据已全部构建并完成布局」作为结束
+		const flushLayout = async () => {
+			for (let i = 0; i < 6; i++) {
+				await nextTick();
+				await sleep(0);
+			}
+		};
+
+		it('reveals the tail and reports isEnd once local data is fully built', async () => {
+			const seen: any[] = [];
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList
+					ref={listRef}
+					disabled
+					lazyTail
+					data={buildItems(3)}
+					onLoadChange={(v: any) => seen.push(v)}
+				>
+					{{
+						default: ({ row }: any) => <div>{row.id}</div>,
+						footer: () => <div class="my-footer">FOOTER</div>
+					}}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await flushLayout();
+
+			expect(wrapper.find('.my-footer').exists()).toBe(true);
+			expect(seen[seen.length - 1]).toEqual({
+				isEnd: true,
+				isLoading: false,
+				isSilentRefresh: false,
+				isEmpty: false
+			});
+			// 远程语义不变：ScrollState 与现有用例依赖的 store.states.isEnd 仍为 false
+			expect(listRef.value.store.states.isEnd).toBe(false);
+			expect(listRef.value.store.states.isBuilt).toBe(true);
+			wrapper.unmount();
+		});
+
+		it('keeps the tail hidden while local data still has unbuilt batches', async () => {
+			const seen: any[] = [];
+			const listRef = ref<any>();
+			// jsdom 下几何全为 0，remain = -threshold，默认阈值会被判定为「接近加载边缘」而一路续建；
+			// threshold=-1 关掉边缘续建，只剩初始一页 + 挂载时一页 = 8/10，保持有未构建数据
+			const wrapper = mount(() => (
+				<RecycleList
+					ref={listRef}
+					disabled
+					lazyTail
+					threshold={-1}
+					batchCount={4}
+					data={buildItems(10)}
+					onLoadChange={(v: any) => seen.push(v)}
+				>
+					{{
+						default: ({ row }: any) => <div>{row.id}</div>,
+						footer: () => <div class="my-footer">FOOTER</div>
+					}}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await flushLayout();
+
+			expect(listRef.value.store.local.hasMore).toBe(true);
+			expect(listRef.value.store.states.isBuilt).toBe(false);
+			expect(wrapper.find('.my-footer').exists()).toBe(false);
+			expect(seen[seen.length - 1].isEnd).toBe(false);
+			wrapper.unmount();
+		});
+
+		it('reports isEmpty for an empty disabled list', async () => {
+			const seen: any[] = [];
+			const wrapper = mount(() => (
+				<RecycleList disabled data={[]} onLoadChange={(v: any) => seen.push(v)} />
+			), { attachTo: document.body });
+
+			await flushLayout();
+
+			expect(seen[seen.length - 1]).toEqual({
+				isEnd: true,
+				isLoading: false,
+				isSilentRefresh: false,
+				isEmpty: true
+			});
+			wrapper.unmount();
+		});
+
+		it('does not flip back to unfinished when data is replaced with the same length', async () => {
+			const seen: any[] = [];
+			const data = ref(buildItems(3));
+			const wrapper = mount(() => (
+				<RecycleList
+					disabled
+					lazyTail
+					data={data.value}
+					onLoadChange={(v: any) => seen.push(v)}
+				>
+					{{
+						default: ({ row }: any) => <div>{row.id}</div>,
+						footer: () => <div class="my-footer">FOOTER</div>
+					}}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await flushLayout();
+			expect(wrapper.find('.my-footer').exists()).toBe(true);
+			const emittedBefore = seen.length;
+
+			// 如 Table 排序：整体替换为等长的新数组，节点会被重置为待测量
+			data.value = buildItems(3, 2, 100);
+			await nextTick();
+			expect(wrapper.find('.my-footer').exists()).toBe(true);
+
+			await flushLayout();
+			expect(wrapper.find('.my-footer').exists()).toBe(true);
+			expect(seen.slice(emittedBefore).some(v => v.isEnd === false)).toBe(false);
+			wrapper.unmount();
+		});
+	});
+
 	describe('Inverted mode', () => {
 		it('shows scroll-state at the top (before content) when inverted', async () => {
 			const wrapper = mount(() => (<RecycleList inverted />), { attachTo: document.body });
@@ -1041,6 +1584,46 @@ describe('index.ts', () => {
 			await sleep(0);
 			await nextTick();
 			wrapper.unmount();
+		});
+
+		it('renders empty when isEnd and there is no real node', async () => {
+			const wrapper = mount(() => (<RecycleList />), { attachTo: document.body });
+
+			await nextTick();
+			await nextTick();
+			await sleep(0);
+			await nextTick();
+
+			expect(wrapper.find('.vc-recycle-list__empty').exists()).toBe(true);
+			expect(wrapper.find('.vc-recycle-list__complete').exists()).toBe(false);
+			wrapper.unmount();
+		});
+
+		it('forwards complete / empty slots to ScrollState', async () => {
+			const withData = mount(() => (
+				<RecycleList data={buildItems(3)}>
+					{{
+						default: ({ row }: any) => <div>{row.id}</div>,
+						complete: () => <div class="slot-complete">slot-complete</div>
+					}}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			const withoutData = mount(() => (
+				<RecycleList>
+					{{ empty: () => <div class="slot-empty">slot-empty</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await nextTick();
+			await sleep(0);
+			await nextTick();
+
+			expect(withData.find('.slot-complete').exists()).toBe(true);
+			expect(withoutData.find('.slot-empty').exists()).toBe(true);
+			withData.unmount();
+			withoutData.unmount();
 		});
 	});
 
@@ -1398,7 +1981,7 @@ describe('index.ts', () => {
 		});
 
 		it('re-lays out rebound nodes when re-measured sizes are unchanged (resize refresh)', () => {
-			// 回归用例：窗口resize -> invalidate + rebind + 重测得到相同尺寸；
+			// 回归用例：窗口resize -> 强制重建 + 重测得到相同尺寸；
 			// 增量重排若只对比size会漏掉rebind重置的column/position，导致整段白屏
 			const total = 600; // 需要超过一个重排块(256)，否则增量路径不会跳过前面的块
 			const store = new RecycleListStore({ batchCount: total });
@@ -1407,14 +1990,26 @@ describe('index.ts', () => {
 			store.layout.refresh();
 			expect(store.states.contentMaxSize).toBe(total * 50);
 
-			store.nodes.invalidate();
-			store.nodes.build(0, total);
+			store.nodes.build(0, total, { force: true });
 			store.states.rebuildData.forEach((it: any) => { it.states.size = 50; });
 			store.layout.refresh();
 
 			expect(store.states.rebuildData.every((it: any) => it.states.column >= 0)).toBe(true);
 			expect(store.states.rebuildData.every((it: any, i: number) => it.states.position === i * 50)).toBe(true);
 			expect(store.states.contentMaxSize).toBe(total * 50);
+		});
+
+		it('re-measures nodes whose measured size came back as 0', () => {
+			const store = new RecycleListStore({ batchCount: 3 });
+			store.setData(buildItems(3));
+
+			// 首次构建时列表不可见，尺寸读到 0
+			const first = store.nodes.build(0, 3);
+			expect(first.length).toBe(3);
+			first.forEach((node: any) => store.nodes.setSize(node, 0));
+
+			// 再次构建时它们仍然待测，不能被当成已完成而跳过
+			expect(store.nodes.build(0, 3).length).toBe(3);
 		});
 
 		it('trimPlaceholders trims trailing placeholders', () => {
@@ -1440,10 +2035,9 @@ describe('index.ts', () => {
 			const b = store.states.rebuildData[1];
 			expect(a.states.isPlaceholder).toBe(false);
 			expect(a.states.data).toEqual({ value: 'a' });
-			expect(a.states.loaded).toBe(true);
 			expect(a.states.index).toBe(0);
+			expect(a.states.size).toBe(0);
 			expect(b.states.isPlaceholder).toBe(true);
-			expect(b.states.loaded).toBe(false);
 			expect(typeof a.id).toBe('string');
 		});
 
@@ -1950,6 +2544,401 @@ describe('index.ts', () => {
 			await nextTick();
 
 			expect(loadData.mock.calls.length).toBeGreaterThanOrEqual(2);
+			wrapper.unmount();
+		});
+	});
+
+	describe('Measure pool: re-measure synchronously, slice only new nodes', () => {
+		/**
+		 * 只推进微任务，不让出宏任务：Defer 的分片（MessageChannel）与浏览器绘制都发生在宏任务之间，
+		 * 在这里完成的更新不会留下中间帧
+		 * @param times 推进次数
+		 */
+		const flushMicrotasks = async (times = 30) => {
+			for (let i = 0; i < times; i++) await Promise.resolve();
+		};
+
+		/**
+		 * 挂载一个本地列表，等首批构建、测量并展示出来
+		 *
+		 * 几何：wrapper 视口 200、scrollHeight 1200，停在顶部时远离尾部阈值线，不会因滚动续建；
+		 * 每项（直接包着 .x 的元素，含隐藏池与可见行）高度由 heightOf 按 id 给出，其余元素高 40
+		 * @param count 数据条数
+		 * @param batchCount 每批构建条数
+		 * @param heightOf 按数据 id 给出项高度
+		 * @param props 额外传给 RecycleList 的属性与事件
+		 * @returns 挂载结果与读取工具
+		 */
+		const setup = async (
+			count: number,
+			batchCount: number,
+			heightOf: (id: number) => number = () => 40,
+			props: Record<string, any> = {}
+		) => {
+			const restoreSize = mockSize(HTMLElement.prototype, { clientHeight: 200, scrollHeight: 1200 });
+			const offsetHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight')!;
+			// 隐藏池里被读取尺寸的数据 id，即实际发生测量的项
+			const measuredIds: number[] = [];
+			Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+				configurable: true,
+				get(this: HTMLElement) {
+					const item = this.querySelector(':scope > .x');
+					if (!item) return 40;
+					const id = Number(item.textContent);
+					this.classList.contains('vc-recycle-list__hidden') && measuredIds.push(id);
+					return heightOf(id);
+				}
+			});
+			const data = ref(buildItems(count));
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} data={data.value} batchCount={batchCount} disabled {...props}>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+			const states = listRef.value.store.states;
+			const shown = () => wrapper.findAll('.vc-recycle-list__column .x');
+
+			for (let i = 0; i < 40 && !(states.preData.length === 0 && shown().length > 0); i++) {
+				await sleep(0);
+			}
+			expect(shown().length).toBeGreaterThan(0);
+
+			return {
+				data,
+				list: listRef.value,
+				states,
+				wrapper,
+				shown,
+				measuredIds,
+				pooled: () => wrapper.findAll('.vc-recycle-list__pool .x'),
+				restore: () => {
+					wrapper.unmount();
+					Object.defineProperty(HTMLElement.prototype, 'offsetHeight', offsetHeight);
+					restoreSize();
+				}
+			};
+		};
+
+		it('keeps shown rows on screen when data is replaced with new objects', async () => {
+			const { data, states, shown, restore } = await setup(30, 30);
+
+			// 换成新对象（并删掉首行）：已展示过的行全部重新待测，必须在同一个任务里测完并重新排版，不能先白屏再逐片出现
+			data.value = data.value.slice(1).map(item => ({ ...item }));
+			await flushMicrotasks();
+
+			expect(states.preData.length).toBe(0);
+			expect(shown().length).toBeGreaterThan(0);
+			expect(shown()[0].text()).toBe('1');
+			restore();
+		});
+
+		it('keeps shown rows on screen when the layout is refreshed', async () => {
+			const { list, states, shown, restore } = await setup(30, 30);
+
+			// 尺寸变化后的整体重排同理：全部节点重新待测，但画面上的行不能消失
+			list.refreshLayout();
+			await flushMicrotasks();
+
+			expect(states.preData.length).toBe(0);
+			expect(shown().length).toBeGreaterThan(0);
+			restore();
+		});
+
+		it('still slices a freshly built batch across tasks', async () => {
+			// setData 先构建一批，挂载时 loadData 再构建一批
+			const { states, pooled, restore, wrapper } = await setup(90, 30);
+			expect(states.rebuildData.length).toBe(60);
+
+			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+			wrapEl.scrollTop = 1000;
+			wrapEl.dispatchEvent(new Event('scroll'));
+			await flushMicrotasks();
+
+			// 新一批从未展示过，照常分片：同一个任务里不会整批渲染进隐藏池
+			expect(states.rebuildData.length).toBe(90);
+			expect(states.preData.length).toBe(30);
+			expect(pooled().length).toBeLessThanOrEqual(10);
+
+			for (let i = 0; i < 40 && states.preData.length > 0; i++) await sleep(0);
+			expect(states.preData.length).toBe(0);
+			restore();
+		});
+
+		describe('Sizes follow data items on setData', () => {
+			// 每项高度不同，尺寸若按下标沿用会对不上
+			const heightOf = (id: number) => 20 + id;
+
+			/**
+			 * 断言节点尺寸与各自数据项的高度一致，且位置首尾相接
+			 * @param states store.states
+			 */
+			const expectLaidOutByData = (states: any) => {
+				const nodes = states.rebuildData;
+				nodes.forEach((node: any, i: number) => {
+					expect(node.states.size).toBe(heightOf(node.states.data.id));
+					i > 0 && expect(node.states.position).toBe(nodes[i - 1].states.position + nodes[i - 1].states.size);
+				});
+			};
+
+			it('does not re-measure kept items when a row is deleted', async () => {
+				const { data, states, shown, measuredIds, restore } = await setup(30, 30, heightOf);
+				measuredIds.length = 0;
+
+				data.value = data.value.filter(item => item.id !== 5);
+				await flushMicrotasks();
+
+				expect(measuredIds).toEqual([]);
+				expect(states.preData.length).toBe(0);
+				expect(states.rebuildData.length).toBe(29);
+				expectLaidOutByData(states);
+				expect(shown()[0].text()).toBe('0');
+				restore();
+			});
+
+			it('measures only the inserted item', async () => {
+				const { data, states, shown, measuredIds, restore } = await setup(30, 30, heightOf);
+				measuredIds.length = 0;
+
+				data.value = [...data.value.slice(0, 3), buildItem(100), ...data.value.slice(3)];
+				await flushMicrotasks();
+				// 新项从未展示过，照常分片测量；等待期间已有的行留在列中
+				expect(shown().length).toBeGreaterThan(0);
+
+				for (let i = 0; i < 40 && states.preData.length > 0; i++) await sleep(0);
+				expect(measuredIds).toEqual([100]);
+				expect(states.preData.length).toBe(0);
+				expectLaidOutByData(states);
+				restore();
+			});
+
+			it('moves nodes along with their data items', async () => {
+				const { data, states, restore } = await setup(30, 30, heightOf);
+				const idOf = (dataId: number) => states.rebuildData.find((node: any) => node.states.data.id === dataId).id;
+				const before = [0, 6, 29].map(idOf);
+
+				data.value = data.value.filter(item => item.id !== 5);
+				await flushMicrotasks();
+
+				// 节点 id 即渲染 key：跟着数据项走，删除后其余行只是移动，不会被换成别的数据重新渲染
+				expect([0, 6, 29].map(idOf)).toEqual(before);
+				expect(states.rebuildData.map((node: any) => node.states.index)).toEqual(Array.from({ length: 29 }, (_, i) => i));
+				restore();
+			});
+
+			it('keeps sizes with their items when the order changes', async () => {
+				const { data, states, measuredIds, restore } = await setup(30, 30, heightOf);
+				measuredIds.length = 0;
+
+				data.value = [...data.value].reverse();
+				await flushMicrotasks();
+
+				expect(measuredIds).toEqual([]);
+				expectLaidOutByData(states);
+				restore();
+			});
+
+			it('keeps reused rows on screen while only new items are being sliced', async () => {
+				// batchCount 大于条数：追加一条时会被构建出来，待测集合里只有这条全新的项，隐藏池照常分片
+				const { data, states, shown, restore } = await setup(30, 40, heightOf);
+
+				data.value = [...[...data.value].reverse(), buildItem(100)];
+				await flushMicrotasks();
+
+				// 分片期间（跨宏任务）沿用尺寸的行不能从列中消失
+				expect(states.preData.length).toBe(1);
+				expect(shown().length).toBeGreaterThan(0);
+				expect(shown()[0].text()).toBe('29');
+
+				for (let i = 0; i < 40 && states.preData.length > 0; i++) await sleep(0);
+				expect(states.preData.length).toBe(0);
+				expectLaidOutByData(states);
+				restore();
+			});
+
+			it('re-measures items replaced by new objects even when the content looks the same', async () => {
+				const { data, states, measuredIds, restore } = await setup(30, 30, heightOf);
+				measuredIds.length = 0;
+
+				// 引用不同即视为内容可能已变：原地改了影响尺寸的字段时，替换成新对象就能触发重测
+				data.value = data.value.map((item, i) => (i === 2 ? { ...item } : item));
+				await flushMicrotasks();
+
+				expect(measuredIds).toEqual([2]);
+				expectLaidOutByData(states);
+				restore();
+			});
+		});
+
+		describe('Correct sizes when rows are rendered', () => {
+			/**
+			 * 可变的行高表：模拟在原对象上改了影响尺寸的字段（不替换数组）
+			 * @returns 行高表与按 id 取高度的函数
+			 */
+			const createHeights = () => {
+				const heights: Record<number, number> = {};
+				return { heights, heightOf: (id: number) => heights[id] ?? 20 + id };
+			};
+
+			/**
+			 * 触发某个已渲染行的 Resizer 测量：行刚渲染出来时 Resizer 首次测量，inited 为 false
+			 * @param wrapper 挂载结果
+			 * @param id 数据 id
+			 * @param height Resizer 读到的高度
+			 */
+			const triggerRendered = (wrapper: any, id: number, height: number) => {
+				const row = wrapper
+					.findAll('.vc-recycle-list__column .vc-resizer')
+					.find((item: any) => item.find('.x').text() === String(id));
+				const el = row.element as any;
+				el.getBoundingClientRect = () => ({
+					width: 100, height, top: 0, left: 0, right: 100, bottom: height, x: 0, y: 0, toJSON: () => ({})
+				});
+				el.__rz__.handleResize([{ target: el }]);
+			};
+
+			/**
+			 * 断言节点尺寸与当前行高一致，且位置首尾相接
+			 * @param states store.states
+			 * @param heightOf 按 id 取高度
+			 */
+			const expectLaidOut = (states: any, heightOf: (id: number) => number) => {
+				const nodes = states.rebuildData;
+				nodes.forEach((node: any, i: number) => {
+					expect(node.states.size).toBe(heightOf(node.states.data.id));
+					i > 0 && expect(node.states.position).toBe(nodes[i - 1].states.position + nodes[i - 1].states.size);
+				});
+			};
+
+			it('corrects a stale size when the row is rendered', async () => {
+				const { heights, heightOf } = createHeights();
+				const onRowResize = vi.fn();
+				const { states, wrapper, restore } = await setup(30, 30, heightOf, { onRowResize });
+				onRowResize.mockClear();
+
+				// 原地改了第 3 行的内容，没有替换数组；该行渲染出来时首次测量读到新高度
+				heights[3] = 80;
+				triggerRendered(wrapper, 3, 80);
+				await flushMicrotasks();
+
+				expectLaidOut(states, heightOf);
+				expect(onRowResize).toHaveBeenCalledTimes(1);
+				expect(onRowResize).toHaveBeenLastCalledWith([{ size: 80, index: 3 }]);
+				restore();
+			});
+
+			it('keeps the viewport still when a row rendered above it is corrected', async () => {
+				const { heights, heightOf } = createHeights();
+				const { states, wrapper, restore } = await setup(30, 30, heightOf);
+				const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+				// 视口上沿停在第 8 行起点之上 10px：第 6 行在视口上方，只因 overscan 被渲染出来
+				wrapEl.scrollTop = states.rebuildData[8].states.position - 10;
+				wrapEl.dispatchEvent(new Event('scroll'));
+				await flushMicrotasks();
+
+				expect(states.firstItemIndex).toBeLessThan(6);
+				const before = wrapEl.scrollTop;
+
+				// 第 6 行变高 30：视口里的内容被整体下推，滚动位置补偿同样的距离，画面不动
+				heights[6] = heightOf(6) + 30;
+				triggerRendered(wrapper, 6, heights[6]);
+				await flushMicrotasks();
+
+				expectLaidOut(states, heightOf);
+				expect(wrapEl.scrollTop).toBe(before + 30);
+				restore();
+			});
+
+			it('does nothing when the rendered size matches the record', async () => {
+				const { heightOf } = createHeights();
+				const onRowResize = vi.fn();
+				const { list, wrapper, restore } = await setup(30, 30, heightOf, { onRowResize });
+				onRowResize.mockClear();
+				const refresh = vi.spyOn(list.store.layout, 'refresh');
+
+				triggerRendered(wrapper, 3, heightOf(3));
+				await flushMicrotasks();
+
+				expect(refresh).not.toHaveBeenCalled();
+				expect(onRowResize).not.toHaveBeenCalled();
+				restore();
+			});
+
+			it('keeps the record when the rendered size cannot be read', async () => {
+				const { heights, heightOf } = createHeights();
+				const { states, wrapper, restore } = await setup(30, 30, heightOf);
+
+				// 列表不可见时读到 0：不能把节点改回待测
+				heights[3] = 0;
+				triggerRendered(wrapper, 3, 10);
+				await flushMicrotasks();
+
+				expect(states.rebuildData[3].states.size).toBe(23);
+				expect(states.preData.length).toBe(0);
+				restore();
+			});
+		});
+	});
+
+	describe('Continue loading when a request finishes at the load edge', () => {
+		/**
+		 * 挂载一个远程列表：第 1 次返回一页数据，第 2 次结束。
+		 * 几何：可见的 wrapper，内容比视口略高（不算不足一屏），用 scrollHeight 控制是否贴着尾部阈值线
+		 * @param geometry 几何设定
+		 * @param geometry.visible wrapper 是否可见（不可见时尺寸为 0）
+		 * @param geometry.scrollHeight wrapper 的 scrollHeight，即列表尾部位置
+		 * @returns 挂载结果与 loadData 桩
+		 */
+		const setup = async (geometry: { visible: boolean; scrollHeight: number }) => {
+			let call = 0;
+			const loadData = vi.fn(async () => {
+				call++;
+				return call === 1 ? buildItems(3) : false;
+			});
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} loadData={loadData}>
+					{{ default: ({ row }: any) => <div>{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+			const size = geometry.visible ? 500 : 0;
+			Object.defineProperty(wrapEl, 'offsetWidth', { configurable: true, get: () => (geometry.visible ? 300 : 0) });
+			Object.defineProperty(wrapEl, 'offsetHeight', { configurable: true, get: () => size });
+			Object.defineProperty(wrapEl, 'clientHeight', { configurable: true, get: () => size });
+			Object.defineProperty(wrapEl, 'scrollHeight', { configurable: true, get: () => geometry.scrollHeight });
+
+			// jsdom 下测不出尺寸：布局后把内容总高固定为 550（比视口 500 高，不属于内容不足一屏）
+			const store = listRef.value.store;
+			const refresh = store.layout.refresh.bind(store.layout);
+			store.layout.refresh = () => {
+				refresh();
+				if (store.states.rebuildData.length > 0) store.states.contentMaxSize = 550;
+			};
+
+			for (let i = 0; i < 12; i++) { await sleep(10); await nextTick(); }
+			return { wrapper, loadData };
+		};
+
+		it('loads the next page without a scroll event when still at the load edge', async () => {
+			// 视口底 500，尾部阈值线 550 - 100 = 450：已越过阈值线
+			const { wrapper, loadData } = await setup({ visible: true, scrollHeight: 550 });
+			expect(loadData).toHaveBeenCalledTimes(2);
+			wrapper.unmount();
+		});
+
+		it('does not continue when the list is hidden', async () => {
+			// 隐藏时尺寸为 0，贴边判断恒为真；不应在后台把数据一次拉完
+			const { wrapper, loadData } = await setup({ visible: false, scrollHeight: 550 });
+			expect(loadData).toHaveBeenCalledTimes(1);
+			wrapper.unmount();
+		});
+
+		it('does not continue when the viewport has left the load edge', async () => {
+			// 尾部阈值线 5000 - 100 = 4900，视口底 500：离边缘很远
+			const { wrapper, loadData } = await setup({ visible: true, scrollHeight: 5000 });
+			expect(loadData).toHaveBeenCalledTimes(1);
 			wrapper.unmount();
 		});
 	});

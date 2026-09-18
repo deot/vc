@@ -36,6 +36,13 @@ export type RecycleListStates = {
 	 */
 	isLoading: boolean;
 	/**
+	 * 本地数据已全部构建并完成布局；由组件在每次布局结束时写入
+	 *
+	 * 不能由 rebuildData / pending 派生：数据整体替换（如 Table 排序）会把节点重置为待测量，
+	 * 派生值会短暂变 false，使依赖它的尾部内容闪烁
+	 */
+	isBuilt: boolean;
+	/**
 	 * 每列交叉轴尺寸（百分比）；单列时不设
 	 */
 	columnSize: string | undefined;
@@ -83,6 +90,7 @@ export class BaseWatcher {
 
 		isEnd: false,
 		isSilentRefresh: false,
+		isBuilt: false,
 		isLoading: computed(() => {
 			return this.states.loadings.length > 0;
 		}),
@@ -131,3 +139,25 @@ export class BaseWatcher {
 		})
 	});
 }
+
+/**
+ * 列表的加载状态快照：load-change 的载荷，也是 lazyTail 与 ScrollState 的判断依据
+ */
+export type RecycleListLoadState = {
+	/**
+	 * 列表已到末尾：远程数据已全部加载；disabled 时为本地数据已全部构建并完成布局
+	 */
+	isEnd: boolean;
+	/**
+	 * 是否有进行中的远程请求
+	 */
+	isLoading: boolean;
+	/**
+	 * 静默刷新中（下拉刷新，旧内容保留到新数据到达）
+	 */
+	isSilentRefresh: boolean;
+	/**
+	 * 已到末尾且没有任何数据
+	 */
+	isEmpty: boolean;
+};
