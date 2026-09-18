@@ -30,12 +30,13 @@ export class Selection {
 
 	clean() {
 		const { primaryKey } = this.store.table.props;
-		const { selection = [], data } = this.store.states;
+		const { selection = [] } = this.store.states;
 		let deleted: any;
 		if (primaryKey) {
 			deleted = [];
 			const selectedMap = getValuesMap(selection, primaryKey);
-			const dataMap = getValuesMap(data, primaryKey);
+			// 含树形子行，避免把仍存在的已选子行当作已删除
+			const dataMap = getValuesMap(this.store.flatData.value, primaryKey);
 			for (const key in selectedMap) {
 				if (hasOwn(selectedMap, key) && !dataMap[key]) {
 					deleted.push(selectedMap[key].row);
@@ -70,6 +71,18 @@ export class Selection {
 			}
 			this.store.table.emit('selection-change', newSelection);
 		}
+	}
+
+	/**
+	 * 批量选中（程序触发，不 emit select），变化时 emit 一次 selection-change
+	 * @param rows 待选中的行
+	 */
+	add(rows: any[]) {
+		const { selection } = this.store.states;
+		const added = rows.filter(row => !selection.includes(row));
+		if (!added.length) return;
+		this.store.states.selection = [...selection, ...added];
+		this.store.table.emit('selection-change', this.store.states.selection.slice());
 	}
 
 	toggleAll = debounce(() => {

@@ -73,7 +73,6 @@ export const computeGridTemplateColumns = (columns: TableColumnNode[] = []) => {
  * @returns 行的唯一标识值
  */
 export const getRowValue = (row: any, primaryKey: any) => {
-	if (row.__KEY__) return row.__KEY__;
 	if (!row) throw new VcError('table', 'row is required when get row identity');
 	if (typeof primaryKey === 'string') {
 		if (!primaryKey.includes('.')) {

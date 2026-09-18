@@ -26,7 +26,7 @@
 				stripe
 				show-summary
 				:fit="false"
-				:affix="{ fixed: false }"
+				:affix="[{ offset: 159 }, false]"
 				:data="tableData"
 				@load-change="loadState = $event"
 			>
@@ -65,7 +65,7 @@
 		</Scroller>
 
 		<p class="note">
-			此示例仅通过现有 <code>affix</code> 配置传入 <code>fixed: false</code>；吸附定位和边界行为没有新增语义。
+			表头使用 <code>fixed</code> 吸顶，<code>offset</code> 为 Scroller 视口顶部到窗口顶部的距离（示例中写死为 159）。
 		</p>
 	</div>
 </template>

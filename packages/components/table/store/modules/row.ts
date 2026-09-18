@@ -21,35 +21,27 @@ export class Row {
 		}
 	}
 
-	// v-model currentRowValue 按 primaryKey 同步，不 emit
+	// v-model currentRowValue 按 primaryKey 同步，不 emit；树形表格含子行
 	setById(id?: number | string) {
 		const store = this.store;
 		const { primaryKey } = store.table.props;
-		store.checkPrimaryKey();
-
-		const { data = [] } = store.states;
-		const currentRow = data.find(item => getRowValue(item, primaryKey) === id);
+		const currentRow = store.tree.rows.find((item: any) => getRowValue(item, primaryKey) === id);
 		store.states.currentRow = currentRow || null;
 	}
 
 	update() {
 		const store = this.store;
 		const { primaryKey } = store.table.props;
-		const { data = [], currentRow } = store.states;
-		const oldCurrentRow = currentRow;
+		const oldCurrentRow = store.states.currentRow;
+		// 树形表格含子行
+		const rows = store.tree.rows;
 
-		// 当 currentRow 不在 data 中时尝试更新数据
-		if (oldCurrentRow && !data.includes(oldCurrentRow)) {
-			let newCurrentRow = null;
-			if (primaryKey) {
-				newCurrentRow = data.find((item: any) => {
-					return getRowValue(item, primaryKey) === getRowValue(oldCurrentRow, primaryKey);
-				});
-			}
+		// 当 currentRow 不在数据中时，按 primaryKey 找回新数据中的同一行
+		if (oldCurrentRow && !rows.includes(oldCurrentRow)) {
+			const id = primaryKey ? getRowValue(oldCurrentRow, primaryKey) : void 0;
+			const newCurrentRow = (primaryKey && rows.find((item: any) => getRowValue(item, primaryKey) === id)) || null;
 			store.states.currentRow = newCurrentRow;
-			if (newCurrentRow !== oldCurrentRow) {
-				store.table.emit('current-change', null, oldCurrentRow);
-			}
+			store.table.emit('current-change', newCurrentRow, oldCurrentRow);
 		}
 	}
 }

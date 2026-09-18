@@ -1,5 +1,4 @@
 import { nextTick, computed } from 'vue';
-import { merge, concat } from 'lodash-es';
 import { VcError } from '../../vc';
 import { BaseWatcher } from './base-watcher';
 import {
@@ -11,7 +10,6 @@ import {
 	Selection,
 	Tree
 } from './modules';
-import { flattenData } from './utils';
 
 class Store extends BaseWatcher {
 	table: any;
@@ -23,15 +21,11 @@ class Store extends BaseWatcher {
 	layout: Layout;
 	selection: Selection;
 
+	/**
+	 * 可选择的行：树形子行可选择（expandSelectable）时为全部行，否则为根行
+	 */
 	flatData = computed(() => {
-		if (this.table.props.expandSelectable) {
-			return concat(
-				flattenData(this.states.data, { parent: true, cascader: true }),
-				this.states.treeLazyData
-			);
-		} else {
-			return this.states.data;
-		}
+		return this.table.props.expandSelectable ? this.tree.rows : this.states.data;
 	});
 
 	constructor(options: any) {
@@ -49,14 +43,6 @@ class Store extends BaseWatcher {
 		this.column = new Column(this);
 		this.layout = new Layout(this);
 		this.selection = new Selection(this);
-
-		const { props } = options.table;
-		merge(this.states, {
-			expandSelectable: props.expandSelectable,
-			treeLazy: props.lazyTree || false,
-			treeLazyColumnIdentifier: props.treeMap.hasChildren || 'hasChildren',
-			treeChildrenColumnName: props.treeMap.children || 'children',
-		});
 	}
 
 	setData(data: any[]) {
@@ -68,8 +54,10 @@ class Store extends BaseWatcher {
 		// reset
 		this.states.data = data;
 
-		this.states.list = this.block.buildInitialList(data);
-		this.block.rebuildMergeList();
+		// 清理已不存在的行的展开 / 加载状态，再按展开状态重建渲染块
+		this.tree.prune();
+		this.expand.prune();
+		this.updateList();
 
 		/**
 		 * 数据变化，更新部分数据。
@@ -77,7 +65,6 @@ class Store extends BaseWatcher {
 		 * https://github.com/vuejs/vue/issues/6660#issuecomment-331417140
 		 */
 		this.row.update();
-		this.expand.update();
 		if (!this.states.reserveSelection) {
 			if (dataInstanceChanged) {
 				this.selection.clear();
@@ -85,11 +72,21 @@ class Store extends BaseWatcher {
 				this.selection.clean();
 			}
 		} else {
-			this.checkPrimaryKey();
 			this.selection.updateByRowKey();
 		}
 		this.selection.updateAllSelected();
 		this.updateTableScrollY();
+	}
+
+	/**
+	 * 重建渲染块：树形表格按展开状态铺平可见行，行号即铺平后的下标
+	 * data 变化、树节点展开 / 收起 / 加载、树形数据原地增删后调用
+	 */
+	updateList() {
+		const tree = this.tree.flatten();
+		this.states.renderData = tree ? tree.data : this.states.data;
+		this.states.list = this.block.buildInitialList(this.states.renderData, tree?.levels);
+		this.block.rebuildMergeList();
 	}
 
 	updateColumns() {
@@ -98,11 +95,13 @@ class Store extends BaseWatcher {
 		this.column.syncToParent();
 	}
 
-	// 展开行与 TreeTable 都要使用
-	toggleRowExpansionAdapter(row: any, expanded?: boolean) {
-		const { columns } = this.states;
-		const hasExpandColumn = columns.some(node => node.states.type === 'expand');
-		if (hasExpandColumn) {
+	/**
+	 * 切换行的展开状态：存在 expand 列时为展开行，否则为树节点
+	 * @param row 行数据
+	 * @param expanded 指定展开与否，省略时切换
+	 */
+	toggleRowExpansion(row: any, expanded?: boolean) {
+		if (this.states.expandColumn) {
 			this.expand.toggle(row, expanded);
 		} else {
 			this.tree.toggle(row, expanded);
@@ -110,24 +109,12 @@ class Store extends BaseWatcher {
 	}
 
 	/**
-	 * 检查 primaryKey 是否存在
+	 * 设置展开的行（expand-row-value），同时作用于展开行与树节点
+	 * @param values 展开行的行值
 	 */
-	checkPrimaryKey() {
-		const { primaryKey } = this.table.props;
-		if (!primaryKey) {
-			// throw new VcError('vc-table', 'primary-key 必传');
-		}
-	}
-
-	/**
-	 * 适配层，expand-primary-keys 在 Expand 与 TreeTable 中都有使用
-	 *
-	 * 这里会触发额外的计算，但为了兼容性，暂时这么做
-	 * @param val 展开行的主键集合
-	 */
-	setExpandRowValueAdapter(val: any) {
-		this.expand.reset(val);
-		this.tree.expand(val);
+	setExpandRowValue(values: any[]) {
+		this.expand.reset(values);
+		this.tree.reset(values);
 	}
 
 	updateTableScrollY() {

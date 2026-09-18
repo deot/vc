@@ -8,7 +8,7 @@ export class Layout {
 	table: any;
 	store: Store;
 	states = reactive({
-		height: null,
+		height: null as number | null,
 		scrollX: false,
 		scrollY: false,
 		bodyWidth: null as any,
@@ -46,13 +46,32 @@ export class Layout {
 		}
 	}
 
+	/**
+	 * 把 height / max-height 写到表根的内联样式上；两者共用 states.height
+	 * @param value 高度，null / undefined 表示清除
+	 * @param prop 样式属性
+	 * @returns ~
+	 */
 	setHeight(value: any, prop = 'height') {
 		if (IS_SERVER) return;
 		const el = this.table.vnode.el;
 		value = parseHeight(value);
-		this.states.height = value;
 
-		if (!el && (value || value === 0)) return nextTick(() => this.setHeight(value, prop));
+		// 清除：移除残留的内联样式；另一者仍生效时沿用它的高度，否则重置由高度派生的布局状态
+		if (value === null) {
+			el && (el.style[prop] = '');
+			const { height, maxHeight } = this.table.props;
+			const rest = parseHeight(prop === 'height' ? maxHeight : height);
+			this.states.height = rest;
+			if (rest === null) {
+				this.states.bodyHeight = null;
+				this.states.scrollY = false;
+			}
+			return;
+		}
+
+		this.states.height = value;
+		if (!el) return nextTick(() => this.setHeight(value, prop));
 
 		if (value) {
 			el.style[prop] = `${value}px`;

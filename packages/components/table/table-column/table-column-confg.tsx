@@ -1,6 +1,5 @@
 /** @jsxImportSource vue */
 
-import type { VNodeChild } from 'vue';
 import { getPropByPath } from '@deot/helper-utils';
 import { Checkbox } from '../../checkbox';
 import { Icon } from '../../icon';
@@ -49,8 +48,9 @@ export const cellForced: Record<string, Partial<TableColumnStates>> = {
 		renderCell({ row, column, store, rowIndex, level, selected }: TableColumnRenderData) {
 			return (
 				<Checkbox
+					// 树形子行按 expandSelectable 决定是否可选择
 					// @ts-ignore
-					vShow={store.states.expandSelectable || level === 0}
+					vShow={store.table.props.expandSelectable || !level}
 					modelValue={selected}
 					disabled={
 						column.selectable
@@ -89,16 +89,15 @@ export const cellForced: Record<string, Partial<TableColumnStates>> = {
 			return column.label || '';
 		},
 		renderCell({ row, store }: TableColumnRenderData) {
-			const classes = ['vc-table__expand-icon'];
-			if (store.states.expandRows.includes(row)) {
-				classes.push('is-expand');
-			}
 			const handleClick = (e: MouseEvent) => {
 				e.stopPropagation();
 				store.expand.toggle(row);
 			};
 			return (
-				<div class={classes} onClick={handleClick}>
+				<div
+					class={['vc-table__expand-icon', { 'is-expand': store.expand.isExpanded(row) }]}
+					onClick={handleClick}
+				>
 					<Icon type="triangle-up" />
 				</div>
 			);
@@ -136,43 +135,26 @@ export const defaultRenderCell = (rowData: TableColumnRenderData) => {
 	return value;
 };
 
-// Cell渲染前缀，如loading, expand
+// 树形列前缀：按层级缩进，可展开的节点显示展开图标（加载中为 Spin），叶子行以同宽占位对齐
 export const treeCellPrefix = ({ row, treeNode, store }: Pick<TableColumnRenderData, 'row' | 'treeNode' | 'store'>) => {
 	if (!treeNode) return null;
-	const ele: VNodeChild[] = [];
 	const handleClick = (e: MouseEvent) => {
 		e.stopPropagation();
-		store.tree.loadOrToggle(row);
+		store.tree.toggle(row);
 	};
-	if (treeNode.indent) {
-		ele.push(
-			<span
-				class="vc-table__indent"
-				style={{
-					'padding-left': treeNode.indent + 'px'
-				}}
-			/>
-		);
-	}
-	if (typeof treeNode.expand === 'boolean' && !treeNode.noLazyChildren) {
-		const expandClasses = {
-			'vc-table__expand-icon': true,
-			'is-expand': treeNode.expand
-		};
-
-		ele.push(
-			<span class={expandClasses} onClick={handleClick}>
-				{
-					treeNode.loading
-						? <Spin size={12} />
-						: <Icon type="triangle-up" />
-				}
-			</span>
-		);
-	} else {
-		ele.push(
-			<span class="vc-table__placeholder" />
-		);
-	}
-	return ele;
+	return [
+		treeNode.indent
+			? <span class="vc-table__indent" style={{ paddingLeft: `${treeNode.indent}px` }} />
+			: null,
+		treeNode.expandable
+			? (
+					<span
+						class={['vc-table__expand-icon', 'vc-table__tree-icon', { 'is-expand': treeNode.expanded }]}
+						onClick={handleClick}
+					>
+						{ treeNode.loading ? <Spin size={12} /> : <Icon type="triangle-up" /> }
+					</span>
+				)
+			: <span class="vc-table__placeholder" />
+	];
 };

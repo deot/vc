@@ -11,9 +11,12 @@ import { getFitIndex } from '../../text/utils';
 import { VcInstance } from '../../vc';
 import { Popover } from '../../popover';
 import type { TableProvide } from '../types';
-import type { TableColumnNode, TableColumnStates } from '../table-column/table-column-node';
+import type { TableColumnStates } from '../table-column/table-column-node';
 
 type RowData = Record<string, unknown>;
+
+// 块内的行条目，见 Block#buildInitialList
+type BlockRow = { index: number; data: RowData; level?: number };
 
 type ResolvedCell = {
 	cellEl: HTMLElement;
@@ -27,7 +30,7 @@ type ResolvedCell = {
  * 块渲染（虚拟化最小单位）：
  * 	- 单行块（无合并，绝大多数场景）：容器即 `vc-table__tr`（行语义 + grid 容器 + cells 直接父级）；
  * 	- 多行合并块：容器为 `vc-table__tr-group`；用户 row-class/row-style 无效；
- * 	- stripe / highlight / expand 等内部行态统一挂 cell；用户 row-class/row-style 仍仅挂单行块 `vc-table__tr`；
+ * 	- stripe / highlight / expand / 树形层级等内部行态统一挂 cell；用户 row-class/row-style 仍仅挂单行块 `vc-table__tr`；
  * 	- cell 事件走容器级委托（cells 只带 data-row / data-column，无 per-cell 闭包）；
  * 	- 展开行以 `<TableGrid /> + <TableExpand />` 兄弟结构渲染在块内。
  */
@@ -41,7 +44,8 @@ export const TableBodyBlock = defineComponent({
 		const states = useStates({
 			columns: 'columns',
 			currentRow: 'currentRow',
-			expandRows: 'expandRows'
+			expandColumn: 'expandColumn',
+			treeColumnIndex: 'treeColumnIndex'
 		});
 
 		// ---------------------------------------------------------------------
@@ -79,18 +83,29 @@ export const TableBodyBlock = defineComponent({
 			return classes.join(' ');
 		};
 
-		const getInternalCellClass = (row: RowData, rowIndex: number) => {
+		// 内部行态按行求值，统一挂到该行的 cell 上；level 仅树形表格传入
+		const getInternalCellClass = (row: RowData, rowIndex: number, level: number | null, expanded: boolean) => {
 			const classes: string[] = [];
+			if (level !== null) {
+				classes.push(`vc-table__row--level-${level}`);
+			}
 			if (table.props.highlight && row === states.currentRow) {
 				classes.push('current-row');
 			}
 			if (table.props.stripe && rowIndex % 2 === 1) {
 				classes.push('vc-table__row--striped', 'is-striped');
 			}
-			if (states.expandRows.indexOf(row) > -1) {
+			if (expanded) {
 				classes.push('expanded');
 			}
 			return classes;
+		};
+
+		const getAriaExpanded = (row: BlockRow, expanded: boolean) => {
+			const { tree } = table.store;
+			const id = tree.isTree ? tree.getKey(row.data) : void 0;
+			if (id != null && tree.nodes[id]) return tree.isExpanded(id);
+			return states.expandColumn ? expanded : void 0;
 		};
 
 		const getUserRowClass = (row: RowData, rowIndex: number) => {
@@ -246,9 +261,21 @@ export const TableBodyBlock = defineComponent({
 			// cells 由 store 懒构建（仅发生在可见块上）：合并块查合并计划，普通块合成 1×1
 			const layoutCells = table.store.block.getCells(block);
 
-			// selected 按行求值；用户 row-class/row-style 仅单行块挂 tr，合并块无效
-			const rowSelected = rows.map((row: { data: RowData }) => table.store.selection.isSelected(row.data));
+			// 选中、展开、层级按行求值；用户 row-class/row-style 仅单行块挂 tr，合并块无效
+			const isTree = table.store.tree.isTree;
+			const expandColumn = states.expandColumn;
+			const rowStates = rows.map((row: BlockRow) => {
+				const level = row.level || 0;
+				const expanded = !!expandColumn && table.store.expand.isExpanded(row.data);
+				return {
+					level,
+					expanded,
+					selected: table.store.selection.isSelected(row.data),
+					class: getInternalCellClass(row.data, row.index, isTree ? level : null, expanded)
+				};
+			});
 			const singleRow = isSingleRow ? rows[0] : null;
+			const singleState = isSingleRow ? rowStates[0] : null;
 
 			type LayoutCell = { rowIndex: number; columnIndex: number; rowspan: number; colspan: number };
 			const cells = layoutCells.reduce((pre: Record<string, unknown>[], cell: LayoutCell) => {
@@ -257,6 +284,7 @@ export const TableBodyBlock = defineComponent({
 				const columnNode = columns[cell.columnIndex];
 				if (!row || !columnNode) return pre;
 				const column = columnNode.states;
+				const rowState = rowStates[rowOffset];
 
 				pre.push({
 					key: `${getValueOfRow(row.data, row.index)}-${column.id}`,
@@ -265,7 +293,7 @@ export const TableBodyBlock = defineComponent({
 					rowspan: cell.rowspan,
 					colspan: cell.colspan,
 					class: [
-						getInternalCellClass(row.data, cell.rowIndex),
+						rowState.class,
 						getCellClass(cell.rowIndex, cell.columnIndex, row.data, column),
 						'vc-table__td'
 					],
@@ -282,8 +310,13 @@ export const TableBodyBlock = defineComponent({
 						rowIndex: cell.rowIndex,
 						column,
 						columnIndex: cell.columnIndex,
-						selected: rowSelected[rowOffset],
+						selected: rowState.selected,
 						store: table.store,
+						level: rowState.level,
+						// 树形列：缩进、展开图标与加载状态
+						treeNode: isTree && cell.columnIndex === states.treeColumnIndex
+							? table.store.tree.getTreeNode(row.data, rowState.level)
+							: void 0,
 						isHead: cell.columnIndex === 0,
 						isTail: cell.columnIndex + (cell.colspan || 1) - 1 === maxColumnIndex
 					})
@@ -300,6 +333,10 @@ export const TableBodyBlock = defineComponent({
 					style={isSingleRow ? getUserRowStyle(singleRow!.data, singleRow!.index) : null}
 					data-row={isSingleRow ? rowStart : void 0}
 					role={isSingleRow ? 'row' : 'rowgroup'}
+					cellRole={isTree ? 'gridcell' : 'cell'}
+					// 无障碍：树形行的层级，以及可展开行的展开状态（树节点优先，其次为展开行）
+					aria-level={singleState && isTree ? singleState.level + 1 : void 0}
+					aria-expanded={singleRow ? getAriaExpanded(singleRow, singleState!.expanded) : void 0}
 					columns={columns}
 					rowStart={rowStart}
 					rowHeight={table.props.rowHeight}
@@ -317,15 +354,16 @@ export const TableBodyBlock = defineComponent({
 
 			// 展开行仅支持单行块（多行合并块内的展开行语义未定义，留作扩展点：
 			// 可用 colspan = 全列的附加 grid 行实现块内展开）
-			const expandedRows = (isSingleRow && table.renderExpand.value)
-				? rows.filter((row: { data: RowData }) => states.expandRows.indexOf(row.data) > -1)
+			const renderExpand = isSingleRow ? expandColumn?.states.renderExpand : void 0;
+			const expandedRows = renderExpand
+				? rows.filter((_: BlockRow, index: number) => rowStates[index].expanded)
 				: [];
 
-			if (!expandedRows.length) return grid;
+			// 根节点结构保持不变：展开 / 收起只增删展开内容，grid 原地更新，cell 不会被重建
 			return (
 				<Fragment>
 					{ grid }
-					<TableExpand rows={expandedRows} />
+					{ renderExpand && expandedRows.length > 0 && <TableExpand rows={expandedRows} render={renderExpand} /> }
 				</Fragment>
 			);
 		};

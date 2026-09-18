@@ -668,19 +668,24 @@ const handleFilter = (value) => {
 :::
 
 ### 树形数据与懒加载
-支持树类型的数据的显示。当 `row` 中包含 `children` 字段时，被视为树形数据。渲染树形数据时，必须要指定 `primary-key`。支持子节点数据异步加载。设置 `Table` 的 `lazy-tree` 属性为 `true` 与加载函数 `load-expand` 。通过指定 `row` 中的 `hasChildren` 字段来指定哪些行是包含子节点。`children` 与 `hasChildren` 都可以通过 `tree-map` 配置。
+支持树类型的数据的显示。当 `row` 中包含 `children` 字段时，被视为树形数据。渲染树形数据时，必须要指定 `primary-key`，且其值在整棵树（含懒加载得到的子行）中唯一；重复出现的值只有首次出现的行可展开。支持子节点数据异步加载：设置 `Table` 的 `lazy-tree` 属性为 `true` 与加载函数 `load-expand`，并通过 `row` 中的 `hasChildren` 字段标记可加载子节点的行（仅 `lazy-tree` 时生效）。`children` 与 `hasChildren` 都可以通过 `tree-map` 配置。
+
+- 展开的子行铺平后逐行渲染，普通表格、`height` 与 `virtualized` 虚拟化表格都适用；缩进与展开图标显示在第一个普通列（非 `selection` / `index` / `expand`）中，缩进宽度由 `indent` 控制；每个单元格带有 `vc-table__row--level-{level}` 类名，便于按层级定制样式。
+- 行号（`rowIndex`、斑马纹、`get-span` 的 `rowIndex` 等）按当前可见行计算。
+- 合计行（`show-summary` / `get-summary`）基于根行 `data` 计算，不含子行。
+- 无障碍：树形表格以 `treegrid` 呈现，行带有 `aria-level` 与 `aria-expanded`。
+- 展开状态按 `primary-key` 记录：数据更新后保留；`default-expand-all` 只作为未操作过的节点的默认值，已收起的节点不会被重新展开；`expand-row-value` 设置当前展开的节点。
+- `expand-change` 回调为 `(row, expanded, maxLevel)`，`maxLevel` 为当前可见行的最大层级（根为 `0`），可用于调整树形列的宽度。
+- `load-expand(row, treeNode)` 可以返回数组或 `Promise`，`treeNode.level` 为该节点的层级；加载失败时节点恢复为待加载。展开尚未加载的节点（点击或 `toggleRowExpansion`）会先触发加载。
+- 嵌套的 `children` 可以原地增删（如 `row.children.splice(index, 1)`），表格会同步更新，被移除的行同时移出选中项；若之后还要增删懒加载得到的子行，`load-expand` 请返回响应式数组（如 `reactive([...])`）。
 
 :::RUNTIME
 ```vue
 <template>
 	<Table
-		ref="table"
-		:key="key"
 		:data="dataSource"
 		:load-expand="loadExpand"
-		:expand-selectable="true"
 		lazy-tree
-		style="width: 100%"
 		primary-key="id"
 		@expand-change="handleExpandChange"
 	>
@@ -699,9 +704,89 @@ const handleFilter = (value) => {
 			min-width="180"
 		/>
 		<TableColumn
-			:formatter="formatter"
 			prop="address"
 			label="地址"
+		/>
+	</Table>
+</template>
+<script setup>
+import { ref, reactive } from 'vue';
+import { Table, TableColumn } from '@deot/vc';
+
+const random = () => Math.ceil(Math.random() * 1000);
+const createRow = (id, extra = {}) => ({
+	id,
+	date: '2011-11-02',
+	name: `代号 - ${random()}`,
+	address: `祥园路${random()}号`,
+	...extra
+});
+
+const dataSource = ref([
+	createRow(1, { hasChildren: true }),
+	createRow(2, { hasChildren: true }),
+	createRow(3, {
+		children: [
+			createRow(31),
+			createRow(32)
+		]
+	}),
+	createRow(4)
+]);
+const treeWidth = ref(180);
+
+let seed = 100;
+const loadExpand = (row, treeNode) => {
+	return new Promise((resolve) => {
+		setTimeout(() => {
+			// 返回响应式数组，之后对它的增删会同步到表格
+			resolve(reactive([
+				createRow(++seed, { hasChildren: treeNode.level < 1 }),
+				createRow(++seed)
+			]));
+		}, 1000);
+	});
+};
+
+const handleExpandChange = (row, expanded, maxLevel) => {
+	treeWidth.value = 180 + maxLevel * 16;
+};
+</script>
+```
+:::
+
+### 展开行
+当行内容过多并且不想显示横向滚动条时，可以使用展开行功能。添加 `type="expand"` 的 `TableColumn`，其默认插槽即为展开行的内容，参数为 `{ row, rowIndex, store }`。
+
+- 通过 `expand-row-value`（需设置 `primary-key`）指定展开的行，或调用 `toggleRowExpansion(row, expanded)` 切换。
+- 展开状态按 `primary-key` 记录（未设置时按行对象），数据更新后保留；`default-expand-all` 只作为未操作过的行的默认值，已收起的行不会被重新展开。
+- `expand-change` 回调为 `(row, expandedRows)`，`expandedRows` 为当前展开的行（按显示顺序）。
+- 通过 `v-model:columns` 隐藏 expand 列时，展开内容一并隐藏。
+- 展开内容的高度可以任意变化，虚拟化表格会自动重新测量。
+- 展开行仅对单行渲染块生效：被 `get-span` 纵向合并在一起的行不渲染展开内容。
+
+:::RUNTIME
+```vue
+<template>
+	<Table
+		:data="tableData"
+		:expand-row-value="[2]"
+		primary-key="id"
+	>
+		<TableColumn type="expand">
+			<template #default="{ row }">
+				<p>姓名：{{ row.name }}</p>
+				<p>地址：{{ row.address }}</p>
+			</template>
+		</TableColumn>
+		<TableColumn
+			prop="date"
+			label="日期"
+			width="180"
+		/>
+		<TableColumn
+			prop="name"
+			label="姓名"
 		/>
 	</Table>
 </template>
@@ -709,86 +794,34 @@ const handleFilter = (value) => {
 import { ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
-const getData = () => {
-	return [
-		{
-			id: 1,
-			date: `${new Date().getTime()}`,
-			name: `代号 - ${Math.ceil(Math.random() * 1000)}`,
-			address: `祥园路${Math.ceil(Math.random() * 1000)}号`,
-			hasChildren: true
-		},
-		{
-			id: 2,
-			date: `${new Date().getTime()}`,
-			name: `代号 - ${Math.ceil(Math.random() * 1000)}`,
-			address: `祥园路${Math.ceil(Math.random() * 1000)}号`,
-			hasChildren: true
-		},
-		{
-			id: 3,
-			date: `${new Date().getTime()}`,
-			name: `代号 - ${Math.ceil(Math.random() * 1000)}`,
-			address: `祥园路${Math.ceil(Math.random() * 1000)}号`,
-			children: [
-				{
-					id: 31,
-					date: `${new Date().getTime()}`,
-					name: `代号 - ${Math.ceil(Math.random() * 1000)}`,
-					address: `祥园路${Math.ceil(Math.random() * 1000)}号`,
-				},
-				{
-					id: 32,
-					date: `${new Date().getTime()}`,
-					name: `代号 - ${Math.ceil(Math.random() * 1000)}`,
-					address: `祥园路${Math.ceil(Math.random() * 1000)}号`,
-				}
-			]
-		},
-		{
-			id: 4,
-			date: `${new Date().getTime()}`,
-			name: `代号 - ${Math.ceil(Math.random() * 1000)}`,
-			address: `祥园路${Math.ceil(Math.random() * 1000)}号`,
-		}
-	];
-};
-
-const dataSource = ref(getData());
-const key = ref(1);
-
-const loadExpand = (tree, treeNode) => {
-	return new Promise((resolve, reject) => {
-		setTimeout(() => {
-			resolve([
-				{
-					id: Math.ceil(Math.random() * 1000),
-					date: `${new Date().getTime()}`,
-					name: `代号 - ${Math.ceil(Math.random() * 1000)}`,
-					address: `祥园路${Math.ceil(Math.random() * 1000)}号`,
-					hasChildren: !(treeNode.level > 1)
-				},
-				{
-					id: Math.ceil(Math.random() * 1000),
-					date: `${new Date().getTime()}`,
-					name: `代号 - ${Math.ceil(Math.random() * 1000)}`,
-					address: `祥园路${Math.ceil(Math.random() * 1000)}号`,
-					hasChildren: !(treeNode.level > 3)
-				}
-			]);
-		}, 1000);
-	});
-};
-
-const formatter = ({ row, column, cellValue, index }) => {
-	return row.address;
-};
-
-const handleExpandChange = (row, expandedRows, maxLevel) => {
-	treeWidth.value = 180 + maxLevel * 20;
-};
+const tableData = ref([
+	{
+		id: 1,
+		date: '2011-11-02',
+		name: '微一案',
+		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+	},
+	{
+		id: 2,
+		date: '2011-11-04',
+		name: '微一案',
+		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+	},
+	{
+		id: 3,
+		date: '2011-11-01',
+		name: '微一案',
+		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+	}
+]);
+</script>
 ```
 :::
+
+完整示例：
+
+- [树形数据：嵌套 / 懒加载 / 删除 / 编辑 / 渲染模式切换](./examples/tree.vue)
+- [展开行：删除 / 编辑 / 渲染模式切换](./examples/expand.vue)
 
 ### 外部视口虚拟化
 
@@ -839,11 +872,12 @@ Window / Scroller
 
 #### Affix 兼容性
 
-外部虚拟化不会修改 Affix 组件、定位方式、target 或边界释放算法，也不会改用 CSS Sticky：
+表头、合计行的吸附直接复用 Affix 组件（不改用 CSS Sticky）：
 
 - Window 下继续使用当前默认的 `fixed: true` 行为。
-- 外层为 VC Scroller 时，按现有能力传入 `:affix="{ fixed: false }"`。
+- 外层为 VC Scroller 时，使用 `fixed` 模式并通过 `offset` 指定 Scroller 视口顶部到窗口顶部的距离，例如 `:affix="[{ offset: 159 }, false]"`。`fixed: false` 要求 Affix 与 Scroller 之间没有定位元素，而 Table 根节点为 `position: relative`，因此不适用。
 - `boolean`、`[top, bottom]`、`object` 的解释和 `refreshAffix()` 方法保持不变。
+- 吸附范围默认限定为表体（`target` 为本表格的 `.vc-table__body-wrapper`）：表头不越过表体底部、合计行不越过表体顶部，表格滚出后随之离开；可在配置对象中传入 `target` 覆盖。
 - Table 设置了 `height`/`max-height` 时，`affix` 仍按原规则强制失效。
 
 #### 延迟展示尾部内容
@@ -883,7 +917,7 @@ Window / Scroller
 | fit                     | 列的宽度是否自撑开                                                                                                                                  | `boolean`                                                  | -                           | `true`  |
 | show-header             | 是否显示表头                                                                                                                                     | `boolean`                                                  | -                           | `true`  |
 | highlight               | 是否要高亮当前行                                                                                                                                   | `boolean`                                                  | -                           | `false` |
-| current-row-value       | 当前行的`[id]/value`唯一值，只写属性                                                                                                                   | `string`、 `number`                                         | -                           | -       |
+| current-row-value       | 当前行的`[id]/value`唯一值（树形表格含子行），只写属性                                                                                                                   | `string`、 `number`                                         | -                           | -       |
 | row-height              | 行的固定高度                                                                                                                                     |                                                            |                             |         |
 | row-class               | 行的 `className`，仅作用于单行块对应的 `vc-table__tr`；存在 `getSpan` 合并时不生效，请用 `cell-class`。支持字符串或 `Function({ row, rowIndex })`。 | `Function({ row, rowIndex })`、 `string`                     | -                           | -       |
 | row-style               | 行的 `style`，仅作用于单行块对应的 `vc-table__tr`；存在 `getSpan` 合并时不生效，请用 `cell-style`。支持对象或 `Function({ row, rowIndex })`。 | `Function({ row, rowIndex })`、 `Object`                     | -                           | -       |
@@ -895,10 +929,13 @@ Window / Scroller
 | header-cell-style       | 表头单元格的 `style` 的回调方法，也可以使用一个固定的 `Object` 为所有表头单元格设置一样的 `Style`。                                                                            | `Function({row, column, rowIndex, columnIndex})`, `Object` | -                           | -       |
 | primary-key             | 行数据的 Key，用来优化 Table 的渲染；在使用 reserve-selection 功能的情况下，该属性是必填的。类型为 string 时，支持多层访问：`user.info.id`，但不支持 `user.info[0].id`，此种情况请使用 `Function`。 | `Function(row)`、`string`                                   | -                           | -       |
 | empty-text              | 空数据时显示的文本内容，也可以通过 `slot="empty"` 设置                                                                                                        | `string`                                                   | -                           | 暂无数据    |
-| default-expand-all      | 是否默认展开所有行，当 `Table` 中存在 `type="expand"` 的 `Column` 的时候有效                                                                                   | `boolean`                                                  | -                           | false   |
+| default-expand-all      | 是否默认展开所有行（展开行与树形节点）；仅作为未操作过的行的默认值                                                                                   | `boolean`                                                  | -                           | false   |
 | lazy-tree               | 树形数据的子节点是否懒加载，需配合 `load-expand` 使用；通过 `row` 的 `hasChildren` 标记可加载的节点 | `boolean` | - | `false` |
-| expand-row-value        | 可以通过该属性设置 `Table` 目前的展开行，需要设置 `primary-key` 属性才能使用，该属性为展开行的 `[id]/value` 数组。                                                               | `Array`                                                    | -                           | -       |
-| expand-selectable       | 子节点是否可选择（会被隐藏）                                                                                                                             | `boolean`                                                  | -                           | `true`  |
+| load-expand             | 懒加载子节点的方法，返回子行数组或 `Promise<Array>`；`treeNode` 为 `{ level, indent, expandable, expanded, loading }`，`level` 根为 `0` | `Function(row, treeNode)` | - | - |
+| tree-map                | 树形数据的字段映射 | `{ children, hasChildren }` | - | `{ children: 'children', hasChildren: 'hasChildren' }` |
+| indent                  | 树形数据每一层的缩进（px） | `number` | - | `16` |
+| expand-row-value        | 设置 `Table` 当前展开的行（展开行与树形节点），需要设置 `primary-key` 属性才能使用，该属性为展开行的 `[id]/value` 数组；未列出的行取 `default-expand-all`。                                                               | `Array`                                                    | -                           | -       |
+| expand-selectable       | 树形子行是否可选择；为 `false` 时子行的勾选框隐藏，全选只作用于根行                                                                                                                             | `boolean`                                                  | -                           | `true`  |
 | show-summary            | 是否在表尾显示合计行                                                                                                                                 | `boolean`                                                  | -                           | `false` |
 | sum-text                | 合计行第一列的文本                                                                                                                                  | `string`                                                   | -                           | 合计      |
 | get-summary             | 自定义的合计计算方法                                                                                                                                 | `Function({ columns, data })`                              | -                           | -       |
@@ -929,7 +966,7 @@ Window / Scroller
 | header-contextmenu | 当某一列的表头被鼠标右键点击时触发该事件                                          | `(column: Object, event: Object) => void 0`                                     | `column`：当前列数据；`event`：事件对象                                    |
 | current-change     | 当表格的当前行发生变化的时候会触发该事件，如果要高亮当前行，请打开表格的 highlight-current-row 属性 | `(currentRow: Object, oldCurrentRow: Object) => void 0`                         | `currentRow`：改变后的行数据；`oldCurrentRow`：改变前的行数据                   |
 | header-dragend     | 当拖动表头改变了列的宽度的时候会触发该事件                                         | `(newWidth: number, oldWidth: number, column: Object, event: Object) => void 0` | `newWidth`: 拖拽后宽度；`oldWidth`：拖拽前宽度；`column`：当前列数据；`event`：事件对象 |
-| expand-change      | 当用户对某一行展开或者关闭的时候会触发该事件                                        | `(row: Object, expandedRows: Object, maxLevel: number) => void 0`               | `row`：当前行数据；`expandedRows`：展开的行数据；`maxLevel`：当前展开最大的level      |
+| expand-change      | 当用户对某一行展开或者关闭的时候会触发该事件                                        | 展开行：`(row: Object, expandedRows: Array) => void 0`；树形：`(row: Object, expanded: boolean, maxLevel: number) => void 0` | `row`：当前行数据；`expandedRows`：展开的行数据；`expanded`：是否展开；`maxLevel`：当前可见行的最大层级（根为 `0`）      |
 | sort-change        | 当表格的排序条件发生变化的时候会触发该事件                                         | { prop, order }                                                                 |                                                                |
 | load-change      | 加载状态变化（单向推送，无对应属性）；挂载即推送一次                                   | `(loadState: { isEnd, isLoading, isSilentRefresh, isEmpty }) => void 0`            | `isEnd`：数据已全部进入虚拟列表（普通表格恒为 `true`）；`isEmpty`：已结束且无数据              |
 
@@ -941,7 +978,7 @@ Window / Scroller
 | clearSelection     | 用于多选表格，清空用户的选择                                                 | -                                                                            |
 | toggleRowSelection | 用于多选表格，切换某一行的选中状态，如果使用了第二个参数，则是设置这一行选中与否（selected 为 true 则选中）  | `row`：要切换的行数据；`selected`：设置改行的选中状态；`emitChange`：调用 API 修改选中值，不触发 `select` 事件 |
 | togglAllSelection  | 用于多选表格，切换所有行的选中状态                                              | -                                                                            |
-| toggleRowExpansion | 用于可展开表格，切换某一行的展开状态，如果使用了第二个参数，则是设置这一行展开与否（expanded 为 true 则展开） | `row`：要展开的行数据；`expanded`：设置该行是否展开                                            |
+| toggleRowExpansion | 用于可展开表格与树形表格，切换某一行的展开状态，如果使用了第二个参数，则是设置这一行展开与否（expanded 为 true 则展开） | `row`：要展开的行数据；`expanded`：设置该行是否展开                                            |
 | setCurrentRow      | 用于单选表格，设定某一行为选中行，如果调用时不加参数，则会取消目前高亮行的选中状态。                     | `row`：选中的行数据                                                                 |
 | refreshLayout      | 对 Table 进行重新布局，虚拟化表格（`height` 或 `virtualized`）会同时整体重新测量已构建的行。数据变化、尺寸变化会自动处理（内部的布局更新只刷新虚拟列表的视口），仅在无法自动观察的布局变化后调用 | -                                                                            |
 | refreshAffix       | 手动刷新表头/合计行的吸附状态（`affix` 生效时）。Affix只有当滚动时才触发，wrapper/content高度变化需手动处理              | -                                                                            |
@@ -986,7 +1023,7 @@ Window / Scroller
 
 | 属性     | 说明                                  |
 | ------ | ----------------------------------- |
-| -      | 自定义列的内容，参数为 { row, column, $index } |
+| -      | 自定义列的内容，参数为 `{ row, column, rowIndex, columnIndex, selected, level, treeNode }`；`treeNode` 仅树形表格的树形列提供，为 `{ level, indent, expandable, expanded, loading }`；`type="expand"` 时为展开行的内容，参数为 `{ row, rowIndex, store }` |
 | header | 自定义表头的内容. 参数为 { column, $index }    |
 
 

@@ -2,13 +2,12 @@
 
 import { MTable, MTableColumn, Table, TableColumn } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
-import { nextTick, ref, toRaw } from 'vue';
+import { nextTick, reactive, ref, toRaw } from 'vue';
 import { vi } from 'vitest';
 
 import { Store } from '../store/store';
 import { Layout, computeMergePlan, columnsToRowsEffect } from '../store/modules';
 import { useStates } from '../store/use-states';
-import { flattenData, walkTreeNode } from '../store/utils';
 import {
 	getRowValue,
 	getValuesMap,
@@ -561,223 +560,765 @@ describe('Selection & expose API', () => {
 	});
 });
 
-// 树形 / Expand-row 渲染交互的"业务正确性"尚未完全打磨，相关 UI 断言保持 skip；
-// 这里仅通过挂载来覆盖底层 store / column-confg 的代码路径，避免对未稳定行为做强假设。
-describe('Tree / Expand row source paths (仅覆盖代码路径，不做业务断言)', () => {
+describe('Tree rows', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';
 	});
 
-	it.skip('expandRowValue prop and toggleRowExpansion API for expand columns', () => {});
-	it.skip('lazy loadExpand supports promise / sync array / non-array error', () => {});
+	const buildTree = () => [
+		{
+			id: 1,
+			name: 'r1',
+			children: [
+				{ id: 11, name: 'r1-1', children: [{ id: 111, name: 'r1-1-1' }] },
+				{ id: 12, name: 'r1-2' }
+			]
+		},
+		{ id: 2, name: 'r2' }
+	];
 
-	it('expand column renders renderHeader / renderCell + store.expand.toggle path', async () => {
-		const data = [
-			{ id: 1, name: 'a' },
-			{ id: 2, name: 'b' }
-		];
+	/**
+	 * 挂载树形表格：selection 列 + 树形列（name）
+	 * @param props 额外的 Table props
+	 * @param data 数据
+	 * @returns 挂载结果与读取工具
+	 */
+	const setup = async (props: Record<string, any> = {}, data: any = buildTree()) => {
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={data} primaryKey="id" {...props}>
+				<TableColumn type="selection" />
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		const trs = () => wrapper.findAll('.vc-table__body-wrapper .vc-table__tr');
+		// 树形列所在的 cell
+		const treeCell = (index: number) => trs()[index].findAll('.vc-table__td')[1];
+		return {
+			wrapper,
+			tableRef,
+			vm: () => tableRef.value!,
+			trs,
+			treeCell,
+			names: () => trs().map((_, index) => treeCell(index).text()),
+			levels: () => trs().map((_, index) => {
+				const level = treeCell(index).classes().find(i => i.startsWith('vc-table__row--level-'));
+				return level ? Number(level.split('-').pop()) : null;
+			}),
+			toggle: async (index: number) => {
+				await treeCell(index).find('.vc-table__expand-icon').trigger('click');
+				await flush();
+			}
+		};
+	};
+
+	it('renders root rows, toggles children with indent and emits expand-change', async () => {
 		const onExpandChange = vi.fn();
-		const tableRef = ref<any>();
-		const wrapper = mount(() => (
-			<Table
-				ref={tableRef}
-				data={data}
-				primaryKey="id"
-				onExpandChange={onExpandChange}
-			>
-				<TableColumn type="expand" label="详情">
-					{{ default: ({ row }: any) => (
-						<div class="expand-content">
-							expanded:
-							{row.name}
-						</div>
-					) }}
-				</TableColumn>
-				<TableColumn label="名称" prop="name" />
-			</Table>
-		), { attachTo: document.body });
-		await flush();
+		const { wrapper, trs, treeCell, names, levels, toggle } = await setup({ onExpandChange });
 
-		expect(wrapper.find('.vc-table__expand-column').exists()).toBe(true);
+		// 默认只渲染根行；有子节点的行显示图标，叶子行显示占位保持对齐
+		expect(names()).toEqual(['r1', 'r2']);
+		expect(levels()).toEqual([0, 0]);
+		expect(treeCell(0).find('.vc-table__expand-icon').exists()).toBe(true);
+		expect(treeCell(1).find('.vc-table__placeholder').exists()).toBe(true);
 
-		// 点击 icon 触发 cellForced.expand.renderCell handleClick → store.expand.toggle
-		const icon = wrapper.find('.vc-table__expand-icon');
-		expect(icon.exists()).toBe(true);
-		await icon.trigger('click');
-		await flush();
+		await toggle(0);
+		expect(names()).toEqual(['r1', 'r1-1', 'r1-2', 'r2']);
+		expect(levels()).toEqual([0, 1, 1, 0]);
+		// 行号即可见行下标
+		expect(trs().map(tr => tr.attributes('data-row'))).toEqual(['0', '1', '2', '3']);
+		expect(treeCell(1).find('.vc-table__indent').attributes('style')).toContain('padding-left: 16px');
+		expect(treeCell(0).find('.vc-table__expand-icon').classes()).toContain('is-expand');
+		// maxLevel 为当前可见行的最大层级
+		expect(onExpandChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: 1 }), true, 1);
 
-		const vm = tableRef.value!;
-		// expandRows 已被 store 内部填充
-		expect(vm.store.states.expandRows.length).toBe(1);
+		await toggle(1);
+		expect(names()).toEqual(['r1', 'r1-1', 'r1-1-1', 'r1-2', 'r2']);
+		expect(onExpandChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: 11 }), true, 2);
 
-		// 直接覆盖 expand.update / reset 代码路径
-		vm.store.expand.update();
-		vm.store.expand.reset([1]);
-
-		// toggleRowExpansion 走 adapter，使用 store 内部 row 实例（避免 reactive proxy 对 indexOf 的影响）
-		const internalRow = vm.store.states.data[0];
-		vm.toggleRowExpansion(internalRow, false);
-		await flush();
-		expect(vm.store.expand.isExpanded(internalRow)).toBe(false);
+		await toggle(0);
+		expect(names()).toEqual(['r1', 'r2']);
+		expect(onExpandChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: 1 }), false, 0);
 
 		wrapper.unmount();
 	});
 
-	it('defaultExpandAll: expand.update slices entire data', async () => {
-		const data = [
-			{ id: 1, name: 'a' },
-			{ id: 2, name: 'b' }
-		];
+	it('defaultExpandAll renders every level on the first render, indent follows the prop', async () => {
+		const { wrapper, treeCell, names, levels } = await setup({ defaultExpandAll: true, indent: 20 });
+		expect(names()).toEqual(['r1', 'r1-1', 'r1-1-1', 'r1-2', 'r2']);
+		expect(levels()).toEqual([0, 1, 2, 1, 0]);
+		expect(treeCell(2).find('.vc-table__indent').attributes('style')).toContain('padding-left: 40px');
+		wrapper.unmount();
+	});
+
+	it('toggleRowExpansion / expandRowValue drive tree rows', async () => {
+		const expandRowValue = ref<any[]>([]);
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
-			<Table ref={tableRef} data={data} primaryKey="id" defaultExpandAll>
-				<TableColumn type="expand" label="详情">
-					{{ default: ({ row }: any) => <div>{row.name}</div> }}
-				</TableColumn>
+			<Table ref={tableRef} data={buildTree()} primaryKey="id" expandRowValue={expandRowValue.value}>
 				<TableColumn label="名称" prop="name" />
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		const vm = tableRef.value!;
-		expect(vm.store.expand.isExpanded(data[0])).toBe(true);
-		expect(vm.store.expand.isExpanded(data[1])).toBe(true);
-		wrapper.unmount();
-	});
+		const names = () => wrapper.findAll('.vc-table__body-wrapper .vc-table__tr').map(tr => tr.text());
+		expect(names()).toEqual(['r1', 'r2']);
 
-	it('expand without primaryKey: update sets empty + isExpanded uses indexOf', async () => {
-		const data = [{ name: 'a' }, { name: 'b' }];
-		const tableRef = ref<any>();
-		const wrapper = mount(() => (
-			<Table ref={tableRef} data={data}>
-				<TableColumn type="expand" label="详情">
-					{{ default: () => <div /> }}
-				</TableColumn>
-				<TableColumn label="名称" prop="name" />
-			</Table>
-		), { attachTo: document.body });
+		expandRowValue.value = [1, 11];
 		await flush();
-		const vm = tableRef.value!;
-		// 无 primaryKey：update → expandRows = []
-		vm.store.expand.update();
-		expect(vm.store.states.expandRows.length).toBe(0);
-		// 直接 push 后 isExpanded 走 indexOf 分支
-		vm.store.states.expandRows.push(data[0]);
-		expect(vm.store.expand.isExpanded(data[0])).toBe(true);
-		expect(vm.store.expand.isExpanded(data[1])).toBe(false);
+		expect(names()).toEqual(['r1', 'r1-1', 'r1-1-1', 'r1-2', 'r2']);
+
+		tableRef.value.toggleRowExpansion(tableRef.value.store.states.data[0], false);
+		await flush();
+		expect(names()).toEqual(['r1', 'r2']);
+
 		wrapper.unmount();
 	});
 
-	it('tree-mode: defaultExpandAll + tree.toggle / tree.expand / tree.update / getMaxLevel', async () => {
-		const data = [
+	it('only visible rows enter the list and unchanged blocks are reused', async () => {
+		const { wrapper, vm, toggle } = await setup();
+		const before = toRaw(vm().store.states.list).slice();
+		expect(before).toHaveLength(2);
+
+		await toggle(0);
+		const after = toRaw(vm().store.states.list).slice();
+		expect(after).toHaveLength(4);
+		// 展开只新建子行块，其余块对象不变（RecycleList 据此沿用已测尺寸）
+		expect(after[0]).toBe(before[0]);
+		expect(after[3]).toBe(before[1]);
+		expect(after.map((block: any) => [block.rowStart, block.rows[0].level])).toEqual([[0, 0], [1, 1], [2, 1], [3, 0]]);
+
+		wrapper.unmount();
+	});
+
+	it('getSpan rowIndex follows the visible rows', async () => {
+		const seen: Record<number, string> = {};
+		const getSpan = ({ row, rowIndex, columnIndex }: any) => {
+			if (columnIndex === 1) seen[rowIndex] = row.name;
+			return [1, 1];
+		};
+		const { wrapper, toggle } = await setup({ getSpan });
+		await toggle(0);
+		expect(seen).toEqual({ 0: 'r1', 1: 'r1-1', 2: 'r1-2', 3: 'r2' });
+		wrapper.unmount();
+	});
+
+	it('selection keeps selected children when data changes in place', async () => {
+		const data = ref(buildTree());
+		const { wrapper, vm } = await setup({ defaultExpandAll: true }, data.value);
+		const child = vm().store.states.renderData[1];
+		vm().toggleRowSelection(child, true);
+		expect(vm().store.states.selection).toHaveLength(1);
+
+		// 同一数组增删：走 selection.clean，不应把仍存在的子行当作已删除
+		data.value.push({ id: 3, name: 'r3' });
+		await flush();
+		expect(vm().store.states.selection.map((i: any) => i.id)).toEqual([11]);
+
+		wrapper.unmount();
+	});
+
+	it('expandSelectable=false hides checkboxes of child rows only', async () => {
+		const { wrapper, trs } = await setup({ defaultExpandAll: true, expandSelectable: false });
+		const visible = trs().map(tr => (tr.find('.vc-checkbox').element as HTMLElement).style.display !== 'none');
+		expect(visible).toEqual([true, false, false, false, true]);
+		wrapper.unmount();
+
+		// 非树形表格的行视为根行，勾选框正常显示
+		const plain = await setup({ expandSelectable: false }, [{ id: 1, name: 'a' }]);
+		expect((plain.trs()[0].find('.vc-checkbox').element as HTMLElement).style.display).not.toBe('none');
+		plain.wrapper.unmount();
+	});
+
+	it('reacts to in-place removal of nested children and cleans selection', async () => {
+		const data = ref([
 			{ id: 1, name: 'r1', children: [{ id: 11, name: 'r1-1' }, { id: 12, name: 'r1-2' }] },
-			{ id: 2, name: 'r2' }
-		];
-		const onExpandChange = vi.fn();
+			{ id: 2, name: 'r2', children: [{ id: 21, name: 'r2-1' }] }
+		]);
+		const { wrapper, vm, treeCell, names } = await setup({ defaultExpandAll: true }, data.value);
+		vm().toggleRowSelection(vm().store.states.renderData[1], true);
+		expect(names()).toEqual(['r1', 'r1-1', 'r1-2', 'r2', 'r2-1']);
+
+		data.value[0].children.splice(0, 1);
+		await flush();
+		expect(names()).toEqual(['r1', 'r1-2', 'r2', 'r2-1']);
+		expect(vm().store.states.selection).toHaveLength(0);
+
+		// 子行删空后父行变为叶子（仍是树形表格，以占位对齐）
+		data.value[0].children.splice(0, 1);
+		await flush();
+		expect(names()).toEqual(['r1', 'r2', 'r2-1']);
+		expect(treeCell(0).find('.vc-table__expand-icon').exists()).toBe(false);
+		expect(treeCell(0).find('.vc-table__placeholder').exists()).toBe(true);
+
+		wrapper.unmount();
+	});
+
+	it('re-renders a cell after the row is edited in place', async () => {
+		const { wrapper, vm, names } = await setup({ defaultExpandAll: true });
+		vm().store.states.renderData[1].name = 'edited';
+		await flush();
+		expect(names()[1]).toBe('edited');
+		wrapper.unmount();
+	});
+
+	it('defaultExpandAll only sets the default: collapsed nodes stay collapsed after data updates', async () => {
+		const data = ref(buildTree());
+		const { wrapper, names, toggle } = await setup({ defaultExpandAll: true }, data.value);
+		expect(names()).toEqual(['r1', 'r1-1', 'r1-1-1', 'r1-2', 'r2']);
+
+		await toggle(1);
+		expect(names()).toEqual(['r1', 'r1-1', 'r1-2', 'r2']);
+
+		// 数据变化不会重新展开已收起的节点，新增的节点按默认展开
+		data.value.push({ id: 3, name: 'r3', children: [{ id: 31, name: 'r3-1' }] } as any);
+		await flush();
+		expect(names()).toEqual(['r1', 'r1-1', 'r1-2', 'r2', 'r3', 'r3-1']);
+
+		wrapper.unmount();
+	});
+
+	it('reacts to runtime defaultExpandAll / expandSelectable changes', async () => {
+		const defaultExpandAll = ref(false);
+		const expandSelectable = ref(true);
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
 			<Table
 				ref={tableRef}
-				data={data}
+				data={buildTree()}
 				primaryKey="id"
+				defaultExpandAll={defaultExpandAll.value}
+				expandSelectable={expandSelectable.value}
+			>
+				<TableColumn type="selection" />
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const vm = tableRef.value!;
+		const names = () => vm.store.states.renderData.map((row: any) => row.name);
+		expect(names()).toEqual(['r1', 'r2']);
+
+		defaultExpandAll.value = true;
+		await flush();
+		expect(names()).toEqual(['r1', 'r1-1', 'r1-1-1', 'r1-2', 'r2']);
+
+		vm.toggleRowSelection(vm.store.states.renderData[1], true);
+		expect(vm.store.states.selection).toHaveLength(1);
+		// 子行不可选择：已选中的子行移出
+		expandSelectable.value = false;
+		await flush();
+		expect(vm.store.states.selection).toHaveLength(0);
+		expect(vm.store.flatData.value.map((row: any) => row.id)).toEqual([1, 2]);
+
+		wrapper.unmount();
+	});
+
+	it('currentRowValue highlights a child row on the first render and survives data updates', async () => {
+		const data = ref(buildTree());
+		const onCurrentChange = vi.fn();
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={data.value}
+				primaryKey="id"
+				currentRowValue={12}
+				highlight
 				defaultExpandAll
-				onExpandChange={onExpandChange}
+				onCurrentChange={onCurrentChange}
 			>
 				<TableColumn label="名称" prop="name" />
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-
 		const vm = tableRef.value!;
-		// 至少返回数字（具体值取决于 walkTreeNode 对 leaf 节点的处理）
-		expect(typeof vm.store.tree.getMaxLevel()).toBe('number');
+		expect(vm.store.states.currentRow?.name).toBe('r1-2');
+		expect(wrapper.findAll('.vc-table__body-wrapper .current-row').map(td => td.text())).toEqual(['r1-2']);
 
-		// 通过 store 内部的 row 调用 tree API，避免 reactive proxy 与原 row 不等
-		const internalRow0 = vm.store.states.data[0];
-		const internalRow1 = vm.store.states.data[1];
-
-		// tree.toggle 切换 + 同值不 emit 分支
-		vm.store.tree.toggle(internalRow0);
+		data.value = buildTree().map((row: any) => ({ ...row, name: `${row.name}!` }));
 		await flush();
-		vm.store.tree.toggle(internalRow0, false); // 同值，不再 emit
-		await flush();
-		// 通过 tree.expand 切换 expandRowValue
-		vm.store.tree.expand([1]);
-		await flush();
-
-		// loadOrToggle 非 lazy 路径走 toggle
-		vm.store.tree.loadOrToggle(internalRow1);
-		await flush();
+		// 子行按 primaryKey 找回，而不是被清空
+		expect(vm.store.states.currentRow?.id).toBe(12);
+		expect(onCurrentChange).not.toHaveBeenCalledWith(null, expect.anything());
 
 		wrapper.unmount();
 	});
 
-	it('tree-mode lazy: tree.loadData with sync array path', async () => {
-		const data = [
-			{ id: 1, name: 'r1', hasChildren: true }
-		];
-		const loadExpand = vi.fn(() => [
-			{ id: 11, name: 'r1-1' },
-			{ id: 12, name: 'r1-2' }
+	it('treats hasChildren as a plain field outside lazy mode', async () => {
+		const { wrapper, names, toggle } = await setup({}, [
+			{ id: 1, name: 'r1', hasChildren: true, children: [{ id: 11, name: 'r1-1' }] },
+			{ id: 2, name: 'r2', hasChildren: true }
+		]);
+		await toggle(0);
+		expect(names()).toEqual(['r1', 'r1-1', 'r2']);
+		wrapper.unmount();
+	});
+
+	it('is not a tree without primaryKey: nested children are neither rendered nor selectable', async () => {
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildTree()}>
+				<TableColumn type="selection" />
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const vm = tableRef.value!;
+		expect(vm.store.tree.isTree).toBe(false);
+		expect(wrapper.findAll('.vc-table__body-wrapper .vc-table__tr')).toHaveLength(2);
+		expect(vm.store.flatData.value).toHaveLength(2);
+		wrapper.unmount();
+	});
+
+	it('exposes the tree to assistive technology (treegrid / aria-level / aria-expanded)', async () => {
+		const { wrapper, trs, toggle } = await setup();
+		const aria = () => trs().map(tr => [tr.attributes('aria-level'), tr.attributes('aria-expanded')]);
+		expect(wrapper.find('.vc-table').attributes('role')).toBe('treegrid');
+		expect(trs()[0].find('.vc-table__td').attributes('role')).toBe('gridcell');
+		expect(aria()).toEqual([['1', 'false'], ['1', undefined]]);
+
+		await toggle(0);
+		expect(aria()).toEqual([['1', 'true'], ['2', 'false'], ['2', undefined], ['1', undefined]]);
+		wrapper.unmount();
+
+		// 非树形表格保持 table / cell，不输出树形属性
+		const plain = mount(() => (
+			<Table data={[{ id: 1, name: 'a' }]} primaryKey="id">
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const tr = plain.find('.vc-table__body-wrapper .vc-table__tr');
+		expect(plain.find('.vc-table').attributes('role')).toBe('table');
+		expect(tr.find('.vc-table__td').attributes('role')).toBe('cell');
+		expect(tr.attributes('aria-level')).toBeUndefined();
+		expect(tr.attributes('aria-expanded')).toBeUndefined();
+		plain.unmount();
+	});
+
+	it('does not recurse into rows whose value repeats an ancestor (self reference)', async () => {
+		const root: any = { id: 1, name: 'r1' };
+		root.children = [root, { id: 11, name: 'r1-1' }];
+		const { wrapper, names } = await setup({ defaultExpandAll: true }, [root]);
+		expect(names()).toEqual(['r1', 'r1', 'r1-1']);
+		wrapper.unmount();
+	});
+
+	it('keeps selected rows removed in place when reserveSelection is set', async () => {
+		const data = ref([
+			{ id: 1, name: 'r1', children: [{ id: 11, name: 'r1-1' }, { id: 12, name: 'r1-2' }] }
 		]);
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
-			<Table
-				ref={tableRef}
-				data={data}
-				primaryKey="id"
-				lazyTree
-				loadExpand={loadExpand}
-			>
+			<Table ref={tableRef} data={data.value} primaryKey="id" defaultExpandAll>
+				<TableColumn type="selection" reserveSelection />
 				<TableColumn label="名称" prop="name" />
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-
 		const vm = tableRef.value!;
-		const treeData = vm.store.states.treeData;
-		expect(treeData[1]).toBeTruthy();
-		expect(treeData[1].lazy).toBe(true);
+		vm.toggleRowSelection(vm.store.states.renderData[1], true);
 
-		// loadOrToggle 触发 lazy 加载（同步数组）
-		vm.store.tree.loadOrToggle(vm.store.states.data[0]);
+		data.value[0].children.splice(0, 1);
 		await flush();
-		expect(loadExpand).toHaveBeenCalled();
-		expect(vm.store.states.treeData[1].loaded).toBe(true);
+		expect(vm.store.states.renderData.map((row: any) => row.id)).toEqual([1, 12]);
+		expect(vm.store.states.selection.map((row: any) => row.id)).toEqual([11]);
 
 		wrapper.unmount();
 	});
 
-	it('tree-mode lazy: loadData with promise path + non-array catch', async () => {
-		const data = [
-			{ id: 1, name: 'r1', hasChildren: true },
-			{ id: 2, name: 'r2', hasChildren: true }
-		];
-		const promised = Promise.resolve([{ id: 11, name: 'r1-1' }]);
-		const loadExpand = vi.fn((row: any) => {
-			if (row.id === 1) return promised;
-			return Promise.resolve('not-an-array');
-		});
-
+	it('currentRowValue resolves once the data arrives later', async () => {
+		const data = ref<any[]>([]);
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
-			<Table ref={tableRef} data={data} primaryKey="id" lazyTree loadExpand={loadExpand}>
+			<Table ref={tableRef} data={data.value} primaryKey="id" currentRowValue={11} highlight>
 				<TableColumn label="名称" prop="name" />
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		const vm = tableRef.value!;
-		vm.store.tree.loadOrToggle(vm.store.states.data[0]);
-		await flush();
-		await sleep(0);
-		await flush();
-		expect(vm.store.states.treeData[1].loaded).toBe(true);
+		expect(tableRef.value.store.states.currentRow).toBe(null);
 
-		// non-array path: throw is captured by .catch (ignored here)
-		try {
-			vm.store.tree.loadOrToggle(vm.store.states.data[1]);
+		data.value = buildTree();
+		await flush();
+		expect(tableRef.value.store.states.currentRow?.name).toBe('r1-1');
+
+		wrapper.unmount();
+	});
+
+	it('prunes states of rows that no longer exist', async () => {
+		const data = ref(buildTree());
+		const { wrapper, vm, toggle } = await setup({}, data.value);
+		await toggle(0);
+		expect(vm().store.states.treeExpanded).toEqual({ 1: true });
+
+		data.value.splice(0, 1);
+		await flush();
+		expect(vm().store.states.treeExpanded).toEqual({});
+
+		wrapper.unmount();
+	});
+
+	describe('lazy', () => {
+		it('loads children with numeric levels and hides the icon for empty results', async () => {
+			let seed = 100;
+			const loadExpand = vi.fn((row: any) => {
+				if (row.id === 2) return [];
+				return [
+					{ id: ++seed, name: `${row.name}-a`, hasChildren: true },
+					{ id: ++seed, name: `${row.name}-b` }
+				];
+			});
+			const onExpandChange = vi.fn();
+			const { wrapper, treeCell, names, levels, toggle } = await setup(
+				{ lazyTree: true, loadExpand, onExpandChange },
+				[{ id: 1, name: 'r1', hasChildren: true }, { id: 2, name: 'r2', hasChildren: true }]
+			);
+
+			await toggle(0);
+			expect(loadExpand).toHaveBeenLastCalledWith(expect.objectContaining({ id: 1 }), expect.objectContaining({ level: 0 }));
+			expect(names()).toEqual(['r1', 'r1-a', 'r1-b', 'r2']);
+			expect(levels()).toEqual([0, 1, 1, 0]);
+			expect(onExpandChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: 1 }), true, 1);
+
+			// 懒加载得到的节点层级为数字
+			await toggle(1);
+			expect(loadExpand).toHaveBeenLastCalledWith(expect.objectContaining({ name: 'r1-a' }), expect.objectContaining({ level: 1 }));
+			expect(names()).toEqual(['r1', 'r1-a', 'r1-a-a', 'r1-a-b', 'r1-b', 'r2']);
+			expect(levels()).toEqual([0, 1, 2, 2, 1, 0]);
+
+			// 空结果：展开图标隐藏
+			await toggle(5);
+			expect(names()).toEqual(['r1', 'r1-a', 'r1-a-a', 'r1-a-b', 'r1-b', 'r2']);
+			expect(treeCell(5).find('.vc-table__expand-icon').exists()).toBe(false);
+
+			// 已加载的节点再次点击为收起
+			await toggle(0);
+			expect(names()).toEqual(['r1', 'r2']);
+			expect(loadExpand).toHaveBeenCalledTimes(3);
+
+			wrapper.unmount();
+		});
+
+		it('shows Spin while pending, ignores repeated clicks and resets loading on rejection', async () => {
+			let resolve: any;
+			const loadExpand = vi.fn((row: any) => {
+				if (row.id === 2) return Promise.reject(new Error('failed'));
+				return new Promise((r) => {
+					resolve = r;
+				});
+			});
+			const { wrapper, vm, treeCell, names } = await setup(
+				{ lazyTree: true, loadExpand },
+				[{ id: 1, name: 'r1', hasChildren: true }, { id: 2, name: 'r2', hasChildren: true }]
+			);
+
+			const icon = treeCell(0).find('.vc-table__expand-icon');
+			await icon.trigger('click');
+			await icon.trigger('click');
+			await flush();
+			expect(loadExpand).toHaveBeenCalledTimes(1);
+			expect(treeCell(0).find('.vc-spin').exists()).toBe(true);
+
+			resolve([{ id: 11, name: 'c1' }]);
+			await flush();
+			expect(names()).toEqual(['r1', 'c1', 'r2']);
+			expect(treeCell(0).find('.vc-spin').exists()).toBe(false);
+
+			// 加载失败：退出加载态，节点仍可再次加载
+			await treeCell(2).find('.vc-table__expand-icon').trigger('click');
 			await flush();
 			await sleep(0);
-		} catch { /* ignore */ }
+			await flush();
+			expect(vm().store.states.treeLoading[2]).toBeUndefined();
+			expect(vm().store.tree.nodes[2].loadable).toBe(true);
+			expect(treeCell(2).find('.vc-spin').exists()).toBe(false);
+
+			wrapper.unmount();
+		});
+
+		it('does not recurse when a lazy result repeats the value of its parent', async () => {
+			const loadExpand = vi.fn(() => [
+				{ id: 1, name: 'dup', hasChildren: true },
+				{ id: 11, name: 'c1' }
+			]);
+			const { wrapper, names, toggle } = await setup(
+				{ lazyTree: true, loadExpand },
+				[{ id: 1, name: 'r1', hasChildren: true }]
+			);
+			await toggle(0);
+			expect(names()).toEqual(['r1', 'dup', 'c1']);
+			expect(loadExpand).toHaveBeenCalledTimes(1);
+			wrapper.unmount();
+		});
+
+		it('drops the result when the row is removed while loading', async () => {
+			let resolve: any;
+			const onExpandChange = vi.fn();
+			const data = ref<any[]>([{ id: 1, name: 'r1', hasChildren: true }, { id: 2, name: 'r2', hasChildren: true }]);
+			const { wrapper, vm, names, toggle } = await setup(
+				{
+					lazyTree: true,
+					onExpandChange,
+					loadExpand: () => new Promise((r) => {
+						resolve = r;
+					})
+				},
+				data.value
+			);
+			await toggle(0);
+			data.value.splice(0, 1);
+			await flush();
+
+			resolve([{ id: 11, name: 'c1' }]);
+			await flush();
+			expect(names()).toEqual(['r2']);
+			expect(vm().store.states.treeLazyChildren).toEqual({});
+			expect(vm().store.states.treeLoading).toEqual({});
+			expect(onExpandChange).not.toHaveBeenCalled();
+
+			wrapper.unmount();
+		});
+
+		it('reacts to in-place removal of a reactive lazy result', async () => {
+			const children = reactive([{ id: 11, name: 'c1' }, { id: 12, name: 'c2' }]);
+			const { wrapper, vm, names, toggle } = await setup(
+				{ lazyTree: true, loadExpand: () => children },
+				[{ id: 1, name: 'r1', hasChildren: true }]
+			);
+			await toggle(0);
+			expect(names()).toEqual(['r1', 'c1', 'c2']);
+			expect(vm().store.flatData.value.map((i: any) => i.id)).toEqual([1, 11, 12]);
+
+			children.splice(0, 1);
+			await flush();
+			expect(names()).toEqual(['r1', 'c2']);
+			expect(vm().store.flatData.value.map((i: any) => i.id)).toEqual([1, 12]);
+
+			wrapper.unmount();
+		});
+	});
+});
+
+describe('Expand rows', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	const expandedTexts = (wrapper: any) => wrapper
+		.findAll('.vc-table__body-wrapper .vc-table__expanded-cell')
+		.map((cell: any) => cell.text());
+
+	it('expandRowValue renders expanded content and toggleRowExpansion switches it', async () => {
+		const expandRowValue = ref<any[]>([2]);
+		const tableRef = ref<any>();
+		const onExpandChange = vi.fn();
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={[{ id: 1, name: 'a' }, { id: 2, name: 'b' }]}
+				primaryKey="id"
+				expandRowValue={expandRowValue.value}
+				onExpandChange={onExpandChange}
+			>
+				<TableColumn type="expand">
+					{{ default: ({ row }: any) => <div>{`detail-${row.name}`}</div> }}
+				</TableColumn>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual(['detail-b']);
+
+		expandRowValue.value = [1];
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual(['detail-a']);
+
+		const vm = tableRef.value!;
+		vm.toggleRowExpansion(vm.store.states.data[1], true);
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual(['detail-a', 'detail-b']);
+		expect(onExpandChange).toHaveBeenLastCalledWith(
+			expect.objectContaining({ id: 2 }),
+			[expect.objectContaining({ id: 1 }), expect.objectContaining({ id: 2 })]
+		);
+
+		vm.toggleRowExpansion(vm.store.states.data[0], false);
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual(['detail-b']);
+
+		wrapper.unmount();
+	});
+
+	it('keeps expanded rows on in-place changes without primaryKey', async () => {
+		const data = ref([{ name: 'a' }, { name: 'b' }]);
+		const wrapper = mount(() => (
+			<Table data={data.value}>
+				<TableColumn type="expand">
+					{{ default: ({ row }: any) => <div>{`detail-${row.name}`}</div> }}
+				</TableColumn>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.findAll('.vc-table__body-wrapper .vc-table__expand-icon')[1].trigger('click');
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual(['detail-b']);
+
+		data.value.push({ name: 'c' });
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual(['detail-b']);
+
+		data.value.splice(1, 1);
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual([]);
+
+		wrapper.unmount();
+	});
+
+	it('rows without a primaryKey value keep their own expanded state', async () => {
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={[{ name: 'a' }, { name: 'b' }]} primaryKey="id">
+				<TableColumn type="expand">
+					{{ default: ({ row }: any) => <div>{`detail-${row.name}`}</div> }}
+				</TableColumn>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.findAll('.vc-table__body-wrapper .vc-table__expand-icon')[0].trigger('click');
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual(['detail-a']);
+		wrapper.unmount();
+	});
+
+	it('an equal expandRowValue (e.g. a template literal) does not reset user expansions', async () => {
+		const tick = ref(0);
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<div data-tick={tick.value}>
+				<Table ref={tableRef} data={[{ id: 1, name: 'a' }, { id: 2, name: 'b' }]} primaryKey="id" expandRowValue={[1]}>
+					<TableColumn type="expand">
+						{{ default: ({ row }: any) => <div>{`detail-${row.name}`}</div> }}
+					</TableColumn>
+					<TableColumn label="名称" prop="name" />
+				</Table>
+			</div>
+		), { attachTo: document.body });
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual(['detail-a']);
+
+		tableRef.value.toggleRowExpansion(tableRef.value.store.states.data[1], true);
+		await flush();
+		// 父级重新渲染，传入新的但相等的数组
+		tick.value++;
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual(['detail-a', 'detail-b']);
+
+		wrapper.unmount();
+	});
+
+	it('patches the row in place when it is expanded / collapsed', async () => {
+		const wrapper = mount(() => (
+			<Table data={[{ id: 1, name: 'a' }]} primaryKey="id">
+				<TableColumn type="expand">
+					{{ default: ({ row }: any) => <div>{`detail-${row.name}`}</div> }}
+				</TableColumn>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const grid = () => wrapper.find('.vc-table__body-wrapper .vc-table__grid').element;
+		const before = grid();
+
+		expect(before.getAttribute('aria-expanded')).toBe('false');
+
+		const icon = wrapper.find('.vc-table__body-wrapper .vc-table__expand-icon');
+		await icon.trigger('click');
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual(['detail-a']);
+		// grid 与其中的 cell 原地更新，不会被重建
+		expect(grid()).toBe(before);
+		expect(icon.classes()).toContain('is-expand');
+		expect(before.getAttribute('aria-expanded')).toBe('true');
+
+		await icon.trigger('click');
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual([]);
+		expect(grid()).toBe(before);
+
+		wrapper.unmount();
+	});
+
+	it('defaultExpandAll only sets the default: collapsed rows stay collapsed after data updates', async () => {
+		const data = ref([{ id: 1, name: 'a' }, { id: 2, name: 'b' }]);
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={data.value} primaryKey="id" defaultExpandAll>
+				<TableColumn type="expand">
+					{{ default: ({ row }: any) => <div>{`detail-${row.name}`}</div> }}
+				</TableColumn>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual(['detail-a', 'detail-b']);
+
+		tableRef.value.toggleRowExpansion(tableRef.value.store.states.data[0], false);
+		await flush();
+		data.value = [{ id: 1, name: 'a2' }, { id: 2, name: 'b2' }, { id: 3, name: 'c' }];
+		await flush();
+		// 已收起的行保持收起，新增的行按默认展开
+		expect(expandedTexts(wrapper)).toEqual(['detail-b2', 'detail-c']);
+
+		wrapper.unmount();
+	});
+
+	it('stops rendering expanded content when the expand column is removed or hidden', async () => {
+		const visible = ref(true);
+		const columns = ref<any[]>([]);
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={[{ id: 1, name: 'a' }]}
+				primaryKey="id"
+				defaultExpandAll
+				columns={columns.value}
+				{...{ 'onUpdate:columns': (v: any[]) => { columns.value = v; } }}
+			>
+				{
+					visible.value && (
+						<TableColumn type="expand">
+							{{ default: ({ row }: any) => <div>{`detail-${row.name}`}</div> }}
+						</TableColumn>
+					)
+				}
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual(['detail-a']);
+
+		// 经 v-model:columns 隐藏 expand 列
+		columns.value = columns.value.map(item => (item.type === 'expand' ? { ...item, hidden: true } : item));
+		await flush();
+		await flush();
+		expect(tableRef.value.store.states.expandColumn).toBe(null);
+		expect(expandedTexts(wrapper)).toEqual([]);
+
+		columns.value = columns.value.map(item => ({ ...item, hidden: false }));
+		await flush();
+		await flush();
+		expect(expandedTexts(wrapper)).toEqual(['detail-a']);
+
+		// 移除 expand 列
+		visible.value = false;
+		await flush();
+		expect(tableRef.value.store.states.expandColumn).toBe(null);
+		expect(expandedTexts(wrapper)).toEqual([]);
 
 		wrapper.unmount();
 	});
@@ -1313,7 +1854,7 @@ describe('Additional source-path coverage', () => {
 		document.body.innerHTML = '';
 	});
 
-	it('expandRowValue prop triggers store.setExpandRowValueAdapter', async () => {
+	it('expandRowValue prop sets the expanded rows', async () => {
 		const data = [{ id: 1, name: 'a' }, { id: 2, name: 'b' }];
 		const expandRowValue = ref<any[]>([1]);
 		const tableRef = ref<any>();
@@ -1332,10 +1873,10 @@ describe('Additional source-path coverage', () => {
 		), { attachTo: document.body });
 		await flush();
 
-		// 触发 watch(expandRowValue) → store.setExpandRowValueAdapter
+		expect(tableRef.value!.store.expand.getRows().map((row: any) => row.id)).toEqual([1]);
 		expandRowValue.value = [1, 2];
 		await flush();
-		expect(tableRef.value!.store.states.expandRows.length).toBeGreaterThanOrEqual(1);
+		expect(tableRef.value!.store.expand.getRows().map((row: any) => row.id)).toEqual([1, 2]);
 		wrapper.unmount();
 	});
 
@@ -1490,8 +2031,12 @@ describe('Additional source-path coverage', () => {
 		data.value = [{ id: 1, name: 'a-updated' }, { id: 3, name: 'c' }];
 		await flush();
 		await flush();
-		// 当前行仍按 primaryKey 找回新引用
+		// 当前行仍按 primaryKey 找回新引用，current-change 携带找回的行
 		expect(vm.store.states.currentRow?.id).toBe(1);
+		expect(onCurrentChange).toHaveBeenLastCalledWith(
+			expect.objectContaining({ id: 1, name: 'a-updated' }),
+			expect.objectContaining({ id: 1, name: 'a' })
+		);
 		wrapper.unmount();
 	});
 
@@ -1548,9 +2093,11 @@ describe('Additional source-path coverage', () => {
 		), { attachTo: document.body });
 		await flush();
 		const vm = tableRef.value!;
-		// 没有 expand 列 → toggleRowExpansion 走 tree.toggle 分支
+		// 没有 expand 列 → toggleRowExpansion 切换树节点
 		vm.toggleRowExpansion(vm.store.states.data[0]);
 		await flush();
+		expect(vm.store.tree.isExpanded(1)).toBe(true);
+		expect(vm.store.states.renderData.map((row: any) => row.id)).toEqual([1, 11]);
 		wrapper.unmount();
 	});
 
@@ -1798,7 +2345,7 @@ describe('Additional source-path coverage', () => {
 		wrapper.unmount();
 	});
 
-	it('store.expand.update without data still safe', async () => {
+	it('store.expand.prune / getRows without data still safe', async () => {
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
 			<Table ref={tableRef} data={[]} primaryKey="id">
@@ -1810,8 +2357,8 @@ describe('Additional source-path coverage', () => {
 		), { attachTo: document.body });
 		await flush();
 		const vm = tableRef.value!;
-		vm.store.expand.update();
-		expect(vm.store.states.expandRows.length).toBe(0);
+		vm.store.expand.prune();
+		expect(vm.store.expand.getRows()).toEqual([]);
 		wrapper.unmount();
 	});
 
@@ -1839,53 +2386,41 @@ describe('Additional source-path coverage', () => {
 		wrapper.unmount();
 	});
 
-	it('treeCellPrefix unit: indent + expanded icon + loading spin + placeholder branches', async () => {
+	it('treeCellPrefix unit: indent + icon / spin + placeholder, click toggles the node', async () => {
 		const { treeCellPrefix } = await import('../table-column/table-column-confg');
 		const fakeStore = {
-			tree: { loadOrToggle: vi.fn() }
+			tree: { toggle: vi.fn() }
 		};
-		// 1) treeNode 为空 → null
-		expect(treeCellPrefix({ row: {}, treeNode: undefined, store: fakeStore } as any)).toBe(null);
-		// 2) indent + expanded=false（无 loading）
-		const r1: any = treeCellPrefix({
-			row: { id: 1 },
-			treeNode: { indent: 20, expand: false, noLazyChildren: false, loading: false },
-			store: fakeStore
-		} as any);
-		expect(Array.isArray(r1)).toBe(true);
-		// 3) indent + expanded=true + loading=true → 渲染 Spin
-		const r2: any = treeCellPrefix({
-			row: { id: 2 },
-			treeNode: { indent: 10, expand: true, noLazyChildren: false, loading: true },
-			store: fakeStore
-		} as any);
-		expect(Array.isArray(r2)).toBe(true);
-		// 4) noLazyChildren=true + expanded boolean → 走 placeholder 分支
-		const r3: any = treeCellPrefix({
-			row: { id: 3 },
-			treeNode: { indent: 0, expand: true, noLazyChildren: true },
-			store: fakeStore
-		} as any);
-		expect(Array.isArray(r3)).toBe(true);
-		// 5) expanded 非 boolean → 走 placeholder 分支
-		const r4: any = treeCellPrefix({
-			row: { id: 4 },
-			treeNode: { indent: 0, expand: undefined, noLazyChildren: false },
-			store: fakeStore
-		} as any);
-		expect(Array.isArray(r4)).toBe(true);
-		// 6) onClick 调用 store.tree.loadOrToggle
-		const r5: any = treeCellPrefix({
-			row: { id: 5 },
-			treeNode: { indent: 0, expand: false, noLazyChildren: false, loading: false },
-			store: fakeStore
-		} as any);
-		// 遍历 vnode 数组找到带 onClick 的展开 span
-		(r5 as any[]).forEach((node: any) => {
-			if (node?.props?.onClick) {
-				node.props.onClick({ stopPropagation: () => {} });
-			}
+		const node = (extra: Record<string, any> = {}) => ({
+			level: 1, indent: 20, expandable: true, expanded: false, loading: false, ...extra
 		});
+		// class 在创建 vnode 时已归一化为字符串
+		const classOf = (vnode: any) => vnode.props.class.split(' ');
+
+		// treeNode 为空 → null
+		expect(treeCellPrefix({ row: {}, treeNode: undefined, store: fakeStore } as any)).toBe(null);
+
+		// 可展开：缩进 + 展开图标
+		const [indent, icon]: any = treeCellPrefix({ row: { id: 1 }, treeNode: node(), store: fakeStore } as any);
+		expect(indent.props.style).toEqual({ paddingLeft: '20px' });
+		expect(classOf(icon)).toContain('vc-table__tree-icon');
+		expect(classOf(icon)).not.toContain('is-expand');
+		icon.props.onClick({ stopPropagation: () => {} });
+		expect(fakeStore.tree.toggle).toHaveBeenCalledWith({ id: 1 });
+
+		// 加载中：图标换为 Spin；已展开带 is-expand
+		const [, loading]: any = treeCellPrefix({
+			row: { id: 2 }, treeNode: node({ expanded: true, loading: true }), store: fakeStore
+		} as any);
+		expect(classOf(loading)).toContain('is-expand');
+		expect(loading.children[0].type.name).toBe('vc-spin');
+
+		// 根层叶子行：无缩进，占位对齐
+		const [noIndent, placeholder]: any = treeCellPrefix({
+			row: { id: 3 }, treeNode: node({ level: 0, indent: 0, expandable: false }), store: fakeStore
+		} as any);
+		expect(noIndent).toBe(null);
+		expect(placeholder.props.class).toBe('vc-table__placeholder');
 	});
 
 	it('selection checkbox click triggers rowSelectedChanged + stopPropagation', async () => {
@@ -2410,14 +2945,17 @@ describe('Additional source-path coverage', () => {
 		), { attachTo: document.body });
 		await flush();
 		const vm = tableRef.value!;
-		// expand.reset with valid ids
-		vm.store.expand.reset([1]);
+		// reset：按行值精确设置，数字 / 字符串形式的行值等价
+		vm.store.expand.reset(['1']);
 		await flush();
 		expect(vm.store.expand.isExpanded(vm.store.states.data[0])).toBe(true);
 		expect(vm.store.expand.isExpanded(vm.store.states.data[1])).toBe(false);
-		// expand.toggle 触发 changed=true 路径
 		vm.store.expand.toggle(vm.store.states.data[1]);
 		await flush();
+		expect(vm.store.expand.getRows().map((row: any) => row.id)).toEqual([1, 2]);
+		vm.store.expand.reset([2]);
+		await flush();
+		expect(vm.store.expand.getRows().map((row: any) => row.id)).toEqual([2]);
 		wrapper.unmount();
 
 		// 没有 primaryKey 的 isExpanded 路径
@@ -2435,12 +2973,10 @@ describe('Additional source-path coverage', () => {
 		vm2.store.expand.toggle(vm2.store.states.data[0]);
 		await flush();
 		expect(vm2.store.expand.isExpanded(vm2.store.states.data[0])).toBe(true);
-		// toggle with explicit `expanded=true` 但已展开 → changed=false 走 else 分支
+		// 指定的状态与当前一致：不变
 		vm2.store.expand.toggle(vm2.store.states.data[0], true);
 		await flush();
-		// reset 传入不存在的 id → info=undefined 走 if 假分支
-		vm2.store.expand.reset(['nonexistent-id']);
-		await flush();
+		expect(vm2.store.expand.isExpanded(vm2.store.states.data[0])).toBe(true);
 		wrapper2.unmount();
 	});
 
@@ -2567,32 +3103,49 @@ describe('Additional source-path coverage', () => {
 		[w1, w2, w3, w4, w5].forEach(w => w.unmount());
 	});
 
-	it('tree-mixin lazy: walkTreeNode with nested children + isSelected toggle', async () => {
+	it('lazy result with nested children / lazy nodes; selected parent selects loaded children', async () => {
 		const data = [{ id: 1, name: 'r1', hasChildren: true }];
 		const loadExpand = vi.fn(() => [
 			{ id: 11, name: 'r1-1', children: [{ id: 111, name: 'leaf' }] },
 			{ id: 12, name: 'r1-2', hasChildren: true }
 		]);
 		const tableRef = ref<any>();
+		const onSelect = vi.fn();
+		const onSelectionChange = vi.fn();
 		const wrapper = mount(() => (
-			<Table ref={tableRef} data={data} primaryKey="id" lazyTree loadExpand={loadExpand}>
+			<Table
+				ref={tableRef}
+				data={data}
+				primaryKey="id"
+				lazyTree
+				loadExpand={loadExpand}
+				defaultExpandAll
+				onSelect={onSelect}
+				onSelectionChange={onSelectionChange}
+			>
 				<TableColumn type="selection" />
 				<TableColumn label="名称" prop="name" />
 			</Table>
 		), { attachTo: document.body });
 		await flush();
 		const vm = tableRef.value!;
-		// 先选中 row → loadData 中 isSelected 分支 + 遍历 toggleRowSelection
+		// 未加载的懒加载节点即便 defaultExpandAll 也保持收起
+		expect(vm.store.states.renderData.map((row: any) => row.id)).toEqual([1]);
+
 		vm.toggleRowSelection(vm.store.states.data[0], true, false);
+		vm.store.tree.toggle(vm.store.states.data[0]);
 		await flush();
-		vm.store.tree.loadOrToggle(vm.store.states.data[0]);
-		await flush();
-		await sleep(0);
-		await flush();
+		// 加载结果中的嵌套 children 按 defaultExpandAll 展开，懒加载节点仍待加载
+		expect(vm.store.states.renderData.map((row: any) => row.id)).toEqual([1, 11, 111, 12]);
+		expect(vm.store.tree.nodes[12]).toEqual({ level: 1, loadable: true });
+		expect(vm.store.states.selection.map((row: any) => row.id)).toEqual([1, 11, 12]);
+		// 程序触发的选中不 emit select；子行一次性加入，selection-change 只额外触发一次
+		expect(onSelect).not.toHaveBeenCalled();
+		expect(onSelectionChange).toHaveBeenCalledTimes(2);
 		wrapper.unmount();
 	});
 
-	it('renderExpand slot renders for expand column when row is expanded', async () => {
+	it('expand column slot renders the content of an expanded row', async () => {
 		const data = [{ id: 1, name: 'a' }];
 		const wrapper = mount(() => (
 			<Table data={data} primaryKey="id">
@@ -2608,11 +3161,13 @@ describe('Additional source-path coverage', () => {
 			</Table>
 		), { attachTo: document.body });
 		await flush();
+		expect(wrapper.find('.expanded-row').exists()).toBe(false);
 		// 点击展开
 		const icon = wrapper.find('.vc-table__expand-icon');
 		await icon.trigger('click');
 		await flush();
-		// renderExpand slot 被注册（store.states.expandRows 已包含此行）
+		expect(icon.classes()).toContain('is-expand');
+		expect(wrapper.find('.expanded-row').text()).toBe('e:a');
 		wrapper.unmount();
 	});
 });
@@ -2782,15 +3337,81 @@ describe('Layout unit', () => {
 		expect((wrapper.element as HTMLElement).style.maxHeight).toBe('500px');
 		wrapper.unmount();
 	});
+
+	it('clearing height at runtime removes the inline style and falls back to the normal body', async () => {
+		const height = ref<number | undefined>(400);
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(5)} primaryKey="id" height={height.value}>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const el = wrapper.element as HTMLElement;
+		const vm = tableRef.value!;
+		expect(el.style.height).toBe('400px');
+		expect(vm.layout.states.height).toBe(400);
+		expect(wrapper.findComponent({ name: 'vc-recycle-list' }).exists()).toBe(true);
+
+		// 模拟固定高度下测得的布局状态
+		vm.layout.states.scrollY = true;
+		vm.layout.states.bodyHeight = 300;
+		await flush();
+		expect(el.classList.contains('vc-table--scrollable-y')).toBe(true);
+
+		height.value = undefined;
+		await flush();
+		expect(el.style.height).toBe('');
+		expect(vm.layout.states.height).toBe(null);
+		expect(vm.layout.states.bodyHeight).toBe(null);
+		expect(vm.layout.states.scrollY).toBe(false);
+		expect(el.classList.contains('vc-table--scrollable-y')).toBe(false);
+		expect(wrapper.findComponent({ name: 'vc-recycle-list' }).exists()).toBe(false);
+		expect(wrapper.findComponent({ name: 'vc-table-normal-list' }).exists()).toBe(true);
+		expect(wrapper.findAll('.vc-table__body-wrapper .vc-table__tr')).toHaveLength(5);
+
+		wrapper.unmount();
+	});
+
+	it('clearing one of height / max-height keeps the other in effect', async () => {
+		const height = ref<number | undefined>(400);
+		const maxHeight = ref<number | undefined>(300);
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(5)} height={height.value} maxHeight={maxHeight.value}>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const el = wrapper.element as HTMLElement;
+		const vm = tableRef.value!;
+		expect(el.style.height).toBe('400px');
+		expect(el.style.maxHeight).toBe('300px');
+
+		maxHeight.value = undefined;
+		await flush();
+		expect(el.style.maxHeight).toBe('');
+		expect(el.style.height).toBe('400px');
+		expect(vm.layout.states.height).toBe(400);
+
+		maxHeight.value = 300;
+		await flush();
+		height.value = undefined;
+		await flush();
+		expect(el.style.height).toBe('');
+		expect(el.style.maxHeight).toBe('300px');
+		expect(vm.layout.states.height).toBe(300);
+
+		wrapper.unmount();
+	});
 });
 
 describe('Table utils', () => {
-	it('getRowValue covers string path / function / __KEY__ / nested', () => {
+	it('getRowValue covers string path / function / nested', () => {
 		expect(getRowValue({ id: 'a' }, 'id')).toBe('a');
 		expect(getRowValue({ id: { v: 1 } }, 'id.v')).toBe(1);
 		expect(getRowValue({}, (row: any) => 'fn-' + JSON.stringify(row))).toContain('fn-');
-		const r: any = { __KEY__: 'k' };
-		expect(getRowValue(r, 'id')).toBe('k');
+		expect(() => getRowValue(null, 'id')).toThrow();
 	});
 
 	it('getValuesMap', () => {
@@ -3010,7 +3631,7 @@ describe('Table utils', () => {
 		wrapper.unmount();
 	});
 
-	it('columnsToRowsEffect handles nested children + flattenData with parent/cascader + walkTreeNode lazy', () => {
+	it('columnsToRowsEffect handles nested children', () => {
 		const cols = [
 			buildColumnNode({}, [buildColumnNode(), buildColumnNode()]),
 			buildColumnNode()
@@ -3018,25 +3639,6 @@ describe('Table utils', () => {
 		const rows = columnsToRowsEffect(cols);
 		expect(rows.length).toBeGreaterThanOrEqual(1);
 		expect(cols[0].states.colspan).toBe(2);
-
-		const tree = [
-			{ id: 1, children: [{ id: 11 }, { id: 12 }] },
-			{ id: 2 }
-		];
-		expect(flattenData(tree).length).toBe(3);
-		expect(flattenData(tree, { parent: true }).length).toBe(4);
-		expect(flattenData(tree, { parent: true, cascader: true }).length).toBe(4);
-
-		const cb = vi.fn();
-		walkTreeNode(
-			[
-				{ hasChildren: true, id: 'lazy-root' },
-				{ id: 'a', children: [{ id: 'a-1', hasChildren: true }, { id: 'a-2', children: [{ id: 'a-2-1' }] }] }
-			],
-			cb,
-			{ childrenKey: 'children', lazyKey: 'hasChildren' }
-		);
-		expect(cb).toHaveBeenCalled();
 	});
 });
 
@@ -3410,6 +4012,25 @@ describe('v-model:columns & hidden', () => {
 		await flush();
 
 		expect(wrapper.findAll('.vc-affix').length).toBe(2);
+
+		wrapper.unmount();
+	});
+
+	it('affix: 活动范围默认限定为表体，可被配置覆盖', async () => {
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(20)} primaryKey="id" affix={[{ fixed: false }, { target: '.custom' }]} showSummary>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		const [header, footer] = wrapper.findAllComponents({ name: 'vc-affix' });
+		expect(header.props('target')).toBe(`.${tableRef.value.tableId} .vc-table__body-wrapper`);
+		// 表格内首个匹配即自身的表体
+		expect(document.querySelector(header.props('target'))).toBe(wrapper.find('.vc-table__body-wrapper').element);
+		expect(header.props('fixed')).toBe(false);
+		expect(footer.props('target')).toBe('.custom');
 
 		wrapper.unmount();
 	});

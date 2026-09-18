@@ -12,6 +12,10 @@ export type TableStates = {
 	 */
 	_data: any[];
 	data: any[];
+	/**
+	 * 参与渲染的行，行号即其下标：树形表格为按展开状态铺平后的可见行，否则同 data
+	 */
+	renderData: any[];
 	list: any[];
 
 	/**
@@ -38,7 +42,6 @@ export type TableStates = {
 	selection: any[];
 	reserveSelection: boolean;
 	selectable: TableColumnStates['selectable'] | null;
-	expandSelectable: any;
 
 	hoverRowIndex: number | null;
 
@@ -48,30 +51,19 @@ export type TableStates = {
 	currentRow: any;
 
 	/**
-	 * Expand
+	 * Expand：显式的展开状态（key 为字符串化的行值，无行值时为行对象），未记录的行取 defaultExpandAll
 	 */
-	defaultExpandAll: boolean;
-	expandRows: any[];
+	expandMap: Map<unknown, boolean>;
 
 	/**
-	 * Tree
+	 * Tree：以下均按行值记录
+	 * 	- treeExpanded: 显式的展开状态，未记录的节点取 defaultExpandAll
+	 * 	- treeLoading: 懒加载中的节点
+	 * 	- treeLazyChildren: 懒加载得到的子行
 	 */
-	treeExpandRowValue: any[];
-	/**
-	 * item的状态，比如loading, loaded
-	 */
-	treeData: Record<string, any>;
-	treeLazy: boolean;
-	/**
-	 * 源数据
-	 */
-	treelazyNodeMap: Record<string, any>;
-	/**
-	 * 源数据展开
-	 */
-	treeLazyData: any[];
-	treeLazyColumnIdentifier: string;
-	treeChildrenColumnName: string;
+	treeExpanded: Record<string, boolean>;
+	treeLoading: Record<string, boolean>;
+	treeLazyChildren: Record<string, any[]>;
 
 	/**
 	 * computeds
@@ -82,6 +74,14 @@ export type TableStates = {
 	 */
 	hasMergeCells: boolean;
 	isGroup: boolean;
+	/**
+	 * type="expand" 的叶子列，承载展开行的渲染
+	 */
+	expandColumn: TableColumnNodeRaw | null;
+	/**
+	 * 树形列：首个 default 类型的叶子列，承载缩进与展开图标
+	 */
+	treeColumnIndex: number;
 
 	/**
 	 * 叶子列 flat 视图（元素为 leaf 节点引用；layout 写 node.states，body/footer 读 node.states）
@@ -99,6 +99,7 @@ export class BaseWatcher {
 	states: TableStates = reactive({
 		_data: [],
 		data: [],
+		renderData: [],
 		list: [],
 
 		headerRows: [],
@@ -113,26 +114,22 @@ export class BaseWatcher {
 		selection: [],
 		reserveSelection: false,
 		selectable: null,
-		expandSelectable: null,
 
 		hoverRowIndex: null,
 
 		currentRow: null,
 
-		defaultExpandAll: false,
-		expandRows: [],
+		expandMap: new Map(),
 
-		treeExpandRowValue: [],
-		treeData: {},
-		treeLazy: false,
-		treelazyNodeMap: {},
-		treeLazyData: [],
-		treeLazyColumnIdentifier: 'hasChildren',
-		treeChildrenColumnName: 'children',
+		treeExpanded: {},
+		treeLoading: {},
+		treeLazyChildren: {},
 
 		isComplex: computed(() => this.states.leftFixedColumns.length > 0 || this.states.rightFixedColumns.length > 0),
 		hasMergeCells: computed(() => this.states.list.some((item: any) => !!item.hasMerge)),
 		isGroup: computed(() => this.states.columns.length > this.states.originColumns.length),
+		expandColumn: computed(() => this.states.columns.find(node => node.states.type === 'expand') || null),
+		treeColumnIndex: computed(() => this.states.columns.findIndex(node => node.states.type === 'default')),
 
 		columns: computed(() => {
 			return concat(this.states.leftFixedLeafColumns, this.states.leafColumns, this.states.rightFixedLeafColumns);

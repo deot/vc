@@ -28,10 +28,6 @@ $line-height: 20px;
 		word-break: break-all;
 		white-space: normal;
 		box-sizing: border-box;
-
-		.vc-table__unexpand__inden {
-			padding-left: 23px;
-		}
 	}
 
 	// 使用原生渲染取代Text动态展示
@@ -232,6 +228,19 @@ $line-height: 20px;
 		&:hover {
 			background-color: transparent !important;
 		}
+	}
+
+	// 树形列：按层级缩进；展开图标 20px + 3px 间距，叶子行以同宽占位对齐
+	@include element(indent) {
+		display: inline-block;
+	}
+
+	@include element(tree-icon) {
+		width: 20px;
+		height: 20px;
+		min-width: 20px;
+		margin-right: 3px;
+		text-align: center;
 	}
 
 	@include element(placeholder) {
@@ -589,18 +598,6 @@ $line-height: 20px;
 
 		.vc-table__th, .vc-table__td {
 			padding: 6px 0;
-		}
-	}
-
-	[class*="vc-table__row--level"] {
-		.vc-table__expand-icon {
-			display: inline-block;
-			width: 20px;
-			height: 20px;
-			min-width: 20px;
-			margin-right: 3px;
-			line-height: 20px;
-			text-align: center;
 		}
 	}
 

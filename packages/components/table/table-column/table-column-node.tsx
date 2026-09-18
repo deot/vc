@@ -3,13 +3,14 @@
 import { reactive, computed, watch, markRaw } from 'vue';
 import type { ComponentInternalInstance, CSSProperties, Slots, SetupContext, VNodeChild } from 'vue';
 import { hasOwn } from '@deot/helper-utils';
-import { merge, isEmpty } from 'lodash-es';
+import { merge } from 'lodash-es';
 import type { Nullable } from '@deot/helper-shared';
 import { cellStarts, cellForced, defaultRenderCell, treeCellPrefix } from './table-column-confg';
 import { parseWidth, parseMinWidth } from '../utils';
 import type { TableColumnProps } from './table-column-props';
 import type { TableProvide } from '../types';
 import type { Store } from '../store/store';
+import type { TreeNode } from '../store/modules/tree';
 
 /**
  * 列 states 完整形状：构造期仅初始化核心字段，props 镜像与 render 函数由 `init()` 写入。
@@ -63,6 +64,8 @@ export type TableColumnStates = {
 
 	renderHeader?: (data: Pick<TableColumnRenderData, 'column' | 'columnIndex' | 'store'>) => VNodeChild;
 	renderCell?: (data: TableColumnRenderData) => VNodeChild;
+	// type="expand"：展开行的内容（列的默认插槽）
+	renderExpand?: (data: Pick<TableColumnRenderData, 'row' | 'rowIndex' | 'store'>) => VNodeChild;
 };
 
 /**
@@ -78,13 +81,8 @@ export interface TableColumnRenderData {
 	level?: number;
 	isHead?: boolean;
 	isTail?: boolean;
-	isExpandColumn?: boolean;
-	treeNode?: {
-		indent?: number;
-		expand?: boolean;
-		noLazyChildren?: boolean;
-		loading?: boolean;
-	};
+	// 树形列的缩进、展开与加载状态（仅树形表格的树形列）
+	treeNode?: TreeNode;
 }
 
 type Options = {
@@ -261,8 +259,7 @@ export class TableColumnNode {
 	 * column
 	 *   -> renderHeader: 渲染头部
 	 *   -> renderCell: 渲染单元格
-	 * owner
-	 * 	 -> renderExpand: 展开
+	 *   -> renderExpand: 展开行内容（type="expand"）
 	 * @param column ~
 	 * @param props ~
 	 * @param slots ~
@@ -283,19 +280,14 @@ export class TableColumnNode {
 		}
 
 		let originRenderCell = column.renderCell;
-		// TODO: 这里的实现调整
 		if (column.type === 'expand') {
-			// 对于展开行，renderCell 不允许配置的。在上一步中已经设置过，这里需要简单封装一下。
+			// 展开列：单元格为展开图标（cellForced），默认插槽为展开行的内容
 			column.renderCell = (data: TableColumnRenderData) => (
 				<div class="vc-table__cell">
 					{ originRenderCell!(data) }
 				</div>
 			);
-			this.table.renderExpand.value = (data) => {
-				return slots.default
-					? slots.default(data)
-					: slots.default;
-			};
+			column.renderExpand = data => slots.default?.(data);
 		} else {
 			originRenderCell = originRenderCell || defaultRenderCell;
 			// 对 renderCell 进行包装
@@ -304,11 +296,8 @@ export class TableColumnNode {
 					? slots?.default?.(data)
 					: originRenderCell!(data);
 
-				let prefix: VNodeChild = treeCellPrefix(data);
-				// 存在树形数组，且当前行无箭头图标且处于当前展开列，表格对齐
-				if (!isEmpty(this.table.store.states.treeData) && !prefix && data.isExpandColumn) {
-					prefix = <span class="vc-table__unexpand__indent" />;
-				}
+				// 树形列：缩进 + 展开图标（叶子行为占位，保持对齐）
+				const prefix = treeCellPrefix(data);
 
 				const { placeholder } = this.table.props;
 				const contentPlaceholder = typeof placeholder === 'function' ? placeholder() : placeholder;

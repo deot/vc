@@ -148,18 +148,20 @@ export class Block {
 	}
 
 	/**
-	 * 构建初始 list：每行一个单行块
+	 * 构建初始 list：每行一个单行块，行条目为 { index, data, level }
 	 *
 	 * 同一个行对象复用上一次的块对象，只原地更新序号：RecycleList 按数据项引用沿用已测尺寸，
 	 * 块对象不变，删除/插入/排序时未变的行就不必重新渲染测量。
 	 * 序号经响应式代理写入，已渲染的块才会随之更新 rowIndex
-	 * @param data 行数据
+	 * @param data 行数据（树形表格为铺平后的可见行）
+	 * @param levels 各行的树形层级，缺省为 0
 	 * @returns 单行块列表
 	 */
-	buildInitialList(data: any[]) {
+	buildInitialList(data: any[], levels?: number[]) {
 		const { primaryKey } = this.store.table.props;
 		const used = new Set<object>();
-		return data.map((row, index) => {
+		return toRaw(data).map((row, index) => {
+			const level = levels ? levels[index] : 0;
 			const $id = primaryKey ? getRowValue(row, primaryKey) : index;
 			const id = typeof $id === 'undefined' ? index : $id;
 			const key = toRaw(row);
@@ -169,16 +171,17 @@ export class Block {
 			// 同一个行对象在数据里出现多次时只复用一次，其余新建，避免多个位置共用一个块
 			if (cached && !used.has(cached)) {
 				used.add(cached);
-				if (cached.id !== id || cached.rowStart !== index) {
+				if (cached.id !== id || cached.rowStart !== index || cached.rows[0].level !== level) {
 					const proxy = reactive(cached);
 					proxy.id = id;
 					proxy.rowStart = index;
 					proxy.rows[0].index = index;
+					proxy.rows[0].level = level;
 				}
 				return cached;
 			}
 
-			const block = { id, rows: [{ index, data: row }], rowStart: index, expand: false };
+			const block = { id, rows: [{ index, data: row, level }], rowStart: index };
 			if (reusable && !cached) {
 				this._blocks.set(key, block);
 				used.add(block);
@@ -194,7 +197,8 @@ export class Block {
 	rebuildMergeList() {
 		this._cells = new WeakMap();
 		const { getSpan, primaryKey } = this.store.table.props;
-		const { data, columns, list } = this.store.states;
+		// 行号以参与渲染的行计：树形表格为铺平后的可见行
+		const { renderData: data, columns, list } = this.store.states;
 		if (typeof getSpan !== 'function' || !data.length || !columns.length) return;
 
 		const columnsKey = columns.map(column => column.states.id).join(',');
@@ -228,7 +232,6 @@ export class Block {
 			return {
 				id: typeof id === 'undefined' ? block.start : id,
 				rows,
-				expand: false,
 				hasMerge: block.hasMerge,
 				rowStart: block.start
 			};

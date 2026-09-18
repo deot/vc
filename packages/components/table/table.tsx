@@ -55,8 +55,6 @@ export const Table = defineComponent({
 		const store = new Store({ table: instance });
 		const { layout } = store;
 
-		// 由table-column控制
-		const renderExpand: TableProvide['renderExpand'] = ref(null);
 		const resizeProxyVisible = ref(false);
 		const resizeState = ref({
 			width: null,
@@ -164,6 +162,8 @@ export const Table = defineComponent({
 				return {
 					placement,
 					fixed: true,
+					// 活动范围限定为表体：表头不越过表体底部、合计行不越过表体顶部，表格滚出后随之离开
+					target: `.${tableId} .vc-table__body-wrapper`,
 					...(isObject ? item : {}),
 					disabled: !fluidHeight || !item || (isObject && (item as any).disabled)
 				};
@@ -236,7 +236,7 @@ export const Table = defineComponent({
 
 		// 用于可展开表格与树形表格，切换某一行的展开状态;如果使用了第二个参数，则是设置这一行展开与否（expanded 为 true 则展开）
 		const toggleRowExpansion = (row: any, expanded?: boolean) => {
-			store.toggleRowExpansionAdapter(row, expanded);
+			store.toggleRowExpansion(row, expanded);
 		};
 
 		// 用于多选表格，清空用户的选择
@@ -339,7 +339,6 @@ export const Table = defineComponent({
 			debouncedUpdateLayout,
 			isReady,
 			hoverState,
-			renderExpand,
 			hiddenColumns,
 			props,
 			emit,
@@ -354,7 +353,7 @@ export const Table = defineComponent({
 					ref={tableWrapper}
 					class={[classes.value, tableId, 'vc-table']}
 					style={{ '--vc-table-columns': layout.templateColumns.value }}
-					role="table"
+					role={store.tree.isTree ? 'treegrid' : 'table'}
 					onMouseleave={handleMouseLeave}
 				>
 					<div ref={hiddenColumns} class="vc-table__hidden">
