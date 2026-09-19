@@ -3,6 +3,7 @@
 import { computed, defineComponent, inject, ref, watch } from 'vue';
 import { isEqualWith } from 'lodash-es';
 import { MPickerView } from '../../picker/index.m';
+import { useLocale } from '../../locale';
 import { props as datePickerViewProps } from './date-picker-view-props';
 import {
 	dateToPickerValue,
@@ -24,6 +25,7 @@ export const MDatePickerView = defineComponent({
 	props: datePickerViewProps,
 	emits: ['update:modelValue', 'change', 'picker-change'],
 	setup(props, { emit }) {
+		const { t, locale } = useLocale();
 		const formItem = inject<any>('vc-form-item', {});
 		const currentValue = ref<PickerValue[]>([]);
 		const rebuildData = ref<PickerColumn[]>([]);
@@ -100,7 +102,7 @@ export const MDatePickerView = defineComponent({
 		const makeRebuildData = () => {
 			return units.value.map((unit) => {
 				const [start, end] = getRange(unit);
-				return makeColumn(unit, start, end);
+				return makeColumn(unit, start, end, t);
 			});
 		};
 
@@ -172,6 +174,7 @@ export const MDatePickerView = defineComponent({
 
 		watch(
 			() => [
+				locale.value,
 				props.type,
 				props.format,
 				props.minDate,

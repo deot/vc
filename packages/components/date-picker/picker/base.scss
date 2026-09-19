@@ -1,5 +1,7 @@
 @use '../../style/helper' as *;
 
+$foreground: varfix(color-dark-lighter, date-picker);
+$muted: varfix(color-dark-extralight, date-picker);
 $component-name: vc-date-picker;
 
 @include block($component-name) {
@@ -10,7 +12,7 @@ $component-name: vc-date-picker;
 
 	@include modifier(portal) {
 		font-size: 12px;
-		color: #515a6e;
+		color: $foreground;
 	}
 
 	@include element(input) {
@@ -31,7 +33,7 @@ $component-name: vc-date-picker;
 		font-size: 16px;
 		font-weight: 400;
 		line-height: 32px;
-		color: #808695;
+		color: $muted;
 		text-align: center;
 		white-space: nowrap;
 		cursor: default;

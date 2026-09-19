@@ -1,5 +1,15 @@
 import { preZero } from '@deot/helper-utils';
 import { DateUtil } from './date';
+import { translate } from '../../locale';
+import { VcInstance } from '../../vc';
+
+const formatYearQuarter = (year: number, quarter: string) => {
+	const locale = VcInstance.options.locale;
+	return translate('vc.DatePicker.yearQuarter', {
+		year,
+		quarter: translate(`vc.DatePicker.quarter.${quarter}`, undefined, locale)
+	}, locale);
+};
 
 const isShortMonth = (month) => {
 	return [4, 6, 9, 11].indexOf(month) > -1;
@@ -229,13 +239,13 @@ export const TYPE_VALUE_RESOLVER_MAP = {
 				const startMonth = startDate.getMonth();
 				const endMonth = endDate.getMonth();
 				if (startMonth === 0 && endMonth === 2) {
-					return `${year}年第一季度`;
+					return formatYearQuarter(year, 'first');
 				} else if (startMonth === 3 && endMonth === 5) {
-					return `${year}年第二季度`;
+					return formatYearQuarter(year, 'second');
 				} else if (startMonth === 6 && endMonth === 8) {
-					return `${year}年第三季度`;
+					return formatYearQuarter(year, 'third');
 				} else if (startMonth === 9 && endMonth === 11) {
-					return `${year}年第四季度`;
+					return formatYearQuarter(year, 'fourth');
 				}
 			}
 		},
@@ -250,16 +260,16 @@ export const TYPE_VALUE_RESOLVER_MAP = {
 	quarterrange: {
 		formatterText: (value: Date[], _format: string, RANGE_SEPARATOR: string) => {
 			const startQuarterMap = {
-				0: '第一季度',
-				3: '第二季度',
-				6: '第三季度',
-				9: '第四季度',
+				0: 'first',
+				3: 'second',
+				6: 'third',
+				9: 'fourth',
 			};
 			const endQuarterMap = {
-				2: '第一季度',
-				5: '第二季度',
-				8: '第三季度',
-				11: '第四季度',
+				2: 'first',
+				5: 'second',
+				8: 'third',
+				11: 'fourth',
 			};
 			const [startDate, endDate] = value;
 			if (startDate && endDate) {
@@ -267,7 +277,8 @@ export const TYPE_VALUE_RESOLVER_MAP = {
 				const startMonth = startDate.getMonth();
 				const endYear = endDate.getFullYear();
 				const endMonth = endDate.getMonth();
-				return `${startYear}年${startQuarterMap[startMonth]}${RANGE_SEPARATOR}${endYear}年${endQuarterMap[endMonth]}`;
+				return formatYearQuarter(startYear, startQuarterMap[startMonth])
+					+ RANGE_SEPARATOR + formatYearQuarter(endYear, endQuarterMap[endMonth]);
 			}
 		},
 		formatter: (value = [], format: string) => {

@@ -3,6 +3,38 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		DatePicker: {
+			clearText: '清空',
+			selectDate: '选择日期',
+			selectTime: '选择时间',
+			startTime: '开始时间',
+			endTime: '结束时间',
+			weekdays: {
+				sunday: '日',
+				monday: '一',
+				tuesday: '二',
+				wednesday: '三',
+				thursday: '四',
+				friday: '五',
+				saturday: '六'
+			},
+			placeholder: '请选择',
+			cancelText: '取消',
+			okText: '确定',
+			year: '{value}年',
+			month: '{value}月',
+			day: '{value}日',
+			hour: '{value}时',
+			minute: '{value}分',
+			second: '{value}秒',
+			yearQuarter: '{year}年{quarter}',
+			quarter: {
+				first: '第一季度',
+				second: '第二季度',
+				third: '第三季度',
+				fourth: '第四季度'
+			}
+		},
 		Select: {
 			placeholder: '请选择',
 			selectAll: '全选',

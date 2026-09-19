@@ -1,9 +1,9 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, computed } from 'vue';
 import { getDayCountOfMonth, getDateTimestamp } from '../../helper/date-utils';
 import { value2Array, isEmpty } from '../../helper/utils';
-import { QUARTER_CN } from '../../constants';
+import { useLocale } from '../../../locale';
 
 const COMPONENT_NAME = 'vc-quarter-table';
 
@@ -64,7 +64,8 @@ export const QuarterTable = defineComponent({
 		'range-change'
 	],
 	setup(props, { emit }) {
-		const quarterMap = ref(QUARTER_CN);
+		const { t } = useLocale();
+		const quarterKeys = ['first', 'second', 'third', 'fourth'];
 		const rows = computed(() => {
 			const $rows: any = [[], []];
 			const year = props.panelDate!.getFullYear();
@@ -164,7 +165,9 @@ export const QuarterTable = defineComponent({
 															class={[getCellClasses(cell), 'vc-quarter-table__cell']}
 														>
 															<div>
-																<span>{`第${quarterMap.value[cell.quarter + 1]}季度`}</span>
+																<span>
+																	{t(`vc.DatePicker.quarter.${quarterKeys[cell.quarter]}`)}
+																</span>
 															</div>
 														</td>
 													);

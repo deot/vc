@@ -1,5 +1,6 @@
 /** @jsxImportSource vue */
 
+import { useLocale } from '../../locale';
 import { defineComponent, ref, computed } from 'vue';
 import { nextMonth, prevMonth, nextYear, prevYear, getDateOfTime, changeYearMonthAndClampDate } from '../helper/date-utils';
 
@@ -72,6 +73,7 @@ export const DateRangePanel = defineComponent({
 		'ok'
 	],
 	setup(props, { emit }) {
+		const { t } = useLocale();
 		const dates = ref(props.value!);
 		const leftPanelDate = ref(props.value![0] || props.startDate! || new Date());
 		const rightPanelDate = ref(
@@ -372,7 +374,7 @@ export const DateRangePanel = defineComponent({
 									currentView={leftCurrentView.value}
 									panelDate={leftPanelDate.value}
 									showNext={props.splitPanels}
-									title="开始时间"
+									title={t('vc.DatePicker.startTime')}
 									onChange={(panelDate, type) => handlePanelChange(panelDate, type, 'left')}
 									// @ts-ignore
 									onChangeCurrentView={handleChangeLeftCurrentView}
@@ -429,7 +431,7 @@ export const DateRangePanel = defineComponent({
 									currentView={rightCurrentView.value}
 									panelDate={rightPanelDate.value}
 									showNext={props.splitPanels}
-									title="结束时间"
+									title={t('vc.DatePicker.endTime')}
 									onChange={(panelDate, type) => handlePanelChange(panelDate, type, 'right')}
 									// @ts-ignore
 									onChangeCurrentView={handleChangeRightCurrentView}

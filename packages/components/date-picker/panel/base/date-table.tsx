@@ -6,7 +6,7 @@ import {
 	getDateTimestamp, nextDate, clearTime
 } from '../../helper/date-utils';
 import { value2Array } from '../../helper/utils';
-import { WEEKS } from '../../constants';
+import { useLocale } from '../../../locale';
 
 const COMPONENT_NAME = 'vc-date-table';
 
@@ -44,6 +44,7 @@ export const DateTable = defineComponent({
 		'range-change'
 	],
 	setup(props, { emit }) {
+		const { t } = useLocale();
 		const tableRows = ref([[], [], [], [], [], []]);
 		const offsetDay = computed(() => {
 			const week = props.firstDayOfWeek;
@@ -52,7 +53,9 @@ export const DateTable = defineComponent({
 		});
 		const weeks = computed(() => {
 			const week = props.firstDayOfWeek;
-			return WEEKS.concat(WEEKS).slice(week, week + 7);
+			const labels = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+				.map(day => t(`vc.DatePicker.weekdays.${day}`));
+			return labels.concat(labels).slice(week, week + 7);
 		});
 		const year = computed(() => {
 			return props.panelDate.getFullYear();

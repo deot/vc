@@ -3,6 +3,7 @@
 import { defineComponent, onMounted, ref, watch } from 'vue';
 import { pick } from 'lodash-es';
 import { Portal } from '../../portal';
+import { useLocale } from '../../locale';
 import { MPickerPopup } from '../../picker/index.m';
 import { MDatePickerView } from './date-picker-view';
 import { props as pickerPopupProps } from '../../picker/mobile/picker-popup-props';
@@ -35,6 +36,8 @@ export const MDatePickerCore = defineComponent({
 	props: {
 		...(pick(pickerPopupProps, popupKeys) as Pick<typeof pickerPopupProps, typeof popupKeys[number]>),
 		...(pick(datePickerViewProps, viewKeys) as Pick<typeof datePickerViewProps, typeof viewKeys[number]>),
+		cancelText: String,
+		okText: String,
 		visible: {
 			type: Boolean,
 			default: true
@@ -54,6 +57,7 @@ export const MDatePickerCore = defineComponent({
 		'visible-change'
 	],
 	setup(props, { emit }) {
+		const { t } = useLocale();
 		const isActive = ref(false);
 		const currentValue = ref<any>('');
 
@@ -123,8 +127,8 @@ export const MDatePickerCore = defineComponent({
 				<MPickerPopup
 					modelValue={isActive.value}
 					title={props.title}
-					cancelText={props.cancelText}
-					okText={props.okText}
+					cancelText={props.cancelText ?? t('vc.DatePicker.cancelText')}
+					okText={props.okText ?? t('vc.DatePicker.okText')}
 					showToolbar={props.showToolbar}
 					onOk={handleOk}
 					onCancel={handleCancel}

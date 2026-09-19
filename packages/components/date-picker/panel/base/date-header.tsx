@@ -3,6 +3,7 @@
 import { defineComponent, computed, Fragment } from 'vue';
 import { preZero } from '@deot/helper-utils';
 import { prevYear, nextYear, prevMonth, nextMonth } from '../../helper/date-utils';
+import { useLocale } from '../../../locale';
 import { Icon } from '../../../icon/index';
 
 const COMPONENT_NAME = 'vc-date-header';
@@ -27,12 +28,13 @@ export const DateHeader = defineComponent({
 		'change'
 	],
 	setup(props, { emit }) {
+		const { t } = useLocale();
 		const year = computed(() => {
-			return props.panelDate!.getFullYear() + '年';
+			return t('vc.DatePicker.year', { value: props.panelDate!.getFullYear() });
 		});
 		const month = computed(() => {
 			const $month = props.panelDate!.getMonth() + 1;
-			return preZero($month) + '月';
+			return t('vc.DatePicker.month', { value: preZero($month) });
 		});
 		const isDate = computed(() => {
 			return ['date', 'daterange'].includes(props.currentView!);

@@ -1,6 +1,7 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, computed } from 'vue';
+import { useLocale } from '../../../locale';
 
 import { getDateTimestamp } from '../../helper/date-utils';
 import { value2Array, getMonthEndDay } from '../../helper/utils';
@@ -29,6 +30,7 @@ export const MonthTable = defineComponent({
 		'range-change'
 	],
 	setup(props, { emit }) {
+		const { t } = useLocale();
 		const getDisabledMonth = (year: number, month: number) => {
 			const monthDay = getMonthEndDay(year, month);
 
@@ -138,7 +140,7 @@ export const MonthTable = defineComponent({
 															class={[getCellClasses(cell), 'vc-month-table__cell']}
 														>
 															<div>
-																<span>{`${cell.month + 1}月`}</span>
+																<span>{t('vc.DatePicker.month', { value: cell.month + 1 })}</span>
 															</div>
 														</td>
 													);

@@ -1,5 +1,6 @@
 /** @jsxImportSource vue */
 
+import { useLocale } from '../../locale';
 import { defineComponent, ref, computed } from 'vue';
 import { getDateOfTime, clearTime } from '../helper/date-utils';
 import { props as timeProps } from './base-time-props';
@@ -30,6 +31,7 @@ export const TimeRangePanel = defineComponent({
 		'ok'
 	],
 	setup(props, { emit }) {
+		const { t } = useLocale();
 		const isReady = useReady();
 		const dates = ref(props.value!);
 		const showSeconds = computed(() => {
@@ -85,7 +87,7 @@ export const TimeRangePanel = defineComponent({
 						<div class="vc-timerange-panel__content is-left">
 							<DateHeader
 								currentView="timerange"
-								title="开始时间"
+								title={t('vc.DatePicker.startTime')}
 							/>
 							<TimeSelect
 								hours={timeSlots.value.left.hours}
@@ -104,7 +106,7 @@ export const TimeRangePanel = defineComponent({
 						<div class="vc-timerange-panel__content is-right">
 							<DateHeader
 								currentView="timerange"
-								title="结束时间"
+								title={t('vc.DatePicker.endTime')}
 							/>
 							<TimeSelect
 								hours={timeSlots.value.right.hours}

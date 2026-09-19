@@ -1,5 +1,6 @@
 @use '../../../style/helper' as *;
 
+$border: varfix(border-color, date-picker, rgb(128 128 128 / 22%));
 $block: vc-daterange-panel;
 
 @include block($block) {
@@ -30,7 +31,7 @@ $block: vc-daterange-panel;
 				z-index: 1;
 				display: block;
 				width: 2px;
-				background: #e8eaec;
+				background: $border;
 				content: "";
 			}
 		}

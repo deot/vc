@@ -32,10 +32,9 @@ export const props = {
 	...(pick(listItemProps, listItemKeys) as Pick<typeof listItemProps, typeof listItemKeys[number]>),
 	...(pick(pickerPopupProps, popupKeys) as Pick<typeof pickerPopupProps, typeof popupKeys[number]>),
 	...(pick(viewProps, viewKeys) as Pick<typeof viewProps, typeof viewKeys[number]>),
-	extra: {
-		type: String,
-		default: '请选择'
-	},
+	cancelText: String,
+	okText: String,
+	extra: String,
 	formatter: Function as PropType<(value: any, format: string, dates: Date[]) => any>
 };
 

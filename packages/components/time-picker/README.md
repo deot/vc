@@ -1,19 +1,23 @@
 ## 时间选择器（TimePicker）
-当用户需要选取一个时间，可以点击标准输入框，弹出时间面板进行选择。
+
+通过时间面板选择时、分、秒或起止时间。
+
+### 何时使用
+
+用于预约时间、营业时段等只需录入时间的场景。
 
 ### 基础用法
-点击 TimePicker，然后可以在浮层中选择某一时间。
 
-:::RUNTIME
+`type="time"` 选择单个时间，`type="timerange"` 选择范围。选择后分别输出格式化字符串和两个字符串组成的数组；默认格式为 `HH:mm:ss`。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
 ```vue
 <template>
-	<div class="">
-		<TimePicker
-			v-model="time"
-			clearable
-			placeholder="Select time"
-			style="width: 168px"
-		/>
+	<div class="demo">
+		<label>时间<TimePicker v-model="time" /></label>
+		<label>时间范围<TimePicker v-model="range" type="timerange" confirm /></label>
+		<p>时间：{{ time }}；范围：{{ range }}</p>
 	</div>
 </template>
 
@@ -21,68 +25,55 @@
 import { ref } from 'vue';
 import { TimePicker } from '@deot/vc';
 
-const time = ref('');
+const time = ref('08:30:00');
+const range = ref(['09:00:00', '18:00:00']);
 </script>
+
+<style scoped>
+.demo { display: grid; gap: 16px; max-width: 420px; }
+.demo label { display: grid; gap: 8px; }
+.demo p { margin: 0; overflow-wrap: anywhere; }
+</style>
 ```
 :::
 
-### 带确认栏
-添加`confirm`属性后弹出的面板带有操作栏，点击确定按钮后才将选中的时间绑定。
+### 确认、步长与禁用时间
 
-:::RUNTIME
+`confirm` 开启后，点击确定才提交值。`steps` 依次设置时、分、秒的步长；禁用列表中使用数字。下面的示例仅显示时、分，分钟以 15 分钟递增。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
 ```vue
 <template>
-	<div class="">
+	<div class="demo">
 		<TimePicker
-			v-model="time1"
+			v-model="time"
+			:steps="[1, 15]"
+			:disabled-hours="[0, 1, 2, 3, 4, 5, 6, 7]"
+			format="HH:mm"
 			confirm
-			placeholder="Select time"
-			style="width: 168px"
 			@ok="handleOk"
 			@clear="handleClear"
 		/>
+		<p>已提交：{{ time || '未选择' }}</p>
+		<p>{{ status }}</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { TimePicker } from '@deot/vc';
 
-const time = ref('');
-const handleOk = (date) => {
-	console.log(date);
-};
-
-const handleClear = (val) => {
-	console.log(val);
-};
+const time = ref('09:00');
+const status = ref('请选择时间并确认');
+const handleOk = (value) => { status.value = '已确认：' + value; };
+const handleClear = () => { status.value = '已清空'; };
 </script>
-```
-:::
 
-### 不可选时间
-通过`disabled-hours`、`disabled-minutes`、`disabled-seconds`分别禁用时分秒。
-
-:::RUNTIME
-```vue
-<template>
-	<div class="">
-		<TimePicker
-			v-model="time"
-			:disabled-hours="[1,5,10]"
-			:disabled-minutes="[0,10,20]"
-			:disabled-seconds="[1,10,20]"
-			clearable
-			placeholder="Select time"
-			style="width: 168px"
-		/>
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { TimePicker } from '@deot/vc';
-
-const time = ref('');
-</script>
+<style scoped>
+.demo { max-width: 360px; }
+.demo p { overflow-wrap: anywhere; }
+</style>
 ```
 :::
 
@@ -90,34 +81,57 @@ const time = ref('');
 
 ### 属性
 
-| 属性          | 说明                                                                                   | 类型              | 可选值                                                                                                                               | 默认值          |
-| ----------- | ------------------------------------------------------------------------------------ | --------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| modelValue  | 时间                                                                                   | `Date`、`String` | -                                                                                                                                 | -            |
-| mode        | 显示类型                                                                                 | `String`        | `time`、`timerange`                                                                                                                | time         |
-| format      | 展示的日期格式                                                                              | `String`        |                                                                                                                                   | -            |
-| steps       | 下拉列表的时间间隔，数组的三项分别对应小时、分钟、秒。例如设置为 [1, 15] 时，分钟会显示：00、15、30、45。                        | `Array`         | -                                                                                                                                 | []           |
-| placement   | 时间选择器出现的位置，2.12.0 版本开始支持自动识别                                                         | `String`        | `top`、`top-start`、`top-end`、`bottom`、`bottom-start`、`bottom-end`、`left`、`left-start`、`left-end`、`right`、`right-start`、`right-end` | bottom-start |
-| placeholder | 占位文本                                                                                 | `String`        | -                                                                                                                                 | 空            |
-| confirm     | 是否显示底部控制栏                                                                            | `Boolean`       | -                                                                                                                                 | `false`      |
-| open        | 手动控制时间选择器的显示状态，`true` 为显示，`false` 为收起。使用该属性后，选择器不会主动关闭。建议配合 slot 及 confirm 和相关事件一起使用 | `Boolean`       | -                                                                                                                                 | null         |
-| size        | 尺寸                                                                                   | `String`        | `large`、`small`、`default`                                                                                                         | -            |
-| disabled    | 是否禁用选择器                                                                              | `Boolean`       | -                                                                                                                                 | `false`      |
-| clearable   | 是否显示清除按钮                                                                             | `Boolean`       | -                                                                                                                                 | `true`       |
-| readonly    | 完全只读，开启后不会弹出选择器，只在没有设置 open 属性下生效                                                    | `Boolean`       | -                                                                                                                                 | `false`      |
-| portal      | 是否将弹层放置于 body 内，在 Tabs、带有 fixed 的 Table 列内使用时，建议添加此属性，它将不受父级样式影响，从而达到更好的效果           | `Boolean`       | -                                                                                                                                 | `true`       |
-| element-id  | 给表单元素设置 `id`，详见 Form 用法。                                                             | `String`        | -                                                                                                                                 | -            |
-| separator   | 两个日期间的分隔符                                                                            | `String`        | -                                                                                                                                 | -            |
-
-
-> type -> mode
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| type | 时间选择类型 | `string` | `time`、`timerange` | `time` |
+| modelValue | 初始时间；范围建议使用数组 | `Date \| string \| (Date \| string)[]` | - | - |
+| format | 解析、显示与输出格式；以 mm 结尾时隐藏秒列 | `string` | - | `HH:mm:ss` |
+| steps | 时、分、秒步长；未设置的项使用 1 | `number[]` | - | `[]` |
+| disabledHours | 禁用的小时 | `number[]` | - | `[]` |
+| disabledMinutes | 禁用的分钟 | `number[]` | - | `[]` |
+| disabledSeconds | 禁用的秒 | `number[]` | - | `[]` |
+| disabledTime | 判断候选时间是否禁用 | `(date: Date) => boolean` | - | `() => false` |
+| filterable | 隐藏禁用的选项 | `boolean` | - | `false` |
+| confirm | 显示确认栏，确认后提交 | `boolean` | - | `false` |
+| changeOnSelect | 选择时立即提交并关闭面板 | `boolean` | - | `false` |
+| open | 值变化时同步显示状态；面板仍能通过交互关闭 | `boolean` | - | `false` |
+| placeholder | 占位文本，允许空字符串 | `string` | - | 当前语言的“请选择” |
+| disabled | 禁用选择器 | `boolean` | - | `false` |
+| clearable | 有值且悬停时显示清除图标 | `boolean` | - | `true` |
+| separator | 范围显示与字符串解析的分隔符 | `string` | - | `' - '` |
+| nullValue | 单值清空后的替代值；范围清空返回空数组 | `string \| number \| object` | - | `''` |
+| id | 内部输入框 ID | `string` | - | - |
+| placement | Popover 位置 | `string` | 同 Popover | `bottom-left` |
+| trigger | Popover 触发方式 | `string` | 同 Popover | `click` |
+| tag | 触发容器标签 | `string` | - | `div` |
+| arrow | 显示弹层箭头 | `boolean` | - | `false` |
+| portalClass | 弹层附加 class | `string \| object \| unknown[]` | - | - |
 
 ### 事件
 
-| 事件名         | 说明           | 参数                               | 返回值                |
-| ----------- | ------------ | -------------------------------- | ------------------ |
-| change      | 点击面板时的回调     | `(date: Date \ Array) => void 0` | `date`: 当前日期值      |
-| open-change | 弹出浮层和关闭浮层时触发 | `(visible: Boolean) => void 0`   | `visible`：当前面板显示状态 |
-| ok          | 点击确定按钮时触发    | -                                | -                  |
-| clear       | 在清空日期时触发     | -                                | -                  |
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue | 提交时间，支持 v-model | `value` | 单时间为字符串，范围为字符串数组 |
+| change | 选择、确认或清空后提交 | `(value, reset)` | reset 仅重置内部显示值 |
+| ok | 确认并通过前置回调后触发 | `(value, reset)` | 同 change |
+| clear | 清空后触发 | `value` | 清空后的值 |
+| visible-change | 面板显示状态变化 | `visible: boolean` | 是否展开 |
+| ready | 弹层就绪 | - | - |
+| close | 面板关闭 | - | - |
+| error | 前置回调同步抛错 | `error` | 捕获的错误 |
 
+`@before-ok` / JSX `onBeforeOk` 是确认前回调，接收未格式化的 `Date[]`；`@before-clear` / `onBeforeClear` 不接收参数。返回 Promise 时，resolve 后继续操作，reject 时中止。
 
+### 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 自定义触发内容，替代输入框 | - |
+
+### 注意事项
+
+- 普通模式选择后提交时间，面板保持打开；启用 confirm 时由确定按钮提交。
+- 使用 `type`、`id`、`visible-change`，没有 `mode`、`element-id` 或 `open-change` API。
+- 当前实现没有独立的 size、readonly 属性。内部输入框只读，但仍可点击打开面板。
+- 当前声明的 portal 属性未传递到 Popover，不能用 `:portal="false"` 改变挂载位置。
+- 共用面板的内置文案通过 `vc.DatePicker` locale 子树配置；共用样式使用 `--vc-date-picker-*` 主题覆盖。

@@ -1,5 +1,10 @@
 @use '../../../../style/helper' as *;
 
+$muted: varfix(color-dark-extralight, date-picker);
+$range: varfix(color-primary-lighter, date-picker);
+$primary: varfix(color-primary, date-picker);
+$selected-foreground: varfix(selected-foreground, date-picker, #fff);
+$disabled-background: varfix(disabled-background, date-picker, rgb(128 128 128 / 8%));
 $block: vc-year-table;
 
 @include block($block) {
@@ -31,7 +36,7 @@ $block: vc-year-table;
 			}
 
 			&:hover {
-				background: #e1f0fe;
+				background: $range;
 			}
 		}
 
@@ -47,19 +52,19 @@ $block: vc-year-table;
 
 		@include when(selected) {
 			div {
-				color: #fff;
-				background: #456CF6;
+				color: $selected-foreground;
+				background: $primary;
 			}
 		}
 
 		@include when(disabled) {
 			div {
-				color: #c5c8ce;
+				color: $muted;
 				cursor: not-allowed;
-				background: #f7f7f7;
+				background: $disabled-background;
 
 				&:hover {
-					background: #f7f7f7;
+					background: $disabled-background;
 				}
 			}
 		}

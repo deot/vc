@@ -1,11 +1,14 @@
 @use '../../../../style/helper' as *;
 
+$border: varfix(border-color, date-picker, rgb(128 128 128 / 22%));
+$surface: varfix(background-color, date-picker);
+$hover: varfix(hover-background, date-picker, rgb(128 128 128 / 10%));
 $block: vc-date-shortcuts;
 
 @include block($block) {
 	height: 100%;
-	background: #f8f8f8;
-	border-right: 1px solid #e8eaec;
+	background: $surface;
+	border-right: 1px solid $border;
 	box-sizing: border-box;
 
 	@include element(ul) {
@@ -19,7 +22,7 @@ $block: vc-date-shortcuts;
 			transition: .2s;
 
 			&:hover {
-				background: #e4e7e9;
+				background: $hover;
 			}
 		}
 	}

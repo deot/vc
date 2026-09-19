@@ -2,6 +2,7 @@
 
 import { computed, defineComponent, inject, onBeforeUnmount, ref, watch } from 'vue';
 import { MListItem } from '../../list/index.m';
+import { useLocale } from '../../locale';
 import { props as datePickerProps } from './date-picker-props';
 import { MDatePickerPortal } from './date-picker-core';
 import {
@@ -26,6 +27,8 @@ export const MDatePicker = defineComponent({
 		'close'
 	],
 	setup(props, { emit, slots }) {
+		const { t } = useLocale();
+		const extra = computed(() => props.extra ?? t('vc.DatePicker.placeholder'));
 		const formItem = inject<any>('vc-form-item', {});
 		const currentValue = ref<any>(props.modelValue);
 		const pickerInstance = ref<any>();
@@ -35,7 +38,7 @@ export const MDatePicker = defineComponent({
 		});
 
 		const formatterValue = computed(() => {
-			if (!dates.value.length) return props.extra;
+			if (!dates.value.length) return extra.value;
 
 			const value = formatDatesToModelValue(dates.value, props.type, props.format, props.nullValue);
 			const customValue = props.formatter?.(
@@ -44,7 +47,7 @@ export const MDatePicker = defineComponent({
 				dates.value
 			);
 
-			return customValue || formatDatesToText(dates.value, props.type, props.format) || props.extra;
+			return customValue || formatDatesToText(dates.value, props.type, props.format, t) || extra.value;
 		});
 
 		watch(

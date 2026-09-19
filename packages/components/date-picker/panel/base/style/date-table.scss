@@ -1,5 +1,10 @@
 @use '../../../../style/helper' as *;
 
+$muted: varfix(color-dark-extralight, date-picker);
+$range: varfix(color-primary-lighter, date-picker);
+$primary: varfix(color-primary, date-picker);
+$selected-foreground: varfix(selected-foreground, date-picker, #fff);
+$disabled-background: varfix(disabled-background, date-picker, rgb(128 128 128 / 8%));
 $block: vc-date-table;
 
 @include block($block) {
@@ -16,7 +21,7 @@ $block: vc-date-table;
 	@include element(header) {
 		margin: 2px;
 		line-height: 24px;
-		color: #c5c8ce;
+		color: $muted;
 		text-align: center;
 	}
 
@@ -35,7 +40,7 @@ $block: vc-date-table;
 			transition: all .2s ease-in-out;
 
 			&:hover {
-				background: #e1f0fe;
+				background: $range;
 			}
 
 			span {
@@ -54,7 +59,7 @@ $block: vc-date-table;
 				display: block;
 				width: 6px;
 				height: 6px;
-				background: #456CF6;
+				background: $primary;
 				border-radius: 50%;
 				content: "";
 			}
@@ -66,7 +71,7 @@ $block: vc-date-table;
 					position: absolute;
 					inset: 0 -2px;
 					display: block;
-					background: #e1f0fe;
+					background: $range;
 					border: 0;
 					border-radius: 0;
 					content: "";
@@ -80,32 +85,32 @@ $block: vc-date-table;
 		}
 
 		@include when(focused) {
-			div { box-shadow: inset 0 0 0 1px #456CF6; }
+			div { box-shadow: inset 0 0 0 1px $primary; }
 		}
 
 		@include when(selected) {
 			div {
-				color: #fff;
-				background: #456CF6;
+				color: $selected-foreground;
+				background: $primary;
 			}
 		}
 
 		@include when(disabled) {
-			color: #c5c8ce;
+			color: $muted;
 			cursor: not-allowed;
-			background: #f7f7f7;
+			background: $disabled-background;
 
 			div:hover {
-				background: #f7f7f7;
+				background: $disabled-background;
 			}
 		}
 
 		@include when(next-month) {
-			div { color: #c5c8ce; }
+			div { color: $muted; }
 		}
 
 		@include when(prev-month) {
-			div { color: #c5c8ce; }
+			div { color: $muted; }
 		}
 	}
 }

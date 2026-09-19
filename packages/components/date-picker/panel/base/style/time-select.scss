@@ -1,5 +1,10 @@
 @use '../../../../style/helper' as *;
 
+$muted: varfix(color-dark-extralight, date-picker);
+$primary: varfix(color-primary, date-picker);
+$border: varfix(border-color, date-picker, rgb(128 128 128 / 22%));
+$hover: varfix(hover-background, date-picker, rgb(128 128 128 / 10%));
+$range: varfix(color-primary-lighter, date-picker);
 $block: vc-time-select;
 
 @include block($block) {
@@ -17,7 +22,7 @@ $block: vc-time-select;
 		width: 56px; // time-picker
 		max-height: 144px;
 		overflow: hidden;
-		border-left: 1px solid #e8eaec;
+		border-left: 1px solid $border;
 
 		&:hover {
 			overflow-y: auto;
@@ -47,26 +52,26 @@ $block: vc-time-select;
 
 	@include element(li) {
 		&:hover {
-			background: #f3f3f3;
+			background: $hover;
 		}
 
 		@include when(selected) {
-			color: #456CF6;
-			background: #f3f3f3;
+			color: $primary;
+			background: $hover;
 
 			&:hover {
-				color: #456CF6;
-				background: #f3f3f3;
+				color: $primary;
+				background: $hover;
 			}
 		}
 
 		@include when(disabled) {
-			color: #c5c8ce;
+			color: $muted;
 			cursor: not-allowed;
 		}
 
 		@include when(focused) {
-			background-color: #d5e8fc;
+			background-color: $range;
 		}
 	}
 }

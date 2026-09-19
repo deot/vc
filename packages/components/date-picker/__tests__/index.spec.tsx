@@ -27,9 +27,7 @@ import {
 import { Form, FormItem } from '../../form';
 
 import {
-	WEEKS,
-	DEFAULT_FORMATS,
-	QUARTER_CN
+	DEFAULT_FORMATS
 } from '../constants';
 import {
 	value2date,
@@ -2526,13 +2524,9 @@ describe('helper/date-utils unit', () => {
 });
 
 describe('constants', () => {
-	it('WEEKS / DEFAULT_FORMATS / QUARTER_CN', () => {
-		expect(WEEKS.length).toBe(7);
-		expect(WEEKS[0]).toBe('日');
+	it('DEFAULT_FORMATS', () => {
 		expect(DEFAULT_FORMATS.date).toBe('YYYY-MM-DD');
 		expect(DEFAULT_FORMATS.datetimerange).toBe('YYYY-MM-DD HH:mm:ss');
-		expect(QUARTER_CN[1]).toBe('一');
-		expect(QUARTER_CN[4]).toBe('四');
 	});
 });
 

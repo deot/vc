@@ -6,6 +6,7 @@ import { props as baseProps } from './base-props';
 import { Input } from '../../input';
 import { Popover } from '../../popover';
 import { Icon } from '../../icon';
+import { useLocale } from '../../locale';
 import { useBase } from './use-base';
 
 export const createPicker = (name: string, pickerProps: object, usePicker: Function) => defineComponent({
@@ -24,6 +25,7 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 		'ok'
 	],
 	setup(props, { slots, emit }) {
+		const { t } = useLocale();
 		const {
 			its,
 			isHover,
@@ -81,7 +83,7 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 										class="vc-date-picker__input"
 										// @ts-ignore
 										readonly={true}
-										placeholder={props.placeholder || '请选择'}
+										placeholder={props.placeholder ?? t('vc.DatePicker.placeholder')}
 									>
 										{{
 											append: () => {

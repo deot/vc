@@ -1,6 +1,7 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, computed } from 'vue';
+import { useLocale } from '../../../locale';
 import { Button } from '../../../button';
 
 const getTimeType = (type: string) => {
@@ -41,11 +42,12 @@ export const Confirm = defineComponent({
 		}
 	},
 	setup(props, { emit }) {
+		const { t } = useLocale();
 		const label = computed(() => {
 			if (Array.isArray(props.currentView)) {
-				return props.currentView.every((view: any) => view.includes('time')) ? '选择日期' : '选择时间';
+				return props.currentView.every((view: any) => view.includes('time')) ? t('vc.DatePicker.selectDate') : t('vc.DatePicker.selectTime');
 			}
-			return props.currentView.includes('date') ? '选择时间' : '选择日期';
+			return props.currentView.includes('date') ? t('vc.DatePicker.selectTime') : t('vc.DatePicker.selectDate');
 		});
 
 		const handleToggleTime = () => {
@@ -82,7 +84,7 @@ export const Confirm = defineComponent({
 						)
 					}
 					<Button size="small" onClick={handleClear}>
-						清空
+						{t('vc.DatePicker.clearText')}
 					</Button>
 					<Button
 						size="small"
@@ -90,7 +92,7 @@ export const Confirm = defineComponent({
 						style="margin-left: 5px"
 						onClick={handleConfirm}
 					>
-						确定
+						{t('vc.DatePicker.okText')}
 					</Button>
 				</div>
 			);

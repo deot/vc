@@ -1,5 +1,6 @@
 import { preZero } from '@deot/helper-utils';
-import { DEFAULT_FORMATS, QUARTER_CN } from '../constants';
+import { DEFAULT_FORMATS } from '../constants';
+import type { Translator } from '../../locale';
 import {
 	TYPE_VALUE_RESOLVER_MAP,
 	getMonthEndDay,
@@ -29,13 +30,13 @@ const FORMAT_MAP: Record<string, string> = {
 };
 
 const UNIT_LABEL_MAP: Record<PickerUnit, string> = {
-	Y: '年',
-	M: '月',
-	D: '日',
-	H: '时',
-	m: '分',
-	s: '秒',
-	Q: '季度'
+	Y: 'year',
+	M: 'month',
+	D: 'day',
+	H: 'hour',
+	m: 'minute',
+	s: 'second',
+	Q: 'quarter'
 };
 
 const normalizeType = (type?: string): MDatePickerType => {
@@ -144,10 +145,18 @@ export const formatDatesToModelValue = (
 
 export const formatDatesToText = (
 	dates: Date[],
-	type?: string,
-	format?: string
+	type: string | undefined,
+	format: string | undefined,
+	t: Translator
 ) => {
 	if (!dates.length) return '';
+	if (getResolverType(type) === 'quarter') {
+		const quarter = ['first', 'second', 'third', 'fourth'][Number(getQuarter(dates[0])) - 1];
+		return t('vc.DatePicker.yearQuarter', {
+			year: dates[0].getFullYear(),
+			quarter: t(`vc.DatePicker.quarter.${quarter}`)
+		});
+	}
 
 	const resolver = getResolver(type) as any;
 	const currentFormat = getEffectiveFormat(type, format);
@@ -233,14 +242,15 @@ export const pickerValueToDates = (
 export const makeColumn = (
 	unit: PickerUnit,
 	start: number,
-	end: number
+	end: number,
+	t: Translator
 ): PickerColumn => {
 	return Array.from({ length: end - start + 1 }, (_, index) => {
 		const current = start + index;
 		const value = unit === 'Y' || unit === 'Q' ? `${current}` : preZero(current);
 		const label = unit === 'Q'
-			? `第${QUARTER_CN[current as keyof typeof QUARTER_CN]}${UNIT_LABEL_MAP[unit]}`
-			: `${value}${UNIT_LABEL_MAP[unit]}`;
+			? t(`vc.DatePicker.quarter.${['first', 'second', 'third', 'fourth'][current - 1]}`)
+			: t(`vc.DatePicker.${UNIT_LABEL_MAP[unit]}`, { value });
 
 		return {
 			value,

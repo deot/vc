@@ -3,6 +3,38 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		DatePicker: {
+			clearText: 'Clear',
+			selectDate: 'Select date',
+			selectTime: 'Select time',
+			startTime: 'Start time',
+			endTime: 'End time',
+			weekdays: {
+				sunday: 'Sun',
+				monday: 'Mon',
+				tuesday: 'Tue',
+				wednesday: 'Wed',
+				thursday: 'Thu',
+				friday: 'Fri',
+				saturday: 'Sat'
+			},
+			placeholder: 'Please select',
+			cancelText: 'Cancel',
+			okText: 'OK',
+			year: '{value}',
+			month: '{value}',
+			day: '{value} day',
+			hour: '{value} h',
+			minute: '{value} min',
+			second: '{value} s',
+			yearQuarter: '{year} {quarter}',
+			quarter: {
+				first: 'Q1',
+				second: 'Q2',
+				third: 'Q3',
+				fourth: 'Q4'
+			}
+		},
 		Select: {
 			placeholder: 'Please select',
 			selectAll: 'Select all',
