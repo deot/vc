@@ -256,7 +256,7 @@ export const MTabs = defineComponent({
 							<div
 								ref={wrapper}
 								style={[props.barStyle as any, fixedStyle.value]}
-								class={[{ 'is-fixed': isFixed }, 'vcm-tabs__bar']}
+								class={[{ 'is-fixed': isFixed.value }, 'vcm-tabs__bar']}
 							>
 								<slot name="prepend" />
 								{ slots.prepend?.() }

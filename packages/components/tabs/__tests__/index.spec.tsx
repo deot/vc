@@ -729,6 +729,7 @@ describe('mobile', () => {
 		));
 		await flush();
 		expect(wrapper.classes()).toContain('is-light');
+		expect(wrapper.find('.vcm-tabs__bar').classes()).not.toContain('is-fixed');
 		const items = wrapper.findAll('.vcm-tabs__item');
 		expect(items[0].classes()).toContain('is-average');
 	});
@@ -822,6 +823,7 @@ describe('mobile', () => {
 		await Utils.sleep(120);
 
 		expect(wrapper.find('.vcm-tabs__placeholder').exists()).toBe(true);
+		expect(wrapper.find('.vcm-tabs__bar').classes()).toContain('is-fixed');
 		wrapper.unmount();
 		if (desc) Object.defineProperty(document, 'scrollingElement', desc);
 		else delete (document as any).scrollingElement;

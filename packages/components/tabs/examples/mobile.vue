@@ -29,8 +29,8 @@
 			<template #extra>
 				<div>extra</div>
 			</template>
-			<template #label="{ it, index }">
-				<span>{{ it.label }} - {{ index }}</span>
+			<template #label="{ row, index }">
+				<span>{{ row.label }} - {{ index }}</span>
 			</template>
 			<MTabsPane label="标签一">
 				<div v-for="item in list" :key="item">
