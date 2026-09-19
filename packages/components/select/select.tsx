@@ -16,6 +16,7 @@ import { Option } from './option.tsx';
 import { OptionGroup } from './option-group.tsx';
 import { props as selectProps } from './select-props';
 import { SelectAll } from './select-all.tsx';
+import { useLocale } from '../locale';
 
 const COMPONENT_NAME = 'vc-select';
 
@@ -24,6 +25,7 @@ export const Select = defineComponent({
 	props: selectProps,
 	emits: ['ready', 'close', 'visible-change', 'clear', 'change', 'update:modelValue'],
 	setup(props, { emit, slots, expose }) {
+		const { t } = useLocale();
 		const instance = getCurrentInstance();
 		const its = useAttrs({ merge: false });
 		const formItem = inject<any>('vc-form-item', {});
@@ -241,7 +243,7 @@ export const Select = defineComponent({
 									class="vc-select__input"
 									// @ts-ignore
 									readonly={true}
-									placeholder={its.value.attrs?.placeholder || '请选择'}
+									placeholder={its.value.attrs?.placeholder ?? t('vc.Select.placeholder')}
 								>
 									{{
 										prepend: slots.prepend || props.label
@@ -320,7 +322,7 @@ export const Select = defineComponent({
 											</div>
 										)
 									}
-									<Scroller class="vc-select__options" max-height="200px">
+									<Scroller class="vc-select__options">
 										{
 											props.data
 												? (

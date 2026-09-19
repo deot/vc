@@ -1,37 +1,42 @@
 @use '../style/helper' as *;
 
 $component-name: vc-select-option;
+$color-dark-lighter: varfix(color-dark-lighter, select-option);
+$color-primary: varfix(color-primary, select-option);
+$color-primary-lighter: varfix(color-primary-lighter, select-option);
+$background-color-light: varfix(background-color-light, select-option);
+$color-dark-extralight: varfix(color-dark-extralight, select-option);
 
 @include block($component-name) {
 	display: flex;
-	padding: 7px 16px;
-	font-size: 12px!important;
+	padding: unitfix(7) unitfix(16);
+	font-size: unitfix(12)!important;
 	line-height: normal;
-	color: #666;
+	color: $color-dark-lighter;
 	white-space: nowrap;
 	cursor: pointer;
 	justify-content: space-between;
 	align-items: center;
 
 	&:hover {
-		background-color: #e6f7ff;
+		background-color: $color-primary-lighter;
 	}
 
 	@include when(select) {
-		color: #456CF6;
-		background-color: #fff;
+		color: $color-primary;
+		background-color: $background-color-light;
 
 		.vc-icon {
-			color: #456CF6;
+			color: inherit;
 		}
 
 		@include when(last) {
-			background-color: #e6f7ff;
+			background-color: $color-primary-lighter;
 		}
 	}
 	
 	&[disabled="disabled"] {
-		color: #c5c8ce;
+		color: $color-dark-extralight;
 		pointer-events: none;
 		cursor: not-allowed;
 	}

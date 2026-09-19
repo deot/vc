@@ -2,6 +2,7 @@
 
 import { defineComponent, computed } from 'vue';
 import { getInstance } from '@deot/vc-hooks';
+import { useLocale } from '../locale';
 
 const COMPONENT_NAME = 'vc-select-all';
 
@@ -14,6 +15,7 @@ export const SelectAll = defineComponent({
 		}
 	},
 	setup(props) {
+		const { t } = useLocale();
 		const owner = getInstance('select', 'selectId') as any;
 
 		/**
@@ -71,7 +73,7 @@ export const SelectAll = defineComponent({
 					class={[{ 'is-selected': isAllSelected.value }, 'vc-select-all']}
 					onClick={handleSelectAll}
 				>
-					{ isAllSelected.value ? '取消全选' : '全选' }
+					{ t(isAllSelected.value ? 'vc.Select.deselectAll' : 'vc.Select.selectAll') }
 				</div>
 			);
 		};

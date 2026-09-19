@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { Select } from '@deot/vc-components';
+import { Select, MSelect, VcInstance } from '@deot/vc-components';
+import { enUS, zhCN } from '@deot/vc-locale';
 import { Option } from '../option';
 import { OptionGroup } from '../option-group';
 import { SelectAll } from '../select-all';
@@ -58,6 +59,58 @@ const groupedData = [
 
 const getOptions = () => document.querySelectorAll('.vc-select-option');
 const getOptionGroups = () => document.querySelectorAll('.vc-select-option-group');
+
+describe('Select locale', () => {
+	it('updates placeholder and select-all actions when locale changes', async () => {
+		const locale = VcInstance.options.locale;
+		VcInstance.configure({ locale: zhCN });
+		const wrapper = mount(Select, {
+			props: { data: cityList, max: 5, searchable: true },
+			attachTo: document.body
+		});
+		try {
+			expect(MSelect).toBe(Select);
+			expect(wrapper.find('input').attributes('placeholder')).toBe('请选择');
+			await wrapper.trigger('click');
+			await flush();
+			const search = document.querySelector('.vc-select__search input') as HTMLInputElement;
+			search.value = 'New';
+			search.dispatchEvent(new Event('input', { bubbles: true }));
+			await flush();
+			expect(document.querySelector('.vc-select-all')!.textContent).toBe('全选');
+			VcInstance.configure({ locale: enUS });
+			await nextTick();
+			expect(wrapper.find('input').attributes('placeholder')).toBe('Please select');
+			expect(document.querySelector('.vc-select-all')!.textContent).toBe('Select all');
+			(document.querySelector('.vc-select-all') as HTMLElement).click();
+			await flush();
+			expect(document.querySelector('.vc-select-all')!.textContent).toBe('Deselect all');
+			VcInstance.configure({ locale: zhCN });
+			await nextTick();
+			expect(document.querySelector('.vc-select-all')!.textContent).toBe('取消全选');
+		} finally {
+			wrapper.unmount();
+			VcInstance.configure({ locale });
+		}
+	});
+
+	it('preserves custom and empty placeholders', async () => {
+		const placeholder = ref('选择城市');
+		const locale = VcInstance.options.locale;
+		const wrapper = mount(() => <Select {...{ placeholder: placeholder.value }} />);
+		try {
+			VcInstance.configure({ locale: enUS });
+			await nextTick();
+			expect(wrapper.find('input').attributes('placeholder')).toBe('选择城市');
+			placeholder.value = '';
+			await nextTick();
+			expect(wrapper.find('input').attributes('placeholder')).toBe('');
+		} finally {
+			wrapper.unmount();
+			VcInstance.configure({ locale });
+		}
+	});
+});
 
 describe('index.ts', () => {
 	afterEach(() => {

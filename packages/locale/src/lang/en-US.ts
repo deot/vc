@@ -3,6 +3,11 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		Select: {
+			placeholder: 'Please select',
+			selectAll: 'Select all',
+			deselectAll: 'Deselect all'
+		},
 		InputNumber: {
 			maxExceeded: 'Value cannot exceed {max}',
 			minExceeded: 'Value cannot be less than {min}',

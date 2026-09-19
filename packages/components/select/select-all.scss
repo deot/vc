@@ -5,14 +5,14 @@ $color-primary-light: varfix(color-primary-light, select-all);
 $component-name: vc-select-all;
 
 @include block($component-name) {
-	padding-left: 4px;
-	font-size: 12px;
+	padding-left: unitfix(4);
+	font-size: unitfix(12);
 	color: $color-primary;
 	text-align: right;
 	cursor: pointer;
 	text-wrap: nowrap;
 	
-	@include pseudo(selected) {
+	@include when(selected) {
 		color: $color-primary-light;
 	}
 }

@@ -3,6 +3,11 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		Select: {
+			placeholder: '请选择',
+			selectAll: '全选',
+			deselectAll: '取消全选'
+		},
 		InputNumber: {
 			maxExceeded: '数值不能超过{max}',
 			minExceeded: '数值不能低于{min}',

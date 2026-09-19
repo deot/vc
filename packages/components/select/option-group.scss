@@ -1,13 +1,14 @@
 @use '../style/helper' as *;
 
 $component-name: vc-select-option-group;
+$color-dark-extralight: varfix(color-dark-extralight, select-option-group);
 
 @include block($component-name) {
 	@include element(title) {
-		height: 30px;
-		padding-left: 8px;
-		font-size: 12px;
-		line-height: 30px;
-		color: #999;
+		height: unitfix(30);
+		padding-left: unitfix(8);
+		font-size: unitfix(12);
+		line-height: unitfix(30);
+		color: $color-dark-extralight;
 	}
 }

@@ -1,6 +1,10 @@
 @use '../style/helper' as *;
 
 $component-name: vc-select;
+$background-color-light: varfix(background-color-light, select);
+$background-color-disabled: varfix(background-color-disabled, select, varfix(background-color, select));
+$color-dark-extralight: varfix(color-dark-extralight, select);
+$color-dark-lighter: varfix(color-dark-lighter, select);
 
 @include block($component-name) {
 	position: relative;
@@ -9,8 +13,10 @@ $component-name: vc-select;
 	line-height: 1;
 
 	@include element(input) {
+		--vc-input-color-disabled: #{$background-color-disabled};
+
 		cursor: pointer;
-		background-color: #fff;
+		background-color: $background-color-light;
 
 		input {
 			cursor: pointer;
@@ -27,19 +33,19 @@ $component-name: vc-select;
 
 	@include element(append) {
 		position: relative;
-		padding: 0 10px 0 2px;
-		font-size: 12px;
-		line-height: 32px;
-		color: #808695;
+		padding: 0 unitfix(10) 0 unitfix(2);
+		font-size: unitfix(12);
+		line-height: unitfix(32);
+		color: $color-dark-extralight;
 		text-align: center;
 		white-space: nowrap;
 	}
 
 	@include element(prepend) {
-		padding-right: 5px;
-		padding-left: 12px;
+		padding-right: unitfix(5);
+		padding-left: unitfix(12);
 		font-weight: 400;
-		color: #4E5969;
+		color: $color-dark-lighter;
 	}
 
 	@include element(icon) {
@@ -49,11 +55,11 @@ $component-name: vc-select;
 	}
 
 	@include element(tags) {
-		padding-left: 4px;
+		padding-left: unitfix(4);
 
 		.vc-tag {
 			max-width: 100%;
-			margin: 3px 4px 3px 0;
+			margin: unitfix(3) unitfix(4) unitfix(3) 0;
 
 			.vc-tag__wrapper span {
 				overflow: hidden;
@@ -62,20 +68,26 @@ $component-name: vc-select;
 			}
 
 			.vc-tag__close {
-				margin-left: 5px;
+				margin-left: unitfix(5);
 			}
 		}
 	}
 
 	@include element(search) {
 		display: flex;
-		padding: 12px 8px;
+		padding: unitfix(12) unitfix(8);
 		justify-content: space-between;
 		align-items: center;
 	}
 
+	@include element(options) {
+		> .vc-scroller__wrapper {
+			max-height: unitfix(200);
+		}
+	}
+
 	@include element(loading) {
-		padding-bottom: 8px;
+		padding-bottom: unitfix(8);
 		text-align: center;
 	}
 }

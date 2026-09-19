@@ -1,339 +1,311 @@
 ## 选择器（Select）
-下拉选择器
+
+从数据列表中单选或多选，支持分组、搜索和自定义选项。移动端导出 `MSelect`，与 `Select` 使用同一实现。
 
 ### 何时使用
-- 弹出一个下拉菜单给用户选择操作，用于代替原生的选择器，或者需要一个更优雅的多选器时。
-- 当选项少时（少于 5 项），建议直接将选项平铺，使用 `Radio` 是更好的选择。
 
-### 基本用法
-- 适用广泛的基础单选; 单选时，`value` 只接受字符串和数字类型，多选时，只接受数组类型，组件会自动根据 `Option` 的 `value` 来返回选中的数据。
-- 可以给 `Select` 添加 `style` 样式，比如宽度。
+需要从较多选项中选择一个或多个值时使用。选项较少时，可考虑使用 Radio 或 Checkbox 平铺展示。
 
-:::RUNTIME
+### 基础用法
+
+通过 `data` 提供选项，`v-model` 绑定选项的 `value`，而不是 `label`。设置 `clearable` 后，鼠标悬停时显示清空按钮；`disabled` 禁用整个选择器，数据项的 `disabled` 禁用单个选项。
+
+:::playground
+<!--
+<config lang="json5">
+{ previewInset: 20 }
+</config>
+-->
 ```vue
 <template>
-	<div class="v-select-basic">
+	<div class="select-demo">
+		<Select v-model="city" :data="cities" clearable placeholder="选择城市" />
+		<p>当前值：{{ city ?? '未选择' }}</p>
+		<Select model-value="london" :data="cities" disabled />
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Select } from '@deot/vc';
+
+const city = ref('paris');
+const cities = [
+	{ value: 'paris', label: 'Paris' },
+	{ value: 'london', label: 'London' },
+	{ value: 'sydney', label: 'Sydney', disabled: true }
+];
+</script>
+
+<style scoped>
+.select-demo { width: min(100%, 320px); }
+.select-demo p { margin: 12px 0; }
+</style>
+```
+:::
+
+### 多选与搜索全选
+
+`max > 1` 启用多选，当前实现不会按 `max` 限制选中数量。`maxTags` 只控制显示的标签数量。
+
+开启 `searchable` 后，按选项文字进行不区分大小写的匹配；空格或逗号分隔的关键词按“或”匹配。输入非空关键词时，可全选或取消选择当前匹配且未禁用的选项，其他已选项保留。全选逐项触发值更新事件。
+
+:::playground
+<!--
+<config lang="json5">
+{ previewInset: 20 }
+</config>
+-->
+```vue
+<template>
+	<div class="select-demo">
+		<Select
+			v-model="cities"
+			:data="options"
+			:max="2"
+			:max-tags="2"
+			searchable
+			clearable
+			search-placeholder="输入 New，试试全选"
+		/>
+		<p>已选：{{ cities.length ? cities.join('、') : '无' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Select } from '@deot/vc';
+
+const cities = ref([]);
+const options = [
+	{ value: 'new-york', label: 'New York' },
+	{ value: 'new-orleans', label: 'New Orleans' },
+	{ value: 'new-delhi', label: 'New Delhi', disabled: true },
+	{ value: 'paris', label: 'Paris' }
+];
+</script>
+
+<style scoped>
+.select-demo { width: min(100%, 360px); }
+.select-demo p { margin: 12px 0 0; overflow-wrap: anywhere; }
+</style>
+```
+:::
+
+### 字符串多选
+
+以数组初始化时返回数组；以字符串初始化多选时，使用 `separator` 连接选中值。数字选项搭配字符串模型时，可使用 `numerable`，并保持默认逗号分隔符。
+
+:::playground
+<!--
+<config lang="json5">
+{ previewInset: 20 }
+</config>
+-->
+```vue
+<template>
+	<div class="select-demo">
+		<Select v-model="cities" :data="options" :max="2" separator=";" clearable />
+		<p>字符串值：{{ JSON.stringify(cities) }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Select } from '@deot/vc';
+
+const cities = ref('paris;london');
+const options = [
+	{ value: 'paris', label: 'Paris' },
+	{ value: 'london', label: 'London' },
+	{ value: 'sydney', label: 'Sydney' }
+];
+</script>
+
+<style scoped>
+.select-demo { width: min(100%, 360px); }
+.select-demo p { margin: 12px 0 0; overflow-wrap: anywhere; }
+</style>
+```
+:::
+
+### 分组与自定义文字
+
+`children` 提供一层分组选项。`label` 插槽定制下拉列表中的选项文字和分组标题，`store.group` 标识分组。输入框与已选标签仍使用数据中的 `label`。
+
+:::playground
+<!--
+<config lang="json5">
+{ previewInset: 20 }
+</config>
+-->
+```vue
+<template>
+	<div class="select-demo">
+		<Select v-model="city" :data="groups" label="城市" searchable>
+			<template #label="{ row, store }">
+				<strong v-if="store.group">{{ row.label }}</strong>
+				<span v-else>{{ row.label }} · {{ row.country }}</span>
+			</template>
+		</Select>
+		<p>当前值：{{ city || '未选择' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Select } from '@deot/vc';
+
+const city = ref('');
+const groups = [
+	{
+		value: 'europe', label: '欧洲',
+		children: [
+			{ value: 'paris', label: 'Paris', country: '法国' },
+			{ value: 'london', label: 'London', country: '英国' }
+		]
+	},
+	{
+		value: 'oceania', label: '大洋洲',
+		children: [{ value: 'sydney', label: 'Sydney', country: '澳大利亚' }]
+	}
+];
+</script>
+
+<style scoped>
+.select-demo { width: min(100%, 320px); }
+.select-demo p { margin: 12px 0 0; }
+</style>
+```
+:::
+
+### 远程搜索
+
+`loadData(query, instance)` 必须返回 Promise，搜索输入经过 250ms 防抖后调用。调用方更新 `data`；Promise 的返回值不会自动成为选项。加载期间显示 Spin，本地文字过滤仍然生效，需要跳过本地过滤的结果可设置 `filterable: false`。
+
+下面用本地延迟模拟请求，不依赖在线接口。
+
+:::playground
+<!--
+<config lang="json5">
+{ previewInset: 20 }
+</config>
+-->
+```vue
+<template>
+	<div class="select-demo">
 		<Select
 			v-model="city"
-			:data="cityList"
-			style="width: 200px;"
-			size="small"
-		/>
-		<span>{{ city }}</span>
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { Select } from '@deot/vc';
-
-const city = ref('New York');
-const cityList = ref([
-	{
-		value: '1',
-		label: 'New York'
-	},
-	{
-		value: '2',
-		label: 'London'
-	},
-	{
-		value: '3',
-		label: 'Sydney'
-	},
-	{
-		value: '4',
-		label: 'Ottawa'
-	},
-	{
-		value: '5',
-		label: 'Paris'
-	}
-]);
-```
-:::
-
-### 禁选状态和可清空单选
-- 选择器不可用状态; 通过给`Select` 或 `Option` 添加 `disabled` 属性来设置全部禁选或单个禁选。
-- 清空按钮，可将选择器清空为初始状态 `clearable`
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-select-basic">
-		<div>全部禁用</div>
-		<Select
-			v-model="model1"
 			:data="options"
-			style="width: 200px;"
-			disabled
-			clearable
-		/>
-		<br/>
-		<br/>
-		<div>选项禁用</div>
-		<Select
-			v-model="model2"
-			:data="options.map((i, index) => ({ ...i, disabled: index === 1 }))"
-			style="width: 200px;"
-			clearable
-		/>
-		<span>{{ model2 }}</span>
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { Select } from '@deot/vc';
-
-const model1 = ref('');
-const model2 = ref('黄金糕');
-const options = ref([
-	{
-		value: '选项1',
-		label: '黄金糕'
-	},
-	{
-		value: '选项2',
-		label: '双皮奶'
-	},
-	{
-		value: '选项3',
-		label: '蚵仔煎'
-	},
-	{
-		value: '选项4',
-		label: '龙须面'
-	},
-	{
-		value: '选项5',
-		label: '北京烤鸭'
-	}
-]);
-</script>
-```
-:::
-
-### 多选
-适用性较广的基础多选, 使用 `max` 属性。
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-select-basic">
-		<div>{{ model1 }}</div>
-		<Select
-			v-model="model1"
-			:data="cityList"
-			:max="2"
-			clearable
-			style="width: 200px;"
-		/>
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { Select } from '@deot/vc';
-
-const model1 = ref([]);
-const cityList = ref([
-	{
-		value: 'New York',
-		label: 'New York'
-	},
-	{
-		value: 'London',
-		label: 'London'
-	},
-	{
-		value: 'Sydney',
-		label: 'Sydney'
-	},
-	{
-		value: 'Ottawa',
-		label: 'Ottawa'
-	},
-	{
-		value: 'Paris',
-		label: 'Paris'
-	},
-	{
-		value: 'Canberra',
-		label: 'Canberra'
-	}
-]);
-</script>
-```
-:::
-
-### 分组
-使用`children`可将选项进行分组。
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-select-group">
-		<Select
-			v-model="value1"
-			:data="[{ value: 'Hot Cities', children: cityList1 }, { value: 'Other Citie', children: cityList2 }]"
-			style="width: 200px"
-			arrow
-		/>
-		<span>{{ value1 }}</span>
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { Select } from '@deot/vc';
-
-const value1 = ref('');
-const cityList1 = ref([
-	{
-		value: '1',
-		label: 'New York'
-	},
-	{
-		value: '2',
-		label: 'London'
-	},
-	{
-		value: '3',
-		label: 'Sydney'
-	}
-]);
-const cityList2 = ref([
-	{
-		value: '4',
-		label: 'Ottawa'
-	},
-	{
-		value: '5',
-		label: 'Paris'
-	},
-	{
-		value: '6',
-		label: 'Canberra'
-	}
-]);
-</script>
-```
-:::
-
-### 可搜索
-可以利用搜索功能快速查找选项
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-select-group">
-		<Select
-			v-model="value1"
-			:data="options"
-			style="width: 200px"
+			:load-data="loadCities"
 			searchable
-			searchPlaceholder="请输入搜索内容"
+			search-placeholder="输入城市名称"
 		/>
-		<span>{{ value1 }}</span>
+		<p>当前值：{{ city || '未选择' }}</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Select } from '@deot/vc';
 
-const value1 = ref([]);
-const options = ref([
-	{
-		value: '选项1',
-		label: '黄金糕'
-	},
-	{
-		value: '选项2',
-		label: '双皮奶'
-	},
-	{
-		value: '选项3',
-		label: '蚵仔煎'
-	},
-	{
-		value: '选项4',
-		label: '龙须面'
-	},
-	{
-		value: '选项5',
-		label: '北京烤鸭'
-	}
-]);
+const city = ref('');
+const source = [
+	{ value: 'paris', label: 'Paris' },
+	{ value: 'london', label: 'London' },
+	{ value: 'sydney', label: 'Sydney' }
+];
+const options = ref(source);
+const loadCities = async (query) => {
+	await new Promise(resolve => setTimeout(resolve, 400));
+	options.value = source.filter(item => item.label.toLowerCase().includes(query.toLowerCase()));
+};
 </script>
+
+<style scoped>
+.select-demo { width: min(100%, 320px); }
+.select-demo p { margin: 12px 0 0; }
+</style>
 ```
 :::
 
 ## API
 
-### Select props
+### 属性
 
-| 属性                | 说明                                                                         | 类型                        | 可选值                                                                                                                                       | 默认值           |
-| ----------------- | -------------------------------------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| modelValue        | 指定选中项目的 value 值，可以使用 v-model 双向绑定数据。单选时只接受 string 或 number，多选时只接受 array    | `string`、`number`、`array` | -                                                                                                                                         | -             |
-| data              | 数据源                                                                        | `array`                   | -                                                                                                                                         | `[]`          |
-| max               | 是否支持多选，输入可支持多选的最大数量                                                        | `number`                  | -                                                                                                                                         | 1             |
-| maxTags           | 最多显示多少个 tag                                                                | `number`                  | -                                                                                                                                         | 1             |
-| disabled          | 是否禁用，设置在Select上全部禁选，在Option上单个禁选                                           | `boolean`                 | -                                                                                                                                         | `false`       |
-| clearable         | 是否可以清空选项                                                                   | `boolean`                 | -                                                                                                                                         | `false`       |
-| searchable        | 是否支持搜索                                                                     | `boolean`                 | -                                                                                                                                         | `false`       |
-| searchPlaceholder | 搜索的占位符                                                                     | `string`                  | -                                                                                                                                         | -             |
-| load-data         | 远程搜索的方法                                                                    | `Function`                | -                                                                                                                                         | -             |
-| label             | 仅在 remote 模式下，初始化时使用。因为仅通过 value 无法得知选项的 label，需手动设置。                      | `string`、`number`、`array` | -                                                                                                                                         | -             |
-| placeholder       | 选择框默认文字                                                                    | `string`                  | -                                                                                                                                         | 请选择           |
-| not-found         | 当下拉列表为空时显示的内容                                                              | `string`                  | -                                                                                                                                         | 无匹配数据         |
-| placement         | 弹窗的展开方向                                                                    | `string`                  | `bottom`、`bottom-left`、`bottom-right`、`top`、 `top-left`、`top-right`、`right`、`right-top`、 `right-bottom` 、`left`、 `left-top` `left-bottom` | `bottom-left` |
-| portal            | 是否将弹层放置于 body 内，在 Tabs、带有 fixed 的 Table 列内使用时，建议添加此属性，它将不受父级样式影响，从而达到更好的效果 | `boolean`                 | -                                                                                                                                         | `true`        |
-| element-id        | 给表单元素设置 `id`，详见 Form 用法。                                                   | `string`                  | -                                                                                                                                         | -             |
-| portalClass       | 外层类名                                                                       | `object`、`string`、`array` | -                                                                                                                                         | -             |
-| disabled          | 是否禁用                                                                       | `boolean`                 | -                                                                                                                                         | `false`       |
-| trigger           | 触发的行为                                                                      | `string`                  | `hover`、`click`、`focus`                                                                                                                   | `click`       |
-| tag               | 外层标签                                                                       | `string`                  | -                                                                                                                                         | `div`         |
-| placement         | 弹层的位置                                                                      | `string`                  | `top`、`left`、`right`、`bottom`、`bottom-left`、`bottom-right`、`top-left`、`top-right`、`right-top`、`right-bottom`、`left-top`、`left-bottom`     | `bottom-left` |
-| arrow             | 弹层有无箭头                                                                     | `boolean`                 | -                                                                                                                                         | `false`       |
-| autoWidth         | 弹层宽度自适应                                                                    | `boolean`                 | -                                                                                                                                         | `true`        |
-| extra             | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |
-| separator         | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |
-| numerable         | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |
-| nullValue         | -                                                                          | `string`、`array`          | -                                                                                                                                         | -             |
-| renderLabel      | -                                                                          | `function`                | -                                                                                                                                         | -             |
-| renderOption      | -                                                                          | `function`                | -                                                                                                                                         | -             |
-| renderOptionGroup      | -                                                                          | `function`                | -                                                                                                                                         | -             |
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| modelValue | 选中值；数组模型保持数组输出，非数组多选输出字符串 | `string \| number \| any[]` | - | `undefined` |
+| data | 选项或一层分组数据，见下文 | `object[]` | - | `[]` |
+| max | 大于 1 启用多选；当前不限制选中数量 | `number` | `>= 1` | `1` |
+| maxTags | 多选最多显示的标签数，其余折叠；使用正整数 | `number` | - | `undefined`（全部显示） |
+| disabled | 禁用选择器 | `boolean` | - | `false` |
+| clearable | 悬停时显示清空按钮 | `boolean` | - | `false` |
+| searchable | 显示搜索框 | `boolean` | - | `false` |
+| searchPlaceholder | 搜索框占位文字 | `string` | - | `''` |
+| placeholder | 输入框占位文字，通过 attribute 传入；支持空字符串覆盖 | `string` | - | 当前语言的“请选择” |
+| loadData | 搜索回调，须返回 Promise，由调用方更新 data | `(query: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
+| label | 输入框前置文字；prepend 插槽优先 | `string` | - | - |
+| extra | 单选 label 为空或无法匹配时显示的文字 | `string` | - | `''` |
+| separator | 字符串模型拆分和多选连接的分隔符 | `string` | - | `','` |
+| numerable | 将字符串模型解析为数字值 | `boolean` | - | `false` |
+| nullValue | 已声明的清空值配置；当前实现未应用，见下方说明 | `number \| string \| object` | - | `undefined` |
+| id | 传给内部 Input 根节点的 id | `string` | - | - |
+| trigger | 弹层触发方式 | `string` | `hover / strictHover / click / focus / custom` | `'click'` |
+| tag | 触发容器标签 | `string` | - | `'div'` |
+| placement | 弹层方向 | `string` | `top / top-left / top-right / bottom / bottom-left / bottom-right / left / left-top / left-bottom / right / right-top / right-bottom` | `'bottom-left'` |
+| arrow | 显示弹层箭头 | `boolean` | - | `false` |
+| autoWidth | true 按内容宽度；false 跟随触发器宽度 | `boolean` | - | `false` |
+| portal | 已声明；当前未传递给 Popover，弹层仍按 Popover 默认挂载 | `boolean` | - | `true` |
+| portalClass | 弹层附加 class | `string \| object \| unknown[]` | - | - |
+| renderOption | 自定义整个选项，需自行绑定 store.click | `(options: { row: any; store: any }) => VNodeChild` | - | - |
+| renderOptionGroup | 自定义分组标题 | `(options: { row: any; store: { group: true } }) => VNodeChild` | - | - |
+| renderLabel | 自定义下拉选项文字，不影响输入框与标签文字 | `(options: { row: any; store: any }) => VNodeChild` | - | - |
 
-### data props
+### 事件
 
-| 属性         | 说明                                                                                                                              | 类型                | 可选值 | 默认值     |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------- | --- | ------- |
-| value      | 选项值，默认根据此属性值进行筛选，必填                                                                                                             | `string` `number` | -   | -       |
-| label      | 选项显示的内容，默认会读取 slot，无 slot 时，优先读取该 label 值，无 label 时，读取 value。当选中时，选择器会显示 label 为已选文案。大部分情况不需要配置此项，直接写入 slot 即可，在自定义选项时，该属性非常有用。 | `string`          | -   | -       |
-| disabled   | 是否禁用当前项                                                                                                                         | `boolean`         | -   | `false` |
-| children   | 分组数据                                                                                                                            | `array`           | -   | `[]`    |
-| filterable | 是否需要被过滤                                                                                                                         | `boolean`         | -   | `true`  |
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue | 用户选择、移除、清空或调用 add/remove 时更新模型 | `(value, labels)` | value 遵循模型类型；labels 始终为选中文字数组 |
+| change | 与模型更新同时触发；外部修改 modelValue 不触发 | `(value, labels)` | 同上；单选 labels 也是数组 |
+| clear | 点击可见的清空按钮时触发，先于模型更新 | - | - |
+| visible-change | 弹层可见状态变化 | `(visible: boolean)` | 当前可见状态 |
+| ready | 弹层创建完成 | - | - |
+| close | 弹层关闭回调 | - | - |
 
-### Select events
+### 插槽
 
-| 事件名            | 说明                          | 回调参数                                                       | 参数说明                                                         |
-| -------------- | --------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------ |
-| change         | 选中的`Option`变化时触发，默认返回 value | `(value: string \ array, label: string \ array) => void 0` | `value`：当前选中的值value,如果是多选类型为数组；`label`：当前选中的值的label，多选时类型为数组 |
-| clear          | 点击清空按钮时触发                   | -                                                          | -                                                            |
-| visible-change | visible改变时回调                | `(visible: boolean) => void 0`                             | `visible`：当前弹层显示状态                                           |
-| close          | 关闭时回调                       | -                                                          | -                                                            |
-| ready          | 弹层出来时回调                     | -                                                          | -                                                            |
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| prepend | 输入框前置内容，优先于 label 属性 | - |
+| option | 整个选项；renderOption 优先，自定义内容需绑定 store.click | `{ row, store: { checked, last, click } }` |
+| optionGroup | 分组标题；renderOptionGroup 优先 | `{ row, store: { group: true } }` |
+| label | 选项文字或分组标题；选项的 renderLabel 优先 | 选项：`{ row, store: { checked, last, click } }`；分组：`{ row, store: { group: true } }` |
 
+插槽名为 `optionGroup`，在模板中使用 `#optionGroup`。默认插槽只在 data 为假值时执行，正常使用通过 data 提供选项；Option、OptionGroup 和 SelectAll 未从组件库公开入口导出。
 
-### Select methods
+### 方法
 
-| 方法名    | 说明    | 参数                                        |
-| ------ | ----- | ----------------------------------------- |
-| add    | 添加单选项 | `value`：添加的选项的value值；`label`：添加的选项的label值 |
-| remove | 删除单选项 | `value`：删除的选项的value值                      |
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| add | 添加选项；单选替换并关闭，多选追加，不去重或校验 disabled | `value: string \| number` | `void` |
+| remove | 移除已存在的选项；调用前确保值已选中 | `value: string \| number` | `void` |
+| close | 关闭弹层 | - | `void` |
+| toggle | 指定或切换弹层状态 | `visible?: boolean` | `void` |
 
-### Select Slot
+### data 数据项
 
-| 属性           | 说明                    |
-| ------------ | --------------------- |
-| label        | ~. 参数为 { row, store } |
-| option       | ~. 参数为 { row, store } |
-| option-group | ~. 参数为 { row }        |
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| value | 唯一选项值或分组标识，必填；避免字符串和数字混用同一值 | `string \| number` | - | - |
+| label | 选项或分组文字；列表中缺省时显示 value，已选文字需提供 label | `string \| number` | - | - |
+| disabled | 禁用选项；分组项不支持整体禁用 | `boolean` | - | `false` |
+| filterable | 是否参与本地搜索过滤；false 时始终显示 | `boolean` | - | `true` |
+| children | 非空时显示为分组，只渲染一层子选项 | `object[]` | - | - |
 
+### 当前行为说明
+
+- 清空数组模型返回 `[]`；普通单选返回 `undefined`；字符串多选返回 `''`。`numerable` 配合字符串模型时，当前输出通过数组转字符串，因此清空返回 `''`，多值输出固定使用逗号。
+- `nullValue` 当前未用于清空结果；`portal` 当前未传递给 Popover。以上为当前实现限制。
+- 当前不提供 `size`、`not-found`、`element-id` 属性；无匹配选项时列表为空。
+- 默认占位符和全选按钮跟随 locale；searchPlaceholder、label、extra 和 data 文案由调用方提供。
