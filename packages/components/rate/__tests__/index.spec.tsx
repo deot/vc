@@ -79,6 +79,16 @@ describe('index.ts', () => {
 		expect(stars[0].attributes('style')).toContain('rgb(255, 0, 0)');
 	});
 
+	it('color: 运行时更新颜色立即作用于已选和半选星级', async () => {
+		const wrapper = mount(Rate, { props: { character: CHAR, modelValue: 1.5, half: true, color: 'red' } });
+		await wrapper.setProps({ color: 'blue' });
+		const stars = wrapper.findAll('.vc-rate__star');
+		expect(stars[0].attributes('style')).toContain('color: blue');
+		expect(stars[1].attributes('style')).toContain('color: blue');
+		expect(stars[2].attributes('style') || '').not.toContain('color: blue');
+		wrapper.unmount();
+	});
+
 	it('tooltip: 渲染提示文本', async () => {
 		const wrapper = mount(() => (
 			<Rate character={CHAR} modelValue={2} tooltip={['极差', '差', '一般', '好', '极好']} />

@@ -4,8 +4,7 @@
 			v-model="value"
 			half
 			clearable
-			color="#ff0000"
-			:tooltips="tooltip"
+			:tooltip="tooltip"
 		/>
 		<div>value: {{ value }}</div>
 		<div>typeof: {{ typeof value }}</div>

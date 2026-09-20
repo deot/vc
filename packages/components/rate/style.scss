@@ -1,10 +1,12 @@
 @use '../style/helper' as *;
 
 $component-name: vc-rate;
+$empty-color: varfix(color-light-deeper, rate);
+$tip-color: varfix(foreground-color, rate);
 
 @include block($component-name) {
 	display: inline-block;
-	font-size: 16px;
+	font-size: unitfix(16);
 	line-height: unset;
 	list-style: none;
 
@@ -14,7 +16,7 @@ $component-name: vc-rate;
 		cursor: pointer;
 
 		@include when(not-last) {
-			margin-right: 8px;
+			margin-right: unitfix(8);
 		}
 
 		@include when(half) {
@@ -34,7 +36,7 @@ $component-name: vc-rate;
 		}
 
 		@include modifier(icon) {
-			color: #f0f0f0;
+			color: $empty-color;
 			transition: all .3s;
 			user-select: none;
 		}
@@ -57,9 +59,9 @@ $component-name: vc-rate;
 
 	@include element(tips) {
 		display: inline-block;
-		margin: 0 8px;
-		font-size: 14px;
-		color: #333;
+		margin: 0 unitfix(8);
+		font-size: unitfix(14);
+		color: $tip-color;
 		box-sizing: border-box;
 	}
 }

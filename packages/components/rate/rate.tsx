@@ -48,8 +48,7 @@ export const Rate = defineComponent({
 						value: v,
 						isSelect,
 						isFull,
-						isHalf,
-						color: isSelect || isHalf ? props.color : ''
+						isHalf
 					};
 				});
 			},
@@ -138,7 +137,7 @@ export const Rate = defineComponent({
 										},
 										'vc-rate__star'
 									]}
-									style={[props.iconStyle, { color: item.color }]}
+									style={[props.iconStyle, { color: item.isSelect || item.isHalf ? props.color : '' }]}
 									onClick={e => handleClick(e, item)}
 									onMousemove={e => handleMouseMove(e, item)}
 								>
