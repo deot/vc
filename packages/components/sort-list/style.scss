@@ -1,6 +1,8 @@
 @use '../style/helper' as *;
 
 $component-name: vc-sort-list;
+$mask-foreground-color: varfix(mask-foreground-color, sort-list, #fff);
+$mask-background-color: varfix(mask-background-color, sort-list, rgb(0 0 0 / 60%));
 
 @include block($component-name) {
 	@include flex;
@@ -9,7 +11,7 @@ $component-name: vc-sort-list;
 
 	@include element(item) {
 		position: relative;
-		margin: 10px;
+		margin: unitfix(10);
 		text-align: center;
 		transition: opacity 0.5s;
 
@@ -42,13 +44,13 @@ $component-name: vc-sort-list;
 		height: 100%;
 		align-items: center;
 		justify-content: space-around;
-		color: #fff;
-		background: rgb(0 0 0 / 60%);
+		color: $mask-foreground-color;
+		background: $mask-background-color;
 		opacity: 0;
 		box-sizing: border-box;
 
 		> span {
-			font-size: 18px;
+			font-size: unitfix(18);
 			cursor: pointer;
 		}
 	}
