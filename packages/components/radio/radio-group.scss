@@ -1,48 +1,58 @@
 @use '../style/helper' as *;
 
+$foreground-color: varfix(color-dark-lightest, radio-group);
+$background-color: varfix(background-color-light, radio-group);
+$border-color: varfix(color-light-deepest, radio-group);
+$color-primary: varfix(color-primary, radio-group);
+$foreground-color-disabled: varfix(color-dark-extralight, radio-group);
+$background-color-disabled: varfix(background-color, radio-group);
+$focus-color: varfix(color-primary-lighter, radio-group);
 $component-name: vc-radio-group;
-$size: 32px;
+$size: unitfix(32);
 
 @include block($component-name) {
 	display: inline-flex;
-	font-size: 12px;
+	font-size: unitfix(12);
 	line-height: unset;
 
 	@include when(vertical) {
+		flex-direction: column;
+
 		.vc-radio {
 			display: block;
-			height: 30px;
-			line-height: 30px;
+			height: unitfix(30);
+			line-height: unitfix(30);
 		}
 	}
 
 	@include when(button) {
+		flex-direction: row;
 		font-size: 0; // 去除间距
 		.vc-radio {
 			position: relative;
 			display: inline-flex;
 			height: $size;
-			padding: 0 12px;
+			padding: 0 unitfix(12);
 			margin: 0;
-			font-size: 12px;
+			font-size: unitfix(12);
 			line-height: $size;
-			color: #515a6e;
+			color: $foreground-color;
 			cursor: pointer;
-			background: #fff;
-			border: 1px solid #dcdee2;
+			background: $background-color;
+			border: unitfix(1) solid $border-color;
 			border-left: 0;
 			transition: all .2s ease-in-out;
 
 			&:hover {
 				position: relative;
-				color: #456CF6;
+				color: $color-primary;
 			}
 
 			&.is-disabled {
-				color: #ccc;
+				color: $foreground-color-disabled;
 				cursor: not-allowed;
-				background-color: #f7f7f7;
-				border-color: #dcdee2;
+				background-color: $background-color-disabled;
+				border-color: $border-color;
 			}
 
 			> span {
@@ -50,34 +60,34 @@ $size: 32px;
 			}
 
 			&:first-child {
-				border-left: 1px solid #dcdee2;
-				border-radius: 4px 0 0 4px;
+				border-left: unitfix(1) solid $border-color;
+				border-radius: unitfix(4) 0 0 unitfix(4);
 			}
 
 			&.is-checked:first-child {
-				border-color: #456CF6;
+				border-color: $color-primary;
 				box-shadow: none;
 			}
 
 			&:last-child {
-				border-radius: 0 4px 4px 0;
+				border-radius: 0 unitfix(4) unitfix(4) 0;
 			}
 
 			&.is-checked:last-child {
-				border-color: #456CF6;
-				box-shadow: -1px 0 0 0 #456CF6;
+				border-color: $color-primary;
+				box-shadow: unitfix(-1) 0 0 0 $color-primary;
 			}
 
 			&.is-checked {
 				z-index: 1;
-				color: #456CF6;
-				background: #fff;
-				border-color: #456CF6;
-				box-shadow: -1px 0 0 0 #456CF6;
+				color: $color-primary;
+				background: $background-color;
+				border-color: $color-primary;
+				box-shadow: unitfix(-1) 0 0 0 $color-primary;
 			}
 
 			&.is-focus {
-				box-shadow: -1px 0 0 0 #456CF6, 0 0 0 2px rgb(45 140 240 / 20%);
+				box-shadow: unitfix(-1) 0 0 0 $color-primary, 0 0 0 unitfix(2) $focus-color;
 				transition: all .2s ease-in-out;
 			}
 		}

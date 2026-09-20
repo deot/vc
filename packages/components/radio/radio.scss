@@ -1,15 +1,22 @@
 @use '../style/helper' as *;
 
+$background-color: varfix(background-color-light, radio);
+$border-color: varfix(color-light-deepest, radio);
+$color-primary: varfix(color-primary, radio);
+$color-error: varfix(color-error, radio);
+$background-color-disabled: varfix(background-color, radio);
+$foreground-color-disabled: varfix(color-dark-extralight, radio);
+$focus-color: varfix(color-primary-lighter, radio);
 $component-name: vc-radio;
 
 // 控制高度32px
 @include block($component-name) {
 	position: relative;
 	display: inline-flex;
-	padding: 6px 0;
-	margin-right: 24px;
-	font-size: 12px;
-	line-height: 20px;
+	padding: unitfix(6) 0;
+	margin-right: unitfix(24);
+	font-size: unitfix(12);
+	line-height: unitfix(20);
 	white-space: nowrap;
 	vertical-align: middle;
 	cursor: pointer;
@@ -24,7 +31,7 @@ $component-name: vc-radio;
 		cursor: pointer;
 
 		@include when(sibling, true) {
-			margin-right: 4px;
+			margin-right: unitfix(4);
 		}
 
 		input {
@@ -41,25 +48,25 @@ $component-name: vc-radio;
 		top: 0;
 		left: 0;
 		display: inline-flex;
-		width: 14px;
-		height: 14px;
-		background-color: #fff;
+		width: unitfix(14);
+		height: unitfix(14);
+		background-color: $background-color;
 		transition: all .2s ease-in-out;
 
-		@include border('', #d4d7db, 50%);
+		@include border('', $border-color, 50%);
 	}
 
 	@include element(inner) {
 		position: absolute;
-		top: 3px;
-		left: 3px;
+		top: unitfix(3);
+		left: unitfix(3);
 		display: table;
-		width: 8px;
-		height: 8px;
-		background-color: #456CF6;
+		width: unitfix(8);
+		height: unitfix(8);
+		background-color: $color-primary;
 		border-top: 0;
 		border-left: 0;
-		border-radius: 6px;
+		border-radius: unitfix(6);
 		content: ' ';
 		opacity: 0;
 		transform: scale(0);
@@ -69,7 +76,7 @@ $component-name: vc-radio;
 	@include when(checked) {
 		@include element(border) {
 			&::before, &::after{
-				border-color: #456CF6;
+				border-color: $color-primary;
 			}
 		}
 
@@ -89,14 +96,14 @@ $component-name: vc-radio;
 
 		@include element(border){
 			&::before, &::after{
-				border-color: #d4d7db;
+				border-color: $border-color;
 			}
 
-			background-color: #f4f5f4;
+			background-color: $background-color-disabled;
 		}
 
 		@include element(inner) {
-			background-color: #ccc;
+			background-color: $foreground-color-disabled;
 			animation-name: none;
 		}
 
@@ -105,7 +112,7 @@ $component-name: vc-radio;
 				animation-name: none;
 
 				&::before, &::after{
-					border-color: #ccc;
+					border-color: $foreground-color-disabled;
 				}
 			}
 		}
@@ -114,7 +121,7 @@ $component-name: vc-radio;
 	@include when(error) {
 		@include element(border) {
 			&::before, &::after{
-				border-color: #f04134;
+				border-color: $color-error;
 			}
 		}
 	}
@@ -122,7 +129,7 @@ $component-name: vc-radio;
 	@include when(focus) {
 		@include element(border){
 			z-index: 1;
-			box-shadow: 0 0 0 2px rgb(45 140 240 / 20%);
+			box-shadow: 0 0 0 unitfix(2) $focus-color;
 		}
 	}
 }

@@ -20,6 +20,28 @@ describe('index.ts', () => {
 });
 
 describe('radio.tsx', () => {
+	it.each([Radio, RadioButton, MRadio])('standalone: uses trueValue/falseValue and reset', async (component) => {
+		const wrapper = mount(component, { props: { modelValue: 'no', trueValue: 'yes', falseValue: 'no' } });
+		const input = wrapper.find('input');
+		expect((input.element as HTMLInputElement).checked).toBe(false);
+		await input.setValue(true);
+		expect(wrapper.emitted('change')?.[0]?.[0]).toBe('yes');
+		expect(wrapper.emitted('update:modelValue')?.[0]?.[0]).toBe('yes');
+		const reset = wrapper.emitted('change')![0][2] as (checked: boolean) => void;
+		reset(false);
+		await nextTick();
+		expect((input.element as HTMLInputElement).checked).toBe(false);
+		await wrapper.setProps({ modelValue: 'yes' });
+		expect((input.element as HTMLInputElement).checked).toBe(true);
+		expect(wrapper.emitted('change')).toHaveLength(1);
+	});
+
+	it.each([Radio, RadioButton, MRadio])('standalone: emits true by default', async (component) => {
+		const wrapper = mount(component);
+		await wrapper.find('input').setValue(true);
+		expect(wrapper.emitted('change')?.[0]?.[0]).toBe(true);
+	});
+
 	it('label: 渲染文本内容', () => {
 		const wrapper = mount(() => (<Radio label="apple" />));
 
@@ -220,6 +242,11 @@ describe('radio-group.tsx', () => {
 });
 
 describe('mobile', () => {
+	it('MRadioGroup: vertical class controls layout', () => {
+		const wrapper = mount(MRadioGroup, { props: { vertical: true } });
+		expect(wrapper.classes()).toContain('is-vertical');
+	});
+
 	it('basic', () => {
 		expect(typeof MRadio).toBe('object');
 		expect(typeof MRadioGroup).toBe('object');

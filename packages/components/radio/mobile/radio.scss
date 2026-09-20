@@ -1,12 +1,20 @@
 @use '../../style/helper' as *;
 
+$background-color: varfix(background-color-light, radio);
+$border-color: varfix(color-dark-extralight, radio);
+$color-success: varfix(color-success, radio);
+$check-color: varfix(check-color, radio, #fff);
+$border-color-disabled: varfix(color-light-deepest, radio);
+$background-color-disabled: varfix(background-color, radio);
+$foreground-color-disabled: varfix(color-dark-extralight, radio);
+$focus-color: varfix(focus-color, radio, rgb(38 190 118 / 20%));
 $component-name: vcm-radio;
 
 @include block($component-name) {
 	position: relative;
 	display: inline-block;
-	margin-right: 24px;
-	font-size: 16px;
+	margin-right: unitfix(24);
+	font-size: unitfix(16);
 	line-height: 1;
 	white-space: nowrap;
 	vertical-align: middle;
@@ -21,15 +29,15 @@ $component-name: vcm-radio;
 		cursor: pointer;
 
 		@include when(sibling, true) {
-			margin-right: 12px;
+			margin-right: unitfix(12);
 		}
 
 		input {
 			position: absolute;
 			inset: 0;
 			z-index: 1;
-			width: 16px;
-			height: 16px;
+			width: unitfix(16);
+			height: unitfix(16);
 			cursor: pointer;
 			opacity: 0;
 		}
@@ -40,23 +48,23 @@ $component-name: vcm-radio;
 		top: 0;
 		left: 0;
 		display: inline-block;
-		width: 16px;
-		height: 16px;
-		background-color: #fff;
+		width: unitfix(16);
+		height: unitfix(16);
+		background-color: $background-color;
 		border-radius: 50%;
 		transition: all .2s ease-in-out;
 
-		@include border('', #999, 50%);
+		@include border('', $border-color, 50%);
 	}
 
 	@include element(inner) {
 		position: absolute;
-		top: 2px;
-		left: 5px; // 有效
+		top: unitfix(2);
+		left: unitfix(5); // 有效
 		display: table;
-		width: 6px;
-		height: 10px;
-		border: 2px solid #fff;
+		width: unitfix(6);
+		height: unitfix(10);
+		border: unitfix(2) solid $check-color;
 		border-collapse: initial;
 		border-top: 0;
 		border-left: 0;
@@ -68,10 +76,10 @@ $component-name: vcm-radio;
 
 	@include when(checked) {
 		@include element(border) {
-			background-color: #26be76;
+			background-color: $color-success;
 
 			&::before, &::after{
-				border-color: #26be76;
+				border-color: $color-success;
 			}
 		}
 
@@ -89,14 +97,14 @@ $component-name: vcm-radio;
 
 		@include element(border){
 			&::before, &::after{
-				border-color: #d4d7db;
+				border-color: $border-color-disabled;
 			}
 
-			background-color: #f4f5f4;
+			background-color: $background-color-disabled;
 		}
 
 		@include element(inner) {
-			background-color: #ccc;
+			background-color: $foreground-color-disabled;
 			animation-name: none;
 		}
 
@@ -105,7 +113,7 @@ $component-name: vcm-radio;
 				animation-name: none;
 
 				&::before, &::after{
-					border-color: #ccc;
+					border-color: $foreground-color-disabled;
 				}
 			}
 		}
@@ -114,7 +122,7 @@ $component-name: vcm-radio;
 	@include when(focus) {
 		@include element(border){
 			z-index: 1;
-			box-shadow: 0 0 0 2px rgb(38 190 118 / 20%);
+			box-shadow: 0 0 0 unitfix(2) $focus-color;
 		}
 	}
 }

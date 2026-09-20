@@ -16,8 +16,7 @@ export const MRadioGroup = defineComponent({
 			if (props.fragment) return slots.default?.();
 			return (
 				<div
-					class="vcm-radio-group"
-					style={classes.value}
+					class={[classes.value, 'vcm-radio-group']}
 					// @ts-ignore
 					name={props.name}
 				>

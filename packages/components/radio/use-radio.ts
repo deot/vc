@@ -28,7 +28,7 @@ export const useRadio = () => {
 	const checked = computed(() => {
 		return hasGroup.value
 			? group.currentValue.value === computedValue.value
-			: currentValue.value === props.checkedValue;
+			: currentValue.value === props.trueValue;
 	});
 
 	const radioName = computed(() => {
@@ -65,7 +65,7 @@ export const useRadio = () => {
 	);
 
 	const reset = ($checked: any) => {
-		currentValue.value = $checked ? props.checkedValue : props.uncheckedValue;
+		currentValue.value = $checked ? props.trueValue : props.falseValue;
 	};
 
 	/**
