@@ -66,7 +66,7 @@ export const Switch = defineComponent({
 							isLoading.value && (
 								<Spin
 									size={14}
-									foreground="#fff"
+									foreground="currentColor"
 									class="vc-switch__loading"
 									style={{
 										left: `${lefts.value.loading}px`

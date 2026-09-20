@@ -1,9 +1,14 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-switch;
-
-// $color-primary: varfix(color-primary, switch);
-// $background-color-light: varfix(background-color-light, switch);
+$track-color: varfix(track-color, switch, varfix(background-color-light, switch));
+$border-color: varfix(border-color, switch, #e5e5e5);
+$checked-color: varfix(checked-color, switch, #53d769);
+$content-color: varfix(content-color, switch, #fff);
+$thumb-color: varfix(thumb-color, switch, #fff);
+$thumb-border-color: varfix(thumb-border-color, switch, rgb(0 0 0 / 13%));
+$thumb-shadow: varfix(thumb-shadow, switch, (0 0 8px 0 rgb(0 0 0 / 11%), 0 6px 7px 1px rgb(0 0 0 / 15%)));
+$loading-color: varfix(loading-color, switch, #fff);
 
 @include block($component-name) {
 	position: relative;
@@ -13,8 +18,8 @@ $component-name: vcm-switch;
 	line-height: 32px;
 	vertical-align: middle;
 	cursor: pointer;
-	background-color: #fff;
-	border: 2px solid #e5e5e5;
+	background-color: $track-color;
+	border: 2px solid $border-color;
 	border-radius: 31px;
 	box-sizing: border-box;
 	transition: all .2s ease-in-out;
@@ -25,7 +30,7 @@ $component-name: vcm-switch;
 		left: 30px;
 		font-size: 14px;
 		line-height: 28px;
-		color: #53d769;
+		color: $checked-color;
 	}
 
 	@include element(inner) {
@@ -35,11 +40,11 @@ $component-name: vcm-switch;
 		width: 28px;
 		height: 28px;
 		cursor: pointer;
-		background-color: #fff;
-		border: 1px solid rgba($color: #000, $alpha: 13%);
+		background-color: $thumb-color;
+		border: 1px solid $thumb-border-color;
 		border-radius: 28px;
 		content: '';
-		box-shadow: 0 0 8px 0 rgb(0 0 0 / 11%), 0 6px 7px 1px rgb(0 0 0 / 15%);
+		box-shadow: $thumb-shadow;
 		transition: left .2s ease-in-out,width .2s ease-in-out;
 	}
 
@@ -50,16 +55,17 @@ $component-name: vcm-switch;
 		z-index: 1;
 		width: 14px;
 		height: 14px;
+		color: $loading-color;
 		opacity: .4;
 	}
 
 	@include when(checked) {
-		background-color: #53d769;
-		border-color: #53d769;
+		background-color: $checked-color;
+		border-color: $checked-color;
 
 		@include element(content) {
 			left: 3px;
-			color: #fff;
+			color: $content-color;
 		}
 
 		@include element(inner) {
