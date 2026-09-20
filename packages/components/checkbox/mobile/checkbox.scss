@@ -1,11 +1,19 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-checkbox;
+$background: varfix(background-color-light, m-checkbox);
+$border: varfix(color-light-deeper, m-checkbox);
+$selected: varfix(color-selected, m-checkbox, #26be76);
+$indicator: varfix(indicator-color, m-checkbox, #fff);
+$disabled-background: varfix(background-color, m-checkbox);
+$disabled-indicator: varfix(color-light-extradeep, m-checkbox);
+$focus: varfix(focus-color, m-checkbox, rgb(38 190 118 / 20%));
+$error: varfix(color-error, m-checkbox);
 
 @include block($component-name) {
 	display: inline-block;
-	margin-right: 12px;
-	font-size: 16px;
+	margin-right: unitfix(12);
+	font-size: unitfix(16);
 	cursor: pointer;
 
 	@include element(wrapper) {
@@ -17,7 +25,7 @@ $component-name: vcm-checkbox;
 		cursor: pointer;
 
 		@include when(sibling, true) {
-			margin-right: 12px;
+			margin-right: unitfix(12);
 		}
 
 		input {
@@ -40,11 +48,11 @@ $component-name: vcm-checkbox;
 		top: 0;
 		left: 0;
 		display: inline-block;
-		width: 16px;
-		height: 16px;
-		background-color: #fff;
+		width: unitfix(16);
+		height: unitfix(16);
+		background-color: $background;
 
-		@include border('', #d4d7db, 2px);
+		@include border('', $border, 2);
 
 		&::after, &::before {
 			transition: border-color .2s;
@@ -53,12 +61,12 @@ $component-name: vcm-checkbox;
 
 	@include element(inner) {
 		position: absolute;
-		top: 2px;
-		left: 5px; // 有效
+		top: unitfix(2);
+		left: unitfix(5); // 有效
 		display: table;
-		width: 6px;
-		height: 10px;
-		border: 2px solid #fff;
+		width: unitfix(6);
+		height: unitfix(10);
+		border: unitfix(2) solid $indicator;
 		border-collapse: initial;
 		border-top: 0;
 		border-left: 0;
@@ -70,10 +78,10 @@ $component-name: vcm-checkbox;
 
 	@include when(checked) {
 		@include element(border){
-			background-color: #26be76;
+			background-color: $selected;
 
 			&::after, &::before {
-				border-color: #26be76;
+				border-color: $selected;
 			}
 		}
 
@@ -82,51 +90,59 @@ $component-name: vcm-checkbox;
 		}
 	}
 
-	@include when(disabled) {
-		@include element(border){
-			background-color: #f4f4f4;
-
-			&::after, &::before {
-				border-color: #d4d7db;
-			}
-			
-		}
-
-		@include element(inner) {
-			border-color: #f4f4f4;
-			animation-name: none;
-		}
-
-		@include when(checked) {
-			@include element(inner) {
-				border-color: #ccc;
-				animation-name: none;
-			}
-		}
-	}
-
 	@include when(focus) {
 		@include element(border){
 			z-index: 1;
-			box-shadow: 0 0 0 2px rgb(38 190 118 / 20%);
+			box-shadow: 0 0 0 unitfix(2) $focus;
+		}
+	}
+
+	@include when(error) {
+		@include element(border) {
+			&::after, &::before {
+				border-color: $error;
+			}
 		}
 	}
 
 	@include when(indeterminate) {
 		@include element(border){
-			background-color: #26be76;
+			background-color: $selected;
 
 			&::after, &::before {
-				border-color: #26be76;
+				border-color: $selected;
 			}
 		}
 
 		@include element(inner) {
-			top: 7px;
-			left: 3px;
-			width: 10px;
-			height: 2px;
+			top: unitfix(7);
+			left: unitfix(3);
+			width: unitfix(10);
+			height: unitfix(2);
 			transform: scale(1);
+		}
+	}
+
+	@include when(disabled) {
+		@include element(border){
+			background-color: $disabled-background;
+
+			&::after, &::before {
+				border-color: $border;
+			}
+
+		}
+
+		@include element(inner) {
+			border-color: $disabled-background;
+			animation-name: none;
+		}
+
+		&.is-checked, &.is-indeterminate {
+			@include element(inner) {
+				border-color: $disabled-indicator;
+				animation-name: none;
+			}
 		}
 	}
 }
