@@ -1,619 +1,432 @@
-
 ## 表单（Form）
-由输入框、选择器、单选框、多选框等控件组成，用以收集、校验、提交数据
+
+组织表单项、校验数据，并将字段恢复到初始值。桌面端使用 `Form / FormItem`，移动端使用 `MForm / MFormItem`。
 
 ### 何时使用
-- 用于创建一个实体或收集信息。
-- 需要对输入的数据类型进行校验时。
-- 注意：当一个 form 元素中只有一个输入框时，在该输入框中按下回车应提交该表单。如果希望阻止这一默认行为，可以在 `<Form>` 标签上添加 `@submit.prevent`。
 
-### 典型表单
-包括各种表单项，比如输入框、选择器、开关、单选框、多选框等。
-在 Form 组件中，每一个表单域由一个 Form-Item 组件构成，表单域中可以放置各种类型的表单控件，包括 Input、Select、Checkbox、Radio、Switch、DatePicker、TimePicker。
+- 收集信息，并在提交前校验一个或多个字段。
+- 为动态字段、嵌套字段组织标签和错误提示。
+- Form 只负责校验和重置；数据提交由调用方处理。原生表单需要通过 `@submit.prevent` 阻止页面跳转。
 
-:::RUNTIME
+### 基础用法
+
+将数据传给 `model`，在 FormItem 上用 `prop` 指定字段路径。只有挂载时设置了 `prop` 的表单项才会注册到表单，参与校验和重置。`required` 可以直接传入错误文案。
+
+`validate()` 成功时 resolve `undefined`，失败时 reject 错误数组；`validateField()` 失败时 reject 单个错误对象。需要使用 `await` 和 `try/catch` 处理结果。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 20 }</config> -->
 ```vue
 <template>
-	<Form
-		ref="form"
-		:model="formData"
-		:label-width="96"
-		style="padding-left: 56px; margin-top: 21px"
-		@submit.prevent
-	>
-		<FormItem label="input：">
-			<Input v-model="formData.input" style="width: 300px" />
-		</FormItem>
-		<FormItem label="select：">
-			<Select v-model="formData.select" style="width: 300px;" clearable>
-				<Option
-					v-for="(item, index) in cityList"
-					:value="item.label"
-					:key="index"
-				>{{ item.label }}</Option>
-			</Select>
-		</FormItem>
-		<FormItem label="switch：">
-			<Switch v-model="formData.switch"/>
-		</FormItem>
-		<FormItem label="date：">
-			<DatePicker
-				v-model="formData.date"
-				type="datetime"
-				clearable
-				placeholder="Select date"
-				style="width: 300px"
-			/>
-		</FormItem>
-		<FormItem label="checkbox：">
-			<CheckboxGroup v-model="formData.checkbox">
-				<Checkbox label="香蕉" />
-				<Checkbox label="苹果" />
-				<Checkbox label="西瓜" />
-			</CheckboxGroup>
-		</FormItem>
-		<FormItem label="radio：">
-			<RadioGroup v-model="formData.radio" vertical>
-				<Radio label="金斑蝶" />
-				<Radio label="爪哇犀牛" />
-				<Radio label="印度黑羚" />
-			</RadioGroup>
-		</FormItem>
-		<FormItem label="radio：">
-			<RadioGroup v-model="formData.radio">
-				<Radio label="金斑蝶" />
-				<Radio label="爪哇犀牛" />
-				<Radio label="印度黑羚" />
-			</RadioGroup>
-		</FormItem>
-		<FormItem
-			v-for="(item, index) in formData.items"
-			:key="index"
-			:label="'Item ' + item.index + '：'"
-			:prop="'items.' + index + '.value'"
-			:rules="{required: true, message: 'Item ' + item.index +' can not be empty', trigger: 'change'}"
-		>
-			<span @click="handleRemove(index)">Delete</span>
-		</FormItem>
-		<FormItem>
-			<div @click="handleAdd">
-				Add item
-			</div>
-		</FormItem>
-		<FormItem>
-			<Button type="primary" @click="handleSubmit">
-				Submit
-			</Button>
-			<Button style="margin-left: 8px" @click="handleReset">
-				Reset
-			</Button>
-			<Button style="margin-left: 8px" @click="handleOnly">
-				Only
-			</Button>
-		</FormItem>
-	</Form>
+	<div class="form-demo">
+		<Form ref="form" :model="model" :label-width="80" @submit.prevent>
+			<FormItem prop="name" label="姓名" required="请输入姓名">
+				<Input v-model="model.name" placeholder="请输入姓名" />
+			</FormItem>
+			<FormItem prop="email" label="邮箱" :rules="emailRules">
+				<Input v-model="model.email" placeholder="name@example.com" />
+			</FormItem>
+			<FormItem>
+				<div class="actions">
+					<Button type="primary" @click="handleSubmit">校验全部</Button>
+					<Button @click="handleValidateEmail">校验邮箱</Button>
+					<Button @click="handleReset">恢复初始值</Button>
+				</div>
+			</FormItem>
+		</Form>
+		<p role="status">{{ result }}</p>
+	</div>
 </template>
-<script setup>
-import { ref, reactive } from 'vue';
-import { Form, Input, Button, Checkbox, Radio, Select, Option, DatePicker, Switch } from '@deot/vc';
 
-const index = ref(1);
-const formData = reactive({
-	input: '',
-	select: '',
-	switch: '',
-	date: '',
-	checkbox: [],
-	radio: '',
-	items: [{
-		value: '',
-		index: 1,
-		status: 1
-	}]
-});
-const cityList = ref([{
-	value: '1',
-	label: 'New York'
-}, {
-	value: '2',
-	label: 'London'
-}]);
+<script setup>
+import { reactive, ref } from 'vue';
+import { Form, FormItem, Input, Button } from '@deot/vc';
+
 const form = ref();
+const model = reactive({ name: '小明', email: '' });
+const result = ref('姓名的初始值为“小明”。');
+const emailRules = [
+	{ required: true, message: '请输入邮箱' },
+	{ pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: '请输入有效邮箱' }
+];
 const handleSubmit = async () => {
 	try {
-		await form.value.validate();
-	} catch (e) {
-		console.log(e);
+		await form.value.validate({ scroll: false });
+		result.value = '全部校验通过，可提交数据。';
+	} catch (errors) {
+		result.value = errors.map(item => item.message).join('；');
 	}
 };
-
-const handleReset = (name) => {
-	form.value.reset();
-};
-
-const handleAdd = () => {
-	index.value++;
-	formData.items.push({
-		value: '',
-		index: index.value,
-		status: 1
-	});
-};
-
-const handleOnly = async (name) => {
+const handleValidateEmail = async () => {
 	try {
-		await form.value.validateField('items.0.value', { scroll: true });
-	} catch (e) {
-		console.log(e);
+		await form.value.validateField('email', { scroll: false });
+		result.value = '邮箱校验通过。';
+	} catch (error) {
+		result.value = error.message;
 	}
 };
-
-const handleRemove = (index) => {
-	formData.value.items[index].status = 0;
+const handleReset = () => {
+	form.value.reset();
+	result.value = '已恢复挂载时的初始值。';
 };
 </script>
-<style>
-.v-form-basic {
-	margin-bottom: 10px;
-}
+
+<style scoped>
+.form-demo { max-width: 560px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+p { margin: 12px 0 0; overflow-wrap: anywhere; }
 </style>
 ```
 :::
 
-### 行内表单
-当垂直方向空间受限且表单较简单时，可以在一行内放置表单。
-设置 `inline` 属性可以让表单域变为行内的表单域。
+### 行内布局与标签对齐
 
-:::RUNTIME
-```vue
-<template>
-	<Form
-		ref="formData"
-		:label-width="50"
-		inline
-		style="padding-left: 56px; margin-top: 21px"
-		@submit.prevent
-	>
-		<FormItem label="input：">
-			<Input v-model="formData.input" />
-		</FormItem>
-		<FormItem label="select：">
-			<Select v-model="formData.select" clearable>
-				<Option
-					v-for="(item, index) in cityList"
-					:value="item.label"
-					:key="index"
-				>{{ item.label }}</Option>
-			</Select>
-		</FormItem>
-		<FormItem>
-			<Button type="primary" @click="handleSubmit">
-				Submit
-			</Button>
-		</FormItem>
-	</Form>
-</template>
-<script setup>
-import { ref, reactive } from 'vue';
-import { Form, FormItem, Input, Button, Select, Option } from '@deot/vc';
+`inline` 将表单项排列为行内块。`labelPosition` 支持 `left / right / top`；设为 `top` 后不再使用标签宽度。FormItem 可以单独覆盖对齐方式和宽度。
 
-const formData = reactive({
-	input: '',
-	select: '',
-});
-
-const cityList = ref([{
-	value: '1',
-	label: 'New York'
-}, {
-	value: '2',
-	label: 'London'
-}]);
-
-const handleSubmit = (name) => {
-	console.log(res, this.formData);
-};
-</script>
-<style>
-.v-form-basic {
-	margin-bottom: 10px;
-}
-</style>
-```
-:::
-
-### 对齐方式
-根据具体目标和制约因素，选择最佳的标签对齐方式。
-通过设置 `label-position` 属性可以改变表单域标签的位置，可选值为 `top`、`left`，当设为 `top` 时标签会置于表单域的顶部。
-
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 20 }</config> -->
 ```vue
 <template>
 	<div>
-		<RadioGroup v-model="labelPosition" type="button">
-			<Radio label="left">左对齐</Radio>
-			<Radio label="right">右对齐</Radio>
-			<Radio label="top">顶部对齐</Radio>
-		</RadioGroup>
-		<Form
-			ref="form"
-			:label-width="50"
-			:label-position="labelPosition"
-			style="margin-top: 21px"
-			@submit.prevent
-		>
-			<FormItem label="input：">
-				<Input v-model="formData.input" style="width: 200px;" />
-			</FormItem>
-			<FormItem label="input：">
-				<Input v-model="formData.input" style="width: 200px;" />
-			</FormItem>
-			<FormItem label="input：">
-				<Input v-model="formData.input" style="width: 200px;" />
-			</FormItem>
+		<div class="controls">
+			<label>标签位置
+				<select v-model="position">
+					<option value="left">左对齐</option>
+					<option value="right">右对齐</option>
+					<option value="top">顶部对齐</option>
+				</select>
+			</label>
+			<label><input v-model="isInline" type="checkbox"> 行内布局</label>
+		</div>
+		<Form :model="model" :label-position="position" :label-width="72" :inline="isInline" @submit.prevent>
+			<FormItem label="姓名"><Input v-model="model.name" /></FormItem>
+			<FormItem label="城市"><Input v-model="model.city" /></FormItem>
 		</Form>
 	</div>
 </template>
-<script setup>
-import { ref, reactive } from 'vue';
-import { Form, FormItem, Input, RadioGroup, Radio } from '@deot/vc';
 
-const labelPosition = ref('right');
-const formData = reactive({
-	input: '',
-});
-const handleSubmit = (name) => {
-	console.log(res, formData);
-};
+<script setup>
+import { reactive, ref } from 'vue';
+import { Form, FormItem, Input } from '@deot/vc';
+
+const position = ref('right');
+const isInline = ref(false);
+const model = reactive({ name: '', city: '' });
 </script>
-<style>
-.v-form-basic {
-	margin-bottom: 10px;
-}
+
+<style scoped>
+.controls { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
 </style>
 ```
 :::
 
-### 表单校验
-在防止用户犯错的前提下，尽可能让用户更早地发现并纠正错误。
-Form 组件提供了表单验证的功能，只需要通过 `rules` 属性传入约定的验证规则，并将 Form-Item 的 `prop` 属性设置为需校验的字段名即可。
+### 动态字段与局部重置
 
-:::RUNTIME
+字段路径支持 `profile.name`、`contacts.0.name` 等形式。动态列表使用稳定的 key，并根据当前数组下标设置 `prop`。`reset({ fields, original })` 只重置选中的已注册字段；指定值为 `null / undefined` 或不存在时恢复该字段挂载时的初始值。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 20 }</config> -->
 ```vue
 <template>
-	<Form
-		ref="form"
-		:model="formData"
-		:rules="rules"
-		:label-width="96"
-		style="padding-left: 56px; margin-top: 21px"
-		@submit.prevent
-	>
-		<FormItem prop="input" label="input：">
-			<Input v-model="formData.input" style="width: 300px" />
-		</FormItem>
-		<FormItem prop="select" label="select：">
-			<Select v-model="formData.select" style="width: 300px;" clearable>
-				<Option
-					v-for="(item, index) in cityList"
-					:value="item.label"
-					:key="index"
-				>{{ item.label }}</Option>
-			</Select>
-		</FormItem>
-		<FormItem prop="switch" label="switch：">
-			<Switch v-model="formData.switch"/>
-		</FormItem>
-		<FormItem prop="date" label="date：">
-			<DatePicker
-				v-model="formData.date"
-				type="datetime"
-				clearable
-				placeholder="Select date"
-				style="width: 300px"
-			/>
-		</FormItem>
-		<FormItem prop="checkbox" label="checkbox：">
-			<CheckboxGroup v-model="formData.checkbox">
-				<Checkbox label="香蕉" />
-				<Checkbox label="苹果" />
-				<Checkbox label="西瓜" />
-			</CheckboxGroup>
-		</FormItem>
-		<FormItem prop="radio" label="radio：">
-			<RadioGroup v-model="formData.radio" vertical>
-				<Radio label="金斑蝶" />
-				<Radio label="爪哇犀牛" />
-				<Radio label="印度黑羚" />
-			</RadioGroup>
-		</FormItem>
-		<FormItem prop="radio" label="radio：">
-			<RadioGroup v-model="formData.radio">
-				<Radio label="金斑蝶" />
-				<Radio label="爪哇犀牛" />
-				<Radio label="印度黑羚" />
-			</RadioGroup>
-		</FormItem>
-		<FormItem
-			v-for="(item, index) in formData.items"
-			v-if="item.status"
-			:key="index"
-			:label="'Item ' + item.index + '：'"
-			:prop="'items.' + index + '.value'"
-			:rules="{required: true, message: 'Item ' + item.index +' can not be empty', trigger: 'change'}"
-		>
-			<span @click="handleRemove(index)">Delete</span>
-		</FormItem>
-		<FormItem>
-			<div @click="handleAdd">
-				Add item
+	<div class="form-demo">
+		<Form ref="form" :model="model" label-position="top" @submit.prevent>
+			<FormItem
+				v-for="(contact, index) in model.contacts"
+				:key="contact.id"
+				:prop="'contacts.' + index + '.name'"
+				:label="'联系人 ' + (index + 1)"
+				required="请输入联系人姓名"
+			>
+				<div class="contact">
+					<Input v-model="contact.name" placeholder="联系人姓名" />
+					<Button @click="handleRemove(index)">删除</Button>
+				</div>
+			</FormItem>
+			<div class="actions">
+				<Button @click="handleAdd">添加联系人</Button>
+				<Button type="primary" @click="handleSubmit">校验联系人</Button>
+				<Button :disabled="!model.contacts.length" @click="handleResetFirst">重置第一项</Button>
 			</div>
-		</FormItem>
-		<FormItem>
-			<Button type="primary" @click="handleSubmit">
-				Submit
-			</Button>
-			<Button style="margin-left: 8px" @click="handleReset">
-				Reset
-			</Button>
-			<Button style="margin-left: 8px" @click="handleOnly">
-				Only
-			</Button>
-		</FormItem>
-	</Form>
+		</Form>
+		<p role="status">{{ result }}</p>
+	</div>
 </template>
+
 <script setup>
-import { ref, reactive } from 'vue';
-import { Form, FormItem, Input, Button, Checkbox, Radio, Select, Option, DatePicker, Switch } from '@deot/vc';
-
-const index = ref(1);
-const formData = reactive({
-	input: '',
-	select: '',
-	switch: '',
-	date: '',
-	checkbox: [],
-	radio: '',
-	items: [
-		{
-			value: '',
-			index: 1,
-			status: 1
-		}
-	]
-});
-const rules = reactive({
-	input: [
-		{ required: true, message: '请输入内容', trigger: 'blur' },
-		{ min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
-	],
-	select: [
-		{ required: true, message: '请选择区域', trigger: 'change' }
-	],
-	date: [
-		{ required: true, type: 'date', message: '请选择日期', trigger: 'change' }
-	],
-	checkbox: [
-		{ type: 'array', required: true, message: '请至少选择一种水果', trigger: 'change' }
-	],
-	radio: [
-		{ required: true, message: '请选择动物', trigger: 'change' }
-	],
-});
-
-const cityList = ref([
-	{
-		value: '1',
-		label: 'New York'
-	},
-	{
-		value: '2',
-		label: 'London'
-	}
-]);
-const form = ref();
-const handleSubmit = async () => {
-	try {
-		await form.value.valuevalidate();
-	} catch (e) {
-		console.log(e);
-	}
-};
-const handleOnly = async () => {
-	try {
-		await form.value.validateField('items.0.value', { scroll: true });
-	} catch (e) {
-		console.log(e);
-	}
-};
-
-const handleReset = () => {
-	form.value.reset();
-};
-
-const handleAdd = () => {
-	index.value++;
-	formData.items.push({
-		value: '',
-		index: index.value,
-		status: 1
-	});
-};
-
-const handleRemove = (index) => {
-	formData.items[index].status = 0;
-};
-</script>
-<style>
-.v-form-basic {
-	margin-bottom: 10px;
-}
-</style>
-```
-:::
-
-### 自定义校验规则
-这个例子中展示了如何使用自定义验证规则来完成密码的二次验证。
-
-:::RUNTIME
-```vue
-<template>
-	<Form
-		ref="formData"
-		:model="formData"
-		:rules="rules"
-		:label-width="96"
-		style="padding-left: 56px; margin-top: 21px"
-		@submit.prevent
-	>
-		<FormItem prop="pass" label="密码：">
-			<Input type="password" v-model="formData.pass" style="width: 300px" />
-		</FormItem>
-		<FormItem prop="checkPass" label="确认密码：">
-			<Input type="password" v-model="formData.checkPass" style="width: 300px" />
-		</FormItem>
-		<FormItem prop="age" label="年龄：">
-			<Input v-model.number="formData.age" style="width: 300px" />
-		</FormItem>
-		<FormItem>
-			<Button type="primary" @click="handleSubmit('formData')">
-				Submit
-			</Button>
-			<Button style="margin-left: 8px" @click="handleReset('formData')">
-				Reset
-			</Button>
-		</FormItem>
-	</Form>
-</template>
-<script setup>
+import { reactive, ref } from 'vue';
 import { Form, FormItem, Input, Button } from '@deot/vc';
 
-const formData = reactive({
-	pass: '',
-	checkPass: '',
-	age: ''
-});
-
-const checkAge = (value) => {
-	if (!value) {
-		return '年龄不能为空';
+const form = ref();
+let nextId = 1;
+const model = reactive({ contacts: [{ id: nextId++, name: '' }] });
+const result = ref('添加或删除字段后再校验。');
+const handleAdd = () => model.contacts.push({ id: nextId++, name: '' });
+const handleRemove = index => model.contacts.splice(index, 1);
+const handleSubmit = async () => {
+	try {
+		await form.value.validate({ scroll: false });
+		result.value = '当前联系人校验通过。';
+	} catch (errors) {
+		result.value = errors.map(item => item.prop + '：' + item.message).join('；');
 	}
-	return new Promise((resolve, reject) => {
-		setTimeout(() => {
-			if (!Number.isInteger(value)) {
-				reject('请输入数字值');
-			} else {
-				if (value < 18) {
-					reject('必须年满18岁');
-				} else {
-					resolve();
-				}
-			}
-		}, 1000);
-	});
 };
-const validatePass = (value) => {
-	if (!value) {
-		return '请输入密码';
-	} else {
-		if (!formData.checkPass) {
-			form.value.validateField('checkPass');
+const handleResetFirst = () => {
+	form.value.reset({
+		fields: ['contacts.0.name'],
+		original: { contacts: [{ name: '默认联系人' }] }
+	});
+	result.value = '仅第一项已重置为“默认联系人”。';
+};
+</script>
+
+<style scoped>
+.form-demo { max-width: 560px; }
+.contact { display: flex; align-items: center; gap: 8px; }
+.contact > :first-child { flex: 1; min-width: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+p { overflow-wrap: anywhere; }
+</style>
+```
+:::
+
+### 自定义校验与错误插槽
+
+规则中的 `validate(value, context)` 可以返回错误字符串、`false`，或返回一个失败时 reject 的 Promise。返回 `undefined / true` 表示同步通过；Promise resolve 表示异步通过。使用多个规则分别表达必填、格式和自定义检查。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+```vue
+<template>
+	<div class="form-demo">
+		<Form ref="form" :model="model" :rules="rules" label-position="top" @submit.prevent>
+			<FormItem prop="password" label="密码">
+				<Input v-model="model.password" type="password" placeholder="至少 6 个字符" />
+			</FormItem>
+			<FormItem prop="confirm" label="确认密码">
+				<Input v-model="model.confirm" type="password" placeholder="再次输入密码" />
+				<template #error="{ show, message, class: errorClass, style }">
+					<div v-if="show" :class="errorClass" :style="style">请检查：{{ message }}</div>
+				</template>
+			</FormItem>
+			<Button type="primary" :loading="isValidating" @click="handleSubmit">校验密码</Button>
+		</Form>
+		<p role="status">{{ result }}</p>
+	</div>
+</template>
+
+<script setup>
+import { reactive, ref } from 'vue';
+import { Form, FormItem, Input, Button } from '@deot/vc';
+
+const form = ref();
+const model = reactive({ password: '', confirm: '' });
+const isValidating = ref(false);
+const result = ref('确认密码使用异步校验。');
+const rules = {
+	password: {
+		validate: value => value.length >= 6 || '密码至少需要 6 个字符'
+	},
+	confirm: {
+		validate: async (value) => {
+			await new Promise(resolve => setTimeout(resolve, 200));
+			if (!value || value !== model.password) throw new Error('两次密码需要一致');
 		}
 	}
 };
-const validatePass2 = (value) => {
-	if (!value) {
-		return '请再次输入密码';
-	} else if (value !== formData.pass) {
-		return '两次输入密码不一致!';
-	}
-};
-
-const rules = reactive({
-	pass: [
-		{ validate: validatePass, trigger: 'blur' }
-	],
-	checkPass: [
-		{ validate: validatePass2, trigger: 'blur' }
-	],
-	age: [
-		{ validate: checkAge, trigger: 'blur' }
-	]
-});
-const handleSubmit = async (name) => {
+const handleSubmit = async () => {
+	isValidating.value = true;
 	try {
-		form.value.validate(() => {});
-	} catch (e) {
-		console.log(e, formData);
+		await form.value.validate({ scroll: false });
+		result.value = '密码校验通过。';
+	} catch {
+		result.value = '请根据字段提示修改。';
+	} finally {
+		isValidating.value = false;
 	}
-};
-
-const handleReset = (name) => {
-	form.value.reset();
 };
 </script>
-<style>
-.v-form-basic {
-	margin-bottom: 10px;
+
+<style scoped>
+.form-demo { max-width: 480px; }
+</style>
+```
+:::
+
+### 移动端
+
+MForm 复用相同的数据、校验和重置逻辑。`showToast` 与 `showMessage` 同时为 `true` 时，手动校验失败会弹出第一条错误；`indent` 控制非嵌套项的左侧缩进。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	previewInset: 16,
+	viewport: [375, 480],
+	viewportOptions: ['auto', 375, [375, 480]]
 }
+</config>
+-->
+```vue
+<template>
+	<div>
+		<MForm ref="form" :model="model" label-position="top" show-toast @submit.prevent>
+			<MFormItem prop="name" label="联系人" required="请输入联系人">
+				<input v-model="model.name" aria-label="联系人" placeholder="请输入联系人">
+			</MFormItem>
+		</MForm>
+		<div class="actions">
+			<MButton type="primary" @click="handleSubmit">校验</MButton>
+			<MButton @click="handleReset">重置</MButton>
+		</div>
+		<p role="status">{{ result }}</p>
+	</div>
+</template>
+
+<script setup>
+import { reactive, ref } from 'vue';
+import { MForm, MFormItem, MButton } from '@deot/vc';
+
+const form = ref();
+const model = reactive({ name: '' });
+const result = ref('原生输入框通过下方按钮手动校验。');
+const handleSubmit = async () => {
+	try {
+		await form.value.validate({ scroll: false });
+		result.value = '校验通过。';
+	} catch (errors) {
+		result.value = errors[0].message;
+	}
+};
+const handleReset = () => {
+	form.value.reset();
+	result.value = '已重置。';
+};
+</script>
+
+<style scoped>
+input { width: 100%; min-width: 0; padding: 8px 0; color: inherit; background: transparent; box-sizing: border-box; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+p { margin: 12px 0 0; }
 </style>
 ```
 :::
 
 ## API
 
-### 属性
+### Form 属性
 
-| 属性             | 说明                                                        | 类型                | 可选值                    | 默认值     |
-| -------------- | --------------------------------------------------------- | ----------------- | ---------------------- | ------- |
-| model          | 表单数据对象                                                    | `object`          | -                      | -       |
-| rules          | 表单验证规则，具体配置查看 [validator](https://github.com/deot/helper) | `object`          | -                      | -       |
-| inline         | 是否开启行内表单模式                                                | `boolean`         | -                      | `false` |
-| label-position | 表单域标签的位置                                                  | `string`          | `left`、 `right`、 `top` | `right` |
-| label-width    | 表单域标签的宽度，所有的 FormItem 都会继承 Form 组件的 label-width 的值        | `number`          | -                      | -       |
-| show-message   | 是否显示校验错误信息                                                | `boolean`         | -                      | `true`  |
-| autocomplete   | 原生的 autocomplete 属性                                       | `string`          | `off`、 `on`            | `off`   |
-| labelClass     | `FormItem` label类名                                        | `object`、`string` | -                      | -       |
-| labelStyle     | `FormItem` label样式                                        | `object`、`string` | -                      | -       |
-| errorClass     | `FormItem` error类名                                        | `object`、`string` | -                      | -       |
-| errorStyle     | `FormItem` error样式                                        | `object`、`string` | -                      | -       |
-| contentClass   | `FormItem` content类名                                      | `object`、`string` | -                      | -       |
-| contentStyle   | `FormItem` content样式                                      | `object`、`string` | -                      | -       |
-     
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| tag | 根元素标签 | `string` | - | `'form'` |
+| model | 表单数据；校验和重置通过字段路径访问该对象 | `object` | - | - |
+| rules | 按字段路径配置规则；字段值运行时支持单条规则或规则数组，也支持嵌套对象 | `Record<string, FormRule>` | - | - |
+| inline | 行内布局 | `boolean` | - | `false` |
+| labelPosition | 标签位置 | `string` | `left / right / top` | `'right'` |
+| labelWidth | 标签宽度，单位 px | `number` | - | - |
+| showMessage | 显示错误信息；也控制移动端校验 Toast | `boolean` | - | `true` |
+| autocomplete | 根元素 autocomplete 属性 | `string` | `on / off` | `'off'` |
+| styleless | 所有表单项只渲染 default/error 插槽，Form 根元素仍保留 | `boolean` | - | `false` |
+| contentStyle / contentClass | 注入所有表单项内容区的样式 / 类名 | `object \| string` | - | - |
+| labelStyle / labelClass | 注入所有表单项标签区的样式 / 类名 | `object \| string` | - | - |
+| errorStyle / errorClass | 注入所有表单项错误区的样式 / 类名 | `object \| string` | - | - |
+| nestedContentStyle / nestedContentClass | 额外注入嵌套表单项内容区 | `object \| string` | - | - |
+| nestedLabelStyle / nestedLabelClass | 额外注入嵌套表单项标签区 | `object \| string` | - | - |
+| nestedErrorStyle / nestedErrorClass | 额外注入嵌套表单项错误区 | `object \| string` | - | - |
 
-### 方法
+### Form 插槽
 
-| 方法名           | 说明                                                     | 参数                                           |
-| ------------- | ------------------------------------------------------ | -------------------------------------------- |
-| validate      | 对整个表单进行校验，参数为检验完的回调，会返回一个 `boolean` 表示成功与失败，支持 Promise | -                                            |
-| validateField | 对部分表单字段进行校验的方法                                         | `props`: 需校验的 prop; `callback`: 检验完回调，返回错误信息 |
-| reset         | 对整个表单进行重置，将所有字段值重置为空并移除校验结果                            | -                                            |
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 表单项和操作区 | - |
 
+### Form 方法
 
-### Item 属性
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| validate | 校验已注册字段，失败时 reject `{ prop, message }[]`，按页面位置排序 | `{ fields?: string[], scroll?: boolean }`；默认全部字段、`scroll: true` | `Promise<void>` |
+| validateField | 校验单个字段，失败时 reject `{ prop, message }` | `prop: string, options?: { scroll?: boolean }` | `Promise<void>` |
+| reset | 清除校验状态，并恢复初始值或指定值；不增删动态列表项 | `{ fields?: string[], original?: object }` | `void` |
+| getField | 查找已注册字段；不存在时抛出错误 | `prop: string` | `ComponentInternalInstance` |
 
+没有字段或筛选结果为空时校验直接通过。`getField()` 返回 Vue 内部实例，字段方法位于其 `exposed` 上，普通调用建议直接使用表单方法。Form 没有自定义事件；原生 `submit` 事件可通过 `@submit.prevent` 处理。
 
-| 属性           | 说明                                                             | 类型                | 可选值 | 默认值    |
-| ------------ | -------------------------------------------------------------- | ----------------- | --- | ------ |
-| prop         | 对应表单域 model 里的字段                                               | `string`          | -   | -      |
-| label        | 标签文本                                                           | `string`          | -   | -      |
-| label-width  | 表单域标签的的宽度                                                      | `number`          | -   |        |
-| label-for    | 指定原生的 label 标签的 for 属性，配合控件的 `element-id` 属性，可以点击 label 时聚焦控件。 | `string`          | -   | -      |
-| required     | 是否必填，如不设置，则会根据校验规则自动生成                                         | `boolean`         | -   | -      |
-| rules        | 表单验证规则                                                         | `object`、`array`  | -   | -      |
-| error        | 表单域验证错误信息, 设置该值会使表单验证状态变为error，并显示该错误信息                        | `string`          | -   | -      |
-| show-message | 是否显示校验错误信息                                                     | `boolean`         | -   | `true` |
-| labelClass   | label类名                                                        | `object`、`string` | -   | -      |
-| labelStyle   | label样式                                                        | `object`、`string` | -   | -      |
-| errorClass   | error类名                                                        | `object`、`string` | -   | -      |
-| errorStyle   | error样式                                                        | `object`、`string` | -   | -      |
-| contentClass | content类名                                                      | `object`、`string` | -   | -      |
-| contentStyle | content样式                                                      | `object`、`string` | -   | -      |
+### FormItem 属性
 
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| prop | 对应 model 的字段路径 | `string` | - | - |
+| label | 标签文案；非空时优先于 label 插槽 | `string` | - | `''` |
+| labelWidth | 覆盖标签宽度；嵌套项的标签默认宽度为 0 | `number` | - | 继承 Form |
+| labelPosition | 覆盖标签位置 | `string` | `left / right / top` | 继承 Form |
+| labelFor | 标签关联目标；当前桌面端将 for 放在标签外层 div，不能依赖它实现原生聚焦；移动端放在 label 上 | `string` | - | - |
+| required | 标记必填；没有匹配规则时生成必填规则，字符串同时作为错误文案 | `boolean \| string` | - | `false` |
+| asterisk | 是否显示必填标记；不影响校验 | `boolean` | - | `true` |
+| rules | 本项规则，非空时优先于 Form.rules | `FormRule \| FormRule[]` | - | - |
+| resetByRulesChanged | 本项 rules 引用改变时重置字段 | `boolean` | - | `false` |
+| error | 外部错误文案；变化时更新错误状态，设为 `''` 清除；初始值不会立即触发该监听 | `string` | - | - |
+| showMessage | 与 Form.showMessage 同时为 true 才显示错误；false 同时移除桌面端项的默认下间距 | `boolean` | - | `true` |
+| styleless | 只渲染 default/error 插槽，不渲染标签和默认错误节点 | `boolean` | - | `false` |
+| contentStyle / contentClass | 内容区样式 / 类名 | `object \| string` | - | - |
+| labelStyle / labelClass | 标签区样式 / 类名 | `object \| string` | - | - |
+| errorStyle / errorClass | 错误区样式 / 类名 | `object \| string` | - | - |
 
-### Item Slot
-属性 | 说明
----|---
-label | label 内容
+样式依次合并 Form、本项对应的 nested 配置、FormItem；类名同时保留。嵌套项通过嵌套 FormItem 创建，字段路径嵌套本身不会创建嵌套布局。
 
+### FormItem 插槽
 
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 表单控件或嵌套表单项 | - |
+| label | 自定义标签，label 为空时使用 | - |
+| error | 自定义错误区；styleless 模式下也由此插槽负责错误展示 | 普通模式：`{ show, nest, message, class, style }`；styleless：`{ show, nested, message, class, style }` |
+
+`show` 为是否应显示错误，`nest / nested` 为是否嵌套。自定义错误插槽需要自行处理 `show`，并按需绑定传入的 class/style。
+
+### FormItem 方法
+
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| validate | 按 trigger 筛选规则并校验，失败时 reject `{ prop, message }` | `trigger: string` | `Promise<void>` |
+| reset | 清除状态；非 null/undefined 的参数替代初始值 | `value?: any` | `void` |
+| getPosition | 获取表单项位置 | - | `Promise<{ top: number, left: number }>` |
+
+### MForm 属性、插槽和方法
+
+继承 Form 的属性、default 插槽和四个方法，额外属性如下：
+
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| showToast | 手动校验失败时弹出第一条错误，需同时启用 showMessage | `boolean` | - | `false` |
+| border | 当前已声明但未绑定边框状态类，设置它不会启用外边框 | `boolean` | - | `false` |
+
+### MFormItem 属性、插槽和方法
+
+继承 FormItem 属性和三个方法，额外属性如下：
+
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| indent | 非嵌套项的左侧缩进，单位 px；嵌套项为 0 | `number` | - | `12` |
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 表单控件或嵌套表单项 | - |
+| label | 自定义标签，label 为空时使用 | - |
+| error | 普通模式只在错误可见时调用；styleless 模式需自行控制显示 | 普通模式：`{ message }`；styleless：`{ show, nested, message, class, style }` |
+
+当前移动端必填标记的样式选择器未匹配实际标签层级，因此不会显示星号；必填校验仍然生效。
+
+### 校验规则与行为边界
+
+`FormRule` 从 `@deot/vc` 导出，基于 `@deot/helper-validator` 的 `ValidatorRule`，额外支持 `trigger?: string | string[]`。
+
+- 支持 `required`、`pattern`、`enum`、`transform`、`validate`、`fields` 和 `message`。不要将其他校验库的 `min / max / type` 当作直接生效的规则；长度、类型检查可用 `validate` 实现。
+- 错误文案来自规则 `message`、required 字符串或自定义校验结果；未提供时可以为空。Form 不提供默认翻译文案。
+- 自动 blur/change 校验依赖控件与 FormItem 的联动。原生输入框不会自动触发，应手动调用表单方法。
+- 规则过滤实际使用 `!rule.trigger || rule.trigger.includes(trigger)`。表单手动校验传入空字符串：字符串 trigger 会匹配；数组 trigger 只有包含 `''` 才会匹配。需要兼顾手动校验时，可省略 trigger、使用单个字符串，或显式包含 `''`。
+- 非空的 FormItem.rules 优先；否则查找 Form.rules。数组路径中的中间数字下标会被移除后查找规则，例如 `contacts.0.name` 查找 `contacts.name`；查找抛错时才尝试完整 prop 键。
+- 布尔 required 主要控制必填标记和无匹配规则时的兜底，不会额外插入已有规则列表。需要保证必填时请在规则中明确写入 `required: true` 和 message。
+- `reset()` 恢复挂载时保存的字段初始值，并非一律清空，也不替换整个 model。
+
+### 主题
+
+桌面端和移动端使用 `form` 主题命名空间。可覆盖 `--vc-form-background-color-light`、`--vc-form-color-error`；桌面端另使用 `--vc-form-foreground-color`、`--vc-form-color-dark-light`，移动端使用 `--vc-form-color-dark`。未覆盖时跟随共享亮暗主题。
