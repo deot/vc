@@ -3,6 +3,27 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		Editor: {
+			videoPlaceholder: 'Embed URL',
+			placeholder: 'Please enter content',
+			open: 'Visit URL:',
+			edit: 'Edit',
+			remove: 'Remove',
+			link: 'Enter link:',
+			save: 'Save',
+			text: 'Normal',
+			heading: 'Heading {level}',
+			lineHeight: 'Line height:',
+			letterSpacing: 'Spacing:',
+			font: 'Sans Serif',
+			serif: 'Serif',
+			monospace: 'Monospace',
+			small: 'Small',
+			large: 'Large',
+			huge: 'Huge',
+			formula: 'Enter formula:',
+			video: 'Enter video:'
+		},
 		DatePicker: {
 			clearText: 'Clear',
 			selectDate: 'Select date',

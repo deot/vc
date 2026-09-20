@@ -3,6 +3,27 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		Editor: {
+			videoPlaceholder: '嵌入视频地址',
+			placeholder: '请输入内容',
+			open: '打开：',
+			edit: '编辑',
+			remove: '删除',
+			link: '链接',
+			save: '保存',
+			text: '文本',
+			heading: '标题{level}',
+			lineHeight: '行高：',
+			letterSpacing: '字间距：',
+			font: '标准字体',
+			serif: '衬线字体',
+			monospace: '等宽字体',
+			small: '小',
+			large: '大',
+			huge: '特大',
+			formula: '公式',
+			video: '视频'
+		},
 		DatePicker: {
 			clearText: '清空',
 			selectDate: '选择日期',

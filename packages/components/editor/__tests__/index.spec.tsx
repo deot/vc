@@ -4,6 +4,7 @@ import { Editor, EditorView } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import Quill from 'quill';
 import { nextTick } from 'vue';
+import { enUS, zhCN } from '@deot/vc-locale';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EditorToolbar } from '../toolbar';
 import { VcInstance } from '../../vc';
@@ -102,6 +103,7 @@ describe('Editor component', () => {
 
 	afterEach(() => {
 		delete (window as any).quill;
+		VcInstance.configure({ locale: zhCN });
 		document.body.innerHTML = '';
 		vi.restoreAllMocks();
 		VcInstance.options.Editor = {
@@ -111,6 +113,29 @@ describe('Editor component', () => {
 		VcInstance.options.UploadPicker = {
 			enhancer: undefined
 		};
+	});
+
+	it('updates the default placeholder with locale and preserves explicit overrides', async () => {
+		const wrapper = mount(Editor, { attachTo: document.body });
+		await flush();
+		const editor = getEditor(wrapper);
+		expect(editor.root.dataset.placeholder).toBe('请输入内容');
+		expect(editor.container.querySelector('input[data-video]')?.getAttribute('data-video')).toBe('嵌入视频地址');
+		expect(wrapper.element.style.getPropertyValue('--vc-editor-label-heading-2')).toBe('"标题2"');
+		VcInstance.configure({ locale: enUS });
+		await flush();
+		expect(editor.root.dataset.placeholder).toBe('Please enter content');
+		expect(editor.container.querySelector('input[data-video]')?.getAttribute('data-video')).toBe('Embed URL');
+		expect(wrapper.element.style.getPropertyValue('--vc-editor-label-heading-2')).toBe('"Heading 2"');
+		expect(wrapper.element.style.getPropertyValue('--vc-editor-label-save')).toBe('"Save"');
+		await wrapper.setProps({ options: { placeholder: '' } });
+		expect(editor.root.dataset.placeholder).toBe('');
+		VcInstance.configure({ locale: zhCN });
+		await flush();
+		expect(editor.root.dataset.placeholder).toBe('');
+		await wrapper.setProps({ options: { placeholder: 'Custom' } });
+		expect(editor.root.dataset.placeholder).toBe('Custom');
+		wrapper.unmount();
 	});
 
 	it('exports and initializes quill with default toolbar', async () => {

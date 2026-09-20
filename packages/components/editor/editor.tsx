@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, nextTick, ref, shallowRef, inject, computed, watch, onMounted, onUnmounted, getCurrentInstance } from 'vue';
+import { defineComponent, nextTick, ref, shallowRef, inject, computed, watch, watchEffect, onMounted, onUnmounted, getCurrentInstance } from 'vue';
 import type Quill from 'quill';
 import { getUid } from '@deot/helper-utils';
 import { EditorToolbar } from './toolbar';
@@ -10,6 +10,7 @@ import { VcInstance } from '../vc/index';
 import { uploadFile, insertFile, registerExtends, EXTENDS_CONTEXT_KEY } from './extends';
 import { Spin } from '../spin';
 import { props as editorProps } from './editor-props';
+import { useLocale } from '../locale';
 
 const COMPONENT_NAME = 'vc-editor';
 
@@ -26,6 +27,20 @@ export const Editor = defineComponent({
 		'change'
 	],
 	setup(props, { slots, emit, expose }) {
+		const { t } = useLocale();
+		const localeStyle = computed(() => {
+			const labels = [
+				'open', 'edit', 'remove', 'link', 'save', 'text', 'lineHeight', 'letterSpacing',
+				'font', 'serif', 'monospace', 'small', 'large', 'huge', 'formula', 'video'
+			];
+			return Object.fromEntries([
+				...labels.map(key => [
+					`--vc-editor-label-${key.replace(/[A-Z]/g, value => `-${value.toLowerCase()}`)}`,
+					JSON.stringify(t(`vc.Editor.${key}`))
+				]),
+				...[1, 2, 3, 4, 5, 6].map(level => [`--vc-editor-label-heading-${level}`, JSON.stringify(t('vc.Editor.heading', { level }))])
+			]);
+		});
 		const instance = getCurrentInstance();
 		const formItem = inject<any>('vc-form-item', {});
 		const hasLoad = ref(false);
@@ -37,10 +52,20 @@ export const Editor = defineComponent({
 
 		const quillInstance = shallowRef<typeof Quill>();
 		const editor = shallowRef<Quill>();
+		watchEffect(() => {
+			const label = t('vc.Editor.videoPlaceholder');
+			const tooltip = editor.value?.container.querySelector('.ql-tooltip');
+			const input = tooltip?.querySelector<HTMLInputElement>('input[data-video]');
+			if (input) {
+				input.dataset.video = label;
+				if (tooltip?.getAttribute('data-mode') === 'video') input.placeholder = label;
+			}
+		});
 		const currentOptions = computed<typeof defaults>(() => {
 			const baseOptions = VcInstance.options?.Editor?.options || {};
 			return {
 				...defaults,
+				placeholder: t('vc.Editor.placeholder'),
 				...(baseOptions || {}),
 				...props.options,
 				modules: {
@@ -52,6 +77,15 @@ export const Editor = defineComponent({
 				}
 			};
 		});
+
+		watch(
+			() => currentOptions.value.placeholder,
+			(value) => {
+				if (editor.value) {
+					editor.value.root.dataset.placeholder = value ?? '';
+				}
+			}
+		);
 
 		watch(
 			() => props.disabled,
@@ -181,7 +215,7 @@ export const Editor = defineComponent({
 
 		return () => {
 			return (
-				<div class="vc-editor">
+				<div class="vc-editor" style={localeStyle.value}>
 					{
 						slots.toolbar
 							? slots.toolbar()

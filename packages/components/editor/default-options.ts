@@ -1,5 +1,7 @@
 import { IS_SERVER } from '@deot/vc-shared';
+import { zhCN } from '@deot/vc-locale';
 import type { QuillOptions } from 'quill';
+import { translate } from '../locale';
 
 interface Options extends QuillOptions {
 	toolbar: any[];
@@ -36,7 +38,7 @@ export const defaults: Options = {
 	modules: {
 		EventExtend: {} // 必须要配置，否则该扩展不生效
 	},
-	placeholder: '请输入内容',
+	placeholder: translate('vc.Editor.placeholder', undefined, zhCN),
 	readOnly: false,
 	toolbar: [
 		['bold', 'italic', 'underline', 'strike'],

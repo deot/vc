@@ -1,0 +1,114 @@
+@use '../style/helper' as *;
+
+$foreground-color: varfix(foreground-color, editor);
+$background-color-light: varfix(background-color-light, editor);
+$color-dark-extralight: varfix(color-dark-extralight, editor);
+$color-light-deeper: varfix(color-light-deeper, editor);
+$color-primary: varfix(color-primary, editor);
+$border-shadow: varfix(border-shadow, editor);
+$background-color: varfix(background-color, editor);
+
+.vc-editor,
+.vc-editor-view {
+	color: $foreground-color;
+	background: $background-color-light;
+
+	.ql-editor.ql-blank::before {
+		color: $color-dark-extralight;
+	}
+
+	.ql-editor td,
+	.ql-editor blockquote {
+		border-color: $color-light-deeper;
+	}
+
+	.ql-editor li[data-list="checked"] > .ql-ui,
+	.ql-editor li[data-list="unchecked"] > .ql-ui {
+		color: $color-dark-extralight;
+	}
+
+	.ql-editor code,
+	.ql-editor .ql-code-block-container {
+		color: $foreground-color;
+		background: $background-color;
+	}
+
+	:is(.ql-snow, .ql-bubble) a {
+		color: $color-primary;
+	}
+}
+
+.vc-editor {
+	:is(.ql-snow, .ql-bubble) button,
+	:is(.ql-snow, .ql-bubble) .ql-picker,
+	:is(.ql-snow, .ql-bubble) .ql-tooltip,
+	:is(.ql-snow, .ql-bubble) .ql-picker.ql-expanded .ql-picker-label {
+		color: $foreground-color;
+	}
+
+	:is(.ql-snow, .ql-bubble) .ql-stroke,
+	:is(.ql-snow, .ql-bubble) .ql-stroke-miter,
+	:is(.ql-snow, .ql-bubble) .ql-picker.ql-expanded .ql-picker-label .ql-stroke {
+		stroke: $foreground-color;
+	}
+
+	:is(.ql-snow, .ql-bubble) .ql-fill,
+	:is(.ql-snow, .ql-bubble) .ql-stroke.ql-fill,
+	:is(.ql-snow, .ql-bubble) .ql-picker.ql-expanded .ql-picker-label .ql-fill {
+		fill: $foreground-color;
+	}
+
+	:is(.ql-snow, .ql-bubble) .ql-picker-options,
+	:is(.ql-snow, .ql-bubble) .ql-tooltip,
+	:is(.ql-snow, .ql-bubble) .ql-tooltip input[type="text"] {
+		color: $foreground-color;
+		background-color: $background-color-light;
+		border-color: $color-light-deeper;
+	}
+
+	:is(.ql-snow, .ql-bubble) .ql-picker-options,
+	:is(.ql-snow, .ql-bubble) .ql-tooltip {
+		box-shadow: $border-shadow;
+	}
+
+	:is(.ql-snow, .ql-bubble) .ql-picker.ql-expanded .ql-picker-label,
+	:is(.ql-snow, .ql-bubble) .ql-picker.ql-expanded .ql-picker-options,
+	:is(.ql-snow, .ql-bubble) .ql-tooltip a.ql-action::after {
+		border-color: $color-light-deeper;
+	}
+
+	:is(.ql-snow, .ql-bubble) .ql-color-picker .ql-picker-item:hover,
+	:is(.ql-snow, .ql-bubble) .ql-color-picker .ql-picker-item.ql-selected {
+		border-color: $foreground-color;
+	}
+
+	:is(.ql-snow, .ql-bubble) {
+		button:hover,
+		button:focus-visible,
+		button.ql-active,
+		.ql-picker-label:hover,
+		.ql-picker-label.ql-active,
+		.ql-picker-item:hover,
+		.ql-picker-item.ql-selected {
+			color: $color-primary;
+
+			.ql-stroke,
+			.ql-stroke-miter {
+				stroke: $color-primary;
+			}
+
+			.ql-fill,
+			.ql-stroke.ql-fill {
+				fill: $color-primary;
+			}
+		}
+	}
+}
+
+.vc-editor .ql-bubble .ql-tooltip-arrow {
+	border-bottom-color: $background-color-light;
+}
+
+.vc-editor .ql-bubble .ql-tooltip.ql-flip .ql-tooltip-arrow {
+	border-top-color: $background-color-light;
+}

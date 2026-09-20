@@ -1,6 +1,7 @@
 @use '../style/helper' as *;
 
 $color-light-deeper: varfix(color-light-deeper, editor);
+$background-color: varfix(background-color-light, editor);
 $component-name: vc-editor;
 
 @include block($component-name) {
@@ -19,10 +20,17 @@ $component-name: vc-editor;
 		position: absolute;
 		z-index: 1;
 		display: flex;
-		background: #fffa;
 		inset: 0;
 		align-items: center;
 		justify-content: center;
+
+		&::before {
+			position: absolute;
+			background: $background-color;
+			content: '';
+			opacity: .67;
+			inset: 0;
+		}
 	}
 
 	.ql-container {
