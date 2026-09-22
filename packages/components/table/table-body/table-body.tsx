@@ -61,23 +61,32 @@ export const TableBody = defineComponent({
 		expose({ target });
 		const layout = table.layout;
 
-		const scrollerOptions = computed(() => ({
-			barTo: `.${table.tableId}`,
-			native: false,
-			always: false,
-			showBar: true,
-			stopPropagation: true,
-			contentClass: 'vc-table__tbody',
-			contentStyle: {
-				width: layout.states.bodyWidth ? layout.states.bodyWidth + 'px' : ''
-			},
-			trackOffsetY: [
-				layout.states.headerHeight,
-				0,
-				-layout.states.headerHeight,
-				0
-			]
-		}));
+		const scrollerOptions = computed(() => {
+			// 流式高度下表体没有纵向溢出：横向滚动条挂到底部 dock 的锚点，随 dock 吸底
+			// 传元素而非 selector：dock 随 affix 切换重建时跟随新锚点，也不会匹配到嵌套表格的锚点
+			const fluid = !table.props.height && !table.props.maxHeight;
+			const barAnchor = table.barAnchor.value;
+			return {
+				barTo: fluid ? barAnchor : `.${table.tableId}`,
+				// 悬停整个表格（含已吸底的 dock）时显示滚动条
+				barTrigger: `.${table.tableId}`,
+				native: false,
+				always: false,
+				// 锚点就绪前不渲染，避免轨道先落在表体内
+				showBar: !fluid || !!barAnchor,
+				stopPropagation: true,
+				contentClass: 'vc-table__tbody',
+				contentStyle: {
+					width: layout.states.bodyWidth ? layout.states.bodyWidth + 'px' : ''
+				},
+				trackOffsetY: [
+					layout.states.headerHeight,
+					0,
+					-layout.states.headerHeight,
+					0
+				]
+			};
+		});
 
 		const renderers = {
 			default: ({ row }) => <TableBodyBlock store={row} />

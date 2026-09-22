@@ -69,6 +69,9 @@ export const Table = defineComponent({
 		const body = ref<any>();
 		const appendWrapper = ref<any>(null);
 		const footerWrapper = ref<any>(null);
+		// 底部 dock：横向滚动条锚点 + 合计行，由 affix 的 bottom 项整体吸底
+		const bottomWrapper = ref<any>(null);
+		const barAnchor = ref<Nullable<HTMLElement>>(null);
 		const affixHeader = ref<any>(null);
 		const affixFooter = ref<any>(null);
 
@@ -162,7 +165,7 @@ export const Table = defineComponent({
 				return {
 					placement,
 					fixed: true,
-					// 活动范围限定为表体：表头不越过表体底部、合计行不越过表体顶部，表格滚出后随之离开
+					// 活动范围限定为表体：表头不越过表体底部、底部 dock（横向滚动条 + 合计行）不越过表体顶部，表格滚出后随之离开
 					target: `.${tableId} .vc-table__body-wrapper`,
 					...(isObject ? item : {}),
 					disabled: !fluidHeight || !item || (isObject && (item as any).disabled)
@@ -177,7 +180,7 @@ export const Table = defineComponent({
 			layout.updateColumnsWidth();
 		};
 
-		// 吸顶表头、吸底合计行重算边界
+		// 吸顶表头、吸底 dock（横向滚动条 + 合计行）重算边界
 		const refreshAffix = () => {
 			nextTick(() => {
 				affixHeader.value?.refresh?.();
@@ -275,8 +278,8 @@ export const Table = defineComponent({
 			if (hoverState.value) hoverState.value = null;
 		};
 
-		// 在表头 / 合计行上滚轮时转交给表体滚动；自行管理 Wheel 的挂载与卸载
-		useWheelForward({ headerWrapper, footerWrapper, bodyXWrapper, bodyYWrapper, bodyScroller });
+		// 在表头 / 底部 dock 上滚轮时转交给表体滚动；自行管理 Wheel 的挂载与卸载
+		useWheelForward({ headerWrapper, bottomWrapper, bodyXWrapper, bodyYWrapper, bodyScroller });
 
 		const bindEvents = () => {
 			if (props.fit) {
@@ -335,6 +338,8 @@ export const Table = defineComponent({
 			headerWrapper,
 			appendWrapper,
 			footerWrapper,
+			bottomWrapper,
+			barAnchor,
 			resizeState,
 			debouncedUpdateLayout,
 			isReady,
@@ -404,20 +409,29 @@ export const Table = defineComponent({
 						)
 					}
 					{
-						props.showSummary && (
+						// 与表体同一次渲染挂载：Affix 只在挂载时解析一次 target（表体）
+						states.columns.length > 0 && (
 							<Affix ref={affixFooter} {...affixOptions.value[1]}>
-								<div
-									// @ts-ignore
-									vShow={props.data && props.data.length > 0}
-									ref={footerWrapper}
-									class="vc-table__footer-wrapper"
-								>
-									<TableFooter
-										border={props.border}
-										sum-text={props.sumText || '合计'}
-										get-summary={props.getSummary}
-										style={bodyWidthStyle.value}
-									/>
+								<div ref={bottomWrapper} class="vc-table__bottom">
+									{/* 流式高度下横向滚动条 Teleport 到这里，随 dock 吸底 */}
+									<div ref={barAnchor} class="vc-table__bar-x" />
+									{
+										props.showSummary && (
+											<div
+												// @ts-ignore
+												vShow={props.data && props.data.length > 0}
+												ref={footerWrapper}
+												class="vc-table__footer-wrapper"
+											>
+												<TableFooter
+													border={props.border}
+													sum-text={props.sumText || '合计'}
+													get-summary={props.getSummary}
+													style={bodyWidthStyle.value}
+												/>
+											</div>
+										)
+									}
 								</div>
 							</Affix>
 						)

@@ -3,6 +3,7 @@ import { IS_SERVER } from '@deot/vc-shared';
 import { parseHeight, computeGridTemplateColumns } from '../../utils';
 import { VcError } from '../../../vc';
 import type { Store } from '../store';
+import type { TableColumnNode } from '../../table-column/table-column-node';
 
 export class Layout {
 	table: any;
@@ -172,10 +173,38 @@ export class Layout {
 			});
 
 			this.states.scrollX = bodyMinWidth > bodyWidth;
-			this.states.bodyWidth = bodyMinWidth;
+
+			// fit：列宽之和不足表格宽度时，剩余宽度交给撑满列（见 getFillColumn）；
+			// 写进 realWidth，表头 / 表体（grid 模板）与合计行（按 realWidth 设宽）才能一致
+			const target = fit && bodyMinWidth < bodyWidth ? this.getFillColumn() : void 0;
+			if (target) {
+				target.states.realWidth! += bodyWidth - bodyMinWidth;
+				this.states.bodyWidth = bodyWidth;
+			} else {
+				this.states.bodyWidth = bodyMinWidth;
+			}
 		}
 
 		this.syncStickyOffsets();
+	}
+
+	/**
+	 * 吸收剩余宽度的列：从后往前第一个没被用户拖动过的非固定叶子列（全是固定列时在全部列中找）
+	 *
+	 * 拖动过的列保持拖动后的宽度，否则拖窄撑满列时剩余宽度又会补回给它；都拖动过时不撑满。
+	 * cloneVisibleTree 保留叶子列的原引用，这里拿到的即 store.states.columns 中的节点
+	 * @returns 叶子列，没有可用的列时为 undefined
+	 */
+	getFillColumn() {
+		const { notFixedColumns = [], columns = [] } = this.store.states;
+		const toLeaves = (list: TableColumnNode[]): TableColumnNode[] => list.reduce(
+			(leaves: TableColumnNode[], column) => leaves.concat(column.childNodes.length ? toLeaves(column.childNodes) : column),
+			[]
+		);
+		const candidates = notFixedColumns.length ? toLeaves(notFixedColumns) : columns;
+		for (let i = candidates.length - 1; i >= 0; i--) {
+			if (!candidates[i].states.resized) return candidates[i];
+		}
 	}
 
 	/**

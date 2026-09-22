@@ -857,7 +857,7 @@ Window / Scroller
 - TableBody 的虚拟占位高度参与正常文档流，后置内容会随数据增长自然后移。
 - 可见范围和加载边界使用 Table 自身区域；外部尾部内容不计入 Table 边界。
 - 动态行高、fixed columns、summary、append、empty、selection、expand、hover 等功能沿用固定高度虚拟表格的现有语义。
-- 数据变化、行尺寸变化、表格宽度变化都会自动处理：虚拟行由内部 RecycleList 按需测量，吸底合计行随行尺寸变化自动刷新。只有外部前置内容发生无法自动观察的位置变化时，才需要调用 `refreshLayout()`。
+- 数据变化、行尺寸变化、表格宽度变化都会自动处理：虚拟行由内部 RecycleList 按需测量，吸底 dock（横向滚动条 + 合计行）随行尺寸变化自动刷新。只有外部前置内容发生无法自动观察的位置变化时，才需要调用 `refreshLayout()`。
 
 渲染模式优先级如下：
 
@@ -872,13 +872,40 @@ Window / Scroller
 
 #### Affix 兼容性
 
-表头、合计行的吸附直接复用 Affix 组件（不改用 CSS Sticky）：
+表头、底部 dock 的吸附直接复用 Affix 组件（不改用 CSS Sticky）：
 
+- 底部 dock 由横向滚动条和合计行组成，`affix` 的 bottom 项作用于整个 dock。流式高度下横向滚动条挂在 dock 顶部（表体底部 / 合计行顶部），宽度与表体一致；没有合计行时，dock 里只有横向滚动条。
 - Window 下继续使用当前默认的 `fixed: true` 行为。
-- 外层为 VC Scroller 时，使用 `fixed` 模式并通过 `offset` 指定 Scroller 视口顶部到窗口顶部的距离，例如 `:affix="[{ offset: 159 }, false]"`。`fixed: false` 要求 Affix 与 Scroller 之间没有定位元素，而 Table 根节点为 `position: relative`，因此不适用。
+- 外层为 VC Scroller 时，使用 `fixed` 模式，并通过 `offset` 指定 Scroller 视口到窗口边缘的距离（见下方示例）。`fixed: false` 要求 Affix 与 Scroller 之间没有定位元素，而 Table 根节点为 `position: relative`，因此不适用。
 - `boolean`、`[top, bottom]`、`object` 的解释和 `refreshAffix()` 方法保持不变。
-- 吸附范围默认限定为表体（`target` 为本表格的 `.vc-table__body-wrapper`）：表头不越过表体底部、合计行不越过表体顶部，表格滚出后随之离开；可在配置对象中传入 `target` 覆盖。
-- Table 设置了 `height`/`max-height` 时，`affix` 仍按原规则强制失效。
+- 吸附范围默认限定为表体（`target` 为本表格的 `.vc-table__body-wrapper`）：表头不越过表体底部、底部 dock 不越过表体顶部，表格滚出后随之离开；可在配置对象中传入 `target` 覆盖。
+- Table 设置了 `height`/`max-height` 时，`affix` 仍按原规则强制失效，横向滚动条仍位于表格底部。
+
+流式高度下横向滚动条与合计行的吸底行为：
+
+| show-summary | affix bottom | 结果 |
+| --- | --- | --- |
+| 否 | 开 | 只有横向滚动条吸底 |
+| 否 | 关 | 横向滚动条在表体底部，不吸底 |
+| 是 | 开 | 横向滚动条与合计行一起吸底，滚动条在合计行顶部 |
+| 是 | 关 | 都不吸底 |
+
+横向滚动条与表格其余部分一样，鼠标悬停在表格上（包括已吸底的 dock）时显示。
+
+外层为 VC Scroller 时，Affix 按窗口定位，两端的 `offset` 需要按 Scroller 视口计算，并在窗口滚动、尺寸变化后重新计算：
+
+```js
+const offsets = reactive({ top: 0, bottom: 0 });
+const updateOffsets = () => {
+	const rect = scrollerRef.value.wrapper.getBoundingClientRect();
+	offsets.top = Math.max(0, rect.top);
+	offsets.bottom = Math.max(0, window.innerHeight - rect.bottom);
+	nextTick(() => tableRef.value.refreshAffix());
+};
+// <Table :affix="[{ offset: offsets.top }, { offset: offsets.bottom }]" />
+```
+
+已知限制：Affix 的活动范围按窗口边缘判断，表格滚出 Scroller 顶部或底部附近时，吸附中的表头 / dock 可能短暂画到 Scroller 之外；另外吸附后为 `position: fixed`，页面自身横向滚动时不会跟随。
 
 #### 延迟展示尾部内容
 
@@ -914,7 +941,7 @@ Window / Scroller
 | stripe                  | 是否为斑马纹 `table`                                                                                                                             | `boolean`                                                  | -                           | `false` |
 | border                  | 是否带有纵向边框                                                                                                                                   | `boolean`                                                  | -                           | `false` |
 | size                    | `Table` 的尺寸                                                                                                                                | `string`                                                   | `medium` 、 `small` 、 `mini` | -       |
-| fit                     | 列的宽度是否自撑开                                                                                                                                  | `boolean`                                                  | -                           | `true`  |
+| fit                     | 列的宽度是否自撑开：列宽之和不足表格宽度时，未设 `width` 的列按比例分配剩余宽度；所有列都设了 `width` 时，剩余宽度给最后一个非固定列（全是固定列时给最后一列）。为 `false` 时不自撑开 | `boolean`                                                  | -                           | `true`  |
 | show-header             | 是否显示表头                                                                                                                                     | `boolean`                                                  | -                           | `true`  |
 | highlight               | 是否要高亮当前行                                                                                                                                   | `boolean`                                                  | -                           | `false` |
 | current-row-value       | 当前行的`[id]/value`唯一值（树形表格含子行），只写属性                                                                                                                   | `string`、 `number`                                         | -                           | -       |
@@ -944,7 +971,7 @@ Window / Scroller
 | sort                    | 默认的排序列的 `prop` 和顺序。它的`prop`属性指定默认的排序的列，`order`指定默认排序的顺序                                                                                    |                                                            |                             |         |
 | delay                   | 延迟选择，排除transition的影响                                                                                                                       |                                                            |                             |         |
 | resizable               | 是否可以伸缩(总开关/单独的column.resizable也可以设置)                                                                                                                                     |                                                            |                             |         |
-| affix                   | 流式高度下（含 `virtualized` 外部虚拟化，未设置 `height`/`max-height`）表头吸顶、合计行吸底。`boolean` 同时作用于表头与合计行；`array` 为 `[top, bottom]`，每项可为 `boolean` 或 [Affix](../affix) 配置对象；`object` 同时作用于两端。设置了 `height`/`max-height` 时强制失效。 | `boolean`、`array`、`object`                                  | -                           | `false` |
+| affix                   | 流式高度下（含 `virtualized` 外部虚拟化，未设置 `height`/`max-height`）表头吸顶、底部 dock（横向滚动条 + 合计行）吸底。`boolean` 同时作用于两端；`array` 为 `[top, bottom]`，每项可为 `boolean` 或 [Affix](../affix) 配置对象；`object` 同时作用于两端。没有合计行时 bottom 项只控制横向滚动条。设置了 `height`/`max-height` 时强制失效。 | `boolean`、`array`、`object`                                  | -                           | `false` |
 | columns                 | `v-model` 暴露 Table 收集到的全部 leaf 列（含 `selection`/`expand`/`index` 等无 `prop` 的结构列），每项含 `{ id, prop, label, type, width, fixed, align, hidden, ... }`。外部可写回两个维度：调整数组顺序（按 `id` 重排）、把某项 `hidden` 置 `true/false`（按 `id` 控制该列是否渲染，被隐藏列仍出现在暴露快照中）。`width`/`fixed` 等其它字段为只读，请用 `TableColumn` 的 props 控制。 | `Array`                                                    | -                           | `[]`    |
 
 
@@ -981,7 +1008,7 @@ Window / Scroller
 | toggleRowExpansion | 用于可展开表格与树形表格，切换某一行的展开状态，如果使用了第二个参数，则是设置这一行展开与否（expanded 为 true 则展开） | `row`：要展开的行数据；`expanded`：设置该行是否展开                                            |
 | setCurrentRow      | 用于单选表格，设定某一行为选中行，如果调用时不加参数，则会取消目前高亮行的选中状态。                     | `row`：选中的行数据                                                                 |
 | refreshLayout      | 对 Table 进行重新布局，虚拟化表格（`height` 或 `virtualized`）会同时整体重新测量已构建的行。数据变化、尺寸变化会自动处理（内部的布局更新只刷新虚拟列表的视口），仅在无法自动观察的布局变化后调用 | -                                                                            |
-| refreshAffix       | 手动刷新表头/合计行的吸附状态（`affix` 生效时）。Affix只有当滚动时才触发，wrapper/content高度变化需手动处理              | -                                                                            |
+| refreshAffix       | 手动刷新表头/底部 dock 的吸附状态（`affix` 生效时）。Affix只有当滚动时才触发，wrapper/content高度变化需手动处理              | -                                                                            |
 
 
 ### Slot

@@ -6,6 +6,7 @@
 		</header>
 
 		<Scroller
+			ref="scrollerRef"
 			class="scroller-viewport"
 			height="560px"
 			:native="false"
@@ -18,6 +19,7 @@
 			</section>
 
 			<Table
+				ref="tableRef"
 				class="virtualized-table"
 				primary-key="id"
 				virtualized
@@ -26,7 +28,7 @@
 				stripe
 				show-summary
 				:fit="false"
-				:affix="[{ offset: 159 }, false]"
+				:affix="[{ offset: offsets.top }, { offset: offsets.bottom }]"
 				:data="tableData"
 				@load-change="loadState = $event"
 			>
@@ -65,15 +67,46 @@
 		</Scroller>
 
 		<p class="note">
-			表头使用 <code>fixed</code> 吸顶，<code>offset</code> 为 Scroller 视口顶部到窗口顶部的距离（示例中写死为 159）。
+			Affix 按窗口定位：表头的 <code>offset</code> 为 Scroller 视口顶部到窗口顶部的距离，
+			底部 dock（横向滚动条 + 合计行）的 <code>offset</code> 为 Scroller 视口底部到窗口底部的距离，
+			两者在挂载、窗口滚动与尺寸变化时重新计算。
 		</p>
 	</div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { Scroller } from '../../scroller';
 import { Table, TableColumn } from '..';
+
+const scrollerRef = ref();
+const tableRef = ref();
+
+// Affix 按窗口定位：嵌套在 Scroller 里时，两端 offset 取 Scroller 视口到窗口边缘的距离
+const offsets = reactive({ top: 0, bottom: 0 });
+const updateOffsets = () => {
+	const el = scrollerRef.value?.wrapper;
+	if (!el) return;
+	const rect = el.getBoundingClientRect();
+	const top = Math.max(0, rect.top);
+	const bottom = Math.max(0, window.innerHeight - rect.bottom);
+	if (top === offsets.top && bottom === offsets.bottom) return;
+	offsets.top = top;
+	offsets.bottom = bottom;
+	// offset 变化后吸附状态要重算
+	nextTick(() => tableRef.value?.refreshAffix());
+};
+
+onMounted(() => {
+	updateOffsets();
+	window.addEventListener('resize', updateOffsets);
+	window.addEventListener('scroll', updateOffsets, { passive: true });
+});
+
+onBeforeUnmount(() => {
+	window.removeEventListener('resize', updateOffsets);
+	window.removeEventListener('scroll', updateOffsets);
+});
 
 // load-change 是单向的：表格把快照推过来，外层只读
 const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false });

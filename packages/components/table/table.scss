@@ -329,6 +329,23 @@ $line-height: 20px;
 		}
 	}
 
+	// 吸附时 Affix 会把测得的宽度写到占位元素上，之后又从占位元素测量，表格宽度变化后会一直沿用旧值；
+	// 表格内的占位元素是块级、与表格等宽，保持自然宽度，让表头 / 底部 dock 每次刷新都拿到当前宽度
+	> .vc-affix {
+		width: auto !important;
+	}
+
+	// 底部 dock：横向滚动条锚点 + 合计行，整体由 affix 的 bottom 项吸底
+	// 轨道从 0 高的锚点向上伸出，dock 与锚点都不能裁剪溢出
+	@include element(bar-x) {
+		position: relative;
+		height: 0;
+
+		> div.vc-scroller-track {
+			z-index: 5;
+		}
+	}
+
 	@include element(footer-wrapper) {
 		margin-top: -1px;
 

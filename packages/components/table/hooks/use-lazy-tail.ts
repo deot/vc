@@ -8,7 +8,7 @@ import type { Props } from '../table-props';
  * @param props Table props（读 lazyTail、data）
  * @param usesRecycleList 是否走虚拟列表
  * @param emit 组件的 emit
- * @param refreshAffix append 出现后重算吸底合计行的边界
+ * @param refreshAffix append 出现后重算吸底 dock（横向滚动条 + 合计行）的边界
  * @returns 供 TableBody 监听的回调与 append 是否隐藏
  */
 export const useLazyTail = (

@@ -56,6 +56,8 @@ export type TableColumnStates = {
 
 	// store / layout 回写
 	realWidth?: number;
+	// 用户拖动过列宽：保持拖动后的宽度，不再吸收剩余宽度（width prop 变化时清除）
+	resized?: boolean;
 	hidden?: boolean;
 	level?: number;
 	stickyOffset?: number;
@@ -215,6 +217,7 @@ export class TableColumnNode {
 		watch(() => parseWidth(props.width), (v) => {
 			this.states.width = v ?? undefined;
 			this.states.realWidth = v ?? undefined;
+			this.states.resized = false;
 			this.table.store.scheduleLayout(false);
 		});
 		watch(() => parseMinWidth(props.minWidth), () => {

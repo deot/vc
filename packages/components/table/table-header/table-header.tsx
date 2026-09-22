@@ -165,6 +165,7 @@ export const TableHeader = defineComponent({
 						const finalLeft = parseInt(resizeProxy.style.left, 10);
 						const columnWidth = finalLeft - startColumnLeft;
 						column.states.width = column.states.minWidth = column.states.realWidth = columnWidth;
+						column.states.resized = true;
 						table.emit('header-dragend', column.states.width, startLeft - startColumnLeft, column.states);
 
 						table.store.scheduleLayout();

@@ -1365,8 +1365,9 @@ describe('TableHeader sort & resize', () => {
 	it('header column resize via mousemove + mousedown + mouseup emits header-dragend', async () => {
 		const onDragend = vi.fn();
 		const data = buildData(2);
+		const tableRef = ref<any>();
 		const wrapper = mount(() => (
-			<Table data={data} border resizable onHeaderDragend={onDragend}>
+			<Table ref={tableRef} data={data} border resizable onHeaderDragend={onDragend}>
 				<TableColumn label="名称" prop="name" />
 				<TableColumn label="地址" prop="address" />
 			</Table>
@@ -1392,6 +1393,9 @@ describe('TableHeader sort & resize', () => {
 		await sleep(0);
 		await flush();
 		expect(onDragend).toHaveBeenCalled();
+		// 拖过的列不再吸收剩余宽度
+		expect(tableRef.value.store.states.columns[0].states.resized).toBe(true);
+		expect(tableRef.value.store.states.columns[1].states.resized).toBeFalsy();
 
 		thEl.dispatchEvent(new MouseEvent('mouseout', { bubbles: true } as any));
 		await flush();
@@ -3103,6 +3107,118 @@ describe('Additional source-path coverage', () => {
 		[w1, w2, w3, w4, w5].forEach(w => w.unmount());
 	});
 
+	it('Layout.updateColumnsWidth：fit 且全部设宽度时，剩余宽度交给最后一个非固定列', async () => {
+		const measure = async (vm: any, bodyWidth: number) => {
+			const restore = defineGetter(vm.$.vnode.el as HTMLElement, 'clientWidth', bodyWidth);
+			vm.layout.updateColumnsWidth();
+			restore();
+			await flush();
+			return vm.store.states.columns.map((c: any) => c.states.realWidth);
+		};
+
+		// 左固定 80 / 普通 200 / 普通 300 / 右固定 120，合计 700
+		const r1 = ref<any>();
+		const w1 = mount(() => (
+			<Table ref={r1} data={buildData(2)} primaryKey="id" showSummary>
+				<TableColumn label="L" prop="id" fixed="left" width={80} />
+				<TableColumn label="A" prop="name" width={200} />
+				<TableColumn label="B" prop="count" width={300} />
+				<TableColumn label="R" prop="address" fixed="right" width={120} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(80);
+
+		// 表格更宽：最后一个非固定列（B）吸收 300，右固定列保持 120
+		expect(await measure(r1.value, 1000)).toEqual([80, 200, 600, 120]);
+		expect(r1.value.layout.states.bodyWidth).toBe(1000);
+		expect(r1.value.layout.states.scrollX).toBe(false);
+		// 合计行按 realWidth 设宽，与 grid 模板一致
+		const footerCells = w1.findAll('.vc-table__footer .vc-table__td');
+		expect((footerCells[2].element as HTMLElement).style.width).toBe('600px');
+		expect(r1.value.layout.templateColumns.value).toBe('80px 200px 600px minmax(120px, 1fr)');
+
+		// 表格不足：回到声明宽度，出现横向滚动；剩余宽度不累积
+		expect(await measure(r1.value, 500)).toEqual([80, 200, 300, 120]);
+		expect(r1.value.layout.states.bodyWidth).toBe(700);
+		expect(r1.value.layout.states.scrollX).toBe(true);
+		expect(await measure(r1.value, 1000)).toEqual([80, 200, 600, 120]);
+
+		// 用户拖过撑满列（B）：B 保持自身宽度，剩余宽度交给前一个没拖过的非固定列（A）
+		const cols1 = r1.value.store.states.columns;
+		cols1[2].states.resized = true;
+		expect(await measure(r1.value, 1000)).toEqual([80, 500, 300, 120]);
+		// 非固定列都拖过：不再撑满
+		cols1[1].states.resized = true;
+		expect(await measure(r1.value, 1000)).toEqual([80, 200, 300, 120]);
+		expect(r1.value.layout.states.bodyWidth).toBe(700);
+		w1.unmount();
+
+		// width prop 变化时清除拖动标记，重新参与撑满
+		const bWidth = ref(300);
+		const r5 = ref<any>();
+		const w5 = mount(() => (
+			<Table ref={r5} data={buildData(1)} primaryKey="id">
+				<TableColumn label="A" prop="name" width={200} />
+				<TableColumn label="B" prop="count" width={bWidth.value} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(80);
+		r5.value.store.states.columns[1].states.resized = true;
+		expect(await measure(r5.value, 1000)).toEqual([700, 300]);
+		bWidth.value = 250;
+		await flush();
+		await sleep(80);
+		expect(r5.value.store.states.columns[1].states.resized).toBe(false);
+		expect(await measure(r5.value, 1000)).toEqual([200, 800]);
+		w5.unmount();
+
+		// 全是固定列：最后一列吸收
+		const r2 = ref<any>();
+		const w2 = mount(() => (
+			<Table ref={r2} data={buildData(1)} primaryKey="id">
+				<TableColumn label="L" prop="id" fixed="left" width={100} />
+				<TableColumn label="R" prop="name" fixed="right" width={100} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(80);
+		expect(await measure(r2.value, 500)).toEqual([100, 400]);
+		w2.unmount();
+
+		// 最后一个非固定列是分组：由分组的最后一个叶子吸收
+		const r3 = ref<any>();
+		const w3 = mount(() => (
+			<Table ref={r3} data={buildData(1)} primaryKey="id">
+				<TableColumn label="A" prop="id" width={100} />
+				<TableColumn label="G">
+					<TableColumn label="G1" prop="name" width={100} />
+					<TableColumn label="G2" prop="count" width={100} />
+				</TableColumn>
+				<TableColumn label="R" prop="address" fixed="right" width={100} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(80);
+		expect(await measure(r3.value, 600)).toEqual([100, 100, 300, 100]);
+		w3.unmount();
+
+		// fit=false：不自撑开
+		const r4 = ref<any>();
+		const w4 = mount(() => (
+			<Table ref={r4} data={buildData(1)} primaryKey="id" fit={false}>
+				<TableColumn label="A" prop="name" width={200} />
+				<TableColumn label="B" prop="count" width={300} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(80);
+		expect(await measure(r4.value, 1000)).toEqual([200, 300]);
+		expect(r4.value.layout.states.bodyWidth).toBe(500);
+		w4.unmount();
+	});
+
 	it('lazy result with nested children / lazy nodes; selected parent selects loaded children', async () => {
 		const data = [{ id: 1, name: 'r1', hasChildren: true }];
 		const loadExpand = vi.fn(() => [
@@ -4065,6 +4181,252 @@ describe('v-model:columns & hidden', () => {
 		await flush();
 
 		wrapper.unmount();
+	});
+
+	describe('底部 dock（横向滚动条 + 合计行）', () => {
+		// 表体在列收集后的下一次渲染出现，Bar 还要再等 wrapper 就绪与 Teleport 目标检查
+		const settle = async () => {
+			for (let i = 0; i < 3; i++) await flush();
+		};
+		// 轨道外层有 Transition（测试中为 transition-stub），按所属锚点归类而非直接子节点
+		const horizontalTracksIn = (anchor: Element | null | undefined) => {
+			if (!anchor) return [];
+			return [...anchor.querySelectorAll('.vc-scroller-track.is-horizontal')]
+				.filter(el => el.closest('.vc-table__bar-x') === anchor);
+		};
+		const horizontalTrackIn = (anchor: Element | null | undefined) => horizontalTracksIn(anchor)[0] || null;
+		// 直接挂在表格根节点（不在任何锚点内）的轨道
+		const rootTracks = (wrapper: any) => {
+			const root = wrapper.find('.vc-table').element as HTMLElement;
+			return [...root.querySelectorAll('.vc-scroller-track')]
+				.filter(el => !el.closest('.vc-table__bar-x') && el.closest('.vc-table') === root);
+		};
+
+		it('流式高度（含 virtualized）下横向滚动条挂在 dock 锚点，height 模式仍在根节点', async () => {
+			for (const extra of [{}, { virtualized: true }]) {
+				const tableRef = ref<any>();
+				const wrapper = mount(() => (
+					<Table ref={tableRef} data={buildData(10)} primaryKey="id" {...extra}>
+						<TableColumn label="名称" prop="name" />
+					</Table>
+				), { attachTo: document.body });
+				await settle();
+
+				const anchor = tableRef.value.barAnchor;
+				expect(anchor.classList.contains('vc-table__bar-x')).toBe(true);
+				expect(horizontalTrackIn(anchor)).toBeTruthy();
+				expect(rootTracks(wrapper).length).toBe(0);
+				wrapper.unmount();
+			}
+
+			const tableRef = ref<any>();
+			const wrapper = mount(() => (
+				<Table ref={tableRef} data={buildData(10)} primaryKey="id" height={200}>
+					<TableColumn label="名称" prop="name" />
+				</Table>
+			), { attachTo: document.body });
+			await settle();
+
+			expect(horizontalTrackIn(tableRef.value.barAnchor)).toBeFalsy();
+			expect(rootTracks(wrapper).some(el => el.classList.contains('is-horizontal'))).toBe(true);
+			wrapper.unmount();
+		});
+
+		it('无合计行时 affix bottom 控制滚动条吸底，且活动范围为表体', async () => {
+			const tableRef = ref<any>();
+			const wrapper = mount(() => (
+				<Table ref={tableRef} data={buildData(10)} primaryKey="id" affix>
+					<TableColumn label="名称" prop="name" />
+				</Table>
+			), { attachTo: document.body });
+			await settle();
+
+			const affixes = wrapper.findAll('.vc-affix');
+			expect(affixes.length).toBe(2);
+			const dockPlaceholder = affixes[1].element;
+			expect(dockPlaceholder.querySelector('.vc-table__bar-x')).toBe(tableRef.value.barAnchor);
+
+			const body = wrapper.find('.vc-table__body-wrapper').element;
+			const rect = (value: Partial<DOMRect>) => ({ left: 0, right: 0, width: 300, x: 0, y: 0, toJSON: () => ({}), ...value }) as DOMRect;
+			const placeholderSpy = vi.spyOn(dockPlaceholder, 'getBoundingClientRect');
+			const bodySpy = vi.spyOn(body, 'getBoundingClientRect');
+
+			// 表格还没进入视口：表体顶部在视口下方，不吸底（target 解析到表体而非 documentElement）
+			placeholderSpy.mockReturnValue(rect({ top: 3000, bottom: 3000, height: 0 }));
+			bodySpy.mockReturnValue(rect({ top: 1000, bottom: 3000, height: 2000 }));
+			tableRef.value.refreshAffix();
+			await flush();
+			expect(wrapper.find('.vc-affix__fixed .vc-table__bar-x').exists()).toBe(false);
+
+			// 表体已进入视口、dock 在视口下方：只有滚动条吸底
+			bodySpy.mockReturnValue(rect({ top: 100, bottom: 3000, height: 2900 }));
+			tableRef.value.refreshAffix();
+			await flush();
+			const fixedAnchor = wrapper.find('.vc-affix__fixed .vc-table__bar-x');
+			expect(fixedAnchor.exists()).toBe(true);
+			expect(horizontalTrackIn(fixedAnchor.element)).toBeTruthy();
+			expect(wrapper.find('.vc-table__footer-wrapper').exists()).toBe(false);
+
+			placeholderSpy.mockRestore();
+			bodySpy.mockRestore();
+			wrapper.unmount();
+		});
+
+		it('affix=[true, false] 且无合计行时滚动条不吸底，仍在锚点', async () => {
+			const tableRef = ref<any>();
+			const wrapper = mount(() => (
+				<Table ref={tableRef} data={buildData(10)} primaryKey="id" affix={[true, false]}>
+					<TableColumn label="名称" prop="name" />
+				</Table>
+			), { attachTo: document.body });
+			await settle();
+
+			expect(wrapper.findAll('.vc-affix').length).toBe(1);
+			expect(horizontalTrackIn(tableRef.value.barAnchor)).toBeTruthy();
+			wrapper.unmount();
+		});
+
+		it('运行时切换 affix bottom：滚动条跟随重建后的锚点，dock 上的滚轮仍转发给表体', async () => {
+			const affix = ref<any>(true);
+			const tableRef = ref<any>();
+			const wrapper = mount(() => (
+				<Table ref={tableRef} data={buildData(10)} primaryKey="id" affix={affix.value} showSummary>
+					<TableColumn label="A" prop="name" width={240} />
+					<TableColumn label="B" prop="count" width={240} />
+					<TableColumn label="C" prop="address" width={240} />
+				</Table>
+			), { attachTo: document.body });
+			await settle();
+
+			const expectTrackInLiveAnchor = () => {
+				const anchor = tableRef.value.barAnchor as HTMLElement;
+				expect(anchor.isConnected).toBe(true);
+				expect(horizontalTrackIn(anchor)).toBeTruthy();
+			};
+
+			const first = tableRef.value.barAnchor;
+			expectTrackInLiveAnchor();
+
+			affix.value = [true, false];
+			await settle();
+			expect(tableRef.value.barAnchor).not.toBe(first);
+			expectTrackInLiveAnchor();
+
+			affix.value = true;
+			await settle();
+			expectTrackInLiveAnchor();
+
+			const innerScroller = wrapper.findComponent({ name: 'vc-scroller-wheel' });
+			const innerScrollTo = vi.fn();
+			(innerScroller.vm as any).$!.exposed.scrollTo = innerScrollTo;
+
+			const xWrapper = wrapper.find('.vc-table__body-wrapper').element as HTMLElement;
+			makeWritable(xWrapper, 'scrollLeft');
+			const restores = [
+				defineGetter(xWrapper, 'scrollWidth', 720),
+				defineGetter(xWrapper, 'clientWidth', 240)
+			];
+
+			wrapper.find('.vc-table__bottom').element.dispatchEvent(new WheelEvent('wheel', {
+				bubbles: true,
+				cancelable: true,
+				deltaX: 30,
+				deltaY: 0
+			} as any));
+			await flush();
+			await sleep(20);
+
+			expect(innerScrollTo).toHaveBeenCalledWith({ x: 30 });
+
+			restores.forEach(fn => fn());
+			wrapper.unmount();
+		});
+
+		it('悬停表格时显示锚点内的横向滚动条', async () => {
+			const tableRef = ref<any>();
+			const wrapper = mount(() => (
+				<Table ref={tableRef} data={buildData(10)} primaryKey="id">
+					<TableColumn label="名称" prop="name" />
+				</Table>
+			), { attachTo: document.body });
+			await settle();
+
+			const xWrapper = wrapper.find('.vc-table__body-wrapper').element as HTMLElement;
+			const restores = [
+				defineGetter(xWrapper, 'scrollWidth', 720),
+				defineGetter(xWrapper, 'clientWidth', 240)
+			];
+			await tableRef.value.scroller.refresh();
+			await flush();
+
+			const track = horizontalTrackIn(tableRef.value.barAnchor) as HTMLElement;
+			expect(track.style.display).toBe('none');
+
+			const root = wrapper.find('.vc-table').element;
+			root.dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+			await flush();
+			expect(track.style.display).not.toBe('none');
+
+			root.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+			await flush();
+			expect(track.style.display).toBe('none');
+
+			restores.forEach(fn => fn());
+			wrapper.unmount();
+		});
+
+		it('展开行嵌套表格时，内外层滚动条各自在自己的锚点', async () => {
+			const outerRef = ref<any>();
+			const innerRef = ref<any>();
+			const wrapper = mount(() => (
+				<Table ref={outerRef} data={buildData(1)} primaryKey="id" defaultExpandAll>
+					<TableColumn type="expand">
+						{{
+							default: () => (
+								<Table ref={innerRef} data={buildData(2)} primaryKey="id">
+									<TableColumn label="内层" prop="name" />
+								</Table>
+							)
+						}}
+					</TableColumn>
+					<TableColumn label="外层" prop="name" />
+				</Table>
+			), { attachTo: document.body });
+			await settle();
+			await settle();
+
+			const outerAnchor = outerRef.value.barAnchor as HTMLElement;
+			const innerAnchor = innerRef.value.barAnchor as HTMLElement;
+			expect(innerAnchor).toBeTruthy();
+			expect(outerAnchor).not.toBe(innerAnchor);
+			expect(horizontalTracksIn(outerAnchor).length).toBe(1);
+			expect(horizontalTracksIn(innerAnchor).length).toBe(1);
+
+			wrapper.unmount();
+		});
+
+		it('virtualized + lazyTail：未到末尾时 dock 已渲染，row-resize 刷新底部 Affix', async () => {
+			const wrapper = mount(() => (
+				<Table data={buildData(20)} primaryKey="id" virtualized lazyTail affix>
+					{{
+						default: () => <TableColumn label="名称" prop="name" />,
+						append: () => <div class="lazy-append">append</div>
+					}}
+				</Table>
+			), { attachTo: document.body });
+			await flush();
+
+			expect(wrapper.find('.vc-table__bottom .vc-table__bar-x').exists()).toBe(true);
+
+			const [, dockAffix] = wrapper.findAllComponents({ name: 'vc-affix' });
+			const refresh = vi.fn();
+			(dockAffix.vm as any).$!.exposed.refresh = refresh;
+			wrapper.findComponent({ name: 'vc-recycle-list' }).vm.$emit('row-resize', []);
+			await flush();
+			expect(refresh).toHaveBeenCalledTimes(1);
+
+			wrapper.unmount();
+		});
 	});
 });
 
