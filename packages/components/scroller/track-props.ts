@@ -21,6 +21,8 @@ export const props = {
 	},
 	thumbStyle: [Object, String, Array] as PropType<StyleValue>,
 	thumbClass: [Object, String, Array] as PropType<StyleValue>,
+	// 悬停时显示轨道的区域（CSS selector），默认为轨道所在的容器
+	trigger: String,
 	// 轨道偏移值（头尾）
 	offset: {
 		type: Array as PropType<number[]>,

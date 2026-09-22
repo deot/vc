@@ -30,6 +30,7 @@ export const Bar = defineComponent({
 				thumbMinSize: props.thumbMinSize,
 				thumbStyle: props.thumbStyle,
 				thumbClass: props.thumbClass,
+				trigger: props.trigger,
 				class: props.trackClass
 			};
 		});
@@ -54,10 +55,12 @@ export const Bar = defineComponent({
 			typeof options.x !== 'undefined' && trackX.value.scrollTo(options.x);
 		};
 
+		// 传元素时视为目标存在；传 selector 时按当前文档查找
 		const setBarStatus = () => {
-			if (typeof document !== 'undefined' && props.to) {
-				hasTo.value = !document.querySelector(props.to);
-			}
+			if (typeof document === 'undefined' || !props.to) return;
+			hasTo.value = typeof props.to === 'string'
+				? !document.querySelector(props.to)
+				: false;
 		};
 
 		onMounted(() => {
@@ -69,6 +72,16 @@ export const Bar = defineComponent({
 		watch(
 			() => props.to,
 			setBarStatus
+		);
+
+		// Teleport 目标变化后轨道已移到新容器，重新解析悬停区域（未传 trigger 时即新容器）
+		watch(
+			() => props.to,
+			() => {
+				trackX.value?.refreshHover();
+				trackY.value?.refreshHover();
+			},
+			{ flush: 'post' }
 		);
 
 		expose({

@@ -49,6 +49,7 @@ export const props = {
 		default: true
 	},
 	barTo: barProps.to,
+	barTrigger: barProps.trigger,
 	...(pick(barProps, barKeys) as Pick<typeof barProps, typeof barKeys[number]>)
 };
 export type Props = ExtractPropTypes<typeof props>;

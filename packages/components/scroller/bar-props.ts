@@ -33,7 +33,10 @@ export const props = {
 		default: () => ([0, 0, 0, 0])
 	},
 
-	to: String,
+	// 轨道挂载的目标：CSS selector 或元素
+	to: [String, Object] as PropType<string | HTMLElement>,
+	// 悬停时显示轨道的区域（CSS selector），默认为轨道所在的容器
+	trigger: String,
 	trackStyle: [Object, String, Array] as PropType<StyleValue>,
 	trackClass: [Object, String, Array] as PropType<StyleValue>,
 	wrapperW: Number,

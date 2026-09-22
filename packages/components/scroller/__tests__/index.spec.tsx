@@ -268,6 +268,205 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
+		it('barTo accepts an element and follows it when it changes', async () => {
+			const first = document.createElement('div');
+			const second = document.createElement('div');
+			document.body.appendChild(first);
+			document.body.appendChild(second);
+
+			const to = ref<HTMLElement>(first);
+			const wrapper = mount(() => (
+				<Scroller native={false} always height="200px" barTo={to.value}>
+					<div style="height: 1000px"></div>
+				</Scroller>
+			), { attachTo: document.body });
+
+			await sleep();
+			await nextTick();
+			expect(first.querySelector('.vc-scroller-track')).toBeTruthy();
+
+			to.value = second;
+			await sleep();
+			await nextTick();
+			expect(first.querySelector('.vc-scroller-track')).toBeFalsy();
+			expect(second.querySelector('.vc-scroller-track')).toBeTruthy();
+
+			wrapper.unmount();
+			first.remove();
+			second.remove();
+		});
+
+		it('rebinds the hover container when an element barTo changes (no barTrigger)', async () => {
+			const first = document.createElement('div');
+			const second = document.createElement('div');
+			document.body.appendChild(first);
+			document.body.appendChild(second);
+
+			const to = ref<HTMLElement>(first);
+			const scrollerRef = ref<any>();
+			const wrapper = mount(() => (
+				<Scroller ref={scrollerRef} native={false} height="100px" barTo={to.value}>
+					<div style="height: 1000px"></div>
+				</Scroller>
+			), { attachTo: document.body });
+
+			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const restore = mockSize(wrapEl, { clientHeight: 100, scrollHeight: 1000 });
+			await scrollerRef.value.refresh();
+			await sleep();
+			await nextTick();
+
+			to.value = second;
+			await sleep();
+			await nextTick();
+
+			const trackEl = second.querySelector('.vc-scroller-track.is-vertical') as HTMLElement;
+			expect(trackEl).toBeTruthy();
+			expect(trackEl.style.display).toBe('none');
+
+			// 旧容器不再触发显示
+			first.dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+			await nextTick();
+			expect(trackEl.style.display).toBe('none');
+
+			// 新容器触发显示 / 隐藏
+			second.dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+			await nextTick();
+			expect(trackEl.style.display).not.toBe('none');
+			second.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+			await nextTick();
+			expect(trackEl.style.display).toBe('none');
+
+			restore();
+			wrapper.unmount();
+			first.remove();
+			second.remove();
+		});
+
+		it('rebinds the hover container when barTrigger changes', async () => {
+			const a = document.createElement('div');
+			a.className = 'bar-trigger-a';
+			const b = document.createElement('div');
+			b.className = 'bar-trigger-b';
+			document.body.appendChild(a);
+			document.body.appendChild(b);
+
+			const trigger = ref('.bar-trigger-a');
+			const scrollerRef = ref<any>();
+			const wrapper = mount(() => (
+				<Scroller ref={scrollerRef} native={false} height="100px" barTrigger={trigger.value}>
+					<div style="height: 1000px"></div>
+				</Scroller>
+			), { attachTo: document.body });
+
+			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const restore = mockSize(wrapEl, { clientHeight: 100, scrollHeight: 1000 });
+			await scrollerRef.value.refresh();
+			await nextTick();
+
+			trigger.value = '.bar-trigger-b';
+			await nextTick();
+			await nextTick();
+
+			const trackEl = wrapper.find('.vc-scroller-track.is-vertical').element as HTMLElement;
+			a.dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+			await nextTick();
+			expect(trackEl.style.display).toBe('none');
+			b.dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+			await nextTick();
+			expect(trackEl.style.display).not.toBe('none');
+
+			restore();
+			wrapper.unmount();
+			a.remove();
+			b.remove();
+		});
+
+		it('barTrigger shows the track while hovering an ancestor of the barTo target', async () => {
+			// 轨道挂在 0 高的锚点里，锚点自身无法悬停；悬停区域交给祖先
+			const trigger = document.createElement('div');
+			trigger.className = 'bar-trigger-host';
+			const anchor = document.createElement('div');
+			trigger.appendChild(anchor);
+			document.body.appendChild(trigger);
+
+			const scrollerRef = ref<any>();
+			const wrapper = mount(() => (
+				<Scroller ref={scrollerRef} native={false} height="100px" barTo={anchor} barTrigger=".bar-trigger-host">
+					<div style="height: 1000px"></div>
+				</Scroller>
+			), { attachTo: document.body });
+
+			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const restore = mockSize(wrapEl, {
+				clientHeight: 100,
+				scrollHeight: 1000
+			});
+			await scrollerRef.value.refresh();
+			await nextTick();
+			await nextTick();
+
+			const trackEl = anchor.querySelector('.vc-scroller-track.is-vertical') as HTMLElement;
+			expect(trackEl).toBeTruthy();
+			expect(trackEl.style.display).toBe('none');
+
+			trigger.dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+			await nextTick();
+			expect(trackEl.style.display).not.toBe('none');
+
+			trigger.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+			await nextTick();
+			expect(trackEl.style.display).toBe('none');
+
+			restore();
+			wrapper.unmount();
+			trigger.remove();
+		});
+
+		it('barTrigger resolves outside the track ancestors and falls back to the parent when missing', async () => {
+			const trigger = document.createElement('div');
+			trigger.className = 'bar-trigger-outside';
+			document.body.appendChild(trigger);
+
+			const mountWith = (barTrigger: string) => {
+				const scrollerRef = ref<any>();
+				const wrapper = mount(() => (
+					<Scroller ref={scrollerRef} native={false} height="100px" barTrigger={barTrigger}>
+						<div style="height: 1000px"></div>
+					</Scroller>
+				), { attachTo: document.body });
+				return { wrapper, scrollerRef };
+			};
+
+			// 不是轨道的祖先：按文档首个匹配
+			const outside = mountWith('.bar-trigger-outside');
+			let wrapEl = outside.wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			let restore = mockSize(wrapEl, { clientHeight: 100, scrollHeight: 1000 });
+			await outside.scrollerRef.value.refresh();
+			await nextTick();
+			let trackEl = outside.wrapper.find('.vc-scroller-track.is-vertical').element as HTMLElement;
+			trigger.dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+			await nextTick();
+			expect(trackEl.style.display).not.toBe('none');
+			restore();
+			outside.wrapper.unmount();
+
+			// 找不到时回退为轨道所在的容器
+			const missing = mountWith('.bar-trigger-missing');
+			wrapEl = missing.wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			restore = mockSize(wrapEl, { clientHeight: 100, scrollHeight: 1000 });
+			await missing.scrollerRef.value.refresh();
+			await nextTick();
+			trackEl = missing.wrapper.find('.vc-scroller-track.is-vertical').element as HTMLElement;
+			trackEl.parentElement!.dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+			await nextTick();
+			expect(trackEl.style.display).not.toBe('none');
+			restore();
+			missing.wrapper.unmount();
+
+			trigger.remove();
+		});
+
 		it('emits scroll event with delegate target on wrapper scroll', async () => {
 			const onScroll = vi.fn();
 			const scrollerRef = ref<any>();

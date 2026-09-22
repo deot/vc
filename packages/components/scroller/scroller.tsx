@@ -66,6 +66,7 @@ export const Scroller = defineComponent({
 								scrollY={scrollY.value}
 								native={props.native}
 								to={props.barTo}
+								trigger={props.barTrigger}
 								always={props.always}
 								thumbMinSize={props.thumbMinSize}
 								thumbStyle={props.thumbStyle}

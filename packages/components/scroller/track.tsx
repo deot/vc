@@ -31,6 +31,7 @@ const BAR_MAP = {
 export type TrackExposed = {
 	target: HTMLElement;
 	scrollTo: (v: number) => void;
+	refreshHover: () => void;
 };
 
 export const Track = defineComponent({
@@ -193,21 +194,47 @@ export const Track = defineComponent({
 
 		const refreshThrottleThumb = throttle(refreshThumb, 10);
 
-		onMounted(() => {
-			const parentEl = instance?.vnode?.el?.parentElement;
-			if (!parentEl) return;
-			$.on($.el(parentEl), 'mousemove', handleMouseMove);
-			$.on($.el(parentEl), 'mouseleave', handleLeave);
-		});
+		// 悬停区域：优先 trigger（祖先或文档中的首个匹配），否则为轨道所在的容器
+		let hoverEl: HTMLElement | null = null;
+		const resolveHoverEl = () => {
+			const el = instance?.vnode?.el as HTMLElement | undefined;
+			if (!el) return null;
+			if (props.trigger) {
+				const target = el.closest?.(props.trigger) || document.querySelector(props.trigger);
+				if (target) return target as HTMLElement;
+			}
+			return el.parentElement;
+		};
+
+		const bindHover = () => {
+			hoverEl = resolveHoverEl();
+			if (!hoverEl) return;
+			$.on($.el(hoverEl), 'mousemove', handleMouseMove);
+			$.on($.el(hoverEl), 'mouseleave', handleLeave);
+		};
+
+		const unbindHover = () => {
+			if (!hoverEl) return;
+			$.off($.el(hoverEl), 'mousemove', handleMouseMove);
+			$.off($.el(hoverEl), 'mouseleave', handleLeave);
+			hoverEl = null;
+		};
+
+		// 轨道被移到别的容器（Teleport 目标变化）或 trigger 变化后，悬停区域随之重新解析
+		const refreshHover = () => {
+			unbindHover();
+			bindHover();
+		};
+
+		onMounted(bindHover);
 
 		onBeforeUnmount(() => {
-			const parentEl = instance?.vnode?.el?.parentElement;
-			if (!parentEl) return;
 			$.off($.el(document.body), 'mousemove', handleMouseMoveDocument);
 			$.off($.el(document.body), 'mouseup', handleMouseUpDocument);
-			$.off($.el(parentEl), 'mousemove', handleMouseMove);
-			$.off($.el(parentEl), 'mouseleave', handleLeave);
+			unbindHover();
 		});
+
+		watch(() => props.trigger, refreshHover, { flush: 'post' });
 
 		// 用throttle优化连续变化的transfrom
 		watch(
@@ -219,7 +246,7 @@ export const Track = defineComponent({
 			{ immediate: true }
 		);
 
-		expose({ scrollTo, target: track });
+		expose({ scrollTo, target: track, refreshHover });
 
 		return () => {
 			return (

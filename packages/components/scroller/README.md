@@ -244,7 +244,8 @@ const trackId = `scroller-track-${useId()}`;
 | trackClass | 横纵轨道共用 class | `StyleValue` | - | - |
 | trackOffsetX | 横向轨道偏移 `[上, 右, 下, 左]`，单位 px；上不生效，左右影响轨道长度 | `number[]` | - | `[0, 0, 0, 0]` |
 | trackOffsetY | 纵向轨道偏移 `[上, 右, 下, 左]`，单位 px；左不生效，上下影响轨道长度 | `number[]` | - | `[0, 0, 0, 0]` |
-| barTo | 将自定义滚动条 Teleport 到匹配的 DOM 节点；目标需已存在且提供合适的定位上下文 | `string` | CSS selector | - |
+| barTo | 将自定义滚动条 Teleport 到匹配的 DOM 节点或传入的元素；目标需已存在且提供合适的定位上下文。传元素时，元素变化后轨道随之移动 | `string \| HTMLElement` | CSS selector / 元素 | - |
+| barTrigger | 鼠标悬停时显示自定义滚动条的区域（CSS selector，优先匹配轨道的祖先）；默认为轨道所在的容器。滚动条 Teleport 到无法直接悬停的节点时使用 | `string` | CSS selector | - |
 
 `StyleValue` 为 Vue 的样式类型；当前 class 属性也沿用这一类型声明，运行时按 Vue class 规则处理字符串、对象或数组。
 
