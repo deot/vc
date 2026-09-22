@@ -4,14 +4,13 @@ import { defineComponent, getCurrentInstance, inject, ref, computed, watch } fro
 import { debounce, isEqualWith } from 'lodash-es';
 import { useAttrs } from '@deot/vc-hooks';
 import { getUid } from '@deot/helper-utils';
-import { escapeString, flattenData, toCurrentValue, toModelValue } from '../select/utils';
+import { createSearchRegex, flattenData, toCurrentValue, toModelValue } from '../select/utils';
 import type { TreeData } from '../select/utils';
 import { VcError } from '../vc/index';
 import { Input, InputSearch } from '../input/index';
 import { Popover } from '../popover/index';
 import { Spin } from '../spin/index';
 import { Tag } from '../tag/index';
-import { Scroller } from '../scroller/index';
 import { Icon } from '../icon/index';
 import { TreeSelectContent } from './tree-select-content';
 import { TreeSelectContentCascader } from './tree-select-content-cascader';
@@ -33,7 +32,7 @@ export const TreeSelect = defineComponent({
 		const isActive = ref(false);
 		const isLoading = ref(false);
 		const searchValue = ref('');
-		const searchRegex = ref(new RegExp(''));
+		const searchRegex = computed(() => createSearchRegex(searchValue.value));
 		const currentValue = ref<Array<string | number>>([]);
 
 		const currentValueGroups = computed(() => {
@@ -196,8 +195,6 @@ export const TreeSelect = defineComponent({
 
 		const handleSearch = (v) => {
 			searchValue.value = v;
-
-			searchRegex.value = new RegExp(escapeString(v.trim()), 'i');
 			props.loadData && _loadData();
 		};
 
@@ -206,6 +203,11 @@ export const TreeSelect = defineComponent({
 
 			sync();
 		};
+
+		// 关闭时（点击外部 / 清空 / close / toggle）重置搜索，下次打开恢复完整视图
+		watch(isActive, (v) => {
+			!v && searchValue.value && handleSearch('');
+		});
 
 		watch(
 			() => props.modelValue,
@@ -254,7 +256,7 @@ export const TreeSelect = defineComponent({
 					animation="y"
 					// @ts-ignore
 					onMouseenter={() => (isHover.value = true)}
-					onMuseleave={() => (isHover.value = false)}
+					onMouseleave={() => (isHover.value = false)}
 					onReady={() => emit('ready')}
 					onClose={() => emit('close')}
 					onVisibleChange={() => emit('visible-change', isActive.value)}
@@ -301,7 +303,7 @@ export const TreeSelect = defineComponent({
 												<div class="vc-tree-select__append">
 													<Icon
 														type={showClear.value ? 'clear' : icon.value}
-														class={[{ 'is-arrow': !showClear }, 'vc-tree-select__icon']}
+														class={[{ 'is-arrow': !showClear.value }, 'vc-tree-select__icon']}
 														// @ts-ignore
 														onClick={handleClear}
 													/>
@@ -319,6 +321,7 @@ export const TreeSelect = defineComponent({
 										props.searchable && (
 											<div class="vc-tree-select__search">
 												<InputSearch
+													class="vc-tree-select__search-input"
 													modelValue={searchValue.value}
 													// @ts-ignore
 													placeholder={props.searchPlaceholder}
@@ -334,39 +337,37 @@ export const TreeSelect = defineComponent({
 											</div>
 										)
 									}
-									<Scroller
-										class={[
-											'vc-tree-select__options',
-											props.cascader && 'is-cascader'
-										]}
-										max-height="200px"
-									>
-										{
-											props.cascader
-												? (
-														<TreeSelectContentCascader
-															value={currentValue.value}
-															data={props.data as TreeData[]}
-															checkStrictly={props.checkStrictly}
-															renderNodeLabel={props.renderNodeLabel}
-															numerable={props.numerable}
-															separator={props.separator}
-															max={props.max}
-															nullValue={props.nullValue as never}
-															onChange={handleChange}
-														/>
-													)
-												: (
-														<TreeSelectContent
-															value={currentValue.value}
-															data={props.data}
-															checkStrictly={props.checkStrictly}
-															renderNodeLabel={props.renderNodeLabel}
-															onChange={handleChange}
-														/>
-													)
-										}
-									</Scroller>
+									{
+										props.cascader
+											? (
+													<TreeSelectContentCascader
+														value={currentValue.value}
+														data={props.data as TreeData[]}
+														checkStrictly={props.checkStrictly}
+														renderNodeLabel={props.renderNodeLabel}
+														numerable={props.numerable}
+														separator={props.separator}
+														max={props.max}
+														nullValue={props.nullValue as never}
+														searchValue={searchValue.value}
+														searchRegex={searchRegex.value}
+														remote={!!props.loadData}
+														onChange={handleChange}
+													/>
+												)
+											: (
+													<TreeSelectContent
+														value={currentValue.value}
+														data={props.data}
+														checkStrictly={props.checkStrictly}
+														renderNodeLabel={props.renderNodeLabel}
+														searchValue={searchValue.value}
+														searchRegex={searchRegex.value}
+														remote={!!props.loadData}
+														onChange={handleChange}
+													/>
+												)
+									}
 								</div>
 							);
 						}

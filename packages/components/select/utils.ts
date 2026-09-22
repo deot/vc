@@ -32,7 +32,7 @@ export interface FlattenDataOptions {
 }
 
 // 正则内的特殊符号
-const specialChar = ['?', '*', '$', '+', '^', '.', '\\'];
+const specialChar = ['?', '*', '$', '+', '^', '.', '\\', '(', ')', '[', ']', '{', '}', '|'];
 /**
  * 如果字符串内存在正则的符号，RegEx会报错，所以转义下
  * @param str ~
@@ -44,6 +44,21 @@ export const escapeString = (str: string) => {
 		val += specialChar.includes(char) ? '\\' + char : char;
 	}
 	return val;
+};
+
+/**
+ * 搜索关键词 -> 正则；空格或逗号分隔多个词，任一命中即可
+ * @param keyword ~
+ * @returns ~
+ */
+export const createSearchRegex = (keyword: string) => {
+	const words = keyword
+		.trim()
+		.split(/[\s,]+/)
+		.filter(Boolean)
+		.map(escapeString);
+
+	return new RegExp(words.join('|'), 'i');
 };
 
 export const getLabel = (data: TreeData, v: TreeValue): TreeLabel => {

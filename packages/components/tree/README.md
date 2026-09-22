@@ -607,3 +607,21 @@ const allowDrag = (draggingNode) => {
 | node-drag-over   | 在拖拽节点覆盖其他节点时触发的事件（类似浏览器的 mouseover 事件） | `(draggingNode: object, dropNode: object, e: Event) => void 0`                   | `draggingNode`：被拖拽节点对应的 Node；`dropNode`：当前覆盖节点对应的 Node；`e`：事件对象                                                                  |
 | node-drag-end    | 拖拽结束时（可能未成功）触发的事件                      | `(draggingNode: object, dropNode: object, dropType: string, e: Event) => void 0` | `draggingNode`：被拖拽节点对应的 Node；`dropNode`：结束拖拽时最后进入的节点（可能为空）；`dropType`：被拖拽节点的放置位置（before、after、inner）；`e`：事件对象                    |
 | node-drop        | 拖拽成功完成时触发的事件                           | `(draggingNode: object, dropNode: object, dropType: string, e: Event) => void 0` | `draggingNode`：被拖拽节点对应的 Node；`dropNode`：结束拖拽时最后进入的节点（可能为空）；`dropType`：被拖拽节点的放置位置（before、after、inner）；`e`：事件对象                    |
+
+## 树选择（TreeSelect）
+
+### 可搜索
+
+设置 `searchable` 开启搜索（默认 `false`），关键词以空格或逗号分隔，任一命中即可；弹层关闭时自动清空关键词。
+
+- 树形模式：保留层级过滤，命中节点及其祖先可见并自动展开，命中文字高亮（自定义 `render-node-label` 时不做高亮）
+- 级联模式（`cascader`）：搜索时切换为扁平路径列表（`一级 / 二级 / 三级`），宽度沿用列视图并限制在 240px ~ 360px，过长路径省略显示
+- 非 `check-strictly` 时，勾选父节点会同时勾选**全部**子孙节点（包括被搜索过滤隐藏的节点）
+- 设置 `load-data` 时视为远程搜索：数据由 `load-data` 返回，本地不再过滤，仅高亮
+
+| 属性                 | 说明                    | 类型         | 可选值 | 默认值     |
+| ------------------ | --------------------- | ---------- | --- | ------- |
+| searchable         | 是否可搜索                 | `boolean`  | —   | `false` |
+| search-placeholder | 搜索框占位文本               | `string`   | —   | —       |
+| cascader           | 级联列模式                 | `boolean`  | —   | `false` |
+| load-data          | 远程搜索，参数为关键词，需返回 Promise | `Function` | —   | —       |

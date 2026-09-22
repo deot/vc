@@ -45,19 +45,41 @@ $component-name: vc-tree-select;
 	}
 
 	@include element(search) {
-		padding: 12px 8px;
+		display: flex;
+		padding: unitfix(12) unitfix(8);
+		justify-content: space-between;
+		align-items: center;
 	}
 
-	@include element(options) {
-		max-height: 220px;
-		overflow: auto;
+	// 选择器较宽时，搜索框不随弹层无限变宽
+	@include element(search-input) {
+		width: 100%;
+		max-width: 360px;
+	}
 
-		&.is-cascader {
-			display: flex;
-			max-height: 200px;
-			overflow: auto hidden;
-			flex-direction: row;
+	@include element(search-results) {
+		padding: 5px 0;
+	}
+
+	@include element(search-item) {
+		justify-content: flex-start;
+		padding: 4px 8px;
+
+		.vc-tree-select__cascader-label {
+			min-width: 0;
+			flex-shrink: 1;
 		}
+	}
+
+	@include element(highlight) {
+		color: #5495f6;
+	}
+
+	@include element(empty) {
+		padding: 8px 0;
+		font-size: 12px;
+		color: #999;
+		text-align: center;
 	}
 
 	@include element(cascader) {
@@ -80,10 +102,14 @@ $component-name: vc-tree-select;
 	}
 
 	@include element(cascader-columns) {
-		display: flex;
 		flex: 1;
+		min-width: 0;
+	}
+
+	@include element(cascader-columns-content) {
+		display: flex;
 		flex-direction: row;
-		min-width: min-content;
+		width: max-content;
 	}
 
 	@include element(cascader-column) {
@@ -102,9 +128,7 @@ $component-name: vc-tree-select;
 	}
 
 	@include element(cascader-column-wrapper) {
-		height: 180px;
 		min-width: 100px;
-		overflow: auto;
 	}
 
 	@include element(cascader-item) {
@@ -121,6 +145,11 @@ $component-name: vc-tree-select;
 		@include when(select) {
 			color: #5495f6;
 			background-color: #e6f7ff;
+		}
+
+		@include when(disabled) {
+			color: #c5c8ce;
+			cursor: not-allowed;
 		}
 	}
 

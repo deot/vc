@@ -7,7 +7,7 @@ import { vi } from 'vitest';
 import { TreeNode, TreeStore } from '../store';
 import { getChildState, markNodeData } from '../store/tree-node';
 import { props as treeNodeContentProps } from '../tree-node-content-props';
-import { TreeSelectContent } from '../tree-select-content';
+import { TreeSelectContent, renderHighlight } from '../tree-select-content';
 import { TreeSelectContentCascader } from '../tree-select-content-cascader';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
@@ -1247,5 +1247,219 @@ describe('Tree store & node unit', () => {
 			checkedValues: ['1', '2']
 		} as any);
 		expect(store2.getCheckedValues().sort()).toEqual(['1', '2']);
+	});
+});
+
+describe('TreeSelect searchable', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+		vi.useRealTimers();
+	});
+
+	const typeSearch = async (keyword: string) => {
+		const input = document.querySelector('.vc-tree-select__search input') as HTMLInputElement;
+		input.value = keyword;
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		await flush();
+	};
+
+	it('renderHighlight', () => {
+		expect(renderHighlight('abc')).toBe('abc');
+		expect(renderHighlight('', /a/i)).toBe('');
+		expect(renderHighlight('abc', new RegExp(''))).toBe('abc');
+		const nodes = renderHighlight('aXbxc', /x/i) as any[];
+		expect(nodes.length).toBe(5);
+		expect(nodes[0]).toBe('a');
+		expect(nodes[4]).toBe('c');
+	});
+
+	it('tree mode: filters keeping hierarchy, highlights, resets on close', async () => {
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={data} max={99} searchable />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+
+		await typeSearch('2-1-1');
+		const visible = Array.from(document.querySelectorAll('.vc-tree-node:not(.is-hidden) > .vc-tree-node__content'))
+			.map(el => el.textContent);
+		expect(visible.some(t => t?.includes('三级 2-1-1'))).toBe(true);
+		expect(visible.some(t => t?.includes('一级 1'))).toBe(false);
+		expect(document.querySelector('.vc-tree-select__highlight')?.textContent).toBe('2-1-1');
+
+		const checkbox = document.querySelector('.vc-tree-node:not(.is-hidden) .vc-checkbox input[type="checkbox"]') as HTMLInputElement;
+		checkbox.click();
+		await flush();
+		expect(value.value.length).toBeGreaterThan(0);
+
+		await typeSearch('不存在');
+		expect(document.querySelector('.vc-tree__empty-text')?.textContent).toBe('暂无匹配数据');
+
+		await typeSearch('(');
+		await typeSearch('[');
+
+		const popover = wrapper.findComponent({ name: 'vc-popover' });
+		(popover.vm as any).$emit('update:modelValue', false);
+		await flush();
+		expect((document.querySelector('.vc-tree-select__search input') as HTMLInputElement).value).toBe('');
+		expect(document.querySelectorAll('.vc-tree-node.is-hidden').length).toBe(0);
+
+		wrapper.unmount();
+	});
+
+	it('tree mode: restores expanded state after leaving search', async () => {
+		const value = ref<any[]>(['1-1-1']);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={freshData()} max={99} searchable />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+
+		const expanded = () => Array.from(document.querySelectorAll('.vc-tree-node.is-expanded'))
+			.map(el => el.querySelector('.vc-tree-node__content')?.textContent?.trim());
+		const before = expanded();
+		expect(before.length).toBeGreaterThan(0);
+
+		await typeSearch('三级');
+		await flush();
+		expect(expanded().length).toBeGreaterThan(before.length);
+
+		await typeSearch('');
+		await flush();
+		expect(expanded()).toEqual(before);
+
+		wrapper.unmount();
+	});
+
+	it('closing via clear icon also resets search', async () => {
+		const value = ref<any[]>(['1']);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={data} max={99} searchable clearable />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+
+		await typeSearch('一级');
+		fireMouse(wrapper.element, 'mouseenter');
+		await flush();
+		await wrapper.find('.vc-tree-select__icon').trigger('click');
+		await flush();
+
+		expect(value.value).toEqual([]);
+		expect((document.querySelector('.vc-tree-select__search input') as HTMLInputElement).value).toBe('');
+
+		wrapper.unmount();
+	});
+
+	it('cascader mode: flat path results, check syncs value', async () => {
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={data} max={99} searchable cascader />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+
+		await typeSearch('2-1-1');
+		const items = document.querySelectorAll('.vc-tree-select__search-item');
+		expect(items.length).toBe(1);
+		expect(items[0].textContent).toContain('一级 2 / 二级 2-1 / 三级 2-1-1');
+		expect(document.querySelector('.vc-tree-select__cascader-columns')?.getAttribute('style')).toContain('display: none');
+
+		(items[0] as HTMLElement).click();
+		await flush();
+		expect(value.value).toContain('2-1-1');
+		expect(value.value).toContain('2-1');
+
+		const checkbox = document.querySelector('.vc-tree-select__search-item input[type="checkbox"]') as HTMLInputElement;
+		checkbox.click();
+		await flush();
+		expect(value.value).not.toContain('2-1-1');
+
+		await typeSearch('不存在');
+		expect(document.querySelector('.vc-tree-select__empty')?.textContent).toBe('暂无匹配数据');
+
+		await typeSearch('');
+		expect(document.querySelector('.vc-tree-select__search-results')).toBeNull();
+		expect(document.querySelectorAll('.vc-tree-select__cascader-column').length).toBeGreaterThan(0);
+
+		wrapper.unmount();
+	});
+
+	it('cascader search width is clamped to [240, 360]', async () => {
+		const getWidth = async (columnsWidth: number) => {
+			const spy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(columnsWidth);
+			const wrapper = mount(TreeSelectContentCascader as any, {
+				attachTo: document.body,
+				props: { value: [], data: freshData(), searchValue: '' }
+			});
+			await flush();
+			await wrapper.setProps({ searchValue: '一级', searchRegex: /一级/i });
+			await flush();
+			const width = (document.querySelector('.vc-tree-select__search-results') as HTMLElement).style.width;
+			spy.mockRestore();
+			wrapper.unmount();
+			return width;
+		};
+		expect(await getWidth(100)).toBe('240px');
+		expect(await getWidth(300)).toBe('300px');
+		expect(await getWidth(600)).toBe('360px');
+	});
+
+	it('cascader remote: lists all data, only highlight', async () => {
+		const wrapper = mount(TreeSelectContentCascader as any, {
+			attachTo: document.body,
+			props: {
+				value: [],
+				data: freshData(),
+				searchValue: 'zzz',
+				searchRegex: /zzz/i,
+				remote: true
+			}
+		});
+		await flush();
+		expect(document.querySelectorAll('.vc-tree-select__search-item').length).toBeGreaterThan(3);
+		wrapper.unmount();
+	});
+
+	it('cascader: disabled item is not toggled by row click', async () => {
+		const onChange = vi.fn();
+		const wrapper = mount(TreeSelectContentCascader as any, {
+			attachTo: document.body,
+			props: {
+				value: [],
+				data: [{ value: 'a', label: 'A', disabled: true }],
+				searchValue: 'A',
+				searchRegex: /A/i,
+				onChange
+			}
+		});
+		await flush();
+		(document.querySelector('.vc-tree-select__search-item') as HTMLElement).click();
+		await flush();
+		expect(onChange).not.toHaveBeenCalled();
+		wrapper.unmount();
+	});
+
+	it('clear icon hides after mouseleave, arrow class applies', async () => {
+		const value = ref<any[]>(['1']);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={data} clearable />
+		), { attachTo: document.body });
+		await flush();
+
+		expect(wrapper.find('.vc-tree-select__icon').classes()).toContain('is-arrow');
+		fireMouse(wrapper.element, 'mouseenter');
+		await flush();
+		expect(wrapper.find('.vc-tree-select__icon').classes()).not.toContain('is-arrow');
+		fireMouse(wrapper.element, 'mouseleave');
+		await flush();
+		expect(wrapper.find('.vc-tree-select__icon').classes()).toContain('is-arrow');
+
+		wrapper.unmount();
 	});
 });

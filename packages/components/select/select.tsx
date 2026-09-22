@@ -4,7 +4,7 @@ import { defineComponent, getCurrentInstance, inject, ref, computed, watch } fro
 import { debounce, isEqualWith } from 'lodash-es';
 import { useAttrs } from '@deot/vc-hooks';
 import { getUid } from '@deot/helper-utils';
-import { getLabel, escapeString, flattenData, toCurrentValue, toModelValue } from './utils';
+import { getLabel, createSearchRegex, flattenData, toCurrentValue, toModelValue } from './utils';
 import { VcError } from '../vc/index';
 import { Input, InputSearch } from '../input/index';
 import { Popover } from '../popover/index';
@@ -74,15 +74,7 @@ export const Select = defineComponent({
 			return v < 0 ? 0 : v;
 		});
 
-		const searchRegex = computed(() => {
-			const v = searchValue
-				.value
-				.trim()
-				.replace(/\s+/g, ' ')
-				.split(/\s|,/);
-
-			return new RegExp(escapeString(`(${v.join('|')})`), 'i');
-		});
+		const searchRegex = computed(() => createSearchRegex(searchValue.value));
 
 		const optionMap = ref<any>({});
 		const options = computed(() => {

@@ -56,6 +56,32 @@
 			clearable
 		/>
 
+		<p style="margin-top: 16px;">
+			可搜索（searchable）：空格或逗号分隔多个关键词；树形模式保留层级过滤，级联模式展示扁平路径列表
+		</p>
+		<TreeSelect
+			v-model="valueSearch"
+			:data="bigData"
+			:check-strictly="checkStrictly"
+			:max="999"
+			:max-tags="3"
+			searchable
+			search-placeholder="搜索城市 / 区域"
+			clearable
+		/>
+		<TreeSelect
+			v-model="valueSearch"
+			:data="bigData"
+			:check-strictly="checkStrictly"
+			:max="999"
+			:max-tags="3"
+			searchable
+			cascader
+			clearable
+			style="margin-top: 8px;"
+		/>
+		<div>valueSearch: {{ valueSearch }}</div>
+
 		<TreeSelect
 			v-model="valueAsync"
 			:data="dataAsync"
@@ -147,10 +173,28 @@ const DEFAULT_DATA = [
 	}
 ];
 
+// 大量数据：每一列都会出现滚动（Scroller）
+const REGIONS = ['华东', '华南', '华北', '华中', '西南', '西北', '东北', '港澳台', '海外', '长三角', '珠三角', '京津冀', '成渝', '关中', '北部湾'];
+const BIG_DATA = REGIONS.map((region, i) => ({
+	value: `r${i}`,
+	label: region,
+	children: Array.from({ length: 12 }).map((_, j) => ({
+		value: `r${i}-c${j}`,
+		label: `${region}城市 ${j + 1}`,
+		disabled: i === 0 && j === 1,
+		children: Array.from({ length: 8 }).map((__, k) => ({
+			value: `r${i}-c${j}-d${k}`,
+			label: `${region}城市 ${j + 1} · 区 ${k + 1}`
+		}))
+	}))
+}));
+
 const lazy = ref(true);
 const checkStrictly = ref(false);
 const value = ref([]);
 const data = ref(DEFAULT_DATA);
+const bigData = ref(BIG_DATA);
+const valueSearch = ref([]);
 const valueAsync = ref([]);
 const dataAsync = ref([]);
 

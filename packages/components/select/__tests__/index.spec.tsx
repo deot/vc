@@ -6,6 +6,7 @@ import { Option } from '../option';
 import { OptionGroup } from '../option-group';
 import { SelectAll } from '../select-all';
 import {
+	createSearchRegex,
 	escapeString,
 	flattenData,
 	getLabel,
@@ -160,6 +161,18 @@ describe('utils', () => {
 		expect(escapeString('a^b$c')).toBe('a\\^b\\$c');
 		expect(escapeString('a\\b')).toBe('a\\\\b');
 		expect(escapeString('plain')).toBe('plain');
+		expect(escapeString('(a)[b]{c}|d')).toBe('\\(a\\)\\[b\\]\\{c\\}\\|d');
+	});
+
+	it('createSearchRegex matches any word and never throws', () => {
+		const regex = createSearchRegex(' a  b,c ');
+		expect(regex.test('xbx')).toBe(true);
+		expect(regex.test('xyz')).toBe(false);
+		expect(createSearchRegex('a,').test('xyz')).toBe(false);
+		expect(createSearchRegex('').test('anything')).toBe(true);
+		expect(() => createSearchRegex('(')).not.toThrow();
+		expect(() => createSearchRegex('[')).not.toThrow();
+		expect(createSearchRegex('(1)').test('a(1)b')).toBe(true);
 	});
 
 	it('getLabel returns label by value', () => {
