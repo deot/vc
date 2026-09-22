@@ -137,4 +137,43 @@ describe('index.ts', () => {
 
 		expect(wrapper.classes()).not.toContain('is-unchecked');
 	});
+
+	it('propagation: 非 checkable 时点击冒泡', async () => {
+		const handleClick = vi.fn();
+		const wrapper = mount(() => (
+			<div onClick={handleClick}><Tag /></div>
+		));
+
+		await wrapper.find('.vc-tag').trigger('click');
+
+		expect(handleClick).toHaveBeenCalledTimes(1);
+	});
+
+	it('propagation: checkable 时点击不冒泡', async () => {
+		const handleClick = vi.fn();
+		const wrapper = mount(() => (
+			<div onClick={handleClick}><Tag checkable /></div>
+		));
+
+		await wrapper.find('.vc-tag').trigger('click');
+
+		expect(handleClick).not.toHaveBeenCalled();
+	});
+
+	it('propagation: 点击关闭图标不冒泡, 也不切换选中状态', async () => {
+		const handleClick = vi.fn();
+		const handleClose = vi.fn();
+		const handleChange = vi.fn();
+		const wrapper = mount(() => (
+			<div onClick={handleClick}>
+				<Tag closable checkable onClose={handleClose} onChange={handleChange} />
+			</div>
+		));
+
+		await wrapper.find('.vc-tag__close').trigger('click');
+
+		expect(handleClose).toHaveBeenCalledTimes(1);
+		expect(handleChange).not.toHaveBeenCalled();
+		expect(handleClick).not.toHaveBeenCalled();
+	});
 });

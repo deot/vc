@@ -501,6 +501,44 @@ describe('Select multiple', () => {
 		wrapper.unmount();
 	});
 
+	it('multiple: clicking tag toggles popover', async () => {
+		const value = ref<any[]>(['1', '4']);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={5} />
+		), { attachTo: document.body });
+		await nextTick();
+
+		await wrapper.find('.vc-tag').trigger('click');
+		await flush();
+
+		const popover = document.querySelector('.vc-popover-wrapper') as HTMLElement;
+		expect(popover).not.toBeNull();
+		expect(popover.style.display).not.toBe('none');
+
+		await wrapper.find('.vc-tag').trigger('click');
+		await flush();
+
+		expect(popover.style.display).toBe('none');
+
+		wrapper.unmount();
+	});
+
+	it('multiple: clicking tag close does not open popover', async () => {
+		const value = ref<any[]>(['1', '4']);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={5} />
+		), { attachTo: document.body });
+		await nextTick();
+
+		await wrapper.find('.vc-tag__close').trigger('click');
+		await flush();
+
+		expect(value.value).toEqual(['4']);
+		expect(document.querySelector('.vc-popover-wrapper')).toBeNull();
+
+		wrapper.unmount();
+	});
+
 	it('multiple maxTags collapses extra tags', async () => {
 		const value = ref<any[]>(['1', '2', '3']);
 		const wrapper = mount(() => (

@@ -21,12 +21,13 @@ export const Tag = defineComponent({
 		});
 
 		const handleClose = (e) => {
+			e.stopPropagation();
 			emit('close', e, props.value || undefined);
 		};
 
 		const handleCheck = (e: any) => {
-			e.stopPropagation();
 			if (!props.checkable) return;
+			e.stopPropagation();
 
 			isChecked.value = !isChecked.value;
 

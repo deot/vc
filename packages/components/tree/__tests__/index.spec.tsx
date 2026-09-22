@@ -640,6 +640,44 @@ describe('TreeSelect interaction', () => {
 		wrapper.unmount();
 	});
 
+	it('multiple: clicking tag toggles popover', async () => {
+		const value = ref<any[]>(['1', '2']);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={data} max={99} checkStrictly />
+		), { attachTo: document.body });
+		await flush();
+
+		await wrapper.find('.vc-tag').trigger('click');
+		await flush();
+
+		const popover = document.querySelector('.vc-popover-wrapper') as HTMLElement;
+		expect(popover).not.toBeNull();
+		expect(popover.style.display).not.toBe('none');
+
+		await wrapper.find('.vc-tag').trigger('click');
+		await flush();
+
+		expect(popover.style.display).toBe('none');
+
+		wrapper.unmount();
+	});
+
+	it('multiple: clicking tag close does not open popover', async () => {
+		const value = ref<any[]>(['1', '2']);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={data} max={99} checkStrictly />
+		), { attachTo: document.body });
+		await flush();
+
+		await wrapper.find('.vc-tag__close').trigger('click');
+		await flush();
+
+		expect(value.value).toEqual(['2']);
+		expect(document.querySelector('.vc-popover-wrapper')).toBeNull();
+
+		wrapper.unmount();
+	});
+
 	it('searchable + loadData triggers debounce search', async () => {
 		vi.useFakeTimers();
 		const loadData = vi.fn(() => Promise.resolve([]));
