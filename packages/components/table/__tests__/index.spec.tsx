@@ -4946,3 +4946,200 @@ describe('Block reuse on setData', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('Table dynamic column order', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	const labelsOf = (vm: any) => vm.store.states.columns.map((column: any) => column.states.label);
+	const headerLabels = (wrapper: any) => wrapper.findAll('.vc-table__thead .vc-table__th').map((th: any) => th.text());
+
+	it('keeps template order when non-adjacent conditional columns toggle in the same tick', async () => {
+		const tableRef = ref<any>();
+		const visible = ref(false);
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(1)} primaryKey="id">
+				<TableColumn label="A" prop="name" />
+				{visible.value ? <TableColumn key="b" label="B" prop="name" /> : null}
+				<TableColumn label="C" prop="name" />
+				{visible.value ? <TableColumn key="d" label="D" prop="name" /> : null}
+				<TableColumn label="E" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['A', 'C', 'E']);
+
+		visible.value = true;
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['A', 'B', 'C', 'D', 'E']);
+		expect(headerLabels(wrapper)).toEqual(['A', 'B', 'C', 'D', 'E']);
+
+		visible.value = false;
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['A', 'C', 'E']);
+
+		wrapper.unmount();
+	});
+
+	it('follows keyed v-for columns on insert, move and replace', async () => {
+		const tableRef = ref<any>();
+		const list = ref(['X1', 'X2', 'X3']);
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(1)} primaryKey="id">
+				<TableColumn label="首" prop="name" />
+				{list.value.map(item => <TableColumn key={item} label={item} prop="name" />)}
+				<TableColumn label="尾" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['首', 'X1', 'X2', 'X3', '尾']);
+
+		// 首尾同时插入：keyed diff 倒序挂载新节点
+		list.value = ['N1', 'X1', 'X2', 'X3', 'N2'];
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['首', 'N1', 'X1', 'X2', 'X3', 'N2', '尾']);
+
+		// 反转：只移动 DOM，不触发挂载/卸载；同一轮 flush 内完成校正，一个 nextTick 后表头即为新顺序
+		list.value = [...list.value].reverse();
+		await nextTick();
+		expect(labelsOf(tableRef.value)).toEqual(['首', 'N2', 'X3', 'X2', 'X1', 'N1', '尾']);
+		expect(headerLabels(wrapper)).toEqual(['首', 'N2', 'X3', 'X2', 'X1', 'N1', '尾']);
+
+		// 整体替换后再还原
+		list.value = ['R1', 'R2', 'R3'];
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['首', 'R1', 'R2', 'R3', '尾']);
+
+		list.value = ['X1', 'X2', 'X3'];
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['首', 'X1', 'X2', 'X3', '尾']);
+
+		wrapper.unmount();
+	});
+
+	it('keeps template order for v-for sub columns in multi-level header', async () => {
+		const tableRef = ref<any>();
+		const list = ref(['S1', 'S2']);
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(1)} primaryKey="id">
+				<TableColumn label="A" prop="name" />
+				<TableColumn label="G">
+					<TableColumn label="G1" prop="name" />
+					{list.value.map(item => <TableColumn key={item} label={item} prop="name" />)}
+					<TableColumn label="G3" prop="name" />
+				</TableColumn>
+				<TableColumn label="B" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['A', 'G1', 'S1', 'S2', 'G3', 'B']);
+
+		list.value = ['S1', 'S3', 'S2'];
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['A', 'G1', 'S1', 'S3', 'S2', 'G3', 'B']);
+
+		// 分组内子列反转：由分组列重渲染后校正，一个 nextTick 后即为新顺序
+		list.value = [...list.value].reverse();
+		await nextTick();
+		expect(labelsOf(tableRef.value)).toEqual(['A', 'G1', 'S2', 'S3', 'S1', 'G3', 'B']);
+		expect(headerLabels(wrapper).filter((label: string) => /^S\d$/.test(label))).toEqual(['S2', 'S3', 'S1']);
+
+		wrapper.unmount();
+	});
+
+	it('places new columns after their template predecessor under external order', async () => {
+		const tableRef = ref<any>();
+		const columns = ref<any[]>([]);
+		const visible = ref(false);
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={buildData(1)}
+				primaryKey="id"
+				columns={columns.value}
+				{...{ 'onUpdate:columns': (v: any[]) => { columns.value = v; } }}
+			>
+				<TableColumn label="A" prop="name" />
+				<TableColumn label="B" prop="name" />
+				{visible.value ? <TableColumn key="c" label="C" prop="name" /> : null}
+				<TableColumn label="D" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		expect(columns.value.map(item => item.label)).toEqual(['A', 'B', 'D']);
+
+		columns.value = [...columns.value].reverse();
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['D', 'B', 'A']);
+
+		visible.value = true;
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['D', 'B', 'C', 'A']);
+		expect(columns.value.map(item => item.label)).toEqual(['D', 'B', 'C', 'A']);
+
+		// 写回模板顺序：恢复跟随模板
+		columns.value = [...columns.value].sort((a, b) => 'ABCD'.indexOf(a.label) - 'ABCD'.indexOf(b.label));
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['A', 'B', 'C', 'D']);
+
+		visible.value = false;
+		await flush();
+		visible.value = true;
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['A', 'B', 'C', 'D']);
+
+		wrapper.unmount();
+	});
+
+	it('keeps external order over template moves until template order is written back', async () => {
+		const tableRef = ref<any>();
+		const columns = ref<any[]>([]);
+		const list = ref(['X', 'Y']);
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={buildData(1)}
+				primaryKey="id"
+				columns={columns.value}
+				{...{ 'onUpdate:columns': (v: any[]) => { columns.value = v; } }}
+			>
+				<TableColumn label="A" prop="name" />
+				{list.value.map(item => <TableColumn key={item} label={item} prop="name" />)}
+				<TableColumn label="D" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		// 仅改显隐（顺序与模板一致）不锁定顺序
+		columns.value = columns.value.map(item => (item.label === 'A' ? { ...item, hidden: true } : item));
+		await flush();
+		list.value = ['Y', 'X'];
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['Y', 'X', 'D']);
+
+		columns.value = columns.value.map(item => ({ ...item, hidden: false }));
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['A', 'Y', 'X', 'D']);
+
+		// 外部重排后，模板移动不影响已知列
+		columns.value = [...columns.value].reverse();
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['D', 'X', 'Y', 'A']);
+
+		list.value = ['X', 'Y'];
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['D', 'X', 'Y', 'A']);
+
+		// 写回模板顺序后恢复跟随模板
+		columns.value = [...columns.value].sort((a, b) => 'AXYD'.indexOf(a.label) - 'AXYD'.indexOf(b.label));
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['A', 'X', 'Y', 'D']);
+
+		list.value = ['Y', 'X'];
+		await flush();
+		expect(labelsOf(tableRef.value)).toEqual(['A', 'Y', 'X', 'D']);
+
+		wrapper.unmount();
+	});
+});

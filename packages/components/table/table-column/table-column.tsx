@@ -5,6 +5,7 @@ import {
 	computed,
 	onBeforeMount,
 	onMounted,
+	onUpdated,
 	onUnmounted,
 	Fragment,
 	inject,
@@ -25,7 +26,7 @@ export const TableColumn = defineComponent({
 		const table = inject<TableProvide>('vc-table')!;
 		const parent = inject<TableColumnProvide | TableProvide>('vc-table-column', table);
 
-		const isSubColumn = table !== parent; // 用于多级表头
+		// 多级表头的父列
 		const parentNode = 'columnNode' in parent ? parent.columnNode : void 0;
 
 		const id = ('columnId' in parent ? parent.columnId.value : parent.tableId) + getUid('column');
@@ -40,19 +41,16 @@ export const TableColumn = defineComponent({
 		onBeforeMount(() => {
 			columnNode.init(props, slots, attrs);
 		});
+		// 位置由 store 按 DOM 顺序整理，不取挂载时的下标
 		onMounted(() => {
-			const children = isSubColumn
-				? parentNode!.instance.vnode.el!.children
-				: table.hiddenColumns.value!.children;
+			table.store.column.insert(columnNode, parentNode);
+		});
 
-			// DOM上
-			const columnIndex = [...children].indexOf(instance.vnode.el as Element);
-
-			table.store.column.insert(
-				columnNode,
-				columnIndex,
-				parentNode
-			);
+		// 分组列重渲染后按 DOM 顺序校正子列（带 key 的子列移动不触发挂载/卸载）
+		onUpdated(() => {
+			columnNode.childNodes.length > 1
+			&& table.store.column.sort(columnNode)
+			&& table.store.scheduleLayout(true);
 		});
 
 		onUnmounted(() => {
@@ -73,16 +71,21 @@ export const TableColumn = defineComponent({
 		return () => {
 			let children: VNode[] = [];
 
+			// Fragment（v-for / template）按原位置展开，保证子列的 DOM 顺序即模板顺序
+			const collect = (nodes: VNode[]) => {
+				for (const childNode of nodes) {
+					if (/^vcm?-table-column$/.test((childNode.type as Component)?.name || '')) {
+						children.push(childNode);
+					} else if (childNode.type === Fragment && childNode.children instanceof Array) {
+						collect(childNode.children as VNode[]);
+					}
+				}
+			};
+
 			try {
 				const renderDefault = slots?.default?.({ row: {}, column: {}, columnIndex: -1, rowIndex: -1 });
 				if (renderDefault instanceof Array) {
-					for (const childNode of renderDefault) {
-						if (/^vcm?-table-column$/.test((childNode.type as Component)?.name || '')) {
-							children.push(childNode);
-						} else if (childNode.type === Fragment && childNode.children instanceof Array) {
-							renderDefault.push(...(childNode.children as VNode[]));
-						}
-					}
+					collect(renderDefault);
 				}
 			} catch {
 				children = [];

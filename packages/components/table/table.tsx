@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, provide, computed, ref, getCurrentInstance, nextTick, onMounted, onUnmounted } from 'vue';
+import { defineComponent, provide, computed, ref, getCurrentInstance, nextTick, onMounted, onUpdated, onUnmounted } from 'vue';
 import { debounce } from 'lodash-es';
 import { Resize } from '@deot/helper-resize';
 import { getUid } from '@deot/helper-utils';
@@ -303,6 +303,7 @@ export const Table = defineComponent({
 		const tableId = getUid('table');
 		onMounted(() => {
 			bindEvents();
+			store.column.sortTree();
 			store.updateColumns();
 			updateLayout();
 
@@ -312,6 +313,11 @@ export const Table = defineComponent({
 			};
 
 			isReady.value = true;
+		});
+
+		// 带 key 的列移动只移动 DOM、不触发列的挂载/卸载：Table 重渲染后按 DOM 顺序校正顶层列（分组内由分组列校正）
+		onUpdated(() => {
+			store.column.sort() && store.scheduleLayout(true);
 		});
 
 		onUnmounted(() => {
