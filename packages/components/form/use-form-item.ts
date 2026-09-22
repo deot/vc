@@ -41,6 +41,8 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 
 	let validateDisabled = false;
 	let initialValue: any;
+	// 每次clear自增，clear之前发起的校验不再写入状态
+	let clearId = 0;
 
 	const currentRules = computed(() => {
 		const formRules = form.props.rules;
@@ -179,9 +181,15 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		}
 	);
 
-	const reset = (v?: any) => {
+	// 仅清除校验状态和提示，不改变值
+	const clear = () => {
+		clearId++;
 		validateState.value = '';
 		validateMessage.value = '';
+	};
+
+	const reset = (v?: any) => {
+		clear();
 
 		const model = form.props.model!;
 		if (!props.prop) return;
@@ -190,14 +198,16 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		if (!k) return;
 
 		validateDisabled = true;
+		// 复制初始值，避免后续修改影响下次reset
 		o[k] = v !== null && v !== undefined
 			? v
-			: Array.isArray(fieldValue.value)
-				? [].concat(initialValue)
-				: initialValue;
+			: cloneDeep(initialValue);
 	};
 
 	const validate = async (trigger: string) => {
+		const id = clearId;
+		const isStale = () => id !== clearId;
+
 		await nextTick(); // 如果数据变更，等待render之后再验证
 		if (!props.prop) return;
 		let rules = currentRules.value
@@ -215,7 +225,8 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 			}
 		}
 
-		validateState.value = 'validating';
+		// 期间调用过clear时，只返回结果，不再更新状态
+		if (!isStale()) validateState.value = 'validating';
 		const descriptor = {};
 
 		descriptor[props.prop] = rules;
@@ -225,15 +236,20 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 
 		try {
 			await validator.validate(model, { first: false });
-			validateState.value = 'success';
-			validateMessage.value = '';
+			if (!isStale()) {
+				validateState.value = 'success';
+				validateMessage.value = '';
+			}
 		} catch (errors: any) {
-			validateState.value = 'error';
-			validateMessage.value = errors[0].message;
+			const message = errors[0].message;
+			if (!isStale()) {
+				validateState.value = 'error';
+				validateMessage.value = message;
+			}
 
 			throw ({
 				prop: props.prop,
-				message: validateMessage.value
+				message
 			});
 		}
 		validateDisabled = false;
@@ -334,6 +350,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	expose({
 		validate,
 		reset,
+		clear,
 		getPosition
 	});
 

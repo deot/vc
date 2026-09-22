@@ -10,9 +10,9 @@
 
 ### 基础用法
 
-将数据传给 `model`，在 FormItem 上用 `prop` 指定字段路径。只有挂载时设置了 `prop` 的表单项才会注册到表单，参与校验和重置。`required` 可以直接传入错误文案。
+将数据传给 `model`，在 FormItem 上用 `prop` 指定字段路径。只有挂载时设置了 `prop` 的表单项才会注册到表单，参与校验、清除和重置。`required` 可以直接传入错误文案。
 
-`validate()` 成功时 resolve `undefined`，失败时 reject 错误数组；`validateField()` 失败时 reject 单个错误对象。需要使用 `await` 和 `try/catch` 处理结果。
+`validate()` 成功时 resolve `undefined`，失败时 reject 错误数组；`validateField()` 失败时 reject 单个错误对象。需要使用 `await` 和 `try/catch` 处理结果。`clear()` 只清除错误状态和提示，不改变字段值；`reset()` 会同时恢复初始值。`clear()` 之前发起、尚未完成的校验仍会返回结果，但不会再显示错误。如果在同一时刻修改了字段值，控件触发的 change 校验会在之后执行，此时应在 `await nextTick()` 之后再调用 `clear()`。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 20 }</config> -->
@@ -30,6 +30,7 @@
 				<div class="actions">
 					<Button type="primary" @click="handleSubmit">校验全部</Button>
 					<Button @click="handleValidateEmail">校验邮箱</Button>
+					<Button @click="handleClear">清除提示</Button>
 					<Button @click="handleReset">恢复初始值</Button>
 				</div>
 			</FormItem>
@@ -64,6 +65,10 @@ const handleValidateEmail = async () => {
 	} catch (error) {
 		result.value = error.message;
 	}
+};
+const handleClear = () => {
+	form.value.clear();
+	result.value = '已清除错误提示，字段值保持不变。';
 };
 const handleReset = () => {
 	form.value.reset();
@@ -343,12 +348,13 @@ p { margin: 12px 0 0; }
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| validate | 校验已注册字段，失败时 reject `{ prop, message }[]`，按页面位置排序 | `{ fields?: string[], scroll?: boolean }`；默认全部字段、`scroll: true` | `Promise<void>` |
+| validate | 校验已注册字段，失败时 reject `{ prop, message }[]`，按页面位置排序 | `{ fields?: string[], excludeFields?: string[], scroll?: boolean }`；默认全部字段、`scroll: true` | `Promise<void>` |
 | validateField | 校验单个字段，失败时 reject `{ prop, message }` | `prop: string, options?: { scroll?: boolean }` | `Promise<void>` |
-| reset | 清除校验状态，并恢复初始值或指定值；不增删动态列表项 | `{ fields?: string[], original?: object }` | `void` |
+| reset | 清除校验状态，并恢复初始值或指定值；不增删动态列表项 | `{ fields?: string[], excludeFields?: string[], original?: object }` | `void` |
+| clear | 清除校验状态和错误提示，不改变字段值 | `{ fields?: string[], excludeFields?: string[] }` | `void` |
 | getField | 查找已注册字段；不存在时抛出错误 | `prop: string` | `ComponentInternalInstance` |
 
-没有字段或筛选结果为空时校验直接通过。`getField()` 返回 Vue 内部实例，字段方法位于其 `exposed` 上，普通调用建议直接使用表单方法。Form 没有自定义事件；原生 `submit` 事件可通过 `@submit.prevent` 处理。
+`fields / excludeFields` 按 prop 完全匹配：先按 `fields` 选择字段（不传则为全部），再排除 `excludeFields` 中的字段。没有字段或筛选结果为空时校验直接通过。`getField()` 返回 Vue 内部实例，字段方法位于其 `exposed` 上，普通调用建议直接使用表单方法。Form 没有自定义事件；原生 `submit` 事件可通过 `@submit.prevent` 处理。
 
 ### FormItem 属性
 
@@ -388,11 +394,12 @@ p { margin: 12px 0 0; }
 | --- | --- | --- | --- |
 | validate | 按 trigger 筛选规则并校验，失败时 reject `{ prop, message }` | `trigger: string` | `Promise<void>` |
 | reset | 清除状态；非 null/undefined 的参数替代初始值 | `value?: any` | `void` |
+| clear | 清除校验状态和错误提示，不改变值 | - | `void` |
 | getPosition | 获取表单项位置 | - | `Promise<{ top: number, left: number }>` |
 
 ### MForm 属性、插槽和方法
 
-继承 Form 的属性、default 插槽和四个方法，额外属性如下：
+继承 Form 的属性、default 插槽和五个方法，额外属性如下：
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
@@ -401,7 +408,7 @@ p { margin: 12px 0 0; }
 
 ### MFormItem 属性、插槽和方法
 
-继承 FormItem 属性和三个方法，额外属性如下：
+继承 FormItem 属性和四个方法，额外属性如下：
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |

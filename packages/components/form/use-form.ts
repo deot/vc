@@ -9,14 +9,17 @@ interface FormOptions {
 	throwToast?: (...args: any[]) => any;
 }
 
-interface FormValidateOptions {
-	scroll?: boolean;
+interface FormFieldsOptions {
 	fields?: string[];
+	excludeFields?: string[];
 }
 
-interface FormResetOptions {
+interface FormValidateOptions extends FormFieldsOptions {
+	scroll?: boolean;
+}
+
+interface FormResetOptions extends FormFieldsOptions {
 	original?: object;
-	fields?: string[];
 }
 
 export const useForm = (expose: SetupContext['expose'], options: FormOptions = {}) => {
@@ -31,12 +34,18 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 			field && fields.push(field);
 		},
 		remove: (field) => {
-			field && fields.splice(fields.indexOf(field), 1);
+			// 未设置prop的表单项不会注册，indexOf为-1时不能splice
+			const index = fields.indexOf(field);
+			index !== -1 && fields.splice(index, 1);
 		}
 	});
 
-	const filterFields = (fields$?: string[]) => {
-		return !fields$ ? fields : fields.filter(item => fields$.includes(item.props.prop as string));
+	// 先按fields选择（未传则为全部），再排除excludeFields
+	const filterFields = ({ fields: fields$, excludeFields }: FormFieldsOptions = {}) => {
+		return fields.filter((item) => {
+			const prop = item.props.prop as string;
+			return (!fields$ || fields$.includes(prop)) && !excludeFields?.includes(prop);
+		});
 	};
 
 	const getField = (prop: string) => {
@@ -77,8 +86,8 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 	};
 
 	const reset = (options$: FormResetOptions = {}) => {
-		const { fields: fields$, original = {} } = options$;
-		filterFields(fields$).forEach((field) => {
+		const { fields: fields$, excludeFields, original = {} } = options$;
+		filterFields({ fields: fields$, excludeFields }).forEach((field) => {
 			let v: any;
 
 			try {
@@ -89,15 +98,19 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 		});
 	};
 
+	const clear = (options$: FormFieldsOptions = {}) => {
+		filterFields(options$).forEach(field => (field.exposed as any).clear());
+	};
+
 	const validate = async (options$: FormValidateOptions = {}) => {
-		const { scroll = true, fields: fields$ } = options$;
+		const { scroll = true, fields: fields$, excludeFields } = options$;
 
 		if (!fields.length) {
 			return;
 		}
 
 		const results = await Promise.allSettled(
-			filterFields(fields$).map(item => (item.exposed as any).validate(''))
+			filterFields({ fields: fields$, excludeFields }).map(item => (item.exposed as any).validate(''))
 		);
 
 		const originErrors = results
@@ -115,10 +128,10 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 		throw errors;
 	};
 
-	const validateField = async (prop: string, options$: FormValidateOptions = {}) => {
+	const validateField = async (prop: string, options$: Pick<FormValidateOptions, 'scroll'> = {}) => {
 		try {
 			await validate({
-				...options$,
+				scroll: options$.scroll,
 				fields: [prop]
 			});
 		} catch (e) {
@@ -128,6 +141,7 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 
 	expose({
 		reset,
+		clear,
 		validate,
 
 		// 单个操作

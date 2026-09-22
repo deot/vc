@@ -159,6 +159,9 @@
 				<Button style="margin-left: 8px" @click="handleReset">
 					Reset
 				</Button>
+				<Button style="margin-left: 8px" @click="handleClear">
+					Clear
+				</Button>
 				<Button style="margin-left: 8px" @click="handleSort">
 					乱序
 				</Button>
@@ -291,6 +294,10 @@ const handleOnly = async () => {
 
 const handleReset = () => {
 	form.value?.reset();
+};
+
+const handleClear = () => {
+	form.value?.clear();
 };
 
 const handleAdd = () => {
