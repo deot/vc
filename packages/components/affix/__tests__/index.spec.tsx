@@ -116,6 +116,41 @@ describe('index.ts', () => {
 		wrapper.unmount();
 	});
 
+	it('placement=bottom reads the live window height after it changes', async () => {
+		const exposed = ref<any>();
+		const wrapper = mount(() => (
+			<Affix ref={exposed} placement="bottom">{SLOT_TEXT}</Affix>
+		), { attachTo: document.body });
+
+		await nextTick();
+
+		const root = wrapper.find('.vc-affix').element;
+		const original = Object.getOwnPropertyDescriptor(window, 'innerHeight');
+		const setInnerHeight = (value: number) => {
+			Object.defineProperty(window, 'innerHeight', { configurable: true, value });
+		};
+
+		// 挂载后窗口变矮：元素底部 700 落在新视口（600）之外，应吸底
+		setInnerHeight(800);
+		const spy = mockRect(root, { top: 660, bottom: 700, width: 200, height: 40 });
+		exposed.value.refresh();
+		await nextTick();
+		expect(wrapper.find('.vc-affix__fixed').exists()).toBe(false);
+
+		setInnerHeight(600);
+		exposed.value.refresh();
+		await nextTick();
+		expect(wrapper.find('.vc-affix__fixed').exists()).toBe(true);
+
+		spy.mockRestore();
+		if (original) {
+			Object.defineProperty(window, 'innerHeight', original);
+		} else {
+			delete (window as any).innerHeight;
+		}
+		wrapper.unmount();
+	});
+
 	it('applies zIndex style when active', async () => {
 		const wrapper = mount(() => (<Affix zIndex={1000}>{SLOT_TEXT}</Affix>), { attachTo: document.body });
 

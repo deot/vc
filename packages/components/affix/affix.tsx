@@ -25,7 +25,6 @@ export const Affix = defineComponent({
 
 		const isActive = ref(false);
 		const transformY = ref(0);
-		const windowHeight = ref(window.innerHeight);
 
 		const isVcScrollerWheel = computed(() => isWheel(scroller.value));
 
@@ -84,6 +83,8 @@ export const Affix = defineComponent({
 
 		const setFixedStatus = () => {
 			const { placement, target, offset } = props;
+			// 每次实时读取：窗口高度会变化
+			const windowHeight = window.innerHeight;
 			const currentHeightOffset = offset + currentRect.height;
 			const containerRect: any = target && base.value!.getBoundingClientRect();
 			if (placement === 'top') {
@@ -95,10 +96,10 @@ export const Affix = defineComponent({
 				}
 			} else {
 				if (target) {
-					isActive.value = windowHeight.value - offset < currentRect.bottom && windowHeight.value > containerRect.top;
-					transformY.value = -Math.min(windowHeight.value - containerRect.top - currentHeightOffset, 0);
+					isActive.value = windowHeight - offset < currentRect.bottom && windowHeight > containerRect.top;
+					transformY.value = -Math.min(windowHeight - containerRect.top - currentHeightOffset, 0);
 				} else {
-					isActive.value = windowHeight.value - offset < currentRect.bottom;
+					isActive.value = windowHeight - offset < currentRect.bottom;
 				}
 			}
 		};
