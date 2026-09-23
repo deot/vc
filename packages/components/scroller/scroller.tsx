@@ -8,11 +8,11 @@ import { useScroller } from './use-scroller';
 const COMPONENT_NAME = 'vc-scroller';
 
 /**
- * 作为备选方案,目前推荐使用ScrollerWheel
- * 使用原生的滚动（overflow: auto）实现滚动
+ * 通用场景优先使用
+ * 使用原生的滚动（overflow: auto）实现滚动，键盘、触摸、聚焦、页内查找等都由浏览器处理
  *
  * 比scroller-wheel存在两个问题
- * 1. scroll效益比wheel高，导致scroll触发的事件操作scroll*和原生的一定延迟
+ * 1. scroll事件晚于实际滚动，依赖scroll事件联动的内容（如表头、虚拟列表）会慢一拍，这类场景使用ScrollerWheel
  * 2. 增加了一层嵌套
  */
 export const Scroller = defineComponent({

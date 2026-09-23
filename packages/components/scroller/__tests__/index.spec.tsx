@@ -657,20 +657,84 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
-		it('does NOT emit scroll on native scroll when native=false', async () => {
+		it('syncs position and emits scroll on external scroll when native=false', async () => {
 			const onScroll = vi.fn();
+			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<ScrollerWheel native={false} height="200px" onScroll={onScroll}>
+				<ScrollerWheel ref={scrollerRef} native={false} height="200px" onScroll={onScroll}>
 					<div style="height: 1000px"></div>
 				</ScrollerWheel>
 			), { attachTo: document.body });
 			await nextTick();
 
 			const wrapEl = wrapper.element as HTMLElement;
+			// 聚焦、scrollIntoView等由浏览器直接改写scrollTop
 			await makeScroll(wrapEl, 'scrollTop', 50);
 
-			expect(onScroll).not.toHaveBeenCalled();
+			expect(onScroll).toHaveBeenCalledTimes(1);
+			expect(onScroll.mock.calls[0][0].target.scrollTop).toBe(50);
+			expect(scrollerRef.value.scrollTop).toBe(50);
 
+			wrapper.unmount();
+		});
+
+		it('does NOT emit scroll twice for its own scrollTo when native=false', async () => {
+			const onScroll = vi.fn();
+			const scrollerRef = ref<any>();
+			const wrapper = mount(() => (
+				<ScrollerWheel ref={scrollerRef} native={false} height="200px" onScroll={onScroll}>
+					<div style="height: 1000px; width: 1000px"></div>
+				</ScrollerWheel>
+			), { attachTo: document.body });
+			await nextTick();
+
+			scrollerRef.value.scrollTo({ x: 10, y: 20 });
+			expect(onScroll).toHaveBeenCalledTimes(1);
+
+			// scrollTo写入DOM后浏览器随后派发的scroll
+			wrapper.element.dispatchEvent(new CustomEvent('scroll'));
+			await sleep();
+			expect(onScroll).toHaveBeenCalledTimes(1);
+
+			wrapper.unmount();
+		});
+
+		it('wheel continues from the externally scrolled position when native=false', async () => {
+			const scrollerRef = ref<any>();
+			const wrapper = mount(() => (
+				<ScrollerWheel ref={scrollerRef} native={false} height="200px">
+					<div style="height: 1000px"></div>
+				</ScrollerWheel>
+			), { attachTo: document.body });
+			await nextTick();
+
+			const wrapEl = wrapper.element as HTMLElement;
+			const restore = mockSize(wrapEl, {
+				clientWidth: 200,
+				clientHeight: 200,
+				scrollWidth: 200,
+				scrollHeight: 1000
+			});
+
+			await scrollerRef.value.refresh();
+			await nextTick();
+
+			await makeScroll(wrapEl, 'scrollTop', 300);
+
+			wrapEl.dispatchEvent(new WheelEvent('wheel', {
+				deltaY: 100,
+				deltaX: 0,
+				deltaMode: 0,
+				bubbles: true,
+				cancelable: true
+			}));
+			await sleep(30);
+
+			// 修复前：从旧位置0开始 -> 100
+			expect(scrollerRef.value.scrollTop).toBe(400);
+			expect(wrapEl.scrollTop).toBe(400);
+
+			restore();
 			wrapper.unmount();
 		});
 

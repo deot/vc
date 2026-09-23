@@ -128,13 +128,28 @@ export const ScrollerWheel = defineComponent({
 			wheel.off(handleWheel);
 		});
 
+		/**
+		 * 非wheel引起的滚动（聚焦、scrollIntoView、页内查找、直接写scrollTop等）也要同步位置，否则下次wheel会从旧位置跳回
+		 * 自身scrollTo写入后触发的scroll与记录值一致，跳过以免重复派发（容差1px兼容小数像素取整）
+		 */
+		const handleNativeScroll = () => {
+			const el = wrapper.value!;
+			if (
+				!props.native
+				&& Math.abs(el.scrollTop - scrollY.value) < 1
+				&& Math.abs(el.scrollLeft - scrollX.value) < 1
+			) return;
+
+			handleScroll();
+		};
+
 		return () => {
 			return (
 				<div
 					ref={wrapper}
 					class={[wrapperClass.value, 'vc-scroller-wheel']}
 					style={wrapperStyle.value}
-					onScroll={() => props.native && handleScroll()}
+					onScroll={handleNativeScroll}
 				>
 					<Content
 						ref={content}

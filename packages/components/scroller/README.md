@@ -6,7 +6,8 @@
 
 - 列表、日志或面板内容超过可用空间时。
 - 需要读取滚动位置、通过方法定位，或调整滚动条位置时。
-- `Scroller` 使用原生滚动事件；`ScrollerWheel` 在 `native=false` 时通过滚轮控制位置，减少一层容器嵌套。触摸滚动场景优先使用 `Scroller`。
+- 通用场景优先使用 `Scroller`：滚动由浏览器处理，键盘、触摸、聚焦等方式都能正常滚动。
+- `ScrollerWheel` 在 `native=false` 时由滚轮驱动位置，减少一层容器嵌套，滚动位置与依赖它的内容在同一帧更新，适合表头联动、虚拟列表等场景；此时键盘方向键、PageDown 等无法滚动内容，触摸滚动为模拟实现。
 
 ### 基础用法
 
@@ -290,7 +291,7 @@ const trackId = `scroller-track-${useId()}`;
 | --- | --- | --- | --- | --- |
 | stopPropagation | 控制被接管的滚轮事件是否停止冒泡 | `boolean` | - | `true` |
 
-`native=true` 时使用原生滚动；`native=false` 时由滚轮和实例方法同步位置，直接修改 DOM 的 `scrollTop` 不会触发其代理 scroll 事件。需要程序化滚动时使用组件方法。
+`native=true` 时使用原生滚动；`native=false` 时由滚轮和实例方法驱动位置，聚焦、`scrollIntoView`、直接修改 DOM 的 `scrollTop` 等引起的滚动也会同步滚动条并触发 scroll 事件。
 
 ### MScroller
 
