@@ -6,11 +6,14 @@ import type { TableColumnNode, TableColumnStates } from '../table-column/table-c
 
 export type TableColumnNodeRaw = Raw<TableColumnNode>;
 
+const findSelectionColumn = (columns: TableColumnNodeRaw[]) => {
+	return flattenColumnNodes(columns).find(node => node.states.type === 'selection');
+};
+
 export type TableStates = {
 	/**
-	 * 渲染的数据来源，是对 table 中的 data 过滤排序后的结果
+	 * 表格的数据（即 table 的 data；排序、过滤由外部完成）
 	 */
-	_data: any[];
 	data: any[];
 	/**
 	 * 参与渲染的行，行号即其下标：树形表格为按展开状态铺平后的可见行，否则同 data
@@ -37,6 +40,7 @@ export type TableStates = {
 
 	/**
 	 * 选择
+	 * 	- reserveSelection / selectable: 取自 type="selection" 列（computed，基于 _columns，列被隐藏时仍生效）
 	 */
 	isAllSelected: boolean;
 	selection: any[];
@@ -68,11 +72,6 @@ export type TableStates = {
 	/**
 	 * computeds
 	 */
-	isComplex: boolean;
-	/**
-	 * 是否存在 getSpan 合并块（grid 渲染），hover 高亮等需要走 JS 控制
-	 */
-	hasMergeCells: boolean;
 	isGroup: boolean;
 	/**
 	 * type="expand" 的叶子列，承载展开行的渲染
@@ -90,14 +89,10 @@ export type TableStates = {
 	leafColumns: TableColumnNodeRaw[];
 	leftFixedLeafColumns: TableColumnNodeRaw[];
 	rightFixedLeafColumns: TableColumnNodeRaw[];
-	leafColumnsLength: number;
-	leftFixedLeafColumnsLength: number;
-	rightFixedLeafColumnsLength: number;
 };
 
 export class BaseWatcher {
 	states: TableStates = reactive({
-		_data: [],
 		data: [],
 		renderData: [],
 		list: [],
@@ -112,8 +107,8 @@ export class BaseWatcher {
 
 		isAllSelected: false,
 		selection: [],
-		reserveSelection: false,
-		selectable: null,
+		reserveSelection: computed(() => !!findSelectionColumn(this.states._columns)?.states.reserveSelection),
+		selectable: computed(() => findSelectionColumn(this.states._columns)?.states.selectable ?? null),
 
 		hoverRowIndex: null,
 
@@ -125,8 +120,6 @@ export class BaseWatcher {
 		treeLoading: {},
 		treeLazyChildren: {},
 
-		isComplex: computed(() => this.states.leftFixedColumns.length > 0 || this.states.rightFixedColumns.length > 0),
-		hasMergeCells: computed(() => this.states.list.some((item: any) => !!item.hasMerge)),
 		isGroup: computed(() => this.states.columns.length > this.states.originColumns.length),
 		expandColumn: computed(() => this.states.columns.find(node => node.states.type === 'expand') || null),
 		treeColumnIndex: computed(() => this.states.columns.findIndex(node => node.states.type === 'default')),
@@ -137,8 +130,5 @@ export class BaseWatcher {
 		leafColumns: computed(() => flattenColumnNodes(this.states.notFixedColumns)),
 		leftFixedLeafColumns: computed(() => flattenColumnNodes(this.states.leftFixedColumns)),
 		rightFixedLeafColumns: computed(() => flattenColumnNodes(this.states.rightFixedColumns)),
-		leafColumnsLength: computed(() => this.states.leafColumns.length),
-		leftFixedLeafColumnsLength: computed(() => this.states.leftFixedLeafColumns.length),
-		rightFixedLeafColumnsLength: computed(() => this.states.rightFixedLeafColumns.length),
 	});
 }

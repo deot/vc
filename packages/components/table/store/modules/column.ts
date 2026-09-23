@@ -1,4 +1,4 @@
-import { concat, isEqual, isEqualWith, pick } from 'lodash-es';
+import { concat, isEqual, pick } from 'lodash-es';
 import type { Nullable } from '@deot/helper-shared';
 import type { TableColumnNode } from '../../table-column/table-column-node';
 import { flattenColumnNodes } from '../utils';
@@ -146,11 +146,6 @@ export class Column {
 		const array = parent ? parent.childNodes : this.store.states._columns;
 		array.push(column);
 
-		if (column.states.type === 'selection') {
-			this.store.states.selectable = column.states.selectable;
-			this.store.states.reserveSelection = !!column.states.reserveSelection;
-		}
-
 		if (this.store.table.exposed.isReady.value) {
 			this.sort(parent);
 			this.store.updateColumns();
@@ -217,20 +212,21 @@ export class Column {
 	update() {
 		const { states } = this.store;
 		const _columns = states._columns || [];
+		const isLeftFixed = (column: TableColumnNode) => column.states.fixed === true || column.states.fixed === 'left';
 
-		// selection 自动 fixed 的副作用作用在原始 _columns 上
-		if (_columns[0] && _columns[0].states.type === 'selection' && !_columns[0].states.fixed) {
-			const anyLeftFixed = _columns.some(column => column.states.fixed === true || column.states.fixed === 'left');
-			if (anyLeftFixed) {
-				_columns[0].states.fixed = true;
-			}
-		}
-
-		// 基于可见树（剔除 hidden）派生 fixed 分组与 headerRows
+		// 基于可见树（剔除 hidden）派生 fixed 分组与 headerRows；leaf 为原引用，可直接与 autoFixed 比较
 		const visibleColumns = this.cloneVisibleTree(_columns);
-		const leftFixedColumns = visibleColumns.filter(column => column.states.fixed === true || column.states.fixed === 'left');
+
+		// 最前的 selection 列在存在（可见的）左固定列时随之左固定：只影响分组，不改写列自身的 fixed，
+		// 其余列取消固定或被隐藏后随之恢复
+		const first = visibleColumns[0];
+		const autoFixed = first && first.states.type === 'selection' && !first.states.fixed && visibleColumns.some(isLeftFixed)
+			? first
+			: null;
+
+		const leftFixedColumns = visibleColumns.filter(column => isLeftFixed(column) || column === autoFixed);
 		const rightFixedColumns = visibleColumns.filter(column => column.states.fixed === 'right');
-		const notFixedColumns = visibleColumns.filter(column => !column.states.fixed);
+		const notFixedColumns = visibleColumns.filter(column => !column.states.fixed && column !== autoFixed);
 		const originColumns = concat(leftFixedColumns, notFixedColumns, rightFixedColumns);
 		const headerRows = columnsToRowsEffect(originColumns);
 
@@ -274,7 +270,7 @@ export class Column {
 	syncToParent() {
 		const flattenColumns = flattenColumnNodes(this.store.states._columns);
 		const columns = flattenColumns.map(column => pick(column.states, COLUMN_SYNC_KEYS) as TableColumnSyncItem);
-		if (isEqualWith(columns.map(i => pick(i, COLUMN_SYNC_KEYS)), this._sync.snapshot.map(i => pick(i, COLUMN_SYNC_KEYS)))) return;
+		if (isEqual(columns, this._sync.snapshot)) return;
 		this._sync.snapshot = columns;
 		// 置位：本次 emit 会回流为外部写回，applyExternal 据此跳过，避免回环
 		this._sync.suppressWatch = true;

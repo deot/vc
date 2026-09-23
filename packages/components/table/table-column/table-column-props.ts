@@ -1,5 +1,6 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { TableColumnStates } from './table-column-node';
+import type { TableFilterOptions } from '../table-header/table-filter';
 
 export const tableColumnProps = {
 	type: {
@@ -10,8 +11,9 @@ export const tableColumnProps = {
 	label: String,
 	labelClass: String,
 	prop: String,
-	width: Number,
-	minWidth: Number,
+	// 数字或 '120' / '120px'
+	width: [String, Number],
+	minWidth: [String, Number],
 	renderHeader: Function as PropType<TableColumnStates['renderHeader']>,
 	resizable: {
 		type: Boolean,
@@ -26,20 +28,8 @@ export const tableColumnProps = {
 	index: [Number, Function] as PropType<number | ((rowIndex: number) => number)>,
 	// 头部是否展示排序
 	sortable: Boolean,
-	// 数据过滤的选项
-	filters: Array as PropType<unknown[]>,
-	// 是否支持多选
-	filterMultiple: {
-		type: Boolean,
-		default: true
-	},
-	filterIcon: String,
-	// 选中的数据过滤项
-	filteredValue: Array as PropType<unknown[]>,
-	// 筛选弹层的样式
-	filterPopupClass: String,
-	// 筛选的方法
-	filter: Function as PropType<(value: unknown) => void>,
+	// 表头筛选：原样传给 TableFilter（data / max / icon / portalClass / modelValue / onChange 等）
+	filterOptions: Object as PropType<TableFilterOptions>,
 
 	tooltip: [String, Function] as PropType<TableColumnStates['tooltip']>
 };

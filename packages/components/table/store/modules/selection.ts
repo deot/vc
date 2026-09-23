@@ -1,3 +1,4 @@
+import { computed, toRaw } from 'vue';
 import { debounce } from 'lodash-es';
 import { hasOwn } from '@deot/helper-utils';
 import { getValuesMap, getRowValue } from '../../utils';
@@ -7,8 +8,25 @@ import type { Store } from '../store';
 export class Selection {
 	store: Store;
 
+	// 行（raw）-> 在可选择行（flatData）中的下标，见 getIndex
+	indexMap = computed(() => {
+		const map = new Map<unknown, number>();
+		this.store.flatData.value.forEach((row: any, index: number) => map.set(toRaw(row), index));
+		return map;
+	});
+
 	constructor(store: Store) {
 		this.store = store;
+	}
+
+	/**
+	 * 行在可选择行（flatData）中的下标，即 selectable 的第二个参数：
+	 * 与展开状态无关，表头全选与行内勾选框取值一致；非树形表格即 data 中的下标
+	 * @param row 行数据
+	 * @returns 下标，不可选择的行（如 expandSelectable 为 false 时的子行）为 -1
+	 */
+	getIndex(row: any) {
+		return this.indexMap.value.get(toRaw(row)) ?? -1;
 	}
 
 	isSelected(row: any) {
@@ -48,10 +66,6 @@ export class Selection {
 			});
 		}
 
-		deleted.forEach((deletedItem: any) => {
-			selection.splice(selection.indexOf(deletedItem), 1);
-		});
-
 		if (deleted.length) {
 			const newSelection = selection.filter((item: any) => !deleted.includes(item));
 			this.store.states.selection = newSelection;
@@ -89,7 +103,7 @@ export class Selection {
 		const { indeterminate } = this.store.table.props;
 		const { selection, isAllSelected, selectable } = this.store.states;
 
-		// 当只选择某些行(但不是全部)时，根据 selectonindefined 的值选择或取消选择所有行
+		// 当只选择某些行(但不是全部)时，根据 indeterminate 的值选择或取消选择所有行
 		const value = indeterminate
 			? !isAllSelected
 			: !(isAllSelected || selection.length);

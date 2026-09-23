@@ -192,6 +192,43 @@ const tableData3 = ref([
 ```
 :::
 
+### 尺寸
+通过 `size` 调整字号与单元格的上下内边距，可选 `large`、`medium`、`small`、`mini`，默认为 `medium`。首末列的左右内边距不受影响；`medium` 的合计行最小高度为 44px，其余尺寸的合计行高度由内边距决定。嵌套在展开行等位置的表格只按自身的 `size`、`border` 等显示，不受外层表格影响。
+
+:::RUNTIME
+```vue
+<template>
+	<Table :data="tableDataSize" size="small" border show-summary>
+		<TableColumn
+			prop="date"
+			label="日期"
+			width="180"
+		/>
+		<TableColumn
+			prop="name"
+			label="姓名"
+		/>
+		<TableColumn
+			prop="amount"
+			label="金额"
+		/>
+	</Table>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Table, TableColumn } from '@deot/vc';
+
+const tableDataSize = ref([
+	{ date: '2011-11-02', name: '微一案', amount: 100 },
+	{ date: '2011-11-04', name: '微一案', amount: 200 },
+	{ date: '2011-11-01', name: '微一案', amount: 300 }
+]);
+</script>
+```
+:::
+
+完整示例（切换各尺寸对比）：[尺寸](./examples/size.vue)
+
 ### 带状态表格
 可将表格内容 `highlight` 显示，方便区分「成功、信息、警告、危险」等内容。添加 `rowClass` 属性返回对应行的类名。
 
@@ -608,20 +645,29 @@ const toggle = (col) => {
 
 ### 筛选
 
-对表格进行筛选，可快速查找或对比数据。
+在列上设置 `filter-options` 后，表头显示筛选图标。表格只负责交互，选中的值通过 `onChange` / `onUpdate:modelValue` 交给外部，数据过滤由外部完成（与排序一致）。`filter-options` 会原样传给表头的筛选组件（`v-bind`），字段见下方 [filter-options](#filter-options)。
+
+- `max` 为可选数量上限，默认 `1`：
+  - `max` 为 `1` 时是单选：点选即生效，「全部」清空。
+  - `max` 大于 `1` 时是多选：勾选后点「确认」生效，「重置」清空；选满 `max` 个后，其余选项置灰。
+- `modelValue` 的形态与 `Select` 一致：数组，或者 `'a,b'` 字符串 / 单个值，输出保持原形态。
+- 写了 `modelValue`（即使值为 `undefined`）即为受控：需在 `onUpdate:modelValue` 或 `onChange` 中写回才生效，不写回（如校验不通过）则保持原值。
+- 不写 `modelValue` 时由组件自己记录确认结果，只用 `onChange` 即可；此时多选收到数组，单选收到单个值。
 
 :::RUNTIME
 ```vue
 <template>
-	<Table :data="dataSource">
+	<Table :data="filteredData">
 		<TableColumn
-			prop="date"
-			label="日期"
-			:filters="filters"
-			:filtered-value="filteredValue"
-			:filter-multiple="true"
-			:filter="handleFilter"
+			prop="type"
+			label="类型"
 			min-width="180"
+			:filter-options="{
+				data: types,
+				max: 2,
+				modelValue: typeFilter,
+				'onUpdate:modelValue': v => (typeFilter = v)
+			}"
 		/>
 		<TableColumn
 			prop="name"
@@ -631,46 +677,51 @@ const toggle = (col) => {
 		<TableColumn
 			prop="address"
 			label="地址"
-			width="880"
 		/>
 	</Table>
 </template>
 <script setup>
+import { ref, computed } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
-const filters = ref([
+const types = [
 	{ label: '代理升级', value: 1 },
-	{ label: '代理加入', value: 2, disabled: true }
-]);
-const filteredValue = ref([]);
+	{ label: '代理加入', value: 2 },
+	{ label: '代理退出', value: 3, disabled: true }
+];
+const typeFilter = ref([]);
 const tableData = ref([
 	{
-		date: '2011-11-02',
+		type: 1,
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
 	},
 	{
-		date: '2011-11-04',
+		type: 2,
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
 	},
 	{
-		date: '2011-11-01',
+		type: 1,
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
 	},
 	{
-		date: '2011-11-03',
+		type: 2,
 		name: '微一案',
 		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
 	}
 ]);
-const handleFilter = (value) => {
-	filteredValue.value = value;
-};
+
+const filteredData = computed(() => {
+	if (!typeFilter.value.length) return tableData.value;
+	return tableData.value.filter(row => typeFilter.value.includes(row.type));
+});
 </script>
 ```
 :::
+
+完整示例（单选受控 / 多选 `max: 2` / 只用 `onChange`）：[筛选](./examples/filter.vue)
 
 ### 树形数据与懒加载
 支持树类型的数据的显示。当 `row` 中包含 `children` 字段时，被视为树形数据。渲染树形数据时，必须要指定 `primary-key`，且其值在整棵树（含懒加载得到的子行）中唯一；重复出现的值只有首次出现的行可展开。支持子节点数据异步加载：设置 `Table` 的 `lazy-tree` 属性为 `true` 与加载函数 `load-expand`，并通过 `row` 中的 `hasChildren` 字段标记可加载子节点的行（仅 `lazy-tree` 时生效）。`children` 与 `hasChildren` 都可以通过 `tree-map` 配置。
@@ -945,7 +996,7 @@ const updateOffsets = () => {
 | lazy-tail               | 延迟展示 `append` slot，直到数据全部进入虚拟列表；普通表格视为已到末尾，不影响合计行 | `boolean` | - | `false` |
 | stripe                  | 是否为斑马纹 `table`                                                                                                                             | `boolean`                                                  | -                           | `false` |
 | border                  | 是否带有纵向边框                                                                                                                                   | `boolean`                                                  | -                           | `false` |
-| size                    | `Table` 的尺寸                                                                                                                                | `string`                                                   | `medium` 、 `small` 、 `mini` | -       |
+| size                    | `Table` 的尺寸：调整字号与单元格的上下内边距                                                                                                           | `string`                                                   | `large` 、 `medium` 、 `small` 、 `mini` | `medium` |
 | fit                     | 列的宽度是否自撑开：列宽之和不足表格宽度时，未设 `width` 的列按比例分配剩余宽度；所有列都设了 `width` 时，剩余宽度给最后一个非固定列（全是固定列时给最后一列）。为 `false` 时不自撑开 | `boolean`                                                  | -                           | `true`  |
 | show-header             | 是否显示表头                                                                                                                                     | `boolean`                                                  | -                           | `true`  |
 | highlight               | 是否要高亮当前行                                                                                                                                   | `boolean`                                                  | -                           | `false` |
@@ -971,8 +1022,8 @@ const updateOffsets = () => {
 | show-summary            | 是否在表尾显示合计行                                                                                                                                 | `boolean`                                                  | -                           | `false` |
 | sum-text                | 合计行第一列的文本                                                                                                                                  | `string`                                                   | -                           | 合计      |
 | get-summary             | 自定义的合计计算方法                                                                                                                                 | `Function({ columns, data })`                              | -                           | -       |
-| get-span                | 合并行或列的计算方法                                                                                                                                 | `Function({ row, column, rowIndex, columnIndex })`         | -                           | -       |
-| select-on-indeterminate | 在多选表格中，当仅有部分行被选中时，点击表头的多选框时的行为。若为 `true`，则选中所有行；若为 `false`，则取消选择所有行                                                                        | `boolean`                                                  | -                           | `true`  |
+| get-span                | 合并行或列的计算方法；开启 / 关闭（传入与否）立即生效，换成另一个函数时在 data 或列变化后按新规则生效                                                                                                                                 | `Function({ row, column, rowIndex, columnIndex })`         | -                           | -       |
+| indeterminate           | 在多选表格中，当仅有部分行被选中时，点击表头的多选框时的行为。若为 `true`，则选中所有行；若为 `false`，则取消选择所有行                                                                        | `boolean`                                                  | -                           | `true`  |
 | sort                    | 默认的排序列的 `prop` 和顺序。它的`prop`属性指定默认的排序的列，`order`指定默认排序的顺序                                                                                    |                                                            |                             |         |
 | delay                   | 延迟选择，排除transition的影响                                                                                                                       |                                                            |                             |         |
 | resizable               | 是否可以伸缩(总开关/单独的column.resizable也可以设置)                                                                                                                                     |                                                            |                             |         |
@@ -996,7 +1047,7 @@ const updateOffsets = () => {
 | row-dblclick       | 当某一行被双击时会触发该事件                                                | `(row: Object, column: Object, event: Object) => void 0`                        | `row`：当前行数据；`column`：当前列数据；`event`：事件对象                        |
 | header-click       | 当某一列的表头被点击时会触发该事件                                             | `(column: Object, event: Object) => void 0`                                     | `column`：当前列数据；`event`：事件对象                                    |
 | header-contextmenu | 当某一列的表头被鼠标右键点击时触发该事件                                          | `(column: Object, event: Object) => void 0`                                     | `column`：当前列数据；`event`：事件对象                                    |
-| current-change     | 当表格的当前行发生变化的时候会触发该事件，如果要高亮当前行，请打开表格的 highlight-current-row 属性 | `(currentRow: Object, oldCurrentRow: Object) => void 0`                         | `currentRow`：改变后的行数据；`oldCurrentRow`：改变前的行数据                   |
+| current-change     | 当表格的当前行发生变化的时候会触发该事件，如果要高亮当前行，请打开表格的 `highlight` 属性 | `(currentRow: Object, oldCurrentRow: Object) => void 0`                         | `currentRow`：改变后的行数据；`oldCurrentRow`：改变前的行数据                   |
 | header-dragend     | 当拖动表头改变了列的宽度的时候会触发该事件                                         | `(newWidth: number, oldWidth: number, column: Object, event: Object) => void 0` | `newWidth`: 拖拽后宽度；`oldWidth`：拖拽前宽度；`column`：当前列数据；`event`：事件对象 |
 | expand-change      | 当用户对某一行展开或者关闭的时候会触发该事件                                        | 展开行：`(row: Object, expandedRows: Array) => void 0`；树形：`(row: Object, expanded: boolean, maxLevel: number) => void 0` | `row`：当前行数据；`expandedRows`：展开的行数据；`expanded`：是否展开；`maxLevel`：当前可见行的最大层级（根为 `0`）      |
 | sort-change        | 当表格的排序条件发生变化的时候会触发该事件                                         | { prop, order }                                                                 |                                                                |
@@ -1009,7 +1060,7 @@ const updateOffsets = () => {
 | ------------------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | clearSelection     | 用于多选表格，清空用户的选择                                                 | -                                                                            |
 | toggleRowSelection | 用于多选表格，切换某一行的选中状态，如果使用了第二个参数，则是设置这一行选中与否（selected 为 true 则选中）  | `row`：要切换的行数据；`selected`：设置改行的选中状态；`emitChange`：调用 API 修改选中值，不触发 `select` 事件 |
-| togglAllSelection  | 用于多选表格，切换所有行的选中状态                                              | -                                                                            |
+| toggleAllSelection | 用于多选表格，切换所有行的选中状态                                              | -                                                                            |
 | toggleRowExpansion | 用于可展开表格与树形表格，切换某一行的展开状态，如果使用了第二个参数，则是设置这一行展开与否（expanded 为 true 则展开） | `row`：要展开的行数据；`expanded`：设置该行是否展开                                            |
 | setCurrentRow      | 用于单选表格，设定某一行为选中行，如果调用时不加参数，则会取消目前高亮行的选中状态。                     | `row`：选中的行数据                                                                 |
 | refreshLayout      | 对 Table 进行重新布局，虚拟化表格（`height` 或 `virtualized`）会同时整体重新测量已构建的行。数据变化、尺寸变化会自动处理（内部的布局更新只刷新虚拟列表的视口），仅在无法自动观察的布局变化后调用 | -                                                                            |
@@ -1031,10 +1082,10 @@ const updateOffsets = () => {
 | index              | 如果设置了 `type=index`，可以通过传递 `index` 属性来自定义索引                                                   | `number`, `Function(index)`                    | -                                      | -         |
 | label              | 显示的标题                                                                                        | `string`                                       | -                                      | -         |
 | prop               | 对应列内容的字段名                                                                                    | `string`                                       | -                                      | -         |
-| width              | 对应列的宽度                                                                                       | `string`                                       | -                                      | -         |
-| min-width          | 对应列的最小宽度，与 `width` 的区别是 `width` 是固定的，`min-width`把剩余宽度按比例分配给设置了 `min-width` 的列                | `string`                                       | -                                      | -         |
+| width              | 对应列的宽度                                                                                       | `string`、`number`                             | -                                      | -         |
+| min-width          | 对应列的最小宽度，与 `width` 的区别是 `width` 是固定的，`min-width`把剩余宽度按比例分配给设置了 `min-width` 的列                | `string`、`number`                             | -                                      | -         |
 | fixed              | 列是否固定在左侧或者右侧，`true` 表示固定在左侧                                                                  | `string`, `boolean`                            | `true`, `left`, `right`                | -         |
-| render-header      | 列标题 `Label` 区域渲染使用的 `Function`                                                               | Function(h, { column, $index })                | -                                      | -         |
+| render-header      | 列标题 `Label` 区域渲染使用的 `Function`                                                               | `Function({ column, columnIndex, store })`     | -                                      | -         |
 | resizable          | 对应列是否可以通过拖动改变宽度（需要在 `Table` 上设置 `border` 属性为真）                                               | `boolean`                                      | -                                      | `true`    |
 | formatter          | 用来格式化内容                                                                                      | `Function({ row, column, cellValue, $index })` | -                                      | -         |
 | line               | 文本行数                                                                                         | `number`                                       | -                                      | `0`       |
@@ -1042,21 +1093,30 @@ const updateOffsets = () => {
 | header-align       | 表头对齐方式，若不设置该项，则使用表格的对齐方式                                                                     | `string`                                       | `left`、`center`、`right`                | -         |
 | class              | 列的 `className`                                                                               | `string`                                       | -                                      |           |
 | label-class        | 当前列标题的自定义类名                                                                                  | `string`                                       | -                                      | -         |
-| selectable         | 仅对 t`ype=selection` 的列有效，类型为 `Function`，`Function` 的返回值用来决定这一行的 `CheckBox` 是否可以勾选            | `Function(row, index)`                         | -                                      | -         |
+| selectable         | 仅对 `type=selection` 的列有效，类型为 `Function`，`Function` 的返回值用来决定这一行的 `CheckBox` 是否可以勾选；`index` 为行在可选择行中的下标（树形表格按展开前的全部行计，与展开状态无关）；行对象需唯一，同一对象在数据中重复出现时，下标取最后一次出现的位置 | `Function(row, index)`                         | -                                      | -         |
 | reserve-selection  | 仅对 `type=selection` 的列有效，类型为 `boolean`，为 `true` 则会在数据更新之后保留之前选中的数据（需指定 `primary-key`）        | `boolean`                                      | -                                      | `false`   |
-| filters            | 数据过滤的选项，数组格式，数组中的元素需要有 label 和 value 属性。                                                     | `Array[{ label, value }]`                      |                                        |           |
-| filter-multiple    | 数据过滤的选项是否多选                                                                                  | `boolean`                                      | -                                      | `true`    |
-| filter-icon        | 筛选的icon                                                                                      | `string`                                       | -                                      | -         |
-| filter-popup-class | 筛选弹框的自定义样式名                                                                                  | `string`                                       | -                                      | -         |
-| filtered-value     | 选中的数据过滤项                                                                                     | `Array`                                        | -                                      | -         |
-| filter             | 筛选数据调用的方法                                                                                    | `Function`                                     | -                                      | -         |
+| filter-options     | 表头筛选的配置，原样传给筛选组件，字段见下方 [filter-options](#filter-options) | `Object` | - | - |
+
+### filter-options
+
+| 字段 | 说明 | 类型 | 默认值 |
+| --- | --- | --- | --- |
+| data | 筛选项 | `Array<{ label, value, disabled? }>` | `[]` |
+| max | 可选数量上限：`1` 为单选，大于 `1` 为多选，选满后其余选项置灰 | `number` | `1` |
+| modelValue | 当前生效的筛选值，形态同 `Select`：数组，或 `'a,b'` 字符串 / 单个值；写了这个字段即为受控 | `Array \| string \| number` | - |
+| separator | 字符串形态的分隔符，同 `Select` | `string` | `,` |
+| numerable | 字符串形态对应数字选项时设为 `true`，同 `Select` | `boolean` | `false` |
+| icon | 筛选图标 | `string` | `filter-solid` |
+| portalClass | 弹层的自定义类名 | `string` | - |
+| onUpdate:modelValue | 生效值变化时触发，受控时在这里写回 | `(value) => void` | - |
+| onChange | 生效值变化时触发 | `(value) => void` | - |
 
 ### Column Slot
 
 | 属性     | 说明                                  |
 | ------ | ----------------------------------- |
 | -      | 自定义列的内容，参数为 `{ row, column, rowIndex, columnIndex, selected, level, treeNode }`；`treeNode` 仅树形表格的树形列提供，为 `{ level, indent, expandable, expanded, loading }`；`type="expand"` 时为展开行的内容，参数为 `{ row, rowIndex, store }` |
-| header | 自定义表头的内容. 参数为 { column, $index }    |
+| header | 自定义表头的内容，参数为 `{ column, columnIndex, store }` |
 
 
 ## TODO

@@ -5,8 +5,8 @@ import { Wheel } from '@deot/helper-wheel';
 type Options = {
 	headerWrapper: Ref<any>;
 	bottomWrapper: Ref<any>;
+	// 表体的滚动容器（横向、纵向为同一个元素）
 	bodyXWrapper: Ref<any>;
-	bodyYWrapper: Ref<any>;
 	bodyScroller: Ref<any>;
 };
 
@@ -18,7 +18,7 @@ type Options = {
  * @param options 相关元素与表体滚动容器
  */
 export const useWheelForward = (options: Options) => {
-	const { headerWrapper, bottomWrapper, bodyXWrapper, bodyYWrapper, bodyScroller } = options;
+	const { headerWrapper, bottomWrapper, bodyXWrapper, bodyScroller } = options;
 
 	const handleMousewheel = (deltaX: number, deltaY: number) => {
 		if (!bodyXWrapper.value) return;
@@ -63,12 +63,12 @@ export const useWheelForward = (options: Options) => {
 				);
 			},
 			shouldWheelY: (delta) => {
-				if (!bodyYWrapper.value) return false;
+				if (!bodyXWrapper.value) return false;
 				const {
 					scrollHeight: contentH,
 					clientHeight: wrapperH,
 					scrollTop: scrollY
-				} = bodyYWrapper.value;
+				} = bodyXWrapper.value;
 
 				if (wrapperH === contentH) {
 					return false;

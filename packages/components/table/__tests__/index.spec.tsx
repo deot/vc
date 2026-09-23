@@ -120,7 +120,7 @@ describe('Table render & modifier classes', () => {
 		document.body.innerHTML = '';
 	});
 
-	it('applies modifier classes for stripe / border / divider / fit / maxHeight', async () => {
+	it('applies modifier classes for stripe / border / divider / fit / size', async () => {
 		const data = buildData(2);
 		const wrapper = mount(() => (
 			<Table
@@ -130,6 +130,7 @@ describe('Table render & modifier classes', () => {
 				divider
 				maxHeight={400}
 				fit={false}
+				size="small"
 			>
 				<TableColumn label="名称" prop="name" />
 			</Table>
@@ -141,10 +142,31 @@ describe('Table render & modifier classes', () => {
 			'vc-table--striped',
 			'vc-table--border',
 			'vc-table--divider',
-			'vc-table--fluid-height'
+			'vc-table--small'
 		]));
 		expect(wrapper.classes()).not.toContain('vc-table--fit');
+		// 已移除的无样式状态类
+		['--fluid-height', '--group', '--sticky-columns', '--enable-row-hover'].forEach((name) => {
+			expect(wrapper.classes()).not.toContain(`vc-table${name}`);
+		});
 
+		wrapper.unmount();
+	});
+
+	it('size defaults to medium and renders the size modifier class', async () => {
+		const size = ref<string | undefined>(undefined);
+		const wrapper = mount(() => (
+			<Table data={buildData(1)} size={size.value as any}>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.classes()).toContain('vc-table--medium');
+
+		size.value = 'large';
+		await flush();
+		expect(wrapper.classes()).toContain('vc-table--large');
+		expect(wrapper.classes()).not.toContain('vc-table--medium');
 		wrapper.unmount();
 	});
 
@@ -215,7 +237,15 @@ describe('TableColumn types & rendering', () => {
 			>
 				<TableColumn type="selection" fixed="left" width={60} />
 				<TableColumn type="index" label="#" index={1} />
-				<TableColumn label="名称" prop="name" sortable tooltip="提示" filters={[{ value: 1, label: 'a' }]} headerAlign="center" align="center" />
+				<TableColumn
+					label="名称"
+					prop="name"
+					sortable
+					tooltip="提示"
+					filterOptions={{ data: [{ value: 1, label: 'a' }] }}
+					headerAlign="center"
+					align="center"
+				/>
 				<TableColumn label="操作" fixed="right" minWidth={80}>
 					{{ default: ({ rowIndex }: any) => <button class="op">{rowIndex}</button> }}
 				</TableColumn>
@@ -227,9 +257,7 @@ describe('TableColumn types & rendering', () => {
 		expect(wrapper.findAll('.vc-table__th').length).toBeGreaterThanOrEqual(4);
 		expect(wrapper.findAll('.vc-table-sort').length).toBeGreaterThan(0);
 		expect(wrapper.findAll('.op').length).toBe(2);
-		// 阶段一：!height 路径走单一 DOM + sticky，根节点带 vc-table--sticky-columns，
-		// 固定列以 is-fixed-left / is-fixed-right 表示，不再有 .vc-table__fixed* 容器。
-		expect(wrapper.classes()).toContain('vc-table--sticky-columns');
+		// !height 路径走单一 DOM + sticky，固定列以 is-fixed-left / is-fixed-right 表示，不再有 .vc-table__fixed* 容器。
 		expect(wrapper.find('.vc-table__th.is-fixed-left').exists()).toBe(true);
 		expect(wrapper.find('.vc-table__th.is-fixed-right').exists()).toBe(true);
 		expect(wrapper.find('.vc-table__fixed').exists()).toBe(false);
@@ -281,10 +309,54 @@ describe('TableColumn types & rendering', () => {
 		wrapper.unmount();
 	});
 
-	// 多级表头依赖 vc-table-column 的 provide 暴露父实例 vnode.el；当前 provide 仅暴露
-	// `{ columnId, columnConfig }`，与 sub-column 中读取 `parent.vnode.el.children` 的逻辑不一致，
-	// 属未完成业务，暂以 it.skip 占位以避免对未稳定行为做强假设。
-	it.skip('supports multi-level header (nested TableColumn children) - 业务未完成', () => {});
+	it('width / min-width accept strings and stay numeric when min-width changes at runtime', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const minWidth = ref('100');
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(1)}>
+				<TableColumn label="A" prop="name" minWidth={minWidth.value} />
+				<TableColumn label="B" prop="count" width="120px" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const vm = tableRef.value!;
+		const [a, b] = vm.store.states.columns;
+		expect(a.states.minWidth).toBe(100);
+		expect(b.states.width).toBe(120);
+
+		minWidth.value = '200px';
+		await flush();
+		await sleep(60);
+		await flush();
+		expect(a.states.minWidth).toBe(200);
+		// 列宽累加保持数值（jsdom 容器宽度为 0，取列宽之和）
+		expect(vm.layout.states.bodyWidth).toBe(320);
+		// 字符串宽度不再触发 prop 类型警告
+		expect(warn.mock.calls.some(args => String(args[0]).includes('Invalid prop'))).toBe(false);
+		warn.mockRestore();
+		wrapper.unmount();
+	});
+
+	it('unparsable width / min-width fall back to the type preset instead of keeping the raw string', async () => {
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(1)}>
+				<TableColumn type="selection" width="auto" />
+				<TableColumn label="A" prop="name" width="auto" minWidth="auto" />
+				<TableColumn label="B" prop="count" width={120} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const vm = tableRef.value!;
+		const [selection, a] = vm.store.states.columns;
+		expect(selection.states.width).toBe(60);
+		expect(a.states.width).toBeUndefined();
+		expect(a.states.minWidth).toBe(80);
+		// 60 + 80 + 120，全为数值
+		expect(vm.layout.states.bodyWidth).toBe(260);
+		wrapper.unmount();
+	});
 });
 
 describe('Table interaction events', () => {
@@ -407,7 +479,7 @@ describe('Table interaction events', () => {
 		w2.unmount();
 	});
 
-	it('mouseleave on table clears hoverRowIndex / hoverState path', async () => {
+	it('mouseleave on table clears hoverRowIndex', async () => {
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
 			<Table ref={tableRef} data={buildData(1)}>
@@ -417,14 +489,14 @@ describe('Table interaction events', () => {
 		await flush();
 		const vm = tableRef.value!;
 
-		// 通过 cell 的 mouseover（委托）设置 hoverState，再触发表格 mouseleave 让 handleMouseLeave 走非空分支
+		// 通过 cell 的 mouseover（委托）进入 hover，再触发表格 mouseleave
 		const cell = wrapper.find('.vc-table__td');
 		await cell.trigger('mouseover');
 		await flush();
 		await wrapper.trigger('mouseleave');
 		await flush();
 
-		// 即便 expose 上 ref 被自动解包，store 上的 hoverRowIndex 应被清理
+		// store 上的 hoverRowIndex 应被清理
 		expect(vm.store.states.hoverRowIndex).toBe(null);
 		wrapper.unmount();
 	});
@@ -556,6 +628,101 @@ describe('Selection & expose API', () => {
 		await flush();
 		await flush();
 		expect(vm.store.states.selection.length).toBe(0);
+		wrapper.unmount();
+	});
+
+	it('toggleAllSelection follows selectable prop changes at runtime', async () => {
+		const data = buildData(4);
+		const selectable = ref((_row: any, index: number) => index % 2 === 0);
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={data} primaryKey="id">
+				<TableColumn type="selection" selectable={selectable.value} />
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		const vm = tableRef.value!;
+		const selectedIds = () => vm.store.states.selection.map((row: any) => row.id);
+
+		vm.toggleAllSelection();
+		await sleep(20);
+		await flush();
+		expect(selectedIds()).toEqual(['id__0', 'id__2']);
+
+		vm.clearSelection();
+		selectable.value = (_row: any, index: number) => index >= 2;
+		await flush();
+		expect(vm.store.states.selectable).toBe(selectable.value);
+
+		vm.toggleAllSelection();
+		await sleep(20);
+		await flush();
+		expect(selectedIds()).toEqual(['id__2', 'id__3']);
+		// 表头全选状态按新的 selectable 计算
+		vm.store.selection.updateAllSelected();
+		expect(vm.store.states.isAllSelected).toBe(true);
+
+		wrapper.unmount();
+	});
+
+	it('removing the selection column resets selectable / reserveSelection', async () => {
+		const selectable = (_row: any, index: number) => index !== 0;
+		const visible = ref(true);
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(3)} primaryKey="id">
+				{{
+					default: () => [
+						visible.value ? <TableColumn type="selection" selectable={selectable} reserveSelection /> : null,
+						<TableColumn label="名称" prop="name" />
+					]
+				}}
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		const vm = tableRef.value!;
+		expect(vm.store.states.selectable).toBe(selectable);
+		expect(vm.store.states.reserveSelection).toBe(true);
+
+		visible.value = false;
+		await flush();
+		expect(vm.store.states.selectable).toBeNull();
+		expect(vm.store.states.reserveSelection).toBe(false);
+
+		wrapper.unmount();
+	});
+
+	it('hiding the selection column via v-model:columns keeps selectable / reserveSelection', async () => {
+		const selectable = (_row: any, index: number) => index !== 0;
+		const columns = ref<any[]>([]);
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={buildData(3)}
+				primaryKey="id"
+				columns={columns.value}
+				{...{ 'onUpdate:columns': (v: any[]) => { columns.value = v; } }}
+			>
+				<TableColumn type="selection" selectable={selectable} reserveSelection />
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		const vm = tableRef.value!;
+		columns.value = columns.value.map((c: any) => (c.type === 'selection' ? { ...c, hidden: true } : c));
+		await flush();
+		await sleep(60);
+		await flush();
+
+		expect(vm.store.states.columns.some((c: any) => c.states.type === 'selection')).toBe(false);
+		expect(vm.store.states.selectable).toBe(selectable);
+		expect(vm.store.states.reserveSelection).toBe(true);
+
 		wrapper.unmount();
 	});
 });
@@ -1912,22 +2079,308 @@ describe('Additional source-path coverage', () => {
 		wrapper.unmount();
 	});
 
-	it('column filters: renders TableFilter trigger inside header cell', async () => {
-		const data = [{ id: 1, name: 'a' }];
+	it('column filters: multiple - confirm / reset through TableFilter', async () => {
+		const filterFn = vi.fn();
 		const wrapper = mount(() => (
-			<Table data={data} primaryKey="id">
+			<Table data={[{ id: 1, name: 'a' }]} primaryKey="id">
 				<TableColumn
 					label="名称"
 					prop="name"
-					filters={[{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }]}
-					filteredValue={['a']}
-					filterIcon="my-filter-icon"
+					filterOptions={{
+						data: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }, { value: 'c', label: 'C', disabled: true }],
+						max: 3,
+						modelValue: ['a'],
+						icon: 'my-filter-icon',
+						portalClass: 'my-filter-popup',
+						onChange: filterFn
+					}}
 				/>
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		// TableFilter 是 div 占位实现，icon 透传到自定义属性，可用此断言渲染发生
-		expect(wrapper.find('.vc-table__th [icon="my-filter-icon"]').exists()).toBe(true);
+
+		const filter = wrapper.findComponent({ name: 'vc-table-filter' });
+		expect(filter.exists()).toBe(true);
+		expect(filter.props('icon')).toBe('my-filter-icon');
+		// 已有生效值：图标高亮
+		expect(wrapper.find('.vc-table__th .vc-table-filter__icon').classes()).toContain('is-active');
+
+		await wrapper.find('.vc-table__th .vc-table-filter').trigger('click');
+		await flush();
+		const popup = document.querySelector('.my-filter-popup') as HTMLElement;
+		expect(popup).not.toBeNull();
+		const inputs = popup.querySelectorAll<HTMLInputElement>('.vc-table-filter__item input');
+		expect(inputs).toHaveLength(3);
+		expect(popup.querySelectorAll('.vc-table-filter__item.is-checked')).toHaveLength(1);
+
+		// 勾选 B 后确认
+		inputs[1].dispatchEvent(new Event('change'));
+		await flush();
+		const [resetButton, confirmButton] = Array.from(popup.querySelectorAll<HTMLElement>('.vc-table-filter__footer .vc-button'));
+		confirmButton.click();
+		await flush();
+		expect(filterFn).toHaveBeenCalledTimes(1);
+		expect(filterFn).toHaveBeenLastCalledWith(['a', 'b']);
+
+		// 重置：清空并生效
+		resetButton.click();
+		await flush();
+		expect(filterFn).toHaveBeenCalledTimes(2);
+		expect(filterFn).toHaveBeenLastCalledWith([]);
+		wrapper.unmount();
+	});
+
+	it('column filters: icon follows the applied value, uncontrolled state survives reopen, reordering is not a change', async () => {
+		const filterFn = vi.fn();
+		const wrapper = mount(() => (
+			<Table data={[{ id: 1, name: 'a' }]} primaryKey="id">
+				<TableColumn
+					label="名称"
+					prop="name"
+					// 不传 modelValue：非受控，多选时 onChange 收到数组
+					filterOptions={{
+						data: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }],
+						max: 2,
+						portalClass: 'applied-filter-popup',
+						onChange: filterFn
+					}}
+				/>
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		const trigger = wrapper.find('.vc-table__th .vc-table-filter');
+		const icon = () => wrapper.find('.vc-table-filter__icon');
+		const popup = () => document.querySelector('.applied-filter-popup') as HTMLElement;
+		const inputs = () => popup().querySelectorAll<HTMLInputElement>('.vc-table-filter__item input');
+		const checked = () => popup().querySelectorAll('.vc-table-filter__item.is-checked').length;
+		const confirm = async () => {
+			// 按钮点击有 250ms 的防抖（leading），两次确认之间需要等过窗口期
+			await sleep(300);
+			popup().querySelectorAll<HTMLElement>('.vc-table-filter__footer .vc-button')[1].click();
+			await flush();
+		};
+
+		// 勾选后不确认就关闭：图标不高亮，也不触发回调
+		await trigger.trigger('click');
+		await flush();
+		inputs()[0].dispatchEvent(new Event('change'));
+		await flush();
+		expect(checked()).toBe(1);
+		expect(icon().classes()).not.toContain('is-active');
+		await trigger.trigger('click');
+		await flush();
+		expect(filterFn).not.toHaveBeenCalled();
+
+		// 重新打开：丢弃未确认的勾选
+		await trigger.trigger('click');
+		await flush();
+		expect(checked()).toBe(0);
+
+		// 确认后生效；非受控时由组件保留生效值
+		inputs()[0].dispatchEvent(new Event('change'));
+		inputs()[1].dispatchEvent(new Event('change'));
+		await flush();
+		await confirm();
+		expect(filterFn).toHaveBeenCalledTimes(1);
+		expect(filterFn).toHaveBeenLastCalledWith(['a', 'b']);
+		expect(icon().classes()).toContain('is-active');
+
+		await trigger.trigger('click');
+		await flush();
+		expect(checked()).toBe(2);
+
+		// 取消再勾选 A：顺序变为 [b, a]，集合未变，确认不触发回调
+		inputs()[0].dispatchEvent(new Event('change'));
+		await flush();
+		inputs()[0].dispatchEvent(new Event('change'));
+		await flush();
+		await confirm();
+		expect(popup().style.display).toBe('none');
+		expect(filterFn).toHaveBeenCalledTimes(1);
+		wrapper.unmount();
+	});
+
+	it('column filters: controlled value stays in effect when onChange does not write it back', async () => {
+		const filteredValue = ref<unknown[]>([]);
+		// 校验不通过：不写回 modelValue
+		const filterFn = vi.fn();
+		const wrapper = mount(() => (
+			<Table data={[{ id: 1, name: 'a' }]} primaryKey="id">
+				<TableColumn
+					label="名称"
+					prop="name"
+					filterOptions={{
+						data: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }],
+						max: 2,
+						modelValue: filteredValue.value,
+						portalClass: 'rejected-filter-popup',
+						onChange: filterFn
+					}}
+				/>
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		const trigger = wrapper.find('.vc-table__th .vc-table-filter');
+		const popup = () => document.querySelector('.rejected-filter-popup') as HTMLElement;
+		const checked = () => popup().querySelectorAll('.vc-table-filter__item.is-checked').length;
+
+		await trigger.trigger('click');
+		await flush();
+		popup().querySelectorAll<HTMLInputElement>('.vc-table-filter__item input')[0].dispatchEvent(new Event('change'));
+		await flush();
+		popup().querySelectorAll<HTMLElement>('.vc-table-filter__footer .vc-button')[1].click();
+		await flush();
+		expect(filterFn).toHaveBeenLastCalledWith(['a']);
+
+		// 外部未写回：图标不高亮，重新打开时回到外部的值
+		expect(wrapper.find('.vc-table-filter__icon').classes()).not.toContain('is-active');
+		await trigger.trigger('click');
+		await flush();
+		expect(checked()).toBe(0);
+
+		// 外部写回后才生效
+		filteredValue.value = ['a'];
+		await flush();
+		expect(wrapper.find('.vc-table-filter__icon').classes()).toContain('is-active');
+		expect(checked()).toBe(1);
+		wrapper.unmount();
+	});
+
+	it('column filters: a re-render passing an equal modelValue keeps the unconfirmed draft', async () => {
+		const tick = ref(0);
+		const wrapper = mount(() => (
+			<Table data={[{ id: 1, name: 'a' }]} primaryKey="id" data-tick={tick.value}>
+				<TableColumn
+					label="名称"
+					prop="name"
+					// 模板字面量：每次渲染都是内容相同的新对象 / 新数组
+					filterOptions={{
+						data: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }],
+						max: 2,
+						modelValue: ['a'],
+						portalClass: 'draft-filter-popup'
+					}}
+				/>
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		await wrapper.find('.vc-table__th .vc-table-filter').trigger('click');
+		await flush();
+		const popup = document.querySelector('.draft-filter-popup') as HTMLElement;
+		const checked = () => popup.querySelectorAll('.vc-table-filter__item.is-checked').length;
+		expect(checked()).toBe(1);
+		popup.querySelectorAll<HTMLInputElement>('.vc-table-filter__item input')[1].dispatchEvent(new Event('change'));
+		await flush();
+		expect(checked()).toBe(2);
+
+		// 父级重渲染：modelValue 为新数组但内容不变，编辑中的勾选保留
+		tick.value++;
+		await flush();
+		expect(checked()).toBe(2);
+		wrapper.unmount();
+	});
+
+	it('column filters: max caps the selection, the rest are disabled until one is unticked', async () => {
+		const wrapper = mount(() => (
+			<Table data={[{ id: 1, name: 'a' }]} primaryKey="id">
+				<TableColumn
+					label="名称"
+					prop="name"
+					filterOptions={{
+						data: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }, { value: 'c', label: 'C' }],
+						max: 2,
+						portalClass: 'max-filter-popup'
+					}}
+				/>
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.find('.vc-table__th .vc-table-filter').trigger('click');
+		await flush();
+		const popup = document.querySelector('.max-filter-popup') as HTMLElement;
+		const inputs = () => popup.querySelectorAll<HTMLInputElement>('.vc-table-filter__item input');
+		const disabled = () => Array.from(inputs()).map(input => input.disabled);
+
+		expect(disabled()).toEqual([false, false, false]);
+		inputs()[0].dispatchEvent(new Event('change'));
+		inputs()[1].dispatchEvent(new Event('change'));
+		await flush();
+		// 选满 2 个：未勾选的 C 置灰
+		expect(disabled()).toEqual([false, false, true]);
+
+		// 取消 A：C 恢复可选
+		inputs()[0].dispatchEvent(new Event('change'));
+		await flush();
+		expect(disabled()).toEqual([false, false, false]);
+		wrapper.unmount();
+	});
+
+	it('column filters: keeps the string shape of modelValue like Select (\'a,b\')', async () => {
+		const value = ref<string>('a');
+		const onChange = vi.fn();
+		const wrapper = mount(() => (
+			<Table data={[{ id: 1, name: 'a' }]} primaryKey="id">
+				<TableColumn
+					label="名称"
+					prop="name"
+					filterOptions={{
+						'data': [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }],
+						'max': 2,
+						'modelValue': value.value,
+						'portalClass': 'string-filter-popup',
+						'onUpdate:modelValue': (v: any) => { value.value = v; },
+						onChange
+					}}
+				/>
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.find('.vc-table__th .vc-table-filter').trigger('click');
+		await flush();
+		const popup = document.querySelector('.string-filter-popup') as HTMLElement;
+		expect(popup.querySelectorAll('.vc-table-filter__item.is-checked')).toHaveLength(1);
+
+		popup.querySelectorAll<HTMLInputElement>('.vc-table-filter__item input')[1].dispatchEvent(new Event('change'));
+		await flush();
+		popup.querySelectorAll<HTMLElement>('.vc-table-filter__footer .vc-button')[1].click();
+		await flush();
+		expect(onChange).toHaveBeenLastCalledWith('a,b');
+		expect(value.value).toBe('a,b');
+		expect(wrapper.find('.vc-table-filter__icon').classes()).toContain('is-active');
+		wrapper.unmount();
+	});
+
+	it('column filters: a reactive filterOptions object updated in place reaches the header', async () => {
+		// 同一个对象，写回时原地修改 modelValue（不是每次传新对象）
+		const options = reactive({
+			'data': [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }],
+			'max': 2,
+			'modelValue': [] as string[],
+			'portalClass': 'reactive-filter-popup',
+			'onUpdate:modelValue': (v: any) => {
+				options.modelValue = v;
+			}
+		});
+		const wrapper = mount(() => (
+			<Table data={[{ id: 1, name: 'a' }]} primaryKey="id">
+				<TableColumn label="名称" prop="name" filterOptions={options} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.find('.vc-table-filter__icon').classes()).not.toContain('is-active');
+
+		await wrapper.find('.vc-table__th .vc-table-filter').trigger('click');
+		await flush();
+		const popup = document.querySelector('.reactive-filter-popup') as HTMLElement;
+		popup.querySelectorAll<HTMLInputElement>('.vc-table-filter__item input')[0].dispatchEvent(new Event('change'));
+		await flush();
+		popup.querySelectorAll<HTMLElement>('.vc-table-filter__footer .vc-button')[1].click();
+		await flush();
+		expect(options.modelValue).toEqual(['a']);
+		expect(wrapper.find('.vc-table-filter__icon').classes()).toContain('is-active');
 		wrapper.unmount();
 	});
 
@@ -2003,8 +2456,7 @@ describe('Additional source-path coverage', () => {
 		await flush();
 		await sleep(30);
 		expect(wrapper.find('.vc-table__footer-wrapper').exists()).toBe(true);
-		// 阶段一：maxHeight + 固定列走 sticky 路径，不再渲染 .vc-table__fixed* 容器
-		expect(wrapper.classes()).toContain('vc-table--sticky-columns');
+		// maxHeight + 固定列走 sticky 路径，不再渲染 .vc-table__fixed* 容器
 		expect(wrapper.find('.vc-table__footer .vc-table__td.is-fixed-left').exists()).toBe(true);
 		expect(wrapper.find('.vc-table__footer .vc-table__td.is-fixed-right').exists()).toBe(true);
 		expect(wrapper.find('.vc-table__fixed').exists()).toBe(false);
@@ -2180,8 +2632,7 @@ describe('Additional source-path coverage', () => {
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		// 阶段一：!height 时不再渲染 .vc-table__fixed* 容器，固定列改为 sticky cell
-		expect(wrapper.classes()).toContain('vc-table--sticky-columns');
+		// !height 时不再渲染 .vc-table__fixed* 容器，固定列改为 sticky cell
 		expect(wrapper.find('.vc-table__th.is-fixed-left').exists()).toBe(true);
 		expect(wrapper.find('.vc-table__th.is-fixed-right').exists()).toBe(true);
 		expect(wrapper.find('.vc-table__td.is-fixed-left').exists()).toBe(true);
@@ -2191,19 +2642,91 @@ describe('Additional source-path coverage', () => {
 		wrapper.unmount();
 	});
 
-	it('selection column auto-fix when other columns are leftFixed', async () => {
-		const data = buildData(2);
+	it('selection column is not auto-fixed when the only left-fixed column is hidden', async () => {
 		const tableRef = ref<any>();
+		const columns = ref<any[]>([]);
 		const wrapper = mount(() => (
-			<Table ref={tableRef} data={data} primaryKey="id">
+			<Table
+				ref={tableRef}
+				data={buildData(2)}
+				primaryKey="id"
+				columns={columns.value}
+				{...{ 'onUpdate:columns': (v: any[]) => { columns.value = v; } }}
+			>
 				<TableColumn type="selection" />
 				<TableColumn label="A" prop="name" fixed="left" width={100} />
 				<TableColumn label="B" prop="address" />
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		// 触发 updateColumns 中 selection 自动 fix 的分支
-		expect(tableRef.value!.store.states.leftFixedColumns.length).toBeGreaterThanOrEqual(2);
+		const states = () => tableRef.value!.store.states;
+		expect(states().leftFixedColumns.map((c: any) => c.states.type)).toEqual(['selection', 'default']);
+
+		// 通过 v-model:columns 隐藏唯一的左固定列：selection 不再单独固定
+		columns.value = columns.value.map((c: any) => (c.prop === 'name' ? { ...c, hidden: true } : c));
+		await flush();
+		await sleep(80);
+		await flush();
+		expect(states().leftFixedColumns).toHaveLength(0);
+		expect(wrapper.find('.vc-table__body-wrapper .vc-table__td').classes()).not.toContain('is-fixed-left');
+		wrapper.unmount();
+	});
+
+	it('selectable receives the same index from row checkboxes and select-all (tree rows, collapsed)', async () => {
+		const selectable = vi.fn<(row: any, index: number) => boolean>(() => true);
+		const tableRef = ref<any>();
+		const data = [
+			{ id: 1, name: 'r1', children: [{ id: 11, name: 'c1' }, { id: 12, name: 'c2' }] },
+			{ id: 2, name: 'r2' }
+		];
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={data} primaryKey="id">
+				<TableColumn type="selection" selectable={selectable} />
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const indexesOf = (id: number) => new Set(selectable.mock.calls.filter(([row]) => row.id === id).map(([, index]) => index));
+
+		// 子节点收起：r2 渲染在第 2 行，但在可选择行（含收起的子行）中的下标为 3
+		expect(indexesOf(2)).toEqual(new Set([3]));
+
+		selectable.mockClear();
+		tableRef.value!.toggleAllSelection();
+		await sleep(20);
+		await flush();
+		expect(indexesOf(2)).toEqual(new Set([3]));
+		expect(indexesOf(11)).toEqual(new Set([1]));
+		wrapper.unmount();
+	});
+
+	it('selection column auto-fix follows the other left-fixed columns without mutating its own fixed', async () => {
+		const data = buildData(2);
+		const tableRef = ref<any>();
+		const fixed = ref<string | undefined>('left');
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={data} primaryKey="id">
+				<TableColumn type="selection" />
+				<TableColumn label="A" prop="name" fixed={fixed.value} width={100} />
+				<TableColumn label="B" prop="address" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const states = () => tableRef.value!.store.states;
+		const selectionCell = () => wrapper.find('.vc-table__body-wrapper .vc-table__td');
+
+		// 存在左固定列：selection 随之左固定，但列自身的 fixed 不被改写
+		expect(states().leftFixedColumns.map((c: any) => c.states.type)).toEqual(['selection', 'default']);
+		expect(states()._columns[0].states.fixed).toBe(false);
+		expect(selectionCell().classes()).toContain('is-fixed-left');
+
+		// 其余列取消固定：selection 随之恢复
+		fixed.value = undefined;
+		await flush();
+		await sleep(80);
+		await flush();
+		expect(states().leftFixedColumns).toHaveLength(0);
+		expect(selectionCell().classes()).not.toContain('is-fixed-left');
 		wrapper.unmount();
 	});
 
@@ -2391,7 +2914,7 @@ describe('Additional source-path coverage', () => {
 	});
 
 	it('treeCellPrefix unit: indent + icon / spin + placeholder, click toggles the node', async () => {
-		const { treeCellPrefix } = await import('../table-column/table-column-confg');
+		const { treeCellPrefix } = await import('../table-column/table-column-config');
 		const fakeStore = {
 			tree: { toggle: vi.fn() }
 		};
@@ -2450,28 +2973,58 @@ describe('Additional source-path coverage', () => {
 		wrapper.unmount();
 	});
 
-	it('column filters: fires TableFilter change to cover handleFilter (filter callback)', async () => {
+	it('column filters: single (max 1) - pick applies immediately, 全部 clears to undefined', async () => {
+		// 受控单选：初始 undefined 也算受控（写了 modelValue 这个键）
+		const value = ref<string | undefined>(undefined);
 		const filterFn = vi.fn();
-		const data = [{ id: 1, name: 'a' }];
 		const wrapper = mount(() => (
-			<Table data={data} primaryKey="id">
+			<Table data={[{ id: 1, name: 'a' }]} primaryKey="id">
 				<TableColumn
 					label="名称"
 					prop="name"
-					filters={[{ value: 'a', label: 'A' }]}
-					filterIcon="filter-marker"
-					// @ts-ignore - 将 column.filter 暴露用于回调
-					filter={filterFn}
+					filterOptions={{
+						'data': [{ value: 'a', label: 'A' }, { value: 'b', label: 'B', disabled: true }],
+						'modelValue': value.value,
+						'portalClass': 'single-filter-popup',
+						'onUpdate:modelValue': (v: any) => { value.value = v; },
+						'onChange': filterFn
+					}}
 				/>
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		// TableFilter 当前是 <div> 占位，onChange 通过 Vue 绑定为 change 事件监听
-		const filterEl = wrapper.find('[icon="filter-marker"]');
-		expect(filterEl.exists()).toBe(true);
-		await filterEl.trigger('change');
+		expect(wrapper.find('.vc-table-filter__icon').classes()).not.toContain('is-active');
+
+		await wrapper.find('.vc-table__th .vc-table-filter').trigger('click');
 		await flush();
-		expect(filterFn).toHaveBeenCalled();
+		const popup = document.querySelector('.single-filter-popup') as HTMLElement;
+		const items = popup.querySelectorAll<HTMLElement>('.vc-table-filter__item');
+		// 「全部」+ 2 个选项
+		expect(items).toHaveLength(3);
+
+		// 禁用项不可选：编辑中的值不变
+		items[2].click();
+		await flush();
+		expect(popup.querySelectorAll('.vc-table-filter__item.is-active')).toHaveLength(0);
+
+		// 点选即生效（延迟确认，等待回调而非固定时长）
+		items[1].click();
+		await vi.waitFor(() => expect(filterFn).toHaveBeenCalledTimes(1));
+		// 单选输出单个值
+		expect(filterFn).toHaveBeenLastCalledWith('a');
+		expect(value.value).toBe('a');
+		await flush();
+		expect(wrapper.find('.vc-table-filter__icon').classes()).toContain('is-active');
+
+		// 重新打开后点「全部」：清空
+		await wrapper.find('.vc-table__th .vc-table-filter').trigger('click');
+		await flush();
+		(document.querySelector('.single-filter-popup .vc-table-filter__item') as HTMLElement).click();
+		await flush();
+		expect(filterFn).toHaveBeenLastCalledWith(undefined);
+		// 外部清空为 undefined：仍是受控，图标取消高亮
+		expect(value.value).toBeUndefined();
+		expect(wrapper.find('.vc-table-filter__icon').classes()).not.toContain('is-active');
 		wrapper.unmount();
 	});
 
@@ -2591,20 +3144,26 @@ describe('Additional source-path coverage', () => {
 		await flush();
 		const th = wrapper.find('.vc-table__th');
 		const thEl = th.element as HTMLElement;
-		// 模拟 boundingClientRect 让 mousemove 命中 resize 区域 (rect.right - pageX < 8)
+		// 模拟 boundingClientRect 让 mousemove 命中 resize 区域 (rect.right - clientX < 8)
 		thEl.getBoundingClientRect = () => ({
 			width: 120, height: 30, left: 0, top: 0, right: 120, bottom: 30, x: 0, y: 0,
 			toJSON: () => ({})
 		} as any);
 
 		document.body.style.cursor = '';
-		await th.trigger('mousemove', { pageX: 115, clientX: 115 });
-		await flush();
+		// 页面横向滚动了 300px：pageX 与视口坐标 clientX 不同，命中判断须以 clientX 为准
+		// （jsdom 的 pageX 恒等于 clientX，这里手动覆盖以模拟页面滚动）
+		const moveTo = async (clientX: number) => {
+			const event = new MouseEvent('mousemove', { clientX, bubbles: true });
+			Object.defineProperty(event, 'pageX', { value: clientX + 300 });
+			thEl.dispatchEvent(event);
+			await flush();
+		};
+		await moveTo(115);
 		// 进入 resize 区 → body cursor 变为 col-resize
 		expect(document.body.style.cursor).toBe('col-resize');
 
-		await th.trigger('mousemove', { pageX: 50, clientX: 50 });
-		await flush();
+		await moveTo(50);
 		// 离开 resize 区 → body cursor 还原
 		expect(document.body.style.cursor).toBe('');
 
@@ -2696,9 +3255,7 @@ describe('Additional source-path coverage', () => {
 		wrapper.unmount();
 	});
 
-	it('Resize listeners: handleResize without props.height evaluates shouldUpdateHeight RHS', async () => {
-		// 未设置 props.height，但通过 fixed 列让 shouldUpdateHeight.value 为 true，
-		// 用以覆盖 `(props.height || shouldUpdateHeight.value)` OR 表达式右操作数分支。
+	it('Resize listeners: fluid height ignores height-only changes even with fixed columns', async () => {
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
 			<Table ref={tableRef} data={buildData(2)}>
@@ -2714,9 +3271,40 @@ describe('Additional source-path coverage', () => {
 		const rz = (tableEl as any).__rz__;
 		expect(rz?.listeners?.length).toBeGreaterThan(0);
 
-		// 触发同尺寸 listener（覆盖 shouldUpdateHeight RHS=false 分支）
+		// 流式高度只关心宽度变化；固定列不再触发高度重算
+		const before = { ...tableRef.value!.resizeState };
+		Object.defineProperty(tableEl, 'offsetHeight', { configurable: true, value: before.height + 100 });
 		rz.listeners.forEach((fn: any) => fn());
 		await flush();
+		expect(tableRef.value!.resizeState.height).toBe(before.height);
+
+		wrapper.unmount();
+	});
+
+	it('Resize listeners: fit=false still listens and refreshes scrollX on width change', async () => {
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(2)} fit={false}>
+				<TableColumn label="A" prop="name" width={120} />
+				<TableColumn label="B" prop="count" width={120} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(20);
+		await flush();
+
+		const vm = tableRef.value!;
+		const tableEl = wrapper.element as HTMLElement;
+		const rz = (tableEl as any).__rz__;
+		expect(rz?.listeners?.length).toBeGreaterThan(0);
+		// jsdom 中容器宽度为 0：列宽之和溢出
+		expect(vm.layout.states.scrollX).toBe(true);
+
+		Object.defineProperty(tableEl, 'clientWidth', { configurable: true, value: 1000 });
+		Object.defineProperty(tableEl, 'offsetWidth', { configurable: true, value: 1000 });
+		rz.listeners.forEach((fn: any) => fn());
+		await flush();
+		expect(vm.layout.states.scrollX).toBe(false);
 
 		wrapper.unmount();
 	});
@@ -3133,9 +3721,9 @@ describe('Additional source-path coverage', () => {
 		expect(await measure(r1.value, 1000)).toEqual([80, 200, 600, 120]);
 		expect(r1.value.layout.states.bodyWidth).toBe(1000);
 		expect(r1.value.layout.states.scrollX).toBe(false);
-		// 合计行按 realWidth 设宽，与 grid 模板一致
-		const footerCells = w1.findAll('.vc-table__footer .vc-table__td');
-		expect((footerCells[2].element as HTMLElement).style.width).toBe('600px');
+		// 合计行与表头 / 表体共用表根的 grid 模板
+		const footerGrid = w1.find('.vc-table__footer .vc-table__grid').element as HTMLElement;
+		expect(footerGrid.style.gridTemplateColumns).toBe('var(--vc-table-columns)');
 		expect(r1.value.layout.templateColumns.value).toBe('80px 200px 600px minmax(120px, 1fr)');
 
 		// 表格不足：回到声明宽度，出现横向滚动；剩余宽度不累积
@@ -3402,7 +3990,7 @@ describe('Layout unit', () => {
 		expect(parseMinWidth(undefined)).toBe(undefined);
 	});
 
-	it('layout edge cases: undefined height + updateScrollY early return', async () => {
+	it('layout edge cases: undefined height', async () => {
 		// 注意: setHeight(0) 在 vnode.el 永远为 null 的情况下会无限 nextTick 递归 OOM，
 		// 这是源码 setHeight 的 `if (!el && (value || value === 0))` 分支期望真实组件挂载后 el 会变为非 null；
 		// 此处单元测试仅覆盖 undefined / null 边界，递归分支由真实组件挂载路径承担。
@@ -3411,19 +3999,14 @@ describe('Layout unit', () => {
 				vnode: { el: null },
 				exposed: {
 					isReady: { value: false },
-					bodyYWrapper: { value: null },
 					headerWrapper: { value: null },
-					appendWrapper: { value: null },
-					footerWrapper: { value: null },
-					updateScrollY: () => {},
-					resizeState: { value: { width: 0, height: 0 } }
+					footerWrapper: { value: null }
 				},
 				props: { showHeader: true }
 			},
 			states: { columns: [] }
 		};
 		const layout = new Layout(fakeStore);
-		layout.updateScrollY();
 		layout.setHeight(undefined);
 		expect(layout.states.height).toBe(null);
 		layout.setMaxHeight(undefined);
@@ -3433,6 +4016,79 @@ describe('Layout unit', () => {
 	it('Layout constructor throws when store / table missing', () => {
 		expect(() => new Layout({} as any)).toThrow();
 		expect(() => new Layout({ table: null } as any)).toThrow();
+	});
+
+	it('keeps the is-scrolling-* class when the root re-renders its own classes', async () => {
+		const stripe = ref(false);
+		const wrapper = mount(() => (
+			<Table data={buildData(2)} stripe={stripe.value}>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(50);
+		const scrolling = () => Array.from((wrapper.element as HTMLElement).classList).filter(c => c.startsWith('is-scrolling-'));
+		expect(scrolling()).toHaveLength(1);
+
+		// 根节点类名变化会让 Vue 整体重写 class：is-scrolling-* 须被补回
+		stripe.value = true;
+		await flush();
+		expect(wrapper.classes()).toContain('vc-table--striped');
+		expect(scrolling()).toHaveLength(1);
+		wrapper.unmount();
+	});
+
+	it('layout.states.scrollY follows the body Scroller measured heights', async () => {
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(5)} primaryKey="id" maxHeight={200}>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const vm = tableRef.value!;
+		const el = wrapper.element as HTMLElement;
+		expect(vm.layout.states.scrollY).toBe(false);
+		expect(el.classList.contains('vc-table--scrollable-y')).toBe(false);
+
+		// 模拟内容高于视口，让表体 Scroller 重新测量
+		const bodyWrapper = vm.bodyXWrapper as HTMLElement;
+		Object.defineProperty(bodyWrapper, 'clientHeight', { configurable: true, value: 150 });
+		Object.defineProperty(bodyWrapper, 'scrollHeight', { configurable: true, value: 300 });
+		await vm.scroller.refresh();
+		await flush();
+		expect(vm.layout.states.scrollY).toBe(true);
+		expect(el.classList.contains('vc-table--scrollable-y')).toBe(true);
+
+		// 内容不再溢出
+		Object.defineProperty(bodyWrapper, 'scrollHeight', { configurable: true, value: 150 });
+		await vm.scroller.refresh();
+		await flush();
+		expect(vm.layout.states.scrollY).toBe(false);
+		wrapper.unmount();
+	});
+
+	it('layout keeps tableHeight / appendHeight, and the instance keeps bodyYWrapper / appendWrapper', async () => {
+		const tableRef = ref<any>();
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(2)} primaryKey="id" height={300}>
+				{{
+					default: () => <TableColumn label="名称" prop="name" />,
+					append: () => <div class="append-content">append</div>
+				}}
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const vm = tableRef.value!;
+		expect(vm.bodyYWrapper).toBe(vm.bodyXWrapper);
+		expect(vm.appendWrapper).toBeInstanceOf(HTMLElement);
+
+		Object.defineProperty(wrapper.element, 'clientHeight', { configurable: true, value: 300 });
+		Object.defineProperty(vm.appendWrapper, 'offsetHeight', { configurable: true, value: 36 });
+		vm.layout.updateElsHeight();
+		expect(vm.layout.states.tableHeight).toBe(300);
+		expect(vm.layout.states.appendHeight).toBe(36);
+		wrapper.unmount();
 	});
 
 	it('layout.setHeight applies inline style when el is ready', async () => {
@@ -3470,18 +4126,14 @@ describe('Layout unit', () => {
 		expect(wrapper.findComponent({ name: 'vc-recycle-list' }).exists()).toBe(true);
 
 		// 模拟固定高度下测得的布局状态
-		vm.layout.states.scrollY = true;
 		vm.layout.states.bodyHeight = 300;
 		await flush();
-		expect(el.classList.contains('vc-table--scrollable-y')).toBe(true);
 
 		height.value = undefined;
 		await flush();
 		expect(el.style.height).toBe('');
 		expect(vm.layout.states.height).toBe(null);
 		expect(vm.layout.states.bodyHeight).toBe(null);
-		expect(vm.layout.states.scrollY).toBe(false);
-		expect(el.classList.contains('vc-table--scrollable-y')).toBe(false);
 		expect(wrapper.findComponent({ name: 'vc-recycle-list' }).exists()).toBe(false);
 		expect(wrapper.findComponent({ name: 'vc-table-normal-list' }).exists()).toBe(true);
 		expect(wrapper.findAll('.vc-table__body-wrapper .vc-table__tr')).toHaveLength(5);
@@ -3558,13 +4210,13 @@ describe('Table utils', () => {
 		expect(left[1].states.stickyOffset).toBe(80);
 		expect(left[1].states.stickyStyle).toEqual({ position: 'sticky', left: '80px' });
 		expect(left[1].states.stickyClass).toBe('is-fixed-left is-fixed-left-tail');
-		// 从右往左累加
+		// 从右往左累加；阴影类挂在与滚动区交界的第一个右固定列上
 		expect(right[right.length - 1].states.stickyOffset).toBe(0);
 		expect(right[right.length - 1].states.stickyStyle).toEqual({ position: 'sticky', right: '0px' });
-		expect(right[right.length - 1].states.stickyClass).toBe('is-fixed-right is-fixed-right-head');
+		expect(right[right.length - 1].states.stickyClass).toBe('is-fixed-right');
 		expect(right[right.length - 2].states.stickyOffset).toBe(50);
 		expect(right[right.length - 2].states.stickyStyle).toEqual({ position: 'sticky', right: '50px' });
-		expect(right[right.length - 2].states.stickyClass).toBe('is-fixed-right');
+		expect(right[right.length - 2].states.stickyClass).toBe('is-fixed-right is-fixed-right-head');
 		// 非固定列 sticky 字段清空
 		const notFixed = vm.store.states.notFixedColumns;
 		expect(notFixed[0].states.stickyOffset).toBeUndefined();
@@ -3669,7 +4321,6 @@ describe('Table utils', () => {
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		expect(wrapper.classes()).toContain('vc-table--sticky-columns');
 		const vm = tableRef.value!;
 		const list = vm.store.states.list;
 		// 同一 grid 行内的 cell 高度天然同步，行对象不再有 height 缓存
@@ -3697,7 +4348,7 @@ describe('Table utils', () => {
 		wrapper.unmount();
 	});
 
-	it('sticky: syncStickyOffsets applies sticky fields on top-level fixed columns (group parents only)', async () => {
+	it('sticky: syncStickyOffsets walks fixed groups down to leaves (offsets, edge classes, recursive clear)', async () => {
 		const data = buildData(2);
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
@@ -3711,12 +4362,16 @@ describe('Table utils', () => {
 		const vm = tableRef.value!;
 		const leftLeaf1 = buildColumnNode({ realWidth: 60, width: 60 });
 		const leftLeaf2 = buildColumnNode({ realWidth: 100, width: 100 });
-		const groupedLeft = buildColumnNode({}, [leftLeaf1, leftLeaf2]);
+		// 分组自身的 realWidth 不参与偏移计算
+		const groupedLeft = buildColumnNode({ realWidth: 80 }, [leftLeaf1, leftLeaf2]);
+		const leftTail = buildColumnNode({ realWidth: 30, width: 30 });
 		const rightLeaf1 = buildColumnNode({ realWidth: 40, width: 40 });
 		const rightLeaf2 = buildColumnNode({ realWidth: 70, width: 70 });
-		const groupedRight = buildColumnNode({}, [rightLeaf1, rightLeaf2]);
-		vm.store.states.leftFixedColumns = [groupedLeft];
-		vm.store.states.rightFixedColumns = [groupedRight];
+		const groupedRight = buildColumnNode({ realWidth: 80 }, [rightLeaf1, rightLeaf2]);
+		const rightTail = buildColumnNode({ realWidth: 20, width: 20 });
+		vm.store.states.leftFixedColumns = [groupedLeft, leftTail];
+		vm.store.states.rightFixedColumns = [groupedRight, rightTail];
+		const notFixedLeaf = buildColumnNode({ stickyOffset: 999, stickyStyle: { position: 'sticky', left: '0px' }, stickyClass: 'is-fixed-left' });
 		const notFixedColumn = buildColumnNode(
 			{
 				realWidth: 200,
@@ -3724,26 +4379,80 @@ describe('Table utils', () => {
 				stickyStyle: { position: 'sticky', left: '0px' },
 				stickyClass: 'is-fixed-left'
 			},
-			[buildColumnNode({ stickyOffset: 999 }), buildColumnNode({ stickyOffset: 999 })]
+			[notFixedLeaf]
 		);
 		vm.store.states.notFixedColumns = [notFixedColumn];
 		vm.layout.syncStickyOffsets();
-		// 仅对 leftFixedColumns / rightFixedColumns 顶层项写入 sticky
+
+		// 左：按叶子宽度累加，分组取首个叶子的偏移；交界在最后一个叶子
 		expect(groupedLeft.states.stickyOffset).toBe(0);
-		expect(groupedLeft.states.stickyStyle).toEqual({ position: 'sticky', left: '0px' });
-		expect(groupedLeft.states.stickyClass).toBe('is-fixed-left is-fixed-left-tail');
-		expect(leftLeaf1.states.stickyOffset).toBeUndefined();
-		expect(leftLeaf2.states.stickyOffset).toBeUndefined();
-		expect(groupedRight.states.stickyOffset).toBe(0);
-		expect(groupedRight.states.stickyStyle).toEqual({ position: 'sticky', right: '0px' });
+		expect(groupedLeft.states.stickyClass).toBe('is-fixed-left');
+		expect(leftLeaf1.states.stickyStyle).toEqual({ position: 'sticky', left: '0px' });
+		expect(leftLeaf2.states.stickyStyle).toEqual({ position: 'sticky', left: '60px' });
+		expect(leftLeaf2.states.stickyClass).toBe('is-fixed-left');
+		expect(leftTail.states.stickyStyle).toEqual({ position: 'sticky', left: '160px' });
+		expect(leftTail.states.stickyClass).toBe('is-fixed-left is-fixed-left-tail');
+
+		// 右：从最右往左累加，分组取末个叶子的偏移；交界在第一个叶子（及包含它的分组）
+		expect(rightTail.states.stickyStyle).toEqual({ position: 'sticky', right: '0px' });
+		expect(rightTail.states.stickyClass).toBe('is-fixed-right');
+		expect(rightLeaf2.states.stickyStyle).toEqual({ position: 'sticky', right: '20px' });
+		expect(rightLeaf2.states.stickyClass).toBe('is-fixed-right');
+		expect(rightLeaf1.states.stickyStyle).toEqual({ position: 'sticky', right: '90px' });
+		expect(rightLeaf1.states.stickyClass).toBe('is-fixed-right is-fixed-right-head');
+		expect(groupedRight.states.stickyStyle).toEqual({ position: 'sticky', right: '20px' });
 		expect(groupedRight.states.stickyClass).toBe('is-fixed-right is-fixed-right-head');
-		expect(rightLeaf1.states.stickyOffset).toBeUndefined();
-		expect(rightLeaf2.states.stickyOffset).toBeUndefined();
-		// 非固定列顶层项清除 sticky；子节点不在 syncStickyOffsets 遍历范围内
+
+		// 非固定列（含子列）清除 sticky
 		expect(notFixedColumn.states.stickyOffset).toBeUndefined();
 		expect(notFixedColumn.states.stickyStyle).toBeUndefined();
 		expect(notFixedColumn.states.stickyClass).toBeUndefined();
-		expect(notFixedColumn.childNodes[0].states.stickyOffset).toBe(999);
+		expect(notFixedLeaf.states.stickyOffset).toBeUndefined();
+		expect(notFixedLeaf.states.stickyStyle).toBeUndefined();
+		expect(notFixedLeaf.states.stickyClass).toBeUndefined();
+		wrapper.unmount();
+	});
+
+	it('sticky: fixed multi-level group renders its leaf header / body / footer cells as sticky', async () => {
+		const data = buildData(2);
+		const wrapper = mount(() => (
+			<Table data={data} showSummary>
+				<TableColumn label="分组" fixed="left">
+					<TableColumn label="A" prop="name" width={100} />
+					<TableColumn label="B" prop="count" width={120} />
+				</TableColumn>
+				<TableColumn label="C" prop="address" width={300} />
+				<TableColumn label="D" prop="name" fixed="right" width={150} />
+				<TableColumn label="E" prop="count" fixed="right" width={50} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(20);
+
+		const bodyCells = wrapper.findAll('.vc-table__body-wrapper .vc-table__tr')[0].findAll('.vc-table__td');
+		const footerCells = wrapper.findAll('.vc-table__footer .vc-table__td');
+		const leftStyle = (el: any) => (el.element as HTMLElement).style.left;
+		const rightStyle = (el: any) => (el.element as HTMLElement).style.right;
+
+		// 分组下的叶子：表体、合计行都 sticky，偏移按叶子宽度累加
+		[bodyCells, footerCells].forEach((cells) => {
+			expect(cells[0].classes()).toContain('is-fixed-left');
+			expect(leftStyle(cells[0])).toBe('0px');
+			expect(cells[1].classes()).toEqual(expect.arrayContaining(['is-fixed-left', 'is-fixed-left-tail']));
+			expect(leftStyle(cells[1])).toBe('100px');
+			expect(cells[2].classes()).not.toContain('is-fixed-left');
+			// 右侧阴影在与滚动区交界的 D 上，而不是最右的 E
+			expect(cells[3].classes()).toEqual(expect.arrayContaining(['is-fixed-right', 'is-fixed-right-head']));
+			expect(rightStyle(cells[3])).toBe('50px');
+			expect(cells[4].classes()).not.toContain('is-fixed-right-head');
+			expect(rightStyle(cells[4])).toBe('0px');
+		});
+
+		// 表头：分组与其叶子都 sticky，分组带交界类
+		const th = (label: string) => wrapper.findAll('.vc-table__th').find(item => item.text() === label)!;
+		expect(th('分组').classes()).toEqual(expect.arrayContaining(['is-fixed-left', 'is-fixed-left-tail']));
+		expect(th('A').classes()).toContain('is-fixed-left');
+		expect(leftStyle(th('B'))).toBe('100px');
 		wrapper.unmount();
 	});
 
@@ -3759,6 +4468,35 @@ describe('Table utils', () => {
 });
 
 describe('v-model:columns & hidden', () => {
+	it('write-back of an emitted empty list resets the echo guard', async () => {
+		const tableRef = ref<any>();
+		const columns = ref<any[]>([]);
+		const visible = ref(true);
+		const wrapper = mount(() => (
+			<Table
+				ref={tableRef}
+				data={buildData(1)}
+				columns={columns.value}
+				{...{ 'onUpdate:columns': (v: any[]) => { columns.value = v; } }}
+			>
+				{visible.value ? <TableColumn label="名称" prop="name" /> : null}
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const vm = tableRef.value!;
+		expect(columns.value).toHaveLength(1);
+		expect(vm.store.column._sync.suppressWatch).toBe(false);
+
+		// 列全部移除：emit [] 并被写回，回流标志应复位
+		visible.value = false;
+		await flush();
+		await sleep(60);
+		await flush();
+		expect(columns.value).toEqual([]);
+		expect(vm.store.column._sync.suppressWatch).toBe(false);
+		wrapper.unmount();
+	});
+
 	afterEach(() => {
 		document.body.innerHTML = '';
 	});
@@ -4489,7 +5227,45 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 		expect(plan.skip).toBe(null);
 	});
 
-	it('getSpan: 合并块走 grid 渲染（aria-rowspan / data-row / 缓存 / hasMergeCells）', async () => {
+	it('getSpan: toggling at runtime rebuilds blocks and clears stale cover anchors', async () => {
+		const tableRef = ref<any>();
+		const getSpan = ref<any>(undefined);
+		// data 放在渲染函数外：切换 getSpan 引起的重渲染不能靠新的 data 引用顺带重建
+		const data = buildData(4);
+		const spanFn = ({ rowIndex, columnIndex }: any) => (columnIndex === 0 && rowIndex === 0 ? [2, 1] : [1, 1]);
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={data} primaryKey="id" getSpan={getSpan.value}>
+				<TableColumn label="名称" prop="name" />
+				<TableColumn label="地址" prop="address" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const store = () => tableRef.value!.store;
+		expect(store().states.list).toHaveLength(4);
+
+		// 开启合并：rows[0,1] 合为一块
+		getSpan.value = spanFn;
+		await flush();
+		expect(store().states.list).toHaveLength(3);
+		expect(store().block.getCoverAnchors(1)).toEqual([{ rowIndex: 0, columnIndex: 0 }]);
+		expect(wrapper.find('.vc-table__tr-group').exists()).toBe(true);
+
+		// 换成另一个函数引用（如模板内联函数每次渲染都是新引用）：不整表重建
+		const list = store().states.list;
+		getSpan.value = (...args: any[]) => (spanFn as any)(...args);
+		await flush();
+		expect(store().states.list).toBe(list);
+
+		// 移除合并：恢复单行块，旧的关联高亮坐标一并清掉
+		getSpan.value = undefined;
+		await flush();
+		expect(store().states.list).toHaveLength(4);
+		expect(store().block.getCoverAnchors(1)).toEqual([]);
+		expect(wrapper.find('.vc-table__tr-group').exists()).toBe(false);
+		wrapper.unmount();
+	});
+
+	it('getSpan: 合并块走 grid 渲染（aria-rowspan / data-row / 缓存 / hasMerge）', async () => {
 		const tableRef = ref<any>();
 		const data = buildData(4);
 		const getSpan = vi.fn(({ rowIndex, columnIndex }: any) => {
@@ -4517,7 +5293,7 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 		const vm = tableRef.value!;
 		// rows[0,1] 合并为一块，rows[2,3] 单行块
 		expect(vm.store.states.list).toHaveLength(3);
-		expect(vm.store.states.hasMergeCells).toBe(true);
+		expect(vm.store.states.list[0].hasMerge).toBe(true);
 
 		// body 中存在多行合并块（tr-group）；anchor cell 带 aria-rowspan，覆盖格子不渲染
 		const layer = wrapper.find('.vc-table__body-wrapper .vc-table__tr-group');

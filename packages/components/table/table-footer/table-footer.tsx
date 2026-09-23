@@ -1,34 +1,20 @@
 import { defineComponent, computed } from 'vue';
 import type { PropType } from 'vue';
 import { useStates } from '../store';
-import type { TableColumnNode, TableColumnStates } from '../table-column/table-column-node';
+import { TableGrid } from '../table-grid';
+import type { TableColumnStates } from '../table-column/table-column-node';
 
 export const TableFooter = defineComponent({
 	name: 'vc-table-footer',
 	props: {
 		getSummary: Function as PropType<(data: { columns: TableColumnStates[]; data: Record<string, unknown>[] }) => (string | number)[]>,
-		sumText: String,
-		border: Boolean,
+		sumText: String
 	},
 	setup(props) {
 		const states = useStates({
 			data: 'data',
-			columns: 'columns',
-			isAllSelected: 'isAllSelected'
+			columns: 'columns'
 		});
-
-		const getRowClasses = (column: TableColumnStates) => {
-			const classes: (string | null | undefined)[] = [column.realAlign, column.labelClass];
-			// 固定列由 is-fixed-* + position: sticky 表达
-			if (column.fixed === true || column.fixed === 'left') {
-				classes.push('is-fixed-left');
-			} else if (column.fixed === 'right') {
-				classes.push('is-fixed-right');
-			}
-			// columns 为叶子列，恒为 is-leaf
-			classes.push('is-leaf');
-			return classes;
-		};
 
 		const sums = computed(() => {
 			let v: (string | number | undefined)[] = [];
@@ -69,33 +55,40 @@ export const TableFooter = defineComponent({
 			return v;
 		});
 
+		/**
+		 * 与表头 / 表体共用 TableGrid：列宽走表根的 --vc-table-columns，首末列内边距由 is-grid-first/last 补；
+		 * 固定列由 layout 写入的 stickyClass（含交界阴影类）+ stickyStyle 表达
+		 * @returns 合计行 cells
+		 */
+		const buildCells = () => {
+			return states.columns.map((node, columnIndex) => {
+				const column = node.states;
+				return {
+					key: column.id,
+					rowIndex: 0,
+					columnIndex,
+					// columns 为叶子列，恒为 is-leaf
+					class: [column.realAlign, column.labelClass, column.stickyClass, 'is-leaf', 'vc-table__td'],
+					style: column.stickyStyle,
+					render: () => (
+						<div class={['vc-table__cell', column.labelClass]}>
+							{ sums.value[columnIndex] }
+						</div>
+					)
+				};
+			});
+		};
+
 		return () => {
 			return (
-				<div
-					class="vc-table__footer"
-					cellspacing="0"
-					cellpadding="0"
-					border="0"
-				>
+				<div class="vc-table__footer">
 					<div class="vc-table__tbody">
-						<div class="vc-table__tr">
-							{
-								states.columns.map((node, columnIndex) => {
-									const column = node.states;
-									return (
-										<div
-											key={columnIndex}
-											class={[getRowClasses(column), 'vc-table__td']}
-											style={[{ width: `${column.realWidth}px`, height: `44px` }, column.stickyStyle]}
-										>
-											<div class={['vc-table__cell', column.labelClass]}>
-												{ sums.value[columnIndex] }
-											</div>
-										</div>
-									);
-								})
-							}
-						</div>
+						<TableGrid
+							class="vc-table__tr"
+							role="row"
+							columns={states.columns}
+							cells={buildCells()}
+						/>
 					</div>
 				</div>
 			);

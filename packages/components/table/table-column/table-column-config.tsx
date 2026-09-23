@@ -8,23 +8,18 @@ import { VcInstance } from '../../vc';
 import type { TableColumnRenderData, TableColumnStates } from './table-column-node';
 
 export const cellStarts: Record<string, Partial<TableColumnStates>> = {
-	default: {
-		order: ''
-	},
+	default: {},
 	selection: {
 		width: 60,
-		minWidth: 60,
-		order: '',
+		minWidth: 60
 	},
 	expand: {
 		width: 60,
-		minWidth: 60,
-		order: ''
+		minWidth: 60
 	},
 	index: {
 		width: 60,
-		minWidth: 60,
-		order: ''
+		minWidth: 60
 	}
 };
 
@@ -45,7 +40,7 @@ export const cellForced: Record<string, Partial<TableColumnStates>> = {
 				/>
 			);
 		},
-		renderCell({ row, column, store, rowIndex, level, selected }: TableColumnRenderData) {
+		renderCell({ row, column, store, level, selected }: TableColumnRenderData) {
 			return (
 				<Checkbox
 					// 树形子行按 expandSelectable 决定是否可选择
@@ -53,8 +48,9 @@ export const cellForced: Record<string, Partial<TableColumnStates>> = {
 					vShow={store.table.props.expandSelectable || !level}
 					modelValue={selected}
 					disabled={
+						// 与表头全选一致：第二个参数为行在可选择行中的下标（树形表格与展开状态无关）
 						column.selectable
-							? !column.selectable.call(null, row, rowIndex)
+							? !column.selectable.call(null, row, store.selection.getIndex(row))
 							: false
 					}
 					onChange={() => store.selection.rowChanged(row)}

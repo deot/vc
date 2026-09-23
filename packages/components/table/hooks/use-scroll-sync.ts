@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue';
+import { ref, watch, onUpdated } from 'vue';
 import type { Ref } from 'vue';
 import { raf } from '@deot/helper-utils';
 import type { Layout } from '../store/modules';
@@ -40,22 +40,25 @@ export const useScrollSync = (options: Options) => {
 
 	// 直接修改className（不使用render函数）, 解决临界值设置修改className时的顿挫。
 	// 挂到 .vc-table 根节点上，让 header / body / footer 三处的 sticky 阴影都能共用同一个状态。
+	const applyScrollingClass = () => {
+		const el = tableWrapper.value;
+		if (!el) return;
+		const className = `is-scrolling-${layout.states.scrollX ? scrollPosition.value : 'none'}`;
+
+		if (el.classList.contains(className)) return;
+
+		el.classList.remove(...['left', 'middle', 'right', 'none'].map(i => `is-scrolling-${i}`));
+		el.classList.add(className);
+	};
+
 	watch(
 		() => [scrollPosition.value, props.data?.length],
-		([v]) => {
-			raf(() => {
-				const el = tableWrapper.value;
-				if (!el) return;
-				const className = `is-scrolling-${layout.states.scrollX ? v : 'none'}`;
-
-				if (el.classList.contains(className)) return;
-
-				el.classList.remove(...['left', 'middle', 'right', 'none'].map(i => `is-scrolling-${i}`));
-				el.classList.add(className);
-			});
-		},
+		() => raf(applyScrollingClass),
 		{ immediate: true }
 	);
+
+	// 根节点重渲染（如 scrollX / scrollY 变化带来的类名变化）时 Vue 会整体重写 class，须立即补回
+	onUpdated(applyScrollingClass);
 
 	return { handleScrollX };
 };

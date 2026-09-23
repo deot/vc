@@ -80,6 +80,17 @@ export const usePropsSync = (props: Props, store: Store, options: Options) => {
 		}
 	);
 
+	// 开启 / 关闭合并：立即重建渲染块
+	// 只看有无，不看函数引用：模板里的内联函数每次渲染都是新引用，按引用监听会让每次父级渲染都整表重算；
+	// 换一套合并规则会在 data / 列变化时生效（Block 按 getSpan 引用判断缓存是否失效）
+	watch(
+		() => typeof props.getSpan === 'function',
+		() => {
+			store.updateList();
+			isReady.value && nextTick(updateLayout);
+		}
+	);
+
 	// 子行不可选择时，移出已选中的子行
 	watch(
 		() => props.expandSelectable,
@@ -91,11 +102,10 @@ export const usePropsSync = (props: Props, store: Store, options: Options) => {
 
 	// v-model:columns 外部写回：按 id 设置 hidden + 按 id 重排
 	// deep 以便外部仅修改某项 hidden 字段（数组引用不变）也能触发
-	// 防回环由 store.column.applyExternal 内部控制
+	// 防回环与空值由 store.column.applyExternal 内部处理：空数组也须交给它，回流标志才会复位
 	watch(
 		() => props.columns,
 		(v) => {
-			if (!Array.isArray(v) || v.length === 0) return;
 			store.column.applyExternal(v);
 		},
 		{ deep: true, flush: 'post' }

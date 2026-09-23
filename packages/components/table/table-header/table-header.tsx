@@ -1,17 +1,15 @@
 import { defineComponent, ref, getCurrentInstance, computed, inject } from 'vue';
 import type { Nullable } from '@deot/helper-shared';
-import { addClass, removeClass, hasClass } from '@deot/helper-dom';
+import { hasClass } from '@deot/helper-dom';
 import { IS_SERVER } from '@deot/vc-shared';
 import { Popover } from '../../popover';
 import { Icon } from '../../icon';
 import { useStates } from '../store';
 import { TableGrid } from '../table-grid';
 import { TableSort } from './table-sort';
+import { TableFilter } from './table-filter';
 import type { TableProvide } from '../types';
 import type { TableColumnNode, TableColumnStates } from '../table-column/table-column-node';
-// import TableFilter from './table-filter';
-
-const TableFilter = 'div';
 
 export const TableHeader = defineComponent({
 	name: 'vc-table-header',
@@ -48,7 +46,6 @@ export const TableHeader = defineComponent({
 
 		const states = useStates({
 			columns: 'columns',
-			isAllSelected: 'isAllSelected',
 			isGroup: 'isGroup',
 			headerRows: 'headerRows'
 		});
@@ -90,7 +87,7 @@ export const TableHeader = defineComponent({
 
 		const getHeaderCellClass = (rowIndex: number, columnIndex: number, row: TableColumnNode[], column: TableColumnNode) => {
 			const { states: columnStates } = column;
-			const classes = [columnStates.id, columnStates.order, columnStates.realHeaderAlign, columnStates.class, columnStates.labelClass];
+			const classes = [columnStates.id, columnStates.realHeaderAlign, columnStates.class, columnStates.labelClass];
 
 			if (!column.childNodes.length) {
 				classes.push('is-leaf');
@@ -133,8 +130,6 @@ export const TableHeader = defineComponent({
 				const columnEl: HTMLElement = instance.vnode.el!.querySelector(`.vc-table__th.${column.states.id}`);
 				const columnRect = columnEl.getBoundingClientRect();
 				const minLeft = columnRect.left - tableLeft + 30;
-
-				addClass(columnEl, 'noclick');
 
 				dragState.value = {
 					startMouseLeft: e.clientX,
@@ -182,10 +177,6 @@ export const TableHeader = defineComponent({
 					document.removeEventListener('mouseup', handleDocumentMouseUp);
 					document.onselectstart = null;
 					document.ondragstart = null;
-
-					setTimeout(function () {
-						removeClass(columnEl, 'noclick');
-					}, 0);
 				};
 
 				document.addEventListener('mousemove', handleDocumentMouseMove);
@@ -206,7 +197,8 @@ export const TableHeader = defineComponent({
 				const rect = target.getBoundingClientRect();
 
 				const bodyStyle = document.body.style;
-				if (rect.width > 12 && rect.right - event.pageX < 8) {
+				// rect 为视口坐标，须与 clientX 比较（pageX 含页面滚动）
+				if (rect.width > 12 && rect.right - event.clientX < 8) {
 					bodyStyle.cursor = 'col-resize';
 					if (hasClass(target, 'is-sortable')) {
 						target.style.cursor = 'col-resize';
@@ -234,11 +226,6 @@ export const TableHeader = defineComponent({
 			table.emit('sort-change', v);
 		};
 
-		const handleFilter = (column: TableColumnStates, value: unknown) => {
-			const { filter } = column;
-			filter && filter(value);
-		};
-
 		const handleCellMouseEnter = (e: MouseEvent, column: TableColumnStates) => {
 			Popover.open({
 				el: document.body,
@@ -256,13 +243,7 @@ export const TableHeader = defineComponent({
 			const { states: columnStates } = column;
 			return (
 				<div
-					class={[
-						'vc-table__cell',
-						// {
-						// 	"is-highlight": column.filteredValue && column.filteredValue.length > 0
-						// },
-						columnStates.labelClass
-					]}
+					class={['vc-table__cell', columnStates.labelClass]}
 				>
 					{
 						columnStates.renderHeader
@@ -297,17 +278,9 @@ export const TableHeader = defineComponent({
 							: null
 					}
 					{
-						columnStates.filters
-							? (
-									<TableFilter
-										data={columnStates.filters}
-										value={columnStates.filteredValue}
-										icon={columnStates.filterIcon}
-										portalClass={columnStates.filterPopupClass}
-										multiple={columnStates.filterMultiple}
-										onChange={(v: unknown) => handleFilter(columnStates, v)}
-									/>
-								)
+						// filter-options 原样透传（含 onChange / onUpdate:modelValue 监听）
+						columnStates.filterOptions
+							? <TableFilter {...columnStates.filterOptions} />
 							: null
 					}
 				</div>

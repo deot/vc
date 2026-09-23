@@ -155,8 +155,7 @@ export const TableBodyBlock = defineComponent({
 			if (!cellEl) return null;
 			const rowIndex = Number(cellEl.dataset.row);
 			const columnIndex = Number(cellEl.dataset.column);
-			const rowStart = props.store.rowStart ?? (props.store.rows[0]?.index || 0);
-			const row = props.store.rows[rowIndex - rowStart];
+			const row = props.store.rows[rowIndex - props.store.rowStart];
 			const columnNode = states.columns[columnIndex];
 			if (!row || !columnNode) return null;
 			return { cellEl, row: row.data, rowIndex, column: columnNode.states, columnIndex };
@@ -201,7 +200,6 @@ export const TableBodyBlock = defineComponent({
 
 		const enterCell = (e: MouseEvent, cell: ResolvedCell) => {
 			handleHoverEnter(cell.rowIndex);
-			table.hoverState.value = { cell: cell.cellEl, column: cell.column, row: cell.row };
 			table.emit('cell-mouse-enter', cell.row, cell.column, cell.cellEl, e);
 			showTextLineTooltip(cell.cellEl, cell.row, cell.column);
 		};
@@ -256,7 +254,7 @@ export const TableBodyBlock = defineComponent({
 			const rows = block.rows;
 			const isSingleRow = rows.length === 1;
 			const maxColumnIndex = columns.length - 1;
-			const rowStart = block.rowStart ?? (rows[0]?.index || 0);
+			const rowStart = block.rowStart;
 
 			// cells 由 store 懒构建（仅发生在可见块上）：合并块查合并计划，普通块合成 1×1
 			const layoutCells = table.store.block.getCells(block);

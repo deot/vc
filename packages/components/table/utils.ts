@@ -50,7 +50,7 @@ export const parseMinWidth = (v?: number | string): null | number => {
 
 /**
  * 由叶子列生成 CSS Grid 的 grid-template-columns 值。
- * 表格内的撑满由 Layout 写进 realWidth（合计行按 realWidth 设宽，须与模板一致）；
+ * 表格内的撑满由 Layout 写进 realWidth（撑满列不一定是最后一列，如最后一列为右固定列）；
  * 最后一列的 minmax 只作兜底，供独立使用（没有 Layout）的 TableGrid 在容器更宽时撑满。
  * @param columns 叶子列
  * @returns 模板值

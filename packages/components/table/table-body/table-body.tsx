@@ -21,9 +21,7 @@ export const TableBody = defineComponent({
 
 		const allowRender = ref(false);
 		const states = useStates({
-			data: 'data',
-			list: 'list',
-			columns: 'columns'
+			list: 'list'
 		});
 
 		const target = ref();

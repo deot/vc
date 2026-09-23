@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, provide, computed, ref, getCurrentInstance, nextTick, onMounted, onUpdated, onUnmounted } from 'vue';
+import { defineComponent, provide, computed, ref, watch, getCurrentInstance, nextTick, onMounted, onUpdated, onUnmounted } from 'vue';
 import { debounce } from 'lodash-es';
 import { Resize } from '@deot/helper-resize';
 import { getUid } from '@deot/helper-utils';
@@ -19,7 +19,6 @@ import { useLazyTail } from './hooks/use-lazy-tail';
 import { usePropsSync } from './hooks/use-props-sync';
 import { useScrollSync } from './hooks/use-scroll-sync';
 import { useWheelForward } from './hooks/use-wheel-forward';
-import type { TableProvide } from './types';
 import type { Nullable } from '@deot/helper-shared';
 
 const COMPONENT_NAME = 'vc-table';
@@ -77,13 +76,10 @@ export const Table = defineComponent({
 
 		const resizeProxy = ref<Nullable<HTMLElement>>(null);
 
-		const hoverState: TableProvide['hoverState'] = ref(null);
 		const isReady = ref(false);
 
 		const states = useStates({
 			columns: 'columns',
-			leftFixedColumns: 'leftFixedColumns',
-			rightFixedColumns: 'rightFixedColumns',
 			isGroup: 'isGroup'
 		}, store);
 
@@ -93,13 +89,10 @@ export const Table = defineComponent({
 				'vc-table--striped': props.stripe,
 				'vc-table--border': props.border || states.isGroup,
 				'vc-table--divider': props.border || props.divider,
-				'vc-table--group': states.isGroup,
-				'vc-table--fluid-height': props.maxHeight,
 				'vc-table--scrollable-x': layout.states.scrollX,
 				'vc-table--scrollable-y': layout.states.scrollY,
-				'vc-table--sticky-columns': true,
-				'vc-table--enable-row-hover': !store.states.isComplex,
-				'vc-table--enable-row-transition': (store.states.data || []).length !== 0 && (store.states.data || []).length < 100
+				'vc-table--enable-row-transition': (store.states.data || []).length !== 0 && (store.states.data || []).length < 100,
+				[`vc-table--${props.size}`]: true
 			};
 		});
 
@@ -123,13 +116,23 @@ export const Table = defineComponent({
 			return bodyScroller.value?.wrapper;
 		});
 
+		// 兼容保留：纵向与横向为同一个滚动容器
 		const bodyYWrapper = computed(() => bodyXWrapper.value);
 
+		// 表体是否出现纵向滚动：取 Scroller 实测的内容高度 / 视口高度（响应式，内容或尺寸变化时随之更新）
+		watch(
+			() => {
+				const target = bodyScroller.value;
+				return !!target && target.scrollHeight > target.clientHeight;
+			},
+			(v) => {
+				layout.states.scrollY = v;
+			},
+			{ immediate: true }
+		);
+
 		const shouldUpdateHeight = computed(() => {
-			return props.height
-				|| props.maxHeight
-				|| states.leftFixedColumns.length > 0
-				|| states.rightFixedColumns.length > 0;
+			return !!props.height || !!props.maxHeight;
 		});
 
 		const bodyWidthStyle = computed(() => {
@@ -174,9 +177,10 @@ export const Table = defineComponent({
 		});
 
 		let isUnMount = false;
+
+		// 兼容保留：scrollY 已随 Scroller 实测自动更新，这里只重算列宽
 		const updateScrollY = () => {
 			if (isUnMount) return;
-			layout.updateScrollY();
 			layout.updateColumnsWidth();
 		};
 
@@ -259,7 +263,7 @@ export const Table = defineComponent({
 			}
 
 			const height = el.offsetHeight;
-			if ((props.height || shouldUpdateHeight.value) && oldHeight !== height) {
+			if (shouldUpdateHeight.value && oldHeight !== height) {
 				shouldUpdateLayout = true;
 			}
 
@@ -275,22 +279,18 @@ export const Table = defineComponent({
 
 		const handleMouseLeave = () => {
 			store.row.setHoverIndex(null);
-			if (hoverState.value) hoverState.value = null;
 		};
 
 		// 在表头 / 底部 dock 上滚轮时转交给表体滚动；自行管理 Wheel 的挂载与卸载
-		useWheelForward({ headerWrapper, bottomWrapper, bodyXWrapper, bodyYWrapper, bodyScroller });
+		useWheelForward({ headerWrapper, bottomWrapper, bodyXWrapper, bodyScroller });
 
+		// 不论 fit 与否都监听：fit=false 时 scrollX（及固定列阴影）同样依赖容器宽度
 		const bindEvents = () => {
-			if (props.fit) {
-				Resize.on(instance.vnode.el as any, handleResize);
-			}
+			Resize.on(instance.vnode.el as any, handleResize);
 		};
 
 		const unbindEvents = () => {
-			if (props.fit) {
-				Resize.off(instance.vnode.el as any, handleResize);
-			}
+			Resize.off(instance.vnode.el as any, handleResize);
 		};
 		const debouncedUpdateLayout = debounce(() => updateLayout(), 50);
 
@@ -349,7 +349,6 @@ export const Table = defineComponent({
 			resizeState,
 			debouncedUpdateLayout,
 			isReady,
-			hoverState,
 			hiddenColumns,
 			props,
 			emit,
@@ -403,10 +402,7 @@ export const Table = defineComponent({
 								}
 								{
 									slots.append && !isTailHidden.value && (
-										<div
-											ref={appendWrapper}
-											class="vc-table__append-wrapper"
-										>
+										<div ref={appendWrapper} class="vc-table__append-wrapper">
 											{ slots.append() }
 										</div>
 									)
@@ -430,7 +426,6 @@ export const Table = defineComponent({
 												class="vc-table__footer-wrapper"
 											>
 												<TableFooter
-													border={props.border}
 													sum-text={props.sumText || '合计'}
 													get-summary={props.getSummary}
 													style={bodyWidthStyle.value}
@@ -444,7 +439,7 @@ export const Table = defineComponent({
 					}
 					{
 						props.data.length === 0 && (
-							<div class={[{ 'has-height': !!props.height }, 'vc-table__empty-wrapper']}>
+							<div class="vc-table__empty-wrapper">
 								{
 									slots.empty
 										? slots.empty()

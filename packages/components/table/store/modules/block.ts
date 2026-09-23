@@ -199,7 +199,11 @@ export class Block {
 		const { getSpan, primaryKey } = this.store.table.props;
 		// 行号以参与渲染的行计：树形表格为铺平后的可见行
 		const { renderData: data, columns, list } = this.store.states;
-		if (typeof getSpan !== 'function' || !data.length || !columns.length) return;
+		// 无合并：清掉旧的合并计划（下次按 !plan 重算），避免 getCoverAnchors 仍按旧计划做关联高亮
+		if (typeof getSpan !== 'function' || !data.length || !columns.length) {
+			this._cache.plan = null;
+			return;
+		}
 
 		const columnsKey = columns.map(column => column.states.id).join(',');
 		const cache = this._cache;

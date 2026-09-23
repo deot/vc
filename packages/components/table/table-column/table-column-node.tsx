@@ -5,12 +5,13 @@ import type { ComponentInternalInstance, CSSProperties, Slots, SetupContext, VNo
 import { hasOwn } from '@deot/helper-utils';
 import { merge } from 'lodash-es';
 import type { Nullable } from '@deot/helper-shared';
-import { cellStarts, cellForced, defaultRenderCell, treeCellPrefix } from './table-column-confg';
+import { cellStarts, cellForced, defaultRenderCell, treeCellPrefix } from './table-column-config';
 import { parseWidth, parseMinWidth } from '../utils';
 import type { TableColumnProps } from './table-column-props';
 import type { TableProvide } from '../types';
 import type { Store } from '../store/store';
 import type { TreeNode } from '../store/modules/tree';
+import type { TableFilterOptions } from '../table-header/table-filter';
 
 /**
  * 列 states 完整形状：构造期仅初始化核心字段，props 镜像与 render 函数由 `init()` 写入。
@@ -35,12 +36,7 @@ export type TableColumnStates = {
 	reserveSelection?: boolean;
 	index?: number | ((rowIndex: number) => number);
 	sortable?: boolean;
-	filters?: unknown[];
-	filterMultiple?: boolean;
-	filterIcon?: string;
-	filteredValue?: unknown[];
-	filterPopupClass?: string;
-	filter?: (value: unknown) => void;
+	filterOptions?: TableFilterOptions;
 	tooltip?: string | ((data: Pick<TableColumnRenderData, 'column' | 'store'>) => string);
 
 	// 注册时写入
@@ -48,7 +44,6 @@ export type TableColumnStates = {
 	rowspan: number;
 	class?: string;
 	style?: CSSProperties;
-	order?: string;
 
 	// 派生（computed，自动解包）
 	realAlign: string | null;
@@ -97,6 +92,18 @@ type Options = {
 // states 内的派生字段（computed），赋值时跳过
 const DERIVED_KEYS = ['realAlign', 'realHeaderAlign'] as const;
 
+// 需归一化（resolveWidth / resolveMinWidth）后再写入 states 的 props
+const WIDTH_KEYS = ['width', 'minWidth'];
+
+// 宽度归一化：无法解析（如 'auto'）或缺省时回退为该类型的预设值，不保留原始字符串
+const resolveWidth = (type: string, value?: number | string) => {
+	return parseWidth(value) || cellStarts[type]?.width;
+};
+
+const resolveMinWidth = (type: string, value?: number | string) => {
+	return parseMinWidth(value) || cellStarts[type]?.minWidth || 80;
+};
+
 const assignStates = (target: TableColumnStates, source: Partial<TableColumnStates>) => {
 	for (const key in source) {
 		if (!hasOwn(source, key) || (DERIVED_KEYS as readonly string[]).includes(key)) continue;
@@ -120,7 +127,6 @@ export class TableColumnNode {
 			headerAlign: '',
 			minWidth: 80,
 			resizable: true,
-			filterMultiple: true,
 			hidden: false,
 			fixed: false,
 			realAlign: computed(() => {
@@ -155,15 +161,6 @@ export class TableColumnNode {
 	}
 
 	/**
-	 * 兼容按 children 遍历列树的场景（如 flattenData）。
-	 * leaf 返回 undefined，保持与原扁平对象一致的 truthy 判断。
-	 * @returns 子节点集合（leaf 为 undefined）
-	 */
-	get children(): TableColumnNode[] | undefined {
-		return this.childNodes.length ? this.childNodes : undefined;
-	}
-
-	/**
 	 * 由组件 props 初始化 states，并绑定 props 监听
 	 * 	1) defaults + cellStarts + props 合并（merge 跳过 undefined，保留 cellStarts 的宽度等预设）
 	 * 	2) 特定类型的强制属性（cellForced）
@@ -189,6 +186,8 @@ export class TableColumnNode {
 		}, {} as Partial<TableColumnStates>);
 
 		let column = merge(defaults, propsData);
+		// merge 会深拷贝对象：filterOptions 须保持原引用，外部改其中的 modelValue 等字段才能同步到表头
+		column.filterOptions = props.filterOptions;
 
 		column = this.applyForcedProps(column);
 		column = this.applyWidth(column, props);
@@ -204,6 +203,8 @@ export class TableColumnNode {
 	 */
 	private registerWatchers(props: TableColumnProps) {
 		Object.keys(props).forEach((key) => {
+			// 宽度需归一化后写入，见下方
+			if (WIDTH_KEYS.includes(key)) return;
 			watch(
 				() => props[key as keyof TableColumnProps],
 				(v) => { (this.states as Record<string, unknown>)[key] = v; }
@@ -214,13 +215,15 @@ export class TableColumnNode {
 		watch(() => props.fixed, () => {
 			this.table.store.scheduleLayout(true);
 		});
-		watch(() => parseWidth(props.width), (v) => {
-			this.states.width = v ?? undefined;
-			this.states.realWidth = v ?? undefined;
+		// 与 applyWidth 一致的归一化
+		watch(() => resolveWidth(this.states.type, props.width), (v) => {
+			this.states.width = v;
+			this.states.realWidth = v;
 			this.states.resized = false;
 			this.table.store.scheduleLayout(false);
 		});
-		watch(() => parseMinWidth(props.minWidth), () => {
+		watch(() => resolveMinWidth(this.states.type, props.minWidth), (v) => {
+			this.states.minWidth = v;
 			this.table.store.scheduleLayout(false);
 		});
 	}
@@ -251,8 +254,8 @@ export class TableColumnNode {
 	 * @returns ~
 	 */
 	private applyWidth(column: Partial<TableColumnStates>, props: TableColumnProps) {
-		column.width = parseWidth(props.width) || column.width;
-		column.minWidth = parseMinWidth(props.minWidth) || column.minWidth || 80;
+		column.width = resolveWidth(props.type, props.width);
+		column.minWidth = resolveMinWidth(props.type, props.minWidth);
 
 		column.realWidth = typeof column.width === 'undefined' ? column.minWidth : column.width;
 		return column;

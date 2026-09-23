@@ -1,4 +1,4 @@
-import { nextTick, computed } from 'vue';
+import { computed } from 'vue';
 import { VcError } from '../../vc';
 import { BaseWatcher } from './base-watcher';
 import {
@@ -46,12 +46,8 @@ class Store extends BaseWatcher {
 	}
 
 	setData(data: any[]) {
-		// 用户是否修改了数据
-		const dataInstanceChanged = this.states._data !== data;
-
-		// clone
-		this.states._data = data;
-		// reset
+		// 数据数组是否换了实例（原地增删时仍为同一实例）
+		const dataInstanceChanged = this.states.data !== data;
 		this.states.data = data;
 
 		// 清理已不存在的行的展开 / 加载状态，再按展开状态重建渲染块
@@ -59,11 +55,7 @@ class Store extends BaseWatcher {
 		this.expand.prune();
 		this.updateList();
 
-		/**
-		 * 数据变化，更新部分数据。
-		 * 没有使用 computed，而是手动更新部分数据
-		 * https://github.com/vuejs/vue/issues/6660#issuecomment-331417140
-		 */
+		// 当前行、选中项随数据同步
 		this.row.update();
 		if (!this.states.reserveSelection) {
 			if (dataInstanceChanged) {
@@ -75,7 +67,6 @@ class Store extends BaseWatcher {
 			this.selection.updateByRowKey();
 		}
 		this.selection.updateAllSelected();
-		this.updateTableScrollY();
 	}
 
 	/**
@@ -115,10 +106,6 @@ class Store extends BaseWatcher {
 	setExpandRowValue(values: any[]) {
 		this.expand.reset(values);
 		this.tree.reset(values);
-	}
-
-	updateTableScrollY() {
-		nextTick(() => this.table.exposed.updateScrollY());
 	}
 
 	// 更新 DOM

@@ -1,0 +1,63 @@
+@use '../../style/helper' as *;
+
+$color-primary: varfix(color-primary, table-filter);
+$icon-color: varfix(icon-color, table-filter, #666);
+$disabled-color: varfix(disabled-color, table-filter, #999);
+
+@include block(vc-table-filter) {
+	display: inline-flex;
+	width: 20px;
+	height: 20px;
+	vertical-align: middle;
+	cursor: pointer;
+	justify-content: center;
+	align-items: center;
+
+	@include element(icon) {
+		color: $icon-color;
+
+		@include when(active) {
+			color: $color-primary;
+		}
+	}
+
+	@include element(content) {
+		max-height: 160px;
+		min-width: 100px;
+		padding: 5px 0;
+		overflow-y: auto;
+	}
+
+	@include element(item) {
+		display: block;
+		width: 100%;
+		padding: 7px 16px;
+		margin: 0;
+		font-size: 12px;
+		line-height: normal;
+		white-space: nowrap;
+		cursor: pointer;
+		box-sizing: border-box;
+		transition: background-color 0.2s ease-in-out;
+
+		@include when(active) {
+			color: $color-primary;
+		}
+
+		@include when(disabled) {
+			color: $disabled-color;
+			cursor: not-allowed;
+		}
+	}
+
+	@include element(footer) {
+		display: flex;
+
+		// 双类盖过 vc-button 自身的圆角
+		> .vc-button {
+			height: 32px;
+			border-radius: 0;
+			flex: 1;
+		}
+	}
+}

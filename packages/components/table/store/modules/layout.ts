@@ -11,6 +11,7 @@ export class Layout {
 	states = reactive({
 		height: null as number | null,
 		scrollX: false,
+		// 表体是否出现纵向滚动：由 table.tsx 按表体 Scroller 实测的 scrollHeight / clientHeight 维护
 		scrollY: false,
 		bodyWidth: null as any,
 		tableHeight: null as any,
@@ -33,18 +34,6 @@ export class Layout {
 		if (!this.table) {
 			throw new VcError('table', 'Table Layout 必须包含table实例');
 		}
-		if (!this.store) {
-			throw new VcError('table', 'Table Layout 必须包含store实例');
-		}
-	}
-
-	updateScrollY() {
-		const { height, bodyHeight } = this.states;
-		if (height === null || bodyHeight === null) return;
-		const bodyYWrapper = this.table.exposed.bodyYWrapper.value;
-		if (this.table.vnode.el && bodyYWrapper) {
-			this.states.scrollY = bodyYWrapper.offsetHeight > bodyHeight;
-		}
 	}
 
 	/**
@@ -66,7 +55,6 @@ export class Layout {
 			this.states.height = rest;
 			if (rest === null) {
 				this.states.bodyHeight = null;
-				this.states.scrollY = false;
 			}
 			return;
 		}
@@ -103,7 +91,6 @@ export class Layout {
 		}
 
 		const tableHeight = this.table.vnode.el.clientHeight;
-
 		this.states.tableHeight = tableHeight;
 		const footerHeight = footerWrapper ? footerWrapper.offsetHeight : 0;
 		this.states.footerHeight = footerHeight;
@@ -112,8 +99,6 @@ export class Layout {
 		if (this.states.height !== null) {
 			this.states.bodyHeight = tableHeight - headerHeight - footerHeight + (footerWrapper ? 1 : 0);
 		}
-
-		this.updateScrollY();
 	}
 
 	updateColumnsWidth() {
@@ -160,7 +145,6 @@ export class Layout {
 			}
 
 			this.states.bodyWidth = Math.max(bodyMinWidth, bodyWidth);
-			this.table.exposed.resizeState.value.width = this.states.bodyWidth;
 		} else {
 			flattenColumns.forEach((column) => {
 				if (!column.states.width && !column.states.minWidth) {
@@ -175,7 +159,7 @@ export class Layout {
 			this.states.scrollX = bodyMinWidth > bodyWidth;
 
 			// fit：列宽之和不足表格宽度时，剩余宽度交给撑满列（见 getFillColumn）；
-			// 写进 realWidth，表头 / 表体（grid 模板）与合计行（按 realWidth 设宽）才能一致
+			// 写进 realWidth，表头 / 表体 / 合计行共用的 grid 模板与 sticky 偏移都由它得出
 			const target = fit && bodyMinWidth < bodyWidth ? this.getFillColumn() : void 0;
 			if (target) {
 				target.states.realWidth! += bodyWidth - bodyMinWidth;
@@ -196,51 +180,60 @@ export class Layout {
 	 * @returns 叶子列，没有可用的列时为 undefined
 	 */
 	getFillColumn() {
-		const { notFixedColumns = [], columns = [] } = this.store.states;
-		const toLeaves = (list: TableColumnNode[]): TableColumnNode[] => list.reduce(
-			(leaves: TableColumnNode[], column) => leaves.concat(column.childNodes.length ? toLeaves(column.childNodes) : column),
-			[]
-		);
-		const candidates = notFixedColumns.length ? toLeaves(notFixedColumns) : columns;
+		const { leafColumns = [], columns = [] } = this.store.states;
+		const candidates = leafColumns.length ? leafColumns : columns;
 		for (let i = candidates.length - 1; i >= 0; i--) {
 			if (!candidates[i].states.resized) return candidates[i];
 		}
 	}
 
 	/**
-	 * 提前计算固定列的 sticky 偏移并写到列节点 states 上（包含分组列），渲染层（header /
+	 * 提前计算固定列的 sticky 偏移并写到列节点 states 上（包含分组列及其子列），渲染层（header /
 	 * body-row / footer）从 column.stickyStyle / column.stickyClass 直接消费即可。
-	 * 非固定列上的 sticky 信息一并清除，避免列从 fixed 切换为非 fixed 时残留。
+	 * 	- 偏移按叶子宽度累加（右侧从最右往左）：分组列取其首个（左）/ 末个（右）叶子的偏移；
+	 * 	- 与滚动区交界的叶子（左侧最后一个、右侧第一个）及包含它的分组列带阴影类；
+	 * 	- 非固定列（含子列）上的 sticky 信息一并清除，避免列从 fixed 切换为非 fixed 时残留。
 	 */
 	syncStickyOffsets() {
 		const { leftFixedColumns = [], rightFixedColumns = [], notFixedColumns = [] } = this.store.states;
 
-		leftFixedColumns.reduce((offset: number, column, index) => {
-			column.states.stickyOffset = offset;
-			column.states.stickyStyle = { position: 'sticky', left: `${offset}px` };
-			column.states.stickyClass = 'is-fixed-left';
-			if (index === leftFixedColumns.length - 1) {
-				column.states.stickyClass += ' is-fixed-left-tail';
-			}
-			offset += column.states.realWidth || column.states.width || 0;
-			return offset;
-		}, 0);
+		const apply = (columns: TableColumnNode[], side: 'left' | 'right') => {
+			let offset = 0;
+			// edge: 父级是否位于交界路径上（顶层视为是）；按累加方向排列时，交界列是每层的最后一个
+			const walk = (nodes: TableColumnNode[], edge: boolean) => {
+				const list = side === 'left' ? nodes : [...nodes].reverse();
+				list.forEach((column, index) => {
+					const isEdge = edge && index === list.length - 1;
+					const start = offset;
+					if (column.childNodes.length) {
+						walk(column.childNodes, isEdge);
+					} else {
+						offset += column.states.realWidth || column.states.width || 0;
+					}
+					column.states.stickyOffset = start;
+					if (side === 'left') {
+						column.states.stickyStyle = { position: 'sticky', left: `${start}px` };
+						column.states.stickyClass = 'is-fixed-left' + (isEdge ? ' is-fixed-left-tail' : '');
+					} else {
+						column.states.stickyStyle = { position: 'sticky', right: `${start}px` };
+						column.states.stickyClass = 'is-fixed-right' + (isEdge ? ' is-fixed-right-head' : '');
+					}
+				});
+			};
+			walk(columns, true);
+		};
 
-		rightFixedColumns.reduceRight((offset: number, column, index) => {
-			column.states.stickyOffset = offset;
-			column.states.stickyStyle = { position: 'sticky', right: `${offset}px` };
-			column.states.stickyClass = 'is-fixed-right';
-			if (index === rightFixedColumns.length - 1) {
-				column.states.stickyClass += ' is-fixed-right-head';
-			}
-			offset += column.states.realWidth || column.states.width || 0;
-			return offset;
-		}, 0);
+		const clear = (nodes: TableColumnNode[]) => {
+			nodes.forEach((column) => {
+				column.states.stickyOffset = void 0;
+				column.states.stickyStyle = void 0;
+				column.states.stickyClass = void 0;
+				column.childNodes.length && clear(column.childNodes);
+			});
+		};
 
-		notFixedColumns.forEach((column) => {
-			column.states.stickyOffset = void 0;
-			column.states.stickyStyle = void 0;
-			column.states.stickyClass = void 0;
-		});
+		apply(leftFixedColumns, 'left');
+		apply(rightFixedColumns, 'right');
+		clear(notFixedColumns);
 	}
 }

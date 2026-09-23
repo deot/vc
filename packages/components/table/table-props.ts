@@ -24,6 +24,11 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
+	// 尺寸：调整字号与单元格上下内边距
+	size: {
+		type: String as PropType<'large' | 'medium' | 'small' | 'mini'>,
+		default: 'medium'
+	},
 	// 是否为斑马纹 table
 	stripe: Boolean,
 	// 是否带有纵向边框
