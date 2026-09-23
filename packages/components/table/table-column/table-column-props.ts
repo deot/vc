@@ -8,6 +8,8 @@ export const tableColumnProps = {
 		default: 'default'
 	},
 	line: Number,
+	// 表头文本行数：不设 default，未设置时取全局配置，再兜底为 1
+	headerLine: Number,
 	label: String,
 	labelClass: String,
 	prop: String,

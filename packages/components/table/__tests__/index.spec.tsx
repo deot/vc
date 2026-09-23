@@ -2059,7 +2059,8 @@ describe('Additional source-path coverage', () => {
 			</Table>
 		), { attachTo: document.body });
 		await flush();
-		expect(wrapper.find('.vc-table__text-line').exists()).toBe(true);
+		// 表头 label 默认也有 text-line（header-line），这里只断言表体
+		expect(wrapper.find('.vc-table__td .vc-table__text-line').exists()).toBe(true);
 		wrapper.unmount();
 	});
 

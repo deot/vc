@@ -5,7 +5,7 @@ import type { ComponentInternalInstance, CSSProperties, Slots, SetupContext, VNo
 import { hasOwn } from '@deot/helper-utils';
 import { merge } from 'lodash-es';
 import type { Nullable } from '@deot/helper-shared';
-import { cellStarts, cellForced, defaultRenderCell, treeCellPrefix } from './table-column-config';
+import { cellStarts, cellForced, defaultRenderCell, defaultRenderHeader, treeCellPrefix } from './table-column-config';
 import { parseWidth, parseMinWidth } from '../utils';
 import type { TableColumnProps } from './table-column-props';
 import type { TableProvide } from '../types';
@@ -22,6 +22,7 @@ export type TableColumnStates = {
 
 	// props 镜像（init 写入）
 	line?: number;
+	headerLine?: number;
 	label?: string;
 	labelClass?: string;
 	prop?: string;
@@ -277,11 +278,12 @@ export class TableColumnNode {
 		if (props.renderHeader) {
 			column.renderHeader = props.renderHeader;
 		} else if (specialTypes.indexOf(column.type!) === -1) {
+			// 自定义表头（header 插槽）不走 header-line，保持单行省略、高度由内容撑开
 			column.renderHeader = (data) => {
 				const renderHeader = slots.header;
 				return renderHeader
 					? renderHeader(data)
-					: data?.column?.label;
+					: defaultRenderHeader(data);
 			};
 		}
 

@@ -1088,7 +1088,8 @@ const updateOffsets = () => {
 | render-header      | 列标题 `Label` 区域渲染使用的 `Function`                                                               | `Function({ column, columnIndex, store })`     | -                                      | -         |
 | resizable          | 对应列是否可以通过拖动改变宽度（需要在 `Table` 上设置 `border` 属性为真）                                               | `boolean`                                      | -                                      | `true`    |
 | formatter          | 用来格式化内容                                                                                      | `Function({ row, column, cellValue, $index })` | -                                      | -         |
-| line               | 文本行数                                                                                         | `number`                                       | -                                      | `0`       |
+| line               | 文本行数，超出省略并在 hover 时展示完整内容；仅对默认内容生效（使用默认插槽或 `formatter` 时无效）。未设置时取全局配置 `TableColumn.line` | `number`                                       | -                                      | `0`       |
+| header-line        | 表头文本行数，超出省略并在 hover 时展示完整内容，`0` 为不限行数。取值顺序：列上的值 → 全局配置 `TableColumn.headerLine` → `1`。仅对 `label` 生效：`header` 插槽、`render-header` 及 `selection`/`index`/`expand` 列保持单行省略，高度由内容撑开 | `number`                                       | -                                      | `1`       |
 | align              | 对齐方式                                                                                         | `string`                                       | `left`、`center`、`right`                | `left`    |
 | header-align       | 表头对齐方式，若不设置该项，则使用表格的对齐方式                                                                     | `string`                                       | `left`、`center`、`right`                | -         |
 | class              | 列的 `className`                                                                               | `string`                                       | -                                      |           |
@@ -1096,6 +1097,21 @@ const updateOffsets = () => {
 | selectable         | 仅对 `type=selection` 的列有效，类型为 `Function`，`Function` 的返回值用来决定这一行的 `CheckBox` 是否可以勾选；`index` 为行在可选择行中的下标（树形表格按展开前的全部行计，与展开状态无关）；行对象需唯一，同一对象在数据中重复出现时，下标取最后一次出现的位置 | `Function(row, index)`                         | -                                      | -         |
 | reserve-selection  | 仅对 `type=selection` 的列有效，类型为 `boolean`，为 `true` 则会在数据更新之后保留之前选中的数据（需指定 `primary-key`）        | `boolean`                                      | -                                      | `false`   |
 | filter-options     | 表头筛选的配置，原样传给筛选组件，字段见下方 [filter-options](#filter-options) | `Object` | - | - |
+
+### 全局配置
+
+`line` / `header-line` 未设置时取 `VcInstance` 上的 `TableColumn` 配置，列上的值优先。`configure()` 按顶层键整体替换，需要同时配置时一并传入：
+
+```ts
+import { VcInstance } from '@deot/vc';
+
+VcInstance.configure({
+	TableColumn: {
+		line: 2,
+		headerLine: 2
+	}
+});
+```
 
 ### filter-options
 

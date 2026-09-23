@@ -97,28 +97,41 @@ $sizes: (
 		align-items: center;
 	}
 
+	// 表头行被多行 label（header-line）撑高时，同行的其它表头与跨行表头垂直居中（与 td 一致）
 	@include element(th) {
 		position: relative;
+		display: flex;
 		padding: var(--vc-table-th-padding-y) 0;
 		overflow: hidden;
 		white-space: nowrap;
 		background-color: #fff;
 		box-sizing: border-box;
 		user-select: none;
+		align-items: center;
 
 		@include when(center) {
 			text-align: center;
+
+			> .vc-table__cell {
+				justify-content: center;
+			}
 		}
 
 		@include when(right) {
 			text-align: right;
+
+			> .vc-table__cell {
+				justify-content: flex-end;
+			}
 		}
 
+		// label 与图标（tooltip / 排序 / 筛选）横向排列：只有 label 可收缩（min-width: 0），图标定宽始终可见
 		> .vc-table__cell {
 			position: relative;
-			text-overflow: ellipsis;
+			display: flex;
 			overflow-wrap: normal;
 			white-space: nowrap;
+			align-items: center;
 		}
 
 		&.is-required > div::before {
@@ -179,6 +192,11 @@ $sizes: (
 			.vc-checkbox {
 				padding: 0;
 			}
+		}
+
+		// 表头全选框贴着 label 边缘，label 的 overflow 会裁掉焦点环
+		.vc-table__th-label {
+			overflow: visible;
 		}
 	}
 	
@@ -281,6 +299,24 @@ $sizes: (
 	@include element(append-wrapper) {
 		// 避免外边距重合 https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Box_Model/Mastering_margin_collapsing
 		overflow: hidden;
+	}
+
+	// 表头 label：自定义表头（插槽 / render-header）沿用单行省略，高度由内容撑开；
+	// 没有图标时撑满，与原先块级布局一致（如 space-between 的自定义表头）
+	@include element(th-label) {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+
+		&:only-child {
+			flex: 1 1 auto;
+		}
+
+		// 默认 label 的多行省略：th 为 nowrap，须恢复换行，clamp 才能生效
+		> .vc-table__text-line {
+			white-space: normal;
+		}
 	}
 
 	@include element(thead) {

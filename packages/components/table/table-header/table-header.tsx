@@ -8,6 +8,8 @@ import { useStates } from '../store';
 import { TableGrid } from '../table-grid';
 import { TableSort } from './table-sort';
 import { TableFilter } from './table-filter';
+import { getColumnLine } from '../table-column/table-column-config';
+import { useTextLineTooltip } from '../hooks/use-text-line-tooltip';
 import type { TableProvide } from '../types';
 import type { TableColumnNode, TableColumnStates } from '../table-column/table-column-node';
 
@@ -239,23 +241,42 @@ export const TableHeader = defineComponent({
 			});
 		};
 
+		const textLineTooltip = useTextLineTooltip();
+
+		// 默认 label 为多行省略（header-line），被截断时展示完整内容；自定义表头内没有 text-line，不处理
+		const handleLabelMouseEnter = (e: MouseEvent, column: TableColumnStates) => {
+			const el = (e.currentTarget as HTMLElement).querySelector(':scope > .vc-table__text-line');
+			textLineTooltip.open(el, getColumnLine(column, 'headerLine'));
+		};
+
+		/**
+		 * label 与图标（tooltip / 排序 / 筛选）横向排列：label 可收缩，图标始终可见
+		 * @param column 列
+		 * @param columnIndex 列在当前表头行的下标
+		 * @returns cell 内容
+		 */
 		const renderCellContent = (column: TableColumnNode, columnIndex: number) => {
 			const { states: columnStates } = column;
 			return (
 				<div
 					class={['vc-table__cell', columnStates.labelClass]}
 				>
-					{
-						columnStates.renderHeader
-							? columnStates.renderHeader(
-									{
-										column: columnStates,
-										columnIndex,
-										store: table.store,
-									}
-								)
-							: columnStates.label
-					}
+					<div
+						class="vc-table__th-label"
+						onMouseenter={(e: MouseEvent) => handleLabelMouseEnter(e, columnStates)}
+					>
+						{
+							columnStates.renderHeader
+								? columnStates.renderHeader(
+										{
+											column: columnStates,
+											columnIndex,
+											store: table.store,
+										}
+									)
+								: columnStates.label
+						}
+					</div>
 					{
 						columnStates.tooltip
 							? (

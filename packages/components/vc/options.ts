@@ -48,7 +48,8 @@ export const defaults: ResolvedOptions = {
 		download: nil
 	},
 	TableColumn: {
-		line: nil
+		line: nil,
+		headerLine: nil
 	},
 	Theme: {
 		variables: VARIABLES

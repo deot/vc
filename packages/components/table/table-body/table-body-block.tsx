@@ -7,9 +7,8 @@ import { useStates } from '../store';
 import { TableGrid } from '../table-grid';
 import { TableExpand } from './table-expand';
 import { getRowValue } from '../utils';
-import { getFitIndex } from '../../text/utils';
-import { VcInstance } from '../../vc';
-import { Popover } from '../../popover';
+import { getColumnLine } from '../table-column/table-column-config';
+import { useTextLineTooltip } from '../hooks/use-text-line-tooltip';
 import type { TableProvide } from '../types';
 import type { TableColumnStates } from '../table-column/table-column-node';
 
@@ -161,34 +160,7 @@ export const TableBodyBlock = defineComponent({
 			return { cellEl, row: row.data, rowIndex, column: columnNode.states, columnIndex };
 		};
 
-		let poper: Nullable<{ destroy: () => void }>;
-		const showTextLineTooltip = (cellEl: HTMLElement, row: RowData, column: TableColumnStates) => {
-			// 判断是否text-overflow, 如果是就显示tooltip
-			const el = cellEl.querySelector('.vc-table__text-line');
-			const line = typeof column.line !== 'undefined'
-				? column.line
-				: VcInstance.options.TableColumn?.line;
-			if (!el || !line) return;
-			const value = `${row[column.prop!]}`;
-			const endIndex = getFitIndex({
-				el,
-				value,
-				line,
-				suffix: '...'
-			});
-			if (endIndex > 0 && endIndex < value.length - 1) {
-				poper && poper.destroy();
-				poper = Popover.open({
-					el: document.body,
-					triggerEl: el,
-					hover: true,
-					alone: true,
-					autoWidth: true,
-					placement: 'top',
-					content: value
-				});
-			}
-		};
+		const textLineTooltip = useTextLineTooltip();
 
 		const handleHoverEnter = debounce((index: number) => {
 			table.store.row.setHoverIndex(index);
@@ -201,7 +173,8 @@ export const TableBodyBlock = defineComponent({
 		const enterCell = (e: MouseEvent, cell: ResolvedCell) => {
 			handleHoverEnter(cell.rowIndex);
 			table.emit('cell-mouse-enter', cell.row, cell.column, cell.cellEl, e);
-			showTextLineTooltip(cell.cellEl, cell.row, cell.column);
+			// 多行省略被截断时展示完整内容
+			textLineTooltip.open(cell.cellEl.querySelector('.vc-table__text-line'), getColumnLine(cell.column, 'line'));
 		};
 
 		const leaveCell = (e: MouseEvent, cell: ResolvedCell) => {
@@ -243,7 +216,6 @@ export const TableBodyBlock = defineComponent({
 		};
 
 		onBeforeUnmount(() => {
-			poper && poper.destroy();
 			handleHoverEnter.cancel();
 			handleHoverLeave.cancel();
 		});

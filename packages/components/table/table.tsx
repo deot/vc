@@ -4,6 +4,7 @@ import { defineComponent, provide, computed, ref, watch, getCurrentInstance, nex
 import { debounce } from 'lodash-es';
 import { Resize } from '@deot/helper-resize';
 import { getUid } from '@deot/helper-utils';
+import { IS_SERVER } from '@deot/vc-shared';
 import { parseHeight } from './utils';
 
 import { Store, useStates } from './store';
@@ -281,6 +282,48 @@ export const Table = defineComponent({
 			store.row.setHoverIndex(null);
 		};
 
+		/**
+		 * 表头高度变化（header-line 随列宽 / 文案换行、自定义表头内容变化等）：
+		 * 表格根节点尺寸可能不变（如固定 height），须单独观察表头，重算表体高度并刷新滚动条与吸附。
+		 * 只处理高度，宽度变化由根节点的 handleResize 负责；不重算列宽，列宽与表头高度无关，不会循环
+		 */
+		let headerOffsetHeight = 0;
+		const handleHeaderResize = () => {
+			const el = headerWrapper.value;
+			if (!isReady.value || isUnMount || !el) return;
+			const height = el.offsetHeight;
+			if (height === headerOffsetHeight) return;
+			headerOffsetHeight = height;
+
+			shouldUpdateHeight.value && layout.updateElsHeight();
+			usesRecycleList.value
+				? scroller.value?.refreshViewport?.()
+				: scroller.value?.refresh?.();
+			refreshAffix();
+		};
+
+		// 表头节点会随 affix 启用 / 禁用、showHeader 切换而重建，按节点重新绑定；
+		// 卸载时 ref 已置空，记下已绑定的节点用于解绑
+		let observedHeader: Nullable<HTMLElement> = null;
+		const unbindHeaderResize = () => {
+			observedHeader && Resize.off(observedHeader, handleHeaderResize);
+			observedHeader = null;
+		};
+		watch(
+			headerWrapper,
+			(el) => {
+				if (IS_SERVER || el === observedHeader) return;
+				unbindHeaderResize();
+				if (el) {
+					// 以绑定时的高度为基准：observe 会先回调一次，高度未变时不重复处理
+					headerOffsetHeight = el.offsetHeight;
+					Resize.on(el, handleHeaderResize);
+					observedHeader = el;
+				}
+			},
+			{ flush: 'post' }
+		);
+
 		// 在表头 / 底部 dock 上滚轮时转交给表体滚动；自行管理 Wheel 的挂载与卸载
 		useWheelForward({ headerWrapper, bottomWrapper, bodyXWrapper, bodyScroller });
 
@@ -291,6 +334,7 @@ export const Table = defineComponent({
 
 		const unbindEvents = () => {
 			Resize.off(instance.vnode.el as any, handleResize);
+			unbindHeaderResize();
 		};
 		const debouncedUpdateLayout = debounce(() => updateLayout(), 50);
 
