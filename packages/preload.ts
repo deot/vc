@@ -1,7 +1,11 @@
 import './components/style';
 
+document.body.style.fontFamily = (
+	`Microsoft YaHei, 微软雅黑, Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Arial, sans-serif`
+);
+
 // 设置 viewport 的内容
-const metaViewport = document.querySelector('meta[name="viewport"]');
+const metaViewport = document.querySelector('meta[name="viewport"]')!;
 metaViewport.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no');
 
 // 设置主题
