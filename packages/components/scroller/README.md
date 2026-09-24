@@ -7,7 +7,27 @@
 - 列表、日志或面板内容超过可用空间时。
 - 需要读取滚动位置、通过方法定位，或调整滚动条位置时。
 - 通用场景优先使用 `Scroller`：滚动由浏览器处理，键盘、触摸、聚焦等方式都能正常滚动。
-- `ScrollerWheel` 在 `native=false` 时由滚轮驱动位置，减少一层容器嵌套，滚动位置与依赖它的内容在同一帧更新，适合表头联动、虚拟列表等场景；此时键盘方向键、PageDown 等无法滚动内容，触摸滚动为模拟实现。
+- `ScrollerWheel` 在 `native=false` 时由滚轮驱动位置，滚动位置与依赖它的内容在同一帧更新，适合表头联动、虚拟列表等场景；此时键盘方向键、PageDown 等无法滚动内容，触摸滚动为模拟实现。
+
+### 结构
+
+两者结构相同：根节点即滚动容器，内部为 `tag` 指定的内容元素；自定义滚动条的轨道是根节点的直接子元素，由 `position: sticky` 固定在可视区边缘（含滚动容器的 padding）。二者只在滚动的驱动方式上不同。
+
+```html
+<div class="vc-scroller vc-scroller__wrapper">  <!-- ScrollerWheel 为 vc-scroller-wheel -->
+	<div class="vc-scroller__content">...</div>
+	<div class="vc-scroller-track is-horizontal is-sticky">...</div>
+	<div class="vc-scroller-track is-vertical is-sticky">...</div>
+</div>
+```
+
+`Scroller` 早期为两层结构（外层 `.vc-scroller` 包裹滚动的 `.vc-scroller__wrapper`），升级时注意：
+
+- `class`、`style` 与 `wrapperClass`、`wrapperStyle` 现在作用于同一个元素，即滚动容器本身。
+- 写在 `Scroller` 上的 `padding` 位于滚动区域内，随内容滚动；滚动条仍贴住容器边缘。
+- 内容中 `position: absolute` 的元素改为相对滚动容器定位，会随内容滚动。需要固定在可视区的内容使用 `Affix`（`fixed=false`，基于 `position: sticky`）。
+- `.vc-scroller > .vc-scroller__wrapper` 等依赖两层结构的选择器不再匹配，改为直接选择 `.vc-scroller`。
+- 根节点保持 `display: block`，内容布局写在内容元素上（`tag`、`contentClass`、`contentStyle`）。
 
 ### 基础用法
 
@@ -228,10 +248,10 @@ const trackId = `scroller-track-${useId()}`;
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | tag | 内容元素标签，初始化时确定 | `string` | HTML 标签 | `'div'` |
-| height | 可视容器高度，数字按 px 处理 | `string \| number` | - | `''` |
-| maxHeight | 可视容器最大高度，数字按 px 处理 | `string \| number` | - | `''` |
-| wrapperStyle | 可视容器样式，height/maxHeight 优先 | `StyleValue` | - | `''` |
-| wrapperClass | 可视容器 class | `StyleValue` | - | `''` |
+| height | 滚动容器高度，数字按 px 处理 | `string \| number` | - | `''` |
+| maxHeight | 滚动容器最大高度，数字按 px 处理 | `string \| number` | - | `''` |
+| wrapperStyle | 滚动容器样式，与 `style` 作用于同一元素；合并顺序为 wrapperStyle → height/maxHeight → `style`，后者覆盖前者 | `StyleValue` | - | `''` |
+| wrapperClass | 滚动容器 class，与 `class` 作用于同一元素 | `StyleValue` | - | `''` |
 | contentStyle | 内容元素样式 | `StyleValue` | - | `''` |
 | contentClass | 内容元素 class | `StyleValue` | - | `''` |
 | native | 使用浏览器滚动条 | `boolean` | - | 浏览器滚动条不占宽时为 `true`，否则为 `false` |
@@ -307,4 +327,6 @@ const trackId = `scroller-track-${useId()}`;
 | `--vc-scroller-track-color-dark-lightest` | 滑块 hover 状态 | `--vc-color-dark-lightest` |
 | `--vc-scroller-track-size` | 轨道粗细（竖向为宽度、横向为高度） | `6px` |
 
-调整轨道粗细请使用 `--vc-scroller-track-size`，不要通过 `trackStyle` 写死宽高：`ScrollerWheel` 的轨道依赖该变量贴住右边与底边。
+调整轨道粗细请使用 `--vc-scroller-track-size`，不要通过 `trackStyle` 写死宽高：轨道依赖该变量贴住右边与底边。
+
+滚动容器的 padding 在尺寸刷新时读取（挂载、尺寸变化或调用 `refresh()`）；只修改 padding 而尺寸不变时，调用 `refresh()` 同步滚动条位置。

@@ -9,6 +9,8 @@ import type { TrackExposed } from './track';
 const COMPONENT_NAME = 'vc-scroller-bar';
 // sticky 下贴右/贴底时扣除的偏移，由 track.scss 读取
 const TRACK_OFFSET = '--vc-scroller-track-offset';
+// sticky 竖轨为留在内容区而扣掉的底 padding，由 track.scss 用伪元素补齐点击区域与背景
+const TRACK_EXTEND = '--vc-scroller-track-extend';
 
 export type BarExposed = {
 	scrollTo: (options?: any) => void;
@@ -40,12 +42,20 @@ export const Bar = defineComponent({
 		});
 
 		// sticky：长度与负 margin 抵消轨道在文档流中的占位；贴右/贴底依赖轨道粗细，见 track.scss
+		// sticky 以滚动容器去掉 padding 后的内容区为参照，且不能越出内容区的末端，这里再把 padding 抵消掉，让轨道贴住 padding 盒边缘：
+		// - 左 / 上：负偏移 + 负 margin 即可
+		// - 右 / 下：用 transform 平移；负 margin 会改变滚动区域（右侧撑大 scrollWidth，底部在 Safari 下吃掉底 padding）
+		// - 竖轨长度扣掉底 padding 以留在内容区内，滑块移动范围仍按 wrapperH 计算，可越出轨道盒子到达底边
 		const stickyPosX = computed(() => {
 			if (!isSticky.value) return {};
 			const [, , bottom, left] = props.trackOffsetX;
+			const [, paddingRight, paddingBottom, paddingLeft] = props.wrapperPadding;
 			return {
+				left: left - paddingLeft + 'px',
 				width: Math.max(props.wrapperW! - left, 0) + 'px',
-				marginLeft: left + 'px',
+				marginLeft: left - paddingLeft + 'px',
+				marginRight: -paddingRight + 'px',
+				transform: paddingBottom ? `translateY(${paddingBottom}px)` : '',
 				[TRACK_OFFSET]: bottom + 'px'
 			};
 		});
@@ -53,12 +63,16 @@ export const Bar = defineComponent({
 		const stickyPosY = computed(() => {
 			if (!isSticky.value) return {};
 			const [top, right] = props.trackOffsetY;
-			const length = Math.max(props.wrapperH! - top, 0);
+			const [paddingTop, paddingRight, paddingBottom] = props.wrapperPadding;
+			const length = Math.max(props.wrapperH! - top - paddingBottom, 0);
 			return {
+				top: top - paddingTop + 'px',
 				height: length + 'px',
 				marginTop: -length + 'px',
 				marginRight: right + 'px',
-				[TRACK_OFFSET]: right + 'px'
+				transform: paddingRight ? `translateX(${paddingRight}px)` : '',
+				[TRACK_OFFSET]: right + 'px',
+				[TRACK_EXTEND]: paddingBottom + 'px'
 			};
 		});
 

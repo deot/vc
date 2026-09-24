@@ -1,5 +1,6 @@
 import { getCurrentInstance, computed, onBeforeUnmount, onMounted, ref, provide, reactive, nextTick } from 'vue';
 import { Resize } from '@deot/helper-resize';
+import { getPadding } from './utils';
 import type { SetupContext } from 'vue';
 import type { BarExposed } from './bar';
 import type { Props } from './scroller-props';
@@ -17,6 +18,8 @@ export const useScroller = (expose: SetupContext['expose']) => {
 	const wrapperH = ref(0);
 	const contentH = ref(0);
 	const contentW = ref(0);
+	// [上, 右, 下, 左]；sticky 轨道需要抵消滚动容器的 padding，见 Bar
+	const wrapperPadding = ref([0, 0, 0, 0]);
 
 	const props = instance.props as Props;
 
@@ -46,6 +49,9 @@ export const useScroller = (expose: SetupContext['expose']) => {
 
 		wrapperW.value = wrapper.value.clientWidth;
 		wrapperH.value = wrapper.value.clientHeight;
+
+		const padding = getPadding(wrapper.value);
+		padding.join() !== wrapperPadding.value.join() && (wrapperPadding.value = padding);
 
 		// 实际测试中发现，不使用nextTick会存在contentW和contentH为上一次值的情况
 		await nextTick();
@@ -175,6 +181,7 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		wrapperH,
 		contentH,
 		contentW,
+		wrapperPadding,
 
 		handleScroll,
 		handleBarChange: scrollTo,

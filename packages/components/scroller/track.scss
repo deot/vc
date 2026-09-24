@@ -41,6 +41,18 @@ $track-size: var(--vc-scroller-track-size, #{unitfix(6)});
 		@include when(vertical) {
 			left: calc(100% - #{$track-size} - var(--vc-scroller-track-offset, 0px));
 			margin-left: auto;
+
+			// 为留在内容区而扣掉的底 padding：伪元素补齐点击区域与背景（画在滑块之下）
+			&::after {
+				position: absolute;
+				top: 100%;
+				right: 0;
+				left: 0;
+				z-index: -1;
+				height: var(--vc-scroller-track-extend, 0);
+				background: inherit;
+				content: '';
+			}
 		}
 
 		@include when(horizontal) {

@@ -41,6 +41,11 @@ export const props = {
 	trackClass: [Object, String, Array] as PropType<StyleValue>,
 	wrapperW: Number,
 	wrapperH: Number,
+	// 滚动容器的 padding [上, 右, 下, 左]，仅 sticky 使用
+	wrapperPadding: {
+		type: Array as PropType<number[]>,
+		default: () => ([0, 0, 0, 0])
+	},
 	contentH: Number,
 	contentW: Number,
 	scrollX: Number,

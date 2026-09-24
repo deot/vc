@@ -80,10 +80,9 @@ $color-dark-lighter: varfix(color-dark-lighter, select);
 		align-items: center;
 	}
 
+	// Scroller 根节点即滚动容器
 	@include element(options) {
-		> .vc-scroller__wrapper {
-			max-height: unitfix(200);
-		}
+		max-height: unitfix(200);
 	}
 
 	@include element(loading) {
