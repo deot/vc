@@ -4,6 +4,9 @@ $component-name: vc-scroller-track;
 $thumb-color: varfix(color-dark-extralight, scroller-track);
 $thumb-color-hover: varfix(color-dark-lightest, scroller-track);
 
+// 轨道粗细；sticky 下贴右/贴底的计算与宽高共用
+$track-size: var(--vc-scroller-track-size, #{unitfix(6)});
+
 @include block($component-name) {
 	position: absolute;
 	z-index: 1;
@@ -13,7 +16,7 @@ $thumb-color-hover: varfix(color-dark-lightest, scroller-track);
 		top: 0;
 		right: 0;
 		bottom: 0;
-		width: unitfix(6);
+		width: $track-size;
 
 		> div {
 			width: 100%;
@@ -24,10 +27,25 @@ $thumb-color-hover: varfix(color-dark-lightest, scroller-track);
 		right: 0;
 		bottom: 0;
 		left: 0;
-		height: unitfix(6);
+		height: $track-size;
 
 		> div {
 			height: 100%;
+		}
+	}
+
+	// 轨道是滚动容器的直接子元素：长度、负 margin、偏移由 Bar 行内设置
+	@include when(sticky) {
+		position: sticky;
+
+		@include when(vertical) {
+			left: calc(100% - #{$track-size} - var(--vc-scroller-track-offset, 0px));
+			margin-left: auto;
+		}
+
+		@include when(horizontal) {
+			top: calc(100% - #{$track-size} - var(--vc-scroller-track-offset, 0px));
+			margin-top: calc(-1 * #{$track-size});
 		}
 	}
 
