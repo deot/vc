@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { Customer, Scroller, ScrollerWheel } from '@deot/vc-components';
-import { getScroller, isWheel } from '../utils';
+import { getPadding, getScroller, getViewportRect } from '../utils';
 import { Bar } from '../bar';
 import { mount } from '@vue/test-utils';
 import { nextTick, reactive, ref } from 'vue';
@@ -1519,21 +1519,61 @@ describe('index.ts', () => {
 	});
 
 	describe('utils', () => {
-		it('isWheel detects vc-scroller-wheel className', () => {
+		it('getPadding reads the computed padding as [top, right, bottom, left]', () => {
 			const el = document.createElement('div');
-			el.className = 'vc-scroller-wheel something';
-			expect(isWheel(el)).toBe(true);
+			document.body.appendChild(el);
+			expect(getPadding(el)).toEqual([0, 0, 0, 0]);
 
-			const other = document.createElement('div');
-			other.className = 'foo bar';
-			expect(isWheel(other)).toBe(false);
+			el.style.padding = '10px 20px 30px 40px';
+			expect(getPadding(el)).toEqual([10, 20, 30, 40]);
 
-			expect(isWheel(null)).toBe(false);
+			el.remove();
+		});
+
+		it('getViewportRect excludes border and padding, and scales them with the element', () => {
+			const el = document.createElement('div');
+			el.style.padding = '10px 20px 30px 40px';
+			document.body.appendChild(el);
+			const restores = [
+				defineGetter(el, 'clientTop', 2),
+				defineGetter(el, 'clientLeft', 3),
+				defineGetter(el, 'clientWidth', 300),
+				defineGetter(el, 'clientHeight', 200),
+				defineGetter(el, 'offsetHeight', 205)
+			];
+			const rect = (height: number) => ({ top: 100, left: 50, right: 0, bottom: 0, width: 0, height, x: 0, y: 0, toJSON: () => ({}) });
+
+			// 未缩放：可视区 = 边框盒 - 边框 - padding
+			el.getBoundingClientRect = () => rect(205);
+			expect(getViewportRect(el)).toEqual({ top: 112, right: 333, bottom: 272, left: 93, scale: 1 });
+
+			// 祖先 transform: scale(0.5)：边框与 padding 按同一比例换算
+			el.getBoundingClientRect = () => rect(102.5);
+			expect(getViewportRect(el)).toEqual({ top: 106, right: 191.5, bottom: 186, left: 71.5, scale: 0.5 });
+
+			restores.forEach(fn => fn());
+			el.remove();
+		});
+
+		it('getViewportRect of window is the whole viewport', () => {
+			expect(getViewportRect(window)).toEqual({ top: 0, right: window.innerWidth, bottom: window.innerHeight, left: 0, scale: 1 });
 		});
 
 		it('getScroller walks up to the closest vc-scroller-wheel ancestor', () => {
 			const root = document.createElement('div');
 			root.className = 'vc-scroller-wheel';
+			const inner = document.createElement('span');
+			root.appendChild(inner);
+			document.body.appendChild(root);
+
+			expect(getScroller(inner)).toBe(root);
+
+			document.body.removeChild(root);
+		});
+
+		it('getScroller recognizes the Scroller root by class even before styles load', () => {
+			const root = document.createElement('div');
+			root.className = 'vc-scroller vc-scroller__wrapper';
 			const inner = document.createElement('span');
 			root.appendChild(inner);
 			document.body.appendChild(root);

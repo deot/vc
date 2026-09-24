@@ -3,11 +3,12 @@
 $component-name: vc-affix;
 
 @include block($component-name) {
-	@include element(fixed) {
-		position: fixed;
+	// fixed=false：在滚动容器内吸附，偏移与层级由行内设置
+	@include when(sticky) {
+		position: sticky;
 	}
 
-	@include element(absolute) {
-		position: absolute;
+	@include element(fixed) {
+		position: fixed;
 	}
 }

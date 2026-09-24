@@ -2,7 +2,7 @@ import { getCurrentInstance, computed, watch, ref, provide, onMounted, onBeforeU
 import { Resize } from '@deot/helper-resize';
 import { getUid } from '@deot/helper-utils';
 import { scrollIntoView } from '@deot/helper-dom';
-import { getScroller } from '../scroller/utils';
+import { getScroller, getViewportRect } from '../scroller/utils';
 
 export default (options: any = {}) => {
 	// 目前只支持外置（<Affix><Tabs></Affix>）,后续集成<Tabs affixable affixOptions="{}" />(但这个与锚点无关)
@@ -80,13 +80,14 @@ export default (options: any = {}) => {
 		const el = document.querySelector(anchor);
 		if (!el) return;
 		const scroller = getScroller(instance.vnode.el) as any;
+		// 以滚动容器去掉边框与 padding 后的可视区为参照（与 Affix 的 sticky 吸附线一致）
+		const viewport = getViewportRect(scroller);
 
 		scrollIntoView(scroller, {
 			duration: 250,
 			from: scroller.scrollTop,
 			to: scroller.scrollTop
-				+ el.getBoundingClientRect().top
-				- scroller.getBoundingClientRect().top
+				+ (el.getBoundingClientRect().top - viewport.top) / viewport.scale
 				- (!affix || affix.props.placement !== 'bottom' ? instance.vnode.el!.offsetHeight : 0)
 				- (affix && affix.props.placement !== 'bottom' ? affix.props.offset : 0)
 		});
@@ -103,6 +104,9 @@ export default (options: any = {}) => {
 		const scroller = getScroller(instance.vnode.el) as any;
 		const scrollTop = scroller?.scrollTop;
 		if (typeof scrollTop !== 'number') return;
+		const viewport = getViewportRect(scroller);
+		// 锚点在滚动内容中的位置（CSS px）
+		const getElTop = (target: HTMLElement) => (target.getBoundingClientRect().top - viewport.top) / viewport.scale + scrollTop;
 
 		for (let i = 0; i < list.value.length; i++) {
 			const nav = list.value[i];
@@ -110,13 +114,13 @@ export default (options: any = {}) => {
 			if (!anchor) continue;
 			const el = document.querySelector(anchor) as HTMLElement;
 			if (!el) continue;
-			const elTop = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+			const elTop = getElTop(el);
 			const nextNav = list.value[i + 1];
 			let nextElTop: number | undefined;
 			if (nextNav && nextNav.anchor) {
 				const nextEl = document.querySelector(nextNav.anchor) as HTMLElement;
 				if (nextEl) {
-					nextElTop = nextEl.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+					nextElTop = getElTop(nextEl);
 				}
 			}
 			const allowDistance = 2; // 允许一点误差

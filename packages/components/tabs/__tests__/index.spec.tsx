@@ -474,6 +474,37 @@ describe('index.ts', () => {
 		document.body.removeChild(scroller);
 	});
 
+	it('anchor: target position is measured from the scroller viewport inside its padding', async () => {
+		const scroller = document.createElement('div');
+		scroller.className = 'vc-scroller__wrapper';
+		scroller.style.paddingTop = '20px';
+		Object.defineProperty(scroller, 'scrollTop', { value: 0, writable: true, configurable: true });
+		scroller.getBoundingClientRect = () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0, toJSON: () => ({}) });
+		document.body.appendChild(scroller);
+
+		const anchorEl = document.createElement('div');
+		anchorEl.id = 'anchor-padding';
+		anchorEl.getBoundingClientRect = () => ({ top: 200, left: 0, right: 0, bottom: 200, width: 0, height: 0, x: 0, y: 0, toJSON: () => ({}) });
+		scroller.appendChild(anchorEl);
+
+		const wrapper = mount(() => (
+			<Tabs modelValue={0}>
+				<TabsPane label="a" value="a" />
+				<TabsPane label="b" value="b" anchor="#anchor-padding" />
+			</Tabs>
+		), { attachTo: scroller });
+
+		await flush();
+		await wrapper.findAll('.vc-tabs__item')[1].trigger('click');
+		await Utils.sleep(400);
+
+		// 可视区顶在 padding 之下（0 + 20），锚点距可视区顶 180
+		expect(scroller.scrollTop).toBe(180);
+
+		wrapper.unmount();
+		document.body.removeChild(scroller);
+	});
+
 	it('scrollToActive: scrolls active item into view when scrollable', async () => {
 		const wrapper = mount(() => (
 			<Tabs modelValue={0}>
