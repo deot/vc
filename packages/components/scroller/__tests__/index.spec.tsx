@@ -2,8 +2,9 @@
 
 import { Customer, Scroller, ScrollerWheel } from '@deot/vc-components';
 import { getScroller, isWheel } from '../utils';
+import { Bar } from '../bar';
 import { mount } from '@vue/test-utils';
-import { nextTick, ref } from 'vue';
+import { nextTick, reactive, ref } from 'vue';
 import { vi } from 'vitest';
 
 const sleep = (time = 0) => new Promise(resolve => setTimeout(resolve, time));
@@ -911,6 +912,195 @@ describe('index.ts', () => {
 
 			restore();
 			wrapper.unmount();
+		});
+	});
+
+	describe('Bar mode', () => {
+		const flush = async () => {
+			await sleep();
+			await nextTick();
+			await nextTick();
+		};
+		const tracksIn = (el: Element) => [...el.children].filter(
+			child => child.classList.contains('vc-scroller-track')
+		) as HTMLElement[];
+		const trackOf = (tracks: HTMLElement[], cls: string) => tracks.find(el => el.classList.contains(cls))!;
+		// 保留真实 Transition：默认的 transition-stub 会多包一层，无法验证轨道是滚动容器的直接子元素
+
+		it('ScrollerWheel pins tracks with sticky inside the wrapper', async () => {
+			const scrollerRef = ref<any>();
+			const wrapper = mount(() => (
+				<ScrollerWheel
+					ref={scrollerRef}
+					native={false}
+					always
+					height="200px"
+					trackOffsetX={[0, 5, 6, 7]}
+					trackOffsetY={[8, 9, 10, 11]}
+				>
+					<div style="height: 1000px; width: 1000px"></div>
+				</ScrollerWheel>
+			), { attachTo: document.body, global: { stubs: { transition: false } } });
+
+			const wrapEl = wrapper.element as HTMLElement;
+			const restore = mockSize(wrapEl, {
+				clientWidth: 200,
+				clientHeight: 200,
+				scrollWidth: 1000,
+				scrollHeight: 1000
+			});
+			await scrollerRef.value.refresh();
+			await flush();
+
+			// 轨道是滚动容器的直接子元素
+			const tracks = tracksIn(wrapEl);
+			expect(tracks.length).toBe(2);
+			tracks.forEach(el => expect(el.classList.contains('is-sticky')).toBe(true));
+
+			// 竖轨：长度 = 可视高度 - 上偏移，负 margin 抵消占位
+			const vertical = trackOf(tracks, 'is-vertical');
+			expect(vertical.style.top).toBe('8px');
+			expect(vertical.style.height).toBe('192px');
+			expect(vertical.style.marginTop).toBe('-192px');
+			expect(vertical.style.marginRight).toBe('9px');
+			expect(vertical.style.getPropertyValue('--vc-scroller-track-offset')).toBe('9px');
+
+			// 横轨：长度 = 可视宽度 - 左偏移
+			const horizontal = trackOf(tracks, 'is-horizontal');
+			expect(horizontal.style.left).toBe('7px');
+			expect(horizontal.style.bottom).toBe('6px');
+			expect(horizontal.style.width).toBe('193px');
+			expect(horizontal.style.marginLeft).toBe('7px');
+			expect(horizontal.style.getPropertyValue('--vc-scroller-track-offset')).toBe('6px');
+
+			// 滚动后不再用 transform 补偿位移
+			scrollerRef.value.scrollTo({ x: 100, y: 300 });
+			await nextTick();
+			tracks.forEach(el => expect(el.getAttribute('style') ?? '').not.toContain('translate('));
+
+			restore();
+			wrapper.unmount();
+		});
+
+		it('ScrollerWheel with barTo keeps tracks absolute in the target', async () => {
+			const target = document.createElement('div');
+			target.className = 'bar-to-wheel-target';
+			document.body.appendChild(target);
+
+			const scrollerRef = ref<any>();
+			const wrapper = mount(() => (
+				<ScrollerWheel
+					ref={scrollerRef}
+					native={false}
+					always
+					height="200px"
+					barTo=".bar-to-wheel-target"
+					trackOffsetY={[8, 9, 10, 11]}
+				>
+					<div style="height: 1000px; width: 1000px"></div>
+				</ScrollerWheel>
+			), { attachTo: document.body, global: { stubs: { transition: false } } });
+
+			const wrapEl = wrapper.element as HTMLElement;
+			const restore = mockSize(wrapEl, {
+				clientWidth: 200,
+				clientHeight: 200,
+				scrollWidth: 1000,
+				scrollHeight: 1000
+			});
+			await scrollerRef.value.refresh();
+			await flush();
+
+			expect(tracksIn(wrapEl).length).toBe(0);
+			const tracks = tracksIn(target);
+			expect(tracks.length).toBe(2);
+			tracks.forEach((el) => {
+				expect(el.classList.contains('is-sticky')).toBe(false);
+				expect(el.style.marginTop).toBe('');
+				expect(el.style.getPropertyValue('--vc-scroller-track-offset')).toBe('');
+			});
+			const vertical = trackOf(tracks, 'is-vertical');
+			expect(vertical.style.top).toBe('8px');
+			expect(vertical.style.right).toBe('9px');
+			expect(vertical.style.height).toBe('');
+
+			restore();
+			wrapper.unmount();
+			target.parentNode?.removeChild(target);
+		});
+
+		it('Scroller keeps tracks absolute outside the wrapper', async () => {
+			const scrollerRef = ref<any>();
+			const wrapper = mount(() => (
+				<Scroller ref={scrollerRef} native={false} always height="200px">
+					<div style="height: 1000px; width: 1000px"></div>
+				</Scroller>
+			), { attachTo: document.body, global: { stubs: { transition: false } } });
+
+			const wrapEl = wrapper.find('.vc-scroller__wrapper').element;
+			const restore = mockSize(wrapEl, {
+				clientWidth: 200,
+				clientHeight: 200,
+				scrollWidth: 1000,
+				scrollHeight: 1000
+			});
+			await scrollerRef.value.refresh();
+			await flush();
+
+			expect(wrapEl.querySelector('.vc-scroller-track')).toBeNull();
+			const tracks = tracksIn(wrapper.element);
+			expect(tracks.length).toBe(2);
+			tracks.forEach((el) => {
+				expect(el.classList.contains('is-sticky')).toBe(false);
+				expect(el.style.marginTop).toBe('');
+			});
+
+			restore();
+			wrapper.unmount();
+		});
+
+		it('Bar mode=translate compensates the scroll offset with transform', async () => {
+			const host = document.createElement('div');
+			const target = document.createElement('div');
+			target.id = 'bar-translate-target';
+			document.body.append(host, target);
+
+			const state = reactive<{ to?: string }>({});
+			const wrapper = mount(() => (
+				<Bar
+					native={false}
+					always
+					mode="translate"
+					to={state.to}
+					wrapperW={200}
+					wrapperH={200}
+					contentW={1000}
+					contentH={1000}
+					scrollX={30}
+					scrollY={40}
+				/>
+			), { attachTo: host, global: { stubs: { transition: false } } });
+			await flush();
+
+			// attachTo 会在 host 内再包一层挂载节点
+			const tracks = [...host.querySelectorAll('.vc-scroller-track')] as HTMLElement[];
+			expect(tracks.length).toBe(2);
+			tracks.forEach((el) => {
+				expect(el.classList.contains('is-sticky')).toBe(false);
+				// transform 可能带厂商前缀，读 style 属性
+				expect(el.getAttribute('style') ?? '').toContain('translate(30px, 40px)');
+			});
+
+			// 移出滚动容器后不再补偿
+			state.to = '#bar-translate-target';
+			await flush();
+			const moved = tracksIn(target);
+			expect(moved.length).toBe(2);
+			moved.forEach(el => expect(el.getAttribute('style') ?? '').not.toContain('translate('));
+
+			wrapper.unmount();
+			host.remove();
+			target.remove();
 		});
 	});
 

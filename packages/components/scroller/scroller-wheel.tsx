@@ -9,7 +9,7 @@ import { useScroller } from './use-scroller';
 const COMPONENT_NAME = 'vc-scroller-wheel';
 
 /**
- * 为减少一层嵌套，为去除滚动bar的抖动，使用wheel模拟
+ * 为减少一层嵌套，使用wheel驱动滚动，让滚动位置与依赖它的内容（如表头、虚拟列表）在同一帧更新
  * 同时考虑分层（开发者工具打开layers, 需要加上will-change和原生保持一致的分层, TODO: always或hover时设置will-change）
  *
  * 以下需要了解浏览器的渲染原理
@@ -24,7 +24,7 @@ const COMPONENT_NAME = 'vc-scroller-wheel';
  * reflow和repaint发生在渲染主线程，不过设置scrollTop会经过渲染主线程
  *
  * 做抖动优化：
- * 使用scroll原生时，bar(可以没有),thumb都会出现抖动，这里选择用wheel代替解决该问题;
+ * 轨道是滚动容器的直接子元素，由 position: sticky 固定在可视区（Bar mode="sticky"），不依赖 JS 补偿位移;
  * 设置scrollTop不会reflow和repaint，不需要考虑transfrom来改变content（transform也只在draw完成）
  */
 export const ScrollerWheel = defineComponent({
@@ -163,7 +163,7 @@ export const ScrollerWheel = defineComponent({
 						(props.showBar && wrapper.value && content.value) && (
 							<Bar
 								ref={bar}
-								fit={true}
+								mode="sticky"
 								wrapperW={wrapperW.value}
 								wrapperH={wrapperH.value}
 								contentW={contentW.value}

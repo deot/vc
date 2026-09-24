@@ -7,6 +7,8 @@ import { Track } from './track';
 import type { TrackExposed } from './track';
 
 const COMPONENT_NAME = 'vc-scroller-bar';
+// sticky 下贴右/贴底时扣除的偏移，由 track.scss 读取
+const TRACK_OFFSET = '--vc-scroller-track-offset';
 
 export type BarExposed = {
 	scrollTo: (options?: any) => void;
@@ -24,6 +26,8 @@ export const Bar = defineComponent({
 		const trackX = ref<TrackExposed>();
 		const trackY = ref<TrackExposed>();
 
+		const isSticky = computed(() => props.mode === 'sticky' && !props.to);
+
 		const trackBinds = computed(() => {
 			return {
 				always: props.always,
@@ -31,12 +35,35 @@ export const Bar = defineComponent({
 				thumbStyle: props.thumbStyle,
 				thumbClass: props.thumbClass,
 				trigger: props.trigger,
-				class: props.trackClass
+				class: [props.trackClass, { 'is-sticky': isSticky.value }]
 			};
 		});
 
-		const barFitPos = computed(() => {
-			if (props.to || !props.fit) return {};
+		// sticky：长度与负 margin 抵消轨道在文档流中的占位；贴右/贴底依赖轨道粗细，见 track.scss
+		const stickyPosX = computed(() => {
+			if (!isSticky.value) return {};
+			const [, , bottom, left] = props.trackOffsetX;
+			return {
+				width: Math.max(props.wrapperW! - left, 0) + 'px',
+				marginLeft: left + 'px',
+				[TRACK_OFFSET]: bottom + 'px'
+			};
+		});
+
+		const stickyPosY = computed(() => {
+			if (!isSticky.value) return {};
+			const [top, right] = props.trackOffsetY;
+			const length = Math.max(props.wrapperH! - top, 0);
+			return {
+				height: length + 'px',
+				marginTop: -length + 'px',
+				marginRight: right + 'px',
+				[TRACK_OFFSET]: right + 'px'
+			};
+		});
+
+		const translatePos = computed(() => {
+			if (props.to || props.mode !== 'translate') return {};
 			const maxMoveX = props.contentW! - props.wrapperW!;
 			const maxMoveY = props.contentH! - props.wrapperH!;
 
@@ -108,8 +135,9 @@ export const Bar = defineComponent({
 								left: props.trackOffsetX[3] + 'px',
 								bottom: props.trackOffsetX[2] + 'px'
 							},
+							stickyPosX.value,
 							props.trackStyle,
-							barFitPos.value
+							translatePos.value
 						]}
 						// @ts-ignore
 						onChange={v => emit('change', { x: v })}
@@ -127,8 +155,9 @@ export const Bar = defineComponent({
 								top: props.trackOffsetY[0] + 'px',
 								right: props.trackOffsetY[1] + 'px'
 							},
+							stickyPosY.value,
 							props.trackStyle,
-							barFitPos.value
+							translatePos.value
 						]}
 						vertical
 						// @ts-ignore

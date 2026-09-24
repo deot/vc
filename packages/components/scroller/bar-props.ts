@@ -45,7 +45,15 @@ export const props = {
 	contentW: Number,
 	scrollX: Number,
 	scrollY: Number,
-	fit: Boolean,
+	// 轨道固定在可视区的方式
+	// default: 轨道所在容器不随内容滚动，absolute 定位即可（Scroller、barTo 的目标容器）
+	// sticky: 轨道是滚动容器的直接子元素，由 position: sticky 固定
+	// translate: 轨道 absolute 定位在滚动容器内，滚动后用 transform 补偿位移
+	// 传 to 时轨道已移出滚动容器，始终按 default 处理
+	mode: {
+		type: String as PropType<'default' | 'sticky' | 'translate'>,
+		default: 'default'
+	},
 	...(pick(barProps, barKeys) as Pick<typeof barProps, typeof barKeys[number]>)
 };
 export type Props = ExtractPropTypes<typeof props>;

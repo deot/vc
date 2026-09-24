@@ -305,3 +305,6 @@ const trackId = `scroller-track-${useId()}`;
 | --- | --- | --- |
 | `--vc-scroller-track-color-dark-extralight` | 滑块普通状态 | `--vc-color-dark-extralight` |
 | `--vc-scroller-track-color-dark-lightest` | 滑块 hover 状态 | `--vc-color-dark-lightest` |
+| `--vc-scroller-track-size` | 轨道粗细（竖向为宽度、横向为高度） | `6px` |
+
+调整轨道粗细请使用 `--vc-scroller-track-size`，不要通过 `trackStyle` 写死宽高：`ScrollerWheel` 的轨道依赖该变量贴住右边与底边。
