@@ -9,23 +9,23 @@ import { useScroller } from './use-scroller';
 const COMPONENT_NAME = 'vc-scroller-wheel';
 
 /**
- * 为减少一层嵌套，使用wheel驱动滚动，让滚动位置与依赖它的内容（如表头、虚拟列表）在同一帧更新
- * 同时考虑分层（开发者工具打开layers, 需要加上will-change和原生保持一致的分层, TODO: always或hover时设置will-change）
+ * 由wheel驱动滚动：滚动位置在rAF中写入，与依赖它的内容（如表头、虚拟列表）在同一帧更新
+ * （Scroller由浏览器滚动，scroll事件晚于实际滚动，依赖它联动的内容会慢一拍）
+ * 轨道是滚动容器的直接子元素，由 position: sticky 固定在可视区（Bar mode="sticky"），不依赖 JS 补偿位移
  *
- * 以下需要了解浏览器的渲染原理
- * 渲染主线程：parse, style, layout, layer, paint
- * 合成线程：tiling, raster, draw
+ * 渲染原理（便于理解分层）
+ * 渲染主线程：parse, style, layout, layer, paint；合成线程：tiling, raster, draw
+ * 改变属性的reflow是异步的（可合并多个属性的改变），但读取几何信息（如clientWidth）会立即reflow
+ * 设置scrollTop会经过渲染主线程；可合成滚动的容器只需合成线程重新draw，否则要重绘滚动内容
  *
- * 原生scroll事件：不会触发reflow和repaint
- * 原生wheel事件设置scrollTop：不会触发reflow和repaint
- * 以上只会影响合成线程的draw，此阶段由GPU完成
- * 改变属性的的reflow是异步的（这样可以合并多个属性的改变），但获取几何信息（如clientWidth）会立即reflow, 然后再执行后续的
+ * 分层：非native时根节点常驻 will-change: transform（见scroller-wheel.scss），与原生滚动容器一样单独成层（开发者工具Layers面板可见）
+ * overflow: hidden 的容器不可由用户滚动，浏览器未必为其做合成滚动，单独成层可把scrollTop变化带来的重绘限定在该层
  *
- * reflow和repaint发生在渲染主线程，不过设置scrollTop会经过渲染主线程
- *
- * 做抖动优化：
- * 轨道是滚动容器的直接子元素，由 position: sticky 固定在可视区（Bar mode="sticky"），不依赖 JS 补偿位移;
- * 设置scrollTop不会reflow和repaint，不需要考虑transfrom来改变content（transform也只在draw完成）
+ * 不按 always / hover 切换 will-change：
+ * 1. will-change: transform 会创建层叠上下文，并让 position: fixed 的后代以该容器为包含块，切换时这些后代的层叠与定位会跳变
+ * 2. 每次切换都要新建/销毁合成层并重新光栅化整块内容，悬停往往紧接着滚轮，切换反而会在开始滚动时引入卡顿
+ * 3. 分层服务于滚动，与滚动条是否可见无关；触摸设备没有hover，按hover切换会让触摸滚动失去分层
+ * native时为 overflow: auto，由浏览器合成滚动，不需要 will-change（is-native 下为 unset）
  */
 export const ScrollerWheel = defineComponent({
 	name: COMPONENT_NAME,
@@ -50,6 +50,7 @@ export const ScrollerWheel = defineComponent({
 			wrapperH,
 			contentH,
 			contentW,
+			wrapperPadding,
 			scrollTo,
 			handleBarChange,
 			handleScroll
@@ -166,6 +167,7 @@ export const ScrollerWheel = defineComponent({
 								mode="sticky"
 								wrapperW={wrapperW.value}
 								wrapperH={wrapperH.value}
+								wrapperPadding={wrapperPadding.value}
 								contentW={contentW.value}
 								contentH={contentH.value}
 								scrollX={scrollX.value}

@@ -1048,7 +1048,8 @@ describe('ModalView Resize 钩子', () => {
 		await flush();
 
 		const container = wrapper.find('.vc-modal__container').element as HTMLElement;
-		const scrollerEl = wrapper.find('.vc-scroller > div').element as HTMLElement;
+		// Scroller 根节点即滚动容器
+		const scrollerEl = wrapper.find('.vc-scroller').element as HTMLElement;
 
 		// 模拟存在 height 样式, 触发清理路径
 		container.style.height = '300px';

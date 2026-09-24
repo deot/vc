@@ -87,9 +87,11 @@ const offsets = reactive({ top: 0, bottom: 0 });
 const updateOffsets = () => {
 	const el = scrollerRef.value?.wrapper;
 	if (!el) return;
+	// 视口取滚动容器边框内的区域（Scroller 的 class / 边框作用在滚动容器上）
 	const rect = el.getBoundingClientRect();
-	const top = Math.max(0, rect.top);
-	const bottom = Math.max(0, window.innerHeight - rect.bottom);
+	const viewportTop = rect.top + el.clientTop;
+	const top = Math.max(0, viewportTop);
+	const bottom = Math.max(0, window.innerHeight - (viewportTop + el.clientHeight));
 	if (top === offsets.top && bottom === offsets.bottom) return;
 	offsets.top = top;
 	offsets.bottom = bottom;

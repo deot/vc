@@ -1029,16 +1029,24 @@ describe('index.ts', () => {
 			target.parentNode?.removeChild(target);
 		});
 
-		it('Scroller keeps tracks absolute outside the wrapper', async () => {
+		it('Scroller is a single layer: the root scrolls and pins tracks with sticky', async () => {
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<Scroller ref={scrollerRef} native={false} always height="200px">
+				<Scroller ref={scrollerRef} native={false} always height="200px" class="custom">
 					<div style="height: 1000px; width: 1000px"></div>
 				</Scroller>
 			), { attachTo: document.body, global: { stubs: { transition: false } } });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element;
-			const restore = mockSize(wrapEl, {
+			const root = wrapper.element as HTMLElement;
+			// 根节点同时是 vc-scroller（外部样式）与 vc-scroller__wrapper（滚动容器），class 直接作用在滚动元素上
+			expect(root.classList.contains('vc-scroller')).toBe(true);
+			expect(root.classList.contains('vc-scroller__wrapper')).toBe(true);
+			expect(root.classList.contains('custom')).toBe(true);
+			expect(root.style.height).toBe('200px');
+			expect(scrollerRef.value.wrapper).toBe(root);
+			expect(root.firstElementChild!.classList.contains('vc-scroller__content')).toBe(true);
+
+			const restore = mockSize(root, {
 				clientWidth: 200,
 				clientHeight: 200,
 				scrollWidth: 1000,
@@ -1047,13 +1055,57 @@ describe('index.ts', () => {
 			await scrollerRef.value.refresh();
 			await flush();
 
-			expect(wrapEl.querySelector('.vc-scroller-track')).toBeNull();
-			const tracks = tracksIn(wrapper.element);
+			const tracks = tracksIn(root);
 			expect(tracks.length).toBe(2);
-			tracks.forEach((el) => {
-				expect(el.classList.contains('is-sticky')).toBe(false);
-				expect(el.style.marginTop).toBe('');
+			tracks.forEach(el => expect(el.classList.contains('is-sticky')).toBe(true));
+
+			restore();
+			wrapper.unmount();
+		});
+
+		it.each([
+			['Scroller', Scroller],
+			['ScrollerWheel', ScrollerWheel]
+		])('%s offsets sticky tracks by the wrapper padding', async (_label, Component: any) => {
+			const scrollerRef = ref<any>();
+			const wrapper = mount(() => (
+				<Component ref={scrollerRef} native={false} always height="200px" style="padding: 10px 20px 30px 40px">
+					<div style="height: 1000px; width: 1000px"></div>
+				</Component>
+			), { attachTo: document.body, global: { stubs: { transition: false } } });
+
+			const root = wrapper.element as HTMLElement;
+			const restore = mockSize(root, {
+				clientWidth: 200,
+				clientHeight: 200,
+				scrollWidth: 1000,
+				scrollHeight: 1000
 			});
+			await scrollerRef.value.refresh();
+			await flush();
+
+			const tracks = tracksIn(root);
+			// 横轨：左 padding 用负偏移与负 margin 抵消，底 padding 用 transform 平移（负 margin-bottom 在 Safari 下会吃掉底 padding）
+			const horizontal = trackOf(tracks, 'is-horizontal');
+			expect(horizontal.style.left).toBe('-40px');
+			expect(horizontal.style.bottom).toBe('0px');
+			expect(horizontal.style.width).toBe('200px');
+			expect(horizontal.style.marginLeft).toBe('-40px');
+			expect(horizontal.style.marginRight).toBe('-20px');
+			expect(horizontal.style.marginBottom).toBe('');
+			expect(horizontal.style.transform).toBe('translateY(30px)');
+			expect(horizontal.style.getPropertyValue('--vc-scroller-track-offset')).toBe('0px');
+
+			// 竖轨：上 padding 用负偏移，右 padding 用 transform 平移（负 margin 会撑大 scrollWidth），长度扣掉底 padding
+			const vertical = trackOf(tracks, 'is-vertical');
+			expect(vertical.style.top).toBe('-10px');
+			expect(vertical.style.height).toBe('170px');
+			expect(vertical.style.marginTop).toBe('-170px');
+			expect(vertical.style.marginBottom).toBe('');
+			expect(vertical.style.transform).toBe('translateX(20px)');
+			expect(vertical.style.getPropertyValue('--vc-scroller-track-offset')).toBe('0px');
+			// 扣掉的底 padding 由伪元素补齐（点击区域与背景）
+			expect(vertical.style.getPropertyValue('--vc-scroller-track-extend')).toBe('30px');
 
 			restore();
 			wrapper.unmount();

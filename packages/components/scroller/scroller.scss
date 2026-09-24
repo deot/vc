@@ -5,8 +5,8 @@ $component-name: vc-scroller;
 @include block($component-name) {
 	position: relative;
 
+	// 根节点即滚动容器（ScrollerWheel 共用），高度由 height / maxHeight 或外部样式决定
 	@include element(wrapper) {
-		height: 100%;
 		overflow: auto;
 		
 		@include when(hidden) {
