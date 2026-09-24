@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Affix, ScrollerWheel } from '@deot/vc-components';
+import { Affix, Scroller, ScrollerWheel } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi } from 'vitest';
@@ -301,16 +301,15 @@ describe('index.ts', () => {
 		removeSpy.mockRestore();
 	});
 
-	it('works inside ScrollerWheel (wheel path)', async () => {
+	const lastActive = (affix: any) => affix.emitted('update:modelValue')!.at(-1)![0];
+	const withRect = (spy: any, el: Element, rect: Partial<DOMRect>) => spy.mockReturnValue({ ...el.getBoundingClientRect(), ...rect } as DOMRect);
+
+	it('fixed=false pins with sticky inside ScrollerWheel (placement=top)', async () => {
 		const scrollerRef = ref<any>();
 		const wrapper = mount(() => (
-			<ScrollerWheel
-				ref={scrollerRef}
-				height="200px"
-				native={false}
-			>
+			<ScrollerWheel ref={scrollerRef} height="200px" native={false}>
 				<div style="height: 1000px">
-					<Affix fixed={false} offset={10}>{SLOT_TEXT}</Affix>
+					<Affix fixed={false} offset={10} zIndex={3}>{SLOT_TEXT}</Affix>
 				</div>
 			</ScrollerWheel>
 		), { attachTo: document.body });
@@ -318,50 +317,43 @@ describe('index.ts', () => {
 		await nextTick();
 		await nextTick();
 
-		const scrollerEl = wrapper.find('.vc-scroller-wheel').element;
-		const affixEl = wrapper.find('.vc-affix').element;
+		const scrollerEl = wrapper.find('.vc-scroller-wheel').element as HTMLElement;
+		const affix = wrapper.findComponent(Affix);
+		const affixEl = affix.element as HTMLElement;
 
-		// 模拟：Affix 顶部处于容器顶部之上，应激活
-		const scrollerSpy = mockRect(scrollerEl, { top: 0, bottom: 200, width: 300, height: 200 });
-		const affixSpy = mockRect(affixEl, { top: -50, bottom: -10, width: 200, height: 40 });
-
-		// ScrollerWheel 暴露 scrollTo 方法，内部会触发订阅在 vc-scroller 上的 listeners（即 Affix 的 refresh）
-		scrollerRef.value.scrollTo({ y: 50 });
-		await nextTick();
-
-		expect(wrapper.find('.vc-affix__absolute').exists()).toBe(true);
-
-		// 反向：Affix 顶部在容器内且距顶部超过 offset，应取消激活
-		affixSpy.mockReturnValue({
-			top: 100,
-			bottom: 140,
-			left: 0,
-			right: 200,
-			width: 200,
-			height: 40,
-			x: 0,
-			y: 100,
-			toJSON: () => ({})
-		} as DOMRect);
-
-		scrollerRef.value.scrollTo({ y: 0 });
-		await nextTick();
-
+		// 吸附由 sticky 完成：偏移与层级在行内，不再使用占位和 absolute
+		expect(affixEl.classList.contains('is-sticky')).toBe(true);
+		expect(affixEl.style.top).toBe('10px');
+		expect(affixEl.style.zIndex).toBe('3');
 		expect(wrapper.find('.vc-affix__absolute').exists()).toBe(false);
+
+		const scrollerSpy = mockRect(scrollerEl, { top: 0, bottom: 200, width: 300, height: 200 });
+		const affixSpy = mockRect(affixEl, { top: 10, bottom: 50, width: 200, height: 40 });
+
+		// 所在滚动容器即注入的 ScrollerWheel：通过实例的滚动通知同步刷新（与滚轮同一帧）
+		scrollerRef.value.scrollTo({ y: 50 });
+		expect(lastActive(affix)).toBe(true);
+		expect(affixEl.style.width).toBe('');
+
+		// 还没滚到吸附线
+		withRect(affixSpy, affixEl, { top: 100, bottom: 140 });
+		scrollerRef.value.scrollTo({ y: 0 });
+		expect(lastActive(affix)).toBe(false);
+
+		// 被父元素边界带走（越过吸附线）：不再算吸附中
+		withRect(affixSpy, affixEl, { top: -20, bottom: 20 });
+		scrollerRef.value.scrollTo({ y: 300 });
+		expect(lastActive(affix)).toBe(false);
 
 		scrollerSpy.mockRestore();
 		affixSpy.mockRestore();
 		wrapper.unmount();
 	});
 
-	it('works inside ScrollerWheel (wheel path, placement=bottom)', async () => {
+	it('fixed=false pins with sticky inside ScrollerWheel (placement=bottom)', async () => {
 		const scrollerRef = ref<any>();
 		const wrapper = mount(() => (
-			<ScrollerWheel
-				ref={scrollerRef}
-				height="200px"
-				native={false}
-			>
+			<ScrollerWheel ref={scrollerRef} height="200px" native={false}>
 				<div style="height: 1000px">
 					<Affix fixed={false} placement="bottom" offset={10}>{SLOT_TEXT}</Affix>
 				</div>
@@ -371,21 +363,190 @@ describe('index.ts', () => {
 		await nextTick();
 		await nextTick();
 
-		const scrollerEl = wrapper.find('.vc-scroller-wheel').element;
-		const affixEl = wrapper.find('.vc-affix').element;
+		const scrollerEl = wrapper.find('.vc-scroller-wheel').element as HTMLElement;
+		const affix = wrapper.findComponent(Affix);
+		const affixEl = affix.element as HTMLElement;
+		expect(affixEl.style.bottom).toBe('10px');
+		expect(affixEl.style.top).toBe('');
 
-		// setAbsoluteStatus(bottom): isActive = currentRect.bottom - containerRect.top >= containerRect.height - offset
-		// 容器 top=0, height=200, offset=10 → 激活条件 bottom >= 190
+		// 吸附线 = 可视区底（clientHeight）- offset = 190
+		Object.defineProperty(scrollerEl, 'clientHeight', { configurable: true, get: () => 200 });
 		const scrollerSpy = mockRect(scrollerEl, { top: 0, bottom: 200, width: 300, height: 200 });
-		const affixSpy = mockRect(affixEl, { top: 160, bottom: 200, width: 200, height: 40 });
+		const affixSpy = mockRect(affixEl, { top: 150, bottom: 190, width: 200, height: 40 });
 
 		scrollerRef.value.scrollTo({ y: 10 });
-		await nextTick();
+		expect(lastActive(affix)).toBe(true);
 
-		expect(wrapper.find('.vc-affix__absolute').exists()).toBe(true);
+		withRect(affixSpy, affixEl, { top: 100, bottom: 140 });
+		scrollerRef.value.scrollTo({ y: 20 });
+		expect(lastActive(affix)).toBe(false);
 
 		scrollerSpy.mockRestore();
 		affixSpy.mockRestore();
+		delete (scrollerEl as any).clientHeight;
+		wrapper.unmount();
+	});
+
+	it('fixed=false in Scroller: native scroll and scrollTo both refresh via the injected instance', async () => {
+		const scrollerRef = ref<any>();
+		const wrapper = mount(() => (
+			<Scroller ref={scrollerRef} height="200px" native={false}>
+				<div style="height: 1000px">
+					<Affix fixed={false} offset={10}>{SLOT_TEXT}</Affix>
+				</div>
+			</Scroller>
+		), { attachTo: document.body });
+
+		await nextTick();
+		await nextTick();
+
+		const scrollerEl = scrollerRef.value.wrapper as HTMLElement;
+		const affix = wrapper.findComponent(Affix);
+		const affixEl = affix.element as HTMLElement;
+		const onSpy = vi.spyOn(scrollerRef.value, 'on');
+		const scrollerSpy = mockRect(scrollerEl, { top: 0, bottom: 200, width: 300, height: 200 });
+		const affixSpy = mockRect(affixEl, { top: 10, bottom: 50, width: 200, height: 40 });
+
+		// 原生滚动：Scroller 的 scroll 处理会通知已订阅的 Affix
+		scrollerEl.dispatchEvent(new Event('scroll'));
+		expect(lastActive(affix)).toBe(true);
+
+		withRect(affixSpy, affixEl, { top: 100, bottom: 140 });
+		scrollerRef.value.setScrollTop(0);
+		expect(lastActive(affix)).toBe(false);
+
+		onSpy.mockRestore();
+		scrollerSpy.mockRestore();
+		affixSpy.mockRestore();
+		wrapper.unmount();
+	});
+
+	it('fixed=false listens to the native scroll of an inner scroll container', async () => {
+		const scrollerRef = ref<any>();
+		const innerRef = ref<HTMLElement>();
+		const wrapper = mount(() => (
+			<Scroller ref={scrollerRef} height="400px" native={false}>
+				<div ref={innerRef} style="height: 200px; overflow: auto">
+					<div style="height: 1000px">
+						<Affix fixed={false} offset={10}>{SLOT_TEXT}</Affix>
+					</div>
+				</div>
+			</Scroller>
+		), { attachTo: document.body });
+
+		await nextTick();
+		await nextTick();
+
+		const inner = innerRef.value!;
+		const affix = wrapper.findComponent(Affix);
+		const affixEl = affix.element as HTMLElement;
+		const innerSpy = mockRect(inner, { top: 50, bottom: 250, width: 300, height: 200 });
+		const affixSpy = mockRect(affixEl, { top: 60, bottom: 100, width: 200, height: 40 });
+
+		// 注入的是外层 Scroller，Affix 实际处在内层滚动容器中：改为监听内层的原生 scroll
+		inner.dispatchEvent(new Event('scroll'));
+		await nextTick();
+		expect(lastActive(affix)).toBe(true);
+
+		// 外层 Scroller 的滚动通知不再驱动它
+		const count = affix.emitted('update:modelValue')!.length;
+		scrollerRef.value.setScrollTop(10);
+		expect(affix.emitted('update:modelValue')!.length).toBe(count);
+
+		innerSpy.mockRestore();
+		affixSpy.mockRestore();
+		wrapper.unmount();
+	});
+
+	it('fixed=false at page level pins against the window', async () => {
+		const wrapper = mount(() => (
+			<div style="height: 3000px">
+				<Affix fixed={false} offset={10}>{SLOT_TEXT}</Affix>
+			</div>
+		), { attachTo: document.body });
+
+		await nextTick();
+		await nextTick();
+
+		const affix = wrapper.findComponent(Affix);
+		const affixEl = affix.element as HTMLElement;
+		expect(affixEl.classList.contains('is-sticky')).toBe(true);
+		const affixSpy = mockRect(affixEl, { top: 10, bottom: 50, width: 200, height: 40 });
+
+		await triggerScroll();
+		expect(lastActive(affix)).toBe(true);
+
+		withRect(affixSpy, affixEl, { top: 300, bottom: 340 });
+		await triggerScroll();
+		expect(lastActive(affix)).toBe(false);
+
+		affixSpy.mockRestore();
+		wrapper.unmount();
+	});
+
+	it('fixed=false pin line accounts for the scroll container padding', async () => {
+		const scrollerRef = ref<any>();
+		const wrapper = mount(() => (
+			<Scroller ref={scrollerRef} height="200px" native={false} wrapperStyle={{ paddingTop: '20px' }}>
+				<div style="height: 1000px">
+					<Affix fixed={false} offset={10}>{SLOT_TEXT}</Affix>
+				</div>
+			</Scroller>
+		), { attachTo: document.body });
+
+		await nextTick();
+		await nextTick();
+
+		const scrollerEl = scrollerRef.value.wrapper as HTMLElement;
+		const affix = wrapper.findComponent(Affix);
+		const affixEl = affix.element as HTMLElement;
+		const scrollerSpy = mockRect(scrollerEl, { top: 0, bottom: 220, width: 300, height: 220 });
+		// sticky 参照去掉 padding 的可视区：吸附线 = 0 + 20 + 10
+		const affixSpy = mockRect(affixEl, { top: 30, bottom: 70, width: 200, height: 40 });
+
+		scrollerRef.value.setScrollTop(100);
+		expect(lastActive(affix)).toBe(true);
+
+		withRect(affixSpy, affixEl, { top: 10, bottom: 50 });
+		scrollerRef.value.setScrollTop(120);
+		expect(lastActive(affix)).toBe(false);
+
+		scrollerSpy.mockRestore();
+		affixSpy.mockRestore();
+		wrapper.unmount();
+	});
+
+	it('fixed=false pin line scales with an ancestor transform', async () => {
+		const scrollerRef = ref<any>();
+		const wrapper = mount(() => (
+			<Scroller ref={scrollerRef} height="200px" native={false}>
+				<div style="height: 1000px">
+					<Affix fixed={false} offset={10}>{SLOT_TEXT}</Affix>
+				</div>
+			</Scroller>
+		), { attachTo: document.body });
+
+		await nextTick();
+		await nextTick();
+
+		const scrollerEl = scrollerRef.value.wrapper as HTMLElement;
+		const affix = wrapper.findComponent(Affix);
+		const affixEl = affix.element as HTMLElement;
+		// transform: scale(0.5)：布局高 200，视口中高 100；offset 10 在视口中为 5
+		Object.defineProperty(scrollerEl, 'offsetHeight', { configurable: true, get: () => 200 });
+		const scrollerSpy = mockRect(scrollerEl, { top: 0, bottom: 100, width: 150, height: 100 });
+		const affixSpy = mockRect(affixEl, { top: 5, bottom: 25, width: 100, height: 20 });
+
+		scrollerRef.value.setScrollTop(100);
+		expect(lastActive(affix)).toBe(true);
+
+		withRect(affixSpy, affixEl, { top: 10, bottom: 30 });
+		scrollerRef.value.setScrollTop(110);
+		expect(lastActive(affix)).toBe(false);
+
+		scrollerSpy.mockRestore();
+		affixSpy.mockRestore();
+		delete (scrollerEl as any).offsetHeight;
 		wrapper.unmount();
 	});
 });

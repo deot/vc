@@ -151,7 +151,9 @@ export const useScroller = (expose: SetupContext['expose']) => {
 			listeners.push(listener);
 		},
 		off: (listener: any) => {
-			listeners.splice(listeners.indexOf(listener), 1);
+			// 未注册的监听器（indexOf 为 -1）不能误删最后一个
+			const index = listeners.indexOf(listener);
+			index !== -1 && listeners.splice(index, 1);
 		}
 	};
 	// 以下两个暴露scroll事件, 从而触发handleScroll

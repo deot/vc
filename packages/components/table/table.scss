@@ -35,6 +35,13 @@ $sizes: (
 	position: relative;
 	width: 100%;
 	max-width: 100%;
+
+	/**
+	 * hidden 会让表格自身成为滚动容器：affix fixed=false（sticky）的表头 / 底部 dock 只能在表格内吸附，实际不生效
+	 * 换成 clip 则不再限制 sticky，但需注意：
+	 * 1. clip 不是滚动容器，作为 flex / grid 子项时最小尺寸会变成内容尺寸（被列宽撑开），需同时补 min-width: 0; min-height: 0
+	 * 2. Safari 16 以下不支持 clip（整条失效为 visible），需保留 hidden 作回退
+	 */
 	overflow: hidden;
 	font-size: var(--vc-table-font-size);
 	color: $foreground-color;

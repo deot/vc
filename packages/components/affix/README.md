@@ -9,7 +9,7 @@
 
 ### 基础用法
 
-`fixed` 默认为 `true`，内容固定在视口中。在局部滚动容器内设为 `false`，组件会使用绝对定位。
+`fixed` 默认为 `true`，内容固定在视口中。在局部滚动容器内设为 `false`，组件使用 `position: sticky` 吸附在滚动容器内：吸附由浏览器完成，滚动时不会抖动；吸附范围受父元素限制，父元素滚出可视区后固钉随之离开（此时 `active` 为 `false`）。需要在整个滚动容器内持续吸附时，把 `Affix` 直接放在滚动内容中，且与滚动容器之间不要有 `overflow` 非 `visible` 的元素。
 
 :::playground
 <!--
@@ -134,12 +134,12 @@ const isActive = ref(false);
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | modelValue | 接收组件检测到的固定状态；传入值不驱动布局，位置检测后通过 `update:modelValue` 同步 | `boolean` | - | `false` |
-| zIndex | 固定状态下的层级 | `number \| string` | - | `1` |
+| zIndex | 固定状态下的层级；`fixed=false` 时始终作用于吸附元素 | `number \| string` | - | `1` |
 | placement | 固定位置 | `string` | `top`、`bottom` | `top` |
 | disabled | 是否禁用固定；禁用时直接渲染默认插槽 | `boolean` | - | `false` |
-| fixed | 是否使用 `position: fixed`；设为 `false` 时使用 `position: absolute` | `boolean` | - | `true` |
-| offset | 距离顶部或底部的偏移量，单位为 px | `number` | - | `0` |
-| target | 限制固钉活动范围的 CSS 选择器；在局部滚动容器中使用绝对定位时不参与计算 | `string` | - | `undefined` |
+| fixed | 是否使用 `position: fixed`；设为 `false` 时使用 `position: sticky`，吸附范围受父元素限制 | `boolean` | - | `true` |
+| offset | 距离顶部或底部的偏移量，单位为 px；`fixed=false` 时相对滚动容器去掉 padding 后的可视区 | `number` | - | `0` |
+| target | 限制固钉活动范围的 CSS 选择器；仅 `fixed=true` 时参与计算 | `string` | - | `undefined` |
 
 ### 事件
 
@@ -160,3 +160,15 @@ const isActive = ref(false);
 | refresh | 重新计算位置并同步固定状态 | - | `void` |
 | onScroll | 在当前滚动源上注册回调；`options.first` 为 `true` 时注册后立即执行 | `handler: () => void`，`options?: { first?: boolean }` | 用于取消注册的 `() => void` |
 | offScroll | 从当前滚动源移除回调 | `handler: () => void` | `void` |
+
+`onScroll` 的滚动源：固钉所在的滚动容器正是外层 `Scroller` / `ScrollerWheel` 时订阅其滚动通知（`ScrollerWheel` 由滚轮驱动时与滚动同一帧回调），否则监听该容器的原生 `scroll`。
+
+### 迁移说明
+
+`fixed=false` 由绝对定位改为 `position: sticky`，升级时注意：
+
+- 吸附范围由父元素决定：父元素滚出可视区后固钉随之离开，`active` 变为 `false`。需要在整个滚动容器内持续吸附时，把 `Affix` 直接放在滚动内容中。
+- 固钉与滚动容器之间不能有 `overflow` 非 `visible` 的元素（包括不滚动的 `overflow: hidden`）：sticky 会以最近的这类元素为参照，导致不吸附。
+- 不要把 `Affix` 放成被拉伸的 flex 子项（如 `align-items: stretch` 的横向 flex 容器中），拉伸后与容器等高，sticky 没有移动空间。
+- 页面级（没有局部滚动容器）的 `fixed=false` 同样使用 sticky，不再参考 `target`；需要限制活动范围时使用 `fixed=true` 与 `target`。
+- 不再输出 `.vc-affix__absolute` class；依赖它的样式改为选择 `.vc-affix.is-sticky`，吸附状态可通过 `v-model` 或插槽参数 `active` 获取。

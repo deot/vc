@@ -2,7 +2,7 @@
 
 import { defineComponent, ref, reactive, shallowRef, computed, onMounted, onBeforeUnmount, inject, provide, nextTick } from 'vue';
 import { props as affixProps } from './affix-props';
-import { isWheel, getScroller } from '../scroller/utils';
+import { getScroller, getViewportRect } from '../scroller/utils';
 
 const COMPONENT_NAME = 'vc-affix';
 
@@ -26,9 +26,15 @@ export const Affix = defineComponent({
 		const isActive = ref(false);
 		const transformY = ref(0);
 
-		const isVcScrollerWheel = computed(() => isWheel(scroller.value));
-
+		// fixed=false：由 position: sticky 固定在滚动容器内，吸附位置不依赖 JS，滚动时不会抖动
 		const currentStyle = computed(() => {
+			if (!props.fixed) {
+				return {
+					top: props.placement === 'top' ? `${props.offset}px` : '',
+					bottom: props.placement === 'bottom' ? `${props.offset}px` : '',
+					zIndex: props.zIndex
+				};
+			}
 			if (!isActive.value) return {};
 			return {
 				height: `${currentRect.height}px`,
@@ -37,7 +43,7 @@ export const Affix = defineComponent({
 		});
 
 		const contentStyle = computed(() => {
-			if (!isActive.value) return {};
+			if (!props.fixed || !isActive.value) return {};
 			const offset = `${props.offset}px`;
 			return {
 				height: `${currentRect.height}px`,
@@ -60,25 +66,16 @@ export const Affix = defineComponent({
 			});
 		};
 
-		const setAbsoluteStatus = () => {
+		// sticky 以滚动容器去掉边框与 padding 后的可视区为参照；恰好停在吸附线上即为吸附中（被父元素带走后不再算）
+		// offset 为 CSS px，祖先有缩放时按 scale 换算为视口 px
+		const setStickyStatus = () => {
+			if (!scroller.value) return;
 			const { placement, offset } = props;
-			const currentHeightOffset = offset + currentRect.height;
-			const containerRect = scroller.value!.getBoundingClientRect();
-			let transformOffsetY = 0;
+			const { top, bottom, scale } = getViewportRect(scroller.value);
 
-			// scroller-wheel滚动条偏移
-			if (scrollerInstance && isVcScrollerWheel.value) {
-				const maxMoveY = scrollerInstance.scrollHeight! - scrollerInstance.clientHeight!;
-				transformOffsetY = scrollerInstance.scrollTop! >= maxMoveY ? maxMoveY : scrollerInstance.scrollTop;
-			}
-
-			if (placement === 'top') {
-				isActive.value = currentRect.top - containerRect.top <= props.offset;
-				transformY.value = Math.min(containerRect.bottom - currentHeightOffset, 0) + transformOffsetY;
-			} else {
-				isActive.value = currentRect.bottom - containerRect.top >= containerRect.height - props.offset;
-				transformY.value = transformOffsetY;
-			}
+			isActive.value = placement === 'bottom'
+				? Math.abs(bottom - offset * scale - currentRect.bottom) < 1
+				: Math.abs(currentRect.top - top - offset * scale) < 1;
 		};
 
 		const setFixedStatus = () => {
@@ -104,9 +101,13 @@ export const Affix = defineComponent({
 			}
 		};
 
+		// 所在滚动容器正是注入的 VC Scroller 时订阅其滚动通知：ScrollerWheel 由滚轮驱动时与滚动同一帧回调
+		// 注入的是更外层的 Scroller（中间另有滚动容器）时，改为监听原生 scroll
+		const isInjectedScroller = () => !!scrollerInstance && scrollerInstance.wrapper === scroller.value;
+
 		const offScroll = (handler: any) => {
-			if (isVcScrollerWheel.value) {
-				scrollerInstance?.off(handler);
+			if (isInjectedScroller()) {
+				scrollerInstance.off(handler);
 			} else {
 				scroller.value?.removeEventListener('scroll', handler);
 			}
@@ -115,12 +116,11 @@ export const Affix = defineComponent({
 		const onScroll = (handler: any, options: any) => {
 			// nextTick目的在与onMounted后执行
 			nextTick(() => {
-				if (isVcScrollerWheel.value) {
-					scrollerInstance?.on(handler);
+				if (isInjectedScroller()) {
+					scrollerInstance.on(handler);
 				} else {
 					scroller.value?.addEventListener('scroll', handler);
 				}
-
 				options?.first && handler();
 			});
 			return () => offScroll(handler);
@@ -130,7 +130,7 @@ export const Affix = defineComponent({
 			if (props.disabled) return;
 			setCurrentRect();
 
-			scroller.value instanceof Window || props.fixed ? setFixedStatus() : setAbsoluteStatus();
+			props.fixed ? setFixedStatus() : setStickyStatus();
 
 			emit('update:modelValue', isActive.value);
 		};
@@ -161,11 +161,11 @@ export const Affix = defineComponent({
 			return (
 				<div
 					ref={current}
-					class="vc-affix"
+					class={['vc-affix', { 'is-sticky': !props.fixed }]}
 					style={currentStyle.value}
 				>
 					<div
-						class={{ [`vc-affix__${props.fixed ? 'fixed' : 'absolute'}`]: isActive.value }}
+						class={{ 'vc-affix__fixed': props.fixed && isActive.value }}
 						style={contentStyle.value}
 					>
 						{ slots?.default?.({ active: isActive.value }) }
