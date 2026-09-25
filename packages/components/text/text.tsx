@@ -64,24 +64,21 @@ export const Text = defineComponent({
 			: debounce(calcPosition, props.resize || 0, { leading: true, trailing: true });
 
 		let poper;
-		const handleMouseOver = (e: any) => {
+		// 用 mouseenter 与根节点：renderRow 返回元素时，mouseover 在子元素间移动会反复触发，e.target 也会落到子元素上
+		const handleMouseEnter = (e: any) => {
 			if (truncated.value) {
 				poper = Popover.open({
 					el: document.body,
 					name: 'vc-text-popover', // 确保不重复创建
-					triggerEl: e.target,
+					triggerEl: e.currentTarget,
 					hover: true,
 					theme: props.theme,
 					placement: props.placement,
 					portalClass: props.portalClass,
-					portalStyle: [props.portalStyle || `width: ${e.target.clientWidth}px`, 'word-break: break-all'],
+					portalStyle: [props.portalStyle || `width: ${e.currentTarget.clientWidth}px`, 'word-break: break-all'],
 					content: props.value,
 				});
 			}
-		};
-
-		const handleMouseOut = () => {
-			// Do.
 		};
 
 		['value', 'indent', 'line', 'slice', 'ellipsis'].forEach((key) => {
@@ -107,8 +104,7 @@ export const Text = defineComponent({
 					// @ts-ignore
 					class="vc-text"
 					style={styles.value}
-					onMouseover={handleMouseOver}
-					onMouseout={handleMouseOut}
+					onMouseenter={handleMouseEnter}
 				>
 					{
 						isActive.value
