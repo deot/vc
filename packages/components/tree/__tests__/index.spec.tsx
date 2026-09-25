@@ -3,7 +3,7 @@
 import { MTree, MTreeSelect, Tree, TreeSelect } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
-import { vi } from 'vitest';
+import { vi, onTestFinished } from 'vitest';
 import { TreeNode, TreeStore } from '../store';
 import { getChildState, markNodeData } from '../store/tree-node';
 import { props as treeNodeContentProps } from '../tree-node-content-props';
@@ -767,6 +767,60 @@ describe('TreeSelect interaction', () => {
 		await wrapper.find('.vc-tree-select__icon').trigger('click');
 		await flush();
 		expect(value.value.length).toBe(1);
+
+		wrapper.unmount();
+	});
+
+	it('single line tags: shrinks the long path tag to leave room for collapse tag', async () => {
+		// jsdom 无布局：容器 200，tag 按文字长度 * 10 计宽
+		const spy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+			const width = this.classList.contains('vc-select-tags')
+				? 200
+				: this.classList.contains('vc-tag') ? (this.textContent || '').length * 10 : 0;
+			return { width, height: 0, top: 0, left: 0, right: width, bottom: 0, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
+		});
+		onTestFinished(() => spy.mockRestore());
+		const value = ref<any[]>(['3', '3-1', '3-1-1', '3-2', '3-2-1']);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={data} max={99} />
+		), { attachTo: document.body });
+		await flush();
+
+		let tags = wrapper.findAll('.vc-tree-select__tags > .vc-tag');
+		expect(tags.map(i => i.text())).toEqual(['一级 3 / 二级 3-1 / 三级 3-1-1', '+1...']);
+		// 200 - '+2...'(50)
+		expect((tags[0].element as HTMLElement).style.maxWidth).toBe('150px');
+
+		await tags[0].find('.vc-tag__close').trigger('click');
+		await flush();
+
+		tags = wrapper.findAll('.vc-tree-select__tags > .vc-tag');
+		expect(tags.map(i => i.text())).toEqual(['一级 3 / 二级 3-2 / 三级 3-2-1']);
+		expect((tags[0].element as HTMLElement).style.maxWidth).toBe('');
+
+		wrapper.unmount();
+	});
+
+	it('tag keys stay unique when values contain the path separator', async () => {
+		// 用 '-' 拼接时两条路径的 key 都是 'a-b-c'
+		const treeData = [
+			{ value: 'a-b', label: 'AB', children: [{ value: 'c', label: 'C' }] },
+			{ value: 'a', label: 'A', children: [{ value: 'b-c', label: 'BC' }] }
+		];
+		const value = ref<any[]>(['a-b', 'c', 'a', 'b-c']);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={treeData} max={99} maxTagLines={0} />
+		), { attachTo: document.body });
+		await flush();
+
+		const texts = () => wrapper.findAll('.vc-tree-select__tags > .vc-tag').map(i => i.text());
+		expect(texts()).toEqual(['AB / C', 'A / BC']);
+		const keys = wrapper.findComponent({ name: 'vc-select-tags' }).props('data').map((i: any) => i.key);
+		expect(new Set(keys).size).toBe(keys.length);
+
+		await wrapper.findAll('.vc-tree-select__tags > .vc-tag')[0].find('.vc-tag__close').trigger('click');
+		await flush();
+		expect(texts()).toEqual(['A / BC']);
 
 		wrapper.unmount();
 	});

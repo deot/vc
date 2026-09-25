@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Select, MSelect, VcInstance } from '@deot/vc-components';
+import { Select, MSelect, VcInstance, Popover } from '@deot/vc-components';
 import { enUS, zhCN } from '@deot/vc-locale';
 import { Option } from '../option';
 import { OptionGroup } from '../option-group';
@@ -8,6 +8,7 @@ import { SelectAll } from '../select-all';
 import {
 	createSearchRegex,
 	escapeString,
+	fitTags,
 	flattenData,
 	getLabel,
 	toCurrentValue,
@@ -15,7 +16,7 @@ import {
 } from '../utils';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
-import { vi } from 'vitest';
+import { vi, onTestFinished } from 'vitest';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -226,6 +227,42 @@ describe('utils', () => {
 	it('toModelValue: numerable string keeps stringified value', () => {
 		const r = toModelValue([1, 2], { modelValue: '', max: 5, separator: ',', numerable: true, nullValue: undefined } as any);
 		expect(r).toBe('1,2');
+	});
+
+	it('fitTags: all tags fit without collapse tag', () => {
+		expect(fitTags({ widths: [50, 50], width: 200, lines: 1, plusWidth: 30, total: 2 })).toEqual({ count: 2 });
+	});
+
+	it('fitTags: candidates limited by maxTags keep room for collapse tag', () => {
+		expect(fitTags({ widths: [50, 50], width: 200, lines: 1, plusWidth: 30, total: 5 })).toEqual({ count: 2 });
+	});
+
+	it('fitTags: drops tags until collapse tag fits on the last row', () => {
+		expect(fitTags({ widths: [80, 60, 60, 60], width: 200, lines: 1, plusWidth: 50, total: 6 })).toEqual({ count: 2 });
+	});
+
+	it('fitTags: shrinks the only tag on the last row', () => {
+		expect(fitTags({ widths: [300, 60], width: 100, lines: 1, plusWidth: 50, total: 2 })).toEqual({ count: 1, shrink: 50 });
+		expect(fitTags({ widths: [80, 60], width: 100, lines: 1, plusWidth: 50, total: 2 })).toEqual({ count: 1, shrink: 50 });
+	});
+
+	it('fitTags: keeps only the collapse tag when the shrunk tag would be narrower than it', () => {
+		expect(fitTags({ widths: [80, 60], width: 80, lines: 1, plusWidth: 50, total: 2 })).toEqual({ count: 0 });
+		// 多行：去掉最后一行的 tag，折叠 tag 独占最后一行
+		expect(fitTags({ widths: [60, 200], width: 80, lines: 2, plusWidth: 50, total: 3 })).toEqual({ count: 1 });
+	});
+
+	it('fitTags: packs multiple lines', () => {
+		expect(fitTags({ widths: [80, 60, 60, 60, 50, 80], width: 150, lines: 2, plusWidth: 50, total: 6 })).toEqual({ count: 3 });
+	});
+
+	it('fitTags: collapse tag may wrap to a spare line', () => {
+		expect(fitTags({ widths: [100], width: 120, lines: 2, plusWidth: 50, total: 5 })).toEqual({ count: 1 });
+	});
+
+	it('fitTags: falls back to all candidates without layout', () => {
+		expect(fitTags({ widths: [50, 50], width: 0, lines: 1, plusWidth: 30, total: 5 })).toEqual({ count: 2 });
+		expect(fitTags({ widths: [50, 50], width: 200, lines: 0, plusWidth: 30, total: 5 })).toEqual({ count: 2 });
 	});
 });
 
@@ -610,6 +647,243 @@ describe('Select multiple', () => {
 
 		expect(value.value).toEqual([]);
 		expect(wrapper.findAll('.vc-tag').length).toBe(0);
+
+		wrapper.unmount();
+	});
+});
+
+describe('Select maxTagLines', () => {
+	// jsdom 无布局：容器宽度可控，tag 按文字长度 * 10 计宽，margin / padding 为 0
+	const containerWidth = ref(200);
+	let spy: any;
+
+	const getTags = (wrapper: any) => wrapper.findAll('.vc-select-tags > .vc-tag');
+	const getTexts = (wrapper: any) => getTags(wrapper).map((i: any) => i.text());
+
+	beforeEach(() => {
+		containerWidth.value = 200;
+		spy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+			const { classList } = this;
+			const width = classList.contains('vc-select-tags')
+				? containerWidth.value
+				: classList.contains('vc-tag')
+					? (this.textContent || '').length * 10
+					: classList.contains('vc-select-tags__list') ? 300 : 0;
+			const height = classList.contains('vc-select-tags__list') ? 60 : 0;
+			return { width, height, top: 0, left: 0, right: width, bottom: height, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
+		});
+	});
+
+	afterEach(() => {
+		spy.mockRestore();
+		document.body.innerHTML = '';
+	});
+
+	it('single line by default: shows tags that fit plus collapse tag', async () => {
+		const value = ref<any[]>(['1', '2', '3', '4', '5', '6']);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={99} maxTags={4} />
+		), { attachTo: document.body });
+		await flush();
+
+		// New York(80) + London(60) + '+6...'(50) <= 200
+		expect(getTexts(wrapper)).toEqual(['New York', 'London', '+4...']);
+		expect(wrapper.find('.vc-select-tags').classes()).toContain('is-nowrap');
+		// 测量层仅在待测量时渲染
+		expect(wrapper.find('.vc-select-tags__measure').exists()).toBe(false);
+
+		wrapper.unmount();
+	});
+
+	it('shrinks the first tag when even one tag does not fit', async () => {
+		const value = ref<any[]>(['x', '1']);
+		const data = [{ value: 'x', label: 'x'.repeat(30) }, ...cityList];
+		containerWidth.value = 100;
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={data} max={99} />
+		), { attachTo: document.body });
+		await flush();
+
+		const tags = getTags(wrapper);
+		expect(tags.length).toBe(2);
+		expect((tags[0].element as HTMLElement).style.maxWidth).toBe('50px');
+		expect(tags[1].text()).toBe('+1...');
+
+		wrapper.unmount();
+	});
+
+	it('refits on container resize', async () => {
+		const value = ref<any[]>(['1', '2', '3', '4', '5', '6']);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={99} />
+		), { attachTo: document.body });
+		await flush();
+		expect(getTags(wrapper).length).toBe(3);
+
+		containerWidth.value = 1000;
+		const el = wrapper.find('.vc-select-tags').element as any;
+		el.__rz__.ro.trigger(el);
+		await flush();
+
+		expect(getTexts(wrapper)).toEqual(['New York', 'London', 'Sydney', 'Ottawa', 'Paris', 'Canberra']);
+
+		wrapper.unmount();
+	});
+
+	it('maxTagLines = 2 packs two lines', async () => {
+		const value = ref<any[]>(['1', '2', '3', '4', '5', '6']);
+		containerWidth.value = 150;
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={99} maxTagLines={2} />
+		), { attachTo: document.body });
+		await flush();
+
+		expect(getTexts(wrapper)).toEqual(['New York', 'London', 'Sydney', '+3...']);
+		expect(wrapper.find('.vc-select-tags').classes()).not.toContain('is-nowrap');
+
+		wrapper.unmount();
+	});
+
+	it('maxTagLines = 0 keeps slicing by maxTags without measuring', async () => {
+		const value = ref<any[]>(['1', '2', '3', '4', '5', '6']);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={99} maxTags={4} maxTagLines={0} />
+		), { attachTo: document.body });
+		await flush();
+
+		expect(getTexts(wrapper)).toEqual(['New York', 'London', 'Sydney', 'Ottawa', '+2...']);
+		expect(wrapper.find('.vc-select-tags__measure').exists()).toBe(false);
+
+		wrapper.unmount();
+	});
+
+	it('maxTags = 0 means no limit', async () => {
+		const value = ref<any[]>(['1', '2', '3']);
+		containerWidth.value = 1000;
+		const wrapper = mount(() => (
+			<div>
+				<Select v-model={value.value} data={cityList} max={99} maxTags={0} />
+				<Select v-model={value.value} data={cityList} max={99} maxTags={0} maxTagLines={0} />
+			</div>
+		), { attachTo: document.body });
+		await flush();
+
+		expect(getTexts(wrapper)).toEqual(['New York', 'London', 'Sydney', 'New York', 'London', 'Sydney']);
+
+		wrapper.unmount();
+	});
+
+	it('hover a truncated tag opens popover with full label', async () => {
+		const leaf = { destroy: vi.fn(), wrapper: { isActive: true } };
+		const open = vi.spyOn(Popover, 'open').mockImplementation(() => leaf as any);
+		onTestFinished(() => open.mockRestore());
+		const value = ref<any[]>(['1', '2']);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={99} />
+		), { attachTo: document.body });
+		await flush();
+
+		const tag = getTags(wrapper)[0];
+		const span = tag.find('.vc-tag__wrapper > span').element;
+		const defineValue = (prop: string, v: number) => Object.defineProperty(span, prop, { configurable: true, value: v });
+
+		// 未截断
+		defineValue('scrollWidth', 80);
+		defineValue('clientWidth', 80);
+		await tag.trigger('mouseenter');
+		expect(open).not.toHaveBeenCalled();
+
+		// 截断：content 为函数，按文本渲染
+		defineValue('scrollWidth', 120);
+		await tag.trigger('mouseenter');
+		expect(open).toHaveBeenCalledTimes(1);
+		const options = open.mock.calls[0][0] as any;
+		expect(options.triggerEl).toBe(tag.element);
+		expect(options.content()).toBe('New York');
+
+		// 弹层仍在显示时再次移入同一 tag：不重建
+		await tag.trigger('mouseenter');
+		expect(open).toHaveBeenCalledTimes(1);
+
+		// 触发的 tag 被移除（外部修改值）：关闭弹层
+		value.value = ['2'];
+		await flush();
+		expect(leaf.destroy).toHaveBeenCalled();
+
+		wrapper.unmount();
+	});
+
+	it('hover collapse tag lists hidden tags, removable in the list', async () => {
+		const value = ref<any[]>(['1', '2', '3', '4', '5']);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={99} />
+		), { attachTo: document.body });
+		await flush();
+		expect(getTexts(wrapper)).toEqual(['New York', 'London', '+3...']);
+
+		const getList = () => Array.from(
+			document.querySelectorAll('.vc-select-tags__popover .vc-select-tags__list .vc-tag')
+		).map(i => i.textContent);
+
+		const collapse = getTags(wrapper)[2].element;
+		await getTags(wrapper)[2].trigger('mouseenter');
+		await flush();
+		expect(getList()).toEqual(['Sydney', 'Ottawa', 'Paris']);
+		const list = document.querySelector('.vc-select-tags__popover .vc-select-tags__list') as HTMLElement;
+		expect(list.style.minHeight).toBe('');
+
+		// 列表内移除：列表与折叠 tag 同步更新
+		(document.querySelector('.vc-select-tags__popover .vc-tag__close') as HTMLElement).click();
+		await flush();
+		expect(value.value).toEqual(['1', '2', '4', '5']);
+		expect(getTexts(wrapper)).toEqual(['New York', 'London', '+2...']);
+		expect(getList()).toEqual(['Ottawa', 'Paris']);
+		// 折叠 tag 不被重建（否则弹层的 triggerEl 失效，重新定位时错位而关闭）
+		expect(getTags(wrapper)[2].element).toBe(collapse);
+		// 锁定列表尺寸，避免弹层收缩移位后脱离鼠标
+		expect(list.style.minWidth).toBe('300px');
+		expect(list.style.minHeight).toBe('60px');
+
+		// 全部可显示后关闭列表
+		(document.querySelector('.vc-select-tags__popover .vc-tag__close') as HTMLElement).click();
+		await flush();
+		await sleep(50);
+		expect(getTexts(wrapper)).toEqual(['New York', 'London', 'Paris']);
+		expect(document.querySelector('.vc-select-tags__popover')).toBeNull();
+
+		wrapper.unmount();
+	});
+
+	it('disabled: collapse list is read-only', async () => {
+		const value = ref<any[]>(['1', '2', '3', '4', '5']);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={99} disabled />
+		), { attachTo: document.body });
+		await flush();
+
+		const tags = getTags(wrapper);
+		await tags[tags.length - 1].trigger('mouseenter');
+		await flush();
+		expect(document.querySelectorAll('.vc-select-tags__popover .vc-tag').length).toBeGreaterThan(0);
+		expect(document.querySelector('.vc-select-tags__popover .vc-tag__close')).toBeNull();
+
+		wrapper.unmount();
+	});
+
+	it('refits after closing a tag', async () => {
+		const value = ref<any[]>(['1', '2', '3', '4']);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={99} />
+		), { attachTo: document.body });
+		await flush();
+		expect(getTexts(wrapper)).toEqual(['New York', 'London', '+2...']);
+
+		await getTags(wrapper)[0].find('.vc-tag__close').trigger('click');
+		await flush();
+
+		expect(value.value).toEqual(['2', '3', '4']);
+		// London(60) + Sydney(60) + Ottawa(60) = 180 <= 200
+		expect(getTexts(wrapper)).toEqual(['London', 'Sydney', 'Ottawa']);
 
 		wrapper.unmount();
 	});

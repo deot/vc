@@ -10,8 +10,8 @@ import { VcError } from '../vc/index';
 import { Input, InputSearch } from '../input/index';
 import { Popover } from '../popover/index';
 import { Spin } from '../spin/index';
-import { Tag } from '../tag/index';
 import { Icon } from '../icon/index';
+import { SelectTags } from '../select/select-tags';
 import { TreeSelectContent } from './tree-select-content';
 import { TreeSelectContentCascader } from './tree-select-content-cascader';
 import { props as treeSelectProps } from './tree-select-props';
@@ -116,10 +116,12 @@ export const TreeSelect = defineComponent({
 			});
 		});
 
-		const collapseTagCount = computed(() => {
-			if (!props.maxTags) return 0;
-			const v = displayTags.value.length - props.maxTags;
-			return v < 0 ? 0 : v;
+		const tags = computed(() => {
+			return displayTags.value.map((item: any) => ({
+				...item,
+				// 值本身可能含分隔符，用 JSON 避免不同路径拼出相同的 key
+				key: item.path ? JSON.stringify(item.path) : item.value
+			}));
 		});
 
 		const autoWidth = computed(() => {
@@ -279,22 +281,14 @@ export const TreeSelect = defineComponent({
 										content: multiple.value && displayTags.value.length > 0
 											? () => {
 													return (
-														<div class={[classes.value, 'vc-tree-select__tags']}>
-															{
-																displayTags.value.slice(0, props.maxTags).map((item: any) => {
-																	return (
-																		<Tag
-																			key={item.path ? item.path.join('-') : item.value}
-																			closable={!props.disabled}
-																			onClose={() => handleClose(item)}
-																		>
-																			{ item.label }
-																		</Tag>
-																	);
-																})
-															}
-															{ collapseTagCount.value ? (<Tag>{ `+${collapseTagCount.value}...` }</Tag>) : null }
-														</div>
+														<SelectTags
+															class={[classes.value, 'vc-tree-select__tags']}
+															data={tags.value}
+															maxTags={props.maxTags}
+															maxTagLines={props.maxTagLines}
+															closable={!props.disabled}
+															onClose={(item: any) => handleClose(item)}
+														/>
 													);
 												}
 											: null,

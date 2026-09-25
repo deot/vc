@@ -26,7 +26,13 @@ $color-dark-lighter: varfix(color-dark-lighter, select);
 			z-index: 0;
 		}
 
+		// 允许内容区收缩到输入框宽度以内，标签才能按宽度折叠
+		.vc-input__wrapper {
+			min-width: 0;
+		}
+
 		.vc-input__content {
+			min-width: 0;
 			overflow: hidden;
 		}
 	}
@@ -51,25 +57,6 @@ $color-dark-lighter: varfix(color-dark-lighter, select);
 	@include element(icon) {
 		@include when(arrow) {
 			transform: scale(0.8);
-		}
-	}
-
-	@include element(tags) {
-		padding-left: unitfix(4);
-
-		.vc-tag {
-			max-width: 100%;
-			margin: unitfix(3) unitfix(4) unitfix(3) 0;
-
-			.vc-tag__wrapper span {
-				overflow: hidden;
-				text-overflow: ellipsis;
-				white-space: nowrap;
-			}
-
-			.vc-tag__close {
-				margin-left: unitfix(5);
-			}
 		}
 	}
 
