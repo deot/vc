@@ -9,14 +9,16 @@ import {
 	onUnmounted
 } from 'vue';
 import { Resize } from '@deot/helper-resize';
-import { debounce } from 'lodash-es';
+import { throttle, isEqual } from 'lodash-es';
 import type { ComponentInternalInstance } from 'vue';
 import type { PopoverWrapperStyle } from './types';
 import { props as popoverWrapperProps } from './wrapper-props';
-import usePos from './use-pos';
+import usePos, { getClip } from './use-pos';
+import { setTrigger, isInArea } from './utils';
 import { TransitionScale } from '../transition';
 import { Customer } from '../customer';
 import { Portal } from '../portal';
+import { getScroller } from '../scroller/utils';
 
 const COMPONENT_NAME = 'vc-popover-wrapper';
 
@@ -37,6 +39,8 @@ export const PopoverWrapper = defineComponent({
 		const arrowStyle = ref({});
 		const fitPos = ref(props.placement);
 		const wrapperW = ref({ width: 'auto' });
+		// 触发节点所在的滚动容器（由内到外，不含 window），见 bindScrollers
+		const scrollers: HTMLElement[] = [];
 
 		const themeClasses = computed(() => {
 			return {
@@ -83,13 +87,27 @@ export const PopoverWrapper = defineComponent({
 		};
 
 		/**
-		 * 添加debounce解决连续setPopupStyle的情况
-		 * 待排查
+		 * 触发节点已被移除（如列表按 key 重新渲染、调用方卸载）：不再定位，直接关闭
+		 * 否则弹层残留，且按全 0 的位置跳到页面左上角；移除的节点也不会再触发 mouseleave
 		 */
-		const setPopupStyle = debounce(() => {
+		let isTriggerRemoved = false;
+		const handleTriggerRemoved = () => {
+			if (isTriggerRemoved) return;
+			isTriggerRemoved = true;
+			props.alone && (isActive.value = false);
+			props.onChange({}, { visible: false, context: instance });
+		};
+
+		/**
+		 * 节流合并连续的计算（滚动、尺寸变化）
+		 * 需保留最后一次（trailing）：内容在短时间内连续变化（如图片加载）时，最后一次的尺寸才是准的
+		 */
+		const setPopupStyle = throttle(() => {
 			if (!vnode.el) return;
+			if (!props.triggerEl!.isConnected) return handleTriggerRemoved();
 
 			const triggerEl = getHackContainer();
+			const { hidden, boundary } = getClip(scrollers, triggerEl.getBoundingClientRect());
 
 			const { portal, getPopupContainer } = props;
 
@@ -103,7 +121,8 @@ export const PopoverWrapper = defineComponent({
 			const result = getFitPos({
 				triggerEl,
 				el: vnode.el,
-				placement: props.placement
+				placement: props.placement,
+				boundary
 			});
 
 			const { wrapperStyle: $wrapperStyle, arrowStyle: $arrowStyle } = getPopupStyle({
@@ -112,16 +131,18 @@ export const PopoverWrapper = defineComponent({
 				el: vnode.el,
 				placement: result
 			});
+			// 触发节点滚出滚动容器可视区时隐藏（不关闭），滚回后恢复
+			hidden && ($wrapperStyle.visibility = 'hidden');
 
+			// 结果不变时不赋新对象，避免滚动时每帧重新渲染弹层内容
 			fitPos.value = result;
-			wrapperStyle.value = $wrapperStyle;
-			arrowStyle.value = $arrowStyle;
+			isEqual(wrapperStyle.value, $wrapperStyle) || (wrapperStyle.value = $wrapperStyle);
+			isEqual(arrowStyle.value, $arrowStyle) || (arrowStyle.value = $arrowStyle);
 			// 自适应高度
 			if (props.autoWidth) return;
-			wrapperW.value = {
-				width: `${triggerEl!.getBoundingClientRect().width}px`
-			};
-		}, 50, { leading: true, trailing: false });
+			const width = `${triggerEl!.getBoundingClientRect().width}px`;
+			wrapperW.value.width !== width && (wrapperW.value = { width });
+		}, 16);
 
 		let timer: any;
 		let isPressMouse = false;
@@ -141,12 +162,12 @@ export const PopoverWrapper = defineComponent({
 
 		/**
 		 * 不会销毁的两种情况
-		 * 1. 在容器内的点击
+		 * 1. 在容器内的点击（含触发节点在容器内的子弹层，如内容区内嵌的 Select 下拉）
 		 * 2. 内部按下，外部释放
 		 * @param e ~
 		 */
 		const handleClick = (e: Event) => {
-			const isIn = vnode.el.contains(e.target);
+			const isIn = isInArea(e, vnode.el);
 			const isPress = isPressMouse;
 
 			isPressMouse = false;
@@ -161,30 +182,6 @@ export const PopoverWrapper = defineComponent({
 		const handleChange = (e: Event, { visible }) => {
 			props.alone && handleTriggerChange(e);
 			!props.alone && props.onChange(e, { visible, context: instance });
-		};
-
-		/**
-		 * 弹层【宽度】变化后的自适应，主要服务于Cascader等内容会变化的下拉框
-		 */
-		const handleWrapperResize = () => {
-			const direction = props.placement.split('-');
-
-			const left = parseFloat(wrapperStyle.value.left);
-			switch (direction[0]) {
-				case 'top':
-				case 'bottom':
-					if (left + vnode.el.offsetWidth > window.innerWidth) {
-						wrapperStyle.value = {
-							...wrapperStyle.value,
-							left: `${window.innerWidth - vnode.el.offsetWidth}px`
-						};
-					} else {
-						setPopupStyle();
-					}
-					break;
-				default:
-					break;
-			}
 		};
 
 		/**
@@ -212,25 +209,47 @@ export const PopoverWrapper = defineComponent({
 
 		props.alone && props.hover && bindEvents();
 
+		/**
+		 * 触发节点所在的滚动容器（逐层向上，不含 window，window 由 document 的 scroll 处理）
+		 * 如 Modal、Table、Scroller 内滚动时重新定位；Scroller 滚轮驱动时为 overflow: hidden，getScroller 按 class 识别
+		 */
+		const bindScrollers = () => {
+			let scroller = getScroller(props.triggerEl?.parentNode);
+			while (scroller instanceof HTMLElement) {
+				scrollers.push(scroller);
+				scroller.addEventListener('scroll', setPopupStyle);
+				scroller = getScroller(scroller.parentNode);
+			}
+		};
+		const unbindScrollers = () => {
+			scrollers.forEach(i => i.removeEventListener('scroll', setPopupStyle));
+		};
+
 		onMounted(() => {
 			isActive.value = true;
+			// 登记触发节点，供外层弹层判断点击区域
+			setTrigger(vnode.el, props.triggerEl as Element);
 			// 捕获阶段执行
 			!props.hover && document.addEventListener('click', handleClick, true);
 			// 监听body的滚动
 			document.addEventListener('scroll', setPopupStyle);
-			// 监听触发节点的Resize
-			Resize.on(props.triggerEl as any, setPopupStyle); // 首次会执行一次
-			// 监听弹层的Resize
-			Resize.on(vnode.el, handleWrapperResize); // 首次会执行一次
+			// 监听触发节点所在滚动容器的滚动
+			bindScrollers();
+			// 监听触发节点的Resize（节点被移除时尺寸变为 0 也会回调，见 handleTriggerRemoved）
+			Resize.on(props.triggerEl as any, setPopupStyle);
+			// 监听弹层的Resize（如 Cascader 展开、图片加载）；弹层节点每次新建，首次回调即完成挂载后的定位
+			Resize.on(vnode.el, setPopupStyle);
 
 			props.onReady && props.onReady();
 		});
 
 		onUnmounted(() => {
+			setPopupStyle.cancel();
 			!props.hover && document.removeEventListener('click', handleClick, true);
 			document.removeEventListener('scroll', setPopupStyle);
+			unbindScrollers();
 			Resize.off(props.triggerEl as any, setPopupStyle);
-			Resize.off(vnode.el, handleWrapperResize);
+			Resize.off(vnode.el, setPopupStyle);
 
 			props.alone && props.hover && removeEvents();
 		});
