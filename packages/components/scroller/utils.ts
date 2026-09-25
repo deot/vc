@@ -27,8 +27,9 @@ export const getScrollBarWidth = () => {
 	return scrollBarWidth;
 };
 
-// Scroller / ScrollerWheel 的根节点即滚动容器；按 class 识别，不依赖样式是否已加载（ScrollerWheel 为 overflow: hidden）
-export const SCROLLER_REG = /(?:vc-scroller-wheel|vc-scroller__wrapper)/;
+// Scroller 的根节点即滚动容器；按 class 识别，不依赖样式是否已加载（滚轮驱动时为 overflow: hidden）
+// getScroller 以整个 className 字符串匹配，须按完整 class 匹配，避免命中 vc-scroller__content、vc-scroller-track 等
+export const SCROLLER_REG = /(?:^|\s)vc-scroller(?:\s|$)/;
 export const getScroller = (el: any) => {
 	return getScroller$(el, { className: SCROLLER_REG });
 };

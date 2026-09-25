@@ -1,4 +1,5 @@
 import { getScroller } from '@deot/helper-dom';
+import { SCROLLER_REG } from '../../../scroller/utils';
 import type { AxisKeys, InjectedScroller } from '../types';
 import { isWindow, getScrollingElement } from './dom';
 
@@ -135,7 +136,7 @@ export const resolveExternalCarrier = (
 ) => {
 	const target = (getScroller(root.parentElement || root.ownerDocument.documentElement, {
 		direction: keys.axis,
-		className: /(?:vc-scroller-wheel|vc-scroller__wrapper)/
+		className: SCROLLER_REG
 	}) || root.ownerDocument.defaultView) as Window | HTMLElement;
 	const scroller = injected?.wrapper === target ? injected : undefined;
 	return new ExternalCarrier(target, scroller, keys);

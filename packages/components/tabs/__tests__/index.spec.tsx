@@ -443,7 +443,7 @@ describe('index.ts', () => {
 	it('anchor: clicking pane scrolls to anchor element', async () => {
 		// 准备一个内置 scroller
 		const scroller = document.createElement('div');
-		scroller.className = 'vc-scroller-wheel';
+		scroller.className = 'vc-scroller is-wheel';
 		scroller.style.overflow = 'auto';
 		Object.defineProperty(scroller, 'scrollTop', { value: 0, writable: true, configurable: true });
 		scroller.getBoundingClientRect = () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0, toJSON: () => ({}) });
@@ -476,7 +476,7 @@ describe('index.ts', () => {
 
 	it('anchor: target position is measured from the scroller viewport inside its padding', async () => {
 		const scroller = document.createElement('div');
-		scroller.className = 'vc-scroller__wrapper';
+		scroller.className = 'vc-scroller';
 		scroller.style.paddingTop = '20px';
 		Object.defineProperty(scroller, 'scrollTop', { value: 0, writable: true, configurable: true });
 		scroller.getBoundingClientRect = () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0, toJSON: () => ({}) });
@@ -575,7 +575,7 @@ describe('index.ts', () => {
 
 	it('scrollToAnchor: clearing pending timer + affix bottom placement', async () => {
 		const scroller = document.createElement('div');
-		scroller.className = 'vc-scroller-wheel';
+		scroller.className = 'vc-scroller is-wheel';
 		scroller.style.overflow = 'auto';
 		Object.defineProperty(scroller, 'scrollTop', { value: 0, writable: true, configurable: true });
 		scroller.getBoundingClientRect = () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0, toJSON: () => ({}) });
@@ -639,7 +639,7 @@ describe('index.ts', () => {
 	it('handleAffixScroll selects the matched anchor pane', async () => {
 		// 准备容器作 scroller
 		const scroller = document.createElement('div');
-		scroller.className = 'vc-scroller-wheel';
+		scroller.className = 'vc-scroller is-wheel';
 		scroller.style.overflow = 'auto';
 		Object.defineProperty(scroller, 'scrollTop', { value: 250, writable: true, configurable: true });
 		scroller.getBoundingClientRect = () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0, toJSON: () => ({}) });

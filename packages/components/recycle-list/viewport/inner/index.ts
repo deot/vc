@@ -2,7 +2,7 @@ import type { DirectionKeys } from '../../hooks/use-direction-keys';
 import type { Bounds, ScrollSource, ViewportAnchors, ViewportOptions } from '../types';
 
 /**
- * 内部滚动源（fill=true）：主轴由 RecycleList 自己的 ScrollerWheel wrapper 承载
+ * 内部滚动源（fill=true）：主轴由 RecycleList 自己的 Scroller wrapper 承载
  *
  * 列表就是滚动容器本身，因此 listStart 恒为 0、listEnd 即 scrollSize，
  * 几何不需要缓存，每次直接读 DOM
@@ -58,7 +58,7 @@ export class InnerViewport implements ScrollSource {
 	}
 
 	/**
-	 * 直接写 wrapper 的 scrollTop / scrollLeft；ScrollerWheel 会通过原生 scroll 事件自行同步滚动条
+	 * 直接写 wrapper 的 scrollTop / scrollLeft；Scroller 会通过原生 scroll 事件自行同步滚动条
 	 * @param value 目标位置
 	 */
 	writeOffset(value: number) {

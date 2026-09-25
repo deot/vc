@@ -12,7 +12,7 @@ import type {
 /**
  * 组件持有的滚动源
  *
- * 组件只认这一个对象，不关心当前主轴由内部 ScrollerWheel 还是外部承载者驱动；
+ * 组件只认这一个对象，不关心当前主轴由内部 Scroller 还是外部承载者驱动；
  * fill / vertical 变化时调 rebind 换掉内部的滚动源，对象本身不替换
  */
 export class Viewport {

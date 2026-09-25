@@ -6,27 +6,24 @@
 
 - 列表、日志或面板内容超过可用空间时。
 - 需要读取滚动位置、通过方法定位，或调整滚动条位置时。
-- 通用场景优先使用 `Scroller`：滚动由浏览器处理，键盘、触摸、聚焦等方式都能正常滚动。
-- `ScrollerWheel` 在 `native=false` 时由滚轮驱动位置，滚动位置与依赖它的内容在同一帧更新，适合表头联动、虚拟列表等场景；此时键盘方向键、PageDown 等无法滚动内容，触摸滚动为模拟实现。
+- 通用场景使用默认的原生滚动：滚动由浏览器处理，键盘、触摸、聚焦等方式都能正常滚动。
+- 设置 `wheel`（且 `native=false`）时由滚轮驱动位置，滚动位置与依赖它的内容在同一帧更新，适合表头联动、虚拟列表等场景；此时键盘方向键、PageDown 等无法滚动内容，触摸滚动为模拟实现。
 
 ### 结构
 
-两者结构相同：根节点即滚动容器，内部为 `tag` 指定的内容元素；自定义滚动条的轨道是根节点的直接子元素，由 `position: sticky` 固定在可视区边缘（含滚动容器的 padding）。二者只在滚动的驱动方式上不同。
+根节点即滚动容器，内部为 `tag` 指定的内容元素；自定义滚动条的轨道是根节点的直接子元素，由 `position: sticky` 固定在可视区边缘（含滚动容器的 padding）。两种驱动方式的结构相同，滚轮驱动时根节点多一个 `is-wheel`。
 
 ```html
-<div class="vc-scroller vc-scroller__wrapper">  <!-- ScrollerWheel 为 vc-scroller-wheel -->
+<div class="vc-scroller is-hidden is-wheel">  <!-- is-native / is-hidden、is-wheel 为状态 -->
 	<div class="vc-scroller__content">...</div>
 	<div class="vc-scroller-track is-horizontal is-sticky">...</div>
 	<div class="vc-scroller-track is-vertical is-sticky">...</div>
 </div>
 ```
 
-`Scroller` 早期为两层结构（外层 `.vc-scroller` 包裹滚动的 `.vc-scroller__wrapper`），升级时注意：
-
-- `class`、`style` 与 `wrapperClass`、`wrapperStyle` 现在作用于同一个元素，即滚动容器本身。
-- 写在 `Scroller` 上的 `padding` 位于滚动区域内，随内容滚动；滚动条仍贴住容器边缘。
-- 内容中 `position: absolute` 的元素改为相对滚动容器定位，会随内容滚动。需要固定在可视区的内容使用 `Affix`（`fixed=false`，基于 `position: sticky`）。
-- `.vc-scroller > .vc-scroller__wrapper` 等依赖两层结构的选择器不再匹配，改为直接选择 `.vc-scroller`。
+- `class`、`style` 与 `wrapperClass`、`wrapperStyle` 都作用于根节点，即滚动容器本身。
+- 写在 `Scroller` 上的 `padding` 位于滚动区域内，随内容滚动；滚动条贴住容器边缘。
+- 内容中 `position: absolute` 的元素相对滚动容器定位，会随内容滚动。需要固定在可视区的内容使用 `Affix`（`fixed=false`，基于 `position: sticky`）。
 - 根节点保持 `display: block`，内容布局写在内容元素上（`tag`、`contentClass`、`contentStyle`）。
 
 ### 基础用法
@@ -59,7 +56,7 @@ import { Scroller } from '@deot/vc';
 
 ### 动态内容与滚动定位
 
-默认通过尺寸监听更新滚动条。关闭 `autoResize` 后，应在 DOM 更新后调用 `refresh()`，首次挂载时也需要手动刷新。这里使用 `ScrollerWheel` 展示追加日志、定位和 `scroll` 事件。
+默认通过尺寸监听更新滚动条。关闭 `autoResize` 后，应在 DOM 更新后调用 `refresh()`，首次挂载时也需要手动刷新。这里使用滚轮驱动（`wheel`）展示追加日志、定位和 `scroll` 事件。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
@@ -70,16 +67,16 @@ import { Scroller } from '@deot/vc';
 			<Button @click="handleAppend">追加日志并到底部</Button>
 			<Button @click="handleTop">回到顶部</Button>
 		</div>
-		<ScrollerWheel ref="scroller" :height="200" :native="false" always @scroll="handleScroll">
+		<Scroller ref="scroller" wheel :height="200" :native="false" always @scroll="handleScroll">
 			<div v-for="item in count" :key="item" class="log">日志 {{ item }}：任务已完成</div>
-		</ScrollerWheel>
+		</Scroller>
 		<div>共 {{ count }} 条，距顶部 {{ scrollTop }} px</div>
 	</div>
 </template>
 
 <script setup>
 import { nextTick, ref } from 'vue';
-import { Button, ScrollerWheel } from '@deot/vc';
+import { Button, Scroller } from '@deot/vc';
 
 const scroller = ref();
 const count = ref(12);
@@ -255,6 +252,8 @@ const trackId = `scroller-track-${useId()}`;
 | contentStyle | 内容元素样式 | `StyleValue` | - | `''` |
 | contentClass | 内容元素 class | `StyleValue` | - | `''` |
 | native | 使用浏览器滚动条 | `boolean` | - | 浏览器滚动条不占宽时为 `true`，否则为 `false` |
+| wheel | 由滚轮驱动滚动位置；`native=true` 时不生效。可在运行时切换 | `boolean` | - | `false` |
+| stopPropagation | 滚轮驱动时，被接管的滚轮事件是否停止冒泡 | `boolean` | - | `true` |
 | showBar | 渲染自定义滚动条；不控制原生滚动条 | `boolean` | - | `true` |
 | always | 自定义滚动条常显；否则鼠标移入并移动时显示，移出后隐藏 | `boolean` | - | `false` |
 | autoResize | 挂载时监听容器和内容尺寸；建议在挂载前设置 | `boolean` | - | `true` |
@@ -271,6 +270,12 @@ const trackId = `scroller-track-${useId()}`;
 `StyleValue` 为 Vue 的样式类型；当前 class 属性也沿用这一类型声明，运行时按 Vue class 规则处理字符串、对象或数组。
 
 滚动条相关样式与偏移仅在 `native=false` 且 `showBar=true` 时生效。`barTo` 目标不存在时不渲染自定义滚动条；移出原容器后，主题变量从目标节点继承。
+
+滚轮驱动（`wheel` 且 `native=false`）时：
+
+- 根节点为 `.vc-scroller.is-wheel`，`overflow: hidden`，用户不能直接滚动（包括键盘）；由滚轮和实例方法驱动位置，聚焦、`scrollIntoView`、直接修改 DOM 的 `scrollTop` 等引起的滚动也会同步滚动条并触发 scroll 事件。
+- 需要允许原生滚动时，可关闭 `wheel`；或通过 `wrapperStyle`（内联样式）、优先级高于 `.vc-scroller.is-wheel` 的选择器覆盖 `overflow`。
+- 根节点常驻 `will-change: transform` 以单独分层：它会创建层叠上下文，内容中 `position: fixed` 的元素（如 `Affix` 的 `fixed=true`）改为相对滚动容器定位，会随内容滚动。
 
 ### Scroller 事件
 
@@ -303,16 +308,6 @@ const trackId = `scroller-track-${useId()}`;
 
 当前导出的 `ScrollerExposed` 类型仅声明 `refresh`、`setScrollTop`、`setScrollLeft`，其中 `refresh` 返回值声明为 `void`；上表同时记录了运行时实际暴露的方法。属性类型导出名为 `ScrollerProps`。
 
-### ScrollerWheel 属性
-
-继承全部 Scroller 属性，事件、插槽和实例方法相同，额外提供：
-
-| 属性 | 说明 | 类型 | 可选值 | 默认值 |
-| --- | --- | --- | --- | --- |
-| stopPropagation | 控制被接管的滚轮事件是否停止冒泡 | `boolean` | - | `true` |
-
-`native=true` 时使用原生滚动；`native=false` 时由滚轮和实例方法驱动位置，聚焦、`scrollIntoView`、直接修改 DOM 的 `scrollTop` 等引起的滚动也会同步滚动条并触发 scroll 事件。
-
 ### MScroller
 
 `MScroller` 是 `Scroller` 的别名，属性、事件、插槽和方法一致，可从 `@deot/vc` 导入。
@@ -330,3 +325,24 @@ const trackId = `scroller-track-${useId()}`;
 调整轨道粗细请使用 `--vc-scroller-track-size`，不要通过 `trackStyle` 写死宽高：轨道依赖该变量贴住右边与底边。
 
 滚动容器的 padding 在尺寸刷新时读取（挂载、尺寸变化或调用 `refresh()`）；只修改 padding 而尺寸不变时，调用 `refresh()` 同步滚动条位置。
+
+<!--
+## 变更说明
+
+### 单层结构
+- 早期为两层结构：外层 `.vc-scroller` 包裹滚动的 `.vc-scroller__wrapper`；现在根节点即滚动容器。
+- `class`、`style` 原先作用于外层，现与 `wrapperClass`、`wrapperStyle` 作用于同一元素（滚动容器）。
+- `padding` 原先位于外层，现位于滚动区域内，随内容滚动。
+- 内容中 `position: absolute` 的元素原先相对外层定位，现相对滚动容器定位，随内容滚动。
+- `.vc-scroller > .vc-scroller__wrapper` 等依赖两层结构的选择器不再匹配。
+
+### 移除 vc-scroller__wrapper
+- 根节点只保留 `vc-scroller`；依赖 `.vc-scroller__wrapper` 的选择器改为 `.vc-scroller`。
+
+### 移除 ScrollerWheel
+- 改用 `<Scroller wheel>`，属性、事件、插槽和方法不变。
+- 根节点不再有 `vc-scroller-wheel` class，滚轮驱动时为 `.vc-scroller.is-wheel`；按组件名查找时改为 `vc-scroller`。
+- 不再默认 `height: 100%`，需要撑满父级时显式设置 `height` 或样式。
+- `native=true` 时不绑定滚轮监听，也不再强制 `overflow: auto`。
+- 滚轮驱动的 `overflow: hidden` 写在 `.vc-scroller.is-wheel` 上，优先级高于单类选择器。
+-->

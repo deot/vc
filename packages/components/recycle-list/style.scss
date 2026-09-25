@@ -33,10 +33,10 @@ $component-name: vc-recycle-list;
 	}
 
 	// core
+	// overflow 由 Scroller 决定：原生滚动为 auto，滚轮驱动为 hidden（.vc-scroller.is-wheel）
 	@include element(wrapper) {
 		position: relative;
 		height: 100%;
-		overflow: hidden auto;
 		box-sizing: border-box;
 		-webkit-overflow-scrolling: touch;
 	}
@@ -84,8 +84,9 @@ $component-name: vc-recycle-list;
 	@include when(horizontal) {
 		text-align: unset !important; // 如果外面设置了center, 会严重影响到内部inline-flex
 
+		// 横向列表不在交叉轴（纵向）上滚动；主轴仍由 Scroller 决定
 		@include element(wrapper) {
-			overflow: auto hidden;
+			overflow-y: hidden;
 
 			.vc-scroller__content {
 				display: inline-flex;

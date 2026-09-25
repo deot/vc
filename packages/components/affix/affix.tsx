@@ -101,7 +101,7 @@ export const Affix = defineComponent({
 			}
 		};
 
-		// 所在滚动容器正是注入的 VC Scroller 时订阅其滚动通知：ScrollerWheel 由滚轮驱动时与滚动同一帧回调
+		// 所在滚动容器正是注入的 VC Scroller 时订阅其滚动通知：Scroller 由滚轮驱动（wheel）时与滚动同一帧回调
 		// 注入的是更外层的 Scroller（中间另有滚动容器）时，改为监听原生 scroll
 		const isInjectedScroller = () => !!scrollerInstance && scrollerInstance.wrapper === scroller.value;
 

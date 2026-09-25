@@ -39,8 +39,7 @@ export const useScroller = (expose: SetupContext['expose']) => {
 	const wrapperClass = computed(() => {
 		return [
 			props.wrapperClass,
-			props.native ? 'is-native' : 'is-hidden',
-			'vc-scroller__wrapper'
+			props.native ? 'is-native' : 'is-hidden'
 		];
 	});
 

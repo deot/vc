@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 
-import { Customer, Scroller, ScrollerWheel } from '@deot/vc-components';
-import { getPadding, getScroller, getViewportRect } from '../utils';
+import { Customer, Scroller } from '@deot/vc-components';
+import { SCROLLER_REG, getPadding, getScroller, getViewportRect } from '../utils';
 import { Bar } from '../bar';
 import { mount } from '@vue/test-utils';
 import { nextTick, reactive, ref } from 'vue';
-import { vi } from 'vitest';
+import { onTestFinished, vi } from 'vitest';
+import { Wheel } from '@deot/helper-wheel';
 
 const sleep = (time = 0) => new Promise(resolve => setTimeout(resolve, time));
 
@@ -61,7 +62,6 @@ const makeScroll = async (
 describe('index.ts', () => {
 	it('basic', () => {
 		expect(typeof Scroller).toBe('object');
-		expect(typeof ScrollerWheel).toBe('object');
 	});
 
 	it('create', async () => {
@@ -75,7 +75,8 @@ describe('index.ts', () => {
 			await nextTick();
 
 			expect(wrapper.find('.vc-scroller').exists()).toBe(true);
-			expect(wrapper.find('.vc-scroller__wrapper').exists()).toBe(true);
+			// 根节点即 block，不再有 vc-scroller__wrapper
+			expect(wrapper.classes()).not.toContain('vc-scroller__wrapper');
 			expect(wrapper.find('.vc-scroller__content').exists()).toBe(true);
 
 			wrapper.unmount();
@@ -88,7 +89,7 @@ describe('index.ts', () => {
 				</Scroller>
 			));
 
-			expect(wrapper.find('.vc-scroller__wrapper').attributes('style')).toContain('height: 200px');
+			expect(wrapper.find('.vc-scroller').attributes('style')).toContain('height: 200px');
 		});
 
 		it('renders max-height props on wrapper (number prop)', () => {
@@ -98,7 +99,7 @@ describe('index.ts', () => {
 				</Scroller>
 			));
 
-			expect(wrapper.find('.vc-scroller__wrapper').attributes('style')).toContain('max-height: 300px');
+			expect(wrapper.find('.vc-scroller').attributes('style')).toContain('max-height: 300px');
 		});
 
 		it('passes wrapperStyle / wrapperClass through', () => {
@@ -109,7 +110,7 @@ describe('index.ts', () => {
 				/>
 			));
 
-			const wrap = wrapper.find('.vc-scroller__wrapper');
+			const wrap = wrapper.find('.vc-scroller');
 			expect(wrap.classes()).toContain('my-wrapper');
 			expect(wrap.attributes('style')).toContain('background: red');
 		});
@@ -137,10 +138,10 @@ describe('index.ts', () => {
 
 		it('applies is-native / is-hidden class based on native prop', () => {
 			const w1 = mount(() => (<Scroller native={true} />));
-			expect(w1.find('.vc-scroller__wrapper').classes()).toContain('is-native');
+			expect(w1.find('.vc-scroller').classes()).toContain('is-native');
 
 			const w2 = mount(() => (<Scroller native={false} />));
-			expect(w2.find('.vc-scroller__wrapper').classes()).toContain('is-hidden');
+			expect(w2.find('.vc-scroller').classes()).toContain('is-hidden');
 		});
 
 		it('does not render Bar when showBar=false', async () => {
@@ -167,7 +168,7 @@ describe('index.ts', () => {
 				</Scroller>
 			), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element;
+			const wrapEl = wrapper.find('.vc-scroller').element;
 			const restore = mockSize(wrapEl, {
 				clientWidth: 200,
 				clientHeight: outerHeight,
@@ -203,7 +204,7 @@ describe('index.ts', () => {
 				</Scroller>
 			), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element;
+			const wrapEl = wrapper.find('.vc-scroller').element;
 			const restore = mockSize(wrapEl, {
 				clientWidth: 200,
 				clientHeight: 200,
@@ -237,7 +238,7 @@ describe('index.ts', () => {
 				</Scroller>
 			), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element;
+			const wrapEl = wrapper.find('.vc-scroller').element;
 			const restore = mockSize(wrapEl, {
 				clientHeight: 200,
 				scrollHeight: 1000
@@ -311,7 +312,7 @@ describe('index.ts', () => {
 				</Scroller>
 			), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const wrapEl = wrapper.find('.vc-scroller').element as HTMLElement;
 			const restore = mockSize(wrapEl, { clientHeight: 100, scrollHeight: 1000 });
 			await scrollerRef.value.refresh();
 			await sleep();
@@ -360,7 +361,7 @@ describe('index.ts', () => {
 				</Scroller>
 			), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const wrapEl = wrapper.find('.vc-scroller').element as HTMLElement;
 			const restore = mockSize(wrapEl, { clientHeight: 100, scrollHeight: 1000 });
 			await scrollerRef.value.refresh();
 			await nextTick();
@@ -398,7 +399,7 @@ describe('index.ts', () => {
 				</Scroller>
 			), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const wrapEl = wrapper.find('.vc-scroller').element as HTMLElement;
 			const restore = mockSize(wrapEl, {
 				clientHeight: 100,
 				scrollHeight: 1000
@@ -441,7 +442,7 @@ describe('index.ts', () => {
 
 			// 不是轨道的祖先：按文档首个匹配
 			const outside = mountWith('.bar-trigger-outside');
-			let wrapEl = outside.wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			let wrapEl = outside.wrapper.find('.vc-scroller').element as HTMLElement;
 			let restore = mockSize(wrapEl, { clientHeight: 100, scrollHeight: 1000 });
 			await outside.scrollerRef.value.refresh();
 			await nextTick();
@@ -454,7 +455,7 @@ describe('index.ts', () => {
 
 			// 找不到时回退为轨道所在的容器
 			const missing = mountWith('.bar-trigger-missing');
-			wrapEl = missing.wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			wrapEl = missing.wrapper.find('.vc-scroller').element as HTMLElement;
 			restore = mockSize(wrapEl, { clientHeight: 100, scrollHeight: 1000 });
 			await missing.scrollerRef.value.refresh();
 			await nextTick();
@@ -477,7 +478,7 @@ describe('index.ts', () => {
 				</Scroller>
 			), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const wrapEl = wrapper.find('.vc-scroller').element as HTMLElement;
 			const restore = mockSize(wrapEl, {
 				clientWidth: 200,
 				clientHeight: 200,
@@ -518,7 +519,7 @@ describe('index.ts', () => {
 			expect(typeof vm.on).toBe('function');
 			expect(typeof vm.off).toBe('function');
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const wrapEl = wrapper.find('.vc-scroller').element as HTMLElement;
 			const restore = mockSize(wrapEl, {
 				clientWidth: 200,
 				clientHeight: 200,
@@ -577,7 +578,7 @@ describe('index.ts', () => {
 				</div>
 			), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element;
+			const wrapEl = wrapper.find('.vc-scroller').element;
 			const restore = mockSize(wrapEl, {
 				clientHeight: 200,
 				scrollHeight: 1000
@@ -597,36 +598,36 @@ describe('index.ts', () => {
 		});
 	});
 
-	describe('ScrollerWheel', () => {
-		it('renders root with vc-scroller-wheel + vc-scroller__wrapper classes', async () => {
-			const wrapper = mount(() => (<ScrollerWheel>x</ScrollerWheel>), { attachTo: document.body });
+	describe('Scroller wheel', () => {
+		it('renders root with vc-scroller + is-wheel classes', async () => {
+			const wrapper = mount(() => (<Scroller wheel native={false}>x</Scroller>), { attachTo: document.body });
 			await nextTick();
 
-			expect(wrapper.classes()).toContain('vc-scroller-wheel');
-			expect(wrapper.classes()).toContain('vc-scroller__wrapper');
+			expect(wrapper.classes()).toContain('vc-scroller');
+			expect(wrapper.classes()).toContain('is-wheel');
 			expect(wrapper.find('.vc-scroller__content').exists()).toBe(true);
 
 			wrapper.unmount();
 		});
 
 		it('renders height / max-height props on wrapper', () => {
-			const w1 = mount(() => (<ScrollerWheel height="240px" />));
+			const w1 = mount(() => (<Scroller wheel height="240px" />));
 			expect(w1.attributes('style')).toContain('height: 240px');
 
-			const w2 = mount(() => (<ScrollerWheel maxHeight="160px" />));
+			const w2 = mount(() => (<Scroller wheel maxHeight="160px" />));
 			expect(w2.attributes('style')).toContain('max-height: 160px');
 		});
 
 		it('applies is-native class when native=true', () => {
-			const wrapper = mount(() => (<ScrollerWheel native={true} />));
+			const wrapper = mount(() => (<Scroller wheel native={true} />));
 			expect(wrapper.classes()).toContain('is-native');
 		});
 
 		it('does not render Bar when showBar=false', async () => {
 			const wrapper = mount(() => (
-				<ScrollerWheel native={false} showBar={false} always height="100px">
+				<Scroller wheel native={false} showBar={false} always height="100px">
 					<div style="height: 500px"></div>
-				</ScrollerWheel>
+				</Scroller>
 			), { attachTo: document.body });
 			await nextTick();
 			await nextTick();
@@ -638,9 +639,9 @@ describe('index.ts', () => {
 		it('emits scroll on native scroll', async () => {
 			const onScroll = vi.fn();
 			const wrapper = mount(() => (
-				<ScrollerWheel native={true} height="200px" onScroll={onScroll}>
+				<Scroller wheel native={true} height="200px" onScroll={onScroll}>
 					<div style="height: 1000px"></div>
-				</ScrollerWheel>
+				</Scroller>
 			), { attachTo: document.body });
 			await nextTick();
 
@@ -662,9 +663,9 @@ describe('index.ts', () => {
 			const onScroll = vi.fn();
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<ScrollerWheel ref={scrollerRef} native={false} height="200px" onScroll={onScroll}>
+				<Scroller wheel ref={scrollerRef} native={false} height="200px" onScroll={onScroll}>
 					<div style="height: 1000px"></div>
-				</ScrollerWheel>
+				</Scroller>
 			), { attachTo: document.body });
 			await nextTick();
 
@@ -683,9 +684,9 @@ describe('index.ts', () => {
 			const onScroll = vi.fn();
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<ScrollerWheel ref={scrollerRef} native={false} height="200px" onScroll={onScroll}>
+				<Scroller wheel ref={scrollerRef} native={false} height="200px" onScroll={onScroll}>
 					<div style="height: 1000px; width: 1000px"></div>
-				</ScrollerWheel>
+				</Scroller>
 			), { attachTo: document.body });
 			await nextTick();
 
@@ -703,9 +704,9 @@ describe('index.ts', () => {
 		it('wheel continues from the externally scrolled position when native=false', async () => {
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<ScrollerWheel ref={scrollerRef} native={false} height="200px">
+				<Scroller wheel ref={scrollerRef} native={false} height="200px">
 					<div style="height: 1000px"></div>
-				</ScrollerWheel>
+				</Scroller>
 			), { attachTo: document.body });
 			await nextTick();
 
@@ -743,14 +744,15 @@ describe('index.ts', () => {
 			const scrollerRef = ref<any>();
 			const onScroll = vi.fn();
 			mount(() => (
-				<ScrollerWheel
+				<Scroller
+					wheel
 					ref={scrollerRef}
 					native={false}
 					height="200px"
 					onScroll={onScroll}
 				>
 					<div style="height: 1000px; width: 1000px"></div>
-				</ScrollerWheel>
+				</Scroller>
 			), { attachTo: document.body });
 
 			await nextTick();
@@ -779,9 +781,9 @@ describe('index.ts', () => {
 
 		it('cleans up wheel listener without throwing on unmount', async () => {
 			const wrapper = mount(() => (
-				<ScrollerWheel native={false} height="200px">
+				<Scroller wheel native={false} height="200px">
 					<div style="height: 1000px"></div>
-				</ScrollerWheel>
+				</Scroller>
 			), { attachTo: document.body });
 
 			await nextTick();
@@ -792,14 +794,15 @@ describe('index.ts', () => {
 			const onScroll = vi.fn();
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<ScrollerWheel
+				<Scroller
+					wheel
 					ref={scrollerRef}
 					native={false}
 					height="200px"
 					onScroll={onScroll}
 				>
 					<div style="height: 1000px"></div>
-				</ScrollerWheel>
+				</Scroller>
 			), { attachTo: document.body });
 			await nextTick();
 
@@ -835,7 +838,8 @@ describe('index.ts', () => {
 			const onScroll = vi.fn();
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<ScrollerWheel
+				<Scroller
+					wheel
 					ref={scrollerRef}
 					native={false}
 					height="200px"
@@ -843,7 +847,7 @@ describe('index.ts', () => {
 					onScroll={onScroll}
 				>
 					<div style="height: 200px; width: 1000px"></div>
-				</ScrollerWheel>
+				</Scroller>
 			), { attachTo: document.body });
 			await nextTick();
 
@@ -879,14 +883,15 @@ describe('index.ts', () => {
 			const onScroll = vi.fn();
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<ScrollerWheel
+				<Scroller
+					wheel
 					ref={scrollerRef}
 					native={true}
 					height="200px"
 					onScroll={onScroll}
 				>
 					<div style="height: 1000px; width: 1000px"></div>
-				</ScrollerWheel>
+				</Scroller>
 			), { attachTo: document.body });
 			await nextTick();
 
@@ -915,6 +920,170 @@ describe('index.ts', () => {
 		});
 	});
 
+	describe('wheel', () => {
+		const wheelOn = async (el: Element, deltaX: number, deltaY: number) => {
+			el.dispatchEvent(new WheelEvent('wheel', {
+				deltaX,
+				deltaY,
+				deltaMode: 0,
+				bubbles: true,
+				cancelable: true
+			}));
+			await sleep(30);
+		};
+
+		// 挂载并模拟 200x200 的可视区、默认 1000x1000 的内容；用例结束（含断言失败）时还原尺寸并卸载
+		const setup = async (render: () => any, scrollerRef: any, content = 1000) => {
+			const wrapper = mount(render, { attachTo: document.body });
+			await nextTick();
+			const el = wrapper.element as HTMLElement;
+			const restore = mockSize(el, {
+				clientWidth: 200,
+				clientHeight: 200,
+				scrollWidth: content,
+				scrollHeight: content
+			});
+			onTestFinished(() => {
+				restore();
+				wrapper.unmount();
+			});
+			await scrollerRef.value.refresh();
+			await nextTick();
+			return { wrapper, el };
+		};
+
+		it('wheel defaults to false', () => {
+			expect(Scroller.name).toBe('vc-scroller');
+			expect((Scroller.props as any).wheel.default).toBe(false);
+		});
+
+		it('drives by wheel, syncs external scroll and skips its own scrollTo', async () => {
+			const onScroll = vi.fn();
+			const scrollerRef = ref<any>();
+			const { wrapper, el } = await setup(() => (
+				<Scroller ref={scrollerRef} wheel native={false} onScroll={onScroll}>
+					<div style="height: 1000px; width: 1000px"></div>
+				</Scroller>
+			), scrollerRef);
+
+			expect(wrapper.classes()).toContain('is-wheel');
+
+			await wheelOn(el, 0, 100);
+			expect(el.scrollTop).toBe(100);
+			await wheelOn(el, 100, 0);
+			expect(el.scrollLeft).toBe(100);
+
+			// 聚焦、scrollIntoView 等由浏览器直接改写 scrollTop
+			const calls = onScroll.mock.calls.length;
+			await makeScroll(el, 'scrollTop', 300);
+			expect(onScroll).toHaveBeenCalledTimes(calls + 1);
+			expect(scrollerRef.value.scrollTop).toBe(300);
+
+			// 自身 scrollTo 写入后浏览器派发的 scroll 不再重复派发
+			scrollerRef.value.scrollTo({ y: 20 });
+			expect(onScroll).toHaveBeenCalledTimes(calls + 2);
+			el.dispatchEvent(new CustomEvent('scroll'));
+			await sleep();
+			expect(onScroll).toHaveBeenCalledTimes(calls + 2);
+		});
+
+		it('does not wheel past either edge, on a zero delta, or without overflow', async () => {
+			const onScroll = vi.fn();
+			const scrollerRef = ref<any>();
+			const { el } = await setup(() => (
+				<Scroller ref={scrollerRef} wheel native={false} onScroll={onScroll}>
+					<div style="height: 1000px; width: 1000px"></div>
+				</Scroller>
+			), scrollerRef);
+
+			// 起点再往回、取整后为 0 的增量：不滚动、不派发
+			await wheelOn(el, 0, -100);
+			await wheelOn(el, 0, 0.4);
+			expect(el.scrollTop).toBe(0);
+			expect(onScroll).not.toHaveBeenCalled();
+
+			// 到达末端后继续向前：停在末端
+			scrollerRef.value.scrollTo({ y: 800 });
+			onScroll.mockClear();
+			await wheelOn(el, 0, 100);
+			expect(el.scrollTop).toBe(800);
+			expect(onScroll).not.toHaveBeenCalled();
+
+			// 内容不溢出：两个方向都不接管
+			const noOverflowRef = ref<any>();
+			const { el: noOverflow } = await setup(() => (
+				<Scroller ref={noOverflowRef} wheel native={false}>
+					<div style="height: 200px; width: 200px"></div>
+				</Scroller>
+			), noOverflowRef, 200);
+			await wheelOn(noOverflow, 100, 100);
+			expect([noOverflow.scrollLeft, noOverflow.scrollTop]).toEqual([0, 0]);
+		});
+
+		it('Scroller is not driven by wheel by default', async () => {
+			const scrollerRef = ref<any>();
+			const { wrapper, el } = await setup(() => (
+				<Scroller ref={scrollerRef} native={false}>
+					<div style="height: 1000px; width: 1000px"></div>
+				</Scroller>
+			), scrollerRef);
+
+			expect(wrapper.classes()).not.toContain('is-wheel');
+			await wheelOn(el, 0, 100);
+			expect(el.scrollTop).toBe(0);
+		});
+
+		it.each([
+			['wheel', { wheel: false, native: false }, { wheel: true }],
+			['native', { wheel: true, native: true }, { native: false }]
+		])('binds / unbinds when %s changes at runtime', async (_, initial, enabled) => {
+			const state = reactive({ ...initial });
+			const scrollerRef = ref<any>();
+			const { wrapper, el } = await setup(() => (
+				<Scroller ref={scrollerRef} wheel={state.wheel} native={state.native}>
+					<div style="height: 1000px; width: 1000px"></div>
+				</Scroller>
+			), scrollerRef);
+
+			expect(wrapper.classes()).not.toContain('is-wheel');
+			await wheelOn(el, 0, 100);
+			expect(el.scrollTop).toBe(0);
+
+			Object.assign(state, enabled);
+			await nextTick();
+			expect(wrapper.classes()).toContain('is-wheel');
+			await wheelOn(el, 0, 100);
+			expect(el.scrollTop).toBe(100);
+
+			Object.assign(state, initial);
+			await nextTick();
+			expect(wrapper.classes()).not.toContain('is-wheel');
+			await wheelOn(el, 0, 100);
+			expect(el.scrollTop).toBe(100);
+		});
+
+		it.each([
+			[false, true],
+			[true, false]
+		])('native=%s: binds Wheel on the root = %s', async (native, expected) => {
+			// 不统计 addEventListener('wheel')：@vue/test-utils 会给根节点挂上所有原生事件
+			const spy = vi.spyOn(Wheel.prototype, 'on');
+			const wrapper = mount(() => (
+				<Scroller wheel native={native}>
+					<div style="height: 1000px"></div>
+				</Scroller>
+			), { attachTo: document.body });
+			onTestFinished(() => {
+				spy.mockRestore();
+				wrapper.unmount();
+			});
+			await nextTick();
+
+			const bound = spy.mock.contexts.some((wheel: any) => wheel.el === wrapper.element);
+			expect(bound).toBe(expected);
+		});
+	});
+
 	describe('Bar mode', () => {
 		const flush = async () => {
 			await sleep();
@@ -927,10 +1096,11 @@ describe('index.ts', () => {
 		const trackOf = (tracks: HTMLElement[], cls: string) => tracks.find(el => el.classList.contains(cls))!;
 		// 保留真实 Transition：默认的 transition-stub 会多包一层，无法验证轨道是滚动容器的直接子元素
 
-		it('ScrollerWheel pins tracks with sticky inside the wrapper', async () => {
+		it('Scroller wheel pins tracks with sticky inside the wrapper', async () => {
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<ScrollerWheel
+				<Scroller
+					wheel
 					ref={scrollerRef}
 					native={false}
 					always
@@ -939,7 +1109,7 @@ describe('index.ts', () => {
 					trackOffsetY={[8, 9, 10, 11]}
 				>
 					<div style="height: 1000px; width: 1000px"></div>
-				</ScrollerWheel>
+				</Scroller>
 			), { attachTo: document.body, global: { stubs: { transition: false } } });
 
 			const wrapEl = wrapper.element as HTMLElement;
@@ -982,14 +1152,15 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
-		it('ScrollerWheel with barTo keeps tracks absolute in the target', async () => {
+		it('Scroller wheel with barTo keeps tracks absolute in the target', async () => {
 			const target = document.createElement('div');
 			target.className = 'bar-to-wheel-target';
 			document.body.appendChild(target);
 
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<ScrollerWheel
+				<Scroller
+					wheel
 					ref={scrollerRef}
 					native={false}
 					always
@@ -998,7 +1169,7 @@ describe('index.ts', () => {
 					trackOffsetY={[8, 9, 10, 11]}
 				>
 					<div style="height: 1000px; width: 1000px"></div>
-				</ScrollerWheel>
+				</Scroller>
 			), { attachTo: document.body, global: { stubs: { transition: false } } });
 
 			const wrapEl = wrapper.element as HTMLElement;
@@ -1038,9 +1209,9 @@ describe('index.ts', () => {
 			), { attachTo: document.body, global: { stubs: { transition: false } } });
 
 			const root = wrapper.element as HTMLElement;
-			// 根节点同时是 vc-scroller（外部样式）与 vc-scroller__wrapper（滚动容器），class 直接作用在滚动元素上
+			// 根节点即 vc-scroller（滚动容器），class 直接作用在滚动元素上
 			expect(root.classList.contains('vc-scroller')).toBe(true);
-			expect(root.classList.contains('vc-scroller__wrapper')).toBe(true);
+			expect(root.classList.contains('vc-scroller__wrapper')).toBe(false);
 			expect(root.classList.contains('custom')).toBe(true);
 			expect(root.style.height).toBe('200px');
 			expect(scrollerRef.value.wrapper).toBe(root);
@@ -1064,14 +1235,14 @@ describe('index.ts', () => {
 		});
 
 		it.each([
-			['Scroller', Scroller],
-			['ScrollerWheel', ScrollerWheel]
-		])('%s offsets sticky tracks by the wrapper padding', async (_label, Component: any) => {
+			['Scroller', {}],
+			['Scroller wheel', { wheel: true }]
+		])('%s offsets sticky tracks by the wrapper padding', async (_label, attrs) => {
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<Component ref={scrollerRef} native={false} always height="200px" style="padding: 10px 20px 30px 40px">
+				<Scroller ref={scrollerRef} {...attrs} native={false} always height="200px" style="padding: 10px 20px 30px 40px">
 					<div style="height: 1000px; width: 1000px"></div>
-				</Component>
+				</Scroller>
 			), { attachTo: document.body, global: { stubs: { transition: false } } });
 
 			const root = wrapper.element as HTMLElement;
@@ -1157,9 +1328,13 @@ describe('index.ts', () => {
 	});
 
 	describe('Track interactions', () => {
-		it.each([Scroller, ScrollerWheel])('passes track styling through %s', async (Component) => {
-			const wrapper = mount(Component, {
+		it.each([
+			['Scroller', {}],
+			['Scroller wheel', { wheel: true }]
+		])('passes track styling through %s', async (_label, attrs) => {
+			const wrapper = mount(Scroller, {
 				props: {
+					...attrs,
 					native: false,
 					trackClass: 'custom-track',
 					trackStyle: { opacity: '0.5' }
@@ -1185,7 +1360,7 @@ describe('index.ts', () => {
 				</Scroller>
 			), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const wrapEl = wrapper.find('.vc-scroller').element as HTMLElement;
 			const restore = mockSize(wrapEl, {
 				clientWidth: 100,
 				clientHeight: 100,
@@ -1228,7 +1403,7 @@ describe('index.ts', () => {
 				</Scroller>
 			), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const wrapEl = wrapper.find('.vc-scroller').element as HTMLElement;
 			const restore = mockSize(wrapEl, {
 				clientWidth: 100,
 				clientHeight: 100,
@@ -1271,7 +1446,7 @@ describe('index.ts', () => {
 				</Scroller>
 			), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const wrapEl = wrapper.find('.vc-scroller').element as HTMLElement;
 			const restore = mockSize(wrapEl, {
 				clientWidth: 100,
 				clientHeight: 100,
@@ -1311,7 +1486,7 @@ describe('index.ts', () => {
 				</Scroller>
 			), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const wrapEl = wrapper.find('.vc-scroller').element as HTMLElement;
 			const restore = mockSize(wrapEl, {
 				clientHeight: 100,
 				scrollHeight: 1000
@@ -1341,7 +1516,7 @@ describe('index.ts', () => {
 				</Scroller>
 			), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const wrapEl = wrapper.find('.vc-scroller').element as HTMLElement;
 			const restore = mockSize(wrapEl, {
 				clientHeight: 100,
 				scrollHeight: 1000
@@ -1372,7 +1547,7 @@ describe('index.ts', () => {
 				</Scroller>
 			), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const wrapEl = wrapper.find('.vc-scroller').element as HTMLElement;
 			const restore = mockSize(wrapEl, {
 				clientHeight: 100,
 				scrollHeight: 1000
@@ -1415,7 +1590,7 @@ describe('index.ts', () => {
 			expect(renderItem).toHaveBeenCalledTimes(100);
 			expect(wrapper.findAll('.item').length).toBe(100);
 
-			const wrapEl = wrapper.find('.vc-scroller__wrapper').element as HTMLElement;
+			const wrapEl = wrapper.find('.vc-scroller').element as HTMLElement;
 			const restore = mockSize(wrapEl, {
 				clientWidth: 200,
 				clientHeight: 200,
@@ -1446,7 +1621,7 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
-		it('ScrollerWheel does not re-render renderItem on wheel scroll', async () => {
+		it('Scroller wheel does not re-render renderItem on wheel scroll', async () => {
 			const renderItem = vi.fn((props: any) => <div class="item">{ props.index }</div>);
 			const renderList = vi.fn((props: any) => {
 				const { length } = props;
@@ -1458,9 +1633,9 @@ describe('index.ts', () => {
 			const length = ref(100);
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<ScrollerWheel ref={scrollerRef} native={false} height="200px">
+				<Scroller wheel ref={scrollerRef} native={false} height="200px">
 					<Customer length={length.value} render={renderList} />
-				</ScrollerWheel>
+				</Scroller>
 			), { attachTo: document.body });
 
 			await nextTick();
@@ -1515,19 +1690,19 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
-		it('ScrollerWheel does not re-render v-for renderItem on wheel scroll', async () => {
+		it('Scroller wheel does not re-render v-for renderItem on wheel scroll', async () => {
 			const renderItem = vi.fn((props: any) => <p class="item">{ props.index }</p>);
 
 			const count = ref(100);
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<ScrollerWheel ref={scrollerRef} native={false} height="200px">
+				<Scroller wheel ref={scrollerRef} native={false} height="200px">
 					{
 						Array.from({ length: count.value }, (_, i) => i + 1).map(item => (
 							<Customer key={item} render={renderItem} index={item} />
 						))
 					}
-				</ScrollerWheel>
+				</Scroller>
 			), { attachTo: document.body });
 
 			await nextTick();
@@ -1611,9 +1786,10 @@ describe('index.ts', () => {
 			expect(getViewportRect(window)).toEqual({ top: 0, right: window.innerWidth, bottom: window.innerHeight, left: 0, scale: 1 });
 		});
 
-		it('getScroller walks up to the closest vc-scroller-wheel ancestor', () => {
+		it('getScroller walks up to the closest wheel-driven Scroller (overflow: hidden) ancestor', () => {
 			const root = document.createElement('div');
-			root.className = 'vc-scroller-wheel';
+			root.className = 'vc-scroller is-wheel';
+			root.style.overflow = 'hidden';
 			const inner = document.createElement('span');
 			root.appendChild(inner);
 			document.body.appendChild(root);
@@ -1625,7 +1801,7 @@ describe('index.ts', () => {
 
 		it('getScroller recognizes the Scroller root by class even before styles load', () => {
 			const root = document.createElement('div');
-			root.className = 'vc-scroller vc-scroller__wrapper';
+			root.className = 'vc-scroller';
 			const inner = document.createElement('span');
 			root.appendChild(inner);
 			document.body.appendChild(root);
@@ -1633,6 +1809,23 @@ describe('index.ts', () => {
 			expect(getScroller(inner)).toBe(root);
 
 			document.body.removeChild(root);
+		});
+
+		it('SCROLLER_REG matches the whole vc-scroller class only', () => {
+			expect(SCROLLER_REG.test('vc-scroller')).toBe(true);
+			expect(SCROLLER_REG.test('custom vc-scroller is-hidden is-wheel')).toBe(true);
+			// getScroller 以整个 className 匹配：内容元素、轨道不能被当作滚动容器
+			expect(SCROLLER_REG.test('vc-scroller__content')).toBe(false);
+			expect(SCROLLER_REG.test('vc-scroller-track is-vertical')).toBe(false);
+
+			const content = document.createElement('div');
+			content.className = 'vc-scroller__content';
+			const inner = document.createElement('span');
+			content.appendChild(inner);
+			document.body.appendChild(content);
+			onTestFinished(() => content.remove());
+
+			expect(getScroller(inner)).not.toBe(content);
 		});
 	});
 });

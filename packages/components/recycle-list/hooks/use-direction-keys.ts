@@ -29,7 +29,7 @@ const getKeys = (v: boolean) => {
 		offsetPosition: v ? 'offsetTop' : 'offsetLeft',
 		screenAxis: v ? 'screenY' : 'screenX',
 
-		// 交叉轴（fill=false 时仍由内部 ScrollerWheel 承载）
+		// 交叉轴（fill=false 时仍由内部 Scroller 承载）
 		crossAxis: v ? 'x' : 'y',
 		crossScrollAxis: v ? 'scrollLeft' : 'scrollTop',
 		crossClientSize: v ? 'clientWidth' : 'clientHeight'

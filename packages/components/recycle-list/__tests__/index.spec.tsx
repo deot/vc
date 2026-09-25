@@ -246,7 +246,7 @@ describe('index.ts', () => {
 			await nextTick();
 			await sleep(0);
 
-			const scroller = wrapper.find('.vc-scroller__wrapper');
+			const scroller = wrapper.find('.vc-scroller');
 			expect(scroller.exists()).toBe(true);
 
 			const scrollerEl = scroller.element as HTMLElement;
@@ -1720,7 +1720,7 @@ describe('index.ts', () => {
 	});
 
 	describe('Scroller options', () => {
-		it('passes scrollerOptions through to inner ScrollerWheel', () => {
+		it('passes scrollerOptions through to inner Scroller', () => {
 			const wrapper = mount(() => (
 				<RecycleList scrollerOptions={{ native: true, height: '300px' } as any} />
 			));
@@ -1728,6 +1728,24 @@ describe('index.ts', () => {
 			const wrap = wrapper.find('.vc-recycle-list__wrapper');
 			expect(wrap.classes()).toContain('is-native');
 			expect(wrap.attributes('style') ?? '').toContain('height: 300px');
+		});
+
+		it('drives the inner Scroller by wheel unless scrollerOptions.wheel=false', () => {
+			const w1 = mount(() => (
+				<RecycleList scrollerOptions={{ native: false } as any} />
+			));
+			expect(w1.find('.vc-recycle-list__wrapper').classes()).toContain('is-wheel');
+
+			const w2 = mount(() => (
+				<RecycleList scrollerOptions={{ native: false, wheel: false } as any} />
+			));
+			expect(w2.find('.vc-recycle-list__wrapper').classes()).not.toContain('is-wheel');
+
+			// undefined 视为未设置，不覆盖默认的滚轮驱动
+			const w3 = mount(() => (
+				<RecycleList scrollerOptions={{ native: false, wheel: undefined } as any} />
+			));
+			expect(w3.find('.vc-recycle-list__wrapper').classes()).toContain('is-wheel');
 		});
 	});
 

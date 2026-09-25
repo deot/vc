@@ -7,7 +7,7 @@ import { NormalList } from './normal-list';
 
 import { useStates } from '../store';
 import { TableBodyBlock } from './table-body-block';
-import { ScrollerWheel } from '../../scroller/scroller-wheel';
+import { Scroller } from '../../scroller/scroller';
 
 export const TableBody = defineComponent({
 	name: 'vc-table-body',
@@ -68,6 +68,8 @@ export const TableBody = defineComponent({
 				barTo: fluid ? barAnchor : `.${table.tableId}`,
 				// 悬停整个表格（含已吸底的 dock）时显示滚动条
 				barTrigger: `.${table.tableId}`,
+				// 滚轮驱动：表头、固定列与表体在同一帧更新
+				wheel: true,
 				native: false,
 				always: false,
 				// 锚点就绪前不渲染，避免轨道先落在表体内
@@ -131,7 +133,7 @@ export const TableBody = defineComponent({
 				);
 			}
 			return (
-				<ScrollerWheel
+				<Scroller
 					ref={target}
 					class="vc-table__body-wrapper"
 					{
@@ -144,7 +146,7 @@ export const TableBody = defineComponent({
 						{ renderers }
 					</NormalList>
 					{slots.default?.()}
-				</ScrollerWheel>
+				</Scroller>
 			);
 		};
 	}

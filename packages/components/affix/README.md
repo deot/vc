@@ -161,14 +161,24 @@ const isActive = ref(false);
 | onScroll | 在当前滚动源上注册回调；`options.first` 为 `true` 时注册后立即执行 | `handler: () => void`，`options?: { first?: boolean }` | 用于取消注册的 `() => void` |
 | offScroll | 从当前滚动源移除回调 | `handler: () => void` | `void` |
 
-`onScroll` 的滚动源：固钉所在的滚动容器正是外层 `Scroller` / `ScrollerWheel` 时订阅其滚动通知（`ScrollerWheel` 由滚轮驱动时与滚动同一帧回调），否则监听该容器的原生 `scroll`。
+`onScroll` 的滚动源：固钉所在的滚动容器正是外层 `Scroller` 时订阅其滚动通知（`wheel` 滚轮驱动时与滚动同一帧回调），否则监听该容器的原生 `scroll`。
 
-### 迁移说明
+### 使用注意
 
-`fixed=false` 由绝对定位改为 `position: sticky`，升级时注意：
+`fixed=false` 基于 `position: sticky`（页面级同样如此）：
 
 - 吸附范围由父元素决定：父元素滚出可视区后固钉随之离开，`active` 变为 `false`。需要在整个滚动容器内持续吸附时，把 `Affix` 直接放在滚动内容中。
-- 固钉与滚动容器之间不能有 `overflow` 非 `visible` 的元素（包括不滚动的 `overflow: hidden`）：sticky 会以最近的这类元素为参照，导致不吸附。
+- 固钉与滚动容器之间不能有 `overflow` 非 `visible` 的中间元素（包括不滚动的 `overflow: hidden`）：sticky 会以最近的这类元素为参照，导致不吸附。滚动容器自身为 `overflow: hidden`（如滚轮驱动的 `Scroller`）不受影响；中间元素只是为了裁剪内容时，可改用 `overflow: clip`。
 - 不要把 `Affix` 放成被拉伸的 flex 子项（如 `align-items: stretch` 的横向 flex 容器中），拉伸后与容器等高，sticky 没有移动空间。
-- 页面级（没有局部滚动容器）的 `fixed=false` 同样使用 sticky，不再参考 `target`；需要限制活动范围时使用 `fixed=true` 与 `target`。
-- 不再输出 `.vc-affix__absolute` class；依赖它的样式改为选择 `.vc-affix.is-sticky`，吸附状态可通过 `v-model` 或插槽参数 `active` 获取。
+- `target` 仅在 `fixed=true` 时生效；需要限制活动范围时使用 `fixed=true` 与 `target`。
+- 根节点为 `.vc-affix.is-sticky`；是否处于吸附中通过 `v-model` 或插槽参数 `active` 获取。
+
+<!--
+## 变更说明
+
+### fixed=false 改用 position: sticky
+- 原先为绝对定位加 JS 滚动补偿，现由浏览器 sticky 吸附，原生滚动时不再抖动。
+- 吸附范围改为由父元素决定，父元素滚出可视区后固钉随之离开。
+- 页面级（没有局部滚动容器）的 `fixed=false` 不再参考 `target`。
+- 不再输出 `.vc-affix__absolute` class，依赖它的样式改为选择 `.vc-affix.is-sticky`。
+-->
