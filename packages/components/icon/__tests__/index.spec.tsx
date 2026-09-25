@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import { Icon, IconManager } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
@@ -36,6 +36,49 @@ describe('index.ts', () => {
 		));
 
 		expect(wrapper.classes()).toContain('vc-icon');
+	});
+
+	it('icon waiting, unmount removes pending listener', () => {
+		const type = 'any-unmount-need-wait';
+
+		expect(() => {
+			Array.from({ length: 150 }).forEach(() => {
+				const wrapper = mount(() => (
+					<Icon type={type} />
+				));
+				expect(IconManager.events[type].length).toBe(1);
+				wrapper.unmount();
+			});
+		}).not.toThrow();
+
+		expect(IconManager.events[type].length).toBe(0);
+	});
+
+	it('icon waiting, type changed removes pending listener', async () => {
+		const waiting = 'any-changed-need-wait';
+		const loaded = 'any-changed-loaded';
+		IconManager.icons[loaded] = { viewBox: '0 0 24 24', path: [] };
+
+		const icon = ref(waiting);
+		const wrapper = mount(() => (
+			<Icon type={icon.value} />
+		));
+		expect(IconManager.events[waiting].length).toBe(1);
+
+		icon.value = '';
+		await nextTick();
+		expect(IconManager.events[waiting].length).toBe(0);
+
+		icon.value = waiting;
+		await nextTick();
+		expect(IconManager.events[waiting].length).toBe(1);
+
+		icon.value = loaded;
+		await nextTick();
+		expect(IconManager.events[waiting].length).toBe(0);
+		expect(wrapper.find('svg').attributes('viewBox')).toBe('0 0 24 24');
+
+		wrapper.unmount();
 	});
 
 	it('click, changed', async () => {

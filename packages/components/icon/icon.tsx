@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, watch } from 'vue';
+import { defineComponent, onBeforeUnmount, ref, watch } from 'vue';
 import { props as iconProps } from './icon-props';
 import { IconManager } from './manager';
 
@@ -23,16 +23,20 @@ export const Icon = defineComponent({
 		watch(
 			() => props.type,
 			(v, old) => {
+				// 先移除旧 type 上等待中的监听（切换到已加载的 type 或空值时也需要移除）
+				old && IconManager.off(old, getConfig);
 				if (!v) return;
 				IconManager.icons[v]
 					? getConfig()
-					: (
-							old && IconManager.off(old, getConfig),
-							v && IconManager.on(v, getConfig)
-						);
+					: IconManager.on(v, getConfig);
 			},
 			{ immediate: true }
 		);
+
+		// 卸载时移除等待中的监听，避免图标集未加载时反复挂载/卸载导致监听累积
+		onBeforeUnmount(() => {
+			props.type && IconManager.off(props.type, getConfig);
+		});
 		return () => {
 			return (
 				<i class="vc-icon">
