@@ -136,6 +136,12 @@ class Manager {
 
 		this.events[type] = this.events[type] || [];
 
+		/**
+		 * 等待队列上限
+		 * - 客户端: Icon 卸载或切换 type 时会 off, 队列长度即当前仍挂载且在等待该 type 的图标数,
+		 *   同时有 100 个图标在等待同一 type 基本意味着该 type 不存在(如拼写错误或未加载对应图标集), 抛错提示
+		 * - 服务端: 图标不会加载且不执行卸载钩子, 单例上的队列会跨请求累积, 这里清空以限制内存(不抛错)
+		 */
 		if (this.events[type].length >= 100) {
 			delete this.events[type];
 
