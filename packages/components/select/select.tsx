@@ -214,6 +214,7 @@ export const Select = defineComponent({
 					placement={props.placement}
 					auto-width={props.autoWidth}
 					disabled={props.disabled}
+					portal={props.portal}
 					portalClass={[['is-padding-none', props.portalClass]]}
 					class={[classes.value, its.value.class, 'vc-select']}
 					style={its.value.style}

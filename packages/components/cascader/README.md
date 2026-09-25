@@ -352,6 +352,7 @@ const formatter = (v) => {
 | tag            | 组件外层dom元素类型           | `string`   | -                                                                                                                                     | `div`                                |
 | placement      | 浮层预设位置                | `string`   | `top`、`left`、`right`、`bottom`、`bottom-left`、`bottom-right`、`top-left`、`top-right`、`right-top`、`right-bottom`、`left-top`、`left-bottom` | `bottom-left`                        |
 | arrow          | 浮层有无箭头                | `boolean`  | -                                                                                                                                     | `false`                              |
+| portal         | 浮层是否挂载到 body；`false` 时挂到组件根节点内，随所在容器滚动，超出容器的部分会被其 `overflow` 裁剪 | `boolean`  | -                                                                                                                                     | `true`                               |
 
 
 ### 事件

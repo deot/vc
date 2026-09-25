@@ -551,6 +551,24 @@ describe('TreeSelect interaction', () => {
 		vi.useRealTimers();
 	});
 
+	it('portal=false 时下拉挂到组件根节点内，点击下拉内部不会关闭', async () => {
+		const wrapper = mount(() => (<TreeSelect data={data} portal={false} />), { attachTo: document.body });
+		await flush();
+
+		await wrapper.trigger('click');
+		await flush();
+
+		const popup = document.querySelector('.vc-popover-wrapper') as HTMLElement;
+		expect(wrapper.element.contains(popup)).toBe(true);
+
+		// 下拉在根节点内，点击会冒泡到触发区
+		popup.querySelector<HTMLElement>('.vc-popover-wrapper__container')!.click();
+		await flush();
+		expect(popup.style.display).not.toBe('none');
+
+		wrapper.unmount();
+	});
+
 	it('basic / open / clearable', async () => {
 		const value = ref<any[]>([]);
 		const wrapper = mount(() => (

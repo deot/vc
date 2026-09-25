@@ -261,6 +261,7 @@ const time = ref();
 | tag | 触发容器标签 | `string` | - | `div` |
 | placement | Popover 位置 | `string` | 同 Popover | `bottom-left` |
 | arrow | 显示 Popover 箭头 | `boolean` | - | `false` |
+| portal | 弹层是否挂载到 body；`false` 时挂到组件根节点内，随所在容器滚动，超出容器的部分会被其 `overflow` 裁剪 | `boolean` | - | `true` |
 | portalClass | 弹层附加 class | `string \| object \| unknown[]` | - | - |
 
 直接传入 `disabledDate`、`shortcuts`，不使用 `options` 包装。快捷项为 `{ text, value?: () => Date | Date[], onClick?: () => void }`，至少提供一个回调；`value()` 返回单个日期或范围，随后执行 `onClick()`。
@@ -359,5 +360,4 @@ const time = ref();
 - 日期字符串应与 `format` 一致。范围和季度推荐使用数组，避免分隔符歧义。
 - locale 控制面板文案和季度摘要；`format` 中的英文月份、星期和 AM/PM 格式标记保持现有解析与输出规则，不随界面语言改变。
 - 当前桌面端 `multiple` 提交路径会将数组当作单值处理，可能报错；在修复前不要依赖多日期提交。该限制不影响日期范围模式。
-- 当前桌面端声明了 `portal`，但没有将其传给 Popover；不能依靠 `:portal="false"` 改变挂载位置。
 - 农历、周数显示不是当前公开能力。

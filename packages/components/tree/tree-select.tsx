@@ -252,6 +252,7 @@ export const TreeSelect = defineComponent({
 					placement={props.placement}
 					autoWidth={autoWidth.value}
 					disabled={props.disabled}
+					portal={props.portal}
 					portalClass={[['is-padding-none', props.portalClass]]}
 					class={[classes.value, its.value.class, 'vc-tree-select']}
 					style={its.value.style}
