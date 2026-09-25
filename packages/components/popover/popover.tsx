@@ -3,9 +3,9 @@
 import { defineComponent, h, ref, computed, watch, getCurrentInstance, onMounted, onUnmounted } from 'vue';
 import type { ComponentInternalInstance } from 'vue';
 import { props as popoverProps } from './popover-props';
-import { composedPath } from '@deot/helper-dom';
 import { getUid } from '@deot/helper-utils';
 import { PopoverPortal } from './wrapper';
+import { isInArea } from './utils';
 import type { PortalLeaf } from '../portal/portal-leaf';
 
 const COMPONENT_NAME = 'vc-popover';
@@ -55,24 +55,16 @@ export const Popover = defineComponent({
 			visible = props.always || visible;
 			if (props.disabled) return;
 
-			isHover.value && timer && clearTimeout(timer);
-			const path: Element[] = e.path || composedPath(e) || [];
+			// 新的触发会取消未执行的延时关闭（hover / strictHover 都会设置）
+			clearTimeout(timer);
 
-			const isPopArea = path.some(item => new RegExp(popoverId).test(item.className));
+			const wrapperEl = popperInstance?.wrapper?.$el;
+			if (!props.portal && wrapperEl && isInArea(e, wrapperEl)) return;
 
-			if (!props.portal && isPopArea) return;
-
-			// document click
+			// document click（弹层内的点击已由弹层自身排除）：触发节点在触发区内的子弹层（如 Select 的标签列表）也视为触发区
 			if (visible === undefined) {
-				if (
-					!isPopArea
-					&& !instance?.vnode?.el?.contains(e.target)
-					&& props.outsideClickable
-				) {
-					visible = false;
-				} else {
-					return;
-				}
+				if (isInArea(e, instance.vnode.el as Element) || !props.outsideClickable) return;
+				visible = false;
 			}
 
 			if (visible != isActive.value) {
@@ -94,13 +86,6 @@ export const Popover = defineComponent({
 					: props.portal
 						? document.body
 						: instance.vnode.el;
-				let { portalClass } = props;
-
-				typeof portalClass === 'object'
-					? portalClass instanceof Array
-						? portalClass.push(popoverId)
-						: (portalClass[popoverId] = true)
-					: (portalClass = `${portalClass || ''} ${popoverId}`);
 				popperInstance = PopoverPortal.popup({
 					el,
 					alone: false, // 由当前组件控制hover/click等情况
@@ -123,8 +108,7 @@ export const Popover = defineComponent({
 					 */
 					slots,
 					parent: instance.parent!,
-					...props,
-					portalClass
+					...props
 				}) as PortalLeaf;
 			} else if (popperInstance && popperInstance.wrapper) {
 				popperInstance.wrapper.toggle(false);

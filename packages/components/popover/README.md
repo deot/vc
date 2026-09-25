@@ -8,7 +8,7 @@
 
 ### 基础用法
 
-`hover` 支持移入浮层继续操作；`strictHover` 在离开触发器后延时关闭。`focus` 监听 Popover 根节点的焦点事件，因此示例通过 `tabindex` 让根节点可聚焦。
+`hover` 支持移入浮层继续操作；`strictHover` 只认触发器：离开触发器后延时关闭，移入浮层不会保持打开，延时内移回触发器则取消关闭。`focus` 监听 Popover 根节点的焦点事件，因此示例通过 `tabindex` 让根节点可聚焦。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
@@ -53,7 +53,7 @@ import { Popover, Button } from '@deot/vc';
 
 ### 定位
 
-支持 12 种位置；空间不足时会根据浏览器视口自动调整方向。可展开预览以观察完整浮层。
+支持 12 种位置；空间不足时自动调整方向。边界为浏览器视口，触发器位于滚动容器（含 Scroller）内时为视口与容器可视区的交集，因此靠近容器底部的浮层会向上打开。浮层内容尺寸变化（如图片加载）后会重新定位；`top`、`left` 系列以靠近触发器的一边对齐，内容变大时朝远离触发器的方向伸展。可展开预览以观察完整浮层。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
@@ -200,7 +200,7 @@ const handleClose = () => {
 
 ### 挂载容器
 
-默认挂载到 `document.body`。`portal="false"` 将浮层挂到 Popover 根节点；`getPopupContainer` 优先指定挂载容器，应返回包含触发器的定位容器。边界判断仍基于浏览器视口，容器的 `overflow` 可能裁剪浮层。
+默认挂载到 `document.body`：触发器所在的滚动容器滚动时浮层跟随，触发器滚出容器可视区时浮层隐藏（不关闭），滚回后恢复。`portal="false"` 将浮层挂到 Popover 根节点；`getPopupContainer` 优先指定挂载容器，应返回包含触发器的定位容器，此时容器的 `overflow` 可能裁剪浮层。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
@@ -241,6 +241,54 @@ const getPopupContainer = () => container.value;
 ```
 :::
 
+### 嵌套弹层
+
+挂载到 body 的子弹层（`Popover.open`、内容区中的 Select / Popover 等）在 DOM 上不在当前浮层内。只要子弹层的触发器位于当前 Popover 的触发器或浮层内，在子弹层中点击不视为点击外部，当前浮层保持打开（可多层嵌套）。hover 触发的嵌套需要内层设置 `portal="false"`。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+```vue
+<template>
+	<div class="nested-demo">
+		<Popover trigger="click">
+			<Button>打开筛选</Button>
+			<template #content>
+				<div class="nested-demo__content">
+					<Select v-model="value" :data="data" />
+				</div>
+			</template>
+		</Popover>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Popover, Button, Select } from '@deot/vc';
+
+const value = ref('');
+const data = [
+	{ value: '1', label: '选项一' },
+	{ value: '2', label: '选项二' }
+];
+</script>
+
+<style scoped>
+.nested-demo {
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	min-height: 200px;
+	padding-top: 32px;
+}
+
+.nested-demo__content {
+	width: 220px;
+	padding: 8px 0;
+}
+</style>
+```
+:::
+
 ### 主题
 
 `theme` 支持 `light`、`dark` 和 `none`；`none` 不设置主题背景，但仍保留容器间距与阴影。颜色跟随共享主题变量，可用 `portalStyle` 覆盖浮层的 `--vc-popover-wrapper-*` 变量。
@@ -275,7 +323,7 @@ import { Popover, Button } from '@deot/vc';
 
 ### 静态方法
 
-`Popover.open` 立即创建浮层，`triggerEl` 必须传真实 DOM 元素。返回的 `PortalLeaf` 可通过 `destroy()` 清理；页面卸载时也应清理仍存在的实例。
+`Popover.open` 立即创建浮层，`triggerEl` 必须传真实 DOM 元素。`triggerEl` 被移除（如列表按 key 重新渲染）后浮层会自动关闭并销毁；返回的 `PortalLeaf` 也可通过 `destroy()` 主动清理，页面卸载时应清理仍存在的实例。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->

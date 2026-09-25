@@ -854,6 +854,33 @@ describe('Select maxTagLines', () => {
 		wrapper.unmount();
 	});
 
+	it('removing a tag in the collapse list keeps the dropdown open', async () => {
+		const value = ref<any[]>(['1', '2', '3', '4', '5']);
+		const onVisibleChange = vi.fn();
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={99} onVisibleChange={onVisibleChange} />
+		), { attachTo: document.body });
+		await flush();
+
+		await wrapper.trigger('click');
+		await flush();
+		const dropdown = document.querySelector('.vc-select__content')!.closest('.vc-popover-wrapper') as HTMLElement;
+		expect(dropdown.style.display).not.toBe('none');
+
+		// 列表弹层挂在 body 下，其触发节点（折叠 tag）在 Select 内：点击视为点在 Select 内
+		await getTags(wrapper)[2].trigger('mouseenter');
+		await flush();
+		(document.querySelector('.vc-select-tags__popover .vc-tag__close') as HTMLElement).click();
+		await flush();
+		await sleep(200);
+
+		expect(value.value).toEqual(['1', '2', '4', '5']);
+		expect(onVisibleChange).not.toHaveBeenCalledWith(false);
+		expect(dropdown.style.display).not.toBe('none');
+
+		wrapper.unmount();
+	});
+
 	it('disabled: collapse list is read-only', async () => {
 		const value = ref<any[]>(['1', '2', '3', '4', '5']);
 		const wrapper = mount(() => (

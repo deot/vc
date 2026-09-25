@@ -12,7 +12,8 @@ $arrow-shadow-color-light: varfix(arrow-shadow-color-light, popover-wrapper, rgb
 	z-index: $popup-zindex;
 	color: $color-dark;
 	box-sizing: border-box;
-	transition: top .02s linear, left .02s linear;
+
+	// top / left 不加过渡：位置变化时弹层会从鼠标下扫过，触发节点收到多余的 mouseleave / mouseenter
 
 	@include when(top) {
 		padding-bottom: 8px;
