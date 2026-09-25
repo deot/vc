@@ -368,7 +368,7 @@ describe('Text 响应式 watch', () => {
 	});
 });
 
-describe('Text 弹层 (mouseover/mouseout)', () => {
+describe('Text 弹层 (mouseenter)', () => {
 	beforeEach(() => {
 		mockedGetFitIndex.mockReset();
 		mockedGetFitIndex.mockReturnValue(-1);
@@ -379,7 +379,7 @@ describe('Text 弹层 (mouseover/mouseout)', () => {
 		vi.restoreAllMocks();
 	});
 
-	it('endIndex>0 时 mouseover 调用 Popover.open, 透传 theme/placement/portalClass/portalStyle', async () => {
+	it('endIndex>0 时 mouseenter 调用 Popover.open, 透传 theme/placement/portalClass/portalStyle', async () => {
 		const popoverOpen = vi.spyOn(Popover, 'open').mockReturnValue({ destroy: vi.fn() } as any);
 		mockedGetFitIndex.mockReturnValue(2);
 
@@ -398,7 +398,7 @@ describe('Text 弹层 (mouseover/mouseout)', () => {
 		triggerResize(wrapper.element);
 		await flush();
 
-		await wrapper.trigger('mouseover');
+		await wrapper.trigger('mouseenter');
 
 		expect(popoverOpen).toHaveBeenCalledTimes(1);
 		const arg = popoverOpen.mock.calls[0][0] as any;
@@ -414,7 +414,7 @@ describe('Text 弹层 (mouseover/mouseout)', () => {
 		wrapper.unmount();
 	});
 
-	it('endIndex<=0 时 mouseover 不会调用 Popover.open', async () => {
+	it('endIndex<=0 时 mouseenter 不会调用 Popover.open', async () => {
 		const popoverOpen = vi.spyOn(Popover, 'open').mockReturnValue({ destroy: vi.fn() } as any);
 
 		const wrapper = mount(() => (<Text value="hi" line={0} resize={true} />), { attachTo: document.body });
@@ -422,7 +422,7 @@ describe('Text 弹层 (mouseover/mouseout)', () => {
 		triggerResize(wrapper.element);
 		await flush();
 
-		await wrapper.trigger('mouseover');
+		await wrapper.trigger('mouseenter');
 		expect(popoverOpen).not.toHaveBeenCalled();
 
 		wrapper.unmount();
@@ -442,7 +442,7 @@ describe('Text 弹层 (mouseover/mouseout)', () => {
 		triggerResize(wrapper.element);
 		await flush();
 
-		await wrapper.trigger('mouseover');
+		await wrapper.trigger('mouseenter');
 		const arg = popoverOpen.mock.calls[0][0] as any;
 		expect(Array.isArray(arg.portalStyle)).toBe(true);
 		expect(arg.portalStyle[0]).toBe('width: 300px');
@@ -451,14 +451,35 @@ describe('Text 弹层 (mouseover/mouseout)', () => {
 		wrapper.unmount();
 	});
 
-	it('mouseout 不抛错 (空操作)', async () => {
-		const wrapper = mount(() => (<Text value="hi" line={0} resize={true} />), { attachTo: document.body });
+	it('renderRow 返回元素时, 在子元素间移动不重复打开, triggerEl 与宽度取根节点', async () => {
+		const popoverOpen = vi.spyOn(Popover, 'open').mockReturnValue({ destroy: vi.fn() } as any);
+		mockedGetFitIndex.mockReturnValue(2);
+
+		const wrapper = mount(() => (
+			<Text
+				value="abcdefg"
+				line={1}
+				resize={true}
+				renderRow={(attrs: any) => [<b>{attrs.value}</b>, 'tail', <b>x</b>]}
+			/>
+		), { attachTo: document.body });
+		Object.defineProperty(wrapper.element, 'clientWidth', { configurable: true, value: 300 });
 
 		triggerResize(wrapper.element);
 		await flush();
 
-		await wrapper.trigger('mouseout');
-		expect(true).toBe(true);
+		// 真实移动：进入根节点一次，其后在子元素之间移动只有冒泡的 mouseover
+		await wrapper.trigger('mouseenter');
+		const [b1, b2] = wrapper.findAll('b');
+		await b1.trigger('mouseover');
+		await wrapper.trigger('mouseover');
+		await b2.trigger('mouseover');
+
+		expect(popoverOpen).toHaveBeenCalledTimes(1);
+		const arg = popoverOpen.mock.calls[0][0] as any;
+		expect(arg.triggerEl).toBe(wrapper.element);
+		expect(arg.portalStyle[0]).toBe('width: 300px');
+
 		wrapper.unmount();
 	});
 });
@@ -579,7 +600,7 @@ describe('Text 卸载清理', () => {
 		triggerResize(wrapper.element);
 		await flush();
 
-		await wrapper.trigger('mouseover');
+		await wrapper.trigger('mouseenter');
 		expect(popoverOpen).toHaveBeenCalled();
 
 		wrapper.unmount();

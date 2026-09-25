@@ -173,7 +173,7 @@ const fileName = '2026年第三季度产品数据分析与复盘报告.final.pdf
 | theme | 全文 Popover 的主题 | `string` | `dark`、`light`、`none` | `'dark'` |
 | placement | 全文 Popover 的位置 | `string` | `top`、`left`、`right`、`bottom`、`bottom-left`、`bottom-right`、`top-left`、`top-right`、`right-top`、`right-bottom`、`left-top`、`left-bottom` | `'top'` |
 | portalClass | 全文 Popover 的类名 | `object \| string \| any[]` | - | `undefined` |
-| portalStyle | 全文 Popover 的样式；未提供有效值时使用触发元素宽度，始终附加 `word-break: break-all` | `object \| string \| any[]` | - | `undefined` |
+| portalStyle | 全文 Popover 的样式；未提供有效值时使用 Text 根节点的宽度，始终附加 `word-break: break-all` | `object \| string \| any[]` | - | `undefined` |
 
 ### 事件
 
