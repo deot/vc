@@ -61,6 +61,20 @@ const makeWritable = (obj: any, prop: string, value: any = 0) => {
 	Object.defineProperty(obj, prop, { configurable: true, writable: true, value });
 };
 
+/**
+ * 表体的滚动容器：非虚拟时为 .vc-table__body-wrapper，虚拟时为 RecycleList 内部的 .vc-recycle-list__wrapper
+ * 找不到时直接断言失败，避免后续断言被静默跳过
+ * @param wrapper 挂载结果
+ * @returns 表体 Scroller 的组件包装
+ */
+const findBodyScroller = (wrapper: any) => {
+	const scroller = wrapper
+		.findAllComponents({ name: 'vc-scroller' })
+		.find((item: any) => item.classes('vc-table__body-wrapper') || item.classes('vc-recycle-list__wrapper'));
+	expect(scroller?.exists()).toBe(true);
+	return scroller;
+};
+
 const buildData = (length: number) => Array.from({ length }).map((_, index) => ({
 	id: `id__${index}`,
 	name: `name-${index}`,
@@ -1595,30 +1609,28 @@ describe('Table virtual + scroll & delay', () => {
 		expect(wrapper.find('.vc-recycle-list').exists()).toBe(true);
 
 		const scrollWrapper = wrapper.find('.vc-table__body-wrapper').element as HTMLElement;
-		// 通过 ScrollerWheel 组件实例直接 emit scroll，触发表格的 handleScollX
-		const sw = wrapper.findComponent({ name: 'vc-scroller-wheel' });
-		if (sw.exists()) {
-			const fakeBodyX = {
-				scrollLeft: 0,
-				offsetWidth: 100,
-				scrollWidth: 100,
-				scrollTop: 0
-			};
-			makeWritable(scrollWrapper, 'scrollLeft');
-			Object.defineProperty(scrollWrapper, 'offsetWidth', { configurable: true, value: 100 });
-			Object.defineProperty(scrollWrapper, 'scrollWidth', { configurable: true, value: 100 });
-			sw.vm.$emit('scroll', { target: fakeBodyX });
-			await flush();
-			// 切到 middle
-			(scrollWrapper as any).scrollLeft = 30;
-			Object.defineProperty(scrollWrapper, 'scrollWidth', { configurable: true, value: 200 });
-			sw.vm.$emit('scroll', { target: { ...fakeBodyX, scrollLeft: 30 } });
-			await flush();
-			// 切到 right
-			(scrollWrapper as any).scrollLeft = 200;
-			sw.vm.$emit('scroll', { target: { ...fakeBodyX, scrollLeft: 200, scrollWidth: 200 } });
-			await flush();
-		}
+		// 通过表体 Scroller 组件实例直接 emit scroll，触发表格的 handleScollX
+		const sw = findBodyScroller(wrapper);
+		const fakeBodyX = {
+			scrollLeft: 0,
+			offsetWidth: 100,
+			scrollWidth: 100,
+			scrollTop: 0
+		};
+		makeWritable(scrollWrapper, 'scrollLeft');
+		Object.defineProperty(scrollWrapper, 'offsetWidth', { configurable: true, value: 100 });
+		Object.defineProperty(scrollWrapper, 'scrollWidth', { configurable: true, value: 100 });
+		sw.vm.$emit('scroll', { target: fakeBodyX });
+		await flush();
+		// 切到 middle
+		(scrollWrapper as any).scrollLeft = 30;
+		Object.defineProperty(scrollWrapper, 'scrollWidth', { configurable: true, value: 200 });
+		sw.vm.$emit('scroll', { target: { ...fakeBodyX, scrollLeft: 30 } });
+		await flush();
+		// 切到 right
+		(scrollWrapper as any).scrollLeft = 200;
+		sw.vm.$emit('scroll', { target: { ...fakeBodyX, scrollLeft: 200, scrollWidth: 200 } });
+		await flush();
 		wrapper.unmount();
 	});
 
@@ -1737,7 +1749,7 @@ describe('Table virtual + scroll & delay', () => {
 		await flush();
 
 		const list = wrapper.findComponent({ name: 'vc-recycle-list' });
-		const innerScroller = list.findComponent({ name: 'vc-scroller-wheel' });
+		const innerScroller = findBodyScroller(list);
 		const listScrollTo = vi.fn();
 		const innerScrollTo = vi.fn();
 		(list.vm as any).$!.exposed.scrollTo = listScrollTo;
@@ -3335,18 +3347,18 @@ describe('Additional source-path coverage', () => {
 			defineGetter(xWrapperEl, 'offsetWidth', 200)
 		];
 
-		const sw = wrapper.findComponent({ name: 'vc-scroller-wheel' });
+		const sw = findBodyScroller(wrapper);
 		// scrollLeft=0 → handleScollX 走 'left' 分支
 		(xWrapperEl as any).scrollLeft = 0;
-		sw.exists() && sw.vm.$emit('scroll', { target: xWrapperEl });
+		sw.vm.$emit('scroll', { target: xWrapperEl });
 		await flush();
 		// 中间 → 'middle'
 		(xWrapperEl as any).scrollLeft = 100;
-		sw.exists() && sw.vm.$emit('scroll', { target: xWrapperEl });
+		sw.vm.$emit('scroll', { target: xWrapperEl });
 		await flush();
 		// 最右 → 'right'
 		(xWrapperEl as any).scrollLeft = 399;
-		sw.exists() && sw.vm.$emit('scroll', { target: xWrapperEl });
+		sw.vm.$emit('scroll', { target: xWrapperEl });
 		await flush();
 
 		restores.forEach(fn => fn());
@@ -4255,7 +4267,7 @@ describe('Table utils', () => {
 		wrapper.unmount();
 	});
 
-	it('sticky: 虚拟滚动路径下不渲染外层 ScrollerWheel，body-wrapper 为普通 div，由 RecycleList 内部承担 X/Y 滚动', async () => {
+	it('sticky: 虚拟滚动路径下不渲染外层 Scroller，body-wrapper 为普通 div，由 RecycleList 内部承担 X/Y 滚动', async () => {
 		const wrapper = mount(() => (
 			<Table data={buildData(20)} primaryKey="id" height={200} rows={5}>
 				<TableColumn label="A" prop="name" fixed="left" width={120} />
@@ -4267,10 +4279,10 @@ describe('Table utils', () => {
 		await sleep(20);
 		await flush();
 		const bodyWrapper = wrapper.find('.vc-table__body-wrapper').element as HTMLElement;
-		// 虚拟路径下 body-wrapper 是普通 div，没有 ScrollerWheel 的 class
-		expect(bodyWrapper.classList.contains('vc-scroller-wheel')).toBe(false);
-		// RecycleList 内部的 ScrollerWheel 提供实际滚动容器
-		expect(wrapper.find('.vc-recycle-list__wrapper.vc-scroller-wheel').exists()).toBe(true);
+		// 虚拟路径下 body-wrapper 是普通 div，没有 Scroller 的 class
+		expect(bodyWrapper.classList.contains('vc-scroller')).toBe(false);
+		// RecycleList 内部由滚轮驱动的 Scroller 提供实际滚动容器
+		expect(wrapper.find('.vc-recycle-list__wrapper.vc-scroller.is-wheel').exists()).toBe(true);
 		wrapper.unmount();
 	});
 
@@ -5055,7 +5067,7 @@ describe('v-model:columns & hidden', () => {
 			await settle();
 			expectTrackInLiveAnchor();
 
-			const innerScroller = wrapper.findComponent({ name: 'vc-scroller-wheel' });
+			const innerScroller = findBodyScroller(wrapper);
 			const innerScrollTo = vi.fn();
 			(innerScroller.vm as any).$!.exposed.scrollTo = innerScrollTo;
 

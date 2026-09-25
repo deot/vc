@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Affix, Scroller, ScrollerWheel } from '@deot/vc-components';
+import { Affix, Scroller } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi } from 'vitest';
@@ -304,20 +304,20 @@ describe('index.ts', () => {
 	const lastActive = (affix: any) => affix.emitted('update:modelValue')!.at(-1)![0];
 	const withRect = (spy: any, el: Element, rect: Partial<DOMRect>) => spy.mockReturnValue({ ...el.getBoundingClientRect(), ...rect } as DOMRect);
 
-	it('fixed=false pins with sticky inside ScrollerWheel (placement=top)', async () => {
+	it('fixed=false pins with sticky inside Scroller wheel (placement=top)', async () => {
 		const scrollerRef = ref<any>();
 		const wrapper = mount(() => (
-			<ScrollerWheel ref={scrollerRef} height="200px" native={false}>
+			<Scroller ref={scrollerRef} wheel height="200px" native={false}>
 				<div style="height: 1000px">
 					<Affix fixed={false} offset={10} zIndex={3}>{SLOT_TEXT}</Affix>
 				</div>
-			</ScrollerWheel>
+			</Scroller>
 		), { attachTo: document.body });
 
 		await nextTick();
 		await nextTick();
 
-		const scrollerEl = wrapper.find('.vc-scroller-wheel').element as HTMLElement;
+		const scrollerEl = wrapper.find('.vc-scroller.is-wheel').element as HTMLElement;
 		const affix = wrapper.findComponent(Affix);
 		const affixEl = affix.element as HTMLElement;
 
@@ -330,7 +330,7 @@ describe('index.ts', () => {
 		const scrollerSpy = mockRect(scrollerEl, { top: 0, bottom: 200, width: 300, height: 200 });
 		const affixSpy = mockRect(affixEl, { top: 10, bottom: 50, width: 200, height: 40 });
 
-		// 所在滚动容器即注入的 ScrollerWheel：通过实例的滚动通知同步刷新（与滚轮同一帧）
+		// 所在滚动容器即注入的 Scroller（wheel）：通过实例的滚动通知同步刷新（与滚轮同一帧）
 		scrollerRef.value.scrollTo({ y: 50 });
 		expect(lastActive(affix)).toBe(true);
 		expect(affixEl.style.width).toBe('');
@@ -350,20 +350,20 @@ describe('index.ts', () => {
 		wrapper.unmount();
 	});
 
-	it('fixed=false pins with sticky inside ScrollerWheel (placement=bottom)', async () => {
+	it('fixed=false pins with sticky inside Scroller wheel (placement=bottom)', async () => {
 		const scrollerRef = ref<any>();
 		const wrapper = mount(() => (
-			<ScrollerWheel ref={scrollerRef} height="200px" native={false}>
+			<Scroller ref={scrollerRef} wheel height="200px" native={false}>
 				<div style="height: 1000px">
 					<Affix fixed={false} placement="bottom" offset={10}>{SLOT_TEXT}</Affix>
 				</div>
-			</ScrollerWheel>
+			</Scroller>
 		), { attachTo: document.body });
 
 		await nextTick();
 		await nextTick();
 
-		const scrollerEl = wrapper.find('.vc-scroller-wheel').element as HTMLElement;
+		const scrollerEl = wrapper.find('.vc-scroller.is-wheel').element as HTMLElement;
 		const affix = wrapper.findComponent(Affix);
 		const affixEl = affix.element as HTMLElement;
 		expect(affixEl.style.bottom).toBe('10px');

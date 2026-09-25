@@ -21,7 +21,8 @@
 				/
 			</h2>
 		</div>
-		<ScrollerWheel
+		<Scroller
+			wheel
 			ref="scroller"
 			height="200px"
 			:always="always"
@@ -36,12 +37,12 @@
 			>
 				<Customer :render="renderItem" :index="item" type="vFor" />
 			</p>
-		</ScrollerWheel>
+		</Scroller>
 	</div>
 </template>
 <script setup lang="jsx">
 import { ref } from 'vue';
-import { ScrollerWheel } from '..';
+import { Scroller } from '..';
 import { Customer } from '../../customer';
 
 const always = ref(true);

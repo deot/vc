@@ -67,7 +67,7 @@ export const props = {
 		default: true
 	},
 
-	// 是否由内部 ScrollerWheel 承载虚拟主轴滚动
+	// 是否由内部 Scroller 承载虚拟主轴滚动
 	fill: {
 		type: Boolean,
 		default: true

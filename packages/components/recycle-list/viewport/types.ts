@@ -19,7 +19,7 @@ export type InjectedScroller = {
 /**
  * 主轴几何快照：所有值均以滚动源自身的滚动坐标为原点
  *
- * - 内部滚动源（fill=true）：原点是 ScrollerWheel wrapper 的 scrollTop/Left
+ * - 内部滚动源（fill=true）：原点是内部 Scroller wrapper 的 scrollTop/Left
  * - 外部滚动源（fill=false）：原点是 Window / 外部容器的 scrollTop/Left
  */
 export type ViewportState = {
@@ -57,7 +57,7 @@ export type ViewportAnchors = {
 	 */
 	root: () => HTMLElement | undefined;
 	/**
-	 * 内部 ScrollerWheel 的 wrapper
+	 * 内部 Scroller 的 wrapper
 	 */
 	wrapper: () => HTMLElement | undefined;
 	/**
@@ -97,7 +97,7 @@ export type ViewportOptions = {
 };
 
 /**
- * 与 ScrollerWheel 触发的事件结构一致的假事件；target 为聚合后的滚动几何
+ * 与内部 Scroller 触发的事件结构一致的假事件；target 为聚合后的滚动几何
  */
 export type ScrollEventLike = {
 	target: Record<string, any>;
@@ -108,8 +108,8 @@ export type ScrollEventLike = {
  * 虚拟化主轴的滚动源
  *
  * 由 InnerViewport / ExternalViewport 实现，按 fill 二选一，经 Viewport 对外；
- * 只读写主轴几何，不关心承载者是内部 ScrollerWheel 还是外部容器，
- * 交叉轴始终由内部 ScrollerWheel 承载，不经过这里
+ * 只读写主轴几何，不关心承载者是内部 Scroller 还是外部容器，
+ * 交叉轴始终由内部 Scroller 承载，不经过这里
  */
 export interface ScrollSource {
 	/**
@@ -166,7 +166,7 @@ export interface ScrollSource {
 	 */
 	invalidate(): void;
 	/**
-	 * 组装滚动事件；内部滚动源返回 undefined，直接沿用 ScrollerWheel 的事件
+	 * 组装滚动事件；内部滚动源返回 undefined，直接沿用内部 Scroller 的事件
 	 * @returns 假事件
 	 */
 	createScrollEvent(): ScrollEventLike | undefined;

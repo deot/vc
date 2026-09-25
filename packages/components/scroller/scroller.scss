@@ -2,19 +2,22 @@
 
 $component-name: vc-scroller;
 
+// 根节点即滚动容器，高度由 height / maxHeight 或外部样式决定
 @include block($component-name) {
 	position: relative;
+	overflow: auto;
 
-	// 根节点即滚动容器（ScrollerWheel 共用），高度由 height / maxHeight 或外部样式决定
-	@include element(wrapper) {
-		overflow: auto;
-		
-		@include when(hidden) {
-			scrollbar-width: none;
+	@include when(hidden) {
+		scrollbar-width: none;
 
-			&::-webkit-scrollbar {
-				display: none;
-			}
+		&::-webkit-scrollbar {
+			display: none;
 		}
+	}
+
+	// 滚轮驱动（wheel 且非 native）：由 Wheel 写入 scrollTop，用户不能直接滚动；常驻分层，原因见 scroller.tsx
+	@include when(wheel) {
+		overflow: hidden;
+		will-change: transform;
 	}
 }

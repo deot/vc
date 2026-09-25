@@ -20,7 +20,7 @@ import { Interrupter } from '@deot/helper-scheduler';
 import { props as recycleListProps } from './recycle-list-props';
 import { Defer } from '../defer';
 import { Customer } from '../customer';
-import { ScrollerWheel } from '../scroller';
+import { Scroller } from '../scroller';
 import { ScrollState } from './scroll-state';
 import { Container } from './container';
 import { Resizer } from '../resizer';
@@ -66,9 +66,11 @@ export const RecycleList = defineComponent({
 		const { renderer, hasPlaceholder, renderEdgeSlot } = useRenderer(props, slots, store, loadState);
 		const { placeholder, trackVisible, trackPooled, isPooled, measure, remeasureVisible } = useMeasure(store, K, hasPlaceholder);
 
+		// 默认滚轮驱动（native=false 时生效）：虚拟内容与滚动位置在同一帧更新；仅显式传 false 时关闭，undefined 视为未设置
 		// fill=false 时主轴交给外部承载者：内部 wrapper 沿主轴随内容展开，不能再被 scrollerOptions 限高/限宽
 		const resolvedScrollerOptions = computed(() => {
-			const source: any = props.scrollerOptions || {};
+			const options: any = props.scrollerOptions || {};
+			const source = { ...options, wheel: options.wheel ?? true };
 			if (props.fill) return source;
 			const mainStyle = props.vertical
 				? { height: 'auto', maxHeight: 'none' }
@@ -81,7 +83,7 @@ export const RecycleList = defineComponent({
 		});
 
 		// ---------------------------------------------------------------------
-		// 滚动源：fill=true 为内部 ScrollerWheel，fill=false 为外部承载者
+		// 滚动源：fill=true 为内部 Scroller，fill=false 为外部承载者
 		// ---------------------------------------------------------------------
 
 		// 最近一次有效的视口尺寸；元素被隐藏（clientSize 读到 0）时作为兜底
@@ -582,7 +584,7 @@ export const RecycleList = defineComponent({
 			emit('scroll', e);
 		};
 
-		// 内部 ScrollerWheel 的滚动：外部滚动源下换成合并了主轴与交叉轴的假事件
+		// 内部 Scroller 的滚动：外部滚动源下换成合并了主轴与交叉轴的假事件
 		const handleInnerScroll = (e: any) => {
 			handleScroll(viewport.createScrollEvent() ?? e);
 		};
@@ -992,7 +994,7 @@ export const RecycleList = defineComponent({
 				render={renderer.value.refresh}
 				onRefresh={handleRefresh}
 			>
-				<ScrollerWheel
+				<Scroller
 					ref={scroller}
 					class="vc-recycle-list__wrapper"
 					{
@@ -1012,7 +1014,7 @@ export const RecycleList = defineComponent({
 					</div>
 					{ renderEdgeSlot('footer') }
 					{ !store.props.inverted && renderScrollState() }
-				</ScrollerWheel>
+				</Scroller>
 			</Container>
 		);
 	}

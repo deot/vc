@@ -216,8 +216,8 @@ describe('resolveExternalCarrier', () => {
 	});
 
 	it.each([
-		'vc-scroller__wrapper',
-		'vc-scroller-wheel'
+		'vc-scroller',
+		'vc-scroller is-wheel'
 	])('recognizes a %s ancestor and retains its matching injection', (className) => {
 		const wrapper = document.createElement('div');
 		const root = document.createElement('div');
@@ -241,7 +241,7 @@ describe('resolveExternalCarrier', () => {
 
 	it('falls back to Window and does not select the RecycleList root itself', () => {
 		const root = document.createElement('div');
-		root.className = 'vc-scroller__wrapper';
+		root.className = 'vc-scroller';
 		root.style.overflowY = 'auto';
 		document.body.appendChild(root);
 

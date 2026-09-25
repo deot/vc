@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { RecycleList, RecycleListStore, Scroller, ScrollerWheel } from '@deot/vc-components';
+import { RecycleList, RecycleListStore, Scroller } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi } from 'vitest';
@@ -204,19 +204,19 @@ describe('RecycleList fill=false', () => {
 	});
 
 	it.each([
-		['Scroller', Scroller],
-		['ScrollerWheel', ScrollerWheel]
-	])('reuses an outer VC %s as its main carrier', async (_label, Carrier: any) => {
+		['Scroller', {}],
+		['Scroller wheel', { wheel: true }]
+	])('reuses an outer VC %s as its main carrier', async (_label, attrs) => {
 		const listRef = ref<any>();
 		const wrapper = mount(() => (
-			<Carrier height={200}>
+			<Scroller height={200} {...attrs}>
 				<div class="before" />
 				<RecycleList ref={listRef} fill={false} disabled />
-			</Carrier>
+			</Scroller>
 		), { attachTo: document.body });
 		await flush();
 
-		const carriers = wrapper.findAll('.vc-scroller__wrapper');
+		const carriers = wrapper.findAll('.vc-scroller');
 		const outer = carriers[0].element as HTMLElement;
 		listRef.value.scrollTo(140);
 		expect(outer.scrollTop).toBe(140);

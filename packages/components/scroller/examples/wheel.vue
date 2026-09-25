@@ -7,7 +7,8 @@
 			native: {{ native }}
 		</h1>
 		<h2>Height</h2>
-		<ScrollerWheel
+		<Scroller
+			wheel
 			height="200px"
 			:always="always"
 			:native="native"
@@ -18,9 +19,9 @@
 			>
 				{{ item }}
 			</p>
-		</ScrollerWheel>
+		</Scroller>
 		<h2>Vertical</h2>
-		<ScrollerWheel :always="always" :native="native">
+		<Scroller wheel :always="always" :native="native">
 			<div style="display: flex;">
 				<p
 					v-for="item in 50"
@@ -30,20 +31,20 @@
 					{{ item }}
 				</p>
 			</div>
-		</ScrollerWheel>
+		</Scroller>
 
 		<h2>MaxHeight</h2>
-		<ScrollerWheel max-height="200px" :always="always" :native="native">
+		<Scroller wheel max-height="200px" :always="always" :native="native">
 			<p
 				v-for="item in 20"
 				:key="item"
 			>
 				{{ item }}
 			</p>
-		</ScrollerWheel>
+		</Scroller>
 
 		<h2>X+Y</h2>
-		<ScrollerWheel max-height="200px" :always="always" :native="native">
+		<Scroller wheel max-height="200px" :always="always" :native="native">
 			<div style="display: flex; flex-direction: column;">
 				<p
 					v-for="item in 20"
@@ -62,11 +63,12 @@
 					{{ item }}
 				</p>
 			</div>
-		</ScrollerWheel>
+		</Scroller>
 
 		<h2>bar-to</h2>
 		<div class="barTo" style="position: relative;">
-			<ScrollerWheel
+			<Scroller
+				wheel
 				max-height="200px"
 				:always="always"
 				:native="native"
@@ -90,11 +92,12 @@
 						{{ item }}
 					</p>
 				</div>
-			</ScrollerWheel>
+			</Scroller>
 		</div>
 
 		<h2>X+Y+trackOffset</h2>
-		<ScrollerWheel
+		<Scroller
+			wheel
 			max-height="200px"
 			:always="always"
 			:native="native"
@@ -119,9 +122,9 @@
 					{{ item }}
 				</p>
 			</div>
-		</ScrollerWheel>
+		</Scroller>
 		<h2>Nested</h2>
-		<ScrollerWheel height="200px" :always="always" :native="native">
+		<Scroller wheel height="200px" :always="always" :native="native">
 			<p
 				v-for="item in 20"
 				:key="item"
@@ -129,31 +132,31 @@
 				{{ item }}
 			</p>
 			<div style="padding:0 100px">
-				<ScrollerWheel height="200px" :always="always" :native="native">
+				<Scroller wheel height="200px" :always="always" :native="native">
 					<p
 						v-for="item in 20"
 						:key="item"
 					>
 						{{ item }}
 					</p>
-				</ScrollerWheel>
+				</Scroller>
 			</div>
-		</ScrollerWheel>
+		</Scroller>
 
 		<h2>Auto</h2>
-		<ScrollerWheel>
+		<Scroller wheel>
 			<p
 				v-for="item in 20"
 				:key="item"
 			>
 				{{ item }}
 			</p>
-		</ScrollerWheel>
+		</Scroller>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { ScrollerWheel } from '..';
+import { Scroller } from '..';
 
 const always = ref(true);
 const native = ref(false);

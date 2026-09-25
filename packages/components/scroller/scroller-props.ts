@@ -48,6 +48,16 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
+	// 由滚轮驱动滚动（见 use-wheel）；native=true 时不生效
+	wheel: {
+		type: Boolean,
+		default: false
+	},
+	// 滚轮驱动时，被接管的滚轮事件是否停止冒泡
+	stopPropagation: {
+		type: Boolean,
+		default: true
+	},
 	barTo: barProps.to,
 	barTrigger: barProps.trigger,
 	...(pick(barProps, barKeys) as Pick<typeof barProps, typeof barKeys[number]>)

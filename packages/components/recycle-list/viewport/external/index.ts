@@ -151,7 +151,7 @@ export class ExternalViewport implements ScrollSource {
 	}
 
 	/**
-	 * 组装与 ScrollerWheel 事件同构的假事件：主轴取承载者，交叉轴取内部 wrapper
+	 * 组装与内部 Scroller 事件同构的假事件：主轴取承载者，交叉轴取内部 wrapper
 	 * @returns 假事件；内部 wrapper 未就绪时为 undefined
 	 */
 	createScrollEvent(): ScrollEventLike | undefined {

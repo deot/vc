@@ -21,7 +21,8 @@
 				/
 			</h2>
 		</div>
-		<ScrollerWheel
+		<Scroller
+			wheel
 			ref="scroller"
 			height="200px"
 			:always="always"
@@ -34,12 +35,12 @@
 			>
 				{{ item }}
 			</p>
-		</ScrollerWheel>
+		</Scroller>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { ScrollerWheel } from '..';
+import { Scroller } from '..';
 
 const always = ref(true);
 const native = ref(false);

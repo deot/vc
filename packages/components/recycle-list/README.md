@@ -15,12 +15,12 @@
 
 | 配置 | 主轴滚动源 | 交叉轴 |
 | --- | --- | --- |
-| `fill=true` | RecycleList 内部 ScrollerWheel | RecycleList 内部 ScrollerWheel |
-| `fill=false` | 最近的外部 VC Scroller/原生滚动祖先，找不到时使用 Window | RecycleList 内部 ScrollerWheel |
+| `fill=true` | RecycleList 内部 Scroller | RecycleList 内部 Scroller |
+| `fill=false` | 最近的外部 VC Scroller/原生滚动祖先，找不到时使用 Window | RecycleList 内部 Scroller |
 
 - `vertical=true` 时主轴为 Y、交叉轴为 X；`vertical=false` 时主轴为 X、交叉轴为 Y。
-- 默认 `fill=true`，需要一个具有确定主轴尺寸的父容器，现有调用方无需迁移。
-- `fill=false` 时列表沿主轴随虚拟内容展开，不需要给列表设置固定主轴尺寸。主轴 wheel/touch 交给外部容器，交叉轴仍由内部 ScrollerWheel 处理。
+- 默认 `fill=true`，需要一个具有确定主轴尺寸的父容器。
+- `fill=false` 时列表沿主轴随虚拟内容展开，不需要给列表设置固定主轴尺寸。主轴 wheel/touch 交给外部容器，交叉轴仍由内部 Scroller 处理。
 - 动态切换 `fill` 会重新绑定滚动源并刷新布局，不会改变其他 prop 的语义。
 
 ### 基础用法
@@ -137,7 +137,7 @@ Window / Scroller
 | --- | --- | --- | --- |
 | data | 本地数据；按 `batchCount` 分批构建。替换数组时，与旧数组中引用相同的数据项沿用已测尺寸，只测量新出现的数据项（删除、插入、排序不会整体重测）；在原对象上修改了影响尺寸的字段也无需处理，行渲染出来时会按实际尺寸自动校正 | `array` | `[]` |
 | store | 可选的共享 RecycleListStore | `Store` | - |
-| fill | 是否由内部 ScrollerWheel 填满并承载主轴滚动；`false` 时自动使用外部 viewport | `boolean` | `true` |
+| fill | 是否由内部 Scroller 填满并承载主轴滚动；`false` 时自动使用外部 viewport | `boolean` | `true` |
 | disabled | 是否禁止触发远程 `loadData`；不阻止本地 `data` 分批构建 | `boolean` | `false` |
 | batchCount | 每次构建/测量的节点批次大小；有 placeholder 时亦作为请求期间预分配的占位节点数 | `number` | `20` |
 | bufferCount | 在可见数据索引前后额外渲染的节点数量 | `number` | `0` |
@@ -150,12 +150,19 @@ Window / Scroller
 | lazyTail | 是否延迟展示「加载方向末端」的 slot，直到列表到达末尾（远程全部加载完；`disabled` 时为本地数据全部构建完）；末端随 `inverted` 翻转 | `boolean` | `false` |
 | pullable | 是否启用下拉/横向右拉刷新 | `boolean` | `false` |
 | vertical | 是否以 Y 轴为主轴 | `boolean` | `true` |
-| scrollerOptions | 内部 ScrollerWheel 配置；external 模式下主轴展开规则优先，交叉轴选项继续生效 | `object` | - |
+| scrollerOptions | 内部 Scroller 的属性，见下方 scrollerOptions 说明 | `object` | - |
 | renderEmpty | 空数据渲染函数 | `function` | - |
 | renderComplete | 加载完成渲染函数 | `function` | - |
 | renderLoading | 加载中渲染函数 | `function` | - |
 | renderPlaceholder | 占位节点渲染函数 | `function` | - |
 | renderRefresh | 刷新状态渲染函数 | `function` | - |
+
+#### scrollerOptions
+
+- 传给内部 Scroller 的属性；`wheel` 默认为 `true`，在 `native=false` 时由滚轮驱动，虚拟内容与滚动位置在同一帧更新。
+- `native` 的默认值取决于浏览器滚动条是否占宽：滚动条不占宽（如悬浮滚动条）时为 `true`，此时为原生滚动。需要滚轮驱动时显式设置 `native: false`。
+- 滚轮驱动时根节点为 `overflow: hidden`，键盘无法原生滚动。需要时可设 `wheel: false` 改用原生滚动，或通过 `wrapperStyle` 覆盖 `overflow`。
+- `fill=false` 时主轴展开规则优先，交叉轴选项继续生效。
 
 #### loadData 契约
 
