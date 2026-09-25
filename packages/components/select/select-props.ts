@@ -56,6 +56,11 @@ export const props = {
 		validator: (v: any) => v >= 1,
 	},
 	maxTags: Number,
+	// 多选标签最多占用的行数，放不下的折叠为 +N...；0 表示不限
+	maxTagLines: {
+		type: Number,
+		default: 1
+	},
 	searchable: {
 		type: Boolean,
 		default: false

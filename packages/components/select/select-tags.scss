@@ -1,0 +1,93 @@
+@use '../style/helper' as *;
+
+$component-name: vc-select-tags;
+
+@include block($component-name) {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	min-width: 0;
+	padding-left: unitfix(4);
+	overflow: hidden;
+
+	@include when(nowrap) {
+		flex-wrap: nowrap;
+	}
+
+	.vc-tag {
+		flex: none;
+		max-width: 100%;
+		margin: unitfix(3) unitfix(4) unitfix(3) 0;
+
+		// 逐层允许收缩，文字才能出现省略号
+		.vc-tag__wrapper {
+			min-width: 0;
+		}
+
+		.vc-tag__wrapper > span {
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.vc-tag__close {
+			flex: none;
+			margin-left: unitfix(5);
+		}
+	}
+
+	// 测量层：不占位、不折行，按自然宽度排布
+	@include element(measure) {
+		position: absolute;
+		top: 0;
+		left: 0;
+		display: flex;
+		width: max-content;
+		pointer-events: none;
+		visibility: hidden;
+
+		.vc-tag {
+			max-width: none;
+		}
+	}
+
+	// 以下为弹层内容，挂载在 body 下
+	// 被截断 tag 的完整内容；字号不会继承 tag，需与 tag 文字保持一致
+	@include element(tip) {
+		max-width: unitfix(360);
+		font-size: unitfix(12);
+		line-height: 1.5;
+		word-break: break-all;
+	}
+
+	// 被折叠 tag 的列表
+	@include element(scroller) {
+		max-width: unitfix(360);
+		max-height: unitfix(200);
+	}
+
+	@include element(list) {
+		display: flex;
+		flex-wrap: wrap;
+		padding: unitfix(4) unitfix(8);
+		box-sizing: border-box;
+		align-content: flex-start;
+		align-items: flex-start;
+
+		.vc-tag {
+			height: auto;
+			max-width: 100%;
+			margin: unitfix(2) unitfix(4) unitfix(2) 0;
+
+			.vc-tag__wrapper > span {
+				word-break: break-all;
+			}
+
+			.vc-tag__close {
+				flex: none;
+				margin-left: unitfix(5);
+			}
+		}
+	}
+}

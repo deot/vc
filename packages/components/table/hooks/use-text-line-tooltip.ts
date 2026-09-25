@@ -1,7 +1,6 @@
-import { onBeforeUnmount } from 'vue';
 import type { Nullable } from '@deot/helper-shared';
 import { getFitIndex } from '../../text/utils';
-import { Popover } from '../../popover';
+import { useHoverPopover } from '../../popover/use-hover-popover';
 
 /**
  * 多行省略（.vc-table__text-line）被截断时，hover 展示完整内容；表体 cell 与表头 label 共用
@@ -10,7 +9,7 @@ import { Popover } from '../../popover';
  * @returns open
  */
 export const useTextLineTooltip = () => {
-	let poper: Nullable<{ destroy: () => void }> = null;
+	const popover = useHoverPopover();
 
 	/**
 	 * 判断是否截断，截断时打开弹层
@@ -30,23 +29,9 @@ export const useTextLineTooltip = () => {
 			ellipsis: '...'
 		});
 		if (endIndex > 0 && endIndex < value.length - 1) {
-			poper && poper.destroy();
-			poper = Popover.open({
-				el: document.body,
-				triggerEl: el,
-				hover: true,
-				alone: true,
-				autoWidth: true,
-				placement: 'top',
-				content: value
-			});
+			popover.open(el, { content: value });
 		}
 	};
-
-	onBeforeUnmount(() => {
-		poper && poper.destroy();
-		poper = null;
-	});
 
 	return { open };
 };

@@ -9,13 +9,13 @@ import { VcError } from '../vc/index';
 import { Input, InputSearch } from '../input/index';
 import { Popover } from '../popover/index';
 import { Spin } from '../spin/index';
-import { Tag } from '../tag/index';
 import { Scroller } from '../scroller/index';
 import { Icon } from '../icon/index';
 import { Option } from './option.tsx';
 import { OptionGroup } from './option-group.tsx';
 import { props as selectProps } from './select-props';
 import { SelectAll } from './select-all.tsx';
+import { SelectTags } from './select-tags.tsx';
 import { useLocale } from '../locale';
 
 const COMPONENT_NAME = 'vc-select';
@@ -68,10 +68,12 @@ export const Select = defineComponent({
 			return currentValue.value.map(getLabel.bind(null, source.value));
 		});
 
-		const collapseTagCount = computed(() => {
-			if (!props.maxTags) return 0;
-			const v = currentValue.value.length - props.maxTags;
-			return v < 0 ? 0 : v;
+		const tags = computed(() => {
+			return currentValue.value.map((v, index) => ({
+				key: v,
+				value: v,
+				label: currentLabel.value[index] || ''
+			}));
 		});
 
 		const searchRegex = computed(() => createSearchRegex(searchValue.value));
@@ -252,22 +254,14 @@ export const Select = defineComponent({
 										content: multiple.value && (currentValue.value && currentValue.value.length > 0)
 											? () => {
 													return (
-														<div class={[classes.value, 'vc-select__tags']}>
-															{
-																currentValue.value.slice(0, props.maxTags).map((item: any, index: number) => {
-																	return (
-																		<Tag
-																			key={item}
-																			closable={!props.disabled}
-																			onClose={() => handleClose(item)}
-																		>
-																			{ currentLabel.value[index] || '' }
-																		</Tag>
-																	);
-																})
-															}
-															{ collapseTagCount.value ? (<Tag>{ `+${collapseTagCount.value}...` }</Tag>) : null }
-														</div>
+														<SelectTags
+															class={[classes.value, 'vc-select__tags']}
+															data={tags.value}
+															maxTags={props.maxTags}
+															maxTagLines={props.maxTagLines}
+															closable={!props.disabled}
+															onClose={(item: any) => handleClose(item.value)}
+														/>
 													);
 												}
 											: null,
