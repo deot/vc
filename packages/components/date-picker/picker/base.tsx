@@ -59,6 +59,7 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 					placement={props.placement}
 					autoWidth={true}
 					disabled={props.disabled}
+					portal={props.portal}
 					portalClass={['is-padding-none', 'vc-date-picker--portal', props.portalClass]}
 					class={[classes.value, its.value.class, 'vc-date-picker']}
 					style={its.value.style}

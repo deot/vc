@@ -636,3 +636,9 @@ const allowDrag = (draggingNode) => {
 | search-placeholder | 搜索框占位文本               | `string`   | —   | —       |
 | cascader           | 级联列模式                 | `boolean`  | —   | `false` |
 | load-data          | 远程搜索，参数为关键词，需返回 Promise | `Function` | —   | —       |
+
+### 挂载位置
+
+| 属性     | 说明 | 类型        | 可选值 | 默认值    |
+| ------ | --- | --------- | --- | ------ |
+| portal | 下拉是否挂载到 body；`false` 时挂到组件根节点内，随所在容器滚动，超出容器的部分会被其 `overflow` 裁剪 | `boolean` | —   | `true` |

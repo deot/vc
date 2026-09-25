@@ -109,6 +109,24 @@ describe('index.ts', () => {
 		wrapper.unmount();
 	});
 
+	it('portal=false 时下拉挂到组件根节点内，点击下拉内部不会关闭', async () => {
+		const wrapper = mount(() => (<DatePicker portal={false} />), { attachTo: document.body });
+		await flush();
+
+		await wrapper.trigger('click');
+		await flush();
+
+		const popup = document.querySelector('.vc-popover-wrapper') as HTMLElement;
+		expect(wrapper.element.contains(popup)).toBe(true);
+
+		// 下拉在根节点内，点击会冒泡到触发区
+		popup.querySelector<HTMLElement>('.vc-popover-wrapper__container')!.click();
+		await flush();
+		expect(popup.style.display).not.toBe('none');
+
+		wrapper.unmount();
+	});
+
 	it('placeholder prop overrides default text', async () => {
 		const wrapper = mount(() => (<DatePicker placeholder="请选择日期" />), { attachTo: document.body });
 		await flush();

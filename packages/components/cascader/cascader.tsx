@@ -285,6 +285,7 @@ export const Cascader = defineComponent({
 					placement={props.placement}
 					auto-width={props.autoWidth}
 					disabled={props.disabled}
+					portal={props.portal}
 					portalClass={[['is-padding-none', props.portalClass]]}
 					class={[its.value.class, 'vc-cascader']}
 					style={its.value.style}

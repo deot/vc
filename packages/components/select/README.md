@@ -261,7 +261,7 @@ const loadCities = async (query) => {
 | placement | 弹层方向 | `string` | `top / top-left / top-right / bottom / bottom-left / bottom-right / left / left-top / left-bottom / right / right-top / right-bottom` | `'bottom-left'` |
 | arrow | 显示弹层箭头 | `boolean` | - | `false` |
 | autoWidth | true 按内容宽度；false 跟随触发器宽度 | `boolean` | - | `false` |
-| portal | 已声明；当前未传递给 Popover，弹层仍按 Popover 默认挂载 | `boolean` | - | `true` |
+| portal | 下拉是否挂载到 body；`false` 时挂到组件根节点内，随所在容器滚动，超出容器的部分会被其 `overflow` 裁剪 | `boolean` | - | `true` |
 | portalClass | 弹层附加 class | `string \| object \| unknown[]` | - | - |
 | renderOption | 自定义整个选项，需自行绑定 store.click | `(options: { row: any; store: any }) => VNodeChild` | - | - |
 | renderOptionGroup | 自定义分组标题 | `(options: { row: any; store: { group: true } }) => VNodeChild` | - | - |
@@ -311,6 +311,6 @@ const loadCities = async (query) => {
 ### 当前行为说明
 
 - 清空数组模型返回 `[]`；普通单选返回 `undefined`；字符串多选返回 `''`。`numerable` 配合字符串模型时，当前输出通过数组转字符串，因此清空返回 `''`，多值输出固定使用逗号。
-- `nullValue` 当前未用于清空结果；`portal` 当前未传递给 Popover。以上为当前实现限制。
+- `nullValue` 当前未用于清空结果，为当前实现限制。
 - 当前不提供 `size`、`not-found`、`element-id` 属性；无匹配选项时列表为空。
 - 默认占位符和全选按钮跟随 locale；searchPlaceholder、label、extra 和 data 文案由调用方提供。
