@@ -296,11 +296,13 @@ describe('index.ts', () => {
 		await nextTick();
 		expect(leaf.app).toBeTruthy();
 		expect(leaf.wrapper).toBeTruthy();
+		expect(leaf.container).toBeTruthy();
 
 		leaf.destroy();
 		expect(leaf.app).toBeUndefined();
 		expect(leaf.wrapper).toBeUndefined();
 		expect(leaf.propsData).toBeUndefined();
+		expect(leaf.container).toBeUndefined();
 	});
 
 	it('destroy, string', async () => {
@@ -391,6 +393,91 @@ describe('index.ts', () => {
 
 		await Utils.sleep(20);
 		expect(Portal.leafs.size).toBe(0);
+	});
+
+	describe('alive 复用不向 el 追加容器', () => {
+		// 关闭只把 isVisible 置为 false，再次 popup 复用实例并通过 update 重新打开
+		const AliveWrapper = defineComponent({
+			setup(_, { expose }) {
+				const isVisible = ref(true);
+				const count = ref(0);
+				expose({
+					isVisible,
+					update: () => {
+						isVisible.value = true;
+						count.value++;
+					}
+				});
+				return () => isVisible.value && <div class="alive-content">{ count.value }</div>;
+			}
+		});
+
+		const reopen = async (fragment: boolean, times: number) => {
+			const el = document.createElement('div');
+			document.body.appendChild(el);
+			const viewer = new Portal(AliveWrapper, { el, alive: true, fragment, leaveDelay: 0 });
+			const leaf = viewer.popup();
+			for (let i = 1; i <= times; i++) {
+				leaf.wrapper!.isVisible = false;
+				await nextTick();
+				expect(el.querySelector('.alive-content')).toBeNull();
+
+				expect(viewer.popup()).toBe(leaf);
+				await nextTick();
+				await nextTick();
+				expect(el.querySelector('.alive-content')!.textContent).toBe(`${i}`);
+			}
+			return { el, leaf };
+		};
+
+		it.each([false, true])('关闭后再次打开，el 中只有弹层自身（fragment: %s）', async (fragment) => {
+			const { el } = await reopen(fragment, 3);
+			try {
+				expect(el.children.length).toBe(1);
+			} finally {
+				el.remove();
+			}
+		});
+
+		it.each([
+			[false, '外部点击'],
+			[true, '外部点击'],
+			[false, 'destroy'],
+			[true, 'destroy']
+		])('复用后清理，el 中不残留节点（fragment: %s，%s）', async (fragment, by) => {
+			const { el, leaf } = await reopen(fragment, 3);
+			try {
+				by === 'destroy' ? leaf.destroy() : document.body.click();
+				expect(Portal.leafs.size).toBe(0);
+				expect(el.children.length).toBe(0);
+			} finally {
+				el.remove();
+			}
+		});
+
+		it.each([
+			['destroy', 0],
+			['外部点击', 0],
+			['外部点击', 10]
+		])('复用后%s清理执行最后一次传入的 onDestroyed（leaveDelay: %s）', async (by, leaveDelay) => {
+			const el = document.createElement('div');
+			document.body.appendChild(el);
+			const first = vi.fn();
+			const last = vi.fn();
+			const viewer = new Portal(AliveWrapper, { el, alive: true, leaveDelay });
+			try {
+				viewer.popup({ onDestroyed: first });
+				const leaf = viewer.popup({ onDestroyed: last });
+				by === 'destroy' ? leaf.destroy() : document.body.click();
+				await Utils.sleep(leaveDelay + 10);
+				expect(Portal.leafs.size).toBe(0);
+				expect(first).not.toHaveBeenCalled();
+				expect(last).toHaveBeenCalledTimes(1);
+				expect(el.children.length).toBe(0);
+			} finally {
+				el.remove();
+			}
+		});
 	});
 
 	it('explicit propsData separates reserved configuration names from wrapper props', () => {

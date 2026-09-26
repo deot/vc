@@ -12,6 +12,11 @@ export class PortalLeaf {
 	propsData?: Ref<Record<string, any>>;
 
 	/**
+	 * app挂载的容器，alive复用时沿用首次创建的
+	 */
+	container?: HTMLElement & { _children?: HTMLElement[] };
+
+	/**
 	 * 销毁的函数，挂载到app上，避免冲突
 	 */
 	destroy: (...args: any[]) => void;
