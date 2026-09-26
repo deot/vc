@@ -2,15 +2,18 @@
 
 $border-shadow: varfix(border-shadow, popover-wrapper);
 $mask-color-dark: varfix(mask-color-dark, popover-wrapper);
-$color-dark: varfix(color-dark, popover-wrapper);
 $color-light: varfix(color-light, popover-wrapper);
 $arrow-shadow-color: varfix(arrow-shadow-color, popover-wrapper, rgb(0 0 0 / 7%));
 $arrow-shadow-color-light: varfix(arrow-shadow-color-light, popover-wrapper, rgb(0 0 0 / 6%));
 
+// 默认字体（与 Table 单元格一致）
+$color-dark-lighter: varfix(color-dark-lighter, popover-wrapper);
+$font-size-small: varfix(font-size-small, popover-wrapper);
+$line-height-large: varfix(line-height-large, popover-wrapper);
+
 @include block(vc-popover-wrapper) {
 	position: absolute;
 	z-index: $popup-zindex;
-	color: $color-dark;
 	box-sizing: border-box;
 
 	// top / left 不加过渡：位置变化时弹层会从鼠标下扫过，触发节点收到多余的 mouseleave / mouseenter
@@ -31,10 +34,13 @@ $arrow-shadow-color-light: varfix(arrow-shadow-color-light, popover-wrapper, rgb
 		padding-right: 8px;
 	}
 
+	// 最大宽高由 use-pos 的 fitMaxSize 按可用空间写入（含 padding），不可断行的长串在宽度内换行
 	@include element(container) {
 		padding: 5px 12px;
+		overflow-wrap: break-word;
 		border-radius: 4px;
 		box-shadow: $border-shadow;
+		box-sizing: border-box;
 
 		@include when(dark) {
 			color: $color-light;
@@ -170,4 +176,11 @@ $arrow-shadow-color-light: varfix(arrow-shadow-color-light, popover-wrapper, rgb
 			transform: translateY(-50%) rotate(45deg);
 		}
 	}
+}
+
+// 默认字体：优先级为 0，组件或调用方通过 portalClass 设置的字体始终优先（如 DatePicker 的 12px），与样式加载顺序无关
+:where(.vc-popover-wrapper) {
+	font-size: $font-size-small;
+	line-height: $line-height-large;
+	color: $color-dark-lighter;
 }

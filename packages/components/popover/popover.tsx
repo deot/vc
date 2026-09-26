@@ -50,8 +50,9 @@ export const Popover = defineComponent({
 		 * @param e ~
 		 * @param root0 ~
 		 * @param root0.visible ~
+		 * @param root0.immediate 不走 hover 的延时关闭
 		 */
-		const handleChange = (e: any = {}, { visible }) => {
+		const handleChange = (e: any = {}, { visible, immediate = false }) => {
 			visible = props.always || visible;
 			if (props.disabled) return;
 
@@ -73,7 +74,8 @@ export const Popover = defineComponent({
 
 					sync();
 				};
-				(isHover.value || isStrictHover.value) && visible === false
+				// immediate：弹层要求立即关闭（如滚动容器滚动、触发节点被移除，见 wrapper 的 close）
+				(isHover.value || isStrictHover.value) && visible === false && !immediate
 					? (timer = setTimeout(callback, 200))
 					: callback();
 			}

@@ -1,4 +1,5 @@
 import { composedPath } from '@deot/helper-dom';
+import { getPadding } from '../scroller/utils';
 
 /**
  * 弹层节点 → 触发节点
@@ -37,4 +38,33 @@ export const isInArea = (e: Event, area: Element) => {
 		path = getAncestors(triggers.get(popup));
 	}
 	return true;
+};
+
+/**
+ * 按弹层的实际字体（可被 CSS 变量覆盖），测量文字排成一行时的尺寸
+ * 	- 临时插入与弹层相同结构的节点，测量后立即移除；fixed 定位，测量时不撑大页面
+ * @param value 文字
+ * @returns width：一行的宽度（不含 padding）；fontSize：字号；lineHeight：行高；padding：内容区左右 padding
+ */
+export const measureText = (value: string) => {
+	const wrapper = document.createElement('div');
+	wrapper.className = 'vc-popover-wrapper';
+	wrapper.style.cssText = 'position: fixed; top: 0; left: 0; visibility: hidden; pointer-events: none;';
+	const container = document.createElement('div');
+	container.className = 'vc-popover-wrapper__container';
+	container.style.cssText = 'width: max-content; white-space: nowrap;';
+	container.textContent = value;
+	wrapper.appendChild(container);
+	document.body.appendChild(wrapper);
+
+	const [, right, , left] = getPadding(container);
+	const style = getComputedStyle(container);
+	const size = {
+		width: container.getBoundingClientRect().width - left - right,
+		fontSize: parseFloat(style.fontSize) || 0,
+		lineHeight: parseFloat(style.lineHeight) || 0,
+		padding: left + right
+	};
+	wrapper.remove();
+	return size;
 };
