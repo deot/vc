@@ -95,7 +95,7 @@ Window / Scroller
 
 `fill=false` 仍保持原有 wrapper 绝对坐标语义，只是主轴 wrapper 变为自动找到的外部承载者：
 
-- `scrollTo(0)` 和 `reset()` 把整个外部主轴承载者移动到绝对坐标 `0`，不是移动到 RecycleList 的起点。
+- `scrollTo(0)` 和 `reset()` 把整个外部主轴承载者移动到绝对坐标 `0`，不是移动到 RecycleList 的起点；`inverted` 下 `reset()` 不移动，见下方「拉动刷新」。
 - `scrollTo(number | { x, y })` 继续使用原有参数补零与分轴规则。纵向 external 时 Y 写入外部容器、X 写入内部 wrapper；横向 external 时相反。
 - `scrollToIndex(index, offset)` 表示定位列表 item，会自动使用 `contentStart + item.position + offset`，因此不会受到前置内容影响。
 - `scroll` 事件仍返回兼容的 `{ target: { scrollLeft, scrollTop } }` 结构；外部主轴与内部交叉轴滚动都会触发该事件。
@@ -103,9 +103,23 @@ Window / Scroller
 ### inverted、pullable 与共享 Store
 
 - `fill=false + inverted` 保持首次对齐尾部、向起点加载和 prepend 后锚点稳定的现有行为。首次对齐可能主动移动整个外部滚动容器，这是内部模式尾部对齐在外部承载者上的等价行为。
-- `fill=false + pullable` 保持原有 Pull/Pending/Refresh 状态机；仅当外部主轴承载者位于绝对坐标 `0` 时可触发。纵向仍为 DOWN，横向仍为 RIGHT。
-- `inverted + pullable` 保持现有组合规则：inverted 会禁用 pull。
+- `pullable` 在正序与 `inverted` 下都可用，规则见下方「拉动刷新」。
 - 共享 `RecycleListStore` 可用于 internal、external 或 mixed leaf。仍由 `store.scroll.currentLeaf` 对应的 active leaf 驱动可见范围和加载，mouseenter/touchstart 的 active leaf 切换行为不变。
+
+### 拉动刷新（pullable）
+
+在刷新一侧的端点拉动超过 30px 后松手，触发静默刷新 `reset(true)`：旧内容保留，新数据到达后整体替换。
+
+| 模式 | 刷新一侧 | 手势（纵向 / 横向） | 提示条位置 | `type` |
+| --- | --- | --- | --- | --- |
+| 正序 | 主轴起点 | 下拉 / 右拉 | 列表头部 | `DOWN` / `RIGHT` |
+| `inverted` | 主轴终点 | 上拉 / 左拉 | 列表尾部 | `UP` / `LEFT` |
+
+- 只有主轴停在该端点时才进入拉动，否则拖动就是普通滚动。内部模式看内部 Scroller 是否在起点 / 末端（末端有 1px 容差）；`fill=false` 时以外部主轴承载者的绝对坐标为准：正序要求位于 `0`，`inverted` 要求滚到承载者的绝对末端，后置内容也要滚完。
+- 刷新期间加载状态区只隐藏、不移除，列表不会因此位移。正序的 `reset()` 仍回到起点；`inverted` 下 `reset()` 不改变滚动位置，首批数据到达后贴到列表尾部。
+- 鼠标拖动只响应主键。按下后在 document 上跟踪移动与松开，拖出列表后松手也能正常结束；拉动期间不会选中文字，根节点带 `is-pulling` 类。触摸拖动不受影响。
+- 提示条内容可用 `renderRefresh({ status, type })` 定制，`status` 为 `2` 拉动中、`3` 可释放、`4` 刷新中，其余（`0` / `1`）为空闲。
+- `inverted + fill=false` 时，如果自定义的 `complete` / `empty` 比加载区矮，刷新开始时首部会变高，列表整体下移这段差值，直到新数据到达。需要时给这两个 slot 设置不低于加载区的最小高度。
 
 ### 延迟展示列表末端与页面后置内容
 
@@ -128,6 +142,7 @@ Window / Scroller
 - [Window 前置内容—RecycleList—后置内容](./examples/external-window.vue)
 - [VC Scroller 外部视口](./examples/external-scroller.vue)
 - [横向外部视口](./examples/external-horizontal.vue)
+- [inverted 上拉刷新](./examples/inverted-pullable.vue)
 
 ## API
 
@@ -148,14 +163,14 @@ Window / Scroller
 | gutter | 多列间距 | `number` | `0` |
 | inverted | 是否倒置 | `boolean` | `false` |
 | lazyTail | 是否延迟展示「加载方向末端」的 slot，直到列表到达末尾（远程全部加载完；`disabled` 时为本地数据全部构建完）；末端随 `inverted` 翻转 | `boolean` | `false` |
-| pullable | 是否启用下拉/横向右拉刷新 | `boolean` | `false` |
+| pullable | 是否启用拉动刷新：正序下拉（横向右拉），`inverted` 时上拉（横向左拉） | `boolean` | `false` |
 | vertical | 是否以 Y 轴为主轴 | `boolean` | `true` |
 | scrollerOptions | 内部 Scroller 的属性，见下方 scrollerOptions 说明 | `object` | - |
 | renderEmpty | 空数据渲染函数 | `function` | - |
 | renderComplete | 加载完成渲染函数 | `function` | - |
 | renderLoading | 加载中渲染函数 | `function` | - |
 | renderPlaceholder | 占位节点渲染函数 | `function` | - |
-| renderRefresh | 刷新状态渲染函数 | `function` | - |
+| renderRefresh | 刷新提示渲染函数，参数为 `{ status, type }`，见上文「拉动刷新」 | `function` | - |
 
 #### scrollerOptions
 
@@ -191,7 +206,7 @@ Window / Scroller
 
 | 方法名 | 说明 | 参数 |
 | --- | --- | --- |
-| reset | 清空列表全部内容并重置数据和滚动位置 | `slient?: boolean` |
+| reset | 清空列表全部内容并重置数据和滚动位置；`silent` 为 `true` 时保留旧内容直到新数据到达（拉动刷新即此模式）；`inverted` 下不改变滚动位置，首批数据到达后贴到列表尾部 | `silent?: boolean` |
 | refreshViewport | 刷新视口几何与可见范围，并按已渲染行的实际尺寸校正一次；代价只与当前渲染的行数相关 | - |
 | refreshLayout | 重新测量全部已构建的行并刷新布局；代价随已构建行数增长 | - |
 | scrollTo | 滚动到 wrapper 的绝对坐标 | `number \| { x, y }` |

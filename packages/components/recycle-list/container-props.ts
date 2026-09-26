@@ -19,7 +19,7 @@ export const props = {
 		type: Number,
 		default: 30
 	},
-	// 是否允许进入下拉（由使用方判断主轴是否停在起点）
+	// 是否允许进入拉动（由使用方判断主轴是否停在刷新一侧的端点：正序为起点，inverted 为终点）
 	canPull: {
 		type: Function as PropType<() => boolean>,
 		default: () => true

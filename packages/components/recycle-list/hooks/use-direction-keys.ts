@@ -21,6 +21,11 @@ const getKeys = (v: boolean) => {
 
 		// margin
 		marginPullHead: v ? 'marginTop' : 'marginLeft',
+		marginPullTail: v ? 'marginBottom' : 'marginRight',
+
+		// 拉动方向（STATUS_MAP 的键）：起点一侧下拉 / 右拉，终点一侧上拉 / 左拉
+		pullHead: v ? 'DOWN' : 'RIGHT',
+		pullTail: v ? 'UP' : 'LEFT',
 
 		// 主轴 x/y
 		axis: v ? 'y' : 'x',
