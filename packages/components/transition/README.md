@@ -247,6 +247,12 @@ const handleRemove = () => {
 ```
 :::
 
+### 内存排查
+
+Chrome DevTools 打开时会持有播放过动画的元素：即使手动回收（Collect garbage），DOM 节点与 JS 堆也只增不减，关闭 DevTools 后才会回收。Performance Monitor、Animations 面板打开时最明显，Vue 原生 `Transition` 同样如此（Chrome 154 实测）。
+
+排查过渡组件相关的内存泄漏时，请先关闭 DevTools 再重新打开后查看。如果内存依旧泄漏，请分析自身程序（可注释动画 class，或提高 CSS 优先级禁用动画后对比）。
+
 ## API
 
 ### Transition 系列公共属性
