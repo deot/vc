@@ -291,6 +291,18 @@ describe('index.ts', () => {
 		expect(Portal.leafs.size).toBe(0);
 	});
 
+	it('destroy 后释放 leaf 上的引用（调用方仍持有 leaf 时不留住弹层节点与组件实例）', async () => {
+		const leaf = Modal.popup();
+		await nextTick();
+		expect(leaf.app).toBeTruthy();
+		expect(leaf.wrapper).toBeTruthy();
+
+		leaf.destroy();
+		expect(leaf.app).toBeUndefined();
+		expect(leaf.wrapper).toBeUndefined();
+		expect(leaf.propsData).toBeUndefined();
+	});
+
 	it('destroy, string', async () => {
 		Modal.popup({ name: uid, el: '' });
 		expect(Portal.leafs.size).toBe(1);

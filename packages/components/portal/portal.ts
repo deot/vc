@@ -220,6 +220,12 @@ export class Portal<T extends Component> {
 			}
 
 			Portal.leafs.delete(name!);
+
+			// 释放引用：调用方可能仍持有已销毁的 leaf（如 Text 的 poper），不应因此留住弹层节点、组件实例与触发节点
+			container._children = undefined;
+			leaf.app = undefined;
+			leaf.wrapper = undefined;
+			leaf.propsData = undefined;
 		};
 
 		const $onRejected = this.createCallback(() => leaf, leaveDelay, onRejected);
