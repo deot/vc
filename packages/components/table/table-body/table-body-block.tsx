@@ -184,6 +184,8 @@ export const TableBodyBlock = defineComponent({
 		// mouseover 冒泡 + 前后 cell 比较，合成 enter/leave 语义
 		let activeCell: Nullable<ResolvedCell> = null;
 		const handleMouseOver = (e: MouseEvent) => {
+			// 拖拽排序中不做 hover 高亮，也不弹出省略提示
+			if (table.store.states.dragBlock) return;
 			const cell = resolveCell(e);
 			if (activeCell && cell && activeCell.cellEl === cell.cellEl) return;
 			if (activeCell) leaveCell(e, activeCell);
@@ -298,10 +300,18 @@ export const TableBodyBlock = defineComponent({
 				<TableGrid
 					class={[
 						isSingleRow ? 'vc-table__tr' : 'vc-table__tr-group',
-						isSingleRow && getUserRowClass(singleRow!.data, singleRow!.index)
+						isSingleRow && getUserRowClass(singleRow!.data, singleRow!.index),
+						{
+							// 拖拽排序中被拖动的块（标记写在块上，拖拽开始 / 结束只有该块重渲染）
+							'is-dragging': !!block.dragging,
+							// 整行拖拽（无把手列时）：整行 move 光标
+							'is-draggable': table.store.drag.rowCursor.value
+						}
 					]}
 					style={isSingleRow ? getUserRowStyle(singleRow!.data, singleRow!.index) : null}
 					data-row={isSingleRow ? rowStart : void 0}
+					// 块的起始行号：拖拽排序按块命中
+					data-row-start={rowStart}
 					role={isSingleRow ? 'row' : 'rowgroup'}
 					cellRole={isTree ? 'gridcell' : 'cell'}
 					// 无障碍：树形行的层级，以及可展开行的展开状态（树节点优先，其次为展开行）

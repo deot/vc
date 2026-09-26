@@ -4,6 +4,7 @@ import { BaseWatcher } from './base-watcher';
 import {
 	Block,
 	Column,
+	Drag,
 	Expand,
 	Layout,
 	Row,
@@ -18,6 +19,7 @@ class Store extends BaseWatcher {
 	tree: Tree;
 	block: Block;
 	column: Column;
+	drag: Drag;
 	layout: Layout;
 	selection: Selection;
 
@@ -41,13 +43,15 @@ class Store extends BaseWatcher {
 		this.tree = new Tree(this);
 		this.block = new Block(this);
 		this.column = new Column(this);
+		this.drag = new Drag(this);
 		this.layout = new Layout(this);
 		this.selection = new Selection(this);
 	}
 
 	setData(data: any[]) {
-		// 数据数组是否换了实例（原地增删时仍为同一实例）
-		const dataInstanceChanged = this.states.data !== data;
+		// 数据数组是否换了实例（原地增删时仍为同一实例）；拖拽排序后外部写回的新顺序视为原地重排，保留选中项
+		const reordered = this.drag.consume(data);
+		const dataInstanceChanged = this.states.data !== data && !reordered;
 		this.states.data = data;
 
 		// 清理已不存在的行的展开 / 加载状态，再按展开状态重建渲染块

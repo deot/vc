@@ -50,6 +50,11 @@ export type TableStates = {
 	hoverRowIndex: number | null;
 
 	/**
+	 * 拖拽排序中被拖动的块（raw），未在拖拽时为 null
+	 */
+	dragBlock: object | null;
+
+	/**
 	 * Row
 	 */
 	currentRow: any;
@@ -111,6 +116,8 @@ export class BaseWatcher {
 		selectable: computed(() => findSelectionColumn(this.states._columns)?.states.selectable ?? null),
 
 		hoverRowIndex: null,
+
+		dragBlock: null,
 
 		currentRow: null,
 

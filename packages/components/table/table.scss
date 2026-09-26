@@ -4,6 +4,10 @@
 $component-name: vc-table;
 $foreground-color: varfix(foreground-color, table);
 $border-color: varfix(border-color, table, #EDEFF1);
+$color-primary: varfix(color-primary, table);
+$color-error: varfix(color-error, table);
+$color-light-deepest: varfix(color-light-deepest, table);
+$color-dark-extralight: varfix(color-dark-extralight, table);
 $f9: #F7F8FA;
 $gap-h: 12px;
 $gap-v: 8px;
@@ -213,6 +217,89 @@ $sizes: (
 			padding: 0;
 			text-align: center;
 		}
+	}
+
+	// 拖拽排序：把手列默认居中（align: center）。首 / 末列的外侧内边距只在一侧，会让把手偏离列中心；
+	// 单元格内容自带左右内边距，这里去掉把手列的外侧内边距，保持两侧对称
+	.vc-table__td.vc-table__drag-column {
+		&.is-grid-first {
+			padding-left: 0;
+		}
+
+		&.is-grid-last {
+			padding-right: 0;
+		}
+	}
+
+	// 把手（浅色，悬停加深）
+	@include element(drag-handle) {
+		display: inline-flex;
+		justify-content: center;
+		align-items: center;
+		width: 20px;
+		height: 20px;
+		font-size: 14px;
+		color: $color-light-deepest;
+		cursor: move;
+		touch-action: none;
+		transition: color 0.2s;
+
+		&:hover {
+			color: $color-dark-extralight;
+		}
+
+		@include when(disabled) {
+			cursor: not-allowed;
+			opacity: 0.5;
+
+			&:hover {
+				color: $color-light-deepest;
+			}
+		}
+	}
+
+	// 整行拖拽（无把手列时）：整行 move 光标，触摸长按发起拖拽时不弹出系统菜单；
+	// 只作用于块根节点的直接单元格，不影响展开行里的嵌套表格
+	.vc-table__body-wrapper {
+		.vc-table__tr.is-draggable > .vc-table__td[data-column],
+		.vc-table__tr-group.is-draggable > .vc-table__td[data-column] {
+			cursor: move;
+			-webkit-touch-callout: none;
+		}
+	}
+
+	// 被拖动的块（整体透明，固定列不会透出下方内容）及其展开行；限定块根节点，不影响单元格内其它组件的 is-dragging
+	.vc-table__body-wrapper {
+		.vc-table__tr.is-dragging,
+		.vc-table__tr-group.is-dragging,
+		.vc-table__tr.is-dragging + .vc-table__tr.is-expanded {
+			opacity: 0.4;
+		}
+	}
+
+	// 插入线：落点块之前 / 之后，不允许放置时为错误色
+	@include element(drop-indicator) {
+		position: absolute;
+		z-index: 11;
+		height: 2px;
+		margin-top: -1px;
+		pointer-events: none;
+		background-color: $color-primary;
+
+		@include when(disabled) {
+			background-color: $color-error;
+		}
+	}
+
+	// 跟随行：块 grid 的克隆，容器与表体等宽，横向滚动位置与表体一致
+	@include element(drag-ghost) {
+		position: absolute;
+		z-index: 10;
+		max-height: 50vh;
+		overflow: hidden;
+		pointer-events: none;
+		background-color: #fff;
+		box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
 	}
 
 	@include element(expand-icon) {
@@ -637,4 +724,11 @@ $sizes: (
 	> div.vc-scroller-track {
 		z-index: 5;
 	}
+}
+
+// 拖拽排序中挂在 body 上：全局 move 光标、禁止选中文本
+.vc-table-block-dragging,
+.vc-table-block-dragging * {
+	cursor: move !important;
+	user-select: none !important;
 }

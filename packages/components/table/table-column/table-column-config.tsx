@@ -21,6 +21,11 @@ export const cellStarts: Record<string, Partial<TableColumnStates>> = {
 	index: {
 		width: 60,
 		minWidth: 60
+	},
+	drag: {
+		width: 60,
+		minWidth: 60,
+		align: 'center'
 	}
 };
 
@@ -102,6 +107,23 @@ export const cellForced: Record<string, Partial<TableColumnStates>> = {
 		sortable: false,
 		resizable: false,
 		class: 'vc-table__expand-column'
+	},
+	// 拖拽排序的把手：从把手按下拖动所在的块；块不可拖动（allowDrag、树形表格）时置灰
+	drag: {
+		renderHeader({ column }) {
+			return column.label || '';
+		},
+		renderCell({ rowIndex, store }: TableColumnRenderData) {
+			const block = store.drag.getBlockByRowIndex(rowIndex);
+			return (
+				<span class={['vc-table__drag-handle', { 'is-disabled': !block || !store.drag.canDrag(block) }]}>
+					<Icon type="drag" />
+				</span>
+			);
+		},
+		sortable: false,
+		resizable: false,
+		class: 'vc-table__drag-column'
 	}
 };
 

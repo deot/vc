@@ -1,5 +1,6 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { TableColumnSyncItem } from './store/modules/column';
+import type { TableBlockDragPayload, TableBlockDropPayload } from './types';
 
 export const props = {
 	data: {
@@ -127,7 +128,16 @@ export const props = {
 	columns: {
 		type: Array as PropType<TableColumnSyncItem[]>,
 		default: () => ([])
-	}
+	},
+	/**
+	 * 整行拖拽排序：按住行内任意位置拖动（以块为单位，getSpan 纵向合并的行整体移动）；
+	 * 只从把手拖动时使用 type="drag" 的列。新顺序经 update:data 发出，配合 v-model:data 使用
+	 */
+	draggable: Boolean,
+	// 块能否被拖动
+	allowDrag: Function as PropType<(data: TableBlockDragPayload) => boolean>,
+	// 能否放到落点（相对落点块之前 / 之后）
+	allowDrop: Function as PropType<(data: Pick<TableBlockDropPayload, 'rows' | 'targetRows' | 'position'>) => boolean>
 };
 export type Props = ExtractPropTypes<typeof props>;
 export type TableProps = Props;

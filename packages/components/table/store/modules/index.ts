@@ -1,5 +1,7 @@
 export { Block, computeMergePlan, normalizeSpan } from './block';
 export { Column, columnsToRowsEffect } from './column';
+export { Drag } from './drag';
+export type { TableBlockMove, TableDropPosition } from './drag';
 export type { TableColumnSyncItem } from './column';
 export { Expand } from './expand';
 export { Layout } from './layout';

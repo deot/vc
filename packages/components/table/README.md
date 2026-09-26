@@ -879,6 +879,81 @@ const tableData = ref([
 - [树形数据：嵌套 / 懒加载 / 删除 / 编辑 / 渲染模式切换](./examples/tree.vue)
 - [展开行：删除 / 编辑 / 渲染模式切换](./examples/expand.vue)
 
+### 拖拽排序
+
+支持两种拖拽方式，可以同时开启：
+
+- **整行拖拽**：设置 `draggable` 后，按住行内任意位置拖动，整行显示 `move` 光标。从输入框、按钮、链接、复选框、展开图标上按下时不会发起拖拽。
+- **锚点拖拽**：添加 `type="drag"` 的 `TableColumn`，只能从这一列的把手（浅色的 `drag` 图标）拖动。自定义把手时，给元素加上 `vc-table__drag-handle` 类名即可。
+- 两者同时开启时，整行不显示 `move` 光标，由把手提示可拖动；按住行内其它位置仍可拖动。
+- 与展开列（`type="expand"`）、树形列同时使用时，把 `drag` 列放在它们之前。
+
+拖拽以**块**为单位。普通表格一行一块；`get-span` 纵向合并在一起的几行是一块，会整体移动，落点只在块与块之间。
+
+- 移动超过 4px 才开始拖拽，单纯的点击、勾选不受影响。按 Esc 取消。
+- 拖动时被拖的块变暗，插入线标出落点，跟随行随指针上下移动。
+- 指针靠近表体上下边缘时自动滚动：设置了 `height`/`max-height` 时滚动表体，流式高度时滚动外层的滚动容器或窗口。
+- 触摸设备上，从把手按下可以直接拖动；整行拖拽需要长按约 300ms，长按前移动视为滚动。
+- 树形表格暂不支持拖拽，把手显示为置灰。
+
+`data` 由外部持有，Table 不会修改传入的数组：
+
+- 松手且顺序变化时，先发出 `update:data`（新数组，行对象的引用不变），再发出 `block-drop`。使用 `v-model:data` 即可生效。
+- 需要异步确认或先调用接口时，不用 `v-model`，在 `block-drop` 里处理，成功后再写回 `rawData`；不写回则行回到原位。
+- 只传 `:data` 且不处理事件时，松手后行会回到原位。
+- 写回拖拽得到的新顺序（包括它的副本）时，选中项、当前行、展开状态都会保留；其它情况下传入新数组，仍按原有规则清空选中项。
+
+:::RUNTIME
+```vue
+<template>
+	<div style="margin-bottom: 8px;">{{ message }}</div>
+	<Table
+		v-model:data="tableData"
+		primary-key="id"
+		draggable
+		:allow-drag="({ rows }) => !rows[0].locked"
+		@block-drop="handleDrop"
+	>
+		<TableColumn type="drag" />
+		<TableColumn
+			prop="name"
+			label="姓名"
+			width="180"
+		/>
+		<TableColumn
+			prop="date"
+			label="日期"
+			width="180"
+		/>
+		<TableColumn
+			prop="address"
+			label="地址"
+		/>
+	</Table>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Table, TableColumn } from '@deot/vc';
+
+const message = ref('按住行内任意位置或左侧把手拖动；「锁定」的行不可拖动');
+const tableData = ref([
+	{ id: 1, name: '微一案', date: '2011-11-01', address: '浙江省杭州市拱墅区祥园路38号' },
+	{ id: 2, name: '微二案', date: '2011-11-02', address: '浙江省杭州市拱墅区祥园路39号' },
+	{ id: 3, name: '微三案（锁定）', date: '2011-11-03', address: '浙江省杭州市拱墅区祥园路40号', locked: true },
+	{ id: 4, name: '微四案', date: '2011-11-04', address: '浙江省杭州市拱墅区祥园路41号' }
+]);
+
+const handleDrop = ({ rows, oldIndex, newIndex }) => {
+	message.value = `${rows[0].name}：${oldIndex} → ${newIndex}`;
+};
+</script>
+```
+:::
+
+完整示例：
+
+- [拖拽排序：整行 / 把手 / 虚拟滚动 / 合并块 / 异步确认 / 展开行 / 滚动容器](./examples/drag.vue)
+
 ### 外部视口虚拟化
 
 当 Table 位于页面或已有 Scroller 的正常文档流中，又需要渲染大量数据时，可以在不设置 `height`/`max-height` 的前提下启用 `virtualized`：
@@ -989,7 +1064,7 @@ const updateOffsets = () => {
 ### Table props
 | 属性                      | 说明                                                                                                                                         | 类型                                                         | 可选值                         | 默认值     |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | --------------------------- | ------- |
-| data                    | 显示的数据                                                                                                                                      | `Array`                                                    | -                           | -       |
+| data                    | 显示的数据；拖拽排序时使用 `v-model:data` 接收新顺序                                                                                                  | `Array`                                                    | -                           | -       |
 | height                  | `Table` 的高度，默认为自动高度。如果 `height` 为 `number` 类型，单位 px；如果 `height` 为 `string` 类型，则这个高度会设置为 `Table` 的 style.height 的值，Table 的高度会受控于外部样式。       | `string`、`number`                                          | -                           | -       |
 | max-height              | `Table` 的最大高度                                                                                                                              | `string`、`number`                                          | -                           | -       |
 | virtualized             | 无 `height`/`max-height` 时启用外部 viewport 行虚拟化；存在 `height` 或 `max-height` 时不改变原有渲染路径                                                                 | `boolean`                                                   | -                           | `false` |
@@ -1029,6 +1104,9 @@ const updateOffsets = () => {
 | resizable               | 是否可以伸缩(总开关/单独的column.resizable也可以设置)                                                                                                                                     |                                                            |                             |         |
 | affix                   | 流式高度下（含 `virtualized` 外部虚拟化，未设置 `height`/`max-height`）表头吸顶、底部 dock（横向滚动条 + 合计行）吸底。`boolean` 同时作用于两端；`array` 为 `[top, bottom]`，每项可为 `boolean` 或 [Affix](../affix) 配置对象；`object` 同时作用于两端。没有合计行时 bottom 项只控制横向滚动条。设置了 `height`/`max-height` 时强制失效。 | `boolean`、`array`、`object`                                  | -                           | `false` |
 | columns                 | `v-model` 暴露 Table 收集到的全部 leaf 列（含 `selection`/`expand`/`index` 等无 `prop` 的结构列），每项含 `{ id, prop, label, type, width, fixed, align, hidden, ... }`。外部可写回两个维度：调整数组顺序（按 `id` 重排）、把某项 `hidden` 置 `true/false`（按 `id` 控制该列是否渲染，被隐藏列仍出现在暴露快照中）。`width`/`fixed` 等其它字段为只读，请用 `TableColumn` 的 props 控制。 | `Array`                                                    | -                           | `[]`    |
+| draggable               | 整行拖拽排序：按住行内任意位置拖动（以块为单位，`get-span` 纵向合并的行整体移动）；只从把手拖动时使用 `type="drag"` 的列。新顺序经 `update:data` 发出，配合 `v-model:data` 使用。树形表格暂不支持 | `boolean`                                                  | -                           | `false` |
+| allow-drag              | 块能否被拖动；返回 `false` 时不能拖动，该块的把手置灰。`rows` 为块的行（普通表格长度为 1），`rowIndex` 为块首行的行号                                                          | `Function({ rows, rowIndex })`                             | -                           | -       |
+| allow-drop              | 能否放到落点；返回 `false` 时插入线显示为不可放置，松手不生效。`targetRows` 为落点块的行，`position` 为相对落点块的位置                                                 | `Function({ rows, targetRows, position })`                 | -                           | -       |
 
 
 ### 事件
@@ -1052,6 +1130,10 @@ const updateOffsets = () => {
 | expand-change      | 当用户对某一行展开或者关闭的时候会触发该事件                                        | 展开行：`(row: Object, expandedRows: Array) => void 0`；树形：`(row: Object, expanded: boolean, maxLevel: number) => void 0` | `row`：当前行数据；`expandedRows`：展开的行数据；`expanded`：是否展开；`maxLevel`：当前可见行的最大层级（根为 `0`）      |
 | sort-change        | 当表格的排序条件发生变化的时候会触发该事件                                         | { prop, order }                                                                 |                                                                |
 | load-change      | 加载状态变化（单向推送，无对应属性）；挂载即推送一次                                   | `(loadState: { isEnd, isLoading, isSilentRefresh, isEmpty }) => void 0`            | `isEnd`：数据已全部进入虚拟列表（普通表格恒为 `true`）；`isEmpty`：已结束且无数据              |
+| update:data        | 拖拽排序松手且顺序变化时触发（`v-model:data`）                                  | `(data: Array) => void 0`                                                       | `data`：新的数组，元素为外部数组中存放的原始行，行对象的引用不变                         |
+| block-drag-start   | 拖拽开始时触发（鼠标移动超过阈值，或触摸长按后）                                        | `({ rows, rowIndex }) => void 0`                                                | `rows`：被拖动块的行（普通表格长度为 1）；`rowIndex`：块首行的行号                       |
+| block-drop         | 松手且顺序变化时触发，在 `update:data` 之后                                       | `({ rows, targetRows, position, oldIndex, newIndex, rawData }) => void 0`       | `targetRows`：落点块的行；`position`：相对落点块的位置，`before` 或 `after`；`oldIndex` / `newIndex`：被拖动块首行在 data 中移动前 / 后的下标；`rawData`：新的数组（同 `update:data`） |
+| block-drag-end     | 拖拽结束时触发，取消、顺序不变、不允许放置时也会触发                                       | `({ rows, rowIndex, dropped }) => void 0`                                       | `dropped`：是否按新顺序放下                                                  |
 
 
 ### 方法
@@ -1078,7 +1160,7 @@ const updateOffsets = () => {
 
 | 属性                 | 说明                                                                                           | 类型                                             | 可选值                                    | 默认值       |
 | ------------------ | -------------------------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------- | --------- |
-| type               | 对应列的类型。如果设置了 `selection` 则显示多选框；如果设置了 `index` 则显示该行的索引（从 1 开始计算）；如果设置了 `expand` 则显示为一个可展开的按钮 | `string`                                       | `selection`、`index`、`expand`、`default` | `default` |
+| type               | 对应列的类型。如果设置了 `selection` 则显示多选框；如果设置了 `index` 则显示该行的索引（从 1 开始计算）；如果设置了 `expand` 则显示为一个可展开的按钮；如果设置了 `drag` 则显示拖拽排序的把手（见[拖拽排序](#拖拽排序)） | `string`                                       | `selection`、`index`、`expand`、`drag`、`default` | `default` |
 | index              | 如果设置了 `type=index`，可以通过传递 `index` 属性来自定义索引                                                   | `number`, `Function(index)`                    | -                                      | -         |
 | label              | 显示的标题                                                                                        | `string`                                       | -                                      | -         |
 | prop               | 对应列内容的字段名                                                                                    | `string`                                       | -                                      | -         |

@@ -20,6 +20,7 @@ import { useLazyTail } from './hooks/use-lazy-tail';
 import { usePropsSync } from './hooks/use-props-sync';
 import { useScrollSync } from './hooks/use-scroll-sync';
 import { useWheelForward } from './hooks/use-wheel-forward';
+import { useBlockDrag } from './hooks/use-block-drag';
 import type { Nullable } from '@deot/helper-shared';
 
 const COMPONENT_NAME = 'vc-table';
@@ -47,7 +48,11 @@ export const Table = defineComponent({
 		'sort-change',
 		'update:sort',
 		'update:columns',
-		'load-change'
+		'load-change',
+		'update:data',
+		'block-drag-start',
+		'block-drop',
+		'block-drag-end'
 	],
 	setup(props, { slots, expose, emit }) {
 		const instance = getCurrentInstance()!;
@@ -344,6 +349,19 @@ export const Table = defineComponent({
 		// 表头 / 合计行横向跟随表体，并维护根节点 is-scrolling-* 类名
 		const { handleScrollX } = useScrollSync({ tableWrapper, headerWrapper, footerWrapper, bodyXWrapper, layout, props });
 
+		// 拖拽排序：整行拖拽（draggable）与锚点拖拽（type="drag" 列的把手）
+		const { handleMousedown, handleTouchstart } = useBlockDrag({
+			props,
+			store,
+			emit,
+			tableWrapper,
+			headerWrapper,
+			bottomWrapper,
+			bodyXWrapper,
+			bodyScroller,
+			virtual: usesRecycleList
+		});
+
 		const tableId = getUid('table');
 		onMounted(() => {
 			bindEvents();
@@ -409,6 +427,9 @@ export const Table = defineComponent({
 					style={{ '--vc-table-columns': layout.templateColumns.value }}
 					role={store.tree.isTree ? 'treegrid' : 'table'}
 					onMouseleave={handleMouseLeave}
+					onMousedown={handleMousedown}
+					// 触摸按下不阻止默认行为，以 passive 监听
+					{...({ onTouchstartPassive: handleTouchstart })}
 				>
 					<div ref={hiddenColumns} class="vc-table__hidden">
 						{ slots.default?.() }
