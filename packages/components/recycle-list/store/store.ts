@@ -155,6 +155,7 @@ export class Store extends BaseWatcher {
 		this.states.contentMaxSize = 0;
 		this.states.columnFillSize = [];
 		this.states.firstItemIndex = 0;
+		this.states.lastItemIndex = 0;
 		this.states.isSilentRefresh = false;
 	}
 }

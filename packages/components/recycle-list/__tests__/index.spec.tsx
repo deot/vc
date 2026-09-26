@@ -2007,6 +2007,48 @@ describe('index.ts', () => {
 		});
 	});
 
+	describe('inverted build keeps the visible range inside rebuildData', () => {
+		// 模拟远程分页落地：写入 originalData 后按区间构建，与 fetchPage + layoutRange 的路径一致
+		const landPage = (store: any, start: number, count: number, size = 50) => {
+			store.local.write(start, buildItems(count, 1, start));
+			store.nodes.build(start, start + count).forEach((node: any) => {
+				node.states.size = size;
+			});
+			store.layout.refresh();
+		};
+		const expectInRange = (store: any) => {
+			const { firstItemIndex, lastItemIndex, rebuildData } = store.states;
+			expect.soft(firstItemIndex).toBeGreaterThanOrEqual(0);
+			expect.soft(lastItemIndex).toBeLessThan(rebuildData.length);
+			expect.soft(firstItemIndex).toBeLessThanOrEqual(lastItemIndex);
+		};
+
+		it('first page on mount', () => {
+			const store = new RecycleListStore({ inverted: true });
+			landPage(store, 0, 20);
+			expectInRange(store);
+		});
+
+		it('first page after clear() in a silent refresh', () => {
+			const store = new RecycleListStore({ inverted: true });
+			landPage(store, 0, 20);
+			landPage(store, 20, 20);
+			// 视口停在底部（inverted 的最新内容）：内容 40 × 50 = 2000
+			store.position.updateVisibleRange(1650, 2000);
+			expect(store.states.lastItemIndex).toBeLessThan(store.states.rebuildData.length);
+
+			// reset(true)：请求发出时 reset，响应到达后 clear，再落地第 1 页
+			store.reset();
+			store.clear();
+			landPage(store, 0, 20);
+			expectInRange(store);
+
+			// 视口仍在旧位置、落在新内容（20 × 50 = 1000）之外时保持原范围，不能因此渲染成空白
+			store.position.updateVisibleRange(1650, 2000);
+			expect.soft(store.states.data.flat().length).toBeGreaterThan(0);
+		});
+	});
+
 	describe('Position.updateVisibleRange / Layout.refresh', () => {
 		it('updateVisibleRange with empty rebuildData resets indexes', () => {
 			const store = new RecycleListStore({});

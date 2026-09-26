@@ -185,11 +185,15 @@ export class Nodes {
 			nodes.push(node);
 		}
 
-		// 数组下标只因插到头部的新节点而后移，复用的节点不改变数组长度
+		// 数组下标只因插到头部的新节点而后移，复用的节点不改变数组长度；
+		// 插入前没有行（首次挂载、clear 之后）时没有可见行可跟随，后移只会把范围推出数组
 		if (props.inverted && created.length) {
+			const hasRows = states.rebuildData.length > 0;
 			this.prepend(created);
-			states.firstItemIndex += created.length;
-			states.lastItemIndex += created.length;
+			if (hasRows) {
+				states.firstItemIndex += created.length;
+				states.lastItemIndex += created.length;
+			}
 		}
 		return nodes;
 	}
