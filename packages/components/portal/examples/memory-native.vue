@@ -2,7 +2,9 @@
 	<div style="padding: 20px">
 		<div id="root" />
 		<h1>{{ timer ? 'Running' : '----' }}</h1>
-		<!-- Tips: components/transition/README.md -->
+		<p>
+			判断方法：Stop 后在 DevTools Memory 面板手动回收（Collect garbage），JS 堆、DOM 节点、事件监听数应回到 Start 前的水平
+		</p>
 		<button @click="start">
 			Start Test
 		</button>
@@ -25,14 +27,13 @@ const start = () => {
 	stop();
 	timer.value = setInterval(
 		() => {
-			let vm = createApp(
+			const vm = createApp(
 				() => Array
 					.from({ length: 1000 })
 					.map(() => h('div', { onClick: () => {} }))
 			);
 			vm.mount('#root');
 			vm.unmount();
-			vm = null;
 		},
 		10
 	);

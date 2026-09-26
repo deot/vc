@@ -185,7 +185,6 @@ export class Portal<T extends Component> {
 			...rest
 		} = options;
 
-		let useAllNodes = fragment;
 		const name = (multiple ? `${name$}__${Utils.getUid(COMPONENT_NAME)}` : name$);
 
 		const container: HTMLElement & { _children?: HTMLElement[] } = document.createElement(tag as any);
@@ -210,19 +209,23 @@ export class Portal<T extends Component> {
 			onDestroyed?.(...args);
 			leaf.app?.unmount();
 
+			// 使用leaf上的容器：alive复用时本次新建的container未使用
+			// 有_children时节点已移到root下，否则container整体挂载（fragment或根节点v-if）
+			const container$ = leaf.container;
 			/* istanbul ignore else -- @preserve */
-			if (useAllNodes) {
-				root?.contains(container) && root.removeChild(container);
-			} else if (container && container._children) {
-				container._children.forEach((i) => {
+			if (container$?._children) {
+				container$._children.forEach((i) => {
 					root?.contains(i) && root.removeChild(i);
 				});
+			} else if (container$) {
+				root?.contains(container$) && root.removeChild(container$);
 			}
 
 			Portal.leafs.delete(name!);
 
 			// 释放引用：调用方可能仍持有已销毁的 leaf（如 Text 的 poper），不应因此留住弹层节点、组件实例与触发节点
-			container._children = undefined;
+			container$ && (container$._children = undefined);
+			leaf.container = undefined;
 			leaf.app = undefined;
 			leaf.wrapper = undefined;
 			leaf.propsData = undefined;
@@ -267,7 +270,8 @@ export class Portal<T extends Component> {
 									}
 
 									// 注意这里`leaf.target`会一直处于pending状态
-									leaveDelay ? setTimeout($onDestroyed, leaveDelay) : $onDestroyed();
+									// 与leaf.destroy()一致：alive复用后执行最后一次传入的onDestroyed
+									leaveDelay ? setTimeout(() => leaf.destroy(), leaveDelay) : leaf.destroy();
 								}
 							} catch (error) {
 								/* istanbul ignore next -- @preserve */
@@ -323,6 +327,7 @@ export class Portal<T extends Component> {
 			});
 
 			leaf.app = app;
+			leaf.container = container;
 
 			if (globalProperties) {
 				app.config.globalProperties = globalProperties;
@@ -352,6 +357,9 @@ export class Portal<T extends Component> {
 
 		// 标记
 		Portal.leafs.set(name!, leaf);
+
+		// alive复用：节点仍在首次创建的容器上，本次新建的container不插入
+		if (leaf.container !== container) return leaf;
 
 		const append = (root$: HTMLElement | null, child$?: HTMLElement) => {
 			if (!root$ || !child$) return;
@@ -385,7 +393,6 @@ export class Portal<T extends Component> {
 				&& !Array.from(container.children).length
 			)
 		) {
-			useAllNodes = true;
 			container.parentElement === null && append(root, container);
 		} else if (!container._children) {
 			container._children = [];

@@ -8,7 +8,9 @@
 	<h3>
 		Current Status：{{ runTip }}
 	</h3>
-	<!-- Tips: components/transition/README.md -->
+	<p>
+		判断方法：Stop 后在 DevTools Memory 面板手动回收（Collect garbage），JS 堆、DOM 节点、事件监听数应回到 Start 前的水平
+	</p>
 	<button @click="start">
 		Start
 	</button>
