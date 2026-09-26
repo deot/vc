@@ -20,6 +20,9 @@ class Manager {
 
 	basicStatus?: Promise<void>;
 
+	// 进行中的图标集加载数
+	loading = 0;
+
 	constructor() {
 		/**
 		 * 初始化加载, Storage.version设置问题需要使用异步
@@ -30,7 +33,10 @@ class Manager {
 	}
 
 	load(url: string): Promise<void> {
-		this.sourceStatus[url] = this.sourceStatus[url] || new Promise<void>((resolve, reject) => {
+		if (url in this.sourceStatus) return this.sourceStatus[url];
+
+		this.loading++;
+		this.sourceStatus[url] = new Promise<void>((resolve, reject) => {
 			(async () => {
 				try {
 					if (IS_SERVER || !/.js$/.test(url)) {
@@ -43,15 +49,15 @@ class Manager {
 
 					/* istanbul ignore next -- @preserve */
 					if (!icons) {
-						const data = await new Promise<string>((resolve$) => {
+						const data = await new Promise<string>((resolve$, reject$) => {
 							const request = new XMLHttpRequest();
 							request.onreadystatechange = () => {
-								if (
-									request.readyState === 4
-									&& request.status >= 200
-									&& request.status <= 400
-								) {
+								if (request.readyState !== 4) return;
+								if (request.status >= 200 && request.status <= 400) {
 									resolve$(request.responseText || request.response);
+								} else {
+									// 请求失败也要结束加载：否则加载计数不归零，等待上限一直不生效
+									reject$(`load ${url} failed (${request.status})`);
 								}
 							};
 							request.open('GET', `${window.location.protocol.replace(/[^:]+/, 'https')}${url}`);
@@ -96,6 +102,17 @@ class Manager {
 			})();
 		});
 
+		// 加载结束（成功或失败）：图标集都已加载完时，检查仍在等待的 type
+		const settle = () => {
+			this.loading--;
+			/* istanbul ignore else -- @preserve */
+			if (!IS_SERVER) {
+				Object.keys(this.events).forEach((type) => {
+					this.limit(type) && new VcError('icon', `${type} nonexistent`);
+				});
+			}
+		};
+		this.sourceStatus[url].then(settle, settle);
 		return this.sourceStatus[url];
 	}
 
@@ -134,26 +151,30 @@ class Manager {
 		/* istanbul ignore next -- @preserve */
 		if (typeof type !== 'string' || typeof fn !== 'function') return this;
 
-		this.events[type] = this.events[type] || [];
-
-		/**
-		 * 等待队列上限
-		 * - 客户端: Icon 卸载或切换 type 时会 off, 队列长度即当前仍挂载且在等待该 type 的图标数,
-		 *   同时有 100 个图标在等待同一 type 基本意味着该 type 不存在(如拼写错误或未加载对应图标集), 抛错提示
-		 * - 服务端: 图标不会加载且不执行卸载钩子, 单例上的队列会跨请求累积, 这里清空以限制内存(不抛错)
-		 */
-		if (this.events[type].length >= 100) {
-			delete this.events[type];
-
-			/* istanbul ignore else -- @preserve */
-			if (!IS_SERVER) {
-				throw new VcError('icon', `${type} nonexistent`);
-			}
+		/* istanbul ignore else -- @preserve */
+		if (this.limit(type) && !IS_SERVER) {
+			throw new VcError('icon', `${type} nonexistent`);
 		}
 
-		this.events[type].push(fn);
+		(this.events[type] = this.events[type] || []).push(fn);
 
 		return this;
+	}
+
+	/**
+	 * 等待队列上限：超出时清空该 type 的等待队列
+	 * - 客户端: Icon 卸载或切换 type 时会 off, 队列长度即当前仍挂载且在等待该 type 的图标数,
+	 *   图标集都已加载完时仍有 100 个图标在等待同一 type 基本意味着该 type 不存在(如拼写错误或未加载对应图标集), 由调用方提示;
+	 *   图标集加载中(含基础图标集尚未开始加载)时不判定: 长列表首屏会有大量同一 type 的图标同时等待, 加载结束时再检查
+	 * - 服务端: 图标不会加载且不执行卸载钩子, 单例上的队列会跨请求累积, 这里清空以限制内存
+	 * @param type 图标类型
+	 * @returns 是否超出上限
+	 */
+	private limit(type: string) {
+		const loading = !this.basicStatus || this.loading > 0;
+		if ((this.events[type]?.length || 0) < 100 || (!IS_SERVER && loading)) return false;
+		delete this.events[type];
+		return true;
 	}
 
 	off(type?: string, fn?: Function) {
