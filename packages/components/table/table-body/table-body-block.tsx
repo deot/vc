@@ -174,7 +174,7 @@ export const TableBodyBlock = defineComponent({
 			handleHoverEnter(cell.rowIndex);
 			table.emit('cell-mouse-enter', cell.row, cell.column, cell.cellEl, e);
 			// 多行省略被截断时展示完整内容
-			textLineTooltip.open(cell.cellEl.querySelector('.vc-table__text-line'), getColumnLine(cell.column, 'line'));
+			textLineTooltip.open(cell.cellEl.querySelector('.vc-table__text-line'), getColumnLine(cell.column, 'line'), cell.cellEl);
 		};
 
 		const leaveCell = (e: MouseEvent, cell: ResolvedCell) => {
