@@ -67,7 +67,7 @@ export const Text = defineComponent({
 		// 用 mouseenter 与根节点：renderRow 返回元素时，mouseover 在子元素间移动会反复触发，e.target 也会落到子元素上
 		const handleMouseEnter = (e: any) => {
 			if (truncated.value) {
-				poper = Popover.open({
+				const leaf = Popover.open({
 					el: document.body,
 					name: 'vc-text-popover', // 确保不重复创建
 					triggerEl: e.currentTarget,
@@ -77,7 +77,10 @@ export const Text = defineComponent({
 					portalClass: props.portalClass,
 					portalStyle: [props.portalStyle || `width: ${e.currentTarget.clientWidth}px`, 'word-break: break-all'],
 					content: props.value,
+					// 弹层销毁（自行关闭、被其它 Text 的提示替换）后不再引用它
+					onDestroyed: () => poper === leaf && (poper = null)
 				});
+				poper = leaf;
 			}
 		};
 

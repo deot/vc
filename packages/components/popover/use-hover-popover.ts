@@ -34,15 +34,21 @@ export const useHoverPopover = () => {
 		if (isActive(triggerEl)) return;
 		close();
 		trigger = triggerEl;
-		poper = Popover.open({
+		const leaf: PortalLeaf = Popover.open({
 			el: document.body,
 			triggerEl,
 			hover: true,
 			alone: true,
 			autoWidth: true,
 			placement: 'top',
-			...options
+			...options,
+			// 弹层销毁（自行关闭、被同名弹层替换等）后不再引用它与触发节点（如已移除的单元格）
+			onDestroyed: (...args: any[]) => {
+				poper === leaf && (poper = null, trigger = null);
+				options.onDestroyed?.(...args);
+			}
 		});
+		poper = leaf;
 	};
 
 	/**
