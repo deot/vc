@@ -53,7 +53,9 @@ import { Popover, Button } from '@deot/vc';
 
 ### 定位
 
-支持 12 种位置；空间不足时自动调整方向。边界为浏览器视口，触发器位于滚动容器（含 Scroller）内时为视口与容器可视区的交集，因此靠近容器底部的浮层会向上打开。浮层内容尺寸变化（如图片加载）后会重新定位；`top`、`left` 系列以靠近触发器的一边对齐，内容变大时朝远离触发器的方向伸展。可展开预览以观察完整浮层。
+支持 12 种位置；空间不足时自动调整方向。边界为浏览器视口（不含滚动条，四周留 8px），触发器位于滚动容器（含 Scroller）内时为视口与容器可视区的交集，因此靠近容器底部的浮层会向上打开；挂在 body 上的 hover 浮层只按视口判断，可以超出容器（如 Table 表体中的提示），避免朝下打开后挡住向下移动的鼠标。
+
+浮层内容的最大宽高为所在一侧的可用空间，超出时在浮层内滚动，不可断行的长串在宽度内换行；交叉轴方向超出视口时位置会被修正回视口内，箭头仍指向触发器中心。浮层内容尺寸变化（如图片加载）后会重新判断方向并定位；`top`、`left` 系列以靠近触发器的一边对齐，内容变大时朝远离触发器的方向伸展。可展开预览以观察完整浮层。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
@@ -200,7 +202,7 @@ const handleClose = () => {
 
 ### 挂载容器
 
-默认挂载到 `document.body`：触发器所在的滚动容器滚动时浮层跟随，触发器滚出容器可视区时浮层隐藏（不关闭），滚回后恢复。`portal="false"` 将浮层挂到 Popover 根节点；`getPopupContainer` 优先指定挂载容器，应返回包含触发器的定位容器，此时容器的 `overflow` 可能裁剪浮层。
+默认挂载到 `document.body`：触发器所在的滚动容器滚动时，click 等浮层跟随，hover 浮层立即关闭（否则会随触发器移到静止的鼠标下并截住滚轮）；触发器滚出容器可视区时浮层隐藏（不关闭），滚回后恢复。`portal="false"` 将浮层挂到 Popover 根节点；`getPopupContainer` 优先指定挂载容器，应返回包含触发器的定位容器，此时容器的 `overflow` 可能裁剪浮层。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
@@ -292,6 +294,8 @@ const data = [
 ### 主题
 
 `theme` 支持 `light`、`dark` 和 `none`；`none` 不设置主题背景，但仍保留容器间距与阴影。颜色跟随共享主题变量，可用 `portalStyle` 覆盖浮层的 `--vc-popover-wrapper-*` 变量。
+
+浮层默认字体取主题变量 `--vc-font-size-small`（13px）、`--vc-line-height-large`（20px，与 Table 单元格一致）与 `--vc-color-dark-lighter`，可分别通过 `--vc-popover-wrapper-font-size-small`、`--vc-popover-wrapper-line-height-large`、`--vc-popover-wrapper-color-dark-lighter` 单独覆盖浮层。默认字体的优先级为 0，组件或 `portalClass` 上设置的字体始终优先，与样式加载顺序无关。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
@@ -422,7 +426,7 @@ onUnmounted(() => leaf?.destroy());
 | onClose | 关闭动画完成回调 | `() => void` | - | - |
 | onChange | 触发器或浮层事件回调 | `(event: Event, info: object) => void` | - | 空函数 |
 
-`onChange` 的 `info` 包含 `context`（浮层内部组件实例）；悬停事件另含 `visible: boolean`，外部点击时不包含 `visible`。`leaf.wrapper?.toggle(false)` 可执行关闭动画，`leaf.destroy()` 立即销毁。其他 Portal 通用配置见 Portal 文档。
+`onChange` 的 `info` 包含 `context`（浮层内部组件实例）；悬停事件另含 `visible: boolean`，外部点击时不包含 `visible`；滚动容器滚动、触发器被移除引起的关闭另含 `immediate: true`（不走 hover 的延时关闭）。`leaf.wrapper?.toggle(false)` 可执行关闭动画，`leaf.destroy()` 立即销毁。其他 Portal 通用配置见 Portal 文档。
 
 ### 移动端
 

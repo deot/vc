@@ -1,15 +1,86 @@
 import { VcError } from '../vc/index';
 import type { PopoverRect } from './types';
-import { getViewportRect } from '../scroller/utils';
+import { getPadding } from '../scroller/utils';
 
 const EXTRA_DISTANCE = 4; // 额外的距离
 const HALF_ARROW = 12.73 / 2; // 箭头一半的高度
-
-// 是否支持独立的 translate 属性（不影响过渡动画使用的 transform）
-const canTranslate = () => typeof CSS !== 'undefined' && !!CSS.supports?.('translate', '0 -100%');
+const VIEWPORT_GAP = 8; // 与视口边缘的留白
+const ARROW_INSET = 12; // 箭头中心距弹层边缘的最小距离（避开圆角）
 
 // 可视边界（视口坐标）
 type Boundary = { top: number; right: number; bottom: number; left: number };
+
+/**
+ * 视口，不含滚动条
+ * @param inset 四周内缩的距离
+ * @returns 视口坐标的四边
+ */
+export const getViewport = (inset = 0): Boundary => {
+	const { clientWidth, clientHeight } = document.documentElement;
+	return {
+		top: inset,
+		left: inset,
+		right: (clientWidth || window.innerWidth) - inset,
+		bottom: (clientHeight || window.innerHeight) - inset
+	};
+};
+
+// 内容区的最大宽高：实际方向所在一侧的可用空间（四周留白），扣除弹层自身的 padding（有箭头时朝向触发节点一侧留出的空间）
+const getMaxSize = (placement: string, triggerRect: DOMRect, padding: { x: number; y: number }) => {
+	const { right: width, bottom: height } = getViewport();
+	const distance = EXTRA_DISTANCE + VIEWPORT_GAP;
+	const sizes: Record<string, [number, number]> = {
+		top: [width - VIEWPORT_GAP * 2, triggerRect.top - distance],
+		bottom: [width - VIEWPORT_GAP * 2, height - triggerRect.bottom - distance],
+		left: [triggerRect.left - distance, height - VIEWPORT_GAP * 2],
+		right: [width - triggerRect.right - distance, height - VIEWPORT_GAP * 2]
+	};
+	const [w, h] = sizes[placement.split('-')[0]] || sizes.bottom;
+	return { maxWidth: Math.max(w - padding.x, 0), maxHeight: Math.max(h - padding.y, 0) };
+};
+
+/**
+ * 判断实际方向，并按该方向所在一侧的可用空间限制内容区尺寸，达到上限时内容区滚动
+ * 	- 方向只在同一轴上翻转（上下 / 左右）：已达到上限时先去掉主轴上限，按内容的实际尺寸判断方向（如图片加载后变高需翻转）并恢复内容区的滚动位置；
+ * 	  未达到上限时当前尺寸即实际尺寸，上限不变时不写样式
+ * 	- 在计算位置前调用：位置依赖弹层尺寸，同一次计算内即可生效
+ * 	- 直接写入节点样式：上限随滚动变化，避免每帧重新渲染弹层内容
+ * 	- 未达到上限时保持 overflow 可见，不裁剪内容中 portal=false 的嵌套弹层
+ * @param container 内容区（.vc-popover-wrapper__container）
+ * @param options ~
+ * @param options.el 弹层节点
+ * @param options.placement 首选方向
+ * @param options.triggerRect 触发节点的矩形（视口坐标）
+ * @param options.fit 按当前尺寸判断实际方向
+ * @returns 实际方向
+ */
+export const fitMaxSize = (container: HTMLElement, { el, placement, triggerRect, fit }) => {
+	const { style, scrollTop, scrollLeft } = container;
+	const reached = container.offsetWidth >= (parseFloat(style.maxWidth) || Infinity) - 1
+		|| container.offsetHeight >= (parseFloat(style.maxHeight) || Infinity) - 1;
+	if (reached) {
+		/^(top|bottom)/.test(placement) ? (style.maxHeight = '') : (style.maxWidth = '');
+	}
+
+	const result: string = fit();
+	const [top, right, bottom, left] = getPadding(el);
+	const { maxWidth, maxHeight } = getMaxSize(result, triggerRect, { x: left + right, y: top + bottom });
+	const width = `${maxWidth}px`;
+	const height = `${maxHeight}px`;
+	if (!reached && style.overflow !== 'auto' && style.maxWidth === width && style.maxHeight === height) return result;
+
+	style.maxWidth = width;
+	style.maxHeight = height;
+	style.overflow = container.offsetWidth >= maxWidth - 1 || container.offsetHeight >= maxHeight - 1 ? 'auto' : '';
+	if (reached) {
+		container.scrollTop = scrollTop;
+		container.scrollLeft = scrollLeft;
+	}
+	return result;
+};
+
+// 是否支持独立的 translate 属性（不影响过渡动画使用的 transform）
+const canTranslate = () => typeof CSS !== 'undefined' && !!CSS.supports?.('translate', '0 -100%');
 
 const intersect = (a: Boundary, b: Boundary): Boundary => ({
 	top: Math.max(a.top, b.top),
@@ -30,18 +101,21 @@ const getPaddingBox = (el: HTMLElement): Boundary => {
  * 触发节点所在滚动容器的裁剪
  * @param scrollers 触发节点所在的滚动容器（由内到外）
  * @param triggerRect 触发节点的矩形（视口坐标）
- * @returns hidden：触发节点完全滚出容器可视区；boundary：翻转判断的边界（视口与容器可视区的交集）
+ * @returns
+ * 	- hidden：触发节点完全滚出容器可视区
+ * 	- viewport：视口扣掉留白与间隙，与 fitMaxSize 的上限同一口径（放得下即不会被限制）
+ * 	- boundary：翻转判断的边界（viewport 与容器可视区的交集）
  */
 export const getClip = (scrollers: HTMLElement[], triggerRect: DOMRect) => {
-	const viewport = getViewportRect(window);
-	if (!scrollers.length) return { hidden: false, boundary: viewport };
+	const viewport = getViewport(VIEWPORT_GAP + EXTRA_DISTANCE);
+	if (!scrollers.length) return { hidden: false, viewport, boundary: viewport };
 
 	const clip = scrollers.map(getPaddingBox).reduce(intersect);
 	const hidden = triggerRect.bottom <= clip.top
 		|| triggerRect.top >= clip.bottom
 		|| triggerRect.right <= clip.left
 		|| triggerRect.left >= clip.right;
-	return { hidden, boundary: intersect(viewport, clip) };
+	return { hidden, viewport, boundary: intersect(viewport, clip) };
 };
 
 export default () => {
@@ -293,14 +367,28 @@ export default () => {
 				break;
 		}
 
-		// 上下方向右侧超出视口时靠右（如 Cascader 展开、图片加载后变宽）；clientWidth 不含滚动条
-		if (/^(top|bottom)/.test(placement)) {
-			const container = el.parentElement;
-			const offset = !container || container === document.body
-				? -(document.scrollingElement?.scrollLeft || 0)
-				: container.getBoundingClientRect().left;
-			const max = (document.documentElement.clientWidth || window.innerWidth) - el.offsetWidth - offset;
-			parseFloat(wrapperStyle.left) > max && (wrapperStyle.left = `${max}px`);
+		if (!wrapperStyle) return { wrapperStyle, arrowStyle };
+
+		// 交叉轴限制在视口内（四周留白，如 Cascader 展开、内容变宽后）：上下方向修正 left，左右方向修正 top
+		// 位置被修正时，箭头改为指向触发节点中心
+		const vertical = /^(top|bottom)/.test(placement);
+		const key = vertical ? 'left' : 'top';
+		const size = vertical ? el.offsetWidth : el.offsetHeight;
+		const container = el.parentElement;
+		// 弹层坐标系原点的视口坐标：挂 body 时为页面滚动的反向，否则为挂载容器的位置
+		const origin = !container || container === document.body
+			? -((vertical ? document.scrollingElement?.scrollLeft : document.scrollingElement?.scrollTop) || 0)
+			: container.getBoundingClientRect()[key];
+		const viewport = getViewport()[vertical ? 'right' : 'bottom'];
+		const value = parseFloat(wrapperStyle[key]);
+		const fixed = Math.max(VIEWPORT_GAP - origin, Math.min(value, viewport - VIEWPORT_GAP - size - origin));
+		if (fixed !== value) {
+			wrapperStyle[key] = `${fixed}px`;
+			const triggerCenter = vertical ? rect.x + rect.width / 2 : rect.y + rect.height / 2;
+			const center = `${Math.min(Math.max(triggerCenter - fixed, ARROW_INSET), size - ARROW_INSET)}px`;
+			arrowStyle = vertical
+				? { left: center, right: 'auto', transform: 'translateX(-50%) rotate(45deg)' }
+				: { top: center, bottom: 'auto', transform: 'translateY(-50%) rotate(45deg)' };
 		}
 
 		return {

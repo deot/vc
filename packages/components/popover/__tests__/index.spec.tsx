@@ -3,8 +3,9 @@
 import { Popover, Select } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Resize } from '@deot/helper-resize';
-import { nextTick, ref } from 'vue';
+import { defineComponent, nextTick, ref } from 'vue';
 import { vi, onTestFinished } from 'vitest';
+import { useHoverPopover } from '../use-hover-popover';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -507,6 +508,22 @@ describe('Popover 外观 (theme / placement / arrow)', () => {
 		wrapper.unmount();
 	});
 
+	it('方向类只按主方向（top-left 只有 is-top），箭头以外的一侧不留 padding', async () => {
+		const wrapper = mount(() => (
+			<Popover trigger="click" content="x" placement="top-left">
+				<button>btn</button>
+			</Popover>
+		), { attachTo: document.body });
+		await wrapper.trigger('click');
+		await flush();
+
+		const { classList } = getWrapperEl()!;
+		expect(classList.contains('is-top')).toBe(true);
+		expect(classList.contains('is-left')).toBe(false);
+
+		wrapper.unmount();
+	});
+
 	it('autoWidth=false 时弹层宽度跟随 trigger', async () => {
 		const wrapper = mount(() => (
 			<Popover trigger="click" content="x" autoWidth={false}>
@@ -962,11 +979,101 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		onTestFinished(() => { vi.unstubAllGlobals(); });
 	};
 
-	it('上下方向右侧超出视口时靠右', async () => {
+	const getContainer = () => getWrapperEl()!.querySelector('.vc-popover-wrapper__container') as HTMLElement;
+	const getArrow = () => getWrapperEl()!.querySelector('.vc-popover-wrapper__arrow') as HTMLElement;
+
+	it('上下方向右侧超出视口时靠右（留 8px），箭头指向触发节点中心', async () => {
 		// bottom-left：左右都放不下 900px 宽的弹层，保持 bottom-left，右侧超出后靠右
 		const wrapper = await openAt('bottom-left', 300, 100);
 		await resizeTo(900, 100);
-		expect(getWrapperEl()!.style.left).toBe('124px'); // 1024 - 900
+		expect(getWrapperEl()!.style.left).toBe('116px'); // 1024 - 8 - 900
+		expect(getArrow().style.left).toBe('224px'); // 触发节点中心 340 - 116
+
+		wrapper.unmount();
+	});
+
+	it('上下方向比视口还宽时靠左（留 8px）', async () => {
+		// 居中放不下，切换为 bottom-right 后左侧超出
+		const wrapper = await openAt('bottom', 500, 100);
+		await resizeTo(1010, 100);
+		expect(getWrapperEl()!.style.left).toBe('8px');
+		expect(getArrow().style.left).toBe('532px'); // 触发节点中心 540 - 8
+
+		wrapper.unmount();
+	});
+
+	it('左右方向上下超出视口时修正到视口内（留 8px），箭头指向触发节点中心', async () => {
+		// right：下方放不下，切换为 right-bottom 后顶部超出
+		const wrapper = await openAt('right', 500, 700);
+		await resizeTo(200, 740);
+		expect(getWrapperEl()!.style.top).toBe('8px');
+		expect(getArrow().style.top).toBe('707px'); // 触发节点中心 715 - 8
+
+		wrapper.unmount();
+	});
+
+	// 视口 1024×768，触发节点 (500, 400) 80×30；上限为所在一侧的可用空间（间隙 4px + 留白 8px），交叉轴两侧各留 8px
+	[
+		['bottom', '1008px', '326px'], // 768 - 430 - 12
+		['top', '1008px', '388px'], // 400 - 12
+		['right', '432px', '752px'], // 1024 - 580 - 12
+		['left', '488px', '752px'] // 500 - 12
+	].forEach(([placement, maxWidth, maxHeight]) => {
+		it(`placement=${placement}：内容区最大宽高为所在一侧的可用空间，未达到上限时不滚动`, async () => {
+			const wrapper = await openAt(placement);
+			await resizeTo(200, 100);
+			expect(getContainer().style.maxWidth).toBe(maxWidth);
+			expect(getContainer().style.maxHeight).toBe(maxHeight);
+			expect(getContainer().style.overflow).toBe('');
+
+			wrapper.unmount();
+		});
+	});
+
+	it('翻转后按新方向所在一侧计算上限', async () => {
+		// 下方只剩 38px，翻转到上方
+		const wrapper = await openAt('bottom', 500, 700);
+		await resizeTo(200, 300);
+		expect(getWrapperEl()!.classList.contains('is-top')).toBe(true);
+		expect(getContainer().style.maxHeight).toBe('688px'); // 700 - 12
+
+		wrapper.unmount();
+	});
+
+	it('内容变高后按实际尺寸翻转，不被上一次的上限压住（如图片加载）', async () => {
+		// 下方可用 768 - 630 - 12 = 126px，上方 600 - 12 = 588px
+		const wrapper = await openAt('bottom', 500, 600);
+		const container = getContainer();
+		// 模拟布局：内容区与弹层的高度受内容区 max-height 限制
+		let natural = 50;
+		const height = () => Math.min(natural, parseFloat(container.style.maxHeight) || Infinity);
+		[getWrapperRoot(), container].forEach((el) => {
+			Object.defineProperty(el, 'offsetWidth', { configurable: true, get: () => 200 });
+			Object.defineProperty(el, 'offsetHeight', { configurable: true, get: height });
+		});
+		resize(getWrapperRoot());
+		await sleep(30);
+		expect(getWrapperEl()!.classList.contains('is-bottom')).toBe(true);
+		expect(container.style.maxHeight).toBe('126px');
+
+		natural = 300;
+		resize(getWrapperRoot());
+		await sleep(30);
+		expect(getWrapperEl()!.classList.contains('is-top')).toBe(true);
+		expect(container.style.maxHeight).toBe('588px');
+
+		wrapper.unmount();
+	});
+
+	it('内容区达到上限时滚动，内容变小后恢复', async () => {
+		const wrapper = await openAt('bottom');
+		setOffset(getContainer(), 200, 326);
+		await resizeTo(200, 326);
+		expect(getContainer().style.overflow).toBe('auto');
+
+		setOffset(getContainer(), 200, 100);
+		await resizeTo(200, 100);
+		expect(getContainer().style.overflow).toBe('');
 
 		wrapper.unmount();
 	});
@@ -1079,7 +1186,7 @@ describe('Popover 位置自适应 (use-pos)', () => {
 	});
 
 	// 触发节点在可视区为 100~260 的滚动容器中
-	const openInScroller = async (triggerY: number, wrapperHeight: number) => {
+	const openInScroller = async (triggerY: number, wrapperHeight: number, hover = false) => {
 		const box = document.createElement('div');
 		box.style.overflow = 'auto';
 		const triggerEl = document.createElement('button');
@@ -1088,7 +1195,7 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		mockScroller(box, { top: 100, left: 0, width: 400, height: 160 });
 		setRect(triggerEl, triggerRect(100, triggerY));
 
-		const leaf = Popover.open({ el: document.body, name: 'in-box', triggerEl, placement: 'bottom', content: 'x' });
+		const leaf = Popover.open({ el: document.body, name: 'in-box', triggerEl, placement: 'bottom', content: 'x', hover });
 		await flush();
 		await resizeTo(200, wrapperHeight);
 		const scrollTo = async (y: number) => {
@@ -1120,6 +1227,85 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		// 触发节点 200~230，下方到容器底边（260）只剩 30px，放不下 100px 高的弹层，上方有 100px
 		const { leaf, wrapperEl } = await openInScroller(200, 100);
 		expect(wrapperEl.classList.contains('is-top')).toBe(true);
+
+		leaf.destroy();
+		await flush();
+	});
+
+	it('useHoverPopover：弹层被销毁后不再视为打开，调用方的 onDestroyed 照常执行', async () => {
+		let hover!: ReturnType<typeof useHoverPopover>;
+		const wrapper = mount(defineComponent({
+			setup() {
+				hover = useHoverPopover();
+				return () => <button>btn</button>;
+			}
+		}), { attachTo: document.body });
+		const onDestroyed = vi.fn();
+		hover.open(wrapper.element, { content: 'x', onDestroyed });
+		await flush();
+		expect(hover.isActive(wrapper.element)).toBe(true);
+
+		// 被别处的同名弹层替换
+		const other = document.createElement('div');
+		document.body.appendChild(other);
+		const leaf = Popover.open({ el: document.body, triggerEl: other, content: 'y' });
+		await flush();
+		expect(onDestroyed).toHaveBeenCalledTimes(1);
+		expect(hover.isActive(wrapper.element)).toBe(false);
+
+		leaf.destroy();
+		wrapper.unmount();
+	});
+
+	it('Popover.open（hover）卸载后不再执行移入 / 移出的延时回调', async () => {
+		const triggerEl = document.createElement('button');
+		document.body.appendChild(triggerEl);
+		const onChange = vi.fn();
+		const leaf = Popover.open({ el: document.body, name: 'hover-timer', triggerEl, content: 'x', hover: true, onChange });
+		await flush();
+
+		fireEvent(triggerEl, 'mouseleave');
+		leaf.destroy();
+		await sleep(250);
+		expect(onChange).not.toHaveBeenCalled();
+	});
+
+	it('hover 弹层（Popover.open）在滚动容器滚动时立即关闭，不跟随', async () => {
+		const { scrollTo, leaf, wrapperEl } = await openInScroller(150, 40, true);
+		expect(wrapperEl.style.display).not.toBe('none');
+
+		await scrollTo(150);
+		expect(wrapperEl.style.display).toBe('none');
+
+		leaf.destroy();
+		await flush();
+	});
+
+	it('trigger="hover" 的 Popover 在滚动容器滚动时立即关闭（不等 200ms）', async () => {
+		const visible = ref(false);
+		const wrapper = mount(() => (
+			<div style="overflow: auto">
+				<Popover v-model={visible.value} trigger="hover" content="x">
+					<button>btn</button>
+				</Popover>
+			</div>
+		), { attachTo: document.body });
+		await nextTick();
+
+		fireEvent(wrapper.find('.vc-popover').element, 'mouseenter');
+		await flush();
+		expect(visible.value).toBe(true);
+
+		wrapper.element.dispatchEvent(new Event('scroll'));
+		await flush();
+		expect(visible.value).toBe(false);
+
+		wrapper.unmount();
+	});
+
+	it('hover 弹层只按视口翻转：靠近滚动容器底边时仍朝下（视口内放得下）', async () => {
+		const { leaf, wrapperEl } = await openInScroller(200, 100, true);
+		expect(wrapperEl.classList.contains('is-bottom')).toBe(true);
 
 		leaf.destroy();
 		await flush();
