@@ -1038,30 +1038,36 @@ describe('Select grouped & search', () => {
 	});
 
 	it('loadData triggers loading spin', async () => {
+		// 使用假定时器，避免真实计时在高负载下错过 debounce/Promise 的时间窗口
+		vi.useFakeTimers();
 		const loadData = vi.fn(() => new Promise<void>(resolve => setTimeout(resolve, 350)));
 		const wrapper = mount(() => (
 			<Select data={cityList} searchable loadData={loadData} />
 		), { attachTo: document.body });
-		await nextTick();
+		try {
+			await nextTick();
 
-		await wrapper.trigger('click');
-		await flush();
+			await wrapper.trigger('click');
+			await nextTick();
 
-		const search = document.querySelector('.vc-select__search input') as HTMLInputElement;
-		search.value = 'foo';
-		search.dispatchEvent(new Event('input', { bubbles: true }));
+			const search = document.querySelector('.vc-select__search input') as HTMLInputElement;
+			search.value = 'foo';
+			search.dispatchEvent(new Event('input', { bubbles: true }));
 
-		// debounce 250ms，Promise 需长于 debounce 才能在触发后仍看到 loading
-		await sleep(280);
-		await flush();
-		expect(loadData).toHaveBeenCalled();
+			// debounce 250ms 到期后调用 loadData，其 Promise（350ms）pending 期间显示 loading
+			await vi.advanceTimersByTimeAsync(250);
+			await nextTick();
+			expect(loadData).toHaveBeenCalledTimes(1);
+			expect(document.querySelector('.vc-select__loading')).not.toBeNull();
 
-		expect(document.querySelector('.vc-select__loading')).not.toBeNull();
-		await sleep(400);
-		await flush();
-		expect(document.querySelector('.vc-select__loading')).toBeNull();
-
-		wrapper.unmount();
+			// Promise resolve 后 loading 消失
+			await vi.advanceTimersByTimeAsync(350);
+			await nextTick();
+			expect(document.querySelector('.vc-select__loading')).toBeNull();
+		} finally {
+			vi.useRealTimers();
+			wrapper.unmount();
+		}
 	});
 
 	it('loadData throws if it does not return a Promise', async () => {
