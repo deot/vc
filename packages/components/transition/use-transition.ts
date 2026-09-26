@@ -18,7 +18,7 @@ export const useTransition = () => {
 	});
 
 	/**
-	 * Tips: components/transition/README.md
+	 * Tips: components/transition/README.md（内存排查）
 	 */
 	const classes = computed(() => {
 		const modeClass = props.mode !== 'none' ? `is-${props.mode.replace(/-/g, ' is-')}` : '';
