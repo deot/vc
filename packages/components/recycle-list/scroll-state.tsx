@@ -43,10 +43,11 @@ export const ScrollState = defineComponent({
 			return (
 				<div class="vc-recycle-list__scroll-state">
 					{
-						!props.disabled && !props.hasPlaceholder && !loadState.isEnd && !loadState.isSilentRefresh && (
+						// 静默刷新由刷新提示条表达加载中，这里只隐藏不移除：inverted 下它在首部，移除会让列表整体位移
+						!props.disabled && !props.hasPlaceholder && !loadState.isEnd && (
 							<div
 								class="vc-recycle-list__loading"
-								style={{ visibility: loadState.isLoading ? 'visible' : 'hidden' }}
+								style={{ visibility: loadState.isLoading && !loadState.isSilentRefresh ? 'visible' : 'hidden' }}
 							>
 								{ renderState('loading', () => (<div class="vc-recycle-list__center"><Spin size={20} /></div>)) }
 							</div>

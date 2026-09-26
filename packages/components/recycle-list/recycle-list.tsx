@@ -543,11 +543,14 @@ export const RecycleList = defineComponent({
 
 		/**
 		 * 重置并重新加载
-		 * @param silent 为 true 时保留旧内容直到新数据到达（下拉刷新）
+		 * @param silent 为 true 时保留旧内容直到新数据到达（下拉 / inverted 上拉刷新）
 		 */
 		const reset = async (silent = false) => {
 			store.reset();
-			viewport.scrollTo(0);
+			// inverted 的起点在尾部：不回到 0，旧内容保持原位直到新数据到达，由首批数据落地时贴到列表尾部
+			if (!store.props.inverted) {
+				viewport.scrollTo(0);
+			}
 
 			const done = () => store.clear();
 			if (!silent) {
@@ -560,13 +563,13 @@ export const RecycleList = defineComponent({
 			}
 		};
 
-		// 触发下拉刷新
+		// 触发下拉（inverted 为上拉）刷新
 		const handleRefresh = async () => {
 			await reset(true);
 		};
 
-		// 只有主轴停在起点时才允许下拉
-		const canPull = () => viewport.offset === 0;
+		// 只有主轴停在刷新一侧的端点才允许拉动：正序为起点，inverted 为终点（1px 容差：高分屏下 scrollTop 可能是小数）
+		const canPull = () => (store.props.inverted ? viewport.offset >= viewport.maxOffset - 1 : viewport.offset === 0);
 
 		// ---------------------------------------------------------------------
 		// 事件

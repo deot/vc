@@ -124,10 +124,14 @@ describe('index.ts', () => {
 			expect(wrapper.find('.vc-recycle-list__pull').exists()).toBe(false);
 		});
 
-		it('does NOT render pull node when inverted=true even if pullable=true', () => {
+		it('renders pull node after the container when inverted=true and pullable=true', () => {
 			const wrapper = mount(() => (<RecycleList pullable inverted />));
 
-			expect(wrapper.find('.vc-recycle-list__pull').exists()).toBe(false);
+			const pull = wrapper.find('.vc-recycle-list__pull').element as HTMLElement;
+			expect(pull.previousElementSibling?.classList.contains('vc-recycle-list__container')).toBe(true);
+			// 靠负 margin-bottom 藏在尾部视口外
+			expect(pull.style.marginBottom).toBe('-30px');
+			expect(pull.style.marginTop).toBe('');
 		});
 
 		it('renders multiple columns when cols > 1', async () => {
@@ -1545,6 +1549,37 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
+		it('keeps the loading area (hidden) during a silent refresh so the list does not shift', async () => {
+			let resolveFn: (v: any) => void = () => {};
+			const loadData = () => new Promise((resolve) => { resolveFn = resolve; });
+			const listRef = ref<any>();
+
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} inverted loadData={loadData as any} />
+			), { attachTo: document.body });
+
+			await nextTick();
+			await nextTick();
+			const loading = () => wrapper.find('.vc-recycle-list__loading');
+			expect((loading().element as HTMLElement).style.visibility).toBe('visible');
+
+			resolveFn([{ id: 1 }]);
+			await sleep(0);
+			await nextTick();
+
+			const pending = listRef.value.reset(true);
+			await nextTick();
+			expect(listRef.value.store.states.isSilentRefresh).toBe(true);
+			expect(listRef.value.store.states.isLoading).toBe(true);
+			// 静默刷新由刷新提示条表达加载中：占位保留、内容隐藏
+			expect(loading().exists()).toBe(true);
+			expect((loading().element as HTMLElement).style.visibility).toBe('hidden');
+
+			resolveFn(false);
+			await pending;
+			wrapper.unmount();
+		});
+
 		it('renders default loading wrapper while not yet end and no placeholder', async () => {
 			let resolveFn: (v: any) => void = () => {};
 			const loadData = () => new Promise((resolve) => { resolveFn = resolve; });
@@ -2369,19 +2404,66 @@ describe('index.ts', () => {
 	});
 
 	describe('Container - pull to refresh', () => {
-		// 注意：jsdom 中 'ontouchend' in window/document 为 true，组件 isTouch 会取 true，
-		// 因此 Container 的 onMousedown / onMousemove / onMouseup 在 jsdom 中不会触发刷新。
-		// 这里使用 touchstart / touchmove / touchend 进行驱动。
-		const fireTouch = (
+		// 触摸事件直接派发到根节点；鼠标按下后由 document 跟踪移动与松开（见 mouse drag 用例）
+		const fireTouchAt = (
 			el: Element,
 			type: 'touchstart' | 'touchmove' | 'touchend',
-			screenY: number,
+			touch: { screenX: number; screenY: number },
 			targetTouches?: any[]
 		) => {
 			const ev = new Event(type, { bubbles: true, cancelable: true }) as any;
-			ev.touches = [{ screenX: 0, screenY }];
+			ev.touches = [touch];
 			ev.targetTouches = targetTouches ?? [];
 			el.dispatchEvent(ev);
+		};
+		const fireTouch = (el: Element, type: 'touchstart' | 'touchmove' | 'touchend', screenY: number, targetTouches?: any[]) => {
+			fireTouchAt(el, type, { screenX: 0, screenY }, targetTouches);
+		};
+		const fireHorizontalTouch = (el: Element, type: 'touchstart' | 'touchmove' | 'touchend', screenX: number) => {
+			fireTouchAt(el, type, { screenX, screenY: 0 });
+		};
+		// 默认主键拖动：按下、移动时 buttons 含主键，松开时为 0
+		const fireMouse = (
+			el: EventTarget,
+			type: 'mousedown' | 'mousemove' | 'mouseup',
+			screenY: number,
+			init: MouseEventInit = {}
+		) => {
+			el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, screenY, buttons: type === 'mouseup' ? 0 : 1, ...init }));
+		};
+		const settle = async () => {
+			await nextTick();
+			await sleep(0);
+			await nextTick();
+		};
+		// 一次完整的触摸拉动（按下 → 移动 → 松开）并等待刷新流程推进
+		const touchDrag = async (el: Element, from: number, to: number) => {
+			fireTouch(el, 'touchstart', from);
+			fireTouch(el, 'touchmove', to);
+			fireTouch(el, 'touchend', to);
+			await sleep(20);
+			await nextTick();
+		};
+		const mountPullable = (loadData: any, props: Record<string, any> = {}) => {
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} pullable loadData={loadData} pauseOffset={30} {...props} />
+			), { attachTo: document.body });
+			const root = wrapper.find('.vc-recycle-list').element;
+			return {
+				wrapper,
+				root,
+				listRef,
+				wrapEl: wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement,
+				pull: () => root.querySelector('.vc-recycle-list__pull') as HTMLElement,
+				container: () => root.querySelector('.vc-recycle-list__container') as HTMLElement
+			};
+		};
+		const selectAll = (el: Element) => {
+			const range = document.createRange();
+			range.selectNodeContents(el);
+			window.getSelection()!.removeAllRanges();
+			window.getSelection()!.addRange(range);
 		};
 
 		it('does NOT trigger reload when not pullable', async () => {
@@ -2460,26 +2542,263 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
-		it('inverted=true does NOT engage pull-to-refresh', async () => {
+		it('inverted: pulling up past pauseOffset at the end triggers refresh', async () => {
 			const loadData = vi.fn(async () => false);
-			const wrapper = mount(() => (
-				<RecycleList pullable inverted loadData={loadData} pauseOffset={30} />
-			), { attachTo: document.body });
-
-			await nextTick();
-			await sleep(0);
-
+			const { wrapper, root, pull, container } = mountPullable(loadData, { inverted: true });
+			await settle();
 			const initialCalls = loadData.mock.calls.length;
 
-			const root = wrapper.find('.vc-recycle-list').element;
-			fireTouch(root, 'touchstart', 0);
-			fireTouch(root, 'touchmove', 200);
-			fireTouch(root, 'touchend', 200);
+			fireTouch(root, 'touchstart', 300);
+			fireTouch(root, 'touchmove', 280); // 上拉 20 < pauseOffset 30
+			await nextTick();
+			expect(pull().textContent).toBe('↑ 上拉刷新');
 
+			fireTouch(root, 'touchmove', 100); // 上拉 200，阻尼后 90 + (200 - 90) / 5 = 112
+			await nextTick();
+			expect(pull().textContent).toBe('↓ 释放更新');
+			// 整体向上平移，露出尾部的提示条
+			// transform 可能带浏览器前缀（jsdom 解析为 webkitTransform），只断言取值
+			expect(container().getAttribute('style')).toContain('translateY(-112px)');
+
+			fireTouch(root, 'touchend', 100);
 			await sleep(20);
 			await nextTick();
+
+			expect(loadData.mock.calls.length).toBeGreaterThan(initialCalls);
+			wrapper.unmount();
+		});
+
+		it('inverted: pulling down does NOT trigger refresh', async () => {
+			const loadData = vi.fn(async () => false);
+			const { wrapper, root } = mountPullable(loadData, { inverted: true });
+			await settle();
+			const initialCalls = loadData.mock.calls.length;
+
+			await touchDrag(root, 100, 300);
 			expect(loadData.mock.calls.length).toBe(initialCalls);
 			wrapper.unmount();
+		});
+
+		it('inverted: only allows pulling up when the main axis is at its end', async () => {
+			const loadData = vi.fn(async () => false);
+			const { wrapper, root, wrapEl } = mountPullable(loadData, { inverted: true });
+			await settle();
+			const initialCalls = loadData.mock.calls.length;
+			const restore = mockSize(wrapEl, { clientHeight: 200, scrollHeight: 1000 });
+
+			// 未到末端：拖动是普通滚动
+			wrapEl.scrollTop = 400;
+			await touchDrag(root, 300, 100);
+			expect(loadData.mock.calls.length).toBe(initialCalls);
+
+			// 小数 scrollTop 距末端不足 1px 也算到底
+			wrapEl.scrollTop = 799.5;
+			await touchDrag(root, 300, 100);
+			expect(loadData.mock.calls.length).toBeGreaterThan(initialCalls);
+
+			restore();
+			wrapper.unmount();
+		});
+
+		it('inverted: silent reset keeps the scroll position instead of jumping to 0', async () => {
+			let resolveFn: (v: any) => void = () => {};
+			let calls = 0;
+			const loadData = vi.fn(() => {
+				calls++;
+				if (calls === 1) return Promise.resolve(false);
+				return new Promise((resolve) => { resolveFn = resolve; });
+			});
+			const { wrapper, listRef, wrapEl } = mountPullable(loadData, { inverted: true });
+			await settle();
+
+			const restore = mockSize(wrapEl, { clientHeight: 200, scrollHeight: 1000 });
+			wrapEl.scrollTop = 400;
+
+			const pending = listRef.value.reset(true);
+			await nextTick();
+			// 请求挂起期间旧内容保持原位，贴底交给首批数据落地
+			expect(listRef.value.store.states.isSilentRefresh).toBe(true);
+			expect(wrapEl.scrollTop).toBe(400);
+
+			resolveFn(false);
+			await pending;
+			restore();
+			wrapper.unmount();
+		});
+
+		it('inverted horizontal: pulling left shows LEFT status and triggers refresh', async () => {
+			const loadData = vi.fn(async () => false);
+			const { wrapper, root, pull } = mountPullable(loadData, { inverted: true, vertical: false });
+			await settle();
+			const initialCalls = loadData.mock.calls.length;
+			expect(pull().style.marginRight).toBe('-30px');
+
+			fireHorizontalTouch(root, 'touchstart', 300);
+			fireHorizontalTouch(root, 'touchmove', 280);
+			await nextTick();
+			expect(pull().textContent).toBe('← 左拉刷新');
+
+			fireHorizontalTouch(root, 'touchmove', 100);
+			fireHorizontalTouch(root, 'touchend', 100);
+			await sleep(20);
+			await nextTick();
+
+			expect(loadData.mock.calls.length).toBeGreaterThan(initialCalls);
+			wrapper.unmount();
+		});
+
+		describe('mouse drag leaving the list', () => {
+			it('releasing outside the list after passing pauseOffset still refreshes and rebounds', async () => {
+				const loadData = vi.fn(async () => false);
+				const { wrapper, root, pull } = mountPullable(loadData);
+				await settle();
+				const initialCalls = loadData.mock.calls.length;
+
+				fireMouse(root, 'mousedown', 100);
+				fireMouse(root, 'mousemove', 300);
+				await nextTick();
+				expect(pull().textContent).toBe('↑ 释放更新');
+
+				// 指针已离开列表：松开发生在列表外
+				fireMouse(document.body, 'mouseup', 300);
+				await sleep(20);
+				await nextTick();
+
+				expect(loadData.mock.calls.length).toBeGreaterThan(initialCalls);
+				expect(pull().textContent).toBe('~');
+				wrapper.unmount();
+			});
+
+			it('keeps following the pointer outside the list', async () => {
+				const loadData = vi.fn(async () => false);
+				const { wrapper, root, pull } = mountPullable(loadData, { inverted: true });
+				await settle();
+				const initialCalls = loadData.mock.calls.length;
+
+				// inverted 上拉：按下后指针移出列表继续向上
+				fireMouse(root, 'mousedown', 300);
+				fireMouse(document.body, 'mousemove', 100);
+				await nextTick();
+				expect(pull().textContent).toBe('↓ 释放更新');
+
+				fireMouse(document.body, 'mouseup', 100);
+				await sleep(20);
+				await nextTick();
+
+				expect(loadData.mock.calls.length).toBeGreaterThan(initialCalls);
+				wrapper.unmount();
+			});
+
+			it('ends the gesture when the primary button is no longer pressed without a mouseup', async () => {
+				const loadData = vi.fn(async () => false);
+				const { wrapper, root, pull } = mountPullable(loadData);
+				await settle();
+
+				fireMouse(root, 'mousedown', 100);
+				fireMouse(root, 'mousemove', 110);
+				await nextTick();
+				expect(pull().textContent).toBe('↓ 下拉刷新');
+
+				// 右键菜单、原生拖拽等吞掉了 mouseup：下一次移动时主键已松开
+				fireMouse(document.body, 'mousemove', 300, { buttons: 0 });
+				await nextTick();
+				expect(pull().textContent).toBe('~');
+
+				// 已解绑：之后按着主键移动也不再拉动
+				fireMouse(document.body, 'mousemove', 300);
+				await nextTick();
+				expect(pull().textContent).toBe('~');
+				wrapper.unmount();
+			});
+
+			it('ignores non-primary buttons', async () => {
+				const loadData = vi.fn(async () => false);
+				const { wrapper, root, pull } = mountPullable(loadData);
+				await settle();
+
+				fireMouse(root, 'mousedown', 100, { button: 2, buttons: 2 });
+				fireMouse(document.body, 'mousemove', 300, { buttons: 2 });
+				await nextTick();
+				// 未进入拉动
+				expect(root.classList.contains('is-pulling')).toBe(false);
+				expect(pull().textContent).not.toBe('↑ 释放更新');
+				wrapper.unmount();
+			});
+
+			it('clears the selection and blocks new selections only while pulling', async () => {
+				const loadData = vi.fn(async () => false);
+				const { wrapper, root } = mountPullable(loadData);
+				await settle();
+
+				const selectStartPrevented = () => {
+					const ev = new Event('selectstart', { bubbles: true, cancelable: true });
+					root.dispatchEvent(ev);
+					return ev.defaultPrevented;
+				};
+
+				// 按下后未进入拉动：选区保留，可以开始新选区
+				selectAll(root);
+				fireMouse(root, 'mousedown', 100);
+				expect(window.getSelection()!.rangeCount).toBe(1);
+				expect(selectStartPrevented()).toBe(false);
+
+				// 进入拉动：清掉选区，拉动期间不再开始新选区
+				fireMouse(root, 'mousemove', 110);
+				await nextTick();
+				expect(window.getSelection()!.rangeCount).toBe(0);
+				expect(root.classList.contains('is-pulling')).toBe(true);
+				expect(selectStartPrevented()).toBe(true);
+
+				// 手势结束后恢复
+				fireMouse(document.body, 'mouseup', 110);
+				await nextTick();
+				expect(root.classList.contains('is-pulling')).toBe(false);
+				expect(selectStartPrevented()).toBe(false);
+				wrapper.unmount();
+			});
+
+			it('keeps the selection when the drag is not a pull', async () => {
+				const loadData = vi.fn(async () => false);
+				const { wrapper, root } = mountPullable(loadData);
+				await settle();
+
+				selectAll(root);
+
+				// 正序反方向（向上）拖动是选字，不进入拉动
+				fireMouse(root, 'mousedown', 300);
+				fireMouse(root, 'mousemove', 100);
+				await nextTick();
+				expect(root.classList.contains('is-pulling')).toBe(false);
+				expect(window.getSelection()!.rangeCount).toBe(1);
+
+				fireMouse(document.body, 'mouseup', 100);
+				window.getSelection()!.removeAllRanges();
+				wrapper.unmount();
+			});
+
+			it('rebounds without refreshing when released outside below pauseOffset, and stops listening afterwards', async () => {
+				const loadData = vi.fn(async () => false);
+				const { wrapper, root, pull, container } = mountPullable(loadData);
+				await settle();
+				const initialCalls = loadData.mock.calls.length;
+
+				fireMouse(root, 'mousedown', 100);
+				fireMouse(root, 'mousemove', 110);
+				await nextTick();
+				expect(pull().textContent).toBe('↓ 下拉刷新');
+
+				fireMouse(document.body, 'mouseup', 110);
+				await nextTick();
+				expect(pull().textContent).toBe('~');
+				expect(container().getAttribute('style')).toContain('translateY(0px)');
+
+				// 手势结束后，列表外的移动不再驱动拉动
+				fireMouse(document.body, 'mousemove', 400);
+				await nextTick();
+				expect(pull().textContent).toBe('~');
+				expect(loadData.mock.calls.length).toBe(initialCalls);
+				wrapper.unmount();
+			});
 		});
 
 		it('second touchend during ongoing refresh keeps offset at pauseOffset (REFRESH branch)', async () => {

@@ -120,6 +120,10 @@ export interface ScrollSource {
 	 * 主轴滚动位置
 	 */
 	readonly offset: number;
+	/**
+	 * 主轴滚动内容的总尺寸；外部滚动源为承载者自身的 scrollHeight / scrollWidth
+	 */
+	readonly scrollSize: number;
 	readonly clientSize: number;
 	/**
 	 * 判定"内容不足一屏"时用的尺寸；与 clientSize 的取法可能不同

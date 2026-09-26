@@ -47,6 +47,14 @@ export class Viewport {
 	}
 
 	/**
+	 * 主轴可滚动的最大位置；外部滚动源为承载者的绝对末端
+	 * @returns 最大滚动位置，不小于 0
+	 */
+	get maxOffset() {
+		return Math.max(0, this.source.scrollSize - this.source.clientSize);
+	}
+
+	/**
 	 * 写主轴滚动位置；只写主轴，不触碰交叉轴
 	 * @param value 目标位置
 	 * @param force 为 true 时即使与当前值相同也写入

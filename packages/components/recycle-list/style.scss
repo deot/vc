@@ -21,8 +21,20 @@ $component-name: vc-recycle-list;
 		transition: transform 300ms ease-out;
 	}
 
-	// 下拉过程中关闭 transition，避免跟手时的 300ms 过渡导致重影/抖动；松手回弹仍用上面 300ms
-	@include when(transition-none) {
+	// inverted 在尾部上拉：提示条贴到底部，靠负 margin-bottom 藏到视口外（横向由后面的 is-horizontal 覆盖）
+	@include when(inverted) {
+		@include element(pull) {
+			top: auto;
+			bottom: 0;
+		}
+	}
+
+	// 拉动中（PULL / PENDING）
+	@include when(pulling) {
+		// 禁止选中文字，鼠标拖动不再顺带选区
+		user-select: none;
+
+		// 关闭 transition，避免跟手时的 300ms 过渡导致重影/抖动；松手回弹仍用上面 300ms
 		@include element(container) {
 			transition: none;
 		}
@@ -95,6 +107,8 @@ $component-name: vc-recycle-list;
 		}
 
 		@include element(pool) {
+			// 不按静态位置排在首部 scroll-state 之后，否则右侧溢出 wrapper，Firefox 会把它算进 scrollWidth
+			left: 0;
 			display: flex;
 
 			@include element(hidden) {
@@ -124,6 +138,14 @@ $component-name: vc-recycle-list;
 			display: flex;
 			justify-content: center;
 			writing-mode: vertical-rl;
+		}
+
+		// inverted 在尾部左拉：提示条贴到右侧，靠负 margin-right 藏到视口外
+		@include when(inverted) {
+			@include element(pull) {
+				right: 0;
+				left: auto;
+			}
 		}
 
 		@include element(scroll-state) {

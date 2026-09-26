@@ -560,6 +560,43 @@ describe('RecycleList fill=false', () => {
 		wrapper.unmount();
 	});
 
+	it('only allows inverted pull-up at the external carrier absolute end', async () => {
+		const loadData = vi.fn()
+			.mockResolvedValueOnce({ data: [], finished: false })
+			.mockResolvedValue(false);
+		const wrapper = mount(() => (
+			<div class="viewport" style="overflow-y: auto; height: 200px;">
+				<RecycleList fill={false} inverted pullable pauseOffset={30} loadData={loadData} />
+			</div>
+		), { attachTo: document.body });
+		await flush();
+
+		const viewport = wrapper.find('.viewport').element as HTMLElement;
+		const root = wrapper.find('.vc-recycle-list').element;
+		const restores = [
+			defineGetter(viewport, 'scrollHeight', () => 1000),
+			defineGetter(viewport, 'clientHeight', () => 200)
+		];
+
+		// 承载者未到绝对末端（例如还有后置内容没滚完）：拖动是普通滚动
+		viewport.scrollTop = 40;
+		fireTouch(root, 'touchstart', 160);
+		fireTouch(root, 'touchmove', 10);
+		fireTouch(root, 'touchend', 10);
+		await flush();
+		expect(loadData).toHaveBeenCalledTimes(1);
+
+		viewport.scrollTop = 800;
+		fireTouch(root, 'touchstart', 160);
+		fireTouch(root, 'touchmove', 10);
+		fireTouch(root, 'touchend', 10);
+		await flush();
+		expect(loadData).toHaveBeenCalledTimes(2);
+
+		restores.forEach(fn => fn());
+		wrapper.unmount();
+	});
+
 	it('keeps horizontal pull-to-refresh on the external absolute start', async () => {
 		const loadData = vi.fn()
 			.mockResolvedValueOnce({ data: [], finished: false })

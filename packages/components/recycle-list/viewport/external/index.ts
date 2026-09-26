@@ -49,7 +49,7 @@ export class ExternalViewport implements ScrollSource {
 		return this.carrier.target;
 	}
 
-	private get scrollSize() {
+	get scrollSize() {
 		return this.carrier.scrollSize;
 	}
 

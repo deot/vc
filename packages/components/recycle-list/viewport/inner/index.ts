@@ -27,7 +27,7 @@ export class InnerViewport implements ScrollSource {
 		return this.anchors.wrapper();
 	}
 
-	private get scrollSize() {
+	get scrollSize() {
 		return this.el?.[this.keys.scrollSize] || 0;
 	}
 
