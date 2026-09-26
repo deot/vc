@@ -87,7 +87,7 @@ export class ExternalCarrier {
 	 * 承载者内容区在客户区坐标中的起点：Window 为 0，元素为自身 rect 加边框
 	 * @returns 起点
 	 */
-	private get contentOrigin() {
+	get contentOrigin() {
 		if (isWindow(this.target)) return 0;
 		const rect = this.target.getBoundingClientRect();
 		return this.keys.axis === 'y'

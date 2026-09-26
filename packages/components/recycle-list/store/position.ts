@@ -8,7 +8,7 @@ import type { RecycleListItemNodeRaw } from './base-watcher';
  * @param isMatch 单调谓词（true 区段在右侧）
  * @returns 首个匹配下标
  */
-const bisectFirst = (length: number, isMatch: (i: number) => boolean) => {
+export const bisectFirst = (length: number, isMatch: (i: number) => boolean) => {
 	let lo = 0;
 	let hi = length;
 	while (lo < hi) {
@@ -28,7 +28,7 @@ const bisectFirst = (length: number, isMatch: (i: number) => boolean) => {
  * @param isMatch 单调谓词（true 区段在左侧）
  * @returns 末个匹配下标
  */
-const bisectLast = (length: number, isMatch: (i: number) => boolean) => {
+export const bisectLast = (length: number, isMatch: (i: number) => boolean) => {
 	let lo = 0;
 	let hi = length - 1;
 	let last = -1;
