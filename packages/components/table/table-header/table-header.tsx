@@ -245,8 +245,8 @@ export const TableHeader = defineComponent({
 
 		// 默认 label 为多行省略（header-line），被截断时展示完整内容；自定义表头内没有 text-line，不处理
 		const handleLabelMouseEnter = (e: MouseEvent, column: TableColumnStates) => {
-			const el = (e.currentTarget as HTMLElement).querySelector(':scope > .vc-table__text-line');
-			textLineTooltip.open(el, getColumnLine(column, 'headerLine'));
+			const label = e.currentTarget as HTMLElement;
+			textLineTooltip.open(label.querySelector(':scope > .vc-table__text-line'), getColumnLine(column, 'headerLine'), label);
 		};
 
 		/**

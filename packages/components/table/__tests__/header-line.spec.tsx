@@ -13,6 +13,7 @@ import { Table, TableColumn, Popover } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { VcInstance } from '../../vc';
+import { getTooltipWidth } from '../hooks/use-text-line-tooltip';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -132,7 +133,10 @@ describe('header-line', () => {
 			line: 2,
 			ellipsis: '...'
 		}));
-		expect(open).toHaveBeenCalledWith(expect.objectContaining({ triggerEl: textLine, content: '很长的表头' }));
+		// 弹层锚在 label 上（鼠标移入的节点）
+		expect(open).toHaveBeenCalledWith(expect.objectContaining({ triggerEl: label.element, content: '很长的表头' }));
+		// jsdom 中测量不到文字宽度：不限制宽度，只受 Popover 的屏幕上限约束（宽度的计算见 getTooltipWidth 用例）
+		expect(open.mock.calls[0][0]).not.toHaveProperty('portalStyle');
 
 		// 从排序图标移入 th 不触发（弹层只随 text-line 的移入移出开关）
 		open.mockClear();
@@ -161,7 +165,37 @@ describe('header-line', () => {
 			line: 1,
 			ellipsis: '...'
 		}));
-		expect(open).toHaveBeenCalledWith(expect.objectContaining({ content: 'nested-value' }));
+		// 弹层锚在单元格上：text-line 外还有 padding，锚在 text-line 上会盖住鼠标所在的格子
+		expect(open).toHaveBeenCalledWith(expect.objectContaining({
+			content: 'nested-value',
+			triggerEl: wrapper.find('.vc-table__td').element
+		}));
+		wrapper.unmount();
+	});
+
+	it('滚动期间不弹出，滚动停止后鼠标仍在单元格上时再弹出', async () => {
+		const open = vi.spyOn(Popover, 'open').mockImplementation(() => ({ destroy: vi.fn() }) as any);
+		const wrapper = mount(() => (
+			<Table data={data} primaryKey="id">
+				<TableColumn label="嵌套" prop="info.name" line={1} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		const td = wrapper.find('.vc-table__td').element;
+		const textLine = td.querySelector('.vc-table__text-line')!;
+		defineValue(textLine, 'scrollHeight', 40);
+		defineValue(textLine, 'clientHeight', 20);
+		mocks.getFitIndex.mockImplementation(() => 3);
+
+		// 表体滚动（捕获阶段监听）后，内容在静止的鼠标下移动触发移入
+		td.dispatchEvent(new Event('scroll'));
+		await wrapper.find('.vc-table__td').trigger('mouseover');
+		expect(open).not.toHaveBeenCalled();
+
+		defineValue(td, 'matches', (selector: string) => selector === ':hover');
+		await sleep(200);
+		expect(open).toHaveBeenCalledWith(expect.objectContaining({ triggerEl: td }));
 		wrapper.unmount();
 	});
 
@@ -270,5 +304,37 @@ describe('header-line', () => {
 		expect(newHeader).not.toBe(oldHeader);
 		expect(newHeader.__rz__.listeners.length).toBe(1);
 		wrapper.unmount();
+	});
+});
+
+describe('getTooltipWidth：长文字按宽高比 3:1，短文字不换行', () => {
+	// 弹层默认字体 13px / 行高 20px，内容区左右 padding 共 24px；一行至少 20 个字（260px）
+	const size = (width: number) => ({ width, fontSize: 13, lineHeight: 20, padding: 24 });
+
+	it('长文字：宽度为 √(3 × 单行宽 × 行高)', () => {
+		// 单行 7200px：√(3 × 7200 × 20) ≈ 657.3，约 11 行、高 220px
+		expect(getTooltipWidth(size(7200), 140)).toBe(682);
+		// 单行 1200px：√(3 × 1200 × 20) ≈ 268.3，约 5 行
+		expect(getTooltipWidth(size(1200), 140)).toBe(293);
+	});
+
+	it('短文字不换行：一行放得下 20 个字以内的文字（如表头）', () => {
+		// “供应商信息”约 65px，单元格文字宽 56px
+		expect(getTooltipWidth(size(65), 56)).toBe(89);
+		expect(getTooltipWidth(size(200), 56)).toBe(224);
+	});
+
+	it('比 20 个字长时，一行至少 20 个字', () => {
+		// √(3 × 300 × 20) ≈ 134.2 < 260
+		expect(getTooltipWidth(size(300), 140)).toBe(284);
+	});
+
+	it('单元格文字比 20 个字还宽时，不窄于单元格', () => {
+		expect(getTooltipWidth(size(600), 400)).toBe(424);
+	});
+
+	it('测量不到时返回 0（不限制宽度）', () => {
+		expect(getTooltipWidth(size(0), 140)).toBe(0);
+		expect(getTooltipWidth({ ...size(1200), lineHeight: 0 }, 140)).toBe(0);
 	});
 });
