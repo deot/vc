@@ -10,7 +10,7 @@ import { TableSort } from './table-sort';
 import { TableFilter } from './table-filter';
 import { getColumnLine } from '../table-column/table-column-config';
 import { useTextLineTooltip } from '../hooks/use-text-line-tooltip';
-import type { TableProvide } from '../types';
+import type { TableColumnResizePayload, TableHeaderEventPayload, TableProvide } from '../types';
 import type { TableColumnNode, TableColumnStates } from '../table-column/table-column-node';
 
 export const TableHeader = defineComponent({
@@ -111,11 +111,11 @@ export const TableHeader = defineComponent({
 		};
 
 		const handleHeaderClick = (e: MouseEvent, column: TableColumnNode) => {
-			table.emit('header-click', column.states, e);
+			table.emit('header-click', { column: column.states, event: e } satisfies TableHeaderEventPayload);
 		};
 
 		const handleHeaderContextMenu = (e: MouseEvent, column: TableColumnNode) => {
-			table.emit('header-contextmenu', column.states, e);
+			table.emit('header-contextmenu', { column: column.states, event: e } satisfies TableHeaderEventPayload);
 		};
 
 		const handleMouseDown = (e: MouseEvent, column: TableColumnNode) => {
@@ -163,7 +163,11 @@ export const TableHeader = defineComponent({
 						const columnWidth = finalLeft - startColumnLeft;
 						column.states.width = column.states.minWidth = column.states.realWidth = columnWidth;
 						column.states.resized = true;
-						table.emit('header-dragend', column.states.width, startLeft - startColumnLeft, column.states);
+						table.emit('column-resize', {
+							column: column.states,
+							width: columnWidth,
+							oldWidth: startLeft - startColumnLeft
+						} satisfies TableColumnResizePayload);
 
 						table.store.scheduleLayout();
 

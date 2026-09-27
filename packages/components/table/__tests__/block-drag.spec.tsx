@@ -247,7 +247,9 @@ describe('table/block-drag', () => {
 		expect(events).toEqual(['start', 'update', 'drop', 'end']);
 		expect(onStart).toHaveBeenCalledWith({ rows: [expect.objectContaining({ id: 'id__0' })], rowIndex: 0 });
 		const payload = (onDrop.mock.calls[0] as any[])[0];
-		expect(payload).toMatchObject({ position: 'after', oldIndex: 0, newIndex: 2 });
+		expect(payload).toMatchObject({ position: 'after', from: { parent: null, index: 0 }, to: { parent: null, index: 2 } });
+		expect(payload).not.toHaveProperty('oldIndex');
+		expect(payload).not.toHaveProperty('newIndex');
 		expect(payload.rows.map((row: any) => row.id)).toEqual(['id__0']);
 		expect(payload.targetRows.map((row: any) => row.id)).toEqual(['id__2']);
 		expect(payload.rawData.map((row: any) => row.id)).toEqual(['id__1', 'id__2', 'id__0', 'id__3', 'id__4']);
@@ -544,7 +546,7 @@ describe('table/block-drag', () => {
 		data.value = [...data.value].reverse();
 		await flush();
 		expect(vm.store.states.selection).toEqual([]);
-		expect(onSelectionChange).toHaveBeenLastCalledWith([]);
+		expect(onSelectionChange).toHaveBeenLastCalledWith({ selection: [] });
 		wrapper.unmount();
 	});
 
@@ -587,7 +589,7 @@ describe('table/block-drag', () => {
 		expect(selfDisplay).toBe('none');
 		const payload = onDrop.mock.calls[0][0];
 		expect(payload.rows.map((row: any) => row.id)).toEqual(['id__0', 'id__1', 'id__2']);
-		expect(payload).toMatchObject({ position: 'after', oldIndex: 0, newIndex: 2 });
+		expect(payload).toMatchObject({ position: 'after', from: { parent: null, index: 0 }, to: { parent: null, index: 2 } });
 		expect(names(wrapper)).toEqual(['name-3', 'name-4', 'name-0', 'name-1', 'name-2']);
 		// 按新顺序重新合并
 		expect(wrapper.find('.vc-table__body-wrapper [data-row-start="2"]').classes()).toContain('vc-table__tr-group');
@@ -786,9 +788,7 @@ describe('table/block-drag', () => {
 			expect(payload).toMatchObject({
 				position: 'before',
 				from: { parent: null, index: 1 },
-				to: { index: 0 },
-				oldIndex: 1,
-				newIndex: 0
+				to: { index: 0 }
 			});
 			expect(payload.to.parent.id).toBe(1);
 			expect(ids(payload.rows)).toEqual([2]);
@@ -954,7 +954,7 @@ describe('table/block-drag', () => {
 			await dragTo(cellOf(w2, 4, 1).element, 4, rowY(1));
 			await flush();
 			expect(tableRef2.value.store.states.selection).toEqual([]);
-			expect(onSelectionChange).toHaveBeenLastCalledWith([]);
+			expect(onSelectionChange).toHaveBeenLastCalledWith({ selection: [] });
 			w2.unmount();
 		});
 
@@ -1169,7 +1169,7 @@ describe('table/block-drag', () => {
 			await startDrag(cellOf(wrapper, 1, 1).element, 1, rowY(0));
 			await sleep(700);
 			await flush();
-			expect(onExpand).toHaveBeenLastCalledWith(expect.objectContaining({ id: 1 }), true, expect.anything());
+			expect(onExpand).toHaveBeenLastCalledWith({ type: 'tree', row: expect.objectContaining({ id: 1 }), expanded: true, maxLevel: 2 });
 			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r1-2', 'r1-2-1', 'r2', 'r3']);
 			// 拖拽仍在进行，被拖行随块列表重建后仍变暗
 			expect(wrapper.element.querySelector('.vc-table__drag-ghost')).toBeTruthy();

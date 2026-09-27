@@ -80,7 +80,8 @@ const tableData1 = ref([
 	}
 ]);
 
-const handleClick = (row, column, cell, event) => {
+// row：点击的行；rowIndex：行号；column：点击的列
+const handleClick = ({ row, rowIndex, column }) => {
 
 };
 
@@ -731,7 +732,7 @@ const filteredData = computed(() => {
 - 合计行（`show-summary` / `get-summary`）基于根行 `data` 计算，不含子行。
 - 无障碍：树形表格以 `treegrid` 呈现，行带有 `aria-level` 与 `aria-expanded`。
 - 展开状态按 `primary-key` 记录：数据更新后保留；`default-expand-all` 只作为未操作过的节点的默认值，已收起的节点不会被重新展开；`expand-row-value` 设置当前展开的节点。
-- `expand-change` 回调为 `(row, expanded, maxLevel)`，`maxLevel` 为当前可见行的最大层级（根为 `0`），可用于调整树形列的宽度。
+- `expand-change` 的参数为 `{ type: 'tree', row, expanded, maxLevel }`，`maxLevel` 为当前可见行的最大层级（根为 `0`），可用于调整树形列的宽度。
 - `load-expand(row, treeNode)` 可以返回数组或 `Promise`，`treeNode.level` 为该节点的层级；加载失败时节点恢复为待加载。展开尚未加载的节点（点击或 `toggleRowExpansion`）会先触发加载。
 - 嵌套的 `children` 可以原地增删（如 `row.children.splice(index, 1)`），表格会同步更新，被移除的行同时移出选中项；若之后还要增删懒加载得到的子行，`load-expand` 请返回响应式数组（如 `reactive([...])`）。
 
@@ -804,7 +805,7 @@ const loadExpand = (row, treeNode) => {
 	});
 };
 
-const handleExpandChange = (row, expanded, maxLevel) => {
+const handleExpandChange = ({ maxLevel }) => {
 	treeWidth.value = 180 + maxLevel * 16;
 };
 </script>
@@ -816,7 +817,7 @@ const handleExpandChange = (row, expanded, maxLevel) => {
 
 - 通过 `expand-row-value`（需设置 `primary-key`）指定展开的行，或调用 `toggleRowExpansion(row, expanded)` 切换。
 - 展开状态按 `primary-key` 记录（未设置时按行对象），数据更新后保留；`default-expand-all` 只作为未操作过的行的默认值，已收起的行不会被重新展开。
-- `expand-change` 回调为 `(row, expandedRows)`，`expandedRows` 为当前展开的行（按显示顺序）。
+- `expand-change` 的参数为 `{ type: 'expand', row, expanded, expandedRows }`，`expanded` 为该行是否展开，`expandedRows` 为当前展开的行（按显示顺序）。
 - 通过 `v-model:columns` 隐藏 expand 列时，展开内容一并隐藏。
 - 展开内容的高度可以任意变化，虚拟化表格会自动重新测量。
 - 展开行仅对单行渲染块生效：被 `get-span` 纵向合并在一起的行不渲染展开内容。
@@ -942,8 +943,8 @@ const tableData = ref([
 	{ id: 4, name: '微四案', date: '2011-11-04', address: '浙江省杭州市拱墅区祥园路41号' }
 ]);
 
-const handleDrop = ({ rows, oldIndex, newIndex }) => {
-	message.value = `${rows[0].name}：${oldIndex} → ${newIndex}`;
+const handleDrop = ({ rows, from, to }) => {
+	message.value = `${rows[0].name}：${from.index} → ${to.index}`;
 };
 </script>
 ```
@@ -1180,28 +1181,31 @@ const updateOffsets = () => {
 
 ### 事件
 
+事件的参数均为一个对象（`update:*` 除外，为 `v-model` 的值）。
+
 | 事件名                | 说明                                                            | 回调参数                                                                            | 参数说明                                                           |
 | ------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| select             | 当用户手动勾选数据行的 Checkbox 时触发的事件                                   | `(selection: Array, row: Object) => void 0`                                     | `selection`：当前表格选中的所有数据；`row`：当前勾选的行数据                         |
-| select-all         | 当用户手动勾选全选 Checkbox 时触发的事件                                     | `(selection: Object) => void 0`                                                 | `selection`：当前表格选中的所有数据                                        |
-| selection-change   | 当选择项发生变化时会触发该事件                                               | `(selection: Object) => void 0`                                                 | `selection`：当前表格选中的所有数据                                        |
-| cell-mouse-enter   | 当单元格 hover 进入时会触发该事件                                          | `(row: Object, column: Object, cell: Object, event: Object) => void 0`          | `row`：当前行数据；`column`：当前列数据； `cell`：当前单元格数据；`event`：事件对象        |
-| cell-mouse-leave   | 当单元格 hover 退出时会触发该事件                                          | `(row: Object, column: Object, cell: Object, event: Object) => void 0`          | `row`：当前行数据；`column`：当前列数据； `cell`：当前单元格数据；`event`：事件对象        |
-| cell-click         | 当某个单元格被点击时会触发该事件                                              | `(row: Object, column: Object, cell: Object, event: Object) => void 0`          | `row`：当前行数据；`column`：当前列数据； `cell`：当前单元格数据；`event`：事件对象        |
-| cell-dblclick      | 当某个单元格被双击击时会触发该事件                                             | `(row: Object, column: Object, cell: Object, event: Object) => void 0`          | `row`：当前行数据；`column`：当前列数据； `cell`：当前单元格数据；`event`：事件对象        |
-| row-click          | 当某一行被点击时会触发该事件                                                | `(row: Object, column: Object, event: Object) => void 0`                        | `row`：当前行数据；`column`：当前列数据；`event`：事件对象                        |
-| row-contextmenu    | 当某一行被鼠标右键点击时会触发该事件                                            | `(row: Object, column: Object, event: Object) => void 0`                        | `row`：当前行数据；`column`：当前列数据；`event`：事件对象                        |
-| row-dblclick       | 当某一行被双击时会触发该事件                                                | `(row: Object, column: Object, event: Object) => void 0`                        | `row`：当前行数据；`column`：当前列数据；`event`：事件对象                        |
-| header-click       | 当某一列的表头被点击时会触发该事件                                             | `(column: Object, event: Object) => void 0`                                     | `column`：当前列数据；`event`：事件对象                                    |
-| header-contextmenu | 当某一列的表头被鼠标右键点击时触发该事件                                          | `(column: Object, event: Object) => void 0`                                     | `column`：当前列数据；`event`：事件对象                                    |
-| current-change     | 当表格的当前行发生变化的时候会触发该事件，如果要高亮当前行，请打开表格的 `highlight` 属性 | `(currentRow: Object, oldCurrentRow: Object) => void 0`                         | `currentRow`：改变后的行数据；`oldCurrentRow`：改变前的行数据                   |
-| header-dragend     | 当拖动表头改变了列的宽度的时候会触发该事件                                         | `(newWidth: number, oldWidth: number, column: Object, event: Object) => void 0` | `newWidth`: 拖拽后宽度；`oldWidth`：拖拽前宽度；`column`：当前列数据；`event`：事件对象 |
-| expand-change      | 当用户对某一行展开或者关闭的时候会触发该事件                                        | 展开行：`(row: Object, expandedRows: Array) => void 0`；树形：`(row: Object, expanded: boolean, maxLevel: number) => void 0` | `row`：当前行数据；`expandedRows`：展开的行数据；`expanded`：是否展开；`maxLevel`：当前可见行的最大层级（根为 `0`）      |
-| sort-change        | 当表格的排序条件发生变化的时候会触发该事件                                         | { prop, order }                                                                 |                                                                |
-| load-change      | 加载状态变化（单向推送，无对应属性）；挂载即推送一次                                   | `(loadState: { isEnd, isLoading, isSilentRefresh, isEmpty }) => void 0`            | `isEnd`：数据已全部进入虚拟列表（普通表格恒为 `true`）；`isEmpty`：已结束且无数据              |
+| select             | 当用户手动勾选数据行的 Checkbox 时触发的事件                                   | `({ row, selected, selection }) => void 0`                                      | `row`：勾选的行；`selected`：勾选后该行是否选中；`selection`：当前选中的所有行                  |
+| select-all         | 当用户手动勾选全选 Checkbox 时触发的事件                                     | `({ selected, selection }) => void 0`                                           | `selected`：全选（`true`）或取消全选（`false`）；`selection`：当前选中的所有行                |
+| selection-change   | 当选择项发生变化时会触发该事件                                               | `({ selection }) => void 0`                                                     | `selection`：当前选中的所有行                                           |
+| cell-mouse-enter   | 当单元格 hover 进入时会触发该事件                                          | `({ row, rowIndex, column, columnIndex, cell, event }) => void 0`               | `row`：所在行的数据；`rowIndex`：行号；`column`：所在列；`columnIndex`：列号；`cell`：单元格元素；`event`：事件对象 |
+| cell-mouse-leave   | 当单元格 hover 退出时会触发该事件                                          | 同 `cell-mouse-enter`                                                            |                                                                |
+| cell-click         | 当某个单元格被点击时会触发该事件                                              | 同 `cell-mouse-enter`                                                            |                                                                |
+| cell-dblclick      | 当某个单元格被双击时会触发该事件                                              | 同 `cell-mouse-enter`                                                            |                                                                |
+| cell-contextmenu   | 当某个单元格被鼠标右键点击时会触发该事件                                          | 同 `cell-mouse-enter`                                                            |                                                                |
+| row-click          | 当某一行被点击时会触发该事件                                                | 同 `cell-mouse-enter`                                                            | 与同一次点击的 `cell-click` 为同一个对象；点击合并单元格时 `row` 为合并区域的首行             |
+| row-contextmenu    | 当某一行被鼠标右键点击时会触发该事件                                            | 同 `cell-mouse-enter`                                                            | 与同一次操作的 `cell-contextmenu` 为同一个对象                               |
+| row-dblclick       | 当某一行被双击时会触发该事件                                                | 同 `cell-mouse-enter`                                                            | 与同一次操作的 `cell-dblclick` 为同一个对象                                  |
+| header-click       | 当某一列的表头被点击时会触发该事件                                             | `({ column, event }) => void 0`                                                 | `column`：所在列；`event`：事件对象                                     |
+| header-contextmenu | 当某一列的表头被鼠标右键点击时触发该事件                                          | `({ column, event }) => void 0`                                                 | `column`：所在列；`event`：事件对象                                     |
+| current-change     | 当表格的当前行发生变化的时候会触发该事件，如果要高亮当前行，请打开表格的 `highlight` 属性 | `({ row, oldRow }) => void 0`                                                   | `row`：改变后的当前行；`oldRow`：改变前的当前行                               |
+| column-resize      | 拖动表头边缘改变列宽，松开时触发                                              | `({ column, width, oldWidth }) => void 0`                                       | `column`：所在列；`width`：拖拽后的宽度；`oldWidth`：拖拽前的宽度                     |
+| expand-change      | 展开或收起某一行时触发（展开行与树形表格共用）                                        | 展开行：`({ type: 'expand', row, expanded, expandedRows }) => void 0`；树形：`({ type: 'tree', row, expanded, maxLevel }) => void 0` | `type`：`expand` 为展开行（`type="expand"` 的列），`tree` 为树形节点；`row`：展开或收起的行；`expanded`：是否展开；`expandedRows`：当前展开的行（按显示顺序）；`maxLevel`：当前可见行的最大层级（根为 `0`） |
+| sort-change        | 当表格的排序条件发生变化的时候会触发该事件                                         | `({ prop, order }) => void 0`                                                   | `prop`：排序的列；`order`：排序方式                                      |
+| load-change      | 加载状态变化（单向推送，无对应属性）；挂载即推送一次                                   | `({ isEnd, isLoading, isSilentRefresh, isEmpty }) => void 0`            | `isEnd`：数据已全部进入虚拟列表（普通表格恒为 `true`）；`isEmpty`：已结束且无数据              |
 | update:data        | 拖拽排序松手且顺序变化时触发（`v-model:data`）；树形表格在原地修改数据之后触发             | `(data: Array) => void 0`                                                       | `data`：新的数组，元素为外部数组中存放的原始行，行对象的引用不变；树形表格为原地修改后根数组的副本 |
 | block-drag-start   | 拖拽开始时触发（鼠标移动超过阈值，或触摸长按后）                                        | `({ rows, rowIndex }) => void 0`                                                | `rows`：被拖动块的行（普通表格长度为 1）；`rowIndex`：块首行的行号                       |
-| block-drop         | 松手且顺序变化时触发，在 `update:data` 之后                                       | `({ rows, targetRows, position, from, to, oldIndex, newIndex, rawData }) => void 0` | `targetRows`：落点行（树形表格 `inner` 时为新的父行）；`position`：`before`、`after`，或 `inner`（仅树形表格）；`from` / `to`：移动前后的位置 `{ parent, index }`，`parent` 为 `null` 表示根级；`oldIndex` / `newIndex`：非树形表格为被拖动块首行在 data 中移动前 / 后的下标，树形表格为兄弟行中的下标；`rawData`：新的数组（同 `update:data`） |
+| block-drop         | 松手且顺序变化时触发，在 `update:data` 之后                                       | `({ rows, targetRows, position, from, to, rawData }) => void 0`                 | `targetRows`：落点行（树形表格 `inner` 时为新的父行）；`position`：`before`、`after`，或 `inner`（仅树形表格）；`from` / `to`：移动前后的位置 `{ parent, index }`，`parent` 为 `null` 表示根级，`index` 非树形表格为块首行在 data 中的下标、树形表格为兄弟行中的下标；`rawData`：新的数组（同 `update:data`） |
 | block-drag-end     | 拖拽结束时触发，取消、顺序不变、不允许放置时也会触发                                       | `({ rows, rowIndex, dropped }) => void 0`                                       | `dropped`：是否按新顺序放下                                                  |
 
 
@@ -1296,3 +1300,21 @@ VcInstance.configure({
 
 ## TODO
 - `SSR`时能渲染带'数据'的内容
+
+<!--
+## 变更说明
+
+### 事件参数统一为对象
+- 所有事件的参数改为一个对象，`update:*`（`v-model`）不变：
+	- `select`：`(selection, row)` → `{ row, selected, selection }`，新增 `selected`（勾选后该行是否选中）。
+	- `select-all`：`(selection)` → `{ selected, selection }`，新增 `selected`（全选或取消全选）。
+	- `selection-change`：`(selection)` → `{ selection }`。
+	- `cell-mouse-enter` / `cell-mouse-leave` / `cell-click` / `cell-dblclick` / `cell-contextmenu`：`(row, column, cell, event)` → `{ row, rowIndex, column, columnIndex, cell, event }`，新增 `rowIndex` / `columnIndex`；`cell` 为单元格元素。
+	- `row-click` / `row-dblclick` / `row-contextmenu`：`(row, column, event)` → 与 cell 事件相同的对象（同一次操作为同一个对象）。
+	- `header-click` / `header-contextmenu`：`(column, event)` → `{ column, event }`。
+	- `current-change`：`(currentRow, oldCurrentRow)` → `{ row, oldRow }`。
+	- `expand-change`：展开行 `(row, expandedRows)` → `{ type: 'expand', row, expanded, expandedRows }`；树形 `(row, expanded, maxLevel)` → `{ type: 'tree', row, expanded, maxLevel }`。
+- `header-dragend` 改名为 `column-resize`，参数 `(newWidth, oldWidth, column)` → `{ column, width, oldWidth }`（原文档中的 `event` 参数实际并未传出）。
+- `block-drop` 移除 `oldIndex` / `newIndex`，改用 `from.index` / `to.index`。
+- `sort-change`、`load-change`、`block-drag-start`、`block-drag-end` 原本即为对象，不变。
+-->

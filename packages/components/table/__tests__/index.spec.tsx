@@ -385,6 +385,9 @@ describe('Table interaction events', () => {
 		const onCurrentChange = vi.fn();
 		const onRowDblclick = vi.fn();
 		const onRowContextmenu = vi.fn();
+		const onCellClick = vi.fn();
+		const onCellDblclick = vi.fn();
+		const onCellContextmenu = vi.fn();
 
 		const data = buildData(2);
 		const wrapper = mount(() => (
@@ -400,6 +403,9 @@ describe('Table interaction events', () => {
 				onRowContextmenu={onRowContextmenu}
 				onCellMouseEnter={onCellMouseEnter}
 				onCellMouseLeave={onCellMouseLeave}
+				onCellClick={onCellClick}
+				onCellDblclick={onCellDblclick}
+				onCellContextmenu={onCellContextmenu}
 				onCurrentChange={onCurrentChange}
 			>
 				<TableColumn label="名称" prop="name" />
@@ -416,12 +422,25 @@ describe('Table interaction events', () => {
 		await cell.trigger('dblclick');
 		await flush();
 
-		expect(onRowClick).toHaveBeenCalled();
-		expect(onRowDblclick).toHaveBeenCalled();
-		expect(onRowContextmenu).toHaveBeenCalled();
-		expect(onCellMouseEnter).toHaveBeenCalled();
-		expect(onCellMouseLeave).toHaveBeenCalled();
-		expect(onCurrentChange).toHaveBeenCalled();
+		// 单元格事件与行事件为同一个对象：行、行号、列、列号、单元格元素与原生事件
+		const payload = {
+			row: data[0],
+			rowIndex: 0,
+			column: expect.objectContaining({ prop: 'name' }),
+			columnIndex: 0,
+			cell: cell.element,
+			event: expect.any(Event)
+		};
+		const handlers = [
+			onRowClick, onRowDblclick, onRowContextmenu,
+			onCellClick, onCellDblclick, onCellContextmenu, onCellMouseEnter, onCellMouseLeave
+		];
+		handlers.forEach((fn) => {
+			expect(fn).toHaveBeenCalledTimes(1);
+			expect(fn).toHaveBeenCalledWith(payload);
+		});
+		expect(onRowClick.mock.calls[0][0]).toBe(onCellClick.mock.calls[0][0]);
+		expect(onCurrentChange).toHaveBeenCalledWith({ row: data[0], oldRow: null });
 		expect(wrapper.find('.vc-table__body-wrapper .vc-table__tr.custom-row').exists()).toBe(true);
 		expect(wrapper.find('.custom-cell').exists()).toBe(true);
 
@@ -445,8 +464,9 @@ describe('Table interaction events', () => {
 		const th = wrapper.find('.vc-table__th');
 		await th.trigger('click');
 		await th.trigger('contextmenu');
-		expect(onHeaderClick).toHaveBeenCalled();
-		expect(onHeaderContextmenu).toHaveBeenCalled();
+		const payload = { column: expect.objectContaining({ prop: 'name' }), event: expect.any(Event) };
+		expect(onHeaderClick).toHaveBeenCalledWith(payload);
+		expect(onHeaderContextmenu).toHaveBeenCalledWith(payload);
 		wrapper.unmount();
 	});
 
@@ -547,12 +567,14 @@ describe('Selection & expose API', () => {
 
 		vm.toggleRowSelection(data[0]);
 		await flush();
-		expect(onSelect).toHaveBeenCalled();
-		expect(onSelectionChange).toHaveBeenCalled();
+		expect(onSelect).toHaveBeenLastCalledWith({ row: data[0], selected: true, selection: [data[0]] });
+		expect(onSelectionChange).toHaveBeenLastCalledWith({ selection: [data[0]] });
 		expect(vm.store.states.selection.length).toBe(1);
 
 		vm.toggleRowSelection(data[0]);
 		await flush();
+		expect(onSelect).toHaveBeenLastCalledWith({ row: data[0], selected: false, selection: [] });
+		expect(onSelectionChange).toHaveBeenLastCalledWith({ selection: [] });
 		expect(vm.store.states.selection.length).toBe(0);
 
 		onSelect.mockClear();
@@ -564,10 +586,20 @@ describe('Selection & expose API', () => {
 		vm.toggleAllSelection();
 		await sleep(30);
 		await flush();
-		expect(onSelectAll).toHaveBeenCalled();
+		expect(onSelectAll).toHaveBeenLastCalledWith({ selected: true, selection: expect.any(Array) });
+		expect(onSelectAll.mock.calls.at(-1)![0].selection).toHaveLength(3);
 
+		vm.toggleAllSelection();
+		await sleep(30);
+		await flush();
+		expect(onSelectAll).toHaveBeenLastCalledWith({ selected: false, selection: [] });
+
+		vm.toggleAllSelection();
+		await sleep(30);
+		await flush();
 		vm.clearSelection();
 		await flush();
+		expect(onSelectionChange).toHaveBeenLastCalledWith({ selection: [] });
 		expect(vm.store.states.selection.length).toBe(0);
 
 		vm.setCurrentRow(data[1]);
@@ -813,15 +845,15 @@ describe('Tree rows', () => {
 		expect(treeCell(1).find('.vc-table__indent').attributes('style')).toContain('padding-left: 16px');
 		expect(treeCell(0).find('.vc-table__expand-icon').classes()).toContain('is-expand');
 		// maxLevel 为当前可见行的最大层级
-		expect(onExpandChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: 1 }), true, 1);
+		expect(onExpandChange).toHaveBeenLastCalledWith({ type: 'tree', row: expect.objectContaining({ id: 1 }), expanded: true, maxLevel: 1 });
 
 		await toggle(1);
 		expect(names()).toEqual(['r1', 'r1-1', 'r1-1-1', 'r1-2', 'r2']);
-		expect(onExpandChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: 11 }), true, 2);
+		expect(onExpandChange).toHaveBeenLastCalledWith({ type: 'tree', row: expect.objectContaining({ id: 11 }), expanded: true, maxLevel: 2 });
 
 		await toggle(0);
 		expect(names()).toEqual(['r1', 'r2']);
-		expect(onExpandChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: 1 }), false, 0);
+		expect(onExpandChange).toHaveBeenLastCalledWith({ type: 'tree', row: expect.objectContaining({ id: 1 }), expanded: false, maxLevel: 0 });
 
 		wrapper.unmount();
 	});
@@ -1022,7 +1054,7 @@ describe('Tree rows', () => {
 		await flush();
 		// 子行按 primaryKey 找回，而不是被清空
 		expect(vm.store.states.currentRow?.id).toBe(12);
-		expect(onCurrentChange).not.toHaveBeenCalledWith(null, expect.anything());
+		expect(onCurrentChange).not.toHaveBeenCalledWith(expect.objectContaining({ row: null }));
 
 		wrapper.unmount();
 	});
@@ -1161,7 +1193,7 @@ describe('Tree rows', () => {
 			expect(loadExpand).toHaveBeenLastCalledWith(expect.objectContaining({ id: 1 }), expect.objectContaining({ level: 0 }));
 			expect(names()).toEqual(['r1', 'r1-a', 'r1-b', 'r2']);
 			expect(levels()).toEqual([0, 1, 1, 0]);
-			expect(onExpandChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: 1 }), true, 1);
+			expect(onExpandChange).toHaveBeenLastCalledWith({ type: 'tree', row: expect.objectContaining({ id: 1 }), expanded: true, maxLevel: 1 });
 
 			// 懒加载得到的节点层级为数字
 			await toggle(1);
@@ -1320,14 +1352,22 @@ describe('Expand rows', () => {
 		vm.toggleRowExpansion(vm.store.states.data[1], true);
 		await flush();
 		expect(expandedTexts(wrapper)).toEqual(['detail-a', 'detail-b']);
-		expect(onExpandChange).toHaveBeenLastCalledWith(
-			expect.objectContaining({ id: 2 }),
-			[expect.objectContaining({ id: 1 }), expect.objectContaining({ id: 2 })]
-		);
+		expect(onExpandChange).toHaveBeenLastCalledWith({
+			type: 'expand',
+			row: expect.objectContaining({ id: 2 }),
+			expanded: true,
+			expandedRows: [expect.objectContaining({ id: 1 }), expect.objectContaining({ id: 2 })]
+		});
 
 		vm.toggleRowExpansion(vm.store.states.data[0], false);
 		await flush();
 		expect(expandedTexts(wrapper)).toEqual(['detail-b']);
+		expect(onExpandChange).toHaveBeenLastCalledWith({
+			type: 'expand',
+			row: expect.objectContaining({ id: 1 }),
+			expanded: false,
+			expandedRows: [expect.objectContaining({ id: 2 })]
+		});
 
 		wrapper.unmount();
 	});
@@ -1543,12 +1583,12 @@ describe('TableHeader sort & resize', () => {
 		wrapper.unmount();
 	});
 
-	it('header column resize via mousemove + mousedown + mouseup emits header-dragend', async () => {
-		const onDragend = vi.fn();
+	it('header column resize via mousemove + mousedown + mouseup emits column-resize', async () => {
+		const onColumnResize = vi.fn();
 		const data = buildData(2);
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
-			<Table ref={tableRef} data={data} border resizable onHeaderDragend={onDragend}>
+			<Table ref={tableRef} data={data} border resizable onColumnResize={onColumnResize}>
 				<TableColumn label="名称" prop="name" />
 				<TableColumn label="地址" prop="address" />
 			</Table>
@@ -1573,7 +1613,8 @@ describe('TableHeader sort & resize', () => {
 		document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true } as any));
 		await sleep(0);
 		await flush();
-		expect(onDragend).toHaveBeenCalled();
+		// 起点为列右缘 100，拖动 55px：新宽度 155，原宽度 100
+		expect(onColumnResize).toHaveBeenCalledWith({ column: expect.objectContaining({ prop: 'name' }), width: 155, oldWidth: 100 });
 		// 拖过的列不再吸收剩余宽度
 		expect(tableRef.value.store.states.columns[0].states.resized).toBe(true);
 		expect(tableRef.value.store.states.columns[1].states.resized).toBeFalsy();
@@ -2502,10 +2543,10 @@ describe('Additional source-path coverage', () => {
 		await flush();
 		// 当前行仍按 primaryKey 找回新引用，current-change 携带找回的行
 		expect(vm.store.states.currentRow?.id).toBe(1);
-		expect(onCurrentChange).toHaveBeenLastCalledWith(
-			expect.objectContaining({ id: 1, name: 'a-updated' }),
-			expect.objectContaining({ id: 1, name: 'a' })
-		);
+		expect(onCurrentChange).toHaveBeenLastCalledWith({
+			row: expect.objectContaining({ id: 1, name: 'a-updated' }),
+			oldRow: expect.objectContaining({ id: 1, name: 'a' })
+		});
 		wrapper.unmount();
 	});
 

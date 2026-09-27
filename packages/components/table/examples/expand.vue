@@ -140,8 +140,8 @@ const expandRowValue = ref([2]);
 // 删除展开行不会触发 expand-change，直接读取当前展开的行
 const expandedCount = computed(() => tableRef.value?.store.expand.getRows().length || 0);
 
-const handleExpandChange = (row, expandedRows) => {
-	console.log('expand-change', row.id, expandedRows.map(item => item.id));
+const handleExpandChange = ({ row, expanded, expandedRows }) => {
+	console.log('expand-change', row.id, expanded, expandedRows.map(item => item.id));
 };
 
 // 重新生成数据，id 不变，展开状态按 primary-key 保留

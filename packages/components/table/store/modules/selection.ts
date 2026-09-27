@@ -4,6 +4,7 @@ import { hasOwn } from '@deot/helper-utils';
 import { getValuesMap, getRowValue } from '../../utils';
 import { toggleRowStatus } from '../utils';
 import type { Store } from '../store';
+import type { TableSelectAllPayload, TableSelectPayload, TableSelectionChangePayload } from '../../types';
 
 export class Selection {
 	store: Store;
@@ -42,7 +43,7 @@ export class Selection {
 			this.store.states.selection = [];
 		}
 		if (oldSelection.length > 0) {
-			this.store.table.emit('selection-change', []);
+			this.store.table.emit('selection-change', { selection: [] } satisfies TableSelectionChangePayload);
 		}
 	}
 
@@ -69,7 +70,7 @@ export class Selection {
 		if (deleted.length) {
 			const newSelection = selection.filter((item: any) => !deleted.includes(item));
 			this.store.states.selection = newSelection;
-			this.store.table.emit('selection-change', newSelection.slice());
+			this.store.table.emit('selection-change', { selection: newSelection.slice() } satisfies TableSelectionChangePayload);
 		}
 	}
 
@@ -81,9 +82,13 @@ export class Selection {
 			const newSelection = (this.store.states.selection || []).slice();
 			// 调用 API 修改选中值，不触发 select 事件
 			if (emitChange) {
-				this.store.table.emit('select', newSelection, row);
+				this.store.table.emit('select', {
+					row,
+					selected: this.isSelected(row),
+					selection: newSelection
+				} satisfies TableSelectPayload);
 			}
-			this.store.table.emit('selection-change', newSelection);
+			this.store.table.emit('selection-change', { selection: newSelection } satisfies TableSelectionChangePayload);
 		}
 	}
 
@@ -96,7 +101,7 @@ export class Selection {
 		const added = rows.filter(row => !selection.includes(row));
 		if (!added.length) return;
 		this.store.states.selection = [...selection, ...added];
-		this.store.table.emit('selection-change', this.store.states.selection.slice());
+		this.store.table.emit('selection-change', { selection: this.store.states.selection.slice() } satisfies TableSelectionChangePayload);
 	}
 
 	toggleAll = debounce(() => {
@@ -124,9 +129,9 @@ export class Selection {
 		this.store.states.selection = [...selection].filter(i => typeof i !== 'undefined');
 		const selection$ = this.store.states.selection.slice();
 		if (selectionChanged) {
-			this.store.table.emit('selection-change', selection$);
+			this.store.table.emit('selection-change', { selection: selection$ } satisfies TableSelectionChangePayload);
 		}
-		this.store.table.emit('select-all', selection$);
+		this.store.table.emit('select-all', { selected: value, selection: selection$ } satisfies TableSelectAllPayload);
 	}, 10);
 
 	updateByRowKey() {

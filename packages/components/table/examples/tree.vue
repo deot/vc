@@ -39,7 +39,7 @@
 			border
 			primary-key="id"
 			@expand-change="handleExpandChange"
-			@selection-change="selection = $event"
+			@selection-change="selection = $event.selection"
 		>
 			<TableColumn
 				type="selection"
@@ -179,7 +179,7 @@ const loadExpand = (row, treeNode) => {
 
 const formatter = ({ row }) => row.date.replace(/-/g, '/');
 
-const handleExpandChange = (row, expanded, maxLevel) => {
+const handleExpandChange = ({ maxLevel }) => {
 	treeWidth.value = 180 + maxLevel * 16;
 };
 

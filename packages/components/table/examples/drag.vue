@@ -19,8 +19,8 @@
 			draggable
 			highlight
 			border
-			@selection-change="(v) => (selection = v)"
-			@current-change="(v) => (currentRow = v)"
+			@selection-change="(e) => (selection = e.selection)"
+			@current-change="(e) => (currentRow = e.row)"
 			@block-drag-start="log('block-drag-start', $event)"
 			@block-drop="log('block-drop', $event)"
 			@block-drag-end="log('block-drag-end', $event)"
@@ -269,7 +269,7 @@ const logs = ref([]);
 const log = (name, e) => {
 	const rows = e.rows.map(row => row.id).join(',');
 	const extra = name === 'block-drop'
-		? ` target=${e.targetRows.map(row => row.id).join(',')} ${e.position} ${e.oldIndex}→${e.newIndex}`
+		? ` target=${e.targetRows.map(row => row.id).join(',')} ${e.position} ${e.from.index}→${e.to.index}`
 		: name === 'block-drag-end' ? ` dropped=${e.dropped}` : '';
 	logs.value = [`${name}: rows=${rows}${extra}`, ...logs.value].slice(0, 6);
 };
@@ -310,7 +310,7 @@ const handleAsyncDrop = (e) => {
 			return;
 		}
 		asyncData.value = e.rawData;
-		message.value = `已保存：${e.rows[0].name} ${e.oldIndex} → ${e.newIndex}`;
+		message.value = `已保存：${e.rows[0].name} ${e.from.index} → ${e.to.index}`;
 	}, 800);
 };
 

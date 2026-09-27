@@ -1,5 +1,6 @@
 import { getRowValue } from '../../utils';
 import type { Store } from '../store';
+import type { TableCurrentChangePayload } from '../../types';
 
 export class Row {
 	store: Store;
@@ -17,7 +18,7 @@ export class Row {
 		const old = this.store.states.currentRow;
 		this.store.states.currentRow = row;
 		if (old !== row) {
-			this.store.table.emit('current-change', row, old);
+			this.store.table.emit('current-change', { row, oldRow: old } satisfies TableCurrentChangePayload);
 		}
 	}
 
@@ -41,7 +42,7 @@ export class Row {
 			const id = primaryKey ? getRowValue(oldCurrentRow, primaryKey) : void 0;
 			const newCurrentRow = (primaryKey && rows.find((item: any) => getRowValue(item, primaryKey) === id)) || null;
 			store.states.currentRow = newCurrentRow;
-			store.table.emit('current-change', newCurrentRow, oldCurrentRow);
+			store.table.emit('current-change', { row: newCurrentRow, oldRow: oldCurrentRow } satisfies TableCurrentChangePayload);
 		}
 	}
 }

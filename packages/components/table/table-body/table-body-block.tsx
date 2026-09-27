@@ -9,7 +9,7 @@ import { TableExpand } from './table-expand';
 import { getRowValue } from '../utils';
 import { getColumnLine } from '../table-column/table-column-config';
 import { useTextLineTooltip } from '../hooks/use-text-line-tooltip';
-import type { TableProvide } from '../types';
+import type { TableCellEventPayload, TableProvide } from '../types';
 import type { TableColumnStates } from '../table-column/table-column-node';
 
 type RowData = Record<string, unknown>;
@@ -24,6 +24,16 @@ type ResolvedCell = {
 	column: TableColumnStates;
 	columnIndex: number;
 };
+
+// 单元格事件与行事件的参数：同一次操作的 cell-* 与 row-* 共用一个对象
+const toPayload = (cell: ResolvedCell, e: MouseEvent): TableCellEventPayload => ({
+	row: cell.row,
+	rowIndex: cell.rowIndex,
+	column: cell.column,
+	columnIndex: cell.columnIndex,
+	cell: cell.cellEl,
+	event: e
+});
 
 /**
  * 块渲染（虚拟化最小单位）：
@@ -172,13 +182,13 @@ export const TableBodyBlock = defineComponent({
 
 		const enterCell = (e: MouseEvent, cell: ResolvedCell) => {
 			handleHoverEnter(cell.rowIndex);
-			table.emit('cell-mouse-enter', cell.row, cell.column, cell.cellEl, e);
+			table.emit('cell-mouse-enter', toPayload(cell, e));
 			// 多行省略被截断时展示完整内容
 			textLineTooltip.open(cell.cellEl.querySelector('.vc-table__text-line'), getColumnLine(cell.column, 'line'), cell.cellEl);
 		};
 
 		const leaveCell = (e: MouseEvent, cell: ResolvedCell) => {
-			table.emit('cell-mouse-leave', cell.row, cell.column, cell.cellEl, e);
+			table.emit('cell-mouse-leave', toPayload(cell, e));
 		};
 
 		// mouseover 冒泡 + 前后 cell 比较，合成 enter/leave 语义
@@ -204,8 +214,9 @@ export const TableBodyBlock = defineComponent({
 		const handleEvent = (e: MouseEvent, name: string) => {
 			const cell = resolveCell(e);
 			if (!cell) return;
-			table.emit(`cell-${name}`, cell.row, cell.column, cell.cellEl, e);
-			table.emit(`row-${name}`, cell.row, cell.column, e);
+			const payload = toPayload(cell, e);
+			table.emit(`cell-${name}`, payload);
+			table.emit(`row-${name}`, payload);
 			return cell;
 		};
 
@@ -213,8 +224,9 @@ export const TableBodyBlock = defineComponent({
 			const cell = resolveCell(e);
 			if (!cell) return;
 			table.store.row.set(cell.row);
-			table.emit('cell-click', cell.row, cell.column, cell.cellEl, e);
-			table.emit('row-click', cell.row, cell.column, e);
+			const payload = toPayload(cell, e);
+			table.emit('cell-click', payload);
+			table.emit('row-click', payload);
 		};
 
 		onBeforeUnmount(() => {

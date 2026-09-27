@@ -43,7 +43,7 @@ export const Table = defineComponent({
 		'header-click',
 		'header-contextmenu',
 		'current-change',
-		'header-dragend',
+		'column-resize',
 		'expand-change',
 		'sort-change',
 		'update:sort',

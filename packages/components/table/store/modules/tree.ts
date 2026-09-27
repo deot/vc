@@ -3,6 +3,7 @@ import { isEmpty } from 'lodash-es';
 import { getRowValue } from '../../utils';
 import { VcError } from '../../../vc';
 import type { Store } from '../store';
+import type { TableExpandChangePayload } from '../../types';
 
 /**
  * 树节点的结构信息（仅记录可展开的节点）
@@ -241,7 +242,7 @@ export class Tree {
 		this.store.states.treeExpanded[id] = value;
 		this.store.updateList();
 		this.store.scheduleLayout();
-		this.store.table.emit('expand-change', row, value, this.maxLevel);
+		this.store.table.emit('expand-change', { type: 'tree', row, expanded: value, maxLevel: this.maxLevel } satisfies TableExpandChangePayload);
 	}
 
 	/**
@@ -298,7 +299,7 @@ export class Tree {
 
 			store.updateList();
 			store.scheduleLayout();
-			store.table.emit('expand-change', row, true, this.maxLevel);
+			store.table.emit('expand-change', { type: 'tree', row, expanded: true, maxLevel: this.maxLevel } satisfies TableExpandChangePayload);
 		};
 		const fail = (e: any) => {
 			delete treeLoading[id];

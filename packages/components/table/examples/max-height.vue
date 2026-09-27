@@ -120,8 +120,8 @@ const handleTestingEnd = () => {
 const handleDelete = (rowIndex) => {
 	dataSource.value.splice(rowIndex, 1);
 };
-const handleChange = (section) => {
-	console.log(section.map(i => i.id));
+const handleChange = ({ selection }) => {
+	console.log(selection.map(i => i.id));
 };
 </script>
 

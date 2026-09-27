@@ -1,6 +1,7 @@
 import { toRaw } from 'vue';
 import { getRowValue } from '../../utils';
 import type { Store } from '../store';
+import type { TableExpandChangePayload } from '../../types';
 
 /**
  * 展开行（type="expand" 列）：
@@ -43,7 +44,12 @@ export class Expand {
 		if (value === current) return;
 
 		this.store.states.expandMap.set(this.getKey(row), value);
-		this.store.table.emit('expand-change', row, this.getRows());
+		this.store.table.emit('expand-change', {
+			type: 'expand',
+			row,
+			expanded: value,
+			expandedRows: this.getRows()
+		} satisfies TableExpandChangePayload);
 		this.store.scheduleLayout();
 	}
 

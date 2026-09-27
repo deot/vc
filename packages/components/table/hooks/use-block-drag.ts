@@ -866,8 +866,6 @@ export const useBlockDrag = (options: Options) => {
 				targetRows: drop.targetRows,
 				position: drop.position,
 				...move,
-				oldIndex: move.from.index,
-				newIndex: move.to.index,
 				rawData
 			} satisfies TableBlockDropPayload);
 			dropped = true;
