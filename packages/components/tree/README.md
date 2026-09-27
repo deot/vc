@@ -59,10 +59,11 @@ const data = ref([{
 	}]
 }]);
 
-const handleNodeClick = (nodeData, node, nodeRef) => {
-	console.log(nodeData);
+// data：节点数据；node：节点对应的 TreeNode；instance：节点组件实例；event：事件对象
+const handleNodeClick = ({ data, node, instance, event }) => {
+	console.log(data);
 	console.log(node);
-	console.log(nodeRef);
+	console.log(instance, event);
 };
 </script>
 ```
@@ -121,7 +122,7 @@ const data = ref([{
 	}]
 }]);
 
-const handleCheckChange = (data, checked, indeterminate) => {
+const handleCheckChange = ({ data, checked, indeterminate }) => {
 	console.log(data, checked, indeterminate);
 };
 </script>
@@ -203,7 +204,7 @@ const loadData = (parent) => {
 		}, 3000);
 	});
 };
-const handleCheckChange = (data, checked, indeterminate) => {
+const handleCheckChange = ({ data, checked, indeterminate }) => {
 	console.log(data, checked, indeterminate);
 };
 ```
@@ -426,14 +427,25 @@ const data = ref([{
 		}]
 	}]
 }]);
-const handleNodeClick = (data) => {
+const handleNodeClick = ({ data }) => {
 	console.log(data);
 };
+</script>
 ```
 :::
 
 ### 可拖拽节点
 通过 `draggable` 属性可让节点变为可拖拽，将节点拖拽到其他节点内部或前后。
+
+- 节点所在行的上 / 中 / 下区域分别表示放在它之前（`before`）、放入它（`inner`，追加为最后一个子节点，目标节点的标签高亮）、放在它之后（`after`）。
+- 已展开且有子节点的节点没有 `after` 区域（它的下方紧接第一个子节点）；要放到它的整棵子树之后，拖到下一个同级节点的上方区域。
+- `allow-drag({ node, data })` 返回 `false` 时节点不能拖动。
+- `allow-drop({ node, data, targetNode, position, from, to })` 对三个区域分别询问：被拒绝的区域让给相邻区域，三个区域都被拒绝时显示不可放置。
+	- `from` / `to` 为移动前后的位置 `{ parent, index }`：`parent` 为父节点的 TreeNode，根级为 `null`；`to.index` 为移除被拖节点之后的下标。
+	- 与 Table 的 `allow-drop` 相同，例如只允许同级：`({ from, to }) => from.parent === to.parent`。
+- 放下时先发出 `node-drop`，再发出 `node-dragend`；取消或没有放下时只发出 `node-dragend`（`dropped` 为 `false`）。
+
+完整示例：[拖拽事件与参数 / 只允许同级 / 区域让渡](./examples/drag.vue)、[节点事件的参数](./examples/events.vue)。
 
 :::RUNTIME
 ```vue
@@ -443,11 +455,11 @@ const handleNodeClick = (data) => {
 			:data="data"
 			default-expand-all
 			draggable
-			@node-drag-start="handleDragStart"
-			@node-drag-enter="handleDragEnter"
-			@node-drag-leave="handleDragLeave"
-			@node-drag-over="handleDragOver"
-			@node-drag-end="handleDragEnd"
+			@node-dragstart="handleDragStart"
+			@node-dragenter="handleDragEnter"
+			@node-dragleave="handleDragLeave"
+			@node-dragover="handleDragOver"
+			@node-dragend="handleDragEnd"
 			@node-drop="handleDrop"
 			:allow-drop="allowDrop"
 			:allow-drag="allowDrag" />
@@ -492,33 +504,33 @@ const data = ref([{
 		}]
 	}]
 }]);
-const handleDragStart = (node, ev) => {
-	console.log('drag start', node);
+// 节点的标签：node / targetNode 为 TreeNode，数据在 states.data 上
+const labelOf = node => (node ? node.states.data.label : '');
+const handleDragStart = ({ data }) => {
+	console.log('drag start: ', data.label);
 };
-const handleDragEnter = (draggingNode, dropNode, ev) => {
-	console.log('tree drag enter: ', dropNode.label);
+const handleDragEnter = ({ targetNode }) => {
+	console.log('tree drag enter: ', labelOf(targetNode));
 };
-const handleDragLeave = (draggingNode, dropNode, ev) => {
-	console.log('tree drag leave: ', dropNode.label);
+const handleDragLeave = ({ targetNode }) => {
+	console.log('tree drag leave: ', labelOf(targetNode));
 };
-const handleDragOver = (draggingNode, dropNode, ev) => {
-	console.log('tree drag over: ', dropNode.label);
+const handleDragOver = ({ targetNode }) => {
+	console.log('tree drag over: ', labelOf(targetNode));
 };
-const handleDragEnd = (draggingNode, dropNode, dropType, ev) => {
-	console.log('tree drag end: ', dropNode && dropNode.label, dropType);
+const handleDragEnd = ({ targetNode, position, dropped }) => {
+	console.log('tree drag end: ', labelOf(targetNode), position, dropped);
 };
-const handleDrop = (draggingNode, dropNode, dropType, ev) => {
-	console.log('tree drop: ', dropNode.label, dropType);
+const handleDrop = ({ data, targetNode, position, from, to }) => {
+	console.log('tree drop: ', data.label, position, labelOf(targetNode), `${from.index} → ${to.index}`);
 };
-const allowDrop = (draggingNode, dropNode, type) => {
-	if (dropNode.data.label === '二级 3-1') {
-		return type !== 'inner';
-	} else {
-		return true;
-	}
+// 「二级 3-1」不能放入子节点，只能放在它前后
+const allowDrop = ({ targetNode, position }) => {
+	return labelOf(targetNode) !== '二级 3-1' || position !== 'inner';
 };
-const allowDrag = (draggingNode) => {
-	return draggingNode.data.label.indexOf('三级 3-2-2') === -1;
+// 「三级 3-2-1」不能拖动
+const allowDrag = ({ data }) => {
+	return data.label !== '三级 3-2-1';
 };
 </script>
 ```
@@ -552,8 +564,8 @@ const allowDrag = (draggingNode) => {
 | icon-class               | 自定义树节点的图标                                                                           | `string`          | -   | -       |
 | lazy                     | 是否懒加载子节点，需与 load 方法结合使用                                                             | `boolean`         | —   | `false` |
 | draggable                | 是否开启拖拽节点功能                                                                          | `boolean`         | —   | `false` |
-| allow-drag               | 判断节点能否被拖拽                                                                           | `Function`        | —   | —       |
-| allow-drop               | 拖拽时判定目标节点能否被放置。`type` 参数有三种情况：`prev`、`inner` 和 `next`，分别表示放置在目标节点前、插入至目标节点和放置在目标节点后 | `Function`        | —   | —       |
+| allow-drag               | 判断节点能否被拖拽，参数为被拖节点 `{ node, data }`                                                      | `Function({ node, data })` | —   | —       |
+| allow-drop               | 判断能否放到目标节点的某个区域，对 `before`（之前）、`inner`（放入）、`after`（之后）分别询问；`from` / `to` 为移动前后的位置 `{ parent, index }`，与 Table 相同，见[可拖拽节点](#可拖拽节点) | `Function({ node, data, targetNode, position, from, to })` | —   | —       |
 | allow-dispatch           | 能否向form发送表单改变事件                                                                     | `boolean`         | —   | `true`  |
 
  ### tree-props
@@ -592,21 +604,22 @@ const allowDrag = (draggingNode) => {
 
 ### 事件
 
-| 事件名              | 说明                                     | 回调参数                                                                             | 参数说明                                                                                                                             |
-| ---------------- | -------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| node-click       | 节点被点击时的回调                              | `(nodeData: object, node: object, nodeRef: object) => void 0`                    | `nodeData`：传递给 `data` 属性的数组中该节点所对应的对象；`node`：节点对应的 Node；`nodeRef`：节点组件本身                                                         |
-| node-contextmenu | 当某一节点被鼠标右键点击时会触发该事件                    | `(e: Event, nodeData: object, node: object, nodeRef: object) => void 0`          | `e`：事件对象；`nodeData`：传递给 `data` 属性的数组中该节点所对应的对象；`node`：节点对应的 Node；`nodeRef`：节点组件本身                                                |
-| check-change     | 节点选中状态发生变化时的回调                         | `(nodeData: object, data: boolean, indeterminate: boolean) => void 0`            | `nodeData`：传递给 `data` 属性的数组中该节点所对应的对象；`checked`：当前节点本身是否被选中；`indeterminate`：当前节点的子树中是否有被选中的节点                                    |
-| check            | 当复选框被点击的时候触发                           | `(nodeData: object, data: object) => void 0`                                     | 共两个参数，依次为：传递给 `data` 属性的数组中该节点所对应的对象；`data`：树目前的选中状态对象，包含 `checkedNodes`、`checkedValues`、`halfCheckedNodes`、`halfCheckedValues` 四个属性 |
-| current-change   | 当前选中节点变化时触发的事件                         | `(nodeData: object, node: object) => void 0`                                     | `nodeData`：传递给 `data` 属性的数组中该节点所对应的对象；`node`：节点对应的 Node；                                                                         |
-| node-expand      | 节点被展开时触发的事件                            | `(nodeData: object, node: object, nodeRef: object) => void 0`                    | `nodeData`：传递给 `data` 属性的数组中该节点所对应的对象；`node`：节点对应的 Node；`nodeRef`：节点组件本身                                                         |
-| node-collapse    | 节点被关闭时触发的事件                            | `(nodeData: object, node: object, nodeRef: object) => void 0`                    | `nodeData`：传递给 `data` 属性的数组中该节点所对应的对象；`node`：节点对应的 Node；`nodeRef`：节点组件本身                                                         |
-| node-drag-start  | 节点开始拖拽时触发的事件                           | `(node: object, e: Event) => void 0`                                             | `node`：节点对应的 Node；`e`：事件对象                                                                                                       |
-| node-drag-enter  | 拖拽进入其他节点时触发的事件                         | `(draggingNode: object, dropNode: object, e: Event) => void 0`                   | `draggingNode`：被拖拽节点对应的 Node；`dropNode`：所进入节点对应的 Node；`e`：事件对象                                                                   |
-| node-drag-leave  | 拖拽离开某个节点时触发的事件                         | `(draggingNode: object, leaveNode: object, e: Event) => void 0`                  | `draggingNode`：被拖拽节点对应的 Node；`leaveNode`：所离开节点对应的 Node；`e`：事件对象                                                                  |
-| node-drag-over   | 在拖拽节点覆盖其他节点时触发的事件（类似浏览器的 mouseover 事件） | `(draggingNode: object, dropNode: object, e: Event) => void 0`                   | `draggingNode`：被拖拽节点对应的 Node；`dropNode`：当前覆盖节点对应的 Node；`e`：事件对象                                                                  |
-| node-drag-end    | 拖拽结束时（可能未成功）触发的事件                      | `(draggingNode: object, dropNode: object, dropType: string, e: Event) => void 0` | `draggingNode`：被拖拽节点对应的 Node；`dropNode`：结束拖拽时最后进入的节点（可能为空）；`dropType`：被拖拽节点的放置位置（before、after、inner）；`e`：事件对象                    |
-| node-drop        | 拖拽成功完成时触发的事件                           | `(draggingNode: object, dropNode: object, dropType: string, e: Event) => void 0` | `draggingNode`：被拖拽节点对应的 Node；`dropNode`：结束拖拽时最后进入的节点（可能为空）；`dropType`：被拖拽节点的放置位置（before、after、inner）；`e`：事件对象                    |
+事件的参数均为一个对象（`update:modelValue`、`change` 除外，为选中的值）。其中 `node` 为节点对应的 TreeNode，`data` 为节点数据（传给 `data` 属性的数组中该节点所对应的对象）；其余节点（`targetNode`、`oldNode`、`from.parent` / `to.parent`）均为 TreeNode，数据在 `states.data` 上。
+
+| 事件名                | 说明                                  | 回调参数                                                                                       | 参数说明                                                                                                                             |
+| ------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| node-click         | 节点被点击时触发                            | `({ node, data, instance, event }) => void 0`                                              | `instance`：节点组件实例；`event`：事件对象                                                                                                  |
+| node-contextmenu   | 节点被鼠标右键点击时触发                        | `({ node, data, instance, event }) => void 0`                                              | 同 `node-click`                                                                                                                  |
+| check-change       | 节点的选中或半选状态变化时触发                     | `({ node, data, checked, indeterminate }) => void 0`                                       | `checked`：节点是否选中；`indeterminate`：节点是否半选（子孙中有部分被选中）                                                                             |
+| check              | 点击复选框时触发                            | `({ node, data, checked, checkedNodes, checkedValues, halfCheckedNodes, halfCheckedValues }) => void 0` | `checked`：点击后该节点是否选中；其余为点击后树的选中状态，`checkedNodes` / `halfCheckedNodes` 为 TreeNode                                                     |
+| current-change     | 当前节点变化时触发；点击当前节点本身不触发               | `({ node, data, oldNode }) => void 0`                                                      | `oldNode`：之前的当前节点，没有时为 `null`                                                                                                  |
+| node-expand-change | 点击展开图标或节点，展开或收起节点时触发                | `({ node, data, expanded, instance }) => void 0`                                           | `expanded`：展开（`true`）或收起（`false`）；`instance`：节点组件实例                                                                           |
+| node-dragstart     | 开始拖拽节点时触发                           | `({ node, data, event }) => void 0`                                                        | `node` / `data`：被拖节点；`event`：事件对象                                                                                                |
+| node-dragenter     | 拖拽进入其他节点时触发                         | `({ node, data, targetNode, event }) => void 0`                                            | `targetNode`：进入的节点                                                                                                             |
+| node-dragleave     | 拖拽离开某个节点时触发                         | `({ node, data, targetNode, event }) => void 0`                                            | `targetNode`：离开的节点                                                                                                             |
+| node-dragover      | 拖拽经过节点时触发（类似浏览器的 `dragover`）          | `({ node, data, targetNode, event }) => void 0`                                            | `targetNode`：经过的节点                                                                                                             |
+| node-drop          | 放下节点时触发，在 `node-dragend` 之前            | `({ node, data, targetNode, position, from, to, event }) => void 0`                        | `targetNode`：放置的目标节点；`position`：`before`、`after` 或 `inner`；`from` / `to`：移动前后的位置 `{ parent, index }`，`parent` 为 TreeNode，根级为 `null`，`to.index` 为移除被拖节点之后的下标 |
+| node-dragend       | 拖拽结束时触发（取消、不可放置时也会触发）              | `({ node, data, targetNode, position, dropped, event }) => void 0`                         | `targetNode`：最后经过的可放置节点，没有时为 `null`；`position`：放置位置，没有放下时为 `null`；`dropped`：是否放下                                                        |
 
 ## 树选择（TreeSelect）
 
@@ -642,3 +655,30 @@ const allowDrag = (draggingNode) => {
 | 属性     | 说明 | 类型        | 可选值 | 默认值    |
 | ------ | --- | --------- | --- | ------ |
 | portal | 下拉是否挂载到 body；`false` 时挂到组件根节点内，随所在容器滚动，超出容器的部分会被其 `overflow` 裁剪 | `boolean` | —   | `true` |
+
+<!--
+## 变更说明
+
+### 事件与拖拽回调的参数统一为对象
+- 所有事件的参数改为一个对象（`update:modelValue`、`change` 不变）；`node` 为 TreeNode，`data` 为节点数据，与 Table 的对象参数约定一致：
+	- `node-click`：`(data, node, nodeRef)` → `{ node, data, instance, event }`，新增 `event`。
+	- `node-contextmenu`：`(e, data, node, nodeRef)` → `{ node, data, instance, event }`。
+	- `check-change`：`(data, checked, indeterminate)` → `{ node, data, checked, indeterminate }`。
+	- `check`：`(data, { checkedNodes, checkedValues, halfCheckedNodes, halfCheckedValues })` → `{ node, data, checked, checkedNodes, checkedValues, halfCheckedNodes, halfCheckedValues }`，新增 `checked`。
+	- `current-change`：`(data, node)` → `{ node, data, oldNode }`，新增 `oldNode`。
+	- `node-drag-*` / `node-drop`：`(draggingNode, dropNode, dropType, e)` 等 → `{ node, data, targetNode, event }`，`node-drop` 另有 `position`、`from`、`to`，`node-dragend` 另有 `position`、`dropped`。
+- `allow-drag`：`(node)` → `({ node, data })`。
+- `allow-drop`：`(draggingNode, dropNode, 'prev' | 'inner' | 'next')` → `({ node, data, targetNode, position, from, to })`，`position` 为 `before` / `inner` / `after`（原 `prev` / `next` 改为与事件相同的 `before` / `after`）。
+
+### 事件名
+- 与浏览器原生事件对应的事件改用原生事件名：`node-drag-start` / `node-drag-enter` / `node-drag-leave` / `node-drag-over` / `node-drag-end` → `node-dragstart` / `node-dragenter` / `node-dragleave` / `node-dragover` / `node-dragend`（`node-drop` 不变）。
+- `node-expand` / `node-collapse` 合并为 `node-expand-change`，以 `expanded` 区分。
+
+### 行为
+- `current-change` 只在当前节点变化时触发，点击当前节点本身不再触发。
+- `check-change` 在选中或半选任一状态变化时触发（原先需两者同时变化，勾选叶子节点时不会触发）。
+- 放下节点时先发出 `node-drop`，再发出 `node-dragend`（原先相反），与浏览器一致。
+- 拖拽中所有节点都不可放置时松手，不再抛错，`node-dragend` 的 `targetNode` 为 `null`。
+- 落点区域按节点所在行计算（原先按包含展开子节点的整个节点计算，展开的父节点上几乎只能放在它之前）；已展开且有子节点的节点没有 `after` 区域。
+- `inner` 时目标节点的标签高亮（原样式未生效）。
+-->

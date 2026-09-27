@@ -228,7 +228,7 @@ const loadData = () => {
 	});
 };
 
-const handleCheckChange = ($data, checked, indeterminate) => {
+const handleCheckChange = ({ data: $data, checked, indeterminate }) => {
 	console.log($data, checked, indeterminate);
 };
 

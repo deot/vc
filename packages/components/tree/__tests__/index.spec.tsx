@@ -248,9 +248,9 @@ describe('Tree interaction', () => {
 			lazy: true,
 			loadData,
 			draggable: true,
-			onNodeDragStart: onDragStart,
-			onNodeDragOver: onDragOver,
-			onNodeDragEnd: onDragEnd
+			onNodeDragstart: onDragStart,
+			onNodeDragover: onDragOver,
+			onNodeDragend: onDragEnd
 		});
 		await nextTick();
 
@@ -291,8 +291,8 @@ describe('Tree interaction', () => {
 			],
 			draggable: true,
 			onNodeDrop: onDrop,
-			onNodeDragEnd: onDragEnd,
-			onNodeDragEnter: onDragEnter
+			onNodeDragend: onDragEnd,
+			onNodeDragenter: onDragEnter
 		});
 		await flush();
 
@@ -333,8 +333,8 @@ describe('Tree interaction', () => {
 			allowDrag,
 			allowDrop,
 			onNodeDrop: onDrop,
-			onNodeDragEnter: onDragEnter,
-			onNodeDragLeave: onDragLeave
+			onNodeDragenter: onDragEnter,
+			onNodeDragleave: onDragLeave
 		});
 		await flush();
 
@@ -373,7 +373,7 @@ describe('Tree interaction', () => {
 			data: [{ value: 'a', label: 'A' }],
 			draggable: true,
 			allowDrag: () => false,
-			onNodeDragStart: onDragStart
+			onNodeDragstart: onDragStart
 		});
 		await flush();
 
@@ -541,6 +541,404 @@ describe('Tree interaction', () => {
 		(wrapper.vm as any).filter('一级 1');
 		await flush();
 		expect((wrapper.vm as any).getNode('1')?.states?.visible).toBe(true);
+		wrapper.unmount();
+	});
+});
+
+describe('Tree event payloads', () => {
+	// 节点高 20px（jsdom 没有排版）：上四分之一为 before，中间为 inner，下四分之一为 after；
+	// 高度为 0 时各区域的阈值都是 0，被拒绝的区域无法让出
+	let restoreRect: { mockRestore: () => void };
+	beforeEach(() => {
+		restoreRect = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+			top: 0, bottom: 20, height: 20, left: 0, right: 100, width: 100, x: 0, y: 0, toJSON: () => ({})
+		} as DOMRect);
+	});
+	afterEach(() => {
+		restoreRect.mockRestore();
+		document.body.innerHTML = '';
+	});
+
+	const BEFORE = 2;
+	const INNER = 10;
+	const AFTER = 18;
+
+	const buildData = () => [
+		{ value: 'p1', label: 'P1', children: [{ value: 'c1', label: 'C1' }] },
+		{ value: 'p2', label: 'P2' },
+		{ value: 'p3', label: 'P3' }
+	];
+
+	// 按标签找到节点元素（内容行的文字即标签）
+	const nodeOf = (wrapper: any, label: string) => {
+		return wrapper.findAll('.vc-tree-node').find((el: any) => el.find('.vc-tree-node__content').text() === label)!;
+	};
+	const labels = (wrapper: any) => wrapper.findAll('.vc-tree-node').map((el: any) => el.find('.vc-tree-node__content').text());
+	const valueOf = (node: any) => (node ? node.states.data.value : null);
+	const placeOf = ({ parent, index }: any) => ({ parent: valueOf(parent), index });
+
+	const dragStart = (el: any) => el.trigger('dragstart', { dataTransfer: dataTransferStub() });
+	const dragOver = (el: any, clientY: number) => el.trigger('dragover', {
+		clientY,
+		preventDefault: vi.fn(),
+		dataTransfer: dataTransferStub()
+	});
+	const dragEnd = (el: any) => el.trigger('dragend', { preventDefault: vi.fn(), dataTransfer: dataTransferStub() });
+
+	it('node-click / current-change：{ node, data, instance, event } / { node, data, oldNode }；当前节点不变时不发出 current-change', async () => {
+		const onNodeClick = vi.fn();
+		const onCurrentChange = vi.fn();
+		const wrapper = mountTree({ data: buildData(), expandOnClickNode: false, onNodeClick, onCurrentChange });
+		await flush();
+
+		await nodeOf(wrapper, 'P1').trigger('click');
+		await flush();
+		const click = onNodeClick.mock.calls[0][0];
+		expect(valueOf(click.node)).toBe('p1');
+		expect(click.data).toEqual(expect.objectContaining({ value: 'p1' }));
+		expect(click.instance.props.node).toBe(click.node);
+		expect(click.event).toBeInstanceOf(Event);
+		expect(onCurrentChange).toHaveBeenCalledTimes(1);
+		expect(onCurrentChange.mock.calls[0][0]).toEqual({ node: click.node, data: click.data, oldNode: null });
+
+		// 再次点击同一节点：node-click 照常发出，current-change 不再发出
+		await nodeOf(wrapper, 'P1').trigger('click');
+		await flush();
+		expect(onNodeClick).toHaveBeenCalledTimes(2);
+		expect(onCurrentChange).toHaveBeenCalledTimes(1);
+
+		await nodeOf(wrapper, 'P2').trigger('click');
+		await flush();
+		const change = onCurrentChange.mock.calls[1][0];
+		expect(valueOf(change.node)).toBe('p2');
+		expect(change.data.value).toBe('p2');
+		expect(valueOf(change.oldNode)).toBe('p1');
+		wrapper.unmount();
+	});
+
+	it('node-contextmenu：{ node, data, instance, event }', async () => {
+		const onNodeContextmenu = vi.fn();
+		const wrapper = mountTree({ data: buildData(), onNodeContextmenu });
+		await flush();
+
+		await nodeOf(wrapper, 'P2').trigger('contextmenu');
+		const payload = onNodeContextmenu.mock.calls[0][0];
+		expect(valueOf(payload.node)).toBe('p2');
+		expect(payload.data.value).toBe('p2');
+		expect(payload.instance.props.node).toBe(payload.node);
+		expect(payload.event).toBeInstanceOf(Event);
+		wrapper.unmount();
+	});
+
+	it('node-expand-change：展开与收起为同一个事件 { node, data, expanded, instance }', async () => {
+		const onNodeExpandChange = vi.fn();
+		const onNodeExpand = vi.fn();
+		const onNodeCollapse = vi.fn();
+		const wrapper = mountTree({ data: buildData(), onNodeExpandChange, onNodeExpand, onNodeCollapse });
+		await flush();
+		const icon = () => nodeOf(wrapper, 'P1').find('.vc-tree-node__expand-icon');
+
+		await icon().trigger('click');
+		await flush();
+		expect(onNodeExpandChange).toHaveBeenCalledTimes(1);
+		const expand = onNodeExpandChange.mock.calls[0][0];
+		expect(valueOf(expand.node)).toBe('p1');
+		expect(expand).toMatchObject({ data: expect.objectContaining({ value: 'p1' }), expanded: true });
+		expect(expand.instance.props.node).toBe(expand.node);
+
+		await icon().trigger('click');
+		await flush();
+		expect(onNodeExpandChange).toHaveBeenCalledTimes(2);
+		expect(onNodeExpandChange.mock.calls[1][0]).toMatchObject({ expanded: false });
+		expect(valueOf(onNodeExpandChange.mock.calls[1][0].node)).toBe('p1');
+		// 原来的两个事件不再发出
+		expect(onNodeExpand).not.toHaveBeenCalled();
+		expect(onNodeCollapse).not.toHaveBeenCalled();
+		wrapper.unmount();
+	});
+
+	it('check / check-change：{ node, data, checked, checkedNodes, … } / { node, data, checked, indeterminate }', async () => {
+		const onCheck = vi.fn();
+		const onCheckChange = vi.fn();
+		const wrapper = mountTree({
+			data: [{ value: 'p', label: 'P', children: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }] }],
+			showCheckbox: true,
+			defaultExpandAll: true,
+			onCheck,
+			onCheckChange
+		});
+		await flush();
+		const checkbox = (label: string) => nodeOf(wrapper, label).find('.vc-tree-node__content input[type="checkbox"]').element as HTMLInputElement;
+
+		checkbox('A').click();
+		await flush();
+		// 叶子节点：checked 变化即发出（indeterminate 不变）；父节点变为半选
+		const changesOf = () => onCheckChange.mock.calls.map(([e]: any) => [valueOf(e.node), e.checked, e.indeterminate]);
+		expect(changesOf().sort()).toEqual([
+			['a', true, false],
+			['p', false, true]
+		]);
+		const check = onCheck.mock.calls.at(-1)![0];
+		expect(valueOf(check.node)).toBe('a');
+		expect(check).toMatchObject({ data: expect.objectContaining({ value: 'a' }), checked: true, checkedValues: ['a'], halfCheckedValues: ['p'] });
+		expect(check.checkedNodes.map(valueOf)).toEqual(['a']);
+		expect(check.halfCheckedNodes.map(valueOf)).toEqual(['p']);
+
+		// 勾满子节点：父节点由半选变为选中
+		checkbox('B').click();
+		await flush();
+		expect(onCheck.mock.calls.at(-1)![0]).toMatchObject({ checked: true, checkedValues: expect.arrayContaining(['p', 'a', 'b']) });
+		const parentChange = onCheckChange.mock.calls.map(([e]: any) => e).filter((e: any) => valueOf(e.node) === 'p').at(-1);
+		expect(parentChange).toMatchObject({ data: expect.objectContaining({ value: 'p' }), checked: true, indeterminate: false });
+		// 每个节点每次变化只发出一次
+		expect(changesOf().sort()).toEqual([
+			['a', true, false],
+			['b', true, false],
+			['p', false, true],
+			['p', true, false]
+		]);
+
+		checkbox('A').click();
+		await flush();
+		expect(onCheck.mock.calls.at(-1)![0]).toMatchObject({ checked: false });
+		wrapper.unmount();
+	});
+
+	it('拖拽事件：node-dragstart / dragenter / dragover / dragleave / drop / dragend 均为对象参数', async () => {
+		const events: any[] = [];
+		const record = (name: string) => (e: any) => events.push([name, e]);
+		const wrapper = mountTree({
+			data: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }, { value: 'c', label: 'C' }],
+			draggable: true,
+			onNodeDragstart: record('dragstart'),
+			onNodeDragenter: record('dragenter'),
+			onNodeDragleave: record('dragleave'),
+			onNodeDragover: record('dragover'),
+			onNodeDrop: record('drop'),
+			onNodeDragend: record('dragend')
+		});
+		await flush();
+		const [a, b, c] = ['A', 'B', 'C'].map(label => nodeOf(wrapper, label));
+
+		// A 经过 C 再到 B 的下方区域：放在 B 之后
+		await dragStart(a);
+		await dragOver(c, AFTER);
+		await dragOver(b, AFTER);
+		await flush();
+		await dragEnd(a);
+		await flush();
+
+		// 与浏览器一致：drop 在 dragend 之前
+		expect(events.map(([name]) => name)).toEqual(['dragstart', 'dragenter', 'dragover', 'dragleave', 'dragenter', 'dragover', 'drop', 'dragend']);
+		const payloadOf = (name: string, i = 0) => events.filter(([n]) => n === name)[i][1];
+
+		const start = payloadOf('dragstart');
+		expect(valueOf(start.node)).toBe('a');
+		expect(start.data.value).toBe('a');
+		expect(start.event).toBeInstanceOf(Event);
+		expect(valueOf(payloadOf('dragenter', 0).targetNode)).toBe('c');
+		expect(valueOf(payloadOf('dragleave').targetNode)).toBe('c');
+		expect(valueOf(payloadOf('dragenter', 1).targetNode)).toBe('b');
+		expect(valueOf(payloadOf('dragover', 1).node)).toBe('a');
+		expect(valueOf(payloadOf('dragover', 1).targetNode)).toBe('b');
+
+		const drop = payloadOf('drop');
+		expect(valueOf(drop.node)).toBe('a');
+		expect(drop.data.value).toBe('a');
+		expect(valueOf(drop.targetNode)).toBe('b');
+		expect(drop.position).toBe('after');
+		expect(placeOf(drop.from)).toEqual({ parent: null, index: 0 });
+		expect(placeOf(drop.to)).toEqual({ parent: null, index: 1 });
+		expect(drop.event).toBeInstanceOf(Event);
+
+		const end = payloadOf('dragend');
+		expect(end).toMatchObject({ position: 'after', dropped: true });
+		expect(valueOf(end.targetNode)).toBe('b');
+		// 移动后的顺序与 to 一致
+		expect(labels(wrapper)).toEqual(['B', 'A', 'C']);
+		wrapper.unmount();
+	});
+
+	it('allowDrag / allowDrop：对象参数；三个区域分别询问，各自带 from / to（to.index 按移除被拖节点之后计算）', async () => {
+		const allowDrag = vi.fn(() => true);
+		const allowDrop = vi.fn(() => true);
+		const wrapper = mountTree({ data: buildData(), draggable: true, defaultExpandAll: true, allowDrag, allowDrop });
+		await flush();
+		const callsOf = () => allowDrop.mock.calls.map(([e]: any) => ({
+			node: valueOf(e.node),
+			data: e.data.value,
+			target: valueOf(e.targetNode),
+			position: e.position,
+			from: placeOf(e.from),
+			to: placeOf(e.to)
+		}));
+
+		// 根级 P3 拖到 P1 的中间：放入 P1，追加在 C1 之后
+		await dragStart(nodeOf(wrapper, 'P3'));
+		expect(allowDrag).toHaveBeenCalledWith({ node: expect.anything(), data: expect.objectContaining({ value: 'p3' }) });
+		expect(valueOf((allowDrag.mock.calls[0] as any[])[0].node)).toBe('p3');
+		await dragOver(nodeOf(wrapper, 'P1'), INNER);
+		const p3 = { node: 'p3', data: 'p3', target: 'p1', from: { parent: null, index: 2 } };
+		expect(callsOf()).toEqual([
+			{ ...p3, position: 'before', to: { parent: null, index: 0 } },
+			{ ...p3, position: 'inner', to: { parent: 'p1', index: 1 } },
+			{ ...p3, position: 'after', to: { parent: null, index: 1 } }
+		]);
+		await dragEnd(nodeOf(wrapper, 'P3'));
+		await flush();
+		expect(labels(wrapper)).toEqual(['P1', 'C1', 'P3', 'P2']);
+
+		// 根级现为 [P1, P2]。P1 拖到 P2 的下方区域：同一父节点内，被拖节点在插入位置之前，to.index 减一
+		allowDrop.mockClear();
+		await dragStart(nodeOf(wrapper, 'P1'));
+		await dragOver(nodeOf(wrapper, 'P2'), AFTER);
+		const p1 = { node: 'p1', data: 'p1', target: 'p2', from: { parent: null, index: 0 } };
+		expect(callsOf()).toEqual([
+			{ ...p1, position: 'before', to: { parent: null, index: 0 } },
+			{ ...p1, position: 'inner', to: { parent: 'p2', index: 0 } },
+			{ ...p1, position: 'after', to: { parent: null, index: 1 } }
+		]);
+		await dragEnd(nodeOf(wrapper, 'P1'));
+		await flush();
+		expect(labels(wrapper)).toEqual(['P2', 'P1', 'C1', 'P3']);
+
+		// 子节点 C1（P1 的子节点为 [C1, P3]）拖到 P1 的上方区域：from.parent 为 P1；放入自己的父节点时追加到末尾
+		allowDrop.mockClear();
+		await dragStart(nodeOf(wrapper, 'C1'));
+		await dragOver(nodeOf(wrapper, 'P1'), BEFORE);
+		const c1 = { node: 'c1', data: 'c1', target: 'p1', from: { parent: 'p1', index: 0 } };
+		expect(callsOf()).toEqual([
+			{ ...c1, position: 'before', to: { parent: null, index: 1 } },
+			{ ...c1, position: 'inner', to: { parent: 'p1', index: 1 } },
+			{ ...c1, position: 'after', to: { parent: null, index: 2 } }
+		]);
+		await dragEnd(nodeOf(wrapper, 'C1'));
+		await flush();
+		expect(labels(wrapper)).toEqual(['P2', 'C1', 'P1', 'P3']);
+		wrapper.unmount();
+	});
+
+	it('allowDrop 只允许同级：({ from, to }) => from.parent === to.parent；全部拒绝时松手不移动、不报错', async () => {
+		const onNodeDrop = vi.fn();
+		const onNodeDragend = vi.fn();
+		const wrapper = mountTree({
+			data: buildData(),
+			draggable: true,
+			defaultExpandAll: true,
+			allowDrop: ({ from, to }: any) => from.parent === to.parent,
+			onNodeDrop,
+			onNodeDragend
+		});
+		await flush();
+
+		// P3 拖到 P1 之前：同为根级，允许
+		await dragStart(nodeOf(wrapper, 'P3'));
+		await dragOver(nodeOf(wrapper, 'P1'), BEFORE);
+		await flush();
+		expect(wrapper.classes()).not.toContain('is-drop-not-allow');
+		await dragEnd(nodeOf(wrapper, 'P3'));
+		await flush();
+		expect(onNodeDrop).toHaveBeenCalledTimes(1);
+		expect(onNodeDrop.mock.calls[0][0].position).toBe('before');
+		expect(labels(wrapper)).toEqual(['P3', 'P1', 'C1', 'P2']);
+
+		// C1 拖到 P2：之前 / 之后会换到根级，放入会换到 P2 下，全部拒绝
+		await dragStart(nodeOf(wrapper, 'C1'));
+		await dragOver(nodeOf(wrapper, 'P2'), AFTER);
+		await flush();
+		expect(wrapper.classes()).toContain('is-drop-not-allow');
+		await dragEnd(nodeOf(wrapper, 'C1'));
+		await flush();
+		expect(onNodeDrop).toHaveBeenCalledTimes(1);
+		const end = onNodeDragend.mock.calls.at(-1)![0];
+		expect(valueOf(end.node)).toBe('c1');
+		expect(end).toMatchObject({ targetNode: null, position: null, dropped: false });
+		// 拖拽状态已重置，数据不变
+		expect(wrapper.classes()).not.toContain('is-dragging');
+		expect(labels(wrapper)).toEqual(['P3', 'P1', 'C1', 'P2']);
+		wrapper.unmount();
+	});
+});
+
+describe('Tree drop zones', () => {
+	// 展开的节点元素包含子节点（高 60px），内容行高 20px：区域应按节点自己的内容行计算
+	let restoreRect: { mockRestore: () => void };
+	beforeEach(() => {
+		restoreRect = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+			const height = this.classList.contains('vc-tree-node') && this.classList.contains('is-expanded') ? 60 : 20;
+			return { top: 0, bottom: height, height, left: 0, right: 100, width: 100, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
+		});
+	});
+	afterEach(() => {
+		restoreRect.mockRestore();
+		document.body.innerHTML = '';
+	});
+
+	const nodeOf = (wrapper: any, label: string) => {
+		return wrapper.findAll('.vc-tree-node').find((el: any) => el.find('.vc-tree-node__content').text() === label)!;
+	};
+	const dragOver = (el: any, clientY: number) => el.trigger('dragover', {
+		clientY,
+		preventDefault: vi.fn(),
+		dataTransfer: dataTransferStub()
+	});
+	const mountZones = (props: Record<string, any> = {}) => mountTree({
+		data: [
+			{ value: 'p1', label: 'P1', children: [{ value: 'c1', label: 'C1' }] },
+			{ value: 'p2', label: 'P2' },
+			{ value: 'p3', label: 'P3' }
+		],
+		draggable: true,
+		defaultExpandAll: true,
+		...props
+	});
+
+	it('展开的父节点：按自己的内容行划分区域，行中间为 inner', async () => {
+		const onNodeDrop = vi.fn();
+		const wrapper = mountZones({ onNodeDrop });
+		await flush();
+		expect(nodeOf(wrapper, 'P1').classes()).toContain('is-expanded');
+
+		await nodeOf(wrapper, 'P2').trigger('dragstart', { dataTransfer: dataTransferStub() });
+		await dragOver(nodeOf(wrapper, 'P1'), 10);
+		await flush();
+		expect(wrapper.classes()).toContain('is-drop-inner');
+		await nodeOf(wrapper, 'P2').trigger('dragend', { preventDefault: vi.fn(), dataTransfer: dataTransferStub() });
+		await flush();
+		expect(onNodeDrop.mock.calls[0][0].position).toBe('inner');
+		wrapper.unmount();
+	});
+
+	it('展开的父节点：没有 after 区域（插入线会画在它与第一个子节点之间，节点却放到整棵子树之后）', async () => {
+		const allowDrop = vi.fn(() => true);
+		const onNodeDrop = vi.fn();
+		const wrapper = mountZones({ allowDrop, onNodeDrop });
+		await flush();
+
+		// P3 与 P1 不相邻（P1 的下一个同级节点是 P2），P1 的 after 区域不会因为相邻而被去掉
+		await nodeOf(wrapper, 'P3').trigger('dragstart', { dataTransfer: dataTransferStub() });
+		// 内容行的下四分之一：收起的节点为 after，展开的节点让给 inner
+		await dragOver(nodeOf(wrapper, 'P1'), 18);
+		await flush();
+		expect(wrapper.classes()).toContain('is-drop-inner');
+		// 仍会询问 after（由组件按结构排除）
+		expect(allowDrop.mock.calls.map(([e]: any) => e.position)).toEqual(['before', 'inner', 'after']);
+		await nodeOf(wrapper, 'P3').trigger('dragend', { preventDefault: vi.fn(), dataTransfer: dataTransferStub() });
+		await flush();
+		expect(onNodeDrop.mock.calls[0][0].position).toBe('inner');
+		wrapper.unmount();
+	});
+
+	it('inner 时高亮目标节点的标签', async () => {
+		const wrapper = mountZones();
+		await flush();
+		await nodeOf(wrapper, 'P1').trigger('dragstart', { dataTransfer: dataTransferStub() });
+		await dragOver(nodeOf(wrapper, 'P2'), 10);
+		await flush();
+		const target = nodeOf(wrapper, 'P2');
+		expect(target.classes()).toContain('is-drop-inner');
+		// 与样式 .vc-tree-node.is-drop-inner > .vc-tree-node__content .vc-tree-node__label 对应
+		expect(target.element.querySelector(':scope > .vc-tree-node__content .vc-tree-node__label')?.textContent).toBe('P2');
 		wrapper.unmount();
 	});
 });

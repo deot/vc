@@ -3,6 +3,7 @@
 import { defineComponent, provide, ref, computed, watch, getCurrentInstance } from 'vue';
 import type { ComponentInternalInstance } from 'vue';
 import type { TreeNode } from './store/tree-node';
+import type { TreeNodeExpandChangePayload } from './types';
 import { TreeStore } from './store/tree-store';
 import { toCurrentValue } from '../select/utils';
 import { TreeNodeContent } from './tree-node-content.tsx';
@@ -24,15 +25,14 @@ export const Tree = defineComponent({
 		'current-change',
 		'node-click',
 		'node-contextmenu',
-		'node-collapse',
-		'node-expand',
+		'node-expand-change',
 		'check',
-		'node-drag-start',
-		'node-drag-end',
+		'node-dragstart',
+		'node-dragend',
 		'node-drop',
-		'node-drag-leave',
-		'node-drag-enter',
-		'node-drag-over'
+		'node-dragleave',
+		'node-dragenter',
+		'node-dragover'
 	],
 	setup(props, { expose, emit }) {
 		const instance = getCurrentInstance();
@@ -185,9 +185,10 @@ export const Tree = defineComponent({
 			store.insertAfter(data, refNode);
 		};
 
-		const handleNodeExpand = (nodeData: any, node: any, $instance: any) => {
-			collector.broadcast(node);
-			emit('node-expand', nodeData, node, $instance);
+		// 根级节点展开：accordion 时先收起同级节点，再发出 node-expand-change
+		const handleNodeExpand = (payload: TreeNodeExpandChangePayload) => {
+			collector.broadcast(payload.node);
+			emit('node-expand-change', payload);
 		};
 
 		const updateKeyChildren = (key: any, data: any) => {

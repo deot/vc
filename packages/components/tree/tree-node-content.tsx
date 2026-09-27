@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { getCurrentInstance, defineComponent, inject, ref, watch, nextTick, withModifiers } from 'vue';
+import { getCurrentInstance, defineComponent, inject, ref, watch, nextTick, withModifiers, toRaw } from 'vue';
 import { isEqualWith } from 'lodash-es';
 import type { TreeNode, TreeStore } from './store';
 import { KEY_VALUE } from './store/constant';
@@ -12,7 +12,14 @@ import { Icon } from '../icon';
 import { toModelValue } from '../select/utils';
 import { useCollectNode } from './use-collect-node';
 import { props as treeNodeProps } from './tree-node-content-props';
-import type { TreeProvide } from './types';
+import type {
+	TreeCheckChangePayload,
+	TreeCheckPayload,
+	TreeCurrentChangePayload,
+	TreeNodeEventPayload,
+	TreeNodeExpandChangePayload,
+	TreeProvide
+} from './types';
 
 const COMPONENT_NAME = 'vc-tree-node';
 
@@ -62,8 +69,14 @@ export const TreeNodeContent = defineComponent({
 		};
 
 		const handleSelectChange = (checked: boolean, indeterminate: boolean) => {
-			if (oldChecked.value !== checked && oldIndeterminate.value !== indeterminate) {
-				tree.emit('check-change', props.node.states.data, checked, indeterminate);
+			// 选中或半选任一变化即发出
+			if (oldChecked.value !== checked || oldIndeterminate.value !== indeterminate) {
+				tree.emit('check-change', {
+					node: props.node,
+					data: props.node.states.data,
+					checked,
+					indeterminate
+				} satisfies TreeCheckChangePayload);
 			}
 			oldChecked.value = checked;
 			oldIndeterminate.value = indeterminate;
@@ -72,25 +85,55 @@ export const TreeNodeContent = defineComponent({
 		const handleCheckChange = async (_: boolean, e: any) => {
 			props.node.setChecked(e.target.checked, !tree.props.checkStrictly);
 			await nextTick();
-			tree.emit('check', props.node.states.data, sync());
+			tree.emit('check', {
+				node: props.node,
+				data: props.node.states.data,
+				checked: props.node.states.checked,
+				...sync()
+			} satisfies TreeCheckPayload);
 		};
+
+		// 展开 / 收起的参数
+		const toExpandPayload = (value: boolean): TreeNodeExpandChangePayload => ({
+			node: props.node,
+			data: props.node.states.data,
+			expanded: value,
+			instance
+		});
+
+		// 节点事件（node-click / node-contextmenu）的参数
+		const toNodePayload = (e: Event): TreeNodeEventPayload => ({
+			node: props.node,
+			data: props.node.states.data,
+			instance,
+			event: e
+		});
 
 		const handleExpandIconClick = async () => {
 			if (props.node.states.isLeaf) return;
 			if (expanded.value) {
-				tree.emit('node-collapse', props.node.states.data, props.node, instance);
+				tree.emit('node-expand-change', toExpandPayload(false));
 				props.node.collapse();
 			} else {
 				await props.node.expand();
 				sync();
-				emit('node-expand', props.node.states.data, props.node, instance);
+				// 交给父级：accordion 时先收起同级节点，再发出 node-expand-change
+				emit('node-expand', toExpandPayload(true));
 			}
 		};
 
-		const handleClick = () => {
+		const handleClick = (e: Event) => {
 			const store = tree.store;
+			const oldNode = store.currentNode;
 			store.setCurrentNode(props.node);
-			tree.emit('current-change', store.currentNode ? store.currentNode.states.data : null, store.currentNode);
+			// 当前节点不变时不发出
+			if (toRaw(store.currentNode) !== toRaw(oldNode)) {
+				tree.emit('current-change', {
+					node: store.currentNode!,
+					data: store.currentNode!.states.data,
+					oldNode
+				} satisfies TreeCurrentChangePayload);
+			}
 
 			tree.currentNodeInstance.value = instance;
 
@@ -103,7 +146,7 @@ export const TreeNodeContent = defineComponent({
 					target: { checked }
 				});
 			}
-			tree.emit('node-click', props.node.states.data, props.node, instance);
+			tree.emit('node-click', toNodePayload(e));
 		};
 
 		const handleContextMenu = (e: any) => {
@@ -111,22 +154,22 @@ export const TreeNodeContent = defineComponent({
 				e.stopPropagation();
 				e.preventDefault();
 			}
-			tree.emit('node-contextmenu', e, props.node.states.data, props.node, instance);
+			tree.emit('node-contextmenu', toNodePayload(e));
 		};
 
-		const handleChildNodeExpand = (nodeData: object, node: TreeNode, $instance: any) => {
-			collector.broadcast(node);
-			tree.emit('node-expand', nodeData, node, $instance);
+		const handleChildNodeExpand = (payload: TreeNodeExpandChangePayload) => {
+			collector.broadcast(payload.node);
+			tree.emit('node-expand-change', payload);
 		};
 
 		const handleDragStart = (e: any) => {
 			if (!tree.props.draggable) return;
-			tree.drag.emit('drag-start', e, instance);
+			tree.drag.emit('dragstart', e, instance);
 		};
 
 		const handleDragOver = (e: any) => {
 			if (!tree.props.draggable) return;
-			tree.drag.emit('drag-over', e, instance);
+			tree.drag.emit('dragover', e, instance);
 			e.preventDefault();
 		};
 
@@ -136,7 +179,7 @@ export const TreeNodeContent = defineComponent({
 
 		const handleDragEnd = (e: any) => {
 			if (!tree.props.draggable) return;
-			tree.drag.emit('drag-end', e, instance);
+			tree.drag.emit('dragend', e, instance);
 		};
 
 		watch(
@@ -252,7 +295,7 @@ export const TreeNodeContent = defineComponent({
 											row={node.states.data}
 										/>
 									)
-								: <span>{node.getter.label}</span>
+								: <span class="vc-tree-node__label">{node.getter.label}</span>
 						}
 					</div>
 					<TransitionCollapse>

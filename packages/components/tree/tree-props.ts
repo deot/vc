@@ -3,6 +3,7 @@ import type { ExtractPropTypes, PropType } from 'vue';
 import { props as selectProps } from '../select/select-props';
 import { KEY_VALUE } from './store/constant';
 import { props as treeNodeContentProps } from './tree-node-content-props';
+import type { TreeAllowDragPayload, TreeAllowDropPayload } from './types';
 
 const selectKeys = [
 	'separator',
@@ -66,8 +67,10 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
-	allowDrag: Function,
-	allowDrop: Function,
+	// 节点能否被拖动
+	allowDrag: Function as PropType<(data: TreeAllowDragPayload) => boolean>,
+	// 能否放到目标节点的某个区域（before / inner / after 分别询问）
+	allowDrop: Function as PropType<(data: TreeAllowDropPayload) => boolean>,
 	lazy: {
 		type: Boolean,
 		default: false

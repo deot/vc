@@ -101,10 +101,6 @@ $component-name: vc-tree;
 		}
 	}
 
-	@include element(label) {
-		font-size: 14px;
-	}
-
 	@include element(loading-icon) {
 		margin-right: 8px;
 		font-size: 14px;

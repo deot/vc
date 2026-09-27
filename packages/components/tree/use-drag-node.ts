@@ -1,7 +1,55 @@
-import { reactive, getCurrentInstance } from 'vue';
+import { reactive, getCurrentInstance, toRaw } from 'vue';
 import type { Ref } from 'vue';
 import { addClass, removeClass } from '@deot/helper-dom';
 import type { TreeStore, TreeNode } from './store';
+import type {
+	TreeAllowDropPayload,
+	TreeDropPlace,
+	TreeDropPosition,
+	TreeMove,
+	TreeNodeDragEndPayload,
+	TreeNodeDragOverPayload,
+	TreeNodeDragPayload,
+	TreeNodeDropPayload
+} from './types';
+
+// 节点在父节点子节点中的下标
+const indexIn = (parent: TreeNode, node: TreeNode) => {
+	const target = toRaw(node);
+	return toRaw(parent.childNodes).findIndex(item => toRaw(item) === target);
+};
+
+// 对外的父节点：根级为 null（不暴露内部的根节点）
+const toParent = (parent: TreeNode) => (parent.parentNode ? parent : null);
+
+/**
+ * 节点当前的位置
+ * @param node 节点
+ * @returns 父节点与下标
+ */
+const getPlace = (node: TreeNode): TreeDropPlace => {
+	const parent = node.parentNode!;
+	return { parent: toParent(parent), index: indexIn(parent, node) };
+};
+
+/**
+ * 放到目标节点某个区域后的位置，与放下时的插入方式一致：
+ * before / after 插入到目标节点的父节点中，inner 追加到目标节点的子节点末尾；
+ * to.index 为移除被拖节点之后的下标
+ * @param node 被拖节点
+ * @param target 目标节点
+ * @param position 区域
+ * @returns 移动前后的位置
+ */
+const getMove = (node: TreeNode, target: TreeNode, position: TreeDropPosition): TreeMove => {
+	const parent = position === 'inner' ? target : target.parentNode!;
+	let index = position === 'inner'
+		? target.childNodes.length
+		: indexIn(parent, target) + (position === 'after' ? 1 : 0);
+	// 同一父节点内，被拖节点在插入位置之前：移除后插入位置前移一位
+	if (toRaw(node.parentNode) === toRaw(parent) && indexIn(parent, node) < index) index--;
+	return { from: getPlace(node), to: { parent: toParent(parent), index } };
+};
 
 export const useDragNode = (store: TreeStore, dropIndicator: Ref<HTMLElement | undefined>) => {
 	const { props, emit, vnode } = getCurrentInstance()!;
@@ -13,8 +61,21 @@ export const useDragNode = (store: TreeStore, dropIndicator: Ref<HTMLElement | u
 		dropType: ''
 	});
 
+	// 询问能否放到目标节点的某个区域
+	const canDrop = (node: TreeNode, target: TreeNode, position: TreeDropPosition) => {
+		if (typeof props.allowDrop !== 'function') return true;
+		return !!props.allowDrop({
+			node,
+			data: node.states.data,
+			targetNode: target,
+			position,
+			...getMove(node, target, position)
+		} satisfies TreeAllowDropPayload);
+	};
+
 	const handleDragStart = (e: any, instance: any) => {
-		if (typeof props.allowDrag === 'function' && !props.allowDrag(instance.props.node)) {
+		const node = instance.props.node as TreeNode;
+		if (typeof props.allowDrag === 'function' && !props.allowDrag({ node, data: node.states.data })) {
 			e.preventDefault();
 			return false;
 		}
@@ -29,7 +90,7 @@ export const useDragNode = (store: TreeStore, dropIndicator: Ref<HTMLElement | u
 			console.log(error);
 		}
 		state.draggingNode = instance;
-		emit('node-drag-start', instance.props.node, e);
+		emit('node-dragstart', { node, data: node.states.data, event: e } satisfies TreeNodeDragPayload);
 	};
 
 	const handleDragOver = (e: any, instance: any) => {
@@ -46,22 +107,23 @@ export const useDragNode = (store: TreeStore, dropIndicator: Ref<HTMLElement | u
 
 		if (!draggingTreeNode || !dropTreeNode) return;
 
-		let dropPrev = true;
-		let dropInner = true;
-		let dropNext = true;
-		let userAllowDropInner = true;
-		if (typeof props.allowDrop === 'function') {
-			dropPrev = props.allowDrop(draggingTreeNode, dropTreeNode, 'prev');
-			userAllowDropInner = props.allowDrop(draggingTreeNode, dropTreeNode, 'inner');
-			dropInner = userAllowDropInner;
-			dropNext = props.allowDrop(draggingTreeNode, dropTreeNode, 'next');
-		}
+		const payload = (targetNode: TreeNode): TreeNodeDragOverPayload => ({
+			node: draggingTreeNode,
+			data: draggingTreeNode.states.data,
+			targetNode,
+			event: e
+		});
+
+		let dropPrev = canDrop(draggingTreeNode, dropTreeNode, 'before');
+		const userAllowDropInner = canDrop(draggingTreeNode, dropTreeNode, 'inner');
+		let dropInner = userAllowDropInner;
+		let dropNext = canDrop(draggingTreeNode, dropTreeNode, 'after');
 		e.dataTransfer.dropEffect = dropInner ? 'move' : 'none';
 		if ((dropPrev || dropInner || dropNext) && oldDropNode !== dropNode) {
 			if (oldDropNode) {
-				emit('node-drag-leave', draggingTreeNode, oldDropNode.props.node, e);
+				emit('node-dragleave', payload(oldDropNode.props.node));
 			}
-			emit('node-drag-enter', draggingTreeNode, dropTreeNode, e);
+			emit('node-dragenter', payload(dropTreeNode));
 		}
 
 		if (dropPrev || dropInner || dropNext) {
@@ -69,6 +131,10 @@ export const useDragNode = (store: TreeStore, dropIndicator: Ref<HTMLElement | u
 		}
 
 		if (dropTreeNode.getNextSiblingNode() === draggingTreeNode) {
+			dropNext = false;
+		}
+		// 展开且有子节点：它的下方紧接第一个子节点，插入线会画在两者之间，而 after 会放到整棵子树之后
+		if (dropTreeNode.states.expanded && dropTreeNode.childNodes.length) {
 			dropNext = false;
 		}
 		if (dropTreeNode.getPreviousSiblingNode() === draggingTreeNode) {
@@ -83,7 +149,8 @@ export const useDragNode = (store: TreeStore, dropIndicator: Ref<HTMLElement | u
 			dropNext = false;
 		}
 
-		const targetPosition = dropNode.vnode.el!.getBoundingClientRect();
+		// 按节点自己的内容行划分区域：节点元素包含展开的子节点
+		const targetPosition = dropNode.vnode.el!.querySelector('.vc-tree-node__content').getBoundingClientRect();
 		const treePosition = vnode.el!.getBoundingClientRect();
 
 		let dropType: string;
@@ -121,43 +188,56 @@ export const useDragNode = (store: TreeStore, dropIndicator: Ref<HTMLElement | u
 
 		state.allowDrop = state.showDropIndicator || userAllowDropInner;
 		state.dropType = dropType;
-		emit('node-drag-over', draggingTreeNode, dropTreeNode, e);
+		emit('node-dragover', payload(dropTreeNode));
 	};
 
 	const handleDragEnd = (e) => {
 		const { draggingNode, dropType, dropNode } = state;
-		const draggingTreeNode = draggingNode!.props.node! as TreeNode;
-		const dropTreeNode = dropNode!.props.node! as TreeNode;
 
 		e.preventDefault();
 		e.dataTransfer.dropEffect = 'move';
 
-		if (draggingNode && dropNode) {
-			const draggingNodeCopy = { data: draggingTreeNode.states.data };
-			if (dropType !== 'none') {
+		if (draggingNode) {
+			const draggingTreeNode = draggingNode.props.node as TreeNode;
+			// 没有落点：allowDrop 拒绝了经过的所有节点
+			const dropTreeNode = (dropNode?.props.node || null) as TreeNode | null;
+			const position = dropTreeNode && dropType !== 'none' ? dropType as TreeDropPosition : null;
+			// 移动前计算位置
+			const move = dropTreeNode && position ? getMove(draggingTreeNode, dropTreeNode, position) : null;
+
+			if (dropTreeNode && position) {
+				const draggingNodeCopy = { data: draggingTreeNode.states.data };
 				draggingTreeNode.remove();
+				let newNode: any;
+				if (position === 'before') {
+					newNode = dropTreeNode.parentNode!.insertBefore(draggingNodeCopy, dropTreeNode);
+				} else if (position === 'after') {
+					newNode = dropTreeNode.parentNode!.insertAfter(draggingNodeCopy, dropTreeNode);
+				} else {
+					newNode = dropTreeNode.insertChild(draggingNodeCopy);
+				}
+				if (newNode) {
+					store.registerNode(newNode as TreeNode);
+				}
 			}
-			let newNode: any;
-			if (dropType === 'before') {
-				newNode = dropTreeNode.parentNode!.insertBefore(draggingNodeCopy, dropTreeNode);
-			} else if (dropType === 'after') {
-				newNode = dropTreeNode.parentNode!.insertAfter(draggingNodeCopy, dropTreeNode);
-			} else if (dropType === 'inner') {
-				newNode = dropTreeNode.insertChild(draggingNodeCopy);
-			}
-			if (newNode && dropType !== 'none') {
-				store.registerNode(newNode as TreeNode);
-			}
+			dropNode && removeClass(dropNode.vnode.el as any, 'is-drop-inner');
 
-			removeClass(dropNode.vnode.el as any, 'is-drop-inner');
-
-			emit('node-drag-end', draggingTreeNode, dropTreeNode, dropType, e);
-			if (dropType !== 'none') {
-				emit('node-drop', draggingTreeNode, dropTreeNode, dropType, e);
+			// 与浏览器一致：先 node-drop，再 node-dragend
+			const base = { node: draggingTreeNode, data: draggingTreeNode.states.data, event: e };
+			if (move) {
+				emit('node-drop', {
+					...base,
+					targetNode: dropTreeNode!,
+					position: position!,
+					...move
+				} satisfies TreeNodeDropPayload);
 			}
-		}
-		if (draggingNode && !dropNode) {
-			emit('node-drag-end', draggingTreeNode, null, dropType, e);
+			emit('node-dragend', {
+				...base,
+				targetNode: dropTreeNode,
+				position,
+				dropped: !!move
+			} satisfies TreeNodeDragEndPayload);
 		}
 
 		state.showDropIndicator = false;
@@ -170,9 +250,9 @@ export const useDragNode = (store: TreeStore, dropIndicator: Ref<HTMLElement | u
 		state,
 		emit: (e: any, ...rest: any[]) => {
 			const methods = {
-				'drag-start': handleDragStart,
-				'drag-over': handleDragOver,
-				'drag-end': handleDragEnd,
+				dragstart: handleDragStart,
+				dragover: handleDragOver,
+				dragend: handleDragEnd
 			};
 
 			return methods[e] && methods[e](...rest);
