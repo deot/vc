@@ -182,13 +182,13 @@ export const TableBodyBlock = defineComponent({
 
 		const enterCell = (e: MouseEvent, cell: ResolvedCell) => {
 			handleHoverEnter(cell.rowIndex);
-			table.emit('cell-mouse-enter', toPayload(cell, e));
+			table.emit('cell-mouseenter', toPayload(cell, e));
 			// 多行省略被截断时展示完整内容
 			textLineTooltip.open(cell.cellEl.querySelector('.vc-table__text-line'), getColumnLine(cell.column, 'line'), cell.cellEl);
 		};
 
 		const leaveCell = (e: MouseEvent, cell: ResolvedCell) => {
-			table.emit('cell-mouse-leave', toPayload(cell, e));
+			table.emit('cell-mouseleave', toPayload(cell, e));
 		};
 
 		// mouseover 冒泡 + 前后 cell 比较，合成 enter/leave 语义

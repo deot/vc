@@ -176,7 +176,7 @@ const getNextOffset = (offset: number, max: number, delta: number) => {
  * 	- 整行拖拽（draggable）从单元格任意位置按下，锚点拖拽从 `.vc-table__drag-handle`（type="drag" 列）按下；
  * 	- 鼠标移动超过阈值后激活；触摸从把手发起同鼠标，整行触摸需长按；
  * 	- 激活后源块变暗，插入线标出落点，跟随行（块 grid 的克隆）随指针纵向移动，指针靠近边缘时自动滚动；
- * 	- 松手时顺序有变化则发出 update:data（新数组）与 block-drop，树形表格先原地修改；之后总会发出 block-drag-end；
+ * 	- 松手时顺序有变化则发出 update:data（新数组）与 block-drop，树形表格先原地修改；之后总会发出 block-dragend；
  * 	- 插入线、跟随行均为命令式 DOM，拖动过程不触发表格重渲染。
  * @param options 表格 props、store、emit 与相关元素
  * @returns 根节点上的按下处理
@@ -706,7 +706,7 @@ export const useBlockDrag = (options: Options) => {
 		document.body.classList.add(BODY_DRAGGING_CLASS);
 		window.getSelection?.()?.removeAllRanges();
 
-		emit('block-drag-start', store.drag.getPayload(current.block) satisfies TableBlockDragPayload);
+		emit('block-dragstart', store.drag.getPayload(current.block) satisfies TableBlockDragPayload);
 		scheduleUpdate();
 		return true;
 	};
@@ -870,7 +870,7 @@ export const useBlockDrag = (options: Options) => {
 			} satisfies TableBlockDropPayload);
 			dropped = true;
 		}
-		emit('block-drag-end', { ...payload, dropped } satisfies TableBlockDragEndPayload);
+		emit('block-dragend', { ...payload, dropped } satisfies TableBlockDragEndPayload);
 	}
 
 	/**

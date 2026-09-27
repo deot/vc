@@ -21,9 +21,9 @@
 			border
 			@selection-change="(e) => (selection = e.selection)"
 			@current-change="(e) => (currentRow = e.row)"
-			@block-drag-start="log('block-drag-start', $event)"
+			@block-dragstart="log('block-dragstart', $event)"
 			@block-drop="log('block-drop', $event)"
-			@block-drag-end="log('block-drag-end', $event)"
+			@block-dragend="log('block-dragend', $event)"
 		>
 			<TableColumn type="selection" />
 			<TableColumn type="index" label="#" />
@@ -270,7 +270,7 @@ const log = (name, e) => {
 	const rows = e.rows.map(row => row.id).join(',');
 	const extra = name === 'block-drop'
 		? ` target=${e.targetRows.map(row => row.id).join(',')} ${e.position} ${e.from.index}→${e.to.index}`
-		: name === 'block-drag-end' ? ` dropped=${e.dropped}` : '';
+		: name === 'block-dragend' ? ` dropped=${e.dropped}` : '';
 	logs.value = [`${name}: rows=${rows}${extra}`, ...logs.value].slice(0, 6);
 };
 

@@ -32,8 +32,8 @@ export const Table = defineComponent({
 		'select',
 		'select-all',
 		'selection-change',
-		'cell-mouse-enter',
-		'cell-mouse-leave',
+		'cell-mouseenter',
+		'cell-mouseleave',
 		'cell-click',
 		'cell-dblclick',
 		'cell-contextmenu',
@@ -50,9 +50,9 @@ export const Table = defineComponent({
 		'update:columns',
 		'load-change',
 		'update:data',
-		'block-drag-start',
+		'block-dragstart',
 		'block-drop',
-		'block-drag-end'
+		'block-dragend'
 	],
 	setup(props, { slots, expose, emit }) {
 		const instance = getCurrentInstance()!;

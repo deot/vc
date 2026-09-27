@@ -68,7 +68,7 @@ export class Drag {
 	}
 
 	/**
-	 * 块的行与首行行号：allowDrag、block-drag-start / end 的参数
+	 * 块的行与首行行号：allowDrag、block-dragstart / block-dragend 的参数
 	 * @param block states.list 中的块
 	 * @returns 行与首行行号
 	 */

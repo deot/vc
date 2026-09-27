@@ -227,9 +227,9 @@ describe('table/block-drag', () => {
 				data={data.value}
 				primaryKey="id"
 				draggable
-				onBlockDragStart={onStart}
+				onBlockDragstart={onStart}
 				onBlockDrop={onDrop}
-				onBlockDragEnd={onEnd}
+				onBlockDragend={onEnd}
 				{...{ 'onUpdate:data': onUpdate }}
 			>
 				<TableColumn type="index" />
@@ -304,7 +304,7 @@ describe('table/block-drag', () => {
 		const onRowClick = vi.fn();
 		const onStart = vi.fn();
 		const wrapper = mount(() => (
-			<Table data={buildData(3)} primaryKey="id" draggable onRowClick={onRowClick} onBlockDragStart={onStart}>
+			<Table data={buildData(3)} primaryKey="id" draggable onRowClick={onRowClick} onBlockDragstart={onStart}>
 				<TableColumn label="名称" prop="name" />
 			</Table>
 		), { attachTo: document.body });
@@ -344,7 +344,7 @@ describe('table/block-drag', () => {
 	it('锚点拖拽：只从把手发起；整行拖拽时交互元素处按下不发起', async () => {
 		const onStart = vi.fn();
 		const w1 = mount(() => (
-			<Table data={buildData(3)} primaryKey="id" onBlockDragStart={onStart}>
+			<Table data={buildData(3)} primaryKey="id" onBlockDragstart={onStart}>
 				<TableColumn type="drag" />
 				<TableColumn label="名称" prop="name" />
 			</Table>
@@ -359,7 +359,7 @@ describe('table/block-drag', () => {
 
 		const onStart2 = vi.fn();
 		const w2 = mount(() => (
-			<Table data={buildData(3)} primaryKey="id" draggable onBlockDragStart={onStart2}>
+			<Table data={buildData(3)} primaryKey="id" draggable onBlockDragstart={onStart2}>
 				<TableColumn type="selection" />
 				<TableColumn label="名称" prop="name">
 					{{ default: () => <input class="remark" /> }}
@@ -387,7 +387,7 @@ describe('table/block-drag', () => {
 				primaryKey="id"
 				allowDrag={({ rows }: any) => rows[0].id !== 'id__1'}
 				allowDrop={allowDrop}
-				onBlockDragEnd={onEnd}
+				onBlockDragend={onEnd}
 				{...{ 'onUpdate:data': onUpdate }}
 			>
 				<TableColumn type="drag" />
@@ -425,7 +425,7 @@ describe('table/block-drag', () => {
 		const onUpdate = vi.fn();
 		const onEnd = vi.fn();
 		const wrapper = mount(() => (
-			<Table data={buildData(4)} primaryKey="id" draggable onBlockDragEnd={onEnd} {...{ 'onUpdate:data': onUpdate }}>
+			<Table data={buildData(4)} primaryKey="id" draggable onBlockDragend={onEnd} {...{ 'onUpdate:data': onUpdate }}>
 				<TableColumn label="名称" prop="name" />
 			</Table>
 		), { attachTo: document.body });
@@ -458,7 +458,7 @@ describe('table/block-drag', () => {
 		const onEnd = vi.fn();
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
-			<Table ref={tableRef} data={data.value} primaryKey="id" draggable onBlockDragEnd={onEnd}>
+			<Table ref={tableRef} data={data.value} primaryKey="id" draggable onBlockDragend={onEnd}>
 				<TableColumn label="名称" prop="name" />
 			</Table>
 		), { attachTo: document.body });
@@ -478,7 +478,7 @@ describe('table/block-drag', () => {
 		const onUpdate = vi.fn((v: any[]) => (data.value = v));
 		const onEnd = vi.fn();
 		const wrapper = mount(() => (
-			<Table data={data.value} primaryKey="id" draggable onBlockDragEnd={onEnd} {...{ 'onUpdate:data': onUpdate }}>
+			<Table data={data.value} primaryKey="id" draggable onBlockDragend={onEnd} {...{ 'onUpdate:data': onUpdate }}>
 				<TableColumn label="名称" prop="name" />
 			</Table>
 		), { attachTo: document.body });
@@ -642,7 +642,7 @@ describe('table/block-drag', () => {
 
 		it('可以拖拽：被拖行连同可见子孙变暗；落在被拖子树内不可放置', async () => {
 			const onStart = vi.fn();
-			const wrapper = await mountTree({ onBlockDragStart: onStart });
+			const wrapper = await mountTree({ onBlockDragstart: onStart });
 			expect(wrapper.findAll('.vc-table__body-wrapper .vc-table__drag-handle.is-disabled').length).toBe(0);
 
 			// 拖 r1-2（第 2 行，子行 r1-2-1 在第 3 行）
@@ -962,7 +962,7 @@ describe('table/block-drag', () => {
 			const data = ref(buildTree());
 			const onDrop = vi.fn();
 			const onEnd = vi.fn();
-			const wrapper = await mountTree({ data: data.value, allowDrop: () => false, onBlockDrop: onDrop, onBlockDragEnd: onEnd });
+			const wrapper = await mountTree({ data: data.value, allowDrop: () => false, onBlockDrop: onDrop, onBlockDragend: onEnd });
 
 			await dragTo(cellOf(wrapper, 4, 1).element, 4, rowY(1));
 			expect(onDrop).not.toHaveBeenCalled();
@@ -1226,7 +1226,7 @@ describe('table/block-drag', () => {
 
 		it('同时配置 getSpan 时禁用拖拽', async () => {
 			const onStart = vi.fn();
-			const wrapper = await mountTree({ getSpan: () => [1, 1], onBlockDragStart: onStart });
+			const wrapper = await mountTree({ getSpan: () => [1, 1], onBlockDragstart: onStart });
 
 			expect(wrapper.findAll('.vc-table__body-wrapper .is-draggable').length).toBe(0);
 			const handles = wrapper.findAll('.vc-table__body-wrapper .vc-table__drag-handle');
@@ -1243,11 +1243,11 @@ describe('table/block-drag', () => {
 		const onOuterStart = vi.fn();
 		const onInnerStart = vi.fn();
 		const wrapper = mount(() => (
-			<Table data={buildData(2)} primaryKey="id" draggable expandRowValue={['id__0']} onBlockDragStart={onOuterStart}>
+			<Table data={buildData(2)} primaryKey="id" draggable expandRowValue={['id__0']} onBlockDragstart={onOuterStart}>
 				<TableColumn type="expand">
 					{{
 						default: () => (
-							<Table class="inner" data={buildData(3)} primaryKey="id" draggable onBlockDragStart={onInnerStart}>
+							<Table class="inner" data={buildData(3)} primaryKey="id" draggable onBlockDragstart={onInnerStart}>
 								<TableColumn label="名称" prop="name" />
 							</Table>
 						)
@@ -1430,7 +1430,7 @@ describe('table/block-drag', () => {
 		const onUpdate = vi.fn();
 		const onEnd = vi.fn();
 		const wrapper = mount(() => (
-			<Table data={buildData(4)} primaryKey="id" draggable onBlockDragEnd={onEnd} {...{ 'onUpdate:data': onUpdate }}>
+			<Table data={buildData(4)} primaryKey="id" draggable onBlockDragend={onEnd} {...{ 'onUpdate:data': onUpdate }}>
 				<TableColumn label="名称" prop="name" />
 			</Table>
 		), { attachTo: document.body });
@@ -1502,7 +1502,7 @@ describe('table/block-drag', () => {
 	it('整行 move 光标：有把手列时不显示；只作用于本表格的块（不影响嵌套表格）', async () => {
 		const onStart = vi.fn();
 		const w1 = mount(() => (
-			<Table data={buildData(3)} primaryKey="id" draggable onBlockDragStart={onStart}>
+			<Table data={buildData(3)} primaryKey="id" draggable onBlockDragstart={onStart}>
 				<TableColumn type="drag" />
 				<TableColumn label="名称" prop="name" />
 			</Table>
@@ -1576,7 +1576,7 @@ describe('table/block-drag', () => {
 				data={data.value}
 				primaryKey="id"
 				draggable
-				onBlockDragStart={onStart}
+				onBlockDragstart={onStart}
 				{...{ 'onUpdate:data': (v: any[]) => (data.value = v) }}
 			>
 				<TableColumn label="名称" prop="name" />

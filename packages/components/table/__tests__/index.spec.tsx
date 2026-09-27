@@ -378,10 +378,10 @@ describe('Table interaction events', () => {
 		document.body.innerHTML = '';
 	});
 
-	it('emits row-click / cell-mouse-* / current-change', async () => {
+	it('emits row-click / cell-mouseenter / cell-mouseleave / current-change', async () => {
 		const onRowClick = vi.fn();
-		const onCellMouseEnter = vi.fn();
-		const onCellMouseLeave = vi.fn();
+		const onCellMouseenter = vi.fn();
+		const onCellMouseleave = vi.fn();
 		const onCurrentChange = vi.fn();
 		const onRowDblclick = vi.fn();
 		const onRowContextmenu = vi.fn();
@@ -401,8 +401,8 @@ describe('Table interaction events', () => {
 				onRowClick={onRowClick}
 				onRowDblclick={onRowDblclick}
 				onRowContextmenu={onRowContextmenu}
-				onCellMouseEnter={onCellMouseEnter}
-				onCellMouseLeave={onCellMouseLeave}
+				onCellMouseenter={onCellMouseenter}
+				onCellMouseleave={onCellMouseleave}
 				onCellClick={onCellClick}
 				onCellDblclick={onCellDblclick}
 				onCellContextmenu={onCellContextmenu}
@@ -433,7 +433,7 @@ describe('Table interaction events', () => {
 		};
 		const handlers = [
 			onRowClick, onRowDblclick, onRowContextmenu,
-			onCellClick, onCellDblclick, onCellContextmenu, onCellMouseEnter, onCellMouseLeave
+			onCellClick, onCellDblclick, onCellContextmenu, onCellMouseenter, onCellMouseleave
 		];
 		handlers.forEach((fn) => {
 			expect(fn).toHaveBeenCalledTimes(1);
@@ -5466,8 +5466,8 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 		const data = buildData(4);
 		const onCellDblclick = vi.fn();
 		const onRowContextmenu = vi.fn();
-		const onCellMouseEnter = vi.fn();
-		const onCellMouseLeave = vi.fn();
+		const onCellMouseenter = vi.fn();
+		const onCellMouseleave = vi.fn();
 		const getSpan = ({ rowIndex, columnIndex }: any) => (columnIndex === 0 && rowIndex === 0 ? [2, 1] : [1, 1]);
 		const wrapper = mount(() => (
 			<Table
@@ -5486,8 +5486,8 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 					...{
 						onCellDblclick,
 						onRowContextmenu,
-						onCellMouseEnter,
-						onCellMouseLeave
+						onCellMouseenter,
+						onCellMouseleave
 					} as any
 				}
 			>
@@ -5518,7 +5518,7 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 		await anchor.trigger('mouseover');
 		await sleep(80);
 		await flush();
-		expect(onCellMouseEnter).toHaveBeenCalled();
+		expect(onCellMouseenter).toHaveBeenCalled();
 		expect(tableRef.value.store.states.hoverRowIndex).toBe(0);
 		expect(layer.find('[data-row="0"].hover-row').exists()).toBe(true);
 
@@ -5533,7 +5533,7 @@ describe('TableGrid (getSpan 合并 + grid 表头)', () => {
 		await layer.trigger('mouseleave');
 		await sleep(80);
 		await flush();
-		expect(onCellMouseLeave).toHaveBeenCalled();
+		expect(onCellMouseleave).toHaveBeenCalled();
 		expect(tableRef.value.store.states.hoverRowIndex).toBe(null);
 		expect(anchor.classes()).not.toContain('hover-related');
 

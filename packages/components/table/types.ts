@@ -30,7 +30,7 @@ export interface TableProvide {
 }
 
 /**
- * 拖拽排序：block-drag-start 的参数
+ * 拖拽排序：block-dragstart 的参数
  */
 export interface TableBlockDragPayload {
 	// 被拖动块的行（普通表格长度为 1，getSpan 纵向合并的块为多行）
@@ -40,7 +40,7 @@ export interface TableBlockDragPayload {
 }
 
 /**
- * 拖拽排序：block-drag-end 的参数
+ * 拖拽排序：block-dragend 的参数
  */
 export interface TableBlockDragEndPayload extends TableBlockDragPayload {
 	// 是否按新顺序放下（取消、落点不变、不允许放置时为 false）
@@ -64,7 +64,7 @@ export interface TableBlockDropPayload {
 }
 
 /**
- * cell-mouse-enter / cell-mouse-leave / cell-click / cell-dblclick / cell-contextmenu 与
+ * cell-mouseenter / cell-mouseleave / cell-click / cell-dblclick / cell-contextmenu 与
  * row-click / row-dblclick / row-contextmenu 的参数（同一次操作的单元格事件与行事件为同一个对象）
  */
 export interface TableCellEventPayload {

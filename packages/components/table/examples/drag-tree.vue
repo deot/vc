@@ -22,7 +22,7 @@
 			border
 			draggable
 			default-expand-all
-			@block-drag-end="dropText = ''"
+			@block-dragend="dropText = ''"
 			@block-drop="handleDrop"
 		>
 			<TableColumn type="drag" />
