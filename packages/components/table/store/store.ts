@@ -49,9 +49,9 @@ class Store extends BaseWatcher {
 	}
 
 	setData(data: any[]) {
-		// 数据数组是否换了实例（原地增删时仍为同一实例）；拖拽排序后外部写回的新顺序视为原地重排，保留选中项
-		const reordered = this.drag.consume(data);
-		const dataInstanceChanged = this.states.data !== data && !reordered;
+		// 数据数组是否换了实例（原地增删时仍为同一实例）；拖拽排序后外部写回的新数组视为原地重排，保留选中项。
+		// 只在换了实例时识别：树形表格拖拽会先原地修改原数组，这次同步不能提前消耗待写回的记录
+		const dataInstanceChanged = this.states.data !== data && !this.drag.consume(data);
 		this.states.data = data;
 
 		// 清理已不存在的行的展开 / 加载状态，再按展开状态重建渲染块

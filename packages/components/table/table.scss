@@ -5,6 +5,7 @@ $component-name: vc-table;
 $foreground-color: varfix(foreground-color, table);
 $border-color: varfix(border-color, table, #EDEFF1);
 $color-primary: varfix(color-primary, table);
+$color-primary-lighter: varfix(color-primary-lighter, table);
 $color-error: varfix(color-error, table);
 $color-light-deepest: varfix(color-light-deepest, table);
 $color-dark-extralight: varfix(color-dark-extralight, table);
@@ -277,7 +278,8 @@ $sizes: (
 		}
 	}
 
-	// 插入线：落点块之前 / 之后，不允许放置时为错误色
+	// 插入线：落点之前 / 之后（树形表格按层级缩进），不允许放置时为错误色；
+	// 树形表格 inner 时改为框住目标行（高度由脚本写入），叠在跟随行之上
 	@include element(drop-indicator) {
 		position: absolute;
 		z-index: 11;
@@ -285,9 +287,21 @@ $sizes: (
 		margin-top: -1px;
 		pointer-events: none;
 		background-color: $color-primary;
+		box-sizing: border-box;
 
 		@include when(disabled) {
 			background-color: $color-error;
+		}
+
+		@include when(inner) {
+			margin-top: 0;
+			background-color: $color-primary-lighter;
+			border: 2px solid $color-primary;
+
+			&.is-disabled {
+				background-color: color-mix(in srgb, #{$color-error} 15%, transparent);
+				border-color: $color-error;
+			}
 		}
 	}
 
@@ -300,6 +314,12 @@ $sizes: (
 		pointer-events: none;
 		background-color: #fff;
 		box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+		transition: opacity 0.15s;
+
+		// 位于 inner 目标行之上时淡出：跟随行与目标行等大且重合，叠在一起两者都看不清；被拖的行由原位置的变暗提示
+		@include when(over-inner) {
+			opacity: 0;
+		}
 	}
 
 	@include element(expand-icon) {

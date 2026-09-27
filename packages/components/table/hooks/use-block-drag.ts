@@ -1,4 +1,4 @@
-import { watch, inject, onBeforeUnmount } from 'vue';
+import { watch, inject, toRaw, onBeforeUnmount } from 'vue';
 import type { Ref } from 'vue';
 import { raf, caf } from '@deot/helper-utils';
 import { getScroller } from '@deot/helper-dom';
@@ -9,7 +9,7 @@ import { ExternalCarrier } from '../../recycle-list/viewport/external/carrier';
 import { bisectFirst } from '../../recycle-list/store/position';
 import type { AxisKeys, InjectedScroller } from '../../recycle-list/viewport/types';
 import type { Store } from '../store';
-import type { TableBlockMove, TableDropPosition } from '../store/modules';
+import type { TableDropPosition, TableMove } from '../store/modules';
 import type { Props } from '../table-props';
 import type { TableBlockDragPayload, TableBlockDragEndPayload, TableBlockDropPayload } from '../types';
 
@@ -27,12 +27,33 @@ type Options = {
 	virtual: Ref<boolean>;
 };
 
-// 顺序会变化的落点（顺序不变时没有落点）
-type Drop = {
-	target: any;
+// 命中的落点；顺序不变时 move 为 null
+type Hit = {
+	// 落点行：非树形表格为落点块的行；树形表格为 before / after 所相对的行，inner 时为新的父行
+	targetRows: any[];
 	position: TableDropPosition;
-	move: TableBlockMove;
+	move: Nullable<TableMove>;
+	// 命中块的纵向范围：inner 时插入线改为框住它
+	rect: Range;
+	// 插入线的纵坐标与左端（树形表格按层级缩进；null 时为表体左缘）
+	lineY: number;
+	lineLeft: Nullable<number>;
+	// 指针停在其中间区域的收起节点（树形表格）：停留片刻后自动展开
+	expandRow: any;
+};
+
+// 顺序会变化的落点
+type Drop = Hit & {
+	move: TableMove;
 	allowed: boolean;
+};
+
+// 树形表格：被拖行连同可见的子孙在可见行中的范围 [start, end]
+type TreeSession = {
+	start: number;
+	end: number;
+	// 树形列单元格的左内边距（首次测量后缓存）
+	padding: Nullable<number>;
 };
 
 // 视口坐标下的纵向范围
@@ -58,9 +79,15 @@ type DragSession = {
 	indicator: HTMLElement;
 	// 表格外的纵向滚动承载者：流式高度下由它承载滚动
 	outer: ExternalCarrier;
-	// 已渲染的块根节点：非虚拟表格拖拽期间不变（数据或列变化会取消拖拽），只查询一次；虚拟表格为 null，每帧查询
+	// 已渲染的块根节点：非虚拟表格在块列表变化前不变，查询一次后缓存；虚拟表格为 null，每帧查询
 	blockEls: Nullable<HTMLElement[]>;
+	// 变暗的块：被拖块，树形表格还包括可见的子孙行
+	dimmed: any[];
+	// 树形表格的拖拽信息；非树形表格为 null
+	tree: Nullable<TreeSession>;
 	drop: Nullable<Drop>;
+	// 悬停自动展开：指针停留的收起节点与计时
+	hover: { row: any; timer: any };
 };
 
 type DragState = {
@@ -68,6 +95,7 @@ type DragState = {
 	block: any;
 	startX: number;
 	startY: number;
+	clientX: number;
 	clientY: number;
 	// 触摸发起
 	touch: boolean;
@@ -85,6 +113,9 @@ const THRESHOLD = 4;
 // 整行触摸：长按（ms）后才开始拖拽，之前移动超过 TOUCH_SLOP（px）视为滚动
 const LONG_PRESS = 300;
 const TOUCH_SLOP = 8;
+
+// 树形表格：指针在收起节点的中间区域停留（ms）后自动展开
+const HOVER_EXPAND = 600;
 
 // 自动滚动：指针进入可见范围上下边缘 EDGE（px）内时滚动，越靠近边缘越快，每帧最多 SPEED（px）
 const EDGE = 48;
@@ -145,7 +176,7 @@ const getNextOffset = (offset: number, max: number, delta: number) => {
  * 	- 整行拖拽（draggable）从单元格任意位置按下，锚点拖拽从 `.vc-table__drag-handle`（type="drag" 列）按下；
  * 	- 鼠标移动超过阈值后激活；触摸从把手发起同鼠标，整行触摸需长按；
  * 	- 激活后源块变暗，插入线标出落点，跟随行（块 grid 的克隆）随指针纵向移动，指针靠近边缘时自动滚动；
- * 	- 松手时顺序有变化则发出 update:data（新数组）与 block-drop，之后总会发出 block-drag-end；
+ * 	- 松手时顺序有变化则发出 update:data（新数组）与 block-drop，树形表格先原地修改；之后总会发出 block-drag-end；
  * 	- 插入线、跟随行均为命令式 DOM，拖动过程不触发表格重渲染。
  * @param options 表格 props、store、emit 与相关元素
  * @returns 根节点上的按下处理
@@ -252,22 +283,125 @@ export const useBlockDrag = (options: Options) => {
 		};
 	};
 
+	// 可见行的行数据与层级（树形表格每行一块）
+	const getRowAt = (index: number) => {
+		const block = store.drag.getBlockByRowIndex(index);
+		return block ? { row: block.rows[0].data, level: block.rows[0].level || 0 } : null;
+	};
+
 	/**
-	 * 命中落点：在已渲染的块中二分查找指针所在的块，以块的中线区分之前 / 之后
-	 * @param session 拖拽会话
-	 * @param y 指针纵坐标（已限制在可见范围内）
-	 * @returns 落点块、位置与块的纵向范围
+	 * 树形列在该行中的内容起点，即层级 0 的展开图标左缘（各层级依次缩进 indent）
+	 * @param tree 树形表格的拖拽信息
+	 * @param el 块根节点
+	 * @returns 内容起点；没有树形列时为 null
 	 */
-	const hitTest = (session: DragSession, y: number) => {
+	const getTreeContentLeft = (tree: TreeSession, el: HTMLElement) => {
+		const column = store.states.treeColumnIndex;
+		if (column < 0) return null;
+		const cell = el.querySelector<HTMLElement>(`:scope > .vc-table__td[data-column="${column}"] > .vc-table__cell`);
+		if (!cell) return null;
+		tree.padding ??= parseFloat(getComputedStyle(cell).paddingLeft) || 0;
+		return cell.getBoundingClientRect().left + tree.padding;
+	};
+
+	/**
+	 * 树形表格的命中：
+	 * 	- 落在被拖子树内：不可放置；
+	 * 	- 行的中间一半为 inner（成为子行，追加到末尾），框住目标行；不能作为 inner 的行（未加载的懒加载节点）按上下两半；
+	 * 	- 上 / 下区域落在与相邻行之间的间隙（跳过被拖子树）。间隙可以接在下方行到上方行之间的任一层级，
+	 * 	  由指针在树形列上的横向位置决定：层级等于下方行时放在它之前，否则放在上方行对应层级的祖先之后
+	 * @param block 被拖动的块
+	 * @param tree 树形表格的拖拽信息
+	 * @param el 命中的块根节点
+	 * @param rect 块的纵向范围
+	 * @param index 命中的行号
+	 * @param x 指针横坐标
+	 * @param y 指针纵坐标
+	 * @returns 落点
+	 */
+	const hitTree = (block: any, tree: TreeSession, el: HTMLElement, rect: Range, index: number, x: number, y: number): Nullable<Hit> => {
+		if (index >= tree.start && index <= tree.end) return null;
+
+		const { row, level } = getRowAt(index)!;
+		const ratio = (y - rect.top) / Math.max(1, rect.bottom - rect.top);
+		const middle = ratio >= 0.25 && ratio <= 0.75;
+		// 收起的可展开节点（含未加载的懒加载节点）：指针停在中间区域时可自动展开
+		const node = store.tree.getTreeNode(row, level);
+		const expandRow = middle && node.expandable && !node.expanded ? row : null;
+		const inner = store.drag.canInner(row);
+		if (inner && middle) {
+			return {
+				targetRows: [row],
+				position: 'inner',
+				move: store.drag.getTreeMove(block, row, store.tree.getSiblings(row).length),
+				rect,
+				lineY: rect.bottom,
+				lineLeft: null,
+				expandRow
+			};
+		}
+
+		const above = ratio < (inner ? 0.25 : 0.5);
+		const skip = (i: number, step: number) => {
+			if (i < tree.start || i > tree.end) return i;
+			return step < 0 ? tree.start - 1 : tree.end + 1;
+		};
+		const upper = above ? getRowAt(skip(index - 1, -1)) : { row, level };
+		const lower = above ? { row, level } : getRowAt(skip(index + 1, 1));
+		const low = lower ? lower.level : 0;
+		const high = Math.max(low, upper ? upper.level : low);
+		const contentLeft = getTreeContentLeft(tree, el);
+		const indent = props.indent;
+		// 没有树形列，或各层级不缩进（横向位置无从区分）时取下方行的层级
+		const chosen = contentLeft == null || indent <= 0 ? low : clamp(Math.floor((x - contentLeft) / indent), low, high);
+
+		// 放在下方行之前，或上方行在 chosen 层级的祖先（chosen 等于上方行层级时即上方行）之后
+		const before = !!lower && chosen === lower.level;
+		let anchor = before ? lower!.row : upper!.row;
+		if (!before) {
+			for (let i = upper!.level; i > chosen; i--) anchor = store.tree.getParent(anchor);
+		}
+		const parent = store.tree.getParent(anchor);
+		return {
+			targetRows: [anchor],
+			position: before ? 'before' : 'after',
+			move: store.drag.getTreeMove(block, parent, store.drag.indexOf(parent, anchor) + (before ? 0 : 1)),
+			rect,
+			lineY: above ? rect.top : rect.bottom,
+			lineLeft: contentLeft == null ? null : contentLeft + chosen * indent,
+			expandRow
+		};
+	};
+
+	/**
+	 * 命中落点：在已渲染的块中二分查找指针所在的块；非树形表格以块的中线区分之前 / 之后
+	 * @param current 拖拽状态
+	 * @param session 拖拽会话
+	 * @param x 指针横坐标
+	 * @param y 指针纵坐标（已限制在可见范围内）
+	 * @returns 落点
+	 */
+	const hitTest = (current: DragState, session: DragSession, x: number, y: number): Nullable<Hit> => {
 		const els = session.blockEls || queryBlockEls();
+		virtual.value || (session.blockEls = els);
 		if (!els.length) return null;
 		// 首个底边在指针之下的块；指针在所有块之下时取最后一块
 		const el = els[Math.min(bisectFirst(els.length, i => getBlockRect(els[i]).bottom > y), els.length - 1)];
 		const target = store.drag.getBlockByRowIndex(Number(el.dataset.rowStart));
 		if (!target) return null;
 		const rect = getBlockRect(el);
+		if (session.tree) return hitTree(current.block, session.tree, el, rect, target.rowStart, x, y);
+
 		const position: TableDropPosition = y < (rect.top + rect.bottom) / 2 ? 'before' : 'after';
-		return { target, position, rect };
+		return {
+			targetRows: store.drag.getRows(target),
+			position,
+			move: store.drag.getMove(current.block, target, position),
+			rect,
+			lineY: position === 'before' ? rect.top : rect.bottom,
+			lineLeft: null,
+			expandRow: null
+		};
 	};
 
 	// ---------------------------------------------------------------------
@@ -405,18 +539,31 @@ export const useBlockDrag = (options: Options) => {
 		ghost.scrollLeft !== scrollLeft && (ghost.scrollLeft = scrollLeft);
 	};
 
-	const updateIndicator = (session: DragSession, visible: VisibleRect, offset: Offset, rect?: Range) => {
-		const { indicator: el, drop } = session;
+	/**
+	 * 插入线：落点之前 / 之后为一条线，树形表格的左端缩进到目标层级；
+	 * inner 时改为框住目标行，跟随行淡出（与目标行重合，叠在一起两者都看不清）
+	 * @param session 拖拽会话
+	 * @param visible 表体可见范围
+	 * @param offset 根节点偏移
+	 */
+	const updateIndicator = (session: DragSession, visible: VisibleRect, offset: Offset) => {
+		const { indicator: el, ghost, drop } = session;
+		const inner = drop?.position === 'inner';
+		el.classList.toggle('is-inner', inner);
+		ghost.classList.toggle('is-over-inner', inner);
 		// 顺序不变的落点不显示
-		if (!drop || !rect) {
+		if (!drop) {
 			el.style.display = 'none';
 			return;
 		}
-		const y = clamp(drop.position === 'before' ? rect.top : rect.bottom, visible.top, visible.bottom);
+		const right = visible.left + visible.width;
+		const top = clamp(inner ? drop.rect.top : drop.lineY, visible.top, visible.bottom);
+		const left = inner ? visible.left : clamp(drop.lineLeft ?? visible.left, visible.left, right);
 		el.style.display = '';
-		el.style.top = `${y - offset.top}px`;
-		el.style.left = `${visible.left - offset.left}px`;
-		el.style.width = `${visible.width}px`;
+		el.style.top = `${top - offset.top}px`;
+		el.style.left = `${left - offset.left}px`;
+		el.style.width = `${right - left}px`;
+		el.style.height = inner ? `${clamp(drop.rect.bottom, visible.top, visible.bottom) - top}px` : '';
 		el.classList.toggle('is-disabled', !drop.allowed);
 	};
 
@@ -424,23 +571,45 @@ export const useBlockDrag = (options: Options) => {
 	// 拖动
 	// ---------------------------------------------------------------------
 	/**
-	 * 按命中结果更新落点；落点与上一帧相同时沿用（不重复调用 allowDrop）
+	 * 按命中结果更新落点；落点与上一帧相同时沿用 allowDrop 的结果（不重复调用）。
+	 * 被拖块在会话中不变，块列表重建时落点清空，所以位置与落点行相同即移动相同
 	 * @param current 拖拽状态
 	 * @param session 拖拽会话
 	 * @param hit 命中结果
 	 */
-	const updateDrop = (current: DragState, session: DragSession, hit: ReturnType<typeof hitTest>) => {
+	const updateDrop = (current: DragState, session: DragSession, hit: Nullable<Hit>) => {
 		const { drop } = session;
-		if (hit && drop && drop.target === hit.target && drop.position === hit.position) return;
-		const move = hit && store.drag.getMove(current.block, hit.target, hit.position);
-		session.drop = move
-			? {
-					target: hit!.target,
-					position: hit!.position,
-					move,
-					allowed: store.drag.canDrop(current.block, hit!.target, hit!.position)
-				}
-			: null;
+		const move = hit?.move;
+		if (!hit || !move) {
+			session.drop = null;
+			return;
+		}
+		const same = !!drop
+			&& drop.position === hit.position
+			&& toRaw(drop.targetRows[0]) === toRaw(hit.targetRows[0]);
+		session.drop = {
+			...hit,
+			move,
+			allowed: same ? drop!.allowed : store.drag.canDrop(current.block, hit.targetRows, hit.position, move)
+		};
+	};
+
+	/**
+	 * 悬停自动展开：指针停在收起节点的中间区域超过 HOVER_EXPAND 后展开（未加载的懒加载节点先加载）；
+	 * 换到别的行或离开中间区域时重新计时
+	 * @param session 拖拽会话
+	 * @param hit 命中结果
+	 */
+	const updateHover = (session: DragSession, hit: Nullable<Hit>) => {
+		const row = hit?.expandRow || null;
+		const { hover } = session;
+		if (toRaw(row) === toRaw(hover.row)) return;
+		hover.timer && clearTimeout(hover.timer);
+		hover.row = row;
+		hover.timer = row && setTimeout(() => {
+			hover.timer = null;
+			state?.session === session && store.tree.toggle(row, true);
+		}, HOVER_EXPAND);
 	};
 
 	/**
@@ -458,11 +627,12 @@ export const useBlockDrag = (options: Options) => {
 		// 滚动外部承载者后表体位置变化，重新测量
 		scrolled && (visible = getVisibleRect(session.outer)!);
 
-		const hit = hitTest(session, clamp(current.clientY, visible.top, visible.bottom));
+		const hit = hitTest(current, session, current.clientX, clamp(current.clientY, visible.top, visible.bottom));
 		updateDrop(current, session, hit);
+		updateHover(session, hit);
 		const offset = toRootOffset(root);
 		updateGhost(current, session, visible, offset, body.scrollLeft);
-		updateIndicator(session, visible, offset, hit?.rect);
+		updateIndicator(session, visible, offset);
 		scrolled && scheduleUpdate();
 	};
 
@@ -476,6 +646,31 @@ export const useBlockDrag = (options: Options) => {
 	const cancelUpdate = () => {
 		frame != null && caf(frame);
 		frame = null;
+	};
+
+	/**
+	 * 更新变暗的块：被拖块，树形表格还包括可见的子孙（紧随其后、层级更深的行，每行一块），并据此更新子树范围。
+	 * 标记写在块上，只有标记变化的块重渲染：仍在其中的块不重复切换
+	 * @param current 拖拽状态
+	 * @param session 拖拽会话
+	 */
+	const updateDimmed = (current: DragState, session: DragSession) => {
+		const { block } = current;
+		const blocks = [block];
+		const { tree } = session;
+		if (tree) {
+			const level = block.rows[0].level || 0;
+			let next;
+			while ((next = store.drag.getBlockByRowIndex(block.rowStart + blocks.length)) && (next.rows[0].level || 0) > level) {
+				blocks.push(next);
+			}
+			tree.start = block.rowStart;
+			tree.end = block.rowStart + blocks.length - 1;
+		}
+		const kept = new Set(blocks.map(item => toRaw(item)));
+		session.dimmed.forEach(item => kept.has(toRaw(item)) || (item.dragging = false));
+		blocks.forEach(item => (item.dragging = true));
+		session.dimmed = blocks;
 	};
 
 	const activate = (current: DragState) => {
@@ -496,14 +691,16 @@ export const useBlockDrag = (options: Options) => {
 			indicator: createIndicator(root),
 			outer,
 			blockEls: virtual.value ? null : els,
-			drop: null
+			dimmed: [],
+			tree: store.tree.isTree ? { start: current.block.rowStart, end: current.block.rowStart, padding: null } : null,
+			drop: null,
+			hover: { row: null, timer: null }
 		};
 		current.session = session;
 		// 立即定位，避免跟随行在下一帧之前出现在默认位置
 		updateGhost(current, session, visible, offset, body.scrollLeft);
 
-		// 源块变暗：标记写在块上，只有该块重渲染
-		current.block.dragging = true;
+		updateDimmed(current, session);
 		store.states.dragBlock = current.block;
 		store.row.setHoverIndex(null);
 		document.body.classList.add(BODY_DRAGGING_CLASS);
@@ -534,6 +731,7 @@ export const useBlockDrag = (options: Options) => {
 	 * @returns 是否处于拖拽中
 	 */
 	const moveTo = (current: DragState, x: number, y: number) => {
+		current.clientX = x;
 		current.clientY = y;
 		if (!current.session) {
 			if (getDistance(current, x, y) <= THRESHOLD) return false;
@@ -649,7 +847,8 @@ export const useBlockDrag = (options: Options) => {
 		const payload = store.drag.getPayload(block);
 		session.ghost.remove();
 		session.indicator.remove();
-		block.dragging = false;
+		session.hover.timer && clearTimeout(session.hover.timer);
+		session.dimmed.forEach(item => (item.dragging = false));
 		store.states.dragBlock = null;
 		document.body.classList.remove(BODY_DRAGGING_CLASS);
 		suppressClick();
@@ -657,17 +856,18 @@ export const useBlockDrag = (options: Options) => {
 		const { drop } = session;
 		let dropped = false;
 		if (commit && drop?.allowed) {
-			const targetRows = store.drag.getRows(drop.target);
-			const rawData = store.drag.apply(drop.move);
+			const { move } = drop;
 			// hover 按行号记录，重排后会指向别的行
 			store.row.setHoverIndex(null);
+			const rawData = store.drag.apply(block, move);
 			emit('update:data', rawData);
 			emit('block-drop', {
 				rows: payload.rows,
-				targetRows,
+				targetRows: drop.targetRows,
 				position: drop.position,
-				oldIndex: drop.move.from,
-				newIndex: drop.move.insert,
+				...move,
+				oldIndex: move.from.index,
+				newIndex: move.to.index,
 				rawData
 			} satisfies TableBlockDropPayload);
 			dropped = true;
@@ -706,6 +906,7 @@ export const useBlockDrag = (options: Options) => {
 			block,
 			startX: x,
 			startY: y,
+			clientX: x,
 			clientY: y,
 			touch,
 			byHandle,
@@ -744,8 +945,24 @@ export const useBlockDrag = (options: Options) => {
 		}, LONG_PRESS);
 	};
 
-	// 拖拽期间数据或列变化（块已重建）：取消
-	watch(() => store.states.list, () => finish(false));
+	/**
+	 * 拖拽期间块列表重建（数据或列变化、树形表格展开 / 收起、懒加载完成）：
+	 * 被拖动的块仍在其中（块按行复用）时继续拖拽，重新计算子树范围与变暗的块，下一帧重新查询块节点与落点；否则取消
+	 */
+	watch(() => store.states.list, (list) => {
+		const current = state;
+		if (!current) return;
+		const { session } = current;
+		if (!toRaw(list).includes(toRaw(current.block))) {
+			finish(false);
+			return;
+		}
+		if (!session) return;
+		updateDimmed(current, session);
+		session.blockEls = null;
+		session.drop = null;
+		scheduleUpdate();
+	});
 
 	onBeforeUnmount(() => finish(false));
 

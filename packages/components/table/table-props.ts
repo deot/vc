@@ -137,7 +137,7 @@ export const props = {
 	// 块能否被拖动
 	allowDrag: Function as PropType<(data: TableBlockDragPayload) => boolean>,
 	// 能否放到落点（相对落点块之前 / 之后）
-	allowDrop: Function as PropType<(data: Pick<TableBlockDropPayload, 'rows' | 'targetRows' | 'position'>) => boolean>
+	allowDrop: Function as PropType<(data: Pick<TableBlockDropPayload, 'rows' | 'targetRows' | 'position' | 'from' | 'to'>) => boolean>
 };
 export type Props = ExtractPropTypes<typeof props>;
 export type TableProps = Props;

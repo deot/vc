@@ -32,6 +32,8 @@ type Normalized = {
 	nodes: Record<string, TreeNodeInfo>;
 	// 全部行（含嵌套与懒加载得到的子行，不论展开与否）
 	rows: any[];
+	// 行（raw）-> 父行，根行为 null
+	parents: Map<object, any>;
 };
 
 /**
@@ -46,14 +48,17 @@ export class Tree {
 	normalized = computed<Normalized>(() => {
 		const { data, treeLazyChildren } = this.store.states;
 		const { primaryKey, lazyTree } = this.store.table.props;
-		if (!primaryKey) return { nodes: {}, rows: data };
+		if (!primaryKey) return { nodes: {}, rows: data, parents: new Map() };
 
 		const { childrenKey, hasChildrenKey } = this.fields;
 		const nodes: Record<string, TreeNodeInfo> = {};
 		const rows: any[] = [];
-		const walk = (source: any[], level: number) => {
+		const parents = new Map<object, any>();
+		const walk = (source: any[], level: number, parent: any) => {
 			source.forEach((row) => {
 				rows.push(row);
+				// 只记录子行：根行的父行为 null（getParent 的缺省值），非树形表格不必为每行建映射
+				parent && parents.set(toRaw(row), parent);
 				const id = getRowValue(row, primaryKey);
 				if (id == null) return;
 
@@ -65,11 +70,11 @@ export class Tree {
 				if ((!hasChildren && !loadable) || nodes[id]) return;
 
 				nodes[id] = { level, loadable };
-				hasChildren && walk(children, level + 1);
+				hasChildren && walk(children, level + 1, row);
 			});
 		};
-		walk(data, 0);
-		return { nodes, rows: isEmpty(nodes) ? data : rows };
+		walk(data, 0, null);
+		return { nodes, rows: isEmpty(nodes) ? data : rows, parents };
 	});
 
 	// 最近一次重建渲染块所依据的结构，结构未变化时 watch 不再重复重建
@@ -120,6 +125,40 @@ export class Tree {
 	// 子行：懒加载结果优先，其次为 children 字段
 	getChildren(row: any, id: any): any[] {
 		return this.store.states.treeLazyChildren[id] || row[this.fields.childrenKey] || [];
+	}
+
+	/**
+	 * 行的父行
+	 * @param row 行数据
+	 * @returns 父行；根行为 null
+	 */
+	getParent(row: any) {
+		return this.normalized.value.parents.get(toRaw(row)) ?? null;
+	}
+
+	/**
+	 * 行所在的兄弟数组：子行取父行的子行（懒加载结果优先），根行为 data
+	 * @param parent 父行；根行为 null
+	 * @returns 兄弟数组
+	 */
+	getSiblings(parent: any): any[] {
+		return parent ? this.getChildren(parent, this.getKey(parent)) : this.store.states.data;
+	}
+
+	/**
+	 * row 是否为 ancestor 的子孙
+	 * @param ancestor 祖先行
+	 * @param row 行数据
+	 * @returns 是否为子孙
+	 */
+	contains(ancestor: any, row: any) {
+		const target = toRaw(ancestor);
+		let parent = this.getParent(row);
+		while (parent) {
+			if (toRaw(parent) === target) return true;
+			parent = this.getParent(parent);
+		}
+		return false;
 	}
 
 	/**

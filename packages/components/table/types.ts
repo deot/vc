@@ -3,7 +3,7 @@ import type { Nullable } from '@deot/helper-shared';
 import type { Store } from './store/store';
 import type { Props as TableProps } from './table-props';
 import type { TableColumnNode } from './table-column/table-column-node';
-import type { TableDropPosition } from './store/modules/drag';
+import type { TableDropPlace, TableDropPosition } from './store/modules/drag';
 
 /**
  * vc-table-column provide 的上下文（多级表头时子列消费）。
@@ -52,13 +52,16 @@ export interface TableBlockDragEndPayload extends TableBlockDragPayload {
  */
 export interface TableBlockDropPayload {
 	rows: any[];
-	// 落点块的行
+	// 落点行：非树形表格为落点块的行；树形表格为 before / after 所相对的行，inner 时为新的父行
 	targetRows: any[];
-	// 相对落点块的位置
+	// 相对落点行的位置；inner（成为子行）仅树形表格
 	position: TableDropPosition;
-	// 被拖动块首行在 data 中移动前 / 后的下标
+	// 移动前 / 后的位置：parent 为 null 表示根级（非树形表格即 data 中的下标）
+	from: TableDropPlace;
+	to: TableDropPlace;
+	// 被拖动块首行在 data 中移动前 / 后的下标；树形表格为在兄弟行中的下标（同 from.index / to.index）
 	oldIndex: number;
 	newIndex: number;
-	// 新的 data（与 update:data 相同），元素为外部数组中存放的原始行
+	// 新的 data（与 update:data 相同），元素为外部数组中存放的原始行；树形表格为原地修改后根数组的副本
 	rawData: any[];
 }

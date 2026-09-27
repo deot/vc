@@ -2,7 +2,7 @@
 
 import { Table, TableColumn } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
-import { effect, isReactive, nextTick, ref, toRaw } from 'vue';
+import { effect, isReactive, nextTick, reactive, ref, toRaw } from 'vue';
 import { vi } from 'vitest';
 import { Drag } from '../store/modules';
 
@@ -68,8 +68,8 @@ const press = (el: Element, clientY: number) => {
 	return e;
 };
 
-const moveTo = async (clientY: number) => {
-	window.dispatchEvent(new MouseEvent('mousemove', { cancelable: true, buttons: 1, clientX: 10, clientY }));
+const moveTo = async (clientY: number, clientX = 10) => {
+	window.dispatchEvent(new MouseEvent('mousemove', { cancelable: true, buttons: 1, clientX, clientY }));
 	await sleep(30);
 };
 
@@ -78,10 +78,10 @@ const release = () => {
 };
 
 // 从第 from 行按下（el 为该行内的元素），越过阈值后拖到纵坐标 toY（不松手）
-const startDrag = async (el: Element, from: number, toY: number) => {
+const startDrag = async (el: Element, from: number, toY: number, toX = 10) => {
 	press(el, rowY(from));
 	await moveTo(rowY(from) + 10);
-	await moveTo(toY);
+	await moveTo(toY, toX);
 };
 
 // 拖到纵坐标 toY 后松手
@@ -127,6 +127,11 @@ const names = (wrapper: any, column = 1) => {
 	return wrapper.findAll(`.vc-table__body-wrapper .vc-table__td[data-column="${column}"]`).map((td: any) => td.text());
 };
 
+// 变暗的块的行号
+const dimmedOf = (wrapper: any) => wrapper.findAll('.vc-table__body-wrapper [data-row-start]')
+	.filter((el: any) => el.classes('is-dragging'))
+	.map((el: any) => el.attributes('data-row-start'));
+
 describe('table/block-drag', () => {
 	let restoreLayout: ReturnType<typeof mockLayout>;
 
@@ -144,11 +149,12 @@ describe('table/block-drag', () => {
 	it('Drag#getMove: 前后移动、多行块与顺序不变', () => {
 		const drag = new Drag({} as any);
 		const block = (rowStart: number, count = 1) => ({ rowStart, rows: Array.from({ length: count }) });
+		const move = (from: number, to: number) => ({ from: { parent: null, index: from }, to: { parent: null, index: to } });
 
-		expect(drag.getMove(block(0), block(2), 'after')).toEqual({ from: 0, count: 1, insert: 2 });
-		expect(drag.getMove(block(0), block(2), 'before')).toEqual({ from: 0, count: 1, insert: 1 });
-		expect(drag.getMove(block(3, 2), block(0), 'before')).toEqual({ from: 3, count: 2, insert: 0 });
-		expect(drag.getMove(block(0, 3), block(4), 'after')).toEqual({ from: 0, count: 3, insert: 2 });
+		expect(drag.getMove(block(0), block(2), 'after')).toEqual(move(0, 2));
+		expect(drag.getMove(block(0), block(2), 'before')).toEqual(move(0, 1));
+		expect(drag.getMove(block(3, 2), block(0), 'before')).toEqual(move(3, 0));
+		expect(drag.getMove(block(0, 3), block(4), 'after')).toEqual(move(0, 2));
 		// 自身、紧邻的前后位置：顺序不变
 		expect(drag.getMove(block(1), block(1), 'before')).toBeNull();
 		expect(drag.getMove(block(1), block(1), 'after')).toBeNull();
@@ -402,7 +408,9 @@ describe('table/block-drag', () => {
 		expect(allowDrop).toHaveBeenLastCalledWith({
 			rows: [expect.objectContaining({ id: 'id__0' })],
 			targetRows: [expect.objectContaining({ id: 'id__3' })],
-			position: 'after'
+			position: 'after',
+			from: { parent: null, index: 0 },
+			to: { parent: null, index: 3 }
 		});
 		release();
 		await flush();
@@ -460,6 +468,32 @@ describe('table/block-drag', () => {
 		expect(onEnd).toHaveBeenCalledWith(expect.objectContaining({ dropped: false }));
 		expect(wrapper.element.querySelector('.vc-table__drag-ghost')).toBeNull();
 		expect(tableRef.value.store.states.dragBlock).toBeNull();
+		wrapper.unmount();
+	});
+
+	it('拖拽中原地追加行（块仍在）：拖拽继续，松手后的新顺序包含追加的行', async () => {
+		const data = ref(buildData(3));
+		const onUpdate = vi.fn((v: any[]) => (data.value = v));
+		const onEnd = vi.fn();
+		const wrapper = mount(() => (
+			<Table data={data.value} primaryKey="id" draggable onBlockDragEnd={onEnd} {...{ 'onUpdate:data': onUpdate }}>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		await startDrag(cellOf(wrapper, 0, 0).element, 0, rowY(1) + 10);
+		data.value.push({ id: 'id__3', name: 'name-3' });
+		await flush();
+		expect(onEnd).not.toHaveBeenCalled();
+		expect(wrapper.element.querySelector('.vc-table__drag-ghost')).toBeTruthy();
+
+		// 拖到追加的行（第 3 行）之后
+		await moveTo(rowY(3) + 10);
+		release();
+		await flush();
+		expect(onEnd).toHaveBeenCalledWith(expect.objectContaining({ dropped: true }));
+		expect(names(wrapper, 0)).toEqual(['name-1', 'name-2', 'name-3', 'name-0']);
 		wrapper.unmount();
 	});
 
@@ -560,28 +594,649 @@ describe('table/block-drag', () => {
 		wrapper.unmount();
 	});
 
-	it('树形表格：暂不支持拖拽', async () => {
-		const onStart = vi.fn();
-		const data = [
-			{ id: 1, name: 'r1', children: [{ id: 11, name: 'r1-1' }] },
-			{ id: 2, name: 'r2' }
+	describe('树形表格', () => {
+		// 默认全部展开后的可见行：0 r1(0) / 1 r1-1(1) / 2 r1-2(1) / 3 r1-2-1(2) / 4 r2(0) / 5 r3(0，未加载的懒加载节点)
+		const buildTree = (): any[] => [
+			{
+				id: 1,
+				name: 'r1',
+				children: [
+					{ id: 11, name: 'r1-1' },
+					{ id: 12, name: 'r1-2', children: [{ id: 121, name: 'r1-2-1' }] }
+				]
+			},
+			{ id: 2, name: 'r2' },
+			{ id: 3, name: 'r3', hasChildren: true }
 		];
-		const wrapper = mount(() => (
-			<Table data={data} primaryKey="id" draggable defaultExpandAll onBlockDragStart={onStart}>
-				<TableColumn type="drag" />
-				<TableColumn label="名称" prop="name" />
-			</Table>
-		), { attachTo: document.body });
-		await flush();
 
-		expect(wrapper.findAll('.vc-table__body-wrapper .is-draggable').length).toBe(0);
-		const handles = wrapper.findAll('.vc-table__body-wrapper .vc-table__drag-handle');
-		expect(handles.length).toBe(3);
-		expect(handles.every(item => item.classes('is-disabled'))).toBe(true);
-		await dragTo(handles[0].element, 0, rowY(2) + 10);
-		await dragTo(cellOf(wrapper, 0, 1).element, 0, rowY(2) + 10);
-		expect(onStart).not.toHaveBeenCalled();
-		wrapper.unmount();
+		// 行内的纵坐标：上 / 下区域取行的上沿 / 下沿附近，中间区域取行中线
+		const topOf = (r: number) => BODY_TOP + r * ROW + 5;
+		const bottomOf = (r: number) => BODY_TOP + r * ROW + ROW - 5;
+		// 树形列内容起点为 0（jsdom 下单元格矩形为 0），层级 l 对应横坐标 [16l, 16l + 16)
+		const levelX = (level: number) => level * 16 + 5;
+
+		// jsdom 下元素没有宽度：给表体补上可见宽度，插入线才能按层级缩进
+		const mountTree = async (props: Record<string, any> = {}) => {
+			const wrapper = mount(() => (
+				<Table
+					data={buildTree()}
+					primaryKey="id"
+					draggable
+					defaultExpandAll
+					lazyTree
+					loadExpand={() => []}
+					{...props}
+				>
+					<TableColumn type="drag" />
+					<TableColumn label="名称" prop="name" />
+				</Table>
+			), { attachTo: document.body });
+			await flush();
+			defineProps(wrapper.find('.vc-table__body-wrapper').element, { clientWidth: 600 });
+			return wrapper;
+		};
+
+		const indicatorOf = (wrapper: any) => wrapper.element.querySelector('.vc-table__drop-indicator') as HTMLElement;
+
+		it('可以拖拽：被拖行连同可见子孙变暗；落在被拖子树内不可放置', async () => {
+			const onStart = vi.fn();
+			const wrapper = await mountTree({ onBlockDragStart: onStart });
+			expect(wrapper.findAll('.vc-table__body-wrapper .vc-table__drag-handle.is-disabled').length).toBe(0);
+
+			// 拖 r1-2（第 2 行，子行 r1-2-1 在第 3 行）
+			await startDrag(cellOf(wrapper, 2, 1).element, 2, rowY(4) + 15);
+			expect(onStart).toHaveBeenCalledTimes(1);
+			expect(dimmedOf(wrapper)).toEqual(['2', '3']);
+
+			// 落在子行上：不可放置
+			await moveTo(rowY(3));
+			expect(indicatorOf(wrapper).style.display).toBe('none');
+			release();
+			await flush();
+			expect(wrapper.findAll('.vc-table__body-wrapper .is-dragging').length).toBe(0);
+			wrapper.unmount();
+		});
+
+		it('中间区域为 inner：框住目标行，跟随行淡出；allowDrop 收到 from / to', async () => {
+			const allowDrop = vi.fn(() => true);
+			const wrapper = await mountTree({ allowDrop });
+
+			// r2 拖到叶子行 r1-1 的中间：成为它的子行
+			await startDrag(cellOf(wrapper, 4, 1).element, 4, rowY(1));
+			const indicator = indicatorOf(wrapper);
+			expect(indicator.classList.contains('is-inner')).toBe(true);
+			expect(indicator.style.display).toBe('');
+			expect(indicator.style.top).toBe(`${BODY_TOP + ROW}px`);
+			expect(indicator.style.height).toBe(`${ROW}px`);
+			expect(wrapper.element.querySelector('.vc-table__drag-ghost')!.classList.contains('is-over-inner')).toBe(true);
+			expect(allowDrop).toHaveBeenLastCalledWith({
+				rows: [expect.objectContaining({ id: 2 })],
+				targetRows: [expect.objectContaining({ id: 11 })],
+				position: 'inner',
+				from: { parent: null, index: 1 },
+				to: { parent: expect.objectContaining({ id: 11 }), index: 0 }
+			});
+
+			// 移到行间隙：恢复为插入线，跟随行重新显示
+			await moveTo(topOf(0));
+			expect(indicator.classList.contains('is-inner')).toBe(false);
+			expect(indicator.style.height).toBe('');
+			expect(wrapper.element.querySelector('.vc-table__drag-ghost')!.classList.contains('is-over-inner')).toBe(false);
+			release();
+			await flush();
+			wrapper.unmount();
+		});
+
+		it('已展开父行的下方区域：放在第一个子行之前，插入线缩进一级', async () => {
+			const allowDrop = vi.fn(() => true);
+			const wrapper = await mountTree({ allowDrop });
+
+			await startDrag(cellOf(wrapper, 4, 1).element, 4, bottomOf(0), levelX(0));
+			const indicator = indicatorOf(wrapper);
+			expect(indicator.style.display).toBe('');
+			expect(indicator.style.top).toBe(`${BODY_TOP + ROW}px`);
+			expect(indicator.style.left).toBe('16px');
+			expect(allowDrop).toHaveBeenLastCalledWith(expect.objectContaining({
+				position: 'before',
+				targetRows: [expect.objectContaining({ id: 11 })],
+				to: { parent: expect.objectContaining({ id: 1 }), index: 0 }
+			}));
+			release();
+			await flush();
+			wrapper.unmount();
+		});
+
+		it('子树末尾：按指针在树形列上的横向位置选层级', async () => {
+			const allowDrop = vi.fn(() => true);
+			const wrapper = await mountTree({ allowDrop });
+
+			// 拖 r1-1，指针在 r1-2-1（第 3 行，层级 2）的下方区域：可接在层级 0 ~ 2
+			const cell = cellOf(wrapper, 1, 1).element;
+			await startDrag(cell, 1, bottomOf(3), levelX(2));
+			expect(indicatorOf(wrapper).style.left).toBe('32px');
+			expect(allowDrop).toHaveBeenLastCalledWith(expect.objectContaining({
+				position: 'after',
+				targetRows: [expect.objectContaining({ id: 121 })],
+				to: { parent: expect.objectContaining({ id: 12 }), index: 1 }
+			}));
+
+			// 层级 1：放在 r1-2 之后（r1 的末尾）
+			await moveTo(bottomOf(3), levelX(1));
+			expect(indicatorOf(wrapper).style.left).toBe('16px');
+			expect(allowDrop).toHaveBeenLastCalledWith(expect.objectContaining({
+				position: 'after',
+				targetRows: [expect.objectContaining({ id: 12 })],
+				from: { parent: expect.objectContaining({ id: 1 }), index: 0 },
+				to: { parent: expect.objectContaining({ id: 1 }), index: 1 }
+			}));
+
+			// 层级 0：等于下方行 r2 的层级，放在 r2 之前（根级）
+			await moveTo(bottomOf(3), levelX(0));
+			expect(indicatorOf(wrapper).style.left).toBe('0px');
+			expect(allowDrop).toHaveBeenLastCalledWith(expect.objectContaining({
+				position: 'before',
+				targetRows: [expect.objectContaining({ id: 2 })],
+				to: { parent: null, index: 1 }
+			}));
+
+			// 超出范围的横向位置按边界取
+			await moveTo(bottomOf(3), levelX(5));
+			expect(indicatorOf(wrapper).style.left).toBe('32px');
+			release();
+			await flush();
+			wrapper.unmount();
+		});
+
+		it('未加载的懒加载节点不能作为 inner：按上下两半；位置不变时不显示插入线', async () => {
+			const allowDrop = vi.fn(() => true);
+			const wrapper = await mountTree({ allowDrop });
+
+			// r1-1 拖到 r3 的中线上方：放在 r3 之前（不框住 r3）
+			await startDrag(cellOf(wrapper, 1, 1).element, 1, rowY(5) - 5);
+			expect(indicatorOf(wrapper).classList.contains('is-inner')).toBe(false);
+			expect(allowDrop).toHaveBeenLastCalledWith(expect.objectContaining({
+				position: 'before',
+				targetRows: [expect.objectContaining({ id: 3 })],
+				to: { parent: null, index: 2 }
+			}));
+			// r1 的下方区域：放在 r1-1 自身之前，位置不变
+			await moveTo(bottomOf(0));
+			expect(indicatorOf(wrapper).style.display).toBe('none');
+			release();
+			await flush();
+			wrapper.unmount();
+		});
+
+		const ids = (rows: any[]) => rows.map(row => row.id);
+
+		it('松手后原地修改：根级 → 子级（before）；发出 update:data（根数组的副本）与 block-drop', async () => {
+			const data = ref(buildTree());
+			const onDrop = vi.fn();
+			const onUpdate = vi.fn();
+			const wrapper = await mountTree({ 'data': data.value, 'onBlockDrop': onDrop, 'onUpdate:data': onUpdate });
+
+			// r2（第 4 行）拖到 r1-1 的上方区域：成为 r1 的第一个子行
+			await dragTo(cellOf(wrapper, 4, 1).element, 4, topOf(1));
+			expect(onUpdate).toHaveBeenCalledTimes(1);
+			const emitted = onUpdate.mock.calls[0][0];
+			// 新数组，内容为原地修改后的根级
+			expect(emitted).not.toBe(toRaw(data.value));
+			expect(ids(emitted)).toEqual([1, 3]);
+			const payload = onDrop.mock.calls[0][0];
+			expect(payload).toMatchObject({
+				position: 'before',
+				from: { parent: null, index: 1 },
+				to: { index: 0 },
+				oldIndex: 1,
+				newIndex: 0
+			});
+			expect(payload.to.parent.id).toBe(1);
+			expect(ids(payload.rows)).toEqual([2]);
+			expect(ids(payload.targetRows)).toEqual([11]);
+			expect(payload.rawData).toBe(emitted);
+			expect(ids(data.value)).toEqual([1, 3]);
+			expect(ids(data.value[0].children)).toEqual([2, 11, 12]);
+
+			await flush();
+			expect(names(wrapper)).toEqual(['r1', 'r2', 'r1-1', 'r1-2', 'r1-2-1', 'r3']);
+			wrapper.unmount();
+		});
+
+		it('异步写回根数组副本：选中项、当前行、展开状态保留', async () => {
+			const data = ref(buildTree());
+			const tableRef = ref<any>();
+			const onSelectionChange = vi.fn();
+			const wrapper = mount(() => (
+				<Table
+					ref={tableRef}
+					data={data.value}
+					primaryKey="id"
+					draggable
+					highlight
+					defaultExpandAll
+					onSelectionChange={onSelectionChange}
+					// 异步写回（如接口成功后）：写回前表格已按原地修改的原数组同步过一次
+					{...{ 'onUpdate:data': (v: any[]) => setTimeout(() => (data.value = v), 20) }}
+				>
+					<TableColumn type="drag" />
+					<TableColumn label="名称" prop="name" />
+				</Table>
+			), { attachTo: document.body });
+			await flush();
+			defineProps(wrapper.find('.vc-table__body-wrapper').element, { clientWidth: 600 });
+			const vm = tableRef.value;
+			const source = data.value;
+			vm.toggleRowSelection(data.value[1], true);
+			vm.setCurrentRow(data.value[0].children[0]);
+			vm.toggleRowExpansion(data.value[0].children[1], false);
+			await flush();
+			onSelectionChange.mockClear();
+
+			// r2（第 3 行，r1-2 已收起）拖到 r1-1 的上方区域
+			await dragTo(cellOf(wrapper, 3, 1).element, 3, topOf(1));
+			await sleep(40);
+			await flush();
+			expect(data.value).not.toBe(source);
+			expect(ids(data.value)).toEqual([1, 3]);
+			expect(toRaw(vm.store.states.data)).toBe(toRaw(data.value));
+			expect(ids(vm.store.states.selection)).toEqual([2]);
+			expect(onSelectionChange).not.toHaveBeenCalled();
+			expect(vm.store.states.currentRow.id).toBe(11);
+			// r1-2 仍收起
+			expect(names(wrapper)).toEqual(['r1', 'r2', 'r1-1', 'r1-2', 'r3']);
+			wrapper.unmount();
+		});
+
+		it('子级 → 根级：子树随节点一起移动；同一父行内调整顺序', async () => {
+			const data = ref(buildTree());
+			const wrapper = await mountTree({ data: data.value });
+
+			// r1-1 拖到 r1-2-1 下方区域的层级 1：放在 r1-2 之后（r1 的末尾）
+			await startDrag(cellOf(wrapper, 1, 1).element, 1, bottomOf(3), levelX(1));
+			release();
+			await flush();
+			expect(ids(data.value[0].children)).toEqual([12, 11]);
+			expect(names(wrapper)).toEqual(['r1', 'r1-2', 'r1-2-1', 'r1-1', 'r2', 'r3']);
+
+			// r1-2（第 1 行，子行 r1-2-1）拖到 r2（第 4 行）之后：移到根级，子行随之移动
+			await dragTo(cellOf(wrapper, 1, 1).element, 1, bottomOf(4));
+			await flush();
+			expect(ids(data.value)).toEqual([1, 2, 12, 3]);
+			expect(ids(data.value[0].children)).toEqual([11]);
+			expect(ids(data.value[2].children)).toEqual([121]);
+			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r2', 'r1-2', 'r1-2-1', 'r3']);
+			wrapper.unmount();
+		});
+
+		it('inner：放进叶子行时新建 children 并展开（普通数组同样生效）', async () => {
+			const data = buildTree();
+			const wrapper = await mountTree({ data });
+
+			// r2 拖到 r1-1 的中间
+			await dragTo(cellOf(wrapper, 4, 1).element, 4, rowY(1));
+			expect(ids((data[0].children as any[])[0].children)).toEqual([2]);
+			expect(ids(data)).toEqual([1, 3]);
+
+			await flush();
+			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r2', 'r1-2', 'r1-2-1', 'r3']);
+			// r2 位于第 2 行，层级 2
+			expect(wrapper.find('.vc-table__body-wrapper [data-row-start="2"]').attributes('aria-level')).toBe('3');
+			wrapper.unmount();
+		});
+
+		it('inner：放进收起的节点时追加到末尾并展开', async () => {
+			const data = ref(buildTree());
+			const tableRef = ref<any>();
+			const wrapper = await mountTree({ ref: tableRef, data: data.value });
+			tableRef.value.toggleRowExpansion(data.value[0].children[1], false);
+			await flush();
+			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r1-2', 'r2', 'r3']);
+
+			// r2（第 3 行）拖到收起的 r1-2（第 2 行）中间
+			await dragTo(cellOf(wrapper, 3, 1).element, 3, rowY(2));
+			await flush();
+			expect(ids(data.value[0].children[1].children)).toEqual([121, 2]);
+			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r1-2', 'r1-2-1', 'r2', 'r3']);
+			wrapper.unmount();
+		});
+
+		it('懒加载：放进已加载的懒加载节点，修改 load-expand 返回的数组', async () => {
+			const data = ref(buildTree());
+			const lazyChildren = [{ id: 31, name: 'r3-1' }];
+			const tableRef = ref<any>();
+			const wrapper = await mountTree({ ref: tableRef, data: data.value, loadExpand: () => lazyChildren });
+			tableRef.value.toggleRowExpansion(data.value[2], true);
+			await flush();
+			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r1-2', 'r1-2-1', 'r2', 'r3', 'r3-1']);
+
+			// r2（第 4 行）拖到 r3（第 5 行，已加载）中间：追加到懒加载的子行
+			await dragTo(cellOf(wrapper, 4, 1).element, 4, rowY(5));
+			await flush();
+			expect(ids(lazyChildren)).toEqual([31, 2]);
+			expect(ids(data.value)).toEqual([1, 3]);
+			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r1-2', 'r1-2-1', 'r3', 'r3-1', 'r2']);
+
+			// 再从懒加载的子行拖回根级：r2（第 6 行）拖到 r1 的上方区域
+			await dragTo(cellOf(wrapper, 6, 1).element, 6, topOf(0));
+			await flush();
+			expect(ids(lazyChildren)).toEqual([31]);
+			expect(ids(data.value)).toEqual([2, 1, 3]);
+			wrapper.unmount();
+		});
+
+		it('选中项、当前行保留；expand-selectable=false 时移成子行的已选根行移出选中', async () => {
+			const data = ref(buildTree());
+			const tableRef = ref<any>();
+			const wrapper = await mountTree({ ref: tableRef, data: data.value, highlight: true });
+			const vm = tableRef.value;
+			vm.toggleRowSelection(data.value[0].children[0], true);
+			vm.setCurrentRow(data.value[0].children[1]);
+			await flush();
+
+			// r1-1 拖到 r1-2-1 下方区域的层级 0：移到根级 r2 之前
+			await startDrag(cellOf(wrapper, 1, 1).element, 1, bottomOf(3), levelX(0));
+			release();
+			await flush();
+			expect(ids(data.value)).toEqual([1, 11, 2, 3]);
+			expect(ids(vm.store.states.selection)).toEqual([11]);
+			expect(vm.store.states.currentRow.id).toBe(12);
+			wrapper.unmount();
+
+			const data2 = ref(buildTree());
+			const tableRef2 = ref<any>();
+			const onSelectionChange = vi.fn();
+			const w2 = await mountTree({ ref: tableRef2, data: data2.value, expandSelectable: false, onSelectionChange });
+			tableRef2.value.toggleRowSelection(data2.value[1], true);
+			await flush();
+			expect(ids(tableRef2.value.store.states.selection)).toEqual([2]);
+
+			// 已选中的根行 r2 放进 r1-1：子行不可选择，移出选中项
+			await dragTo(cellOf(w2, 4, 1).element, 4, rowY(1));
+			await flush();
+			expect(tableRef2.value.store.states.selection).toEqual([]);
+			expect(onSelectionChange).toHaveBeenLastCalledWith([]);
+			w2.unmount();
+		});
+
+		it('allowDrop 返回 false 时不修改数据', async () => {
+			const data = ref(buildTree());
+			const onDrop = vi.fn();
+			const onEnd = vi.fn();
+			const wrapper = await mountTree({ data: data.value, allowDrop: () => false, onBlockDrop: onDrop, onBlockDragEnd: onEnd });
+
+			await dragTo(cellOf(wrapper, 4, 1).element, 4, rowY(1));
+			expect(onDrop).not.toHaveBeenCalled();
+			expect(onEnd).toHaveBeenCalledWith(expect.objectContaining({ dropped: false }));
+			expect(ids(data.value)).toEqual([1, 2, 3]);
+			expect(data.value[0].children[0].children).toBeUndefined();
+			wrapper.unmount();
+		});
+
+		it('tree-map 自定义子行字段：放进叶子行时新建对应字段', async () => {
+			const data = [
+				{ id: 1, name: 'r1', items: [{ id: 11, name: 'r1-1' }] },
+				{ id: 2, name: 'r2' }
+			];
+			const wrapper = await mountTree({ data, treeMap: { children: 'items', hasChildren: 'hasChildren' } });
+			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r2']);
+
+			// r1（第 0 行）拖到根行 r2（第 2 行）的中间
+			await dragTo(cellOf(wrapper, 0, 1).element, 0, rowY(2));
+			await flush();
+			expect(ids(data)).toEqual([2]);
+			expect(ids((data[0] as any).items)).toEqual([1]);
+			expect((data[0] as any).children).toBeUndefined();
+			expect(names(wrapper)).toEqual(['r2', 'r1', 'r1-1']);
+			wrapper.unmount();
+		});
+
+		it('allow-drop 限制只能同级移动', async () => {
+			const data = ref(buildTree());
+			const onDrop = vi.fn();
+			const wrapper = await mountTree({
+				data: data.value,
+				allowDrop: ({ from, to }: any) => from.parent === to.parent,
+				onBlockDrop: onDrop
+			});
+
+			// r1-1 移到根级：换了父行，不允许
+			await startDrag(cellOf(wrapper, 1, 1).element, 1, bottomOf(3), levelX(0));
+			expect(indicatorOf(wrapper).classList.contains('is-disabled')).toBe(true);
+			release();
+			await flush();
+			expect(onDrop).not.toHaveBeenCalled();
+			expect(ids(data.value)).toEqual([1, 2, 3]);
+
+			// 同一父行内（r1-2 之后）：允许
+			await startDrag(cellOf(wrapper, 1, 1).element, 1, bottomOf(3), levelX(1));
+			expect(indicatorOf(wrapper).classList.contains('is-disabled')).toBe(false);
+			release();
+			await flush();
+			expect(onDrop).toHaveBeenCalledTimes(1);
+			expect(ids(data.value[0].children)).toEqual([12, 11]);
+			wrapper.unmount();
+		});
+
+		it('移走最后一个子行后，父行变为叶子行', async () => {
+			const data = ref(buildTree());
+			const wrapper = await mountTree({ data: data.value });
+			const expandIcon = (row: number) => cellOf(wrapper, row, 1).find('.vc-table__tree-icon').exists();
+			expect(expandIcon(2)).toBe(true);
+
+			// r1-2-1（第 3 行，r1-2 唯一的子行）拖到 r1 的上方区域：移到根级最前
+			await dragTo(cellOf(wrapper, 3, 1).element, 3, topOf(0));
+			await flush();
+			expect(ids(data.value)).toEqual([121, 1, 2, 3]);
+			expect(data.value[1].children[1].children).toEqual([]);
+			expect(names(wrapper)).toEqual(['r1-2-1', 'r1', 'r1-1', 'r1-2', 'r2', 'r3']);
+			// r1-2 现为第 3 行，不再显示展开图标
+			expect(expandIcon(3)).toBe(false);
+			wrapper.unmount();
+		});
+
+		it('根数组存放响应式行（如由响应式状态派生的数组）：根级排序、根级与子级之间的移动都作用于被拖行', async () => {
+			const data = buildTree().map(row => reactive(row));
+			const wrapper = await mountTree({ data });
+
+			// r2（第 4 行）拖到 r1 的上方区域：根级排序
+			await dragTo(cellOf(wrapper, 4, 1).element, 4, topOf(0));
+			await flush();
+			expect(ids(data)).toEqual([2, 1, 3]);
+
+			// r2（第 0 行）拖到 r1-1（第 2 行）的中间：根级 → 子级
+			await dragTo(cellOf(wrapper, 0, 1).element, 0, rowY(2));
+			await flush();
+			expect(ids(data)).toEqual([1, 3]);
+			expect(ids(data[0].children[0].children)).toEqual([2]);
+			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r2', 'r1-2', 'r1-2-1', 'r3']);
+
+			// r1-2（第 3 行，含子行）拖到 r3（第 5 行，最后一行）的下方区域：子级 → 根级末尾
+			await startDrag(cellOf(wrapper, 3, 1).element, 3, bottomOf(5), levelX(0));
+			release();
+			await flush();
+			expect(ids(data)).toEqual([1, 3, 12]);
+			expect(ids(data[0].children)).toEqual([11]);
+			expect(ids(data[2].children)).toEqual([121]);
+			wrapper.unmount();
+		});
+
+		it('没有主键值的行不能作为 inner：中间区域按上下两半，拖入的行不会从表格中消失', async () => {
+			const data: any[] = [...buildTree(), { name: 'r4' }];
+			const wrapper = await mountTree({ data });
+			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r1-2', 'r1-2-1', 'r2', 'r3', 'r4']);
+
+			// r2（第 4 行）拖到 r4（第 6 行）中线偏下：按下半处理，放在 r4 之后
+			await startDrag(cellOf(wrapper, 4, 1).element, 4, rowY(6) + 5);
+			expect(indicatorOf(wrapper).classList.contains('is-inner')).toBe(false);
+			release();
+			await flush();
+			expect(data.map(row => row.name)).toEqual(['r1', 'r3', 'r4', 'r2']);
+			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r1-2', 'r1-2-1', 'r3', 'r4', 'r2']);
+			wrapper.unmount();
+		});
+
+		it('不写回时（只有 :data）：之后换成同一批行的新数组，仍按新数据清空选中', async () => {
+			const data = ref(buildTree());
+			const tableRef = ref<any>();
+			const wrapper = mount(() => (
+				<Table ref={tableRef} data={data.value} primaryKey="id" draggable defaultExpandAll>
+					<TableColumn type="drag" />
+					<TableColumn label="名称" prop="name" />
+				</Table>
+			), { attachTo: document.body });
+			await flush();
+			defineProps(wrapper.find('.vc-table__body-wrapper').element, { clientWidth: 600 });
+			const vm = tableRef.value;
+			vm.toggleRowSelection(data.value[1], true);
+			await flush();
+
+			// r2（第 4 行）拖到 r1 的上方区域：原地修改，不写回
+			await dragTo(cellOf(wrapper, 4, 1).element, 4, topOf(0));
+			await flush();
+			expect(ids(data.value)).toEqual([2, 1, 3]);
+			expect(ids(vm.store.states.selection)).toEqual([2]);
+
+			// 与拖拽无关的新数组（内容与当前 data 相同）：与非树形表格一致，清空选中
+			data.value = [...data.value];
+			await flush();
+			expect(vm.store.states.selection).toEqual([]);
+			wrapper.unmount();
+		});
+
+		it('lazy-tree：带 hasChildren、子行由数据提供的节点被移空后变为叶子行，不会再触发加载', async () => {
+			const data: any[] = [
+				{ id: 1, name: 'r1', hasChildren: true, children: [{ id: 11, name: 'r1-1' }] },
+				{ id: 2, name: 'r2' }
+			];
+			const loadExpand = vi.fn(() => [{ id: 11, name: 'r1-1' }]);
+			const wrapper = await mountTree({ data, loadExpand });
+			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r2']);
+
+			// r1-1（第 1 行，r1 唯一的子行）拖到 r2（第 2 行）的下方区域：移到根级末尾
+			await dragTo(cellOf(wrapper, 1, 1).element, 1, bottomOf(2));
+			await flush();
+			expect(ids(data)).toEqual([1, 2, 11]);
+			expect(names(wrapper)).toEqual(['r1', 'r2', 'r1-1']);
+			expect(cellOf(wrapper, 0, 1).find('.vc-table__tree-icon').exists()).toBe(false);
+			expect(loadExpand).not.toHaveBeenCalled();
+			wrapper.unmount();
+		});
+
+		it('indent 为 0：各层级横向位置相同，子树末尾的间隙取下方行的层级', async () => {
+			const allowDrop = vi.fn(() => true);
+			const wrapper = await mountTree({ indent: 0, allowDrop });
+
+			// r1-1（第 1 行）拖到 r1-2-1（第 3 行）的下方区域，指针正好在树形列的内容起点：放在 r2 之前（根级）
+			await startDrag(cellOf(wrapper, 1, 1).element, 1, bottomOf(3), 0);
+			expect(indicatorOf(wrapper).style.left).toBe('0px');
+			expect(allowDrop).toHaveBeenLastCalledWith(expect.objectContaining({
+				position: 'before',
+				targetRows: [expect.objectContaining({ id: 2 })],
+				to: { parent: null, index: 1 }
+			}));
+			release();
+			await flush();
+			wrapper.unmount();
+		});
+
+		it('收起的节点：只有它自己变暗，子行随之移动', async () => {
+			const data = ref(buildTree());
+			const tableRef = ref<any>();
+			const wrapper = await mountTree({ ref: tableRef, data: data.value });
+			tableRef.value.toggleRowExpansion(data.value[0], false);
+			await flush();
+			expect(names(wrapper)).toEqual(['r1', 'r2', 'r3']);
+
+			await startDrag(cellOf(wrapper, 0, 1).element, 0, bottomOf(1));
+			expect(dimmedOf(wrapper)).toEqual(['0']);
+			release();
+			await flush();
+			expect(ids(data.value)).toEqual([2, 1, 3]);
+			expect(ids(data.value[1].children)).toEqual([11, 12]);
+			wrapper.unmount();
+		});
+
+		it('悬停自动展开：停在收起节点中间 600ms 后展开，拖拽继续，可以放进展开出的位置', async () => {
+			const data = ref(buildTree());
+			const tableRef = ref<any>();
+			const onExpand = vi.fn();
+			const wrapper = await mountTree({ ref: tableRef, data: data.value, onExpandChange: onExpand });
+			tableRef.value.toggleRowExpansion(data.value[0], false);
+			await flush();
+			expect(names(wrapper)).toEqual(['r1', 'r2', 'r3']);
+
+			// r2（第 1 行）拖到收起的 r1（第 0 行）中间，停留
+			await startDrag(cellOf(wrapper, 1, 1).element, 1, rowY(0));
+			await sleep(700);
+			await flush();
+			expect(onExpand).toHaveBeenLastCalledWith(expect.objectContaining({ id: 1 }), true, expect.anything());
+			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r1-2', 'r1-2-1', 'r2', 'r3']);
+			// 拖拽仍在进行，被拖行随块列表重建后仍变暗
+			expect(wrapper.element.querySelector('.vc-table__drag-ghost')).toBeTruthy();
+			expect(wrapper.find('.vc-table__body-wrapper [data-row-start="4"]').classes()).toContain('is-dragging');
+
+			// 放到展开出的 r1-1 之前
+			await moveTo(topOf(1));
+			release();
+			await flush();
+			expect(ids(data.value)).toEqual([1, 3]);
+			expect(ids(data.value[0].children)).toEqual([2, 11, 12]);
+			wrapper.unmount();
+		});
+
+		it('悬停不足 600ms 就移开：不展开', async () => {
+			const data = ref(buildTree());
+			const tableRef = ref<any>();
+			const wrapper = await mountTree({ ref: tableRef, data: data.value });
+			tableRef.value.toggleRowExpansion(data.value[0], false);
+			await flush();
+
+			await startDrag(cellOf(wrapper, 1, 1).element, 1, rowY(0));
+			await sleep(300);
+			await moveTo(rowY(2));
+			await sleep(500);
+			await flush();
+			expect(names(wrapper)).toEqual(['r1', 'r2', 'r3']);
+			release();
+			await flush();
+			wrapper.unmount();
+		});
+
+		it('悬停自动展开未加载的懒加载节点：先加载，之后可以放入', async () => {
+			const data = ref(buildTree());
+			const lazyChildren = [{ id: 31, name: 'r3-1' }];
+			const loadExpand = vi.fn(() => lazyChildren);
+			const wrapper = await mountTree({ data: data.value, loadExpand });
+
+			// r2（第 4 行）拖到未加载的 r3（第 5 行）中间，停留
+			await startDrag(cellOf(wrapper, 4, 1).element, 4, rowY(5) - 2);
+			await sleep(700);
+			await flush();
+			expect(loadExpand).toHaveBeenCalledTimes(1);
+			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r1-2', 'r1-2-1', 'r2', 'r3', 'r3-1']);
+
+			// 已加载：中间区域可以作为 inner
+			await moveTo(rowY(5));
+			expect(indicatorOf(wrapper).classList.contains('is-inner')).toBe(true);
+			release();
+			await flush();
+			expect(ids(lazyChildren)).toEqual([31, 2]);
+			wrapper.unmount();
+		});
+
+		it('同时配置 getSpan 时禁用拖拽', async () => {
+			const onStart = vi.fn();
+			const wrapper = await mountTree({ getSpan: () => [1, 1], onBlockDragStart: onStart });
+
+			expect(wrapper.findAll('.vc-table__body-wrapper .is-draggable').length).toBe(0);
+			const handles = wrapper.findAll('.vc-table__body-wrapper .vc-table__drag-handle');
+			expect(handles.length).toBe(6);
+			expect(handles.every(item => item.classes('is-disabled'))).toBe(true);
+			await dragTo(handles[0].element, 0, rowY(2) + 10);
+			await dragTo(cellOf(wrapper, 0, 1).element, 0, rowY(2) + 10);
+			expect(onStart).not.toHaveBeenCalled();
+			wrapper.unmount();
+		});
 	});
 
 	it('嵌套表格：内层拖拽不触发外层', async () => {

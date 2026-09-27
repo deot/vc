@@ -1,5 +1,8 @@
 <template>
 	<div style="padding: 30px;">
+		<p class="drag-demo__tip">
+			每个表格的「操作」列：编辑（随机修改名称）、删除（原地删除该行）；从按钮上按下不会发起拖拽。
+		</p>
 		<h2>1. 整行拖拽 + v-model:data</h2>
 		<p class="drag-demo__tip">
 			按住行内任意位置拖动（复选框、输入框处按下不会发起拖拽）；Esc 取消。
@@ -29,6 +32,14 @@
 			<TableColumn label="备注" :min-width="200">
 				<template #default="{ row }">
 					<input v-model="row.remark" placeholder="在输入框内可正常选中文本">
+				</template>
+			</TableColumn>
+			<TableColumn label="操作" :width="140">
+				<template #default="{ row }">
+					<div class="drag-demo__actions">
+						<Button type="text" size="small" @click="rename(row)">编辑</Button>
+						<Button type="text" size="small" @click="remove(basicData, row)">删除</Button>
+					</div>
 				</template>
 			</TableColumn>
 		</Table>
@@ -61,6 +72,14 @@
 				:label="`字段 ${n}`"
 				:width="160"
 			/>
+			<TableColumn label="操作" :width="140" fixed="right">
+				<template #default="{ row }">
+					<div class="drag-demo__actions">
+						<Button type="text" size="small" @click="rename(row)">编辑</Button>
+						<Button type="text" size="small" @click="remove(handleData, row)">删除</Button>
+					</div>
+				</template>
+			</TableColumn>
 		</Table>
 
 		<h2>3. 固定高度 + 虚拟滚动（1000 行）+ 固定列</h2>
@@ -91,6 +110,14 @@
 				:width="160"
 			/>
 			<TableColumn prop="date" label="日期" fixed="right" :width="140" />
+			<TableColumn label="操作" :width="140" fixed="right">
+				<template #default="{ row }">
+					<div class="drag-demo__actions">
+						<Button type="text" size="small" @click="rename(row)">编辑</Button>
+						<Button type="text" size="small" @click="remove(virtualData, row)">删除</Button>
+					</div>
+				</template>
+			</TableColumn>
 		</Table>
 
 		<h2>4. getSpan 合并块整体拖动</h2>
@@ -108,6 +135,14 @@
 			<TableColumn prop="group" label="分组" :width="120" />
 			<TableColumn prop="name" label="姓名" :width="140" />
 			<TableColumn prop="date" label="日期" :min-width="160" />
+			<TableColumn label="操作" :width="140">
+				<template #default="{ row }">
+					<div class="drag-demo__actions">
+						<Button type="text" size="small" @click="rename(row)">编辑</Button>
+						<Button type="text" size="small" @click="remove(spanData, row)">删除</Button>
+					</div>
+				</template>
+			</TableColumn>
 		</Table>
 
 		<h2>5. :data + @block-drop：异步确认</h2>
@@ -130,6 +165,14 @@
 			<TableColumn type="index" label="#" />
 			<TableColumn prop="name" label="姓名" :width="140" />
 			<TableColumn prop="date" label="日期" :min-width="160" />
+			<TableColumn label="操作" :width="140">
+				<template #default="{ row }">
+					<div class="drag-demo__actions">
+						<Button type="text" size="small" @click="rename(row)">编辑</Button>
+						<Button type="text" size="small" @click="remove(asyncData, row)">删除</Button>
+					</div>
+				</template>
+			</TableColumn>
 		</Table>
 
 		<h2>6. 展开行 + 流式高度 + 表头吸顶</h2>
@@ -154,6 +197,14 @@
 			<TableColumn prop="name" label="姓名" :width="140" />
 			<TableColumn prop="date" label="日期" :width="160" />
 			<TableColumn prop="address" label="地址" :min-width="200" />
+			<TableColumn label="操作" :width="140">
+				<template #default="{ row }">
+					<div class="drag-demo__actions">
+						<Button type="text" size="small" @click="rename(row)">编辑</Button>
+						<Button type="text" size="small" @click="remove(expandData, row)">删除</Button>
+					</div>
+				</template>
+			</TableColumn>
 		</Table>
 
 		<h2>7. 表格位于可滚动的容器中</h2>
@@ -170,6 +221,14 @@
 				<TableColumn type="index" label="#" />
 				<TableColumn prop="name" label="姓名" :width="140" />
 				<TableColumn prop="date" label="日期" :min-width="160" />
+				<TableColumn label="操作" :width="140">
+					<template #default="{ row }">
+						<div class="drag-demo__actions">
+							<Button type="text" size="small" @click="rename(row)">编辑</Button>
+							<Button type="text" size="small" @click="remove(containerData, row)">删除</Button>
+						</div>
+					</template>
+				</TableColumn>
 			</Table>
 		</div>
 		<div style="height: 400px;" />
@@ -192,6 +251,15 @@ const genData = (length, prefix = 'id') => Array.from({ length }).map((_, index)
 	date: `2011-11-${String((index % 28) + 1).padStart(2, '0')}`,
 	remark: ''
 }));
+
+// 操作：编辑（随机修改名称）与删除（原地删除，已选中的其它行保持选中）；模板中 ref 已解包，list 为数组本身
+const rename = (row) => {
+	row.name = `${row.name.split(' #')[0]} #${Math.random().toString(36).slice(2, 6)}`;
+};
+const remove = (list, row) => {
+	const index = list.indexOf(row);
+	index > -1 && list.splice(index, 1);
+};
 
 // 1. 整行拖拽
 const basicData = ref(genData(6));
@@ -287,5 +355,10 @@ const containerData = ref(genData(20, 'c'));
 	color: #999;
 	border: 1px solid #DDD;
 	border-radius: 2px;
+}
+
+// 操作按钮不换行
+.drag-demo__actions {
+	white-space: nowrap;
 }
 </style>
