@@ -1,6 +1,15 @@
 import type { TableColumnNode } from '../table-column/table-column-node';
 
 /**
+ * 列树的全部节点（前序：分组在其子列之前）
+ * @param nodes 列树
+ * @returns 全部列节点
+ */
+export const getAllColumnNodes = <T extends TableColumnNode>(nodes: readonly T[]): T[] => {
+	return nodes.flatMap(node => [node, ...getAllColumnNodes(node.childNodes as T[])]);
+};
+
+/**
  * 展开列树为叶子列节点数组
  * @param nodes 列树
  * @returns 叶子列节点

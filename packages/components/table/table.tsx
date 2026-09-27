@@ -21,6 +21,7 @@ import { usePropsSync } from './hooks/use-props-sync';
 import { useScrollSync } from './hooks/use-scroll-sync';
 import { useWheelForward } from './hooks/use-wheel-forward';
 import { useBlockDrag } from './hooks/use-block-drag';
+import { useColumnDrag } from './hooks/use-column-drag';
 import type { Nullable } from '@deot/helper-shared';
 
 const COMPONENT_NAME = 'vc-table';
@@ -349,8 +350,8 @@ export const Table = defineComponent({
 		// 表头 / 合计行横向跟随表体，并维护根节点 is-scrolling-* 类名
 		const { handleScrollX } = useScrollSync({ tableWrapper, headerWrapper, footerWrapper, bodyXWrapper, layout, props });
 
-		// 拖拽排序：整行拖拽（draggable）与锚点拖拽（type="drag" 列的把手）
-		const { handleMousedown, handleTouchstart } = useBlockDrag({
+		// 拖拽排序：整行拖拽（draggable 第一项）与锚点拖拽（type="drag" 列的把手）
+		const blockDrag = useBlockDrag({
 			props,
 			store,
 			emit,
@@ -361,6 +362,27 @@ export const Table = defineComponent({
 			bodyScroller,
 			virtual: usesRecycleList
 		});
+
+		// 列拖拽（draggable 第二项）：拖动表头调整列顺序
+		const columnDrag = useColumnDrag({
+			store,
+			emit,
+			tableWrapper,
+			headerWrapper,
+			bottomWrapper,
+			bodyXWrapper,
+			bodyScroller,
+			// 表头按下列宽拖拽区时置位（先于根节点的按下处理），此时不发起列拖拽
+			resizing: resizeProxyVisible
+		});
+
+		// 按下：表体单元格交给行拖拽，表头单元格交给列拖拽
+		const handleMousedown = (e: MouseEvent) => {
+			blockDrag.handleMousedown(e) || columnDrag.handleMousedown(e);
+		};
+		const handleTouchstart = (e: TouchEvent) => {
+			blockDrag.handleTouchstart(e) || columnDrag.handleTouchstart(e);
+		};
 
 		const tableId = getUid('table');
 		onMounted(() => {

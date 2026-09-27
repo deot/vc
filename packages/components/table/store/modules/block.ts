@@ -1,4 +1,5 @@
 import { reactive, toRaw } from 'vue';
+import type { Nullable } from '@deot/helper-shared';
 import { getRowValue } from '../../utils';
 import type { TableColumnRenderData, TableColumnNode } from '../../table-column/table-column-node';
 import type { Store } from '../store';
@@ -287,5 +288,21 @@ export class Block {
 
 	getCoverAnchors(rowIndex: number) {
 		return this._cache.plan?.covers?.get(rowIndex) || [];
+	}
+
+	/**
+	 * 横向合并中跨过某列、但不从该列开始的锚点格（列拖拽时随被拖列一起变暗）
+	 * @param columnIndex 列号
+	 * @returns 锚点格的起始列号与 colspan（去重）
+	 */
+	getSpansCovering(columnIndex: number) {
+		const spans: Nullable<Map<number, { colspan: number }>> = this._cache.plan?.spans;
+		const count = this.store.states.columns.length;
+		const result = new Map<string, { start: number; colspan: number }>();
+		spans?.forEach(({ colspan }, key) => {
+			const start = key % count;
+			start < columnIndex && start + colspan > columnIndex && result.set(`${start}/${colspan}`, { start, colspan });
+		});
+		return [...result.values()];
 	}
 }

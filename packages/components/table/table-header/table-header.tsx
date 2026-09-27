@@ -1,6 +1,5 @@
 import { defineComponent, ref, getCurrentInstance, computed, inject } from 'vue';
 import type { Nullable } from '@deot/helper-shared';
-import { hasClass } from '@deot/helper-dom';
 import { IS_SERVER } from '@deot/vc-shared';
 import { Popover } from '../../popover';
 import { Icon } from '../../icon';
@@ -110,6 +109,12 @@ export const TableHeader = defineComponent({
 			return classes.join(' ');
 		};
 
+		// 可拖动（列拖拽）的列：分组表头为克隆节点，按原列节点判断
+		const isColumnDraggable = (column: TableColumnNode) => {
+			const { drag } = table.store;
+			return drag.draggable.value[1] && drag.canDragColumn(column.origin ?? column);
+		};
+
 		const handleHeaderClick = (e: MouseEvent, column: TableColumnNode) => {
 			table.emit('header-click', { column: column.states, event: e } satisfies TableHeaderEventPayload);
 		};
@@ -204,19 +209,11 @@ export const TableHeader = defineComponent({
 
 				const bodyStyle = document.body.style;
 				// rect 为视口坐标，须与 clientX 比较（pageX 含页面滚动）
-				if (rect.width > 12 && rect.right - event.clientX < 8) {
-					bodyStyle.cursor = 'col-resize';
-					if (hasClass(target, 'is-sortable')) {
-						target.style.cursor = 'col-resize';
-					}
-					draggingColumn.value = column;
-				} else if (!dragging.value) {
-					bodyStyle.cursor = '';
-					if (hasClass(target, 'is-sortable')) {
-						target.style.cursor = 'pointer';
-					}
-					draggingColumn.value = null;
-				}
+				// 列宽拖拽区：单元格自身的光标（如可拖动列的 move）由 is-resize-zone 改为 col-resize
+				const zone = rect.width > 12 && rect.right - event.clientX < 8;
+				target.classList.toggle('is-resize-zone', zone);
+				bodyStyle.cursor = zone ? 'col-resize' : '';
+				draggingColumn.value = zone ? column : null;
 			}
 		};
 
@@ -233,6 +230,8 @@ export const TableHeader = defineComponent({
 		};
 
 		const handleCellMouseEnter = (e: MouseEvent, column: TableColumnStates) => {
+			// 拖拽排序中不弹出提示
+			if (table.store.states.dragging) return;
 			Popover.open({
 				el: document.body,
 				name: 'vc-table-header-popover', // 确保不重复创建
@@ -249,6 +248,7 @@ export const TableHeader = defineComponent({
 
 		// 默认 label 为多行省略（header-line），被截断时展示完整内容；自定义表头内没有 text-line，不处理
 		const handleLabelMouseEnter = (e: MouseEvent, column: TableColumnStates) => {
+			if (table.store.states.dragging) return;
 			const label = e.currentTarget as HTMLElement;
 			textLineTooltip.open(label.querySelector(':scope > .vc-table__text-line'), getColumnLine(column, 'headerLine'), label);
 		};
@@ -347,6 +347,7 @@ export const TableHeader = defineComponent({
 							getHeaderCellClass(rowIndex, columnIndex, columns, column),
 							column.states.resizable && dragLineClass.value,
 							column.states.stickyClass,
+							isColumnDraggable(column) && 'is-column-draggable',
 							'vc-table__th'
 						],
 						style: [

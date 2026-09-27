@@ -1,6 +1,6 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { TableColumnSyncItem } from './store/modules/column';
-import type { TableBlockDragPayload, TableBlockDropPayload } from './types';
+import type { TableAllowDragPayload, TableAllowDropPayload } from './types';
 
 export const props = {
 	data: {
@@ -130,14 +130,18 @@ export const props = {
 		default: () => ([])
 	},
 	/**
-	 * 整行拖拽排序：按住行内任意位置拖动（以块为单位，getSpan 纵向合并的行整体移动）；
-	 * 只从把手拖动时使用 type="drag" 的列。新顺序经 update:data 发出，配合 v-model:data 使用
+	 * 拖拽排序：[整行拖拽, 列拖拽]，true 等于 [true, false]。
+	 * 整行拖拽按住行内任意位置拖动（以块为单位，getSpan 纵向合并的行整体移动），只从把手拖动时使用 type="drag" 的列（不受第一项影响），
+	 * 新顺序经 update:data 发出，配合 v-model:data 使用；列拖拽拖动表头，新顺序在表格内部生效并经 update:columns 发出
 	 */
-	draggable: Boolean,
-	// 块能否被拖动
-	allowDrag: Function as PropType<(data: TableBlockDragPayload) => boolean>,
-	// 能否放到落点（相对落点块之前 / 之后）
-	allowDrop: Function as PropType<(data: Pick<TableBlockDropPayload, 'rows' | 'targetRows' | 'position' | 'from' | 'to'>) => boolean>
+	draggable: {
+		type: [Boolean, Array] as PropType<boolean | [boolean, boolean]>,
+		default: false
+	},
+	// 块 / 列能否被拖动（type 区分）
+	allowDrag: Function as PropType<(data: TableAllowDragPayload) => boolean>,
+	// 能否放到落点（type 区分块与列）
+	allowDrop: Function as PropType<(data: TableAllowDropPayload) => boolean>
 };
 export type Props = ExtractPropTypes<typeof props>;
 export type TableProps = Props;

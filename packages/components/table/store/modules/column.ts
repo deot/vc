@@ -1,8 +1,9 @@
 import { concat, isEqual, pick } from 'lodash-es';
 import type { Nullable } from '@deot/helper-shared';
 import type { TableColumnNode } from '../../table-column/table-column-node';
-import { flattenColumnNodes } from '../utils';
+import { flattenColumnNodes, getAllColumnNodes } from '../utils';
 import type { Store } from '../store';
+import type { TableColumnMove } from './drag';
 
 /**
  * v-model:columns 的同步项（对外暴露的 leaf 列摘要）。
@@ -14,19 +15,6 @@ export interface TableColumnSyncItem {
 	prop?: string;
 	type?: string;
 }
-
-const getAllColumns = (columns: TableColumnNode[]): TableColumnNode[] => {
-	const result: TableColumnNode[] = [];
-	columns.forEach((column) => {
-		if (column.childNodes.length) {
-			result.push(column);
-			result.push(...getAllColumns(column.childNodes));
-		} else {
-			result.push(column);
-		}
-	});
-	return result;
-};
 
 // 这是一个不纯的函数，遍历时会向 column.states 写入 level/colspan/rowspan
 export const columnsToRowsEffect = (v: TableColumnNode[]) => {
@@ -60,7 +48,7 @@ export const columnsToRowsEffect = (v: TableColumnNode[]) => {
 		rows.push([]);
 	}
 
-	const allColumns = getAllColumns(v);
+	const allColumns = getAllColumnNodes(v);
 
 	allColumns.forEach((column) => {
 		if (!column.childNodes.length) {
@@ -103,18 +91,36 @@ const sortByDom = (columns: TableColumnNode[], container?: Nullable<Element>) =>
 };
 
 /**
- * 在模板顺序之上叠加外部顺序：已知列按外部顺序，新列跟在其模板中的前一列之后（无前一列时放最前）。
- * @param columns 按模板顺序排列的列节点
+ * 列在外部顺序中的排位：自身 id 有排位时取之，否则取子孙中最靠前的排位（外部顺序多为叶子 id）
+ * @param column 列节点
+ * @param rank 列 id -> 排位
+ * @returns 排位；自身与子孙都不在外部顺序中时为 undefined
+ */
+const getRank = (column: TableColumnNode, rank: Map<string, number>): number | undefined => {
+	const own = rank.get(column.states.id);
+	if (own != null) return own;
+	let min: number | undefined;
+	for (const child of column.childNodes) {
+		const value = getRank(child, rank);
+		if (value != null && (min == null || value < min)) min = value;
+	}
+	return min;
+};
+
+/**
+ * 在模板顺序之上叠加外部顺序：有排位的列按排位，新列跟在其模板中的前一列之后（无前一列时放最前）。
+ * @param columns 按模板顺序排列的同一层列节点
  * @param order 外部顺序（列 id）
  * @returns 排序后的新数组
  */
 const applyOrder = (columns: TableColumnNode[], order: string[]) => {
 	const rank = new Map(order.map((id, index) => [id, index]));
+	const ranks = new Map(columns.map(column => [column, getRank(column, rank)]));
 	const result = columns
-		.filter(column => rank.has(column.states.id))
-		.sort((a, b) => rank.get(a.states.id)! - rank.get(b.states.id)!);
+		.filter(column => ranks.get(column) != null)
+		.sort((a, b) => ranks.get(a)! - ranks.get(b)!);
 	columns.forEach((column, index) => {
-		if (rank.has(column.states.id)) return;
+		if (ranks.get(column) != null) return;
 		const prev = columns[index - 1];
 		result.splice(prev ? result.indexOf(prev) + 1 : 0, 0, column);
 	});
@@ -126,8 +132,8 @@ export class Column {
 
 	_sync = {
 		snapshot: [] as TableColumnSyncItem[],
-		suppressWatch: false,
-		// 外部（v-model:columns）重排后的顶层顺序；与模板顺序一致时为 null，即跟随模板
+		// 外部写回（v-model:columns）或列拖拽得到的列 id 顺序（多为叶子 id），逐层叠加在模板顺序之上；
+		// 与模板顺序一致时为 null，即跟随模板
 		order: null as Nullable<string[]>
 	};
 
@@ -143,8 +149,7 @@ export class Column {
 	 * @param parent 父列节点（多级表头）
 	 */
 	insert(column: TableColumnNode, parent?: TableColumnNode) {
-		const array = parent ? parent.childNodes : this.store.states._columns;
-		array.push(column);
+		this.getSiblings(parent).push(column);
 
 		if (this.store.table.exposed.isReady.value) {
 			this.sort(parent);
@@ -154,7 +159,7 @@ export class Column {
 	}
 
 	remove(column: TableColumnNode, parent?: TableColumnNode) {
-		const array = parent ? parent.childNodes : this.store.states._columns;
+		const array = this.getSiblings(parent);
 		const index = array.indexOf(column);
 		if (index > -1) {
 			array.splice(index, 1);
@@ -167,21 +172,59 @@ export class Column {
 	}
 
 	/**
-	 * 按模板（DOM）顺序整理一层列；顶层存在外部顺序时再叠加外部顺序。
+	 * 一层列（兄弟列）：分组的子列，顶层为 _columns
+	 * @param parent 父列节点，省略或 null 时为顶层
+	 * @returns 兄弟列数组
+	 */
+	getSiblings(parent?: Nullable<TableColumnNode>) {
+		return parent ? parent.childNodes : this.store.states._columns;
+	}
+
+	/**
+	 * 按模板（DOM）顺序整理一层列，再叠加列顺序（不修改列节点）
+	 * @param parent 父列节点，省略时为顶层
+	 * @param order 列 id 顺序；省略时只按模板顺序
+	 * @returns 整理后的新数组（已有序时为原数组）
+	 */
+	arrange(parent?: Nullable<TableColumnNode>, order?: Nullable<string[]>) {
+		// 模板容器：顶层为隐藏的列容器，分组内为分组列的根元素
+		const container = parent
+			? parent.instance?.vnode.el as Nullable<Element>
+			: this.store.table.exposed?.hiddenColumns?.value;
+		const sorted = sortByDom(this.getSiblings(parent), container);
+		return order ? applyOrder(sorted, order) : sorted;
+	}
+
+	/**
+	 * 按给定顺序整理后的叶子 id 序列（不修改列节点）；省略顺序时即模板顺序
+	 * @param order 列 id 顺序
+	 * @returns 叶子 id 序列
+	 */
+	getLeafOrder(order?: Nullable<string[]>) {
+		const walk = (parent?: TableColumnNode): string[] => {
+			return this.arrange(parent, order).flatMap(column => (column.childNodes.length ? walk(column) : [column.states.id]));
+		};
+		return walk();
+	}
+
+	/**
+	 * 记录列顺序：与模板顺序一致时记为 null（跟随模板）
+	 * @param order 列 id 顺序
+	 */
+	setOrder(order: Nullable<string[]>) {
+		this._sync.order = order && order.length && !isEqual(this.getLeafOrder(order), this.getLeafOrder())
+			? order
+			: null;
+	}
+
+	/**
+	 * 按模板（DOM）顺序整理一层列；存在外部顺序时再叠加外部顺序（每一层都按排位重排）。
 	 * @param parent 父列节点，省略时为顶层
 	 * @returns 顺序是否变化
 	 */
 	sort(parent?: TableColumnNode) {
-		const array = parent ? parent.childNodes : this.store.states._columns;
-		const container = parent
-			? parent.instance?.vnode.el as Nullable<Element>
-			: this.store.table.exposed?.hiddenColumns?.value;
-
-		let sorted = sortByDom(array, container);
-		if (!parent && this._sync.order) {
-			sorted = applyOrder(sorted, this._sync.order);
-		}
-
+		const array = this.getSiblings(parent);
+		const sorted = this.arrange(parent, this._sync.order);
 		const changed = sorted.some((column, index) => column !== array[index]);
 		changed && array.splice(0, array.length, ...sorted);
 		return changed;
@@ -194,8 +237,7 @@ export class Column {
 	sortTree() {
 		const walk = (parent?: TableColumnNode): boolean => {
 			let changed = this.sort(parent);
-			const array = parent ? parent.childNodes : this.store.states._columns;
-			array.forEach((column) => {
+			this.getSiblings(parent).forEach((column) => {
 				if (column.childNodes.length) {
 					changed = walk(column) || changed;
 				}
@@ -264,33 +306,51 @@ export class Column {
 	}
 
 	/**
+	 * 拖拽排序：把列（分组连同子列）移到同一父级中的新位置，以移动后的叶子顺序作为列顺序，并经 update:columns 发出
+	 * @param move 列的移动
+	 * @returns 新的扁平列表（与 update:columns 相同）
+	 */
+	move(move: TableColumnMove) {
+		const { from, to } = move;
+		const siblings = this.getSiblings(from.parent);
+		siblings.splice(to.index, 0, ...siblings.splice(from.index, 1));
+		this.setOrder(flattenColumnNodes(this.store.states._columns).map(column => column.states.id));
+		this.store.updateColumns();
+		this.store.scheduleLayout();
+		return this._sync.snapshot;
+	}
+
+	/**
 	 * 向外部 emit update:columns。
 	 * 暴露全部收集到的 leaf 列（含被隐藏的，带 hidden 标记），不做可见性过滤。
 	 */
 	syncToParent() {
-		const flattenColumns = flattenColumnNodes(this.store.states._columns);
-		const columns = flattenColumns.map(column => pick(column.states, COLUMN_SYNC_KEYS) as TableColumnSyncItem);
+		const columns = this.getSyncItems();
 		if (isEqual(columns, this._sync.snapshot)) return;
 		this._sync.snapshot = columns;
-		// 置位：本次 emit 会回流为外部写回，applyExternal 据此跳过，避免回环
-		this._sync.suppressWatch = true;
 		this.store.table.emit('update:columns', columns);
+	}
+
+	/**
+	 * 当前的扁平列表（update:columns 发出的内容）：全部 leaf 列，含被隐藏的
+	 * @returns 同步项
+	 */
+	getSyncItems() {
+		return flattenColumnNodes(this.store.states._columns).map(column => pick(column.states, COLUMN_SYNC_KEYS) as TableColumnSyncItem);
 	}
 
 	/**
 	 * 处理外部对 v-model:columns 的写回：
 	 * 	1) 按 id 把 hidden 回写到内部列节点（递归含 childNodes，覆盖多级表头）；
-	 * 	2) 按 id 记录顶层顺序并重排 _columns：与模板顺序一致时不记录（跟随模板），
+	 * 	2) 按 id 记录顺序并逐层重排：分组按其叶子中最靠前的排位；与模板顺序一致时不记录（跟随模板），
 	 * 	   否则外部顺序优先，缺失项（如新增列）跟在其模板中的前一列之后。
 	 * @param v 外部写回的列数组
 	 */
 	applyExternal(v: TableColumnSyncItem[]) {
-		if (this._sync.suppressWatch) {
-			this._sync.suppressWatch = false;
-			return;
-		}
 		const _columns = this.store.states._columns;
-		if (!Array.isArray(v) || !v.length) return;
+		// 与当前列一致（包括 update:columns 写回的回流）：无需处理。
+		// 按内容而不是标记识别回流：发出后不写回（只监听 update:columns）时，之后的外部修改照常生效
+		if (!Array.isArray(v) || !v.length || isEqual(v, this.getSyncItems())) return;
 
 		// 1) 写 hidden（按 id，递归 childNodes）
 		const hiddenById = v.reduce((pre, e) => (e && e.id != null && pre.set(e.id, !!e.hidden), pre), new Map<string, boolean>());
@@ -309,14 +369,11 @@ export class Column {
 		};
 		applyHidden(_columns);
 
-		// 2) 重排顶层 _columns（多级表头下外部多为 leaf id，匹配不到顶层则跳过）
-		const templateOrder = sortByDom(_columns, this.store.table.exposed?.hiddenColumns?.value).map(column => column.states.id);
-		const order = [...new Set(v.map(e => e?.id).filter(id => templateOrder.includes(id)))];
-		this._sync.order = order.length && !isEqual(order, templateOrder.filter(id => order.includes(id)))
-			? order
-			: null;
+		// 2) 逐层重排（外部多为叶子 id，也可以是分组 id）
+		const ids = new Set(getAllColumnNodes(_columns).map(column => column.states.id));
+		this.setOrder([...new Set(v.map(e => e?.id).filter(id => ids.has(id)))]);
 
-		const orderChanged = this.sort();
+		const orderChanged = this.sortTree();
 
 		if (orderChanged || hiddenChanged) {
 			this.store.updateColumns();

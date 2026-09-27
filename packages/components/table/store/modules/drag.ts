@@ -1,7 +1,10 @@
 import { computed, reactive, toRaw } from 'vue';
+import type { Nullable } from '@deot/helper-shared';
 import { bisectLast } from '../../../recycle-list/store/position';
+import { flattenColumnNodes } from '../utils';
 import type { Store } from '../store';
-import type { TableBlockDragPayload } from '../../types';
+import type { TableColumnNode } from '../../table-column/table-column-node';
+import type { TableBlockDragPayload, TableColumnDragPayload, TableColumnDropPayload } from '../../types';
 
 // 两个数组的行（raw）逐项相同
 const isSameRows = (a: any[], b: any[]) => {
@@ -31,12 +34,37 @@ export type TableMove = {
 };
 
 /**
+ * 列拖拽的落点位置：相对落点列之前 / 之后
+ */
+export type TableColumnDropPosition = Exclude<TableDropPosition, 'inner'>;
+
+/**
+ * 列的位置：parent 为父分组，顶层为 null；index 为兄弟列（含隐藏列）中的下标
+ */
+export type TableColumnPlace = {
+	parent: Nullable<TableColumnNode>;
+	index: number;
+};
+
+/**
+ * 列的移动：同一父级内从 from 移到 to，to.index 为移除被拖列之后的下标（分组连同子列一起移动）
+ */
+export type TableColumnMove = {
+	from: TableColumnPlace;
+	to: TableColumnPlace;
+};
+
+// 参与列拖拽的普通列：selection / index / expand / drag 等结构列不能拖动，也不作为落点
+const isPlainColumn = (column: TableColumnNode) => column.states.type === 'default';
+
+/**
  * 拖拽排序（以块为单位）：
  * 	- 块即渲染 / 虚拟化的最小单位（见 Block），普通表格一行一块，getSpan 纵向合并的若干行为一块；
  * 	- 非树形表格的块对应 data 中连续的一段行，移动块即移动这段行；
  * 	  data 由外部持有（v-model:data），这里只计算新顺序，并记录最近一次发出的顺序，
  * 	  外部写回时 setData 据此识别为重排，保留选中等状态；
- * 	- 树形表格每行一块，被拖行连同子孙移到新的父行下（before / after / inner）。
+ * 	- 树形表格每行一块，被拖行连同子孙移到新的父行下（before / after / inner）；
+ * 	- 列拖拽（draggable 第二项）：拖动表头在同一父级内调整列顺序，新顺序由 Column#move 在表格内部生效并经 update:columns 发出。
  */
 export class Drag {
 	store: Store;
@@ -45,11 +73,19 @@ export class Drag {
 	pending: any[] | null = null;
 
 	/**
+	 * 规整后的 draggable：[整行拖拽, 列拖拽]，true 只开启整行拖拽
+	 */
+	draggable = computed<[boolean, boolean]>(() => {
+		const value = this.store.table.props.draggable;
+		return Array.isArray(value) ? [!!value[0], !!value[1]] : [!!value, false];
+	});
+
+	/**
 	 * 整行显示 move 光标（并禁用触摸长按的系统菜单）：开启了整行拖拽，且没有把手列（有把手时由把手提示）
 	 */
 	rowCursor = computed(() => {
 		const { store } = this;
-		return !!store.table.props.draggable
+		return this.draggable.value[0]
 			&& !this.disabled
 			&& !store.states.columns.some(column => column.states.type === 'drag');
 	});
@@ -106,7 +142,7 @@ export class Drag {
 	canDrag(block: any) {
 		if (this.disabled) return false;
 		const { allowDrag } = this.store.table.props;
-		return typeof allowDrag !== 'function' || !!allowDrag(this.getPayload(block));
+		return typeof allowDrag !== 'function' || !!allowDrag({ type: 'block', ...this.getPayload(block) });
 	}
 
 	/**
@@ -120,6 +156,7 @@ export class Drag {
 	canDrop(block: any, targetRows: any[], position: TableDropPosition, move: TableMove) {
 		const { allowDrop } = this.store.table.props;
 		return typeof allowDrop !== 'function' || !!allowDrop({
+			type: 'block',
 			rows: this.getRows(block),
 			targetRows,
 			position,
@@ -243,5 +280,117 @@ export class Drag {
 			|| (!isSameRows(toRaw(this.store.states.data), pending) && isSameRows(source, pending));
 		hit && (this.pending = null);
 		return hit;
+	}
+
+	// ---------------------------------------------------------------------
+	// 列拖拽（拖动表头调整列顺序，同一父级内移动，分组连同子列一起移动）
+	// ---------------------------------------------------------------------
+	/**
+	 * 列（分组时为它的第一个可见叶子）在可见叶子列中的下标，与 cell 事件的 columnIndex 一致
+	 * @param column 列节点
+	 * @returns 下标；列不可见时为 -1
+	 */
+	getColumnIndex(column: TableColumnNode) {
+		const leaves = flattenColumnNodes([column]);
+		return this.store.states.columns.findIndex(item => leaves.includes(item));
+	}
+
+	/**
+	 * 列所在的固定分组：按顶层祖先所在的分组（左固定含随之固定的首个 selection 列；分组在其中为克隆节点）
+	 * @param column 列节点
+	 * @returns left / right；不固定时为空字符串
+	 */
+	getColumnSide(column: TableColumnNode) {
+		let top = column;
+		while (top.parentNode) top = top.parentNode;
+		const isTop = (item: TableColumnNode) => (item.origin ?? item) === top;
+		const { leftFixedColumns, rightFixedColumns } = this.store.states;
+		if (leftFixedColumns.some(isTop)) return 'left';
+		if (rightFixedColumns.some(isTop)) return 'right';
+		return '';
+	}
+
+	/**
+	 * 列与它的下标：allowDrag、column-dragstart / column-dragend 的参数
+	 * @param column 列节点
+	 * @returns 列（states）与下标
+	 */
+	getColumnPayload(column: TableColumnNode): TableColumnDragPayload {
+		return { column: column.states, columnIndex: this.getColumnIndex(column) };
+	}
+
+	/**
+	 * 列能否被拖动：开启了列拖拽的可见普通列，再交给 allowDrag
+	 * @param column 列节点
+	 * @returns 能否拖动
+	 */
+	canDragColumn(column: TableColumnNode) {
+		if (!this.draggable.value[1] || !isPlainColumn(column)) return false;
+		const columnIndex = this.getColumnIndex(column);
+		if (columnIndex < 0) return false;
+		const { allowDrag } = this.store.table.props;
+		return typeof allowDrag !== 'function' || !!allowDrag({ type: 'column', column: column.states, columnIndex });
+	}
+
+	/**
+	 * 能否作为列的落点：同一父级、同一固定分组内的另一个可见普通列
+	 * @param column 拖动的列
+	 * @param target 落点列
+	 * @returns 能否作为落点
+	 */
+	isColumnTarget(column: TableColumnNode, target: TableColumnNode) {
+		return column !== target
+			&& isPlainColumn(target)
+			&& column.parentNode === target.parentNode
+			&& this.getColumnIndex(target) >= 0
+			&& (!!column.parentNode || this.getColumnSide(column) === this.getColumnSide(target));
+	}
+
+	/**
+	 * 计算列的移动
+	 * @param column 拖动的列
+	 * @param target 落点列
+	 * @param position 相对落点列的位置
+	 * @returns 移动；不能作为落点或顺序不变时为 null
+	 */
+	getColumnMove(column: TableColumnNode, target: TableColumnNode, position: TableColumnDropPosition): Nullable<TableColumnMove> {
+		if (!this.isColumnTarget(column, target)) return null;
+		const parent = column.parentNode;
+		const siblings = this.store.column.getSiblings(parent);
+		const from = siblings.indexOf(column);
+		let to = siblings.indexOf(target) + (position === 'after' ? 1 : 0);
+		if (to > from) to--;
+		return to === from ? null : { from: { parent, index: from }, to: { parent, index: to } };
+	}
+
+	/**
+	 * allowDrop（type 为 column）与 column-drop 共有的参数：from / to 的 parent 为父分组的 states
+	 * @param column 拖动的列
+	 * @param target 落点列
+	 * @param position 相对落点列的位置
+	 * @param move 移动
+	 * @returns 参数
+	 */
+	getColumnDropPayload(
+		column: TableColumnNode,
+		target: TableColumnNode,
+		position: TableColumnDropPosition,
+		move: TableColumnMove
+	): Omit<TableColumnDropPayload, 'columns'> {
+		const toPlace = ({ parent, index }: TableColumnPlace) => ({ parent: parent ? parent.states : null, index });
+		return { column: column.states, targetColumn: target.states, position, from: toPlace(move.from), to: toPlace(move.to) };
+	}
+
+	/**
+	 * 能否把列放到落点：交给 allowDrop
+	 * @param column 拖动的列
+	 * @param target 落点列
+	 * @param position 相对落点列的位置
+	 * @param move 移动
+	 * @returns 能否放置
+	 */
+	canDropColumn(column: TableColumnNode, target: TableColumnNode, position: TableColumnDropPosition, move: TableColumnMove) {
+		const { allowDrop } = this.store.table.props;
+		return typeof allowDrop !== 'function' || !!allowDrop({ type: 'column', ...this.getColumnDropPayload(column, target, position, move) });
 	}
 }

@@ -195,7 +195,7 @@ export const TableBodyBlock = defineComponent({
 		let activeCell: Nullable<ResolvedCell> = null;
 		const handleMouseOver = (e: MouseEvent) => {
 			// 拖拽排序中不做 hover 高亮，也不弹出省略提示
-			if (table.store.states.dragBlock) return;
+			if (table.store.states.dragging) return;
 			const cell = resolveCell(e);
 			if (activeCell && cell && activeCell.cellEl === cell.cellEl) return;
 			if (activeCell) leaveCell(e, activeCell);

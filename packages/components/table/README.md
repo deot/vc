@@ -572,7 +572,8 @@ const handleSort = () => {};
 
 - 列可以用 `v-if`、`v-for`（含多级表头的子列）动态增删与移动，列顺序始终跟随模板。
 - 列写在自定义组件内部时，调整顺序请用新数组替换，并经由 Table 插槽中的 props 传入该组件（不要原地修改数组），或者直接把 `v-for` 写在 Table 的插槽里；否则 Table 感知不到列的移动。
-- 通过 `v-model:columns` 调整过顺序后，以外部顺序为准，模板中的移动不再影响这些列；新出现的列排在它在模板中的前一列之后。
+- 通过 `v-model:columns`（或[列拖拽](#列拖拽)）调整过顺序后，以外部顺序为准，模板中的移动不再影响这些列；新出现的列排在它在模板中的前一列之后。
+- 多级表头下逐层重排：列表中是叶子列，分组按其子列中最靠前的一个排序，子列只在所属分组内调整。
 - 写回与模板一致的顺序（或只修改 `hidden`、不调整顺序）时，恢复跟随模板。
 
 :::RUNTIME
@@ -882,9 +883,11 @@ const tableData = ref([
 
 ### 拖拽排序
 
-支持两种拖拽方式，可以同时开启：
+`draggable` 可以是布尔值或数组 `[行, 列]`：`true` 等于 `[true, false]`，只开启整行拖拽；拖动表头调整列顺序见下方「列拖拽」。
 
-- **整行拖拽**：设置 `draggable` 后，按住行内任意位置拖动，整行显示 `move` 光标。从输入框、按钮、链接、复选框、展开图标上按下时不会发起拖拽。
+行拖拽支持两种方式，可以同时开启：
+
+- **整行拖拽**：设置 `draggable`（或数组的第一项）后，按住行内任意位置拖动，整行显示 `move` 光标。从输入框、按钮、链接、复选框、展开图标上按下时不会发起拖拽。
 - **锚点拖拽**：添加 `type="drag"` 的 `TableColumn`，只能从这一列的把手（浅色的 `drag` 图标）拖动。自定义把手时，给元素加上 `vc-table__drag-handle` 类名即可。
 - 两者同时开启时，整行不显示 `move` 光标，由把手提示可拖动；按住行内其它位置仍可拖动。
 - 与展开列（`type="expand"`）、树形列同时使用时，把 `drag` 列放在它们之前。
@@ -1019,10 +1022,65 @@ const handleDrop = ({ rows, from, to }) => {
 ```
 :::
 
+#### 列拖拽
+
+`:draggable="[false, true]"`（或 `[true, true]`，行、列同时开启）后，按住表头拖动可以调整列顺序：
+
+- 移动超过 4px 才开始拖拽，按 Esc 取消；触摸设备上需要长按约 300ms。从排序、筛选、提示图标、复选框上按下，或在表头右缘的列宽拖拽区按下时，不会发起列拖拽。
+- `selection`、`index`、`expand`、`drag` 等结构列不能拖动，也不作为落点。
+- 只在同一父级内调整：多级表头下，分组表头连同子列一起移动，分组内的列只在所属分组内移动；左固定、右固定与不固定的列只在各自的分组内调整。
+- 拖动时被拖的列变暗，竖向插入线标出落点，跟随块随指针横向移动；拖动不固定的列时，指针靠近表体左右边缘会横向自动滚动。
+- 新顺序在表格内部生效，并经 `update:columns` 发出新的列列表，之后依次发出 `column-drop`、`column-dragend`。不绑定 `v-model:columns` 也能拖动；绑定后可以保存、恢复列顺序（见[动态列与列显隐](#动态列与列显隐)）。
+- `allow-drag` / `allow-drop` 与行拖拽共用，参数中的 `type` 区分行（`'block'`）与列（`'column'`）；行、列同时开启时请按 `type` 分别处理。
+- 树形表格的缩进与展开图标显示在第一个普通列；把别的列拖到它之前后，缩进与展开图标会移到新的第一个普通列。
+
+:::RUNTIME
+```vue
+<template>
+	<div style="margin-bottom: 8px;">顺序：{{ columns.map(item => item.label || item.type).join(' / ') }}</div>
+	<Table
+		v-model:columns="columns"
+		:data="tableData"
+		:draggable="[false, true]"
+		:allow-drag="({ type, column }) => type !== 'column' || column.prop !== 'name'"
+		border
+	>
+		<TableColumn type="selection" />
+		<TableColumn
+			prop="name"
+			label="姓名（锁定）"
+			width="140"
+		/>
+		<TableColumn
+			prop="date"
+			label="日期"
+			width="140"
+		/>
+		<TableColumn
+			prop="address"
+			label="地址"
+		/>
+	</Table>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Table, TableColumn } from '@deot/vc';
+
+// v-model:columns 回填为 { id, prop, label, type, hidden } 的列表，可以保存下来恢复列顺序
+const columns = ref([]);
+const tableData = ref([
+	{ id: 1, name: '微一案', date: '2011-11-01', address: '浙江省杭州市拱墅区祥园路38号' },
+	{ id: 2, name: '微二案', date: '2011-11-02', address: '浙江省杭州市拱墅区祥园路39号' }
+]);
+</script>
+```
+:::
+
 完整示例：
 
 - [拖拽排序：整行 / 把手 / 虚拟滚动 / 合并块 / 异步确认 / 展开行 / 滚动容器](./examples/drag.vue)
 - [树形表格拖拽：嵌套 / 懒加载 / 只允许同级 / 虚拟滚动](./examples/drag-tree.vue)
+- [列拖拽：v-model:columns / 固定列与横向滚动 / 多级表头 / allowDrag、allowDrop / 行列同时拖拽](./examples/drag-column.vue)
 
 ### 外部视口虚拟化
 
@@ -1173,10 +1231,10 @@ const updateOffsets = () => {
 | delay                   | 延迟选择，排除transition的影响                                                                                                                       |                                                            |                             |         |
 | resizable               | 是否可以伸缩(总开关/单独的column.resizable也可以设置)                                                                                                                                     |                                                            |                             |         |
 | affix                   | 流式高度下（含 `virtualized` 外部虚拟化，未设置 `height`/`max-height`）表头吸顶、底部 dock（横向滚动条 + 合计行）吸底。`boolean` 同时作用于两端；`array` 为 `[top, bottom]`，每项可为 `boolean` 或 [Affix](../affix) 配置对象；`object` 同时作用于两端。没有合计行时 bottom 项只控制横向滚动条。设置了 `height`/`max-height` 时强制失效。 | `boolean`、`array`、`object`                                  | -                           | `false` |
-| columns                 | `v-model` 暴露 Table 收集到的全部 leaf 列（含 `selection`/`expand`/`index` 等无 `prop` 的结构列），每项含 `{ id, prop, label, type, width, fixed, align, hidden, ... }`。外部可写回两个维度：调整数组顺序（按 `id` 重排）、把某项 `hidden` 置 `true/false`（按 `id` 控制该列是否渲染，被隐藏列仍出现在暴露快照中）。`width`/`fixed` 等其它字段为只读，请用 `TableColumn` 的 props 控制。 | `Array`                                                    | -                           | `[]`    |
-| draggable               | 整行拖拽排序：按住行内任意位置拖动（以块为单位，`get-span` 纵向合并的行整体移动）；只从把手拖动时使用 `type="drag"` 的列。新顺序经 `update:data` 发出，配合 `v-model:data` 使用；树形表格会先原地修改 `data`，见[拖拽排序](#拖拽排序)。树形表格同时配置 `get-span` 时不可拖拽 | `boolean`                                                  | -                           | `false` |
-| allow-drag              | 块能否被拖动；返回 `false` 时不能拖动，该块的把手置灰。`rows` 为块的行（普通表格长度为 1），`rowIndex` 为块首行的行号                                                          | `Function({ rows, rowIndex })`                             | -                           | -       |
-| allow-drop              | 能否放到落点；返回 `false` 时插入线显示为不可放置，松手不生效。`targetRows` 为落点行（树形表格 `inner` 时为新的父行）；`position` 为相对落点行的位置，`before`、`after`，或 `inner`（成为子行，仅树形表格）；`from` / `to` 为移动前后的位置 `{ parent, index }`，`parent` 为 `null` 表示根级 | `Function({ rows, targetRows, position, from, to })`       | -                           | -       |
+| columns                 | `v-model` 暴露 Table 收集到的全部 leaf 列（含 `selection`/`expand`/`index` 等无 `prop` 的结构列），每项为 `{ id, prop, label, type, hidden }`。外部可写回两个维度：调整数组顺序（按 `id` 重排，多级表头下逐层生效）、把某项 `hidden` 置 `true/false`（按 `id` 控制该列是否渲染，被隐藏列仍出现在暴露快照中）。列拖拽后的新顺序同样经此发出。其它列属性请用 `TableColumn` 的 props 控制。 | `Array`                                                    | -                           | `[]`    |
+| draggable               | 拖拽排序，数组依次为 `[整行拖拽, 列拖拽]`，`true` 等于 `[true, false]`。整行拖拽按住行内任意位置拖动（以块为单位，`get-span` 纵向合并的行整体移动），只从把手拖动时使用 `type="drag"` 的列（不受第一项影响）；新顺序经 `update:data` 发出，配合 `v-model:data` 使用；树形表格会先原地修改 `data`，同时配置 `get-span` 时不可拖拽。列拖拽按住表头拖动，新顺序在表格内部生效并经 `update:columns` 发出。见[拖拽排序](#拖拽排序) | `boolean`、`[boolean, boolean]`                            | -                           | `false` |
+| allow-drag              | 块 / 列能否被拖动；返回 `false` 时不能拖动（块的把手置灰，表头不显示 `move` 光标）。`type` 为 `'block'`（行）或 `'column'`（列）；行：`rows` 为块的行（普通表格长度为 1），`rowIndex` 为块首行的行号；列：`column` 为列（分组时为分组本身），`columnIndex` 为列（分组时为其第一个可见叶子）在可见叶子列中的下标 | `Function({ type, rows, rowIndex })`、`Function({ type, column, columnIndex })` | -                           | -       |
+| allow-drop              | 能否放到落点；返回 `false` 时插入线显示为不可放置，松手不生效。`type` 为 `'block'`（行）或 `'column'`（列）。行：`targetRows` 为落点行（树形表格 `inner` 时为新的父行）；`position` 为相对落点行的位置，`before`、`after`，或 `inner`（成为子行，仅树形表格）；`from` / `to` 为移动前后的位置 `{ parent, index }`，`parent` 为 `null` 表示根级。列：`targetColumn` 为落点列（与被拖列同一父级）；`position` 为 `before` 或 `after`；`from` / `to` 的 `parent` 为父分组，顶层为 `null`，`index` 为兄弟列（含隐藏列）中的下标 | `Function({ type, rows, targetRows, position, from, to })`、`Function({ type, column, targetColumn, position, from, to })` | -                           | -       |
 
 
 ### 事件
@@ -1207,6 +1265,9 @@ const updateOffsets = () => {
 | block-dragstart    | 拖拽开始时触发（鼠标移动超过阈值，或触摸长按后）                                        | `({ rows, rowIndex }) => void 0`                                                | `rows`：被拖动块的行（普通表格长度为 1）；`rowIndex`：块首行的行号                       |
 | block-drop         | 松手且顺序变化时触发，在 `update:data` 之后                                       | `({ rows, targetRows, position, from, to, rawData }) => void 0`                 | `targetRows`：落点行（树形表格 `inner` 时为新的父行）；`position`：`before`、`after`，或 `inner`（仅树形表格）；`from` / `to`：移动前后的位置 `{ parent, index }`，`parent` 为 `null` 表示根级，`index` 非树形表格为块首行在 data 中的下标、树形表格为兄弟行中的下标；`rawData`：新的数组（同 `update:data`） |
 | block-dragend      | 拖拽结束时触发，取消、顺序不变、不允许放置时也会触发                                       | `({ rows, rowIndex, dropped }) => void 0`                                       | `dropped`：是否按新顺序放下                                                  |
+| column-dragstart   | 列拖拽开始时触发（鼠标移动超过阈值，或触摸长按后）                                     | `({ column, columnIndex }) => void 0`                                           | `column`：被拖动的列（分组时为分组本身）；`columnIndex`：列（分组时为其第一个可见叶子）在可见叶子列中的下标 |
+| column-drop        | 列拖拽松手且顺序变化时触发，在新顺序生效、`update:columns` 发出之后                      | `({ column, targetColumn, position, from, to, columns }) => void 0`             | `targetColumn`：落点列；`position`：`before` 或 `after`；`from` / `to`：移动前后的位置 `{ parent, index }`，`parent` 为父分组，顶层为 `null`，`index` 为兄弟列（含隐藏列）中的下标；`columns`：新的列列表（同 `update:columns`） |
+| column-dragend     | 列拖拽结束时触发，取消、顺序不变、不允许放置时也会触发                                     | `({ column, columnIndex, dropped }) => void 0`                                  | `dropped`：是否按新顺序放下                                                  |
 
 
 ### 方法
@@ -1323,4 +1384,13 @@ VcInstance.configure({
 	- `cell-mouse-enter` / `cell-mouse-leave` → `cell-mouseenter` / `cell-mouseleave`。
 	- `block-drag-start` / `block-drag-end` → `block-dragstart` / `block-dragend`（`block-drop` 不变）。
 - 组件自身语义的事件仍按词拆分，如 `selection-change`、`column-resize`。
+
+### 拖拽排序支持列
+- `draggable` 支持数组 `[行, 列]`；`true` 与原来一致，只开启整行拖拽。
+- `allow-drag` / `allow-drop` 的参数新增 `type`：行为 `'block'`，列为 `'column'`。开启列拖拽后同一个回调也会收到列的参数，需要按 `type` 区分。
+- `v-model:columns` 写回的顺序改为逐层生效：多级表头下原先只重排顶层列，现在分组内的列也按外部顺序排列，分组按其子列中最靠前的一个排序。
+- `v-model:columns` 的回流改为按内容识别：写回与当前列一致时忽略；不再依赖「发出后等一次写回」的标记，只监听 `update:columns`、不写回时，之后的外部修改照常生效。
+- `columns` 属性文档中列出的 `width`、`fixed`、`align` 实际并未同步，已从说明中去掉；同步项为 `{ id, prop, label, type, hidden }`。
+- 合计行单元格新增 `data-column` 属性（与表体单元格一致）。
+- 拖拽中挂在 `body` 上的类名由 `vc-table-block-dragging` 改为 `vc-table-dragging`（行、列拖拽共用）。
 -->

@@ -1,6 +1,5 @@
-import { watch, inject, toRaw, onBeforeUnmount } from 'vue';
+import { watch, inject, toRaw } from 'vue';
 import type { Ref } from 'vue';
-import { raf, caf } from '@deot/helper-utils';
 import { getScroller } from '@deot/helper-dom';
 import type { Nullable } from '@deot/helper-shared';
 import { SCROLLER_REG } from '../../scroller/utils';
@@ -12,6 +11,18 @@ import type { Store } from '../store';
 import type { TableDropPosition, TableMove } from '../store/modules';
 import type { Props } from '../table-props';
 import type { TableBlockDragPayload, TableBlockDragEndPayload, TableBlockDropPayload } from '../types';
+import { clamp } from 'lodash-es';
+import {
+	INTERACTIVE_SELECTOR,
+	createGhost,
+	createIndicator,
+	getEdgeDelta,
+	getNextOffset,
+	scrollBody,
+	toRootOffset,
+	usePointerDrag
+} from './drag-helpers';
+import type { PointerDragState, RootOffset } from './drag-helpers';
 
 type Options = {
 	props: Props;
@@ -90,36 +101,11 @@ type DragSession = {
 	hover: { row: any; timer: any };
 };
 
-type DragState = {
-	// 被拖动的块（states.list 中的块）
-	block: any;
-	startX: number;
-	startY: number;
-	clientX: number;
-	clientY: number;
-	// 触摸发起
-	touch: boolean;
-	// 从把手发起：触摸时手势直接归拖拽所有
-	byHandle: boolean;
-	// 整行触摸的长按计时
-	timer: any;
-	// 未激活（未超过阈值、未长按）时为 null
-	session: Nullable<DragSession>;
-};
-
-// 超过该距离（px）才开始拖拽：单纯的点击、勾选不受影响
-const THRESHOLD = 4;
-
-// 整行触摸：长按（ms）后才开始拖拽，之前移动超过 TOUCH_SLOP（px）视为滚动
-const LONG_PRESS = 300;
-const TOUCH_SLOP = 8;
+// 拖拽状态：source 为被拖动的块（states.list 中的块）
+type DragState = PointerDragState<any, DragSession>;
 
 // 树形表格：指针在收起节点的中间区域停留（ms）后自动展开
 const HOVER_EXPAND = 600;
-
-// 自动滚动：指针进入可见范围上下边缘 EDGE（px）内时滚动，越靠近边缘越快，每帧最多 SPEED（px）
-const EDGE = 48;
-const SPEED = 16;
 
 // 外部滚动承载者的纵向属性名
 const Y_KEYS: AxisKeys = {
@@ -130,51 +116,9 @@ const Y_KEYS: AxisKeys = {
 	offsetSize: 'offsetHeight'
 };
 
-// 整行拖拽时，从这些元素按下不发起拖拽（保留输入、选择、点击等原有交互）
-const INTERACTIVE_SELECTOR = [
-	'input',
-	'textarea',
-	'select',
-	'button',
-	'a[href]',
-	'[contenteditable]:not([contenteditable="false"])',
-	'label',
-	'.vc-checkbox',
-	'.vc-table__expand-icon'
-].join(',');
-
-// 拖拽中挂在 body 上：全局 move 光标、禁止选中文本
-const BODY_DRAGGING_CLASS = 'vc-table-block-dragging';
-
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
-
-// 指针离按下点的距离（横纵取大）
-const getDistance = (current: DragState, x: number, y: number) => {
-	return Math.max(Math.abs(x - current.startX), Math.abs(y - current.startY));
-};
-
-// 触摸手势归拖拽所有：拦截 touchmove / touchend，不再交给滚动
-const isOwned = (current: DragState) => !!current.session || current.byHandle;
-
-const preventDefault = (e: Event) => e.preventDefault();
-
 /**
- * 纵向滚动 delta 后的位置
- * @param offset 当前位置
- * @param max 最大位置
- * @param delta 纵向增量
- * @returns 新位置；不可滚动或已到边界时为 null
- */
-const getNextOffset = (offset: number, max: number, delta: number) => {
-	if (max <= 0) return null;
-	const next = clamp(offset + delta, 0, max);
-	return Math.abs(next - offset) < 0.5 ? null : next;
-};
-
-/**
- * 拖拽排序（以块为单位）：
- * 	- 整行拖拽（draggable）从单元格任意位置按下，锚点拖拽从 `.vc-table__drag-handle`（type="drag" 列）按下；
- * 	- 鼠标移动超过阈值后激活；触摸从把手发起同鼠标，整行触摸需长按；
+ * 拖拽排序（以块为单位），按下到结束的生命周期见 usePointerDrag：
+ * 	- 整行拖拽（draggable 第一项）从单元格任意位置按下，锚点拖拽从 `.vc-table__drag-handle`（type="drag" 列）按下；
  * 	- 激活后源块变暗，插入线标出落点，跟随行（块 grid 的克隆）随指针纵向移动，指针靠近边缘时自动滚动；
  * 	- 松手时顺序有变化则发出 update:data（新数组）与 block-drop，树形表格先原地修改；之后总会发出 block-dragend；
  * 	- 插入线、跟随行均为命令式 DOM，拖动过程不触发表格重渲染。
@@ -185,9 +129,6 @@ export const useBlockDrag = (options: Options) => {
 	const { props, store, emit, tableWrapper, headerWrapper, bottomWrapper, bodyXWrapper, bodyScroller, virtual } = options;
 	// 外层的 VC Scroller：外部滚动承载者恰好是它时，滚动交给它以同步其滚动条
 	const injected = inject<InjectedScroller | undefined>('vc-scroller', undefined);
-
-	let state: Nullable<DragState> = null;
-	let frame: Nullable<number> = null;
 
 	// ---------------------------------------------------------------------
 	// 几何
@@ -390,13 +331,13 @@ export const useBlockDrag = (options: Options) => {
 		const target = store.drag.getBlockByRowIndex(Number(el.dataset.rowStart));
 		if (!target) return null;
 		const rect = getBlockRect(el);
-		if (session.tree) return hitTree(current.block, session.tree, el, rect, target.rowStart, x, y);
+		if (session.tree) return hitTree(current.source, session.tree, el, rect, target.rowStart, x, y);
 
 		const position: TableDropPosition = y < (rect.top + rect.bottom) / 2 ? 'before' : 'after';
 		return {
 			targetRows: store.drag.getRows(target),
 			position,
-			move: store.drag.getMove(current.block, target, position),
+			move: store.drag.getMove(current.source, target, position),
 			rect,
 			lineY: position === 'before' ? rect.top : rect.bottom,
 			lineLeft: null,
@@ -415,10 +356,7 @@ export const useBlockDrag = (options: Options) => {
 	const scrollInner = (delta: number) => {
 		const el = bodyXWrapper.value;
 		const scroller = bodyScroller.value;
-		const next = el && scroller ? getNextOffset(el.scrollTop, el.scrollHeight - el.clientHeight, delta) : null;
-		if (next == null) return false;
-		scroller.scrollTo({ y: next });
-		return true;
+		return !!el && !!scroller && scrollBody(el, scroller, 'y', delta);
 	};
 
 	/**
@@ -443,47 +381,16 @@ export const useBlockDrag = (options: Options) => {
 	 * @returns 是否滚动了
 	 */
 	const autoScroll = (current: DragState, session: DragSession, visible: VisibleRect) => {
-		const zone = Math.min(EDGE, (visible.bottom - visible.top) / 3);
-		if (zone <= 0) return false;
-
-		const y = current.clientY;
-		let direction = 0;
-		let ratio = 0;
-		if (y < visible.top + zone) {
-			direction = -1;
-			ratio = (visible.top + zone - y) / zone;
-		} else if (y > visible.bottom - zone) {
-			direction = 1;
-			ratio = (y - visible.bottom + zone) / zone;
-		}
-		if (!direction) return false;
-
-		const delta = direction * Math.max(1, Math.round(SPEED * Math.min(1, ratio)));
+		const delta = getEdgeDelta(current.clientY, visible.top, visible.bottom);
+		if (!delta) return false;
 		if (scrollInner(delta)) return true;
-		const clipped = direction < 0 ? visible.clippedTop : visible.clippedBottom;
+		const clipped = delta < 0 ? visible.clippedTop : visible.clippedBottom;
 		return clipped && scrollOuter(session.outer, delta);
 	};
 
 	// ---------------------------------------------------------------------
 	// 插入线与跟随行
 	// ---------------------------------------------------------------------
-	// 根节点（position: relative）坐标系下的偏移
-	const toRootOffset = (root: HTMLElement) => {
-		const rect = root.getBoundingClientRect();
-		return { top: rect.top + root.clientTop, left: rect.left + root.clientLeft };
-	};
-
-	type Offset = ReturnType<typeof toRootOffset>;
-
-	const createIndicator = (root: HTMLElement) => {
-		const el = document.createElement('div');
-		el.className = 'vc-table__drop-indicator';
-		el.setAttribute('aria-hidden', 'true');
-		el.style.display = 'none';
-		root.appendChild(el);
-		return el;
-	};
-
 	/**
 	 * 跟随行：克隆块的 grid，放进与表体等宽、横向滚动位置一致的容器，固定列（sticky）位置与表体一致
 	 * @param root 表格根节点
@@ -491,34 +398,18 @@ export const useBlockDrag = (options: Options) => {
 	 * @param offset 根节点偏移
 	 * @returns 跟随行容器
 	 */
-	const createGhost = (root: HTMLElement, blockEl: HTMLElement, offset: Offset) => {
+	const createBlockGhost = (root: HTMLElement, blockEl: HTMLElement, offset: RootOffset) => {
 		const body = bodyXWrapper.value!;
-		const ghost = document.createElement('div');
-		ghost.className = 'vc-table__drag-ghost';
-		ghost.setAttribute('aria-hidden', 'true');
-		ghost.setAttribute('inert', '');
-
-		const clone = blockEl.cloneNode(true) as HTMLElement;
+		// 表体内的单元格样式（固定列底色、斑马纹等）限定在 .vc-table__tbody 下
+		const { ghost, clone, content } = createGhost(root, blockEl, 'vc-table__tbody');
 		clone.removeAttribute('data-row-start');
 		clone.classList.remove('is-dragging');
 		clone.querySelectorAll('.hover-row, .hover-related').forEach((node) => {
 			node.classList.remove('hover-row', 'hover-related');
 		});
-		// 克隆里的元素不参与原有的分组与引用：带 name 的已选中 radio 插入文档会取消同组原 radio 的选中；重复的 id 会干扰 label[for] 等引用
-		clone.querySelectorAll('[name], [id]').forEach((node) => {
-			node.removeAttribute('name');
-			node.removeAttribute('id');
-		});
-		// 表体内的单元格样式（固定列底色、斑马纹等）限定在 .vc-table__tbody 下
-		const content = document.createElement('div');
-		content.className = 'vc-table__tbody';
 		content.style.width = `${blockEl.offsetWidth}px`;
-		content.appendChild(clone);
-		ghost.appendChild(content);
-
 		ghost.style.left = `${body.getBoundingClientRect().left - offset.left}px`;
 		ghost.style.width = `${body.clientWidth}px`;
-		root.appendChild(ghost);
 		ghost.scrollLeft = body.scrollLeft;
 		return ghost;
 	};
@@ -531,7 +422,7 @@ export const useBlockDrag = (options: Options) => {
 	 * @param offset 根节点偏移
 	 * @param scrollLeft 表体横向滚动位置
 	 */
-	const updateGhost = (current: DragState, session: DragSession, visible: VisibleRect, offset: Offset, scrollLeft: number) => {
+	const updateGhost = (current: DragState, session: DragSession, visible: VisibleRect, offset: RootOffset, scrollLeft: number) => {
 		const { ghost } = session;
 		// 跟随行高于可见范围时顶部对齐
 		const top = Math.max(Math.min(current.clientY - session.grabOffset, visible.bottom - session.ghostHeight), visible.top);
@@ -546,7 +437,7 @@ export const useBlockDrag = (options: Options) => {
 	 * @param visible 表体可见范围
 	 * @param offset 根节点偏移
 	 */
-	const updateIndicator = (session: DragSession, visible: VisibleRect, offset: Offset) => {
+	const updateIndicator = (session: DragSession, visible: VisibleRect, offset: RootOffset) => {
 		const { indicator: el, ghost, drop } = session;
 		const inner = drop?.position === 'inner';
 		el.classList.toggle('is-inner', inner);
@@ -590,7 +481,7 @@ export const useBlockDrag = (options: Options) => {
 		session.drop = {
 			...hit,
 			move,
-			allowed: same ? drop!.allowed : store.drag.canDrop(current.block, hit.targetRows, hit.position, move)
+			allowed: same ? drop!.allowed : store.drag.canDrop(current.source, hit.targetRows, hit.position, move)
 		};
 	};
 
@@ -606,22 +497,23 @@ export const useBlockDrag = (options: Options) => {
 		if (toRaw(row) === toRaw(hover.row)) return;
 		hover.timer && clearTimeout(hover.timer);
 		hover.row = row;
+		// 结束拖拽时清除计时，到时即仍在拖拽中
 		hover.timer = row && setTimeout(() => {
 			hover.timer = null;
-			state?.session === session && store.tree.toggle(row, true);
+			store.tree.toggle(row, true);
 		}, HOVER_EXPAND);
 	};
 
 	/**
-	 * 每帧：自动滚动，再按指针位置更新落点、跟随行与插入线（先读后写）；仍在滚动时继续下一帧
+	 * 每帧：自动滚动，再按指针位置更新落点、跟随行与插入线（先读后写）
+	 * @param current 拖拽状态
+	 * @param session 拖拽会话
+	 * @returns 仍在滚动时为 true（继续下一帧）
 	 */
-	const update = () => {
-		frame = null;
-		const current = state;
-		const session = current?.session;
+	const update = (current: DragState, session: DragSession) => {
 		const root = tableWrapper.value;
 		const body = bodyXWrapper.value;
-		if (!current || !session || !root || !body) return;
+		if (!root || !body) return false;
 		let visible = getVisibleRect(session.outer)!;
 		const scrolled = autoScroll(current, session, visible);
 		// 滚动外部承载者后表体位置变化，重新测量
@@ -633,19 +525,7 @@ export const useBlockDrag = (options: Options) => {
 		const offset = toRootOffset(root);
 		updateGhost(current, session, visible, offset, body.scrollLeft);
 		updateIndicator(session, visible, offset);
-		scrolled && scheduleUpdate();
-	};
-
-	/**
-	 * 下一帧更新（同一帧内只安排一次）
-	 */
-	function scheduleUpdate() {
-		frame == null && (frame = raf(update));
-	}
-
-	const cancelUpdate = () => {
-		frame != null && caf(frame);
-		frame = null;
+		return scrolled;
 	};
 
 	/**
@@ -655,7 +535,7 @@ export const useBlockDrag = (options: Options) => {
 	 * @param session 拖拽会话
 	 */
 	const updateDimmed = (current: DragState, session: DragSession) => {
-		const { block } = current;
+		const block = current.source;
 		const blocks = [block];
 		const { tree } = session;
 		if (tree) {
@@ -677,13 +557,13 @@ export const useBlockDrag = (options: Options) => {
 		const root = tableWrapper.value;
 		const body = bodyXWrapper.value;
 		const els = queryBlockEls();
-		const blockEl = els.find(el => Number(el.dataset.rowStart) === current.block.rowStart);
-		if (!root || !body || !blockEl) return false;
+		const blockEl = els.find(el => Number(el.dataset.rowStart) === current.source.rowStart);
+		if (!root || !body || !blockEl) return null;
 
 		const outer = resolveOuter(root);
 		const visible = getVisibleRect(outer)!;
 		const offset = toRootOffset(root);
-		const ghost = createGhost(root, blockEl, offset);
+		const ghost = createBlockGhost(root, blockEl, offset);
 		const session: DragSession = {
 			grabOffset: current.startY - blockEl.getBoundingClientRect().top,
 			ghost,
@@ -692,166 +572,37 @@ export const useBlockDrag = (options: Options) => {
 			outer,
 			blockEls: virtual.value ? null : els,
 			dimmed: [],
-			tree: store.tree.isTree ? { start: current.block.rowStart, end: current.block.rowStart, padding: null } : null,
+			tree: store.tree.isTree ? { start: current.source.rowStart, end: current.source.rowStart, padding: null } : null,
 			drop: null,
 			hover: { row: null, timer: null }
 		};
-		current.session = session;
 		// 立即定位，避免跟随行在下一帧之前出现在默认位置
 		updateGhost(current, session, visible, offset, body.scrollLeft);
 
 		updateDimmed(current, session);
-		store.states.dragBlock = current.block;
+		store.states.dragging = true;
 		store.row.setHoverIndex(null);
-		document.body.classList.add(BODY_DRAGGING_CLASS);
-		window.getSelection?.()?.removeAllRanges();
-
-		emit('block-dragstart', store.drag.getPayload(current.block) satisfies TableBlockDragPayload);
-		scheduleUpdate();
-		return true;
+		return session;
 	};
 
-	// 松手后吞掉紧随其后、落在表格内的 click，避免触发 row-click / current-change；表格外的点击不受影响
-	const suppressClick = () => {
-		const root = tableWrapper.value;
-		if (!root) return;
-		const handler = (e: Event) => {
-			e.stopPropagation();
-			e.preventDefault();
-		};
-		root.addEventListener('click', handler, true);
-		setTimeout(() => root.removeEventListener('click', handler, true), 0);
+	const start = (current: DragState) => {
+		emit('block-dragstart', store.drag.getPayload(current.source) satisfies TableBlockDragPayload);
 	};
 
 	/**
-	 * 指针移动：未激活时超过阈值则激活；激活后记录位置，下一帧更新
+	 * 结束拖拽（激活过的）：移除跟随行与插入线，恢复变暗的块；commit 且允许放置时写回并发出事件
 	 * @param current 拖拽状态
-	 * @param x 指针横坐标
-	 * @param y 指针纵坐标
-	 * @returns 是否处于拖拽中
-	 */
-	const moveTo = (current: DragState, x: number, y: number) => {
-		current.clientX = x;
-		current.clientY = y;
-		if (!current.session) {
-			if (getDistance(current, x, y) <= THRESHOLD) return false;
-			if (!activate(current)) {
-				finish(false);
-				return false;
-			}
-		}
-		scheduleUpdate();
-		return true;
-	};
-
-	const handleMousemove = (e: MouseEvent) => {
-		const current = state;
-		if (!current || current.touch) return;
-		// 左键已松开却没有收到 mouseup（如在窗口外松开）：取消
-		if (e.buttons === 0) {
-			finish(false);
-			return;
-		}
-		moveTo(current, e.clientX, e.clientY) && e.preventDefault();
-	};
-
-	// 只有左键松开才结束
-	const handleMouseup = (e: MouseEvent) => {
-		e.button === 0 && state && !state.touch && finish(true);
-	};
-
-	/**
-	 * 触摸移动（window 捕获阶段、非 passive）：
-	 * 手势归拖拽所有时阻止默认滚动，并截断传播，避免表体 Scroller 的模拟触摸滚动；
-	 * 整行触摸在长按前移动超过 TOUCH_SLOP 视为滚动，放弃拖拽
-	 * @param e touchmove
-	 */
-	const handleTouchmove = (e: TouchEvent) => {
-		const current = state;
-		const touch = e.touches?.[0];
-		if (!current || !current.touch || !touch) return;
-		if (!isOwned(current)) {
-			getDistance(current, touch.clientX, touch.clientY) > TOUCH_SLOP && finish(false);
-			return;
-		}
-		e.stopPropagation();
-		e.cancelable && e.preventDefault();
-		moveTo(current, touch.clientX, touch.clientY);
-	};
-
-	const handleTouchend = (e: TouchEvent) => {
-		const current = state;
-		if (!current || !current.touch) return;
-		// 表体 Scroller 的触摸惯性由 touchend 触发
-		isOwned(current) && e.stopPropagation();
-		finish(true);
-	};
-
-	const handleTouchcancel = () => {
-		state?.touch && finish(false);
-	};
-
-	// 长按期间的系统菜单（Android 长按触发 contextmenu）
-	const handleContextmenu = (e: Event) => {
-		state && isOwned(state) && e.preventDefault();
-	};
-
-	// 拖拽中表体、页面被滚动（滚轮、触控板、自动滚动）：落点与插入线随之更新
-	const handleScroll = () => {
-		state?.session && scheduleUpdate();
-	};
-
-	const handleKeydown = (e: KeyboardEvent) => {
-		if (e.key === 'Escape') {
-			e.preventDefault();
-			finish(false);
-		}
-	};
-
-	const handleBlur = () => finish(false);
-
-	/**
-	 * 按下到结束期间的监听。
-	 * 原生拖拽（图片、链接、选中的文本）与文本选择在这里阻止，而不是在按下时 preventDefault，以免影响焦点切换
-	 * @param add 绑定或解绑
-	 */
-	const toggleListeners = (add: boolean) => {
-		const fn = (add ? window.addEventListener : window.removeEventListener).bind(window);
-		fn('mousemove', handleMousemove);
-		fn('mouseup', handleMouseup);
-		fn('touchmove', handleTouchmove as EventListener, { capture: true, passive: false } as any);
-		fn('touchend', handleTouchend as EventListener, true);
-		fn('touchcancel', handleTouchcancel, true);
-		fn('contextmenu', handleContextmenu, true);
-		fn('dragstart', preventDefault, true);
-		fn('selectstart', preventDefault, true);
-		fn('scroll', handleScroll, { capture: true, passive: true } as any);
-		fn('keydown', handleKeydown as EventListener, true);
-		fn('blur', handleBlur);
-	};
-
-	/**
-	 * 结束拖拽
+	 * @param session 拖拽会话
 	 * @param commit 是否按当前落点提交（Esc、失焦、数据变化等取消时为 false）
 	 */
-	function finish(commit: boolean) {
-		const current = state;
-		if (!current) return;
-		state = null;
-		current.timer && clearTimeout(current.timer);
-		toggleListeners(false);
-		cancelUpdate();
-		const { block, session } = current;
-		if (!session) return;
-
+	const finish = (current: DragState, session: DragSession, commit: boolean) => {
+		const block = current.source;
 		const payload = store.drag.getPayload(block);
 		session.ghost.remove();
 		session.indicator.remove();
 		session.hover.timer && clearTimeout(session.hover.timer);
 		session.dimmed.forEach(item => (item.dragging = false));
-		store.states.dragBlock = null;
-		document.body.classList.remove(BODY_DRAGGING_CLASS);
-		suppressClick();
+		store.states.dragging = false;
 
 		const { drop } = session;
 		let dropped = false;
@@ -871,7 +622,7 @@ export const useBlockDrag = (options: Options) => {
 			dropped = true;
 		}
 		emit('block-dragend', { ...payload, dropped } satisfies TableBlockDragEndPayload);
-	}
+	};
 
 	/**
 	 * 按下位置对应的块：整行拖拽从单元格任意位置（交互元素除外），锚点拖拽从把手
@@ -889,83 +640,39 @@ export const useBlockDrag = (options: Options) => {
 		const handle = target.closest('.vc-table__drag-handle');
 		const byHandle = !!handle && cell.contains(handle);
 		if (!byHandle) {
-			if (!props.draggable) return null;
+			if (!store.drag.draggable.value[0]) return null;
 			const interactive = target.closest(INTERACTIVE_SELECTOR);
 			if (interactive && cell.contains(interactive)) return null;
 		}
 
 		const block = store.drag.getBlockByRowIndex(Number(cell.dataset.row));
 		if (!block || !store.drag.canDrag(block)) return null;
-		return { block, byHandle };
+		return { source: block, byHandle };
 	};
 
-	const start = (block: any, x: number, y: number, touch: boolean, byHandle: boolean): DragState => {
-		state = {
-			block,
-			startX: x,
-			startY: y,
-			clientX: x,
-			clientY: y,
-			touch,
-			byHandle,
-			timer: null,
-			session: null
-		};
-		toggleListeners(true);
-		return state;
-	};
-
-	/**
-	 * 鼠标按下：不阻止默认行为（焦点照常切换），文本选择与原生拖拽在按下期间由 toggleListeners 阻止
-	 * @param e 根节点上的 mousedown
-	 */
-	const handleMousedown = (e: MouseEvent) => {
-		if (e.button !== 0 || state) return;
-		const source = resolveSource(e.target as Nullable<HTMLElement>);
-		if (!source) return;
-		start(source.block, e.clientX, e.clientY, false, source.byHandle);
-	};
-
-	/**
-	 * 触摸按下（passive）：从把手发起时手势直接归拖拽所有（把手 touch-action: none）；整行需长按
-	 * @param e 根节点上的 touchstart
-	 */
-	const handleTouchstart = (e: TouchEvent) => {
-		const touch = e.touches?.[0];
-		if (state || !touch || e.touches.length !== 1) return;
-		const source = resolveSource(e.target as Nullable<HTMLElement>);
-		if (!source) return;
-		const current = start(source.block, touch.clientX, touch.clientY, true, source.byHandle);
-		if (source.byHandle) return;
-		current.timer = setTimeout(() => {
-			current.timer = null;
-			state === current && !activate(current) && finish(false);
-		}, LONG_PRESS);
-	};
+	const drag = usePointerDrag({ root: tableWrapper, resolve: resolveSource, activate, start, update, finish });
 
 	/**
 	 * 拖拽期间块列表重建（数据或列变化、树形表格展开 / 收起、懒加载完成）：
 	 * 被拖动的块仍在其中（块按行复用）时继续拖拽，重新计算子树范围与变暗的块，下一帧重新查询块节点与落点；否则取消
 	 */
 	watch(() => store.states.list, (list) => {
-		const current = state;
+		const current = drag.getState();
 		if (!current) return;
-		const { session } = current;
-		if (!toRaw(list).includes(toRaw(current.block))) {
-			finish(false);
+		if (!toRaw(list).includes(toRaw(current.source))) {
+			drag.cancel();
 			return;
 		}
+		const { session } = current;
 		if (!session) return;
 		updateDimmed(current, session);
 		session.blockEls = null;
 		session.drop = null;
-		scheduleUpdate();
+		drag.schedule();
 	});
 
-	onBeforeUnmount(() => finish(false));
-
 	return {
-		handleMousedown,
-		handleTouchstart
+		handleMousedown: drag.handleMousedown,
+		handleTouchstart: drag.handleTouchstart
 	};
 };

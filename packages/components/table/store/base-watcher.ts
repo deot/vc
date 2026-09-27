@@ -50,9 +50,9 @@ export type TableStates = {
 	hoverRowIndex: number | null;
 
 	/**
-	 * 拖拽排序中被拖动的块（raw），未在拖拽时为 null
+	 * 拖拽排序（行或列）进行中：拖拽中不做 hover 高亮、不弹出提示
 	 */
-	dragBlock: object | null;
+	dragging: boolean;
 
 	/**
 	 * Row
@@ -117,7 +117,7 @@ export class BaseWatcher {
 
 		hoverRowIndex: null,
 
-		dragBlock: null,
+		dragging: false,
 
 		currentRow: null,
 

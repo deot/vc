@@ -70,6 +70,8 @@ export const TableFooter = defineComponent({
 					// columns 为叶子列，恒为 is-leaf
 					class: [column.realAlign, column.labelClass, column.stickyClass, 'is-leaf', 'vc-table__td'],
 					style: column.stickyStyle,
+					// 与表体单元格一致，列拖拽的变暗样式据此匹配
+					attrs: { 'data-column': columnIndex },
 					render: () => (
 						<div class={['vc-table__cell', column.labelClass]}>
 							{ sums.value[columnIndex] }

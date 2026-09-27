@@ -3,7 +3,8 @@ import type { Nullable } from '@deot/helper-shared';
 import type { Store } from './store/store';
 import type { Props as TableProps } from './table-props';
 import type { TableColumnNode, TableColumnStates } from './table-column/table-column-node';
-import type { TableDropPlace, TableDropPosition } from './store/modules/drag';
+import type { TableColumnDropPosition, TableDropPlace, TableDropPosition } from './store/modules/drag';
+import type { TableColumnSyncItem } from './store/modules/column';
 
 /**
  * vc-table-column provide 的上下文（多级表头时子列消费）。
@@ -145,3 +146,55 @@ export type TableExpandChangePayload = {
 	// 当前可见行的最大层级（根为 0）
 	maxLevel: number;
 };
+
+/**
+ * 列拖拽：column-dragstart 的参数
+ */
+export interface TableColumnDragPayload {
+	// 被拖动的列；拖动分组表头时为分组本身
+	column: TableColumnStates;
+	// 列（分组时为它的第一个可见叶子）在可见叶子列中的下标，与 cell 事件的 columnIndex 一致
+	columnIndex: number;
+}
+
+/**
+ * 列拖拽：column-dragend 的参数
+ */
+export interface TableColumnDragEndPayload extends TableColumnDragPayload {
+	// 是否按新顺序放下（取消、落点不变、不允许放置时为 false）
+	dropped: boolean;
+}
+
+/**
+ * 列的位置：parent 为父分组，顶层为 null；index 为兄弟列（含隐藏列）中的下标
+ */
+export interface TableColumnDropPlace {
+	parent: Nullable<TableColumnStates>;
+	index: number;
+}
+
+/**
+ * 列拖拽：column-drop 的参数
+ */
+export interface TableColumnDropPayload {
+	column: TableColumnStates;
+	// 落点列：与被拖列同一父级
+	targetColumn: TableColumnStates;
+	position: TableColumnDropPosition;
+	// 移动前 / 后的位置，to.index 为移除被拖列之后的下标
+	from: TableColumnDropPlace;
+	to: TableColumnDropPlace;
+	// 新的扁平列表（与 update:columns 相同）
+	columns: TableColumnSyncItem[];
+}
+
+/**
+ * allowDrag 的参数：type 区分行（块）与列
+ */
+export type TableAllowDragPayload = ({ type: 'block' } & TableBlockDragPayload) | ({ type: 'column' } & TableColumnDragPayload);
+
+/**
+ * allowDrop 的参数：type 区分行（块）与列
+ */
+export type TableAllowDropPayload = ({ type: 'block' } & Pick<TableBlockDropPayload, 'rows' | 'targetRows' | 'position' | 'from' | 'to'>)
+	| ({ type: 'column' } & Omit<TableColumnDropPayload, 'columns'>);

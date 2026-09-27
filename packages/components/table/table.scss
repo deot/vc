@@ -26,6 +26,9 @@ $sizes: (
 	// 嵌套表格的根节点会重新声明默认值，因此单元格只取最近一层表格的值，不会继承外层的尺寸 / 边框。
 	// 边框、过渡仍只在对应修饰类下声明（不覆盖使用方的样式）；边框变量只含线宽与线型，颜色在单元格上求值
 	--vc-table-font-size: 13px;
+
+	// 拖拽排序中被拖动的块 / 列的透明度（列的变暗样式由脚本注入，同样引用它）
+	--vc-table-dragging-opacity: 0.4;
 	--vc-table-th-padding-y: 10px;
 	--vc-table-td-padding-y: #{$gap-v};
 	--vc-table-footer-min-height: 44px;
@@ -269,12 +272,23 @@ $sizes: (
 		}
 	}
 
+	// 列拖拽：可拖动的表头单元格 move 光标（列宽拖拽区由脚本改写为 col-resize），触摸长按时不弹出系统菜单
+	.vc-table__th.is-column-draggable {
+		cursor: move;
+		-webkit-touch-callout: none;
+	}
+
+	// 列宽拖拽区（表头右缘，由脚本标记）：优先于单元格自身的光标
+	.vc-table__th.is-resize-zone {
+		cursor: col-resize;
+	}
+
 	// 被拖动的块（整体透明，固定列不会透出下方内容）及其展开行；限定块根节点，不影响单元格内其它组件的 is-dragging
 	.vc-table__body-wrapper {
 		.vc-table__tr.is-dragging,
 		.vc-table__tr-group.is-dragging,
 		.vc-table__tr.is-dragging + .vc-table__tr.is-expanded {
-			opacity: 0.4;
+			opacity: var(--vc-table-dragging-opacity);
 		}
 	}
 
@@ -291,6 +305,13 @@ $sizes: (
 
 		@include when(disabled) {
 			background-color: $color-error;
+		}
+
+		// 列拖拽：竖线，高度由脚本写入
+		@include when(vertical) {
+			width: 2px;
+			margin-top: 0;
+			margin-left: -1px;
 		}
 
 		@include when(inner) {
@@ -319,6 +340,16 @@ $sizes: (
 		// 位于 inner 目标行之上时淡出：跟随行与目标行等大且重合，叠在一起两者都看不清；被拖的行由原位置的变暗提示
 		@include when(over-inner) {
 			opacity: 0;
+		}
+
+		// 列拖拽：表头单元格的克隆，随指针横向移动
+		@include when(column) {
+			z-index: 12;
+			max-height: none;
+
+			.vc-table__thead {
+				height: 100%;
+			}
 		}
 	}
 
@@ -747,8 +778,8 @@ $sizes: (
 }
 
 // 拖拽排序中挂在 body 上：全局 move 光标、禁止选中文本
-.vc-table-block-dragging,
-.vc-table-block-dragging * {
+.vc-table-dragging,
+.vc-table-dragging * {
 	cursor: move !important;
 	user-select: none !important;
 }

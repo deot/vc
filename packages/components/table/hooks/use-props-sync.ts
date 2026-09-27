@@ -102,7 +102,7 @@ export const usePropsSync = (props: Props, store: Store, options: Options) => {
 
 	// v-model:columns 外部写回：按 id 设置 hidden + 按 id 重排
 	// deep 以便外部仅修改某项 hidden 字段（数组引用不变）也能触发
-	// 防回环与空值由 store.column.applyExternal 内部处理：空数组也须交给它，回流标志才会复位
+	// 回流（与当前列一致）与空值由 store.column.applyExternal 内部处理
 	watch(
 		() => props.columns,
 		(v) => {

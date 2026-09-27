@@ -4522,7 +4522,7 @@ describe('Table utils', () => {
 });
 
 describe('v-model:columns & hidden', () => {
-	it('write-back of an emitted empty list resets the echo guard', async () => {
+	it('write-back of an emitted list (incl. empty) is an echo and changes nothing', async () => {
 		const tableRef = ref<any>();
 		const columns = ref<any[]>([]);
 		const visible = ref(true);
@@ -4539,15 +4539,15 @@ describe('v-model:columns & hidden', () => {
 		await flush();
 		const vm = tableRef.value!;
 		expect(columns.value).toHaveLength(1);
-		expect(vm.store.column._sync.suppressWatch).toBe(false);
+		expect(vm.store.column.getSyncItems()).toEqual(columns.value);
 
-		// 列全部移除：emit [] 并被写回，回流标志应复位
+		// 列全部移除：emit [] 并被写回
 		visible.value = false;
 		await flush();
 		await sleep(60);
 		await flush();
 		expect(columns.value).toEqual([]);
-		expect(vm.store.column._sync.suppressWatch).toBe(false);
+		expect(vm.store.column.getSyncItems()).toEqual([]);
 		wrapper.unmount();
 	});
 
@@ -4848,11 +4848,8 @@ describe('v-model:columns & hidden', () => {
 			buildColumnNode({ id: 'c3', prop: 'c', label: 'C' })
 		];
 		store.updateColumns();
-		// 单测直接调用 applyExternalColumns（无父组件消费 emit 回流），
-		// 每次生效的 apply 都会经 updateColumns 重新置位防回环，
-		// 故在每次期望生效的调用前手动清掉置位。
+		// 单测直接调用 applyExternalColumns（无父组件消费 emit 回流）
 		const apply = (v: any) => {
-			store.column._sync.suppressWatch = false;
 			store.column.applyExternal(v);
 		};
 

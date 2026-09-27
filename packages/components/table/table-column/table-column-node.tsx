@@ -148,6 +148,8 @@ export class TableColumnNode {
 
 	table!: TableProvide;
 	parentNode: Nullable<TableColumnNode> = null;
+	// 克隆节点（cloneNode）对应的原节点；原节点为 null
+	origin: Nullable<TableColumnNode> = null;
 	instance!: ComponentInternalInstance;
 
 	constructor(options: Options) {
@@ -340,6 +342,7 @@ export class TableColumnNode {
 			states: source
 		});
 		cloned.childNodes.push(...childNodes);
+		cloned.origin = this.origin ?? this;
 		return cloned;
 	}
 }

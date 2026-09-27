@@ -286,17 +286,17 @@ describe('table/block-drag', () => {
 		expect(indicator.style.display).toBe('');
 		// 插入线在第 3 行之后
 		expect(indicator.style.top).toBe(`${BODY_TOP + 4 * ROW}px`);
-		expect(document.body.classList.contains('vc-table-block-dragging')).toBe(true);
+		expect(document.body.classList.contains('vc-table-dragging')).toBe(true);
 		expect(wrapper.find('.vc-table__body-wrapper [data-row-start="1"]').classes()).toContain('is-dragging');
-		expect(tableRef.value.store.states.dragBlock).toBeTruthy();
+		expect(tableRef.value.store.states.dragging).toBe(true);
 
 		release();
 		await flush();
 		expect(root.querySelector('.vc-table__drag-ghost')).toBeNull();
 		expect(root.querySelector('.vc-table__drop-indicator')).toBeNull();
-		expect(document.body.classList.contains('vc-table-block-dragging')).toBe(false);
+		expect(document.body.classList.contains('vc-table-dragging')).toBe(false);
 		expect(wrapper.findAll('.vc-table__body-wrapper .is-dragging').length).toBe(0);
-		expect(tableRef.value.store.states.dragBlock).toBeNull();
+		expect(tableRef.value.store.states.dragging).toBe(false);
 		wrapper.unmount();
 	});
 
@@ -377,15 +377,49 @@ describe('table/block-drag', () => {
 		w2.unmount();
 	});
 
+	it('draggable 数组 [行, 列]：[true, false] 同 true；[false, true] 不开启整行拖拽，把手列照常', async () => {
+		const onStart = vi.fn();
+		const draggable = ref<any>([true, false]);
+		const withHandle = ref(false);
+		const wrapper = mount(() => (
+			<Table data={buildData(3)} primaryKey="id" draggable={draggable.value} onBlockDragstart={onStart}>
+				{withHandle.value ? <TableColumn type="drag" /> : null}
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.findAll('.vc-table__body-wrapper .vc-table__tr.is-draggable').length).toBe(3);
+
+		// 只开启列拖拽：整行不再可拖
+		draggable.value = [false, true];
+		await flush();
+		expect(wrapper.findAll('.vc-table__body-wrapper .is-draggable').length).toBe(0);
+		await startDrag(cellOf(wrapper, 0, 0).element, 0, rowY(2) + 10);
+		release();
+		await flush();
+		expect(onStart).not.toHaveBeenCalled();
+
+		// 把手列不受第一项影响
+		withHandle.value = true;
+		await flush();
+		const handle = wrapper.find('.vc-table__body-wrapper .vc-table__drag-handle');
+		await startDrag(handle.element, 0, rowY(2) + 10);
+		release();
+		await flush();
+		expect(onStart).toHaveBeenCalledTimes(1);
+		wrapper.unmount();
+	});
+
 	it('allowDrag / allowDrop：不可拖动的块把手置灰；不可放置时插入线禁用且不写回', async () => {
 		const onUpdate = vi.fn();
 		const onEnd = vi.fn();
 		const allowDrop = vi.fn(({ targetRows }: any) => targetRows[0].id !== 'id__3');
+		const allowDrag = vi.fn(({ rows }: any) => rows[0].id !== 'id__1');
 		const wrapper = mount(() => (
 			<Table
 				data={buildData(4)}
 				primaryKey="id"
-				allowDrag={({ rows }: any) => rows[0].id !== 'id__1'}
+				allowDrag={allowDrag}
 				allowDrop={allowDrop}
 				onBlockDragend={onEnd}
 				{...{ 'onUpdate:data': onUpdate }}
@@ -398,6 +432,8 @@ describe('table/block-drag', () => {
 
 		const handles = wrapper.findAll('.vc-table__body-wrapper .vc-table__drag-handle');
 		expect(handles.map(item => item.classes('is-disabled'))).toEqual([false, true, false, false]);
+		// type 区分行（块）与列
+		expect(allowDrag).toHaveBeenCalledWith({ type: 'block', rows: [expect.objectContaining({ id: 'id__1' })], rowIndex: 1 });
 
 		// 不可拖动的块
 		await dragTo(handles[1].element, 1, rowY(3) + 10);
@@ -408,6 +444,7 @@ describe('table/block-drag', () => {
 		const indicator = wrapper.element.querySelector('.vc-table__drop-indicator') as HTMLElement;
 		expect(indicator.classList.contains('is-disabled')).toBe(true);
 		expect(allowDrop).toHaveBeenLastCalledWith({
+			type: 'block',
 			rows: [expect.objectContaining({ id: 'id__0' })],
 			targetRows: [expect.objectContaining({ id: 'id__3' })],
 			position: 'after',
@@ -469,7 +506,7 @@ describe('table/block-drag', () => {
 		await flush();
 		expect(onEnd).toHaveBeenCalledWith(expect.objectContaining({ dropped: false }));
 		expect(wrapper.element.querySelector('.vc-table__drag-ghost')).toBeNull();
-		expect(tableRef.value.store.states.dragBlock).toBeNull();
+		expect(tableRef.value.store.states.dragging).toBe(false);
 		wrapper.unmount();
 	});
 
@@ -672,6 +709,7 @@ describe('table/block-drag', () => {
 			expect(indicator.style.height).toBe(`${ROW}px`);
 			expect(wrapper.element.querySelector('.vc-table__drag-ghost')!.classList.contains('is-over-inner')).toBe(true);
 			expect(allowDrop).toHaveBeenLastCalledWith({
+				type: 'block',
 				rows: [expect.objectContaining({ id: 2 })],
 				targetRows: [expect.objectContaining({ id: 11 })],
 				position: 'inner',
