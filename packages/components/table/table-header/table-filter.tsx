@@ -8,6 +8,7 @@ import { Button } from '../../button/index';
 import { Checkbox, CheckboxGroup } from '../../checkbox/index';
 import { Dropdown } from '../../dropdown/index';
 import { Icon } from '../../icon/index';
+import { useLocale } from '../../locale';
 
 export type TableFilterOption = {
 	label: string | number;
@@ -69,6 +70,7 @@ export const TableFilter = defineComponent({
 	},
 	emits: ['update:modelValue', 'change'],
 	setup(props, { emit }) {
+		const { t } = useLocale();
 		const instance = getCurrentInstance()!;
 		const isVisible = ref(false);
 		const multiple = computed(() => props.max > 1);
@@ -182,13 +184,13 @@ export const TableFilter = defineComponent({
 					</CheckboxGroup>
 					<div class="vc-table-filter__footer">
 						<Button onClick={handleReset}>
-							重置
+							{ t('vc.Table.filterReset') }
 						</Button>
 						<Button
 							type="primary"
 							onClick={handleConfirm}
 						>
-							确认
+							{ t('vc.Table.filterConfirm') }
 						</Button>
 					</div>
 				</div>
@@ -202,7 +204,7 @@ export const TableFilter = defineComponent({
 						class="vc-table-filter__item"
 						onClick={handleReset}
 					>
-						全部
+						{ t('vc.Table.filterAll') }
 					</div>
 					{
 						props.data.map(item => (

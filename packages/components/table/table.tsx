@@ -14,6 +14,7 @@ import { TableBody } from './table-body';
 import { TableHeader } from './table-header';
 import { TableFooter } from './table-footer';
 import { Affix } from '../affix';
+import { useLocale } from '../locale';
 
 import { props as tableProps } from './table-props';
 import { useLazyTail } from './hooks/use-lazy-tail';
@@ -56,6 +57,7 @@ export const Table = defineComponent({
 		'block-dragend'
 	],
 	setup(props, { slots, expose, emit }) {
+		const { t } = useLocale();
 		const instance = getCurrentInstance()!;
 
 		const store = new Store({ table: instance });
@@ -513,7 +515,7 @@ export const Table = defineComponent({
 												class="vc-table__footer-wrapper"
 											>
 												<TableFooter
-													sum-text={props.sumText || '合计'}
+													sum-text={props.sumText ?? t('vc.Table.sumText')}
 													get-summary={props.getSummary}
 													style={bodyWidthStyle.value}
 												/>
@@ -532,7 +534,7 @@ export const Table = defineComponent({
 										? slots.empty()
 										: (
 												<span class="vc-table__empty-text">
-													{ props.emptyText || '暂无数据' }
+													{ props.emptyText ?? t('vc.Table.emptyText') }
 												</span>
 											)
 								}

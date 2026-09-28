@@ -1,41 +1,19 @@
-## 表格（Table)
+## 表格（Table）
 展示行列数据
 
 ### 何时使用
 - 当有大量结构化的数据需要展现时。
 - 当需要对数据进行排序、筛选、分页、自定义操作等复杂行为时。
 
-### 避坑
-> flex布局 + Tabs时要额外注意，否则宽度会被无限撑开
-```vue
-<template>
-	<div style="display: flex;">
-		<div>Flex布局时，要增加`flex: 1; overflow-x: auto;`</div>
-		<div style="flex: 1; overflow-x: auto;">
-			<Tabs>
-				<TabsPane
-					v-for="item in 10"
-					:key="item"
-					:label="`标签${item}`"
-					:name="item"
-				>
-					<Table>
-						<!-- any -->
-					</Table>
-				</TabsPane>
-			</Tabs>
-		</div>
-	</div>
-</template>
-```
-
-### 基本使用
+### 基础用法
 基础的表格展示用法。
-当 `Table` 元素中注入 `dataSource` 对象数组后，在 `TableColumn` 中用 `prop` 属性来对应对象中的键名即可填入数据，用 `label` 属性来定义表格的列名。可以使用 `width`属性来定义列宽 `min-width` 来设置对应列的最小宽度。
+通过 `Table` 的 `data` 传入对象数组，在 `TableColumn` 中用 `prop` 对应对象中的字段，用 `label` 定义列名。使用 `width` 定义固定列宽，或使用 `min-width` 分配剩余宽度。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
+	<p>当前点击：{{ selectedName }}</p>
 	<Table :data="tableData1" @row-click="handleClick">
 		<TableColumn
 			prop="date"
@@ -81,9 +59,10 @@ const tableData1 = ref([
 ]);
 
 // row：点击的行；rowIndex：行号；column：点击的列
-const handleClick = ({ row, rowIndex, column }) => {
-
+const handleClick = ({ row }) => {
+	selectedName.value = row.name;
 };
+const selectedName = ref('尚未点击');
 
 </script>
 ```
@@ -92,7 +71,8 @@ const handleClick = ({ row, rowIndex, column }) => {
 ### 带斑马纹表格
 设置属性 `stripe` ，表格会间隔显示不同颜色，用于区分不同行数据。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<Table :data="tableData2" stripe >
@@ -144,7 +124,8 @@ const tableData2 = ref([
 ### 带边框表格
 默认情况下，`Table` 组件是不具有竖直方向的边框的，如果需要，可以使用`border`属性，
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<Table :data="tableData3" border >
@@ -196,7 +177,8 @@ const tableData3 = ref([
 ### 尺寸
 通过 `size` 调整字号与单元格的上下内边距，可选 `large`、`medium`、`small`、`mini`，默认为 `medium`。首末列的左右内边距不受影响；`medium` 的合计行最小高度为 44px，其余尺寸的合计行高度由内边距决定。嵌套在展开行等位置的表格只按自身的 `size`、`border` 等显示，不受外层表格影响。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<Table :data="tableDataSize" size="small" border show-summary>
@@ -231,9 +213,10 @@ const tableDataSize = ref([
 完整示例（切换各尺寸对比）：[尺寸](./examples/size.vue)
 
 ### 带状态表格
-可将表格内容 `highlight` 显示，方便区分「成功、信息、警告、危险」等内容。添加 `rowClass` 属性返回对应行的类名。
+通过 `rowClass` 给普通行添加状态类，并在示例的局部样式中定义视觉效果。`highlight` 用于当前行高亮，与业务状态配色无关。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<Table :data="tableData4" :row-class="tableRowClass">
@@ -287,11 +270,11 @@ const tableRowClass = ({ row, rowIndex }) => {
 	}
 };
 </script>
-<style>
-.vc-table .warning {
+<style scoped>
+:deep(.vc-table .warning) {
 	background: oldlace!important;
 }
-.vc-table .success {
+:deep(.vc-table .success) {
 	background: #f0f9eb!important;
 }
 </style>
@@ -301,7 +284,8 @@ const tableRowClass = ({ row, rowIndex }) => {
 ### 固定表头
 纵向内容过多时，可选择固定表头。只要在 `Table` 元素中定义了 `height` 属性，即可实现固定表头的表格，而不需要额外的代码。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<Table :data="tableData5" border stripe height="250">
@@ -361,7 +345,8 @@ const tableData5 = ref([{
 ### 固定列
 横向内容过多时，可选择固定列。固定列需要使用 `fixed` 属性，它接受 `boolean` 值或者`left`、`right`，表示左边固定还是右边固定。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<Table :data="tableData5" border stripe height="250">
@@ -450,7 +435,8 @@ const tableData5 = ref([{
 ### 多选
 选择多行数据时使用 `Checkbox`。非常简单: 手动添加一个  `TableColumn` ，设 `type` 属性为 `selection` 即可。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<Table :data="tableData" border stripe>
@@ -505,15 +491,15 @@ const tableData = ref([
 
 ### 排序
 
-对表格进行排序，可快速查找或对比数据。
+Table 只维护排序交互，数据排序由调用方处理。下面通过 `v-model:sort` 和计算属性完成本地排序，取消排序后恢复原顺序。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<Table
-		:data="dataSource"
+		:data="sortedData"
 		v-model:sort="sort"
-		@sort-change="handleSort"
 	>
 		<TableColumn
 			prop="date"
@@ -535,7 +521,7 @@ const tableData = ref([
 	</Table>
 </template>
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
 const sort = ref({ prop: 'date', order: 'descending' });
@@ -562,7 +548,12 @@ const tableData = ref([
 	}
 ]);
 
-const handleSort = () => {};
+const sortedData = computed(() => {
+	const { prop, order } = sort.value;
+	if (!prop || !order) return tableData.value;
+	const direction = order === 'ascending' ? 1 : -1;
+	return [...tableData.value].sort((a, b) => String(a[prop]).localeCompare(String(b[prop])) * direction);
+});
 </script>
 ```
 :::
@@ -576,7 +567,8 @@ const handleSort = () => {};
 - 多级表头下逐层重排：列表中是叶子列，分组按其子列中最靠前的一个排序，子列只在所属分组内调整。
 - 写回与模板一致的顺序（或只修改 `hidden`、不调整顺序）时，恢复跟随模板。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<div>
@@ -588,7 +580,7 @@ const handleSort = () => {};
 			<input
 				type="checkbox"
 				:checked="!col.hidden"
-				@change="toggle(col)"
+				@change="handleToggle(col)"
 			>
 			{{ col.label || col.type }}
 		</label>
@@ -636,7 +628,7 @@ const tableData = ref([
 	}
 ]);
 
-const toggle = (col) => {
+const handleToggle = (col) => {
 	columns.value = columns.value.map(item => (
 		item.id === col.id ? { ...item, hidden: !item.hidden } : item
 	));
@@ -656,7 +648,8 @@ const toggle = (col) => {
 - 写了 `modelValue`（即使值为 `undefined`）即为受控：需在 `onUpdate:modelValue` 或 `onChange` 中写回才生效，不写回（如校验不通过）则保持原值。
 - 不写 `modelValue` 时由组件自己记录确认结果，只用 `onChange` 即可；此时多选收到数组，单选收到单个值。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<Table :data="filteredData">
@@ -723,7 +716,39 @@ const filteredData = computed(() => {
 ```
 :::
 
-完整示例（单选受控 / 多选 `max: 2` / 只用 `onChange`）：[筛选](./examples/filter.vue)
+#### 单选筛选
+
+单选点击选项即生效，“全部”清空条件。此例只传 `onChange`，由筛选器保存当前选项，外部据此过滤数据。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<Table :data="filteredRows">
+		<TableColumn prop="name" label="任务" />
+		<TableColumn prop="status" label="状态" :filter-options="{ data: options, onChange: handleFilter }" />
+	</Table>
+</template>
+<script setup>
+import { ref, computed } from 'vue';
+import { Table, TableColumn } from '@deot/vc';
+
+const status = ref();
+const options = [
+	{ label: '进行中', value: '进行中' },
+	{ label: '已完成', value: '已完成' }
+];
+const rows = [
+	{ name: '编写文档', status: '进行中' },
+	{ name: '核对接口', status: '已完成' }
+];
+const filteredRows = computed(() => status.value ? rows.filter(row => row.status === status.value) : rows);
+const handleFilter = (value) => { status.value = value; };
+</script>
+```
+:::
+
+进阶示例（单选受控 / 多选 `max: 2` / 只用 `onChange`）：[筛选](./examples/filter.vue)
 
 ### 树形数据与懒加载
 支持树类型的数据的显示。当 `row` 中包含 `children` 字段时，被视为树形数据。渲染树形数据时，必须要指定 `primary-key`，且其值在整棵树（含懒加载得到的子行）中唯一；重复出现的值只有首次出现的行可展开。支持子节点数据异步加载：设置 `Table` 的 `lazy-tree` 属性为 `true` 与加载函数 `load-expand`，并通过 `row` 中的 `hasChildren` 字段标记可加载子节点的行（仅 `lazy-tree` 时生效）。`children` 与 `hasChildren` 都可以通过 `tree-map` 配置。
@@ -737,7 +762,8 @@ const filteredData = computed(() => {
 - `load-expand(row, treeNode)` 可以返回数组或 `Promise`，`treeNode.level` 为该节点的层级；加载失败时节点恢复为待加载。展开尚未加载的节点（点击或 `toggleRowExpansion`）会先触发加载。
 - 嵌套的 `children` 可以原地增删（如 `row.children.splice(index, 1)`），表格会同步更新，被移除的行同时移出选中项；若之后还要增删懒加载得到的子行，`load-expand` 请返回响应式数组（如 `reactive([...])`）。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<Table
@@ -813,6 +839,86 @@ const handleExpandChange = ({ maxLevel }) => {
 ```
 :::
 
+#### 编辑和删除树节点
+
+下面同时包含已有子节点与懒加载子节点。编辑直接更新响应式行对象；删除从该行所属数组移除。懒加载数组由调用方保存，便于后续增删。切换渲染模式后仍可继续操作。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="tree-demo">
+		<div class="toolbar">
+			<label>渲染模式：
+				<select v-model="mode">
+					<option value="normal">普通</option>
+					<option value="height">固定高度虚拟化</option>
+					<option value="virtualized">外部视口虚拟化</option>
+				</select>
+			</label>
+			<span>展开“待加载项目”后也可编辑、删除子节点。</span>
+		</div>
+		<Table
+			:data="rows"
+			:height="mode === 'height' ? 280 : undefined"
+			:virtualized="mode === 'virtualized'"
+			:load-expand="loadExpand"
+			primary-key="id"
+			lazy-tree
+			border
+		>
+			<TableColumn prop="name" label="项目" min-width="200" />
+			<TableColumn label="编辑名称" min-width="180">
+				<template #default="{ row }">
+					<input v-model="row.name" :aria-label="`编辑项目 ${row.id}`">
+				</template>
+			</TableColumn>
+			<TableColumn label="操作" width="90">
+				<template #default="{ row }">
+					<Button type="text" @click="handleDelete(row)">删除</Button>
+				</template>
+			</TableColumn>
+		</Table>
+	</div>
+</template>
+<script setup>
+import { ref, reactive } from 'vue';
+import { Button, Table, TableColumn } from '@deot/vc';
+
+const mode = ref('normal');
+const rows = ref([
+	{ id: 'project', name: '已有项目', children: [{ id: 'task', name: '已有任务' }] },
+	{ id: 'lazy', name: '待加载项目', hasChildren: true }
+]);
+const loaded = new Map();
+const loadExpand = async (row) => {
+	await new Promise(resolve => setTimeout(resolve, 400));
+	const children = reactive([{ id: `${row.id}-child`, name: '异步任务' }]);
+	loaded.set(row.id, children);
+	return children;
+};
+const removeRow = (list, row) => {
+	const index = list.findIndex(item => item.id === row.id);
+	if (index >= 0) {
+		list.splice(index, 1);
+		return true;
+	}
+	return list.some(item => item.children && removeRow(item.children, row));
+};
+const handleDelete = (row) => {
+	if (removeRow(rows.value, row)) return;
+	for (const children of loaded.values()) {
+		if (removeRow(children, row)) break;
+	}
+};
+</script>
+<style scoped>
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
+input { width: 100%; box-sizing: border-box; }
+</style>
+```
+:::
+
 ### 展开行
 当行内容过多并且不想显示横向滚动条时，可以使用展开行功能。添加 `type="expand"` 的 `TableColumn`，其默认插槽即为展开行的内容，参数为 `{ row, rowIndex, store }`。
 
@@ -823,7 +929,8 @@ const handleExpandChange = ({ maxLevel }) => {
 - 展开内容的高度可以任意变化，虚拟化表格会自动重新测量。
 - 展开行仅对单行渲染块生效：被 `get-span` 纵向合并在一起的行不渲染展开内容。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<Table
@@ -876,10 +983,78 @@ const tableData = ref([
 ```
 :::
 
-完整示例：
+#### 编辑展开内容与切换渲染模式
 
-- [树形数据：嵌套 / 懒加载 / 删除 / 编辑 / 渲染模式切换](./examples/tree.vue)
-- [展开行：删除 / 编辑 / 渲染模式切换](./examples/expand.vue)
+展开区使用普通表单编辑行对象，表格名称同步更新。增加备注会改变展开区高度，可在三种模式下观察布局；删除行直接更新 `data`。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div>
+		<div class="toolbar">
+			<label>渲染模式：
+				<select v-model="mode">
+					<option value="normal">普通</option>
+					<option value="height">固定高度虚拟化</option>
+					<option value="virtualized">外部视口虚拟化</option>
+				</select>
+			</label>
+			<Button :disabled="!rows.length" @click="handleToggle">展开 / 收起首行</Button>
+		</div>
+		<Table
+			ref="tableRef"
+			:data="rows"
+			:height="mode === 'height' ? 300 : undefined"
+			:virtualized="mode === 'virtualized'"
+			:expand-row-value="[1]"
+			primary-key="id"
+			border
+		>
+			<TableColumn type="expand">
+				<template #default="{ row }">
+					<div class="detail">
+						<label>名称：<input v-model="row.name"></label>
+						<p v-for="(remark, index) in row.remarks" :key="index">{{ remark }}</p>
+						<Button @click="handleAddRemark(row)">增加备注</Button>
+					</div>
+				</template>
+			</TableColumn>
+			<TableColumn prop="name" label="任务" min-width="180" />
+			<TableColumn label="操作" width="90">
+				<template #default="{ row }">
+					<Button type="text" @click="handleDelete(row)">删除</Button>
+				</template>
+			</TableColumn>
+		</Table>
+	</div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Button, Table, TableColumn } from '@deot/vc';
+
+const mode = ref('normal');
+const tableRef = ref();
+const rows = ref([
+	{ id: 1, name: '确认需求', remarks: ['展开内容可编辑，行高随内容变化。'] },
+	{ id: 2, name: '准备交付', remarks: ['点击左侧箭头查看详情。'] }
+]);
+const handleToggle = () => tableRef.value.toggleRowExpansion(rows.value[0]);
+const handleAddRemark = row => row.remarks.push(`新增备注 ${row.remarks.length + 1}`);
+const handleDelete = (row) => {
+	rows.value = rows.value.filter(item => item.id !== row.id);
+};
+</script>
+<style scoped>
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
+.detail { padding: 12px 0; }
+.detail p { margin: 8px 0; }
+input { max-width: 100%; box-sizing: border-box; }
+</style>
+```
+:::
+
+进阶示例：[树形数据](./examples/tree.vue)、[展开行](./examples/expand.vue)。
 
 ### 拖拽排序
 
@@ -906,7 +1081,8 @@ const tableData = ref([
 - 只传 `:data` 且不处理事件时，松手后行会回到原位。
 - 写回拖拽得到的新顺序（包括它的副本）时，选中项、当前行、展开状态都会保留；其它情况下传入新数组，仍按原有规则清空选中项。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<div style="margin-bottom: 8px;">{{ message }}</div>
@@ -971,7 +1147,8 @@ const handleDrop = ({ rows, from, to }) => {
 - 行对象的引用不变，写回 `update:data` 发出的数组（包括异步写回）时选中项、当前行、展开状态都会保留。数据已原地修改，写回它的副本与普通的新数组无法区分，按新数据处理（清空选中项）；`expand-selectable` 为 `false` 时，被移成子行的已选中行会移出选中项。
 - 需要限制落点时使用 `allow-drop`，例如只允许同级：`({ from, to }) => from.parent === to.parent`。[Tree](../tree) 的 `allow-drop` 同样带 `position` / `from` / `to`（`parent` 为 TreeNode），这类判断两个组件通用。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<div style="margin-bottom: 8px;">{{ message }}</div>
@@ -1034,7 +1211,8 @@ const handleDrop = ({ rows, from, to }) => {
 - `allow-drag` / `allow-drop` 与行拖拽共用，参数中的 `type` 区分行（`'block'`）与列（`'column'`）；行、列同时开启时请按 `type` 分别处理。
 - 树形表格的缩进与展开图标显示在第一个普通列；把别的列拖到它之前后，缩进与展开图标会移到新的第一个普通列。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<div style="margin-bottom: 8px;">顺序：{{ columns.map(item => item.label || item.type).join(' / ') }}</div>
@@ -1086,20 +1264,39 @@ const tableData = ref([
 
 当 Table 位于页面或已有 Scroller 的正常文档流中，又需要渲染大量数据时，可以在不设置 `height`/`max-height` 的前提下启用 `virtualized`：
 
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<section>其他头部内容</section>
-	<Table
-		virtualized
-		primary-key="id"
-		:data="tableData"
-	>
-		<TableColumn prop="name" label="名称" />
-		<TableColumn prop="description" label="说明" />
-	</Table>
-	<section>其他尾部内容</section>
+	<div class="viewport">
+		<p>外部容器的前置内容：向下滚动查看 300 行数据。</p>
+		<Table virtualized lazy-tail primary-key="id" :data="tableData" @load-change="handleLoadChange">
+			<TableColumn prop="name" label="名称" width="150" />
+			<TableColumn prop="description" label="说明" min-width="200" />
+			<template #append><p>所有行已构建。</p></template>
+		</Table>
+		<p v-if="isEnd">外部容器的后置内容</p>
+	</div>
 </template>
+<script setup>
+import { ref } from 'vue';
+import { Table, TableColumn } from '@deot/vc';
+
+const isEnd = ref(false);
+const tableData = Array.from({ length: 300 }, (_, index) => ({
+	id: index + 1,
+	name: `任务 ${index + 1}`,
+	description: 'Table 未设置高度，滚动由外层容器承载。'
+}));
+const handleLoadChange = (state) => {
+	isEnd.value = state.isEnd;
+};
+</script>
+<style scoped>
+.viewport { height: 320px; overflow: auto; }
+</style>
 ```
+:::
 
 纵向主轴由最近的外部 VC Scroller/原生滚动祖先承载，找不到时使用 Window；Table 内部仍承载横向滚动，并继续同步表头、表体、合计行和固定列。
 
@@ -1131,6 +1328,33 @@ Window / Scroller
 
 #### Affix 兼容性
 
+下面在预览窗口内滚动页面，表头吸顶，合计行和横向滚动条吸底。Table 本身未设置 `height`，因此吸附与外部视口虚拟化可以同时生效。
+
+:::playground
+<!-- <config lang="json5">{ viewport: [800, 360], previewInset: 16 }</config> -->
+```vue
+<template>
+	<p>向下滚动：表头与合计行保持可见。</p>
+	<Table :data="rows" virtualized affix show-summary primary-key="id" border>
+		<TableColumn prop="name" label="项目" width="180" fixed="left" />
+		<TableColumn prop="description" label="说明" min-width="500" />
+		<TableColumn prop="amount" label="金额" width="140" />
+	</Table>
+	<p>表格结束，吸附范围也随之结束。</p>
+</template>
+<script setup>
+import { Table, TableColumn } from '@deot/vc';
+
+const rows = Array.from({ length: 60 }, (_, index) => ({
+	id: index + 1,
+	name: `项目 ${index + 1}`,
+	description: '滚动页面查看吸附；横向滚动时左侧项目列保持固定。',
+	amount: index + 1
+}));
+</script>
+```
+:::
+
 表头、底部 dock 的吸附直接复用 Affix 组件（不改用 CSS Sticky）：
 
 - 底部 dock 由横向滚动条和合计行组成，`affix` 的 bottom 项作用于整个 dock。流式高度下横向滚动条挂在 dock 顶部（表体底部 / 合计行顶部），宽度与表体一致；没有合计行时，dock 里只有横向滚动条。
@@ -1142,7 +1366,7 @@ Window / Scroller
 
 流式高度下横向滚动条与合计行的吸底行为：
 
-| show-summary | affix bottom | 结果 |
+| showSummary | affix bottom | 结果 |
 | --- | --- | --- |
 | 否 | 开 | 只有横向滚动条吸底 |
 | 否 | 关 | 横向滚动条在表体底部，不吸底 |
@@ -1187,57 +1411,190 @@ const updateOffsets = () => {
 - [Window 前置内容—虚拟 Table—后置内容](./examples/virtualized-window.vue)
 - [VC Scroller 中的虚拟 Table](./examples/virtualized-scroller.vue)
 
+### 合计与自定义统计
+
+`show-summary` 默认对第一列之后的数字求和。`get-summary` 返回与叶子列顺序对应的数组，可以自定义每一列的统计内容；树形表格只统计根行。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<label><input v-model="isCustom" type="checkbox"> 使用自定义合计</label>
+	<Table :data="rows" :get-summary="isCustom ? getSummary : undefined" show-summary border>
+		<TableColumn prop="name" label="商品" />
+		<TableColumn prop="quantity" label="数量" />
+		<TableColumn prop="amount" label="金额" />
+	</Table>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Table, TableColumn } from '@deot/vc';
+
+const isCustom = ref(false);
+const rows = [
+	{ name: '笔记本', quantity: 3, amount: 36 },
+	{ name: '文件夹', quantity: 2, amount: 18 }
+];
+const getSummary = ({ data }) => [
+	`共 ${data.length} 种商品`,
+	data.reduce((sum, row) => sum + row.quantity, 0),
+	`¥ ${data.reduce((sum, row) => sum + row.amount, 0).toFixed(2)}`
+];
+</script>
+<style scoped>
+label { display: block; margin-bottom: 12px; }
+</style>
+```
+:::
+
+### 合并单元格
+
+`get-span` 返回 `[rowspan, colspan]` 或 `{ rowspan, colspan }`。此例将相邻两行的分组列合并；设置 `height` 后，合并块作为整体参与虚拟滚动。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<Table :data="rows" :get-span="getSpan" :height="280" primary-key="id" border>
+		<TableColumn prop="group" label="分组" width="120" fixed="left" />
+		<TableColumn prop="name" label="任务" min-width="180" />
+		<TableColumn prop="status" label="状态" width="120" />
+	</Table>
+</template>
+<script setup>
+import { Table, TableColumn } from '@deot/vc';
+
+const rows = Array.from({ length: 40 }, (_, index) => ({
+	id: index + 1,
+	group: `分组 ${Math.floor(index / 2) + 1}`,
+	name: `任务 ${index + 1}`,
+	status: index % 2 ? '进行中' : '已完成'
+}));
+const getSpan = ({ rowIndex, columnIndex }) => {
+	if (columnIndex === 0) return rowIndex % 2 === 0 ? [2, 1] : [0, 0];
+	return [1, 1];
+};
+</script>
+```
+:::
+
+### 多级表头与文本截断
+
+嵌套 `TableColumn` 形成分组表头。`header-line` 控制默认标题行数，`line` 控制默认单元格内容行数，截断后悬停可查看完整文本。自定义插槽和 `formatter` 的排版由调用方负责。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<Table :data="rows" border resizable>
+		<TableColumn prop="name" label="姓名" width="100" fixed="left" />
+		<TableColumn label="联系信息">
+			<TableColumn prop="city" label="常驻城市" width="120" />
+			<TableColumn prop="address" label="详细联系地址（拖动列边缘调整宽度）" :header-line="2" :line="2" min-width="180" />
+		</TableColumn>
+	</Table>
+</template>
+<script setup>
+import { Table, TableColumn } from '@deot/vc';
+
+const rows = [
+	{ name: '小林', city: '杭州', address: '这是一段较长的联系地址，用于展示两行截断与悬停提示；调整列宽后会重新判断是否需要提示。' },
+	{ name: '小周', city: '上海', address: '浦东新区示例路 12 号' }
+];
+</script>
+```
+:::
+
+### 空状态与尾部内容
+
+`empty` 插槽优先于 `empty-text`；`append` 插槽位于表体之后、合计行之前。空状态容器不接收指针事件，需要交互时可将操作按钮放在表格外。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="toolbar">
+		<Button @click="handleToggle">{{ isEmpty ? '载入数据' : '清空数据' }}</Button>
+		<label><input v-model="isCustom" type="checkbox"> 自定义空状态</label>
+	</div>
+	<Table :data="isEmpty ? [] : rows" empty-text="尚未创建任务">
+		<TableColumn prop="name" label="任务" />
+		<TableColumn prop="owner" label="负责人" />
+		<template v-if="isCustom" #empty><span>没有匹配结果，请调整条件。</span></template>
+		<template v-if="!isEmpty" #append><p>共 {{ rows.length }} 条任务，尾部可放说明或加载入口。</p></template>
+	</Table>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Button, Table, TableColumn } from '@deot/vc';
+
+const isEmpty = ref(true);
+const isCustom = ref(false);
+const rows = [{ name: '准备发布', owner: '小林' }];
+const handleToggle = () => { isEmpty.value = !isEmpty.value; };
+</script>
+<style scoped>
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
+</style>
+```
+:::
+
 ## API
 
-### Table props
+### Table 属性
+
+以下 `CSSProperties`、`VNodeChild` 为 Vue 类型；回调中的 `row` 为调用方行对象，`column` 为当前列信息。`allowDrag` / `allowDrop` 的对象字段见对应说明。
+
 | 属性                      | 说明                                                                                                                                         | 类型                                                         | 可选值                         | 默认值     |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | --------------------------- | ------- |
-| data                    | 显示的数据；拖拽排序时使用 `v-model:data` 接收新顺序                                                                                                  | `Array`                                                    | -                           | -       |
+| data                    | 显示的数据；拖拽排序时使用 `v-model:data` 接收新顺序                                                                                                  | `Array`                                                    | -                           | `[]` |
 | height                  | `Table` 的高度，默认为自动高度。如果 `height` 为 `number` 类型，单位 px；如果 `height` 为 `string` 类型，则这个高度会设置为 `Table` 的 style.height 的值，Table 的高度会受控于外部样式。       | `string`、`number`                                          | -                           | -       |
-| max-height              | `Table` 的最大高度                                                                                                                              | `string`、`number`                                          | -                           | -       |
+| maxHeight              | `Table` 的最大高度                                                                                                                              | `string`、`number`                                          | -                           | -       |
 | virtualized             | 无 `height`/`max-height` 时启用外部 viewport 行虚拟化；存在 `height` 或 `max-height` 时不改变原有渲染路径                                                                 | `boolean`                                                   | -                           | `false` |
-| lazy-tail               | 延迟展示 `append` slot，直到数据全部进入虚拟列表；普通表格视为已到末尾，不影响合计行 | `boolean` | - | `false` |
+| lazyTail               | 延迟展示 `append` slot，直到数据全部进入虚拟列表；普通表格视为已到末尾，不影响合计行 | `boolean` | - | `false` |
 | stripe                  | 是否为斑马纹 `table`                                                                                                                             | `boolean`                                                  | -                           | `false` |
 | border                  | 是否带有纵向边框                                                                                                                                   | `boolean`                                                  | -                           | `false` |
 | size                    | `Table` 的尺寸：调整字号与单元格的上下内边距                                                                                                           | `string`                                                   | `large` 、 `medium` 、 `small` 、 `mini` | `medium` |
 | fit                     | 列的宽度是否自撑开：列宽之和不足表格宽度时，未设 `width` 的列按比例分配剩余宽度；所有列都设了 `width` 时，剩余宽度给最后一个非固定列（全是固定列时给最后一列）。为 `false` 时不自撑开 | `boolean`                                                  | -                           | `true`  |
-| show-header             | 是否显示表头                                                                                                                                     | `boolean`                                                  | -                           | `true`  |
+| showHeader             | 是否显示表头                                                                                                                                     | `boolean`                                                  | -                           | `true`  |
 | highlight               | 是否要高亮当前行                                                                                                                                   | `boolean`                                                  | -                           | `false` |
-| current-row-value       | 当前行的`[id]/value`唯一值（树形表格含子行），只写属性                                                                                                                   | `string`、 `number`                                         | -                           | -       |
-| row-height              | 行的固定高度                                                                                                                                     |                                                            |                             |         |
-| row-class               | 行的 `className`，仅作用于单行块对应的 `vc-table__tr`；存在 `getSpan` 合并时不生效，请用 `cell-class`。支持字符串或 `Function({ row, rowIndex })`。 | `Function({ row, rowIndex })`、 `string`                     | -                           | -       |
-| row-style               | 行的 `style`，仅作用于单行块对应的 `vc-table__tr`；存在 `getSpan` 合并时不生效，请用 `cell-style`。支持对象或 `Function({ row, rowIndex })`。 | `Function({ row, rowIndex })`、 `Object`                     | -                           | -       |
-| cell-class              | 单元格的 `className` 的回调方法，也可以使用字符串为所有单元格设置一个固定的 `className`。                                                                                  | `Function({row, column, rowIndex, columnIndex})`、 `string` | -                           | -       |
-| cell-style              | 单元格的 style 的回调方法，也可以使用一个固定的 Object 为所有单元格设置一样的 Style。                                                                                      | `Function({row, column, rowIndex, columnIndex})`、 `Object` | -                           | -       |
-| header-row-class        | 表头 `vc-table__tr` 的 `className`，支持字符串或 `Function()`（无参数）。                                                                                         | `Function()`、`string`                                      | -                           | -       |
-| header-row-style        | 表头 `vc-table__tr` 的 `style`，支持对象或 `Function()`（无参数）。                                                                                               | `Function()`、 `Object`                                     | -                           | -       |
-| header-cell-class       | 表头单元格的 `className` 的回调方法，也可以使用字符串为所有表头单元格设置一个固定的 `className`。                                                                              | `Function({row, column, rowIndex, columnIndex})`, `string` | -                           | -       |
-| header-cell-style       | 表头单元格的 `style` 的回调方法，也可以使用一个固定的 `Object` 为所有表头单元格设置一样的 `Style`。                                                                            | `Function({row, column, rowIndex, columnIndex})`, `Object` | -                           | -       |
-| primary-key             | 行数据的 Key，用来优化 Table 的渲染；在使用 reserve-selection 功能的情况下，该属性是必填的。类型为 string 时，支持多层访问：`user.info.id`，但不支持 `user.info[0].id`，此种情况请使用 `Function`。 | `Function(row)`、`string`                                   | -                           | -       |
-| empty-text              | 空数据时显示的文本内容，也可以通过 `slot="empty"` 设置                                                                                                        | `string`                                                   | -                           | 暂无数据    |
-| default-expand-all      | 是否默认展开所有行（展开行与树形节点）；仅作为未操作过的行的默认值                                                                                   | `boolean`                                                  | -                           | false   |
-| lazy-tree               | 树形数据的子节点是否懒加载，需配合 `load-expand` 使用；通过 `row` 的 `hasChildren` 标记可加载的节点 | `boolean` | - | `false` |
-| load-expand             | 懒加载子节点的方法，返回子行数组或 `Promise<Array>`；`treeNode` 为 `{ level, indent, expandable, expanded, loading }`，`level` 根为 `0` | `Function(row, treeNode)` | - | - |
-| tree-map                | 树形数据的字段映射 | `{ children, hasChildren }` | - | `{ children: 'children', hasChildren: 'hasChildren' }` |
+| currentRowValue       | 当前行的`[id]/value`唯一值（树形表格含子行），只写属性                                                                                                                   | `string`、 `number`                                         | -                           | -       |
+| rowHeight | 固定行高，数字及数字字符串按 px 解析；缺省由内容撑开 | `string \| number` | - | - |
+| rowClass               | 行的 `className`，仅作用于单行块对应的 `vc-table__tr`；存在 `getSpan` 合并时不生效，请用 `cell-class`。支持字符串或 `Function({ row, rowIndex })`。 | `string \| ((context: { row: any; rowIndex: number }) => string)` | -                           | -       |
+| rowStyle               | 行的 `style`，仅作用于单行块对应的 `vc-table__tr`；存在 `getSpan` 合并时不生效，请用 `cell-style`。支持对象或 `Function({ row, rowIndex })`。 | `CSSProperties \| ((context: { row: any; rowIndex: number }) => CSSProperties)` | -                           | -       |
+| cellClass              | 单元格的 `className` 的回调方法，也可以使用字符串为所有单元格设置一个固定的 `className`。                                                                                  | `string \| ((context: { row: any; column: any; rowIndex: number; columnIndex: number }) => string)` | -                           | -       |
+| cellStyle              | 单元格的 style 的回调方法，也可以使用一个固定的 Object 为所有单元格设置一样的 Style。                                                                                      | `CSSProperties \| ((context: { row: any; column: any; rowIndex: number; columnIndex: number }) => CSSProperties)` | -                           | -       |
+| headerRowClass        | 表头 `vc-table__tr` 的 `className`，支持字符串或 `Function()`（无参数）。                                                                                         | `string \| (() => string)` | -                           | -       |
+| headerRowStyle        | 表头 `vc-table__tr` 的 `style`，支持对象或 `Function()`（无参数）。                                                                                               | `CSSProperties \| (() => CSSProperties)` | -                           | -       |
+| headerCellClass       | 表头单元格的 `className` 的回调方法，也可以使用字符串为所有表头单元格设置一个固定的 `className`。                                                                              | `string \| ((context: { row: any[]; column: any; rowIndex: number; columnIndex: number }) => string)` | -                           | -       |
+| headerCellStyle       | 表头单元格的 `style` 的回调方法，也可以使用一个固定的 `Object` 为所有表头单元格设置一样的 `Style`。                                                                            | `CSSProperties \| ((context: { row: any[]; column: any; rowIndex: number; columnIndex: number }) => CSSProperties)` | -                           | -       |
+| primaryKey             | 行数据的 Key，用来优化 Table 的渲染；在使用 reserve-selection 功能的情况下，该属性是必填的。类型为 string 时，支持多层访问：`user.info.id`，但不支持 `user.info[0].id`，此种情况请使用 `Function`。 | `string \| ((row: any) => string \| number)` | -                           | -       |
+| emptyText | 空状态文案，`empty` 插槽优先；显式空字符串有效。虽然 props 声明接受函数，当前渲染不会调用它，请用插槽自定义内容 | `string` | - | 当前语言的“暂无数据” |
+| defaultExpandAll      | 是否默认展开所有行（展开行与树形节点）；仅作为未操作过的行的默认值                                                                                   | `boolean`                                                  | -                           | false   |
+| lazyTree               | 树形数据的子节点是否懒加载，需配合 `load-expand` 使用；通过 `row` 的 `hasChildren` 标记可加载的节点 | `boolean` | - | `false` |
+| loadExpand             | 懒加载子节点的方法，返回子行数组或 `Promise<Array>`；`treeNode` 为 `{ level, indent, expandable, expanded, loading }`，`level` 根为 `0` | `(row: any, treeNode: { level: number; indent: number; expandable: boolean; expanded: boolean; loading: boolean }) => any[] \| Promise<any[]>` | - | - |
+| treeMap                | 树形数据的字段映射 | `{ children: string; hasChildren: string }` | - | `{ children: 'children', hasChildren: 'hasChildren' }` |
 | indent                  | 树形数据每一层的缩进（px） | `number` | - | `16` |
-| expand-row-value        | 设置 `Table` 当前展开的行（展开行与树形节点），需要设置 `primary-key` 属性才能使用，该属性为展开行的 `[id]/value` 数组；未列出的行取 `default-expand-all`。                                                               | `Array`                                                    | -                           | -       |
-| expand-selectable       | 树形子行是否可选择；为 `false` 时子行的勾选框隐藏，全选只作用于根行                                                                                                                             | `boolean`                                                  | -                           | `true`  |
-| show-summary            | 是否在表尾显示合计行                                                                                                                                 | `boolean`                                                  | -                           | `false` |
-| sum-text                | 合计行第一列的文本                                                                                                                                  | `string`                                                   | -                           | 合计      |
-| get-summary             | 自定义的合计计算方法                                                                                                                                 | `Function({ columns, data })`                              | -                           | -       |
-| get-span                | 合并行或列的计算方法；开启 / 关闭（传入与否）立即生效，换成另一个函数时在 data 或列变化后按新规则生效                                                                                                                                 | `Function({ row, column, rowIndex, columnIndex })`         | -                           | -       |
+| expandRowValue        | 设置 `Table` 当前展开的行（展开行与树形节点），需要设置 `primary-key` 属性才能使用，该属性为展开行的 `[id]/value` 数组；未列出的行取 `default-expand-all`。                                                               | `Array`                                                    | -                           | -       |
+| expandSelectable       | 树形子行是否可选择；为 `false` 时子行的勾选框隐藏，全选只作用于根行                                                                                                                             | `boolean`                                                  | -                           | `true`  |
+| showSummary            | 是否在表尾显示合计行                                                                                                                                 | `boolean`                                                  | -                           | `false` |
+| sumText | 默认合计行第一列文案；显式空字符串有效 | `string` | - | 当前语言的“合计” |
+| getSummary             | 自定义的合计计算方法                                                                                                                                 | `(context: { columns: any[]; data: any[] }) => (string \| number)[]` | -                           | -       |
+| getSpan                | 合并行或列的计算方法；开启 / 关闭（传入与否）立即生效，换成另一个函数时在 data 或列变化后按新规则生效                                                                                                                                 | `(context: { row: any; column: any; rowIndex: number; columnIndex: number }) => number[] \| { rowspan?: number; colspan?: number } \| undefined` | -                           | -       |
 | indeterminate           | 在多选表格中，当仅有部分行被选中时，点击表头的多选框时的行为。若为 `true`，则选中所有行；若为 `false`，则取消选择所有行                                                                        | `boolean`                                                  | -                           | `true`  |
-| sort                    | 默认的排序列的 `prop` 和顺序。它的`prop`属性指定默认的排序的列，`order`指定默认排序的顺序                                                                                    |                                                            |                             |         |
-| delay                   | 延迟选择，排除transition的影响                                                                                                                       |                                                            |                             |         |
-| resizable               | 是否可以伸缩(总开关/单独的column.resizable也可以设置)                                                                                                                                     |                                                            |                             |         |
-| affix                   | 流式高度下（含 `virtualized` 外部虚拟化，未设置 `height`/`max-height`）表头吸顶、底部 dock（横向滚动条 + 合计行）吸底。`boolean` 同时作用于两端；`array` 为 `[top, bottom]`，每项可为 `boolean` 或 [Affix](../affix) 配置对象；`object` 同时作用于两端。没有合计行时 bottom 项只控制横向滚动条。设置了 `height`/`max-height` 时强制失效。 | `boolean`、`array`、`object`                                  | -                           | `false` |
+| sort | 当前排序状态，支持 `v-model:sort`；数据排序由外部处理 | `{ prop?: string; order?: string }` | `ascending`、`descending`、`''` | `{}` |
+| delay | 表体延迟挂载的毫秒数 | `number` | - | - |
+| resizable | 调整列宽的总开关；缺省跟随 `border`，还需列本身 `resizable=true` | `boolean` | - | `undefined` |
+| affix                   | 流式高度下（含 `virtualized` 外部虚拟化，未设置 `height`/`max-height`）表头吸顶、底部 dock（横向滚动条 + 合计行）吸底。`boolean` 同时作用于两端；`array` 为 `[top, bottom]`，每项可为 `boolean` 或 [Affix](../affix) 配置对象；`object` 同时作用于两端。没有合计行时 bottom 项只控制横向滚动条。设置了 `height`/`max-height` 时强制失效。 | `boolean \| object \| [boolean \| object, boolean \| object]`                                  | -                           | `false` |
 | columns                 | `v-model` 暴露 Table 收集到的全部 leaf 列（含 `selection`/`expand`/`index` 等无 `prop` 的结构列），每项为 `{ id, prop, label, type, hidden }`。外部可写回两个维度：调整数组顺序（按 `id` 重排，多级表头下逐层生效）、把某项 `hidden` 置 `true/false`（按 `id` 控制该列是否渲染，被隐藏列仍出现在暴露快照中）。列拖拽后的新顺序同样经此发出。其它列属性请用 `TableColumn` 的 props 控制。 | `Array`                                                    | -                           | `[]`    |
 | draggable               | 拖拽排序，数组依次为 `[整行拖拽, 列拖拽]`，`true` 等于 `[true, false]`。整行拖拽按住行内任意位置拖动（以块为单位，`get-span` 纵向合并的行整体移动），只从把手拖动时使用 `type="drag"` 的列（不受第一项影响）；新顺序经 `update:data` 发出，配合 `v-model:data` 使用；树形表格会先原地修改 `data`，同时配置 `get-span` 时不可拖拽。列拖拽按住表头拖动，新顺序在表格内部生效并经 `update:columns` 发出。见[拖拽排序](#拖拽排序) | `boolean`、`[boolean, boolean]`                            | -                           | `false` |
-| allow-drag              | 块 / 列能否被拖动；返回 `false` 时不能拖动（块的把手置灰，表头不显示 `move` 光标）。`type` 为 `'block'`（行）或 `'column'`（列）；行：`rows` 为块的行（普通表格长度为 1），`rowIndex` 为块首行的行号；列：`column` 为列（分组时为分组本身），`columnIndex` 为列（分组时为其第一个可见叶子）在可见叶子列中的下标 | `Function({ type, rows, rowIndex })`、`Function({ type, column, columnIndex })` | -                           | -       |
-| allow-drop              | 能否放到落点；返回 `false` 时插入线显示为不可放置，松手不生效。`type` 为 `'block'`（行）或 `'column'`（列）。行：`targetRows` 为落点行（树形表格 `inner` 时为新的父行）；`position` 为相对落点行的位置，`before`、`after`，或 `inner`（成为子行，仅树形表格）；`from` / `to` 为移动前后的位置 `{ parent, index }`，`parent` 为 `null` 表示根级。列：`targetColumn` 为落点列（与被拖列同一父级）；`position` 为 `before` 或 `after`；`from` / `to` 的 `parent` 为父分组，顶层为 `null`，`index` 为兄弟列（含隐藏列）中的下标 | `Function({ type, rows, targetRows, position, from, to })`、`Function({ type, column, targetColumn, position, from, to })` | -                           | -       |
+| allowDrag              | 块 / 列能否被拖动；返回 `false` 时不能拖动（块的把手置灰，表头不显示 `move` 光标）。`type` 为 `'block'`（行）或 `'column'`（列）；行：`rows` 为块的行（普通表格长度为 1），`rowIndex` 为块首行的行号；列：`column` 为列（分组时为分组本身），`columnIndex` 为列（分组时为其第一个可见叶子）在可见叶子列中的下标 | `(payload: any) => boolean` | -                           | -       |
+| allowDrop              | 能否放到落点；返回 `false` 时插入线显示为不可放置，松手不生效。`type` 为 `'block'`（行）或 `'column'`（列）。行：`targetRows` 为落点行（树形表格 `inner` 时为新的父行）；`position` 为相对落点行的位置，`before`、`after`，或 `inner`（成为子行，仅树形表格）；`from` / `to` 为移动前后的位置 `{ parent, index }`，`parent` 为 `null` 表示根级。列：`targetColumn` 为落点列（与被拖列同一父级）；`position` 为 `before` 或 `after`；`from` / `to` 的 `parent` 为父分组，顶层为 `null`，`index` 为兄弟列（含隐藏列）中的下标 | `(payload: any) => boolean` | -                           | -       |
+| width | 保留属性，当前实现未读取；控制表格宽度请使用外层布局或 style | `string \| number` | - | - |
+| divider | 显示横向分割线；`border` 也会启用 | `boolean` | - | `false` |
+| placeholder | 保留属性，当前单元格渲染未读取；空值占位请通过 formatter 或默认插槽实现 | `string \| Function` | - | `'-'` |
 
-
-### 事件
+### Table 事件
 
 事件的参数均为一个对象（`update:*` 除外，为 `v-model` 的值）。
 
@@ -1259,6 +1616,8 @@ const updateOffsets = () => {
 | current-change     | 当表格的当前行发生变化的时候会触发该事件，如果要高亮当前行，请打开表格的 `highlight` 属性 | `({ row, oldRow }) => void 0`                                                   | `row`：改变后的当前行；`oldRow`：改变前的当前行                               |
 | column-resize      | 拖动表头边缘改变列宽，松开时触发                                              | `({ column, width, oldWidth }) => void 0`                                       | `column`：所在列；`width`：拖拽后的宽度；`oldWidth`：拖拽前的宽度                     |
 | expand-change      | 展开或收起某一行时触发（展开行与树形表格共用）                                        | 展开行：`({ type: 'expand', row, expanded, expandedRows }) => void 0`；树形：`({ type: 'tree', row, expanded, maxLevel }) => void 0` | `type`：`expand` 为展开行（`type="expand"` 的列），`tree` 为树形节点；`row`：展开或收起的行；`expanded`：是否展开；`expandedRows`：当前展开的行（按显示顺序）；`maxLevel`：当前可见行的最大层级（根为 `0`） |
+| update:sort | 排序交互后同步状态 | `(sort) => void` | `{ prop, order }` |
+| update:columns | 列收集、重排或显隐变化时同步列快照 | `(columns) => void` | `{ id, prop, label, type, hidden }[]` |
 | sort-change        | 当表格的排序条件发生变化的时候会触发该事件                                         | `({ prop, order }) => void 0`                                                   | `prop`：排序的列；`order`：排序方式                                      |
 | load-change      | 加载状态变化（单向推送，无对应属性）；挂载即推送一次                                   | `({ isEnd, isLoading, isSilentRefresh, isEmpty }) => void 0`            | `isEnd`：数据已全部进入虚拟列表（普通表格恒为 `true`）；`isEmpty`：已结束且无数据              |
 | update:data        | 拖拽排序松手且顺序变化时触发（`v-model:data`）；树形表格在原地修改数据之后触发             | `(data: Array) => void 0`                                                       | `data`：新的数组，元素为外部数组中存放的原始行，行对象的引用不变；树形表格为原地修改后根数组的副本 |
@@ -1270,49 +1629,61 @@ const updateOffsets = () => {
 | column-dragend     | 列拖拽结束时触发，取消、顺序不变、不允许放置时也会触发                                     | `({ column, columnIndex, dropped }) => void 0`                                  | `dropped`：是否按新顺序放下                                                  |
 
 
-### 方法
+### Table 方法
 
-| 方法名                | 说明                                                             | 参数                                                                           |
-| ------------------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| clearSelection     | 用于多选表格，清空用户的选择                                                 | -                                                                            |
-| toggleRowSelection | 用于多选表格，切换某一行的选中状态，如果使用了第二个参数，则是设置这一行选中与否（selected 为 true 则选中）  | `row`：要切换的行数据；`selected`：设置改行的选中状态；`emitChange`：调用 API 修改选中值，不触发 `select` 事件 |
-| toggleAllSelection | 用于多选表格，切换所有行的选中状态                                              | -                                                                            |
-| toggleRowExpansion | 用于可展开表格与树形表格，切换某一行的展开状态，如果使用了第二个参数，则是设置这一行展开与否（expanded 为 true 则展开） | `row`：要展开的行数据；`expanded`：设置该行是否展开                                            |
-| setCurrentRow      | 用于单选表格，设定某一行为选中行，如果调用时不加参数，则会取消目前高亮行的选中状态。                     | `row`：选中的行数据                                                                 |
-| refreshLayout      | 对 Table 进行重新布局，虚拟化表格（`height` 或 `virtualized`）会同时整体重新测量已构建的行。数据变化、尺寸变化会自动处理（内部的布局更新只刷新虚拟列表的视口），仅在无法自动观察的布局变化后调用 | -                                                                            |
-| refreshAffix       | 手动刷新表头/底部 dock 的吸附状态（`affix` 生效时）。Affix只有当滚动时才触发，wrapper/content高度变化需手动处理              | -                                                                            |
-
-
-### Slot
-
-| 属性     | 说明                                                                       |
-| ------ | ------------------------------------------------------------------------ |
-| append | 插入至表格最后一行之后的内容，如果需要对表格的内容进行无限滚动操作，可能需要用到这个 slot。若表格有合计行，该 slot 会位于合计行之上。 |
+| 方法名                | 说明                                                             | 参数                                                                           | 返回值 |
+| ------------------ | -------------------------------------------------------------- | ---------------------------------------------------------------------------- | --- |
+| clearSelection     | 用于多选表格，清空用户的选择                                                 | -                                                                            | `void` |
+| toggleRowSelection | 用于多选表格，切换某一行的选中状态，如果使用了第二个参数，则是设置这一行选中与否（selected 为 true 则选中）  | `row`：要切换的行数据；`selected`：设置该行的选中状态；`emitChange`：是否触发 `select`，缺省为 `true` | `void` |
+| toggleAllSelection | 用于多选表格，切换所有行的选中状态                                              | -                                                                            | `void` |
+| toggleRowExpansion | 用于可展开表格与树形表格，切换某一行的展开状态，如果使用了第二个参数，则是设置这一行展开与否（expanded 为 true 则展开） | `row`：要展开的行数据；`expanded`：设置该行是否展开                                            | `void` |
+| setCurrentRow      | 用于单选表格，设定某一行为选中行，如果调用时不加参数，则会取消目前高亮行的选中状态。                     | `row`：选中的行数据                                                                 | `void` |
+| refreshLayout      | 对 Table 进行重新布局，虚拟化表格（`height` 或 `virtualized`）会同时整体重新测量已构建的行。数据变化、尺寸变化会自动处理（内部的布局更新只刷新虚拟列表的视口），仅在无法自动观察的布局变化后调用 | -                                                                            | `void` |
+| refreshAffix       | 手动刷新表头/底部 dock 的吸附状态（`affix` 生效时）。Affix只有当滚动时才触发，wrapper/content高度变化需手动处理              | -                                                                            | `void` |
 
 
-### Column props
+### Table 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 声明 TableColumn | - |
+| empty | 自定义空状态，优先于 emptyText | - |
+| append | 表体之后、合计行之前的内容；lazyTail 控制延迟显示 | - |
+
+
+### TableColumn 属性
 
 | 属性                 | 说明                                                                                           | 类型                                             | 可选值                                    | 默认值       |
 | ------------------ | -------------------------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------- | --------- |
 | type               | 对应列的类型。如果设置了 `selection` 则显示多选框；如果设置了 `index` 则显示该行的索引（从 1 开始计算）；如果设置了 `expand` 则显示为一个可展开的按钮；如果设置了 `drag` 则显示拖拽排序的把手（见[拖拽排序](#拖拽排序)） | `string`                                       | `selection`、`index`、`expand`、`drag`、`default` | `default` |
-| index              | 如果设置了 `type=index`，可以通过传递 `index` 属性来自定义索引                                                   | `number`, `Function(index)`                    | -                                      | -         |
+| index              | 如果设置了 `type=index`，可以通过传递 `index` 属性来自定义索引                                                   | `number \| ((rowIndex: number) => number)` | -                                      | -         |
 | label              | 显示的标题                                                                                        | `string`                                       | -                                      | -         |
 | prop               | 对应列内容的字段名                                                                                    | `string`                                       | -                                      | -         |
 | width              | 对应列的宽度                                                                                       | `string`、`number`                             | -                                      | -         |
-| min-width          | 对应列的最小宽度，与 `width` 的区别是 `width` 是固定的，`min-width`把剩余宽度按比例分配给设置了 `min-width` 的列                | `string`、`number`                             | -                                      | -         |
+| minWidth          | 对应列的最小宽度，与 `width` 的区别是 `width` 是固定的，`min-width`把剩余宽度按比例分配给设置了 `min-width` 的列                | `string`、`number`                             | -                                      | -         |
 | fixed              | 列是否固定在左侧或者右侧，`true` 表示固定在左侧                                                                  | `string`, `boolean`                            | `true`, `left`, `right`                | -         |
-| render-header      | 列标题 `Label` 区域渲染使用的 `Function`                                                               | `Function({ column, columnIndex, store })`     | -                                      | -         |
-| resizable          | 对应列是否可以通过拖动改变宽度（需要在 `Table` 上设置 `border` 属性为真）                                               | `boolean`                                      | -                                      | `true`    |
-| formatter          | 用来格式化内容                                                                                      | `Function({ row, column, cellValue, $index })` | -                                      | -         |
-| line               | 文本行数，超出省略并在 hover 时展示完整内容；仅对默认内容生效（使用默认插槽或 `formatter` 时无效）。未设置时取全局配置 `TableColumn.line` | `number`                                       | -                                      | `0`       |
-| header-line        | 表头文本行数，超出省略并在 hover 时展示完整内容，`0` 为不限行数。取值顺序：列上的值 → 全局配置 `TableColumn.headerLine` → `1`。仅对 `label` 生效：`header` 插槽、`render-header` 及 `selection`/`index`/`expand` 列保持单行省略，高度由内容撑开 | `number`                                       | -                                      | `1`       |
+| renderHeader      | 列标题 `Label` 区域渲染使用的 `Function`                                                               | `(context: { column: any; columnIndex: number; store: any }) => VNodeChild` | -                                      | -         |
+| resizable | 当前列允许调整宽度，还需 Table 的 resizable 或 border 启用；selection/expand/drag 列不允许调整 | `boolean` | - | `true` |
+| formatter | 自定义单元格内容；参数与默认单元格插槽相同，无 `cellValue` 或 `$index` 字段 | `(context: { row: any; column: any; rowIndex: number; columnIndex: number; store: any; selected?: boolean; level?: number; treeNode?: object }) => VNodeChild` | - | - |
+| line | 默认单元格最多显示行数，截断时显示悬停提示；缺省读取全局 TableColumn.line，仍缺省则不限行 | `number` | `0` 表示不限行 | `undefined` |
+| headerLine        | 表头文本行数，超出省略并在 hover 时展示完整内容，`0` 为不限行数。取值顺序：列上的值 → 全局配置 `TableColumn.headerLine` → `1`。仅对 `label` 生效：`header` 插槽、`render-header` 及 `selection`/`index`/`expand` 列保持单行省略，高度由内容撑开 | `number`                                       | -                                      | `1`       |
 | align              | 对齐方式                                                                                         | `string`                                       | `left`、`center`、`right`                | `left`    |
-| header-align       | 表头对齐方式，若不设置该项，则使用表格的对齐方式                                                                     | `string`                                       | `left`、`center`、`right`                | -         |
+| headerAlign | 表头对齐，缺省跟随当前列 align | `string` | `left`、`center`、`right` | - |
 | class              | 列的 `className`                                                                               | `string`                                       | -                                      |           |
-| label-class        | 当前列标题的自定义类名                                                                                  | `string`                                       | -                                      | -         |
-| selectable         | 仅对 `type=selection` 的列有效，类型为 `Function`，`Function` 的返回值用来决定这一行的 `CheckBox` 是否可以勾选；`index` 为行在可选择行中的下标（树形表格按展开前的全部行计，与展开状态无关）；行对象需唯一，同一对象在数据中重复出现时，下标取最后一次出现的位置 | `Function(row, index)`                         | -                                      | -         |
-| reserve-selection  | 仅对 `type=selection` 的列有效，类型为 `boolean`，为 `true` 则会在数据更新之后保留之前选中的数据（需指定 `primary-key`）        | `boolean`                                      | -                                      | `false`   |
-| filter-options     | 表头筛选的配置，原样传给筛选组件，字段见下方 [filter-options](#filter-options) | `Object` | - | - |
+| labelClass        | 当前列标题的自定义类名                                                                                  | `string`                                       | -                                      | -         |
+| selectable         | 仅对 `type=selection` 的列有效，类型为 `Function`，`Function` 的返回值用来决定这一行的 `CheckBox` 是否可以勾选；`index` 为行在可选择行中的下标（树形表格按展开前的全部行计，与展开状态无关）；行对象需唯一，同一对象在数据中重复出现时，下标取最后一次出现的位置 | `(row: any, rowIndex: number) => boolean` | -                                      | -         |
+| reserveSelection  | 仅对 `type=selection` 的列有效，类型为 `boolean`，为 `true` 则会在数据更新之后保留之前选中的数据（需指定 `primary-key`）        | `boolean`                                      | -                                      | `false`   |
+| filterOptions     | 表头筛选的配置，原样传给筛选组件，字段见下方 [filter-options](#filter-options) | `Object` | - | - |
+| sortable | 显示排序箭头，selection/expand/drag 列不支持 | `boolean` | - | `false` |
+| tooltip | 表头帮助图标的提示文字 | `string \| ((context: { column: any; store: any }) => string)` | - | - |
+
+### TableColumn 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 默认单元格内容；嵌套 TableColumn 时作为分组声明 | `{ row, column, rowIndex, columnIndex, store, selected, level, treeNode }`；treeNode 仅树形列提供，包含 `{ level, indent, expandable, expanded, loading }` |
+| default（type="expand"） | 展开区内容 | `{ row, rowIndex, store }` |
+| header | 自定义表头 | `{ column, columnIndex, store }` |
 
 ### 全局配置
 
@@ -1341,7 +1712,7 @@ VcInstance.configure({
 
 | 字段 | 说明 | 类型 | 默认值 |
 | --- | --- | --- | --- |
-| data | 筛选项 | `Array<{ label, value, disabled? }>` | `[]` |
+| data | 筛选项 | `Array<{ label: string \| number; value: string \| number; disabled?: boolean }>` | `[]` |
 | max | 可选数量上限：`1` 为单选，大于 `1` 为多选，选满后其余选项置灰 | `number` | `1` |
 | modelValue | 当前生效的筛选值，形态同 `Select`：数组，或 `'a,b'` 字符串 / 单个值；写了这个字段即为受控 | `Array \| string \| number` | - |
 | separator | 字符串形态的分隔符，同 `Select` | `string` | `,` |
@@ -1351,46 +1722,10 @@ VcInstance.configure({
 | onUpdate:modelValue | 生效值变化时触发，受控时在这里写回 | `(value) => void` | - |
 | onChange | 生效值变化时触发 | `(value) => void` | - |
 
-### Column Slot
+### 移动端
 
-| 属性     | 说明                                  |
-| ------ | ----------------------------------- |
-| -      | 自定义列的内容，参数为 `{ row, column, rowIndex, columnIndex, selected, level, treeNode }`；`treeNode` 仅树形表格的树形列提供，为 `{ level, indent, expandable, expanded, loading }`；`type="expand"` 时为展开行的内容，参数为 `{ row, rowIndex, store }` |
-| header | 自定义表头的内容，参数为 `{ column, columnIndex, store }` |
+`MTable`、`MTableColumn` 分别是 `Table`、`TableColumn` 的别名，使用相同的属性、插槽、样式和行为。
 
+### 布局注意事项
 
-## TODO
-- `SSR`时能渲染带'数据'的内容
-
-<!--
-## 变更说明
-
-### 事件参数统一为对象
-- 所有事件的参数改为一个对象，`update:*`（`v-model`）不变：
-	- `select`：`(selection, row)` → `{ row, selected, selection }`，新增 `selected`（勾选后该行是否选中）。
-	- `select-all`：`(selection)` → `{ selected, selection }`，新增 `selected`（全选或取消全选）。
-	- `selection-change`：`(selection)` → `{ selection }`。
-	- `cell-mouse-enter` / `cell-mouse-leave` / `cell-click` / `cell-dblclick` / `cell-contextmenu`：`(row, column, cell, event)` → `{ row, rowIndex, column, columnIndex, cell, event }`，新增 `rowIndex` / `columnIndex`；`cell` 为单元格元素。
-	- `row-click` / `row-dblclick` / `row-contextmenu`：`(row, column, event)` → 与 cell 事件相同的对象（同一次操作为同一个对象）。
-	- `header-click` / `header-contextmenu`：`(column, event)` → `{ column, event }`。
-	- `current-change`：`(currentRow, oldCurrentRow)` → `{ row, oldRow }`。
-	- `expand-change`：展开行 `(row, expandedRows)` → `{ type: 'expand', row, expanded, expandedRows }`；树形 `(row, expanded, maxLevel)` → `{ type: 'tree', row, expanded, maxLevel }`。
-- `header-dragend` 改名为 `column-resize`，参数 `(newWidth, oldWidth, column)` → `{ column, width, oldWidth }`（原文档中的 `event` 参数实际并未传出）。
-- `block-drop` 移除 `oldIndex` / `newIndex`，改用 `from.index` / `to.index`。
-- `sort-change`、`load-change`、`block-dragstart`、`block-dragend` 原本即为对象，不变。
-
-### 事件名与浏览器原生事件同名
-- 与浏览器原生事件对应的事件改用原生事件名（与 `row-dblclick`、`cell-contextmenu` 一致）：
-	- `cell-mouse-enter` / `cell-mouse-leave` → `cell-mouseenter` / `cell-mouseleave`。
-	- `block-drag-start` / `block-drag-end` → `block-dragstart` / `block-dragend`（`block-drop` 不变）。
-- 组件自身语义的事件仍按词拆分，如 `selection-change`、`column-resize`。
-
-### 拖拽排序支持列
-- `draggable` 支持数组 `[行, 列]`；`true` 与原来一致，只开启整行拖拽。
-- `allow-drag` / `allow-drop` 的参数新增 `type`：行为 `'block'`，列为 `'column'`。开启列拖拽后同一个回调也会收到列的参数，需要按 `type` 区分。
-- `v-model:columns` 写回的顺序改为逐层生效：多级表头下原先只重排顶层列，现在分组内的列也按外部顺序排列，分组按其子列中最靠前的一个排序。
-- `v-model:columns` 的回流改为按内容识别：写回与当前列一致时忽略；不再依赖「发出后等一次写回」的标记，只监听 `update:columns`、不写回时，之后的外部修改照常生效。
-- `columns` 属性文档中列出的 `width`、`fixed`、`align` 实际并未同步，已从说明中去掉；同步项为 `{ id, prop, label, type, hidden }`。
-- 合计行单元格新增 `data-column` 属性（与表体单元格一致）。
-- 拖拽中挂在 `body` 上的类名由 `vc-table-block-dragging` 改为 `vc-table-dragging`（行、列拖拽共用）。
--->
+位于 flex/grid 容器中时，给承载表格的子项设置 `min-width: 0`，避免列宽撑开父容器。SSR 不会渲染完整表体，请在客户端挂载后展示数据。

@@ -3,6 +3,13 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		Table: {
+			emptyText: '暂无数据',
+			sumText: '合计',
+			filterReset: '重置',
+			filterConfirm: '确认',
+			filterAll: '全部'
+		},
 		Pagination: {
 			total: '共 {total} 条',
 			previousPage: '上一页',

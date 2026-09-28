@@ -1,8 +1,8 @@
 @use '../../style/helper' as *;
 
 $color-primary: varfix(color-primary, table-filter);
-$icon-color: varfix(icon-color, table-filter, #666);
-$disabled-color: varfix(disabled-color, table-filter, #999);
+$icon-color: varfix(icon-color, table-filter, varfix(color-dark-lighter));
+$disabled-color: varfix(disabled-color, table-filter, varfix(color-dark-extralight));
 
 @include block(vc-table-filter) {
 	display: inline-flex;

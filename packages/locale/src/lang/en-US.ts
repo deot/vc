@@ -3,6 +3,13 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		Table: {
+			emptyText: 'No data',
+			sumText: 'Total',
+			filterReset: 'Reset',
+			filterConfirm: 'Confirm',
+			filterAll: 'All'
+		},
 		Pagination: {
 			total: '{total} items',
 			previousPage: 'Previous page',
