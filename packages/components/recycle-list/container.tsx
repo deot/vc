@@ -3,8 +3,9 @@
 import { ref, computed, defineComponent, getCurrentInstance, onBeforeUnmount } from 'vue';
 import * as $ from '@deot/helper-dom';
 import { props as containerProps } from './container-props';
-import { DEFAULT, PENDING, PULL, REFRESH } from './container-constant';
+import { DEFAULT, PENDING, PULL, REFRESH, STATUS_MAP } from './container-constant';
 import { Customer } from '../customer';
+import { useLocale } from '../locale';
 import { useDirectionKeys } from './hooks/use-direction-keys';
 
 const COMPONENT_NAME = 'vc-recycle-list-container';
@@ -17,6 +18,10 @@ export const Container = defineComponent({
 	props: containerProps,
 	emits: ['refresh'],
 	setup(props, { slots }) {
+		const { t } = useLocale();
+		const renderDefault = ({ status, type }: Record<string, any>) => status === DEFAULT
+			? '~'
+			: STATUS_MAP[type][status] && t(`vc.RecycleList.${STATUS_MAP[type][status]}`);
 		const vm = getCurrentInstance()!;
 		const K = useDirectionKeys();
 		const current = ref();
@@ -153,7 +158,7 @@ export const Container = defineComponent({
 				class="vc-recycle-list__pull"
 			>
 				<Customer
-					render={props.render}
+					render={props.render || renderDefault}
 					// @ts-ignore
 					status={status.value}
 					type={props.inverted ? K.pullTail : K.pullHead}

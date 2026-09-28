@@ -3,6 +3,19 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		RecycleList: {
+			empty: 'No data',
+			complete: 'All loaded',
+			pullDown: '↓ Pull down to refresh',
+			pullUp: '↑ Pull up to refresh',
+			pullRight: '→ Pull right to refresh',
+			pullLeft: '← Pull left to refresh',
+			releaseUp: '↑ Release to refresh',
+			releaseDown: '↓ Release to refresh',
+			releaseLeft: '← Release to refresh',
+			releaseRight: '→ Release to refresh',
+			refreshing: 'Loading...',
+		},
 		Editor: {
 			videoPlaceholder: 'Embed URL',
 			placeholder: 'Please enter content',

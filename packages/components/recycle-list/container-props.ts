@@ -1,6 +1,5 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { Render } from '../customer/types';
-import { STATUS_MAP } from './container-constant';
 
 export const props = {
 	inverted: {
@@ -24,9 +23,6 @@ export const props = {
 		type: Function as PropType<() => boolean>,
 		default: () => true
 	},
-	render: {
-		type: Function as Render,
-		default: ({ status, type }) => STATUS_MAP[type][status]
-	}
+	render: Function as Render
 };
 export type Props = ExtractPropTypes<typeof props>;

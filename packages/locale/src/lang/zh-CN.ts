@@ -3,6 +3,19 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		RecycleList: {
+			empty: '暂无数据~',
+			complete: '已全部加载~',
+			pullDown: '↓ 下拉刷新',
+			pullUp: '↑ 上拉刷新',
+			pullRight: '→ 右拉刷新',
+			pullLeft: '← 左拉刷新',
+			releaseUp: '↑ 释放更新',
+			releaseDown: '↓ 释放更新',
+			releaseLeft: '← 释放更新',
+			releaseRight: '→ 释放更新',
+			refreshing: '加载中...',
+		},
 		Editor: {
 			videoPlaceholder: '嵌入视频地址',
 			placeholder: '请输入内容',

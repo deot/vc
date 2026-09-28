@@ -5,27 +5,23 @@ export const REFRESH = 4;
 
 export const STATUS_MAP = {
 	DOWN: {
-		[DEFAULT]: '~',
-		[PULL]: '↓ 下拉刷新',
-		[PENDING]: '↑ 释放更新',
-		[REFRESH]: '加载中...',
+		[PULL]: 'pullDown',
+		[PENDING]: 'releaseUp',
+		[REFRESH]: 'refreshing',
 	},
 	UP: {
-		[DEFAULT]: '~',
-		[PULL]: '↑ 上拉刷新',
-		[PENDING]: '↓ 释放更新',
-		[REFRESH]: '加载中...',
+		[PULL]: 'pullUp',
+		[PENDING]: 'releaseDown',
+		[REFRESH]: 'refreshing',
 	},
 	RIGHT: {
-		[DEFAULT]: '~',
-		[PULL]: '→ 右拉刷新',
-		[PENDING]: '← 释放更新',
-		[REFRESH]: '加载中...',
+		[PULL]: 'pullRight',
+		[PENDING]: 'releaseLeft',
+		[REFRESH]: 'refreshing',
 	},
 	LEFT: {
-		[DEFAULT]: '~',
-		[PULL]: '← 左拉刷新',
-		[PENDING]: '→ 释放更新',
-		[REFRESH]: '加载中...',
+		[PULL]: 'pullLeft',
+		[PENDING]: 'releaseRight',
+		[REFRESH]: 'refreshing',
 	},
 };

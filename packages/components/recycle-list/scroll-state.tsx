@@ -4,6 +4,7 @@ import { defineComponent } from 'vue';
 import type { PropType } from 'vue';
 import { Customer } from '../customer';
 import { Spin } from '../spin';
+import { useLocale } from '../locale';
 import type { RecycleListLoadState } from './store';
 
 const COMPONENT_NAME = 'vc-recycle-list-scroll-state';
@@ -28,6 +29,7 @@ export const ScrollState = defineComponent({
 		}
 	},
 	setup(props, { slots }) {
+		const { t } = useLocale();
 		/**
 		 * 按 slot → render 属性 → 默认内容的优先级渲染一种状态
 		 * @param name 状态名
@@ -58,12 +60,16 @@ export const ScrollState = defineComponent({
 							loadState.isEmpty
 								? (
 										<div class="vc-recycle-list__empty">
-											{ renderState('empty', () => (<div class="vc-recycle-list__center">暂无数据~</div>)) }
+											{ renderState('empty', () => (
+												<div class="vc-recycle-list__center">{ t('vc.RecycleList.empty') }</div>
+											)) }
 										</div>
 									)
 								: (
 										<div class="vc-recycle-list__complete">
-											{ renderState('complete', () => (<div class="vc-recycle-list__center">已全部加载~</div>)) }
+											{ renderState('complete', () => (
+												<div class="vc-recycle-list__center">{ t('vc.RecycleList.complete') }</div>
+											)) }
 										</div>
 									)
 						)
