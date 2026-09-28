@@ -61,6 +61,7 @@ const loadData = ({ current, count }) => new Promise((resolve) => {
 .list {
 	height: 280px;
 }
+
 .row {
 	padding: 12px;
 	border-bottom: 1px solid var(--vc-color-light-deeper);
@@ -71,6 +72,203 @@ const loadData = ({ current, count }) => new Promise((resolve) => {
 :::
 
 示例共三页，每页 20 项；滚动接近末尾时继续加载。在起点下拉可重新加载，行高由实际内容测量。
+
+### 本地数据、动态行高与定位
+
+使用 `data + disabled` 只构建本地数据；`scrollToIndex` 只能定位已构建的条目，示例中的第 10 项在首批 20 项内。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="controls">
+		<Button @click="handlePrepend">头部插入</Button>
+		<Button @click="handleRemove">删除首项</Button>
+		<Button @click="handleLocate">定位第 10 项</Button>
+		<Button @click="handleTop">回到顶部</Button>
+	</div>
+	<p class="note">共 {{ data.length }} 项；点击行内按钮改变高度，列表会自动校正。</p>
+	<RecycleList ref="listRef" class="list" :data="data" disabled>
+		<template #default="{ row, index }">
+			<div class="row">
+				<Button size="small" @click="handleExpand(row)">{{ row.isExpanded ? '收起' : '展开' }} {{ row.name }}</Button>
+				<p v-if="row.isExpanded">当前索引：{{ index }}。额外内容会参与真实高度测量，无需手动刷新布局。</p>
+			</div>
+		</template>
+	</RecycleList>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Button, RecycleList } from '@deot/vc';
+
+const listRef = ref();
+let nextId = 100;
+const data = ref(Array.from({ length: 100 }, (_, id) => ({ id, name: `条目 ${id + 1}`, isExpanded: false })));
+const handlePrepend = () => {
+	data.value = [{ id: nextId++, name: '新插入的条目', isExpanded: false }, ...data.value];
+};
+const handleRemove = () => { data.value = data.value.slice(1); };
+const handleExpand = (row) => { row.isExpanded = !row.isExpanded; };
+const handleLocate = () => listRef.value?.scrollToIndex(9);
+const handleTop = () => listRef.value?.scrollTo(0);
+</script>
+<style scoped>
+.list {
+	height: 280px;
+}
+
+.row {
+	padding: 12px;
+	border-bottom: 1px solid var(--vc-color-light-deeper);
+	box-sizing: border-box;
+}
+
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.note {
+	margin: 12px 0;
+	line-height: 1.6;
+}
+</style>
+```
+:::
+
+### 多列瀑布流
+
+`cols` 决定列数，`gutter` 决定列间距；卡片自身的下边距负责纵向间隔。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="controls">
+		<Button @click="handleColumns">切换为 {{ cols === 2 ? 3 : 2 }} 列</Button>
+	</div>
+	<RecycleList class="list" :data="data" :cols="cols" :gutter="12" disabled>
+		<template #default="{ row }">
+			<article class="card" :style="{ minHeight: `${row.height}px` }">
+				<strong>卡片 {{ row.id + 1 }}</strong>
+				<p>{{ row.height }}px · 不同高度自动分配到各列</p>
+			</article>
+		</template>
+	</RecycleList>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Button, RecycleList } from '@deot/vc';
+
+const cols = ref(2);
+const data = Array.from({ length: 60 }, (_, id) => ({ id, height: 100 + id % 4 * 30 }));
+const handleColumns = () => { cols.value = cols.value === 2 ? 3 : 2; };
+</script>
+<style scoped>
+.list {
+	height: 280px;
+}
+
+.row {
+	padding: 12px;
+	border-bottom: 1px solid var(--vc-color-light-deeper);
+	box-sizing: border-box;
+}
+
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.card {
+	padding: 12px;
+	margin-bottom: 12px;
+	border: 1px solid var(--vc-color-light-deeper);
+	border-radius: 8px;
+	box-sizing: border-box;
+	overflow-wrap: anywhere;
+}
+</style>
+```
+:::
+
+### 骨架屏与空状态
+
+提供 `placeholder` 时，等待请求期间使用占位节点替代加载提示。重置按钮可重复观察首屏加载、完成与空数据三种状态。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="controls">
+		<Button @click="handleReload">重新加载</Button>
+		<Button @click="handleEmpty">查看空状态</Button>
+	</div>
+	<RecycleList ref="listRef" class="list" :load-data="loadData" :batch-count="6">
+		<template #default="{ row }"><div class="row">{{ row.name }}</div></template>
+		<template #placeholder><div class="skeleton">正在准备条目…</div></template>
+		<template #empty><p class="note">没有匹配记录，点击“重新加载”恢复。</p></template>
+		<template #complete><p class="note">全部 12 条记录已加载</p></template>
+	</RecycleList>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Button, RecycleList } from '@deot/vc';
+
+const listRef = ref();
+const isEmpty = ref(false);
+const loadData = async ({ current, count }) => {
+	await new Promise(resolve => setTimeout(resolve, 600));
+	return {
+		data: isEmpty.value ? [] : Array.from({ length: 6 }, (_, index) => ({ name: `条目 ${count + index + 1}` })),
+		finished: isEmpty.value || current >= 2
+	};
+};
+const handleReload = () => { isEmpty.value = false; listRef.value?.reset(); };
+const handleEmpty = () => { isEmpty.value = true; listRef.value?.reset(); };
+</script>
+<style scoped>
+.list {
+	height: 280px;
+}
+
+.row {
+	padding: 12px;
+	border-bottom: 1px solid var(--vc-color-light-deeper);
+	box-sizing: border-box;
+}
+
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.note {
+	margin: 12px 0;
+	line-height: 1.6;
+}
+
+.row, .skeleton {
+	height: 56px;
+}
+
+.skeleton {
+	padding: 16px;
+	margin: 4px 0;
+	color: var(--vc-color-dark-lightest);
+	background: var(--vc-color-light-deep);
+	border-radius: 6px;
+	box-sizing: border-box;
+}
+</style>
+```
+:::
 
 ### 外部视口与前、中、后内容
 
@@ -83,17 +281,62 @@ Window / Scroller
 └── 其他尾部内容
 ```
 
-```text
+下面由外部 `Scroller` 承载主轴滚动，可以比较“定位条目”和“回到外部顶部”的坐标差异。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
 <template>
-	<section>其他头部内容</section>
-	<RecycleList ref="listRef" :fill="false" :load-data="loadData">
-		<template #default="{ row }">
-			<div>{{ row.name }}</div>
-		</template>
-	</RecycleList>
-	<section>其他尾部内容</section>
+	<div class="controls">
+		<Button @click="handleLocate">定位列表第 10 项</Button>
+		<Button @click="handleTop">回到外部容器顶部</Button>
+	</div>
+	<Scroller :height="300" :native="true">
+		<section class="banner">外部前置内容：这一段不计入列表索引</section>
+		<RecycleList ref="listRef" :fill="false" :data="data" disabled>
+			<template #default="{ row }"><div class="row">{{ row.name }}</div></template>
+		</RecycleList>
+		<section class="banner">外部后置内容：和列表共用同一个滚动条</section>
+	</Scroller>
 </template>
+<script setup>
+import { ref } from 'vue';
+import { Button, RecycleList, Scroller } from '@deot/vc';
+
+const listRef = ref();
+const data = Array.from({ length: 40 }, (_, id) => ({ name: `条目 ${id + 1}` }));
+const handleLocate = () => listRef.value?.scrollToIndex(9);
+const handleTop = () => listRef.value?.scrollTo(0);
+</script>
+<style scoped>
+.list {
+	height: 280px;
+}
+
+.row {
+	padding: 12px;
+	border-bottom: 1px solid var(--vc-color-light-deeper);
+	box-sizing: border-box;
+}
+
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.banner {
+	padding: 32px 12px;
+	background: var(--vc-color-light-deep);
+}
+
+.row {
+	min-height: 48px;
+}
+</style>
 ```
+:::
 
 - 前置内容只改变列表在外部容器中的绝对位置，不计入 item position。
 - 可见范围由外部 viewport 与列表内容区的相对位置计算。外部 viewport 尚在头部或已经进入尾部时，不会因为外部容器滚动而触发无关批次。
@@ -101,6 +344,126 @@ Window / Scroller
 - 虚拟占位尺寸参与正常文档流，数据增加时会自然把后置内容向后推。
 - 挂载、列表自身交叉轴尺寸变化以及 `fill`/方向变化会自动重新测量；单行内容变化只校正该行，已渲染的其它行保持不动；外部 viewport 尺寸变化只刷新可见范围，不重新测量节点（节点尺寸只取决于列表自身的交叉轴）。外部前置内容发生无法被观察的位置变化时，调用 `refreshViewport()` 即可，它只刷新几何与已渲染的行。
 - 首次加载、本地数据分批构建、underfill、placeholder/loading/complete/empty 和 `disabled` 的行为与内部模式一致。
+
+### Window 作为滚动源
+
+没有滚动祖先时，`fill=false` 使用 Window。此示例以固定高度的 Playground 模拟独立页面，滚动的是预览 iframe 内的 Window，不影响文档页面。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16, viewport: [375, 420], viewportOptions: ['auto', [375, 420]] }</config> -->
+```vue
+<template>
+	<header class="banner">页面头部 · 在预览内滚动整个页面</header>
+	<RecycleList :fill="false" :data="data" disabled>
+		<template #default="{ row }"><div class="row">页面条目 {{ row.id + 1 }}</div></template>
+	</RecycleList>
+	<footer class="banner">页面尾部 · 所有本地数据构建完成后可滚动至此</footer>
+</template>
+<script setup>
+import { RecycleList } from '@deot/vc';
+
+const data = Array.from({ length: 30 }, (_, id) => ({ id }));
+</script>
+<style scoped>
+.row {
+	min-height: 56px;
+	padding: 16px;
+	border-bottom: 1px solid var(--vc-color-light-deeper);
+	box-sizing: border-box;
+}
+
+.banner {
+	padding: 32px 16px;
+	background: var(--vc-color-light-deep);
+}
+</style>
+```
+:::
+
+### 横向列表与外部容器
+
+横向条目需提供可测量的宽度。外部模式让列表与前后内容排成一条横向轨道；切换按钮重新挂载示例，以便从起点比较两种承载方式。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="controls">
+		<Button @click="handleMode">{{ isExternal ? '改用内部滚动' : '改用外部滚动' }}</Button>
+	</div>
+	<p class="note">向右滚动，或按住 Shift 使用滚轮。当前：{{ isExternal ? '外部原生容器' : '列表内部 Scroller' }}。</p>
+	<div class="carrier">
+		<div :class="{ track: isExternal }">
+			<div v-if="isExternal" class="edge">前置内容</div>
+			<RecycleList :key="isExternal" class="horizontal" :fill="!isExternal" :vertical="false" :data="data" disabled>
+				<template #default="{ row }">
+					<div class="tile" :style="{ width: `${row.width}px` }">卡片 {{ row.id + 1 }} · {{ row.width }}px</div>
+				</template>
+			</RecycleList>
+			<div v-if="isExternal" class="edge">后置内容</div>
+		</div>
+	</div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Button, RecycleList } from '@deot/vc';
+
+const isExternal = ref(true);
+const data = Array.from({ length: 30 }, (_, id) => ({ id, width: 120 + id % 3 * 40 }));
+const handleMode = () => { isExternal.value = !isExternal.value; };
+</script>
+<style scoped>
+
+.row {
+	padding: 12px;
+	border-bottom: 1px solid var(--vc-color-light-deeper);
+	box-sizing: border-box;
+}
+
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.note {
+	margin: 12px 0;
+	line-height: 1.6;
+}
+
+.carrier {
+	width: 100%;
+	overflow-x: auto;
+}
+
+.track {
+	display: flex;
+	width: max-content;
+	align-items: stretch;
+}
+
+.horizontal {
+	height: 160px;
+}
+
+.tile {
+	height: 100%;
+	padding: 20px 12px;
+	border-right: 1px solid var(--vc-color-light-deeper);
+	box-sizing: border-box;
+}
+
+.edge {
+	display: grid;
+	width: 140px;
+	flex-shrink: 0;
+	place-items: center;
+	background: var(--vc-color-light-deep);
+}
+</style>
+```
+:::
 
 ### 外部模式下的方法坐标
 
@@ -132,23 +495,183 @@ Window / Scroller
 - 提示条内容可用 `renderRefresh({ status, type })` 定制，`status` 为 `2` 拉动中、`3` 可释放、`4` 刷新中，其余（`0` / `1`）为空闲；默认 `0` 不显示内容，`1` 显示 `~`。
 - `inverted + fill=false` 时，如果自定义的 `complete` / `empty` 比加载区矮，刷新开始时首部会变高，列表整体下移这段差值，直到新数据到达。需要时给这两个 slot 设置不低于加载区的最小高度。
 
+### 倒置消息列表与上拉刷新
+
+远程数据按新到旧返回，倒置列表将最新消息放在底部，后续历史页加入列表起点。观察轮次可以区分“加载历史页”和“重新刷新数据”。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<p class="note">第 {{ round }} 轮数据。首次贴底；向上滚动加载历史，到底后向上拖动超过 30px 刷新。</p>
+	<RecycleList class="list" inverted pullable :load-data="loadData">
+		<template #default="{ row }"><div class="row">{{ row.text }}</div></template>
+		<template #complete><div class="row">没有更早的消息</div></template>
+	</RecycleList>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { RecycleList } from '@deot/vc';
+
+const round = ref(0);
+const loadData = async ({ current }) => {
+	if (current === 1) round.value++;
+	const version = round.value;
+	await new Promise(resolve => setTimeout(resolve, 500));
+	return {
+		data: Array.from({ length: 12 }, (_, index) => ({
+			text: `第 ${version} 轮 · 消息 ${36 - (current - 1) * 12 - index}`
+		})),
+		finished: current >= 3
+	};
+};
+</script>
+<style scoped>
+.list {
+	height: 280px;
+}
+
+.row {
+	padding: 12px;
+	border-bottom: 1px solid var(--vc-color-light-deeper);
+	box-sizing: border-box;
+}
+
+.note {
+	margin: 12px 0;
+	line-height: 1.6;
+}
+
+.row {
+	min-height: 48px;
+}
+</style>
+```
+:::
+
 ### 延迟展示列表末端与页面后置内容
 
 列表还在分页时，它**末端之后**的内容会被不断增长的列表反复推走。`lazyTail` 负责列表内部的那一侧，`load-change` 让页面自己的后置区块跟上：
 
-```text
-<RecycleList :fill="false" lazy-tail :load-data="loadData" @load-change="loadState = $event">
-	<template #footer>
-		<div>列表尾部</div>
-	</template>
-</RecycleList>
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<p class="note">{{ loadState.isEnd ? '加载完成，两个尾部已显示' : '滚动加载中，尾部暂不显示' }}</p>
+	<Scroller :height="280" :native="true">
+		<RecycleList :fill="false" lazy-tail :load-data="loadData" @load-change="handleLoadChange">
+			<template #default="{ row }"><div class="row">{{ row.name }}</div></template>
+			<template #footer><div class="tail">列表内部 footer</div></template>
+		</RecycleList>
+		<section v-if="loadState.isEnd" class="tail">页面后置内容：仅在整个列表结束后展示</section>
+	</Scroller>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { RecycleList, Scroller } from '@deot/vc';
 
-<section v-show="loadState.isEnd">页面后置内容</section>
+const loadState = ref({ isEnd: false });
+const handleLoadChange = (state) => { loadState.value = state; };
+const loadData = async ({ current, count }) => {
+	await new Promise(resolve => setTimeout(resolve, 400));
+	return {
+		data: Array.from({ length: 8 }, (_, index) => ({ name: `条目 ${count + index + 1}` })),
+		finished: current >= 2
+	};
+};
+</script>
+<style scoped>
+
+.row {
+	padding: 12px;
+	border-bottom: 1px solid var(--vc-color-light-deeper);
+	box-sizing: border-box;
+}
+
+.note {
+	margin: 12px 0;
+	line-height: 1.6;
+}
+
+.row {
+	height: 48px;
+}
+
+.tail {
+	padding: 20px 12px;
+	margin-top: 8px;
+	background: var(--vc-color-light-deep);
+}
+</style>
 ```
+:::
 
 `lazyTail` 延迟的是**加载方向末端**那一侧：正序数据向下生长，延迟 `#footer`；`inverted` 数据向上生长，改为延迟 `#header`。另一侧始终正常渲染。该行为与 `fill` 无关，`fill=true` 同样生效。
 
+### 共享 Store 的双视图
+
+通过同一个 `RecycleListStore` 共享加载结果。两个视图采用相同宽度与行样式，让共享的测量结果适用于两侧。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<p class="note">两个视图共用数据与布局。将鼠标移入任一视图后滚动，另一个视图会同步位置。</p>
+	<div class="panels">
+		<section v-for="name in ['视图 A', '视图 B']" :key="name">
+			<h4>{{ name }}</h4>
+			<RecycleList class="list" :store="store">
+				<template #default="{ row }"><div class="row">{{ row.name }}</div></template>
+			</RecycleList>
+		</section>
+	</div>
+</template>
+<script setup>
+import { RecycleList, RecycleListStore } from '@deot/vc';
+
+const store = new RecycleListStore({
+	loadData: ({ current, count }) => ({
+		data: Array.from({ length: 20 }, (_, index) => ({ name: `条目 ${count + index + 1}` })),
+		finished: current >= 3
+	})
+});
+</script>
+<style scoped>
+.list {
+	height: 280px;
+}
+
+.row {
+	padding: 12px;
+	border-bottom: 1px solid var(--vc-color-light-deeper);
+	box-sizing: border-box;
+}
+
+.note {
+	margin: 12px 0;
+	line-height: 1.6;
+}
+
+.panels {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+}
+
+.panels section {
+	min-width: 0;
+}
+
+.row {
+	height: 48px;
+}
+</style>
+```
+:::
+
 ### 完整示例
+
+以上 Playground 保留各场景的最小交互；下面的源码示例提供更多组合选项和调试信息。
 
 - [Window 前置内容—RecycleList—后置内容](./examples/external-window.vue)
 - [VC Scroller 外部视口](./examples/external-scroller.vue)
