@@ -3,6 +3,16 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		Pagination: {
+			total: '共 {total} 条',
+			previousPage: '上一页',
+			nextPage: '下一页',
+			previousPages: '向前 {count} 页',
+			nextPages: '向后 {count} 页',
+			pageSize: '{size} 条/页',
+			goto: '跳至',
+			page: '页'
+		},
 		RecycleList: {
 			empty: '暂无数据~',
 			complete: '已全部加载~',

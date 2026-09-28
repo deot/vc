@@ -1,12 +1,16 @@
 @use '../style/helper' as *;
 
-$size: 32px;
+$size: unitfix(32);
+$foreground: varfix(foreground-color, pagination);
+$primary: varfix(color-primary-light, pagination);
+$selected-background: varfix(color-primary-lighter, pagination);
+$disabled: varfix(color-dark-extralight, pagination);
 $component-name: vc-pagination;
 
 @include block($component-name) {
 	display: flex;
-	font-size: 13px;
-	color: #080F20;
+	font-size: unitfix(13);
+	color: $foreground;
 	align-items: center;
 
 	@include clearfix;
@@ -14,53 +18,53 @@ $component-name: vc-pagination;
 	@include element(item) {
 		height: $size;
 		min-width: $size;
-		margin-right: 8px;
+		margin-right: unitfix(8);
 		font-family: Arial;
 		font-weight: 500;
 		line-height: $size;
 		text-align: center;
 		cursor: pointer;
-		border-radius: 8px;
+		border-radius: unitfix(8);
 		box-sizing: border-box;
 		user-select: none;
 
 		span {
 			font-family: "Monospaced Number";
-			color: #313947;
+			color: inherit;
 		}
 
 		@include when(jump) {
 			&::before, &::after {
-				border-color: #0000!important;
+				border-color: transparent!important;
 			};
 		}
 
 		@include when(active) {
-			background-color: #E8F4FF; 
+			background-color: $selected-background;
 
 			span {
-				color: #4A96FF !important;
+				color: $primary !important;
 			}
 
 			&::before, &::after {
-				border-color: #E8F4FF;
+				border-color: $selected-background;
 			};
 		}
 
 		&:hover {
-			background-color: #E8F4FF; 
+			background-color: $selected-background;
 
 			span {
-				color: #4A96FF !important;
+				color: $primary !important;
 			}
 
 			&::before, &::after {
-				border-color: #4A96FF;
+				border-color: $primary;
 			};
 		}
 
 		@include when(disabled) {
-			color: #ccc;
+			color: $disabled;
 			cursor: not-allowed;
 		}
 
@@ -68,24 +72,25 @@ $component-name: vc-pagination;
 			@include flex-cc;
 
 			.vc-icon {
-				font-size: 12px;
+				font-size: unitfix(12);
 				transform: scale(0.8);
 			}
 
 			&:hover {
-				color: #4A96FF !important;
+				color: $primary !important;
 			}
 
 			@include when(disabled) {
-				color: #ccc;
+				color: $disabled;
 				cursor: not-allowed;
 
 				&:hover {
-					color: #ccc !important;
+					color: $disabled !important;
+					background-color: transparent;
 				}
 
 				&::before, &::after {
-					border-color: #ccc;
+					border-color: $disabled;
 				};
 			}
 		}
@@ -94,7 +99,7 @@ $component-name: vc-pagination;
 	@include element(count) {
 		display: inline-block;
 		height: $size;
-		margin-right: 10px;
+		margin-right: unitfix(10);
 		line-height: $size;
 		white-space: nowrap;
 	}
@@ -108,5 +113,16 @@ $component-name: vc-pagination;
 		display: flex;
 		align-items: center;
 		white-space: nowrap;
+	}
+
+	@include element(sizer) {
+		width: unitfix(110);
+		margin-right: unitfix(10);
+	}
+
+	@include element(input) {
+		width: unitfix(50);
+		margin-right: unitfix(10);
+		margin-left: unitfix(10);
 	}
 }

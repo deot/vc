@@ -3,6 +3,16 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		Pagination: {
+			total: '{total} items',
+			previousPage: 'Previous page',
+			nextPage: 'Next page',
+			previousPages: 'Previous {count} pages',
+			nextPages: 'Next {count} pages',
+			pageSize: '{size} / page',
+			goto: 'Go to',
+			page: 'page'
+		},
 		RecycleList: {
 			empty: 'No data',
 			complete: 'All loaded',

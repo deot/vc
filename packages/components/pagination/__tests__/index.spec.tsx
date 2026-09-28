@@ -1,9 +1,52 @@
 // @vitest-environment jsdom
 
-import { Pagination, Select, InputNumber } from '@deot/vc-components';
+import { Pagination, MPagination, Select, InputNumber, VcInstance } from '@deot/vc-components';
+import { enUS, zhCN } from '@deot/vc-locale';
+import { nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
 
 describe('index.ts', () => {
+	afterEach(() => {
+		VcInstance.configure({ locale: zhCN });
+	});
+
+	it('locale: 文案、提示和条数选项随语言实时更新', async () => {
+		const wrapper = mount(Pagination, { props: { count: 200, current: 10, showSizer: true, showElevator: true } });
+		expect(MPagination).toBe(Pagination);
+		expect(wrapper.find('.vc-pagination__count').text()).toBe('共 200 条');
+		VcInstance.configure({ locale: enUS });
+		await nextTick();
+		expect(wrapper.find('.vc-pagination__count').text()).toBe('200 items');
+		for (const title of ['Previous page', 'Next page', 'Previous 5 pages', 'Next 5 pages']) {
+			expect(wrapper.find(`[title="${title}"]`).exists()).toBe(true);
+		}
+		expect(wrapper.findComponent(Select).props('extra')).toBe('10 / page');
+		expect(wrapper.findComponent(Select).props('data')).toEqual([10, 20, 30, 40].map(value => ({ value, label: `${value} / page` })));
+		expect(wrapper.find('.vc-pagination__elevator').text()).toBe('Go topage');
+		VcInstance.configure({ locale: zhCN });
+		await nextTick();
+		expect(wrapper.find('[title="上一页"]').exists()).toBe(true);
+		expect(wrapper.findComponent(Select).props('extra')).toBe('10 条/页');
+		wrapper.unmount();
+	});
+
+	it('locale: 默认插槽在切换语言后仍优先，包括空内容', async () => {
+		const wrapper = mount(Pagination, { props: { count: 100 }, slots: { default: () => '' } });
+		VcInstance.configure({ locale: enUS });
+		await nextTick();
+		expect(wrapper.find('.vc-pagination__count').text()).toBe('');
+		wrapper.unmount();
+	});
+
+	it('disabled: 首末页样式随当前页变化，空数据禁用双向翻页', async () => {
+		const wrapper = mount(Pagination, { props: { count: 20 } });
+		expect(wrapper.find('[title="上一页"]').classes()).toContain('is-disabled');
+		expect(wrapper.find('[title="下一页"]').classes()).not.toContain('is-disabled');
+		await wrapper.setProps({ current: 2 });
+		expect(wrapper.find('[title="下一页"]').classes()).toContain('is-disabled');
+		await wrapper.setProps({ count: 0 });
+		expect(wrapper.findAll('.is-icon.is-disabled')).toHaveLength(2);
+	});
 	it('basic', () => {
 		expect(typeof Pagination).toBe('object');
 	});
@@ -64,7 +107,7 @@ describe('index.ts', () => {
 	it('next: 点击下一页', async () => {
 		const wrapper = mount(Pagination, { props: { count: 100, current: 1 } });
 
-		await wrapper.find('[title="next"]').trigger('click');
+		await wrapper.find('[title="下一页"]').trigger('click');
 
 		expect(wrapper.emitted()).toHaveProperty('update:current');
 		expect(wrapper.emitted()).toHaveProperty('change');
@@ -74,7 +117,7 @@ describe('index.ts', () => {
 	it('prev: 点击上一页', async () => {
 		const wrapper = mount(Pagination, { props: { count: 100, current: 3 } });
 
-		await wrapper.find('[title="prev"]').trigger('click');
+		await wrapper.find('[title="上一页"]').trigger('click');
 
 		expect(wrapper.emitted('change')![0]).toEqual([2]);
 	});
@@ -82,7 +125,7 @@ describe('index.ts', () => {
 	it('prev: 第一页时点击无效', async () => {
 		const wrapper = mount(() => (<Pagination count={100} current={1} />));
 
-		await wrapper.find('[title="prev"]').trigger('click');
+		await wrapper.find('[title="上一页"]').trigger('click');
 
 		expect(wrapper.emitted('change')).toBeUndefined();
 	});
@@ -90,7 +133,7 @@ describe('index.ts', () => {
 	it('next: 最后一页时点击无效', async () => {
 		const wrapper = mount(() => (<Pagination count={100} current={10} pageSize={10} />));
 
-		await wrapper.find('[title="next"]').trigger('click');
+		await wrapper.find('[title="下一页"]').trigger('click');
 
 		expect(wrapper.emitted('change')).toBeUndefined();
 	});

@@ -5,6 +5,7 @@ import { props as pageProps } from './pagination-props';
 import { Icon } from '../icon/index';
 import { Select } from '../select/index';
 import { InputNumber } from '../input/index';
+import { useLocale } from '../locale';
 
 const COMPONENT_NAME = 'vc-pagination';
 
@@ -13,6 +14,7 @@ export const Pagination = defineComponent({
 	props: pageProps,
 	emits: ['update:current', 'change', 'page-size-change'],
 	setup(props, { emit, slots, expose }) {
+		const { t } = useLocale();
 		const hackPage = ref(props.current);
 		const currentPage = ref();
 		const currentPageSize = ref();
@@ -124,9 +126,7 @@ export const Pagination = defineComponent({
 										? slots.default()
 										: (
 												<span>
-													<span>共</span>
-													<span style="padding: 0 5px">{props.count}</span>
-													<span>条</span>
+													{t('vc.Pagination.total', { total: props.count })}
 												</span>
 											)
 								}
@@ -135,7 +135,7 @@ export const Pagination = defineComponent({
 					}
 					<div
 						class={[{ 'is-disabled': currentPage.value == 1 }, 'vc-pagination__item is-icon']}
-						title="prev"
+						title={t('vc.Pagination.previousPage')}
 						onClick={prev}
 					>
 						<Icon type="left" />
@@ -151,7 +151,7 @@ export const Pagination = defineComponent({
 					{
 						currentPage.value > 5 && (
 							<div
-								title="向前 5 页"
+								title={t('vc.Pagination.previousPages', { count: 5 })}
 								class="vc-pagination__item is-jump"
 								onClick={handleFastPre}
 							>
@@ -250,7 +250,7 @@ export const Pagination = defineComponent({
 					{
 						totalPage.value - currentPage.value >= 5 && (
 							<div
-								title="向后 5 页"
+								title={t('vc.Pagination.nextPages', { count: 5 })}
 								class="vc-pagination__item is-jump"
 								onClick={handleFastNext}
 							>
@@ -272,8 +272,8 @@ export const Pagination = defineComponent({
 					}
 
 					<div
-						class={[{ 'is-disabled': currentPage == totalPage }, 'vc-pagination__item is-icon']}
-						title="next"
+						class={[{ 'is-disabled': currentPage.value == totalPage.value }, 'vc-pagination__item is-icon']}
+						title={t('vc.Pagination.nextPage')}
 						onClick={next}
 					>
 						<Icon type="right" />
@@ -290,9 +290,12 @@ export const Pagination = defineComponent({
 												modelValue={currentPageSize.value}
 												placement={props.placement}
 												portal={props.portal}
-												extra={`${currentPageSize.value} 条/页`}
-												style="width: 90px; margin-right: 10px;"
-												data={props.pageSizeOptions.map(i => ({ value: i, label: `${i} 条/页` }))}
+												extra={t('vc.Pagination.pageSize', { size: currentPageSize.value })}
+												class="vc-pagination__sizer"
+												data={props.pageSizeOptions.map(i => ({
+													value: i,
+													label: t('vc.Pagination.pageSize', { size: `${i}` })
+												}))}
 												onChange={resetPageSize}
 											/>
 										</div>
@@ -302,20 +305,20 @@ export const Pagination = defineComponent({
 								{
 									props.showElevator && (
 										<div class="vc-pagination__elevator">
-											<span>跳至</span>
+											<span>{t('vc.Pagination.goto')}</span>
 											<InputNumber
 												modelValue={hackPage.value}
 												step={0}
 												min={1}
 												max={totalPage.value}
-												style="width: 50px; margin-right: 10px; margin-left: 10px;"
+												class="vc-pagination__input"
 												// @ts-ignore
 												spellcheck={false}
 												autocomplete="off"
 												onInput={handleInput}
 												onEnter={handleEnter}
 											/>
-											<span>页</span>
+											<span>{t('vc.Pagination.page')}</span>
 										</div>
 									)
 								}
