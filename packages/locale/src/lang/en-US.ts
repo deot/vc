@@ -3,6 +3,13 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		UploadPicker: {
+			upload: 'Upload',
+			failed: 'Upload failed',
+			receiving: 'Receiving on server...',
+			previewAudio: 'Preview audio',
+			previewVideo: 'Preview video'
+		},
 		Upload: {
 			remoteError: 'Upload response failed. Please try again',
 			sizeLimit: 'Upload failed. Maximum size: {size}MB',

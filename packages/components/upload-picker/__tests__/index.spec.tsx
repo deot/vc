@@ -24,6 +24,8 @@ import { MImageItem } from '../mobile/item/image';
 import { MVideoItem } from '../mobile/item/video';
 import { MAudioItem } from '../mobile/item/audio';
 import { MFileItem } from '../mobile/item/file';
+import { VcInstance } from '../../vc';
+import { enUS, zhCN } from '@deot/vc-locale';
 
 const files = [
 	{ type: 'image', label: 'photo.jpg', value: 'https://cdn.test/photo.jpg' },
@@ -33,6 +35,48 @@ const files = [
 ];
 
 describe('UploadPicker', () => {
+	it('updates built-in labels and item states when locale changes', async () => {
+		const originalLocale = VcInstance.options.locale;
+		const wrappers: ReturnType<typeof mount>[] = [];
+		try {
+			VcInstance.configure({ locale: zhCN });
+			const picker = mount(UploadPicker);
+			wrappers.push(picker);
+			expect(picker.text()).toContain('上传');
+			for (const Component of [ImageItem, VideoItem, AudioItem, FileItem, MImageItem, MVideoItem, MAudioItem, MFileItem]) {
+				const wrapper = mount(Component, {
+					props: { row: { errorFlag: true }, keyValue: { label: 'label', value: 'value' } }
+				});
+				wrappers.push(wrapper);
+				expect(wrapper.text()).toContain('上传失败');
+			}
+			VcInstance.configure({ locale: enUS });
+			await nextTick();
+			expect(picker.text()).toContain('Upload');
+			for (const wrapper of wrappers.slice(1)) expect(wrapper.text()).toContain('Upload failed');
+			for (const Component of [ImageItem, VideoItem, AudioItem]) {
+				const wrapper = mount(Component, {
+					props: { row: { percent: 100 }, keyValue: { label: 'label', value: 'value' } }
+				});
+				wrappers.push(wrapper);
+				expect(wrapper.text()).toContain('Receiving on server...');
+			}
+			for (const Component of [UploadPicker, MUploadPicker]) {
+				const wrapper = mount(Component, { props: { picker: ['video', 'audio'], modelValue: files.slice(1, 3) } });
+				wrappers.push(wrapper);
+				expect(wrapper.findAll('button').map(button => button.attributes('aria-label'))).toEqual(['Preview video', 'Preview audio']);
+				VcInstance.configure({ locale: zhCN });
+				await nextTick();
+				expect(wrapper.findAll('button').map(button => button.attributes('aria-label'))).toEqual(['预览视频', '预览音频']);
+				VcInstance.configure({ locale: enUS });
+				await nextTick();
+			}
+		} finally {
+			wrappers.forEach(wrapper => wrapper.unmount());
+			VcInstance.configure({ locale: originalLocale });
+		}
+	});
+
 	it('exports desktop and mobile components', () => {
 		const onFileStart: UploadPickerCallback['onFileStart'] = ({ type }) => type;
 

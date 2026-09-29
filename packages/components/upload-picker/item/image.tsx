@@ -1,6 +1,7 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, getCurrentInstance, computed, Fragment } from 'vue';
+import { useLocale } from '../../locale';
 import { ImagePreview } from '../../image-preview/index';
 import { VcInstance } from '../../vc/index';
 import { Icon } from '../../icon/index';
@@ -32,6 +33,7 @@ export const ImageItem = defineComponent({
 	},
 	emits: ['open', 'close', 'remove'],
 	setup(props, { slots, emit }) {
+		const { t } = useLocale();
 		const instance = getCurrentInstance();
 		const current = computed(() => {
 			return getAvailableIndex(props.row, props.data, props.index!, props.keyValue!.value);
@@ -102,9 +104,13 @@ export const ImageItem = defineComponent({
 																			/>
 																		)
 																	: !value && row.percent === 100 && !row.errorFlag
-																			? (<p style="line-height: 1; padding: 5px">服务器正在接收...</p>)
+																			? (
+																					<p style="line-height: 1; padding: 5px">
+																						{t('vc.UploadPicker.receiving')}
+																					</p>
+																				)
 																			: isError
-																				? (<div style="padding: 5px">上传失败</div>)
+																				? (<div style="padding: 5px">{t('vc.UploadPicker.failed')}</div>)
 																				: null
 															}
 

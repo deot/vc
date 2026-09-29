@@ -1,6 +1,7 @@
 /** @jsxImportSource vue */
 
 import { computed, defineComponent, Fragment } from 'vue';
+import { useLocale } from '../../../locale';
 import { Icon } from '../../../icon';
 import { Spin } from '../../../spin';
 import { getAvailableIndex } from '../../utils';
@@ -17,6 +18,7 @@ export const MFileItem = defineComponent({
 	},
 	emits: ['remove'],
 	setup(props, { emit, slots }) {
+		const { t } = useLocale();
 		const current = computed(() => {
 			return getAvailableIndex(props.row, props.data, props.index!, props.keyValue!.value);
 		});
@@ -35,7 +37,7 @@ export const MFileItem = defineComponent({
 										<div class={[props.fileClass, 'vcm-upload-picker-file-item__content']}>
 											{
 												isError
-													? <span>上传失败</span>
+													? <span>{t('vc.UploadPicker.failed')}</span>
 													: !value
 															? <Spin size={20} />
 															: (

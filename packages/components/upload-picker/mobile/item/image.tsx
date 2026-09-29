@@ -1,6 +1,7 @@
 /** @jsxImportSource vue */
 
 import { computed, defineComponent, Fragment, getCurrentInstance } from 'vue';
+import { useLocale } from '../../../locale';
 import { ImagePreview } from '../../../image-preview';
 import { VcInstance } from '../../../vc';
 import { Icon } from '../../../icon';
@@ -21,6 +22,7 @@ export const MImageItem = defineComponent({
 	},
 	emits: ['open', 'close', 'remove'],
 	setup(props, { slots, emit }) {
+		const { t } = useLocale();
 		const instance = getCurrentInstance();
 		const current = computed(() => {
 			return getAvailableIndex(props.row, props.data, props.index!, props.keyValue!.value);
@@ -63,7 +65,11 @@ export const MImageItem = defineComponent({
 													)
 												: (
 														<div class={[props.imageClass, 'vcm-upload-image-item__content']}>
-															{ isError ? <div style="padding: 5px">上传失败</div> : <Spin size={20} /> }
+															{
+																isError
+																	? <div style="padding: 5px">{t('vc.UploadPicker.failed')}</div>
+																	: <Spin size={20} />
+															}
 														</div>
 													)
 										}

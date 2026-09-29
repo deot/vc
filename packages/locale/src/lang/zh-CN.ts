@@ -3,6 +3,13 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		UploadPicker: {
+			upload: '上传',
+			failed: '上传失败',
+			receiving: '服务器正在接收...',
+			previewAudio: '预览音频',
+			previewVideo: '预览视频'
+		},
 		Upload: {
 			remoteError: '上传远程失败，请重试',
 			sizeLimit: '上传失败，大小限制为{size}MB',

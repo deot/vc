@@ -1,6 +1,7 @@
 /** @jsxImportSource vue */
 
 import { computed, defineComponent, Fragment } from 'vue';
+import { useLocale } from '../../locale';
 import { Icon } from '../../icon';
 import { Progress } from '../../progress';
 import { VideoPreview } from '../preview/video';
@@ -24,6 +25,7 @@ export const VideoItem = defineComponent({
 	},
 	emits: ['remove'],
 	setup(props, { emit, slots }) {
+		const { t } = useLocale();
 		const current = computed(() => {
 			return getAvailableIndex(props.row, props.data, props.index!, props.keyValue!.value);
 		});
@@ -46,9 +48,9 @@ export const VideoItem = defineComponent({
 													: row.percent && Number(row.percent) !== 100
 														? <Progress percent={row.percent} showText={false} style="width: 100%; padding: 0 5px" />
 														: !value && row.percent === 100 && !row.errorFlag
-																? <p style="line-height: 1; padding: 5px">服务器正在接收...</p>
+																? <p style="line-height: 1; padding: 5px">{t('vc.UploadPicker.receiving')}</p>
 																: isError
-																	? <div style="padding: 5px">上传失败</div>
+																	? <div style="padding: 5px">{t('vc.UploadPicker.failed')}</div>
 																	: null
 											}
 										</div>
@@ -56,7 +58,7 @@ export const VideoItem = defineComponent({
 											typeof value === 'string' && !row.errorFlag && (
 												<button
 													type="button"
-													aria-label="预览视频"
+													aria-label={t('vc.UploadPicker.previewVideo')}
 													class="vc-upload-picker-video-item__play"
 													onClick={() => VideoPreview.popup({ src: value })}
 												>

@@ -1,6 +1,7 @@
 /** @jsxImportSource vue */
 
 import { computed, defineComponent, Fragment } from 'vue';
+import { useLocale } from '../../../locale';
 import { Icon } from '../../../icon';
 import { Spin } from '../../../spin';
 import { AudioPreview } from '../../preview/audio';
@@ -18,6 +19,7 @@ export const MAudioItem = defineComponent({
 	},
 	emits: ['remove'],
 	setup(props, { emit, slots }) {
+		const { t } = useLocale();
 		const current = computed(() => {
 			return getAvailableIndex(props.row, props.data, props.index!, props.keyValue!.value);
 		});
@@ -37,7 +39,7 @@ export const MAudioItem = defineComponent({
 												typeof value === 'string' && !row.errorFlag
 													? <audio src={value} preload="metadata" />
 													: isError
-														? <div style="padding: 5px">上传失败</div>
+														? <div style="padding: 5px">{t('vc.UploadPicker.failed')}</div>
 														: <Spin size={20} />
 											}
 										</div>
@@ -45,7 +47,7 @@ export const MAudioItem = defineComponent({
 											typeof value === 'string' && !row.errorFlag && (
 												<button
 													type="button"
-													aria-label="预览音频"
+													aria-label={t('vc.UploadPicker.previewAudio')}
 													class="vcm-upload-picker-audio-item__play"
 													onClick={() => AudioPreview.popup({ src: value })}
 												>

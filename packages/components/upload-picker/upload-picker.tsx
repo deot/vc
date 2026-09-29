@@ -1,6 +1,7 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, computed, getCurrentInstance, Fragment } from 'vue';
+import { useLocale } from '../locale';
 
 import { props as uploadPickerProps } from './upload-picker-props';
 import { VcInstance } from '../vc';
@@ -31,6 +32,7 @@ export const UploadPicker = defineComponent({
 		'remove-before'
 	],
 	setup(props, { slots, expose }) {
+		const { t } = useLocale();
 		const instance = getCurrentInstance()!;
 		const itemMap = {
 			image: ImageItem,
@@ -134,7 +136,7 @@ export const UploadPicker = defineComponent({
 															onClick={e => handleClick(e, picker.type)}
 														>
 															<Icon type="mini-plus" class="vc-upload-picker__plus-icon" />
-															<span style="margin-top: 8px">上传</span>
+															<span style="margin-top: 8px">{t('vc.UploadPicker.upload')}</span>
 														</div>
 													)
 										}
