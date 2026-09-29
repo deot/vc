@@ -1,13 +1,18 @@
 @use '../style/helper' as *;
 
 $component-name: vc-dropdown;
+$color: varfix(color-dark-lighter, dropdown);
+$color-primary: varfix(color-primary, dropdown);
+$background-hover: varfix(color-primary-lighter, dropdown);
+$color-disabled: varfix(color-dark-extralight, dropdown);
+$border-color: varfix(color-light-deeper, dropdown);
 
 @include block(vc-dropdown) {
 	display: inline-block;
 }
 
 @include block(vc-dropdown-menu) {
-	min-width: 100px;
+	min-width: unitfix(100);
 	padding: 0;
 	margin: 0;
 	list-style: none;
@@ -15,12 +20,12 @@ $component-name: vc-dropdown;
 
 @include block(vc-dropdown-item) {
 	position: relative;
-	padding: 7px 16px;
+	padding: unitfix(7) unitfix(16);
 	margin: 0;
 	clear: both;
-	font-size: 12px !important;
+	font-size: unitfix(12) !important;
 	line-height: normal;
-	color: #666;
+	color: $color;
 	white-space: nowrap;
 	list-style: none;
 	cursor: pointer;
@@ -29,25 +34,25 @@ $component-name: vc-dropdown;
 
 
 	&:hover {
-		color: #456CF6;
-		background-color: #e6f7ff;
+		color: $color-primary;
+		background-color: $background-hover;
 	}
 
 	@include when(disabled) {
-		color: #c5c8ce;
+		color: $color-disabled;
 		cursor: not-allowed;
 
 		&:hover {
-			background-color: #fff;
+			background-color: transparent;
 		}
 	}
 
 	@include when(selected) {
-		color: #456CF6;
+		color: $color-primary;
 	}
 
 	@include when(divided) {
-		margin-top: 5px;
+		margin-top: unitfix(5);
 
-		@include border('top', #e8eaec); }
+		@include border('top', $border-color); }
 }

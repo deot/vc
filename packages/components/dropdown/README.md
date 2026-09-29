@@ -1,290 +1,242 @@
 ## 下拉菜单（Dropdown）
-将菜单折叠到下拉菜单里
+
+将操作收纳到浮层菜单中，通过 DropdownMenu 和 DropdownItem 展示并选择操作。
 
 ### 何时使用
-当页面上的操作命令过多时，用此组件可以收纳操作元素。点击或移入触点，会出现一个下拉菜单。可在列表中进行选择，并执行相应的命令。
+
+当页面操作较多，或需要为某个元素提供附加操作时使用。
 
 ### 基础用法
-移动到菜单上，展开。
 
-:::RUNTIME
+默认悬停展开；点击菜单项会触发 `click` 并关闭菜单。回调优先使用 `value`，缺省时使用 `label`。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
 ```vue
 <template>
-	<div class="v-dropdown-basic">
-		<Dropdown
-			v-model="visible"
-			placement="bottom-left"
-		>
-			<div class="link">下拉菜单</div>
+	<div class="dropdown-basic-demo">
+		<Dropdown placement="bottom-left" @click="handleClick">
+			<Button>悬停查看操作</Button>
 			<template #content>
 				<DropdownMenu>
-					<DropdownItem value="1">
-						驴打滚
-					</DropdownItem>
-					<DropdownItem value="2">
-						炸酱面
-					</DropdownItem>
-					<DropdownItem value="3">
-						豆汁儿
-					</DropdownItem>
-					<DropdownItem value="4">
-						臭豆腐
-					</DropdownItem>
+					<DropdownItem value="edit" label="编辑" />
+					<DropdownItem value="copy" label="复制" />
+					<DropdownItem label="查看详情" />
 				</DropdownMenu>
 			</template>
 		</Dropdown>
+		<p>最近操作：{{ action }}</p>
 	</div>
 </template>
-<script>
-import { Dropdown } from '@deot/vc';
 
-export default {
-	components: {
-		Dropdown: Dropdown
-	},
-};
-</script>
-<style>
-.v-dropdown-basic .link {
-	cursor: pointer;
-}
-.v-dropdown-basic .link:hover {
-	color: #409EFF;
-}
-</style>
-```
-:::
-
-### 触发方式
-配置`trigger`参数为`hover`触发或者`click`触发。
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-dropdown-basic">
-		<h2>默认hover触发</h2>
-		<Dropdown
-			v-model="visible"
-			placement="bottom-left"
-		>
-			<div class="link">下拉菜单</div>
-			<template #content>
-				<DropdownMenu>
-					<DropdownItem value="1">
-						驴打滚
-					</DropdownItem>
-					<DropdownItem value="2">
-						炸酱面
-					</DropdownItem>
-					<DropdownItem value="3">
-						豆汁儿
-					</DropdownItem>
-					<DropdownItem value="4">
-						臭豆腐
-					</DropdownItem>
-				</DropdownMenu>
-			</template>
-		</Dropdown>
-		<h2>click触发</h2>
-		<Dropdown
-			v-model="visible2"
-			placement="bottom-left"
-			trigger="click"
-		>
-			<div class="link">下拉菜单</div>
-			<template #content>
-				<DropdownMenu>
-					<DropdownItem value="1">
-						驴打滚
-					</DropdownItem>
-					<DropdownItem value="2">
-						炸酱面
-					</DropdownItem>
-					<DropdownItem value="3">
-						豆汁儿
-					</DropdownItem>
-					<DropdownItem value="4">
-						臭豆腐
-					</DropdownItem>
-				</DropdownMenu>
-			</template>
-		</Dropdown>
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { Dropdown, DropdownMenu, DropdownItem } from '@deot/vc';
-
-const visible = ref(false);
-const visible2 = ref(false);
-</script>
-<style>
-.v-dropdown-basic .link {
-	cursor: pointer;
-}
-.v-dropdown-basic .link:hover {
-	color: #409EFF;
-}
-</style>
-```
-:::
-
-### 下拉菜单出现位置
-配置placement。
-
-:::RUNTIME
-```vue
-<template>
-	<div class="v-dropdown-basic">
-		<div style="margin-bottom: 10px">
-			<Button @click="handlePlacement('top')">top</Button>
-			<Button @click="handlePlacement('left')">left</Button>
-			<Button @click="handlePlacement('right')">right</Button>
-			<Button @click="handlePlacement('bottom')">bottom</Button>
-			<Button @click="handlePlacement('bottom-left')">bottom-left</Button>
-			<Button @click="handlePlacement('bottom-right')">bottom-right</Button>
-			<Button @click="handlePlacement('top-left')">top-left</Button>
-			<Button @click="handlePlacement('top-right')">top-right</Button>
-			<Button @click="handlePlacement('right-top')">right-top</Button>
-			<Button @click="handlePlacement('right-bottom')">right-bottom</Button>
-			<Button @click="handlePlacement('left-top')">left-top</Button>
-			<Button @click="handlePlacement('left-bottom')">left-bottom</Button>
-		</div>
-		<Dropdown
-			v-model="visible"
-			:placement="palcement"
-		>
-			<div class="link">下拉菜单</div>
-			<template #content>
-				<DropdownMenu>
-					<DropdownItem value="1">
-						驴打滚
-					</DropdownItem>
-					<DropdownItem value="2">
-						炸酱面
-					</DropdownItem>
-					<DropdownItem value="3">
-						豆汁儿
-					</DropdownItem>
-					<DropdownItem value="4">
-						臭豆腐
-					</DropdownItem>
-				</DropdownMenu>
-			</template>
-		</Dropdown>
-	</div>
-</template>
 <script setup>
 import { ref } from 'vue';
 import { Button, Dropdown, DropdownMenu, DropdownItem } from '@deot/vc';
 
-const palcement = ref('bottom');
-const handlePlacement = (val) => {
-	palcement.value = val;
+const action = ref('尚未选择');
+const handleClick = (value) => {
+	action.value = value;
 };
 </script>
-<style>
-.v-dropdown-basic .link {
-	cursor: pointer;
-}
-.v-dropdown-basic .link:hover {
-	color: #409EFF;
-}
-.v-dropdown-basic .vc-btn {
-	margin-bottom: 10px;
+
+<style scoped>
+.dropdown-basic-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: space-between;
+	min-height: 160px;
 }
 </style>
 ```
 :::
 
-### 带三角指向的菜单
-通过设置`arrow`添加三角指向。
+### 点击触发与菜单项状态
 
-:::RUNTIME
+`selected` 只控制选中样式，选中值由调用方维护。`disabled` 阻止菜单项事件和关闭；`:closable="false"` 允许连续选择。`divided` 添加上分割线，`arrow` 显示箭头。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
 ```vue
 <template>
-	<div class="v-dropdown-basic">
-		<Dropdown
-			v-model="visible"
-			placement="bottom-left"
-			arrow
-		>
-			<div class="link">下拉菜单</div>
+	<div class="dropdown-states-demo">
+		<Dropdown v-model="isVisible" trigger="click" placement="bottom-left" arrow @click="handleClick">
+			<Button>点击选择排序</Button>
 			<template #content>
 				<DropdownMenu>
-					<DropdownItem value="1" disabled>
-						驴打滚（不可点击）
-					</DropdownItem>
-					<DropdownItem value="2" :closable="false">
-						炸酱面（点击菜单不消失）
-					</DropdownItem>
-					<DropdownItem value="3" divided>
-						豆汁儿（添加分割线）
-					</DropdownItem>
-					<DropdownItem value="4">
-						臭豆腐
-					</DropdownItem>
+					<DropdownItem value="time" :selected="sort === 'time'" :closable="false" label="按时间排序" />
+					<DropdownItem value="name" :selected="sort === 'name'" :closable="false" label="按名称排序" />
+					<DropdownItem disabled label="无权限操作" />
+					<DropdownItem value="done" divided label="完成并关闭" />
 				</DropdownMenu>
 			</template>
 		</Dropdown>
+		<p>排序：{{ sort }}；菜单{{ isVisible ? '已展开' : '已关闭' }}</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Dropdown, DropdownMenu, DropdownItem } from '@deot/vc';
+import { Button, Dropdown, DropdownMenu, DropdownItem } from '@deot/vc';
 
-const palcement = ref('bottom');
-const handlePlacement = (val) => {
-	palcement.value = val;
+const isVisible = ref(false);
+const sort = ref('time');
+const handleClick = (value) => {
+	if (value !== 'done') sort.value = value;
 };
 </script>
-<style>
-.v-dropdown-basic .link {
-	cursor: pointer;
-}
-.v-dropdown-basic .link:hover {
-	color: #409EFF;
+
+<style scoped>
+.dropdown-states-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: space-between;
+	min-height: 220px;
 }
 </style>
 ```
 :::
 
-### API
+### 手动控制与弹出位置
 
-### Dropdown属性
+`trigger="custom"` 配合 `v-model` 控制显隐，也可以通过实例 `close()` 关闭。下例切换位置后重新展开，弹层靠近视口边缘时会自动调整位置。
 
-| 属性                | 说明                                  | 类型        | 可选值                                                                                                                                   | 默认值      |
-| ----------------- | ----------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| modelValue        | 手动控制下拉框的显示，在 trigger = 'custom' 时使用 | `boolean` | -                                                                                                                                     | `false`  |
-| trigger           | 触发方式                                | `string`  | 可选值为 `hover`（悬停）`click`（点击）`contextMenu`（右键）`custom`（自定义），使用 custom 时，需配合 `visible` 一起使用                                              | `hover`  |
-| arrow             | 是否带三角指向                             | `boolean` | -                                                                                                                                     | `false`  |
-| placement         | 菜单弹出位置                              | `string`  | `top`、`left`、`right`、`bottom`、`bottom-left`、`bottom-right`、`top-left`、`top-right`、`right-top`、`right-bottom`、`left-top`、`left-bottom` | `bottom` |
-| portal-class | 开启 portal 时，给浮层添加额外的 class 名称       | `string`  | -                                                                                                                                     | -        |
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+```vue
+<template>
+	<div class="dropdown-placement-demo">
+		<label>
+			弹出位置
+			<select v-model="placement" @change="handlePlacement">
+				<option v-for="item in placements" :key="item" :value="item">{{ item }}</option>
+			</select>
+		</label>
+		<div class="dropdown-placement-demo__stage">
+			<Dropdown ref="dropdown" v-model="isVisible" trigger="custom" :placement="placement" arrow>
+				<Button @click="handleToggle">{{ isVisible ? '收起' : '展开' }}菜单</Button>
+				<template #content>
+					<DropdownMenu>
+						<DropdownItem label="编辑" />
+						<DropdownItem label="复制" />
+					</DropdownMenu>
+				</template>
+			</Dropdown>
+		</div>
+		<Button @click="handleClose">调用 close()</Button>
+	</div>
+</template>
 
-### DropdownItem属性
-属性 | 说明 | 类型 | 可选值 | 默认值
----|---|---|---|---
-name | 用来标识这一项 | `string` | - | -
-disabled | 是否禁止选择 | `boolean` | - | `false`
-selected | 是否选中 | `boolean` | - | `false`
-closable | 是否点击后隐藏 | `boolean` | - | `true`
-divided | 是否需要分割线 | `boolean` | - | `false`
+<script setup>
+import { ref } from 'vue';
+import { Button, Dropdown, DropdownMenu, DropdownItem } from '@deot/vc';
 
-### 事件
+const dropdown = ref();
+const isVisible = ref(false);
+const placement = ref('bottom');
+const placements = [
+	'top', 'top-left', 'top-right', 'bottom', 'bottom-left', 'bottom-right',
+	'left', 'left-top', 'left-bottom', 'right', 'right-top', 'right-bottom'
+];
+const handleToggle = () => {
+	isVisible.value = !isVisible.value;
+};
+const handlePlacement = () => {
+	isVisible.value = false;
+};
+const handleClose = () => {
+	dropdown.value?.close();
+};
+</script>
 
-| 事件名            | 说明           | 回调参数                     | 参数说明             |
-| -------------- | ------------ | ------------------------ | ---------------- |
-| click          | 点击菜单项时触发     | `(name: string) => void` | `name`：item的name |
-| visible-change | visible改变时回调 | -                        | -                |
-| close          | 关闭时回调        | -                        | -                |
-| ready          | 弹层出来时回调      | -                        | -                |
+<style scoped>
+.dropdown-placement-demo {
+	display: grid;
+	gap: 16px;
+	justify-items: start;
+}
+.dropdown-placement-demo__stage {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: 240px;
+}
+</style>
+```
+:::
 
+## API
 
-### Slot
+### Dropdown 属性
 
-| 属性   | 说明                             |
-| ---- | ------------------------------ |
-| \-   | 触发下拉列表显示的元素。 注意： 必须是一个元素或者或者组件 |
-| content | 列表内容，一般由 `DropdownMenu` 承担     |
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| modelValue | 是否显示菜单，支持 `v-model`，适用于所有触发模式 | `boolean` | - | `false` |
+| trigger | 触发方式；`custom` 由调用方控制，`strictHover` 移出触发区即延时关闭，`focus` 需触发根节点可聚焦 | `string` | `hover` / `strictHover` / `click` / `focus` / `custom` | `hover` |
+| placement | 首选弹出位置 | `string` | `top` / `top-left` / `top-right` / `bottom` / `bottom-left` / `bottom-right` / `left` / `left-top` / `left-bottom` / `right` / `right-top` / `right-bottom` | `bottom` |
+| arrow | 是否显示箭头 | `boolean` | - | `false` |
+| portalClass | 浮层附加类名 | `string \| object` | - | - |
 
+其他属性透传给 Popover，例如 `portal`、`portalStyle`、`getPopupContainer`、`outsideClickable` 和 `tag`；`class`、`style` 应用于触发根节点。`focus` 模式可搭配 `tabindex="0"`。当前不支持 `contextMenu` 触发。
 
+### Dropdown 事件
+
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue | 内部显隐操作时同步状态 | `(isVisible: boolean)` | 用于 `v-model` |
+| visible-change | 内部显隐操作时触发；仅外部赋值不触发 | `(isVisible: boolean)` | 当前显隐状态 |
+| click | 点击未禁用菜单项时触发 | `(value: string \| number \| undefined, event: MouseEvent)` | 菜单项 `value`，缺省时为 `label`；第二参数为原生事件 |
+| ready | 浮层就绪时触发 | - | - |
+| close | 浮层关闭生命周期回调 | - | - |
+
+### Dropdown 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 触发内容，由 Popover 根节点包裹 | - |
+| content | 浮层内容，通常放置 DropdownMenu | - |
+
+### Dropdown 方法
+
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| close | 关闭菜单并触发 `update:modelValue(false)` 与 `visible-change(false)` | - | `void` |
+
+### DropdownMenu 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 菜单项；渲染于 `ul` 内 | - |
+
+### DropdownItem 属性
+
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| value | 菜单项回调值；未设置时使用 `label` | `string \| number` | - | `undefined` |
+| label | 默认显示文本，也是 `value` 缺省时的回调值 | `string \| number` | - | `undefined` |
+| disabled | 禁止点击，不触发菜单项事件或关闭 | `boolean` | - | `false` |
+| selected | 是否显示选中样式，不自动维护选择状态 | `boolean` | - | `false` |
+| closable | 点击后是否关闭所属 Dropdown | `boolean` | - | `true` |
+| divided | 是否显示上分割线 | `boolean` | - | `false` |
+
+### DropdownItem 事件
+
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| click | 未禁用时点击触发，同时通知所属 Dropdown | `(value: string \| number \| undefined, event: MouseEvent)` | 与 Dropdown 的 `click` 参数相同 |
+
+### DropdownItem 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 优先于 `label` 的显示内容；不用于推断回调值 | - |
+
+DropdownItem 应置于 Dropdown 的内容中使用。`MDropdown`、`MDropdownMenu`、`MDropdownItem` 是同一实现的移动端别名，触屏场景建议使用 `trigger="click"`。
+
+### 主题
+
+菜单项支持 `--vc-dropdown-color-dark-lighter`（文字）、`--vc-dropdown-color-primary`（悬停与选中）、`--vc-dropdown-color-primary-lighter`（悬停背景）、`--vc-dropdown-color-dark-extralight`（禁用文字）和 `--vc-dropdown-color-light-deeper`（分割线），缺省时使用同名全局 token。
+
+浮层背景、阴影和箭头由 Popover 提供。默认浮层挂载在 `body`，主题变量应设置在浮层能继承的位置，或通过 `portalStyle` / `portalClass` 设置。
