@@ -8,6 +8,9 @@ $color-dark: varfix(color-dark, upload-task);
 $color-dark-lighter: varfix(color-dark-lighter, upload-task);
 $background-color-light: varfix(background-color-light, upload-task);
 $border-color: varfix(border-color, upload-task, #e8e8e8);
+$result-color: varfix(result-color, upload-task, #fff);
+$progress-background: varfix(progress-background, upload-task, rgb(74 150 255 / 8%));
+$box-shadow: varfix(box-shadow, upload-task, 0 0 unitfix(50) rgb(0 0 0 / 20%));
 $row-height: unitfix(32);
 
 @include block($component-name) {
@@ -22,7 +25,7 @@ $row-height: unitfix(32);
 	color: $color-dark;
 	background: $background-color-light;
 	border-radius: unitfix(4);
-	box-shadow: 0 0 unitfix(50) rgb(0 0 0 / 20%);
+	box-shadow: $box-shadow;
 
 	button {
 		padding: 0;
@@ -50,7 +53,7 @@ $row-height: unitfix(32);
 		display: flex;
 		height: $row-height;
 		padding: 0 unitfix(12);
-		color: #fff;
+		color: $result-color;
 		background: $color-primary;
 		align-items: center;
 		justify-content: space-between;
@@ -108,7 +111,7 @@ $row-height: unitfix(32);
 		top: 0;
 		bottom: 0;
 		left: 0;
-		background: rgb(74 150 255 / 8%);
+		background: $progress-background;
 		transition: width 0.2s ease;
 	}
 

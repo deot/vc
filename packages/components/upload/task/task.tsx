@@ -3,6 +3,7 @@
 import { computed, defineComponent, ref } from 'vue';
 import { Portal } from '../../portal';
 import { TransitionFade } from '../../transition';
+import { useLocale } from '../../locale';
 import type {
 	UploadTaskItem,
 	UploadTaskSource,
@@ -23,17 +24,17 @@ const createTask = (file: UploadTaskSource): UploadTaskItem => ({
 	message: ''
 });
 const formatSize = (size: number) => `${(size / 1024 / 1024).toFixed(2)} MB`;
-const getStatusText = (task: UploadTaskItem) => {
-	if (task.status === 'error') return task.message;
-	if (task.status === 'success') return '✓';
-	if (task.status === 'pending') return '等待中';
-	return '上传中';
-};
 
 export const UploadTaskView = defineComponent({
 	name: COMPONENT_NAME,
 	emits: ['close'],
 	setup(_, { emit, expose }) {
+		const { t } = useLocale();
+		const getStatusText = (task: UploadTaskItem) => {
+			if (task.status === 'error') return task.message;
+			if (task.status === 'success') return '✓';
+			return t(task.status === 'pending' ? 'vc.Upload.pending' : 'vc.Upload.uploading');
+		};
 		const isVisible = ref(false);
 		const showResult = ref(false);
 		const tasks = ref<UploadTaskItem[]>([]);
@@ -115,7 +116,7 @@ export const UploadTaskView = defineComponent({
 			task.percent = normalizePercent(percent);
 		};
 		const success = (uploadId: string) => setStatus(uploadId, 'success');
-		const error = (uploadId: string, message = '上传失败') => setStatus(uploadId, 'error', message);
+		const error = (uploadId: string, message = t('vc.Upload.failed')) => setStatus(uploadId, 'error', message);
 		const complete = () => syncResult();
 
 		/*
@@ -127,23 +128,33 @@ export const UploadTaskView = defineComponent({
 			<TransitionFade>
 				{
 					isVisible.value && (
-						<section class={COMPONENT_NAME} aria-label="上传任务">
+						<section class={COMPONENT_NAME} aria-label={t('vc.Upload.taskLabel')}>
 							<header class={`${COMPONENT_NAME}__header`}>
-								<span>当前上传进度</span>
-								<button type="button" aria-label="关闭" onClick={hide}>×</button>
+								<span>{t('vc.Upload.taskTitle')}</span>
+								<button type="button" aria-label={t('vc.Upload.close')} onClick={hide}>×</button>
 							</header>
 							{
 								showResult.value && (
 									<div class={`${COMPONENT_NAME}__result`}>
-										<span>{`上传结束，成功：${successCount.value}，失败：${errorCount.value}，总数：${tasks.value.length}`}</span>
-										<button type="button" aria-label="关闭上传结果" onClick={() => (showResult.value = false)}>×</button>
+										<span>
+											{t('vc.Upload.result', {
+												succeeded: successCount.value, failed: errorCount.value, total: tasks.value.length
+											})}
+										</span>
+										<button
+											type="button"
+											aria-label={t('vc.Upload.closeResult')}
+											onClick={() => (showResult.value = false)}
+										>
+											×
+										</button>
 									</div>
 								)
 							}
 							<div class={[`${COMPONENT_NAME}__columns`, `${COMPONENT_NAME}__row`]}>
-								<div>文件名</div>
-								<div>文件大小</div>
-								<div>状态</div>
+								<div>{t('vc.Upload.fileName')}</div>
+								<div>{t('vc.Upload.fileSize')}</div>
+								<div>{t('vc.Upload.status')}</div>
 							</div>
 							<ul class={`${COMPONENT_NAME}__list`}>
 								{

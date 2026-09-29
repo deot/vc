@@ -6,6 +6,8 @@ import type {
 	UploadRequestHandle
 } from './types';
 import { normalizeProcessedFile } from './utils';
+import { translate } from '../../locale';
+import { VcInstance } from '../../vc';
 
 /**
  * 一次文件选择对应一个 Leaf，负责该批文件的调度、请求取消与结果结算。
@@ -99,7 +101,7 @@ export class UploadCycleLeaf {
 			: processedFile;
 		const file = normalizeProcessedFile(source, isolatedFile, sourceFile);
 		if (file === false) {
-			this.finishPreflightError(source, '上传已取消');
+			this.finishPreflightError(source, translate('vc.Upload.canceled', undefined, VcInstance.options.locale));
 			return;
 		}
 

@@ -3,6 +3,31 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		Upload: {
+			remoteError: '上传远程失败，请重试',
+			sizeLimit: '上传失败，大小限制为{size}MB',
+			serverError: '服务异常',
+			aborted: '上传取消',
+			timeout: '上传超时',
+			requestError: '调用异常',
+			parseError: '上传解析失败，请重试',
+			failed: '上传失败',
+			acceptLimit: '文件格式限制：{accept}',
+			countLimit: '可选文件数量不能超过{max}个',
+			directoryLimit: '文件夹内文件的数量不能超过{max}个',
+			canceled: '上传已取消',
+			loading: '上传中...',
+			pending: '等待中',
+			uploading: '上传中',
+			taskLabel: '上传任务',
+			taskTitle: '当前上传进度',
+			close: '关闭',
+			closeResult: '关闭上传结果',
+			result: '上传结束，成功：{succeeded}，失败：{failed}，总数：{total}',
+			fileName: '文件名',
+			fileSize: '文件大小',
+			status: '状态'
+		},
 		Tree: {
 			emptyText: '暂无数据'
 		},

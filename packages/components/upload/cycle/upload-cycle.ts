@@ -1,4 +1,6 @@
 import { UploadTaskContext } from '../task/context';
+import { translate } from '../../locale';
+import { VcInstance } from '../../vc';
 import type { UploadResolvedProps } from '../upload-props';
 import type { UploadCycleResult, UploadFeedback } from '../types';
 import { UploadCycleLeaf } from './upload-cycle-leaf';
@@ -62,7 +64,7 @@ export class UploadCycle {
 			...options,
 			parallel: this.props.parallel,
 			loadingInstance: this.props.showLoading
-				? this.feedback.loading('上传中...')
+				? this.feedback.loading(translate('vc.Upload.loading', undefined, VcInstance.options.locale))
 				: undefined
 		});
 		this.leafs.add(leaf);

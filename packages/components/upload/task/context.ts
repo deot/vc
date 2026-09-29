@@ -1,5 +1,7 @@
 import { onScopeDispose, watch } from 'vue';
 import { Portal } from '../../portal';
+import { translate } from '../../locale';
+import { VcInstance } from '../../vc';
 import type { UploadLifecycleEventArgs } from '../cycle/types';
 import type { UploadFile } from '../types';
 import type {
@@ -66,7 +68,7 @@ export class UploadTaskContext {
 				this.success(payload.file.uploadId);
 				break;
 			case 'file-error':
-				this.error(payload.file.uploadId, payload.message || '上传失败');
+				this.error(payload.file.uploadId, payload.message || translate('vc.Upload.failed', undefined, VcInstance.options.locale));
 				break;
 			case 'complete':
 				this.complete();
@@ -141,7 +143,7 @@ export class UploadTaskContext {
 		this.acquireLeaf()?.wrapper?.success(uploadId);
 	}
 
-	private error(uploadId: string, message = '上传失败') {
+	private error(uploadId: string, message: string) {
 		if (!this.setStatus(uploadId, 'error', message)) return;
 
 		this.acquireLeaf()?.wrapper?.error(uploadId, message);

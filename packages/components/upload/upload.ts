@@ -5,6 +5,7 @@ import type { ComponentPublicInstance } from 'vue';
 import { appendFormValue, attrAccept, toUploadError } from './utils';
 import { getUid } from '@deot/helper-utils';
 import { VcInstance, VcError } from '../vc/index';
+import { useLocale } from '../locale';
 import { props as uploadProps } from './upload-props';
 import type {
 	UploadCallback,
@@ -36,6 +37,7 @@ export const createUpload = (feedback: UploadFeedback) => defineComponent({
 		'complete'
 	],
 	setup(props, { emit, slots, expose }) {
+		const { t } = useLocale();
 		const instance = getCurrentInstance()!;
 		const input$ = ref<HTMLInputElement>();
 		const refreshKey = ref(getUid()); // 每次上传重置，避免历史
@@ -105,7 +107,7 @@ export const createUpload = (feedback: UploadFeedback) => defineComponent({
 						try { response = JSON.parse(text); } catch { response = text; }
 					}
 				} catch (e) {
-					finishClaimedError(e, '上传远程失败，请重试');
+					finishClaimedError(e, t('vc.Upload.remoteError'));
 					return;
 				}
 				if (leaf.canceled) return;
@@ -125,7 +127,7 @@ export const createUpload = (feedback: UploadFeedback) => defineComponent({
 			};
 			try {
 				if (size && file.size > size * 1024 * 1024) {
-					onError({}, `上传失败，大小限制为${size}MB`);
+					onError({}, t('vc.Upload.sizeLimit', { size }));
 					return;
 				}
 
@@ -153,13 +155,13 @@ export const createUpload = (feedback: UploadFeedback) => defineComponent({
 					if (xhr.status >= 200 && xhr.status < 300) {
 						onSuccess(xhr);
 					} else {
-						onError({}, `服务异常`); // 服务器返回404等
+						onError({}, t('vc.Upload.serverError')); // 服务器返回404等
 					}
 				};
 
-				xhr.onabort = e => onError(e, `上传取消`);
-				xhr.ontimeout = e => onError(e, `上传超时`);
-				xhr.onerror = e => onError(e, `调用异常`); // CORS等
+				xhr.onabort = e => onError(e, t('vc.Upload.aborted'));
+				xhr.ontimeout = e => onError(e, t('vc.Upload.timeout'));
+				xhr.onerror = e => onError(e, t('vc.Upload.requestError')); // CORS等
 
 				xhr.upload.onprogress = (e: ProgressEvent) => {
 					if (leaf.isSettled(file)) return;
@@ -193,7 +195,7 @@ export const createUpload = (feedback: UploadFeedback) => defineComponent({
 				xhr.send(body);
 			} catch (e: unknown) {
 				console.log(e);
-				onError(e, '上传解析失败，请重试');
+				onError(e, t('vc.Upload.parseError'));
 			}
 		};
 
@@ -215,7 +217,7 @@ export const createUpload = (feedback: UploadFeedback) => defineComponent({
 					&& 'message' in e
 					&& typeof e.message === 'string'
 					? e.message
-					: '上传失败';
+					: t('vc.Upload.failed');
 				leaf.finishPreflightError(file, message, e);
 			}
 		};
@@ -228,10 +230,10 @@ export const createUpload = (feedback: UploadFeedback) => defineComponent({
 			const length = rawFiles.length;
 
 			if (length === 0) {
-				emitError({}, `文件格式限制：${props.accept}`);
+				emitError({}, t('vc.Upload.acceptLimit', { accept: String(props.accept) }));
 				return;
 			} else if (length > props.max) {
-				emitError({}, !props.directory ? `可选文件数量不能超过${props.max}个` : `文件夹内文件的数量不能超过${props.max}个`);
+				emitError({}, t(props.directory ? 'vc.Upload.directoryLimit' : 'vc.Upload.countLimit', { max: props.max }));
 				return;
 			}
 

@@ -3,6 +3,31 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		Upload: {
+			remoteError: 'Upload response failed. Please try again',
+			sizeLimit: 'Upload failed. Maximum size: {size}MB',
+			serverError: 'Server error',
+			aborted: 'Upload aborted',
+			timeout: 'Upload timed out',
+			requestError: 'Request failed',
+			parseError: 'Upload processing failed. Please try again',
+			failed: 'Upload failed',
+			acceptLimit: 'Allowed file formats: {accept}',
+			countLimit: 'Select no more than {max} files',
+			directoryLimit: 'The folder must contain no more than {max} files',
+			canceled: 'Upload canceled',
+			loading: 'Uploading...',
+			pending: 'Waiting',
+			uploading: 'Uploading',
+			taskLabel: 'Upload tasks',
+			taskTitle: 'Current upload progress',
+			close: 'Close',
+			closeResult: 'Close upload results',
+			result: 'Upload finished. Succeeded: {succeeded}, failed: {failed}, total: {total}',
+			fileName: 'File name',
+			fileSize: 'File size',
+			status: 'Status'
+		},
 		Tree: {
 			emptyText: 'No data'
 		},
