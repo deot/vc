@@ -3,6 +3,13 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		Tree: {
+			emptyText: '暂无数据'
+		},
+		TreeSelect: {
+			placeholder: '请选择',
+			noMatch: '暂无匹配数据'
+		},
 		Table: {
 			emptyText: '暂无数据',
 			sumText: '合计',

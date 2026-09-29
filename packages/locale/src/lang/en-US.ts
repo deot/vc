@@ -3,6 +3,13 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		Tree: {
+			emptyText: 'No data'
+		},
+		TreeSelect: {
+			placeholder: 'Please select',
+			noMatch: 'No matching data'
+		},
 		Table: {
 			emptyText: 'No data',
 			sumText: 'Total',

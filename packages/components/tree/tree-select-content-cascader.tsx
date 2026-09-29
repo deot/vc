@@ -8,6 +8,7 @@ import { Checkbox } from '../checkbox/index';
 import { Customer } from '../customer/index';
 import { Icon } from '../icon/index';
 import { Scroller } from '../scroller/index';
+import { useLocale } from '../locale';
 import { Tree } from './tree';
 import { renderHighlight } from './tree-select-content';
 
@@ -58,6 +59,7 @@ export const TreeSelectContentCascader = defineComponent({
 	},
 	emits: ['change'],
 	setup(props, { emit }) {
+		const { t } = useLocale();
 		const treeRef = ref<any>(null);
 		/** hover 展开路径，与 Cascader 一致 */
 		const currentValue = ref<TreeValue[]>([]);
@@ -226,7 +228,7 @@ export const TreeSelectContentCascader = defineComponent({
 										</div>
 									);
 								})
-							: (<div class="vc-tree-select__empty">暂无匹配数据</div>)
+							: (<div class="vc-tree-select__empty">{t('vc.TreeSelect.noMatch')}</div>)
 					}
 				</Scroller>
 			);

@@ -1,684 +1,420 @@
 ## 树形控件（Tree）
 
-用清晰的层级结构展示信息，可展开或折叠。
+`Tree` 展示层级数据，支持展开、勾选、筛选、懒加载和拖拽；`TreeSelect` 将树形选择放入下拉面板，也支持级联列展示。`MTree`、`MTreeSelect` 分别复用这两个组件。
 
 ### 何时使用
 
-文件夹、组织架构、生物分类、国家地区等等，世间万物的大多数结构都是树形结构。使用 树控件 可以完整展现其中的层级关系，并具有展开收起选择等交互功能。
+用于目录、组织架构、分类等层级信息。需要在表单中选择节点时使用 `TreeSelect`。
 
 ### 基础用法
 
-最简单的用法，展示数据，可通过`node-click`获取点击的节点元素。
+每个节点提供全树唯一的 `value` 和显示用的 `label`，通过 `children` 组织子节点。点击标签会设置当前节点，默认也会展开或收起；`accordion` 使同级节点互斥展开。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 20 }</config> -->
 ```vue
 <template>
-	<div>
-		<Tree
-			:data="data"
-			@node-click="handleNodeClick"  />
+	<div class="tree-demo">
+		<Checkbox v-model="isAccordion">同级手风琴</Checkbox>
+		<Tree :data="data" :accordion="isAccordion" highlight-current @node-click="handleNodeClick" />
+		<p>当前节点：{{ current || '尚未选择' }}</p>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Tree } from '@deot/vc';
+import { Checkbox, Tree } from '@deot/vc';
 
-const data = ref([{
-	label: '一级 1',
-	children: [{
-		label: '二级 1-1',
-		children: [{
-			label: '三级 1-1-1'
-		}]
-	}]
-}, {
-	label: '一级 2',
-	children: [{
-		label: '二级 2-1',
-		children: [{
-			label: '三级 2-1-1'
-		}]
-	}, {
-		label: '二级 2-2',
-		children: [{
-			label: '三级 2-2-1'
-		}]
-	}]
-}, {
-	label: '一级 3',
-	children: [{
-		label: '二级 3-1',
-		children: [{
-			label: '三级 3-1-1'
-		}]
-	}, {
-		label: '二级 3-2',
-		children: [{
-			label: '三级 3-2-1'
-		}]
-	}]
-}]);
-
-// data：节点数据；node：节点对应的 TreeNode；instance：节点组件实例；event：事件对象
-const handleNodeClick = ({ data, node, instance, event }) => {
-	console.log(data);
-	console.log(node);
-	console.log(instance, event);
-};
+const isAccordion = ref(false);
+const current = ref('');
+const data = [
+	{ value: 'guide', label: '使用指南', children: [{ value: 'start', label: '快速开始' }, { value: 'install', label: '安装' }] },
+	{ value: 'components', label: '组件', children: [{ value: 'tree', label: '树形控件' }, { value: 'table', label: '表格' }] }
+];
+const handleNodeClick = ({ data: row }) => { current.value = row.label; };
 </script>
-```
-:::
-
-### 可选择
-适用于需要选择层级时使用，选中父级时自动选中子节点数据。
-
-:::RUNTIME
-```vue
-<template>
-	<div>
-		<Tree
-			:data="data"
-			show-checkbox
-			@check-change="handleCheckChange"  />
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { Tree } from '@deot/vc';
-
-const data = ref([{
-	label: '一级 1',
-	children: [{
-		label: '二级 1-1',
-		children: [{
-			label: '三级 1-1-1'
-		}]
-	}]
-}, {
-	label: '一级 2',
-	children: [{
-		label: '二级 2-1',
-		children: [{
-			label: '三级 2-1-1'
-		}]
-	}, {
-		label: '二级 2-2',
-		children: [{
-			label: '三级 2-2-1'
-		}]
-	}]
-}, {
-	label: '一级 3',
-	children: [{
-		label: '二级 3-1',
-		children: [{
-			label: '三级 3-1-1'
-		}]
-	}, {
-		label: '二级 3-2',
-		children: [{
-			label: '三级 3-2-1'
-		}]
-	}]
-}]);
-
-const handleCheckChange = ({ data, checked, indeterminate }) => {
-	console.log(data, checked, indeterminate);
-};
-</script>
-```
-:::
-
-### 懒加载自定义叶子节点
-由于在点击节点时才进行该层数据的获取，默认情况下 Tree 无法预知某个节点是否为叶子节点，所以会为每个节点添加一个下拉按钮，如果节点没有下层数据，则点击后下拉按钮会消失。同时，你也可以提前告知 Tree 某个节点是否为叶子节点，从而避免在叶子节点前渲染下拉按钮。
-
-:::RUNTIME
-```vue
-<template>
-	<div>
-		<Tree
-			:data="data"
-			:load-data="loadData"
-			lazy
-			show-checkbox
-			@check-change="handleCheckChange"  />
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { Tree } from '@deot/vc';
-
-const data = ref([{
-	label: '一级 1',
-	children: [{
-		label: '二级 1-1',
-		children: [{
-			label: '三级 1-1-1'
-		}]
-	}]
-}, {
-	label: '一级 2',
-	children: [{
-		label: '二级 2-1',
-		children: [{
-			label: '三级 2-1-1'
-		}]
-	}, {
-		label: '二级 2-2',
-		children: [{
-			label: '三级 2-2-1'
-		}]
-	}]
-}, {
-	label: '一级 3',
-	children: [{
-		label: '二级 3-1',
-		children: [{
-			label: '三级 3-1-1'
-		}]
-	}, {
-		label: '二级 3-2',
-		children: [{
-			label: '三级 3-2-1'
-		}]
-	}]
-}]);
-const loadData = (parent) => {
-	return new Promise((resolve) => {
-		setTimeout(() => {
-			resolve([{
-				value: '4-1',
-				label: '二级 4-1',
-				children: [{
-					value: '4-1-1',
-					label: '三级 4-1-1'
-				}],
-			}, {
-				value: '4-2',
-				label: '二级 4-2',
-				isLeaf: true
-			}, {
-				value: '4-3',
-				label: '二级 4-3'
-			}]);
-		}, 3000);
-	});
-};
-const handleCheckChange = ({ data, checked, indeterminate }) => {
-	console.log(data, checked, indeterminate);
-};
-```
-:::
-
-### 禁用状态
-可将 Tree 的某些节点通过`disabled`设置为禁用状态。
-
-:::RUNTIME
-```vue
-<template>
-	<div>
-		<Tree
-			:data="data"
-			show-checkbox/>
-	</div>
-</template>
-<script setup>
-import { Tree } from '@deot/vc';
-
-const data = ref([{
-	id: 1,
-	label: '一级 1',
-	disabled: true,
-	children: [{
-		id: 4,
-		label: '二级 1-1',
-		children: [{
-			id: 9,
-			label: '三级 1-1-1'
-		}, {
-			id: 10,
-			label: '三级 1-1-2',
-			disabled: true
-		}]
-	}]
-}, {
-	id: 2,
-	label: '一级 2',
-	children: [{
-		id: 5,
-		label: '二级 2-1',
-		disabled: true
-	}, {
-		id: 6,
-		label: '二级 2-2'
-	}]
-}, {
-	id: 3,
-	label: '一级 3',
-	children: [{
-		id: 7,
-		label: '二级 3-1'
-	}, {
-		id: 8,
-		label: '二级 3-2'
-	}]
-}]);
-</script>
-```
-:::
-
-### 树节点的选择
-本例展示如何获取和设置选中节点。获取和设置各有两种方式：通过 `node` 或通过 `key`。如果需要通过 `key` 来获取或设置，则必须设置`node-key`, 通过key获取目前还不支持。
-
-:::RUNTIME
-```vue
-<template>
-	<div>
-		<Tree
-			ref="tree"
-			:data="data"
-			:render="renderContent"
-			show-checkbox
-			default-expand-all
-			highlight-current />
-		<div class="buttons">
-			<Button @click="getCheckedNodes">通过 node 获取</Button>
-			<!-- <Button @click="getCheckedValues">通过 key 获取</Button>
-			<Button @click="setCheckedNodes">通过 node 设置</Button>
-			<Button @click="setCheckedValues">通过 key 设置</Button>
-			<Button @click="resetChecked">清空</Button> -->
-		</div>
-	</div>
-</template>
-<script setup lang="jsx">
-import { ref } from 'vue';
-import { Tree, Button } from '@deot/vc';
-
-const data = ref([{
-	id: 1,
-	label: '一级 1',
-	children: [{
-		id: 4,
-		label: '二级 1-1',
-		children: [{
-			id: 9,
-			label: '三级 1-1-1'
-		}, {
-			id: 10,
-			label: '三级 1-1-2',
-		}]
-	}]
-}, {
-	id: 2,
-	label: '一级 2',
-	children: [{
-		id: 5,
-		label: '二级 2-1',
-	}, {
-		id: 6,
-		label: '二级 2-2'
-	}]
-}, {
-	id: 3,
-	label: '一级 3',
-	children: [{
-		id: 7,
-		label: '二级 3-1'
-	}, {
-		id: 8,
-		label: '二级 3-2'
-	}]
-}]);
-
-const tree = ref();
-const getCheckedNodes = () => {
-	console.log(tree.value.getCheckedNodes());
-};
-
-const renderContent = ({ it, node }) => {
-	return (
-		<span>
-			{it.label}
-			{' '}
-			自定义渲染
-		</span>
-	);
-};
-
-const getCheckedValues = () => {
-	console.log(tree.value.getCheckedValues());
-};
-
-const setCheckedNodes = () => {
-	tree.value.setCheckedNodes([{
-		id: 5,
-		label: '二级 2-1'
-	}, {
-		id: 9,
-		label: '三级 1-1-1'
-	}]);
-};
-
-const setCheckedValues = () => {
-	tree.value.setCheckedValues([3]);
-};
-
-const resetChecked = () => {
-	tree.value.setCheckedValues([]);
-};
-</script>
-<style>
-.buttons {
-	margin: 10px 0;
-}
+<style scoped>
+.tree-demo { display: grid; gap: 12px; }
+.tree-demo p { margin: 0; }
 </style>
 ```
 :::
 
-### 手风琴模式
-通过`accordion`属性开启手风琴模式，每次只能展开一个同层级的节点。
+### 勾选、筛选与自定义标签
 
-:::RUNTIME
+`showCheckbox` 开启勾选，`v-model` 保存节点值。默认父子联动，`checkStrictly` 可切换为独立勾选。节点的 `disabled` 只限制交互勾选，不禁止展开或设置当前节点。
+
+调用 `filter(value)` 时，必须提供 `filterNode(value, data, node)`；命中节点的祖先会保留显示。`renderNodeLabel` 接收 `{ row, store }`，分别为原始数据和节点对象。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 20 }</config> -->
 ```vue
 <template>
-	<div>
+	<div class="tree-demo">
+		<Input v-model="keyword" placeholder="筛选节点" @input="handleFilter" />
+		<Checkbox v-model="isStrict">父子独立勾选</Checkbox>
 		<Tree
+			ref="tree"
+			v-model="values"
 			:data="data"
-			accordion
-			@node-click="handleNodeClick"  />
+			:check-strictly="isStrict"
+			:filter-node="filterNode"
+			:render-node-label="renderLabel"
+			:expand-on-click-node="false"
+			show-checkbox
+			default-expand-all
+		/>
+		<div class="tree-demo__actions">
+			<Button @click="handleSelect">选择研发部</Button>
+			<Button @click="handleClear">清空勾选</Button>
+			<Button @click="handleRead">读取叶节点</Button>
+		</div>
+		<p>节点值：{{ values.join(', ') || '无' }}</p>
+		<p>最近读取：{{ result || '尚未读取' }}</p>
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue';
-import { Tree } from '@deot/vc';
+import { h, ref } from 'vue';
+import { Button, Checkbox, Input, Tree } from '@deot/vc';
 
-const data = ref([{
-	label: '一级 1',
-	children: [{
-		label: '二级 1-1',
-		children: [{
-			label: '三级 1-1-1'
-		}]
-	}]
-}, {
-	label: '一级 2',
-	children: [{
-		label: '二级 2-1',
-		children: [{
-			label: '三级 2-1-1'
-		}]
-	}, {
-		label: '二级 2-2',
-		children: [{
-			label: '三级 2-2-1'
-		}]
-	}]
-}, {
-	label: '一级 3',
-	children: [{
-		label: '二级 3-1',
-		children: [{
-			label: '三级 3-1-1'
-		}]
-	}, {
-		label: '二级 3-2',
-		children: [{
-			label: '三级 3-2-1'
-		}]
-	}]
-}]);
-const handleNodeClick = ({ data }) => {
-	console.log(data);
+const tree = ref();
+const keyword = ref('');
+const values = ref([]);
+const isStrict = ref(false);
+const result = ref('');
+const data = [{ value: 'company', label: '公司', children: [
+	{ value: 'dev', label: '研发部' },
+	{ value: 'design', label: '设计部' },
+	{ value: 'archive', label: '归档部门（禁用）', disabled: true }
+] }];
+const filterNode = (value, row) => !value || row.label.includes(value);
+const renderLabel = ({ row }) => h('span', `${row.label} · ${row.value}`);
+const handleFilter = () => tree.value.filter(keyword.value);
+const handleSelect = () => { values.value = ['dev']; };
+const handleClear = () => { values.value = []; };
+const handleRead = () => {
+	result.value = tree.value.getCheckedNodes(true).map(node => node.states.data.label).join('、') || '无';
 };
 </script>
+<style scoped>
+.tree-demo { display: grid; gap: 12px; max-width: 480px; }
+.tree-demo__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.tree-demo p { margin: 0; overflow-wrap: anywhere; }
+</style>
 ```
 :::
 
-### 可拖拽节点
-通过 `draggable` 属性可让节点变为可拖拽，将节点拖拽到其他节点内部或前后。
+### 懒加载
 
-- 节点所在行的上 / 中 / 下区域分别表示放在它之前（`before`）、放入它（`inner`，追加为最后一个子节点，目标节点的标签高亮）、放在它之后（`after`）。
-- 已展开且有子节点的节点没有 `after` 区域（它的下方紧接第一个子节点）；要放到它的整棵子树之后，拖到下一个同级节点的上方区域。
-- `allow-drag({ node, data })` 返回 `false` 时节点不能拖动。
-- `allow-drop({ node, data, targetNode, position, from, to })` 对三个区域分别询问：被拒绝的区域让给相邻区域，三个区域都被拒绝时显示不可放置。
-	- `from` / `to` 为移动前后的位置 `{ parent, index }`：`parent` 为父节点的 TreeNode，根级为 `null`；`to.index` 为移除被拖节点之后的下标。
-	- 与 Table 的 `allow-drop` 相同，例如只允许同级：`({ from, to }) => from.parent === to.parent`。
-- 放下时先发出 `node-drop`，再发出 `node-dragend`；取消或没有放下时只发出 `node-dragend`（`dropped` 为 `false`）。
+`lazy` 与 `loadData(node)` 配合使用，回调返回子节点数组的 Promise。根数据由 `data` 提供；展开未加载节点时才请求子节点。已知叶节点可设置 `isLeaf: true`，加载后返回空数组也会成为叶节点。
 
-完整示例：[拖拽事件与参数 / 只允许同级 / 区域让渡](./examples/drag.vue)、[节点事件的参数](./examples/events.vue)。
-
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ previewInset: 20 }</config> -->
 ```vue
 <template>
-	<div>
-		<Tree
-			:data="data"
-			default-expand-all
-			draggable
-			@node-dragstart="handleDragStart"
-			@node-dragenter="handleDragEnter"
-			@node-dragleave="handleDragLeave"
-			@node-dragover="handleDragOver"
-			@node-dragend="handleDragEnd"
-			@node-drop="handleDrop"
-			:allow-drop="allowDrop"
-			:allow-drag="allowDrag" />
+	<div class="tree-demo">
+		<Tree :data="data" :load-data="loadData" lazy />
+		<p>加载次数：{{ count }}。展开“远程目录”查看子节点。</p>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
 import { Tree } from '@deot/vc';
 
-const data = ref([{
-	label: '一级 1',
-	children: [{
-		label: '二级 1-1',
-		children: [{
-			label: '三级 1-1-1'
-		}]
-	}]
-}, {
-	label: '一级 2',
-	children: [{
-		label: '二级 2-1',
-		children: [{
-			label: '三级 2-1-1'
-		}]
-	}, {
-		label: '二级 2-2',
-		children: [{
-			label: '三级 2-2-1'
-		}]
-	}]
-}, {
-	label: '一级 3',
-	children: [{
-		label: '二级 3-1',
-		children: [{
-			label: '三级 3-1-1'
-		}]
-	}, {
-		label: '二级 3-2',
-		children: [{
-			label: '三级 3-2-1'
-		}]
-	}]
-}]);
-// 节点的标签：node / targetNode 为 TreeNode，数据在 states.data 上
-const labelOf = node => (node ? node.states.data.label : '');
-const handleDragStart = ({ data }) => {
-	console.log('drag start: ', data.label);
-};
-const handleDragEnter = ({ targetNode }) => {
-	console.log('tree drag enter: ', labelOf(targetNode));
-};
-const handleDragLeave = ({ targetNode }) => {
-	console.log('tree drag leave: ', labelOf(targetNode));
-};
-const handleDragOver = ({ targetNode }) => {
-	console.log('tree drag over: ', labelOf(targetNode));
-};
-const handleDragEnd = ({ targetNode, position, dropped }) => {
-	console.log('tree drag end: ', labelOf(targetNode), position, dropped);
-};
-const handleDrop = ({ data, targetNode, position, from, to }) => {
-	console.log('tree drop: ', data.label, position, labelOf(targetNode), `${from.index} → ${to.index}`);
-};
-// 「二级 3-1」不能放入子节点，只能放在它前后
-const allowDrop = ({ targetNode, position }) => {
-	return labelOf(targetNode) !== '二级 3-1' || position !== 'inner';
-};
-// 「三级 3-2-1」不能拖动
-const allowDrag = ({ data }) => {
-	return data.label !== '三级 3-2-1';
+const count = ref(0);
+const data = [{ value: 'remote', label: '远程目录' }, { value: 'readme', label: '说明文件', isLeaf: true }];
+const loadData = async (node) => {
+	count.value++;
+	await new Promise(resolve => setTimeout(resolve, 500));
+	return [1, 2].map(index => ({ value: `${node.getter.value}-${index}`, label: `文件 ${index}`, isLeaf: true }));
 };
 </script>
+<style scoped>
+.tree-demo { display: grid; gap: 12px; }
+.tree-demo p { margin: 0; }
+</style>
+```
+:::
+
+### 拖拽节点
+
+设置 `draggable` 后，行的上、中、下区域分别表示 `before`、`inner`、`after`；`inner` 将节点追加到目标的子节点末尾。已展开且有子节点的行没有 `after` 区域。
+
+`allowDrag({ node, data })` 决定能否开始拖拽；`allowDrop({ node, data, targetNode, position, from, to })` 分别判断三个落点区域，被拒绝的区域让给相邻区域。`from`、`to` 为 `{ parent, index }`，根级 `parent` 为 `null`，`to.index` 按移除被拖节点后的下标计算。成功移动会先发出 `node-drop`，再发出 `node-dragend`。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+```vue
+<template>
+	<div class="tree-demo">
+		<Checkbox v-model="isSameLevel">只允许同级排序</Checkbox>
+		<Tree :data="data" :allow-drag="allowDrag" :allow-drop="allowDrop" draggable default-expand-all @node-drop="handleDrop" />
+		<p>{{ result }}</p>
+	</div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Checkbox, Tree } from '@deot/vc';
+
+const isSameLevel = ref(false);
+const result = ref('拖动节点后查看落点');
+const data = [
+	{ value: 'group', label: '项目组', children: [{ value: 'a', label: '任务 A' }, { value: 'b', label: '任务 B' }] },
+	{ value: 'c', label: '任务 C' },
+	{ value: 'locked', label: '固定节点（不可拖动）', locked: true }
+];
+const allowDrag = ({ data: row }) => !row.locked;
+const allowDrop = ({ from, to }) => !isSameLevel.value || from.parent === to.parent;
+const handleDrop = ({ data: row, targetNode, position, from, to }) => {
+	result.value = `${row.label} → ${targetNode.getter.label} (${position})，下标 ${from.index} → ${to.index}`;
+};
+</script>
+<style scoped>
+.tree-demo { display: grid; gap: 12px; }
+.tree-demo p { margin: 0; overflow-wrap: anywhere; }
+</style>
+```
+:::
+
+### 树选择与级联搜索
+
+`TreeSelect` 默认 `max = Infinity`，显示多选标签；`max = 1` 切换为单标签展示。当前实现不按 `max` 限制勾选数量，单标签展示也不等同于互斥单选。
+
+`cascader` 开启鼠标悬停展开的级联列。`searchable` 开启搜索，空格或英文逗号分隔的关键词任一命中即可：树形模式保留层级，级联模式显示完整路径列表。关闭面板会清空搜索。非独立勾选时，搜索结果中的父节点仍会联动所有子孙节点，包括隐藏节点。
+
+多选标签默认只占一行；超出宽度的标签折叠为 `+N...`，悬停可查看并移除。`maxTags` 限制可见标签数，`maxTagLines` 控制行数，设为 `0` 表示不限制。非 `checkStrictly` 时标签展示完整路径。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+```vue
+<template>
+	<div class="tree-select-demo">
+		<div class="tree-select-demo__actions">
+			<Checkbox v-model="isCascader">级联列</Checkbox>
+			<Checkbox v-model="isStrict">独立勾选</Checkbox>
+			<Checkbox v-model="isDisabled">禁用</Checkbox>
+		</div>
+		<TreeSelect
+			v-model="values"
+			:data="data"
+			:cascader="isCascader"
+			:check-strictly="isStrict"
+			:disabled="isDisabled"
+			:max-tags="2"
+			searchable
+			clearable
+			search-placeholder="搜索部门"
+		/>
+		<p>节点值：{{ values.join(', ') || '无' }}</p>
+	</div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Checkbox, TreeSelect } from '@deot/vc';
+
+const isCascader = ref(false);
+const isStrict = ref(false);
+const isDisabled = ref(false);
+const values = ref(['east-dev', 'south-sales']);
+const data = [
+	{ value: 'east', label: '华东', children: [{ value: 'east-dev', label: '研发部' }, { value: 'east-sales', label: '销售部' }] },
+	{ value: 'south', label: '华南', children: [{ value: 'south-sales', label: '销售部' }, { value: 'south-archive', label: '归档部门', disabled: true }] }
+];
+</script>
+<style scoped>
+.tree-select-demo { display: grid; gap: 12px; max-width: 400px; }
+.tree-select-demo__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.tree-select-demo p { margin: 0; overflow-wrap: anywhere; }
+</style>
+```
+:::
+
+### 远程搜索
+
+TreeSelect 的 `loadData(keyword, instance)` 用于搜索，不是 Tree 的懒加载回调。组件以 250ms 防抖调用它，并显示 Promise 等待状态；调用方需更新 `data`，Promise 的返回值不会自动成为数据源。启用后关闭本地过滤，仅保留匹配高亮。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+```vue
+<template>
+	<div class="tree-select-demo">
+		<TreeSelect v-model="values" :data="data" :load-data="loadData" searchable check-strictly clearable search-placeholder="输入研发或设计" />
+		<p>节点值：{{ values.join(', ') || '无' }}</p>
+	</div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { TreeSelect } from '@deot/vc';
+
+const source = [{ value: 'dev', label: '研发部' }, { value: 'design', label: '设计部' }];
+const data = ref(source);
+const values = ref([]);
+let requestId = 0;
+const loadData = async (keyword) => {
+	const id = ++requestId;
+	await new Promise(resolve => setTimeout(resolve, 400));
+	if (id === requestId) data.value = source.filter(row => row.label.includes(keyword));
+};
+</script>
+<style scoped>
+.tree-select-demo { display: grid; gap: 12px; max-width: 400px; }
+.tree-select-demo p { margin: 0; }
+</style>
 ```
 :::
 
 ## API
 
-### 属性
+下表用 `Value` 表示 `string | number`，`NodeData` 表示调用方的节点数据，`Node` 表示由 `getNode` 等方法返回的节点对象（包含 `states.data`、`getter`、`childNodes` 等）。这些名称仅用于说明，不是包入口导出的类型。
 
-| 属性                       | 说明                                                                                  | 类型                | 可选值 | 默认值     |
-| ------------------------ | ----------------------------------------------------------------------------------- | ----------------- | --- | ------- |
-| modelValue               | 选中的数据`checkedValues`                                                                | `array`           | —   | —       |
-| expandedValues           | 展开的数据                                                                               | `array`           | —   | —       |
-| data                     | 展示数据                                                                                | `array`           | —   | —       |
-| empty-text               | 内容为空的时候展示的文本                                                                        | `string`          | —   | —       |
-| tree-props               | 配置选项，具体看下表                                                                          | `object`          | —   | —       |
-| render-node-after-expand | 是否在第一次展开某个树节点后才渲染其子节点                                                               | `boolean`         | —   | `true`  |
-| render-node-label        | 树节点的内容区的渲染 Function                                                                 | `Function`        | —   | —       |
-| load-data                | 加载子树数据的方法，仅当 lazy 属性为true 时生效                                                       | `Function`        | —   | —       |
-| highlight-current        | 是否高亮当前选中节点，默认值是 `false`。                                                            | `boolean`         | —   | `false` |
-| default-expand-all       | 是否默认展开所有节点                                                                          | `boolean`         | —   | `false` |
-| expand-on-click-node     | 是否在点击节点的时候展开或者收缩节点， 默认值为 true，如果为 false，则只有点箭头图标的时候才会展开或者收缩节点。                      | `boolean`         | —   | `true`  |
-| check-on-click-node      | 是否在点击节点的时候选中节点，默认值为 `false`，即只有在点击复选框时才会选中节点。                                       | `boolean`         | —   | `false` |
-| auto-expand-parent       | 展开子节点的时候是否自动展开父节点                                                                   | `boolean`         | —   | `true`  |
-| show-checkbox            | 节点是否可被选择                                                                            | `boolean`         | —   | `false` |
-| check-strictly           | 在显示复选框的情况下，是否严格的遵循父子不互相关联的做法，默认为 `false`                                            | `boolean`         | —   | `false` |
-| current-node-value       | 当前选中的节点                                                                             | `string`、`number` | —   | —       |
-| filter-node              | 对树节点进行筛选时执行的方法，返回 `true` 表示这个节点可以显示，返回 `false` 则表示这个节点会被隐藏                          | `Function`        | —   | —       |
-| accordion                | 是否每次只打开一个同级树节点展开                                                                    | `boolean`         | —   | `false` |
-| indent                   | 相邻级节点间的水平缩进，单位为像素                                                                   | `number`          | —   | 16      |
-| icon-class               | 自定义树节点的图标                                                                           | `string`          | -   | -       |
-| lazy                     | 是否懒加载子节点，需与 load 方法结合使用                                                             | `boolean`         | —   | `false` |
-| draggable                | 是否开启拖拽节点功能                                                                          | `boolean`         | —   | `false` |
-| allow-drag               | 判断节点能否被拖拽，参数为被拖节点 `{ node, data }`                                                      | `Function({ node, data })` | —   | —       |
-| allow-drop               | 判断能否放到目标节点的某个区域，对 `before`（之前）、`inner`（放入）、`after`（之后）分别询问；`from` / `to` 为移动前后的位置 `{ parent, index }`，与 Table 相同，见[可拖拽节点](#可拖拽节点) | `Function({ node, data, targetNode, position, from, to })` | —   | —       |
-| allow-dispatch           | 能否向form发送表单改变事件                                                                     | `boolean`         | —   | `true`  |
+### Tree 属性
 
- ### tree-props
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| data | 层级数据，每个节点值必须全树唯一 | `NodeData[]` | - | `[]` |
+| modelValue | 勾选值，支持 `v-model`；建议使用数组 | `string \| number \| any[]` | - | `undefined` |
+| keyValue | 节点字段映射，见下表；替代旧文档的 `treeProps` / `nodeKey` | `Record<string, string>` | - | 见下表 |
+| emptyText | 空状态文案，支持空字符串覆盖 | `string` | - | 当前语言的“暂无数据” |
+| showCheckbox | 显示复选框 | `boolean` | - | `false` |
+| checkStrictly | 父子独立勾选 | `boolean` | - | `false` |
+| checkDescendants | 懒加载时，深度勾选可触发未加载子节点的加载 | `boolean` | - | `false` |
+| expandedValues | 要展开的节点值；更新时展开列出的节点，不自动收起其他节点 | `Value[]` | - | `[]` |
+| defaultExpandAll | 默认展开已有子数据的节点 | `boolean` | - | `false` |
+| autoExpandParent | 按 `expandedValues` 展开时同时展开祖先 | `boolean` | - | `true` |
+| expandOnClickNode | 点击标签也展开 / 收起 | `boolean` | - | `true` |
+| checkOnClickNode | 点击标签也切换勾选 | `boolean` | - | `false` |
+| accordion | 同级节点互斥展开 | `boolean` | - | `false` |
+| currentNodeValue | 初始化当前节点值；后续修改使用实例方法 | `Value` | - | `undefined` |
+| highlightCurrent | 高亮当前节点 | `boolean` | - | `false` |
+| renderNodeAfterExpand | 首次展开后才渲染子节点 | `boolean` | - | `true` |
+| renderNodeLabel | 自定义标签，参数为 `{ row, store }` | `(props: { row: NodeData; store: Node }) => VNodeChild` | - | - |
+| lazy | 开启子节点懒加载 | `boolean` | - | `false` |
+| loadData | 懒加载回调，返回子数据 | `(node: Node) => Promise<NodeData[]>` | - | - |
+| filterNode | `filter()` 的筛选回调 | `(value: any, data: NodeData, node: Node) => boolean` | - | - |
+| indent | 每级缩进，单位 px | `number` | - | `18` |
+| draggable | 开启节点拖拽 | `boolean` | - | `false` |
+| allowDrag | 拖拽许可 | `({ node, data }) => boolean` | - | - |
+| allowDrop | 落点许可，参数见“拖拽节点” | `({ node, data, targetNode, position, from, to }) => boolean` | - | - |
+| separator | 字符串勾选值的分隔符 | `string` | - | `','` |
+| numerable | 字符串输入值是否转为数字 | `boolean` | - | `false` |
+| max | 非数组输入时，`1` 输出首个值，`> 1` 输出分隔符字符串；不限制勾选数 | `number` | `>= 1` | `Infinity` |
+| nullValue | 已声明的兼容属性，当前转换逻辑不使用它替代空值 | `number \| string \| object` | - | `undefined` |
+| iconClass | 已声明的兼容属性，当前渲染未使用 | `string` | - | - |
+| allowDispatch | 交互改变值时通知 FormItem | `boolean` | - | `true` |
 
-| 属性       | 说明                              | 类型                   | 返回值 |
-| -------- | ------------------------------- | -------------------- | --- |
-| label    | 指定节点标签为节点对象的某个属性值               | `string`、`Function`  | —   |
-| value    | 指定节点标签为节点对象的某个属性值               | `string`             | —   |
-| children | 指定子树为节点对象的某个属性值                 | `string`             | —   |
-| disabled | 指定节点选择框是否禁用为节点对象的某个属性值          | `boolean`、`Function` | —   |
-| isLeaf   | 指定节点是否为叶子节点，仅在指定了 lazy 属性的情况下生效 | `boolean`、`Function` | —   |
- 
+### Tree keyValue
 
-### 方法
-| 方法名                 | 说明                                                                                                                                                               | 参数 |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -- |
-| filter              | 对树节点进行筛选操作、 接收一个任意类型的参数，该参数会在 `filter-node` 中作为第一个参数                                                                                                             | -  |
-| updateKeyChildren   | 通过 keys 设置节点子元素，使用此方法必须设置 `node-key` 属性 、 (key, data) 接收两个参数，1. 节点 key 2. 节点数据的数组                                                                                | -  |
-| getCheckedNodes     | 若节点可被选择（即 `show-checkbox` 为 `true`），则返回目前被选中的节点所组成的数组 、 (leafOnly, includeHalfChecked) 接收两个 boolean 类型的参数，1. 是否只是叶子节点，默认值为 `false` 2. 是否包含半选节点，默认值为 `false`      | -  |
-| setCheckedNodes     | 设置目前勾选的节点，使用此方法必须设置 `node-key` 属性 、(nodes) 接收勾选节点数据的数组                                                                                                           | -  |
-| getCheckedValues      | 若节点可被选择（即 `show-checkbox` 为 `true`），则返回目前被选中的节点的 key 所组成的数组 、 (leafOnly) 接收一个 boolean 类型的参数，若为 `true` 则仅返回被选中的叶子节点的 keys，默认值为 `false`                            | -  |
-| setCheckedValues      | 通过 keys 设置目前勾选的节点，使用此方法必须设置 `node-key` 属性 、 (keys, leafOnly) 接收两个参数，1. 勾选节点的 key 的数组 2. boolean 类型的参数，若为 `true` 则仅设置叶子节点的选中状态，默认值为 `false`                       | -  |
-| setChecked          | 通过 key / data 设置某个节点的勾选状态，使用此方法必须设置 `node-key` 属性 、 (key/data, checked, deep) 接收三个参数，1. 勾选节点的 key 或者 data 2. boolean 类型，节点是否选中  3. boolean 类型，是否设置子节点 ，默认为 false | -  |
-| getHalfCheckedNodes | 若节点可被选择（即 `show-checkbox` 为 `true`），则返回目前半选中的节点所组成的数组                                                                                                            | -  |
-| getHalfCheckedValues  | 若节点可被选择（即 `show-checkbox` 为 `true`），则返回目前半选中的节点的 key 所组成的数组                                                                                                      | -  |
-| getCurrentKey       | 获取当前被选中节点的 key，使用此方法必须设置 `node-key` 属性，若没有节点被选中则返回 null                                                                                                          | —  |
-| getCurrentNode      | 获取当前被选中节点的 data，若没有节点被选中则返回 null                                                                                                                                 | —  |
-| setCurrentKey       | 通过 key 设置某个节点的当前选中状态，使用此方法必须设置 `node-key` 属性 、 (key) 待被选节点的 key，若为 null 则取消当前高亮的节点                                                                               | -  |
-| setCurrentNode      | 通过 node 设置某个节点的当前选中状态，使用此方法必须设置 `node-key` 属性 、 (node) 待被选节点的 node                                                                                               | -  |
-| getNode             | 根据 data 或者 key 拿到 Tree 组件中的 node 、 (data) 要获得 node 的 key 或者 data                                                                                                 | -  |
-| remove              | 删除 Tree 中的一个节点，使用此方法必须设置 `node-key` 属性 、 (data) 要删除的节点的 data 或者 node                                                                                             | -  |
-| append              | 为 Tree 中的一个节点追加一个子节点 、 (data, parentNode) 接收两个参数，1. 要追加的子节点的 data 2. 子节点的 parent 的 data、key 或者 node                                                              | -  |
-| insertBefore        | 为 Tree 的一个节点的前面增加一个节点 、 (data, refNode) 接收两个参数，1. 要增加的节点的 data 2. 要增加的节点的后一个节点的 data、key 或者 node                                                                 | -  |
-| insertAfter         | 为 Tree 的一个节点的后面增加一个节点 、 (data, refNode) 接收两个参数，1. 要增加的节点的 data 2. 要增加的节点的前一个节点的 data、key 或者 node                                                                 | -  |
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| value | 唯一节点值字段 | `string` | - | `'value'` |
+| label | 标签字段 | `string` | - | `'label'` |
+| children | 子节点数组字段 | `string` | - | `'children'` |
+| disabled | 禁止交互勾选的字段 | `string` | - | `'disabled'` |
+| isLeaf | 懒加载叶节点字段；建议保留默认字段名 | `string` | - | `'isLeaf'` |
 
+传入映射时建议提供完整对象，例如 `{ value: 'id', label: 'name', children: 'children', disabled: 'disabled', isLeaf: 'isLeaf' }`。公开类型为字符串映射。
 
-### 事件
+### Tree 事件
 
-事件的参数均为一个对象（`update:modelValue`、`change` 除外，为选中的值）。其中 `node` 为节点对应的 TreeNode，`data` 为节点数据（传给 `data` 属性的数组中该节点所对应的对象）；其余节点（`targetNode`、`oldNode`、`from.parent` / `to.parent`）均为 TreeNode，数据在 `states.data` 上。
+`checkedNodes`、`halfCheckedNodes` 是节点对象数组，原始数据从 `node.states.data` 读取。节点事件中的 `data` 则直接是原始数据。
 
-| 事件名                | 说明                                  | 回调参数                                                                                       | 参数说明                                                                                                                             |
-| ------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| node-click         | 节点被点击时触发                            | `({ node, data, instance, event }) => void 0`                                              | `instance`：节点组件实例；`event`：事件对象                                                                                                  |
-| node-contextmenu   | 节点被鼠标右键点击时触发                        | `({ node, data, instance, event }) => void 0`                                              | 同 `node-click`                                                                                                                  |
-| check-change       | 节点的选中或半选状态变化时触发                     | `({ node, data, checked, indeterminate }) => void 0`                                       | `checked`：节点是否选中；`indeterminate`：节点是否半选（子孙中有部分被选中）                                                                             |
-| check              | 点击复选框时触发                            | `({ node, data, checked, checkedNodes, checkedValues, halfCheckedNodes, halfCheckedValues }) => void 0` | `checked`：点击后该节点是否选中；其余为点击后树的选中状态，`checkedNodes` / `halfCheckedNodes` 为 TreeNode                                                     |
-| current-change     | 当前节点变化时触发；点击当前节点本身不触发               | `({ node, data, oldNode }) => void 0`                                                      | `oldNode`：之前的当前节点，没有时为 `null`                                                                                                  |
-| node-expand-change | 点击展开图标或节点，展开或收起节点时触发                | `({ node, data, expanded, instance }) => void 0`                                           | `expanded`：展开（`true`）或收起（`false`）；`instance`：节点组件实例                                                                           |
-| node-dragstart     | 开始拖拽节点时触发                           | `({ node, data, event }) => void 0`                                                        | `node` / `data`：被拖节点；`event`：事件对象                                                                                                |
-| node-dragenter     | 拖拽进入其他节点时触发                         | `({ node, data, targetNode, event }) => void 0`                                            | `targetNode`：进入的节点                                                                                                             |
-| node-dragleave     | 拖拽离开某个节点时触发                         | `({ node, data, targetNode, event }) => void 0`                                            | `targetNode`：离开的节点                                                                                                             |
-| node-dragover      | 拖拽经过节点时触发（类似浏览器的 `dragover`）          | `({ node, data, targetNode, event }) => void 0`                                            | `targetNode`：经过的节点                                                                                                             |
-| node-drop          | 放下节点时触发，在 `node-dragend` 之前            | `({ node, data, targetNode, position, from, to, event }) => void 0`                        | `targetNode`：放置的目标节点；`position`：`before`、`after` 或 `inner`；`from` / `to`：移动前后的位置 `{ parent, index }`，`parent` 为 TreeNode，根级为 `null`，`to.index` 为移除被拖节点之后的下标 |
-| node-dragend       | 拖拽结束时触发（取消、不可放置时也会触发）              | `({ node, data, targetNode, position, dropped, event }) => void 0`                         | `targetNode`：最后经过的可放置节点，没有时为 `null`；`position`：放置位置，没有放下时为 `null`；`dropped`：是否放下                                                        |
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue / change | 交互导致勾选值变化 | `(value, summary)` | `summary` 包含 `checkedNodes`、`checkedValues`、`halfCheckedNodes`、`halfCheckedValues` |
+| check | 用户切换勾选后 | `({ node, data, checked, checkedNodes, checkedValues, halfCheckedNodes, halfCheckedValues })` | 含本次节点和整棵树状态 |
+| check-change | 节点勾选或半选状态变化 | `({ node, data, checked, indeterminate })` | 联动时可针对多个节点触发 |
+| node-click | 点击节点 | `({ node, data, instance, event })` | `instance` 为节点组件实例，`event` 为原生事件 |
+| node-contextmenu | 右键节点 | `({ node, data, instance, event })` | 注册监听时阻止原生右键菜单 |
+| current-change | 点击切换当前节点 | `({ node, data, oldNode })` | `oldNode` 无前值时为 `null`；重复点击同节点不触发 |
+| node-expand-change | 点击展开 / 收起 | `({ node, data, expanded, instance })` | `expanded` 为当前操作的展开状态 |
+| node-dragstart | 开始拖拽 | `({ node, data, event })` | `node` / `data` 为被拖节点 |
+| node-dragenter / node-dragleave / node-dragover | 进入 / 离开 / 经过目标 | `({ node, data, targetNode, event })` | `targetNode` 为目标节点 |
+| node-drop | 成功移动节点 | `({ node, data, targetNode, position, from, to, event })` | `position` 为 `before` / `inner` / `after`；位置定义见“拖拽节点” |
+| node-dragend | 拖拽结束 | `({ node, data, targetNode, position, dropped, event })` | `dropped` 表示是否移动；无落点时 `targetNode` / `position` 为 `null` |
 
-## 树选择（TreeSelect）
+### Tree 方法
 
-### 多选标签
+通过组件 ref 调用。程序化勾选方法直接修改树状态，不主动发出 `update:modelValue` / `change`；需要同步外部值时优先修改 `v-model`，或读取 `getCheckedValues()` 后自行赋值。
 
-`max > 1` 启用多选，标签行为与 Select 一致：默认只占一行，按输入框的可用宽度决定实际显示几个，放不下的折叠为 `+N...`；连 1 个都放不下时，第 1 个标签以省略号截断。非 `check-strictly` 时标签显示完整路径（`一级 / 二级 / 三级`）。
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| filter | 筛选节点，必须配置 `filterNode` | `(value: any)` | `void` |
+| getNode | 按值、原始数据或节点对象查找 | `(data: Value \| NodeData \| Node)` | `Node \| null` |
+| getNodeKey | 读取节点的值字段 | `(node: Node)` | `Value` |
+| getNodePath | 读取从根级到目标的原始数据路径 | `(data: Value \| NodeData \| Node)` | `NodeData[]`，找不到时为 `[]` |
+| getCheckedNodes | 读取勾选节点，可只取叶节点或包含半选节点 | `(leafOnly = false, includeHalfChecked = false)` | `Node[]` |
+| getCheckedValues | 读取勾选值 | `(leafOnly = false)` | `Value[]` |
+| getHalfCheckedNodes | 读取半选节点 | - | `Node[]` |
+| getHalfCheckedValues | 读取半选值 | - | `Value[]` |
+| setCheckedNodes | 按原始数据数组设置勾选 | `(nodes: NodeData[], leafOnly = false)` | `void` |
+| setCheckedValues | 按节点值设置勾选 | `(values: Value[])` | `void` |
+| setChecked | 设置一个节点；`deep` 控制是否向下联动 | `(data: Value \| NodeData \| Node, checked: boolean, deep?: boolean)` | `void` |
+| getCurrentNode | 读取当前节点原始数据 | - | `NodeData \| null` |
+| getCurrentKey | 读取当前节点值 | - | `Value \| null` |
+| setCurrentNode | 按已存在的原始节点数据设置当前节点 | `(data: NodeData)` | `void` |
+| setCurrentNodeByData | 按值、数据或节点对象设置当前节点；有当前节点时传 `null` 可清除 | `(data: Value \| NodeData \| Node \| null)` | `void` |
+| append | 添加子节点，省略父节点时添加到根级 | `(data: NodeData, parent?: Value \| NodeData \| Node)` | `void` |
+| remove | 移除节点 | `(data: Value \| NodeData \| Node)` | `void` |
+| insertBefore / insertAfter | 在参考节点前 / 后插入 | `(data: NodeData, reference: Value \| NodeData \| Node)` | `void` |
+| updateKeyChildren | 替换指定节点的子数据 | `(value: Value, children: NodeData[])` | `void` |
 
-悬停 `+N...` 时弹出被折叠的标签列表，可在列表中移除（禁用时只读）；悬停被截断的标签时显示完整内容。
+### TreeSelect 属性
 
-| 属性            | 说明                             | 类型       | 可选值    | 默认值          |
-| ------------- | ------------------------------ | -------- | ------ | ------------ |
-| max-tags      | 最多显示的标签数（上限），其余折叠；`0` 或不传表示不限    | `number` | `>= 0` | —（不限）        |
-| max-tag-lines | 标签最多占用的行数，按可用宽度自适应折叠；`0` 表示不限行 | `number` | `>= 0` | `1`          |
+TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字段，不透传 Tree 的全部属性。
 
-### 可搜索
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| modelValue | 选中的节点值，支持 `v-model` | `string \| number \| any[]` | - | `undefined` |
+| data | 节点数据 | `NodeData[]` | - | `[]` |
+| checkStrictly | 父子独立勾选 | `boolean` | - | `false` |
+| renderNodeLabel | 自定义树节点 / 级联列标签；级联搜索结果使用路径文本 | `(props: { row: NodeData; store: Node }) => VNodeChild` | - | - |
+| max | `> 1` 显示多选标签；影响非数组值输出形式，不限制勾选数 | `number` | `>= 1` | `Infinity` |
+| maxTags | 最多显示的标签数，`0` 或不传表示不限 | `number` | `>= 0` | - |
+| maxTagLines | 标签最多行数，`0` 表示不限 | `number` | `>= 0` | `1` |
+| disabled | 禁用交互 | `boolean` | - | `false` |
+| clearable | 悬停时显示清空按钮 | `boolean` | - | `false` |
+| placeholder | 输入框占位文案（通过 attribute 传入），支持空字符串 | `string` | - | 当前语言的“请选择” |
+| extra | 无选中标签时的输入框显示值 | `string` | - | `''` |
+| searchable | 开启搜索 | `boolean` | - | `false` |
+| searchPlaceholder | 搜索框占位文案 | `string` | - | `''` |
+| loadData | 防抖搜索回调，需自行更新 `data` | `(keyword: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
+| cascader | 使用级联列面板 | `boolean` | - | `false` |
+| autoWidth | 面板按内容计算宽度 | `boolean` | - | 未指定时跟随 `cascader` |
+| portal | 下拉挂到 body；`false` 挂在组件根节点内，可能被祖先 overflow 裁剪 | `boolean` | - | `true` |
+| portalClass | 面板附加类名 | `string \| object \| any[]` | - | - |
+| trigger | 面板触发方式，沿用 Popover | `string` | `click` / `hover` | `'click'` |
+| placement | 面板位置，沿用 Popover | `string` | 见 Popover | `'bottom-left'` |
+| arrow | 显示面板箭头 | `boolean` | - | `false` |
+| tag | 触发器根元素 | `string` | - | `'div'` |
+| id | 输入框 id | `string` | - | - |
+| separator | 字符串值分隔符 | `string` | - | `','` |
+| numerable | 字符串输入值转为数字 | `boolean` | - | `false` |
+| nullValue | 兼容属性，当前空值转换不使用该替代值 | `number \| string \| object` | - | `undefined` |
 
-设置 `searchable` 开启搜索（默认 `false`），关键词以空格或逗号分隔，任一命中即可；弹层关闭时自动清空关键词。
+继承声明的 `renderOption`、`renderOptionGroup`、`renderLabel`、`label` 当前不参与 TreeSelect 渲染；自定义节点内容请使用 `renderNodeLabel`。
 
-- 树形模式：保留层级过滤，命中节点及其祖先可见并自动展开，命中文字高亮（自定义 `render-node-label` 时不做高亮）
-- 级联模式（`cascader`）：搜索时切换为扁平路径列表（`一级 / 二级 / 三级`），宽度沿用列视图并限制在 240px ~ 360px，过长路径省略显示
-- 非 `check-strictly` 时，勾选父节点会同时勾选**全部**子孙节点（包括被搜索过滤隐藏的节点）
-- 设置 `load-data` 时视为远程搜索：数据由 `load-data` 返回，本地不再过滤，仅高亮
+### TreeSelect 事件
 
-| 属性                 | 说明                    | 类型         | 可选值 | 默认值     |
-| ------------------ | --------------------- | ---------- | --- | ------- |
-| searchable         | 是否可搜索                 | `boolean`  | —   | `false` |
-| search-placeholder | 搜索框占位文本               | `string`   | —   | —       |
-| cascader           | 级联列模式                 | `boolean`  | —   | `false` |
-| load-data          | 远程搜索，参数为关键词，需返回 Promise | `Function` | —   | —       |
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue / change | 勾选、移除标签或清空 | `(value, labels: string[])` | `labels` 是当前展示标签文本，联动模式为完整路径 |
+| clear | 点击清空按钮 | - | 随后发出值变化事件 |
+| visible-change | 面板可见性变化 | `(visible: boolean)` | 当前是否打开 |
+| ready | 面板组件挂载 | - | 由 Popover 转发 |
+| close | 面板关闭 | - | 由 Popover 转发 |
 
-### 挂载位置
+### TreeSelect 方法
 
-| 属性     | 说明 | 类型        | 可选值 | 默认值    |
-| ------ | --- | --------- | --- | ------ |
-| portal | 下拉是否挂载到 body；`false` 时挂到组件根节点内，随所在容器滚动，超出容器的部分会被其 `overflow` 裁剪 | `boolean` | —   | `true` |
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| close | 关闭面板 | - | `void` |
+| toggle | 指定可见性或切换当前状态 | `(visible?: boolean)` | `void` |
 
-<!--
-## 变更说明
+TreeSelect 实例还暴露 `treeSelectId`、`isActive`、`multiple`、`current`、`currentValueGroups`、`searchRegex`。通常使用 `v-model` 和上面的方法即可。Tree 与 TreeSelect 都没有消费调用方插槽，标签定制使用 `renderNodeLabel`。
 
-### 事件与拖拽回调的参数统一为对象
-- 所有事件的参数改为一个对象（`update:modelValue`、`change` 不变）；`node` 为 TreeNode，`data` 为节点数据，与 Table 的对象参数约定一致：
-	- `node-click`：`(data, node, nodeRef)` → `{ node, data, instance, event }`，新增 `event`。
-	- `node-contextmenu`：`(e, data, node, nodeRef)` → `{ node, data, instance, event }`。
-	- `check-change`：`(data, checked, indeterminate)` → `{ node, data, checked, indeterminate }`。
-	- `check`：`(data, { checkedNodes, checkedValues, halfCheckedNodes, halfCheckedValues })` → `{ node, data, checked, checkedNodes, checkedValues, halfCheckedNodes, halfCheckedValues }`，新增 `checked`。
-	- `current-change`：`(data, node)` → `{ node, data, oldNode }`，新增 `oldNode`。
-	- `node-drag-*` / `node-drop`：`(draggingNode, dropNode, dropType, e)` 等 → `{ node, data, targetNode, event }`，`node-drop` 另有 `position`、`from`、`to`，`node-dragend` 另有 `position`、`dropped`。
-- `allow-drag`：`(node)` → `({ node, data })`。
-- `allow-drop`：`(draggingNode, dropNode, 'prev' | 'inner' | 'next')` → `({ node, data, targetNode, position, from, to })`，`position` 为 `before` / `inner` / `after`（原 `prev` / `next` 改为与事件相同的 `before` / `after`）。
+### 主题与语言
 
-### 事件名
-- 与浏览器原生事件对应的事件改用原生事件名：`node-drag-start` / `node-drag-enter` / `node-drag-leave` / `node-drag-over` / `node-drag-end` → `node-dragstart` / `node-dragenter` / `node-dragleave` / `node-dragover` / `node-dragend`（`node-drop` 不变）。
-- `node-expand` / `node-collapse` 合并为 `node-expand-change`，以 `expanded` 区分。
+Tree 使用 `--vc-tree-*`，TreeSelect 使用 `--vc-tree-select-*` 组件覆盖变量，默认回退到共享亮暗主题。可分别覆盖 `background-color-selected`；Tree 还支持 `background-color-hover`、`foreground-color-drop`，TreeSelect 支持 `foreground-color-disabled`。拖入高亮文字默认保持白色，以配合主色背景。
 
-### 行为
-- `current-change` 只在当前节点变化时触发，点击当前节点本身不再触发。
-- `check-change` 在选中或半选任一状态变化时触发（原先需两者同时变化，勾选叶子节点时不会触发）。
-- 放下节点时先发出 `node-drop`，再发出 `node-dragend`（原先相反），与浏览器一致。
-- 拖拽中所有节点都不可放置时松手，不再抛错，`node-dragend` 的 `targetNode` 为 `null`。
-- 落点区域按节点所在行计算（原先按包含展开子节点的整个节点计算，展开的父节点上几乎只能放在它之前）；已展开且有子节点的节点没有 `after` 区域。
-- `inner` 时目标节点的标签高亮（原样式未生效）。
--->
+内置文案使用 `vc.Tree.emptyText`、`vc.TreeSelect.placeholder`、`vc.TreeSelect.noMatch`；通过 `VcInstance.configure({ locale })` 切换语言。节点标签、自定义渲染和显式传入的文案由调用方管理。
+
+更多交互细节可参考[节点事件示例](./examples/events.vue)、[拖拽示例](./examples/drag.vue)、[标签折叠示例](./examples/tree-select-tags.vue)与[挂载位置示例](./examples/tree-select-portal.vue)。

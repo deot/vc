@@ -35,7 +35,7 @@ export const props = {
 	},
 	emptyText: {
 		type: String,
-		default: '暂无数据'
+		default: undefined
 	},
 	checkStrictly: {
 		type: Boolean,

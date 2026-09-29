@@ -12,6 +12,7 @@ import { Popover } from '../popover/index';
 import { Spin } from '../spin/index';
 import { Icon } from '../icon/index';
 import { SelectTags } from '../select/select-tags';
+import { useLocale } from '../locale';
 import { TreeSelectContent } from './tree-select-content';
 import { TreeSelectContentCascader } from './tree-select-content-cascader';
 import { props as treeSelectProps } from './tree-select-props';
@@ -22,7 +23,8 @@ export const TreeSelect = defineComponent({
 	name: COMPONENT_NAME,
 	props: treeSelectProps,
 	emits: ['ready', 'close', 'visible-change', 'clear', 'change', 'update:modelValue'],
-	setup(props, { emit, expose }) {
+	setup(props, { attrs, emit, expose }) {
+		const { t } = useLocale();
 		const instance = getCurrentInstance();
 		const its = useAttrs({ merge: false });
 		const formItem = inject<any>('vc-form-item', {});
@@ -276,7 +278,7 @@ export const TreeSelect = defineComponent({
 									class="vc-tree-select__input"
 									// @ts-ignore
 									readonly={true}
-									placeholder={its.value.attrs?.placeholder || '请选择'}
+									placeholder={attrs.placeholder ?? t('vc.TreeSelect.placeholder')}
 								>
 									{{
 										content: multiple.value && displayTags.value.length > 0

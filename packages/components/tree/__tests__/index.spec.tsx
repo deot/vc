@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { MTree, MTreeSelect, Tree, TreeSelect } from '@deot/vc-components';
+import { MTree, MTreeSelect, Tree, TreeSelect, VcInstance } from '@deot/vc-components';
+import { enUS, zhCN } from '@deot/vc-locale';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi, onTestFinished } from 'vitest';
@@ -120,10 +121,75 @@ describe('index.ts', () => {
 	});
 });
 
+describe('Tree locale', () => {
+	afterEach(() => {
+		VcInstance.configure({ locale: zhCN });
+		document.body.innerHTML = '';
+	});
+
+	it('updates empty text and preserves explicit overrides', async () => {
+		const wrapper = mountTree();
+		onTestFinished(() => wrapper.unmount());
+		expect(wrapper.text()).toBe('暂无数据');
+		VcInstance.configure({ locale: enUS });
+		await nextTick();
+		expect(wrapper.text()).toBe('No data');
+		await wrapper.setProps({ emptyText: 'Nothing here' });
+		expect(wrapper.text()).toBe('Nothing here');
+		await wrapper.setProps({ emptyText: '' });
+		VcInstance.configure({ locale: zhCN });
+		await nextTick();
+		expect(wrapper.text()).toBe('');
+	});
+
+	it.each([false, true])('updates TreeSelect placeholder and no-match text (cascader=%s)', async (cascader) => {
+		const wrapper = mountTreeSelect({ data: freshData(), searchable: true, cascader });
+		onTestFinished(() => wrapper.unmount());
+		expect(wrapper.find('input').attributes('placeholder')).toBe('请选择');
+		await wrapper.trigger('click');
+		await flush();
+		const input = document.querySelector('.vc-tree-select__search input') as HTMLInputElement;
+		input.value = 'missing';
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		await flush();
+		const empty = () => document.querySelector(cascader ? '.vc-tree-select__empty' : '.vc-tree__empty-text')?.textContent;
+		expect(empty()).toBe('暂无匹配数据');
+		VcInstance.configure({ locale: enUS });
+		await nextTick();
+		expect(wrapper.find('input').attributes('placeholder')).toBe('Please select');
+		expect(empty()).toBe('No matching data');
+		await wrapper.setProps({ placeholder: 'Choose a node' });
+		expect(wrapper.find('input').attributes('placeholder')).toBe('Choose a node');
+		await wrapper.setProps({ placeholder: '' });
+		VcInstance.configure({ locale: zhCN });
+		await nextTick();
+		expect(wrapper.find('input').attributes('placeholder')).toBe('');
+		expect(empty()).toBe('暂无匹配数据');
+	});
+});
+
 describe('Tree interaction', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';
 		vi.useRealTimers();
+	});
+
+	it('replaces data without retaining old nodes or lookup entries', async () => {
+		const wrapper = mountTree({
+			data: [{ value: 'old', label: 'Old', children: [{ value: 'old-child', label: 'Old child' }] }, { value: 'last', label: 'Last' }]
+		});
+		onTestFinished(() => wrapper.unmount());
+		await wrapper.setProps({ data: [{ value: 'new', label: 'New' }] });
+		expect(wrapper.findAll('[role="treeitem"]')).toHaveLength(1);
+		expect(wrapper.text()).toBe('New');
+		for (const value of ['old', 'old-child', 'last']) {
+			expect((wrapper.vm as any).getNode(value)).toBeNull();
+		}
+		expect((wrapper.vm as any).getNode('new').states.data.label).toBe('New');
+		await wrapper.setProps({ data: [] });
+		expect(wrapper.findAll('[role="treeitem"]')).toHaveLength(0);
+		expect(wrapper.text()).toBe('暂无数据');
+		expect((wrapper.vm as any).getNode('new')).toBeNull();
 	});
 
 	it('render / expand / checkbox / v-model', async () => {

@@ -200,7 +200,8 @@ export class TreeNode {
 		}
 
 		this.states.data = data;
-		this.childNodes.splice(0, this.childNodes.length - 1);
+		this.childNodes.forEach(child => this.store.deregisterNode(child));
+		this.childNodes.splice(0, this.childNodes.length);
 
 		let children: any[];
 		if (this.states.level === 0 && this.states.data instanceof Array) {

@@ -4,6 +4,7 @@ import { defineComponent, ref, watch } from 'vue';
 import type { PropType } from 'vue';
 import type { Render } from '../customer/types';
 import { Scroller } from '../scroller/index';
+import { useLocale } from '../locale';
 import { Tree } from './tree';
 
 const COMPONENT_NAME = 'vc-tree-select-content';
@@ -64,6 +65,7 @@ export const TreeSelectContent = defineComponent({
 	},
 	emits: ['change'],
 	setup(props, { emit }) {
+		const { t } = useLocale();
 		const treeRef = ref<any>(null);
 
 		const filterNode = (keyword: string, data: any, node: any) => {
@@ -123,7 +125,7 @@ export const TreeSelectContent = defineComponent({
 						allowDispatch={false}
 						showCheckbox={true}
 						filterNode={filterNode}
-						emptyText={searching ? '暂无匹配数据' : void 0}
+						emptyText={searching ? t('vc.TreeSelect.noMatch') : void 0}
 						renderNodeLabel={props.renderNodeLabel || renderLabel}
 						onChange={(_: any, data: any) => emit('change', _, data)}
 					/>

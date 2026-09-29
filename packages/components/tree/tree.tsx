@@ -6,6 +6,7 @@ import type { TreeNode } from './store/tree-node';
 import type { TreeNodeExpandChangePayload } from './types';
 import { TreeStore } from './store/tree-store';
 import { toCurrentValue } from '../select/utils';
+import { useLocale } from '../locale';
 import { TreeNodeContent } from './tree-node-content.tsx';
 import { useDragNode } from './use-drag-node';
 import { useKeydown } from './use-keydown';
@@ -35,6 +36,7 @@ export const Tree = defineComponent({
 		'node-dragover'
 	],
 	setup(props, { expose, emit }) {
+		const { t } = useLocale();
 		const instance = getCurrentInstance();
 		const store = new TreeStore({
 			data: props.data,
@@ -265,7 +267,7 @@ export const Tree = defineComponent({
 					{
 						isEmpty.value && (
 							<div class="vc-tree__empty-block">
-								<span class="vc-tree__empty-text">{props.emptyText}</span>
+								<span class="vc-tree__empty-text">{props.emptyText ?? t('vc.Tree.emptyText')}</span>
 							</div>
 						)
 					}
