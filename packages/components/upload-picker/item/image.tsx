@@ -99,7 +99,6 @@ export const ImageItem = defineComponent({
 																			<Progress
 																				percent={row.percent}
 																				show-text={false}
-																				status="normal"
 																				style="width: 100%;padding: 0 5px"
 																			/>
 																		)

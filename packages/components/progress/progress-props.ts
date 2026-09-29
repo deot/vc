@@ -14,9 +14,9 @@ export const props = {
 	},
 	status: {
 		validator(val: string) {
-			return ['normal', 'error', 'success'].includes(val);
+			return ['default', 'error', 'success'].includes(val);
 		},
-		default: 'normal'
+		default: 'default'
 	},
 	showText: {
 		type: Boolean,
@@ -51,7 +51,7 @@ export const props = {
 	color: {
 		type: [Object, String],
 		default: () => ({
-			normal: 'var(--vc-progress-color-primary, var(--vc-color-primary))',
+			default: 'var(--vc-progress-color-primary, var(--vc-color-primary))',
 			success: 'var(--vc-progress-color-success, var(--vc-color-success))',
 			error: 'var(--vc-progress-color-error, var(--vc-color-error))'
 		})

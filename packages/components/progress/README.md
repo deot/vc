@@ -76,7 +76,7 @@ const percent = ref(30);
 
 ### 圆形与自定义颜色
 
-`color` 可传入统一颜色，或按 `normal`、`success`、`error` 提供完整的状态颜色对象。`trackColor` 控制轨道颜色。圆形中心可通过默认插槽替换，插槽内容不受 `showText` 控制。
+`color` 可传入统一颜色，或按 `default`、`success`、`error` 提供完整的状态颜色对象。`trackColor` 控制轨道颜色。圆形中心可通过默认插槽替换，插槽内容不受 `showText` 控制。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 20 }</config> -->
@@ -87,7 +87,7 @@ const percent = ref(30);
 		<Progress
 			type="circle"
 			:percent="100"
-			:color="{ normal: '#456cf6', success: '#1db88c', error: '#f04134' }"
+			:color="{ default: '#456cf6', success: '#1db88c', error: '#f04134' }"
 		/>
 		<Progress type="circle" :percent="60" :size="150" :show-text="false">
 			<span>已完成 60%</span>
@@ -123,7 +123,7 @@ import { Progress } from '@deot/vc';
 | --- | --- | --- | --- | --- |
 | type | 进度条形态 | `string` | `line`、`circle` | `line` |
 | percent | 进度百分比，达到 100 时强制成功 | `number \| string` | - | `0` |
-| status | 进度状态；线形显示对应状态图标，圆形仍显示百分比 | `string` | `normal`、`success`、`error` | `normal` |
+| status | 进度状态；线形显示对应状态图标，圆形仍显示百分比 | `string` | `default`、`success`、`error` | `default` |
 | showText | 是否显示默认百分比或线形状态图标 | `boolean` | - | `true` |
 | textStyle | 默认百分比文本样式，不作用于状态图标或插槽 | `string \| object` | - | - |
 | textClass | 默认百分比文本类名，不作用于状态图标或插槽 | `string \| object` | - | - |
