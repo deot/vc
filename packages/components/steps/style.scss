@@ -1,6 +1,2 @@
-@use '../style/helper' as *;
-
-$component-name: vc-steps;
-
-@include block($component-name) {
-}
+@use "./steps";
+@use "./step";

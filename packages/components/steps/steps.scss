@@ -1,0 +1,456 @@
+@use 'sass:math';
+@use '../style/helper' as *;
+
+$component-name: vc-steps;
+$title-color: varfix(color-dark-light, steps);
+$title-color-default: varfix(color-dark-lighter, steps);
+$description-color: varfix(color-dark-extralight, steps);
+$primary-color: varfix(color-primary, steps);
+$primary-color-lighter: varfix(color-primary-lighter, steps);
+$error-color: varfix(color-error, steps);
+$dot-color-default: varfix(color-light-deepest, steps);
+$foreground-color-active: varfix(foreground-color-active, steps, #fff);
+$background-color-default: varfix(background-color, steps);
+$background-color-light: varfix(background-color-light, steps);
+$icon-size: 28px;
+$gap: 12px;
+$line-size: 1px;
+$label-width: 140px; // 标题在节点上方/下方时，内容区的宽度
+$icon-offset: math.div($label-width - $icon-size, 2);
+$icon-center: math.div($icon-size - $line-size, 2);
+$dot-size: 8px;
+$dot-size-active: 10px;
+$dot-gap: 4px;
+$dot-offset: math.div($label-width - $dot-size, 2);
+$dot-center: math.div($dot-size - $line-size, 2);
+$dot-active-offset: math.div($dot-size-active - $dot-size, 2);
+$dot-spacing: 17px; // 横向dot：节点与相邻文字的间距（文字在下方时由行高撑开，上方时保持一致）
+$dot-vertical-top: 8px;
+$dot-vertical-spacing: 16px;
+$arrow-height: 72px;
+$arrow-size: math.div($arrow-height, 2);
+$arrow-gap: 4px;
+$arrow-padding: 16px;
+$step: '.vc-step';
+
+/**
+ * 布局由根节点上的类决定：
+ * is-horizontal/is-vertical；is-default/is-dot/is-arrow/is-navigation；is-label-right/bottom/left/top（实际位置）
+ */
+@include block($component-name) {
+	display: flex;
+	font-size: 14px;
+	line-height: 1.5;
+
+	// 连线：标题在右侧（横向）时接在标题后，在左侧（横向）时接在节点后，其余由tail绘制
+	&.is-label-right:not(.is-vertical):not(.is-lineless) > #{$step}:not(:last-child) > #{$step}__content > #{$step}__title::after,
+	&.is-label-left:not(.is-vertical):not(.is-lineless) > #{$step}:not(:last-child) > #{$step}__dot::after {
+		position: absolute;
+		top: $icon-center;
+		left: 100%;
+		width: 5000px;
+		height: $line-size;
+		background-color: var(--vc-step-line-color);
+		content: '';
+		box-sizing: border-box;
+	}
+
+	// 标题在节点左侧
+	&.is-label-left > #{$step} {
+		display: flex;
+		flex-direction: row-reverse;
+		align-items: flex-start;
+		justify-content: flex-end;
+
+		> #{$step}__dot {
+			position: relative;
+			margin-right: 0;
+			margin-left: $gap;
+
+			// 连线与节点的间距，对应标题在右侧时标题的padding-right
+			&::after {
+				margin-left: $gap;
+			}
+		}
+
+		> #{$step}__content {
+			text-align: right;
+
+			> #{$step}__title {
+				padding-right: 0;
+			}
+
+			> #{$step}__description {
+				margin-left: auto;
+			}
+		}
+	}
+
+	// 标题在节点下方/上方：连线在两个节点之间
+	&.is-label-bottom > #{$step},
+	&.is-label-top > #{$step} {
+		overflow: visible;
+
+		> #{$step}__dot {
+			margin-left: $icon-offset;
+		}
+
+		> #{$step}__content {
+			display: block;
+			width: $label-width;
+			text-align: center;
+
+			> #{$step}__title {
+				padding-right: 0;
+			}
+
+			> #{$step}__description {
+				max-width: none;
+			}
+		}
+
+		> #{$step}__tail {
+			left: $icon-offset + $icon-size + $gap;
+			width: 100%;
+			height: $line-size;
+			padding-right: $icon-size + $gap;
+		}
+	}
+
+	&.is-label-bottom > #{$step} {
+		> #{$step}__content > #{$step}__title {
+			margin-top: 2px;
+		}
+
+		> #{$step}__tail {
+			top: $icon-center;
+		}
+	}
+
+	// 节点在底部对齐（各项等高）
+	&.is-label-top > #{$step} {
+		display: flex;
+		flex-direction: column-reverse;
+
+		> #{$step}__dot {
+			align-self: flex-start;
+		}
+
+		> #{$step}__content {
+			margin-bottom: 2px;
+		}
+
+		> #{$step}__tail {
+			bottom: $icon-center;
+		}
+	}
+
+	// 纵向
+	@include when(vertical) {
+		flex-direction: column;
+
+		// 内容区收缩到剩余宽度，长描述换行而不被裁掉
+		> #{$step} {
+			display: flex;
+			align-items: flex-start;
+		}
+
+		> #{$step}:not(:last-child) {
+			min-height: 90px;
+		}
+
+		> #{$step} > #{$step}__content > #{$step}__description {
+			max-width: none;
+		}
+
+		> #{$step} > #{$step}__tail {
+			top: $icon-size + 6px;
+			bottom: 6px;
+			left: $icon-center;
+			width: $line-size;
+		}
+
+		// 标题在左侧：节点靠右
+		&.is-label-left > #{$step} {
+			margin-right: 0;
+			justify-content: flex-start;
+
+			> #{$step}__tail {
+				right: $icon-center;
+				left: auto;
+			}
+		}
+	}
+
+	// 圆点
+	@include when(dot) {
+		> #{$step} {
+			margin-right: $dot-size + $dot-gap * 2;
+			overflow: visible;
+
+			&:last-child {
+				margin-right: 0;
+			}
+
+			> #{$step}__dot #{$step}__icon {
+				width: $dot-size;
+				height: $dot-size;
+				line-height: 0;
+				border: 0;
+			}
+
+			&.is-active > #{$step}__dot #{$step}__icon {
+				width: $dot-size-active;
+				height: $dot-size-active;
+			}
+
+			&.is-default > #{$step}__dot #{$step}__icon {
+				background-color: $dot-color-default;
+			}
+
+			&.is-success > #{$step}__dot #{$step}__icon {
+				background-color: $primary-color;
+			}
+
+			> #{$step}__content > #{$step}__description {
+				margin-top: $dot-gap;
+			}
+		}
+
+		// 横向：文字在圆点下方/上方
+		&.is-horizontal > #{$step} {
+			> #{$step}__dot {
+				margin-left: $dot-offset;
+			}
+
+			&.is-active > #{$step}__dot {
+				margin-left: $dot-offset - $dot-active-offset;
+			}
+
+			> #{$step}__tail {
+				left: $dot-offset + $dot-size + $dot-gap;
+				padding-right: 0;
+			}
+		}
+
+		&.is-label-bottom > #{$step} {
+			> #{$step}__content > #{$step}__title {
+				margin-top: $dot-gap;
+			}
+
+			&.is-active > #{$step}__dot {
+				margin-top: -$dot-active-offset;
+			}
+
+			> #{$step}__tail {
+				top: $dot-center;
+			}
+		}
+
+		&.is-label-top > #{$step} {
+			> #{$step}__content {
+				margin-bottom: $dot-spacing;
+			}
+
+			// 上下同时收回，占位与未激活时一致，文字不跟着移动
+			&.is-active > #{$step}__dot {
+				margin-top: -$dot-active-offset;
+				margin-bottom: -$dot-active-offset;
+			}
+
+			> #{$step}__tail {
+				bottom: $dot-center;
+			}
+		}
+
+		// 纵向：文字在圆点右侧/左侧
+		&.is-vertical > #{$step} {
+			> #{$step}__dot {
+				margin-top: $dot-vertical-top;
+				margin-right: $dot-vertical-spacing;
+			}
+
+			// 四周同时收回：中心与占位都与未激活时一致，切换当前步时文字与高度不变
+			&.is-active > #{$step}__dot {
+				margin-top: $dot-vertical-top - $dot-active-offset;
+				margin-bottom: -$dot-active-offset;
+				margin-left: -$dot-active-offset;
+			}
+
+			> #{$step}__content {
+				overflow: hidden;
+
+				> #{$step}__title {
+					margin-top: $dot-vertical-top + math.div($dot-size - $icon-size, 2);
+				}
+			}
+
+			> #{$step}__tail {
+				top: $dot-size + $dot-vertical-top + $dot-gap;
+				bottom: $dot-gap - $dot-vertical-top;
+				left: math.div($dot-size, 2);
+				transform: translateX(-50%);
+			}
+		}
+
+		&.is-vertical.is-label-left > #{$step} {
+			> #{$step}__dot {
+				margin-right: 0;
+				margin-left: $dot-vertical-spacing;
+			}
+
+			&.is-active > #{$step}__dot {
+				margin-right: -$dot-active-offset;
+				margin-left: $dot-vertical-spacing;
+			}
+
+			> #{$step}__tail {
+				right: math.div($dot-size, 2);
+				left: auto;
+				transform: translateX(50%);
+			}
+		}
+	}
+
+	// 箭头
+	@include when(arrow) {
+		> #{$step} {
+			display: flex;
+			flex: 1;
+			height: $arrow-height;
+			overflow: visible;
+			align-items: center;
+
+			&:not(:last-child) {
+				margin-right: $arrow-gap;
+			}
+
+			> #{$step}__content {
+				padding-left: $arrow-padding + $arrow-size;
+				box-sizing: border-box;
+
+				> #{$step}__description {
+					max-width: none;
+					margin-top: 0;
+					white-space: nowrap;
+				}
+			}
+
+			&:first-child > #{$step}__content {
+				padding-left: $arrow-padding;
+			}
+
+			&:not(:first-child)::before,
+			&:not(:last-child)::after {
+				position: absolute;
+				top: 0;
+				width: 0;
+				height: 0;
+				border-top: $arrow-size solid transparent;
+				border-bottom: $arrow-size solid transparent;
+				content: '';
+			}
+
+			// 前箭头：用背景色挖出缺口
+			&:not(:first-child)::before {
+				left: 0;
+				z-index: 1;
+				border-left: $arrow-size solid $background-color-light;
+			}
+
+			// 后箭头：与该项同色
+			&:not(:last-child)::after {
+				right: -$arrow-size;
+				z-index: 2;
+				border-left: $arrow-size solid;
+			}
+
+			@each $status, $background, $title, $description in (
+				default $background-color-default $title-color-default $description-color,
+				pending $primary-color $foreground-color-active $foreground-color-active,
+				success $primary-color-lighter $title-color $description-color,
+				error $error-color $foreground-color-active $foreground-color-active
+			) {
+				&.is-#{$status} {
+					background-color: $background;
+
+					&::after {
+						border-left-color: $background;
+					}
+
+					> #{$step}__content > #{$step}__title {
+						color: $title;
+					}
+
+					> #{$step}__content > #{$step}__description {
+						color: $description;
+					}
+				}
+			}
+		}
+	}
+
+	// 导航
+	@include when(navigation) {
+		> #{$step} {
+			padding-right: 10px;
+			padding-left: 20px;
+			margin-right: 32px;
+
+			&:last-child {
+				flex: 1;
+			}
+
+			> #{$step}__content {
+				margin-bottom: 20px;
+
+				> #{$step}__description {
+					padding-right: 20px;
+				}
+			}
+
+			// 当前步的指示条
+			&.is-active::after {
+				position: absolute;
+				right: 30px;
+				bottom: 0;
+				left: 0;
+				height: 2px;
+				background-color: $primary-color;
+				content: '';
+			}
+
+			&.is-active:last-child::after {
+				width: 100%;
+			}
+
+			// 步骤之间的箭头
+			&:not(:last-child) > #{$step}__content::after {
+				position: absolute;
+				top: 10px;
+				right: 10px;
+				width: 6px;
+				height: 6px;
+				background-color: $background-color-light;
+				border: 2px solid $dot-color-default;
+				border-bottom: none;
+				border-left: none;
+				content: '';
+				transform: rotate(45deg);
+			}
+		}
+	}
+
+	// 放在最后，覆盖各形态下的文字颜色
+	@include when(clickable) {
+		#{$step}__title,
+		#{$step}__description {
+			transition: color 0.1s linear;
+		}
+
+		> #{$step}.is-clickable:hover > #{$step}__content > #{$step}__title,
+		> #{$step}.is-clickable:hover > #{$step}__content > #{$step}__description {
+			color: $primary-color;
+		}
+	}
+}

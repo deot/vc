@@ -1,97 +1,352 @@
-## 步骤条
-引导用户按照流程完成任务的导航条。
+## 步骤条（Steps）
+
+引导用户按流程完成任务的导航条，展示当前所处的步骤以及前后步骤的状态。
 
 ### 何时使用
-当任务复杂或者存在先后关系时，将其分解成一系列步骤，从而简化任务。
+
+- 任务较复杂或存在先后关系时，将其拆分为一系列步骤。
+- 需要展示流程进度，或允许用户在步骤之间切换。
 
 ### 基础用法
-<!-- 仅展示最基本的用法 -->
-:::RUNTIME
+
+`v-model` 绑定当前步数，从 1 开始：之前的步骤为 `success`，当前步为 `pending`，之后的步骤为 `default`。`0` 表示都未开始，步骤数加 1 表示全部完成。`description` 设置步骤的描述。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
 ```vue
 <template>
-	<div style="padding: 20px">
-		<StepsBar
-			v-model="current"
-			:data="dataSource"
-			@change="handleChange"
-		/>
-		<Steps :current="2" style="margin-top: 20px">
-			<Step title="这是标题" subtitle="我是子标题" description="我是描述我是描述我是描述我是描述我是描述我是描述我是描述我是描述" />
-			<Step title="这是标题" subtitle="我是子标题" description="我是描述我是描述我是描述我是描述我是描述我是描述我是描述我是描述" />
-			<Step title="这是标题" subtitle="我是子标题" description="我是描述我是描述我是描述我是描述我是描述我是描述我是描述我是描述" />
+	<div>
+		<Steps v-model="current">
+			<Step title="填写信息" description="填写基本信息" />
+			<Step title="确认信息" description="核对填写内容" />
+			<Step title="完成" description="提交成功" />
 		</Steps>
-		<Steps :current="2" style="margin-top: 20px" direction="vertical">
-			<Step title="这是标题" subtitle="我是子标题" description="我是描述我是描述我是描述我是描述我是描述我是描述我是描述我是描述" />
-			<Step title="这是标题" subtitle="我是子标题" description="我是描述我是描述我是描述我是描述我是描述我是描述我是描述我是描述" />
-			<Step title="这是标题" subtitle="我是子标题" description="我是描述我是描述我是描述我是描述我是描述我是描述我是描述我是描述" />
+		<div class="toolbar">
+			<Button :disabled="current <= 0" @click="current--">上一步</Button>
+			<Button :disabled="current >= 4" @click="current++">下一步</Button>
+			<span>当前步数：{{ current }}</span>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, Steps, Step } from '@deot/vc';
+
+const current = ref(2);
+</script>
+
+<style scoped>
+.toolbar {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	margin-top: 24px;
+}
+</style>
+```
+:::
+
+### 步骤状态
+
+Steps 的 `status` 只作用于当前步，默认为 `pending`；设为 `error` 时，前一步的连线同时变为错误色。Step 单独设置的 `status` 优先于推导结果。`lineless` 隐藏连线。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+```vue
+<template>
+	<div class="status-demo">
+		<Steps :model-value="2" status="error">
+			<Step title="提交订单" description="已完成" />
+			<Step title="支付" description="支付失败" />
+			<Step title="发货" description="等待中" />
 		</Steps>
-		<Steps :current="2" style="margin-top: 20px" size="small">
-			<Step title="这是标题" subtitle="我是子标题" description="我是描述我是描述我是描述我是描述我是描述我是描述我是描述我是描述" />
-			<Step title="这是标题" subtitle="我是子标题" description="我是描述我是描述我是描述我是描述我是描述我是描述我是描述我是描述" />
-			<Step title="这是标题" subtitle="我是子标题" description="我是描述我是描述我是描述我是描述我是描述我是描述我是描述我是描述" />
+		<Steps :model-value="2">
+			<Step title="提交订单" />
+			<Step title="审核" />
+			<Step title="打款" status="error" />
+			<Step title="归档" status="success" />
+		</Steps>
+		<Steps :model-value="2" lineless>
+			<Step title="提交订单" />
+			<Step title="审核" />
+			<Step title="归档" />
 		</Steps>
 	</div>
 </template>
+
+<script setup>
+import { Steps, Step } from '@deot/vc';
+</script>
+
+<style scoped>
+.status-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+}
+</style>
+```
+:::
+
+### 标题位置与方向
+
+`labelPosition` 设置标题与描述相对节点的位置，默认在右侧。`vertical` 为 `true` 时纵向展示，此时只支持 `right` / `left`（`bottom` 视为 `right`，`top` 视为 `left`）。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+```vue
+<template>
+	<div>
+		<div class="toolbar">
+			<label><span>纵向</span><Switch v-model="vertical" /></label>
+			<RadioGroup v-model="labelPosition">
+				<Radio value="right">right</Radio>
+				<Radio value="bottom">bottom</Radio>
+				<Radio value="left">left</Radio>
+				<Radio value="top">top</Radio>
+			</RadioGroup>
+		</div>
+		<Steps :model-value="2" :vertical="vertical" :label-position="labelPosition">
+			<Step title="填写信息" description="填写基本信息" />
+			<Step title="确认信息" description="核对填写内容" />
+			<Step title="完成" description="提交成功" />
+		</Steps>
+	</div>
+</template>
+
 <script setup>
 import { ref } from 'vue';
-import { Steps, Step, StepsBar } from '@deot/vc';
+import { Radio, RadioGroup, Switch, Steps, Step } from '@deot/vc';
 
-const current = ref('1');
+const vertical = ref(false);
+const labelPosition = ref('right');
+</script>
 
-const dataSource = ref([
-	{
-		value: '1',
-		label: '第1步'
-	},
-	{
-		value: '2',
-		label: '第2步'
-	},
-	{
-		value: '3',
-		label: '第3步'
-	}
-]);
-const handleChange = (e) => {
-	console.log(e);
+<style scoped>
+.toolbar {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 24px;
+	margin-bottom: 24px;
+}
+.toolbar label {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+</style>
+```
+:::
+
+### 点击切换
+
+`clickable` 开启后，点击步骤会更新 `v-model` 并触发 `change`。点击当前步或设置了 `disabled` 的步骤不会触发。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+```vue
+<template>
+	<div>
+		<Steps v-model="current" clickable @change="handleChange">
+			<Step title="填写信息" description="填写基本信息" />
+			<Step title="确认信息" description="核对填写内容" />
+			<Step title="上传附件" description="不可跳转" disabled />
+			<Step title="完成" description="提交成功" />
+		</Steps>
+		<p>change：{{ log.join('、') || '-' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Steps, Step } from '@deot/vc';
+
+const current = ref(1);
+const log = ref([]);
+const handleChange = (value) => {
+	log.value.push(value);
 };
 </script>
 ```
 :::
 
+### 圆点
+
+`type="dot"` 使用圆点作为节点。横向时文字在圆点下方，`labelPosition` 为 `top` / `left` 时在上方；纵向时文字在右侧，`labelPosition` 为 `left` / `top` 时在左侧。
+
+`renderDot` 自定义节点，参数中的 `dot` 为默认节点，可以包裹后返回；`dot` 插槽的参数相同，并优先于 `renderDot`。两者对 `type="arrow"` 以外的类型均有效。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+```vue
+<template>
+	<div class="dot-demo">
+		<Steps :model-value="2" type="dot" :render-dot="renderDot">
+			<Step title="填写信息" description="悬停圆点查看提示" />
+			<Step title="确认信息" description="核对填写内容" />
+			<Step title="完成" description="提交成功" />
+		</Steps>
+		<Steps :model-value="2" type="dot" vertical>
+			<Step title="填写信息" description="填写基本信息" />
+			<Step title="确认信息" description="核对填写内容" />
+			<Step title="完成" description="提交成功" />
+		</Steps>
+		<Steps :model-value="2">
+			<Step title="填写信息" />
+			<Step title="搜索" />
+			<Step title="完成" />
+			<template #dot="{ index, dot }">
+				<Icon v-if="index === 2" type="search" class="search" />
+				<component :is="dot" v-else />
+			</template>
+		</Steps>
+	</div>
+</template>
+
+<script setup>
+import { h } from 'vue';
+import { Icon, Popover, Steps, Step } from '@deot/vc';
+
+const renderDot = ({ index, status, dot }) => {
+	return h(Popover, { content: `第 ${index} 步：${status}`, placement: 'top' }, () => dot);
+};
+</script>
+
+<style scoped>
+.dot-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+}
+.search {
+	width: 28px;
+	font-size: 20px;
+	line-height: 28px;
+	color: #456CF6;
+	text-align: center;
+}
+</style>
+```
+:::
+
+### 箭头与导航
+
+`type="arrow"` 为箭头样式，没有节点；`type="navigation"` 为导航样式，当前步下方显示指示条。两者只支持横向，`navigation` 的文字固定在节点右侧。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+```vue
+<template>
+	<div class="type-demo">
+		<Steps v-model="current" type="arrow" clickable>
+			<Step title="填写信息" description="填写基本信息" />
+			<Step title="确认信息" description="核对填写内容" />
+			<Step title="完成" description="提交成功" />
+		</Steps>
+		<Steps v-model="current" type="navigation" clickable>
+			<Step title="填写信息" />
+			<Step title="确认信息" />
+			<Step title="完成" />
+		</Steps>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Steps, Step } from '@deot/vc';
+
+const current = ref(2);
+</script>
+
+<style scoped>
+.type-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+}
+</style>
+```
+:::
+
 ## API
+
 ### Steps 属性
 
-| 属性        | 说明                                               | 类型       | 可选值                               | 默认值          |
-| --------- | ------------------------------------------------ | -------- | --------------------------------- | ------------ |
-| current   | 指定当前步骤，从 1 开始记数。在子 Step 元素中，可以通过 `status` 属性覆盖状态 | `number` | -                                 | 0            |
-| direction | 指定步骤条方向。目前支持水平（`horizontal`）和竖直（`vertical`）两种方向  | `string` | `horizontal` `vertical`           | `horizontal` |
-| size      | 指定大小，目前支持普通（`default`）和迷你（`small`）               | `string` | `default` `small`                 | `default`    |
-| status    | 指定当前步骤的状态                                        | `string` | `wait` `process` `complete` `error` | `process`    |
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| modelValue | 当前步数，从 1 开始；`0` 表示都未开始，步骤数加 1 表示全部完成 | `number` | - | `1` |
+| vertical | 是否纵向展示；`arrow`、`navigation` 不支持 | `boolean` | - | `false` |
+| labelPosition | 标题与描述相对节点的位置，实际位置见“使用注意” | `string` | `right` / `bottom` / `left` / `top` | `right` |
+| type | 步骤条类型 | `string` | `default` / `dot` / `arrow` / `navigation` | `default` |
+| status | 当前步的状态 | `string` | `default` / `pending` / `success` / `error` | `pending` |
+| lineless | 隐藏连线 | `boolean` | - | `false` |
+| clickable | 点击步骤切换当前步数 | `boolean` | - | `false` |
+| renderDot | 自定义节点；`type="arrow"` 时不生效 | `(options) => VNodeChild` | - | - |
+| tag | 外层标签 | `string` | - | `'div'` |
 
+`renderDot` 与 `dot` 插槽的参数 `options`：
 
-### Steps Slot
-属性 | 说明
----|---
-default | -
+| 字段 | 说明 | 类型 |
+| --- | --- | --- |
+| index | 步数，从 1 开始 | `number` |
+| status | 该步的状态 | `string` |
+| title | Step 的 `title` 属性 | `string \| Function` |
+| description | Step 的 `description` 属性 | `string \| Function` |
+| dot | 默认节点，可包裹后返回 | `VNode` |
+
+### Steps 事件
+
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue | 开启 `clickable` 后点击步骤时更新绑定值 | `value: number` | 点击的步数 |
+| change | 开启 `clickable` 后点击步骤时触发 | `value: number` | 同上；外部赋值不触发 |
+
+### Steps 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 放置 Step | - |
+| dot | 自定义节点，优先于 `renderDot`；`type="arrow"` 时不生效 | `options`，同 `renderDot` |
 
 ### Step 属性
 
-| 属性          | 说明        | 类型       | 可选值                               | 默认值       |
-| ----------- | --------- | -------- | --------------------------------- | --------- |
-| title       | 标题        | `string` | -                                 |           |
-| subtitle    | 子标题       | `string` | -                                 |           |
-| description | 步骤的详情描述   | `string` | -                                 |           |
-| icon        | 步骤图标的类型   | `string` | -                                 |           |
-| status      | 指定当前步骤的状态 | `string` | `wait` `process` `complete` `error` | `process` |
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| title | 标题；字符串按 HTML 渲染，函数通过 `Customer` 渲染 | `string \| Function` | - | `''` |
+| description | 描述，为空时不渲染；字符串按 HTML 渲染，函数通过 `Customer` 渲染 | `string \| Function` | - | `''` |
+| status | 该步的状态，优先于根据当前步数推导的结果 | `string` | `default` / `pending` / `success` / `error` | - |
+| disabled | 开启 `clickable` 时不可点击 | `boolean` | - | `false` |
 
-### Step Slot
+### Step 插槽
 
-| 属性          | 说明     |
-| ----------- | ------ |
-| title       | 自定义标题  |
-| subtitle    | 自定义子标题 |
-| description | 自定义描述  |
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| title | 标题，优先于 `title` 属性 | - |
+| description | 描述，优先于 `description` 属性 | - |
 
+### 使用注意
 
-
+- `labelPosition` 的实际位置：
+  - `default` 横向：四种位置都支持。
+  - 纵向（`default`、`dot`）：只支持 `right` / `left`，`bottom` 视为 `right`，`top` 视为 `left`。
+  - `dot` 横向：只支持 `bottom` / `top`，`right` 视为 `bottom`，`left` 视为 `top`。
+  - `navigation` 的文字固定在节点右侧，`arrow` 没有节点，两者都忽略该属性。
+- 某一步的最终状态为 `error` 时（包括 Step 单独设置），前一步的连线显示为错误色；已完成步骤的连线为主色。
+- Steps 的默认插槽只渲染 Step（包括 `v-for`、`<template>` 中的 Step），其他节点会被忽略；被其他组件包裹的 Step 也不会渲染。
+- `title`、`description` 为字符串时按 HTML 渲染，不要传入未经处理的用户输入。
+- 自定义节点的尺寸由调用方控制；连线位置按默认节点（28px，`dot` 为 8px）计算。
+- 颜色使用主题变量，可通过以下变量单独覆盖：
+  - `--vc-steps-color-primary`：当前步、已完成的连线
+  - `--vc-steps-color-primary-lighter`：已完成步骤的底色
+  - `--vc-steps-color-error`：失败
+  - `--vc-steps-background-color`：未开始步骤的底色
+  - `--vc-steps-color-light-deeper`：连线
+  - `--vc-steps-color-light-deepest`：未开始的圆点、导航箭头
+  - `--vc-steps-color-dark-light`：标题
+  - `--vc-steps-color-dark-lighter`：未开始步骤的标题与序号
+  - `--vc-steps-color-dark-extralight`：描述
+  - `--vc-steps-foreground-color-active`：主色、错误色底色上的文字，默认 `#fff`
+  - `--vc-steps-background-color-light`：`arrow` 的分隔缺口与 `navigation` 箭头的背景，应与所在容器的背景一致
+- `MSteps`、`MStep` 分别是 `Steps`、`Step` 的别名，使用同一实现与样式，可从 `@deot/vc` 导入。
