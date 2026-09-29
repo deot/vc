@@ -1,0 +1,14 @@
+@use '../style/helper' as *;
+
+$component-name: vc-timeline;
+
+@include block($component-name) {
+	@include when(horizontal) {
+		display: flex;
+
+		&.is-center {
+			min-height: 200px;
+			align-items: center;
+		}
+	}
+}

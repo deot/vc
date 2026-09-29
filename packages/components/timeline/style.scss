@@ -1,6 +1,2 @@
-@use '../style/helper' as *;
-
-$component-name: vc-timeline;
-
-@include block($component-name) {
-}
+@use "./timeline";
+@use "./timeline-item";
