@@ -2,11 +2,11 @@
 
 import { FilePreview, ImagePreview, MFilePreview, MImagePreview } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
-import { nextTick } from 'vue';
+import { nextTick, ref } from 'vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import { VcInstance } from '../../vc';
-import { getFileName, getFileType, normalize, resolveFileName, resolveFileType } from '../utils';
+import { getFileExtension, getFileName, getFileType, normalize, resolveFileName, resolveFileType } from '../utils';
 import { VideoPreview } from '../preview/video';
 import { AudioPreview } from '../preview/audio';
 
@@ -15,6 +15,7 @@ const banner = 'https://cdn.test/banner.png';
 const movie = 'https://cdn.test/movie.mp4';
 const sound = 'https://cdn.test/sound.mp3';
 const report = 'https://cdn.test/report.pdf';
+const readme = 'https://cdn.test/readme';
 
 const lightbox = vi.hoisted(() => ({ init: vi.fn(), loadAndOpen: vi.fn() }));
 vi.mock('photoswipe/lightbox', () => ({
@@ -22,6 +23,8 @@ vi.mock('photoswipe/lightbox', () => ({
 		Object.assign(this, lightbox);
 	})
 }));
+
+const kindOf = (el: Element) => el.className.match(/is-(image|video|audio|file)/)![1];
 
 afterEach(() => {
 	VcInstance.options.FilePreview = { getFileType: undefined, getFileName: undefined, enhancer: undefined };
@@ -78,6 +81,13 @@ describe('FilePreview', () => {
 		expect(resolveFileName(report)).toBe('report.pdf');
 		VcInstance.options.FilePreview!.getFileName = () => 1 as any;
 		expect(resolveFileName(report)).toBe('report.pdf');
+	});
+
+	it('gets upper-case file extensions', () => {
+		expect(getFileExtension('合同.pdf?x=1')).toBe('PDF');
+		expect(getFileExtension('https://cdn.test/a.b/report.xlsx#page')).toBe('XLSX');
+		expect(getFileExtension('photo.jpg!4-4')).toBe('');
+		expect(getFileExtension('')).toBe('');
 	});
 
 	it('normalizes strings, arrays and objects', () => {
@@ -156,6 +166,155 @@ describe('FilePreview', () => {
 		await FilePreview.open({ data: [photo] });
 		expect(open).toHaveBeenCalledTimes(2);
 		expect(open).toHaveBeenLastCalledWith({ current: 0, data: [photo] });
+	});
+
+	it('renders mix items in data order with thumbnails for images', async () => {
+		const wrapper = mount(FilePreview, {
+			props: {
+				data: [
+					{ source: photo, thumbnail: banner },
+					report,
+					{ source: movie, thumbnail: banner },
+					sound,
+					'https://cdn.test/clip.mov'
+				]
+			}
+		});
+		const root = wrapper.find('.vc-file-preview');
+		expect(root.classes()).toEqual(expect.arrayContaining(['is-mix', 'is-medium']));
+		expect(root.classes()).not.toContain('is-vertical');
+		expect(wrapper.findAll('.vc-file-preview__group')).toHaveLength(0);
+		expect(wrapper.findAll('.vc-file-preview__square')).toHaveLength(0);
+
+		const items = wrapper.findAll('.vc-file-preview__item');
+		expect(items.map(i => kindOf(i.element))).toEqual(['image', 'file', 'video', 'audio', 'video']);
+		expect(items.map(i => i.attributes('title'))).toEqual(['photo.jpg', 'report.pdf', 'movie.mp4', 'sound.mp3', 'clip.mov']);
+		expect(items.every(i => i.classes('is-previewable'))).toBe(true);
+		expect(wrapper.findAll('.vc-file-preview__card')).toHaveLength(5);
+		expect(wrapper.findAll('.vc-file-preview__extension')).toHaveLength(0);
+		expect(wrapper.findAll('.vc-file-preview__dot')).toHaveLength(0);
+
+		const images = wrapper.findAllComponents({ name: 'vc-image' });
+		expect(images.map(i => [i.props('src'), i.props('thumbnail'), i.props('previewable')])).toEqual([
+			[photo, banner, false],
+			[banner, undefined, false]
+		]);
+
+		await wrapper.setProps({ size: 'large', vertical: true, data: report });
+		expect(root.classes()).toEqual(expect.arrayContaining(['is-large', 'is-vertical']));
+		expect(wrapper.findAll('.vc-file-preview__item')).toHaveLength(1);
+	});
+
+	it('renders group items by file type with squares, dots and extensions', () => {
+		const wrapper = mount(FilePreview, {
+			props: {
+				type: 'group',
+				size: 'mini',
+				data: [
+					report,
+					photo,
+					sound,
+					movie,
+					{ source: readme, type: 'file' },
+					banner,
+					{ source: 'https://cdn.test/cover.mp4', thumbnail: banner }
+				]
+			}
+		});
+		expect(wrapper.find('.vc-file-preview').classes()).toEqual(expect.arrayContaining(['is-group', 'is-mini']));
+
+		const groups = wrapper.findAll('.vc-file-preview__group');
+		expect(groups.map(g => kindOf(g.element))).toEqual(['image', 'video', 'audio', 'file']);
+		expect(groups.map(g => g.findAll('.vc-file-preview__item').length)).toEqual([2, 2, 1, 2]);
+
+		expect(groups[0].findAll('.vc-file-preview__square')).toHaveLength(2);
+		expect(groups[0].findAll('.vc-file-preview__play')).toHaveLength(0);
+		expect(groups[1].findAll('.vc-file-preview__square')).toHaveLength(2);
+		expect(groups[1].findAll('.vc-file-preview__play')).toHaveLength(2);
+		expect(groups[1].find('video').attributes()).toEqual(expect.objectContaining({ src: movie, preload: 'metadata' }));
+		expect(groups[1].findComponent({ name: 'vc-image' }).props('src')).toBe(banner);
+		expect(groups[2].findAll('.vc-file-preview__dot')).toHaveLength(1);
+		expect(groups[3].findAll('.vc-file-preview__extension').map(i => i.text())).toEqual(['PDF']);
+		expect(groups[3].findAll('.vc-file-preview__name').map(i => i.text())).toEqual(['report.pdf', 'readme']);
+	});
+
+	it('keeps the original data index when previewing grouped items', async () => {
+		const open = vi.spyOn(ImagePreview, 'open').mockResolvedValue(undefined);
+		const windowOpen = vi.spyOn(window, 'open').mockReturnValue(null);
+		const wrapper = mount(FilePreview, {
+			props: { type: 'group', data: [photo, report, banner] }
+		});
+
+		await wrapper.findAll('.vc-file-preview__item')[1].trigger('click');
+		expect(open).toHaveBeenCalledWith({ current: 1, data: [photo, banner] });
+
+		await wrapper.findAll('.vc-file-preview__item')[2].trigger('click');
+		expect(windowOpen).toHaveBeenCalledWith(report, '_blank', 'noopener');
+	});
+
+	it('passes the component instance to the enhancer', async () => {
+		const enhancer = vi.fn(() => true);
+		VcInstance.options.FilePreview!.enhancer = enhancer;
+		const wrapper = mount(FilePreview, { props: { data: [report, photo] } });
+
+		await wrapper.findAll('.vc-file-preview__item')[1].trigger('click');
+		expect(enhancer).toHaveBeenCalledWith(expect.objectContaining({
+			current: 1,
+			instance: wrapper.vm.$
+		}));
+	});
+
+	it('does not preview when previewable is false', async () => {
+		const open = vi.spyOn(ImagePreview, 'open').mockResolvedValue(undefined);
+		const wrapper = mount(FilePreview, { props: { data: [photo], previewable: false } });
+		const item = wrapper.find('.vc-file-preview__item');
+
+		expect(item.classes()).not.toContain('is-previewable');
+		await item.trigger('click');
+		expect(open).not.toHaveBeenCalled();
+	});
+
+	it('hands preview to the default slot instead of binding clicks', async () => {
+		const open = vi.spyOn(ImagePreview, 'open').mockResolvedValue(undefined);
+		const enhancer = vi.fn(() => false);
+		VcInstance.options.FilePreview!.enhancer = enhancer;
+		const scopes: any[] = [];
+		const data = ref<any[]>([report, photo]);
+		const wrapper = mount(() => (
+			<FilePreview data={data.value} previewable={false}>
+				{{
+					default: (scope: any) => {
+						scopes.push(scope);
+						return <button class="custom" onClick={scope.preview}>{scope.row.name}</button>;
+					}
+				}}
+			</FilePreview>
+		));
+
+		expect(wrapper.findAll('.custom').map(i => i.text())).toEqual(['report.pdf', 'photo.jpg']);
+		expect(wrapper.findAll('.vc-file-preview__card')).toHaveLength(0);
+		expect(wrapper.findAll('.vc-file-preview__item.is-previewable')).toHaveLength(0);
+		expect(scopes[1]).toEqual(expect.objectContaining({ index: 1, row: expect.objectContaining({ type: 'image', source: photo }) }));
+
+		await wrapper.findAll('.vc-file-preview__item')[1].trigger('click');
+		expect(enhancer).not.toHaveBeenCalled();
+
+		await wrapper.findAll('.custom')[1].trigger('click');
+		await nextTick();
+		expect(enhancer).toHaveBeenCalledWith(expect.objectContaining({ current: 1 }));
+		expect(open).toHaveBeenCalledWith({ current: 0, data: [photo] });
+
+		data.value = [movie];
+		await nextTick();
+		expect(wrapper.findAll('.custom').map(i => i.text())).toEqual(['movie.mp4']);
+	});
+
+	it('validates type and size', () => {
+		const { type, size } = (FilePreview as any).props;
+		expect(['mix', 'group'].map(type.validator)).toEqual([true, true]);
+		expect(type.validator('image')).toBe(false);
+		expect(['mini', 'small', 'medium', 'large'].map(size.validator)).toEqual([true, true, true, true]);
+		expect(size.validator('default')).toBe(false);
 	});
 
 	it('opens photoswipe with fitted sizes', async () => {

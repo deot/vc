@@ -1,7 +1,169 @@
 @use '../style/helper' as *;
 
-
 $component-name: vc-file-preview;
+$color: varfix(color-dark-light, file-preview);
+$color-light: varfix(color-light, file-preview);
+$color-primary: varfix(color-primary, file-preview);
+$color-primary-lighter: varfix(color-primary-lighter, file-preview);
+$background-color: varfix(background-color, file-preview);
+$mask-color: varfix(mask-color, file-preview);
+$border-shadow: varfix(border-shadow, file-preview);
+
+// 方格medium对应uploader v4的96；卡片按内容宽度，card-width为最大宽度
+$sizes: (
+	mini: (square-size: 48px, square-radius: 4px, card-width: 160px, card-height: 24px, card-padding: 6px, card-radius: 4px, thumbnail-size: 16px, text-size: 12px, inner-gap: 4px, gap: 6px, play-size: 16px, dot-size: 14px),
+	small: (square-size: 64px, square-radius: 6px, card-width: 180px, card-height: 28px, card-padding: 8px, card-radius: 4px, thumbnail-size: 20px, text-size: 12px, inner-gap: 6px, gap: 8px, play-size: 22px, dot-size: 16px),
+	medium: (square-size: 96px, square-radius: 8px, card-width: 200px, card-height: 32px, card-padding: 8px, card-radius: 6px, thumbnail-size: 22px, text-size: 13px, inner-gap: 6px, gap: 8px, play-size: 28px, dot-size: 18px),
+	large: (square-size: 128px, square-radius: 8px, card-width: 240px, card-height: 40px, card-padding: 10px, card-radius: 6px, thumbnail-size: 28px, text-size: 14px, inner-gap: 8px, gap: 12px, play-size: 36px, dot-size: 22px)
+);
+
+// 圆形底色中的播放三角，父级需flex-cc；margin-left用于视觉居中
+@mixin play($size) {
+	@include flex-cc;
+
+	width: $size;
+	height: $size;
+	border-radius: 50%;
+
+	&::after {
+		margin-left: calc(#{$size} * 0.1);
+		border-top: calc(#{$size} * 0.2) solid transparent;
+		border-bottom: calc(#{$size} * 0.2) solid transparent;
+		border-left: calc(#{$size} * 0.3) solid currentcolor;
+		content: '';
+	}
+}
+
+%flow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--vc-file-preview-gap);
+}
 
 @include block($component-name) {
+	@extend %flow;
+
+	@each $size, $values in $sizes {
+		@include when($size) {
+			@each $key, $value in $values {
+				--vc-file-preview-#{$key}: #{$value};
+			}
+		}
+	}
+
+	@include when(group) {
+		flex-flow: column nowrap;
+	}
+
+	@include element(group) {
+		@extend %flow;
+	}
+
+	@include when(vertical) {
+		&,
+		.vc-file-preview__group {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+	}
+
+	@include element(item) {
+		position: relative;
+		max-width: 100%;
+
+		@include when(previewable) {
+			cursor: pointer;
+
+			&:hover .vc-file-preview__card {
+				color: $color-primary;
+				background-color: $color-primary-lighter;
+			}
+
+			&:hover .vc-file-preview__square {
+				transform: scale(1.05);
+				box-shadow: $border-shadow;
+			}
+		}
+	}
+
+	@include element(card) {
+		display: flex;
+		height: var(--vc-file-preview-card-height);
+		max-width: min(var(--vc-file-preview-card-width), 100%);
+		padding: 0 var(--vc-file-preview-card-padding);
+		font-size: var(--vc-file-preview-text-size);
+		line-height: 1;
+		color: $color;
+		background-color: $background-color;
+		border-radius: var(--vc-file-preview-card-radius);
+		box-sizing: border-box;
+		transition: color 0.2s, background-color 0.2s;
+		align-items: center;
+		gap: var(--vc-file-preview-inner-gap);
+
+		// 缩略图与上下留白一致
+		@include when(thumbnail) {
+			padding-left: calc((var(--vc-file-preview-card-height) - var(--vc-file-preview-thumbnail-size)) / 2);
+		}
+	}
+
+	@include element(name) {
+		@include ellipsis;
+
+		min-width: 0;
+		flex: 1;
+	}
+
+	@include element(thumbnail) {
+		width: var(--vc-file-preview-thumbnail-size);
+		height: var(--vc-file-preview-thumbnail-size);
+		border-radius: 3px;
+		flex-shrink: 0;
+	}
+
+	@include element(dot) {
+		@include play(var(--vc-file-preview-dot-size));
+
+		color: $color-primary;
+		background-color: $color-primary-lighter;
+		flex-shrink: 0;
+	}
+
+	@include element(extension) {
+		padding: 0 4px;
+		font-size: 10px;
+		line-height: 16px;
+		color: $color-primary;
+		background-color: $color-primary-lighter;
+		border-radius: 3px;
+		flex-shrink: 0;
+	}
+
+	@include element(square) {
+		position: relative;
+		width: var(--vc-file-preview-square-size);
+		height: var(--vc-file-preview-square-size);
+		overflow: hidden;
+		background-color: $background-color;
+		border-radius: var(--vc-file-preview-square-radius);
+		transition: transform 0.3s, box-shadow 0.3s;
+	}
+
+	@include element(media) {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	@include element(play) {
+		@include play(var(--vc-file-preview-play-size));
+
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		color: $color-light;
+		background-color: $mask-color;
+		transform: translate(-50%, -50%);
+	}
 }

@@ -1,267 +1,249 @@
-## 更新`3.x`注意事项
-- 组件: `ImagePreview -> vc-image-preview`
-- 变更属性: `id -> elementId`
-- 移除`getInstance``
-- `options -> options`
+## 文件预览（FilePreview）
 
-## 图片预览（ImagePreview）
-点击预览大图
+展示一组文件（图片、视频、音频、其他文件），点击后按类型打开预览。`ImagePreview.open` 用于直接打开图片预览。
 
 ### 何时使用
-随时能在页面内展示完整的图片。
+
+- 在详情页展示已上传的附件、图片或视频。
+- 需要统一控制文件类型识别和预览方式（如接入在线文档预览）。
 
 ### 基础用法
 
-:::RUNTIME
+`data` 可以是逗号分隔的字符串、地址数组或对象数组。默认 `type="mix"`：按 `data` 顺序混编成紧凑的卡片（按内容宽度，超出最大宽度时省略名称），图片显示缩略图，其余只显示名称。点击后：图片打开多图预览（只包含图片项），视频、音频打开播放弹窗，其他文件在新窗口打开。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
 ```vue
 <template>
-	<div>
-		<ImagePreview :data="dataSource" />
-	</div>
+	<FilePreview :data="data" />
 </template>
-<script setup lang="jsx">
-import { ref } from 'vue';
-import { ImagePreview } from '@deot/vc';
 
-const dataSource = ref([
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 1',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	}
+<script setup>
+import { FilePreview } from '@deot/vc';
 
-]);
+const data = [
+	{ source: 'https://dummyimage.com/1800x600/555/fff.png?text=banner', name: 'banner.png' },
+	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '合同-2026.pdf' },
+	'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+	'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3',
+	{ source: 'https://dummyimage.com/600x1800/555/fff.png?text=detail', name: 'detail.png' }
+];
 </script>
 ```
 :::
 
-### 自定义 renderRow
-可以自定义展示图片，设置图片的样式。
+### 分组展示
 
-:::RUNTIME
+`type="group"` 按图片、视频、音频、文件的顺序分组：图片、视频使用方格，音频卡片带播放标记，文件卡片带扩展名。分组只影响展示，预览时的顺序与索引仍按 `data` 原始顺序。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
 ```vue
 <template>
-	<div>
-		<!-- 自定义 renderRow -->
-		<p>通过renderRow自定义</p>
-		<ImagePreview :data="dataSource" :render-row="renderRow" />
-
-		<!-- 自定义 renderRow -->
-		<p>通过slot自定义</p>
-		<ImagePreview :data="dataSource">
-			<template #row="it">
-				<img
-					:key="it.index"
-					:src="it.src"
-					:style="{ width: '100px', height: '100px', borderRadius: '20px' }"
-				>
-			</template>
-		</ImagePreview>
-	</div>
+	<FilePreview :data="data" type="group" />
 </template>
-<script setup lang="jsx">
-import { ref } from 'vue';
-import { ImagePreview } from '@deot/vc';
 
-const dataSource = ref([
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 1',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	}
-]);
-const renderRow = (props, parent) => {
-	const { src, index } = props;
-	return (
-		<img
-			src={src}
-			key={index}
-			style={{ width: '100px', height: '100px', borderRadius: '50px' }}
+<script setup>
+import { FilePreview } from '@deot/vc';
+
+const data = [
+	{ source: 'https://dummyimage.com/1800x600/555/fff.png?text=1', name: '1.png' },
+	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '合同-2026.pdf' },
+	'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+	{ source: 'https://dummyimage.com/600x1800/555/fff.png?text=2', name: '2.png' },
+	'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3'
+];
+</script>
+```
+:::
+
+### 尺寸、方向与缩略图
+
+`size` 控制方格、卡片与文字的尺寸，默认 `medium`（方格 96px，卡片高 32px、最大宽 200px）。`vertical` 使每组内纵向排列。数据项的 `thumbnail` 优先用于展示，预览使用 `source`；视频没有 `thumbnail` 时显示首帧。`previewable` 为 `false` 时点击不预览。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+```vue
+<template>
+	<div class="demo">
+		<div class="toolbar">
+			<RadioGroup v-model="size" type="button">
+				<Radio v-for="item in sizes" :key="item" :value="item" :label="item" />
+			</RadioGroup>
+			<Checkbox v-model="vertical">vertical</Checkbox>
+			<Checkbox v-model="previewable">previewable</Checkbox>
+		</div>
+		<FilePreview
+			:data="data"
+			:size="size"
+			:vertical="vertical"
+			:previewable="previewable"
+			type="group"
 		/>
-	);
-};
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { FilePreview, RadioGroup, Radio, Checkbox } from '@deot/vc';
+
+const sizes = ['mini', 'small', 'medium', 'large'];
+const size = ref('medium');
+const vertical = ref(false);
+const previewable = ref(true);
+const data = [
+	{
+		source: 'https://dummyimage.com/1800x600/555/fff.png?text=source',
+		thumbnail: 'https://dummyimage.com/96x96/2d8cf0/fff.png?text=thumb',
+		name: 'source.png'
+	},
+	{
+		source: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+		thumbnail: 'https://dummyimage.com/96x96/1db88c/fff.png?text=cover'
+	},
+	'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4'
+];
 </script>
+
+<style scoped>
+.toolbar {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	margin-bottom: 16px;
+}
+</style>
 ```
 :::
 
-### 自定义operate
-通过`slot`：operate插入预览触发内容。
+### 自定义文件项
 
-:::RUNTIME
+`default` 插槽替换每一项的内容，参数为 `{ row, index, preview }`。使用插槽后外层不再绑定点击，由插槽调用 `preview()` 打开预览；`preview()` 同样先经过全局 `enhancer`，且不受 `previewable` 限制。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
 ```vue
 <template>
-	<div>
-		<!-- 自定义 operate -->
-		<ImagePreview :data="dataSource">
-			<template #operate="it">
-				<div @click="it.show($event, it.index)">
-					{{ it.index }}
-				</div>
-			</template>
-		</ImagePreview>
-	</div>
+	<FilePreview :data="data" vertical>
+		<template #default="{ row, preview }">
+			<div class="row">
+				<span class="name">{{ row.name }}</span>
+				<a @click="preview">预览</a>
+				<a :href="row.source" target="_blank" rel="noopener">新窗口打开</a>
+			</div>
+		</template>
+	</FilePreview>
 </template>
-<script setup lang="jsx">
-import { ref } from 'vue';
-import { ImagePreview } from '@deot/vc';
 
-const dataSource = ref([
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 1',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	}
+<script setup>
+import { FilePreview } from '@deot/vc';
 
-]);
+const data = [
+	{ source: 'https://dummyimage.com/1800x600/555/fff.png?text=1', name: '1.png' },
+	'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '合同-2026.pdf' }
+];
 </script>
+
+<style scoped>
+.row {
+	display: flex;
+	gap: 12px;
+	font-size: 13px;
+}
+
+.name {
+	width: 120px;
+}
+
+.row a {
+	cursor: pointer;
+}
+</style>
 ```
 :::
 
-### 自定义预览
-调用ImagePreview的open方法预览大图。
+### 全局配置
 
-:::RUNTIME
+`VcInstance.options.FilePreview` 由 FilePreview、UploadPicker 与 Editor 共用：
+
+- `getFileType(source)`：自定义类型识别，返回空值时回退内置规则。
+- `getFileName(source)`：自定义从地址推导文件名，返回空值时回退内置规则；数据中显式的 `name`（UploadPicker 为 `label`）优先。
+- `enhancer({ current, data, instance })`：预览前调用，返回真值（或 resolve 真值）表示已接管，不再执行内置预览（Editor 不使用）。
+
+示例中带处理后缀的图片地址（内置规则会识别为文件）被识别为图片，文件名去掉时间戳前缀，文件交给 `enhancer` 处理。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
 ```vue
 <template>
 	<div>
-		<span style="cursor: pointer;" @click="handleClick">自定义预览</span>
+		<FilePreview :data="data" type="group" />
+		<p class="tip">{{ tip }}</p>
 	</div>
 </template>
-<script setup lang="jsx">
-import { ref } from 'vue';
-import { ImagePreview } from '@deot/vc';
 
-const dataSource = ref([
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 1',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
-	},
-	{
-		src: 'https://github.githubassets.com/favicons/favicon.svg',
-		title: 'Image 2',
-		w: 1200,
-		h: 900
+<script setup>
+import { ref, onBeforeUnmount } from 'vue';
+import { FilePreview, VcInstance } from '@deot/vc';
+
+const original = { ...VcInstance.options.FilePreview };
+const tip = ref('点击文件，由 enhancer 接管');
+const data = [
+	{ source: 'https://dummyimage.com/800x600/555/fff/?text=photo.jpg!4-4', name: 'photo.jpg!4-4' },
+	'https://example.com/files/1695123_%E5%90%88%E5%90%8C.pdf'
+];
+
+VcInstance.configure({
+	FilePreview: {
+		getFileType: source => (/\.jpg!/.test(source) ? 'image' : undefined),
+		getFileName: (source) => {
+			const name = decodeURIComponent(source.split('/').pop());
+			return name.replace(/^\d+_/, '');
+		},
+		enhancer: ({ current, data: items }) => {
+			const item = items[current];
+			if (item.type !== 'file') return false;
+			tip.value = `enhancer 接管：${item.name}`;
+			return true;
+		}
 	}
-]);
-
-const options = ref({
-	closeOnScroll: false
 });
 
-const handleClick = (e) => {
-	let pos = {};
-	try {
-		const target = e.target; // 先得到pos, 否则getThumbBoundsFn再计划，target已变化（比如弹窗transition的影响）
-		const pageYScroll = window.pageYOffset || document.documentElement.scrollTop;
-		const rect = target.getBoundingClientRect();
+onBeforeUnmount(() => VcInstance.configure({ FilePreview: original }));
+</script>
 
-		pos = { x: rect.left, y: rect.top + pageYScroll, w: rect.width };
-	} catch (e) {
-		console.log(e);
-	}
+<style scoped>
+.tip {
+	margin: 12px 0 0;
+	font-size: 13px;
+}
+</style>
+```
+:::
+
+### 图片预览（ImagePreview）
+
+`ImagePreview.open` 直接打开图片预览（基于 PhotoSwipe），不经过 `enhancer`。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+```vue
+<template>
+	<Button @click="handleClick">从第 2 张打开</Button>
+</template>
+
+<script setup>
+import { Button, ImagePreview } from '@deot/vc';
+
+const handleClick = () => {
 	ImagePreview.open({
-		visible: true,
-		data: dataSource.value,
-		options: {
-			index: 2,
-			history: false,
-			getThumbBoundsFn: index => pos
-		}
+		current: 1,
+		data: [
+			'https://dummyimage.com/1800x600/555/fff.png?text=1',
+			'https://dummyimage.com/600x1800/555/fff.png?text=2',
+			'https://dummyimage.com/800x600/555/fff.png?text=3'
+		]
 	});
 };
 </script>
@@ -272,32 +254,73 @@ const handleClick = (e) => {
 
 ### 属性
 
-| 属性          | 说明             | 类型                               | 可选值 | 默认值 |
-| ----------- | -------------- | -------------------------------- | --- | --- |
-| data        | 源数据            | `array<object>`; `array<String>` | -   | -   |
-| options     | photoSwipe参数   | `object`                         | -   | -   |
-| events      | photoSwipe事件   | `object`                         | -   | -   |
-| actionBar   | 工具栏扩展          | `array`                          | -   | -   |
-| getInstance | 获取组件实例对象       | `Function`                       | -   | -   |
-| enhancer    | 增强方法           | `Function`                       | -   | -   |
-| itemClass   | item的className | `string`                         | -   | -   |
-| renderRow   | 自定义渲染内容        | `(props, parent) => jsx`         | -   |     |
-| elementId   | 外层标识           | `string`                         | -   | -   |
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| data | 文件数据；字符串按逗号分隔，数组项为地址或数据项对象，没有 `source` 的项会被忽略 | `string \| (string \| object)[]` | - | `[]` |
+| type | 展示方式（与数据项的文件类型无关）：`mix` 按顺序混编，`group` 按文件类型分组 | `string` | `mix` / `group` | `mix` |
+| size | 尺寸 | `string` | `mini` / `small` / `medium` / `large` | `medium` |
+| vertical | 纵向排列；`group` 时作用于每组 | `boolean` | - | `false` |
+| previewable | 点击是否预览；使用 `default` 插槽时由插槽调用 `preview` | `boolean` | - | `true` |
 
+数据项（字符串会解析为 `{ source }`）：
 
+| 字段 | 说明 | 类型 |
+| --- | --- | --- |
+| source | 文件地址，预览时使用 | `string` |
+| type | 文件类型；不传或不合法时通过 `getFileType` 识别 | `'image' \| 'video' \| 'audio' \| 'file'` |
+| name | 名称；不传时通过 `getFileName` 推导，内置规则取地址最后一段（去掉 `?`、`#` 之后的部分并解码） | `string` |
+| thumbnail | 缩略图，优先用于展示；视频只在有 `thumbnail` 时显示图片 | `string` |
 
-### 事件
-
-| 事件名   | 说明   | 回调参数 | 参数说明 |
-| ----- | ---- | ---- | ---- |
-| open  | 打开预览 | -    | -    |
-| close | 关闭预览 | -    | -    |
-
+其他字段原样保留，可在插槽和 `enhancer` 中读取。
 
 ### 插槽
 
-| 属性      | 说明           |
-| ------- | ------------ |
-| operate | 蒙层中的操作视图     |
-| row     | 同方法renderRow |
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 替换每一项的内容；外层不再绑定点击 | `{ row, index, preview }`：`row` 为解析后的数据项，`index` 为解析后列表中的索引，`preview()` 打开该项的预览并返回 Promise |
 
+### 静态方法
+
+| 方法 | 说明 | 参数 |
+| --- | --- | --- |
+| FilePreview.open | 执行完整预览流程：先调用全局 `enhancer`，未接管时按类型打开内置预览；返回 Promise | `{ data, current?, instance? }`：`data` 同属性 `data`，`current` 默认 `0` |
+| ImagePreview.open | 打开图片预览 | `{ data, current?, onClose?, ...photoswipeOptions }`：`data` 为地址数组或对象数组（读取 `value`、`source`、`src`，可带 `width`、`height`） |
+
+### 全局配置
+
+通过 `VcInstance.configure({ FilePreview: { ... } })` 设置，FilePreview 与 UploadPicker 共用；Editor 按地址插入资源时也读取 `getFileType`、`getFileName`。
+
+| 属性 | 说明 | 类型 |
+| --- | --- | --- |
+| getFileType | 自定义类型识别，参数为地址或文件名；返回空值或非法类型时回退内置规则 | `(source: string) => 'image' \| 'video' \| 'audio' \| 'file' \| void` |
+| getFileName | 自定义从地址推导文件名；返回空值时回退内置规则。只在数据未提供名称时调用 | `(source: string) => string \| void` |
+| enhancer | 预览前调用；返回真值（或 resolve 真值）表示已接管，不再执行内置预览。`data` 为解析后的列表，`instance` 为调用方组件实例 | `({ current, data, instance }) => unknown` |
+
+### 使用注意
+
+- 内置类型规则按扩展名识别（忽略 `?`、`#` 之后的部分）：
+  - image：`jpg`、`jpeg`、`png`、`gif`、`bmp`、`webp`、`heic`
+  - video：`mp4`、`mov`、`avi`、`mpg`、`mpeg`、`rmvb`
+  - audio：`mp3`、`aac`、`wav`、`flac`、`ape`、`ogg`、`m4a`
+  - 其余为 file。没有扩展名的地址可在数据项中传 `type`，或配置 `getFileType`。
+- 内置预览：图片打开多图预览，只包含 `data` 中的图片项；视频、音频打开播放弹窗；其他文件通过 `window.open` 在新窗口打开。Office、PDF 等在线预览可通过 `enhancer` 接入。
+- 属性 `type` 表示展示方式，数据项的 `type` 表示文件类型，两者含义不同。
+- 颜色使用主题变量，可通过以下变量单独覆盖：
+  - `--vc-file-preview-background-color`：卡片、方格底色
+  - `--vc-file-preview-color-dark-light`：名称
+  - `--vc-file-preview-color-primary`：悬停文字、音频标记、扩展名
+  - `--vc-file-preview-color-primary-lighter`：悬停底色、音频标记与扩展名底色
+  - `--vc-file-preview-mask-color`、`--vc-file-preview-color-light`：视频播放标记
+  - `--vc-file-preview-border-shadow`：方格悬停阴影
+  - `--vc-file-preview-color-dark`：视频、音频播放弹窗的背景
+- 尺寸由根节点上按 `size` 设置的变量控制，可在 `style` 中覆盖：
+  - 方格：`--vc-file-preview-square-size`、`--vc-file-preview-square-radius`、`--vc-file-preview-play-size`
+  - 卡片：`--vc-file-preview-card-width`（最大宽度）、`--vc-file-preview-card-height`、`--vc-file-preview-card-padding`、`--vc-file-preview-card-radius`、`--vc-file-preview-thumbnail-size`、`--vc-file-preview-dot-size`、`--vc-file-preview-text-size`、`--vc-file-preview-inner-gap`
+  - 间距：`--vc-file-preview-gap`
+- `MFilePreview`、`MImagePreview` 分别是 `FilePreview`、`ImagePreview` 的别名。
+
+### 从 ImagePreview 迁移
+
+- 组件 `ImagePreview`（`vc-image-preview`）改为 `FilePreview`（`vc-file-preview`）；`ImagePreview` 只保留 `open` 方法，不再注册为组件。
+- `VcInstance.options.ImagePreview.enhancer` 移除，改用 `VcInstance.options.FilePreview.enhancer`，参数改为 `{ current, data, instance }`，且对所有文件类型生效。
+- 视频、音频播放弹窗的主题变量前缀由 `--vc-upload-picker-*` 改为 `--vc-file-preview-*`。
