@@ -45,7 +45,7 @@ const getFitSize = (src: string) => {
 export const open = async (options: Options) => {
 	const { data: originalData, current, ...photoSwipeOptions } = options;
 	const e = VcInstance.globalEvent as any;
-	const data = originalData.map((i) => {
+	const items = originalData.map((i) => {
 		if (typeof i === 'string') {
 			return {
 				src: i
@@ -57,14 +57,10 @@ export const open = async (options: Options) => {
 			src: i.value || i.source || i.src
 		};
 	});
-	for (let i = 0; i < data.length; i++) {
-		if (!data[i].width) {
-			data[i] = {
-				...data[i],
-				...(await getFitSize(data[i].src) as any),
-			};
-		}
-	}
+	// 并行获取尺寸，等待时间取决于最慢的一张
+	const data = await Promise.all(items.map(async (item) => {
+		return item.width ? item : { ...item, ...(await getFitSize(item.src) as any) };
+	}));
 
 	const lightbox = new PhotoSwipeLightbox({
 		pswpModule: () => import('photoswipe'),

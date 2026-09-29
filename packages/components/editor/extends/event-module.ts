@@ -1,8 +1,9 @@
 import type Quill from 'quill';
-import { ImagePreview } from '../../image-preview';
+import { ImagePreview } from '../../file-preview/image-preview';
 import { Upload } from '../../upload';
 import { EXTENDS_CONTEXT_KEY } from './constant';
-import { getFileType, IMAGE_ACCEPTS, VIDEO_ACCEPTS } from '../../upload-picker/utils';
+import { IMAGE_ACCEPTS, VIDEO_ACCEPTS } from '../../upload-picker/utils';
+import { resolveFileName, resolveFileType } from '../../file-preview/utils';
 
 const MODULE_NAME = 'modules/EventExtend';
 
@@ -25,10 +26,10 @@ const getResponseValue = (response: unknown) => {
 export const insertFile = (body: any, context: any) => {
 	if (!body.target) {
 		body.target = {
-			name: body.value?.replace?.(/^.*\/([^/]+)$/, '$1')
+			name: typeof body.value === 'string' ? resolveFileName(body.value) : undefined
 		};
 	}
-	const fileType = getFileType(body.target.name);
+	const fileType = resolveFileType(body.target.name);
 	const index = (context.editor.getSelection() || {}).index || context.editor.getLength();
 	switch (fileType) {
 		case 'image':

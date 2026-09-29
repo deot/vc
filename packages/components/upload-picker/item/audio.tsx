@@ -4,7 +4,7 @@ import { computed, defineComponent, Fragment } from 'vue';
 import { useLocale } from '../../locale';
 import { Icon } from '../../icon';
 import { Progress } from '../../progress';
-import { AudioPreview } from '../preview/audio';
+import { AudioPreview } from '../../file-preview/preview/audio';
 import { getAvailableIndex } from '../utils';
 
 export const AudioItem = defineComponent({

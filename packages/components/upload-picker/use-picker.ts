@@ -1,8 +1,8 @@
 import { getCurrentInstance, ref, computed, watch, inject } from 'vue';
 import type { UploadEventMap } from '../upload/types';
 import { VcError } from '../vc';
+import { getFileType } from '../file-preview/utils';
 import {
-	getFileType,
 	IMAGE_ACCEPTS,
 	VIDEO_ACCEPTS,
 	AUDIO_ACCEPTS,

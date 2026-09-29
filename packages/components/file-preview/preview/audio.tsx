@@ -4,6 +4,7 @@ import { defineComponent, onMounted, ref, watch } from 'vue';
 import { Portal } from '../../portal';
 import { MPopup } from '../../popup/index.m';
 import { Icon } from '../../icon';
+import './audio.scss';
 
 const AudioPreviewView = defineComponent({
 	name: 'vc-audio-preview',

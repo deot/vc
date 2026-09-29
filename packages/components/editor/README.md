@@ -82,7 +82,7 @@ editorRef.value.add([
 ]);
 ```
 
-资源类型根据 `target.name` 的扩展名识别；省略 `target` 时从地址末尾推导文件名。普通文件插入链接，图片、音频和视频插入对应媒体元素。应在 `ready` 后调用。
+资源类型根据 `target.name` 识别；省略 `target` 时从地址推导文件名。两者分别读取全局 `VcInstance.options.FilePreview.getFileType`、`getFileName`，未配置或返回空值时使用内置规则（按扩展名识别；取地址最后一段，去掉 `?`、`#` 之后的部分并解码）。普通文件插入链接，图片、音频和视频插入对应媒体元素。应在 `ready` 后调用。
 
 ## API
 

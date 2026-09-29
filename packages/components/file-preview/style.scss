@@ -1,8 +1,7 @@
 @use '../style/helper' as *;
-@use './third';
 
 
-$component-name: vc-image-preview;
+$component-name: vc-file-preview;
 
 @include block($component-name) {
 }

@@ -2,6 +2,7 @@ import type { ComponentInternalInstance } from 'vue';
 import type { Language } from '@deot/vc-locale';
 import { zhCN } from '@deot/vc-locale';
 import { VARIABLES } from '../theme/constant';
+import type { FilePreviewOptions } from '../file-preview/types';
 
 const nil = void 0;
 
@@ -17,6 +18,7 @@ export type Options = Partial<{
 	Image: {
 		formatter?: (value: any, type: string, instance: ComponentInternalInstance) => string;
 	};
+	FilePreview: FilePreviewOptions;
 }>;
 
 export type ResolvedOptions = Options & {
@@ -64,5 +66,10 @@ export const defaults: ResolvedOptions = {
 	},
 	Image: {
 		formatter: nil
+	},
+	FilePreview: {
+		getFileType: nil,
+		getFileName: nil,
+		enhancer: nil
 	},
 };

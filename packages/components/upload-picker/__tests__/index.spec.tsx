@@ -12,10 +12,10 @@ import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import type { UploadCallback } from '../../upload/types';
-import { getAvailableIndex, getAvailableValues, getFileType } from '../utils';
+import { getAvailableIndex, getAvailableValues } from '../utils';
 import type { PickerType } from '../types';
-import { VideoPreview } from '../preview/video';
-import { AudioPreview } from '../preview/audio';
+import { VideoPreview } from '../../file-preview/preview/video';
+import { AudioPreview } from '../../file-preview/preview/audio';
 import { ImageItem } from '../item/image';
 import { VideoItem } from '../item/video';
 import { AudioItem } from '../item/audio';
@@ -164,25 +164,6 @@ describe('UploadPicker', () => {
 		expect(audioPopup).toHaveBeenLastCalledWith({ src: files[2].value });
 		videoPopup.mockRestore();
 		audioPopup.mockRestore();
-	});
-
-	it('renders and closes video and audio preview views', async () => {
-		const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
-		const video = mount(VideoPreview.wrapper as any, { props: { src: files[1].value } });
-		const audio = mount(AudioPreview.wrapper as any, { props: { src: files[2].value } });
-		await nextTick();
-
-		expect(video.find('video').attributes('src')).toBe(files[1].value);
-		expect(audio.find('audio').attributes('src')).toBe(files[2].value);
-		await video.find('.vc-video-preview__close').trigger('click');
-		await audio.find('.vc-audio-preview__close').trigger('click');
-		expect(pause).toHaveBeenCalledTimes(2);
-
-		video.findComponent({ name: 'vc-popup' }).vm.$emit('close');
-		audio.findComponent({ name: 'vc-popup' }).vm.$emit('close');
-		expect(video.emitted('portal-fulfilled')).toHaveLength(1);
-		expect(audio.emitted('portal-fulfilled')).toHaveLength(1);
-		pause.mockRestore();
 	});
 
 	it('previews desktop and mobile images with filtered data', () => {
@@ -565,12 +546,5 @@ describe('UploadPicker', () => {
 		});
 		await objectWrapper.find('.vc-upload-picker__delete').trigger('click');
 		expect(objectWrapper.emitted('update:modelValue')?.at(-1)?.[0]).toBeNull();
-	});
-
-	it('recognizes normal and query-string URLs', () => {
-		expect(getFileType('PHOTO.HEIC?x=1')).toBe('image');
-		expect(getFileType('movie.mov#time=2')).toBe('video');
-		expect(getFileType('sound.m4a')).toBe('audio');
-		expect(getFileType('archive.zip')).toBe('file');
 	});
 });

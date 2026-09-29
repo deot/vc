@@ -4,6 +4,7 @@ import { defineComponent, onMounted, ref, watch } from 'vue';
 import { Portal } from '../../portal';
 import { MPopup } from '../../popup/index.m';
 import { Icon } from '../../icon';
+import './video.scss';
 
 const VideoPreviewView = defineComponent({
 	name: 'vc-video-preview',

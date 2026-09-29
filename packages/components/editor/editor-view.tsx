@@ -5,7 +5,7 @@ import type { PropType } from 'vue';
 
 import * as Load from '@deot/helper-load';
 import { getUid } from '@deot/helper-utils';
-import { ImagePreview } from '../image-preview/index';
+import { ImagePreview } from '../file-preview/image-preview';
 import { insertFontSizeStyle, insertLineHeightStyle, insertLetterSpacingStyle } from './utils';
 import { toolbarDefaultsMap } from './default-options';
 

@@ -8,7 +8,7 @@ import { enUS, zhCN } from '@deot/vc-locale';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EditorToolbar } from '../toolbar';
 import { VcInstance } from '../../vc';
-import { ImagePreview } from '../../image-preview';
+import { ImagePreview } from '../../file-preview';
 import { Upload } from '../../upload';
 import { defaults, toolbarDefaultsMap } from '../default-options';
 import { registerAudioBlot } from '../extends/audio-blot';
@@ -485,6 +485,23 @@ describe('Editor extends', () => {
 
 		insertFile({ value: 'https://site/no-name.png' }, context);
 		expect(context.editor.insertEmbed).toHaveBeenCalledWith(2, 'image', 'https://site/no-name.png');
+	});
+
+	it('derives name and type for bare urls through the FilePreview config', () => {
+		const context = makeEditorContext();
+		VcInstance.options.FilePreview!.getFileName = v => (v.includes('download') ? '报价单.pdf' : undefined);
+		VcInstance.options.FilePreview!.getFileType = v => (/\.jpg!/.test(v) ? 'image' : undefined);
+		try {
+			insertFile({ value: 'https://site/download?id=1' }, context);
+			expect(context.editor.insertText).toHaveBeenCalledWith(2, '报价单.pdf');
+			expect(context.editor.format).toHaveBeenCalledWith('link', 'https://site/download?id=1');
+
+			insertFile({ value: 'https://site/a.jpg!4-4' }, context);
+			expect(context.editor.insertEmbed).toHaveBeenCalledWith(2, 'image', 'https://site/a.jpg!4-4');
+		} finally {
+			VcInstance.options.FilePreview!.getFileName = undefined;
+			VcInstance.options.FilePreview!.getFileType = undefined;
+		}
 	});
 
 	it('uploads files through Upload.open for picker and silent file modes', () => {

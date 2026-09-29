@@ -4,7 +4,7 @@ import { computed, defineComponent, Fragment } from 'vue';
 import { useLocale } from '../../locale';
 import { Icon } from '../../icon';
 import { Progress } from '../../progress';
-import { VideoPreview } from '../preview/video';
+import { VideoPreview } from '../../file-preview/preview/video';
 import { getAvailableIndex } from '../utils';
 
 export const VideoItem = defineComponent({

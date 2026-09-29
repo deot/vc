@@ -5,7 +5,8 @@ import { IS_SERVER } from '@deot/vc-shared';
 import { useAttrs } from '@deot/vc-hooks';
 import * as $ from '@deot/helper-dom';
 import { throttle } from 'lodash-es';
-import { ImagePreview } from '../image-preview/index';
+// 叶子模块（只依赖photoswipe），避免与FilePreview（依赖Image）形成循环引用
+import { ImagePreview } from '../file-preview/image-preview';
 import { useLocale } from '../locale';
 import { VcInstance } from '../vc';
 import { props as imageProps } from './image-props';

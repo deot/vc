@@ -2,7 +2,7 @@
 
 import { computed, defineComponent, Fragment, getCurrentInstance } from 'vue';
 import { useLocale } from '../../../locale';
-import { ImagePreview } from '../../../image-preview';
+import { ImagePreview } from '../../../file-preview';
 import { VcInstance } from '../../../vc';
 import { Icon } from '../../../icon';
 import { Image } from '../../../image';

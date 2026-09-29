@@ -1,7 +1,7 @@
 @use '../../style/helper' as *;
 
-$color-dark: varfix(color-dark, upload-picker);
-$color-light: varfix(color-light, upload-picker);
+$color-dark: varfix(color-dark, file-preview);
+$color-light: varfix(color-light, file-preview);
 
 .vc-video-preview {
 	position: relative;
