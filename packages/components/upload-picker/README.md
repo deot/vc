@@ -4,7 +4,7 @@
 
 ### 何时使用
 
-需要在表单内管理上传后的文件列表时使用。图片可放大预览，音视频可打开播放器，普通文件展示文件名。
+需要在表单内管理上传后的文件列表时使用。图片可放大预览，音视频可打开播放器，点击普通文件的名称在新窗口打开。预览与 `FilePreview` 共用同一套流程和全局配置。
 
 ### 基础用法
 
@@ -204,7 +204,6 @@ onBeforeUnmount(() => urls.forEach(url => URL.revokeObjectURL(url)));
 | output | 输出项格式；函数接收内部项，返回假值时保留该项 | `string \| Function` | `'object'`、`'string'`、函数 | `'object'` |
 | keyValue | 名称和地址的字段映射 | `{ label: string; value: string }` | - | `{ label: 'label', value: 'value' }` |
 | boxClass | 默认上传方块的 class | `string` | - | - |
-| imagePreviewOptions | 当前读取 `enhancer(current, images, instance)`；返回真值接管图片预览 | `object` | - | `{}` |
 | imageClass | 图片内容的 class | `string` | - | - |
 | videoClass | 视频内容的 class | `string` | - | - |
 | audioClass | 音频内容的 class | `string` | - | - |
@@ -248,9 +247,16 @@ onBeforeUnmount(() => urls.forEach(url => URL.revokeObjectURL(url)));
 | remove | 等待删除前回调并删除指定项 | `(typeIndex, type)` | `Promise<void>` |
 | reset | 用数组替换内部列表并通知 FormItem，不触发 update:modelValue/change | `source = []`，必须为数组 | `void` |
 
+### 预览
+
+- 点击图片、视频/音频的播放按钮、普通文件的名称时，调用 `FilePreview.open`：先执行全局 `VcInstance.options.FilePreview.enhancer`，返回真值（或 resolve 真值）表示已接管；否则图片打开多图预览，音视频打开播放弹窗，普通文件在新窗口打开。
+- 预览数据只包含当前类型中上传成功的项，按类型内顺序排列。`enhancer` 收到 `{ current, data, instance }`：`data` 每项为 `{ ...内部项, type, source, name }`，`source`、`name` 分别取自 `keyValue.value`、`keyValue.label`；`instance` 为 UploadPicker 实例。
+- 原 `imagePreviewOptions` 与 `VcInstance.options.ImagePreview.enhancer` 已移除，改用 `VcInstance.options.FilePreview.enhancer`，对所有文件类型生效。
+
 ### 数据行为
 
-- 单一 picker 类型作为未声明 type 的默认类型；多个类型时根据地址扩展名识别，无法识别的归为 file。Blob URL 等无扩展名地址应显式指定 type。
+- 单一 picker 类型作为未声明 type 的默认类型；多个类型时通过 `VcInstance.options.FilePreview.getFileType` 识别，未配置或返回空值时按地址扩展名识别，无法识别的归为 file。Blob URL 等无扩展名地址应显式指定 type。`getFileType` 在解析 modelValue 时读取，修改后需重新设置 modelValue 才会重新分组。
+- 未提供 label 的项通过 `VcInstance.options.FilePreview.getFileName` 推导名称，未配置或返回空值时取地址最后一段（去掉 `?`、`#` 之后的部分并解码）；推导出的 label 会写入输出数据。
 - 字符串 modelValue 保持字符串输出；output='object'、max=1 且 modelValue 为对象或 null 时保持单对象输出，删除后为 null。其余通常输出数组。
 - 失败项在当前内部列表中显示，不写入输出数据；外部 modelValue 变化会重新解析列表。删除失败项只清理内部项，不触发同步。
 - 数据按 picker 顺序分组输出，排序只发生在单一类型内。删除上传中项目不等同于取消底层请求。

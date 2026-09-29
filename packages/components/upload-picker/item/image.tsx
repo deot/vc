@@ -1,13 +1,11 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, getCurrentInstance, computed, Fragment } from 'vue';
+import { defineComponent, computed, Fragment } from 'vue';
 import { useLocale } from '../../locale';
-import { ImagePreview } from '../../file-preview/index';
-import { VcInstance } from '../../vc/index';
 import { Icon } from '../../icon/index';
 import { Progress } from '../../progress/index';
 import { Image } from '../../image';
-import { getAvailableIndex, getAvailableValues } from '../utils';
+import { getAvailableIndex } from '../utils';
 
 const COMPONENT_NAME = 'vc-upload-picker-image-item';
 
@@ -20,10 +18,6 @@ export const ImageItem = defineComponent({
 			type: Object,
 			default: () => ({})
 		},
-		imagePreviewOptions: {
-			type: Object,
-			default: () => ({})
-		},
 		index: [String, Number],
 		data: {
 			type: Array,
@@ -31,35 +25,12 @@ export const ImageItem = defineComponent({
 		},
 		keyValue: Object
 	},
-	emits: ['open', 'close', 'remove'],
+	emits: ['preview', 'remove'],
 	setup(props, { slots, emit }) {
 		const { t } = useLocale();
-		const instance = getCurrentInstance();
 		const current = computed(() => {
 			return getAvailableIndex(props.row, props.data, props.index!, props.keyValue!.value);
 		});
-		// 拿到可预览的图片，供预览组件使用
-		const getPreviewData = () => {
-			return getAvailableValues(props.data, props.keyValue!.value);
-		};
-		const previewByPS = (e: any, index: number) => {
-			emit('open');
-			ImagePreview.open({
-				current: index,
-				data: getPreviewData(),
-				onClose: () => emit('close'),
-			});
-		};
-		const handlePreview = (e) => {
-			/**
-			 * 渐进增强
-			 */
-			let { enhancer } = VcInstance.options.ImagePreview || {};
-
-			enhancer = props.imagePreviewOptions.enhancer || enhancer || (() => false);
-			const images = getPreviewData().map(item => ({ value: item }));
-			enhancer(current.value, images, instance) || previewByPS(e, current.value);
-		};
 
 		const handleRemove = () => {
 			emit('remove');
@@ -88,7 +59,7 @@ export const ImageItem = defineComponent({
 															fit="cover"
 															previewable={false}
 															// @ts-ignore
-															onClick={handlePreview}
+															onClick={() => emit('preview')}
 														/>
 													)
 												: (

@@ -4,7 +4,6 @@ import { computed, defineComponent, Fragment } from 'vue';
 import { useLocale } from '../../../locale';
 import { Icon } from '../../../icon';
 import { Spin } from '../../../spin';
-import { AudioPreview } from '../../../file-preview/preview/audio';
 import { getAvailableIndex } from '../../utils';
 
 export const MAudioItem = defineComponent({
@@ -17,7 +16,7 @@ export const MAudioItem = defineComponent({
 		data: { type: Array, default: () => ([]) },
 		keyValue: Object
 	},
-	emits: ['remove'],
+	emits: ['preview', 'remove'],
 	setup(props, { emit, slots }) {
 		const { t } = useLocale();
 		const current = computed(() => {
@@ -49,7 +48,7 @@ export const MAudioItem = defineComponent({
 													type="button"
 													aria-label={t('vc.UploadPicker.previewAudio')}
 													class="vcm-upload-picker-audio-item__play"
-													onClick={() => AudioPreview.popup({ src: value })}
+													onClick={() => emit('preview')}
 												>
 													<span class="vcm-upload-picker-audio-item__play-icon" />
 												</button>

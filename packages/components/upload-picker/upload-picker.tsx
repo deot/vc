@@ -69,7 +69,6 @@ export const UploadPicker = defineComponent({
 										key={item[PICKER_ITEM_KEY]}
 										row={item}
 										disabled={props.disabled}
-										image-preview-options={props.imagePreviewOptions}
 										imageClass={props.imageClass}
 										videoClass={props.videoClass}
 										audioClass={props.audioClass}
@@ -79,6 +78,7 @@ export const UploadPicker = defineComponent({
 										data={base.currentValue.value[picker.type]}
 										class="vc-upload-picker__item"
 										onRemove={() => base.handleRemove(index, picker.type)}
+										onPreview={() => base.handlePreview(index, picker.type)}
 									>
 										{{
 											default: slots.default

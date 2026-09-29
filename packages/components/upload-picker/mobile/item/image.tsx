@@ -1,13 +1,11 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, Fragment, getCurrentInstance } from 'vue';
+import { computed, defineComponent, Fragment } from 'vue';
 import { useLocale } from '../../../locale';
-import { ImagePreview } from '../../../file-preview';
-import { VcInstance } from '../../../vc';
 import { Icon } from '../../../icon';
 import { Image } from '../../../image';
 import { Spin } from '../../../spin';
-import { getAvailableIndex, getAvailableValues } from '../../utils';
+import { getAvailableIndex } from '../../utils';
 
 export const MImageItem = defineComponent({
 	name: 'vcm-upload-picker-image-item',
@@ -15,30 +13,16 @@ export const MImageItem = defineComponent({
 		imageClass: [String, Object, Array],
 		disabled: Boolean,
 		row: { type: Object, default: () => ({}) },
-		imagePreviewOptions: { type: Object, default: () => ({}) },
 		index: [String, Number],
 		data: { type: Array, default: () => ([]) },
 		keyValue: Object
 	},
-	emits: ['open', 'close', 'remove'],
+	emits: ['preview', 'remove'],
 	setup(props, { slots, emit }) {
 		const { t } = useLocale();
-		const instance = getCurrentInstance();
 		const current = computed(() => {
 			return getAvailableIndex(props.row, props.data, props.index!, props.keyValue!.value);
 		});
-		const getPreviewData = () => getAvailableValues(props.data, props.keyValue!.value);
-		const handlePreview = () => {
-			let { enhancer } = VcInstance.options.ImagePreview || {};
-			enhancer = props.imagePreviewOptions.enhancer || enhancer || (() => false);
-			const images = getPreviewData().map(value => ({ value }));
-			enhancer(current.value, images, instance) || ImagePreview.open({
-				current: current.value,
-				data: getPreviewData(),
-				onClose: () => emit('close')
-			});
-			emit('open');
-		};
 
 		return () => {
 			const row = props.row;
@@ -60,7 +44,7 @@ export const MImageItem = defineComponent({
 															fit="cover"
 															previewable={false}
 															// @ts-ignore
-															onClick={handlePreview}
+															onClick={() => emit('preview')}
 														/>
 													)
 												: (

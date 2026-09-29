@@ -4,7 +4,6 @@ import { computed, defineComponent, Fragment } from 'vue';
 import { useLocale } from '../../../locale';
 import { Icon } from '../../../icon';
 import { Spin } from '../../../spin';
-import { VideoPreview } from '../../../file-preview/preview/video';
 import { getAvailableIndex } from '../../utils';
 
 export const MVideoItem = defineComponent({
@@ -17,7 +16,7 @@ export const MVideoItem = defineComponent({
 		data: { type: Array, default: () => ([]) },
 		keyValue: Object
 	},
-	emits: ['remove'],
+	emits: ['preview', 'remove'],
 	setup(props, { emit, slots }) {
 		const { t } = useLocale();
 		const current = computed(() => {
@@ -49,7 +48,7 @@ export const MVideoItem = defineComponent({
 													type="button"
 													aria-label={t('vc.UploadPicker.previewVideo')}
 													class="vcm-upload-picker-video-item__play"
-													onClick={() => VideoPreview.popup({ src: value })}
+													onClick={() => emit('preview')}
 												>
 													<span class="vcm-upload-picker-video-item__play-icon" />
 												</button>

@@ -12,7 +12,7 @@ import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import type { UploadCallback } from '../../upload/types';
-import { getAvailableIndex, getAvailableValues } from '../utils';
+import { getAvailableIndex, getAvailableItems } from '../utils';
 import type { PickerType } from '../types';
 import { VideoPreview } from '../../file-preview/preview/video';
 import { AudioPreview } from '../../file-preview/preview/audio';
@@ -166,30 +166,93 @@ describe('UploadPicker', () => {
 		audioPopup.mockRestore();
 	});
 
-	it('previews desktop and mobile images with filtered data', () => {
+	it('previews desktop and mobile images without failed items', async () => {
 		const open = vi.spyOn(ImagePreview, 'open').mockReturnValue({} as any);
-		const data = [files[0], { ...files[0], value: '', errorFlag: true }];
+		const second = { ...files[0], label: 'second.jpg', value: 'https://cdn.test/second.jpg' };
 
-		for (const Component of [ImageItem, MImageItem]) {
+		for (const [Component, UploadComponent] of [[UploadPicker, Upload], [MUploadPicker, MUpload]] as const) {
 			const wrapper = mount(Component, {
-				props: {
-					row: data[0],
-					data,
-					index: 0,
-					keyValue: { label: 'label', value: 'value' },
-					imagePreviewOptions: { enhancer: () => false }
-				}
+				props: { modelValue: [files[0], second], picker: ['image'] }
 			});
-			const image = wrapper.findComponent({ name: 'vc-image' });
-			(image.vm.$.vnode.props as any).onClick(new MouseEvent('click'));
+			const failedFile = { uploadId: 'failed-image', name: 'failed.jpg', percent: 0 };
+			const upload = wrapper.findComponent(UploadComponent as any);
+			upload.vm.$emit('file-start', { file: failedFile });
+			upload.vm.$emit('file-error', { stage: 'upload', cause: {}, message: '上传失败', file: failedFile, result: {} });
+			await nextTick();
+
+			const images = wrapper.findAllComponents({ name: 'vc-image' });
+			expect(images).toHaveLength(2);
+			(images[1].vm.$.vnode.props as any).onClick(new MouseEvent('click'));
+			await nextTick();
 		}
 
 		expect(open).toHaveBeenCalledTimes(2);
-		expect(open).toHaveBeenLastCalledWith(expect.objectContaining({
-			current: 0,
-			data: [files[0].value]
-		}));
+		expect(open).toHaveBeenLastCalledWith({ current: 1, data: [files[0].value, second.value] });
 		open.mockRestore();
+	});
+
+	it('opens files in a new window on desktop and mobile', async () => {
+		const windowOpen = vi.spyOn(window, 'open').mockReturnValue(null);
+
+		for (const [Component, selector] of [
+			[UploadPicker, '.vc-upload-picker-file-item__title'],
+			[MUploadPicker, '.vcm-upload-picker-file-item__title']
+		] as const) {
+			const wrapper = mount(Component, {
+				props: { modelValue: [files[3]], picker: ['file'] }
+			});
+			await wrapper.find(selector).trigger('click');
+		}
+
+		expect(windowOpen).toHaveBeenCalledTimes(2);
+		expect(windowOpen).toHaveBeenLastCalledWith(files[3].value, '_blank', 'noopener');
+		windowOpen.mockRestore();
+	});
+
+	it('lets the global FilePreview enhancer take over previews', async () => {
+		const videoPopup = vi.spyOn(VideoPreview, 'popup').mockReturnValue({} as any);
+		const enhancer = vi.fn(() => true);
+		VcInstance.options.FilePreview!.enhancer = enhancer;
+		try {
+			const wrapper = mount(UploadPicker, {
+				props: {
+					modelValue: [files[1], { ...files[1], label: 'clip.mp4', value: 'https://cdn.test/clip.mp4' }],
+					picker: ['video']
+				}
+			});
+			await wrapper.findAll('button[aria-label="预览视频"]')[1].trigger('click');
+			await nextTick();
+
+			expect(enhancer).toHaveBeenCalledWith({
+				current: 1,
+				instance: wrapper.vm.$,
+				data: [
+					expect.objectContaining({ type: 'video', source: files[1].value, name: 'movie.mp4' }),
+					expect.objectContaining({ type: 'video', source: 'https://cdn.test/clip.mp4', name: 'clip.mp4' })
+				]
+			});
+			expect(videoPopup).not.toHaveBeenCalled();
+		} finally {
+			VcInstance.options.FilePreview!.enhancer = undefined;
+			videoPopup.mockRestore();
+		}
+	});
+
+	it('groups model values with the global getFileType', () => {
+		VcInstance.options.FilePreview!.getFileType = v => (/!4-4$/.test(v) ? 'image' : undefined);
+		try {
+			const wrapper = mount(UploadPicker, {
+				props: {
+					modelValue: ['https://cdn.test/photo.jpg!4-4', files[3].value],
+					picker: ['image', 'file']
+				}
+			});
+
+			expect(wrapper.findAll('.vc-upload-image-item')).toHaveLength(1);
+			expect(wrapper.findAll('.vc-upload-picker-file-item')).toHaveLength(1);
+		} finally {
+			VcInstance.options.FilePreview!.getFileType = undefined;
+		}
 	});
 
 	it('provides safe item defaults and unavailable indexes', () => {
@@ -212,7 +275,7 @@ describe('UploadPicker', () => {
 
 		const row = { value: '/same.jpg' };
 		expect(getAvailableIndex(row, [row], 'invalid', 'value')).toBe(0);
-		expect(getAvailableValues([row, { value: '/failed.jpg', errorFlag: true }], 'value')).toEqual(['/same.jpg']);
+		expect(getAvailableItems([row, { value: '/failed.jpg', errorFlag: true }], 'value')).toEqual([row]);
 	});
 
 	it('uses mobile classes and mobile upload button', () => {
@@ -532,6 +595,26 @@ describe('UploadPicker', () => {
 		expect(processed).toBe(false);
 		expect(onFileBefore).toHaveBeenCalledWith({ ...payload, type: 'image' });
 		expect(enhancer).toHaveBeenCalledWith(expect.anything(), 'image');
+	});
+
+	it('derives labels with getFileName and keeps explicit labels', () => {
+		const wrapper = mount(UploadPicker, {
+			props: {
+				modelValue: ['https://cdn.test/a%20b.pdf?x=1', { value: 'https://cdn.test/c.pdf', label: '自定义.pdf' }],
+				picker: ['file']
+			}
+		});
+		expect(wrapper.findAll('.vc-upload-picker-file-item__title').map(i => i.text())).toEqual(['a b.pdf', '自定义.pdf']);
+
+		VcInstance.options.FilePreview!.getFileName = v => `name:${v.split('/').pop()}`;
+		try {
+			const configured = mount(UploadPicker, {
+				props: { modelValue: ['https://cdn.test/download'], picker: ['file'] }
+			});
+			expect(configured.find('.vc-upload-picker-file-item__title').text()).toBe('name:download');
+		} finally {
+			VcInstance.options.FilePreview!.getFileName = undefined;
+		}
 	});
 
 	it('preserves string and single-object model shapes', async () => {

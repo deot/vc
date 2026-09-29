@@ -37,6 +37,7 @@ $color-dark-extralight: varfix(color-dark-extralight, upload-picker);
 			text-align: center;
 			text-overflow: ellipsis;
 			white-space: nowrap;
+			cursor: pointer;
 		}
 
 		@include element(file-icon) {

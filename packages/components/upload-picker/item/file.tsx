@@ -16,7 +16,7 @@ export const FileItem = defineComponent({
 		data: { type: Array, default: () => ([]) },
 		keyValue: Object
 	},
-	emits: ['remove'],
+	emits: ['preview', 'remove'],
 	setup(props, { emit, slots }) {
 		const { t } = useLocale();
 		const current = computed(() => {
@@ -52,7 +52,13 @@ export const FileItem = defineComponent({
 															: (
 																	<Fragment>
 																		<Icon type="file" class="vc-upload-picker-file-item__file-icon" />
-																		<div title={label} class="vc-upload-picker-file-item__title">{label}</div>
+																		<div
+																			title={label}
+																			class="vc-upload-picker-file-item__title"
+																			onClick={() => emit('preview')}
+																		>
+																			{label}
+																		</div>
 																	</Fragment>
 																)
 											}

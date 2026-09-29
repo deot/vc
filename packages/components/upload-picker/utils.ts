@@ -10,6 +10,7 @@ export const withPickerItemKey = <T extends Record<string, any>>(item: T, key?: 
 	});
 	return item;
 };
+
 const isAvailableItem = (item: any, valueKey: string) => {
 	return item?.status !== 0 && !item?.errorFlag && !!item?.[valueKey];
 };
@@ -26,10 +27,8 @@ export const getAvailableIndex = (row: any, data: any[], typeIndex: string | num
 	return data.filter(item => isAvailableItem(item, valueKey)).findIndex(item => item === row);
 };
 
-export const getAvailableValues = (data: any[], valueKey: string) => {
-	return data
-		.filter(item => isAvailableItem(item, valueKey))
-		.map(item => item[valueKey]);
+export const getAvailableItems = <T = any>(data: T[], valueKey: string) => {
+	return data.filter(item => isAvailableItem(item, valueKey));
 };
 
 export const IMAGE_ACCEPTS = 'image/*';

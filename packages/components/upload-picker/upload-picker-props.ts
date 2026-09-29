@@ -66,10 +66,6 @@ export const props = {
 	 * 盒子className
 	 */
 	boxClass: String,
-	imagePreviewOptions: {
-		type: Object,
-		default: () => ({})
-	},
 	imageClass: String,
 	videoClass: String,
 	audioClass: String,

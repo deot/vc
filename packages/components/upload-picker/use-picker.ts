@@ -1,7 +1,8 @@
 import { getCurrentInstance, ref, computed, watch, inject } from 'vue';
 import type { UploadEventMap } from '../upload/types';
 import { VcError } from '../vc';
-import { getFileType } from '../file-preview/utils';
+import { open as openFilePreview } from '../file-preview/open';
+import { resolveFileName, resolveFileType } from '../file-preview/utils';
 import {
 	IMAGE_ACCEPTS,
 	VIDEO_ACCEPTS,
@@ -13,6 +14,7 @@ import {
 	TXT_ACCEPTS,
 	HTML_ACCEPTS,
 	PICKER_ITEM_KEY,
+	getAvailableItems,
 	withPickerItemKey
 } from './utils';
 
@@ -266,6 +268,21 @@ export const usePicker = (expose: any) => {
 		sync();
 	};
 
+	// 只预览当前类型中上传成功的项；各项是独立对象，按引用即可取得过滤后的索引
+	const handlePreview = (index: number, type: PickerType) => {
+		const target = currentValue.value[type];
+		const { label, value } = props.keyValue;
+		const items = getAvailableItems(target, value);
+		const current = items.indexOf(target[index]);
+		if (current < 0) return;
+
+		return openFilePreview({
+			current,
+			instance,
+			data: items.map(row => ({ ...row, type, source: row[value], name: row[label] }))
+		});
+	};
+
 	const parseModelValue = (v) => {
 		const initialData: Record<PickerType, PickerItem[]> = { image: [], video: [], audio: [], file: [] };
 		if (allowKeepString.value) {
@@ -278,8 +295,8 @@ export const usePicker = (expose: any) => {
 
 		return v.reduce((pre, cur) => {
 			const value = cur?.[props.keyValue.value] || (typeof cur === 'object' ? '' : cur);
-			const label = cur?.[props.keyValue.label] || value.replace(/^.*\/([^/]+)$/, '$1');
-			const type = cur.type || (props.picker.length === 1 ? props.picker[0] : getFileType(value)); // 长度为1时，强制类型
+			const label = cur?.[props.keyValue.label] || resolveFileName(value);
+			const type = cur.type || (props.picker.length === 1 ? props.picker[0] : resolveFileType(value)); // 长度为1时，强制类型
 			switch (type) {
 				case 'image':
 				case 'video':
@@ -338,6 +355,7 @@ export const usePicker = (expose: any) => {
 		dynamicMax,
 
 		handleRemove,
+		handlePreview,
 		handleFileBefore,
 		handleFileStart,
 		handleFileProgress,

@@ -41,3 +41,23 @@ import { VcInstance, enUS } from '@deot/vc';
 ```
 
 组件专属的全局配置使用组件名作为键，例如 `Theme`、`Image`、`Upload` 和 `RecycleList`。局部 props 可以继续覆盖对应组件的全局默认值。
+
+`FilePreview` 的配置由 FilePreview、UploadPicker 与 Editor 共用，用于自定义文件类型识别、文件名推导和接管预览（Editor 不使用 `enhancer`）：
+
+```ts
+VcInstance.configure({
+	FilePreview: {
+		// 返回空值时回退内置规则
+		getFileType: source => (/\.jpg!/.test(source) ? 'image' : undefined),
+		// 数据未提供名称时调用，返回空值时回退内置规则
+		getFileName: source => decodeURIComponent(source.split('/').pop()).replace(/^\d+_/, ''),
+		// 返回真值（或 resolve 真值）表示已接管，不再执行内置预览
+		enhancer: ({ current, data, instance }) => {
+			const item = data[current];
+			if (item.type !== 'file') return false;
+			window.open(`https://view.example.com/?src=${encodeURIComponent(item.source)}`);
+			return true;
+		}
+	}
+});
+```
