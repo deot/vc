@@ -3,6 +3,11 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		Picker: {
+			extra: '请选择',
+			cancelText: '取消',
+			okText: '确定'
+		},
 		UploadPicker: {
 			upload: '上传',
 			failed: '上传失败',

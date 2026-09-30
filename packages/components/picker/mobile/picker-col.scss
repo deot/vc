@@ -4,11 +4,14 @@ $component-name: vcm-picker-col;
 $background-color-light: varfix(background-color-light, picker);
 $color-dark: varfix(color-dark, picker);
 $color-light-deeper: varfix(color-light-deeper, picker);
+$item-height: varfix(item-height, picker, unitfix(34));
 
 @include block($component-name) {
+	--vcm-picker-item-height: #{$item-height};
+
 	position: relative;
 	width: 100%;
-	height: unitfix(238);
+	height: calc(var(--vcm-picker-item-height) * 7);
 	overflow: hidden;
 
 	@include element(mask) {
@@ -33,28 +36,32 @@ $color-light-deeper: varfix(color-light-deeper, picker);
 			);
 		background-position: top, bottom;
 		background-repeat: no-repeat;
-		background-size: 100% unitfix(102);
+		background-size: 100% calc(var(--vcm-picker-item-height) * 3);
 	}
 
 	@include element(indicator) {
 		position: absolute;
-		top: unitfix(102);
+		top: calc(var(--vcm-picker-item-height) * 3);
 		left: 0;
 		z-index: 3;
 		width: 100%;
+		height: var(--vcm-picker-item-height);
 		pointer-events: none;
 		border-top: unitfix(1) solid $color-light-deeper;
 		border-bottom: unitfix(1) solid $color-light-deeper;
+		box-sizing: border-box;
 	}
 
 	@include element(wrapper) {
-		padding: unitfix(102) 0;
+		padding: calc(var(--vcm-picker-item-height) * 3) 0;
 	}
 
 	@include element(item) {
+		height: var(--vcm-picker-item-height);
 		padding: 0;
 		overflow: hidden;
 		font-size: unitfix(16);
+		line-height: var(--vcm-picker-item-height);
 		color: $color-dark;
 		text-align: center;
 		text-overflow: ellipsis;

@@ -13,14 +13,8 @@ export const props = {
 		type: String,
 		default: ''
 	},
-	cancelText: {
-		type: String,
-		default: '取消'
-	},
-	okText: {
-		type: String,
-		default: '确定'
-	},
+	cancelText: String,
+	okText: String,
 	showToolbar: {
 		type: Boolean,
 		default: true

@@ -4,6 +4,8 @@ import { MPicker, MPickerPopup, MPickerView, Picker, PickerPopup, PickerView } f
 import { mount } from '@vue/test-utils';
 import { h, nextTick, ref } from 'vue';
 import { vi } from 'vitest';
+import { enUS, zhCN } from '@deot/vc-locale';
+import { VcInstance } from '../../vc';
 import { MPopup } from '../../popup/index.m';
 import { toCurrentValue, toModelValue } from '../../select/utils';
 import { PickerCol } from '../mobile/picker-col';
@@ -363,6 +365,23 @@ describe('PickerCol', () => {
 		wrapper.unmount();
 	});
 
+	it('uses the rendered row height when selecting after a drag', async () => {
+		const onChange = vi.fn();
+		const wrapper = mount(() => (
+			<PickerCol
+				value="a"
+				data={['a', 'b', 'c', 'd'].map(value => ({ value }))}
+				onChange={onChange}
+			/>
+		));
+		vi.spyOn(wrapper.find('.vcm-picker-col__indicator').element, 'getBoundingClientRect')
+			.mockReturnValue({ height: 68 } as DOMRect);
+
+		await dragCol(wrapper.element, 0, -68);
+		expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ value: 'b' }));
+		wrapper.unmount();
+	});
+
 	it('handles empty data and clamps to first item', async () => {
 		const emptyChange = vi.fn();
 		const emptyWrapper = mount(() => <PickerCol onChange={emptyChange} />);
@@ -414,6 +433,65 @@ describe('PickerCol', () => {
 		expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ value: 'b' }));
 
 		wrapper.unmount();
+	});
+});
+
+describe('Picker locale', () => {
+	afterEach(() => {
+		VcInstance.configure({ locale: zhCN });
+		document.body.innerHTML = '';
+	});
+
+	it('updates the placeholder and an open portal when locale changes', async () => {
+		const wrapper = mount(Picker, { attachTo: document.body, props: { data: regionData, cols: 3 } });
+		expect(wrapper.text()).toContain('请选择');
+		await wrapper.trigger('click');
+		await flush();
+		expect(document.querySelector('.is-left')?.textContent).toBe('取消');
+		expect(document.querySelector('.is-right')?.textContent).toBe('确定');
+
+		VcInstance.configure({ locale: enUS });
+		await flush();
+		expect(wrapper.text()).toContain('Please select');
+		expect(document.querySelector('.is-left')?.textContent).toBe('Cancel');
+		expect(document.querySelector('.is-right')?.textContent).toBe('OK');
+		wrapper.unmount();
+	});
+
+	it('preserves custom and empty text overrides on the trigger and popup', async () => {
+		VcInstance.configure({ locale: enUS });
+		const wrapper = mount(Picker, {
+			attachTo: document.body,
+			props: { extra: '自定义提示', cancelText: '', okText: '提交', data: regionData }
+		});
+		expect(wrapper.text()).toContain('自定义提示');
+		await wrapper.setProps({ extra: '' });
+		expect(wrapper.text()).not.toContain('Please select');
+		await wrapper.trigger('click');
+		await flush();
+		expect(document.querySelector('.is-left')).toBeNull();
+		expect(document.querySelector('.is-right')?.textContent).toBe('提交');
+		wrapper.unmount();
+
+		const popup = mount(PickerPopup, {
+			attachTo: document.body,
+			props: { cancelText: '返回', okText: '' }
+		});
+		await flush();
+		expect(popup.find('.is-left').text()).toBe('返回');
+		expect(popup.find('.is-right').exists()).toBe(false);
+		popup.unmount();
+	});
+
+	it('localizes method-created popups reactively', async () => {
+		const leaf = MPicker.open();
+		await flush();
+		expect(document.querySelector('.is-right')?.textContent).toBe('确定');
+		VcInstance.configure({ locale: enUS });
+		await flush();
+		expect(document.querySelector('.is-left')?.textContent).toBe('Cancel');
+		expect(document.querySelector('.is-right')?.textContent).toBe('OK');
+		leaf.destroy();
 	});
 });
 

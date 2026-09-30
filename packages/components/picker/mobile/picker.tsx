@@ -5,6 +5,7 @@ import { isEqualWith } from 'lodash-es';
 import { MListItem } from '../../list/index.m';
 import { toCurrentValue, toModelValue } from '../../select/utils';
 import { VcError } from '../../vc';
+import { useLocale } from '../../locale';
 import { props as pickerProps } from './picker-props';
 import { PickerPortal } from './picker-core';
 import { getSelectedData } from './utils';
@@ -25,6 +26,7 @@ export const Picker = defineComponent({
 		'close'
 	],
 	setup(props, { emit, slots }) {
+		const { t } = useLocale();
 		const formItem = inject<any>('vc-form-item', {});
 		const currentValue = ref<PickerValue[]>([]);
 		const pickerInstance = ref<any>();
@@ -33,7 +35,7 @@ export const Picker = defineComponent({
 
 		const formatterValue = computed(() => {
 			const { label = [] } = getSelectedData(currentValue.value, source.value);
-			return props.formatter(label) || props.extra;
+			return props.formatter(label) || (props.extra ?? t('vc.Picker.extra'));
 		});
 
 		watch(

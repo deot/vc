@@ -3,6 +3,11 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		Picker: {
+			extra: 'Please select',
+			cancelText: 'Cancel',
+			okText: 'OK'
+		},
 		UploadPicker: {
 			upload: 'Upload',
 			failed: 'Upload failed',

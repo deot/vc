@@ -29,6 +29,8 @@ export const PickerCol = defineComponent({
 	},
 	emits: ['change'],
 	setup(props, { emit }) {
+		const indicator = ref<HTMLElement>();
+		const itemHeight = ref(ITEM_HEIGHT);
 		const offsetY = ref(0);
 		const scrollStart = ref(false);
 		const scrollEnd = ref(true);
@@ -41,19 +43,12 @@ export const PickerCol = defineComponent({
 		});
 
 		const maxH = computed(() => {
-			return Math.max(props.data.length - 1, 0) * ITEM_HEIGHT;
-		});
-
-		const styleH = computed(() => {
-			return {
-				height: `${ITEM_HEIGHT}px`,
-				lineHeight: `${ITEM_HEIGHT}px`
-			};
+			return Math.max(props.data.length - 1, 0) * itemHeight.value;
 		});
 
 		const transform = computed(() => {
 			return {
-				[TRANSFORM]: `translate3d(0, ${(selectedIndex.value * ITEM_HEIGHT + offsetY.value) * -1}px, 0)`
+				[TRANSFORM]: `translate3d(0, calc(var(--vcm-picker-item-height) * ${-selectedIndex.value} - ${offsetY.value}px), 0)`
 			};
 		});
 
@@ -65,6 +60,7 @@ export const PickerCol = defineComponent({
 
 		const handleStart = (y: number) => {
 			if (!props.data.length) return;
+			itemHeight.value = indicator.value?.getBoundingClientRect().height || ITEM_HEIGHT;
 
 			scrollStart.value = true;
 			scrollEnd.value = false;
@@ -83,11 +79,11 @@ export const PickerCol = defineComponent({
 			let translateY: number;
 			const dt = Date.now() - startTime.value;
 			if (dt > 500 || dt < 50) {
-				translateY = selectedIndex.value * ITEM_HEIGHT + offsetY.value;
+				translateY = selectedIndex.value * itemHeight.value + offsetY.value;
 			} else {
 				const dy = startY.value - y;
 				const speed = dy / dt;
-				translateY = selectedIndex.value * ITEM_HEIGHT + speed * 500;
+				translateY = selectedIndex.value * itemHeight.value + speed * 500;
 			}
 
 			let target: PickerData;
@@ -96,7 +92,7 @@ export const PickerCol = defineComponent({
 			} else if (translateY >= maxH.value) {
 				target = props.data[props.data.length - 1];
 			} else {
-				target = props.data[Math.round(translateY / ITEM_HEIGHT)];
+				target = props.data[Math.round(translateY / itemHeight.value)];
 			}
 
 			emit('change', cloneDeep(target));
@@ -142,13 +138,13 @@ export const PickerCol = defineComponent({
 					onMouseup={withModifiers((e: Event) => handleEnd((e as MouseEvent).screenY), ['prevent', 'stop'])}
 				>
 					<div class="vcm-picker-col__mask" />
-					<div style={styleH.value} class="vcm-picker-col__indicator" />
+					<div ref={indicator} class="vcm-picker-col__indicator" />
 					<div style={[transform.value, transition.value]} class="vcm-picker-col__wrapper">
 						{
 							props.data.map((item, index) => (
 								<div
 									key={index}
-									style={[styleH.value, props.itemStyle]}
+									style={props.itemStyle}
 									class="vcm-picker-col__item"
 								>
 									{ renderItem(item, index) }

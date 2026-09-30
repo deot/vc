@@ -21,10 +21,7 @@ export const props = {
 		default: true
 	},
 	loadData: Function as PropType<() => Promise<any> | any>,
-	extra: {
-		type: String,
-		default: '请选择'
-	},
+	extra: String,
 	formatter: {
 		type: Function as PropType<(label: any[]) => string>,
 		default: (v: any[]) => (!v ? v : v.join(','))
@@ -35,14 +32,8 @@ export const props = {
 		type: String,
 		default: ''
 	},
-	cancelText: {
-		type: String,
-		default: '取消'
-	},
-	okText: {
-		type: String,
-		default: '确定'
-	},
+	cancelText: String,
+	okText: String,
 	showToolbar: {
 		type: Boolean,
 		default: true

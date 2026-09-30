@@ -3,6 +3,7 @@
 import { computed, defineComponent, ref, watch, withModifiers } from 'vue';
 import { useAttrs } from '@deot/vc-hooks';
 import { MPopup } from '../../popup/index.m';
+import { useLocale } from '../../locale';
 import { props as pickerPopupProps } from './picker-popup-props';
 
 const COMPONENT_NAME = 'vcm-picker-popup';
@@ -13,8 +14,11 @@ export const PickerPopup = defineComponent({
 	props: pickerPopupProps,
 	emits: ['update:modelValue', 'update:visible', 'visible-change', 'close', 'cancel', 'ok'],
 	setup(props, { emit, slots }) {
+		const { t } = useLocale();
 		const its = useAttrs({ merge: false });
 		const isActive = ref(false);
+		const cancelText = computed(() => props.cancelText ?? t('vc.Picker.cancelText'));
+		const okText = computed(() => props.okText ?? t('vc.Picker.okText'));
 
 		const visible = computed(() => {
 			return typeof props.visible === 'boolean' ? props.visible : props.modelValue;
@@ -61,23 +65,23 @@ export const PickerPopup = defineComponent({
 							props.showToolbar && (
 								<div class="vcm-picker-popup__header">
 									{
-										props.cancelText && (
+										cancelText.value && (
 											<div
 												class="vcm-picker-popup__item is-left"
 												onClick={withModifiers(() => handleAction('cancel'), ['stop'])}
 											>
-												{ props.cancelText }
+												{ cancelText.value }
 											</div>
 										)
 									}
 									<div class="vcm-picker-popup__item is-title" innerHTML={props.title} />
 									{
-										props.okText && (
+										okText.value && (
 											<div
 												class="vcm-picker-popup__item is-right"
 												onClick={withModifiers(() => handleAction('ok'), ['stop'])}
 											>
-												{ props.okText }
+												{ okText.value }
 											</div>
 										)
 									}
