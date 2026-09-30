@@ -2,7 +2,6 @@ import type { DirectionKeys } from '../hooks/use-direction-keys';
 import { ExternalViewport } from './external';
 import { InnerViewport } from './inner';
 import type {
-	InjectedScroller,
 	ScrollSource,
 	ViewportAnchors,
 	ViewportHandlers,
@@ -82,13 +81,12 @@ export class Viewport {
 	 * 按 fill 换掉滚动源；外部模式但根元素尚未挂载时退回内部滚动源
 	 * @param external 是否使用外部滚动源（!props.fill）
 	 * @param root 列表根元素；外部模式下用于向上寻找滚动祖先
-	 * @param injected provide('vc-scroller') 注入的实例
 	 */
-	rebind(external: boolean, root?: HTMLElement, injected?: InjectedScroller) {
+	rebind(external: boolean, root?: HTMLElement) {
 		const { anchors, handlers, keys } = this;
 		this.source.unbind();
 		this.source = external && root
-			? new ExternalViewport({ anchors, handlers, keys, root, injected })
+			? new ExternalViewport({ anchors, handlers, keys, root })
 			: new InnerViewport({ anchors, handlers, keys });
 		this.source.bind();
 		this.epoch++;

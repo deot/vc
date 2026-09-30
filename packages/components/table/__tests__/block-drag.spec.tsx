@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Table, TableColumn } from '@deot/vc-components';
+import { Scroller, Table, TableColumn } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { effect, isReactive, nextTick, reactive, ref, toRaw } from 'vue';
 import { vi } from 'vitest';
@@ -1430,6 +1430,34 @@ describe('table/block-drag', () => {
 		} finally {
 			restore();
 			restoreWindow();
+			wrapper.unmount();
+		}
+	});
+
+	it('自动滚动：外层为 VC Scroller 时经其 scrollTo 滚动（同步其自绘滚动条）', async () => {
+		const scrollerRef = ref();
+		const wrapper = mount(() => (
+			<Scroller ref={scrollerRef} native={false} height="300px">
+				<Table data={buildData(20)} primaryKey="id" draggable>
+					<TableColumn label="名称" prop="name" />
+				</Table>
+			</Scroller>
+		), { attachTo: document.body });
+		await flush();
+
+		const scroller = scrollerRef.value;
+		const scrollTo = vi.spyOn(scroller, 'scrollTo');
+		const restore = defineProps(scroller.wrapper, { scrollHeight: 1000, clientHeight: 300, scrollTop: 0, clientTop: 0 });
+		try {
+			// 容器下边缘（300）内侧
+			await startDrag(cellOf(wrapper, 1, 0).element, 1, 298);
+			await sleep(100);
+			expect(scrollTo).toHaveBeenCalled();
+			expect((scrollTo.mock.calls.at(-1)![0] as { y: number }).y).toBeGreaterThan(0);
+			release();
+			await flush();
+		} finally {
+			restore();
 			wrapper.unmount();
 		}
 	});

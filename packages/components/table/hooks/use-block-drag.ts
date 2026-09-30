@@ -1,4 +1,4 @@
-import { watch, inject, toRaw } from 'vue';
+import { watch, toRaw } from 'vue';
 import type { Ref } from 'vue';
 import { getScroller } from '@deot/helper-dom';
 import type { Nullable } from '@deot/helper-shared';
@@ -6,7 +6,7 @@ import { SCROLLER_REG } from '../../scroller/utils';
 import { isWindow } from '../../recycle-list/viewport/external/dom';
 import { ExternalCarrier } from '../../recycle-list/viewport/external/carrier';
 import { bisectFirst } from '../../recycle-list/store/position';
-import type { AxisKeys, InjectedScroller } from '../../recycle-list/viewport/types';
+import type { AxisKeys } from '../../recycle-list/viewport/types';
 import type { Store } from '../store';
 import type { TableDropPosition, TableMove } from '../store/modules';
 import type { Props } from '../table-props';
@@ -127,8 +127,6 @@ const Y_KEYS: AxisKeys = {
  */
 export const useBlockDrag = (options: Options) => {
 	const { props, store, emit, tableWrapper, headerWrapper, bottomWrapper, bodyXWrapper, bodyScroller, virtual } = options;
-	// 外层的 VC Scroller：外部滚动承载者恰好是它时，滚动交给它以同步其滚动条
-	const injected = inject<InjectedScroller | undefined>('vc-scroller', undefined);
 
 	// ---------------------------------------------------------------------
 	// 几何
@@ -173,11 +171,11 @@ export const useBlockDrag = (options: Options) => {
 			const target = getScroller(el, { direction: 'y', className: SCROLLER_REG });
 			if (!target || isWindow(target)) break;
 			if (target.scrollHeight > target.clientHeight) {
-				return new ExternalCarrier(target, injected?.wrapper === target ? injected : undefined, Y_KEYS);
+				return new ExternalCarrier(target, Y_KEYS);
 			}
 			el = target.parentElement;
 		}
-		return new ExternalCarrier(window, undefined, Y_KEYS);
+		return new ExternalCarrier(window, Y_KEYS);
 	};
 
 	/**

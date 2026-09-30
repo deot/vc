@@ -36,13 +36,14 @@ export class ExternalViewport implements ScrollSource {
 	private cache: Bounds = { listStart: 0, listEnd: 0, contentStart: 0 };
 	private dirty = true;
 	private unregister?: () => void;
+	private offScroll?: () => void;
 
 	constructor(options: ViewportOptions & { root: HTMLElement }) {
-		const { anchors, handlers, keys, root, injected } = options;
+		const { anchors, handlers, keys, root } = options;
 		this.anchors = anchors;
 		this.handlers = handlers;
 		this.keys = keys;
-		this.carrier = resolveExternalCarrier(root, injected, keys);
+		this.carrier = resolveExternalCarrier(root, keys);
 	}
 
 	private get target() {
@@ -174,7 +175,7 @@ export class ExternalViewport implements ScrollSource {
 
 	bind() {
 		const { onScroll, onResize } = this.handlers;
-		this.carrier.on(onScroll);
+		this.offScroll = this.carrier.on(onScroll);
 		if (this.carrier.isWindow) {
 			(this.target as Window).addEventListener('resize', onResize);
 		} else {
@@ -185,8 +186,9 @@ export class ExternalViewport implements ScrollSource {
 	}
 
 	unbind() {
-		const { onScroll, onResize } = this.handlers;
-		this.carrier.off(onScroll);
+		const { onResize } = this.handlers;
+		this.offScroll?.();
+		this.offScroll = undefined;
 		if (this.carrier.isWindow) {
 			(this.target as Window).removeEventListener('resize', onResize);
 		} else {

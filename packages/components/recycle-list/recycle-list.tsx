@@ -11,8 +11,7 @@ import {
 	watch,
 	Fragment,
 	getCurrentInstance,
-	shallowRef,
-	inject
+	shallowRef
 } from 'vue';
 import { throttle } from '@deot/helper-utils';
 import { Resize } from '@deot/helper-resize';
@@ -43,7 +42,6 @@ export const RecycleList = defineComponent({
 	setup(props, { slots, expose, emit }) {
 		const instance = getCurrentInstance()!;
 		const leaf = instance as unknown as ScrollLeaf;
-		const injectedScroller = inject<any>('vc-scroller', undefined);
 		const store = props.store || new Store(props);
 		const K = useDirectionKeys();
 		const isMounted = ref(false);
@@ -737,7 +735,7 @@ export const RecycleList = defineComponent({
 			invertedAligned = false;
 			// 换轴/换承载者后旧的兜底尺寸不再可信
 			lastClientSize = 0;
-			viewport.rebind(!props.fill, getRoot(), injectedScroller);
+			viewport.rebind(!props.fill, getRoot());
 			if (!viewport.external) return;
 
 			// 主轴交给外部承载者后，内部 wrapper 的主轴归零，避免残留偏移叠加到位置计算

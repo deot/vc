@@ -6,17 +6,6 @@ import type { DirectionKeys } from '../hooks/use-direction-keys';
 export type AxisKeys = Pick<DirectionKeys, 'axis' | 'scrollAxis' | 'clientSize' | 'scrollSize' | 'offsetSize'>;
 
 /**
- * 通过 provide('vc-scroller') 注入的 VC Scroller 最小结构；
- * 命中时滚动与订阅走它，以复用 Scroller 自身的滚动条同步
- */
-export type InjectedScroller = {
-	wrapper?: HTMLElement;
-	scrollTo?: (options: { x?: number; y?: number }) => void;
-	on?: (listener: (e: any) => void) => void;
-	off?: (listener: (e: any) => void) => void;
-};
-
-/**
  * 主轴几何快照：所有值均以滚动源自身的滚动坐标为原点
  *
  * - 内部滚动源（fill=true）：原点是内部 Scroller wrapper 的 scrollTop/Left
@@ -83,7 +72,7 @@ export type ViewportHandlers = {
 };
 
 /**
- * 两种滚动源统一的构造参数；各取所需，内部滚动源用不到 handlers / root / injected
+ * 两种滚动源统一的构造参数；各取所需，内部滚动源用不到 handlers / root
  */
 export type ViewportOptions = {
 	anchors: ViewportAnchors;
@@ -93,7 +82,6 @@ export type ViewportOptions = {
 	 * 列表根元素；仅外部滚动源需要，用于向上寻找滚动祖先
 	 */
 	root?: HTMLElement;
-	injected?: InjectedScroller;
 };
 
 /**

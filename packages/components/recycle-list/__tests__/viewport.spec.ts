@@ -2,6 +2,8 @@
 
 import { ExternalCarrier, resolveExternalCarrier } from '../viewport/external/carrier';
 import { invalidateViewport, registerViewport } from '../viewport/external/registry';
+import { ScrollerManager } from '../../scroller/manager';
+import type { ScrollerInstance } from '../../scroller/manager';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const verticalKeys = {
@@ -21,6 +23,12 @@ const horizontalKeys = {
 };
 
 const restorers: Array<() => void> = [];
+
+// 登记 Scroller 实例（测试结束时由 restorers 移除）
+const registerScroller = (el: Element, instance: ScrollerInstance) => {
+	ScrollerManager.add(el, instance);
+	restorers.push(() => ScrollerManager.remove(el));
+};
 
 const defineValue = (target: object, key: PropertyKey, value: unknown) => {
 	const descriptor = Object.getOwnPropertyDescriptor(target, key);
@@ -71,7 +79,7 @@ describe('ExternalCarrier', () => {
 			defineValue(scrolling, 'scrollHeight', 2400);
 			defineValue(window, 'innerHeight', 600);
 
-			const viewport = new ExternalCarrier(window, undefined, verticalKeys);
+			const viewport = new ExternalCarrier(window, verticalKeys);
 			const element = document.createElement('div');
 			mockRect(element, { top: 75, bottom: 155 });
 
@@ -95,7 +103,7 @@ describe('ExternalCarrier', () => {
 			defineValue(window, 'innerWidth', 0);
 			defineValue(document.documentElement, 'clientWidth', 880);
 
-			const viewport = new ExternalCarrier(window, undefined, horizontalKeys);
+			const viewport = new ExternalCarrier(window, horizontalKeys);
 			const element = document.createElement('div');
 			const listener = vi.fn();
 			mockRect(element, { left: 30, right: 130 });
@@ -106,10 +114,10 @@ describe('ExternalCarrier', () => {
 			expect(viewport.getElementStart(element)).toBe(75);
 			expect(viewport.getElementEnd(element)).toBe(175);
 
-			viewport.on(listener);
+			const off = viewport.on(listener);
 			window.dispatchEvent(new Event('scroll'));
 			expect(listener).toHaveBeenCalledTimes(1);
-			viewport.off(listener);
+			off();
 			window.dispatchEvent(new Event('scroll'));
 			expect(listener).toHaveBeenCalledTimes(1);
 
@@ -139,8 +147,8 @@ describe('ExternalCarrier', () => {
 				right: 190
 			});
 
-			const vertical = new ExternalCarrier(target, undefined, verticalKeys);
-			const horizontal = new ExternalCarrier(target, undefined, horizontalKeys);
+			const vertical = new ExternalCarrier(target, verticalKeys);
+			const horizontal = new ExternalCarrier(target, horizontalKeys);
 
 			expect(vertical.isWindow).toBe(false);
 			expect(vertical.mainOffset).toBe(200);
@@ -162,31 +170,31 @@ describe('ExternalCarrier', () => {
 
 		it('adds and removes native scroll listeners', () => {
 			const target = document.createElement('div');
-			const viewport = new ExternalCarrier(target, undefined, verticalKeys);
+			const viewport = new ExternalCarrier(target, verticalKeys);
 			const listener = vi.fn();
 
-			viewport.on(listener);
+			const off = viewport.on(listener);
 			target.dispatchEvent(new Event('scroll'));
 			expect(listener).toHaveBeenCalledTimes(1);
 
-			viewport.off(listener);
+			off();
 			target.dispatchEvent(new Event('scroll'));
 			expect(listener).toHaveBeenCalledTimes(1);
 		});
 	});
 
-	it('delegates scrolling and subscriptions to an injected scroller', () => {
+	it('delegates scrolling and subscriptions to the Scroller registered on the target', () => {
 		const target = document.createElement('div');
 		const scrollTo = vi.fn();
 		const on = vi.fn();
 		const off = vi.fn();
-		const scroller = { wrapper: target, scrollTo, on, off };
-		const viewport = new ExternalCarrier(target, scroller, horizontalKeys);
+		registerScroller(target, { scrollTo, on, off });
+		const viewport = new ExternalCarrier(target, horizontalKeys);
 		const listener = vi.fn();
 
 		viewport.setMainOffset(95);
-		viewport.on(listener);
-		viewport.off(listener);
+		const unsubscribe = viewport.on(listener);
+		unsubscribe();
 
 		expect(scrollTo).toHaveBeenCalledOnce();
 		expect(scrollTo).toHaveBeenCalledWith({ x: 95 });
@@ -208,8 +216,9 @@ describe('resolveExternalCarrier', () => {
 		outer.appendChild(scroller);
 		document.body.appendChild(outer);
 
-		const injected = { wrapper: outer, scrollTo: vi.fn() };
-		const viewport = resolveExternalCarrier(root, injected, verticalKeys);
+		// 外层登记了 Scroller 实例，但命中的是内层原生滚动容器：不借用外层实例
+		registerScroller(outer, { scrollTo: vi.fn(), on: vi.fn(), off: vi.fn() });
+		const viewport = resolveExternalCarrier(root, verticalKeys);
 
 		expect(viewport.target).toBe(scroller);
 		expect(viewport.scroller).toBeUndefined();
@@ -218,25 +227,25 @@ describe('resolveExternalCarrier', () => {
 	it.each([
 		'vc-scroller',
 		'vc-scroller is-wheel'
-	])('recognizes a %s ancestor and retains its matching injection', (className) => {
+	])('recognizes a %s ancestor and uses its registered instance', (className) => {
 		const wrapper = document.createElement('div');
 		const root = document.createElement('div');
 		wrapper.className = className;
 		wrapper.appendChild(root);
 		document.body.appendChild(wrapper);
-		const injected = {
-			wrapper,
+		const instance = {
 			scrollTo: vi.fn(),
 			on: vi.fn(),
 			off: vi.fn()
 		};
+		registerScroller(wrapper, instance);
 
-		const viewport = resolveExternalCarrier(root, injected, verticalKeys);
+		const viewport = resolveExternalCarrier(root, verticalKeys);
 
 		expect(viewport.target).toBe(wrapper);
-		expect(viewport.scroller).toBe(injected);
+		expect(viewport.scroller).toBe(instance);
 		viewport.setMainOffset(120);
-		expect(injected.scrollTo).toHaveBeenCalledWith({ y: 120 });
+		expect(instance.scrollTo).toHaveBeenCalledWith({ y: 120 });
 	});
 
 	it('falls back to Window and does not select the RecycleList root itself', () => {
@@ -245,7 +254,7 @@ describe('resolveExternalCarrier', () => {
 		root.style.overflowY = 'auto';
 		document.body.appendChild(root);
 
-		const viewport = resolveExternalCarrier(root, undefined, verticalKeys);
+		const viewport = resolveExternalCarrier(root, verticalKeys);
 
 		expect(viewport.target).toBe(window);
 		expect(viewport.isWindow).toBe(true);

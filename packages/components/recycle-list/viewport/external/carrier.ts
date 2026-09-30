@@ -1,10 +1,14 @@
 import { getScroller } from '@deot/helper-dom';
 import { SCROLLER_REG } from '../../../scroller/utils';
-import type { AxisKeys, InjectedScroller } from '../types';
+import { ScrollerManager } from '../../../scroller/manager';
+import type { ScrollerInstance } from '../../../scroller/manager';
+import type { AxisKeys } from '../types';
 import { isWindow, getScrollingElement } from './dom';
 
 /**
- * 外部滚动承载者：统一 Window / 滚动元素 / 注入的 VC Scroller 的主轴读写
+ * 外部滚动承载者：统一 Window / 滚动元素 / VC Scroller 的主轴读写
+ *
+ * 承载者是 VC Scroller 的根节点时，滚动与订阅交给其实例（见 ScrollerManager），以同步其自绘滚动条
  *
  * 只负责"承载者本身"的几何与事件，不知道列表的存在；
  * 列表相关的边界缓存见 ExternalViewport
@@ -12,12 +16,12 @@ import { isWindow, getScrollingElement } from './dom';
  */
 export class ExternalCarrier {
 	target: Window | HTMLElement;
-	scroller?: InjectedScroller;
+	scroller?: ScrollerInstance;
 	keys: AxisKeys;
 
-	constructor(target: Window | HTMLElement, scroller: InjectedScroller | undefined, keys: AxisKeys) {
+	constructor(target: Window | HTMLElement, keys: AxisKeys) {
 		this.target = target;
-		this.scroller = scroller;
+		this.scroller = isWindow(target) ? undefined : ScrollerManager.get(target);
 		this.keys = keys;
 	}
 
@@ -54,12 +58,12 @@ export class ExternalCarrier {
 	}
 
 	/**
-	 * 写主轴滚动位置；命中注入的 Scroller 时交给它，以同步其自绘滚动条
+	 * 写主轴滚动位置；承载者是 VC Scroller 时交给它，以同步其自绘滚动条
 	 * @param value 目标位置
 	 */
 	setMainOffset(value: number) {
 		const { axis, scrollAxis } = this.keys;
-		if (this.scroller?.scrollTo) {
+		if (this.scroller) {
 			this.scroller.scrollTo({ [axis]: value });
 			return;
 		}
@@ -67,20 +71,13 @@ export class ExternalCarrier {
 		el[scrollAxis] = value;
 	}
 
+	/**
+	 * 订阅承载者的滚动，见 ScrollerManager.listen
+	 * @param listener 滚动回调
+	 * @returns 取消订阅
+	 */
 	on(listener: (e: any) => void) {
-		if (this.scroller?.on) {
-			this.scroller.on(listener);
-			return;
-		}
-		this.target.addEventListener('scroll', listener as EventListener);
-	}
-
-	off(listener: (e: any) => void) {
-		if (this.scroller?.off) {
-			this.scroller.off(listener);
-			return;
-		}
-		this.target.removeEventListener('scroll', listener as EventListener);
+		return ScrollerManager.listen(this.target, listener);
 	}
 
 	/**
@@ -120,24 +117,15 @@ export class ExternalCarrier {
 
 /**
  * 从列表根元素向上寻找主轴滚动祖先（优先识别 VC Scroller 的 wrapper），找不到时用 Window
- *
- * 只有当命中的元素恰好是注入 Scroller 的 wrapper 时才复用注入实例，
- * 避免把内层 Scroller 的注入用到外层原生滚动容器上
  * 原 resolveExternalViewport
  * @param root 列表根元素
- * @param injected provide('vc-scroller') 注入的实例
  * @param keys 主轴键
  * @returns 承载者
  */
-export const resolveExternalCarrier = (
-	root: HTMLElement,
-	injected: InjectedScroller | undefined,
-	keys: AxisKeys
-) => {
+export const resolveExternalCarrier = (root: HTMLElement, keys: AxisKeys) => {
 	const target = (getScroller(root.parentElement || root.ownerDocument.documentElement, {
 		direction: keys.axis,
 		className: SCROLLER_REG
 	}) || root.ownerDocument.defaultView) as Window | HTMLElement;
-	const scroller = injected?.wrapper === target ? injected : undefined;
-	return new ExternalCarrier(target, scroller, keys);
+	return new ExternalCarrier(target, keys);
 };
