@@ -23,18 +23,18 @@ $center-spacing: $dot-radius + $content-spacing; // 轴线居中时，内容与�
  */
 @include block($component-name) {
 	position: relative;
-	font-size: $font-size;
+	font-size: unitfix($font-size);
 	color: $color;
 	overflow-wrap: break-word; // 内容与标签中无空格的长串自动断行
 
 	@include element(label) {
-		font-size: 12px;
+		font-size: unitfix(12);
 		line-height: 1.667;
 		color: $label-color;
 	}
 
 	@include element(content) {
-		margin-bottom: 4px;
+		margin-bottom: unitfix(4);
 		line-height: $line-height;
 	}
 
@@ -50,13 +50,13 @@ $center-spacing: $dot-radius + $content-spacing; // 轴线居中时，内容与�
 
 	@include element(dot-content) {
 		position: relative;
-		width: $dot-size;
+		width: unitfix($dot-size);
 	}
 
 	@include element(dot) {
 		position: relative;
-		width: $dot-size;
-		height: $dot-size;
+		width: unitfix($dot-size);
+		height: unitfix($dot-size);
 		color: $dot-color;
 		border-radius: 50%;
 		box-sizing: border-box;
@@ -66,7 +66,7 @@ $center-spacing: $dot-radius + $content-spacing; // 轴线居中时，内容与�
 		}
 
 		@include when(hollow) {
-			border: 2px solid;
+			border: unitfix(2) solid;
 		}
 	}
 
@@ -101,25 +101,25 @@ $center-spacing: $dot-radius + $content-spacing; // 轴线居中时，内容与�
 	&.is-opposite > &__label {
 		position: absolute;
 		top: 0;
-		max-width: $label-width;
+		max-width: unitfix($label-width);
 		box-sizing: border-box;
 	}
 
 	// 纵向（单独使用时也按纵向展示）
 	&:not(.is-horizontal) {
-		min-height: 78px;
-		padding-left: $dot-size;
+		min-height: unitfix(78);
+		padding-left: unitfix($dot-size);
 
 		> .vc-timeline-item__content-wrapper {
-			margin-left: $content-spacing;
+			margin-left: unitfix($content-spacing);
 		}
 
 		> .vc-timeline-item__dot-wrapper {
 			height: 100%;
 
 			.vc-timeline-item__dot-content {
-				height: $line-height * $font-size;
-				line-height: $line-height * $font-size;
+				height: unitfix($line-height * $font-size);
+				line-height: unitfix($line-height * $font-size);
 			}
 
 			.vc-timeline-item__dot {
@@ -128,29 +128,29 @@ $center-spacing: $dot-radius + $content-spacing; // 轴线居中时，内容与�
 			}
 
 			.vc-timeline-item__line {
-				top: $dot-center + math.div($dot-size, 2) + $line-spacing;
-				bottom: -($dot-center - math.div($dot-size, 2) - $line-spacing);
+				top: unitfix($dot-center + math.div($dot-size, 2) + $line-spacing);
+				bottom: unitfix(-($dot-center - math.div($dot-size, 2) - $line-spacing));
 				left: 50%;
-				width: 1px;
-				border-left-width: 1px;
+				width: unitfix(1);
+				border-left-width: unitfix(1);
 				transform: translateX(-50%);
 			}
 		}
 
 		&.is-opposite.is-start > .vc-timeline-item__label {
 			left: 0;
-			padding-right: $content-spacing;
+			padding-right: unitfix($content-spacing);
 			text-align: right;
 		}
 
 		&.is-opposite.is-end > .vc-timeline-item__label {
 			right: 0;
-			padding-left: $content-spacing;
+			padding-left: unitfix($content-spacing);
 			text-align: left;
 		}
 
 		&.is-end:not(.is-center) {
-			padding-right: $dot-size;
+			padding-right: unitfix($dot-size);
 
 			> .vc-timeline-item__dot-wrapper {
 				right: 0;
@@ -158,7 +158,7 @@ $center-spacing: $dot-radius + $content-spacing; // 轴线居中时，内容与�
 			}
 
 			> .vc-timeline-item__content-wrapper {
-				margin-right: $content-spacing;
+				margin-right: unitfix($content-spacing);
 				margin-left: 0;
 				text-align: right;
 			}
@@ -167,7 +167,7 @@ $center-spacing: $dot-radius + $content-spacing; // 轴线居中时，内容与�
 		// 标签在轴线外侧留出位置
 		&.is-opposite:not(.is-center) {
 			&.is-start {
-				margin-left: $label-width;
+				margin-left: unitfix($label-width);
 
 				> .vc-timeline-item__label {
 					transform: translateX(-100%);
@@ -175,7 +175,7 @@ $center-spacing: $dot-radius + $content-spacing; // 轴线居中时，内容与�
 			}
 
 			&.is-end {
-				margin-right: $label-width;
+				margin-right: unitfix($label-width);
 
 				> .vc-timeline-item__label {
 					transform: translateX(100%);
@@ -189,20 +189,20 @@ $center-spacing: $dot-radius + $content-spacing; // 轴线居中时，内容与�
 
 			> .vc-timeline-item__dot-wrapper {
 				left: 50%;
-				margin-left: -$dot-radius;
+				margin-left: unitfix(-$dot-radius);
 			}
 
 			&.is-opposite > .vc-timeline-item__label {
-				width: calc(50% - #{$dot-radius});
+				width: calc(50% - #{unitfix($dot-radius)});
 				max-width: none;
 			}
 
 			&.is-start > .vc-timeline-item__content-wrapper {
-				margin-left: calc(50% + #{$center-spacing});
+				margin-left: calc(50% + #{unitfix($center-spacing)});
 			}
 
 			&.is-end > .vc-timeline-item__content-wrapper {
-				margin-right: calc(50% + #{$center-spacing});
+				margin-right: calc(50% + #{unitfix($center-spacing)});
 				margin-left: 0;
 				text-align: right;
 			}
@@ -218,50 +218,50 @@ $center-spacing: $dot-radius + $content-spacing; // 轴线居中时，内容与�
 			width: 100%;
 
 			.vc-timeline-item__dot-content {
-				height: $dot-size;
-				line-height: $dot-size;
+				height: unitfix($dot-size);
+				line-height: unitfix($dot-size);
 			}
 
 			.vc-timeline-item__line {
-				inset: 50% 4px auto $dot-size + 6px;
-				height: 1px;
-				border-top-width: 1px;
+				inset: 50% unitfix(4) auto unitfix($dot-size + 6px);
+				height: unitfix(1);
+				border-top-width: unitfix(1);
 				transform: translateY(-50%);
 			}
 		}
 
 		&.is-start {
-			padding-top: $dot-size;
+			padding-top: unitfix($dot-size);
 
 			> .vc-timeline-item__dot-wrapper {
 				top: 0;
 			}
 
 			> .vc-timeline-item__content-wrapper {
-				margin-top: $content-spacing;
+				margin-top: unitfix($content-spacing);
 			}
 
 			&.is-opposite > .vc-timeline-item__label {
-				padding-bottom: $content-spacing;
+				padding-bottom: unitfix($content-spacing);
 				transform: translateY(-100%);
 			}
 		}
 
 		&.is-end {
-			padding-bottom: $dot-size;
+			padding-bottom: unitfix($dot-size);
 
 			> .vc-timeline-item__dot-wrapper {
 				bottom: 0;
 			}
 
 			> .vc-timeline-item__content-wrapper {
-				margin-bottom: $content-spacing;
+				margin-bottom: unitfix($content-spacing);
 			}
 
 			&.is-opposite > .vc-timeline-item__label {
 				top: auto;
 				bottom: 0;
-				padding-top: $content-spacing;
+				padding-top: unitfix($content-spacing);
 				text-align: left;
 				transform: translateY(100%);
 			}
@@ -270,23 +270,23 @@ $center-spacing: $dot-radius + $content-spacing; // 轴线居中时，内容与�
 		// 标签在轴线外侧留出位置
 		&.is-opposite:not(.is-center) {
 			&.is-start {
-				margin-top: 50px;
+				margin-top: unitfix(50);
 			}
 
 			&.is-end {
-				margin-bottom: 50px;
+				margin-bottom: unitfix(50);
 			}
 		}
 
 		// 轴线居中：两侧的项分别向中线平移
 		&.is-center {
 			&.is-start {
-				margin-top: -$dot-size;
+				margin-top: unitfix(-$dot-size);
 				transform: translateY(50%);
 			}
 
 			&.is-end {
-				margin-top: $dot-size;
+				margin-top: unitfix($dot-size);
 				transform: translateY(-50%);
 			}
 		}

@@ -18,9 +18,9 @@
 	<div>
 		<div class="toolbar">
 			<span>倒序</span>
-			<Switch v-model="inverted" />
+			<Switch v-model="isInverted" />
 		</div>
-		<Timeline :inverted="inverted">
+		<Timeline :inverted="isInverted">
 			<TimelineItem label="2017-03-10">创建项目</TimelineItem>
 			<TimelineItem label="2018-05-12">发布第一个版本</TimelineItem>
 			<TimelineItem label="2020-09-30">发布第二个版本</TimelineItem>
@@ -32,13 +32,14 @@
 import { ref } from 'vue';
 import { Switch, Timeline, TimelineItem } from '@deot/vc';
 
-const inverted = ref(false);
+const isInverted = ref(false);
 </script>
 
 <style scoped>
 .toolbar {
 	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 	gap: 8px;
 	margin-bottom: 24px;
 }
@@ -56,15 +57,15 @@ const inverted = ref(false);
 <template>
 	<div>
 		<div class="toolbar">
-			<label><span>纵向</span><Switch v-model="vertical" /></label>
-			<label><span>交替</span><Switch v-model="alternate" /></label>
-			<RadioGroup v-model="align" :disabled="alternate">
+			<label><span>纵向</span><Switch v-model="isVertical" /></label>
+			<label><span>交替</span><Switch v-model="isAlternate" /></label>
+			<RadioGroup v-model="align" :disabled="isAlternate">
 				<Radio value="start">start</Radio>
 				<Radio value="center">center</Radio>
 				<Radio value="end">end</Radio>
 			</RadioGroup>
 		</div>
-		<Timeline :vertical="vertical" :align="align" :alternate="alternate">
+		<Timeline :vertical="isVertical" :align="align" :alternate="isAlternate">
 			<TimelineItem label="2017-03-10">创建项目</TimelineItem>
 			<TimelineItem label="2018-05-12">发布第一个版本</TimelineItem>
 			<TimelineItem label="2020-09-30">发布第二个版本</TimelineItem>
@@ -77,8 +78,8 @@ const inverted = ref(false);
 import { ref } from 'vue';
 import { Radio, RadioGroup, Switch, Timeline, TimelineItem } from '@deot/vc';
 
-const vertical = ref(true);
-const alternate = ref(false);
+const isVertical = ref(true);
+const isAlternate = ref(false);
 const align = ref('start');
 </script>
 
@@ -109,12 +110,12 @@ const align = ref('start');
 <template>
 	<div>
 		<div class="toolbar">
-			<label><span>另一侧</span><Switch v-model="opposite" /></label>
-			<label><span>交替</span><Switch v-model="alternate" /></label>
+			<label><span>另一侧</span><Switch v-model="isOpposite" /></label>
+			<label><span>交替</span><Switch v-model="isAlternate" /></label>
 		</div>
-		<Timeline :opposite="opposite" :alternate="alternate">
+		<Timeline :opposite="isOpposite" :alternate="isAlternate">
 			<TimelineItem label="2017-03-10" dot-color="#1DB88C">创建项目</TimelineItem>
-			<TimelineItem label="2018-05-12" dot-color="#f04134" :opposite="!opposite">
+			<TimelineItem label="2018-05-12" dot-color="#f04134" :opposite="!isOpposite">
 				该项单独设置 opposite
 			</TimelineItem>
 			<TimelineItem label="2020-09-30">发布第二个版本</TimelineItem>
@@ -126,14 +127,15 @@ const align = ref('start');
 import { ref } from 'vue';
 import { Switch, Timeline, TimelineItem } from '@deot/vc';
 
-const opposite = ref(true);
-const alternate = ref(false);
+const isOpposite = ref(true);
+const isAlternate = ref(false);
 </script>
 
 <style scoped>
 .toolbar {
 	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 	gap: 24px;
 	margin-bottom: 24px;
 }
@@ -148,7 +150,7 @@ const alternate = ref(false);
 
 ### 幽灵节点
 
-`showPending` 在末尾追加一个幽灵节点，表示记录仍在进行中。幽灵节点及与之相连的轴线显示为虚线。`pending` 插槽设置内容，`pending-dot` 插槽替换默认的加载图标。
+`showPending` 在末尾追加一个幽灵节点，表示记录仍在进行中，与之相连的轴线显示为虚线。`inverted` 开启后幽灵节点移到最前。`pending` 插槽设置内容，`pending-dot` 插槽替换默认的加载图标。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
@@ -156,10 +158,10 @@ const alternate = ref(false);
 <template>
 	<div>
 		<div class="toolbar">
-			<label><span>幽灵节点</span><Switch v-model="showPending" /></label>
-			<label><span>倒序</span><Switch v-model="inverted" /></label>
+			<label><span>幽灵节点</span><Switch v-model="isPendingVisible" /></label>
+			<label><span>倒序</span><Switch v-model="isInverted" /></label>
 		</div>
-		<Timeline :show-pending="showPending" :inverted="inverted">
+		<Timeline :show-pending="isPendingVisible" :inverted="isInverted">
 			<TimelineItem label="2017-03-10">提交订单</TimelineItem>
 			<TimelineItem label="2017-03-11">商家发货</TimelineItem>
 			<template #pending>
@@ -179,14 +181,15 @@ const alternate = ref(false);
 import { ref } from 'vue';
 import { Switch, Timeline, TimelineItem } from '@deot/vc';
 
-const showPending = ref(true);
-const inverted = ref(false);
+const isPendingVisible = ref(true);
+const isInverted = ref(false);
 </script>
 
 <style scoped>
 .toolbar {
 	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 	gap: 24px;
 	margin-bottom: 24px;
 }
@@ -272,10 +275,10 @@ const renderDot = () => h('span', { class: 'check' }, '✓');
 | --- | --- | --- | --- | --- |
 | vertical | 是否纵向展示 | `boolean` | - | `true` |
 | align | 轴线位置。纵向时 `start` 在左、`end` 在右；横向时 `start` 在上、`end` 在下 | `string` | `start` / `center` / `end` | `start` |
-| alternate | 节点在轴线两侧交替展示，第 1 项位于 `start` 一侧；开启后轴线居中，`align` 不生效 | `boolean` | - | `false` |
+| alternate | 节点在轴线两侧交替展示，按最终显示顺序排列；第 1 项的轴线位于内容左侧（纵向）或上方（横向）；开启后轴线居中，`align` 不生效 | `boolean` | - | `false` |
 | opposite | 标签显示在轴线另一侧；为 `false` 时标签位于内容下方 | `boolean` | - | `false` |
 | inverted | 倒序展示，幽灵节点一并参与，DOM 顺序同步反转 | `boolean` | - | `false` |
-| showPending | 在末尾追加幽灵节点；幽灵节点及与之相连的轴线显示为虚线 | `boolean` | - | `false` |
+| showPending | 在末尾追加幽灵节点，与之相连的轴线显示为虚线；默认节点为加载图标，内容为空 | `boolean` | - | `false` |
 | tag | 外层标签 | `string` | - | `'div'` |
 
 ### Timeline 插槽

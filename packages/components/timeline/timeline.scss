@@ -7,7 +7,7 @@ $component-name: vc-timeline;
 		display: flex;
 
 		&.is-center {
-			min-height: 200px;
+			min-height: unitfix(200);
 			align-items: center;
 		}
 	}
