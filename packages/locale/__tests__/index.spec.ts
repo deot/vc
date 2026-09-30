@@ -66,4 +66,20 @@ describe('locale', () => {
 		expect(getNestedValue(zhImage, 'loadError')).toBe('加载失败');
 		expect(getNestedValue(enImage, 'loadError')).toBe('Failed to load image');
 	});
+
+	it('keeps file preview family keys, leaf types and placeholders aligned', () => {
+		for (const name of ['FilePreview', 'ImagePreview']) {
+			const zh = zhCN.vc[name];
+			const en = enUS.vc[name];
+			const paths = getLeafPaths(zh);
+			expect(paths.length).toBeGreaterThan(0);
+			expect(paths).toEqual(getLeafPaths(en));
+			expect(allLeavesAreStrings(zh)).toBe(true);
+			expect(allLeavesAreStrings(en)).toBe(true);
+			for (const path of paths) {
+				const placeholders = (value: unknown) => (String(value).match(/\{\w+\}/g) || []).sort();
+				expect(placeholders(getNestedValue(zh, path))).toEqual(placeholders(getNestedValue(en, path)));
+			}
+		}
+	});
 });

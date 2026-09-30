@@ -186,6 +186,16 @@ export const zhCN: Language = {
 		Clipboard: {
 			copySuccess: '复制成功'
 		},
+		FilePreview: {
+			close: '关闭'
+		},
+		ImagePreview: {
+			closeTitle: '关闭(Esc)',
+			zoomTitle: '缩放',
+			arrowPrevTitle: '上一张',
+			arrowNextTitle: '下一张',
+			errorMsg: '网络异常 图片加载失败'
+		},
 		Image: {
 			loadError: '加载失败'
 		},

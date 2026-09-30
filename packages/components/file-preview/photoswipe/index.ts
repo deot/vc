@@ -1,5 +1,6 @@
 import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import { VcInstance } from '../../vc'; // VcInstance.globalEvent.target
+import { translate } from '../../locale';
 
 type Options = {
 	current?: number;
@@ -62,14 +63,15 @@ export const open = async (options: Options) => {
 		return item.width ? item : { ...item, ...(await getFitSize(item.src) as any) };
 	}));
 
+	const t = (key: string) => translate(`vc.ImagePreview.${key}`, undefined, VcInstance.options.locale);
 	const lightbox = new PhotoSwipeLightbox({
 		pswpModule: () => import('photoswipe'),
-		closeTitle: '关闭(Esc)',
-		zoomTitle: '缩放',
-		arrowPrevTitle: '上一张',
-		arrowNextTitle: '下一张',
+		closeTitle: t('closeTitle'),
+		zoomTitle: t('zoomTitle'),
+		arrowPrevTitle: t('arrowPrevTitle'),
+		arrowNextTitle: t('arrowNextTitle'),
 
-		errorMsg: '网络异常 图片加载失败',
+		errorMsg: t('errorMsg'),
 		indexIndicatorSep: ' / ',
 		wheelToZoom: true,
 

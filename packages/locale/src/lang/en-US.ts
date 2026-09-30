@@ -186,6 +186,16 @@ export const enUS: Language = {
 		Clipboard: {
 			copySuccess: 'Copied successfully'
 		},
+		FilePreview: {
+			close: 'Close'
+		},
+		ImagePreview: {
+			closeTitle: 'Close (Esc)',
+			zoomTitle: 'Zoom',
+			arrowPrevTitle: 'Previous image',
+			arrowNextTitle: 'Next image',
+			errorMsg: 'Failed to load image'
+		},
 		Image: {
 			loadError: 'Failed to load image'
 		},

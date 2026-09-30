@@ -1,7 +1,7 @@
 @use '../../style/helper' as *;
 
-$color-dark: varfix(color-dark, file-preview);
-$color-light: varfix(color-light, file-preview);
+$preview-background-color: varfix(preview-background-color, file-preview, var(--vc-file-preview-color-dark, #000));
+$preview-close-color: varfix(preview-close-color, file-preview, var(--vc-file-preview-color-light, #fff));
 
 .vc-video-preview {
 	position: relative;
@@ -14,7 +14,7 @@ $color-light: varfix(color-light, file-preview);
 	&__wrapper {
 		inset: 0 !important;
 		max-width: none !important;
-		background-color: $color-dark !important;
+		background-color: $preview-background-color !important;
 		transform: none !important;
 	}
 
@@ -26,10 +26,14 @@ $color-light: varfix(color-light, file-preview);
 
 	&__close {
 		position: absolute;
-		top: 20px;
-		right: 20px;
-		font-size: 18px;
-		color: $color-light;
+		top: unitfix(20);
+		right: unitfix(20);
+		padding: unitfix(4);
+		font-size: unitfix(18);
+		line-height: 1;
+		color: $preview-close-color;
 		cursor: pointer;
+		background: transparent;
+		border: 0;
 	}
 }

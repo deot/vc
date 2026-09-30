@@ -4,6 +4,7 @@ import { defineComponent, onMounted, ref, watch } from 'vue';
 import { Portal } from '../../portal';
 import { MPopup } from '../../popup/index.m';
 import { Icon } from '../../icon';
+import { useLocale } from '../../locale';
 import './video.scss';
 
 const VideoPreviewView = defineComponent({
@@ -13,6 +14,7 @@ const VideoPreviewView = defineComponent({
 	},
 	emits: ['portal-fulfilled'],
 	setup(props, { emit }) {
+		const { t } = useLocale();
 		const visible = ref(false);
 		const video = ref<HTMLVideoElement>();
 
@@ -38,12 +40,14 @@ const VideoPreviewView = defineComponent({
 						controlslist="nodownload"
 						disablePictureInPicture
 					/>
-					<Icon
-						type="close"
+					<button
+						type="button"
 						class="vc-video-preview__close"
-						// @ts-ignore
+						aria-label={t('vc.FilePreview.close')}
 						onClick={() => (visible.value = false)}
-					/>
+					>
+						<Icon type="close" />
+					</button>
 				</div>
 			</MPopup>
 		);

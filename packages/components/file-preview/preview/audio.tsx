@@ -4,6 +4,7 @@ import { defineComponent, onMounted, ref, watch } from 'vue';
 import { Portal } from '../../portal';
 import { MPopup } from '../../popup/index.m';
 import { Icon } from '../../icon';
+import { useLocale } from '../../locale';
 import './audio.scss';
 
 const AudioPreviewView = defineComponent({
@@ -13,6 +14,7 @@ const AudioPreviewView = defineComponent({
 	},
 	emits: ['portal-fulfilled'],
 	setup(props, { emit }) {
+		const { t } = useLocale();
 		const visible = ref(false);
 		const audio = ref<HTMLAudioElement>();
 
@@ -35,12 +37,14 @@ const AudioPreviewView = defineComponent({
 						class="vc-audio-preview__audio"
 						controls
 					/>
-					<Icon
-						type="close"
+					<button
+						type="button"
 						class="vc-audio-preview__close"
-						// @ts-ignore
+						aria-label={t('vc.FilePreview.close')}
 						onClick={() => (visible.value = false)}
-					/>
+					>
+						<Icon type="close" />
+					</button>
 				</div>
 			</MPopup>
 		);

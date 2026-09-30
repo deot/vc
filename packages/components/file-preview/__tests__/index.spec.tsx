@@ -3,6 +3,7 @@
 import { FilePreview, ImagePreview, MFilePreview, MImagePreview } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
+import { zhCN, enUS } from '@deot/vc-locale';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import { VcInstance } from '../../vc';
@@ -27,6 +28,7 @@ vi.mock('photoswipe/lightbox', () => ({
 const kindOf = (el: Element) => el.className.match(/is-(image|video|audio|file)/)![1];
 
 afterEach(() => {
+	VcInstance.configure({ locale: zhCN });
 	VcInstance.options.FilePreview = { getFileType: undefined, getFileName: undefined, enhancer: undefined };
 	vi.restoreAllMocks();
 	vi.unstubAllGlobals();
@@ -361,6 +363,44 @@ describe('FilePreview', () => {
 
 		await ImagePreview.open({ data: ['https://cdn.test/1x1.jpg'] });
 		expect(lightbox.loadAndOpen.mock.calls.at(-1)![0]).toBe(0);
+	});
+
+	it('uses the current locale for each image preview and preserves explicit overrides', async () => {
+		const data = [{ src: photo, width: 100, height: 100 }];
+		await ImagePreview.open({ data });
+		expect(PhotoSwipeLightbox).toHaveBeenLastCalledWith(expect.objectContaining({
+			closeTitle: '关闭(Esc)', zoomTitle: '缩放', arrowPrevTitle: '上一张',
+			arrowNextTitle: '下一张', errorMsg: '网络异常 图片加载失败'
+		}));
+
+		VcInstance.configure({ locale: enUS });
+		await ImagePreview.open({ data });
+		expect(PhotoSwipeLightbox).toHaveBeenLastCalledWith(expect.objectContaining({
+			closeTitle: 'Close (Esc)', zoomTitle: 'Zoom', arrowPrevTitle: 'Previous image',
+			arrowNextTitle: 'Next image', errorMsg: 'Failed to load image'
+		}));
+
+		await ImagePreview.open({ data, closeTitle: '', zoomTitle: 'Custom zoom', errorMsg: '' });
+		expect(PhotoSwipeLightbox).toHaveBeenLastCalledWith(expect.objectContaining({
+			closeTitle: '', zoomTitle: 'Custom zoom', errorMsg: ''
+		}));
+	});
+
+	it('updates media close button labels when the locale changes', async () => {
+		const video = mount(VideoPreview.wrapper as any, { props: { src: movie } });
+		const audio = mount(AudioPreview.wrapper as any, { props: { src: sound } });
+		await nextTick();
+		for (const wrapper of [video, audio]) {
+			expect(wrapper.find('button').attributes('aria-label')).toBe('关闭');
+			expect(wrapper.find('button').attributes('type')).toBe('button');
+		}
+
+		VcInstance.configure({ locale: enUS });
+		await nextTick();
+		for (const wrapper of [video, audio]) {
+			expect(wrapper.find('button').attributes('aria-label')).toBe('Close');
+			wrapper.unmount();
+		}
 	});
 
 	it('renders and closes video and audio preview views', async () => {

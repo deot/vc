@@ -46,7 +46,7 @@ $sizes: (
 	@each $size, $values in $sizes {
 		@include when($size) {
 			@each $key, $value in $values {
-				--vc-file-preview-#{$key}: #{$value};
+				--vc-file-preview-#{$key}: #{unitfix($value)};
 			}
 		}
 	}
@@ -117,7 +117,7 @@ $sizes: (
 	@include element(thumbnail) {
 		width: var(--vc-file-preview-thumbnail-size);
 		height: var(--vc-file-preview-thumbnail-size);
-		border-radius: 3px;
+		border-radius: unitfix(3);
 		flex-shrink: 0;
 	}
 
@@ -130,12 +130,12 @@ $sizes: (
 	}
 
 	@include element(extension) {
-		padding: 0 4px;
-		font-size: 10px;
-		line-height: 16px;
+		padding: 0 unitfix(4);
+		font-size: unitfix(10);
+		line-height: unitfix(16);
 		color: $color-primary;
 		background-color: $color-primary-lighter;
-		border-radius: 3px;
+		border-radius: unitfix(3);
 		flex-shrink: 0;
 	}
 
