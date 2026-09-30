@@ -9,7 +9,7 @@ import {
 	onUnmounted
 } from 'vue';
 import { Resize } from '@deot/helper-resize';
-import { throttle, isEqual } from 'lodash-es';
+import { isEqual } from 'lodash-es';
 import type { ComponentInternalInstance } from 'vue';
 import type { PopoverWrapperStyle } from './types';
 import { props as popoverWrapperProps } from './wrapper-props';
@@ -18,7 +18,7 @@ import { setTrigger, isInArea } from './utils';
 import { TransitionScale } from '../transition';
 import { Customer } from '../customer';
 import { Portal } from '../portal';
-import { getScroller } from '../scroller/utils';
+import { ScrollerManager } from '../scroller/manager';
 
 const COMPONENT_NAME = 'vc-popover-wrapper';
 
@@ -40,8 +40,9 @@ export const PopoverWrapper = defineComponent({
 		const fitPos = ref(props.placement);
 		const wrapperW = ref({ width: 'auto' });
 		const containerRef = ref<HTMLElement>();
-		// 触发节点所在的滚动容器（由内到外，不含 window），见 bindScrollers
-		const scrollers: HTMLElement[] = [];
+		// 触发节点所在的滚动容器（由内到外，不含 window）及取消订阅，见 onMounted
+		let scrollers: HTMLElement[] = [];
+		let unbindScrollers = () => {};
 
 		const themeClasses = computed(() => {
 			return {
@@ -116,13 +117,21 @@ export const PopoverWrapper = defineComponent({
 			close({}, { visible: false, immediate: true });
 		};
 
+		// 弹层尺寸（上次计算后），见 handlePopupResize
+		let popupSize = '';
+		const getPopupSize = () => `${vnode.el.offsetWidth}x${vnode.el.offsetHeight}`;
+
 		/**
-		 * 节流合并连续的计算（滚动、尺寸变化）
-		 * 需保留最后一次（trailing）：内容在短时间内连续变化（如图片加载）时，最后一次的尺寸才是准的
+		 * 滚动、尺寸变化时同步计算，与滚动同一帧生效
+		 * 	- scroll 事件每帧最多派发一次，ResizeObserver 在绘制前回调，本身已与帧对齐
+		 * 	- 不节流：高刷屏（如 120Hz）下 scroll 间隔不足 16ms，被推迟的计算落在绘制之后，弹层先随页面移动一帧再被拉回（贴边修正时尤为明显）
 		 */
-		const setPopupStyle = throttle(() => {
+		const setPopupStyle = () => {
 			if (!vnode.el) return;
-			if (!props.triggerEl!.isConnected) return handleTriggerRemoved();
+			if (!props.triggerEl!.isConnected) {
+				handleTriggerRemoved();
+				return;
+			}
 
 			const triggerEl = getHackContainer();
 			const triggerRect = triggerEl.getBoundingClientRect();
@@ -162,11 +171,12 @@ export const PopoverWrapper = defineComponent({
 			fitPos.value = result;
 			isEqual(wrapperStyle.value, $wrapperStyle) || (wrapperStyle.value = $wrapperStyle);
 			isEqual(arrowStyle.value, $arrowStyle) || (arrowStyle.value = $arrowStyle);
+			popupSize = getPopupSize();
 			// 自适应高度
 			if (props.autoWidth) return;
 			const width = `${triggerEl!.getBoundingClientRect().width}px`;
 			wrapperW.value.width !== width && (wrapperW.value = { width });
-		}, 16);
+		};
 
 		let isPressMouse = false;
 		const handleTriggerChange = (e: Event) => {
@@ -235,7 +245,7 @@ export const PopoverWrapper = defineComponent({
 		 * 滚动容器滚动时
 		 * 	- hover 弹层立即关闭：跟随滚动会滑到静止的鼠标下并截住滚轮（如 Table 向上滚动），且此时用户在滚动而不是查看弹层
 		 * 	- click 弹层（下拉）跟随重新定位
-		 * @param e ~
+		 * @param e 原生 scroll 事件，或 Scroller 的滚动通知（{ target, currentTarget }）
 		 */
 		const handleScrollerScroll = (e: Event) => {
 			if (!props.hover) {
@@ -246,19 +256,11 @@ export const PopoverWrapper = defineComponent({
 		};
 
 		/**
-		 * 触发节点所在的滚动容器（逐层向上，不含 window，window 由 document 的 scroll 处理）
-		 * 如 Modal、Table、Scroller；Scroller 滚轮驱动时为 overflow: hidden，getScroller 按 class 识别；滚动时的处理见 handleScrollerScroll
+		 * 弹层自身的尺寸变化（如 Cascader 展开、图片加载）
+		 * setPopupStyle 写入的内容区上限也会改变尺寸并回调这里（如贴边的弹层随滚动），与上次计算后一致时结果不变，跳过
 		 */
-		const bindScrollers = () => {
-			let scroller = getScroller(props.triggerEl?.parentNode);
-			while (scroller instanceof HTMLElement) {
-				scrollers.push(scroller);
-				scroller.addEventListener('scroll', handleScrollerScroll);
-				scroller = getScroller(scroller.parentNode);
-			}
-		};
-		const unbindScrollers = () => {
-			scrollers.forEach(i => i.removeEventListener('scroll', handleScrollerScroll));
+		const handlePopupResize = () => {
+			getPopupSize() !== popupSize && setPopupStyle();
 		};
 
 		onMounted(() => {
@@ -269,24 +271,24 @@ export const PopoverWrapper = defineComponent({
 			!props.hover && document.addEventListener('click', handleClick, true);
 			// 监听body的滚动
 			document.addEventListener('scroll', setPopupStyle);
-			// 监听触发节点所在滚动容器的滚动
-			bindScrollers();
+			// 监听触发节点所在滚动容器的滚动（逐层向上，不含 window，window 由 document 的 scroll 处理），滚动时的处理见 handleScrollerScroll
+			// 如 Modal、Table、Scroller；Scroller 订阅其滚动通知，其余监听原生 scroll，见 ScrollerManager.subscribe
+			({ scrollers, off: unbindScrollers } = ScrollerManager.subscribe(props.triggerEl?.parentNode, handleScrollerScroll));
 			// 监听触发节点的Resize（节点被移除时尺寸变为 0 也会回调，见 handleTriggerRemoved）
 			Resize.on(props.triggerEl as any, setPopupStyle);
 			// 监听弹层的Resize（如 Cascader 展开、图片加载）；弹层节点每次新建，首次回调即完成挂载后的定位
-			Resize.on(vnode.el, setPopupStyle);
+			Resize.on(vnode.el, handlePopupResize);
 
 			props.onReady && props.onReady();
 		});
 
 		onUnmounted(() => {
 			clearTimeout(timer);
-			setPopupStyle.cancel();
 			!props.hover && document.removeEventListener('click', handleClick, true);
 			document.removeEventListener('scroll', setPopupStyle);
 			unbindScrollers();
 			Resize.off(props.triggerEl as any, setPopupStyle);
-			Resize.off(vnode.el, setPopupStyle);
+			Resize.off(vnode.el, handlePopupResize);
 
 			props.alone && props.hover && removeEvents();
 		});

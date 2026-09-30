@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Popover, Select } from '@deot/vc-components';
+import { Popover, Select, Scroller } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Resize } from '@deot/helper-resize';
 import { defineComponent, nextTick, ref } from 'vue';
@@ -541,9 +541,6 @@ describe('Popover 外观 (theme / placement / arrow)', () => {
 		// 手动触发 ResizeObserver 回调，让 setPopupStyle 真正执行
 		const rz = (wrapper.element as any).__rz__;
 		rz?.handleResize?.([{ target: wrapper.element }]);
-		// debounce(50, leading:true) 之后再次触发以等待 trailing 状态
-		await sleep(60);
-		rz?.handleResize?.([{ target: wrapper.element }]);
 		await flush();
 
 		const wrapperEl = getWrapperEl();
@@ -756,12 +753,8 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		await wrapper.trigger('click');
 		await flush();
 
-		// 触发一次 ResizeObserver 回调以驱动 setPopupStyle (debounce leading: true)
+		// 触发一次 ResizeObserver 回调以驱动 setPopupStyle
 		const triggerRz = (wrapper.element as any).__rz__;
-		triggerRz?.handleResize?.([{ target: wrapper.element }]);
-		await flush();
-		// 等待 debounce 间隔后再次触发 trailing 路径
-		await sleep(60);
 		triggerRz?.handleResize?.([{ target: wrapper.element }]);
 		await flush();
 
@@ -813,8 +806,6 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		if (wrapperEl) setOffset(wrapperEl, wrapperSize.w, wrapperSize.h);
 		// 使 getFitPos 能拿到非零 offset
 		const triggerRz = (wrapper.element as any).__rz__;
-		triggerRz?.handleResize?.([{ target: wrapper.element }]);
-		await sleep(60);
 		triggerRz?.handleResize?.([{ target: wrapper.element }]);
 		await flush();
 
@@ -941,7 +932,6 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		await flush();
 
 		document.dispatchEvent(new Event('scroll'));
-		await sleep(60);
 		await flush();
 
 		expect(getWrapperEl()).not.toBeNull();
@@ -951,11 +941,11 @@ describe('Popover 位置自适应 (use-pos)', () => {
 	// 测试环境中 Transition 被 stub（<transition-stub>），弹层组件的根节点（尺寸与 RO 所在）是 .vc-popover-wrapper 的父节点
 	const getWrapperRoot = () => getWrapperEl()!.parentElement!;
 
-	// 弹层尺寸变为 w × h，触发其 RO 回调并等待节流
+	// 弹层尺寸变为 w × h，触发其 RO 回调并等待渲染
 	const resizeTo = async (w: number, h: number) => {
 		setOffset(getWrapperRoot(), w, h);
 		resize(getWrapperRoot());
-		await sleep(30);
+		await nextTick();
 	};
 
 	// 80 × 30、左上角在 (x, y) 的触发节点
@@ -1052,13 +1042,13 @@ describe('Popover 位置自适应 (use-pos)', () => {
 			Object.defineProperty(el, 'offsetHeight', { configurable: true, get: height });
 		});
 		resize(getWrapperRoot());
-		await sleep(30);
+		await nextTick();
 		expect(getWrapperEl()!.classList.contains('is-bottom')).toBe(true);
 		expect(container.style.maxHeight).toBe('126px');
 
 		natural = 300;
 		resize(getWrapperRoot());
-		await sleep(30);
+		await nextTick();
 		expect(getWrapperEl()!.classList.contains('is-top')).toBe(true);
 		expect(container.style.maxHeight).toBe('588px');
 
@@ -1172,13 +1162,13 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		// 内层滚动 40px（scroll 不冒泡）
 		setRect(triggerEl, triggerRect(100, 60));
 		inner.dispatchEvent(new Event('scroll'));
-		await sleep(30);
+		await nextTick();
 		expect(wrapperEl.style.top).toBe('94px');
 
 		// 外层 Scroller 滚动
 		setRect(triggerEl, triggerRect(100, 20));
 		outer.dispatchEvent(new Event('scroll'));
-		await sleep(30);
+		await nextTick();
 		expect(wrapperEl.style.top).toBe('54px');
 
 		leaf.destroy();
@@ -1201,10 +1191,166 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		const scrollTo = async (y: number) => {
 			setRect(triggerEl, triggerRect(100, y));
 			box.dispatchEvent(new Event('scroll'));
-			await sleep(30);
+			await nextTick();
 		};
-		return { scrollTo, leaf, wrapperEl: getWrapperEl()! };
+		return { scrollTo, leaf, box, triggerEl, wrapperEl: getWrapperEl()! };
 	};
+
+	/**
+	 * 触发节点在滚轮驱动的 Scroller（可视区为 100~260）内，位于 150，弹层高 40（top 为 184px）
+	 * @param render Scroller 的内容，触发节点带 class="scroll-trigger"
+	 * @param open 打开弹层，默认不处理（如挂载时即打开）
+	 * @returns scrollTo(y)：Scroller 写入滚动位置（同步通知订阅者，不派发原生 scroll），触发节点随之上移 y
+	 */
+	const openInWheelScroller = async (render: () => any, open: (triggerEl: HTMLElement) => void = () => {}) => {
+		const scrollerRef = ref();
+		const wrapper = mount(() => (
+			<Scroller ref={scrollerRef} wheel native={false} height="160px">{render()}</Scroller>
+		), { attachTo: document.body });
+		await nextTick();
+
+		const scroller = scrollerRef.value;
+		const on = vi.spyOn(scroller, 'on');
+		const off = vi.spyOn(scroller, 'off');
+		mockScroller(scroller.wrapper, { top: 100, left: 0, width: 400, height: 160 });
+		const triggerEl = wrapper.find('.scroll-trigger').element as HTMLElement;
+		setRect(triggerEl, triggerRect(100, 150));
+		open(triggerEl);
+		await flush();
+		await resizeTo(200, 40);
+
+		const scrollTo = async (y: number) => {
+			setRect(triggerEl, triggerRect(100, 150 - y));
+			scroller.scrollTo({ y });
+			await nextTick();
+		};
+		return { wrapper, on, off, triggerEl, wrapperEl: getWrapperEl()!, scrollTo };
+	};
+
+	it('连续 scroll 间隔不足 16ms（如高刷屏）：每次都在当次重新定位，不推迟到绘制之后', async () => {
+		const { leaf, box, triggerEl, wrapperEl } = await openInScroller(150, 40);
+		expect(wrapperEl.style.top).toBe('184px'); // 150 + 30 + 4
+
+		// 两次 scroll 之间不等待：第二次的结果须在同一轮渲染中生效
+		setRect(triggerEl, triggerRect(100, 140));
+		box.dispatchEvent(new Event('scroll'));
+		setRect(triggerEl, triggerRect(100, 130));
+		box.dispatchEvent(new Event('scroll'));
+		await nextTick();
+		expect(wrapperEl.style.top).toBe('164px');
+
+		leaf.destroy();
+		await flush();
+	});
+
+	it('触发节点在滚轮驱动的 Scroller 内：订阅其滚动通知，写入滚动位置时同步重新定位（不等下一帧的原生 scroll）', async () => {
+		const { wrapper, on, off, wrapperEl, scrollTo } = await openInWheelScroller(
+			() => (
+				<Popover class="scroll-trigger" trigger="click" content="x" placement="bottom">
+					<button>btn</button>
+				</Popover>
+			),
+			triggerEl => triggerEl.click()
+		);
+		expect(wrapperEl.style.top).toBe('184px'); // 150 + 30 + 4
+
+		await scrollTo(40);
+		expect(wrapperEl.style.top).toBe('144px'); // 110 + 30 + 4
+		expect(on).toHaveBeenCalledTimes(1);
+
+		// 弹层销毁后取消订阅
+		wrapper.unmount();
+		await flush();
+		expect(off).toHaveBeenCalledWith(on.mock.calls[0][0]);
+	});
+
+	it('Popover.open 的触发节点在滚轮驱动的 Scroller 内：按根节点找到实例并订阅，写入滚动位置时同步重新定位', async () => {
+		let leaf: any;
+		const { wrapper, on, off, wrapperEl, scrollTo } = await openInWheelScroller(
+			() => <button class="scroll-trigger">btn</button>,
+			(triggerEl) => {
+				leaf = Popover.open({ el: document.body, name: 'api-scroller', triggerEl, placement: 'bottom', content: 'x' });
+			}
+		);
+		expect(wrapperEl.style.top).toBe('184px');
+
+		await scrollTo(40);
+		expect(wrapperEl.style.top).toBe('144px');
+		expect(on).toHaveBeenCalledTimes(1);
+
+		leaf.destroy();
+		await flush();
+		expect(off).toHaveBeenCalledWith(on.mock.calls[0][0]);
+		wrapper.unmount();
+	});
+
+	it('嵌套的滚轮驱动 Scroller：外层滚动时也同步重新定位', async () => {
+		const outerRef = ref();
+		const innerRef = ref();
+		const wrapper = mount(() => (
+			<Scroller ref={outerRef} wheel native={false} height="300px">
+				<Scroller ref={innerRef} wheel native={false} height="160px">
+					<Popover trigger="click" content="x" placement="bottom">
+						<button>btn</button>
+					</Popover>
+				</Scroller>
+			</Scroller>
+		), { attachTo: document.body });
+		await nextTick();
+
+		const outer = outerRef.value;
+		mockScroller(outer.wrapper, { top: 0, left: 0, width: 400, height: 300 });
+		mockScroller(innerRef.value.wrapper, { top: 100, left: 0, width: 400, height: 160 });
+		const trigger = wrapper.find('.vc-popover');
+		setRect(trigger.element, triggerRect(100, 150));
+
+		await trigger.trigger('click');
+		await flush();
+		await resizeTo(200, 40);
+		const wrapperEl = getWrapperEl()!;
+		expect(wrapperEl.style.top).toBe('184px');
+
+		// 外层滚动 20px，触发节点与内层容器一起上移
+		mockScroller(innerRef.value.wrapper, { top: 80, left: 0, width: 400, height: 160 });
+		setRect(trigger.element, triggerRect(100, 130));
+		outer.scrollTo({ y: 20 });
+		await nextTick();
+		expect(wrapperEl.style.top).toBe('164px');
+
+		wrapper.unmount();
+	});
+
+	it('Scroller 内挂载时即打开的弹层：同样订阅（Scroller 的 onMounted 晚于子组件）', async () => {
+		const { wrapper, wrapperEl, scrollTo } = await openInWheelScroller(() => (
+			<Popover class="scroll-trigger" modelValue={true} trigger="click" content="x" placement="bottom">
+				<button>btn</button>
+			</Popover>
+		));
+		expect(wrapperEl.style.top).toBe('184px');
+
+		await scrollTo(40);
+		expect(wrapperEl.style.top).toBe('144px');
+
+		wrapper.unmount();
+	});
+
+	it('弹层自身的 RO 回调：尺寸与上次计算后一致时不重算，变化时重算', async () => {
+		const { leaf, triggerEl, wrapperEl } = await openInScroller(150, 40);
+		expect(wrapperEl.style.top).toBe('184px');
+
+		// 触发节点移动但尺寸未变：不重算（位置由滚动等其他回调更新）
+		setRect(triggerEl, triggerRect(100, 140));
+		resize(getWrapperRoot());
+		await nextTick();
+		expect(wrapperEl.style.top).toBe('184px');
+
+		// 尺寸变化：重算
+		await resizeTo(200, 50);
+		expect(wrapperEl.style.top).toBe('174px'); // 140 + 30 + 4
+
+		leaf.destroy();
+		await flush();
+	});
 
 	it('触发节点滚出滚动容器可视区时隐藏弹层，滚回后恢复', async () => {
 		const { scrollTo, leaf, wrapperEl } = await openInScroller(150, 40);

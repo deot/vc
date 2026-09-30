@@ -202,7 +202,7 @@ const handleClose = () => {
 
 ### 挂载容器
 
-默认挂载到 `document.body`：触发器所在的滚动容器滚动时，click 等浮层跟随，hover 浮层立即关闭（否则会随触发器移到静止的鼠标下并截住滚轮）；触发器滚出容器可视区时浮层隐藏（不关闭），滚回后恢复。`portal="false"` 将浮层挂到 Popover 根节点；`getPopupContainer` 优先指定挂载容器，应返回包含触发器的定位容器，此时容器的 `overflow` 可能裁剪浮层。
+默认挂载到 `document.body`：触发器所在的滚动容器滚动时，click 等浮层跟随（与滚动同一帧重新定位；触发器位于滚轮驱动的 Scroller 内时，如 Table 表体，订阅其滚动通知），hover 浮层立即关闭（否则会随触发器移到静止的鼠标下并截住滚轮）；触发器滚出容器可视区时浮层隐藏（不关闭），滚回后恢复。`portal="false"` 将浮层挂到 Popover 根节点；`getPopupContainer` 优先指定挂载容器，应返回包含触发器的定位容器，此时容器的 `overflow` 可能裁剪浮层。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
