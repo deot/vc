@@ -15,20 +15,46 @@
 ```vue
 <template>
 	<div class="popover-demo">
-		<Popover content="可以将鼠标移入浮层" trigger="hover">
+		<Popover
+			content="可以将鼠标移入浮层"
+			trigger="hover"
+			@visible-change="visible => visible && handleVisibleChange('hover', true)"
+			@close="handleVisibleChange('hover', false)"
+		>
 			<Button>悬停打开</Button>
 		</Popover>
-		<Popover content="再次点击触发器或点击外部关闭" trigger="click">
+		<Popover
+			content="再次点击触发器或点击外部关闭"
+			trigger="click"
+			@visible-change="visible => visible && handleVisibleChange('click', true)"
+			@close="handleVisibleChange('click', false)"
+		>
 			<Button>点击打开</Button>
 		</Popover>
-		<Popover class="focus-trigger" content="失去焦点后关闭" trigger="focus" tabindex="0">
+		<Popover
+			class="focus-trigger"
+			content="失去焦点后关闭"
+			trigger="focus"
+			tabindex="0"
+			@visible-change="visible => visible && handleVisibleChange('focus', true)"
+			@close="handleVisibleChange('focus', false)"
+		>
 			聚焦打开
 		</Popover>
 	</div>
 </template>
 
 <script setup>
+import { inject } from 'vue';
 import { Popover, Button } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const visibleStates = {};
+const handlePreview = playground.run(320);
+const handleVisibleChange = (key, visible) => {
+	visibleStates[key] = visible;
+	return handlePreview(Object.values(visibleStates).some(Boolean));
+};
 </script>
 
 <style scoped>
@@ -38,7 +64,6 @@ import { Popover, Button } from '@deot/vc';
 	justify-content: center;
 	align-items: center;
 	gap: 16px;
-	min-height: 160px;
 }
 
 .focus-trigger {
@@ -68,6 +93,8 @@ import { Popover, Button } from '@deot/vc';
 			:class="`placement-demo__${placement}`"
 			:placement="placement"
 			trigger="hover"
+			@visible-change="visible => visible && handleVisibleChange(placement, true)"
+			@close="handleVisibleChange(placement, false)"
 		>
 			<Button>{{ placement }}</Button>
 			<template #content>
@@ -78,7 +105,16 @@ import { Popover, Button } from '@deot/vc';
 </template>
 
 <script setup>
+import { inject } from 'vue';
 import { Popover, Button } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const visibleStates = {};
+const handlePreview = playground.run(500);
+const handleVisibleChange = (key, visible) => {
+	visibleStates[key] = visible;
+	return handlePreview(Object.values(visibleStates).some(Boolean));
+};
 
 const placements = [
 	'top-left', 'top', 'top-right',
@@ -146,7 +182,12 @@ const placements = [
 ```vue
 <template>
 	<div class="custom-demo">
-		<Popover v-model="isVisible" trigger="custom" :outside-clickable="false">
+		<Popover
+			v-model="isVisible"
+			trigger="custom"
+			:outside-clickable="false"
+			@close="isPreviewVisible = false"
+		>
 			<Button @click="handleToggle">自定义操作</Button>
 			<template #content>
 				<div class="custom-content">
@@ -162,14 +203,22 @@ const placements = [
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { Popover, Button } from '@deot/vc';
 
+const playground = inject('docs:playground');
+
 const isVisible = ref(false);
+const isPreviewVisible = ref(false);
 const count = ref(0);
 
+const handleOpen = playground.run(320, { visible: isPreviewVisible }, () => {
+	isPreviewVisible.value = true;
+	isVisible.value = true;
+});
 const handleToggle = () => {
-	isVisible.value = !isVisible.value;
+	if (isVisible.value) isVisible.value = false;
+	else handleOpen();
 };
 const handleIncrease = () => {
 	count.value++;
@@ -184,8 +233,6 @@ const handleClose = () => {
 	display: flex;
 	align-items: flex-start;
 	justify-content: center;
-	min-height: 180px;
-	padding-top: 32px;
 }
 
 .custom-content p {
@@ -209,18 +256,38 @@ const handleClose = () => {
 ```vue
 <template>
 	<div ref="container" class="container-demo">
-		<Popover :get-popup-container="getPopupContainer" trigger="click" content="挂载在定位容器内">
+		<Popover
+			:get-popup-container="getPopupContainer"
+			trigger="click"
+			content="挂载在定位容器内"
+			@visible-change="visible => visible && handleVisibleChange('container', true)"
+			@close="handleVisibleChange('container', false)"
+		>
 			<Button>指定容器</Button>
 		</Popover>
-		<Popover :portal="false" trigger="click" content="挂载在触发器根节点内">
+		<Popover
+			:portal="false"
+			trigger="click"
+			content="挂载在触发器根节点内"
+			@visible-change="visible => visible && handleVisibleChange('inline', true)"
+			@close="handleVisibleChange('inline', false)"
+		>
 			<Button>就地挂载</Button>
 		</Popover>
 	</div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { Popover, Button } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const visibleStates = {};
+const handlePreview = playground.run(320);
+const handleVisibleChange = (key, visible) => {
+	visibleStates[key] = visible;
+	return handlePreview(Object.values(visibleStates).some(Boolean));
+};
 
 const container = ref();
 const getPopupContainer = () => container.value;
@@ -234,7 +301,6 @@ const getPopupContainer = () => container.value;
 	align-items: center;
 	justify-content: center;
 	gap: 16px;
-	min-height: 180px;
 	padding: 32px 24px;
 	border: 1px dashed var(--vc-color-light-deeper);
 	border-radius: 8px;
@@ -252,7 +318,11 @@ const getPopupContainer = () => container.value;
 ```vue
 <template>
 	<div class="nested-demo">
-		<Popover trigger="click">
+		<Popover
+			trigger="click"
+			@visible-change="visible => visible && handleVisibleChange(true)"
+			@close="handleVisibleChange(false)"
+		>
 			<Button>打开筛选</Button>
 			<template #content>
 				<div class="nested-demo__content">
@@ -264,8 +334,11 @@ const getPopupContainer = () => container.value;
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { Popover, Button, Select } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const handleVisibleChange = playground.run(400);
 
 const value = ref('');
 const data = [
@@ -279,8 +352,6 @@ const data = [
 	display: flex;
 	align-items: flex-start;
 	justify-content: center;
-	min-height: 200px;
-	padding-top: 32px;
 }
 
 .nested-demo__content {
@@ -302,14 +373,31 @@ const data = [
 ```vue
 <template>
 	<div class="theme-demo">
-		<Popover v-for="theme in ['light', 'dark', 'none']" :key="theme" :theme="theme" :content="theme" trigger="click">
+		<Popover
+			v-for="theme in ['light', 'dark', 'none']"
+			:key="theme"
+			:theme="theme"
+			:content="theme"
+			trigger="click"
+			@visible-change="visible => visible && handleVisibleChange(theme, true)"
+			@close="handleVisibleChange(theme, false)"
+		>
 			<Button>{{ theme }}</Button>
 		</Popover>
 	</div>
 </template>
 
 <script setup>
+import { inject } from 'vue';
 import { Popover, Button } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const visibleStates = {};
+const handlePreview = playground.run(320);
+const handleVisibleChange = (key, visible) => {
+	visibleStates[key] = visible;
+	return handlePreview(Object.values(visibleStates).some(Boolean));
+};
 </script>
 
 <style scoped>
@@ -319,7 +407,6 @@ import { Popover, Button } from '@deot/vc';
 	gap: 16px;
 	align-items: center;
 	justify-content: center;
-	min-height: 160px;
 }
 </style>
 ```
@@ -334,23 +421,26 @@ import { Popover, Button } from '@deot/vc';
 ```vue
 <template>
 	<div class="method-demo">
-		<Button @click="handleOpen">调用 Popover.open</Button>
+		<Button @click="event => handleOpen(event.currentTarget)">调用 Popover.open</Button>
 	</div>
 </template>
 
 <script setup>
-import { onUnmounted } from 'vue';
+import { onUnmounted, inject } from 'vue';
 import { Popover, Button } from '@deot/vc';
 
+const playground = inject('docs:playground');
+
 let leaf;
-const handleOpen = (event) => {
+const handleOpen = playground.run(320, async (triggerEl) => {
 	leaf?.destroy();
 	leaf = Popover.open({
-		triggerEl: event.currentTarget,
+		triggerEl,
 		placement: 'bottom',
 		content: '点击浮层外部关闭'
 	});
-};
+	await leaf;
+});
 
 onUnmounted(() => leaf?.destroy());
 </script>
@@ -360,8 +450,6 @@ onUnmounted(() => leaf?.destroy());
 	display: flex;
 	align-items: flex-start;
 	justify-content: center;
-	min-height: 160px;
-	padding-top: 32px;
 }
 </style>
 ```

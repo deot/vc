@@ -31,7 +31,7 @@
 -->
 ```vue App.vue
 <template>
-	<div :class="['editor-demo', { 'is-expanded': isActive }]">
+	<div class="editor-demo">
 		<Card title="项目资料">
 			<div class="record-row">
 				<div>
@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { nextTick, onUnmounted, ref, inject } from 'vue';
+import { onUnmounted, ref, inject } from 'vue';
 import { Button, Card } from '@deot/vc';
 import { RecordEditor } from './record-editor.js';
 
@@ -80,10 +80,6 @@ onUnmounted(() => {
 	display: grid;
 	gap: 16px;
 	align-content: start;
-}
-
-.editor-demo.is-expanded {
-	min-height: 500px;
 }
 
 .record-row {
@@ -789,22 +785,24 @@ const handleClose = () => emit('portal-destroyed');
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { Button, Card, PortalView } from '@deot/vc';
+
+const playground = inject('docs:playground');
 
 const isActive = ref(false);
 const count = ref(0);
 
-const handleToggle = () => (isActive.value = !isActive.value);
+const handleOpen = playground.run(340, { visible: isActive });
+const handleToggle = () => {
+	if (isActive.value) isActive.value = false;
+	else handleOpen();
+};
 const handleExecute = () => count.value++;
 const handleClose = () => (isActive.value = false);
 </script>
 
 <style scoped>
-.view-demo {
-	min-height: 340px;
-}
-
 .description {
 	margin: 0 0 16px;
 	line-height: 1.7;

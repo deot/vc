@@ -15,7 +15,13 @@
 ```vue
 <template>
 	<div class="basic-demo">
-		<Popconfirm title="确定删除这条记录？" @ok="handleOk" @cancel="handleCancel">
+		<Popconfirm
+			title="确定删除这条记录？"
+			@visible-change="visible => visible && handleVisibleChange(true)"
+			@close="handleVisibleChange(false)"
+			@ok="handleOk"
+			@cancel="handleCancel"
+		>
 			<Button type="error">删除记录</Button>
 		</Popconfirm>
 		<p>{{ result }}</p>
@@ -23,8 +29,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { Popconfirm, Button } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const handleVisibleChange = playground.run(320);
 
 const result = ref('等待操作');
 const handleOk = () => {
@@ -40,8 +49,6 @@ const handleCancel = () => {
 	display: grid;
 	justify-items: center;
 	gap: 16px;
-	padding-top: 80px;
-	min-height: 160px;
 }
 
 .basic-demo p {
@@ -66,10 +73,20 @@ const handleCancel = () => {
 			:type="type"
 			:title="`${type} 提示`"
 			content="可以补充操作说明。"
+			@visible-change="visible => visible && handleVisibleChange(type, true)"
+			@close="handleVisibleChange(type, false)"
 		>
 			<Button>{{ type }}</Button>
 		</Popconfirm>
-		<Popconfirm :width="280" ok-text="确认归档" cancel-text="稍后处理" ok-type="success" cancel-type="text">
+		<Popconfirm
+			:width="280"
+			ok-text="确认归档"
+			cancel-text="稍后处理"
+			ok-type="success"
+			cancel-type="text"
+			@visible-change="visible => visible && handleVisibleChange('custom', true)"
+			@close="handleVisibleChange('custom', false)"
+		>
 			<Button type="primary">自定义确认框</Button>
 			<template #title><strong>归档已完成的任务？</strong></template>
 			<template #content>归档后仍可在历史记录中查看。</template>
@@ -79,7 +96,16 @@ const handleCancel = () => {
 </template>
 
 <script setup>
+import { inject } from 'vue';
 import { Popconfirm, Button, Icon } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const visibleStates = {};
+const handlePreview = playground.run(400);
+const handleVisibleChange = (key, visible) => {
+	visibleStates[key] = visible;
+	return handlePreview(Object.values(visibleStates).some(Boolean));
+};
 
 const types = ['warning', 'info', 'success', 'error'];
 </script>
@@ -91,8 +117,6 @@ const types = ['warning', 'info', 'success', 'error'];
 	align-items: center;
 	justify-content: center;
 	gap: 16px;
-	min-height: 200px;
-	padding-top: 64px;
 }
 </style>
 ```
@@ -113,6 +137,8 @@ const types = ['warning', 'info', 'success', 'error'];
 			:class="`placement-demo__${placement}`"
 			:placement="placement"
 			title="确定执行这项操作？"
+			@visible-change="visible => visible && handleVisibleChange(placement, true)"
+			@close="handleVisibleChange(placement, false)"
 		>
 			<Button>{{ placement }}</Button>
 		</Popconfirm>
@@ -120,7 +146,16 @@ const types = ['warning', 'info', 'success', 'error'];
 </template>
 
 <script setup>
+import { inject } from 'vue';
 import { Popconfirm, Button } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const visibleStates = {};
+const handlePreview = playground.run(500);
+const handleVisibleChange = (key, visible) => {
+	visibleStates[key] = visible;
+	return handlePreview(Object.values(visibleStates).some(Boolean));
+};
 
 const placements = [
 	'top-left', 'top', 'top-right',
@@ -189,6 +224,7 @@ const placements = [
 			:outside-clickable="false"
 			title="确认提交？"
 			placement="bottom"
+			@close="isPreviewVisible = false"
 		>
 			<Button @click="handleToggle">{{ isVisible ? '收起' : '打开' }}确认框</Button>
 		</Popconfirm>
@@ -197,12 +233,20 @@ const placements = [
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { Popconfirm, Button } from '@deot/vc';
 
+const playground = inject('docs:playground');
+
 const isVisible = ref(false);
+const isPreviewVisible = ref(false);
+const handleOpen = playground.run(320, { visible: isPreviewVisible }, () => {
+	isPreviewVisible.value = true;
+	isVisible.value = true;
+});
 const handleToggle = () => {
-	isVisible.value = !isVisible.value;
+	if (isVisible.value) isVisible.value = false;
+	else handleOpen();
 };
 </script>
 
@@ -211,9 +255,7 @@ const handleToggle = () => {
 	display: grid;
 	justify-items: center;
 	align-content: start;
-	gap: 120px;
-	padding-top: 24px;
-	min-height: 200px;
+	gap: 16px;
 }
 
 .controlled-demo p { margin: 0; }
@@ -230,7 +272,12 @@ const handleToggle = () => {
 ```vue
 <template>
 	<div class="async-demo">
-		<Popconfirm title="提交并等待完成？" @ok="handleOk">
+		<Popconfirm
+			title="提交并等待完成？"
+			@visible-change="visible => visible && handleVisibleChange(true)"
+			@close="handleVisibleChange(false)"
+			@ok="handleOk"
+		>
 			<Button type="primary">异步提交</Button>
 		</Popconfirm>
 		<p>{{ result }}</p>
@@ -238,8 +285,11 @@ const handleToggle = () => {
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { Popconfirm, Button } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const handleVisibleChange = playground.run(320);
 
 const result = ref('等待提交');
 const handleOk = () => {
@@ -258,8 +308,6 @@ const handleOk = () => {
 	display: grid;
 	justify-items: center;
 	gap: 16px;
-	padding-top: 80px;
-	min-height: 160px;
 }
 
 .async-demo p { margin: 0; }

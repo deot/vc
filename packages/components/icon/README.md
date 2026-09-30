@@ -55,7 +55,7 @@ const iconColor = ref('#456CF6');
 	align-items: center;
 	justify-content: center;
 	gap: 24px;
-	min-height: 120px;
+	padding: 16px;
 	background: var(--vc-background-color);
 	border-radius: var(--vc-border-radius);
 }
@@ -162,7 +162,6 @@ onMounted(async () => {
 	font-size: 13px;
 }
 .icon-gallery-status {
-	min-height: 20px;
 	margin: 12px 0 0;
 }
 .icon-gallery {

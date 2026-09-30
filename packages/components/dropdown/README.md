@@ -15,7 +15,12 @@
 ```vue
 <template>
 	<div class="dropdown-basic-demo">
-		<Dropdown placement="bottom-left" @click="handleClick">
+		<Dropdown
+			placement="bottom-left"
+			@visible-change="visible => visible && handleVisibleChange(true)"
+			@close="handleVisibleChange(false)"
+			@click="handleClick"
+		>
 			<Button>悬停查看操作</Button>
 			<template #content>
 				<DropdownMenu>
@@ -30,8 +35,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { Button, Dropdown, DropdownMenu, DropdownItem } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const handleVisibleChange = playground.run(320);
 
 const action = ref('尚未选择');
 const handleClick = (value) => {
@@ -44,8 +52,7 @@ const handleClick = (value) => {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	justify-content: space-between;
-	min-height: 160px;
+	gap: 16px;
 }
 </style>
 ```
@@ -60,7 +67,15 @@ const handleClick = (value) => {
 ```vue
 <template>
 	<div class="dropdown-states-demo">
-		<Dropdown v-model="isVisible" trigger="click" placement="bottom-left" arrow @click="handleClick">
+		<Dropdown
+			v-model="isVisible"
+			trigger="click"
+			placement="bottom-left"
+			arrow
+			@visible-change="visible => visible && handleVisibleChange(true)"
+			@close="handleVisibleChange(false)"
+			@click="handleClick"
+		>
 			<Button>点击选择排序</Button>
 			<template #content>
 				<DropdownMenu>
@@ -76,8 +91,11 @@ const handleClick = (value) => {
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { Button, Dropdown, DropdownMenu, DropdownItem } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const handleVisibleChange = playground.run(400);
 
 const isVisible = ref(false);
 const sort = ref('time');
@@ -91,8 +109,7 @@ const handleClick = (value) => {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	justify-content: space-between;
-	min-height: 220px;
+	gap: 16px;
 }
 </style>
 ```
@@ -114,7 +131,14 @@ const handleClick = (value) => {
 			</select>
 		</label>
 		<div class="dropdown-placement-demo__stage">
-			<Dropdown ref="dropdown" v-model="isVisible" trigger="custom" :placement="placement" arrow>
+			<Dropdown
+				ref="dropdown"
+				v-model="isVisible"
+				trigger="custom"
+				:placement="placement"
+				arrow
+				@close="isPreviewVisible = false"
+			>
 				<Button @click="handleToggle">{{ isVisible ? '收起' : '展开' }}菜单</Button>
 				<template #content>
 					<DropdownMenu>
@@ -129,18 +153,26 @@ const handleClick = (value) => {
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { Button, Dropdown, DropdownMenu, DropdownItem } from '@deot/vc';
+
+const playground = inject('docs:playground');
 
 const dropdown = ref();
 const isVisible = ref(false);
+const isPreviewVisible = ref(false);
 const placement = ref('bottom');
 const placements = [
 	'top', 'top-left', 'top-right', 'bottom', 'bottom-left', 'bottom-right',
 	'left', 'left-top', 'left-bottom', 'right', 'right-top', 'right-bottom'
 ];
+const handleOpen = playground.run(400, { visible: isPreviewVisible }, () => {
+	isPreviewVisible.value = true;
+	isVisible.value = true;
+});
 const handleToggle = () => {
-	isVisible.value = !isVisible.value;
+	if (isVisible.value) isVisible.value = false;
+	else handleOpen();
 };
 const handlePlacement = () => {
 	isVisible.value = false;
@@ -161,7 +193,6 @@ const handleClose = () => {
 	align-items: center;
 	justify-content: center;
 	width: 100%;
-	min-height: 240px;
 }
 </style>
 ```

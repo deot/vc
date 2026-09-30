@@ -205,7 +205,7 @@ const input = ref('');
 `MInput` 支持右对齐，`MInputNumber` 在两侧显示步进按钮，`MInputSearch` 聚焦时显示取消操作。使用 `v-model` 同步取消后的空值。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, viewport: [375, 400] }</config> -->
+<!-- <config lang="json5">{ previewInset: 16, viewport: 375 }</config> -->
 ```vue
 <template>
 	<div class="mobile-demo">

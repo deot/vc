@@ -15,7 +15,7 @@
 ```vue
 <template>
 	<div>
-		<div style="display: flex; align-items: center; gap: 24px; min-height: 48px">
+		<div style="display: flex; align-items: center; gap: 24px">
 			<Spin :size="size" />
 			<InputNumber v-model="size" :min="16" :max="56" :step="4" style="width: 96px" />
 		</div>
@@ -43,7 +43,7 @@ const size = ref(28);
 		<Button type="primary" @click="loading = !loading">
 			{{ loading ? '停止加载' : '开始加载' }}
 		</Button>
-		<div style="margin-top: 16px; min-height: 64px">
+		<div style="margin-top: 16px">
 			<Spin v-if="loading">
 				<div style="margin-top: 8px; line-height: 20px">加载中，请稍候</div>
 			</Spin>

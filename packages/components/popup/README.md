@@ -11,7 +11,7 @@
 通过 `v-model` 控制显示。默认从底部弹出，点击遮罩可关闭；关闭事件在离场动画结束后触发。
 
 :::playground
-<!-- <config lang="json5">{ viewport: [375, 500], previewInset: 16 }</config> -->
+<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
 ```vue
 <template>
 	<div>
@@ -28,17 +28,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { MPopup, MButton } from '@deot/vc';
 
+const playground = inject('docs:playground');
+
 const isVisible = ref(false);
+const isPreviewVisible = ref(false);
 const message = ref('等待打开');
-const handleOpen = () => {
+const handleOpen = playground.run(500, { visible: isPreviewVisible }, () => {
+	isPreviewVisible.value = true;
 	isVisible.value = true;
 	message.value = '面板已打开';
-};
+});
 const handleClose = () => { isVisible.value = false; };
-const handleClosed = () => { message.value = '离场动画已结束'; };
+const handleClosed = () => {
+	isPreviewVisible.value = false;
+	message.value = '离场动画已结束';
+};
 </script>
 
 <style scoped>
@@ -54,7 +61,7 @@ const handleClosed = () => { message.value = '离场动画已结束'; };
 `theme="light"` 使用随全局亮暗主题变化的默认面板；`dark` 保留白字半透明深色外观；`none` 不设置面板前景和背景。`wrapperClass`、`wrapperStyle` 作用于内容容器。
 
 :::playground
-<!-- <config lang="json5">{ viewport: [375, 500], previewInset: 16 }</config> -->
+<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
 ```vue
 <template>
 	<div>
@@ -75,6 +82,7 @@ const handleClosed = () => { message.value = '离场动画已结束'; };
 			:key="item.placement"
 			v-model="item.isVisible"
 			:placement="item.placement"
+			@close="handleClosed"
 			:theme="theme"
 			wrapper-class="demo-panel"
 			:wrapper-style="{ borderRadius: '12px', maxWidth: '100%' }"
@@ -89,9 +97,12 @@ const handleClosed = () => { message.value = '离场动画已结束'; };
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { MPopup, MButton } from '@deot/vc';
 
+const playground = inject('docs:playground');
+
+const isPreviewVisible = ref(false);
 const theme = ref('light');
 const panels = ref([
 	{ placement: 'bottom', label: '底部', isVisible: false },
@@ -100,8 +111,14 @@ const panels = ref([
 	{ placement: 'right', label: '右侧', isVisible: false },
 	{ placement: 'center', label: '居中', isVisible: false }
 ]);
-const handleOpen = (item) => { item.isVisible = true; };
+const handleOpen = playground.run(500, { visible: isPreviewVisible }, (item) => {
+	isPreviewVisible.value = true;
+	item.isVisible = true;
+});
 const handleClose = (item) => { item.isVisible = false; };
+const handleClosed = () => {
+	isPreviewVisible.value = panels.value.some(item => item.isVisible);
+};
 </script>
 
 <style scoped>
@@ -119,7 +136,7 @@ const handleClose = (item) => { item.isVisible = false; };
 遮罩在所有位置均有效；设置 `:mask-closable="false"` 可禁止点击遮罩关闭。关闭入口需由调用方提供。触屏滚动区域应添加 `vcm-popup-scrollable`（或 `vc-popup-scrollable`），并设置高度和 `overflow`；`scrollRegExp` 可自定义匹配规则。
 
 :::playground
-<!-- <config lang="json5">{ viewport: [375, 560], previewInset: 16 }</config> -->
+<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
 ```vue
 <template>
 	<div>
@@ -136,7 +153,7 @@ const handleClose = (item) => { item.isVisible = false; };
 				</div>
 			</MPopup>
 		</div>
-		<MPopup v-model="isModalVisible" :mask-closable="false">
+		<MPopup v-model="isModalVisible" :mask-closable="false" @close="isPreviewVisible = false">
 			<div class="panel">
 				<h3>滚动列表</h3>
 				<div class="vcm-popup-scrollable list">
@@ -149,14 +166,20 @@ const handleClose = (item) => { item.isVisible = false; };
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { MPopup, MButton } from '@deot/vc';
+
+const playground = inject('docs:playground');
 
 const isLocalVisible = ref(false);
 const isModalVisible = ref(false);
+const isPreviewVisible = ref(false);
 const handleLocalOpen = () => { isLocalVisible.value = true; };
 const handleLocalClose = () => { isLocalVisible.value = false; };
-const handleModalOpen = () => { isModalVisible.value = true; };
+const handleModalOpen = playground.run(560, { visible: isPreviewVisible }, () => {
+	isPreviewVisible.value = true;
+	isModalVisible.value = true;
+});
 const handleModalClose = () => { isModalVisible.value = false; };
 </script>
 

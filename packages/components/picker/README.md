@@ -13,21 +13,33 @@
 :::playground
 <!--
 <config lang="json5">
-{ viewport: [375, 460], previewInset: 16 }
+{ viewport: 375, previewInset: 16 }
 </config>
 -->
 ```vue
 <template>
 	<div class="demo">
-		<Picker v-model="value" :data="data" :cols="2" label="地区" title="选择地区" @change="handleChange" />
+		<Picker
+			v-model="value"
+			:data="data"
+			:cols="2"
+			label="地区"
+			title="选择地区"
+			@visible-change="visible => visible && handleVisibleChange(true)"
+			@close="handleVisibleChange(false)"
+			@change="handleChange"
+		/>
 		<p>已提交：{{ value }}</p>
 		<p>名称：{{ selectedLabel }}</p>
 	</div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { Picker } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const handleVisibleChange = playground.run(460);
 
 const data = [
 	{ value: 'zhejiang', label: '浙江', children: [
@@ -60,7 +72,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 :::playground
 <!--
 <config lang="json5">
-{ viewport: [375, 400], previewInset: 16 }
+{ viewport: 375, previewInset: 16 }
 </config>
 -->
 ```vue
@@ -101,13 +113,20 @@ p { margin: 0; overflow-wrap: anywhere; }
 :::playground
 <!--
 <config lang="json5">
-{ viewport: [375, 400], previewInset: 16 }
+{ viewport: 375, previewInset: 16 }
 </config>
 -->
 ```vue
 <template>
 	<div class="demo">
-		<Picker v-model="value" :data="data" :load-data="loadData" title="选择配送方式">
+		<Picker
+			v-model="value"
+			:data="data"
+			:load-data="loadData"
+			title="选择配送方式"
+			@visible-change="visible => visible && handleVisibleChange(true)"
+			@close="handleVisibleChange(false)"
+		>
 			<template #default="{ label }">
 				<Button>{{ isLoading ? '加载中…' : label }}</Button>
 			</template>
@@ -117,8 +136,11 @@ p { margin: 0; overflow-wrap: anywhere; }
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { Button, Picker } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const handleVisibleChange = playground.run(400);
 
 const data = ref([]);
 const value = ref(['standard']);
@@ -148,7 +170,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 :::playground
 <!--
 <config lang="json5">
-{ viewport: [375, 400], previewInset: 16 }
+{ viewport: 375, previewInset: 16 }
 </config>
 -->
 ```vue
@@ -160,13 +182,15 @@ p { margin: 0; overflow-wrap: anywhere; }
 </template>
 
 <script setup>
-import { onBeforeUnmount, ref } from 'vue';
+import { onBeforeUnmount, ref, inject } from 'vue';
 import { Button, MPicker } from '@deot/vc';
+
+const playground = inject('docs:playground');
 
 const value = ref(['standard']);
 const result = ref('尚未确认');
 let picker;
-const handleOpen = () => {
+const handleOpen = playground.run(400, async () => {
 	picker?.destroy();
 	picker = MPicker.open({
 		title: '配送方式',
@@ -183,7 +207,8 @@ const handleOpen = () => {
 			result.value = '已取消，保留原值';
 		}
 	});
-};
+	await picker;
+});
 onBeforeUnmount(() => picker?.destroy());
 </script>
 
@@ -201,7 +226,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 :::playground
 <!--
 <config lang="json5">
-{ viewport: [375, 460], previewInset: 16 }
+{ viewport: 375, previewInset: 16 }
 </config>
 -->
 ```vue
@@ -209,15 +234,22 @@ p { margin: 0; overflow-wrap: anywhere; }
 	<div class="demo">
 		<Button @click="handleOpen">打开组合选择器</Button>
 		<p>已提交：{{ value }}</p>
-		<PickerPopup v-model:visible="isVisible" title="选择季节" @ok="handleOk">
+		<PickerPopup
+			v-model:visible="isVisible"
+			title="选择季节"
+			@close="isPreviewVisible = false"
+			@ok="handleOk"
+		>
 			<PickerView v-model="draft" :data="data" />
 		</PickerPopup>
 	</div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { Button, PickerPopup, PickerView } from '@deot/vc';
+
+const playground = inject('docs:playground');
 
 const data = [
 	{ value: 'spring', label: '春季' },
@@ -228,10 +260,12 @@ const data = [
 const value = ref(['spring']);
 const draft = ref(['spring']);
 const isVisible = ref(false);
-const handleOpen = () => {
+const isPreviewVisible = ref(false);
+const handleOpen = playground.run(460, { visible: isPreviewVisible }, () => {
 	draft.value = value.value.slice();
+	isPreviewVisible.value = true;
 	isVisible.value = true;
-};
+});
 const handleOk = () => {
 	value.value = draft.value.slice();
 };

@@ -178,7 +178,7 @@ const timeOptions = ref({
 点击触发内容打开滚轮；确认后提交格式化字符串，取消不提交。`format="HH:mm"` 只显示时、分列。
 
 :::playground
-<!-- <config lang="json5">{ viewport: [375, 560], previewInset: 16 }</config> -->
+<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
 ```vue
 <template>
 	<div class="v-data-picker-basic" style="display: grid; gap: 12px; max-width: 420px">
@@ -187,6 +187,8 @@ const timeOptions = ref({
 			v-model="value"
 			:arrow="false"
 			type="datetime"
+			@visible-change="visible => visible && handleVisibleChange('datetime', true)"
+			@close="handleVisibleChange('datetime', false)"
 		>
 			<template #default="it">
 				<h2>
@@ -199,6 +201,8 @@ const timeOptions = ref({
 			v-model="yearmonth"
 			:arrow="false"
 			type="yearmonth"
+			@visible-change="visible => visible && handleVisibleChange('yearmonth', true)"
+			@close="handleVisibleChange('yearmonth', false)"
 		>
 			<template #default="it">
 				<h2>
@@ -212,6 +216,8 @@ const timeOptions = ref({
 			:arrow="false"
 			type="time"
 			format="HH:mm"
+			@visible-change="visible => visible && handleVisibleChange('time', true)"
+			@close="handleVisibleChange('time', false)"
 		>
 			<template #default="it">
 				<h2>
@@ -222,8 +228,16 @@ const timeOptions = ref({
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue';
+import { ref, inject } from 'vue';
 import { MDatePicker } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const visibleStates = {};
+const handlePreview = playground.run(560);
+const handleVisibleChange = (key, visible) => {
+	visibleStates[key] = visible;
+	return handlePreview(Object.values(visibleStates).some(Boolean));
+};
 
 const value = ref(new Date());
 const yearmonth = ref(new Date());
