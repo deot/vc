@@ -1,190 +1,250 @@
 ## 通知提醒（Notice）
 
-全局展示通知提醒信息。
+在页面右上角展示带标题、正文和状态图标的通知。`Notice` 同时支持组件渲染和静态方法调用；`MNotice` 是同一组件的别名，使用相同的布局。
 
 ### 何时使用
 
-在界面右上角显示可关闭的全局通知，可设置描述信息。经常用于以下情况：
-- 较为复杂的通知内容。
-- 带有交互的通知，给出用户下一步的行动点。
-- 系统主动推送。
+- 展示系统通知、操作结果或需要较长描述的反馈。
+- 在异步任务期间保留通知，并在任务完成后更新内容。
 
 ### 基础用法
 
-基本用法，默认在 4.5秒后关闭。如果 content 参数为空或不填，则自动应用仅标题模式下的样式。
+`Notice.open()` 展示无图标通知，`info()`、`success()`、`warning()`、`error()` 展示对应状态。默认在 `4500ms` 后关闭，正文缺省或为空字符串时只显示标题。全局通知可同时存在，默认把新通知插入顶部。
 
-:::RUNTIME
+:::playground
+<!--
+<config lang="json5">
+{
+	viewport: 480,
+	viewportOptions: ['auto', 480],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<Button @click="handleClick(true)">
-			打开通知
-		</Button>
-		<Button @click="handleClick(false)">
-			仅标题模式
-		</Button>
-	</div>
-</template>
-<script setup>
-import { Button, Notice } from '@deot/vc';
-
-window.Notice = Notice;
-
-const handleClick = (content) => {
-	Notice.open({
-		title: '这是标题',
-		content: content ? '这里是通知描述这里,是通知描述这里是通知描述这里,是通知描述这里,是通知描述这里是通知描述这里是通知描述' : '',
-		onClose() {
-			console.log('回调');
-		}
-	});
-};
-</script>
-```
-:::
-
-### 提醒类型
-通知提醒框左侧有图标。
-
-:::RUNTIME
-```vue
-<template>
-	<div>
-		<div>
-			<Button @click="handleClick('info')">
-				消息
+	<div class="notice-demo" :class="{ 'is-visible': isVisible }">
+		<div class="notice-demo__actions">
+			<Button
+				v-for="item in notices"
+				:key="item.label"
+				:disabled="isVisible"
+				@click="handleOpen(item)"
+			>
+				{{ item.label }}
 			</Button>
-			<Button @click="handleClick('success')">
-				成功
-			</Button>
-			<Button @click="handleClick('error')">
-				错误
-			</Button>
-			<Button @click="handleClick('warn')">
-				警告
-			</Button>
-			<Button @click="handleClick('open')">
-				无图标
+			<Button :disabled="!isVisible" @click="handleClear">
+				清空通知
 			</Button>
 		</div>
+		<p>{{ result }}</p>
 	</div>
 </template>
+
 <script setup>
+import { inject, onUnmounted, ref } from 'vue';
 import { Button, Notice } from '@deot/vc';
 
-window.Notice = Notice;
+const playground = inject('docs:playground');
+const isVisible = ref(false);
+const result = ref('选择一种通知类型');
+const notices = [
+	{ method: 'open', label: '普通通知', content: '通知支持标题和正文。' },
+	{ method: 'info', label: '信息', content: '你有一条新的系统消息。' },
+	{ method: 'success', label: '成功', content: '文件已保存。' },
+	{ method: 'warning', label: '警告', content: '请检查尚未完成的操作。' },
+	{ method: 'error', label: '错误', content: '保存失败，请稍后重试。' },
+	{ method: 'open', label: '仅标题', content: '' }
+];
 
-const handleClick = (type) => {
-	if (type === 'info') {
-		Notice.info({
-			title: '消息',
-			content: '测试消息的提示',
-			onClose() {
-				console.log('回调');
-			}
-		});
-	} else if (type === 'success') {
-		Notice.success({
-			title: '成功',
-			content: '成功的提示',
-			onClose() {
-				console.log('回调');
-			}
-		});
-	} else if (type === 'error') {
-		Notice.error({
-			title: '错误',
-			content: '测试错误的提示',
-			onClose() {
-				console.log('回调');
-			}
-		});
-	} else if (type === 'warn') {
-		Notice.warning({
-			title: '警告',
-			content: '测试警告的提示',
-			onClose() {
-				console.log('回调');
-			}
-		});
-	} else if (type === 'open') {
-		Notice.open({
-			title: '这是标题',
-			content: '测试无图标的提示',
-			onClose() {
-				console.log('回调');
-			}
-		});
-	}
-};
-</script>
-```
-:::
-
-### 自定义关闭时间
-使用duration属性，为0则不自动关闭，默认为4.5。
-
-:::RUNTIME
-```vue
-<template>
-	<div>
-		<div>
-			<Button @click="handleClick()">
-				自定义关闭时间
-			</Button>
-		</div>
-	</div>
-</template>
-<script setup>
-import { Button, Notice } from '@deot/vc';
-
-window.Notice = Notice;
-
-const handleClick = (type) => {
-	Notice.info({
-		title: '手动关闭提醒',
-		content: '需要点击关闭按钮关闭提醒',
-		duration: 0,
+const handleOpen = playground.run(260, { visible: isVisible }, (item) => {
+	isVisible.value = true;
+	result.value = `${item.label}：4500ms 后自动关闭，也可点击关闭图标`;
+	Notice[item.method]({
+		title: item.label,
+		content: item.content,
 		onClose: () => {
-			console.log('回调');
+			isVisible.value = false;
+			result.value = '通知已关闭';
 		}
 	});
+});
+
+const handleClear = () => {
+	Notice.destroy();
+	isVisible.value = false;
+	result.value = '已清空全部通知';
 };
+
+onUnmounted(() => Notice.destroy());
 </script>
+
+<style scoped>
+.notice-demo {
+	display: grid;
+	gap: 12px;
+}
+.notice-demo.is-visible {
+	padding-top: 120px;
+}
+.notice-demo__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 8px;
+}
+.notice-demo p {
+	margin: 0;
+	line-height: 1.6;
+}
+</style>
 ```
 :::
 
-#### render函数渲染
-你可以自定义 Render 函数来替代 content。
+### 更新内容与延迟关闭
 
-:::RUNTIME
+`duration: 0` 保持通知显示。静态方法返回 `PortalLeaf`，可通过 `leaf.wrapper.setContent()` 更新字符串或 render 函数，再用 `setDuration()` 从当前时刻重新计时。render 函数接收组件属性和上下文，使用 Vue 的 `h` 返回节点。
+
+点击关闭图标会调用 `onBeforeClose(event)`；返回 Promise 时等待其兑现后关闭。自动关闭和实例方法不执行这个回调。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	viewport: 480,
+	viewportOptions: ['auto', 480],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<Button @click="handleClickrender">
-			根据render函数渲染
-		</Button>
+	<div class="notice-demo" :class="{ 'is-visible': isVisible }">
+		<div class="notice-demo__actions">
+			<Button :disabled="isVisible" @click="handleOpen">
+				开始任务
+			</Button>
+			<Button :disabled="!isVisible" @click="handleComplete">
+				更新为已完成
+			</Button>
+		</div>
+		<p>{{ result }}</p>
 	</div>
 </template>
-<script setup lang="jsx">
+
+<script setup>
+import { h, inject, onUnmounted, ref } from 'vue';
 import { Button, Notice } from '@deot/vc';
 
-window.Notice = Notice;
+const playground = inject('docs:playground');
+const isVisible = ref(false);
+const result = ref('通知持续显示；点击关闭图标会等待 800ms');
+let leaf;
 
-const handleClickrender = () => {
-	Notice.info({
-		content: (h) => {
-			return (
-				<span>
-					使用
-					<span style="color: #456CF6">jsx</span>
-					渲染
-				</span>
-			);
+const handleOpen = playground.run(260, { visible: isVisible }, () => {
+	isVisible.value = true;
+	result.value = '任务进行中，可更新正文或点击关闭图标';
+	leaf = Notice.info({
+		title: '任务进度',
+		content: () => h('span', '正在处理文件…'),
+		duration: 0,
+		onBeforeClose: () => {
+			result.value = '正在完成关闭前的处理…';
+			return new Promise(resolve => setTimeout(resolve, 800));
+		},
+		onClose: () => {
+			isVisible.value = false;
+			leaf = undefined;
+			result.value = '通知已关闭';
 		}
 	});
+});
+
+const handleComplete = () => {
+	leaf?.wrapper?.setContent(() => h('strong', '文件处理完成'));
+	leaf?.wrapper?.setDuration(1800);
+	result.value = '正文已更新，1800ms 后自动关闭';
+};
+
+onUnmounted(() => Notice.destroy());
+</script>
+
+<style scoped>
+.notice-demo {
+	display: grid;
+	gap: 12px;
+}
+.notice-demo.is-visible {
+	padding-top: 120px;
+}
+.notice-demo__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 8px;
+}
+.notice-demo p {
+	margin: 0;
+	line-height: 1.6;
+}
+</style>
+```
+:::
+
+### 在页面中渲染
+
+声明式 `Notice` 使用 `fixed: false` 可放入普通文档流。它在挂载时显示并开始计时；收到 `close` 后由父组件卸载，再次展示时重新挂载。`mode="loading"` 适用于声明式通知，静态方法没有 `Notice.loading()`。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	viewport: 480,
+	viewportOptions: ['auto', 480],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="notice-demo">
+		<Button :disabled="isVisible" @click="handleShow">
+			显示页面内通知
+		</Button>
+		<Notice
+			v-if="isVisible"
+			:fixed="false"
+			:duration="0"
+			mode="loading"
+			title="正在同步"
+			content="这条通知位于页面布局中，点击关闭图标可移除。"
+			@close="handleClose"
+		/>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, Notice } from '@deot/vc';
+
+const isVisible = ref(true);
+const handleShow = () => {
+	isVisible.value = true;
+};
+const handleClose = () => {
+	isVisible.value = false;
 };
 </script>
+
+<style scoped>
+.notice-demo {
+	display: grid;
+	justify-items: start;
+	gap: 16px;
+}
+</style>
 ```
 :::
 
@@ -192,21 +252,52 @@ const handleClickrender = () => {
 
 ### 属性
 
-| 属性          | 说明                    | 类型                        | 可选值                                | 默认值    |
-| ----------- | --------------------- | ------------------------- | ---------------------------------- | ------ |
-| title       | 通知的标题                 | `string`、`Function`       | -                                  | -      |
-| content     | 通知的内容                 | `string`、`Function`、`jsx` | -                                  | -      |
-| duration    | 自动关闭的延时，单位`ms`，不关闭可以写 0 | `number`                  | -                                  | 450    |
-| closable    | 手动关闭提示                | `Boolean`                 | -                                  | `true` |
-| mode        | 通知的图标类型               | `string`                  | `info`、`success`、`error`、`warning` | -      |
-| beforeClose | 关闭前的回调                | `Function`                | -                                  | -      |
-| onClose     | 关闭后的回调                | -                         | -                                  | -      |
+下列属性用于声明式 `Notice`，也可作为静态方法的配置。静态方法会固定 `fixed: false`，由全局容器在右上角定位；其 `top` 不控制全局容器。`open()` 固定无图标，其余静态方法固定各自的 `mode`。
 
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| title | 标题；字符串按 HTML 渲染，函数返回自定义节点 | `string \| ((props: Record<string, unknown>, context: SetupContext) => any)` | - | - |
+| content | 正文；字符串按 HTML 渲染，函数返回自定义节点 | `string \| ((props: Record<string, unknown>, context: SetupContext) => any)` | - | - |
+| duration | 挂载后自动关闭的延时，单位 ms；`0` 不自动关闭 | `number` | - | `4500` |
+| closable | 是否显示关闭图标 | `boolean` | - | `true` |
+| mode | 状态图标类型 | `'info' \| 'loading' \| 'success' \| 'warning' \| 'error'` | 同类型 | - |
+| top | 固定定位时距顶部的距离，单位 px | `number` | - | `24` |
+| fixed | 是否固定在右上角 | `boolean` | - | `true` |
+| onBeforeClose | 点击关闭图标前的回调，参数为点击事件 | `Function` | - | - |
+
+`SetupContext` 是 Vue 的类型。`title` 和 `content` 的字符串使用 `innerHTML`，只应传入可信 HTML；展示普通外部文本时可使用 `() => h('span', text)`。
+
+`onBeforeClose` 当前的同步返回规则是：`undefined`、`false`、`0`、空字符串等假值以及 `true` 均允许关闭，其他真值阻止关闭。返回 Promise 时，只要兑现就关闭，不检查兑现值；拒绝时保持显示，调用方需自行处理拒绝。它不暂停自动关闭计时。修改 `duration` prop 不会重设计时，需调用 `setDuration()`。
 
 ### 事件
 
-- `Notice.open(config)` 没有图标
-- `Notice.success(config)`
-- `Notice.info(config)`
-- `Notice.error(config)`
-- `Notice.warning(config)`
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| close | 自动关闭或点击图标的离场动画结束后触发；调用实例关闭方法时立即触发 | - | - |
+
+静态调用使用配置项 `onClose: () => void` 接收关闭完成通知。`Notice.destroy()` 和返回对象的 `destroy()` 直接销毁，不触发 `onClose`。
+
+### 方法
+
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| Notice.open | 展示无图标通知 | `config` | `PortalLeaf` |
+| Notice.info | 展示信息通知 | `config` | `PortalLeaf` |
+| Notice.success | 展示成功通知 | `config` | `PortalLeaf` |
+| Notice.warning | 展示警告通知 | `config` | `PortalLeaf` |
+| Notice.error | 展示错误通知 | `config` | `PortalLeaf` |
+| Notice.destroy | 立即销毁全部全局通知并清理全局容器 | - | `void` |
+
+`config` 除组件属性外，还支持 `insertion: 'first' | 'last'`（默认 `'first'`）和 `onClose`。`MNotice` 提供同样的方法。
+
+组件 ref 和返回对象的 `wrapper` 暴露以下实例方法：
+
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| setContent | 更新正文 | 与 `content` 相同 | `void` |
+| setDuration | 清除旧定时器，并从调用时刻重新计时；`0` 取消自动关闭 | `duration: number` | `void` |
+| close / remove / hide / destroy | 立即发送关闭事件；全局调用时移除当前通知，声明式使用时由父组件卸载 | - | `void` |
+
+实例方法不会执行 `onBeforeClose`，也不启动离场动画；标题通过更新 `title` prop 修改，没有公开的 `setTitle()` 方法。
+
+返回的 `PortalLeaf` 支持 `then/catch/finally`，正常关闭后以 `undefined` 兑现；`leaf.wrapper` 只在实例存在时可用。直接 `leaf.destroy()` 会销毁实例，但不兑现关闭 Promise，也不执行 Notice 的容器清理；清空通知请使用 `Notice.destroy()`。

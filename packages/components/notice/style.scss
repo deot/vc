@@ -8,6 +8,8 @@ $color-warning: varfix(color-warning, notice);
 $color-info: varfix(color-primary, notice);
 $color-dark-light: varfix(color-dark-light, notice);
 $color-dark-lighter: varfix(color-dark-lighter, notice);
+$close-color: varfix(color-dark-lightest, notice);
+$close-color-hover: varfix(color-dark-light, notice);
 $background-color-light: varfix(background-color-light, notice);
 $border-shadow: varfix(border-shadow, notice);
 
@@ -53,6 +55,10 @@ $border-shadow: varfix(border-shadow, notice);
 			padding-right: unitfix(24);
 			font-size: unitfix(16);
 			color: $color-dark-light;
+
+			&.has-content {
+				margin-bottom: unitfix(8);
+			}
 		}
 
 		@include element(content) {
@@ -81,6 +87,10 @@ $border-shadow: varfix(border-shadow, notice);
 			@include when(info) {
 				color: $color-info;
 			}
+
+			@include when(loading) {
+				color: $color-info;
+			}
 		}
 	}
 
@@ -91,7 +101,12 @@ $border-shadow: varfix(border-shadow, notice);
 		display: inline-flex;
 		height: unitfix(24);
 		font-size: unitfix(12);
+		color: $close-color;
 		cursor: pointer;
 		align-items: center;
+
+		&:hover {
+			color: $close-color-hover;
+		}
 	}
 }

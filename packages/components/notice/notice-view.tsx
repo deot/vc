@@ -100,7 +100,7 @@ export const NoticeView = defineComponent({
 								<div>
 									{
 										currentTitle.value && (
-											<div style={[{ marginBottom: currentContent.value ? '8px' : '' }]} class="vc-notice__title">
+											<div class={['vc-notice__title', { 'has-content': !!currentContent.value }]}>
 												{
 													typeof currentTitle.value === 'string'
 														? <div innerHTML={currentTitle.value} />
@@ -129,7 +129,6 @@ export const NoticeView = defineComponent({
 									props.closable && (
 										<Icon
 											type="close"
-											style="font-size: 12px"
 											class="vc-notice__close"
 											// @ts-ignore
 											onClick={handleClose}

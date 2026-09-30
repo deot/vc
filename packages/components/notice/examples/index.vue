@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<h3>View</h3>
-		<NoticeView title="View" content="123" :fixed="false" />
+		<NoticeView title="页面内通知" content="正在同步内容" mode="loading" :duration="0" :fixed="false" />
 		<h3>无图标</h3>
 		<div style="margin-bottom: 12px">
 			<Button :wait="0" @click="handleClick('open')">
