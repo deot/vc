@@ -551,13 +551,13 @@ const loadData = async ({ page }) => {
 
 ### 延迟展示列表末端与页面后置内容
 
-列表还在分页时，它**末端之后**的内容会被不断增长的列表反复推走。`lazyTail` 负责列表内部的那一侧，`load-change` 让页面自己的后置区块跟上：
+列表还在分页时，它**末端之后**的内容会被不断增长的列表反复推走。`lazyTail` 负责列表内部的那一侧，`load-change` 让页面自己的后置区块跟上；它在每批数据落地后也会推送，`loaded` 可用来展示加载进度：
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<p class="note">{{ loadState.isEnd ? '加载完成，两个尾部已显示' : '滚动加载中，尾部暂不显示' }}</p>
+	<p class="note">已加载 {{ loadState.loaded }} 条，{{ loadState.isEnd ? '加载完成，两个尾部已显示' : '滚动加载中，尾部暂不显示' }}</p>
 	<Scroller :height="280" :native="true">
 		<RecycleList :fill="false" lazy-tail :load-data="loadData" @load-change="handleLoadChange">
 			<template #default="{ row }"><div class="row">{{ row.name }}</div></template>
@@ -570,7 +570,7 @@ const loadData = async ({ page }) => {
 import { ref } from 'vue';
 import { RecycleList, Scroller } from '@deot/vc';
 
-const loadState = ref({ isEnd: false });
+const loadState = ref({ isEnd: false, loaded: 0 });
 const handleLoadChange = (state) => { loadState.value = state; };
 const loadData = async ({ page, loaded }) => {
 	await new Promise(resolve => setTimeout(resolve, 400));
@@ -726,13 +726,14 @@ const store = new RecycleListStore({
 | --- | --- | --- | --- |
 | scroll | 主轴或交叉轴滚动 | `event` | `event.target` 含 `scrollLeft`、`scrollTop` |
 | row-resize | 行尺寸变化：已渲染的行内容变化（展开、编辑、图片撑开等），或行渲染出来时按实际尺寸校正了记录；只校正变化的行，不整体重测 | - | - |
-| load-change | 加载状态变化 | `state: RecycleListLoadState` | `{ isEnd, isLoading, isSilentRefresh, isEmpty }`，均为 `boolean` |
+| load-change | 加载状态变化；每批数据构建并完成布局后也会推送 | `state: RecycleListLoadState` | `{ isEnd, isLoading, isSilentRefresh, isEmpty, loaded }`，`loaded` 为 `number`，其余为 `boolean` |
 
 #### load-change
 
 - **单向**：只由列表向外推快照，没有对应的属性，也不会 emit `update:*`。加载是否结束由列表自己决定，外层写回会误关 `loadData`。
 - 任一字段变化就推送**完整快照**；挂载时立即推一次，外层不必自己兜初值。
 - `isEmpty` 为「已结束且没有任何真实节点」。
+- `loaded` 为已构建并完成布局的条数（不含骨架占位），与 `loadData` 收到的 `loaded` 同义。本地 `data` 分批构建与远程分页都在每批落地后更新它，因此每批推送一次；同时进行的几批（如挂载时的首批与下一批）全部排版完才更新，推出的条数都已完成布局。数据替换、清空时随之变化。
 - `disabled` 时远程分支不会执行，`isEnd` 表示本地 `data` 已全部构建并完成布局（此时 `store.states.isEnd` 仍为 `false`）。`lazyTail` 与 loading / complete / empty 状态区按同一口径判断；`disabled` 时不展示加载中。
 - `loadData` 响应里的 `finished: true` 表示远程数据已全部返回，组件会停止后续请求；`isEnd` 是列表对外提供的结束状态，也涵盖 `disabled` 下本地数据构建完成的情况。
 

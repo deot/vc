@@ -80,7 +80,7 @@ import { Table, TableColumn } from '..';
 // 行高变化由虚拟列表自动感知并重新测量，吸底 dock（横向滚动条 + 合计行）随之刷新，不需要手动调用 refreshLayout / refreshAffix
 const expanded = ref(false);
 // load-change 是单向的：表格把快照推过来，外层只读
-const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false });
+const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false, loaded: 0 });
 
 const tableData = Array.from({ length: 2000 }, (_, index) => ({
 	id: index + 1,

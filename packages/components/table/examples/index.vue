@@ -7,6 +7,7 @@
 			取消测试
 		</Button>
 		<h1 @click="isActive = !isActive">Brenchmark</h1>
+		<p>已构建 {{ loadState.loaded }} / {{ dataSource.length }} 行{{ loadState.isEnd ? '（全部构建完成）' : '' }}</p>
 		<Table
 			v-if="isActive"
 			primary-key="id"
@@ -16,6 +17,7 @@
 			:height="600"
 			:data="dataSource"
 			@selection-change="handleChange"
+			@load-change="handleLoadChange"
 		>
 			<TableColumn
 				type="selection"
@@ -156,5 +158,12 @@ const handleDelete = (rowIndex) => {
 };
 const handleChange = ({ selection }) => {
 	console.log(selection.map(i => i.id));
+};
+
+// load-change 是单向的：挂载推一次，之后每批行构建完成推一次，loaded 为已构建的行数
+const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false, loaded: 0 });
+const handleLoadChange = (e) => {
+	loadState.value = e;
+	console.log(e);
 };
 </script>

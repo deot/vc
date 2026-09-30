@@ -1268,6 +1268,7 @@ const tableData = ref([
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
+	<p>已构建 {{ loadState.loaded }} / {{ tableData.length }} 行</p>
 	<div class="viewport">
 		<p>外部容器的前置内容：向下滚动查看 300 行数据。</p>
 		<Table virtualized lazy-tail primary-key="id" :data="tableData" @load-change="handleLoadChange">
@@ -1275,21 +1276,21 @@ const tableData = ref([
 			<TableColumn prop="description" label="说明" min-width="200" />
 			<template #append><p>所有行已构建。</p></template>
 		</Table>
-		<p v-if="isEnd">外部容器的后置内容</p>
+		<p v-if="loadState.isEnd">外部容器的后置内容</p>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
-const isEnd = ref(false);
+const loadState = ref({ isEnd: false, loaded: 0 });
 const tableData = Array.from({ length: 300 }, (_, index) => ({
 	id: index + 1,
 	name: `任务 ${index + 1}`,
 	description: 'Table 未设置高度，滚动由外层容器承载。'
 }));
 const handleLoadChange = (state) => {
-	isEnd.value = state.isEnd;
+	loadState.value = state;
 };
 </script>
 <style scoped>
@@ -1392,7 +1393,7 @@ const updateOffsets = () => {
 
 #### 延迟展示尾部内容
 
-表体逐批构建时，`append` 与表格之后的页面内容会被不断往下推。`lazy-tail` 让 `append` 等数据全部进入虚拟列表后再出现；页面上的后置内容可以通过 `load-change` 跟上：
+表体逐批构建时，`append` 与表格之后的页面内容会被不断往下推。`lazy-tail` 让 `append` 等数据全部进入虚拟列表后再出现；页面上的后置内容可以通过 `load-change` 跟上，`loaded` 可用来展示构建进度：
 
 ```vue
 <Table virtualized lazy-tail :data="rows" @load-change="loadState = $event">
@@ -1400,10 +1401,12 @@ const updateOffsets = () => {
 </Table>
 
 <section v-show="loadState.isEnd">页面后置内容</section>
+<p>已构建 {{ loadState.loaded }} / {{ rows.length }} 行</p>
 ```
 
 - `load-change` 只对外单向推送，没有对应属性。内部虚拟列表以 `disabled` 直接接收 `data`，此时 `isEnd` 表示数据已全部构建并完成布局。
-- 普通表格（未设置 `height` 且未启用 `virtualized`）一次渲染完，挂载即推送 `isEnd: true`，同样的写法依然成立。
+- 挂载即推送一次，之后每批行构建并完成布局后推送一次。`loaded` 按行计：合并单元格的多行都计入，树形表格为展开后的可见行。
+- 普通表格（未设置 `height` 且未启用 `virtualized`）一次渲染完，挂载即推送 `isEnd: true`，`loaded` 为全部行数并随行数变化，同样的写法依然成立。
 - 合计行不受 `lazy-tail` 影响。
 
 完整示例：
@@ -1619,7 +1622,7 @@ const handleToggle = () => { isEmpty.value = !isEmpty.value; };
 | update:sort | 排序交互后同步状态 | `(sort) => void` | `{ prop, order }` |
 | update:columns | 列收集、重排或显隐变化时同步列快照 | `(columns) => void` | `{ id, prop, label, type, hidden }[]` |
 | sort-change        | 当表格的排序条件发生变化的时候会触发该事件                                         | `({ prop, order }) => void 0`                                                   | `prop`：排序的列；`order`：排序方式                                      |
-| load-change      | 加载状态变化（单向推送，无对应属性）；挂载即推送一次                                   | `({ isEnd, isLoading, isSilentRefresh, isEmpty }) => void 0`            | `isEnd`：数据已全部进入虚拟列表（普通表格恒为 `true`）；`isEmpty`：已结束且无数据              |
+| load-change      | 加载状态变化（单向推送，无对应属性）；挂载即推送一次，之后每批行构建完成推送一次               | `({ isEnd, isLoading, isSilentRefresh, isEmpty, loaded }) => void 0`    | `isEnd`：数据已全部进入虚拟列表（普通表格恒为 `true`）；`isEmpty`：已结束且无数据；`loaded`：已构建并完成布局的行数（合并单元格按行计，树形表格为展开后的可见行，普通表格为全部行数） |
 | update:data        | 拖拽排序松手且顺序变化时触发（`v-model:data`）；树形表格在原地修改数据之后触发             | `(data: Array) => void 0`                                                       | `data`：新的数组，元素为外部数组中存放的原始行，行对象的引用不变；树形表格为原地修改后根数组的副本 |
 | block-dragstart    | 拖拽开始时触发（鼠标移动超过阈值，或触摸长按后）                                        | `({ rows, rowIndex }) => void 0`                                                | `rows`：被拖动块的行（普通表格长度为 1）；`rowIndex`：块首行的行号                       |
 | block-drop         | 松手且顺序变化时触发，在 `update:data` 之后                                       | `({ rows, targetRows, position, from, to, rawData }) => void 0`                 | `targetRows`：落点行（树形表格 `inner` 时为新的父行）；`position`：`before`、`after`，或 `inner`（仅树形表格）；`from` / `to`：移动前后的位置 `{ parent, index }`，`parent` 为 `null` 表示根级，`index` 非树形表格为块首行在 data 中的下标、树形表格为兄弟行中的下标；`rawData`：新的数组（同 `update:data`） |

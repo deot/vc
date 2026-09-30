@@ -102,7 +102,7 @@ const vertical = computed(() => direction.value === 'vertical');
 const external = computed(() => source.value === 'external');
 
 // load-change 是单向的：列表把快照推过来，外层只读
-const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false });
+const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false, loaded: 0 });
 const pageSize = 20;
 const pageTotal = 4;
 

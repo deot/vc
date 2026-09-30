@@ -93,7 +93,7 @@ const compact = ref(true);
 const inverted = ref(false);
 const lazyTail = ref(true);
 // load-change 是单向的：列表把快照推过来，外层只读
-const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false });
+const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false, loaded: 0 });
 
 const pageSize = 24;
 const pageTotal = 6;

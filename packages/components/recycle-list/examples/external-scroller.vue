@@ -88,7 +88,7 @@ const modes = [
 const mode = ref('normal');
 const listRef = ref();
 // load-change 是单向的：列表把快照推过来，外层只读
-const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false });
+const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false, loaded: 0 });
 const loadedPage = ref(0);
 const pageSize = 18;
 const pageTotal = 5;

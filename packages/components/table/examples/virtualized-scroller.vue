@@ -111,7 +111,7 @@ onBeforeUnmount(() => {
 });
 
 // load-change 是单向的：表格把快照推过来，外层只读
-const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false });
+const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false, loaded: 0 });
 
 const tableData = Array.from({ length: 1200 }, (_, index) => ({
 	id: index + 1,
