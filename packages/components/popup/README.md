@@ -1,328 +1,218 @@
-## 功能（Popup）
+## 弹出层（Popup）
 
-移动端弹出层
+从屏幕边缘滑入或在中央淡入的内容容器。`Popup` 与 `MPopup` 是同一个实现，以下使用 `MPopup`。
 
 ### 何时使用
 
-抽屉从父窗体边缘滑入，覆盖住部分父窗体内容。用户在抽屉内操作时不必离开当前任务，操作完成后，可以平滑地回到到原任务。
-- 当需要在当前任务流中插入临时任务，创建或预览附加内容。比如展示协议条款，创建子对象。
-- 当需要一个附加的面板来控制父窗体内容，这个面板在需要时呼出。比如，控制界面展示样式，往界面中添加内容。
+用于临时操作面板、内容预览和移动端选项列表。内容与关闭按钮由默认插槽提供。
 
 ### 基础用法
 
-通过v-model控制弹出层是否展示。
+通过 `v-model` 控制显示。默认从底部弹出，点击遮罩可关闭；关闭事件在离场动画结束后触发。
 
-:::RUNTIME
+:::playground
+<!-- <config lang="json5">{ viewport: [375, 500], previewInset: 16 }</config> -->
 ```vue
 <template>
 	<div>
-		<MPopup v-model="show">
-			<div style="height: 200px;" >默认弹层</div>
+		<MButton @click="handleOpen">打开操作面板</MButton>
+		<p>{{ message }}</p>
+		<MPopup v-model="isVisible" @close="handleClosed">
+			<div class="panel">
+				<h3>操作面板</h3>
+				<p>点击遮罩或下方按钮关闭。</p>
+				<MButton @click="handleClose">完成</MButton>
+			</div>
 		</MPopup>
-		<MButton @click="handleClick">点击弹出</MButton>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { MPopup, Button } from '@deot/vc';
+import { MPopup, MButton } from '@deot/vc';
 
-const show = ref(false);
-const handleClick = () => {
-	show.value = true;
+const isVisible = ref(false);
+const message = ref('等待打开');
+const handleOpen = () => {
+	isVisible.value = true;
+	message.value = '面板已打开';
 };
+const handleClose = () => { isVisible.value = false; };
+const handleClosed = () => { message.value = '离场动画已结束'; };
 </script>
+
+<style scoped>
+.panel { padding: 24px; }
+</style>
 ```
 :::
 
-### 布局
-通过`fixed`控制弹出层是否采用fixed布局
+### 弹出位置与面板外观
 
-:::RUNTIME
+四个边缘位置使用滑动动画，`center` 使用淡入淡出。此例为每个位置保留独立实例，因为动画组件在初始化时按 `placement` 选择。
+
+`theme="light"` 使用随全局亮暗主题变化的默认面板；`dark` 保留白字半透明深色外观；`none` 不设置面板前景和背景。`wrapperClass`、`wrapperStyle` 作用于内容容器。
+
+:::playground
+<!-- <config lang="json5">{ viewport: [375, 500], previewInset: 16 }</config> -->
 ```vue
 <template>
 	<div>
-		<MPopup v-model="show" fixed>
-			<div style="height: 200px;" >fixed布局</div>
+		<label>面板外观：
+			<select v-model="theme">
+				<option value="light">light</option>
+				<option value="dark">dark</option>
+				<option value="none">none</option>
+			</select>
+		</label>
+		<div class="actions">
+			<MButton v-for="item in panels" :key="item.placement" @click="handleOpen(item)">
+				{{ item.label }}
+			</MButton>
+		</div>
+		<MPopup
+			v-for="item in panels"
+			:key="item.placement"
+			v-model="item.isVisible"
+			:placement="item.placement"
+			:theme="theme"
+			wrapper-class="demo-panel"
+			:wrapper-style="{ borderRadius: '12px', maxWidth: '100%' }"
+		>
+			<div class="content">
+				<h3>{{ item.label }}面板</h3>
+				<p>当前外观：{{ theme }}</p>
+				<MButton @click="handleClose(item)">关闭</MButton>
+			</div>
 		</MPopup>
-		<MPopup v-model="show1">
-			<div style="height: 200px;" >非fixed布局</div>
-		</MPopup>
-		<MButton @click="handleClick">fixed布局</MButton>
-		<MButton @click="handleClickOne">非fixed布局</MButton>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { MPopup, Button } from '@deot/vc';
+import { MPopup, MButton } from '@deot/vc';
 
-const show = ref(false);
-const show1 = ref(false);
-
-const handleClick = () => {
-	show.value = true;
-};
-
-const handleClickOne = () => {
-	show1.value = true;
-};
+const theme = ref('light');
+const panels = ref([
+	{ placement: 'bottom', label: '底部', isVisible: false },
+	{ placement: 'top', label: '顶部', isVisible: false },
+	{ placement: 'left', label: '左侧', isVisible: false },
+	{ placement: 'right', label: '右侧', isVisible: false },
+	{ placement: 'center', label: '居中', isVisible: false }
+]);
+const handleOpen = (item) => { item.isVisible = true; };
+const handleClose = (item) => { item.isVisible = false; };
 </script>
+
+<style scoped>
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.content { box-sizing: border-box; min-width: 240px; padding: 24px; }
+:deep(.demo-panel) { overflow: hidden; }
+</style>
 ```
 :::
 
-### 弹出位置
-通过`placement`属性设置弹出位置，默认底部弹出，可以设置为`top`、`bottom`、`left`、`right`、`center`。
+### 局部布局、遮罩与滚动内容
 
-:::RUNTIME
+`fixed` 默认为 `true`。设置 `:fixed="false"` 后，内容容器使用绝对定位，可放入具有定位的父容器。遮罩始终使用固定定位，因此局部展示时通常同时设置 `:mask="false"`。
+
+遮罩在所有位置均有效；设置 `:mask-closable="false"` 可禁止点击遮罩关闭。关闭入口需由调用方提供。触屏滚动区域应添加 `vcm-popup-scrollable`（或 `vc-popup-scrollable`），并设置高度和 `overflow`；`scrollRegExp` 可自定义匹配规则。
+
+:::playground
+<!-- <config lang="json5">{ viewport: [375, 560], previewInset: 16 }</config> -->
 ```vue
 <template>
 	<div>
-		<MPopup v-model="show1" >
-			<div style="height: 200px;">
-				默认弹出（底部）
+		<div class="actions">
+			<MButton @click="handleLocalOpen">局部无遮罩</MButton>
+			<MButton @click="handleModalOpen">滚动面板</MButton>
+		</div>
+		<div class="stage">
+			<p>局部定位容器</p>
+			<MPopup v-model="isLocalVisible" :fixed="false" :mask="false">
+				<div class="panel">
+					<p>此面板定位在父容器底部。</p>
+					<MButton @click="handleLocalClose">关闭局部面板</MButton>
+				</div>
+			</MPopup>
+		</div>
+		<MPopup v-model="isModalVisible" :mask-closable="false">
+			<div class="panel">
+				<h3>滚动列表</h3>
+				<div class="vcm-popup-scrollable list">
+					<p v-for="item in 20" :key="item">选项 {{ item }}</p>
+				</div>
+				<MButton @click="handleModalClose">关闭滚动面板</MButton>
 			</div>
 		</MPopup>
-		<MPopup v-model="show2" placement="top">
-			<div style="height: 200px;" >
-				顶部弹出
-			</div>
-		</MPopup>
-		<MPopup v-model="show3" placement="left">
-			<div style="min-width: 100px;">
-				左侧弹出
-			</div>
-		</MPopup>
-		<MPopup v-model="show4" placement="right">
-			<div style="">
-				右侧弹出
-			</div>
-		</MPopup>
-		<MPopup v-model="show5" placement="center">
-			<div style="min-height: 200px; min-width: 200px;">
-				居中弹出
-			</div>
-		</MPopup>
-		<MButton @click="handleClick(1)">默认弹出（底部）</MButton>
-		<MButton @click="handleClick(2)">顶部弹出</MButton>
-		<MButton @click="handleClick(3)">左侧弹出</MButton>
-		<MButton @click="handleClick(4)">右侧弹出</MButton>
-		<MButton @click="handleClick(5)">居中弹出</MButton>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { MPopup, Button } from '@deot/vc';
+import { MPopup, MButton } from '@deot/vc';
 
-const show1 = ref(false);
-const show2 = ref(false);
-const show3 = ref(false);
-const show4 = ref(false);
-const show5 = ref(false);
-
-const handleClick = (index) => {
-	switch (index) {
-		case 2:
-			show2.value = true;
-			break;
-		case 3:
-			show3.value = true;
-			break;
-		case 4:
-			show4.value = true;
-			break;
-		case 5:
-			show5.value = true;
-			break;
-		default:
-			show1.value = true;
-			break;
-	}
-};
+const isLocalVisible = ref(false);
+const isModalVisible = ref(false);
+const handleLocalOpen = () => { isLocalVisible.value = true; };
+const handleLocalClose = () => { isLocalVisible.value = false; };
+const handleModalOpen = () => { isModalVisible.value = true; };
+const handleModalClose = () => { isModalVisible.value = false; };
 </script>
-```
-:::
 
-### 主题
-通过theme属性设置弹层主题，默认`light`，可以设置为`dark`、`light`、`none`。
-
-:::RUNTIME
-```vue
-<template>
-	<div>
-		<MPopup v-model="show1" theme="light">
-			<div style="height: 200px;">
-				默认弹层
-			</div>
-		</MPopup>
-		<MPopup v-model="show2" theme="dark">
-			<div style="height: 200px;" >
-				黑色主题
-			</div>
-		</MPopup>
-		<MPopup v-model="show3" theme="none">
-			<div style="height: 200px;">
-				不设置主题
-			</div>
-		</MPopup>
-		<MButton @click="handleClick(1)">默认主题</MButton>
-		<MButton @click="handleClick(2)">黑色主题</MButton>
-		<MButton @click="handleClick(3)">不设置主题</MButton>
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { MPopup, Button } from '@deot/vc';
-
-const show1 = ref(false);
-const show2 = ref(false);
-const show3 = ref(false);
-const handleClick = (index) => {
-	switch (index) {
-		case 2:
-			show2.value = true;
-			break;
-		case 3:
-			show3.value = true;
-			break;
-		default:
-			show1.value = true;
-			break;
-	}
-};
-</script>
-```
-:::
-
-### 遮罩层
-通过mask控制遮罩层层是否展示，通过maskClosable控制是否能通过点击遮罩层来关闭整个弹出层，默认均为true。
-
-:::RUNTIME
-```vue
-<template>
-	<div>
-		<MPopup v-model="show">
-			<div style="height: 200px;" >默认弹层</div>
-		</MPopup>
-		<MPopup v-model="show1" :mask="false">
-			<div style="height: 200px;" @click="handleCloseOne">无遮罩层</div>
-		</MPopup>
-		<MPopup v-model="show2" :maskClosable="false">
-			<div style="height: 200px;" @click="handleCloseTwo">点击遮罩层不能关闭弹层</div>
-		</MPopup>
-		<MButton @click="handleClick">默认弹层</MButton>
-		<MButton @click="handleClickOne">无遮罩层</MButton>
-		<MButton @click="handleClickTwo">点击遮罩层不能关闭弹层</MButton>
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { MPopup, Button } from '@deot/vc';
-
-const show = ref(false);
-const show1 = ref(false);
-const show2 = ref(false);
-
-const handleClick = () => {
-	show.value = true;
-};
-const handleClickOne = () => {
-	show1.value = true;
-};
-const handleClickTwo = () => {
-	show2.value = true;
-};
-const handleCloseOne = () => {
-	show1.value = false;
-};
-const handleCloseTwo = () => {
-	show2.value = false;
-};
-</script>
-```
-:::
-
-### 自定义外层容器样式
-通过`wrapperClass`属性设置外层容器样式名，通过`wrapperStyle`属性设置外层容器行内样式。
-
-:::RUNTIME
-```vue
-<template>
-	<div>
-		<MPopup v-model="show1" :wrapper-class="classes" >
-			<div style="height: 200px;" >
-				样式一
-			</div>
-		</MPopup>
-		<MPopup v-model="show2" :wrapper-style="wrapperStyle" >
-			<div style="height: 200px;" >
-				样式二
-			</div>
-		</MPopup>
-		<MPopup v-model="show3" :wrapper-class="classes" :wrapper-style="wrapperStyle">
-			<div style="height: 200px;">
-				样式三
-			</div>
-		</MPopup>
-
-		<MButton @click="handleClick(1)">样式一</MButton>
-		<MButton @click="handleClick(2)">样式二</MButton>
-		<MButton @click="handleClick(3)">样式三</MButton>
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { MPopup, Button } from '@deot/vc';
-
-const show1 = ref(false);
-const show2 = ref(false);
-const show3 = ref(false);
-const classes = ref({ 'is-red': true });
-const wrapperStyle = ref({
-	background: 'orange'
-});
-const handleClick = (index) => {
-	switch (index) {
-		case 2:
-			show2.value = true;
-			break;
-		case 3:
-			show3.value = true;
-			break;
-		default:
-			show1.value = true;
-			break;
-	}
-};
-</script>
-<style>
-.is-red {
-	color: red;
-}
+<style scoped>
+.actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.stage { position: relative; height: 280px; margin-top: 20px; border: 1px dashed currentColor; }
+.stage > p { padding: 16px; }
+.panel { padding: 20px; }
+.list { height: 180px; overflow-y: auto; margin-bottom: 16px; }
 </style>
 ```
 :::
 
 ## API
 
-### 基础属性
+以下 API 同时适用于 `Popup` 和 `MPopup`。
 
-| 属性               | 说明                               | 类型                        | 可选值                                                          | 默认值      |
-| ---------------- | -------------------------------- | ------------------------- | ------------------------------------------------------------ | -------- |
-| modelValue       | 显示popop                          | `boolean`                 | -                                                            | `false`  |
-| fixed            | 是否使用fixed布局                      | `boolean`                 | -                                                            | `false`  |
-| show             | 是否显示                             | `boolean`                 | -                                                            | `false`  |
-| placement        | 从哪个方向弹出                          | `string`                  | `top`、`bottom`、`left`、`right`、`center`                       | `bottom` |
-| theme            | 主题                               | `string`                  | `dark`、`light`、`none`                                        | `light`  |
-| mask             | 是否显示遮罩（只有在position为bottom的时候才有用） | `boolean`                 | -                                                            | `true`   |
-| maskClosable     | 是否允许通过点击遮罩关闭弹窗                   | `boolean`                 | -                                                            | `true`   |
-| wrapperClass | 外层容器的Class名                      | `object`、`array`、`string` | -                                                            | -        |
-| wrapperStyle     | 外层容器的样式                          | `object`、`array`、`string` | -                                                            | -        |
-| scrollRegExp     | 判断滑动是否在滚动容器内，防止滚动穿透弹层            | `Function`                | `void: function(v) { return /vc-hack-scroll/.test(v); }` | -        |
+### 属性
 
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| modelValue | 是否显示，支持 `v-model` | `boolean` | - | `false` |
+| fixed | 内容容器是否使用固定定位；为 `false` 时使用绝对定位 | `boolean` | - | `true` |
+| placement | 弹出位置，建议初始化时确定 | `string` | `top`、`bottom`、`left`、`right`、`center` | `bottom` |
+| theme | 面板外观 | `string` | `light`、`dark`、`none` | `light` |
+| mask | 是否显示遮罩，适用于所有位置 | `boolean` | - | `true` |
+| maskClosable | 是否允许点击遮罩关闭 | `boolean` | - | `true` |
+| wrapperClass | 内容容器的 class | `string \| object \| unknown[]` | - | - |
+| wrapperStyle | 内容容器的 style | `string \| object \| unknown[]` | - | - |
+| scrollRegExp | 按事件路径上的元素属性匹配可滚动区域，任一规则匹配即可 | `{ id?: RegExp; className?: RegExp; tagName?: RegExp }` | - | `{ className: /(vcm?-popup-scrollable)/ }` |
 
 ### 事件
 
-| 事件名            | 说明     | 回调参数                         | 参数说明           |
-| -------------- | ------ | ---------------------------- | -------------- |
-| close          | 弹层关闭回调 | -                            | -              |
-| visible-change | 显示状态改变 | `(visible: boolean) => void` | `visible`：显示状态 |
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue | 离场动画结束后同步关闭状态 | `(value: boolean) => void` | 当前实现只发出 `false` |
+| close | 离场动画结束后触发 | - | - |
+| portal-fulfilled | 离场动画结束后通知 Portal 完成 | - | - |
+| visible-change | 离场动画结束后触发；打开时不触发 | `(visible: boolean) => void` | 当前实现只发出 `false` |
 
+### 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 弹出层内容，隐藏时仍保留挂载 | - |
+
+### 方法
+
+通过组件 ref 调用。
+
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| toggle | 修改内部可见状态；省略参数时切换。打开时不会同步 `modelValue`，通常优先使用 `v-model` | `value?: boolean` | `void` |
+
+实例还暴露 `isActive`，供 Portal 读取内部可见状态。组件本身没有静态 `open` 方法，也不会自动 Teleport 到 `body`；存在裁剪或层叠上下文时，请自行选择挂载位置或配合 `Portal` 使用。
+
+### 主题变量
+
+默认面板与遮罩支持 `--vc-popup-background-color-light`、`--vc-popup-foreground-color`、`--vc-popup-mask-color`，分别回退到同名全局 token。`dark` 外观使用 `--vc-popup-background-color-translucent`（默认 `rgb(0 0 0 / 30%)`）与 `--vc-popup-foreground-color-inverse`（默认 `#fff`）；`none` 不设置面板颜色。
