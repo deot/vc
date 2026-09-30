@@ -635,8 +635,8 @@ describe('index.ts', () => {
 
 	describe('loadData behaviour', () => {
 		it('auto-loads first page on mount and stores data', async () => {
-			const loadData = vi.fn(async ({ current }: any) => {
-				return buildItems(3, current);
+			const loadData = vi.fn(async ({ page }: any) => {
+				return buildItems(3, page);
 			});
 
 			const listRef = ref<any>();
@@ -650,28 +650,28 @@ describe('index.ts', () => {
 			await nextTick();
 
 			expect(loadData).toHaveBeenCalledTimes(1);
-			// current = 第N次请求；count = 当前已加载条数
-			expect(loadData.mock.calls[0][0]).toEqual({ current: 1, count: 0 });
+			// page = 第 N 次请求；loaded = 当前已加载条数
+			expect(loadData.mock.calls[0][0]).toEqual({ page: 1, loaded: 0 });
 			expect(listRef.value.store.states.rebuildData.length).toBe(3);
 		});
 
-		it('passes { current, count } to loadData and appends by start', async () => {
-			const loadData = vi.fn(async ({ current }: any) => buildItems(2, current));
+		it('passes { page, loaded } to loadData and appends by start', async () => {
+			const loadData = vi.fn(async ({ page }: any) => buildItems(2, page));
 			const store = new RecycleListStore({ loadData });
 
 			let r = await store.fetchPage();
-			expect(loadData).toHaveBeenLastCalledWith({ current: 1, count: 0 });
+			expect(loadData).toHaveBeenLastCalledWith({ page: 1, loaded: 0 });
 			expect([r.start, r.end]).toEqual([0, 2]);
 			// 非空页推断为未结束
 			expect(r.response.finished).toBe(false);
 
 			r = await store.fetchPage();
-			expect(loadData).toHaveBeenLastCalledWith({ current: 2, count: 2 });
+			expect(loadData).toHaveBeenLastCalledWith({ page: 2, loaded: 2 });
 			expect([r.start, r.end]).toEqual([2, 4]);
 			expect(store.local.originalData.length).toBe(4);
 		});
 
-		it('count passed to loadData includes local data length', async () => {
+		it('loaded passed to loadData includes local data length', async () => {
 			const loadData = vi.fn(async () => false);
 			mount(() => (
 				<RecycleList data={buildItems(4)} loadData={loadData}>
@@ -682,7 +682,7 @@ describe('index.ts', () => {
 			await nextTick();
 			await sleep(0);
 
-			expect(loadData).toHaveBeenCalledWith({ current: 1, count: 4 });
+			expect(loadData).toHaveBeenCalledWith({ page: 1, loaded: 4 });
 		});
 
 		it('handles { data, finished } object response and marks isEnd when finished', async () => {
@@ -1246,7 +1246,8 @@ describe('index.ts', () => {
 				isEnd: false,
 				isLoading: false,
 				isSilentRefresh: false,
-				isEmpty: false
+				isEmpty: false,
+				loaded: 0
 			});
 
 			await nextTick();
@@ -1264,7 +1265,8 @@ describe('index.ts', () => {
 				isEnd: true,
 				isLoading: false,
 				isSilentRefresh: false,
-				isEmpty: true
+				isEmpty: true,
+				loaded: 0
 			});
 			wrapper.unmount();
 		});
@@ -1285,7 +1287,8 @@ describe('index.ts', () => {
 				isEnd: true,
 				isLoading: false,
 				isSilentRefresh: false,
-				isEmpty: false
+				isEmpty: false,
+				loaded: 3
 			});
 			wrapper.unmount();
 		});
@@ -1317,6 +1320,109 @@ describe('index.ts', () => {
 			expect(listRef.value.store.states.isEnd).toBe(true);
 			expect(wrapper.find('.vc-recycle-list__complete').exists()).toBe(true);
 			expect(wrapper.find('.vc-recycle-list__empty').exists()).toBe(false);
+			wrapper.unmount();
+		});
+	});
+
+	describe('load-change loaded', () => {
+		const flushLayout = async () => {
+			for (let i = 0; i < 10; i++) {
+				await nextTick();
+				await sleep(0);
+			}
+		};
+
+		it('pushes loaded after every local batch is built and laid out', async () => {
+			// 列表可见（有宽高）才会在一批结束后仍停在加载边缘时续建
+			const restore = mockSize(HTMLElement.prototype, { offsetHeight: 40, offsetWidth: 100 });
+			const seen: any[] = [];
+			const listRef = ref<any>();
+			// 隐藏池首片渲染 10 条：挂载时并发的首批先排完版，下一批还在等后面的分片
+			const wrapper = mount(() => (
+				<RecycleList
+					ref={listRef}
+					disabled
+					batchCount={10}
+					data={buildItems(30)}
+					onLoadChange={(v: any) => seen.push({ ...v, pending: listRef.value?.store.nodes.pending.size })}
+				>
+					{{ default: ({ row }: any) => <div>{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await flushLayout();
+			restore();
+
+			// 并发的布局全部结束才推送：推出的 loaded 里没有待测量的节点
+			expect(seen.slice(1).map(v => v.pending)).toEqual(seen.slice(1).map(() => 0));
+			// 布尔字段在中间批次都不变，推送来自 loaded 的变化
+			const values = seen.map(v => v.loaded);
+			expect(values[0]).toBe(0);
+			expect(values[values.length - 1]).toBe(30);
+			expect(values.length).toBeGreaterThan(2);
+			expect(values.every((v, i) => i === 0 || v > values[i - 1])).toBe(true);
+			expect(seen[seen.length - 1]).toMatchObject({ isEnd: true, isEmpty: false, loaded: 30 });
+			wrapper.unmount();
+		});
+
+		it('pushes loaded after every remote page is laid out', async () => {
+			// 每项 40px、视口 1000px：内容不足一屏，逐页续载直到空页结束
+			const heightSpy = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+				return this.classList.contains('vc-recycle-list__wrapper') ? 1000 : 40;
+			});
+			const seen: any[] = [];
+			const loadData = vi.fn(async ({ page }: any) => (page <= 2 ? buildItems(3, page, (page - 1) * 3) : []));
+			const wrapper = mount(() => (
+				<RecycleList loadData={loadData} onLoadChange={(v: any) => seen.push(v)}>
+					{{ default: ({ row }: any) => <div>{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await flushLayout();
+			heightSpy.mockRestore();
+
+			expect(loadData.mock.calls.map(([v]) => v)).toEqual([
+				{ page: 1, loaded: 0 },
+				{ page: 2, loaded: 3 },
+				{ page: 3, loaded: 6 }
+			]);
+			// loadData 收到的 loaded 与 load-change 推出的 loaded 是同一个数
+			expect([...new Set(seen.map(v => v.loaded))]).toEqual([0, 3, 6]);
+			expect(seen[seen.length - 1]).toEqual({
+				isEnd: true,
+				isLoading: false,
+				isSilentRefresh: false,
+				isEmpty: false,
+				loaded: 6
+			});
+			wrapper.unmount();
+		});
+
+		it('follows data replacement and reset', async () => {
+			const seen: any[] = [];
+			const listRef = ref<any>();
+			const data = ref(buildItems(5));
+			const wrapper = mount(() => (
+				<RecycleList
+					ref={listRef}
+					disabled
+					data={data.value}
+					onLoadChange={(v: any) => seen.push(v)}
+				>
+					{{ default: ({ row }: any) => <div>{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await flushLayout();
+			expect(seen[seen.length - 1].loaded).toBe(5);
+
+			data.value = buildItems(2, 2, 100);
+			await flushLayout();
+			expect(seen[seen.length - 1]).toMatchObject({ isEnd: true, loaded: 2 });
+
+			data.value = [];
+			await flushLayout();
+			expect(seen[seen.length - 1]).toMatchObject({ isEnd: true, isEmpty: true, loaded: 0 });
 			wrapper.unmount();
 		});
 	});
@@ -1389,7 +1495,8 @@ describe('index.ts', () => {
 				isEnd: true,
 				isLoading: false,
 				isSilentRefresh: false,
-				isEmpty: false
+				isEmpty: false,
+				loaded: 3
 			});
 			// 远程语义不变：ScrollState 与现有用例依赖的 store.states.isEnd 仍为 false
 			expect(listRef.value.store.states.isEnd).toBe(false);
@@ -1440,7 +1547,8 @@ describe('index.ts', () => {
 				isEnd: true,
 				isLoading: false,
 				isSilentRefresh: false,
-				isEmpty: true
+				isEmpty: true,
+				loaded: 0
 			});
 			wrapper.unmount();
 		});
@@ -1870,8 +1978,8 @@ describe('index.ts', () => {
 
 		it('inverted placeholder keeps the current rows rendered while prepending a page', async () => {
 			let resolveSecondPage: (v: any) => void = () => {};
-			const loadData = vi.fn(({ current }: any) => {
-				return current === 1
+			const loadData = vi.fn(({ page }: any) => {
+				return page === 1
 					? Promise.resolve(buildItems(20))
 					: new Promise(resolve => (resolveSecondPage = resolve));
 			});
@@ -1975,7 +2083,7 @@ describe('index.ts', () => {
 			expect(wrapper.findAll('.vc-recycle-list__column .ph')).toHaveLength(20);
 			// 纯占位批次无需等待 Defer；否则 preData 为空，complete 不会触发，请求会永久阻塞
 			expect(loadData).toHaveBeenCalledTimes(1);
-			expect(loadData).toHaveBeenCalledWith({ current: 1, count: 0 });
+			expect(loadData).toHaveBeenCalledWith({ page: 1, loaded: 0 });
 
 			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
 			const restore = mockSize(wrapEl, {

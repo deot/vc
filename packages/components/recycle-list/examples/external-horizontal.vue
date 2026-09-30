@@ -93,22 +93,22 @@ const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, 
 const pageSize = 16;
 const pageTotal = 5;
 
-const loadData = ({ current }) => new Promise((resolve) => {
+const loadData = ({ page }) => new Promise((resolve) => {
 	setTimeout(() => {
-		if (current > pageTotal) {
+		if (page > pageTotal) {
 			resolve(false);
 			return;
 		}
 
 		const data = Array.from({ length: pageSize }, (_, index) => {
-			const id = (current - 1) * pageSize + index;
+			const id = (page - 1) * pageSize + index;
 			return {
 				id,
-				page: current,
+				page,
 				width: 130 + (id % 5) * 32
 			};
 		});
-		resolve({ data, finished: current === pageTotal });
+		resolve({ data, finished: page === pageTotal });
 	}, 200);
 });
 </script>

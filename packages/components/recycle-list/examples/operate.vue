@@ -75,7 +75,7 @@ const makeItems = (size, page, tag) => {
 	return list;
 };
 
-const loadData = ({ current: page, count: loaded }) => {
+const loadData = ({ page, loaded }) => {
 	console.log('page:', page, 'loaded:', loaded);
 	return new Promise((resolve) => {
 		if (page == total + 1) {

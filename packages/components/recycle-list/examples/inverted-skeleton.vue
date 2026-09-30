@@ -59,7 +59,7 @@ const randomText = (size) => {
 	return v;
 };
 
-const loadData = ({ current: page, count: loaded }) => {
+const loadData = ({ page, loaded }) => {
 	console.log('page:', page, 'loaded:', loaded);
 	const list = [];
 	return new Promise((resolve) => {

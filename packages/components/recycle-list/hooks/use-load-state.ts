@@ -18,7 +18,9 @@ export const useLoadState = (props: Props, store: Store) => {
 		isLoading: computed(() => store.states.isLoading),
 		isSilentRefresh: computed(() => store.states.isSilentRefresh),
 		// 远程路径结束时 stop() 会裁掉全部占位，disabled 下不分配占位，因此没有节点即没有数据
-		isEmpty: computed(() => isEnd.value && store.states.rebuildData.length === 0)
+		isEmpty: computed(() => isEnd.value && store.states.rebuildData.length === 0),
+		// 每批数据构建并完成布局后变化：本地分批与远程分页都靠它逐批推送
+		loaded: computed(() => store.states.loaded)
 	}) as RecycleListLoadState;
 };
 

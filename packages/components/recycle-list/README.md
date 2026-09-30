@@ -45,14 +45,14 @@
 <script setup>
 import { RecycleList } from '@deot/vc';
 
-const loadData = ({ current, count }) => new Promise((resolve) => {
+const loadData = ({ page, loaded }) => new Promise((resolve) => {
 	setTimeout(() => {
 		const data = Array.from({ length: 20 }, (_, index) => ({
-			id: count + index,
-			page: current,
+			id: loaded + index,
+			page,
 			height: 40 + (index % 3) * 20
 		}));
-		resolve({ data, finished: current >= 3 });
+		resolve({ data, finished: page >= 3 });
 	}, 400);
 });
 </script>
@@ -221,11 +221,11 @@ import { Button, RecycleList } from '@deot/vc';
 
 const listRef = ref();
 const isEmpty = ref(false);
-const loadData = async ({ current, count }) => {
+const loadData = async ({ page, loaded }) => {
 	await new Promise(resolve => setTimeout(resolve, 600));
 	return {
-		data: isEmpty.value ? [] : Array.from({ length: 6 }, (_, index) => ({ name: `条目 ${count + index + 1}` })),
-		finished: isEmpty.value || current >= 2
+		data: isEmpty.value ? [] : Array.from({ length: 6 }, (_, index) => ({ name: `条目 ${loaded + index + 1}` })),
+		finished: isEmpty.value || page >= 2
 	};
 };
 const handleReload = () => { isEmpty.value = false; listRef.value?.reset(); };
@@ -514,15 +514,15 @@ import { ref } from 'vue';
 import { RecycleList } from '@deot/vc';
 
 const round = ref(0);
-const loadData = async ({ current }) => {
-	if (current === 1) round.value++;
+const loadData = async ({ page }) => {
+	if (page === 1) round.value++;
 	const version = round.value;
 	await new Promise(resolve => setTimeout(resolve, 500));
 	return {
 		data: Array.from({ length: 12 }, (_, index) => ({
-			text: `第 ${version} 轮 · 消息 ${36 - (current - 1) * 12 - index}`
+			text: `第 ${version} 轮 · 消息 ${36 - (page - 1) * 12 - index}`
 		})),
-		finished: current >= 3
+		finished: page >= 3
 	};
 };
 </script>
@@ -572,11 +572,11 @@ import { RecycleList, Scroller } from '@deot/vc';
 
 const loadState = ref({ isEnd: false });
 const handleLoadChange = (state) => { loadState.value = state; };
-const loadData = async ({ current, count }) => {
+const loadData = async ({ page, loaded }) => {
 	await new Promise(resolve => setTimeout(resolve, 400));
 	return {
-		data: Array.from({ length: 8 }, (_, index) => ({ name: `条目 ${count + index + 1}` })),
-		finished: current >= 2
+		data: Array.from({ length: 8 }, (_, index) => ({ name: `条目 ${loaded + index + 1}` })),
+		finished: page >= 2
 	};
 };
 </script>
@@ -630,9 +630,9 @@ const loadData = async ({ current, count }) => {
 import { RecycleList, RecycleListStore } from '@deot/vc';
 
 const store = new RecycleListStore({
-	loadData: ({ current, count }) => ({
-		data: Array.from({ length: 20 }, (_, index) => ({ name: `条目 ${count + index + 1}` })),
-		finished: current >= 3
+	loadData: ({ page, loaded }) => ({
+		data: Array.from({ length: 20 }, (_, index) => ({ name: `条目 ${loaded + index + 1}` })),
+		finished: page >= 3
 	})
 });
 </script>
@@ -692,7 +692,7 @@ const store = new RecycleListStore({
 | bufferCount | 在可见数据索引前后额外渲染的节点数量 | `number` | - | `0` |
 | overscan | 视口上下（横向时左右）额外预渲染距离，单位 px | `number` | - | `50` |
 | threshold | 距离列表加载边缘小于等于该值时触发加载，单位 px | `number` | - | `100` |
-| loadData | 获取更多数据，签名为 `({ current, count }) => response` | `Function` | - | `() => false` |
+| loadData | 获取更多数据，签名为 `({ page, loaded }) => response` | `Function` | - | `() => false` |
 | cols | 多列数量；不定高时支持瀑布流 | `number` | - | `1` |
 | gutter | 多列间距 | `number` | - | `0` |
 | inverted | 是否倒置 | `boolean` | - | `false` |
@@ -715,7 +715,7 @@ const store = new RecycleListStore({
 
 #### loadData 契约
 
-- 参数为 `{ current, count }`。`current` 是第 N 次请求（从 1 开始）；`count` 是当前已加载总条数（含 `data` 传入的本地数据），可作为服务端 offset。
+- 参数为 `{ page, loaded }`。`page` 是第 N 次请求（从 1 开始）；`loaded` 是当前已加载总条数（含 `data` 传入的本地数据），可作为服务端 offset，与 `load-change` 推出的 `loaded` 同义。
 - 可返回 `Array`、`{ data, finished }` 或 falsy（如 `false`）。
 - falsy 或无 `data` 表示结束；裸数组视为 `{ data }`。未显式提供 `finished` 时，非空数组表示未结束，空页表示结束。
 - 末页刚好满页时，需要再返回一次空数组，或在末页显式返回 `finished: true`。

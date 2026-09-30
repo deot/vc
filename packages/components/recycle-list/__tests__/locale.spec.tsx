@@ -23,7 +23,7 @@ describe('RecycleList locale', () => {
 	it.each([true, false])('updates end state text when locale changes (empty=%s)', async (isEmpty) => {
 		const wrapper = mount(ScrollState, {
 			props: {
-				loadState: { isEnd: true, isLoading: false, isSilentRefresh: false, isEmpty },
+				loadState: { isEnd: true, isLoading: false, isSilentRefresh: false, isEmpty, loaded: isEmpty ? 0 : 3 },
 				renderer: {}
 			}
 		});
@@ -35,7 +35,7 @@ describe('RecycleList locale', () => {
 
 	it('preserves slot and render overrides including empty content', () => {
 		const props = {
-			loadState: { isEnd: true, isLoading: false, isSilentRefresh: false, isEmpty: true },
+			loadState: { isEnd: true, isLoading: false, isSilentRefresh: false, isEmpty: true, loaded: 0 },
 			renderer: { empty: () => 'custom render' }
 		};
 		expect(mount(ScrollState, { props }).text()).toBe('custom render');

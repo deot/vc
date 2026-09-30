@@ -93,23 +93,23 @@ const loadedPage = ref(0);
 const pageSize = 18;
 const pageTotal = 5;
 
-const loadData = ({ current }) => new Promise((resolve) => {
-	loadedPage.value = current;
+const loadData = ({ page }) => new Promise((resolve) => {
+	loadedPage.value = page;
 	setTimeout(() => {
-		if (current > pageTotal) {
+		if (page > pageTotal) {
 			resolve(false);
 			return;
 		}
 
 		const data = Array.from({ length: pageSize }, (_, index) => {
-			const offset = (current - 1) * pageSize + index;
+			const offset = (page - 1) * pageSize + index;
 			return {
 				id: `${mode.value}-${offset}`,
-				page: current,
+				page,
 				height: 52 + (offset % 3) * 18
 			};
 		});
-		resolve({ data, finished: current === pageTotal });
+		resolve({ data, finished: page === pageTotal });
 	}, 220);
 });
 </script>

@@ -117,26 +117,26 @@ watch([direction, source, skeleton], () => {
 	loadedPage.value = 0;
 });
 
-const loadData = ({ current }) => {
-	if (current === 1) round.value++;
-	loadedPage.value = current;
+const loadData = ({ page }) => {
+	if (page === 1) round.value++;
+	loadedPage.value = page;
 	const currentRound = round.value;
 	return new Promise((resolve) => {
 		setTimeout(() => {
-			if (current > pageTotal) {
+			if (page > pageTotal) {
 				resolve(false);
 				return;
 			}
 			const data = Array.from({ length: pageSize }, (_, index) => {
-				const offset = (current - 1) * pageSize + index;
+				const offset = (page - 1) * pageSize + index;
 				return {
 					id: `${currentRound}-${offset}`,
 					round: currentRound,
-					page: current,
+					page,
 					size: 48 + (offset % 3) * 16
 				};
 			});
-			resolve({ data, finished: current === pageTotal });
+			resolve({ data, finished: page === pageTotal });
 		}, 800);
 	});
 };

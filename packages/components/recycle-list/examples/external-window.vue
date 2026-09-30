@@ -98,23 +98,23 @@ const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, 
 const pageSize = 24;
 const pageTotal = 6;
 
-const loadData = ({ current }) => new Promise((resolve) => {
+const loadData = ({ page }) => new Promise((resolve) => {
 	setTimeout(() => {
-		if (current > pageTotal) {
+		if (page > pageTotal) {
 			resolve(false);
 			return;
 		}
 
 		const data = Array.from({ length: pageSize }, (_, index) => {
-			const id = (current - 1) * pageSize + index;
+			const id = (page - 1) * pageSize + index;
 			return {
 				id,
-				page: current,
+				page,
 				height: 58 + (id % 4) * 18,
 				description: `外部 Window 滚动中的虚拟行 ${id}`
 			};
 		});
-		resolve({ data, finished: current === pageTotal });
+		resolve({ data, finished: page === pageTotal });
 	}, 240);
 });
 

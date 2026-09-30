@@ -277,6 +277,16 @@ export const RecycleList = defineComponent({
 		});
 
 		/**
+		 * 所有并发布局结束时按当时的实际状态写入构建进度：重排期间保持原值，数据整体替换时尾部不会闪；
+		 * 挂载时首批与下一批并发构建，先结束的一批不能把另一批还没测量的节点算进来
+		 */
+		const commitBuildState = () => {
+			if (runningLayouts > 0) return;
+			store.states.isBuilt = !store.local.hasMore;
+			store.states.loaded = store.nodes.real.size;
+		};
+
+		/**
 		 * 构建 [start, end) 区间的节点，测量后重排并刷新可见范围
 		 * @param start 区间起点（含）
 		 * @param end 区间终点（不含）
@@ -286,7 +296,7 @@ export const RecycleList = defineComponent({
 		 */
 		const layoutRange = async (start: number, end: number, options: { reversed?: boolean; force?: boolean } = {}) => {
 			if (start === end) {
-				store.states.isBuilt = !store.local.hasMore;
+				commitBuildState();
 				syncVisibleRange();
 				return;
 			}
@@ -320,11 +330,10 @@ export const RecycleList = defineComponent({
 				measured.map(node => ({ size: node.states.size, index: node.states.index }))
 			);
 
-			// 布局结束时按当时的实际状态写入：重排期间保持原值，数据整体替换时尾部不会闪
-			store.states.isBuilt = !store.local.hasMore;
-
-			// 仍有并发的布局时不放行等待者
-			if (--runningLayouts === 0) layoutInterrupter.next();
+			// 仍有并发的布局时不写入进度、不放行等待者
+			if (--runningLayouts > 0) return;
+			commitBuildState();
+			layoutInterrupter.next();
 		};
 
 		// 整体重新测量已构建的节点并重排
@@ -417,20 +426,20 @@ export const RecycleList = defineComponent({
 
 		/**
 		 * 远程分页落地后的布局刷新
-		 * @param current 第 N 次请求（从 1 开始）
+		 * @param page 第 N 次请求（从 1 开始）
 		 * @param start 区间起点
 		 * @param end 区间终点
 		 */
-		const layoutPage = async (current: number, start: number, end: number) => {
+		const layoutPage = async (page: number, start: number, end: number) => {
 			if (!store.props.inverted) {
 				await layoutRange(start, end);
 				return;
 			}
 
 			await layoutInvertedRange(start, end, {
-				originalSize: current === 1 ? 0 : store.states.contentMaxSize,
+				originalSize: page === 1 ? 0 : store.states.contentMaxSize,
 				offset: () => {
-					if (current === 1) return 0;
+					if (page === 1) return 0;
 					const offset = viewport.offset;
 					if (viewport.external) return offset;
 					// 内部滚动源：请求期间用户滚动过才保留当前位置，否则只补内容增量
@@ -494,12 +503,12 @@ export const RecycleList = defineComponent({
 		};
 
 		const loadRemoteData = async (onBeforeCommit?: () => void) => {
-			const { current, response, start, end } = await store.fetchPage(onBeforeCommit);
+			const { page, response, start, end } = await store.fetchPage(onBeforeCommit);
 			if (!response || !response.data) {
 				stopScroll();
 				return;
 			}
-			await layoutPage(current, start, end);
+			await layoutPage(page, start, end);
 
 			// 响应条数少于预分配的占位时，回收多余骨架，避免后续 id 漂移
 			if (store.nodes.trimPlaceholders()) {

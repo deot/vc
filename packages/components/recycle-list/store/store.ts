@@ -108,14 +108,14 @@ export class Store extends BaseWatcher {
 	/**
 	 * 拉取下一页远程数据，数据写入 originalData
 	 *
-	 * loadData 入参为 { current, count }：current 为第 N 次请求(从 1 开始)；count 为已加载总条数(可作偏移)
+	 * loadData 入参为 { page, loaded }：page 为第 N 次请求(从 1 开始)；loaded 为已加载总条数(可作偏移)
 	 * @param onBeforeCommit 响应到达后、写入 states/originalData 之前的钩子（如清空旧列表）；原参数名 onBeforeResponse
 	 * @returns 响应及数据写入的区间 [start, end)
 	 */
 	async fetchPage(onBeforeCommit?: () => void) {
-		const current = this.promiseStack.length + 1;
+		const page = this.promiseStack.length + 1;
 		const start = this.local.originalData.length;
-		const promiseFetch = this.props.loadData({ current, count: start });
+		const promiseFetch = this.props.loadData({ page, loaded: start });
 		this.states.loadings.push('pending');
 		this.promiseStack.push(promiseFetch);
 
@@ -125,7 +125,7 @@ export class Store extends BaseWatcher {
 		if (response && response.data) {
 			this.local.write(start, response.data);
 		}
-		return { current, response, start, end: start + (response?.data?.length || 0) };
+		return { page, response, start, end: start + (response?.data?.length || 0) };
 	}
 
 	/**
@@ -152,6 +152,7 @@ export class Store extends BaseWatcher {
 	 */
 	clear() {
 		this.setData([]);
+		this.states.loaded = 0;
 		this.states.contentMaxSize = 0;
 		this.states.columnFillSize = [];
 		this.states.firstItemIndex = 0;

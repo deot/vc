@@ -43,6 +43,10 @@ export type RecycleListStates = {
 	 */
 	isBuilt: boolean;
 	/**
+	 * 已构建并完成布局的条数（不含骨架占位）；与 isBuilt 同时写入
+	 */
+	loaded: number;
+	/**
 	 * 每列交叉轴尺寸（百分比）；单列时不设
 	 */
 	columnSize: string | undefined;
@@ -91,6 +95,7 @@ export class BaseWatcher {
 		isEnd: false,
 		isSilentRefresh: false,
 		isBuilt: false,
+		loaded: 0,
 		isLoading: computed(() => {
 			return this.states.loadings.length > 0;
 		}),
@@ -160,4 +165,8 @@ export type RecycleListLoadState = {
 	 * 已到末尾且没有任何数据
 	 */
 	isEmpty: boolean;
+	/**
+	 * 已构建并完成布局的条数（不含骨架占位）；每批数据进入列表后更新，与 loadData 收到的 loaded 同义
+	 */
+	loaded: number;
 };
