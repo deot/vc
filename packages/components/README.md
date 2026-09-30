@@ -18,6 +18,8 @@ import { Button, MButton } from '@deot/vc-components';
 
 ## VcInstance
 
+完整的配置契约、运行时示例与 API 请参阅 [全局配置（VcInstance）](./vc/README.md)。
+
 `VcInstance` 用于统一配置语言、主题变量和组件的全局默认行为。`configure()` 可以多次调用，每次只更新传入的顶层配置项。
 
 ```ts

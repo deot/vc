@@ -32,7 +32,7 @@
 				documents: [
 					{
 						label: { zh: 'VcInstance 数据配置', en: 'VcInstance Configuration' },
-						value: '/packages/components#vcinstance'
+						value: '/components/vc'
 					}
 				],
 				items: ['theme']
@@ -142,6 +142,7 @@
 		})));
 		const readmes = Object.fromEntries([
 			['guide', 'README.md'],
+			['component-vc', 'packages/components/vc/README.md'],
 			...packageDocuments.map(item => [`package-${item.value}`, item.source]),
 			...components.map(item => [`component-${item.value}`, item.source])
 		]);
