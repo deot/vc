@@ -9,23 +9,23 @@ $color-dark-light: varfix(color-dark-light, popconfirm);
 
 @include block($component-name) {
 	@include element(wrapper) {
-		min-width: 218px;
-		padding: 16px;
+		min-width: unitfix(218);
+		padding: unitfix(16);
 		box-sizing: border-box;
 	}
 
 	@include element(title) {
 		position: relative;
-		padding-left: 23px;
-		margin-bottom: 15px;
+		padding-left: unitfix(23);
+		margin-bottom: unitfix(15);
 		color: $color-dark-light;
 	}
 
 	@include element(icon) {
 		position: absolute;
-		top: 4px;
+		top: unitfix(4);
 		left: 0;
-		font-size: 15px;
+		font-size: unitfix(15);
 
 		@include when(warning) {
 			color: $color-warning;
@@ -44,7 +44,15 @@ $color-dark-light: varfix(color-dark-light, popconfirm);
 		}
 	}
 
+	@include element(content) {
+		@include when(with-content) {
+			margin-bottom: unitfix(15);
+		}
+	}
+
 	@include element(footer) {
-		text-align: right;
+		display: flex;
+		justify-content: flex-end;
+		gap: unitfix(8);
 	}
 }

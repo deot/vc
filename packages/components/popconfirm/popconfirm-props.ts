@@ -24,11 +24,11 @@ export const props = {
 	},
 	okText: {
 		type: String,
-		default: '确定'
+		default: undefined
 	},
 	cancelText: {
 		type: String,
-		default: '取消'
+		default: undefined
 	},
 	okType: {
 		type: String,

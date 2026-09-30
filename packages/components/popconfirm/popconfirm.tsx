@@ -5,6 +5,7 @@ import { Popover } from '../popover/index';
 import { Button } from '../button/index';
 import { Icon } from '../icon/index';
 import { Customer } from '../customer/index';
+import { useLocale } from '../locale';
 import { useAttrs } from '@deot/vc-hooks';
 import { props as popconfirmProps } from './popconfirm-props';
 
@@ -16,15 +17,10 @@ export const Popconfirm = defineComponent({
 	inheritAttrs: false,
 	emits: ['update:modelValue', 'visible-change', 'ready', 'close', 'cancel', 'ok'],
 	setup(props, { slots, emit }) {
+		const { t } = useLocale();
 		const instance = getCurrentInstance()!;
 		const its = useAttrs({ merge: false });
 		const isActive = ref(false);
-
-		const contentStyle = computed(() => {
-			return props.content || !!slots.content
-				? { marginBottom: '15px' }
-				: {};
-		});
 
 		const inherit = computed(() => {
 			return {
@@ -132,7 +128,7 @@ export const Popconfirm = defineComponent({
 											}
 										</div>
 									</div>
-									<div style={contentStyle.value} class="vc-popconfirm__content">
+									<div class={['vc-popconfirm__content', { 'is-with-content': props.content || !!slots.content }]}>
 										{
 											slots.content
 												? slots.content()
@@ -146,18 +142,17 @@ export const Popconfirm = defineComponent({
 									<div class="vc-popconfirm__footer">
 										<Button
 											type={props.cancelType as any}
-											style="margin-right: 8px;"
 											size="small"
 											onClick={(e: any) => handleBefore(e, handleCancel)}
 										>
-											{props.cancelText}
+											{props.cancelText ?? t('vc.Popconfirm.cancelButtonText')}
 										</Button>
 										<Button
 											type={props.okType as any}
 											size="small"
 											onClick={(e: any) => handleBefore(e, handleOk)}
 										>
-											{props.okText}
+											{props.okText ?? t('vc.Popconfirm.okButtonText')}
 										</Button>
 									</div>
 								</div>

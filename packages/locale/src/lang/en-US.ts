@@ -142,6 +142,10 @@ export const enUS: Language = {
 		Snapshot: {
 			generating: 'Generating...'
 		},
+		Popconfirm: {
+			okButtonText: 'OK',
+			cancelButtonText: 'Cancel'
+		},
 		Drawer: {
 			okButtonText: 'OK',
 			cancelButtonText: 'Cancel'

@@ -142,6 +142,10 @@ export const zhCN: Language = {
 		Snapshot: {
 			generating: '正在生成...'
 		},
+		Popconfirm: {
+			okButtonText: '确定',
+			cancelButtonText: '取消'
+		},
 		Drawer: {
 			okButtonText: '确定',
 			cancelButtonText: '取消'

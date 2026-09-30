@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { Popconfirm } from '@deot/vc-components';
+import { Popconfirm, MPopconfirm, VcInstance } from '@deot/vc-components';
+import { zhCN, enUS } from '@deot/vc-locale';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi } from 'vitest';
@@ -185,7 +186,47 @@ describe('Popconfirm 内容渲染', () => {
 
 describe('Popconfirm 按钮', () => {
 	afterEach(() => {
+		VcInstance.configure({ locale: zhCN });
 		document.body.innerHTML = '';
+	});
+
+	it('MPopconfirm 与 Popconfirm 使用同一实现', () => {
+		expect(MPopconfirm).toBe(Popconfirm);
+	});
+
+	it('已打开的 portal 按钮随 locale 更新', async () => {
+		const wrapper = mount(() => (
+			<Popconfirm modelValue={true} title="x">
+				<button>btn</button>
+			</Popconfirm>
+		), { attachTo: document.body });
+		await flush();
+		expect(getFooterButtons().map(button => button.textContent)).toEqual(['取消', '确定']);
+
+		VcInstance.configure({ locale: enUS });
+		await flush();
+		expect(getFooterButtons().map(button => button.textContent)).toEqual(['Cancel', 'OK']);
+
+		VcInstance.configure({ locale: zhCN });
+		await flush();
+		expect(getFooterButtons().map(button => button.textContent)).toEqual(['取消', '确定']);
+		wrapper.unmount();
+	});
+
+	it.each(['Yes', ''])('显式按钮文案 %j 在切换语言后保留', async (text) => {
+		VcInstance.configure({ locale: enUS });
+		const wrapper = mount(() => (
+			<Popconfirm modelValue={true} title="x" okText={text} cancelText={text}>
+				<button>btn</button>
+			</Popconfirm>
+		), { attachTo: document.body });
+		await flush();
+		expect(getFooterButtons().map(button => button.textContent)).toEqual([text, text]);
+
+		VcInstance.configure({ locale: zhCN });
+		await flush();
+		expect(getFooterButtons().map(button => button.textContent)).toEqual([text, text]);
+		wrapper.unmount();
 	});
 
 	it('okText/cancelText: 默认按钮文字', async () => {
