@@ -2,9 +2,10 @@
 
 import { Customer, Scroller } from '@deot/vc-components';
 import { SCROLLER_REG, getPadding, getScroller, getViewportRect } from '../utils';
+import { ScrollerManager } from '../manager';
 import { Bar } from '../bar';
 import { mount } from '@vue/test-utils';
-import { nextTick, reactive, ref } from 'vue';
+import { defineComponent, getCurrentInstance, nextTick, onMounted, reactive, ref } from 'vue';
 import { onTestFinished, vi } from 'vitest';
 import { Wheel } from '@deot/helper-wheel';
 
@@ -1809,6 +1810,86 @@ describe('index.ts', () => {
 			expect(getScroller(inner)).toBe(root);
 
 			document.body.removeChild(root);
+		});
+
+		it('ScrollerManager finds the mounted Scroller by its root and forgets it after unmount', async () => {
+			const scrollerRef = ref();
+			const wrapper = mount(() => (
+				<Scroller ref={scrollerRef} wheel native={false} height="100px">
+					<span class="inner" />
+				</Scroller>
+			), { attachTo: document.body });
+			await nextTick();
+
+			const root = scrollerRef.value.wrapper;
+			expect(getScroller(wrapper.find('.inner').element)).toBe(root);
+			const instance = ScrollerManager.get(root)!;
+			expect(instance).toBeDefined();
+
+			// 订阅的通知与写入滚动位置同步
+			const listener = vi.fn();
+			instance.on(listener);
+			scrollerRef.value.scrollTo({ y: 10 });
+			expect(listener).toHaveBeenCalledTimes(1);
+
+			wrapper.unmount();
+			expect(ScrollerManager.get(root)).toBeUndefined();
+		});
+
+		it('ScrollerManager registers the Scroller before its children mount', async () => {
+			let found: unknown;
+			const Child = defineComponent({
+				setup() {
+					const instance = getCurrentInstance()!;
+					onMounted(() => {
+						const root = getScroller(instance.vnode.el);
+						found = root instanceof HTMLElement ? ScrollerManager.get(root) : undefined;
+					});
+					return () => <span class="child" />;
+				}
+			});
+			const wrapper = mount(() => (
+				<Scroller wheel native={false} height="100px">
+					<Child />
+				</Scroller>
+			), { attachTo: document.body });
+			await nextTick();
+
+			// 子组件（如外部滚动的 RecycleList）在自身 onMounted 中即可取到外层 Scroller
+			expect(found).toBeDefined();
+
+			wrapper.unmount();
+		});
+
+		it('ScrollerManager.subscribe uses Scroller notifications and native scroll elsewhere, and off stops both', async () => {
+			const scrollerRef = ref();
+			const wrapper = mount(() => (
+				<div class="native-box" style="overflow: auto">
+					<Scroller ref={scrollerRef} wheel native={false} height="100px">
+						<span class="inner" />
+					</Scroller>
+				</div>
+			), { attachTo: document.body });
+			await nextTick();
+
+			const root = scrollerRef.value.wrapper;
+			const box = wrapper.find('.native-box').element;
+			const listener = vi.fn();
+			const { scrollers, off } = ScrollerManager.subscribe(wrapper.find('.inner').element, listener);
+			expect(scrollers).toEqual([root, box]);
+
+			// Scroller 写入滚动位置时同步通知（滚轮驱动时不等下一帧的原生 scroll）
+			scrollerRef.value.scrollTo({ y: 10 });
+			expect(listener).toHaveBeenCalledTimes(1);
+			box.dispatchEvent(new Event('scroll'));
+			expect(listener).toHaveBeenCalledTimes(2);
+
+			off();
+			scrollerRef.value.scrollTo({ y: 20 });
+			box.dispatchEvent(new Event('scroll'));
+			expect(listener).toHaveBeenCalledTimes(2);
+
+			wrapper.unmount();
 		});
 
 		it('SCROLLER_REG matches the whole vc-scroller class only', () => {

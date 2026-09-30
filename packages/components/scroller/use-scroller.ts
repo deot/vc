@@ -1,6 +1,7 @@
-import { getCurrentInstance, computed, onBeforeUnmount, onMounted, ref, provide, reactive, nextTick } from 'vue';
+import { getCurrentInstance, computed, onBeforeUnmount, onMounted, ref, provide, reactive, nextTick, watch } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import { getPadding } from './utils';
+import { ScrollerManager } from './manager';
 import type { SetupContext } from 'vue';
 import type { BarExposed } from './bar';
 import type { Props } from './scroller-props';
@@ -161,6 +162,14 @@ export const useScroller = (expose: SetupContext['expose']) => {
 			index !== -1 && listeners.splice(index, 1);
 		}
 	};
+	// 根节点登记实例，见 ScrollerManager
+	// 在根节点的 ref 赋值时同步登记：早于所有 onMounted（含子组件，如外部滚动的 RecycleList 挂载时即查找承载者）；卸载时侦听器停止即移除
+	watch(wrapper, (el, _, onCleanup) => {
+		if (!el) return;
+		ScrollerManager.add(el, exposed);
+		onCleanup(() => ScrollerManager.remove(el));
+	}, { flush: 'sync' });
+
 	// 以下两个暴露scroll事件, 从而触发handleScroll
 	expose(exposed);
 	// reactive: xxx.scrollLeft.value -> xxx.scrollLeft
