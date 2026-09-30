@@ -330,7 +330,7 @@ describe('index.ts', () => {
 		const scrollerSpy = mockRect(scrollerEl, { top: 0, bottom: 200, width: 300, height: 200 });
 		const affixSpy = mockRect(affixEl, { top: 10, bottom: 50, width: 200, height: 40 });
 
-		// 所在滚动容器即注入的 Scroller（wheel）：通过实例的滚动通知同步刷新（与滚轮同一帧）
+		// 所在滚动容器即 Scroller（wheel）：通过实例的滚动通知同步刷新（与滚轮同一帧）
 		scrollerRef.value.scrollTo({ y: 50 });
 		expect(lastActive(affix)).toBe(true);
 		expect(affixEl.style.width).toBe('');
@@ -387,7 +387,7 @@ describe('index.ts', () => {
 		wrapper.unmount();
 	});
 
-	it('fixed=false in Scroller: native scroll and scrollTo both refresh via the injected instance', async () => {
+	it('fixed=false in Scroller: native scroll and scrollTo both refresh via the Scroller instance', async () => {
 		const scrollerRef = ref<any>();
 		const wrapper = mount(() => (
 			<Scroller ref={scrollerRef} height="200px" native={false}>
@@ -421,7 +421,7 @@ describe('index.ts', () => {
 		wrapper.unmount();
 	});
 
-	it('fixed=false listens to the native scroll of an inner scroll container', async () => {
+	it('fixed=false pins against the inner scroll container and also refreshes when an outer Scroller scrolls', async () => {
 		const scrollerRef = ref<any>();
 		const innerRef = ref<HTMLElement>();
 		const wrapper = mount(() => (
@@ -443,18 +443,42 @@ describe('index.ts', () => {
 		const innerSpy = mockRect(inner, { top: 50, bottom: 250, width: 300, height: 200 });
 		const affixSpy = mockRect(affixEl, { top: 60, bottom: 100, width: 200, height: 40 });
 
-		// 注入的是外层 Scroller，Affix 实际处在内层滚动容器中：改为监听内层的原生 scroll
+		// Affix 处在内层原生滚动容器中：监听内层的原生 scroll，吸附以内层可视区为参照
 		inner.dispatchEvent(new Event('scroll'));
 		await nextTick();
 		expect(lastActive(affix)).toBe(true);
 
-		// 外层 Scroller 的滚动通知不再驱动它
+		// 外层 Scroller 滚动时同样刷新（订阅整条滚动容器链），与写入滚动位置同步，吸附仍以内层为参照
 		const count = affix.emitted('update:modelValue')!.length;
 		scrollerRef.value.setScrollTop(10);
-		expect(affix.emitted('update:modelValue')!.length).toBe(count);
+		expect(affix.emitted('update:modelValue')!.length).toBe(count + 1);
+		expect(lastActive(affix)).toBe(true);
 
 		innerSpy.mockRestore();
 		affixSpy.mockRestore();
+		wrapper.unmount();
+	});
+
+	it('fixed inside an inner scroll container also refreshes on page scroll', async () => {
+		const wrapper = mount(() => (
+			<div style="height: 200px; overflow: auto">
+				<div style="height: 1000px">
+					<Affix offset={20}>{SLOT_TEXT}</Affix>
+				</div>
+			</div>
+		), { attachTo: document.body });
+
+		await nextTick();
+		await nextTick();
+
+		const root = wrapper.find('.vc-affix').element;
+		const spy = mockRect(root, { top: -100, bottom: -60, width: 200, height: 40 });
+
+		// 页面滚动（内层容器未滚动）：固定定位以视口为参照，同样需要刷新
+		await triggerScroll();
+		expect(wrapper.find('.vc-affix__fixed').exists()).toBe(true);
+
+		spy.mockRestore();
 		wrapper.unmount();
 	});
 

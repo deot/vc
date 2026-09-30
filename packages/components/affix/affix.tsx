@@ -1,8 +1,9 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, reactive, shallowRef, computed, onMounted, onBeforeUnmount, inject, provide, nextTick } from 'vue';
+import { defineComponent, ref, reactive, shallowRef, computed, onMounted, onBeforeUnmount, provide, nextTick } from 'vue';
 import { props as affixProps } from './affix-props';
-import { getScroller, getViewportRect } from '../scroller/utils';
+import { getViewportRect } from '../scroller/utils';
+import { ScrollerManager } from '../scroller/manager';
 
 const COMPONENT_NAME = 'vc-affix';
 
@@ -11,8 +12,7 @@ export const Affix = defineComponent({
 	emits: ['update:modelValue'],
 	props: affixProps,
 	setup(props, { slots, expose, emit }) {
-		const scrollerInstance = inject<any>('vc-scroller', null);
-		const scroller = shallowRef<any>(); // 当前元素所在的滚动容器
+		const scroller = shallowRef<any>(); // 当前元素所在的滚动容器（最近一层，可能为 window），吸附位置以它为参照
 		const base = shallowRef<HTMLElement>(); // 当前元素（props.tagret）的参考容器
 		const current = shallowRef<HTMLDivElement>(); // 当前元素
 
@@ -101,28 +101,21 @@ export const Affix = defineComponent({
 			}
 		};
 
-		// 所在滚动容器正是注入的 VC Scroller 时订阅其滚动通知：Scroller 由滚轮驱动（wheel）时与滚动同一帧回调
-		// 注入的是更外层的 Scroller（中间另有滚动容器）时，改为监听原生 scroll
-		const isInjectedScroller = () => !!scrollerInstance && scrollerInstance.wrapper === scroller.value;
+		/**
+		 * 滚动回调：自身的 refresh 与子组件（如 Tabs）经 onScroll 登记的回调
+		 * 挂载时统一订阅当前元素所在滚动容器链（逐层向上）及页面的滚动，见 ScrollerManager.subscribe
+		 */
+		const handlers = new Set<(...args: any[]) => void>();
+		let unsubscribe = () => {};
 
 		const offScroll = (handler: any) => {
-			if (isInjectedScroller()) {
-				scrollerInstance.off(handler);
-			} else {
-				scroller.value?.removeEventListener('scroll', handler);
-			}
+			handlers.delete(handler);
 		};
 
-		const onScroll = (handler: any, options: any) => {
+		const onScroll = (handler: any, options?: any) => {
+			handlers.add(handler);
 			// nextTick目的在与onMounted后执行
-			nextTick(() => {
-				if (isInjectedScroller()) {
-					scrollerInstance.on(handler);
-				} else {
-					scroller.value?.addEventListener('scroll', handler);
-				}
-				options?.first && handler();
-			});
+			options?.first && nextTick(handler);
 			return () => offScroll(handler);
 		};
 
@@ -141,12 +134,16 @@ export const Affix = defineComponent({
 			}
 
 			!base.value && (base.value = document.documentElement);
-			scroller.value = getScroller(current.value!);
+			if (current.value) {
+				const result = ScrollerManager.subscribe(current.value, () => handlers.forEach(fn => fn()), { window: true });
+				scroller.value = result.scrollers[0] || window;
+				unsubscribe = result.off;
+			}
 
 			onScroll(refresh, { first: true });
 		});
 
-		onBeforeUnmount(() => offScroll(refresh));
+		onBeforeUnmount(() => unsubscribe());
 
 		expose({ refresh, onScroll, offScroll });
 		provide('vc-affix', {
