@@ -231,8 +231,6 @@ export const Table = defineComponent({
 			updateLayout();
 			usesRecycleList.value && scroller.value?.refreshLayout?.();
 		};
-		// append 的延迟展示：记录并转发 load-change
-		const { handleLoadChange, isTailHidden } = useLazyTail(props, usesRecycleList, emit, refreshAffix);
 
 		// 用于多选表格，切换所有行的选中状态
 		const toggleAllSelection = () => {
@@ -348,6 +346,9 @@ export const Table = defineComponent({
 
 		// 把 props 同步进 store / layout；其中 immediate 的 watch 会在此处立即执行，须保持调用位置
 		usePropsSync(props, store, { isReady, updateLayout });
+
+		// append 的延迟展示：记录并转发 load-change；普通表格挂载即推送行数，须在 data 同步进 store 之后
+		const { handleLoadChange, isTailHidden } = useLazyTail(props, store, usesRecycleList, emit, refreshAffix);
 
 		// 表头 / 合计行横向跟随表体，并维护根节点 is-scrolling-* 类名
 		const { handleScrollX } = useScrollSync({ tableWrapper, headerWrapper, footerWrapper, bodyXWrapper, layout, props });

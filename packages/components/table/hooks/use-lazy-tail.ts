@@ -2,10 +2,14 @@ import { computed, ref, watch } from 'vue';
 import type { ComputedRef } from 'vue';
 import type { RecycleListLoadState } from '../../recycle-list';
 import type { Props } from '../table-props';
+import type { Store } from '../store';
 
 /**
- * append 的延迟展示：记录内部 RecycleList 推送的加载状态并原样转发（load-change），据此决定 append 是否延迟
- * @param props Table props（读 lazyTail、data）
+ * append 的延迟展示：记录内部 RecycleList 推送的加载状态，换算成行数后转发（load-change），据此决定 append 是否延迟
+ *
+ * 普通表格读 store 里的行数，须在 store 同步 data 之后调用
+ * @param props Table props（读 lazyTail）
+ * @param store Table 的 store（读渲染块与行数）
  * @param usesRecycleList 是否走虚拟列表
  * @param emit 组件的 emit
  * @param refreshAffix append 出现后重算吸底 dock（横向滚动条 + 合计行）的边界
@@ -13,24 +17,36 @@ import type { Props } from '../table-props';
  */
 export const useLazyTail = (
 	props: Props,
+	store: Store,
 	usesRecycleList: ComputedRef<boolean>,
 	emit: (event: 'load-change', loadState: RecycleListLoadState) => void,
 	refreshAffix: () => void
 ) => {
-	// 虚拟模式由内部 RecycleList 推送，这里记一份用于 lazyTail 并原样转发
-	const loadState = ref<RecycleListLoadState>({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false });
-	const handleLoadChange = (v: RecycleListLoadState) => {
+	const loadState = ref<RecycleListLoadState>({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false, loaded: 0 });
+	const commit = (v: RecycleListLoadState) => {
 		loadState.value = v;
 		emit('load-change', v);
+	};
+
+	// 内部 RecycleList 按块计数：合并单元格时一块含多行，换算成已构建的行数（树形表格为铺平后的可见行）
+	const toRowCount = (blocks: number) => {
+		const { list } = store.states;
+		const block = list[Math.min(blocks, list.length) - 1];
+		return block ? block.rowStart + block.rows.length : 0;
+	};
+
+	// 虚拟模式由内部 RecycleList 推送，这里记一份用于 lazyTail 并转发
+	const handleLoadChange = (v: RecycleListLoadState) => {
+		commit({ ...v, loaded: toRowCount(v.loaded) });
 	};
 
 	// 普通表格整表一次渲染完，没有分批过程，直接视为已到末尾；
 	// 否则 @load-change + v-show="loadState.isEnd" 的写法在非虚拟表格上永远等不到结束
 	watch(
-		() => [usesRecycleList.value, props.data.length === 0],
-		([virtual, empty]) => {
+		() => [usesRecycleList.value, store.states.renderData.length] as const,
+		([virtual, rows]) => {
 			if (virtual) return;
-			handleLoadChange({ isEnd: true, isLoading: false, isSilentRefresh: false, isEmpty: !!empty });
+			commit({ isEnd: true, isLoading: false, isSilentRefresh: false, isEmpty: rows === 0, loaded: rows });
 		},
 		{ immediate: true }
 	);

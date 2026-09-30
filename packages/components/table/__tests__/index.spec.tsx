@@ -1894,7 +1894,8 @@ describe('Table virtual + scroll & delay', () => {
 				isEnd: true,
 				isLoading: false,
 				isSilentRefresh: false,
-				isEmpty: false
+				isEmpty: false,
+				loaded: 20
 			});
 			wrapper.unmount();
 		});
@@ -1972,7 +1973,8 @@ describe('Table virtual + scroll & delay', () => {
 				isEnd: true,
 				isLoading: false,
 				isSilentRefresh: false,
-				isEmpty: false
+				isEmpty: false,
+				loaded: 3
 			});
 			await settle();
 			expect(wrapper.find('.lazy-append').exists()).toBe(true);
@@ -1991,8 +1993,102 @@ describe('Table virtual + scroll & delay', () => {
 				isEnd: true,
 				isLoading: false,
 				isSilentRefresh: false,
-				isEmpty: true
+				isEmpty: true,
+				loaded: 0
 			});
+			wrapper.unmount();
+		});
+
+		it('virtualized: pushes loaded rows after every batch', async () => {
+			const seen: any[] = [];
+			// 内部 batchCount 为 100；挂载阶段最多续建三批，500 行还有未构建数据
+			const wrapper = mount(() => (
+				<Table data={buildData(500)} primaryKey="id" virtualized onLoadChange={(v: any) => seen.push(v)}>
+					{{ default: columns }}
+				</Table>
+			), { attachTo: document.body });
+			await settle();
+
+			// 挂载阶段的几批并发构建、只推一次；之后每次滚到加载边缘再构建一批
+			const list = wrapper.findComponent({ name: 'vc-recycle-list' });
+			list.find('.vc-recycle-list__wrapper').element.dispatchEvent(new Event('mouseenter'));
+			for (let i = 0; i < 2; i++) {
+				list.findComponent({ name: 'vc-scroller' }).vm.$emit('scroll', { target: {} });
+				await settle();
+			}
+
+			// isEnd 等布尔字段都没变，每批的推送来自 loaded
+			const values = seen.map(v => v.loaded);
+			expect(values[0]).toBe(0);
+			expect(values.length).toBeGreaterThan(2);
+			expect(values.every((v, i) => i === 0 || v > values[i - 1])).toBe(true);
+			expect(values.every(v => v % 100 === 0)).toBe(true);
+			expect(seen.every(v => v.isEnd === false)).toBe(true);
+			wrapper.unmount();
+		});
+
+		it('virtualized: counts rows rather than merged blocks', async () => {
+			const seen: any[] = [];
+			// 首列每两行合并：一块两行
+			const getSpan = ({ rowIndex, columnIndex }: any) => (columnIndex === 0 && rowIndex % 2 === 0 ? [2, 1] : [1, 1]);
+			const mountMerged = (length: number) => mount(() => (
+				<Table data={buildData(length)} primaryKey="id" virtualized getSpan={getSpan} onLoadChange={(v: any) => seen.push(v)}>
+					{{ default: columns }}
+				</Table>
+			), { attachTo: document.body });
+
+			// 还有未构建的块：已构建的行数是块数的两倍
+			let wrapper = mountMerged(1000);
+			await settle();
+			const list = (wrapper.findComponent({ name: 'vc-recycle-list' }).vm as any).$.exposed;
+			expect(list.store.local.hasMore).toBe(true);
+			expect(list.store.states.loaded).toBeGreaterThan(0);
+			expect(seen[seen.length - 1]).toMatchObject({ isEnd: false, loaded: list.store.states.loaded * 2 });
+			wrapper.unmount();
+
+			// 全部构建完：等于总行数
+			seen.length = 0;
+			wrapper = mountMerged(250);
+			await settle();
+			expect(seen[seen.length - 1]).toMatchObject({ isEnd: true, loaded: 250 });
+			wrapper.unmount();
+		});
+
+		it.each([false, true])('tree table counts visible rows (virtualized=%s)', async (virtualized) => {
+			const seen: any[] = [];
+			const tree = [
+				{ id: 1, name: 'r1', children: [{ id: 11, name: 'r1-1', children: [{ id: 111, name: 'r1-1-1' }] }, { id: 12, name: 'r1-2' }] },
+				{ id: 2, name: 'r2' }
+			];
+			const wrapper = mount(() => (
+				<Table data={tree} primaryKey="id" defaultExpandAll virtualized={virtualized} onLoadChange={(v: any) => seen.push(v)}>
+					{{ default: columns }}
+				</Table>
+			), { attachTo: document.body });
+			await settle();
+
+			// 2 个根行展开后共 5 行可见
+			expect(seen[seen.length - 1]).toMatchObject({ isEnd: true, isEmpty: false, loaded: 5 });
+			wrapper.unmount();
+		});
+
+		it('normal table: loaded follows the row count', async () => {
+			const seen: any[] = [];
+			const data = ref(buildData(3));
+			const wrapper = mount(() => (
+				<Table data={data.value} onLoadChange={(v: any) => seen.push(v)}>
+					{{ default: columns }}
+				</Table>
+			), { attachTo: document.body });
+			expect(seen[seen.length - 1].loaded).toBe(3);
+
+			data.value = buildData(5);
+			await settle();
+			expect(seen[seen.length - 1]).toMatchObject({ isEnd: true, isEmpty: false, loaded: 5 });
+
+			data.value = [];
+			await settle();
+			expect(seen[seen.length - 1]).toMatchObject({ isEnd: true, isEmpty: true, loaded: 0 });
 			wrapper.unmount();
 		});
 	});
