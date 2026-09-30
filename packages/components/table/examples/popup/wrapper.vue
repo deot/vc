@@ -12,7 +12,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, onUnmounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { Modal } from '../../../modal';
 import TableDemo from '../max-height.vue';
 
@@ -24,14 +24,9 @@ const emit = defineEmits(['portal-fulfilled', 'portal-rejected']);
 
 const target = ref(null);
 const isActive = ref(false);
-let timer;
 
 onMounted(() => {
 	isActive.value = true;
-});
-
-onUnmounted(() => {
-	clearInterval(timer);
 });
 
 const handleOk = () => {

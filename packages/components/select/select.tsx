@@ -343,7 +343,10 @@ export const Select = defineComponent({
 																										render={props.renderOption}
 																										renderLabel={props.renderLabel}
 																									>
-																										{{ default: slots?.option, label: slots?.label }}
+																										{{
+																											default: slots?.option,
+																											label: slots?.label
+																										}}
 																									</Option>
 																								);
 																							});

@@ -49,7 +49,7 @@ const scroller = ref();
 
 window.scroller = scroller;
 
-const handleScrollDelegate = (e) => {
+const handleScrollDelegate = () => {
 	// do ...
 };
 </script>

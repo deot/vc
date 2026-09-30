@@ -15,7 +15,7 @@ export const RadioButton = defineComponent({
 	},
 	emits: ['update:modelValue', 'change'],
 	setup(props, { slots }) {
-		const {  styles, radioName, checked, classes, computedLabel, isDisabled, handleChange, handleFocus, handleBlur } = useRadio();
+		const { styles, radioName, checked, classes, computedLabel, isDisabled, handleChange, handleFocus, handleBlur } = useRadio();
 		return () => {
 			return (
 				<label class={[classes.value, 'vc-radio-button']} style={styles.value}>

@@ -39,7 +39,7 @@ export const Input = defineComponent({
 		'enter',
 		'tip'
 	],
-	setup(props, { slots, expose, attrs }) {
+	setup(props, { slots, expose }) {
 		const input = ref<HTMLInputElement>();
 
 		useNativeEmitter(input, expose);

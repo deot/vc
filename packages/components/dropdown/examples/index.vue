@@ -144,7 +144,6 @@ const checkAllGroup = ref(['香蕉', '西瓜']);
 const inputV = ref('');
 
 let wait;
-let timer;
 
 const handleClick = (...args) => {
 	/**
@@ -179,7 +178,7 @@ const handleClose = () => {
 const handleCloseCb = () => {
 	console.log('cb');
 	wait = 1;
-	timer = setTimeout(() => {
+	setTimeout(() => {
 		wait = 0;
 	}, 200);
 };

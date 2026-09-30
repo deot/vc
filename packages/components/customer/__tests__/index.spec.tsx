@@ -2,7 +2,6 @@
 
 import { Customer } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
-import { h } from 'vue';
 import { vi } from 'vitest';
 
 describe('index.ts', () => {

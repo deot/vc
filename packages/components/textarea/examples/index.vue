@@ -8,12 +8,12 @@
 			@blur="handleBlur"
 			@enter="handleEnter"
 		/>
-		<br>	
-		<br>	
-		<br>	
-		<br>	
+		<br>
+		<br>
+		<br>
+		<br>
 		<Form
-			ref="formValidate" 
+			ref="formValidate"
 			:label-width="96"
 			style="padding-left: 56px; margin-top: 21px"
 			@submit.prevent
@@ -51,7 +51,7 @@
 	</div>
 </template>
 <script setup>
-import {ref } from 'vue';
+import { ref } from 'vue';
 import { Textarea } from '..';
 import { Form, FormItem } from '../../form/index';
 
