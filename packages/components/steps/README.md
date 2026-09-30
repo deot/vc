@@ -40,6 +40,7 @@ const current = ref(2);
 .toolbar {
 	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 	gap: 16px;
 	margin-top: 24px;
 }
@@ -99,7 +100,7 @@ import { Steps, Step } from '@deot/vc';
 <template>
 	<div>
 		<div class="toolbar">
-			<label><span>纵向</span><Switch v-model="vertical" /></label>
+			<label><span>纵向</span><Switch v-model="isVertical" /></label>
 			<RadioGroup v-model="labelPosition">
 				<Radio value="right">right</Radio>
 				<Radio value="bottom">bottom</Radio>
@@ -107,7 +108,7 @@ import { Steps, Step } from '@deot/vc';
 				<Radio value="top">top</Radio>
 			</RadioGroup>
 		</div>
-		<Steps :model-value="2" :vertical="vertical" :label-position="labelPosition">
+		<Steps :model-value="2" :vertical="isVertical" :label-position="labelPosition">
 			<Step title="填写信息" description="填写基本信息" />
 			<Step title="确认信息" description="核对填写内容" />
 			<Step title="完成" description="提交成功" />
@@ -119,7 +120,7 @@ import { Steps, Step } from '@deot/vc';
 import { ref } from 'vue';
 import { Radio, RadioGroup, Switch, Steps, Step } from '@deot/vc';
 
-const vertical = ref(false);
+const isVertical = ref(false);
 const labelPosition = ref('right');
 </script>
 
@@ -224,7 +225,7 @@ const renderDot = ({ index, status, dot }) => {
 	width: 28px;
 	font-size: 20px;
 	line-height: 28px;
-	color: #456CF6;
+	color: var(--vc-steps-color-primary, var(--vc-color-primary));
 	text-align: center;
 }
 </style>
@@ -336,7 +337,7 @@ const current = ref(2);
 - 某一步的最终状态为 `error` 时（包括 Step 单独设置），前一步的连线显示为错误色；已完成步骤的连线为主色。
 - Steps 的默认插槽只渲染 Step（包括 `v-for`、`<template>` 中的 Step），其他节点会被忽略；被其他组件包裹的 Step 也不会渲染。
 - `title`、`description` 为字符串时按 HTML 渲染，不要传入未经处理的用户输入。
-- 自定义节点的尺寸由调用方控制；连线位置按默认节点（28px，`dot` 为 8px）计算。
+- 自定义节点的尺寸由调用方控制；连线位置按默认节点（默认缩放下为 28px，`dot` 为 8px）计算。组件尺寸随 SCSS `$scale` 配置缩放，自定义节点需同步调整。
 - 颜色使用主题变量，可通过以下变量单独覆盖：
   - `--vc-steps-color-primary`：当前步、已完成的连线
   - `--vc-steps-color-primary-lighter`：已完成步骤的底色

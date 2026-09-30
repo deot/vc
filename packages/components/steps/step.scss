@@ -19,7 +19,7 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 @include block($component-name) {
 	position: relative;
 	flex: 1;
-	margin-right: $gap;
+	margin-right: unitfix($gap);
 	overflow: hidden;
 	text-align: left;
 	white-space: nowrap;
@@ -34,8 +34,8 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 
 	@include element(dot) {
 		display: inline-block;
-		margin-right: $gap;
-		font-size: 16px;
+		margin-right: unitfix($gap);
+		font-size: unitfix(16px);
 		font-weight: 500;
 		vertical-align: top;
 	}
@@ -43,10 +43,10 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 	// 序号与图标均上下左右居中
 	@include element(icon) {
 		display: flex;
-		width: $icon-size;
-		height: $icon-size;
-		line-height: $icon-size - 2px;
-		border: 1px solid transparent;
+		width: unitfix($icon-size);
+		height: unitfix($icon-size);
+		line-height: unitfix($icon-size - 2px);
+		border: unitfix(1px) solid transparent;
 		border-radius: 50%;
 		box-sizing: border-box;
 		align-items: center;
@@ -54,7 +54,7 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 
 		// 成功/失败图标的字形接近满格，按10px与序号的视觉大小一致
 		> .vc-icon {
-			font-size: 10px;
+			font-size: unitfix(10px);
 		}
 	}
 
@@ -65,17 +65,17 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 	@include element(title) {
 		position: relative;
 		display: inline-block;
-		padding-right: $gap;
-		font-size: 16px;
+		padding-right: unitfix($gap);
+		font-size: unitfix(16px);
 		font-weight: normal;
-		line-height: $icon-size;
+		line-height: unitfix($icon-size);
 		color: $title-color;
 	}
 
 	@include element(description) {
-		max-width: 140px;
-		margin-top: 2px;
-		font-size: 12px;
+		max-width: unitfix(140px);
+		margin-top: unitfix(2px);
+		font-size: unitfix(12px);
 		color: $description-color;
 		white-space: normal;
 	}
