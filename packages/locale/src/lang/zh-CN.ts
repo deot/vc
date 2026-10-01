@@ -3,6 +3,9 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		Cascader: {
+			placeholder: '请选择'
+		},
 		ColorPicker: {
 			clearText: '清空',
 			confirmText: '确定'

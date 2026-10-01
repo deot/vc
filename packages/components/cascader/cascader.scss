@@ -1,6 +1,7 @@
 @use '../style/helper' as *;
 
 $component-name: vc-cascader;
+$color-dark-extralight: varfix(color-dark-extralight, cascader);
 
 @include block($component-name) {
 	position: relative;
@@ -23,10 +24,10 @@ $component-name: vc-cascader;
 
 	@include element(append) {
 		position: relative;
-		padding: 0 10px 0 2px;
-		font-size: 12px;
-		line-height: 32px;
-		color: #808695;
+		padding: 0 unitfix(10) 0 unitfix(2);
+		font-size: unitfix(12);
+		line-height: unitfix(32);
+		color: $color-dark-extralight;
 		text-align: center;
 		white-space: nowrap;
 		cursor: pointer;

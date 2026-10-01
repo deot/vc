@@ -5,6 +5,9 @@ import { CascaderView } from '../cascader-view';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi } from 'vitest';
+import * as Dom from '@deot/helper-dom';
+
+vi.mock('@deot/helper-dom', { spy: true });
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -159,6 +162,23 @@ describe('Cascader interaction', () => {
 		expect(getCols().length).toBe(3);
 
 		wrapper.unmount();
+	});
+
+	it('scrolls to the default selection using the rendered row height', async () => {
+		const rowHeight = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(60);
+		const scroll = vi.mocked(Dom.scrollIntoView).mockImplementation(async () => {});
+		const wrapper = mount(() => (
+			<Cascader modelValue={['zhejiang', 'hangzhou', 'binjiang']} data={options} />
+		), { attachTo: document.body });
+		try {
+			await wrapper.trigger('click');
+			await flush();
+			expect(scroll).toHaveBeenCalledWith(getCols()[2].firstChild, { to: 60 });
+		} finally {
+			wrapper.unmount();
+			scroll.mockRestore();
+			rowHeight.mockRestore();
+		}
 	});
 
 	it('empty data when dataSource is empty', async () => {

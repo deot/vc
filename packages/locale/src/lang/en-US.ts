@@ -3,6 +3,9 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		Cascader: {
+			placeholder: 'Please select'
+		},
 		ColorPicker: {
 			clearText: 'Clear',
 			confirmText: 'OK'

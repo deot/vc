@@ -9,6 +9,7 @@ import { VcError } from '../vc/index';
 import { Input } from '../input/index';
 import { Popover } from '../popover/index';
 import { Icon } from '../icon/index';
+import { useLocale } from '../locale';
 import { CascaderColumn } from './column';
 
 import { toCurrentValue, toModelValue } from '../select/utils';
@@ -26,6 +27,7 @@ export const Cascader = defineComponent({
 	props: cascaderProps,
 	emits: ['update:modelValue', 'visible-change', 'ready', 'change', 'close'],
 	setup(props, { emit, slots }) {
+		const { t } = useLocale();
 		const formItem = inject('vc-form-item', {} as FormItemProvide);
 		const its = useAttrs({ merge: false });
 
@@ -164,7 +166,8 @@ export const Cascader = defineComponent({
 
 					if (source && el) {
 						const $instance = source.findIndex((i: TreeData) => item == i.value);
-						scrollIntoView(el.firstChild, { to: $instance * 30 });
+						const rowHeight = el.firstChild.firstElementChild?.clientHeight || 0;
+						scrollIntoView(el.firstChild, { to: $instance * rowHeight });
 					}
 				});
 			});
@@ -317,7 +320,7 @@ export const Cascader = defineComponent({
 									class="vc-cascader__input"
 									// @ts-ignore
 									readonly={true}
-									placeholder={its.value.attrs?.placeholder || '请选择'}
+									placeholder={its.value.attrs?.placeholder ?? t('vc.Cascader.placeholder')}
 								>
 									{{
 										append: () => {
