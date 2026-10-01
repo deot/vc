@@ -698,9 +698,7 @@ const store = new RecycleListStore({
 
 以上 Playground 保留各场景的最小交互；下面的源码示例提供更多组合选项和调试信息。
 
-- [Window 前置内容—RecycleList—后置内容](./examples/external-window.vue)
-- [VC Scroller 外部视口](./examples/external-scroller.vue)
-- [横向外部视口](./examples/external-horizontal.vue)
+- [外部视口：Window / VC Scroller / 横向原生容器，前置内容—RecycleList—后置内容](./examples/external.vue)
 - [inverted 上拉刷新](./examples/inverted-pullable.vue)
 - [预估尺寸](./examples/estimate-size.vue)
 

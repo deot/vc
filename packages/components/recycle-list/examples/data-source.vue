@@ -1,47 +1,64 @@
-<!-- 含默认值dataSource -->
+<!-- 本地 data 作为初始数据，滚到已有数据末尾后继续 loadData；可增删、可禁用远程加载 -->
 <template>
-	<div class="demo">
-		<RecycleList
-			class="list"
-			pullable
-			:cols="5"
-			:disabled="disabled"
-			:data="dataSource"
-			:load-data="loadData"
-			:scroller-options="{
-				native: false,
-				always: true
-			}"
-		>
-			<template #default="{ row }">
-				<div
-					:key="row.id"
-					class="item"
-					:style="{
-						background: row.background
-					}"
-				>
-					<div>id: {{ row.id }}</div>
-					<div>page: {{ row.page }}</div>
-					<div style="visibility: hidden;">row.text: {{ row.text }}</div>
+	<div class="recycle-data-source">
+		<div class="recycle-data-source__controls">
+			<Select
+				v-for="item in CONTROLS"
+				:key="item.key"
+				v-model="controls[item.key]"
+				:data="item.data"
+				:label="item.label"
+			/>
+		</div>
+		<div class="recycle-data-source__body">
+			<RecycleList
+				class="recycle-data-source__list"
+				pullable
+				:cols="5"
+				:disabled="controls.disabled === 'on'"
+				:data="dataSource"
+				:load-data="loadData"
+				:scroller-options="{
+					native: false,
+					always: true
+				}"
+			>
+				<template #default="{ row }">
 					<div
-						:style="`height: ${dynamicSize}px`"
-						@click="handleClick(row)"
-					>{{ dynamicSize }}</div>
-					<div @click="handleDelete(row)">删除</div>
-					<div @click="handleAdd(row)">增加</div>
-				</div>
-			</template>
-		</RecycleList>
+						:key="row.id"
+						class="recycle-data-source__item"
+						:style="{
+							background: row.background
+						}"
+					>
+						<div>id: {{ row.id }}</div>
+						<div>page: {{ row.page }}</div>
+						<div style="visibility: hidden;">row.text: {{ row.text }}</div>
+						<div
+							:style="`height: ${dynamicSize}px`"
+							@click="handleClick(row)"
+						>{{ dynamicSize }}</div>
+						<div @click="handleDelete(row)">删除</div>
+						<div @click="handleAdd(row)">增加</div>
+					</div>
+				</template>
+			</RecycleList>
+		</div>
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue';
+import { onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { RecycleList } from '..';
+import { Select } from '../../select';
+
+// 对照项：每项一个 Select
+const CONTROLS = [
+	{ key: 'disabled', label: 'disabled', data: [{ value: 'off', label: 'false（滚到末尾继续 loadData）' }, { value: 'on', label: 'true（只展示本地 data）' }] }
+];
+const controls = reactive(Object.fromEntries(CONTROLS.map(({ key, data }) => [key, data[0].value])));
 
 const dynamicSize = ref(20);
 const pageSize = 50; // 示例内每页条数（组件不再感知分页大小）
-const disabled = ref(true);
 
 let count = 0;
 const total = 405;
@@ -116,34 +133,54 @@ const handleAdd = (row) => {
 	dataSource.value = v;
 };
 dataSource.value = makeItems(Math.max(1, total - 5) * pageSize, 1, 'From dataSource');
-disabled.value = false;
+
+// 右上角的性能读数：切换对照项或增删数据后清零
+window.$perf?.observe();
+watch([controls, dataSource], () => window.$perf?.reset());
+onBeforeUnmount(() => window.$perf?.disconnect());
 
 </script>
 
-<style>
-.demo {
+<style lang="scss">
+.recycle-data-source {
 	position: fixed;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	width: 100%;
-}
-.list {
-	height: 100%;
-	margin: 0 auto;
-	padding: 0;
-	border: 1px solid #ddd;
-	list-style-type: none;
-	text-align: center;
-	background: #eee;
-	box-sizing: border-box;
-}
-.item {
+	inset: 0;
 	display: flex;
-	line-height: 20px;
-	width: 100%;
-	text-align: left;
-	word-break: break-all;
 	flex-direction: column;
+
+	&__controls {
+		display: flex;
+		gap: 12px;
+		padding: 12px;
+
+		.vc-select {
+			width: 320px;
+		}
+	}
+
+	&__body {
+		min-height: 0;
+		flex: 1;
+	}
+
+	&__list {
+		height: 100%;
+		padding: 0;
+		margin: 0 auto;
+		text-align: center;
+		list-style-type: none;
+		background: #eee;
+		border: 1px solid #ddd;
+		box-sizing: border-box;
+	}
+
+	&__item {
+		display: flex;
+		width: 100%;
+		line-height: 20px;
+		text-align: left;
+		word-break: break-all;
+		flex-direction: column;
+	}
 }
 </style>

@@ -25,10 +25,15 @@
 	</div>
 </template>
 <script setup lang="jsx">
-import { ref } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
 import { RecycleList, RecycleListStore } from '..';
 
 const isActive = ref(true);
+
+// 右上角的性能读数：重新挂载后清零
+window.$perf?.observe();
+watch(isActive, () => window.$perf?.reset());
+onBeforeUnmount(() => window.$perf?.disconnect());
 const dynamicSize = ref(20);
 
 const pageSize = 30; // 示例内每页条数（组件不再感知分页大小）

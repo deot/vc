@@ -4,24 +4,13 @@
 		<header class="demo-header">
 			<h1>inverted 上拉刷新</h1>
 			<div class="controls">
-				<span class="group">
-					<span class="group-label">方向</span>
-					<label v-for="option in directions" :key="option.value">
-						<input v-model="direction" type="radio" :value="option.value">
-						{{ option.label }}
-					</label>
-				</span>
-				<span class="group">
-					<span class="group-label">滚动源</span>
-					<label v-for="option in sources" :key="option.value">
-						<input v-model="source" type="radio" :value="option.value">
-						{{ option.label }}
-					</label>
-				</span>
-				<label>
-					<input v-model="skeleton" type="checkbox">
-					骨架屏
-				</label>
+				<Select
+					v-for="item in CONTROLS"
+					:key="item.key"
+					v-model="controls[item.key]"
+					:data="item.data"
+					:label="item.label"
+				/>
 			</div>
 			<p class="stats">
 				<span>刷新次数：<strong class="refresh-count">{{ refreshCount }}</strong></span>
@@ -83,21 +72,20 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { RecycleList } from '..';
+import { Select } from '../../select';
 
-const directions = [
-	{ label: '纵向', value: 'vertical' },
-	{ label: '横向', value: 'horizontal' }
+// 对照项：每项一个 Select
+const CONTROLS = [
+	{ key: 'direction', label: '方向', data: [{ value: 'vertical', label: '纵向' }, { value: 'horizontal', label: '横向' }] },
+	{ key: 'source', label: '滚动源', data: [{ value: 'inner', label: '内部 Scroller' }, { value: 'external', label: '外部容器（fill=false）' }] },
+	{ key: 'skeleton', label: '骨架屏', data: [{ value: 'off', label: '关闭' }, { value: 'on', label: '开启' }] }
 ];
-const sources = [
-	{ label: '内部 Scroller', value: 'inner' },
-	{ label: '外部容器（fill=false）', value: 'external' }
-];
-
-const direction = ref('vertical');
-const source = ref('inner');
-const skeleton = ref(false);
+const controls = reactive(Object.fromEntries(CONTROLS.map(({ key, data }) => [key, data[0].value])));
+const direction = computed(() => controls.direction);
+const source = computed(() => controls.source);
+const skeleton = computed(() => controls.skeleton === 'on');
 const vertical = computed(() => direction.value === 'vertical');
 const external = computed(() => source.value === 'external');
 
@@ -116,6 +104,11 @@ watch([direction, source, skeleton], () => {
 	round.value = 0;
 	loadedPage.value = 0;
 });
+
+// 右上角的性能读数：切换对照项后清零
+window.$perf?.observe();
+watch(controls, () => window.$perf?.reset());
+onBeforeUnmount(() => window.$perf?.disconnect());
 
 const loadData = ({ page }) => {
 	if (page === 1) round.value++;
@@ -171,17 +164,9 @@ const loadData = ({ page }) => {
 	flex-wrap: wrap;
 }
 
-.controls label,
-.group {
-	display: inline-flex;
-	color: #475569;
-	align-items: center;
-	gap: 6px;
-}
-
-.group-label {
-	font-weight: 600;
-	color: #1f2933;
+/* Select 的根节点带着本组件的 scope，可以直接选中 */
+.controls .vc-select {
+	width: 240px;
 }
 
 .stats {

@@ -29,7 +29,7 @@
 	</div>
 </template>
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { RecycleList } from '..';
 import { Select } from '../../select';
 
@@ -50,6 +50,11 @@ const listRef = ref();
 const loaded = ref(0);
 const contentSize = computed(() => listRef.value?.store.states.contentMaxSize || 0);
 const data = ref(Array.from({ length: 10000 }, (_, id) => ({ id, tall: id % 5 === 4, expanded: false })));
+
+// 右上角的性能读数：切换预估方式后清零
+window.$perf?.observe();
+watch(mode, () => window.$perf?.reset());
+onBeforeUnmount(() => window.$perf?.disconnect());
 </script>
 <style scoped>
 .demo {
