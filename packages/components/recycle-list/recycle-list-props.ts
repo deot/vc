@@ -24,6 +24,11 @@ export const props = {
 		type: Number,
 		default: 0
 	},
+
+	// 预估尺寸（px）：给出尺寸的项不进隐藏池测量，本地数据一次构建完；渲染后按实际尺寸校正。
+	// 函数入参与默认插槽一致：row 为 data 中的一项，index 为它的下标；返回 undefined 的项照常测量
+	estimateSize: [Number, Function] as PropType<number | ((data: { row: any; index: number }) => number | undefined)>,
+
 	// 视口外额外预渲染距离（px）
 	overscan: {
 		type: Number,

@@ -72,6 +72,11 @@ $component-name: vc-recycle-list;
 		width: 100%;
 	}
 
+	// 可见行的容器，尺寸即行的尺寸
+	@include element(item) {
+		box-sizing: border-box;
+	}
+
 	// scroll-state
 	@include element(loading) {
 		display: flex;

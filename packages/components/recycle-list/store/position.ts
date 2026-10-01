@@ -1,48 +1,7 @@
 import { toRaw } from 'vue';
+import { Utils } from '@deot/vc-shared';
 import type { Store } from './store';
 import type { RecycleListItemNodeRaw } from './base-watcher';
-
-/**
- * 第一个满足 isMatch 的下标；无匹配返回 length
- * @param length 搜索区间长度
- * @param isMatch 单调谓词（true 区段在右侧）
- * @returns 首个匹配下标
- */
-export const bisectFirst = (length: number, isMatch: (i: number) => boolean) => {
-	let lo = 0;
-	let hi = length;
-	while (lo < hi) {
-		const mid = (lo + hi) >>> 1;
-		if (isMatch(mid)) {
-			hi = mid;
-		} else {
-			lo = mid + 1;
-		}
-	}
-	return lo;
-};
-
-/**
- * 最后一个满足 isMatch 的下标；无匹配返回 -1
- * @param length 搜索区间长度
- * @param isMatch 单调谓词（true 区段在左侧）
- * @returns 末个匹配下标
- */
-export const bisectLast = (length: number, isMatch: (i: number) => boolean) => {
-	let lo = 0;
-	let hi = length - 1;
-	let last = -1;
-	while (lo <= hi) {
-		const mid = (lo + hi) >>> 1;
-		if (isMatch(mid)) {
-			last = mid;
-			lo = mid + 1;
-		} else {
-			hi = mid - 1;
-		}
-	}
-	return last;
-};
 
 /**
  * 列索引与可见范围查询
@@ -112,7 +71,7 @@ export class Position {
 
 		for (let column = 0; column < cols; column++) {
 			const indices = columns[column];
-			indices.length = bisectFirst(indices.length, i => indices[i] >= startScan);
+			indices.length = Utils.bisectFirst(indices.length, i => indices[i] >= startScan);
 		}
 		return columns;
 	}
@@ -151,11 +110,11 @@ export class Position {
 			const indices = columns[column];
 			// inverted 下每列相对最高列有底部填充，位置需整体下移
 			const fillSize = inverted ? columnFillSize[column] : 0;
-			const first = bisectFirst(indices.length, (i) => {
+			const first = Utils.bisectFirst(indices.length, (i) => {
 				const item = rebuildData[indices[i]];
 				return item.raw.position + item.raw.size + fillSize >= headPosition;
 			});
-			const last = bisectLast(indices.length, (i) => {
+			const last = Utils.bisectLast(indices.length, (i) => {
 				const item = rebuildData[indices[i]];
 				return item.raw.position + fillSize <= tailPosition;
 			});

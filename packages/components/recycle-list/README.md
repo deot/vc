@@ -138,6 +138,31 @@ const handleTop = () => listRef.value?.scrollTo(0);
 ```
 :::
 
+### 预估尺寸
+
+默认每一项都要先在隐藏池里完整渲染一次、量出尺寸才能排版，所以本地数据按 `batchCount` 分批构建，滚到已构建内容的末尾才构建下一批。尺寸事先可知（如固定行高）时传入 `estimateSize`：这些项跳过隐藏池，数据一次构建全部，滚动条从一开始就是完整长度；项渲染出来后仍按实际尺寸校正。
+
+```vue
+<!-- 固定高度 -->
+<RecycleList :data="data" :estimate-size="48" disabled />
+<!-- 按项给出；返回 undefined 的项照常测量 -->
+<RecycleList :data="data" :estimate-size="({ row }) => (row.expanded ? undefined : 48)" disabled />
+```
+
+### 测量时跳过副作用
+
+没有预估尺寸的项会先在隐藏的测量池里渲染一遍来量尺寸，再在列表里渲染展示的那一份。项内组件有挂载即触发的副作用（发请求、登记等）时，用 [useMeasuring()](../measuring) 判断自己是否在测量池里，跳过与尺寸无关的工作；`Image`、`Text` 已内置这一处理。
+
+```ts
+import { useMeasuring } from '@deot/vc';
+
+const measuring = useMeasuring();
+onMounted(() => {
+	if (measuring) return;
+	fetchDetail();
+});
+```
+
 ### 多列瀑布流
 
 `cols` 决定列数，`gutter` 决定列间距；卡片自身的下边距负责纵向间隔。
@@ -342,7 +367,7 @@ const handleTop = () => listRef.value?.scrollTo(0);
 - 可见范围由外部 viewport 与列表内容区的相对位置计算。外部 viewport 尚在头部或已经进入尾部时，不会因为外部容器滚动而触发无关批次。
 - 后置内容不计入列表尾部边界；接近 RecycleList 自身尾部时就会加载下一批，不必等待外部 Footer 滚动结束。
 - 虚拟占位尺寸参与正常文档流，数据增加时会自然把后置内容向后推。
-- 挂载、列表自身交叉轴尺寸变化以及 `fill`/方向变化会自动重新测量；单行内容变化只校正该行，已渲染的其它行保持不动；外部 viewport 尺寸变化只刷新可见范围，不重新测量节点（节点尺寸只取决于列表自身的交叉轴）。外部前置内容发生无法被观察的位置变化时，调用 `refreshViewport()` 即可，它只刷新几何与已渲染的行。
+- 挂载、列表由隐藏变为可见以及 `fill`/方向变化会自动重新测量；列表自身交叉轴尺寸变化（如变宽）时只重测正在渲染的行，其余行沿用原尺寸、渲染出来时再校正；单行内容变化只校正该行，已渲染的其它行保持不动；外部 viewport 尺寸变化只刷新可见范围，不重新测量节点（节点尺寸只取决于列表自身的交叉轴）。外部前置内容发生无法被观察的位置变化时，调用 `refreshViewport()` 即可，它只刷新几何与已渲染的行。
 - 首次加载、本地数据分批构建、underfill、placeholder/loading/complete/empty 和 `disabled` 的行为与内部模式一致。
 
 ### Window 作为滚动源
@@ -677,6 +702,7 @@ const store = new RecycleListStore({
 - [VC Scroller 外部视口](./examples/external-scroller.vue)
 - [横向外部视口](./examples/external-horizontal.vue)
 - [inverted 上拉刷新](./examples/inverted-pullable.vue)
+- [预估尺寸](./examples/estimate-size.vue)
 
 ## API
 
@@ -684,12 +710,13 @@ const store = new RecycleListStore({
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| data | 本地数据；按 `batchCount` 分批构建。替换数组时，与旧数组中引用相同的数据项沿用已测尺寸，只测量新出现的数据项（删除、插入、排序不会整体重测）；在原对象上修改了影响尺寸的字段也无需处理，行渲染出来时会按实际尺寸自动校正 | `unknown[]` | - | `[]` |
+| data | 本地数据；按 `batchCount` 分批构建（设置 `estimateSize` 时一次构建全部）。替换数组时，与旧数组中引用相同的数据项沿用已测尺寸，只测量新出现的数据项（删除、插入、排序不会整体重测）；换成新对象的数据项沿用同位置旧项的尺寸作为估计值（设置了 `estimateSize` 时取预估值），不进隐藏池，行渲染出来时按实际尺寸校正（整页替换因此不必重测已构建的行）；在原对象上修改了影响尺寸的字段也无需处理，行渲染出来时会按实际尺寸自动校正 | `unknown[]` | - | `[]` |
 | store | 可选的共享 RecycleListStore | `RecycleListStore` | - | - |
 | fill | 是否由内部 Scroller 填满并承载主轴滚动；`false` 时自动使用外部 viewport | `boolean` | - | `true` |
 | disabled | 是否禁止触发远程 `loadData`；不阻止本地 `data` 分批构建 | `boolean` | - | `false` |
 | batchCount | 每次构建/测量的节点批次大小；有 placeholder 时亦作为请求期间预分配的占位节点数 | `number` | - | `20` |
 | bufferCount | 在可见数据索引前后额外渲染的节点数量 | `number` | - | `0` |
+| estimateSize | 预估尺寸（主轴，px），数字或 `({ row, index }) => number \| undefined`（`row` 为 `data` 中的一项，`index` 为它的下标，与默认插槽一致）。给出尺寸的项不进隐藏池测量，本地数据一次构建全部，内容尺寸从一开始就完整；渲染出来后按实际尺寸校正（按锚点补偿，画面不跳）。返回 `undefined` 的项照常测量。取值或函数变化时，只有预估值变了的项换用新值（之前测过的尺寸也随之作废），预估值没变的项不动，因此可以直接写内联函数 | `number \| Function` | - | - |
 | overscan | 视口上下（横向时左右）额外预渲染距离，单位 px | `number` | - | `50` |
 | threshold | 距离列表加载边缘小于等于该值时触发加载，单位 px | `number` | - | `100` |
 | loadData | 获取更多数据，签名为 `({ page, loaded }) => response` | `Function` | - | `() => false` |
@@ -743,7 +770,7 @@ const store = new RecycleListStore({
 | --- | --- | --- | --- |
 | reset | 清空列表全部内容并重置数据和主轴滚动位置；`silent` 为 `true` 时保留旧内容直到新数据到达（拉动刷新即此模式）；`inverted` 下不改变滚动位置，首批数据到达后贴到列表尾部 | `silent?: boolean`，默认 `false` | `Promise<void>` |
 | refreshViewport | 刷新视口几何与可见范围，并按已渲染行的实际尺寸校正一次；代价只与当前渲染的行数相关 | - | `Promise<void>` |
-| refreshLayout | 重新测量全部已构建的行并刷新布局；代价随已构建行数增长 | - | `Promise<void>` |
+| refreshLayout | 重新测量全部已构建的行并刷新布局：正在渲染的行原地按实际尺寸重测，其余行在隐藏测量池中分片重测；代价随已构建行数增长 | - | `Promise<void>` |
 | scrollTo | 滚动到 wrapper 的绝对坐标，数字表示主轴位置，对象中缺省轴归零 | `options: number \| { x?: number; y?: number }, force?: boolean`；`force` 强制写入相同坐标 | `void` |
 | scrollToIndex | 定位当前已构建并具有布局位置的 item，交叉轴归零；尚未构建的索引不触发加载或滚动 | `index: number, offset?: number`，`offset` 默认 `0` | `void` |
 
@@ -751,7 +778,7 @@ const store = new RecycleListStore({
 
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
-| default | 行内容；也会在隐藏测量池中渲染，避免在渲染过程中执行副作用 | `{ row, index }`，`index` 为当前数据索引 |
+| default | 行内容；尺寸未知的项会先在隐藏测量池中渲染一次，避免在渲染过程中执行副作用 | `{ row, index }`，`index` 为当前数据索引 |
 | placeholder | 未加载数据时的占位内容，如骨架屏 | - |
 | loading | 加载更多提示 | - |
 | complete | 无更多数据提示 | - |
@@ -765,4 +792,4 @@ const store = new RecycleListStore({
 
 `MRecycleList` 是 `RecycleList` 的别名，属性、事件、插槽和方法一致。`RecycleListStore` 与 `RecycleListLoadState` 可从 `@deot/vc` 导入。
 
-使用 `new RecycleListStore({ loadData, cols, gutter })` 创建共享实例并传给多个列表。传入 `store` 后，`batchCount`、`bufferCount`、`inverted`、`cols`、`gutter`、`loadData` 由 Store 接管，列表对应属性不再同步到 Store。
+使用 `new RecycleListStore({ loadData, cols, gutter })` 创建共享实例并传给多个列表。传入 `store` 后，`batchCount`、`bufferCount`、`estimateSize`、`inverted`、`cols`、`gutter`、`loadData` 由 Store 接管，列表对应属性不再同步到 Store。

@@ -1,4 +1,4 @@
-import { shallowRef } from 'vue';
+import { shallowRef, onBeforeUnmount } from 'vue';
 import type { ComputedRef } from 'vue';
 import type { Store, RecycleListItemNodeRaw } from '../store';
 import type { DirectionKeys } from './use-direction-keys';
@@ -8,12 +8,14 @@ import type { DirectionKeys } from './use-direction-keys';
  * @param store 数据中枢
  * @param keys 方向键映射
  * @param hasPlaceholder 是否有骨架，决定兜底尺寸是否可用
+ * @param onRowResize 已渲染的行尺寸变化（含渲染出来时的首次测量）
  * @returns 骨架引用、元素登记函数、进池判断与测量函数
  */
 export const useMeasure = (
 	store: Store,
 	keys: DirectionKeys,
-	hasPlaceholder: ComputedRef<any>
+	hasPlaceholder: ComputedRef<any>,
+	onRowResize: (node: RecycleListItemNodeRaw) => void
 ) => {
 	// 隐藏池里那份骨架 DOM，仅用于量兜底尺寸
 	const placeholder = shallowRef();
@@ -26,8 +28,46 @@ export const useMeasure = (
 	 */
 	const visibleEls = new Map<RecycleListItemNodeRaw, HTMLElement>();
 	const pooledEls = new Map<RecycleListItemNodeRaw, HTMLElement>();
-	const track = (target: Map<RecycleListItemNodeRaw, HTMLElement>, node: RecycleListItemNodeRaw, el?: HTMLElement) => {
-		el ? target.set(node, el) : target.delete(node);
+
+	/**
+	 * 行尺寸监听：整个列表共用一个 ResizeObserver，按元素找回节点
+	 *
+	 * 首次 observe 的回调即「行渲染出来时的首次测量」，之后行自身内容变化（展开、编辑、图片撑开等）也从这里上报；
+	 * 行只是普通元素，不必每行一个组件实例与观察器
+	 */
+	const nodeOfEl = new WeakMap<Element, RecycleListItemNodeRaw>();
+	const rowObserver = typeof ResizeObserver === 'undefined'
+		? null
+		: new ResizeObserver((entries) => {
+				entries.forEach((entry) => {
+					const node = nodeOfEl.get(entry.target);
+					node && onRowResize(node);
+				});
+			});
+	onBeforeUnmount(() => rowObserver?.disconnect());
+
+	/**
+	 * 行元素挂载：登记并开始观察
+	 * @param node 节点
+	 * @param el 行元素
+	 */
+	const observeRow = (node: RecycleListItemNodeRaw, el: HTMLElement) => {
+		visibleEls.set(node, el);
+		nodeOfEl.set(el, node);
+		rowObserver?.observe(el);
+	};
+
+	/**
+	 * 行元素卸载：停止观察
+	 *
+	 * 节点换列（瀑布流重排）时新元素可能先于旧元素卸载前挂载，登记的已是新元素，按元素核对后再删
+	 * @param node 节点
+	 * @param el 行元素
+	 */
+	const unobserveRow = (node: RecycleListItemNodeRaw, el: HTMLElement) => {
+		rowObserver?.unobserve(el);
+		nodeOfEl.delete(el);
+		visibleEls.get(node) === el && visibleEls.delete(node);
 	};
 
 	// 骨架 DOM 的当前尺寸，作为测量兜底；不能缓存：列表变宽后骨架尺寸也会变
@@ -43,7 +83,7 @@ export const useMeasure = (
 	 * 读取节点 DOM 的实际尺寸写回 store
 	 *
 	 * 待测量节点都在隐藏池中渲染过，优先读池；已可见的节点兜底读列内元素；
-	 * 都读不到（占位节点）则用骨架尺寸
+	 * 都读不到时保留已有的预估尺寸（estimateSize），没有预估的（占位节点）用骨架尺寸
 	 * 原 recycle-list.tsx measureNode
 	 * @param node 待测量的节点
 	 * @returns 被测量的节点；节点已被回收时为 undefined
@@ -51,7 +91,10 @@ export const useMeasure = (
 	const measure = (node: RecycleListItemNodeRaw) => {
 		if (!isAttached(node)) return;
 		const el = pooledEls.get(node) || visibleEls.get(node);
-		store.nodes.setSize(node, (el && el[keys.offsetSize]) || readFallbackSize());
+		const size = el && el[keys.offsetSize];
+		// 读不到元素时保留已有的尺寸（预估值）
+		if (!size && node.raw.size) return node;
+		store.nodes.setSize(node, size || readFallbackSize());
 		return node;
 	};
 
@@ -74,9 +117,9 @@ export const useMeasure = (
 		placeholder,
 		// 节点是否已经在隐藏池里渲染出来：等待测量的一批据此判断自己是否可以开始量
 		isPooled: (node: RecycleListItemNodeRaw) => pooledEls.has(node),
-		// 可见行挂的是 Resizer 实例，登记它的根元素：实例暴露的尺寸是去掉 padding 的浮点值，与隐藏池读到的整数口径不同
-		trackVisible: (node: RecycleListItemNodeRaw, instance: any) => track(visibleEls, node, instance?.$el),
-		trackPooled: (node: RecycleListItemNodeRaw, el: any) => track(pooledEls, node, el),
+		observeRow,
+		unobserveRow,
+		trackPooled: (node: RecycleListItemNodeRaw, el: any) => { el ? pooledEls.set(node, el) : pooledEls.delete(node); },
 		measure,
 		remeasureVisible
 	};

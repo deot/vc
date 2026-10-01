@@ -15,29 +15,29 @@ type Options = {
 export class RecycleListItemNode {
 	id = getUid('recycle-list-item');
 
-	states = reactive({
+	states: {
 		/**
 		 * 数据索引（originalData 下标）
 		 */
-		index: -1,
-		data: {} as any,
+		index: number;
+		data: any;
 		/**
-		 * 主轴实测尺寸；0 表示尚未测量
+		 * 主轴尺寸：实测值，或尚未渲染时的预估值（estimateSize / 替换数据前的旧尺寸）；0 表示既未测量也无预估
 		 */
-		size: 0,
+		size: number;
 		/**
 		 * 主轴位置（content 坐标系）；-1000 表示尚未布局
 		 */
-		position: -1000,
+		position: number;
 		/**
 		 * 所属列；-1 表示尚未布局
 		 */
-		column: -1,
+		column: number;
 		/**
 		 * 没有数据的骨架占位
 		 */
-		isPlaceholder: true
-	});
+		isPlaceholder: boolean;
+	};
 
 	/**
 	 * states 的原始对象，供布局重排的热路径读取几何信息
@@ -45,14 +45,15 @@ export class RecycleListItemNode {
 	 * 重排每轮都要遍历比较 size，走响应式代理的开销会被放大到不可接受；
 	 * 写入仍必须经过 states，否则不会触发渲染更新
 	 */
-	raw = toRaw(this.states);
+	raw: RecycleListItemNode['states'];
 
 	/**
-	 * 是否测量过（写入过非 0 尺寸），非响应式
+	 * 这条数据上一次求得的预估尺寸（estimateSize），没有时为 0
 	 *
-	 * rebind 清空几何时保留它：节点再次待测时，据此区分「已经展示过、被重置的行」与「从未展示过的新行」
+	 * 只用来判断预估值有没有变：estimateSize 换了引用但取值没变（模板里的内联函数）时不必动已有的尺寸。
+	 * 不参与渲染，不放进 states
 	 */
-	measured = false;
+	estimate = 0;
 
 	static of(options: Options) {
 		return new RecycleListItemNode(options);
@@ -60,8 +61,17 @@ export class RecycleListItemNode {
 
 	constructor(options: Options) {
 		markRaw(this);
-		this.states.index = options.index;
-		this.setData(options.data);
+		// 初值一次写进字面量：逐个经响应式代理写入，在一次构建上万项（有预估尺寸时）时开销明显。
+		// data 存原始对象，与经代理写入（setData）时一致
+		this.states = reactive({
+			index: options.index,
+			data: options.data ? toRaw(options.data) : {},
+			size: 0,
+			position: -1000,
+			column: -1,
+			isPlaceholder: !options.data
+		});
+		this.raw = toRaw(this.states);
 	}
 
 	setData(data?: any) {
@@ -84,6 +94,7 @@ export class RecycleListItemNode {
 
 	// 复用节点：更新 index/data 并清空布局，保持 id 稳定
 	rebind(options: Options) {
+		this.estimate = 0;
 		this.states.index = options.index;
 		this.states.size = 0;
 		this.states.position = -1000;

@@ -1,5 +1,6 @@
 import { reactive } from 'vue';
 import { merge } from 'lodash-es';
+import { hasOwn } from '@deot/helper-utils';
 import { props } from '../recycle-list-props';
 import type { Props } from '../recycle-list-props';
 import { BaseWatcher } from './base-watcher';
@@ -12,7 +13,7 @@ import { Scroll } from './scroll';
 /**
  * 被 store 接管的 props：共享同一 Store 的多个实例以 store.props 为准，而非各自的组件 props
  */
-export const STORE_PROP_KEYS = ['batchCount', 'bufferCount', 'inverted', 'cols', 'gutter', 'loadData'] as const;
+export const STORE_PROP_KEYS = ['batchCount', 'bufferCount', 'estimateSize', 'inverted', 'cols', 'gutter', 'loadData'] as const;
 
 /**
  * 按组件 props 定义生成带默认值的响应式 store.props
@@ -94,12 +95,13 @@ export class Store extends BaseWatcher {
 	/**
 	 * 同步被 store 接管的属性；只覆盖传入的键
 	 *
-	 * 组件自建 store 时由组件属性驱动；共享 store 时以 store.props 为准，由使用方直接改
+	 * 组件自建 store 时由组件属性驱动；共享 store 时以 store.props 为准，由使用方直接改。
+	 * 传入的键即使值为 undefined 也会写入：estimateSize 没有默认值，撤掉时要能回到逐项测量
 	 * @param next 待同步的属性
 	 */
 	syncProps(next: Partial<Props>) {
 		STORE_PROP_KEYS.forEach((key) => {
-			if (typeof next[key] !== 'undefined' && this.props[key] !== next[key]) {
+			if (hasOwn(next, key) && this.props[key] !== next[key]) {
 				(this.props as any)[key] = next[key];
 			}
 		});

@@ -2,8 +2,9 @@
 
 import { Customer, RecycleList, RecycleListStore, MRecycleList } from '@deot/vc-components';
 import { RecycleListItemNode } from '../store';
+import { useMeasuring } from '../../measuring';
 import { mount } from '@vue/test-utils';
-import { defineComponent, getCurrentInstance, nextTick, onMounted, ref, toRaw } from 'vue';
+import { defineComponent, getCurrentInstance, nextTick, onMounted, reactive, ref, toRaw } from 'vue';
 import { vi } from 'vitest';
 
 const sleep = (time = 0) => new Promise(resolve => setTimeout(resolve, time));
@@ -57,6 +58,34 @@ const buildItem = (id: number, page = 1) => ({
 const buildItems = (count: number, page = 1, startId = 0) => {
 	return Array.from({ length: count }).map((_, i) => buildItem(startId + i, page));
 };
+
+// 推进若干轮 nextTick + 宏任务，等分批构建与布局完成
+const flushLayout = async (rounds = 10) => {
+	for (let i = 0; i < rounds; i++) {
+		await nextTick();
+		await sleep(0);
+	}
+};
+
+// 列表 wrapper 读到 wrapperHeight，其余元素读到 itemHeight
+const spyOffsetHeight = (wrapperHeight: number, itemHeight: number) => vi
+	.spyOn(HTMLElement.prototype, 'offsetHeight', 'get')
+	.mockImplementation(function (this: HTMLElement) {
+		return this.classList.contains('vc-recycle-list__wrapper') ? wrapperHeight : itemHeight;
+	});
+
+// 记录所有 ResizeObserver 实例：行尺寸由列表共用的一个观察器监听，测试里按元素找到它再触发回调
+const observers: any[] = [];
+const MockResizeObserver = (globalThis as any).ResizeObserver;
+(globalThis as any).ResizeObserver = class extends MockResizeObserver {
+	constructor(cb: any) {
+		super(cb);
+		observers.push(this);
+	}
+};
+const ROW = '.vc-recycle-list__column .vc-recycle-list__item';
+// 观察着某个行元素的观察器
+const observerOf = (el: Element) => observers.find(ro => ro.targets.has(el));
 
 describe('index.ts', () => {
 	it('basic', () => {
@@ -1325,13 +1354,6 @@ describe('index.ts', () => {
 	});
 
 	describe('load-change loaded', () => {
-		const flushLayout = async () => {
-			for (let i = 0; i < 10; i++) {
-				await nextTick();
-				await sleep(0);
-			}
-		};
-
 		it('pushes loaded after every local batch is built and laid out', async () => {
 			// 列表可见（有宽高）才会在一批结束后仍停在加载边缘时续建
 			const restore = mockSize(HTMLElement.prototype, { offsetHeight: 40, offsetWidth: 100 });
@@ -1367,9 +1389,7 @@ describe('index.ts', () => {
 
 		it('pushes loaded after every remote page is laid out', async () => {
 			// 每项 40px、视口 1000px：内容不足一屏，逐页续载直到空页结束
-			const heightSpy = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
-				return this.classList.contains('vc-recycle-list__wrapper') ? 1000 : 40;
-			});
+			const heightSpy = spyOffsetHeight(1000, 40);
 			const seen: any[] = [];
 			const loadData = vi.fn(async ({ page }: any) => (page <= 2 ? buildItems(3, page, (page - 1) * 3) : []));
 			const wrapper = mount(() => (
@@ -1463,13 +1483,6 @@ describe('index.ts', () => {
 	describe('disabled end signal', () => {
 		// disabled 挡住远程分支，store.states.isEnd 永不置真；
 		// lazyTail 与 load-change 以「本地数据已全部构建并完成布局」作为结束
-		const flushLayout = async () => {
-			for (let i = 0; i < 6; i++) {
-				await nextTick();
-				await sleep(0);
-			}
-		};
-
 		it('reveals the tail and reports isEnd once local data is fully built', async () => {
 			const seen: any[] = [];
 			const listRef = ref<any>();
@@ -1488,7 +1501,7 @@ describe('index.ts', () => {
 				</RecycleList>
 			), { attachTo: document.body });
 
-			await flushLayout();
+			await flushLayout(6);
 
 			expect(wrapper.find('.my-footer').exists()).toBe(true);
 			expect(seen[seen.length - 1]).toEqual({
@@ -1526,7 +1539,7 @@ describe('index.ts', () => {
 				</RecycleList>
 			), { attachTo: document.body });
 
-			await flushLayout();
+			await flushLayout(6);
 
 			expect(listRef.value.store.local.hasMore).toBe(true);
 			expect(listRef.value.store.states.isBuilt).toBe(false);
@@ -1541,7 +1554,7 @@ describe('index.ts', () => {
 				<RecycleList disabled data={[]} onLoadChange={(v: any) => seen.push(v)} />
 			), { attachTo: document.body });
 
-			await flushLayout();
+			await flushLayout(6);
 
 			expect(seen[seen.length - 1]).toEqual({
 				isEnd: true,
@@ -1570,7 +1583,7 @@ describe('index.ts', () => {
 				</RecycleList>
 			), { attachTo: document.body });
 
-			await flushLayout();
+			await flushLayout(6);
 			expect(wrapper.find('.my-footer').exists()).toBe(true);
 			const emittedBefore = seen.length;
 
@@ -1579,7 +1592,7 @@ describe('index.ts', () => {
 			await nextTick();
 			expect(wrapper.find('.my-footer').exists()).toBe(true);
 
-			await flushLayout();
+			await flushLayout(6);
 			expect(wrapper.find('.my-footer').exists()).toBe(true);
 			expect(seen.slice(emittedBefore).some(v => v.isEnd === false)).toBe(false);
 			wrapper.unmount();
@@ -2158,6 +2171,22 @@ describe('index.ts', () => {
 	});
 
 	describe('Position.updateVisibleRange / Layout.refresh', () => {
+		it('keeps a valid range for a list that is still empty at mount', async () => {
+			// 远程数据还没到时视口已绑定：空列表的范围为 [0, 0]，数据到达后视口在内容之外也能保留首项
+			const listRef = ref<any>();
+			const wrapper = mount(() => <RecycleList ref={listRef} disabled />, { attachTo: document.body });
+			await nextTick();
+			const { states } = listRef.value.store;
+			expect([states.firstItemIndex, states.lastItemIndex]).toEqual([0, 0]);
+			wrapper.unmount();
+		});
+
+		it('stores the raw data item on a new node', () => {
+			const item = reactive({ id: 1 });
+			const node = RecycleListItemNode.of({ index: 0, data: item });
+			expect(node.raw.data).toBe(toRaw(item));
+		});
+
 		it('updateVisibleRange with empty rebuildData resets indexes', () => {
 			const store = new RecycleListStore({});
 			store.states.rebuildData = [];
@@ -2263,8 +2292,9 @@ describe('index.ts', () => {
 			expect(() => store.scroll.broadcast({ target: { scrollLeft: 10, scrollTop: 20 } })).not.toThrow();
 		});
 
+		// 直接构造已排好版的节点，并像正常构建一样登记到节点池（rebuildData 与节点集合保持同步）
 		const layoutNode = (
-			_store: InstanceType<typeof RecycleListStore>,
+			store: InstanceType<typeof RecycleListStore>,
 			index: number,
 			geometry: { position: number; size: number; column?: number }
 		) => {
@@ -2272,7 +2302,7 @@ describe('index.ts', () => {
 			node.states.position = geometry.position;
 			node.states.size = geometry.size;
 			node.states.column = geometry.column ?? 0;
-			return node;
+			return store.nodes.attach(index, node);
 		};
 
 		it('Position.updateVisibleRange updates the range when scrolling back to the top', () => {
@@ -3035,7 +3065,7 @@ describe('index.ts', () => {
 		});
 	});
 
-	describe('Measure pool: re-measure synchronously, slice only new nodes', () => {
+	describe('Measure pool: only nodes without a size are measured, sizes are estimates until rendered', () => {
 		/**
 		 * 只推进微任务，不让出宏任务：Defer 的分片（MessageChannel）与浏览器绘制都发生在宏任务之间，
 		 * 在这里完成的更新不会留下中间帧
@@ -3107,28 +3137,47 @@ describe('index.ts', () => {
 			};
 		};
 
-		it('keeps shown rows on screen when data is replaced with new objects', async () => {
-			const { data, states, shown, restore } = await setup(30, 30);
+		/**
+		 * 触发某个已渲染行的尺寸回调（行渲染出来时的首次测量，或之后内容变化）；行的尺寸由 offsetHeight 的 mock 给出
+		 * @param wrapper 挂载结果
+		 * @param id 数据 id
+		 */
+		const triggerRendered = (wrapper: any, id: number) => {
+			const row = wrapper.findAll(ROW).find((item: any) => item.find('.x').text() === String(id));
+			observerOf(row.element).trigger(row.element);
+		};
 
-			// 换成新对象（并删掉首行）：已展示过的行全部重新待测，必须在同一个任务里测完并重新排版，不能先白屏再逐片出现
+		it('keeps shown rows on screen when data is replaced with new objects', async () => {
+			const { data, states, shown, pooled, wrapper, restore } = await setup(30, 30);
+
+			// 换成新对象（并删掉首行）：沿用同位置的尺寸作估计值，行原地换成新数据，不进隐藏池，也不会先白屏再出现
+			const rows = wrapper.findAll(ROW).map((item: any) => item.element);
 			data.value = data.value.slice(1).map(item => ({ ...item }));
 			await flushMicrotasks();
 
 			expect(states.preData.length).toBe(0);
+			expect(pooled().length).toBe(0);
 			expect(shown().length).toBeGreaterThan(0);
 			expect(shown()[0].text()).toBe('1');
+			expect(wrapper.findAll(ROW)[0].element).toBe(rows[0]);
 			restore();
 		});
 
 		it('keeps shown rows on screen when the layout is refreshed', async () => {
-			const { list, states, shown, restore } = await setup(30, 30);
+			const { list, states, shown, wrapper, restore } = await setup(30, 30);
+			const rows = wrapper.findAll(ROW).map((item: any) => item.element);
 
-			// 尺寸变化后的整体重排同理：全部节点重新待测，但画面上的行不能消失
+			// 整体重测：渲染中的行保留几何、按 DOM 重测，原地不动；其余已构建的行在隐藏池分片重测
 			list.refreshLayout();
 			await flushMicrotasks();
 
+			expect(shown().length).toBe(rows.length);
+			expect(wrapper.findAll(ROW).map((item: any) => item.element)).toEqual(rows);
+			expect(states.preData.length).toBe(30 - rows.length);
+			expect(states.preData.every((node: any) => !rows.some((el: Element) => el.textContent === String(node.states.data.id)))).toBe(true);
+
+			for (let i = 0; i < 40 && states.preData.length > 0; i++) await sleep(0);
 			expect(states.preData.length).toBe(0);
-			expect(shown().length).toBeGreaterThan(0);
 			restore();
 		});
 
@@ -3243,16 +3292,63 @@ describe('index.ts', () => {
 				restore();
 			});
 
-			it('re-measures items replaced by new objects even when the content looks the same', async () => {
-				const { data, states, measuredIds, restore } = await setup(30, 30, heightOf);
+			it('corrects a rendered item replaced by a new object from the DOM, without the pool', async () => {
+				const heights: Record<number, number> = {};
+				const dynamicHeightOf = (id: number) => heights[id] ?? heightOf(id);
+				const { data, states, measuredIds, restore } = await setup(30, 30, dynamicHeightOf);
 				measuredIds.length = 0;
 
-				// 引用不同即视为内容可能已变：原地改了影响尺寸的字段时，替换成新对象就能触发重测
+				// 换成新对象且内容变高：沿用旧尺寸作估计值，行渲染出新内容后按 DOM 校正，不进隐藏池
+				heights[2] = 77;
 				data.value = data.value.map((item, i) => (i === 2 ? { ...item } : item));
 				await flushMicrotasks();
 
-				expect(measuredIds).toEqual([2]);
-				expectLaidOutByData(states);
+				expect(measuredIds).toEqual([]);
+				expect(states.rebuildData[2].states.size).toBe(77);
+				expect(states.rebuildData[3].states.position).toBe(states.rebuildData[2].states.position + 77);
+				restore();
+			});
+
+			it('keeps sizes as estimates when every item is replaced (e.g. switching pages)', async () => {
+				const { data, states, wrapper, shown, measuredIds, restore } = await setup(30, 30, heightOf);
+				const rendered = shown().length;
+				expect(rendered).toBeLessThan(30);
+				measuredIds.length = 0;
+
+				// 整页换成新对象：没有任何项进隐藏池；正在渲染的按 DOM 校正，视口外的沿用原尺寸
+				data.value = buildItems(30, 2, 100);
+				await flushMicrotasks();
+
+				expect(states.preData.length).toBe(0);
+				expect(measuredIds).toEqual([]);
+				expect(shown()[0].text()).toBe('100');
+				expect(states.rebuildData[0].states.size).toBe(heightOf(100));
+				expect(states.rebuildData[29].states.size).toBe(heightOf(29));
+
+				// 视口外的项渲染出来时再按实际尺寸校正
+				const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+				wrapEl.scrollTop = states.rebuildData[20].states.position;
+				wrapEl.dispatchEvent(new Event('scroll'));
+				await flushMicrotasks();
+				triggerRendered(wrapper, 120);
+				await flushMicrotasks();
+				expect(states.rebuildData[20].states.size).toBe(heightOf(120));
+				restore();
+			});
+
+			it('does the same in a multi-column list', async () => {
+				const { data, states, shown, measuredIds, restore } = await setup(30, 30, heightOf, { cols: 2 });
+				measuredIds.length = 0;
+
+				// 多列同样沿用尺寸作估计值，渲染中的按 DOM 校正
+				data.value = buildItems(30, 2, 100);
+				await flushMicrotasks();
+
+				expect(states.preData.length).toBe(0);
+				expect(measuredIds).toEqual([]);
+				expect(shown().length).toBeGreaterThan(0);
+				const first = states.rebuildData.find((node: any) => node.states.data.id === Number(shown()[0].text()));
+				expect(first.states.size).toBe(heightOf(first.states.data.id));
 				restore();
 			});
 		});
@@ -3265,23 +3361,6 @@ describe('index.ts', () => {
 			const createHeights = () => {
 				const heights: Record<number, number> = {};
 				return { heights, heightOf: (id: number) => heights[id] ?? 20 + id };
-			};
-
-			/**
-			 * 触发某个已渲染行的 Resizer 测量：行刚渲染出来时 Resizer 首次测量，inited 为 false
-			 * @param wrapper 挂载结果
-			 * @param id 数据 id
-			 * @param height Resizer 读到的高度
-			 */
-			const triggerRendered = (wrapper: any, id: number, height: number) => {
-				const row = wrapper
-					.findAll('.vc-recycle-list__column .vc-resizer')
-					.find((item: any) => item.find('.x').text() === String(id));
-				const el = row.element as any;
-				el.getBoundingClientRect = () => ({
-					width: 100, height, top: 0, left: 0, right: 100, bottom: height, x: 0, y: 0, toJSON: () => ({})
-				});
-				el.__rz__.handleResize([{ target: el }]);
 			};
 
 			/**
@@ -3305,7 +3384,7 @@ describe('index.ts', () => {
 
 				// 原地改了第 3 行的内容，没有替换数组；该行渲染出来时首次测量读到新高度
 				heights[3] = 80;
-				triggerRendered(wrapper, 3, 80);
+				triggerRendered(wrapper, 3);
 				await flushMicrotasks();
 
 				expectLaidOut(states, heightOf);
@@ -3328,7 +3407,7 @@ describe('index.ts', () => {
 
 				// 第 6 行变高 30：视口里的内容被整体下推，滚动位置补偿同样的距离，画面不动
 				heights[6] = heightOf(6) + 30;
-				triggerRendered(wrapper, 6, heights[6]);
+				triggerRendered(wrapper, 6);
 				await flushMicrotasks();
 
 				expectLaidOut(states, heightOf);
@@ -3341,18 +3420,18 @@ describe('index.ts', () => {
 				const onRowResize = vi.fn();
 				const { list, states, wrapper, measuredIds, restore } = await setup(30, 30, heightOf, { onRowResize });
 				heights[3] = 80;
-				triggerRendered(wrapper, 3, 80);
+				triggerRendered(wrapper, 3);
 				await flushMicrotasks();
 
-				const rows = () => wrapper.findAll('.vc-recycle-list__column .vc-resizer').map((item: any) => item.element);
+				const rows = () => wrapper.findAll(ROW).map((item: any) => item.element);
 				const before = rows();
 				const build = vi.spyOn(list.store.nodes, 'build');
 				measuredIds.length = 0;
 				onRowResize.mockClear();
 
-				// 同一行再次变化（Resizer 已完成首次测量，如展开、编辑、图片撑开）
+				// 同一行再次变化（首次测量之后，如展开、编辑、图片撑开）
 				heights[3] = 120;
-				triggerRendered(wrapper, 3, 120);
+				triggerRendered(wrapper, 3);
 				await flushMicrotasks();
 				await sleep(80);
 
@@ -3376,7 +3455,7 @@ describe('index.ts', () => {
 				onRowResize.mockClear();
 				const refresh = vi.spyOn(list.store.layout, 'refresh');
 
-				triggerRendered(wrapper, 3, heightOf(3));
+				triggerRendered(wrapper, 3);
 				await flushMicrotasks();
 
 				expect(refresh).not.toHaveBeenCalled();
@@ -3390,12 +3469,392 @@ describe('index.ts', () => {
 
 				// 列表不可见时读到 0：不能把节点改回待测
 				heights[3] = 0;
-				triggerRendered(wrapper, 3, 10);
+				triggerRendered(wrapper, 3);
 				await flushMicrotasks();
 
 				expect(states.rebuildData[3].states.size).toBe(23);
 				expect(states.preData.length).toBe(0);
 				restore();
+			});
+		});
+
+		describe('Cross-axis resize: sizes stay as estimates', () => {
+			// jsdom 下元素宽度恒为 0：给 wrapper 一个宽度并触发它的尺寸回调
+			const resizeWrapper = (wrapper: any, width: number) => {
+				const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as any;
+				Object.defineProperty(wrapEl, 'clientWidth', { configurable: true, get: () => width });
+				wrapEl.__rz__.handleResize([{ target: wrapEl }]);
+			};
+			const settle = async (states: any) => {
+				await sleep(80);
+				for (let i = 0; i < 40 && states.preData.length > 0; i++) await sleep(0);
+				await flushMicrotasks();
+			};
+
+			it('does nothing on the first callback after mount', async () => {
+				const { list, wrapper, measuredIds, restore } = await setup(30, 30);
+				const build = vi.spyOn(list.store.nodes, 'build');
+				const refresh = vi.spyOn(list.store.layout, 'refresh');
+				measuredIds.length = 0;
+
+				// 挂载后的首次回调：宽度与绑定视口时一致，只刷新几何，不重测
+				const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as any;
+				wrapEl.__rz__.handleResize([{ target: wrapEl }]);
+				await sleep(80);
+
+				expect(build).not.toHaveBeenCalled();
+				expect(refresh).not.toHaveBeenCalled();
+				expect(measuredIds).toEqual([]);
+				restore();
+			});
+
+			it('re-measures everything when the list becomes visible', async () => {
+				const { list, wrapper, states, shown, restore } = await setup(30, 30);
+				const build = vi.spyOn(list.store.nodes, 'build');
+
+				// 宽度从 0 变为有值：隐藏期间量到的尺寸不可信，整体重测
+				resizeWrapper(wrapper, 300);
+				await settle(states);
+
+				expect(build).toHaveBeenCalledWith(0, 30, expect.objectContaining({ force: true }));
+				expect(states.preData.length).toBe(0);
+				expect(shown().length).toBeGreaterThan(0);
+				restore();
+			});
+
+			it('re-measures only the rendered rows when the width changes', async () => {
+				const heights: Record<number, number> = {};
+				const { list, wrapper, states, shown, measuredIds, restore } = await setup(30, 30, id => heights[id] ?? 40);
+				resizeWrapper(wrapper, 300);
+				await settle(states);
+				const rendered = shown().map(item => Number(item.text()));
+				const build = vi.spyOn(list.store.nodes, 'build');
+				measuredIds.length = 0;
+
+				// 变窄后每行都变高：渲染中的行按 DOM 重测，其余保留原尺寸作估计值，不进隐藏池
+				for (let id = 0; id < 30; id++) heights[id] = 60;
+				resizeWrapper(wrapper, 200);
+				await settle(states);
+
+				expect(build).not.toHaveBeenCalled();
+				expect(measuredIds).toEqual([]);
+				rendered.forEach(id => expect(states.rebuildData[id].states.size).toBe(60));
+				expect(states.rebuildData[29].states.size).toBe(40);
+				restore();
+			});
+		});
+
+		it('marks rows rendered in the measure pool as measuring', async () => {
+			const restoreSize = mockSize(HTMLElement.prototype, { clientHeight: 200, scrollHeight: 1200, offsetHeight: 40 });
+			const seen: boolean[] = [];
+			const Probe = defineComponent({
+				setup() {
+					seen.push(useMeasuring());
+					return () => <div class="x" />;
+				}
+			});
+			const wrapper = mount(() => (
+				<RecycleList data={buildItems(5)} disabled>
+					{{ default: () => <Probe /> }}
+				</RecycleList>
+			), { attachTo: document.body });
+			await flushLayout();
+
+			// 隐藏池里那份渲染为 true，展示出来的行为 false
+			expect(seen.filter(Boolean).length).toBe(5);
+			expect(wrapper.findAll(`${ROW} .x`).length).toBe(5);
+			expect(seen.filter(v => !v).length).toBe(5);
+			restoreSize();
+			wrapper.unmount();
+		});
+
+		describe('Row observer: one ResizeObserver per list', () => {
+			const rowsOf = (wrapper: any): Element[] => wrapper.findAll(ROW).map((item: any) => item.element);
+
+			it.each([
+				['single column', {}],
+				['multi column', { cols: 2 }],
+				['inverted', { inverted: true }]
+			])('observes exactly the rendered rows with a single observer (%s)', async (_, props) => {
+				const { wrapper, restore } = await setup(60, 60, () => 40, props);
+				const rows = rowsOf(wrapper);
+				expect(rows.length).toBeGreaterThan(0);
+
+				const used = new Set(rows.map(observerOf));
+				expect(used.size).toBe(1);
+				expect(new Set(observerOf(rows[0]).targets)).toEqual(new Set(rows));
+				restore();
+			});
+
+			it('unobserves rows that leave the rendered range', async () => {
+				const { wrapper, restore } = await setup(60, 60);
+				const before = rowsOf(wrapper);
+				const observer = observerOf(before[0]);
+
+				const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+				wrapEl.scrollTop = 800;
+				wrapEl.dispatchEvent(new Event('scroll'));
+				await flushMicrotasks();
+
+				const rows = rowsOf(wrapper);
+				const left = before.filter(el => !rows.includes(el));
+				expect(left.length).toBeGreaterThan(0);
+				// 离开的行不再被观察，也不再留在文档里
+				expect(new Set(observer.targets)).toEqual(new Set(rows));
+				expect(left.every(el => !el.isConnected)).toBe(true);
+				restore();
+			});
+
+			it('does not observe again when the list re-renders', async () => {
+				const options = reactive<Record<string, any>>({ 'data-mark': 1 });
+				const { wrapper, restore } = await setup(60, 60, () => 40, options);
+				const rows = rowsOf(wrapper);
+				const observer = observerOf(rows[0]);
+				const observe = vi.spyOn(observer, 'observe');
+				const unobserve = vi.spyOn(observer, 'unobserve');
+
+				// 列表重渲染、可见范围不变：行元素原地保留，不重复登记
+				options['data-mark'] = 2;
+				await flushMicrotasks();
+
+				expect(wrapper.find('.vc-recycle-list').attributes('data-mark')).toBe('2');
+				expect(rowsOf(wrapper)).toEqual(rows);
+				expect(observe).not.toHaveBeenCalled();
+				expect(unobserve).not.toHaveBeenCalled();
+				restore();
+			});
+
+			it('reports a resize to the node that owns the element after rows move', async () => {
+				const heights: Record<number, number> = {};
+				const heightOf = (id: number) => heights[id] ?? 20 + id;
+				const { data, states, wrapper, restore } = await setup(30, 30, heightOf);
+				const sizeOf = (id: number) => states.rebuildData.find((node: any) => node.states.data.id === id).states.size;
+
+				// 删掉一行后其余行前移：元素跟着节点走，回调仍落到原来那条数据上
+				data.value = data.value.filter(item => item.id !== 1);
+				await flushMicrotasks();
+				heights[3] = 90;
+				triggerRendered(wrapper, 3);
+				await flushMicrotasks();
+
+				expect(sizeOf(3)).toBe(90);
+				expect(sizeOf(2)).toBe(heightOf(2));
+				expect(sizeOf(4)).toBe(heightOf(4));
+				restore();
+			});
+
+			it('disconnects the observer on unmount', async () => {
+				const { wrapper, restore } = await setup(30, 30);
+				const observer = observerOf(rowsOf(wrapper)[0]);
+				const disconnect = vi.spyOn(observer, 'disconnect');
+
+				restore();
+
+				expect(disconnect).toHaveBeenCalledTimes(1);
+				expect(observer.targets.size).toBe(0);
+			});
+
+			it('does not observe skeleton placeholders', async () => {
+				const restoreSize = mockSize(HTMLElement.prototype, { clientHeight: 200, scrollHeight: 1200, offsetHeight: 40 });
+				const wrapper = mount(() => (
+					<RecycleList loadData={() => new Promise(() => {})} batchCount={5} renderPlaceholder={() => <div class="ph">loading</div>}>
+						{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+					</RecycleList>
+				), { attachTo: document.body });
+				await flushLayout(4);
+
+				const placeholders = wrapper.findAll('.vc-recycle-list__column .ph');
+				expect(placeholders.length).toBeGreaterThan(0);
+				expect(wrapper.findAll(ROW).length).toBe(0);
+				// 骨架占位不是数据行：不登记、不观察
+				expect(placeholders.every(item => !observers.some(ro => ro.targets.has(item.element.parentElement)))).toBe(true);
+				restoreSize();
+				wrapper.unmount();
+			});
+
+			it('shows every skeleton placeholder at first, then windows them on scroll', async () => {
+				const restoreSize = mockSize(HTMLElement.prototype, { clientHeight: 200, scrollHeight: 1200, offsetHeight: 40 });
+				const wrapper = mount(() => (
+					<RecycleList loadData={() => new Promise(() => {})} batchCount={20} renderPlaceholder={() => <div class="ph">loading</div>}>
+						{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+					</RecycleList>
+				), { attachTo: document.body });
+				await flushLayout(4);
+
+				const placeholders = () => wrapper.findAll('.vc-recycle-list__column .ph').length;
+				const total = placeholders();
+				expect(total).toBeGreaterThan(10);
+
+				// 滚动后按视口裁剪：只有骨架时也不必一直渲染全部占位
+				const el = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+				el.scrollTop = 400;
+				el.dispatchEvent(new Event('scroll'));
+				await flushLayout(2);
+				expect(placeholders()).toBeGreaterThan(0);
+				expect(placeholders()).toBeLessThan(total);
+				restoreSize();
+				wrapper.unmount();
+			});
+
+			it('corrects by width in a horizontal list', async () => {
+				const restoreSize = mockSize(HTMLElement.prototype, { clientWidth: 200, scrollWidth: 1200 });
+				const widths: Record<number, number> = {};
+				const offsetWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
+				Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+					configurable: true,
+					get(this: HTMLElement) {
+						const item = this.querySelector(':scope > .x');
+						return item ? widths[Number(item.textContent)] ?? 50 : 50;
+					}
+				});
+				const listRef = ref<any>();
+				const wrapper = mount(() => (
+					<RecycleList ref={listRef} data={buildItems(20)} batchCount={20} disabled vertical={false}>
+						{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+					</RecycleList>
+				), { attachTo: document.body });
+				const { states } = listRef.value.store;
+				for (let i = 0; i < 40 && !(states.preData.length === 0 && wrapper.findAll(ROW).length > 0); i++) await sleep(0);
+
+				widths[2] = 90;
+				triggerRendered(wrapper, 2);
+				await flushMicrotasks();
+
+				expect(states.rebuildData[2].states.size).toBe(90);
+				expect(states.rebuildData[3].states.position).toBe(states.rebuildData[2].states.position + 90);
+				wrapper.unmount();
+				offsetWidth
+					? Object.defineProperty(HTMLElement.prototype, 'offsetWidth', offsetWidth)
+					: delete (HTMLElement.prototype as any).offsetWidth;
+				restoreSize();
+			});
+		});
+
+		describe('estimateSize: skip the measure pool', () => {
+			it('lays out every item from the estimate without rendering the pool', async () => {
+				const { states, shown, pooled, measuredIds, restore } = await setup(100, 20, () => 40, { estimateSize: 40 });
+				for (let i = 0; i < 20 && !states.isBuilt; i++) await sleep(0);
+
+				// 尺寸已知：不分批，一次构建全部；没有任何项进隐藏池。挂载前排好版的行挂载后即按视口展示（200 / 40 + overscan）
+				expect(shown().length).toBeGreaterThan(5);
+				expect(states.rebuildData.length).toBe(100);
+				expect(measuredIds).toEqual([]);
+				expect(pooled().length).toBe(0);
+				expect(states.contentMaxSize).toBe(4000);
+				expect(states.isBuilt).toBe(true);
+				expect(states.loaded).toBe(100);
+				restore();
+			});
+
+			it('measures the items the function leaves undefined', async () => {
+				const heightOf = (id: number) => (id % 10 === 3 ? 90 : 40);
+				const estimateSize = vi.fn(({ row }: any) => (row.id % 10 === 3 ? undefined : 40));
+				const { states, measuredIds, restore } = await setup(100, 20, heightOf, { estimateSize });
+				// 入参与默认插槽一致：{ row, index }
+				expect(estimateSize).toHaveBeenCalledWith({ row: expect.objectContaining({ id: 7 }), index: 7 });
+
+				for (let i = 0; i < 40 && states.preData.length > 0; i++) await sleep(0);
+				expect(measuredIds.sort((a, b) => a - b)).toEqual(Array.from({ length: 10 }, (_, i) => i * 10 + 3));
+				expect(states.rebuildData[3].states.size).toBe(90);
+				expect(states.contentMaxSize).toBe(90 * 10 + 40 * 90);
+				restore();
+			});
+
+			it('counts only the items that need measuring toward a batch', async () => {
+				// 偶数项没有预估：每批凑满 batchCount（10）个待测项为止，有预估的项不占批次、不进隐藏池
+				const estimateSize = ({ row }: any) => (row.id % 2 === 0 ? undefined : 40);
+				const { states, measuredIds, restore } = await setup(100, 10, () => 40, { estimateSize });
+				for (let i = 0; i < 40 && states.preData.length > 0; i++) await sleep(0);
+
+				// setData 构建到第 10 个待测项（id 18），挂载时再续一批到第 20 个（id 38）
+				expect(states.rebuildData.length).toBe(39);
+				expect(measuredIds.sort((a, b) => a - b)).toEqual(Array.from({ length: 20 }, (_, i) => i * 2));
+				restore();
+			});
+
+			it('corrects the estimate once the item is rendered', async () => {
+				const heightOf = (id: number) => 20 + id;
+				const { states, wrapper, restore } = await setup(100, 20, heightOf, { estimateSize: 30 });
+
+				triggerRendered(wrapper, 2);
+				await flushMicrotasks();
+
+				expect(states.rebuildData[2].states.size).toBe(heightOf(2));
+				// 没渲染过的项仍是估计值
+				expect(states.rebuildData[50].states.size).toBe(30);
+				expect(states.rebuildData[3].states.position).toBe(states.rebuildData[2].states.position + heightOf(2));
+				restore();
+			});
+
+			it('re-lays out with the new estimate when estimateSize changes', async () => {
+				const options = reactive<Record<string, any>>({ estimateSize: undefined });
+				const { states, pooled, restore } = await setup(100, 20, () => 40, options);
+				expect(states.rebuildData.length).toBeLessThan(100);
+
+				// 挂载后才给出预估：剩余的本地数据一次构建完
+				options.estimateSize = 60;
+				for (let i = 0; i < 40 && states.rebuildData.length < 100; i++) await sleep(0);
+				await flushMicrotasks();
+				expect(states.rebuildData.length).toBe(100);
+				expect(pooled().length).toBe(0);
+				// 没渲染过的项换成新的预估值；渲染中的行随即按 DOM 校正
+				expect(states.rebuildData[99].states.size).toBe(60);
+				expect(states.rebuildData[0].states.size).toBe(40);
+
+				// 撤掉预估：已有的尺寸原样保留（同样只是估计值），不重建列表，也不把已构建的数据放进隐藏池
+				options.estimateSize = undefined;
+				await flushMicrotasks();
+				expect(states.rebuildData.length).toBe(100);
+				expect(states.preData.length).toBe(0);
+				expect(pooled().length).toBe(0);
+				expect(states.rebuildData[99].states.size).toBe(60);
+				restore();
+			});
+
+			it('re-estimates only the items whose estimate changed when the function is replaced', async () => {
+				const options = reactive<Record<string, any>>({ estimateSize: () => 30 });
+				// 渲染出来的行实测为 50，与预估不同
+				const { states, list, wrapper, restore } = await setup(100, 20, () => 50, options);
+				triggerRendered(wrapper, 0);
+				await flushMicrotasks();
+				const sizes = () => states.rebuildData.map((node: any) => node.states.size);
+				expect(sizes()[0]).toBe(50);
+				expect(sizes()[99]).toBe(30);
+				const before = sizes();
+
+				// 换了引用、取值没变（模板里的内联函数每次渲染都是这样）：不重排，实测过的尺寸保留
+				const refresh = vi.spyOn(list.store.layout, 'refresh');
+				options.estimateSize = () => 30;
+				await flushMicrotasks();
+				expect(refresh).not.toHaveBeenCalled();
+				expect(sizes()).toEqual(before);
+
+				// 取值变了：未渲染的项换成新的预估值，渲染中的行按 DOM 校正
+				options.estimateSize = ({ index }: any) => (index < 50 ? 30 : 60);
+				await flushMicrotasks();
+				expect(refresh).toHaveBeenCalled();
+				expect(sizes()[0]).toBe(50);
+				expect(sizes()[49]).toBe(30);
+				expect(sizes()[99]).toBe(60);
+				restore();
+			});
+
+			it('applies the estimate to remotely loaded pages', async () => {
+				const offsetHeight = spyOffsetHeight(1000, 40);
+				const listRef = ref<any>();
+				const loadData = vi.fn(async ({ page }: any) => (page === 1 ? buildItems(5) : []));
+				const wrapper = mount(() => (
+					<RecycleList ref={listRef} loadData={loadData} estimateSize={32}>
+						{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+					</RecycleList>
+				), { attachTo: document.body });
+
+				await flushLayout();
+				const { states } = listRef.value.store;
+				expect(states.rebuildData.map((node: any) => node.states.size)).toEqual([32, 32, 32, 32, 32]);
+				expect(wrapper.findAll('.vc-recycle-list__pool .x').length).toBe(0);
+				offsetHeight.mockRestore();
+				wrapper.unmount();
 			});
 		});
 	});

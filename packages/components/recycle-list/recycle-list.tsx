@@ -13,6 +13,7 @@ import {
 	getCurrentInstance,
 	shallowRef
 } from 'vue';
+import type { VNode } from 'vue';
 import { throttle } from '@deot/helper-utils';
 import { Resize } from '@deot/helper-resize';
 import { Interrupter } from '@deot/helper-scheduler';
@@ -22,7 +23,6 @@ import { Customer } from '../customer';
 import { Scroller } from '../scroller';
 import { ScrollState } from './scroll-state';
 import { Container } from './container';
-import { Resizer } from '../resizer';
 import { useDirectionKeys } from './hooks/use-direction-keys';
 import { useMeasure } from './hooks/use-measure';
 import { useRenderer } from './hooks/use-renderer';
@@ -31,6 +31,7 @@ import { useLoadEmitter, useLoadState } from './hooks/use-load-state';
 import { Store } from './store';
 import type { RecycleListItemNodeRaw, ScrollLeaf } from './store';
 import { Viewport } from './viewport';
+import { Measuring } from '../measuring';
 
 const isTouch = typeof document !== 'undefined' && 'ontouchend' in document;
 const COMPONENT_NAME = 'vc-recycle-list';
@@ -62,7 +63,12 @@ export const RecycleList = defineComponent({
 		const loadState = useLoadState(props, store);
 
 		const { renderer, hasPlaceholder, renderEdgeSlot } = useRenderer(props, slots, store, loadState);
-		const { placeholder, trackVisible, trackPooled, isPooled, measure, remeasureVisible } = useMeasure(store, K, hasPlaceholder);
+		const { placeholder, observeRow, unobserveRow, trackPooled, isPooled, measure, remeasureVisible } = useMeasure(
+			store,
+			K,
+			hasPlaceholder,
+			node => handleRowResize(node)
+		);
 
 		// 默认滚轮驱动（native=false 时生效）：虚拟内容与滚动位置在同一帧更新；仅显式传 false 时关闭，undefined 视为未设置
 		// fill=false 时主轴交给外部承载者：内部 wrapper 沿主轴随内容展开，不能再被 scrollerOptions 限高/限宽
@@ -109,7 +115,17 @@ export const RecycleList = defineComponent({
 		// ---------------------------------------------------------------------
 		// 可见范围
 		// ---------------------------------------------------------------------
-		const setVisibleItemRange = () => {
+		/**
+		 * 按视口位置刷新可见范围
+		 * @param isLayout 布局完成或绑定视口时为 true：此时只有骨架占位就全部展示，骨架撑起首屏；之后的滚动仍按视口裁剪
+		 */
+		const setVisibleItemRange = (isLayout = false) => {
+			const { length } = store.states.rebuildData;
+			if (isLayout && length && !hasRealNodes()) {
+				store.states.firstItemIndex = 0;
+				store.states.lastItemIndex = length - 1;
+				return;
+			}
 			const state = viewport.state();
 			if (!state) return;
 			const overscan = Math.max(0, props.overscan);
@@ -240,14 +256,6 @@ export const RecycleList = defineComponent({
 		let runningLayouts = 0;
 		const layoutInterrupter = Interrupter.of();
 		/**
-		 * 隐藏池是否同步渲染待测节点
-		 *
-		 * 待测集合里有测量过的节点，说明已经展示过的行被重置了（数据替换、尺寸变化后的整体重排）：
-		 * 它们测完之前不会出现在列中，必须在同一个任务里渲染、测量并排版，否则会先白屏再逐片出现。
-		 * 全是从未测量过的新节点（如按批懒构建的下一批）时才分片，避免整批在一个任务里渲染
-		 */
-		const isPoolSync = computed(() => store.states.preData.some(node => node.measured));
-		/**
 		 * 隐藏池每渲染完一片就放行一次等待中的测量
 		 *
 		 * 待测集合每次变化 Defer 都会重新渲染一轮（once=false），因此用 next 反复放行；
@@ -293,8 +301,13 @@ export const RecycleList = defineComponent({
 		 * @param options 构建选项，透传给 nodes.build
 		 * @param options.reversed inverted 本地翻页时逆序补建更早的数据
 		 * @param options.force 已测量的节点也重新构建，用于整体重测
+		 * @param options.keep force 时仍然跳过的节点（正在渲染的行）
 		 */
-		const layoutRange = async (start: number, end: number, options: { reversed?: boolean; force?: boolean } = {}) => {
+		const layoutRange = async (
+			start: number,
+			end: number,
+			options: { reversed?: boolean; force?: boolean; keep?: Set<RecycleListItemNodeRaw> } = {}
+		) => {
 			if (start === end) {
 				commitBuildState();
 				syncVisibleRange();
@@ -318,13 +331,7 @@ export const RecycleList = defineComponent({
 			await viewport.settle();
 			viewport.invalidate();
 
-			if (!hasRealNodes()) {
-				// 只有占位时全部展示，骨架撑起首屏
-				store.states.firstItemIndex = 0;
-				store.states.lastItemIndex = store.states.rebuildData.length - 1;
-			} else {
-				setVisibleItemRange();
-			}
+			setVisibleItemRange(true);
 			measured.length > 0 && emit(
 				'row-resize',
 				measured.map(node => ({ size: node.states.size, index: node.states.index }))
@@ -336,11 +343,17 @@ export const RecycleList = defineComponent({
 			layoutInterrupter.next();
 		};
 
-		// 整体重新测量已构建的节点并重排
+		/**
+		 * 整体重新测量已构建的节点并重排
+		 *
+		 * 正在渲染的行保留几何、按 DOM 重测（不进隐藏池，画面不空）；其余已构建的行清空后在隐藏池分片重测
+		 */
 		const refreshLayout = async () => {
 			viewport.invalidate();
+			const rendered = new Set(store.states.data.flat());
 			const [start, end] = store.local.builtRange;
-			await layoutRange(start, end, { force: true });
+			await layoutRange(start, end, { force: true, keep: rendered });
+			rendered.forEach(handleRowResize);
 		};
 
 		// ---------------------------------------------------------------------
@@ -452,7 +465,7 @@ export const RecycleList = defineComponent({
 		// 数据加载
 		// ---------------------------------------------------------------------
 
-		// 本地数据(data)按 batchCount 懒构建下一批
+		// 本地数据(data)懒构建下一批：每批凑满 batchCount 个需要测量的项，有预估尺寸的项不占批次
 		let isBuildingLocal = false;
 		const buildLocalPage = async () => {
 			if (isBuildingLocal || !store.local.hasMore) return false;
@@ -496,9 +509,7 @@ export const RecycleList = defineComponent({
 			} else {
 				viewport.scrollTo(position);
 			}
-			if (hasRealNodes()) {
-				setVisibleItemRange();
-			}
+			setVisibleItemRange();
 			unlock();
 		};
 
@@ -639,12 +650,16 @@ export const RecycleList = defineComponent({
 			}
 		};
 
-		// 列表交叉轴尺寸变化会改变所有节点的尺寸：节流结束后整体重排并保持首个可见项不跳动
+		// 视口尺寸变了：记下新的主轴尺寸，几何缓存作废
+		const syncClientSize = () => {
+			lastClientSize = viewport.state()?.clientSize || wrapper.value[K.clientSize];
+			viewport.invalidate();
+		};
+
+		// 列表由隐藏变为可见：隐藏期间量到的尺寸不可信，节流结束后整体重测并保持首个可见项不跳动
 		const handleResize = throttle(async () => {
 			if (!wrapper.value) return;
-			const state = viewport.state();
-			lastClientSize = state?.clientSize || wrapper.value[K.clientSize];
-			viewport.invalidate();
+			syncClientSize();
 			if (!hasRealNodes()) return;
 
 			await preserveAnchor(refreshLayout);
@@ -682,13 +697,16 @@ export const RecycleList = defineComponent({
 		};
 
 		/**
-		 * 行尺寸变化（Resizer 首次测量或内容变化）时登记，留待同一个微任务内统一校正
+		 * 行尺寸变化（渲染出来时的首次测量或内容变化）时登记，留待同一个微任务内统一校正
 		 * @param node 尺寸变化的节点
 		 */
 		const handleRowResize = (node: RecycleListItemNodeRaw) => {
 			renderedRows.size === 0 && Promise.resolve().then(correctRenderedRows);
 			renderedRows.add(node);
 		};
+
+		// 按 DOM 校正正在渲染的行：记录的尺寸可能只是估计值，而 DOM 尺寸没变时行监听不会回调
+		const correctRendered = () => store.states.data.flat().forEach(handleRowResize);
 
 		/**
 		 * 刷新视口几何与可见范围，并按已渲染行的实际尺寸校正一次
@@ -697,7 +715,7 @@ export const RecycleList = defineComponent({
 		 */
 		const refreshViewport = async () => {
 			scroller.value?.refresh?.();
-			store.states.data.flat().forEach(handleRowResize);
+			correctRendered();
 			await syncVisibleRange(true);
 		};
 
@@ -705,22 +723,31 @@ export const RecycleList = defineComponent({
 		 * 列表 wrapper 自身尺寸变化
 		 *
 		 * 节点尺寸只受交叉轴（纵向列表为宽度）影响，主轴尺寸变化不会改变任何节点的大小。
-		 * fill=false 时 wrapper 沿主轴随内容增长，每构建一批都会触发这里；若每次都全量重测，
-		 * 就要把所有已构建节点重新放进隐藏池渲染一遍，代价随已构建数量线性增长。
-		 * 因此交叉轴未变时只刷新几何缓存与可见范围；首次回调与交叉轴变化时仍走全量重测
+		 * fill=false 时 wrapper 沿主轴随内容增长，每构建一批都会触发这里，交叉轴未变时只刷新几何缓存与可见范围。
+		 * 交叉轴变化时已有的尺寸都只是估计值：只按 DOM 重测正在渲染的行，其余行等渲染出来再校正，
+		 * 不必把全部已构建的行放回隐藏池；从隐藏（尺寸为 0）变为可见时才整体重测。
+		 * 基准在绑定视口时取当前值（见 rebindViewport），挂载后的首次回调不算变化
 		 */
 		let lastCrossSize = -1;
+		const handleCrossResize = throttle(() => {
+			if (!wrapper.value) return;
+			syncClientSize();
+			hasRealNodes() && refreshViewport();
+		}, 50, {
+			leading: false,
+			trailing: true
+		});
 		const handleWrapperResize = () => {
 			const el = wrapper.value;
 			if (!el) return;
 			const crossSize = el[K.crossClientSize];
 			if (crossSize !== lastCrossSize) {
+				const wasHidden = lastCrossSize <= 0;
 				lastCrossSize = crossSize;
-				handleResize();
+				wasHidden ? handleResize() : handleCrossResize();
 				return;
 			}
-			lastClientSize = viewport.state()?.clientSize || el[K.clientSize];
-			viewport.invalidate();
+			syncClientSize();
 			setVisibleItemRange();
 		};
 
@@ -745,22 +772,26 @@ export const RecycleList = defineComponent({
 			// 换轴/换承载者后旧的兜底尺寸不再可信
 			lastClientSize = 0;
 			viewport.rebind(!props.fill, getRoot());
-			if (!viewport.external) return;
-
-			// 主轴交给外部承载者后，内部 wrapper 的主轴归零，避免残留偏移叠加到位置计算
-			wrapper.value && (wrapper.value[K.scrollAxis] = 0);
-			lastClientSize = viewport.clientSize;
-			setVisibleItemRange();
+			lastCrossSize = wrapper.value?.[K.crossClientSize] ?? -1;
+			if (viewport.external) {
+				// 主轴交给外部承载者后，内部 wrapper 的主轴归零，避免残留偏移叠加到位置计算
+				wrapper.value && (wrapper.value[K.scrollAxis] = 0);
+				lastClientSize = viewport.clientSize;
+			}
+			// 换了滚动源就按新的几何重算可见范围；挂载前已排好版的节点（有预估尺寸时不必等隐藏池）也在这里第一次按视口展示
+			setVisibleItemRange(true);
 			alignInvertedOnce();
 		};
 
-		// 设置初始数据（模拟分页，只构建已构建区间，剩余部分随滚动构建）
+		// 设置初始数据（模拟分页，只构建已构建区间，剩余部分随滚动构建；全部有预估尺寸时一次构建完）
 		const setDataSource = async (v: any, oldV: any) => {
 			if (!Array.isArray(v) || oldV === v) return;
 
 			if (!store.setData(v)) return;
 
 			await layoutRange(...store.local.builtRange);
+			// 换了数据的行沿用的是估计值：正在渲染的按 DOM 校正一次（只涉及渲染中的行）
+			correctRendered();
 			await alignInvertedOnce();
 
 			// 追加数据时若已停在加载阈值内（如列表底部），无需再滚动即继续构建
@@ -768,12 +799,12 @@ export const RecycleList = defineComponent({
 		};
 
 		/**
-		 * 方向变化后按新方向重建列表
+		 * 方向变化后按新方向从头重建列表
 		 *
 		 * 本地数据与远程分页在 inverted 下的排列方式不同，无法原地翻转：保留 data 属性按新方向重建，
 		 * 已请求的远程页丢弃并从第 1 页重新请求
 		 */
-		const rebuildDirection = async () => {
+		const rebuildList = async () => {
 			if (!isMounted.value) return;
 			lock();
 			store.reset();
@@ -844,6 +875,20 @@ export const RecycleList = defineComponent({
 				}
 			);
 
+			// 预估尺寸变化：预估值变了的已构建节点换用新值（撤掉时保留原尺寸，同样当作估计值），渲染中的行按 DOM 校正，
+			// 剩余的本地数据按新规则构建。
+			// 预估值没变时什么都不做：模板里的内联函数每次渲染都是新引用，不该因此丢掉已测的尺寸或整体重排
+			watch(
+				() => props.estimateSize,
+				async (v) => {
+					store.syncProps({ estimateSize: v });
+					if (!isMounted.value || !store.nodes.reestimate()) return;
+					store.layout.refresh();
+					await refreshViewport();
+					isMounted.value && store.local.hasMore && loadData();
+				}
+			);
+
 			// 列数 / 列间距变化会改变列宽，行高要重新测量
 			watch(
 				() => [props.cols, props.gutter],
@@ -859,7 +904,7 @@ export const RecycleList = defineComponent({
 				() => props.inverted,
 				(v) => {
 					store.syncProps({ inverted: v });
-					rebuildDirection();
+					rebuildList();
 				}
 			);
 		}
@@ -927,15 +972,17 @@ export const RecycleList = defineComponent({
 				}
 				{
 					!item.states.isPlaceholder && (
-						<Resizer
-							ref={v => trackVisible(item, v)}
-							fill={false}
-							// 单行尺寸变化只校正该行；交叉轴变化引起的整体变化由 handleWrapperResize 负责
-							// @ts-ignore
-							onResize={() => handleRowResize(item)}
+						// 行只是普通元素：尺寸由列表共用的 ResizeObserver 监听，单行变化只校正该行（见 use-measure）
+						<div
+							class="vc-recycle-list__item"
+							// vnode 钩子不在元素的 JSX 类型里：经展开传入
+							{...{
+								onVnodeMounted: (vnode: VNode) => observeRow(item, vnode.el as HTMLElement),
+								onVnodeBeforeUnmount: (vnode: VNode) => unobserveRow(item, vnode.el as HTMLElement)
+							}}
 						>
 							{ slots.default?.({ row: item.states.data || {}, index: item.states.index }) }
-						</Resizer>
+						</div>
 					)
 				}
 			</Fragment>
@@ -961,32 +1008,34 @@ export const RecycleList = defineComponent({
 		);
 
 		// 隐藏测量池：待测量节点与骨架在这里先渲染一次以读取真实尺寸
+		// 隐藏池只为量尺寸而渲染：整个池包在一个 Measuring 里，池里的组件可据此跳过图片请求等与尺寸无关的副作用
 		const renderPool = () => (
 			<div
 				class="vc-recycle-list__pool"
 				style={{ [K.columnSize]: store.states.columnSize, [K.paddingColumnHead]: `${store.states.columnOffsetGutter}px` }}
 			>
-				<Defer
-					data={poolData.value}
-					once={false}
-					disabled={isPoolSync.value}
-					onProgress={handlePoolRendered}
-					onComplete={handlePoolRendered}
-				>
-					{{
-						default: ({ row: item }) => (
-							<div
-								ref={v => trackPooled(item, v)}
-								class="vc-recycle-list__hidden"
-							>
-								{ slots.default?.({ row: item.states.data || {}, index: item.states.index }) }
-							</div>
-						)
-					}}
-				</Defer>
-				<div ref={placeholder} class="vc-recycle-list__hidden">
-					{ renderPlaceholder() }
-				</div>
+				<Measuring>
+					<Defer
+						data={poolData.value}
+						once={false}
+						onProgress={handlePoolRendered}
+						onComplete={handlePoolRendered}
+					>
+						{{
+							default: ({ row: item }) => (
+								<div
+									ref={v => trackPooled(item, v)}
+									class="vc-recycle-list__hidden"
+								>
+									{ slots.default?.({ row: item.states.data || {}, index: item.states.index }) }
+								</div>
+							)
+						}}
+					</Defer>
+					<div ref={placeholder} class="vc-recycle-list__hidden">
+						{ renderPlaceholder() }
+					</div>
+				</Measuring>
 			</div>
 		);
 

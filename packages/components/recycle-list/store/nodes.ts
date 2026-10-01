@@ -16,7 +16,7 @@ export class Nodes {
 	byIndex = new Map<number, RecycleListItemNodeRaw>();
 
 	/**
-	 * 已有数据但尚未测量的节点
+	 * 已有数据、既未测量也没有预估尺寸的节点
 	 *
 	 * 全量 filter 出这批节点是 O(n)，而它每批构建后都会被读取，
 	 * 深滚动下同样会退化成 O(n²)，因此改为增量维护
@@ -53,6 +53,8 @@ export class Nodes {
 
 	/**
 	 * 登记节点到 byIndex 并同步集合归属
+	 *
+	 * 还没有尺寸的数据节点先取预估尺寸：有预估尺寸就不算待测，不进隐藏池，渲染后由实测校正
 	 * 原 nodeByIndex.set + markPending 内联
 	 * @param index 数据索引
 	 * @param node 目标节点
@@ -60,8 +62,25 @@ export class Nodes {
 	 */
 	attach(index: number, node: RecycleListItemNodeRaw) {
 		this.byIndex.set(index, node);
+		if (!node.raw.size && !node.raw.isPlaceholder) {
+			node.estimate = this.estimate(node.raw.data, index);
+			node.estimate && (node.states.size = node.estimate);
+		}
 		this.sync(node);
 		return node;
+	}
+
+	/**
+	 * 数据项的预估尺寸（props.estimateSize）；没有配置、没有数据或返回无效值时为 0
+	 * @param data 行数据
+	 * @param index 数据索引
+	 * @returns 预估尺寸
+	 */
+	estimate(data: any, index: number) {
+		const { estimateSize } = this.store.props;
+		if (!estimateSize || !data) return 0;
+		const size = typeof estimateSize === 'function' ? estimateSize({ row: data, index }) : estimateSize;
+		return typeof size === 'number' && size > 0 ? size : 0;
 	}
 
 	/**
@@ -128,8 +147,27 @@ export class Nodes {
 	 */
 	setSize(node: RecycleListItemNodeRaw, size: number) {
 		if (node.raw.size !== size) node.states.size = size;
-		if (size > 0) node.measured = true;
 		this.sync(node);
+	}
+
+	/**
+	 * estimateSize 变化后重估已构建的节点
+	 *
+	 * 只处理预估值变了的节点：依据变了，原尺寸（预估或实测）不再可信，换成新的预估值；撤掉预估时保留原尺寸，它同样只是估计值。
+	 * 预估值没变的节点不动，实测过的尺寸得以保留。已渲染的行随后由调用方按 DOM 校正
+	 * @returns 是否有节点的预估值变了
+	 */
+	reestimate() {
+		let isChanged = false;
+		toRaw(this.store.states.rebuildData).forEach((node) => {
+			if (!node || node.raw.isPlaceholder) return;
+			const estimate = this.estimate(node.raw.data, node.raw.index);
+			if (estimate === node.estimate) return;
+			node.estimate = estimate;
+			isChanged = true;
+			estimate && this.setSize(node, estimate);
+		});
+		return isChanged;
 	}
 
 	/**
@@ -153,26 +191,32 @@ export class Nodes {
 	/**
 	 * 构建 [start, end) 区间的节点，返回待测量的节点
 	 *
-	 * 有数据且已测出尺寸的节点跳过（force 时不跳过）；其余的复用 rebind，不存在的新建。
+	 * 有数据且已有尺寸（实测或预估）的节点跳过（force 时不跳过）；其余的复用 rebind，不存在的新建。
 	 * inverted 下新建节点整批插到头部，并把可见范围下标同步后移
 	 * @param start 区间起点（含）
 	 * @param end 区间终点（不含）
 	 * @param options 构建选项
 	 * @param options.reversed inverted 本地翻页时向前补建更早的数据，逆序后头部保持升序
 	 * @param options.force 已测量的节点也重新构建，用于整体重测
+	 * @param options.keep force 时仍然跳过的节点（正在渲染的行：保留几何，由调用方按 DOM 重测）
 	 * @returns 本次构建、待测量的节点
 	 */
-	build(start: number, end: number, options: { reversed?: boolean; force?: boolean } = {}) {
+	build(
+		start: number,
+		end: number,
+		options: { reversed?: boolean; force?: boolean; keep?: Set<RecycleListItemNodeRaw> } = {}
+	) {
 		const { states, props, local } = this.store;
-		const { reversed, force } = options;
+		const { reversed, force, keep } = options;
 		const nodes: RecycleListItemNodeRaw[] = [];
 		const created: RecycleListItemNodeRaw[] = [];
 
 		for (let step = start; step < end; step++) {
 			const index = reversed ? end - 1 - (step - start) : step;
 			const existing = this.get(index);
-			// 尺寸为 0 表示还没测出来，不能当成已完成
+			// 尺寸为 0 表示既没测出来也没有预估，不能当成已完成
 			if (!force && existing && !existing.raw.isPlaceholder && existing.raw.size > 0) continue;
+			if (existing && keep?.has(existing)) continue;
 
 			if (existing) {
 				nodes.push(this.rebind(existing, index, local.originalData[index]));
@@ -262,7 +306,10 @@ export class Nodes {
 	 *
 	 * 节点跟着数据项走：与旧数组中引用相同（===）的数据项视为内容未变，认领原来承载它的节点，
 	 * 沿用尺寸与几何、不再重测，id 不变，渲染时只是移动位置；删除、插入、排序因此只需测量新出现的数据项。
-	 * 没有被认领的位置优先复用同索引的旧节点（保持 id 稳定），清空几何重新测量。
+	 * 没有被认领的位置优先复用同索引的旧节点（保持 id 稳定），几何原样保留：
+	 * 尺寸取新数据的预估值，没有预估时沿用旧尺寸作为估计值，都不进隐藏池；
+	 * 正在渲染的行原地换成新数据、不会先消失，行渲染出来（或内容变了）时再按实际尺寸校正。
+	 * 整页替换（如切换分页）因此不必重测已构建的行。旧节点也没有尺寸时才清空待测。
 	 * 原 Store.setData 的节点重建段；复用/新建的选择原 Store.reuseOrCreateNode（private），此处内联为 existing ? rebind : create
 	 * @param base 已构建区间在 originalData 中的起始下标
 	 * @param count 已构建条数
@@ -295,11 +342,17 @@ export class Nodes {
 			// 尺寸为 0 的节点仍待测，交给下一次构建
 			if (owner) return this.attach(index, owner.reuse({ index, data }));
 
-			// 新的数据项：清空几何重新测量
+			// 新的数据项：预估值优先，其次沿用旧尺寸作为估计值；占位节点的尺寸是骨架的，不沿用
 			const existing = byIndex.get(index);
 			if (!existing || claimed.has(existing)) return this.create(index, data);
 			claimed.add(existing);
-			return this.rebind(existing, index, data);
+			const estimate = data ? this.estimate(data, index) : 0;
+			const size = estimate || (data && !existing.raw.isPlaceholder ? existing.raw.size : 0);
+			if (!size) return this.rebind(existing, index, data);
+			existing.reuse({ index, data });
+			existing.estimate = estimate;
+			if (existing.raw.size !== size) existing.states.size = size;
+			return this.attach(index, existing);
 		});
 	}
 }

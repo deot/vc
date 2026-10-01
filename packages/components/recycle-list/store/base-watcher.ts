@@ -72,7 +72,7 @@ export type RecycleListStates = {
 	 */
 	data: RecycleListItemNodeRaw[][];
 	/**
-	 * 已有数据但尚未测量的节点，喂给 Defer 预渲染测高
+	 * 已有数据、既未测量也没有预估尺寸的节点，喂给 Defer 预渲染测高
 	 */
 	preData: RecycleListItemNodeRaw[];
 };

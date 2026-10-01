@@ -65,7 +65,10 @@ export class Local {
 
 		this.total = data.length;
 		// 模拟分页，初始只构建一批；数据变更时保留已构建进度，避免深滚动后内容塌缩
-		this.buildCount = Math.min(this.total, Math.max(this.buildCount, this.store.props.batchCount));
+		// 已构建进度覆盖了全部数据时不必再数首批（数的过程要逐项求预估尺寸）
+		this.buildCount = this.buildCount >= this.total
+			? this.total
+			: Math.max(this.buildCount, this.nextBatch(0));
 		return true;
 	}
 
@@ -82,15 +85,36 @@ export class Local {
 	}
 
 	/**
+	 * 下一批要构建的条数：从已构建区间的边缘起，凑满 batchCount 个需要测量的项为止
+	 *
+	 * 分批只是为了限制每次放进隐藏池的数量：有预估尺寸的项不进隐藏池，不占批次。
+	 * 全部可预估（如固定行高）时一次构建完，内容尺寸从一开始就完整
+	 * @param built 已构建条数
+	 * @returns 本批条数
+	 */
+	private nextBatch(built: number) {
+		const { batchCount, inverted, estimateSize } = this.store.props;
+		const remain = this.total - built;
+		if (!estimateSize) return Math.min(batchCount, remain);
+
+		let size = 0;
+		let unknown = 0;
+		while (size < remain && unknown < batchCount) {
+			// 正序向后扫描，inverted 从尾部向前
+			const index = inverted ? this.total - built - size - 1 : built + size;
+			if (!this.store.nodes.estimate(this.originalData[index], index)) unknown++;
+			size++;
+		}
+		return size;
+	}
+
+	/**
 	 * 本地数据模拟分页，消费下一批的构建区间并推进 buildCount
 	 * @returns 待构建区间；无更多数据时返回 null
 	 */
 	consumePage(): { start: number; end: number; reversed: boolean } | null {
 		if (!this.hasMore) return null;
-		const size = Math.min(
-			this.store.props.batchCount,
-			this.total - this.buildCount
-		);
+		const size = this.nextBatch(this.buildCount);
 		if (!this.store.props.inverted) {
 			const start = this.buildCount;
 			this.buildCount += size;
