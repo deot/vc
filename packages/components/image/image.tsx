@@ -8,6 +8,7 @@ import { throttle } from 'lodash-es';
 // 叶子模块（只依赖photoswipe），避免与FilePreview（依赖Image）形成循环引用
 import { ImagePreview } from '../file-preview/image-preview';
 import { useLocale } from '../locale';
+import { useMeasuring } from '../measuring';
 import { VcInstance } from '../vc';
 import { props as imageProps } from './image-props';
 import IMGStore from './store';
@@ -63,6 +64,7 @@ export const Image = defineComponent({
 		});
 
 		const setScroller = () => {
+			if (scroller.value) return;
 			const { wrapper } = props;
 
 			if (typeof wrapper === 'object') {
@@ -75,16 +77,21 @@ export const Image = defineComponent({
 		};
 
 		const initPlaceholder = () => {
-			isAuto.value = instance.vnode.el!.clientHeight === 1 || instance.vnode.el!.clientWidth === 1;
+			const el = instance.vnode.el!;
+			isAuto.value = el.clientHeight === 1 || el.clientWidth === 1;
 
 			// el上是否有width和height
-			const { width, height } = instance.vnode.el!.style;
+			const { width, height } = el.style;
 
-			if (width && height) return;
+			// 没有缓存过原始尺寸时算不出占位尺寸：不必再读尺寸、找滚动容器
+			if ((width && height) || !IMGStore.has(displaySrc.value!)) return;
+
+			// 找滚动容器要逐级读样式，只在用得到它的宽度时才找（两个方向都没给尺寸）
+			!width && !height && setScroller();
 
 			const { w, h } = IMGStore.getSize(displaySrc.value!, {
-				clientW: instance.vnode.el!.clientWidth,
-				clientH: instance.vnode.el!.clientHeight,
+				clientW: el.clientWidth,
+				clientH: el.clientHeight,
 				style: {
 					width,
 					height
@@ -124,7 +131,25 @@ export const Image = defineComponent({
 			}
 		};
 
+		/**
+		 * 进行中的预加载
+		 *
+		 * 它的回调引用着组件实例：卸载后若不取消，请求结束前整棵已卸载的子树（组件与 DOM）都无法回收，
+		 * 列表快速卸载大量行时内存会随未完成的图片请求一起堆积
+		 */
+		let loader: HTMLImageElement | null = null;
+
+		// 取消预加载：先摘掉回调，再清空 src 中止请求
+		const cancelLoad = () => {
+			if (!loader) return;
+			loader.onload = null;
+			loader.onerror = null;
+			loader.src = '';
+			loader = null;
+		};
+
 		const handleLoad = (e, img) => {
+			loader = null;
 			originW.value = img.naturalWidth || img.width;
 			originH.value = img.naturalHeight || img.height;
 
@@ -139,18 +164,25 @@ export const Image = defineComponent({
 		};
 
 		const handleError = (e: any, img: any) => {
+			loader = null;
 			isLoading.value = false;
 			isError.value = true;
 			emit('error', e, img, instance);
 		};
 
+		// 渲染在虚拟列表的隐藏测量池里：那份渲染只为量尺寸、不会展示，只占位，不发请求
+		const measuring = useMeasuring();
+
 		const loadImage = () => {
-			if (!displaySrc.value) return;
+			// 换图时上一张还没加载完：取消它，迟到的回调不能覆盖新图的状态
+			cancelLoad();
+			if (measuring || !displaySrc.value) return;
 			// reset status
 			isLoading.value = true;
 			isError.value = false;
 
 			const img = new window.Image();
+			loader = img;
 			img.onload = e => handleLoad(e, img);
 			img.onerror = e => handleError(e, img);
 
@@ -226,15 +258,17 @@ export const Image = defineComponent({
 		);
 
 		onMounted(() => {
-			setScroller();
 			initPlaceholder();
-			props.lazy
-				? addLazyLoadListener()
-				: loadImage();
+			if (measuring) return;
+			if (!props.lazy) return loadImage();
+			// 只有懒加载要监听滚动容器
+			setScroller();
+			addLazyLoadListener();
 		});
 
 		onBeforeUnmount(() => {
 			props.lazy && removeLazyLoadListener();
+			cancelLoad();
 		});
 		return () => {
 			return (

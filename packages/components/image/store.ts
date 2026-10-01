@@ -1,23 +1,26 @@
-import { Storage } from '@deot/helper-cache';
+type Size = { originW: number; originH: number };
+
+// 只为加载前的占位尺寸服务，放在内存里即可；按最近使用保留，避免随浏览的图片数量无限增长
+const MAX = 500;
 
 class IMGStore {
-	map: any;
+	map = new Map<string, Size>();
 
-	constructor() {
-		this.map = Storage.get('@wya/vc-img:', { session: true }) || {};
+	has(src: string) {
+		return this.map.has(src);
 	}
 
-	add(src: string, opts: any = {}) {
+	add(src: string, opts: Partial<Size> = {}) {
 		const { originW, originH } = opts;
+		// 内联图片（data:）的地址就是图片本身，不必缓存尺寸：它不经过网络，缓存只会把整份数据留在内存里
+		if (!originW || !originH || src.startsWith('data:')) return;
 
-		if (this.map[src] && originW && originH) return;
-
-		this.map[src] = {
-			originW,
-			originH,
-		};
-
-		Storage.set('@wya/vc-img:', this.map, { session: true });
+		// 重新插入，排到最近
+		this.map.delete(src);
+		this.map.set(src, { originW, originH });
+		if (this.map.size > MAX) {
+			this.map.delete(this.map.keys().next().value!);
+		}
 	}
 
 	getSize(src: string, opts: any = {}) {
@@ -27,9 +30,10 @@ class IMGStore {
 		 * 1. 不存在
 		 * 2. 外部传入了宽高（做了特殊处理，促使高宽至少1）
 		 */
-		if (!this.map[src]) return {};
+		const size = this.map.get(src);
+		if (!size) return {};
 
-		const { originW, originH } = this.map[src];
+		const { originW, originH } = size;
 
 		// let scale;
 		// 优先计算W
