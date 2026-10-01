@@ -3,6 +3,10 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		ColorPicker: {
+			clearText: 'Clear',
+			confirmText: 'OK'
+		},
 		Picker: {
 			extra: 'Please select',
 			cancelText: 'Cancel',

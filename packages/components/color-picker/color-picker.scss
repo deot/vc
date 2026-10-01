@@ -7,6 +7,7 @@ $color-dark-light: varfix(color-dark-light, color-picker);
 $color-dark-extralight: varfix(color-dark-extralight, color-picker);
 $color-primary: varfix(color-primary, color-picker);
 $color-disabled: varfix(color-disabled, color-picker);
+$swatch-border-color: varfix(swatch-border-color, color-picker, rgb(0 0 0 / 15%));
 
 @include block($component-name) {
 	display: inline-flex;
@@ -127,7 +128,7 @@ $color-disabled: varfix(color-disabled, color-picker);
 			width: 100%;
 			height: 100%;
 			border-radius: unitfix(2);
-			box-shadow: inset 0 0 0 unitfix(1) rgb(0 0 0 / 15%);
+			box-shadow: inset 0 0 0 unitfix(1) $swatch-border-color;
 		}
 
 		.vc-icon {

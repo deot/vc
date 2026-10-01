@@ -3,6 +3,7 @@
 $component-name: vc-color-picker-predefine;
 $alpha-background: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==';
 $color-primary: varfix(color-primary, color-picker);
+$swatch-border-color: varfix(swatch-border-color, color-picker, rgb(0 0 0 / 15%));
 
 @include block($component-name) {
 	display: flex;
@@ -20,7 +21,7 @@ $color-primary: varfix(color-primary, color-picker);
 		div {
 			height: 100%;
 			border-radius: unitfix(2);
-			box-shadow: inset 0 0 0 unitfix(1) rgb(0 0 0 / 15%);
+			box-shadow: inset 0 0 0 unitfix(1) $swatch-border-color;
 		}
 
 		&:nth-child(10n + 1) {

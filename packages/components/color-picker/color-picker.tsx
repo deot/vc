@@ -9,6 +9,7 @@ import { Popover } from '../popover/index';
 import { Icon } from '../icon/index';
 import { Input } from '../input/index';
 import { Button } from '../button/index';
+import { useLocale } from '../locale';
 import { ColorPickerView } from './picker-view';
 
 const COMPONENT_NAME = 'vc-color-picker';
@@ -38,6 +39,7 @@ export const ColorPicker = defineComponent({
 		'color-change'
 	],
 	setup(props, { emit }) {
+		const { t } = useLocale();
 		const its = useAttrs({ merge: false });
 		const formItem = inject<any>('vc-form-item', {});
 		const isActive = ref(false);
@@ -211,7 +213,7 @@ export const ColorPicker = defineComponent({
 										class="vc-btn is-default"
 										onClick={handleClearValue}
 									>
-										清空
+										{t('vc.ColorPicker.clearText')}
 									</Button>
 									<Button
 										type="primary"
@@ -219,7 +221,7 @@ export const ColorPicker = defineComponent({
 										class="vc-btn"
 										onClick={handleConfirmValue}
 									>
-										确定
+										{t('vc.ColorPicker.confirmText')}
 									</Button>
 								</div>
 							</div>

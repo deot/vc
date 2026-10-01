@@ -3,6 +3,10 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		ColorPicker: {
+			clearText: '清空',
+			confirmText: '确定'
+		},
 		Picker: {
 			extra: '请选择',
 			cancelText: '取消',
