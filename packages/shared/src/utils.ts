@@ -86,3 +86,45 @@ export const getComputedStyle = (el: HTMLElement, SIZING_STYLE: string[]) => {
 		boxSizing,
 	};
 };
+
+/**
+ * 第一个满足 isMatch 的下标；无匹配返回 length
+ * @param length 搜索区间长度
+ * @param isMatch 单调谓词（true 区段在右侧）
+ * @returns 首个匹配下标
+ */
+export const bisectFirst = (length: number, isMatch: (i: number) => boolean) => {
+	let lo = 0;
+	let hi = length;
+	while (lo < hi) {
+		const mid = (lo + hi) >>> 1;
+		if (isMatch(mid)) {
+			hi = mid;
+		} else {
+			lo = mid + 1;
+		}
+	}
+	return lo;
+};
+
+/**
+ * 最后一个满足 isMatch 的下标；无匹配返回 -1
+ * @param length 搜索区间长度
+ * @param isMatch 单调谓词（true 区段在左侧）
+ * @returns 末个匹配下标
+ */
+export const bisectLast = (length: number, isMatch: (i: number) => boolean) => {
+	let lo = 0;
+	let hi = length - 1;
+	let last = -1;
+	while (lo <= hi) {
+		const mid = (lo + hi) >>> 1;
+		if (isMatch(mid)) {
+			last = mid;
+			lo = mid + 1;
+		} else {
+			hi = mid - 1;
+		}
+	}
+	return last;
+};
