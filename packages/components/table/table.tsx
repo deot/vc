@@ -152,8 +152,11 @@ export const Table = defineComponent({
 		const bodyHeightStyle = computed(() => {
 			const { headerHeight, bodyHeight: $bodyHeight, footerHeight } = layout.states;
 			if (props.height) {
+				// 表体高度还没算出来，或算不出有效值（表格比表头 + 合计行还矮）时以表格高度为上限：
+				// 不设高度时虚拟列表会被内容撑开，把已构建的行全部渲染一遍（设置 rowHeight 时全部行一次构建完，行数多时首屏会卡住）
+				const height = $bodyHeight > 0 ? $bodyHeight : parseHeight(props.height);
 				return {
-					height: $bodyHeight ? $bodyHeight + 'px' : ''
+					height: height ? height + 'px' : ''
 				};
 			} else if (props.maxHeight) {
 				const maxHeight = parseHeight(props.maxHeight);

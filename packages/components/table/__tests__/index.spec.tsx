@@ -2239,6 +2239,31 @@ describe('Table virtual + scroll & delay', () => {
 			wrapper.unmount();
 		});
 
+		it('bounds the body by the table height until a valid body height is known', async () => {
+			const tableRef = ref<any>();
+			const wrapper = mount(() => (
+				<Table ref={tableRef} data={buildData(500)} primaryKey="id" height={200} rowHeight={40}>
+					<TableColumn label="名称" prop="name" />
+				</Table>
+			), { attachTo: document.body });
+			await settleList();
+			const list = wrapper.findComponent({ name: 'vc-recycle-list' }).element as HTMLElement;
+			const { states } = tableRef.value.layout;
+
+			// 还没算出来（jsdom 里恒为 0）：不能不设高度，否则列表被内容撑开，全部行都渲染出来
+			expect(list.style.height).toBe('200px');
+
+			// 表格比表头 + 合计行还矮时算出负数：同样回退到表格高度
+			states.bodyHeight = -20;
+			await flush();
+			expect(list.style.height).toBe('200px');
+
+			states.bodyHeight = 160;
+			await flush();
+			expect(list.style.height).toBe('160px');
+			wrapper.unmount();
+		});
+
 		it('does not estimate without rowHeight', async () => {
 			const wrapper = mount(() => (
 				<Table data={buildData(3)} primaryKey="id" virtualized>
