@@ -232,3 +232,78 @@ describe('utils.ts > getFitIndex', () => {
 		})).toBe(7);
 	});
 });
+
+describe('utils.ts > getFitIndex 测量次数', () => {
+	let restoreLayout: (() => void) | null = null;
+	// 每次读取 clientHeight 在浏览器里都是一次强制排版
+	let reads: ReturnType<typeof vi.spyOn>;
+
+	beforeEach(() => {
+		restoreLayout = installVirtualLayout();
+		reads = vi.spyOn(HTMLDivElement.prototype, 'clientHeight', 'get');
+	});
+
+	afterEach(() => {
+		document.body.innerHTML = '';
+		reads.mockRestore();
+		restoreLayout?.();
+	});
+
+	/**
+	 * 逐字扫描的旧实现，作为结果对照
+	 * @param options getFitIndex 的参数
+	 * @param options.line 行数
+	 * @param options.value 文本
+	 * @param options.ellipsis 省略号
+	 * @param options.slice 保留的尾部
+	 * @returns 截断下标
+	 */
+	const scan = ({ line, value, ellipsis, slice }: any) => {
+		const exceeds = (text: string) => text.length * charHeight > charHeight * line;
+		const hasSlice = slice !== undefined && slice !== null;
+		const sliceText = hasSlice ? value.slice(slice) : '';
+		let endIndex = -1;
+		for (let i = 0; i < value.length; i++) {
+			if (exceeds(value.slice(0, i + 1))) {
+				endIndex = i;
+				break;
+			}
+		}
+		if (endIndex < 0) return -1;
+		for (let i = endIndex - 1; i >= 0; i--) {
+			if (!exceeds(value.slice(0, i) + ellipsis + sliceText)) return i;
+		}
+		return hasSlice ? 0 : endIndex;
+	};
+
+	it('放得下时只量一次', () => {
+		const el = createEl();
+		expect(getFitIndex({ el, line: 50, value: 'a'.repeat(40), ellipsis: '...' })).toBe(-1);
+		// 读 line-height 兜底一次（jsdom 下 line-height 为 NaN）+ 整串一次
+		expect(reads).toHaveBeenCalledTimes(2);
+	});
+
+	it('溢出时按二分测量，次数与长度成对数关系', () => {
+		const el = createEl();
+		getFitIndex({ el, line: 10, value: 'a'.repeat(1000), ellipsis: '...' });
+		expect(reads.mock.calls.length).toBeLessThan(30);
+	});
+
+	it('结果与逐字扫描一致', () => {
+		const el = createEl();
+		const values = ['', 'a', 'abcdef', 'abcdefghijkl', 'abcdefghijklmnop', 'x'.repeat(37)];
+		const cases: any[] = [];
+		values.forEach((value) => {
+			[1, 2, 5, 10, 20].forEach((line) => {
+				['', '.', '...'].forEach((ellipsis) => {
+					[undefined, null, 0, -1, -5, 3, 20].forEach((slice) => {
+						cases.push({ value, line, ellipsis, slice });
+					});
+				});
+			});
+		});
+		cases.forEach((options) => {
+			expect(getFitIndex({ el, ...options }), JSON.stringify(options)).toBe(scan(options));
+		});
+	});
+});

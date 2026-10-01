@@ -62,41 +62,28 @@ export const getFitIndex = (options = {}) => {
 		lineHeight = hiddenEl.clientHeight - sideHeight;
 	}
 
-	let endIndex = -1;
-
 	const source = typeof value === 'number' ? `${value}` : (value || '');
 	const hasSlice = slice !== undefined && slice !== null;
 	// 与 String.prototype.slice 语义一致: slice=-5 取末尾 5 字符, slice=0 取整串
 	const sliceText = hasSlice ? source.slice(slice) : '';
 
-	const strs = source.split('');
-	let innerText = '';
-	for (let i = 0; i < strs.length; i++) {
-		innerText += strs[i];
-		hiddenEl.innerText = innerText;
-		if (endIndex === -1 && hiddenEl.clientHeight - sideHeight > lineHeight * line) {
-			endIndex = i;
-			break;
-		}
-	}
+	// 每次写入文本再读 clientHeight 都会强制一次排版。高度随字符数单调不减（word-break: break-all），
+	// 所以整串放得下就直接返回；溢出时用二分代替逐字扫描，排版次数从 O(n) 降到 O(log n)，结果不变
+	const exceeds = (text: string) => {
+		hiddenEl.innerText = text;
+		return hiddenEl.clientHeight - sideHeight > lineHeight * line;
+	};
 
-	if (endIndex >= 0 && endIndex <= strs.length - 1) {
-		let foundFit = false;
-		for (let i = endIndex - 1; i >= 0; i--) {
-			innerText = innerText.substring(0, i);
-			hiddenEl.innerText = innerText + ellipsis + sliceText;
-			if (hiddenEl.clientHeight - sideHeight <= lineHeight * line) {
-				endIndex = i;
-				foundFit = true;
-				break;
-			}
-		}
-		// 边界: slice 让 ellipsis+sliceText 始终撑爆 line 行 (典型 slice=0)
-		// 此时强制让 prefix 为空, 渲染端仍按 '' + ellipsis + sliceText 输出
-		if (!foundFit && hasSlice) {
-			endIndex = 0;
-		}
-	}
+	if (!source || !exceeds(source)) return -1;
 
-	return endIndex;
+	// 首个溢出位置：source.slice(0, i + 1) 溢出的最小 i（整串已知溢出，搜不到时即末位）
+	const endIndex = Utils.bisectFirst(source.length - 1, i => exceeds(source.slice(0, i + 1)));
+
+	// 回退：加上 ellipsis 与 sliceText 后仍放得下的最长前缀 source.slice(0, i)，i < endIndex
+	const fitIndex = Utils.bisectLast(endIndex, i => !exceeds(source.slice(0, i) + ellipsis + sliceText));
+	if (fitIndex >= 0) return fitIndex;
+
+	// 边界: slice 让 ellipsis+sliceText 始终撑爆 line 行 (典型 slice=0)
+	// 此时强制让 prefix 为空, 渲染端仍按 '' + ellipsis + sliceText 输出
+	return hasSlice ? 0 : endIndex;
 };

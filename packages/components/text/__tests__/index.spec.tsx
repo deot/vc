@@ -17,6 +17,7 @@ import { Text, Popover } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
 import { defineComponent, nextTick, ref } from 'vue';
+import { Measuring } from '../../measuring';
 
 const textStyle = readFileSync(resolve('packages/components/text/style.scss'), 'utf8');
 
@@ -98,7 +99,7 @@ describe('Text 渲染分支 (line=0 / line>0)', () => {
 		'short'
 	])('首次测量前用隐藏全文参与布局: %s', async (value) => {
 		const wrapper = mount(() => (
-			<Text value={value} line={1} resize={true} />
+			<Text value={value} line={1} resize={true} ellipsis="..." />
 		), { attachTo: document.body });
 
 		expect(wrapper.element.textContent).toBe(value);
@@ -128,7 +129,7 @@ describe('Text 渲染分支 (line=0 / line>0)', () => {
 		triggerResize(wrapper.element);
 		await flush();
 
-		expect(wrapper.element.textContent).toBe(`${value.slice(0, 4)}...`);
+		expect(wrapper.element.textContent).toBe(`${value.slice(0, 4)}…`);
 		expect(wrapper.attributes('style') || '').not.toContain('visibility: hidden');
 		expect(renderRow).toHaveBeenCalledTimes(1);
 
@@ -164,7 +165,7 @@ describe('Text 渲染分支 (line=0 / line>0)', () => {
 		triggerResize(wrapper.element);
 		await flush();
 
-		expect(wrapper.text()).toBe('abc...');
+		expect(wrapper.text()).toBe('abc…');
 		expect(wrapper.attributes('style') || '').toContain('cursor: pointer');
 		expect(onClip).toHaveBeenCalledWith(3);
 
@@ -174,7 +175,7 @@ describe('Text 渲染分支 (line=0 / line>0)', () => {
 	it('line>0 但内容未超出: getFitIndex 返回 -1, 渲染完整 value, cursor=unset', async () => {
 		mockedGetFitIndex.mockReturnValue(-1);
 		const wrapper = mount(() => (
-			<Text value="short" line={3} resize={true} />
+			<Text value="short" line={3} resize={true} ellipsis="..." />
 		), { attachTo: document.body });
 
 		triggerResize(wrapper.element);
@@ -215,7 +216,7 @@ describe('Text 渲染分支 (line=0 / line>0)', () => {
 
 		const rr = wrapper.find('.rr');
 		expect(rr.exists()).toBe(true);
-		expect(rr.text()).toBe('[3]hel...');
+		expect(rr.text()).toBe('[3]hel…');
 		expect(renderRow).toHaveBeenCalled();
 
 		wrapper.unmount();
@@ -252,8 +253,8 @@ describe('Text 渲染分支 (line=0 / line>0)', () => {
 		triggerResize(wrapper.element);
 		await flush();
 
-		// 'abc' + '...' + 'lmnop'
-		expect(wrapper.text()).toBe('abc...lmnop');
+		// 'abc' + '…' + 'lmnop'
+		expect(wrapper.text()).toBe('abc…lmnop');
 		expect(wrapper.attributes('style') || '').toContain('cursor: pointer');
 
 		wrapper.unmount();
@@ -268,8 +269,8 @@ describe('Text 渲染分支 (line=0 / line>0)', () => {
 		triggerResize(wrapper.element);
 		await flush();
 
-		// '' + '...' + 'abcdefghij'
-		expect(wrapper.text()).toBe('...abcdefghij');
+		// '' + '…' + 'abcdefghij'
+		expect(wrapper.text()).toBe('…abcdefghij');
 		// hasSlice + endIndex===0 也算 truncated, cursor=pointer
 		expect(wrapper.attributes('style') || '').toContain('cursor: pointer');
 
@@ -279,7 +280,7 @@ describe('Text 渲染分支 (line=0 / line>0)', () => {
 	it('slice 未传 + endIndex=0: 不截断 (保持旧行为, 渲染完整 value)', async () => {
 		mockedGetFitIndex.mockReturnValue(0);
 		const wrapper = mount(() => (
-			<Text value="abcdefghij" line={2} resize={true} />
+			<Text value="abcdefghij" line={2} resize={true} ellipsis="..." />
 		), { attachTo: document.body });
 
 		triggerResize(wrapper.element);
@@ -392,6 +393,7 @@ describe('Text 弹层 (mouseenter)', () => {
 				theme="light"
 				portalClass="my-portal-class"
 				portalStyle="color:red"
+				ellipsis="..."
 			/>
 		), { attachTo: document.body });
 
@@ -433,7 +435,7 @@ describe('Text 弹层 (mouseenter)', () => {
 		mockedGetFitIndex.mockReturnValue(2);
 
 		const wrapper = mount(() => (
-			<Text value="abcdefg" line={1} resize={true} />
+			<Text value="abcdefg" line={1} resize={true} ellipsis="..." />
 		), { attachTo: document.body });
 
 		// 让 trigger 拥有可见宽度
@@ -595,7 +597,7 @@ describe('Text 卸载清理', () => {
 		const popoverOpen = vi.spyOn(Popover, 'open').mockReturnValue({ destroy } as any);
 		mockedGetFitIndex.mockReturnValue(2);
 
-		const wrapper = mount(() => (<Text value="abcdefg" line={1} resize={true} />), { attachTo: document.body });
+		const wrapper = mount(() => (<Text value="abcdefg" line={1} resize={true} ellipsis="..." />), { attachTo: document.body });
 
 		triggerResize(wrapper.element);
 		await flush();
@@ -623,5 +625,131 @@ describe('Text 卸载清理', () => {
 
 		await flush();
 		expect(() => wrapper.unmount()).not.toThrow();
+	});
+});
+
+describe('Text CSS 截断 (默认省略符且无 slice / renderRow / indent / clip)', () => {
+	beforeEach(() => {
+		mockedGetFitIndex.mockReset();
+		mockedGetFitIndex.mockReturnValue(-1);
+	});
+
+	afterEach(() => {
+		document.body.innerHTML = '';
+		vi.restoreAllMocks();
+	});
+
+	// 给根节点一个被截断 / 未截断的尺寸
+	const mockOverflow = (el: Element, size: Record<string, number>) => {
+		Object.keys(size).forEach(key => Object.defineProperty(el, key, { configurable: true, value: size[key] }));
+	};
+
+	it('不测量、不监听尺寸，DOM 为原文，行数交给 CSS', async () => {
+		const wrapper = mount(() => (<Text value="abcdefghij" line={2} />), { attachTo: document.body });
+		await flush();
+
+		expect(wrapper.classes()).toContain('is-clamp');
+		expect(wrapper.attributes('style')).toContain('--vc-text-line: 2');
+		expect(wrapper.attributes('style') || '').not.toContain('visibility');
+		expect(wrapper.element.textContent).toBe('abcdefghij');
+		expect((wrapper.element as any).__rz__).toBeUndefined();
+		expect(mockedGetFitIndex).not.toHaveBeenCalled();
+
+		wrapper.unmount();
+	});
+
+	it('移入时才判断是否截断：截断才弹出全文，光标随之变化', async () => {
+		const popoverOpen = vi.spyOn(Popover, 'open').mockReturnValue({ destroy: vi.fn() } as any);
+		const wrapper = mount(() => (<Text value="abcdefg" line={1} />), { attachTo: document.body });
+
+		mockOverflow(wrapper.element, { scrollHeight: 20, clientHeight: 20 });
+		await wrapper.trigger('mouseenter');
+		expect(popoverOpen).not.toHaveBeenCalled();
+		expect(wrapper.attributes('style')).toContain('cursor: unset');
+
+		mockOverflow(wrapper.element, { scrollHeight: 60, clientHeight: 20 });
+		await wrapper.trigger('mouseenter');
+		expect(popoverOpen).toHaveBeenCalledTimes(1);
+		expect((popoverOpen.mock.calls[0][0] as any).content).toBe('abcdefg');
+		expect(wrapper.attributes('style')).toContain('cursor: pointer');
+
+		wrapper.unmount();
+	});
+
+	it.each([
+		['slice', { slice: -3 }],
+		['indent', { indent: 10 }],
+		['自定义 ellipsis', { ellipsis: '...' }],
+		['renderRow', { renderRow: (attrs: any) => attrs.value }],
+		['clip 监听', { onClip: () => {} }],
+		['line=0', { line: 0 }]
+	])('传入 %s 时回到 JS 测量', async (_, extra) => {
+		const wrapper = mount(() => (<Text value="abcdefg" line={1} resize={true} {...(extra as any)} />), { attachTo: document.body });
+		expect(wrapper.classes()).not.toContain('is-clamp');
+		expect((wrapper.element as any).__rz__).toBeDefined();
+		wrapper.unmount();
+	});
+
+	it('属性切换时在两种方式间切换，并绑定 / 解绑尺寸监听', async () => {
+		const slice = ref<number | undefined>(void 0);
+		const wrapper = mount(() => (<Text value="abcdefg" line={1} resize={true} slice={slice.value} />), { attachTo: document.body });
+		expect(wrapper.classes()).toContain('is-clamp');
+
+		slice.value = -2;
+		await flush();
+		expect(wrapper.classes()).not.toContain('is-clamp');
+		expect((wrapper.element as any).__rz__.listeners.length).toBe(1);
+
+		slice.value = void 0;
+		await flush();
+		expect(wrapper.classes()).toContain('is-clamp');
+		expect((wrapper.element as any).__rz__.listeners.length).toBe(0);
+
+		wrapper.unmount();
+	});
+
+	it('滚动期间不弹出全文，滚动停止后鼠标仍在上面时再弹出', async () => {
+		const popoverOpen = vi.spyOn(Popover, 'open').mockReturnValue({ destroy: vi.fn() } as any);
+		const wrapper = mount(() => (
+			<div class="scroller">
+				<Text value="abcdefg" line={1} />
+				<Text class="other" value="abcdefg" line={1} />
+			</div>
+		), { attachTo: document.body });
+		const [text, other] = wrapper.findAll('.vc-text');
+		mockOverflow(text.element, { scrollHeight: 40, clientHeight: 20 });
+		mockOverflow(other.element, { scrollHeight: 40, clientHeight: 20 });
+
+		// 所在容器滚动时，内容从静止的鼠标下经过也会触发移入
+		wrapper.element.dispatchEvent(new Event('scroll'));
+		await other.trigger('mouseenter');
+		await text.trigger('mouseenter');
+		expect(popoverOpen).not.toHaveBeenCalled();
+
+		// 停下后只为鼠标仍停着的那个弹出
+		mockOverflow(text.element, { matches: ((selector: string) => selector === ':hover') as any });
+		await new Promise(r => setTimeout(r, 200));
+		expect(popoverOpen).toHaveBeenCalledTimes(1);
+		expect((popoverOpen.mock.calls[0][0] as any).triggerEl).toBe(text.element);
+		wrapper.unmount();
+	});
+
+	it('虚拟列表的测量池里一律用 CSS 截断：不测量、不监听尺寸，高度与截断后的一致', async () => {
+		const wrapper = mount(() => (
+			<Measuring>
+				<Text class="sliced" value="abcdefg" line={2} resize={true} slice={-3} />
+				<Text class="unlimited" value="abcdefg" line={0} resize={true} />
+			</Measuring>
+		), { attachTo: document.body });
+		await flush();
+
+		const sliced = wrapper.find('.sliced');
+		expect(sliced.classes()).toContain('is-clamp');
+		expect(sliced.text()).toBe('abcdefg');
+		expect((sliced.element as any).__rz__).toBeUndefined();
+		// 不限行数的本来就不截断，同样不监听
+		expect(wrapper.find('.unlimited').classes()).not.toContain('is-clamp');
+		expect((wrapper.find('.unlimited').element as any).__rz__).toBeUndefined();
+		wrapper.unmount();
 	});
 });

@@ -26,9 +26,10 @@ export const props = {
 		type: [Boolean, Number],
 		default: void 0
 	},
+	// 保持默认值且没有 slice / renderRow / indent / clip 监听时，由 CSS 截断（见 text.tsx）
 	ellipsis: {
 		type: String,
-		default: '...'
+		default: '…'
 	},
 	slice: {
 		type: Number,

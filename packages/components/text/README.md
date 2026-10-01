@@ -167,7 +167,7 @@ const fileName = '2026年第三季度产品数据分析与复盘报告.final.pdf
 | indent | 测量时叠加到宿主 `text-indent` 的偏移量（px），不直接设置展示样式 | `number` | - | `0` |
 | shrink | 根节点的 `flex-shrink`；布尔值转换为 `1` / `0`，数字直接使用；不传时不设置内联值 | `boolean \| number` | 布尔值或非负数字 | `undefined` |
 | resize | 尺寸监听；`true` / `0` 立即计算，正数为防抖间隔（ms，首尾触发），`false` 不监听 | `boolean \| number` | - | `100` |
-| ellipsis | 截断时使用的省略符 | `string` | - | `'...'` |
+| ellipsis | 截断时使用的省略符；保持默认值且未使用 `slice`、`renderRow`、`indent`、`clip` 时由 CSS 截断（见使用注意） | `string` | - | `'…'` |
 | slice | 截断时保留 `value.slice(slice)`；负数从末尾计算，`0` 保留整串，正数从指定下标开始；大于等于文本长度时尾部为空 | `number` | - | `undefined` |
 | renderRow | 测量完成后的渲染函数；接收展示文本 `value`、测量下标 `index` 和 Customer 的 setup 上下文，返回可渲染内容 | `(attrs: { value: string; index: number }, context: SetupContext) => any` | - | 返回 `attrs.value` |
 | theme | 全文 Popover 的主题 | `string` | `dark`、`light`、`none` | `'dark'` |
@@ -179,12 +179,14 @@ const fileName = '2026年第三季度产品数据分析与复盘报告.final.pdf
 
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
-| clip | 每次计算完成时触发，包括未截断时 | `(index: number) => void` | `-1` 表示无需截断；正数为前缀结束下标；`0` 在传入 `slice` 时表示空前缀，未传 `slice` 时仍显示原文 |
+| clip | 每次计算完成时触发，包括未截断时；监听它会使组件改用 JS 测量 | `(index: number) => void` | `-1` 表示无需截断；正数为前缀结束下标；`0` 在传入 `slice` 时表示空前缀，未传 `slice` 时仍显示原文 |
 
 ### 使用注意
 
 - `MText` 是 `Text` 的别名，属性和事件相同，全文提示仍由鼠标悬停触发。
+- 全文提示在所在的滚动容器（或页面）滚动期间不弹出：内容从静止的鼠标下经过不算悬停，滚动停止后鼠标仍在该文字上时再弹出。
 - 内容通过 `value` 或 `renderRow` 提供；组件没有内容插槽或公开方法。
+- 截断方式：`line > 0`、`ellipsis` 为默认值、且没有 `slice`、`renderRow`、`indent`，也没有监听 `clip` 时，由 CSS 截断（`line-clamp`）。这时不测量、不监听尺寸，DOM 中是完整文本，是否截断到鼠标移入时才判断，截断才弹出全文。其余情况走 JS 测量，以下几条只针对 JS 测量。
 - 默认在首次尺寸回调前以隐藏全文参与布局。初始化传入 `resize=false` 时不会首次计算，内容为空；后续修改 `value`、`line`、`indent`、`slice` 或 `ellipsis` 仍会触发计算。
 - `resize` 的监听与防抖策略在初始化时确定，不支持通过运行时切换该属性重建监听。
 - 自定义 `renderRow` 的额外节点不会参与原始文本测量；字号、宽度和省略符应保持可容纳，`line` 不是强制 CSS 裁剪。
