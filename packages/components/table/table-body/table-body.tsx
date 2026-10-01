@@ -4,7 +4,7 @@ import { RecycleList } from '../../recycle-list';
 import { NormalList } from './normal-list';
 
 import { useStates } from '../store';
-import { parseHeight } from '../utils';
+import { parseHeight, getRowHeight } from '../utils';
 import { RECYCLE_LIST_RESERVED_KEYS } from '../table-props';
 import { getColumnLine } from '../table-column/table-column-config';
 import { useRowHover, resolveCellEl } from '../hooks/use-row-hover';
@@ -137,13 +137,26 @@ export const TableBody = defineComponent({
 		});
 
 		/**
-		 * 固定行高时块的尺寸可以直接算出：虚拟列表跳过隐藏池测量，一次构建全部行；合并块按行数计。
+		 * 行高已知时块的尺寸可以直接算出：虚拟列表跳过隐藏池测量，一次构建全部行；合并块按行数计。
+		 * 行高是函数时取块内各行之和，任一行没给出高度，整块照常测量。
 		 * 展开行的内容高度事先不可知，与渲染后才展开的行一样，由渲染出来后的实测校正。
 		 * 虚拟列表的数据项（row）是内部的渲染块，不对外暴露
 		 */
 		const estimateSize = computed(() => {
-			const rowHeight = parseHeight(table.props.rowHeight);
-			return rowHeight ? ({ row: block }: { row: any }) => block.rows.length * rowHeight : void 0;
+			const { rowHeight } = table.props;
+			if (typeof rowHeight !== 'function') {
+				const height = parseHeight(rowHeight);
+				return height ? ({ row: block }: { row: any }) => block.rows.length * height : void 0;
+			}
+			return ({ row: block }: { row: any }) => {
+				let size = 0;
+				for (const { data, index } of block.rows) {
+					const height = getRowHeight(rowHeight, data, index);
+					if (!height) return void 0;
+					size += height;
+				}
+				return size;
+			};
 		});
 
 		// 透传给 RecycleList 的属性：Table 的默认批次可被覆盖；保留键与事件被忽略（键名按 camelCase 比较，兼容 'buffer-count' 写法）

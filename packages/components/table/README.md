@@ -1406,7 +1406,7 @@ const updateOffsets = () => {
 
 - `load-change` 只对外单向推送，没有对应属性。内部虚拟列表以 `disabled` 直接接收 `data`，此时 `isEnd` 表示数据已全部构建并完成布局。
 - 挂载即推送一次，之后每批行构建并完成布局后推送一次。`loaded` 按行计：合并单元格的多行都计入，树形表格为展开后的可见行。
-- 设置了 `row-height` 时行高已知，全部行一次构建完成，只推送一次，`loaded` 直接等于全部行数。
+- 设置了 `row-height` 时行高已知，全部行一次构建完成，只推送一次，`loaded` 直接等于全部行数（`row-height` 为函数时，需对所有行都给出高度）。
 - 普通表格（未设置 `height` 且未启用 `virtualized`）一次渲染完，挂载即推送 `isEnd: true`，`loaded` 为全部行数并随行数变化，同样的写法依然成立。
 - 合计行不受 `lazy-tail` 影响。
 
@@ -1563,7 +1563,7 @@ const handleToggle = () => { isEmpty.value = !isEmpty.value; };
 | showHeader             | 是否显示表头                                                                                                                                     | `boolean`                                                  | -                           | `true`  |
 | highlight               | 是否要高亮当前行                                                                                                                                   | `boolean`                                                  | -                           | `false` |
 | currentRowValue       | 当前行的`[id]/value`唯一值（树形表格含子行），只写属性                                                                                                                   | `string`、 `number`                                         | -                           | -       |
-| rowHeight | 固定行高，数字及数字字符串按 px 解析；缺省由内容撑开。虚拟化表格（`height` 或 `virtualized`）设置后按行高直接算出每行尺寸，跳过隐藏测量并一次构建全部行，滚动不再逐批停顿；展开行的内容在渲染出来后按实际高度校正；运行时修改行高，未渲染的行也立即按新行高重排 | `string \| number` | - | - |
+| rowHeight | 固定行高，数字及数字字符串按 px 解析；缺省由内容撑开。虚拟化表格（`height` 或 `virtualized`）设置后按行高直接算出每行尺寸，跳过隐藏测量并一次构建全部行，滚动不再逐批停顿；展开行的内容在渲染出来后按实际高度校正；运行时修改行高，未渲染的行也立即按新行高重排。也可以传函数 `({ row, rowIndex }) => string \| number \| undefined` 按行给出行高：返回 `undefined` 的行由内容撑开并照常测量（合并块里任一行没给出高度时整块照常测量）；函数在构建时对每行调用一次，引用变化时对已构建的行重新调用并只重排取值变了的行，建议传稳定的引用；函数内读取的数据变化不会重估未渲染的行（滚到时按实际高度校正），需要立即生效时换一个函数引用 | `string \| number \| Function` | - | - |
 | recycleListOptions | 透传给内部 [RecycleList](../recycle-list) 的属性，仅在走虚拟列表时（`height` 或 `virtualized`）生效，如 `bufferCount`（可见行前后多渲染的行数，快速滚动时减少露白）、`overscan`、`batchCount`（默认 `100`）、`threshold`。`data`、`store`、`disabled`、`fill`、`vertical`、`inverted`、`cols`、`gutter`、`pullable`、`loadData`、`lazyTail`、`scrollerOptions`、`estimateSize`、`style`、`class` 与事件由 Table 控制，传入无效 | `object` | - | - |
 | rowClass               | 行的 `className`，仅作用于单行块对应的 `vc-table__tr`；存在 `getSpan` 合并时不生效，请用 `cell-class`。支持字符串或 `Function({ row, rowIndex })`。 | `string \| ((context: { row: any; rowIndex: number }) => string)` | -                           | -       |
 | rowStyle               | 行的 `style`，仅作用于单行块对应的 `vc-table__tr`；存在 `getSpan` 合并时不生效，请用 `cell-style`。支持对象或 `Function({ row, rowIndex })`。 | `CSSProperties \| ((context: { row: any; rowIndex: number }) => CSSProperties)` | -                           | -       |

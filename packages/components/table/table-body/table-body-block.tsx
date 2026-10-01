@@ -3,7 +3,7 @@
 import { defineComponent, inject, Fragment } from 'vue';
 import { TableGrid } from '../table-grid';
 import { TableExpand } from './table-expand';
-import { getRowValue } from '../utils';
+import { getRowValue, getRowHeight } from '../utils';
 import { useMeasuring } from '../../measuring';
 import type { TableProvide } from '../types';
 import type { TableColumnStates } from '../table-column/table-column-node';
@@ -116,7 +116,7 @@ export const TableBodyBlock = defineComponent({
 
 			// 选中、展开、层级按行求值；用户 row-class/row-style 仅单行块挂 tr，合并块无效
 			const isTree = table.store.tree.isTree;
-			const { primaryKey, cellStyle, cellClass } = table.props;
+			const { primaryKey, cellStyle, cellClass, rowHeight } = table.props;
 			const rowStates = rows.map((row: BlockRow) => {
 				const { data, index } = row;
 				const level = row.level || 0;
@@ -203,7 +203,10 @@ export const TableBodyBlock = defineComponent({
 					aria-expanded={singleRow ? getAriaExpanded(table, singleRow, singleState!.expanded) : void 0}
 					columns={columns}
 					rowStart={rowStart}
-					rowHeight={table.props.rowHeight}
+					// 行高是函数时逐行给出（合并块里各行可以不等高）
+					rowHeight={typeof rowHeight === 'function'
+						? rows.map((row: BlockRow) => getRowHeight(rowHeight, row.data, row.index))
+						: rowHeight}
 					cells={cells}
 				/>
 			);

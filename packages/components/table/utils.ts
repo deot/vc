@@ -19,6 +19,19 @@ export const parseHeight = (v?: number | string): null | number => {
 	return null;
 };
 
+export type TableRowHeight = string | number | ((data: { row: any; rowIndex: number }) => string | number | undefined);
+
+/**
+ * 某一行的行高：固定值直接解析，函数按行调用
+ * @param rowHeight table 的 rowHeight
+ * @param row 行数据
+ * @param rowIndex 行号
+ * @returns 行高（px）；null 表示该行由内容撑开
+ */
+export const getRowHeight = (rowHeight: TableRowHeight | undefined, row: any, rowIndex: number): null | number => {
+	return parseHeight(typeof rowHeight === 'function' ? rowHeight({ row, rowIndex }) : rowHeight);
+};
+
 export const parseWidth = (v?: number | string): null | number => {
 	if (typeof v === 'number') {
 		return v;

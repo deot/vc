@@ -2239,6 +2239,69 @@ describe('Table virtual + scroll & delay', () => {
 			wrapper.unmount();
 		});
 
+		it('function rowHeight: estimates each block by the sum of its rows', async () => {
+			const getSpan = ({ rowIndex, columnIndex }: any) => (columnIndex === 0 && rowIndex === 0 ? [2, 1] : [1, 1]);
+			const rowHeight = vi.fn(({ rowIndex }: any) => (rowIndex % 2 ? 60 : '40px'));
+			const data = buildData(6);
+			const wrapper = mount(() => (
+				<Table data={data} primaryKey="id" height={200} rowHeight={rowHeight} getSpan={getSpan}>
+					<TableColumn label="名称" prop="name" />
+					<TableColumn label="标识" prop="id" />
+				</Table>
+			), { attachTo: document.body });
+			await settleList();
+
+			expect(rowHeight).toHaveBeenCalledWith({ row: expect.objectContaining({ id: data[3].id }), rowIndex: 3 });
+			const list = wrapper.findComponent({ name: 'vc-recycle-list' });
+			const { states } = (list.vm as any).$.exposed.store;
+			// 前两行合并成一块（40 + 60），其余每行一块
+			expect(states.rebuildData.map((node: any) => node.states.size)).toEqual([100, 40, 60, 40, 60]);
+			expect(states.contentMaxSize).toBe(300);
+
+			// 渲染出来的行高逐行指定：合并块里各行可以不等高
+			const grids = wrapper.findAll('.vc-recycle-list__content .vc-table__grid');
+			expect((grids[0].element as HTMLElement).style.gridTemplateRows).toBe('40px 60px');
+			expect((grids[0].element as HTMLElement).style.gridAutoRows).toBe('');
+			wrapper.unmount();
+		});
+
+		it('function rowHeight: rows without a height are measured as usual', async () => {
+			const rowHeight = ({ rowIndex }: any) => (rowIndex === 1 ? undefined : 40);
+			const wrapper = mount(() => (
+				<Table data={buildData(4)} primaryKey="id" height={200} rowHeight={rowHeight}>
+					<TableColumn label="名称" prop="name" />
+				</Table>
+			), { attachTo: document.body });
+			await settleList();
+
+			const list = wrapper.findComponent({ name: 'vc-recycle-list' });
+			const estimate = list.props('estimateSize');
+			const blocks = list.props('data').map((block: any) => toRaw(block));
+			expect(blocks.map((block: any, index: number) => estimate({ row: block, index }))).toEqual([40, undefined, 40, 40]);
+			const grids = wrapper.findAll('.vc-recycle-list__content .vc-table__grid');
+			expect((grids[1].element as HTMLElement).style.gridTemplateRows).toBe('auto');
+			wrapper.unmount();
+		});
+
+		it('function rowHeight: re-estimates rows that are not rendered when the function changes', async () => {
+			const rowHeight = ref<any>(() => 40);
+			const wrapper = mount(() => (
+				<Table data={buildData(500)} primaryKey="id" virtualized rowHeight={rowHeight.value}>
+					<TableColumn label="名称" prop="name" />
+				</Table>
+			), { attachTo: document.body });
+			await settleList();
+			const { states } = (wrapper.findComponent({ name: 'vc-recycle-list' }).vm as any).$.exposed.store;
+			expect(states.rebuildData.length).toBe(500);
+			expect(states.rebuildData[499].states.size).toBe(40);
+
+			rowHeight.value = ({ rowIndex }: any) => (rowIndex % 2 ? 60 : 40);
+			await settleList();
+			expect(states.rebuildData[498].states.size).toBe(40);
+			expect(states.rebuildData[499].states.size).toBe(60);
+			wrapper.unmount();
+		});
+
 		it('bounds the body by the table height until a valid body height is known', async () => {
 			const tableRef = ref<any>();
 			const wrapper = mount(() => (

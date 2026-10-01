@@ -1,4 +1,4 @@
-<!-- 各种高度模式下的表格：固定高度（虚拟滚动）、最大高度、不设高度（流式 + 吸附）、固定行高；可切换数据量与动态列，附挂载 / 卸载的内存测试 -->
+<!-- 各种高度模式下的表格：固定高度（虚拟滚动）、最大高度、不设高度（流式 + 吸附）、固定行高、按行给出行高；可切换数据量与动态列，附挂载 / 卸载的内存测试 -->
 <template>
 	<div class="table-index">
 		<div class="table-index__controls">
@@ -91,7 +91,9 @@ const MODES = {
 	'max-height': { props: { maxHeight: 600 }, rows: 100 },
 	// 流式高度 + affix：窄屏横向溢出时，横向滚动条与合计行一起吸在视口底部
 	'none': { props: { affix: true }, rows: 30 },
-	'row-height': { props: { height: 600, rowHeight: 100 }, rows: 10000 }
+	'row-height': { props: { height: 600, rowHeight: 100 }, rows: 10000 },
+	// 行高按行给出：引用保持稳定，行高同样事先可知，一次构建全部行
+	'row-height-fn': { props: { height: 600, rowHeight: ({ rowIndex }) => (rowIndex % 2 ? 100 : 60) }, rows: 10000 }
 };
 
 // 对照项：每项一个 Select
@@ -103,7 +105,8 @@ const CONTROLS = [
 			{ value: 'height', label: 'height=600（虚拟滚动，1 万行）' },
 			{ value: 'max-height', label: 'max-height=600（100 行）' },
 			{ value: 'none', label: '不设高度 + affix（30 行）' },
-			{ value: 'row-height', label: 'height=600 + row-height=100（1 万行）' }
+			{ value: 'row-height', label: 'height=600 + row-height=100（1 万行）' },
+			{ value: 'row-height-fn', label: 'height=600 + row-height 函数（奇偶行 60 / 100，1 万行）' }
 		]
 	},
 	{ key: 'data', label: '数据', data: [{ value: 'full', label: '有数据' }, { value: 'empty', label: '空' }] },

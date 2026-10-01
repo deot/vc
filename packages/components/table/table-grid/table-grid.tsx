@@ -34,8 +34,8 @@ export const TableGrid = defineComponent({
 			type: Number,
 			default: 0
 		},
-		// 固定行高（如 table 的 rowHeight），缺省由内容撑开
-		rowHeight: [Number, String],
+		// 行高：固定值（如 table 的 rowHeight），或逐行给出的数组（null 为由内容撑开）；缺省由内容撑开
+		rowHeight: [Number, String, Array] as PropType<number | string | (number | null)[]>,
 		role: {
 			type: String,
 			default: 'rowgroup'
@@ -52,7 +52,14 @@ export const TableGrid = defineComponent({
 		const localTemplateColumns = computed(() => computeGridTemplateColumns(props.columns));
 
 		const gridTemplateColumns = computed(() => table ? 'var(--vc-table-columns)' : localTemplateColumns.value);
-		const rowHeight = computed(() => parseHeight(props.rowHeight));
+		const rowStyle = computed(() => {
+			const { rowHeight } = props;
+			if (Array.isArray(rowHeight)) {
+				return { gridTemplateRows: rowHeight.map(v => (v ? `${v}px` : 'auto')).join(' ') };
+			}
+			const height = parseHeight(rowHeight);
+			return { gridAutoRows: height ? `${height}px` : void 0 };
+		});
 
 		return () => {
 			const columnCount = props.columns.length;
@@ -62,7 +69,7 @@ export const TableGrid = defineComponent({
 					role={props.role}
 					style={{
 						gridTemplateColumns: gridTemplateColumns.value,
-						gridAutoRows: rowHeight.value ? `${rowHeight.value}px` : void 0
+						...rowStyle.value
 					}}
 				>
 					{
