@@ -32,8 +32,8 @@ export const useCarouselItem = (expose: SetupContext['expose']) => {
 		return carousel.offset.value !== 0;
 	});
 
-	const itemGutter = computed(() => {
-		return props.gutter || carousel.props.gutter || 0;
+	const itemGap = computed(() => {
+		return props.gap || carousel.props.gap || 0;
 	});
 
 	const itemStyle = computed(() => {
@@ -44,10 +44,10 @@ export const useCarouselItem = (expose: SetupContext['expose']) => {
 				width: props.width
 			};
 		} else {
-			// 只有当设置了gutter, width才能生效, 且宽度要>50%，否则会失效
+			// 只有当设置了gap, width才能生效, 且宽度要>50%，否则会失效
 			return {
 				[TRANSFORM]: `${translateType}(${translate.value}px) scale(${currentScale.value})`,
-				width: itemGutter.value ? props.width : '100%'
+				width: itemGap.value ? props.width : '100%'
 			};
 		}
 	});
@@ -58,7 +58,7 @@ export const useCarouselItem = (expose: SetupContext['expose']) => {
 		// 检查语法
 		if (
 			!isCard.value
-			&& itemGutter.value
+			&& itemGap.value
 			&& carousel.props.loop
 		) {
 			throw new VcError('carousel', 'slide模式下loop不能为true');
@@ -91,9 +91,9 @@ export const useCarouselItem = (expose: SetupContext['expose']) => {
 			if (index === activeIndex) {
 				value = (parentW * (1 - widthNumber)) / 2;
 			} else if (index > activeIndex) {
-				value = (parentW * (1 + widthNumber * props.scale)) / 2 + itemGutter.value;
+				value = (parentW * (1 + widthNumber * props.scale)) / 2 + itemGap.value;
 			} else {
-				value = -(parentW * ((widthNumber * props.scale - 1) / 2 + widthNumber)) - itemGutter.value;
+				value = -(parentW * ((widthNumber * props.scale - 1) / 2 + widthNumber)) - itemGap.value;
 			}
 		} else if (index < activeIndex) {
 			value = (parentW * (1 - widthNumber)) / 2;
@@ -114,9 +114,9 @@ export const useCarouselItem = (expose: SetupContext['expose']) => {
 	const calcSlideOffset = (index: number, activeIndex: number, wrapperWidth: number) => {
 		const { length } = carousel.items.value;
 		const offset = wrapperWidth - (carousel.wrapper?.value?.offsetWidth || 0);
-		const gutter = itemGutter.value;
+		const gap = itemGap.value;
 
-		if (!gutter || isVertical.value) return 0;
+		if (!gap || isVertical.value) return 0;
 
 		let slideOffset = 0;
 
@@ -128,9 +128,9 @@ export const useCarouselItem = (expose: SetupContext['expose']) => {
 		// 头
 		if (activeIndex == 0) {
 			if (index - activeIndex === 0) {
-				slideOffset = gutter;
+				slideOffset = gap;
 			} else if (index - activeIndex === 1) {
-				slideOffset = -offset + gutter * 2;
+				slideOffset = -offset + gap * 2;
 			}
 		}
 
@@ -139,18 +139,18 @@ export const useCarouselItem = (expose: SetupContext['expose']) => {
 			if (index - activeIndex === 0) {
 				slideOffset = offset / 2;
 			} else if (index - activeIndex === 1) {
-				slideOffset = -offset / 2 + gutter;
+				slideOffset = -offset / 2 + gap;
 			} else if (index - activeIndex === -1) {
-				slideOffset = (offset * 3) / 2 - gutter;
+				slideOffset = (offset * 3) / 2 - gap;
 			}
 		}
 
 		// 尾
 		if (activeIndex == length - 1) {
 			if (index - activeIndex === 0) {
-				slideOffset = offset - gutter;
+				slideOffset = offset - gap;
 			} else if (index - activeIndex === -1) {
-				slideOffset = offset * 2 - gutter * 2;
+				slideOffset = offset * 2 - gap * 2;
 			}
 		}
 
@@ -175,7 +175,7 @@ export const useCarouselItem = (expose: SetupContext['expose']) => {
 			// 如果有边距且没有设置动画，前后需要添加动画
 			if (!isVertical.value
 				&& !isAnimating.value
-				&& itemGutter.value
+				&& itemGap.value
 				&& (index - activeIndex === 1 || index - activeIndex === -1)
 			) {
 				isAnimating.value = true;
@@ -225,7 +225,7 @@ export const useCarouselItem = (expose: SetupContext['expose']) => {
 		isVertical,
 		isCard,
 		isMove,
-		itemGutter,
+		itemGap,
 		itemStyle,
 
 		reset,

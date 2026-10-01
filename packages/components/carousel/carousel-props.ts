@@ -6,7 +6,7 @@ export const props = {
 		default: 3000
 	},
 	card: Boolean,
-	gutter: {
+	gap: {
 		type: Number,
 		default: 0
 	},

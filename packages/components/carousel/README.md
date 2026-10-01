@@ -368,7 +368,7 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 
 ### 带间距的滑动
 
-非卡片模式下，为 `CarouselItem` 或 `MCarouselItem` 设置 `gutter` 后可以露出相邻项；此时需要关闭 `loop`，且 `width` 应大于 `50%`。
+非卡片模式下，为 `CarouselItem` 或 `MCarouselItem` 设置 `gap` 后可以露出相邻项；此时需要关闭 `loop`，且 `width` 应大于 `50%`。
 
 :::playground
 <!--
@@ -393,7 +393,7 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 			v-for="item in 4"
 			:key="item"
 			width="calc(100% - 72px)"
-			:gutter="12"
+			:gap="12"
 		>
 			<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
 				{{ item }}
@@ -432,7 +432,7 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 | --- | --- | --- | --- | --- |
 | t | 自动播放的切换间隔，单位为毫秒 | `number` | - | `3000` |
 | card | 是否启用卡片模式 | `boolean` | - | `false` |
-| gutter | 轮播项的默认间距；`CarouselItem.gutter` 或 `MCarouselItem.gutter` 优先 | `number` | - | `0` |
+| gap | 轮播项的默认间距；`CarouselItem.gap` 或 `MCarouselItem.gap` 优先 | `number` | - | `0` |
 | height | 内容区域高度，按 px 设置 | `string \| number` | - | - |
 | initialIndex | 初始激活项索引，从 `0` 开始 | `number` | - | `0` |
 | trigger | 桌面端指示器的切换方式 | `string` | `hover`、`click` | `hover` |
@@ -474,8 +474,8 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 | --- | --- | --- | --- | --- |
 | name | 轮播项名称，可供 `setActiveItem` 定位 | `string` | - | - |
 | label | 对应指示器的文本 | `string \| number` | - | `''` |
-| width | 卡片宽度；非卡片模式下仅在存在 `gutter` 时生效 | `string \| number` | - | `'70%'` |
-| gutter | 当前轮播项的间距 | `number` | - | `0` |
+| width | 卡片宽度；非卡片模式下仅在存在 `gap` 时生效 | `string \| number` | - | `'70%'` |
+| gap | 当前轮播项的间距 | `number` | - | `0` |
 | scale | 非激活卡片的缩放比例 | `number` | - | `0.83` |
 
 ### CarouselItem 与 MCarouselItem 插槽
@@ -487,5 +487,5 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 ### 使用限制
 
 - `card` 与 `vertical` 不能同时启用。
-- 非卡片模式使用非零 `gutter` 时必须将 `loop` 设为 `false`，否则组件会抛出异常。
-- 非卡片模式中，`width` 只在存在非零 `gutter` 时生效；当前位移算法要求宽度大于 `50%`。
+- 非卡片模式使用非零 `gap` 时必须将 `loop` 设为 `false`，否则组件会抛出异常。
+- 非卡片模式中，`width` 只在存在非零 `gap` 时生效；当前位移算法要求宽度大于 `50%`。

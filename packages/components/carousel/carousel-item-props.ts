@@ -14,7 +14,7 @@ export const props = {
 	},
 
 	// card之间间距, 或者滑动时候的间距
-	gutter: {
+	gap: {
 		type: Number,
 		default: 0
 	},

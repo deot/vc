@@ -864,22 +864,22 @@ describe('index.ts', () => {
 		});
 	});
 
-	describe('slide gutter mode', () => {
-		it('throws when loop=true and gutter is set on item', () => {
+	describe('slide gap mode', () => {
+		it('throws when loop=true and gap is set on item', () => {
 			expect(() => mount(() => (
 				<Carousel autoplay={false} loop>
-					<CarouselItem gutter={20} width="80%" />
-					<CarouselItem gutter={20} width="80%" />
+					<CarouselItem gap={20} width="80%" />
+					<CarouselItem gap={20} width="80%" />
 				</Carousel>
 			))).toThrow();
 		});
 
-		it('renders fine with loop=false + gutter', async () => {
+		it('renders fine with loop=false + gap', async () => {
 			const wrapper = mount(() => (
 				<Carousel autoplay={false} loop={false}>
-					<CarouselItem gutter={20} width="80%" />
-					<CarouselItem gutter={20} width="80%" />
-					<CarouselItem gutter={20} width="80%" />
+					<CarouselItem gap={20} width="80%" />
+					<CarouselItem gap={20} width="80%" />
+					<CarouselItem gap={20} width="80%" />
 				</Carousel>
 			), { attachTo: document.body });
 			restoreSize = mockOffsetSize(wrapper.element as HTMLElement);
@@ -888,15 +888,15 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
-		it('navigating through start/middle/end with gutter does not throw', async () => {
+		it('navigating through start/middle/end with gap does not throw', async () => {
 			const carouselRef = ref<any>(null);
 			const wrapper = mount({
 				setup() {
 					return () => (
 						<Carousel ref={carouselRef} autoplay={false} loop={false}>
-							<CarouselItem gutter={20} width="80%" />
-							<CarouselItem gutter={20} width="80%" />
-							<CarouselItem gutter={20} width="80%" />
+							<CarouselItem gap={20} width="80%" />
+							<CarouselItem gap={20} width="80%" />
+							<CarouselItem gap={20} width="80%" />
 						</Carousel>
 					);
 				}
@@ -912,10 +912,10 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
-		it('single-item slide gutter centers the item', async () => {
+		it('single-item slide gap centers the item', async () => {
 			const wrapper = mount(() => (
 				<Carousel autoplay={false} loop={false}>
-					<CarouselItem gutter={10} width="80%" />
+					<CarouselItem gap={10} width="80%" />
 				</Carousel>
 			), { attachTo: document.body });
 			restoreSize = mockOffsetSize(wrapper.element as HTMLElement);

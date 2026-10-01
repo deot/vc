@@ -15,7 +15,7 @@
 					v-for="item in 4"
 					:key="item"
 					:width="`calc(100% - 100px)`"
-					:gutter="20"
+					:gap="20"
 				>
 					<h3>{{ item }}</h3>
 				</MCarouselItem>
