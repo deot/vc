@@ -75,40 +75,16 @@
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { ref } from 'vue';
 import { Scroller } from '../../scroller';
 import { Table, TableColumn } from '..';
+import { useScrollerAffix } from './use-scroller-affix';
 
 const scrollerRef = ref();
 const tableRef = ref();
 
 // Affix 按窗口定位：嵌套在 Scroller 里时，两端 offset 取 Scroller 视口到窗口边缘的距离
-const offsets = reactive({ top: 0, bottom: 0 });
-const updateOffsets = () => {
-	const el = scrollerRef.value?.wrapper;
-	if (!el) return;
-	// 视口取滚动容器边框内的区域（Scroller 的 class / 边框作用在滚动容器上）
-	const rect = el.getBoundingClientRect();
-	const viewportTop = rect.top + el.clientTop;
-	const top = Math.max(0, viewportTop);
-	const bottom = Math.max(0, window.innerHeight - (viewportTop + el.clientHeight));
-	if (top === offsets.top && bottom === offsets.bottom) return;
-	offsets.top = top;
-	offsets.bottom = bottom;
-	// offset 变化后吸附状态要重算
-	nextTick(() => tableRef.value?.refreshAffix());
-};
-
-onMounted(() => {
-	updateOffsets();
-	window.addEventListener('resize', updateOffsets);
-	window.addEventListener('scroll', updateOffsets, { passive: true });
-});
-
-onBeforeUnmount(() => {
-	window.removeEventListener('resize', updateOffsets);
-	window.removeEventListener('scroll', updateOffsets);
-});
+const { offsets } = useScrollerAffix(() => scrollerRef.value?.wrapper, () => tableRef.value);
 
 // load-change 是单向的：表格把快照推过来，外层只读
 const loadState = ref({ isEnd: false, isLoading: false, isSilentRefresh: false, isEmpty: false, loaded: 0 });
