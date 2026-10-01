@@ -51,11 +51,11 @@ export type RecycleListStates = {
 	 */
 	columnSize: string | undefined;
 	/**
-	 * 每列为 gutter 让出的交叉轴总量
+	 * 每列为 gap 让出的交叉轴总量
 	 */
-	columnOffsetGutter: number;
+	columnOffsetGap: number;
 	/**
-	 * 各列的 [头, 尾] padding，使列间距为 gutter 而首尾贴边
+	 * 各列的 [头, 尾] padding，使列间距为 gap 而首尾贴边
 	 */
 	columns: { index: number; offset: number[] }[];
 	/**
@@ -105,18 +105,18 @@ export class BaseWatcher {
 			return `${100 / this.props.cols}%`;
 		}),
 
-		columnOffsetGutter: computed(() => {
-			return this.props.gutter * (this.props.cols - 1) / this.props.cols;
+		columnOffsetGap: computed(() => {
+			return this.props.gap * (this.props.cols - 1) / this.props.cols;
 		}),
 
-		// 每列的 padding 之和恒为 columnOffsetGutter，相邻两列"前尾 + 后头"恰为 gutter
+		// 每列的 padding 之和恒为 columnOffsetGap，相邻两列"前尾 + 后头"恰为 gap
 		columns: computed(() => {
 			const v = Array.from({ length: this.props.cols }).map((_, index) => ({ index, offset: [0, 0] }));
-			v[0].offset = [0, this.states.columnOffsetGutter];
+			v[0].offset = [0, this.states.columnOffsetGap];
 			for (let i = 1; i < v.length; i++) {
 				const pre = v[i - 1].offset;
 
-				v[i].offset = [this.props.gutter - pre[1], this.states.columnOffsetGutter - this.props.gutter + pre[1]];
+				v[i].offset = [this.props.gap - pre[1], this.states.columnOffsetGap - this.props.gap + pre[1]];
 			}
 
 			return v;

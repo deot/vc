@@ -894,9 +894,9 @@ export const RecycleList = defineComponent({
 			// 先按已有尺寸（作估计值）同步重排并刷新可见范围，渲染中的行直接落到新列里，不留空白帧；
 			// 新列宽下的实际尺寸随后由 refreshLayout 重测
 			watch(
-				() => [props.cols, props.gutter],
+				() => [props.cols, props.gap],
 				async () => {
-					store.syncProps({ cols: props.cols, gutter: props.gutter });
+					store.syncProps({ cols: props.cols, gap: props.gap });
 					store.layout.refresh();
 					if (!isMounted.value) return;
 					syncVisibleRange();
@@ -1017,7 +1017,7 @@ export const RecycleList = defineComponent({
 		const renderPool = () => (
 			<div
 				class="vc-recycle-list__pool"
-				style={{ [K.columnSize]: store.states.columnSize, [K.paddingColumnHead]: `${store.states.columnOffsetGutter}px` }}
+				style={{ [K.columnSize]: store.states.columnSize, [K.paddingColumnHead]: `${store.states.columnOffsetGap}px` }}
 			>
 				<Measuring>
 					<Defer

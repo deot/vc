@@ -13,7 +13,7 @@ export const RECYCLE_LIST_RESERVED_KEYS = [
 	'vertical',
 	'inverted',
 	'cols',
-	'gutter',
+	'gap',
 	'pullable',
 	'loadData',
 	'lazyTail',

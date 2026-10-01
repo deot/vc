@@ -20,7 +20,7 @@
 				:inverted="isInverted"
 				:vertical="isVertical"
 				:cols="isVertical ? controls.cols : 1"
-				:gutter="10"
+				:gap="10"
 				:load-data="loadData"
 			>
 				<template #default="{ row }">

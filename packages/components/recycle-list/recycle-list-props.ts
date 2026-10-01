@@ -51,7 +51,7 @@ export const props = {
 		default: 1
 	},
 
-	gutter: {
+	gap: {
 		type: Number,
 		default: 0
 	},
