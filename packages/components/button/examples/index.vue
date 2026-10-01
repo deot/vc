@@ -62,7 +62,7 @@
 				default
 			</Button>
 			<Button size="small">
-				large
+				small
 			</Button>
 		</div>
 		<div class="box-wrapper">

@@ -40,11 +40,11 @@ const size = ref(28);
 ```vue
 <template>
 	<div>
-		<Button type="primary" @click="loading = !loading">
-			{{ loading ? '停止加载' : '开始加载' }}
+		<Button type="primary" @click="isLoading = !isLoading">
+			{{ isLoading ? '停止加载' : '开始加载' }}
 		</Button>
 		<div style="margin-top: 16px">
-			<Spin v-if="loading">
+			<Spin v-if="isLoading">
 				<div style="margin-top: 8px; line-height: 20px">加载中，请稍候</div>
 			</Spin>
 			<div v-else>内容已就绪</div>
@@ -56,7 +56,7 @@ const size = ref(28);
 import { ref } from 'vue';
 import { Button, Spin } from '@deot/vc';
 
-const loading = ref(true);
+const isLoading = ref(true);
 </script>
 ```
 :::

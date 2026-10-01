@@ -16,7 +16,7 @@
 					<div class="select-portal-demo__inner">
 						<Select
 							v-model="values[String(portal)]"
-							:data="cityList"
+							:data="optionList"
 							:portal="portal"
 							:portal-class="`select-portal-demo__popup-${portal}`"
 							@ready="handleReady(portal)"
@@ -32,7 +32,7 @@
 <script setup>
 import { reactive } from 'vue';
 import { Select } from '..';
-import { cityList } from './basic/data';
+import { optionList } from './basic/data';
 
 const values = reactive({ true: '', false: '' });
 const mounts = reactive({ true: '（未打开）', false: '（未打开）' });

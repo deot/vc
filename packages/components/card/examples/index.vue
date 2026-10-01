@@ -2,7 +2,7 @@
 	<div style="margin: 40px">
 		<Card>
 			<template #title>
-				<p>Borderless card</p>
+				<p>标题插槽示例</p>
 			</template>
 			<template #extra>
 				<p>Content of card</p>

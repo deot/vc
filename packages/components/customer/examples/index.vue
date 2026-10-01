@@ -5,7 +5,7 @@
 		:value="value"
 		class="v-customer-basic"
 		@click="handleClick"
-		@customer-click="hadnleCustomerClick"
+		@customer-click="handleCustomerClick"
 	>
 		<template #default>
 			default: <span>v3</span>
@@ -20,7 +20,7 @@
 		:value="value"
 		class="v-customer-basic"
 		@click="handleClick"
-		@customer-click="hadnleCustomerClick"
+		@customer-click="handleCustomerClick"
 	>
 		<template #default>
 			default: <span>Customer</span>
@@ -66,7 +66,7 @@ const handleClick = () => {
 	value.value += '!';
 };
 
-const hadnleCustomerClick = (e) => {
+const handleCustomerClick = (e) => {
 	console.log(e);
 };
 </script>

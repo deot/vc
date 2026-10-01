@@ -32,11 +32,11 @@
 ```vue App.vue
 <template>
 	<div class="editor-demo">
-		<Card title="项目资料">
+		<Card title="条目资料">
 			<div class="record-row">
 				<div>
 					<strong>{{ record.name }}</strong>
-					<p class="description">编号 #{{ record.id }} · 点击编辑更新项目名称</p>
+					<p class="description">编号 #{{ record.id }} · 点击编辑更新条目名称</p>
 				</div>
 				<Button type="primary" :disabled="isActive" @click="handleEdit">
 					编辑记录
@@ -53,7 +53,7 @@ import { Button, Card } from '@deot/vc';
 import { RecordEditor } from './record-editor.js';
 
 const playground = inject('docs:playground');
-const record = ref({ id: 1, name: '示例项目' });
+const record = ref({ id: 1, name: '示例条目' });
 const result = ref('尚未编辑');
 const isActive = ref(false);
 
@@ -127,14 +127,14 @@ export const RecordEditor = new Portal(EditorWrapper, {
 		:mask-closable="false"
 		:on-cancel="handleCancel"
 	>
-		<p class="description">保存后，项目名称会同步更新到调用页面。</p>
+		<p class="description">保存后，条目名称会同步更新到调用页面。</p>
 		<Form ref="form" :model="formData" label-position="top" @submit.prevent="handleSave">
-			<FormItem prop="name" label="项目名称" label-for="record-name" required="请填写名称">
+			<FormItem prop="name" label="条目名称" label-for="record-name" required="请填写名称">
 				<Input
 					v-model="formData.name"
 					input-id="record-name"
-					aria-label="项目名称"
-					placeholder="请输入项目名称"
+					aria-label="条目名称"
+					placeholder="请输入条目名称"
 					:allow-dispatch="false"
 					clearable
 				/>

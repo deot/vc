@@ -2,9 +2,9 @@
 	<div class="vcm-picker-example">
 		<Picker
 			v-model="value"
-			:data="regionData"
+			:data="groupData"
 			:cols="3"
-			label="所在地区"
+			label="所在分组"
 			@change="handleChange"
 		/>
 		<div class="vcm-picker-example__value">
@@ -13,7 +13,7 @@
 
 		<Picker
 			v-model="stringValue"
-			:data="regionData"
+			:data="groupData"
 			:cols="3"
 			label="字符串值"
 		/>
@@ -38,7 +38,7 @@
 			:data="asyncData"
 			:cols="3"
 			:load-data="loadData"
-			label="异步地区"
+			label="异步分组"
 		>
 			<template #default="{ label }">
 				<div class="vcm-picker-example__custom">
@@ -65,7 +65,7 @@
 		<div class="vcm-picker-example__panel">
 			<PickerView
 				v-model="viewValue"
-				:data="regionData"
+				:data="groupData"
 				:cols="3"
 				@picker-change="handlePickerChange"
 			/>
@@ -75,7 +75,7 @@
 		</div>
 
 		<div class="vcm-picker-example__actions">
-			<Button @click="visible = true">
+			<Button @click="isVisible = true">
 				打开 PickerPopup
 			</Button>
 			<Button @click="handleOpen">
@@ -84,10 +84,10 @@
 		</div>
 
 		<PickerPopup
-			v-model:visible="visible"
+			v-model:visible="isVisible"
 			title="自定义弹层"
-			@ok="visible = false"
-			@cancel="visible = false"
+			@ok="isVisible = false"
+			@cancel="isVisible = false"
 		>
 			<div class="vcm-picker-example__popup-content">
 				这里可以放任意内容
@@ -102,26 +102,26 @@ import { Button } from '../../button';
 import { MPicker } from '../index.m';
 import { Picker, PickerPopup, PickerView } from '..';
 
-const regionData = [
+const groupData = [
 	{
 		value: '110000',
-		label: '北京市',
+		label: '分组 A',
 		children: [
 			{
 				value: '110100',
-				label: '北京市辖区',
+				label: '子组 A-1',
 				children: [
-					{ value: '110101', label: '东城区' },
-					{ value: '110102', label: '西城区' },
-					{ value: '110116', label: '其他' }
+					{ value: '110101', label: '条目 A-1-1' },
+					{ value: '110102', label: '条目 A-1-2' },
+					{ value: '110116', label: '条目 A-1-3' }
 				]
 			},
 			{
 				value: '110200',
-				label: '北京县区',
+				label: '子组 A-2',
 				children: [
-					{ value: '110228', label: '密云县' },
-					{ value: '110229', label: '延庆县' }
+					{ value: '110228', label: '条目 A-2-1' },
+					{ value: '110229', label: '条目 A-2-2' }
 				]
 			}
 		]
@@ -148,19 +148,19 @@ const asyncValue = ref([]);
 const asyncData = ref([]);
 const seasonValue = ref(['2026', 'summer']);
 const viewValue = ref(['110000', '110200', '110228']);
-const visible = ref(false);
+const isVisible = ref(false);
 
-const cloneRegionData = () => JSON.parse(JSON.stringify(regionData));
+const cloneGroupData = () => JSON.parse(JSON.stringify(groupData));
 const formatValue = value => JSON.stringify(value);
 
 const loadData = async () => {
 	await new Promise(resolve => setTimeout(resolve, 300));
-	asyncData.value = cloneRegionData();
+	asyncData.value = cloneGroupData();
 };
 
 const handleOpen = () => {
 	MPicker.open({
-		data: regionData,
+		data: groupData,
 		value: value.value,
 		cols: 3,
 		onOk: (next) => {

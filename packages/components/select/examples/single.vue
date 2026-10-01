@@ -1,7 +1,7 @@
 <template>
 	<Select
 		v-model="value"
-		:data="cityList"
+		:data="optionList"
 		clearable
 		searchable
 		style="width: 200px"
@@ -18,7 +18,7 @@
 import { ref } from 'vue';
 import { Select } from '..';
 
-import { cityList } from './basic/data';
+import { optionList } from './basic/data';
 
 const value = ref(null);
 

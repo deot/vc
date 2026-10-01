@@ -29,10 +29,10 @@
 				/>
 			</div>
 			<div class="text-popover-demo__actions">
-				<Button type="primary" size="small" @click="run(item)">
+				<Button type="primary" size="small" @click="handleRun(item)">
 					自动复现
 				</Button>
-				<Button size="small" @click="reset(item.id)">
+				<Button size="small" @click="handleReset(item.id)">
 					清空
 				</Button>
 				<span>创建次数：<b data-count>{{ counts[item.id] }}</b>，弹层宽度：<b data-width>{{ widths[item.id] }}</b></span>
@@ -115,15 +115,15 @@ onBeforeUnmount(() => {
 	destroy();
 });
 
-const reset = (id) => {
+const handleReset = (id) => {
 	destroy();
 	counts[id] = 0;
 	widths[id] = '-';
 	results[id] = null;
 };
 
-const run = async (item) => {
-	reset(item.id);
+const handleRun = async (item) => {
+	handleReset(item.id);
 	await sleep(300);
 	const root = refs[item.id].$el;
 	root.dispatchEvent(new MouseEvent('mouseenter'));

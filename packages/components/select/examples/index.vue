@@ -16,7 +16,7 @@
 			<Select
 				v-model="value1"
 				:disabled="disabled"
-				:data="cityList.map((i, index) => ({ ...i, disabled: index === 1 }))"
+				:data="optionList.map((i, index) => ({ ...i, disabled: index === 1 }))"
 				clearable
 				searchable
 				style="width: 200px"
@@ -33,8 +33,8 @@
 				v-model="value1"
 				style="width: 200px"
 				searchable
-				label="城市: "
-				:data="[{ value: 'Hot Cities', children: cityList1 }, { value: 'Other Citie', children: cityList2 }]"
+				label="条目: "
+				:data="[{ value: '分组 A', children: optionList1 }, { value: '分组 B', children: optionList2 }]"
 			/>
 		</div>
 
@@ -46,7 +46,7 @@
 				:disabled="disabled"
 				style="width: 200px"
 				searchable
-				:data="[{ value: 'Hot Cities', children: cityList1 }, { value: 'Other Citie', children: cityList2 }]"
+				:data="[{ value: '分组 A', children: optionList1 }, { value: '分组 B', children: optionList2 }]"
 			/>
 		</div>
 
@@ -70,8 +70,8 @@
 				style="width: 200px"
 				searchable
 				:data="[
-					{ value: 'Hot Cities', children: [...searchData1, { value: '不会被过滤', filterable: false  }] },
-					{ value: 'Other Cities', children: searchData2 }
+					{ value: '分组 A', children: [...searchData1, { value: '不会被过滤', filterable: false  }] },
+					{ value: '分组 Bs', children: searchData2 }
 				]"
 			/>
 		</div>
@@ -84,7 +84,7 @@
 				searchable
 				search-placeholder="请输入"
 				style="width: 200px"
-				:data="cityListAsync.map((i, index) => ({ ...i, disabled: index === 1 }))"
+				:data="asyncOptions.map((i, index) => ({ ...i, disabled: index === 1 }))"
 			/>
 		</div>
 
@@ -95,7 +95,7 @@
 				clearable
 				searchable
 				style="width: 200px"
-				:data="cityList.map((i, index) => ({ ...i, disabled: index === 1 }))"
+				:data="optionList.map((i, index) => ({ ...i, disabled: index === 1 }))"
 			/>
 		</div>
 
@@ -114,7 +114,7 @@
 					v-model="formValidate.value"
 					clearable
 					style="width: 300px;"
-					:data="cityList"
+					:data="optionList"
 				/>
 			</FormItem>
 			<FormItem label="设置多选：" prop="value1">
@@ -123,7 +123,7 @@
 					:max="5"
 					clearable
 					style="width: 300px;"
-					:data="cityList"
+					:data="optionList"
 				/>
 			</FormItem>
 
@@ -146,7 +146,7 @@
 				clearable
 				searchable
 				style="width: 200px"
-				:data="cityList"
+				:data="optionList"
 				@change="handleClear"
 			/>
 			<Select
@@ -154,7 +154,7 @@
 				clearable
 				searchable
 				style="width: 200px"
-				:data="cityList"
+				:data="optionList"
 			/>
 		</div>
 		<div style="margin: 40px 0 ">
@@ -163,7 +163,7 @@
 				clearable
 				searchable
 				style="width: 200px"
-				:data="cityTree"
+				:data="optionTree"
 			/>
 		</div>
 	</div>
@@ -175,20 +175,20 @@ import { Button } from '../../button';
 import { Form, FormItem } from '../../form';
 
 import {
-	cityList as $cityList,
-	cityList1 as $cityList1,
-	cityList2 as $cityList2,
+	optionList as $optionList,
+	optionList1 as $optionList1,
+	optionList2 as $optionList2,
 	searchData as $searchData,
-	cityTree as $cityTree
+	optionTree as $optionTree
 } from './basic/data';
 
 const form = ref(null);
 const disabled = ref(false);
 
-const cityList = ref($cityList);
-const cityList1 = ref($cityList1);
-const cityList2 = ref($cityList2);
-const cityTree = ref($cityTree);
+const optionList = ref($optionList);
+const optionList1 = ref($optionList1);
+const optionList2 = ref($optionList2);
+const optionTree = ref($optionTree);
 const value1 = ref(1);
 const value2 = ref(['1', '4']);
 
@@ -199,7 +199,7 @@ const searchData1 = ref([]);
 const searchData2 = ref([]);
 
 const value5 = ref('1');
-const cityListAsync = ref([]);
+const asyncOptions = ref([]);
 
 const valueAsync = ref('');
 
@@ -228,7 +228,7 @@ let timer;
 const handleClear = (id) => {
 	if (!id) {
 		formValidate.value4 = '';
-		cityList.value = [];
+		optionList.value = [];
 	}
 };
 
@@ -249,8 +249,8 @@ const handleSearch = () => {
 		setTimeout(() => {
 			searchData.value = $searchData;
 
-			searchData1.value = $cityList1;
-			searchData2.value = $cityList2;
+			searchData1.value = $optionList1;
+			searchData2.value = $optionList2;
 			resolve();
 		}, 1000);
 	});
@@ -274,7 +274,7 @@ const handleVisibleChange = (v) => {
 
 onMounted(() => {
 	setTimeout(() => {
-		cityListAsync.value = $cityList;
+		asyncOptions.value = $optionList;
 
 		valueAsync.value = '1';
 	}, 2000);

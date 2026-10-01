@@ -23,7 +23,7 @@ import { FilePreview } from '@deot/vc';
 
 const data = [
 	{ source: 'https://dummyimage.com/1800x600/555/fff.png?text=banner', name: 'banner.png' },
-	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '合同-2026.pdf' },
+	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '示例文件-2026.pdf' },
 	'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
 	'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3',
 	{ source: 'https://dummyimage.com/600x1800/555/fff.png?text=detail', name: 'detail.png' }
@@ -48,7 +48,7 @@ import { FilePreview } from '@deot/vc';
 
 const data = [
 	{ source: 'https://dummyimage.com/1800x600/555/fff.png?text=1', name: '1.png' },
-	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '合同-2026.pdf' },
+	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '示例文件-2026.pdf' },
 	'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
 	{ source: 'https://dummyimage.com/600x1800/555/fff.png?text=2', name: '2.png' },
 	'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3'
@@ -143,7 +143,7 @@ const handlePreview = preview => preview();
 const data = [
 	{ source: 'https://dummyimage.com/1800x600/555/fff.png?text=1', name: '1.png' },
 	'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
-	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '合同-2026.pdf' }
+	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '示例文件-2026.pdf' }
 ];
 </script>
 
@@ -199,7 +199,7 @@ const original = { ...VcInstance.options.FilePreview };
 const tip = ref('点击文件，由 enhancer 接管');
 const data = [
 	{ source: 'https://dummyimage.com/800x600/555/fff/?text=photo.jpg!4-4', name: 'photo.jpg!4-4' },
-	'https://example.com/files/1695123_%E5%90%88%E5%90%8C.pdf'
+	'https://example.com/files/1695123_%E7%A4%BA%E4%BE%8B%E6%96%87%E4%BB%B6.pdf'
 ];
 
 VcInstance.configure({

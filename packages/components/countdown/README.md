@@ -38,7 +38,7 @@ const targetTime = Date.now() + 2 * 24 * 60 * 60 * 1000;
 			:t="refreshInterval"
 			format="HH:mm:ss:SSS"
 		/>
-		<Button @click="switchInterval">
+		<Button @click="handleSwitchInterval">
 			切换为 {{ refreshInterval === 1000 ? '50ms' : '1 秒' }} 刷新
 		</Button>
 	</div>
@@ -51,7 +51,7 @@ import { Button, Countdown } from '@deot/vc';
 const targetTime = ref(Date.now() + 90 * 1000);
 const refreshInterval = ref(1000);
 
-const switchInterval = () => {
+const handleSwitchInterval = () => {
 	refreshInterval.value = refreshInterval.value === 1000 ? 50 : 1000;
 	targetTime.value = Date.now() + 90 * 1000;
 };
@@ -86,13 +86,13 @@ const targetTime = Date.now() + 26 * 60 * 60 * 1000;
 ```vue
 <template>
 	<div style="display: flex; align-items: center; gap: 12px">
-		<Countdown :target-time="targetTime" @complete="completed = true">
+		<Countdown :target-time="targetTime" @complete="isCompleted = true">
 			<template #default="{ minute, second }">
 				剩余 {{ minute }} 分 {{ second }} 秒
 			</template>
 		</Countdown>
-		<span v-if="completed">已结束</span>
-		<Button @click="restart">重新开始</Button>
+		<span v-if="isCompleted">已结束</span>
+		<Button @click="handleRestart">重新开始</Button>
 	</div>
 </template>
 
@@ -101,11 +101,11 @@ import { ref } from 'vue';
 import { Button, Countdown } from '@deot/vc';
 
 const targetTime = ref(Date.now() + 10 * 1000);
-const completed = ref(false);
+const isCompleted = ref(false);
 
-const restart = () => {
+const handleRestart = () => {
 	targetTime.value = Date.now() + 10 * 1000;
-	completed.value = false;
+	isCompleted.value = false;
 };
 </script>
 ```

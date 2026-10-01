@@ -37,22 +37,22 @@ import { MToast, Button } from '@deot/vc';
 
 const status = ref('提示将在 3 秒后关闭，也可点击外部区域关闭。');
 const playground = inject('docs:playground');
-const infoVisible = ref(false);
-const successVisible = ref(false);
+const isInfoVisible = ref(false);
+const isSuccessVisible = ref(false);
 
-const handleInfo = playground.run(360, { visible: infoVisible }, () => {
-	infoVisible.value = true;
+const handleInfo = playground.run(360, { visible: isInfoVisible }, () => {
+	isInfoVisible.value = true;
 	MToast.info('这是一条提示', 3000, () => {
 		status.value = '提示已关闭';
-		infoVisible.value = false;
+		isInfoVisible.value = false;
 	});
 });
-const handleSuccess = playground.run(360, { visible: successVisible }, () => {
-	successVisible.value = true;
+const handleSuccess = playground.run(360, { visible: isSuccessVisible }, () => {
+	isSuccessVisible.value = true;
 	MToast.success({
 		content: '保存成功',
 		duration: 1500,
-		onClose: () => (successVisible.value = false)
+		onClose: () => (isSuccessVisible.value = false)
 	});
 });
 onUnmounted(() => {
@@ -96,11 +96,11 @@ import { MToast, Button } from '@deot/vc';
 
 const status = ref('加载提示在任务完成后关闭。');
 const playground = inject('docs:playground');
-const visible = ref(false);
+const isVisible = ref(false);
 let timer;
 let toast;
-const handleLoading = playground.run(360, { visible }, () => {
-	visible.value = true;
+const handleLoading = playground.run(360, { visible: isVisible }, () => {
+	isVisible.value = true;
 	clearTimeout(timer);
 	toast?.destroy();
 	status.value = '正在处理…';
@@ -108,7 +108,7 @@ const handleLoading = playground.run(360, { visible }, () => {
 	timer = setTimeout(() => {
 		toast.destroy();
 		status.value = '任务完成';
-		visible.value = false;
+		isVisible.value = false;
 	}, 2000);
 });
 onBeforeUnmount(() => {
@@ -150,13 +150,13 @@ import { inject, h, onUnmounted, ref } from 'vue';
 import { MToast, Button } from '@deot/vc';
 
 const playground = inject('docs:playground');
-const visible = ref(false);
-const handleCustom = playground.run(360, { visible }, () => {
-	visible.value = true;
+const isVisible = ref(false);
+const handleCustom = playground.run(360, { visible: isVisible }, () => {
+	isVisible.value = true;
 	MToast.info({
 		content: () => h('div', [h('strong', '已保存'), h('div', '可以继续操作')]),
 		duration: 3000,
-		onClose: () => (visible.value = false)
+		onClose: () => (isVisible.value = false)
 	});
 });
 onUnmounted(() => {

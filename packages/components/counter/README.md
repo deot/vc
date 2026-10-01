@@ -78,7 +78,7 @@ const separator = ref(',');
 			<Button @click="counter.resume()">继续</Button>
 			<Button @click="counter.end()">结束</Button>
 			<Button @click="counter.restart()">重新开始</Button>
-			<Button type="primary" @click="updateTarget">目标 +100</Button>
+			<Button type="primary" @click="handleUpdateTarget">目标 +100</Button>
 		</div>
 	</div>
 </template>
@@ -91,7 +91,7 @@ const counter = ref();
 const target = ref(100);
 const status = ref('尚未开始');
 
-const updateTarget = () => {
+const handleUpdateTarget = () => {
 	target.value += 100;
 	counter.value.update(target.value);
 };

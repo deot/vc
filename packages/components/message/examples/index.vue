@@ -15,7 +15,7 @@
 		<Button :wait="0" @click="handleClickClose('info')">
 			手动关闭的提示
 		</Button>
-		<Button :wait="0" @click="handleClickrender">
+		<Button :wait="0" @click="handleRender">
 			根据render函数渲染
 		</Button>
 	</div>
@@ -60,7 +60,7 @@ const handleClickClose = () => {
 	});
 };
 
-const handleClickrender = () => {
+const handleRender = () => {
 	Message.info({
 		content: () => {
 			return h('span', [

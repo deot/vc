@@ -69,10 +69,10 @@
 			</div>
 		</Countdown>
 		<div @click="handleTarget">
-			点我targetTime: Data.now() + 1d
+			点我targetTime: Date.now() + 1d
 		</div>
 		<div @click="handleServer">
-			点我serverTime: Data.now() - 1d
+			点我serverTime: Date.now() - 1d
 		</div>
 	</div>
 </template>

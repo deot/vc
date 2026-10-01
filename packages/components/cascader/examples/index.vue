@@ -61,71 +61,71 @@ import { Form, FormItem } from '../../form';
 
 const value1 = ref([1, 110000, 110100, 110101]);
 const value2 = ref([]);
-const value3 = ref(['jiangsu', 'nanjing']);
+const value3 = ref(['group-b', 'item-b-1']);
 const value4 = ref([]);
 const valueAlone = ref([]);
 const bigData = ref($bigData);
 const dataSource = ref([
 	{
-		value: 'beijing',
-		label: '北京',
+		value: 'group-a',
+		label: '分组 A',
 		children: [
 			{
-				value: 'gugong',
-				label: '故宫'
+				value: 'item-a-1',
+				label: '条目 A-1'
 			},
 			{
-				value: 'tiantan',
-				label: '天坛'
+				value: 'item-a-2',
+				label: '条目 A-2'
 			},
 			{
-				value: 'wangfujing',
-				label: '王府井'
+				value: 'item-a-3',
+				label: '条目 A-3'
 			}
 		]
 	},
 	{
-		value: 'jiangsu',
-		label: '江苏',
+		value: 'group-b',
+		label: '分组 B',
 		children: [
 			{
-				value: 'nanjing',
-				label: '南京',
+				value: 'item-b-1',
+				label: '条目 B-1',
 				children: [
 					{
-						value: 'fuzimiao',
-						label: '夫子庙',
+						value: 'item-b-1-1',
+						label: '条目 B-1-1',
 					}
 				]
 			},
 			{
-				value: 'suzhou',
-				label: '苏州'
+				value: 'item-b-2',
+				label: '条目 B-2'
 			}
 		],
 	}
 ]);
 const dataSourceAlone = ref([
 	{
-		value: 'beijing',
-		label: '北京'
+		value: 'group-a',
+		label: '分组 A'
 	},
 	{
-		value: 'suzhou',
-		label: '苏州'
+		value: 'item-b-2',
+		label: '条目 B-2'
 	}
 ]);
 
 const dataAsyncSource1 = ref([]);
 const dataAsyncSource2 = ref([
 	{
-		value: 'beijing',
-		label: '北京',
+		value: 'group-a',
+		label: '分组 A',
 		children: []
 	}
 ]);
 const formValidate = reactive({
-	value: ['beijing', 'gugong'],
+	value: ['group-a', 'item-a-1'],
 	value1: [],
 	value2: []
 });
@@ -164,16 +164,16 @@ const loadData = () => {
 		setTimeout(() => {
 			resolve([
 				{
-					value: 'gugong',
-					label: '故宫'
+					value: 'item-a-1',
+					label: '条目 A-1'
 				},
 				{
-					value: 'tiantan',
-					label: '天坛'
+					value: 'item-a-2',
+					label: '条目 A-2'
 				},
 				{
-					value: 'wangfujing',
-					label: '王府井'
+					value: 'item-a-3',
+					label: '条目 A-3'
 				}
 			]);
 		}, 2000);

@@ -46,13 +46,13 @@ const effects = ref(0);
 
 const Probe = defineComponent({
 	setup() {
-		const measuring = useMeasuring();
+		const isMeasuring = useMeasuring();
 		onMounted(() => {
 			// 这一遍只用来量尺寸：不发请求、不登记
-			if (measuring) return;
+			if (isMeasuring) return;
 			effects.value++;
 		});
-		return () => h('div', { class: 'measuring-demo__probe' }, `useMeasuring() → ${measuring}`);
+		return () => h('div', { class: 'measuring-demo__probe' }, `useMeasuring() → ${isMeasuring}`);
 	}
 });
 </script>

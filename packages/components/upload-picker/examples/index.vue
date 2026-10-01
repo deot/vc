@@ -36,14 +36,15 @@
 import { UploadPicker } from '..';
 import { MUploadPicker } from '../index.m';
 import { ref, watchEffect } from 'vue';
-import { random } from 'lodash-es';
 import { VcInstance } from '../../vc/index';
+
+let requestCount = 0;
 
 VcInstance.configure({
 	Upload: {
 		onRequest: ({ requestOptions }) => {
 			return new Promise((resolve) => {
-				if (random(0, 10) > 9) {
+				if (++requestCount % 3 === 0) {
 					throw new Error('存在异常');
 				}
 				resolve({
@@ -82,9 +83,9 @@ VcInstance.configure({
 });
 const list = ref([]);
 const dataSource = ref([
-	'https://wyatest.oss-cn-hangzhou.aliyuncs.com/image/172/20191226/2007790743/test_video.mp4',
-	'https://wyatest.oss-cn-hangzhou.aliyuncs.com/image/172/20200306/0936814587/O1CN01STX58I1HIDIUHqYwP_!!2885750734.jpg!4-4',
-	'https://thirdwx.qlogo.cn/mmopen/vi_32/IUeRRqTWdyoMOkveehFRrbogiaFuk9U9kBgRMvP4A8U6GjYhiaboDsBf5WEEhV7Cfjr8a0Tz91Hal0oUaDsOslvg/132'
+	'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+	'https://dummyimage.com/800x600/555/fff.jpg?text=Image',
+	'https://dummyimage.com/132x132/555/fff.png?text=Image'
 ]);
 
 watchEffect(() => console.log(dataSource.value));

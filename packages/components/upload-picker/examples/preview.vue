@@ -40,7 +40,7 @@ const dataSource = ref([
 	{ label: 'photo.jpg!4-4', value: 'https://dummyimage.com/800x600/2d8cf0/fff/?text=photo.jpg!4-4' },
 	'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
 	'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3',
-	{ label: '合同-2026.pdf', value: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' }
+	{ label: '示例文件-2026.pdf', value: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' }
 ]);
 
 // 本地预览，不走真实上传

@@ -1,18 +1,18 @@
 <template>
 	<div>
-		<Button @click="lazy = !lazy">
-			lazy {{ lazy }}
+		<Button @click="isLazy = !isLazy">
+			lazy {{ isLazy }}
 		</Button>
-		<Button @click="checkStrictly = !checkStrictly">
-			单选独立 {{ checkStrictly }}
+		<Button @click="isCheckStrictly = !isCheckStrictly">
+			单选独立 {{ isCheckStrictly }}
 		</Button>
 		<Tree
-			:key="lazy"
+			:key="isLazy"
 			v-model="value"
 			:data="data"
 			:load-data="loadData"
-			:lazy="lazy"
-			:check-strictly="checkStrictly"
+			:lazy="isLazy"
+			:check-strictly="isCheckStrictly"
 			:render="renderContent"
 			show-checkbox
 			accordion
@@ -27,7 +27,7 @@
 		<TreeSelect
 			v-model="value"
 			:data="data"
-			:check-strictly="checkStrictly"
+			:check-strictly="isCheckStrictly"
 			:max="99"
 			clearable
 		/>
@@ -50,7 +50,7 @@
 		<TreeSelect
 			v-model="value"
 			:data="data"
-			:check-strictly="checkStrictly"
+			:check-strictly="isCheckStrictly"
 			:max="99"
 			cascader
 			clearable
@@ -62,17 +62,17 @@
 		<TreeSelect
 			v-model="valueSearch"
 			:data="bigData"
-			:check-strictly="checkStrictly"
+			:check-strictly="isCheckStrictly"
 			:max="999"
 			:max-tags="3"
 			searchable
-			search-placeholder="搜索城市 / 区域"
+			search-placeholder="搜索条目 / 分组"
 			clearable
 		/>
 		<TreeSelect
 			v-model="valueSearch"
 			:data="bigData"
-			:check-strictly="checkStrictly"
+			:check-strictly="isCheckStrictly"
 			:max="999"
 			:max-tags="3"
 			searchable
@@ -85,7 +85,7 @@
 		<TreeSelect
 			v-model="valueAsync"
 			:data="dataAsync"
-			:check-strictly="checkStrictly"
+			:check-strictly="isCheckStrictly"
 			clearable
 		/>
 	</div>
@@ -174,23 +174,23 @@ const DEFAULT_DATA = [
 ];
 
 // 大量数据：每一列都会出现滚动（Scroller）
-const REGIONS = ['华东', '华南', '华北', '华中', '西南', '西北', '东北', '港澳台', '海外', '长三角', '珠三角', '京津冀', '成渝', '关中', '北部湾'];
-const BIG_DATA = REGIONS.map((region, i) => ({
+const GROUPS = Array.from({ length: 15 }, (_, index) => `分组 ${index + 1}`);
+const BIG_DATA = GROUPS.map((region, i) => ({
 	value: `r${i}`,
 	label: region,
 	children: Array.from({ length: 12 }).map((_, j) => ({
 		value: `r${i}-c${j}`,
-		label: `${region}城市 ${j + 1}`,
+		label: `${region}子组 ${j + 1}`,
 		disabled: i === 0 && j === 1,
 		children: Array.from({ length: 8 }).map((__, k) => ({
 			value: `r${i}-c${j}-d${k}`,
-			label: `${region}城市 ${j + 1} · 区 ${k + 1}`
+			label: `${region}子组 ${j + 1} · 条目 ${k + 1}`
 		}))
 	}))
 }));
 
-const lazy = ref(true);
-const checkStrictly = ref(false);
+const isLazy = ref(true);
+const isCheckStrictly = ref(false);
 const value = ref([]);
 const data = ref(DEFAULT_DATA);
 const bigData = ref(BIG_DATA);

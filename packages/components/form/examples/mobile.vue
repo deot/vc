@@ -16,7 +16,7 @@
 		:label-width="labelWidth"
 		@submit.prevent
 	>
-		<MFormItem v-if="hasLoad" prop="input1" label="异步：" required="input1必填">
+		<MFormItem v-if="isLoaded" prop="input1" label="异步：" required="input1必填">
 			<input v-model="formData.input1" placeholder="input1">
 			<template #label>
 				<span>异步：</span>
@@ -151,7 +151,7 @@ import FakeArray from './fake/array.vue'; // 可以使用trigger
 import { MButton } from '../../button/index.m';
 
 let index = 0;
-const hasLoad = ref(false);
+const isLoaded = ref(false);
 const form = ref(null);
 const labelPosition = ref('right');
 const labelWidth = ref(120);
@@ -274,7 +274,7 @@ const handleChangeLabelPosition = () => {
 
 onMounted(() => {
 	Array.from({ length: 10 }).forEach(handleAdd);
-	setTimeout(() => hasLoad.value = true, 3000);
+	setTimeout(() => isLoaded.value = true, 3000);
 });
 </script>
 

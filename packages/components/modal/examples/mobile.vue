@@ -1,16 +1,16 @@
 <template>
 	<div style="padding: 100px">
 		<MModalView
-			v-model="visible1"
+			v-model="isVisible1"
 			:mask-closable="true"
 			title="标题1"
-			content="账号密码不一致，请重试"
+			content="输入内容不一致，请重试，请重试"
 			@close="handleClose"
 			@cancel="handleCancel"
 			@ok="handleOk"
 		/>
 		<MModalView
-			v-model="visible2"
+			v-model="isVisible2"
 			:mode="mode"
 			:mask-closable="true"
 			title="标题1"
@@ -24,20 +24,20 @@
 			<!-- <vcm-input v-model="value" /> -->
 		</MModalView>
 		<MModalView
-			v-model="visible3"
+			v-model="isVisible3"
 			:mode="mode"
 			:mask-closable="true"
 			:cancel-text="false"
 			title="标题1"
-			content="啦啦啦啦"
+			content="确认"
 			@close="handleClose"
 			@cancel="handleCancel"
 			@ok="handleOk"
 		/>
 		<MModalView
-			v-model="visible4"
+			v-model="isVisible4"
 			:mask-closable="true"
-			content="账号密码不一致，请重试"
+			content="输入内容不一致，请重试，请重试"
 			@close="handleClose"
 			@cancel="handleCancel"
 			@ok="handleOk"
@@ -73,10 +73,10 @@ import { VcInstance } from '../../vc/index';
 window.vc = VcInstance;
 
 const mode = ref('alert');
-const visible1 = ref(false);
-const visible2 = ref(false);
-const visible3 = ref(false);
-const visible4 = ref(false);
+const isVisible1 = ref(false);
+const isVisible2 = ref(false);
+const isVisible3 = ref(false);
+const isVisible4 = ref(false);
 
 const handleClose = () => {
 	console.log('关闭后都会触发');
@@ -94,15 +94,15 @@ const handleOk = () => {
 };
 
 const handleClick1 = () => {
-	visible1.value = !visible1.value;
+	isVisible1.value = !isVisible1.value;
 };
 
 const handleClick2 = () => {
-	visible2.value = !visible2.value;
+	isVisible2.value = !isVisible2.value;
 };
 
 const handleClick3 = () => {
-	visible3.value = !visible3.value;
+	isVisible3.value = !isVisible3.value;
 };
 
 const handleClick4 = () => {
@@ -165,6 +165,6 @@ const handleClick6 = () => {
 };
 
 const handleClick7 = () => {
-	visible4.value = !visible4.value;
+	isVisible4.value = !isVisible4.value;
 };
 </script>

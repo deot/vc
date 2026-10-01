@@ -56,7 +56,7 @@
 		<h2>自定义</h2>
 		<DatePicker
 			v-model="month"
-			:open="dateOpen"
+			:open="isDateOpen"
 			type="month"
 			clearable
 			placeholder="Select date"
@@ -150,8 +150,8 @@
 			format="YYYY-MM-DD"
 			placeholder="Select date"
 			@change="handleChange"
-			@before-ok="handeleOnBeforeOk"
-			@before-clear="handeleOnBeforeClear"
+			@before-ok="handleBeforeOk"
+			@before-clear="handleBeforeClear"
 			@error="handleError"
 		/>
 		<h2>Form表单校验</h2>
@@ -191,7 +191,7 @@ const quarter = ref('');
 const quarterrange = ref('');
 const datePromise = ref(new Date());
 const type = ref('date');
-const dateOpen = ref(false);
+const isDateOpen = ref(false);
 const rangeStart = ref('');
 const rangeEnd = ref('');
 const disabledDate = ref(
@@ -237,7 +237,7 @@ const handleError = (err) => {
 	console.log('err :>> ', err);
 };
 
-const handeleOnBeforeOk = (val) => {
+const handleBeforeOk = (val) => {
 	console.log('val :>> ', val);
 	return new Promise((resolve, reject) => {
 		const date = new Date();
@@ -249,12 +249,13 @@ const handeleOnBeforeOk = (val) => {
 	});
 };
 
-const handeleOnBeforeClear = () => {
+let clearCount = 0;
+const handleBeforeClear = () => {
 	return new Promise((resolve, reject) => {
-		const num = Math.random();
-		console.log('num :>> ', num > 0.5);
+		const isAllowed = ++clearCount % 2 === 1;
+		console.log('num :>> ', isAllowed);
 		setTimeout(() => {
-			if (num > 0.5) {
+			if (isAllowed) {
 				resolve(true);
 			} else {
 				reject(new Error(false));
@@ -269,7 +270,7 @@ const handleChangeTime = (val) => {
 
 const handleVisibleChange = (v) => {
 	console.log('VisibleChange', v);
-	dateOpen.value = v;
+	isDateOpen.value = v;
 };
 
 const handleClear = (v) => {
@@ -291,12 +292,12 @@ const handleYearChange = (v) => {
 };
 
 const handleSelectMonth = () => {
-	dateOpen.value = !dateOpen.value;
+	isDateOpen.value = !isDateOpen.value;
 };
 
 const handleMonthChange = ($month) => {
 	month.value = $month;
-	dateOpen.value = false;
+	isDateOpen.value = false;
 };
 
 const handleQuarterChange = (v) => {

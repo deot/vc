@@ -1,33 +1,33 @@
 <template>
 	<div style="display: flex; flex-direction: column;">
 		<!-- single -->
-		<MRadio v-model="single" @change="handleChange">
-			{{ single }}
+		<MRadio v-model="isSelected" @change="handleChange">
+			{{ isSelected }}
 		</MRadio>
 
 		<!-- group -->
-		<MRadioGroup v-model="phone">
-			<MRadio value="apple" disabled>
-				<span>Apple</span>
+		<MRadioGroup v-model="selectedOption">
+			<MRadio value="option-a" disabled>
+				<span>选项 A</span>
 			</MRadio>
-			<MRadio value="android">
-				<span>Android</span>
+			<MRadio value="option-b">
+				<span>选项 B</span>
 			</MRadio>
-			<MRadio value="windows">
-				<span>Windows</span>
+			<MRadio value="option-c">
+				<span>选项 C</span>
 			</MRadio>
 		</MRadioGroup>
-		<MRadioGroup v-model="animal" vertical>
-			<MRadio value="金斑蝶" />
-			<MRadio value="爪哇犀牛" />
-			<MRadio value="印度黑羚" />
+		<MRadioGroup v-model="selectedItem" vertical>
+			<MRadio value="条目 A" />
+			<MRadio value="条目 B" />
+			<MRadio value="条目 C" />
 		</MRadioGroup>
 
-		<MRadioGroup v-model="city" type="button" @change="handleChange">
-			<MRadio value="北京" />
-			<MRadio value="上海" disabled />
-			<MRadio value="深圳" />
-			<MRadio value="杭州" />
+		<MRadioGroup v-model="selectedGroup" type="button" @change="handleChange">
+			<MRadio value="分组 A" />
+			<MRadio value="分组 B" disabled />
+			<MRadio value="分组 C" />
+			<MRadio value="分组 D" />
 		</MRadioGroup>
 		<MForm
 			ref="formValidate"
@@ -37,17 +37,17 @@
 			style="padding-left: 56px; margin-top: 21px"
 			@submit.prevent
 		>
-			<MFormItem prop="animal" label="动物：">
-				<MRadioGroup v-model="formValidate.animal">
-					<MRadio value="金斑蝶" />
-					<MRadio value="爪哇犀牛" />
-					<MRadio value="印度黑羚" />
+			<MFormItem prop="selectedItem" label="条目：">
+				<MRadioGroup v-model="formValidate.selectedItem">
+					<MRadio value="条目 A" />
+					<MRadio value="条目 B" />
+					<MRadio value="条目 C" />
 				</MRadioGroup>
 			</MFormItem>
-			<MFormItem prop="animal" label="动物：">
-				<MRadio value="金斑蝶" />
+			<MFormItem prop="selectedItem" label="条目：">
+				<MRadio value="条目 A" />
 			</MFormItem>
-			<MFormItem prop="input" label="动物：">
+			<MFormItem prop="input" label="条目：">
 				<MInput style="width: 300px" />
 			</MFormItem>
 		</MForm>
@@ -59,10 +59,10 @@ import { MRadio, MRadioGroup } from '../index.m';
 import { MForm, MFormItem } from '../../form/index.m';
 import { MInput } from '../../input/index.m';
 
-const single = ref(false);
-const phone = ref('apple');
-const animal = ref('爪哇犀牛');
-const city = ref('北京');
+const isSelected = ref(false);
+const selectedOption = ref('option-a');
+const selectedItem = ref('条目 B');
+const selectedGroup = ref('分组 A');
 const formValidate = reactive({});
 const ruleValidate = reactive({});
 
@@ -72,10 +72,10 @@ const handleChange = (a) => {
 
 onUpdated(() => {
 	console.log({
-		single: single.value,
-		phone: phone.value,
-		animal: animal.value,
-		city: city.value
+		single: isSelected.value,
+		phone: selectedOption.value,
+		selectedItem: selectedItem.value,
+		city: selectedGroup.value
 	});
 });
 

@@ -63,7 +63,7 @@ const calendar = ref();
 ```vue
 <template>
 	<div class="calendar-demo">
-		<Button class="calendar-demo__locale" @click="toggleLocale">
+		<Button class="calendar-demo__locale" @click="handleToggleLocale">
 			切换到{{ locale.name === 'zh-CN' ? '英文' : '中文' }}
 		</Button>
 		<Calendar />
@@ -106,7 +106,7 @@ const locales = [
 ];
 const locale = ref(locales[0]);
 
-const toggleLocale = () => {
+const handleToggleLocale = () => {
 	locale.value = locale.value.name === 'zh-CN' ? locales[1] : locales[0];
 	VcInstance.configure({ locale: locale.value });
 };

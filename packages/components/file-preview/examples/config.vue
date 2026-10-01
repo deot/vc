@@ -25,9 +25,9 @@ const logs = ref([]);
 const dataSource = [
 	{ source: 'https://dummyimage.com/800x600/555/fff/?text=photo.jpg!4-4', name: 'photo.jpg!4-4' },
 	{ source: 'https://dummyimage.com/600x800/2d8cf0/fff.png?text=a', name: 'a.png' },
-	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '合同-2026.pdf' },
+	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '示例文件-2026.pdf' },
 	// 未提供name，由getFileName推导
-	'https://example.com/files/1695123_%E6%8A%A5%E4%BB%B7%E5%8D%95.xlsx'
+	'https://example.com/files/1695123_%E7%A4%BA%E4%BE%8B%E6%96%87%E4%BB%B6.xlsx'
 ];
 
 watchEffect(() => {

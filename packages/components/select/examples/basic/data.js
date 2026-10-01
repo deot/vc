@@ -1,55 +1,55 @@
-export const cityList = [
+export const optionList = [
 	{
 		value: '1',
-		label: 'New York'
+		label: '选项 A'
 	},
 	{
 		value: '2',
-		label: 'London'
+		label: '选项 B'
 	},
 	{
 		value: '3',
-		label: 'Sydney'
+		label: '选项 C'
 	},
 	{
 		value: '4',
-		label: 'Ottawa'
+		label: '选项 D'
 	},
 	{
 		value: '5',
-		label: 'Paris'
+		label: '选项 E'
 	},
 	{
 		value: '6',
-		label: 'Canberra'
+		label: '选项 F'
 	}
 ];
 
-export const cityTree = [
+export const optionTree = [
 	{
 		value: '1',
-		label: 'New York'
+		label: '示例长选项'
 	},
 	{
 		value: '2',
-		label: 'London'
+		label: '选项 B'
 	},
 	{
 		value: '3',
-		label: 'Sydney'
+		label: '选项 C'
 	},
 	{
 		value: '4',
-		label: 'Ottawa'
+		label: '选项 D'
 	},
 	{
 		value: '5',
-		label: 'Paris'
+		label: '选项 E'
 	},
 	{
 		value: '6',
-		label: 'Canberra',
-		children: cityList.map((i) => {
+		label: '选项 F',
+		children: optionList.map((i) => {
 			return {
 				value: 'children' + i.value,
 				label: 'children' + i.label
@@ -58,240 +58,240 @@ export const cityTree = [
 	}
 ];
 
-export const cityList1 = [
+export const optionList1 = [
 	{
 		value: '1',
-		label: `New York New YorkNew YorkNew YorkNew YorkNew YorkNew YorkNew YorkNew YorkNew 
-			YorkNew YorkNew YorkNew YorkNew YorkNew YorkNew YorkNew YorkNew YorkNew YorkNew 
-			YorkNew YorkNew YorkNew YorkNew YorkNew YorkNew YorkNew YorkNew York`
+		label: `示例长选项 示例长选项示例长选项示例长选项示例长选项示例长选项示例长选项示例长选项示例长选项示例
+			示例长选项示例长选项示例长选项示例长选项示例长选项示例长选项示例长选项示例长选项示例长选项示例长选项示例
+			示例长选项示例长选项示例长选项示例长选项示例长选项示例长选项示例长选项示例长选项示例长选项`
 	},
 	{
 		value: '2',
-		label: 'London'
+		label: '选项 B'
 	},
 	{
 		value: '3',
-		label: 'Sydney'
+		label: '选项 C'
 	}
 ];
-export const cityList2 = [
+export const optionList2 = [
 	{
 		value: '4',
-		label: 'Ottawa'
+		label: '选项 D'
 	},
 	{
 		value: '5',
-		label: 'Paris'
+		label: '选项 E'
 	},
 	{
 		value: '6',
-		label: 'Canberra'
+		label: '选项 F'
 	}
 ];
 
 export const searchData = [
 	{
 		value: '0',
-		label: 'Alabama'
+		label: 'Option 1'
 	},
 	{
 		value: '1',
-		label: 'Alaska'
+		label: 'Option 2'
 	},
 	{
 		value: '2',
-		label: 'Arizona'
+		label: 'Option 3'
 	},
 	{
 		value: '3',
-		label: 'Arkansas'
+		label: 'Option 4'
 	},
 	{
 		value: '4',
-		label: 'California'
+		label: 'Option 5'
 	},
 	{
 		value: '5',
-		label: 'Colorado'
+		label: 'Option 6'
 	},
 	{
 		value: '6',
-		label: 'Connecticut'
+		label: 'Option 7'
 	},
 	{
 		value: '7',
-		label: 'Delaware'
+		label: 'Option 8'
 	},
 	{
 		value: '8',
-		label: 'Florida'
+		label: 'Option 9'
 	},
 	{
 		value: '9',
-		label: 'Georgia'
+		label: 'Option 10'
 	},
 	{
 		value: '10',
-		label: 'Hawaii'
+		label: 'Option 11'
 	},
 	{
 		value: '11',
-		label: 'Idaho'
+		label: 'Option 12'
 	},
 	{
 		value: '12',
-		label: 'Illinois'
+		label: 'Option 13'
 	},
 	{
 		value: '13',
-		label: 'Indiana'
+		label: 'Option 14'
 	},
 	{
 		value: '14',
-		label: 'Iowa'
+		label: 'Option 15'
 	},
 	{
 		value: '15',
-		label: 'Kansas'
+		label: 'Option 16'
 	},
 	{
 		value: '16',
-		label: 'Kentucky'
+		label: 'Option 17'
 	},
 	{
 		value: '17',
-		label: 'Louisiana'
+		label: 'Option 18'
 	},
 	{
 		value: '18',
-		label: 'Maine'
+		label: 'Option 19'
 	},
 	{
 		value: '19',
-		label: 'Maryland'
+		label: 'Option 20'
 	},
 	{
 		value: '20',
-		label: 'Massachusetts'
+		label: 'Option 21'
 	},
 	{
 		value: '21',
-		label: 'Michigan'
+		label: 'Option 22'
 	},
 	{
 		value: '22',
-		label: 'Minnesota'
+		label: 'Option 23'
 	},
 	{
 		value: '23',
-		label: 'Mississippi'
+		label: 'Option 24'
 	},
 	{
 		value: '24',
-		label: 'Missouri'
+		label: 'Option 25'
 	},
 	{
 		value: '25',
-		label: 'Montana'
+		label: 'Option 26'
 	},
 	{
 		value: '26',
-		label: 'Nebraska'
+		label: 'Option 27'
 	},
 	{
 		value: '27',
-		label: 'Nevada'
+		label: 'Option 28'
 	},
 	{
 		value: '28',
-		label: 'New hampshire'
+		label: 'Option 29 Example'
 	},
 	{
 		value: '29',
-		label: 'New jersey'
+		label: 'Option 30 Example'
 	},
 	{
 		value: '30',
-		label: 'New mexico'
+		label: 'Option 31 Example'
 	},
 	{
 		value: '31',
-		label: 'New york'
+		label: 'Option 32 Example'
 	},
 	{
 		value: '32',
-		label: 'North carolina'
+		label: 'Option 33 Example'
 	},
 	{
 		value: '33',
-		label: 'North dakota'
+		label: 'Option 34 Example'
 	},
 	{
 		value: '34',
-		label: 'Ohio'
+		label: 'Option 35'
 	},
 	{
 		value: '35',
-		label: 'Oklahoma'
+		label: 'Option 36'
 	},
 	{
 		value: '36',
-		label: 'Oregon'
+		label: 'Option 37'
 	},
 	{
 		value: '37',
-		label: 'Pennsylvania'
+		label: 'Option 38'
 	},
 	{
 		value: '38',
-		label: 'Rhode island'
+		label: 'Option 39 Example'
 	},
 	{
 		value: '39',
-		label: 'South carolina'
+		label: 'Option 40 Example'
 	},
 	{
 		value: '40',
-		label: 'South dakota'
+		label: 'Option 41 Example'
 	},
 	{
 		value: '41',
-		label: 'Tennessee'
+		label: 'Option 42'
 	},
 	{
 		value: '42',
-		label: 'Texas'
+		label: 'Option 43'
 	},
 	{
 		value: '43',
-		label: 'Utah'
+		label: 'Option 44'
 	},
 	{
 		value: '44',
-		label: 'Vermont'
+		label: 'Option 45'
 	},
 	{
 		value: '45',
-		label: 'Virginia'
+		label: 'Option 46'
 	},
 	{
 		value: '46',
-		label: 'Washington'
+		label: 'Option 47'
 	},
 	{
 		value: '47',
-		label: 'West virginia'
+		label: 'Option 48 Example'
 	},
 	{
 		value: '48',
-		label: 'Wisconsin'
+		label: 'Option 49'
 	},
 	{
 		value: '49',
-		label: 'Wyoming'
+		label: 'Option 50'
 	},
 	{
 		value: '50',
-		label: '中文'
+		label: '中文选项'
 	}
 ];

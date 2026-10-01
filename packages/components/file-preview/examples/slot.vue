@@ -22,7 +22,7 @@ const dataSource = [
 	'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
 	'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3',
 	{ source: 'https://dummyimage.com/600x1800/555/fff.png?text=2', name: '2.png' },
-	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '合同-2026.pdf' }
+	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '示例文件-2026.pdf' }
 ];
 </script>
 <style scoped>

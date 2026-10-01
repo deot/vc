@@ -40,7 +40,7 @@
 <script setup>
 import { ImageProcessor } from '..';
 
-const image = 'https://github.githubassets.com/favicons/favicon.svg';
+const image = 'https://dummyimage.com/100x100/ffffff/881122.png?text=Image';
 
 const enhance = (imageData, options) => {
 	const { data } = imageData;

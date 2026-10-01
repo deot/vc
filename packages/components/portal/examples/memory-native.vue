@@ -5,12 +5,12 @@
 		<p>
 			判断方法：Stop 后在 DevTools Memory 面板手动回收（Collect garbage），JS 堆、DOM 节点、事件监听数应回到 Start 前的水平
 		</p>
-		<button @click="start">
+		<button @click="handleStart">
 			Start Test
 		</button>
 		<br>
 		<br>
-		<button @click="stop">
+		<button @click="handleStop">
 			Stop Test
 		</button>
 	</div>
@@ -19,12 +19,12 @@
 import { createApp, h, ref, onUnmounted } from 'vue';
 
 const timer = ref(null);
-const stop = () => {
+const handleStop = () => {
 	timer.value && clearInterval(timer.value);
 	timer.value = null;
 };
-const start = () => {
-	stop();
+const handleStart = () => {
+	handleStop();
 	timer.value = setInterval(
 		() => {
 			const vm = createApp(
@@ -39,5 +39,5 @@ const start = () => {
 	);
 };
 
-onUnmounted(stop);
+onUnmounted(handleStop);
 </script>

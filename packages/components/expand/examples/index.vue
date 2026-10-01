@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<span @click="alive = !alive">alive: {{ alive ? 'true' : 'false' }}</span>
+		<span @click="isAlive = !isAlive">alive: {{ isAlive ? 'true' : 'false' }}</span>
 		<span @click="handleToggle">
 			更多搜索条件{{ isVisible ? `up` : `down` }}
 		</span>
@@ -8,7 +8,7 @@
 		<Expand
 			ref="expand"
 			v-model="isVisible"
-			:alive="alive"
+			:alive="isAlive"
 		>
 			<div style="background: red">
 				<div>1</div>
@@ -29,7 +29,7 @@ import { Expand } from '..';
 import { Icon } from '../../icon';
 
 const isVisible = ref(false);
-const alive = ref(true);
+const isAlive = ref(true);
 const handleToggle = () => {
 	isVisible.value = !isVisible.value;
 };

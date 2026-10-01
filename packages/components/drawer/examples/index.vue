@@ -21,7 +21,7 @@
 			:scrollable="true"
 		>
 			<div>
-				我是content2
+				示例内容
 			</div>
 		</Drawer>
 		<Drawer
@@ -32,7 +32,7 @@
 			placement="bottom"
 		>
 			<div v-for="item in 1000" :key="item">
-				'我是content{{ item }}'
+				'条目{{ item }}'
 			</div>
 		</Drawer>
 	</div>
@@ -68,7 +68,7 @@ const handleDrawerOpen = () => {
 				})
 			];
 		},
-		okText: '啦啦啦啦',
+		okText: '确认',
 		mask: true,
 		closeWithCancel: true,
 		maskClosable: true,

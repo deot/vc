@@ -1,7 +1,7 @@
 <template>
 	<div style="background: var(--vc-background-color)">
-		<Button @click="animated = !animated">
-			animated: {{ animated }}
+		<Button @click="isAnimated = !isAnimated">
+			animated: {{ isAnimated }}
 		</Button>
 		<Button @click="type = type === 'line' ? 'card' : 'line'">
 			type: {{ type }}
@@ -10,7 +10,7 @@
 		<br>
 		<Tabs
 			v-model="value"
-			:animated="animated"
+			:animated="isAnimated"
 			:type="type"
 			@click="handleClick"
 			@tab-remove="handleRemove"
@@ -83,7 +83,7 @@ import { Tabs, TabsPane } from '..';
 import { Button } from '../../button';
 
 const value = ref(2);
-const animated = ref(false);
+const isAnimated = ref(false);
 const type = ref('line');
 const list = ref(Array.from({ length: 200 }, (_, i) => i));
 

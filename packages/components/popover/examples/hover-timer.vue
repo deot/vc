@@ -15,7 +15,7 @@
 			<p class="timer-demo__verdict is-fixed">结论：已修复——离开后移回会取消关闭，连续离开只 emit 一次</p>
 			<Popover
 				ref="b1Ref"
-				v-model="b1"
+				v-model="isB1Visible"
 				trigger="strictHover"
 				content="strictHover 内容"
 				portal-class="timer-demo__b1"
@@ -23,8 +23,8 @@
 			>
 				<Button>悬停（strictHover）</Button>
 			</Popover>
-			<Actions :result="results.b1" @run="runB1" @clear="clear('b1')" />
-			<Log :state="b1" :list="logs.b1.list" />
+			<Actions :result="results.b1" @run="handleRunB1" @clear="handleClear('b1')" />
+			<Log :state="isB1Visible" :list="logs.b1.list" />
 		</section>
 
 		<!-- B2 -->
@@ -33,17 +33,17 @@
 			<p>
 				手动：勾选“移出即卸载”，悬停按钮后移出
 				<label>
-					<input v-model="b2UnmountOnLeave" type="checkbox">
+					<input v-model="isB2UnmountOnLeave" type="checkbox">
 					移出即卸载
 				</label>
 			</p>
 			<p>期望：卸载后不再收到 visible-change / update:modelValue</p>
 			<p class="timer-demo__verdict is-wontfix">结论：不处理——未复现：Vue 3.5 的 emit 会忽略已卸载实例</p>
-			<div class="timer-demo__slot" @mouseleave="b2UnmountOnLeave && unmountB2()">
+			<div class="timer-demo__slot" @mouseleave="isB2UnmountOnLeave && handleUnmountB2()">
 				<Popover
-					v-if="b2Mounted"
+					v-if="isB2Mounted"
 					ref="b2Ref"
-					v-model="b2"
+					v-model="isB2Visible"
 					trigger="hover"
 					content="hover 内容"
 					portal-class="timer-demo__b2"
@@ -54,12 +54,12 @@
 				</Popover>
 				<span v-else>（已卸载）</span>
 			</div>
-			<Actions :result="results.b2" @run="runB2" @clear="clear('b2')">
-				<Button size="small" @click="b2Mounted = true">
+			<Actions :result="results.b2" @run="handleRunB2" @clear="handleClear('b2')">
+				<Button size="small" @click="isB2Mounted = true">
 					重新挂载
 				</Button>
 			</Actions>
-			<Log :state="b2" :list="logs.b2.list" />
+			<Log :state="isB2Visible" :list="logs.b2.list" />
 		</section>
 
 		<!-- B3 -->
@@ -69,7 +69,7 @@
 			<p class="timer-demo__verdict is-wontfix">结论：不处理——需要外部在 200ms 内关闭再打开，属刻意构造</p>
 			<Popover
 				ref="b3Ref"
-				v-model="b3"
+				v-model="isB3Visible"
 				trigger="hover"
 				content="hover 内容"
 				portal-class="timer-demo__b3"
@@ -77,8 +77,8 @@
 			>
 				<Button>悬停（hover）</Button>
 			</Popover>
-			<Actions :result="results.b3" @run="runB3" @clear="clear('b3')" />
-			<Log :state="b3" :list="logs.b3.list" />
+			<Actions :result="results.b3" @run="handleRunB3" @clear="handleClear('b3')" />
+			<Log :state="isB3Visible" :list="logs.b3.list" />
 		</section>
 
 		<h3>C. Popover.open：触发节点被移除 / 重复调用</h3>
@@ -91,15 +91,15 @@
 			<p class="timer-demo__verdict is-fixed">结论：已修复——触发节点移除后弹层关闭并销毁，不再残留在左上角</p>
 			<div class="timer-demo__slot">
 				<span
-					v-if="c1Show"
+					v-if="isC1Visible"
 					ref="c1Ref"
 					class="timer-demo__trigger"
-					@mouseenter="e => openC('c1', e.currentTarget, {}, 500)"
+					@mouseenter="e => handleOpenC('c1', e.currentTarget, {}, 500)"
 				>悬停（500ms 后移除）</span>
 				<span v-else>（节点已移除）</span>
 			</div>
-			<Actions :result="results.c1" @run="runC1" @clear="clear('c1')">
-				<Button size="small" @click="resetC('c1')">
+			<Actions :result="results.c1" @run="handleRunC1" @clear="handleClear('c1')">
+				<Button size="small" @click="handleResetC('c1')">
 					恢复节点并销毁弹层
 				</Button>
 			</Actions>
@@ -114,16 +114,16 @@
 			<p class="timer-demo__verdict is-ok">结论：对照，无问题</p>
 			<div class="timer-demo__slot">
 				<span
-					v-if="c2Show"
+					v-if="isC2Visible"
 					ref="c2Ref"
 					class="timer-demo__trigger"
-					@mouseenter="e => openC('c2', e.currentTarget)"
-					@mouseleave="removeLater('c2', 50)"
+					@mouseenter="e => handleOpenC('c2', e.currentTarget)"
+					@mouseleave="handleRemoveLater('c2', 50)"
 				>悬停后移出（50ms 后移除）</span>
 				<span v-else>（节点已移除）</span>
 			</div>
-			<Actions :result="results.c2" @run="runC2" @clear="clear('c2')">
-				<Button size="small" @click="resetC('c2')">
+			<Actions :result="results.c2" @run="handleRunC2" @clear="handleClear('c2')">
+				<Button size="small" @click="handleResetC('c2')">
 					恢复节点并销毁弹层
 				</Button>
 			</Actions>
@@ -138,15 +138,15 @@
 			<p class="timer-demo__verdict is-fixed">结论：已修复（同 C1）</p>
 			<div class="timer-demo__slot">
 				<span
-					v-if="c3Show"
+					v-if="isC3Visible"
 					ref="c3Ref"
 					class="timer-demo__trigger"
-					@click="e => openC('c3', e.currentTarget, { hover: false }, 500)"
+					@click="e => handleOpenC('c3', e.currentTarget, { hover: false }, 500)"
 				>点击（500ms 后移除）</span>
 				<span v-else>（节点已移除）</span>
 			</div>
-			<Actions :result="results.c3" @run="runC3" @clear="clear('c3')">
-				<Button size="small" @click="resetC('c3')">
+			<Actions :result="results.c3" @run="handleRunC3" @clear="handleClear('c3')">
+				<Button size="small" @click="handleResetC('c3')">
 					恢复节点并销毁弹层
 				</Button>
 			</Actions>
@@ -164,11 +164,11 @@
 					v-for="item in c4List"
 					:key="item.key"
 					class="timer-demo__trigger"
-					@mouseenter="e => openC('c4', e.currentTarget, {}, 500)"
+					@mouseenter="e => handleOpenC('c4', e.currentTarget, {}, 500)"
 				>{{ item.label }}</span>
 			</div>
-			<Actions :result="results.c4" @run="runC4" @clear="clear('c4')">
-				<Button size="small" @click="resetC('c4')">
+			<Actions :result="results.c4" @run="handleRunC4" @clear="handleClear('c4')">
+				<Button size="small" @click="handleResetC('c4')">
 					销毁弹层
 				</Button>
 			</Actions>
@@ -183,19 +183,19 @@
 			<p class="timer-demo__verdict is-ok">结论：对照，无问题</p>
 			<div class="timer-demo__slot">
 				<Popover
-					v-if="c5Show"
+					v-if="isC5Visible"
 					ref="c5Ref"
 					trigger="hover"
 					content="C5 弹层"
 					portal-class="timer-demo__c5"
-					@visible-change="v => v && removeLater('c5', 500)"
+					@visible-change="v => v && handleRemoveLater('c5', 500)"
 				>
 					<Button>悬停（500ms 后卸载 Popover）</Button>
 				</Popover>
 				<span v-else>（Popover 已卸载）</span>
 			</div>
-			<Actions :result="results.c5" @run="runC5" @clear="clear('c5')">
-				<Button size="small" @click="c5Show = true">
+			<Actions :result="results.c5" @run="handleRunC5" @clear="handleClear('c5')">
+				<Button size="small" @click="isC5Visible = true">
 					重新挂载
 				</Button>
 			</Actions>
@@ -213,17 +213,17 @@
 				<span
 					ref="c6Ref"
 					class="timer-demo__trigger timer-demo__c6"
-					@mouseover="e => openC6(e, 'over')"
+					@mouseover="e => handleOpenC6(e, 'over')"
 				><span>文字 A</span> <span>文字 B</span> <span>文字 C</span></span>
 				<span>对照 mouseenter：</span>
 				<span
 					ref="c6EnterRef"
 					class="timer-demo__trigger timer-demo__c6"
-					@mouseenter="e => openC6(e, 'enter')"
+					@mouseenter="e => handleOpenC6(e, 'enter')"
 				><span>文字 A</span> <span>文字 B</span> <span>文字 C</span></span>
 			</div>
-			<Actions :result="results.c6" @run="runC6" @clear="clear('c6')">
-				<Button size="small" @click="resetC('c6')">
+			<Actions :result="results.c6" @run="handleRunC6" @clear="handleClear('c6')">
+				<Button size="small" @click="handleResetC('c6')">
 					销毁弹层
 				</Button>
 			</Actions>
@@ -250,7 +250,7 @@ const createLog = () => {
 			start = list.value.length ? start : now;
 			list.value.push(`[+${Math.round(now - start)}ms] ${text}`);
 		},
-		clear() {
+		handleClear() {
 			list.value = [];
 		}
 	};
@@ -326,7 +326,7 @@ const logs = reactive({
 });
 const results = reactive({ b1: null, b2: null, b3: null, c1: null, c2: null, c3: null, c4: null, c5: null, c6: null });
 
-const clear = (key) => {
+const handleClear = (key) => {
 	logs[key].clear();
 	results[key] = null;
 };
@@ -340,10 +340,10 @@ const isShown = (cls) => {
 const fire = (el, type) => el.dispatchEvent(new MouseEvent(type));
 
 const b1Ref = ref();
-const b1 = ref(false);
-const runB1 = async () => {
-	clear('b1');
-	b1.value = false;
+const isB1Visible = ref(false);
+const handleRunB1 = async () => {
+	handleClear('b1');
+	isB1Visible.value = false;
 	await sleep(400);
 	const el = b1Ref.value.$el;
 
@@ -358,7 +358,7 @@ const runB1 = async () => {
 	await sleep(400);
 
 	const shown = isShown('timer-demo__b1');
-	logs.b1.push(`检查：v-model=${b1.value}，弹层${shown ? '可见' : '不可见'}`);
+	logs.b1.push(`检查：v-model=${isB1Visible.value}，弹层${shown ? '可见' : '不可见'}`);
 	results.b1 = {
 		expected: '保持打开',
 		actual: shown ? '保持打开' : '已关闭',
@@ -367,18 +367,18 @@ const runB1 = async () => {
 };
 
 const b2Ref = ref();
-const b2 = ref(false);
-const b2Mounted = ref(true);
-const b2UnmountOnLeave = ref(false);
+const isB2Visible = ref(false);
+const isB2Mounted = ref(true);
+const isB2UnmountOnLeave = ref(false);
 let b2AfterUnmount = 0;
-const unmountB2 = () => {
-	b2Mounted.value = false;
+const handleUnmountB2 = () => {
+	isB2Mounted.value = false;
 	logs.b2.push('卸载 Popover');
 };
-const runB2 = async () => {
-	clear('b2');
-	b2.value = false;
-	b2Mounted.value = true;
+const handleRunB2 = async () => {
+	handleClear('b2');
+	isB2Visible.value = false;
+	isB2Mounted.value = true;
 	await nextTick();
 	await sleep(400);
 	const el = b2Ref.value.$el;
@@ -388,24 +388,24 @@ const runB2 = async () => {
 	await sleep(300);
 	logs.b2.push('mouseleave');
 	fire(el, 'mouseleave');
-	unmountB2();
+	handleUnmountB2();
 	b2AfterUnmount = logs.b2.list.length;
 	await sleep(400);
 
 	const stale = logs.b2.list.slice(b2AfterUnmount);
-	logs.b2.push(`检查：卸载后收到 ${stale.length} 条事件，v-model=${b2.value}`);
+	logs.b2.push(`检查：卸载后收到 ${stale.length} 条事件，v-model=${isB2Visible.value}`);
 	results.b2 = {
 		expected: '卸载后无事件',
-		actual: stale.length ? `卸载后收到 ${stale.length} 条事件，v-model 被改为 ${b2.value}` : '卸载后无事件',
+		actual: stale.length ? `卸载后收到 ${stale.length} 条事件，v-model 被改为 ${isB2Visible.value}` : '卸载后无事件',
 		pass: !stale.length
 	};
 };
 
 const b3Ref = ref();
-const b3 = ref(false);
-const runB3 = async () => {
-	clear('b3');
-	b3.value = false;
+const isB3Visible = ref(false);
+const handleRunB3 = async () => {
+	handleClear('b3');
+	isB3Visible.value = false;
 	await sleep(400);
 	const el = b3Ref.value.$el;
 
@@ -416,14 +416,14 @@ const runB3 = async () => {
 	fire(el, 'mouseleave');
 	await sleep(50);
 	logs.b3.push('外部 v-model = false');
-	b3.value = false;
+	isB3Visible.value = false;
 	await sleep(50);
 	logs.b3.push('外部 v-model = true');
-	b3.value = true;
+	isB3Visible.value = true;
 	await sleep(400);
 
 	const shown = isShown('timer-demo__b3');
-	logs.b3.push(`检查：v-model=${b3.value}，弹层${shown ? '可见' : '不可见'}`);
+	logs.b3.push(`检查：v-model=${isB3Visible.value}，弹层${shown ? '可见' : '不可见'}`);
 	results.b3 = {
 		expected: '保持打开',
 		actual: shown ? '保持打开' : '已关闭',
@@ -451,12 +451,12 @@ const describeState = (s) => {
 	return `${alive}DOM ${s.inDom ? '存在' : '不存在'}，${s.shown ? '可见' : '不可见'}${where}`;
 };
 
-const c1Show = ref(true);
-const c2Show = ref(true);
-const c3Show = ref(true);
+const isC1Visible = ref(true);
+const isC2Visible = ref(true);
+const isC3Visible = ref(true);
 const c4Version = ref(0);
 const c4List = computed(() => ['甲', '乙', '丙'].map(label => ({ key: `${label}-${c4Version.value}`, label })));
-const c5Show = ref(true);
+const isC5Visible = ref(true);
 const c1Ref = ref();
 const c2Ref = ref();
 const c3Ref = ref();
@@ -468,23 +468,23 @@ const cClass = id => `timer-demo__${id}`;
 // 移除触发节点：C1~C3 为 v-if，C4 为 key 变化后列表重建，C5 为卸载 Popover 组件
 const removeTrigger = (id) => {
 	const map = {
-		c1: () => (c1Show.value = false),
-		c2: () => (c2Show.value = false),
-		c3: () => (c3Show.value = false),
+		c1: () => (isC1Visible.value = false),
+		c2: () => (isC2Visible.value = false),
+		c3: () => (isC3Visible.value = false),
 		c4: () => (c4Version.value++),
-		c5: () => (c5Show.value = false)
+		c5: () => (isC5Visible.value = false)
 	};
 	map[id]?.();
 	logs[id].push(id === 'c4' ? '定时器：列表刷新（triggerEl 被替换）' : id === 'c5' ? '定时器：卸载 Popover 组件' : '定时器：移除 triggerEl');
 };
 
 const timers = {};
-const removeLater = (id, delay) => {
+const handleRemoveLater = (id, delay) => {
 	clearTimeout(timers[id]);
 	timers[id] = setTimeout(() => removeTrigger(id), delay);
 };
 
-const openC = (id, el, options = {}, removeDelay) => {
+const handleOpenC = (id, el, options = {}, removeDelay) => {
 	logs[id].push(`Popover.open（${options.hover === false ? 'click' : 'hover'}）`);
 	Popover.open({
 		el: document.body,
@@ -496,19 +496,19 @@ const openC = (id, el, options = {}, removeDelay) => {
 		content: `${id.toUpperCase()} 弹层`,
 		...options
 	});
-	removeDelay && removeLater(id, removeDelay);
+	removeDelay && handleRemoveLater(id, removeDelay);
 };
 
-const shows = { c1: c1Show, c2: c2Show, c3: c3Show, c5: c5Show };
-const resetC = (id) => {
+const shows = { c1: isC1Visible, c2: isC2Visible, c3: isC3Visible, c5: isC5Visible };
+const handleResetC = (id) => {
 	clearTimeout(timers[id]);
 	Portal.leafs.get(cName(id))?.destroy();
 	shows[id] && (shows[id].value = true);
 };
 
 const prepare = async (id) => {
-	clear(id);
-	resetC(id);
+	handleClear(id);
+	handleResetC(id);
 	await nextTick();
 	await sleep(300);
 };
@@ -518,7 +518,7 @@ const report = (id, expected, actual, pass) => {
 	results[id] = { expected, actual, pass };
 };
 
-const runC1 = async () => {
+const handleRunC1 = async () => {
 	await prepare('c1');
 	fire(c1Ref.value, 'mouseenter');
 	await sleep(500 + 500);
@@ -526,7 +526,7 @@ const runC1 = async () => {
 	report('c1', '弹层关闭并销毁', describeState(s), !s.alive && !s.inDom);
 };
 
-const runC2 = async () => {
+const handleRunC2 = async () => {
 	await prepare('c2');
 	fire(c2Ref.value, 'mouseenter');
 	await sleep(300);
@@ -537,7 +537,7 @@ const runC2 = async () => {
 	report('c2', '弹层关闭并销毁', describeState(s), !s.alive && !s.inDom);
 };
 
-const runC3 = async () => {
+const handleRunC3 = async () => {
 	await prepare('c3');
 	c3Ref.value.click();
 	await sleep(500 + 500);
@@ -550,7 +550,7 @@ const runC3 = async () => {
 	report('c3', '弹层关闭并销毁', `移除后：${describeState(s1)}；滚动后：${afterScroll}`, !s1.alive && !s1.inDom);
 };
 
-const runC4 = async () => {
+const handleRunC4 = async () => {
 	await prepare('c4');
 	const el = document.querySelector('[data-case="c4"] .timer-demo__trigger');
 	fire(el, 'mouseenter');
@@ -559,9 +559,9 @@ const runC4 = async () => {
 	report('c4', '旧弹层关闭', `${describeState(s)}；旧 triggerEl ${el.isConnected ? '仍在文档中' : '已脱离文档'}`, !s.alive && !s.inDom);
 };
 
-const runC5 = async () => {
-	clear('c5');
-	c5Show.value = true;
+const handleRunC5 = async () => {
+	handleClear('c5');
+	isC5Visible.value = true;
 	await nextTick();
 	await sleep(300);
 	logs.c5.push('mouseenter');
@@ -575,7 +575,7 @@ const runC5 = async () => {
 const c6Ref = ref();
 const c6EnterRef = ref();
 const c6Count = { over: { calls: 0, created: 0 }, enter: { calls: 0, created: 0 } };
-const openC6 = (e, type) => {
+const handleOpenC6 = (e, type) => {
 	const count = c6Count[type];
 	count.calls++;
 	logs.c6.push(`${e.type}（${e.target.textContent.trim()}）→ Popover.open`);
@@ -598,12 +598,12 @@ const passOver = async (root) => {
 	}
 	await sleep(400);
 };
-const runC6 = async () => {
+const handleRunC6 = async () => {
 	await prepare('c6');
 	Object.values(c6Count).forEach(i => Object.assign(i, { calls: 0, created: 0 }));
 
 	await passOver(c6Ref.value);
-	resetC('c6');
+	handleResetC('c6');
 	await sleep(300);
 
 	fire(c6EnterRef.value, 'mouseenter');

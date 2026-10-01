@@ -14,7 +14,7 @@
 		</Button>
 		<div style="width: 100%; height: 2000px" />
 		<ModalView
-			v-model="visible1"
+			v-model="isVisible1"
 			:mask-closable="true"
 			title="标题1"
 			@close="handleClose"
@@ -29,7 +29,7 @@
 			</template>
 		</ModalView>
 		<ModalView
-			v-model="visible2"
+			v-model="isVisible2"
 			:mask="false"
 			:mask-closable="false"
 			:esc-closable="false"
@@ -63,15 +63,15 @@ import { AnyModal } from './popup';
 import { VcInstance } from '../../vc';
 
 window.vc = VcInstance;
-const visible1 = ref(true);
-const visible2 = ref(false);
-let hasReject = false;
+const isVisible1 = ref(true);
+const isVisible2 = ref(false);
+let isRejected = false;
 
 const handleModal1 = () => {
-	visible1.value = !visible1.value;
+	isVisible1.value = !isVisible1.value;
 };
 const handleModal2 = () => {
-	visible2.value = !visible2.value;
+	isVisible2.value = !isVisible2.value;
 };
 const handleModal3 = async () => {
 	await AnyModal.popup({});
@@ -82,10 +82,10 @@ const handleModal4 = () => {
 		width: 500,
 		content: () => {
 			return [
-				h('div', '通过审批后数据不能更改，请确认数据无误，再通过审批！')
+				h('div', '确认后将提交当前示例内容，请检查填写结果。')
 			];
 		},
-		okText: '啦啦啦啦',
+		okText: '确认',
 		mask: true,
 		closeWithCancel: true,
 		maskClosable: true,
@@ -122,9 +122,9 @@ const handleCancel = () => {
 const handleOk = () => {
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
-			hasReject
+			isRejected
 				? resolve()
-				: (reject(), (hasReject = true));
+				: (reject(), (isRejected = true));
 		}, 1000);
 	}).catch((err) => {
 		return Promise.reject(err);

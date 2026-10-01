@@ -30,7 +30,7 @@ Modal 在当前页面上方承载需要用户确认或处理的内容。桌面�
 		<span>{{ result }}</span>
 
 		<Modal
-			v-if="modalReady"
+			v-if="isModalReady"
 			v-model="isActive"
 			title="提交确认"
 			@ok="handleOk"
@@ -47,12 +47,12 @@ import { inject, nextTick, ref } from 'vue';
 import { Button, Modal } from '@deot/vc';
 
 const playground = inject('docs:playground');
-const modalReady = ref(false);
+const isModalReady = ref(false);
 const isActive = ref(false);
 const result = ref('尚未操作');
 
-const handleOpen = playground.run(500, { visible: modalReady }, async () => {
-	modalReady.value = true;
+const handleOpen = playground.run(500, { visible: isModalReady }, async () => {
+	isModalReady.value = true;
 	await nextTick();
 
 	isActive.value = true;
@@ -67,7 +67,7 @@ const handleCancel = () => {
 };
 
 const handleClose = () => {
-	modalReady.value = false;
+	isModalReady.value = false;
 };
 </script>
 
@@ -107,7 +107,7 @@ const handleClose = () => {
 		</Button>
 
 		<Modal
-			v-if="modalReady"
+			v-if="isModalReady"
 			v-model="isActive"
 			:size="size"
 			title="可拖拽对话框"
@@ -130,21 +130,21 @@ const sizes = [
 	{ label: '大尺寸', value: 'large' }
 ];
 const playground = inject('docs:playground');
-const modalReady = ref(false);
+const isModalReady = ref(false);
 const isActive = ref(false);
 const size = ref('small');
 
-const handleOpen = playground.run(740, { visible: modalReady }, async (value) => {
+const handleOpen = playground.run(740, { visible: isModalReady }, async (value) => {
 	size.value = value;
 
-	modalReady.value = true;
+	isModalReady.value = true;
 	await nextTick();
 
 	isActive.value = true;
 });
 
 const handleClose = () => {
-	modalReady.value = false;
+	isModalReady.value = false;
 };
 </script>
 
@@ -197,11 +197,11 @@ const methods = [
 	{ label: '错误', method: 'error' }
 ];
 const playground = inject('docs:playground');
-const visible = ref(false);
+const isVisible = ref(false);
 const result = ref('请选择一种状态');
 
-const handleOpen = playground.run(380, { visible }, (method) => {
-	visible.value = true;
+const handleOpen = playground.run(380, { visible: isVisible }, (method) => {
+	isVisible.value = true;
 
 	Modal[method]({
 		title: methods.find(item => item.method === method)?.label,
@@ -210,7 +210,7 @@ const handleOpen = playground.run(380, { visible }, (method) => {
 			result.value = `已确认 ${method}`;
 		},
 		onClose: () => {
-			visible.value = false;
+			isVisible.value = false;
 		}
 	});
 });

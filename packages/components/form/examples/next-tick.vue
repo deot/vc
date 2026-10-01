@@ -17,7 +17,7 @@ export default defineComponent({
 					<FormItem prop="select" label="select" required="必填">
 						<Select
 							modelValue={select.value}
-							data={[{ label: 'Apple', value: 'apple' }]}
+							data={[{ label: '选项 A', value: 'option-a' }]}
 							clearable
 							style="width: 300px"
 							onChange={v => select.value = v}

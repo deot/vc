@@ -64,17 +64,17 @@ const handleClose = (event, value) => {
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<Tag checkable :checked="checked" color="primary" value="推荐" @change="handleChange">推荐</Tag>
-	<span>{{ checked ? '已选中' : '未选中' }}</span>
+	<Tag checkable :checked="isChecked" color="primary" value="选项 A" @change="handleChange">选项 A</Tag>
+	<span>{{ isChecked ? '已选中' : '未选中' }}</span>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { Tag } from '@deot/vc';
 
-const checked = ref(false);
+const isChecked = ref(false);
 const handleChange = (value) => {
-	checked.value = value;
+	isChecked.value = value;
 };
 </script>
 ```

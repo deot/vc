@@ -15,8 +15,8 @@
 ```vue
 <template>
 	<Tabs v-model="value" animated>
-		<TabsPane value="overview" label="概览">项目概览与最新动态。</TabsPane>
-		<TabsPane value="details" label="详情">完整的项目说明。</TabsPane>
+		<TabsPane value="overview" label="概览">内容概览与最新动态。</TabsPane>
+		<TabsPane value="details" label="详情">完整的内容说明。</TabsPane>
 		<TabsPane value="locked" label="暂未开放" disabled />
 	</Tabs>
 	<p>当前面板：{{ value }}</p>
@@ -57,10 +57,10 @@ const value = ref('overview');
 import { ref } from 'vue';
 import { Tabs, TabsPane } from '@deot/vc';
 
-const value = ref('report');
+const value = ref('summary');
 const items = ref([
 	{ value: 'home', label: '首页' },
-	{ value: 'report', label: '报表' },
+	{ value: 'summary', label: '摘要' },
 	{ value: 'history', label: '历史记录' }
 ]);
 const handleRemove = (removedValue, index) => {

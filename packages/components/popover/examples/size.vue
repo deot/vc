@@ -12,10 +12,10 @@
 			<p>自动：触发器分别位于视口顶部附近、视口中部时打开（同 index.vue 的“无需插槽，动态创建”）</p>
 			<p>期望：弹层完整在视口内（放不下时按所在一侧的可用空间限制高度，另一侧更宽裕时先翻转），内容可滚动查看</p>
 			<p class="size-demo__verdict is-fixed">结论：已修复——按实际方向所在一侧的可用空间限制内容区高度（先按内容的实际尺寸判断是否翻转），超出时内容区滚动</p>
-			<Button ref="s1Ref" @click="e => { openRows(e.currentTarget, 'bottom') }">
+			<Button ref="s1Ref" @click="e => { handleOpenRows(e.currentTarget, 'bottom') }">
 				打开
 			</Button>
-			<Actions :results="results.s1" @run="runS1" />
+			<Actions :results="results.s1" @run="handleRunS1" />
 		</section>
 
 		<!-- S2 -->
@@ -24,11 +24,11 @@
 			<p>期望：宽度不超过视口，长串在宽度内换行，弹层完整在视口内（四周留 8px）</p>
 			<p class="size-demo__verdict is-fixed">结论：已修复——内容区最大宽度为视口宽减两侧留白，overflow-wrap: break-word 让长串在宽度内换行</p>
 			<div class="size-demo__center">
-				<Button ref="s2Ref" @click="e => { openText(e.currentTarget, 'top', LONG_WORD) }">
+				<Button ref="s2Ref" @click="e => { handleOpenText(e.currentTarget, 'top', LONG_WORD) }">
 					打开
 				</Button>
 			</div>
-			<Actions :results="results.s2" @run="runS2" />
+			<Actions :results="results.s2" @run="handleRunS2" />
 		</section>
 
 		<!-- S3 -->
@@ -37,11 +37,11 @@
 			<p>期望：宽度不超过视口，弹层完整在视口内（四周留 8px）</p>
 			<p class="size-demo__verdict is-fixed">结论：已修复——同 S2</p>
 			<div class="size-demo__center">
-				<Button ref="s3Ref" @click="e => { openText(e.currentTarget, 'top', LONG_TEXT) }">
+				<Button ref="s3Ref" @click="e => { handleOpenText(e.currentTarget, 'top', LONG_TEXT) }">
 					打开
 				</Button>
 			</div>
-			<Actions :results="results.s3" @run="runS3" />
+			<Actions :results="results.s3" @run="handleRunS3" />
 		</section>
 
 		<!-- S4 -->
@@ -50,14 +50,14 @@
 			<p>期望：弹层完整在视口内（位置被修正时仍如此），箭头落在触发器范围内</p>
 			<p class="size-demo__verdict is-fixed">结论：已修复——交叉轴两侧都修正到视口内，位置被修正后箭头指向触发器中心</p>
 			<div class="size-demo__edges">
-				<Button ref="s4LeftRef" @click="e => { openWide(e.currentTarget) }">
+				<Button ref="s4LeftRef" @click="e => { handleOpenWide(e.currentTarget) }">
 					靠左
 				</Button>
-				<Button ref="s4RightRef" @click="e => { openWide(e.currentTarget) }">
+				<Button ref="s4RightRef" @click="e => { handleOpenWide(e.currentTarget) }">
 					靠右
 				</Button>
 			</div>
-			<Actions :results="results.s4" @run="runS4" />
+			<Actions :results="results.s4" @run="handleRunS4" />
 		</section>
 
 		<!-- S5 -->
@@ -65,10 +65,10 @@
 			<h4>S5. left / right 方向的超高内容（Popover.open，right，100 行）</h4>
 			<p>期望：弹层完整在视口内，内容可滚动查看，箭头落在触发器范围内</p>
 			<p class="size-demo__verdict is-fixed">结论：已修复——左右方向的高度上限为视口高减留白，上下位置修正到视口内，箭头指向触发器中心</p>
-			<Button ref="s5Ref" @click="e => { openRows(e.currentTarget, 'right') }">
+			<Button ref="s5Ref" @click="e => { handleOpenRows(e.currentTarget, 'right') }">
 				打开
 			</Button>
-			<Actions :results="results.s5" @run="runS5" />
+			<Actions :results="results.s5" @run="handleRunS5" />
 		</section>
 
 		<!-- S6 -->
@@ -131,7 +131,7 @@
 					</template>
 				</Dropdown>
 			</div>
-			<Actions :results="results.s6" @run="runS6" />
+			<Actions :results="results.s6" @run="handleRunS6" />
 		</section>
 	</div>
 </template>
@@ -189,11 +189,11 @@ const open = (triggerEl, options) => Popover.open({
 	portalClass: POPUP_CLASS,
 	...options
 });
-const openRows = (triggerEl, placement) => open(triggerEl, {
+const handleOpenRows = (triggerEl, placement) => open(triggerEl, {
 	placement,
 	content: () => <div>{ Array.from({ length: 100 }).map((_, i) => <div key={i}>{ `第 ${i + 1} 行` }</div>) }</div>
 });
-const openText = (triggerEl, placement, content) => open(triggerEl, { placement, content });
+const handleOpenText = (triggerEl, placement, content) => open(triggerEl, { placement, content });
 const destroy = () => Portal.leafs.get(NAME)?.destroy();
 onBeforeUnmount(destroy);
 
@@ -220,7 +220,7 @@ const measure = (popup, triggerEl) => {
 	// 箭头：按实际方向，箭头中心须落在触发器范围内（*-left / *-right 方向的箭头本就不在中心）
 	const arrow = popup.querySelector('.vc-popover-wrapper__arrow');
 	let arrowOffset = null;
-	let arrowOk = true;
+	let isArrowValid = true;
 	if (arrow) {
 		const a = arrow.getBoundingClientRect();
 		const vertical = /is-(top|bottom)-basic/.test(arrow.className);
@@ -228,16 +228,16 @@ const measure = (popup, triggerEl) => {
 			? [a.left + a.width / 2, t.left, t.right]
 			: [a.top + a.height / 2, t.top, t.bottom];
 		arrowOffset = center - (start + end) / 2;
-		arrowOk = center >= start && center <= end;
+		isArrowValid = center >= start && center <= end;
 	}
 	const text = [
 		`内容区 (${round(c.left)}, ${round(c.top)}) ~ (${round(c.right)}, ${round(c.bottom)}) ${round(c.width)}×${round(c.height)} / 视口 ${vw}×${vh}`,
 		inView ? '在视口内' : '超出视口（或未留 8px）',
 		overflows ? (reachable ? '可滚动' : '超出部分无法查看') : '内容未超出',
-		arrowOffset === null ? '' : `箭头距触发器中心 ${round(arrowOffset)}px${arrowOk ? '' : '（在触发器范围外）'}`,
+		arrowOffset === null ? '' : `箭头距触发器中心 ${round(arrowOffset)}px${isArrowValid ? '' : '（在触发器范围外）'}`,
 		covers ? '盖住触发器' : ''
 	].filter(Boolean).join('，');
-	return { ok: inView && reachable && arrowOk && !covers, inView, reachable, arrowOk, covers, text };
+	return { ok: inView && reachable && isArrowValid && !covers, inView, reachable, arrowOk: isArrowValid, covers, text };
 };
 
 const getPopup = (cls = POPUP_CLASS) => document.querySelector(`.${cls}`);
@@ -282,24 +282,24 @@ const s3Ref = ref();
 const s4LeftRef = ref();
 const s4RightRef = ref();
 const s5Ref = ref();
-const openRowsBottom = el => openRows(el, 'bottom');
-const openWide = el => openText(el, 'bottom', LONG_TEXT);
-const runS1 = () => runCases('s1', [
+const openRowsBottom = el => handleOpenRows(el, 'bottom');
+const handleOpenWide = el => handleOpenText(el, 'bottom', LONG_TEXT);
+const handleRunS1 = () => runCases('s1', [
 	{ label: '触发器在视口顶部附近', trigger: s1Ref, top: 80, open: openRowsBottom, expected: '在视口内，可滚动' },
 	{ label: '触发器在视口中部', trigger: s1Ref, open: openRowsBottom, expected: '在视口内，可滚动' }
 ]);
-const runS2 = () => runCases('s2', [
-	{ label: '600 个字符', trigger: s2Ref, open: el => openText(el, 'top', LONG_WORD), expected: '宽度不超过视口，在视口内' }
+const handleRunS2 = () => runCases('s2', [
+	{ label: '600 个字符', trigger: s2Ref, open: el => handleOpenText(el, 'top', LONG_WORD), expected: '宽度不超过视口，在视口内' }
 ]);
-const runS3 = () => runCases('s3', [
-	{ label: '中英文混排', trigger: s3Ref, open: el => openText(el, 'top', LONG_TEXT), expected: '宽度不超过视口，在视口内' }
+const handleRunS3 = () => runCases('s3', [
+	{ label: '中英文混排', trigger: s3Ref, open: el => handleOpenText(el, 'top', LONG_TEXT), expected: '宽度不超过视口，在视口内' }
 ]);
-const runS4 = () => runCases('s4', [
-	{ label: '靠左', trigger: s4LeftRef, open: openWide, expected: '在视口内，箭头在触发器范围内' },
-	{ label: '靠右', trigger: s4RightRef, open: openWide, expected: '在视口内，箭头在触发器范围内' }
+const handleRunS4 = () => runCases('s4', [
+	{ label: '靠左', trigger: s4LeftRef, open: handleOpenWide, expected: '在视口内，箭头在触发器范围内' },
+	{ label: '靠右', trigger: s4RightRef, open: handleOpenWide, expected: '在视口内，箭头在触发器范围内' }
 ]);
-const runS5 = () => runCases('s5', [
-	{ label: 'right，100 行', trigger: s5Ref, open: el => openRows(el, 'right'), expected: '在视口内，可滚动，箭头在触发器范围内' }
+const handleRunS5 = () => runCases('s5', [
+	{ label: 'right，100 行', trigger: s5Ref, open: el => handleOpenRows(el, 'right'), expected: '在视口内，可滚动，箭头在触发器范围内' }
 ]);
 
 const s6LongRef = ref();
@@ -309,7 +309,7 @@ const clickOutside = async () => {
 	document.body.click();
 	await sleep(400);
 };
-const runS6 = async () => {
+const handleRunS6 = async () => {
 	results.s6 = [];
 	destroy();
 	const list = [];

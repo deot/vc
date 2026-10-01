@@ -23,7 +23,7 @@
 			v-model="value"
 			:data="data"
 			:cols="2"
-			label="地区"
+			label="分组"
 			title="选择地区"
 			@visible-change="visible => visible && handleVisibleChange(true)"
 			@close="handleVisibleChange(false)"
@@ -42,17 +42,17 @@ const playground = inject('docs:playground');
 const handleVisibleChange = playground.run(460);
 
 const data = [
-	{ value: 'zhejiang', label: '浙江', children: [
-		{ value: 'hangzhou', label: '杭州' },
-		{ value: 'ningbo', label: '宁波' }
+	{ value: 'group-a', label: '分组 A', children: [
+		{ value: 'item-a1', label: '条目 A-1' },
+		{ value: 'item-a2', label: '条目 A-2' }
 	] },
-	{ value: 'jiangsu', label: '江苏', children: [
-		{ value: 'nanjing', label: '南京' },
-		{ value: 'suzhou', label: '苏州' }
+	{ value: 'group-b', label: '分组 B', children: [
+		{ value: 'item-b1', label: '条目 B-1' },
+		{ value: 'item-b2', label: '条目 B-2' }
 	] }
 ];
-const value = ref(['zhejiang', 'hangzhou']);
-const selectedLabel = ref('浙江 / 杭州');
+const value = ref(['group-a', 'item-a1']);
+const selectedLabel = ref('分组 A / 条目 A-1');
 const handleChange = (_, labels) => {
 	selectedLabel.value = labels.join(' / ');
 };
@@ -123,7 +123,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 			v-model="value"
 			:data="data"
 			:load-data="loadData"
-			title="选择配送方式"
+			title="选择条目"
 			@visible-change="visible => visible && handleVisibleChange(true)"
 			@close="handleVisibleChange(false)"
 		>
@@ -143,14 +143,14 @@ const playground = inject('docs:playground');
 const handleVisibleChange = playground.run(400);
 
 const data = ref([]);
-const value = ref(['standard']);
+const value = ref(['item-a']);
 const isLoading = ref(false);
 const loadData = async () => {
 	isLoading.value = true;
 	await new Promise(resolve => setTimeout(resolve, 300));
 	data.value = [
-		{ value: 'standard', label: '标准配送' },
-		{ value: 'express', label: '加急配送' }
+		{ value: 'item-a', label: '条目 A' },
+		{ value: 'item-b', label: '条目 B' }
 	];
 	isLoading.value = false;
 };
@@ -176,7 +176,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 ```vue
 <template>
 	<div class="demo">
-		<Button @click="handleOpen">选择配送方式</Button>
+		<Button @click="handleOpen">选择条目</Button>
 		<p>{{ result }}</p>
 	</div>
 </template>
@@ -187,17 +187,17 @@ import { Button, MPicker } from '@deot/vc';
 
 const playground = inject('docs:playground');
 
-const value = ref(['standard']);
+const value = ref(['item-a']);
 const result = ref('尚未确认');
 let picker;
 const handleOpen = playground.run(400, async () => {
 	picker?.destroy();
 	picker = MPicker.open({
-		title: '配送方式',
+		title: '选择条目',
 		modelValue: value.value,
 		data: [
-			{ value: 'standard', label: '标准配送' },
-			{ value: 'express', label: '加急配送' }
+			{ value: 'item-a', label: '条目 A' },
+			{ value: 'item-b', label: '条目 B' }
 		],
 		onOk: (next, labels) => {
 			value.value = next;

@@ -16,11 +16,11 @@
 			:allow-drop="handleAllowDrop"
 			default-expand-all
 			draggable
-			@node-dragstart="log('node-dragstart', $event)"
-			@node-dragenter="log('node-dragenter', $event)"
-			@node-dragleave="log('node-dragleave', $event)"
+			@node-dragstart="handleLog('node-dragstart', $event)"
+			@node-dragenter="handleLog('node-dragenter', $event)"
+			@node-dragleave="handleLog('node-dragleave', $event)"
 			@node-drop="handleDrop"
-			@node-dragend="log('node-dragend', $event)"
+			@node-dragend="handleLog('node-dragend', $event)"
 		/>
 		<p class="tree-drag-demo__tip">
 			事件记录（最近 6 条，node-dragover 触发频繁，未记录）：
@@ -50,7 +50,7 @@
 		</p>
 		<Tree
 			:data="zoneData"
-			:allow-drag="({ data }) => !data.locked"
+			:allow-drag="({ data }) => !data.isLocked"
 			:allow-drop="allowZone"
 			default-expand-all
 			draggable
@@ -66,10 +66,10 @@ const place = ({ parent, index }) => `${parent ? labelOf(parent) : '根级'}[${i
 
 // 1. 拖拽事件与参数
 const basicData = ref([
-	{ value: 'p1', label: '部门 A', children: [{ value: 'c1', label: '成员 A-1' }, { value: 'c2', label: '成员 A-2' }] },
-	{ value: 'p2', label: '部门 B' },
-	{ value: 'p3', label: '部门 C' },
-	{ value: 'p4', label: '部门 D' }
+	{ value: 'p1', label: '分组 A', children: [{ value: 'c1', label: '条目 A-1' }, { value: 'c2', label: '条目 A-2' }] },
+	{ value: 'p2', label: '分组 B' },
+	{ value: 'p3', label: '分组 C' },
+	{ value: 'p4', label: '分组 D' }
 ]);
 
 // 同一个目标节点的三次询问依次记录
@@ -81,7 +81,7 @@ const handleAllowDrop = ({ targetNode, position, to }) => {
 };
 
 const logs = ref([]);
-const log = (name, e) => {
+const handleLog = (name, e) => {
 	const extra = e.targetNode !== undefined ? ` target=${labelOf(e.targetNode) || 'null'}` : '';
 	const end = name === 'node-dragend' ? ` position=${e.position} dropped=${e.dropped}` : '';
 	logs.value = [`${name}: ${e.data.label}${extra}${end}`, ...logs.value].slice(0, 6);
@@ -89,7 +89,7 @@ const log = (name, e) => {
 
 const dropText = ref('');
 const handleDrop = (e) => {
-	log('node-drop', e);
+	handleLog('node-drop', e);
 	dropText.value = `${e.data.label} ${e.position} ${labelOf(e.targetNode)}：${place(e.from)} → ${place(e.to)}`;
 };
 
@@ -104,7 +104,7 @@ const sameLevelData = ref([
 const zoneData = ref([
 	{ value: 'z1', label: '文件夹', children: [{ value: 'z11', label: '文件 1', type: 'file' }, { value: 'z12', label: '文件 2', type: 'file' }] },
 	{ value: 'z2', label: '文件 3', type: 'file' },
-	{ value: 'z3', label: '文件 4（锁定）', type: 'file', locked: true },
+	{ value: 'z3', label: '文件 4（锁定）', type: 'file', isLocked: true },
 	{ value: 'z4', label: '回收站', type: 'trash' }
 ]);
 const allowZone = ({ targetNode, position }) => {

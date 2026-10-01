@@ -91,7 +91,7 @@ const limitedValue = ref('第一行\n第二行');
 import { ref } from 'vue';
 import { Textarea } from '@deot/vc';
 
-const value = ref('项目备注');
+const value = ref('示例备注');
 const remainingValue = ref('');
 </script>
 ```

@@ -58,20 +58,20 @@ Steps 的 `status` 只作用于当前步，默认为 `pending`；设为 `error` 
 <template>
 	<div class="status-demo">
 		<Steps :model-value="2" status="error">
-			<Step title="提交订单" description="已完成" />
-			<Step title="支付" description="支付失败" />
-			<Step title="发货" description="等待中" />
+			<Step title="步骤一" description="已完成" />
+			<Step title="步骤二" description="处理失败" />
+			<Step title="步骤三" description="等待中" />
 		</Steps>
 		<Steps :model-value="2">
-			<Step title="提交订单" />
-			<Step title="审核" />
-			<Step title="打款" status="error" />
-			<Step title="归档" status="success" />
+			<Step title="步骤一" />
+			<Step title="步骤二" />
+			<Step title="步骤三" status="error" />
+			<Step title="步骤四" status="success" />
 		</Steps>
 		<Steps :model-value="2" lineless>
-			<Step title="提交订单" />
-			<Step title="审核" />
-			<Step title="归档" />
+			<Step title="步骤一" />
+			<Step title="步骤二" />
+			<Step title="步骤三" />
 		</Steps>
 	</div>
 </template>

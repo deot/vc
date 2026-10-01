@@ -1,7 +1,7 @@
 <template>
 	<div style="padding: 20px; display: flex; flex-direction: column;">
 		<Image
-			src="https://yayabms-2.oss-cn-hangzhou.aliyuncs.com/common/p/login/decorate.png"
+			src="https://dummyimage.com/400x200/555/fff.png?text=Image"
 			fit="contain"
 			style="height: 100px; width: 200px;"
 		/>
@@ -18,7 +18,7 @@
 			</div>
 		</div>
 
-		<div v-if="show">
+		<div v-if="isVisible">
 			<h1>Lazy(img没有宽高，最好不要使用lazy)</h1>
 			<div style="height: 400px; overflow-y: auto; display: flex; flex-direction: column;">
 				<!-- hack 边距 -->
@@ -39,16 +39,16 @@ import { ref } from 'vue';
 
 import { Image } from '..';
 
-const show = ref(false);
+const isVisible = ref(false);
 const urls = ref([
-	'https://yayabms-2.oss-cn-hangzhou.aliyuncs.com/common/p/login/bg.png',
-	'https://yayabms-2.oss-cn-hangzhou.aliyuncs.com/common/p/login/bg.png',
-	'https://yayabms-2.oss-cn-hangzhou.aliyuncs.com/common/p/login/bg.png',
-	'https://yayabms-2.oss-cn-hangzhou.aliyuncs.com/common/p/login/bg.png',
-	'https://yayabms-2.oss-cn-hangzhou.aliyuncs.com/common/p/login/bg.png'
+	'https://dummyimage.com/800x400/555/fff.png?text=Image-1',
+	'https://dummyimage.com/800x400/555/fff.png?text=Image-2',
+	'https://dummyimage.com/800x400/555/fff.png?text=Image-3',
+	'https://dummyimage.com/800x400/555/fff.png?text=Image-4',
+	'https://dummyimage.com/800x400/555/fff.png?text=Image-5'
 ]);
 setTimeout(() => {
-	show.value = true;
+	isVisible.value = true;
 }, 5000);
 
 </script>

@@ -1,7 +1,7 @@
 <template>
 	<ModalView
 		v-model="isActive"
-		title="签名"
+		title="画板弹层"
 		size="large"
 		@cancel="handleCancel"
 		@ok="handleOk"

@@ -23,7 +23,7 @@
 		<div style="width: 258px;">
 			<div style="display: flex; align-items: center;">
 				<div>
-					<Text :value="` https://github.com?v=${'123'.repeat(10)}`" :line="1" />
+					<Text :value="` https://example.com?v=${'123'.repeat(10)}`" :line="1" />
 				</div>
 			</div>
 		</div>

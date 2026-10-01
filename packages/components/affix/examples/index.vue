@@ -7,14 +7,14 @@
 	<div style="padding: 0 140px;" class="no-scroller">
 		<div style="height: 200px; background: gray;">
 			<div>a</div>
-			<Affix :offset="10" to=".no-scroller">
+			<Affix :offset="10" target=".no-scroller">
 				<Button type="success">2. Top(NoScroller)</Button>
 			</Affix>
 			<div>b</div>
 			<div>c</div>
 			<div>d</div>
 			<div>e</div>
-			<Affix :offset="10" placement="bottom" to=".no-scroller">
+			<Affix :offset="10" placement="bottom" target=".no-scroller">
 				<Button type="success">2. Bottom(NoScroller)</Button>
 			</Affix>
 			<div>f</div>

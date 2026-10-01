@@ -81,7 +81,7 @@
 					v-model="value"
 					:data="data"
 					:max="99"
-					label="城市"
+					label="条目"
 				/>
 			</div>
 		</div>
@@ -93,14 +93,14 @@
 import { ref } from 'vue';
 import { Select } from '..';
 import { Button } from '../../button';
-import { cityList } from './basic/data';
+import { optionList } from './basic/data';
 
 const widths = ['120px', '200px', '320px', '100%'];
 const width = ref('200px');
 
 const data = [
-	{ value: '0', label: 'Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch' },
-	...cityList
+	{ value: '0', label: 'ExampleLongOptionExampleLongOptionExampleLongOptionExampleLongOption' },
+	...optionList
 ];
 
 const value = ref(['1', '2', '3', '4', '5', '6']);

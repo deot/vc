@@ -23,9 +23,9 @@ Card 默认显示边框，主体区域的内边距为 `16px`。
 <template>
 	<Card class="card-demo">
 		<div class="card-demo__content">
-			<strong>本周概览</strong>
-			<span>已完成 24 项任务</span>
-			<span>还有 6 项任务待处理</span>
+			<strong>条目概览</strong>
+			<span>已完成 24 项条目</span>
+			<span>还有 6 项条目待处理</span>
 		</div>
 	</Card>
 </template>
@@ -66,12 +66,12 @@ import { Card } from '@deot/vc';
 ```vue
 <template>
 	<div class="card-demo-list">
-		<Card title="订单信息">
+		<Card title="条目信息">
 			<template #extra>
 				<a class="card-demo-link" href="#">查看全部</a>
 			</template>
-			<div>订单编号：VC-2026</div>
-			<div>订单状态：已完成</div>
+			<div>条目编号：ITEM-2026</div>
+			<div>条目状态：已完成</div>
 		</Card>
 		<Card>
 			<template #title>

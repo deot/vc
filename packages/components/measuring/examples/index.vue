@@ -25,12 +25,12 @@ const effects = ref(0);
 // 尺寸两份一致；副作用只在正常展示的那份里执行
 const Probe = defineComponent({
 	setup() {
-		const measuring = useMeasuring();
+		const isMeasuring = useMeasuring();
 		onMounted(() => {
-			if (measuring) return;
+			if (isMeasuring) return;
 			effects.value++;
 		});
-		return () => h('div', { class: 'measuring-demo__probe' }, `useMeasuring() → ${measuring}`);
+		return () => h('div', { class: 'measuring-demo__probe' }, `useMeasuring() → ${isMeasuring}`);
 	}
 });
 </script>

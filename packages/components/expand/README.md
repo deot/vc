@@ -16,10 +16,10 @@
 <template>
 	<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px;">
 		<Button type="primary" style="white-space: nowrap;" @click="handleToggle">
-			{{ visible ? '收起' : '展开' }}更多搜索条件
+			{{ isVisible ? '收起' : '展开' }}更多搜索条件
 		</Button>
 		<Expand
-			:model-value="visible"
+			:model-value="isVisible"
 			:tag="'section'"
 		>
 			<div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; padding: 12px; border: 1px solid #d9d9d9; border-radius: 4px;">
@@ -39,7 +39,7 @@
 import { ref } from 'vue';
 import { Button, Expand, Input, Select } from '@deot/vc';
 
-const visible = ref(false);
+const isVisible = ref(false);
 const status = ref('all');
 const statusOptions = [
 	{ value: 'all', label: '全部' },
@@ -48,7 +48,7 @@ const statusOptions = [
 ];
 
 const handleToggle = () => {
-	visible.value = !visible.value;
+	isVisible.value = !isVisible.value;
 };
 </script>
 ```
@@ -65,12 +65,12 @@ const handleToggle = () => {
 ```vue
 <template>
 	<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px;">
-		<Checkbox style="white-space: nowrap;" v-model="alive">保留子内容</Checkbox>
-		<Button type="primary" style="white-space: nowrap;" @click="visible = !visible">
-			{{ visible ? '收起' : '展开' }}输入框
+		<Checkbox style="white-space: nowrap;" v-model="isAlive">保留子内容</Checkbox>
+		<Button type="primary" style="white-space: nowrap;" @click="isVisible = !isVisible">
+			{{ isVisible ? '收起' : '展开' }}输入框
 		</Button>
 	</div>
-	<Expand :model-value="visible" :alive="alive">
+	<Expand :model-value="isVisible" :alive="isAlive">
 		<div style="display: flex; align-items: center; gap: 6px; margin-top: 12px; padding: 12px; background: #f7f7f7;">
 			<label style="display: flex; align-items: center; gap: 6px; white-space: nowrap;">
 				备注
@@ -84,8 +84,8 @@ const handleToggle = () => {
 import { ref } from 'vue';
 import { Button, Checkbox, Expand, Input } from '@deot/vc';
 
-const visible = ref(true);
-const alive = ref(true);
+const isVisible = ref(true);
+const isAlive = ref(true);
 </script>
 ```
 :::

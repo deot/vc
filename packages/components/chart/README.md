@@ -33,7 +33,7 @@ const options = ref({
 	grid: { left: 48, right: 20, top: 24, bottom: 32 },
 	xAxis: { type: 'category', data: ['周一', '周二', '周三', '周四', '周五'] },
 	yAxis: { type: 'value' },
-	series: [{ name: '访问量', type: 'bar', data: [120, 200, 150, 80, 170] }]
+	series: [{ name: '数值', type: 'bar', data: [120, 200, 150, 80, 170] }]
 });
 const handleUpdate = () => {
 	options.value.series[0].data = options.value.series[0].data.map(value => value >= 240 ? 80 : value + 20);
@@ -74,9 +74,9 @@ const options = {
 		radius: ['35%', '65%'],
 		label: { position: 'inside' },
 		data: [
-			{ name: '搜索', value: 48 },
-			{ name: '直接访问', value: 32 },
-			{ name: '推荐', value: 20 }
+			{ name: '分类 A', value: 48 },
+			{ name: '分类 B', value: 32 },
+			{ name: '分类 C', value: 20 }
 		]
 	}]
 };

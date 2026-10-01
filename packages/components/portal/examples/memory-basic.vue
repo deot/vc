@@ -11,12 +11,12 @@
 	<p>
 		判断方法：Stop 后在 DevTools Memory 面板手动回收（Collect garbage），JS 堆、DOM 节点、事件监听数应回到 Start 前的水平
 	</p>
-	<button @click="start">
+	<button @click="handleStart">
 		Start
 	</button>
 	<br>
 	<br>
-	<button @click="stop">
+	<button @click="handleStop">
 		Stop
 	</button>
 	<div ref="root" />
@@ -65,7 +65,7 @@ const runTip = ref('Not Started');
 const root = ref(null);
 const useComponent = ref(true);
 
-const start = () => {
+const handleStart = () => {
 	clearInterval(timer);
 	timer = setInterval(() => {
 		runTip.value = 'Running';
@@ -101,10 +101,10 @@ const start = () => {
 	}, 50);
 };
 
-const stop = () => {
+const handleStop = () => {
 	clearInterval(timer);
 	runTip.value = 'Stop';
 };
 
-onUnmounted(stop);
+onUnmounted(handleStop);
 </script>

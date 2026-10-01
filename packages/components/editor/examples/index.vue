@@ -5,16 +5,16 @@
 		style="padding: 20px; "
 		@submit.prevent
 	>
-		<FormItem prop="useDefaultOptions" label="默认导航栏">
-			<Switch v-model="formData.useDefaultOptions">{{ formData.useDefaultOptions ? '默认' : '自定义' }}</Switch>
+		<FormItem prop="isDefaultOptions" label="默认导航栏">
+			<Switch v-model="formData.isDefaultOptions">{{ formData.isDefaultOptions ? '默认' : '自定义' }}</Switch>
 		</FormItem>
 		<FormItem prop="value" required="请输入内容">
 			<Editor
 				ref="editor"
-				:key="formData.useDefaultOptions"
+				:key="formData.isDefaultOptions"
 				v-model="formData.value"
 				:disabled="disabled"
-				:options="formData.useDefaultOptions ? {} : customEditorOption"
+				:options="formData.isDefaultOptions ? {} : customEditorOption"
 				:preview="false"
 				style="width: 100%;height: 500px"
 				@change="handleInput"
@@ -79,7 +79,7 @@ const customEditorOption = ref({
 });
 const disabled = ref(false);
 const formData = reactive({
-	useDefaultOptions: true,
+	isDefaultOptions: true,
 	value: '<p><img src="https://dummyimage.com/300x200/555/fff/?text=5" contenteditable="true" ></p>'
 });
 

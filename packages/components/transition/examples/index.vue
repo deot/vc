@@ -120,10 +120,8 @@ const zoomModeOptions = ref(['x', 'y', 'center']);
 const scaleModeName = ref('both');
 const scaleModeOptions = ref(['both', 'part']);
 
-const color = () => {
-	const fn = () => Math.floor(Math.random() * 256);
-	return `rgba(${fn()}, ${fn()}, ${fn()})`;
-};
+const palette = ['#f04134', '#00b42a', '#165dff', '#ff7d00', '#722ed1'];
+const color = () => palette[(count - 1) % palette.length];
 
 const colors = ref(Array.from({ length: 5 }, () => ({ id: count++, color: color() })));
 

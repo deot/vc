@@ -36,13 +36,13 @@ import { inject, reactive } from 'vue';
 import { Cascader } from '@deot/vc';
 
 const data = [
-	{ value: 'beijing', label: '北京', children: [
-		{ value: 'gugong', label: '故宫' },
-		{ value: 'tiantan', label: '天坛' }
+	{ value: 'group-a', label: '分组 A', children: [
+		{ value: 'item-a-1', label: '条目 A-1' },
+		{ value: 'item-a-2', label: '条目 A-2' }
 	] },
-	{ value: 'jiangsu', label: '江苏', children: [
-		{ value: 'nanjing', label: '南京' },
-		{ value: 'suzhou', label: '苏州' }
+	{ value: 'group-b', label: '分组 B', children: [
+		{ value: 'item-b-1', label: '条目 B-1' },
+		{ value: 'item-b-2', label: '条目 B-2' }
 	] }
 ];
 const values = reactive({ click: [], hover: [] });
@@ -102,16 +102,16 @@ import { inject, ref } from 'vue';
 import { Cascader } from '@deot/vc';
 
 const data = [
-	{ value: 'beijing', label: '北京', children: [
-		{ value: 'gugong', label: '故宫' },
-		{ value: 'tiantan', label: '天坛' }
+	{ value: 'group-a', label: '分组 A', children: [
+		{ value: 'item-a-1', label: '条目 A-1' },
+		{ value: 'item-a-2', label: '条目 A-2' }
 	] },
-	{ value: 'jiangsu', label: '江苏', children: [
-		{ value: 'nanjing', label: '南京' },
-		{ value: 'suzhou', label: '苏州' }
+	{ value: 'group-b', label: '分组 B', children: [
+		{ value: 'item-b-1', label: '条目 B-1' },
+		{ value: 'item-b-2', label: '条目 B-2' }
 	] }
 ];
-const value = ref(['beijing', 'gugong']);
+const value = ref(['group-a', 'item-a-1']);
 const isDisabled = ref(false);
 const playground = inject('docs:playground');
 const handleVisibleChange = playground.run(320);
@@ -145,7 +145,7 @@ p {
 			v-model="value"
 			:data="data"
 			:formatter="formatter"
-			placeholder="选择目的地"
+			placeholder="选择条目"
 			clearable
 			@visible-change="isVisible => isVisible && handleVisibleChange(true)"
 			@close="handleVisibleChange(false)"
@@ -159,16 +159,16 @@ import { inject, ref } from 'vue';
 import { Cascader } from '@deot/vc';
 
 const data = [
-	{ value: 'beijing', label: '北京', children: [
-		{ value: 'gugong', label: '故宫' },
-		{ value: 'tiantan', label: '天坛' }
+	{ value: 'group-a', label: '分组 A', children: [
+		{ value: 'item-a-1', label: '条目 A-1' },
+		{ value: 'item-a-2', label: '条目 A-2' }
 	] },
-	{ value: 'jiangsu', label: '江苏', children: [
-		{ value: 'nanjing', label: '南京' },
-		{ value: 'suzhou', label: '苏州' }
+	{ value: 'group-b', label: '分组 B', children: [
+		{ value: 'item-b-1', label: '条目 B-1' },
+		{ value: 'item-b-2', label: '条目 B-2' }
 	] }
 ];
-const value = ref(['jiangsu', 'suzhou']);
+const value = ref(['group-b', 'item-b-2']);
 const formatter = labels => labels[labels.length - 1];
 const playground = inject('docs:playground');
 const handleVisibleChange = playground.run(320);
@@ -216,13 +216,13 @@ import { inject, ref } from 'vue';
 import { Cascader } from '@deot/vc';
 
 const data = [
-	{ value: 'beijing', label: '北京', children: [
-		{ value: 'gugong', label: '故宫' },
-		{ value: 'tiantan', label: '天坛' }
+	{ value: 'group-a', label: '分组 A', children: [
+		{ value: 'item-a-1', label: '条目 A-1' },
+		{ value: 'item-a-2', label: '条目 A-2' }
 	] },
-	{ value: 'jiangsu', label: '江苏', children: [
-		{ value: 'nanjing', label: '南京' },
-		{ value: 'suzhou', label: '苏州' }
+	{ value: 'group-b', label: '分组 B', children: [
+		{ value: 'item-b-1', label: '条目 B-1' },
+		{ value: 'item-b-2', label: '条目 B-2' }
 	] }
 ];
 const value = ref([]);
@@ -268,7 +268,7 @@ p {
 			@close="handleVisibleChange(false)"
 		/>
 		<p>加载次数：{{ loadCount }}；当前路径：{{ value }}</p>
-		<p>打开后将鼠标移到“北京”，等待子节点出现再选择。</p>
+		<p>打开后将鼠标移到“分组 A”，等待子节点出现再选择。</p>
 	</div>
 </template>
 
@@ -277,13 +277,13 @@ import { inject, ref } from 'vue';
 import { Cascader } from '@deot/vc';
 
 const value = ref([]);
-const data = ref([{ value: 'beijing', label: '北京', children: [] }]);
+const data = ref([{ value: 'group-a', label: '分组 A', children: [] }]);
 const loadCount = ref(0);
 const loadData = () => {
 	loadCount.value++;
 	return new Promise(resolve => setTimeout(() => resolve([
-		{ value: 'gugong', label: '故宫' },
-		{ value: 'tiantan', label: '天坛' }
+		{ value: 'item-a-1', label: '条目 A-1' },
+		{ value: 'item-a-2', label: '条目 A-2' }
 	]), 600));
 };
 const playground = inject('docs:playground');
@@ -321,7 +321,7 @@ p {
 			@close="handleVisibleChange(false)"
 		>
 			<template #default="{ label, active }">
-				<Button>{{ label.join(' / ') || '选择目的地' }}{{ active ? '（展开中）' : '' }}</Button>
+				<Button>{{ label.join(' / ') || '选择条目' }}{{ active ? '（展开中）' : '' }}</Button>
 			</template>
 		</Cascader>
 		<p>已提交路径：{{ value }}</p>
@@ -333,13 +333,13 @@ import { inject, ref } from 'vue';
 import { Cascader, Button } from '@deot/vc';
 
 const data = [
-	{ value: 'beijing', label: '北京', children: [
-		{ value: 'gugong', label: '故宫' },
-		{ value: 'tiantan', label: '天坛' }
+	{ value: 'group-a', label: '分组 A', children: [
+		{ value: 'item-a-1', label: '条目 A-1' },
+		{ value: 'item-a-2', label: '条目 A-2' }
 	] },
-	{ value: 'jiangsu', label: '江苏', children: [
-		{ value: 'nanjing', label: '南京' },
-		{ value: 'suzhou', label: '苏州' }
+	{ value: 'group-b', label: '分组 B', children: [
+		{ value: 'item-b-1', label: '条目 B-1' },
+		{ value: 'item-b-2', label: '条目 B-2' }
 	] }
 ];
 const value = ref([]);
@@ -392,13 +392,13 @@ import { inject, ref } from 'vue';
 import { Cascader } from '@deot/vc';
 
 const data = [
-	{ value: 'beijing', label: '北京', children: [
-		{ value: 'gugong', label: '故宫' },
-		{ value: 'tiantan', label: '天坛' }
+	{ value: 'group-a', label: '分组 A', children: [
+		{ value: 'item-a-1', label: '条目 A-1' },
+		{ value: 'item-a-2', label: '条目 A-2' }
 	] },
-	{ value: 'jiangsu', label: '江苏', children: [
-		{ value: 'nanjing', label: '南京' },
-		{ value: 'suzhou', label: '苏州' }
+	{ value: 'group-b', label: '分组 B', children: [
+		{ value: 'item-b-1', label: '条目 B-1' },
+		{ value: 'item-b-2', label: '条目 B-2' }
 	] }
 ];
 const value = ref([]);

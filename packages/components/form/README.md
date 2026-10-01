@@ -20,8 +20,8 @@
 <template>
 	<div class="form-demo">
 		<Form ref="form" :model="model" :label-width="80" @submit.prevent>
-			<FormItem prop="name" label="姓名" required="请输入姓名">
-				<Input v-model="model.name" placeholder="请输入姓名" />
+			<FormItem prop="name" label="名称" required="请输入名称">
+				<Input v-model="model.name" placeholder="请输入名称" />
 			</FormItem>
 			<FormItem prop="email" label="邮箱" :rules="emailRules">
 				<Input v-model="model.email" placeholder="name@example.com" />
@@ -44,8 +44,8 @@ import { reactive, ref } from 'vue';
 import { Form, FormItem, Input, Button } from '@deot/vc';
 
 const form = ref();
-const model = reactive({ name: '小明', email: '' });
-const result = ref('姓名的初始值为“小明”。');
+const model = reactive({ name: '示例名称', email: '' });
+const result = ref('名称的初始值为“示例名称”。');
 const emailRules = [
 	{ required: true, message: '请输入邮箱' },
 	{ pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: '请输入有效邮箱' }
@@ -104,8 +104,8 @@ p { margin: 12px 0 0; overflow-wrap: anywhere; }
 			<label><input v-model="isInline" type="checkbox"> 行内布局</label>
 		</div>
 		<Form :model="model" :label-position="position" :label-width="72" :inline="isInline" @submit.prevent>
-			<FormItem label="姓名"><Input v-model="model.name" /></FormItem>
-			<FormItem label="城市"><Input v-model="model.city" /></FormItem>
+			<FormItem label="名称"><Input v-model="model.name" /></FormItem>
+			<FormItem label="分类"><Input v-model="model.category" /></FormItem>
 		</Form>
 	</div>
 </template>
@@ -116,7 +116,7 @@ import { Form, FormItem, Input } from '@deot/vc';
 
 const position = ref('right');
 const isInline = ref(false);
-const model = reactive({ name: '', city: '' });
+const model = reactive({ name: '', category: '' });
 </script>
 
 <style scoped>
@@ -136,21 +136,21 @@ const model = reactive({ name: '', city: '' });
 	<div class="form-demo">
 		<Form ref="form" :model="model" label-position="top" @submit.prevent>
 			<FormItem
-				v-for="(contact, index) in model.contacts"
-				:key="contact.id"
-				:prop="'contacts.' + index + '.name'"
-				:label="'联系人 ' + (index + 1)"
-				required="请输入联系人姓名"
+				v-for="(item, index) in model.items"
+				:key="item.id"
+				:prop="'items.' + index + '.name'"
+				:label="'条目 ' + (index + 1)"
+				required="请输入条目名称"
 			>
 				<div class="contact">
-					<Input v-model="contact.name" placeholder="联系人姓名" />
+					<Input v-model="item.name" placeholder="条目名称" />
 					<Button @click="handleRemove(index)">删除</Button>
 				</div>
 			</FormItem>
 			<div class="actions">
-				<Button @click="handleAdd">添加联系人</Button>
-				<Button type="primary" @click="handleSubmit">校验联系人</Button>
-				<Button :disabled="!model.contacts.length" @click="handleResetFirst">重置第一项</Button>
+				<Button @click="handleAdd">添加条目</Button>
+				<Button type="primary" @click="handleSubmit">校验条目</Button>
+				<Button :disabled="!model.items.length" @click="handleResetFirst">重置第一项</Button>
 			</div>
 		</Form>
 		<p role="status">{{ result }}</p>
@@ -163,24 +163,24 @@ import { Form, FormItem, Input, Button } from '@deot/vc';
 
 const form = ref();
 let nextId = 1;
-const model = reactive({ contacts: [{ id: nextId++, name: '' }] });
+const model = reactive({ items: [{ id: nextId++, name: '' }] });
 const result = ref('添加或删除字段后再校验。');
-const handleAdd = () => model.contacts.push({ id: nextId++, name: '' });
-const handleRemove = index => model.contacts.splice(index, 1);
+const handleAdd = () => model.items.push({ id: nextId++, name: '' });
+const handleRemove = index => model.items.splice(index, 1);
 const handleSubmit = async () => {
 	try {
 		await form.value.validate({ scroll: false });
-		result.value = '当前联系人校验通过。';
+		result.value = '当前条目校验通过。';
 	} catch (errors) {
 		result.value = errors.map(item => item.prop + '：' + item.message).join('；');
 	}
 };
 const handleResetFirst = () => {
 	form.value.reset({
-		fields: ['contacts.0.name'],
-		original: { contacts: [{ name: '默认联系人' }] }
+		fields: ['items.0.name'],
+		original: { items: [{ name: '默认名称' }] }
 	});
-	result.value = '仅第一项已重置为“默认联系人”。';
+	result.value = '仅第一项已重置为“默认名称”。';
 };
 </script>
 
@@ -275,8 +275,8 @@ MForm 复用相同的数据、校验和重置逻辑。`showToast` 与 `showMessa
 <template>
 	<div>
 		<MForm ref="form" :model="model" label-position="top" show-toast @submit.prevent>
-			<MFormItem prop="name" label="联系人" required="请输入联系人">
-				<input v-model="model.name" aria-label="联系人" placeholder="请输入联系人">
+			<MFormItem prop="name" label="名称" required="请输入名称">
+				<input v-model="model.name" aria-label="名称" placeholder="请输入名称">
 			</MFormItem>
 		</MForm>
 		<div class="actions">

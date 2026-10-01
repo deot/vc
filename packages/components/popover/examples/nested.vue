@@ -17,7 +17,7 @@
 			<p>期望：外层保持打开</p>
 			<p class="nested-demo__verdict is-fixed">结论：已修复——与 A4 同一根因（点击区域判断）</p>
 			<Popover
-				v-model="a1"
+				v-model="isA1Visible"
 				trigger="click"
 				portal-class="nested-demo__a1"
 				@visible-change="v => logs.a1.push(`外层 visible-change(${v})`)"
@@ -35,7 +35,7 @@
 					</div>
 				</template>
 			</Popover>
-			<Log :state="a1" :list="logs.a1.list" @clear="logs.a1.clear()" />
+			<Log :state="isA1Visible" :list="logs.a1.list" @clear="logs.a1.clear()" />
 		</section>
 
 		<!-- A2 -->
@@ -48,7 +48,7 @@
 			<p>期望：外层保持打开</p>
 			<p class="nested-demo__verdict is-fixed">结论：已修复——下拉挂在 body 时，在下拉中操作不再关闭外层</p>
 			<Popover
-				v-model="a2"
+				v-model="isA2Visible"
 				trigger="click"
 				portal-class="nested-demo__a2"
 				@visible-change="v => logs.a2.push(`外层 visible-change(${v})`)"
@@ -58,13 +58,13 @@
 					<div class="nested-demo__content">
 						<Select
 							v-model="a2Value"
-							:data="cityList"
+							:data="optionList"
 							class="nested-demo__select"
 						/>
 					</div>
 				</template>
 			</Popover>
-			<Log :state="a2" :list="logs.a2.list" @clear="logs.a2.clear()" />
+			<Log :state="isA2Visible" :list="logs.a2.list" @clear="logs.a2.clear()" />
 		</section>
 
 		<!-- A3 -->
@@ -78,7 +78,7 @@
 			<p class="nested-demo__verdict is-fixed">结论：已修复（随 A2）——与 B4 是同一组合的 click 版，与 A2 走同一处判断</p>
 			<div class="nested-demo__row">
 				<Popover
-					v-model="a3"
+					v-model="isA3Visible"
 					trigger="click"
 					portal-class="nested-demo__a3"
 					@visible-change="v => logs.a3.push(`外层 visible-change(${v})`)"
@@ -103,7 +103,7 @@
 					</template>
 				</Popover>
 				<Popover
-					v-model="a3Control"
+					v-model="isA3ControlVisible"
 					trigger="click"
 					portal-class="nested-demo__a3-control"
 					@visible-change="v => logs.a3.push(`对照外层 visible-change(${v})`)"
@@ -128,7 +128,7 @@
 					</template>
 				</Popover>
 			</div>
-			<Log :state="a3" :list="logs.a3.list" @clear="logs.a3.clear()" />
+			<Log :state="isA3Visible" :list="logs.a3.list" @clear="logs.a3.clear()" />
 		</section>
 
 		<!-- A4 -->
@@ -144,7 +144,7 @@
 			<div class="nested-demo__select">
 				<Select
 					v-model="a4Value"
-					:data="cityList"
+					:data="optionList"
 					:max="99"
 					@visible-change="v => logs.a4.push(`下拉 visible-change(${v})`)"
 				/>
@@ -167,7 +167,7 @@
 			<p class="nested-demo__verdict is-wontfix">结论：不处理——内层使用 portal=false 即可（见右侧对照），改动最大，已确认不修</p>
 			<div class="nested-demo__row">
 				<Popover
-					v-model="b4"
+					v-model="isB4Visible"
 					trigger="hover"
 					portal-class="nested-demo__b4"
 					@visible-change="v => logs.b4.push(`外层 visible-change(${v})`)"
@@ -192,7 +192,7 @@
 					</template>
 				</Popover>
 				<Popover
-					v-model="b4Control"
+					v-model="isB4ControlVisible"
 					trigger="hover"
 					portal-class="nested-demo__b4-control"
 					@visible-change="v => logs.b4.push(`对照外层 visible-change(${v})`)"
@@ -217,7 +217,7 @@
 					</template>
 				</Popover>
 			</div>
-			<Log :state="b4" :list="logs.b4.list" @clear="logs.b4.clear()" />
+			<Log :state="isB4Visible" :list="logs.b4.list" @clear="logs.b4.clear()" />
 		</section>
 	</div>
 </template>
@@ -228,7 +228,7 @@ import { Popover } from '..';
 import { useHoverPopover } from '../use-hover-popover';
 import { Button } from '../../button';
 import { Select } from '../../select';
-import { cityList } from '../../select/examples/basic/data';
+import { optionList } from '../../select/examples/basic/data';
 
 // 带时间戳的日志：时间相对本场景第一条记录
 const createLog = () => {
@@ -241,7 +241,7 @@ const createLog = () => {
 			start = list.value.length ? start : now;
 			list.value.push(`[+${Math.round(now - start)}ms] ${text}`);
 		},
-		clear() {
+		handleClear() {
 			list.value = [];
 		}
 	};
@@ -282,14 +282,14 @@ const logs = reactive({
 	b4: createLog()
 });
 
-const a1 = ref(false);
-const a2 = ref(false);
+const isA1Visible = ref(false);
+const isA2Visible = ref(false);
 const a2Value = ref('');
-const a3 = ref(false);
-const a3Control = ref(false);
+const isA3Visible = ref(false);
+const isA3ControlVisible = ref(false);
 const a4Value = ref(['1', '2', '3', '4', '5', '6']);
-const b4 = ref(false);
-const b4Control = ref(false);
+const isB4Visible = ref(false);
+const isB4ControlVisible = ref(false);
 
 // A1：与 SelectTags 相同，用 useHoverPopover 打开挂在 body 下的 hover 弹层
 const hoverPopover = useHoverPopover();

@@ -19,9 +19,9 @@
 ```vue
 <template>
 	<div class="select-demo">
-		<Select v-model="city" :data="cities" clearable placeholder="选择城市" />
-		<p>当前值：{{ city ?? '未选择' }}</p>
-		<Select model-value="london" :data="cities" disabled />
+		<Select v-model="selectedValue" :data="options" clearable placeholder="选择条目" />
+		<p>当前值：{{ selectedValue ?? '未选择' }}</p>
+		<Select model-value="option-b" :data="options" disabled />
 	</div>
 </template>
 
@@ -29,11 +29,11 @@
 import { ref } from 'vue';
 import { Select } from '@deot/vc';
 
-const city = ref('paris');
-const cities = [
-	{ value: 'paris', label: 'Paris' },
-	{ value: 'london', label: 'London' },
-	{ value: 'sydney', label: 'Sydney', disabled: true }
+const selectedValue = ref('option-a');
+const options = [
+	{ value: 'option-a', label: '选项 A' },
+	{ value: 'option-b', label: '选项 B' },
+	{ value: 'option-c', label: '选项 C', disabled: true }
 ];
 </script>
 
@@ -64,15 +64,15 @@ const cities = [
 <template>
 	<div class="select-demo">
 		<Select
-			v-model="cities"
+			v-model="selectedValues"
 			:data="options"
 			:max="2"
 			:max-tags="2"
 			searchable
 			clearable
-			search-placeholder="输入 New，试试全选"
+			search-placeholder="输入 Example，试试全选"
 		/>
-		<p>已选：{{ cities.length ? cities.join('、') : '无' }}</p>
+		<p>已选：{{ selectedValues.length ? selectedValues.join('、') : '无' }}</p>
 	</div>
 </template>
 
@@ -80,12 +80,12 @@ const cities = [
 import { ref } from 'vue';
 import { Select } from '@deot/vc';
 
-const cities = ref([]);
+const selectedValues = ref([]);
 const options = [
-	{ value: 'new-york', label: 'New York' },
-	{ value: 'new-orleans', label: 'New Orleans' },
-	{ value: 'new-delhi', label: 'New Delhi', disabled: true },
-	{ value: 'paris', label: 'Paris' }
+	{ value: 'option-a', label: 'Example A' },
+	{ value: 'option-b', label: 'Example B' },
+	{ value: 'option-c', label: 'Example C', disabled: true },
+	{ value: 'option-d', label: 'Option D' }
 ];
 </script>
 
@@ -109,8 +109,8 @@ const options = [
 ```vue
 <template>
 	<div class="select-demo">
-		<Select v-model="cities" :data="options" :max="2" separator=";" clearable />
-		<p>字符串值：{{ JSON.stringify(cities) }}</p>
+		<Select v-model="selectedValues" :data="options" :max="2" separator=";" clearable />
+		<p>字符串值：{{ JSON.stringify(selectedValues) }}</p>
 	</div>
 </template>
 
@@ -118,11 +118,11 @@ const options = [
 import { ref } from 'vue';
 import { Select } from '@deot/vc';
 
-const cities = ref('paris;london');
+const selectedValues = ref('option-a;option-b');
 const options = [
-	{ value: 'paris', label: 'Paris' },
-	{ value: 'london', label: 'London' },
-	{ value: 'sydney', label: 'Sydney' }
+	{ value: 'option-a', label: '选项 A' },
+	{ value: 'option-b', label: '选项 B' },
+	{ value: 'option-c', label: '选项 C' }
 ];
 </script>
 
@@ -146,13 +146,13 @@ const options = [
 ```vue
 <template>
 	<div class="select-demo">
-		<Select v-model="city" :data="groups" label="城市" searchable>
+		<Select v-model="selectedValue" :data="groups" label="条目" searchable>
 			<template #label="{ row, store }">
 				<strong v-if="store.group">{{ row.label }}</strong>
-				<span v-else>{{ row.label }} · {{ row.country }}</span>
+				<span v-else>{{ row.label }} · {{ row.description }}</span>
 			</template>
 		</Select>
-		<p>当前值：{{ city || '未选择' }}</p>
+		<p>当前值：{{ selectedValue || '未选择' }}</p>
 	</div>
 </template>
 
@@ -160,18 +160,18 @@ const options = [
 import { ref } from 'vue';
 import { Select } from '@deot/vc';
 
-const city = ref('');
+const selectedValue = ref('');
 const groups = [
 	{
-		value: 'europe', label: '欧洲',
+		value: 'group-a', label: '分组 A',
 		children: [
-			{ value: 'paris', label: 'Paris', country: '法国' },
-			{ value: 'london', label: 'London', country: '英国' }
+			{ value: 'option-a', label: '选项 A', description: '描述 A' },
+			{ value: 'option-b', label: '选项 B', description: '描述 B' }
 		]
 	},
 	{
-		value: 'oceania', label: '大洋洲',
-		children: [{ value: 'sydney', label: 'Sydney', country: '澳大利亚' }]
+		value: 'group-b', label: '分组 B',
+		children: [{ value: 'option-c', label: '选项 C', description: '描述 C' }]
 	}
 ];
 </script>
@@ -199,13 +199,13 @@ const groups = [
 <template>
 	<div class="select-demo">
 		<Select
-			v-model="city"
+			v-model="selectedValue"
 			:data="options"
-			:load-data="loadCities"
+			:load-data="loadOptions"
 			searchable
-			search-placeholder="输入城市名称"
+			search-placeholder="输入条目名称"
 		/>
-		<p>当前值：{{ city || '未选择' }}</p>
+		<p>当前值：{{ selectedValue || '未选择' }}</p>
 	</div>
 </template>
 
@@ -213,14 +213,14 @@ const groups = [
 import { ref } from 'vue';
 import { Select } from '@deot/vc';
 
-const city = ref('');
+const selectedValue = ref('');
 const source = [
-	{ value: 'paris', label: 'Paris' },
-	{ value: 'london', label: 'London' },
-	{ value: 'sydney', label: 'Sydney' }
+	{ value: 'option-a', label: '选项 A' },
+	{ value: 'option-b', label: '选项 B' },
+	{ value: 'option-c', label: '选项 C' }
 ];
 const options = ref(source);
-const loadCities = async (query) => {
+const loadOptions = async (query) => {
 	await new Promise(resolve => setTimeout(resolve, 400));
 	options.value = source.filter(item => item.label.toLowerCase().includes(query.toLowerCase()));
 };

@@ -13,10 +13,10 @@
 :::playground
 ```vue
 <template>
-	<div class="theme-demo" :data-mode="dark ? 'dark' : 'light'">
+	<div class="theme-demo" :data-mode="isDark ? 'dark' : 'light'">
 		<div class="theme-demo__toolbar">
-			<ThemeText color="demo-text">当前预览：{{ dark ? '暗色' : '亮色' }}</ThemeText>
-			<Button size="small" type="primary" @click="dark = !dark">
+			<ThemeText color="demo-text">当前预览：{{ isDark ? '暗色' : '亮色' }}</ThemeText>
+			<Button size="small" type="primary" @click="isDark = !isDark">
 				切换主题
 			</Button>
 		</div>
@@ -35,7 +35,7 @@
 import { ref } from 'vue';
 import { Button, ThemeView, ThemeText } from '@deot/vc';
 
-const dark = ref(false);
+const isDark = ref(false);
 </script>
 
 <style scoped>
@@ -76,8 +76,8 @@ const dark = ref(false);
 <template>
 	<div style="padding: 20px">
 		<div class="theme-vars__toolbar">
-			<ThemeText color="text">当前变量表：{{ dark ? '暗色' : '亮色' }}</ThemeText>
-			<Button size="small" type="primary" @click="dark = !dark">
+			<ThemeText color="text">当前变量表：{{ isDark ? '暗色' : '亮色' }}</ThemeText>
+			<Button size="small" type="primary" @click="isDark = !isDark">
 				切换变量表
 			</Button>
 		</div>
@@ -106,14 +106,14 @@ const dark = ref(false);
 import { computed, ref } from 'vue';
 import { Button, Theme, ThemeView, ThemeImage, ThemeText } from '@deot/vc';
 
-const dark = ref(false);
+const isDark = ref(false);
 const variables = computed(() => {
-	const fill = dark.value ? '#93c5fd' : '#245ac2';
+	const fill = isDark.value ? '#93c5fd' : '#245ac2';
 	const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">'
 		+ '<rect width="64" height="64" fill="' + fill + '"/></svg>';
 	return {
-		text: dark.value ? '#e5eaf2' : '#243247',
-		surface: dark.value ? '#202938' : '#f5f7fa',
+		text: isDark.value ? '#e5eaf2' : '#243247',
+		surface: isDark.value ? '#202938' : '#f5f7fa',
 		image: 'data:image/svg+xml,' + encodeURIComponent(svg)
 	};
 });

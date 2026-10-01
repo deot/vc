@@ -16,7 +16,7 @@
 ```vue
 <template>
 	<div class="v-drawer-basic">
-		<p class="drawer-description">选择展开方向，在当前页面中查看项目详情。</p>
+		<p class="drawer-description">选择展开方向，在当前页面中查看条目详情。</p>
 		<div class="drawer-actions">
 			<Button @click="handleDrawer('top')">
 				从上到下
@@ -37,7 +37,7 @@
 			:placement="placement"
 		>
 			<div class="drawer-content">
-				<strong>项目详情</strong>
+				<strong>条目详情</strong>
 				<p>当前展开方向：{{ placement }}</p>
 				<p class="drawer-description">查看完毕后关闭抽屉，即可继续当前任务。</p>
 			</div>
@@ -111,10 +111,10 @@ const handleDrawer = playground.run(500, { visible: isActive }, (res) => {
 		<Drawer
 			v-model="isActive"
 			title="遮罩设置"
-			:mask="mask"
+			:mask="isMask"
 		>
 			<div class="drawer-content">
-				<strong>{{ mask ? '已显示遮罩' : '已隐藏遮罩' }}</strong>
+				<strong>{{ isMask ? '已显示遮罩' : '已隐藏遮罩' }}</strong>
 				<p class="drawer-description">可以通过关闭图标或底部按钮关闭抽屉。</p>
 			</div>
 		</Drawer>
@@ -125,10 +125,10 @@ import { inject, ref } from 'vue';
 import { Button, Drawer } from '@deot/vc';
 
 const isActive = ref(false);
-const mask = ref(true);
+const isMask = ref(true);
 const playground = inject('docs:playground');
 const handleDrawer = playground.run(500, { visible: isActive }, (res) => {
-	mask.value = res;
+	isMask.value = res;
 	isActive.value = true;
 });
 </script>
@@ -262,7 +262,7 @@ import { Button, Drawer } from '@deot/vc';
 
 const status = ref('等待操作');
 const playground = inject('docs:playground');
-const visible = ref(false);
+const isVisible = ref(false);
 let leaf;
 let closeTimer;
 const handleClose = () => {
@@ -270,11 +270,11 @@ const handleClose = () => {
 	closeTimer = setTimeout(() => {
 		leaf?.destroy();
 		leaf = undefined;
-		visible.value = false;
+		isVisible.value = false;
 	}, 300);
 };
-const handleOpen = playground.run(500, { visible }, () => {
-	visible.value = true;
+const handleOpen = playground.run(500, { visible: isVisible }, () => {
+	isVisible.value = true;
 	leaf?.destroy();
 
 	leaf = Drawer.open({

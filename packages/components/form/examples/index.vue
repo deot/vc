@@ -27,36 +27,36 @@
 		</FormItem>
 		<FormItem prop="radio" label="radio" required="必填">
 			<RadioGroup v-model="formData.radio">
-				<RadioButton value="mac">
-					<span>Mac</span>
+				<RadioButton value="option-a">
+					<span>选项 A</span>
 				</RadioButton>
-				<RadioButton value="linux">
-					<span>Linux</span>
+				<RadioButton value="option-b">
+					<span>选项 B</span>
 				</RadioButton>
-				<Radio value="apple" disabled>
-					<span>Apple</span>
+				<Radio value="option-c" disabled>
+					<span>选项 C</span>
 				</Radio>
-				<Radio value="android">
-					<span>Android</span>
+				<Radio value="option-d">
+					<span>选项 D</span>
 				</Radio>
-				<Radio value="windows">
-					<span>Windows</span>
+				<Radio value="option-e">
+					<span>选项 E</span>
 				</Radio>
 			</RadioGroup>
 		</FormItem>
 		<FormItem prop="checkbox" label="checkbox" required="必填">
 			<CheckboxGroup v-model="formData.checkbox">
-				<Checkbox value="twitter">
-					<span>Twitter</span>
+				<Checkbox value="option-a">
+					<span>选项 A</span>
 				</Checkbox>
-				<Checkbox value="facebook">
-					<span>Facebook</span>
+				<Checkbox value="option-b">
+					<span>选项 B</span>
 				</Checkbox>
-				<Checkbox value="github" disabled>
-					<span>Github</span>
+				<Checkbox value="option-c" disabled>
+					<span>选项 C</span>
 				</Checkbox>
-				<Checkbox value="snapchat" disabled>
-					<span>Snapchat</span>
+				<Checkbox value="option-d" disabled>
+					<span>选项 D</span>
 				</Checkbox>
 			</CheckboxGroup>
 		</FormItem>

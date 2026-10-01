@@ -130,13 +130,13 @@ const input = ref('');
 	<div class="v-input-icon">
 		<div>
 			属性方式：
-			<Input v-model="input1" placeholder="请输入金额" prepend="rmb" style="width: 100%; max-width: 300px" />
+			<Input v-model="input1" placeholder="请输入数值" prepend="rmb" style="width: 100%; max-width: 300px" />
 			<Input v-model="input2" placeholder="请输入内容" append="search" style="width: 100%; max-width: 300px" />
 		</div>
 
 		<div style="margin-top: 10px">
 			Slot方式：
-			<Input v-model="input3" placeholder="请输入金额" style="width: 100%; max-width: 300px" >
+			<Input v-model="input3" placeholder="请输入数值" style="width: 100%; max-width: 300px" >
 				<template #prepend>
 					<div class="icon-wrapper">
 						<Icon type="rmb" class="icon" />
@@ -209,7 +209,7 @@ const input = ref('');
 ```vue
 <template>
 	<div class="mobile-demo">
-		<MInput v-model="name" placeholder="请输入姓名" right />
+		<MInput v-model="name" placeholder="请输入名称" right />
 		<div class="quantity"><span>数量</span><MInputNumber v-model="quantity" :min="0" :max="10" /></div>
 		<MInputSearch v-model="keyword" placeholder="搜索关键词" @enter="handleEnter" @cancel="handleCancel" />
 		<p>{{ status }}</p>

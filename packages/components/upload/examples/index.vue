@@ -37,15 +37,16 @@
 <script setup>
 import { ref } from 'vue';
 import { Upload } from '..';
-import { random } from 'lodash-es';
 import { VcInstance } from '../../vc';
 import { Message } from '../../message';
+
+let requestCount = 0;
 
 VcInstance.configure({
 	Upload: {
 		onRequest: ({ requestOptions }) => {
 			return new Promise((resolve) => {
-				if (random(0, 10) > 9) {
+				if (++requestCount % 3 === 0) {
 					throw new Error('存在异常');
 				}
 				resolve({

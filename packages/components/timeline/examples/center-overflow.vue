@@ -11,11 +11,11 @@
 			</Button>
 			<label>
 				<span>alternate</span>
-				<Switch v-model="alternate" />
+				<Switch v-model="isAlternate" />
 			</label>
 			<label>
 				<span>opposite</span>
-				<Switch v-model="opposite" />
+				<Switch v-model="isOpposite" />
 			</label>
 		</div>
 		<p>
@@ -24,7 +24,7 @@
 		</p>
 
 		<div ref="wrapper" :style="{ width: width + 'px' }" class="frame">
-			<Timeline align="center" :alternate="alternate" :opposite="opposite">
+			<Timeline align="center" :alternate="isAlternate" :opposite="isOpposite">
 				<TimelineItem label="2017-03-10 标签也很长的时候会怎样">
 					The first milestone with a long description that wraps across multiple lines
 				</TimelineItem>
@@ -80,8 +80,8 @@ import { Timeline, TimelineItem } from '..';
 
 const widths = [300, 400, 600];
 const width = ref(400);
-const alternate = ref(true);
-const opposite = ref(false);
+const isAlternate = ref(true);
+const isOpposite = ref(false);
 const wrapper = ref();
 const metrics = ref([]);
 
@@ -115,7 +115,7 @@ const measure = async () => {
 	});
 };
 
-watch([width, alternate, opposite], measure);
+watch([width, isAlternate, isOpposite], measure);
 onMounted(measure);
 </script>
 <style scoped>

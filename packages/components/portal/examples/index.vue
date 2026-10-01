@@ -35,11 +35,12 @@ setInterval(() => {
 	random.value = _random(1, 10000);
 }, 1000);
 
+let openCount = 0;
 const handleClickBasic = async () => {
 	try {
 		const e = await Modal.popup({
 			leaveDelay: 0,
-			title: `Hello world - ${Math.random()}`
+			title: `示例内容 - ${++openCount}`
 		});
 		console.log(`${e.status}: ${e.title}`);
 	} catch (e) {
@@ -52,7 +53,7 @@ const handleClickMultiple = async () => {
 		const e = await Modal.popup({
 			leaveDelay: 0,
 			multiple: true,
-			title: `Hello world - ${Math.random()}`
+			title: `示例内容 - ${++openCount}`
 		});
 		console.log(`${e.status}: ${e.title}`);
 	} catch (e) {

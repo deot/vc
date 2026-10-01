@@ -1,44 +1,44 @@
 <template>
 	<div style="display: flex; flex-direction: column;">
 		<!-- single -->
-		<Radio v-model="single" @change="handleChange">
-			{{ single }}
+		<Radio v-model="isSelected" @change="handleChange">
+			{{ isSelected }}
 		</Radio>
 
 		<!-- group -->
-		<RadioGroup v-model="phone">
-			<RadioButton label="apple" disabled>
-				<span>Apple</span>
+		<RadioGroup v-model="selectedOption">
+			<RadioButton label="option-a" disabled>
+				<span>选项 A</span>
 			</RadioButton>
-			<RadioButton label="android">
-				<span>Android</span>
+			<RadioButton label="option-b">
+				<span>选项 B</span>
 			</RadioButton>
-			<Radio label="windows">
-				<span>Windows</span>
+			<Radio label="option-c">
+				<span>选项 C</span>
 			</Radio>
 		</RadioGroup>
-		<RadioGroup v-model="phone">
-			<Radio label="apple">
-				<span>Apple</span>
+		<RadioGroup v-model="selectedOption">
+			<Radio label="option-a">
+				<span>选项 A</span>
 			</Radio>
-			<Radio label="android" disabled>
-				<span>Android</span>
+			<Radio label="option-b" disabled>
+				<span>选项 B</span>
 			</Radio>
-			<Radio label="windows">
-				<span>Windows</span>
+			<Radio label="option-c">
+				<span>选项 C</span>
 			</Radio>
 		</RadioGroup>
-		<RadioGroup v-model="animal" vertical disabled>
-			<Radio label="金斑蝶" />
-			<Radio label="爪哇犀牛" />
-			<Radio label="印度黑羚" />
+		<RadioGroup v-model="selectedItem" vertical disabled>
+			<Radio label="条目 A" />
+			<Radio label="条目 B" />
+			<Radio label="条目 C" />
 		</RadioGroup>
 
-		<RadioGroup v-model="city" type="button" @change="handleChange">
-			<Radio label="北京" />
-			<Radio label="上海" disabled />
-			<Radio label="深圳" />
-			<Radio label="杭州" />
+		<RadioGroup v-model="selectedGroup" type="button" @change="handleChange">
+			<Radio label="分组 A" />
+			<Radio label="分组 B" disabled />
+			<Radio label="分组 C" />
+			<Radio label="分组 D" />
 		</RadioGroup>
 		<Form
 			ref="formValidate"
@@ -48,17 +48,17 @@
 			style="padding-left: 56px; margin-top: 21px"
 			@submit.prevent
 		>
-			<FormItem prop="animal" label="动物：">
-				<RadioGroup v-model="formValidate.animal">
-					<Radio label="金斑蝶" />
-					<Radio label="爪哇犀牛" />
-					<Radio label="印度黑羚" />
+			<FormItem prop="selectedItem" label="条目：">
+				<RadioGroup v-model="formValidate.selectedItem">
+					<Radio label="条目 A" />
+					<Radio label="条目 B" />
+					<Radio label="条目 C" />
 				</RadioGroup>
 			</FormItem>
-			<FormItem prop="animal" label="动物：">
-				<Radio label="金斑蝶" />
+			<FormItem prop="selectedItem" label="条目：">
+				<Radio label="条目 A" />
 			</FormItem>
-			<FormItem prop="input" label="动物：">
+			<FormItem prop="input" label="条目：">
 				<Input style="width: 300px" />
 			</FormItem>
 		</Form>
@@ -70,10 +70,10 @@ import { Radio, RadioButton, RadioGroup } from '..';
 import { Form, FormItem } from '../../form/index';
 import { Input } from '../../input/index';
 
-const single = ref(false);
-const phone = ref('apple');
-const animal = ref('爪哇犀牛');
-const city = ref('北京');
+const isSelected = ref(false);
+const selectedOption = ref('option-a');
+const selectedItem = ref('条目 B');
+const selectedGroup = ref('分组 A');
 const formValidate = reactive({});
 const ruleValidate = reactive({});
 
@@ -83,10 +83,10 @@ const handleChange = (a) => {
 
 onUpdated(() => {
 	console.log({
-		single: single.value,
-		phone: phone.value,
-		animal: animal.value,
-		city: city.value
+		single: isSelected.value,
+		phone: selectedOption.value,
+		selectedItem: selectedItem.value,
+		city: selectedGroup.value
 	});
 });
 

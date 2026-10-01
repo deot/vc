@@ -64,7 +64,7 @@ const handleNodeClick = ({ data: row }) => { current.value = row.label; };
 			default-expand-all
 		/>
 		<div class="tree-demo__actions">
-			<Button @click="handleSelect">选择研发部</Button>
+			<Button @click="handleSelect">选择条目 A</Button>
 			<Button @click="handleClear">清空勾选</Button>
 			<Button @click="handleRead">读取叶节点</Button>
 		</div>
@@ -81,15 +81,15 @@ const keyword = ref('');
 const values = ref([]);
 const isStrict = ref(false);
 const result = ref('');
-const data = [{ value: 'company', label: '公司', children: [
-	{ value: 'dev', label: '研发部' },
-	{ value: 'design', label: '设计部' },
-	{ value: 'archive', label: '归档部门（禁用）', disabled: true }
+const data = [{ value: 'group-a', label: '分组 A', children: [
+	{ value: 'item-a', label: '条目 A' },
+	{ value: 'item-b', label: '条目 B' },
+	{ value: 'item-c', label: '条目 C（禁用）', disabled: true }
 ] }];
 const filterNode = (value, row) => !value || row.label.includes(value);
 const renderLabel = ({ row }) => h('span', `${row.label} · ${row.value}`);
 const handleFilter = () => tree.value.filter(keyword.value);
-const handleSelect = () => { values.value = ['dev']; };
+const handleSelect = () => { values.value = ['item-a']; };
 const handleClear = () => { values.value = []; };
 const handleRead = () => {
 	result.value = tree.value.getCheckedNodes(true).map(node => node.states.data.label).join('、') || '无';
@@ -158,11 +158,11 @@ import { Checkbox, Tree } from '@deot/vc';
 const isSameLevel = ref(false);
 const result = ref('拖动节点后查看落点');
 const data = [
-	{ value: 'group', label: '项目组', children: [{ value: 'a', label: '任务 A' }, { value: 'b', label: '任务 B' }] },
-	{ value: 'c', label: '任务 C' },
-	{ value: 'locked', label: '固定节点（不可拖动）', locked: true }
+	{ value: 'group', label: '分组', children: [{ value: 'a', label: '条目 A' }, { value: 'b', label: '条目 B' }] },
+	{ value: 'c', label: '条目 C' },
+	{ value: 'locked', label: '固定节点（不可拖动）', isLocked: true }
 ];
-const allowDrag = ({ data: row }) => !row.locked;
+const allowDrag = ({ data: row }) => !row.isLocked;
 const allowDrop = ({ from, to }) => !isSameLevel.value || from.parent === to.parent;
 const handleDrop = ({ data: row, targetNode, position, from, to }) => {
 	result.value = `${row.label} → ${targetNode.getter.label} (${position})，下标 ${from.index} → ${to.index}`;
@@ -202,7 +202,7 @@ const handleDrop = ({ data: row, targetNode, position, from, to }) => {
 			:max-tags="2"
 			searchable
 			clearable
-			search-placeholder="搜索部门"
+			search-placeholder="搜索条目"
 		/>
 		<p>节点值：{{ values.join(', ') || '无' }}</p>
 	</div>
@@ -214,10 +214,10 @@ import { Checkbox, TreeSelect } from '@deot/vc';
 const isCascader = ref(false);
 const isStrict = ref(false);
 const isDisabled = ref(false);
-const values = ref(['east-dev', 'south-sales']);
+const values = ref(['item-a1', 'item-b1']);
 const data = [
-	{ value: 'east', label: '华东', children: [{ value: 'east-dev', label: '研发部' }, { value: 'east-sales', label: '销售部' }] },
-	{ value: 'south', label: '华南', children: [{ value: 'south-sales', label: '销售部' }, { value: 'south-archive', label: '归档部门', disabled: true }] }
+	{ value: 'group-a', label: '分组 A', children: [{ value: 'item-a1', label: '条目 A' }, { value: 'item-a2', label: '条目 B' }] },
+	{ value: 'group-b', label: '分组 B', children: [{ value: 'item-b1', label: '条目 B' }, { value: 'item-b2', label: '条目 C', disabled: true }] }
 ];
 </script>
 <style scoped>
@@ -237,7 +237,7 @@ TreeSelect 的 `loadData(keyword, instance)` 用于搜索，不是 Tree 的懒�
 ```vue
 <template>
 	<div class="tree-select-demo">
-		<TreeSelect v-model="values" :data="data" :load-data="loadData" searchable check-strictly clearable search-placeholder="输入研发或设计" />
+		<TreeSelect v-model="values" :data="data" :load-data="loadData" searchable check-strictly clearable search-placeholder="输入条目 A 或 B" />
 		<p>节点值：{{ values.join(', ') || '无' }}</p>
 	</div>
 </template>
@@ -245,7 +245,7 @@ TreeSelect 的 `loadData(keyword, instance)` 用于搜索，不是 Tree 的懒�
 import { ref } from 'vue';
 import { TreeSelect } from '@deot/vc';
 
-const source = [{ value: 'dev', label: '研发部' }, { value: 'design', label: '设计部' }];
+const source = [{ value: 'item-a', label: '条目 A' }, { value: 'item-b', label: '条目 B' }];
 const data = ref(source);
 const values = ref([]);
 let requestId = 0;

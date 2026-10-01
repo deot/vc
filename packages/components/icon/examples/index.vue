@@ -4,7 +4,7 @@
 			乱序测试: <Icon :type="items[0]"/>
 		</h1>
 		<h2 @click="handleClick">
-			点我切换 prefix: {{ mobile ? 'vcm-' : 'vc-' }}
+			点我切换 prefix: {{ isMobile ? 'vcm-' : 'vc-' }}
 		</h2>
 		<div class="vc-icon-basic">
 			<!-- index 仅用于乱序测试 -->
@@ -29,8 +29,8 @@ import { shuffle } from 'lodash-es';
 import { Icon, IconManager } from '..';
 
 const items = ref([]);
-const mobile = ref(false);
-const m = computed(() => (mobile.value ? 'm' : ''));
+const isMobile = ref(false);
+const m = computed(() => (isMobile.value ? 'm' : ''));
 
 onMounted(async () => {
 	await new Promise(_ => setTimeout(_, 0));
@@ -45,7 +45,7 @@ onMounted(async () => {
 });
 
 const handleClick = () => {
-	mobile.value = !mobile.value;
+	isMobile.value = !isMobile.value;
 };
 
 const handleShuffle = () => {

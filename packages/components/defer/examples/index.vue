@@ -21,17 +21,15 @@ import { Defer } from '..';
 
 const disabled = ref(false);
 const isActive = ref(true);
-const random255 = () => Math.floor(Math.random() * 255);
-const randomColor = () => `rgba(${random255()}, ${random255()}, ${random255()}, ${Math.random()})`;
 
-const genTableData = length => Array.from({ length }).map((_, index) => ({
+const createItems = length => Array.from({ length }).map((_, index) => ({
 	id: `id__${index}`,
-	background: randomColor(),
+	background: `rgba(${index % 255}, ${(index + 85) % 255}, ${(index + 170) % 255}, ${0.4 + (index % 6) / 10})`,
 	count: length === index + 1 ? length : (index + 1) % 100
 }));
 
 const count = ref(20000);
-const dataSource = computed(() => genTableData(count.value));
+const dataSource = computed(() => createItems(count.value));
 
 const handleComplete = (v) => {
 	console.log('complete', `${v}ms`);

@@ -31,7 +31,7 @@ import { ref } from 'vue';
 import { Image } from '@deot/vc';
 
 const fits = ref(['fill', 'contain', 'cover', 'none', 'scale-down']);
-const url = ref('https://github.githubassets.com/favicons/favicon.svg');
+const url = ref('https://dummyimage.com/100x100/555/fff.png?text=Image');
 
 </script>
 <style>
@@ -72,9 +72,9 @@ import { ref } from 'vue';
 import { Image } from '@deot/vc';
 
 const urls = ref([
-	'https://github.githubassets.com/favicons/favicon.svg?lazy=1',
-	'https://github.githubassets.com/favicons/favicon.svg?lazy=2',
-	'https://github.githubassets.com/favicons/favicon.svg?lazy=3'
+	'https://dummyimage.com/100x100/555/fff.png?text=Image?lazy=1',
+	'https://dummyimage.com/100x100/555/fff.png?text=Image?lazy=2',
+	'https://dummyimage.com/100x100/555/fff.png?text=Image?lazy=3'
 ]);
 </script>
 ```

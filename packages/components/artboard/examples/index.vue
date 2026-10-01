@@ -36,18 +36,18 @@ import { Sign } from './popup';
 const src = ref('');
 const artboard = ref(null);
 
-let undo = false;
-let redo = false;
+let undoable = false;
+let redoable = false;
 
 const handleUndo = () => {
-	if (!undo) {
+	if (!undoable) {
 		Message.warning('已经没有回退的步骤了');
 		return;
 	}
 	artboard.value.undo();
 };
 const handleRedo = () => {
-	if (!redo) {
+	if (!redoable) {
 		Message.warning('已经没有撤销的步骤了');
 		return;
 	}
@@ -63,18 +63,11 @@ const handleGetImg = () => {
 	src.value = artboard.value.canvas.toDataURL();
 };
 
-const handleChange = ({ snapshots, current }) => {
+const handleChange = ({ snapshots, current, allowUndo, allowRedo }) => {
 	console.log('snapshots :', snapshots);
 	console.log('current :', current);
-	if (current === 0) {
-		undo = false;
-	} else if (current === snapshots.length) {
-		undo = true;
-		redo = false;
-	} else {
-		undo = true;
-		redo = true;
-	}
+	undoable = allowUndo;
+	redoable = allowRedo;
 };
 
 const handlePopup = () => {

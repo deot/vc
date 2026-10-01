@@ -31,10 +31,10 @@
 				<span
 					ref="d1Ref"
 					class="position-demo__thumb"
-					@mouseenter="e => openImage(e.currentTarget, { placement: 'top' })"
+					@mouseenter="e => handleOpenImage(e.currentTarget, { placement: 'top' })"
 				>缩略图</span>
 			</div>
-			<Actions :results="results.d1" @run="runD1" />
+			<Actions :results="results.d1" @run="handleRunD1" />
 		</section>
 
 		<!-- D2 -->
@@ -47,10 +47,10 @@
 				<span
 					ref="d2Ref"
 					class="position-demo__thumb"
-					@mouseenter="e => openImage(e.currentTarget, { placement: 'right' })"
+					@mouseenter="e => handleOpenImage(e.currentTarget, { placement: 'right' })"
 				>缩略图</span>
 			</div>
-			<Actions :results="results.d2" @run="runD2" />
+			<Actions :results="results.d2" @run="handleRunD2" />
 		</section>
 
 		<!-- D3 -->
@@ -64,10 +64,10 @@
 				<span
 					ref="d3Ref"
 					class="position-demo__thumb"
-					@mouseenter="e => openImage(e.currentTarget, { placement: 'top', width: 320, height: 120 })"
+					@mouseenter="e => handleOpenImage(e.currentTarget, { placement: 'top', width: 320, height: 120 })"
 				>缩略图</span>
 			</div>
-			<Actions :results="results.d3" @run="runD3" />
+			<Actions :results="results.d3" @run="handleRunD3" />
 		</section>
 
 		<!-- D4 -->
@@ -83,11 +83,11 @@
 				<span
 					ref="d4Ref"
 					class="position-demo__thumb"
-					@mouseenter="e => (d4Opens++, openImage(e.currentTarget, { placement: 'bottom', width: 240, height: 240 }))"
+					@mouseenter="e => (d4Opens++, handleOpenImage(e.currentTarget, { placement: 'bottom', width: 240, height: 240 }))"
 				>缩略图</span>
 			</div>
-			<Actions :results="results.d4" @run="runD4">
-				<Button size="small" @click="scrollD4">
+			<Actions :results="results.d4" @run="handleRunD4">
+				<Button size="small" @click="handleScrollD4">
 					滚动到视口底部附近
 				</Button>
 				<span class="position-demo__count">打开次数：{{ d4Opens }}</span>
@@ -104,15 +104,15 @@
 				<span
 					ref="d5Ref"
 					class="position-demo__thumb"
-					@mouseenter="e => openText(e.currentTarget, { placement: 'right' })"
+					@mouseenter="e => handleOpenText(e.currentTarget, { placement: 'right' })"
 				>已被监听</span>
 				<span
 					ref="d5ControlRef"
 					class="position-demo__thumb"
-					@mouseenter="e => openText(e.currentTarget, { placement: 'right' })"
+					@mouseenter="e => handleOpenText(e.currentTarget, { placement: 'right' })"
 				>对照</span>
 			</div>
-			<Actions :results="results.d5" @run="runD5" />
+			<Actions :results="results.d5" @run="handleRunD5" />
 		</section>
 
 		<!-- D6 -->
@@ -128,11 +128,11 @@
 					<span
 						ref="d6Ref"
 						class="position-demo__thumb"
-						@click="e => openText(e.currentTarget, { placement: 'bottom', hover: false })"
+						@click="e => handleOpenText(e.currentTarget, { placement: 'bottom', hover: false })"
 					>点击打开</span>
 				</div>
 			</div>
-			<Actions :results="results.d6" @run="runD6" />
+			<Actions :results="results.d6" @run="handleRunD6" />
 		</section>
 
 		<!-- D7 -->
@@ -141,25 +141,25 @@
 			<p>自动：打开后在节点上方插入 80px 内容；手动：点击节点打开后，改变窗口宽度（右侧节点居中布局）</p>
 			<p>期望：弹层跟随触发节点</p>
 			<p class="position-demo__verdict is-wontfix">结论：不处理——窗口缩放为瞬时场景，重新打开即恢复；上方插入需轮询，成本高</p>
-			<div v-if="d7Spacer" class="position-demo__spacer">
+			<div v-if="isD7SpacerVisible" class="position-demo__spacer">
 				插入的内容
 			</div>
 			<div class="position-demo__row">
 				<span
 					ref="d7Ref"
 					class="position-demo__thumb"
-					@click="e => openText(e.currentTarget, { placement: 'bottom', hover: false })"
+					@click="e => handleOpenText(e.currentTarget, { placement: 'bottom', hover: false })"
 				>点击打开（上方插入）</span>
 				<div class="position-demo__center position-demo__grow">
 					<span
 						ref="d7bRef"
 						class="position-demo__thumb"
-						@click="e => openText(e.currentTarget, { placement: 'bottom', hover: false })"
+						@click="e => handleOpenText(e.currentTarget, { placement: 'bottom', hover: false })"
 					>点击打开（窗口缩放）</span>
 				</div>
 			</div>
-			<Actions :results="results.d7" @run="runD7">
-				<Button size="small" @click="measureD7b">
+			<Actions :results="results.d7" @run="handleRunD7">
+				<Button size="small" @click="handleMeasureD7b">
 					测量右侧节点
 				</Button>
 			</Actions>
@@ -174,8 +174,8 @@
 			<div class="position-demo__center">
 				<span ref="d8Ref" class="position-demo__thumb">触发节点</span>
 			</div>
-			<div v-if="d8Wide" class="position-demo__wide" />
-			<Actions :results="results.d8" @run="runD8" />
+			<div v-if="isD8Wide" class="position-demo__wide" />
+			<Actions :results="results.d8" @run="handleRunD8" />
 		</section>
 	</div>
 </template>
@@ -286,12 +286,12 @@ const open = (triggerEl, options) => Popover.open({
 	...options
 });
 
-const openImage = (triggerEl, { width = 240, height = 180, delay: delay$ = delay.value, onLoad, ...rest } = {}) => open(triggerEl, {
+const handleOpenImage = (triggerEl, { width = 240, height = 180, delay: delay$ = delay.value, onLoad, ...rest } = {}) => open(triggerEl, {
 	content: () => <DelayImage src={getImage(width, height)} delay={delay$} onLoad={onLoad} />,
 	...rest
 });
 
-const openText = (triggerEl, options = {}) => open(triggerEl, {
+const handleOpenText = (triggerEl, options = {}) => open(triggerEl, {
 	content: () => <div class="position-demo__text">弹层文本内容</div>,
 	...options
 });
@@ -300,7 +300,7 @@ const openText = (triggerEl, options = {}) => open(triggerEl, {
 const openImageAndWait = async (triggerEl, options) => {
 	let done;
 	const loaded = new Promise(r => (done = r));
-	openImage(triggerEl, { ...options, onLoad: () => done() });
+	handleOpenImage(triggerEl, { ...options, onLoad: () => done() });
 	await Promise.race([loaded, sleep(3000)]);
 	await sleep(500);
 };
@@ -364,7 +364,7 @@ const scrollCenter = async (el) => {
 };
 
 const d1Ref = ref();
-const runD1 = async () => {
+const handleRunD1 = async () => {
 	results.d1 = [];
 	await scrollCenter(d1Ref.value);
 	const list = [];
@@ -377,7 +377,7 @@ const runD1 = async () => {
 };
 
 const d2Ref = ref();
-const runD2 = async () => {
+const handleRunD2 = async () => {
 	results.d2 = [];
 	await scrollCenter(d2Ref.value);
 	const list = [];
@@ -390,7 +390,7 @@ const runD2 = async () => {
 };
 
 const d3Ref = ref();
-const runD3 = async () => {
+const handleRunD3 = async () => {
 	results.d3 = [];
 	await scrollCenter(d3Ref.value);
 	await openImageAndWait(d3Ref.value, { placement: 'top', width: 320, height: 120, delay: 300 });
@@ -414,17 +414,17 @@ const runD3 = async () => {
 const d4Ref = ref();
 const d4Opens = ref(0);
 // 触发节点底边距视口底部 80px
-const scrollD4 = async () => {
+const handleScrollD4 = async () => {
 	d4Opens.value = 0;
 	await scrollCenter(d4Ref.value);
 	window.scrollBy(0, d4Ref.value.getBoundingClientRect().bottom - (window.innerHeight - 80));
 	await sleep(150);
 };
-const runD4 = async () => {
+const handleRunD4 = async () => {
 	results.d4 = [];
 	const list = [];
 	for (const d of [20, 300, 0]) {
-		await scrollD4();
+		await handleScrollD4();
 		await openImageAndWait(d4Ref.value, { placement: 'bottom', width: 240, height: 240, delay: d });
 		const c = check(d4Ref.value, 'top');
 		const inView = c.rect && c.rect.top >= 0 && c.rect.bottom <= window.innerHeight;
@@ -443,12 +443,12 @@ const d5ControlRef = ref();
 const noop = () => {};
 onMounted(() => Resize.on(d5Ref.value, noop));
 onBeforeUnmount(() => Resize.off(d5Ref.value, noop));
-const runD5 = async () => {
+const handleRunD5 = async () => {
 	results.d5 = [];
 	await scrollCenter(d5Ref.value);
 	const list = [];
 	for (const [label, el] of [['已被监听', d5Ref.value], ['对照', d5ControlRef.value]]) {
-		openText(el, { placement: 'right' });
+		handleOpenText(el, { placement: 'right' });
 		await sleep(500);
 		const c = check(el, 'right');
 		list.push({ label, expected: '方向 right，间距 4px，对齐偏差 0', actual: c.text, pass: c.ok });
@@ -458,7 +458,7 @@ const runD5 = async () => {
 
 const d6Ref = ref();
 const d6ScrollRef = ref();
-const runD6 = async () => {
+const handleRunD6 = async () => {
 	results.d6 = [];
 	await scrollCenter(d6ScrollRef.value);
 	const scrollTo = async (top) => {
@@ -467,7 +467,7 @@ const runD6 = async () => {
 	};
 	const isHidden = () => getComputedStyle(getPopup()).visibility === 'hidden';
 	await scrollTo(100);
-	openText(d6Ref.value, { placement: 'bottom', hover: false });
+	handleOpenText(d6Ref.value, { placement: 'bottom', hover: false });
 	await sleep(500);
 	const before = check(d6Ref.value, 'bottom');
 	await scrollTo(140);
@@ -492,26 +492,26 @@ const runD6 = async () => {
 
 const d7Ref = ref();
 const d7bRef = ref();
-const d7Spacer = ref(false);
-const runD7 = async () => {
+const isD7SpacerVisible = ref(false);
+const handleRunD7 = async () => {
 	results.d7 = [];
-	d7Spacer.value = false;
+	isD7SpacerVisible.value = false;
 	await nextTick();
 	await scrollCenter(d7Ref.value);
-	openText(d7Ref.value, { placement: 'bottom', hover: false });
+	handleOpenText(d7Ref.value, { placement: 'bottom', hover: false });
 	await sleep(500);
 	const before = check(d7Ref.value, 'bottom');
-	d7Spacer.value = true;
+	isD7SpacerVisible.value = true;
 	await sleep(300);
 	const after = check(d7Ref.value, 'bottom');
-	d7Spacer.value = false;
+	isD7SpacerVisible.value = false;
 	results.d7 = [
 		{ label: '插入前', expected: '间距 4px', actual: before.text, pass: before.ok },
 		{ label: '上方插入 80px 后', expected: '间距 4px（跟随）', actual: after.text, pass: after.ok, wontfix: true }
 	];
 };
 // 窗口缩放需手动完成，这里只测量
-const measureD7b = () => {
+const handleMeasureD7b = () => {
 	const c = check(d7bRef.value, 'bottom');
 	results.d7 = [
 		...results.d7.filter(i => i.label !== '右侧节点'),
@@ -520,24 +520,24 @@ const measureD7b = () => {
 };
 
 const d8Ref = ref();
-const d8Wide = ref(false);
-const runD8 = async () => {
+const isD8Wide = ref(false);
+const handleRunD8 = async () => {
 	results.d8 = [];
-	d8Wide.value = true;
+	isD8Wide.value = true;
 	await nextTick();
 	await scrollCenter(d8Ref.value);
 	window.scrollTo(300, window.scrollY);
 	await sleep(150);
 	const list = [];
 	for (const placement of ['bottom', 'bottom-left']) {
-		openText(d8Ref.value, { placement });
+		handleOpenText(d8Ref.value, { placement });
 		await sleep(500);
 		const c = check(d8Ref.value, placement);
 		list.push({ label: `${placement}（scrollX=${Math.round(window.scrollX)}）`, expected: `方向 bottom，间距 4px，对齐偏差 0`, actual: c.text, pass: c.ok });
 	}
 	Portal.leafs.get(NAME)?.destroy();
 	window.scrollTo(0, window.scrollY);
-	d8Wide.value = false;
+	isD8Wide.value = false;
 	results.d8 = list;
 };
 

@@ -7,7 +7,7 @@
 			<Button @click="basic?.next()">
 				下个月
 			</Button>
-			<Button @click="toggleLocale">
+			<Button @click="handleToggleLocale">
 				{{ locale.name === 'zh-CN' ? 'English' : '中文' }}
 			</Button>
 		</div>
@@ -50,7 +50,7 @@ import { enUS, zhCN } from '@deot/vc-locale';
 const basic = ref();
 const locale = ref(zhCN);
 
-const toggleLocale = () => {
+const handleToggleLocale = () => {
 	locale.value = locale.value.name === 'zh-CN' ? enUS : zhCN;
 	VcInstance.configure({ locale: locale.value });
 };

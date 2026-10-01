@@ -11,7 +11,7 @@
 
 		<div class="scroll-follow-demo__meter" data-meter>
 			实时：错位帧 <b data-meter-bad>{{ meter.bad }}</b> / 滚动帧 <b data-meter-total>{{ meter.total }}</b>，最大偏差 {{ meter.max }}px
-			<Button size="small" @click="resetMeter">
+			<Button size="small" @click="handleResetMeter">
 				清零
 			</Button>
 		</div>
@@ -37,7 +37,7 @@
 					</div>
 				</template>
 			</Popover>
-			<Actions :results="results.f1" @run="runF1" />
+			<Actions :results="results.f1" @run="handleRunF1" />
 		</section>
 
 		<!-- F2 -->
@@ -150,8 +150,8 @@
 					</div>
 				</div>
 			</component>
-			<Actions :results="results.f2" @run="runF2">
-				<Button size="small" data-run-all @click="runF2All">
+			<Actions :results="results.f2" @run="handleRunF2">
+				<Button size="small" data-run-all @click="handleRunF2All">
 					全部环境
 				</Button>
 			</Actions>
@@ -172,12 +172,12 @@
 				class="scroll-follow-demo__box"
 			>
 				<div class="scroll-follow-demo__inner is-scroller">
-					<Button ref="openTriggerRef" @click="openByApi()">
+					<Button ref="openTriggerRef" @click="handleOpenByApi()">
 						Popover.open
 					</Button>
 				</div>
 			</Scroller>
-			<Actions :results="results.f3" @run="runF3" />
+			<Actions :results="results.f3" @run="handleRunF3" />
 		</section>
 
 		<!-- F4 -->
@@ -213,7 +213,7 @@
 					</Scroller>
 				</div>
 			</Scroller>
-			<Actions :results="results.f4" @run="runF4" />
+			<Actions :results="results.f4" @run="handleRunF4" />
 		</section>
 	</div>
 </template>
@@ -261,12 +261,12 @@ const getPopup = (key) => {
 };
 
 const options = Array.from({ length: 20 }).map((_, i) => ({ value: `${i}`, label: `选项 ${i + 1}` }));
-const treeData = ['华东', '华南', '华北'].map((region, i) => ({
+const treeData = ['分组 A', '分组 B', '分组 C'].map((region, i) => ({
 	value: `${i}`,
-	label: `${region}大区`,
-	children: ['销售', '研发', '运营'].map((dept, j) => ({
+	label: `${region}`,
+	children: ['条目一', '条目二', '条目三'].map((dept, j) => ({
 		value: `${i}-${j}`,
-		label: `${dept}部`
+		label: `${dept}`
 	}))
 }));
 const values = reactive({ select: '', cascader: [], datePicker: '', treeSelect: [] });
@@ -298,10 +298,10 @@ const startProbe = () => {
 	document.body.appendChild(el);
 	const offResize = Resize.on(el, () => frameHooks.forEach(fn => fn()));
 	let id;
-	let flip = false;
+	let isFlipped = false;
 	const tick = () => {
-		flip = !flip;
-		el.style.width = flip ? '2px' : '1px';
+		isFlipped = !isFlipped;
+		el.style.width = isFlipped ? '2px' : '1px';
 		id = requestAnimationFrame(tick);
 	};
 	id = requestAnimationFrame(tick);
@@ -361,7 +361,7 @@ const measure = (mode, triggerEl, popupEl) => {
  * 实时计数（手动滚动）：静止的帧更新基准（打开、翻转、贴边修正后的位置），移动的帧与基准比较
  */
 const meter = reactive(createStat());
-const resetMeter = () => Object.assign(meter, createStat());
+const handleResetMeter = () => Object.assign(meter, createStat());
 let meterState;
 const getOpened = () => {
 	if (getPopup('edge')) return { mode: 'edge', key: 'edge', triggerEl: edgeRef.value?.$el };
@@ -479,7 +479,7 @@ const placeInScroller = async (box, triggerEl) => {
 
 // F1
 const edgeRef = ref();
-const runF1 = async () => {
+const handleRunF1 = async () => {
 	results.f1 = [];
 	const triggerEl = edgeRef.value.$el;
 	results.f1 = await runCase({
@@ -538,12 +538,12 @@ const runEnv = async () => {
 	}
 };
 
-const runF2 = async () => {
+const handleRunF2 = async () => {
 	results.f2 = [];
 	await runEnv();
 };
 
-const runF2All = async () => {
+const handleRunF2All = async () => {
 	results.f2 = [];
 	for (const item of ENVS) {
 		env.value = item.value;
@@ -556,7 +556,7 @@ const runF2All = async () => {
 // F3
 const openScrollerRef = ref();
 const openTriggerRef = ref();
-const openByApi = () => {
+const handleOpenByApi = () => {
 	Popover.open({
 		el: document.body,
 		name: API_NAME,
@@ -567,7 +567,7 @@ const openByApi = () => {
 		portalClass: popupClass('api')
 	});
 };
-const runF3 = async () => {
+const handleRunF3 = async () => {
 	results.f3 = [];
 	const box = openScrollerRef.value;
 	const triggerEl = openTriggerRef.value.$el;
@@ -576,7 +576,7 @@ const runF3 = async () => {
 		key: 'api',
 		triggerEl,
 		place: () => placeInScroller(box, triggerEl),
-		open: openByApi,
+		open: handleOpenByApi,
 		drive: () => driveWheel(box.content)
 	});
 };
@@ -584,7 +584,7 @@ const runF3 = async () => {
 // F4
 const outerScrollerRef = ref();
 const nestedRef = ref();
-const runF4 = async () => {
+const handleRunF4 = async () => {
 	results.f4 = [];
 	const box = outerScrollerRef.value;
 	const triggerEl = nestedRef.value.$el;

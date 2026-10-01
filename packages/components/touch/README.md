@@ -22,15 +22,15 @@
 <template>
 	<MTouch
 		class="touch-demo"
-		@tap="setEvent('单击')"
-		@double-tap="setEvent('双击')"
-		@long-tap="setEvent('长按')"
+		@tap="handleSetEvent('单击')"
+		@double-tap="handleSetEvent('双击')"
+		@long-tap="handleSetEvent('长按')"
 		@move="handleMove"
-		@swipe="setEvent('滑动')"
-		@swipe-left="setEvent('左滑')"
-		@swipe-right="setEvent('右滑')"
-		@swipe-up="setEvent('上滑')"
-		@swipe-down="setEvent('下滑')"
+		@swipe="handleSetEvent('滑动')"
+		@swipe-left="handleSetEvent('左滑')"
+		@swipe-right="handleSetEvent('右滑')"
+		@swipe-up="handleSetEvent('上滑')"
+		@swipe-down="handleSetEvent('下滑')"
 		@pinch="handlePinch"
 		@rotate="handleRotate"
 	>
@@ -57,7 +57,7 @@ const transform = computed(() => ({
 	transform: `scale(${scale.value}) rotate(${angle.value}deg)`
 }));
 
-const setEvent = (type) => {
+const handleSetEvent = (type) => {
 	eventType.value = type;
 };
 

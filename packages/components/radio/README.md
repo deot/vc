@@ -105,12 +105,12 @@ const status = ref('idle');
 ```vue
 <template>
 	<div class="demo">
-		<RadioGroup v-model="phone" vertical>
-			<Radio value="apple" label="Apple" disabled />
-			<Radio value="android" label="Android" />
-			<Radio value="windows">Windows（自定义内容）</Radio>
+		<RadioGroup v-model="selectedOption" vertical>
+			<Radio value="option-a" label="选项 A" disabled />
+			<Radio value="option-b" label="选项 B" />
+			<Radio value="option-c">选项 C（自定义内容）</Radio>
 		</RadioGroup>
-		<p>当前选项：{{ phone }}</p>
+		<p>当前选项：{{ selectedOption }}</p>
 	</div>
 </template>
 
@@ -118,7 +118,7 @@ const status = ref('idle');
 import { ref } from 'vue';
 import { Radio, RadioGroup } from '@deot/vc';
 
-const phone = ref('apple');
+const selectedOption = ref('option-a');
 </script>
 
 <style scoped>
@@ -150,21 +150,21 @@ const phone = ref('apple');
 	<div class="demo">
 		<div>
 			<p>连体按钮</p>
-			<RadioGroup v-model="city" type="button">
-				<Radio label="北京" />
-				<Radio label="上海" disabled />
-				<Radio label="杭州" />
+			<RadioGroup v-model="selectedGroup" type="button">
+				<Radio label="分组 A" />
+				<Radio label="分组 B" disabled />
+				<Radio label="分组 D" />
 			</RadioGroup>
 		</div>
 		<div>
 			<p>独立按钮</p>
-			<RadioGroup v-model="city">
-				<RadioButton label="北京" />
-				<RadioButton label="上海" disabled />
-				<RadioButton label="杭州" />
+			<RadioGroup v-model="selectedGroup">
+				<RadioButton label="分组 A" />
+				<RadioButton label="分组 B" disabled />
+				<RadioButton label="分组 D" />
 			</RadioGroup>
 		</div>
-		<p>当前城市：{{ city }}</p>
+		<p>当前分组：{{ selectedGroup }}</p>
 	</div>
 </template>
 
@@ -172,7 +172,7 @@ const phone = ref('apple');
 import { ref } from 'vue';
 import { Radio, RadioButton, RadioGroup } from '@deot/vc';
 
-const city = ref('北京');
+const selectedGroup = ref('分组 A');
 </script>
 
 <style scoped>
@@ -202,12 +202,12 @@ const city = ref('北京');
 ```vue
 <template>
 	<div class="demo">
-		<MRadioGroup v-model="delivery" vertical>
-			<MRadio value="express" label="快递配送" />
-			<MRadio value="pickup" label="到店自取" />
-			<MRadio value="same-day" label="当日送达（暂不可用）" disabled />
+		<MRadioGroup v-model="selectedOption" vertical>
+			<MRadio value="option-a" label="选项 A" />
+			<MRadio value="option-b" label="选项 B" />
+			<MRadio value="option-c" label="选项 C（暂不可用）" disabled />
 		</MRadioGroup>
-		<p>配送方式：{{ delivery }}</p>
+		<p>已选值：{{ selectedOption }}</p>
 	</div>
 </template>
 
@@ -215,7 +215,7 @@ const city = ref('北京');
 import { ref } from 'vue';
 import { MRadio, MRadioGroup } from '@deot/vc';
 
-const delivery = ref('express');
+const selectedOption = ref('option-a');
 </script>
 
 <style scoped>

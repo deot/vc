@@ -25,38 +25,38 @@
 ```vue
 <template>
 	<div class="transition-demo">
-		<Button @click="visible = !visible">
-			{{ visible ? '隐藏内容' : '显示内容' }}
+		<Button @click="isVisible = !isVisible">
+			{{ isVisible ? '隐藏内容' : '显示内容' }}
 		</Button>
 		<div class="transition-demo__grid">
 			<div class="transition-demo__item">
 				<span>Fade</span>
 				<TransitionFade :duration="300">
-					<div v-show="visible" class="transition-demo__panel">淡入淡出</div>
+					<div v-show="isVisible" class="transition-demo__panel">淡入淡出</div>
 				</TransitionFade>
 			</div>
 			<div class="transition-demo__item">
 				<span>Scale</span>
 				<TransitionScale mode="part" :duration="300">
-					<div v-show="visible" class="transition-demo__panel">局部缩放</div>
+					<div v-show="isVisible" class="transition-demo__panel">局部缩放</div>
 				</TransitionScale>
 			</div>
 			<div class="transition-demo__item">
 				<span>Slide</span>
 				<TransitionSlide mode="top-part" :duration="300">
-					<div v-show="visible" class="transition-demo__panel">向上滑动</div>
+					<div v-show="isVisible" class="transition-demo__panel">向上滑动</div>
 				</TransitionSlide>
 			</div>
 			<div class="transition-demo__item">
 				<span>Zoom</span>
 				<TransitionZoom mode="center" :duration="300">
-					<div v-show="visible" class="transition-demo__panel">中心缩放</div>
+					<div v-show="isVisible" class="transition-demo__panel">中心缩放</div>
 				</TransitionZoom>
 			</div>
 			<div class="transition-demo__item">
 				<span>Collapse</span>
 				<TransitionCollapse :duration="300">
-					<div v-show="visible">
+					<div v-show="isVisible">
 						<div class="transition-demo__panel">展开折叠</div>
 					</div>
 				</TransitionCollapse>
@@ -76,7 +76,7 @@ import {
 	TransitionZoom
 } from '@deot/vc';
 
-const visible = ref(true);
+const isVisible = ref(true);
 </script>
 
 <style scoped>
@@ -120,11 +120,11 @@ const visible = ref(true);
 ```vue
 <template>
 	<div>
-		<Button @click="visible = !visible">
-			{{ visible ? '离开' : '进入' }}
+		<Button @click="isVisible = !isVisible">
+			{{ isVisible ? '离开' : '进入' }}
 		</Button>
 		<Transition prefix="transition-custom" :duration="400">
-			<div v-show="visible" class="transition-custom__panel">
+			<div v-show="isVisible" class="transition-custom__panel">
 				自定义过渡内容
 			</div>
 		</Transition>
@@ -135,7 +135,7 @@ const visible = ref(true);
 import { ref } from 'vue';
 import { Button, Transition } from '@deot/vc';
 
-const visible = ref(true);
+const isVisible = ref(true);
 </script>
 
 <style scoped>

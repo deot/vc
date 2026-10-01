@@ -17,8 +17,8 @@
 ```vue
 <template>
 	<div>
-		<Checkbox v-model="isChecked">接收更新通知</Checkbox>
-		<p>当前状态：{{ isChecked ? '已订阅' : '未订阅' }}</p>
+		<Checkbox v-model="isChecked">选择条目</Checkbox>
+		<p>当前状态：{{ isChecked ? '已选中' : '未选中' }}</p>
 	</div>
 </template>
 
@@ -69,12 +69,12 @@ import { Checkbox } from '@deot/vc';
 ```vue
 <template>
 	<div>
-		<CheckboxGroup v-model="selectedFruits">
-			<Checkbox value="apple" label="苹果" />
-			<Checkbox value="banana" label="香蕉" />
-			<Checkbox value="watermelon" label="西瓜" />
+		<CheckboxGroup v-model="selectedItems">
+			<Checkbox value="item-a" label="条目 A" />
+			<Checkbox value="item-b" label="条目 B" />
+			<Checkbox value="item-c" label="条目 C" />
 		</CheckboxGroup>
-		<p>已选值：{{ selectedFruits }}</p>
+		<p>已选值：{{ selectedItems }}</p>
 	</div>
 </template>
 
@@ -82,7 +82,7 @@ import { Checkbox } from '@deot/vc';
 import { ref } from 'vue';
 import { Checkbox, CheckboxGroup } from '@deot/vc';
 
-const selectedFruits = ref(['apple']);
+const selectedItems = ref(['item-a']);
 </script>
 ```
 :::
@@ -101,12 +101,12 @@ const selectedFruits = ref(['apple']);
 			:indeterminate="isIndeterminate"
 			@change="handleCheckAll"
 		>
-			全选水果
+			全选条目
 		</Checkbox>
-		<CheckboxGroup v-model="selectedFruits">
-			<Checkbox v-for="fruit in fruits" :key="fruit" :value="fruit" />
+		<CheckboxGroup v-model="selectedItems">
+			<Checkbox v-for="item in items" :key="item" :value="item" />
 		</CheckboxGroup>
-		<p>已选择 {{ selectedFruits.length }} / {{ fruits.length }} 项</p>
+		<p>已选择 {{ selectedItems.length }} / {{ items.length }} 项</p>
 	</div>
 </template>
 
@@ -114,13 +114,13 @@ const selectedFruits = ref(['apple']);
 import { computed, ref } from 'vue';
 import { Checkbox, CheckboxGroup } from '@deot/vc';
 
-const fruits = ['苹果', '香蕉', '西瓜'];
-const selectedFruits = ref(['苹果']);
-const isAllChecked = computed(() => selectedFruits.value.length === fruits.length);
-const isIndeterminate = computed(() => selectedFruits.value.length > 0 && !isAllChecked.value);
+const items = ['条目 A', '条目 B', '条目 C'];
+const selectedItems = ref(['条目 A']);
+const isAllChecked = computed(() => selectedItems.value.length === items.length);
+const isIndeterminate = computed(() => selectedItems.value.length > 0 && !isAllChecked.value);
 
 const handleCheckAll = (isChecked) => {
-	selectedFruits.value = isChecked ? [...fruits] : [];
+	selectedItems.value = isChecked ? [...items] : [];
 };
 </script>
 
@@ -143,7 +143,7 @@ const handleCheckAll = (isChecked) => {
 <template>
 	<div>
 		<Checkbox v-model="status" checked-value="enabled" unchecked-value="disabled">
-			启用提醒
+			启用选项
 		</Checkbox>
 		<p>当前值：{{ status }}</p>
 	</div>
@@ -167,12 +167,12 @@ const status = ref('disabled');
 ```vue
 <template>
 	<div class="checkbox-demo">
-		<MCheckboxGroup v-model="selectedDays" fragment>
-			<MCheckbox value="weekday" label="工作日" />
-			<MCheckbox value="weekend" label="周末" />
-			<MCheckbox value="holiday" label="节假日（不可选）" disabled />
+		<MCheckboxGroup v-model="selectedOptions" fragment>
+			<MCheckbox value="option-a" label="选项 A" />
+			<MCheckbox value="option-b" label="选项 B" />
+			<MCheckbox value="option-c" label="选项 C（不可选）" disabled />
 		</MCheckboxGroup>
-		<p>提醒时间：{{ selectedDays }}</p>
+		<p>已选值：{{ selectedOptions }}</p>
 	</div>
 </template>
 
@@ -180,7 +180,7 @@ const status = ref('disabled');
 import { ref } from 'vue';
 import { MCheckbox, MCheckboxGroup } from '@deot/vc';
 
-const selectedDays = ref(['weekday']);
+const selectedOptions = ref(['option-a']);
 </script>
 
 <style scoped>

@@ -2,7 +2,7 @@
 	<div style="background: var(--vc-background-color)">
 		<Tabs
 			v-model="current"
-			:animated="animated"
+			:animated="isAnimated"
 			:type="type"
 			@click="handleClick"
 			@tab-remove="handleRemove"
@@ -26,7 +26,7 @@ import { ref } from 'vue';
 import { Tabs, TabsPane } from '..';
 
 const current = ref('');
-const animated = ref(false);
+const isAnimated = ref(false);
 const type = ref('line');
 const list = ref([
 	{

@@ -162,14 +162,14 @@ const isAlternate = ref(false);
 			<label><span>倒序</span><Switch v-model="isInverted" /></label>
 		</div>
 		<Timeline :show-pending="isPendingVisible" :inverted="isInverted">
-			<TimelineItem label="2017-03-10">提交订单</TimelineItem>
-			<TimelineItem label="2017-03-11">商家发货</TimelineItem>
+			<TimelineItem label="2017-03-10">开始处理</TimelineItem>
+			<TimelineItem label="2017-03-11">完成准备</TimelineItem>
 			<template #pending>
-				运输中
+				处理中
 			</template>
 		</Timeline>
 		<Timeline show-pending class="custom">
-			<TimelineItem label="2017-03-10">提交订单</TimelineItem>
+			<TimelineItem label="2017-03-10">开始处理</TimelineItem>
 			<template #pending-dot>
 				<span class="pending-dot" />
 			</template>

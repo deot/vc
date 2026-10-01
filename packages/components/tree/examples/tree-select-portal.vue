@@ -34,12 +34,12 @@
 import { reactive } from 'vue';
 import { TreeSelect } from '..';
 
-const data = ['华东', '华南', '华北'].map((region, i) => ({
+const data = ['分组 A', '分组 B', '分组 C'].map((region, i) => ({
 	value: `${i}`,
-	label: `${region}大区`,
-	children: ['销售', '研发', '运营'].map((dept, j) => ({
+	label: `${region}`,
+	children: ['条目一', '条目二', '条目三'].map((dept, j) => ({
 		value: `${i}-${j}`,
-		label: `${dept}部`
+		label: `${dept}`
 	}))
 }));
 const values = reactive({ true: [], false: [] });

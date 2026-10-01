@@ -25,12 +25,12 @@
 		<Alert title="信息提示" desc="这是一条需要关注的信息。" />
 		<Alert type="success" title="成功提示" desc="操作已经顺利完成。" />
 		<Alert type="error" title="错误提示" desc="操作失败，请稍后重试。" />
-		<Alert type="warning" title="警告提示" closable @close="closed = true">
+		<Alert type="warning" title="警告提示" closable @close="isClosed = true">
 			<template #desc>
 				当前操作可能影响已有数据。
 			</template>
 		</Alert>
-		<span v-if="closed" class="alert-demo__status">警告提示已关闭</span>
+		<span v-if="isClosed" class="alert-demo__status">警告提示已关闭</span>
 	</div>
 </template>
 
@@ -38,7 +38,7 @@
 import { ref } from 'vue';
 import { Alert } from '@deot/vc';
 
-const closed = ref(false);
+const isClosed = ref(false);
 </script>
 
 <style scoped>

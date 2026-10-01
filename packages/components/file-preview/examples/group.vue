@@ -31,7 +31,7 @@ const vertical = ref(false);
 
 const dataSource = ref([
 	{ source: 'https://dummyimage.com/1800x600/555/fff.png?text=1', name: '1.png' },
-	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '合同-2026.pdf' },
+	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '示例文件-2026.pdf' },
 	{
 		source: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
 		thumbnail: 'https://dummyimage.com/120x120/2d8cf0/fff.png?text=cover'
@@ -40,8 +40,8 @@ const dataSource = ref([
 	'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3',
 	{ source: 'https://dummyimage.com/3000x1500/555/fff.png?text=3', name: '3.png' },
 	{ source: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4', name: 'flower-2.mp4' },
-	{ source: 'https://example.com/files/%E6%8A%A5%E4%BB%B7%E5%8D%95.xlsx', type: 'file' },
-	{ source: 'https://example.com/files/readme', type: 'file', name: '无扩展名文件' }
+	{ source: 'https://samplefile.com/samples/download/document/xlsx/xlsx_formula_recalc_sample.xlsx/', type: 'file', name: '示例文件.xlsx' },
+	{ source: 'https://www.w3.org/', type: 'file', name: '无扩展名文件' }
 ]);
 
 const thumbnails = [

@@ -41,7 +41,7 @@ import { inject, onUnmounted, ref } from 'vue';
 import { Button, Message } from '@deot/vc';
 
 const playground = inject('docs:playground');
-const visible = ref(false);
+const isVisible = ref(false);
 const messages = [
 	{ mode: 'info', label: '信息', content: '这是一条信息提示' },
 	{ mode: 'success', label: '成功', content: '操作已成功完成' },
@@ -50,11 +50,11 @@ const messages = [
 	{ mode: 'loading', label: '加载', content: '正在加载中' }
 ];
 
-const handleOpen = playground.run(220, { visible }, (item) => {
-	visible.value = true;
+const handleOpen = playground.run(220, { visible: isVisible }, (item) => {
+	isVisible.value = true;
 
 	const onClose = () => {
-		visible.value = false;
+		isVisible.value = false;
 	};
 	if (item.mode === 'loading') {
 		Message.loading({ content: item.content, duration: 1200, onClose });
@@ -110,11 +110,11 @@ import { inject, onUnmounted, ref } from 'vue';
 import { Button, Message } from '@deot/vc';
 
 const playground = inject('docs:playground');
-const visible = ref(false);
+const isVisible = ref(false);
 const status = ref('尚未关闭');
 
-const handleOpen = playground.run(220, { visible }, () => {
-	visible.value = true;
+const handleOpen = playground.run(220, { visible: isVisible }, () => {
+	isVisible.value = true;
 
 	status.value = '等待关闭';
 	Message.info({
@@ -124,7 +124,7 @@ const handleOpen = playground.run(220, { visible }, () => {
 		onBeforeClose: () => new Promise(resolve => setTimeout(resolve, 500)),
 		onClose: () => {
 			status.value = '提示已关闭';
-			visible.value = false;
+			isVisible.value = false;
 		}
 	});
 });

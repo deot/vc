@@ -29,11 +29,11 @@
 				<span>第 {{ activeIndex + 1 }} / {{ slides.length }} 张</span>
 			</div>
 			<div class="carousel-demo__actions">
-				<Button type="text" size="small" @click="toggleAutoplay">
+				<Button type="text" size="small" @click="handleToggleAutoplay">
 					{{ autoplay ? '暂停自动播放' : '开始自动播放' }}
 				</Button>
-				<Button size="small" @click="goPrev">上一张</Button>
-				<Button type="primary" size="small" @click="goNext">下一张</Button>
+				<Button size="small" @click="handlePrev">上一张</Button>
+				<Button type="primary" size="small" @click="handleNext">下一张</Button>
 			</div>
 		</div>
 
@@ -75,11 +75,11 @@ const slides = [
 const handleChange = (index) => {
 	activeIndex.value = index;
 };
-const toggleAutoplay = () => {
+const handleToggleAutoplay = () => {
 	autoplay.value = !autoplay.value;
 };
-const goPrev = () => carouselRef.value?.prev();
-const goNext = () => carouselRef.value?.next();
+const handlePrev = () => carouselRef.value?.prev();
+const handleNext = () => carouselRef.value?.next();
 </script>
 
 <style scoped>
@@ -164,9 +164,9 @@ const goNext = () => carouselRef.value?.next();
 		<div class="carousel-demo__toolbar">
 			<strong>带标签的指示器</strong>
 			<div>
-				<Button size="small" @click="goTo('design')">设计</Button>
-				<Button size="small" @click="goTo('motion')">动效</Button>
-				<Button size="small" @click="goTo('focus')">重点</Button>
+				<Button size="small" @click="handleGoTo('design')">设计</Button>
+				<Button size="small" @click="handleGoTo('motion')">动效</Button>
+				<Button size="small" @click="handleGoTo('focus')">重点</Button>
 			</div>
 		</div>
 		<Carousel
@@ -203,7 +203,7 @@ import { ref } from 'vue';
 import { Button, Carousel, CarouselItem } from '@deot/vc';
 
 const carouselRef = ref();
-const goTo = name => carouselRef.value?.setActiveItem(name);
+const handleGoTo = name => carouselRef.value?.setActiveItem(name);
 </script>
 
 <style scoped>

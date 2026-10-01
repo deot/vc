@@ -30,7 +30,7 @@ Defer 最终会渲染全部数据，不是虚拟列表。**每个任务只提交
 <template>
 	<div style="max-width: 560px; padding: 20px;">
 		<div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
-			<Button type="primary" size="small" @click="reload">重新加载</Button>
+			<Button type="primary" size="small" @click="handleReload">重新加载</Button>
 			<Button size="small" @click="disabled = !disabled">{{ disabled ? '启用延迟' : '立即显示全部' }}</Button>
 			<span style="color: #888;">{{ data.length }} 条数据</span>
 		</div>
@@ -57,7 +57,7 @@ const data = ref(createData());
 const disabled = ref(false);
 const completed = ref(0);
 const elapsed = ref(0);
-const reload = () => {
+const handleReload = () => {
 	data.value = createData();
 };
 const handleComplete = (timestamp) => {

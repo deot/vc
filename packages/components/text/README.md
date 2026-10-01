@@ -134,7 +134,7 @@ const content = '这是一段较长的说明文字，用来对比默认省略符
 <script setup>
 import { Text } from '@deot/vc';
 
-const fileName = '2026年第三季度产品数据分析与复盘报告.final.pdf';
+const fileName = '2026年第三季度示例内容说明与结构展示文档.final.pdf';
 </script>
 
 <style scoped>

@@ -7,12 +7,12 @@
 		<p>
 			受 Transition 动画的影响，Chrome DevTools/Performance Monitor 开着时动画元素可能不回收，关闭再开启后才会回收；如果内存依旧泄漏，请分析自身程序（可注释动画 Class 或给 CSS 加权禁用它）
 		</p>
-		<button @click="start">
+		<button @click="handleStart">
 			Start Test
 		</button>
 		<br>
 		<br>
-		<button @click="stop">
+		<button @click="handleStop">
 			Stop Test
 		</button>
 		<div ref="root" />
@@ -23,7 +23,7 @@ import { createApp, h, ref, onUnmounted, Transition, onMounted, withDirectives, 
 
 const root = ref(null);
 const timer = ref(null);
-const stop = () => {
+const handleStop = () => {
 	timer.value && clearInterval(timer.value);
 	timer.value = null;
 };
@@ -33,8 +33,8 @@ const stop = () => {
  * 挂载后进入动画 -> 进入完成后隐藏 -> 离开动画结束后卸载
  * 不能 mount 后同步 unmount，否则 isActive 的更新来不及执行，动画从未触发
  */
-const start = () => {
-	stop();
+const handleStart = () => {
+	handleStop();
 	timer.value = setInterval(
 		() => {
 			const container = document.createElement('div');
@@ -81,7 +81,7 @@ const start = () => {
 	);
 };
 
-onUnmounted(stop);
+onUnmounted(handleStop);
 </script>
 <style>
 .fade-enter-active,

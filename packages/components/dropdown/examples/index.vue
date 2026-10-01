@@ -1,7 +1,7 @@
 <template>
 	<div style="margin: 40px">
 		<Dropdown
-			v-model="visible"
+			v-model="isVisible"
 			:portal="true"
 			:trigger="trigger"
 			placement="bottom-left"
@@ -9,17 +9,17 @@
 			@visible-change="handleChange"
 			@close="handleCloseCb"
 		>
-			<div>菜单(右){{ visible }}</div>
+			<div>菜单(右){{ isVisible }}</div>
 			<template #content>
 				<DropdownMenu>
 					<DropdownItem value="1">
-						驴打滚
+						选项一
 					</DropdownItem>
 					<DropdownItem value="2">
-						炸酱面
+						选项二
 					</DropdownItem>
 					<DropdownItem value="3">
-						豆汁儿
+						选项三
 					</DropdownItem>
 
 					<!-- 高级嵌套 -->
@@ -32,17 +32,17 @@
 						@click="handleClick"
 						@visible-change="handleChange"
 					>
-						<span @click.stop>冰糖葫芦</span>
+						<span @click.stop>嵌套菜单</span>
 						<template #content>
 							<DropdownMenu>
 								<DropdownItem value="1">
-									驴打滚
+									选项一
 								</DropdownItem>
 								<DropdownItem value="2">
-									炸酱面
+									选项二
 								</DropdownItem>
 								<DropdownItem value="3">
-									豆汁儿
+									选项三
 								</DropdownItem>
 							</DropdownMenu>
 						</template>
@@ -50,7 +50,7 @@
 
 					<!-- 高级嵌套需要v-model -->
 					<Popover
-						v-model="visiblePopover"
+						v-model="isPopoverVisible"
 						:portal="false"
 						trigger="hover"
 						tag="li"
@@ -58,26 +58,26 @@
 						portal-class="is-padding-none"
 						placement="right"
 					>
-						<span @click.stop>北京烤鸭popover</span>
+						<span @click.stop>嵌套popover</span>
 						<template #content>
 							<DropdownItem value="1">
-								驴打滚
+								选项一
 							</DropdownItem>
 							<DropdownItem value="2">
-								炸酱面
+								选项二
 							</DropdownItem>
 							<DropdownItem value="3">
-								豆汁儿
+								选项三
 							</DropdownItem>
 							<DropdownItem value="4">
-								冰糖葫芦
+								嵌套菜单
 							</DropdownItem>
 						</template>
 					</Popover>
 
 					<!-- 高级嵌套需要v-model -->
 					<Popconfirm
-						v-model="visiblePopconfirm"
+						v-model="isPopconfirmVisible"
 						:portal="false"
 						:trigger="trigger"
 						tag="li"
@@ -85,7 +85,7 @@
 						placement="right"
 						title="确定删除吗？"
 					>
-						<span>北京烤鸭popconfirm</span>
+						<span>嵌套popconfirm</span>
 						<template #content>
 							<Input v-model="inputV" />
 						</template>
@@ -95,17 +95,17 @@
 				<!-- indeterminate 测试slot同步 -->
 				<div style="border-bottom: 1px solid #e9e9e9;padding-bottom:6px;margin-bottom:6px;">
 					<Checkbox
-						:indeterminate="indeterminate"
-						:model-value="checkAll"
+						:indeterminate="isIndeterminate"
+						:model-value="isAllChecked"
 						@click.prevent="handleCheckAll"
 					>
 						全选
 					</Checkbox>
 				</div>
-				<CheckboxGroup v-model="checkAllGroup" @change="handleCheckChange">
-					<Checkbox value="香蕉" />
-					<Checkbox value="苹果" />
-					<Checkbox value="西瓜" />
+				<CheckboxGroup v-model="checkedItems" @change="handleCheckChange">
+					<Checkbox value="条目 B" />
+					<Checkbox value="条目 A" />
+					<Checkbox value="条目 C" />
 				</CheckboxGroup>
 				<Button
 					style="margin-left: 100px"
@@ -117,7 +117,7 @@
 		</Dropdown>
 
 		<Button style="margin-left: 100px" @click="handleVisible">
-			visible: {{ visible }}
+			visible: {{ isVisible }}
 		</Button>
 		<Button style="margin-left: 100px" @click="handleTrigger">
 			trigger {{ trigger }}
@@ -133,14 +133,14 @@ import { Button } from '../../button';
 import { Checkbox, CheckboxGroup } from '../../checkbox';
 import { Input } from '../../input';
 
-const visible = ref(false);
-const visiblePopover = ref(false);
-const visiblePopconfirm = ref(false);
+const isVisible = ref(false);
+const isPopoverVisible = ref(false);
+const isPopconfirmVisible = ref(false);
 const trigger = ref('hover');
 
-const indeterminate = ref(true);
-const checkAll = ref(false);
-const checkAllGroup = ref(['香蕉', '西瓜']);
+const isIndeterminate = ref(true);
+const isAllChecked = ref(false);
+const checkedItems = ref(['条目 B', '条目 C']);
 const inputV = ref('');
 
 let wait;
@@ -149,8 +149,8 @@ const handleClick = (...args) => {
 	/**
 	 * 两层以上销毁
 	 */
-	visiblePopover.value = false; // 让popover先消失
-	visible.value = false;
+	isPopoverVisible.value = false; // 让popover先消失
+	isVisible.value = false;
 
 	console.log('click', ...args);
 };
@@ -167,12 +167,12 @@ const handleVisible = () => {
 	 * click模式下，this.visible会一直拿到false
 	 */
 	if (!wait) {
-		visible.value = !visible.value;
+		isVisible.value = !isVisible.value;
 	}
 };
 
 const handleClose = () => {
-	visible.value = false;
+	isVisible.value = false;
 };
 
 const handleCloseCb = () => {
@@ -188,30 +188,30 @@ const handleTrigger = () => {
 };
 
 const handleCheckAll = () => {
-	if (indeterminate.value) {
-		checkAll.value = false;
+	if (isIndeterminate.value) {
+		isAllChecked.value = false;
 	} else {
-		checkAll.value = !checkAll.value;
+		isAllChecked.value = !isAllChecked.value;
 	}
-	indeterminate.value = false;
+	isIndeterminate.value = false;
 
-	if (checkAll.value) {
-		checkAllGroup.value = ['香蕉', '苹果', '西瓜'];
+	if (isAllChecked.value) {
+		checkedItems.value = ['条目 B', '条目 A', '条目 C'];
 	} else {
-		checkAllGroup.value = [];
+		checkedItems.value = [];
 	}
 };
 
 const handleCheckChange = (data) => {
 	if (data.length === 3) {
-		indeterminate.value = false;
-		checkAll.value = true;
+		isIndeterminate.value = false;
+		isAllChecked.value = true;
 	} else if (data.length > 0) {
-		indeterminate.value = true;
-		checkAll.value = false;
+		isIndeterminate.value = true;
+		isAllChecked.value = false;
 	} else {
-		indeterminate.value = false;
-		checkAll.value = false;
+		isIndeterminate.value = false;
+		isAllChecked.value = false;
 	}
 };
 

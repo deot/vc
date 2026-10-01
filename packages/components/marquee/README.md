@@ -92,7 +92,7 @@ const text = ref('ABCDEFG');
 		<Marquee
 			:content="text.repeat(3)"
 			class="_normal"
-			:animated="animated"
+			:animated="isAnimated"
 		/>
 		<div>
 			<Button @click="handleClick">切换滚动状态</Button>
@@ -104,10 +104,10 @@ import { ref } from 'vue';
 import { Marquee, Button } from '@deot/vc';
 
 const text = ref('ABCDEFG');
-const animated = ref(true);
+const isAnimated = ref(true);
 
 const handleClick = () => {
-	animated.value = !animated.value;
+	isAnimated.value = !isAnimated.value;
 };
 </script>
 <style>

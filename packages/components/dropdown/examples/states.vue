@@ -17,7 +17,8 @@
 
 <script setup>
 import { ref } from 'vue';
-import { Button, Dropdown, DropdownMenu, DropdownItem } from '@deot/vc-components';
+import { Button } from '../../button';
+import { Dropdown, DropdownMenu, DropdownItem } from '..';
 
 const isVisible = ref(false);
 const sort = ref('time');

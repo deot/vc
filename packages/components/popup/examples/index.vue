@@ -3,7 +3,7 @@
 		<MPopup
 			v-for="(item, index) in placements"
 			:key="`popup__${item}`"
-			v-model="visibles[index]"
+			v-model="isVisibleByPlacement[index]"
 			:placement="item"
 		>
 			<MForm>
@@ -29,7 +29,7 @@
 			:placement="item"
 			@click="handleNormal(item, index)"
 		>
-			normal: {{ item }} {{ visibles[index] }}
+			normal: {{ item }} {{ isVisibleByPlacement[index] }}
 		</MButton>
 
 		<MButton
@@ -99,10 +99,10 @@ import { MForm, MFormItem } from '../../form/index.m';
 
 const value = ref('');
 const placements = ref(['top', 'bottom', 'center', 'left', 'right']);
-const visibles = ref([false, false, false, false, false]);
+const isVisibleByPlacement = ref([false, false, false, false, false]);
 
 const handleNormal = (_, index) => {
-	visibles.value.splice(index, 0, !visibles.value[index]);
+	isVisibleByPlacement.value.splice(index, 0, !isVisibleByPlacement.value[index]);
 };
 
 const handlePortal = async (placement) => {

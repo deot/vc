@@ -110,8 +110,8 @@ import { Collapse, CollapseItem } from '@deot/vc';
 
 const value = ref(1);
 const items = [
-	{ id: 1, title: '账户设置', content: '收起后输入框会卸载，重新展开即可看到重置后的内容。' },
-	{ id: 2, title: '通知偏好', content: '手风琴模式下，同一时间只保留一个面板展开。' }
+	{ id: 1, title: '分组一', content: '收起后输入框会卸载，重新展开即可看到重置后的内容。' },
+	{ id: 2, title: '分组二', content: '手风琴模式下，同一时间只保留一个面板展开。' }
 ];
 </script>
 

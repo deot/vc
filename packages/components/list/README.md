@@ -19,9 +19,9 @@
 ```vue
 <template>
 	<MList :label-width="80">
-		<MListItem label="姓名" extra="小林" :arrow="false" />
-		<MListItem label="消息通知" :extra="enabled ? '已开启' : '已关闭'" @click="enabled = !enabled" />
-		<MListItem label="个人介绍" :label-width="100" extra="点击列表项可切换通知状态" :arrow="false" />
+		<MListItem label="名称" extra="示例名称" :arrow="false" />
+		<MListItem label="状态切换" :extra="isEnabled ? '已开启' : '已关闭'" @click="isEnabled = !isEnabled" />
+		<MListItem label="描述" :label-width="100" extra="点击列表项可切换选项状态" :arrow="false" />
 	</MList>
 </template>
 
@@ -29,7 +29,7 @@
 import { ref } from 'vue';
 import { MList, MListItem } from '@deot/vc';
 
-const enabled = ref(true);
+const isEnabled = ref(true);
 </script>
 ```
 :::
@@ -49,8 +49,8 @@ const enabled = ref(true);
 	<div>
 		<MList :border="false">
 			<MListItem multiple :arrow="false">
-				<template #label><strong>配送地址</strong></template>
-				<template #extra>上海市徐汇区示例路 18 号</template>
+				<template #label><strong>多行描述</strong></template>
+				<template #extra>这是一段用于展示多行布局的示例描述，内容换行后保持对齐。</template>
 			</MListItem>
 		</MList>
 		<MListItem label="独立入口" :extra="`已点击 ${count} 次`" :indent="0" :to="handleOpen" />

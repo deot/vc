@@ -30,7 +30,7 @@ const previewable = ref(true);
 
 const dataSource = ref([
 	{ source: 'https://dummyimage.com/1800x600/555/fff.png?text=banner', name: 'banner.png' },
-	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '合同-2026.pdf' },
+	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '示例文件-2026.pdf' },
 	{
 		source: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
 		thumbnail: 'https://dummyimage.com/120x120/2d8cf0/fff.png?text=cover'
@@ -39,7 +39,7 @@ const dataSource = ref([
 	'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3',
 	{ source: 'https://dummyimage.com/3000x1500/555/fff.png?text=detail-02', name: 'detail-02.png' },
 	{ source: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4', name: 'flower-2.mp4' },
-	{ source: 'https://example.com/files/%E6%8A%A5%E4%BB%B7%E5%8D%95.xlsx', type: 'file' }
+	{ source: 'https://samplefile.com/samples/download/document/xlsx/xlsx_formula_recalc_sample.xlsx/', type: 'file', name: '示例文件.xlsx' }
 ]);
 
 const stringSource = 'https://dummyimage.com/800x600/555/fff.png?text=a,https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';

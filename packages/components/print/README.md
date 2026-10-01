@@ -22,15 +22,15 @@
 		<Print ref="pageTarget">
 			<article class="print-card">
 				<header>
-					<strong>订单明细</strong>
+					<strong>条目明细</strong>
 					<span>2026-09-11</span>
 				</header>
-				<p>商品：笔记本 × 2</p>
-				<p>合计：20 元</p>
+				<p>条目：条目 A × 2</p>
+				<p>数值合计：20</p>
 			</article>
 		</Print>
 		<Button style="margin-top: 12px;" @click="handlePrint">
-			打印订单
+			打印条目
 		</Button>
 	</div>
 </template>
@@ -76,7 +76,7 @@ const handlePrint = () => {
 	<div>
 		<Print ref="pageTarget" :value="content" />
 		<Button style="margin-top: 12px;" @click="handlePrint">
-			打印通知
+			打印说明
 		</Button>
 	</div>
 </template>
@@ -88,8 +88,8 @@ import { Print, Button } from '@deot/vc';
 const pageTarget = ref();
 const content = `
 	<article style="padding: 16px; border: 1px solid #d9d9d9; border-radius: 8px">
-		<h3 style="margin: 0 0 12px">会议通知</h3>
-		<p style="margin: 0">请于下午三点到会议室参会。</p>
+		<h3 style="margin: 0 0 12px">示例说明</h3>
+		<p style="margin: 0">这是一段通过 HTML 字符串提供的示例内容。</p>
 	</article>
 `;
 const handlePrint = () => {

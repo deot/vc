@@ -88,7 +88,7 @@ const handleCancel = () => {
 			@close="handleVisibleChange('custom', false)"
 		>
 			<Button type="primary">自定义确认框</Button>
-			<template #title><strong>归档已完成的任务？</strong></template>
+			<template #title><strong>归档已完成的条目？</strong></template>
 			<template #content>归档后仍可在历史记录中查看。</template>
 			<template #icon><Icon type="info" /></template>
 		</Popconfirm>
