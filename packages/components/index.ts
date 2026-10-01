@@ -75,6 +75,8 @@ export * from './list';
 export * from './list/index.m';
 export * from './marquee';
 export * from './marquee/index.m';
+export * from './measuring';
+export * from './measuring/index.m';
 export * from './message';
 export * from './message/index.m';
 export * from './modal';
