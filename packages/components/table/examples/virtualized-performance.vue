@@ -100,14 +100,13 @@
 </template>
 
 <script setup>
-import { computed, h, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import { computed, h, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { Table, TableColumn } from '..';
 import { Pagination } from '../../pagination';
 import { Image } from '../../image';
 import { Text } from '../../text';
 import { Select } from '../../select';
 import { Scroller } from '../../scroller';
-import { useScrollerAffix } from './use-scroller-affix';
 
 const COLORS = ['456cf6', '54b675', 'f3833a', '8e51ff'];
 const GROUPS = ['分组 A/类别 1/子项', '分组 A/类别 2/子项', '分组 B/类别 1/子项', '分组 B/类别 2/子项'];
@@ -179,11 +178,26 @@ const containerProps = computed(() => (controls.container === 'scroller'
 	? { class: 'virtualized-performance__scroller', height: '600px', native: false }
 	: {}));
 
-// Affix 按窗口定位：页面滚动时吸顶 0、吸底让出分页栏（52px）；Scroller 里取 Scroller 视口到窗口边缘的距离
-const { offsets, update: updateOffsets } = useScrollerAffix(
-	() => (controls.container === 'scroller' ? containerRef.value?.wrapper : void 0),
-	() => tableRef.value
-);
+// Affix 按窗口定位：页面滚动时吸顶 0、吸底让出分页栏（52px）；Scroller 里取 Scroller 视口到窗口边缘的距离，
+// 挂载、窗口滚动与尺寸变化时重新计算，变化后让 Table 重算吸附
+const offsets = reactive({ top: 0, bottom: 0 });
+const updateOffsets = () => {
+	const el = controls.container === 'scroller' ? containerRef.value?.wrapper : void 0;
+	if (!el) return;
+	// 视口取滚动容器边框内的区域（Scroller 的 class / 边框作用在滚动容器上）
+	const viewportTop = el.getBoundingClientRect().top + el.clientTop;
+	const top = Math.max(0, viewportTop);
+	const bottom = Math.max(0, window.innerHeight - (viewportTop + el.clientHeight));
+	if (top === offsets.top && bottom === offsets.bottom) return;
+	offsets.top = top;
+	offsets.bottom = bottom;
+	nextTick(() => tableRef.value?.refreshAffix());
+};
+onMounted(() => {
+	updateOffsets();
+	window.addEventListener('resize', updateOffsets);
+	window.addEventListener('scroll', updateOffsets, { passive: true });
+});
 const affix = computed(() => (controls.container === 'scroller'
 	? [{ offset: offsets.top }, { offset: offsets.bottom }]
 	: [{ offset: 0 }, { offset: 52 }]));
@@ -209,7 +223,11 @@ const handlePageSizeChange = (size) => {
 // 最长任务与 JS 堆由 preload 显示在右上角：setup 时开启（能记到首次挂载），切页时清零，只看这次切页的耗时
 window.$perf?.observe();
 watch(rows, () => window.$perf?.reset());
-onBeforeUnmount(() => window.$perf?.disconnect());
+onBeforeUnmount(() => {
+	window.removeEventListener('resize', updateOffsets);
+	window.removeEventListener('scroll', updateOffsets);
+	window.$perf?.disconnect();
+});
 </script>
 
 <style lang="scss">

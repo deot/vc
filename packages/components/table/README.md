@@ -22,11 +22,11 @@
 		/>
 		<TableColumn
 			prop="name"
-			label="姓名"
+			label="名称"
 		/>
 		<TableColumn
-			prop="address"
-			label="地址"
+			prop="desc"
+			label="说明"
 			min-width="200"
 		/>
 	</Table>
@@ -38,23 +38,23 @@ import { Table, TableColumn } from '@deot/vc';
 const tableData1 = ref([
 	{
 		date: '2011-11-02',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 1',
+		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-04',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 2',
+		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-01',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 3',
+		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-03',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 4',
+		desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
 	}
 ]);
 
@@ -83,11 +83,11 @@ const selectedName = ref('尚未点击');
 		/>
 		<TableColumn
 			prop="name"
-			label="姓名"
+			label="名称"
 		/>
 		<TableColumn
-			prop="address"
-			label="地址"
+			prop="desc"
+			label="说明"
 		/>
 	</Table>
 </template>
@@ -98,23 +98,23 @@ import { Table, TableColumn } from '@deot/vc';
 const tableData2 = ref([
 	{
 		date: '2011-11-02',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 1',
+		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-04',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 2',
+		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-01',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 3',
+		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-03',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 4',
+		desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
 	}
 ]);
 </script>
@@ -136,11 +136,11 @@ const tableData2 = ref([
 		/>
 		<TableColumn
 			prop="name"
-			label="姓名"
+			label="名称"
 		/>
 		<TableColumn
-			prop="address"
-			label="地址"
+			prop="desc"
+			label="说明"
 		/>
 	</Table>
 </template>
@@ -151,23 +151,23 @@ import { Table, TableColumn } from '@deot/vc';
 const tableData3 = ref([
 	{
 		date: '2011-11-02',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 1',
+		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-04',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 2',
+		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-01',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 3',
+		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-03',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 4',
+		desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
 	}
 ]);
 </script>
@@ -189,11 +189,11 @@ const tableData3 = ref([
 		/>
 		<TableColumn
 			prop="name"
-			label="姓名"
+			label="名称"
 		/>
 		<TableColumn
-			prop="amount"
-			label="金额"
+			prop="value"
+			label="数值"
 		/>
 	</Table>
 </template>
@@ -202,9 +202,9 @@ import { ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
 const tableDataSize = ref([
-	{ date: '2011-11-02', name: '微一案', amount: 100 },
-	{ date: '2011-11-04', name: '微一案', amount: 200 },
-	{ date: '2011-11-01', name: '微一案', amount: 300 }
+	{ date: '2011-11-02', name: '条目 1', value: 100 },
+	{ date: '2011-11-04', name: '条目 2', value: 200 },
+	{ date: '2011-11-01', name: '条目 3', value: 300 }
 ]);
 </script>
 ```
@@ -227,11 +227,11 @@ const tableDataSize = ref([
 		/>
 		<TableColumn
 			prop="name"
-			label="姓名"
+			label="名称"
 		/>
 		<TableColumn
-			prop="address"
-			label="地址"
+			prop="desc"
+			label="说明"
 		/>
 	</Table>
 </template>
@@ -242,23 +242,23 @@ import { Table, TableColumn } from '@deot/vc';
 const tableData4 = ref([
 	{
 		date: '2011-11-02',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 1',
+		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-04',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 2',
+		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-01',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 3',
+		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-03',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 4',
+		desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
 	}
 ]);
 
@@ -296,12 +296,12 @@ const tableRowClass = ({ row, rowIndex }) => {
 		/>
 		<TableColumn
 			prop="name"
-			label="姓名"
+			label="名称"
 			width="180"
 		/>
 		<TableColumn
-			prop="address"
-			label="地址"
+			prop="desc"
+			label="说明"
 		/>
 	</Table>
 </template>
@@ -311,32 +311,32 @@ import { Table, TableColumn } from '@deot/vc';
 
 const tableData5 = ref([{
 	date: '2011-11-03',
-	name: '微一案',
-	address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+	name: '条目 1',
+	desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
 }, {
 	date: '2011-11-02',
-	name: '微一案',
-	address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+	name: '条目 2',
+	desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
 }, {
 	date: '2011-11-04',
-	name: '微一案',
-	address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+	name: '条目 3',
+	desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
 }, {
 	date: '2011-11-01',
-	name: '微一案',
-	address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+	name: '条目 4',
+	desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
 }, {
 	date: '2011-11-08',
-	name: '微一案',
-	address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+	name: '条目 5',
+	desc: '这是条目 5 的说明文字，用于展示较长内容的换行与截断。'
 }, {
 	date: '2011-11-06',
-	name: '微一案',
-	address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+	name: '条目 6',
+	desc: '这是条目 6 的说明文字，用于展示较长内容的换行与截断。'
 }, {
 	date: '2011-11-07',
-	name: '微一案',
-	address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+	name: '条目 7',
+	desc: '这是条目 7 的说明文字，用于展示较长内容的换行与截断。'
 }]);
 </script>
 ```
@@ -358,29 +358,29 @@ const tableData5 = ref([{
 		/>
 		<TableColumn
 			prop="name"
-			label="姓名"
+			label="名称"
 			width="180"
 
 		/>
 		<TableColumn
-			prop="province"
-			label="省份"
+			prop="group"
+			label="分组"
 			width="180"
 
 		/>
 		<TableColumn
-			prop="city"
-			label="市区"
+			prop="subgroup"
+			label="子分组"
 			width="180"
 		/>
 		<TableColumn
-			prop="address"
-			label="地址"
+			prop="desc"
+			label="说明"
 			width="180"
 		/>
 		<TableColumn
-			prop="zip"
-			label="邮编"
+			prop="code"
+			label="编码"
 			width="180"
 		/>
 		<TableColumn
@@ -401,32 +401,32 @@ import { Table, Button, TableColumn } from '@deot/vc';
 
 const tableData5 = ref([{
 	date: '2011-11-02',
-	name: '微一案',
-	province: '浙江',
-	city: '杭州市',
-	address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼',
-	zip: 200333
+	name: '条目 1',
+	group: '分组 A',
+	subgroup: '子分组 A-1',
+	desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。',
+	code: 'NO100001'
 }, {
 	date: '2011-11-04',
-	name: '微一案',
-	province: '浙江',
-	city: '杭州市',
-	address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼',
-	zip: 200333
+	name: '条目 2',
+	group: '分组 A',
+	subgroup: '子分组 A-1',
+	desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。',
+	code: 'NO100001'
 }, {
 	date: '2011-11-01',
-	name: '微一案',
-	province: '浙江',
-	city: '杭州市',
-	address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼',
-	zip: 200333
+	name: '条目 3',
+	group: '分组 A',
+	subgroup: '子分组 A-1',
+	desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。',
+	code: 'NO100001'
 }, {
 	date: '2011-11-03',
-	name: '微一案',
-	province: '浙江',
-	city: '杭州市',
-	address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼',
-	zip: 200333
+	name: '条目 4',
+	group: '分组 A',
+	subgroup: '子分组 A-1',
+	desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。',
+	code: 'NO100001'
 }]);
 </script>
 ```
@@ -451,11 +451,11 @@ const tableData5 = ref([{
 		/>
 		<TableColumn
 			prop="name"
-			label="姓名"
+			label="名称"
 		/>
 		<TableColumn
-			prop="address"
-			label="地址"
+			prop="desc"
+			label="说明"
 		/>
 	</Table>
 </template>
@@ -466,23 +466,23 @@ import { Table, TableColumn } from '@deot/vc';
 const tableData = ref([
 	{
 		date: '2011-11-02',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 1',
+		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-04',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 2',
+		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-01',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 3',
+		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-03',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 4',
+		desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
 	}
 ]);
 </script>
@@ -509,13 +509,13 @@ Table 只维护排序交互，数据排序由调用方处理。下面通过 `v-m
 		/>
 		<TableColumn
 			prop="name"
-			label="姓名"
+			label="名称"
 			width="180"
 			sortable
 		/>
 		<TableColumn
-			prop="address"
-			label="地址"
+			prop="desc"
+			label="说明"
 			width="880"
 		/>
 	</Table>
@@ -528,23 +528,23 @@ const sort = ref({ prop: 'date', order: 'descending' });
 const tableData = ref([
 	{
 		date: '2011-11-02',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 1',
+		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-04',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 2',
+		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-01',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 3',
+		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-03',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 4',
+		desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
 	}
 ]);
 
@@ -597,11 +597,11 @@ const sortedData = computed(() => {
 		/>
 		<TableColumn
 			prop="name"
-			label="姓名"
+			label="名称"
 		/>
 		<TableColumn
-			prop="address"
-			label="地址"
+			prop="desc"
+			label="说明"
 		/>
 	</Table>
 </template>
@@ -613,18 +613,18 @@ const columns = ref([]);
 const tableData = ref([
 	{
 		date: '2011-11-02',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 1',
+		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-04',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 2',
+		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		date: '2011-11-01',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 3',
+		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
 	}
 ]);
 
@@ -666,12 +666,12 @@ const handleToggle = (col) => {
 		/>
 		<TableColumn
 			prop="name"
-			label="姓名"
+			label="名称"
 			width="180"
 		/>
 		<TableColumn
-			prop="address"
-			label="地址"
+			prop="desc"
+			label="说明"
 		/>
 	</Table>
 </template>
@@ -680,31 +680,31 @@ import { ref, computed } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
 const types = [
-	{ label: '代理升级', value: 1 },
-	{ label: '代理加入', value: 2 },
-	{ label: '代理退出', value: 3, disabled: true }
+	{ label: '类型 A', value: 1 },
+	{ label: '类型 B', value: 2 },
+	{ label: '类型 C', value: 3, disabled: true }
 ];
 const typeFilter = ref([]);
 const tableData = ref([
 	{
 		type: 1,
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 1',
+		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		type: 2,
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 2',
+		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		type: 1,
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 3',
+		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		type: 2,
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 4',
+		desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
 	}
 ]);
 
@@ -725,7 +725,7 @@ const filteredData = computed(() => {
 ```vue
 <template>
 	<Table :data="filteredRows">
-		<TableColumn prop="name" label="任务" />
+		<TableColumn prop="name" label="名称" />
 		<TableColumn prop="status" label="状态" :filter-options="{ data: options, onChange: handleFilter }" />
 	</Table>
 </template>
@@ -739,8 +739,8 @@ const options = [
 	{ label: '已完成', value: '已完成' }
 ];
 const rows = [
-	{ name: '编写文档', status: '进行中' },
-	{ name: '核对接口', status: '已完成' }
+	{ name: '条目 1', status: '进行中' },
+	{ name: '条目 2', status: '已完成' }
 ];
 const filteredRows = computed(() => status.value ? rows.filter(row => row.status === status.value) : rows);
 const handleFilter = (value) => { status.value = value; };
@@ -784,12 +784,12 @@ const handleFilter = (value) => { status.value = value; };
 		/>
 		<TableColumn
 			prop="name"
-			label="姓名"
+			label="名称"
 			min-width="180"
 		/>
 		<TableColumn
-			prop="address"
-			label="地址"
+			prop="desc"
+			label="说明"
 		/>
 	</Table>
 </template>
@@ -801,8 +801,8 @@ const random = () => Math.ceil(Math.random() * 1000);
 const createRow = (id, extra = {}) => ({
 	id,
 	date: '2011-11-02',
-	name: `代号 - ${random()}`,
-	address: `祥园路${random()}号`,
+	name: `条目 ${random()}`,
+	desc: `条目说明 ${random()}`,
 	...extra
 });
 
@@ -856,7 +856,7 @@ const handleExpandChange = ({ maxLevel }) => {
 					<option value="virtualized">外部视口虚拟化</option>
 				</select>
 			</label>
-			<span>展开“待加载项目”后也可编辑、删除子节点。</span>
+			<span>展开“待加载的条目”后也可编辑、删除子节点。</span>
 		</div>
 		<Table
 			:data="rows"
@@ -867,10 +867,10 @@ const handleExpandChange = ({ maxLevel }) => {
 			lazy-tree
 			border
 		>
-			<TableColumn prop="name" label="项目" min-width="200" />
+			<TableColumn prop="name" label="名称" min-width="200" />
 			<TableColumn label="编辑名称" min-width="180">
 				<template #default="{ row }">
-					<input v-model="row.name" :aria-label="`编辑项目 ${row.id}`">
+					<input v-model="row.name" :aria-label="`编辑条目 ${row.id}`">
 				</template>
 			</TableColumn>
 			<TableColumn label="操作" width="90">
@@ -887,13 +887,13 @@ import { Button, Table, TableColumn } from '@deot/vc';
 
 const mode = ref('normal');
 const rows = ref([
-	{ id: 'project', name: '已有项目', children: [{ id: 'task', name: '已有任务' }] },
-	{ id: 'lazy', name: '待加载项目', hasChildren: true }
+	{ id: 'project', name: '已有条目', children: [{ id: 'task', name: '已有子条目' }] },
+	{ id: 'lazy', name: '待加载的条目', hasChildren: true }
 ]);
 const loaded = new Map();
 const loadExpand = async (row) => {
 	await new Promise(resolve => setTimeout(resolve, 400));
-	const children = reactive([{ id: `${row.id}-child`, name: '异步任务' }]);
+	const children = reactive([{ id: `${row.id}-child`, name: '异步加载的子条目' }]);
 	loaded.set(row.id, children);
 	return children;
 };
@@ -940,8 +940,8 @@ input { width: 100%; box-sizing: border-box; }
 	>
 		<TableColumn type="expand">
 			<template #default="{ row }">
-				<p>姓名：{{ row.name }}</p>
-				<p>地址：{{ row.address }}</p>
+				<p>名称：{{ row.name }}</p>
+				<p>说明：{{ row.desc }}</p>
 			</template>
 		</TableColumn>
 		<TableColumn
@@ -951,7 +951,7 @@ input { width: 100%; box-sizing: border-box; }
 		/>
 		<TableColumn
 			prop="name"
-			label="姓名"
+			label="名称"
 		/>
 	</Table>
 </template>
@@ -963,20 +963,20 @@ const tableData = ref([
 	{
 		id: 1,
 		date: '2011-11-02',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼/11号入口5楼'
+		name: '条目 1',
+		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		id: 2,
 		date: '2011-11-04',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 2',
+		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
 	},
 	{
 		id: 3,
 		date: '2011-11-01',
-		name: '微一案',
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦11号入口5楼'
+		name: '条目 3',
+		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
 	}
 ]);
 </script>
@@ -1020,7 +1020,7 @@ const tableData = ref([
 					</div>
 				</template>
 			</TableColumn>
-			<TableColumn prop="name" label="任务" min-width="180" />
+			<TableColumn prop="name" label="名称" min-width="180" />
 			<TableColumn label="操作" width="90">
 				<template #default="{ row }">
 					<Button type="text" @click="handleDelete(row)">删除</Button>
@@ -1036,8 +1036,8 @@ import { Button, Table, TableColumn } from '@deot/vc';
 const mode = ref('normal');
 const tableRef = ref();
 const rows = ref([
-	{ id: 1, name: '确认需求', remarks: ['展开内容可编辑，行高随内容变化。'] },
-	{ id: 2, name: '准备交付', remarks: ['点击左侧箭头查看详情。'] }
+	{ id: 1, name: '条目 1', remarks: ['展开内容可编辑，行高随内容变化。'] },
+	{ id: 2, name: '条目 2', remarks: ['点击左侧箭头查看详情。'] }
 ]);
 const handleToggle = () => tableRef.value.toggleRowExpansion(rows.value[0]);
 const handleAddRemark = row => row.remarks.push(`新增备注 ${row.remarks.length + 1}`);
@@ -1096,7 +1096,7 @@ input { max-width: 100%; box-sizing: border-box; }
 		<TableColumn type="drag" />
 		<TableColumn
 			prop="name"
-			label="姓名"
+			label="名称"
 			width="180"
 		/>
 		<TableColumn
@@ -1105,8 +1105,8 @@ input { max-width: 100%; box-sizing: border-box; }
 			width="180"
 		/>
 		<TableColumn
-			prop="address"
-			label="地址"
+			prop="desc"
+			label="说明"
 		/>
 	</Table>
 </template>
@@ -1116,10 +1116,10 @@ import { Table, TableColumn } from '@deot/vc';
 
 const message = ref('按住行内任意位置或左侧把手拖动；「锁定」的行不可拖动');
 const tableData = ref([
-	{ id: 1, name: '微一案', date: '2011-11-01', address: '浙江省杭州市拱墅区祥园路38号' },
-	{ id: 2, name: '微二案', date: '2011-11-02', address: '浙江省杭州市拱墅区祥园路39号' },
-	{ id: 3, name: '微三案（锁定）', date: '2011-11-03', address: '浙江省杭州市拱墅区祥园路40号', locked: true },
-	{ id: 4, name: '微四案', date: '2011-11-04', address: '浙江省杭州市拱墅区祥园路41号' }
+	{ id: 1, name: '条目 1', date: '2011-11-01', desc: '条目 1 的说明' },
+	{ id: 2, name: '条目 2', date: '2011-11-02', desc: '条目 2 的说明' },
+	{ id: 3, name: '条目 3（锁定）', date: '2011-11-03', desc: '条目 3 的说明', locked: true },
+	{ id: 4, name: '条目 4', date: '2011-11-04', desc: '条目 4 的说明' }
 ]);
 
 const handleDrop = ({ rows, from, to }) => {
@@ -1179,15 +1179,15 @@ const message = ref('拖到行的中间成为子行；子树末尾按横向位�
 const tableData = ref([
 	{
 		id: 1,
-		name: '部门 A',
+		name: '分组 A',
 		date: '2011-11-01',
 		children: [
-			{ id: 11, name: '成员 A-1', date: '2011-11-02' },
-			{ id: 12, name: '成员 A-2', date: '2011-11-03' }
+			{ id: 11, name: '条目 A-1', date: '2011-11-02' },
+			{ id: 12, name: '条目 A-2', date: '2011-11-03' }
 		]
 	},
-	{ id: 2, name: '部门 B', date: '2011-11-04', children: [{ id: 21, name: '成员 B-1', date: '2011-11-05' }] },
-	{ id: 3, name: '部门 C', date: '2011-11-06' }
+	{ id: 2, name: '分组 B', date: '2011-11-04', children: [{ id: 21, name: '条目 B-1', date: '2011-11-05' }] },
+	{ id: 3, name: '分组 C', date: '2011-11-06' }
 ]);
 
 // 数据已原地修改（v-model 写回根数组的副本），这里按 from / to 保存
@@ -1226,7 +1226,7 @@ const handleDrop = ({ rows, from, to }) => {
 		<TableColumn type="selection" />
 		<TableColumn
 			prop="name"
-			label="姓名（锁定）"
+			label="名称（锁定）"
 			width="140"
 		/>
 		<TableColumn
@@ -1235,8 +1235,8 @@ const handleDrop = ({ rows, from, to }) => {
 			width="140"
 		/>
 		<TableColumn
-			prop="address"
-			label="地址"
+			prop="desc"
+			label="说明"
 		/>
 	</Table>
 </template>
@@ -1247,8 +1247,8 @@ import { Table, TableColumn } from '@deot/vc';
 // v-model:columns 回填为 { id, prop, label, type, hidden } 的列表，可以保存下来恢复列顺序
 const columns = ref([]);
 const tableData = ref([
-	{ id: 1, name: '微一案', date: '2011-11-01', address: '浙江省杭州市拱墅区祥园路38号' },
-	{ id: 2, name: '微二案', date: '2011-11-02', address: '浙江省杭州市拱墅区祥园路39号' }
+	{ id: 1, name: '条目 1', date: '2011-11-01', desc: '条目 1 的说明' },
+	{ id: 2, name: '条目 2', date: '2011-11-02', desc: '条目 2 的说明' }
 ]);
 </script>
 ```
@@ -1286,7 +1286,7 @@ import { Table, TableColumn } from '@deot/vc';
 const loadState = ref({ isEnd: false, loaded: 0 });
 const tableData = Array.from({ length: 300 }, (_, index) => ({
 	id: index + 1,
-	name: `任务 ${index + 1}`,
+	name: `条目 ${index + 1}`,
 	description: 'Table 未设置高度，滚动由外层容器承载。'
 }));
 const handleLoadChange = (state) => {
@@ -1337,9 +1337,9 @@ Window / Scroller
 <template>
 	<p>向下滚动：表头与合计行保持可见。</p>
 	<Table :data="rows" virtualized affix show-summary primary-key="id" border>
-		<TableColumn prop="name" label="项目" width="180" fixed="left" />
+		<TableColumn prop="name" label="名称" width="180" fixed="left" />
 		<TableColumn prop="description" label="说明" min-width="500" />
-		<TableColumn prop="amount" label="金额" width="140" />
+		<TableColumn prop="value" label="数值" width="140" />
 	</Table>
 	<p>表格结束，吸附范围也随之结束。</p>
 </template>
@@ -1348,9 +1348,9 @@ import { Table, TableColumn } from '@deot/vc';
 
 const rows = Array.from({ length: 60 }, (_, index) => ({
 	id: index + 1,
-	name: `项目 ${index + 1}`,
-	description: '滚动页面查看吸附；横向滚动时左侧项目列保持固定。',
-	amount: index + 1
+	name: `条目 ${index + 1}`,
+	description: '滚动页面查看吸附；横向滚动时左侧名称列保持固定。',
+	value: index + 1
 }));
 </script>
 ```
@@ -1412,8 +1412,7 @@ const updateOffsets = () => {
 
 完整示例：
 
-- [Window 前置内容—虚拟 Table—后置内容](./examples/virtualized-window.vue)
-- [VC Scroller 中的虚拟 Table](./examples/virtualized-scroller.vue)
+- [外部视口：Window / VC Scroller，前置内容—虚拟 Table—后置内容](./examples/virtualized.vue)
 - [500 条/页富单元格的性能对照（固定行高、bufferCount、滚动容器）](./examples/virtualized-performance.vue)
 
 ### 合计与自定义统计
@@ -1426,9 +1425,9 @@ const updateOffsets = () => {
 <template>
 	<label><input v-model="isCustom" type="checkbox"> 使用自定义合计</label>
 	<Table :data="rows" :get-summary="isCustom ? getSummary : undefined" show-summary border>
-		<TableColumn prop="name" label="商品" />
+		<TableColumn prop="name" label="名称" />
 		<TableColumn prop="quantity" label="数量" />
-		<TableColumn prop="amount" label="金额" />
+		<TableColumn prop="value" label="数值" />
 	</Table>
 </template>
 <script setup>
@@ -1437,13 +1436,13 @@ import { Table, TableColumn } from '@deot/vc';
 
 const isCustom = ref(false);
 const rows = [
-	{ name: '笔记本', quantity: 3, amount: 36 },
-	{ name: '文件夹', quantity: 2, amount: 18 }
+	{ name: '条目 A', quantity: 3, value: 36 },
+	{ name: '条目 B', quantity: 2, value: 18 }
 ];
 const getSummary = ({ data }) => [
-	`共 ${data.length} 种商品`,
+	`共 ${data.length} 项`,
 	data.reduce((sum, row) => sum + row.quantity, 0),
-	`¥ ${data.reduce((sum, row) => sum + row.amount, 0).toFixed(2)}`
+	`${data.reduce((sum, row) => sum + row.value, 0).toFixed(2)}`
 ];
 </script>
 <style scoped>
@@ -1462,7 +1461,7 @@ label { display: block; margin-bottom: 12px; }
 <template>
 	<Table :data="rows" :get-span="getSpan" :height="280" primary-key="id" border>
 		<TableColumn prop="group" label="分组" width="120" fixed="left" />
-		<TableColumn prop="name" label="任务" min-width="180" />
+		<TableColumn prop="name" label="名称" min-width="180" />
 		<TableColumn prop="status" label="状态" width="120" />
 	</Table>
 </template>
@@ -1472,7 +1471,7 @@ import { Table, TableColumn } from '@deot/vc';
 const rows = Array.from({ length: 40 }, (_, index) => ({
 	id: index + 1,
 	group: `分组 ${Math.floor(index / 2) + 1}`,
-	name: `任务 ${index + 1}`,
+	name: `条目 ${index + 1}`,
 	status: index % 2 ? '进行中' : '已完成'
 }));
 const getSpan = ({ rowIndex, columnIndex }) => {
@@ -1492,10 +1491,10 @@ const getSpan = ({ rowIndex, columnIndex }) => {
 ```vue
 <template>
 	<Table :data="rows" border resizable>
-		<TableColumn prop="name" label="姓名" width="100" fixed="left" />
-		<TableColumn label="联系信息">
-			<TableColumn prop="city" label="常驻城市" width="120" />
-			<TableColumn prop="address" label="详细联系地址（拖动列边缘调整宽度）" :header-line="2" :line="2" min-width="180" />
+		<TableColumn prop="name" label="名称" width="100" fixed="left" />
+		<TableColumn label="详细信息">
+			<TableColumn prop="group" label="分组" width="120" />
+			<TableColumn prop="desc" label="详细说明（拖动列边缘调整宽度）" :header-line="2" :line="2" min-width="180" />
 		</TableColumn>
 	</Table>
 </template>
@@ -1503,8 +1502,8 @@ const getSpan = ({ rowIndex, columnIndex }) => {
 import { Table, TableColumn } from '@deot/vc';
 
 const rows = [
-	{ name: '小林', city: '杭州', address: '这是一段较长的联系地址，用于展示两行截断与悬停提示；调整列宽后会重新判断是否需要提示。' },
-	{ name: '小周', city: '上海', address: '浦东新区示例路 12 号' }
+	{ name: '条目 1', group: '分组 A', desc: '这是一段较长的说明文字，用于展示两行截断与悬停提示；调整列宽后会重新判断是否需要提示。' },
+	{ name: '条目 2', group: '分组 B', desc: '较短的说明' }
 ];
 </script>
 ```
@@ -1522,11 +1521,11 @@ const rows = [
 		<Button @click="handleToggle">{{ isEmpty ? '载入数据' : '清空数据' }}</Button>
 		<label><input v-model="isCustom" type="checkbox"> 自定义空状态</label>
 	</div>
-	<Table :data="isEmpty ? [] : rows" empty-text="尚未创建任务">
-		<TableColumn prop="name" label="任务" />
-		<TableColumn prop="owner" label="负责人" />
+	<Table :data="isEmpty ? [] : rows" empty-text="暂无条目">
+		<TableColumn prop="name" label="名称" />
+		<TableColumn prop="remark" label="备注" />
 		<template v-if="isCustom" #empty><span>没有匹配结果，请调整条件。</span></template>
-		<template v-if="!isEmpty" #append><p>共 {{ rows.length }} 条任务，尾部可放说明或加载入口。</p></template>
+		<template v-if="!isEmpty" #append><p>共 {{ rows.length }} 条，尾部可放说明或加载入口。</p></template>
 	</Table>
 </template>
 <script setup>
@@ -1535,7 +1534,7 @@ import { Button, Table, TableColumn } from '@deot/vc';
 
 const isEmpty = ref(true);
 const isCustom = ref(false);
-const rows = [{ name: '准备发布', owner: '小林' }];
+const rows = [{ name: '条目 1', remark: '备注内容' }];
 const handleToggle = () => { isEmpty.value = !isEmpty.value; };
 </script>
 <style scoped>

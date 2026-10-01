@@ -26,10 +26,10 @@
 			@column-dragend="log('column-dragend', $event)"
 		>
 			<TableColumn type="selection" />
-			<TableColumn prop="name" label="姓名" :width="120" />
+			<TableColumn prop="name" label="名称" :width="120" />
 			<TableColumn prop="date" label="日期" :width="140" sortable />
-			<TableColumn prop="city" label="城市" :width="120" />
-			<TableColumn prop="address" label="地址" :min-width="220" />
+			<TableColumn prop="group" label="分组" :width="120" />
+			<TableColumn prop="desc" label="说明" :min-width="220" />
 		</Table>
 		<pre class="drag-column-demo__log">{{ logs.join('\n') || '事件日志' }}</pre>
 
@@ -46,7 +46,7 @@
 			style="width: 720px;"
 		>
 			<TableColumn prop="id" label="编号" :width="80" fixed="left" />
-			<TableColumn prop="name" label="姓名" :width="100" fixed="left" />
+			<TableColumn prop="name" label="名称" :width="100" fixed="left" />
 			<TableColumn
 				v-for="i in 10"
 				:key="i"
@@ -54,7 +54,7 @@
 				:label="`字段 ${i}`"
 				:width="120"
 			/>
-			<TableColumn prop="city" label="城市" :width="100" fixed="right" />
+			<TableColumn prop="group" label="分组" :width="100" fixed="right" />
 			<TableColumn prop="date" label="日期" :width="120" fixed="right" />
 		</Table>
 
@@ -72,20 +72,20 @@
 			primary-key="id"
 			border
 		>
-			<TableColumn prop="name" label="姓名" :width="120" />
+			<TableColumn prop="name" label="名称" :width="120" />
 			<TableColumn label="基本信息">
 				<TableColumn prop="date" label="日期" :width="140" />
-				<TableColumn prop="city" label="城市" :width="120" />
+				<TableColumn prop="group" label="分组" :width="120" />
 			</TableColumn>
-			<TableColumn label="地址信息">
-				<TableColumn prop="province" label="省份" :width="120" />
-				<TableColumn prop="address" label="地址" :min-width="220" />
+			<TableColumn label="详细信息">
+				<TableColumn prop="subgroup" label="子分组" :width="120" />
+				<TableColumn prop="desc" label="说明" :min-width="220" />
 			</TableColumn>
 		</Table>
 
 		<h2>4. allowDrag / allowDrop</h2>
 		<p class="drag-column-demo__tip">
-			「姓名」列锁定，不可拖动（没有 move 光标）；其他列不能放到「姓名」之前（插入线变为错误色，松手不生效）。
+			「名称」列锁定，不可拖动（没有 move 光标）；其他列不能放到「名称」之前（插入线变为错误色，松手不生效）。
 			参数带 type: 'column'，行拖拽时为 type: 'block'。
 		</p>
 		<div class="drag-column-demo__status">
@@ -94,16 +94,16 @@
 		<Table
 			:data="data"
 			:draggable="[false, true]"
-			:allow-drag="({ type, column }) => type !== 'column' || column.label !== '姓名'"
+			:allow-drag="({ type, column }) => type !== 'column' || column.label !== '名称'"
 			:allow-drop="handleAllowDrop"
 			primary-key="id"
 			border
 			@column-dragend="dropText = ''"
 		>
-			<TableColumn prop="name" label="姓名" :width="120" />
+			<TableColumn prop="name" label="名称" :width="120" />
 			<TableColumn prop="date" label="日期" :width="140" />
-			<TableColumn prop="city" label="城市" :width="120" />
-			<TableColumn prop="address" label="地址" :min-width="220" />
+			<TableColumn prop="group" label="分组" :width="120" />
+			<TableColumn prop="desc" label="说明" :min-width="220" />
 		</Table>
 
 		<h2>5. 行、列同时拖拽</h2>
@@ -117,26 +117,26 @@
 			border
 		>
 			<TableColumn type="drag" />
-			<TableColumn prop="name" label="姓名" :width="120" />
+			<TableColumn prop="name" label="名称" :width="120" />
 			<TableColumn prop="date" label="日期" :width="140" />
-			<TableColumn prop="city" label="城市" :width="120" />
-			<TableColumn prop="address" label="地址" :min-width="220" />
+			<TableColumn prop="group" label="分组" :width="120" />
+			<TableColumn prop="desc" label="说明" :min-width="220" />
 		</Table>
 		<div style="height: 200px;" />
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue';
+import { ref, onBeforeUnmount } from 'vue';
 import { Table, TableColumn } from '..';
 
-const cities = ['杭州', '上海', '北京', '深圳', '成都'];
+const groups = ['分组 A', '分组 B', '分组 C', '分组 D', '分组 E'];
 const genData = length => Array.from({ length }).map((_, i) => ({
 	id: i + 1,
-	name: `用户 ${i + 1}`,
+	name: `条目 ${i + 1}`,
 	date: `2011-11-${String(i + 1).padStart(2, '0')}`,
-	city: cities[i % cities.length],
-	province: '浙江省',
-	address: `拱墅区祥园路 ${i + 1} 号`,
+	group: groups[i % groups.length],
+	subgroup: '子分组 A',
+	desc: `条目 ${i + 1} 的说明`,
 	...Object.fromEntries(Array.from({ length: 10 }).map((__, j) => [`field${j + 1}`, `${i + 1}-${j + 1}`]))
 }));
 
@@ -164,11 +164,15 @@ const dropText = ref('');
 const handleAllowDrop = ({ type, column, targetColumn, position }) => {
 	if (type !== 'column') return true;
 	dropText.value = `${column.label} → ${position} ${targetColumn.label}`;
-	return !(targetColumn.label === '姓名' && position === 'before');
+	return !(targetColumn.label === '名称' && position === 'before');
 };
 
 // 5. 行、列同时拖拽
 const bothData = ref(genData(5));
+
+// 右上角的性能读数
+window.$perf?.observe();
+onBeforeUnmount(() => window.$perf?.disconnect());
 </script>
 
 <style lang="scss">

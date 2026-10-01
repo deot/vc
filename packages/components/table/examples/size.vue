@@ -1,16 +1,17 @@
 <template>
 	<div style="padding: 30px;">
-		<RadioGroup v-model="size" type="button" style="margin-bottom: 16px;">
-			<Radio
-				v-for="item in sizes"
-				:key="item.value"
-				:value="item.value"
+		<div class="table-controls">
+			<Select
+				v-for="item in CONTROLS"
+				:key="item.key"
+				v-model="controls[item.key]"
+				:data="item.data"
 				:label="item.label"
 			/>
-		</RadioGroup>
+		</div>
 		<Table
 			:data="dataSource"
-			:size="size"
+			:size="controls.size"
 			primary-key="id"
 			border
 			stripe
@@ -18,7 +19,7 @@
 		>
 			<TableColumn
 				prop="name"
-				label="姓名"
+				label="名称"
 				fixed="left"
 				:width="120"
 			/>
@@ -28,13 +29,13 @@
 				:width="160"
 			/>
 			<TableColumn
-				prop="address"
-				label="地址"
+				prop="desc"
+				label="说明"
 				:min-width="360"
 			/>
 			<TableColumn
-				prop="amount"
-				label="金额"
+				prop="value"
+				label="数值"
 				fixed="right"
 				:width="120"
 			/>
@@ -42,26 +43,49 @@
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive, onBeforeUnmount, watch } from 'vue';
 import { Table, TableColumn } from '..';
-import { Radio, RadioGroup } from '../../radio';
+import { Select } from '../../select';
 
-// medium 为默认尺寸
-const size = ref('medium');
-const sizes = [
-	{ label: 'large', value: 'large' },
-	{ label: 'medium（默认）', value: 'medium' },
-	{ label: 'small', value: 'small' },
-	{ label: 'mini', value: 'mini' }
+// 对照项：每项一个 Select；medium 为默认尺寸
+const CONTROLS = [
+	{
+		key: 'size',
+		label: 'size',
+		data: [
+			{ value: 'medium', label: 'medium（默认）' },
+			{ value: 'large', label: 'large' },
+			{ value: 'small', label: 'small' },
+			{ value: 'mini', label: 'mini' }
+		]
+	}
 ];
+const controls = reactive(Object.fromEntries(CONTROLS.map(({ key, data }) => [key, data[0].value])));
 
 const dataSource = ref(
 	Array.from({ length: 6 }, (_, index) => ({
 		id: index + 1,
-		name: `用户 ${index + 1}`,
+		name: `条目 ${index + 1}`,
 		date: `2016-05-0${index + 1}`,
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼',
-		amount: (index + 1) * 100
+		desc: '这是一段较长的说明文字，用于展示不同尺寸下单元格的换行与间距',
+		value: (index + 1) * 100
 	}))
 );
+
+// 右上角的性能读数：切换对照项后清零
+window.$perf?.observe();
+watch(controls, () => window.$perf?.reset());
+onBeforeUnmount(() => window.$perf?.disconnect());
 </script>
+
+<style lang="scss">
+.table-controls {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 16px;
+
+	.vc-select {
+		width: 240px;
+	}
+}
+</style>

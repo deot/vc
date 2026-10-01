@@ -3,7 +3,7 @@
 		<div style="margin-bottom: 16px;">
 			当前筛选：类型 {{ typeFilter || '全部' }}；
 			状态 {{ statusFilter.length ? statusFilter.join(' / ') : '全部' }}；
-			城市 {{ cityFilter.length ? cityFilter.join(' / ') : '全部' }}
+			分组 {{ groupFilter.length ? groupFilter.join(' / ') : '全部' }}
 		</div>
 		<Table
 			:data="filteredData"
@@ -40,68 +40,73 @@
 			/>
 			<!-- 只用 onChange（非受控）：组件自己记录确认结果，多选收到数组 -->
 			<TableColumn
-				prop="city"
-				label="城市"
+				prop="group"
+				label="分组"
 				:width="160"
 				:filter-options="{
-					data: cityOptions,
+					data: groupOptions,
 					max: Infinity,
-					onChange: handleCityChange
+					onChange: handleGroupChange
 				}"
 			/>
 			<TableColumn
-				prop="address"
-				label="地址"
+				prop="desc"
+				label="说明"
 				:min-width="240"
 			/>
 		</Table>
 	</div>
 </template>
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onBeforeUnmount, watch } from 'vue';
 import { Table, TableColumn } from '..';
 
 const typeOptions = [
-	{ label: '代理升级', value: '代理升级' },
-	{ label: '代理加入', value: '代理加入' }
+	{ label: '类型 A', value: '类型 A' },
+	{ label: '类型 B', value: '类型 B' }
 ];
 const statusOptions = [
-	{ label: '待审核', value: '待审核' },
-	{ label: '已通过', value: '已通过' },
-	{ label: '已驳回', value: '已驳回' },
+	{ label: '待处理', value: '待处理' },
+	{ label: '进行中', value: '进行中' },
+	{ label: '已完成', value: '已完成' },
 	{ label: '已归档', value: '已归档', disabled: true }
 ];
-const cityOptions = [
-	{ label: '杭州', value: '杭州' },
-	{ label: '上海', value: '上海' },
-	{ label: '北京', value: '北京' }
+const groupOptions = [
+	{ label: '分组 A', value: '分组 A' },
+	{ label: '分组 B', value: '分组 B' },
+	{ label: '分组 C', value: '分组 C' }
 ];
 
 const dataSource = ref(
 	Array.from({ length: 12 }, (_, index) => ({
 		id: index + 1,
-		name: `申请 ${index + 1}`,
+		name: `条目 ${index + 1}`,
 		type: typeOptions[index % 2].value,
 		status: statusOptions[index % 3].value,
-		city: cityOptions[index % 3].value,
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼'
+		group: groupOptions[index % 3].value,
+		desc: `条目 ${index + 1} 的说明`
 	}))
 );
 
 // 表格只负责交互，过滤由外部完成
 const typeFilter = ref();
 const statusFilter = ref([]);
-const cityFilter = ref([]);
+const groupFilter = ref([]);
 
-const handleCityChange = (value) => {
-	cityFilter.value = value;
+const handleGroupChange = (value) => {
+	groupFilter.value = value;
 };
 
 const filteredData = computed(() => {
 	return dataSource.value.filter((row) => {
 		return (!typeFilter.value || row.type === typeFilter.value)
 			&& (!statusFilter.value.length || statusFilter.value.includes(row.status))
-			&& (!cityFilter.value.length || cityFilter.value.includes(row.city));
+			&& (!groupFilter.value.length || groupFilter.value.includes(row.group));
 	});
 });
+
+// 右上角的性能读数：筛选变化后清零
+window.$perf?.observe();
+watch([typeFilter, statusFilter, groupFilter], () => window.$perf?.reset());
+onBeforeUnmount(() => window.$perf?.disconnect());
 </script>

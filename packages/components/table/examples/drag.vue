@@ -27,7 +27,7 @@
 		>
 			<TableColumn type="selection" />
 			<TableColumn type="index" label="#" />
-			<TableColumn prop="name" label="姓名" :width="140" />
+			<TableColumn prop="name" label="名称" :width="140" />
 			<TableColumn prop="date" label="日期" :width="160" />
 			<TableColumn label="备注" :min-width="200">
 				<template #default="{ row }">
@@ -58,7 +58,7 @@
 			:allow-drop="({ targetRows, position }) => !(targetRows[0].pinned && position === 'before')"
 		>
 			<TableColumn type="drag" fixed="left" />
-			<TableColumn prop="name" label="姓名" fixed="left" :width="160">
+			<TableColumn prop="name" label="名称" fixed="left" :width="160">
 				<template #default="{ row }">
 					{{ row.name }}
 					<span v-if="row.pinned" class="drag-demo__tag">置顶</span>
@@ -101,7 +101,7 @@
 		>
 			<TableColumn type="drag" fixed="left" />
 			<TableColumn type="index" label="#" fixed="left" />
-			<TableColumn prop="name" label="姓名" :width="140" />
+			<TableColumn prop="name" label="名称" :width="140" />
 			<TableColumn
 				v-for="n in 6"
 				:key="n"
@@ -133,7 +133,7 @@
 			:get-span="getSpan"
 		>
 			<TableColumn prop="group" label="分组" :width="120" />
-			<TableColumn prop="name" label="姓名" :width="140" />
+			<TableColumn prop="name" label="名称" :width="140" />
 			<TableColumn prop="date" label="日期" :min-width="160" />
 			<TableColumn label="操作" :width="140">
 				<template #default="{ row }">
@@ -163,7 +163,7 @@
 			@block-drop="handleAsyncDrop"
 		>
 			<TableColumn type="index" label="#" />
-			<TableColumn prop="name" label="姓名" :width="140" />
+			<TableColumn prop="name" label="名称" :width="140" />
 			<TableColumn prop="date" label="日期" :min-width="160" />
 			<TableColumn label="操作" :width="140">
 				<template #default="{ row }">
@@ -191,12 +191,12 @@
 			<TableColumn type="drag" />
 			<TableColumn type="expand">
 				<template #default="{ row }">
-					<div>{{ row.name }} 的详情：{{ row.address }}</div>
+					<div>{{ row.name }} 的详情：{{ row.desc }}</div>
 				</template>
 			</TableColumn>
-			<TableColumn prop="name" label="姓名" :width="140" />
+			<TableColumn prop="name" label="名称" :width="140" />
 			<TableColumn prop="date" label="日期" :width="160" />
-			<TableColumn prop="address" label="地址" :min-width="200" />
+			<TableColumn prop="desc" label="说明" :min-width="200" />
 			<TableColumn label="操作" :width="140">
 				<template #default="{ row }">
 					<div class="drag-demo__actions">
@@ -219,7 +219,7 @@
 				draggable
 			>
 				<TableColumn type="index" label="#" />
-				<TableColumn prop="name" label="姓名" :width="140" />
+				<TableColumn prop="name" label="名称" :width="140" />
 				<TableColumn prop="date" label="日期" :min-width="160" />
 				<TableColumn label="操作" :width="140">
 					<template #default="{ row }">
@@ -235,7 +235,7 @@
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue';
+import { ref, onBeforeUnmount } from 'vue';
 import { Table, TableColumn } from '..';
 import { Button } from '../../button';
 
@@ -247,7 +247,7 @@ const withFields = (item, count) => Array.from({ length: count }).reduce((pre, _
 
 const genData = (length, prefix = 'id') => Array.from({ length }).map((_, index) => ({
 	id: `${prefix}${index}`,
-	name: `用户 ${index}`,
+	name: `条目 ${index}`,
 	date: `2011-11-${String((index % 28) + 1).padStart(2, '0')}`,
 	remark: ''
 }));
@@ -315,10 +315,14 @@ const handleAsyncDrop = (e) => {
 };
 
 // 6. 展开行 + 流式高度
-const expandData = ref(genData(40, 'e').map(item => ({ ...item, address: `祥园路 ${item.id} 号` })));
+const expandData = ref(genData(40, 'e').map(item => ({ ...item, desc: `条目 ${item.id} 的说明` })));
 
 // 7. 滚动容器
 const containerData = ref(genData(20, 'c'));
+
+// 右上角的性能读数
+window.$perf?.observe();
+onBeforeUnmount(() => window.$perf?.disconnect());
 </script>
 
 <style lang="scss">

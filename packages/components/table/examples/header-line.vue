@@ -1,15 +1,13 @@
 <template>
 	<div style="padding: 30px;">
-		<div style="margin-bottom: 16px;">
-			<span>全局 TableColumn.headerLine：</span>
-			<RadioGroup v-model="globalLine" type="button">
-				<Radio
-					v-for="item in globalLines"
-					:key="item.label"
-					:value="item.value"
-					:label="item.label"
-				/>
-			</RadioGroup>
+		<div class="table-controls">
+			<Select
+				v-for="item in CONTROLS"
+				:key="item.key"
+				v-model="controls[item.key]"
+				:data="item.data"
+				:label="item.label"
+			/>
 		</div>
 
 		<h3>height：表头随列宽换行，表体高度随表头联动（拖动列宽 / 缩放窗口）</h3>
@@ -29,7 +27,7 @@
 			/>
 			<TableColumn
 				prop="name"
-				label="姓名（未设置 header-line，取全局配置，均未设置时为 1）"
+				label="名称（未设置 header-line，取全局配置，均未设置时为 1）"
 				fixed="left"
 				:width="160"
 			/>
@@ -49,21 +47,21 @@
 				:filter-options="{ data: typeOptions }"
 			/>
 			<TableColumn
-				prop="amount"
-				label="金额（右对齐）"
+				prop="value"
+				label="数值（右对齐）"
 				header-align="right"
 				align="right"
 				:header-line="2"
 				:width="100"
 			/>
 			<TableColumn
-				prop="address"
+				prop="desc"
 				:min-width="240"
 			>
 				<template #header>
 					<!-- 自定义表头不走 header-line：保持单行省略，高度由内容撑开 -->
 					<div style="display: flex; justify-content: space-between;">
-						<span>地址（header 插槽）</span>
+						<span>说明（header 插槽）</span>
 						<span>space-between</span>
 					</div>
 				</template>
@@ -82,7 +80,7 @@
 		>
 			<TableColumn
 				prop="name"
-				label="姓名（跨行）"
+				label="名称（跨行）"
 				:width="120"
 			/>
 			<TableColumn
@@ -90,20 +88,20 @@
 				:header-line="2"
 			>
 				<TableColumn
-					prop="city"
-					label="城市（header-line=0 不限行数）"
+					prop="group"
+					label="分组（header-line=0 不限行数）"
 					:header-line="0"
 					:width="120"
 				/>
 				<TableColumn
-					prop="amount"
-					label="金额"
+					prop="value"
+					label="数值"
 					:width="100"
 				/>
 			</TableColumn>
 			<TableColumn
-				prop="address"
-				label="地址"
+				prop="desc"
+				label="说明"
 				:min-width="240"
 			/>
 		</Table>
@@ -117,18 +115,18 @@
 		>
 			<TableColumn
 				prop="name"
-				label="姓名"
+				label="名称"
 				:width="120"
 			/>
 			<TableColumn
-				prop="address"
-				label="地址（header-line=2）浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼"
+				prop="desc"
+				label="说明（header-line=2）这是一段很长的表头文字，用于展示表头换行与截断后的效果"
 				:header-line="2"
 				:min-width="200"
 			/>
 			<TableColumn
-				prop="amount"
-				label="金额"
+				prop="value"
+				label="数值"
 				:width="120"
 			/>
 		</Table>
@@ -142,12 +140,12 @@
 		>
 			<TableColumn
 				prop="name"
-				label="姓名"
+				label="名称"
 				:width="120"
 			/>
 			<TableColumn
-				prop="address"
-				label="地址（header-line=3）浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼"
+				prop="desc"
+				label="说明（header-line=3）这是一段很长的表头文字，用于展示表头换行与截断后的效果"
 				:header-line="3"
 				:width="160"
 			/>
@@ -161,21 +159,24 @@
 	</div>
 </template>
 <script setup>
-import { ref, computed, watch, onBeforeUnmount } from 'vue';
+import { ref, computed, reactive, watch, onBeforeUnmount } from 'vue';
 import { Table, TableColumn } from '..';
-import { Radio, RadioGroup } from '../../radio';
+import { Select } from '../../select';
 import { VcInstance } from '../../vc';
 
 // 仅演示：修改全局配置，离开页面时还原
 const original = VcInstance.options.TableColumn?.headerLine;
-const globalLine = ref(original ?? '');
-const globalLines = [
-	{ label: '未设置', value: '' },
-	{ label: '1', value: 1 },
-	{ label: '2', value: 2 }
+// 对照项：每项一个 Select
+const CONTROLS = [
+	{
+		key: 'headerLine',
+		label: '全局 TableColumn.headerLine',
+		data: [{ value: 'unset', label: '未设置' }, { value: 1, label: '1' }, { value: 2, label: '2' }]
+	}
 ];
-watch(globalLine, (v) => {
-	VcInstance.options.TableColumn.headerLine = v === '' ? void 0 : v;
+const controls = reactive({ headerLine: original ?? 'unset' });
+watch(() => controls.headerLine, (v) => {
+	VcInstance.options.TableColumn.headerLine = v === 'unset' ? void 0 : v;
 });
 onBeforeUnmount(() => {
 	VcInstance.options.TableColumn.headerLine = original;
@@ -186,19 +187,36 @@ const heightLayout = computed(() => heightTable.value?.layout.states || {});
 
 const sort = ref({});
 const typeOptions = [
-	{ label: '代理升级', value: '代理升级' },
-	{ label: '代理加入', value: '代理加入' }
+	{ label: '类型 A', value: '类型 A' },
+	{ label: '类型 B', value: '类型 B' }
 ];
 
 const dataSource = ref(
 	Array.from({ length: 20 }, (_, index) => ({
 		id: index + 1,
-		name: `用户 ${index + 1}`,
+		name: `条目 ${index + 1}`,
 		date: `2016-05-${String(index + 1).padStart(2, '0')}`,
-		type: index % 2 ? '代理升级' : '代理加入',
-		city: '杭州',
-		amount: (index + 1) * 100,
-		address: '浙江省杭州市拱墅区祥园路38号浙报印务大厦15号入口4楼'
+		type: index % 2 ? '类型 A' : '类型 B',
+		group: '分组 A',
+		value: (index + 1) * 100,
+		desc: '这是一段较长的说明文字，用于展示单元格内容的换行与截断'
 	}))
 );
+
+// 右上角的性能读数：切换对照项后清零
+window.$perf?.observe();
+watch(controls, () => window.$perf?.reset());
+onBeforeUnmount(() => window.$perf?.disconnect());
 </script>
+
+<style lang="scss">
+.table-controls {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 16px;
+
+	.vc-select {
+		width: 320px;
+	}
+}
+</style>

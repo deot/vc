@@ -117,7 +117,7 @@
 	</div>
 </template>
 <script setup>
-import { ref } from 'vue';
+import { ref, onBeforeUnmount } from 'vue';
 import { Table, TableColumn } from '..';
 import { Button } from '../../button';
 
@@ -132,14 +132,14 @@ const node = (name, children, extra) => ({
 
 // 1. 嵌套树
 const treeData = ref([
-	node('部门 A', [
-		node('小组 A-1', [node('成员 A-1-1'), node('成员 A-1-2')]),
-		node('小组 A-2', [node('成员 A-2-1')]),
-		node('成员 A-3')
+	node('分组 A', [
+		node('子组 A-1', [node('条目 A-1-1'), node('条目 A-1-2')]),
+		node('子组 A-2', [node('条目 A-2-1')]),
+		node('条目 A-3')
 	]),
-	node('部门 B', [node('成员 B-1'), node('成员 B-2')]),
-	node('部门 C'),
-	node('部门 D', [node('小组 D-1', [node('成员 D-1-1')])])
+	node('分组 B', [node('条目 B-1'), node('条目 B-2')]),
+	node('分组 C'),
+	node('分组 D', [node('子组 D-1', [node('条目 D-1-1')])])
 ]);
 
 const place = ({ parent, index }) => `${parent ? parent.name : '根级'}[${index}]`;
@@ -172,15 +172,15 @@ const handleDrop = ({ rows, from, to }) => {
 
 // 2. 懒加载树：hasChildren 的节点展开时加载 3 个子行
 const lazyData = ref([
-	node('目录 1', null, { hasChildren: true }),
-	node('目录 2', null, { hasChildren: true }),
-	node('文件 3'),
-	node('文件 4')
+	node('分组 1', null, { hasChildren: true }),
+	node('分组 2', null, { hasChildren: true }),
+	node('条目 3'),
+	node('条目 4')
 ]);
 // 加载结果同时写入 row.children：与表格持有同一个数组，之后原地增删（删除、拖入拖出）两边一致
 const loadExpand = row => new Promise((resolve) => {
 	setTimeout(() => {
-		row.children = [1, 2, 3].map(i => node(`${row.name} - 文件 ${i}`));
+		row.children = [1, 2, 3].map(i => node(`${row.name} - 条目 ${i}`));
 		resolve(row.children);
 	}, 400);
 });
@@ -195,8 +195,12 @@ const sameLevelData = ref([
 // 4. 虚拟滚动大树
 const bigData = ref(Array.from({ length: 30 }).map((_, i) => node(
 	`分组 ${i + 1}`,
-	Array.from({ length: 30 }).map((__, j) => node(`分组 ${i + 1} - 成员 ${j + 1}`))
+	Array.from({ length: 30 }).map((__, j) => node(`分组 ${i + 1} - 条目 ${j + 1}`))
 )));
+
+// 右上角的性能读数
+window.$perf?.observe();
+onBeforeUnmount(() => window.$perf?.disconnect());
 </script>
 
 <style lang="scss">

@@ -2,23 +2,15 @@
 	<div style="padding: 20px;">
 		<h1>Tree</h1>
 		<div class="toolbar">
-			<span>渲染模式：</span>
-			<Button
-				v-for="item in modes"
-				:key="item.value"
-				:type="mode === item.value ? 'primary' : 'default'"
-				@click="mode = item.value"
-			>
-				{{ item.label }}
-			</Button>
+			<Select
+				v-for="item in CONTROLS"
+				:key="item.key"
+				v-model="controls[item.key]"
+				:data="item.data"
+				:label="item.label"
+			/>
 		</div>
 		<div class="toolbar">
-			<Button @click="expandSelectable = !expandSelectable">
-				expandSelectable: {{ expandSelectable }}
-			</Button>
-			<Button @click="defaultExpandAll = !defaultExpandAll">
-				defaultExpandAll: {{ defaultExpandAll }}
-			</Button>
 			<Button @click="handleUpdate">
 				update
 			</Button>
@@ -53,7 +45,7 @@
 			/>
 			<TableColumn
 				prop="name"
-				label="姓名"
+				label="名称"
 				:min-width="180"
 			>
 				<template #default="{ row }">
@@ -67,18 +59,18 @@
 				</template>
 			</TableColumn>
 			<TableColumn
-				prop="address"
-				label="地址"
+				prop="desc"
+				label="说明"
 				:min-width="200"
 			>
 				<template #default="{ row }">
 					<input
 						v-if="editingId === row.id"
-						v-model="draft.address"
+						v-model="draft.desc"
 						type="text"
 						style="width: 100%;"
 					>
-					<span v-else>{{ row.address }}</span>
+					<span v-else>{{ row.desc }}</span>
 				</template>
 			</TableColumn>
 			<TableColumn
@@ -109,22 +101,30 @@
 	</div>
 </template>
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed, onBeforeUnmount, watch } from 'vue';
 import { Table, TableColumn } from '..';
 import { Button } from '../../button';
+import { Select } from '../../select';
 
-const modes = [
-	{ label: '普通', value: 'normal' },
-	{ label: '虚拟 · height=400', value: 'height' },
-	{ label: '虚拟 · virtualized', value: 'virtualized' }
+// 对照项：每项一个 Select
+const CONTROLS = [
+	{
+		key: 'mode',
+		label: '渲染模式',
+		data: [{ value: 'normal', label: '普通' }, { value: 'height', label: '虚拟 · height=400' }, { value: 'virtualized', label: '虚拟 · virtualized' }]
+	},
+	{ key: 'expandSelectable', label: 'expandSelectable', data: [{ value: 'on', label: 'true' }, { value: 'off', label: 'false' }] },
+	{ key: 'defaultExpandAll', label: 'defaultExpandAll', data: [{ value: 'off', label: 'false' }, { value: 'on', label: 'true' }] }
 ];
+const controls = reactive(Object.fromEntries(CONTROLS.map(({ key, data }) => [key, data[0].value])));
+const mode = computed(() => controls.mode);
 
 const random = () => Math.ceil(Math.random() * 10000);
 const createRow = (id, extra = {}) => ({
 	id,
 	date: new Date(Date.now() - random() * 3600 * 1000).toISOString().slice(0, 10),
-	name: `代号 - ${random()}`,
-	address: `祥园路${random()}号`,
+	name: `条目 ${random()}`,
+	desc: `条目说明 ${random()}`,
 	...extra
 });
 
@@ -153,10 +153,9 @@ const getData = () => Array.from({ length: 100 }, (_, index) => {
 	return createRow(id);
 });
 
-const mode = ref('normal');
 const tableRef = ref();
-const expandSelectable = ref(true);
-const defaultExpandAll = ref(false);
+const expandSelectable = computed(() => controls.expandSelectable === 'on');
+const defaultExpandAll = computed(() => controls.defaultExpandAll === 'on');
 const treeWidth = ref(180);
 const selection = ref([]);
 const dataSource = ref(getData());
@@ -193,15 +192,15 @@ const handleToggle = () => {
 
 // 编辑：只改草稿，保存时写回行对象
 const editingId = ref(null);
-const draft = reactive({ name: '', address: '' });
+const draft = reactive({ name: '', desc: '' });
 const handleEdit = (row) => {
 	editingId.value = row.id;
 	draft.name = row.name;
-	draft.address = row.address;
+	draft.desc = row.desc;
 };
 const handleSave = (row) => {
 	row.name = draft.name;
-	row.address = draft.address;
+	row.desc = draft.desc;
 	editingId.value = null;
 };
 const handleCancel = () => {
@@ -228,6 +227,11 @@ const handleDelete = (row) => {
 	if (removeFrom(dataSource.value, row)) return;
 	Object.keys(lazyChildren).some(id => removeFrom(lazyChildren[id], row));
 };
+
+// 右上角的性能读数：切换对照项后清零
+window.$perf?.observe();
+watch(controls, () => window.$perf?.reset());
+onBeforeUnmount(() => window.$perf?.disconnect());
 </script>
 <style scoped>
 .toolbar {
@@ -236,5 +240,9 @@ const handleDelete = (row) => {
 	flex-wrap: wrap;
 	gap: 8px;
 	align-items: center;
+}
+
+.toolbar .vc-select {
+	width: 260px;
 }
 </style>

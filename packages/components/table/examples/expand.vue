@@ -2,15 +2,13 @@
 	<div style="padding: 20px;">
 		<h1>Expand</h1>
 		<div class="toolbar">
-			<span>渲染模式：</span>
-			<Button
-				v-for="item in modes"
-				:key="item.value"
-				:type="mode === item.value ? 'primary' : 'default'"
-				@click="mode = item.value"
-			>
-				{{ item.label }}
-			</Button>
+			<Select
+				v-for="item in CONTROLS"
+				:key="item.key"
+				v-model="controls[item.key]"
+				:data="item.data"
+				:label="item.label"
+			/>
 		</div>
 		<div class="toolbar">
 			<Button @click="handleUpdate">
@@ -34,9 +32,9 @@
 			<TableColumn type="expand">
 				<template #default="{ row }">
 					<div class="detail">
-						<p><b>姓名：</b>{{ row.name }}</p>
-						<p class="detail__address">
-							<b>地址：</b>{{ row.address }}
+						<p><b>名称：</b>{{ row.name }}</p>
+						<p class="detail__desc">
+							<b>说明：</b>{{ row.desc }}
 						</p>
 						<p v-for="(remark, index) in row.remarks" :key="index">
 							<b>备注 {{ index + 1 }}：</b>{{ remark }}
@@ -56,7 +54,7 @@
 			/>
 			<TableColumn
 				prop="name"
-				label="姓名"
+				label="名称"
 				:min-width="160"
 			>
 				<template #default="{ row }">
@@ -70,18 +68,18 @@
 				</template>
 			</TableColumn>
 			<TableColumn
-				prop="address"
-				label="地址（多行编辑，展开区随之变高）"
+				prop="desc"
+				label="说明（多行编辑，展开区随之变高）"
 				:min-width="260"
 			>
 				<template #default="{ row }">
 					<textarea
 						v-if="editingId === row.id"
-						v-model="draft.address"
+						v-model="draft.desc"
 						rows="3"
 						style="width: 100%;"
 					/>
-					<span v-else>{{ row.address }}</span>
+					<span v-else>{{ row.desc }}</span>
 				</template>
 			</TableColumn>
 			<TableColumn
@@ -112,15 +110,21 @@
 	</div>
 </template>
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, onBeforeUnmount, watch } from 'vue';
 import { Table, TableColumn } from '..';
 import { Button } from '../../button';
+import { Select } from '../../select';
 
-const modes = [
-	{ label: '普通', value: 'normal' },
-	{ label: '虚拟 · height=400', value: 'height' },
-	{ label: '虚拟 · virtualized', value: 'virtualized' }
+// 对照项：每项一个 Select
+const CONTROLS = [
+	{
+		key: 'mode',
+		label: '渲染模式',
+		data: [{ value: 'normal', label: '普通' }, { value: 'height', label: '虚拟 · height=400' }, { value: 'virtualized', label: '虚拟 · virtualized' }]
+	}
 ];
+const controls = reactive(Object.fromEntries(CONTROLS.map(({ key, data }) => [key, data[0].value])));
+const mode = computed(() => controls.mode);
 
 const random = () => Math.ceil(Math.random() * 10000);
 
@@ -128,12 +132,11 @@ const random = () => Math.ceil(Math.random() * 10000);
 const getData = () => Array.from({ length: 100 }, (_, index) => ({
 	id: index + 1,
 	date: new Date(Date.now() - random() * 3600 * 1000).toISOString().slice(0, 10),
-	name: `代号 - ${random()}`,
-	address: `祥园路${random()}号`,
+	name: `条目 ${random()}`,
+	desc: `条目说明 ${random()}`,
 	remarks: Array.from({ length: index % 4 + 1 }, (__, i) => `第 ${index + 1} 行的第 ${i + 1} 条备注`)
 }));
 
-const mode = ref('normal');
 const tableRef = ref();
 const dataSource = ref(getData());
 const expandRowValue = ref([2]);
@@ -155,15 +158,15 @@ const handleToggle = () => {
 
 // 编辑：只改草稿，保存时写回行对象
 const editingId = ref(null);
-const draft = reactive({ name: '', address: '' });
+const draft = reactive({ name: '', desc: '' });
 const handleEdit = (row) => {
 	editingId.value = row.id;
 	draft.name = row.name;
-	draft.address = row.address;
+	draft.desc = row.desc;
 };
 const handleSave = (row) => {
 	row.name = draft.name;
-	row.address = draft.address;
+	row.desc = draft.desc;
 	editingId.value = null;
 };
 const handleCancel = () => {
@@ -175,6 +178,11 @@ const handleDelete = (row) => {
 	const index = dataSource.value.findIndex(item => item.id === row.id);
 	index !== -1 && dataSource.value.splice(index, 1);
 };
+
+// 右上角的性能读数：切换对照项后清零
+window.$perf?.observe();
+watch(controls, () => window.$perf?.reset());
+onBeforeUnmount(() => window.$perf?.disconnect());
 </script>
 <style scoped>
 .toolbar {
@@ -185,11 +193,15 @@ const handleDelete = (row) => {
 	align-items: center;
 }
 
+.toolbar .vc-select {
+	width: 260px;
+}
+
 .detail p {
 	margin: 4px 0;
 }
 
-.detail__address {
+.detail__desc {
 	white-space: pre-wrap;
 }
 </style>

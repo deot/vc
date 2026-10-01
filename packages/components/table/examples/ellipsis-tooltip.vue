@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onBeforeUnmount } from 'vue';
 import { Table, TableColumn } from '..';
 import { Button } from '../../button';
 
@@ -143,6 +143,10 @@ const run = async () => {
 	document.body.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
 	results.value = list;
 };
+
+// 右上角的性能读数
+window.$perf?.observe();
+onBeforeUnmount(() => window.$perf?.disconnect());
 </script>
 
 <style lang="scss">
@@ -163,8 +167,8 @@ const run = async () => {
 		font-size: 12px;
 
 		&.is-fixed {
-			color: #52c41a;
 			font-weight: bold;
+			color: #52c41a;
 		}
 	}
 
