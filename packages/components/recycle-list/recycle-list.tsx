@@ -889,12 +889,17 @@ export const RecycleList = defineComponent({
 				}
 			);
 
-			// 列数 / 列间距变化会改变列宽，行高要重新测量
+			// 列数 / 列间距变化会改变列宽，行高要重新测量。
+			// 新列数在本轮渲染前就已生效，而已排版节点的 column 还是旧值（列数变少时可能已不存在）：
+			// 先按已有尺寸（作估计值）同步重排并刷新可见范围，渲染中的行直接落到新列里，不留空白帧；
+			// 新列宽下的实际尺寸随后由 refreshLayout 重测
 			watch(
 				() => [props.cols, props.gutter],
 				async () => {
 					store.syncProps({ cols: props.cols, gutter: props.gutter });
+					store.layout.refresh();
 					if (!isMounted.value) return;
+					syncVisibleRange();
 					await nextTick();
 					isMounted.value && refreshLayout();
 				}

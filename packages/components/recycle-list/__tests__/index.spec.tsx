@@ -898,6 +898,158 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
+		describe('cols shrinks at runtime', () => {
+			// 列越窄行越高：列数变化后旧尺寸只是估计值，校正后才与 DOM 一致
+			const heightOf = (cols: number) => cols * 20;
+
+			/**
+			 * 断言布局自洽：每个节点都在有效列内，同列节点按下标首尾相接，内容高为最高列
+			 *
+			 * 给出 rowSize 时再按 DOM 核对渲染出来的行：记录的尺寸等于行的实际高度，
+			 * 行在列容器的 translate 之后流式排布，记录的位置与 DOM 位置一致
+			 * @param wrapper 挂载结果
+			 * @param states store.states
+			 * @param cols 当前列数
+			 * @param rowSize 行的实际高度；不给时不核对 DOM（尺寸仍是估计值的那一帧）
+			 */
+			const expectConsistent = (wrapper: any, states: any, cols: number, rowSize?: number) => {
+				const sizes = Array.from({ length: cols }, () => 0);
+				states.rebuildData.forEach((node: any) => {
+					expect(node.states.column).toBeGreaterThanOrEqual(0);
+					expect(node.states.column).toBeLessThan(cols);
+					expect(node.states.size).toBeGreaterThan(0);
+					expect(node.states.position).toBe(sizes[node.states.column]);
+					sizes[node.states.column] += node.states.size;
+				});
+				expect(states.contentMaxSize).toBe(Math.max(...sizes));
+
+				const columns = wrapper.findAll('.vc-recycle-list__column');
+				expect(columns.length).toBe(cols);
+				let shown = 0;
+				columns.forEach((column: any, index: number) => {
+					let top = Number(/\(([-\d.]+)px\)/.exec(column.attributes('style') || '')?.[1] || 0);
+					column.findAll('.vc-recycle-list__item').forEach((row: any) => {
+						const node = states.rebuildData[Number(row.text())];
+						expect(node.states.column).toBe(index);
+						if (rowSize) {
+							expect(node.states.size).toBe(rowSize);
+							expect(node.states.position).toBe(top);
+							top += rowSize;
+						}
+						shown++;
+					});
+				});
+				expect(shown).toBeGreaterThan(0);
+			};
+
+			/**
+			 * 断言每列渲染出来的行覆盖了视口（列内容不足视口时覆盖到列尾）
+			 * @param wrapper 挂载结果
+			 * @param states store.states
+			 */
+			const expectViewportCovered = (wrapper: any, states: any) => {
+				// jsdom 下 content 在 wrapper 内的偏移为 0，滚动位置即 content 坐标
+				const scrollTop = wrapper.find('.vc-recycle-list__wrapper').element.scrollTop;
+				const viewportEnd = scrollTop + 200;
+				wrapper.findAll('.vc-recycle-list__column').forEach((column: any, index: number) => {
+					const nodes = states.data[index];
+					const columnEnd = states.rebuildData
+						.filter((node: any) => node.states.column === index)
+						.reduce((sum: number, node: any) => sum + node.states.size, 0);
+					expect(column.findAll('.vc-recycle-list__item').length).toBe(nodes.length);
+					expect(nodes[0].states.position).toBeLessThanOrEqual(scrollTop);
+					const last = nodes[nodes.length - 1];
+					expect(last.states.position + last.states.size).toBeGreaterThanOrEqual(Math.min(viewportEnd, columnEnd));
+				});
+			};
+
+			/**
+			 * 模拟浏览器里 ResizeObserver 对新挂载行的首次回调（jsdom 的 mock 不会自动触发），直到渲染中的行都按 DOM 校正过
+			 * @param wrapper 挂载结果
+			 * @param states store.states
+			 * @param rowSize 行的实际高度
+			 */
+			const settleRendered = async (wrapper: any, states: any, rowSize: number) => {
+				for (let i = 0; i < 10; i++) {
+					const rows = wrapper.findAll(ROW);
+					if (rows.every((row: any) => states.rebuildData[Number(row.text())].states.size === rowSize)) return;
+					rows.forEach((row: any) => observerOf(row.element).trigger(row.element));
+					await flushLayout(2);
+				}
+			};
+
+			it.each([
+				[3, 1, 0],
+				[5, 1, 0],
+				[5, 3, 0],
+				[3, 1, 200],
+				[5, 1, 120]
+			])('re-lays out from %i to %i columns (scrollTop %i) without errors or a blank frame', async (from, to, scrollTop) => {
+				const restoreSize = mockSize(HTMLElement.prototype, { clientHeight: 200, scrollHeight: 1200 });
+				const offsetHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight')!;
+				// 行（隐藏池与列内）的高度随当前列宽变化，其余元素高 40
+				let rowSize = heightOf(from);
+				Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
+					configurable: true,
+					get(this: HTMLElement) {
+						return this.querySelector(':scope > .x') ? rowSize : 40;
+					}
+				});
+				const errorHandler = vi.fn();
+				const cols = ref(from);
+				const listRef = ref<any>();
+				const wrapper = mount(() => (
+					<RecycleList ref={listRef} data={buildItems(30)} batchCount={30} cols={cols.value} disabled>
+						{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+					</RecycleList>
+				), { attachTo: document.body, global: { config: { errorHandler } } });
+				try {
+					const states = listRef.value.store.states;
+					for (let i = 0; i < 40 && !(states.isBuilt && states.preData.length === 0); i++) await sleep(0);
+					const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+					// jsdom 不限制 scrollTop 的取值：按浏览器的行为钳到 [0, scrollHeight - clientHeight]，锚点补偿可能写入负值
+					let offset = 0;
+					Object.defineProperty(wrapEl, 'scrollTop', {
+						configurable: true,
+						get: () => offset,
+						set: (v: number) => { offset = Math.max(0, Math.min(v, 1200 - 200)); }
+					});
+					wrapEl.scrollTop = scrollTop;
+					wrapEl.dispatchEvent(new Event('scroll'));
+					await nextTick();
+					expectConsistent(wrapper, states, from, rowSize);
+					expectViewportCovered(wrapper, states);
+
+					cols.value = to;
+					rowSize = heightOf(to);
+					await nextTick();
+
+					// 本轮渲染（重测开始前）列表仍在：节点按旧尺寸（估计值）落到新的列里，渲染中的行覆盖视口
+					expect(errorHandler).not.toHaveBeenCalled();
+					expect(states.preData.length).toBe(0);
+					expectConsistent(wrapper, states, to);
+					expectViewportCovered(wrapper, states);
+
+					await sleep(20);
+					for (let i = 0; i < 40 && states.preData.length > 0; i++) await sleep(0);
+					await flushLayout();
+					await settleRendered(wrapper, states, rowSize);
+
+					// 重测后：所有节点仍在有效列内，渲染中的行尺寸与位置都与 DOM 一致
+					expect(errorHandler).not.toHaveBeenCalled();
+					expect(states.rebuildData.length).toBe(30);
+					expectConsistent(wrapper, states, to, rowSize);
+					expectViewportCovered(wrapper, states);
+					// 停在顶部时一直渲染着的行已按 DOM 重测，其余在隐藏池重测，全部是新尺寸
+					scrollTop === 0 && states.rebuildData.forEach((node: any) => expect(node.states.size).toBe(rowSize));
+				} finally {
+					wrapper.unmount();
+					Object.defineProperty(HTMLElement.prototype, 'offsetHeight', offsetHeight);
+					restoreSize();
+				}
+			});
+		});
+
 		it('rebuilds the list when inverted changes, matching a list mounted that way', async () => {
 			const data = buildItems(6);
 			const inverted = ref(false);
