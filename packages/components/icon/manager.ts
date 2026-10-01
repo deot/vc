@@ -4,13 +4,36 @@ const svgReg = /.*<svg>(.*)<\/svg>.*/g;
 const basicReg = /.*id="icon-([^"]+).*viewBox="([^"]+)(.*)/g;
 const symbolReg = /<symbol.*?<\/symbol>/gi;
 const pathReg = /<path.*?<\/path>/gi;
-const dReg = /.*d="([^"]+).*/g;
-const fillReg = /.*fill="([^"]+).*/g;
+const fillReg = /fill="[^"]/;
 const basicUrl = '//at.alicdn.com/t/font_1119857_u0f4525o6sd.js';
 const prefix = '@deot/vc-icon:';
 const IS_DEV = process.env.NODE_ENV === 'development';
 
 const IS_SERVER = typeof document === 'undefined';
+
+/**
+ * 取最后一个非空的属性值（取到下一个引号或结尾），不存在时返回原字符串
+ * 结果与 str.replace(/.*key="([^"]+).*\/g, '$1') 一致，但避免了 `.*` 的回溯：
+ * 匹配失败时会从每个位置重试，长 path 上为 O(n²)
+ * @param str 单个 path 字符串
+ * @param key 属性名
+ * @returns 属性值
+ */
+const getAttr = (str: string, key: string) => {
+	const token = `${key}="`;
+	let index = str.lastIndexOf(token);
+	while (index !== -1) {
+		const start = index + token.length;
+		// 空值（如 fill=""）继续向前找
+		if (start < str.length && str[start] !== '"') {
+			const end = str.indexOf('"', start);
+			return str.slice(start, end === -1 ? str.length : end);
+		}
+		index = index === 0 ? -1 : str.lastIndexOf(token, index - 1);
+	}
+	return str;
+};
+
 class Manager {
 	icons: { [key: string]: { viewBox: string; path: string[] } } = {};
 
@@ -126,11 +149,14 @@ class Manager {
 					svgStr.replace(svgReg, '$1')?.match(symbolReg)?.forEach(
 						(i: string) => i.replace(basicReg, (_: string, ...args: any[]): string => {
 							const [$1, $2, $3] = args;
+							// 每个 symbol 只判断一次：symbol 内没有 fill 时，所有 path 的 fill 都为 ''
+							const hasFill = fillReg.test($3);
 							icons[`${$1}`] = {
 								viewBox: $2,
 								path: $3?.match(pathReg)?.map((j: string) => ({
-									d: j.replace(dReg, '$1'),
-									fill: fillReg.test($3) ? j.replace(fillReg, '$1') : ''
+									d: getAttr(j, 'd'),
+									// path 自身没有 fill 时为整个 path 字符串（保持原有结果）
+									fill: hasFill ? getAttr(j, 'fill') : ''
 								}))
 							};
 							return '';
