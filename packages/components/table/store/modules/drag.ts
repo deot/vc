@@ -1,6 +1,6 @@
 import { computed, reactive, toRaw } from 'vue';
 import type { Nullable } from '@deot/helper-shared';
-import { bisectLast } from '../../../recycle-list/store/position';
+import { Utils } from '@deot/vc-shared';
 import { flattenColumnNodes } from '../utils';
 import type { Store } from '../store';
 import type { TableColumnNode } from '../../table-column/table-column-node';
@@ -122,7 +122,7 @@ export class Drag {
 	 */
 	getBlockByRowIndex(rowIndex: number) {
 		const { list } = toRaw(this.store.states);
-		const block = list[bisectLast(list.length, i => list[i].rowStart <= rowIndex)];
+		const block = list[Utils.bisectLast(list.length, i => list[i].rowStart <= rowIndex)];
 		return block && rowIndex < block.rowStart + block.rows.length ? reactive(block) : null;
 	}
 

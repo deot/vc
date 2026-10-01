@@ -1406,6 +1406,7 @@ const updateOffsets = () => {
 
 - `load-change` 只对外单向推送，没有对应属性。内部虚拟列表以 `disabled` 直接接收 `data`，此时 `isEnd` 表示数据已全部构建并完成布局。
 - 挂载即推送一次，之后每批行构建并完成布局后推送一次。`loaded` 按行计：合并单元格的多行都计入，树形表格为展开后的可见行。
+- 设置了 `row-height` 时行高已知，全部行一次构建完成，只推送一次，`loaded` 直接等于全部行数。
 - 普通表格（未设置 `height` 且未启用 `virtualized`）一次渲染完，挂载即推送 `isEnd: true`，`loaded` 为全部行数并随行数变化，同样的写法依然成立。
 - 合计行不受 `lazy-tail` 影响。
 
@@ -1413,6 +1414,7 @@ const updateOffsets = () => {
 
 - [Window 前置内容—虚拟 Table—后置内容](./examples/virtualized-window.vue)
 - [VC Scroller 中的虚拟 Table](./examples/virtualized-scroller.vue)
+- [500 条/页富单元格的性能对照（固定行高、bufferCount、滚动容器）](./examples/virtualized-performance.vue)
 
 ### 合计与自定义统计
 
@@ -1562,7 +1564,8 @@ const handleToggle = () => { isEmpty.value = !isEmpty.value; };
 | showHeader             | 是否显示表头                                                                                                                                     | `boolean`                                                  | -                           | `true`  |
 | highlight               | 是否要高亮当前行                                                                                                                                   | `boolean`                                                  | -                           | `false` |
 | currentRowValue       | 当前行的`[id]/value`唯一值（树形表格含子行），只写属性                                                                                                                   | `string`、 `number`                                         | -                           | -       |
-| rowHeight | 固定行高，数字及数字字符串按 px 解析；缺省由内容撑开 | `string \| number` | - | - |
+| rowHeight | 固定行高，数字及数字字符串按 px 解析；缺省由内容撑开。虚拟化表格（`height` 或 `virtualized`）设置后按行高直接算出每行尺寸，跳过隐藏测量并一次构建全部行，滚动不再逐批停顿；展开行的内容在渲染出来后按实际高度校正；运行时修改行高，未渲染的行也立即按新行高重排 | `string \| number` | - | - |
+| recycleListOptions | 透传给内部 [RecycleList](../recycle-list) 的属性，仅在走虚拟列表时（`height` 或 `virtualized`）生效，如 `bufferCount`（可见行前后多渲染的行数，快速滚动时减少露白）、`overscan`、`batchCount`（默认 `100`）、`threshold`。`data`、`store`、`disabled`、`fill`、`vertical`、`inverted`、`cols`、`gutter`、`pullable`、`loadData`、`lazyTail`、`scrollerOptions`、`estimateSize`、`style`、`class` 与事件由 Table 控制，传入无效 | `object` | - | - |
 | rowClass               | 行的 `className`，仅作用于单行块对应的 `vc-table__tr`；存在 `getSpan` 合并时不生效，请用 `cell-class`。支持字符串或 `Function({ row, rowIndex })`。 | `string \| ((context: { row: any; rowIndex: number }) => string)` | -                           | -       |
 | rowStyle               | 行的 `style`，仅作用于单行块对应的 `vc-table__tr`；存在 `getSpan` 合并时不生效，请用 `cell-style`。支持对象或 `Function({ row, rowIndex })`。 | `CSSProperties \| ((context: { row: any; rowIndex: number }) => CSSProperties)` | -                           | -       |
 | cellClass              | 单元格的 `className` 的回调方法，也可以使用字符串为所有单元格设置一个固定的 `className`。                                                                                  | `string \| ((context: { row: any; column: any; rowIndex: number; columnIndex: number }) => string)` | -                           | -       |
@@ -1710,6 +1713,14 @@ VcInstance.configure({
 - 提示锚在整个单元格（表头为 label）上，不会盖住鼠标所在的格子
 - 宽度按弹层字体测量：20 个字以内的短文字不换行；更长的文字按宽高比约 3:1 换行，且不窄于 20 个字与单元格文字；整体不超出屏幕，超出时在提示内滚动
 - 表体或页面滚动期间不弹出，已弹出的提示随滚动关闭；滚动停止后鼠标仍在该单元格上时再弹出
+
+### 悬停高亮
+
+鼠标所在的行高亮；`getSpan` 纵向合并覆盖该行的单元格一并高亮。
+
+- 鼠标停留约 30ms 后才高亮，快速划过时不逐行闪
+- 表体或页面滚动期间不高亮（行从静止的鼠标下经过时不逐行闪），滚动停止约 150ms 后按鼠标位置恢复；拖拽排序期间同样不高亮
+- 滚动期间单元格事件（`cell-mouseenter` / `cell-mouseleave`、点击等）照常触发
 
 ### filter-options
 

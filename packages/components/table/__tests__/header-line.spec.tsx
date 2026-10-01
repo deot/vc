@@ -131,7 +131,7 @@ describe('header-line', () => {
 			el: textLine,
 			value: '很长的表头',
 			line: 2,
-			ellipsis: '...'
+			ellipsis: '…'
 		}));
 		// 弹层锚在 label 上（鼠标移入的节点）
 		expect(open).toHaveBeenCalledWith(expect.objectContaining({ triggerEl: label.element, content: '很长的表头' }));
@@ -163,7 +163,7 @@ describe('header-line', () => {
 		expect(mocks.getFitIndex).toHaveBeenCalledWith(expect.objectContaining({
 			value: 'nested-value',
 			line: 1,
-			ellipsis: '...'
+			ellipsis: '…'
 		}));
 		// 弹层锚在单元格上：text-line 外还有 padding，锚在 text-line 上会盖住鼠标所在的格子
 		expect(open).toHaveBeenCalledWith(expect.objectContaining({

@@ -1,6 +1,26 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { TableColumnSyncItem } from './store/modules/column';
 import type { TableAllowDragPayload, TableAllowDropPayload } from './types';
+import type { Props as RecycleListProps } from '../recycle-list/recycle-list-props';
+
+// Table 自己要用到的 RecycleList 属性（以及 style、class 和事件）：recycleListOptions 里的同名项被忽略
+export const RECYCLE_LIST_RESERVED_KEYS = [
+	'data',
+	'store',
+	'disabled',
+	'fill',
+	'vertical',
+	'inverted',
+	'cols',
+	'gutter',
+	'pullable',
+	'loadData',
+	'lazyTail',
+	'scrollerOptions',
+	'estimateSize',
+	'style',
+	'class'
+] as const;
 
 export const props = {
 	data: {
@@ -19,7 +39,10 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
+	// 固定行高；虚拟化时每行尺寸按它直接算出，跳过隐藏测量并一次构建全部行
 	rowHeight: [String, Number],
+	// 透传给内部 RecycleList 的属性（仅 height 或 virtualized 走虚拟列表时生效），Table 自己要用的键被忽略
+	recycleListOptions: Object as PropType<Partial<Omit<RecycleListProps, typeof RECYCLE_LIST_RESERVED_KEYS[number]>>>,
 	// 列的宽度是否自撑开
 	fit: {
 		type: Boolean,

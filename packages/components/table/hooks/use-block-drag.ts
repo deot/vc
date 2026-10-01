@@ -2,10 +2,10 @@ import { watch, toRaw } from 'vue';
 import type { Ref } from 'vue';
 import { getScroller } from '@deot/helper-dom';
 import type { Nullable } from '@deot/helper-shared';
+import { Utils } from '@deot/vc-shared';
 import { SCROLLER_REG } from '../../scroller/utils';
 import { isWindow } from '../../recycle-list/viewport/external/dom';
 import { ExternalCarrier } from '../../recycle-list/viewport/external/carrier';
-import { bisectFirst } from '../../recycle-list/store/position';
 import type { AxisKeys } from '../../recycle-list/viewport/types';
 import type { Store } from '../store';
 import type { TableDropPosition, TableMove } from '../store/modules';
@@ -132,7 +132,7 @@ export const useBlockDrag = (options: Options) => {
 	// 几何
 	// ---------------------------------------------------------------------
 	/**
-	 * 本表格已渲染的块根节点（按 DOM 顺序，排除嵌套表格与虚拟列表的测量池）
+	 * 本表格已渲染的块根节点（按 DOM 顺序，排除嵌套表格；虚拟列表测量池里的块不带 data-row-start）
 	 * @returns 块根节点
 	 */
 	const queryBlockEls = () => {
@@ -140,7 +140,7 @@ export const useBlockDrag = (options: Options) => {
 		const root = tableWrapper.value;
 		if (!body || !root) return [];
 		return Array.from(body.querySelectorAll<HTMLElement>('[data-row-start]'))
-			.filter(el => el.closest('.vc-table') === root && (!virtual.value || !el.closest('.vc-recycle-list__pool')));
+			.filter(el => el.closest('.vc-table') === root);
 	};
 
 	/**
@@ -325,7 +325,7 @@ export const useBlockDrag = (options: Options) => {
 		virtual.value || (session.blockEls = els);
 		if (!els.length) return null;
 		// 首个底边在指针之下的块；指针在所有块之下时取最后一块
-		const el = els[Math.min(bisectFirst(els.length, i => getBlockRect(els[i]).bottom > y), els.length - 1)];
+		const el = els[Math.min(Utils.bisectFirst(els.length, i => getBlockRect(els[i]).bottom > y), els.length - 1)];
 		const target = store.drag.getBlockByRowIndex(Number(el.dataset.rowStart));
 		if (!target) return null;
 		const rect = getBlockRect(el);

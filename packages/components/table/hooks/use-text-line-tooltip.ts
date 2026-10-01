@@ -1,39 +1,14 @@
-import { onMounted, onBeforeUnmount } from 'vue';
 import type { Nullable } from '@deot/helper-shared';
 import { getFitIndex } from '../../text/utils';
+import { props as textProps } from '../../text/text-props';
 import { useHoverPopover } from '../../popover/use-hover-popover';
 import { measureText } from '../../popover/utils';
+import { useScrollListener, whenScrollIdle } from '../../scroller/scroll-idle';
 
 // 提示的目标宽高比（宽 : 高）
 const ASPECT_RATIO = 3;
 // 一行至少能放下的字数（em）：短文字不换行
 const MIN_LINE_EM = 20;
-// 滚动停止多久后才弹出（ms）
-const SCROLL_IDLE = 150;
-
-// 最近一次滚动：所有实例共用一个捕获阶段的监听，按引用计数注册 / 注销
-// 滚动的元素用 WeakRef 保存：否则已卸载的 Table（滚动过的表体）会一直留在内存里
-const lastScroll = { time: 0, target: null as Nullable<WeakRef<EventTarget>> };
-let listeners = 0;
-// 滚动停止后待弹出的提示（同一时刻只有一个；实例卸载后单元格已脱离文档，不会再处于 :hover，无需清除）
-let pending: ReturnType<typeof setTimeout> | undefined;
-const markScroll = (e: Event) => {
-	lastScroll.time = Date.now();
-	lastScroll.target = e.target && new WeakRef(e.target);
-};
-const listenScroll = () => {
-	listeners++ || document.addEventListener('scroll', markScroll, { capture: true, passive: true });
-};
-const unlistenScroll = () => {
-	--listeners || document.removeEventListener('scroll', markScroll, { capture: true });
-};
-
-// 触发节点所在的滚动容器（或页面）是否刚滚动过：内容在静止的鼠标下移动也会触发移入
-const getScrollWait = (trigger: Element) => {
-	const target = lastScroll.target?.deref();
-	const related = target === document || (target instanceof Node && target.contains(trigger));
-	return related ? SCROLL_IDLE - (Date.now() - lastScroll.time) : 0;
-};
 
 /**
  * 提示的最大宽度：长文字接近 ASPECT_RATIO 的宽高比，短文字不换行
@@ -65,8 +40,7 @@ export const getTooltipWidth = (size: { width: number; fontSize: number; lineHei
 export const useTextLineTooltip = () => {
 	const popover = useHoverPopover();
 
-	onMounted(listenScroll);
-	onBeforeUnmount(unlistenScroll);
+	useScrollListener();
 
 	/**
 	 * 判断是否截断，截断时打开弹层
@@ -75,32 +49,27 @@ export const useTextLineTooltip = () => {
 	 * @param trigger 弹层的触发节点（鼠标移入的节点）
 	 */
 	const open = (el: Nullable<Element>, line: number | undefined, trigger: Element) => {
-		clearTimeout(pending);
-		if (!el || !line || popover.isActive(trigger)) return;
+		whenScrollIdle(trigger, () => {
+			if (!el || !line || popover.isActive(trigger)) return;
+			// clamp 未截断时内容高度不超出，跳过逐字测量
+			if (el.scrollHeight <= el.clientHeight) return;
 
-		const wait = getScrollWait(trigger);
-		if (wait > 0) {
-			pending = setTimeout(() => trigger.matches(':hover') && open(el, line, trigger), wait);
-			return;
-		}
-		// clamp 未截断时内容高度不超出，跳过逐字测量
-		if (el.scrollHeight <= el.clientHeight) return;
-
-		const value = el.textContent || '';
-		const endIndex = getFitIndex({
-			el,
-			value,
-			line,
-			ellipsis: '...'
-		});
-		if (endIndex > 0 && endIndex < value.length - 1) {
-			const minWidth = el.clientWidth;
-			const maxWidth = getTooltipWidth(measureText(value), minWidth);
-			popover.open(trigger, {
-				content: value,
-				...(maxWidth && { portalStyle: { maxWidth: `${maxWidth}px` } })
+			const value = el.textContent || '';
+			const endIndex = getFitIndex({
+				el,
+				value,
+				line,
+				ellipsis: textProps.ellipsis.default
 			});
-		}
+			if (endIndex > 0 && endIndex < value.length - 1) {
+				const minWidth = el.clientWidth;
+				const maxWidth = getTooltipWidth(measureText(value), minWidth);
+				popover.open(trigger, {
+					content: value,
+					...(maxWidth && { portalStyle: { maxWidth: `${maxWidth}px` } })
+				});
+			}
+		});
 	};
 
 	return { open };

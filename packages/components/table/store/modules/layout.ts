@@ -210,14 +210,15 @@ export class Layout {
 					} else {
 						offset += column.states.realWidth || column.states.width || 0;
 					}
-					column.states.stickyOffset = start;
-					if (side === 'left') {
-						column.states.stickyStyle = { position: 'sticky', left: `${start}px` };
-						column.states.stickyClass = 'is-fixed-left' + (isEdge ? ' is-fixed-left-tail' : '');
-					} else {
-						column.states.stickyStyle = { position: 'sticky', right: `${start}px` };
-						column.states.stickyClass = 'is-fixed-right' + (isEdge ? ' is-fixed-right-head' : '');
-					}
+					const stickyClass = side === 'left'
+						? 'is-fixed-left' + (isEdge ? ' is-fixed-left-tail' : '')
+						: 'is-fixed-right' + (isEdge ? ' is-fixed-right-head' : '');
+					// 偏移与类名都没变就不写：每次布局都换一个新的样式对象，会让所有可见块重渲染、单元格插槽全部重跑
+					const { states } = column;
+					if (states.stickyOffset === start && states.stickyClass === stickyClass && states.stickyStyle) return;
+					states.stickyOffset = start;
+					states.stickyStyle = { position: 'sticky', [side]: `${start}px` };
+					states.stickyClass = stickyClass;
 				});
 			};
 			walk(columns, true);
@@ -225,9 +226,11 @@ export class Layout {
 
 		const clear = (nodes: TableColumnNode[]) => {
 			nodes.forEach((column) => {
-				column.states.stickyOffset = void 0;
-				column.states.stickyStyle = void 0;
-				column.states.stickyClass = void 0;
+				if (column.states.stickyStyle) {
+					column.states.stickyOffset = void 0;
+					column.states.stickyStyle = void 0;
+					column.states.stickyClass = void 0;
+				}
 				column.childNodes.length && clear(column.childNodes);
 			});
 		};

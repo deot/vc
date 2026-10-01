@@ -696,8 +696,9 @@ $sizes: (
 		}
 	}
 
-	// 单行块的悬停高亮（合并块由 JS 的 hover-row / hover-related 处理）
-	.vc-table__tbody .vc-table__tr:hover > .vc-table__td {
+	// 合计行的悬停高亮。表体的行由 JS 加 hover-row / hover-related（见 use-row-hover）：
+	// 滚动期间要暂停、合并块要带上关联的格子，只用一套机制
+	.vc-table__footer .vc-table__tr:hover > .vc-table__td {
 		background: linear-gradient($surface-tint, $surface-tint) $background-color-muted;
 	}
 

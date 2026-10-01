@@ -28,6 +28,8 @@ export interface TableProvide {
 	resizeProxyVisible: Ref<boolean>;
 	resizeProxy: Ref<Nullable<HTMLElement>>;
 	tableWrapper: Ref<Nullable<HTMLElement>>;
+	// 表体的滚动容器（横向、纵向为同一个元素）
+	bodyXWrapper: Ref<Nullable<HTMLElement>>;
 }
 
 /**
