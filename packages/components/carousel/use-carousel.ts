@@ -83,7 +83,8 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 	};
 
 	const startTimer = () => {
-		if (props.t <= 0 || !props.autoplay || timer.value) return;
+		// 拖动中不恢复自动播放（指针拖出轮播时会触发 mouseleave）
+		if (props.t <= 0 || !props.autoplay || timer.value || start.value) return;
 		timer.value = setInterval(playSlides, props.t);
 	};
 
@@ -127,17 +128,18 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 	const handleStart = (e: any) => {
 		allowTransition.value = true;
 
-		if (!props.draggable) return;
+		if (!props.draggable) return false;
 		pauseTimer();
 
 		start.value = true;
 		dragMovedPastThreshold.value = false;
 		startX.value = e.screenX;
 		startY.value = e.screenY;
+		return true;
 	};
 
 	const handleMove = (e: any) => {
-		if (!start.value || !props.draggable) return;
+		if (!props.draggable) return;
 		offset.value = !props.vertical
 			? (e.screenX - startX.value)
 			: (e.screenY - startY.value);
@@ -150,8 +152,6 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 	};
 
 	const handleEnd = () => {
-		if (!props.draggable) return;
-
 		const shouldSwallowClick = dragMovedPastThreshold.value;
 
 		start.value = false;
@@ -171,6 +171,13 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 		}
 
 		dragMovedPastThreshold.value = false;
+	};
+
+	// 手势被打断（touchcancel、mouseup 丢失）：位移清零后按松开处理，即回弹、不切换
+	const handleCancel = () => {
+		offset.value = 0;
+		dragMovedPastThreshold.value = false;
+		handleEnd();
 	};
 
 	watch(
@@ -274,6 +281,7 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 		handleStart,
 		handleMove,
 		handleEnd,
+		handleCancel,
 		handleDotClick,
 
 		prev,

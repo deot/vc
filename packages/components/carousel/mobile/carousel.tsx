@@ -1,6 +1,7 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, ref, withModifiers } from 'vue';
+import { useDrag } from '@deot/vc-hooks';
 import { useCarousel } from '../use-carousel';
 import { props as carouselProps } from '../carousel-props';
 
@@ -27,45 +28,49 @@ export const MCarousel = defineComponent({
 
 		let scrollStatus = 0;
 
-		const handleTouchStart = (e: any) => {
-			carousel.handleStart(e.touches[0]);
-			scrollStatus = 0;
-		};
+		const drag = useDrag({
+			start: (_, point) => {
+				scrollStatus = 0;
+				return carousel.handleStart(point);
+			},
+			move: (e, point) => {
+				const absX = Math.abs(point.screenX - carousel.startX.value);
+				const absY = Math.abs(point.screenY - carousel.startY.value);
 
-		const handleTouchMove = (e: any) => {
-			const absX = Math.abs(e.touches[0].screenX - carousel.startX.value);
-			const absY = Math.abs(e.touches[0].screenY - carousel.startY.value);
-
-			if (!props.vertical && absX > absY && scrollStatus !== 1) {
-				e.preventDefault();
-				carousel.handleMove(e.touches[0]);
-				scrollStatus = 2;
-				return;
+				if (!props.vertical && absX > absY && scrollStatus !== 1) {
+					e.preventDefault();
+					carousel.handleMove(point);
+					scrollStatus = 2;
+					return;
+				}
+				if (props.vertical && absY > absX) {
+					e.preventDefault();
+					carousel.handleMove(point);
+					return;
+				}
+				if (scrollStatus === 0) {
+					scrollStatus = 1;
+				}
+			},
+			end: () => {
+				carousel.handleEnd();
+				scrollStatus = 0;
+			},
+			cancel: () => {
+				carousel.handleCancel();
+				scrollStatus = 0;
 			}
-			if (props.vertical && absY > absX) {
-				e.preventDefault();
-				carousel.handleMove(e.touches[0]);
-				return;
-			}
-			if (scrollStatus === 0) {
-				scrollStatus = 1;
-			}
-		};
-
-		// e.changedTouches[0]
-		const handleTouchEnd = () => {
-			carousel.handleEnd();
-			scrollStatus = 0;
-		};
+		});
 
 		return () => {
 			return (
 				<div
 					ref={wrapper}
 					class={['vcm-carousel', `is-${carousel.direction.value}`]}
-					onTouchstart={withModifiers(handleTouchStart, ['stop'])}
-					onTouchmove={withModifiers(handleTouchMove, ['stop'])}
-					onTouchend={withModifiers(handleTouchEnd, ['stop'])}
+					onTouchstart={withModifiers(drag.listeners.onTouchstart, ['stop'])}
+					onTouchmove={withModifiers(drag.listeners.onTouchmove, ['stop'])}
+					onTouchend={withModifiers(drag.listeners.onTouchend, ['stop'])}
+					onTouchcancel={withModifiers(drag.listeners.onTouchcancel, ['stop'])}
 				>
 					<div
 						ref={content}

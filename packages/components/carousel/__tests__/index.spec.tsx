@@ -5,6 +5,7 @@ import { MCarousel, MCarouselItem } from '../index.m';
 import { mount } from '@vue/test-utils';
 import { defineComponent, nextTick, reactive, ref } from 'vue';
 import { vi } from 'vitest';
+import * as drag from '../../../hooks/__tests__/fixtures/drag';
 
 const sleep = (time = 0) => new Promise<void>(r => setTimeout(r, time));
 
@@ -48,28 +49,24 @@ const mockOffsetSize = (root: HTMLElement, width = 600, height = 300) => {
 	return () => restores.forEach(fn => fn());
 };
 
+// 轮播按屏幕坐标取位移
 const fireMouse = (
-	el: Element,
+	el: EventTarget,
 	type: 'mousedown' | 'mousemove' | 'mouseup' | 'mouseenter' | 'mouseleave',
 	screenX = 0,
-	screenY = 0
+	screenY = 0,
+	init: MouseEventInit = {}
 ) => {
-	const ev = new MouseEvent(type, { bubbles: true, cancelable: true, screenX, screenY });
-	el.dispatchEvent(ev);
+	drag.fireMouse(el, type, { screenX, screenY, ...init });
 };
 
 const fireTouch = (
 	el: Element,
-	type: 'touchstart' | 'touchmove' | 'touchend',
+	type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel',
 	screenX = 0,
 	screenY = 0
 ) => {
-	const ev = new Event(type, { bubbles: true, cancelable: true }) as any;
-	const touch = { screenX, screenY };
-	ev.touches = [touch];
-	ev.changedTouches = [touch];
-	ev.targetTouches = [touch];
-	return el.dispatchEvent(ev);
+	drag.fireTouch(el, type, { screenX, screenY });
 };
 
 describe('index.ts', () => {
@@ -1048,6 +1045,117 @@ describe('index.ts', () => {
 			expect(innerClick).not.toHaveBeenCalled();
 			wrapper.unmount();
 		});
+
+		describe('mouse drag leaving the carousel', () => {
+			const mountDraggable = async (props: Record<string, any> = {}) => {
+				const wrapper = mount(() => (
+					<Carousel autoplay={false} {...props}>
+						<CarouselItem />
+						<CarouselItem />
+						<CarouselItem />
+					</Carousel>
+				), { attachTo: document.body });
+				restoreSize = mockOffsetSize(wrapper.element as HTMLElement);
+				await flushAll();
+				return {
+					wrapper,
+					root: wrapper.element,
+					items: () => wrapper.findAll('.vc-carousel-item'),
+					style: (index: number) => wrapper.findAll('.vc-carousel-item')[index].element.getAttribute('style') || ''
+				};
+			};
+
+			it('releasing outside the carousel still ends the drag and switches', async () => {
+				const { wrapper, root, items, style } = await mountDraggable();
+
+				fireMouse(root, 'mousedown', 200, 0);
+				fireMouse(root, 'mousemove', 50, 0);
+				// 指针已离开轮播：松开发生在轮播外
+				fireMouse(document.body, 'mouseup', 50, 0);
+				await flushAll();
+				expect(items()[1].classes()).toContain('is-active');
+
+				// 手势结束后，不按键的移动不再拖动
+				fireMouse(root, 'mousemove', 120, 0, { buttons: 0 });
+				await flushAll();
+				expect(style(1)).toContain('translateX(0px)');
+				wrapper.unmount();
+			});
+
+			it('keeps following the pointer outside the carousel', async () => {
+				const { wrapper, root, items, style } = await mountDraggable();
+
+				fireMouse(root, 'mousedown', 200, 0);
+				fireMouse(document.body, 'mousemove', 50, 0);
+				await flushAll();
+				expect(style(0)).toContain('translateX(-150px)');
+
+				fireMouse(document.body, 'mouseup', 50, 0);
+				await flushAll();
+				expect(items()[1].classes()).toContain('is-active');
+				wrapper.unmount();
+			});
+
+			it('cancels the drag when the primary button is no longer pressed without a mouseup', async () => {
+				const { wrapper, root, items, style } = await mountDraggable();
+
+				fireMouse(root, 'mousedown', 200, 0);
+				fireMouse(root, 'mousemove', 50, 0);
+				await flushAll();
+				expect(style(0)).toContain('translateX(-150px)');
+
+				// 右键菜单、原生拖拽等吞掉了 mouseup：下一次移动时主键已松开
+				fireMouse(root, 'mousemove', 20, 0, { buttons: 0 });
+				await flushAll();
+				// 取消：回弹，不切页
+				expect(items()[0].classes()).toContain('is-active');
+				expect(style(0)).toContain('translateX(0px)');
+
+				// 已解绑：之后按着主键移动也不再拖动
+				fireMouse(root, 'mousemove', 120, 0);
+				await flushAll();
+				expect(style(0)).toContain('translateX(0px)');
+				wrapper.unmount();
+			});
+
+			it('ignores non-primary buttons', async () => {
+				const { wrapper, root, items, style } = await mountDraggable();
+
+				fireMouse(root, 'mousedown', 200, 0, { button: 2, buttons: 2 });
+				fireMouse(root, 'mousemove', 50, 0, { buttons: 2 });
+				await flushAll();
+				// 未进入拖动
+				expect(style(0)).toContain('translateX(0px)');
+
+				fireMouse(root, 'mouseup', 50, 0, { button: 2 });
+				await flushAll();
+				expect(items()[0].classes()).toContain('is-active');
+				wrapper.unmount();
+			});
+
+			it('does not resume autoplay on mouseleave while dragging', async () => {
+				useFakeTimers();
+				const { wrapper, root, items } = await mountDraggable({ autoplay: true, t: 500 });
+
+				fireMouse(root, 'mouseenter');
+				fireMouse(root, 'mousedown', 200, 0);
+				fireMouse(root, 'mousemove', 198, 0);
+				// 拖动中指针移出轮播
+				fireMouse(root, 'mouseleave');
+				await flushAll();
+				vi.advanceTimersByTime(800);
+				await flushAll();
+				expect(items()[0].classes()).toContain('is-active');
+
+				// 松开后恢复自动播放
+				fireMouse(document.body, 'mouseup', 198, 0);
+				await flushAll();
+				vi.advanceTimersByTime(600);
+				await flushAll();
+				expect(items()[1].classes()).toContain('is-active');
+				wrapper.unmount();
+			});
+		});
 	});
 
 	describe('dynamic items', () => {
@@ -1292,6 +1400,39 @@ describe('index.ts', () => {
 			fireTouch(root, 'touchend', 105, 200);
 			await flushAll();
 			expect(wrapper.findAll('.vcm-carousel-item')[0].classes()).toContain('is-active');
+			wrapper.unmount();
+		});
+
+		it('touchcancel snaps back without switching', async () => {
+			const wrapper = mount(() => (
+				<MCarousel autoplay={false}>
+					<MCarouselItem />
+					<MCarouselItem />
+					<MCarouselItem />
+				</MCarousel>
+			), { attachTo: document.body });
+			restoreSize = mockOffsetSize(wrapper.element as HTMLElement);
+			await flushAll();
+
+			const root = wrapper.element;
+			const items = () => wrapper.findAll('.vcm-carousel-item');
+			const style = () => items()[0].element.getAttribute('style') || '';
+
+			fireTouch(root, 'touchstart', 200, 100);
+			fireTouch(root, 'touchmove', 50, 110);
+			await flushAll();
+			expect(style()).toContain('translateX(-150px)');
+
+			// 系统手势等打断了触摸：不会再有 touchend
+			fireTouch(root, 'touchcancel', 50, 110);
+			await flushAll();
+			expect(items()[0].classes()).toContain('is-active');
+			expect(style()).toContain('translateX(0px)');
+
+			// 取消后的移动不再拖动
+			fireTouch(root, 'touchmove', 20, 110);
+			await flushAll();
+			expect(style()).toContain('translateX(0px)');
 			wrapper.unmount();
 		});
 

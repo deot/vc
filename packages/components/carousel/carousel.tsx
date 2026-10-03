@@ -3,6 +3,7 @@
 import { defineComponent, ref, computed, withModifiers } from 'vue';
 import type { ComponentInternalInstance } from 'vue';
 import { throttle } from 'lodash-es';
+import { useDrag } from '@deot/vc-hooks';
 import { Icon } from '../icon';
 import { TransitionSlide } from '../transition';
 import { useCarousel } from './use-carousel';
@@ -24,6 +25,12 @@ export const Carousel = defineComponent({
 		});
 
 		const carousel = useCarousel(wrapper, content, expose);
+		const drag = useDrag({
+			start: carousel.handleStart,
+			move: carousel.handleMove,
+			end: carousel.handleEnd,
+			cancel: carousel.handleCancel
+		});
 		const itemInStage = (item: ComponentInternalInstance, index: number, items: ComponentInternalInstance[]) => {
 			const length = items.length;
 			const isInStage = item.exposed!.isInStage.value;
@@ -78,9 +85,7 @@ export const Carousel = defineComponent({
 				<div
 					ref={wrapper}
 					class={['vc-carousel', `is-${carousel.direction.value}`]}
-					onMousedown={withModifiers(carousel.handleStart, ['stop', 'prevent'])}
-					onMousemove={withModifiers(carousel.handleMove, ['stop', 'prevent'])}
-					onMouseup={withModifiers(carousel.handleEnd, ['stop', 'prevent'])}
+					onMousedown={withModifiers(drag.listeners.onMousedown, ['stop', 'prevent'])}
 					onMouseenter={withModifiers(handleMouseEnter, ['stop'])}
 					onMouseleave={withModifiers(handleMouseLeave, ['stop'])}
 				>
