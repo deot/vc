@@ -1,0 +1,18 @@
+@use 'sass:map';
+@use 'sass:meta';
+@use '../../../style/theme' as source;
+
+// 编译期读取真实参数，CSS Modules 只导出数据，不生成主题覆盖。
+/* stylelint-disable-next-line selector-pseudo-class-no-unknown -- CSS Modules 参数导出 */
+:export {
+	@each $key, $value in source.$theme {
+		$is-paired: meta.type-of($value) == 'map';
+		$light: if(sass($is-paired): map.get($value, light); else: $value);
+		$dark: if(sass($is-paired): map.get($value, dark); else: $value);
+
+		#{$key}__mode: #{if(sass($is-paired): paired; else: shared)};
+		#{$key}__kind: #{if(sass(meta.type-of($light) == 'color'): color; else: if(sass($key == box-shadow or $key == box-shadow-floating or $key == box-shadow-top): shadow; else: dimension))};
+		#{$key}__light: #{$light};
+		#{$key}__dark: #{$dark};
+	}
+}

@@ -1,0 +1,720 @@
+@use '../../../style/helper' as *;
+
+// 控制区保持稳定的中性色；组件案例继续读取真实主题参数。
+@include block(theme-audit) {
+	--audit-ui-background: #FFF;
+	--audit-ui-surface: #F5F7FB;
+	--audit-ui-text: #253249;
+	--audit-ui-muted: #718096;
+	--audit-ui-border: #DCE3ED;
+	--audit-ui-card-border: #E7ECF3;
+	--audit-ui-accent: #456CF6;
+
+	min-height: 100vh;
+
+	// 高度变化只重排卡片，不补偿页面滚动。
+	overflow-anchor: none;
+	padding: 24px;
+	font-size: 14px;
+	color: varfix(foreground-color);
+	background: varfix(background-color);
+	box-sizing: border-box;
+
+	@include when(dark) {
+		--audit-ui-background: #242B3A;
+		--audit-ui-surface: #2C3547;
+		--audit-ui-text: #EAF0FA;
+		--audit-ui-muted: #A4B1C7;
+		--audit-ui-border: #45516A;
+		--audit-ui-card-border: #364156;
+		--audit-ui-accent: #9EB6FF;
+	}
+
+	* { box-sizing: border-box; }
+
+	:where(h1, h2, h3, p) { margin: 0; }
+}
+
+@include block(audit-layout) {
+	display: grid;
+	grid-template-columns: 360px minmax(0, 1fr);
+	align-items: start;
+	gap: 20px;
+}
+
+@include block(audit-panel) {
+	position: sticky;
+	top: 24px;
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - 48px);
+	min-height: 0;
+	overflow: hidden;
+	font-size: 13px;
+	color: var(--audit-ui-text);
+	background: var(--audit-ui-background);
+	border: 1px solid var(--audit-ui-card-border);
+	border-radius: 14px;
+
+	@include element(heading) {
+		flex-shrink: 0;
+		padding: 18px 18px 14px;
+		border-bottom: 1px solid var(--audit-ui-card-border);
+	}
+
+	@include element(title) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		font-size: 17px;
+
+		small {
+			font-size: 11px;
+			font-weight: 400;
+			color: var(--audit-ui-muted);
+		}
+	}
+
+	@include element(description) {
+		margin: 6px 0 16px;
+		font-size: 12px;
+		color: var(--audit-ui-muted);
+	}
+
+	@include element(scroller) {
+		flex: 1;
+		min-height: 0;
+		overscroll-behavior: contain;
+	}
+
+	@include element(content) {
+		padding: 0 18px 18px;
+	}
+}
+
+@include block(audit-config-actions) {
+	display: grid;
+	gap: 10px;
+}
+
+@include block(audit-config-field) {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+@include block(audit-config-buttons) {
+	display: flex;
+	gap: 6px;
+}
+
+@include block(audit-export) {
+	margin: 10px 0 12px;
+}
+
+@include block(audit-export-heading) {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	cursor: pointer;
+}
+
+@include block(audit-native-input) {
+	width: 100%;
+	min-width: 0;
+	padding: 8px 10px;
+	font: inherit;
+	font-size: 13px;
+	line-height: 1.4;
+	color: var(--audit-ui-text);
+	background: var(--audit-ui-background);
+	border: 1px solid var(--audit-ui-border);
+	border-radius: 8px;
+	transition: border-color .15s, box-shadow .15s;
+
+	&::placeholder { color: var(--audit-ui-muted); }
+
+	&:hover { border-color: var(--audit-ui-muted); }
+
+	&:focus-visible {
+		border-color: var(--audit-ui-accent);
+		outline: 2px solid var(--audit-ui-surface);
+		outline-offset: 2px;
+	}
+}
+
+@include block(audit-code) {
+	width: 100%;
+	height: 120px;
+	max-height: 18vh;
+	min-height: 80px;
+	padding: 10px;
+	margin-top: 10px;
+	font: 11px/1.6 monospace;
+	color: var(--audit-ui-text);
+	white-space: pre;
+	background: var(--audit-ui-surface);
+	border: 1px solid var(--audit-ui-border);
+	border-radius: 8px;
+	resize: vertical;
+}
+
+@include block(audit-parameter-group) {
+	margin-top: 16px;
+
+	@include element(heading) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding-bottom: 10px;
+		font-size: 12px;
+		border-bottom: 1px solid var(--audit-ui-card-border);
+
+		small {
+			font-weight: 400;
+			color: var(--audit-ui-muted);
+		}
+	}
+}
+
+@include block(audit-parameter) {
+	padding: 12px 0;
+	border-bottom: 1px solid var(--audit-ui-card-border);
+
+	&:last-child { border-bottom: 0; }
+
+	@include when(changed) {
+		@include element(name) {
+			color: var(--audit-ui-accent);
+		}
+	}
+
+	@include element(heading) {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		margin-bottom: 8px;
+	}
+
+	@include element(name) {
+		flex: 1;
+		overflow-wrap: anywhere;
+		font: 11px/1.5 monospace;
+	}
+
+	@include element(type) {
+		font-size: 10px;
+		color: var(--audit-ui-muted);
+		white-space: nowrap;
+	}
+
+	@include element(reset) {
+		flex-shrink: 0;
+		padding: 0 6px;
+		color: var(--audit-ui-muted);
+
+		&:hover {
+			color: var(--audit-ui-accent);
+			background: var(--audit-ui-surface);
+		}
+	}
+
+	@include element(values) {
+		display: grid;
+		grid-auto-columns: minmax(0, 150px);
+		grid-auto-flow: column;
+		gap: 10px;
+
+		> div { min-width: 0; }
+	}
+
+	@include element(edit) {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	@include element(input) {
+		width: 100px;
+		max-width: 100%;
+		flex: 0 1 100px;
+		min-width: 0;
+
+		input { font: 11px/1.5 monospace; }
+	}
+
+	@include element(mode) {
+		display: block;
+		margin-bottom: 5px;
+		font-size: 11px;
+		color: var(--audit-ui-muted);
+	}
+}
+
+@include block(audit-shadow-preview) {
+	padding: 8px;
+	margin: 12px 6px 4px;
+	text-align: center;
+	background: var(--audit-ui-surface);
+	border-radius: 6px;
+}
+
+@include block(audit-error) {
+	margin-top: 6px;
+	color: varfix(color-error);
+}
+
+@include block(audit-gallery) {
+	min-width: 0;
+
+	@include element(controls) {
+		padding: 14px;
+		color: var(--audit-ui-text);
+		background: var(--audit-ui-background);
+		border: 1px solid var(--audit-ui-card-border);
+		border-radius: 14px;
+	}
+
+	@include element(filters) {
+		display: flex;
+		gap: 10px;
+	}
+
+	@include element(platform) {
+		width: 210px;
+		flex-shrink: 0;
+	}
+}
+
+@include block(audit-nav) {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 12px;
+
+	@include element(item) {
+		padding: 6px 10px;
+		font: inherit;
+		font-size: 12px;
+		color: var(--audit-ui-text);
+		cursor: pointer;
+		background: var(--audit-ui-surface);
+		border: 1px solid transparent;
+		border-radius: 8px;
+		transition: color .15s, border-color .15s;
+
+		small {
+			margin-left: 4px;
+			color: var(--audit-ui-muted);
+		}
+
+		&:hover, &:focus-visible {
+			color: var(--audit-ui-accent);
+			border-color: var(--audit-ui-accent);
+		}
+	}
+}
+
+@include block(audit-hint) {
+	margin: 10px 0 0;
+	font-size: 12px;
+	line-height: 1.7;
+	color: varfix(foreground-color-light);
+}
+
+@include block(audit-theme-mapping) {
+	margin-top: 12px;
+}
+
+@include block(audit-group) {
+	scroll-margin-top: 24px;
+	margin-top: 24px;
+
+	@include element(heading) {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin-bottom: 12px;
+		font-size: 18px;
+
+		small {
+			font-size: 12px;
+			font-weight: 400;
+			color: varfix(foreground-color-light);
+		}
+	}
+}
+
+@include block(audit-cards) {
+	--audit-grid-columns: 2;
+
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	align-items: start;
+	gap: 12px;
+
+	@include when(masonry) {
+		grid-auto-rows: 1px;
+		row-gap: 0;
+	}
+}
+
+@include block(audit-card) {
+	min-width: 0;
+	padding: 18px;
+	background: varfix(background-color-lightest);
+	border: 1px solid varfix(color-neutral-light);
+	border-radius: 14px;
+	scroll-margin-top: 24px;
+
+	@include when(wide) {
+		grid-column: 1 / -1;
+	}
+
+	@include element(heading) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding-bottom: 12px;
+		margin-bottom: 14px;
+		border-bottom: 1px solid varfix(color-neutral-light);
+
+		h3 { font-size: 15px; }
+	}
+
+	@include element(meta) {
+		padding: 3px 7px;
+		font-size: 10px;
+		color: varfix(foreground-color-light);
+		background: varfix(background-color-light);
+		border-radius: 6px;
+	}
+}
+
+@include block(audit-stack) {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-width: 0;
+}
+
+@include block(audit-row) {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+
+@include block(audit-sample) {
+	min-width: 0;
+
+	@include element(label) {
+		margin-bottom: 8px;
+		font-size: 11px;
+		line-height: 1.7;
+		color: varfix(foreground-color-light);
+	}
+}
+
+@include block(audit-mobile) {
+	width: 100%;
+	max-width: 375px;
+	padding: 12px;
+	border: 1px dashed varfix(color-neutral-light);
+	border-radius: 10px;
+}
+
+@include block(audit-version) {
+	& + & {
+		padding-top: 14px;
+		border-top: 1px solid varfix(color-neutral-light);
+	}
+
+	@include element(label) {
+		margin-bottom: 10px;
+		font-size: 11px;
+		color: varfix(foreground-color-light);
+	}
+}
+
+@include block(audit-empty) {
+	padding: 40px;
+	text-align: center;
+}
+
+@include block(audit-scroll) {
+	max-width: 100%;
+	overflow: auto;
+}
+
+@each $name in audit-utility-surface, audit-utility-heading {
+	@include block($name) {
+		padding: 12px;
+		color: varfix(foreground-color);
+		background: varfix(background-color-light);
+		border: 1px solid varfix(color-neutral-light);
+		border-radius: 8px;
+	}
+}
+
+@include block(audit-utility-heading) {
+	cursor: pointer;
+}
+
+@include block(audit-recycle-row) {
+	height: 44px;
+	padding: 12px;
+	border-bottom: 1px solid varfix(color-neutral-light);
+}
+
+@include block(audit-inline-tabs) { .vcm-tabs__placeholder { display: none; } }
+
+@include block(audit-demo-button) {
+	padding: 7px 12px;
+	color: varfix(foreground-color);
+	cursor: pointer;
+	background: varfix(background-color-light);
+	border: 1px solid varfix(border-color);
+	border-radius: 6px;
+}
+
+@include block(audit-table-loading) {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	background: varfix(color-mask);
+}
+
+@include block(audit-sort-item) {
+	padding: 16px;
+	margin: 6px 0;
+	background: varfix(background-color-light);
+	border: 1px solid varfix(color-neutral-light);
+	border-radius: 6px;
+}
+
+@include block(audit-loading-surface) {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	min-height: 80px;
+	padding: 18px;
+	background: varfix(background-color-light);
+	border-radius: 8px;
+}
+
+// 各组件案例的静态样式；动态主题映射、尺寸和组件样式配置由模板保留。
+@include block(audit-carousel) {
+	width: 100%;
+	max-width: 480px;
+
+	@include element(image) {
+		width: 100%;
+		height: 150px;
+		object-fit: cover;
+
+		@include when(card) {
+			height: 130px;
+			object-fit: fill;
+		}
+	}
+}
+
+@include block(audit-scroller) {
+	@include element(content) {
+		width: 650px;
+		height: 400px;
+		padding: 16px;
+	}
+
+	@include element(row) {
+		padding: 8px;
+	}
+}
+
+@include block(audit-image) {
+	width: 100%;
+	height: 140px;
+	max-width: 360px;
+
+	@include when(empty) {
+		width: 120px;
+		height: 80px;
+	}
+}
+
+@include block(audit-recycle-list) {
+	height: 200px;
+
+	@include when(empty) {
+		height: 80px;
+	}
+
+	@include element(content) {
+		height: 100%;
+	}
+}
+
+@include block(audit-table) {
+	position: relative;
+
+	@include element(expand) {
+		padding: 16px;
+	}
+}
+
+@include block(audit-theme) {
+	@include element(surface) {
+		padding: 12px;
+
+		@include when(bordered) {
+			border-style: solid;
+			border-width: 1px;
+		}
+	}
+}
+
+@include block(audit-utility-surface) {
+	@include when(muted) {
+		color: varfix(foreground-color-light);
+	}
+}
+
+@include block(audit-chart) {
+	height: 240px;
+}
+
+@include block(audit-touch) {
+	min-height: 100px;
+	touch-action: none;
+}
+
+@include block(audit-steps) {
+	min-width: 650px;
+}
+
+@include block(audit-tabs) {
+	width: 280px;
+	max-width: 100%;
+}
+
+@include block(audit-icon) {
+	font-size: 24px;
+}
+
+@include block(audit-affix) {
+	height: 180px;
+	overflow: auto;
+
+	@include element(intro) {
+		height: 60px;
+	}
+
+	@include element(content) {
+		height: 360px;
+		padding-top: 20px;
+	}
+}
+
+@include block(audit-popover) {
+	@include element(content) {
+		padding: 12px;
+	}
+}
+
+@include block(audit-editor) {
+	width: 100%;
+	height: 260px;
+}
+
+@include block(audit-result-image) {
+	width: auto;
+	height: auto;
+	max-width: min(100%, 360px);
+	max-height: 240px;
+	align-self: flex-start;
+	object-fit: contain;
+}
+
+@include block(audit-image-crop) {
+	width: 100%;
+
+	@include element(workspace) {
+		width: 100%;
+		max-width: 360px;
+	}
+}
+
+@include block(audit-popup) {
+	@include element(content) {
+		min-width: 180px;
+		padding: 24px;
+	}
+
+	@include element(close) {
+		margin-top: 12px;
+	}
+}
+
+@include block(audit-customer) {
+	@include element(muted) {
+		color: varfix(foreground-color-light);
+	}
+
+	@include element(primary) {
+		color: varfix(color-primary);
+	}
+}
+
+@include block(audit-calendar) {
+	@include element(date, $root: false) {
+		cursor: pointer;
+
+		@include when(disabled) {
+			color: varfix(foreground-color-inactive);
+			cursor: not-allowed;
+		}
+	}
+}
+
+@media (width <= 1100px) {
+	@include block(audit-layout) {
+		gap: 16px;
+	}
+
+	@include block(audit-cards) {
+		--audit-grid-columns: 1;
+
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+@media (width <= 760px) {
+	@include block(audit-layout) {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	@include block(audit-panel) {
+		position: static;
+		height: 500px;
+	}
+
+	@include block(audit-gallery) {
+		@include element(filters) {
+			flex-wrap: wrap;
+		}
+
+		@include element(platform) {
+			width: 100%;
+		}
+	}
+
+	@include block(audit-card) {
+		padding: 14px;
+	}
+}
