@@ -532,6 +532,11 @@ $sizes: (
 			background: linear-gradient($surface-tint, $surface-tint) $background-color-light;
 			border-top: 1px solid $color-neutral-light;
 		}
+
+		// 首列（合计文案）不换行
+		.is-grid-first > .vc-table__cell {
+			white-space: nowrap;
+		}
 	}
 
 	@include element(hidden) {
