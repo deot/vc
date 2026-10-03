@@ -1,9 +1,11 @@
 /** @jsxImportSource vue */
 
-import { getCurrentInstance, computed, defineComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { getCurrentInstance, computed, defineComponent, onBeforeUnmount, onMounted, ref, watch, withModifiers } from 'vue';
 import { throttle } from 'lodash-es';
 import { raf } from '@deot/helper-utils';
 import * as $ from '@deot/helper-dom';
+import { useDrag } from '@deot/vc-hooks';
+import type { DragPoint } from '@deot/vc-hooks';
 import { TransitionFade } from '../transition';
 import { props as trackProps } from './track-props';
 
@@ -96,7 +98,6 @@ export const Track = defineComponent({
 			};
 		});
 
-		let originalOnselectstart: any;
 		let startMove = 0;
 		let startThumbMove = 0;
 
@@ -113,10 +114,7 @@ export const Track = defineComponent({
 			emit('change', scrollDistance.value);
 		};
 
-		const handleMouseMoveDocument = (e: MouseEvent) => {
-			if (cursorDown.value === false) return;
-			if (!startMove) return;
-
+		const handleMouseMoveDocument = (e: DragPoint) => {
 			const { client } = barOptions.value;
 
 			const thumbFitMove = Math.min(
@@ -129,45 +127,36 @@ export const Track = defineComponent({
 
 		const handleMouseUpDocument = () => {
 			cursorDown.value = false;
-			startMove = 0;
 
-			$.off($.el(document.body), 'mousemove', handleMouseMoveDocument);
-			$.off($.el(document.body), 'mouseup', handleMouseUpDocument);
-
-			document.body.onselectstart = originalOnselectstart;
 			if (cursorLeave.value) {
 				isVisible.value = false;
 			}
 		};
 
-		const startDrag = (e: MouseEvent) => {
-			e.stopImmediatePropagation();
-			cursorDown.value = true;
-
-			$.on($.el(document.body), 'mousemove', handleMouseMoveDocument);
-			$.on($.el(document.body), 'mouseup', handleMouseUpDocument);
-
-			originalOnselectstart = document.body.onselectstart;
-			document.body.onselectstart = () => false;
-		};
-
 		// 拖动
-		const handleClickThumb = (e: MouseEvent) => {
-			// 防止中右键点击事件
-			e.stopPropagation();
-			if (e.ctrlKey || [1, 2].includes(e.button)) {
-				return;
-			}
+		const handleClickThumb = (e: MouseEvent | TouchEvent, point: DragPoint) => {
+			// ctrl + 点击会弹出右键菜单
+			if (e.ctrlKey) return false;
 
 			window.getSelection()?.removeAllRanges();
 
-			startDrag(e);
+			e.stopImmediatePropagation();
+			cursorDown.value = true;
 
 			const { client } = barOptions.value;
 
-			startMove = e[client];
+			startMove = point[client];
 			startThumbMove = thumbMove.value;
+			return true;
 		};
+
+		// 滑块只用鼠标拖动；指针移出视口后事件的 target 是 <html>，移动与松开由 useDrag 在 document 上跟踪
+		const drag = useDrag({
+			selectable: false,
+			start: handleClickThumb,
+			move: (_, point) => handleMouseMoveDocument(point),
+			end: handleMouseUpDocument
+		});
 
 		// 点击滚动轴
 		const handleClickTrack = (e: MouseEvent) => {
@@ -228,11 +217,7 @@ export const Track = defineComponent({
 
 		onMounted(bindHover);
 
-		onBeforeUnmount(() => {
-			$.off($.el(document.body), 'mousemove', handleMouseMoveDocument);
-			$.off($.el(document.body), 'mouseup', handleMouseUpDocument);
-			unbindHover();
-		});
+		onBeforeUnmount(unbindHover);
 
 		watch(() => props.trigger, refreshHover, { flush: 'post' });
 
@@ -263,7 +248,8 @@ export const Track = defineComponent({
 							ref={thumb}
 							class={[props.thumbClass, 'vc-scroller-track__thumb']}
 							style={[props.thumbStyle!, thumbCalcStyle.value]}
-							onMousedown={handleClickThumb}
+							// 中右键也不冒泡到轨道
+							onMousedown={withModifiers(drag.listeners.onMousedown, ['stop'])}
 						/>
 					</div>
 				</TransitionFade>

@@ -7,6 +7,7 @@ import { Bar } from '../bar';
 import { mount } from '@vue/test-utils';
 import { defineComponent, getCurrentInstance, nextTick, onMounted, reactive, ref } from 'vue';
 import { onTestFinished, vi } from 'vitest';
+import * as drag from '../../../hooks/__tests__/fixtures/drag';
 import { Wheel } from '@deot/helper-wheel';
 
 const sleep = (time = 0) => new Promise(resolve => setTimeout(resolve, time));
@@ -1439,74 +1440,135 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
-		it('thumb mousedown + document mousemove + mouseup drives scroll', async () => {
-			const scrollerRef = ref<any>();
-			const wrapper = mount(() => (
-				<Scroller ref={scrollerRef} native={false} always height="100px">
-					<div style="height: 1000px"></div>
-				</Scroller>
-			), { attachTo: document.body });
+		describe('thumb drag gesture', () => {
+			const mountThumb = async () => {
+				const scrollerRef = ref<any>();
+				const wrapper = mount(() => (
+					<Scroller ref={scrollerRef} native={false} always height="100px">
+						<div style="height: 1000px"></div>
+					</Scroller>
+				), { attachTo: document.body });
 
-			const wrapEl = wrapper.find('.vc-scroller').element as HTMLElement;
-			const restore = mockSize(wrapEl, {
-				clientWidth: 100,
-				clientHeight: 100,
-				scrollWidth: 100,
-				scrollHeight: 1000
+				const restore = mockSize(wrapper.find('.vc-scroller').element as HTMLElement, {
+					clientWidth: 100,
+					clientHeight: 100,
+					scrollWidth: 100,
+					scrollHeight: 1000
+				});
+				await scrollerRef.value.refresh();
+				await nextTick();
+
+				return {
+					wrapper,
+					restore,
+					thumb: wrapper.find('.vc-scroller-track.is-vertical .vc-scroller-track__thumb').element,
+					scrollTop: () => scrollerRef.value.scrollTop
+				};
+			};
+			const fireMouse = async (
+				el: EventTarget,
+				type: 'mousedown' | 'mousemove' | 'mouseup',
+				clientY: number,
+				init: MouseEventInit = {}
+			) => {
+				drag.fireMouse(el, type, { clientY, ...init });
+				await nextTick();
+			};
+			const { blocked } = drag;
+
+			it('keeps following and ends when the pointer is outside the viewport', async () => {
+				const { wrapper, restore, thumb, scrollTop } = await mountThumb();
+
+				await fireMouse(thumb, 'mousedown', 5);
+				// 指针在视口外时事件的 target 是 <html>，冒泡不到 body
+				await fireMouse(document.documentElement, 'mousemove', 30);
+				const top = scrollTop();
+				expect(top).toBeGreaterThan(0);
+
+				await fireMouse(document.documentElement, 'mouseup', 30);
+				// 松开后，不按键的移动不再拖动
+				await fireMouse(document.body, 'mousemove', 60, { buttons: 0 });
+				expect(scrollTop()).toBe(top);
+
+				restore();
+				wrapper.unmount();
 			});
-			await scrollerRef.value.refresh();
-			await nextTick();
 
-			const thumb = wrapper.find('.vc-scroller-track.is-vertical .vc-scroller-track__thumb');
-			expect(thumb.exists()).toBe(true);
+			it('stops following when the primary button is no longer pressed without a mouseup', async () => {
+				const { wrapper, restore, thumb, scrollTop } = await mountThumb();
 
-			await thumb.trigger('mousedown', { clientY: 5, button: 0 });
+				await fireMouse(thumb, 'mousedown', 5);
+				await fireMouse(document.body, 'mousemove', 30);
+				const top = scrollTop();
+				expect(top).toBeGreaterThan(0);
 
-			document.body.dispatchEvent(new MouseEvent('mousemove', {
-				clientY: 50,
-				bubbles: true
-			}));
-			await nextTick();
+				// 右键菜单、原生拖拽等吞掉了 mouseup：下一次移动时主键已松开
+				await fireMouse(document.body, 'mousemove', 60, { buttons: 0 });
+				expect(scrollTop()).toBe(top);
 
-			document.body.dispatchEvent(new MouseEvent('mouseup', {
-				bubbles: true
-			}));
-			await nextTick();
+				// 已解绑：之后按着主键移动也不再拖动
+				await fireMouse(document.body, 'mousemove', 80);
+				expect(scrollTop()).toBe(top);
 
-			expect(scrollerRef.value.scrollTop).toBeGreaterThan(0);
-
-			restore();
-			wrapper.unmount();
-		});
-
-		it('thumb mousedown is ignored for right/middle button', async () => {
-			const scrollerRef = ref<any>();
-			const wrapper = mount(() => (
-				<Scroller ref={scrollerRef} native={false} always height="100px">
-					<div style="height: 1000px"></div>
-				</Scroller>
-			), { attachTo: document.body });
-
-			const wrapEl = wrapper.find('.vc-scroller').element as HTMLElement;
-			const restore = mockSize(wrapEl, {
-				clientHeight: 100,
-				scrollHeight: 1000
+				restore();
+				wrapper.unmount();
 			});
-			await scrollerRef.value.refresh();
-			await nextTick();
 
-			const thumb = wrapper.find('.vc-scroller-track.is-vertical .vc-scroller-track__thumb');
-			await thumb.trigger('mousedown', { clientY: 10, button: 2 });
+			it('blocks text selection while dragging without taking over document.body.onselectstart', async () => {
+				const { wrapper, restore, thumb } = await mountThumb();
+				const own = () => {};
+				document.body.onselectstart = own;
 
-			document.body.dispatchEvent(new MouseEvent('mousemove', {
-				clientY: 50,
-				bubbles: true
-			}));
+				await fireMouse(thumb, 'mousedown', 5);
+				expect(blocked('selectstart')).toBe(true);
+				expect(document.body.onselectstart).toBe(own);
 
-			expect(scrollerRef.value.scrollTop).toBe(0);
+				await fireMouse(document.body, 'mouseup', 5);
+				expect(blocked('selectstart')).toBe(false);
+				expect(document.body.onselectstart).toBe(own);
 
-			restore();
-			wrapper.unmount();
+				document.body.onselectstart = null;
+				restore();
+				wrapper.unmount();
+			});
+
+			it('restores text selection when unmounted while dragging', async () => {
+				const { wrapper, restore, thumb } = await mountThumb();
+
+				await fireMouse(thumb, 'mousedown', 5);
+				restore();
+				wrapper.unmount();
+
+				expect(blocked('selectstart')).toBe(false);
+				expect(document.body.onselectstart).toBe(null);
+			});
+
+			it('ctrl + click does not start a drag', async () => {
+				const { wrapper, restore, thumb, scrollTop } = await mountThumb();
+
+				await fireMouse(thumb, 'mousedown', 5, { ctrlKey: true });
+				await fireMouse(document.body, 'mousemove', 50);
+				expect(scrollTop()).toBe(0);
+
+				restore();
+				wrapper.unmount();
+			});
+
+			it('non-primary mousedown on the thumb neither drags nor reaches the track', async () => {
+				const { wrapper, restore, thumb, scrollTop } = await mountThumb();
+
+				// 冒泡到轨道会按点击位置跳转
+				await fireMouse(thumb, 'mousedown', 80, { button: 2, buttons: 2 });
+				await fireMouse(thumb, 'mousedown', 80, { button: 1, buttons: 4 });
+				expect(scrollTop()).toBe(0);
+
+				// 也没有进入拖动
+				await fireMouse(document.body, 'mousemove', 120, { buttons: 2 });
+				expect(scrollTop()).toBe(0);
+
+				restore();
+				wrapper.unmount();
+			});
 		});
 
 		it('mousemove on track parent shows track; mouseleave hides it', async () => {
