@@ -1,17 +1,55 @@
 @use '../style/helper' as *;
 
 $component-name: vc-input;
-$background-color-light: varfix(background-color-light, input);
-$color-light-deeper: varfix(color-light-deeper, input);
-$color-error: varfix(color-error, input);
-$color-primary: varfix(color-primary, input);
-$color-primary-lighter: varfix(color-primary-lighter, input);
-$color-dark-lighter: varfix(color-dark-lighter, input);
 $color-dark-light: varfix(color-dark-light, input);
+$color-dark-lighter: varfix(color-dark-lighter, input);
 $color-dark-extralight: varfix(color-dark-extralight, input);
-$color-light-deep: varfix(color-light-deep, input);
-$foreground-color: varfix(foreground-color, input);
 $color-disabled: varfix(color-disabled, input);
+$color-error: varfix(color-error, input);
+$color-light-deep: varfix(color-light-deep, input);
+$color-primary: varfix(color-primary, input);
+$color-primary-light: varfix(color-primary-light, input);
+$color-primary-lighter: varfix(color-primary-lighter, input);
+$background-color-light: varfix(background-color-light, input);
+$background-color-lightest: varfix(background-color-lightest, input);
+$border-color: varfix(border-color, input);
+$foreground-color: varfix(foreground-color, input);
+
+@mixin input-theme($light) {
+	.vc-input.is-focus:not(.is-error) {
+		&::after, &::before {
+			border-color: if(sass($light): $color-primary; else: $color-primary-light);
+		}
+	}
+
+	.vc-input.is-disabled,
+	.vc-input__prepend.is-disabled,
+	.vc-input__append.is-disabled,
+	.vc-input-number__up[disabled="disabled"],
+	.vc-input-number__down[disabled="disabled"] {
+		background-color: if(sass($light): $color-disabled; else: $background-color-light);
+	}
+}
+
+@media (prefers-color-scheme: light) {
+	:root {
+		@include input-theme(true);
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		@include input-theme(false);
+	}
+}
+
+[data-vc-theme="light"] {
+	@include input-theme(true);
+}
+
+[data-vc-theme="dark"] {
+	@include input-theme(false);
+}
 
 @include block($component-name) {
 	position: relative;
@@ -22,13 +60,13 @@ $color-disabled: varfix(color-disabled, input);
 	font-size: unitfix(12);
 	line-height: 1.5;
 	cursor: text;
-	background-color: $background-color-light;
+	background-color: $background-color-lightest;
 	border-radius: unitfix(8);
 	transition: border .2s ease-in-out, 
 		background .2s ease-in-out, 
 		box-shadow .2s ease-in-out;
 
-	@include border('', $color-light-deeper, 8); // 不占边距
+	@include border('', $border-color, 8); // 不占边距
 
 	@include when(focus) {
 		&::after, &::before {
@@ -137,7 +175,7 @@ $color-disabled: varfix(color-disabled, input);
 			width: unitfix(16);
 			font-size: unitfix(12);
 			color: $foreground-color;
-			background-color: $background-color-light;
+			background-color: $background-color-lightest;
 		}
 
 		@include when(disabled) {

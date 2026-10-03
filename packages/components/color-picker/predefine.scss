@@ -1,9 +1,13 @@
+@use 'sass:color';
 @use '../style/helper' as *;
 
+$color-contrast-dark: varfix(color-contrast-dark, color-picker);
+$color-contrast-dark-frozen: themefrozen(color-contrast-dark);
+$color-primary: varfix(color-primary, color-picker);
 $component-name: vc-color-picker-predefine;
 $alpha-background: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==';
-$color-primary: varfix(color-primary, color-picker);
-$swatch-border-color: varfix(swatch-border-color, color-picker, rgb(0 0 0 / 15%));
+$swatch-border-color-fallback: color.change($color-contrast-dark-frozen, $alpha: .15);
+$swatch-border-color: color-mix(in srgb, #{$color-contrast-dark} 15%, transparent);
 
 @include block($component-name) {
 	display: flex;
@@ -21,7 +25,13 @@ $swatch-border-color: varfix(swatch-border-color, color-picker, rgb(0 0 0 / 15%)
 		div {
 			height: 100%;
 			border-radius: unitfix(2);
-			box-shadow: inset 0 0 0 unitfix(1) $swatch-border-color;
+			box-shadow: inset 0 0 0 unitfix(1) $swatch-border-color-fallback;
+
+			@supports (color: color-mix(in srgb, black, white)) {
+				& {
+					box-shadow: inset 0 0 0 unitfix(1) $swatch-border-color;
+				}
+			}
 		}
 
 		&:nth-child(10n + 1) {

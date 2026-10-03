@@ -140,6 +140,35 @@ const handleClick = () => new Promise(resolve => setTimeout(resolve, 1000));
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-switch-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+桌面端和移动端使用相同的状态配色。普通文字和滑块使用 `color-contrast-light`，加载标记使用 `color-primary`，暗色禁用文字和滑块使用 `foreground-color-inactive`。⚠ color-mix：移动端滑块边框由 color-contrast-dark 以 13% 与透明色混合。⚠ color-mix：选中禁用轨道由 color-primary-light 30% 与 background-color-lightest 70% 混合；不支持时使用 color-primary-lighter。
+
+未选中且可交互的轨道，亮色使用 `color-light-deepest`，暗色使用 `background-color-light`，与白色文字和滑块保持区分；支持系统主题及 `data-vc-theme="light|dark"`。
+
+透明色增强声明仅在 `@supports` 内生效；不支持 color-mix 时使用 Sass 编译的固定黑色 rgba() 降级值，透明度与上述比例一致，降级值不会随 color-contrast-dark 变量变化。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-dark | 移动端滑块边框的派生基色 | `#000000`（亮暗主题相同） |
+| color-contrast-light | 普通文字、普通滑块及亮色禁用文字和滑块 | `#FFFFFF`（亮暗主题相同） |
+| color-light-deepest | 亮色未选中轨道及同色边框 | 亮色：`#C0C4CC`；暗色：`#E8E8E8` |
+| color-primary | 选中轨道及同色边框、加载标记 | `#456CF6` |
+| color-primary-light | 选中禁用轨道派生 | `#4A96FF` |
+| color-primary-lighter | 选中禁用轨道降级色 | `rgba(45, 140, 240, 0.2)` |
+| background-color-light | 未选中禁用轨道、暗色未选中轨道及同色边框 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+| background-color-lightest | 禁用主色混合表面 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| foreground-color-inactive | 暗色禁用文字和滑块 | 亮色：`#C0C4CC`；暗色：`#737D8C` |
+| box-shadow-floating | 移动端滑块阴影 | 亮色：`0 4px 12px rgba(0, 0, 0, 0.12)`；暗色：`0 4px 12px rgba(0, 0, 0, 0.32)` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 以下 API 适用于 `Switch` 和 `MSwitch`，尺寸属性仅作用于 `Switch`。

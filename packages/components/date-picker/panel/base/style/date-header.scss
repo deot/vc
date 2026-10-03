@@ -1,15 +1,15 @@
 @use '../../../../style/helper' as *;
 
-$muted: varfix(color-dark-extralight, date-picker);
-$primary: varfix(color-primary, date-picker);
-$border: varfix(border-color, date-picker, rgb(128 128 128 / 22%));
+$color-dark-extralight: varfix(color-dark-extralight, date-picker);
+$color-neutral-light: varfix(color-neutral-light, date-picker);
+$color-primary: varfix(color-primary, date-picker);
 $block: vc-date-header;
 
 @include block($block) {
 	height: 32px;
 	line-height: 32px;
 	text-align: center;
-	border-bottom: 1px solid $border;
+	border-bottom: 1px solid $color-neutral-light;
 	user-select: none;
 
 	@include element(arrow) {
@@ -19,14 +19,14 @@ $block: vc-date-header;
 		margin-top: 2px;
 		font-size: 14px;
 		line-height: 26px;
-		color: $muted;
+		color: $color-dark-extralight;
 		text-align: center;
 		vertical-align: unset;
 		cursor: pointer;
 		transition: color .2s ease-in-out;
 
 		&:hover {
-			color: $primary;
+			color: $color-primary;
 		}
 
 		@include when(prev) {
@@ -50,7 +50,7 @@ $block: vc-date-header;
 		cursor: pointer;
 
 		&:hover {
-			color: $primary;
+			color: $color-primary;
 		}
 	}
 }

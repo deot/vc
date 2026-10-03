@@ -212,7 +212,7 @@ export const TreeSelectContentCascader = defineComponent({
 											class={[
 												'vc-tree-select__cascader-item',
 												'vc-tree-select__search-item',
-												{ 'is-disabled': !!item.disabled }
+												{ 'is-checked': state.checked, 'is-disabled': !!item.disabled }
 											]}
 											onClick={() => handleLabelClick(!state.checked, item)}
 										>
@@ -276,7 +276,7 @@ export const TreeSelectContentCascader = defineComponent({
 															key={item.value}
 															class={[
 																'vc-tree-select__cascader-item',
-																{ 'is-select': isSelect, 'is-disabled': !!item.disabled }
+																{ 'is-select': isSelect, 'is-checked': state.checked, 'is-disabled': !!item.disabled }
 															]}
 															onMouseenter={() => handleHover(item.value, columnIndex)}
 															onClick={() => handleLabelClick(!state.checked, item)}

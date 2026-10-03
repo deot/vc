@@ -315,6 +315,28 @@ const handleOk = () => {
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-popconfirm-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
+
+弹层或遮罩通过 Portal 挂载时，覆盖变量需作用于实际浮层或其祖先。
+
+内嵌或复用的 [popover](../popover/README.md#主题与局部覆盖)、[button](../button/README.md#主题与局部覆盖) 使用各自的主题入口。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-light | 确认标题 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-error | 错误图标 | `#F53F3F` |
+| color-primary | 信息图标 | `#456CF6` |
+| color-success | 成功图标 | `#1DB88C` |
+| color-warning | 警告图标 | `#E6A23C` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### 属性

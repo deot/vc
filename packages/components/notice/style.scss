@@ -2,16 +2,15 @@
 
 $component-name: vc-notice;
 $component-portals-name: vc-notice-portals;
-$color-success: varfix(color-success, notice);
-$color-error: varfix(color-error, notice);
-$color-warning: varfix(color-warning, notice);
-$color-info: varfix(color-primary, notice);
 $color-dark-light: varfix(color-dark-light, notice);
 $color-dark-lighter: varfix(color-dark-lighter, notice);
-$close-color: varfix(color-dark-lightest, notice);
-$close-color-hover: varfix(color-dark-light, notice);
-$background-color-light: varfix(background-color-light, notice);
-$border-shadow: varfix(border-shadow, notice);
+$color-dark-lightest: varfix(color-dark-lightest, notice);
+$color-error: varfix(color-error, notice);
+$color-primary: varfix(color-primary, notice);
+$color-success: varfix(color-success, notice);
+$color-warning: varfix(color-warning, notice);
+$background-color-lightest: varfix(background-color-lightest, notice);
+$box-shadow: varfix(box-shadow, notice);
 
 
 // 消息加入理应是倒置的
@@ -45,9 +44,9 @@ $border-shadow: varfix(border-shadow, notice);
 		margin-bottom: unitfix(16);
 		overflow: hidden;
 		font-size: unitfix(14);
-		background: $background-color-light;
+		background: $background-color-lightest;
 		border-radius: unitfix(4);
-		box-shadow: $border-shadow;
+		box-shadow: $box-shadow;
 		align-items: center;
 
 		@include element(title) {
@@ -85,11 +84,11 @@ $border-shadow: varfix(border-shadow, notice);
 			}
 
 			@include when(info) {
-				color: $color-info;
+				color: $color-primary;
 			}
 
 			@include when(loading) {
-				color: $color-info;
+				color: $color-primary;
 			}
 		}
 	}
@@ -101,12 +100,12 @@ $border-shadow: varfix(border-shadow, notice);
 		display: inline-flex;
 		height: unitfix(24);
 		font-size: unitfix(12);
-		color: $close-color;
+		color: $color-dark-lightest;
 		cursor: pointer;
 		align-items: center;
 
 		&:hover {
-			color: $close-color-hover;
+			color: $color-dark-light;
 		}
 	}
 }

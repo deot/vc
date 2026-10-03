@@ -1,13 +1,13 @@
 @use '../style/helper' as *;
 
-$component-name: vc-divider;
-$background-color-light: varfix(background-color-light, divider);
-$border-color: varfix(border-color, divider, #EDEFF1);
 $color-dark: varfix(color-dark, divider);
+$color-neutral-light: varfix(color-neutral-light, divider);
+$background-color-lightest: varfix(background-color-lightest, divider);
+$component-name: vc-divider;
 
 @include block($component-name) {
 	position: relative;
-	background-color: $border-color;
+	background-color: $color-neutral-light;
 
 	@include when(horizontal) {
 		display: block;
@@ -32,7 +32,7 @@ $color-dark: varfix(color-dark, divider);
 		font-size: 14px;
 		font-weight: 500;
 		color: $color-dark;
-		background-color: $background-color-light;
+		background-color: $background-color-lightest;
 
 		@include when(left) {
 			left: 20px;

@@ -1,15 +1,15 @@
 @use '../style/helper' as *;
 
+$color-contrast-light: varfix(color-contrast-light, steps);
+$color-dark-light: varfix(color-dark-light, steps);
+$color-dark-lighter: varfix(color-dark-lighter, steps);
+$color-dark-extralight: varfix(color-dark-extralight, steps);
+$color-error: varfix(color-error, steps);
+$color-neutral-light: varfix(color-neutral-light, steps);
+$color-primary: varfix(color-primary, steps);
+$color-primary-lighter: varfix(color-primary-lighter, steps);
+$background-color: varfix(background-color, steps);
 $component-name: vc-step;
-$title-color: varfix(color-dark-light, steps);
-$title-color-default: varfix(color-dark-lighter, steps);
-$description-color: varfix(color-dark-extralight, steps);
-$primary-color: varfix(color-primary, steps);
-$primary-color-lighter: varfix(color-primary-lighter, steps);
-$error-color: varfix(color-error, steps);
-$line-color: varfix(color-light-deeper, steps);
-$foreground-color-active: varfix(foreground-color-active, steps, #fff);
-$background-color-default: varfix(background-color, steps);
 $icon-size: 28px;
 $gap: 12px; // 节点与标题、项与项之间的间距
 
@@ -25,7 +25,7 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 	white-space: nowrap;
 
 	// 该步之后连线的颜色，由连线（伪元素或tail）统一读取
-	--vc-step-line-color: #{$line-color};
+	--vc-step-line-color: #{$color-neutral-light};
 
 	&:last-child {
 		flex: none;
@@ -69,14 +69,14 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 		font-size: unitfix(16px);
 		font-weight: normal;
 		line-height: unitfix($icon-size);
-		color: $title-color;
+		color: $color-dark-light;
 	}
 
 	@include element(description) {
 		max-width: unitfix(140px);
 		margin-top: unitfix(2px);
 		font-size: unitfix(12px);
-		color: $description-color;
+		color: $color-dark-extralight;
 		white-space: normal;
 	}
 
@@ -102,10 +102,10 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 	}
 
 	@each $status, $color, $background in (
-		default $title-color-default $background-color-default,
-		pending $foreground-color-active $primary-color,
-		success $primary-color $primary-color-lighter,
-		error $foreground-color-active $error-color
+		default $color-dark-lighter $background-color,
+		pending $color-contrast-light $color-primary,
+		success $color-primary $color-primary-lighter,
+		error $color-contrast-light $color-error
 	) {
 		@include when($status) {
 			.vc-step__icon {
@@ -116,16 +116,16 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 	}
 
 	&.is-default .vc-step__title {
-		color: $title-color-default;
+		color: $color-dark-lighter;
 	}
 
 	// 连线颜色：已完成为主色，下一步失败时为错误色
 	@include when(success) {
-		--vc-step-line-color: #{$primary-color};
+		--vc-step-line-color: #{$color-primary};
 	}
 
 	@include when(next-error) {
-		--vc-step-line-color: #{$error-color};
+		--vc-step-line-color: #{$color-error};
 	}
 
 	@include when(clickable) {

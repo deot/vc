@@ -102,6 +102,6 @@ const renderLabel = () => h('span', { style: 'font-weight: bold;' }, '2020-04-12
 	flex-wrap: wrap;
 	gap: 40px;
 	padding: 20px;
-	background: var(--vc-background-color-light);
+	background: var(--vc-background-color-lightest);
 }
 </style>

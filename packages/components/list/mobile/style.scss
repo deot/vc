@@ -2,24 +2,25 @@
 
 $component-name: vcm-list;
 $component-child-name: vcm-list-item;
-$background-color-light: varfix(background-color-light, list);
 $color-dark: varfix(color-dark, list);
 $color-dark-extralight: varfix(color-dark-extralight, list);
+$color-neutral-light: varfix(color-neutral-light, list);
+$background-color-lightest: varfix(background-color-lightest, list);
 
 @include block($component-name) {
 	& {
-		background: $background-color-light;
+		background: $background-color-lightest;
 	}
 
 	@include when(border) {
-		@include border(top);
-		@include border(bottom);
+		@include border(top, $color-neutral-light);
+		@include border(bottom, $color-neutral-light);
 	}
 }
 
 @include block($component-child-name) {
 	@include element(wrapper) {
-		@include border(bottom);
+		@include border(bottom, $color-neutral-light);
 
 		& {
 			display: flex;
@@ -29,7 +30,7 @@ $color-dark-extralight: varfix(color-dark-extralight, list);
 			font-size: 16px;
 			line-height: 24px;
 			color: $color-dark;
-			background: $background-color-light;
+			background: $background-color-lightest;
 		}
 
 		// 单行

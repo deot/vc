@@ -1,18 +1,18 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-picker-popup;
-$background-color-light: varfix(background-color-light, picker);
 $color-dark: varfix(color-dark, picker);
+$color-neutral-light: varfix(color-neutral-light, picker);
 $color-primary: varfix(color-primary, picker);
-$color-light-deeper: varfix(color-light-deeper, picker);
+$background-color-lightest: varfix(background-color-lightest, picker);
 
 @include block($component-name) {
 	@include element(header) {
 		position: relative;
 		display: flex;
 		align-items: center;
-		background-color: $background-color-light;
-		border-bottom: unitfix(1) solid $color-light-deeper;
+		background-color: $background-color-lightest;
+		border-bottom: unitfix(1) solid $color-neutral-light;
 		box-sizing: border-box;
 	}
 

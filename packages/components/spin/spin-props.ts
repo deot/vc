@@ -7,7 +7,7 @@ export const props = {
 	},
 	foreground: {
 		type: String,
-		default: 'var(--vc-spin-foreground-color, #ccc)'
+		default: 'var(--vc-spin-color-light-deepest, var(--vc-color-light-deepest))'
 	},
 	background: {
 		type: String,

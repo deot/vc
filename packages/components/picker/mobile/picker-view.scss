@@ -1,7 +1,7 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-picker-view;
-$background-color-light: varfix(background-color-light, picker);
+$background-color-lightest: varfix(background-color-lightest, picker);
 
 @include block($component-name) {
 	display: flex;
@@ -9,6 +9,6 @@ $background-color-light: varfix(background-color-light, picker);
 	flex: 1;
 	flex-direction: row;
 	overflow: hidden;
-	background-color: $background-color-light;
+	background-color: $background-color-lightest;
 	box-sizing: border-box;
 }

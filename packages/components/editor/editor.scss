@@ -1,7 +1,8 @@
 @use '../style/helper' as *;
 
-$color-light-deeper: varfix(color-light-deeper, editor);
-$background-color: varfix(background-color-light, editor);
+$color-neutral-light: varfix(color-neutral-light, editor);
+$background-color-lightest: varfix(background-color-lightest, editor);
+$border-color: varfix(border-color, editor);
 $component-name: vc-editor;
 
 @include block($component-name) {
@@ -9,7 +10,7 @@ $component-name: vc-editor;
 	display: inline-flex;
 	flex-direction: column;
 
-	@include border('', $color-light-deeper, 8); // 不占边距
+	@include border('', $border-color, 8); // 不占边距
 
 	@include element(icon) { 
 		line-height: 1;
@@ -26,7 +27,7 @@ $component-name: vc-editor;
 
 		&::before {
 			position: absolute;
-			background: $background-color;
+			background: $background-color-lightest;
 			content: '';
 			opacity: .67;
 			inset: 0;
@@ -43,7 +44,7 @@ $component-name: vc-editor;
 		z-index: 1;
 		border: none;
 
-		@include border('bottom', $color-light-deeper);
+		@include border('bottom', $color-neutral-light);
 	}
 
 	.ql-picker-options {

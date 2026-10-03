@@ -1,17 +1,17 @@
 @use 'sass:math';
 @use '../style/helper' as *;
 
+$color-contrast-light: varfix(color-contrast-light, steps);
+$color-dark-light: varfix(color-dark-light, steps);
+$color-dark-lighter: varfix(color-dark-lighter, steps);
+$color-dark-extralight: varfix(color-dark-extralight, steps);
+$color-error: varfix(color-error, steps);
+$color-light-deepest: varfix(color-light-deepest, steps);
+$color-primary: varfix(color-primary, steps);
+$color-primary-lighter: varfix(color-primary-lighter, steps);
+$background-color: varfix(background-color, steps);
+$background-color-lightest: varfix(background-color-lightest, steps);
 $component-name: vc-steps;
-$title-color: varfix(color-dark-light, steps);
-$title-color-default: varfix(color-dark-lighter, steps);
-$description-color: varfix(color-dark-extralight, steps);
-$primary-color: varfix(color-primary, steps);
-$primary-color-lighter: varfix(color-primary-lighter, steps);
-$error-color: varfix(color-error, steps);
-$dot-color-default: varfix(color-light-deepest, steps);
-$foreground-color-active: varfix(foreground-color-active, steps, #fff);
-$background-color-default: varfix(background-color, steps);
-$background-color-light: varfix(background-color-light, steps);
 $icon-size: 28px;
 $gap: 12px;
 $line-size: 1px;
@@ -205,11 +205,11 @@ $step: '.vc-step';
 			}
 
 			&.is-default > #{$step}__dot #{$step}__icon {
-				background-color: $dot-color-default;
+				background-color: $color-light-deepest;
 			}
 
 			&.is-success > #{$step}__dot #{$step}__icon {
-				background-color: $primary-color;
+				background-color: $color-primary;
 			}
 
 			> #{$step}__content > #{$step}__description {
@@ -355,7 +355,7 @@ $step: '.vc-step';
 			&:not(:first-child)::before {
 				left: 0;
 				z-index: 1;
-				border-left: unitfix($arrow-size) solid $background-color-light;
+				border-left: unitfix($arrow-size) solid $background-color-lightest;
 			}
 
 			// 后箭头：与该项同色
@@ -366,10 +366,10 @@ $step: '.vc-step';
 			}
 
 			@each $status, $background, $title, $description in (
-				default $background-color-default $title-color-default $description-color,
-				pending $primary-color $foreground-color-active $foreground-color-active,
-				success $primary-color-lighter $title-color $description-color,
-				error $error-color $foreground-color-active $foreground-color-active
+				default $background-color $color-dark-lighter $color-dark-extralight,
+				pending $color-primary $color-contrast-light $color-contrast-light,
+				success $color-primary-lighter $color-dark-light $color-dark-extralight,
+				error $color-error $color-contrast-light $color-contrast-light
 			) {
 				&.is-#{$status} {
 					background-color: $background;
@@ -416,7 +416,7 @@ $step: '.vc-step';
 				bottom: 0;
 				left: 0;
 				height: unitfix(2px);
-				background-color: $primary-color;
+				background-color: $color-primary;
 				content: '';
 			}
 
@@ -431,8 +431,8 @@ $step: '.vc-step';
 				right: unitfix(10px);
 				width: unitfix(6px);
 				height: unitfix(6px);
-				background-color: $background-color-light;
-				border: unitfix(2px) solid $dot-color-default;
+				background-color: $background-color-lightest;
+				border: unitfix(2px) solid $color-light-deepest;
 				border-bottom: none;
 				border-left: none;
 				content: '';
@@ -441,7 +441,7 @@ $step: '.vc-step';
 		}
 	}
 
-	// 放在最后，覆盖各形态下的文字颜色
+	// 可点击步骤高亮文字，箭头的状态底色保留对比文字色
 	@include when(clickable) {
 		#{$step}__title,
 		#{$step}__description {
@@ -450,7 +450,16 @@ $step: '.vc-step';
 
 		> #{$step}.is-clickable:hover > #{$step}__content > #{$step}__title,
 		> #{$step}.is-clickable:hover > #{$step}__content > #{$step}__description {
-			color: $primary-color;
+			color: $color-primary;
+		}
+
+		@include when(arrow) {
+			@each $status in pending, error {
+				> #{$step}.is-#{$status}.is-clickable:hover > #{$step}__content > #{$step}__title,
+				> #{$step}.is-#{$status}.is-clickable:hover > #{$step}__content > #{$step}__description {
+					color: $color-contrast-light;
+				}
+			}
 		}
 	}
 }

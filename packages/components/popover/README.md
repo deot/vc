@@ -455,6 +455,28 @@ onUnmounted(() => leaf?.destroy());
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-popover-wrapper-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+弹层使用 popover-wrapper 命名空间；变量需作用于实际弹层或其祖先。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-lighter | 弹层默认文字 | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-light | dark 外观文字及 light 外观面板、箭头背景 | 亮色：`#FFFFFF`；暗色：`#000000` |
+| color-mask-dark | dark 外观面板及箭头背景 | 亮色：`rgba(0, 0, 0, 0.75)`；暗色：`rgba(255, 255, 255, 0.75)` |
+| color-shadow-fixed | 弹层箭头阴影 | 亮色：`rgba(0, 0, 0, 0.06)`；暗色：`rgba(0, 0, 0, 0.24)` |
+| box-shadow | 弹层阴影 | 亮色：`0 0 8px 0 rgba(0, 0, 0, 0.1)`；暗色：`0 0 8px 0 rgba(255, 255, 255, 0.05)` |
+| font-size-small | 弹层默认字号 | `13px` |
+| line-height-large | 弹层默认行高 | `20px` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### 属性

@@ -349,6 +349,36 @@ const handleChange = (value, currentColor) => {
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-color-picker-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+色相渐变、透明棋盘格和用户选择的颜色属于绘图数据，保持原行为。⚠ color-mix：输入色块及预设色块边框由 color-contrast-dark 以 15% 与透明色混合。
+
+透明色增强声明仅在 `@supports` 内生效；不支持 color-mix 时使用 Sass 编译的固定黑色 rgba() 降级值，透明度与上述比例一致，降级值不会随 color-contrast-dark 变量变化。
+
+内置 Input 保留 input 命名空间，不与 color-picker 建立变量桥接。外层和内容区通过 `--vc-color-picker-<参数>` 覆盖；内置输入框边框及禁用背景通过 `--vc-input-border-color`、`--vc-input-color-disabled`、`--vc-input-background-color-light` 覆盖。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-dark | 输入色块及预设色块边框的派生基色 | `#000000`（亮暗主题相同） |
+| color-contrast-light | 色相和透明度滑块背景 | `#FFFFFF`（亮暗主题相同） |
+| color-dark-light | 输入区文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-dark-extralight | 禁用文字、附加图标及清除图标 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-disabled | 亮色禁用外层及内部内容区背景（color-picker）；内置输入框禁用背景（input） | `#EBEEF5` |
+| color-neutral-light | 确认区分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 输入框悬停边框及预设色选中阴影 | `#456CF6` |
+| color-shadow-fixed | 色相和透明度滑块阴影 | 亮色：`rgb(0 0 0 / 6%)`；暗色：`rgb(0 0 0 / 24%)` |
+| background-color-light | 暗色禁用外层及内部内容区背景（color-picker）；内置输入框禁用背景（input） | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+| background-color-lightest | 输入区背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| border-color | 禁用悬停边框及滑块边框 | `#D5D9E1` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### ColorPicker 属性
@@ -419,7 +449,7 @@ color.toRgb(); // { r: 19, g: 206, b: 103 }
 
 ### 主题与移动端
 
-组件外观使用 `--vc-color-picker-*` 覆盖变量，并回退到共享主题值。触发器和预设色块的边界使用 `--vc-color-picker-swatch-border-color`，默认 `rgb(0 0 0 / 15%)`；推荐色选中阴影使用 `--vc-color-picker-color-primary`。浮层背景由 Popover 控制，内部 Input/Button 使用各自主题。
+组件外观使用 `--vc-color-picker-*` 覆盖变量，并回退到共享主题值。触发器和预设色块的边界由 `--vc-color-picker-color-contrast-dark` 派生 15% 透明色；推荐色选中阴影使用 `--vc-color-picker-color-primary`。浮层背景由 Popover 控制，内部 Input/Button 使用各自主题。
 
 色谱、饱和度/明度黑白渐变、面板光标和透明度棋盘保留固定图形色，不随主题改变所选颜色。
 

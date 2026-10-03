@@ -1,0 +1,43 @@
+@use '../style/helper' as *;
+
+$color-contrast-light: varfix(color-contrast-light, switch);
+$color-light-deepest: varfix(color-light-deepest, switch);
+$background-color-light: varfix(background-color-light, switch);
+$foreground-color-inactive: varfix(foreground-color-inactive, switch);
+
+@mixin switch-theme($light, $component-name, $track) {
+	.#{$component-name}:not(.is-checked, .is-disabled)#{$track} {
+		$track-color: if(sass($light): $color-light-deepest; else: $background-color-light);
+
+		background-color: $track-color;
+		border-color: $track-color;
+	}
+
+	.#{$component-name}.is-disabled {
+		$disabled-foreground: if(sass($light): $color-contrast-light; else: $foreground-color-inactive);
+
+		.#{$component-name}__content {
+			color: $disabled-foreground;
+		}
+
+		.#{$component-name}__inner {
+			background-color: $disabled-foreground;
+		}
+	}
+}
+
+@mixin switch-themes($component-name, $track: '') {
+	@each $mode, $light in light true, dark false {
+		@media (prefers-color-scheme: #{$mode}) {
+			:root {
+				@include switch-theme($light, $component-name, $track);
+			}
+		}
+	}
+
+	@each $mode, $light in light true, dark false {
+		[data-vc-theme="#{$mode}"] {
+			@include switch-theme($light, $component-name, $track);
+		}
+	}
+}

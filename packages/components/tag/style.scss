@@ -1,16 +1,43 @@
 @use '../style/helper' as *;
 
-$component-name: vc-tag;
-$color-success: varfix(color-success, tag);
+$color-contrast-light: varfix(color-contrast-light, tag);
 $color-error: varfix(color-error, tag);
-$color-warning: varfix(color-warning, tag);
+$color-light-deep: varfix(color-light-deep, tag);
+$color-light-deepest: varfix(color-light-deepest, tag);
+$color-neutral-light: varfix(color-neutral-light, tag);
 $color-primary: varfix(color-primary, tag);
-$background-color: varfix(background-color, tag);
+$color-success: varfix(color-success, tag);
+$color-warning: varfix(color-warning, tag);
 $background-color-light: varfix(background-color-light, tag);
+$background-color-lightest: varfix(background-color-lightest, tag);
 $foreground-color: varfix(foreground-color, tag);
-$color-on-emphasis: varfix(color-on-emphasis, tag, #fff);
-$border-color: varfix(color-light-deeper, tag);
-$dot-color: varfix(color-light-deepest, tag);
+$component-name: vc-tag;
+
+@mixin tag-theme($light) {
+	.vc-tag {
+		background-color: if(sass($light): $color-light-deep; else: $background-color-light);
+	}
+}
+
+@media (prefers-color-scheme: light) {
+	:root {
+		@include tag-theme(true);
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		@include tag-theme(false);
+	}
+}
+
+[data-vc-theme="light"] {
+	@include tag-theme(true);
+}
+
+[data-vc-theme="dark"] {
+	@include tag-theme(false);
+}
 
 @include block($component-name) {
 	position: relative;
@@ -28,11 +55,11 @@ $dot-color: varfix(color-light-deepest, tag);
 	 */
 	vertical-align: middle;
 	cursor: pointer;
-	background: $background-color;
+	background: $color-light-deep;
 	border-radius: 3px;
 	box-sizing: border-box;
 
-	@include border('', $border-color, 3);
+	@include border('', $color-neutral-light, 3);
 
 	@include element(wrapper) {
 		display: flex;
@@ -52,13 +79,13 @@ $dot-color: varfix(color-light-deepest, tag);
 		width: 10px;
 		height: 10px;
 		margin-right: 6px;
-		background: $dot-color;
+		background: $color-light-deepest;
 		border-radius: 50%;
 	}
 	
 	@include when(default) {
 		@include when(success) {
-			color: $color-on-emphasis;
+			color: $color-contrast-light;
 			background: $color-success;
 
 			&::after, &::before {
@@ -67,7 +94,7 @@ $dot-color: varfix(color-light-deepest, tag);
 		}
 
 		@include when(primary) {
-			color: $color-on-emphasis;
+			color: $color-contrast-light;
 			background: $color-primary;
 
 			&::after, &::before {
@@ -76,7 +103,7 @@ $dot-color: varfix(color-light-deepest, tag);
 		}
 
 		@include when(warning) {
-			color: $color-on-emphasis;
+			color: $color-contrast-light;
 			background: $color-warning;
 
 			&::after, &::before {
@@ -85,7 +112,7 @@ $dot-color: varfix(color-light-deepest, tag);
 		}
 
 		@include when(error) {
-			color: $color-on-emphasis;
+			color: $color-contrast-light;
 			background: $color-error;
 
 			&::after, &::before {
@@ -97,7 +124,7 @@ $dot-color: varfix(color-light-deepest, tag);
 	@include when(border) {
 		height: 24px;
 		line-height: 24px;
-		background: $background-color-light;
+		background: $background-color-lightest;
 
 		@include when(success) {
 			color: $color-success;
@@ -132,10 +159,10 @@ $dot-color: varfix(color-light-deepest, tag);
 		}
 
 		@include when(white) {
-			color: $color-on-emphasis;
+			color: $color-contrast-light;
 
 			&::after, &::before {
-				border-color: $color-on-emphasis;
+				border-color: $color-contrast-light;
 			}
 		}
 
@@ -148,7 +175,7 @@ $dot-color: varfix(color-light-deepest, tag);
 		height: 28px;
 		padding: 0 10px;
 		line-height: 28px;
-		background: $background-color-light;
+		background: $background-color-lightest;
 
 		@include when(success) {
 			@include element(dot) {
@@ -176,7 +203,7 @@ $dot-color: varfix(color-light-deepest, tag);
 
 		@include when(white) {
 			@include element(dot) {
-				background: $color-on-emphasis;
+				background: $color-contrast-light;
 			}
 		}
 
@@ -187,10 +214,10 @@ $dot-color: varfix(color-light-deepest, tag);
 
 	@include when(unchecked) {
 		color: $foreground-color !important;
-		background: $background-color-light !important;
+		background: $background-color-lightest !important;
 
 		&::after, &::before {
-			border-color: $background-color-light !important;
+			border-color: $background-color-lightest !important;
 		}
 	}
 }

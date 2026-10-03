@@ -445,6 +445,36 @@ onUnmounted(() => {
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-modal-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
+
+弹层或遮罩通过 Portal 挂载时，覆盖变量需作用于实际浮层或其祖先。
+
+内嵌或复用的 [button](../button/README.md#主题与局部覆盖)、[scroller](../scroller/README.md#主题与局部覆盖) 使用各自的主题入口。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark | 移动端标题、无标题正文及取消按钮 | 亮色：`#000000`；暗色：`#FFFFFF` |
+| color-dark-light | 桌面端标题及移动端操作文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-dark-lighter | 移动端正文 | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-lightest | 桌面端关闭图标 | 亮色：`#64758B`；暗色：`#C9C9C9` |
+| color-error | 错误图标 | `#F53F3F` |
+| color-mask | 遮罩背景 | 亮色：`rgb(0 0 0 / 40%)`；暗色：`rgb(255 255 255 / 40%)` |
+| color-neutral-light | 桌面标题、底部及移动端按钮分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 信息图标及移动端确认按钮 | `#456CF6` |
+| color-success | 成功图标 | `#1DB88C` |
+| color-warning | 警告图标 | `#E6A23C` |
+| background-color-lightest | 弹窗面板背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| foreground-color | 桌面端弹窗文字 | 亮色：`#080F20`；暗色：`#F8F8F8` |
+| box-shadow | 弹窗面板阴影 | 亮色：`0 0 8px 0 rgb(0 0 0 / 10%)`；暗色：`0 0 8px 0 rgb(255 255 255 / 5%)` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### Modal 属性

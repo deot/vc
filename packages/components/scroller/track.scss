@@ -1,8 +1,8 @@
 @use '../style/helper' as *;
 
 $component-name: vc-scroller-track;
-$thumb-color: varfix(color-dark-extralight, scroller-track);
-$thumb-color-hover: varfix(color-dark-lightest, scroller-track);
+$color-dark-lightest: varfix(color-dark-lightest, scroller-track);
+$color-dark-extralight: varfix(color-dark-extralight, scroller-track);
 
 // 轨道粗细；sticky 下贴右/贴底的计算与宽高共用
 $track-size: var(--vc-scroller-track-size, #{unitfix(6)});
@@ -67,12 +67,12 @@ $track-size: var(--vc-scroller-track-size, #{unitfix(6)});
 		width: 0;
 		height: 0;
 		cursor: pointer;
-		background-color: $thumb-color;
+		background-color: $color-dark-extralight;
 		border-radius: inherit;
 		transition: .3s background-color;
 		
 		&:hover {
-			background-color: $thumb-color-hover;
+			background-color: $color-dark-lightest;
 		}
 	}
 }

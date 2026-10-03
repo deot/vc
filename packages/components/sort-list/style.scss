@@ -1,8 +1,12 @@
+@use 'sass:color';
 @use '../style/helper' as *;
 
+$color-contrast-dark: varfix(color-contrast-dark, sort-list);
+$color-contrast-dark-frozen: themefrozen(color-contrast-dark);
+$color-contrast-light: varfix(color-contrast-light, sort-list);
 $component-name: vc-sort-list;
-$mask-foreground-color: varfix(mask-foreground-color, sort-list, #fff);
-$mask-background-color: varfix(mask-background-color, sort-list, rgb(0 0 0 / 60%));
+$mask-background-color-fallback: color.change($color-contrast-dark-frozen, $alpha: .6);
+$mask-background-color: color-mix(in srgb, #{$color-contrast-dark} 60%, transparent);
 
 @include block($component-name) {
 	@include flex;
@@ -44,8 +48,15 @@ $mask-background-color: varfix(mask-background-color, sort-list, rgb(0 0 0 / 60%
 		height: 100%;
 		align-items: center;
 		justify-content: space-around;
-		color: $mask-foreground-color;
-		background: $mask-background-color;
+		color: $color-contrast-light;
+		background: $mask-background-color-fallback;
+
+		@supports (color: color-mix(in srgb, black, white)) {
+			& {
+				background: $mask-background-color;
+			}
+		}
+
 		opacity: 0;
 		box-sizing: border-box;
 

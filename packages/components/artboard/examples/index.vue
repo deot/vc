@@ -1,5 +1,5 @@
 <template>
-	<div class="v-artboard">
+	<div class="v-artboard" style="padding: 10px;">
 		<Artboard
 			ref="artboard"
 			:options="{ strokeStyle: 'red', shadowColor: 'red' }"
@@ -7,7 +7,7 @@
 			:height="200"
 			@change="handleChange"
 		/>
-		<div style="margin-top: 20px;">
+		<div style="margin: 10px 0;">
 			<Button @click="handleReset">
 				重置画布
 			</Button>
@@ -23,7 +23,7 @@
 		</div>
 		<img :src="src" alt="">
 
-		<Button @click="handlePopup">弹层</Button>
+		<Button style="margin: 10px 0;" @click="handlePopup">弹层</Button>
 	</div>
 </template>
 <script setup>

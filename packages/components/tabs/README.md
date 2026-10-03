@@ -136,6 +136,33 @@ const isDark = ref(false);
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-tabs-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+移动端黑金（dark 外观）配色属于内部主题，以下三个局部参数保留，不参与全局颜色收敛。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-lighter | 移动端 light 外观标签文字 | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-lightest | 桌面端标签文字 | 亮色：`#64758B`；暗色：`#C9C9C9` |
+| color-neutral-light | 桌面标签底部分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 桌面端激活标签、悬停文字及指示线 | `#456CF6` |
+| color-shadow-fixed | 移动端普通滚动边缘阴影 | 亮色：`rgb(0 0 0 / 6%)`；暗色：`rgb(0 0 0 / 24%)` |
+| background-color-lightest | 卡片标签及移动端 light 外观背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| border-color | 桌面卡片边框 | `#D5D9E1` |
+| foreground-color-dark | 移动端 light 外观选中文字及指示线 | 亮色：`#000000`；暗色：`#F8F8F8` |
+
+### 局部
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| dark-background-color | 移动端 dark 外观背景 | `#333333` |
+| dark-color | 移动端 dark 外观标签文字 | `#E7C083` |
+| dark-step-shadow-color | 移动端 dark 外观滚动边缘阴影 | `#242421` |
+
 ## API
 
 ### Tabs 属性
@@ -229,4 +256,4 @@ const isDark = ref(false);
 
 在 flex 布局中给标签页所在的弹性子容器设置 `min-width: 0; overflow-x: auto;`，防止内容撑开容器。首次激活后的面板会保留在 DOM 中，切换时通过高度与透明度隐藏。
 
-组件颜色通过 `--vc-tabs-*` 变量覆盖，并回退到全局主题。桌面端使用 `color-primary`、`color-dark-lightest`、`color-light-deeper` 和 `background-color-light`；移动端普通风格使用 `color-dark-lighter`、`foreground-color-dark`、`background-color-light` 和 `step-shadow-color`。移动端金色风格提供 `--vc-tabs-dark-background-color`、`--vc-tabs-dark-color`、`--vc-tabs-dark-step-shadow-color`，默认保留深色背景和金色标签。
+组件颜色通过 `--vc-tabs-*` 变量覆盖，并回退到全局主题。桌面端使用 `color-primary`、`color-dark-lightest`、`border-color`、`color-neutral-light` 和 `background-color-lightest`；移动端普通风格使用 `color-dark-lighter`、`foreground-color-dark`、`background-color-lightest` 和 `color-shadow-fixed`。移动端金色风格提供 `--vc-tabs-dark-background-color`、`--vc-tabs-dark-color`、`--vc-tabs-dark-step-shadow-color`，默认保留深色背景和金色标签。

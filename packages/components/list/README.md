@@ -67,6 +67,25 @@ const handleOpen = () => { count.value++; };
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-list-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
+
+这些入口用于移动端 MList 和 MListItem。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark | 列表项文字 | 亮色：`#000000`；暗色：`#FFFFFF` |
+| color-dark-extralight | 附加文字及箭头 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-neutral-light | 列表边框和列表项分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| background-color-lightest | 移动端列表及列表项背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### MList 属性

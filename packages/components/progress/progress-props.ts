@@ -42,7 +42,7 @@ export const props = {
 	},
 	trackColor: {
 		type: String,
-		default: 'var(--vc-progress-track-color, var(--vc-color-light-deeper))'
+		default: 'var(--vc-progress-background-color-light, var(--vc-background-color-light))'
 	},
 	size: {
 		type: Number,

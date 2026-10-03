@@ -1,6 +1,6 @@
 @use '../style/helper' as *;
 
-$background-color-mask: varfix(background-color-mask, carousel-item, #fff);
+$color-contrast-light: varfix(color-contrast-light, carousel);
 $component-name: vc-carousel-item;
 
 @include block($component-name) {
@@ -46,7 +46,7 @@ $component-name: vc-carousel-item;
 		left: 0;
 		width: 100%;
 		height: 100%;
-		background-color: $background-color-mask;
+		background-color: $color-contrast-light;
 		opacity: 0.24;
 		transition: .2s;
 	}

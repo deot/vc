@@ -1,10 +1,14 @@
+@use 'sass:color';
 @use '../../style/helper' as *;
 
-$component-name: vcm-upload-picker;
-$background-color: varfix(background-color, upload-picker);
-$color-light: varfix(color-light, upload-picker);
+$color-contrast-dark: varfix(color-contrast-dark, upload-picker);
+$color-contrast-dark-frozen: themefrozen(color-contrast-dark);
+$color-contrast-light: varfix(color-contrast-light, upload-picker);
 $color-dark-extralight: varfix(color-dark-extralight, upload-picker);
-$mask-color: varfix(mask-color, upload-picker);
+$background-color: varfix(background-color, upload-picker);
+$component-name: vcm-upload-picker;
+$delete-background-fallback: color.change($color-contrast-dark-frozen, $alpha: .4);
+$delete-background: color-mix(in srgb, #{$color-contrast-dark} 40%, transparent);
 
 @include block($component-name) {
 	display: flex;
@@ -36,8 +40,15 @@ $mask-color: varfix(mask-color, upload-picker);
 		width: 15px;
 		height: 15px;
 		font-size: 7px;
-		color: $color-light;
-		background: $mask-color;
+		color: $color-contrast-light;
+		background: $delete-background-fallback;
+
+		@supports (color: color-mix(in srgb, black, white)) {
+			& {
+				background: $delete-background;
+			}
+		}
+
 		border-radius: 2px;
 	}
 

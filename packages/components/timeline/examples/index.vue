@@ -1,5 +1,5 @@
 <template>
-	<div style="padding: 20px; background: var(--vc-background-color-light);">
+	<div style="padding: 20px; background: var(--vc-background-color-lightest);">
 		<div style="margin-bottom: 40px;">
 			<span style="margin-right: 8px;">inverted</span>
 			<Switch v-model="isInverted" />

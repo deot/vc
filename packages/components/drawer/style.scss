@@ -1,11 +1,11 @@
 @use '../style/helper' as *;
 
 $component-name: vc-drawer;
-$color-light-deeper: varfix(color-light-deeper, drawer);
 $color-dark-lightest: varfix(color-dark-lightest, drawer);
-$background-color-light: varfix(background-color-light, drawer);
-$mask-color: varfix(mask-color, drawer);
-$box-shadow: varfix(box-shadow, drawer, 0 unitfix(4) unitfix(12) rgb(0 0 0 / 15%));
+$color-mask: varfix(color-mask, drawer);
+$color-neutral-light: varfix(color-neutral-light, drawer);
+$background-color-lightest: varfix(background-color-lightest, drawer);
+$box-shadow: varfix(box-shadow, drawer);
 
 @include block($component-name) {
 	@include element(mask){
@@ -13,13 +13,13 @@ $box-shadow: varfix(box-shadow, drawer, 0 unitfix(4) unitfix(12) rgb(0 0 0 / 15%
 		inset: 0;
 		z-index: $popup-zindex;
 		height: 100%;
-		background-color: $mask-color;
+		background-color: $color-mask;
 	}
 
 	@include element(wrapper) {
 		position: fixed;
 		z-index: $popup-zindex;
-		background-color: $background-color-light;
+		background-color: $background-color-lightest;
 		box-shadow: $box-shadow;
 	}
 
@@ -64,7 +64,7 @@ $box-shadow: varfix(box-shadow, drawer, 0 unitfix(4) unitfix(12) rgb(0 0 0 / 15%
 		display: flex;
 		height: 100%;
 		padding-bottom: unitfix(57);
-		background: $background-color-light;
+		background: $background-color-lightest;
 		box-sizing: border-box;
 		flex-direction: column;
 
@@ -79,7 +79,7 @@ $box-shadow: varfix(box-shadow, drawer, 0 unitfix(4) unitfix(12) rgb(0 0 0 / 15%
 		font-size: unitfix(16);
 		font-weight: 600;
 		line-height: unitfix(24);
-		border-bottom: unitfix(1) solid $color-light-deeper;
+		border-bottom: unitfix(1) solid $color-neutral-light;
 	}
 
 	@include element(content-container) {
@@ -103,7 +103,7 @@ $box-shadow: varfix(box-shadow, drawer, 0 unitfix(4) unitfix(12) rgb(0 0 0 / 15%
 		padding: unitfix(12) unitfix(24);
 		font-size: unitfix(12);
 		text-align: right;
-		border-top: unitfix(1) solid $color-light-deeper;
+		border-top: unitfix(1) solid $color-neutral-light;
 		box-sizing: border-box;
 	}
 

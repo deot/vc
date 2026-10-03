@@ -258,6 +258,44 @@ const handleClick = () => {
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-file-preview-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+尺寸变量由 size 修饰类写在根节点，单实例调整时应作用于对应 FilePreview 根节点。音视频预览背景使用 color-contrast-dark，关闭控件使用 color-contrast-light；默认不随亮暗主题反转，仍可通过变量覆盖。媒体浮层挂载在 Portal 中，变量需作用于实际浮层或其祖先。
+
+⚠ color-mix：缩略图播放圆形底色由 color-contrast-dark 40% 与透明色混合，增强声明仅在 `@supports` 内生效；不支持时使用 Sass 编译的 `rgba(0, 0, 0, .4)`。降级值不会随变量覆盖变化。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-dark | 音视频预览背景；缩略图播放圆形底色的派生基色 | `#000000`（亮暗主题相同） |
+| color-contrast-light | 音视频预览关闭控件及缩略图播放标记 | `#FFFFFF`（亮暗主题相同） |
+| color-dark-light | 卡片文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-primary | 可预览卡片悬停文字、类型标记及扩展名 | `#456CF6` |
+| color-primary-lighter | 类型标记及扩展名背景 | `rgba(45, 140, 240, 0.2)` |
+| background-color | 卡片及方格背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-primary-light | 可预览卡片悬停背景 | 亮色：`#E6F7FF`；暗色：`#273E5E` |
+| box-shadow | 方格悬停阴影 | 亮色：`0 0 8px 0 rgba(0, 0, 0, 0.1)`；暗色：`0 0 8px 0 rgba(255, 255, 255, 0.05)` |
+
+### 局部
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| card-height | 卡片高度 | mini：`24px`；small：`28px`；medium：`32px`；large：`40px` |
+| card-padding | 卡片左右内边距 | mini：`6px`；small：`8px`；medium：`8px`；large：`10px` |
+| card-radius | 卡片圆角 | mini：`4px`；small：`4px`；medium：`6px`；large：`6px` |
+| card-width | 卡片最大宽度 | mini：`160px`；small：`180px`；medium：`200px`；large：`240px` |
+| dot-size | 类型标记尺寸 | mini：`14px`；small：`16px`；medium：`18px`；large：`22px` |
+| gap | 文件项目间距 | mini：`6px`；small：`8px`；medium：`8px`；large：`12px` |
+| inner-gap | 卡片内部间距 | mini：`4px`；small：`6px`；medium：`6px`；large：`8px` |
+| play-size | 播放标记尺寸 | mini：`16px`；small：`22px`；medium：`28px`；large：`36px` |
+| square-radius | 方格圆角 | mini：`4px`；small：`6px`；medium：`8px`；large：`8px` |
+| square-size | 方格尺寸 | mini：`48px`；small：`64px`；medium：`96px`；large：`128px` |
+| text-size | 卡片字号 | mini：`12px`；small：`12px`；medium：`13px`；large：`14px` |
+| thumbnail-size | 缩略图尺寸 | mini：`16px`；small：`20px`；medium：`22px`；large：`28px` |
+
 ## API
 
 ### FilePreview 属性
@@ -326,12 +364,11 @@ const handleClick = () => {
   - `--vc-file-preview-background-color`：卡片、方格底色
   - `--vc-file-preview-color-dark-light`：名称
   - `--vc-file-preview-color-primary`：悬停文字、音频标记、扩展名
-  - `--vc-file-preview-color-primary-lighter`：悬停底色、音频标记与扩展名底色
-  - `--vc-file-preview-mask-color`、`--vc-file-preview-color-light`：视频播放标记
-  - `--vc-file-preview-border-shadow`：方格悬停阴影
-  - `--vc-file-preview-preview-background-color`：视频、音频播放弹窗的背景，默认 `#000`
-  - `--vc-file-preview-preview-close-color`：视频、音频关闭按钮的颜色，默认 `#fff`
-- 音视频弹窗也兼容显式设置 `--vc-file-preview-color-dark`（背景）和 `--vc-file-preview-color-light`（关闭按钮）；专属 `preview-*` 变量优先。预览弹窗挂载在页面外层，覆盖变量需设置在其能继承的祖先（如 `:root`）上。
+  - `--vc-file-preview-color-primary-lighter`：音频标记与扩展名底色
+  - `--vc-file-preview-background-color-primary-light`：可预览卡片悬停底色
+  - `--vc-file-preview-color-contrast-dark`、`--vc-file-preview-color-contrast-light`：播放底色的派生基色、播放标记及音视频浮层控件
+  - `--vc-file-preview-box-shadow`：方格悬停阴影
+- 音视频预览弹窗挂载在页面外层，覆盖变量需设置在其能继承的祖先（如 `:root`）上。
 - 图片预览使用 PhotoSwipe 自带的深色画布及 `--pswp-*` 变量，保持媒体显示与控件对比度，不随页面主题反转。
 - 尺寸默认按 Sass `$scale` 缩放；由根节点上按 `size` 设置的变量控制，可在 `style` 中覆盖：
   - 方格：`--vc-file-preview-square-size`、`--vc-file-preview-square-radius`、`--vc-file-preview-play-size`

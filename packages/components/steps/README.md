@@ -271,6 +271,32 @@ const current = ref(2);
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-steps-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+当前及错误步骤的标记文字、`arrow` 模式下 pending/error 状态的标题和描述使用可覆盖的 `color-contrast-light`，悬停时保持该对比文字色。内部 --vc-step-line-color 由步骤状态写入，使用现有对应状态色。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-light | 当前及错误步骤标记文字、arrow 的 pending/error 标题和描述（含悬停） | `#FFFFFF`（亮暗主题相同） |
+| color-dark-light | 步骤标题 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-dark-lighter | 未激活图标和标题 | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-extralight | 步骤描述 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-error | 错误步骤及错误连接线 | `#F53F3F` |
+| color-light-deepest | 默认点及导航箭头 | 亮色：`#C0C4CC`；暗色：`#E8E8E8` |
+| color-neutral-light | 默认连接线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 当前、完成步骤及已完成连接线；可点击步骤悬停文字（arrow 的 pending/error 除外） | `#456CF6` |
+| color-primary-lighter | 完成步骤背景 | `rgba(45, 140, 240, 0.2)` |
+| background-color | 未激活步骤背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-lightest | 箭头及导航步骤间隔背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### Steps 属性
@@ -343,11 +369,11 @@ const current = ref(2);
   - `--vc-steps-color-primary-lighter`：已完成步骤的底色
   - `--vc-steps-color-error`：失败
   - `--vc-steps-background-color`：未开始步骤的底色
-  - `--vc-steps-color-light-deeper`：连线
+  - `--vc-steps-color-neutral-light`：连线
   - `--vc-steps-color-light-deepest`：未开始的圆点、导航箭头
   - `--vc-steps-color-dark-light`：标题
   - `--vc-steps-color-dark-lighter`：未开始步骤的标题与序号
   - `--vc-steps-color-dark-extralight`：描述
-  - `--vc-steps-foreground-color-active`：主色、错误色底色上的文字，默认 `#fff`
-  - `--vc-steps-background-color-light`：`arrow` 的分隔缺口与 `navigation` 箭头的背景，应与所在容器的背景一致
+  - `--vc-steps-color-contrast-light`：主色、错误色底色上的文字（含 arrow 悬停），默认 `#fff`
+  - `--vc-steps-background-color-lightest`：`arrow` 的分隔缺口与 `navigation` 箭头的背景，应与所在容器的背景一致
 - `MSteps`、`MStep` 分别是 `Steps`、`Step` 的别名，使用同一实现与样式，可从 `@deot/vc` 导入。

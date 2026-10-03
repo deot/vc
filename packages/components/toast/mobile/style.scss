@@ -1,8 +1,12 @@
+@use 'sass:color';
 @use '../../style/helper' as *;
 
+$color-contrast-dark: varfix(color-contrast-dark, toast);
+$color-contrast-dark-frozen: themefrozen(color-contrast-dark);
+$color-contrast-light: varfix(color-contrast-light, toast);
 $component-name: vcm-toast;
-$content-color: varfix(content-color, toast, #fff);
-$surface-color: varfix(surface-color, toast, rgb(58 58 58 / 75%));
+$surface-color-fallback: color.change($color-contrast-dark-frozen, $alpha: .75);
+$surface-color: color-mix(in srgb, #{$color-contrast-dark} 75%, transparent);
 
 @include block($component-name) {
 	font-size: unitfix(12);
@@ -28,9 +32,16 @@ $surface-color: varfix(surface-color, toast, rgb(58 58 58 / 75%));
 		max-width: 50%;
 		padding: unitfix(9) unitfix(15);
 		line-height: 1.5;
-		color: $content-color;
+		color: $color-contrast-light;
 		text-align: center;
-		background: $surface-color;
+		background: $surface-color-fallback;
+
+		@supports (color: color-mix(in srgb, black, white)) {
+			& {
+				background: $surface-color;
+			}
+		}
+
 		border-radius: unitfix(3);
 		transform: translate(-50%, -50%);
 	}

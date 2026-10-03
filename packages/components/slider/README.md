@@ -127,6 +127,28 @@ const hideFormat = () => {
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-slider-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+⚠ color-mix：禁用已选范围和滑块边框由 color-primary-light 30% 与 background-color-lightest 70% 混合；不支持时使用 color-primary-lighter。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-light | 滑块背景 | `#FFFFFF`（亮暗主题相同） |
+| color-light-deepest | 停靠点颜色 | 亮色：`#C0C4CC`；暗色：`#E8E8E8` |
+| color-primary | 已选范围背景及滑块边框 | `#456CF6` |
+| color-primary-light | 滑块悬停、拖动边框及禁用主色派生 | `#4A96FF` |
+| color-primary-lighter | 禁用已选范围和滑块边框降级色 | `rgba(45, 140, 240, 0.2)` |
+| background-color-light | 普通及禁用滑轨背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+| background-color-lightest | 禁用主色的混合表面 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### 属性

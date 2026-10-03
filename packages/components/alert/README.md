@@ -59,6 +59,28 @@ const isClosed = ref(false);
 
 `title` 和 `desc` 字符串通过 `innerHTML` 渲染，只应传入可信内容。对应属性为空字符串时，组件分别使用默认插槽和 `desc` 插槽。
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-alert-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+⚠ color-mix：四种状态的背景由对应状态色 8% 与 background-color-lightest 92% 混合，边框按 40% / 60% 混合。不支持时，背景使用 background-color-light，边框使用对应状态色。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-lighter | 普通文字 | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-error | 对应状态文字、图标、边框及浅底派生色 | `#F53F3F` |
+| color-primary | 对应状态文字、图标、边框及浅底派生色 | `#456CF6` |
+| color-success | 对应状态文字、图标、边框及浅底派生色 | `#1DB88C` |
+| color-warning | 对应状态文字、图标、边框及浅底派生色 | `#E6A23C` |
+| background-color-light | 不支持混合色时的状态背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+| background-color-lightest | 状态背景和边框的混合表面色 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### 属性

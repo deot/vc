@@ -5,8 +5,8 @@
 - `packages/components/style/theme.scss` 定义共享 semantic tokens，`variables.scss` 为系统主题、强制亮色主题和强制暗色主题输出 `--vc-*` CSS variables。
 - 组件样式通过 `packages/components/style/functions.scss` 中的 `varfix` 使用 tokens。
 - 当存在共享 token 时，`varfix(color-primary, button)` 表示先取组件覆盖值，再取全局 fallback：`--vc-button-color-primary` -> `--vc-color-primary`。
-- 对没有共享 token 的组件专属语义值，提供显式 fallback：`varfix(color-primary-disabled, button, #BEDAFF)`。
-- 如果 token 已经存在于 `$theme`，`varfix` 会忽略第三个参数，仍以全局 token 作为 fallback。不要试图通过第三个参数覆盖该分支。
+- 只有 `$theme` 中没有同名 token 时，第三个参数才作为组件专属 fallback 生效，例如 `varfix(color-primary-disabled, button, #BEDAFF)`。已有同名全局 token 时，组件覆盖值回退到全局 token，第三个参数不生效，应去除冗余第三参。
+- 已有对应语义的全局 token 时，直接调用 `varfix(token, component)`，不要额外创建局部别名并嵌套 `varfix`。SCSS 中不要手写可由 `varfix` 表达的主题变量回退链。
 - 此 SCSS/CSS-variable 系统与 `Theme` 组件的 `VcInstance.options.Theme.variables` 相互独立。常规组件 theme 工作不应迁移到该 JS 兼容机制中。
 
 ## 组件约定

@@ -1,12 +1,12 @@
 @use '../style/helper' as *;
 
-$background-color: varfix(background-color-light, radio);
-$border-color: varfix(color-light-deepest, radio);
-$color-primary: varfix(color-primary, radio);
+$color-dark-extralight: varfix(color-dark-extralight, radio);
 $color-error: varfix(color-error, radio);
-$background-color-disabled: varfix(background-color, radio);
-$foreground-color-disabled: varfix(color-dark-extralight, radio);
-$focus-color: varfix(color-primary-lighter, radio);
+$color-light-deepest: varfix(color-light-deepest, radio);
+$color-primary: varfix(color-primary, radio);
+$color-primary-lighter: varfix(color-primary-lighter, radio);
+$background-color: varfix(background-color, radio);
+$background-color-lightest: varfix(background-color-lightest, radio);
 $component-name: vc-radio;
 
 // 控制高度32px
@@ -50,10 +50,10 @@ $component-name: vc-radio;
 		display: inline-flex;
 		width: unitfix(14);
 		height: unitfix(14);
-		background-color: $background-color;
+		background-color: $background-color-lightest;
 		transition: all .2s ease-in-out;
 
-		@include border('', $border-color, 50%);
+		@include border('', $color-light-deepest, 50%);
 	}
 
 	@include element(inner) {
@@ -96,14 +96,14 @@ $component-name: vc-radio;
 
 		@include element(border){
 			&::before, &::after{
-				border-color: $border-color;
+				border-color: $color-light-deepest;
 			}
 
-			background-color: $background-color-disabled;
+			background-color: $background-color;
 		}
 
 		@include element(inner) {
-			background-color: $foreground-color-disabled;
+			background-color: $color-dark-extralight;
 			animation-name: none;
 		}
 
@@ -112,7 +112,7 @@ $component-name: vc-radio;
 				animation-name: none;
 
 				&::before, &::after{
-					border-color: $foreground-color-disabled;
+					border-color: $color-dark-extralight;
 				}
 			}
 		}
@@ -129,7 +129,7 @@ $component-name: vc-radio;
 	@include when(focus) {
 		@include element(border){
 			z-index: 1;
-			box-shadow: 0 0 0 unitfix(2) $focus-color;
+			box-shadow: 0 0 0 unitfix(2) $color-primary-lighter;
 		}
 	}
 }

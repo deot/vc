@@ -1,16 +1,20 @@
 @use '../style/helper' as *;
 
-$border-color-default: varfix(border-color-default, button-group, #d9d9d9);
+$color-neutral-light: varfix(color-neutral-light, button-group);
 
 @include block(vc-button-group) {
 	display: inline-block;
+	border-radius: unitfix(8);
 
 	@include block(vc-button) {
 		position: relative;
 		display: block;
 		float: left;
 		margin-left: -1px;
-		border-radius: 0;
+
+		&:not(:only-child) {
+			border-radius: 0;
+		}
 
 		@include when(with-icon) {
 			display: flex;
@@ -19,13 +23,17 @@ $border-color-default: varfix(border-color-default, button-group, #d9d9d9);
 		}
 
 		&:first-child {
-			border-bottom-left-radius: unitfix(8);
-			border-top-left-radius: unitfix(8);
+			border-bottom-left-radius: inherit;
+			border-top-left-radius: inherit;
 		}
 
 		&:last-child {
-			border-top-right-radius: unitfix(8);
-			border-bottom-right-radius: unitfix(8);
+			border-top-right-radius: inherit;
+			border-bottom-right-radius: inherit;
+		}
+
+		&:only-child {
+			border-radius: inherit;
 		}
 
 		&:hover {
@@ -35,39 +43,12 @@ $border-color-default: varfix(border-color-default, button-group, #d9d9d9);
 
 	@include block(vc-button) {
 		@include when(default) {
-			border-color: $border-color-default;
-		}
-	}
-
-
-	@include when(large) {
-		@include block(vc-button) {
-			padding: unitfix(8) unitfix(16);
-			font-size: unitfix(14);
-
-			&:first-child {
-				border-radius: unitfix(8) 0 0 unitfix(8);
-			}
-
-			&:last-child {
-				border-radius: 0 unitfix(8) unitfix(8) 0;
-			}
+			border-color: $color-neutral-light;
 		}
 	}
 
 	@include when(small) {
-		@include block(vc-button) {
-			padding: unitfix(2) unitfix(8);
-			font-size: unitfix(12);
-
-			&:first-child {
-				border-radius: unitfix(3) 0 0 unitfix(3);
-			}
-
-			&:last-child {
-				border-radius: 0 unitfix(3) unitfix(3) 0;
-			}
-		}
+		border-radius: unitfix(3);
 	}
 
 	@include when(vertical) {
@@ -77,84 +58,30 @@ $border-color-default: varfix(border-color-default, button-group, #d9d9d9);
 			margin-left: 0;
 
 			&:first-child {
-				border-radius: unitfix(4) unitfix(4) 0 0;
+				border-top-right-radius: inherit;
+				border-bottom-left-radius: 0;
 			}
 
 			&:last-child {
-				border-radius: 0 0 unitfix(4) unitfix(4);
-			}
-		}
-
-		@include when(circle) {
-			@include block(vc-button) {
-				&:first-child {
-					border-radius: unitfix(36) unitfix(36) 0 0; 
-				}
-
-				&:last-child {
-					border-radius: 0 0 unitfix(36) unitfix(36); 
-				}
+				border-top-right-radius: 0;
+				border-bottom-left-radius: inherit;
 			}
 
-			@include when(large) {
-				@include block(vc-button) {
-					&:first-child {
-						border-radius: unitfix(36) unitfix(36) 0 0; 
-					}
-
-					&:last-child {
-						border-radius: 0 0 unitfix(36) unitfix(36); 
-					}
-				}
-			}
-
-			@include when(small) {
-				@include block(vc-button) {
-					&:first-child {
-						border-radius: unitfix(24) unitfix(24) 0 0; 
-					}
-
-					&:last-child {
-						border-radius: 0 0 unitfix(24) unitfix(24); 
-					}
-				}
+			&:only-child {
+				border-radius: inherit;
 			}
 		}
 	}
 
 	@include when(circle) {
-		@include block(vc-button) {
-			&:first-child {
-				border-radius: unitfix(30) 0 0 unitfix(30); 
-			}
-
-			&:last-child {
-				border-radius: 0 unitfix(30) unitfix(30) 0;
-			}
-		}
+		border-radius: unitfix(30);
 
 		@include when(large) {
-			@include block(vc-button) {
-				&:first-child {
-					border-radius: unitfix(36) 0 0 unitfix(36); 
-				}
-
-				&:last-child {
-					border-radius: 0 unitfix(36) unitfix(36) 0;
-				}
-			}
+			border-radius: unitfix(36);
 		}
 
 		@include when(small) {
-			@include block(vc-button) {
-				&:first-child {
-					border-radius: unitfix(24) 0 0 unitfix(24); 
-				}
-
-				&:last-child {
-					border-radius: 0 unitfix(24) unitfix(24) 0;
-				}
-			}
+			border-radius: unitfix(24);
 		}
 	}
 }

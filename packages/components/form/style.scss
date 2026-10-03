@@ -2,15 +2,15 @@
 
 $component-name: vc-form;
 $component-item-name: vc-form-item;
-$foreground-color: varfix(foreground-color, form);
-$background-color-light: varfix(background-color-light, form);
 $color-dark-light: varfix(color-dark-light, form);
 $color-error: varfix(color-error, form);
+$background-color-lightest: varfix(background-color-lightest, form);
+$foreground-color: varfix(foreground-color, form);
 
 @include block($component-name) {
 	padding: unitfix(24) 0;
 	color: $foreground-color;
-	background: $background-color-light;
+	background: $background-color-lightest;
 }
 
 @include block($component-item-name) {

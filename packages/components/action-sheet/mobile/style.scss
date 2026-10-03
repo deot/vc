@@ -1,14 +1,14 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-action-sheet;
-$background-color: varfix(background-color, action-sheet);
-$background-color-light: varfix(background-color-light, action-sheet);
-$color-light: varfix(color-light, action-sheet);
 $color-dark: varfix(color-dark, action-sheet);
 $color-dark-lightest: varfix(color-dark-lightest, action-sheet);
-$color-light-deep: varfix(color-light-deep, action-sheet);
-$color-light-deeper: varfix(color-light-deeper, action-sheet);
-$color-disabled: varfix(color-disabled, action-sheet);
+$color-light: varfix(color-light, action-sheet);
+$color-neutral-light: varfix(color-neutral-light, action-sheet);
+$background-color: varfix(background-color, action-sheet);
+$background-color-light: varfix(background-color-light, action-sheet);
+$background-color-lightest: varfix(background-color-lightest, action-sheet);
+$foreground-color-inactive: varfix(foreground-color-inactive, action-sheet);
 
 @include block($component-name) {
 	color: $color-dark;
@@ -26,7 +26,7 @@ $color-disabled: varfix(color-disabled, action-sheet);
 
 	@include element(group) {
 		overflow: hidden;
-		background: $background-color-light;
+		background: $background-color-lightest;
 		border-radius: unitfix(12) unitfix(12) 0 0;
 	}
 
@@ -39,7 +39,7 @@ $color-disabled: varfix(color-disabled, action-sheet);
 		text-align: center;
 		overflow-wrap: break-word;
 
-		@include border(bottom, $color-light-deeper);
+		@include border(bottom, $color-neutral-light);
 	}
 
 	@include element(actions) {
@@ -56,7 +56,7 @@ $color-disabled: varfix(color-disabled, action-sheet);
 		line-height: unitfix(22);
 		text-align: center;
 		cursor: pointer;
-		background: $background-color-light;
+		background: $background-color-lightest;
 		border: none;
 		box-sizing: border-box;
 		align-items: center;
@@ -64,19 +64,23 @@ $color-disabled: varfix(color-disabled, action-sheet);
 		flex-direction: column;
 
 		&:not(:last-child) {
-			@include border(bottom, $color-light-deeper);
+			@include border(bottom, $color-neutral-light);
 		}
 
 		&:active {
-			background: $color-light-deep;
+			background: $background-color-light;
 		}
 
 		@include when(disabled) {
-			color: $color-disabled;
+			color: $foreground-color-inactive;
 			cursor: not-allowed;
 
+			@include element(sub-content) {
+				color: $foreground-color-inactive;
+			}
+
 			&:active {
-				background: $background-color-light;
+				background: $background-color-lightest;
 			}
 		}
 
@@ -84,7 +88,7 @@ $color-disabled: varfix(color-disabled, action-sheet);
 			cursor: default;
 
 			&:active {
-				background: $background-color-light;
+				background: $background-color-lightest;
 			}
 		}
 	}
@@ -143,11 +147,11 @@ $color-disabled: varfix(color-disabled, action-sheet);
 		color: $color-dark-lightest;
 		text-align: center;
 		cursor: pointer;
-		background: $background-color-light;
+		background: $background-color-lightest;
 		box-sizing: border-box;
 
 		&:active {
-			background: $color-light-deep;
+			background: $background-color-light;
 		}
 	}
 }

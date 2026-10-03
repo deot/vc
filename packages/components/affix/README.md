@@ -92,7 +92,7 @@ const isActive = ref(false);
 .affix-demo__scroller {
 	border: 1px solid var(--vc-color-primary-lighter);
 	border-radius: var(--vc-border-radius);
-	background: var(--vc-background-color-light);
+	background: var(--vc-background-color-lightest);
 }
 
 .affix-demo__content {

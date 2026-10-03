@@ -4,15 +4,16 @@ $component-name: vcm-form;
 $component-item-name: vcm-form-item;
 $color-dark: varfix(color-dark, form);
 $color-error: varfix(color-error, form);
-$background-color-light: varfix(background-color-light, form);
+$color-neutral-light: varfix(color-neutral-light, form);
+$background-color-lightest: varfix(background-color-lightest, form);
 
 @include block($component-name) {
 	color: $color-dark;
-	background: $background-color-light;
+	background: $background-color-lightest;
 
 	@include when(border) {
-		@include border(top);
-		@include border(bottom);
+		@include border(top, $color-neutral-light);
+		@include border(bottom, $color-neutral-light);
 	}
 }
 
@@ -22,7 +23,7 @@ $background-color-light: varfix(background-color-light, form);
 		padding-right: unitfix(12);
 		padding-bottom: unitfix(12);
 
-		@include border(bottom);
+		@include border(bottom, $color-neutral-light);
 	}
 
 	@include pseudo(last-child) {

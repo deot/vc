@@ -300,7 +300,7 @@ const handleDynamic = (e) => {
 		margin-top: 200px;
 		overflow: unset;
 		position: relative;
-		background: varfix(background-color-light);
+		background: varfix(background-color-lightest);
 		@include element(left) {
 			display: flex;
 			flex-direction: column;

@@ -185,6 +185,30 @@ onBeforeUnmount(() => urls.forEach(url => URL.revokeObjectURL(url)));
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-upload-picker-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+⚠ color-mix：移动端删除区底色由 color-contrast-dark 40% 与透明色混合，增强声明仅在 `@supports` 内生效；不支持时使用 Sass 编译的 `rgba(0, 0, 0, .4)`。降级值不会随变量覆盖变化。桌面、移动端共用 upload-picker 命名空间。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-dark | 音视频项背景；移动端删除区透明底色的派生基色 | `#000000`（亮暗主题相同） |
+| color-contrast-light | 删除及播放图标、播放边框 | `#FFFFFF`（亮暗主题相同） |
+| color-dark-lightest | 音视频及文件标题文字 | 亮色：`#64758B`；暗色：`#C9C9C9` |
+| color-dark-extralight | 上传区域文字及文件图标 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-error | 上传失败文字和边框 | `#F53F3F` |
+| color-neutral-light | 桌面上传区域边框 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary-light | 桌面端删除按钮背景 | `#4A96FF` |
+| background-color | 上传区域及文件项背景；桌面图片内容区仅亮色使用 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-light | 桌面图片内容区的暗色背景 | 亮色：`#F7F8FA`（此处不使用）；暗色：`#2D3444` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 以下属性、事件、插槽和方法适用于 `UploadPicker` 与 `MUploadPicker`，平台差异在对应行说明。下文 `PickerType` 表示 `'image' | 'video' | 'audio' | 'file'`，仅用于解释数据结构。

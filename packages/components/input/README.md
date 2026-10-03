@@ -236,6 +236,34 @@ const handleCancel = () => { status.value = '已取消搜索'; };
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-input-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+同时覆盖 Input、InputNumber、InputSearch 的桌面和移动端样式；内嵌组件沿用各自主题入口。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-light | 输入文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-dark-extralight | 占位文字、数字按钮及附加图标 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-disabled | 亮色禁用输入区、附加区及数字按钮背景 | `#EBEEF5` |
+| color-error | 错误边框 | `#F53F3F` |
+| color-light-extradeep | 移动端步进按钮禁用文字 | 亮色：`#B9B9B9`；暗色：`#F8F8F8` |
+| color-primary | 亮色聚焦及悬停边框 | `#456CF6` |
+| color-primary-light | 暗色聚焦边框、数字按钮悬停图标 | `#4A96FF` |
+| color-primary-lighter | 焦点阴影及移动端步进按钮激活背景 | `rgba(45, 140, 240, 0.2)` |
+| background-color | 移动端数字输入区及按钮背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-light | 暗色禁用输入区、附加区及数字按钮背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+| background-color-lightest | 输入区、附加区及桌面端数字按钮背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| border-color | 桌面端输入边框及数字按钮的纵向、横向分隔线 | `#D5D9E1`（亮暗主题相同） |
+| foreground-color | 附加区及移动端搜索按钮文字 | 亮色：`#080F20`；暗色：`#F8F8F8` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### Input 属性

@@ -170,6 +170,25 @@ onUnmounted(() => {
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-toast-<参数>` 覆盖。
+
+移动端提示文字使用 color-contrast-light。⚠ color-mix：背景由 color-contrast-dark 以 75% 与透明色混合。
+
+透明色增强声明仅在 `@supports` 内生效；不支持 color-mix 时使用 Sass 编译的固定黑色 rgba() 降级值，透明度与上述比例一致，降级值不会随 color-contrast-dark 变量变化。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-dark | 移动端提示背景的派生基色 | `#000000`（亮暗主题相同） |
+| color-contrast-light | 移动端提示文字 | `#FFFFFF`（亮暗主题相同） |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### MToast 方法

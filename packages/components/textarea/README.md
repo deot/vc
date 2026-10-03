@@ -143,6 +143,27 @@ const value = ref('');
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-textarea-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-light | 输入文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-dark-extralight | 占位、字数提示、桌面及移动端禁用文字、移动端右对齐文字 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-error | 错误边框 | `#F53F3F` |
+| color-primary | 焦点及悬停边框 | `#456CF6` |
+| color-primary-lighter | 焦点阴影 | `rgba(45, 140, 240, 0.2)` |
+| background-color-light | 桌面及移动端禁用背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+| background-color-lightest | 文本域背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| border-color | 桌面端边框 | `#D5D9E1` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### Textarea 属性

@@ -24,5 +24,9 @@ export const useClipboard = (done: any) => {
 		}
 	};
 
-	return () => h(props.tag as string, { onClick: handleClick, class: 'vc-clipboard' }, slots?.default?.());
+	return () => h(
+		props.tag as string,
+		{ onClick: handleClick, class: 'vc-clipboard' },
+		typeof props.tag === 'string' ? slots.default?.() : slots
+	);
 };

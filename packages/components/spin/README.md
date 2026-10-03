@@ -95,6 +95,23 @@ const background = ref('#456cf6');
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-spin-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+foreground、background 显式属性优先于默认值中的 CSS 变量；默认长弧颜色使用 color-light-deepest。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-light-deepest | 旋转环长弧默认颜色 | 亮色：`#C0C4CC`；暗色：`#E8E8E8` |
+| color-primary | 旋转环主色 | `#456CF6` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### 属性

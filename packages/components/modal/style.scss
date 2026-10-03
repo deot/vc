@@ -1,17 +1,17 @@
 @use '../style/helper' as *;
 
 $component-name: vc-modal;
-$mask-color: varfix(mask-color, modal);
-$color-success: varfix(color-success, modal);
-$color-error: varfix(color-error, modal);
-$color-warning: varfix(color-warning, modal);
-$color-info: varfix(color-primary, modal);
-$foreground-color: varfix(foreground-color, modal);
-$background-color-light: varfix(background-color-light, modal);
-$border-shadow: varfix(border-shadow, modal);
-$color-light-deeper: tablevarfix(color-light-deeper, modal);
 $color-dark-light: varfix(color-dark-light, modal);
 $color-dark-lightest: varfix(color-dark-lightest, modal);
+$color-error: varfix(color-error, modal);
+$color-mask: varfix(color-mask, modal);
+$color-neutral-light: varfix(color-neutral-light, modal);
+$color-primary: varfix(color-primary, modal);
+$color-success: varfix(color-success, modal);
+$color-warning: varfix(color-warning, modal);
+$background-color-lightest: varfix(background-color-lightest, modal);
+$foreground-color: varfix(foreground-color, modal);
+$box-shadow: varfix(box-shadow, modal);
 
 @include block($component-name) {
 	font-size: unitfix(14);
@@ -22,7 +22,7 @@ $color-dark-lightest: varfix(color-dark-lightest, modal);
 		inset: 0;
 		z-index: $popup-zindex; // 与wrapper相同，两个modal同时出现时可以盖上去
 		height: 100%;
-		background-color: $mask-color;
+		background-color: $color-mask;
 		opacity: 1;
 	}
 
@@ -40,9 +40,9 @@ $color-dark-lightest: varfix(color-dark-lightest, modal);
 		display: flex;
 		padding-bottom: 0;
 		margin: auto;
-		background: $background-color-light;
+		background: $background-color-lightest;
 		border-radius: unitfix(16);
-		box-shadow: $border-shadow;
+		box-shadow: $box-shadow;
 		box-sizing: border-box;
 		flex-direction: column;
 
@@ -74,7 +74,7 @@ $color-dark-lightest: varfix(color-dark-lightest, modal);
 				padding: unitfix(14) unitfix(24);
 				font-size: unitfix(14);
 				font-weight: 400;
-				border-bottom: unitfix(1) solid $color-light-deeper;
+				border-bottom: unitfix(1) solid $color-neutral-light;
 			}
 
 			@include element(title) {
@@ -89,7 +89,7 @@ $color-dark-lightest: varfix(color-dark-lightest, modal);
 			@include element(footer) {
 				padding: unitfix(17) unitfix(24);
 				font-size: unitfix(12);
-				border-top: unitfix(1) solid $color-light-deeper;
+				border-top: unitfix(1) solid $color-neutral-light;
 			}
 
 			@include element(close) {
@@ -196,7 +196,7 @@ $color-dark-lightest: varfix(color-dark-lightest, modal);
 		}
 
 		@include when(info) {
-			color: $color-info;
+			color: $color-primary;
 		}
 	}
 }

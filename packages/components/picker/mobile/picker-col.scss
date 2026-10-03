@@ -1,9 +1,9 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-picker-col;
-$background-color-light: varfix(background-color-light, picker);
 $color-dark: varfix(color-dark, picker);
-$color-light-deeper: varfix(color-light-deeper, picker);
+$color-neutral-light: varfix(color-neutral-light, picker);
+$background-color-lightest: varfix(background-color-lightest, picker);
 $item-height: varfix(item-height, picker, unitfix(34));
 
 @include block($component-name) {
@@ -26,12 +26,12 @@ $item-height: varfix(item-height, picker, unitfix(34));
 		background-image:
 			linear-gradient(
 				180deg,
-				$background-color-light,
+				$background-color-lightest,
 				transparent
 			),
 			linear-gradient(
 				0deg,
-				$background-color-light,
+				$background-color-lightest,
 				transparent
 			);
 		background-position: top, bottom;
@@ -47,8 +47,8 @@ $item-height: varfix(item-height, picker, unitfix(34));
 		width: 100%;
 		height: var(--vcm-picker-item-height);
 		pointer-events: none;
-		border-top: unitfix(1) solid $color-light-deeper;
-		border-bottom: unitfix(1) solid $color-light-deeper;
+		border-top: unitfix(1) solid $color-neutral-light;
+		border-bottom: unitfix(1) solid $color-neutral-light;
 		box-sizing: border-box;
 	}
 

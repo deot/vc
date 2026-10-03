@@ -1,8 +1,11 @@
 @use '../../style/helper' as *;
 
+$color-dark-extralight: varfix(color-dark-extralight, table-filter);
+$color-light-deepest: varfix(color-light-deepest, table-filter);
+$color-neutral-light: varfix(color-neutral-light, table-filter);
 $color-primary: varfix(color-primary, table-filter);
-$icon-color: varfix(icon-color, table-filter, varfix(color-dark-lighter));
-$disabled-color: varfix(disabled-color, table-filter, varfix(color-dark-extralight));
+$background-color-primary-light: varfix(background-color-primary-light, table-filter);
+$foreground-color-inactive: varfix(foreground-color-inactive, table-filter);
 
 @include block(vc-table-filter) {
 	display: inline-flex;
@@ -14,7 +17,7 @@ $disabled-color: varfix(disabled-color, table-filter, varfix(color-dark-extralig
 	align-items: center;
 
 	@include element(icon) {
-		color: $icon-color;
+		color: $color-light-deepest;
 
 		@include when(active) {
 			color: $color-primary;
@@ -31,33 +34,45 @@ $disabled-color: varfix(disabled-color, table-filter, varfix(color-dark-extralig
 	@include element(item) {
 		display: block;
 		width: 100%;
-		padding: 7px 16px;
+		padding: unitfix(7) unitfix(16);
 		margin: 0;
-		font-size: 12px;
+		font-size: unitfix(12);
 		line-height: normal;
+		color: $color-dark-extralight;
 		white-space: nowrap;
 		cursor: pointer;
 		box-sizing: border-box;
 		transition: background-color 0.2s ease-in-out;
+
+		&:not(.is-disabled):hover {
+			background-color: $background-color-primary-light;
+		}
+
+		&.vc-checkbox {
+			display: flex;
+			padding: unitfix(3) unitfix(16);
+			line-height: unitfix(20);
+
+			.vc-checkbox__wrapper {
+				margin-right: unitfix(8);
+			}
+		}
 
 		@include when(active) {
 			color: $color-primary;
 		}
 
 		@include when(disabled) {
-			color: $disabled-color;
+			color: $foreground-color-inactive;
 			cursor: not-allowed;
 		}
 	}
 
 	@include element(footer) {
 		display: flex;
-
-		// 双类盖过 vc-button 自身的圆角
-		> .vc-button {
-			height: 32px;
-			border-radius: 0;
-			flex: 1;
-		}
+		gap: unitfix(6);
+		padding: unitfix(8);
+		border-top: unitfix(1) solid $color-neutral-light;
+		justify-content: flex-end;
 	}
 }

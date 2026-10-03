@@ -232,6 +232,30 @@ const selectedOption = ref('option-a');
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-radio-button-<参数>`、`--vc-radio-<参数>`、`--vc-radio-group-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+桌面端圆点与移动端勾选项使用相同的主色、焦点及禁用参数。移动端保留勾选形态，正常勾选标记使用可覆盖的 color-contrast-light，禁用标记使用 color-dark-extralight。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-light | 移动端勾选标记（radio） | `#FFFFFF`（亮暗主题相同） |
+| color-dark-lightest | 按钮式单选文字（radio-group） | 亮色：`#64758B`；暗色：`#C9C9C9` |
+| color-dark-extralight | 禁用文字及选中标记（radio-button / radio / radio-group） | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-error | 校验错误文字和边框（radio-button / radio） | `#F53F3F` |
+| color-light-deepest | 单选框及按钮式单选边框（radio / radio-group） | 亮色：`#C0C4CC`；暗色：`#E8E8E8` |
+| color-primary | 桌面端选中标记、文字及边框，移动端选中背景及边框（radio-button / radio / radio-group） | `#456CF6` |
+| color-primary-lighter | 桌面及移动端焦点阴影（radio / radio-group） | `rgba(45, 140, 240, 0.2)` |
+| background-color | 按钮式单选及禁用背景、边框（radio-button / radio / radio-group） | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-lightest | 单选框及按钮式单选背景（radio / radio-group） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### Radio 属性
@@ -314,6 +338,6 @@ const selectedOption = ref('option-a');
 
 ### 主题覆盖
 
-桌面圆点与移动端勾选项使用 `--vc-radio-*`，独立按钮使用 `--vc-radio-button-*`，连体按钮使用 `--vc-radio-group-*`。组件覆盖值优先于共享主题值。例如 `--vc-radio-color-primary` 控制桌面选中色，`--vc-radio-color-success` 控制移动端选中色。
+桌面圆点与移动端勾选项使用 `--vc-radio-*`，独立按钮使用 `--vc-radio-button-*`，连体按钮使用 `--vc-radio-group-*`。组件覆盖值优先于共享主题值。例如 `--vc-radio-color-primary` 同时控制桌面和移动端选中色。
 
-移动端勾选标记使用 `--vc-radio-check-color`（默认白色），聚焦光晕使用 `--vc-radio-focus-color`（默认半透明绿色），均可按需覆盖。
+移动端正常勾选标记使用 `--vc-radio-color-contrast-light`（默认白色），禁用标记使用 `--vc-radio-color-dark-extralight`；两端聚焦光晕使用 `--vc-radio-color-primary-lighter`（默认 `rgba(45, 140, 240, 0.2)`），均可按需覆盖。

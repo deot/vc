@@ -2,10 +2,9 @@
 
 $component-name: vc-select-option;
 $color-dark-lighter: varfix(color-dark-lighter, select-option);
-$color-primary: varfix(color-primary, select-option);
-$color-primary-lighter: varfix(color-primary-lighter, select-option);
-$background-color-light: varfix(background-color-light, select-option);
 $color-dark-extralight: varfix(color-dark-extralight, select-option);
+$color-primary: varfix(color-primary, select-option);
+$background-color-primary-light: varfix(background-color-primary-light, select-option);
 
 @include block($component-name) {
 	display: flex;
@@ -18,20 +17,16 @@ $color-dark-extralight: varfix(color-dark-extralight, select-option);
 	justify-content: space-between;
 	align-items: center;
 
-	&:hover {
-		background-color: $color-primary-lighter;
+	&:not([disabled="disabled"]):hover {
+		background-color: $background-color-primary-light;
 	}
 
 	@include when(select) {
 		color: $color-primary;
-		background-color: $background-color-light;
+		background-color: $background-color-primary-light;
 
 		.vc-icon {
 			color: inherit;
-		}
-
-		@include when(last) {
-			background-color: $color-primary-lighter;
 		}
 	}
 	

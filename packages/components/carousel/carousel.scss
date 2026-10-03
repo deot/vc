@@ -1,10 +1,14 @@
+@use 'sass:color';
 @use '../style/helper' as *;
 
-$color-arrow: varfix(color-arrow, carousel, #fff);
-$background-color-arrow: varfix(background-color-arrow, carousel, rgb(31 45 61 / 11%));
-$background-color-arrow-hover: varfix(background-color-arrow-hover, carousel, rgb(31 45 61 / 23%));
-$background-color-dot: varfix(background-color-dot, carousel, #fff);
-$background-color-dot-outside: varfix(background-color-dot-outside, carousel, #C0C4CC);
+$color-contrast-dark: varfix(color-contrast-dark, carousel);
+$color-contrast-dark-frozen: themefrozen(color-contrast-dark);
+$color-contrast-light: varfix(color-contrast-light, carousel);
+$color-light-deepest: varfix(color-light-deepest, carousel);
+$background-color-arrow: color-mix(in srgb, #{$color-contrast-dark} 11%, transparent);
+$background-color-arrow-fallback: color.change($color-contrast-dark-frozen, $alpha: .11);
+$background-color-arrow-hover: color-mix(in srgb, #{$color-contrast-dark} 23%, transparent);
+$background-color-arrow-hover-fallback: color.change($color-contrast-dark-frozen, $alpha: .23);
 $component-name: vc-carousel;
 
 @include block($component-name) {
@@ -33,10 +37,17 @@ $component-name: vc-carousel;
 		margin: 0;
 		margin-top: -18px;
 		font-size: 12px;
-		color: $color-arrow;
+		color: $color-contrast-light;
 		text-align: center;
 		cursor: pointer;
-		background-color: $background-color-arrow;
+		background-color: $background-color-arrow-fallback;
+
+		@supports (color: color-mix(in srgb, black, white)) {
+			& {
+				background-color: $background-color-arrow;
+			}
+		}
+
 		border: none;
 		border-radius: 50%;
 		outline: none;
@@ -51,7 +62,13 @@ $component-name: vc-carousel;
 		}
 
 		&:hover {
-			background-color: $background-color-arrow-hover;
+			background-color: $background-color-arrow-hover-fallback;
+
+			@supports (color: color-mix(in srgb, black, white)) {
+				& {
+					background-color: $background-color-arrow-hover;
+				}
+			}
 		}
 	}
 
@@ -90,7 +107,7 @@ $component-name: vc-carousel;
 			}
 
 			button {
-				background-color: $background-color-dot-outside;
+				background-color: $color-light-deepest;
 				opacity: 0.24;
 			}
 		}
@@ -150,7 +167,7 @@ $component-name: vc-carousel;
 		padding: 0;
 		margin: 0;
 		cursor: pointer;
-		background-color: $background-color-dot;
+		background-color: $color-contrast-light;
 		border: none;
 		outline: none;
 		opacity: 0.48;

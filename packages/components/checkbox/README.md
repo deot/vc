@@ -160,7 +160,7 @@ const status = ref('disabled');
 
 ### 移动端
 
-`MCheckbox` 与 `MCheckboxGroup` 使用相同的数据和事件约定，默认采用绿色选中样式。`fragment` 可省略组合外层容器，便于自定义布局。
+`MCheckbox` 与 `MCheckboxGroup` 使用相同的数据和事件约定，选中色与桌面端一致，使用主色参数。`fragment` 可省略组合外层容器，便于自定义布局。
 
 :::playground
 <!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
@@ -191,6 +191,29 @@ const selectedOptions = ref(['option-a']);
 </style>
 ```
 :::
+
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-checkbox-<参数>`、`--vc-m-checkbox-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+桌面端使用 checkbox，移动端使用 m-checkbox；两端选中、半选及焦点使用相同的主色参数。勾选标记使用可覆盖的 color-contrast-light。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-light | 勾选标记（checkbox / m-checkbox） | `#FFFFFF`（亮暗主题相同） |
+| color-error | 校验错误边框（checkbox / m-checkbox） | `#F53F3F` |
+| color-light-extradeep | 禁用且选中时的勾选标记（checkbox / m-checkbox） | 亮色：`#B9B9B9`；暗色：`#F8F8F8` |
+| color-primary | 选中及半选背景、边框（checkbox / m-checkbox） | `#456CF6` |
+| color-primary-lighter | 焦点阴影（checkbox / m-checkbox） | `rgba(45, 140, 240, 0.2)` |
+| background-color | 禁用勾选框背景（checkbox / m-checkbox） | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-lightest | 勾选框背景（checkbox / m-checkbox） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| border-color | 勾选框边框及禁用边框（checkbox / m-checkbox） | `#D5D9E1` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
 
 ## API
 

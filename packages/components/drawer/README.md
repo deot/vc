@@ -325,6 +325,28 @@ onUnmounted(() => {
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-drawer-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
+
+弹层或遮罩通过 Portal 挂载时，覆盖变量需作用于实际浮层或其祖先。
+
+内嵌或复用的 [button](../button/README.md#主题与局部覆盖)、[scroller](../scroller/README.md#主题与局部覆盖) 使用各自的主题入口。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-lightest | 关闭图标 | 亮色：`#64758B`；暗色：`#C9C9C9` |
+| color-mask | 遮罩背景 | 亮色：`rgb(0 0 0 / 40%)`；暗色：`rgb(255 255 255 / 40%)` |
+| color-neutral-light | 头部和底部分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| background-color-lightest | 抽屉面板背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| box-shadow | 抽屉面板阴影 | 亮色：`0 0 8px 0 rgb(0 0 0 / 10%)`；暗色：`0 0 8px 0 rgb(255 255 255 / 5%)` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 `DrawerView` 与 `Drawer` 使用相同的属性、事件、插槽和实例方法。`Drawer` 额外提供静态方法 `open`、`destroy`。`MDrawer`、`MDrawerView` 是相应桌面组件的别名，共用实现和样式；小屏幕使用时应设置合适的宽度。

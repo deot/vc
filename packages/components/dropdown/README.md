@@ -198,6 +198,28 @@ const handleClose = () => {
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-dropdown-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
+
+菜单通过 Portal 挂载时，变量需作用于实际菜单弹层或其祖先。
+
+内嵌或复用的 [popover](../popover/README.md#主题与局部覆盖) 使用各自的主题入口。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-lighter | 菜单项文字 | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-extralight | 禁用菜单文字 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-neutral-light | 菜单分组分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 菜单悬停及选中文字 | `#456CF6` |
+| background-color-primary-light | 可用菜单项悬停背景 | 亮色：`#E6F7FF`；暗色：`#273E5E` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### Dropdown 属性
@@ -268,6 +290,6 @@ DropdownItem 应置于 Dropdown 的内容中使用。`MDropdown`、`MDropdownMen
 
 ### 主题
 
-菜单项支持 `--vc-dropdown-color-dark-lighter`（文字）、`--vc-dropdown-color-primary`（悬停与选中）、`--vc-dropdown-color-primary-lighter`（悬停背景）、`--vc-dropdown-color-dark-extralight`（禁用文字）和 `--vc-dropdown-color-light-deeper`（分割线），缺省时使用同名全局 token。
+菜单项支持 `--vc-dropdown-color-dark-lighter`（文字）、`--vc-dropdown-color-primary`（悬停与选中）、`--vc-dropdown-background-color-primary-light`（悬停背景）、`--vc-dropdown-color-dark-extralight`（禁用文字）和 `--vc-dropdown-color-neutral-light`（分割线），缺省时使用同名全局 token。
 
 浮层背景、阴影和箭头由 Popover 提供。默认浮层挂载在 `body`，主题变量应设置在浮层能继承的位置，或通过 `portalStyle` / `portalClass` 设置。

@@ -246,6 +246,32 @@ const time = ref();
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-date-picker-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+日、月、季度、年表中的选中标记文字使用可覆盖的 color-contrast-light。
+
+弹层通过 Portal 挂载时，变量需作用于实际弹层或其祖先。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-light | 日、月、季度、年表中的选中文字 | `#FFFFFF`（亮暗主题相同） |
+| color-dark-lighter | 弹层文字 | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-extralight | 导航箭头、表头、禁用及相邻日期文字 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-neutral-light | 日期头、时间列、确认区及范围面板分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 选中日期、今天标记及导航激活状态 | `#456CF6` |
+| color-primary-lighter | 时间选项键盘焦点背景（非悬停） | `rgba(45, 140, 240, 0.2)` |
+| background-color | 快捷选项背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-light | 日期、月份、季度、年份禁用背景，时间选项选中（非悬停）及禁用选项悬停背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+| background-color-primary-light | 日期、日期时间、月份及季度区间内部的连续底色；日、月、季度、年表、可用时间及快捷选项悬停背景 | 亮色：`#E6F7FF`；暗色：`#273E5E` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### DatePicker 属性

@@ -1,11 +1,11 @@
 @use '../style/helper' as *;
 
+$color-dark-lighter: varfix(color-dark-lighter, tree-select);
+$color-dark-extralight: varfix(color-dark-extralight, tree-select);
+$color-neutral-light: varfix(color-neutral-light, tree-select);
+$color-primary: varfix(color-primary, tree-select);
+$background-color-primary-light: varfix(background-color-primary-light, tree-select);
 $component-name: vc-tree-select;
-$foreground-color: varfix(color-dark-lighter, tree-select);
-$muted-color: varfix(color-dark-extralight, tree-select);
-$active-color: varfix(color-primary, tree-select);
-$selected-background: varfix(background-color-selected, tree-select, varfix(color-primary-lighter));
-$disabled-color: varfix(foreground-color-disabled, tree-select, varfix(color-dark-extralight));
 
 @include block($component-name) {
 	position: relative;
@@ -40,7 +40,7 @@ $disabled-color: varfix(foreground-color-disabled, tree-select, varfix(color-dar
 		padding: 0 unitfix(10) 0 unitfix(2);
 		font-size: unitfix(12);
 		line-height: unitfix(28);
-		color: $muted-color;
+		color: $color-dark-extralight;
 		text-align: center;
 		white-space: nowrap;
 	}
@@ -68,6 +68,16 @@ $disabled-color: varfix(foreground-color-disabled, tree-select, varfix(color-dar
 		padding: unitfix(5) 0;
 	}
 
+	@include element(options) {
+		.vc-tree-node:not([aria-disabled="true"]) {
+			&:focus > .vc-tree-node__content,
+			&.is-checked > .vc-tree-node__content,
+			> .vc-tree-node__content:hover {
+				background-color: $background-color-primary-light;
+			}
+		}
+	}
+
 	@include element(search-item) {
 		justify-content: flex-start;
 		padding: unitfix(4) unitfix(8);
@@ -79,13 +89,13 @@ $disabled-color: varfix(foreground-color-disabled, tree-select, varfix(color-dar
 	}
 
 	@include element(highlight) {
-		color: $active-color;
+		color: $color-primary;
 	}
 
 	@include element(empty) {
 		padding: unitfix(8) 0;
 		font-size: unitfix(12);
-		color: $muted-color;
+		color: $color-dark-extralight;
 		text-align: center;
 	}
 
@@ -124,7 +134,7 @@ $disabled-color: varfix(foreground-color-disabled, tree-select, varfix(color-dar
 		padding: unitfix(5) 0 !important;
 		margin: 0;
 
-		@include border(right);
+		@include border(right, $color-neutral-light);
 
 		&:last-child {
 			&::before,
@@ -143,19 +153,24 @@ $disabled-color: varfix(foreground-color-disabled, tree-select, varfix(color-dar
 		padding: unitfix(2) unitfix(8);
 		font-size: unitfix(12) !important;
 		line-height: unitfix(16);
-		color: $foreground-color;
+		color: $color-dark-lighter;
 		white-space: nowrap;
 		cursor: pointer;
 		justify-content: space-between;
 		align-items: center;
 
+		&:not(.is-disabled):hover,
+		&.is-checked {
+			background-color: $background-color-primary-light;
+		}
+
 		@include when(select) {
-			color: $active-color;
-			background-color: $selected-background;
+			color: $color-primary;
+			background-color: $background-color-primary-light;
 		}
 
 		@include when(disabled) {
-			color: $disabled-color;
+			color: $color-dark-extralight;
 			cursor: not-allowed;
 		}
 	}

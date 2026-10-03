@@ -18,7 +18,7 @@ export const Button = defineComponent({
 		const isLoading = ref(false);
 
 		const group = inject('vc-button-group', {
-			size: 'medium',
+			size: '',
 			vertical: false,
 			circle: false
 		});
@@ -33,7 +33,7 @@ export const Button = defineComponent({
 			'is-solid': props.solid,
 			'is-dashed': props.dashed,
 			'is-hover': isHover.value,
-			[`is-${props.size}`]: true,
+			[`is-${group.size || props.size}`]: true,
 			[`is-${props.type}`]: true
 		}));
 
@@ -88,7 +88,7 @@ export const Button = defineComponent({
 								size={12}
 								foreground={
 									props.type === 'default'
-										? 'var(--vc-button-color-loading, #ccc)'
+										? 'var(--vc-button-color-light-deepest, var(--vc-color-light-deepest))'
 										: 'currentColor'
 								}
 								background="var(--vc-button-color-primary, var(--vc-color-primary))"

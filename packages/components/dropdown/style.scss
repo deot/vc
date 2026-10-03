@@ -1,11 +1,11 @@
 @use '../style/helper' as *;
 
 $component-name: vc-dropdown;
-$color: varfix(color-dark-lighter, dropdown);
+$color-dark-lighter: varfix(color-dark-lighter, dropdown);
+$color-dark-extralight: varfix(color-dark-extralight, dropdown);
+$color-neutral-light: varfix(color-neutral-light, dropdown);
 $color-primary: varfix(color-primary, dropdown);
-$background-hover: varfix(color-primary-lighter, dropdown);
-$color-disabled: varfix(color-dark-extralight, dropdown);
-$border-color: varfix(color-light-deeper, dropdown);
+$background-color-primary-light: varfix(background-color-primary-light, dropdown);
 
 @include block(vc-dropdown) {
 	display: inline-block;
@@ -25,7 +25,7 @@ $border-color: varfix(color-light-deeper, dropdown);
 	clear: both;
 	font-size: unitfix(12) !important;
 	line-height: normal;
-	color: $color;
+	color: $color-dark-lighter;
 	white-space: nowrap;
 	list-style: none;
 	cursor: pointer;
@@ -35,11 +35,11 @@ $border-color: varfix(color-light-deeper, dropdown);
 
 	&:hover {
 		color: $color-primary;
-		background-color: $background-hover;
+		background-color: $background-color-primary-light;
 	}
 
 	@include when(disabled) {
-		color: $color-disabled;
+		color: $color-dark-extralight;
 		cursor: not-allowed;
 
 		&:hover {
@@ -54,5 +54,5 @@ $border-color: varfix(color-light-deeper, dropdown);
 	@include when(divided) {
 		margin-top: unitfix(5);
 
-		@include border('top', $border-color); }
+		@include border('top', $color-neutral-light); }
 }

@@ -2486,6 +2486,8 @@ describe('Additional source-path coverage', () => {
 		inputs[1].dispatchEvent(new Event('change'));
 		await flush();
 		const [resetButton, confirmButton] = Array.from(popup.querySelectorAll<HTMLElement>('.vc-table-filter__footer .vc-button'));
+		expect(resetButton.classList.contains('is-small')).toBe(true);
+		expect(confirmButton.classList.contains('is-small')).toBe(true);
 		confirmButton.click();
 		await flush();
 		expect(filterFn).toHaveBeenCalledTimes(1);

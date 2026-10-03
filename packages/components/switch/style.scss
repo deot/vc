@@ -1,12 +1,16 @@
 @use '../style/helper' as *;
+@use './theme';
 
-$component-name: vc-switch;
+$color-contrast-light: varfix(color-contrast-light, switch);
+$color-light-deepest: varfix(color-light-deepest, switch);
 $color-primary: varfix(color-primary, switch);
+$color-primary-light: varfix(color-primary-light, switch);
+$color-primary-lighter: varfix(color-primary-lighter, switch);
 $background-color-light: varfix(background-color-light, switch);
-$track-color: varfix(track-color, switch, #d9d9d9);
-$track-color-disabled: varfix(track-color-disabled, switch, #E8E9EB);
-$track-color-checked-disabled: varfix(track-color-checked-disabled, switch, #D4DBFF);
-$loading-color: varfix(loading-color, switch, #fff);
+$background-color-lightest: varfix(background-color-lightest, switch);
+$component-name: vc-switch;
+
+@include theme.switch-themes($component-name, ' .vc-switch__wrapper');
 
 // 控制在32px
 @include block($component-name) {
@@ -23,8 +27,8 @@ $loading-color: varfix(loading-color, switch, #fff);
 		display: flex;
 		width: 100%;
 		vertical-align: middle;
-		background-color: $track-color;
-		border: 1px solid $track-color;
+		background-color: $color-light-deepest;
+		border: 1px solid $color-light-deepest;
 		border-radius: 20px;
 		box-sizing: border-box;
 		transition: all .2s ease-in-out;
@@ -35,7 +39,7 @@ $loading-color: varfix(loading-color, switch, #fff);
 		position: absolute;
 		display: flex;
 		font-size: inherit;
-		color: $background-color-light;
+		color: $color-contrast-light;
 		align-items: center;
 		justify-content: flex-end;
 	}
@@ -46,7 +50,7 @@ $loading-color: varfix(loading-color, switch, #fff);
 		left: 1px;
 		width: 16px;
 		height: 16px;
-		background-color: $background-color-light;
+		background-color: $color-contrast-light;
 		border-radius: 18px;
 		content: '';
 		transition: left .2s ease-in-out,width .2s ease-in-out;
@@ -59,7 +63,7 @@ $loading-color: varfix(loading-color, switch, #fff);
 		z-index: 1;
 		width: 12px;
 		height: 12px;
-		color: $loading-color;
+		color: $color-primary;
 		opacity: .4;
 	}
 
@@ -78,14 +82,21 @@ $loading-color: varfix(loading-color, switch, #fff);
 		cursor: not-allowed;
 
 		@include element(wrapper) {
-			background-color: $track-color-disabled;
-			border-color: $track-color-disabled;
+			background-color: $background-color-light;
+			border-color: $background-color-light;
 		}
 
 		@include when(checked) {
 			@include element(wrapper) {
-				background-color: $track-color-checked-disabled;
-				border-color: $track-color-checked-disabled;
+				background-color: $color-primary-lighter;
+				border-color: $color-primary-lighter;
+
+				@supports (color: color-mix(in srgb, black, white)) {
+					& {
+						background-color: color-mix(in srgb, #{$color-primary-light} 30%, #{$background-color-lightest});
+						border-color: color-mix(in srgb, #{$color-primary-light} 30%, #{$background-color-lightest});
+					}
+				}
 			}
 
 		}

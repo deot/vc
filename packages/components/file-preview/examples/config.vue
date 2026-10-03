@@ -1,5 +1,5 @@
 <template>
-	<div style="padding: 20px; background: var(--vc-background-color-light);">
+	<div style="padding: 20px; background: var(--vc-background-color-lightest);">
 		<p>VcInstance.options.FilePreview：getFileType 识别带处理后缀的地址（模拟 OSS 的 xxx.jpg!4-4，内置规则会识别为 file）；getFileName 去掉文件名的时间戳前缀；enhancer 接管 file 类型</p>
 		<div class="toolbar">
 			<label><input v-model="useGetFileType" type="checkbox"> getFileType</label>

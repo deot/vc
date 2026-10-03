@@ -1,11 +1,11 @@
 @use '../style/helper' as *;
 
-$component-name: vc-upload-picker;
-$background-color: varfix(background-color, upload-picker);
-$color-light: varfix(color-light, upload-picker);
-$color-primary-light: varfix(color-primary-light, upload-picker);
+$color-contrast-light: varfix(color-contrast-light, upload-picker);
 $color-dark-extralight: varfix(color-dark-extralight, upload-picker);
-$border-color-light: varfix(border-color-light, upload-picker, #D9D9D9);
+$color-neutral-light: varfix(color-neutral-light, upload-picker);
+$color-primary-light: varfix(color-primary-light, upload-picker);
+$background-color: varfix(background-color, upload-picker);
+$component-name: vc-upload-picker;
 
 @include block($component-name) {
 	display: flex;
@@ -35,7 +35,7 @@ $border-color-light: varfix(border-color-light, upload-picker, #D9D9D9);
 		width: 14px;
 		height: 14px;
 		font-size: 14px;
-		color: $color-light;
+		color: $color-contrast-light;
 		background-color: $color-primary-light;
 		border-radius: 7px;
 	}
@@ -50,7 +50,7 @@ $border-color-light: varfix(border-color-light, upload-picker, #D9D9D9);
 		line-height: 1;
 		color: $color-dark-extralight;
 		background-color: $background-color;
-		border: 1px dashed $border-color-light;
+		border: 1px dashed $color-neutral-light;
 		align-items: center;
 		justify-content: center;
 		flex-direction: column;

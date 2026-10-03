@@ -433,6 +433,26 @@ p {
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-cascader-column-<参数>`、`--vc-cascader-<参数>`。局部参数仅提供组件级入口；表中括号标明对应命名空间。
+
+内嵌或复用的 [spin](../spin/README.md#主题与局部覆盖)、[input](../input/README.md#主题与局部覆盖)、[popover](../popover/README.md#主题与局部覆盖) 使用各自的主题入口。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-lighter | 级联选项文字（cascader-column） | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-extralight | 输入区附加图标（cascader） | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-neutral-light | 级联列分隔线（cascader-column） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 选中选项文字（cascader-column） | `#456CF6` |
+| background-color-primary-light | 选项悬停及当前浏览选项背景（cascader-column） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### 属性
@@ -503,8 +523,8 @@ interface CascaderOption {
 | 变量 | 用途 |
 | --- | --- |
 | `--vc-cascader-column-color-dark-lighter` | 选项文本 |
+| `--vc-cascader-column-color-neutral-light` | 列分隔线 |
 | `--vc-cascader-column-color-primary` | 当前浏览选项的文本 |
-| `--vc-cascader-column-color-primary-lighter` | 当前浏览选项的背景 |
-| `--vc-cascader-column-color-light-deeper` | 列分隔线 |
+| `--vc-cascader-column-background-color-primary-light` | 选项悬停及当前浏览选项的背景 |
 
 `portal: true` 时浮层位于 body 下，列变量需设置在浮层祖先（例如 body）或通过 `portalClass` 对浮层设置。

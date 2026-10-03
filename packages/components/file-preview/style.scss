@@ -1,13 +1,18 @@
+@use 'sass:color';
 @use '../style/helper' as *;
 
-$component-name: vc-file-preview;
-$color: varfix(color-dark-light, file-preview);
-$color-light: varfix(color-light, file-preview);
+$color-contrast-dark: varfix(color-contrast-dark, file-preview);
+$color-contrast-dark-frozen: themefrozen(color-contrast-dark);
+$color-contrast-light: varfix(color-contrast-light, file-preview);
+$color-dark-light: varfix(color-dark-light, file-preview);
 $color-primary: varfix(color-primary, file-preview);
 $color-primary-lighter: varfix(color-primary-lighter, file-preview);
 $background-color: varfix(background-color, file-preview);
-$mask-color: varfix(mask-color, file-preview);
-$border-shadow: varfix(border-shadow, file-preview);
+$background-color-primary-light: varfix(background-color-primary-light, file-preview);
+$box-shadow: varfix(box-shadow, file-preview);
+$component-name: vc-file-preview;
+$play-background-fallback: color.change($color-contrast-dark-frozen, $alpha: .4);
+$play-background: color-mix(in srgb, #{$color-contrast-dark} 40%, transparent);
 
 // 方格medium对应uploader v4的96；卡片按内容宽度，card-width为最大宽度
 $sizes: (
@@ -76,12 +81,12 @@ $sizes: (
 
 			&:hover .vc-file-preview__card {
 				color: $color-primary;
-				background-color: $color-primary-lighter;
+				background-color: $background-color-primary-light;
 			}
 
 			&:hover .vc-file-preview__square {
 				transform: scale(1.05);
-				box-shadow: $border-shadow;
+				box-shadow: $box-shadow;
 			}
 		}
 	}
@@ -93,7 +98,7 @@ $sizes: (
 		padding: 0 var(--vc-file-preview-card-padding);
 		font-size: var(--vc-file-preview-text-size);
 		line-height: 1;
-		color: $color;
+		color: $color-dark-light;
 		background-color: $background-color;
 		border-radius: var(--vc-file-preview-card-radius);
 		box-sizing: border-box;
@@ -162,8 +167,15 @@ $sizes: (
 		position: absolute;
 		top: 50%;
 		left: 50%;
-		color: $color-light;
-		background-color: $mask-color;
+		color: $color-contrast-light;
+		background-color: $play-background-fallback;
+
+		@supports (color: color-mix(in srgb, black, white)) {
+			& {
+				background-color: $play-background;
+			}
+		}
+
 		transform: translate(-50%, -50%);
 	}
 }

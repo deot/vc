@@ -238,6 +238,27 @@ const trackId = `scroller-track-${useId()}`;
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-scroller-track-<参数>`。局部参数仅提供组件级入口；表中括号标明对应命名空间。
+
+轨道使用 `scroller-track` 命名空间；offset 和 extend 由布局计算写入轨道行内样式，通常通过布局属性调整。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-lightest | 滑块悬停背景（scroller-track） | 亮色：`#64758B`；暗色：`#C9C9C9` |
+| color-dark-extralight | 滚动条滑块背景（scroller-track） | 亮色：`#909399`；暗色：`#B9B9B9` |
+
+### 局部
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| extend | sticky 垂直轨道延伸区，由组件按布局写入（scroller-track） | `0` |
+| offset | sticky 轨道偏移，由组件按布局写入（scroller-track） | `0px` |
+| size | 滚动轨道粗细（scroller-track） | `6px` |
+
 ## API
 
 ### Scroller 属性

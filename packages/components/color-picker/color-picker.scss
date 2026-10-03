@@ -1,13 +1,49 @@
+@use 'sass:color';
 @use '../style/helper' as *;
 
-$component-name: vc-color-picker;
-$background-color-light: varfix(background-color-light, color-picker);
-$color-light-deeper: varfix(color-light-deeper, color-picker);
+$color-contrast-dark: varfix(color-contrast-dark, color-picker);
+$color-contrast-dark-frozen: themefrozen(color-contrast-dark);
 $color-dark-light: varfix(color-dark-light, color-picker);
 $color-dark-extralight: varfix(color-dark-extralight, color-picker);
-$color-primary: varfix(color-primary, color-picker);
 $color-disabled: varfix(color-disabled, color-picker);
-$swatch-border-color: varfix(swatch-border-color, color-picker, rgb(0 0 0 / 15%));
+$color-neutral-light: varfix(color-neutral-light, color-picker);
+$color-primary: varfix(color-primary, color-picker);
+$background-color-light: varfix(background-color-light, color-picker);
+$background-color-lightest: varfix(background-color-lightest, color-picker);
+$border-color: varfix(border-color, color-picker);
+$component-name: vc-color-picker;
+$swatch-border-color-fallback: color.change($color-contrast-dark-frozen, $alpha: .15);
+$swatch-border-color: color-mix(in srgb, #{$color-contrast-dark} 15%, transparent);
+
+@mixin color-picker-theme($light) {
+	.vc-color-picker.is-disabled {
+		background-color: if(sass($light): $color-disabled; else: $background-color-light);
+
+		.vc-color-picker__input {
+			background-color: if(sass($light): $color-disabled; else: $background-color-light);
+		}
+	}
+}
+
+@media (prefers-color-scheme: light) {
+	:root {
+		@include color-picker-theme(true);
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		@include color-picker-theme(false);
+	}
+}
+
+[data-vc-theme="light"] {
+	@include color-picker-theme(true);
+}
+
+[data-vc-theme="dark"] {
+	@include color-picker-theme(false);
+}
 
 @include block($component-name) {
 	display: inline-flex;
@@ -33,9 +69,13 @@ $swatch-border-color: varfix(swatch-border-color, color-picker, rgb(0 0 0 / 15%)
 		background-color: $color-disabled;
 		opacity: 1;
 
+		@include element(input) {
+			color: $color-dark-extralight;
+		}
+
 		&:hover {
 			@include element(input) {
-				border-color: $color-light-deeper;
+				border-color: $border-color;
 			}
 		}
 	}
@@ -58,7 +98,7 @@ $swatch-border-color: varfix(swatch-border-color, color-picker, rgb(0 0 0 / 15%)
 		font-size: unitfix(14);
 		line-height: 1.5;
 		color: $color-dark-light;
-		background-color: $background-color-light;
+		background-color: $background-color-lightest;
 		background-image: none;
 		border-radius: unitfix(4);
 		box-sizing: border-box;
@@ -128,7 +168,13 @@ $swatch-border-color: varfix(swatch-border-color, color-picker, rgb(0 0 0 / 15%)
 			width: 100%;
 			height: 100%;
 			border-radius: unitfix(2);
-			box-shadow: inset 0 0 0 unitfix(1) $swatch-border-color;
+			box-shadow: inset 0 0 0 unitfix(1) $swatch-border-color-fallback;
+
+			@supports (color: color-mix(in srgb, black, white)) {
+				& {
+					box-shadow: inset 0 0 0 unitfix(1) $swatch-border-color;
+				}
+			}
 		}
 
 		.vc-icon {
@@ -148,7 +194,7 @@ $swatch-border-color: varfix(swatch-border-color, color-picker, rgb(0 0 0 / 15%)
 		margin-top: unitfix(8);
 		clear: both;
 		text-align: right;
-		border-top: unitfix(1) solid $color-light-deeper;
+		border-top: unitfix(1) solid $color-neutral-light;
 
 		.vc-btn {
 			height: unitfix(24);

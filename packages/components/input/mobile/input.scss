@@ -1,9 +1,9 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-input;
-$background-color-light: varfix(background-color-light, input);
 $color-dark-light: varfix(color-dark-light, input);
 $color-dark-extralight: varfix(color-dark-extralight, input);
+$background-color-lightest: varfix(background-color-lightest, input);
 $foreground-color: varfix(foreground-color, input);
 
 @include block($component-name) {
@@ -13,7 +13,7 @@ $foreground-color: varfix(foreground-color, input);
 	min-height: 24px;
 	line-height: 1.5;
 	cursor: text;
-	background-color: $background-color-light;
+	background-color: $background-color-lightest;
 
 	@include element(wrapper) {
 		display: flex;
@@ -99,7 +99,7 @@ $foreground-color: varfix(foreground-color, input);
 			width: 16px;
 			font-size: 12px;
 			color: $foreground-color;
-			background-color: $background-color-light;
+			background-color: $background-color-lightest;
 		}
 	}
 	

@@ -1,5 +1,5 @@
 <template>
-	<div style="padding: 20px; background: var(--vc-background-color-light);">
+	<div style="padding: 20px; background: var(--vc-background-color-lightest);">
 		<p>预览统一走 FilePreview.open：图片（多图，跳过上传失败项）、视频、音频弹窗，文件点击名称在新窗口打开</p>
 		<p>VcInstance.options.FilePreview 与 FilePreview 共用：getFileType 影响分组，enhancer 可接管预览</p>
 		<div class="toolbar">

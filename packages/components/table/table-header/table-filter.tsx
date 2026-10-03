@@ -183,11 +183,12 @@ export const TableFilter = defineComponent({
 						}
 					</CheckboxGroup>
 					<div class="vc-table-filter__footer">
-						<Button onClick={handleReset}>
+						<Button size="small" onClick={handleReset}>
 							{ t('vc.Table.filterReset') }
 						</Button>
 						<Button
 							type="primary"
+							size="small"
 							onClick={handleConfirm}
 						>
 							{ t('vc.Table.filterConfirm') }

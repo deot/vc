@@ -2,16 +2,16 @@
 
 $component-name: vc-cascader-column;
 $color-dark-lighter: varfix(color-dark-lighter, cascader-column);
+$color-neutral-light: varfix(color-neutral-light, cascader-column);
 $color-primary: varfix(color-primary, cascader-column);
-$color-primary-lighter: varfix(color-primary-lighter, cascader-column);
-$color-light-deeper: varfix(color-light-deeper, cascader-column);
+$background-color-primary-light: varfix(background-color-primary-light, cascader-column);
 
 @include block($component-name) {
 	display: inline-block;
 	padding: unitfix(5) 0!important;
 	margin: 0;
 
-	@include border(right, $color-light-deeper);
+	@include border(right, $color-neutral-light);
 
 	&:last-child {
 		&::before, &::after {
@@ -36,9 +36,13 @@ $color-light-deeper: varfix(color-light-deeper, cascader-column);
 		justify-content: space-between;
 		align-items: center;
 
+		&:hover {
+			background-color: $background-color-primary-light;
+		}
+
 		@include when(select) {
 			color: $color-primary;
-			background-color: $color-primary-lighter;
+			background-color: $background-color-primary-light;
 		}
 	}
 

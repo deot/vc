@@ -2,24 +2,24 @@
 @use '../style/helper' as *;
 
 $component-name: vc-table;
-$foreground-color: varfix(foreground-color, table);
-$border-color: varfix(border-color, table, rgb(128 128 128 / 20%));
-$color-primary: varfix(color-primary, table);
-$color-primary-lighter: varfix(color-primary-lighter, table);
+$color-dark-extralight: varfix(color-dark-extralight, table);
 $color-error: varfix(color-error, table);
 $color-light-deepest: varfix(color-light-deepest, table);
-$color-dark-extralight: varfix(color-dark-extralight, table);
-$background-color: varfix(background-color-light, table);
-$background-color-muted: varfix(background-color-muted, table, varfix(background-color-light, table));
-$surface-tint: varfix(surface-tint, table, rgb(128 128 128 / 8%));
-$stripe-tint: varfix(stripe-tint, table, rgb(128 128 128 / 4%));
-$foreground-color-muted: varfix(color-dark-lightest, table);
-$foreground-color-secondary: varfix(color-dark-lighter, table);
-$foreground-color-disabled: varfix(color-dark-extralight, table);
-$background-color-striped: varfix(background-color-striped, table, varfix(background-color-light, table));
-$drop-error-background: varfix(drop-error-background, table, rgb(240 65 52 / 15%));
-$drag-shadow: varfix(border-shadow, table);
-$fixed-shadow-color: varfix(fixed-shadow-color, table, rgb(0 0 0 / 12%));
+$color-neutral-light: varfix(color-neutral-light, table);
+$color-primary: varfix(color-primary, table);
+$color-primary-lighter: varfix(color-primary-lighter, table);
+$color-shadow-fixed: varfix(color-shadow-fixed, table);
+$background-color-light: varfix(background-color-light, table);
+$background-color-lighter: varfix(background-color-lighter, table);
+$background-color-lightest: varfix(background-color-lightest, table);
+$background-color-error-light: varfix(background-color-error-light, table);
+$foreground-color: varfix(foreground-color, table);
+$foreground-color-light: varfix(foreground-color-light, table);
+$box-shadow-floating: varfix(box-shadow-floating, table);
+
+// 旧叠色入口只在使用方显式覆盖时生效，默认使用主题中的准确底色。
+$surface-tint: varfix(surface-tint, table, transparent);
+$stripe-tint: varfix(stripe-tint, table, transparent);
 $gap-h: 12px;
 $gap-v: 8px;
 $line-height: 20px;
@@ -63,7 +63,7 @@ $sizes: (
 	overflow: hidden;
 	font-size: var(--vc-table-font-size);
 	color: $foreground-color;
-	background-color: $background-color;
+	background-color: $background-color-lightest;
 	box-sizing: border-box;
 	flex: 1;
 
@@ -109,7 +109,7 @@ $sizes: (
 	}
 
 	@include element(tr) {
-		background-color: $background-color;
+		background-color: $background-color-lightest;
 
 		input[type="checkbox"] {
 			margin: 0;
@@ -129,7 +129,7 @@ $sizes: (
 		padding: var(--vc-table-th-padding-y) 0;
 		overflow: hidden;
 		white-space: nowrap;
-		background-color: $background-color;
+		background-color: $background-color-lightest;
 		box-sizing: border-box;
 		user-select: none;
 		align-items: center;
@@ -181,7 +181,7 @@ $sizes: (
 				bottom: 30%;
 				width: 1px;
 				height: 40%;
-				background-color: $border-color;
+				background-color: $color-neutral-light;
 				content: "";
 			}
 		}
@@ -207,7 +207,7 @@ $sizes: (
 
 	@include element(empty-text) {
 		line-height: 60px;
-		color: $foreground-color-disabled;
+		color: $color-dark-extralight;
 	}
 
 	@include element(selection-column) {
@@ -330,7 +330,7 @@ $sizes: (
 			border: 2px solid $color-primary;
 
 			&.is-disabled {
-				background-color: $drop-error-background;
+				background-color: $background-color-error-light;
 				border-color: $color-error;
 			}
 		}
@@ -343,8 +343,8 @@ $sizes: (
 		max-height: 50vh;
 		overflow: hidden;
 		pointer-events: none;
-		background-color: $background-color;
-		box-shadow: $drag-shadow;
+		background-color: $background-color-lightest;
+		box-shadow: $box-shadow-floating;
 		transition: opacity 0.15s;
 
 		// 位于 inner 目标行之上时淡出：跟随行与目标行等大且重合，叠在一起两者都看不清；被拖的行由原位置的变暗提示
@@ -369,7 +369,7 @@ $sizes: (
 		height: 23px;
 		font-size: 12px;
 		line-height: $line-height;
-		color: $foreground-color-secondary;
+		color: $color-light-deepest;
 		cursor: pointer;
 
 		.vc-icon {
@@ -385,7 +385,7 @@ $sizes: (
 	}
 
 	@include element(expanded-cell) {
-		background-color: $background-color;
+		background-color: $background-color-lightest;
 
 		// 纯属为了增加权重
 		&[class*="cell"] {
@@ -436,7 +436,7 @@ $sizes: (
 	// 多行合并块：无行容器，默认 cell 底色
 	@include element(tr-group) {
 		> .vc-table__td {
-			background-color: $background-color;
+			background-color: $background-color-lightest;
 		}
 	}
 
@@ -480,8 +480,8 @@ $sizes: (
 			font-size: var(--vc-table-font-size);
 			font-weight: 500;
 			line-height: 20px;
-			color: $foreground-color-muted;
-			background: linear-gradient($surface-tint, $surface-tint) $background-color-muted;
+			color: $foreground-color-light;
+			background: linear-gradient($surface-tint, $surface-tint) $background-color-light;
 		}
 
 		.vc-table__tr {
@@ -491,7 +491,7 @@ $sizes: (
 
 		&.is-group {
 			.vc-table__th {
-				background: linear-gradient($surface-tint, $surface-tint) $background-color-muted;
+				background: linear-gradient($surface-tint, $surface-tint) $background-color-light;
 			}
 		}
 	}
@@ -528,9 +528,9 @@ $sizes: (
 		.vc-table__td {
 			// medium（默认）为 44px；其余尺寸由内边距决定，见文末 size
 			min-height: var(--vc-table-footer-min-height);
-			color: $foreground-color-secondary;
-			background: linear-gradient($surface-tint, $surface-tint) $background-color-muted;
-			border-top: 1px solid $border-color;
+			color: $foreground-color-light;
+			background: linear-gradient($surface-tint, $surface-tint) $background-color-light;
+			border-top: 1px solid $color-neutral-light;
 		}
 	}
 
@@ -552,21 +552,21 @@ $sizes: (
 	.vc-table__tbody .vc-table__td {
 		&.is-fixed-left,
 		&.is-fixed-right {
-			background-color: $background-color;
+			background-color: $background-color-lightest;
 		}
 	}
 
 	.vc-table__thead .vc-table__th {
 		&.is-fixed-left,
 		&.is-fixed-right {
-			background: linear-gradient($surface-tint, $surface-tint) $background-color-muted;
+			background: linear-gradient($surface-tint, $surface-tint) $background-color-light;
 		}
 	}
 
 	.vc-table__footer .vc-table__td {
 		&.is-fixed-left,
 		&.is-fixed-right {
-			background: linear-gradient($surface-tint, $surface-tint) $background-color-muted;
+			background: linear-gradient($surface-tint, $surface-tint) $background-color-light;
 		}
 	}
 
@@ -577,12 +577,12 @@ $sizes: (
 		// hover / highlight：内部行态统一挂 cell（双类保证盖过 sticky 列底色）
 		.vc-table__td.vc-table__td.hover-row,
 		.vc-table__td.vc-table__td.current-row {
-			background: linear-gradient($surface-tint, $surface-tint) $background-color-muted;
+			background: linear-gradient($surface-tint, $surface-tint) $background-color-light;
 		}
 
 		// 行覆盖高亮：rowspan 覆盖 hover 行的合并 anchor（关联路径亮到第一列）
 		.vc-table__td.vc-table__td.hover-related {
-			background: linear-gradient($surface-tint, $surface-tint) $background-color-muted;
+			background: linear-gradient($surface-tint, $surface-tint) $background-color-light;
 		}
 	}
 
@@ -593,7 +593,7 @@ $sizes: (
 		left: 200px;
 		z-index: 10;
 		width: 0;
-		border-left: 1px solid $border-color;
+		border-left: 1px solid $color-neutral-light;
 	}
 
 
@@ -606,12 +606,12 @@ $sizes: (
 		& .vc-table__tbody {
 			// 斑马纹：内部行态挂 cell，以绝对行号计
 			& .vc-table__td.is-striped {
-				background: linear-gradient($stripe-tint, $stripe-tint) $background-color-striped;
+				background: linear-gradient($stripe-tint, $stripe-tint) $background-color-lighter;
 
 				&.current-row,
 				&.hover-row,
 				&.hover-related {
-					background: linear-gradient($surface-tint, $surface-tint) $background-color-muted;
+					background: linear-gradient($surface-tint, $surface-tint) $background-color-light;
 				}
 			}
 		}
@@ -620,7 +620,7 @@ $sizes: (
 	@include share-rule(table-border-pseudo) {
 		position: absolute;
 		z-index: 1;
-		background-color: $border-color;
+		background-color: $color-neutral-light;
 		content: "";
 	}
 
@@ -630,12 +630,12 @@ $sizes: (
 		--vc-table-th-border-bottom: 1px solid;
 
 		.vc-table__td {
-			border-bottom: var(--vc-table-td-border-bottom) $border-color;
+			border-bottom: var(--vc-table-td-border-bottom) $color-neutral-light;
 		}
 
 		.vc-table__th {
-			border-top: var(--vc-table-th-border-top) $border-color;
-			border-bottom: var(--vc-table-th-border-bottom) $border-color;
+			border-top: var(--vc-table-th-border-top) $color-neutral-light;
+			border-bottom: var(--vc-table-th-border-bottom) $color-neutral-light;
 		}
 
 		// 表格底部伪 border
@@ -656,10 +656,10 @@ $sizes: (
 		--vc-table-th-border-top: none;
 		--vc-table-th-border-bottom: 1px solid;
 
-		border-top: 1px solid $border-color;
+		border-top: 1px solid $color-neutral-light;
 		border-right: none;
 		border-bottom: none;
-		border-left: 1px solid $border-color;
+		border-left: 1px solid $color-neutral-light;
 
 		// 表格右部伪 border
 		&::after {
@@ -672,19 +672,19 @@ $sizes: (
 		}
 
 		.vc-table__th, .vc-table__td {
-			border-right: var(--vc-table-cell-border-right) $border-color;
+			border-right: var(--vc-table-cell-border-right) $color-neutral-light;
 		}
 
 		.vc-table__th {
-			border-top: var(--vc-table-th-border-top) $border-color;
-			border-bottom: var(--vc-table-th-border-bottom) $border-color;
+			border-top: var(--vc-table-th-border-top) $color-neutral-light;
+			border-bottom: var(--vc-table-th-border-bottom) $color-neutral-light;
 		}
 	}
 
 	// 叶子表头的下边框：写在 divider / border 之后，嵌套在带这些修饰类的表格里时不会被外层规则置为 none
 	@include element(th) {
 		&.is-leaf {
-			border-bottom: 1px solid $border-color;
+			border-bottom: 1px solid $color-neutral-light;
 		}
 	}
 
@@ -699,7 +699,7 @@ $sizes: (
 	// 合计行的悬停高亮。表体的行由 JS 加 hover-row / hover-related（见 use-row-hover）：
 	// 滚动期间要暂停、合并块要带上关联的格子，只用一套机制
 	.vc-table__footer .vc-table__tr:hover > .vc-table__td {
-		background: linear-gradient($surface-tint, $surface-tint) $background-color-muted;
+		background: linear-gradient($surface-tint, $surface-tint) $background-color-light;
 	}
 
 	// 固定列横向滚动阴影：用 ::after 渐变替代 box-shadow，避免单边阴影缺陷
@@ -716,14 +716,14 @@ $sizes: (
 		@include extend-rule(table-fixed-shadow-pseudo);
 
 		right: -5px;
-		background-image: linear-gradient(to right, $fixed-shadow-color 0%, transparent);
+		background-image: linear-gradient(to right, $color-shadow-fixed 0%, transparent);
 	}
 
 	@include share-rule(table-fixed-shadow-pseudo-right) {
 		@include extend-rule(table-fixed-shadow-pseudo);
 
 		left: -5px;
-		background-image: linear-gradient(to left, $fixed-shadow-color 0%, transparent);
+		background-image: linear-gradient(to left, $color-shadow-fixed 0%, transparent);
 	}
 
 	@include share-rule(table-fixed-shadow-left-tail-cell) {

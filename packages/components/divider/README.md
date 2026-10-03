@@ -98,6 +98,22 @@ import { Divider } from '@deot/vc';
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-divider-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark | 分隔文字 | 亮色：`#000000`；暗色：`#FFFFFF` |
+| color-neutral-light | 分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| background-color-lightest | 分隔文字背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 `MDivider` 是 `Divider` 的别名，属性、插槽和样式一致，可从 `@deot/vc` 导入。

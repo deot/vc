@@ -1,17 +1,18 @@
 @use '../style/helper' as *;
 
-$foreground-color: varfix(foreground-color, editor);
-$background-color-light: varfix(background-color-light, editor);
 $color-dark-extralight: varfix(color-dark-extralight, editor);
-$color-light-deeper: varfix(color-light-deeper, editor);
+$color-neutral-light: varfix(color-neutral-light, editor);
 $color-primary: varfix(color-primary, editor);
-$border-shadow: varfix(border-shadow, editor);
 $background-color: varfix(background-color, editor);
+$background-color-lightest: varfix(background-color-lightest, editor);
+$border-color: varfix(border-color, editor);
+$foreground-color: varfix(foreground-color, editor);
+$box-shadow: varfix(box-shadow, editor);
 
 .vc-editor,
 .vc-editor-view {
 	color: $foreground-color;
-	background: $background-color-light;
+	background: $background-color-lightest;
 
 	.ql-editor.ql-blank::before {
 		color: $color-dark-extralight;
@@ -19,7 +20,7 @@ $background-color: varfix(background-color, editor);
 
 	.ql-editor td,
 	.ql-editor blockquote {
-		border-color: $color-light-deeper;
+		border-color: $color-neutral-light;
 	}
 
 	.ql-editor li[data-list="checked"] > .ql-ui,
@@ -62,19 +63,22 @@ $background-color: varfix(background-color, editor);
 	:is(.ql-snow, .ql-bubble) .ql-tooltip,
 	:is(.ql-snow, .ql-bubble) .ql-tooltip input[type="text"] {
 		color: $foreground-color;
-		background-color: $background-color-light;
-		border-color: $color-light-deeper;
+		background-color: $background-color-lightest;
+		border-color: $border-color;
 	}
 
 	:is(.ql-snow, .ql-bubble) .ql-picker-options,
 	:is(.ql-snow, .ql-bubble) .ql-tooltip {
-		box-shadow: $border-shadow;
+		box-shadow: $box-shadow;
 	}
 
 	:is(.ql-snow, .ql-bubble) .ql-picker.ql-expanded .ql-picker-label,
-	:is(.ql-snow, .ql-bubble) .ql-picker.ql-expanded .ql-picker-options,
+	:is(.ql-snow, .ql-bubble) .ql-picker.ql-expanded .ql-picker-options {
+		border-color: $border-color;
+	}
+
 	:is(.ql-snow, .ql-bubble) .ql-tooltip a.ql-action::after {
-		border-color: $color-light-deeper;
+		border-color: $color-neutral-light;
 	}
 
 	:is(.ql-snow, .ql-bubble) .ql-color-picker .ql-picker-item:hover,
@@ -106,9 +110,9 @@ $background-color: varfix(background-color, editor);
 }
 
 .vc-editor .ql-bubble .ql-tooltip-arrow {
-	border-bottom-color: $background-color-light;
+	border-bottom-color: $background-color-lightest;
 }
 
 .vc-editor .ql-bubble .ql-tooltip.ql-flip .ql-tooltip-arrow {
-	border-top-color: $background-color-light;
+	border-top-color: $background-color-lightest;
 }

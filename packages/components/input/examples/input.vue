@@ -1,4 +1,11 @@
 <template>
+	<h2>状态对比</h2>
+	<div class="input-state-examples">
+		<Input placeholder="普通输入：点击查看聚焦边框" />
+		<Input disabled placeholder="禁用输入：空值" />
+		<Input disabled model-value="禁用输入：已有内容" clearable />
+	</div>
+
 	<h1>{{ current }}</h1>
 	<h1>typeof: {{ current.map(i => typeof i) }}</h1>
 	<Input
@@ -88,6 +95,13 @@ const handleClick = () => {
 </script>
 
 <style>
+.input-state-examples {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
 .vc-input {
 	margin-bottom: 10px;
 	width: 200px;

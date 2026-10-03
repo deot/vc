@@ -127,7 +127,7 @@ describe('index.ts', () => {
 			const spin = wrapper.findComponent(Spin);
 
 			expect(spin.exists()).toBeTruthy();
-			expect(spin.props('foreground')).toBe('var(--vc-button-color-loading, #ccc)');
+			expect(spin.props('foreground')).toBe('var(--vc-button-color-light-deepest, var(--vc-color-light-deepest))');
 			expect(spin.props('background')).toBe('var(--vc-button-color-primary, var(--vc-color-primary))');
 		};
 
@@ -159,9 +159,28 @@ describe('index.ts', () => {
 	});
 
 	it('group, fragment', async () => {
-		const wrapper = mount(() => <ButtonGroup fragment><Button /></ButtonGroup>);
+		const wrapper = mount(() => <ButtonGroup fragment size="small"><Button /></ButtonGroup>);
 
 		expect(wrapper.classes()).not.toContain('vc-button-group');
+		expect(wrapper.findComponent(Button).classes()).toContain('is-small');
+	});
+
+	it.each(['small', 'medium', 'large'])('group inherits %s size', (size) => {
+		const wrapper = mount(() => <ButtonGroup size={size}><Button size="large" /></ButtonGroup>);
+
+		expect(wrapper.findComponent(Button).classes()).toContain(`is-${size}`);
+	});
+
+	it('group size updates reactively', async () => {
+		const wrapper = mount(ButtonGroup, {
+			props: { size: 'large' },
+			slots: { default: () => <Button /> }
+		});
+
+		expect(wrapper.findComponent(Button).classes()).toContain('is-large');
+		await wrapper.setProps({ size: 'small' });
+		expect(wrapper.findComponent(Button).classes()).toContain('is-small');
+		expect(wrapper.findComponent(Button).classes()).not.toContain('is-large');
 	});
 
 	it('group, vertical, circle, size', async () => {
@@ -174,6 +193,7 @@ describe('index.ts', () => {
 		expect(wrapper.classes()).toContain('is-vertical');
 		expect(wrapper.classes()).toContain('is-circle');
 		expect(wrapper.classes()).toContain('is-large');
+		expect(wrapper.findComponent(Button).classes()).toContain('is-large');
 	});
 
 	it('group, circle inject', async () => {

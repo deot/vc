@@ -1,5 +1,5 @@
 <template>
-	<div style="padding: 20px; background: var(--vc-background-color-light);">
+	<div style="padding: 20px; background: var(--vc-background-color-lightest);">
 		<p>type="group"：按 image → video → audio → file 分组；预览顺序仍按 data 原始顺序</p>
 		<div class="toolbar">
 			<label><input v-model="vertical" type="checkbox"> vertical</label>

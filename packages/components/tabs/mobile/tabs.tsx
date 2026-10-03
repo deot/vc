@@ -258,7 +258,6 @@ export const MTabs = defineComponent({
 								style={[props.barStyle as any, fixedStyle.value]}
 								class={[{ 'is-fixed': isFixed.value }, 'vcm-tabs__bar']}
 							>
-								<slot name="prepend" />
 								{ slots.prepend?.() }
 								{
 									props.showStep && tabs.scrollable.value && (

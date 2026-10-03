@@ -278,6 +278,27 @@ p { margin: 0; overflow-wrap: anywhere; }
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-picker-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
+
+这些入口用于 Picker、PickerView、PickerPopup 及内部滚动列；桌面端入口也复用移动端实现。通过 open 创建的浮层挂载在 body，覆盖样式需作用于该浮层或其祖先。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark | 滚动选项和标题文字 | 亮色：`#000000`；暗色：`#FFFFFF` |
+| color-neutral-light | 选中区域及头部分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 头部操作文字 | `#456CF6` |
+| background-color-lightest | 选择器、滚动列及渐变遮罩背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+
+### 局部
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| item-height | 滚动选项行高 | `34px` |
+
 ## API
 
 ### Picker 属性
@@ -419,4 +440,4 @@ type PickerSource = PickerColumn | PickerColumn[];
 
 默认文案读取 `vc.Picker.extra`、`vc.Picker.cancelText`、`vc.Picker.okText`，会跟随 `VcInstance.configure({ locale })` 更新；显式文本属性优先。
 
-样式支持 `--vc-picker-background-color-light`、`--vc-picker-color-dark`、`--vc-picker-color-primary`、`--vc-picker-color-light-deeper`，缺省时使用同名全局主题变量。`--vc-picker-item-height` 控制滚轮行高，默认随 SCSS 缩放的 `34px`；视图高度、遮罩和拖动计算与此行高保持一致。通过 `open` 创建的弹层挂载在 body，组件变量需要设置在可覆盖该弹层的祖先元素上。
+样式支持 `--vc-picker-background-color-lightest`、`--vc-picker-color-dark`、`--vc-picker-color-primary`、`--vc-picker-color-neutral-light`，缺省时使用同名全局主题变量。`--vc-picker-item-height` 控制滚轮行高，默认随 SCSS 缩放的 `34px`；视图高度、遮罩和拖动计算与此行高保持一致。通过 `open` 创建的弹层挂载在 body，组件变量需要设置在可覆盖该弹层的祖先元素上。

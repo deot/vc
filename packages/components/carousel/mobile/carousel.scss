@@ -1,9 +1,12 @@
+@use 'sass:color';
 @use '../../style/helper' as *;
 
-$color-indicator: varfix(color-indicator, carousel, #fff);
-$background-color-indicator: varfix(background-color-indicator, carousel, rgb(0 0 0 / 70%));
-$background-color-dot: varfix(background-color-dot, carousel, #fff);
-$background-color-dot-outside: varfix(background-color-dot-outside, carousel, #C0C4CC);
+$color-contrast-dark: varfix(color-contrast-dark, carousel);
+$color-contrast-dark-frozen: themefrozen(color-contrast-dark);
+$color-contrast-light: varfix(color-contrast-light, carousel);
+$color-light-deepest: varfix(color-light-deepest, carousel);
+$background-color-indicator: color-mix(in srgb, #{$color-contrast-dark} 70%, transparent);
+$background-color-indicator-fallback: color.change($color-contrast-dark-frozen, $alpha: .7);
 $component-name: vcm-carousel;
 
 @include block($component-name) {
@@ -57,7 +60,7 @@ $component-name: vcm-carousel;
 			}
 
 			button {
-				background-color: $background-color-dot-outside;
+				background-color: $color-light-deepest;
 				opacity: 0.24;
 			}
 		}
@@ -117,7 +120,7 @@ $component-name: vcm-carousel;
 		padding: 0;
 		margin: 0 2px;
 		cursor: pointer;
-		background-color: $background-color-dot;
+		background-color: $color-contrast-light;
 		border: none;
 		border-radius: 50%;
 		outline: none;
@@ -133,8 +136,15 @@ $component-name: vcm-carousel;
 		height: 20px;
 		padding: 0 10px;
 		line-height: 20px;
-		color: $color-indicator;
-		background: $background-color-indicator;
+		color: $color-contrast-light;
+		background: $background-color-indicator-fallback;
+
+		@supports (color: color-mix(in srgb, black, white)) {
+			& {
+				background: $background-color-indicator;
+			}
+		}
+
 		border-radius: 10px;
 	}
 }

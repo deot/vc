@@ -1,5 +1,5 @@
 <template>
-	<div style="padding: 20px; background: var(--vc-background-color-light);">
+	<div style="padding: 20px; background: var(--vc-background-color-lightest);">
 		<p>Steps.status 只作用于当前这一步：status="error"，前一步的连线变红</p>
 		<Steps :model-value="2" status="error" style="max-width: 780px;">
 			<Step title="Succeeded" description="This is a description" />

@@ -1,11 +1,15 @@
+@use 'sass:color';
 @use '../../style/helper' as *;
 
-$component-name: vcm-popup;
-$mask-color: varfix(mask-color, popup);
-$background-color: varfix(background-color-light, popup);
+$color-contrast-dark: varfix(color-contrast-dark, popup);
+$color-contrast-dark-frozen: themefrozen(color-contrast-dark);
+$color-contrast-light: varfix(color-contrast-light, popup);
+$color-mask: varfix(color-mask, popup);
+$background-color-lightest: varfix(background-color-lightest, popup);
 $foreground-color: varfix(foreground-color, popup);
-$dark-background-color: varfix(background-color-translucent, popup, rgb(0 0 0 / 30%));
-$dark-foreground-color: varfix(foreground-color-inverse, popup, #fff);
+$component-name: vcm-popup;
+$dark-background-color-fallback: color.change($color-contrast-dark-frozen, $alpha: .3);
+$dark-background-color: color-mix(in srgb, #{$color-contrast-dark} 30%, transparent);
 
 @include block($component-name) {
 	@include element(mask) {
@@ -13,7 +17,7 @@ $dark-foreground-color: varfix(foreground-color-inverse, popup, #fff);
 		inset: 0;
 		z-index: 1000;
 		height: 100%;
-		background-color: $mask-color;
+		background-color: $color-mask;
 	}
 
 	@include element(wrapper) {
@@ -72,15 +76,21 @@ $dark-foreground-color: varfix(foreground-color-inverse, popup, #fff);
 
 	@include when(dark) {
 		@include element(wrapper) {
-			color: $dark-foreground-color;
-			background: $dark-background-color;
+			color: $color-contrast-light;
+			background: $dark-background-color-fallback;
+
+			@supports (color: color-mix(in srgb, black, white)) {
+				& {
+					background: $dark-background-color;
+				}
+			}
 		}
 	}
 
 	@include when(light) {
 		@include element(wrapper) {
 			color: $foreground-color;
-			background-color: $background-color;
+			background-color: $background-color-lightest;
 		}
 	}
 }

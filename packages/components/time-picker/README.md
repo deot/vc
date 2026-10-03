@@ -77,6 +77,30 @@ const handleClear = () => { status.value = '已清空'; };
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-date-picker-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+TimePicker 共用 DatePicker 时间面板，使用 date-picker 命名空间；Input、Popover 沿用各自主题入口。
+
+弹层通过 Portal 挂载时，变量需作用于实际弹层或其祖先。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-lighter | 时间弹层文字 | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-extralight | 禁用时间文字 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-neutral-light | 时间列、范围及确认区分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 选中时间文字 | `#456CF6` |
+| color-primary-lighter | 时间选项键盘焦点背景（非悬停） | `rgba(45, 140, 240, 0.2)` |
+| background-color-light | 时间选项选中（非悬停）及禁用选项悬停背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+| background-color-primary-light | 可用时间选项悬停背景（含选中及焦点选项） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### 属性

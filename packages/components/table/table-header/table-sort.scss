@@ -1,8 +1,8 @@
 @use '../../style/helper' as *;
 
+$color-light-deepest: varfix(color-light-deepest, table-sort);
 $color-primary: varfix(color-primary, table-sort);
 $color-primary-light: varfix(color-primary-light, table-sort);
-$border-color: varfix(border-color, table-sort, varfix(color-dark-lighter));
 
 @include block(vc-table-sort) {
 	position: relative;
@@ -24,12 +24,12 @@ $border-color: varfix(border-color, table-sort, varfix(color-dark-lighter));
 
 		@include modifier(ascending) {
 			top: -2px;
-			border-bottom-color: $border-color;
+			border-bottom-color: $color-light-deepest;
 		}
 
 		@include modifier(descending) {
 			bottom: 0;
-			border-top-color: $border-color;
+			border-top-color: $color-light-deepest;
 		}
 
 		@include when(ascending) {

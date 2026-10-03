@@ -113,6 +113,27 @@ import { Progress } from '@deot/vc';
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-progress-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+活跃动画层使用可覆盖的 color-contrast-light。color、trackColor 等显式颜色属性优先于默认值中的 CSS 变量；默认轨道色使用 background-color-light。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-light | 活跃动画层 | `#FFFFFF`（亮暗主题相同） |
+| color-dark-lightest | 进度文字 | 亮色：`#64758B`；暗色：`#C9C9C9` |
+| color-error | 错误进度条及图标 | `#F53F3F` |
+| color-primary | 默认进度条及圆形进度主色 | `#456CF6` |
+| color-success | 成功进度条及图标 | `#1DB88C` |
+| background-color-light | 进度轨道背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### 属性
@@ -131,7 +152,7 @@ import { Progress } from '@deot/vc';
 | strokeWidth | 线形高度（px）；圆形为 SVG 100 × 100 坐标系中的描边宽度，随 size 缩放 | `number` | - | `6` |
 | size | 圆形画布宽高，单位 px | `number` | - | `120` |
 | color | 进度颜色；对象按当前状态取值，不会补齐缺失的状态颜色 | `string \| object` | - | 对应主题的 primary / success / error 颜色 |
-| trackColor | 轨道颜色 | `string` | - | `var(--vc-progress-track-color, var(--vc-color-light-deeper))` |
+| trackColor | 轨道颜色 | `string` | - | `var(--vc-progress-background-color-light, var(--vc-background-color-light))` |
 | strokeColor | 兼容属性，当前不参与渲染；请使用 color | `string` | - | `#456CF6` |
 
 ### 插槽
@@ -144,4 +165,4 @@ import { Progress } from '@deot/vc';
 
 默认状态色分别读取 `--vc-progress-color-primary`、`--vc-progress-color-success`、`--vc-progress-color-error`，回退到对应的全局 `--vc-color-*` 变量。显式 `color` 和 `trackColor` 优先于默认主题值。
 
-文本使用 `--vc-progress-color-dark-lightest`，回退到 `--vc-color-dark-lightest`；轨道可通过 `--vc-progress-track-color` 覆盖。线形错误边框使用主题 error 色，循环高光使用 `--vc-progress-active-overlay-color`（默认白色）。
+文本使用 `--vc-progress-color-dark-lightest`，回退到 `--vc-color-dark-lightest`；轨道可通过 `--vc-progress-background-color-light` 覆盖。线形错误边框使用主题 error 色，循环高光使用 `--vc-progress-color-contrast-light`（默认白色）。

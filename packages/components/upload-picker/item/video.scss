@@ -1,8 +1,8 @@
 @use '../../style/helper' as *;
 
 $component-name: vc-upload-picker-video-item;
-$color-dark: varfix(color-dark, upload-picker);
-$color-light: varfix(color-light, upload-picker);
+$color-contrast-dark: varfix(color-contrast-dark, upload-picker);
+$color-contrast-light: varfix(color-contrast-light, upload-picker);
 $color-dark-lightest: varfix(color-dark-lightest, upload-picker);
 $color-error: varfix(color-error, upload-picker);
 
@@ -10,7 +10,7 @@ $color-error: varfix(color-error, upload-picker);
 	position: relative;
 	display: flex;
 	color: $color-dark-lightest;
-	background-color: $color-dark;
+	background-color: $color-contrast-dark;
 	box-sizing: border-box;
 
 	@include when(error) {
@@ -39,7 +39,7 @@ $color-error: varfix(color-error, upload-picker);
 		position: absolute;
 		inset: 0;
 		padding: 0;
-		color: $color-light;
+		color: $color-contrast-light;
 		cursor: pointer;
 		background: transparent;
 		border: 0;
@@ -48,7 +48,7 @@ $color-error: varfix(color-error, upload-picker);
 			position: absolute;
 			width: 24px;
 			height: 24px;
-			border: 1px solid $color-light;
+			border: 1px solid $color-contrast-light;
 			border-radius: 50%;
 			content: '';
 		}

@@ -1,13 +1,12 @@
 @use '../../style/helper' as *;
 
-$component-name: vcm-input-number;
-$background-color: varfix(background-color, input);
-$color-light-extradeep: varfix(color-light-extradeep, input);
-$color-primary-light: varfix(color-primary-light, input);
 $color-dark-extralight: varfix(color-dark-extralight, input);
 $color-light-deep: varfix(color-light-deep, input);
-$background-color-active: varfix(background-color-active, input, varfix(color-primary-lighter, input));
-$foreground-color-disabled: varfix(foreground-color-disabled, input, varfix(color-light-extradeep, input));
+$color-light-extradeep: varfix(color-light-extradeep, input);
+$color-primary-light: varfix(color-primary-light, input);
+$color-primary-lighter: varfix(color-primary-lighter, input);
+$background-color: varfix(background-color, input);
+$component-name: vcm-input-number;
 
 @include block($component-name) {
 	width: auto;
@@ -23,13 +22,13 @@ $foreground-color-disabled: varfix(foreground-color-disabled, input, varfix(colo
 		background-color: $background-color;
 
 		&[disabled] {
-			color: $foreground-color-disabled;
+			color: $color-light-extradeep;
 			cursor: not-allowed;
 			opacity: .8;
 		}
 
 		&:active {
-			background-color: $background-color-active;
+			background-color: $color-primary-lighter;
 		}
 	}
 	

@@ -1,10 +1,10 @@
 @use '../style/helper' as *;
 
+$color-contrast-light: varfix(color-contrast-light, color-picker);
+$color-shadow-fixed: varfix(color-shadow-fixed, color-picker);
+$border-color: varfix(border-color, color-picker);
 $component-name: vc-color-picker-alpha;
 $alpha-background: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==';
-$color-light: varfix(color-light, color-picker);
-$color-light-deeper: varfix(color-light-deeper, color-picker);
-$mask-color-dark: varfix(mask-color-dark, color-picker);
 
 @include block($component-name) {
 	position: relative;
@@ -28,10 +28,10 @@ $mask-color-dark: varfix(mask-color-dark, color-picker);
 		width: unitfix(4);
 		height: 100%;
 		cursor: pointer;
-		background: $color-light;
-		border: unitfix(1) solid $color-light-deeper;
+		background: $color-contrast-light;
+		border: unitfix(1) solid $border-color;
 		border-radius: unitfix(1);
-		box-shadow: 0 0 unitfix(2) $mask-color-dark;
+		box-shadow: 0 0 unitfix(2) $color-shadow-fixed;
 		box-sizing: border-box;
 	}
 }

@@ -1,24 +1,23 @@
 @use '../style/helper' as *;
 
-$component-name: vc-card;
-$background-color-light: varfix(background-color-light, card);
 $color-dark: varfix(color-dark, card);
-$border-color: varfix(border-color, card, #e8eaec);
-$border-color-hover: varfix(border-color-hover, card, #eee);
-$box-shadow: varfix(box-shadow, card, 0 unitfix(1) unitfix(1) 0 rgb(0 0 0 / 10%));
-$box-shadow-hover: varfix(box-shadow-hover, card, 0 unitfix(1) unitfix(6) rgb(0 0 0 / 20%));
+$color-neutral-light: varfix(color-neutral-light, card);
+$background-color-lightest: varfix(background-color-lightest, card);
+$box-shadow: varfix(box-shadow, card);
+$box-shadow-floating: varfix(box-shadow-floating, card);
+$component-name: vc-card;
 $border-radius: unitfix(4);
 
 @include block($component-name) {
 	position: relative;
 	font-size: unitfix(14);
-	background: $background-color-light;
+	background: $background-color-lightest;
 	border-radius: $border-radius;
 	box-sizing: border-box;
 	transition: all .2s ease-in-out;
 
 	&:hover {
-		box-shadow: $box-shadow-hover;
+		box-shadow: $box-shadow-floating;
 	}
 
 	p {
@@ -26,10 +25,10 @@ $border-radius: unitfix(4);
 	}
 
 	@include when(border) {
-		@include border('', $border-color, $border-radius);
+		@include border('', $color-neutral-light, $border-radius);
 
 		&:hover::after {
-			border-color: $border-color-hover;
+			border-color: $color-neutral-light;
 		}
 	}
 
@@ -38,7 +37,7 @@ $border-radius: unitfix(4);
 	}
 
 	@include element(header) {
-		@include border(bottom, $border-color);
+		@include border(bottom, $color-neutral-light);
 
 		& {
 			padding: unitfix(14) unitfix(16);

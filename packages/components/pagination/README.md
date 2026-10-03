@@ -113,6 +113,25 @@ const handleJump = () => pagination.value.resetPage(3);
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-pagination-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
+
+内嵌或复用的 [input](../input/README.md#主题与局部覆盖) 使用各自的主题入口。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-extralight | 禁用页码及翻页图标 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-primary-light | 激活及悬停页码文字、边框 | `#4A96FF` |
+| color-primary-lighter | 激活及悬停页码背景 | `rgb(45 140 240 / 20%)` |
+| foreground-color | 分页文字 | 亮色：`#080F20`；暗色：`#F8F8F8` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 `MPagination` 为 `Pagination` 的别名，使用同一实现、样式和 API。

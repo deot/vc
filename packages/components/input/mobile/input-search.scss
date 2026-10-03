@@ -2,8 +2,8 @@
 
 $component-name: vcm-input-search;
 $size: 54px;
-$background-color-light: varfix(background-color-light, input);
 $color-dark-extralight: varfix(color-dark-extralight, input);
+$background-color-lightest: varfix(background-color-lightest, input);
 $foreground-color: varfix(foreground-color, input);
 
 @include block($component-name) {
@@ -23,7 +23,7 @@ $foreground-color: varfix(foreground-color, input);
 	@include element(content) {
 		padding-right: 14px;
 		overflow: hidden;
-		background: $background-color-light;
+		background: $background-color-lightest;
 		border-radius: 16px;
 
 		input {

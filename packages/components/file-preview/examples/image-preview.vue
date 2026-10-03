@@ -1,5 +1,5 @@
 <template>
-	<div style="padding: 20px; background: var(--vc-background-color-light);">
+	<div style="padding: 20px; background: var(--vc-background-color-lightest);">
 		<p>ImagePreview.open：直接打开图片预览（不经过 FilePreview 的 enhancer）</p>
 		<button @click="handleClick(0)">从第 1 张打开</button>
 		<button @click="handleClick(2)">从第 3 张打开</button>

@@ -166,7 +166,7 @@ import { Calendar } from '@deot/vc';
 }
 
 .calendar-date.is-today {
-	color: var(--vc-calendar-color-light, var(--vc-color-light));
+	color: var(--vc-calendar-color-contrast-light, var(--vc-color-contrast-light));
 	background: var(--vc-calendar-color-primary, var(--vc-color-primary));
 }
 
@@ -207,6 +207,25 @@ import { Calendar } from '@deot/vc';
 </script>
 ```
 :::
+
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-calendar-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-light | 选中日期文字 | `#FFFFFF`（亮暗主题相同） |
+| color-dark-light | 月份文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-dark-extralight | 星期及相邻月份日期文字 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-primary | 选中日期背景 | `#456CF6` |
+| color-primary-light | 选中日期阴影 | `#4A96FF` |
+| background-color | 月份背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
 
 ## API
 

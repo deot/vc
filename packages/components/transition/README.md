@@ -98,7 +98,7 @@ const isVisible = ref(true);
 	padding: 12px;
 	border: 1px solid var(--vc-color-light-deepest);
 	border-radius: 4px;
-	background: var(--vc-background-color-light);
+	background: var(--vc-background-color-lightest);
 	color: var(--vc-foreground-color);
 }
 </style>

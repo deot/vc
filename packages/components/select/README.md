@@ -233,6 +233,28 @@ const loadOptions = async (query) => {
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-select-option-<参数>`、`--vc-select-all-<参数>`、`--vc-select-<参数>`、`--vc-select-option-group-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+`portal: true` 时，选项变量需设置在浮层祖先（例如 body）或通过 `portalClass` 为浮层配置，触发器上的局部变量不会自动传入浮层。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-lighter | 前置内容及选项文字（select / select-option） | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-extralight | 附加图标、分组标题及禁用选项（select / select-option-group / select-option） | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-primary | 选中选项及全选文字（select-all / select-option） | `#456CF6` |
+| color-primary-light | 已全选状态文字（select-all） | `#4A96FF` |
+| background-color | 禁用输入区背景（select） | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-lightest | 输入区背景（select） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| background-color-primary-light | 选项悬停及单选、多选的选中背景（select-option） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### 属性

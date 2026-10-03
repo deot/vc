@@ -193,6 +193,30 @@ const handleModalClose = () => { isModalVisible.value = false; };
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-popup-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+移动端深色外观文字使用 color-contrast-light。⚠ color-mix：背景由 color-contrast-dark 以 30% 与透明色混合。系统遮罩仍使用 color-mask。
+
+弹层通过 Portal 挂载时，变量需作用于实际弹层或其祖先。
+
+透明色增强声明仅在 `@supports` 内生效；不支持 color-mix 时使用 Sass 编译的固定黑色 rgba() 降级值，透明度与上述比例一致，降级值不会随 color-contrast-dark 变量变化。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-dark | 移动端深色外观背景的派生基色 | `#000000`（亮暗主题相同） |
+| color-contrast-light | 移动端深色外观文字 | `#FFFFFF`（亮暗主题相同） |
+| color-mask | 遮罩背景 | 亮色：`rgba(0, 0, 0, 0.4)`；暗色：`rgba(255, 255, 255, 0.4)` |
+| background-color-lightest | light 外观面板背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| foreground-color | light 外观文字 | 亮色：`#080F20`；暗色：`#F8F8F8` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 以下 API 同时适用于 `Popup` 和 `MPopup`。
@@ -238,4 +262,4 @@ const handleModalClose = () => { isModalVisible.value = false; };
 
 ### 主题变量
 
-默认面板与遮罩支持 `--vc-popup-background-color-light`、`--vc-popup-foreground-color`、`--vc-popup-mask-color`，分别回退到同名全局 token。`dark` 外观使用 `--vc-popup-background-color-translucent`（默认 `rgb(0 0 0 / 30%)`）与 `--vc-popup-foreground-color-inverse`（默认 `#fff`）；`none` 不设置面板颜色。
+默认面板与遮罩支持 `--vc-popup-background-color-lightest`、`--vc-popup-foreground-color`、`--vc-popup-color-mask`，分别回退到同名全局 token。`dark` 外观使用 `--vc-popup-background-color-translucent`（默认 `rgb(0 0 0 / 30%)`）与 `--vc-popup-foreground-color-inverse`（默认 `#fff`）；`none` 不设置面板颜色。

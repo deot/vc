@@ -1,18 +1,16 @@
 @use '../style/helper' as *;
 
-$component-name: vc-textarea;
-$background-color-light: varfix(background-color-light, textarea);
-$color-light-deeper: varfix(color-light-deeper, textarea);
-$color-error: varfix(color-error, textarea);
-$color-primary: varfix(color-primary, textarea);
-$color-primary-lighter: varfix(color-primary-lighter, textarea);
-$color-dark-lighter: varfix(color-dark-lighter, textarea);
 $color-dark-light: varfix(color-dark-light, textarea);
 $color-dark-extralight: varfix(color-dark-extralight, textarea);
+$color-error: varfix(color-error, textarea);
 $color-light-deep: varfix(color-light-deep, textarea);
+$color-primary: varfix(color-primary, textarea);
+$color-primary-lighter: varfix(color-primary-lighter, textarea);
+$background-color-light: varfix(background-color-light, textarea);
+$background-color-lightest: varfix(background-color-lightest, textarea);
+$border-color: varfix(border-color, textarea);
 $foreground-color: varfix(foreground-color, textarea);
-$color-disabled: varfix(color-disabled, textarea);
-$foreground-color-disabled: varfix(foreground-color-disabled, textarea, #515151);
+$component-name: vc-textarea;
 
 @include block($component-name) {
 	position: relative;
@@ -23,13 +21,13 @@ $foreground-color-disabled: varfix(foreground-color-disabled, textarea, #515151)
 	line-height: 1.5;
 	vertical-align: middle;
 	cursor: text;
-	background-color: $background-color-light;
+	background-color: $background-color-lightest;
 	border-radius: unitfix(8);
 	transition: border .2s ease-in-out, 
 		background .2s ease-in-out, 
 		box-shadow .2s ease-in-out;
 
-	@include border('', $color-light-deeper, 8); // 不占边距
+	@include border('', $border-color, 8); // 不占边距
 
 	@include when(focus) {
 		&::after, &::before {
@@ -75,7 +73,7 @@ $foreground-color-disabled: varfix(foreground-color-disabled, textarea, #515151)
 			font-size: inherit;
 			line-height: inherit;
 			color: $color-dark-light;
-			background-color: $background-color-light;
+			background-color: $background-color-lightest;
 			border: none;
 			outline: 0;
 			box-sizing: border-box;	
@@ -102,16 +100,18 @@ $foreground-color-disabled: varfix(foreground-color-disabled, textarea, #515151)
 	}
 
 	@include when(disabled) {
+		background-color: $background-color-light;
+
 		@include element(content){
 			cursor: not-allowed;
-			background-color: $color-disabled;
+			background-color: $background-color-light;
 			opacity: 1;
 
 			// hack需要设置
 			textarea {
-				color: $foreground-color-disabled;
+				color: $color-dark-extralight;
 				cursor: not-allowed;
-				background-color: $color-disabled;
+				background-color: $background-color-light;
 			}
 		}
 	}

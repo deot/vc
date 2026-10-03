@@ -1543,6 +1543,43 @@ const handleToggle = () => { isEmpty.value = !isEmpty.value; };
 ```
 :::
 
+## 主题与局部覆盖
+
+下列颜色及阴影参数来自全局主题配置，单个表格可通过 `--vc-table-<参数>` 覆盖。筛选和排序分别使用 `--vc-table-filter-<参数>`、`--vc-table-sort-<参数>`；筛选弹层的覆盖样式需作用于弹层。尺寸等局部属性可在 Table 根节点设置对应的 CSS 变量。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-extralight | 空状态、筛选普通文字、把手悬停 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-error | 必填标记、不允许拖入的线框 | `#F53F3F` |
+| color-light-deepest | 展开、筛选、未激活排序图标及拖拽把手 | 亮色：`#C0C4CC`；暗色：`#E8E8E8` |
+| color-neutral-light | 边框、分隔线、列宽辅助线；筛选操作区分隔线（table-filter） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 激活排序/筛选、单选选中项、拖拽落点线 | `#456CF6` |
+| color-primary-lighter | 树节点内部落点底色 | `rgb(45 140 240 / 20%)` |
+| color-shadow-fixed | 固定列边缘阴影 | 亮色：`rgb(0 0 0 / 6%)`；暗色：`rgb(0 0 0 / 24%)` |
+| background-color-light | 表头、合计、hover、当前行及关联高亮 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+| background-color-lighter | 斑马纹 | 亮色：`#FAFAFA`；暗色：`#292F3E` |
+| background-color-lightest | 表体、固定列、展开区、拖拽浮层 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| background-color-error-light | 不允许拖入的底色 | `rgb(245 63 63 / 15%)` |
+| background-color-primary-light | 单选、多选筛选的可用选项 hover 背景（table-filter） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
+| foreground-color | 表体文字 | 亮色：`#080F20`；暗色：`#F8F8F8` |
+| foreground-color-light | 表头、合计文字 | 亮色：`#667383`；暗色：`#C9C9C9` |
+| foreground-color-inactive | 筛选禁用文字 | 亮色：`#C0C4CC`；暗色：`#737D8C` |
+| box-shadow-floating | 拖拽浮层阴影 | 亮色：`0 4px 12px rgb(0 0 0 / 12%)`；暗色：`0 4px 12px rgb(0 0 0 / 32%)` |
+
+### 局部
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| dragging-opacity | 被拖动的行、列透明度 | `0.4` |
+| font-size | 表头、单元格字号 | medium：`13px`；large：`14px`；small / mini：`12px` |
+| footer-min-height | 合计单元格最小高度 | medium：`44px`；其他尺寸：`auto` |
+| td-padding-y | 单元格上下内边距 | medium：`8px`；large：`12px`；small：`6px`；mini：`4px` |
+| th-padding-y | 表头上下内边距 | medium：`10px`；large：`12px`；small：`8px`；mini：`6px` |
+
+多选筛选的选项采用 `12px` 字号、`26px` 行高；重置和确认复用 Button 的 `small` 尺寸，按钮颜色通过 `--vc-button-<参数>` 覆盖。
+
 ## API
 
 ### Table 属性

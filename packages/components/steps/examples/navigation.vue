@@ -1,5 +1,5 @@
 <template>
-	<div style="padding: 20px; background: var(--vc-background-color-light);">
+	<div style="padding: 20px; background: var(--vc-background-color-lightest);">
 		<p>navigation：只支持横向，文字固定在节点右侧</p>
 		<Steps v-model="current" type="navigation" clickable style="width: 780px;">
 			<Step title="Succeeded" />

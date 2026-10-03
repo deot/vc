@@ -156,6 +156,32 @@ onBeforeUnmount(() => leaf?.destroy());
 
 `Upload` 使用 `Message.error/loading`；`MUpload` 使用 `MToast.info/loading`。二者的编程式 Portal 相互独立。
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-upload-task-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+这些入口属于 upload-task 任务浮层；变量应作用于实际浮层或其祖先。任务结果区域文字使用可覆盖的 color-contrast-light。⚠ color-mix：任务进度浅底由 color-primary-light 与透明色混合，颜色占 8%；不支持时使用 color-primary-lighter。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-light | 任务结果区域文字（upload-task） | `#FFFFFF`（亮暗主题相同） |
+| color-dark | 上传任务浮层文字 | 亮色：`#000000`；暗色：`#FFFFFF` |
+| color-dark-lighter | 任务列表列文字 | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-error | 上传失败状态 | `#F53F3F` |
+| color-neutral-light | 任务标题及列表分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 任务结果区域背景 | `#456CF6` |
+| color-primary-light | 任务进度浅底派生 | `#4A96FF` |
+| color-primary-lighter | 任务进度浅底降级色 | `rgba(45, 140, 240, 0.2)` |
+| color-success | 上传成功状态 | `#1DB88C` |
+| background-color-lightest | 上传任务浮层背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| box-shadow | 上传任务浮层阴影 | 亮色：`0 0 8px 0 rgba(0, 0, 0, 0.1)`；暗色：`0 0 8px 0 rgba(255, 255, 255, 0.05)` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### 属性

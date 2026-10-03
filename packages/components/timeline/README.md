@@ -267,6 +267,26 @@ const renderDot = () => h('span', { class: 'check' }, '✓');
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-timeline-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
+
+内嵌或复用的 [spin](../spin/README.md#主题与局部覆盖) 使用各自的主题入口。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-light | 时间轴正文 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-dark-extralight | 标签文字 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-neutral-light | 连接线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 节点及自定义节点颜色 | `#456CF6` |
+| background-color-lightest | 自定义节点背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### Timeline 属性
@@ -314,5 +334,5 @@ const renderDot = () => h('span', { class: 'check' }, '✓');
 - Timeline 的默认插槽只渲染 TimelineItem（包括 `v-for`、`<template>` 中的 TimelineItem），其他节点会被忽略；被其他组件包裹的 TimelineItem 也不会渲染。
 - `label`、`dot` 为字符串时按 HTML 渲染，不要传入未经处理的用户输入。
 - 与幽灵节点相连的那段轴线会被强制设为虚线，覆盖该项的 `lineType`。
-- 颜色使用主题变量，可通过 `--vc-timeline-color-primary`（圆点）、`--vc-timeline-color-light-deeper`（轴线）、`--vc-timeline-color-dark-light`（内容）、`--vc-timeline-color-dark-extralight`（标签）、`--vc-timeline-background-color-light`（自定义节点的背景，用于遮挡轴线）单独覆盖。
+- 颜色使用主题变量，可通过 `--vc-timeline-color-primary`（圆点）、`--vc-timeline-color-neutral-light`（轴线）、`--vc-timeline-color-dark-light`（内容）、`--vc-timeline-color-dark-extralight`（标签）、`--vc-timeline-background-color-lightest`（自定义节点的背景，用于遮挡轴线）单独覆盖。
 - `MTimeline`、`MTimelineItem` 分别是 `Timeline`、`TimelineItem` 的别名，使用同一实现与样式，可从 `@deot/vc` 导入。

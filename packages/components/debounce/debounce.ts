@@ -52,7 +52,7 @@ export const Debounce = defineComponent({
 			return h(props.tag, {
 				...attrs,
 				...listener.value
-			}, slots.default?.());
+			}, typeof props.tag === 'string' ? slots.default?.() : slots);
 		};
 	}
 });

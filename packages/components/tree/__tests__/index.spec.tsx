@@ -1809,6 +1809,28 @@ describe('TreeSelect searchable', () => {
 		expect(nodes[4]).toBe('c');
 	});
 
+	it.each([false, true])('cascader checked class tracks selection (search=%s)', async (searching) => {
+		const wrapper = mount(TreeSelectContentCascader, {
+			props: {
+				value: ['a'],
+				data: [{ value: 'a', label: '甲' }],
+				searchValue: searching ? '甲' : '',
+				searchRegex: /甲/i
+			},
+			attachTo: document.body
+		});
+		await flush();
+		const row = () => wrapper.find(searching ? '.vc-tree-select__search-item' : '.vc-tree-select__cascader-item');
+		expect(row().classes()).toContain('is-checked');
+		await row().trigger('click');
+		await flush();
+		expect(row().classes()).not.toContain('is-checked');
+		await row().trigger('click');
+		await flush();
+		expect(row().classes()).toContain('is-checked');
+		wrapper.unmount();
+	});
+
 	it('tree mode: filters keeping hierarchy, highlights, resets on close', async () => {
 		const value = ref<any[]>([]);
 		const wrapper = mount(() => (

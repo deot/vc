@@ -316,6 +316,25 @@ p { margin: 12px 0 0; }
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-form-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark | 移动端表单和标签文字 | 亮色：`#000000`；暗色：`#FFFFFF` |
+| color-dark-light | 桌面端标签文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-error | 必填标记及错误提示 | `#F53F3F` |
+| color-neutral-light | 移动端表单边框及表单项分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| background-color-lightest | 表单背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| foreground-color | 桌面端表单文字 | 亮色：`#080F20`；暗色：`#F8F8F8` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### Form 属性
@@ -436,4 +455,4 @@ p { margin: 12px 0 0; }
 
 ### 主题
 
-桌面端和移动端使用 `form` 主题命名空间。可覆盖 `--vc-form-background-color-light`、`--vc-form-color-error`；桌面端另使用 `--vc-form-foreground-color`、`--vc-form-color-dark-light`，移动端使用 `--vc-form-color-dark`。未覆盖时跟随共享亮暗主题。
+桌面端和移动端使用 `form` 主题命名空间。可覆盖 `--vc-form-background-color-lightest`、`--vc-form-color-error`；桌面端另使用 `--vc-form-foreground-color`、`--vc-form-color-dark-light`，移动端使用 `--vc-form-color-dark`。未覆盖时跟随共享亮暗主题。

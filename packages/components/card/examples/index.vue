@@ -1,5 +1,5 @@
 <template>
-	<div style="margin: 40px">
+	<div style="padding: 40px;">
 		<Card>
 			<template #title>
 				<p>标题插槽示例</p>

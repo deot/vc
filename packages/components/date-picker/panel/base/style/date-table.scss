@@ -1,10 +1,10 @@
 @use '../../../../style/helper' as *;
 
-$muted: varfix(color-dark-extralight, date-picker);
-$range: varfix(color-primary-lighter, date-picker);
-$primary: varfix(color-primary, date-picker);
-$selected-foreground: varfix(selected-foreground, date-picker, #fff);
-$disabled-background: varfix(disabled-background, date-picker, rgb(128 128 128 / 8%));
+$color-contrast-light: varfix(color-contrast-light, date-picker);
+$color-dark-extralight: varfix(color-dark-extralight, date-picker);
+$color-primary: varfix(color-primary, date-picker);
+$background-color-light: varfix(background-color-light, date-picker);
+$background-color-primary-light: varfix(background-color-primary-light, date-picker);
 $block: vc-date-table;
 
 @include block($block) {
@@ -21,7 +21,7 @@ $block: vc-date-table;
 	@include element(header) {
 		margin: 2px;
 		line-height: 24px;
-		color: $muted;
+		color: $color-dark-extralight;
 		text-align: center;
 	}
 
@@ -40,7 +40,7 @@ $block: vc-date-table;
 			transition: all .2s ease-in-out;
 
 			&:hover {
-				background: $range;
+				background: $background-color-primary-light;
 			}
 
 			span {
@@ -59,7 +59,7 @@ $block: vc-date-table;
 				display: block;
 				width: 6px;
 				height: 6px;
-				background: $primary;
+				background: $color-primary;
 				border-radius: 50%;
 				content: "";
 			}
@@ -71,7 +71,7 @@ $block: vc-date-table;
 					position: absolute;
 					inset: 0 -2px;
 					display: block;
-					background: $range;
+					background: $background-color-primary-light;
 					border: 0;
 					border-radius: 0;
 					content: "";
@@ -85,32 +85,32 @@ $block: vc-date-table;
 		}
 
 		@include when(focused) {
-			div { box-shadow: inset 0 0 0 1px $primary; }
+			div { box-shadow: inset 0 0 0 1px $color-primary; }
 		}
 
 		@include when(selected) {
 			div {
-				color: $selected-foreground;
-				background: $primary;
+				color: $color-contrast-light;
+				background: $color-primary;
 			}
 		}
 
 		@include when(disabled) {
-			color: $muted;
+			color: $color-dark-extralight;
 			cursor: not-allowed;
-			background: $disabled-background;
+			background: $background-color-light;
 
 			div:hover {
-				background: $disabled-background;
+				background: $background-color-light;
 			}
 		}
 
 		@include when(next-month) {
-			div { color: $muted; }
+			div { color: $color-dark-extralight; }
 		}
 
 		@include when(prev-month) {
-			div { color: $muted; }
+			div { color: $color-dark-extralight; }
 		}
 	}
 }

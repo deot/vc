@@ -1,12 +1,12 @@
 @use '../style/helper' as *;
 
-$foreground-color: varfix(color-dark-lightest, radio-group);
-$background-color: varfix(background-color-light, radio-group);
-$border-color: varfix(color-light-deepest, radio-group);
+$color-dark-lightest: varfix(color-dark-lightest, radio-group);
+$color-dark-extralight: varfix(color-dark-extralight, radio-group);
+$color-light-deepest: varfix(color-light-deepest, radio-group);
 $color-primary: varfix(color-primary, radio-group);
-$foreground-color-disabled: varfix(color-dark-extralight, radio-group);
-$background-color-disabled: varfix(background-color, radio-group);
-$focus-color: varfix(color-primary-lighter, radio-group);
+$color-primary-lighter: varfix(color-primary-lighter, radio-group);
+$background-color: varfix(background-color, radio-group);
+$background-color-lightest: varfix(background-color-lightest, radio-group);
 $component-name: vc-radio-group;
 $size: unitfix(32);
 
@@ -36,10 +36,10 @@ $size: unitfix(32);
 			margin: 0;
 			font-size: unitfix(12);
 			line-height: $size;
-			color: $foreground-color;
+			color: $color-dark-lightest;
 			cursor: pointer;
-			background: $background-color;
-			border: unitfix(1) solid $border-color;
+			background: $background-color-lightest;
+			border: unitfix(1) solid $color-light-deepest;
 			border-left: 0;
 			transition: all .2s ease-in-out;
 
@@ -49,10 +49,10 @@ $size: unitfix(32);
 			}
 
 			&.is-disabled {
-				color: $foreground-color-disabled;
+				color: $color-dark-extralight;
 				cursor: not-allowed;
-				background-color: $background-color-disabled;
-				border-color: $border-color;
+				background-color: $background-color;
+				border-color: $color-light-deepest;
 			}
 
 			> span {
@@ -60,7 +60,7 @@ $size: unitfix(32);
 			}
 
 			&:first-child {
-				border-left: unitfix(1) solid $border-color;
+				border-left: unitfix(1) solid $color-light-deepest;
 				border-radius: unitfix(4) 0 0 unitfix(4);
 			}
 
@@ -81,13 +81,13 @@ $size: unitfix(32);
 			&.is-checked {
 				z-index: 1;
 				color: $color-primary;
-				background: $background-color;
+				background: $background-color-lightest;
 				border-color: $color-primary;
 				box-shadow: unitfix(-1) 0 0 0 $color-primary;
 			}
 
 			&.is-focus {
-				box-shadow: unitfix(-1) 0 0 0 $color-primary, 0 0 0 unitfix(2) $focus-color;
+				box-shadow: unitfix(-1) 0 0 0 $color-primary, 0 0 0 unitfix(2) $color-primary-lighter;
 				transition: all .2s ease-in-out;
 			}
 		}

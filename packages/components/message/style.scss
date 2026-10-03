@@ -1,14 +1,14 @@
 @use '../style/helper' as *;
 
 $component-name: vc-message;
-$color-success: varfix(color-success, message);
 $color-error: varfix(color-error, message);
+$color-mask: varfix(color-mask, message);
+$color-primary: varfix(color-primary, message);
+$color-success: varfix(color-success, message);
 $color-warning: varfix(color-warning, message);
-$color-info: varfix(color-primary, message);
+$background-color-lightest: varfix(background-color-lightest, message);
 $foreground-color: varfix(foreground-color, message);
-$background-color-light: varfix(background-color-light, message);
-$mask-color: varfix(mask-color, message);
-$border-shadow: varfix(border-shadow, message);
+$box-shadow: varfix(box-shadow, message);
 
 @include block($component-name) {
 	color: $foreground-color;
@@ -22,7 +22,7 @@ $border-shadow: varfix(border-shadow, message);
 		width: 100%;
 		height: 100%;
 		margin: 0 auto;
-		background: $mask-color;
+		background: $color-mask;
 		opacity: 0;
 	}
 
@@ -41,9 +41,9 @@ $border-shadow: varfix(border-shadow, message);
 		display: flex;
 		padding: unitfix(8) unitfix(16);
 		font-size: unitfix(14);
-		background: $background-color-light;
+		background: $background-color-lightest;
 		border-radius: unitfix(4);
-		box-shadow: $border-shadow;
+		box-shadow: $box-shadow;
 		align-items: center;
 
 		@include element(icon) {
@@ -62,7 +62,7 @@ $border-shadow: varfix(border-shadow, message);
 			}
 
 			@include when(info) {
-				color: $color-info;
+				color: $color-primary;
 			}
 		}
 	}

@@ -1,12 +1,12 @@
 @use '../style/helper' as *;
 
 $component-name: vc-calendar;
-$background-color: varfix(background-color, calendar);
+$color-contrast-light: varfix(color-contrast-light, calendar);
 $color-dark-light: varfix(color-dark-light, calendar);
 $color-dark-extralight: varfix(color-dark-extralight, calendar);
-$color-light: varfix(color-light, calendar);
 $color-primary: varfix(color-primary, calendar);
 $color-primary-light: varfix(color-primary-light, calendar);
+$background-color: varfix(background-color, calendar);
 
 @include block($component-name) {
 	position: relative;
@@ -69,7 +69,7 @@ $color-primary-light: varfix(color-primary-light, calendar);
 
 				width: unitfix(40);
 				height: unitfix(40);
-				color: $color-light;
+				color: $color-contrast-light;
 				background-color: $color-primary;
 				border-radius: unitfix(20);
 				box-shadow: unitfix(1) unitfix(2) unitfix(10) $color-primary-light;

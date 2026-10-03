@@ -181,7 +181,7 @@ onMounted(async () => {
 	color: inherit;
 	font: inherit;
 	text-align: center;
-	background: var(--vc-background-color-light);
+	background: var(--vc-background-color-lightest);
 	border: 1px solid var(--vc-color-light-deeper);
 	border-radius: var(--vc-border-radius);
 	cursor: pointer;
@@ -191,7 +191,7 @@ onMounted(async () => {
 .icon-gallery-item:hover,
 .icon-gallery-item:focus-visible {
 	border-color: var(--vc-color-primary);
-	box-shadow: var(--vc-border-shadow);
+	box-shadow: var(--vc-box-shadow);
 	transform: translateY(-2px);
 }
 .icon-gallery-item:focus-visible {

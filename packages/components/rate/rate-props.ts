@@ -12,7 +12,7 @@ export const props = {
 	},
 	color: {
 		type: String,
-		default: 'var(--vc-rate-selected-color, #16a3ff)'
+		default: 'var(--vc-rate-color-primary-light, var(--vc-color-primary-light))'
 	},
 	icon: {
 		type: String,

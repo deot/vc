@@ -1,13 +1,11 @@
 @use '../style/helper' as *;
 
-$border-shadow: varfix(border-shadow, popover-wrapper);
-$mask-color-dark: varfix(mask-color-dark, popover-wrapper);
-$color-light: varfix(color-light, popover-wrapper);
-$arrow-shadow-color: varfix(arrow-shadow-color, popover-wrapper, rgb(0 0 0 / 7%));
-$arrow-shadow-color-light: varfix(arrow-shadow-color-light, popover-wrapper, rgb(0 0 0 / 6%));
-
 // 默认字体（与 Table 单元格一致）
 $color-dark-lighter: varfix(color-dark-lighter, popover-wrapper);
+$color-light: varfix(color-light, popover-wrapper);
+$color-mask-dark: varfix(color-mask-dark, popover-wrapper);
+$color-shadow-fixed: varfix(color-shadow-fixed, popover-wrapper);
+$box-shadow: varfix(box-shadow, popover-wrapper);
 $font-size-small: varfix(font-size-small, popover-wrapper);
 $line-height-large: varfix(line-height-large, popover-wrapper);
 
@@ -39,12 +37,12 @@ $line-height-large: varfix(line-height-large, popover-wrapper);
 		padding: 5px 12px;
 		overflow-wrap: break-word;
 		border-radius: 4px;
-		box-shadow: $border-shadow;
+		box-shadow: $box-shadow;
 		box-sizing: border-box;
 
 		@include when(dark) {
 			color: $color-light;
-			background-color: $mask-color-dark;
+			background-color: $color-mask-dark;
 		}
 
 		@include when(light) {
@@ -74,7 +72,7 @@ $line-height-large: varfix(line-height-large, popover-wrapper);
 			bottom: 4px;
 			border-top-color: transparent;
 			border-left-color: transparent;
-			box-shadow: 3px 3px 7px $arrow-shadow-color;
+			box-shadow: 3px 3px 7px $color-shadow-fixed;
 
 			@include when(light) {
 				border-right-color: $color-light;
@@ -82,8 +80,8 @@ $line-height-large: varfix(line-height-large, popover-wrapper);
 			}
 
 			@include when(dark) {
-				border-right-color: $mask-color-dark;
-				border-bottom-color: $mask-color-dark;
+				border-right-color: $color-mask-dark;
+				border-bottom-color: $color-mask-dark;
 			}
 		}
 
@@ -104,7 +102,7 @@ $line-height-large: varfix(line-height-large, popover-wrapper);
 			top: 4px;
 			border-right-color: transparent;
 			border-bottom-color: transparent;
-			box-shadow: -2px -2px 5px $arrow-shadow-color-light;
+			box-shadow: -2px -2px 5px $color-shadow-fixed;
 
 			@include when(light) {
 				border-top-color: $color-light;
@@ -112,8 +110,8 @@ $line-height-large: varfix(line-height-large, popover-wrapper);
 			}
 
 			@include when(dark) {
-				border-top-color: $mask-color-dark;
-				border-left-color: $mask-color-dark;
+				border-top-color: $color-mask-dark;
+				border-left-color: $color-mask-dark;
 			}
 			
 		}
@@ -135,7 +133,7 @@ $line-height-large: varfix(line-height-large, popover-wrapper);
 			left: 4px;
 			border-top-color: transparent;
 			border-right-color: transparent;
-			box-shadow: -3px 3px 7px $arrow-shadow-color;
+			box-shadow: -3px 3px 7px $color-shadow-fixed;
 
 			@include when(light) {
 				border-bottom-color: $color-light;
@@ -143,8 +141,8 @@ $line-height-large: varfix(line-height-large, popover-wrapper);
 			}
 
 			@include when(dark) {
-				border-bottom-color: $mask-color-dark;
-				border-left-color: $mask-color-dark;
+				border-bottom-color: $color-mask-dark;
+				border-left-color: $color-mask-dark;
 			}
 		}
 
@@ -157,7 +155,7 @@ $line-height-large: varfix(line-height-large, popover-wrapper);
 			right: 4px;
 			border-bottom-color: transparent;
 			border-left-color: transparent;
-			box-shadow: 3px -3px 7px $arrow-shadow-color;
+			box-shadow: 3px -3px 7px $color-shadow-fixed;
 
 			@include when(light) {
 				border-top-color: $color-light;
@@ -165,8 +163,8 @@ $line-height-large: varfix(line-height-large, popover-wrapper);
 			}
 
 			@include when(dark) {
-				border-top-color: $mask-color-dark;
-				border-right-color: $mask-color-dark;
+				border-top-color: $color-mask-dark;
+				border-right-color: $color-mask-dark;
 			}
 		}
 

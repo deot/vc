@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 
 import { vi } from 'vitest';
-import { Clipboard, MClipboard, Message, MToast, VcInstance } from '@deot/vc-components';
+import { Button, Clipboard, MClipboard, Message, MToast, VcInstance } from '@deot/vc-components';
 import { enUS, zhCN } from '@deot/vc-locale';
 import { mount } from '@vue/test-utils';
+import { markRaw } from 'vue';
 import { copyToClipboard, toggleSelection, group } from '../utils';
 
 beforeEach(() => {
@@ -39,6 +40,24 @@ describe('index.ts', () => {
 });
 
 describe('clipboard.tsx', () => {
+	it.each([Clipboard, MClipboard])('component tag: 保留函数插槽和复制行为，不产生警告', async (Component) => {
+		const warnings: string[] = [];
+		const onAfter = vi.fn();
+		const wrapper = mount(Component, {
+			props: { tag: markRaw(Button), value: 'hello' },
+			attrs: { size: 'small', onAfter },
+			slots: { default: () => '复制' },
+			global: { config: { warnHandler: (message) => { warnings.push(message); } } }
+		});
+
+		expect(wrapper.findComponent(Button).text()).toBe('复制');
+		expect(wrapper.findComponent(Button).props('size')).toBe('small');
+		await wrapper.trigger('click');
+		expect(onAfter).toHaveBeenCalledWith('hello');
+		expect(warnings).toEqual([]);
+		wrapper.unmount();
+	});
+
 	it.each([Clipboard, MClipboard])('locale: 点击时读取当前语言，after 覆盖默认提示', async (Component) => {
 		const success = vi.spyOn(Message, 'success').mockImplementation(() => ({}) as any);
 		const info = vi.spyOn(MToast, 'info').mockImplementation(() => ({}) as any);

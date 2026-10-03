@@ -2,11 +2,11 @@
 @use '../style/helper' as *;
 
 $component-name: vc-timeline-item;
-$color: varfix(color-dark-light, timeline);
-$label-color: varfix(color-dark-extralight, timeline);
-$dot-color: varfix(color-primary, timeline);
-$line-color: varfix(color-light-deeper, timeline);
-$background-color: varfix(background-color-light, timeline);
+$color-dark-light: varfix(color-dark-light, timeline);
+$color-dark-extralight: varfix(color-dark-extralight, timeline);
+$color-neutral-light: varfix(color-neutral-light, timeline);
+$color-primary: varfix(color-primary, timeline);
+$background-color-lightest: varfix(background-color-lightest, timeline);
 $font-size: 14px;
 $line-height: 1.5715;
 $dot-size: 6px;
@@ -24,13 +24,13 @@ $center-spacing: $dot-radius + $content-spacing; // 轴线居中时，内容与�
 @include block($component-name) {
 	position: relative;
 	font-size: unitfix($font-size);
-	color: $color;
+	color: $color-dark-light;
 	overflow-wrap: break-word; // 内容与标签中无空格的长串自动断行
 
 	@include element(label) {
 		font-size: unitfix(12);
 		line-height: 1.667;
-		color: $label-color;
+		color: $color-dark-extralight;
 	}
 
 	@include element(content) {
@@ -57,7 +57,7 @@ $center-spacing: $dot-radius + $content-spacing; // 轴线居中时，内容与�
 		position: relative;
 		width: unitfix($dot-size);
 		height: unitfix($dot-size);
-		color: $dot-color;
+		color: $color-primary;
 		border-radius: 50%;
 		box-sizing: border-box;
 
@@ -75,14 +75,14 @@ $center-spacing: $dot-radius + $content-spacing; // 轴线居中时，内容与�
 		top: 50%;
 		left: 50%;
 		display: inline-flex;
-		color: $dot-color;
-		background-color: $background-color;
+		color: $color-primary;
+		background-color: $background-color-lightest;
 		transform: translateX(-50%) translateY(-50%);
 	}
 
 	@include element(line) {
 		position: absolute;
-		border: 0 solid $line-color;
+		border: 0 solid $color-neutral-light;
 		box-sizing: border-box;
 
 		@include when(dashed) {

@@ -1,17 +1,15 @@
 @use '../../style/helper' as *;
 
-$component-name: vcm-textarea;
-$background-color-light: varfix(background-color-light, textarea);
-$color-light-deeper: varfix(color-light-deeper, textarea);
-$color-primary: varfix(color-primary, textarea);
-$color-primary-lighter: varfix(color-primary-lighter, textarea);
-$color-dark-lighter: varfix(color-dark-lighter, textarea);
 $color-dark-light: varfix(color-dark-light, textarea);
 $color-dark-extralight: varfix(color-dark-extralight, textarea);
 $color-light-deep: varfix(color-light-deep, textarea);
+$color-light-deeper: varfix(color-light-deeper, textarea);
+$color-primary: varfix(color-primary, textarea);
+$color-primary-lighter: varfix(color-primary-lighter, textarea);
+$background-color-light: varfix(background-color-light, textarea);
+$background-color-lightest: varfix(background-color-lightest, textarea);
 $foreground-color: varfix(foreground-color, textarea);
-$color-disabled: varfix(color-disabled, textarea);
-$foreground-color-disabled: varfix(foreground-color-disabled, textarea, #515151);
+$component-name: vcm-textarea;
 
 @include block($component-name) {
 	position: relative;
@@ -43,7 +41,7 @@ $foreground-color-disabled: varfix(foreground-color-disabled, textarea, #515151)
 			font-size: unitfix(16);
 			line-height: inherit;
 			color: $color-dark-light;
-			background-color: $background-color-light;
+			background-color: $background-color-lightest;
 			border: none;
 			outline: 0;
 			resize: none;  // 不形式拖拽按钮
@@ -53,9 +51,9 @@ $foreground-color-disabled: varfix(foreground-color-disabled, textarea, #515151)
 			}
 
 			&[disabled] {
-				color: $foreground-color-disabled;
+				color: $color-dark-extralight;
 				cursor: not-allowed;
-				background-color: $color-disabled;
+				background-color: $background-color-light;
 				opacity: 1;
 			}
 		}

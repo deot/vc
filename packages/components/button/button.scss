@@ -1,30 +1,106 @@
 @use '../style/helper' as *;
 
-$component-name: vc-button;
-
 /**
  * 可配制的主题色提取, Button可单独配置，默认使用全局值
  */
-$background-color-light: varfix(background-color-light, button);
-$border-color-light: varfix(border-color-light, button, #C4C9D2);
-$foreground-color-default: varfix(foreground-color-default, button, themefrozen(color-dark));
-$foreground-color-disabled: varfix(foreground-color-disabled, button, #374455);
-$color-light: varfix(color-light, button);
-$color-light-deep: varfix(color-light-deep, button);
-$color-light-deeper: varfix(color-light-deeper, button);
+$color-contrast-light: varfix(color-contrast-light, button);
 $color-dark: varfix(color-dark, button);
 $color-dark-light: varfix(color-dark-light, button);
-$color-primary: varfix(color-primary, button);
-$color-primary-light: varfix(color-primary-light, button);
-$color-primary-disabled: varfix(color-primary-disabled, button, #BEDAFF);
-$color-success: varfix(color-success, button);
-$color-success-light: varfix(color-success-light, button);
-$color-error: varfix(color-error, button);
-$color-error-light: varfix(color-error-light, button);
-$color-warning: varfix(color-warning, button);
-$color-warning-light: varfix(color-warning-light, button);
+$color-dark-lighter: varfix(color-dark-lighter, button);
 $color-disabled: varfix(color-disabled, button);
 $color-disabled-light: varfix(color-disabled-light, button);
+$color-error: varfix(color-error, button);
+$color-error-light: varfix(color-error-light, button);
+$color-light-deep: varfix(color-light-deep, button);
+$color-light-deeper: varfix(color-light-deeper, button);
+$color-light-deepest: varfix(color-light-deepest, button);
+$color-neutral: varfix(color-neutral, button);
+$color-neutral-light: varfix(color-neutral-light, button);
+$color-neutral-deep: varfix(color-neutral-deep, button);
+$color-primary: varfix(color-primary, button);
+$color-primary-light: varfix(color-primary-light, button);
+$color-primary-lighter: varfix(color-primary-lighter, button);
+$color-success: varfix(color-success, button);
+$color-success-light: varfix(color-success-light, button);
+$color-warning: varfix(color-warning, button);
+$color-warning-light: varfix(color-warning-light, button);
+$background-color-light: varfix(background-color-light, button);
+$background-color-lightest: varfix(background-color-lightest, button);
+$foreground-color: varfix(foreground-color, button);
+$component-name: vc-button;
+
+@mixin button-theme($light) {
+	.vc-button.is-default:not(.is-disabled) {
+		background-color: if(sass($light): $color-light-deep; else: $background-color-light);
+		border-color: if(sass($light): $color-light-deep; else: $background-color-light);
+
+		&:not(.is-solid):hover {
+			background-color: if(sass($light): $color-light-deeper; else: $color-neutral-light);
+			border-color: if(sass($light): $color-light-deeper; else: $color-neutral-light);
+		}
+
+		&.is-solid:not(:hover) {
+			border-color: $color-neutral;
+		}
+
+		&.is-solid:hover {
+			border-color: $color-neutral-deep;
+		}
+	}
+
+	.vc-button.is-default.is-disabled {
+		&,
+		&:hover {
+			color: if(sass($light): $color-neutral; else: $color-dark-lighter);
+			background-color: if(sass($light): $color-light-deep; else: $background-color-light);
+			border-color: if(sass($light): $color-light-deep; else: $background-color-light);
+		}
+
+		&.is-solid {
+			&,
+			&:hover {
+				border-color: if(sass($light): $color-light-deeper; else: $background-color-light);
+			}
+		}
+	}
+
+	.vc-button.is-text.is-disabled {
+		&,
+		&:hover {
+			color: if(sass($light): $color-neutral; else: $color-dark-lighter);
+		}
+	}
+
+	.vc-button.is-primary.is-solid:not(.is-disabled) {
+		color: if(sass($light): $color-primary; else: $color-primary-light);
+		border-color: if(sass($light): $color-primary; else: $color-primary-light);
+
+		&:hover {
+			color: if(sass($light): $color-primary-light; else: $color-contrast-light);
+			border-color: currentcolor;
+		}
+	}
+}
+
+@media (prefers-color-scheme: light) {
+	:root {
+		@include button-theme(true);
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		@include button-theme(false);
+	}
+}
+
+[data-vc-theme="light"] {
+	@include button-theme(true);
+}
+
+[data-vc-theme="dark"] {
+	@include button-theme(false);
+}
 
 
 @include block($component-name) {
@@ -33,7 +109,7 @@ $color-disabled-light: varfix(color-disabled-light, button);
 	font-weight: 400;
 	line-height: unitfix(20);
 	cursor: pointer;
-	background: $color-light;
+	background: $background-color-lightest;
 	border: unitfix(1) solid transparent;
 	border-color: $color-light-deeper;
 	border-radius: unitfix(8);
@@ -54,11 +130,11 @@ $color-disabled-light: varfix(color-disabled-light, button);
 
 	@include element(icon) {
 		display: inline-flex;
-		flex: 0 0 unitfix(14);
+		flex: 0 0 1em;
 		align-items: center;
 		justify-content: center;
-		width: unitfix(14);
-		height: unitfix(14);
+		width: 1em;
+		height: 1em;
 		font-size: unitfix(14);
 		line-height: 1;
 	}
@@ -69,7 +145,7 @@ $color-disabled-light: varfix(color-disabled-light, button);
 		justify-content: center;
 
 		&:not(.is-alone) > .vc-button__icon {
-			margin-right: unitfix(4);
+			margin-right: unitfix(6);
 		}
 	}
 
@@ -82,17 +158,17 @@ $color-disabled-light: varfix(color-disabled-light, button);
 	}
 
 	@include when(default) {
-		color: $foreground-color-default;
-		background-color: $color-light-deep;
-		border-color: $color-light-deep;
+		color: $foreground-color;
+		background-color: $background-color-light;
+		border-color: $background-color-light;
 
 		&:hover {
-			color: $foreground-color-default;
+			color: $foreground-color;
 			border-color: $color-primary;
 		}
 
 		@include when(solid) {
-			border-color: $border-color-light;
+			border-color: $color-neutral;
 
 			&:hover {
 				border-color: $color-primary-light;
@@ -101,7 +177,7 @@ $color-disabled-light: varfix(color-disabled-light, button);
 	}
 
 	@include when(primary) {
-		color: $color-light;
+		color: $color-contrast-light;
 		background-color: $color-primary;
 		border-color: $color-primary;
 
@@ -112,7 +188,7 @@ $color-disabled-light: varfix(color-disabled-light, button);
 
 		@include when(solid) {
 			color: $color-primary;
-			background-color: $color-light;
+			background-color: $background-color-lightest;
 
 			&:hover {
 				color: $color-primary-light;
@@ -132,7 +208,7 @@ $color-disabled-light: varfix(color-disabled-light, button);
 	}
 
 	@include when(success) {
-		color: $color-light;
+		color: $color-contrast-light;
 		background-color: $color-success;
 		border-color: $color-success;
 
@@ -143,7 +219,7 @@ $color-disabled-light: varfix(color-disabled-light, button);
 	}
 
 	@include when(error) {
-		color: $color-light;
+		color: $color-contrast-light;
 		background-color: $color-error;
 		border-color: $color-error;
 
@@ -154,7 +230,7 @@ $color-disabled-light: varfix(color-disabled-light, button);
 	}
 
 	@include when(warning) {
-		color: $color-light;
+		color: $color-contrast-light;
 		background-color: $color-warning;
 		border-color: $color-warning;
 
@@ -165,28 +241,55 @@ $color-disabled-light: varfix(color-disabled-light, button);
 	}
 
 	@include when(disabled) {
-		color: $foreground-color-disabled;
+		color: $color-dark-lighter;
 		cursor: not-allowed;
-		background-color: $border-color-light;
-		border-color: $border-color-light;
+		background-color: $background-color-light;
+		border-color: $background-color-light;
 
 		&:hover {
-			color: $foreground-color-disabled;
-			background: $border-color-light;
-			border-color: $border-color-light;
+			color: $color-dark-lighter;
+			background: $background-color-light;
+			border-color: $background-color-light;
 		}
 
 		@include when(primary) {
-			color: $foreground-color-disabled;
-			background-color: $color-primary-disabled;
-			border-color: $color-primary-disabled;
+			color: $color-contrast-light;
+			background-color: $color-primary-lighter;
+			border-color: $color-primary-lighter;
+
+			@supports (color: color-mix(in srgb, black, white)) {
+				& {
+					background-color: color-mix(in srgb, #{$color-primary-light} 30%, #{$background-color-lightest});
+					border-color: color-mix(in srgb, #{$color-primary-light} 30%, #{$background-color-lightest});
+				}
+			}
+
+			@include when(solid) {
+				&,
+				&:hover {
+					color: $color-primary-lighter;
+					background-color: $background-color-lightest;
+					border-color: currentcolor;
+				}
+
+				@supports (color: color-mix(in srgb, black, white)) {
+					&,
+					&:hover {
+						color: color-mix(in srgb, #{$color-primary-light} 30%, #{$background-color-lightest});
+					}
+				}
+			}
 		}
 	}
 
 	@include when(large) {
-		padding: unitfix(8) unitfix(16);
+		padding: unitfix(8) unitfix(20);
 		font-size: unitfix(14);
 		border-radius: unitfix(8);
+
+		> .vc-button__icon {
+			font-size: unitfix(16);
+		}
 
 		@include when(circle) {
 			border-radius: unitfix(36);
@@ -197,6 +300,10 @@ $color-disabled-light: varfix(color-disabled-light, button);
 		padding: unitfix(2) unitfix(8);
 		font-size: unitfix(12);
 		border-radius: unitfix(3);
+
+		> .vc-button__icon {
+			font-size: unitfix(12);
+		}
 
 		@include when(circle){
 			border-radius: unitfix(24);

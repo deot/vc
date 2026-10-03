@@ -66,6 +66,24 @@ import { Rate } from '@deot/vc';
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-rate-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+选中色来自 color 属性的默认值；显式传入 color 时以该属性为准。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-primary-light | 默认选中星星颜色 | `#4A96FF` |
+| foreground-color | 评分提示文字 | 亮色：`#080F20`；暗色：`#F8F8F8` |
+| foreground-color-inactive | 未选中星标 | 亮色：`#C0C4CC`；暗色：`#737D8C` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### 属性
@@ -98,7 +116,7 @@ import { Rate } from '@deot/vc';
 
 ### 主题
 
-可通过 `--vc-rate-selected-color` 覆盖默认选中色（回退为 `#16a3ff`）；显式 `color` 优先。未选图标使用 `--vc-rate-color-light-deeper`，回退至共享 `--vc-color-light-deeper`；提示文字使用 `--vc-rate-foreground-color`，回退至共享 `--vc-foreground-color`，随亮暗主题切换。
+默认选中色使用 `--vc-rate-color-primary-light`，回退至共享 `--vc-color-primary-light`；显式 `color` 优先。未选图标使用 `--vc-rate-foreground-color-inactive`，回退至共享 `--vc-foreground-color-inactive`；提示文字使用 `--vc-rate-foreground-color`，回退至共享 `--vc-foreground-color`，随亮暗主题切换。
 
 ### 移动端
 

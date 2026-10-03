@@ -262,6 +262,32 @@ const loadData = async (keyword) => {
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-tree-<参数>`、`--vc-tree-select-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+Tree 使用 tree，TreeSelect 的选项背景、级联面板及输入附加区使用 tree-select。内部拖入节点文字使用可覆盖的 color-contrast-light。TreeSelect 的树模式、级联模式及搜索结果使用同一组选项背景，普通 Tree 的背景参数保持独立。
+
+TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（例如 body）或通过 `portalClass` 为浮层配置，触发器上的局部变量不会自动传入浮层。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-light | 内部拖入节点文字（tree） | `#FFFFFF`（亮暗主题相同） |
+| color-dark-lighter | 树节点及级联选项文字（tree / tree-select） | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-lightest | 展开图标（tree） | 亮色：`#64758B`；暗色：`#C9C9C9` |
+| color-dark-extralight | 空状态、加载、附加图标及级联禁用文字（tree / tree-select） | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-neutral-light | 级联列分隔线（tree-select） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 拖拽落点、搜索高亮及选中选项文字（tree / tree-select） | `#456CF6` |
+| color-primary-lighter | 普通树节点非悬停时的焦点及当前节点高亮背景（tree） | `rgba(45, 140, 240, 0.2)` |
+| background-color-lightest | 树背景（tree） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| background-color-primary-light | 普通树节点悬停背景（tree）；TreeSelect 非禁用树节点悬停、焦点及勾选背景，级联选项和搜索结果悬停、勾选及当前浏览背景（tree-select） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 下表用 `Value` 表示 `string | number`，`NodeData` 表示调用方的节点数据，`Node` 表示由 `getNode` 等方法返回的节点对象（包含 `states.data`、`getter`、`childNodes` 等）。这些名称仅用于说明，不是包入口导出的类型。
@@ -413,7 +439,7 @@ TreeSelect 实例还暴露 `treeSelectId`、`isActive`、`multiple`、`current`�
 
 ### 主题与语言
 
-Tree 使用 `--vc-tree-*`，TreeSelect 使用 `--vc-tree-select-*` 组件覆盖变量，默认回退到共享亮暗主题。可分别覆盖 `background-color-selected`；Tree 还支持 `background-color-hover`、`foreground-color-drop`，TreeSelect 支持 `foreground-color-disabled`。拖入高亮文字默认保持白色，以配合主色背景。
+Tree 使用 `--vc-tree-*`，TreeSelect 使用 `--vc-tree-select-*` 组件覆盖变量，默认回退到共享亮暗主题。Tree 悬停背景使用 `background-color-primary-light`，非悬停时的焦点及当前节点高亮使用 `color-primary-lighter`；TreeSelect 选项背景使用自身命名空间的 `background-color-primary-light`。拖入高亮文字使用 `color-contrast-light`，默认保持白色，以配合主色背景。
 
 内置文案使用 `vc.Tree.emptyText`、`vc.TreeSelect.placeholder`、`vc.TreeSelect.noMatch`；通过 `VcInstance.configure({ locale })` 切换语言。节点标签、自定义渲染和显式传入的文案由调用方管理。
 

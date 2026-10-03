@@ -80,6 +80,34 @@ const handleChange = (value) => {
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-tag-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+实心语义标签文字使用可覆盖的 color-contrast-light。
+
+默认标签背景与 Button default 普通态一致：亮色使用 color-light-deep，暗色使用 background-color-light。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-contrast-light | 实心语义标签文字及对应标记、边框 | `#FFFFFF`（亮暗主题相同） |
+| color-error | 错误标签背景、边框或文字 | `#F53F3F` |
+| color-light-deep | 亮色默认标签背景 | 亮色：`#F3F4F6`；暗色：`#C0C4CC` |
+| color-light-deepest | 默认圆点 | 亮色：`#C0C4CC`；暗色：`#E8E8E8` |
+| color-neutral-light | 默认标签边框 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 主色标签背景、边框或文字 | `#456CF6` |
+| color-success | 成功标签背景、边框或文字 | `#1DB88C` |
+| color-warning | 警告标签背景、边框或文字 | `#E6A23C` |
+| background-color-light | 暗色默认标签背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+| background-color-lightest | 边框、圆点及未选中标签背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| foreground-color | 默认及未选中标签文字 | 亮色：`#080F20`；暗色：`#F8F8F8` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### 属性

@@ -1,14 +1,14 @@
 @use '../style/helper' as *;
 
-$foreground: varfix(color-dark-lightest, progress);
-$primary: varfix(color-primary, progress);
-$success: varfix(color-success, progress);
-$error: varfix(color-error, progress);
-$active: varfix(active-overlay-color, progress, #fff);
+$color-contrast-light: varfix(color-contrast-light, progress);
+$color-dark-lightest: varfix(color-dark-lightest, progress);
+$color-error: varfix(color-error, progress);
+$color-primary: varfix(color-primary, progress);
+$color-success: varfix(color-success, progress);
 
 @include block(vc-progress) {
 	font-size: unitfix(12);
-	color: $foreground;
+	color: $color-dark-lightest;
 }
 
 @include block(vc-progress-line) {
@@ -29,21 +29,21 @@ $active: varfix(active-overlay-color, progress, #fff);
 			border-radius: unitfix(8);
 
 			@include when(error) {
-				border: 1px solid $error;
+				border: 1px solid $color-error;
 			}
 
 			@include element(inner) {
 				position: relative;
-				background-color: $primary;
+				background-color: $color-primary;
 				border-radius: unitfix(8);
 				transition: width .5s cubic-bezier(.075,.82,.165,1);
 
 				@include when(success) {
-					background-color: $success;
+					background-color: $color-success;
 				}
 
 				@include when(error) {
-					background-color: $error;
+					background-color: $color-error;
 				}
 
 				@include when(active) {
@@ -52,7 +52,7 @@ $active: varfix(active-overlay-color, progress, #fff);
 						top: 0;
 						left: 0;
 						height: 100%;
-						background-color: $active;
+						background-color: $color-contrast-light;
 						border-radius: unitfix(8);
 						content: '';
 						animation: vc-progress-line-width 2s infinite;
@@ -70,12 +70,12 @@ $active: varfix(active-overlay-color, progress, #fff);
 		@include element(icon) {
 			@include when(success) {
 				font-size: unitfix(12);
-				color: $success;
+				color: $color-success;
 			}
 
 			@include when(error) {
 				font-size: unitfix(12);
-				color: $error;
+				color: $color-error;
 			}
 		}
 	}

@@ -1,13 +1,14 @@
 @use '../style/helper' as *;
 
 $component-name: vc-tabs;
+$color-dark-lightest: varfix(color-dark-lightest, tabs);
+$color-neutral-light: varfix(color-neutral-light, tabs);
 $color-primary: varfix(color-primary, tabs);
-$background-color-light: varfix(background-color-light, tabs);
-$color: varfix(color-dark-lightest, tabs);
-$border-color: varfix(color-light-deeper, tabs);
+$background-color-lightest: varfix(background-color-lightest, tabs);
+$border-color: varfix(border-color, tabs);
 
 @include block($component-name) {
-	color: $color;
+	color: $color-dark-lightest;
 
 	@include element(bar) {
 		position: relative;
@@ -16,7 +17,7 @@ $border-color: varfix(color-light-deeper, tabs);
 		align-items: center;
 
 		// 不用添加背景色
-		// background: $background-color-light;
+		// background: $background-color-lightest;
 	}
 
 	@include element(extra) {
@@ -79,7 +80,7 @@ $border-color: varfix(color-light-deeper, tabs);
 
 	@include when(line) {
 		@include element(bar){
-			@include border(bottom, $border-color);
+			@include border(bottom, $color-neutral-light);
 		}
 
 		@include element(item) {
@@ -114,7 +115,7 @@ $border-color: varfix(color-light-deeper, tabs);
 			margin-right: -1px;
 			line-height: 30px;
 			cursor: pointer;
-			background: $background-color-light;
+			background: $background-color-lightest;
 			border: 1px solid $border-color;
 			box-sizing: border-box;
 			transition: all .3s ease-in-out;

@@ -1,13 +1,13 @@
 @use '../style/helper' as *;
 
-$component-name: vc-slider;
-$color-light: varfix(color-light, slider);
-$color-light-deeper: varfix(color-light-deeper, slider);
+$color-contrast-light: varfix(color-contrast-light, slider);
+$color-light-deepest: varfix(color-light-deepest, slider);
 $color-primary: varfix(color-primary, slider);
 $color-primary-light: varfix(color-primary-light, slider);
-$color-primary-disabled: varfix(color-primary-disabled, slider, #BEDAFF);
-$color-disabled: varfix(color-disabled, slider);
-$border-color-light: varfix(border-color-light, slider, #C4C9D2);
+$color-primary-lighter: varfix(color-primary-lighter, slider);
+$background-color-light: varfix(background-color-light, slider);
+$background-color-lightest: varfix(background-color-lightest, slider);
+$component-name: vc-slider;
 
 @include block($component-name) {
 	position: relative;
@@ -21,7 +21,7 @@ $border-color-light: varfix(border-color-light, slider, #C4C9D2);
 		width: 100%;
 		height: 4px;
 		vertical-align: middle;
-		background-color: $color-light-deeper;
+		background-color: $background-color-light;
 		border-radius: 3px;
 
 		@include when(clickable) {
@@ -49,7 +49,7 @@ $border-color-light: varfix(border-color-light, slider, #C4C9D2);
 	@include element(button) {
 		width: 12px;
 		height: 12px;
-		background-color: $color-light;
+		background-color: $color-contrast-light;
 		border: 2px solid $color-primary;
 		border-radius: 50%;
 		outline: 0;
@@ -77,7 +77,7 @@ $border-color-light: varfix(border-color-light, slider, #C4C9D2);
 		position: absolute;
 		width: 4px;
 		height: 4px;
-		background-color: $border-color-light;
+		background-color: $color-light-deepest;
 		border-radius: 50%;
 		transform: translateX(-50%);
 	}
@@ -87,19 +87,37 @@ $border-color-light: varfix(border-color-light, slider, #C4C9D2);
 
 		.vc-slider__wrapper {
 			cursor: not-allowed;
-			background-color: $color-disabled;
+			background-color: $background-color-light;
 		}
 
 		.vc-slider__bar {
-			background-color: $color-primary-disabled;
+			background-color: $color-primary-lighter;
+
+			@supports (color: color-mix(in srgb, black, white)) {
+				& {
+					background-color: color-mix(in srgb, #{$color-primary-light} 30%, #{$background-color-lightest});
+				}
+			}
 		}
 
 		.vc-slider__button {
-			border-color: $color-primary-disabled;
+			border-color: $color-primary-lighter;
+
+			@supports (color: color-mix(in srgb, black, white)) {
+				& {
+					border-color: color-mix(in srgb, #{$color-primary-light} 30%, #{$background-color-lightest});
+				}
+			}
 
 			&:hover {
 				cursor: not-allowed;
-				border-color: $color-primary-disabled;
+				border-color: $color-primary-lighter;
+
+				@supports (color: color-mix(in srgb, black, white)) {
+					& {
+						border-color: color-mix(in srgb, #{$color-primary-light} 30%, #{$background-color-lightest});
+					}
+				}
 			}
 		}
 	}

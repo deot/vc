@@ -1,8 +1,35 @@
 @use '../../style/helper' as *;
 
-$component-name: vc-upload-image-item;
-$background-color: varfix(background-color, upload-picker);
 $color-error: varfix(color-error, upload-picker);
+$background-color: varfix(background-color, upload-picker);
+$background-color-light: varfix(background-color-light, upload-picker);
+$component-name: vc-upload-image-item;
+
+@mixin upload-image-item-theme($light) {
+	.vc-upload-image-item__content {
+		background-color: if(sass($light): $background-color; else: $background-color-light);
+	}
+}
+
+@media (prefers-color-scheme: light) {
+	:root {
+		@include upload-image-item-theme(true);
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		@include upload-image-item-theme(false);
+	}
+}
+
+[data-vc-theme="light"] {
+	@include upload-image-item-theme(true);
+}
+
+[data-vc-theme="dark"] {
+	@include upload-image-item-theme(false);
+}
 
 @include block($component-name) {
 	position: relative;

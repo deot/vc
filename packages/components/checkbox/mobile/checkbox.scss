@@ -1,14 +1,14 @@
 @use '../../style/helper' as *;
 
+$color-contrast-light: varfix(color-contrast-light, m-checkbox);
+$color-error: varfix(color-error, m-checkbox);
+$color-light-extradeep: varfix(color-light-extradeep, m-checkbox);
+$color-primary: varfix(color-primary, m-checkbox);
+$color-primary-lighter: varfix(color-primary-lighter, m-checkbox);
+$background-color: varfix(background-color, m-checkbox);
+$background-color-lightest: varfix(background-color-lightest, m-checkbox);
+$border-color: varfix(border-color, m-checkbox);
 $component-name: vcm-checkbox;
-$background: varfix(background-color-light, m-checkbox);
-$border: varfix(color-light-deeper, m-checkbox);
-$selected: varfix(color-selected, m-checkbox, #26be76);
-$indicator: varfix(indicator-color, m-checkbox, #fff);
-$disabled-background: varfix(background-color, m-checkbox);
-$disabled-indicator: varfix(color-light-extradeep, m-checkbox);
-$focus: varfix(focus-color, m-checkbox, rgb(38 190 118 / 20%));
-$error: varfix(color-error, m-checkbox);
 
 @include block($component-name) {
 	display: inline-block;
@@ -50,9 +50,9 @@ $error: varfix(color-error, m-checkbox);
 		display: inline-block;
 		width: unitfix(16);
 		height: unitfix(16);
-		background-color: $background;
+		background-color: $background-color-lightest;
 
-		@include border('', $border, 2);
+		@include border('', $border-color, 2);
 
 		&::after, &::before {
 			transition: border-color .2s;
@@ -66,7 +66,7 @@ $error: varfix(color-error, m-checkbox);
 		display: table;
 		width: unitfix(6);
 		height: unitfix(10);
-		border: unitfix(2) solid $indicator;
+		border: unitfix(2) solid $color-contrast-light;
 		border-collapse: initial;
 		border-top: 0;
 		border-left: 0;
@@ -78,10 +78,10 @@ $error: varfix(color-error, m-checkbox);
 
 	@include when(checked) {
 		@include element(border){
-			background-color: $selected;
+			background-color: $color-primary;
 
 			&::after, &::before {
-				border-color: $selected;
+				border-color: $color-primary;
 			}
 		}
 
@@ -93,24 +93,24 @@ $error: varfix(color-error, m-checkbox);
 	@include when(focus) {
 		@include element(border){
 			z-index: 1;
-			box-shadow: 0 0 0 unitfix(2) $focus;
+			box-shadow: 0 0 0 unitfix(2) $color-primary-lighter;
 		}
 	}
 
 	@include when(error) {
 		@include element(border) {
 			&::after, &::before {
-				border-color: $error;
+				border-color: $color-error;
 			}
 		}
 	}
 
 	@include when(indeterminate) {
 		@include element(border){
-			background-color: $selected;
+			background-color: $color-primary;
 
 			&::after, &::before {
-				border-color: $selected;
+				border-color: $color-primary;
 			}
 		}
 
@@ -125,22 +125,22 @@ $error: varfix(color-error, m-checkbox);
 
 	@include when(disabled) {
 		@include element(border){
-			background-color: $disabled-background;
+			background-color: $background-color;
 
 			&::after, &::before {
-				border-color: $border;
+				border-color: $border-color;
 			}
 
 		}
 
 		@include element(inner) {
-			border-color: $disabled-background;
+			border-color: $background-color;
 			animation-name: none;
 		}
 
 		&.is-checked, &.is-indeterminate {
 			@include element(inner) {
-				border-color: $disabled-indicator;
+				border-color: $color-light-extradeep;
 				animation-name: none;
 			}
 		}

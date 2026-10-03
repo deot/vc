@@ -716,6 +716,26 @@ describe('index.ts', () => {
 });
 
 describe('mobile', () => {
+	it('renders named slots without resolving a slot component', async () => {
+		const warnings: string[] = [];
+		const wrapper = mount(MTabs, {
+			props: { modelValue: 'a' },
+			slots: {
+				prepend: () => h('span', { class: 'test-prepend' }, 'Before'),
+				append: () => h('span', { class: 'test-append' }, 'After'),
+				default: () => h(MTabsPane, { label: 'A', value: 'a' }, () => 'Content')
+			},
+			global: { config: { warnHandler: (message) => { warnings.push(message); } } }
+		});
+
+		await flush();
+		expect(wrapper.findAll('.test-prepend')).toHaveLength(1);
+		expect(wrapper.findAll('.test-append')).toHaveLength(1);
+		expect(wrapper.find('slot').exists()).toBe(false);
+		expect(warnings).toEqual([]);
+		wrapper.unmount();
+	});
+
 	it('basic', async () => {
 		const wrapper = mount(() => (<MTabs />));
 		expect(wrapper.classes()).toContain('vcm-tabs');

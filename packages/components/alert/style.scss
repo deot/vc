@@ -1,23 +1,24 @@
 @use '../style/helper' as *;
 
-$component-name: vc-alert;
-$color-default: varfix(color-default, alert, #515151);
-$color-info: varfix(color-primary, alert);
-$color-success: varfix(color-success, alert);
+$color-dark-lighter: varfix(color-dark-lighter, alert);
 $color-error: varfix(color-error, alert);
+$color-primary: varfix(color-primary, alert);
+$color-success: varfix(color-success, alert);
 $color-warning: varfix(color-warning, alert);
-$border-color-info: varfix(border-color-info, alert, #91d5ff);
-$border-color-success: varfix(border-color-success, alert, #b7eb8f);
-$border-color-error: varfix(border-color-error, alert, #ffb08f);
-$border-color-warning: varfix(border-color-warning, alert, #ffe58f);
-$background-color-info: varfix(background-color-info, alert, #e6f7ff);
-$background-color-success: varfix(background-color-success, alert, #f6ffed);
-$background-color-error: varfix(background-color-error, alert, #fbe9e9);
-$background-color-warning: varfix(background-color-warning, alert, #fffbe6);
+$background-color-light: varfix(background-color-light, alert);
+$background-color-lightest: varfix(background-color-lightest, alert);
+$component-name: vc-alert;
 
 @mixin alert-type($type-color, $border-color, $background-color) {
 	background-color: $background-color;
 	border-color: $border-color;
+
+	@supports (color: color-mix(in srgb, black, white)) {
+		& {
+			background-color: color-mix(in srgb, #{$type-color} 8%, #{$background-color-lightest});
+			border-color: color-mix(in srgb, #{$type-color} 40%, #{$background-color-lightest});
+		}
+	}
 
 	@include element((icon, desc)) {
 		color: $type-color;
@@ -42,7 +43,7 @@ $background-color-warning: varfix(background-color-warning, alert, #fffbe6);
 	padding: unitfix(4) unitfix(10);
 	overflow: hidden;
 	font-size: unitfix(14);
-	color: $color-default;
+	color: $color-dark-lighter;
 	border-style: solid;
 	border-width: unitfix(1);
 	border-radius: unitfix(4);
@@ -61,16 +62,18 @@ $background-color-warning: varfix(background-color-warning, alert, #fffbe6);
 	}
 
 	@include when(desc, true) {
-		padding: unitfix(6) unitfix(6) unitfix(6) unitfix(44);
+		padding: unitfix(8) unitfix(8) unitfix(8) unitfix(44);
+		font-size: unitfix(13);
 
 		@include element(icon) {
-			top: unitfix(16);
-			font-size: unitfix(22);
+			top: unitfix(20);
+			font-size: unitfix(20);
 		}
 
 		@include element(title) {
 			margin-bottom: unitfix(5);
-			font-size: unitfix(14);
+			font-size: unitfix(15);
+			font-weight: 500;
 		}
 	}
 
@@ -93,23 +96,23 @@ $background-color-warning: varfix(background-color-warning, alert, #fffbe6);
 
 	@include element(close) {
 		margin: 0 unitfix(4) 0 unitfix(12);
-		font-size: unitfix(12);
+		font-size: unitfix(10);
 		cursor: pointer;
 	}
 
 	@include when(info) {
-		@include alert-type($color-info, $border-color-info, $background-color-info);
+		@include alert-type($color-primary, $color-primary, $background-color-light);
 	}
 
 	@include when(success) {
-		@include alert-type($color-success, $border-color-success, $background-color-success);
+		@include alert-type($color-success, $color-success, $background-color-light);
 	}
 
 	@include when(error) {
-		@include alert-type($color-error, $border-color-error, $background-color-error);
+		@include alert-type($color-error, $color-error, $background-color-light);
 	}
 
 	@include when(warning) {
-		@include alert-type($color-warning, $border-color-warning, $background-color-warning);
+		@include alert-type($color-warning, $color-warning, $background-color-light);
 	}
 }

@@ -1,5 +1,5 @@
 <template>
-	<div style="padding: 20px; background: var(--vc-background-color-light);">
+	<div style="padding: 20px; background: var(--vc-background-color-lightest);">
 		<p>type="mix"（默认）：按 data 顺序混编，图片显示缩略图，其余只显示名称</p>
 		<div class="toolbar">
 			<label><input v-model="vertical" type="checkbox"> vertical</label>

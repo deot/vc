@@ -232,6 +232,24 @@ const handleIncreasePadding = () => {
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-card-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark | 标题文字 | 亮色：`#000000`；暗色：`#FFFFFF` |
+| color-neutral-light | 普通及悬停边框、标题分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| background-color-lightest | 卡片背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| box-shadow | 开启 shadow 时的阴影 | 亮色：`0 0 8px 0 rgba(0, 0, 0, 0.1)`；暗色：`0 0 8px 0 rgba(255, 255, 255, 0.05)` |
+| box-shadow-floating | 悬停阴影 | 亮色：`0 4px 12px rgba(0, 0, 0, 0.12)`；暗色：`0 4px 12px rgba(0, 0, 0, 0.32)` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### Card 属性

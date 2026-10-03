@@ -1,16 +1,16 @@
 @use '../style/helper' as *;
 
 $size: unitfix(32);
-$foreground: varfix(foreground-color, pagination);
-$primary: varfix(color-primary-light, pagination);
-$selected-background: varfix(color-primary-lighter, pagination);
-$disabled: varfix(color-dark-extralight, pagination);
+$color-dark-extralight: varfix(color-dark-extralight, pagination);
+$color-primary-light: varfix(color-primary-light, pagination);
+$color-primary-lighter: varfix(color-primary-lighter, pagination);
+$foreground-color: varfix(foreground-color, pagination);
 $component-name: vc-pagination;
 
 @include block($component-name) {
 	display: flex;
 	font-size: unitfix(13);
-	color: $foreground;
+	color: $foreground-color;
 	align-items: center;
 
 	@include clearfix;
@@ -40,31 +40,31 @@ $component-name: vc-pagination;
 		}
 
 		@include when(active) {
-			background-color: $selected-background;
+			background-color: $color-primary-lighter;
 
 			span {
-				color: $primary !important;
+				color: $color-primary-light !important;
 			}
 
 			&::before, &::after {
-				border-color: $selected-background;
+				border-color: $color-primary-lighter;
 			};
 		}
 
 		&:hover {
-			background-color: $selected-background;
+			background-color: $color-primary-lighter;
 
 			span {
-				color: $primary !important;
+				color: $color-primary-light !important;
 			}
 
 			&::before, &::after {
-				border-color: $primary;
+				border-color: $color-primary-light;
 			};
 		}
 
 		@include when(disabled) {
-			color: $disabled;
+			color: $color-dark-extralight;
 			cursor: not-allowed;
 		}
 
@@ -77,20 +77,20 @@ $component-name: vc-pagination;
 			}
 
 			&:hover {
-				color: $primary !important;
+				color: $color-primary-light !important;
 			}
 
 			@include when(disabled) {
-				color: $disabled;
+				color: $color-dark-extralight;
 				cursor: not-allowed;
 
 				&:hover {
-					color: $disabled !important;
+					color: $color-dark-extralight !important;
 					background-color: transparent;
 				}
 
 				&::before, &::after {
-					border-color: $disabled;
+					border-color: $color-dark-extralight;
 				};
 			}
 		}

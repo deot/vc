@@ -1,5 +1,5 @@
 <template>
-	<div style="padding: 20px; background: var(--vc-background-color-light);">
+	<div style="padding: 20px; background: var(--vc-background-color-lightest);">
 		<p>arrow：只支持横向，没有节点，忽略 labelPosition / renderDot</p>
 		<Steps v-model="current" type="arrow" clickable style="max-width: 780px;">
 			<Step title="Succeeded" description="This is a description" />

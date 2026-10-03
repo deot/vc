@@ -1,10 +1,10 @@
 @use '../../style/helper' as *;
 
+$color-dark-lighter: varfix(color-dark-lighter, tabs);
+$color-shadow-fixed: varfix(color-shadow-fixed, tabs);
+$background-color-lightest: varfix(background-color-lightest, tabs);
+$foreground-color-dark: varfix(foreground-color-dark, tabs);
 $component-name: vcm-tabs;
-$background-color: varfix(background-color-light, tabs);
-$color: varfix(color-dark-lighter, tabs);
-$color-active: varfix(foreground-color-dark, tabs);
-$step-shadow-color: varfix(step-shadow-color, tabs, varfix(color-light-deeper));
 $dark-background-color: varfix(dark-background-color, tabs, #333);
 $dark-color: varfix(dark-color, tabs, #E7C083);
 $dark-step-shadow-color: varfix(dark-step-shadow-color, tabs, #242421);
@@ -20,11 +20,11 @@ $dark-step-shadow-color: varfix(dark-step-shadow-color, tabs, #242421);
 		align-items: center;
 
 		@include when(left) {
-			box-shadow: 1px 0 5px 1px $step-shadow-color;
+			box-shadow: 1px 0 5px 1px $color-shadow-fixed;
 		}
 
 		@include when(right) {
-			box-shadow: -1px 0 5px 1px $step-shadow-color;
+			box-shadow: -1px 0 5px 1px $color-shadow-fixed;
 		}
 	}
 
@@ -103,20 +103,20 @@ $dark-step-shadow-color: varfix(dark-step-shadow-color, tabs, #242421);
 
 	@include when(light) {
 		@include element(bar) {
-			background: $background-color;
+			background: $background-color-lightest;
 		}
 
 		@include element(item) {
-			color: $color;
+			color: $color-dark-lighter;
 
 			@include when(active) {
-				color: $color-active;
+				color: $foreground-color-dark;
 			}
 		}
 
 		@include element(afloat) {
 			bottom: 0;
-			background-color: $color-active;
+			background-color: $foreground-color-dark;
 		}
 	}
 

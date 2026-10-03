@@ -1,10 +1,11 @@
 @use '../../../../style/helper' as *;
 
-$muted: varfix(color-dark-extralight, date-picker);
-$primary: varfix(color-primary, date-picker);
-$border: varfix(border-color, date-picker, rgb(128 128 128 / 22%));
-$hover: varfix(hover-background, date-picker, rgb(128 128 128 / 10%));
-$range: varfix(color-primary-lighter, date-picker);
+$color-dark-extralight: varfix(color-dark-extralight, date-picker);
+$color-neutral-light: varfix(color-neutral-light, date-picker);
+$color-primary: varfix(color-primary, date-picker);
+$color-primary-lighter: varfix(color-primary-lighter, date-picker);
+$background-color-light: varfix(background-color-light, date-picker);
+$background-color-primary-light: varfix(background-color-primary-light, date-picker);
 $block: vc-time-select;
 
 @include block($block) {
@@ -22,7 +23,7 @@ $block: vc-time-select;
 		width: 56px; // time-picker
 		max-height: 144px;
 		overflow: hidden;
-		border-left: 1px solid $border;
+		border-left: 1px solid $color-neutral-light;
 
 		&:hover {
 			overflow-y: auto;
@@ -52,26 +53,34 @@ $block: vc-time-select;
 
 	@include element(li) {
 		&:hover {
-			background: $hover;
+			background: $background-color-primary-light;
 		}
 
 		@include when(selected) {
-			color: $primary;
-			background: $hover;
+			color: $color-primary;
+			background: $background-color-light;
 
 			&:hover {
-				color: $primary;
-				background: $hover;
+				color: $color-primary;
+				background: $background-color-primary-light;
+			}
+		}
+
+		@include when(focused) {
+			background-color: $color-primary-lighter;
+
+			&:hover {
+				background: $background-color-primary-light;
 			}
 		}
 
 		@include when(disabled) {
-			color: $muted;
+			color: $color-dark-extralight;
 			cursor: not-allowed;
-		}
 
-		@include when(focused) {
-			background-color: $range;
+			&:hover {
+				background: $background-color-light;
+			}
 		}
 	}
 }

@@ -1,21 +1,21 @@
 @use '../style/helper' as *;
 
+$color-contrast-light: varfix(color-contrast-light, tree);
+$color-dark-lighter: varfix(color-dark-lighter, tree);
+$color-dark-lightest: varfix(color-dark-lightest, tree);
+$color-dark-extralight: varfix(color-dark-extralight, tree);
+$color-primary: varfix(color-primary, tree);
+$color-primary-lighter: varfix(color-primary-lighter, tree);
+$background-color-lightest: varfix(background-color-lightest, tree);
+$background-color-primary-light: varfix(background-color-primary-light, tree);
 $component-name: vc-tree;
-$foreground-color: varfix(color-dark-lighter, tree);
-$background-color: varfix(background-color-light, tree);
-$muted-color: varfix(color-dark-extralight, tree);
-$icon-color: varfix(color-dark-lightest, tree);
-$active-color: varfix(color-primary, tree);
-$hover-background: varfix(background-color-hover, tree, varfix(color-primary-lighter));
-$selected-background: varfix(background-color-selected, tree, varfix(color-primary-lighter));
-$drop-color: varfix(foreground-color-drop, tree, #fff);
 
 @include block($component-name) {
 	position: relative;
 	font-size: unitfix(12);
-	color: $foreground-color;
+	color: $color-dark-lighter;
 	cursor: default;
-	background: $background-color;
+	background: $background-color-lightest;
 
 	@include element(empty-block) {
 		position: relative;
@@ -29,7 +29,7 @@ $drop-color: varfix(foreground-color-drop, tree, #fff);
 		position: absolute;
 		top: 50%;
 		left: 50%;
-		color: $muted-color;
+		color: $color-dark-extralight;
 		transform: translate(-50%, -50%);
 	}
 
@@ -38,7 +38,7 @@ $drop-color: varfix(foreground-color-drop, tree, #fff);
 		right: 0;
 		left: 0;
 		height: 1px;
-		background-color: $active-color;
+		background-color: $color-primary;
 	}
 }
 
@@ -48,14 +48,14 @@ $drop-color: varfix(foreground-color-drop, tree, #fff);
 
 	&:focus { /* focus */
 		> .vc-tree-node__content {
-			background-color: $hover-background;
+			background-color: $color-primary-lighter;
 		}
 	}
 
 	@include when(drop-inner) {
 		> .vc-tree-node__content .vc-tree-node__label {
-			color: $drop-color;
-			background-color: $active-color;
+			color: $color-contrast-light;
+			background-color: $color-primary;
 		}
 	}
 
@@ -69,8 +69,9 @@ $drop-color: varfix(foreground-color-drop, tree, #fff);
 			padding: unitfix(6);
 		}
 
-		&:hover {
-			background-color: $hover-background;
+		&:hover,
+		.vc-tree-node:focus > &:hover {
+			background-color: $background-color-primary-light;
 		}
 
 		.vc-tree.is-dragging & {
@@ -88,7 +89,7 @@ $drop-color: varfix(foreground-color-drop, tree, #fff);
 
 	@include element(expand-icon) {
 		font-size: unitfix(12);
-		color: $icon-color;
+		color: $color-dark-lightest;
 		cursor: pointer;
 
 		.vc-icon {
@@ -111,7 +112,7 @@ $drop-color: varfix(foreground-color-drop, tree, #fff);
 	@include element(loading-icon) {
 		margin-right: unitfix(8);
 		font-size: unitfix(14);
-		color: $muted-color;
+		color: $color-dark-extralight;
 	}
 
 	& > .vc-tree-node__children {
@@ -125,5 +126,9 @@ $drop-color: varfix(foreground-color-drop, tree, #fff);
 }
 
 .vc-tree--highlight-current .vc-tree-node.is-current > .vc-tree-node__content {
-	background-color: $selected-background;
+	background-color: $color-primary-lighter;
+
+	&:hover {
+		background-color: $background-color-primary-light;
+	}
 }

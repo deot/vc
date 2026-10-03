@@ -1,14 +1,14 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-modal;
-$mask-color: varfix(mask-color, modal);
-$border-shadow: varfix(border-shadow, modal);
-$background-color-light: varfix(background-color-light, modal);
 $color-dark: varfix(color-dark, modal);
-$color-primary: varfix(color-primary, modal);
-$color-dark-lighter: varfix(color-dark-lighter, modal);
 $color-dark-light: varfix(color-dark-light, modal);
-$color-light-deeper: varfix(color-light-deeper, modal);
+$color-dark-lighter: varfix(color-dark-lighter, modal);
+$color-mask: varfix(color-mask, modal);
+$color-neutral-light: varfix(color-neutral-light, modal);
+$color-primary: varfix(color-primary, modal);
+$background-color-lightest: varfix(background-color-lightest, modal);
+$box-shadow: varfix(box-shadow, modal);
 
 @include block($component-name) {
 	@include element(mask) {
@@ -16,7 +16,7 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 		inset: 0;
 		z-index: $popup-zindex; // 与wrapper相同，两个modal同时出现时可以盖上去
 		height: 100%;
-		background-color: $mask-color;
+		background-color: $color-mask;
 		opacity: 1;
 	}
 
@@ -33,9 +33,9 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 		position: relative;
 		display: flex;
 		margin: auto;
-		background: $background-color-light;
+		background: $background-color-lightest;
 		border-radius: unitfix(7);
-		box-shadow: $border-shadow;
+		box-shadow: $box-shadow;
 		flex-direction: column;
 	}
 
@@ -91,7 +91,7 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 		&:first-child {
 			color: $color-dark;
 
-			@include border(right, $color-light-deeper);
+			@include border(right, $color-neutral-light);
 		}
 	}
 
@@ -99,7 +99,7 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 		position: relative;
 		display: flex;
 
-		@include border(top, $color-light-deeper);
+		@include border(top, $color-neutral-light);
 
 		@include when(column) {
 			flex-direction: column;
@@ -114,7 +114,7 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 				}
 
 				&:not(:first-child) {
-					@include border(top, $color-light-deeper);
+					@include border(top, $color-neutral-light);
 				}
 			}
 		}
@@ -143,7 +143,7 @@ $color-light-deeper: varfix(color-light-deeper, modal);
 			text-align: left;
 
 			&:not(:first-child) {
-				@include border(top, $color-light-deeper);
+				@include border(top, $color-neutral-light);
 			}
 
 			&:first-child {

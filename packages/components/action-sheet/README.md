@@ -94,6 +94,31 @@ onUnmounted(() => {
 
 `title`、`content` 和 `subContent` 均支持字符串或渲染函数。字符串通过 `innerHTML` 渲染，只应传入可信内容；操作的渲染函数会收到包含 `loading` 状态的属性对象。
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-action-sheet-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
+
+弹层或遮罩通过 Portal 挂载时，覆盖变量需作用于实际浮层或其祖先。
+
+内嵌或复用的 [spin](../spin/README.md#主题与局部覆盖) 使用各自的主题入口。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark | 选项文字 | 亮色：`#000000`；暗色：`#FFFFFF` |
+| color-dark-lightest | 标题、描述和取消文字 | 亮色：`#64758B`；暗色：`#C9C9C9` |
+| color-light | 分组间隔的半透明叠层 | 亮色：`#FFFFFF`；暗色：`#000000` |
+| color-neutral-light | 标题及选项分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| background-color | 分组间隔背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-light | 可交互选项及取消区按下背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+| background-color-lightest | 选项组、选项和取消区背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| foreground-color-inactive | 禁用选项及辅助文字 | 亮色：`#C0C4CC`；暗色：`#737D8C` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### ActionSheet 属性

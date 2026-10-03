@@ -248,6 +248,30 @@ const handleClose = () => {
 ```
 :::
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-notice-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
+
+弹层或遮罩通过 Portal 挂载时，覆盖变量需作用于实际浮层或其祖先。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-light | 标题及关闭图标悬停色 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-dark-lighter | 通知正文 | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-lightest | 关闭图标 | 亮色：`#64758B`；暗色：`#C9C9C9` |
+| color-error | 错误图标 | `#F53F3F` |
+| color-primary | 信息及加载图标 | `#456CF6` |
+| color-success | 成功图标 | `#1DB88C` |
+| color-warning | 警告图标 | `#E6A23C` |
+| background-color-lightest | 通知面板背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| box-shadow | 通知面板阴影 | 亮色：`0 0 8px 0 rgb(0 0 0 / 10%)`；暗色：`0 0 8px 0 rgb(255 255 255 / 5%)` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### 属性

@@ -1,10 +1,10 @@
 @use '../style/helper' as *;
 
-$component-name: vc-select;
-$background-color-light: varfix(background-color-light, select);
-$background-color-disabled: varfix(background-color-disabled, select, varfix(background-color, select));
-$color-dark-extralight: varfix(color-dark-extralight, select);
 $color-dark-lighter: varfix(color-dark-lighter, select);
+$color-dark-extralight: varfix(color-dark-extralight, select);
+$background-color: varfix(background-color, select);
+$background-color-lightest: varfix(background-color-lightest, select);
+$component-name: vc-select;
 
 @include block($component-name) {
 	position: relative;
@@ -13,10 +13,10 @@ $color-dark-lighter: varfix(color-dark-lighter, select);
 	line-height: 1;
 
 	@include element(input) {
-		--vc-input-color-disabled: #{$background-color-disabled};
+		--vc-input-color-disabled: #{$background-color};
 
 		cursor: pointer;
-		background-color: $background-color-light;
+		background-color: $background-color-lightest;
 
 		input {
 			cursor: pointer;

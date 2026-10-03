@@ -91,7 +91,7 @@ const handleExport = () => {
 }
 
 .artboard-demo__surface {
-	background: var(--vc-background-color-light, #fff);
+	background: var(--vc-background-color-lightest, #fff);
 	border-radius: 8px;
 }
 
@@ -123,6 +123,20 @@ const handleExport = () => {
 </style>
 ```
 :::
+
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-artboard-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-neutral-light | 画布边框 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
 
 ## API
 

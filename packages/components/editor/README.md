@@ -84,6 +84,29 @@ editorRef.value.add([
 
 资源类型根据 `target.name` 识别；省略 `target` 时从地址推导文件名。两者分别读取全局 `VcInstance.options.FilePreview.getFileType`、`getFileName`，未配置或返回空值时使用内置规则（按扩展名识别；取地址最后一段，去掉 `?`、`#` 之后的部分并解码）。普通文件插入链接，图片、音频和视频插入对应媒体元素。应在 `ready` 后调用。
 
+## 主题与局部覆盖
+
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-editor-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
+
+`label-*` 变量由 locale 写入，用于工具栏文案；文案调整使用语言配置。文件预览和加载图标分别复用 FilePreview、Spin 的主题入口。
+
+### 全局
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| color-dark-extralight | 占位文字及列表标记 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-neutral-light | 工具栏、内容表格、引用块及操作分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 链接、激活工具及选中选项 | `#456CF6` |
+| background-color | 代码及代码块背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-lightest | 编辑区、工具栏选项及提示浮层背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| border-color | 编辑区外框、工具选项及浮层输入框边框 | `#D5D9E1` |
+| foreground-color | 正文、工具栏文字及 SVG 图标 | 亮色：`#080F20`；暗色：`#F8F8F8` |
+| box-shadow | 工具栏选项及提示浮层阴影 | 亮色：`0 0 8px 0 rgb(0 0 0 / 10%)`；暗色：`0 0 8px 0 rgb(255 255 255 / 5%)` |
+
+### 局部
+
+当前组件没有额外的局部 CSS 主题参数。
+
 ## API
 
 ### Editor 属性

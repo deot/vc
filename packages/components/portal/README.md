@@ -842,10 +842,10 @@ const handleClose = () => (isActive.value = false);
 	flex-wrap: wrap;
 	padding: 16px;
 	color: var(--vc-foreground-color);
-	background: var(--vc-background-color-light);
+	background: var(--vc-background-color-lightest);
 	border: 1px solid var(--vc-color-light-deeper);
 	border-radius: 12px;
-	box-shadow: var(--vc-border-shadow);
+	box-shadow: var(--vc-box-shadow);
 }
 </style>
 ```

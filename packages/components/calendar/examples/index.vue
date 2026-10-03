@@ -96,7 +96,7 @@ onBeforeUnmount(() => VcInstance.configure({ locale: zhCN }));
 		border-radius: 22px;
 
 		&.is-selected {
-			color: var(--vc-calendar-color-light, var(--vc-color-light));
+			color: var(--vc-calendar-color-contrast-light, var(--vc-color-contrast-light));
 			background: var(--vc-calendar-color-primary, var(--vc-color-primary));
 		}
 

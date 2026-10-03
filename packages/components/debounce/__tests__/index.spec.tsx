@@ -1,9 +1,28 @@
 // @vitest-environment jsdom
 
-import { Debounce } from '@deot/vc-components';
+import { Button, Debounce } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
+import { markRaw } from 'vue';
 
 describe('index.ts', () => {
+	it('component tag: 保留函数插槽和防抖行为，不产生警告', async () => {
+		const warnings: string[] = [];
+		const onClick = vi.fn();
+		const wrapper = mount(Debounce, {
+			props: { tag: markRaw(Button), wait: 300 },
+			attrs: { onClick },
+			slots: { default: () => '执行' },
+			global: { config: { warnHandler: (message) => { warnings.push(message); } } }
+		});
+
+		expect(wrapper.findComponent(Button).text()).toBe('执行');
+		await wrapper.trigger('click');
+		await wrapper.trigger('click');
+		expect(onClick).toHaveBeenCalledTimes(1);
+		expect(warnings).toEqual([]);
+		wrapper.unmount();
+	});
+
 	it('basic', () => {
 		expect(typeof Debounce).toBe('object');
 	});
