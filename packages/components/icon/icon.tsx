@@ -6,6 +6,9 @@ import { IconManager } from './manager';
 
 const COMPONENT_NAME = 'vc-icon';
 
+// 12 -> [12, 12]; [20] -> [20, 20]; [100, 24] -> [100, 24]
+const pair = (v: any): any[] => (Array.isArray(v) ? [v[0], v[1] || v[0]] : [v, v]);
+
 export const Icon = defineComponent({
 	name: COMPONENT_NAME,
 	props: iconProps,
@@ -38,9 +41,32 @@ export const Icon = defineComponent({
 			props.type && IconManager.off(props.type, getConfig);
 		});
 		return () => {
+			const { size, color } = props;
+			// [外层宽高, 图标宽高]，如 [20, 12] -> [[20, 20], [12, 12]]
+			const [box, glyph] = size ? pair(size).map(pair) : [];
 			return (
-				<i class="vc-icon">
-					<svg viewBox={viewBox.value} xmlns="http://www.w3.org/2000/svg">
+				<i
+					class={size ? 'vc-icon is-size' : 'vc-icon'}
+					style={
+						size
+							? {
+									color,
+									width: `${box[0]}px`,
+									height: `${box[1]}px`,
+									fontSize: `${Math.min(glyph[0], glyph[1])}px`
+								}
+							: (color ? { color } : undefined)
+					}
+				>
+					<svg
+						viewBox={viewBox.value}
+						xmlns="http://www.w3.org/2000/svg"
+						style={
+							size && glyph[0] !== glyph[1]
+								? { width: `${glyph[0]}px`, height: `${glyph[1]}px` }
+								: undefined
+						}
+					>
 						{
 							path.value.map((it: any, i: number) => {
 								return (

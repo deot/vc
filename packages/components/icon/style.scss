@@ -11,4 +11,12 @@
 		// padding: 0.05em;
 		fill: currentcolor;
 	}
+
+	// size有值时，外层为固定盒子，图标居中
+	&.is-size {
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+	}
 }

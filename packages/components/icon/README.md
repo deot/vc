@@ -8,7 +8,7 @@
 
 ### 基础用法
 
-通过 `type` 指定图标名称，通过 CSS `font-size` 调整大小。SVG 的宽高为 `1em`，默认通过 `currentColor` 继承文字颜色。
+通过 `type` 指定图标名称，通过 CSS `font-size` 调整大小。SVG 的宽高为 `1em`，默认通过 `currentColor` 继承文字颜色。也可以通过 `size`、`color` 直接指定，见[尺寸与颜色](#尺寸与颜色)。
 
 :::playground
 <!--
@@ -79,6 +79,80 @@ const iconColor = ref('#456CF6');
 }
 .icon-basic-color > output {
 	text-align: left;
+}
+</style>
+```
+:::
+
+### 尺寸与颜色
+
+`size` 以 px 指定尺寸，格式为 `数值` 或 `[外层, 里层]`，每一层可以是 `数值` 或 `[宽, 高]`；省略里层时与外层一致。外层是根元素的固定盒子，里层是居中的图标。`[20, 12]` 表示外层 20×20、图标 12×12，需要指定宽高时写成 `[[宽, 高]]`。`color` 写入根元素的文字颜色。
+
+不传 `size` 时仍由 CSS `font-size` 控制；传入后根元素的 `font-size` 为里层宽高中较小的值。
+
+与文字混排时，无论是否传 `size`，图标都按 `vertical-align: middle` 对齐，在中文或大写字母旁会比文字中心略低（约 0.1em，随字体而异）。需要精确居中时，把图标和文字放进 `align-items: center` 的 flex 容器。
+
+:::playground
+<!--
+<config lang="json5">
+{ previewInset: 24 }
+</config>
+-->
+```vue
+<template>
+	<div class="icon-size-demo">
+		<div class="icon-size-toolbar">
+			<span>图标颜色</span>
+			<ColorPicker v-model="iconColor" />
+			<span class="icon-size-tip">虚线为外层盒子，实线为图标</span>
+		</div>
+		<div v-for="item in items" :key="item.label" class="icon-size-item">
+			<code>{{ item.label }}</code>
+			<span>{{ item.desc }}</span>
+			<Icon type="success" :size="item.size" :color="iconColor" aria-hidden="true" />
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { ColorPicker, Icon } from '@deot/vc';
+
+const iconColor = ref('#456CF6');
+const items = [
+	{ label: '12', desc: '外层 12×12，图标 12×12', size: 12 },
+	{ label: '[20, 12]', desc: '外层 20×20，图标 12×12', size: [20, 12] },
+	{ label: '[[100, 24], 12]', desc: '外层 100×24，图标 12×12', size: [[100, 24], 12] },
+	{ label: '[[100, 24]]', desc: '外层 100×24，图标 100×24', size: [[100, 24]] }
+];
+</script>
+<style scoped>
+.icon-size-demo {
+	color: var(--vc-foreground-color);
+}
+.icon-size-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-bottom: 12px;
+}
+.icon-size-tip {
+	color: var(--vc-color-dark-lightest);
+	font-size: 13px;
+}
+.icon-size-item {
+	display: grid;
+	grid-template-columns: 140px minmax(0, 1fr) 100px;
+	align-items: center;
+	padding: 8px 0;
+	font-size: 13px;
+	border-top: 1px solid var(--vc-color-light-deeper);
+}
+.icon-size-item > :deep(.vc-icon) {
+	outline: 1px dashed var(--vc-color-dark-lightest);
+}
+.icon-size-item > :deep(.vc-icon > svg) {
+	outline: 1px solid var(--vc-color-light-deeper);
 }
 </style>
 ```
@@ -217,8 +291,10 @@ onMounted(async () => {
 ---|---|---|---|---
 type | 图标名称，对应已加载资源中 `icon-` 前缀之后的名称 | `string` | 已加载的图标名称 | -
 inherit | 是否使用 SVG 路径的预设 `fill`；为 `false` 时继承文字颜色 | `boolean` | - | `false`
+color | 图标颜色，写入根元素的 `color` | `string` | - | -
+size | 尺寸（px）：`数值` 或 `[外层, 里层]`，每层为 `数值` 或 `[宽, 高]`；不传时跟随 `font-size` | `number \| [number \| [number, number?], (number \| [number, number?])?]` | - | -
 
-`class`、`style`、`aria-label` 等属性透传到根 `<i>` 元素。组件不提供自定义插槽或实例方法。
+`class`、`style`、`aria-label` 等属性透传到根 `<i>` 元素，透传的 `style` 会覆盖 `size`、`color` 生成的同名样式。组件不提供自定义插槽或实例方法。
 
 ### 事件
 
