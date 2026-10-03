@@ -3,6 +3,7 @@
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi } from 'vitest';
+import { fireMouse } from '../../../hooks/__tests__/fixtures/drag';
 import { MDatePicker, MDatePickerView } from '../index.m';
 import { MDatePickerCore } from '../mobile/date-picker-core';
 
@@ -22,9 +23,9 @@ const emitPickerChange = async (wrapper: any, value: string, index: number) => {
 };
 
 const dragCol = async (el: Element, from: number, to: number) => {
-	el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, screenY: from }));
-	el.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, screenY: to }));
-	el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, screenY: to }));
+	fireMouse(el, 'mousedown', { screenY: from });
+	fireMouse(el, 'mousemove', { screenY: to });
+	fireMouse(el, 'mouseup', { screenY: to });
 	await flush();
 };
 

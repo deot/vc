@@ -2,6 +2,7 @@
 
 import { computed, defineComponent, h, ref, withModifiers } from 'vue';
 import { prefixStyle } from '@deot/helper-dom';
+import { useDrag } from '@deot/vc-hooks';
 import { cloneDeep } from 'lodash-es';
 import { Customer } from '../../customer';
 import { getRowLabel, getRowValue } from './utils';
@@ -32,7 +33,6 @@ export const PickerCol = defineComponent({
 		const indicator = ref<HTMLElement>();
 		const itemHeight = ref(ITEM_HEIGHT);
 		const offsetY = ref(0);
-		const scrollStart = ref(false);
 		const scrollEnd = ref(true);
 		const startY = ref(0);
 		const startTime = ref(0);
@@ -59,22 +59,28 @@ export const PickerCol = defineComponent({
 		});
 
 		const handleStart = (y: number) => {
-			if (!props.data.length) return;
+			if (!props.data.length) return false;
 			itemHeight.value = indicator.value?.getBoundingClientRect().height || ITEM_HEIGHT;
 
-			scrollStart.value = true;
 			scrollEnd.value = false;
 			startY.value = y;
 			startTime.value = Date.now();
+			return true;
 		};
 
 		const handleMove = (y: number) => {
-			if (!scrollStart.value) return;
 			offsetY.value = startY.value - y;
 		};
 
+		// 回弹到当前选中项；手势被打断（touchcancel、mouseup 丢失）时只回弹，不选中
+		const reset = () => {
+			scrollEnd.value = true;
+			startY.value = 0;
+			offsetY.value = 0;
+		};
+
 		const handleEnd = (y: number) => {
-			if (!scrollStart.value || !props.data.length) return;
+			if (!props.data.length) return;
 
 			let translateY: number;
 			const dt = Date.now() - startTime.value;
@@ -96,12 +102,15 @@ export const PickerCol = defineComponent({
 			}
 
 			emit('change', cloneDeep(target));
-
-			scrollStart.value = false;
-			scrollEnd.value = true;
-			startY.value = 0;
-			offsetY.value = 0;
+			reset();
 		};
+
+		const drag = useDrag({
+			start: (_, point) => handleStart(point.screenY),
+			move: (_, point) => handleMove(point.screenY),
+			end: (_, point) => handleEnd(point.screenY),
+			cancel: reset
+		});
 
 		const renderItem = (item: PickerData, index: number) => {
 			const label = getRowLabel(item);
@@ -130,12 +139,11 @@ export const PickerCol = defineComponent({
 			return (
 				<div
 					class="vcm-picker-col"
-					onTouchstart={withModifiers((e: Event) => handleStart((e as TouchEvent).touches[0].screenY), ['prevent', 'stop'])}
-					onTouchmove={withModifiers((e: Event) => handleMove((e as TouchEvent).touches[0].screenY), ['prevent', 'stop'])}
-					onTouchend={withModifiers((e: Event) => handleEnd((e as TouchEvent).changedTouches[0].screenY), ['prevent', 'stop'])}
-					onMousedown={withModifiers((e: Event) => handleStart((e as MouseEvent).screenY), ['prevent', 'stop'])}
-					onMousemove={withModifiers((e: Event) => handleMove((e as MouseEvent).screenY), ['prevent', 'stop'])}
-					onMouseup={withModifiers((e: Event) => handleEnd((e as MouseEvent).screenY), ['prevent', 'stop'])}
+					onTouchstart={withModifiers(drag.listeners.onTouchstart, ['prevent', 'stop'])}
+					onTouchmove={withModifiers(drag.listeners.onTouchmove, ['prevent', 'stop'])}
+					onTouchend={withModifiers(drag.listeners.onTouchend, ['prevent', 'stop'])}
+					onTouchcancel={withModifiers(drag.listeners.onTouchcancel, ['prevent', 'stop'])}
+					onMousedown={withModifiers(drag.listeners.onMousedown, ['prevent', 'stop'])}
 				>
 					<div class="vcm-picker-col__mask" />
 					<div ref={indicator} class="vcm-picker-col__indicator" />

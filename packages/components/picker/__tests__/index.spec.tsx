@@ -4,6 +4,7 @@ import { MPicker, MPickerPopup, MPickerView, Picker, PickerPopup, PickerView } f
 import { mount } from '@vue/test-utils';
 import { h, nextTick, ref } from 'vue';
 import { vi } from 'vitest';
+import * as drag from '../../../hooks/__tests__/fixtures/drag';
 import { enUS, zhCN } from '@deot/vc-locale';
 import { VcInstance } from '../../vc';
 import { MPopup } from '../../popup/index.m';
@@ -27,29 +28,31 @@ const flush = async () => {
 	await nextTick();
 };
 
+// 列按屏幕纵坐标取位移
+const fireMouse = (
+	el: EventTarget,
+	type: 'mousedown' | 'mousemove' | 'mouseup',
+	screenY: number,
+	init: MouseEventInit = {}
+) => {
+	drag.fireMouse(el, type, { screenY, ...init });
+};
+
 const dragCol = async (el: Element, from: number, to: number) => {
-	el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, screenY: from }));
-	el.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, screenY: to }));
-	el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, screenY: to }));
+	fireMouse(el, 'mousedown', from);
+	fireMouse(el, 'mousemove', to);
+	fireMouse(el, 'mouseup', to);
 	await flush();
 };
 
+const fireTouch = (el: Element, type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel', screenY: number) => {
+	drag.fireTouch(el, type, { screenY });
+};
+
 const touchCol = async (el: Element, from: number, to: number) => {
-	el.dispatchEvent(new TouchEvent('touchstart', {
-		bubbles: true,
-		cancelable: true,
-		touches: [{ screenY: from } as Touch]
-	}));
-	el.dispatchEvent(new TouchEvent('touchmove', {
-		bubbles: true,
-		cancelable: true,
-		touches: [{ screenY: to } as Touch]
-	}));
-	el.dispatchEvent(new TouchEvent('touchend', {
-		bubbles: true,
-		cancelable: true,
-		changedTouches: [{ screenY: to } as Touch]
-	}));
+	fireTouch(el, 'touchstart', from);
+	fireTouch(el, 'touchmove', to);
+	fireTouch(el, 'touchend', to);
 	await flush();
 };
 
@@ -213,7 +216,7 @@ describe('PickerView', () => {
 				onChange={onChange}
 				onPickerChange={onPickerChange}
 			/>
-		));
+		), { attachTo: document.body });
 		await flush();
 
 		const cols = wrapper.findAll('.vcm-picker-col');
@@ -244,7 +247,7 @@ describe('PickerView', () => {
 				cols={2}
 				onChange={onChange}
 			/>
-		));
+		), { attachTo: document.body });
 		await flush();
 
 		const cols = wrapper.findAll('.vcm-picker-col');
@@ -273,7 +276,7 @@ describe('PickerView', () => {
 				separator="|"
 				onChange={onChange}
 			/>
-		));
+		), { attachTo: document.body });
 		await flush();
 
 		expect(wrapper.text()).toContain('2026');
@@ -302,6 +305,7 @@ describe('PickerView', () => {
 				renderLabel={renderLabel}
 			/>
 		), {
+			attachTo: document.body,
 			global: {
 				provide: {
 					'vc-form-item': { change: formChange }
@@ -373,7 +377,7 @@ describe('PickerCol', () => {
 				data={['a', 'b', 'c', 'd'].map(value => ({ value }))}
 				onChange={onChange}
 			/>
-		));
+		), { attachTo: document.body });
 		vi.spyOn(wrapper.find('.vcm-picker-col__indicator').element, 'getBoundingClientRect')
 			.mockReturnValue({ height: 68 } as DOMRect);
 
@@ -384,7 +388,7 @@ describe('PickerCol', () => {
 
 	it('handles empty data and clamps to first item', async () => {
 		const emptyChange = vi.fn();
-		const emptyWrapper = mount(() => <PickerCol onChange={emptyChange} />);
+		const emptyWrapper = mount(() => <PickerCol onChange={emptyChange} />, { attachTo: document.body });
 		await dragCol(emptyWrapper.element, 0, -40);
 		expect(emptyChange).not.toHaveBeenCalled();
 		emptyWrapper.unmount();
@@ -400,7 +404,7 @@ describe('PickerCol', () => {
 				]}
 				onChange={onChange}
 			/>
-		));
+		), { attachTo: document.body });
 		await flush();
 
 		await dragCol(wrapper.element, 0, 40);
@@ -422,17 +426,127 @@ describe('PickerCol', () => {
 				]}
 				onChange={onChange}
 			/>
-		));
+		), { attachTo: document.body });
 		await nextTick();
 
-		wrapper.element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, screenY: 0 }));
+		fireMouse(wrapper.element, 'mousedown', 0);
 		vi.advanceTimersByTime(100);
-		wrapper.element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, screenY: -10 }));
+		fireMouse(wrapper.element, 'mouseup', -10);
 		await nextTick();
 
 		expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ value: 'b' }));
 
 		wrapper.unmount();
+	});
+
+	describe('drag interrupted or leaving the column', () => {
+		const mountCol = async () => {
+			const onChange = vi.fn();
+			const wrapper = mount(() => (
+				<PickerCol
+					value="a"
+					data={['a', 'b', 'c', 'd'].map(value => ({ value }))}
+					onChange={onChange}
+				/>
+			), { attachTo: document.body });
+			await flush();
+			return {
+				wrapper,
+				onChange,
+				col: wrapper.element,
+				// 列的位移：calc(var(--vcm-picker-item-height) * -index - {offset}px)
+				style: () => wrapper.find('.vcm-picker-col__wrapper').element.getAttribute('style') || ''
+			};
+		};
+
+		it('releasing outside the column still ends the drag and selects', async () => {
+			const { wrapper, onChange, col, style } = await mountCol();
+
+			fireMouse(col, 'mousedown', 0);
+			fireMouse(col, 'mousemove', -40);
+			// 指针已离开该列：松开发生在列外
+			fireMouse(document.body, 'mouseup', -40);
+			await flush();
+			expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ value: 'b' }));
+
+			// 手势结束后，不按键的移动不再拖动
+			fireMouse(col, 'mousemove', -100, { buttons: 0 });
+			await flush();
+			expect(style()).toContain('- 0px');
+			wrapper.unmount();
+		});
+
+		it('keeps following the pointer outside the column', async () => {
+			const { wrapper, onChange, col, style } = await mountCol();
+
+			fireMouse(col, 'mousedown', 0);
+			fireMouse(document.body, 'mousemove', -40);
+			await flush();
+			expect(style()).toContain('- 40px');
+
+			fireMouse(document.body, 'mouseup', -40);
+			await flush();
+			expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ value: 'b' }));
+			wrapper.unmount();
+		});
+
+		it('cancels the drag when the primary button is no longer pressed without a mouseup', async () => {
+			const { wrapper, onChange, col, style } = await mountCol();
+
+			fireMouse(col, 'mousedown', 0);
+			fireMouse(col, 'mousemove', -40);
+			await flush();
+			expect(style()).toContain('- 40px');
+
+			// 右键菜单、原生拖拽等吞掉了 mouseup：下一次移动时主键已松开
+			fireMouse(col, 'mousemove', -60, { buttons: 0 });
+			await flush();
+			// 取消：回弹，不选中
+			expect(onChange).not.toHaveBeenCalled();
+			expect(style()).toContain('- 0px');
+
+			// 已解绑：之后按着主键移动也不再拖动
+			fireMouse(col, 'mousemove', -80);
+			await flush();
+			expect(style()).toContain('- 0px');
+			wrapper.unmount();
+		});
+
+		it('ignores non-primary buttons', async () => {
+			const { wrapper, onChange, col, style } = await mountCol();
+
+			fireMouse(col, 'mousedown', 0, { button: 2, buttons: 2 });
+			fireMouse(col, 'mousemove', -40, { buttons: 2 });
+			await flush();
+			// 未进入拖动
+			expect(style()).toContain('- 0px');
+
+			fireMouse(col, 'mouseup', -40, { button: 2 });
+			await flush();
+			expect(onChange).not.toHaveBeenCalled();
+			wrapper.unmount();
+		});
+
+		it('touchcancel snaps back without selecting', async () => {
+			const { wrapper, onChange, col, style } = await mountCol();
+
+			fireTouch(col, 'touchstart', 0);
+			fireTouch(col, 'touchmove', -40);
+			await flush();
+			expect(style()).toContain('- 40px');
+
+			// 系统手势等打断了触摸：不会再有 touchend
+			fireTouch(col, 'touchcancel', -40);
+			await flush();
+			expect(onChange).not.toHaveBeenCalled();
+			expect(style()).toContain('- 0px');
+
+			// 取消后的移动不再拖动
+			fireTouch(col, 'touchmove', -80);
+			await flush();
+			expect(style()).toContain('- 0px');
+			wrapper.unmount();
+		});
 	});
 });
 
