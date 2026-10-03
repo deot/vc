@@ -18,6 +18,7 @@ import {
 import { TableSort } from '../table-header/table-sort';
 import { TableGrid } from '../table-grid';
 import { TableColumnNode } from '../table-column/table-column-node';
+import * as drag from '../../../hooks/__tests__/fixtures/drag';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -1583,48 +1584,134 @@ describe('TableHeader sort & resize', () => {
 		wrapper.unmount();
 	});
 
-	it('header column resize via mousemove + mousedown + mouseup emits column-resize', async () => {
-		const onColumnResize = vi.fn();
-		const data = buildData(2);
-		const tableRef = ref<any>();
-		const wrapper = mount(() => (
-			<Table ref={tableRef} data={data} border resizable onColumnResize={onColumnResize}>
-				<TableColumn label="名称" prop="name" />
-				<TableColumn label="地址" prop="address" />
-			</Table>
-		), { attachTo: document.body });
-		await flush();
+	describe('column resize gesture', () => {
+		const mountResizable = async () => {
+			const onColumnResize = vi.fn();
+			const data = buildData(2);
+			const tableRef = ref<any>();
+			const wrapper = mount(() => (
+				<Table ref={tableRef} data={data} border resizable onColumnResize={onColumnResize}>
+					<TableColumn label="名称" prop="name" />
+					<TableColumn label="地址" prop="address" />
+				</Table>
+			), { attachTo: document.body });
+			await flush();
 
-		const ths = wrapper.findAll('.vc-table__th');
-		const thEl = ths[0].element as HTMLElement;
-		const restoreRect = vi.spyOn(thEl, 'getBoundingClientRect').mockReturnValue({
-			left: 0, right: 100, top: 0, bottom: 30, width: 100, height: 30, x: 0, y: 0, toJSON: () => ({})
-		} as DOMRect);
-		const wrapperEl = wrapper.find('.vc-table').element as HTMLElement;
-		const restoreWrapperRect = vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
-			left: 0, right: 200, top: 0, bottom: 100, width: 200, height: 100, x: 0, y: 0, toJSON: () => ({})
-		} as DOMRect);
+			const th = wrapper.findAll('.vc-table__th')[0].element as HTMLElement;
+			vi.spyOn(th, 'getBoundingClientRect').mockReturnValue({
+				left: 0, right: 100, top: 0, bottom: 30, width: 100, height: 30, x: 0, y: 0, toJSON: () => ({})
+			} as DOMRect);
+			vi.spyOn(wrapper.find('.vc-table').element, 'getBoundingClientRect').mockReturnValue({
+				left: 0, right: 200, top: 0, bottom: 100, width: 200, height: 100, x: 0, y: 0, toJSON: () => ({})
+			} as DOMRect);
+			const proxy = wrapper.find('.vc-table__column-resize-proxy').element as HTMLElement;
 
-		thEl.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 95 } as any));
-		await flush();
-		thEl.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 95 } as any));
-		await flush();
-		document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 150 } as any));
-		document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true } as any));
-		await sleep(0);
-		await flush();
-		// 起点为列右缘 100，拖动 55px：新宽度 155，原宽度 100
-		expect(onColumnResize).toHaveBeenCalledWith({ column: expect.objectContaining({ prop: 'name' }), width: 155, oldWidth: 100 });
-		// 拖过的列不再吸收剩余宽度
-		expect(tableRef.value.store.states.columns[0].states.resized).toBe(true);
-		expect(tableRef.value.store.states.columns[1].states.resized).toBeFalsy();
+			// 指针先移到列右缘的拖拽区
+			th.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 95 }));
+			await flush();
 
-		thEl.dispatchEvent(new MouseEvent('mouseout', { bubbles: true } as any));
-		await flush();
+			return {
+				wrapper,
+				th,
+				onColumnResize,
+				columns: () => tableRef.value.store.states.columns.map((column: any) => column.states),
+				// 辅助线是否显示及其位置
+				proxy: () => (proxy.style.display === 'none' ? null : proxy.style.left)
+			};
+		};
+		const fireMouse = async (
+			el: EventTarget,
+			type: 'mousedown' | 'mousemove' | 'mouseup',
+			clientX: number,
+			init: MouseEventInit = {}
+		) => {
+			drag.fireMouse(el, type, { clientX, ...init });
+			await flush();
+		};
+		const { blocked } = drag;
 
-		restoreRect.mockRestore();
-		restoreWrapperRect.mockRestore();
-		wrapper.unmount();
+		afterEach(() => {
+			vi.restoreAllMocks();
+			document.onselectstart = null;
+		});
+
+		it('emits column-resize with the new width after dragging the column edge', async () => {
+			const { wrapper, th, onColumnResize, columns } = await mountResizable();
+
+			await fireMouse(th, 'mousedown', 95);
+			await fireMouse(document, 'mousemove', 150);
+			await fireMouse(document, 'mouseup', 150);
+			// 起点为列右缘 100，拖动 55px：新宽度 155，原宽度 100
+			expect(onColumnResize).toHaveBeenCalledWith({ column: expect.objectContaining({ prop: 'name' }), width: 155, oldWidth: 100 });
+			// 拖过的列不再吸收剩余宽度
+			expect(columns()[0].resized).toBe(true);
+			expect(columns()[1].resized).toBeFalsy();
+
+			th.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+			await flush();
+			wrapper.unmount();
+		});
+
+		it('ignores non-primary buttons', async () => {
+			const { wrapper, th, onColumnResize, proxy } = await mountResizable();
+
+			await fireMouse(th, 'mousedown', 95, { button: 2, buttons: 2 });
+			await fireMouse(document, 'mousemove', 150, { buttons: 2 });
+			// 未进入拖动
+			expect(proxy()).toBe(null);
+
+			await fireMouse(document, 'mouseup', 150, { button: 2 });
+			expect(onColumnResize).not.toHaveBeenCalled();
+			wrapper.unmount();
+		});
+
+		it('abandons the resize when the primary button is no longer pressed without a mouseup', async () => {
+			const { wrapper, th, onColumnResize, columns, proxy } = await mountResizable();
+
+			await fireMouse(th, 'mousedown', 95);
+			await fireMouse(document, 'mousemove', 150);
+			expect(proxy()).toBe('155px');
+
+			// 右键菜单、原生拖拽等吞掉了 mouseup：此时的指针位置不作数，放弃这次调整
+			await fireMouse(document, 'mousemove', 180, { buttons: 0 });
+			expect(proxy()).toBe(null);
+			expect(document.body.style.cursor).toBe('');
+
+			// 之后的点击不会再提交列宽
+			await fireMouse(document, 'mousemove', 190);
+			await fireMouse(document, 'mouseup', 190);
+			expect(onColumnResize).not.toHaveBeenCalled();
+			expect(columns()[0].resized).toBeFalsy();
+			wrapper.unmount();
+		});
+
+		it('blocks text selection while resizing without taking over document.onselectstart', async () => {
+			const { wrapper, th } = await mountResizable();
+			const own = () => {};
+			document.onselectstart = own;
+
+			await fireMouse(th, 'mousedown', 95);
+			expect(blocked('selectstart')).toBe(true);
+			expect(blocked('dragstart')).toBe(true);
+			expect(document.onselectstart).toBe(own);
+
+			await fireMouse(document, 'mouseup', 95);
+			expect(blocked('selectstart')).toBe(false);
+			expect(document.onselectstart).toBe(own);
+			wrapper.unmount();
+		});
+
+		it('stops tracking the document when unmounted while resizing', async () => {
+			const { wrapper, th, onColumnResize } = await mountResizable();
+
+			await fireMouse(th, 'mousedown', 95);
+			wrapper.unmount();
+
+			expect(blocked('selectstart')).toBe(false);
+			await fireMouse(document, 'mousemove', 150);
+			await fireMouse(document, 'mouseup', 150);
+			expect(onColumnResize).not.toHaveBeenCalled();
+		});
 	});
 });
 

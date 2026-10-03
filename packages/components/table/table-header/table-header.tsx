@@ -1,6 +1,8 @@
 import { defineComponent, ref, getCurrentInstance, computed, inject } from 'vue';
 import type { Nullable } from '@deot/helper-shared';
 import { IS_SERVER } from '@deot/vc-shared';
+import { useDrag } from '@deot/vc-hooks';
+import type { DragPoint } from '@deot/vc-hooks';
 import { Popover } from '../../popover';
 import { Icon } from '../../icon';
 import { useStates } from '../store';
@@ -34,6 +36,8 @@ export const TableHeader = defineComponent({
 		const draggingColumn = ref<Nullable<TableColumnNode>>(null);
 		const dragging = ref(false);
 		const dragState = ref<Record<string, number>>({});
+		// 按下的表头列
+		let resizeColumn: Nullable<TableColumnNode> = null;
 
 		const allowDrag = computed(() => {
 			return typeof props.resizable === 'boolean' ? props.resizable : props.border;
@@ -123,76 +127,83 @@ export const TableHeader = defineComponent({
 			table.emit('header-contextmenu', { column: column.states, event: e } satisfies TableHeaderEventPayload);
 		};
 
+		// 列宽拖动结束：隐藏辅助线并复位
+		const resetResize = () => {
+			document.body.style.cursor = '';
+			dragging.value = false;
+			draggingColumn.value = null;
+			dragState.value = {};
+
+			table.resizeProxyVisible.value = false;
+		};
+
+		const handleResizeStart = (e: DragPoint) => {
+			const column = resizeColumn!;
+			if (column.childNodes.length > 0) return false;
+			if (!draggingColumn.value || !allowDrag.value) return false;
+
+			dragging.value = true;
+
+			table.resizeProxyVisible.value = true;
+
+			const tableEl = table.tableWrapper.value!;
+			const tableLeft = tableEl.getBoundingClientRect().left;
+			const columnEl: HTMLElement = instance.vnode.el!.querySelector(`.vc-table__th.${column.states.id}`);
+			const columnRect = columnEl.getBoundingClientRect();
+
+			dragState.value = {
+				startMouseLeft: e.clientX,
+				startLeft: columnRect.right - tableLeft,
+				startColumnLeft: columnRect.left - tableLeft,
+				minLeft: columnRect.left - tableLeft + 30
+			};
+
+			table.resizeProxy.value!.style.left = dragState.value.startLeft + 'px';
+			return true;
+		};
+
+		const handleResizeMove = (e: DragPoint) => {
+			const { startMouseLeft, startLeft, minLeft } = dragState.value;
+			const proxyLeft = startLeft + e.clientX - startMouseLeft;
+
+			table.resizeProxy.value!.style.left = Math.max(minLeft, proxyLeft) + 'px';
+		};
+
+		const handleResizeEnd = () => {
+			const column = resizeColumn!;
+			const {
+				startColumnLeft,
+				startLeft
+			} = dragState.value;
+			const finalLeft = parseInt(table.resizeProxy.value!.style.left, 10);
+			const columnWidth = finalLeft - startColumnLeft;
+			column.states.width = column.states.minWidth = column.states.realWidth = columnWidth;
+			column.states.resized = true;
+			table.emit('column-resize', {
+				column: column.states,
+				width: columnWidth,
+				oldWidth: startLeft - startColumnLeft
+			} satisfies TableColumnResizePayload);
+
+			table.store.scheduleLayout();
+			resetResize();
+		};
+
+		// 列宽只用鼠标拖动；mouseup 丢失时的指针位置不作数，放弃这次调整
+		const drag = useDrag({
+			selectable: false,
+			start: (_, point) => handleResizeStart(point),
+			move: (_, point) => handleResizeMove(point),
+			end: handleResizeEnd,
+			cancel: resetResize
+		});
+
 		const handleMouseDown = (e: MouseEvent, column: TableColumnNode) => {
-			if (IS_SERVER) return;
-			if (column.childNodes.length > 0) return;
-			/* istanbul ignore if */
-			if (draggingColumn.value && allowDrag.value) {
-				dragging.value = true;
+			// 拖动中不受理新的按下（如按住主键时又按了右键）
+			if (dragging.value) return;
 
-				table.resizeProxyVisible.value = true;
-
-				const tableEl = table.tableWrapper.value!;
-				const tableLeft = tableEl.getBoundingClientRect().left;
-				const columnEl: HTMLElement = instance.vnode.el!.querySelector(`.vc-table__th.${column.states.id}`);
-				const columnRect = columnEl.getBoundingClientRect();
-				const minLeft = columnRect.left - tableLeft + 30;
-
-				dragState.value = {
-					startMouseLeft: e.clientX,
-					startLeft: columnRect.right - tableLeft,
-					startColumnLeft: columnRect.left - tableLeft,
-					tableLeft
-				};
-
-				const resizeProxy = table.resizeProxy.value!;
-				resizeProxy.style.left = dragState.value.startLeft + 'px';
-
-				document.onselectstart = () => false;
-				document.ondragstart = () => false;
-
-				const handleDocumentMouseMove = ($e: MouseEvent) => {
-					const deltaLeft = $e.clientX - dragState.value.startMouseLeft;
-					const proxyLeft = dragState.value.startLeft + deltaLeft;
-
-					resizeProxy.style.left = Math.max(minLeft, proxyLeft) + 'px';
-				};
-
-				const handleDocumentMouseUp = () => {
-					if (dragging.value) {
-						const {
-							startColumnLeft,
-							startLeft
-						} = dragState.value;
-						const finalLeft = parseInt(resizeProxy.style.left, 10);
-						const columnWidth = finalLeft - startColumnLeft;
-						column.states.width = column.states.minWidth = column.states.realWidth = columnWidth;
-						column.states.resized = true;
-						table.emit('column-resize', {
-							column: column.states,
-							width: columnWidth,
-							oldWidth: startLeft - startColumnLeft
-						} satisfies TableColumnResizePayload);
-
-						table.store.scheduleLayout();
-
-						document.body.style.cursor = '';
-						dragging.value = false;
-						draggingColumn.value = null;
-						dragState.value = {};
-
-						table.resizeProxyVisible.value = false;
-					}
-
-					document.removeEventListener('mousemove', handleDocumentMouseMove);
-					document.removeEventListener('mouseup', handleDocumentMouseUp);
-					document.onselectstart = null;
-					document.ondragstart = null;
-				};
-
-				document.addEventListener('mousemove', handleDocumentMouseMove);
-				document.addEventListener('mouseup', handleDocumentMouseUp);
-			}
+			resizeColumn = column;
+			drag.listeners.onMousedown(e);
 		};
 
 		const handleMouseMove = (event: MouseEvent, column: TableColumnNode) => {
