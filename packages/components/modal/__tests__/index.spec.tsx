@@ -6,6 +6,7 @@ import { mount, config } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
 import { h, nextTick } from 'vue';
 import { vi } from 'vitest';
+import * as drag from '../../../hooks/__tests__/fixtures/drag';
 
 // @vue/test-utils 默认通过全局 transformVNodeArgs 把 Transition/TransitionGroup
 // 替换为 stub (createApp 也受影响), 会导致 v-show 拿不到 vnode.transition,
@@ -917,46 +918,6 @@ describe('ModalView draggable', () => {
 		document.body.style.removeProperty('overflow');
 	});
 
-	it('header mousedown 设置 cursor=move, mousemove 与 mouseup 完整链路', async () => {
-		const wrapper = mount(ModalView, {
-			attachTo: document.body,
-			props: { modelValue: true, draggable: true }
-		});
-		await flush();
-
-		const header = wrapper.find('.vc-modal__header').element as HTMLElement;
-		const wrapperEl = wrapper.find('.vc-modal__wrapper').element as HTMLElement;
-		header.dispatchEvent(new MouseEvent('mousedown', {
-			bubbles: true,
-			clientX: 100,
-			clientY: 100
-		}));
-		await flush();
-
-		expect(header.style.cursor).toBe('move');
-		// zIndex 单调递增
-		expect(parseInt(wrapperEl.style.zIndex || '0')).toBeGreaterThan(0);
-
-		// 触发 mousemove (handleMouseMove 更新 x/y)
-		document.dispatchEvent(new MouseEvent('mousemove', {
-			bubbles: true,
-			clientX: 150,
-			clientY: 160
-		}));
-		await flush();
-
-		// mouseup 卸载 listener (resetOrigin debounced 不抛错)
-		document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-		await flush();
-
-		// 二次 mousemove 应该已经被解绑, 不会抛错
-		expect(() => {
-			document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 200, clientY: 200 }));
-		}).not.toThrow();
-
-		wrapper.unmount();
-	});
-
 	it('draggable=false: header mousedown 不会改变 cursor', async () => {
 		const wrapper = mount(ModalView, {
 			attachTo: document.body,
@@ -988,6 +949,85 @@ describe('ModalView draggable', () => {
 		expect(container.style.left).toBe('50px');
 		expect(container.style.top).toBe('80px');
 		wrapper.unmount();
+	});
+
+	describe('header drag gesture', () => {
+		const fireMouse = (
+			el: EventTarget,
+			type: 'mousedown' | 'mousemove' | 'mouseup',
+			clientX: number,
+			clientY: number,
+			init: MouseEventInit = {}
+		) => {
+			drag.fireMouse(el, type, { clientX, clientY, ...init });
+		};
+		const mountDraggable = async () => {
+			const wrapper = mount(ModalView, {
+				attachTo: document.body,
+				props: { modelValue: true, draggable: true }
+			});
+			await flush();
+			const container = wrapper.find('.vc-modal__container').element as HTMLElement;
+			return {
+				wrapper,
+				header: wrapper.find('.vc-modal__header').element as HTMLElement,
+				layer: wrapper.find('.vc-modal__wrapper').element as HTMLElement,
+				position: () => [container.style.left, container.style.top]
+			};
+		};
+
+		it('follows the pointer and keeps the position after release', async () => {
+			const { wrapper, header, layer, position } = await mountDraggable();
+
+			fireMouse(header, 'mousedown', 100, 100);
+			expect(header.style.cursor).toBe('move');
+			// 按下时置顶：zIndex 单调递增
+			expect(parseInt(layer.style.zIndex || '0')).toBeGreaterThan(0);
+
+			fireMouse(document.body, 'mousemove', 150, 160);
+			await flush();
+			expect(position()).toEqual(['50px', '60px']);
+
+			fireMouse(document.body, 'mouseup', 150, 160);
+			// 松开后，不按键的移动不再拖动
+			fireMouse(document.body, 'mousemove', 200, 220, { buttons: 0 });
+			await flush();
+			expect(position()).toEqual(['50px', '60px']);
+			wrapper.unmount();
+		});
+
+		it('stops following when the primary button is no longer pressed without a mouseup', async () => {
+			const { wrapper, header, position } = await mountDraggable();
+
+			fireMouse(header, 'mousedown', 100, 100);
+			fireMouse(document.body, 'mousemove', 150, 160);
+			await flush();
+			expect(position()).toEqual(['50px', '60px']);
+
+			// 右键菜单、原生拖拽等吞掉了 mouseup：下一次移动时主键已松开
+			fireMouse(document.body, 'mousemove', 200, 220, { buttons: 0 });
+			await flush();
+			expect(position()).toEqual(['50px', '60px']);
+
+			// 已解绑：之后按着主键移动也不再拖动
+			fireMouse(document.body, 'mousemove', 260, 260);
+			await flush();
+			expect(position()).toEqual(['50px', '60px']);
+			wrapper.unmount();
+		});
+
+		it('ignores non-primary buttons', async () => {
+			const { wrapper, header, position } = await mountDraggable();
+			const initial = position();
+
+			fireMouse(header, 'mousedown', 100, 100, { button: 2, buttons: 2 });
+			fireMouse(document.body, 'mousemove', 150, 160, { buttons: 2 });
+			await flush();
+			// 未进入拖动
+			expect(header.style.cursor).not.toBe('move');
+			expect(position()).toEqual(initial);
+			wrapper.unmount();
+		});
 	});
 });
 

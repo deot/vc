@@ -16,7 +16,8 @@ import {
 import { debounce } from 'lodash-es';
 import { IS_SERVER } from '@deot/vc-shared';
 import { Resize } from '@deot/helper-resize';
-import { useScrollbar } from '@deot/vc-hooks';
+import { useScrollbar, useDrag } from '@deot/vc-hooks';
+import type { DragPoint } from '@deot/vc-hooks';
 
 import { Icon } from '../icon';
 import { Button } from '../button';
@@ -259,28 +260,16 @@ export const ModalView = defineComponent({
 			originY = e.y;
 		};
 
-		const handleMouseMove = (e: MouseEvent) => {
+		const handleMouseMove = (e: DragPoint) => {
 			x.value += e.clientX - startX;
 			y.value += e.clientY - startY;
 			startX = e.clientX;
 			startY = e.clientY;
 		};
-		/**
-		 * 松开鼠标时清除move和up事件
-		 */
-		const handleMouseUp = () => {
-			/**
-			 * 放手后重新设置原点
-			 */
-			resetOrigin();
 
-			document.removeEventListener('mousemove', handleMouseMove);
-			document.removeEventListener('mouseup', handleMouseUp);
-		};
-
-		const handleMouseDown = (e: MouseEvent) => {
+		const handleMouseDown = (e: DragPoint) => {
 			if (!props.draggable) {
-				return;
+				return false;
 			}
 			const $container = container.value!;
 			const $wrapper = wrapper.value!;
@@ -294,10 +283,16 @@ export const ModalView = defineComponent({
 
 			startX = e.clientX;
 			startY = e.clientY;
-
-			document.addEventListener('mousemove', handleMouseMove);
-			document.addEventListener('mouseup', handleMouseUp);
+			return true;
 		};
+
+		// 标题栏拖动只用鼠标；位置随拖动即时生效，mouseup 丢失时与松开同样处理
+		const drag = useDrag({
+			start: (_, point) => handleMouseDown(point),
+			move: (_, point) => handleMouseMove(point),
+			// 放手后重新设置原点
+			end: () => resetOrigin()
+		});
 
 		onMounted(() => {
 			document.addEventListener('keydown', handleEscClose);
@@ -321,8 +316,6 @@ export const ModalView = defineComponent({
 		onUnmounted(() => {
 			document.removeEventListener('click', handleClick, true);
 			document.removeEventListener('keydown', handleEscClose);
-			document.removeEventListener('mousemove', handleMouseMove);
-			document.removeEventListener('mouseup', handleMouseUp);
 		});
 
 		watch(
@@ -385,7 +378,7 @@ export const ModalView = defineComponent({
 									ref={header}
 									class={[{ 'is-confirm': props.mode }, 'vc-modal__header']}
 									// @ts-ignore
-									onMousedown={handleMouseDown}
+									onMousedown={drag.listeners.onMousedown}
 								>
 									{
 										props.mode && (
