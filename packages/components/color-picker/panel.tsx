@@ -2,6 +2,7 @@
 
 import { computed, defineComponent, nextTick, onMounted, ref, watch } from 'vue';
 import type { PropType } from 'vue';
+import type { DragPoint } from '@deot/vc-hooks';
 import { Color } from './color';
 import { useDraggable } from './use-draggable';
 
@@ -56,7 +57,7 @@ export const Panel = defineComponent({
 			background.value = `hsl(${props.color.states.hue}, 100%, 50%)`;
 		};
 
-		const handleDrag = (e: MouseEvent) => {
+		const handleDrag = (e: DragPoint) => {
 			if (!panel.value) return;
 
 			const rect = getRect(panel.value);
@@ -74,11 +75,7 @@ export const Panel = defineComponent({
 			props.color.states.value = 100 - (top / rect.height) * 100;
 		};
 
-		useDraggable(() => panel.value, {
-			start: handleDrag,
-			drag: handleDrag,
-			end: handleDrag
-		});
+		const listeners = useDraggable(handleDrag);
 
 		onMounted(() => {
 			nextTick(update);
@@ -91,6 +88,7 @@ export const Panel = defineComponent({
 				ref={panel}
 				style={{ background: background.value }}
 				class="vc-color-picker-panel"
+				{...listeners}
 			>
 				<div class="vc-color-picker-panel__white" />
 				<div class="vc-color-picker-panel__black" />

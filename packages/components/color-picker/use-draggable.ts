@@ -1,115 +1,24 @@
-import { onBeforeUnmount, onMounted } from 'vue';
-import { IS_SERVER } from '@deot/vc-shared';
+import { useDrag } from '@deot/vc-hooks';
+import type { DragPoint } from '@deot/vc-hooks';
 
-type DragEventLike = MouseEvent | TouchEvent;
-type DragHandler = (e: MouseEvent & { originalEvent?: DragEventLike }) => void;
-
-interface DraggableOptions {
-	start?: DragHandler;
-	drag?: DragHandler;
-	end?: DragHandler;
-}
-
-let isDragging = false;
-
-const draggableEvents = {
-	start: ['touchstart', 'mousedown'],
-	move: ['touchmove', 'mousemove'],
-	end: ['touchend', 'touchcancel', 'mouseup']
-};
-
-const eventOptions = { capture: true, passive: false };
-
-const normalizeEvent = (e: DragEventLike) => {
-	const touchEvent = e as TouchEvent;
-	const touch = touchEvent.touches?.[0] || touchEvent.changedTouches?.[0];
-
-	if (!touch) {
-		return e as MouseEvent & { originalEvent?: DragEventLike };
-	}
-
-	if (e.cancelable) {
-		e.preventDefault();
-	}
-
-	return {
-		...e,
-		clientX: touch.clientX,
-		clientY: touch.clientY,
-		originalEvent: e
-	} as MouseEvent & { originalEvent?: DragEventLike };
-};
-
-export const useDraggable = (
-	el: HTMLElement | undefined | null | (() => HTMLElement | undefined | null),
-	options: DraggableOptions
-) => {
-	if (IS_SERVER) return;
-
-	const getElement = () => (typeof el === 'function' ? el() : el);
-
-	const handleMove = (e: DragEventLike) => {
-		options.drag?.(normalizeEvent(e));
+/**
+ * 色板、色相条、透明度条共用的拖动：按下、移动、松开都按触点位置取值
+ * @param handleDrag 按触点位置取值
+ * @returns 绑到元素上的监听
+ */
+export const useDraggable = (handleDrag: (point: DragPoint) => void) => {
+	const handle = (e: MouseEvent | TouchEvent, point: DragPoint) => {
+		// 触摸拖动不滚动页面
+		e.type.startsWith('touch') && e.cancelable && e.preventDefault();
+		handleDrag(point);
 	};
 
-	const handleEnd = (e: DragEventLike) => {
-		draggableEvents.move.forEach((eventName) => {
-			document.removeEventListener(eventName, handleMove as EventListener, eventOptions);
-		});
-		draggableEvents.end.forEach((eventName) => {
-			document.removeEventListener(eventName, handleEnd as EventListener);
-		});
-		document.onselectstart = null;
-		document.ondragstart = null;
-
-		isDragging = false;
-		options.end?.(normalizeEvent(e));
-	};
-
-	const handleStart = (e: DragEventLike) => {
-		if (isDragging) return;
-
-		document.onselectstart = () => false;
-		document.ondragstart = () => false;
-
-		draggableEvents.move.forEach((eventName) => {
-			document.addEventListener(eventName, handleMove as EventListener, eventOptions);
-		});
-		draggableEvents.end.forEach((eventName) => {
-			document.addEventListener(eventName, handleEnd as EventListener);
-		});
-
-		isDragging = true;
-		options.start?.(normalizeEvent(e));
-	};
-
-	onMounted(() => {
-		const element = getElement();
-		if (!element) return;
-
-		draggableEvents.start.forEach((eventName) => {
-			element.addEventListener(eventName, handleStart as EventListener);
-		});
-	});
-
-	onBeforeUnmount(() => {
-		const element = getElement();
-
-		if (element) {
-			draggableEvents.start.forEach((eventName) => {
-				element.removeEventListener(eventName, handleStart as EventListener);
-			});
-		}
-
-		draggableEvents.move.forEach((eventName) => {
-			document.removeEventListener(eventName, handleMove as EventListener, eventOptions);
-		});
-		draggableEvents.end.forEach((eventName) => {
-			document.removeEventListener(eventName, handleEnd as EventListener);
-		});
-
-		document.onselectstart = null;
-		document.ondragstart = null;
-		isDragging = false;
-	});
+	return useDrag({
+		selectable: false,
+		start: handle,
+		move: handle,
+		end: handle,
+		// 手势被打断时的触点位置不作数：保持最后一次拖动的值
+		cancel: () => {}
+	}).listeners;
 };

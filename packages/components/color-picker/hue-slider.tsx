@@ -2,6 +2,7 @@
 
 import { defineComponent, nextTick, onMounted, ref, watch } from 'vue';
 import type { PropType } from 'vue';
+import type { DragPoint } from '@deot/vc-hooks';
 import { Color } from './color';
 import { useDraggable } from './use-draggable';
 
@@ -22,11 +23,10 @@ export const HueSlider = defineComponent({
 	},
 	setup(props) {
 		const slider = ref<HTMLElement>();
-		const bar = ref<HTMLElement>();
 		const thumb = ref<HTMLElement>();
 		const thumbLeft = ref(0);
 
-		const handleDrag = (e: MouseEvent) => {
+		const handleDrag = (e: DragPoint) => {
 			if (!slider.value) return;
 
 			const rect = slider.value.getBoundingClientRect();
@@ -53,14 +53,7 @@ export const HueSlider = defineComponent({
 				: 0;
 		};
 
-		const dragConfig = {
-			start: handleDrag,
-			drag: handleDrag,
-			end: handleDrag
-		};
-
-		useDraggable(() => bar.value, dragConfig);
-		useDraggable(() => thumb.value, dragConfig);
+		const listeners = useDraggable(handleDrag);
 
 		onMounted(() => {
 			nextTick(update);
@@ -72,8 +65,8 @@ export const HueSlider = defineComponent({
 		);
 
 		return () => (
-			<div ref={slider} class="vc-color-picker-hue-slider">
-				<div ref={bar} class="vc-color-picker-hue-slider__bar" />
+			<div ref={slider} class="vc-color-picker-hue-slider" {...listeners}>
+				<div class="vc-color-picker-hue-slider__bar" />
 				<div
 					ref={thumb}
 					style={{

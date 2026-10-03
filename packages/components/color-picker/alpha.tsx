@@ -2,6 +2,7 @@
 
 import { defineComponent, nextTick, onMounted, ref, watch } from 'vue';
 import type { PropType } from 'vue';
+import type { DragPoint } from '@deot/vc-hooks';
 import { Color } from './color';
 import { useDraggable } from './use-draggable';
 
@@ -22,12 +23,11 @@ export const Alpha = defineComponent({
 	},
 	setup(props) {
 		const slider = ref<HTMLElement>();
-		const bar = ref<HTMLElement>();
 		const thumb = ref<HTMLElement>();
 		const background = ref('');
 		const thumbLeft = ref(0);
 
-		const handleDrag = (e: MouseEvent) => {
+		const handleDrag = (e: DragPoint) => {
 			const element = slider.value;
 			if (!element) return;
 
@@ -63,14 +63,7 @@ export const Alpha = defineComponent({
 			background.value = getBackground();
 		};
 
-		const dragConfig = {
-			start: handleDrag,
-			drag: handleDrag,
-			end: handleDrag
-		};
-
-		useDraggable(() => bar.value, dragConfig);
-		useDraggable(() => thumb.value, dragConfig);
+		const listeners = useDraggable(handleDrag);
 
 		onMounted(() => {
 			nextTick(update);
@@ -82,9 +75,8 @@ export const Alpha = defineComponent({
 		);
 
 		return () => (
-			<div ref={slider} class="vc-color-picker-alpha">
+			<div ref={slider} class="vc-color-picker-alpha" {...listeners}>
 				<div
-					ref={bar}
 					style={{ background: background.value }}
 					class="vc-color-picker-alpha__bar"
 				/>

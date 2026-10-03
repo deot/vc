@@ -6,6 +6,7 @@ import { defineComponent, nextTick, ref } from 'vue';
 import { ColorPickerView } from '../picker-view';
 import { Color } from '../color';
 import { useDraggable } from '../use-draggable';
+import * as drag from '../../../hooks/__tests__/fixtures/drag';
 
 const sleep = (ms = 0) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
@@ -63,37 +64,25 @@ const click = (el: Element) => {
 };
 
 const mouseDown = (el: Element, options: MouseEventInit) => {
-	el.dispatchEvent(new MouseEvent('mousedown', {
-		bubbles: true,
-		cancelable: true,
-		...options
-	}));
+	drag.fireMouse(el, 'mousedown', options);
 };
 
 const mouseMove = (options: MouseEventInit) => {
-	document.dispatchEvent(new MouseEvent('mousemove', {
-		bubbles: true,
-		cancelable: true,
-		...options
-	}));
+	drag.fireMouse(document, 'mousemove', options);
 };
 
 const mouseUp = (options: MouseEventInit) => {
-	document.dispatchEvent(new MouseEvent('mouseup', {
-		bubbles: true,
-		cancelable: true,
-		...options
-	}));
+	drag.fireMouse(document, 'mouseup', options);
 };
 
-const touch = (el: Element | Document, type: string, clientX: number, clientY = 0, cancelable = true) => {
-	const e = new Event(type, { bubbles: true, cancelable });
-	const key = type === 'touchend' || type === 'touchcancel' ? 'changedTouches' : 'touches';
-
-	Object.defineProperty(e, key, {
-		value: [{ clientX, clientY }]
-	});
-	el.dispatchEvent(e);
+const touch = (
+	el: Element,
+	type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel',
+	clientX: number,
+	clientY = 0,
+	cancelable = true
+) => {
+	return drag.fireTouch(el, type, { clientX, clientY }, [], { cancelable });
 };
 
 const getPicker = () => document.querySelector('.vc-color-picker__picker') as HTMLElement | null;
@@ -481,7 +470,6 @@ describe('ColorPickerView', () => {
 
 		setRect(slider, { left: 0, width: 360 });
 		mouseDown(bar, { clientX: 180, clientY: 0 });
-		mouseDown(bar, { clientX: 90, clientY: 0 });
 		await flush();
 
 		let latest = changes[changes.length - 1];
@@ -567,17 +555,123 @@ describe('ColorPickerView', () => {
 		let latest = changes[changes.length - 1];
 		expect(latest[0]).toBe('rgba(255, 0, 0, 0.4)');
 
-		touch(document, 'touchmove', 60);
+		touch(bar, 'touchmove', 60);
 		await flush();
 		latest = changes[changes.length - 1];
 		expect(latest[0]).toBe('rgba(255, 0, 0, 0.6)');
 
-		touch(document, 'touchend', 70);
+		touch(bar, 'touchend', 70);
 		await flush();
 		latest = changes[changes.length - 1];
 		expect(latest[0]).toBe('rgba(255, 0, 0, 0.7)');
 
 		wrapper.unmount();
+	});
+
+	describe('drag gesture', () => {
+		// 用例中途失败时也结束手势，避免残留的 document 监听影响后续用例
+		afterEach(() => {
+			mouseUp({});
+			document.onselectstart = null;
+		});
+
+		const mountHue = async () => {
+			const changes: any[] = [];
+			const wrapper = mount(() => (
+				<ColorPickerView
+					modelValue="#FF0000"
+					format="hsv"
+					onChange={(...args: any[]) => changes.push(args)}
+				/>
+			), { attachTo: document.body });
+			await flush();
+
+			setRect(wrapper.find('.vc-color-picker-hue-slider').element, { left: 0, width: 360 });
+			return {
+				wrapper,
+				changes,
+				bar: wrapper.find('.vc-color-picker-hue-slider__bar').element,
+				latest: () => changes[changes.length - 1]?.[0]
+			};
+		};
+		const { blocked } = drag;
+
+		it('只有主键能拖动', async () => {
+			const { wrapper, changes, bar } = await mountHue();
+			const count = changes.length;
+
+			mouseDown(bar, { clientX: 180, button: 2, buttons: 2 });
+			mouseMove({ clientX: 90, buttons: 2 });
+			await flush();
+
+			expect(changes.length).toBe(count);
+			wrapper.unmount();
+		});
+
+		it('mouseup 丢失后不再跟手, 保持最后一次拖动的值', async () => {
+			const { wrapper, bar, latest } = await mountHue();
+
+			mouseDown(bar, { clientX: 180 });
+			mouseMove({ clientX: 90 });
+			await flush();
+			expect(latest()).toBe('hsv(90, 100%, 100%)');
+
+			// 右键菜单、原生拖拽等吞掉了 mouseup：下一次移动时主键已松开
+			mouseMove({ clientX: 300, buttons: 0 });
+			await flush();
+			expect(latest()).toBe('hsv(90, 100%, 100%)');
+
+			// 已解绑：之后按着主键移动也不再拖动
+			mouseMove({ clientX: 200 });
+			await flush();
+			expect(latest()).toBe('hsv(90, 100%, 100%)');
+			wrapper.unmount();
+		});
+
+		it('拖动期间阻止选区与原生拖拽, 且不占用 document.onselectstart', async () => {
+			const { wrapper, bar } = await mountHue();
+			const own = () => {};
+			document.onselectstart = own;
+
+			expect(blocked('selectstart')).toBe(false);
+
+			mouseDown(bar, { clientX: 180 });
+			expect(blocked('selectstart')).toBe(true);
+			expect(blocked('dragstart')).toBe(true);
+			expect(document.onselectstart).toBe(own);
+
+			mouseUp({ clientX: 180 });
+			expect(blocked('selectstart')).toBe(false);
+			expect(blocked('dragstart')).toBe(false);
+			expect(document.onselectstart).toBe(own);
+			wrapper.unmount();
+		});
+
+		it('拖动中卸载后恢复选区', async () => {
+			const { wrapper, bar } = await mountHue();
+
+			mouseDown(bar, { clientX: 180 });
+			expect(blocked('selectstart')).toBe(true);
+
+			wrapper.unmount();
+			expect(blocked('selectstart')).toBe(false);
+			expect(blocked('dragstart')).toBe(false);
+		});
+
+		it('touchcancel 保持最后一次拖动的值', async () => {
+			const { wrapper, bar, latest } = await mountHue();
+
+			touch(bar, 'touchstart', 180);
+			touch(bar, 'touchmove', 90);
+			await flush();
+			expect(latest()).toBe('hsv(90, 100%, 100%)');
+
+			// 系统手势等打断了触摸：此时的触点位置不作数
+			touch(bar, 'touchcancel', 300);
+			await flush();
+			expect(latest()).toBe('hsv(90, 100%, 100%)');
+			wrapper.unmount();
+		});
 	});
 
 	it('recommend: 无自定义 colors 时渲染推荐色', async () => {
@@ -702,53 +796,48 @@ describe('useDraggable', () => {
 		document.body.innerHTML = '';
 	});
 
-	it('element 为空时不绑定事件', async () => {
-		const start = ref(0);
+	const mountDraggable = () => {
+		const points: number[] = [];
 		const Component = defineComponent({
 			setup() {
-				useDraggable(() => null, {
-					start: () => start.value++
-				});
+				const listeners = useDraggable(point => points.push(point.clientX));
 
-				return () => <div class="empty-draggable" />;
+				return () => <div class="draggable" {...listeners} />;
 			}
 		});
 		const wrapper = mount(Component, { attachTo: document.body });
 
-		await flush();
-		mouseDown(wrapper.element, { clientX: 0, clientY: 0 });
+		return { wrapper, points, target: wrapper.element };
+	};
 
-		expect(start.value).toBe(0);
+	it('按下、移动、松开都按触点位置取值', async () => {
+		const { wrapper, points, target } = mountDraggable();
+
+		mouseDown(target, { clientX: 1 });
+		mouseMove({ clientX: 2 });
+		mouseUp({ clientX: 3 });
+
+		touch(target, 'touchstart', 11);
+		touch(target, 'touchmove', 12);
+		touch(target, 'touchend', 13);
+
+		expect(points).toEqual([1, 2, 3, 11, 12, 13]);
 
 		wrapper.unmount();
 	});
 
-	it('支持直接元素和非 cancelable touch 事件', async () => {
-		const target = document.createElement('div');
-		const points: number[] = [];
-		document.body.appendChild(target);
+	it('触摸拖动阻止默认滚动, 不可取消的事件不处理', async () => {
+		const { wrapper, points, target } = mountDraggable();
 
-		const Component = defineComponent({
-			setup() {
-				useDraggable(target, {
-					start: e => points.push(e.clientX),
-					drag: e => points.push(e.clientX),
-					end: e => points.push(e.clientX)
-				});
+		expect(touch(target, 'touchstart', 11).defaultPrevented).toBe(true);
+		expect(touch(target, 'touchmove', 12).defaultPrevented).toBe(true);
+		expect(touch(target, 'touchend', 13).defaultPrevented).toBe(true);
 
-				return () => <div class="direct-draggable" />;
-			}
-		});
-		const wrapper = mount(Component, { attachTo: document.body });
+		expect(touch(target, 'touchstart', 21, 0, false).defaultPrevented).toBe(false);
+		expect(touch(target, 'touchmove', 22, 0, false).defaultPrevented).toBe(false);
+		expect(touch(target, 'touchend', 23, 0, false).defaultPrevented).toBe(false);
 
-		await flush();
-
-		touch(target, 'touchstart', 11, 0, false);
-		touch(document, 'touchmove', 12, 0, false);
-		touch(document, 'touchend', 13, 0, false);
-		await flush();
-
-		expect(points).toEqual([11, 12, 13]);
+		expect(points).toEqual([11, 12, 13, 21, 22, 23]);
 
 		wrapper.unmount();
 	});
