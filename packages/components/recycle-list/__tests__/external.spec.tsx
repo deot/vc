@@ -4,6 +4,7 @@ import { RecycleList, RecycleListStore, Scroller } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi } from 'vitest';
+import * as drag from '../../../hooks/__tests__/fixtures/drag';
 
 const sleep = (time = 0) => new Promise(resolve => setTimeout(resolve, time));
 
@@ -116,10 +117,7 @@ const fireTouch = (
 	type: 'touchstart' | 'touchmove' | 'touchend',
 	screenY: number
 ) => {
-	const event = new Event(type, { bubbles: true, cancelable: true }) as any;
-	event.touches = type === 'touchend' ? [] : [{ screenX: 0, screenY }];
-	event.targetTouches = type === 'touchend' ? [] : [{ screenX: 0, screenY }];
-	el.dispatchEvent(event);
+	drag.fireTouch(el, type, { screenX: 0, screenY });
 };
 
 const fireHorizontalTouch = (
@@ -127,10 +125,7 @@ const fireHorizontalTouch = (
 	type: 'touchstart' | 'touchmove' | 'touchend',
 	screenX: number
 ) => {
-	const event = new Event(type, { bubbles: true, cancelable: true }) as any;
-	event.touches = type === 'touchend' ? [] : [{ screenX, screenY: 0 }];
-	event.targetTouches = type === 'touchend' ? [] : [{ screenX, screenY: 0 }];
-	el.dispatchEvent(event);
+	drag.fireTouch(el, type, { screenX, screenY: 0 });
 };
 
 describe('RecycleList fill=false', () => {

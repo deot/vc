@@ -6,6 +6,7 @@ import { useMeasuring } from '../../measuring';
 import { mount } from '@vue/test-utils';
 import { defineComponent, getCurrentInstance, nextTick, onMounted, reactive, ref, toRaw } from 'vue';
 import { vi } from 'vitest';
+import * as drag from '../../../hooks/__tests__/fixtures/drag';
 
 const sleep = (time = 0) => new Promise(resolve => setTimeout(resolve, time));
 
@@ -2737,31 +2738,19 @@ describe('index.ts', () => {
 
 	describe('Container - pull to refresh', () => {
 		// 触摸事件直接派发到根节点；鼠标按下后由 document 跟踪移动与松开（见 mouse drag 用例）
-		const fireTouchAt = (
-			el: Element,
-			type: 'touchstart' | 'touchmove' | 'touchend',
-			touch: { screenX: number; screenY: number },
-			targetTouches?: any[]
-		) => {
-			const ev = new Event(type, { bubbles: true, cancelable: true }) as any;
-			ev.touches = [touch];
-			ev.targetTouches = targetTouches ?? [];
-			el.dispatchEvent(ev);
-		};
-		const fireTouch = (el: Element, type: 'touchstart' | 'touchmove' | 'touchend', screenY: number, targetTouches?: any[]) => {
-			fireTouchAt(el, type, { screenX: 0, screenY }, targetTouches);
+		const fireTouch = (el: Element, type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel', screenY: number) => {
+			drag.fireTouch(el, type, { screenX: 0, screenY });
 		};
 		const fireHorizontalTouch = (el: Element, type: 'touchstart' | 'touchmove' | 'touchend', screenX: number) => {
-			fireTouchAt(el, type, { screenX, screenY: 0 });
+			drag.fireTouch(el, type, { screenX, screenY: 0 });
 		};
-		// 默认主键拖动：按下、移动时 buttons 含主键，松开时为 0
 		const fireMouse = (
 			el: EventTarget,
 			type: 'mousedown' | 'mousemove' | 'mouseup',
 			screenY: number,
 			init: MouseEventInit = {}
 		) => {
-			el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, screenY, buttons: type === 'mouseup' ? 0 : 1, ...init }));
+			drag.fireMouse(el, type, { screenY, ...init });
 		};
 		const settle = async () => {
 			await nextTick();
@@ -2979,6 +2968,62 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
+		it('follows only the finger that started the pull', async () => {
+			const loadData = vi.fn(async () => false);
+			const { wrapper, root, pull } = mountPullable(loadData);
+			await settle();
+			const initialCalls = loadData.mock.calls.length;
+			const first = { identifier: 0, screenX: 0 };
+			const second = { identifier: 1, screenX: 0, screenY: 600 };
+
+			drag.fireTouch(root, 'touchstart', { ...first, screenY: 100 });
+			drag.fireTouch(root, 'touchmove', { ...first, screenY: 110 });
+			await nextTick();
+			expect(pull().textContent).toBe('↓ 下拉刷新');
+
+			// 第二根手指按下、移动、抬起都不影响拉动距离
+			drag.fireTouch(root, 'touchstart', second, [{ ...first, screenY: 110 }]);
+			drag.fireTouch(root, 'touchmove', second, [{ ...first, screenY: 110 }]);
+			drag.fireTouch(root, 'touchend', second, [{ ...first, screenY: 110 }]);
+			await nextTick();
+			expect(pull().textContent).toBe('↓ 下拉刷新');
+
+			// 发起拉动的手指抬起即结束
+			drag.fireTouch(root, 'touchmove', { ...first, screenY: 300 });
+			drag.fireTouch(root, 'touchend', { ...first, screenY: 300 });
+			await sleep(20);
+			await nextTick();
+			expect(loadData.mock.calls.length).toBeGreaterThan(initialCalls);
+			expect(pull().textContent).toBe('~');
+			wrapper.unmount();
+		});
+
+		it('touchcancel rebounds without refreshing', async () => {
+			const loadData = vi.fn(async () => false);
+			const { wrapper, root, pull, container } = mountPullable(loadData);
+			await settle();
+			const initialCalls = loadData.mock.calls.length;
+
+			fireTouch(root, 'touchstart', 100);
+			fireTouch(root, 'touchmove', 300);
+			await nextTick();
+			expect(pull().textContent).toBe('↑ 释放更新');
+
+			// 系统手势等打断了触摸：不会再有 touchend
+			fireTouch(root, 'touchcancel', 300);
+			await sleep(20);
+			await nextTick();
+			expect(pull().textContent).toBe('~');
+			expect(container().getAttribute('style')).toContain('translateY(0px)');
+			expect(loadData.mock.calls.length).toBe(initialCalls);
+
+			// 取消后的移动不再拉动
+			fireTouch(root, 'touchmove', 400);
+			await nextTick();
+			expect(pull().textContent).toBe('~');
+			wrapper.unmount();
+		});
+
 		describe('mouse drag leaving the list', () => {
 			it('releasing outside the list after passing pauseOffset still refreshes and rebounds', async () => {
 				const loadData = vi.fn(async () => false);
@@ -3040,6 +3085,27 @@ describe('index.ts', () => {
 				fireMouse(document.body, 'mousemove', 300);
 				await nextTick();
 				expect(pull().textContent).toBe('~');
+				wrapper.unmount();
+			});
+
+			it('cancels without refreshing when the mouseup is lost after passing pauseOffset', async () => {
+				const loadData = vi.fn(async () => false);
+				const { wrapper, root, pull, container } = mountPullable(loadData);
+				await settle();
+				const initialCalls = loadData.mock.calls.length;
+
+				fireMouse(root, 'mousedown', 100);
+				fireMouse(root, 'mousemove', 300);
+				await nextTick();
+				expect(pull().textContent).toBe('↑ 释放更新');
+
+				// 右键菜单、原生拖拽等吞掉了 mouseup：按取消处理，只回弹
+				fireMouse(document.body, 'mousemove', 300, { buttons: 0 });
+				await sleep(20);
+				await nextTick();
+				expect(pull().textContent).toBe('~');
+				expect(container().getAttribute('style')).toContain('translateY(0px)');
+				expect(loadData.mock.calls.length).toBe(initialCalls);
 				wrapper.unmount();
 			});
 

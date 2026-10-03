@@ -6,6 +6,7 @@ import { enUS, zhCN } from '@deot/vc-locale';
 import { VcInstance } from '../../vc';
 import { Container } from '../container';
 import { ScrollState } from '../scroll-state';
+import * as drag from '../../../hooks/__tests__/fixtures/drag';
 
 enableAutoUnmount(afterEach);
 const originalLocale = VcInstance.options.locale;
@@ -53,12 +54,10 @@ describe('RecycleList locale', () => {
 		const wrapper = mount(Container, {
 			props: { pullable: true, vertical, inverted, onRefresh: () => new Promise<void>((resolve) => { finish = resolve; }) }
 		});
-		const touch = async (type: string, distance: number) => {
+		const touch = async (type: 'touchstart' | 'touchmove' | 'touchend', distance: number) => {
 			const position = 100 + (inverted ? -distance : distance);
-			await wrapper.trigger(type, {
-				touches: [{ screenX: vertical ? 100 : position, screenY: vertical ? position : 100 }],
-				targetTouches: []
-			});
+			drag.fireTouch(wrapper.element, type, { screenX: vertical ? 100 : position, screenY: vertical ? position : 100 });
+			await nextTick();
 		};
 		await touch('touchstart', 0);
 		await touch('touchmove', 20);
