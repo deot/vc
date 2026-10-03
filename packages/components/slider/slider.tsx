@@ -2,9 +2,11 @@
 
 import { computed, defineComponent, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Resize } from '@deot/helper-resize';
+import { useDrag } from '@deot/vc-hooks';
+import type { DragPoint } from '@deot/vc-hooks';
 import { props as sliderProps } from './slider-props';
 import type { SliderButtonType, SliderValue } from './slider-props';
-import { checkLimits, getDecimalLength, getOffset, getPointerX } from './utils';
+import { checkLimits, getDecimalLength, getOffset } from './utils';
 import type { FormItemProvide } from '../form/types';
 import { InputNumber } from '../input';
 import { Popover } from '../popover';
@@ -178,15 +180,14 @@ export const Slider = defineComponent({
 			sync('change');
 		};
 
-		const handleSliderClick = (event: MouseEvent | TouchEvent) => {
+		const handleSliderClick = (event: MouseEvent) => {
 			if (props.disabled || !props.clickable || !slider.value) return;
 
 			handleSetSliderWidth();
 			if (!sliderWidth.value || !valueRange.value) return;
 
-			const currentPointerX = getPointerX(event);
 			const sliderOffsetLeft = slider.value.getBoundingClientRect().left;
-			const newPosition = (((currentPointerX - sliderOffsetLeft) / sliderWidth.value) * valueRange.value) + props.min;
+			const newPosition = (((event.clientX - sliderOffsetLeft) / sliderWidth.value) * valueRange.value) + props.min;
 			const percentPosition = (newPosition / valueRange.value) * 100;
 
 			if (!props.range || percentPosition <= minPosition.value) {
@@ -199,28 +200,21 @@ export const Slider = defineComponent({
 			}
 		};
 
-		const handlePointerDragStart = (event: MouseEvent | TouchEvent, type: SliderButtonType) => {
+		const handlePointerDragStart = (point: DragPoint, type: SliderButtonType) => {
 			dragging.value = false;
 			handleSetSliderWidth();
-			startX.value = getPointerX(event);
+			startX.value = point.clientX;
 			startPos.value = ((getPositionRef(type).value * valueRange.value) / 100) + props.min;
 		};
 
-		const handlePointerDrag = (event: MouseEvent | TouchEvent) => {
+		const handlePointerDrag = (point: DragPoint) => {
 			if (!pointerDown.value || !sliderWidth.value || !valueRange.value) return;
 
 			dragging.value = true;
-			currentX.value = getPointerX(event);
+			currentX.value = point.clientX;
 
 			const diff = ((currentX.value - startX.value) / sliderWidth.value) * valueRange.value;
 			changeButtonPosition(startPos.value + diff);
-		};
-
-		const removeDragEvents = () => {
-			window.removeEventListener('mousemove', handlePointerDrag as EventListener);
-			window.removeEventListener('touchmove', handlePointerDrag as EventListener);
-			window.removeEventListener('mouseup', handlePointerDragEnd);
-			window.removeEventListener('touchend', handlePointerDragEnd);
 		};
 
 		const handlePointerDragEnd = () => {
@@ -232,21 +226,25 @@ export const Slider = defineComponent({
 			}
 
 			pointerDown.value = '';
-			removeDragEvents();
 		};
 
-		const handlePointerDown = (event: MouseEvent | TouchEvent, type: SliderButtonType) => {
-			if (props.disabled) return;
+		const handlePointerDown = (point: DragPoint, type: SliderButtonType) => {
+			if (props.disabled) return false;
 
 			pointerDown.value = type;
 			getVisibleRef(type).value = props.showTip !== 'never';
-			handlePointerDragStart(event, type);
-
-			window.addEventListener('mousemove', handlePointerDrag as EventListener);
-			window.addEventListener('touchmove', handlePointerDrag as EventListener);
-			window.addEventListener('mouseup', handlePointerDragEnd);
-			window.addEventListener('touchend', handlePointerDragEnd);
+			handlePointerDragStart(point, type);
+			return true;
 		};
+
+		// 值随拖动即时生效，手势被打断（touchcancel、mouseup 丢失）时与松开同样处理
+		const createDrag = (type: SliderButtonType) => useDrag({
+			start: (_, point) => handlePointerDown(point, type),
+			move: (_, point) => handlePointerDrag(point),
+			end: handlePointerDragEnd
+		});
+		const minDrag = createDrag('min');
+		const maxDrag = createDrag('max');
 
 		const handleFocus = (type: SliderButtonType) => {
 			getVisibleRef(type).value = props.showTip !== 'never';
@@ -306,7 +304,6 @@ export const Slider = defineComponent({
 
 		onBeforeUnmount(() => {
 			slider.value && Resize.off(slider.value, handleSetSliderWidth);
-			removeDragEvents();
 		});
 
 		expose({
@@ -394,8 +391,7 @@ export const Slider = defineComponent({
 						<div
 							style={{ left: `${minPosition.value}%` }}
 							class="vc-slider__btn-wrapper"
-							onTouchstart={(event: TouchEvent) => handlePointerDown(event, 'min')}
-							onMousedown={(event: MouseEvent) => handlePointerDown(event, 'min')}
+							{...minDrag.listeners}
 						>
 							{ renderButton('min') }
 						</div>
@@ -404,8 +400,7 @@ export const Slider = defineComponent({
 								<div
 									style={{ left: `${maxPosition.value}%` }}
 									class="vc-slider__btn-wrapper"
-									onTouchstart={(event: TouchEvent) => handlePointerDown(event, 'max')}
-									onMousedown={(event: MouseEvent) => handlePointerDown(event, 'max')}
+									{...maxDrag.listeners}
 								>
 									{ renderButton('max') }
 								</div>

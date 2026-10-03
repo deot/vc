@@ -3,8 +3,9 @@
 import { Slider, Popover } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { vi } from 'vitest';
+import * as drag from '../../../hooks/__tests__/fixtures/drag';
 import { defineComponent, h, nextTick, ref } from 'vue';
-import { checkLimits, clamp, getOffset, getPointerX } from '../utils';
+import { checkLimits, clamp, getOffset } from '../utils';
 
 const sleep = (ms = 0) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
@@ -29,27 +30,17 @@ const setRect = (el: Element, rect: Partial<DOMRect>) => {
 	});
 };
 
-const mouseDown = (el: Element, clientX: number) => {
-	el.dispatchEvent(new MouseEvent('mousedown', {
-		bubbles: true,
-		cancelable: true,
-		clientX
-	}));
+// 移动与松开发生在滑块之外
+const mouseDown = (el: Element, clientX: number, init: MouseEventInit = {}) => {
+	drag.fireMouse(el, 'mousedown', { clientX, ...init });
 };
 
-const mouseMove = (clientX: number) => {
-	window.dispatchEvent(new MouseEvent('mousemove', {
-		bubbles: true,
-		cancelable: true,
-		clientX
-	}));
+const mouseMove = (clientX: number, init: MouseEventInit = {}) => {
+	drag.fireMouse(document.body, 'mousemove', { clientX, ...init });
 };
 
 const mouseUp = () => {
-	window.dispatchEvent(new MouseEvent('mouseup', {
-		bubbles: true,
-		cancelable: true
-	}));
+	drag.fireMouse(document.body, 'mouseup');
 };
 
 const click = (el: Element, clientX: number) => {
@@ -60,17 +51,8 @@ const click = (el: Element, clientX: number) => {
 	}));
 };
 
-const touch = (el: Element | Window, type: string, clientX: number) => {
-	const event = new Event(type, {
-		bubbles: true,
-		cancelable: true
-	});
-	const key = type === 'touchend' ? 'changedTouches' : 'touches';
-
-	Object.defineProperty(event, key, {
-		value: [{ clientX }]
-	});
-	el.dispatchEvent(event);
+const touch = (el: Element, type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel', clientX: number) => {
+	drag.fireTouch(el, type, { clientX });
 };
 
 const mountControlled = (options: Record<string, any> = {}) => {
@@ -253,6 +235,57 @@ describe('index.ts', () => {
 		wrapper.unmount();
 	});
 
+	it('drag: 只有主键能拖动', async () => {
+		const { wrapper, value, onChange } = mountControlled();
+		const button = wrapper.find('.vc-slider__btn-wrapper').element;
+
+		mouseDown(button, 25, { button: 2, buttons: 2 });
+		mouseMove(75, { buttons: 2 });
+		await flush();
+
+		expect(value.value).toBe(25);
+		expect(onChange).not.toHaveBeenCalled();
+		expect(wrapper.find('.vc-slider__button').classes()).not.toContain('is-dragging');
+
+		wrapper.unmount();
+	});
+
+	it('drag: mouseup 丢失后不再跟手', async () => {
+		const { wrapper, value, onAfterChange } = mountControlled();
+		const button = wrapper.find('.vc-slider__btn-wrapper').element;
+
+		mouseDown(button, 25);
+		mouseMove(50);
+		await flush();
+		expect(value.value).toBe(50);
+
+		// 右键菜单、原生拖拽等吞掉了 mouseup：下一次移动时主键已松开
+		mouseMove(75, { buttons: 0 });
+		await flush();
+		expect(value.value).toBe(50);
+		expect(onAfterChange).toHaveBeenCalledTimes(1);
+		expect(wrapper.find('.vc-slider__button').classes()).not.toContain('is-dragging');
+
+		// 已解绑：之后按着主键移动也不再拖动
+		mouseMove(90);
+		await flush();
+		expect(value.value).toBe(50);
+
+		wrapper.unmount();
+	});
+
+	it('drag: 拖动中卸载后不再响应', async () => {
+		const { wrapper, onChange } = mountControlled();
+		const button = wrapper.find('.vc-slider__btn-wrapper').element;
+
+		mouseDown(button, 25);
+		wrapper.unmount();
+		mouseMove(75);
+		mouseUp();
+
+		expect(onChange).not.toHaveBeenCalled();
+	});
+
 	it('clickable=false: 禁止轨道点击但保留拖动', async () => {
 		const { wrapper, value } = mountControlled({ clickable: false });
 		const button = wrapper.find('.vc-slider__btn-wrapper').element;
@@ -276,8 +309,8 @@ describe('index.ts', () => {
 		const maxButton = wrapper.findAll('.vc-slider__btn-wrapper')[1].element;
 
 		touch(maxButton, 'touchstart', 50);
-		touch(window, 'touchmove', 80);
-		touch(window, 'touchend', 80);
+		touch(maxButton, 'touchmove', 80);
+		touch(maxButton, 'touchend', 80);
 		await flush();
 
 		expect(value.value).toEqual([25, 80]);
@@ -433,11 +466,34 @@ describe('index.ts', () => {
 		const button = wrapper.find('.vc-slider__btn-wrapper').element;
 
 		touch(button, 'touchstart', 25);
-		touch(window, 'touchmove', 75);
-		touch(window, 'touchend', 75);
+		touch(button, 'touchmove', 75);
+		touch(button, 'touchend', 75);
 		await flush();
 
 		expect(value.value).toBe(75);
+
+		wrapper.unmount();
+	});
+
+	it('touch: touchcancel 结束拖动', async () => {
+		const { wrapper, value, onAfterChange } = mountControlled();
+		const button = wrapper.find('.vc-slider__btn-wrapper').element;
+
+		touch(button, 'touchstart', 25);
+		touch(button, 'touchmove', 60);
+		await flush();
+		expect(value.value).toBe(60);
+
+		// 系统手势等打断了触摸：不会再有 touchend
+		touch(button, 'touchcancel', 60);
+		await flush();
+		expect(onAfterChange).toHaveBeenCalledTimes(1);
+		expect(wrapper.find('.vc-slider__button').classes()).not.toContain('is-dragging');
+
+		// 结束后的移动不再拖动
+		touch(button, 'touchmove', 90);
+		await flush();
+		expect(value.value).toBe(60);
 
 		wrapper.unmount();
 	});
@@ -477,14 +533,5 @@ describe('index.ts', () => {
 		expect(clamp(Number.NaN, 1, 5)).toBe(1);
 		expect(checkLimits([8, 3], { min: 0, max: 10 })).toEqual([8, 8]);
 		expect(getOffset(75.2, 0.1)).toBe(0);
-
-		const mouseEvent = new MouseEvent('mousemove', { clientX: 12 });
-		expect(getPointerX(mouseEvent)).toBe(12);
-
-		const touchEnd = new Event('touchend') as TouchEvent;
-		Object.defineProperty(touchEnd, 'changedTouches', {
-			value: [{ clientX: 34 }]
-		});
-		expect(getPointerX(touchEnd)).toBe(34);
 	});
 });

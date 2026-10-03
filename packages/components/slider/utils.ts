@@ -20,15 +20,6 @@ export const checkLimits = (value: SliderValue, options: SliderLimits): [number,
 	return [min, max];
 };
 
-export const getPointerX = (e: MouseEvent | TouchEvent) => {
-	if (e.type.includes('touch')) {
-		const touch = (e as TouchEvent).touches?.[0] || (e as TouchEvent).changedTouches?.[0];
-		return touch?.clientX || 0;
-	}
-
-	return (e as MouseEvent).clientX;
-};
-
 export const getOffset = (position: number, step: number) => {
 	const stepValue = Math.abs(step) || 1;
 	let offset = position % stepValue;
