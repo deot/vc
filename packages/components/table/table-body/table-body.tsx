@@ -112,7 +112,10 @@ export const TableBody = defineComponent({
 			// 传元素而非 selector：dock 随 affix 切换重建时跟随新锚点，也不会匹配到嵌套表格的锚点
 			const fluid = !table.props.height && !table.props.maxHeight;
 			const barAnchor = table.barAnchor.value;
+			// 固定高度下轨道挂在表格根节点：横向轨道上移到合计行上方（合计行有 -1px 的上外边距），与流式高度一致
+			const { footerHeight } = layout.states;
 			return {
+				trackOffsetX: [0, 0, fluid ? 0 : Math.max(footerHeight - 1, 0), 0],
 				barTo: fluid ? barAnchor : `.${table.tableId}`,
 				// 悬停整个表格（含已吸底的 dock）时显示滚动条
 				barTrigger: `.${table.tableId}`,
