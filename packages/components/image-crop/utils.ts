@@ -81,20 +81,6 @@ export const isBlob = (source: unknown): source is Blob => {
 	return !IS_SERVER && typeof Blob !== 'undefined' && source instanceof Blob;
 };
 
-export const getPointer = (event: MouseEvent | TouchEvent) => {
-	if ('targetTouches' in event && event.targetTouches.length) {
-		return {
-			x: event.targetTouches[0].pageX,
-			y: event.targetTouches[0].pageY
-		};
-	}
-
-	return {
-		x: (event as MouseEvent).clientX,
-		y: (event as MouseEvent).clientY
-	};
-};
-
 export const drawRoundedRect = (
 	context: CanvasRenderingContext2D,
 	x: number,

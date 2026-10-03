@@ -4,11 +4,12 @@ import { computed, defineComponent, onBeforeUnmount, onMounted, ref, shallowRef,
 import { canvasToImage } from '@deot/helper-utils';
 import { Resize } from '@deot/helper-resize';
 import { IS_SERVER } from '@deot/vc-shared';
+import { useDrag } from '@deot/vc-hooks';
+import type { DragPoint } from '@deot/vc-hooks';
 import { props as imageCropProps } from './image-crop-props';
 import {
 	appendTimestamp,
 	drawRoundedRect,
-	getPointer,
 	isBlob,
 	isDataURL,
 	normalizeBorder,
@@ -27,12 +28,6 @@ import type {
 } from './image-crop-props';
 
 const COMPONENT_NAME = 'vc-image-crop';
-
-const draggableEvents = {
-	start: ['touchstart', 'mousedown'],
-	move: ['touchmove', 'mousemove'],
-	end: ['touchend', 'touchcancel', 'mouseup']
-} as const;
 
 export const ImageCrop = defineComponent({
 	name: COMPONENT_NAME,
@@ -397,12 +392,13 @@ export const ImageCrop = defineComponent({
 		};
 
 		const handleStart = (event: MouseEvent | TouchEvent) => {
-			if ('touches' in event && event.touches.length > 1) return;
+			if ('touches' in event && event.touches.length > 1) return false;
 
 			event.preventDefault();
 			dragging.value = true;
 			lastX.value = null;
 			lastY.value = null;
+			return true;
 		};
 
 		const handleEnd = (event?: MouseEvent | TouchEvent) => {
@@ -412,11 +408,11 @@ export const ImageCrop = defineComponent({
 			emit('mouseup', event);
 		};
 
-		const handleMove = (event: MouseEvent | TouchEvent) => {
+		const handleMove = (event: MouseEvent | TouchEvent, point: DragPoint) => {
 			if (!dragging.value) return;
 			if ('touches' in event && event.touches.length > 1) return;
 
-			const pointer = getPointer(event);
+			const pointer = { x: point.clientX, y: point.clientY };
 
 			if (lastX.value !== null && lastY.value !== null) {
 				const diffX = lastX.value - pointer.x;
@@ -463,6 +459,13 @@ export const ImageCrop = defineComponent({
 			lastY.value = pointer.y;
 			emit('mousemove', event);
 		};
+
+		// 位置随拖动即时生效，手势被打断（touchcancel、mouseup 丢失）时与松开同样处理
+		const drag = useDrag({
+			start: handleStart,
+			move: handleMove,
+			end: handleEnd
+		});
 
 		const handleDragOver = (event: DragEvent) => {
 			if (!props.droppable) return;
@@ -537,26 +540,10 @@ export const ImageCrop = defineComponent({
 
 			refresh();
 			loadImage(props.src);
-
-			draggableEvents.move.forEach((eventName) => {
-				document.addEventListener(eventName, handleMove as EventListener, false);
-			});
-			draggableEvents.end.forEach((eventName) => {
-				document.addEventListener(eventName, handleEnd as EventListener, false);
-			});
 			Resize.on(canvas.value, refreshElementSize);
 		});
 
 		onBeforeUnmount(() => {
-			/* istanbul ignore next -- SSR guard. */
-			if (IS_SERVER) return;
-
-			draggableEvents.move.forEach((eventName) => {
-				document.removeEventListener(eventName, handleMove as EventListener, false);
-			});
-			draggableEvents.end.forEach((eventName) => {
-				document.removeEventListener(eventName, handleEnd as EventListener, false);
-			});
 			canvas.value && Resize.off(canvas.value, refreshElementSize);
 		});
 
@@ -579,8 +566,7 @@ export const ImageCrop = defineComponent({
 					draggable={props.droppable}
 					onDragover={handleDragOver}
 					onDrop={handleDrop}
-					onMousedown={handleStart}
-					onTouchstart={handleStart}
+					{...drag.listeners}
 				/>
 			);
 		};

@@ -6,6 +6,7 @@ import { ImageCrop, MImageCrop } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as drag from '../../../hooks/__tests__/fixtures/drag';
 
 vi.mock('@deot/helper-utils', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@deot/helper-utils')>();
@@ -99,26 +100,9 @@ const flush = async () => {
 	}
 };
 
-const createTouchEvent = (
-	type: string,
-	touches: Array<{ pageX: number; pageY: number }>,
-	targetTouches = touches
-) => {
-	const event = new Event(type, {
-		bubbles: true,
-		cancelable: true
-	});
-
-	Object.defineProperty(event, 'touches', {
-		configurable: true,
-		value: touches
-	});
-	Object.defineProperty(event, 'targetTouches', {
-		configurable: true,
-		value: targetTouches
-	});
-
-	return event;
+// 移动发生在画布之外
+const mouseMove = (clientX: number, clientY: number, init: MouseEventInit = {}) => {
+	drag.fireMouse(document, 'mousemove', { clientX, clientY, ...init });
 };
 
 beforeEach(() => {
@@ -408,8 +392,8 @@ describe('image-crop', () => {
 			clientX: 100,
 			clientY: 100
 		});
-		document.dispatchEvent(new MouseEvent('mousemove', { clientX: 90, clientY: 90 }));
-		document.dispatchEvent(new MouseEvent('mousemove', { clientX: 80, clientY: 70 }));
+		mouseMove(90, 90);
+		mouseMove(80, 70);
 		document.dispatchEvent(new MouseEvent('mouseup'));
 		await flush();
 
@@ -436,8 +420,8 @@ describe('image-crop', () => {
 			clientX: 100,
 			clientY: 100
 		});
-		document.dispatchEvent(new MouseEvent('mousemove', { clientX: 90, clientY: 90 }));
-		document.dispatchEvent(new MouseEvent('mousemove', { clientX: 80, clientY: 70 }));
+		mouseMove(90, 90);
+		mouseMove(80, 70);
 		document.dispatchEvent(new MouseEvent('mouseup'));
 		await flush();
 
@@ -454,6 +438,38 @@ describe('image-crop', () => {
 				src: 'data:image/png;base64,source',
 				rotate: -90,
 				outputSize: [400, 300]
+			},
+			attachTo: document.body
+		});
+		await flush();
+
+		MockImage.instances[0].triggerLoad(800, 600);
+		await flush();
+
+		// 两根手指同时按下：不进入拖动
+		drag.fireTouch(wrapper.element, 'touchstart', [{ clientX: 0, clientY: 0 }, { clientX: 1, clientY: 1 }]);
+		drag.fireTouch(wrapper.element, 'touchmove', [{ clientX: 90, clientY: 90 }, { clientX: 91, clientY: 91 }]);
+		drag.fireTouch(wrapper.element, 'touchend', [{ clientX: 90, clientY: 90 }, { clientX: 91, clientY: 91 }]);
+		await flush();
+		expect(wrapper.emitted('mousemove')).toBeUndefined();
+
+		drag.fireTouch(wrapper.element, 'touchstart', { clientX: 100, clientY: 100 });
+		drag.fireTouch(wrapper.element, 'touchmove', { clientX: 90, clientY: 90 });
+		drag.fireTouch(wrapper.element, 'touchmove', { clientX: 80, clientY: 70 });
+		drag.fireTouch(wrapper.element, 'touchend', { clientX: 80, clientY: 70 });
+		await flush();
+
+		expect(wrapper.emitted('position-change')?.length).toBeGreaterThan(0);
+		expect(wrapper.emitted('mouseup')).toHaveLength(1);
+
+		wrapper.unmount();
+	});
+
+	it('only the primary button starts a drag', async () => {
+		const wrapper = mount(ImageCrop, {
+			props: {
+				src: 'data:image/png;base64,source',
+				outputSize: [400, 300]
 			}
 		});
 		await flush();
@@ -461,22 +477,56 @@ describe('image-crop', () => {
 		MockImage.instances[0].triggerLoad(800, 600);
 		await flush();
 
-		wrapper.element.dispatchEvent(createTouchEvent('touchstart', [
-			{ pageX: 0, pageY: 0 },
-			{ pageX: 1, pageY: 1 }
-		]));
-		document.dispatchEvent(createTouchEvent('touchmove', [{ pageX: 90, pageY: 90 }]));
+		await wrapper.trigger('mousedown', {
+			clientX: 100,
+			clientY: 100,
+			button: 2
+		});
+		mouseMove(90, 90, { buttons: 2 });
+		mouseMove(80, 70, { buttons: 2 });
 		await flush();
+
+		// 未进入拖动
+		expect((wrapper.element as HTMLElement).style.cursor).toBe('grab');
+		expect(wrapper.emitted('position-change')).toBeUndefined();
 		expect(wrapper.emitted('mousemove')).toBeUndefined();
 
-		wrapper.element.dispatchEvent(createTouchEvent('touchstart', [{ pageX: 100, pageY: 100 }]));
-		document.dispatchEvent(createTouchEvent('touchmove', [{ pageX: 90, pageY: 90 }]));
-		document.dispatchEvent(createTouchEvent('touchmove', [{ pageX: 80, pageY: 70 }]));
-		document.dispatchEvent(createTouchEvent('touchend', []));
+		wrapper.unmount();
+	});
+
+	it('ends the drag when the primary button is no longer pressed without a mouseup', async () => {
+		const wrapper = mount(ImageCrop, {
+			props: {
+				src: 'data:image/png;base64,source',
+				outputSize: [400, 300]
+			}
+		});
 		await flush();
 
-		expect(wrapper.emitted('position-change')?.length).toBeGreaterThan(0);
+		MockImage.instances[0].triggerLoad(800, 600);
+		await flush();
+
+		await wrapper.trigger('mousedown', {
+			clientX: 100,
+			clientY: 100
+		});
+		mouseMove(90, 90);
+		mouseMove(80, 70);
+		await flush();
+		const moved = wrapper.emitted('position-change')!.length;
+		expect((wrapper.element as HTMLElement).style.cursor).toBe('grabbing');
+
+		// 右键菜单、原生拖拽等吞掉了 mouseup：下一次移动时主键已松开
+		mouseMove(60, 50, { buttons: 0 });
+		await flush();
 		expect(wrapper.emitted('mouseup')).toHaveLength(1);
+		expect((wrapper.element as HTMLElement).style.cursor).toBe('grab');
+		expect(wrapper.emitted('position-change')).toHaveLength(moved);
+
+		// 已解绑：之后按着主键移动也不再拖动
+		mouseMove(40, 30);
+		await flush();
+		expect(wrapper.emitted('position-change')).toHaveLength(moved);
 
 		wrapper.unmount();
 	});
@@ -626,20 +676,26 @@ describe('image-crop', () => {
 		wrapper.unmount();
 	});
 
-	it('registers Resize and document listeners and removes them on unmount', async () => {
+	it('registers Resize, tracks the document only while dragging, and cleans up on unmount', async () => {
 		const addSpy = vi.spyOn(document, 'addEventListener');
 		const removeSpy = vi.spyOn(document, 'removeEventListener');
+		const tracked = (calls: any[][]) => calls.filter(([type]) => type === 'mousemove' || type === 'mouseup');
 		const wrapper = mount(ImageCrop);
 		await flush();
 
 		expect(Resize.on).toHaveBeenCalledTimes(1);
-		expect(addSpy).toHaveBeenCalledWith('mousemove', expect.any(Function), false);
-		expect(addSpy).toHaveBeenCalledWith('mouseup', expect.any(Function), false);
+		// 未拖动时不监听 document
+		expect(tracked(addSpy.mock.calls)).toHaveLength(0);
+
+		await wrapper.trigger('mousedown', { clientX: 100, clientY: 100 });
+		const added = tracked(addSpy.mock.calls);
+		expect(added.map(([type]) => type).sort()).toEqual(['mousemove', 'mouseup']);
 
 		wrapper.unmount();
 
 		expect(Resize.off).toHaveBeenCalledTimes(1);
-		expect(removeSpy).toHaveBeenCalledWith('mousemove', expect.any(Function), false);
-		expect(removeSpy).toHaveBeenCalledWith('mouseup', expect.any(Function), false);
+		added.forEach(([type, listener]) => {
+			expect(removeSpy).toHaveBeenCalledWith(type, listener);
+		});
 	});
 });
