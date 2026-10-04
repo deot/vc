@@ -11,7 +11,7 @@ export const props = {
 		type: Array as PropType<PickerSource>,
 		default: () => []
 	},
-	cols: {
+	columns: {
 		type: Number,
 		default: 1
 	},

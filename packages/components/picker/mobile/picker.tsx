@@ -62,7 +62,7 @@ export const Picker = defineComponent({
 				numerable: props.numerable,
 				separator: props.separator,
 				nullValue: props.nullValue,
-				max: props.cols
+				max: props.columns
 			}) as PickerModelValue;
 
 			emit('update:modelValue', value, label, data);
@@ -79,7 +79,7 @@ export const Picker = defineComponent({
 
 				pickerInstance.value = PickerPortal.popup({
 					data: source.value,
-					cols: props.cols,
+					columns: props.columns,
 					cascader: props.cascader,
 					itemStyle: props.itemStyle,
 					title: props.title,
@@ -101,7 +101,7 @@ export const Picker = defineComponent({
 							numerable: props.numerable,
 							separator: props.separator,
 							nullValue: props.nullValue,
-							max: props.cols
+							max: props.columns
 						}) as PickerModelValue;
 
 						currentValue.value = next;

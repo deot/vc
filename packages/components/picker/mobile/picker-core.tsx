@@ -25,7 +25,7 @@ const viewKeys = [
 	'modelValue',
 	'data',
 	'itemStyle',
-	'cols',
+	'columns',
 	'cascader',
 	'renderLabel',
 	'separator',
@@ -104,7 +104,7 @@ export const PickerCore = defineComponent({
 				numerable: props.numerable,
 				separator: props.separator,
 				nullValue: props.nullValue,
-				max: props.cols
+				max: props.columns
 			}) as PickerModelValue;
 			const { label, data } = getSelectedData(value, props.data);
 
@@ -135,7 +135,7 @@ export const PickerCore = defineComponent({
 					<PickerView
 						modelValue={currentValue.value}
 						data={props.data}
-						cols={props.cols}
+						columns={props.columns}
 						itemStyle={props.itemStyle}
 						cascader={props.cascader}
 						allowDispatch={false}

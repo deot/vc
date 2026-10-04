@@ -2439,6 +2439,7 @@ describe('Table virtual + scroll & delay', () => {
 					'overscan': 10,
 					'data': [],
 					'fill': false,
+					'columns': 3,
 					'disabled': false,
 					'estimateSize': 1,
 					onScroll
@@ -2457,6 +2458,8 @@ describe('Table virtual + scroll & delay', () => {
 		// 保留键不被覆盖
 		expect(list.props('data').length).toBe(20);
 		expect(list.props('fill')).toBe(true);
+		expect(list.props('columns')).toBe(1);
+		expect((list.vm as any).$.exposed.store.props.columns).toBe(1);
 		expect(list.props('disabled')).toBe(true);
 		expect(list.props('estimateSize')).toBeUndefined();
 		list.vm.$emit('scroll', { target: {} });

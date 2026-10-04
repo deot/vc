@@ -165,16 +165,16 @@ onMounted(() => {
 
 ### 多列瀑布流
 
-`cols` 决定列数，`gap` 决定列间距；卡片自身的下边距负责纵向间隔。
+`columns` 决定列数，`gap` 决定列间距；卡片自身的下边距负责纵向间隔。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
 	<div class="controls">
-		<Button @click="handleColumns">切换为 {{ cols === 2 ? 3 : 2 }} 列</Button>
+		<Button @click="handleColumns">切换为 {{ columns === 2 ? 3 : 2 }} 列</Button>
 	</div>
-	<RecycleList class="list" :data="data" :cols="cols" :gap="12" disabled>
+	<RecycleList class="list" :data="data" :columns="columns" :gap="12" disabled>
 		<template #default="{ row }">
 			<article class="card" :style="{ minHeight: `${row.height}px` }">
 				<strong>卡片 {{ row.id + 1 }}</strong>
@@ -187,9 +187,9 @@ onMounted(() => {
 import { ref } from 'vue';
 import { Button, RecycleList } from '@deot/vc';
 
-const cols = ref(2);
+const columns = ref(2);
 const data = Array.from({ length: 60 }, (_, id) => ({ id, height: 100 + id % 4 * 30 }));
-const handleColumns = () => { cols.value = cols.value === 2 ? 3 : 2; };
+const handleColumns = () => { columns.value = columns.value === 2 ? 3 : 2; };
 </script>
 <style scoped>
 .list {
@@ -718,7 +718,7 @@ const store = new RecycleListStore({
 | overscan | 视口上下（横向时左右）额外预渲染距离，单位 px | `number` | - | `50` |
 | threshold | 距离列表加载边缘小于等于该值时触发加载，单位 px | `number` | - | `100` |
 | loadData | 获取更多数据，签名为 `({ page, loaded }) => response` | `Function` | - | `() => false` |
-| cols | 多列数量；不定高时支持瀑布流 | `number` | - | `1` |
+| columns | 多列数量；不定高时支持瀑布流 | `number` | - | `1` |
 | gap | 多列间距 | `number` | - | `0` |
 | inverted | 是否倒置 | `boolean` | - | `false` |
 | lazyTail | 是否延迟展示「加载方向末端」的 slot，直到列表到达末尾（远程全部加载完；`disabled` 时为本地数据全部构建完）；末端随 `inverted` 翻转 | `boolean` | - | `false` |
@@ -790,4 +790,4 @@ const store = new RecycleListStore({
 
 `MRecycleList` 是 `RecycleList` 的别名，属性、事件、插槽和方法一致。`RecycleListStore` 与 `RecycleListLoadState` 可从 `@deot/vc` 导入。
 
-使用 `new RecycleListStore({ loadData, cols, gap })` 创建共享实例并传给多个列表。传入 `store` 后，`batchCount`、`bufferCount`、`estimateSize`、`inverted`、`cols`、`gap`、`loadData` 由 Store 接管，列表对应属性不再同步到 Store。
+使用 `new RecycleListStore({ loadData, columns, gap })` 创建共享实例并传给多个列表。传入 `store` 后，`batchCount`、`bufferCount`、`estimateSize`、`inverted`、`columns`、`gap`、`loadData` 由 Store 接管，列表对应属性不再同步到 Store。

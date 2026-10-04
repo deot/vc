@@ -13,7 +13,7 @@ import { Scroll } from './scroll';
 /**
  * 被 store 接管的 props：共享同一 Store 的多个实例以 store.props 为准，而非各自的组件 props
  */
-export const STORE_PROP_KEYS = ['batchCount', 'bufferCount', 'estimateSize', 'inverted', 'cols', 'gap', 'loadData'] as const;
+export const STORE_PROP_KEYS = ['batchCount', 'bufferCount', 'estimateSize', 'inverted', 'columns', 'gap', 'loadData'] as const;
 
 /**
  * 按组件 props 定义生成带默认值的响应式 store.props

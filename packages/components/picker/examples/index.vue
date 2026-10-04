@@ -3,7 +3,7 @@
 		<Picker
 			v-model="value"
 			:data="groupData"
-			:cols="3"
+			:columns="3"
 			label="所在分组"
 			@change="handleChange"
 		/>
@@ -14,7 +14,7 @@
 		<Picker
 			v-model="stringValue"
 			:data="groupData"
-			:cols="3"
+			:columns="3"
 			label="字符串值"
 		/>
 		<div class="vcm-picker-example__value">
@@ -25,7 +25,7 @@
 			v-model="stringArrayValue"
 			:data="seasonData"
 			:cascader="false"
-			:cols="2"
+			:columns="2"
 			separator="|"
 			label="字符串数组"
 		/>
@@ -36,7 +36,7 @@
 		<Picker
 			v-model="asyncValue"
 			:data="asyncData"
-			:cols="3"
+			:columns="3"
 			:load-data="loadData"
 			label="异步分组"
 		>
@@ -54,7 +54,7 @@
 			v-model="seasonValue"
 			:data="seasonData"
 			:cascader="false"
-			:cols="2"
+			:columns="2"
 			extra="选择年份和季节"
 			label="季节"
 		/>
@@ -66,7 +66,7 @@
 			<PickerView
 				v-model="viewValue"
 				:data="groupData"
-				:cols="3"
+				:columns="3"
 				@picker-change="handlePickerChange"
 			/>
 		</div>
@@ -162,7 +162,7 @@ const handleOpen = () => {
 	MPicker.open({
 		data: groupData,
 		value: value.value,
-		cols: 3,
+		columns: 3,
 		onOk: (next) => {
 			value.value = next;
 		}

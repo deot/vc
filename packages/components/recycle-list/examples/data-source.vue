@@ -14,7 +14,7 @@
 			<RecycleList
 				class="recycle-data-source__list"
 				pullable
-				:cols="5"
+				:columns="5"
 				:disabled="controls.disabled === 'on'"
 				:data="dataSource"
 				:load-data="loadData"

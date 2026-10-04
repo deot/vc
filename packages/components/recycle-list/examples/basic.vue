@@ -19,7 +19,7 @@
 				:pullable="!isInverted"
 				:inverted="isInverted"
 				:vertical="isVertical"
-				:cols="isVertical ? controls.cols : 1"
+				:columns="isVertical ? controls.columns : 1"
 				:gap="10"
 				:load-data="loadData"
 			>
@@ -53,7 +53,7 @@ import { Select } from '../../select';
 // 对照项：每项一个 Select
 const CONTROLS = [
 	{ key: 'direction', label: '方向', data: [{ value: 'vertical', label: '纵向' }, { value: 'horizontal', label: '横向' }] },
-	{ key: 'cols', label: '列数（纵向）', data: [{ value: 1, label: '1 列' }, { value: 3, label: '3 列（瀑布流）' }, { value: 5, label: '5 列（瀑布流）' }] },
+	{ key: 'columns', label: '列数（纵向）', data: [{ value: 1, label: '1 列' }, { value: 3, label: '3 列（瀑布流）' }, { value: 5, label: '5 列（瀑布流）' }] },
 	{ key: 'order', label: '顺序', data: [{ value: 'normal', label: '正序（可下拉刷新）' }, { value: 'inverted', label: '倒序（inverted）' }] },
 	{ key: 'pageSize', label: '每页条数', data: [{ value: 30, label: '30 条 × 5 页' }, { value: 3, label: '3 条 × 20 页（不足一屏）' }] }
 ];

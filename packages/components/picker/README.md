@@ -8,7 +8,7 @@
 
 ### 基础用法
 
-联动数据通过 `children` 描述层级，`cols` 指定显示列数。拖动上级列会重建下级列；点击取消保留原值，点击确定才更新 `Picker` 的 `modelValue`。
+联动数据通过 `children` 描述层级，`columns` 指定显示列数。拖动上级列会重建下级列；点击取消保留原值，点击确定才更新 `Picker` 的 `modelValue`。
 
 :::playground
 <!--
@@ -22,7 +22,7 @@
 		<Picker
 			v-model="value"
 			:data="data"
-			:cols="2"
+			:columns="2"
 			label="分组"
 			title="选择地区"
 			@visible-change="visible => visible && handleVisibleChange(true)"
@@ -78,7 +78,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 ```vue
 <template>
 	<div class="demo">
-		<PickerView v-model="value" :data="data" :cols="2" :cascader="false" separator="|" @picker-change="handlePickerChange" />
+		<PickerView v-model="value" :data="data" :columns="2" :cascader="false" separator="|" @picker-change="handlePickerChange" />
 		<p>字符串值：{{ value }}</p>
 		<p>{{ lastChange }}</p>
 	</div>
@@ -309,7 +309,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | --- | --- | --- | --- | --- |
 | modelValue | 选中值，支持 v-model | `PickerModelValue` | - | `[]` |
 | data | 联动树或独立列数据 | `PickerSource` | - | `[]` |
-| cols | 列数 | `number` | - | `1` |
+| columns | 列数 | `number` | - | `1` |
 | cascader | 是否联动下级列 | `boolean` | - | `true` |
 | itemStyle | 每个选项的行内样式；改变高度时应同时设置行高变量 | `Record<string, any>` | - | - |
 | loadData | 数据为空时点击执行；需更新 data | `() => Promise<any> \| any` | - | - |
@@ -352,7 +352,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | Picker.View / MPicker.View | PickerView 的静态组件别名 | - | - |
 | Picker.Popup / MPicker.Popup | PickerPopup 的静态组件别名 | - | - |
 
-`open(options)` 支持 `modelValue`（兼容 `value`）、`data`、`cols`、`cascader`、`itemStyle`、`renderLabel`、`separator`、`numerable`、`nullValue`、`title`、`cancelText`、`okText`、`showToolbar` 和 `visible`（默认 `true`）。`onOk(value, labels, items)`、`onCancel()`、`onChange(value, labels, items)`、`onPickerChange(value, index, row)`、`onVisibleChange(visible)`、`onClose()` 对应弹层事件。该方法不执行 `loadData`，也没有触发区域的 `label`、`extra` 和 `formatter`。
+`open(options)` 支持 `modelValue`（兼容 `value`）、`data`、`columns`、`cascader`、`itemStyle`、`renderLabel`、`separator`、`numerable`、`nullValue`、`title`、`cancelText`、`okText`、`showToolbar` 和 `visible`（默认 `true`）。`onOk(value, labels, items)`、`onCancel()`、`onChange(value, labels, items)`、`onPickerChange(value, index, row)`、`onVisibleChange(visible)`、`onClose()` 对应弹层事件。该方法不执行 `loadData`，也没有触发区域的 `label`、`extra` 和 `formatter`。
 
 ### PickerView 属性
 
@@ -362,7 +362,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | --- | --- | --- | --- | --- |
 | modelValue | 当前值，支持 v-model | `PickerModelValue` | - | `[]` |
 | data | 联动树或独立列数据 | `PickerSource` | - | `[]` |
-| cols | 列数，渲染时最少一列 | `number` | - | `1` |
+| columns | 列数，渲染时最少一列 | `number` | - | `1` |
 | cascader | 是否联动下级列 | `boolean` | - | `true` |
 | itemStyle | 每个选项的行内样式 | `Record<string, any>` | - | - |
 | renderLabel | 自定义选项渲染，接收含 label、row、index 的对象 | `Render` | - | - |

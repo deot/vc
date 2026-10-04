@@ -126,7 +126,7 @@ describe('index.ts', () => {
 			<Picker
 				modelValue={['zhejiang', 'hangzhou', 'xihu']}
 				data={regionData}
-				cols={3}
+				columns={3}
 				label="地区"
 			/>
 		));
@@ -142,7 +142,7 @@ describe('index.ts', () => {
 
 	it('renders default slot with label scope', async () => {
 		const wrapper = mount(() => (
-			<Picker modelValue={['zhejiang', 'hangzhou', 'xihu']} data={regionData} cols={3}>
+			<Picker modelValue={['zhejiang', 'hangzhou', 'xihu']} data={regionData} columns={3}>
 				{{
 					default: ({ label }: any) => <span class="slot-label">{label}</span>
 				}}
@@ -212,7 +212,7 @@ describe('PickerView', () => {
 			<PickerView
 				v-model={value.value}
 				data={regionData}
-				cols={3}
+				columns={3}
 				onChange={onChange}
 				onPickerChange={onPickerChange}
 			/>
@@ -244,7 +244,7 @@ describe('PickerView', () => {
 				v-model={value.value}
 				data={seasonData}
 				cascader={false}
-				cols={2}
+				columns={2}
 				onChange={onChange}
 			/>
 		), { attachTo: document.body });
@@ -272,7 +272,7 @@ describe('PickerView', () => {
 				v-model={value.value}
 				data={seasonData}
 				cascader={false}
-				cols={2}
+				columns={2}
 				separator="|"
 				onChange={onChange}
 			/>
@@ -301,7 +301,7 @@ describe('PickerView', () => {
 			<PickerView
 				data={seasonData}
 				cascader={false}
-				cols={2}
+				columns={2}
 				renderLabel={renderLabel}
 			/>
 		), {
@@ -325,7 +325,7 @@ describe('PickerView', () => {
 	it('updates columns when data changes and handles empty columns', async () => {
 		const data = ref<any[]>([[]]);
 		const wrapper = mount(() => (
-			<PickerView data={data.value} cascader={false} cols={1} />
+			<PickerView data={data.value} cascader={false} columns={1} />
 		));
 		await flush();
 
@@ -557,7 +557,7 @@ describe('Picker locale', () => {
 	});
 
 	it('updates the placeholder and an open portal when locale changes', async () => {
-		const wrapper = mount(Picker, { attachTo: document.body, props: { data: regionData, cols: 3 } });
+		const wrapper = mount(Picker, { attachTo: document.body, props: { data: regionData, columns: 3 } });
 		expect(wrapper.text()).toContain('请选择');
 		await wrapper.trigger('click');
 		await flush();
@@ -694,7 +694,7 @@ describe('PickerCore', () => {
 				visible: false,
 				data: regionData,
 				modelValue: ['zhejiang', 'hangzhou', 'xihu'],
-				cols: 3
+				columns: 3
 			}
 		});
 		await flush();
@@ -723,7 +723,7 @@ describe('PickerCore', () => {
 			props: {
 				data: regionData,
 				modelValue: ['zhejiang', 'hangzhou', 'xihu'],
-				cols: 3
+				columns: 3
 			}
 		});
 		await flush();
@@ -756,7 +756,7 @@ describe('Picker integration', () => {
 			<Picker
 				v-model={value.value}
 				data={regionData}
-				cols={3}
+				columns={3}
 				onOk={onOk}
 				onChange={onChange}
 				onPickerChange={onPickerChange}
@@ -794,7 +794,7 @@ describe('Picker integration', () => {
 			<Picker
 				v-model={value.value}
 				data={regionData}
-				cols={3}
+				columns={3}
 				onOk={onOk}
 				onChange={onChange}
 			/>
@@ -827,7 +827,7 @@ describe('Picker integration', () => {
 	it('emits cancel from trigger popup', async () => {
 		const onCancel = vi.fn();
 		const wrapper = mount(() => (
-			<Picker data={regionData} cols={3} onCancel={onCancel} />
+			<Picker data={regionData} columns={3} onCancel={onCancel} />
 		), { attachTo: document.body });
 		await flush();
 
@@ -847,7 +847,7 @@ describe('Picker integration', () => {
 			data.value = regionData;
 		});
 		const wrapper = mount(() => (
-			<Picker data={data.value} cols={3} loadData={loadData} />
+			<Picker data={data.value} columns={3} loadData={loadData} />
 		), { attachTo: document.body });
 		await flush();
 
@@ -865,7 +865,7 @@ describe('Picker integration', () => {
 		const leaf = MPicker.open({
 			data: regionData,
 			value: ['zhejiang', 'hangzhou', 'xihu'],
-			cols: 3,
+			columns: 3,
 			onOk
 		});
 		await flush();
@@ -889,7 +889,7 @@ describe('Picker integration', () => {
 			data: regionData,
 			value: 'zhejiang/hangzhou/xihu',
 			separator: '/',
-			cols: 3,
+			columns: 3,
 			onOk
 		});
 		await flush();

@@ -231,7 +231,7 @@ export class Layout {
 	 */
 	refresh() {
 		const { props, states, position } = this.store;
-		const { inverted, cols } = props;
+		const { inverted, columns: cols } = props;
 		const rebuildData = toRaw(states.rebuildData);
 		const length = rebuildData.length;
 

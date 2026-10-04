@@ -101,17 +101,17 @@ export class BaseWatcher {
 		}),
 
 		columnSize: computed(() => {
-			if (this.props.cols === 1) return;
-			return `${100 / this.props.cols}%`;
+			if (this.props.columns === 1) return;
+			return `${100 / this.props.columns}%`;
 		}),
 
 		columnOffsetGap: computed(() => {
-			return this.props.gap * (this.props.cols - 1) / this.props.cols;
+			return this.props.gap * (this.props.columns - 1) / this.props.columns;
 		}),
 
 		// 每列的 padding 之和恒为 columnOffsetGap，相邻两列"前尾 + 后头"恰为 gap
 		columns: computed(() => {
-			const v = Array.from({ length: this.props.cols }).map((_, index) => ({ index, offset: [0, 0] }));
+			const v = Array.from({ length: this.props.columns }).map((_, index) => ({ index, offset: [0, 0] }));
 			v[0].offset = [0, this.states.columnOffsetGap];
 			for (let i = 1; i < v.length; i++) {
 				const pre = v[i - 1].offset;
@@ -125,7 +125,7 @@ export class BaseWatcher {
 		firstItemIndex: 0,
 		lastItemIndex: 0,
 		data: computed(() => {
-			const base = Array.from({ length: this.props.cols }).map(() => [] as RecycleListItemNodeRaw[]);
+			const base = Array.from({ length: this.props.columns }).map(() => [] as RecycleListItemNodeRaw[]);
 			return this.states.rebuildData
 				.slice(
 					Math.max(0, this.states.firstItemIndex - this.props.bufferCount),

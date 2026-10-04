@@ -46,7 +46,7 @@ export const props = {
 		default: () => false
 	},
 
-	cols: {
+	columns: {
 		type: Number,
 		default: 1
 	},

@@ -164,10 +164,10 @@ describe('index.ts', () => {
 			expect(pull.style.marginTop).toBe('');
 		});
 
-		it('renders multiple columns when cols > 1', async () => {
+		it('renders multiple columns when columns > 1', async () => {
 			const wrapper = mount(() => (
 				<RecycleList
-					cols={3}
+					columns={3}
 					data={buildItems(6)}
 				>
 					{{ default: ({ row }: any) => (
@@ -189,7 +189,7 @@ describe('index.ts', () => {
 			const wrapper = mount(() => (
 				<RecycleList
 					vertical={false}
-					cols={3}
+					columns={3}
 					data={buildItems(3)}
 				>
 					{{ default: ({ row }: any) => <div class="hr-item">{row.id}</div> }}
@@ -877,11 +877,11 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
-		it('re-measures and re-lays out when cols changes', async () => {
+		it('re-measures and re-lays out when columns changes', async () => {
 			const cols = ref(1);
 			const listRef = ref<any>();
 			const wrapper = mount(() => (
-				<RecycleList ref={listRef} data={buildItems(6)} batchCount={6} cols={cols.value} disabled>
+				<RecycleList ref={listRef} data={buildItems(6)} batchCount={6} columns={cols.value} disabled>
 					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
 				</RecycleList>
 			), { attachTo: document.body });
@@ -893,13 +893,13 @@ describe('index.ts', () => {
 			await sleep(20);
 			await nextTick();
 
-			expect(listRef.value.store.props.cols).toBe(3);
+			expect(listRef.value.store.props.columns).toBe(3);
 			expect(listRef.value.store.states.columns.length).toBe(3);
 			expect(wrapper.findAll('.vc-recycle-list__column').length).toBe(3);
 			wrapper.unmount();
 		});
 
-		describe('cols shrinks at runtime', () => {
+		describe('columns shrinks at runtime', () => {
 			// 列越窄行越高：列数变化后旧尺寸只是估计值，校正后才与 DOM 一致
 			const heightOf = (cols: number) => cols * 20;
 
@@ -1000,7 +1000,7 @@ describe('index.ts', () => {
 				const cols = ref(from);
 				const listRef = ref<any>();
 				const wrapper = mount(() => (
-					<RecycleList ref={listRef} data={buildItems(30)} batchCount={30} cols={cols.value} disabled>
+					<RecycleList ref={listRef} data={buildItems(30)} batchCount={30} columns={cols.value} disabled>
 						{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
 					</RecycleList>
 				), { attachTo: document.body, global: { config: { errorHandler } } });
@@ -2348,8 +2348,8 @@ describe('index.ts', () => {
 			expect(store.states.lastItemIndex).toBe(0);
 		});
 
-		it('refreshItemPosition computes contentMaxSize and column distribution (cols=2)', () => {
-			const store = new RecycleListStore({ cols: 2 });
+		it('refreshItemPosition computes contentMaxSize and column distribution (columns=2)', () => {
+			const store = new RecycleListStore({ columns: 2 });
 			store.setData([{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }]);
 			store.states.rebuildData.forEach((it: any, i: number) => {
 				it.states.size = (i + 1) * 10; // 10, 20, 30, 40
@@ -2459,7 +2459,7 @@ describe('index.ts', () => {
 		};
 
 		it('Position.updateVisibleRange updates the range when scrolling back to the top', () => {
-			const store = new RecycleListStore({ cols: 1, bufferCount: 0 });
+			const store = new RecycleListStore({ columns: 1, bufferCount: 0 });
 			store.states.rebuildData = Array.from({ length: 10 }).map((_, i) => layoutNode(store, i, {
 				position: i * 100,
 				size: 100
@@ -2475,7 +2475,7 @@ describe('index.ts', () => {
 		});
 
 		it('Position.updateVisibleRange includes the previous item at a shared boundary', () => {
-			const store = new RecycleListStore({ cols: 1, bufferCount: 0 });
+			const store = new RecycleListStore({ columns: 1, bufferCount: 0 });
 			store.states.rebuildData = [
 				layoutNode(store, 0, { position: 0, size: 100 }),
 				layoutNode(store, 1, { position: 100, size: 100 })
@@ -2489,7 +2489,7 @@ describe('index.ts', () => {
 		});
 
 		it('Position.updateVisibleRange handles non-monotonic inverted multi-column positions', () => {
-			const store = new RecycleListStore({ cols: 2, inverted: true, bufferCount: 0 });
+			const store = new RecycleListStore({ columns: 2, inverted: true, bufferCount: 0 });
 			store.states.rebuildData = [
 				layoutNode(store, 0, { position: 0, size: 10, column: 0 }),
 				layoutNode(store, 1, { position: 10, size: 10, column: 0 }),
@@ -2505,7 +2505,7 @@ describe('index.ts', () => {
 		});
 
 		it('Position.updateVisibleRange uses content-local coordinates for inverted lists', () => {
-			const store = new RecycleListStore({ cols: 1, inverted: true, bufferCount: 0 });
+			const store = new RecycleListStore({ columns: 1, inverted: true, bufferCount: 0 });
 			store.states.rebuildData = [
 				layoutNode(store, 0, { position: 0, size: 100 }),
 				layoutNode(store, 1, { position: 100, size: 100 })
@@ -2579,7 +2579,7 @@ describe('index.ts', () => {
 		});
 
 		it('Position.updateVisibleRange handles generated inverted positions', () => {
-			const store = new RecycleListStore({ cols: 1, inverted: true });
+			const store = new RecycleListStore({ columns: 1, inverted: true });
 			store.setData([{ id: 0 }, { id: 1 }, { id: 2 }]);
 			store.states.rebuildData.forEach((it: any, i: number) => {
 				it.states.size = 50;
@@ -2591,11 +2591,11 @@ describe('index.ts', () => {
 		});
 
 		it.each([
-			{ cols: 3, inverted: false },
-			{ cols: 1, inverted: true },
-			{ cols: 3, inverted: true }
-		])('Position.updateVisibleRange matches all visible items for $cols columns, inverted=$inverted', ({ cols, inverted }) => {
-			const store = new RecycleListStore({ cols, inverted, batchCount: 12, bufferCount: 0 });
+			{ columns: 3, inverted: false },
+			{ columns: 1, inverted: true },
+			{ columns: 3, inverted: true }
+		])('Position.updateVisibleRange matches all visible items for $columns columns, inverted=$inverted', ({ columns: cols, inverted }) => {
+			const store = new RecycleListStore({ columns: cols, inverted, batchCount: 12, bufferCount: 0 });
 			store.setData(Array.from({ length: 12 }).map((_, id) => ({ id })));
 			const sizes = [100, 20, 80, 40, 120, 30, 60, 90, 25, 110, 35, 70];
 			store.states.rebuildData.forEach((item: any, index: number) => { item.states.size = sizes[index]; });
@@ -2619,7 +2619,7 @@ describe('index.ts', () => {
 		});
 
 		it('Position.updateVisibleRange no-ops when range unchanged', () => {
-			const store = new RecycleListStore({ cols: 1 });
+			const store = new RecycleListStore({ columns: 1 });
 			store.states.rebuildData = [
 				layoutNode(store, 0, { position: 0, size: 100 }),
 				layoutNode(store, 1, { position: 100, size: 100 })
@@ -2633,7 +2633,7 @@ describe('index.ts', () => {
 		});
 
 		it('Position.updateVisibleRange reads geometry updates from the current reactive source', () => {
-			const store = new RecycleListStore({ cols: 1, bufferCount: 0 });
+			const store = new RecycleListStore({ columns: 1, bufferCount: 0 });
 			store.states.rebuildData = [
 				layoutNode(store, 0, { position: 0, size: 100 }),
 				layoutNode(store, 1, { position: 100, size: 100 })
@@ -2652,7 +2652,7 @@ describe('index.ts', () => {
 		});
 
 		it('Position.updateVisibleRange rebuilds the column index after same-length source replacement', () => {
-			const store = new RecycleListStore({ cols: 2, bufferCount: 0 });
+			const store = new RecycleListStore({ columns: 2, bufferCount: 0 });
 			store.states.rebuildData = [
 				layoutNode(store, 0, { position: 0, size: 10, column: 0 }),
 				layoutNode(store, 1, { position: 0, size: 100, column: 1 }),
@@ -2674,7 +2674,7 @@ describe('index.ts', () => {
 		});
 
 		it('Layout.refresh handles inverted multi-column', () => {
-			const store = new RecycleListStore({ cols: 2, inverted: true });
+			const store = new RecycleListStore({ columns: 2, inverted: true });
 			store.setData([{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }]);
 			store.states.rebuildData.forEach((it: any) => { it.states.size = 50; });
 			store.layout.refresh();
@@ -2683,7 +2683,7 @@ describe('index.ts', () => {
 		});
 
 		it('Layout.refresh skips sparse holes in rebuildData', () => {
-			const store = new RecycleListStore({ cols: 1 });
+			const store = new RecycleListStore({ columns: 1 });
 			store.states.rebuildData = [
 				layoutNode(store, 0, { position: 0, size: 40 }),
 				null,
@@ -3555,7 +3555,7 @@ describe('index.ts', () => {
 			});
 
 			it('does the same in a multi-column list', async () => {
-				const { data, states, shown, measuredIds, restore } = await setup(30, 30, heightOf, { cols: 2 });
+				const { data, states, shown, measuredIds, restore } = await setup(30, 30, heightOf, { columns: 2 });
 				measuredIds.length = 0;
 
 				// 多列同样沿用尺寸作估计值，渲染中的按 DOM 校正
@@ -3791,7 +3791,7 @@ describe('index.ts', () => {
 
 			it.each([
 				['single column', {}],
-				['multi column', { cols: 2 }],
+				['multi column', { columns: 2 }],
 				['inverted', { inverted: true }]
 			])('observes exactly the rendered rows with a single observer (%s)', async (_, props) => {
 				const { wrapper, restore } = await setup(60, 60, () => 40, props);

@@ -12,7 +12,7 @@ export const RECYCLE_LIST_RESERVED_KEYS = [
 	'fill',
 	'vertical',
 	'inverted',
-	'cols',
+	'columns',
 	'gap',
 	'pullable',
 	'loadData',

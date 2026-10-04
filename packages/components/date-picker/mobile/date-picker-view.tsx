@@ -192,7 +192,7 @@ export const MDatePickerView = defineComponent({
 				<MPickerView
 					modelValue={currentValue.value}
 					data={rebuildData.value}
-					cols={cols.value}
+					columns={cols.value}
 					cascader={false}
 					allowDispatch={false}
 					{...{

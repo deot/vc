@@ -894,9 +894,9 @@ export const RecycleList = defineComponent({
 			// 先按已有尺寸（作估计值）同步重排并刷新可见范围，渲染中的行直接落到新列里，不留空白帧；
 			// 新列宽下的实际尺寸随后由 refreshLayout 重测
 			watch(
-				() => [props.cols, props.gap],
+				() => [props.columns, props.gap],
 				async () => {
-					store.syncProps({ cols: props.cols, gap: props.gap });
+					store.syncProps({ columns: props.columns, gap: props.gap });
 					store.layout.refresh();
 					if (!isMounted.value) return;
 					syncVisibleRange();
@@ -1008,7 +1008,7 @@ export const RecycleList = defineComponent({
 					{ store.props.inverted && (<div style={{ height: `${store.states.columnFillSize[columnIndex]}px` }} />) }
 					{ store.states.data[columnIndex].map(renderItem) }
 				</div>
-				{ !props.vertical && columnIndex < store.props.cols - 1 && (<br />) }
+				{ !props.vertical && columnIndex < store.props.columns - 1 && (<br />) }
 			</Fragment>
 		);
 

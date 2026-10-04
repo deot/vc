@@ -2,7 +2,7 @@
 	<div class="audit-stack">
 		<div class="audit-sample" data-state="选中区域 / 禁用项 / 上下分隔线">
 			<div class="audit-sample__label">选中区域 / 禁用项 / 上下分隔线</div>
-			<MPickerView :key="`view-${generation}`" v-model="view" :data="options" :cols="1" :cascader="false" />
+			<MPickerView :key="`view-${generation}`" v-model="view" :data="options" :columns="1" :cascader="false" />
 		</div>
 		<div class="audit-sample" data-state="打开标题与确认 / 取消弹层">
 			<div class="audit-sample__label">打开标题与确认 / 取消弹层</div>

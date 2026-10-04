@@ -20,7 +20,7 @@ export const PickerView = defineComponent({
 		const rebuildData = ref<PickerColumn[]>([]);
 
 		const source = computed(() => props.data || []);
-		const colCount = computed(() => Math.max(props.cols || 1, 1));
+		const colCount = computed(() => Math.max(props.columns || 1, 1));
 
 		const makePlainColumns = () => {
 			const currentSource = source.value;
@@ -76,7 +76,7 @@ export const PickerView = defineComponent({
 				numerable: props.numerable,
 				separator: props.separator,
 				nullValue: props.nullValue,
-				max: props.cols
+				max: props.columns
 			}) as PickerModelValue;
 
 			emit('update:modelValue', value, label, data);
@@ -99,7 +99,7 @@ export const PickerView = defineComponent({
 		};
 
 		watch(
-			() => [props.data, props.cols, props.cascader],
+			() => [props.data, props.columns, props.cascader],
 			() => {
 				rebuildData.value = makeRebuildData();
 				resetDefault();

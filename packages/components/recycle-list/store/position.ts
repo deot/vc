@@ -43,7 +43,7 @@ export class Position {
 	 * @returns 重建后的 columns
 	 */
 	rebuild() {
-		const cols = this.store.props.cols;
+		const cols = this.store.props.columns;
 		const columns = Array.from({ length: cols }, () => [] as number[]);
 		const rebuildData = toRaw(this.store.states.rebuildData);
 		for (let index = 0; index < rebuildData.length; index++) {
@@ -86,7 +86,7 @@ export class Position {
 	 * @param tailPosition 视口下沿（content 坐标系）
 	 */
 	updateVisibleRange(headPosition: number, tailPosition: number) {
-		const { inverted, cols } = this.store.props;
+		const { inverted, columns: cols } = this.store.props;
 		const { states } = this.store;
 		// 范围查询是命令式只读操作，绕过深层响应式代理可显著降低滚动热路径开销
 		const rebuildData = toRaw(states.rebuildData);
