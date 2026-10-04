@@ -78,7 +78,7 @@ const handleChange = (index) => {
 const handleToggleAutoplay = () => {
 	autoplay.value = !autoplay.value;
 };
-const handlePrev = () => carouselRef.value?.prev();
+const handlePrev = () => carouselRef.value?.previous();
 const handleNext = () => carouselRef.value?.next();
 </script>
 
@@ -485,7 +485,7 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
 | setActiveItem | 切换到指定轮播项 | `index: number \| string`；传入索引或对应轮播项的 `name` | `void` |
-| prev | 切换到上一项 | - | `void` |
+| previous | 切换到上一项 | - | `void` |
 | next | 切换到下一项 | - | `void` |
 
 ### CarouselItem 与 MCarouselItem 属性

@@ -114,7 +114,7 @@ describe('index.ts', () => {
 		expect(wrapper.emitted('change')![0]).toEqual([2]);
 	});
 
-	it('prev: 点击上一页', async () => {
+	it('previous: 点击上一页', async () => {
 		const wrapper = mount(Pagination, { props: { count: 100, current: 3 } });
 
 		await wrapper.find('[title="上一页"]').trigger('click');
@@ -122,7 +122,7 @@ describe('index.ts', () => {
 		expect(wrapper.emitted('change')![0]).toEqual([2]);
 	});
 
-	it('prev: 第一页时点击无效', async () => {
+	it('previous: 第一页时点击无效', async () => {
 		const wrapper = mount(() => (<Pagination count={100} current={1} />));
 
 		await wrapper.find('[title="上一页"]').trigger('click');
@@ -316,12 +316,12 @@ describe('index.ts', () => {
 		expect(wrapper.find('.vc-pagination__item.is-active').text()).toBe('3');
 	});
 
-	it('expose: prev / next / resetPage', async () => {
+	it('expose: previous / next / resetPage', async () => {
 		const wrapper = mount(Pagination, {
 			props: { count: 100, current: 3, pageSize: 10 }
 		});
 
-		expect(typeof (wrapper.vm as any).prev).toBe('function');
+		expect(typeof (wrapper.vm as any).previous).toBe('function');
 		expect(typeof (wrapper.vm as any).next).toBe('function');
 		expect(typeof (wrapper.vm as any).resetPage).toBe('function');
 
@@ -329,7 +329,7 @@ describe('index.ts', () => {
 		await wrapper.vm.$nextTick();
 		expect(wrapper.find('.vc-pagination__item.is-active').text()).toBe('4');
 
-		(wrapper.vm as any).prev();
+		(wrapper.vm as any).previous();
 		await wrapper.vm.$nextTick();
 		expect(wrapper.find('.vc-pagination__item.is-active').text()).toBe('3');
 

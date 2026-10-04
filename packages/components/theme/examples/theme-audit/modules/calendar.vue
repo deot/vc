@@ -1,7 +1,7 @@
 <template>
 	<div class="audit-stack audit-calendar">
 		<div class="audit-row">
-			<Button @click="calendar?.prev()">上个月</Button>
+			<Button @click="calendar?.previous()">上个月</Button>
 			<Button @click="calendar?.next()">下个月</Button>
 		</div>
 		<Calendar ref="calendar" show-adjacent-weeks />

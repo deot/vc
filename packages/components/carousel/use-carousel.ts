@@ -113,7 +113,7 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 		}
 	};
 
-	const prev = () => {
+	const previous = () => {
 		setActiveItem(activeIndex.value - 1);
 	};
 
@@ -160,7 +160,7 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 		const $direction = offset.value > 0;
 		offset.value = 0;
 		if ($offset > 5) {
-			$direction && prev();
+			$direction && previous();
 			!$direction && next();
 		} else {
 			resetItems();
@@ -260,7 +260,7 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 
 	expose({
 		setActiveItem,
-		prev,
+		previous,
 		next
 	});
 
@@ -284,7 +284,7 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 		handleCancel,
 		handleDotClick,
 
-		prev,
+		previous,
 		next,
 		setActiveItem,
 		pauseTimer,

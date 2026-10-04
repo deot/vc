@@ -58,7 +58,7 @@ export const Pagination = defineComponent({
 			}
 		};
 
-		const prev = () => {
+		const previous = () => {
 			const current = currentPage.value;
 			if (current <= 1) {
 				return false;
@@ -111,7 +111,7 @@ export const Pagination = defineComponent({
 		};
 
 		expose({
-			prev,
+			previous,
 			next,
 			resetPage
 		});
@@ -136,7 +136,7 @@ export const Pagination = defineComponent({
 					<div
 						class={[{ 'is-disabled': currentPage.value == 1 }, 'vc-pagination__item is-icon']}
 						title={t('vc.Pagination.previousPage')}
-						onClick={prev}
+						onClick={previous}
 					>
 						<Icon type="left" />
 					</div>

@@ -78,7 +78,7 @@ const handlePageSizeChange = (value) => {
 
 ### 自定义总数与实例方法
 
-默认插槽替换总条数内容。通过组件 ref 调用 `prev()`、`next()` 或 `resetPage(page)`；`resetPage` 的参数需由调用方保证是有效页码。
+默认插槽替换总条数内容。通过组件 ref 调用 `previous()`、`next()` 或 `resetPage(page)`；`resetPage` 的参数需由调用方保证是有效页码。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
@@ -101,7 +101,7 @@ import { Pagination, Button } from '@deot/vc';
 
 const pagination = ref();
 const current = ref(1);
-const handlePrev = () => pagination.value.prev();
+const handlePrev = () => pagination.value.previous();
 const handleNext = () => pagination.value.next();
 const handleJump = () => pagination.value.resetPage(3);
 </script>
@@ -168,7 +168,7 @@ const handleJump = () => pagination.value.resetPage(3);
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| prev | 向前翻一页；首页时不执行 | - | `false \| undefined` |
+| previous | 向前翻一页；首页时不执行 | - | `false \| undefined` |
 | next | 向后翻一页；末页时不执行 | - | `false \| undefined` |
 | resetPage | 跳转到指定页，不自动校验范围 | `page: number` | `undefined` |
 

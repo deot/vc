@@ -667,7 +667,7 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
-		it('prev/next navigate active item with loop', async () => {
+		it('previous/next navigate active item with loop', async () => {
 			const { wrapper, carouselRef } = setup();
 			await flushAll();
 
@@ -675,11 +675,11 @@ describe('index.ts', () => {
 			await flushAll();
 			expect(wrapper.findAll('.vc-carousel-item')[1].classes()).toContain('is-active');
 
-			carouselRef.value.prev();
+			carouselRef.value.previous();
 			await flushAll();
 			expect(wrapper.findAll('.vc-carousel-item')[0].classes()).toContain('is-active');
 
-			carouselRef.value.prev();
+			carouselRef.value.previous();
 			await flushAll();
 			expect(wrapper.findAll('.vc-carousel-item')[2].classes()).toContain('is-active');
 
@@ -705,7 +705,7 @@ describe('index.ts', () => {
 			});
 			await flushAll();
 
-			carouselRef.value.prev();
+			carouselRef.value.previous();
 			await flushAll();
 			expect(wrapper.findAll('.vc-carousel-item')[0].classes()).toContain('is-active');
 
@@ -718,7 +718,7 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
-		it('two items: next/prev navigate between exactly two items', async () => {
+		it('two items: next/previous navigate between exactly two items', async () => {
 			const carouselRef = ref<any>(null);
 			const wrapper = mount({
 				setup() {
@@ -739,7 +739,7 @@ describe('index.ts', () => {
 			carouselRef.value.next();
 			await flushAll();
 			expect(wrapper.findAll('.vc-carousel-item')[0].classes()).toContain('is-active');
-			carouselRef.value.prev();
+			carouselRef.value.previous();
 			await flushAll();
 			expect(wrapper.findAll('.vc-carousel-item')[1].classes()).toContain('is-active');
 			wrapper.unmount();
@@ -1436,7 +1436,7 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
-		it('exposes setActiveItem/prev/next', async () => {
+		it('exposes setActiveItem/previous/next', async () => {
 			const carouselRef = ref<any>(null);
 			const wrapper = mount({
 				setup() {
@@ -1459,7 +1459,7 @@ describe('index.ts', () => {
 			await flushAll();
 			expect(wrapper.findAll('.vcm-carousel-item')[2].classes()).toContain('is-active');
 
-			carouselRef.value.prev();
+			carouselRef.value.previous();
 			await flushAll();
 			expect(wrapper.findAll('.vcm-carousel-item')[1].classes()).toContain('is-active');
 			wrapper.unmount();
