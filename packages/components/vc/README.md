@@ -221,7 +221,7 @@ Portal 的独立 app 不自动继承主应用的插件或 `provide`，可在这�
 | 配置项 | 具体作用 | 默认值 |
 | --- | --- | --- |
 | install | 在独立弹层 app 挂载前调用，接收 `app`，用于安装插件或注入依赖 | `undefined` |
-| aliveRegExp | 在 `alive` 模式下，点击路径中的元素匹配 `className` 或 `id` 正则时不触发外部点击关闭 | 未设置时使用 `{ className: /(vc-portal-alive)/ }` |
+| aliveRules | 在 `alive` 模式下，点击路径中的元素匹配 `className` 或 `id` 正则时不触发外部点击关闭 | 未设置时使用 `{ className: /(vc-portal-alive)/ }` |
 
 ```js
 import { VcInstance } from '@deot/vc';
@@ -229,7 +229,7 @@ import { VcInstance } from '@deot/vc';
 // router、store 为主应用已有的路由和状态管理插件
 VcInstance.configure({
 	Portal: {
-		aliveRegExp: { className: /(vc-portal-alive|vc-modal|vc-drawer)/ },
+		aliveRules: { className: /(vc-portal-alive|vc-modal|vc-drawer)/ },
 		install: (app) => {
 			app.use(router);
 			app.use(store);

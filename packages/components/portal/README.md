@@ -470,9 +470,9 @@ const handleConfirm = () => emit('portal-fulfilled', props.id);
 
 ### 活跃实例复用
 
-`alive: true` 在同名实例仍存在时更新 props，并在下一次 Vue 更新后调用包装组件暴露的 `update(options)`。它不会在关闭后永久缓存组件：点击未匹配 `aliveRegExp` 的外部区域、发送结果事件或主动销毁，都会清理实例。
+`alive: true` 在同名实例仍存在时更新 props，并在下一次 Vue 更新后调用包装组件暴露的 `update(options)`。它不会在关闭后永久缓存组件：点击未匹配 `aliveRules` 的外部区域、发送结果事件或主动销毁，都会清理实例。
 
-触发区域需匹配 `aliveRegExp`，否则再次点击触发按钮时可能先触发外部清理。下面保留输入的草稿，切换当前记录时通过计数观察复用；主动销毁或点击外部区域后重新打开，草稿和计数重置。
+触发区域需匹配 `aliveRules`，否则再次点击触发按钮时可能先触发外部清理。下面保留输入的草稿，切换当前记录时通过计数观察复用；主动销毁或点击外部区域后重新打开，草稿和计数重置。
 
 “打开活跃面板”返回等待销毁的 Promise，Button 在面板存在期间保持 loading，`onDestroyed` 触发后恢复。记录切换按钮只更新当前实例，不等待新的操作结果。复用后的主动销毁和外部清理都执行最后一次传入的 `onDestroyed`，因此每次复用都传入同一个销毁回调，确保都能结束打开按钮的等待。
 
@@ -876,7 +876,7 @@ const handleClose = () => (isActive.value = false);
 | leaveDelay | resolve/reject 后延迟销毁的时间，单位 ms；直接 destroy 不延迟 | `number` | - | `300` |
 | autoDestroy | 是否允许无强制参数的 `Portal.clear()` 清理；不影响结果事件的自动销毁 | `boolean` | - | `true` |
 | alive | 同名活跃实例再次调用时复用并更新 props | `boolean` | - | `false` |
-| aliveRegExp | alive 模式下，点击路径匹配这些属性时不执行外部清理 | `{ className?: RegExp; id?: RegExp }` | - | `{ className: /(vc-portal-alive)/ }` |
+| aliveRules | alive 模式下，点击路径匹配这些属性时不执行外部清理 | `{ className?: RegExp; id?: RegExp }` | - | `{ className: /(vc-portal-alive)/ }` |
 | aliveVisibleKey | 外部清理前操作的暴露字段：函数则传入 false，否则赋值 false | `string` | - | `'isVisible'` |
 | aliveUpdateKey | alive 复用后调用的暴露方法名，接收本次完整 options | `string` | - | `'update'` |
 | slots | 传给包装组件的插槽，通常使用插槽函数对象 | `VNodeNormalizedChildren` | - | - |

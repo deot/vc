@@ -44,7 +44,7 @@ export type PortalOptions = Partial<{
 	/**
 	 * 点击当前节点不销毁
 	 */
-	aliveRegExp: {
+	aliveRules: {
 		className?: RegExp;
 		id?: RegExp;
 	};
@@ -126,7 +126,7 @@ export const defaults: PortalOptions = {
 	element: 'body',
 	alive: false,
 	multiple: false,
-	aliveRegExp: { className: /(vc-portal-alive)/ },
+	aliveRules: { className: /(vc-portal-alive)/ },
 	aliveVisibleKey: 'isVisible',
 	aliveUpdateKey: 'update',
 	leaveDelay: 300,

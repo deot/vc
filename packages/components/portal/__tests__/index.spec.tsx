@@ -661,15 +661,17 @@ describe('index.ts', () => {
 		expect(root.text()).toBe('');
 	});
 
-	it('alive updates exposed state after props and protects matching external triggers', async () => {
+	it.each([undefined, { id: /^custom-alive-trigger$/ }])('alive reuses state and protects external triggers with rules %j', async (aliveRules) => {
 		const viewer = new Portal(Wrapper, {
 			element: root.vm.$el,
 			alive: true,
+			...(aliveRules ? { aliveRules } : {}),
 			fragment: true,
 			leaveDelay: 0
 		});
 		const trigger = document.createElement('button');
-		trigger.className = 'vc-portal-alive';
+		trigger.className = aliveRules ? 'custom-alive' : 'vc-portal-alive';
+		trigger.id = 'custom-alive-trigger';
 		document.body.appendChild(trigger);
 		try {
 			const first = viewer.popup({ title: 'A' });

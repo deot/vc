@@ -160,7 +160,7 @@ export class Portal<T extends Component> {
 			element: el,
 			tag,
 			alive,
-			aliveRegExp,
+			aliveRules,
 			aliveVisibleKey,
 			aliveUpdateKey,
 			name: name$,
@@ -257,7 +257,7 @@ export class Portal<T extends Component> {
 									container
 									&& e.target
 									&& !container.contains(e.target as HTMLElement)
-									&& !path?.some((item: any) => VcUtils.matchesElementRules(item, aliveRegExp!))
+									&& !path?.some((item: any) => VcUtils.matchesElementRules(item, aliveRules!))
 								) {
 									/* istanbul ignore else -- @preserve */
 									if (
