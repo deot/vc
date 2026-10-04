@@ -300,7 +300,7 @@ describe('index.ts', () => {
 			second.remove();
 		});
 
-		it('rebinds the hover container when an element barTo changes (no barTrigger)', async () => {
+		it('rebinds the hover container when an element barTo changes (no barTriggerElement)', async () => {
 			const first = document.createElement('div');
 			const second = document.createElement('div');
 			document.body.appendChild(first);
@@ -347,7 +347,7 @@ describe('index.ts', () => {
 			second.remove();
 		});
 
-		it('rebinds the hover container when barTrigger changes', async () => {
+		it('rebinds the hover container when barTriggerElement changes', async () => {
 			const a = document.createElement('div');
 			a.className = 'bar-trigger-a';
 			const b = document.createElement('div');
@@ -358,7 +358,7 @@ describe('index.ts', () => {
 			const trigger = ref('.bar-trigger-a');
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<Scroller ref={scrollerRef} native={false} height="100px" barTrigger={trigger.value}>
+				<Scroller ref={scrollerRef} native={false} height="100px" barTriggerElement={trigger.value}>
 					<div style="height: 1000px"></div>
 				</Scroller>
 			), { attachTo: document.body });
@@ -386,7 +386,7 @@ describe('index.ts', () => {
 			b.remove();
 		});
 
-		it('barTrigger shows the track while hovering an ancestor of the barTo target', async () => {
+		it('barTriggerElement shows the track while hovering an ancestor of the barTo target', async () => {
 			// 轨道挂在 0 高的锚点里，锚点自身无法悬停；悬停区域交给祖先
 			const trigger = document.createElement('div');
 			trigger.className = 'bar-trigger-host';
@@ -396,7 +396,7 @@ describe('index.ts', () => {
 
 			const scrollerRef = ref<any>();
 			const wrapper = mount(() => (
-				<Scroller ref={scrollerRef} native={false} height="100px" barTo={anchor} barTrigger=".bar-trigger-host">
+				<Scroller ref={scrollerRef} native={false} height="100px" barTo={anchor} barTriggerElement=".bar-trigger-host">
 					<div style="height: 1000px"></div>
 				</Scroller>
 			), { attachTo: document.body });
@@ -427,15 +427,15 @@ describe('index.ts', () => {
 			trigger.remove();
 		});
 
-		it('barTrigger resolves outside the track ancestors and falls back to the parent when missing', async () => {
+		it('barTriggerElement resolves outside the track ancestors and falls back to the parent when missing', async () => {
 			const trigger = document.createElement('div');
 			trigger.className = 'bar-trigger-outside';
 			document.body.appendChild(trigger);
 
-			const mountWith = (barTrigger: string) => {
+			const mountWith = (barTriggerElement: string) => {
 				const scrollerRef = ref<any>();
 				const wrapper = mount(() => (
-					<Scroller ref={scrollerRef} native={false} height="100px" barTrigger={barTrigger}>
+					<Scroller ref={scrollerRef} native={false} height="100px" barTriggerElement={barTriggerElement}>
 						<div style="height: 1000px"></div>
 					</Scroller>
 				), { attachTo: document.body });

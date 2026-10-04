@@ -71,7 +71,7 @@ export const PopoverWrapper = defineComponent({
 
 		// hack 外层高度没有撑开时
 		const getHackContainer = () => {
-			let container = props.triggerEl!;
+			let container = props.triggerElement!;
 			try {
 				if (
 					slots.content
@@ -128,7 +128,7 @@ export const PopoverWrapper = defineComponent({
 		 */
 		const setPopupStyle = () => {
 			if (!vnode.el) return;
-			if (!props.triggerEl!.isConnected) {
+			if (!props.triggerElement!.isConnected) {
 				handleTriggerRemoved();
 				return;
 			}
@@ -231,12 +231,12 @@ export const PopoverWrapper = defineComponent({
 		 * for alone, 方法直接调用
 		 */
 		const bindEvents = () => {
-			props.triggerEl!.addEventListener('mouseenter', handleTriggerChange);
-			props.triggerEl!.addEventListener('mouseleave', handleTriggerChange);
+			props.triggerElement!.addEventListener('mouseenter', handleTriggerChange);
+			props.triggerElement!.addEventListener('mouseleave', handleTriggerChange);
 		};
 		const removeEvents = () => {
-			props.triggerEl!.removeEventListener('mouseenter', handleTriggerChange);
-			props.triggerEl!.removeEventListener('mouseleave', handleTriggerChange);
+			props.triggerElement!.removeEventListener('mouseenter', handleTriggerChange);
+			props.triggerElement!.removeEventListener('mouseleave', handleTriggerChange);
 		};
 
 		props.alone && props.hover && bindEvents();
@@ -266,16 +266,16 @@ export const PopoverWrapper = defineComponent({
 		onMounted(() => {
 			isActive.value = true;
 			// 登记触发节点，供外层弹层判断点击区域
-			setTrigger(vnode.el, props.triggerEl as Element);
+			setTrigger(vnode.el, props.triggerElement as Element);
 			// 捕获阶段执行
 			!props.hover && document.addEventListener('click', handleClick, true);
 			// 监听body的滚动
 			document.addEventListener('scroll', setPopupStyle);
 			// 监听触发节点所在滚动容器的滚动（逐层向上，不含 window，window 由 document 的 scroll 处理），滚动时的处理见 handleScrollerScroll
 			// 如 Modal、Table、Scroller；Scroller 订阅其滚动通知，其余监听原生 scroll，见 ScrollerManager.subscribe
-			({ scrollers, off: unbindScrollers } = ScrollerManager.subscribe(props.triggerEl?.parentNode, handleScrollerScroll));
+			({ scrollers, off: unbindScrollers } = ScrollerManager.subscribe(props.triggerElement?.parentNode, handleScrollerScroll));
 			// 监听触发节点的Resize（节点被移除时尺寸变为 0 也会回调，见 handleTriggerRemoved）
-			Resize.on(props.triggerEl as any, setPopupStyle);
+			Resize.on(props.triggerElement as any, setPopupStyle);
 			// 监听弹层的Resize（如 Cascader 展开、图片加载）；弹层节点每次新建，首次回调即完成挂载后的定位
 			Resize.on(vnode.el, handlePopupResize);
 
@@ -287,7 +287,7 @@ export const PopoverWrapper = defineComponent({
 			!props.hover && document.removeEventListener('click', handleClick, true);
 			document.removeEventListener('scroll', setPopupStyle);
 			unbindScrollers();
-			Resize.off(props.triggerEl as any, setPopupStyle);
+			Resize.off(props.triggerElement as any, setPopupStyle);
 			Resize.off(vnode.el, handlePopupResize);
 
 			props.alone && props.hover && removeEvents();

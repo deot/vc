@@ -157,7 +157,7 @@ export class Portal<T extends Component> {
 		onRejected: (v?: any) => any
 	): PortalLeaf {
 		const {
-			el,
+			element: el,
 			tag,
 			alive,
 			aliveRegExp,

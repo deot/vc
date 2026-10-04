@@ -248,9 +248,9 @@ const handleDynamic = (e) => {
 		&& typeof poper?.wrapper?.isActive === 'boolean'
 	) return;
 	poper = Popover.open({
-		el: document.body,
+		element: document.body,
 		name: 'only',
-		triggerEl: e.target,
+		triggerElement: e.target,
 		hover: isHover.value,
 		content: () => {
 			return (

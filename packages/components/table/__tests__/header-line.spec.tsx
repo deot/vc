@@ -134,7 +134,7 @@ describe('header-line', () => {
 			ellipsis: '…'
 		}));
 		// 弹层锚在 label 上（鼠标移入的节点）
-		expect(open).toHaveBeenCalledWith(expect.objectContaining({ triggerEl: label.element, content: '很长的表头' }));
+		expect(open).toHaveBeenCalledWith(expect.objectContaining({ triggerElement: label.element, content: '很长的表头' }));
 		// jsdom 中测量不到文字宽度：不限制宽度，只受 Popover 的屏幕上限约束（宽度的计算见 getTooltipWidth 用例）
 		expect(open.mock.calls[0][0]).not.toHaveProperty('portalStyle');
 
@@ -168,7 +168,7 @@ describe('header-line', () => {
 		// 弹层锚在单元格上：text-line 外还有 padding，锚在 text-line 上会盖住鼠标所在的格子
 		expect(open).toHaveBeenCalledWith(expect.objectContaining({
 			content: 'nested-value',
-			triggerEl: wrapper.find('.vc-table__td').element
+			triggerElement: wrapper.find('.vc-table__td').element
 		}));
 		wrapper.unmount();
 	});
@@ -195,7 +195,7 @@ describe('header-line', () => {
 
 		defineValue(td, 'matches', (selector: string) => selector === ':hover');
 		await sleep(200);
-		expect(open).toHaveBeenCalledWith(expect.objectContaining({ triggerEl: td }));
+		expect(open).toHaveBeenCalledWith(expect.objectContaining({ triggerElement: td }));
 		wrapper.unmount();
 	});
 

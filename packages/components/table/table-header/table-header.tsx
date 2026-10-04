@@ -244,9 +244,9 @@ export const TableHeader = defineComponent({
 			// 拖拽排序中不弹出提示
 			if (table.store.states.dragging) return;
 			Popover.open({
-				el: document.body,
+				element: document.body,
 				name: 'vc-table-header-popover', // 确保不重复创建
-				triggerEl: e.currentTarget,
+				triggerElement: e.currentTarget,
 				hover: true,
 				theme: 'dark',
 				placement: 'top',

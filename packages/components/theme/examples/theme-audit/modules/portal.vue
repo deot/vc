@@ -20,7 +20,7 @@ let leaf;
 const close = () => { leaf?.destroy(); leaf = undefined; visible.value = false; };
 const handleToggle = () => {
 	if (visible.value) return close();
-	leaf = portal.popup({ el: host.value, multiple: true, leaveDelay: 0 });
+	leaf = portal.popup({ element: host.value, multiple: true, leaveDelay: 0 });
 	visible.value = true;
 };
 watch(() => props.overlayGeneration,

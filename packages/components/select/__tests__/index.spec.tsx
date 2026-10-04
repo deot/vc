@@ -816,7 +816,7 @@ describe('Select maxTagLines', () => {
 		await tag.trigger('mouseenter');
 		expect(open).toHaveBeenCalledTimes(1);
 		const options = open.mock.calls[0][0] as any;
-		expect(options.triggerEl).toBe(tag.element);
+		expect(options.triggerElement).toBe(tag.element);
 		expect(options.content()).toBe('New York');
 
 		// 弹层仍在显示时再次移入同一 tag：不重建
@@ -856,7 +856,7 @@ describe('Select maxTagLines', () => {
 		expect(value.value).toEqual(['1', '2', '4', '5']);
 		expect(getTexts(wrapper)).toEqual(['New York', 'London', '+2...']);
 		expect(getList()).toEqual(['Ottawa', 'Paris']);
-		// 折叠 tag 不被重建（否则弹层的 triggerEl 失效，重新定位时错位而关闭）
+		// 折叠 tag 不被重建（否则弹层的 triggerElement 失效，重新定位时错位而关闭）
 		expect(getTags(wrapper)[2].element).toBe(collapse);
 		// 锁定列表尺寸，避免弹层收缩移位后脱离鼠标
 		expect(list.style.minWidth).toBe('300px');

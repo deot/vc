@@ -85,7 +85,7 @@
 
 		<!-- C1 -->
 		<section class="timer-demo__case" data-case="c1">
-			<h4>C1. hover 打开后，定时器 500ms 移除 triggerEl（鼠标不碰弹层）</h4>
+			<h4>C1. hover 打开后，定时器 500ms 移除 triggerElement（鼠标不碰弹层）</h4>
 			<p>手动：悬停下方节点打开弹层，鼠标停住不动，500ms 后节点被移除；之后不要移入弹层</p>
 			<p>期望：弹层关闭并销毁</p>
 			<p class="timer-demo__verdict is-fixed">结论：已修复——触发节点移除后弹层关闭并销毁，不再残留在左上角</p>
@@ -108,7 +108,7 @@
 
 		<!-- C2 -->
 		<section class="timer-demo__case" data-case="c2">
-			<h4>C2. hover 移出后 50ms 移除 triggerEl（对照：移出的关闭定时器仍在）</h4>
+			<h4>C2. hover 移出后 50ms 移除 triggerElement（对照：移出的关闭定时器仍在）</h4>
 			<p>手动：悬停下方节点后移出，移出 50ms 后节点被移除</p>
 			<p>期望：弹层正常关闭并销毁</p>
 			<p class="timer-demo__verdict is-ok">结论：对照，无问题</p>
@@ -132,7 +132,7 @@
 
 		<!-- C3 -->
 		<section class="timer-demo__case" data-case="c3">
-			<h4>C3. click（非 hover）打开后，定时器 500ms 移除 triggerEl</h4>
+			<h4>C3. click（非 hover）打开后，定时器 500ms 移除 triggerElement</h4>
 			<p>手动：点击下方节点打开弹层，500ms 后节点被移除；随后滚动页面，观察弹层位置</p>
 			<p>期望：弹层关闭并销毁</p>
 			<p class="timer-demo__verdict is-fixed">结论：已修复（同 C1）</p>
@@ -155,7 +155,7 @@
 
 		<!-- C4 -->
 		<section class="timer-demo__case" data-case="c4">
-			<h4>C4. 列表按 key 重新渲染：triggerEl 被同位置的新节点替换</h4>
+			<h4>C4. 列表按 key 重新渲染：triggerElement 被同位置的新节点替换</h4>
 			<p>手动：悬停任一项打开弹层，500ms 后列表刷新（key 变化，节点被替换）</p>
 			<p>期望：旧弹层关闭</p>
 			<p class="timer-demo__verdict is-fixed">结论：已修复（同 C1）——表格 / 列表刷新数据时最常见</p>
@@ -204,7 +204,7 @@
 
 		<!-- C6 -->
 		<section class="timer-demo__case" data-case="c6">
-			<h4>C6. 同一 triggerEl 在 mouseover 中重复调用 Popover.open（Text 组件的用法）</h4>
+			<h4>C6. 同一 triggerElement 在 mouseover 中重复调用 Popover.open（Text 组件的用法）</h4>
 			<p>手动：在下方文字上来回移动（经过不同的子节点），观察弹层入场动画是否反复重播</p>
 			<p>期望：弹层只创建 1 次</p>
 			<p class="timer-demo__verdict is-wontfix">结论：不处理——调用方用法问题，改用 mouseenter 即可（见右侧对照）</p>
@@ -475,7 +475,7 @@ const removeTrigger = (id) => {
 		c5: () => (isC5Visible.value = false)
 	};
 	map[id]?.();
-	logs[id].push(id === 'c4' ? '定时器：列表刷新（triggerEl 被替换）' : id === 'c5' ? '定时器：卸载 Popover 组件' : '定时器：移除 triggerEl');
+	logs[id].push(id === 'c4' ? '定时器：列表刷新（triggerElement 被替换）' : id === 'c5' ? '定时器：卸载 Popover 组件' : '定时器：移除 triggerElement');
 };
 
 const timers = {};
@@ -487,9 +487,9 @@ const handleRemoveLater = (id, delay) => {
 const handleOpenC = (id, el, options = {}, removeDelay) => {
 	logs[id].push(`Popover.open（${options.hover === false ? 'click' : 'hover'}）`);
 	Popover.open({
-		el: document.body,
+		element: document.body,
 		name: cName(id),
-		triggerEl: el,
+		triggerElement: el,
 		hover: true,
 		placement: 'bottom',
 		portalClass: cClass(id),
@@ -556,7 +556,7 @@ const handleRunC4 = async () => {
 	fire(el, 'mouseenter');
 	await sleep(500 + 500);
 	const s = inspect(cName('c4'), cClass('c4'));
-	report('c4', '旧弹层关闭', `${describeState(s)}；旧 triggerEl ${el.isConnected ? '仍在文档中' : '已脱离文档'}`, !s.alive && !s.inDom);
+	report('c4', '旧弹层关闭', `${describeState(s)}；旧 triggerElement ${el.isConnected ? '仍在文档中' : '已脱离文档'}`, !s.alive && !s.inDom);
 };
 
 const handleRunC5 = async () => {
@@ -571,7 +571,7 @@ const handleRunC5 = async () => {
 	report('c5', '弹层销毁', describeState(s), !s.inDom);
 };
 
-// C6：mouseover 经过每个子节点都会触发，每次都调用 Popover.open（同名、同 triggerEl）；mouseenter 只在进入根节点时触发一次
+// C6：mouseover 经过每个子节点都会触发，每次都调用 Popover.open（同名、同 triggerElement）；mouseenter 只在进入根节点时触发一次
 const c6Ref = ref();
 const c6EnterRef = ref();
 const c6Count = { over: { calls: 0, created: 0 }, enter: { calls: 0, created: 0 } };
@@ -580,9 +580,9 @@ const handleOpenC6 = (e, type) => {
 	count.calls++;
 	logs.c6.push(`${e.type}（${e.target.textContent.trim()}）→ Popover.open`);
 	Popover.open({
-		el: document.body,
+		element: document.body,
 		name: cName('c6'),
-		triggerEl: e.currentTarget,
+		triggerElement: e.currentTarget,
 		hover: true,
 		placement: 'bottom',
 		portalClass: cClass('c6'),

@@ -10,7 +10,7 @@ if (typeof document !== 'undefined') {
 }
 
 const Notice$ = new Portal(NoticeView, {
-	el: el!,
+	element: el!,
 	leaveDelay: 0,
 	multiple: true,
 	autoDestroy: false

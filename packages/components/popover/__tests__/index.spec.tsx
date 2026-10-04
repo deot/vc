@@ -645,9 +645,9 @@ describe('Popover.open (静态方法)', () => {
 		document.body.appendChild(triggerEl);
 
 		const leaf = Popover.open({
-			el: document.body,
+			element: document.body,
 			name: 'static-1',
-			triggerEl,
+			triggerElement: triggerEl,
 			content: () => (<span class="static-c">static</span>) as any
 		});
 		await flush();
@@ -665,9 +665,9 @@ describe('Popover.open (静态方法)', () => {
 		document.body.appendChild(triggerEl);
 
 		const leaf = Popover.open({
-			el: document.body,
+			element: document.body,
 			name: 'static-hover-1',
-			triggerEl,
+			triggerElement: triggerEl,
 			hover: true,
 			content: () => (<span class="static-h">hover</span>) as any
 		});
@@ -692,9 +692,9 @@ describe('Popover.open (静态方法)', () => {
 		document.body.appendChild(outside);
 
 		const leaf = Popover.open({
-			el: document.body,
+			element: document.body,
 			name: 'static-alone',
-			triggerEl,
+			triggerElement: triggerEl,
 			content: () => (<span>x</span>) as any
 		});
 		await flush();
@@ -714,9 +714,9 @@ describe('Popover.open (静态方法)', () => {
 		document.body.appendChild(triggerEl);
 
 		const leaf = Popover.open({
-			el: document.body,
+			element: document.body,
 			name: 'static-mousedown',
-			triggerEl,
+			triggerElement: triggerEl,
 			content: () => (<span class="inner-mousedown">x</span>) as any
 		});
 		await flush();
@@ -1153,7 +1153,7 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		mockScroller(inner, { top: 0, left: 0, width: 1024, height: 768 });
 		setRect(triggerEl, triggerRect(100, 100));
 
-		const leaf = Popover.open({ el: document.body, name: 'in-scroller', triggerEl, placement: 'bottom', content: 'x' });
+		const leaf = Popover.open({ element: document.body, name: 'in-scroller', triggerElement: triggerEl, placement: 'bottom', content: 'x' });
 		await flush();
 		const wrapperEl = getWrapperEl()!;
 		await resizeTo(200, 100);
@@ -1185,7 +1185,7 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		mockScroller(box, { top: 100, left: 0, width: 400, height: 160 });
 		setRect(triggerEl, triggerRect(100, triggerY));
 
-		const leaf = Popover.open({ el: document.body, name: 'in-box', triggerEl, placement: 'bottom', content: 'x', hover });
+		const leaf = Popover.open({ element: document.body, name: 'in-box', triggerElement: triggerEl, placement: 'bottom', content: 'x', hover });
 		await flush();
 		await resizeTo(200, wrapperHeight);
 		const scrollTo = async (y: number) => {
@@ -1269,7 +1269,7 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		const { wrapper, on, off, wrapperEl, scrollTo } = await openInWheelScroller(
 			() => <button class="scroll-trigger">btn</button>,
 			(triggerEl) => {
-				leaf = Popover.open({ el: document.body, name: 'api-scroller', triggerEl, placement: 'bottom', content: 'x' });
+				leaf = Popover.open({ element: document.body, name: 'api-scroller', triggerElement: triggerEl, placement: 'bottom', content: 'x' });
 			}
 		);
 		expect(wrapperEl.style.top).toBe('184px');
@@ -1394,7 +1394,7 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		// 被别处的同名弹层替换
 		const other = document.createElement('div');
 		document.body.appendChild(other);
-		const leaf = Popover.open({ el: document.body, triggerEl: other, content: 'y' });
+		const leaf = Popover.open({ element: document.body, triggerElement: other, content: 'y' });
 		await flush();
 		expect(onDestroyed).toHaveBeenCalledTimes(1);
 		expect(hover.isActive(wrapper.element)).toBe(false);
@@ -1407,7 +1407,7 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		const triggerEl = document.createElement('button');
 		document.body.appendChild(triggerEl);
 		const onChange = vi.fn();
-		const leaf = Popover.open({ el: document.body, name: 'hover-timer', triggerEl, content: 'x', hover: true, onChange });
+		const leaf = Popover.open({ element: document.body, name: 'hover-timer', triggerElement: triggerEl, content: 'x', hover: true, onChange });
 		await flush();
 
 		fireEvent(triggerEl, 'mouseleave');
@@ -1477,7 +1477,7 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		wrapper.unmount();
 	});
 
-	it('triggerEl 已被其他代码 Resize.on 监听：弹层自身的首次回调完成定位', async () => {
+	it('triggerElement 已被其他代码 Resize.on 监听：弹层自身的首次回调完成定位', async () => {
 		const triggerEl = document.createElement('button');
 		document.body.appendChild(triggerEl);
 		setRect(triggerEl, triggerRect(100, 100));
@@ -1485,7 +1485,7 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		const noop = () => {};
 		Resize.on(triggerEl, noop);
 
-		const leaf = Popover.open({ el: document.body, name: 'observed-trigger', triggerEl, placement: 'right', content: 'x' });
+		const leaf = Popover.open({ element: document.body, name: 'observed-trigger', triggerElement: triggerEl, placement: 'right', content: 'x' });
 		await flush();
 
 		await resizeTo(200, 100);
@@ -1537,9 +1537,9 @@ describe('Popover 弹层内 hover 事件 (wrapper.tsx)', () => {
 		const triggerEl = document.createElement('button');
 		document.body.appendChild(triggerEl);
 		const leaf = Popover.open({
-			el: document.body,
+			element: document.body,
 			name: 'wrap-hover',
-			triggerEl,
+			triggerElement: triggerEl,
 			hover: true,
 			content: () => (<span>x</span>) as any
 		});
@@ -1615,9 +1615,9 @@ describe('Popover 嵌套弹层：子弹层挂在 body 下时的区域判断', ()
 		await flush();
 
 		const leaf = Popover.open({
-			el: document.body,
+			element: document.body,
 			name: 'nested-hover-inner',
-			triggerEl: wrapper.element.querySelector('.inner-trigger'),
+			triggerElement: wrapper.element.querySelector('.inner-trigger'),
 			hover: true,
 			alone: true,
 			content: () => (<button class="inner-btn">x</button>) as any
@@ -1703,9 +1703,9 @@ describe('Popover 嵌套弹层：子弹层挂在 body 下时的区域判断', ()
 		const inner = ref(true);
 
 		const leaf = Popover.open({
-			el: document.body,
+			element: document.body,
 			name: 'nested-alone',
-			triggerEl,
+			triggerElement: triggerEl,
 			portalClass: 'outer-pop',
 			content: () => (
 				<Popover v-model={inner.value} trigger="click" portalClass="inner-pop">
@@ -1770,13 +1770,13 @@ describe('Popover 触发节点被移除', () => {
 		document.body.innerHTML = '';
 	});
 
-	it('Popover.open（hover）：triggerEl 移除后弹层关闭', async () => {
+	it('Popover.open（hover）：triggerElement 移除后弹层关闭', async () => {
 		const triggerEl = document.createElement('button');
 		document.body.appendChild(triggerEl);
 		Popover.open({
-			el: document.body,
+			element: document.body,
 			name: 'removed-hover',
-			triggerEl,
+			triggerElement: triggerEl,
 			hover: true,
 			content: () => (<span>x</span>) as any
 		});
@@ -1791,13 +1791,13 @@ describe('Popover 触发节点被移除', () => {
 		expect(isShown(getWrapperEl())).toBe(false);
 	});
 
-	it('Popover.open（click）：triggerEl 移除后，滚动时发现并关闭', async () => {
+	it('Popover.open（click）：triggerElement 移除后，滚动时发现并关闭', async () => {
 		const triggerEl = document.createElement('button');
 		document.body.appendChild(triggerEl);
 		Popover.open({
-			el: document.body,
+			element: document.body,
 			name: 'removed-click',
-			triggerEl,
+			triggerElement: triggerEl,
 			content: () => (<span>x</span>) as any
 		});
 		await flush();

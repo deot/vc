@@ -183,9 +183,9 @@ const results = reactive({ s1: [], s2: [], s3: [], s4: [], s5: [], s6: [] });
 // 同一时刻只保留一个弹层（同名，打开新的会销毁旧的）
 // 按钮的点击回调不返回它：Button 会等待回调返回的 thenable，按钮会一直处于加载中
 const open = (triggerEl, options) => Popover.open({
-	el: document.body,
+	element: document.body,
 	name: NAME,
-	triggerEl,
+	triggerElement: triggerEl,
 	portalClass: POPUP_CLASS,
 	...options
 });

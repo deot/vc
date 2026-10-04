@@ -89,10 +89,10 @@ export const Popover = defineComponent({
 						? document.body
 						: instance.vnode.el;
 				popperInstance = PopoverPortal.popup({
-					el,
+					element: el,
 					alone: false, // 由当前组件控制hover/click等情况
 					name: popoverId,
-					triggerEl: instance.vnode.el as Element,
+					triggerElement: instance.vnode.el as Element,
 					onChange: handleChange,
 					// @ts-ignore
 					onClose: () => {

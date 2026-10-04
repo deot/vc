@@ -96,7 +96,7 @@
 
 		<!-- D5 -->
 		<section class="position-demo__case" data-case="d5">
-			<h4>D5. triggerEl 已被其他代码 Resize.on 监听，placement=right（纯文本内容）</h4>
+			<h4>D5. triggerElement 已被其他代码 Resize.on 监听，placement=right（纯文本内容）</h4>
 			<p>左侧节点在挂载时已被 Resize.on 监听（如 Text 组件根节点），右侧为对照</p>
 			<p>期望：两者都定位在节点右侧</p>
 			<p class="position-demo__verdict is-fixed">结论：已修复（随 D2）——弹层自身的首次尺寸回调即完成定位</p>
@@ -278,9 +278,9 @@ const results = reactive({ d1: [], d2: [], d3: [], d4: [], d5: [], d6: [], d7: [
 
 // 同一时刻只保留一个弹层（同名，打开新的会销毁旧的）
 const open = (triggerEl, options) => Popover.open({
-	el: document.body,
+	element: document.body,
 	name: NAME,
-	triggerEl,
+	triggerElement: triggerEl,
 	hover: true,
 	portalClass: POPUP_CLASS,
 	...options

@@ -86,7 +86,7 @@ export const SelectTags = defineComponent({
 
 		const fit = computed<FitTagsResult>((previous) => {
 			if (!measurable.value) return { count: limit.value };
-			// 等待测量的中间态：沿用上次结果，避免节点被增删重建（如折叠 tag 重建后，其弹层的 triggerEl 失效而错位）
+			// 等待测量的中间态：沿用上次结果，避免节点被增删重建（如折叠 tag 重建后，其弹层的 triggerElement 失效而错位）
 			if (!settled.value) {
 				return previous
 					? { ...previous, count: Math.min(previous.count, limit.value) }

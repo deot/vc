@@ -410,8 +410,8 @@ describe('Text 弹层 (mouseenter)', () => {
 		expect(arg.content).toBe('abcdefg');
 		expect(arg.hover).toBe(true);
 		expect(arg.name).toBe('vc-text-popover');
-		expect(arg.el).toBe(document.body);
-		expect(arg.triggerEl).toBe(wrapper.element);
+		expect(arg.element).toBe(document.body);
+		expect(arg.triggerElement).toBe(wrapper.element);
 
 		wrapper.unmount();
 	});
@@ -453,7 +453,7 @@ describe('Text 弹层 (mouseenter)', () => {
 		wrapper.unmount();
 	});
 
-	it('renderRow 返回元素时, 在子元素间移动不重复打开, triggerEl 与宽度取根节点', async () => {
+	it('renderRow 返回元素时, 在子元素间移动不重复打开, triggerElement 与宽度取根节点', async () => {
 		const popoverOpen = vi.spyOn(Popover, 'open').mockReturnValue({ destroy: vi.fn() } as any);
 		mockedGetFitIndex.mockReturnValue(2);
 
@@ -479,7 +479,7 @@ describe('Text 弹层 (mouseenter)', () => {
 
 		expect(popoverOpen).toHaveBeenCalledTimes(1);
 		const arg = popoverOpen.mock.calls[0][0] as any;
-		expect(arg.triggerEl).toBe(wrapper.element);
+		expect(arg.triggerElement).toBe(wrapper.element);
 		expect(arg.portalStyle[0]).toBe('width: 300px');
 
 		wrapper.unmount();
@@ -730,7 +730,7 @@ describe('Text CSS 截断 (默认省略符且无 slice / renderRow / indent / cl
 		mockOverflow(text.element, { matches: ((selector: string) => selector === ':hover') as any });
 		await new Promise(r => setTimeout(r, 200));
 		expect(popoverOpen).toHaveBeenCalledTimes(1);
-		expect((popoverOpen.mock.calls[0][0] as any).triggerEl).toBe(text.element);
+		expect((popoverOpen.mock.calls[0][0] as any).triggerElement).toBe(text.element);
 		wrapper.unmount();
 	});
 

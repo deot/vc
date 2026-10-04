@@ -64,7 +64,7 @@ describe('index.ts', () => {
 	const uid = 'vc-wrapper';
 	const root = mount(() => <div class="root" />);
 	const Modal = new Portal(Wrapper, {
-		el: root.vm.$el,
+		element: root.vm.$el,
 		leaveDelay: 0,
 
 		globalProperties: {
@@ -85,6 +85,40 @@ describe('index.ts', () => {
 	it('PortalView', async () => {
 		const wrapper = mount(() => (<PortalView />));
 		expect(wrapper.html()).toMatch('vc-portal-view');
+	});
+
+	it('element: 默认挂载到 body，配置不作为组件参数传入', () => {
+		const viewer = new Portal(Wrapper, { leaveDelay: 0 });
+		const leaf = viewer.popup({ title: '默认挂载' });
+		const content = leaf.wrapper!.$el as HTMLElement;
+
+		expect(content.parentElement).toBe(document.body);
+		expect(leaf.propsData?.value).toEqual({ title: '默认挂载' });
+		leaf.destroy();
+		expect(document.body.contains(content)).toBe(false);
+	});
+
+	it.each(['element', 'selector'])('element: 单次 %s 挂载目标覆盖构造配置', (mode) => {
+		const first = document.createElement('div');
+		const second = document.createElement('div');
+		first.id = 'portal-first-target';
+		second.id = 'portal-second-target';
+		document.body.append(first, second);
+		const viewer = new Portal(Wrapper, { element: '#portal-first-target', leaveDelay: 0 });
+		viewer.popup({ title: '首次挂载' });
+		expect(first.querySelector('h1')?.textContent).toBe('首次挂载');
+
+		const leaf = viewer.popup({
+			element: mode === 'element' ? second : '#portal-second-target',
+			title: '覆盖挂载'
+		});
+		expect(first.children).toHaveLength(0);
+		expect(second.querySelector('h1')?.textContent).toBe('覆盖挂载');
+		expect(leaf.propsData?.value).toEqual({ title: '覆盖挂载' });
+		leaf.destroy();
+		expect(second.children).toHaveLength(0);
+		first.remove();
+		second.remove();
 	});
 
 	it('props', async () => {
@@ -266,7 +300,7 @@ describe('index.ts', () => {
 
 	it('destroy, multiple', async () => {
 		const ModalMultiple = new Portal(Wrapper, {
-			el: root.vm.$el,
+			element: root.vm.$el,
 			leaveDelay: 0,
 			multiple: true,
 			name: uid
@@ -306,7 +340,7 @@ describe('index.ts', () => {
 	});
 
 	it('destroy, string', async () => {
-		Modal.popup({ name: uid, el: '' });
+		Modal.popup({ name: uid, element: '' });
 		expect(Portal.leafs.size).toBe(1);
 		Modal.destroy('xxxxx');
 		expect(Portal.leafs.size).toBe(1);
@@ -359,7 +393,7 @@ describe('index.ts', () => {
 
 	it('alive', async () => {
 		const ModalAlive = new Portal(Wrapper, {
-			el: root.vm.$el,
+			element: root.vm.$el,
 			leaveDelay: 0,
 			alive: true,
 			name: uid
@@ -415,7 +449,7 @@ describe('index.ts', () => {
 		const reopen = async (fragment: boolean, times: number) => {
 			const el = document.createElement('div');
 			document.body.appendChild(el);
-			const viewer = new Portal(AliveWrapper, { el, alive: true, fragment, leaveDelay: 0 });
+			const viewer = new Portal(AliveWrapper, { element: el, alive: true, fragment, leaveDelay: 0 });
 			const leaf = viewer.popup();
 			for (let i = 1; i <= times; i++) {
 				leaf.wrapper!.isVisible = false;
@@ -464,7 +498,7 @@ describe('index.ts', () => {
 			document.body.appendChild(el);
 			const first = vi.fn();
 			const last = vi.fn();
-			const viewer = new Portal(AliveWrapper, { el, alive: true, leaveDelay });
+			const viewer = new Portal(AliveWrapper, { element: el, alive: true, leaveDelay });
 			try {
 				viewer.popup({ onDestroyed: first });
 				const leaf = viewer.popup({ onDestroyed: last });
@@ -491,7 +525,7 @@ describe('index.ts', () => {
 				</p>
 			)
 		});
-		const viewer = new Portal(NamedWrapper, { el: root.vm.$el, leaveDelay: 0 });
+		const viewer = new Portal(NamedWrapper, { element: root.vm.$el, leaveDelay: 0 });
 		viewer.popup({
 			name: 'service-name',
 			title: 'not a prop',
@@ -565,7 +599,7 @@ describe('index.ts', () => {
 
 	it('multiple panels preserve insertion order and can be rejected independently', async () => {
 		const viewer = new Portal(Wrapper, {
-			el: root.vm.$el,
+			element: root.vm.$el,
 			name: 'panel-group',
 			multiple: true,
 			fragment: true,
@@ -591,7 +625,7 @@ describe('index.ts', () => {
 				<span>stable root</span>
 			]
 		});
-		const viewer = new Portal(FragmentWrapper, { el: root.vm.$el, fragment: true });
+		const viewer = new Portal(FragmentWrapper, { element: root.vm.$el, fragment: true });
 		const leaf = viewer.popup();
 		expect(root.text()).toBe('stable root');
 		visible.value = true;
@@ -615,7 +649,7 @@ describe('index.ts', () => {
 			}
 		});
 		const viewer = new Portal(InjectedWrapper, {
-			el: root.vm.$el,
+			element: root.vm.$el,
 			install: app => app.provide('workspace', workspace)
 		});
 		const leaf = viewer.popup({ slots: { default: () => h('span', workspace.value) } });
@@ -629,7 +663,7 @@ describe('index.ts', () => {
 
 	it('alive updates exposed state after props and protects matching external triggers', async () => {
 		const viewer = new Portal(Wrapper, {
-			el: root.vm.$el,
+			element: root.vm.$el,
 			alive: true,
 			fragment: true,
 			leaveDelay: 0

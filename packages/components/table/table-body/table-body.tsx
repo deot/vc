@@ -118,7 +118,7 @@ export const TableBody = defineComponent({
 				trackOffsetX: [0, 0, fluid ? 0 : Math.max(footerHeight - 1, 0), 0],
 				barTo: fluid ? barAnchor : `.${table.tableId}`,
 				// 悬停整个表格（含已吸底的 dock）时显示滚动条
-				barTrigger: `.${table.tableId}`,
+				barTriggerElement: `.${table.tableId}`,
 				// 滚轮驱动：表头、固定列与表体在同一帧更新
 				wheel: true,
 				native: false,

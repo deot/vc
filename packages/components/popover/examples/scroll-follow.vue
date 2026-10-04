@@ -558,9 +558,9 @@ const openScrollerRef = ref();
 const openTriggerRef = ref();
 const handleOpenByApi = () => {
 	Popover.open({
-		el: document.body,
+		element: document.body,
 		name: API_NAME,
-		triggerEl: openTriggerRef.value.$el,
+		triggerElement: openTriggerRef.value.$el,
 		hover: false,
 		placement: 'bottom',
 		content: '弹层内容',

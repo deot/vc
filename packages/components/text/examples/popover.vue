@@ -1,9 +1,9 @@
 <template>
 	<div class="text-popover-demo">
 		<p class="text-popover-demo__tip">
-			Text 截断后悬停弹出全文（Popover.open，同名，打开新的会销毁旧的）。原先在根节点的 mouseover 中打开，triggerEl 与宽度取 e.target：
+			Text 截断后悬停弹出全文（Popover.open，同名，打开新的会销毁旧的）。原先在根节点的 mouseover 中打开，triggerElement 与宽度取 e.target：
 			mouseover 会冒泡，renderRow 返回元素时鼠标每跨过一次子元素边界就重新打开一次，落到行内元素上时宽度为 0；根节点下只有文本节点时只在移入时触发一次（与 mouseenter 相同）。
-			现改为 mouseenter，triggerEl 与宽度取根节点。
+			现改为 mouseenter，triggerElement 与宽度取根节点。
 		</p>
 		<p class="text-popover-demo__legend">结论：<b>已修复</b> = 本次已修复；<b>无问题</b> = 对照组</p>
 
@@ -72,7 +72,7 @@ const cases = [
 		title: 'T2. renderRow 返回一个 <span>（根节点下只有一个子元素）',
 		path: 'span → 根节点（行间 / 末行空白）→ span',
 		fixed: true,
-		verdict: '结论：已修复——原先在 span 与行间空白之间移动时反复重建，triggerEl 为 span，宽度取行内元素的 clientWidth 为 0，全文一字一行',
+		verdict: '结论：已修复——原先在 span 与行间空白之间移动时反复重建，triggerElement 为 span，宽度取行内元素的 clientWidth 为 0，全文一字一行',
 		renderRow: ({ value: v }) => <span class="text-popover-demo__row">{ v }</span>,
 		targets: root => [root.querySelector('span'), root, root.querySelector('span')]
 	},

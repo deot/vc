@@ -414,7 +414,7 @@ const handleVisibleChange = (key, visible) => {
 
 ### 静态方法
 
-`Popover.open` 立即创建浮层，`triggerEl` 必须传真实 DOM 元素。`triggerEl` 被移除（如列表按 key 重新渲染）后浮层会自动关闭并销毁；返回的 `PortalLeaf` 也可通过 `destroy()` 主动清理，页面卸载时应清理仍存在的实例。
+`Popover.open` 立即创建浮层，`triggerElement` 必须传真实 DOM 元素。`triggerElement` 被移除（如列表按 key 重新渲染）后浮层会自动关闭并销毁；返回的 `PortalLeaf` 也可通过 `destroy()` 主动清理，页面卸载时应清理仍存在的实例。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
@@ -435,7 +435,7 @@ let leaf;
 const handleOpen = playground.run(320, async (triggerEl) => {
 	leaf?.destroy();
 	leaf = Popover.open({
-		triggerEl,
+		triggerElement: triggerEl,
 		placement: 'bottom',
 		content: '点击浮层外部关闭'
 	});
@@ -526,8 +526,8 @@ onUnmounted(() => leaf?.destroy());
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| triggerEl | 必填，定位与事件绑定使用的真实 DOM | `HTMLElement` | - | - |
-| el | Portal 挂载节点或选择器 | `HTMLElement \| string` | - | `body` |
+| triggerElement | 必填，定位与事件绑定使用的真实 DOM | `HTMLElement` | - | - |
+| element | Portal 挂载节点或选择器 | `HTMLElement \| string` | - | `body` |
 | name | Portal 实例标识，同名实例默认替换 | `string` | - | `vc-popover-wrapper` |
 | multiple | 是否允许多个实例共存 | `boolean` | - | `false` |
 | alone | 独立管理显隐，通常保持默认 | `boolean` | - | `true` |

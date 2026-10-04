@@ -237,7 +237,7 @@ const handleOpen = (isFail) => {
 		isFail,
 		onReady: () => (status.value = '详情已就绪')
 	}, {
-		el: target.value,
+		element: target.value,
 		onDestroyed: (error) => {
 			isActive.value = false;
 			if (error) status.value = error.message;
@@ -331,7 +331,7 @@ onMounted(() => emit('ready'));
 
 ### 多实例、指定容器与独立关闭
 
-默认相同 `name` 的再次调用会销毁旧实例。`multiple: true` 为每次调用生成独立标识，适合并列查看多个详情或显示多条任务通知。`el` 接受已存在的 DOM 元素或选择器；`insertion: 'first'` 将新节点插在目标的首个元素前。
+默认相同 `name` 的再次调用会销毁旧实例。`multiple: true` 为每次调用生成独立标识，适合并列查看多个详情或显示多条任务通知。`element` 接受已存在的 DOM 元素或选择器；`insertion: 'first'` 将新节点插在目标的首个元素前。
 
 保存返回的 leaf，可以分别 `resolve(value)`、`reject(reason)` 或 `destroy()`。下例使用普通面板展示多实例，避免多个遮罩相互遮挡。`fragment: true` 保留挂载容器，支持包装组件的多根节点和条件渲染。
 
@@ -368,7 +368,7 @@ let sequence = 0;
 const handleAdd = () => {
 	const id = ++sequence;
 	const leaf = Panels.popup({ id }, {
-		el: target.value,
+		element: target.value,
 		onDestroyed: () => {
 			leaves.delete(id);
 			activeCount.value = leaves.size;
@@ -506,7 +506,7 @@ const isActive = ref(false);
 let onDestroyed;
 
 const handleUpdate = (title) => {
-	Preview.popup({ title }, { el: target.value, onDestroyed });
+	Preview.popup({ title }, { element: target.value, onDestroyed });
 };
 const handleOpen = () => new Promise((resolve) => {
 	onDestroyed = () => {
@@ -643,7 +643,7 @@ const isActive = ref(false);
 const handleOpen = () => new Promise((resolve) => {
 	isActive.value = true;
 	ContextPanel.popup({
-		el: target.value,
+		element: target.value,
 		install: app => app.provide('workspace', workspace),
 		slots: { default: () => h('span', workspace.value) },
 		onDestroyed: () => {
@@ -868,7 +868,7 @@ const handleClose = () => (isActive.value = false);
 | --- | --- | --- | --- | --- |
 | propsData | 显式传给包装组件的 props | `Record<string, any>` | - | - |
 | name | 实例注册标识；不同服务建议显式区分，避免重名替换 | `string` | - | 构造配置的 name、wrapper.name 或自动生成值 |
-| el | 已存在的挂载目标；未找到时不会插入页面 | `string \| HTMLElement` | - | `'body'` |
+| element | 已存在的挂载目标；未找到时不会插入页面 | `string \| HTMLElement` | - | `'body'` |
 | tag | 内部挂载容器标签；默认通常仅将其元素子节点移入目标 | `string` | - | `'div'` |
 | fragment | 保留挂载容器，适合多根节点及根节点的条件变化 | `boolean` | - | `false` |
 | insertion | 插入目标首个元素之前或末尾 | `string` | `first` / `last` | `'last'` |
@@ -912,7 +912,7 @@ Viewer.popup({ propsData: { name: '业务名称' }, name: 'portal-detail' });
 Viewer.popup({ name: '业务名称', title: '详情' }, { name: 'portal-detail' });
 ```
 
-当业务字段也叫 `name`、`el`、`slots` 等配置名时，使用显式 `propsData` 或双参数形式，避免被当作 Portal 配置。`popup(propsData, options)` 会把 propsData 写入传入的 options 对象，建议每次传入新对象。
+当业务字段也叫 `name`、`element`、`slots` 等配置名时，使用显式 `propsData` 或双参数形式，避免被当作 Portal 配置。`popup(propsData, options)` 会把 propsData 写入传入的 options 对象，建议每次传入新对象。
 
 `Portal.leafs` 是静态的 `Map<string, PortalLeaf>`，记录当前所有 Portal 节点。`multiple` 模式下注册标识附带自动生成后缀；精确关闭优先保存 leaf，避免依赖后缀格式。临时覆盖 `name` 或 `multiple` 后，也优先调用 `leaf.destroy()`。
 

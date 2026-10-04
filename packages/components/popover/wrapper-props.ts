@@ -30,11 +30,11 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
-	autoWidth: { // 当为false是，使用triggerEl宽度
+	autoWidth: { // 当为false是，使用triggerElement宽度
 		type: Boolean,
 		default: true
 	},
-	triggerEl: {
+	triggerElement: {
 		type: Object,
 		required: true
 	},

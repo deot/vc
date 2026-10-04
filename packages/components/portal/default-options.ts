@@ -29,7 +29,7 @@ export type PortalOptions = Partial<{
 	/**
 	 * 插入的节点
 	 */
-	el: string | HTMLElement;
+	element: string | HTMLElement;
 
 	/**
 	 * 再次调用，实例不销毁
@@ -123,7 +123,7 @@ export type PortalOptions = Partial<{
 
 export const defaults: PortalOptions = {
 	tag: 'div',
-	el: 'body',
+	element: 'body',
 	alive: false,
 	multiple: false,
 	aliveRegExp: { className: /(vc-portal-alive)/ },
