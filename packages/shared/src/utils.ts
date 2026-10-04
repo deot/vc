@@ -14,16 +14,16 @@ export const autoCatch = async (impl: any, options: Record<string, any> = {}) =>
 	}
 };
 
-interface Exceptions {
+interface ElementRules {
 	id?: RegExp;
 	className?: RegExp;
 	tagName?: RegExp;
 }
 
 // 当前节点是否符合条件
-export const eleInRegExp = (el: HTMLElement, exceptions: Exceptions): boolean => {
-	for (const i in exceptions) {
-		if (exceptions[i].test(el[i])) {
+export const matchesElementRules = (element: HTMLElement, rules: ElementRules): boolean => {
+	for (const i in rules) {
+		if (rules[i].test(element[i])) {
 			return true;
 		}
 	}

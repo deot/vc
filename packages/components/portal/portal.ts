@@ -257,7 +257,7 @@ export class Portal<T extends Component> {
 									container
 									&& e.target
 									&& !container.contains(e.target as HTMLElement)
-									&& !path?.some((item: any) => VcUtils.eleInRegExp(item, aliveRegExp!))
+									&& !path?.some((item: any) => VcUtils.matchesElementRules(item, aliveRegExp!))
 								) {
 									/* istanbul ignore else -- @preserve */
 									if (

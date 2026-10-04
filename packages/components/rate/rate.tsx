@@ -63,8 +63,8 @@ export const Rate = defineComponent({
 
 		const getClickSide = (e) => {
 			const path = e.path || DOM.composedPath(e) || [];
-			const isLeftSide = path.some((item: any) => VcUtils.eleInRegExp(item, { className: /vc-rate__star--first/ }));
-			const isRightSide = path.some((item: any) => VcUtils.eleInRegExp(item, { className: /vc-rate__star--second/ }));
+			const isLeftSide = path.some((item: any) => VcUtils.matchesElementRules(item, { className: /vc-rate__star--first/ }));
+			const isRightSide = path.some((item: any) => VcUtils.matchesElementRules(item, { className: /vc-rate__star--second/ }));
 			if (isLeftSide) return 'left';
 			if (isRightSide) return 'right';
 			return false;

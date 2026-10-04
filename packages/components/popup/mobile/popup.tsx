@@ -73,7 +73,7 @@ export const MPopup = defineComponent({
 			if (!isActive.value) return;
 			const path = e.path || composedPath(e) || [];
 			const inContainer = path.some((ele: any) => {
-				if (Utils.eleInRegExp(ele, props.scrollRegExp)) {
+				if (Utils.matchesElementRules(ele, props.scrollRegExp)) {
 					scrollContainer = ele;
 					return true;
 				}
