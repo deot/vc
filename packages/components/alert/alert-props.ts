@@ -13,7 +13,7 @@ export const props = {
 		type: String,
 		default: ''
 	},
-	desc: {
+	description: {
 		type: String,
 		default: ''
 	},

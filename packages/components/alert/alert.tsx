@@ -39,7 +39,11 @@ export const Alert = defineComponent({
 					{
 						isActive.value && (
 							<div
-								class={[`is-${props.type}`, { 'has-icon': showIcon.value, 'has-desc': props.desc || slots.desc }, 'vc-alert']}
+								class={[
+									`is-${props.type}`,
+									{ 'has-icon': showIcon.value, 'has-desc': props.description || slots.description },
+									'vc-alert'
+								]}
 							>
 								{
 									showIcon.value && (
@@ -66,9 +70,9 @@ export const Alert = defineComponent({
 													)
 										}
 										{
-											props.desc
-												? (<div class="vc-alert__desc" innerHTML={props.desc} />)
-												: (slots.desc && (<div class="vc-alert__desc">{ slots.desc?.() }</div>))
+											props.description
+												? (<div class="vc-alert__desc" innerHTML={props.description} />)
+												: (slots.description && (<div class="vc-alert__desc">{ slots.description?.() }</div>))
 										}
 									</div>
 									{

@@ -43,17 +43,17 @@ describe('index.ts', () => {
 		}
 	});
 
-	it('desc (by prop)', async () => {
-		const wrapper = mount(() => (<Alert title={TITLE} desc={DESC} />));
+	it('description (by prop)', async () => {
+		const wrapper = mount(() => (<Alert title={TITLE} description={DESC} />));
 
 		await waitTransition();
 		expect(wrapper.find('.vc-alert').classes()).toContain('has-desc');
 		expect(wrapper.find('.vc-alert__desc').text()).toBe(DESC);
 	});
 
-	it('title & desc support innerHTML', async () => {
+	it('title & description support innerHTML', async () => {
 		const wrapper = mount(() => (
-			<Alert title="<span class='custom-title'>Hi</span>" desc="<span class='custom-desc'>Desc</span>" />
+			<Alert title="<span class='custom-title'>Hi</span>" description="<span class='custom-desc'>Desc</span>" />
 		));
 
 		await waitTransition();
@@ -137,17 +137,31 @@ describe('index.ts', () => {
 		expect(wrapper.html()).toContain(TITLE);
 	});
 
-	it('desc slot', async () => {
+	it('description slot', async () => {
 		const wrapper = mount(Alert, {
 			props: { title: TITLE },
 			slots: {
-				desc: () => DESC
+				description: () => DESC
 			}
 		});
 
 		await waitTransition();
 		expect(wrapper.find('.vc-alert').classes()).toContain('has-desc');
 		expect(wrapper.html()).toContain(DESC);
+	});
+
+	it('description prop takes priority over slot and falls back when empty', async () => {
+		const wrapper = mount(Alert, {
+			props: { description: DESC },
+			slots: { description: () => '插槽描述' }
+		});
+
+		await waitTransition();
+		expect(wrapper.find('.vc-alert__desc').text()).toBe(DESC);
+
+		await wrapper.setProps({ description: '' });
+		expect(wrapper.find('.vc-alert__desc').text()).toBe('插槽描述');
+		expect(wrapper.find('.vc-alert').classes()).toContain('has-desc');
 	});
 
 	it('close slot', async () => {

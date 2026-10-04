@@ -3,7 +3,7 @@
 		<div v-for="type in types" :key="type" class="audit-sample" :data-state="type">
 			<div class="audit-sample__label">{{ type }}</div>
 			<div class="audit-stack">
-				<Alert v-model="visible[type]" :type="type" :title="`${type} 提示`" desc="状态背景、边框、图标与普通正文" closable />
+				<Alert v-model="visible[type]" :type="type" :title="`${type} 提示`" description="状态背景、边框、图标与普通正文" closable />
 				<Alert :type="type" title="仅标题 · 不带图标" :icon="false" />
 			</div>
 		</div>
