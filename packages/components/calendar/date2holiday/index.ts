@@ -131,20 +131,20 @@ class Date2HolidayManager {
 
 		return {
 			animal: chineseZodiac[(lunarInfo.lunarYear - 4) % 12],
-			gzDate: this.getGanzhiDay(date),
-			gzMonth: this.getGanzhiMonth(date, year, month),
-			gzYear: this.getGanzhiYear(year, lunarInfo.lunarYear),
+			ganzhiDate: this.getGanzhiDay(date),
+			ganzhiMonth: this.getGanzhiMonth(date, year, month),
+			ganzhiYear: this.getGanzhiYear(year, lunarInfo.lunarYear),
 			lunarYear: lunarInfo.lunarYear,
 			lunarMonth: lunarInfo.lunarMonth,
 			lunarDate: lunarInfo.lunarDay,
-			lMonth: (lunarInfo.isLeap ? '闰' : '') + lunarMonthTitles[lunarInfo.lunarMonth - 1],
-			lDate: this.getLunarDayText(lunarInfo.lunarDay),
+			lunarMonthText: (lunarInfo.isLeap ? '闰' : '') + lunarMonthTitles[lunarInfo.lunarMonth - 1],
+			lunarDateText: this.getLunarDayText(lunarInfo.lunarDay),
 			solarTerm,
 			festivals,
 			isBigMonth: lunarInfo.isBigMonth,
-			oDate: date,
+			originalDate: date,
 			weekDay,
-			cnWeekDay: '日一二三四五六'.charAt(weekDay),
+			chineseWeekDay: '日一二三四五六'.charAt(weekDay),
 			holiday: festivals[0]?.value || solarTerm
 		};
 	}
@@ -325,7 +325,7 @@ class Date2HolidayManager {
 			.map((item) => {
 				return {
 					type: item.type,
-					desc: item.value,
+					description: item.value,
 					value: item.value
 				};
 			})

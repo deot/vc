@@ -10,7 +10,7 @@
 
 ### 基础用法
 
-通过组件实例的 `prev()` 和 `next()` 切换月份。
+通过组件实例的 `previous()` 和 `next()` 切换月份。
 
 :::playground
 <!--
@@ -24,7 +24,7 @@
 <template>
 	<div class="calendar-demo">
 		<div class="calendar-demo__tools">
-			<Button @click="calendar?.prev()">上个月</Button>
+			<Button @click="calendar?.previous()">上个月</Button>
 			<Button @click="calendar?.next()">下个月</Button>
 		</div>
 		<Calendar ref="calendar" />
@@ -247,14 +247,15 @@ import { Calendar } from '@deot/vc';
 | month | 自定义月份标题 | `{ data, month, year, lang }` |
 | week | 自定义星期标题 | `{ data, date, lang, firstDayOfWeek }` |
 
-- `cell` 包含 `date`、`value` 和 `type`；`value` 为 `YYYY-MM-DD`，`type` 为 `prev`、`current` 或 `next`。
+- `cell` 包含 `date`、`value` 和 `type`；`value` 为 `YYYY-MM-DD`，`type` 为 `previous`、`current` 或 `next`。
 - 月份 `data` 为 `{ month: string, year: number }`；`month` 为从 `0` 开始的月份索引。
 - 星期 `data` 和 `date` 是相同的七项翻译结果；`lang` 为当前 `locale.name`。
 - `holiday` 始终包含 `holiday` 和 `festivals`。仅当当前 `locale.name === 'zh-CN'` 且日期在 1900–2100 年内时，才会附带农历、生肖、干支、节气等详细字段；其他情况返回空结果。
+- `festivals` 每项包含 `type`、`description` 和 `value`。干支字段为 `ganzhiDate`、`ganzhiMonth`、`ganzhiYear`；农历数字字段为 `lunarYear`、`lunarMonth`、`lunarDate`，文字字段为 `lunarMonthText`、`lunarDateText`；公历日期对象为 `originalDate`，中文星期文字为 `chineseWeekDay`。
 
 ### Calendar 方法
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| prev | 切换到上一个月 | - | `void` |
+| previous | 切换到上一个月 | - | `void` |
 | next | 切换到下一个月 | - | `void` |

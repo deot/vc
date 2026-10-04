@@ -41,11 +41,11 @@ describe('index.ts', () => {
 		expect(wrapper.find('.is-selected').text()).toBe('15');
 	});
 
-	it('prev/next: 支持普通月份和跨年切换', async () => {
+	it('previous/next: 支持普通月份和跨年切换', async () => {
 		const wrapper = mount(Calendar);
 		const vm = wrapper.vm as any;
 
-		vm.prev();
+		vm.previous();
 		await nextTick();
 		expect(wrapper.find('.vc-calendar__month').text()).toContain('四月');
 		expect(wrapper.find('.vc-calendar__month').text()).toContain('2024');
@@ -59,7 +59,7 @@ describe('index.ts', () => {
 		const wrapper2 = mount(Calendar);
 		const vm2 = wrapper2.vm as any;
 
-		vm2.prev();
+		vm2.previous();
 		await nextTick();
 		expect(wrapper2.find('.vc-calendar__month').text()).toContain('十二月');
 		expect(wrapper2.find('.vc-calendar__month').text()).toContain('2023');
@@ -147,6 +147,39 @@ describe('index.ts', () => {
 		expect(wrapper.find('.week-slot').text()).toContain('zh-CN:一|二|三');
 		expect(wrapper.findAll('.date-slot')).toHaveLength(42);
 		expect(wrapper.find('.date-slot').text()).toContain('2024-');
+	});
+
+	it('slots/renderDate: 公开完整名称的日期类型和节日字段', () => {
+		vi.setSystemTime(new Date('2024-02-10T12:00:00'));
+		const renderDate = vi.fn(({ cell }) => h('span', cell.date));
+		const slot = vi.fn(({ cell }) => h('span', cell.date));
+		const wrapper = mount(Calendar, { props: { renderDate } });
+		const slotWrapper = mount(Calendar, { slots: { default: slot } });
+
+		for (const render of [renderDate, slot]) {
+			expect(render.mock.calls[0][0].cell.type).toBe('previous');
+			const { holiday } = render.mock.calls.find(([{ cell }]) => cell.value === '2024-02-10')![0];
+			expect(holiday).toEqual({
+				animal: '龙',
+				ganzhiDate: expect.any(String),
+				ganzhiMonth: expect.any(String),
+				ganzhiYear: '甲辰',
+				lunarYear: 2024,
+				lunarMonth: 1,
+				lunarDate: 1,
+				lunarMonthText: '正',
+				lunarDateText: '初一',
+				solarTerm: '',
+				festivals: [{ type: 't', description: '春节', value: '春节' }],
+				isBigMonth: false,
+				originalDate: new Date(2024, 1, 10),
+				weekDay: 6,
+				chineseWeekDay: '六',
+				holiday: '春节'
+			});
+		}
+		expect(wrapper.find('.is-previous').exists()).toBe(true);
+		expect(slotWrapper.find('.is-previous').exists()).toBe(true);
 	});
 
 	it('Date2Holiday: 返回公历、农历和节气信息', () => {

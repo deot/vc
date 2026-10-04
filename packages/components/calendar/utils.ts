@@ -73,7 +73,7 @@ export const getMonthData = (
 		nextMonth = 1;
 	}
 
-	const prevData = createDaysArray(prevYear, prevMonth, getMonthDays(prevYear, prevMonth), 'prev');
+	const prevData = createDaysArray(prevYear, prevMonth, getMonthDays(prevYear, prevMonth), 'previous');
 	const currentData = createDaysArray(year, month, getMonthDays(year, month), 'current');
 	const nextData = createDaysArray(nextYear, nextMonth, getMonthDays(nextYear, nextMonth), 'next');
 	const firstWeek = getWeek(`${year}-${preZero(month)}-1`);

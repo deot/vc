@@ -2,7 +2,7 @@ export type CalendarFestivalType = 'a' | 'c' | 'h' | 'i' | 't';
 
 export interface CalendarFestival {
 	type: CalendarFestivalType;
-	desc: string;
+	description: string;
 	value: string;
 }
 
@@ -10,17 +10,17 @@ export interface CalendarHoliday {
 	holiday: string;
 	festivals: CalendarFestival[];
 	animal?: string;
-	gzDate?: string;
-	gzMonth?: string;
-	gzYear?: string;
+	ganzhiDate?: string;
+	ganzhiMonth?: string;
+	ganzhiYear?: string;
 	lunarYear?: number;
 	lunarMonth?: number;
 	lunarDate?: number;
-	lMonth?: string;
-	lDate?: string;
+	lunarMonthText?: string;
+	lunarDateText?: string;
 	solarTerm?: string;
 	isBigMonth?: boolean;
-	oDate?: Date;
+	originalDate?: Date;
 	weekDay?: number;
-	cnWeekDay?: string;
+	chineseWeekDay?: string;
 }

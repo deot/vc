@@ -1,7 +1,7 @@
 <template>
 	<div class="v-calendar-example">
 		<div class="v-calendar-example__tools">
-			<Button @click="basic?.prev()">
+			<Button @click="basic?.previous()">
 				上个月
 			</Button>
 			<Button @click="basic?.next()">

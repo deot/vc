@@ -76,7 +76,7 @@ $background-color: varfix(background-color, calendar);
 			}
 		}
 
-		@include when(prev) {
+		@include when(previous) {
 			color: $color-dark-extralight;
 		}
 

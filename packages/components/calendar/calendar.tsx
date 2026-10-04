@@ -38,7 +38,7 @@ export const Calendar = defineComponent({
 			const [showPrev, showNext] = normalizeShowAdjacentWeeks(props.showAdjacentWeeks);
 
 			return rows.filter((row) => {
-				if (row.every(cell => cell.type === 'prev')) {
+				if (row.every(cell => cell.type === 'previous')) {
 					return showPrev;
 				}
 
@@ -79,7 +79,7 @@ export const Calendar = defineComponent({
 			}
 		};
 
-		const prev = () => {
+		const previous = () => {
 			slideMode.value = 'right';
 
 			if (currentMonth.value === 0) {
@@ -91,7 +91,7 @@ export const Calendar = defineComponent({
 		};
 
 		expose({
-			prev,
+			previous,
 			next
 		});
 

@@ -2,7 +2,7 @@ import type { VNodeChild } from 'vue';
 import type { CalendarHoliday } from './date2holiday/types';
 
 export type CalendarLang = string;
-export type CalendarCellType = 'prev' | 'current' | 'next' | string;
+export type CalendarCellType = 'previous' | 'current' | 'next' | string;
 export type CalendarFirstDayOfWeek = number;
 export type CalendarAdjacentWeeks = boolean | [boolean, boolean];
 
