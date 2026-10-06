@@ -1,4 +1,5 @@
-import { VcError, VcInstance } from '@deot/vc-components';
+import { createApp, defineComponent } from 'vue';
+import { VcError, VcInstance, defineVcPlugin } from '@deot/vc-components';
 import { Utils } from '@deot/dev-test';
 import { enUS, zhCN } from '@deot/vc-locale';
 
@@ -54,5 +55,33 @@ describe('index.ts', () => {
 		await Utils.sleep(10);
 
 		expect(VcInstance.globalEvent).toBe(event);
+	});
+
+	it('defineVcPlugin', () => {
+		const Foo = defineComponent({ name: 'vc-foo', render: () => null });
+		const Bar = defineComponent({ name: 'vc-bar', render: () => null });
+		const createVcPlugin = defineVcPlugin({ Foo, Bar });
+
+		const app = createApp({});
+		app.use(createVcPlugin({ locale: enUS }));
+		expect(app.component('Foo')).toBe(Foo);
+		expect(app.component('Bar')).toBe(Bar);
+		expect(app.config.globalProperties.$vc).toBe(VcInstance);
+		expect(VcInstance.options.locale.name).toBe('en-US');
+
+		VcInstance.configure({ locale: zhCN });
+	});
+
+	it('defineVcPlugin, transfromComponentKey', () => {
+		const Foo = defineComponent({ name: 'vc-foo', render: () => null });
+		const Bar = defineComponent({ name: 'vc-bar', render: () => null });
+		const createVcPlugin = defineVcPlugin({ Foo, Bar });
+
+		const app = createApp({});
+		app.use(createVcPlugin(undefined, key => (key === 'Foo' ? `V${key}` : '')));
+		expect(app.component('VFoo')).toBe(Foo);
+		expect(app.component('Foo')).toBeUndefined();
+		// 返回空值时保留原名
+		expect(app.component('Bar')).toBe(Bar);
 	});
 });

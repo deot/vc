@@ -1,24 +1,41 @@
 // @vitest-environment jsdom
 
-import { createVcPlugin, enUS, useLocale, zhCN } from '@deot/vc';
-import { defineComponent } from 'vue';
-import { mount, config } from '@vue/test-utils';
+import {
+	Button,
+	MButton,
+	VcInstance,
+	defineVcPlugin,
+	useLocale,
+	zhCN,
+	enUS,
+	Utils,
+	Keyboard,
+	IS_SERVER
+} from '@deot/vc';
 
 describe('index.ts', () => {
-	const plugin = createVcPlugin();
-	config.global.plugins = [plugin as any];
-	it('create', async () => {
-		const Wrapper = defineComponent({
-			template: `<Popover />`
-		});
-
-		const wrapper = mount(Wrapper);
-		expect(wrapper.classes()).toContain('vc-popover');
+	it('components exports', () => {
+		expect(Button).toBeTypeOf('object');
+		expect(MButton).toBeTypeOf('object');
+		expect(VcInstance).toBeTypeOf('object');
+		expect(defineVcPlugin).toBeTypeOf('function');
 	});
 
 	it('locale exports', () => {
 		expect(zhCN.name).toBe('zh-CN');
 		expect(enUS.name).toBe('en-US');
 		expect(useLocale).toBeTypeOf('function');
+	});
+
+	it('shared exports', () => {
+		expect(Utils).toBeTypeOf('object');
+		expect(Keyboard).toBeTruthy();
+		expect(IS_SERVER).toBe(false);
+	});
+
+	it('no full registration exports', async () => {
+		const v = await import('@deot/vc');
+		expect('createVcPlugin' in v).toBe(false);
+		expect('Components' in v).toBe(false);
 	});
 });
