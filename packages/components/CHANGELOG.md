@@ -1,5 +1,13 @@
 # @deot/vc-components ChangeLog
 
+## v1.2.1
+
+_2026-10-06_
+
+### Bugfixes
+
+- fix: declare @deot/vc-hooks and @deot/vc-shared dependencies ([3692656](https://github.com/deot/vc/commit/3692656d0bb9e88c8004f90d6dfcebfea7367b00))
+
 ## v1.2.0
 
 _2026-10-06_
