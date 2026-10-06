@@ -1,4 +1,4 @@
-# @deot/vc-locale ChangeLog
+# @deot/vc-full ChangeLog
 
 ## v1.2.0
 
