@@ -24,13 +24,13 @@ VcInstance.configure(options);
 
 ### 通过插件统一初始化
 
-使用全量包 `@deot/vc-full` 的 `createVcPlugin()`（或用 `defineVcPlugin()` 自行挑选组件得到的插件工厂）时，安装插件会将同一份配置交给 `VcInstance.configure()`，并将单例挂到 `app.config.globalProperties.$vc`。第二个参数可以统一转换注册到 Vue app 的组件名。
+使用全量入口 `@deot/vc/full` 的 `createVcPlugin()`（或用 `defineVcPlugin()` 自行挑选组件得到的插件工厂）时，安装插件会将同一份配置交给 `VcInstance.configure()`，并将单例挂到 `app.config.globalProperties.$vc`。第二个参数可以统一转换注册到 Vue app 的组件名。
 
 下面通过插件设置默认语言。注册名称加上 `V` 前缀后，可在模板中使用 `VButton` 等名称；按需导入的组件名不受影响。各组件的配置在下方独立说明。
 
 ```ts
 import { createApp } from 'vue';
-import { createVcPlugin, zhCN } from '@deot/vc-full';
+import { createVcPlugin, zhCN } from '@deot/vc/full';
 
 const app = createApp({});
 const vc = createVcPlugin({
@@ -428,7 +428,7 @@ const diagnostic = new VcError('example', 'invalid configuration');
 
 ### defineVcPlugin / createVcPlugin
 
-`defineVcPlugin(components)` 基于传入的组件集合返回插件工厂 `createVcPlugin`，自身不引用任何组件，按需引入时只有传入的组件会进入产物。全量包 `@deot/vc-full` 导出的 `createVcPlugin` 即 `defineVcPlugin(Components)`。插件用于注册组件、应用全局配置，并在主应用上提供 `$vc`；它使用上文同一个 `VcInstance`，不会创建隔离的配置实例。
+`defineVcPlugin(components)` 基于传入的组件集合返回插件工厂 `createVcPlugin`，自身不引用任何组件，按需引入时只有传入的组件会进入产物。全量入口 `@deot/vc/full` 导出的 `createVcPlugin` 即 `defineVcPlugin(Components)`。插件用于注册组件、应用全局配置，并在主应用上提供 `$vc`；它使用上文同一个 `VcInstance`，不会创建隔离的配置实例。
 
 ```ts
 import { defineVcPlugin, Button, MButton } from '@deot/vc';

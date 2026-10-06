@@ -1,15 +1,17 @@
 // @vitest-environment jsdom
 
-import { createVcPlugin, Components, Button, VcInstance, enUS, zhCN } from '@deot/vc-full';
 import { createApp, defineComponent } from 'vue';
 import { mount } from '@vue/test-utils';
-import * as Mobile from '../src/index.m';
+import { Button, VcInstance, enUS, zhCN } from '@deot/vc';
+import { createVcPlugin, Components } from '../src/index.full';
+import * as Full from '../src/index.full';
+import * as Mobile from '../src/index.mobile';
 import * as Desktop from '../src/index.desktop';
 
 const MOBILE_REGEXP = /^M[A-Z]/;
 const DESKTOP_WITH_M = ['Marquee', 'Measuring', 'Modal', 'ModalView'];
 
-describe('index.ts', () => {
+describe('index.{full,desktop,mobile}.ts', () => {
 	it('create', async () => {
 		const Wrapper = defineComponent({
 			template: `<div><Popover /><MPopover /></div>`
@@ -46,7 +48,7 @@ describe('index.ts', () => {
 		expect(keys.length).toBe(Object.keys(Mobile.Components).length + Object.keys(Desktop.Components).length);
 	});
 
-	it('index.m.ts', () => {
+	it('index.mobile.ts', () => {
 		const keys = Object.keys(Mobile.Components);
 		expect(keys.length).toBeGreaterThan(0);
 		expect(keys.every(key => MOBILE_REGEXP.test(key))).toBe(true);
@@ -72,7 +74,7 @@ describe('index.ts', () => {
 	});
 
 	it('re-exports', () => {
-		[Mobile, Desktop].forEach((entry) => {
+		[Full, Mobile, Desktop].forEach((entry) => {
 			expect(entry.zhCN.name).toBe('zh-CN');
 			expect(entry.Button).toBe(Button);
 			expect(entry.VcInstance).toBe(VcInstance);

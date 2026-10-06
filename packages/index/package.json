@@ -9,10 +9,39 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs",
       "types": "./dist/index.d.ts"
+    },
+    "./full": {
+      "import": "./dist/index.full.js",
+      "require": "./dist/index.full.cjs",
+      "types": "./types/entry.d.ts"
+    },
+    "./desktop": {
+      "import": "./dist/index.desktop.js",
+      "require": "./dist/index.desktop.cjs",
+      "types": "./types/entry.d.ts"
+    },
+    "./mobile": {
+      "import": "./dist/index.mobile.js",
+      "require": "./dist/index.mobile.cjs",
+      "types": "./types/entry.d.ts"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "full": [
+        "./types/entry.d.ts"
+      ],
+      "desktop": [
+        "./types/entry.d.ts"
+      ],
+      "mobile": [
+        "./types/entry.d.ts"
+      ]
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "types"
   ],
   "license": "MIT",
   "publishConfig": {

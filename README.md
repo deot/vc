@@ -19,8 +19,7 @@ import { Button } from '@deot/vc';
 
 ## Monorepo
 
-- [`@deot/vc`](./packages/index) - 聚合入口，支持 `tree-shaking`。
-- [`@deot/vc-full`](./packages/full) - 全量注册入口（含 `/m`、`/desktop` 按端入口），不可 `tree-shaking`。
+- [`@deot/vc`](./packages/index) - 聚合入口，支持 `tree-shaking`；`@deot/vc/full`、`/desktop`、`/mobile` 为全量注册入口。
 - [`@deot/vc-components`](./packages/components) - 桌面端与移动端组件。
 - [`@deot/vc-hooks`](./packages/hooks) - Vue 组合式工具。
 - [`@deot/vc-locale`](./packages/locale) - 内置语言与语言类型。

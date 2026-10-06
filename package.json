@@ -14,10 +14,10 @@
     "lint:style": "stylelint '**/*.{css,scss}' --cache --cache-location node_modules/.cache/stylelint/",
     "link": "ddc link",
     "docs:dev": "doc dev --workspace .",
-    "dev": "ddc dev --vue-package 'components,hooks,index,full'",
+    "dev": "ddc dev --vue-package 'components,hooks,index'",
     "update": "ddc update",
-    "build": "ddc build --vue-package 'components,hooks,index,full' --script-formats=es,cjs,umd,iife --external vue",
-    "test": "ddc test --vue-package 'components,hooks,index,full'",
+    "build": "ddc build --vue-package 'components,hooks,index' --script-formats=es,cjs,umd,iife --external vue",
+    "test": "ddc test --vue-package 'components,hooks,index'",
     "add": "ddc add",
     "release": "ddc release",
     "typecheck": "vue-tsc --noEmit --skipLibCheck"

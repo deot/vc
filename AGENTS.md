@@ -25,5 +25,5 @@
 - `pnpm-workspace.yaml` 包含 `allowBuilds` 配置，因此原生扩展（`@swc/core`、`esbuild`、`puppeteer` 等）会在 `pnpm install` 期间自动构建，无需单独安装 Puppeteer。
 - ESLint 会报告 README.md 文件和部分示例中原本就存在的警告或错误（主要是 `no-console`），这些问题不会阻塞当前工作。
 - 构建时会出现来自 `echarts` 和 `@vue/runtime-core` 类型定义的 TypeScript 警告；这些属于上游问题，不影响构建产物。
-- 测试命令底层使用 `ddc test`；`--package-name` 必须是 `components`、`hooks`、`index` 或 `full` 之一，不能使用 `button` 之类的组件名。测试单个组件时使用 `--subpackage`。
+- 测试命令底层使用 `ddc test`；`--package-name` 必须是 `components`、`hooks` 或 `index` 之一，不能使用 `button` 之类的组件名。测试单个组件时使用 `--subpackage`。
 - 项目使用 **Tab 缩进**（参阅 `.editorconfig`），编辑文件时请遵循这一规范。
