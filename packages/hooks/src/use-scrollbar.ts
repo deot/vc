@@ -1,16 +1,28 @@
 import { onMounted, onBeforeUnmount, watch } from 'vue';
 import type { Ref, ComputedRef } from 'vue';
 
+let locks = 0;
+let original = '';
+let priority = '';
+
 export const useScrollbar = (visibleRef: Ref<boolean> | ComputedRef) => {
-	let original = '';
 	let isMounted = false;
+	let locked = false;
 
 	const setScrollBar = (v: boolean) => {
-		if (!isMounted || original === 'hidden') return;
+		if (!isMounted || v === locked) return;
+		const { style } = document.body;
+		locked = v;
 		if (v) {
-			document.body.style.overflow = 'hidden';
+			if (locks++ === 0) {
+				original = style.getPropertyValue('overflow');
+				priority = style.getPropertyPriority('overflow');
+				style.setProperty('overflow', 'hidden');
+			}
 		} else {
-			document.body.style.removeProperty('overflow');
+			if (--locks === 0) {
+				original ? style.setProperty('overflow', original, priority) : style.removeProperty('overflow');
+			}
 		}
 	};
 
@@ -24,8 +36,6 @@ export const useScrollbar = (visibleRef: Ref<boolean> | ComputedRef) => {
 
 	onMounted(() => {
 		isMounted = true;
-		original = document.body.style.overflow;
-
 		// 初始就展示弹层的情况下
 		visibleRef.value && setScrollBar(true);
 	});
