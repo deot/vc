@@ -41,7 +41,7 @@ it('updates empty and summary text when the locale changes and preserves explici
 it('updates single and multiple filter actions while mounted', async () => {
 	const wrapper = mount(TableFilter, {
 		props: { max: 2 },
-		global: { stubs: { 'vc-dropdown': { template: '<div><slot /><slot name="content" /></div>' } } }
+		global: { stubs: { 'vc-dropdown': { template: '<div><slot /><slot name="content" /><slot name="footer" /></div>' } } }
 	});
 	try {
 		expect(wrapper.text()).toContain('重置');

@@ -24,11 +24,10 @@ $foreground-color-inactive: varfix(foreground-color-inactive, table-filter);
 		}
 	}
 
+	// 高度上限与滚动由弹层内置的 Scroller 承担（见 table-filter.tsx 的 scrollerOptions）
 	@include element(content) {
-		max-height: 160px;
 		min-width: 100px;
 		padding: 5px 0;
-		overflow-y: auto;
 	}
 
 	@include element(item) {

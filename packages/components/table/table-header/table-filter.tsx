@@ -163,37 +163,41 @@ export const TableFilter = defineComponent({
 			// 选满 max 个后，未勾选的选项置灰
 			const isFull = currentValue.value.length >= props.max;
 			return (
-				<div>
-					<CheckboxGroup
-						modelValue={currentValue.value}
-						class="vc-table-filter__content"
-						// @ts-ignore
-						onChange={handleChange}
+				<CheckboxGroup
+					modelValue={currentValue.value}
+					class="vc-table-filter__content"
+					// @ts-ignore
+					onChange={handleChange}
+				>
+					{
+						props.data.map(item => (
+							<Checkbox
+								key={item.value}
+								value={item.value}
+								label={item.label}
+								disabled={item.disabled || (isFull && !currentValue.value.includes(item.value))}
+								class="vc-table-filter__item"
+							/>
+						))
+					}
+				</CheckboxGroup>
+			);
+		};
+
+		// 多选的操作按钮在弹层的固定区，不随选项滚动
+		const renderFooter = () => {
+			return (
+				<div class="vc-table-filter__footer">
+					<Button size="small" onClick={handleReset}>
+						{ t('vc.Table.filterReset') }
+					</Button>
+					<Button
+						type="primary"
+						size="small"
+						onClick={handleConfirm}
 					>
-						{
-							props.data.map(item => (
-								<Checkbox
-									key={item.value}
-									value={item.value}
-									label={item.label}
-									disabled={item.disabled || (isFull && !currentValue.value.includes(item.value))}
-									class="vc-table-filter__item"
-								/>
-							))
-						}
-					</CheckboxGroup>
-					<div class="vc-table-filter__footer">
-						<Button size="small" onClick={handleReset}>
-							{ t('vc.Table.filterReset') }
-						</Button>
-						<Button
-							type="primary"
-							size="small"
-							onClick={handleConfirm}
-						>
-							{ t('vc.Table.filterConfirm') }
-						</Button>
-					</div>
+						{ t('vc.Table.filterConfirm') }
+					</Button>
 				</div>
 			);
 		};
@@ -235,6 +239,8 @@ export const TableFilter = defineComponent({
 					trigger="click"
 					placement="bottom"
 					portalClass={props.portalClass}
+					// 选项由弹层内置的 Scroller 限高滚动
+					scrollerOptions={{ maxHeight: 160 }}
 					class="vc-table-filter"
 					// @ts-ignore
 					onVisibleChange={handleVisibleChange}
@@ -247,7 +253,8 @@ export const TableFilter = defineComponent({
 								class={[{ 'is-active': isFiltered.value }, 'vc-table-filter__icon']}
 							/>
 						),
-						content: () => (multiple.value ? renderMultiple() : renderSingle())
+						content: () => (multiple.value ? renderMultiple() : renderSingle()),
+						footer: multiple.value ? renderFooter : undefined
 					}}
 				</Dropdown>
 			);

@@ -2575,6 +2575,12 @@ describe('Additional source-path coverage', () => {
 		// 勾选 B 后确认
 		inputs[1].dispatchEvent(new Event('change'));
 		await flush();
+		// 操作按钮在弹层的固定区，选项由内置的 Scroller 限高滚动
+		expect(popup.querySelector('.vc-popover-wrapper__footer > .vc-table-filter__footer')).not.toBeNull();
+		const list = popup.querySelector('.vc-popover-wrapper__content') as HTMLElement;
+		expect(list.classList.contains('vc-scroller')).toBe(true);
+		expect(list.style.maxHeight).toBe('160px');
+		expect(list.querySelector('.vc-table-filter__footer')).toBeNull();
 		const [resetButton, confirmButton] = Array.from(popup.querySelectorAll<HTMLElement>('.vc-table-filter__footer .vc-button'));
 		expect(resetButton.classList.contains('is-small')).toBe(true);
 		expect(confirmButton.classList.contains('is-small')).toBe(true);
