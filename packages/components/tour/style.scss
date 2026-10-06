@@ -68,7 +68,7 @@ $line-height-large: varfix(line-height-large, tour);
 		position: relative;
 		display: flex;
 		min-height: 0;
-		padding: unitfix(20);
+		padding: unitfix(20) 0;
 		overflow: hidden;
 		outline: none;
 		box-sizing: border-box;
@@ -92,9 +92,13 @@ $line-height-large: varfix(line-height-large, tour);
 
 	@include element(close) {
 		position: absolute;
-		top: unitfix(10);
-		right: unitfix(10);
-		padding: unitfix(4);
+		top: unitfix(20);
+		right: unitfix(16);
+		display: flex;
+		align-items: center;
+		height: unitfix(20); // 与标题行高一致，图标与标题中线对齐
+		padding: 0 unitfix(4);
+		font-size: unitfix(13);
 		color: $foreground-color-light;
 		cursor: pointer;
 		background: transparent;
@@ -106,20 +110,26 @@ $line-height-large: varfix(line-height-large, tour);
 	}
 
 	@include element(header) {
+		padding: 0 unitfix(20);
 		flex-shrink: 0;
 	}
 
 	@include element(title) {
-		padding-right: unitfix(16);
+		min-height: unitfix(20);
+		padding-right: unitfix(24);
 		margin-bottom: unitfix(10);
+		font-size: unitfix(16);
 		font-weight: 600;
+		line-height: unitfix(20);
 	}
 
 	@include element(content-container) {
 		min-height: 0;
 	}
 
+	// 左右留白放在内容上，滚动条贴卡片右边缘
 	@include element(content) {
+		padding: 0 unitfix(20);
 		color: $foreground-color-light;
 	}
 
@@ -129,6 +139,7 @@ $line-height-large: varfix(line-height-large, tour);
 		gap: unitfix(12);
 		align-items: center;
 		justify-content: space-between;
+		padding: 0 unitfix(20);
 		margin-top: unitfix(24);
 	}
 
