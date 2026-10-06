@@ -18,6 +18,7 @@ import { setTrigger, isInArea } from './utils';
 import { TransitionScale } from '../transition';
 import { Customer } from '../customer';
 import { Portal } from '../portal';
+import { Scroller } from '../scroller';
 import { ScrollerManager } from '../scroller/manager';
 
 // 同时是 CSS 块名、主题变量前缀（--vc-popover-wrapper-*）与 Popover.open 的默认 Portal 名
@@ -25,9 +26,10 @@ const COMPONENT_NAME = 'vc-popover-wrapper';
 
 export const PopoverView = defineComponent({
 	name: COMPONENT_NAME,
+	inheritAttrs: false,
 	props: popoverViewProps,
 	emits: ['portal-fulfilled', 'close'],
-	setup(props, { emit, slots, expose }) {
+	setup(props, { emit, slots, expose, attrs }) {
 		const {
 			getPopupStyle,
 			getFitPos,
@@ -41,6 +43,12 @@ export const PopoverView = defineComponent({
 		const fitPos = ref(props.placement);
 		const wrapperW = ref({ width: 'auto' });
 		const containerRef = ref<HTMLElement>();
+		// 内容区（Scroller）：容器达到上限时由它滚动，见 fitMaxSize；未达到上限时不挂载滚动条
+		// scrollable=false 时没有 Scroller，容器仍限制尺寸，由内容自行收缩并滚动
+		const scrollerRef = ref<{ wrapper: HTMLElement }>();
+		const isReached = ref(false);
+		// 调用方限定了内容区高度：始终由内容区滚动，与容器是否达到上限无关
+		const isLimited = computed(() => !!(props.scrollerOptions?.height || props.scrollerOptions?.maxHeight));
 		// 触发节点所在的滚动容器（由内到外，不含 window）及取消订阅，见 onMounted
 		let scrollers: HTMLElement[] = [];
 		let unbindScrollers = () => {};
@@ -156,8 +164,15 @@ export const PopoverView = defineComponent({
 				placement: props.placement,
 				boundary: props.hover && inBody ? viewport : boundary
 			});
-			// 内容区尺寸不超过实际方向所在一侧的可用空间
-			const result = fitMaxSize(containerRef.value!, { el: vnode.el, placement: props.placement, triggerRect, fit });
+			// 容器尺寸不超过实际方向所在一侧的可用空间
+			const { placement: result, reached } = fitMaxSize(containerRef.value!, {
+				scroller: scrollerRef.value?.wrapper,
+				el: vnode.el,
+				placement: props.placement,
+				triggerRect,
+				fit
+			});
+			isReached.value = reached;
 
 			const { wrapperStyle: $wrapperStyle, arrowStyle: $arrowStyle } = getPopupStyle({
 				rect,
@@ -303,6 +318,17 @@ export const PopoverView = defineComponent({
 			update: setPopupStyle
 		});
 		return () => {
+			const content = slots.content
+				? slots.content()
+				: typeof props.content === 'function'
+					? (
+							<Customer
+								// @ts-ignore
+								render={props.content}
+							/>
+						)
+					: <div innerHTML={props.content} />;
+
 			return (
 				<TransitionScale
 					mode={props.animation || 'part'}
@@ -312,6 +338,7 @@ export const PopoverView = defineComponent({
 				>
 					{
 						<div
+							{...attrs}
 							// @ts-ignore
 							vShow={isActive.value}
 							style={[wrapperStyle.value, wrapperW.value, props.portalStyle]}
@@ -321,27 +348,35 @@ export const PopoverView = defineComponent({
 							onMouseleave={e => props.hover && handleChange(e, { visible: false })}
 						>
 							<div ref={containerRef} class={[themeClasses.value, 'vc-popover-wrapper__container']}>
+								{slots.header && <div class="vc-popover-wrapper__header">{slots.header()}</div>}
 								{
-									props.arrow && (
-										<div
-											style={arrowStyle.value}
-											class={[themeClasses.value, posClasses.value, 'vc-popover-wrapper__arrow']}
-										/>
-									)
+									props.scrollable
+										? (
+												<Scroller
+													{...props.scrollerOptions}
+													ref={scrollerRef}
+													wrapperClass={[
+														'vc-popover-wrapper__content',
+														{ 'is-limited': isLimited.value },
+														props.scrollerOptions?.wrapperClass
+													] as any}
+													showBar={(isReached.value || isLimited.value) && props.scrollerOptions?.showBar !== false}
+												>
+													{content}
+												</Scroller>
+											)
+										: <div class="vc-popover-wrapper__content is-unscrollable">{content}</div>
 								}
-								{
-									slots.content
-										? slots.content()
-										: typeof props.content === 'function'
-											? (
-													<Customer
-														// @ts-ignore
-														render={props.content}
-													/>
-												)
-											: <div innerHTML={props.content} />
-								}
+								{slots.footer && <div class="vc-popover-wrapper__footer">{slots.footer()}</div>}
 							</div>
+							{
+								props.arrow && (
+									<div
+										style={arrowStyle.value}
+										class={[themeClasses.value, posClasses.value, 'vc-popover-wrapper__arrow']}
+									/>
+								)
+							}
 						</div>
 					}
 				</TransitionScale>

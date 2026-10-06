@@ -212,9 +212,10 @@ const measure = (popup, triggerEl) => {
 	const w = popup.getBoundingClientRect();
 	const t = triggerEl.getBoundingClientRect();
 	const inView = c.left >= GAP - 0.5 && c.top >= GAP - 0.5 && c.right <= vw - GAP + 0.5 && c.bottom <= vh - GAP + 0.5;
-	// 内容超出内容区时，内容区须可滚动
-	const style = getComputedStyle(container);
-	const overflows = container.scrollHeight > container.clientHeight + 1 || container.scrollWidth > container.clientWidth + 1;
+	// 内容超出内容区（Scroller）时，内容区须可滚动
+	const content = popup.querySelector('.vc-popover-wrapper__content');
+	const style = getComputedStyle(content);
+	const overflows = content.scrollHeight > content.clientHeight + 1 || content.scrollWidth > content.clientWidth + 1;
 	const reachable = !overflows || /(auto|scroll)/.test(style.overflowY + style.overflowX);
 	const covers = w.left < t.right && w.right > t.left && w.top < t.bottom && w.bottom > t.top;
 	// 箭头：按实际方向，箭头中心须落在触发器范围内（*-left / *-right 方向的箭头本就不在中心）

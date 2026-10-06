@@ -175,7 +175,7 @@ const placements = [
 
 ### 自定义内容与受控状态
 
-`content` 插槽优先于同名属性。通过 `trigger="custom"` 和 `v-model` 自行控制显隐；需要禁止外部点击关闭时，设置 `outsideClickable` 为 `false`。
+`content` 插槽优先于同名属性。浮层放不下时按所在一侧的可用空间限制尺寸，内容区在 Scroller 内滚动；需要固定在顶部、底部的内容（如标题、操作按钮）放到 `header`、`footer` 插槽，不随内容滚动。`scrollerOptions` 透传内置 Scroller 的属性（如 `maxHeight`、`native`、`always`）；设置 `always` 后滚动条常显，并在各系统下统一使用自绘滚动条。内容需要自己滚动时（如多列各自滚动、虚拟列表）设置 `scrollable` 为 `false`：内容区变为纵向 flex 容器，内容的根节点设置 `min-height: 0` 后在浮层的高度上限内收缩，由其内部的滚动容器滚动。通过 `trigger="custom"` 和 `v-model` 自行控制显隐；需要禁止外部点击关闭时，设置 `outsideClickable` 为 `false`。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
@@ -475,7 +475,9 @@ onUnmounted(() => leaf?.destroy());
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| border-radius | 弹层圆角 | `4px` |
 
 ## API
 
@@ -499,6 +501,8 @@ onUnmounted(() => leaf?.destroy());
 | outsideClickable | 是否允许点击浮层外部关闭 | `boolean` | - | `true` |
 | portalClass | 浮层外层类名 | `string \| object \| unknown[]` | - | - |
 | portalStyle | 浮层外层样式 | `string \| object` | - | - |
+| scrollable | 内容区是否由内置的 Scroller 滚动；`false` 时浮层仍限制尺寸，由内容自行收缩并滚动 | `boolean` | - | `true` |
+| scrollerOptions | 内置 Scroller 的属性；需要限定内容区高度时设置其中的 `height` 或 `maxHeight`（通过 `wrapperStyle`、`wrapperClass` 限高不会生效） | `object` | - | - |
 
 ### 事件
 
@@ -515,6 +519,8 @@ onUnmounted(() => leaf?.destroy());
 | --- | --- | --- |
 | default | 触发器内容 | - |
 | content | 浮层内容，优先于 content 属性 | - |
+| header | 浮层顶部的固定区，不随内容滚动 | - |
+| footer | 浮层底部的固定区，不随内容滚动 | - |
 
 ### 方法
 

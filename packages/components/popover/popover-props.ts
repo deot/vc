@@ -2,7 +2,7 @@ import type { ExtractPropTypes } from 'vue';
 import { pick } from 'lodash-es';
 import { props as viewProps } from './popover-view-props';
 
-const viewKeys = [
+export const viewKeys = [
 	'modelValue',
 	'animation',
 	'placement',
@@ -14,7 +14,9 @@ const viewKeys = [
 	'portalClass',
 	'portalStyle',
 	'autoWidth',
-	'always'
+	'always',
+	'scrollable',
+	'scrollerOptions'
 ] as const;
 
 export const props = {

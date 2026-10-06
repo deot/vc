@@ -71,15 +71,18 @@ export const measureText = (value: string) => {
 	wrapper.style.cssText = 'position: fixed; top: 0; left: 0; visibility: hidden; pointer-events: none;';
 	const container = document.createElement('div');
 	container.className = 'vc-popover-wrapper__container';
-	container.style.cssText = 'width: max-content; white-space: nowrap;';
-	container.textContent = value;
+	const content = document.createElement('div');
+	content.className = 'vc-popover-wrapper__content';
+	content.style.cssText = 'width: max-content; white-space: nowrap;';
+	content.textContent = value;
+	container.appendChild(content);
 	wrapper.appendChild(container);
 	document.body.appendChild(wrapper);
 
-	const [, right, , left] = getPadding(container);
-	const style = getComputedStyle(container);
+	const [, right, , left] = getPadding(content);
+	const style = getComputedStyle(content);
 	const size = {
-		width: container.getBoundingClientRect().width - left - right,
+		width: content.getBoundingClientRect().width - left - right,
 		fontSize: parseFloat(style.fontSize) || 0,
 		lineHeight: parseFloat(style.lineHeight) || 0,
 		padding: left + right

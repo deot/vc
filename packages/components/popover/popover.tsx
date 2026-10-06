@@ -2,7 +2,8 @@
 
 import { defineComponent, h, ref, computed, watch, getCurrentInstance, onMounted, onUnmounted } from 'vue';
 import type { ComponentInternalInstance } from 'vue';
-import { props as popoverProps } from './popover-props';
+import { pick } from 'lodash-es';
+import { props as popoverProps, viewKeys } from './popover-props';
 import { getUid } from '@deot/helper-utils';
 import { PopoverPortal } from './popover-view';
 import { isInArea } from './utils';
@@ -110,7 +111,8 @@ export const Popover = defineComponent({
 					 */
 					slots,
 					parent: instance.parent!,
-					...props
+					// 只传弹层的属性：trigger、tag 等属于触发器，否则会成为弹层根节点的 attrs（tag 还会被 Portal 当作挂载容器的标签）
+					...pick(props, viewKeys)
 				}) as PortalLeaf;
 			} else if (popperInstance && popperInstance.wrapper) {
 				popperInstance.wrapper.toggle(false);

@@ -1,4 +1,5 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
+import type { Props as ScrollerProps } from '../scroller/scroller-props';
 
 export const props = {
 	modelValue: Boolean,
@@ -51,6 +52,13 @@ export const props = {
 	hover: Boolean,
 	always: Boolean,
 	portalClass: [Object, String, Array],
-	portalStyle: [Object, String]
+	portalStyle: [Object, String],
+	// 内容区由内置的 Scroller 滚动；为 false 时内容区不滚动，由内容自行收缩并滚动
+	scrollable: {
+		type: Boolean,
+		default: true
+	},
+	// 内置 Scroller 的属性；设置 height / maxHeight 时内容区按该高度滚动
+	scrollerOptions: Object as PropType<Partial<ScrollerProps>>
 };
 export type Props = ExtractPropTypes<typeof props>;

@@ -8,6 +8,15 @@ $color-shadow-fixed: varfix(color-shadow-fixed, popover-wrapper);
 $box-shadow: varfix(box-shadow, popover-wrapper);
 $font-size-small: varfix(font-size-small, popover-wrapper);
 $line-height-large: varfix(line-height-large, popover-wrapper);
+$padding: 5px 12px;
+
+// 容器圆角，仅组件内的参数（全局 border-radius 为卡片类的较大圆角）
+$border-radius: var(--vc-popover-wrapper-border-radius, 4px);
+
+%vc-popover-wrapper-fixed {
+	padding: $padding;
+	flex-shrink: 0;
+}
 
 @include block(vc-popover-wrapper) {
 	position: absolute;
@@ -32,13 +41,15 @@ $line-height-large: varfix(line-height-large, popover-wrapper);
 		padding-right: 8px;
 	}
 
-	// 最大宽高由 use-pos 的 fitMaxSize 按可用空间写入（含 padding），不可断行的长串在宽度内换行
+	// 最大宽高由 use-pos 的 fitMaxSize 按可用空间写入，不可断行的长串在宽度内换行
+	// 内边距在各分区上：内容区的滚动条贴住容器边缘
 	@include element(container) {
-		padding: 5px 12px;
+		display: flex;
 		overflow-wrap: break-word;
-		border-radius: 4px;
+		border-radius: $border-radius;
 		box-shadow: $box-shadow;
 		box-sizing: border-box;
+		flex-direction: column;
 
 		@include when(dark) {
 			color: $color-light;
@@ -48,10 +59,42 @@ $line-height-large: varfix(line-height-large, popover-wrapper);
 		@include when(light) {
 			background-color: $color-light;
 		}
+
+		// 首 / 末分区沿用容器的圆角，滚动的内容不在圆角处露出
+		& > :first-child {
+			border-top-right-radius: inherit;
+			border-top-left-radius: inherit;
+		}
+
+		& > :last-child {
+			border-bottom-right-radius: inherit;
+			border-bottom-left-radius: inherit;
+		}
+	}
+
+	// 固定区：不随内容滚动
+	@include element(header) {
+		@extend %vc-popover-wrapper-fixed;
+	}
+
+	@include element(footer) {
+		@extend %vc-popover-wrapper-fixed;
+	}
+
+	// 内容区（Scroller 的根节点）：容器达到上限时收缩并滚动
+	@include element(content) {
+		min-height: 0;
+		padding: $padding;
+
+		// scrollable=false：内容自行滚动，这里只传递高度约束（内容的根节点设 min-height: 0 后可在容器内收缩）
+		@include when(unscrollable) {
+			display: flex;
+			flex-direction: column;
+		}
 	}
 
 	@include when(padding-none) {
-		& > .vc-popover-wrapper__container {
+		& > .vc-popover-wrapper__container > * {
 			padding: 0;
 		}
 	}
@@ -158,6 +201,13 @@ $line-height-large: varfix(line-height-large, popover-wrapper);
 			transform: translateY(-50%) rotate(45deg);
 		}
 	}
+}
+
+// 未达到上限时保持可见（不裁剪内容中 portal=false 的嵌套弹层），达到上限时由 fitMaxSize 写入 overflow: auto
+// 选择器的优先级高于 Scroller 根节点的 overflow: auto，与样式加载顺序无关
+// is-limited：调用方通过 scrollerOptions 限定了高度，始终由 Scroller 滚动
+.vc-popover-wrapper__container > .vc-popover-wrapper__content:not(.is-limited) {
+	overflow: visible;
 }
 
 // 默认字体：优先级为 0，组件或调用方通过 portalClass 设置的字体始终优先（如 DatePicker 的 12px），与样式加载顺序无关

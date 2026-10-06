@@ -423,6 +423,160 @@ describe('Popover 内容渲染', () => {
 		wrapper.unmount();
 	});
 
+	it('内容渲染在 Scroller（内容区）内，箭头与容器同级', async () => {
+		const wrapper = mount(() => (
+			<Popover trigger="click" content="<span class='c-prop'>prop</span>">
+				<button>btn</button>
+			</Popover>
+		), { attachTo: document.body });
+		await wrapper.trigger('click');
+		await flush();
+
+		const container = document.querySelector('.vc-popover-wrapper__container')!;
+		const content = container.querySelector('.vc-popover-wrapper__content')!;
+		expect(content.classList.contains('vc-scroller')).toBe(true);
+		expect(content.parentElement).toBe(container);
+		expect(content.querySelector('.vc-scroller__content .c-prop')).not.toBeNull();
+		// 未传 header / footer 时不渲染固定区
+		expect(container.querySelector('.vc-popover-wrapper__header')).toBeNull();
+		expect(container.querySelector('.vc-popover-wrapper__footer')).toBeNull();
+		expect(document.querySelector('.vc-popover-wrapper__arrow')!.parentElement).toBe(getWrapperEl());
+
+		wrapper.unmount();
+	});
+
+	it('#header / #footer slot 渲染在内容区之外，不随内容滚动', async () => {
+		const wrapper = mount(() => (
+			<Popover trigger="click">
+				{{
+					default: () => <button>btn</button>,
+					header: () => <span class="c-header">header</span>,
+					content: () => <span class="c-slot">slot</span>,
+					footer: () => <span class="c-footer">footer</span>
+				}}
+			</Popover>
+		), { attachTo: document.body });
+		await wrapper.trigger('click');
+		await flush();
+
+		const container = document.querySelector('.vc-popover-wrapper__container')!;
+		expect(Array.from(container.children).map(el => el.className.split(' ').pop())).toEqual([
+			'vc-popover-wrapper__header',
+			'vc-scroller',
+			'vc-popover-wrapper__footer'
+		]);
+		expect(container.querySelector('.vc-popover-wrapper__header > .c-header')).not.toBeNull();
+		expect(container.querySelector('.vc-popover-wrapper__footer > .c-footer')).not.toBeNull();
+		const content = container.querySelector('.vc-popover-wrapper__content')!;
+		expect(content.querySelector('.c-slot')).not.toBeNull();
+		expect(content.querySelector('.c-header')).toBeNull();
+		expect(content.querySelector('.c-footer')).toBeNull();
+
+		wrapper.unmount();
+	});
+
+	it('PopoverView：未声明的属性（如 role / aria-*）透传到弹层根节点', async () => {
+		const trigger = document.createElement('button');
+		document.body.appendChild(trigger);
+		const wrapper = mount(() => (
+			<PopoverView
+				triggerElement={trigger}
+				alone={false}
+				content="x"
+				// @ts-ignore
+				role="dialog"
+				aria-modal="true"
+				tabindex={-1}
+				data-id="a"
+			/>
+		), { attachTo: document.body });
+		await flush();
+
+		const el = getWrapperEl()!;
+		expect(el.getAttribute('role')).toBe('dialog');
+		expect(el.getAttribute('aria-modal')).toBe('true');
+		expect(el.getAttribute('tabindex')).toBe('-1');
+		expect(el.getAttribute('data-id')).toBe('a');
+
+		wrapper.unmount();
+	});
+
+	it('Popover 只把弹层的属性交给 Portal：trigger / tag 等不落到弹层根节点', async () => {
+		const wrapper = mount(() => (
+			<Popover trigger="click" tag="section" content="x" outsideClickable={false}>
+				<button>btn</button>
+			</Popover>
+		), { attachTo: document.body });
+		await wrapper.trigger('click');
+		await flush();
+
+		const el = getWrapperEl()!;
+		['trigger', 'tag', 'disabled', 'outsideclickable'].forEach(key => expect(el.hasAttribute(key)).toBe(false));
+
+		wrapper.unmount();
+	});
+
+	it('scrollerOptions 透传给内置 Scroller；设置 maxHeight 时内容区始终可滚动并渲染滚动条', async () => {
+		const wrapper = mount(() => (
+			<Popover
+				trigger="click"
+				content="x"
+				scrollerOptions={{ maxHeight: 120, native: false, wrapperClass: 'c-scroller', contentClass: 'c-inner' }}
+			>
+				<button>btn</button>
+			</Popover>
+		), { attachTo: document.body });
+		await wrapper.trigger('click');
+		await flush();
+
+		const content = document.querySelector('.vc-popover-wrapper__content') as HTMLElement;
+		expect(content.classList.contains('c-scroller')).toBe(true);
+		expect(content.classList.contains('is-limited')).toBe(true);
+		expect(content.style.maxHeight).toBe('120px');
+		expect(content.querySelector('.vc-scroller__content')!.classList.contains('c-inner')).toBe(true);
+		expect(content.querySelectorAll('.vc-scroller-track')).toHaveLength(2);
+
+		wrapper.unmount();
+	});
+
+	it('未设置高度时，未达到上限不渲染滚动条', async () => {
+		const wrapper = mount(() => (
+			<Popover trigger="click" content="x" scrollerOptions={{ native: false }}>
+				<button>btn</button>
+			</Popover>
+		), { attachTo: document.body });
+		await wrapper.trigger('click');
+		await flush();
+
+		const content = document.querySelector('.vc-popover-wrapper__content') as HTMLElement;
+		expect(content.classList.contains('is-limited')).toBe(false);
+		expect(content.querySelectorAll('.vc-scroller-track')).toHaveLength(0);
+
+		wrapper.unmount();
+	});
+
+	it('scrollable=false：不渲染内置 Scroller，header / footer 仍在固定区', async () => {
+		const wrapper = mount(() => (
+			<Popover trigger="click" scrollable={false}>
+				{{
+					default: () => <button>btn</button>,
+					header: () => <span class="c-header">header</span>,
+					content: () => <span class="c-slot">slot</span>
+				}}
+			</Popover>
+		), { attachTo: document.body });
+		await wrapper.trigger('click');
+		await flush();
+
+		const content = document.querySelector('.vc-popover-wrapper__content') as HTMLElement;
+		expect(content.classList.contains('vc-scroller')).toBe(false);
+		expect(content.classList.contains('is-unscrollable')).toBe(true);
+		expect(content.firstElementChild!.classList.contains('c-slot')).toBe(true);
+		expect(document.querySelector('.vc-popover-wrapper__header > .c-header')).not.toBeNull();
+
+		wrapper.unmount();
+	});
+
 	it('content 函数渲染走 Customer 组件', async () => {
 		const renderFn = vi.fn(() => (<span class="c-fn">fn-render</span>) as any);
 		const wrapper = mount(() => (
@@ -990,6 +1144,8 @@ describe('Popover 位置自适应 (use-pos)', () => {
 	};
 
 	const getContainer = () => getWrapperEl()!.querySelector('.vc-popover-wrapper__container') as HTMLElement;
+	// 内容区：Scroller 的根节点，达到上限时由它滚动
+	const getContent = () => getWrapperEl()!.querySelector('.vc-popover-wrapper__content') as HTMLElement;
 	const getArrow = () => getWrapperEl()!.querySelector('.vc-popover-wrapper__arrow') as HTMLElement;
 
 	it('上下方向右侧超出视口时靠右（留 8px），箭头指向触发节点中心', async () => {
@@ -1098,7 +1254,7 @@ describe('Popover 位置自适应 (use-pos)', () => {
 			await resizeTo(200, 100);
 			expect(getContainer().style.maxWidth).toBe(maxWidth);
 			expect(getContainer().style.maxHeight).toBe(maxHeight);
-			expect(getContainer().style.overflow).toBe('');
+			expect(getContent().style.overflow).toBe('');
 
 			wrapper.unmount();
 		});
@@ -1143,11 +1299,33 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		const wrapper = await openAt('bottom');
 		setOffset(getContainer(), 200, 326);
 		await resizeTo(200, 326);
-		expect(getContainer().style.overflow).toBe('auto');
+		expect(getContent().style.overflow).toBe('auto');
+		// 容器只限制尺寸，不滚动
+		expect(getContainer().style.overflow).toBe('');
+		expect(getContent().classList.contains('vc-scroller')).toBe(true);
 
 		setOffset(getContainer(), 200, 100);
 		await resizeTo(200, 100);
+		expect(getContent().style.overflow).toBe('');
+
+		wrapper.unmount();
+	});
+
+	it('scrollable=false：达到上限时只限制容器尺寸，不写 overflow', async () => {
+		const wrapper = mount(() => (
+			<Popover trigger="click" content="x" placement="bottom" scrollable={false}>
+				<button>btn</button>
+			</Popover>
+		), { attachTo: document.body });
+		await nextTick();
+		setRect(wrapper.element, triggerRect(500, 400));
+		await wrapper.trigger('click');
+		await flush();
+		setOffset(getContainer(), 200, 326);
+		await resizeTo(200, 326);
+		expect(getContainer().style.maxHeight).toBe('326px');
 		expect(getContainer().style.overflow).toBe('');
+		expect(getContent().style.overflow).toBe('');
 
 		wrapper.unmount();
 	});

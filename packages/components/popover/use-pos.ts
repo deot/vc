@@ -41,25 +41,28 @@ const getMaxSize = (placement: string, triggerRect: DOMRect, padding: { x: numbe
 };
 
 /**
- * 判断实际方向，并按该方向所在一侧的可用空间限制内容区尺寸，达到上限时内容区滚动
+ * 判断实际方向，并按该方向所在一侧的可用空间限制容器尺寸，达到上限时内容区（Scroller）滚动，header / footer 不滚动
  * 	- 方向只在同一轴上翻转（上下 / 左右）：已达到上限时先去掉主轴上限，按内容的实际尺寸判断方向（如图片加载后变高需翻转）并恢复内容区的滚动位置；
  * 	  未达到上限时当前尺寸即实际尺寸，上限不变时不写样式
  * 	- 在计算位置前调用：位置依赖弹层尺寸，同一次计算内即可生效
  * 	- 直接写入节点样式：上限随滚动变化，避免每帧重新渲染弹层内容
  * 	- 未达到上限时保持 overflow 可见，不裁剪内容中 portal=false 的嵌套弹层
- * @param container 内容区（.vc-popover-wrapper__container）
+ * @param container 容器（.vc-popover-wrapper__container）
  * @param options ~
+ * @param options.scroller 内容区（.vc-popover-wrapper__content，Scroller 的根节点）；scrollable=false 时没有，只限制容器尺寸
  * @param options.el 弹层节点
  * @param options.placement 首选方向
  * @param options.triggerRect 触发节点的矩形（视口坐标）
  * @param options.fit 按当前尺寸判断实际方向
- * @returns 实际方向
+ * @returns placement：实际方向；reached：容器是否达到上限
  */
-export const fitMaxSize = (container: HTMLElement, { el, placement, triggerRect, fit }) => {
-	const { style, scrollTop, scrollLeft } = container;
-	const reached = container.offsetWidth >= (parseFloat(style.maxWidth) || Infinity) - 1
+export const fitMaxSize = (container: HTMLElement, { scroller, el, placement, triggerRect, fit }) => {
+	const { style } = container;
+	const { scrollTop, scrollLeft } = scroller || {};
+	const getReached = () => container.offsetWidth >= (parseFloat(style.maxWidth) || Infinity) - 1
 		|| container.offsetHeight >= (parseFloat(style.maxHeight) || Infinity) - 1;
-	if (reached) {
+	const wasReached = getReached();
+	if (wasReached) {
 		/^(top|bottom)/.test(placement) ? (style.maxHeight = '') : (style.maxWidth = '');
 	}
 
@@ -68,16 +71,22 @@ export const fitMaxSize = (container: HTMLElement, { el, placement, triggerRect,
 	const { maxWidth, maxHeight } = getMaxSize(result, triggerRect, { x: left + right, y: top + bottom });
 	const width = `${maxWidth}px`;
 	const height = `${maxHeight}px`;
-	if (!reached && style.overflow !== 'auto' && style.maxWidth === width && style.maxHeight === height) return result;
+	const isOverflowing = scroller?.style.overflow === 'auto';
+	if (!wasReached && !isOverflowing && style.maxWidth === width && style.maxHeight === height) {
+		return { placement: result, reached: false };
+	}
 
 	style.maxWidth = width;
 	style.maxHeight = height;
-	style.overflow = container.offsetWidth >= maxWidth - 1 || container.offsetHeight >= maxHeight - 1 ? 'auto' : '';
-	if (reached) {
-		container.scrollTop = scrollTop;
-		container.scrollLeft = scrollLeft;
+	const reached = getReached();
+	if (scroller) {
+		scroller.style.overflow = reached ? 'auto' : '';
+		if (wasReached) {
+			scroller.scrollTop = scrollTop;
+			scroller.scrollLeft = scrollLeft;
+		}
 	}
-	return result;
+	return { placement: result, reached };
 };
 
 /**
