@@ -13,6 +13,7 @@ const barKeys = [
 export const props = {
 	// 	如果存在滚动条宽度为false, 不存在则为true
 	// 	为false的情况下才能使用track-offset
+	// 	Scroller 中设置 always 时按 false 处理（常显只有自绘滚动条能做到）
 	native: {
 		type: Boolean,
 		default: !getScrollBarWidth(),

@@ -4,6 +4,7 @@ import { Customer, Scroller } from '@deot/vc-components';
 import { SCROLLER_REG, getPadding, getScroller, getViewportRect } from '../utils';
 import { ScrollerManager } from '../manager';
 import { Bar } from '../bar';
+import { Track } from '../track';
 import { mount } from '@vue/test-utils';
 import { defineComponent, getCurrentInstance, nextTick, onMounted, reactive, ref } from 'vue';
 import { onTestFinished, vi } from 'vitest';
@@ -80,6 +81,47 @@ describe('index.ts', () => {
 			// 根节点即 block，不再有 vc-scroller__wrapper
 			expect(wrapper.classes()).not.toContain('vc-scroller__wrapper');
 			expect(wrapper.find('.vc-scroller__content').exists()).toBe(true);
+
+			wrapper.unmount();
+		});
+
+		it('卸载后节点上排队的 scroll 仍会派发：不报错', async () => {
+			const wrapper = mount(() => (<Scroller>content</Scroller>), { attachTo: document.body });
+			await nextTick();
+			const el = wrapper.element;
+			wrapper.unmount();
+
+			expect(() => el.dispatchEvent(new Event('scroll'))).not.toThrow();
+		});
+
+		it('always：不再使用原生滚动条（即使 native=true），渲染常显的自绘轨道', async () => {
+			const wrapper = mount(() => (<Scroller native always>content</Scroller>), { attachTo: document.body });
+			await nextTick();
+			await nextTick();
+
+			expect(wrapper.classes()).toContain('is-hidden');
+			expect(wrapper.classes()).not.toContain('is-native');
+			expect(wrapper.findAll('.vc-scroller-track')).toHaveLength(2);
+
+			wrapper.unmount();
+		});
+
+		it('native 且未设置 always：使用原生滚动条，不渲染自绘轨道', async () => {
+			const wrapper = mount(() => (<Scroller native>content</Scroller>), { attachTo: document.body });
+			await nextTick();
+			await nextTick();
+
+			expect(wrapper.classes()).toContain('is-native');
+			expect(wrapper.findAll('.vc-scroller-track')).toHaveLength(0);
+
+			wrapper.unmount();
+		});
+
+		it('wheel + always：按非原生处理，由滚轮驱动', async () => {
+			const wrapper = mount(() => (<Scroller native wheel always>content</Scroller>), { attachTo: document.body });
+			await nextTick();
+
+			expect(wrapper.classes()).toContain('is-wheel');
 
 			wrapper.unmount();
 		});
@@ -1351,6 +1393,28 @@ describe('index.ts', () => {
 				expect(track.classes()).toContain('custom-track');
 				expect((track.element as HTMLElement).style.opacity).toBe('0.5');
 			});
+			wrapper.unmount();
+		});
+
+		it('容器尺寸变化时同步写入滑块位置，不等下一帧（滑块不留在轨道外撑大 scrollHeight）', async () => {
+			const size = ref(400);
+			const trackRef = ref<any>();
+			const wrapper = mount(() => (
+				<Track ref={trackRef} vertical always wrapperSize={size.value} contentSize={1200} />
+			), { attachTo: document.body });
+			const thumb = wrapper.find('.vc-scroller-track__thumb').element as HTMLElement;
+			const getMove = () => parseFloat((thumb.getAttribute('style') || '').split('translateY(')[1]);
+
+			trackRef.value.scrollTo(600);
+			await sleep(50);
+			const before = getMove();
+			expect(before).toBeGreaterThan(70);
+
+			// 内容变少：轨道变为 100px，滑块（最小 30px）最多移动 70px
+			size.value = 100;
+			await nextTick();
+			expect(getMove()).toBeLessThanOrEqual(70);
+
 			wrapper.unmount();
 		});
 

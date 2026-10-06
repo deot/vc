@@ -176,10 +176,12 @@ export const Track = defineComponent({
 			isVisible.value = cursorDown.value;
 		};
 
-		const refreshThumb = () => raf(() => {
+		const setThumbMove = () => {
 			if (!thumb.value) return;
 			thumb.value.style[$.prefixStyle('transform').camel] = `translate${barOptions.value.axis}(${thumbMove.value}px)`;
-		});
+		};
+
+		const refreshThumb = () => raf(setThumbMove);
 
 		const refreshThrottleThumb = throttle(refreshThumb, 10);
 
@@ -230,6 +232,10 @@ export const Track = defineComponent({
 			},
 			{ immediate: true }
 		);
+
+		// 可移动范围变化（如滚动后内容变少）时同步写入：滑块立即收回轨道内
+		// sticky 轨道在滚动容器内，留在旧位置的滑块会撑大容器的 scrollHeight，随后 Scroller 测得的内容尺寸偏大、滚动条不消失（Firefox）
+		watch(maxMove, setThumbMove, { flush: 'post' });
 
 		expose({ scrollTo, target: track, refreshHover });
 

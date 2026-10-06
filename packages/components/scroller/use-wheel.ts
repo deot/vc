@@ -6,7 +6,7 @@ import type { useScroller } from './use-scroller';
 
 /**
  * 滚轮驱动：接管滚轮（触摸设备上为模拟的触摸滚动），在rAF中写入滚动位置
- * wheel=true 且 native=false 时生效，运行时切换会绑定 / 解绑
+ * wheel=true 且不使用原生滚动条（native=false 或 always=true）时生效，运行时切换会绑定 / 解绑
  * @param scroller useScroller 的返回值
  * @returns isWheel 是否由滚轮驱动；handleNativeScroll 根节点的 scroll 处理
  */
@@ -15,6 +15,7 @@ export const useWheel = (scroller: ReturnType<typeof useScroller>) => {
 	const props = instance.props as Props;
 	const {
 		wrapper,
+		isNative,
 		scrollX,
 		scrollY,
 		wrapperW,
@@ -25,7 +26,7 @@ export const useWheel = (scroller: ReturnType<typeof useScroller>) => {
 		handleScroll
 	} = scroller;
 
-	const isWheel = computed(() => props.wheel && !props.native);
+	const isWheel = computed(() => props.wheel && !isNative.value);
 
 	const handleWheel = (deltaX: number, deltaY: number) => {
 		const options: any = {};
@@ -94,7 +95,9 @@ export const useWheel = (scroller: ReturnType<typeof useScroller>) => {
 	 * 自身scrollTo写入后触发的scroll与记录值一致，跳过以免重复派发（容差1px兼容小数像素取整）
 	 */
 	const handleNativeScroll = () => {
-		const el = wrapper.value!;
+		const el = wrapper.value;
+		// 卸载后节点上排队的 scroll 仍会派发（如弹层关闭前刚滚动过）
+		if (!el) return;
 		if (
 			isWheel.value
 			&& Math.abs(el.scrollTop - scrollY.value) < 1

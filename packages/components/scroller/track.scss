@@ -35,8 +35,10 @@ $track-size: var(--vc-scroller-track-size, #{unitfix(6)});
 	}
 
 	// 轨道是滚动容器的直接子元素：长度、负 margin、偏移由 Bar 行内设置
+	// 滚动容器是 flex 容器时（由使用方设置，如让内容随容器收缩）轨道不参与收缩，否则负 margin 抵消不了占位
 	@include when(sticky) {
 		position: sticky;
+		flex-shrink: 0;
 
 		@include when(vertical) {
 			left: calc(100% - #{$track-size} - var(--vc-scroller-track-offset, 0px));

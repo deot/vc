@@ -44,6 +44,7 @@ export const Scroller = defineComponent({
 			content,
 			wrapperStyle,
 			wrapperClass,
+			isNative,
 			scrollX,
 			scrollY,
 			wrapperW,
@@ -72,7 +73,7 @@ export const Scroller = defineComponent({
 						{ slots.default?.() }
 					</Content>
 					{
-						(props.showBar && wrapper.value && content.value) && (
+						(props.showBar && !isNative.value && wrapper.value && content.value) && (
 							<Bar
 								ref={bar}
 								mode="sticky"
@@ -83,7 +84,7 @@ export const Scroller = defineComponent({
 								contentH={contentH.value}
 								scrollX={scrollX.value}
 								scrollY={scrollY.value}
-								native={props.native}
+								native={false}
 								to={props.barTo}
 								trigger={props.barTriggerElement}
 								always={props.always}

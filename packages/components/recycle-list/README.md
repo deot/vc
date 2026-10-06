@@ -733,7 +733,7 @@ const store = new RecycleListStore({
 
 #### scrollerOptions
 
-- 传给内部 Scroller 的属性；`wheel` 默认为 `true`，在 `native=false` 时由滚轮驱动，虚拟内容与滚动位置在同一帧更新。
+- 传给内部 Scroller 的属性；`wheel` 默认为 `true`，在不使用原生滚动条（`native=false` 或 `always=true`）时由滚轮驱动，虚拟内容与滚动位置在同一帧更新。
 - `native` 的默认值取决于浏览器滚动条是否占宽：滚动条不占宽（如悬浮滚动条）时为 `true`，此时为原生滚动。需要滚轮驱动时显式设置 `native: false`。
 - 滚轮驱动时根节点为 `overflow: hidden`，键盘无法原生滚动。需要时可设 `wheel: false` 改用原生滚动，或通过 `wrapperStyle` 覆盖 `overflow`。
 - `fill=false` 时主轴展开规则优先，交叉轴选项继续生效。

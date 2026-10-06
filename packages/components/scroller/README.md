@@ -7,7 +7,7 @@
 - 列表、日志或面板内容超过可用空间时。
 - 需要读取滚动位置、通过方法定位，或调整滚动条位置时。
 - 通用场景使用默认的原生滚动：滚动由浏览器处理，键盘、触摸、聚焦等方式都能正常滚动。
-- 设置 `wheel`（且 `native=false`）时由滚轮驱动位置，滚动位置与依赖它的内容在同一帧更新，适合表头联动、虚拟列表等场景；此时键盘方向键、PageDown 等无法滚动内容，触摸滚动为模拟实现。
+- 设置 `wheel`（且不使用原生滚动条，即 `native=false` 或 `always=true`）时由滚轮驱动位置，滚动位置与依赖它的内容在同一帧更新，适合表头联动、虚拟列表等场景；此时键盘方向键、PageDown 等无法滚动内容，触摸滚动为模拟实现。
 
 ### 结构
 
@@ -30,7 +30,7 @@
 
 设置 `height` 或 `maxHeight` 限制可视区域；内容超出后才能滚动。数字尺寸按 px 处理，字符串应包含 CSS 单位。`tag` 指定内部内容元素。
 
-`native` 的默认值取决于浏览器滚动条是否占宽。需要稳定展示自定义滚动条时，显式设置 `:native="false"`；`always` 只在内容溢出时让自定义滚动条常显。
+`native` 的默认值取决于浏览器滚动条是否占宽。需要稳定展示自定义滚动条时，显式设置 `:native="false"`。`always` 在内容溢出时让自定义滚动条常显；设置后不再使用原生滚动条（等同于 `native=false`，即使显式传了 `native`），各系统下表现一致。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
@@ -272,11 +272,11 @@ const trackId = `scroller-track-${useId()}`;
 | wrapperClass | 滚动容器 class，与 `class` 作用于同一元素 | `StyleValue` | - | `''` |
 | contentStyle | 内容元素样式 | `StyleValue` | - | `''` |
 | contentClass | 内容元素 class | `StyleValue` | - | `''` |
-| native | 使用浏览器滚动条 | `boolean` | - | 浏览器滚动条不占宽时为 `true`，否则为 `false` |
-| wheel | 由滚轮驱动滚动位置；`native=true` 时不生效。可在运行时切换 | `boolean` | - | `false` |
+| native | 使用浏览器滚动条；设置 `always` 时不生效，按 `false` 处理 | `boolean` | - | 浏览器滚动条不占宽时为 `true`，否则为 `false` |
+| wheel | 由滚轮驱动滚动位置；使用原生滚动条（`native=true` 且未设置 `always`）时不生效。可在运行时切换 | `boolean` | - | `false` |
 | stopPropagation | 滚轮驱动时，被接管的滚轮事件是否停止冒泡 | `boolean` | - | `true` |
 | showBar | 渲染自定义滚动条；不控制原生滚动条 | `boolean` | - | `true` |
-| always | 自定义滚动条常显；否则鼠标移入并移动时显示，移出后隐藏 | `boolean` | - | `false` |
+| always | 自定义滚动条常显，并且不再使用原生滚动条；否则鼠标移入并移动时显示，移出后隐藏 | `boolean` | - | `false` |
 | autoResize | 挂载时监听容器和内容尺寸；建议在挂载前设置 | `boolean` | - | `true` |
 | thumbMinSize | 自定义滑块最小长度，单位 px | `number` | - | `30` |
 | thumbStyle | 自定义滑块样式 | `StyleValue` | - | - |
@@ -290,9 +290,9 @@ const trackId = `scroller-track-${useId()}`;
 
 `StyleValue` 为 Vue 的样式类型；当前 class 属性也沿用这一类型声明，运行时按 Vue class 规则处理字符串、对象或数组。
 
-滚动条相关样式与偏移仅在 `native=false` 且 `showBar=true` 时生效。`barTo` 目标不存在时不渲染自定义滚动条；移出原容器后，主题变量从目标节点继承。
+滚动条相关样式与偏移仅在使用自定义滚动条（`native=false` 或 `always=true`）且 `showBar=true` 时生效。`barTo` 目标不存在时不渲染自定义滚动条；移出原容器后，主题变量从目标节点继承。
 
-滚轮驱动（`wheel` 且 `native=false`）时：
+滚轮驱动（`wheel` 且不使用原生滚动条）时：
 
 - 根节点为 `.vc-scroller.is-wheel`，`overflow: hidden`，用户不能直接滚动（包括键盘）；由滚轮和实例方法驱动位置，聚焦、`scrollIntoView`、直接修改 DOM 的 `scrollTop` 等引起的滚动也会同步滚动条并触发 scroll 事件。
 - 需要允许原生滚动时，可关闭 `wheel`；或通过 `wrapperStyle`（内联样式）、优先级高于 `.vc-scroller.is-wheel` 的选择器覆盖 `overflow`。

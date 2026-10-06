@@ -37,10 +37,13 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		return [props.wrapperStyle, style];
 	});
 
+	// 是否使用原生滚动条：always（常显）只有自绘滚动条能做到，设置后不再使用原生滚动条
+	const isNative = computed(() => props.native && !props.always);
+
 	const wrapperClass = computed(() => {
 		return [
 			props.wrapperClass,
-			props.native ? 'is-native' : 'is-hidden'
+			isNative.value ? 'is-native' : 'is-hidden'
 		];
 	});
 
@@ -181,6 +184,7 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		content,
 		wrapperStyle,
 		wrapperClass,
+		isNative,
 		scrollTo,
 
 		scrollX,
