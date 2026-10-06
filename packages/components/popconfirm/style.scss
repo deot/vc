@@ -6,25 +6,23 @@ $color-error: varfix(color-error, popconfirm);
 $color-primary: varfix(color-primary, popconfirm);
 $color-success: varfix(color-success, popconfirm);
 $color-warning: varfix(color-warning, popconfirm);
+$padding: unitfix(16);
 
 @include block($component-name) {
-	@include element(wrapper) {
-		min-width: unitfix(218);
-		padding: unitfix(16);
-		box-sizing: border-box;
-	}
-
+	// 弹层的内边距（$padding）分在标题、内容、按钮三段上：标题与按钮固定，内容在其间滚动
 	@include element(title) {
 		position: relative;
-		padding-left: unitfix(23);
+		min-width: unitfix(218);
+		padding: $padding $padding 0 calc(#{$padding} + #{unitfix(23)});
 		margin-bottom: unitfix(15);
 		color: $color-dark-light;
+		box-sizing: border-box;
 	}
 
 	@include element(icon) {
 		position: absolute;
-		top: unitfix(4);
-		left: 0;
+		top: calc(#{$padding} + #{unitfix(4)});
+		left: $padding;
 		font-size: unitfix(15);
 
 		@include when(warning) {
@@ -45,8 +43,12 @@ $color-warning: varfix(color-warning, popconfirm);
 	}
 
 	@include element(content) {
+		min-width: unitfix(218);
+		padding: 0 $padding;
+		box-sizing: border-box;
+
 		@include when(with-content) {
-			margin-bottom: unitfix(15);
+			padding-bottom: unitfix(15);
 		}
 	}
 
@@ -54,5 +56,6 @@ $color-warning: varfix(color-warning, popconfirm);
 		display: flex;
 		justify-content: flex-end;
 		gap: unitfix(8);
+		padding: 0 $padding $padding;
 	}
 }

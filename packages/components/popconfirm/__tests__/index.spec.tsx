@@ -168,6 +168,25 @@ describe('Popconfirm 内容渲染', () => {
 		wrapper.unmount();
 	});
 
+	it('标题、按钮在固定区，内容在 Scroller 内滚动', async () => {
+		const wrapper = mount(() => (
+			<Popconfirm modelValue={true} portal={false} title="标题" content="内容">
+				<button>btn</button>
+			</Popconfirm>
+		), { attachTo: document.body });
+		await flush();
+
+		const el = getWrapperEl()!;
+		expect(el.querySelector('.vc-popover-wrapper__header > .vc-popconfirm__title')).not.toBeNull();
+		expect(el.querySelector('.vc-popover-wrapper__footer > .vc-popconfirm__footer')).not.toBeNull();
+		const scroller = el.querySelector('.vc-popover-wrapper__content.vc-scroller')!;
+		expect(scroller.querySelector('.vc-popconfirm__content')!.textContent).toBe('内容');
+		expect(scroller.querySelector('.vc-popconfirm__title')).toBeNull();
+		expect(scroller.querySelector('.vc-popconfirm__footer')).toBeNull();
+
+		wrapper.unmount();
+	});
+
 	it('width: 设置弹层宽度', async () => {
 		const wrapper = mount(() => (
 			<Popconfirm modelValue={true} portal={false} title="x" width={300}>
@@ -176,9 +195,11 @@ describe('Popconfirm 内容渲染', () => {
 		), { attachTo: document.body });
 		await flush();
 
-		const inner = document.querySelector('.vc-popconfirm__wrapper') as HTMLElement;
-		expect(inner).not.toBeNull();
-		expect(inner.style.width).toBe('300px');
+		// 宽度写在标题与内容上，由它们撑开弹层
+		const title = document.querySelector('.vc-popconfirm__title') as HTMLElement;
+		const content = document.querySelector('.vc-popconfirm__content') as HTMLElement;
+		expect(title.style.width).toBe('300px');
+		expect(content.style.width).toBe('300px');
 
 		wrapper.unmount();
 	});

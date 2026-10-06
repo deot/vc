@@ -33,6 +33,11 @@ export const Popconfirm = defineComponent({
 			return its.value.attrs;
 		});
 
+		// 宽度写在标题与内容上（含左右内边距），由它们撑开弹层
+		const widthStyle = computed(() => {
+			return props.width ? { width: `${props.width}px` } : undefined;
+		});
+
 		watch(
 			() => props.modelValue,
 			(v) => {
@@ -104,57 +109,64 @@ export const Popconfirm = defineComponent({
 				>
 					{{
 						default: () => slots?.default?.(),
-						content: () => {
+						// 标题与按钮在固定区，内容超长时只有内容滚动
+						header: () => {
 							return (
-								<div
-									style={[{ width: `${props.width}px` }]}
-									class="vc-popconfirm__wrapper"
-								>
-									<div class="vc-popconfirm__title">
+								<div style={widthStyle.value} class="vc-popconfirm__title">
+									{
+										slots.icon
+											? slots.icon()
+											: (<Icon type={props.type} class={[`is-${props.type}`, 'vc-popconfirm__icon']} />)
+									}
+									<div>
 										{
-											slots.icon
-												? slots.icon()
-												: (<Icon type={props.type} class={[`is-${props.type}`, 'vc-popconfirm__icon']} />)
-										}
-										<div>
-											{
-												slots.title
-													? slots.title()
-													: typeof props.title === 'string'
-														? (<div innerHTML={props.title} />)
-														: typeof props.title === 'function'
-															? (<Customer render={props.title} />)
-															: null
-											}
-										</div>
-									</div>
-									<div class={['vc-popconfirm__content', { 'is-with-content': props.content || !!slots.content }]}>
-										{
-											slots.content
-												? slots.content()
-												: typeof props.content === 'string'
-													? (<div innerHTML={props.content} />)
-													: typeof props.content === 'function'
-														? (<Customer render={props.content} />)
+											slots.title
+												? slots.title()
+												: typeof props.title === 'string'
+													? (<div innerHTML={props.title} />)
+													: typeof props.title === 'function'
+														? (<Customer render={props.title} />)
 														: null
 										}
 									</div>
-									<div class="vc-popconfirm__footer">
-										<Button
-											type={props.cancelType as any}
-											size="small"
-											onClick={(e: any) => handleBefore(e, handleCancel)}
-										>
-											{props.cancelText ?? t('vc.Popconfirm.cancelButtonText')}
-										</Button>
-										<Button
-											type={props.okType as any}
-											size="small"
-											onClick={(e: any) => handleBefore(e, handleOk)}
-										>
-											{props.okText ?? t('vc.Popconfirm.okButtonText')}
-										</Button>
-									</div>
+								</div>
+							);
+						},
+						content: () => {
+							return (
+								<div
+									style={widthStyle.value}
+									class={['vc-popconfirm__content', { 'is-with-content': props.content || !!slots.content }]}
+								>
+									{
+										slots.content
+											? slots.content()
+											: typeof props.content === 'string'
+												? (<div innerHTML={props.content} />)
+												: typeof props.content === 'function'
+													? (<Customer render={props.content} />)
+													: null
+									}
+								</div>
+							);
+						},
+						footer: () => {
+							return (
+								<div class="vc-popconfirm__footer">
+									<Button
+										type={props.cancelType as any}
+										size="small"
+										onClick={(e: any) => handleBefore(e, handleCancel)}
+									>
+										{props.cancelText ?? t('vc.Popconfirm.cancelButtonText')}
+									</Button>
+									<Button
+										type={props.okType as any}
+										size="small"
+										onClick={(e: any) => handleBefore(e, handleOk)}
+									>
+										{props.okText ?? t('vc.Popconfirm.okButtonText')}
+									</Button>
 								</div>
 							);
 						}

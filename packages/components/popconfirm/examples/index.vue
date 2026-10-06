@@ -21,6 +21,14 @@
 			<Popconfirm title="自定义按钮文案" ok-text="Yes" cancel-text="No">
 				<Button>自定义文案</Button>
 			</Popconfirm>
+			<Popconfirm title="超长内容" placement="bottom" :width="280">
+				<Button>超长内容</Button>
+				<template #content>
+					<div v-for="i in 60" :key="i">
+						第 {{ i }} 行内容
+					</div>
+				</template>
+			</Popconfirm>
 		</div>
 		<div class="popconfirm-demo__actions">
 			<Popconfirm v-model="isVisible" trigger="custom" :outside-clickable="false" title="外部控制显隐">
