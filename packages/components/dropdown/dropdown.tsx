@@ -69,6 +69,8 @@ export const Dropdown = defineComponent({
 					placement={props.placement}
 					trigger={props.trigger}
 					arrow={props.arrow}
+					scrollable={props.scrollable}
+					scrollerOptions={props.scrollerOptions}
 					portalClass={['is-padding-none', 'vc-dropdown-wrapper', props.portalClass]}
 					class={['vc-dropdown', inherit.value.class]}
 					style={inherit.value.style}
@@ -79,7 +81,9 @@ export const Dropdown = defineComponent({
 				>
 					{{
 						default: () => slots?.default?.(),
-						content: () => slots?.content?.()
+						header: slots.header,
+						content: () => slots?.content?.(),
+						footer: slots.footer
 					}}
 				</Popover>
 

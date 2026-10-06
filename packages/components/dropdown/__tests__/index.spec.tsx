@@ -422,3 +422,37 @@ describe('DropdownItem 点击交互', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('Dropdown 固定区与滚动', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('header / footer 插槽与 scrollerOptions 透传给 Popover', async () => {
+		const wrapper = mount(() => (
+			<Dropdown
+				modelValue={true}
+				trigger="click"
+				scrollerOptions={{ maxHeight: 120 }}
+			>
+				{{
+					default: () => <button>btn</button>,
+					header: () => <span class="d-header">header</span>,
+					content: () => <span class="d-content">content</span>,
+					footer: () => <span class="d-footer">footer</span>
+				}}
+			</Dropdown>
+		), { attachTo: document.body });
+		await flush();
+
+		const popup = getWrapperEl()!;
+		expect(popup.querySelector('.vc-popover-wrapper__header > .d-header')).not.toBeNull();
+		expect(popup.querySelector('.vc-popover-wrapper__footer > .d-footer')).not.toBeNull();
+		const content = popup.querySelector('.vc-popover-wrapper__content') as HTMLElement;
+		expect(content.style.maxHeight).toBe('120px');
+		expect(content.querySelector('.d-content')).not.toBeNull();
+		expect(content.querySelector('.d-footer')).toBeNull();
+
+		wrapper.unmount();
+	});
+});

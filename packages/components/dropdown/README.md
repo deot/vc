@@ -249,6 +249,8 @@ const handleClose = () => {
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
 | default | 触发内容，由 Popover 根节点包裹 | - |
+| header | 浮层顶部的固定区，不随内容滚动 | - |
+| footer | 浮层底部的固定区，不随内容滚动 | - |
 | content | 浮层内容，通常放置 DropdownMenu | - |
 
 ### Dropdown 方法

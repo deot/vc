@@ -1,4 +1,8 @@
 import type { ExtractPropTypes } from 'vue';
+import { pick } from 'lodash-es';
+import { props as popoverProps } from '../popover/popover-props';
+
+const popoverKeys = ['scrollable', 'scrollerOptions'] as const;
 
 export const props = {
 	modelValue: {
@@ -17,6 +21,7 @@ export const props = {
 	arrow: {
 		type: Boolean,
 		default: false
-	}
+	},
+	...(pick(popoverProps, popoverKeys) as Pick<typeof popoverProps, typeof popoverKeys[number]>)
 };
 export type Props = ExtractPropTypes<typeof props>;
