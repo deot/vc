@@ -225,7 +225,7 @@ describe('Tour', () => {
 		await settle();
 		const scroller = document.querySelector<HTMLElement>('.vc-tour__content-container')!;
 		const card = document.querySelector<HTMLElement>('.vc-tour__card')!;
-		expect(scroller.matches('.vc-scroller.is-hidden')).toBe(true);
+		expect(scroller.matches('.vc-scroller')).toBe(true);
 		expect(scroller.parentElement).toBe(card);
 		expect(scroller.querySelector('.vc-tour__content')?.textContent).toBe('长内容'.repeat(200));
 		expect(scroller.querySelector('.vc-tour__header')).toBeNull();
@@ -243,15 +243,23 @@ describe('Tour', () => {
 			steps: [{ element, content: '长内容'.repeat(200) }, { content: '居中长内容'.repeat(200) }]
 		});
 		await settle();
+		// 卡片即气泡：标题、底部在 Popover 的固定区，正文在其内置的 Scroller 内，不再自带 Scroller
 		const card = document.querySelector<HTMLElement>('.vc-tour__card')!;
-		const container = card.parentElement!;
-		// 气泡容器承担 Popover 写入的最大宽高，卡片在其中收缩，由正文 Scroller 滚动
-		expect(container.matches('.vc-tour__popover > .vc-popover-wrapper__container')).toBe(true);
+		expect(card.matches('.vc-popover-wrapper.vc-tour__popover')).toBe(true);
+		const container = card.querySelector<HTMLElement>(':scope > .vc-popover-wrapper__container')!;
+		const scroller = container.querySelector<HTMLElement>(':scope > .vc-popover-wrapper__content.vc-scroller')!;
+		expect(container.querySelector(':scope > .vc-popover-wrapper__header .vc-tour__header')).not.toBeNull();
+		expect(container.querySelector(':scope > .vc-popover-wrapper__footer .vc-tour__footer')).not.toBeNull();
+		expect(scroller.querySelector('.vc-tour__content')?.textContent).toBe('长内容'.repeat(200));
+		expect(scroller.querySelector('.vc-tour__header')).toBeNull();
+		expect(scroller.querySelector('.vc-tour__footer')).toBeNull();
+		expect(card.querySelector('.vc-tour__content-container')).toBeNull();
+		// 气泡容器承担 Popover 写入的最大宽高，达到上限时只有正文滚动
 		Object.defineProperty(container, 'offsetHeight', { configurable: true, get: () => 1000 });
 		await instance(wrapper).refresh();
 		expect(container.style.maxHeight).not.toBe('');
-		expect(card.style.maxHeight).toBe('');
-		expect(card.style.overflow).not.toBe('auto');
+		expect(container.style.overflow).toBe('');
+		expect(scroller.style.overflow).toBe('auto');
 		expect(await instance(wrapper).next()).toBe(true);
 		const center = document.querySelector<HTMLElement>('.vc-tour__card')!;
 		expect(center.classList.contains('is-center')).toBe(true);
@@ -268,7 +276,7 @@ describe('Tour', () => {
 		const bubble = root.querySelector<HTMLElement>('.vc-popover-wrapper.vc-tour__popover')!;
 		expect(bubble.parentElement).toBe(root);
 		expect(bubble.classList.contains('is-right')).toBe(true);
-		expect(bubble.querySelector('.vc-tour__card .vc-tour__title')?.textContent).toBe('气泡');
+		expect(bubble.querySelector('.vc-tour__title')?.textContent).toBe('气泡');
 		expect(bubble.querySelector('.vc-popover-wrapper__arrow')).not.toBeNull();
 
 		// 点击蒙层、页面和目标都不关闭气泡
@@ -301,7 +309,7 @@ describe('Tour', () => {
 		const wrapper = create({ steps: [{ element: target(), title: '目标' }, { title: '居中' }] });
 		await settle();
 		expect(document.querySelectorAll('.vc-tour__popover')).toHaveLength(1);
-		expect(document.activeElement).toBe(document.querySelector('.vc-tour__popover .vc-tour__card'));
+		expect(document.activeElement).toBe(document.querySelector('.vc-tour__popover.vc-tour__card'));
 		await instance(wrapper).next();
 		await settle();
 		expect(document.querySelector('.vc-popover-wrapper')).toBeNull();
@@ -311,7 +319,7 @@ describe('Tour', () => {
 		await settle();
 		expect(document.querySelector('.vc-tour__card.is-center')).toBeNull();
 		expect(document.querySelector('.vc-tour__popover .vc-tour__title')?.textContent).toBe('目标');
-		expect(document.activeElement).toBe(document.querySelector('.vc-tour__popover .vc-tour__card'));
+		expect(document.activeElement).toBe(document.querySelector('.vc-tour__popover.vc-tour__card'));
 	});
 
 	it('结束和强制销毁后不残留气泡', async () => {

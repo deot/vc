@@ -44,7 +44,7 @@ $line-height-large: varfix(line-height-large, tour);
 		visibility: hidden;
 	}
 
-	// 有目标时的气泡：沿用 Popover 的定位与箭头，颜色、圆角、阴影使用引导的主题参数
+	// 有目标时的气泡：沿用 Popover 的定位、箭头与限高滚动（标题、底部在其固定区），颜色、圆角、阴影通过 Popover 的主题参数换成引导的
 	@include element(popover) {
 		font-size: $font-size-small;
 		line-height: $line-height-large;
@@ -53,40 +53,32 @@ $line-height-large: varfix(line-height-large, tour);
 
 		--vc-popover-wrapper-color-light: #{$background-color-lightest};
 		--vc-popover-wrapper-box-shadow: #{$box-shadow-floating};
+		--vc-popover-wrapper-border-radius: #{$border-radius};
 
 		// 箭头与卡片一体，不加阴影
 		--vc-popover-wrapper-color-shadow-fixed: transparent;
-
-		& > .vc-popover-wrapper__container {
-			display: flex;
-			border-radius: $border-radius;
-			flex-direction: column;
-		}
 	}
 
+	// 卡片：有目标时为气泡本身，无目标时居中
 	@include element(card) {
-		position: relative;
-		display: flex;
-		min-height: 0;
-		padding: unitfix(20) 0;
-		overflow: hidden;
 		outline: none;
-		box-sizing: border-box;
 		overflow-wrap: anywhere;
-		flex-direction: column;
 
-		// 无目标时居中
 		@include when(center) {
 			position: absolute;
 			top: 50%;
 			left: 50%;
+			display: flex;
 			max-width: calc(100% - #{unitfix(16)});
 			max-height: calc(100% - #{unitfix(16)});
+			overflow: hidden;
 			pointer-events: auto;
 			background: $background-color-lightest;
 			border-radius: $border-radius;
 			transform: translate(-50%, -50%);
 			box-shadow: $box-shadow-floating;
+			box-sizing: border-box;
+			flex-direction: column;
 		}
 	}
 
@@ -109,8 +101,10 @@ $line-height-large: varfix(line-height-large, tour);
 		}
 	}
 
+	// 卡片四周的留白分在标题、正文、底部上
 	@include element(header) {
-		padding: 0 unitfix(20);
+		position: relative;
+		padding: unitfix(20) unitfix(20) 0;
 		flex-shrink: 0;
 	}
 
@@ -131,6 +125,10 @@ $line-height-large: varfix(line-height-large, tour);
 	@include element(content) {
 		padding: 0 unitfix(20);
 		color: $foreground-color-light;
+
+		@include when(end) {
+			padding-bottom: unitfix(20);
+		}
 	}
 
 	@include element(footer) {
@@ -139,7 +137,7 @@ $line-height-large: varfix(line-height-large, tour);
 		gap: unitfix(12);
 		align-items: center;
 		justify-content: space-between;
-		padding: 0 unitfix(20);
+		padding: 0 unitfix(20) unitfix(20);
 		margin-top: unitfix(24);
 	}
 

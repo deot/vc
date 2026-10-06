@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, computed, shallowRef, watch, nextTick, onBeforeUnmount, Fragment } from 'vue';
+import { defineComponent, computed, shallowRef, watch, nextTick, onBeforeUnmount, normalizeStyle, Fragment } from 'vue';
 import { omit } from 'lodash-es';
 import { getUid } from '@deot/helper-utils';
 import { Button } from '../button';
@@ -33,12 +33,11 @@ export const TourView = defineComponent({
 			await nextTick();
 			position.update(true);
 		});
-		// 有目标时卡片在 Popover 气泡内（以锚点为触发节点，显隐由引导控制），否则居中渲染在根节点内
-		const popover = shallowRef<{ update: () => void }>();
+		// 有目标时卡片即 Popover 气泡（以锚点为触发节点，显隐由引导控制），否则居中渲染在根节点内
+		const popover = shallowRef<{ update: () => void; $el: HTMLElement }>();
 		const position = usePosition(tour.isActive, tour.element, tour.options, tour.refresh, () => popover.value?.update());
-		const popoverCard = shallowRef<HTMLElement>();
 		const centerCard = shallowRef<HTMLElement>();
-		const card = computed(() => (tour.element.value ? popoverCard.value : centerCard.value));
+		const card = computed(() => (tour.element.value ? popover.value?.$el : centerCard.value));
 		useKeyboard(tour, card);
 		expose({
 			...tour.api,
@@ -130,19 +129,12 @@ export const TourView = defineComponent({
 			const { width: value } = tour.options.value;
 			return typeof value === 'number' ? `${value}px` : value;
 		});
-		const renderCard = (isCenter = false) => {
+		// 卡片的三段：标题（含关闭按钮）与底部固定，正文滚动
+		// 有目标时作为气泡（Popover）的 header / content / footer，由其内置的 Scroller 滚动；居中时由 renderCenter 组装
+		const renderHeader = () => {
 			const options = tour.options.value;
 			return (
-				<div
-					ref={isCenter ? centerCard : popoverCard}
-					class={['vc-tour__card', { 'is-center': isCenter }, options.contentClass]}
-					style={[isCenter && { width: cardWidth.value }, options.contentStyle]}
-					role="dialog"
-					aria-modal={options.mask ? 'true' : undefined}
-					aria-labelledby={titleId}
-					aria-busy={tour.isLoading.value}
-					tabindex={-1}
-				>
+				<div class="vc-tour__header">
 					{
 						options.closable && (
 							<button
@@ -156,38 +148,64 @@ export const TourView = defineComponent({
 							</button>
 						)
 					}
-					<div class="vc-tour__header" id={titleId}>
+					<div id={titleId}>
 						{
 							renderSlot('header') ?? (
 								<div class="vc-tour__title">{renderSlot('title') ?? renderValue(options.title)}</div>
 							)
 						}
 					</div>
-					<Scroller
-						native={false}
-						wrapperClass="vc-tour__content-container"
-						contentClass="vc-tour__content"
-					>
-						{renderSlot('content') ?? renderValue(options.content)}
-					</Scroller>
+				</div>
+			);
+		};
+		// 没有底部时，卡片底部的留白落在正文上
+		const renderContent = () => {
+			return (
+				<div class={['vc-tour__content', { 'is-end': !tour.options.value.footer }]}>
+					{renderSlot('content') ?? renderValue(tour.options.value.content)}
+				</div>
+			);
+		};
+		const renderFooter = () => {
+			return (
+				<div class="vc-tour__footer">
 					{
-						options.footer && (
-							<div class="vc-tour__footer">
-								{
-									renderSlot('footer') ?? (
-										<Fragment>
-											{renderProgress()}
-											<div class="vc-tour__buttons">
-												{tour.current.value > 0 && renderButton('previous')}
-												{renderButton('skip')}
-												{renderButton(tour.isLast.value ? 'finish' : 'next')}
-											</div>
-										</Fragment>
-									)
-								}
-							</div>
+						renderSlot('footer') ?? (
+							<Fragment>
+								{renderProgress()}
+								<div class="vc-tour__buttons">
+									{tour.current.value > 0 && renderButton('previous')}
+									{renderButton('skip')}
+									{renderButton(tour.isLast.value ? 'finish' : 'next')}
+								</div>
+							</Fragment>
 						)
 					}
+				</div>
+			);
+		};
+		// 卡片（气泡或居中）的对话框语义
+		const getDialogAttrs = () => ({
+			'role': 'dialog',
+			'aria-modal': tour.options.value.mask ? 'true' as const : undefined,
+			'aria-labelledby': titleId,
+			'aria-busy': tour.isLoading.value,
+			'tabindex': -1
+		});
+		const renderCenter = () => {
+			const options = tour.options.value;
+			return (
+				<div
+					ref={centerCard}
+					class={['vc-tour__card', 'is-center', options.contentClass]}
+					style={[{ width: cardWidth.value }, options.contentStyle]}
+					{...getDialogAttrs()}
+				>
+					{renderHeader()}
+					<Scroller wrapperClass="vc-tour__content-container">
+						{renderContent()}
+					</Scroller>
+					{options.footer && renderFooter()}
 				</div>
 			);
 		};
@@ -225,12 +243,18 @@ export const TourView = defineComponent({
 											animation="none"
 											placement={options.placement}
 											arrow={options.arrow}
-											portalClass={['vc-tour__popover', 'is-padding-none']}
-											portalStyle={{ width: cardWidth.value }}
-											v-slots={{ content: () => renderCard() }}
-										/>
+											portalClass={['vc-tour__popover', 'vc-tour__card', 'is-padding-none', options.contentClass]}
+											portalStyle={normalizeStyle([{ width: cardWidth.value }, options.contentStyle]) as any}
+											{...getDialogAttrs()}
+										>
+											{{
+												header: renderHeader,
+												content: renderContent,
+												footer: options.footer ? renderFooter : undefined
+											}}
+										</PopoverView>
 									)
-								: renderCard(true)
+								: renderCenter()
 						}
 					</div>
 				</TransitionFade>
