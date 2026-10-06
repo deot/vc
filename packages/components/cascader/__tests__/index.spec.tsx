@@ -490,3 +490,29 @@ describe('CascaderView', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('Cascader 弹层滚动', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('弹层不内置滚动；各列用 Scroller 滚动，列容器为横向的 Scroller', async () => {
+		const wrapper = mount(() => (<Cascader data={options} />), { attachTo: document.body });
+		await nextTick();
+		await wrapper.trigger('click');
+		await flush();
+
+		const popup = document.querySelector('.vc-popover-wrapper') as HTMLElement;
+		const content = popup.querySelector('.vc-popover-wrapper__content') as HTMLElement;
+		expect(content.classList.contains('is-unscrollable')).toBe(true);
+		expect(content.classList.contains('vc-scroller')).toBe(false);
+		const columns = content.querySelector(':scope > .vc-scroller.vc-cascader__columns')!;
+		expect(columns.querySelector(':scope > .vc-cascader__content > .vc-cascader-column')).not.toBeNull();
+		const list = getCols()[0].firstElementChild as HTMLElement;
+		expect(list.matches('.vc-scroller.vc-cascader-column__wrapper')).toBe(true);
+		expect(getCells(0).length).toBe(options.length);
+		expect(getCells(0)[0].closest('.vc-scroller')).toBe(list);
+
+		wrapper.unmount();
+	});
+});

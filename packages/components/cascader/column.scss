@@ -6,10 +6,14 @@ $color-neutral-light: varfix(color-neutral-light, cascader-column);
 $color-primary: varfix(color-primary, cascader-column);
 $background-color-primary-light: varfix(background-color-primary-light, cascader-column);
 
+// 高度随弹层的上限收缩（弹层 scrollable=false），列表在其中滚动
 @include block($component-name) {
-	display: inline-block;
+	display: flex;
+	min-height: 0;
 	padding: unitfix(5) 0!important;
 	margin: 0;
+	box-sizing: border-box;
+	flex-direction: column;
 
 	@include border(right, $color-neutral-light);
 
@@ -19,10 +23,10 @@ $background-color-primary-light: varfix(background-color-primary-light, cascader
 		}
 	}
 
+	// Scroller 根节点即滚动容器
 	@include element(wrapper) {
 		height: unitfix(180);
 		min-width: unitfix(100);
-		overflow: auto;
 	}
 
 	@include element(item) {

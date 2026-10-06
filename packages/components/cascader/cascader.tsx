@@ -11,6 +11,7 @@ import { Popover } from '../popover/index';
 import { Icon } from '../icon/index';
 import { useLocale } from '../locale';
 import { CascaderColumn } from './column';
+import { Scroller } from '../scroller/index';
 
 import { toCurrentValue, toModelValue } from '../select/utils';
 
@@ -166,8 +167,10 @@ export const Cascader = defineComponent({
 
 					if (source && el) {
 						const $instance = source.findIndex((i: TreeData) => item == i.value);
-						const rowHeight = el.firstChild.firstElementChild?.clientHeight || 0;
-						scrollIntoView(el.firstChild, { to: $instance * rowHeight });
+						// 列内的 Scroller 根节点即滚动容器
+						const scroller = el.firstElementChild;
+						const rowHeight = scroller.querySelector('.vc-cascader-column__item')?.clientHeight || 0;
+						scrollIntoView(scroller, { to: $instance * rowHeight });
 					}
 				});
 			});
@@ -290,6 +293,8 @@ export const Cascader = defineComponent({
 					disabled={props.disabled}
 					portal={props.portal}
 					portalClass={[['is-padding-none', props.portalClass]]}
+					// 各列在高度上限内收缩并自行滚动
+					scrollable={false}
 					class={[its.value.class, 'vc-cascader']}
 					style={its.value.style}
 					animation="y"
@@ -341,7 +346,7 @@ export const Cascader = defineComponent({
 						},
 						content: () => {
 							return (
-								<div class="vc-cascader__content">
+								<Scroller class="vc-cascader__columns" contentClass="vc-cascader__content">
 									{
 										columns.value.map((_, index) => {
 											if (!rebuildData.value[index] || !rebuildData.value[index].length) return;
@@ -358,7 +363,7 @@ export const Cascader = defineComponent({
 											);
 										})
 									}
-								</div>
+								</Scroller>
 							);
 						}
 					}}

@@ -3,6 +3,7 @@
 import { defineComponent } from 'vue';
 import { Icon } from '../icon/index';
 import { Spin } from '../spin/index';
+import { Scroller } from '../scroller/index';
 
 const COMPONENT_NAME = 'vc-cascader-column';
 
@@ -37,7 +38,7 @@ export const CascaderColumn = defineComponent({
 		return () => {
 			return (
 				<div class="vc-cascader-column">
-					<div class="vc-cascader-column__wrapper">
+					<Scroller class="vc-cascader-column__wrapper">
 						{
 							props.data.map((item: any, index: number) => {
 								return (
@@ -60,7 +61,7 @@ export const CascaderColumn = defineComponent({
 								);
 							})
 						}
-					</div>
+					</Scroller>
 				</div>
 			);
 		};

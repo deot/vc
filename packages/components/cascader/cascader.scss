@@ -39,9 +39,19 @@ $color-dark-extralight: varfix(color-dark-extralight, cascader);
 		}
 	}
 
+	// 列太多时横向滚动；高度随弹层的上限收缩（弹层 scrollable=false）
+	// 纵向 flex：内容作为 flex 子项收缩后高度确定，各列才能随之收缩（百分比高度在这里不生效）
+	@include element(columns) {
+		display: flex;
+		min-height: 0;
+		flex-direction: column;
+	}
+
 	// 默认不换行
 	@include element(content) {
 		display: flex;
 		flex-wrap: nowrap;
+		width: max-content;
+		min-height: 0;
 	}
 }
