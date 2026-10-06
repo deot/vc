@@ -3,6 +3,7 @@ import type { Language } from '@deot/vc-locale';
 import { zhCN } from '@deot/vc-locale';
 import { VARIABLES } from '../theme/constant';
 import type { FilePreviewOptions } from '../file-preview/types';
+import type { TourConfig } from '../tour/types';
 
 const nil = void 0;
 
@@ -19,6 +20,7 @@ export type Options = Partial<{
 		formatter?: (value: any, type: string, instance: ComponentInternalInstance) => string;
 	};
 	FilePreview: FilePreviewOptions;
+	Tour: TourConfig;
 }>;
 
 export type ResolvedOptions = Options & {
@@ -71,5 +73,12 @@ export const defaults: ResolvedOptions = {
 		getFileType: nil,
 		getFileName: nil,
 		enhancer: nil
+	},
+	Tour: {
+		cache: true,
+		cacheTypes: ['finish', 'skip'],
+		getCache: nil,
+		setCache: nil,
+		onOpen: nil
 	},
 };

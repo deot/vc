@@ -3,6 +3,14 @@ import type { Language } from '../types';
 export const enUS: Language = {
 	name: 'en-US',
 	vc: {
+		Tour: {
+			previousText: 'Previous',
+			nextText: 'Next',
+			finishText: 'Got it',
+			skipText: 'Skip',
+			close: 'Close tour',
+			progress: 'Step {current} of {total}'
+		},
 		Cascader: {
 			placeholder: 'Please select'
 		},

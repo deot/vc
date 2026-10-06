@@ -145,6 +145,8 @@ export * from './toast';
 export * from './toast/index.m';
 export * from './touch';
 export * from './touch/index.m';
+export * from './tour';
+export * from './tour/index.m';
 export * from './transition';
 export * from './transition/index.m';
 export * from './tree';

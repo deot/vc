@@ -1,0 +1,160 @@
+@use '../style/helper' as *;
+
+$component-name: vc-tour;
+$color-mask: varfix(color-mask, tour);
+$color-primary: varfix(color-primary, tour);
+$background-color-lightest: varfix(background-color-lightest, tour);
+$foreground-color: varfix(foreground-color, tour);
+$foreground-color-light: varfix(foreground-color-light, tour);
+$foreground-color-inactive: varfix(foreground-color-inactive, tour);
+$border-radius: varfix(border-radius, tour);
+$box-shadow-floating: varfix(box-shadow-floating, tour);
+$font-size-small: varfix(font-size-small, tour);
+$line-height-large: varfix(line-height-large, tour);
+
+@include block($component-name) {
+	position: fixed;
+	font-size: $font-size-small;
+	line-height: $line-height-large;
+	color: $foreground-color;
+	pointer-events: none;
+	inset: 0;
+
+	@include element(mask) {
+		position: absolute;
+		inset: 0;
+		overflow: visible;
+		pointer-events: none;
+	}
+
+	@include element(shade) {
+		fill: $color-mask;
+		pointer-events: visiblepainted;
+	}
+
+	@include element(blocker) {
+		fill: transparent;
+		pointer-events: all;
+	}
+
+	// 气泡（Popover）的触发节点，与高亮区重合
+	@include element(anchor) {
+		position: absolute;
+		pointer-events: none;
+		visibility: hidden;
+	}
+
+	// 有目标时的气泡：沿用 Popover 的定位与箭头，颜色、圆角、阴影使用引导的主题参数
+	@include element(popover) {
+		font-size: $font-size-small;
+		line-height: $line-height-large;
+		color: $foreground-color;
+		pointer-events: auto;
+
+		--vc-popover-wrapper-color-light: #{$background-color-lightest};
+		--vc-popover-wrapper-box-shadow: #{$box-shadow-floating};
+
+		// 箭头与卡片一体，不加阴影
+		--vc-popover-wrapper-color-shadow-fixed: transparent;
+
+		& > .vc-popover-wrapper__container {
+			display: flex;
+			border-radius: $border-radius;
+			flex-direction: column;
+		}
+	}
+
+	@include element(card) {
+		position: relative;
+		display: flex;
+		min-height: 0;
+		padding: unitfix(20);
+		overflow: hidden;
+		outline: none;
+		box-sizing: border-box;
+		overflow-wrap: anywhere;
+		flex-direction: column;
+
+		// 无目标时居中
+		@include when(center) {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			max-width: calc(100% - #{unitfix(16)});
+			max-height: calc(100% - #{unitfix(16)});
+			pointer-events: auto;
+			background: $background-color-lightest;
+			border-radius: $border-radius;
+			transform: translate(-50%, -50%);
+			box-shadow: $box-shadow-floating;
+		}
+	}
+
+	@include element(close) {
+		position: absolute;
+		top: unitfix(10);
+		right: unitfix(10);
+		padding: unitfix(4);
+		color: $foreground-color-light;
+		cursor: pointer;
+		background: transparent;
+		border: none;
+
+		&:disabled {
+			cursor: wait;
+		}
+	}
+
+	@include element(header) {
+		flex-shrink: 0;
+	}
+
+	@include element(title) {
+		padding-right: unitfix(16);
+		margin-bottom: unitfix(10);
+		font-weight: 600;
+	}
+
+	@include element(content-container) {
+		min-height: 0;
+	}
+
+	@include element(content) {
+		color: $foreground-color-light;
+	}
+
+	@include element(footer) {
+		display: flex;
+		flex-shrink: 0;
+		gap: unitfix(12);
+		align-items: center;
+		justify-content: space-between;
+		margin-top: unitfix(24);
+	}
+
+	@include element(buttons) {
+		display: flex;
+		flex-wrap: wrap;
+		gap: unitfix(6);
+		justify-content: flex-end;
+		margin-left: auto;
+	}
+
+	@include element(progress) {
+		display: flex;
+		flex-shrink: 0;
+		gap: unitfix(5);
+		color: $foreground-color-inactive;
+	}
+
+	@include element(dot) {
+		width: unitfix(6);
+		height: unitfix(6);
+		background: $foreground-color-inactive;
+		border-radius: 50%;
+
+		@include when(active) {
+			background: $color-primary;
+		}
+	}
+}

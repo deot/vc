@@ -395,6 +395,22 @@ VcInstance.configure({
 });
 ```
 
+### Tour 全局配置
+
+Tour 的全局配置使用 `VcInstance.configure({ Tour })`，实例使用 `cache: '业务引导-key'` 开启缓存。
+
+| 配置项 | 具体作用 | 默认值 |
+| --- | --- | --- |
+| cache | 布尔总开关，为 `false` 时禁止所有实例读写缓存 | `true` |
+| cacheTypes | 写入缓存的结束类型，可选 `finish`、`skip`、`close` | `['finish', 'skip']` |
+| getCache | 接收 `({ cacheKey })`，返回 `boolean` 或 `Promise<boolean>`；未配置时使用页面内存 | `undefined` |
+| setCache | 接收 `({ cacheKey, type })`，可返回 `Promise`；未配置时使用页面内存 | `undefined` |
+| onOpen | 接收 `({ cacheKey, steps })`，可返回 `Promise`；返回 `false` 阻止打开 | `undefined` |
+
+默认缓存不持久化；缓存失败通过 Tour error 通知。全局打开检查先于实例检查。
+更新嵌套配置会整体替换，切换开关可使用 `{ ...VcInstance.options.Tour, cache: false }` 保留回调。
+完整用法见 [Tour](../tour/README.md)。
+
 ### VcError
 
 `VcError` 是开发诊断对象，不继承原生 `Error`，没有原生错误的 `name`、`stack` 等能力。仅当 `target` 和 `message` 都为真值时，生成 `message`；在 development 环境还会调用 `console.error()`。这不是面向用户的提示组件。

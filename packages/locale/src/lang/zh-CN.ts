@@ -3,6 +3,14 @@ import type { Language } from '../types';
 export const zhCN: Language = {
 	name: 'zh-CN',
 	vc: {
+		Tour: {
+			previousText: '上一步',
+			nextText: '下一步',
+			finishText: '我知道了',
+			skipText: '跳过',
+			close: '关闭引导',
+			progress: '第 {current} 步，共 {total} 步'
+		},
 		Cascader: {
 			placeholder: '请选择'
 		},

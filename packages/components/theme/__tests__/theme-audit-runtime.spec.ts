@@ -47,9 +47,9 @@ vi.mock('../examples/theme-audit/parameters.module.scss',
 
 describe('Theme audit demo: independent modules',
 	() => {
-		it('resolves each of the 72 modules through the gallery',
+		it('resolves each of the 73 modules through the gallery',
 			() => {
-				expect(Object.keys(MODULES)).toHaveLength(72);
+				expect(Object.keys(MODULES)).toHaveLength(73);
 				for (const [name, component] of Object.entries(MODULES)) {
 					const wrapper = mount(GallerySamples, { props: { name }, shallow: true });
 					try { expect(wrapper.findComponent(component).exists(), name).toBe(true); } finally { wrapper.unmount(); }
@@ -431,8 +431,8 @@ describe('Theme audit demo: runtime',
 			async () => {
 				wrapper = mount(ThemeAudit, { shallow: true, global: { stubs: { 'vc-input': false, 'vc-scroller': false } } });
 				expect(wrapper.find('.audit-toolbar').exists()).toBe(false);
-				expect(wrapper.find('.audit-panel').text()).toContain('72 个组件');
-				expect(wrapper.find('.audit-panel__heading > p').text()).toBe('3 个参数 · 72 个组件');
+				expect(wrapper.find('.audit-panel').text()).toContain('73 个组件');
+				expect(wrapper.find('.audit-panel__heading > p').text()).toBe('3 个参数 · 73 个组件');
 				expect(wrapper.text()).not.toContain('配置自动保存在本地');
 				expect(wrapper.text()).not.toContain('取消取色恢复预览');
 				expect(wrapper.text()).not.toContain('关闭本页弹层');

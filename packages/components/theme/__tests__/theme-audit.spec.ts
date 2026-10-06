@@ -125,12 +125,12 @@ describe('Theme audit demo: source parameters',
 			const cssNames = [...exportCss(parameters, changes).matchAll(/--vc-([a-z-]+):/g)].map(match => match[1]);
 			expect(cssNames).toEqual([...names, ...names, ...names, ...names]);
 		});
-		it('matches all seven sidebar groups and covers 72 families including Theme',
+		it('matches all seven sidebar groups and covers 73 families including Theme',
 			() => {
 				const names = GROUPS.flatMap(group => [...group.names]);
-				expect(names).toHaveLength(71);
-				expect(new Set(names).size).toBe(71);
-				expect(COMPONENT_COUNT).toBe(72);
+				expect(names).toHaveLength(72);
+				expect(new Set(names).size).toBe(72);
+				expect(COMPONENT_COUNT).toBe(73);
 				const html = readFileSync(new URL('../../../../index.html', import.meta.url), 'utf8');
 				const source = html.slice(html.indexOf('const componentGroups ='), html.indexOf('const componentName ='));
 				const sidebar = runInNewContext(source + 'componentGroups').filter((group: any) => group.label.zh !== '配置');
