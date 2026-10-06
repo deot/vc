@@ -104,6 +104,21 @@ export const DrawerView = defineComponent({
 
 		useScrollbar(isActive);
 
+		const renderContent = () => {
+			return (
+				<Fragment>
+					{
+						typeof props.content === 'string'
+							? (<div innerHTML={props.content} />)
+							: typeof props.content === 'function'
+								? (<Customer render={props.content} />)
+								: null
+					}
+					{ slots.default?.() }
+				</Fragment>
+			);
+		};
+
 		expose({
 			isActive, // for portal
 			toggle(v?: boolean) {
@@ -162,20 +177,27 @@ export const DrawerView = defineComponent({
 								<div
 									class="vc-drawer__content-container"
 								>
-									<Scroller
-										native={false}
-										contentClass={[props.contentClass, 'vc-drawer__content']}
-										contentStyle={props.contentStyle}
-									>
-										{
-											typeof props.content === 'string'
-												? (<div innerHTML={props.content} />)
-												: typeof props.content === 'function'
-													? (<Customer render={props.content} />)
-													: null
-										}
-										{ slots.default?.() }
-									</Scroller>
+									{
+										props.scrollable
+											? (
+													<Scroller
+														native={false}
+														{...props.scrollerOptions}
+														contentClass={[props.contentClass, 'vc-drawer__content']}
+														contentStyle={props.contentStyle}
+													>
+														{renderContent()}
+													</Scroller>
+												)
+											: (
+													<div
+														class={[props.contentClass, 'vc-drawer__content', 'is-unscrollable']}
+														style={props.contentStyle}
+													>
+														{renderContent()}
+													</div>
+												)
+									}
 								</div>
 								{
 									(props.footer && (cancelText.value || okText.value)) && (

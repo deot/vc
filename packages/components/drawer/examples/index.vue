@@ -18,7 +18,6 @@
 			title="Right"
 			:width="500"
 			:mask="false"
-			:scrollable="true"
 		>
 			<div>
 				示例内容

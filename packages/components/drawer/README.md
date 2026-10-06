@@ -363,7 +363,8 @@ onUnmounted(() => {
 | height | 上下抽屉高度，单位 px | `number` | - | `300` |
 | mask | 显示遮罩 | `boolean` | - | `true` |
 | maskClosable | 点击遮罩可关闭 | `boolean` | - | `true` |
-| scrollable | 当前实现未使用该属性，打开时仍锁定页面滚动 | `boolean` | - | `false` |
+| scrollable | 内容区是否由内置的 Scroller 滚动；`false` 时由内容自行收缩并滚动（内容的根节点需设置 `min-height: 0`） | `boolean` | - | `true` |
+| scrollerOptions | 内置 Scroller 的属性（如 `always`、`native`）；内容区的类名与样式仍用 `contentClass`、`contentStyle` | `object` | - | - |
 | maskStyle | 遮罩样式 | `object \| string` | - | - |
 | wrapperClass | 面板容器类名 | `object \| string` | - | - |
 | wrapperStyle | 面板容器样式，可覆盖宽高 | `object \| string` | - | - |

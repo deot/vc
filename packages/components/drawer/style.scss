@@ -94,6 +94,13 @@ $box-shadow: varfix(box-shadow, drawer);
 	@include element(content) {
 		padding: unitfix(16) unitfix(24);
 		box-sizing: border-box;
+
+		// scrollable=false：占满内容区并传递高度约束，内容的根节点设 min-height: 0 后由其内部滚动
+		@include when(unscrollable) {
+			display: flex;
+			height: 100%;
+			flex-direction: column;
+		}
 	}
 
 	@include element(footer) {

@@ -764,6 +764,44 @@ describe('DrawerView 类名 / 样式透传', () => {
 		wrapper.unmount();
 	});
 
+	it('scrollerOptions 透传给内置 Scroller，contentClass 仍落在内容区', async () => {
+		const wrapper = mount(DrawerView, {
+			attachTo: document.body,
+			props: {
+				modelValue: true,
+				contentClass: 'content-x',
+				scrollerOptions: { wrapperClass: 'scroller-x', always: true }
+			}
+		});
+		await flush();
+
+		const scroller = wrapper.find('.vc-drawer__content-container > .vc-scroller');
+		expect(scroller.classes()).toContain('scroller-x');
+		expect(scroller.find('.vc-drawer__content').classes()).toContain('content-x');
+		wrapper.unmount();
+	});
+
+	it('scrollable=false：不渲染内置 Scroller，内容区直接承载内容', async () => {
+		const wrapper = mount(DrawerView, {
+			attachTo: document.body,
+			props: {
+				modelValue: true,
+				scrollable: false,
+				contentClass: 'content-x',
+				contentStyle: { padding: '10px' }
+			},
+			slots: { default: () => h('div', { class: 'own-scroll' }) }
+		});
+		await flush();
+
+		expect(wrapper.find('.vc-drawer__content-container .vc-scroller').exists()).toBe(false);
+		const c = wrapper.find('.vc-drawer__content-container > .vc-drawer__content');
+		expect(c.classes()).toEqual(expect.arrayContaining(['content-x', 'is-unscrollable']));
+		expect((c.element as HTMLElement).style.padding).toBe('10px');
+		expect(c.find(':scope > .own-scroll').exists()).toBe(true);
+		wrapper.unmount();
+	});
+
 	it('maskStyle 透传到 vc-drawer__mask', async () => {
 		const wrapper = mount(DrawerView, {
 			attachTo: document.body,

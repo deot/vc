@@ -1,5 +1,6 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { Props as CustomerProps } from '../customer/customer-props';
+import type { Props as ScrollerProps } from '../scroller/scroller-props';
 
 export const props = {
 	title: [String, Boolean, Function] as PropType<string | boolean | CustomerProps['render']>,
@@ -27,10 +28,13 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
+	// 内容区由内置的 Scroller 滚动；为 false 时内容区不滚动，由内容自行收缩并滚动
 	scrollable: {
 		type: Boolean,
-		default: false
+		default: true
 	},
+	// 内置 Scroller 的属性
+	scrollerOptions: Object as PropType<Partial<ScrollerProps>>,
 	placement: {
 		type: String,
 		default: 'right' // top/right/left/bottom
