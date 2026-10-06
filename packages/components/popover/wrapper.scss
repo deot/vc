@@ -90,14 +90,6 @@ $line-height-large: varfix(line-height-large, popover-wrapper);
 			transform: translateX(-50%) rotate(45deg);
 		}
 
-		@include when(top-left) {
-			left: 16px;
-		}
-
-		@include when(top-right) {
-			right: 16px;
-		}
-
 		@include when(bottom-basic) {
 			top: 4px;
 			border-right-color: transparent;
@@ -119,14 +111,6 @@ $line-height-large: varfix(line-height-large, popover-wrapper);
 		@include when(bottom) {
 			left: 50%;
 			transform: translateX(-50%) rotate(45deg);
-		}
-
-		@include when(bottom-left) {
-			left: 16px;
-		}
-
-		@include when(bottom-right) {
-			right: 16px;
 		}
 
 		@include when(right-basic) {

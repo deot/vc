@@ -11,8 +11,8 @@ import {
 import { Resize } from '@deot/helper-resize';
 import { isEqual } from 'lodash-es';
 import type { ComponentInternalInstance } from 'vue';
-import type { PopoverWrapperStyle } from './types';
-import { props as popoverWrapperProps } from './wrapper-props';
+import type { PopoverViewStyle } from './types';
+import { props as popoverViewProps } from './popover-view-props';
 import usePos, { getClip, fitMaxSize } from './use-pos';
 import { setTrigger, isInArea } from './utils';
 import { TransitionScale } from '../transition';
@@ -20,11 +20,12 @@ import { Customer } from '../customer';
 import { Portal } from '../portal';
 import { ScrollerManager } from '../scroller/manager';
 
+// 同时是 CSS 块名、主题变量前缀（--vc-popover-wrapper-*）与 Popover.open 的默认 Portal 名
 const COMPONENT_NAME = 'vc-popover-wrapper';
 
-export const PopoverWrapper = defineComponent({
+export const PopoverView = defineComponent({
 	name: COMPONENT_NAME,
-	props: popoverWrapperProps,
+	props: popoverViewProps,
 	emits: ['portal-fulfilled', 'close'],
 	setup(props, { emit, slots, expose }) {
 		const {
@@ -35,7 +36,7 @@ export const PopoverWrapper = defineComponent({
 		const instance = getCurrentInstance() as (ComponentInternalInstance & { vnode: any });
 		const { vnode } = instance;
 		const isActive = ref(false);
-		const wrapperStyle = ref({} as PopoverWrapperStyle);
+		const wrapperStyle = ref({} as PopoverViewStyle);
 		const arrowStyle = ref({});
 		const fitPos = ref(props.placement);
 		const wrapperW = ref({ width: 'auto' });
@@ -160,7 +161,6 @@ export const PopoverWrapper = defineComponent({
 
 			const { wrapperStyle: $wrapperStyle, arrowStyle: $arrowStyle } = getPopupStyle({
 				rect,
-				triggerEl,
 				el: vnode.el,
 				placement: result
 			});
@@ -298,7 +298,9 @@ export const PopoverWrapper = defineComponent({
 			toggle(v?: boolean) {
 				v = typeof v === 'boolean' ? v : !isActive.value;
 				isActive.value = v;
-			}
+			},
+			// 触发节点只移动、尺寸不变时（滚动与 Resize 之外），由调用方触发重新定位
+			update: setPopupStyle
 		});
 		return () => {
 			return (
@@ -349,4 +351,4 @@ export const PopoverWrapper = defineComponent({
 	}
 });
 
-export const PopoverPortal = new Portal(PopoverWrapper, { leaveDelay: 0 });
+export const PopoverPortal = new Portal(PopoverView, { leaveDelay: 0 });

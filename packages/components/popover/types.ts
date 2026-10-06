@@ -6,7 +6,7 @@ export interface PopoverRect {
 	width: number;
 }
 
-export interface PopoverWrapperStyle {
+export interface PopoverViewStyle {
 	[key: string]: any;
 	top: string;
 	left: string;

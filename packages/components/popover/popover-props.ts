@@ -1,8 +1,8 @@
 import type { ExtractPropTypes } from 'vue';
 import { pick } from 'lodash-es';
-import { props as wrapperProps } from './wrapper-props';
+import { props as viewProps } from './popover-view-props';
 
-const wrapperKeys = [
+const viewKeys = [
 	'modelValue',
 	'animation',
 	'placement',
@@ -35,6 +35,6 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
-	...(pick(wrapperProps, wrapperKeys) as Pick<typeof wrapperProps, typeof wrapperKeys[number]>)
+	...(pick(viewProps, viewKeys) as Pick<typeof viewProps, typeof viewKeys[number]>)
 };
 export type Props = ExtractPropTypes<typeof props>;

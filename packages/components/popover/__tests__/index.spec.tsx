@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 
-import { Popover, Select, Scroller } from '@deot/vc-components';
+import { Popover, PopoverView, Select, Scroller } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Resize } from '@deot/helper-resize';
 import { defineComponent, nextTick, ref } from 'vue';
 import { vi, onTestFinished } from 'vitest';
 import { useHoverPopover } from '../use-hover-popover';
+import { getAreaNode } from '../utils';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -45,6 +46,25 @@ describe('index.ts', () => {
 	it('basic', () => {
 		expect(typeof Popover).toBe('object');
 		expect(typeof Popover.open).toBe('function');
+		expect(typeof PopoverView).toBe('object');
+	});
+
+	it('getAreaNode：区域内为自身，子弹层（含嵌套）追溯到区域内的触发节点，无关节点为 null', async () => {
+		const area = document.createElement('div');
+		const trigger = document.createElement('button');
+		area.appendChild(trigger);
+		document.body.appendChild(area);
+		const first = Popover.open({ name: 'area-first', triggerElement: trigger, content: () => <input class="area-first" /> });
+		await flush();
+		const input = document.querySelector('.area-first')!;
+		const nested = Popover.open({ name: 'area-nested', triggerElement: input, content: () => <input class="area-nested" /> });
+		await flush();
+		expect(getAreaNode(trigger, area)).toBe(trigger);
+		expect(getAreaNode(input, area)).toBe(trigger);
+		expect(getAreaNode(document.querySelector('.area-nested'), area)).toBe(trigger);
+		expect(getAreaNode(document.body, area)).toBeNull();
+		nested.destroy();
+		first.destroy();
 	});
 
 	it('create', async () => {
@@ -1000,6 +1020,70 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		expect(getArrow().style.top).toBe('707px'); // 触发节点中心 715 - 8
 
 		wrapper.unmount();
+	});
+
+	// 视口 1024×768，弹层 200×100；触发节点左上角在 (500, 300)
+	const openSized = async (placement: string, width: number, height: number) => {
+		const wrapper = mount(() => (
+			<Popover trigger="click" content="x" placement={placement}>
+				<button>btn</button>
+			</Popover>
+		), { attachTo: document.body });
+		await nextTick();
+		setRect(wrapper.element, { x: 500, y: 300, width, height, top: 300, left: 500, bottom: 300 + height, right: 500 + width });
+		await wrapper.trigger('click');
+		await flush();
+		await resizeTo(200, 100);
+		return wrapper;
+	};
+
+	[
+		['bottom-left', 80, 'left', '20.5px'], // 较宽的触发节点：保持距边 16px 的箭头（中心 20.5px）
+		['bottom-left', 30, 'left', '15px'], // 较窄：指向触发节点中心
+		['top-right', 30, 'right', '15px'],
+		['top-left', 16, 'left', '12px'] // 很窄：不小于 ARROW_INSET，避开圆角
+	].forEach(([placement, width, side, value]) => {
+		it(`placement=${placement}、触发节点宽 ${width}px：箭头 ${side} 为 ${value}`, async () => {
+			const wrapper = await openSized(placement as string, width as number, 30);
+			expect(getArrow().style[side as string]).toBe(value);
+			expect(getArrow().style[side === 'left' ? 'right' : 'left']).toBe('auto');
+
+			wrapper.unmount();
+		});
+	});
+
+	[
+		['right-top', 30, 'top', '15px'], // 指向触发节点中心
+		['left-bottom', 30, 'bottom', '15px'],
+		['right-top', 300, 'top', '88px'], // 触发节点高于弹层：限制在弹层内（100 - 12）
+		['left-top', 10, 'top', '12px'] // 很矮：不小于 ARROW_INSET
+	].forEach(([placement, height, side, value]) => {
+		it(`placement=${placement}、触发节点高 ${height}px：箭头 ${side} 为 ${value}`, async () => {
+			const wrapper = await openSized(placement as string, 80, height as number);
+			expect(getWrapperEl()!.classList.contains(`is-${(placement as string).split('-')[0]}`)).toBe(true);
+			expect(getArrow().style[side as string]).toBe(value);
+			expect(getArrow().style.transform).toContain('rotate(45deg)');
+
+			wrapper.unmount();
+		});
+	});
+
+	it('leaf.wrapper.update()：触发节点只移动、尺寸不变时由调用方重新定位', async () => {
+		const triggerEl = document.createElement('button');
+		document.body.appendChild(triggerEl);
+		setRect(triggerEl, triggerRect(100, 100));
+		const leaf = Popover.open({ element: document.body, name: 'manual-update', triggerElement: triggerEl, placement: 'bottom', content: 'x' });
+		await flush();
+		await resizeTo(200, 100);
+		expect(getWrapperEl()!.style.top).toBe('134px'); // 100 + 30 + 4
+
+		setRect(triggerEl, triggerRect(100, 200));
+		leaf.wrapper!.update();
+		await nextTick();
+		expect(getWrapperEl()!.style.top).toBe('234px');
+
+		leaf.destroy();
+		await flush();
 	});
 
 	// 视口 1024×768，触发节点 (500, 400) 80×30；上限为所在一侧的可用空间（间隙 4px + 留白 8px），交叉轴两侧各留 8px

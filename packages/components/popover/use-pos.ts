@@ -3,12 +3,13 @@ import type { PopoverRect } from './types';
 import { getPadding } from '../scroller/utils';
 
 const EXTRA_DISTANCE = 4; // 额外的距离
-const HALF_ARROW = 12.73 / 2; // 箭头一半的高度
 const VIEWPORT_GAP = 8; // 与视口边缘的留白
 const ARROW_INSET = 12; // 箭头中心距弹层边缘的最小距离（避开圆角）
+const ARROW_OFFSET = 16 + 9 / 2; // 角落方向箭头中心距对齐边的距离（9px 的箭头距边 16px）
 
 // 可视边界（视口坐标）
 type Boundary = { top: number; right: number; bottom: number; left: number };
+type ArrowSide = keyof Boundary;
 
 /**
  * 视口，不含滚动条
@@ -77,6 +78,27 @@ export const fitMaxSize = (container: HTMLElement, { el, placement, triggerRect,
 		container.scrollLeft = scrollLeft;
 	}
 	return result;
+};
+
+/**
+ * 箭头样式：中心距 side 一边 distance，并限制在弹层内（避开圆角）
+ * @param side 计算距离的一边
+ * @param distance 箭头中心距该边的距离
+ * @param size 弹层在箭头移动方向上的尺寸
+ * @returns 箭头样式
+ */
+const getArrowStyle = (side: ArrowSide, distance: number, size: number) => {
+	const value = `${Math.min(Math.max(distance, ARROW_INSET), size - ARROW_INSET)}px`;
+	switch (side) {
+		case 'left':
+			return { left: value, right: 'auto', transform: 'translateX(-50%) rotate(45deg)' };
+		case 'right':
+			return { left: 'auto', right: value, transform: 'translateX(50%) rotate(45deg)' };
+		case 'top':
+			return { top: value, bottom: 'auto', transform: 'translateY(-50%) rotate(45deg)' };
+		default:
+			return { top: 'auto', bottom: value, transform: 'translateY(50%) rotate(45deg)' };
+	}
 };
 
 // 是否支持独立的 translate 属性（不影响过渡动画使用的 transform）
@@ -253,7 +275,7 @@ export default () => {
 
 		return placement;
 	};
-	const getPopupStyle = ({ rect, placement, triggerEl, el }) => {
+	const getPopupStyle = ({ rect, placement, el }) => {
 		let wrapperStyle: any;
 		let arrowStyle: any;
 		// top / left 方向以靠近触发节点的一边定位，再用 translate 移开自身尺寸：内容长高 / 变宽时朝远离触发节点的方向伸展
@@ -322,18 +344,12 @@ export default () => {
 					left: `${rect.x + rect.width + EXTRA_DISTANCE}px`,
 					transformOrigin: `0px 12px`
 				};
-				arrowStyle = {
-					top: `${triggerEl.offsetHeight / 2 - HALF_ARROW}px`
-				};
 				break;
 			case 'right-bottom':
 				wrapperStyle = {
 					top: `${rect.y + rect.height - el.offsetHeight}px`,
 					left: `${rect.x + rect.width + EXTRA_DISTANCE}px`,
 					transformOrigin: `0px ${el.offsetHeight - 12}px`
-				};
-				arrowStyle = {
-					bottom: `${triggerEl.offsetHeight / 2 - HALF_ARROW}px`
 				};
 				break;
 			case 'left':
@@ -349,18 +365,12 @@ export default () => {
 					...before,
 					transformOrigin: `100% 12px`
 				};
-				arrowStyle = {
-					top: `${triggerEl.offsetHeight / 2 - HALF_ARROW}px`
-				};
 				break;
 			case 'left-bottom':
 				wrapperStyle = {
 					top: `${rect.y + rect.height - el.offsetHeight}px`,
 					...before,
 					transformOrigin: `100% ${el.offsetHeight - 12}px`
-				};
-				arrowStyle = {
-					bottom: `${triggerEl.offsetHeight / 2 - HALF_ARROW}px`
 				};
 				break;
 			default:
@@ -369,11 +379,17 @@ export default () => {
 
 		if (!wrapperStyle) return { wrapperStyle, arrowStyle };
 
+		const vertical = /^(top|bottom)/.test(placement);
+		const size = vertical ? el.offsetWidth : el.offsetHeight;
+		// 角落方向：上下方向距对齐边 ARROW_OFFSET（触发节点较窄时指向其中心），左右方向指向触发节点中心
+		const [, align] = placement.split('-');
+		if (align) {
+			arrowStyle = getArrowStyle(align as ArrowSide, vertical ? Math.min(ARROW_OFFSET, rect.width / 2) : rect.height / 2, size);
+		}
+
 		// 交叉轴限制在视口内（四周留白，如 Cascader 展开、内容变宽后）：上下方向修正 left，左右方向修正 top
 		// 位置被修正时，箭头改为指向触发节点中心
-		const vertical = /^(top|bottom)/.test(placement);
 		const key = vertical ? 'left' : 'top';
-		const size = vertical ? el.offsetWidth : el.offsetHeight;
 		const container = el.parentElement;
 		// 弹层坐标系原点的视口坐标：挂 body 时为页面滚动的反向，否则为挂载容器的位置
 		const origin = !container || container === document.body
@@ -385,10 +401,7 @@ export default () => {
 		if (fixed !== value) {
 			wrapperStyle[key] = `${fixed}px`;
 			const triggerCenter = vertical ? rect.x + rect.width / 2 : rect.y + rect.height / 2;
-			const center = `${Math.min(Math.max(triggerCenter - fixed, ARROW_INSET), size - ARROW_INSET)}px`;
-			arrowStyle = vertical
-				? { left: center, right: 'auto', transform: 'translateX(-50%) rotate(45deg)' }
-				: { top: center, bottom: 'auto', transform: 'translateY(-50%) rotate(45deg)' };
+			arrowStyle = getArrowStyle(key, triggerCenter - fixed, size);
 		}
 
 		return {

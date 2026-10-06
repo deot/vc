@@ -21,6 +21,27 @@ const getAncestors = (node?: Node | null) => {
 };
 
 /**
+ * 路径（由内到外）在 area 内对应的节点
+ * 	- 路径含 area 时为路径的起点
+ * 	- 落在已登记的弹层内时，改用该弹层的触发节点继续判断（可多层），对应节点为最后找到的触发节点
+ * @param path 路径
+ * @param area 区域节点
+ * @returns 对应的节点，不在 area 内时为 null
+ */
+const resolveInArea = (path: Node[], area: Element) => {
+	const seen = new Set<Node>();
+	let node: Node | undefined = path[0];
+	while (!path.includes(area)) {
+		const popup = path.find(item => triggers.has(item) && !seen.has(item));
+		if (!popup) return null;
+		seen.add(popup);
+		node = triggers.get(popup);
+		path = getAncestors(node);
+	}
+	return node || null;
+};
+
+/**
  * 事件是否发生在 area 内（含嵌套的子弹层）
  * 	- 落在已登记的弹层内时，改用该弹层的触发节点继续判断（可多层）
  * 	- 如：Select 下拉打开时，点击标签列表弹层（挂 body，触发节点在 Select 内）视为点在 Select 内
@@ -28,17 +49,15 @@ const getAncestors = (node?: Node | null) => {
  * @param area 区域节点
  * @returns ~
  */
-export const isInArea = (e: Event, area: Element) => {
-	let path = composedPath(e) as Node[];
-	const seen = new Set<Node>();
-	while (!path.includes(area)) {
-		const popup = path.find(node => triggers.has(node) && !seen.has(node));
-		if (!popup) return false;
-		seen.add(popup);
-		path = getAncestors(triggers.get(popup));
-	}
-	return true;
-};
+export const isInArea = (e: Event, area: Element) => !!resolveInArea(composedPath(e) as Node[], area);
+
+/**
+ * 节点在 area 内对应的节点：本身在 area 内时为自身；在 area 内打开的弹层（可多层）中时为 area 内的触发节点
+ * @param node 节点
+ * @param area 区域节点
+ * @returns 对应的节点，不在 area 内时为 null
+ */
+export const getAreaNode = (node: Node | null | undefined, area: Element) => resolveInArea(getAncestors(node), area);
 
 /**
  * 按弹层的实际字体（可被 CSS 变量覆盖），测量文字排成一行时的尺寸

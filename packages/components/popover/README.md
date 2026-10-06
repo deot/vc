@@ -536,7 +536,9 @@ onUnmounted(() => leaf?.destroy());
 | onClose | 关闭动画完成回调 | `() => void` | - | - |
 | onChange | 触发器或浮层事件回调 | `(event: Event, info: object) => void` | - | 空函数 |
 
-`onChange` 的 `info` 包含 `context`（浮层内部组件实例）；悬停事件另含 `visible: boolean`，外部点击时不包含 `visible`；滚动容器滚动、触发器被移除引起的关闭另含 `immediate: true`（不走 hover 的延时关闭）。`leaf.wrapper?.toggle(false)` 可执行关闭动画，`leaf.destroy()` 立即销毁。其他 Portal 通用配置见 Portal 文档。
+`onChange` 的 `info` 包含 `context`（浮层内部组件实例）；悬停事件另含 `visible: boolean`，外部点击时不包含 `visible`；滚动容器滚动、触发器被移除引起的关闭另含 `immediate: true`（不走 hover 的延时关闭）。`leaf.wrapper?.toggle(false)` 可执行关闭动画，`leaf.destroy()` 立即销毁。触发节点只移动、尺寸不变且不是由滚动引起时（如由调用方改变位置），可调用 `leaf.wrapper?.update()` 重新定位。其他 Portal 通用配置见 Portal 文档。
+
+`PopoverView` 是 `Popover.open` 渲染的浮层组件，需要自行管理挂载位置与显隐时（如 Tour 的气泡）可直接渲染，属性同上方 open 选项表。
 
 ### 移动端
 

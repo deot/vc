@@ -4,7 +4,7 @@ import { defineComponent, h, ref, computed, watch, getCurrentInstance, onMounted
 import type { ComponentInternalInstance } from 'vue';
 import { props as popoverProps } from './popover-props';
 import { getUid } from '@deot/helper-utils';
-import { PopoverPortal } from './wrapper';
+import { PopoverPortal } from './popover-view';
 import { isInArea } from './utils';
 import type { PortalLeaf } from '../portal/portal-leaf';
 
