@@ -38,5 +38,7 @@ export const TimePicker = createPicker(COMPONENT_NAME, timePickerProps, () => {
 		icon,
 		panel,
 		panelOptions,
+		// 时间面板的各列在高度上限内收缩并自行滚动（见 panel/style/time.scss），弹层不再内置滚动
+		scrollable: false
 	};
 });

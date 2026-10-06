@@ -10,24 +10,15 @@ $block: vc-time-select;
 
 @include block($block) {
 	display: flex;
+	min-height: 0;
 	font-size: 14px;
 
-	@include when(touch) {
-		@include element(list) {
-			overflow-y: auto;
-		}
-	}
-
+	// 各列是 Scroller（根节点即滚动容器）；纯时间面板放不下时各列随弹层的高度上限收缩
 	@include element(list) {
 		position: relative;
 		width: 56px; // time-picker
 		max-height: 144px;
-		overflow: hidden;
 		border-left: 1px solid $color-neutral-light;
-
-		&:hover {
-			overflow-y: auto;
-		}
 
 		ul {
 			width: 100%;
@@ -44,7 +35,9 @@ $block: vc-time-select;
 				text-align: left;
 				list-style: none;
 				cursor: pointer;
-				box-sizing: content-box;
+
+				// 左内边距计入宽度：不超出列宽，列只纵向滚动
+				box-sizing: border-box;
 				transition: background .2s ease-in-out;
 				user-select: none;
 			}

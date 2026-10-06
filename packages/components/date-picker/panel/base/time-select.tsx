@@ -5,6 +5,7 @@ import { preZero } from '@deot/helper-utils';
 import { scrollIntoView } from '@deot/helper-dom';
 import { startCase } from 'lodash-es';
 import { clearTime, getDateOfTime } from '../../helper/date-utils';
+import { Scroller } from '../../../scroller';
 
 const COMPONENT_NAME = 'vc-time-select';
 
@@ -62,16 +63,16 @@ export const TimeSelect = defineComponent({
 		'pick'
 	],
 	setup(props, { emit }) {
-		const isTouch = ref('ontouchend' in window);
 		const spinerSteps = ref([1, 1, 1].map((one, i) => Math.abs(props.steps[i] as number) || one));
 		const compiled = ref(false);
 		const isFirst = ref(false);
 		const focusedColumn = ref(-1);
 		const focusedTime = ref([0, 0, 0]); // [hh, mm, ss]
 		const refs = reactive({});
+		// 各列是 Scroller，记录其根节点（滚动容器）
 		const setRef = (key: string) => (el: any) => {
 			if (el) {
-				refs[key] = el;
+				refs[key] = el.wrapper;
 			}
 		};
 
@@ -242,8 +243,8 @@ export const TimeSelect = defineComponent({
 
 		return () => {
 			return (
-				<div class={[{ 'is-touch': isTouch.value }, 'vc-time-select']}>
-					<div ref={setRef('hours')} class="vc-time-select__list">
+				<div class="vc-time-select">
+					<Scroller ref={setRef('hours')} class="vc-time-select__list">
 						<ul class="vc-time-select__ul">
 							{
 								hoursList.value.map((item: any, index: number) => {
@@ -261,8 +262,8 @@ export const TimeSelect = defineComponent({
 								})
 							}
 						</ul>
-					</div>
-					<div ref={setRef('minutes')} class="vc-time-select__list">
+					</Scroller>
+					<Scroller ref={setRef('minutes')} class="vc-time-select__list">
 						<ul class="vc-time-select__ul">
 							{
 								minutesList.value.map((item: any, index: number) => {
@@ -280,8 +281,8 @@ export const TimeSelect = defineComponent({
 								})
 							}
 						</ul>
-					</div>
-					<div
+					</Scroller>
+					<Scroller
 						// @ts-ignore
 						vShow={props.showSeconds}
 						ref={setRef('seconds')}
@@ -304,7 +305,7 @@ export const TimeSelect = defineComponent({
 								})
 							}
 						</ul>
-					</div>
+					</Scroller>
 				</div>
 			);
 		};

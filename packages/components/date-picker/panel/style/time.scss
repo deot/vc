@@ -2,5 +2,9 @@
 
 $block: vc-time-panel;
 
+// 弹层 scrollable=false：时间列在高度上限内收缩并自行滚动，确认栏固定
 @include block($block) {
+	display: flex;
+	min-height: 0;
+	flex-direction: column;
 }

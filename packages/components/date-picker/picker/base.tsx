@@ -45,7 +45,7 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 			handleClose
 		} = useBase();
 
-		const { icon, panel, panelOptions } = usePicker();
+		const { icon, panel, panelOptions, scrollable = true } = usePicker();
 		return () => {
 			return (
 				<Popover
@@ -61,6 +61,8 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 					disabled={props.disabled}
 					portal={props.portal}
 					portalClass={['is-padding-none', 'vc-date-picker--portal', props.portalClass]}
+					// 面板能自行收缩并滚动时（时间面板）由 picker 声明为 false；带日历的面板放不下时整体滚动
+					scrollable={scrollable}
 					class={[classes.value, its.value.class, 'vc-date-picker']}
 					style={its.value.style}
 					animation="y"

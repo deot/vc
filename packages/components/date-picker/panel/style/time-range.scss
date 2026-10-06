@@ -3,12 +3,22 @@
 $color-neutral-light: varfix(color-neutral-light, date-picker);
 $block: vc-timerange-panel;
 
+// 弹层 scrollable=false：时间列在高度上限内收缩并自行滚动，标题与确认栏固定
 @include block($block) {
+	display: flex;
+	min-height: 0;
+	flex-direction: column;
+
 	@include element(wrapper) {
-		display: flex; 
+		display: flex;
+		min-height: 0;
 	}
 
 	@include element(content) {
+		display: flex;
+		min-height: 0;
+		flex-direction: column;
+
 		// position: relative;
 		.vc-time-select {
 			position: relative;

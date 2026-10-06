@@ -3188,3 +3188,41 @@ describe('额外覆盖：panel 内分支补足', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('时间列与弹层滚动', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('TimePicker：弹层不内置滚动，时间列是 Scroller', async () => {
+		const wrapper = mount(() => (<TimePicker modelValue={new Date(2023, 0, 1, 8, 30, 0)} />), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+		await sleep(20);
+		await flush();
+
+		const popup = document.querySelector('.vc-popover-wrapper') as HTMLElement;
+		const content = popup.querySelector('.vc-popover-wrapper__content') as HTMLElement;
+		expect(content.classList.contains('is-unscrollable')).toBe(true);
+		const lists = popup.querySelectorAll('.vc-time-select__list');
+		expect(lists).toHaveLength(3);
+		lists.forEach(list => expect(list.classList.contains('vc-scroller')).toBe(true));
+		expect(lists[0].querySelectorAll('.vc-scroller__content .vc-time-select__li').length).toBe(24);
+
+		wrapper.unmount();
+	});
+
+	it('DatePicker：带日历的面板仍由 Popover 内置的 Scroller 滚动', async () => {
+		const wrapper = mount(() => (<DatePicker modelValue={new Date(2023, 0, 1)} />), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+
+		const content = document.querySelector('.vc-popover-wrapper .vc-popover-wrapper__content') as HTMLElement;
+		expect(content.classList.contains('vc-scroller')).toBe(true);
+		expect(content.classList.contains('is-unscrollable')).toBe(false);
+
+		wrapper.unmount();
+	});
+});
