@@ -3,7 +3,6 @@
 import { defineComponent, ref, watch } from 'vue';
 import type { PropType } from 'vue';
 import type { Render } from '../customer/types';
-import { Scroller } from '../scroller/index';
 import { useLocale } from '../locale';
 import { Tree } from './tree';
 
@@ -115,7 +114,7 @@ export const TreeSelectContent = defineComponent({
 		return () => {
 			const searching = !!props.searchValue.trim();
 			return (
-				<Scroller class="vc-tree-select__options" max-height="200px">
+				<div class="vc-tree-select__options">
 					<Tree
 						ref={treeRef}
 						model-value={props.value}
@@ -129,7 +128,7 @@ export const TreeSelectContent = defineComponent({
 						renderNodeLabel={props.renderNodeLabel || renderLabel}
 						onChange={(_: any, data: any) => emit('change', _, data)}
 					/>
-				</Scroller>
+				</div>
 			);
 		};
 	}

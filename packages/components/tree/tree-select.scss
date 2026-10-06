@@ -102,9 +102,10 @@ $component-name: vc-tree-select;
 	@include element(cascader) {
 		position: relative;
 		display: flex;
+		min-width: min-content;
+		min-height: 0;
 		flex: 1;
 		flex-direction: row;
-		min-width: min-content;
 	}
 
 	@include element(cascader-tree-hidden) {
@@ -118,21 +119,29 @@ $component-name: vc-tree-select;
 		opacity: 0;
 	}
 
+	// 纵向 flex：内容作为 flex 子项收缩后高度确定，各列才能随之收缩（百分比高度在这里不生效）
 	@include element(cascader-columns) {
-		flex: 1;
+		display: flex;
 		min-width: 0;
+		flex: 1;
+		flex-direction: column;
 	}
 
+	// 高度随弹层的上限收缩（弹层 scrollable=false），各列在其中自行滚动
 	@include element(cascader-columns-content) {
 		display: flex;
 		flex-direction: row;
 		width: max-content;
+		min-height: 0;
 	}
 
 	@include element(cascader-column) {
-		display: inline-block;
+		display: flex;
+		min-height: 0;
 		padding: unitfix(5) 0 !important;
 		margin: 0;
+		box-sizing: border-box;
+		flex-direction: column;
 
 		@include border(right, $color-neutral-light);
 

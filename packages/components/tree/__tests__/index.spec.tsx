@@ -2021,3 +2021,45 @@ describe('TreeSelect searchable', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('TreeSelect 弹层滚动', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('树模式：搜索在固定区，树由 Popover 内置的 Scroller 限高滚动', async () => {
+		const wrapper = mount(() => (
+			<TreeSelect data={freshData()} max={99} searchable />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+
+		const popup = document.querySelector('.vc-popover-wrapper') as HTMLElement;
+		expect(popup.querySelector('.vc-popover-wrapper__header > .vc-tree-select__search')).not.toBeNull();
+		const content = popup.querySelector('.vc-popover-wrapper__content') as HTMLElement;
+		expect(content.classList.contains('vc-scroller')).toBe(true);
+		expect(content.style.maxHeight).toBe('200px');
+		expect(content.querySelector('.vc-tree-select__options .vc-tree')).not.toBeNull();
+		expect(popup.querySelectorAll('.vc-scroller')).toHaveLength(1);
+
+		wrapper.unmount();
+	});
+
+	it('级联模式：弹层不内置滚动，各列是 Scroller', async () => {
+		const wrapper = mount(() => (
+			<TreeSelect data={freshData()} max={99} cascader />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+
+		const popup = document.querySelector('.vc-popover-wrapper') as HTMLElement;
+		const content = popup.querySelector('.vc-popover-wrapper__content') as HTMLElement;
+		expect(content.classList.contains('is-unscrollable')).toBe(true);
+		expect(content.classList.contains('vc-scroller')).toBe(false);
+		expect(popup.querySelector('.vc-tree-select__cascader-column > .vc-scroller.vc-tree-select__cascader-column-wrapper')).not.toBeNull();
+
+		wrapper.unmount();
+	});
+});

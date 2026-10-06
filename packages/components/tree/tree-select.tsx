@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, getCurrentInstance, inject, ref, computed, watch } from 'vue';
+import { defineComponent, getCurrentInstance, inject, ref, computed, watch, Fragment } from 'vue';
 import { debounce, isEqualWith } from 'lodash-es';
 import { useAttrs } from '@deot/vc-hooks';
 import { getUid } from '@deot/helper-utils';
@@ -256,6 +256,9 @@ export const TreeSelect = defineComponent({
 					disabled={props.disabled}
 					portal={props.portal}
 					portalClass={[['is-padding-none', props.portalClass]]}
+					// 树：由内置的 Scroller 限高滚动；级联：各列在高度上限内收缩并自行滚动
+					scrollable={!props.cascader}
+					scrollerOptions={{ maxHeight: 200 }}
 					class={[classes.value, its.value.class, 'vc-tree-select']}
 					style={its.value.style}
 					animation="y"
@@ -311,61 +314,65 @@ export const TreeSelect = defineComponent({
 								</Input>
 							);
 						},
+						header: (props.searchable || isLoading.value)
+							? () => {
+									return (
+										<Fragment>
+											{
+												props.searchable && (
+													<div class="vc-tree-select__search">
+														<InputSearch
+															class="vc-tree-select__search-input"
+															modelValue={searchValue.value}
+															// @ts-ignore
+															placeholder={props.searchPlaceholder}
+															onInput={handleSearch}
+														/>
+													</div>
+												)
+											}
+											{
+												isLoading.value && (
+													<div class="vc-tree-select__loading">
+														<Spin size={16} />
+													</div>
+												)
+											}
+										</Fragment>
+									);
+								}
+							: undefined,
 						content: () => {
 							return (
-								<div class="vc-tree-select__content">
-									{
-										props.searchable && (
-											<div class="vc-tree-select__search">
-												<InputSearch
-													class="vc-tree-select__search-input"
-													modelValue={searchValue.value}
-													// @ts-ignore
-													placeholder={props.searchPlaceholder}
-													onInput={handleSearch}
-												/>
-											</div>
+								props.cascader
+									? (
+											<TreeSelectContentCascader
+												value={currentValue.value}
+												data={props.data as TreeData[]}
+												checkStrictly={props.checkStrictly}
+												renderNodeLabel={props.renderNodeLabel}
+												numerable={props.numerable}
+												separator={props.separator}
+												max={props.max}
+												nullValue={props.nullValue as never}
+												searchValue={searchValue.value}
+												searchRegex={searchRegex.value}
+												remote={!!props.loadData}
+												onChange={handleChange}
+											/>
 										)
-									}
-									{
-										isLoading.value && (
-											<div class="vc-tree-select__loading">
-												<Spin size={16} />
-											</div>
+									: (
+											<TreeSelectContent
+												value={currentValue.value}
+												data={props.data}
+												checkStrictly={props.checkStrictly}
+												renderNodeLabel={props.renderNodeLabel}
+												searchValue={searchValue.value}
+												searchRegex={searchRegex.value}
+												remote={!!props.loadData}
+												onChange={handleChange}
+											/>
 										)
-									}
-									{
-										props.cascader
-											? (
-													<TreeSelectContentCascader
-														value={currentValue.value}
-														data={props.data as TreeData[]}
-														checkStrictly={props.checkStrictly}
-														renderNodeLabel={props.renderNodeLabel}
-														numerable={props.numerable}
-														separator={props.separator}
-														max={props.max}
-														nullValue={props.nullValue as never}
-														searchValue={searchValue.value}
-														searchRegex={searchRegex.value}
-														remote={!!props.loadData}
-														onChange={handleChange}
-													/>
-												)
-											: (
-													<TreeSelectContent
-														value={currentValue.value}
-														data={props.data}
-														checkStrictly={props.checkStrictly}
-														renderNodeLabel={props.renderNodeLabel}
-														searchValue={searchValue.value}
-														searchRegex={searchRegex.value}
-														remote={!!props.loadData}
-														onChange={handleChange}
-													/>
-												)
-									}
-								</div>
 							);
 						}
 					}}
