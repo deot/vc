@@ -67,11 +67,6 @@ $component-name: vc-select;
 		align-items: center;
 	}
 
-	// Scroller 根节点即滚动容器
-	@include element(options) {
-		max-height: unitfix(200);
-	}
-
 	@include element(loading) {
 		padding-bottom: unitfix(8);
 		text-align: center;

@@ -882,7 +882,7 @@ describe('Select maxTagLines', () => {
 
 		await wrapper.trigger('click');
 		await flush();
-		const dropdown = document.querySelector('.vc-select__content')!.closest('.vc-popover-wrapper') as HTMLElement;
+		const dropdown = document.querySelector('.vc-select__options')!.closest('.vc-popover-wrapper') as HTMLElement;
 		expect(dropdown.style.display).not.toBe('none');
 
 		// 列表弹层挂在 body 下，其触发节点（折叠 tag）在 Select 内：点击视为点在 Select 内
@@ -1290,6 +1290,41 @@ describe('Option / OptionGroup / SelectAll components', () => {
 	it('SelectAll renders nothing when no selectable options', () => {
 		const wrapper = mount(SelectAll, { props: { data: [] } });
 		expect(wrapper.html()).toBe('');
+		wrapper.unmount();
+	});
+});
+
+describe('Select 弹层滚动', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('搜索在固定区，选项由 Popover 内置的 Scroller 限高滚动，弹层内只有一个滚动容器', async () => {
+		const wrapper = mount(() => (<Select data={cityList} searchable />), { attachTo: document.body });
+		await nextTick();
+		await wrapper.trigger('click');
+		await flush();
+
+		const popup = document.querySelector('.vc-popover-wrapper') as HTMLElement;
+		expect(popup.querySelector('.vc-popover-wrapper__header > .vc-select__search')).not.toBeNull();
+		const options = popup.querySelector('.vc-popover-wrapper__content') as HTMLElement;
+		expect(options.classList.contains('vc-select__options')).toBe(true);
+		expect(options.style.maxHeight).toBe('200px');
+		expect(options.querySelector('.vc-select__search')).toBeNull();
+		expect(options.querySelectorAll('.vc-select-option').length).toBeGreaterThan(0);
+		expect(popup.querySelectorAll('.vc-scroller')).toHaveLength(1);
+
+		wrapper.unmount();
+	});
+
+	it('不可搜索且未加载时不渲染固定区', async () => {
+		const wrapper = mount(() => (<Select data={cityList} />), { attachTo: document.body });
+		await nextTick();
+		await wrapper.trigger('click');
+		await flush();
+
+		expect(document.querySelector('.vc-popover-wrapper__header')).toBeNull();
+
 		wrapper.unmount();
 	});
 });

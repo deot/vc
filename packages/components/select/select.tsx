@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, getCurrentInstance, inject, ref, computed, watch } from 'vue';
+import { defineComponent, getCurrentInstance, inject, ref, computed, watch, Fragment } from 'vue';
 import { debounce, isEqualWith } from 'lodash-es';
 import { useAttrs } from '@deot/vc-hooks';
 import { getUid } from '@deot/helper-utils';
@@ -9,7 +9,6 @@ import { VcError } from '../vc/index';
 import { Input, InputSearch } from '../input/index';
 import { Popover } from '../popover/index';
 import { Spin } from '../spin/index';
-import { Scroller } from '../scroller/index';
 import { Icon } from '../icon/index';
 import { Option } from './option.tsx';
 import { OptionGroup } from './option-group.tsx';
@@ -216,6 +215,7 @@ export const Select = defineComponent({
 					disabled={props.disabled}
 					portal={props.portal}
 					portalClass={[['is-padding-none', props.portalClass]]}
+					scrollerOptions={{ maxHeight: 200, wrapperClass: 'vc-select__options' }}
 					class={[classes.value, its.value.class, 'vc-select']}
 					style={its.value.style}
 					animation="y"
@@ -282,101 +282,104 @@ export const Select = defineComponent({
 								</Input>
 							);
 						},
+						// 搜索、加载在固定区；选项由 Popover 内置的 Scroller 滚动（高度上限见 scrollerOptions）
+						header: (props.searchable || isLoading.value)
+							? () => {
+									return (
+										<Fragment>
+											{
+												props.searchable && (
+													<div class="vc-select__search">
+														<InputSearch
+															modelValue={searchValue.value}
+															// @ts-ignore
+															placeholder={props.searchPlaceholder}
+															onInput={handleSearch}
+														/>
+														{
+															showSelectAll.value && (
+																<SelectAll data={options.value} />
+															)
+														}
+													</div>
+												)
+											}
+											{
+												isLoading.value && (
+													<div class="vc-select__loading">
+														<Spin size={16} />
+													</div>
+												)
+											}
+										</Fragment>
+									);
+								}
+							: undefined,
 						content: () => {
 							return (
-								<div class="vc-select__content">
-									{
-										props.searchable && (
-											<div class="vc-select__search">
-												<InputSearch
-													modelValue={searchValue.value}
-													// @ts-ignore
-													placeholder={props.searchPlaceholder}
-													onInput={handleSearch}
-												/>
+								props.data
+									? (
+											<div>
 												{
-													showSelectAll.value && (
-														<SelectAll data={options.value} />
-													)
+													props.data.map((item: any) => {
+														return Array.isArray(item.children) && item.children.length
+															? (
+																	<OptionGroup
+																		row={item}
+																		value={item.value}
+																		label={item.label}
+																		key={item.value}
+																		render={props.renderOptionGroup}
+																	>
+
+																		{{
+																			optionGroup: slots?.optionGroup,
+																			label: slots?.label,
+																			default: () => {
+																				return item.children.map(($item: any) => {
+																					return (
+																						<Option
+																							ref={el => setOption($item, el)}
+																							key={$item.value}
+																							row={$item}
+																							value={$item.value}
+																							label={$item.label}
+																							disabled={$item.disabled}
+																							filterable={$item.filterable}
+																							render={props.renderOption}
+																							renderLabel={props.renderLabel}
+																						>
+																							{{
+																								default: slots?.option,
+																								label: slots?.label
+																							}}
+																						</Option>
+																					);
+																				});
+																			}
+																		}}
+																	</OptionGroup>
+																)
+															: (
+																	<Option
+																		ref={el => setOption(item, el)}
+																		key={item.value}
+																		row={item}
+																		value={item.value}
+																		label={item.label}
+																		disabled={item.disabled}
+																		filterable={item.filterable}
+																		render={props.renderOption}
+																		renderLabel={props.renderLabel}
+																	>
+																		{{ default: slots?.option, label: slots?.label }}
+																	</Option>
+																);
+													})
 												}
 											</div>
 										)
-									}
-									{
-										isLoading.value && (
-											<div class="vc-select__loading">
-												<Spin size={16} />
-											</div>
-										)
-									}
-									<Scroller class="vc-select__options">
-										{
-											props.data
-												? (
-														<div>
-															{
-																props.data.map((item: any) => {
-																	return Array.isArray(item.children) && item.children.length
-																		? (
-																				<OptionGroup
-																					row={item}
-																					value={item.value}
-																					label={item.label}
-																					key={item.value}
-																					render={props.renderOptionGroup}
-																				>
-
-																					{{
-																						optionGroup: slots?.optionGroup,
-																						label: slots?.label,
-																						default: () => {
-																							return item.children.map(($item: any) => {
-																								return (
-																									<Option
-																										ref={el => setOption($item, el)}
-																										key={$item.value}
-																										row={$item}
-																										value={$item.value}
-																										label={$item.label}
-																										disabled={$item.disabled}
-																										filterable={$item.filterable}
-																										render={props.renderOption}
-																										renderLabel={props.renderLabel}
-																									>
-																										{{
-																											default: slots?.option,
-																											label: slots?.label
-																										}}
-																									</Option>
-																								);
-																							});
-																						}
-																					}}
-																				</OptionGroup>
-																			)
-																		: (
-																				<Option
-																					ref={el => setOption(item, el)}
-																					key={item.value}
-																					row={item}
-																					value={item.value}
-																					label={item.label}
-																					disabled={item.disabled}
-																					filterable={item.filterable}
-																					render={props.renderOption}
-																					renderLabel={props.renderLabel}
-																				>
-																					{{ default: slots?.option, label: slots?.label }}
-																				</Option>
-																			);
-																})
-															}
-														</div>
-													)
-												: slots?.default?.()
-										}
-									</Scroller>
-								</div>
+									: slots?.default?.()
 							);
 						}
 					}}
