@@ -16,6 +16,7 @@
 		<ModalView
 			v-model="isVisible1"
 			:mask-closable="true"
+			height="auto"
 			title="标题1"
 			@close="handleClose"
 			@cancel="handleCancel"
@@ -35,7 +36,6 @@
 			:esc-closable="false"
 			:height="500"
 			:width="500"
-			scrollable
 			draggable
 			border
 			title="标题2"

@@ -55,14 +55,15 @@ $box-shadow: varfix(box-shadow, modal);
 		}
 
 
+		// 矮视口下大尺寸弹窗的最小高度；height="auto"（is-auto-height）时高度跟随内容，不设最小高度
 		@media screen and (height <=768px) {
-			@include when(large) {
+			&.is-large:not(.is-auto-height) {
 				min-height: unitfix(400) !important;
 			}
 		}
 
 		@media screen and (height <=400px) {
-			@include when(large) {
+			&.is-large:not(.is-auto-height) {
 				min-height: 100% !important;
 			}
 		}
@@ -121,11 +122,24 @@ $box-shadow: varfix(box-shadow, modal);
 		>.vc-scroller {
 			height: 100%;
 		}
+
+		// scrollable=false：内容区随弹窗的高度上限收缩，内容在其中自行滚动
+		@include when(unscrollable) {
+			display: flex;
+			flex-direction: column;
+		}
 	}
 
 	@include element(content) {
 		padding: unitfix(12) unitfix(28);
 		box-sizing: border-box;
+
+		// scrollable=false：传递高度约束，内容的根节点设 min-height: 0 后由其内部滚动
+		@include when(unscrollable) {
+			display: flex;
+			min-height: 0;
+			flex-direction: column;
+		}
 
 		@include when(confirm) {
 			padding: unitfix(0) unitfix(24) unitfix(32) unitfix(56);

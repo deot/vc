@@ -267,6 +267,21 @@ describe('ModalView size 与自定义尺寸', () => {
 		expect(container.style.minHeight).toBe('');
 		wrapper.unmount();
 	});
+
+	it('height="auto"：高度跟随内容，不设固定高度与预设的最小高度；内容变化时仍重新适配', async () => {
+		const wrapper = mount(ModalView, {
+			attachTo: document.body,
+			props: { modelValue: true, size: 'large', height: 'auto' }
+		});
+		await flush();
+		const container = wrapper.find('.vc-modal__container').element as HTMLElement;
+		expect(container.style.height).toBe('');
+		expect(container.style.minHeight).toBe('');
+		expect(container.style.maxHeight).not.toBe('');
+		expect(container.style.width).toBe('864px');
+		expect(container.classList.contains('is-auto-height')).toBe(true);
+		wrapper.unmount();
+	});
 });
 
 describe('ModalView mode (info/success/warning/error)', () => {
@@ -909,6 +924,44 @@ describe('ModalView modifier 类名 / 样式透传', () => {
 		expect(c.classes()).toContain('content-x');
 		expect((c.element as HTMLElement).style.padding).toBe('10px');
 		wrapper.unmount();
+	});
+
+	it('scrollerOptions 透传给内置 Scroller，contentClass 仍落在内容区', async () => {
+		const wrapper = mount(ModalView, {
+			attachTo: document.body,
+			props: {
+				modelValue: true,
+				contentClass: 'content-x',
+				scrollerOptions: { wrapperClass: 'scroller-x', always: true }
+			}
+		});
+		await flush();
+
+		const scroller = wrapper.find('.vc-modal__content-container > .vc-scroller');
+		expect(scroller.classes()).toContain('scroller-x');
+		expect(scroller.find('.vc-modal__content').classes()).toContain('content-x');
+		wrapper.unmount();
+	});
+
+	it('scrollable=false：不渲染内置 Scroller，内容区直接承载内容；卸载不报错', async () => {
+		const wrapper = mount(ModalView, {
+			attachTo: document.body,
+			props: {
+				modelValue: true,
+				scrollable: false,
+				contentClass: 'content-x',
+				contentStyle: { padding: '10px' }
+			},
+			slots: { default: () => h('div', { class: 'own-scroll' }) }
+		});
+		await flush();
+
+		expect(wrapper.find('.vc-modal__content-container .vc-scroller').exists()).toBe(false);
+		const c = wrapper.find('.vc-modal__content-container.is-unscrollable > .vc-modal__content');
+		expect(c.classes()).toEqual(expect.arrayContaining(['content-x', 'is-unscrollable']));
+		expect((c.element as HTMLElement).style.padding).toBe('10px');
+		expect(c.find(':scope > .own-scroll').exists()).toBe(true);
+		expect(() => wrapper.unmount()).not.toThrow();
 	});
 });
 

@@ -64,6 +64,11 @@ export const ModalView = defineComponent({
 		// 注: 服务端渲染为0, 在客服端激活前，展示端存在问题【高度不定】
 		const MAX_HEIGHT = IS_SERVER ? 0 : window.innerHeight - 20;
 		const MAX_WIDTH = IS_SERVER ? 0 : window.innerWidth - 20;
+		// height：数字为固定高度；'auto' 跟随内容；不传时以预设高度为最小高度
+		const isFixedHeight = computed(() => typeof props.height === 'number' && props.height > 0);
+		const isAutoHeight = computed(() => props.height === 'auto');
+		// 跟随内容时容器的实际高度，拖拽模式下用于初始居中
+		const autoHeight = ref(0);
 		const defaultSize = computed(() => {
 			let width = 0;
 			let height = 0;
@@ -85,7 +90,7 @@ export const ModalView = defineComponent({
 			}
 			return {
 				width: Math.min(props.width || width, MAX_WIDTH),
-				height: Math.min(props.height || height, MAX_HEIGHT)
+				height: Math.min(isFixedHeight.value ? (props.height as number) : height, MAX_HEIGHT)
 			};
 		});
 
@@ -95,9 +100,9 @@ export const ModalView = defineComponent({
 				maxHeight: `${MAX_HEIGHT}px`,
 			};
 
-			if (props.height) {
+			if (isFixedHeight.value) {
 				result.height = `${defaultSize.value.height}px`;
-			} else {
+			} else if (!isAutoHeight.value) {
 				result.minHeight = `${defaultSize.value.height}px`;
 			}
 
@@ -108,7 +113,9 @@ export const ModalView = defineComponent({
 			if (IS_SERVER || !props.draggable) return {};
 
 			const left = typeof x.value === 'undefined' ? window.innerWidth / 2 - defaultSize.value.width / 2 : x.value;
-			const top = typeof y.value === 'undefined' ? window.innerHeight / 2 - defaultSize.value.height / 2 : y.value;
+			// 未拖动过时居中：跟随内容时按实际高度
+			const getHeight = () => (isAutoHeight.value ? autoHeight.value : defaultSize.value.height);
+			const top = typeof y.value === 'undefined' ? window.innerHeight / 2 - getHeight() / 2 : y.value;
 
 			return {
 				left: `${left}px`,
@@ -225,6 +232,7 @@ export const ModalView = defineComponent({
 			const $container = container.value!;
 			const maxheight = window.innerHeight - 20;
 			const containerHeight = $container.offsetHeight;
+			isAutoHeight.value && (autoHeight.value = containerHeight);
 			if (containerHeight + 1 > maxheight) {
 				if (maxheight % 2 !== 0) {
 					$container.style.height = `${maxheight - 1}px`;
@@ -232,6 +240,21 @@ export const ModalView = defineComponent({
 			} else if (containerHeight % 2 !== 0) {
 				$container.style.height = `${containerHeight + 1}px`;
 			}
+		};
+
+		const renderContent = () => {
+			return (
+				<Fragment>
+					{
+						typeof props.content === 'string'
+							? (<div innerHTML={props.content} />)
+							: typeof props.content === 'function'
+								? (<Customer render={props.content} />)
+								: null
+					}
+					{ slots.default?.() }
+				</Fragment>
+			);
 		};
 
 		/**
@@ -244,7 +267,7 @@ export const ModalView = defineComponent({
 		 * container在最大值时，需要移除，宽度才会缩回去
 		 */
 		const handleContentResize = () => {
-			if (props.height) return;
+			if (isFixedHeight.value) return;
 			const needRefreshScroller = !!scroller.value.wrapper!.style.getPropertyValue('height');
 			const needRefreshContainer = !!container.value!.style.getPropertyValue('height');
 
@@ -298,7 +321,8 @@ export const ModalView = defineComponent({
 			document.addEventListener('keydown', handleEscClose);
 			document.addEventListener('click', handleClick, true);
 			Resize.on(container.value!, handleContainerResize);
-			Resize.on(scroller.value!.content, handleContentResize);
+			// scrollable=false 时内容的高度受容器约束，不能据此重新适配
+			scroller.value && Resize.on(scroller.value.content, handleContentResize);
 		});
 
 		onUpdated(() => {
@@ -310,7 +334,7 @@ export const ModalView = defineComponent({
 
 		onBeforeUnmount(() => {
 			Resize.off(container.value!, handleContainerResize);
-			Resize.off(scroller.value!.content, handleContentResize);
+			scroller.value && Resize.off(scroller.value.content, handleContentResize);
 		});
 
 		onUnmounted(() => {
@@ -367,6 +391,7 @@ export const ModalView = defineComponent({
 									{
 										'is-drag': props.draggable,
 										'is-large': props.size === 'large' || props.size === 'medium',
+										'is-auto-height': isAutoHeight.value,
 										'has-footer': props.footer && (cancelText.value || okText.value),
 										'has-border': props.border,
 									},
@@ -417,28 +442,25 @@ export const ModalView = defineComponent({
 											: slots.header()
 									}
 								</div>
-								<Resizer ref={resizer} class="vc-modal__content-container">
+								<Resizer ref={resizer} class={['vc-modal__content-container', { 'is-unscrollable': !props.scrollable }]}>
 									{{
 										default: (row: any) => {
-											return (
-												<Scroller
-													ref={scroller}
-													native={false}
-													always={false}
-													height={isTransitionEnd.value ? row.height : (void 0)}
-													contentClass={[{ 'is-confirm': props.mode }, props.contentClass, 'vc-modal__content']}
-													contentStyle={props.contentStyle}
-												>
-													{
-														typeof props.content === 'string'
-															? (<div innerHTML={props.content} />)
-															: typeof props.content === 'function'
-																? (<Customer render={props.content} />)
-																: null
-													}
-													{ slots.default?.() }
-												</Scroller>
-											);
+											const contentClass = [{ 'is-confirm': props.mode }, props.contentClass, 'vc-modal__content'];
+											return props.scrollable
+												? (
+														<Scroller
+															native={false}
+															always={false}
+															{...props.scrollerOptions}
+															ref={scroller}
+															height={isTransitionEnd.value ? row.height : (void 0)}
+															contentClass={contentClass}
+															contentStyle={props.contentStyle}
+														>
+															{renderContent()}
+														</Scroller>
+													)
+												: <div class={[contentClass, 'is-unscrollable']} style={props.contentStyle}>{renderContent()}</div>;
 										}
 									}}
 								</Resizer>

@@ -84,7 +84,7 @@ const handleClose = () => {
 
 ### 尺寸、边框与拖拽
 
-`size` 提供三档预设尺寸；`width`、`height` 可进一步覆盖尺寸。开启 `draggable` 后可从页头拖动对话框，`border` 则启用带分隔线的紧凑样式。
+`size` 提供三档预设尺寸；`width`、`height` 可进一步覆盖尺寸。不传 `height` 时预设高度是最小高度，内容更多时增长；内容较少又希望弹窗贴合内容时设置 `height="auto"`，高度超过视口后内容区滚动。开启 `draggable` 后可从页头拖动对话框，`border` 则启用带分隔线的紧凑样式。
 
 :::playground
 <!--
@@ -491,13 +491,14 @@ onUnmounted(() => {
 | contentStyle | 内容区域的行内样式 | `object \| string` | - | - |
 | contentClass | 内容区域的 class | `object \| string` | - | - |
 | width | 自定义宽度，单位为 px | `number` | - | 由 `size` 与 `mode` 计算 |
-| height | 自定义高度，单位为 px | `number` | - | - |
+| height | 数字为固定高度，单位为 px；`'auto'` 时高度跟随内容，不使用 `size` 预设的最小高度；不传时以 `size` 预设的高度为最小高度 | `number \| 'auto'` | - | - |
 | mask | 是否显示遮罩 | `boolean` | - | `true` |
 | closable | 非 `mode` 布局下是否显示关闭图标 | `boolean` | - | `true` |
 | maskClosable | 是否允许点击遮罩或 wrapper 关闭 | `boolean` | - | `true` |
 | escClosable | 是否允许按 `Escape` 关闭 | `boolean` | - | `true` |
 | closeWithCancel | 主动关闭时是否先执行 `onCancel` / `cancel` | `boolean` | - | `true` |
-| scrollable | 兼容属性；当前实现始终在显示期间锁定页面滚动 | `boolean` | - | `false` |
+| scrollable | 内容区是否由内置的 Scroller 滚动；`false` 时由内容自行收缩并滚动（内容的根节点需设置 `min-height: 0`），此时未设置 `height` 的弹窗不随内容变化重新适配高度 | `boolean` | - | `true` |
+| scrollerOptions | 内置 Scroller 的属性（如 `always`、`native`）；内容区的类名与样式仍用 `contentClass`、`contentStyle` | `object` | - | - |
 | draggable | 是否允许从页头拖动 | `boolean` | - | `false` |
 | x | 可拖动布局的初始 left，单位为 px | `number` | - | - |
 | y | 可拖动布局的初始 top，单位为 px | `number` | - | - |

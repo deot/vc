@@ -1,5 +1,6 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { Props as CustomerProps } from '../customer/customer-props';
+import type { Props as ScrollerProps } from '../scroller/scroller-props';
 
 export const props = {
 	modelValue: {
@@ -24,8 +25,9 @@ export const props = {
 	width: {
 		type: Number
 	},
+	// 数字为固定高度；'auto' 时高度跟随内容（不使用 size 预设的最小高度）；不传时以 size 预设的高度为最小高度
 	height: {
-		type: Number
+		type: [Number, String] as PropType<number | 'auto'>
 	},
 	mask: {
 		type: Boolean,
@@ -50,10 +52,13 @@ export const props = {
 	title: {
 		type: [String, Function] as PropType<string | CustomerProps['render']>,
 	},
+	// 内容区由内置的 Scroller 滚动；为 false 时内容区不滚动，由内容自行收缩并滚动
 	scrollable: {
 		type: Boolean,
-		default: false
+		default: true
 	},
+	// 内置 Scroller 的属性
+	scrollerOptions: Object as PropType<Partial<ScrollerProps>>,
 	draggable: {
 		type: Boolean,
 		default: false
