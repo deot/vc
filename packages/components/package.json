@@ -20,7 +20,9 @@
     "access": "public"
   },
   "dependencies": {
-    "@deot/vc-locale": "^1.2.0"
+    "@deot/vc-hooks": "^1.2.0",
+    "@deot/vc-locale": "^1.2.0",
+    "@deot/vc-shared": "^1.2.0"
   },
   "peerDependencies": {
     "@deot/helper": "*",
