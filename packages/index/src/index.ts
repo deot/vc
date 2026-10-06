@@ -1,6 +1,7 @@
 import type { App } from 'vue';
 
-export { Utils } from '@deot/vc-shared';
+export { Utils, Keyboard } from '@deot/vc-shared';
+export type { KeyboardHandler } from '@deot/vc-shared';
 export * from '@deot/vc-hooks';
 export * from '@deot/vc-components';
 export * from '@deot/vc-locale';
