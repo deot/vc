@@ -54,7 +54,7 @@ export class Expand {
 	}
 
 	/**
-	 * 设置展开的行（expand-row-value，需要 primaryKey），其余行取 defaultExpandAll
+	 * 设置展开的行（expanded-values，需要 primaryKey），其余行取 defaultExpandAll
 	 * @param values 展开行的行值
 	 */
 	reset(values: any[]) {

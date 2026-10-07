@@ -110,12 +110,12 @@ export class Tree {
 		return !isEmpty(this.nodes);
 	}
 
-	// tree-map 映射的字段名
+	// key-value 映射的字段名
 	get fields() {
-		const { treeMap } = this.store.table.props;
+		const { keyValue } = this.store.table.props;
 		return {
-			childrenKey: treeMap.children || 'children',
-			hasChildrenKey: treeMap.hasChildren || 'hasChildren'
+			childrenKey: keyValue.children || 'children',
+			hasChildrenKey: keyValue.hasChildren || 'hasChildren'
 		};
 	}
 
@@ -246,7 +246,7 @@ export class Tree {
 	}
 
 	/**
-	 * 设置展开的节点（expand-row-value），其余节点取 defaultExpandAll
+	 * 设置展开的节点（expanded-values），其余节点取 defaultExpandAll
 	 * @param values 展开节点的行值
 	 */
 	reset(values: any[]) {

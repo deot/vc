@@ -751,13 +751,13 @@ const handleFilter = (value) => { status.value = value; };
 进阶示例（单选受控 / 多选 `max: 2` / 只用 `onChange`）：[筛选](./examples/filter.vue)
 
 ### 树形数据与懒加载
-支持树类型的数据的显示。当 `row` 中包含 `children` 字段时，被视为树形数据。渲染树形数据时，必须要指定 `primary-key`，且其值在整棵树（含懒加载得到的子行）中唯一；重复出现的值只有首次出现的行可展开。支持子节点数据异步加载：设置 `Table` 的 `lazy-tree` 属性为 `true` 与加载函数 `load-expand`，并通过 `row` 中的 `hasChildren` 字段标记可加载子节点的行（仅 `lazy-tree` 时生效）。`children` 与 `hasChildren` 都可以通过 `tree-map` 配置。
+支持树类型的数据的显示。当 `row` 中包含 `children` 字段时，被视为树形数据。渲染树形数据时，必须要指定 `primary-key`，且其值在整棵树（含懒加载得到的子行）中唯一；重复出现的值只有首次出现的行可展开。支持子节点数据异步加载：设置 `Table` 的 `lazy-tree` 属性为 `true` 与加载函数 `load-expand`，并通过 `row` 中的 `hasChildren` 字段标记可加载子节点的行（仅 `lazy-tree` 时生效）。`children` 与 `hasChildren` 都可以通过 `key-value` 配置。
 
 - 展开的子行铺平后逐行渲染，普通表格、`height` 与 `virtualized` 虚拟化表格都适用；缩进与展开图标显示在第一个普通列（非 `selection` / `index` / `expand`）中，缩进宽度由 `indent` 控制；每个单元格带有 `vc-table__row--level-{level}` 类名，便于按层级定制样式。
 - 行号（`rowIndex`、斑马纹、`get-span` 的 `rowIndex` 等）按当前可见行计算。
 - 合计行（`show-summary` / `get-summary`）基于根行 `data` 计算，不含子行。
 - 无障碍：树形表格以 `treegrid` 呈现，行带有 `aria-level` 与 `aria-expanded`。
-- 展开状态按 `primary-key` 记录：数据更新后保留；`default-expand-all` 只作为未操作过的节点的默认值，已收起的节点不会被重新展开；`expand-row-value` 设置当前展开的节点。
+- 展开状态按 `primary-key` 记录：数据更新后保留；`default-expand-all` 只作为未操作过的节点的默认值，已收起的节点不会被重新展开；`expanded-values` 设置当前展开的节点。
 - `expand-change` 的参数为 `{ type: 'tree', row, expanded, maxLevel }`，`maxLevel` 为当前可见行的最大层级（根为 `0`），可用于调整树形列的宽度。
 - `load-expand(row, treeNode)` 可以返回数组或 `Promise`，`treeNode.level` 为该节点的层级；加载失败时节点恢复为待加载。展开尚未加载的节点（点击或 `toggleRowExpansion`）会先触发加载。
 - 嵌套的 `children` 可以原地增删（如 `row.children.splice(index, 1)`），表格会同步更新，被移除的行同时移出选中项；若之后还要增删懒加载得到的子行，`load-expand` 请返回响应式数组（如 `reactive([...])`）。
@@ -922,7 +922,7 @@ input { width: 100%; box-sizing: border-box; }
 ### 展开行
 当行内容过多并且不想显示横向滚动条时，可以使用展开行功能。添加 `type="expand"` 的 `TableColumn`，其默认插槽即为展开行的内容，参数为 `{ row, rowIndex, store }`。
 
-- 通过 `expand-row-value`（需设置 `primary-key`）指定展开的行，或调用 `toggleRowExpansion(row, expanded)` 切换。
+- 通过 `expanded-values`（需设置 `primary-key`）指定展开的行，或调用 `toggleRowExpansion(row, expanded)` 切换。
 - 展开状态按 `primary-key` 记录（未设置时按行对象），数据更新后保留；`default-expand-all` 只作为未操作过的行的默认值，已收起的行不会被重新展开。
 - `expand-change` 的参数为 `{ type: 'expand', row, expanded, expandedRows }`，`expanded` 为该行是否展开，`expandedRows` 为当前展开的行（按显示顺序）。
 - 通过 `v-model:columns` 隐藏 expand 列时，展开内容一并隐藏。
@@ -935,7 +935,7 @@ input { width: 100%; box-sizing: border-box; }
 <template>
 	<Table
 		:data="tableData"
-		:expand-row-value="[2]"
+		:expanded-values="[2]"
 		primary-key="id"
 	>
 		<TableColumn type="expand">
@@ -1007,7 +1007,7 @@ const tableData = ref([
 			:data="rows"
 			:height="mode === 'height' ? 300 : undefined"
 			:virtualized="mode === 'virtualized'"
-			:expand-row-value="[1]"
+			:expanded-values="[1]"
 			primary-key="id"
 			border
 		>
@@ -1136,7 +1136,7 @@ const handleDrop = ({ rows, from, to }) => {
 - 行的上 / 下四分之一落在与相邻行之间的间隙；中间一半表示成为该行的子行（追加到末尾），此时框住目标行。
 - 子树末尾的间隙可以接在多个层级，由指针在树形列上的横向位置决定，插入线缩进到对应层级。
 - 不能拖进自身或自己的子孙；没有主键值的行、尚未加载的懒加载节点（`lazy-tree` 下带 `hasChildren`）不能作为子行的目标，中间区域按上下两半处理。
-- 放进收起的节点或叶子行时，目标节点随之展开；叶子行会新建子行数组（字段名随 `tree-map`）。
+- 放进收起的节点或叶子行时，目标节点随之展开；叶子行会新建子行数组（字段名随 `key-value`）。
 - 同时配置了 `get-span` 时不能拖拽。
 
 树形表格先**原地修改**数据（与 Tree 组件一致），再发出事件：
@@ -1615,9 +1615,9 @@ const handleToggle = () => { isEmpty.value = !isEmpty.value; };
 | defaultExpandAll | 是否默认展开所有行（展开行与树形节点）；仅作为未操作过的行的默认值 | `boolean` | - | false |
 | lazyTree | 树形数据的子节点是否懒加载，需配合 `load-expand` 使用；通过 `row` 的 `hasChildren` 标记可加载的节点 | `boolean` | - | `false` |
 | loadExpand | 懒加载子节点的方法，返回子行数组或 `Promise<Array>`；`treeNode` 为 `{ level, indent, expandable, expanded, loading }`，`level` 根为 `0` | `(row: any, treeNode: { level: number; indent: number; expandable: boolean; expanded: boolean; loading: boolean }) => any[] \| Promise<any[]>` | - | - |
-| treeMap | 树形数据的字段映射 | `{ children: string; hasChildren: string }` | - | `{ children: 'children', hasChildren: 'hasChildren' }` |
+| keyValue | 树形数据的字段映射 | `{ children: string; hasChildren: string }` | - | `{ children: 'children', hasChildren: 'hasChildren' }` |
 | indent | 树形数据每一层的缩进（px） | `number` | - | `16` |
-| expandRowValue | 设置 `Table` 当前展开的行（展开行与树形节点），需要设置 `primary-key` 属性才能使用，该属性为展开行的 `[id]/value` 数组；未列出的行取 `default-expand-all`。 | `Array` | - | - |
+| expandedValues | 设置 `Table` 当前展开的行（展开行与树形节点），需要设置 `primary-key` 属性才能使用，该属性为展开行的 `[id]/value` 数组；未列出的行取 `default-expand-all`。 | `Array` | - | - |
 | expandSelectable | 树形子行是否可选择；为 `false` 时子行的勾选框隐藏，全选只作用于根行 | `boolean` | - | `true` |
 | showSummary | 是否在表尾显示合计行 | `boolean` | - | `false` |
 | sumText | 默认合计行第一列文案；显式空字符串有效 | `string` | - | 当前语言的“合计” |

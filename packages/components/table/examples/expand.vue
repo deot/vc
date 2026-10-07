@@ -24,7 +24,7 @@
 			:data="dataSource"
 			:height="mode === 'height' ? 400 : undefined"
 			:virtualized="mode === 'virtualized'"
-			:expand-row-value="expandRowValue"
+			:expanded-values="expandedValues"
 			border
 			primary-key="id"
 			@expand-change="handleExpandChange"
@@ -139,7 +139,7 @@ const getData = () => Array.from({ length: 100 }, (_, index) => ({
 
 const tableRef = ref();
 const dataSource = ref(getData());
-const expandRowValue = ref([2]);
+const expandedValues = ref([2]);
 // 删除展开行不会触发 expand-change，直接读取当前展开的行
 const expandedCount = computed(() => tableRef.value?.store.expand.getRows().length || 0);
 

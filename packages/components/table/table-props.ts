@@ -82,7 +82,7 @@ export const props = {
 	// TODO: 支持数组
 	currentRowValue: [String, Number],
 	emptyText: [String, Function],
-	expandRowValue: Array,
+	expandedValues: Array,
 	defaultExpandAll: Boolean,
 	/**
 	 * 在多选表格中，当仅有部分行被选中时，点击表头的多选框时的行为。
@@ -99,7 +99,7 @@ export const props = {
 		type: Number,
 		default: 16
 	},
-	treeMap: {
+	keyValue: {
 		type: Object,
 		default: () => {
 			return {

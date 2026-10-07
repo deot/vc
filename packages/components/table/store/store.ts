@@ -104,10 +104,10 @@ class Store extends BaseWatcher {
 	}
 
 	/**
-	 * 设置展开的行（expand-row-value），同时作用于展开行与树节点
+	 * 设置展开的行（expanded-values），同时作用于展开行与树节点
 	 * @param values 展开行的行值
 	 */
-	setExpandRowValue(values: any[]) {
+	setExpandedValues(values: any[]) {
 		this.expand.reset(values);
 		this.tree.reset(values);
 	}

@@ -1010,12 +1010,12 @@ describe('table/block-drag', () => {
 			wrapper.unmount();
 		});
 
-		it('tree-map 自定义子行字段：放进叶子行时新建对应字段', async () => {
+		it('key-value 自定义子行字段：放进叶子行时新建对应字段', async () => {
 			const data = [
 				{ id: 1, name: 'r1', items: [{ id: 11, name: 'r1-1' }] },
 				{ id: 2, name: 'r2' }
 			];
-			const wrapper = await mountTree({ data, treeMap: { children: 'items', hasChildren: 'hasChildren' } });
+			const wrapper = await mountTree({ data, keyValue: { children: 'items', hasChildren: 'hasChildren' } });
 			expect(names(wrapper)).toEqual(['r1', 'r1-1', 'r2']);
 
 			// r1（第 0 行）拖到根行 r2（第 2 行）的中间
@@ -1281,7 +1281,7 @@ describe('table/block-drag', () => {
 		const onOuterStart = vi.fn();
 		const onInnerStart = vi.fn();
 		const wrapper = mount(() => (
-			<Table data={buildData(2)} primaryKey="id" draggable expandRowValue={['id__0']} onBlockDragstart={onOuterStart}>
+			<Table data={buildData(2)} primaryKey="id" draggable expandedValues={['id__0']} onBlockDragstart={onOuterStart}>
 				<TableColumn type="expand">
 					{{
 						default: () => (
@@ -1581,7 +1581,7 @@ describe('table/block-drag', () => {
 		w1.unmount();
 
 		const w2 = mount(() => (
-			<Table data={buildData(2)} primaryKey="id" draggable expandRowValue={['id__0']}>
+			<Table data={buildData(2)} primaryKey="id" draggable expandedValues={['id__0']}>
 				<TableColumn type="expand">
 					{{
 						default: () => (

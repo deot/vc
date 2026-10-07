@@ -867,11 +867,11 @@ describe('Tree rows', () => {
 		wrapper.unmount();
 	});
 
-	it('toggleRowExpansion / expandRowValue drive tree rows', async () => {
-		const expandRowValue = ref<any[]>([]);
+	it('toggleRowExpansion / expandedValues drive tree rows', async () => {
+		const expandedValues = ref<any[]>([]);
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
-			<Table ref={tableRef} data={buildTree()} primaryKey="id" expandRowValue={expandRowValue.value}>
+			<Table ref={tableRef} data={buildTree()} primaryKey="id" expandedValues={expandedValues.value}>
 				<TableColumn label="名称" prop="name" />
 			</Table>
 		), { attachTo: document.body });
@@ -879,7 +879,7 @@ describe('Tree rows', () => {
 		const names = () => wrapper.findAll('.vc-table__body-wrapper .vc-table__tr').map(tr => tr.text());
 		expect(names()).toEqual(['r1', 'r2']);
 
-		expandRowValue.value = [1, 11];
+		expandedValues.value = [1, 11];
 		await flush();
 		expect(names()).toEqual(['r1', 'r1-1', 'r1-1-1', 'r1-2', 'r2']);
 
@@ -1324,8 +1324,8 @@ describe('Expand rows', () => {
 		.findAll('.vc-table__body-wrapper .vc-table__expanded-cell')
 		.map((cell: any) => cell.text());
 
-	it('expandRowValue renders expanded content and toggleRowExpansion switches it', async () => {
-		const expandRowValue = ref<any[]>([2]);
+	it('expandedValues renders expanded content and toggleRowExpansion switches it', async () => {
+		const expandedValues = ref<any[]>([2]);
 		const tableRef = ref<any>();
 		const onExpandChange = vi.fn();
 		const wrapper = mount(() => (
@@ -1333,7 +1333,7 @@ describe('Expand rows', () => {
 				ref={tableRef}
 				data={[{ id: 1, name: 'a' }, { id: 2, name: 'b' }]}
 				primaryKey="id"
-				expandRowValue={expandRowValue.value}
+				expandedValues={expandedValues.value}
 				onExpandChange={onExpandChange}
 			>
 				<TableColumn type="expand">
@@ -1345,7 +1345,7 @@ describe('Expand rows', () => {
 		await flush();
 		expect(expandedTexts(wrapper)).toEqual(['detail-b']);
 
-		expandRowValue.value = [1];
+		expandedValues.value = [1];
 		await flush();
 		expect(expandedTexts(wrapper)).toEqual(['detail-a']);
 
@@ -1416,12 +1416,12 @@ describe('Expand rows', () => {
 		wrapper.unmount();
 	});
 
-	it('an equal expandRowValue (e.g. a template literal) does not reset user expansions', async () => {
+	it('an equal expandedValues (e.g. a template literal) does not reset user expansions', async () => {
 		const tick = ref(0);
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
 			<div data-tick={tick.value}>
-				<Table ref={tableRef} data={[{ id: 1, name: 'a' }, { id: 2, name: 'b' }]} primaryKey="id" expandRowValue={[1]}>
+				<Table ref={tableRef} data={[{ id: 1, name: 'a' }, { id: 2, name: 'b' }]} primaryKey="id" expandedValues={[1]}>
 					<TableColumn type="expand">
 						{{ default: ({ row }: any) => <div>{`detail-${row.name}`}</div> }}
 					</TableColumn>
@@ -2275,7 +2275,7 @@ describe('Table virtual + scroll', () => {
 		it('estimates merged blocks by row count, expanded rows included', async () => {
 			const getSpan = ({ rowIndex, columnIndex }: any) => (columnIndex === 1 && rowIndex % 2 === 0 ? [2, 1] : [1, 1]);
 			const wrapper = mount(() => (
-				<Table data={buildData(6)} primaryKey="id" height={200} rowHeight={40} getSpan={getSpan} expandRowValue={['id__2']}>
+				<Table data={buildData(6)} primaryKey="id" height={200} rowHeight={40} getSpan={getSpan} expandedValues={['id__2']}>
 					<TableColumn type="expand">
 						{{ default: ({ row }: any) => <div>{row.name}</div> }}
 					</TableColumn>
@@ -2468,16 +2468,16 @@ describe('Additional source-path coverage', () => {
 		document.body.innerHTML = '';
 	});
 
-	it('expandRowValue prop sets the expanded rows', async () => {
+	it('expandedValues prop sets the expanded rows', async () => {
 		const data = [{ id: 1, name: 'a' }, { id: 2, name: 'b' }];
-		const expandRowValue = ref<any[]>([1]);
+		const expandedValues = ref<any[]>([1]);
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
 			<Table
 				ref={tableRef}
 				data={data}
 				primaryKey="id"
-				expandRowValue={expandRowValue.value}
+				expandedValues={expandedValues.value}
 			>
 				<TableColumn type="expand" label="详情">
 					{{ default: ({ row }: any) => <div>{row.name}</div> }}
@@ -2488,7 +2488,7 @@ describe('Additional source-path coverage', () => {
 		await flush();
 
 		expect(tableRef.value!.store.expand.getRows().map((row: any) => row.id)).toEqual([1]);
-		expandRowValue.value = [1, 2];
+		expandedValues.value = [1, 2];
 		await flush();
 		expect(tableRef.value!.store.expand.getRows().map((row: any) => row.id)).toEqual([1, 2]);
 		wrapper.unmount();
@@ -3880,12 +3880,12 @@ describe('Additional source-path coverage', () => {
 		wrapper.unmount();
 	});
 
-	it('store branches: defaultExpandAll + treeMap defaults + currentRow same row + initial states', async () => {
-		// 1) treeMap 部分缺失 → 走 || 'hasChildren' / 'children' 默认分支
+	it('store branches: defaultExpandAll + keyValue defaults + currentRow same row + initial states', async () => {
+		// 1) keyValue 部分缺失 → 走 || 'hasChildren' / 'children' 默认分支
 		const data = [{ id: 1, name: 'r1', children: [{ id: 2, name: 'r1-1' }] }];
 		const tableRef = ref<any>();
 		const wrapper = mount(() => (
-			<Table ref={tableRef} data={data} primaryKey="id" treeMap={{}}>
+			<Table ref={tableRef} data={data} primaryKey="id" keyValue={{}}>
 				<TableColumn label="名称" prop="name" />
 			</Table>
 		), { attachTo: document.body });
@@ -5201,7 +5201,7 @@ describe('v-model:columns & hidden', () => {
 				props: {
 					expandSelectable: true,
 					lazy: false,
-					treeMap: { hasChildren: 'hasChildren', children: 'children' }
+					keyValue: { hasChildren: 'hasChildren', children: 'children' }
 				},
 				emit
 			}
@@ -5241,7 +5241,7 @@ describe('v-model:columns & hidden', () => {
 				props: {
 					expandSelectable: true,
 					lazy: false,
-					treeMap: { hasChildren: 'hasChildren', children: 'children' }
+					keyValue: { hasChildren: 'hasChildren', children: 'children' }
 				},
 				emit
 			}

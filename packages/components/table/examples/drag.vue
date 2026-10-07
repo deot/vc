@@ -186,7 +186,7 @@
 			border
 			draggable
 			affix
-			:expand-row-value="['e1', 'e4']"
+			:expanded-values="['e1', 'e4']"
 		>
 			<TableColumn type="drag" />
 			<TableColumn type="expand">

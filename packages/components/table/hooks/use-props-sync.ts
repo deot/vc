@@ -62,10 +62,10 @@ export const usePropsSync = (props: Props, store: Store, options: Options) => {
 
 	// 按值比较：模板中的字面量数组每次渲染都是新引用，不应因此重置用户的展开操作
 	watch(
-		() => props.expandRowValue,
+		() => props.expandedValues,
 		(v, oldV) => {
 			if (!v || isEqual(v, oldV)) return;
-			store.setExpandRowValue(v);
+			store.setExpandedValues(v);
 			isReady.value && nextTick(updateLayout);
 		},
 		{ immediate: true }
