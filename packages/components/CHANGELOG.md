@@ -1,5 +1,19 @@
 # @deot/vc-components ChangeLog
 
+## v1.2.3
+
+_2026-10-07_
+
+### Bugfixes
+
+- fix: button, correct the solid styles and keep vertical group buttons the same width ([811a49f](https://github.com/deot/vc/commit/811a49fb4da70080a835ba8e94c02976196be2c9))
+- fix: recycle-list, keep the visible range right when content before an external list changes ([4b8423e](https://github.com/deot/vc/commit/4b8423e69695fedaae59f2a7d5e4c4e21fe0f76c))
+
+### Updates
+
+- style: tree, fill the missing keyValue fields with defaults ([934edff](https://github.com/deot/vc/commit/934edffc970c75699aec1a5241d60a330f9e3445))
+- style: table, rename treeMap to keyValue and expandRowValue to expandedValues ([7f181f2](https://github.com/deot/vc/commit/7f181f20b92e629a63f100199910fc7a39ffeba8))
+
 ## v1.2.2
 
 _2026-10-07_
