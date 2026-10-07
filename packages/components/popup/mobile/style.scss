@@ -62,9 +62,7 @@ $dark-background-color: color-mix(in srgb, #{$color-contrast-dark} 30%, transpar
 
 	@include when(center) {
 		@include element(wrapper) {
-			top: 50%;
-			left: 50%;
-			transform: translate3d(-50%, -50%, 0);
+			@include position-center;
 		}
 	}
 

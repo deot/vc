@@ -47,6 +47,19 @@
 }
 
 /**
+ * 定位元素（absolute / fixed）按自身尺寸在包含块内居中
+ * 用布局居中，位置对齐到设备像素；transform 的百分比位移遇奇数或小数尺寸会落在非整像素上，线条发虚，
+ * left: 50% 还会把内容的可用宽度限制为包含块的一半
+ */
+
+@mixin position-center {
+	inset: 0;
+	width: fit-content;
+	height: fit-content;
+	margin: auto;
+}
+
+/**
  * 水平垂直居中
  */
 

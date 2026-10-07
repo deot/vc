@@ -12,10 +12,9 @@ $color-contrast-light: varfix(color-contrast-light, file-preview);
 	justify-content: center;
 
 	&__wrapper {
-		inset: 0 !important;
 		max-width: none !important;
+		margin: 0 !important; // 铺满视口，从左上角起排
 		background-color: $color-contrast-dark !important;
-		transform: none !important;
 	}
 
 	&__video {
