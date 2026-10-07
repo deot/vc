@@ -222,9 +222,9 @@ import { Button, ButtonGroup } from '@deot/vc';
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-button-<参数>`、`--vc-button-group-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
 
-语义按钮文字使用 color-contrast-light，默认不随亮暗主题反转，可通过 CSS 变量覆盖。⚠ color-mix：禁用主色由 color-primary-light 30% 与 background-color-lightest 70% 混合；非 solid 用于背景和边框，solid 用于文字和边框。不支持时使用 color-primary-lighter。禁用的 primary + solid 保留 background-color-lightest 背景，边框通过 currentColor 与文字同色，悬停时保持禁用样式。加载图标的默认灰色使用 button 命名空间下的 color-light-deepest。
+语义按钮文字使用 color-contrast-light，默认不随亮暗主题反转，可通过 CSS 变量覆盖。⚠ color-mix：禁用主色由 color-primary-light 30% 与 background-color-lightest 70% 混合；非 solid 用于背景和边框，solid 用于文字和边框。不支持时使用 color-primary-lighter。禁用的 primary + solid 保留 background-color-lightest 背景，边框通过 currentColor 与文字同色，悬停时保持禁用样式。success / error / warning + solid 与 primary + solid 同构：背景使用 background-color-lightest，文字和边框使用对应语义色，悬停时改为对应的 -light 色；禁用时文字由对应 -light 色 30% 与 background-color-lightest 70% 混合（不支持 color-mix 时直接使用 -light 色），边框通过 currentColor 与文字同色，悬停时保持禁用样式。加载图标的默认灰色使用 button 命名空间下的 color-light-deepest。
 
-默认按钮的亮色普通背景使用 color-light-deep（`#F3F4F6`），非 solid 悬停时背景和边框使用 color-light-deeper（`#EBEDEF`）；暗色普通背景使用 background-color-light，非 solid 悬停时背景和边框使用 color-neutral-light（`#3B4354`）。默认 solid 按钮的普通边框使用 color-neutral，亮暗主题悬停时仅边框改为 color-neutral-deep（`#86909C`），背景不变。亮色默认按钮禁用时（包括 solid），文字使用 color-neutral（`#C4C9D2`），背景使用 color-light-deep；非 solid 边框使用 color-light-deep，solid 边框使用 color-light-deeper（`#EBEDEF`）；悬停时保持禁用样式。亮色 text 按钮禁用文字同样使用 color-neutral，悬停时保持不变；暗色默认和 text 按钮禁用文字使用 color-dark-lighter。暗色下的 primary + solid 按钮使用 color-primary-light 作为普通文字和边框色，悬停时文字使用 color-contrast-light，边框通过 currentColor 保持与文字同色；禁用状态沿用上述禁用配色。
+默认按钮的亮色普通背景使用 color-light-deep（`#F3F4F6`），非 solid 悬停时背景和边框使用 color-light-deeper（`#EBEDEF`）；暗色普通背景使用 background-color-light，非 solid 悬停时背景和边框使用 color-neutral-light（`#3B4354`）。默认 solid 按钮的背景使用 background-color-lightest（亮色 `#FFFFFF`），普通边框使用 color-neutral，亮暗主题悬停时仅边框改为 color-neutral-deep（`#86909C`），背景不变。亮色默认按钮禁用时（包括 solid），文字使用 color-neutral（`#C4C9D2`），背景使用 color-light-deep；非 solid 边框使用 color-light-deep，solid 边框使用 color-light-deeper（`#EBEDEF`）；悬停时保持禁用样式。亮色 text 按钮禁用文字同样使用 color-neutral，悬停时保持不变；暗色默认和 text 按钮禁用文字使用 color-dark-lighter。暗色下的 primary + solid 按钮使用 color-primary-light 作为普通文字和边框色，悬停时文字使用 color-contrast-light，边框通过 currentColor 保持与文字同色；禁用状态沿用上述禁用配色。
 
 ### 全局
 
@@ -271,7 +271,7 @@ import { Button, ButtonGroup } from '@deot/vc';
 | circle | 是否使用胶囊形圆角 | `boolean` | - | `false` |
 | round | 无默认插槽时，是否使用等宽圆形样式 | `boolean` | - | `false` |
 | long | 是否占满父元素宽度 | `boolean` | - | `false` |
-| solid | 是否启用 solid 状态；内置样式覆盖 `default` 和 `primary` 类型 | `boolean` | - | `false` |
+| solid | 是否启用 solid 状态；内置样式覆盖 `default`、`primary`、`success`、`error`、`warning` 类型 | `boolean` | - | `false` |
 | dashed | 是否添加 `is-dashed` 状态类；当前不提供内置虚线边框 | `boolean` | - | `false` |
 | htmlType | 原生 `button` 元素的 `type` 属性 | `'button' \| 'submit' \| 'reset'` | `button`、`submit`、`reset` | `button` |
 

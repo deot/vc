@@ -30,6 +30,31 @@
 			</Button>
 		</div>
 		<div class="box-wrapper">
+			<Button type="success" solid>
+				success/solid
+			</Button>
+			<Button type="error" solid>
+				error/solid
+			</Button>
+			<Button type="warning" solid>
+				warning/solid
+			</Button>
+		</div>
+		<div class="box-wrapper">
+			<Button type="primary" solid disabled>
+				primary/solid
+			</Button>
+			<Button type="success" solid disabled>
+				success/solid
+			</Button>
+			<Button type="error" solid disabled>
+				error/solid
+			</Button>
+			<Button type="warning" solid disabled>
+				warning/solid
+			</Button>
+		</div>
+		<div class="box-wrapper">
 			<Button long>
 				long
 			</Button>
@@ -114,6 +139,11 @@
 				<Button>large</Button>
 				<Button>large</Button>
 				<Button>large</Button>
+			</ButtonGroup>
+			<ButtonGroup vertical>
+				<Button>短</Button>
+				<Button icon="up">带图标的按钮</Button>
+				<Button type="primary">更长一些的按钮文字</Button>
 			</ButtonGroup>
 			<ButtonGroup circle vertical>
 				<Button>测试</Button>

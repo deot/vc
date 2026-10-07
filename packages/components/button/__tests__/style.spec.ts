@@ -44,3 +44,24 @@ describe('Button disabled primary solid styles', () => {
 		expect(declarations[0].value).toBe(`color-mix(in srgb, var(--vc-button-color-primary-light, var(--vc-color-primary-light)) 30%, ${surface})`);
 	});
 });
+
+describe('Button semantic solid styles', () => {
+	it.each(['success', 'error', 'warning'])('%s: outlines the ordinary state and mirrors the primary disabled treatment', (type) => {
+		const color = (suffix = '') => `var(--vc-button-color-${type}${suffix}, var(--vc-color-${type}${suffix}))`;
+		const find = (target: string, guarded = false) => {
+			let found: postcss.Rule | undefined;
+			css.walkRules((rule) => {
+				if (rule.selectors.includes(target) && (rule.parent?.type === 'atrule') === guarded) found = rule;
+			});
+			expect(found).toBeDefined();
+			return Object.fromEntries(found!.nodes.filter(node => node.type === 'decl').map(node => [node.prop, node.value]));
+		};
+
+		expect(find(`.vc-button.is-${type}.is-solid`)).toMatchObject({ 'color': color(), 'background-color': surface });
+		expect(find(`.vc-button.is-${type}.is-solid:hover`)).toMatchObject({ 'color': color('-light'), 'border-color': color('-light') });
+
+		const disabled = `.vc-button.is-disabled.is-${type}.is-solid`;
+		expect(find(disabled)).toMatchObject({ 'color': color('-light'), 'background-color': surface, 'border-color': 'currentcolor' });
+		expect(find(`${disabled}:hover`, true)).toEqual({ color: `color-mix(in srgb, ${color('-light')} 30%, ${surface})` });
+	});
+});

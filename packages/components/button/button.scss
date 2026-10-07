@@ -29,6 +29,38 @@ $background-color-lightest: varfix(background-color-lightest, button);
 $foreground-color: varfix(foreground-color, button);
 $component-name: vc-button;
 
+@mixin semantic-solid($color, $color-light) {
+	@include when(solid) {
+		color: $color;
+		background-color: $background-color-lightest;
+
+		&:hover {
+			color: $color-light;
+			border-color: $color-light;
+		}
+	}
+}
+
+@mixin semantic-solid-disabled($type, $color-light) {
+	@include when($type) {
+		@include when(solid) {
+			&,
+			&:hover {
+				color: $color-light;
+				background-color: $background-color-lightest;
+				border-color: currentcolor;
+			}
+
+			@supports (color: color-mix(in srgb, black, white)) {
+				&,
+				&:hover {
+					color: color-mix(in srgb, #{$color-light} 30%, #{$background-color-lightest});
+				}
+			}
+		}
+	}
+}
+
 @mixin button-theme($light) {
 	.vc-button.is-default:not(.is-disabled) {
 		background-color: if(sass($light): $color-light-deep; else: $background-color-light);
@@ -39,12 +71,13 @@ $component-name: vc-button;
 			border-color: if(sass($light): $color-light-deeper; else: $color-neutral-light);
 		}
 
-		&.is-solid:not(:hover) {
+		&.is-solid {
+			background-color: $background-color-lightest;
 			border-color: $color-neutral;
-		}
 
-		&.is-solid:hover {
-			border-color: $color-neutral-deep;
+			&:hover {
+				border-color: $color-neutral-deep;
+			}
 		}
 	}
 
@@ -168,6 +201,7 @@ $component-name: vc-button;
 		}
 
 		@include when(solid) {
+			background-color: $background-color-lightest;
 			border-color: $color-neutral;
 
 			&:hover {
@@ -216,6 +250,8 @@ $component-name: vc-button;
 			background-color: $color-success-light;
 			border-color: $color-success-light;
 		}
+
+		@include semantic-solid($color-success, $color-success-light);
 	}
 
 	@include when(error) {
@@ -227,6 +263,8 @@ $component-name: vc-button;
 			background-color: $color-error-light;
 			border-color: $color-error-light;
 		}
+
+		@include semantic-solid($color-error, $color-error-light);
 	}
 
 	@include when(warning) {
@@ -238,6 +276,8 @@ $component-name: vc-button;
 			background: $color-warning-light;
 			border-color: $color-warning-light;
 		}
+
+		@include semantic-solid($color-warning, $color-warning-light);
 	}
 
 	@include when(disabled) {
@@ -280,6 +320,10 @@ $component-name: vc-button;
 				}
 			}
 		}
+
+		@include semantic-solid-disabled(success, $color-success-light);
+		@include semantic-solid-disabled(error, $color-error-light);
+		@include semantic-solid-disabled(warning, $color-warning-light);
 	}
 
 	@include when(large) {

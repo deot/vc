@@ -54,6 +54,7 @@ $color-neutral-light: varfix(color-neutral-light, button-group);
 	@include when(vertical) {
 		@include block(vc-button) {
 			float: none;
+			width: 100%; // button 元素即使 display: block 也按内容收缩
 			margin-top: -1px;
 			margin-left: 0;
 
