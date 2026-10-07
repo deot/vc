@@ -8,6 +8,18 @@ import * as drag from '../../../hooks/__tests__/fixtures/drag';
 
 const sleep = (time = 0) => new Promise(resolve => setTimeout(resolve, time));
 
+// 记录所有 ResizeObserver 实例：测试里按被观察的元素找到对应的观察器再触发回调
+const observers: any[] = [];
+const MockResizeObserver = (globalThis as any).ResizeObserver;
+(globalThis as any).ResizeObserver = class extends MockResizeObserver {
+	constructor(cb: any) {
+		super(cb);
+		observers.push(this);
+	}
+};
+// 观察着某个元素的观察器
+const observerOf = (el: Element) => observers.find(ro => ro.targets.has(el));
+
 const defineGetter = (target: any, key: string, getter: () => any) => {
 	const original = Object.getOwnPropertyDescriptor(target, key);
 	Object.defineProperty(target, key, {
@@ -812,5 +824,155 @@ describe('RecycleList fill=false', () => {
 
 		expect(build).not.toHaveBeenCalled();
 		wrapper.unmount();
+	});
+});
+
+// 列表之前的内容变高 / 变矮会把列表整体推走，列表与承载者的尺寸都不变
+describe('RecycleList fill=false: content before the list changes', () => {
+	const ITEM_SIZE = 40;
+	// 前置内容的增量，折合 6 行
+	const SHIFT = 240;
+
+	// 50 行 × 40px，视口 200px；列表起点（contentStart）可变，用来模拟前置内容的伸缩
+	const setup = async () => {
+		const listRef = ref<any>();
+		const geometry = { contentStart: 500 };
+		const data = Array.from({ length: 50 }, (_, id) => ({ id }));
+		const wrapper = mount(() => (
+			<div class="viewport" style="overflow-y: auto; height: 200px;">
+				<div class="page">
+					<div class="before" />
+					<RecycleList ref={listRef} fill={false} disabled data={data} estimateSize={ITEM_SIZE}>
+						{{ default: ({ row }: any) => <div>{row.id}</div> }}
+					</RecycleList>
+				</div>
+			</div>
+		), { attachTo: document.body });
+		await flush();
+
+		const viewport = wrapper.find('.viewport').element as HTMLElement;
+		const restore = mockVerticalGeometry(
+			viewport,
+			wrapper.find('.vc-recycle-list').element as HTMLElement,
+			wrapper.find('.vc-recycle-list__content').element as HTMLElement,
+			{ listSize: 2000, contentStart: () => geometry.contentStart }
+		);
+		await listRef.value.refreshViewport();
+
+		const scroll = async (value: number) => {
+			viewport.scrollTop = value;
+			viewport.dispatchEvent(new Event('scroll'));
+			await flush();
+		};
+		const range = () => {
+			const { firstItemIndex, lastItemIndex } = listRef.value.store.states;
+			return [firstItemIndex, lastItemIndex];
+		};
+		return {
+			wrapper,
+			viewport,
+			geometry,
+			scroll,
+			range,
+			destroy: () => {
+				restore();
+				wrapper.unmount();
+			}
+		};
+	};
+
+	it('re-measures the list position on every carrier scroll', async () => {
+		const { geometry, scroll, range, destroy } = await setup();
+		await scroll(900);
+		const [first, last] = range();
+		expect(first).toBeGreaterThan(0);
+
+		// 前置内容变高后继续滚动：同样的滚动位置对应更靠前的行
+		geometry.contentStart += SHIFT;
+		await scroll(901);
+		expect(range()).toEqual([first - SHIFT / ITEM_SIZE, last - SHIFT / ITEM_SIZE]);
+
+		// 变回去
+		geometry.contentStart -= SHIFT;
+		await scroll(900);
+		expect(range()).toEqual([first, last]);
+		destroy();
+	});
+
+	it('follows the shift without scrolling when an ancestor inside the carrier resizes', async () => {
+		const { wrapper, viewport, geometry, scroll, range, destroy } = await setup();
+		await scroll(900);
+		const [first, last] = range();
+
+		// 列表到承载者之间的祖先被观察；列表根自身不算
+		const page = wrapper.find('.page').element;
+		const observer = observerOf(page);
+		expect(observer).toBeTruthy();
+		expect(observerOf(wrapper.find('.vc-recycle-list').element)).toBeUndefined();
+
+		geometry.contentStart += SHIFT;
+		observer.trigger(page);
+		await flush();
+		expect(range()).toEqual([first - SHIFT / ITEM_SIZE, last - SHIFT / ITEM_SIZE]);
+
+		// 承载者自身的尺寸变化走视口变化的处理，同样按新位置重算
+		geometry.contentStart -= SHIFT;
+		observerOf(viewport).trigger(viewport);
+		await flush();
+		expect(range()).toEqual([first, last]);
+
+		destroy();
+		expect(observerOf(page)).toBeUndefined();
+	});
+
+	it('observes every ancestor up to the document root when Window carries the scroll', async () => {
+		const listRef = ref<any>();
+		const wrapper = mount(() => (
+			<div class="page">
+				<RecycleList ref={listRef} fill={false} disabled data={[{ id: 1 }]} estimateSize={ITEM_SIZE}>
+					{{ default: ({ row }: any) => <div>{row.id}</div> }}
+				</RecycleList>
+			</div>
+		), { attachTo: document.body });
+		await flush();
+
+		const ancestors = [wrapper.find('.page').element, document.body, document.documentElement];
+		expect(ancestors.every(observerOf)).toBe(true);
+		expect(observerOf(wrapper.find('.vc-recycle-list').element)).toBeUndefined();
+
+		// 各层共用一个观察器：多层同时变化由一次回调带回，只重算一次
+		expect(new Set(ancestors.map(observerOf)).size).toBe(1);
+		const update = vi.spyOn(listRef.value.store.position, 'updateVisibleRange');
+		observerOf(ancestors[0]).cb(ancestors.map(target => ({ target })));
+		expect(update).toHaveBeenCalledTimes(1);
+
+		wrapper.unmount();
+		expect(ancestors.some(observerOf)).toBe(false);
+	});
+
+	it('stops observing the ancestors when switching back to fill', async () => {
+		const fill = ref(false);
+		const wrapper = mount(() => (
+			<div class="viewport" style="overflow-y: auto; height: 200px;">
+				<div class="page">
+					<RecycleList fill={fill.value} disabled />
+				</div>
+			</div>
+		), { attachTo: document.body });
+		await flush();
+
+		const page = wrapper.find('.page').element;
+		expect(observerOf(page)).toBeTruthy();
+
+		fill.value = true;
+		await flush();
+		expect(observerOf(page)).toBeUndefined();
+
+		// 切回外部滚动后重新观察
+		fill.value = false;
+		await flush();
+		expect(observerOf(page)).toBeTruthy();
+		wrapper.unmount();
+		expect(observerOf(page)).toBeUndefined();
 	});
 });

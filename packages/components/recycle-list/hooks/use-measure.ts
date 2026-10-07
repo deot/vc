@@ -1,7 +1,10 @@
 import { shallowRef, onBeforeUnmount } from 'vue';
 import type { ComputedRef } from 'vue';
+import { Resize } from '@deot/helper-resize';
 import type { Store, RecycleListItemNodeRaw } from '../store';
 import type { DirectionKeys } from './use-direction-keys';
+
+const SHARED = { shared: true };
 
 /**
  * 节点尺寸测量：按节点登记已渲染 / 隐藏池中的元素，并把真实尺寸写回 store
@@ -30,21 +33,19 @@ export const useMeasure = (
 	const pooledEls = new Map<RecycleListItemNodeRaw, HTMLElement>();
 
 	/**
-	 * 行尺寸监听：整个列表共用一个 ResizeObserver，按元素找回节点
+	 * 行尺寸监听：用 Resize 的共用模式，列表的所有行共用一个 ResizeObserver，同一轮里变化的行由一次回调带回，按元素找回节点
 	 *
 	 * 首次 observe 的回调即「行渲染出来时的首次测量」，之后行自身内容变化（展开、编辑、图片撑开等）也从这里上报；
 	 * 行只是普通元素，不必每行一个组件实例与观察器
 	 */
 	const nodeOfEl = new WeakMap<Element, RecycleListItemNodeRaw>();
-	const rowObserver = typeof ResizeObserver === 'undefined'
-		? null
-		: new ResizeObserver((entries) => {
-				entries.forEach((entry) => {
-					const node = nodeOfEl.get(entry.target);
-					node && onRowResize(node);
-				});
-			});
-	onBeforeUnmount(() => rowObserver?.disconnect());
+	const handleRowsResize = (entries: ResizeObserverEntry[]) => {
+		entries.forEach((entry) => {
+			const node = nodeOfEl.get(entry.target);
+			node && onRowResize(node);
+		});
+	};
+	onBeforeUnmount(() => Resize.disconnect(handleRowsResize));
 
 	/**
 	 * 行元素挂载：登记并开始观察
@@ -54,7 +55,7 @@ export const useMeasure = (
 	const observeRow = (node: RecycleListItemNodeRaw, el: HTMLElement) => {
 		visibleEls.set(node, el);
 		nodeOfEl.set(el, node);
-		rowObserver?.observe(el);
+		Resize.on(el, handleRowsResize, SHARED);
 	};
 
 	/**
@@ -65,7 +66,7 @@ export const useMeasure = (
 	 * @param el 行元素
 	 */
 	const unobserveRow = (node: RecycleListItemNodeRaw, el: HTMLElement) => {
-		rowObserver?.unobserve(el);
+		Resize.off(el, handleRowsResize, SHARED);
 		nodeOfEl.delete(el);
 		visibleEls.get(node) === el && visibleEls.delete(node);
 	};

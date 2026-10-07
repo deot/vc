@@ -102,7 +102,8 @@ export const RecycleList = defineComponent({
 			},
 			{
 				onScroll: () => handleExternalScroll(),
-				onResize: () => handleViewportResize()
+				onResize: () => handleViewportResize(),
+				onShift: () => handleViewportShift()
 			},
 			K
 		);
@@ -764,6 +765,17 @@ export const RecycleList = defineComponent({
 		};
 
 		/**
+		 * 列表在外部承载者里的位置变了：列表之前的内容变高或变矮，把列表整体推走
+		 *
+		 * 视口与节点的尺寸都没变，只按新位置重算可见范围；是否不足一屏与位置无关，不在这里续载。
+		 * 列表自身增长也会经祖先的尺寸变化走到这里，与 handleWrapperResize 交叉轴未变时的处理等价
+		 */
+		const handleViewportShift = () => {
+			viewport.invalidate();
+			setVisibleItemRange();
+		};
+
+		/**
 		 * 按当前 fill 重建滚动源；挂载、fill / vertical 变化时调用
 		 * 原 bindExternalViewport / unbindExternalViewport
 		 */
@@ -977,7 +989,7 @@ export const RecycleList = defineComponent({
 				}
 				{
 					!item.states.isPlaceholder && (
-						// 行只是普通元素：尺寸由列表共用的 ResizeObserver 监听，单行变化只校正该行（见 use-measure）
+						// 行只是普通元素：尺寸经 Resize 的共用模式监听，单行变化只校正该行（见 use-measure）
 						<div
 							class="vc-recycle-list__item"
 							// vnode 钩子不在元素的 JSX 类型里：经展开传入

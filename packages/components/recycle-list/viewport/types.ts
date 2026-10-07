@@ -69,6 +69,10 @@ export type ViewportAnchors = {
 export type ViewportHandlers = {
 	onScroll: (e: any) => void;
 	onResize: () => void;
+	/**
+	 * 列表在承载者里的位置变了（列表之前的内容伸缩），视口与列表的尺寸都没变
+	 */
+	onShift: () => void;
 };
 
 /**

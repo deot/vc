@@ -75,7 +75,7 @@ const spyOffsetHeight = (wrapperHeight: number, itemHeight: number) => vi
 		return this.classList.contains('vc-recycle-list__wrapper') ? wrapperHeight : itemHeight;
 	});
 
-// 记录所有 ResizeObserver 实例：行尺寸由列表共用的一个观察器监听，测试里按元素找到它再触发回调
+// 记录所有 ResizeObserver 实例：行尺寸经 Resize 的共用模式监听（每个列表的行共用一个观察器），测试里按元素找到它再触发回调
 const observers: any[] = [];
 const MockResizeObserver = (globalThis as any).ResizeObserver;
 (globalThis as any).ResizeObserver = class extends MockResizeObserver {
@@ -3861,14 +3861,31 @@ describe('index.ts', () => {
 				restore();
 			});
 
-			it('disconnects the observer on unmount', async () => {
+			it('corrects the rows that changed in one callback with a single relayout', async () => {
+				const heights: Record<number, number> = {};
+				const { list, states, wrapper, restore } = await setup(30, 30, id => heights[id] ?? 40);
+				const sizeOf = (id: number) => states.rebuildData.find((node: any) => node.states.data.id === id).states.size;
+				const rows = rowsOf(wrapper).slice(0, 3);
+				const ids = rows.map(el => Number(el.textContent));
+				const refresh = vi.spyOn(list.store.layout, 'refresh');
+
+				// 三行同时变高：一次回调带回三个 entry
+				ids.forEach((id) => { heights[id] = 70; });
+				observerOf(rows[0]).cb(rows.map(target => ({ target })));
+				await flushMicrotasks();
+
+				expect(refresh).toHaveBeenCalledTimes(1);
+				expect(ids.map(sizeOf)).toEqual([70, 70, 70]);
+				restore();
+			});
+
+			it('stops observing every row on unmount', async () => {
 				const { wrapper, restore } = await setup(30, 30);
 				const observer = observerOf(rowsOf(wrapper)[0]);
-				const disconnect = vi.spyOn(observer, 'disconnect');
+				expect(observer.targets.size).toBeGreaterThan(0);
 
 				restore();
 
-				expect(disconnect).toHaveBeenCalledTimes(1);
 				expect(observer.targets.size).toBe(0);
 			});
 
