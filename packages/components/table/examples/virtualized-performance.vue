@@ -7,6 +7,7 @@
 			<li>切页：滚到底后切页，看右上角 longtask（切页时自动清零）。固定行高时不再测量；不固定时只重测视口附近的行，滚动位置保留</li>
 			<li>内存：DevTools 网络调成 Slow 4G，滚到底后连续点「下一页」，Memory 面板手动 GC 后看右上角 heap；「图片」切到不渲染作为对照</li>
 			<li>「滚动容器」切换页面滚动与 VC Scroller 内滚动，以上各项在两种容器下表现一致</li>
+			<li>「前置内容」展开或收起会把表格在滚动容器里整体下推 / 上提 240px：之后无论是否继续滚动，行都应铺满表头与分页栏之间，不露白</li>
 		</ol>
 		<div class="virtualized-performance__controls">
 			<Select
@@ -23,6 +24,9 @@
 			:key="controls.container"
 			v-bind="containerProps"
 		>
+			<Expand :model-value="controls.front === 'expanded'">
+				<div class="virtualized-performance__front">前置内容（240px）</div>
+			</Expand>
 			<Table
 				ref="tableRef"
 				primary-key="id"
@@ -107,6 +111,7 @@ import { Image } from '../../image';
 import { Text } from '../../text';
 import { Select } from '../../select';
 import { Scroller } from '../../scroller';
+import { Expand } from '../../expand';
 
 const COLORS = ['456cf6', '54b675', 'f3833a', '8e51ff'];
 const GROUPS = ['分组 A/类别 1/子项', '分组 A/类别 2/子项', '分组 B/类别 1/子项', '分组 B/类别 2/子项'];
@@ -162,7 +167,9 @@ const CONTROLS = [
 		key: 'imageMode',
 		label: '图片',
 		data: [{ value: 'component', label: 'Image 组件' }, { value: 'native', label: '原生 img' }, { value: 'none', label: '不渲染' }]
-	}
+	},
+	// 与表格同在滚动容器里、位于表格之前；运行时切换，不重新挂载
+	{ key: 'front', label: '前置内容', data: [{ value: 'collapsed', label: '收起' }, { value: 'expanded', label: '展开（240px）' }] }
 ];
 // 初值为各项的第一个选项，也可由 URL 参数给出（如 ?rowMode=auto&container=scroller）
 const query = new URLSearchParams(location.search);
@@ -257,6 +264,15 @@ onBeforeUnmount(() => {
 
 	&__scroller {
 		border: 1px solid #e5e6eb;
+	}
+
+	&__front {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 240px;
+		color: #4e5969;
+		background: #f2f3f5;
 	}
 
 	&__footer {
