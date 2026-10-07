@@ -26,13 +26,15 @@ $box-shadow: varfix(box-shadow, modal);
 		opacity: 1;
 	}
 
+	// 铺满视口，用布局居中：位置对齐到设备像素（transform 的百分比位移遇奇数高度会落在半像素上，边线发虚）
+	// 自身不接收事件：弹窗外的点击落到 mask，无 mask 时穿透到页面
 	@include element(wrapper) {
 		position: fixed;
-		top: 50%;
-		left: 0;
+		inset: 0;
 		z-index: $popup-zindex;
-		width: 100%;
-		transform: translateY(-50%);
+		pointer-events: none;
+
+		@include flex-cc;
 	}
 
 	@include element(container) {
@@ -40,6 +42,7 @@ $box-shadow: varfix(box-shadow, modal);
 		display: flex;
 		padding-bottom: 0;
 		margin: auto;
+		pointer-events: auto;
 		background: $background-color-lightest;
 		border-radius: unitfix(16);
 		box-shadow: $box-shadow;
@@ -64,7 +67,7 @@ $box-shadow: varfix(box-shadow, modal);
 
 		@media screen and (height <=400px) {
 			&.is-large:not(.is-auto-height) {
-				min-height: 100% !important;
+				min-height: 0 !important;
 			}
 		}
 
@@ -115,18 +118,16 @@ $box-shadow: varfix(box-shadow, modal);
 		}
 	}
 
+	// 内容区随弹窗的高度上限收缩：内置 Scroller 在其中滚动，scrollable=false 时由内容自行滚动
 	@include element(content-container) {
+		display: flex;
 		overflow: hidden;
 		flex: 1;
+		flex-direction: column;
 
+		// 滚动容器的自动最小高度为 0，可收缩到内容区的高度
 		>.vc-scroller {
-			height: 100%;
-		}
-
-		// scrollable=false：内容区随弹窗的高度上限收缩，内容在其中自行滚动
-		@include when(unscrollable) {
-			display: flex;
-			flex-direction: column;
+			flex: 1 1 auto;
 		}
 	}
 

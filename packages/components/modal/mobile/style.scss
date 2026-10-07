@@ -20,19 +20,22 @@ $box-shadow: varfix(box-shadow, modal);
 		opacity: 1;
 	}
 
+	// 铺满视口，用布局居中：位置对齐到设备像素（transform 的百分比位移遇奇数高度会落在半像素上，边线发虚）
+	// 自身不接收事件：弹窗外的点击落到 mask，无 mask 时穿透到页面
 	@include element(wrapper) {
 		position: fixed;
-		top: 50%;
-		left: 0;
+		inset: 0;
 		z-index: $popup-zindex;
-		width: 100%;
-		transform: translateY(-50%);
+		pointer-events: none;
+
+		@include flex-cc;
 	}
 
 	@include element(container) {
 		position: relative;
 		display: flex;
 		margin: auto;
+		pointer-events: auto;
 		background: $background-color-lightest;
 		border-radius: unitfix(7);
 		box-shadow: $box-shadow;

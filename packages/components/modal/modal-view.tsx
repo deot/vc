@@ -8,14 +8,11 @@ import {
 	defineComponent,
 	onMounted,
 	onUnmounted,
-	onBeforeUnmount,
 	onUpdated,
 	getCurrentInstance,
 	Fragment
 } from 'vue';
 import { debounce } from 'lodash-es';
-import { IS_SERVER } from '@deot/vc-shared';
-import { Resize } from '@deot/helper-resize';
 import { useScrollbar, useDrag } from '@deot/vc-hooks';
 import type { DragPoint } from '@deot/vc-hooks';
 
@@ -24,13 +21,14 @@ import { Button } from '../button';
 import { TransitionScale, TransitionFade } from '../transition';
 import { Customer } from '../customer';
 import { Scroller } from '../scroller';
-import { Resizer } from '../resizer';
 import { VcInstance } from '../vc';
 import { useLocale } from '../locale';
 
 import { props as modalProps } from './modal-view-props';
 
 const COMPONENT_NAME = 'vc-modal';
+// 宽高上限：视口减去留白（四周各 10px）。wrapper 铺满视口，百分比即相对视口，随窗口变化
+const MAX_SIZE = '100% - 20px';
 let zIndexNumber = 1002;
 
 export const ModalView = defineComponent({
@@ -44,8 +42,6 @@ export const ModalView = defineComponent({
 		const container = shallowRef<HTMLElement>();
 		const wrapper = shallowRef<HTMLElement>();
 		const header = shallowRef<HTMLElement>();
-		const scroller = shallowRef<any>();
-		const resizer = shallowRef<any>();
 
 		const x = ref(props.x!);
 		const y = ref(props.y!);
@@ -61,14 +57,9 @@ export const ModalView = defineComponent({
 				: props.cancelText;
 		});
 
-		// 注: 服务端渲染为0, 在客服端激活前，展示端存在问题【高度不定】
-		const MAX_HEIGHT = IS_SERVER ? 0 : window.innerHeight - 20;
-		const MAX_WIDTH = IS_SERVER ? 0 : window.innerWidth - 20;
 		// height：数字为固定高度；'auto' 跟随内容；不传时以预设高度为最小高度
 		const isFixedHeight = computed(() => typeof props.height === 'number' && props.height > 0);
 		const isAutoHeight = computed(() => props.height === 'auto');
-		// 跟随内容时容器的实际高度，拖拽模式下用于初始居中
-		const autoHeight = ref(0);
 		const defaultSize = computed(() => {
 			let width = 0;
 			let height = 0;
@@ -89,37 +80,36 @@ export const ModalView = defineComponent({
 					break;
 			}
 			return {
-				width: Math.min(props.width || width, MAX_WIDTH),
-				height: Math.min(isFixedHeight.value ? (props.height as number) : height, MAX_HEIGHT)
+				width: props.width || width,
+				height: isFixedHeight.value ? (props.height as number) : height
 			};
 		});
 
 		const basicStyle = computed(() => {
+			const { width, height } = defaultSize.value;
 			const result: any = {
-				width: `${defaultSize.value.width}px`,
-				maxHeight: `${MAX_HEIGHT}px`,
+				width: `${width}px`,
+				maxWidth: `calc(${MAX_SIZE})`,
+				maxHeight: `calc(${MAX_SIZE})`,
 			};
 
 			if (isFixedHeight.value) {
-				result.height = `${defaultSize.value.height}px`;
+				result.height = `${height}px`;
 			} else if (!isAutoHeight.value) {
-				result.minHeight = `${defaultSize.value.height}px`;
+				// min-height 优先于 max-height，预设高度需与上限取小
+				result.minHeight = `min(${height}px, ${MAX_SIZE})`;
 			}
 
 			return result;
 		});
 
+		// 未指定且未拖动过的方向不设置，由 wrapper 按容器的实际尺寸居中
 		const draggableStyle = computed(() => {
-			if (IS_SERVER || !props.draggable) return {};
-
-			const left = typeof x.value === 'undefined' ? window.innerWidth / 2 - defaultSize.value.width / 2 : x.value;
-			// 未拖动过时居中：跟随内容时按实际高度
-			const getHeight = () => (isAutoHeight.value ? autoHeight.value : defaultSize.value.height);
-			const top = typeof y.value === 'undefined' ? window.innerHeight / 2 - getHeight() / 2 : y.value;
+			if (!props.draggable) return {};
 
 			return {
-				left: `${left}px`,
-				top: `${top}px`,
+				left: typeof x.value === 'undefined' ? undefined : `${x.value}px`,
+				top: typeof y.value === 'undefined' ? undefined : `${y.value}px`,
 			};
 		});
 
@@ -139,28 +129,13 @@ export const ModalView = defineComponent({
 
 			if (!el) return;
 
-			const modalX = x.value || el.offsetLeft;
-			const modalY = y.value || el.offsetTop || (window.screen.height - el.clientHeight) / 2;
-
-			const $x = originX - modalX;
-			const $y = originY - modalY;
-
-			el.style.transformOrigin = `${$x}px ${$y}px 0`;
+			// wrapper 铺满视口，offsetLeft / offsetTop 即容器在视口中的位置
+			el.style.transformOrigin = `${originX - el.offsetLeft}px ${originY - el.offsetTop}px 0`;
 		}, 250, { leading: true });
-
-		const isTransitionEnd = ref(false);
-		const handleBeforeEnter = () => {
-			isTransitionEnd.value = false;
-		};
 
 		const handleEnter = () => {
 			if (instance.isUnmounted) return;
 			resetOrigin();
-		};
-		const handleAfterEnter = () => {
-			if (instance.isUnmounted) return;
-			isTransitionEnd.value = true;
-			resizer.value?.refresh();
 		};
 		/**
 		 * 动画执行后关闭, 关闭事件都会被执行
@@ -207,38 +182,17 @@ export const ModalView = defineComponent({
 
 		// 关闭事件
 		const handleClose = (e: any, closable: boolean) => {
-			if (closable
-				|| (
-					props.maskClosable
-					&& e.target?.classList?.contains('vc-modal__wrapper')
-				)
-			) {
-				// 用户主要取消与关闭事件关联
-				if (props.closeWithCancel) {
-					handleBefore(e, handleCancel);
-				} else {
-					isActive.value = false;
-				}
+			if (!closable) return;
+			// 用户主要取消与关闭事件关联
+			if (props.closeWithCancel) {
+				handleBefore(e, handleCancel);
+			} else {
+				isActive.value = false;
 			}
 		};
 		const handleEscClose = (e: KeyboardEvent) => {
 			if (e.code === 'Escape' && props.escClosable && isActive.value) {
 				handleClose(e, true);
-			}
-		};
-
-		// 当高度为基数时，解决模糊的问题
-		const handleContainerResize = () => {
-			const $container = container.value!;
-			const maxheight = window.innerHeight - 20;
-			const containerHeight = $container.offsetHeight;
-			isAutoHeight.value && (autoHeight.value = containerHeight);
-			if (containerHeight + 1 > maxheight) {
-				if (maxheight % 2 !== 0) {
-					$container.style.height = `${maxheight - 1}px`;
-				}
-			} else if (containerHeight % 2 !== 0) {
-				$container.style.height = `${containerHeight + 1}px`;
 			}
 		};
 
@@ -255,25 +209,6 @@ export const ModalView = defineComponent({
 					{ slots.default?.() }
 				</Fragment>
 			);
-		};
-
-		/**
-		 * content变化, 由于容器是maxHeight, 这里需要重匹配高度
-		 *
-		 * 这里由于scroller的resize时，render会重置height(实际上就是保留height, 无法移除)
-		 * 1. 改用nextTick, 抖动严重
-		 * 2. resizer.value.refresh, 不抖动
-		 *
-		 * container在最大值时，需要移除，宽度才会缩回去
-		 */
-		const handleContentResize = () => {
-			if (isFixedHeight.value) return;
-			const needRefreshScroller = !!scroller.value.wrapper!.style.getPropertyValue('height');
-			const needRefreshContainer = !!container.value!.style.getPropertyValue('height');
-
-			needRefreshContainer && container.value!.style.removeProperty('height');
-			needRefreshScroller && scroller.value.wrapper!.style.removeProperty('height');
-			needRefreshScroller && resizer.value?.refresh();
 		};
 
 		const handleClick = (e: MouseEvent) => {
@@ -320,9 +255,6 @@ export const ModalView = defineComponent({
 		onMounted(() => {
 			document.addEventListener('keydown', handleEscClose);
 			document.addEventListener('click', handleClick, true);
-			Resize.on(container.value!, handleContainerResize);
-			// scrollable=false 时内容的高度受容器约束，不能据此重新适配
-			scroller.value && Resize.on(scroller.value.content, handleContentResize);
 		});
 
 		onUpdated(() => {
@@ -330,11 +262,6 @@ export const ModalView = defineComponent({
 			 * 非拖动状态下, 外部,会触发设置初始值
 			 */
 			!props.draggable && isActive.value && resetOrigin();
-		});
-
-		onBeforeUnmount(() => {
-			Resize.off(container.value!, handleContainerResize);
-			scroller.value && Resize.off(scroller.value.content, handleContentResize);
 		});
 
 		onUnmounted(() => {
@@ -359,6 +286,7 @@ export const ModalView = defineComponent({
 			resetOrigin
 		});
 		return () => {
+			const contentClass = [{ 'is-confirm': props.mode }, props.contentClass, 'vc-modal__content'];
 			return (
 				<div class="vc-modal">
 					<TransitionFade delay={40}>
@@ -371,17 +299,13 @@ export const ModalView = defineComponent({
 					</TransitionFade>
 					<div
 						ref={wrapper}
-						style={[props.wrapperStyle || {}, props.draggable ? { top: 0 } : {}]}
+						style={props.wrapperStyle}
 						class={[props.wrapperClass, 'vc-modal__wrapper']}
-						// @ts-ignore
-						onClick={e => handleClose(e, false)}
 					>
 						<TransitionScale
 							mode="part"
 							// @ts-ignore
-							onBeforeEnter={handleBeforeEnter}
 							onEnter={handleEnter}
-							onAfterEnter={handleAfterEnter}
 							onAfterLeave={handleRemove}
 						>
 							<div
@@ -442,28 +366,23 @@ export const ModalView = defineComponent({
 											: slots.header()
 									}
 								</div>
-								<Resizer ref={resizer} class={['vc-modal__content-container', { 'is-unscrollable': !props.scrollable }]}>
-									{{
-										default: (row: any) => {
-											const contentClass = [{ 'is-confirm': props.mode }, props.contentClass, 'vc-modal__content'];
-											return props.scrollable
-												? (
-														<Scroller
-															native={false}
-															always={false}
-															{...props.scrollerOptions}
-															ref={scroller}
-															height={isTransitionEnd.value ? row.height : (void 0)}
-															contentClass={contentClass}
-															contentStyle={props.contentStyle}
-														>
-															{renderContent()}
-														</Scroller>
-													)
-												: <div class={[contentClass, 'is-unscrollable']} style={props.contentStyle}>{renderContent()}</div>;
-										}
-									}}
-								</Resizer>
+								<div class="vc-modal__content-container">
+									{
+										props.scrollable
+											? (
+													<Scroller
+														native={false}
+														always={false}
+														{...props.scrollerOptions}
+														contentClass={contentClass}
+														contentStyle={props.contentStyle}
+													>
+														{renderContent()}
+													</Scroller>
+												)
+											: <div class={[contentClass, 'is-unscrollable']} style={props.contentStyle}>{renderContent()}</div>
+									}
+								</div>
 								{
 									(props.footer && (cancelText.value || okText.value)) && (
 										<div class={[{ 'is-confirm': props.mode }, 'vc-modal__footer']}>

@@ -70,18 +70,12 @@ export const MModalView = defineComponent({
 
 		// 关闭事件
 		const handleClose = (e: any, closable: boolean) => {
-			if (closable
-				|| (
-					props.maskClosable
-					&& e.target.classList.contains('vcm-modal__wrapper')
-				)
-			) {
-				// 用户主要取消与关闭事件关联
-				if (props.closeWithCancel) {
-					handleBefore(e, handleCancel);
-				} else {
-					isActive.value = false;
-				}
+			if (!closable) return;
+			// 用户主要取消与关闭事件关联
+			if (props.closeWithCancel) {
+				handleBefore(e, handleCancel);
+			} else {
+				isActive.value = false;
 			}
 		};
 		/**
@@ -112,7 +106,8 @@ export const MModalView = defineComponent({
 		const basicStyle = computed(() => {
 			return {
 				width: `${props.width}px`,
-				maxHeight: `${window.innerHeight - 20}px`,
+				// 高度上限：视口减去上下各 10px 的留白。wrapper 铺满视口，百分比即相对视口，随窗口变化
+				maxHeight: 'calc(100% - 20px)',
 			};
 		});
 

@@ -494,17 +494,17 @@ onUnmounted(() => {
 | height | 数字为固定高度，单位为 px；`'auto'` 时高度跟随内容，不使用 `size` 预设的最小高度；不传时以 `size` 预设的高度为最小高度 | `number \| 'auto'` | - | - |
 | mask | 是否显示遮罩 | `boolean` | - | `true` |
 | closable | 非 `mode` 布局下是否显示关闭图标 | `boolean` | - | `true` |
-| maskClosable | 是否允许点击遮罩或 wrapper 关闭 | `boolean` | - | `true` |
+| maskClosable | 是否允许点击遮罩关闭 | `boolean` | - | `true` |
 | escClosable | 是否允许按 `Escape` 关闭 | `boolean` | - | `true` |
 | closeWithCancel | 主动关闭时是否先执行 `onCancel` / `cancel` | `boolean` | - | `true` |
-| scrollable | 内容区是否由内置的 Scroller 滚动；`false` 时由内容自行收缩并滚动（内容的根节点需设置 `min-height: 0`），此时未设置 `height` 的弹窗不随内容变化重新适配高度 | `boolean` | - | `true` |
+| scrollable | 内容区是否由内置的 Scroller 滚动；`false` 时由内容自行收缩并滚动（内容的根节点需设置 `min-height: 0`） | `boolean` | - | `true` |
 | scrollerOptions | 内置 Scroller 的属性（如 `always`、`native`）；内容区的类名与样式仍用 `contentClass`、`contentStyle` | `object` | - | - |
 | draggable | 是否允许从页头拖动 | `boolean` | - | `false` |
 | x | 可拖动布局的初始 left，单位为 px | `number` | - | - |
 | y | 可拖动布局的初始 top，单位为 px | `number` | - | - |
 | okText | 确定按钮文案；传 `false` 或空字符串时隐藏 | `string \| boolean` | - | 当前 locale 的“确定” |
 | cancelText | 取消按钮文案；传 `false` 或空字符串时隐藏 | `string \| boolean` | - | 当前 locale 的“取消” |
-| wrapperStyle | wrapper 的行内样式 | `object \| string` | - | - |
+| wrapperStyle | wrapper 的行内样式；wrapper 铺满视口并负责居中，自身不接收事件 | `object \| string` | - | - |
 | wrapperClass | wrapper 的 class | `object \| string` | - | - |
 | footer | 是否渲染页脚；默认文案或覆盖文案至少有一项为 truthy 时生效 | `boolean` | - | `true` |
 | border | 是否使用带分隔线的紧凑样式 | `boolean` | - | `false` |
@@ -614,7 +614,7 @@ const handleSubmit = async () => {
 | closeWithCancel | 点击遮罩关闭时是否先执行 `onCancel` / `cancel` | `boolean` | - | `true` |
 | okText | 默认确定按钮文案；传 `false` 或空字符串时隐藏 | `string \| boolean` | - | 当前 locale 的“确定” |
 | cancelText | 默认取消按钮文案；传 `false` 或空字符串时隐藏 | `string \| boolean` | - | 当前 locale 的“取消” |
-| wrapperStyle | wrapper 的行内样式 | `object` | - | - |
+| wrapperStyle | wrapper 的行内样式；wrapper 铺满视口并负责居中，自身不接收事件 | `object` | - | - |
 | footer | `alert` 模式下是否渲染页脚 | `boolean` | - | `true` |
 | data | 自定义按钮列表；`operation` 模式的数据源 | `Array<{ content?: string \| boolean; style?: object; onClick?: Function }>` | - | 取消、确定两个默认项 |
 | onOk | 默认确定按钮回调；与 `ok` 事件监听器等价 | `Function` | - | - |

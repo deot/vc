@@ -243,7 +243,7 @@ describe('ModalView size 与自定义尺寸', () => {
 		large.unmount();
 	});
 
-	it('自定义 width 覆盖默认宽度 (受 MAX_WIDTH=window.innerWidth-20 限制)', async () => {
+	it('自定义 width 覆盖默认宽度；宽高上限为视口减去留白，预设高度作为最小高度并与上限取小', async () => {
 		const wrapper = mount(ModalView, {
 			attachTo: document.body,
 			props: { modelValue: true, width: 500 }
@@ -251,8 +251,10 @@ describe('ModalView size 与自定义尺寸', () => {
 		await flush();
 		const container = wrapper.find('.vc-modal__container').element as HTMLElement;
 		expect(container.style.width).toBe('500px');
+		expect(container.style.maxWidth).toBe('calc(100% - 20px)');
+		expect(container.style.maxHeight).toBe('calc(100% - 20px)');
 		// 未指定 height 时使用 minHeight
-		expect(container.style.minHeight).toBeTruthy();
+		expect(container.style.minHeight).toBe('min(296px, 100% - 20px)');
 		wrapper.unmount();
 	});
 
@@ -347,22 +349,21 @@ describe('ModalView 关闭逻辑', () => {
 		wrapper.unmount();
 	});
 
-	it('maskClosable=true (默认): 点击 wrapper 自身关闭', async () => {
+	it('wrapper 只用于居中，不处理点击（样式上不接收事件，弹窗外的点击落到 mask）', async () => {
 		const wrapper = mount(ModalView, {
 			attachTo: document.body,
 			props: { modelValue: true }
 		});
 		await flush();
 
-		// 必须 e.target 为 wrapper 自身才会关闭
 		await wrapper.find('.vc-modal__wrapper').trigger('click');
 		await flush();
-		expect((wrapper.vm as any).isActive).toBe(false);
+		expect((wrapper.vm as any).isActive).toBe(true);
 
 		wrapper.unmount();
 	});
 
-	it('maskClosable=true: 点击 mask 也会关闭', async () => {
+	it('maskClosable=true (默认): 点击 mask 关闭', async () => {
 		const wrapper = mount(ModalView, {
 			attachTo: document.body,
 			props: { modelValue: true }
@@ -376,14 +377,13 @@ describe('ModalView 关闭逻辑', () => {
 		wrapper.unmount();
 	});
 
-	it('maskClosable=false: 点击 wrapper / mask 都不关闭', async () => {
+	it('maskClosable=false: 点击 mask 不关闭', async () => {
 		const wrapper = mount(ModalView, {
 			attachTo: document.body,
 			props: { modelValue: true, maskClosable: false }
 		});
 		await flush();
 
-		await wrapper.find('.vc-modal__wrapper').trigger('click');
 		await wrapper.find('.vc-modal__mask').trigger('click');
 		await flush();
 		expect((wrapper.vm as any).isActive).toBe(true);
@@ -874,10 +874,11 @@ describe('ModalView modifier 类名 / 样式透传', () => {
 		});
 		await flush();
 
-		expect(wrapper.find('.vc-modal__container').classes()).toContain('is-drag');
-		// draggable 时 wrapper 上 top: 0
-		const wrapperEl = wrapper.find('.vc-modal__wrapper').element as HTMLElement;
-		expect(wrapperEl.style.top).toBe('0px');
+		const container = wrapper.find('.vc-modal__container');
+		expect(container.classes()).toContain('is-drag');
+		// 未指定 x / y 且未拖动过：不写 left / top，由 wrapper 按实际尺寸居中
+		expect((container.element as HTMLElement).style.left).toBe('');
+		expect((container.element as HTMLElement).style.top).toBe('');
 		wrapper.unmount();
 	});
 
@@ -957,7 +958,7 @@ describe('ModalView modifier 类名 / 样式透传', () => {
 		await flush();
 
 		expect(wrapper.find('.vc-modal__content-container .vc-scroller').exists()).toBe(false);
-		const c = wrapper.find('.vc-modal__content-container.is-unscrollable > .vc-modal__content');
+		const c = wrapper.find('.vc-modal__content-container > .vc-modal__content');
 		expect(c.classes()).toEqual(expect.arrayContaining(['content-x', 'is-unscrollable']));
 		expect((c.element as HTMLElement).style.padding).toBe('10px');
 		expect(c.find(':scope > .own-scroll').exists()).toBe(true);
@@ -1001,6 +1002,19 @@ describe('ModalView draggable', () => {
 		const container = wrapper.find('.vc-modal__container').element as HTMLElement;
 		expect(container.style.left).toBe('50px');
 		expect(container.style.top).toBe('80px');
+		wrapper.unmount();
+	});
+
+	it('draggable + 只传 x: 只写 left，纵向仍由 wrapper 居中', async () => {
+		const wrapper = mount(ModalView, {
+			attachTo: document.body,
+			props: { modelValue: true, draggable: true, x: 50 }
+		});
+		await flush();
+
+		const container = wrapper.find('.vc-modal__container').element as HTMLElement;
+		expect(container.style.left).toBe('50px');
+		expect(container.style.top).toBe('');
 		wrapper.unmount();
 	});
 
@@ -1084,95 +1098,27 @@ describe('ModalView draggable', () => {
 	});
 });
 
-describe('ModalView Resize 钩子', () => {
+describe('ModalView 高度适配', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';
 		document.body.style.removeProperty('overflow');
 	});
 
-	it('container Resize 回调: 奇数高度时把高度补 +1 (containerHeight%2 !== 0)', async () => {
+	it.each([true, false])('未设置 height 时不向容器写入高度（奇数高度也不补偶数），scrollable=%s', async (scrollable) => {
 		const wrapper = mount(ModalView, {
 			attachTo: document.body,
-			props: { modelValue: true }
+			props: { modelValue: true, scrollable }
 		});
 		await flush();
 
 		const container = wrapper.find('.vc-modal__container').element as HTMLElement;
-		// 模拟一个奇数 offsetHeight, 触发 `containerHeight % 2 !== 0` 分支
 		Object.defineProperty(container, 'offsetHeight', { configurable: true, value: 301 });
-
 		triggerResize(container);
 		await flush();
 
-		expect(container.style.height).toBe('302px');
-		wrapper.unmount();
-	});
-
-	it('container Resize 回调: 容器顶到 maxheight 且 maxheight 为奇数时降 1', async () => {
-		// window.innerHeight 默认 768, maxheight=748 (偶数). 改为 769 让 maxheight=749 (奇数)
-		const original = window.innerHeight;
-		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 769 });
-
-		const wrapper = mount(ModalView, {
-			attachTo: document.body,
-			props: { modelValue: true }
-		});
-		await flush();
-
-		const container = wrapper.find('.vc-modal__container').element as HTMLElement;
-		// containerHeight + 1 > maxheight(749) → containerHeight >= 749
-		Object.defineProperty(container, 'offsetHeight', { configurable: true, value: 800 });
-
-		triggerResize(container);
-		await flush();
-
-		// maxheight - 1 = 748
-		expect(container.style.height).toBe('748px');
-
-		wrapper.unmount();
-		Object.defineProperty(window, 'innerHeight', { configurable: true, value: original });
-	});
-
-	it('content Resize 回调: 当未传 height 且 scroller/container 存在 height 时清理 + refresh', async () => {
-		const wrapper = mount(ModalView, {
-			attachTo: document.body,
-			props: { modelValue: true }
-		});
-		await flush();
-
-		const container = wrapper.find('.vc-modal__container').element as HTMLElement;
-		// Scroller 根节点即滚动容器
-		const scrollerEl = wrapper.find('.vc-scroller').element as HTMLElement;
-
-		// 模拟存在 height 样式, 触发清理路径
-		container.style.height = '300px';
-		scrollerEl.style.height = '200px';
-
-		const scrollerContent = wrapper.find('.vc-modal__content').element as HTMLElement;
-		triggerResize(scrollerContent);
-		await flush();
-
+		// 高度完全由样式决定：容器不被监听尺寸，也不被写入高度
+		expect((container as any).__rz__).toBeUndefined();
 		expect(container.style.height).toBe('');
-		expect(scrollerEl.style.height).toBe('');
-
-		wrapper.unmount();
-	});
-
-	it('content Resize 回调: 当 props.height 已设置时直接 return', async () => {
-		const wrapper = mount(ModalView, {
-			attachTo: document.body,
-			props: { modelValue: true, height: 400 }
-		});
-		await flush();
-
-		const container = wrapper.find('.vc-modal__container').element as HTMLElement;
-		// 不应该被清理 (height 设置后属于固定模式)
-		const original = container.style.height;
-		const scrollerContent = wrapper.find('.vc-modal__content').element as HTMLElement;
-		triggerResize(scrollerContent);
-		await flush();
-
-		expect(container.style.height).toBe(original);
 		wrapper.unmount();
 	});
 });
@@ -1181,6 +1127,22 @@ describe('ModalView expose', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';
 		document.body.style.removeProperty('overflow');
+	});
+
+	it('resetOrigin: 缩放原点为点击位置相对容器的偏移（wrapper 铺满视口，offsetLeft / offsetTop 即视口坐标）', async () => {
+		const original = VcInstance.globalEvent;
+		VcInstance.globalEvent = { x: 300, y: 200 } as MouseEvent;
+		const wrapper = mount(ModalView, { attachTo: document.body });
+		await flush();
+
+		const container = wrapper.find('.vc-modal__container').element as HTMLElement;
+		Object.defineProperty(container, 'offsetLeft', { configurable: true, value: 100 });
+		Object.defineProperty(container, 'offsetTop', { configurable: true, value: 50 });
+		(wrapper.vm as any).resetOrigin();
+
+		expect(container.style.transformOrigin).toMatch(/^200px 150px 0/);
+		wrapper.unmount();
+		VcInstance.globalEvent = original;
 	});
 
 	it('expose: isActive / toggle / resetOrigin 都可访问', async () => {
@@ -1567,7 +1529,7 @@ describe('MModalView 基础渲染 / props', () => {
 		wrapper.unmount();
 	});
 
-	it('basicStyle: width 默认 270px, maxHeight=window.innerHeight - 20', async () => {
+	it('basicStyle: width 默认 270px, maxHeight 为视口减去留白', async () => {
 		const wrapper = mount(MModalView, {
 			attachTo: document.body,
 			props: { modelValue: true, mode: 'alert', title: 't', content: 'c', width: 320 }
@@ -1575,7 +1537,7 @@ describe('MModalView 基础渲染 / props', () => {
 		await flush();
 		const container = wrapper.find('.vcm-modal__container').element as HTMLElement;
 		expect(container.style.width).toBe('320px');
-		expect(container.style.maxHeight).toBe(`${window.innerHeight - 20}px`);
+		expect(container.style.maxHeight).toBe('calc(100% - 20px)');
 		wrapper.unmount();
 	});
 
@@ -1613,13 +1575,7 @@ describe('MModalView 基础渲染 / props', () => {
 		});
 		await flush();
 
-		const wrapperEl = wrapper.find('.vcm-modal__wrapper').element as HTMLElement;
-		// mask 点击事件挂在 .vcm-modal__mask, 但条件判断里检测的是 .vcm-modal__wrapper className
-		const maskEl = wrapper.find('.vcm-modal__mask').element as HTMLElement;
-		// 直接用 wrapperEl 派发 click 让 e.target 命中 .vcm-modal__wrapper
-		const event = new MouseEvent('click', { bubbles: true });
-		Object.defineProperty(event, 'target', { value: wrapperEl, writable: false });
-		maskEl.dispatchEvent(event);
+		await wrapper.find('.vcm-modal__mask').trigger('click');
 		await flush();
 
 		expect(onCancel).toHaveBeenCalled();
@@ -1663,11 +1619,7 @@ describe('MModalView 基础渲染 / props', () => {
 		});
 		await flush();
 
-		const wrapperEl = wrapper.find('.vcm-modal__wrapper').element as HTMLElement;
-		const maskEl = wrapper.find('.vcm-modal__mask').element as HTMLElement;
-		const event = new MouseEvent('click', { bubbles: true });
-		Object.defineProperty(event, 'target', { value: wrapperEl });
-		maskEl.dispatchEvent(event);
+		await wrapper.find('.vcm-modal__mask').trigger('click');
 		await flush();
 		expect((wrapper.vm as any).isActive).toBe(false);
 		wrapper.unmount();
