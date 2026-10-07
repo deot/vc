@@ -66,8 +66,6 @@ $line-height-large: varfix(line-height-large, tour);
 
 		@include when(center) {
 			position: absolute;
-			top: 50%;
-			left: 50%;
 			display: flex;
 			max-width: calc(100% - #{unitfix(16)});
 			max-height: calc(100% - #{unitfix(16)});
@@ -75,10 +73,11 @@ $line-height-large: varfix(line-height-large, tour);
 			pointer-events: auto;
 			background: $background-color-lightest;
 			border-radius: $border-radius;
-			transform: translate(-50%, -50%);
 			box-shadow: $box-shadow-floating;
 			box-sizing: border-box;
 			flex-direction: column;
+
+			@include position-center;
 		}
 	}
 
