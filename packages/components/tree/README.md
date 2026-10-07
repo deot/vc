@@ -337,7 +337,7 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 | disabled | 禁止交互勾选的字段 | `string` | - | `'disabled'` |
 | isLeaf | 懒加载叶节点字段；建议保留默认字段名 | `string` | - | `'isLeaf'` |
 
-传入映射时建议提供完整对象，例如 `{ value: 'id', label: 'name', children: 'children', disabled: 'disabled', isLeaf: 'isLeaf' }`。公开类型为字符串映射。
+只传部分字段时，其余字段取默认值，例如 `{ value: 'id', label: 'name' }`。公开类型为字符串映射。
 
 ### Tree 事件
 

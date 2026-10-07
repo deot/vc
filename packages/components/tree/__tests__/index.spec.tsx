@@ -453,6 +453,21 @@ describe('Tree interaction', () => {
 		wrapper.unmount();
 	});
 
+	it('partial keyValue falls back to defaults', async () => {
+		const wrapper = mountTree({
+			data: [{ id: '1', label: 'a', children: [{ id: '1-1', label: 'b' }] }],
+			keyValue: { value: 'id' },
+			defaultExpandAll: true
+		});
+		await flush();
+		const vm = wrapper.vm as any;
+
+		expect(wrapper.findAll('.vc-tree-node[role="treeitem"]').length).toBe(2);
+		expect(vm.getNodePath('1-1').map((i: any) => i.id)).toEqual(['1', '1-1']);
+
+		wrapper.unmount();
+	});
+
 	it('tree api errors when keyValue.value missing', async () => {
 		const wrapper = mountTree({
 			data,

@@ -84,7 +84,7 @@ export const props = {
 	},
 	iconClass: String,
 	keyValue: {
-		type: Object as PropType<typeof KEY_VALUE>,
+		type: Object as PropType<Partial<typeof KEY_VALUE>>,
 		default: () => (KEY_VALUE)
 	}
 };

@@ -4,6 +4,7 @@ import { defineComponent, provide, ref, computed, watch, getCurrentInstance } fr
 import type { ComponentInternalInstance } from 'vue';
 import type { TreeNode } from './store/tree-node';
 import type { TreeNodeExpandChangePayload } from './types';
+import { KEY_VALUE } from './store/constant';
 import { TreeStore } from './store/tree-store';
 import { toCurrentValue } from '../select/utils';
 import { useLocale } from '../locale';
@@ -41,7 +42,8 @@ export const Tree = defineComponent({
 		const store = new TreeStore({
 			data: props.data,
 			lazy: props.lazy,
-			keyValue: props.keyValue,
+			// 只传部分字段时，其余字段取默认值
+			keyValue: { ...KEY_VALUE, ...props.keyValue },
 			loadData: props.loadData,
 			currentNodeValue: props.currentNodeValue,
 			checkStrictly: props.checkStrictly,
@@ -100,11 +102,11 @@ export const Tree = defineComponent({
 		};
 
 		const getNodeKey = (node: TreeNode) => {
-			return node.states.data[props.keyValue.value];
+			return node.states.data[store.keyValue.value];
 		};
 
 		const getNodePath = (data: any) => {
-			if (!props.keyValue.value) throw new Error('[Tree] keyValue.value is required in getNodePath');
+			if (!store.keyValue.value) throw new Error('[Tree] keyValue.value is required in getNodePath');
 			const node = store.getNode(data);
 			if (!node) return [];
 			const path = [node.states.data];
@@ -130,18 +132,18 @@ export const Tree = defineComponent({
 		};
 
 		const getCurrentKey = () => {
-			if (!props.keyValue.value) throw new Error('[Tree] keyValue.value is required in getCurrentKey');
+			if (!store.keyValue.value) throw new Error('[Tree] keyValue.value is required in getCurrentKey');
 			const $currentNode = getCurrentNode();
-			return $currentNode ? $currentNode[props.keyValue.value] : null;
+			return $currentNode ? $currentNode[store.keyValue.value] : null;
 		};
 
 		const setCheckedNodes = (nodes: any, leafOnly: any) => {
-			if (!props.keyValue.value) throw new Error('[Tree] keyValue.value is required in setCheckedNodes');
+			if (!store.keyValue.value) throw new Error('[Tree] keyValue.value is required in setCheckedNodes');
 			store.setCheckedNodes(nodes, leafOnly);
 		};
 
 		const setCheckedValues = (values: any) => {
-			if (!props.keyValue.value) throw new Error('[Tree] keyValue.value is required in setCheckedValues');
+			if (!store.keyValue.value) throw new Error('[Tree] keyValue.value is required in setCheckedValues');
 			store.setCheckedValues(values);
 		};
 
@@ -158,12 +160,12 @@ export const Tree = defineComponent({
 		};
 
 		const setCurrentNode = (node: any) => {
-			if (!props.keyValue.value) throw new Error('[Tree] keyValue.value is required in setCurrentNode');
+			if (!store.keyValue.value) throw new Error('[Tree] keyValue.value is required in setCurrentNode');
 			store.setUserCurrentNode(node);
 		};
 
 		const setCurrentNodeByData = (data: any) => {
-			if (!props.keyValue.value) throw new Error('[Tree] keyValue.value is required in setCurrentNodeByData');
+			if (!store.keyValue.value) throw new Error('[Tree] keyValue.value is required in setCurrentNodeByData');
 			store.setCurrentNodeByData(data);
 		};
 
@@ -194,7 +196,7 @@ export const Tree = defineComponent({
 		};
 
 		const updateKeyChildren = (key: any, data: any) => {
-			if (!props.keyValue.value) throw new Error('[Tree] keyValue.value is required in updateKeyChild');
+			if (!store.keyValue.value) throw new Error('[Tree] keyValue.value is required in updateKeyChild');
 			store.updateChildren(key, data);
 		};
 

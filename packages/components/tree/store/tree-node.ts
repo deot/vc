@@ -3,7 +3,7 @@ import { hasOwn } from '@deot/helper-utils';
 import type { Nullable } from '@deot/helper-shared';
 import type { TreeStore } from './tree-store';
 
-import { KEY_NODE, KEY_VALUE } from './constant';
+import { KEY_NODE } from './constant';
 
 export const markNodeData = (node: TreeNode, data?: object) => {
 	if (!data || data[KEY_NODE]) return;
@@ -435,7 +435,7 @@ export class TreeNode {
 		const data = this.states.data;
 		if (!data) return null;
 
-		const children = this.store.keyValue?.children || KEY_VALUE.children;
+		const children = this.store.keyValue.children;
 		if (data[children] === undefined) {
 			data[children] = null;
 		}

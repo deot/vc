@@ -3,7 +3,6 @@
 import { getCurrentInstance, defineComponent, inject, ref, watch, nextTick, withModifiers, toRaw } from 'vue';
 import { isEqualWith } from 'lodash-es';
 import type { TreeNode, TreeStore } from './store';
-import { KEY_VALUE } from './store/constant';
 import { TransitionCollapse } from '../transition';
 import { Checkbox } from '../checkbox';
 import { Customer } from '../customer';
@@ -65,7 +64,7 @@ export const TreeNodeContent = defineComponent({
 			return data;
 		};
 		const getNodeKey = (node: TreeNode) => {
-			return node.states.data[tree.props.keyValue.value];
+			return node.states.data[tree.store.keyValue.value];
 		};
 
 		const handleSelectChange = (checked: boolean, indeterminate: boolean) => {
@@ -184,7 +183,7 @@ export const TreeNodeContent = defineComponent({
 
 		watch(
 			() => {
-				const childrenKey = tree.props.keyValue.children || KEY_VALUE.children;
+				const childrenKey = tree.store.keyValue.children;
 				return props.node.states.data[childrenKey];
 			},
 			(v) => {
