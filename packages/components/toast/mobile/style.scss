@@ -25,11 +25,8 @@ $surface-color: color-mix(in srgb, #{$color-contrast-dark} 75%, transparent);
 
 	@include element(wrapper) {
 		position: fixed;
-		top: 50%;
-		left: 50%;
 		z-index: 4001;
-		height: auto;
-		max-width: 50%;
+		max-width: 50%; // 含内边距，与此前的最大宽度一致
 		padding: unitfix(9) unitfix(15);
 		line-height: 1.5;
 		color: $color-contrast-light;
@@ -43,7 +40,9 @@ $surface-color: color-mix(in srgb, #{$color-contrast-dark} 75%, transparent);
 		}
 
 		border-radius: unitfix(3);
-		transform: translate(-50%, -50%);
+		box-sizing: border-box;
+
+		@include position-center;
 	}
 
 	@include element(loading) {
