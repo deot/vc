@@ -1,4 +1,4 @@
-<!-- 弹层中的表格：Modal 展开动画期间先不渲染表格（delay），动画结束后再渲染 -->
+<!-- 弹层中的表格：随 Modal 的展开动画一起渲染，尺寸与动画结束后一致 -->
 <template>
 	<div style="padding: 30px;">
 		<Button type="primary" @click="handleOpen">打开弹层</Button>
@@ -33,7 +33,7 @@ const Wrapper = defineComponent({
 				onOk={() => emit('portal-fulfilled')}
 				onCancel={() => emit('portal-rejected')}
 			>
-				<Table primaryKey="id" border stripe showSummary delay={350} maxHeight={400} data={dataSource}>
+				<Table primaryKey="id" border stripe showSummary maxHeight={400} data={dataSource}>
 					<TableColumn type="selection" fixed="left" width={60} />
 					<TableColumn prop="name" label="名称" fixed="left" width={160} />
 					<TableColumn prop="desc" label="说明" minWidth={320} line={1} />

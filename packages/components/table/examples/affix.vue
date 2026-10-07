@@ -15,7 +15,6 @@
 			ref="tableRef"
 			primary-key="id"
 			:rows="8"
-			:delay="delay"
 			border
 			stripe
 			show-summary
@@ -73,8 +72,6 @@ import { ref, computed, reactive, onBeforeUnmount, watch } from 'vue';
 import { Table, TableColumn } from '..';
 import { Button } from '../../button';
 import { Select } from '../../select';
-
-defineProps({ delay: Number });
 
 const genTableData = length => Array.from({ length }).map((_, index) => ({
 	id: `id__${index}`,

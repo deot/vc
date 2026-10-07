@@ -1,4 +1,4 @@
-import { defineComponent, ref, getCurrentInstance, computed, inject, onBeforeMount, onBeforeUnmount, camelize } from 'vue';
+import { defineComponent, ref, getCurrentInstance, computed, inject, camelize } from 'vue';
 import type { Nullable } from '@deot/helper-shared';
 import { RecycleList } from '../../recycle-list';
 import { NormalList } from './normal-list';
@@ -23,7 +23,6 @@ export const TableBody = defineComponent({
 		const instance = getCurrentInstance()!;
 		const table: any = inject('vc-table');
 
-		const allowRender = ref(false);
 		const states = useStates({
 			list: 'list'
 		});
@@ -178,20 +177,7 @@ export const TableBody = defineComponent({
 			default: ({ row }) => <TableBodyBlock store={row} />
 		};
 
-		let timer: any;
-		onBeforeMount(() => {
-			if (table.props.delay) {
-				timer = setTimeout(() => allowRender.value = true, table.props.delay);
-			} else {
-				allowRender.value = true;
-			}
-		});
-		onBeforeUnmount(() => {
-			timer && clearTimeout(timer);
-			allowRender.value = false;
-		});
 		return () => {
-			if (!allowRender.value) return;
 			const externalVirtualized = !table.props.height
 				&& !table.props.maxHeight
 				&& table.props.virtualized;

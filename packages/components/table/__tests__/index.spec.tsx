@@ -1715,7 +1715,7 @@ describe('TableHeader sort & resize', () => {
 	});
 });
 
-describe('Table virtual + scroll & delay', () => {
+describe('Table virtual + scroll', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';
 	});
@@ -2237,21 +2237,6 @@ describe('Table virtual + scroll & delay', () => {
 		expect(wrapper.findComponent({ name: 'vc-recycle-list' }).props('fill')).toBe(false);
 		expect(wrapper.find('.vc-table__empty-placeholder').exists()).toBe(true);
 		expect(wrapper.find('.vc-table__empty-text').text()).toBe('外部虚拟表暂无数据');
-		wrapper.unmount();
-	});
-
-	it('delay defers body rendering', async () => {
-		const data = buildData(2);
-		const wrapper = mount(() => (
-			<Table data={data} primaryKey="id" delay={20}>
-				<TableColumn label="名称" prop="name" />
-			</Table>
-		), { attachTo: document.body });
-		await flush();
-		expect(wrapper.find('.vc-table__body-wrapper').exists()).toBe(false);
-		await sleep(40);
-		await flush();
-		expect(wrapper.find('.vc-table__body-wrapper').exists()).toBe(true);
 		wrapper.unmount();
 	});
 

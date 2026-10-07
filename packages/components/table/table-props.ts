@@ -128,8 +128,6 @@ export const props = {
 		default: () => ({})
 	},
 
-	// 用于延迟渲染，用于计算高度
-	delay: Number,
 	resizable: {
 		type: Boolean,
 		default: void 0
