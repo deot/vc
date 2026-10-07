@@ -19,7 +19,6 @@ $component-name: vc-pagination;
 		height: $size;
 		min-width: $size;
 		margin-right: unitfix(8);
-		font-family: Arial;
 		font-weight: 500;
 		line-height: $size;
 		text-align: center;
@@ -29,7 +28,6 @@ $component-name: vc-pagination;
 		user-select: none;
 
 		span {
-			font-family: "Monospaced Number";
 			color: inherit;
 		}
 
