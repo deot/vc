@@ -40,7 +40,6 @@ $foreground-color: varfix(foreground-color, form);
 	@include share-rule(form-error-tip) {
 		display: inline-block;
 		margin-right: unitfix(4);
-		font-family: SimSun;
 		font-size: unitfix(12);
 		line-height: 1;
 		color: $color-error;
