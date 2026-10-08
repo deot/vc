@@ -129,12 +129,18 @@
  * 已为父元素添加position: relative;
  * 其他只操作before和after;
  * 暂时不抽离公用
+ *
+ * 高分屏下用 0.5px：浏览器会把 border-width 向下对齐到整数设备像素，且不足 1 个设备像素时取 1，
+ * 任意缩放比例下都是实色的整像素线；不用 transform 缩放，缩放后的右、下边缘对不齐设备像素，会发虚或缺失
+ *
+ * 不用 @supports (border-width: 0.5px) 兜底：它只判断能否解析，不判断能否渲染，
+ * 在可运行 Vue 3 的浏览器里恒为真
  */
 
 @mixin border($direction: '', $color: varfix('color-light-deeper'), $border-radius: inherit) {
 	& {
 		position: relative;
-		transform: translateZ(0);
+		isolation: isolate; // 伪元素的层级只在自身内部生效
 
 		&::before,
 		&::after {
@@ -154,7 +160,6 @@
 				left: 0;
 				width: 100%;
 				border-top: unitfix(1) solid $color;
-				transform-origin: 0 top;
 			}
 		} @else if $direction == 'right' {
 			&::after {
@@ -162,7 +167,6 @@
 				right: 0;
 				height: 100%;
 				border-right: unitfix(1) solid $color;
-				transform-origin: right 0;
 			}
 		} @else if $direction == 'bottom' {
 			&::after {
@@ -170,7 +174,6 @@
 				left: 0;
 				width: 100%;
 				border-bottom: unitfix(1) solid $color;
-				transform-origin: 0 bottom;
 			}
 		} @else if $direction == 'left' {
 			&::before {
@@ -178,7 +181,6 @@
 				left: 0;
 				height: 100%;
 				border-left: unitfix(1) solid $color;
-				transform-origin: left 0;
 			}
 		} @else {
 			&::after {
@@ -187,84 +189,19 @@
 				width: 100%;
 				height: 100%;
 				border: unitfix(1) solid $color;
-				transform-origin: 0 0;
 			}
 		}
 	}
 
 	@media (resolution >= 2dppx) {
 		& {
-			@if  meta.type-of($border-radius) == 'number' {
-				&::before,
-				&::after {
-					border-radius: unitfix($border-radius * 2);
-				}
-			}
-
-			@if $direction == 'top' {
+			@if $direction == 'top' or $direction == 'left' {
 				&::before {
-					width: 200%;
-					transform: scale(0.5);
-				}
-			} @else if $direction == 'right' {
-				&::after {
-					height: 200%;
-					transform: scale(0.5);
-				}
-			} @else if $direction == 'bottom' {
-				&::after {
-					width: 200%;
-					transform: scale(0.5);
-				}
-			} @else if $direction == 'left' {
-				&::before {
-					height: 200%;
-					transform: scale(0.5);
+					border-width: unitfix(0.5);
 				}
 			} @else {
 				&::after {
-					width: 200%;
-					height: 200%;
-					transform: scale(0.5);
-				}
-			}
-		}
-	}
-
-	@media (resolution >= 3dppx) {
-		& {
-			@if  meta.type-of($border-radius) == 'number' {
-				&::before,
-				&::after {
-					border-radius: unitfix($border-radius * 3);
-				}
-			}
-
-			@if $direction == 'top' {
-				&::before {
-					width: 300%;
-					transform: scale(1 / 3);
-				}
-			} @else if $direction == 'right' {
-				&::after {
-					height: 300%;
-					transform: scale(1 / 3);
-				}
-			} @else if $direction == 'bottom' {
-				&::after {
-					width: 300%;
-					transform: scale(1 / 3);
-				}
-			} @else if $direction == 'left' {
-				&::before {
-					height: 300%;
-					transform: scale(1 / 3);
-				}
-			} @else {
-				&::after {
-					width: 300%;
-					height: 300%;
-					transform: scale(1 / 3);
+					border-width: unitfix(0.5);
 				}
 			}
 		}
