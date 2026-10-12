@@ -1,4 +1,5 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
+import type { PickerEnhancer } from '../upload-picker/types';
 
 export const props = {
 	modelValue: {
@@ -29,7 +30,7 @@ export const props = {
 	register: Function,
 	poster: Function,
 	enhancer: {
-		type: [Function, Boolean],
+		type: [Function, Boolean] as PropType<PickerEnhancer | boolean>,
 		default: true
 	},
 	// 点击img元素是否可以进行预览，为false的时候会将光标聚焦到该元素后面

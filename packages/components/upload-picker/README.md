@@ -232,7 +232,7 @@ onBeforeUnmount(() => urls.forEach(url => URL.revokeObjectURL(url)));
 | videoClass | 视频内容的 class | `string` | - | - |
 | audioClass | 音频内容的 class | `string` | - | - |
 | fileClass | 普通文件内容的 class | `string` | - | - |
-| enhancer | 仅桌面端默认入口生效；函数接收 `(instance, type)`，返回真值阻止原生选择；true 使用全局 UploadPicker.enhancer | `boolean \| Function` | - | `false` |
+| enhancer | 仅桌面端默认入口生效；函数接收 `{ instance, type }`，返回真值阻止原生选择；true 使用全局 UploadPicker.enhancer | `boolean \| Function` | - | `false` |
 | compressOptions | 保留的图片压缩配置，当前尚未执行压缩 | `object` | - | `{ compress: false, width: 0, height: 0, filetype: 'image/jpeg', encoderOptions: 0.92 }` |
 | showError | 上传错误提示；桌面端 Message，移动端 MToast | `boolean` | - | `false` |
 

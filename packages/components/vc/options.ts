@@ -3,7 +3,11 @@ import type { Language } from '@deot/vc-locale';
 import { zhCN } from '@deot/vc-locale';
 import { VARIABLES } from '../theme/constant';
 import type { FilePreviewOptions } from '../file-preview/types';
+import type { ImageFormatter } from '../image/image-props';
+import type { SnapshotDownload } from '../snapshot/snapshot-props';
 import type { TourConfig } from '../tour/types';
+import type { UploadCallback, UploadEnhancer } from '../upload/types';
+import type { PickerEnhancer } from '../upload-picker/types';
 
 const nil = void 0;
 
@@ -14,13 +18,29 @@ export type Options = Partial<{
 		variables: Record<string, string>;
 	};
 	MListItem: {
-		to: (value: any, instance: ComponentInternalInstance) => any;
+		to: (data: { value: any; instance: ComponentInternalInstance }) => any;
 	};
 	Image: {
-		formatter?: (value: any, type: string, instance: ComponentInternalInstance) => string;
+		formatter?: ImageFormatter;
 	};
 	FilePreview: FilePreviewOptions;
 	Tour: TourConfig;
+	Snapshot: {
+		options?: Record<string, any>;
+		source?: any;
+		download?: SnapshotDownload;
+	};
+	Upload: Partial<Pick<UploadCallback, 'onRequest' | 'onResponse' | 'onMessage'>> & {
+		name?: string;
+		enhancer?: UploadEnhancer;
+	};
+	UploadPicker: {
+		enhancer?: PickerEnhancer;
+	};
+	Editor: {
+		options?: Record<string, any>;
+		enhancer?: PickerEnhancer;
+	};
 }>;
 
 export type ResolvedOptions = Options & {

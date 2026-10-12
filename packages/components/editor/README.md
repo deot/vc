@@ -74,7 +74,7 @@ h4 {
 
 默认工具栏包含 `upload/image` 和 `upload/video`，通过 `Upload.open()` 上传。先配置公开的 `VcInstance.configure({ Upload: … })` 上传能力；成功响应应包含字符串 `value`、`source` 或 `url`，依次取首个字符串作为文件地址。
 
-工具栏上传前会调用 `enhancer(instance, type)`，异步返回真值时终止默认上传。可在自定义资源选择完成后调用组件实例的 `add()` 插入资源。粘贴或拖入文件走默认上传流程，不经过工具栏 enhancer。
+工具栏上传前会调用 `enhancer({ instance, type })`，异步返回真值时终止默认上传。可在自定义资源选择完成后调用组件实例的 `add()` 插入资源。粘贴或拖入文件走默认上传流程，不经过工具栏 enhancer。
 
 ```text
 editorRef.value.add([
@@ -126,7 +126,7 @@ editorRef.value.add([
 
 工具栏从 `options.toolbar` 读取数组或 `{ container: [...] }`，`options.modules.toolbar` 会被内部生成的工具栏选择器覆盖。默认工具包括常用格式、标题、列表、字体、颜色、对齐、字号、行高、字间距、链接、图片/视频上传及撤销/重做。
 
-全局 enhancer 优先使用 `VcInstance.options.Editor.enhancer`，其次使用 `VcInstance.options.UploadPicker.enhancer`。函数收到 Vue 组件内部实例和上传类型（如 `image`、`video`）。
+全局 enhancer 优先使用 `VcInstance.options.Editor.enhancer`，其次使用 `VcInstance.options.UploadPicker.enhancer`。函数收到 `{ instance, type }`，分别是 Vue 组件内部实例和上传类型（如 `image`、`video`）。
 
 ### Editor 事件
 

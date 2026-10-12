@@ -1,6 +1,10 @@
+import type { ComponentInternalInstance } from 'vue';
 import type { UploadCallback } from '../upload/types';
 
 export type PickerType = 'image' | 'video' | 'audio' | 'file';
+
+// 上传入口的增强：返回 true 表示已自行处理，不再走默认上传
+export type PickerEnhancer = (data: { instance: ComponentInternalInstance; type: string }) => any;
 
 type UploadPickerCallbackName
 	= 'onFileBefore'

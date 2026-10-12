@@ -56,7 +56,7 @@ watchEffect(() => {
 	VcInstance.configure({
 		FilePreview: {
 			getFileType: useGetFileType.value
-				? source => (/\.jpg!/.test(source) ? 'image' : undefined)
+				? ({ source }) => (/\.jpg!/.test(source) ? 'image' : undefined)
 				: undefined,
 			enhancer: useEnhancer.value
 				? ({ current, data, instance }) => {

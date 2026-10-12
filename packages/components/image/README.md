@@ -126,7 +126,7 @@ import { Image } from '@deot/vc';
 | --- | --- | --- | --- | --- |
 | src | 图片地址；未提供时使用 `thumbnail` | `string` | - | - |
 | thumbnail | 加载和显示用的缩略图地址；提供 `src` 时预览仍使用 `src` | `string` | - | - |
-| formatter | 转换图片地址，优先于全局 `VcInstance.configure({ Image: { formatter } })` 配置 | `(path: string, type: 'src' \| 'thumbnail', instance: object) => string` | - | - |
+| formatter | 转换图片地址，优先于全局 `VcInstance.configure({ Image: { formatter } })` 配置 | `(data: { value: string; type: 'src' \| 'thumbnail'; instance: object }) => string` | - | - |
 | fit | 图片如何适应容器，同原生 `object-fit` | `string` | `fill`、`contain`、`cover`、`none`、`scale-down` | - |
 | lazy | 是否在滚动容器中延迟加载 | `boolean` | - | `false` |
 | wrapper | 懒加载时使用的滚动容器元素或选择器；未提供时自动查找 | `HTMLElement \| string` | - | - |

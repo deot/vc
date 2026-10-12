@@ -13,6 +13,7 @@ export const MListItem = defineComponent({
 	props: listItemProps,
 	emits: ['click'],
 	setup(props, { slots, emit }) {
+		const instance = getCurrentInstance()!;
 		const list = inject('vc-list', {} as any);
 
 		const classes = computed(() => {
@@ -48,10 +49,7 @@ export const MListItem = defineComponent({
 			 * undefined会继续走默认的
 			 */
 			const to = VcInstance.options.MListItem?.to;
-			if (typeof to === 'function') {
-				const vm = getCurrentInstance()!;
-				if (typeof to(props.to, vm) !== 'undefined') return;
-			}
+			if (typeof to === 'function' && typeof to({ value: props.to, instance }) !== 'undefined') return;
 
 			if (props.href) {
 				window.location.href = props.href;

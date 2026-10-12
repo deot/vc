@@ -167,7 +167,7 @@ describe('Editor component', () => {
 	it('merges global and prop options and supports custom toolbar slot', async () => {
 		const CustomModule = vi.fn();
 		Quill.register('modules/custom', CustomModule as any, true);
-		VcInstance.options.Editor.options = {
+		VcInstance.options.Editor!.options = {
 			placeholder: 'global',
 			modules: { custom: true },
 			toolbar: ['bold']
@@ -316,15 +316,15 @@ describe('Editor component', () => {
 		await flush();
 
 		await wrapper.findAll('.vc-editor__icon .vc-icon')[0].trigger('click');
-		expect(propEnhancer).toHaveBeenCalledWith(expect.anything(), 'video');
+		expect(propEnhancer).toHaveBeenCalledWith({ instance: expect.anything(), type: 'video' });
 		expect(uploadOpen).not.toHaveBeenCalled();
 		wrapper.unmount();
 
-		VcInstance.options.UploadPicker.enhancer = vi.fn(async () => true);
+		VcInstance.options.UploadPicker!.enhancer = vi.fn(async () => true);
 		const wrapper2 = mount(() => (<Editor enhancer />), { attachTo: document.body });
 		await flush();
 		await wrapper2.findAll('.vc-editor__icon .vc-icon')[1].trigger('click');
-		expect(VcInstance.options.UploadPicker.enhancer).toHaveBeenCalledWith(expect.anything(), 'image');
+		expect(VcInstance.options.UploadPicker!.enhancer).toHaveBeenCalledWith({ instance: expect.anything(), type: 'image' });
 
 		wrapper2.unmount();
 	});
@@ -489,8 +489,8 @@ describe('Editor extends', () => {
 
 	it('derives name and type for bare urls through the FilePreview config', () => {
 		const context = makeEditorContext();
-		VcInstance.options.FilePreview!.getFileName = v => (v.includes('download') ? '报价单.pdf' : undefined);
-		VcInstance.options.FilePreview!.getFileType = v => (/\.jpg!/.test(v) ? 'image' : undefined);
+		VcInstance.options.FilePreview!.getFileName = ({ source }) => (source.includes('download') ? '报价单.pdf' : undefined);
+		VcInstance.options.FilePreview!.getFileType = ({ source }) => (/\.jpg!/.test(source) ? 'image' : undefined);
 		try {
 			insertFile({ value: 'https://site/download?id=1' }, context);
 			expect(context.editor.insertText).toHaveBeenCalledWith(2, '报价单.pdf');

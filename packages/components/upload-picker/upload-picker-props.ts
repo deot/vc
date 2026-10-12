@@ -1,5 +1,5 @@
 import type { ExtractPropTypes, PropType } from 'vue';
-import type { PickerType } from './types';
+import type { PickerEnhancer, PickerType } from './types';
 
 export const props = {
 	picker: {
@@ -83,6 +83,6 @@ export const props = {
 		}
 	},
 	showError: Boolean,
-	enhancer: [Function, Boolean]
+	enhancer: [Function, Boolean] as PropType<PickerEnhancer | boolean>
 };
 export type Props = ExtractPropTypes<typeof props>;

@@ -333,6 +333,8 @@ describe('Upload 触发点击', () => {
 
 		await wrapper.trigger('click');
 		expect(enhancer).toHaveBeenCalledTimes(1);
+		expect(enhancer.mock.calls[0]).toHaveLength(1);
+		expect((enhancer.mock.calls[0] as any)[0].instance.type.name).toBe('vc-upload');
 		expect(clickSpy).not.toHaveBeenCalled();
 	});
 

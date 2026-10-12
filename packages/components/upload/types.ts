@@ -127,7 +127,7 @@ export type UploadEventArgs<EventName extends keyof UploadEventMap = keyof Uploa
 /**
  * 原生选择器增强器，可以同步或异步决定是否跳过 input click。
  */
-export type UploadEnhancer = (instance: ComponentInternalInstance) => boolean | void | Promise<boolean | void>;
+export type UploadEnhancer = (data: { instance: ComponentInternalInstance }) => boolean | void | Promise<boolean | void>;
 
 /**
  * Upload 组件实例向模板 ref 与 Upload.open 暴露的操作。

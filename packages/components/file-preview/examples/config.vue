@@ -34,10 +34,10 @@ watchEffect(() => {
 	VcInstance.configure({
 		FilePreview: {
 			getFileType: useGetFileType.value
-				? source => (/\.jpg!/.test(source) ? 'image' : undefined)
+				? ({ source }) => (/\.jpg!/.test(source) ? 'image' : undefined)
 				: undefined,
 			getFileName: useGetFileName.value
-				? source => decodeURIComponent(source.split('/').pop()).replace(/^\d+_/, '')
+				? ({ source }) => decodeURIComponent(source.split('/').pop()).replace(/^\d+_/, '')
 				: undefined,
 			enhancer: useEnhancer.value
 				? ({ current, data }) => {

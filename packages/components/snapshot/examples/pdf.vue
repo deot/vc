@@ -27,7 +27,7 @@ import { Button } from '../../button/index';
 import { Input } from '../../input/index';
 import { VcInstance } from '../../vc/index';
 
-VcInstance.options.Snapshot.download = async (instance, options) => {
+VcInstance.options.Snapshot.download = async ({ instance, options }) => {
 	if (options.format === 'pdf') {
 		await instance.exposed.refresh();
 		const canvas = await instance.exposed.snapshot.value.toCanvas();

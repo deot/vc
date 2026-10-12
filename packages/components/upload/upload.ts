@@ -278,7 +278,7 @@ export const createUpload = (feedback: UploadFeedback) => defineComponent({
 			let enhancer: UploadEnhancer | undefined = VcInstance.options.Upload?.enhancer;
 
 			enhancer = props.enhancer || enhancer || (() => false);
-			const skip = enhancer(instance);
+			const skip = enhancer({ instance });
 			if (skip && typeof skip !== 'boolean') {
 				let skip$ = false;
 				skip

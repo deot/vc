@@ -1,4 +1,6 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ComponentInternalInstance, ExtractPropTypes, PropType } from 'vue';
+
+export type SnapshotDownload = (data: { instance: ComponentInternalInstance; options: any }) => any;
 
 export const props = {
 	tag: {
@@ -13,7 +15,7 @@ export const props = {
 		validator: (v: string) => /^(|anonymous|use-credentials)$/.test(v),
 	},
 	source: Function,
-	download: Function,
+	download: Function as PropType<SnapshotDownload>,
 	lazy: {
 		type: Boolean,
 		default: true

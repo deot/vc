@@ -1,4 +1,5 @@
 import { getUid } from '@deot/helper-utils';
+import type { PickerEnhancer } from './types';
 
 export const PICKER_ITEM_KEY = '__vcUploadPickerKey';
 
@@ -40,3 +41,13 @@ export const PPT_ACCEPTS = '.ppt,.pptx,application/vnd.ms-powerpoint,application
 export const PDF_ACCEPTS = '.pdf,application/pdf';
 export const TXT_ACCEPTS = 'text/plain';
 export const HTML_ACCEPTS = 'text/html';
+
+/**
+ * 取出要执行的 enhancer：属性传了函数就用它；属性为真时用全局配置里第一个有值的
+ * @param own 组件的 enhancer 属性
+ * @param globals 全局配置里的候选，按优先级排列
+ * @returns ~
+ */
+export const resolveEnhancer = (own: unknown, ...globals: Array<PickerEnhancer | undefined>) => {
+	return typeof own === 'function' ? own as PickerEnhancer : own ? globals.find(Boolean) : void 0;
+};

@@ -239,7 +239,7 @@ describe('UploadPicker', () => {
 	});
 
 	it('groups model values with the global getFileType', () => {
-		VcInstance.options.FilePreview!.getFileType = v => (/!4-4$/.test(v) ? 'image' : undefined);
+		VcInstance.options.FilePreview!.getFileType = ({ source }) => (/!4-4$/.test(source) ? 'image' : undefined);
 		try {
 			const wrapper = mount(UploadPicker, {
 				props: {
@@ -594,7 +594,7 @@ describe('UploadPicker', () => {
 
 		expect(processed).toBe(false);
 		expect(onFileBefore).toHaveBeenCalledWith({ ...payload, type: 'image' });
-		expect(enhancer).toHaveBeenCalledWith(expect.anything(), 'image');
+		expect(enhancer).toHaveBeenCalledWith({ instance: expect.anything(), type: 'image' });
 	});
 
 	it('derives labels with getFileName and keeps explicit labels', () => {
@@ -606,7 +606,7 @@ describe('UploadPicker', () => {
 		});
 		expect(wrapper.findAll('.vc-upload-picker-file-item__title').map(i => i.text())).toEqual(['a b.pdf', '自定义.pdf']);
 
-		VcInstance.options.FilePreview!.getFileName = v => `name:${v.split('/').pop()}`;
+		VcInstance.options.FilePreview!.getFileName = ({ source }) => `name:${source.split('/').pop()}`;
 		try {
 			const configured = mount(UploadPicker, {
 				props: { modelValue: ['https://cdn.test/download'], picker: ['file'] }

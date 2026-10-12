@@ -63,7 +63,7 @@ export const Snapshot = defineComponent({
 		const download = async (options: any) => {
 			const loadContext = onLoad();
 			const downloadByUser = props.download || VcInstance.options.Snapshot?.download || (() => false);
-			const skip = downloadByUser(instance, options);
+			const skip = downloadByUser({ instance, options });
 
 			const done = async (v: boolean) => {
 				try {

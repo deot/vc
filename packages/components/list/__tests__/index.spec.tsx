@@ -90,6 +90,9 @@ describe('index.ts', () => {
 
 		await wrapper.find('.item-1').trigger('click');
 		expect(to).toHaveBeenCalledTimes(1);
+		expect(to.mock.calls[0]).toHaveLength(1);
+		expect((to.mock.calls[0] as any)[0].value).toBe('https://xx.com');
+		expect((to.mock.calls[0] as any)[0].instance.type.name).toBe('vcm-list-item');
 	});
 
 	it('VcInstance, to -> truthy', async () => {

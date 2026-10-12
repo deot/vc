@@ -199,7 +199,7 @@ onBeforeUnmount(() => leaf?.destroy());
 | headers | 请求头 | `Record<string, string>` | - | `{}` |
 | showTask | 展示共享任务浮层 | `boolean` | - | `false` |
 | directory | 使用浏览器文件夹选择能力，仍受 max 限制 | `boolean` | - | `false` |
-| enhancer | 选择器增强器；同步 true 跳过原生选择器，Promise 返回 undefined 也跳过 | `(instance: ComponentInternalInstance) => boolean \| void \| Promise<boolean \| void>` | - | - |
+| enhancer | 选择器增强器；同步 true 跳过原生选择器，Promise 返回 undefined 也跳过 | `(data: { instance: ComponentInternalInstance }) => boolean \| void \| Promise<boolean \| void>` | - | - |
 | parallel | 并行上传；false 为串行，每批开始时固定 | `boolean` | - | `true` |
 | showError | 展示组件错误反馈；不影响 error 事件 | `boolean` | - | `true` |
 | showLoading | 每批创建 Loading，完成或卸载时关闭 | `boolean` | - | `false` |

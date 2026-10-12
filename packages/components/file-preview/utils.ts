@@ -38,7 +38,7 @@ export const getFileType = (v: string): FilePreviewFileType => {
  */
 export const resolveFileType = (v: string): FilePreviewFileType => {
 	const fn = VcInstance.options.FilePreview?.getFileType;
-	const type = typeof fn === 'function' ? fn(v) : null;
+	const type = typeof fn === 'function' ? fn({ source: v }) : null;
 	return isFileType(type) ? type : getFileType(v);
 };
 
@@ -63,7 +63,7 @@ export const getFileName = (v: string) => {
  */
 export const resolveFileName = (v: string) => {
 	const fn = VcInstance.options.FilePreview?.getFileName;
-	const name = typeof fn === 'function' ? fn(v) : null;
+	const name = typeof fn === 'function' ? fn({ source: v }) : null;
 	return typeof name === 'string' && name ? name : getFileName(v);
 };
 

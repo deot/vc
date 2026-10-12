@@ -51,6 +51,44 @@ describe('index.ts', () => {
 		expect(wrapper.find('.vc-image__error').text()).toBe('Failed to load image');
 	});
 
+	describe('formatter', () => {
+		afterEach(() => {
+			VcInstance.configure({ Image: { formatter: void 0 } });
+		});
+
+		it('receives a single object and falls back to the original path on empty result', async () => {
+			const formatter = vi.fn(({ value, type }) => (type === 'thumbnail' ? `/thumbnail/${value}` : ''));
+			VcInstance.configure({ Image: { formatter } });
+
+			const wrapper = mount(Image, { props: { src: 'a.png', thumbnail: 'b.png' } });
+			await nextTick();
+
+			expect(formatter.mock.calls[0]).toHaveLength(1);
+			expect(formatter.mock.calls[0][0]).toMatchObject({ value: 'b.png', type: 'thumbnail' });
+			expect(formatter.mock.calls[0][0].instance.type.name).toBe('vc-image');
+			wrapper.unmount();
+
+			const wrapper$ = mount(Image, { props: { src: 'a.png' } });
+			await nextTick();
+			expect(formatter.mock.calls.at(-1)![0]).toMatchObject({ value: 'a.png', type: 'src' });
+			wrapper$.unmount();
+		});
+
+		it('prefers the prop over the global option', async () => {
+			const formatter = vi.fn(({ value }) => value);
+			const formatter$ = vi.fn(({ value }) => value);
+			VcInstance.configure({ Image: { formatter } });
+
+			const wrapper = mount(Image, { props: { src: 'a.png', formatter: formatter$ } });
+			await nextTick();
+
+			expect(formatter$).toHaveBeenCalled();
+			// 其它用例里仍挂载着的 Image 也会响应全局配置，只看当前这张图
+			expect(formatter.mock.calls.some(([data]) => data.value === 'a.png')).toBe(false);
+			wrapper.unmount();
+		});
+	});
+
 	describe('pending preload', () => {
 		// 请求一直不返回的图片：记录每次创建的实例，检查回调与 src 是否被取消
 		class PendingImage {

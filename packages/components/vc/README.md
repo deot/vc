@@ -125,14 +125,14 @@ export const restoreLocale = () => VcInstance.configure({ locale: originalLocale
 
 | 配置项 | 具体作用 | 默认值 |
 | --- | --- | --- |
-| formatter | 接收 `(value, type, instance)`，`type` 为 `src` 或 `thumbnail`；返回空值时保留原地址，组件的 `formatter` 优先 | `undefined` |
+| formatter | 接收 `{ value, type, instance }`，`value` 为图片地址，`type` 为 `src` 或 `thumbnail`；返回空值时保留原地址，组件的 `formatter` 优先 | `undefined` |
 
 ```js
 import { VcInstance } from '@deot/vc';
 
 VcInstance.configure({
 	Image: {
-		formatter: path => new URL(path, 'https://assets.example.com/').href
+		formatter: ({ value }) => new URL(value, 'https://assets.example.com/').href
 	}
 });
 ```
@@ -143,7 +143,7 @@ VcInstance.configure({
 
 | 配置项 | 具体作用 | 默认值 |
 | --- | --- | --- |
-| to | 接收 `(value, instance)`，`value` 为当前项的 `to`；返回非 `undefined` 值时终止默认导航，包括 `false` | `undefined` |
+| to | 接收 `{ value, instance }`，`value` 为当前项的 `to`；返回非 `undefined` 值时终止默认导航，包括 `false` | `undefined` |
 
 ```js
 import { VcInstance } from '@deot/vc';
@@ -151,7 +151,7 @@ import { VcInstance } from '@deot/vc';
 // router 为应用的 Vue Router 实例
 VcInstance.configure({
 	MListItem: {
-		to: (value) => {
+		to: ({ value }) => {
 			if (!value) return;
 			router.push(value);
 			return false;
@@ -166,8 +166,8 @@ FilePreview 与 UploadPicker 共用此配置，Editor 只读取文件类型和�
 
 | 配置项 | 具体作用 | 默认值 |
 | --- | --- | --- |
-| getFileType | 接收地址，识别 `image`、`video`、`audio` 或 `file`；返回空值或非法类型时回退内置规则 | `undefined` |
-| getFileName | 从地址推导缺省名称；数据中的显式名称优先，返回空值时回退内置规则 | `undefined` |
+| getFileType | 接收 `{ source }`，`source` 为地址或文件名，识别 `image`、`video`、`audio` 或 `file`；返回空值或非法类型时回退内置规则 | `undefined` |
+| getFileName | 接收 `{ source }`，从地址推导缺省名称；数据中的显式名称优先，返回空值时回退内置规则 | `undefined` |
 | enhancer | 接收 `{ current, data, instance }`；返回真值或 resolve 真值时接管预览 | `undefined` |
 
 ```js
@@ -175,8 +175,8 @@ import { VcInstance } from '@deot/vc';
 
 VcInstance.configure({
 	FilePreview: {
-		getFileType: source => source.endsWith('.jpg!preview') ? 'image' : undefined,
-		getFileName: source => decodeURIComponent(source.split('/').pop()).replace(/^\d+_/, ''),
+		getFileType: ({ source }) => source.endsWith('.jpg!preview') ? 'image' : undefined,
+		getFileName: ({ source }) => decodeURIComponent(source.split('/').pop()).replace(/^\d+_/, ''),
 		enhancer: ({ current, data }) => {
 			const item = data[current];
 			if (item.type !== 'file') return false;
@@ -195,7 +195,7 @@ VcInstance.configure({
 | 配置项 | 具体作用 | 默认值 |
 | --- | --- | --- |
 | options | 提供 Quill 初始化配置，在 Editor 默认配置之后、组件 `options` 之前合并 | `undefined` |
-| enhancer | 接收 `(instance, type)`，返回真值时终止默认工具栏上传；需要组件启用 `enhancer`，缺省回退到 `UploadPicker.enhancer` | `undefined` |
+| enhancer | 接收 `{ instance, type }`，返回真值时终止默认工具栏上传；需要组件启用 `enhancer`，缺省回退到 `UploadPicker.enhancer` | `undefined` |
 
 ```js
 import { VcInstance } from '@deot/vc';
@@ -203,7 +203,7 @@ import { VcInstance } from '@deot/vc';
 VcInstance.configure({
 	Editor: {
 		options: { toolbar: ['bold', 'italic', 'link', 'upload/image', 'undo', 'redo'] },
-		enhancer: async (instance, type) => {
+		enhancer: async ({ instance, type }) => {
 			// selectResource 为业务资源库，返回 { source, name } 或空值
 			const resource = await selectResource(type);
 			if (!resource) return false;
@@ -273,7 +273,7 @@ VcInstance.configure({
 | 配置项 | 具体作用 | 默认值 |
 | --- | --- | --- |
 | options | 提供 DOM 采集配置，与内置配置、组件 `options` 依次合并 | `undefined` |
-| download | 接收 `(instance, options)`，组件的 `download` 优先；同步真值、Promise 兑现为真值或 `undefined` 时跳过默认下载，假值继续默认下载 | `undefined` |
+| download | 接收 `{ instance, options }`，组件的 `download` 优先；同步真值、Promise 兑现为真值或 `undefined` 时跳过默认下载，假值继续默认下载 | `undefined` |
 | source | 保留配置，当前实现未读取 | `undefined` |
 
 ```js
@@ -282,7 +282,7 @@ import { VcInstance } from '@deot/vc';
 VcInstance.configure({
 	Snapshot: {
 		options: { fast: false },
-		download: async (instance, options) => {
+		download: async ({ instance, options }) => {
 			if (options.format !== 'pdf') return false;
 			const snapshot = await instance.exposed.refresh();
 			const canvas = await snapshot.toCanvas();
@@ -324,7 +324,7 @@ VcInstance.configure({
 | onResponse | 接收 `{ request, requestOptions }`，将响应转换成组件使用的结果，例如上传文件的 `source` | `undefined` |
 | onMessage | 接收 `{ cause, message }`，返回字符串时覆盖上传失败文案 | `undefined` |
 | name | 设置 FormData 的文件字段名，组件非空的 `name` 优先 | 未设置时回退为 `'file'` |
-| enhancer | 接收组件内部实例，接管原生文件选择前的操作；跳过选择器的返回值规则见 Upload 文档 | `undefined` |
+| enhancer | 接收 `{ instance }`，`instance` 为组件内部实例，接管原生文件选择前的操作；跳过选择器的返回值规则见 Upload 文档 | `undefined` |
 
 ```js
 import { VcInstance } from '@deot/vc';
@@ -358,14 +358,14 @@ VcInstance.configure({
 
 | 配置项 | 具体作用 | 默认值 |
 | --- | --- | --- |
-| enhancer | 接收 `(instance, type)`，同步返回真值时阻止原生选择；需要组件的 `enhancer` 为 `true`，移动端入口不使用此配置 | `undefined` |
+| enhancer | 接收 `{ instance, type }`，同步返回真值时阻止原生选择；需要组件的 `enhancer` 为 `true`，移动端入口不使用此配置 | `undefined` |
 
 ```js
 import { VcInstance } from '@deot/vc';
 
 VcInstance.configure({
 	UploadPicker: {
-		enhancer: (instance, type) => {
+		enhancer: ({ instance, type }) => {
 			// openResourceLibrary 为业务资源库；此回调同步返回 true
 			openResourceLibrary(type, (items) => {
 				// items 按组件的 keyValue 配置提供 value、label 等字段

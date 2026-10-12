@@ -106,7 +106,7 @@ await snapshot.download({ format: 'png', filename: 'reading' });
 | lazy | 跳过挂载时的首次采集；依赖仍在挂载时加载 | `boolean` | - | `true` |
 | showLoading | 调用 `toDataURL`、`download` 时显示生成提示 | `boolean` | - | `true` |
 | options | 传给 snapdom 的采集配置，覆盖全局配置 | `object` | - | `{}` |
-| download | 自定义下载回调 | `(instance, options) => any` | - | - |
+| download | 自定义下载回调，`options` 为调用 `download()` 时传入的参数 | `(data: { instance: object; options: any }) => any` | - | - |
 | tag | 保留属性，当前渲染固定为 `div` | `string` | - | `'div'` |
 | crossOrigin | 保留属性，当前未参与采集或图片属性设置 | `string` | `''`、`'anonymous'`、`'use-credentials'` | `'anonymous'` |
 | source | 保留属性，当前未调用 | `Function` | - | - |

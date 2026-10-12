@@ -15,7 +15,7 @@ import { FileItem } from './item/file';
 import { usePicker } from './use-picker';
 import type { PickerItem, PickerType } from './types';
 import { SortList } from '../sort-list';
-import { PICKER_ITEM_KEY } from './utils';
+import { PICKER_ITEM_KEY, resolveEnhancer } from './utils';
 
 export const UploadPicker = defineComponent({
 	name: 'vc-upload-picker',
@@ -46,15 +46,8 @@ export const UploadPicker = defineComponent({
 				.filter(picker => !!picker.item);
 		});
 		const handleClick = (e: MouseEvent, type: PickerType) => {
-			const options = VcInstance.options.UploadPicker || {};
-			if (typeof props.enhancer === 'function' || (props.enhancer && options.enhancer)) {
-				const fn = typeof props.enhancer === 'function'
-					? props.enhancer
-					: options.enhancer;
-
-				// 阻止原生事件，如video, file不走enhancer, 可以跳过;
-				fn(instance, type) && e.stopPropagation();
-			}
+			// 阻止原生事件，如video, file不走enhancer, 可以跳过;
+			resolveEnhancer(props.enhancer, VcInstance.options.UploadPicker?.enhancer)?.({ instance, type }) && e.stopPropagation();
 		};
 		const base = usePicker(expose);
 		return () => {

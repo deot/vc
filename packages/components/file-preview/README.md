@@ -175,8 +175,8 @@ const data = [
 
 `VcInstance.options.FilePreview` 由 FilePreview、UploadPicker 与 Editor 共用：
 
-- `getFileType(source)`：自定义类型识别，返回空值时回退内置规则。
-- `getFileName(source)`：自定义从地址推导文件名，返回空值时回退内置规则；数据中显式的 `name`（UploadPicker 为 `label`）优先。
+- `getFileType({ source })`：自定义类型识别，返回空值时回退内置规则。
+- `getFileName({ source })`：自定义从地址推导文件名，返回空值时回退内置规则；数据中显式的 `name`（UploadPicker 为 `label`）优先。
 - `enhancer({ current, data, instance })`：预览前调用，返回真值（或 resolve 真值）表示已接管，不再执行内置预览（Editor 不使用）。
 
 示例中带处理后缀的图片地址（内置规则会识别为文件）被识别为图片，文件名去掉时间戳前缀，文件交给 `enhancer` 处理。
@@ -204,8 +204,8 @@ const data = [
 
 VcInstance.configure({
 	FilePreview: {
-		getFileType: source => (/\.jpg!/.test(source) ? 'image' : undefined),
-		getFileName: (source) => {
+		getFileType: ({ source }) => (/\.jpg!/.test(source) ? 'image' : undefined),
+		getFileName: ({ source }) => {
 			const name = decodeURIComponent(source.split('/').pop());
 			return name.replace(/^\d+_/, '');
 		},
@@ -347,8 +347,8 @@ const handleClick = () => {
 
 | 属性 | 说明 | 类型 |
 | --- | --- | --- |
-| getFileType | 自定义类型识别，参数为地址或文件名；返回空值或非法类型时回退内置规则 | `(source: string) => 'image' \| 'video' \| 'audio' \| 'file' \| null \| undefined \| void` |
-| getFileName | 自定义从地址推导文件名；返回空值时回退内置规则。只在数据未提供名称时调用 | `(source: string) => string \| null \| undefined \| void` |
+| getFileType | 自定义类型识别，`source` 为地址或文件名；返回空值或非法类型时回退内置规则 | `(data: { source: string }) => 'image' \| 'video' \| 'audio' \| 'file' \| null \| undefined \| void` |
+| getFileName | 自定义从地址推导文件名，`source` 为地址；返回空值时回退内置规则。只在数据未提供名称时调用 | `(data: { source: string }) => string \| null \| undefined \| void` |
 | enhancer | 预览前调用；返回真值（或 resolve 真值）表示已接管，不再执行内置预览。`data` 为解析后的列表，`instance` 为调用方组件内部实例或 `null` | `({ current, data, instance }) => unknown` |
 
 ### 使用注意

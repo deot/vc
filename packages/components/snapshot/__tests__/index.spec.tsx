@@ -222,6 +222,9 @@ describe('index.ts', () => {
 		await flush();
 
 		expect(userDownload).toHaveBeenCalledTimes(1);
+		expect(userDownload.mock.calls[0]).toHaveLength(1);
+		expect((userDownload.mock.calls[0] as any)[0].options).toEqual({ filename: 'a' });
+		expect((userDownload.mock.calls[0] as any)[0].instance.type.name).toBe('vc-snapshot');
 		expect(snapshotObject.download).not.toHaveBeenCalled();
 	});
 

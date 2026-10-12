@@ -50,9 +50,9 @@ import { VcInstance, enUS } from '@deot/vc';
 VcInstance.configure({
 	FilePreview: {
 		// 返回空值时回退内置规则
-		getFileType: source => (/\.jpg!/.test(source) ? 'image' : undefined),
+		getFileType: ({ source }) => (/\.jpg!/.test(source) ? 'image' : undefined),
 		// 数据未提供名称时调用，返回空值时回退内置规则
-		getFileName: source => decodeURIComponent(source.split('/').pop()).replace(/^\d+_/, ''),
+		getFileName: ({ source }) => decodeURIComponent(source.split('/').pop()).replace(/^\d+_/, ''),
 		// 返回真值（或 resolve 真值）表示已接管，不再执行内置预览
 		enhancer: ({ current, data, instance }) => {
 			const item = data[current];

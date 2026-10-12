@@ -49,7 +49,7 @@ export const Image = defineComponent({
 		const resolvePath = (path: string, type: string) => {
 			const fn = props.formatter || VcInstance.options.Image?.formatter;
 			if (typeof fn === 'function') {
-				return fn(path, type, instance) || path;
+				return fn({ value: path, type, instance }) || path;
 			}
 			return path;
 		};

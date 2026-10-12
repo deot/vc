@@ -10,6 +10,7 @@ import { VcInstance } from '../vc/index';
 import { uploadFile, insertFile, registerExtends, EXTENDS_CONTEXT_KEY } from './extends';
 import { Spin } from '../spin';
 import { props as editorProps } from './editor-props';
+import { resolveEnhancer } from '../upload-picker/utils';
 import { useLocale } from '../locale';
 
 const COMPONENT_NAME = 'vc-editor';
@@ -173,11 +174,8 @@ export const Editor = defineComponent({
 		};
 
 		const handleUpload = async (e: any, type: string) => {
-			const enhancer = VcInstance.options.Editor.enhancer || VcInstance.options.UploadPicker.enhancer;
-			if (typeof props.enhancer === 'function' || (props.enhancer && enhancer)) {
-				const fn = typeof props.enhancer === 'function' ? props.enhancer : enhancer;
-				if (await fn(instance, type)) return;
-			}
+			const enhancer = resolveEnhancer(props.enhancer, VcInstance.options.Editor?.enhancer, VcInstance.options.UploadPicker?.enhancer);
+			if (await enhancer?.({ instance: instance!, type })) return;
 			// 默认上传
 			uploadFile(type, getFakeEventExtend());
 		};

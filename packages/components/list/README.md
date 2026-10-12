@@ -134,6 +134,6 @@ const handleOpen = () => { count.value++; };
 
 ### 导航行为
 
-点击时先触发 `click`，随后调用全局配置 `VcInstance.configure({ MListItem: { to } })` 中的处理函数（如已配置），第一个参数为当前项的 `to`。处理函数返回任何非 `undefined` 值都会终止后续默认导航，包括 `false`。
+点击时先触发 `click`，随后调用全局配置 `VcInstance.configure({ MListItem: { to } })` 中的处理函数（如已配置），参数为 `{ value, instance }`，`value` 为当前项的 `to`。处理函数返回任何非 `undefined` 值都会终止后续默认导航，包括 `false`。
 
 默认导航优先使用 `href` 设置 `window.location.href`；否则，函数类型的 `to` 无参数执行，包含 `协议://地址` 的字符串通过 `window.open` 打开。普通路由路径和对象不会自动交给 Vue Router，需要通过全局处理函数自行接入。组件没有 `method` 属性。

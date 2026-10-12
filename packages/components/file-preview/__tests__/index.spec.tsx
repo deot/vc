@@ -57,8 +57,10 @@ describe('FilePreview', () => {
 		const oss = 'https://cdn.test/photo.jpg!4-4';
 		expect(resolveFileType(oss)).toBe('file');
 
-		VcInstance.options.FilePreview!.getFileType = v => (/\.jpg!/.test(v) ? 'image' : undefined);
+		const getFileType$ = vi.fn(({ source }) => (/\.jpg!/.test(source) ? 'image' : undefined));
+		VcInstance.options.FilePreview!.getFileType = getFileType$ as any;
 		expect(resolveFileType(oss)).toBe('image');
+		expect(getFileType$).toHaveBeenCalledWith({ source: oss });
 		expect(resolveFileType(movie)).toBe('video');
 
 		VcInstance.options.FilePreview!.getFileType = () => 'pdf' as any;
@@ -75,8 +77,10 @@ describe('FilePreview', () => {
 		const url = 'https://cdn.test/files/1695123_%E5%90%88%E5%90%8C.pdf?token=1';
 		expect(resolveFileName(url)).toBe('1695123_合同.pdf');
 
-		VcInstance.options.FilePreview!.getFileName = v => getFileName(v).replace(/^\d+_/, '');
+		const getFileName$ = vi.fn(({ source }) => getFileName(source).replace(/^\d+_/, ''));
+		VcInstance.options.FilePreview!.getFileName = getFileName$;
 		expect(resolveFileName(url)).toBe('合同.pdf');
+		expect(getFileName$).toHaveBeenCalledWith({ source: url });
 		expect(normalize([url, { source: url, name: 'explicit.pdf' }]).map(i => i.name)).toEqual(['合同.pdf', 'explicit.pdf']);
 
 		VcInstance.options.FilePreview!.getFileName = () => '';
