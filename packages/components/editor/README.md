@@ -164,8 +164,9 @@ editorRef.value.add([
 | fontSize | 注入字号工具标签样式的值 | `string[]` | - | `['12px', '14px', '16px', '18px', '20px', '22px', '24px', '50px']` |
 | lineHeight | 注入行高工具标签样式的值 | `string[]` | - | `['1', '1.2', '1.4', '1.6', '1.8', '2.0', '2.2', '2.4', '2.6', '2.8', '3.0']` |
 | letterSpacing | 注入字间距工具标签样式的值 | `string[]` | - | `['0px', '1px', '2px', '3px', '4px', '5px', '6px', '7px', '8px', '9px', '10px']` |
+| previewable | 点击内容中的图片时是否打开预览 | `boolean` | - | `true` |
 
-这些数组在挂载时生成标签样式，不修改 HTML 或 Quill 格式白名单。EditorView 没有公开事件、插槽或方法。当前图片预览监听匹配旧容器类名，因此普通 EditorView 渲染不提供有效的图片点击预览。
+这些数组在挂载时生成标签样式，不修改 HTML 或 Quill 格式白名单。EditorView 没有公开事件、插槽或方法。`previewable` 开启时，点击内容中的图片会打开预览，预览列表为内容内的全部图片。
 
 ### 注意事项
 

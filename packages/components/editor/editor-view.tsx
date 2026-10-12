@@ -1,35 +1,14 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, computed, onUnmounted, onMounted } from 'vue';
+import { defineComponent, onUnmounted, onMounted } from 'vue';
 import type { PropType } from 'vue';
 
 import * as Load from '@deot/helper-load';
 import { getUid } from '@deot/helper-utils';
-import { ImagePreview } from '../file-preview/image-preview';
-import { insertFontSizeStyle, insertLineHeightStyle, insertLetterSpacingStyle } from './utils';
+import { insertFontSizeStyle, insertLineHeightStyle, insertLetterSpacingStyle, previewImages } from './utils';
 import { toolbarDefaultsMap } from './default-options';
 
 const COMPONENT_NAME = 'vc-editor-view';
-
-const setImages = (v: string) => {
-	if (!v) return;
-
-	const IMG_REGX = /<img.*?(?:>|\/>)/gi;
-	const SRC_REGX = /src=[\'\"]?([^\'\"]*)[\'\"]?/i;
-
-	const imgs = v.match(IMG_REGX);
-	if (imgs) {
-		const imgUrls: string[] = [];
-		for (let i = 0; i < imgs.length; i++) {
-			const src = imgs[i].match(SRC_REGX);
-			// 获取图片地址
-			src?.[1] && imgUrls.push(src?.[1]);
-		}
-		return imgUrls;
-	}
-
-	return;
-};
 
 export const EditorView = defineComponent({
 	name: COMPONENT_NAME,
@@ -51,44 +30,26 @@ export const EditorView = defineComponent({
 			type: Array as PropType<string[]>,
 			default: () => toolbarDefaultsMap['letter-spacing']
 		},
+		// 点击内容里的图片是否打开预览
+		previewable: {
+			type: Boolean,
+			default: true
+		}
 	},
 	setup(props) {
 		const styleId = getUid('editor-view-style');
 		const lineHeightStyleId = getUid('editor-toolbar-style');
 		const letterSpacingStyleId = getUid('editor-toolbar-style');
 
-		// value
-		const currentValue = computed(() => {
-			return props.value || '';
-		});
-
-		const currentImages = computed(() => {
-			return setImages(currentValue.value) || [];
-		});
-
-		const initListener = () => {
-			const dom = document.getElementsByClassName('ql-editor');
-			Array.from(dom).forEach((it: any) => {
-				if (it.parentNode.className.indexOf('vc-quilleditor-view ql-snow') !== -1) {
-					it.addEventListener('click', (e: any) => {
-						if (e.target.nodeName === 'IMG') {
-							const index = (currentImages.value).indexOf(e.target.currentSrc);
-							ImagePreview.open({
-								current: index,
-								data: currentImages.value
-							});
-						}
-					});
-				}
-			});
+		const handleClick = (e: MouseEvent) => {
+			const target = e.target as Element;
+			props.previewable && target.nodeName === 'IMG' && previewImages(e.currentTarget as Element, target);
 		};
 
 		onMounted(() => {
 			insertFontSizeStyle(props.fontSize, styleId);
 			insertLineHeightStyle(props.lineHeight, lineHeightStyleId);
 			insertLetterSpacingStyle(props.letterSpacing, letterSpacingStyleId);
-
-			initListener();
 		});
 
 		onUnmounted(() => {
@@ -99,8 +60,8 @@ export const EditorView = defineComponent({
 
 		return () => {
 			return (
-				<div class="vc-editor-view">
-					<div class="ql-editor ql-snow ql-container" innerHTML={currentValue.value} />
+				<div class="vc-editor-view" onClick={handleClick}>
+					<div class="ql-editor ql-snow ql-container" innerHTML={props.value} />
 				</div>
 			);
 		};

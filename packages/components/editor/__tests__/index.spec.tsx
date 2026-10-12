@@ -3,7 +3,7 @@
 import { Editor, EditorView } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import Quill from 'quill';
-import { nextTick } from 'vue';
+import { nextTick, ref } from 'vue';
 import { enUS, zhCN } from '@deot/vc-locale';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EditorToolbar } from '../toolbar';
@@ -409,24 +409,10 @@ describe('EditorView and utils', () => {
 		expect(Load.style).toHaveBeenCalledWith(expect.stringContaining('2px'), { id: 'letter-style' });
 	});
 
-	it('renders html, initializes preview listener and cleans styles', async () => {
-		const previewOpen = vi.spyOn(ImagePreview, 'open').mockReturnValue({} as any);
-		const host = document.createElement('div');
-		host.className = 'vc-quilleditor-view ql-snow';
-		const editor = document.createElement('div');
-		editor.className = 'ql-editor';
-		const image = document.createElement('img');
-		Object.defineProperty(image, 'currentSrc', {
-			value: 'second.png',
-			configurable: true
-		});
-		editor.appendChild(image);
-		host.appendChild(editor);
-		document.body.appendChild(host);
-
+	it('renders html and cleans styles', async () => {
 		const wrapper = mount(() => (
 			<EditorView
-				value={'<p>hello</p><img src="first.png"><img src="second.png">'}
+				value="<p>hello</p>"
 				fontSize={['13px']}
 				lineHeight={['1.2']}
 				letterSpacing={['1px']}
@@ -437,14 +423,88 @@ describe('EditorView and utils', () => {
 		expect(wrapper.find('.vc-editor-view').exists()).toBe(true);
 		expect(wrapper.find('.ql-editor').html()).toContain('hello');
 
-		image.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		wrapper.unmount();
+		expect(Load.removeStyle).toHaveBeenCalledTimes(3);
+	});
+
+	it('opens the preview when an image inside the view is clicked', async () => {
+		const previewOpen = vi.spyOn(ImagePreview, 'open').mockReturnValue({} as any);
+		const wrapper = mount(() => (
+			<EditorView
+				value={'<p>hello</p><img src="https://example.com/first.png"><p><img src="https://example.com/second.png"></p>'}
+			/>
+		), { attachTo: document.body });
+		await flush();
+
+		await wrapper.find('p').trigger('click');
+		expect(previewOpen).not.toHaveBeenCalled();
+
+		await wrapper.findAll('img')[1].trigger('click');
+		expect(previewOpen).toHaveBeenCalledTimes(1);
 		expect(previewOpen).toHaveBeenCalledWith({
 			current: 1,
-			data: ['first.png', 'second.png']
+			data: ['https://example.com/first.png', 'https://example.com/second.png']
 		});
 
 		wrapper.unmount();
-		expect(Load.removeStyle).toHaveBeenCalledTimes(3);
+	});
+
+	it('previews the clicked one among images sharing a source, and follows value changes', async () => {
+		const previewOpen = vi.spyOn(ImagePreview, 'open').mockReturnValue({} as any);
+		const value = ref('<img src="https://example.com/same.png"><img src="https://example.com/same.png">');
+		const wrapper = mount(() => (<EditorView value={value.value} />), { attachTo: document.body });
+		await flush();
+
+		await wrapper.findAll('img')[1].trigger('click');
+		expect(previewOpen).toHaveBeenLastCalledWith({
+			current: 1,
+			data: ['https://example.com/same.png', 'https://example.com/same.png']
+		});
+
+		value.value = '<img src="https://example.com/next.png">';
+		await flush();
+		await wrapper.find('img').trigger('click');
+		expect(previewOpen).toHaveBeenLastCalledWith({
+			current: 0,
+			data: ['https://example.com/next.png']
+		});
+
+		wrapper.unmount();
+	});
+
+	it('skips the preview when previewable is false', async () => {
+		const previewOpen = vi.spyOn(ImagePreview, 'open').mockReturnValue({} as any);
+		const previewable = ref(false);
+		const wrapper = mount(() => (
+			<EditorView value={'<img src="https://example.com/first.png">'} previewable={previewable.value} />
+		), { attachTo: document.body });
+		await flush();
+
+		await wrapper.find('img').trigger('click');
+		expect(previewOpen).not.toHaveBeenCalled();
+
+		previewable.value = true;
+		await flush();
+		await wrapper.find('img').trigger('click');
+		expect(previewOpen).toHaveBeenCalledTimes(1);
+
+		wrapper.unmount();
+	});
+
+	it('leaves images outside the view alone', async () => {
+		const previewOpen = vi.spyOn(ImagePreview, 'open').mockReturnValue({} as any);
+		const outside = document.createElement('div');
+		outside.className = 'ql-editor';
+		outside.innerHTML = '<img src="https://example.com/outside.png">';
+		document.body.appendChild(outside);
+
+		const wrapper = mount(() => (<EditorView value={'<img src="https://example.com/inside.png">'} />), { attachTo: document.body });
+		await flush();
+
+		outside.querySelector('img')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		expect(previewOpen).not.toHaveBeenCalled();
+
+		wrapper.unmount();
 	});
 
 	it('handles empty editor view value', () => {

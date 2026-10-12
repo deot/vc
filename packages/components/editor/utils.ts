@@ -1,4 +1,5 @@
 import * as Load from '@deot/helper-load';
+import { ImagePreview } from '../file-preview/image-preview';
 
 /**
  * 动态生成font-size的css，插入head
@@ -50,4 +51,17 @@ export const insertLetterSpacingStyle = (value: string[], id: string) => {
 		return pre;
 	}, '');
 	return Load.style(code, { id });
+};
+
+/**
+ * 预览容器内的全部图片，并定位到被点击的那张；按节点定位，相同地址的图片也能对上
+ * @param container 图片所在的容器
+ * @param target 被点击的图片
+ */
+export const previewImages = (container: Element, target: Element) => {
+	const images = Array.from(container.querySelectorAll('img'));
+	ImagePreview.open({
+		current: images.indexOf(target as HTMLImageElement),
+		data: images.map(it => it.currentSrc || it.src)
+	});
 };

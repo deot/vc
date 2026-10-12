@@ -1,5 +1,5 @@
 import type Quill from 'quill';
-import { ImagePreview } from '../../file-preview/image-preview';
+import { previewImages } from '../utils';
 import { Upload } from '../../upload';
 import { EXTENDS_CONTEXT_KEY } from './constant';
 import { IMAGE_ACCEPTS, VIDEO_ACCEPTS } from '../../upload-picker/utils';
@@ -143,11 +143,7 @@ export const registerEventModule = (QuillClass: typeof Quill) => {
 			const current = QuillClass.find(e.target) as any;
 			// @ts-ignore
 			if (current instanceof ImageBlot) {
-				const images = Array.from(this.editor.root.querySelectorAll('.ql-container img')).map((i: any) => i.src);
-				ImagePreview.open({
-					current: images.findIndex(i => i === current.domNode.src),
-					data: images,
-				});
+				previewImages(this.editor.root, current.domNode);
 			}
 		};
 
