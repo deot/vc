@@ -23,6 +23,7 @@ $color-neutral-light: varfix(color-neutral-light, button-group);
 		}
 
 		&:first-child {
+			margin-left: 0;
 			border-bottom-left-radius: inherit;
 			border-top-left-radius: inherit;
 		}
@@ -59,6 +60,7 @@ $color-neutral-light: varfix(color-neutral-light, button-group);
 			margin-left: 0;
 
 			&:first-child {
+				margin-top: 0;
 				border-top-right-radius: inherit;
 				border-bottom-left-radius: 0;
 			}

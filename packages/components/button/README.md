@@ -220,41 +220,48 @@ import { Button, ButtonGroup } from '@deot/vc';
 
 ## 主题与局部覆盖
 
-全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-button-<参数>`、`--vc-button-group-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
-
-语义按钮文字使用 color-contrast-light，默认不随亮暗主题反转，可通过 CSS 变量覆盖。⚠ color-mix：禁用主色由 color-primary-light 30% 与 background-color-lightest 70% 混合；非 solid 用于背景和边框，solid 用于文字和边框。不支持时使用 color-primary-lighter。禁用的 primary + solid 保留 background-color-lightest 背景，边框通过 currentColor 与文字同色，悬停时保持禁用样式。success / error / warning + solid 与 primary + solid 同构：背景使用 background-color-lightest，文字和边框使用对应语义色，悬停时改为对应的 -light 色；禁用时文字由对应 -light 色 30% 与 background-color-lightest 70% 混合（不支持 color-mix 时直接使用 -light 色），边框通过 currentColor 与文字同色，悬停时保持禁用样式。加载图标的默认灰色使用 button 命名空间下的 color-light-deepest。
-
-默认按钮的亮色普通背景使用 color-light-deep（`#F3F4F6`），非 solid 悬停时背景和边框使用 color-light-deeper（`#EBEDEF`）；暗色普通背景使用 background-color-light，非 solid 悬停时背景和边框使用 color-neutral-light（`#3B4354`）。默认 solid 按钮的背景使用 background-color-lightest（亮色 `#FFFFFF`），普通边框使用 color-neutral，亮暗主题悬停时仅边框改为 color-neutral-deep（`#86909C`），背景不变。亮色默认按钮禁用时（包括 solid），文字使用 color-neutral（`#C4C9D2`），背景使用 color-light-deep；非 solid 边框使用 color-light-deep，solid 边框使用 color-light-deeper（`#EBEDEF`）；悬停时保持禁用样式。亮色 text 按钮禁用文字同样使用 color-neutral，悬停时保持不变；暗色默认和 text 按钮禁用文字使用 color-dark-lighter。暗色下的 primary + solid 按钮使用 color-primary-light 作为普通文字和边框色，悬停时文字使用 color-contrast-light，边框通过 currentColor 保持与文字同色；禁用状态沿用上述禁用配色。
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-button-<参数>`、`--vc-button-group-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。禁用时悬停保持禁用配色。
 
 ### 全局
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
-| color-contrast-light | 语义按钮文字及暗色 primary + solid 悬停文字、边框 | `#FFFFFF`（亮暗主题相同） |
-| color-dark-light | 文字按钮文字（button） | 亮色：`#080F20`；暗色：`#E8E8E8` |
-| color-dark-lighter | 暗色非主色禁用文字及亮色 success / error / warning 禁用文字（button） | 亮色：`#515151`；暗色：`#D9D9D9` |
-| color-error | 错误按钮背景和边框（button） | `#F53F3F` |
-| color-error-light | 错误按钮悬停状态（button） | `#F76560` |
-| color-light-deep | 亮色默认按钮普通、禁用背景及非朴素普通、禁用边框（button） | 亮色：`#F3F4F6`；暗色：`#C0C4CC`（此处不使用暗色值） |
-| color-light-deeper | 基础边框、亮色默认非朴素按钮悬停背景和边框及朴素按钮禁用边框（button） | 亮色：`#EBEDEF`；暗色：`#D5D9E1` |
-| color-light-deepest | 默认加载图标（button） | 亮色：`#C0C4CC`；暗色：`#E8E8E8` |
-| color-neutral | 默认朴素按钮普通状态边框及亮色默认、text 禁用按钮文字（button） | 亮色：`#C4C9D2`；暗色：`#E8E8E8` |
-| color-neutral-light | 暗色默认非朴素按钮悬停背景和边框（button）；按钮组默认按钮边框（button-group） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
-| color-neutral-deep | 默认朴素按钮悬停边框（button） | `#86909C`（亮暗主题相同） |
-| color-primary | 主色按钮背景和边框（button） | `#456CF6` |
-| color-primary-light | 主色悬停状态、暗色主色朴素按钮文字和边框及禁用主色派生（button） | `#4A96FF` |
-| color-primary-lighter | 禁用主色背景和边框、朴素禁用文字的降级色（button） | `rgba(45, 140, 240, 0.2)` |
-| color-success | 成功按钮背景和边框（button） | `#1DB88C` |
-| color-success-light | 成功按钮悬停状态（button） | `#47CB89` |
-| color-warning | 警告按钮背景和边框（button） | `#E6A23C` |
-| color-warning-light | 警告按钮悬停状态（button） | `#EBB563` |
-| background-color-light | 暗色默认按钮及其他非主色禁用按钮的背景、边框（button） | 亮色：`#F7F8FA`；暗色：`#2D3444` |
-| background-color-lightest | 基础、朴素（包括禁用）背景及禁用主色的混合表面（button） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
-| foreground-color | 默认按钮文字（button） | 亮色：`#080F20`；暗色：`#F8F8F8` |
+| `color-contrast-light` | 非 `solid` 语义按钮文字；暗色 `primary` + `solid` 悬停文字及 `currentColor` 边框（`button`） | `#FFFFFF`（亮暗主题相同，默认不随主题反转，可通过 CSS 变量覆盖） |
+| `color-dark-light` | `text` 普通文字（`button`） | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| `color-dark-lighter` | 暗色 `default`、`text` 禁用文字；非 `solid` 的 `success`、`error`、`warning` 禁用文字（`button`） | 亮色：`#515151`；暗色：`#D9D9D9` |
+| `color-error` | 非 `solid` 的 `error` 普通背景、边框；`solid` 普通文字、边框（`button`） | `#F53F3F` |
+| `color-error-light` | 非 `solid` 的 `error` 悬停背景、边框；`solid` 悬停文字、边框及禁用派生基色（`button`） | `#F76560` |
+| `color-light-deep` | 亮色 `default` 普通、禁用背景（含 `solid` 禁用）；非 `solid` 普通、禁用边框（`button`） | 亮色：`#F3F4F6`；暗色：`#C0C4CC`（此处不使用暗色值） |
+| `color-light-deeper` | 基础边框；亮色 `default` 非 `solid` 悬停背景、边框及 `solid` 禁用边框（`button`） | 亮色：`#EBEDEF`；暗色：`#D5D9E1` |
+| `color-light-deepest` | 默认加载图标的灰色（`button`） | 亮色：`#C0C4CC`；暗色：`#E8E8E8` |
+| `color-neutral` | `default` + `solid` 普通边框（亮暗主题）；亮色 `default`、`text` 禁用文字（`button`） | 亮色：`#C4C9D2`；暗色：`#E8E8E8` |
+| `color-neutral-light` | 暗色 `default` 非 `solid` 悬停背景、边框（`button`）；按钮组默认按钮边框（`button-group`） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| `color-neutral-deep` | `default` + `solid` 悬停边框（亮暗主题，仅边框变化，背景不变）（`button`） | `#86909C`（亮暗主题相同） |
+| `color-primary` | 非 `solid` 的 `primary` 普通背景、边框；亮色 `solid` 普通文字、边框（`button`） | `#456CF6` |
+| `color-primary-light` | 非 `solid` 的 `primary` 悬停背景、边框；亮色 `primary` + `solid` 悬停文字及 `currentColor` 边框；暗色 `primary` + `solid` 普通文字、边框；`text` 悬停文字；禁用主色派生基色（`button`） | `#4A96FF` |
+| `color-primary-lighter` | 不支持 `color-mix` 时，禁用 `primary` 非 `solid` 背景、边框及 `solid` 文字、边框的降级色（`button`） | `rgba(45, 140, 240, 0.2)` |
+| `color-success` | 非 `solid` 的 `success` 普通背景、边框；`solid` 普通文字、边框（`button`） | `#1DB88C` |
+| `color-success-light` | 非 `solid` 的 `success` 悬停背景、边框；`solid` 悬停文字、边框及禁用派生基色（`button`） | `#47CB89` |
+| `color-warning` | 非 `solid` 的 `warning` 普通背景、边框；`solid` 普通文字、边框（`button`） | `#E6A23C` |
+| `color-warning-light` | 非 `solid` 的 `warning` 悬停背景、边框；`solid` 悬停文字、边框及禁用派生基色（`button`） | `#EBB563` |
+| `background-color-light` | 暗色 `default` 普通、禁用背景、边框（含 `solid` 禁用）；非 `solid` 的 `success`、`error`、`warning` 及 `text` 禁用背景、边框（`button`） | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+| `background-color-lightest` | 基础背景；`solid` 普通、悬停背景及语义按钮禁用背景；禁用派生色的混合表面（`button`） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| `foreground-color` | `default` 普通、悬停文字（含 `solid`）（`button`） | 亮色：`#080F20`；暗色：`#F8F8F8` |
+
+禁用语义色在亮暗主题下采用以下混合及降级规则，`solid` 边框通过 `currentColor` 与文字同色，背景保持 `background-color-lightest`：
+
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| `color-primary-light`、`background-color-lightest` | 禁用 `primary`：非 `solid` 背景、边框；`solid` 文字、边框（`button`） | 支持 `color-mix`：前者 `30%` 与后者 `70%` 混合；不支持时使用 `color-primary-lighter` |
+| `color-success-light`、`background-color-lightest` | 禁用 `success` + `solid` 文字、边框（`button`） | 支持 `color-mix`：前者 `30%` 与后者 `70%` 混合；不支持时使用 `color-success-light` |
+| `color-error-light`、`background-color-lightest` | 禁用 `error` + `solid` 文字、边框（`button`） | 支持 `color-mix`：前者 `30%` 与后者 `70%` 混合；不支持时使用 `color-error-light` |
+| `color-warning-light`、`background-color-lightest` | 禁用 `warning` + `solid` 文字、边框（`button`） | 支持 `color-mix`：前者 `30%` 与后者 `70%` 混合；不支持时使用 `color-warning-light` |
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| - | 当前组件没有额外的局部 CSS 主题参数 | - |
 
 ## API
 
