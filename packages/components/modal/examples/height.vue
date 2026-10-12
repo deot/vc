@@ -12,7 +12,7 @@
 			<span>行数</span>
 			<Select v-model="rows" :data="rowOptions" style="width: 120px;" />
 			<span>draggable</span>
-			<Select v-model="draggable" :data="booleanOptions" style="width: 100px;" />
+			<Select v-model="draggable" :data="switchOptions" style="width: 100px;" />
 		</div>
 		<Button type="primary" @click="isVisible = true">
 			打开
@@ -24,7 +24,7 @@
 			title="标题"
 			:size="size"
 			:height="height"
-			:draggable="draggable"
+			:draggable="draggable === 'on'"
 		>
 			<div v-for="i in rows" :key="i">
 				第 {{ i }} 行内容
@@ -51,8 +51,8 @@ const size = ref('small');
 const sizeOptions = ['small', 'medium', 'large'].map(value => ({ value, label: value }));
 const rows = ref(2);
 const rowOptions = [2, 10, 80].map(value => ({ value, label: `${value} 行` }));
-const draggable = ref(false);
-const booleanOptions = [{ value: false, label: '关' }, { value: true, label: '开' }];
+const draggable = ref('off');
+const switchOptions = [{ value: 'off', label: '关' }, { value: 'on', label: '开' }];
 </script>
 
 <style lang="scss">

@@ -26,7 +26,7 @@
 			v-if="controls.platform === 'mobile'"
 			:key="`mobile-${controls.mask}`"
 			v-model="isVisible"
-			:mask="controls.mask"
+			:mask="controls.mask === 'on'"
 			:data="mobileActions"
 			title="标题"
 		>
@@ -40,15 +40,15 @@
 			v-else
 			:key="`${controls.scrollable}-${controls.height}-${controls.draggable}-${controls.mask}`"
 			v-model="isVisible"
-			:scrollable="controls.scrollable"
+			:scrollable="controls.scrollable === 'on'"
 			:height="height"
-			:draggable="controls.draggable"
-			:mask="controls.mask"
+			:draggable="controls.draggable === 'on'"
+			:mask="controls.mask === 'on'"
 			:width="480"
 			border
 			title="标题"
 		>
-			<div ref="body" class="refit-demo__rows" :class="{ 'is-unscrollable': !controls.scrollable }">
+			<div ref="body" class="refit-demo__rows" :class="{ 'is-unscrollable': controls.scrollable === 'off' }">
 				<div v-for="i in rows" :key="i">
 					第 {{ i }} 行内容
 				</div>
@@ -72,18 +72,18 @@ import { MModalView } from '../index.m';
 import { Button } from '../../button';
 import { Select } from '../../select';
 
-const booleanOptions = [{ value: true, label: '开' }, { value: false, label: '关' }];
+const switchOptions = [{ value: 'on', label: '开' }, { value: 'off', label: '关' }];
 // 对照项：每项一个 Select
 const CONTROLS = [
 	{ key: 'platform', label: '端', data: [{ value: 'pc', label: 'PC' }, { value: 'mobile', label: '移动' }] },
-	{ key: 'scrollable', label: 'scrollable', data: [{ value: false, label: '关（内容自行滚动）' }, { value: true, label: '开（内置 Scroller）' }] },
+	{ key: 'scrollable', label: 'scrollable', data: [{ value: 'off', label: '关（内容自行滚动）' }, { value: 'on', label: '开（内置 Scroller）' }] },
 	{
 		key: 'height',
 		label: 'height',
 		data: [{ value: 'default', label: '不传（预设为最小）' }, { value: 'auto', label: 'auto（跟随内容）' }, { value: 'fixed', label: '400（固定）' }]
 	},
-	{ key: 'draggable', label: 'draggable', data: [...booleanOptions].reverse() },
-	{ key: 'mask', label: 'mask', data: booleanOptions }
+	{ key: 'draggable', label: 'draggable', data: [...switchOptions].reverse() },
+	{ key: 'mask', label: 'mask', data: switchOptions }
 ];
 const controls = reactive(Object.fromEntries(CONTROLS.map(({ key, data }) => [key, data[0].value])));
 const height = computed(() => ({ default: undefined, auto: 'auto', fixed: 400 })[controls.height]);

@@ -41,7 +41,6 @@
 			<Radio label="分组 D" />
 		</RadioGroup>
 		<Form
-			ref="formValidate"
 			:model="formValidate"
 			:rules="ruleValidate"
 			:label-width="96"

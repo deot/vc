@@ -241,7 +241,7 @@ const createLog = () => {
 			start = list.value.length ? start : now;
 			list.value.push(`[+${Math.round(now - start)}ms] ${text}`);
 		},
-		handleClear() {
+		clear() {
 			list.value = [];
 		}
 	};
@@ -330,14 +330,14 @@ const handleA1Enter = (e) => {
 		}
 
 		&.is-fixed {
-			color: #52c41a;
 			font-weight: bold;
+			color: #52c41a;
 		}
 	}
 
 	&__case {
-		margin-bottom: 32px;
 		padding: 16px;
+		margin-bottom: 32px;
 		border: 1px solid #e9e9e9;
 		border-radius: 4px;
 
@@ -346,8 +346,8 @@ const handleA1Enter = (e) => {
 		}
 
 		ol {
-			margin: 0 0 8px;
 			padding-left: 20px;
+			margin: 0 0 8px;
 		}
 	}
 
@@ -364,9 +364,9 @@ const handleA1Enter = (e) => {
 
 	&__hover {
 		padding: 4px 8px;
+		cursor: default;
 		border: 1px dashed #999;
 		border-radius: 4px;
-		cursor: default;
 	}
 
 	&__content {
@@ -389,11 +389,11 @@ const handleA1Enter = (e) => {
 
 		pre {
 			min-height: 20px;
-			margin: 4px 0;
 			padding: 8px;
-			background: #f5f5f5;
+			margin: 4px 0;
 			font-size: 12px;
 			white-space: pre-wrap;
+			background: #f5f5f5;
 		}
 	}
 }

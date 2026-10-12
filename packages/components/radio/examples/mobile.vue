@@ -30,7 +30,6 @@
 			<MRadio value="分组 D" />
 		</MRadioGroup>
 		<MForm
-			ref="formValidate"
 			:model="formValidate"
 			:rules="ruleValidate"
 			:label-width="96"
