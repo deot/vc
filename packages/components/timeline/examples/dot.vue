@@ -24,7 +24,7 @@
 		<div>
 			<p>dot 字符串 / 函数</p>
 			<Timeline>
-				<TimelineItem label="2020-04-12" dot="<b style='font-size: 12px;'>✓</b>">
+				<TimelineItem label="2020-04-12" :dot="{ type: 'html', value: '<b style=\'font-size: 12px;\'>✓</b>' }">
 					dot 字符串（按 HTML 渲染）
 				</TimelineItem>
 				<TimelineItem label="2020-05-17" :dot="renderDot">

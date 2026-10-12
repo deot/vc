@@ -2,7 +2,7 @@
 
 import { defineComponent, ref, computed, watch, nextTick } from 'vue';
 import type { PropType } from 'vue';
-import type { Render } from '../customer/types';
+import { renderType } from '../customer/customer-props';
 import type { TreeData, TreeValue } from '../select/utils';
 import { Checkbox } from '../checkbox/index';
 import { Customer } from '../customer/index';
@@ -29,7 +29,7 @@ export const TreeSelectContentCascader = defineComponent({
 			type: Boolean,
 			default: false
 		},
-		renderNodeLabel: Function as Render,
+		renderNodeLabel: renderType,
 		numerable: {
 			type: Boolean,
 			default: false
@@ -288,7 +288,6 @@ export const TreeSelectContentCascader = defineComponent({
 																		? (
 																				<Customer
 																					render={props.renderNodeLabel}
-																					// @ts-ignore
 																					store={treeRef.value.getNode(item)}
 																					row={item}
 																				/>

@@ -89,10 +89,10 @@ describe('ToastView 基础渲染', () => {
 		wrapper.unmount();
 	});
 
-	it('content (string) 渲染到 __content 的 innerHTML', async () => {
+	it('content：{ type: \'html\' } 写入 __content 的 innerHTML，字符串按文本', async () => {
 		const wrapper = mount(MToastView, {
 			attachTo: document.body,
-			props: { content: '提示语 <br> 换行' }
+			props: { content: { type: 'html', value: '提示语 <br> 换行' } }
 		});
 		await flush();
 
@@ -100,6 +100,10 @@ describe('ToastView 基础渲染', () => {
 		expect(content.exists()).toBe(true);
 		expect(content.element.innerHTML).toContain('提示语');
 		expect(content.element.innerHTML).toContain('<br>');
+
+		await wrapper.setProps({ content: '提示语 <br> 换行' });
+		expect(content.find('br').exists()).toBe(false);
+		expect(content.text()).toBe('提示语 <br> 换行');
 
 		wrapper.unmount();
 	});
@@ -359,6 +363,16 @@ describe('MToast 静态方法 (info / success / loading / warning / error / dest
 		document.body.innerHTML = '';
 	});
 
+	it('MToast.info 传入 { type, value } 时作为内容，而不是选项', async () => {
+		MToast.info({ type: 'text', value: '<b class="inner">text</b>' });
+		await nextTick();
+
+		const content = document.body.querySelector('.vcm-toast__content')!;
+		expect(content.querySelector('.inner')).toBe(null);
+		expect(content.textContent).toBe('<b class="inner">text</b>');
+		MToast.destroy();
+	});
+
 	it('MToast.info 渲染 toast 到 body', async () => {
 		MToast.info('提示语', 0);
 		await flush();
@@ -413,5 +427,67 @@ describe('MToast 静态方法 (info / success / loading / warning / error / dest
 		MToast.destroy();
 		await flush();
 		expect(document.body.querySelectorAll('.vcm-toast').length).toBe(0);
+	});
+});
+
+describe('函数式调用的参数', () => {
+	afterEach(() => {
+		MToast.destroy();
+		document.body.innerHTML = '';
+	});
+
+	// 最终传给 MToastView 的属性
+	const read = (leaf: any) => leaf.propsData.value;
+	const html = { type: 'html', value: '<b class="inner">text</b>' };
+
+	it('按位置传参，第四位是 maskClosable', () => {
+		const onClose = vi.fn();
+		const leaf = MToast.info('文字', 123, onClose, false);
+
+		expect(read(leaf)).toMatchObject({ content: '文字', duration: 123, maskClosable: false, mode: 'info' });
+		leaf.resolve();
+		expect(onClose).toHaveBeenCalledTimes(1);
+	});
+
+	it('传一个选项对象', () => {
+		const onClose = vi.fn();
+		const leaf = MToast.error({ duration: 20, content: '文字', onClose });
+
+		expect(read(leaf)).toMatchObject({ content: '文字', duration: 20, mode: 'error' });
+		leaf.resolve();
+		expect(onClose).toHaveBeenCalledTimes(1);
+	});
+
+	it('两种写法混用：最后一位的对象是选项', () => {
+		const leaf = MToast.info('文字', { duration: 0, maskClosable: false });
+		expect(read(leaf)).toMatchObject({ content: '文字', duration: 0, maskClosable: false });
+
+		// 最后一位是 null 等于没传
+		const leaf$ = MToast.info('文字', null as any);
+		expect(read(leaf$).content).toBe('文字');
+		expect(read(leaf$)).not.toHaveProperty('duration');
+	});
+
+	it('{ type, value } 是内容，后面可以继续跟位置参数或选项对象', () => {
+		const alone = read(MToast.info(html));
+		expect(alone.content).toEqual(html);
+		expect(alone).not.toHaveProperty('type');
+		expect(alone).not.toHaveProperty('value');
+
+		expect(read(MToast.info(html, 0))).toMatchObject({ content: html, duration: 0 });
+		expect(read(MToast.info(html, { duration: 0, maskClosable: false }))).toMatchObject({ content: html, duration: 0, maskClosable: false });
+		expect(read(MToast.info({ content: html, duration: 0 }))).toMatchObject({ content: html, duration: 0 });
+	});
+
+	it('上一次调用的参数不会留到下一次', () => {
+		const onClose = vi.fn();
+		MToast.info('a', 0, onClose, false);
+		const leaf = MToast.info('b');
+
+		expect(read(leaf).content).toBe('b');
+		expect(read(leaf)).not.toHaveProperty('duration');
+		expect(read(leaf)).not.toHaveProperty('maskClosable');
+		leaf.resolve();
+		expect(onClose).not.toHaveBeenCalled();
 	});
 });

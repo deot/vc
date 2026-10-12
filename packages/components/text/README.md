@@ -169,7 +169,7 @@ const fileName = '2026年第三季度示例内容说明与结构展示文档.fin
 | resize | 尺寸监听；`true` / `0` 立即计算，正数为防抖间隔（ms，首尾触发），`false` 不监听 | `boolean \| number` | - | `100` |
 | ellipsis | 截断时使用的省略符；保持默认值且未使用 `slice`、`renderRow`、`indent`、`clip` 时由 CSS 截断（见使用注意） | `string` | - | `'…'` |
 | slice | 截断时保留 `value.slice(slice)`；负数从末尾计算，`0` 保留整串，正数从指定下标开始；大于等于文本长度时尾部为空 | `number` | - | `undefined` |
-| renderRow | 测量完成后的渲染函数；接收展示文本 `value`、测量下标 `index` 和 Customer 的 setup 上下文，返回可渲染内容 | `(attrs: { value: string; index: number }, context: SetupContext) => any` | - | 返回 `attrs.value` |
+| renderRow | 测量完成后的渲染函数；接收展示文本 `value`、测量下标 `index`，第二个参数为 Vue 的 `SetupContext`，返回可渲染内容 | `(attrs: { value: string; index: number }, context: SetupContext) => any` | - | 返回 `attrs.value` |
 | theme | 全文 Popover 的主题 | `string` | `dark`、`light`、`none` | `'dark'` |
 | placement | 全文 Popover 的位置 | `string` | `top`、`left`、`right`、`bottom`、`bottom-left`、`bottom-right`、`top-left`、`top-right`、`right-top`、`right-bottom`、`left-top`、`left-bottom` | `'top'` |
 | portalClass | 全文 Popover 的类名 | `object \| string \| any[]` | - | `undefined` |

@@ -493,7 +493,7 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | name | 轮播项名称，可供 `setActiveItem` 定位 | `string` | - | - |
-| label | 对应指示器的文本 | `string \| number` | - | `''` |
+| label | 对应指示器的文本。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | width | 卡片宽度；非卡片模式下仅在存在 `gap` 时生效 | `string \| number` | - | `'70%'` |
 | gap | 当前轮播项的间距 | `number` | - | `0` |
 | scale | 非激活卡片的缩放比例 | `number` | - | `0.83` |

@@ -356,8 +356,8 @@ onUnmounted(() => {
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | modelValue | 是否显示，支持 `v-model` | `boolean` | - | `false` |
-| title | 标题；字符串按 HTML 渲染，函数由 Customer 渲染；布尔值不渲染标题内容 | `string \| boolean \| Function` | - | - |
-| content | 内容，字符串按 HTML 渲染，函数由 Customer 渲染；与默认插槽同时显示 | `string \| Function` | - | `''` |
+| title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md)；布尔值不渲染标题内容 | `string \| number \| boolean \| Function \| { type: string; value: any }` | - | - |
+| content | 内容，取值与 title 相同（布尔值除外）；与默认插槽同时显示 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | placement | 滑入方向 | `string` | `top`、`right`、`bottom`、`left` | `'right'` |
 | width | 左右抽屉宽度，单位 px | `number` | - | `600` |
 | height | 上下抽屉高度，单位 px | `number` | - | `300` |
@@ -443,4 +443,4 @@ const confirm = () => new Promise((resolve, reject) => {
 - onOk/onCancel 返回 Promise 时，兑现后关闭；拒绝时保持打开，组件没有内置错误提示。
 - 同步返回假值（包括 false、undefined）或 true 时关闭；返回其他真值时保持打开。不要用 false 阻止关闭。
 - toggle(true) 不发出 update:modelValue 或 visible-change；关闭动画结束后才发出 false。
-- title/content 的字符串使用 innerHTML，请仅传入可信 HTML；普通文本可使用插槽。
+- title / content 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。

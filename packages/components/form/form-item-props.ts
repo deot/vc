@@ -1,9 +1,10 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { FormRule } from './types';
+import { valueType } from '../customer/customer-props';
 
 export const props = {
 	label: {
-		type: String,
+		type: valueType,
 		default: ''
 	},
 	labelWidth: {

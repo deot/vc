@@ -119,15 +119,7 @@ export const Popconfirm = defineComponent({
 											: (<Icon type={props.type} class={[`is-${props.type}`, 'vc-popconfirm__icon']} />)
 									}
 									<div>
-										{
-											slots.title
-												? slots.title()
-												: typeof props.title === 'string'
-													? (<div innerHTML={props.title} />)
-													: typeof props.title === 'function'
-														? (<Customer render={props.title} />)
-														: null
-										}
+										<Customer render={slots.title || props.title} />
 									</div>
 								</div>
 							);
@@ -138,15 +130,7 @@ export const Popconfirm = defineComponent({
 									style={widthStyle.value}
 									class={['vc-popconfirm__content', { 'is-with-content': props.content || !!slots.content }]}
 								>
-									{
-										slots.content
-											? slots.content()
-											: typeof props.content === 'string'
-												? (<div innerHTML={props.content} />)
-												: typeof props.content === 'function'
-													? (<Customer render={props.content} />)
-													: null
-									}
+									<Customer render={slots.content || props.content} />
 								</div>
 							);
 						},

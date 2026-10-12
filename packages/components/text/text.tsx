@@ -177,12 +177,7 @@ export const Text = defineComponent({
 					{
 						isActive.value
 							? (
-									<Customer
-										value={displayValue.value}
-										index={endIndex.value}
-										// @ts-ignore
-										render={props.renderRow}
-									/>
+									<Customer render={props.renderRow} value={displayValue.value} index={endIndex.value} />
 								)
 							// 首次测量前用隐藏全文撑开 intrinsic width，避免 Flex 父级按空内容收缩
 							: (props.resize !== false ? props.value : null)

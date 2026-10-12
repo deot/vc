@@ -259,7 +259,7 @@ const handleIncreasePadding = () => {
 | border | 是否显示边框 | `boolean` | - | `true` |
 | shadow | 是否显示静态阴影 | `boolean` | - | `false` |
 | padding | 主体区域的内边距，单位为 `px` | `number` | - | `16` |
-| title | 标题文本 | `string` | - | - |
+| title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | icon | 文字标题前的图标类型；提供 `title` 插槽时不生效 | `string` | - | - |
 
 ### Card 插槽

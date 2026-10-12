@@ -137,14 +137,14 @@ export const SelectTags = defineComponent({
 		const popover = useHoverPopover();
 		const hiddenTags = computed(() => props.data.slice(fit.value.count));
 
-		// 被截断的 tag：hover 展示完整内容（content 为函数，按文本渲染）
+		// 被截断的 tag：hover 展示完整内容
 		const handleTagEnter = (e: MouseEvent, item: SelectTag) => {
 			const el = e.currentTarget as HTMLElement;
 			const span = el.querySelector('.vc-tag__wrapper > span');
 			if (!span || span.scrollWidth <= span.clientWidth) return;
 			popover.open(el, {
 				portalClass: 'vc-select-tags__tip',
-				content: () => item.label
+				content: item.label
 			});
 		};
 

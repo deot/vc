@@ -13,7 +13,7 @@ vi.mock('../utils.ts', () => mocks);
 vi.mock('./utils', () => mocks);
 vi.mock('./utils.ts', () => mocks);
 
-import { Text, Popover } from '@deot/vc-components';
+import { Text, Popover, Portal } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
 import { defineComponent, nextTick, ref } from 'vue';
@@ -218,6 +218,16 @@ describe('Text 渲染分支 (line=0 / line>0)', () => {
 		expect(rr.exists()).toBe(true);
 		expect(rr.text()).toBe('[3]hel…');
 		expect(renderRow).toHaveBeenCalled();
+		// 参数只有 value / index，不会作为属性落到根节点上
+		expect(Object.keys(renderRow.mock.calls[0][0]).sort()).toEqual(['index', 'value']);
+		expect(rr.attributes()).toEqual({ class: 'rr' });
+
+		// 移入只改变光标样式：内容不变时 renderRow 不重新执行
+		const count = renderRow.mock.calls.length;
+		vi.spyOn(Popover, 'open').mockReturnValue({ destroy: vi.fn() } as any);
+		await wrapper.trigger('mouseenter');
+		await flush();
+		expect(renderRow).toHaveBeenCalledTimes(count);
 
 		wrapper.unmount();
 	});
@@ -482,6 +492,31 @@ describe('Text 弹层 (mouseenter)', () => {
 		expect(arg.triggerElement).toBe(wrapper.element);
 		expect(arg.portalStyle[0]).toBe('width: 300px');
 
+		wrapper.unmount();
+	});
+
+	it('提示内容与本体一致按文本渲染，标签不生成元素', async () => {
+		mockedGetFitIndex.mockReturnValue(2);
+		const value = '<b class="injected">text</b><img class="injected" src="x">';
+
+		const wrapper = mount(() => (
+			<Text value={value} line={1} resize={true} ellipsis="..." portalClass="text-popover-content" />
+		), { attachTo: document.body });
+
+		triggerResize(wrapper.element);
+		await flush();
+		// 本体：标签作为文字显示
+		expect(wrapper.find('.injected').exists()).toBe(false);
+
+		await wrapper.trigger('mouseenter');
+		await flush();
+
+		const content = document.body.querySelector('.text-popover-content .vc-popover-wrapper__content')!;
+		expect(content).toBeTruthy();
+		expect(content.querySelector('.injected')).toBe(null);
+		expect(content.textContent).toContain(value);
+
+		Portal.leafs.get('vc-text-popover')?.destroy();
 		wrapper.unmount();
 	});
 });

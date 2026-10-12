@@ -147,7 +147,7 @@ onUnmounted(() => {
 
 ### 内容渲染
 
-`content` 支持字符串或与 `Customer` 一致的渲染函数。字符串通过 `innerHTML` 渲染，只应传入可信内容；需要渲染 VNode 时，应在外部导入 Vue 的 `h` 并在函数中调用。
+`content` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。`{ type, value }` 始终是内容而不是配置对象，后面可以继续跟位置参数或配置对象，例如 `Message.info({ type: 'html', value }, 3000)`。需要渲染 VNode 时，应在外部导入 Vue 的 `h` 并在函数中调用。
 
 函数式方法既支持配置对象，也支持 `Message.info(content, duration, onClose)` 形式；最后一个参数为配置对象时，会与前面的参数合并，例如 `Message.info('提示内容', { closable: true, duration: 0 })`。
 
@@ -182,7 +182,7 @@ onUnmounted(() => {
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| content | 提示内容；字符串通过 `innerHTML` 渲染 | `string \| ((attrs: Record<string, unknown>, context: SetupContext) => any)` | - | `undefined` |
+| content | 提示内容。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `undefined` |
 | mask | `fixed` 为 `true` 时是否渲染透明遮罩 | `boolean` | - | `true` |
 | maskClosable | 是否允许点击遮罩关闭提示 | `boolean` | - | `true` |
 | fixed | 是否使用固定定位；设为 `false` 时不渲染遮罩，也不应用 `top` | `boolean` | - | `true` |

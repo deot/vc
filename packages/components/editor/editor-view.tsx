@@ -5,6 +5,7 @@ import type { PropType } from 'vue';
 
 import * as Load from '@deot/helper-load';
 import { getUid } from '@deot/helper-utils';
+import { Customer } from '../customer';
 import { insertFontSizeStyle, insertLineHeightStyle, insertLetterSpacingStyle, previewImages } from './utils';
 import { toolbarDefaultsMap } from './default-options';
 
@@ -61,7 +62,12 @@ export const EditorView = defineComponent({
 		return () => {
 			return (
 				<div class="vc-editor-view" onClick={handleClick}>
-					<div class="ql-editor ql-snow ql-container" innerHTML={props.value} />
+					<Customer
+						wrap
+						class="ql-editor ql-snow ql-container"
+						// 富文本内容本身就是 HTML
+						render={{ type: 'html', value: props.value }}
+					/>
 				</div>
 			);
 		};

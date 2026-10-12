@@ -149,10 +149,10 @@ describe('DrawerView 基础渲染', () => {
 		wrapper.unmount();
 	});
 
-	it('title (string) 透传到 vc-drawer__title 的 innerHTML', async () => {
+	it('title：{ type: \'html\' } 写入 vc-drawer__title 的 innerHTML，字符串按文本', async () => {
 		const wrapper = mount(DrawerView, {
 			attachTo: document.body,
-			props: { modelValue: true, title: '<span class="t-inner">hi</span>' }
+			props: { modelValue: true, title: { type: 'html', value: '<span class="t-inner">hi</span>' } }
 		});
 		await flush();
 
@@ -160,6 +160,10 @@ describe('DrawerView 基础渲染', () => {
 		expect(title.exists()).toBe(true);
 		expect(title.find('.t-inner').exists()).toBe(true);
 		expect(title.text()).toBe('hi');
+
+		await wrapper.setProps({ title: '<span class="t-inner">hi</span>' });
+		expect(title.find('.t-inner').exists()).toBe(false);
+		expect(title.text()).toBe('<span class="t-inner">hi</span>');
 
 		wrapper.unmount();
 	});
@@ -179,12 +183,12 @@ describe('DrawerView 基础渲染', () => {
 		wrapper.unmount();
 	});
 
-	it('content (string) 渲染到 vc-drawer__content 内', async () => {
+	it('content：{ type: \'html\' } 渲染到 vc-drawer__content 内', async () => {
 		const wrapper = mount(DrawerView, {
 			attachTo: document.body,
 			props: {
 				modelValue: true,
-				content: '<p class="c-string">hello</p>'
+				content: { type: 'html', value: '<p class="c-string">hello</p>' }
 			}
 		});
 		await flush();

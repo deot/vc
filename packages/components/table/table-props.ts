@@ -3,6 +3,7 @@ import type { TableColumnSyncItem } from './store/modules/column';
 import type { TableAllowDragPayload, TableAllowDropPayload } from './types';
 import type { TableRowHeight } from './utils';
 import type { Props as RecycleListProps } from '../recycle-list/recycle-list-props';
+import { valueType } from '../customer/customer-props';
 
 // Table 自己要用到的 RecycleList 属性（以及 style、class 和事件）：recycleListOptions 里的同名项被忽略
 export const RECYCLE_LIST_RESERVED_KEYS = [
@@ -81,7 +82,7 @@ export const props = {
 	highlight: Boolean,
 	// TODO: 支持数组
 	currentRowValue: [String, Number],
-	emptyText: [String, Function],
+	emptyText: valueType,
 	expandedValues: Array,
 	defaultExpandAll: Boolean,
 	/**

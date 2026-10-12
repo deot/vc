@@ -57,7 +57,7 @@ const isClosed = ref(false);
 
 ### 内容渲染
 
-`title` 和 `description` 字符串通过 `innerHTML` 渲染，只应传入可信内容。对应属性为空字符串时，组件分别使用默认插槽和 `description` 插槽。
+`title` 和 `description` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。同时提供默认插槽或 `description` 插槽时，插槽优先。
 
 ## 主题与局部覆盖
 
@@ -89,8 +89,8 @@ const isClosed = ref(false);
 | --- | --- | --- | --- | --- |
 | modelValue | 是否显示提示；关闭提示时通过 `update:modelValue` 同步为 `false` | `boolean` | - | `true` |
 | type | 提示类型 | `'success' \| 'info' \| 'error' \| 'warning'` | `success`、`info`、`error`、`warning` | `info` |
-| title | 标题；非空时优先于默认插槽，并通过 `innerHTML` 渲染 | `string` | - | `''` |
-| description | 说明文字；非空时优先于 `description` 插槽，并通过 `innerHTML` 渲染 | `string` | - | `''` |
+| title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md)；默认插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
+| description | 说明文字，取值与 title 相同；`description` 插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | icon | 图标配置；`true` 或空字符串使用当前 `type`，字符串使用对应图标，`false` 隐藏图标 | `string \| boolean` | - | `true` |
 | closable | 是否显示关闭入口 | `boolean` | - | `false` |
 
@@ -106,6 +106,6 @@ const isClosed = ref(false);
 
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
-| default | `title` 为空字符串时显示的标题内容 | - |
-| description | `description` 为空字符串时显示的说明内容 | - |
+| default | 标题内容，优先于 `title` | - |
+| description | 说明内容，优先于 `description` 属性 | - |
 | close | 自定义关闭入口内容；仅在 `closable` 为 `true` 时渲染 | - |

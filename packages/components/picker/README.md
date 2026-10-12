@@ -317,11 +317,11 @@ p { margin: 0; overflow-wrap: anywhere; }
 | labelWidth | 默认触发区域标题宽度，传给 MListItem | `string \| number` | - | - |
 | extra | formatter 返回空值时的提示；支持空字符串 | `string` | - | 当前语言的“请选择” |
 | formatter | 格式化选中项的 label 数组 | `(label: any[]) => string` | - | 以 `,` 拼接 |
-| title | 弹层标题，通过 innerHTML 渲染，只传可信内容 | `string` | - | `''` |
+| title | 弹层标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | cancelText | 取消文本，空字符串隐藏按钮 | `string` | - | 当前语言的“取消” |
 | okText | 确定文本，空字符串隐藏按钮 | `string` | - | 当前语言的“确定” |
 | showToolbar | 显示工具栏 | `boolean` | - | `true` |
-| renderLabel | 自定义选项渲染函数，接收含 label、row、index 的对象 | `Render` | - | - |
+| renderLabel | 自定义选项渲染函数，接收含 label、row、index 的对象 | `(options: { label: any; row: any; index: number }) => VNodeChild` | - | - |
 | separator | 字符串模型的分隔符 | `string` | - | `','` |
 | numerable | 解析字符串模型时把各项转为 number | `boolean` | - | `false` |
 | nullValue | 传入内部值规范化函数的空值参数；不提供清空交互 | `PickerModelValue` | - | `undefined` |
@@ -365,7 +365,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | columns | 列数，渲染时最少一列 | `number` | - | `1` |
 | cascader | 是否联动下级列 | `boolean` | - | `true` |
 | itemStyle | 每个选项的行内样式 | `Record<string, any>` | - | - |
-| renderLabel | 自定义选项渲染，接收含 label、row、index 的对象 | `Render` | - | - |
+| renderLabel | 自定义选项渲染，接收含 label、row、index 的对象 | `(options: { label: any; row: any; index: number }) => VNodeChild` | - | - |
 | allowDispatch | 选择变化时通知注入的 FormItem | `boolean` | - | `true` |
 | separator | 字符串模型的分隔符 | `string` | - | `','` |
 | numerable | 解析字符串模型时把各项转为 number | `boolean` | - | `false` |
@@ -391,7 +391,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | --- | --- | --- | --- | --- |
 | modelValue | 弹层显示状态，支持 v-model | `boolean` | - | `true` |
 | visible | 显示状态别名，布尔值时优先；支持 v-model:visible | `boolean` | - | `undefined` |
-| title | 标题，通过 innerHTML 渲染，只传可信内容 | `string` | - | `''` |
+| title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | cancelText | 取消文本，空字符串隐藏按钮 | `string` | - | 当前语言的“取消” |
 | okText | 确定文本，空字符串隐藏按钮 | `string` | - | 当前语言的“确定” |
 | showToolbar | 显示工具栏 | `boolean` | - | `true` |

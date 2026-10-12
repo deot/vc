@@ -318,16 +318,7 @@ export const PopoverView = defineComponent({
 			update: setPopupStyle
 		});
 		return () => {
-			const content = slots.content
-				? slots.content()
-				: typeof props.content === 'function'
-					? (
-							<Customer
-								// @ts-ignore
-								render={props.content}
-							/>
-						)
-					: <div innerHTML={props.content} />;
+			const content = (<Customer render={slots.content || props.content} />);
 
 			return (
 				<TransitionScale

@@ -126,7 +126,7 @@ onBeforeUnmount(() => {
 
 ### 自定义内容
 
-`content` 支持渲染函数。字符串会作为 HTML 渲染，请只传入可信内容；展示未经信任的文本时，可通过 `h` 创建文本节点。
+`content` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。`{ type, value }` 始终是内容而不是配置对象，后面可以继续跟位置参数或配置对象。
 
 :::playground
 <!--
@@ -193,7 +193,7 @@ onUnmounted(() => {
 
 ### MToast 方法
 
-下列方法也可通过 `Toast` 调用。提示方法支持 `method(options)` 或 `method(content, duration?, onClose?, maskClosable?)`，`content` 可以是字符串或渲染函数。
+下列方法也可通过 `Toast` 调用。提示方法支持 `method(options)` 或 `method(content, duration?, onClose?, maskClosable?)`；最后一个参数为配置对象时，会与前面的参数合并，例如 `MToast.info('提示内容', { duration: 0 })`。`content` 可以是字符串、数字、渲染函数或 `{ type, value }`。
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
@@ -211,7 +211,7 @@ onUnmounted(() => {
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| content | HTML 字符串或 Customer 渲染函数 | `string \| Function` | - | - |
+| content | 提示内容。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | maskClosable | 是否允许点击透明遮罩关闭 | `boolean` | - | `true` |
 | duration | 挂载时开始计时，单位 ms；`0` 表示不自动关闭 | `number` | - | `3000` |
 | mode | 仅 `loading` 显示加载图标，其余模式外观相同 | `string` | `info` / `loading` / `success` / `warning` / `error` | `info` |

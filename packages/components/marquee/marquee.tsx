@@ -63,20 +63,7 @@ export const Marquee = defineComponent({
 						style={style.value}
 						class={[{ 'is-paused': paused.value }, 'vc-marquee__content']}
 					>
-						{
-							slots.default
-								? slots.default()
-								: typeof props.content === 'string'
-									? (<div innerHTML={props.content} />)
-									: typeof props.content === 'function'
-										? (
-												<Customer
-													// @ts-ignore
-													render={props.content}
-												/>
-											)
-										: null
-						}
+						<Customer render={slots.default || props.content} />
 					</div>
 				</div>
 			);

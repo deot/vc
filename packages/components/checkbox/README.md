@@ -223,7 +223,7 @@ const selectedOptions = ref(['option-a']);
 | --- | --- | --- | --- | --- |
 | modelValue | 单独使用时的绑定值，严格等于 checkedValue 时选中 | `string \| number \| boolean` | - | `false` |
 | value | 组合中的选项值；缺省或为空字符串时使用 label；也可作为显示文案的回退值 | `string \| number \| boolean` | - | `undefined` |
-| label | 显示文案；缺省或为空字符串时使用 value；无默认插槽时渲染 | `string \| number \| boolean` | - | `undefined` |
+| label | 显示文案；缺省或为空字符串时使用 value；无默认插槽时渲染。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md)，此时需同时提供 value | `string \| number \| boolean \| Function \| { type: string; value: any }` | - | `undefined` |
 | disabled | 禁用当前选项 | `boolean` | - | `false` |
 | indeterminate | 半选外观，仅控制样式 | `boolean` | - | `false` |
 | checkedValue | 单独使用时选中对应的值 | `string \| number \| boolean` | - | `true` |

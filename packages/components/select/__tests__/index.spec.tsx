@@ -811,13 +811,13 @@ describe('Select maxTagLines', () => {
 		await tag.trigger('mouseenter');
 		expect(open).not.toHaveBeenCalled();
 
-		// 截断：content 为函数，按文本渲染
+		// 截断：按文本渲染
 		defineValue('scrollWidth', 120);
 		await tag.trigger('mouseenter');
 		expect(open).toHaveBeenCalledTimes(1);
 		const options = open.mock.calls[0][0] as any;
 		expect(options.triggerElement).toBe(tag.element);
-		expect(options.content()).toBe('New York');
+		expect(options.content).toBe('New York');
 
 		// 弹层仍在显示时再次移入同一 tag：不重建
 		await tag.trigger('mouseenter');

@@ -84,7 +84,6 @@ export const Countdown = defineComponent({
 				second: second.value,
 				millisecond: millisecond.value,
 				format: format.value,
-				tag: props.tag,
 				trim: props.trim,
 			};
 		});
@@ -155,29 +154,16 @@ export const Countdown = defineComponent({
 		onMounted(start);
 		onBeforeUnmount(stop);
 
-		const Content = props.tag;
 		return () => {
-			if (slots.default) {
-				return (
-					// @ts-ignore
-					<Content class="vc-countdown">
-						{ slots.default(binds.value) }
-					</Content>
-				);
-			}
-			if (props.render) {
-				return (
-					<Customer
-						class="vc-countdown"
-						// @ts-ignore
-						render={props.render}
-						{...binds.value}
-					/>
-				);
-			}
+			// 格式化结果本身就是 HTML
 			return (
-				// @ts-ignore
-				<Content class="vc-countdown" innerHTML={result.value} />
+				<Customer
+					wrap
+					tag={props.tag}
+					class="vc-countdown"
+					render={slots.default || props.render || { type: 'html', value: result.value }}
+					{...binds.value}
+				/>
 			);
 		};
 	}

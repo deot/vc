@@ -621,7 +621,7 @@ describe('PickerPopup', () => {
 		const wrapper = mount(() => (
 			<PickerPopup
 				visible
-				title="<b class='title-inner'>标题</b>"
+				title={{ type: 'html', value: '<b class=\'title-inner\'>标题</b>' }}
 				onCancel={onCancel}
 				onVisibleChange={onVisibleChange}
 				onUpdate:visible={onUpdateVisible}
@@ -913,5 +913,56 @@ describe('Picker integration', () => {
 		expect(document.querySelector('.vcm-picker-popup')).not.toBeNull();
 
 		leaf.destroy();
+	});
+});
+
+describe('PickerPopup title', () => {
+	it('标题位始终保留，支持渲染函数与 { type, value }', async () => {
+		const wrapper = mount(PickerPopup, { props: { modelValue: true, title: '' } });
+		await nextTick();
+		expect(wrapper.find('.vcm-picker-popup__item.is-title').exists()).toBe(true);
+
+		await wrapper.setProps({ title: () => h('i', { class: 'render-title' }, 'title') });
+		expect(wrapper.find('.is-title .render-title').exists()).toBe(true);
+
+		await wrapper.setProps({ title: { type: 'text', value: '<b class="inner">text</b>' } });
+		expect(wrapper.find('.is-title .inner').exists()).toBe(false);
+		expect(wrapper.find('.is-title').text()).toBe('<b class="inner">text</b>');
+		wrapper.unmount();
+	});
+});
+
+describe('PickerCol renderLabel', () => {
+	it('收到 { label, row, index }，根节点上没有透传属性', () => {
+		const renderLabel = vi.fn(({ label }: any) => h('i', { class: 'render-label' }, label));
+		const wrapper = mount(PickerCol, {
+			props: { data: [{ value: 1, label: 'A' }, { value: 2, label: 'B' }], value: 1, renderLabel }
+		});
+
+		expect(renderLabel).toHaveBeenCalledTimes(2);
+		expect(Object.keys((renderLabel.mock.calls[0] as any)[0]).sort()).toEqual(['index', 'label', 'row']);
+		expect(wrapper.find('.render-label').attributes()).toEqual({ class: 'render-label' });
+		wrapper.unmount();
+	});
+
+	it('整列重渲染时，数据不变则渲染函数不重新执行', async () => {
+		const renderLabel = vi.fn(({ label }: any) => h('i', { class: 'render-label' }, label));
+		const rowLabel = vi.fn(() => h('i', { class: 'row-label' }, 'B'));
+		const wrapper = mount(PickerCol, {
+			props: { data: [{ value: 1, label: 'A' }, { value: 2, label: 'B' }], value: 1, renderLabel }
+		});
+		expect(renderLabel).toHaveBeenCalledTimes(2);
+
+		// 选中项变化会让整列重新渲染
+		await wrapper.setProps({ value: 2 });
+		expect(renderLabel).toHaveBeenCalledTimes(2);
+
+		// 数据项的 label 本身是函数时，同样只在数据变化后执行
+		await wrapper.setProps({ renderLabel: void 0, data: [{ value: 1, label: 'A' }, { value: 2, label: rowLabel }] });
+		expect(wrapper.find('.row-label').exists()).toBe(true);
+		expect(rowLabel).toHaveBeenCalledTimes(1);
+		await wrapper.setProps({ value: 1 });
+		expect(rowLabel).toHaveBeenCalledTimes(1);
+		wrapper.unmount();
 	});
 });

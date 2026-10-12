@@ -1,7 +1,7 @@
-import { Utils } from '@deot/vc-shared';
 import { Portal } from '../../portal';
 import { MToastView } from './toast-view.tsx';
 import type { Props } from './toast-view-props';
+import { toOptions } from '../../customer/utils';
 
 const MToast$ = new Portal(MToastView, {
 	multiple: true,
@@ -11,12 +11,7 @@ const MToast$ = new Portal(MToastView, {
 type Options = Partial<Props & { onClose: (...args: any[]) => any }>;
 
 const create = (options: Options) => (...params: Array<Options[keyof Options] | Options>) => {
-	const options$ = Utils.toOptions(
-		params,
-		['content', 'duration', 'onClose', 'maskClosable'],
-		// 避免引用
-		{ ...options }
-	);
+	const options$ = toOptions(params, ['content', 'duration', 'onClose', 'maskClosable'], options);
 
 	// 执行弹窗
 	return MToast$.popup({

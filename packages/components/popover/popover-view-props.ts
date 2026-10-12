@@ -1,5 +1,6 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { Props as ScrollerProps } from '../scroller/scroller-props';
+import { valueType } from '../customer/customer-props';
 
 export const props = {
 	modelValue: Boolean,
@@ -21,7 +22,7 @@ export const props = {
 		default: 'light',
 		validator: (v: string) => /(light|dark|none)/.test(v)
 	},
-	content: [String, Function],
+	content: valueType,
 	getPopupContainer: Function,
 	portal: {
 		type: Boolean,

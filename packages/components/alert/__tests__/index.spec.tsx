@@ -51,14 +51,18 @@ describe('index.ts', () => {
 		expect(wrapper.find('.vc-alert__desc').text()).toBe(DESC);
 	});
 
-	it('title & description support innerHTML', async () => {
+	it('title & description: { type: \'html\' } renders html, strings render as text', async () => {
 		const wrapper = mount(() => (
-			<Alert title="<span class='custom-title'>Hi</span>" description="<span class='custom-desc'>Desc</span>" />
+			<Alert
+				title={{ type: 'html', value: '<span class=\'custom-title\'>Hi</span>' }}
+				description="<span class='custom-desc'>Desc</span>"
+			/>
 		));
 
 		await waitTransition();
 		expect(wrapper.find('.custom-title').exists()).toBe(true);
-		expect(wrapper.find('.custom-desc').exists()).toBe(true);
+		expect(wrapper.find('.custom-desc').exists()).toBe(false);
+		expect(wrapper.text()).toContain('<span class=\'custom-desc\'>Desc</span>');
 	});
 
 	it('icon (default shown)', async () => {
@@ -150,17 +154,35 @@ describe('index.ts', () => {
 		expect(wrapper.html()).toContain(DESC);
 	});
 
-	it('description prop takes priority over slot and falls back when empty', async () => {
+	it('slots take priority over title / description props', async () => {
 		const wrapper = mount(Alert, {
-			props: { description: DESC },
-			slots: { description: () => '插槽描述' }
+			props: { title: TITLE, description: DESC },
+			slots: { default: () => '插槽标题', description: () => '插槽描述' }
 		});
 
 		await waitTransition();
-		expect(wrapper.find('.vc-alert__desc').text()).toBe(DESC);
-
-		await wrapper.setProps({ description: '' });
+		expect(wrapper.find('.vc-alert__title').text()).toBe('插槽标题');
 		expect(wrapper.find('.vc-alert__desc').text()).toBe('插槽描述');
+
+		await wrapper.setProps({ title: '', description: '' });
+		expect(wrapper.find('.vc-alert__title').text()).toBe('插槽标题');
+		expect(wrapper.find('.vc-alert__desc').text()).toBe('插槽描述');
+		expect(wrapper.find('.vc-alert').classes()).toContain('has-desc');
+	});
+
+	it('title / description accept render functions and { type, value }', async () => {
+		const markup = '<span class="inner">text</span>';
+		const wrapper = mount(Alert, {
+			props: {
+				title: () => (<i class="render-title">title</i>),
+				description: { type: 'text', value: markup }
+			}
+		});
+
+		await waitTransition();
+		expect(wrapper.find('.vc-alert__title .render-title').exists()).toBe(true);
+		expect(wrapper.find('.vc-alert__desc .inner').exists()).toBe(false);
+		expect(wrapper.find('.vc-alert__desc').text()).toBe(markup);
 		expect(wrapper.find('.vc-alert').classes()).toContain('has-desc');
 	});
 

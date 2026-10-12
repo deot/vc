@@ -369,6 +369,14 @@ describe('FilePreview', () => {
 		expect(lightbox.loadAndOpen.mock.calls.at(-1)![0]).toBe(0);
 	});
 
+	it('does not pass html slides through to photoswipe', async () => {
+		await ImagePreview.open({ data: [{ src: 'https://cdn.test/c.jpg', width: 10, height: 20, html: '<img src="x" onerror="alert(1)">' }] });
+
+		const [, data] = lightbox.loadAndOpen.mock.calls.at(-1)!;
+		expect(data[0].src).toBe('https://cdn.test/c.jpg');
+		expect(data[0].html).toBe(void 0);
+	});
+
 	it('uses the current locale for each image preview and preserves explicit overrides', async () => {
 		const data = [{ src: photo, width: 100, height: 100 }];
 		await ImagePreview.open({ data });

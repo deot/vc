@@ -55,9 +55,9 @@ export const TourView = defineComponent({
 			const slot = stepSlots?.[name] || (name === 'content' ? stepSlots?.default : undefined) || slots[name];
 			return slot?.(getSlotProps());
 		};
-		const renderValue = (value: any) => typeof value === 'function'
-			? <Customer {...tour.getContext()} render={value} />
-			: <span innerHTML={value || ''} />;
+		const renderValue = (value: any) => (
+			<Customer tag="span" render={value} {...tour.getContext()} />
+		);
 		const getText = (action: TourAction) => {
 			return tour.options.value[`${action}Text`] ?? t(`vc.Tour.${action}Text`);
 		};

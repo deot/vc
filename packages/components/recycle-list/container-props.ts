@@ -1,5 +1,5 @@
 import type { ExtractPropTypes, PropType } from 'vue';
-import type { Render } from '../customer/types';
+import { renderType } from '../customer/customer-props';
 
 export const props = {
 	inverted: {
@@ -23,6 +23,6 @@ export const props = {
 		type: Function as PropType<() => boolean>,
 		default: () => true
 	},
-	render: Function as Render
+	render: renderType
 };
 export type Props = ExtractPropTypes<typeof props>;

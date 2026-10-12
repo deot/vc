@@ -1,5 +1,5 @@
 import type { ExtractPropTypes } from 'vue';
-import type { Render } from '../customer/types';
+import { renderType } from '../customer/customer-props';
 
 export const props = {
 	value: {
@@ -10,7 +10,7 @@ export const props = {
 		type: [String, Number]
 	},
 	row: Object,
-	render: [Function] as Render,
-	renderLabel: [Function] as Render,
+	render: renderType,
+	renderLabel: renderType,
 };
 export type Props = ExtractPropTypes<typeof props>;

@@ -1,4 +1,5 @@
 import type { ExtractPropTypes } from 'vue';
+import { valueType } from '../customer/customer-props';
 
 export const props = {
 	// 每秒移动多少px
@@ -6,7 +7,7 @@ export const props = {
 		type: Number,
 		default: 50,
 	},
-	content: [String, Function],
+	content: valueType,
 	animated: {
 		type: Boolean,
 		default: true,

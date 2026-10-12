@@ -3,7 +3,7 @@
 import { getCurrentInstance, defineComponent, ref, computed, nextTick } from 'vue';
 import { props as tabsProps } from './tabs-props';
 import { Icon } from '../icon';
-import { Customer } from '../customer';
+import { CustomerProp } from '../customer/customer-prop';
 import useTabs from './use-tabs';
 
 const COMPONENT_NAME = 'vc-tabs';
@@ -194,22 +194,15 @@ export const Tabs = defineComponent({
 												]}
 												onClick={() => tabs.handleChange(index)}
 											>
-												{
-													slots.label
-														? slots.label({ row: item, index, })
-														: (
-																typeof item.label === 'string'
-																	? <span innerHTML={item.label} />
-																	: typeof item.label === 'function' && (
-																		<Customer
-																			render={item.label}
-																			// @ts-ignore
-																			it={item}
-																			index={index}
-																		/>
-																	)
-															)
-												}
+												<CustomerProp
+													tag="span"
+													render={slots.label}
+													source={item}
+													name="label"
+													row={item}
+													it={item}
+													index={index}
+												/>
 												{
 													props.closable && item.closable && (
 														<Icon

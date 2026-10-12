@@ -313,8 +313,8 @@ const renderDot = () => h('span', { class: 'check' }, '✓');
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| label | 标签；字符串按 HTML 渲染，函数通过 `Customer` 渲染 | `string \| Function` | - | `''` |
-| dot | 自定义节点，替代默认圆点；字符串按 HTML 渲染，函数通过 `Customer` 渲染 | `string \| Function` | - | - |
+| label | 标签。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md)；`label` 插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
+| dot | 自定义节点，替代默认圆点；取值与 label 相同，`dot` 插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | dotColor | 默认圆点的颜色；实心时为背景色，空心时为边框色 | `string` | - | - |
 | dotType | 默认圆点的样式 | `string` | `solid` / `hollow` | `solid` |
 | lineColor | 该节点之后那段轴线的颜色 | `string` | - | - |
@@ -332,7 +332,7 @@ const renderDot = () => h('span', { class: 'check' }, '✓');
 ### 使用注意
 
 - Timeline 的默认插槽只渲染 TimelineItem（包括 `v-for`、`<template>` 中的 TimelineItem），其他节点会被忽略；被其他组件包裹的 TimelineItem 也不会渲染。
-- `label`、`dot` 为字符串时按 HTML 渲染，不要传入未经处理的用户输入。
+- `label`、`dot` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。
 - 与幽灵节点相连的那段轴线会被强制设为虚线，覆盖该项的 `lineType`。
 - 颜色使用主题变量，可通过 `--vc-timeline-color-primary`（圆点）、`--vc-timeline-color-neutral-light`（轴线）、`--vc-timeline-color-dark-light`（内容）、`--vc-timeline-color-dark-extralight`（标签）、`--vc-timeline-background-color-lightest`（自定义节点的背景，用于遮挡轴线）单独覆盖。
 - `MTimeline`、`MTimelineItem` 分别是 `Timeline`、`TimelineItem` 的别名，使用同一实现与样式，可从 `@deot/vc` 导入。

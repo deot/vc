@@ -14,6 +14,7 @@ import { TableBody } from './table-body';
 import { TableHeader } from './table-header';
 import { TableFooter } from './table-footer';
 import { Affix } from '../affix';
+import { Customer } from '../customer';
 import { useLocale } from '../locale';
 
 import { props as tableProps } from './table-props';
@@ -533,15 +534,11 @@ export const Table = defineComponent({
 					{
 						props.data.length === 0 && (
 							<div class="vc-table__empty-wrapper">
-								{
-									slots.empty
-										? slots.empty()
-										: (
-												<span class="vc-table__empty-text">
-													{ props.emptyText ?? t('vc.Table.emptyText') }
-												</span>
-											)
-								}
+								<Customer
+									tag="span"
+									class="vc-table__empty-text"
+									render={slots.empty || (props.emptyText ?? t('vc.Table.emptyText'))}
+								/>
 							</div>
 						)
 					}

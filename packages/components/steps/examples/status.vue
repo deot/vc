@@ -38,7 +38,7 @@
 				</template>
 			</Step>
 			<Step :title="renderTitle" :description="renderDescription" />
-			<Step title="<b>标题：HTML</b>">
+			<Step :title="{ type: 'html', value: '<b>标题：HTML</b>' }">
 				<template #description>
 					描述：插槽
 				</template>

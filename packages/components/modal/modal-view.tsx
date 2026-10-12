@@ -199,13 +199,7 @@ export const ModalView = defineComponent({
 		const renderContent = () => {
 			return (
 				<Fragment>
-					{
-						typeof props.content === 'string'
-							? (<div innerHTML={props.content} />)
-							: typeof props.content === 'function'
-								? (<Customer render={props.content} />)
-								: null
-					}
+					<Customer render={props.content} />
 					{ slots.default?.() }
 				</Fragment>
 			);
@@ -341,15 +335,12 @@ export const ModalView = defineComponent({
 										!slots.header
 											? (
 													<Fragment>
-														{
-															typeof props.title === 'string'
-																? <div class="vc-modal__title" innerHTML={props.title} />
-																: typeof props.title === 'function' && (
-																	<Customer
-																		render={props.title}
-																	/>
-																)
-														}
+														<Customer
+															// 标题行有最小高度：空字符串也保留它，头部高度不变
+															wrap={props.title === ''}
+															class="vc-modal__title"
+															render={props.title}
+														/>
 														{
 															props.closable && !props.mode && (
 																<div

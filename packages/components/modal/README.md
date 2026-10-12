@@ -485,8 +485,8 @@ onUnmounted(() => {
 | --- | --- | --- | --- | --- |
 | modelValue | 是否显示；支持 `v-model` | `boolean` | - | `false` |
 | mode | 状态图标与确认式布局 | `string` | `info`、`success`、`error`、`warning` | - |
-| title | 标题；字符串按 HTML 渲染，也可传渲染函数 | `string \| ((props: Record<string, unknown>, context: SetupContext) => any)` | - | - |
-| content | 内容；字符串按 HTML 渲染，也可传渲染函数 | `string \| ((props: Record<string, unknown>, context: SetupContext) => any)` | - | `''` |
+| title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |
+| content | 内容，取值与 title 相同；与默认插槽同时显示 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | size | 预设尺寸 | `string` | `small`、`medium`、`large` | `small` |
 | contentStyle | 内容区域的行内样式 | `object \| string` | - | - |
 | contentClass | 内容区域的 class | `object \| string` | - | - |
@@ -606,8 +606,8 @@ const handleSubmit = async () => {
 | --- | --- | --- | --- | --- |
 | modelValue | 是否显示；支持 `v-model` | `boolean` | - | `false` |
 | mode | 移动端布局模式 | `string` | `alert`、`operation` | `alert` |
-| title | 标题；`false` 隐藏，字符串按 HTML 渲染，也可传渲染函数 | `boolean \| string \| ((props: Record<string, unknown>, context: SetupContext) => any)` | - | - |
-| content | 内容；`false` 隐藏，字符串按 HTML 渲染，也可传渲染函数 | `boolean \| string \| ((props: Record<string, unknown>, context: SetupContext) => any)` | - | - |
+| title | 标题；`false` 隐藏。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| boolean \| Function \| { type: string; value: any }` | - | - |
+| content | 内容；`false` 隐藏，其余取值与 title 相同 | `string \| number \| boolean \| Function \| { type: string; value: any }` | - | - |
 | width | 对话框宽度，单位为 px | `number` | - | `270` |
 | mask | 是否显示遮罩 | `boolean` | - | `true` |
 | maskClosable | 是否允许点击遮罩关闭 | `boolean` | - | `true` |
@@ -626,7 +626,7 @@ const handleSubmit = async () => {
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| content | 按钮内容，字符串按 HTML 渲染；falsy 值不渲染 | `string \| boolean` | - | - |
+| content | 按钮内容，取值与 title 相同；falsy 值不渲染 | `string \| number \| boolean \| Function \| { type: string; value: any }` | - | - |
 | style | 按钮行内样式 | `object` | - | - |
 | onClick | 点击回调 | `(event: MouseEvent) => unknown` | - | - |
 
@@ -674,4 +674,4 @@ const handleSubmit = async () => {
 
 ## 注意事项
 
-`title`、`content` 和移动端 `data[].content` 的字符串会通过 `innerHTML` 渲染。只应传入可信内容；展示不可信输入时请使用插槽或渲染函数，由调用方自行创建文本节点。
+`title`、`content` 和移动端 `data[].content` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。

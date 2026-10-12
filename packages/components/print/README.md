@@ -63,7 +63,7 @@ const handlePrint = () => {
 
 ### 打印 HTML 内容
 
-非空的 `value` 通过 `innerHTML` 渲染，并优先于默认插槽。`value` 为空字符串或未传入时，渲染默认插槽。仅传入可信的 HTML，组件不会进行内容清洗。
+`value` 按 HTML 渲染，只应传入可信的 HTML；同时提供默认插槽时，插槽优先。组件本身不清洗内容，可通过全局的 `sanitize` 统一处理，见 [Customer](../customer/README.md)。
 
 :::playground
 <!--
@@ -105,14 +105,14 @@ const handlePrint = () => {
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| value | 待打印的 HTML 字符串；非空时覆盖默认插槽 | `string` | - | - |
+| value | 待打印的 HTML 字符串；默认插槽优先 | `string` | - | - |
 | tag | 已声明但当前未用于渲染，根节点始终为 `div` | `string \| object \| Function` | - | `'div'` |
 
 ### 插槽
 
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
-| default | `value` 为空或未传入时展示的打印内容 | - |
+| default | 打印内容，优先于 `value` | - |
 
 ### 方法
 
@@ -123,6 +123,7 @@ const handlePrint = () => {
 ### 注意事项
 
 - 组件没有自定义事件，不提供 `before` / `after` 打印钩子。
+- 写在组件上的 `class`、`style` 和事件监听会落到根节点；`id`、`data-*` 等其他属性不会出现在 DOM 上。
 - `print()` 临时隐藏 `document.body` 下内联 `display` 不为 `none` 的直接子 `div`，将内容克隆到新的 `div` 后调用浏览器打印。调用返回后删除克隆节点，并移除被隐藏节点的内联 `display`；原有的 `flex`、`grid` 等内联值不会恢复。
 - `body` 下非 `div` 的直接子元素不会被隐藏，仍可能出现在打印结果中。打印内容的样式依赖当前页面，克隆内容也可能失去原祖先选择器的样式。
 - 方法不返回打印结果，也不表示用户已经确认打印；打印对话框和最终输出由浏览器控制。

@@ -3,6 +3,7 @@
 import { defineComponent } from 'vue';
 import { props as formItemProps } from './form-item-props';
 import { useFormItem } from './use-form-item';
+import { Customer } from '../customer';
 import { TransitionFade } from '../transition';
 
 const COMPONENT_NAME = 'vc-form-item';
@@ -49,9 +50,7 @@ export const FormItem = defineComponent({
 								// @ts-ignore
 								for={props.labelFor}
 							>
-								<label>
-									{ props.label || slots.label?.() }
-								</label>
+								<Customer wrap tag="label" render={slots.label || props.label} />
 							</div>
 						)
 					}

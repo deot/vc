@@ -104,13 +104,13 @@ const handleEnd = (id) => {
 };
 
 const renderRow = (props) => {
-	const { day, hour, minute, second, millisecond, tag } = props;
+	const { day, hour, minute, second, millisecond } = props;
 	const num = Number(millisecond);
 	const r = num % 255;
 	const g = (num + 100) % 255;
 	const b = (num + 200) % 255;
 	return h(
-		tag,
+		'span',
 		{
 			style: `color:rgb(${r}, ${g}, ${b})`,
 			class: props.class,

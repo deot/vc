@@ -1,15 +1,15 @@
 import type { ExtractPropTypes, PropType } from 'vue';
-import type { Props as CustomerProps } from '../customer/customer-props';
+import { valueType } from '../customer/customer-props';
 import { STEP_STATUSES } from './steps-props';
 import type { StepStatus } from './steps-props';
 
 export const props = {
 	title: {
-		type: [String, Function] as PropType<string | CustomerProps['render']>,
+		type: valueType,
 		default: ''
 	},
 	description: {
-		type: [String, Function] as PropType<string | CustomerProps['render']>,
+		type: valueType,
 		default: ''
 	},
 	/**

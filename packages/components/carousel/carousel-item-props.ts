@@ -1,9 +1,10 @@
 import type { ExtractPropTypes } from 'vue';
+import { valueType } from '../customer/customer-props';
 
 export const props = {
 	name: String,
 	label: {
-		type: [String, Number],
+		type: valueType,
 		default: ''
 	},
 

@@ -286,14 +286,7 @@ export const TreeNodeContent = defineComponent({
 
 						{
 							props.renderNodeLabel
-								? (
-										<Customer
-											render={props.renderNodeLabel}
-											// @ts-ignore
-											store={node}
-											row={node.states.data}
-										/>
-									)
+								? (<Customer render={props.renderNodeLabel} store={node} row={node.states.data} />)
 								: <span class="vc-tree-node__label">{node.getter.label}</span>
 						}
 					</div>

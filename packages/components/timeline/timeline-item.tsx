@@ -25,19 +25,6 @@ export const TimelineItem = defineComponent({
 			return props.lineColor ? { borderColor: props.lineColor } : {};
 		});
 
-		/**
-		 * 插槽优先，其次字符串（innerHTML）或函数（Customer）
-		 * @param key ~
-		 * @returns ~
-		 */
-		const renderContent = (key: 'dot' | 'label') => {
-			const value = props[key];
-			if (slots[key]) return slots[key]!();
-			return typeof value === 'function'
-				? (<Customer render={value} />)
-				: (<span innerHTML={value} />);
-		};
-
 		const renderDot = () => {
 			if (!slots.dot && !props.dot) {
 				return (
@@ -49,7 +36,7 @@ export const TimelineItem = defineComponent({
 			}
 			return (
 				<div class="vc-timeline-item__dot-custom">
-					{ renderContent('dot') }
+					<Customer tag="span" render={slots.dot || props.dot} />
 				</div>
 			);
 		};
@@ -58,7 +45,7 @@ export const TimelineItem = defineComponent({
 			if (!slots.label && !props.label) return null;
 			return (
 				<div class="vc-timeline-item__label">
-					{ renderContent('label') }
+					<Customer tag="span" render={slots.label || props.label} />
 				</div>
 			);
 		};

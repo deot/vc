@@ -1,4 +1,5 @@
 import { inject, getCurrentInstance, ref, watch, computed } from 'vue';
+import type { CustomerValue } from '../customer/types';
 
 export const useRadio = () => {
 	const { props, emit } = getCurrentInstance()!;
@@ -16,9 +17,9 @@ export const useRadio = () => {
 	});
 
 	const computedLabel = computed(() => {
-		return typeof props.label === 'undefined' || props.label === ''
+		return (typeof props.label === 'undefined' || props.label === ''
 			? props.value
-			: props.label;
+			: props.label) as CustomerValue | undefined;
 	});
 
 	const hasGroup = computed(() => {

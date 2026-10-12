@@ -3,6 +3,8 @@
 import { defineComponent } from 'vue';
 import { props as checkboxProps } from './checkbox-props';
 import { useCheckbox } from './use-checkbox';
+import { Customer } from '../customer';
+import { hasCustomerValue } from '../customer/utils';
 
 const COMPONENT_NAME = 'vc-checkbox';
 
@@ -13,9 +15,11 @@ export const Checkbox = defineComponent({
 	setup(props, { slots }) {
 		const { checked, classes, computedLabel, handleChange, handleFocus, handleBlur } = useCheckbox();
 		return () => {
+			const label = slots.default || computedLabel.value;
+			const hasLabel = hasCustomerValue(label);
 			return (
 				<label class={[classes.value, 'vc-checkbox']}>
-					<span class={[{ 'has-sibling': !!(computedLabel.value || slots.default) }, 'vc-checkbox__wrapper']}>
+					<span class={[{ 'has-sibling': hasLabel }, 'vc-checkbox__wrapper']}>
 						<span class="vc-checkbox__border">
 							<span class="vc-checkbox__inner" />
 						</span>
@@ -29,9 +33,7 @@ export const Checkbox = defineComponent({
 							onBlur={handleBlur}
 						/>
 					</span>
-					{
-						slots.default ? slots.default() : (computedLabel.value && <span>{computedLabel.value}</span>)
-					}
+					{ hasLabel && (<Customer tag="span" render={label} />) }
 				</label>
 			);
 		};

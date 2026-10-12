@@ -36,19 +36,6 @@ export const Step = defineComponent({
 		});
 
 		/**
-		 * 插槽优先，其次字符串（innerHTML）或函数（Customer）
-		 * @param key ~
-		 * @returns ~
-		 */
-		const renderContent = (key: 'title' | 'description') => {
-			const value = props[key];
-			if (slots[key]) return slots[key]!();
-			return typeof value === 'function'
-				? (<Customer render={value} />)
-				: (<span innerHTML={value} />);
-		};
-
-		/**
 		 * 默认节点：dot为圆点，其余为序号，成功/失败时为图标
 		 * @returns ~
 		 */
@@ -92,7 +79,7 @@ export const Step = defineComponent({
 			if (!slots.description && !props.description) return null;
 			return (
 				<div class="vc-step__description">
-					{ renderContent('description') }
+					<Customer tag="span" render={slots.description || props.description} />
 				</div>
 			);
 		};
@@ -120,7 +107,7 @@ export const Step = defineComponent({
 					{ renderDot() }
 					<div class="vc-step__content">
 						<div class="vc-step__title">
-							{ renderContent('title') }
+							<Customer tag="span" render={slots.title || props.title} />
 						</div>
 						{ renderDescription() }
 					</div>

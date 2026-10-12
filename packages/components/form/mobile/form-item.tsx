@@ -3,6 +3,8 @@
 import { defineComponent } from 'vue';
 import { props as mFormItemProps } from './form-item-props';
 import { useFormItem } from '../use-form-item';
+import { MCustomer } from '../../customer/index.m';
+import { isCustomerData } from '../../customer/utils';
 
 const COMPONENT_NAME = 'vcm-form-item';
 
@@ -27,6 +29,15 @@ export const MFormItem = defineComponent({
 		} = it;
 
 		const errorColorClass = 'vcm-form-item__error';
+
+		// label 插槽优先；文字直接放在 label 内，渲染函数与 { type, value } 交给 Customer
+		const renderLabel = () => {
+			const label = slots.label || props.label;
+			return typeof label === 'function' || isCustomerData(label)
+				? (<MCustomer tag="span" render={label} />)
+				: label;
+		};
+
 		return () => {
 			if (isStyleless.value) return [
 				slots.default?.(),
@@ -52,7 +63,7 @@ export const MFormItem = defineComponent({
 									style={labelStyle.value}
 									class={['vcm-form-item__label', ...labelClass.value]}
 								>
-									{ props.label || slots.label?.() }
+									{ renderLabel() }
 								</label>
 							)
 						}

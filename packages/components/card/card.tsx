@@ -2,6 +2,7 @@
 
 import { defineComponent } from 'vue';
 import { props as cardProps } from './card-props';
+import { Customer } from '../customer';
 import { Icon } from '../icon';
 
 const COMPONENT_NAME = 'vc-card';
@@ -18,13 +19,13 @@ export const Card = defineComponent({
 							<div class="vc-card__header">
 								{
 									slots.title
-										? slots.title?.()
-										: (props.title && (
+										? slots.title()
+										: (
 												<p>
 													{ props.icon && (<Icon type={props.icon} />) }
-													<span>{props.title}</span>
+													<Customer tag="span" render={props.title} />
 												</p>
-											))
+											)
 								}
 							</div>
 						)

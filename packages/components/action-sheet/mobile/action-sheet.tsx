@@ -2,6 +2,7 @@
 
 import { defineComponent, Fragment, onMounted, ref, withModifiers } from 'vue';
 import { MCustomer } from '../../customer/index.m';
+import { hasCustomerValue } from '../../customer/utils';
 import { MPopup } from '../../popup/index.m';
 import { MSpin } from '../../spin/index.m';
 import { props as actionSheetProps } from './action-sheet-props';
@@ -9,23 +10,9 @@ import type { ActionSheetAction, ActionSheetActionValue, ActionSheetContent } fr
 
 const COMPONENT_NAME = 'vcm-action-sheet';
 
+// 函数的内容也放进带 class 的元素；没有内容时不输出
 const renderContent = (content: ActionSheetContent | undefined, className: string, loading = false) => {
-	if (typeof content === 'string') {
-		return <div class={className} innerHTML={content} />;
-	}
-
-	if (typeof content === 'function') {
-		return (
-			<MCustomer
-				render={content}
-				class={className}
-				// @ts-ignore
-				loading={loading}
-			/>
-		);
-	}
-
-	return null;
+	return hasCustomerValue(content) && (<MCustomer wrap class={className} render={content} loading={loading} />);
 };
 
 export const ActionSheet = defineComponent({
@@ -103,7 +90,7 @@ export const ActionSheet = defineComponent({
 					>
 						<div class="vcm-action-sheet__container">
 							<div class="vcm-action-sheet__group">
-								{props.title && renderContent(props.title, 'vcm-action-sheet__title')}
+								{ renderContent(props.title, 'vcm-action-sheet__title') }
 								<div class="vcm-action-sheet__actions vcm-popup-scrollable">
 									{
 										props.data.map((action, index) => {
@@ -136,8 +123,7 @@ export const ActionSheet = defineComponent({
 															}
 														</div>
 														{
-															action.subContent
-															&& renderContent(action.subContent, 'vcm-action-sheet__sub-content', isLoading)
+															renderContent(action.subContent, 'vcm-action-sheet__sub-content', isLoading)
 														}
 													</Fragment>
 												</div>

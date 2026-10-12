@@ -27,8 +27,8 @@ const handleOpen = async () => {
 				onClick: () => sleep(3000)
 			},
 			{
-				content: '<span style="color: #456CF6;">HTML 选项</span>',
-				subContent: '字符串默认使用 v-html'
+				content: { type: 'html', value: '<span style="color: #456CF6;">HTML 选项</span>' },
+				subContent: '需要 HTML 时传 { type: \'html\', value }'
 			},
 			{
 				content: () => h('span', { style: { color: '#f04134' } }, 'DELETE'),

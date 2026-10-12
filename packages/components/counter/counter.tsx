@@ -240,28 +240,11 @@ export const Counter = defineComponent({
 
 		const Content = props.tag;
 		return () => {
-			if (slots.default) {
-				return (
-					// @ts-ignore
-					<Content class="vc-counter">
-						{ slots.default(binds.value) }
-					</Content>
-				);
-			}
-			if (props.render) {
-				return (
-					<Customer
-						class="vc-counter"
-						// @ts-ignore
-						render={props.render}
-						{...binds.value}
-					/>
-				);
-			}
+			const content = slots.default || props.render;
 			return (
 				// @ts-ignore
 				<Content class="vc-counter">
-					{displayValue.value}
+					{ content ? (<Customer render={content} {...binds.value} />) : displayValue.value }
 				</Content>
 			);
 		};

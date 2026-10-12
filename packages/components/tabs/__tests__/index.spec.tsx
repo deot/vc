@@ -173,10 +173,10 @@ describe('index.ts', () => {
 		expect(wrapper.find('.vc-tabs__item .fn-label').text()).toBe('idx#0');
 	});
 
-	it('renders label as html string', async () => {
+	it('renders { type: \'html\' } label as html', async () => {
 		const wrapper = mount(() => (
 			<Tabs>
-				<TabsPane label="<i class='label-html'>x</i>">A</TabsPane>
+				<TabsPane label={{ type: 'html', value: '<i class=\'label-html\'>x</i>' }}>A</TabsPane>
 			</Tabs>
 		));
 		await flush();
@@ -1116,6 +1116,114 @@ describe('mobile', () => {
 
 		restoreScroll();
 		restoreNav();
+		wrapper.unmount();
+	});
+});
+
+describe('label', () => {
+	const MARKUP = '<b class="inner">text</b>';
+
+	it('渲染函数与插槽收到 row / it / index，根节点上没有透传属性', async () => {
+		const render = vi.fn(({ it, index }: any) => (<em class="render">{ `${it.value}:${index}` }</em>));
+		const wrapper = mount(() => (
+			<Tabs modelValue="a">
+				<TabsPane value="a" label={render}>A</TabsPane>
+			</Tabs>
+		), { attachTo: document.body });
+		await flush();
+
+		const options = (render.mock.calls[0] as any)[0];
+		expect(Object.keys(options).sort()).toEqual(['index', 'it', 'row']);
+		expect(options.row).toBe(options.it);
+		expect(wrapper.find('.render').text()).toBe('a:0');
+		expect(wrapper.find('.render').attributes()).toEqual({ class: 'render' });
+		wrapper.unmount();
+
+		const slot = vi.fn(() => 'slot');
+		const wrapper$ = mount(() => (
+			<Tabs modelValue="a" v-slots={{ label: slot }}>
+				<TabsPane value="a" label="a">A</TabsPane>
+			</Tabs>
+		), { attachTo: document.body });
+		await flush();
+		expect(Object.keys((slot.mock.calls[0] as any)[0]).sort()).toEqual(['index', 'it', 'row']);
+		wrapper$.unmount();
+	});
+
+	it('{ type: \'html\' } 按 HTML 渲染，字符串按文本渲染', async () => {
+		const wrapper = mount(() => (
+			<Tabs modelValue="a">
+				<TabsPane value="a" label={{ type: 'html', value: MARKUP }}>A</TabsPane>
+				<TabsPane value="b" label={MARKUP}>B</TabsPane>
+			</Tabs>
+		), { attachTo: document.body });
+		await flush();
+
+		const [a, b] = wrapper.findAll('.vc-tabs__item');
+		expect(a.find('span .inner').exists()).toBe(true);
+		expect(b.find('.inner').exists()).toBe(false);
+		expect(b.find('span').text()).toBe(MARKUP);
+		wrapper.unmount();
+	});
+
+	describe.each([
+		['Tabs', Tabs, TabsPane, 'vc'],
+		['MTabs', MTabs, MTabsPane, 'vcm']
+	])('%s：每次渲染都是新引用的 label', (_, Component: any, Pane: any, prefix) => {
+		it.each([
+			['{ type, value }', () => ({ type: 'html', value: '<b class="inline">甲</b>' })],
+			['渲染函数', () => () => (<b class="inline">甲</b>)]
+		])('内联的 %s 不会循环更新', async (__, create) => {
+			// 默认插槽每次求值都产生新的 label
+			const render = vi.fn(() => [
+				<Pane value="a" label={create() as any}>A</Pane>,
+				<Pane value="b" label="乙">B</Pane>
+			]);
+			const wrapper = mount(() => (<Component modelValue="a">{{ default: render }}</Component>), { attachTo: document.body });
+			await flush();
+
+			expect(render.mock.calls.length).toBeLessThan(10);
+			expect(wrapper.find(`.${prefix}-tabs__item .inline`).text()).toBe('甲');
+			wrapper.unmount();
+		});
+
+		it('label 变化后标签更新', async () => {
+			const text = ref('甲');
+			const wrapper = mount(() => (
+				<Component modelValue="a">
+					<Pane value="a" label={{ type: 'text', value: text.value }}>A</Pane>
+				</Component>
+			), { attachTo: document.body });
+			await flush();
+			expect(wrapper.find(`.${prefix}-tabs__item`).text()).toBe('甲');
+
+			text.value = '乙';
+			await flush();
+			expect(wrapper.find(`.${prefix}-tabs__item`).text()).toBe('乙');
+			wrapper.unmount();
+		});
+	});
+
+	it('移动端：渲染函数、插槽和空标签都在 span 内，滑块按这个 span 的宽度计算', async () => {
+		const wrapper = mount(() => (
+			<MTabs modelValue="a">
+				<MTabsPane value="a">A</MTabsPane>
+				<MTabsPane value="b" label={() => (<em>B</em>)}>B</MTabsPane>
+			</MTabs>
+		), { attachTo: document.body });
+		await flush();
+
+		const items = wrapper.findAll('.vcm-tabs__item');
+		const spans = items.map(i => i.element.firstElementChild as HTMLElement);
+		expect(spans.map(i => i.outerHTML)).toEqual(['<span></span>', '<span><em>B</em></span>']);
+
+		const restore = mockSize(spans[1], 36);
+		// 切到渲染函数的标签，触发刷新
+		await items[1].trigger('click');
+		await flush();
+		expect((wrapper.find('.vcm-tabs__afloat').element as HTMLElement).style.width).toBe('36px');
+
+		restore();
 		wrapper.unmount();
 	});
 });

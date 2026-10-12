@@ -1,13 +1,13 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, h, ref, withModifiers } from 'vue';
+import { computed, defineComponent, ref, withModifiers } from 'vue';
 import { prefixStyle } from '@deot/helper-dom';
 import { useDrag } from '@deot/vc-hooks';
 import { cloneDeep } from 'lodash-es';
 import { Customer } from '../../customer';
 import { getRowLabel, getRowValue } from './utils';
 import type { PickerData, PickerValue } from '../types';
-import type { Render } from '../../customer/types';
+import { renderType } from '../../customer/customer-props';
 import type { PropType } from 'vue';
 
 const COMPONENT_NAME = 'vcm-picker-col';
@@ -26,7 +26,7 @@ export const PickerCol = defineComponent({
 		},
 		itemStyle: Object as PropType<Record<string, any>>,
 		value: [String, Number, Boolean] as PropType<PickerValue>,
-		renderLabel: Function as Render
+		renderLabel: renderType
 	},
 	emits: ['change'],
 	setup(props, { emit }) {
@@ -114,25 +114,13 @@ export const PickerCol = defineComponent({
 
 		const renderItem = (item: PickerData, index: number) => {
 			const label = getRowLabel(item);
+			// label 本身可以是字符串，也可以是渲染函数
+			const render = props.renderLabel || (typeof label === 'function' ? label : void 0);
 
-			if (typeof props.renderLabel === 'function') {
-				return h(Customer, {
-					render: props.renderLabel,
-					label,
-					row: item,
-					index
-				} as any);
-			}
-
-			if (typeof label === 'function') {
-				return h(Customer, {
-					render: label,
-					row: item,
-					index
-				} as any);
-			}
-
-			return label;
+			// 拖动时整列逐帧重渲染；参数不变，各项不会更新
+			return render
+				? (<Customer render={render} label={label} row={item} index={index} />)
+				: label;
 		};
 
 		return () => {

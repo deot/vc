@@ -231,10 +231,10 @@ describe('index.ts', () => {
 		expect(solid.classes()).toContain('is-solid');
 	});
 
-	it('label: 字符串 / 函数 / 插槽优先 / 为空时不渲染', () => {
+	it('label: { type, value } / 函数 / 插槽优先 / 为空时不渲染', () => {
 		const wrapper = mount(() => (
 			<Timeline>
-				<TimelineItem label="<b>html</b>">A</TimelineItem>
+				<TimelineItem label={{ type: 'html', value: '<b>html</b>' }}>A</TimelineItem>
 				<TimelineItem label={() => h('i', 'fn')}>B</TimelineItem>
 				<TimelineItem label="prop">
 					{{
@@ -254,10 +254,10 @@ describe('index.ts', () => {
 		expect(labels[3].exists()).toBe(false);
 	});
 
-	it('dot: 字符串 / 函数 / 插槽优先, 设置后不渲染默认节点', () => {
+	it('dot: { type, value } / 函数 / 插槽优先, 设置后不渲染默认节点', () => {
 		const wrapper = mount(() => (
 			<Timeline>
-				<TimelineItem dot="<b>✓</b>" dotColor="red">A</TimelineItem>
+				<TimelineItem dot={{ type: 'html', value: '<b>✓</b>' }} dotColor="red">A</TimelineItem>
 				<TimelineItem dot={() => h('i', { class: 'fn-dot' })}>B</TimelineItem>
 				<TimelineItem dot="prop">
 					{{

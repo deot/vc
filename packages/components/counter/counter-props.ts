@@ -1,4 +1,5 @@
 import type { ExtractPropTypes } from 'vue';
+import { renderType } from '../customer/customer-props';
 
 export const props = {
 	tag: {
@@ -51,6 +52,6 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
-	render: Function
+	render: renderType
 };
 export type Props = ExtractPropTypes<typeof props>;

@@ -71,28 +71,28 @@ export const Option = defineComponent({
 		});
 		return () => {
 			if (!isActive.value) return;
-			return typeof props.render === 'function'
-				? (<Customer render={props.render} {...customOptions.value} />)
-				: slots.default
-					? slots.default(customOptions.value)
-					: (
-							<div
-								// @ts-ignore
-								disabled={props.disabled && 'disabled'}
-								class={[{ 'is-select': isChecked.value, 'is-last': isLast.value }, 'vc-select-option']}
-								onClick={withModifiers(handleClick, ['stop'])}
-								onMousedown={handlePrevent}
-							>
-								{
-									typeof props.renderLabel === 'function'
-										? (<Customer render={props.renderLabel} {...customOptions.value} />)
-										: slots.label
-											? slots.label(customOptions.value)
-											: formatterLabel.value
-								}
-								{ isChecked.value && (<Icon type="correct" />) }
-							</div>
-						);
+
+			// 同名插槽优先
+			const render = slots.default || props.render;
+			if (render) return (<Customer render={render} {...customOptions.value} />);
+
+			const renderLabel = slots.label || props.renderLabel;
+			return (
+				<div
+					// @ts-ignore
+					disabled={props.disabled && 'disabled'}
+					class={[{ 'is-select': isChecked.value, 'is-last': isLast.value }, 'vc-select-option']}
+					onClick={withModifiers(handleClick, ['stop'])}
+					onMousedown={handlePrevent}
+				>
+					{
+						renderLabel
+							? (<Customer render={renderLabel} {...customOptions.value} />)
+							: formatterLabel.value
+					}
+					{ isChecked.value && (<Icon type="correct" />) }
+				</div>
+			);
 		};
 	}
 });

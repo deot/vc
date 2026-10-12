@@ -128,7 +128,6 @@ export const Container = defineComponent({
 			>
 				<Customer
 					render={props.render || renderDefault}
-					// @ts-ignore
 					status={status.value}
 					type={props.inverted ? K.pullTail : K.pullHead}
 				/>

@@ -3,6 +3,8 @@
 import { defineComponent } from 'vue';
 import { props as radioProps } from '../radio-props';
 import { useRadio } from '../use-radio';
+import { MCustomer } from '../../customer/index.m';
+import { hasCustomerValue } from '../../customer/utils';
 
 const COMPONENT_NAME = 'vcm-radio';
 
@@ -13,9 +15,11 @@ export const MRadio = defineComponent({
 	setup(props, { slots }) {
 		const { styles, radioName, checked, classes, computedLabel, isDisabled, handleChange, handleFocus, handleBlur } = useRadio();
 		return () => {
+			const label = slots.default || computedLabel.value;
+			const hasLabel = hasCustomerValue(label);
 			return (
 				<label class={[classes.value, 'vcm-radio']} style={styles.value}>
-					<span class={[{ 'has-sibling': !!(computedLabel.value || slots.default) }, 'vcm-radio__wrapper']}>
+					<span class={[{ 'has-sibling': hasLabel }, 'vcm-radio__wrapper']}>
 						<span class="vcm-radio__border">
 							<span class="vcm-radio__inner" />
 						</span>
@@ -29,9 +33,7 @@ export const MRadio = defineComponent({
 							onBlur={handleBlur}
 						/>
 					</span>
-					{
-						slots.default ? slots.default() : (computedLabel.value && <span>{computedLabel.value}</span>)
-					}
+					{ hasLabel && (<MCustomer tag="span" render={label} />) }
 				</label>
 			);
 		};

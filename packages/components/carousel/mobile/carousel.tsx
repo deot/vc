@@ -3,6 +3,7 @@
 import { defineComponent, ref, withModifiers } from 'vue';
 import { useDrag } from '@deot/vc-hooks';
 import { useCarousel } from '../use-carousel';
+import { CustomerProp } from '../../customer/customer-prop';
 import { props as carouselProps } from '../carousel-props';
 
 const COMPONENT_NAME = 'vcm-carousel';
@@ -99,7 +100,7 @@ export const MCarousel = defineComponent({
 									>
 										<button class="vcm-carousel__button">
 											{carousel.hasLabel.value && (
-												<span>{(carousel.items.value[index].props as any).label}</span>
+												<CustomerProp wrap tag="span" source={carousel.items.value[index].props} name="label" />
 											)}
 										</button>
 									</li>

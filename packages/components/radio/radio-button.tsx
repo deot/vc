@@ -3,6 +3,7 @@
 import { defineComponent } from 'vue';
 import { props as radioProps } from './radio-props';
 import { useRadio } from './use-radio';
+import { Customer } from '../customer';
 
 const COMPONENT_NAME = 'vc-radio-button';
 
@@ -28,11 +29,13 @@ export const RadioButton = defineComponent({
 						onFocus={handleFocus}
 						onBlur={handleBlur}
 					/>
-					<span class={[props.labelClass, 'vc-radio-button__label']} style={props.labelStyle}>
-						{
-							slots.default ? slots.default() : (computedLabel.value || '')
-						}
-					</span>
+					<Customer
+						wrap
+						tag="span"
+						class={[props.labelClass, 'vc-radio-button__label']}
+						style={props.labelStyle}
+						render={slots.default || computedLabel.value}
+					/>
 				</label>
 			);
 		};

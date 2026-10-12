@@ -226,10 +226,10 @@ describe('index.ts', () => {
 		expect(items(wrapper).some((item: any) => item.classes('is-clickable'))).toBe(false);
 	});
 
-	it('title / description: 字符串 / 函数 / 插槽优先 / 描述为空时不渲染', () => {
+	it('title / description: 字符串 / { type, value } / 函数 / 插槽优先 / 描述为空时不渲染', () => {
 		const wrapper = mount(() => (
 			<Steps>
-				<Step title="<b>html</b>" description="desc" />
+				<Step title={{ type: 'html', value: '<b>html</b>' }} description="<b>desc</b>" />
 				<Step title={() => h('i', 'fn')} description={() => h('i', 'fn-desc')} />
 				<Step title="prop" description="prop">
 					{{
@@ -244,10 +244,12 @@ describe('index.ts', () => {
 		const descriptions = items(wrapper).map((item: any) => item.find('.vc-step__description'));
 
 		expect(titles[0].find('b').text()).toBe('html');
+		// 字符串按文本渲染
+		expect(descriptions[0].find('b').exists()).toBe(false);
 		expect(titles[1].find('i').text()).toBe('fn');
 		expect(titles[2].find('.slot-title').text()).toBe('slot');
 		expect(titles[2].text()).toBe('slot');
-		expect(descriptions[0].text()).toBe('desc');
+		expect(descriptions[0].text()).toBe('<b>desc</b>');
 		expect(descriptions[1].find('i').text()).toBe('fn-desc');
 		expect(descriptions[2].find('.slot-desc').exists()).toBe(true);
 		expect(descriptions[3].exists()).toBe(false);

@@ -1,4 +1,5 @@
 import type { ExtractPropTypes } from 'vue';
+import { renderType } from '../customer/customer-props';
 
 export const props = {
 	tag: {
@@ -22,7 +23,7 @@ export const props = {
 		type: [String, Number, Date],
 		default: ''
 	},
-	render: Function,
+	render: renderType,
 
 	// 仅当默认展示时有效
 	// 当为false时：00天00小时29分10秒12 -> 29分10秒12

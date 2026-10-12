@@ -33,7 +33,7 @@ export const tableColumnProps = {
 	// 表头筛选：原样传给 TableFilter（data / max / icon / portalClass / modelValue / onChange 等）
 	filterOptions: Object as PropType<TableFilterOptions>,
 
-	tooltip: [String, Function] as PropType<TableColumnStates['tooltip']>
+	tooltip: [String, Function, Object] as PropType<TableColumnStates['tooltip']>
 };
 
 export type TableColumnProps = ExtractPropTypes<typeof tableColumnProps>;

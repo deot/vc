@@ -346,8 +346,8 @@ const handleOk = () => {
 | modelValue | 是否显示，支持 `v-model` | `boolean` | - | `false` |
 | trigger | 触发方式；`focus` 监听根节点，需让根节点可聚焦 | `string` | `click`、`hover`、`strictHover`、`focus`、`custom` | `click` |
 | placement | 首选弹出位置 | `string` | `top`、`top-left`、`top-right`、`bottom`、`bottom-left`、`bottom-right`、`left`、`left-top`、`left-bottom`、`right`、`right-top`、`right-bottom` | `top` |
-| title | 标题；字符串按 HTML 渲染，函数通过 Customer 渲染 | `string \| Function` | - | `''` |
-| content | 补充内容；字符串按 HTML 渲染，函数通过 Customer 渲染 | `string \| Function` | - | `''` |
+| title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
+| content | 补充内容，取值与 title 相同 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | okText | 确定按钮文案；显式字符串优先于 locale | `string` | - | 当前 locale 的 `vc.Popconfirm.okButtonText`（中文：`确定`） |
 | cancelText | 取消按钮文案；显式字符串优先于 locale | `string` | - | 当前 locale 的 `vc.Popconfirm.cancelButtonText`（中文：`取消`） |
 | okType | 确定按钮类型，沿用 Button 的 type | `string` | `default`、`primary`、`text`、`success`、`error`、`warning` | `primary` |
@@ -384,4 +384,4 @@ const handleOk = () => {
 
 ### 注意事项
 
-字符串 `title`、`content` 会作为 HTML 插入，避免传入未经处理的不可信内容；普通文本可使用插槽插值显示。
+`title`、`content` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。

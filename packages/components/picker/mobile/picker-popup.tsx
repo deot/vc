@@ -2,6 +2,7 @@
 
 import { computed, defineComponent, ref, watch, withModifiers } from 'vue';
 import { useAttrs } from '@deot/vc-hooks';
+import { MCustomer } from '../../customer/index.m';
 import { MPopup } from '../../popup/index.m';
 import { useLocale } from '../../locale';
 import { props as pickerPopupProps } from './picker-popup-props';
@@ -74,7 +75,7 @@ export const PickerPopup = defineComponent({
 											</div>
 										)
 									}
-									<div class="vcm-picker-popup__item is-title" innerHTML={props.title} />
+									<MCustomer wrap class="vcm-picker-popup__item is-title" render={props.title} />
 									{
 										okText.value && (
 											<div

@@ -1,5 +1,5 @@
 import type { ExtractPropTypes, PropType } from 'vue';
-import type { Render } from '../customer/types';
+import { renderType } from '../customer/customer-props';
 import type { Props as ScrollerProps } from '../scroller/scroller-props';
 import type { Store } from './store';
 
@@ -86,10 +86,10 @@ export const props = {
 
 	scrollerOptions: Object as PropType<ScrollerProps>,
 
-	renderEmpty: Function as Render,
-	renderComplete: Function as Render,
-	renderLoading: Function as Render,
-	renderPlaceholder: Function as Render,
-	renderRefresh: Function as Render
+	renderEmpty: renderType,
+	renderComplete: renderType,
+	renderLoading: renderType,
+	renderPlaceholder: renderType,
+	renderRefresh: renderType
 };
 export type Props = ExtractPropTypes<typeof props>;

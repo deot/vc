@@ -170,6 +170,6 @@ editorRef.value.add([
 
 ### 注意事项
 
-- EditorView 使用 `innerHTML`，不会清洗 HTML；展示外部内容前应由业务侧完成可信校验和清洗。
+- EditorView 的内容按 HTML 渲染，组件本身不清洗；展示外部内容前应由业务侧完成可信校验，或配置全局的 `sanitize` 统一清洗（钩子里可用 `instance.parent` 识别 EditorView，为富文本放行更多标签），见 [Customer](../customer/README.md)。
 - `MEditor`、`MEditorView` 是对应桌面组件的别名，没有独立移动端实现。
 - 旧的 `imageUploadOptions`、`videoUploadOptions` 不属于当前公开属性。

@@ -380,7 +380,7 @@ p { margin: 12px 0 0; }
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | prop | 对应 model 的字段路径 | `string` | - | - |
-| label | 标签文案；非空时优先于 label 插槽 | `string` | - | `''` |
+| label | 标签。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md)；label 插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | labelWidth | 覆盖标签宽度；嵌套项的标签默认宽度为 0 | `number` | - | 继承 Form |
 | labelPosition | 覆盖标签位置 | `string` | `left / right / top` | 继承 Form |
 | labelFor | 标签关联目标；当前桌面端将 for 放在标签外层 div，不能依赖它实现原生聚焦；移动端放在 label 上 | `string` | - | - |
@@ -402,7 +402,7 @@ p { margin: 12px 0 0; }
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
 | default | 表单控件或嵌套表单项 | - |
-| label | 自定义标签，label 为空时使用 | - |
+| label | 自定义标签，优先于 label 属性 | - |
 | error | 自定义错误区；styleless 模式下也由此插槽负责错误展示 | 普通模式：`{ show, nest, message, class, style }`；styleless：`{ show, nested, message, class, style }` |
 
 `show` 为是否应显示错误，`nest / nested` 为是否嵌套。自定义错误插槽需要自行处理 `show`，并按需绑定传入的 class/style。
@@ -436,7 +436,7 @@ p { margin: 12px 0 0; }
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
 | default | 表单控件或嵌套表单项 | - |
-| label | 自定义标签，label 为空时使用 | - |
+| label | 自定义标签，优先于 label 属性 | - |
 | error | 普通模式只在错误可见时调用；styleless 模式需自行控制显示 | 普通模式：`{ message }`；styleless：`{ show, nested, message, class, style }` |
 
 当前移动端必填标记的样式选择器未匹配实际标签层级，因此不会显示星号；必填校验仍然生效。

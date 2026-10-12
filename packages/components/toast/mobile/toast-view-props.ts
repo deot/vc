@@ -1,8 +1,8 @@
 import type { ExtractPropTypes, PropType } from 'vue';
-import type { Props as MCustomerProps } from '../../customer/customer-props';
+import { valueType } from '../../customer/customer-props';
 
 export const props = {
-	content: [String, Function] as PropType<string | MCustomerProps['render']>,
+	content: valueType,
 	maskClosable: {
 		type: Boolean,
 		default: true

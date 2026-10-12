@@ -55,7 +55,9 @@ export const open = async (options: Options) => {
 		// value/label优先原则
 		return {
 			...i,
-			src: i.value || i.source || i.src
+			src: i.value || i.source || i.src,
+			// html 幻灯片会被 PhotoSwipe 直接写入 innerHTML，不经过全局的 sanitize：这里只预览图片
+			html: void 0
 		};
 	});
 	// 并行获取尺寸，等待时间取决于最慢的一张

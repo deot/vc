@@ -1,7 +1,8 @@
 import type { ExtractPropTypes, PropType } from 'vue';
-import type { Props as CustomerProps } from '../../customer/customer-props';
+import { valueType } from '../../customer/customer-props';
+import type { CustomerValue } from '../../customer/types';
 
-export type ActionSheetContent = string | CustomerProps['render'];
+export type ActionSheetContent = CustomerValue;
 
 export type ActionSheetAction = {
 	content?: ActionSheetContent;
@@ -32,7 +33,7 @@ export const props = {
 		})
 	},
 	title: {
-		type: [String, Function] as PropType<ActionSheetContent>,
+		type: valueType,
 		default: ''
 	},
 	data: {

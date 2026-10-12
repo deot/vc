@@ -75,7 +75,7 @@ const handleRemove = (removedValue, index) => {
 
 ### 自定义标签
 
-`label` 插槽接收 `{ row, index }`，其中 `row` 是面板的 props。也可将渲染函数传入面板的 `label`，函数接收 `{ it, index }`。移动端自定义标签应包含 `span`，供自动下划线宽度测量使用。
+`label` 插槽接收 `{ row, index }`，其中 `row` 是面板的 props。也可将渲染函数传入面板的 `label`，函数接收 `{ it, index }`。移动端会把标签内容放进一个 `span`，自动下划线按它的宽度计算。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
@@ -209,7 +209,7 @@ const isDark = ref(false);
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | value | 面板标识，与父组件 modelValue 对应 | `string \| number \| boolean` | - | `undefined`，使用索引 |
-| label | 标签内容；字符串按 HTML 渲染，仅传入可信内容 | `string \| Function` | - | `''` |
+| label | 标签内容。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | anchor | 点击时滚动至目标元素的 CSS 选择器 | `string` | - | - |
 | lazy | 首次激活时渲染内容，之后保留；false 时立即渲染 | `boolean` | - | `true` |
 | closable | 配合父组件 closable 显示关闭按钮 | `boolean` | - | `false` |

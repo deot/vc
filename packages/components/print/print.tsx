@@ -2,6 +2,7 @@
 
 import { defineComponent, getCurrentInstance } from 'vue';
 import { props as printProps } from './print-props';
+import { Customer } from '../customer';
 
 const COMPONENT_NAME = 'vc-print';
 
@@ -34,13 +35,9 @@ export const Print = defineComponent({
 
 		expose({ print });
 		return () => {
-			if (props.value) return (
-				<div class="vc-print" innerHTML={props.value} />
-			);
+			// value 本身就是 HTML
 			return (
-				<div class="vc-print">
-					{ slots?.default?.() }
-				</div>
+				<Customer wrap class="vc-print" render={slots.default || { type: 'html', value: props.value }} />
 			);
 		};
 	}

@@ -160,14 +160,14 @@ describe('NoticeView 渲染', () => {
 		wrapper.unmount();
 	});
 
-	it('title/content 非 string/function 时不渲染内部节点', async () => {
+	it('title/content 为数字时按文本渲染，布尔值不渲染内部节点', async () => {
 		const wrapper = mount(NoticeView, {
 			props: { title: 123 as any, content: true as any }
 		});
 		await flush();
 
 		expect(wrapper.find('.vc-notice__title').exists()).toBe(true);
-		expect(wrapper.find('.vc-notice__title').text()).toBe('');
+		expect(wrapper.find('.vc-notice__title').text()).toBe('123');
 		expect(wrapper.find('.vc-notice__content').exists()).toBe(true);
 		expect(wrapper.find('.vc-notice__content').text()).toBe('');
 

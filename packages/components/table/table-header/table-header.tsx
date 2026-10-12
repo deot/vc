@@ -243,6 +243,7 @@ export const TableHeader = defineComponent({
 		const handleCellMouseEnter = (e: MouseEvent, column: TableColumnStates) => {
 			// 拖拽排序中不弹出提示
 			if (table.store.states.dragging) return;
+			const { tooltip } = column;
 			Popover.open({
 				element: document.body,
 				name: 'vc-table-header-popover', // 确保不重复创建
@@ -250,7 +251,8 @@ export const TableHeader = defineComponent({
 				hover: true,
 				theme: 'dark',
 				placement: 'top',
-				content: column.tooltip,
+				// 函数由这里调用：弹层只拿得到内容，拿不到列
+				content: typeof tooltip === 'function' ? () => tooltip({ column, store: table.store }) : tooltip,
 				alone: true
 			});
 		};

@@ -1,13 +1,13 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { TreeNode } from './store/tree-node';
-import type { Render } from '../customer/types';
+import { renderType } from '../customer/customer-props';
 
 export const props = {
 	node: {
 		type: Object as PropType<TreeNode>,
 		default: () => ({})
 	},
-	renderNodeLabel: Function as Render,
+	renderNodeLabel: renderType,
 	renderNodeAfterExpand: {
 		type: Boolean,
 		default: true

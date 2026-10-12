@@ -319,8 +319,8 @@ const current = ref(2);
 | --- | --- | --- |
 | index | 步数，从 1 开始 | `number` |
 | status | 该步的状态 | `string` |
-| title | Step 的 `title` 属性 | `string \| Function` |
-| description | Step 的 `description` 属性 | `string \| Function` |
+| title | Step 的 `title` 属性 | `string \| number \| Function \| { type: string; value: any }` |
+| description | Step 的 `description` 属性 | `string \| number \| Function \| { type: string; value: any }` |
 | dot | 默认节点，可包裹后返回 | `VNode` |
 
 ### Steps 事件
@@ -341,8 +341,8 @@ const current = ref(2);
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| title | 标题；字符串按 HTML 渲染，函数通过 `Customer` 渲染 | `string \| Function` | - | `''` |
-| description | 描述，为空时不渲染；字符串按 HTML 渲染，函数通过 `Customer` 渲染 | `string \| Function` | - | `''` |
+| title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md)；`title` 插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
+| description | 描述，为空时不渲染；取值与 title 相同，`description` 插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | status | 该步的状态，优先于根据当前步数推导的结果 | `string` | `default` / `pending` / `success` / `error` | - |
 | disabled | 开启 `clickable` 时不可点击 | `boolean` | - | `false` |
 
@@ -362,7 +362,7 @@ const current = ref(2);
   - `navigation` 的文字固定在节点右侧，`arrow` 没有节点，两者都忽略该属性。
 - 某一步的最终状态为 `error` 时（包括 Step 单独设置），前一步的连线显示为错误色；已完成步骤的连线为主色。
 - Steps 的默认插槽只渲染 Step（包括 `v-for`、`<template>` 中的 Step），其他节点会被忽略；被其他组件包裹的 Step 也不会渲染。
-- `title`、`description` 为字符串时按 HTML 渲染，不要传入未经处理的用户输入。
+- `title`、`description` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。
 - 自定义节点的尺寸由调用方控制；连线位置按默认节点（默认缩放下为 28px，`dot` 为 8px）计算。组件尺寸随 SCSS `$scale` 配置缩放，自定义节点需同步调整。
 - 颜色使用主题变量，可通过以下变量单独覆盖：
   - `--vc-steps-color-primary`：当前步、已完成的连线

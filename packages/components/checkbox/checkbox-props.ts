@@ -1,4 +1,5 @@
 import type { ExtractPropTypes } from 'vue';
+import { valueOrBooleanType } from '../customer/customer-props';
 
 export const props = {
 	disabled: {
@@ -16,7 +17,7 @@ export const props = {
 	},
 	// 当前选项label值
 	label: {
-		type: [String, Number, Boolean],
+		type: valueOrBooleanType,
 		default: undefined
 	},
 	indeterminate: {

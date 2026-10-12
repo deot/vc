@@ -3,6 +3,8 @@
 import { defineComponent } from 'vue';
 import { props as radioProps } from './radio-props';
 import { useRadio } from './use-radio';
+import { Customer } from '../customer';
+import { hasCustomerValue } from '../customer/utils';
 
 const COMPONENT_NAME = 'vc-radio';
 
@@ -13,9 +15,11 @@ export const Radio = defineComponent({
 	setup(props, { slots }) {
 		const { styles, radioName, checked, classes, computedLabel, isDisabled, handleChange, handleFocus, handleBlur } = useRadio();
 		return () => {
+			const label = slots.default || computedLabel.value;
+			const hasLabel = hasCustomerValue(label);
 			return (
 				<label class={[classes.value, 'vc-radio']} style={styles.value}>
-					<span class={[{ 'has-sibling': !!(computedLabel.value || slots.default) }, 'vc-radio__wrapper']}>
+					<span class={[{ 'has-sibling': hasLabel }, 'vc-radio__wrapper']}>
 						<span class="vc-radio__border">
 							<span class="vc-radio__inner" />
 						</span>
@@ -29,9 +33,7 @@ export const Radio = defineComponent({
 							onBlur={handleBlur}
 						/>
 					</span>
-					{
-						slots.default ? slots.default() : (computedLabel.value && <span>{computedLabel.value}</span>)
-					}
+					{ hasLabel && (<Customer tag="span" render={label} />) }
 				</label>
 			);
 		};

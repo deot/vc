@@ -4,6 +4,7 @@ import { props as selectProps } from '../select/select-props';
 import { KEY_VALUE } from './store/constant';
 import { props as treeNodeContentProps } from './tree-node-content-props';
 import type { TreeAllowDragPayload, TreeAllowDropPayload } from './types';
+import { valueType } from '../customer/customer-props';
 
 const selectKeys = [
 	'separator',
@@ -34,7 +35,7 @@ export const props = {
 		default: () => ([])
 	},
 	emptyText: {
-		type: String,
+		type: valueType,
 		default: undefined
 	},
 	checkStrictly: {

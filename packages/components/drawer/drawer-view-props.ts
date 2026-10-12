@@ -1,11 +1,11 @@
 import type { ExtractPropTypes, PropType } from 'vue';
-import type { Props as CustomerProps } from '../customer/customer-props';
+import { valueOrBooleanType, valueType } from '../customer/customer-props';
 import type { Props as ScrollerProps } from '../scroller/scroller-props';
 
 export const props = {
-	title: [String, Boolean, Function] as PropType<string | boolean | CustomerProps['render']>,
+	title: valueOrBooleanType,
 	content: {
-		type: [String, Function] as PropType<string | CustomerProps['render']>,
+		type: valueType,
 		default: ''
 	},
 	modelValue: {

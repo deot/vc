@@ -62,7 +62,7 @@ describe('header-line', () => {
 	});
 
 	it('全局配置生效，列上的 header-line 优先于全局', async () => {
-		VcInstance.options.TableColumn.headerLine = 2;
+		VcInstance.options.TableColumn!.headerLine = 2;
 		const wrapper = mount(() => (
 			<Table data={data} primaryKey="id">
 				<TableColumn label="全局" prop="name" />
@@ -75,7 +75,7 @@ describe('header-line', () => {
 		expect((textLineOf(wrapper, '列上').element as HTMLElement).style.webkitLineClamp).toBe('1');
 
 		// 全局配置为响应式：运行时修改同步到表头
-		VcInstance.options.TableColumn.headerLine = 3;
+		VcInstance.options.TableColumn!.headerLine = 3;
 		await flush();
 		expect((textLineOf(wrapper, '全局').element as HTMLElement).style.webkitLineClamp).toBe('3');
 		wrapper.unmount();

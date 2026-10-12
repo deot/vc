@@ -116,8 +116,42 @@ export const restoreLocale = () => VcInstance.configure({ locale: originalLocale
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | locale | 设置默认文案使用的完整语言对象；使用 `useLocale()` 的组件响应语言切换 | `Language` | `zhCN`、`enUS` 或自定义语言对象 | `zhCN` |
+| sanitize | 写入 HTML 前的清洗，返回清洗后的 HTML；组件库内所有按 HTML 渲染的内容都会经过 | `(data: { value: string; instance: object }) => string` | - | `undefined` |
 
 `Language` 由 `@deot/vc-locale` 导出。以下按组件列出常用配置，每个代码块都是配置伪代码；其中的路由、资源库、鉴权、导出等业务依赖由应用提供。配置是否即时生效、局部覆盖规则及完整参数见对应组件文档。
+
+### HTML 清洗（sanitize）
+
+组件库里只有 `{ type: 'html', value }` 以及 EditorView / Print 的 `value`、Countdown 的默认展示会按 HTML 写入，字符串和数字永远是文本。`sanitize` 在写入之前统一清洗这些内容，`instance.parent` 是使用它的组件，可据此为富文本放行更多标签。详见 [Customer](../customer/README.md)。
+
+```js
+import { VcInstance } from '@deot/vc';
+
+VcInstance.configure({
+	sanitize: ({ value, instance }) => {
+		const isRichText = instance.parent?.type.name === 'vc-editor-view';
+		return clean(value, isRichText ? RICH_TEXT_RULES : STRICT_RULES);
+	}
+});
+```
+
+### Customer 全局配置
+
+在渲染前转换 `{ type, value }` 的内容，用来支持自定义类型。详见 [Customer](../customer/README.md)。
+
+| 配置项 | 具体作用 | 默认值 |
+| --- | --- | --- |
+| formatter | 接收 `{ type, value, instance }`，返回渲染前的内容；只处理 `{ type, value }`，`html` 类型的结果再交给 `sanitize` | `undefined` |
+
+```js
+import { VcInstance } from '@deot/vc';
+
+VcInstance.configure({
+	Customer: {
+		formatter: ({ type, value }) => (type === 'amount' ? value.toFixed(2) : value)
+	}
+});
+```
 
 ### Image 全局配置
 

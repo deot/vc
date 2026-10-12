@@ -1,5 +1,5 @@
 import type { ExtractPropTypes, PropType } from 'vue';
-import type { Render } from '../../customer/types';
+import { renderType, valueType } from '../../customer/customer-props';
 import type { PickerModelValue, PickerSource } from '../types';
 
 export const props = {
@@ -29,7 +29,7 @@ export const props = {
 	label: String,
 	labelWidth: [String, Number],
 	title: {
-		type: String,
+		type: valueType,
 		default: ''
 	},
 	cancelText: String,
@@ -38,7 +38,7 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
-	renderLabel: Function as Render,
+	renderLabel: renderType,
 	separator: {
 		type: String,
 		default: ','

@@ -1,4 +1,5 @@
 import type { ExtractPropTypes } from 'vue';
+import { renderType } from '../customer/customer-props';
 
 export const props = {
 	tag: {
@@ -48,7 +49,7 @@ export const props = {
 	portalClass: [Object, String, Array],
 	portalStyle: [Object, String, Array],
 	renderRow: {
-		type: Function,
+		type: renderType,
 		default: (props$: any) => {
 			return props$.value;
 		}

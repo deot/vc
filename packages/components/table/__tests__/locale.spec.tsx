@@ -30,7 +30,9 @@ it('updates empty and summary text when the locale changes and preserves explici
 		expect(summary.find('.vc-table__footer').text()).toContain('Custom total');
 		await empty.setProps({ emptyText: '' });
 		await summary.setProps({ sumText: '' });
-		expect(empty.find('.vc-table__empty-text').text()).toBe('');
+		// 显式的空字符串不回落到默认文案，也不渲染空的文字节点
+		expect(empty.find('.vc-table__empty-wrapper').text()).toBe('');
+		expect(empty.find('.vc-table__empty-text').exists()).toBe(false);
 		expect(summary.find('.vc-table__footer .vc-table__cell').text()).toBe('');
 	} finally {
 		empty.unmount();

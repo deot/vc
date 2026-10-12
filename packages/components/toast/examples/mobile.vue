@@ -1,5 +1,5 @@
 <template>
-	<div style="height: 2000px">
+	<div style="height: 2000px;">
 		<div @click="handleClick('normal', 15000)">
 			点击
 		</div>
@@ -23,7 +23,7 @@ onMounted(async () => {
 	MToast.info('测试1', 1000);
 	await sleep(1);
 
-	MToast.info(`测试2: 换行 <br> tt <br> zz`, 1000);
+	MToast.info({ type: 'html', value: '测试2: 换行 <br> tt <br> zz' }, 1000);
 	await sleep(1);
 
 	MToast.info('测试3: 销毁', 10000);

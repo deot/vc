@@ -59,15 +59,15 @@ describe('ActionSheet render', () => {
 		document.body.innerHTML = '';
 	});
 
-	it('title/content/subContent 字符串默认使用 innerHTML', async () => {
+	it('title/content/subContent：{ type: \'html\' } 按 HTML 渲染，字符串按文本', async () => {
 		const wrapper = mount(ActionSheet, {
 			attachTo: document.body,
 			props: {
-				title: '<span class="title-html">标题</span>',
+				title: { type: 'html', value: '<span class="title-html">标题</span>' },
 				cancelText: '取消',
 				data: [
 					{
-						content: '<span class="content-html">内容</span>',
+						content: { type: 'html', value: '<span class="content-html">内容</span>' },
 						subContent: '<span class="sub-html">二级内容</span>'
 					}
 				]
@@ -77,7 +77,8 @@ describe('ActionSheet render', () => {
 
 		expect(wrapper.find('.title-html').text()).toBe('标题');
 		expect(wrapper.find('.content-html').text()).toBe('内容');
-		expect(wrapper.find('.sub-html').text()).toBe('二级内容');
+		expect(wrapper.find('.sub-html').exists()).toBe(false);
+		expect(wrapper.find('.vcm-action-sheet__sub-content').text()).toBe('<span class="sub-html">二级内容</span>');
 		expect(wrapper.find('.vcm-action-sheet__cancel').text()).toBe('取消');
 
 		wrapper.unmount();
@@ -99,9 +100,11 @@ describe('ActionSheet render', () => {
 		expect(title).toHaveBeenCalled();
 		expect(content).toHaveBeenCalled();
 		expect(subContent).toHaveBeenCalled();
-		expect(wrapper.find('.title-fn').text()).toBe('函数标题');
-		expect(wrapper.find('.content-fn').text()).toBe('函数内容');
-		expect(wrapper.find('.sub-fn').text()).toBe('函数二级内容');
+		// 函数的内容放在带 class 的元素里，class 不落到函数返回的根节点上
+		expect(wrapper.find('.vcm-action-sheet__title > .title-fn').text()).toBe('函数标题');
+		expect(wrapper.find('.vcm-action-sheet__content > .content-fn').text()).toBe('函数内容');
+		expect(wrapper.find('.vcm-action-sheet__sub-content > .sub-fn').text()).toBe('函数二级内容');
+		expect(wrapper.find('.title-fn').classes()).toEqual(['title-fn']);
 
 		wrapper.unmount();
 	});

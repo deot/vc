@@ -135,6 +135,21 @@ export const MModalView = defineComponent({
 				isActive.value = v;
 			},
 		});
+		// 底部与操作列表两种布局共用
+		const renderButtons = () => currentData.value.map((item: any, index) => {
+			if (!item.content) return null;
+			return (
+				<MCustomer
+					key={index}
+					wrap
+					style={item.style}
+					class="vcm-modal__button"
+					render={item.content}
+					onClick={(e: any) => handleBefore(e, item.onClick)}
+				/>
+			);
+		});
+
 		return () => {
 			return (
 				<div class="vcm-modal">
@@ -168,17 +183,7 @@ export const MModalView = defineComponent({
 													{
 														(props.title || slots.header) && (
 															<div class="vcm-modal__header">
-																{
-																	slots.header?.() || (
-																		typeof props.title === 'string'
-																			? <div class="vcm-modal__title" innerHTML={props.title} />
-																			: typeof props.title === 'function' && (
-																				<MCustomer
-																					render={props.title}
-																				/>
-																			)
-																	)
-																}
+																<MCustomer class="vcm-modal__title" render={slots.header || props.title} />
 															</div>
 														)
 													}
@@ -189,21 +194,17 @@ export const MModalView = defineComponent({
 																class={[{ 'vcm-modal__no-title': !props.title }, 'vcm-modal__content']}
 															>
 																{
-																	(typeof props.content === 'string' || slots.default)
+																	(typeof props.content !== 'function' || slots.default)
 																		? (
-																				<div
-																					class="vcm-modal__html"
-																				>
+																				<div class="vcm-modal__html">
 																					{
-																						typeof props.content === 'string'
-																						&& (<div innerHTML={props.content} />)
+																						typeof props.content !== 'function'
+																						&& (<MCustomer render={props.content} />)
 																					}
 																					{ slots.default?.() }
 																				</div>
 																			)
-																		: typeof props.content === 'function'
-																			? <MCustomer render={props.content} />
-																			: null
+																		: (<MCustomer render={props.content} />)
 																}
 															</div>
 														)
@@ -211,22 +212,7 @@ export const MModalView = defineComponent({
 													{
 														(props.footer || slots.footer) && (
 															<div class={[footerClasses.value, 'vcm-modal__footer']}>
-																{
-																	slots.footer?.() || (
-																		currentData.value.map((item: any, index) => {
-																			if (!item.content) return null;
-																			return (
-																				<div
-																					key={index}
-																					style={[item.style]}
-																					class="vcm-modal__button"
-																					onClick={e => handleBefore(e, item.onClick)}
-																					innerHTML={item.content}
-																				/>
-																			);
-																		})
-																	)
-																}
+																{ slots.footer?.() || renderButtons() }
 															</div>
 														)
 													}
@@ -235,20 +221,7 @@ export const MModalView = defineComponent({
 										: props.mode === 'operation'
 											? (
 													<div class="vcm-modal__operation">
-														{
-															currentData.value.map((item: any, index) => {
-																if (!item.content) return null;
-																return (
-																	<div
-																		key={index}
-																		style={[item.style]}
-																		class="vcm-modal__button"
-																		innerHTML={item.content}
-																		onClick={e => handleBefore(e, item.onClick)}
-																	/>
-																);
-															})
-														}
+														{ renderButtons() }
 													</div>
 												)
 											: null

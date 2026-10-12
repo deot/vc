@@ -340,7 +340,7 @@ const time = ref();
 | arrow | 条目箭头 | `boolean \| string` | - | `right` |
 | extra | 未选中时的提示，允许空字符串 | `string` | - | 当前语言的“请选择” |
 | formatter | 自定义显示，返回假值时使用默认显示 | `(value, format: string, dates: Date[]) => any` | - | - |
-| title | 弹层标题 | `string` | - | `''` |
+| title | 弹层标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | cancelText | 取消文案，允许空字符串 | `string` | - | 当前语言的“取消” |
 | okText | 确认文案，允许空字符串 | `string` | - | 当前语言的“确定” |
 | showToolbar | 显示标题和操作栏 | `boolean` | - | `true` |

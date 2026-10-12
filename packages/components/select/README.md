@@ -272,7 +272,7 @@ const loadOptions = async (query) => {
 | searchPlaceholder | 搜索框占位文字 | `string` | - | `''` |
 | placeholder | 输入框占位文字，通过 attribute 传入；支持空字符串覆盖 | `string` | - | 当前语言的“请选择” |
 | loadData | 搜索回调，须返回 Promise，由调用方更新 data | `(query: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
-| label | 输入框前置文字；prepend 插槽优先 | `string` | - | - |
+| label | 输入框前置文字；prepend 插槽优先。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | extra | 单选 label 为空或无法匹配时显示的文字 | `string` | - | `''` |
 | separator | 字符串模型拆分和多选连接的分隔符 | `string` | - | `','` |
 | numerable | 将字符串模型解析为数字值 | `boolean` | - | `false` |
@@ -285,9 +285,9 @@ const loadOptions = async (query) => {
 | autoWidth | true 按内容宽度；false 跟随触发器宽度 | `boolean` | - | `false` |
 | portal | 下拉是否挂载到 body；`false` 时挂到组件根节点内，随所在容器滚动，超出容器的部分会被其 `overflow` 裁剪 | `boolean` | - | `true` |
 | portalClass | 弹层附加 class | `string \| object \| unknown[]` | - | - |
-| renderOption | 自定义整个选项，需自行绑定 store.click | `(options: { row: any; store: any }) => VNodeChild` | - | - |
-| renderOptionGroup | 自定义分组标题 | `(options: { row: any; store: { group: true } }) => VNodeChild` | - | - |
-| renderLabel | 自定义下拉选项文字，不影响输入框与标签文字 | `(options: { row: any; store: any }) => VNodeChild` | - | - |
+| renderOption | 自定义整个选项，需自行绑定 store.click；`option` 插槽优先 | `(options: { row: any; store: any }) => VNodeChild` | - | - |
+| renderOptionGroup | 自定义分组标题；`optionGroup` 插槽优先 | `(options: { row: any; store: { group: true } }) => VNodeChild` | - | - |
+| renderLabel | 自定义下拉选项文字，不影响输入框与标签文字；`label` 插槽优先 | `(options: { row: any; store: any }) => VNodeChild` | - | - |
 
 ### 事件
 
@@ -305,9 +305,9 @@ const loadOptions = async (query) => {
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
 | prepend | 输入框前置内容，优先于 label 属性 | - |
-| option | 整个选项；renderOption 优先，自定义内容需绑定 store.click | `{ row, store: { checked, last, click } }` |
-| optionGroup | 分组标题；renderOptionGroup 优先 | `{ row, store: { group: true } }` |
-| label | 选项文字或分组标题；选项的 renderLabel 优先 | 选项：`{ row, store: { checked, last, click } }`；分组：`{ row, store: { group: true } }` |
+| option | 整个选项，优先于 renderOption；自定义内容需绑定 store.click | `{ row, store: { checked, last, click } }` |
+| optionGroup | 分组标题，优先于 renderOptionGroup | `{ row, store: { group: true } }` |
+| label | 选项文字或分组标题，优先于 renderLabel | 选项：`{ row, store: { checked, last, click } }`；分组：`{ row, store: { group: true } }` |
 
 插槽名为 `optionGroup`，在模板中使用 `#optionGroup`。默认插槽只在 data 为假值时执行，正常使用通过 data 提供选项；Option、OptionGroup 和 SelectAll 未从组件库公开入口导出。
 

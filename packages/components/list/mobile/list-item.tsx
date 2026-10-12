@@ -1,6 +1,8 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, inject, computed, getCurrentInstance } from 'vue';
+import { MCustomer } from '../../customer/index.m';
+import { hasCustomerValue } from '../../customer/utils';
 import { Icon } from '../../icon';
 import { props as listItemProps } from './list-item-props';
 import { VcInstance } from '../../vc';
@@ -67,6 +69,7 @@ export const MListItem = defineComponent({
 			}
 		};
 		return () => {
+			const extra = slots.extra || props.extra;
 			return (
 				<div
 					class="vcm-list-item"
@@ -76,13 +79,13 @@ export const MListItem = defineComponent({
 					<div
 						class={['vcm-list-item__wrapper', classes.value]}
 					>
-						<div style={labelStyle.value}>
-							{ slots.label?.() || props.label }
-						</div>
+						<MCustomer wrap style={labelStyle.value} render={slots.label || props.label} />
 						<div class="vcm-list-item__content">
-							<div class="vcm-list-item__extra">
-								{ slots.extra?.() || props.extra }
-							</div>
+							{
+								hasCustomerValue(extra)
+									? (<MCustomer wrap class="vcm-list-item__extra" render={extra} />)
+									: (<div class="vcm-list-item__extra" />)
+							}
 							{
 								props.arrow && (
 									<Icon

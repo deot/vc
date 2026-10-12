@@ -1,4 +1,5 @@
 import type { ExtractPropTypes } from 'vue';
+import { valueType } from '../customer/customer-props';
 
 export const props = {
 	value: {
@@ -6,7 +7,7 @@ export const props = {
 		default: void 0
 	},
 	label: {
-		type: [String, Function],
+		type: valueType,
 		default: ''
 	},
 	anchor: {

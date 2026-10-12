@@ -1,4 +1,5 @@
 import type { ExtractPropTypes, PropType } from 'vue';
+import { valueType } from '../../customer/customer-props';
 
 export const props = {
 	modelValue: {
@@ -10,7 +11,7 @@ export const props = {
 		default: undefined
 	},
 	title: {
-		type: String,
+		type: valueType,
 		default: ''
 	},
 	cancelText: String,

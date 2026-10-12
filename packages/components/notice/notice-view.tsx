@@ -101,26 +101,14 @@ export const NoticeView = defineComponent({
 									{
 										currentTitle.value && (
 											<div class={['vc-notice__title', { 'has-content': !!currentContent.value }]}>
-												{
-													typeof currentTitle.value === 'string'
-														? <div innerHTML={currentTitle.value} />
-														: typeof currentTitle.value === 'function'
-															? <Customer render={currentTitle.value} />
-															: null
-												}
+												<Customer render={currentTitle.value} />
 											</div>
 										)
 									}
 									{
 										currentContent.value && (
 											<div class="vc-notice__content">
-												{
-													typeof currentContent.value === 'string'
-														? <div innerHTML={currentContent.value} />
-														: typeof currentContent.value === 'function'
-															? <Customer render={currentContent.value} />
-															: null
-												}
+												<Customer render={currentContent.value} />
 											</div>
 										)
 									}

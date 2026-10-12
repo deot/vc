@@ -8,6 +8,7 @@ import type { Nullable } from '@deot/helper-shared';
 import { cellStarts, cellForced, defaultRenderCell, defaultRenderHeader, treeCellPrefix } from './table-column-config';
 import { parseWidth, parseMinWidth } from '../utils';
 import type { TableColumnProps } from './table-column-props';
+import type { CustomerData } from '../../customer/types';
 import type { TableProvide } from '../types';
 import type { Store } from '../store/store';
 import type { TreeNode } from '../store/modules/tree';
@@ -38,7 +39,7 @@ export type TableColumnStates = {
 	index?: number | ((rowIndex: number) => number);
 	sortable?: boolean;
 	filterOptions?: TableFilterOptions;
-	tooltip?: string | ((data: Pick<TableColumnRenderData, 'column' | 'store'>) => string);
+	tooltip?: string | CustomerData | ((data: Pick<TableColumnRenderData, 'column' | 'store'>) => string);
 
 	// 注册时写入
 	colspan: number;

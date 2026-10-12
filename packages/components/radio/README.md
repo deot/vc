@@ -266,7 +266,7 @@ const selectedOption = ref('option-a');
 | --- | --- | --- | --- | --- |
 | modelValue | 独立使用时的绑定值，支持 `v-model` | `string \| number \| boolean` | - | `false` |
 | value | 组内选择值；缺省或空字符串时使用 label | `string \| number \| boolean` | - | `undefined` |
-| label | 默认显示内容；缺省或空字符串时使用 value，也可作为组内选择值 | `string \| number \| boolean` | - | `undefined` |
+| label | 默认显示内容；缺省或空字符串时使用 value，也可作为组内选择值。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md)，此时需同时提供 value | `string \| number \| boolean \| Function \| { type: string; value: any }` | - | `undefined` |
 | disabled | 禁用当前项；组 disabled 同样生效 | `boolean` | - | `false` |
 | trueValue | 独立使用时的选中值 | `string \| number \| boolean` | - | `true` |
 | falseValue | 独立使用时 reset(false) 写入的值 | `string \| number \| boolean` | - | `false` |

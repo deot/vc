@@ -193,9 +193,11 @@ describe('index.ts', () => {
 		));
 		await nextTick();
 
-		const row = wrapper.find('.render-row');
+		// 与插槽一致：内容放在组件自己的元素里，数据字段不出现在 DOM 上
+		const row = wrapper.find('.vc-counter > .render-row');
 		expect(row.exists()).toBe(true);
-		expect(row.classes()).toContain('vc-counter');
+		expect(row.classes()).toEqual(['render-row']);
+		expect(row.attributes('value')).toBeUndefined();
 		expect(row.text()).toBe('1,234');
 		wrapper.unmount();
 	});

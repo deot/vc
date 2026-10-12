@@ -299,7 +299,7 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 | data | 层级数据，每个节点值必须全树唯一 | `NodeData[]` | - | `[]` |
 | modelValue | 勾选值，支持 `v-model`；建议使用数组 | `string \| number \| any[]` | - | `undefined` |
 | keyValue | 节点字段映射，见下表；替代旧文档的 `treeProps` / `nodeKey` | `Record<string, string>` | - | 见下表 |
-| emptyText | 空状态文案，支持空字符串覆盖 | `string` | - | 当前语言的“暂无数据” |
+| emptyText | 空状态文案，`empty` 插槽优先；支持空字符串覆盖。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | 当前语言的“暂无数据” |
 | showCheckbox | 显示复选框 | `boolean` | - | `false` |
 | checkStrictly | 父子独立勾选 | `boolean` | - | `false` |
 | checkDescendants | 懒加载时，深度勾选可触发未加载子节点的加载 | `boolean` | - | `false` |
@@ -382,6 +382,12 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 | remove | 移除节点 | `(data: Value \| NodeData \| Node)` | `void` |
 | insertBefore / insertAfter | 在参考节点前 / 后插入 | `(data: NodeData, reference: Value \| NodeData \| Node)` | `void` |
 | updateKeyChildren | 替换指定节点的子数据 | `(value: Value, children: NodeData[])` | `void` |
+
+### Tree 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| empty | 自定义空状态，优先于 emptyText | - |
 
 ### TreeSelect 属性
 

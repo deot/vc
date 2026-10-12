@@ -109,8 +109,8 @@ const handleUpdateTarget = () => {
 | precision | 小数位数，截取并补零，不四舍五入 | `number` | - | `0` |
 | zeroless | 根据实际小数长度限制补零 | `boolean` | - | `false` |
 | placeholder  | 占位符 | `string`  | -   | - |
-| render | 自定义渲染，接收下述格式化字段 | `Function` | - | - |
-| tag | 默认或插槽渲染的根标签，初始化时确定 | `string` | - | `'span'` |
+| render | 自定义渲染，接收下述格式化字段；内容放在根标签内 | `Function` | - | - |
+| tag | 根标签，默认展示、插槽和 `render` 的内容都放在它里面；初始化时确定 | `string` | - | `'span'` |
 | duration | 动画时长（毫秒）；非正数时 start 直接打印 | `number` | - | `500` |
 | decimal | 小数分隔符 | `string` | - | `'.'` |
 | separator | 千位分隔符，空字符串关闭分组 | `string` | - | `','` |
@@ -136,7 +136,7 @@ const handleUpdateTarget = () => {
 | --- | --- | --- |
 | default | 自定义展示，优先于 render，外层使用 tag | 下述格式化字段 |
 
-`render` 也接收这些字段，其返回内容决定根节点。字段均为字符串；插槽和 `render` 的 `value` 在无效输入时替换为 `placeholder`，可能为 `undefined`。
+`render` 也接收这些字段，返回的内容与插槽一样放在根标签内。字段均为字符串；插槽和 `render` 的 `value` 在无效输入时替换为 `placeholder`，可能为 `undefined`。
 
 | 字段 | 说明 | 示例（-1234.5，precision 为 2） |
 | --- | --- | --- |

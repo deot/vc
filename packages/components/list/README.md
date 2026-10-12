@@ -107,9 +107,9 @@ const handleOpen = () => { count.value++; };
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | tag | 当前保留属性，实际根节点固定为 `div` | `string` | - | `'div'` |
-| label | 左侧标签 | `string` | - | - |
+| label | 左侧标签。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md)；label 插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | labelWidth | 覆盖容器标签宽度；`0` 显式设为自动宽度，空字符串继承容器值；不支持 `100px` 等 CSS 长度字符串 | `string \| number` | - | `''` |
-| extra | 右侧内容 | `string` | - | - |
+| extra | 右侧内容，取值与 label 相同；extra 插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | arrow | 字符串指定 Icon 类型，`true` 显示右箭头，`false` 或空字符串隐藏 | `string \| boolean` | - | `'right'` |
 | multiple | 标签与内容上下排列 | `boolean` | - | `false` |
 | indent | 根节点左内边距，单位 px | `number` | - | `12` |

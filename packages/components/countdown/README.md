@@ -121,8 +121,8 @@ const handleRestart = () => {
 | serverTime | 服务器当前时间，用于计算与本地时钟的偏移；未提供时使用本地时钟 | `string \| number \| Date` | - | `''` |
 | t | 刷新周期，单位毫秒；应传入正数 | `number` | - | `1000` |
 | format | 默认展示格式；省略时跟随 locale，显式空字符串表示空展示 | `string` | - | 中文：`DD天HH小时mm分ss秒SSS`；英文：`DDd HHh mmm sss SSS` |
-| render | 自定义渲染，参数与默认插槽一致，由函数生成根节点 | `(data: CountdownRenderData) => VNodeChild` | - | - |
-| tag | 默认展示及插槽的外层标签；也传入 render 参数 | `string` | - | `'span'` |
+| render | 自定义渲染，参数与默认插槽一致；内容放在 `tag` 指定的外层标签内 | `(data: CountdownRenderData) => VNodeChild` | - | - |
+| tag | 默认展示、插槽和 `render` 的外层标签 | `string` | - | `'span'` |
 | trim | 默认展示时移除匹配的 `00` 和格式分隔片段；当前是全局替换，不限于前缀 | `boolean` | - | `false` |
 
 ### 事件
@@ -156,7 +156,6 @@ interface CountdownChangeData extends CountdownTimeData {
 
 interface CountdownRenderData extends CountdownTimeData {
 	format: string;
-	tag: string;
 	trim: boolean;
 }
 ```
@@ -168,5 +167,6 @@ interface CountdownRenderData extends CountdownTimeData {
 - `DD`、`HH`、`mm`、`ss`、`SSS` 分别替换天、小时、分钟、秒和秒内余量，每种标记只替换第一次出现的位置。小时、分钟和秒为扣除更大单位后的余数。
 - `SSS` 不补零：`t < 10` 时为 0–999，`10 ≤ t < 100` 时为 0–99，`t ≥ 100` 时为 0–9。
 - `trim` 会将格式分隔文本拼入正则表达式，复杂格式建议通过插槽自行展示。
-- 默认格式通过 HTML 渲染，勿将不可信内容直接作为 `format`。组件没有公开的启动、暂停或停止方法。
+- 默认格式按 HTML 渲染，勿将不可信内容直接作为 `format`；配置了全局的 `sanitize` 时会先经过清洗。
+- 写在组件上的 `class`、`style` 和事件监听会落到外层标签上；`id`、`data-*` 等其他属性不会出现在 DOM 上，使用默认插槽或 `render` 时它们会并入参数。组件没有公开的启动、暂停或停止方法。
 - 完成事件的数据已归零，但默认展示及插槽字段可能保留最后一次计算结果；需要结束状态时，请响应 `complete` 切换展示内容。

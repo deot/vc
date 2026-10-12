@@ -4,6 +4,7 @@ import { Resize } from '@deot/helper-resize';
 import { getUid } from '@deot/helper-utils';
 import { VcError } from '../vc/index';
 import type { Props } from './carousel-props';
+import { hasCustomerValue } from '../customer/utils';
 
 /**
  * 与切换幻灯片的位移阈值一致；超过则视为拖动，吞掉随后的 click，避免子元素误触
@@ -46,7 +47,7 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 	});
 
 	const hasLabel = computed(() => {
-		return items.value.some(item => (item.props as any).label.toString().length > 0);
+		return items.value.some(item => hasCustomerValue((item.props as any).label));
 	});
 
 	const dotsClasses = computed(() => {

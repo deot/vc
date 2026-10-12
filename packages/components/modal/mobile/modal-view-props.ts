@@ -1,5 +1,5 @@
 import type { ExtractPropTypes, PropType } from 'vue';
-import type { Props as CustomerProps } from '../../customer/customer-props';
+import { valueOrBooleanType } from '../../customer/customer-props';
 
 export const props = {
 	mode: {
@@ -9,7 +9,7 @@ export const props = {
 	},
 	// false 不显示头部
 	content: {
-		type: [String, Function, Boolean] as PropType<boolean | string | CustomerProps['render']>
+		type: valueOrBooleanType
 	},
 
 	width: {
@@ -33,7 +33,7 @@ export const props = {
 		default: true // 如果关闭, cancel只能是取消的按钮
 	},
 	title: {
-		type: [String, Boolean, Function] as PropType<boolean | string | CustomerProps['render']>,
+		type: valueOrBooleanType,
 	}, // false 不显示头部
 	okText: {
 		type: [String, Boolean],

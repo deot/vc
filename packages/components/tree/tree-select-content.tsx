@@ -2,7 +2,7 @@
 
 import { defineComponent, ref, watch } from 'vue';
 import type { PropType } from 'vue';
-import type { Render } from '../customer/types';
+import { renderType } from '../customer/customer-props';
 import { useLocale } from '../locale';
 import { Tree } from './tree';
 
@@ -50,7 +50,7 @@ export const TreeSelectContent = defineComponent({
 			type: Boolean,
 			default: false
 		},
-		renderNodeLabel: Function as Render,
+		renderNodeLabel: renderType,
 		searchValue: {
 			type: String,
 			default: ''

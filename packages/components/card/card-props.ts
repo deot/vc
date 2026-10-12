@@ -1,4 +1,5 @@
 import type { ExtractPropTypes } from 'vue';
+import { valueType } from '../customer/customer-props';
 
 export const props = {
 	border: {
@@ -14,7 +15,7 @@ export const props = {
 		default: 16
 	},
 	title: {
-		type: String,
+		type: valueType,
 	},
 	icon: {
 		type: String,

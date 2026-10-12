@@ -1,5 +1,5 @@
 import type { ExtractPropTypes, PropType } from 'vue';
-import type { Props as CustomerProps } from '../customer/customer-props';
+import { valueType } from '../customer/customer-props';
 import type { Props as ScrollerProps } from '../scroller/scroller-props';
 
 export const props = {
@@ -12,7 +12,7 @@ export const props = {
 		validator: (v: string) => /(info|success|error|warning)/.test(v),
 	},
 	content: {
-		type: [String, Function] as PropType<string | CustomerProps['render']>,
+		type: valueType,
 		default: ''
 	},
 	size: {
@@ -50,7 +50,7 @@ export const props = {
 		default: true // 如果关闭, cancel只能是取消的按钮
 	},
 	title: {
-		type: [String, Function] as PropType<string | CustomerProps['render']>,
+		type: valueType,
 	},
 	// 内容区由内置的 Scroller 滚动；为 false 时内容区不滚动，由内容自行收缩并滚动
 	scrollable: {

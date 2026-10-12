@@ -79,13 +79,7 @@ export const MToastView = defineComponent({
 					>
 						<div v-show={isActive.value} class="vcm-toast__wrapper">
 							{ props.mode === 'loading' && (<MSpin class="vcm-toast__loading" />) }
-							{
-								typeof currentContent.value === 'string'
-									? (<div class="vcm-toast__content" innerHTML={currentContent.value} />)
-									: typeof currentContent.value === 'function'
-										? (<MCustomer render={currentContent.value} />)
-										: null
-							}
+							<MCustomer class="vcm-toast__content" render={currentContent.value} />
 						</div>
 					</MTransitionFade>
 				</div>

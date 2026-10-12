@@ -1,6 +1,6 @@
-import { Utils } from '@deot/vc-shared';
 import { Portal } from '../portal';
 import { MessageView } from './message-view.tsx';
+import { toOptions } from '../customer/utils';
 import type { Props } from './message-view-props';
 
 const Message$ = new Portal(MessageView, {
@@ -22,12 +22,7 @@ const create = (options: Options) => (...params: Array<Options[keyof Options] | 
 	const top = 30 + number * 40;
 	const maxH = window.innerHeight - 100;
 	options.top = top > maxH ? maxH : top;
-	const options$ = Utils.toOptions(
-		params,
-		['content', 'duration', 'onClose'],
-		// 避免引用
-		{ ...options }
-	);
+	const options$ = toOptions(params, ['content', 'duration', 'onClose'], options);
 
 	// 执行弹窗
 	return Message$.popup({

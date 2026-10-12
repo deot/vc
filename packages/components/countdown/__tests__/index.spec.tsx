@@ -289,19 +289,23 @@ describe('index.ts', () => {
 		useMockedNow();
 		const target = FIXED + 1 * ms.hour;
 
-		const renderRow = (props: any) => h(
-			props.tag,
+		// 参数只有时间字段与 format / trim，不包含 tag
+		const renderRow = vi.fn((props: any) => h(
+			'span',
 			{ class: 'render-row' },
 			`${props.day}-${props.hour}-${props.minute}-${props.second}`
-		);
+		));
 
 		const wrapper = mount(() => (<Countdown targetTime={target} render={renderRow} />));
 		await nextTick();
 
-		const row = wrapper.find('.render-row');
+		// 与插槽一致：内容放在组件自己的元素里，数据字段不出现在 DOM 上
+		const row = wrapper.find('.vc-countdown > .render-row');
 		expect(row.exists()).toBe(true);
-		expect(row.classes()).toContain('vc-countdown');
+		expect(row.classes()).toEqual(['render-row']);
+		expect(row.attributes('day')).toBeUndefined();
 		expect(row.text()).toBe('00-01-00-00');
+		expect(renderRow.mock.calls[0][0]).not.toHaveProperty('tag');
 		wrapper.unmount();
 	});
 
@@ -357,5 +361,42 @@ describe('index.ts', () => {
 		vi.advanceTimersByTime(5000);
 
 		expect(onChange).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('格式化结果', () => {
+	afterEach(() => {
+		VcInstance.configure({ sanitize: void 0 });
+	});
+
+	it('按 HTML 渲染', async () => {
+		const wrapper = mount(() => (
+			<Countdown tag="p" class="extra" targetTime={Date.now() + ms.day} format="<b>T</b>" />
+		));
+		await nextTick();
+
+		expect(wrapper.element.tagName).toBe('P');
+		expect(wrapper.classes()).toEqual(['vc-countdown', 'extra']);
+		expect(wrapper.find('b').text()).toBe('T');
+		wrapper.unmount();
+	});
+
+	it('配置了 sanitize 时先清洗再写入；不含标记的结果不需要清洗', async () => {
+		const sanitize = vi.fn(({ value }) => value.replace(/<\/?b>/g, ''));
+		VcInstance.configure({ sanitize });
+
+		const wrapper = mount(() => (<Countdown targetTime={Date.now() + ms.day} format="<b>T</b><i>X</i>" />));
+		await nextTick();
+		expect(wrapper.find('b').exists()).toBe(false);
+		expect(wrapper.find('i').text()).toBe('X');
+		expect(sanitize.mock.calls[0][0].instance.parent.type.name).toBe('vc-countdown');
+		wrapper.unmount();
+
+		sanitize.mockClear();
+		const plain = mount(() => (<Countdown targetTime={Date.now() + ms.day} format="T" />));
+		await nextTick();
+		expect(plain.text()).toBe('T');
+		expect(sanitize).not.toHaveBeenCalled();
+		plain.unmount();
 	});
 });

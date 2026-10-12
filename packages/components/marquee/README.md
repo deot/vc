@@ -170,7 +170,7 @@ const text = ref('ABCDEFG');
 | 属性       | 说明               | 类型                  | 可选值 | 默认值     |
 | -------- | ---------------- | ------------------- | --- | ------- |
 | speed    | 速度计算（如：每秒移动50px） | `number`            | -   | 50      |
-| content  | 内容；字符串按 HTML 渲染，也可传入返回 VNode 的渲染函数 | `string \| Function` | - | - |
+| content  | 内容。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md)；默认插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | animated | 是否运行动画，设为 `false` 暂停 | `boolean` | - | `true` |
 | autoplay | 未超出一屏时是否滚动       | `boolean`           | -   | `false` |
 
@@ -184,7 +184,7 @@ const text = ref('ABCDEFG');
 ### 注意事项
 
 - `speed` 的单位为 px/s，使用正数。动画时长为「容器宽度 + 内容宽度」除以速度。
-- 字符串 `content` 按 HTML 插入，仅传入可信内容；普通文本可使用默认插槽插值。
+- `content` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。
 - 组件挂载后测量宽度，并在 `content` 或 `speed` 变化时重新计算；容器尺寸、插槽内容及渲染函数内部依赖变化不会自动重新测量。
 - `animated` 和 `autoplay` 只控制暂停条件。若首次测量时处于暂停状态，之后仅切换这两个属性不会初始化动画。
 - 移动端导出 `MMarquee`，与 `Marquee` 共用实现及 API。

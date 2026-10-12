@@ -488,7 +488,7 @@ onUnmounted(() => leaf?.destroy());
 | modelValue | 显隐状态，支持 `v-model` | `boolean` | - | `false` |
 | trigger | 触发方式，`custom` 不绑定自动触发行为 | `string` | `hover`、`strictHover`、`click`、`focus`、`custom` | `hover` |
 | placement | 首选位置，空间不足时自动调整 | `string` | `top`、`top-left`、`top-right`、`bottom`、`bottom-left`、`bottom-right`、`left`、`left-top`、`left-bottom`、`right`、`right-top`、`right-bottom` | `bottom` |
-| content | 内容字符串按 HTML 渲染；函数通过 Customer 渲染 | `string \| Function` | - | - |
+| content | 内容。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | animation | TransitionScale 动画模式，未设置时使用 `part` | `string` | - | - |
 | theme | 浮层主题 | `string` | `light`、`dark`、`none` | `light` |
 | getPopupContainer | 返回浮层挂载容器，优先于 `portal` | `() => HTMLElement` | - | - |
@@ -552,4 +552,4 @@ onUnmounted(() => leaf?.destroy());
 
 ### 注意事项
 
-字符串 `content` 会作为 HTML 插入，避免传入未经处理的不可信内容；普通文本可通过 `content` 插槽插值显示。浮层默认挂载到 body，局部祖先上的主题变量不会自动继承到浮层，可在全局或 `portalStyle` 上设置覆盖值。
+`content` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。浮层默认挂载到 body，局部祖先上的主题变量不会自动继承到浮层，可在全局或 `portalStyle` 上设置覆盖值。

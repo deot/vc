@@ -1,13 +1,13 @@
-import type { ExtractPropTypes, PropType } from 'vue';
-import type { Props as CustomerProps } from '../customer/customer-props';
+import type { ExtractPropTypes } from 'vue';
+import { valueType } from '../customer/customer-props';
 
 export const props = {
 	title: {
-		type: [String, Function] as PropType<string | CustomerProps['render']>,
+		type: valueType,
 		default: ''
 	},
 	content: {
-		type: [String, Function] as PropType<string | CustomerProps['render']>,
+		type: valueType,
 		default: ''
 	},
 	modelValue: {

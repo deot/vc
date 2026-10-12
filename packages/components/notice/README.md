@@ -280,8 +280,8 @@ const handleClose = () => {
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| title | 标题；字符串按 HTML 渲染，函数返回自定义节点 | `string \| ((props: Record<string, unknown>, context: SetupContext) => any)` | - | - |
-| content | 正文；字符串按 HTML 渲染，函数返回自定义节点 | `string \| ((props: Record<string, unknown>, context: SetupContext) => any)` | - | - |
+| title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |
+| content | 正文，取值与 title 相同 | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | duration | 挂载后自动关闭的延时，单位 ms；`0` 不自动关闭 | `number` | - | `4500` |
 | closable | 是否显示关闭图标 | `boolean` | - | `true` |
 | mode | 状态图标类型 | `'info' \| 'loading' \| 'success' \| 'warning' \| 'error'` | 同类型 | - |
@@ -289,7 +289,7 @@ const handleClose = () => {
 | fixed | 是否固定在右上角 | `boolean` | - | `true` |
 | onBeforeClose | 点击关闭图标前的回调，参数为点击事件 | `Function` | - | - |
 
-`SetupContext` 是 Vue 的类型。`title` 和 `content` 的字符串使用 `innerHTML`，只应传入可信 HTML；展示普通外部文本时可使用 `() => h('span', text)`。
+`title` 和 `content` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。
 
 `onBeforeClose` 当前的同步返回规则是：`undefined`、`false`、`0`、空字符串等假值以及 `true` 均允许关闭，其他真值阻止关闭。返回 Promise 时，只要兑现就关闭，不检查兑现值；拒绝时保持显示，调用方需自行处理拒绝。它不暂停自动关闭计时。修改 `duration` prop 不会重设计时，需调用 `setDuration()`。
 

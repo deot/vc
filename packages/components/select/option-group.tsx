@@ -25,24 +25,23 @@ export const OptionGroup = defineComponent({
 		});
 
 		return () => {
+			// 同名插槽优先
+			const render = slots.optionGroup || props.render;
+			const renderLabel = slots.label || props.renderLabel;
 			return (
 				<div class="vc-select-option-group">
 					{
-						typeof props.render === 'function'
-							? (<Customer render={props.render} {...customOptions.value} />)
-							: slots.optionGroup
-								? slots.optionGroup(customOptions.value)
-								: (
-										<div class="vc-select-option-group__title">
-											{
-												typeof props.renderLabel === 'function'
-													? (<Customer render={props.renderLabel} {...customOptions.value} />)
-													: slots.label
-														? slots.label(customOptions.value)
-														: formatterLabel.value
-											}
-										</div>
-									)
+						render
+							? (<Customer render={render} {...customOptions.value} />)
+							: (
+									<div class="vc-select-option-group__title">
+										{
+											renderLabel
+												? (<Customer render={renderLabel} {...customOptions.value} />)
+												: formatterLabel.value
+										}
+									</div>
+								)
 					}
 					<div>
 						{ slots?.default?.() }

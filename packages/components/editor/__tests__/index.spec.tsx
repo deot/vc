@@ -394,6 +394,36 @@ describe('EditorToolbar', () => {
 });
 
 describe('EditorView and utils', () => {
+	it('renders value as HTML', () => {
+		const wrapper = mount(() => (<EditorView value="<p class='inner'>text</p>" />));
+		expect(wrapper.find('.ql-editor .inner').exists()).toBe(true);
+		wrapper.unmount();
+
+		const empty = mount(() => (<EditorView />));
+		expect(empty.find('.ql-editor').exists()).toBe(true);
+		empty.unmount();
+	});
+
+	it('value goes through the global sanitize, which can tell EditorView apart by instance.parent', () => {
+		const sanitize = vi.fn(({ value, instance }) => {
+			// 富文本放行图片，其它内容去掉
+			return instance.parent?.type.name === 'vc-editor-view' ? value.replace(/<script[^>]*>.*?<\/script>/g, '') : '';
+		});
+		VcInstance.configure({ sanitize });
+		try {
+			const wrapper = mount(() => (
+				<EditorView value={'<p class="inner">text</p><img src="a.png"><script>window.x = 1<\/script>'} />
+			));
+			expect(sanitize).toHaveBeenCalledTimes(1);
+			expect(wrapper.find('.ql-editor .inner').exists()).toBe(true);
+			expect(wrapper.find('.ql-editor img').exists()).toBe(true);
+			expect(wrapper.find('.ql-editor script').exists()).toBe(false);
+			wrapper.unmount();
+		} finally {
+			VcInstance.configure({ sanitize: void 0 });
+		}
+	});
+
 	afterEach(() => {
 		document.body.innerHTML = '';
 		vi.clearAllMocks();

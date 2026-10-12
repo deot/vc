@@ -2,6 +2,7 @@
 
 import { defineComponent, ref, computed, watch } from 'vue';
 import { props as alertProps } from './alert-props';
+import { Customer } from '../customer';
 import { Icon } from '../icon';
 import { TransitionFade } from '../transition';
 
@@ -34,6 +35,7 @@ export const Alert = defineComponent({
 			{ immediate: true }
 		);
 		return () => {
+			const description = slots.description || props.description;
 			return (
 				<TransitionFade>
 					{
@@ -41,7 +43,7 @@ export const Alert = defineComponent({
 							<div
 								class={[
 									`is-${props.type}`,
-									{ 'has-icon': showIcon.value, 'has-desc': props.description || slots.description },
+									{ 'has-icon': showIcon.value, 'has-desc': description },
 									'vc-alert'
 								]}
 							>
@@ -55,25 +57,8 @@ export const Alert = defineComponent({
 								}
 								<div class="vc-alert__content">
 									<div class="vc-alert__message">
-										{
-											props.title
-												? (
-														<div
-															class="vc-alert__title"
-															innerHTML={props.title}
-														/>
-													)
-												: (
-														<div class="vc-alert__title">
-															{ slots?.default?.() }
-														</div>
-													)
-										}
-										{
-											props.description
-												? (<div class="vc-alert__desc" innerHTML={props.description} />)
-												: (slots.description && (<div class="vc-alert__desc">{ slots.description?.() }</div>))
-										}
+										<Customer wrap class="vc-alert__title" render={slots.default || props.title} />
+										{ !!description && (<Customer wrap class="vc-alert__desc" render={description} />) }
 									</div>
 									{
 										props.closable && (

@@ -10,6 +10,7 @@ import { Input, InputSearch } from '../input/index';
 import { Popover } from '../popover/index';
 import { Spin } from '../spin/index';
 import { Icon } from '../icon/index';
+import { Customer } from '../customer/index';
 import { Option } from './option.tsx';
 import { OptionGroup } from './option-group.tsx';
 import { props as selectProps } from './select-props';
@@ -247,7 +248,7 @@ export const Select = defineComponent({
 														? slots.prepend()
 														: (
 																<div class="vc-select__prepend">
-																	<span class="vc-select__label">{ props.label }</span>
+																	<Customer wrap tag="span" class="vc-select__label" render={props.label} />
 																</div>
 															)
 												)

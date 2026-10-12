@@ -390,9 +390,9 @@ describe('Popover 内容渲染', () => {
 		document.body.innerHTML = '';
 	});
 
-	it('content prop 字符串渲染', async () => {
+	it('content prop：{ type: \'html\' } 按 HTML 渲染', async () => {
 		const wrapper = mount(() => (
-			<Popover trigger="click" content="<span class='c-prop'>prop</span>">
+			<Popover trigger="click" content={{ type: 'html', value: '<span class=\'c-prop\'>prop</span>' }}>
 				<button>btn</button>
 			</Popover>
 		), { attachTo: document.body });
@@ -425,7 +425,7 @@ describe('Popover 内容渲染', () => {
 
 	it('内容渲染在 Scroller（内容区）内，箭头与容器同级', async () => {
 		const wrapper = mount(() => (
-			<Popover trigger="click" content="<span class='c-prop'>prop</span>">
+			<Popover trigger="click" content={{ type: 'html', value: '<span class=\'c-prop\'>prop</span>' }}>
 				<button>btn</button>
 			</Popover>
 		), { attachTo: document.body });
@@ -1662,6 +1662,33 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		expect(hover.isActive(wrapper.element)).toBe(false);
 
 		leaf.destroy();
+		wrapper.unmount();
+	});
+
+	it('useHoverPopover：字符串内容按文本渲染，{ type: \'html\' } 按 HTML', async () => {
+		let hover!: ReturnType<typeof useHoverPopover>;
+		const wrapper = mount(defineComponent({
+			setup() {
+				hover = useHoverPopover();
+				return () => <button>btn</button>;
+			}
+		}), { attachTo: document.body });
+		const MARKUP = '<b class="hover-injected">加粗</b>';
+
+		hover.open(wrapper.element, { content: MARKUP });
+		await flush();
+		expect(hover.isActive(wrapper.element)).toBe(true);
+		expect(document.querySelector('.hover-injected')).toBeNull();
+		expect(document.body.textContent).toContain(MARKUP);
+		hover.close();
+		await flush();
+
+		hover.open(wrapper.element, { content: { type: 'html', value: MARKUP } });
+		await flush();
+		expect(document.querySelector('.hover-injected')).not.toBeNull();
+		hover.close();
+		await flush();
+
 		wrapper.unmount();
 	});
 

@@ -7,6 +7,7 @@ import { useDrag } from '@deot/vc-hooks';
 import { Icon } from '../icon';
 import { TransitionSlide } from '../transition';
 import { useCarousel } from './use-carousel';
+import { CustomerProp } from '../customer/customer-prop';
 
 import { props as carouselProps } from './carousel-props';
 
@@ -148,7 +149,7 @@ export const Carousel = defineComponent({
 										onClick={() => carousel.handleDotClick(index)}
 									>
 										<button class="vc-carousel__button">
-											{carousel.hasLabel.value && <span>{(item.props as any).label}</span>}
+											{carousel.hasLabel.value && (<CustomerProp wrap tag="span" source={item.props} name="label" />)}
 										</button>
 									</li>
 								))}

@@ -1,4 +1,5 @@
 import type { ExtractPropTypes } from 'vue';
+import { valueOrBooleanType } from '../customer/customer-props';
 
 export const props = {
 	disabled: {
@@ -14,7 +15,7 @@ export const props = {
 		default: undefined
 	},
 	label: {
-		type: [String, Number, Boolean],
+		type: valueOrBooleanType,
 		default: undefined
 	},
 	name: {

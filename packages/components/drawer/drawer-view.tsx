@@ -107,13 +107,7 @@ export const DrawerView = defineComponent({
 		const renderContent = () => {
 			return (
 				<Fragment>
-					{
-						typeof props.content === 'string'
-							? (<div innerHTML={props.content} />)
-							: typeof props.content === 'function'
-								? (<Customer render={props.content} />)
-								: null
-					}
+					<Customer render={props.content} />
 					{ slots.default?.() }
 				</Fragment>
 			);
@@ -157,19 +151,7 @@ export const DrawerView = defineComponent({
 								]}
 							>
 								<div class="vc-drawer__header">
-									{
-										slots.header
-											? slots.header()
-											: (
-													typeof props.title === 'string'
-														? <div class="vc-drawer__title" innerHTML={props.title} />
-														: typeof props.title === 'function' && (
-															<Customer
-																render={props.title}
-															/>
-														)
-												)
-									}
+									<Customer class="vc-drawer__title" render={slots.header || props.title} />
 									<a class="vc-drawer__close" onClick={e => handleClose(e, true)}>
 										<Icon type="close" />
 									</a>

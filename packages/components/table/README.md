@@ -1611,7 +1611,7 @@ const handleToggle = () => { isEmpty.value = !isEmpty.value; };
 | headerCellClass | 表头单元格的 `className` 的回调方法，也可以使用字符串为所有表头单元格设置一个固定的 `className`。 | `string \| ((context: { row: any[]; column: any; rowIndex: number; columnIndex: number }) => string)` | - | - |
 | headerCellStyle | 表头单元格的 `style` 的回调方法，也可以使用一个固定的 `Object` 为所有表头单元格设置一样的 `Style`。 | `CSSProperties \| ((context: { row: any[]; column: any; rowIndex: number; columnIndex: number }) => CSSProperties)` | - | - |
 | primaryKey | 行数据的 Key，用来优化 Table 的渲染；在使用 reserve-selection 功能的情况下，该属性是必填的。类型为 string 时，支持多层访问：`user.info.id`，但不支持 `user.info[0].id`，此种情况请使用 `Function`。 | `string \| ((row: any) => string \| number)` | - | - |
-| emptyText | 空状态文案，`empty` 插槽优先；显式空字符串有效。虽然 props 声明接受函数，当前渲染不会调用它，请用插槽自定义内容 | `string` | - | 当前语言的“暂无数据” |
+| emptyText | 空状态文案，`empty` 插槽优先；显式空字符串有效。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | 当前语言的“暂无数据” |
 | defaultExpandAll | 是否默认展开所有行（展开行与树形节点）；仅作为未操作过的行的默认值 | `boolean` | - | false |
 | lazyTree | 树形数据的子节点是否懒加载，需配合 `load-expand` 使用；通过 `row` 的 `hasChildren` 标记可加载的节点 | `boolean` | - | `false` |
 | loadExpand | 懒加载子节点的方法，返回子行数组或 `Promise<Array>`；`treeNode` 为 `{ level, indent, expandable, expanded, loading }`，`level` 根为 `0` | `(row: any, treeNode: { level: number; indent: number; expandable: boolean; expanded: boolean; loading: boolean }) => any[] \| Promise<any[]>` | - | - |
@@ -1716,7 +1716,7 @@ const handleToggle = () => { isEmpty.value = !isEmpty.value; };
 | reserveSelection | 仅对 `type=selection` 的列有效，类型为 `boolean`，为 `true` 则会在数据更新之后保留之前选中的数据（需指定 `primary-key`） | `boolean` | - | `false` |
 | filterOptions | 表头筛选的配置，原样传给筛选组件，字段见下方 [filter-options](#filter-options) | `Object` | - | - |
 | sortable | 显示排序箭头，selection/expand/drag 列不支持 | `boolean` | - | `false` |
-| tooltip | 表头帮助图标的提示文字 | `string \| ((context: { column: any; store: any }) => string)` | - | - |
+| tooltip | 表头帮助图标的提示内容。字符串按文本渲染，需要 HTML 时传 `{ type: 'html', value }`；也可传函数，函数返回的字符串同样按文本渲染 | `string \| { type: string; value: any } \| ((context: { column: any; store: any }) => string)` | - | - |
 
 ### TableColumn 插槽
 

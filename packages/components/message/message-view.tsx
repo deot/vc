@@ -114,18 +114,7 @@ export const MessageView = defineComponent({
 											)
 								}
 
-								{
-									typeof currentContent.value === 'string'
-										? (
-												<div
-													class="vc-message__content"
-													innerHTML={currentContent.value}
-												/>
-											)
-										: typeof currentContent.value === 'function'
-											? (<Customer render={currentContent.value} />)
-											: null
-								}
+								<Customer class="vc-message__content" render={currentContent.value} />
 
 								{
 									props.closable && (

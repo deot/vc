@@ -470,8 +470,8 @@ Tour.open({ cache: 'feature-guide-v1', steps: [{ element: '#feature-entry', titl
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | element | 目标选择器、DOM 或返回 DOM/null 的函数；未提供时主动居中 | `string \| HTMLElement \| (() => HTMLElement \| null)` | - | - |
-| title | 标题；字符串按 HTML 渲染，函数通过 Customer 渲染 | `string \| Function` | - | - |
-| content | 内容；字符串按 HTML 渲染，函数通过 Customer 渲染 | `string \| Function` | - | - |
+| title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |
+| content | 内容，取值与 title 相同 | `string \| number \| Function \| { type: string; value: any }` | - | - |
 
 ### TourStep 事件
 
@@ -501,7 +501,7 @@ Tour.open({ cache: 'feature-guide-v1', steps: [{ element: '#feature-entry', titl
 - 卡片或目标中打开的子弹层（如 Select 下拉）获得焦点时视为在引导内：Tab 从触发控件的位置继续，ESC 先让焦点回到触发控件，再次按下才关闭引导，左右键交给子弹层处理、不切步。
 - Portal 创建的 app 不继承调用方插件和 provide，需要通过 uses/components/install 显式注入，卡片与气泡内容都在该 app 中；Portal 配置用法见 [Portal](../portal/README.md)。
 - `getPopupContainer` 指向带 `transform` 等会改变 fixed 定位参照的容器时，气泡贴边仍以页面视口为准。
-- title/content 字符串按 HTML 渲染，请传入可信内容；需要组合其他组件时使用渲染函数或插槽。
+- title / content 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。需要组合其他组件时使用渲染函数或插槽。
 - `MTour`、`MTourStep` 分别是 `Tour`、`TourStep` 的别名，使用同一实现与样式，可从 `@deot/vc` 导入。
 
 ### 完整示例

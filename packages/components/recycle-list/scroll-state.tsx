@@ -37,7 +37,8 @@ export const ScrollState = defineComponent({
 		 * @returns 状态内容
 		 */
 		const renderState = (name: 'loading' | 'complete' | 'empty', fallback: () => any) => {
-			return slots[name]?.() || (props.renderer[name] ? (<Customer render={props.renderer[name]} />) : fallback());
+			const render = slots[name] || props.renderer[name];
+			return render ? (<Customer render={render} />) : fallback();
 		};
 
 		return () => {

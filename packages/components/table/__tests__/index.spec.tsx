@@ -2523,6 +2523,27 @@ describe('Additional source-path coverage', () => {
 		wrapper.unmount();
 	});
 
+	it('column tooltip function receives column and store, its result renders as text', async () => {
+		const tooltip = vi.fn(() => '<ins class="tooltip-probe">函数提示</ins>');
+		const wrapper = mount(() => (
+			<Table data={[{ id: 1, name: 'a' }]} primaryKey="id">
+				<TableColumn label="名称" prop="name" tooltip={tooltip} />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.find('.vc-table__tooltip').trigger('mouseenter');
+		await flush();
+
+		expect(tooltip).toHaveBeenCalled();
+		const [data] = tooltip.mock.calls[0] as any[];
+		expect(Object.keys(data).sort()).toEqual(['column', 'store']);
+		expect(data.column.prop).toBe('name');
+		expect(data.store).toBeInstanceOf(Store);
+		expect(document.body.textContent).toContain('<ins class="tooltip-probe">函数提示</ins>');
+		expect(document.querySelector('.tooltip-probe')).toBeNull();
+		wrapper.unmount();
+	});
+
 	it('column filters: multiple - confirm / reset through TableFilter', async () => {
 		const filterFn = vi.fn();
 		const wrapper = mount(() => (

@@ -961,7 +961,8 @@ export const RecycleList = defineComponent({
 		// 渲染
 		// ---------------------------------------------------------------------
 		const renderPlaceholder = () => {
-			return slots.placeholder?.() || (renderer.value.placeholder && (<Customer render={renderer.value.placeholder} />));
+			const render = slots.placeholder || renderer.value.placeholder;
+			return render && (<Customer render={render} />);
 		};
 
 		// ScrollState 自身没有数据来源，状态与 loading / complete / empty 三个 slot 都由外层传入

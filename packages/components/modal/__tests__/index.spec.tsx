@@ -140,10 +140,43 @@ describe('ModalView 基础渲染', () => {
 		wrapper.unmount();
 	});
 
-	it('title (string) 透传到 vc-modal__title 的 innerHTML', async () => {
+	it('title 为空字符串时保留标题行，未传时不渲染', async () => {
 		const wrapper = mount(ModalView, {
 			attachTo: document.body,
-			props: { modelValue: true, title: '<span class="t-inner">hi</span>' }
+			props: { modelValue: true, title: '' }
+		});
+		await flush();
+		expect(wrapper.find('.vc-modal__title').exists()).toBe(true);
+		expect(wrapper.find('.vc-modal__title').element.innerHTML).toBe('');
+
+		await wrapper.setProps({ title: void 0 });
+		expect(wrapper.find('.vc-modal__title').exists()).toBe(false);
+
+		// 渲染函数不放进标题行
+		await wrapper.setProps({ title: () => h('i', { class: 't-render' }, 'hi') });
+		expect(wrapper.find('.t-render').exists()).toBe(true);
+		expect(wrapper.find('.vc-modal__title').exists()).toBe(false);
+		wrapper.unmount();
+	});
+
+	it('title / content 传入 { type: \'text\' } 时按文本渲染', async () => {
+		const value = '<span class="t-inner">hi</span>';
+		const wrapper = mount(ModalView, {
+			attachTo: document.body,
+			props: { modelValue: true, title: { type: 'text', value }, content: { type: 'text', value } }
+		});
+		await flush();
+
+		expect(wrapper.find('.t-inner').exists()).toBe(false);
+		expect(wrapper.find('.vc-modal__title').text()).toBe(value);
+		expect(wrapper.find('.vc-modal__content').text()).toBe(value);
+		wrapper.unmount();
+	});
+
+	it('title：{ type: \'html\' } 写入 vc-modal__title 的 innerHTML，字符串按文本', async () => {
+		const wrapper = mount(ModalView, {
+			attachTo: document.body,
+			props: { modelValue: true, title: { type: 'html', value: '<span class="t-inner">hi</span>' } }
 		});
 		await flush();
 
@@ -152,15 +185,19 @@ describe('ModalView 基础渲染', () => {
 		expect(title.find('.t-inner').exists()).toBe(true);
 		expect(title.text()).toBe('hi');
 
+		await wrapper.setProps({ title: '<span class="t-inner">hi</span>' });
+		expect(title.find('.t-inner').exists()).toBe(false);
+		expect(title.text()).toBe('<span class="t-inner">hi</span>');
+
 		wrapper.unmount();
 	});
 
-	it('content (string) 渲染到 vc-modal__content 内', async () => {
+	it('content：{ type: \'html\' } 渲染到 vc-modal__content 内', async () => {
 		const wrapper = mount(ModalView, {
 			attachTo: document.body,
 			props: {
 				modelValue: true,
-				content: '<p class="c-string">hello</p>'
+				content: { type: 'html', value: '<p class="c-string">hello</p>' }
 			}
 		});
 		await flush();

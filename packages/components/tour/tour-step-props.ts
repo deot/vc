@@ -1,6 +1,6 @@
-import type { ExtractPropTypes, PropType } from 'vue';
+import type { ExtractPropTypes } from 'vue';
 import { pick, mapValues } from 'lodash-es';
-import type { Props as CustomerProps } from '../customer/customer-props';
+import { valueType } from '../customer/customer-props';
 import { props as tourProps } from './tour-props';
 
 const tourKeys = [
@@ -52,7 +52,7 @@ export const props = {
 	...(pick(tourProps, tourKeys) as Pick<typeof tourProps, typeof tourKeys[number]>),
 	...tourDefaultProps,
 	element: [String, Object, Function],
-	title: [String, Function] as PropType<string | CustomerProps['render']>,
-	content: [String, Function] as PropType<string | CustomerProps['render']>
+	title: valueType,
+	content: valueType
 };
 export type Props = ExtractPropTypes<typeof props>;

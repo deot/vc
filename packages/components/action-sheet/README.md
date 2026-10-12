@@ -92,7 +92,7 @@ onUnmounted(() => {
 
 ### 内容渲染
 
-`title`、`content` 和 `subContent` 均支持字符串或渲染函数。字符串通过 `innerHTML` 渲染，只应传入可信内容；操作的渲染函数会收到包含 `loading` 状态的属性对象。
+`title`、`content` 和 `subContent` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。渲染函数返回的内容放在对应的容器元素内（标题、操作内容、补充说明各自带 class 的 `div`），操作的渲染函数会收到包含 `loading` 状态的参数对象。
 
 ## 主题与局部覆盖
 
@@ -138,8 +138,8 @@ onUnmounted(() => {
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| content | 操作内容；字符串通过 `innerHTML` 渲染 | `ActionSheetContent` | - | `undefined` |
-| subContent | 操作的补充说明；字符串通过 `innerHTML` 渲染 | `ActionSheetContent` | - | `undefined` |
+| content | 操作内容；字符串按文本渲染，需要 HTML 时传 `{ type: 'html', value }` | `ActionSheetContent` | - | `undefined` |
+| subContent | 操作的补充说明；字符串按文本渲染，需要 HTML 时传 `{ type: 'html', value }` | `ActionSheetContent` | - | `undefined` |
 | disabled | 是否禁用当前操作 | `boolean` | - | `undefined` |
 | class | 当前操作的额外 class | `any` | - | `undefined` |
 | style | 当前操作的额外内联样式 | `any` | - | `undefined` |
@@ -163,6 +163,6 @@ onUnmounted(() => {
 
 | 类型名 | 说明 |
 | --- | --- |
-| `ActionSheetContent` | 字符串或与 `Customer` 一致的渲染函数 |
+| `ActionSheetContent` | 字符串、数字、渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) |
 | `ActionSheetAction` | 单个操作的公开数据结构 |
 | `ActionSheetActionValue` | `ActionSheetAction` 的别名 |

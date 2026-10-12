@@ -1,16 +1,17 @@
 import type { ExtractPropTypes } from 'vue';
+import { valueType } from '../../customer/customer-props';
 
 export const props = {
 	tag: {
 		type: String,
 		default: 'div'
 	},
-	label: String,
+	label: valueType,
 	labelWidth: {
 		type: [String, Number],
 		default: ''
 	},
-	extra: String,
+	extra: valueType,
 	arrow: {
 		type: [String, Boolean],
 		default: 'right',
