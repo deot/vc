@@ -175,7 +175,7 @@ describe('UploadPicker', () => {
 				props: { modelValue: [files[0], second], picker: ['image'] }
 			});
 			const failedFile = { uploadId: 'failed-image', name: 'failed.jpg', percent: 0 };
-			const upload = wrapper.findComponent(UploadComponent as any);
+			const upload = wrapper.findComponent(UploadComponent as any) as any;
 			upload.vm.$emit('file-start', { file: failedFile });
 			upload.vm.$emit('file-error', { stage: 'upload', cause: {}, message: '上传失败', file: failedFile, result: {} });
 			await nextTick();
@@ -330,7 +330,7 @@ describe('UploadPicker', () => {
 					)
 				}
 			});
-			const upload = wrapper.findComponent(UploadComponent);
+			const upload = wrapper.findComponent(UploadComponent as any) as any;
 			const failedFile = { uploadId: 'failed-audio', name: 'failed.mp3', percent: 0 };
 
 			const result = { total: 1, completed: 1, succeeded: 0, failed: 1, responses: [], queues: [] };
@@ -464,7 +464,7 @@ describe('UploadPicker', () => {
 			const wrapper = mount(Component, {
 				props: { modelValue: [], picker: ['audio'] }
 			});
-			const upload = wrapper.findComponent(UploadComponent);
+			const upload = wrapper.findComponent(UploadComponent as any) as any;
 			const vFile = { uploadId: `upload-error-${selector}`, name: 'broken.mp3', percent: 0 };
 
 			const result = { total: 1, completed: 1, succeeded: 0, failed: 1, responses: [], queues: [] };
