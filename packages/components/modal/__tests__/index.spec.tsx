@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Modal, ModalView, MModal, MModalView, VcInstance } from '@deot/vc-components';
+import { Modal, ModalView, MModal, MModalView, Select, VcInstance } from '@deot/vc-components';
 import { enUS, zhCN } from '@deot/vc-locale';
 import { mount, config } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
@@ -450,6 +450,75 @@ describe('ModalView 关闭逻辑', () => {
 		await flush();
 
 		document.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape' }));
+		await flush();
+		expect((wrapper.vm as any).isActive).toBe(false);
+
+		wrapper.unmount();
+	});
+
+	it('多个弹窗叠加时，ESC 只关闭最后打开的一个；输入法组合中不关闭', async () => {
+		const first = mount(ModalView, { attachTo: document.body, props: { modelValue: true } });
+		const second = mount(ModalView, { attachTo: document.body, props: { modelValue: false } });
+		await flush();
+		await second.setProps({ modelValue: true });
+		await flush();
+
+		const composing = new KeyboardEvent('keydown', { code: 'Escape', isComposing: true, cancelable: true });
+		document.dispatchEvent(composing);
+		await flush();
+		expect(composing.defaultPrevented).toBe(false);
+		expect((second.vm as any).isActive).toBe(true);
+
+		// 已处理的按键不再传给页面上的其他监听
+		const outside = vi.fn();
+		document.addEventListener('keydown', outside);
+		const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+		document.dispatchEvent(event);
+		await flush();
+		expect(event.defaultPrevented).toBe(true);
+		expect(outside).not.toHaveBeenCalled();
+		expect((second.vm as any).isActive).toBe(false);
+		expect((first.vm as any).isActive).toBe(true);
+
+		document.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape' }));
+		await flush();
+		expect((first.vm as any).isActive).toBe(false);
+
+		// 都关闭后不再订阅
+		document.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape' }));
+		expect(outside).toHaveBeenCalledTimes(1);
+
+		document.removeEventListener('keydown', outside);
+		first.unmount();
+		second.unmount();
+	});
+
+	it('弹窗内的下拉打开时，ESC 先关闭下拉，再按才关闭弹窗', async () => {
+		const wrapper = mount(ModalView, {
+			attachTo: document.body,
+			props: { modelValue: true },
+			slots: { default: () => h(Select, { data: [{ value: '1', label: 'A' }] }) }
+		});
+		await flush();
+		const isSelectOpen = () => {
+			return Array.from(document.querySelectorAll<HTMLElement>('.vc-popover-wrapper')).some(el => el.style.display !== 'none');
+		};
+		const press = () => {
+			const event = new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true });
+			document.body.dispatchEvent(event);
+		};
+
+		(document.querySelector('.vc-select') as HTMLElement).click();
+		await flush();
+		expect(isSelectOpen()).toBe(true);
+
+		// 本文件走真实的过渡，下拉在离场动画结束后才隐藏
+		press();
+		await flushTransition();
+		expect(isSelectOpen()).toBe(false);
+		expect((wrapper.vm as any).isActive).toBe(true);
+
+		press();
 		await flush();
 		expect((wrapper.vm as any).isActive).toBe(false);
 

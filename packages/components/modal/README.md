@@ -495,7 +495,7 @@ onUnmounted(() => {
 | mask | 是否显示遮罩 | `boolean` | - | `true` |
 | closable | 非 `mode` 布局下是否显示关闭图标 | `boolean` | - | `true` |
 | maskClosable | 是否允许点击遮罩关闭 | `boolean` | - | `true` |
-| escClosable | 是否允许按 `Escape` 关闭 | `boolean` | - | `true` |
+| escClosable | 是否允许按 `Escape` 关闭；多个弹层叠加时一次只关闭最后打开的一个，其中的下拉打开时先关闭下拉，输入法组合中不响应 | `boolean` | - | `true` |
 | closeWithCancel | 主动关闭时是否先执行 `onCancel` / `cancel` | `boolean` | - | `true` |
 | scrollable | 内容区是否由内置的 Scroller 滚动；`false` 时由内容自行收缩并滚动（内容的根节点需设置 `min-height: 0`） | `boolean` | - | `true` |
 | scrollerOptions | 内置 Scroller 的属性（如 `always`、`native`）；内容区的类名与样式仍用 `contentClass`、`contentStyle` | `object` | - | - |

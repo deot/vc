@@ -21,6 +21,7 @@ import { Button } from '../button';
 import { TransitionScale, TransitionFade } from '../transition';
 import { Customer } from '../customer';
 import { Scroller } from '../scroller';
+import { Keyboard } from '@deot/vc-shared';
 import { VcInstance } from '../vc';
 import { useLocale } from '../locale';
 
@@ -190,11 +191,21 @@ export const ModalView = defineComponent({
 				isActive.value = false;
 			}
 		};
+		// 由统一的 Keyboard 分发：后打开的弹层先处理，处理后不再传给下层（如下层的 Modal）
 		const handleEscClose = (e: KeyboardEvent) => {
-			if (e.code === 'Escape' && props.escClosable && isActive.value) {
-				handleClose(e, true);
-			}
+			if (e.isComposing || !(e.code === 'Escape' || e.key === 'Escape') || !props.escClosable) return false;
+			handleClose(e, true);
+			return true;
 		};
+		let unsubscribe: (() => void) | null = null;
+		watch(
+			() => isActive.value,
+			(v) => {
+				unsubscribe?.();
+				unsubscribe = v ? Keyboard.on(handleEscClose) : null;
+			},
+			{ flush: 'post' }
+		);
 
 		const renderContent = () => {
 			return (
@@ -247,7 +258,6 @@ export const ModalView = defineComponent({
 		});
 
 		onMounted(() => {
-			document.addEventListener('keydown', handleEscClose);
 			document.addEventListener('click', handleClick, true);
 		});
 
@@ -260,7 +270,7 @@ export const ModalView = defineComponent({
 
 		onUnmounted(() => {
 			document.removeEventListener('click', handleClick, true);
-			document.removeEventListener('keydown', handleEscClose);
+			unsubscribe?.();
 		});
 
 		watch(
