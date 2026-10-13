@@ -445,6 +445,42 @@ describe('Popover 内容渲染', () => {
 		wrapper.unmount();
 	});
 
+	it('#header / #footer 没有渲染出内容时不占位，打开期间可在插槽内按条件显示', async () => {
+		const header = ref(false);
+		const footer = ref(true);
+		const wrapper = mount(() => (
+			<Popover trigger="click">
+				{{
+					default: () => <button>btn</button>,
+					header: () => header.value && (<span class="c-header">header</span>),
+					content: () => <span class="c-slot">slot</span>,
+					// 空片段同样视为没有内容
+					footer: () => (<>{ footer.value ? (<span class="c-footer">footer</span>) : null }</>)
+				}}
+			</Popover>
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await wrapper.trigger('click');
+		await flush();
+
+		const container = document.querySelector('.vc-popover-wrapper__container')!;
+		const getParts = () => Array.from(container.children).map(el => el.className.split(' ').pop());
+		expect(getParts()).toEqual(['vc-scroller', 'vc-popover-wrapper__footer']);
+		const content = container.querySelector('.c-slot');
+
+		header.value = true;
+		await flush();
+		expect(getParts()).toEqual(['vc-popover-wrapper__header', 'vc-scroller', 'vc-popover-wrapper__footer']);
+		expect(container.querySelector('.vc-popover-wrapper__header > .c-header')).not.toBeNull();
+
+		footer.value = false;
+		header.value = false;
+		await flush();
+		expect(getParts()).toEqual(['vc-scroller']);
+		// 内容区的节点保持不变
+		expect(container.querySelector('.c-slot')).toBe(content);
+	});
+
 	it('#header / #footer slot 渲染在内容区之外，不随内容滚动', async () => {
 		const wrapper = mount(() => (
 			<Popover trigger="click">

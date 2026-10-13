@@ -6,7 +6,10 @@ import {
 	ref,
 	computed,
 	onMounted,
-	onUnmounted
+	onUnmounted,
+	Comment,
+	Fragment,
+	isVNode
 } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import { isEqual } from 'lodash-es';
@@ -23,6 +26,13 @@ import { ScrollerManager } from '../scroller/manager';
 
 // 同时是 CSS 块名、主题变量前缀（--vc-popover-wrapper-*）与 Popover.open 的默认 Portal 名
 const COMPONENT_NAME = 'vc-popover-wrapper';
+
+// 插槽是否渲染出了内容：条件不成立时得到的是注释节点或空片段（片段的子节点此时尚未规范化，可能是 null / false）
+const hasContent = (node: unknown): boolean => {
+	if (Array.isArray(node)) return node.some(hasContent);
+	if (!isVNode(node)) return node != null && typeof node !== 'boolean' && node !== '';
+	return node.type === Fragment ? hasContent(node.children) : node.type !== Comment;
+};
 
 export const PopoverView = defineComponent({
 	name: COMPONENT_NAME,
@@ -317,6 +327,13 @@ export const PopoverView = defineComponent({
 			// 触发节点只移动、尺寸不变时（滚动与 Resize 之外），由调用方触发重新定位
 			update: setPopupStyle
 		});
+		// 固定区（header / footer）：插槽在弹层创建时取定，要按条件显示时由插槽自己决定渲染什么（其中的响应式依赖会让弹层重新渲染），
+		// 没有渲染出内容时不输出外层节点
+		const renderFixed = (name: 'header' | 'footer') => {
+			const nodes = slots[name]?.();
+			return hasContent(nodes) && (<div class={`vc-popover-wrapper__${name}`}>{nodes}</div>);
+		};
+
 		return () => {
 			const content = (<Customer render={slots.content || props.content} />);
 
@@ -339,7 +356,7 @@ export const PopoverView = defineComponent({
 							onMouseleave={e => props.hover && handleChange(e, { visible: false })}
 						>
 							<div ref={containerRef} class={[themeClasses.value, 'vc-popover-wrapper__container']}>
-								{slots.header && <div class="vc-popover-wrapper__header">{slots.header()}</div>}
+								{renderFixed('header')}
 								{
 									props.scrollable
 										? (
@@ -358,7 +375,7 @@ export const PopoverView = defineComponent({
 											)
 										: <div class="vc-popover-wrapper__content is-unscrollable">{content}</div>
 								}
-								{slots.footer && <div class="vc-popover-wrapper__footer">{slots.footer()}</div>}
+								{renderFixed('footer')}
 							</div>
 							{
 								props.arrow && (
