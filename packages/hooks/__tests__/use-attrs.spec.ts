@@ -43,6 +43,22 @@ describe('use-scrollbar.ts', () => {
 		expect(handleAny).toBeCalledTimes(1);
 	});
 
+	it('merge: false 时，初始为空的 attrs 之后新增属性也会更新', async () => {
+		const Wrapper = defineComponent({
+			inheritAttrs: false,
+			setup() {
+				const it = useAttrs({ merge: false });
+				return () => h('div', h('span', it.value.attrs, 'any'));
+			}
+		});
+
+		const root = mount(Wrapper);
+		expect(root.find('span').attributes()).toEqual({});
+
+		await root.setProps({ any: 'any' } as any);
+		expect(root.find('span').attributes()).toEqual({ any: 'any' });
+	});
+
 	it('exclude', async () => {
 		const Wrapper = defineComponent(() => {
 			const it = useAttrs({ merge: false, exclude: ['any'] });

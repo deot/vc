@@ -27,6 +27,8 @@ export const useAttrs = (options?: Options): ComputedRef<Attrs> => {
 
 	return computed(() => {
 		if (merge && !exclude.length) return attrs;
+		// 读取 attrs 的属性才会建立依赖：为空时 Object.entries 不读取任何属性，之后新增的属性就不会触发重新计算
+		void attrs.class;
 		const result = Object.entries(attrs).reduce((pre, [key, val]) => {
 			if (exclude.includes(key)) return pre;
 			if (!merge && /^on([A-Z])/.test(key)) {
