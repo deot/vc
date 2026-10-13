@@ -15,36 +15,11 @@ $component-name: vc-select;
 	@include element(input) {
 		--vc-input-color-disabled: #{$background-color};
 
-		cursor: pointer;
 		background-color: $background-color-lightest;
-
-		input {
-			cursor: pointer;
-		}
-
-		.vc-input__append {
-			z-index: 0;
-		}
-
-		// 允许内容区收缩到输入框宽度以内，标签才能按宽度折叠
-		.vc-input__wrapper {
-			min-width: 0;
-		}
-
-		.vc-input__content {
-			min-width: 0;
-			overflow: hidden;
-		}
 	}
 
 	@include element(append) {
-		position: relative;
-		padding: 0 unitfix(10) 0 unitfix(2);
-		font-size: unitfix(12);
-		line-height: unitfix(32);
 		color: $color-dark-extralight;
-		text-align: center;
-		white-space: nowrap;
 	}
 
 	@include element(prepend) {
@@ -52,23 +27,5 @@ $component-name: vc-select;
 		padding-left: unitfix(12);
 		font-weight: 400;
 		color: $color-dark-lighter;
-	}
-
-	@include element(icon) {
-		@include when(arrow) {
-			transform: scale(0.8);
-		}
-	}
-
-	@include element(search) {
-		display: flex;
-		padding: unitfix(12) unitfix(8);
-		justify-content: space-between;
-		align-items: center;
-	}
-
-	@include element(loading) {
-		padding-bottom: unitfix(8);
-		text-align: center;
 	}
 }

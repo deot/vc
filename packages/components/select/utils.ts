@@ -1,3 +1,5 @@
+import { escapeRegExp } from 'lodash-es';
+
 /**
  * 树形label
  */
@@ -31,34 +33,52 @@ export interface FlattenDataOptions {
 	cascader?: boolean;
 }
 
-// 正则内的特殊符号
-const specialChar = ['?', '*', '$', '+', '^', '.', '\\', '(', ')', '[', ']', '{', '}', '|'];
 /**
- * 如果字符串内存在正则的符号，RegEx会报错，所以转义下
- * @param str ~
- * @returns ~
+ * 搜索用的正则：自身只用于 test；highlight 用于标出命中的部分（任一关键词，带一个捕获组），没有关键词时为空
  */
-export const escapeString = (str: string) => {
-	let val = '';
-	for (const char of str) {
-		val += specialChar.includes(char) ? '\\' + char : char;
-	}
-	return val;
-};
+export type SearchRegex = RegExp & { highlight?: RegExp };
 
 /**
- * 搜索关键词 -> 正则；空格或逗号分隔多个词，任一命中即可
+ * 搜索关键词 -> 正则
+ * 	- 空格分隔的词需同时命中，逗号分隔的各组任一命中即可（如 `a b,c`：同时含 a 和 b，或含 c）
+ * 	- 关键词为空时匹配全部
  * @param keyword ~
  * @returns ~
  */
-export const createSearchRegex = (keyword: string) => {
-	const words = keyword
-		.trim()
-		.split(/[\s,]+/)
-		.filter(Boolean)
-		.map(escapeString);
+export const createSearchRegex = (keyword: string): SearchRegex => {
+	const groups = keyword
+		.split(',')
+		.map(group => group.split(/\s+/).filter(Boolean).map(escapeRegExp))
+		.filter(words => words.length);
 
-	return new RegExp(words.join('|'), 'i');
+	if (!groups.length) return new RegExp('', 'i');
+
+	const source = groups
+		.map(words => words.map(word => `(?=[\\s\\S]*${word})`).join(''))
+		.join('|');
+	const regex: SearchRegex = new RegExp(`^(?:${source})`, 'i');
+	// 较长的词在前，避免被它的前缀抢先匹配
+	const words = groups.flat().sort((a, b) => b.length - a.length);
+	regex.highlight = new RegExp(`(${words.join('|')})`, 'gi');
+	return regex;
+};
+
+/**
+ * 深度优先遍历树形数据
+ * @param data ~
+ * @param fn 返回 false 时不进入该节点的子节点；ancestors 为从根到当前节点的各级数据，遍历中复用同一个数组，需要保留时自行拷贝
+ * @param ancestors ~
+ */
+export const walkTree = (
+	data: TreeData[],
+	fn: (item: TreeData, ancestors: TreeData[]) => unknown,
+	ancestors: TreeData[] = []
+) => {
+	data.forEach((item) => {
+		ancestors.push(item);
+		fn(item, ancestors) !== false && item.children?.length && walkTree(item.children, fn, ancestors);
+		ancestors.pop();
+	});
 };
 
 export const getLabel = (data: TreeData, v: TreeValue): TreeLabel => {
@@ -151,88 +171,4 @@ export const toModelValue = (v: CurrentValue, options: CurrentValueOptions): Mod
 	}
 
 	return value;
-};
-
-export interface FitTagsOptions {
-	/**
-	 * 候选 tag 的外宽（含左右 margin），长度即候选数量
-	 */
-	widths: number[];
-
-	/**
-	 * 容器可用宽度
-	 */
-	width: number;
-
-	/**
-	 * 最多行数
-	 */
-	lines: number;
-
-	/**
-	 * 折叠 tag（+N...）的外宽
-	 */
-	plusWidth: number;
-
-	/**
-	 * tag 总数
-	 */
-	total: number;
-}
-
-export interface FitTagsResult {
-	/**
-	 * 可显示的 tag 数量
-	 */
-	count: number;
-
-	/**
-	 * 最后一个可显示 tag 需收缩到的外宽（为折叠 tag 让位）
-	 */
-	shrink?: number;
-}
-
-/**
- * 按行贪心放置 tag，计算在给定行数内可显示的数量
- * 	- 需要折叠 tag 时为其让位：减少数量，最后一行只剩一个时收缩它（出现省略号）；
- * 	- 收缩后比折叠 tag 还窄（约只剩一个字）时不再显示它，只保留折叠 tag。
- * @param options ~
- * @returns ~
- */
-export const fitTags = (options: FitTagsOptions): FitTagsResult => {
-	const { widths, width, lines, plusWidth, total } = options;
-	if (!widths.length || width <= 0 || lines <= 0) return { count: widths.length };
-
-	// 每个 tag 放置后的所在行、行内已用宽度、是否为该行首个
-	const layout: Array<{ row: number; used: number; head: boolean }> = [];
-	let row = 1;
-	let used = 0;
-	for (let i = 0; i < widths.length; i++) {
-		// 超长 tag 独占一行，由省略号截断
-		const w = Math.min(widths[i], width);
-		if (used > 0 && used + w > width) {
-			row++;
-			used = 0;
-		}
-		if (row > lines) break;
-		layout.push({ row, used: used + w, head: used === 0 });
-		used += w;
-	}
-
-	if (layout.length >= total) return { count: layout.length };
-
-	// 需要折叠 tag：能跟在最后一个 tag 后面，或还能换到下一行
-	for (let i = layout.length - 1; i >= 0; i--) {
-		const item = layout[i];
-		if (item.used + plusWidth <= width || (item.row < lines && plusWidth <= width)) {
-			return { count: i + 1 };
-		}
-		if (item.head) {
-			const shrink = width - plusWidth;
-			return shrink >= plusWidth ? { count: i + 1, shrink } : { count: i };
-		}
-	}
-
-	// layout[0].head 恒为 true，不会走到这里
-	return { count: 0 };
 };

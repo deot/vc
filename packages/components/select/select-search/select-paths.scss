@@ -1,0 +1,45 @@
+@use '../../style/helper' as *;
+
+$component-name: vc-select-paths;
+$color-dark-lighter: varfix(color-dark-lighter, select-paths);
+$color-dark-extralight: varfix(color-dark-extralight, select-paths);
+$background-color-primary-light: varfix(background-color-primary-light, select-paths);
+
+@include block($component-name) {
+	padding: unitfix(5) 0;
+
+	@include element(item) {
+		display: flex;
+		padding: unitfix(4) unitfix(8);
+		font-size: unitfix(12);
+		line-height: unitfix(16);
+		color: $color-dark-lighter;
+		white-space: nowrap;
+		cursor: pointer;
+		align-items: center;
+
+		// 键盘与鼠标共用的高亮，见 use-navigate；背景只表示高亮，已选中由调用方表示（复选框、主色文字）
+		&[data-active] {
+			background-color: $background-color-primary-light;
+		}
+
+		@include when(disabled) {
+			color: $color-dark-extralight;
+			cursor: not-allowed;
+		}
+	}
+
+	@include element(label) {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		flex: 1;
+	}
+
+	@include element(empty) {
+		padding: unitfix(8) 0;
+		font-size: unitfix(12);
+		color: $color-dark-extralight;
+		text-align: center;
+	}
+}

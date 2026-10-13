@@ -179,9 +179,19 @@ const handleDrop = ({ data: row, targetNode, position, from, to }) => {
 
 `TreeSelect` 默认 `max = Infinity`，显示多选标签；`max = 1` 切换为单标签展示。当前实现不按 `max` 限制勾选数量，单标签展示也不等同于互斥单选。
 
-`cascader` 开启鼠标悬停展开的级联列。`searchable` 开启搜索，空格或英文逗号分隔的关键词任一命中即可：树形模式保留层级，级联模式显示完整路径列表。关闭面板会清空搜索。非独立勾选时，搜索结果中的父节点仍会联动所有子孙节点，包括隐藏节点。
+`cascader` 开启鼠标悬停展开的级联列。`searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入（输入框跟在标签之后，输入为空时按 Backspace 移除最后一个标签），`searchable="popover"` 改为在面板顶部显示搜索栏。空格分隔的关键词需同时命中，英文逗号分隔的各组任一命中即可：树形模式保留层级，级联模式显示完整路径列表。关闭面板会清空搜索。非独立勾选时，搜索结果中的父节点仍会联动所有子孙节点，包括隐藏节点。
 
 多选标签默认只占一行；超出宽度的标签折叠为 `+N...`，悬停可查看并移除。`maxTags` 限制可见标签数，`maxTagLines` 控制行数，设为 `0` 表示不限制。非 `checkStrictly` 时标签展示完整路径。
+
+输入框聚焦时按 Enter 打开面板，Esc 关闭并把焦点还给输入框，Tab 关闭并移到下一个可聚焦元素。面板打开后的按键随内容而定：
+
+| 面板内容 | 按键 |
+| --- | --- |
+| 树形 | ↓ 把焦点移入树；之后 ↑ / ↓ 在可见节点间移动，← / → 展开或收起，Enter / 空格切换勾选；在第一个节点上按 ↑ 回到输入框 |
+| 级联列 | ↑ / ↓ 在当前列内移动，← / → 回到父级或进入子级（搜索词为空时），Enter 切换勾选 |
+| 级联搜索结果 | ↑ / ↓ 移动高亮，Enter 切换勾选 |
+
+背景色只表示当前高亮（键盘聚焦或鼠标悬停），是否勾选由复选框表示。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 20 }</config> -->
@@ -230,7 +240,7 @@ const data = [
 
 ### 远程搜索
 
-TreeSelect 的 `loadData(keyword, instance)` 用于搜索，不是 Tree 的懒加载回调。组件以 250ms 防抖调用它，并显示 Promise 等待状态；调用方需更新 `data`，Promise 的返回值不会自动成为数据源。启用后关闭本地过滤，仅保留匹配高亮。
+TreeSelect 的 `loadData(keyword, instance)` 用于搜索，不是 Tree 的懒加载回调，未开启 `searchable` 时不会调用。组件以 250ms 防抖调用它，等待期间输入框后缀显示加载图标；调用方需更新 `data`，Promise 的返回值不会自动成为数据源。启用后关闭本地过滤，仅保留匹配高亮。打开下拉时，如果还没有数据，或当前数据是按某个关键词加载的，会立即以空关键词调用一次，用于加载默认数据；关闭下拉时只重置搜索词，不调用它。搜索结果里没有已选节点时，标签沿用上次查到的路径与文字，继续勾选也不会丢掉它们。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 20 }</config> -->
@@ -264,9 +274,9 @@ const loadData = async (keyword) => {
 
 ## 主题与局部覆盖
 
-全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-tree-<参数>`、`--vc-tree-select-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-tree-<参数>`、`--vc-tree-select-<参数>` 覆盖；TreeSelect 的级联搜索结果与搜索命中的文字使用 `--vc-select-paths-<参数>`、`--vc-select-highlight-<参数>`。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
 
-Tree 使用 tree，TreeSelect 的选项背景、级联面板及输入附加区使用 tree-select。内部拖入节点文字使用可覆盖的 color-contrast-light。TreeSelect 的树模式、级联模式及搜索结果使用同一组选项背景，普通 Tree 的背景参数保持独立。
+Tree 使用 tree，TreeSelect 的选项背景、级联面板及输入附加区使用 tree-select。内部拖入节点文字使用可覆盖的 color-contrast-light。TreeSelect 的树模式与级联模式使用同一组选项背景，级联搜索结果使用 select-paths，普通 Tree 的背景参数保持独立。
 
 TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（例如 body）或通过 `portalClass` 为浮层配置，触发器上的局部变量不会自动传入浮层。
 
@@ -275,14 +285,14 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
 | color-contrast-light | 内部拖入节点文字（tree） | `#FFFFFF`（亮暗主题相同） |
-| color-dark-lighter | 树节点及级联选项文字（tree / tree-select） | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-lighter | 树节点及级联选项文字（tree / tree-select）；级联搜索结果文字（select-paths） | 亮色：`#515151`；暗色：`#D9D9D9` |
 | color-dark-lightest | 展开图标（tree） | 亮色：`#64758B`；暗色：`#C9C9C9` |
-| color-dark-extralight | 空状态、加载、附加图标及级联禁用文字（tree / tree-select） | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-dark-extralight | 空状态、加载、附加图标及级联禁用文字（tree / tree-select）；级联搜索结果的空状态与禁用文字（select-paths） | 亮色：`#909399`；暗色：`#B9B9B9` |
 | color-neutral-light | 级联列分隔线（tree-select） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
-| color-primary | 拖拽落点、搜索高亮及选中选项文字（tree / tree-select） | `#456CF6` |
+| color-primary | 拖拽落点及当前浏览的级联选项文字（tree / tree-select）；搜索命中的文字（select-highlight） | `#456CF6` |
 | color-primary-lighter | 普通树节点非悬停时的焦点及当前节点高亮背景（tree） | `rgba(45, 140, 240, 0.2)` |
 | background-color-lightest | 树背景（tree） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
-| background-color-primary-light | 普通树节点悬停背景（tree）；TreeSelect 非禁用树节点悬停、焦点及勾选背景，级联选项和搜索结果悬停、勾选及当前浏览背景（tree-select） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
+| background-color-primary-light | 普通树节点悬停背景（tree）；TreeSelect 非禁用树节点悬停、焦点背景，级联选项悬停及当前浏览背景（tree-select）；级联搜索结果的高亮背景（select-paths） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
 
 ### 局部
 
@@ -406,9 +416,9 @@ TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字
 | clearable | 悬停时显示清空按钮 | `boolean` | - | `false` |
 | placeholder | 输入框占位文案（通过 attribute 传入），支持空字符串 | `string` | - | 当前语言的“请选择” |
 | extra | 无选中标签时的输入框显示值 | `string` | - | `''` |
-| searchable | 开启搜索 | `boolean` | - | `false` |
-| searchPlaceholder | 搜索框占位文案 | `string` | - | `''` |
-| loadData | 防抖搜索回调，需自行更新 `data` | `(keyword: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
+| searchable | 开启搜索：`true` / `'inline'` 在输入框内直接输入，`'popover'` 在面板顶部显示搜索栏 | `boolean \| 'inline' \| 'popover'` | - | `false` |
+| searchPlaceholder | 搜索时的占位文案：内联搜索为面板打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
+| loadData | 防抖搜索回调，需自行更新 `data`；调用时机见[远程搜索](#远程搜索) | `(keyword: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | cascader | 使用级联列面板 | `boolean` | - | `false` |
 | autoWidth | 面板按内容计算宽度 | `boolean` | - | 未指定时跟随 `cascader` |
 | portal | 下拉挂到 body；`false` 挂在组件根节点内，可能被祖先 overflow 裁剪 | `boolean` | - | `true` |
@@ -430,7 +440,7 @@ TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字
 | --- | --- | --- | --- |
 | update:modelValue / change | 勾选、移除标签或清空 | `(value, labels: string[])` | `labels` 是当前展示标签文本，联动模式为完整路径 |
 | clear | 点击清空按钮 | - | 随后发出值变化事件 |
-| visible-change | 面板可见性变化 | `(visible: boolean)` | 当前是否打开 |
+| visible-change | 点击触发器、点击外部、输入或按 Enter 改变面板可见性时触发；清空、Esc、Tab 或调用方法引起的关闭不触发 | `(visible: boolean)` | 当前是否打开 |
 | ready | 面板组件挂载 | - | 由 Popover 转发 |
 | close | 面板关闭 | - | 由 Popover 转发 |
 
@@ -449,4 +459,4 @@ Tree 使用 `--vc-tree-*`，TreeSelect 使用 `--vc-tree-select-*` 组件覆盖�
 
 内置文案使用 `vc.Tree.emptyText`、`vc.TreeSelect.placeholder`、`vc.TreeSelect.noMatch`；通过 `VcInstance.configure({ locale })` 切换语言。节点标签、自定义渲染和显式传入的文案由调用方管理。
 
-更多交互细节可参考[节点事件示例](./examples/events.vue)、[拖拽示例](./examples/drag.vue)、[标签折叠示例](./examples/tree-select-tags.vue)与[挂载位置示例](./examples/tree-select-portal.vue)。
+更多交互细节可参考[节点事件示例](./examples/events.vue)、[拖拽示例](./examples/drag.vue)、[标签折叠示例](./examples/tree-select-tags.vue)、[搜索与键盘示例](./examples/tree-select-search.vue)与[挂载位置示例](./examples/tree-select-portal.vue)。

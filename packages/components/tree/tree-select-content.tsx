@@ -4,36 +4,13 @@ import { defineComponent, ref, watch } from 'vue';
 import type { PropType } from 'vue';
 import { renderType } from '../customer/customer-props';
 import { useLocale } from '../locale';
+import { renderHighlight } from '../select/select-search';
+import type { SearchRegex } from '../select/utils';
+import { keepFocus } from '../select/select-trigger';
 import { Tree } from './tree';
+import { getFocusableItems } from './use-keydown';
 
 const COMPONENT_NAME = 'vc-tree-select-content';
-
-/**
- * 高亮 label 中命中关键词的部分
- * @param label ~
- * @param regex ~
- * @returns ~
- */
-export const renderHighlight = (label: any, regex?: RegExp) => {
-	const text = String(label ?? '');
-	if (!regex || !regex.source || regex.source === '(?:)' || !text) return text;
-
-	const matcher = new RegExp(regex.source, 'gi');
-	const result: any[] = [];
-	let lastIndex = 0;
-	let match: RegExpExecArray | null;
-	while ((match = matcher.exec(text))) {
-		if (!match[0]) {
-			matcher.lastIndex++;
-			continue;
-		}
-		match.index > lastIndex && result.push(text.slice(lastIndex, match.index));
-		result.push(<span class="vc-tree-select__highlight">{match[0]}</span>);
-		lastIndex = match.index + match[0].length;
-	}
-	lastIndex < text.length && result.push(text.slice(lastIndex));
-	return result;
-};
 
 export const TreeSelectContent = defineComponent({
 	name: COMPONENT_NAME,
@@ -55,16 +32,17 @@ export const TreeSelectContent = defineComponent({
 			type: String,
 			default: ''
 		},
-		searchRegex: RegExp as PropType<RegExp>,
+		searchRegex: RegExp as PropType<SearchRegex>,
 		// 远程搜索时数据已由 loadData 过滤，本地仅高亮
 		remote: {
 			type: Boolean,
 			default: false
 		}
 	},
-	emits: ['change'],
-	setup(props, { emit }) {
+	emits: ['change', 'leave'],
+	setup(props, { emit, expose }) {
 		const { t } = useLocale();
+		const root = ref<HTMLElement>();
 		const treeRef = ref<any>(null);
 
 		const filterNode = (keyword: string, data: any, node: any) => {
@@ -74,7 +52,7 @@ export const TreeSelectContent = defineComponent({
 
 		const renderLabel = ({ store, row }: any) => {
 			const label = store?.getter?.label ?? row.label;
-			return <span>{renderHighlight(label, props.searchValue.trim() ? props.searchRegex : void 0)}</span>;
+			return <span>{renderHighlight(label, props.searchRegex)}</span>;
 		};
 
 		const eachNode = (fn: (node: any) => void) => {
@@ -111,10 +89,28 @@ export const TreeSelectContent = defineComponent({
 			{ flush: 'post' }
 		);
 
+		// 方向键：焦点不在树内时，↓ 把焦点交给树；已在树内时由 Tree 自身的键盘逻辑接管，
+		// 只有在第一个节点上再按 ↑ 时离开树（回到搜索输入框）
+		const isFocusInside = () => !!root.value?.contains(document.activeElement);
+		expose({
+			move(step: number) {
+				const items = getFocusableItems(root.value);
+				if (isFocusInside()) {
+					if (step > 0 || document.activeElement !== items[0]) return false;
+					emit('leave');
+				} else if (step > 0) {
+					(items.find(item => item.tabIndex === 0) || items[0])?.focus();
+				}
+			},
+			enter() {
+				if (isFocusInside()) return false;
+			}
+		});
+
 		return () => {
 			const searching = !!props.searchValue.trim();
 			return (
-				<div class="vc-tree-select__options">
+				<div ref={root} class="vc-tree-select__options" onMousedown={keepFocus}>
 					<Tree
 						ref={treeRef}
 						model-value={props.value}

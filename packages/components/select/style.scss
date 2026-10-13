@@ -1,5 +1,8 @@
 @use "./select";
-@use "./select-all";
-@use "./select-tags";
-@use "./option-group";
-@use "./option";
+@use "./select-trigger/select-trigger";
+@use "./select-trigger/select-tags";
+@use "./select-search/select-search";
+@use "./select-search/select-all";
+@use "./select-search/highlight";
+@use "./select-option/option-group";
+@use "./select-option/option";

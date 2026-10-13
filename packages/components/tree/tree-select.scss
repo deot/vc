@@ -13,90 +13,18 @@ $component-name: vc-tree-select;
 	width: 100%;
 	line-height: 1;
 
-	@include element(input) {
-		cursor: pointer;
-
-		input {
-			cursor: pointer;
-		}
-
-		.vc-input__append {
-			z-index: 0;
-		}
-
-		// 允许内容区收缩到输入框宽度以内，标签才能按宽度折叠
-		.vc-input__wrapper {
-			min-width: 0;
-		}
-
-		.vc-input__content {
-			min-width: 0;
-			overflow: hidden;
-		}
-	}
-
 	@include element(append) {
-		position: relative;
-		padding: 0 unitfix(10) 0 unitfix(2);
-		font-size: unitfix(12);
-		line-height: unitfix(28);
 		color: $color-dark-extralight;
-		text-align: center;
-		white-space: nowrap;
 	}
 
-	@include element(icon) {
-		@include when(arrow) {
-			transform: scale(0.8);
-		}
-	}
-
-	@include element(search) {
-		display: flex;
-		padding: unitfix(12) unitfix(8);
-		justify-content: space-between;
-		align-items: center;
-	}
-
-	// 选择器较宽时，搜索框不随弹层无限变宽
-	@include element(search-input) {
-		width: 100%;
-		max-width: unitfix(360);
-	}
-
-	@include element(search-results) {
-		padding: unitfix(5) 0;
-	}
-
+	// 背景只表示当前高亮（键盘聚焦 / 鼠标悬停），已勾选由复选框表示
 	@include element(options) {
 		.vc-tree-node:not([aria-disabled="true"]) {
 			&:focus > .vc-tree-node__content,
-			&.is-checked > .vc-tree-node__content,
 			> .vc-tree-node__content:hover {
 				background-color: $background-color-primary-light;
 			}
 		}
-	}
-
-	@include element(search-item) {
-		justify-content: flex-start;
-		padding: unitfix(4) unitfix(8);
-
-		.vc-tree-select__cascader-label {
-			min-width: 0;
-			flex-shrink: 1;
-		}
-	}
-
-	@include element(highlight) {
-		color: $color-primary;
-	}
-
-	@include element(empty) {
-		padding: unitfix(8) 0;
-		font-size: unitfix(12);
-		color: $color-dark-extralight;
-		text-align: center;
 	}
 
 	@include element(cascader) {
@@ -168,8 +96,7 @@ $component-name: vc-tree-select;
 		justify-content: space-between;
 		align-items: center;
 
-		&:not(.is-disabled):hover,
-		&.is-checked {
+		&:not(.is-disabled):hover {
 			background-color: $background-color-primary-light;
 		}
 
@@ -198,10 +125,5 @@ $component-name: vc-tree-select;
 
 	@include element(cascader-icon) {
 		transform: scale(0.7);
-	}
-
-	@include element(loading) {
-		padding-bottom: unitfix(8);
-		text-align: center;
 	}
 }

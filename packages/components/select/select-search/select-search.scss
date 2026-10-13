@@ -1,0 +1,22 @@
+@use '../../style/helper' as *;
+
+$component-name: vc-select-search;
+
+@include block($component-name) {
+	display: flex;
+	padding: unitfix(12) unitfix(8);
+	justify-content: space-between;
+	align-items: center;
+
+	// 没有输入框，只有默认插槽（如全选）
+	@include when(plain) {
+		padding: unitfix(6) unitfix(16) 0;
+		justify-content: flex-end;
+	}
+
+	// 选择器较宽时，搜索框不随弹层无限变宽
+	@include element(input) {
+		width: 100%;
+		max-width: unitfix(360);
+	}
+}

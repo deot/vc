@@ -1,4 +1,4 @@
-@use '../style/helper' as *;
+@use '../../style/helper' as *;
 
 $component-name: vc-select-tags;
 
@@ -35,6 +35,15 @@ $component-name: vc-select-tags;
 			flex: none;
 			margin-left: unitfix(5);
 		}
+	}
+
+	// 默认插槽（如内联的搜索输入框）：跟在 tag 之后，占满该行剩余的宽度
+	@include element(suffix) {
+		display: flex;
+		min-width: 0;
+		overflow: hidden;
+		flex: 1 1 0;
+		align-items: center;
 	}
 
 	// 测量层：不占位、不折行，按自然宽度排布

@@ -12,7 +12,8 @@ export const enUS: Language = {
 			progress: 'Step {current} of {total}'
 		},
 		Cascader: {
-			placeholder: 'Please select'
+			placeholder: 'Please select',
+			noMatch: 'No matching data'
 		},
 		ColorPicker: {
 			clearText: 'Clear',

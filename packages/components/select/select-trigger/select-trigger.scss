@@ -1,0 +1,91 @@
+@use '../../style/helper' as *;
+
+$component-name: vc-select-trigger;
+$color-dark-light: varfix(color-dark-light, select-trigger);
+
+/**
+ * 节点同时带有所属组件的类名（如 .vc-select__input / __append / __icon），供各组件设置自己的主题色与调用方覆盖
+ */
+@include block($component-name) {
+	cursor: pointer;
+
+	.vc-input__append {
+		z-index: 0;
+	}
+
+	// 允许内容区收缩到输入框宽度以内，标签才能按宽度折叠
+	.vc-input__wrapper {
+		min-width: 0;
+	}
+
+	.vc-input__content {
+		min-width: 0;
+		overflow: hidden;
+	}
+
+	// 后缀图标区；颜色由各组件按自己的主题变量设置
+	@include element(append) {
+		position: relative;
+		padding: 0 unitfix(10) 0 unitfix(2);
+		font-size: unitfix(12);
+		line-height: unitfix(32);
+		text-align: center;
+		white-space: nowrap;
+	}
+
+	@include element(icon) {
+		@include when(arrow) {
+			transform: scale(0.8);
+		}
+	}
+
+	// 清空图标：悬停时替换后缀图标
+	@include element(clear) {
+		display: none;
+		cursor: pointer;
+	}
+
+	&:hover {
+		.vc-select-trigger__clear {
+			display: inline-block;
+
+			+ .vc-select-trigger__icon {
+				display: none;
+			}
+		}
+	}
+
+	// 光标只在搜索中（内联搜索且弹层打开）显示
+	// 弹层关闭后焦点仍留在输入框（回车可再次打开、直接输入即搜索），但此时不是编辑状态，光标不闪
+	input {
+		cursor: pointer;
+		caret-color: transparent;
+	}
+
+	// 内联搜索：输入框的值是搜索词，回显文字走 placeholder
+	@include when(searchable) {
+		input {
+			cursor: text;
+		}
+
+		@include when(active) {
+			input {
+				caret-color: auto;
+			}
+		}
+	}
+
+	// 弹层未打开时，回显文字按正常文字显示
+	@include when(value) {
+		input::placeholder {
+			color: $color-dark-light;
+			opacity: 1;
+		}
+	}
+
+	// 多选时跟在标签之后的搜索输入框；与标签同高
+	@include element(search, false) {
+		min-width: 0;
+		padding: unitfix(5) unitfix(3);
+	}
+}

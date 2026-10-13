@@ -2,7 +2,7 @@
 
 import { defineComponent, computed } from 'vue';
 import { props as optionGroupProps } from './option-group-props';
-import { Customer } from '../customer';
+import { Customer } from '../../customer';
 
 const COMPONENT_NAME = 'vc-select-option-group';
 

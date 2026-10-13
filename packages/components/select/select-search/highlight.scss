@@ -1,0 +1,8 @@
+@use '../../style/helper' as *;
+
+$component-name: vc-select-highlight;
+$color-primary: varfix(color-primary, select-highlight);
+
+@include block($component-name) {
+	color: $color-primary;
+}

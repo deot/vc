@@ -52,7 +52,7 @@ const options = [
 
 悬停 `+N...` 时弹出被折叠的标签列表，可在列表中移除（禁用时只读）；悬停被截断的标签时显示完整内容。
 
-开启 `searchable` 后，按选项文字进行不区分大小写的匹配；空格或逗号分隔的关键词按“或”匹配。输入非空关键词时，可全选或取消选择当前匹配且未禁用的选项，其他已选项保留。全选逐项触发值更新事件。
+开启 `searchable` 后，按选项文字进行不区分大小写的匹配，命中的部分高亮；空格分隔的关键词需同时命中，英文逗号分隔的各组任一命中即可（如 `a b,c`：同时含 a 和 b，或含 c）。输入非空关键词时，可全选或取消选择当前匹配且未禁用的选项，其他已选项保留。全选逐项触发值更新事件。
 
 :::playground
 <!--
@@ -92,6 +92,61 @@ const options = [
 <style scoped>
 .select-demo { width: min(100%, 360px); }
 .select-demo p { margin: 12px 0 0; overflow-wrap: anywhere; }
+</style>
+```
+:::
+
+### 搜索方式与键盘
+
+`searchable` 有两种方式：
+
+- `searchable`（或 `searchable="inline"`）：点击后直接在输入框里输入。单选时已选文字以占位文字的形式保留，输入后显示搜索词；多选时输入框跟在标签之后，下拉打开期间为它留出位置，放不下的标签折叠进 `+N...`，输入为空时按 Backspace 移除最后一个已选值。
+- `searchable="popover"`：输入框保持只读，搜索栏显示在下拉顶部，打开后自动聚焦。触发器较窄、不希望输入框占用标签位置时使用。
+
+两种方式下，关闭下拉都会清空搜索词；下拉关闭但输入框聚焦时，直接输入也会打开下拉。
+
+| 按键 | 行为 |
+| --- | --- |
+| Enter | 下拉关闭且输入框聚焦时打开；打开时选中高亮项，多选为切换选中且不关闭 |
+| ↑ / ↓ | 在可选的选项间移动高亮，跳过禁用和被过滤的选项，首尾循环 |
+| Esc | 关闭下拉，焦点留在输入框 |
+| Tab | 关闭下拉并移到下一个可聚焦元素 |
+| Backspace | 多选内联搜索且输入为空时，移除最后一个已选值 |
+
+打开时默认高亮已选项（没有则为第一项），搜索词变化后高亮第一个匹配项；鼠标移入与键盘共用同一个高亮。背景色只表示当前高亮，已选项用主色文字和勾表示。
+
+:::playground
+<!--
+<config lang="json5">
+{ previewInset: 20 }
+</config>
+-->
+```vue
+<template>
+	<div class="select-demo">
+		<Select v-model="inlineValue" :data="options" searchable clearable placeholder="点击后直接输入" />
+		<Select v-model="popoverValues" :data="options" :max="99" searchable="popover" clearable search-placeholder="在下拉里搜索" />
+		<p>inline：{{ inlineValue || '未选择' }}；popover：{{ popoverValues.join('、') || '无' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Select } from '@deot/vc';
+
+const inlineValue = ref('option-b');
+const popoverValues = ref(['option-a']);
+const options = [
+	{ value: 'option-a', label: '选项 A' },
+	{ value: 'option-b', label: '选项 B' },
+	{ value: 'option-c', label: '选项 C', disabled: true },
+	{ value: 'option-d', label: '条目 D' }
+];
+</script>
+
+<style scoped>
+.select-demo { display: grid; gap: 12px; width: min(100%, 360px); }
+.select-demo p { margin: 0; overflow-wrap: anywhere; }
 </style>
 ```
 :::
@@ -185,7 +240,7 @@ const groups = [
 
 ### 远程搜索
 
-`loadData(query, instance)` 必须返回 Promise，搜索输入经过 250ms 防抖后调用。调用方更新 `data`；Promise 的返回值不会自动成为选项。加载期间显示 Spin，本地文字过滤仍然生效，需要跳过本地过滤的结果可设置 `filterable: false`。
+`loadData(query, instance)` 必须返回 Promise，搜索输入经过 250ms 防抖后调用；未开启 `searchable` 时不会调用。调用方更新 `data`；Promise 的返回值不会自动成为选项。加载期间输入框后缀显示加载图标，本地文字过滤仍然生效，需要跳过本地过滤的结果可设置 `filterable: false`。打开下拉时，如果还没有数据，或当前数据是按某个关键词加载的，会立即以空关键词调用一次，用于加载默认数据；关闭下拉时只重置搜索词，不调用它。搜索结果里没有已选项时，输入框与标签沿用上次查到的文字。
 
 下面用本地延迟模拟请求，不依赖在线接口。
 
@@ -235,7 +290,7 @@ const loadOptions = async (query) => {
 
 ## 主题与局部覆盖
 
-全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-select-option-<参数>`、`--vc-select-all-<参数>`、`--vc-select-<参数>`、`--vc-select-option-group-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-select-option-<参数>`、`--vc-select-all-<参数>`、`--vc-select-<参数>`、`--vc-select-option-group-<参数>`、`--vc-select-trigger-<参数>`、`--vc-select-highlight-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
 
 `portal: true` 时，选项变量需设置在浮层祖先（例如 body）或通过 `portalClass` 为浮层配置，触发器上的局部变量不会自动传入浮层。
 
@@ -243,13 +298,14 @@ const loadOptions = async (query) => {
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
+| color-dark-light | 内联搜索时，下拉未打开状态下的已选文字（select-trigger） | 亮色：`#080F20`；暗色：`#E8E8E8` |
 | color-dark-lighter | 前置内容及选项文字（select / select-option） | 亮色：`#515151`；暗色：`#D9D9D9` |
 | color-dark-extralight | 附加图标、分组标题及禁用选项（select / select-option-group / select-option） | 亮色：`#909399`；暗色：`#B9B9B9` |
-| color-primary | 选中选项及全选文字（select-all / select-option） | `#456CF6` |
+| color-primary | 选中选项、全选文字及搜索命中的文字（select-option / select-all / select-highlight） | `#456CF6` |
 | color-primary-light | 已全选状态文字（select-all） | `#4A96FF` |
 | background-color | 禁用输入区背景（select） | 亮色：`#F5F6FA`；暗色：`#252B3A` |
 | background-color-lightest | 输入区背景（select） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
-| background-color-primary-light | 选项悬停及单选、多选的选中背景（select-option） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
+| background-color-primary-light | 选项高亮背景（键盘或鼠标所在的一项，select-option） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
 
 ### 局部
 
@@ -268,10 +324,10 @@ const loadOptions = async (query) => {
 | maxTagLines | 多选标签最多占用的行数，按可用宽度自适应折叠；`0` 表示不限行 | `number` | `>= 0` | `1` |
 | disabled | 禁用选择器 | `boolean` | - | `false` |
 | clearable | 悬停时显示清空按钮 | `boolean` | - | `false` |
-| searchable | 显示搜索框 | `boolean` | - | `false` |
-| searchPlaceholder | 搜索框占位文字 | `string` | - | `''` |
+| searchable | 开启搜索：`true` / `'inline'` 在输入框内直接输入，`'popover'` 在下拉顶部显示搜索栏 | `boolean \| 'inline' \| 'popover'` | - | `false` |
+| searchPlaceholder | 搜索时的占位文字：内联搜索为下拉打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
 | placeholder | 输入框占位文字，通过 attribute 传入；支持空字符串覆盖 | `string` | - | 当前语言的“请选择” |
-| loadData | 搜索回调，须返回 Promise，由调用方更新 data | `(query: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
+| loadData | 搜索回调，须返回 Promise，由调用方更新 data；调用时机见[远程搜索](#远程搜索) | `(query: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | label | 输入框前置文字；prepend 插槽优先。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | extra | 单选 label 为空或无法匹配时显示的文字 | `string` | - | `''` |
 | separator | 字符串模型拆分和多选连接的分隔符 | `string` | - | `','` |
@@ -296,7 +352,7 @@ const loadOptions = async (query) => {
 | update:modelValue | 用户选择、移除、清空或调用 add/remove 时更新模型 | `(value, labels)` | value 遵循模型类型；labels 始终为选中文字数组 |
 | change | 与模型更新同时触发；外部修改 modelValue 不触发 | `(value, labels)` | 同上；单选 labels 也是数组 |
 | clear | 点击可见的清空按钮时触发，先于模型更新 | - | - |
-| visible-change | 弹层可见状态变化 | `(visible: boolean)` | 当前可见状态 |
+| visible-change | 点击触发器、点击外部、输入或按 Enter 改变弹层可见状态时触发；选中、清空、Esc、Tab 或调用方法引起的关闭不触发 | `(visible: boolean)` | 当前可见状态 |
 | ready | 弹层创建完成 | - | - |
 | close | 弹层关闭回调 | - | - |
 
@@ -335,4 +391,8 @@ const loadOptions = async (query) => {
 - 清空数组模型返回 `[]`；普通单选返回 `undefined`；字符串多选返回 `''`。`numerable` 配合字符串模型时，当前输出通过数组转字符串，因此清空返回 `''`，多值输出固定使用逗号。
 - `nullValue` 当前未用于清空结果，为当前实现限制。
 - 当前不提供 `size`、`not-found`、`element-id` 属性；无匹配选项时列表为空。
+- 内联搜索时输入框的值是搜索词，已选文字以占位文字的形式显示，不能被选中复制；需要可复制时使用 `searchable="popover"`。下拉关闭后焦点仍在输入框，但不显示光标。
+- 内联搜索且下拉打开时，点击输入区不会关闭下拉，这次点击也不再冒泡到祖先节点；点击后缀图标、点击外部、按 Esc 或选中（单选）关闭。
+- 输入框聚焦时按 Enter 会打开下拉并阻止默认行为，放在原生 `<form>` 里不会触发隐式提交。
+- 方向键高亮只作用于默认渲染的选项；用 `option` 插槽或 `renderOption` 自定义整个选项时不参与。
 - 默认占位符和全选按钮跟随 locale；searchPlaceholder、label、extra 和 data 文案由调用方提供。

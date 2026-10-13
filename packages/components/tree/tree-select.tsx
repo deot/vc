@@ -1,17 +1,13 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, getCurrentInstance, inject, ref, computed, watch, Fragment } from 'vue';
-import { debounce, isEqualWith } from 'lodash-es';
-import { useAttrs } from '@deot/vc-hooks';
+import { defineComponent, ref, computed } from 'vue';
 import { getUid } from '@deot/helper-utils';
-import { createSearchRegex, flattenData, toCurrentValue, toModelValue } from '../select/utils';
+import { walkTree } from '../select/utils';
 import type { TreeData } from '../select/utils';
-import { VcError } from '../vc/index';
-import { Input, InputSearch } from '../input/index';
 import { Popover } from '../popover/index';
-import { Spin } from '../spin/index';
-import { Icon } from '../icon/index';
-import { SelectTags } from '../select/select-tags';
+import { SelectTrigger } from '../select/select-trigger';
+import { SelectSearch } from '../select/select-search';
+import { useSelect, useSelectValue, useSelectedCache } from '../select/hooks/use-select';
 import { useLocale } from '../locale';
 import { TreeSelectContent } from './tree-select-content';
 import { TreeSelectContentCascader } from './tree-select-content-cascader';
@@ -19,42 +15,73 @@ import { props as treeSelectProps } from './tree-select-props';
 
 const COMPONENT_NAME = 'vc-tree-select';
 
+// 树：由 Popover 内置的 Scroller 限高滚动
+const scrollerOptions = { maxHeight: 200 };
+
+interface TreeNode {
+	item: TreeData;
+	parent?: TreeNode;
+}
+
+interface SelectedNode {
+	path: (string | number)[];
+	// 路径上各级的文字
+	labels: string[];
+}
+
+interface DisplayTag {
+	value: string | number;
+	label: string;
+	path?: (string | number)[];
+}
+
 export const TreeSelect = defineComponent({
 	name: COMPONENT_NAME,
 	props: treeSelectProps,
 	emits: ['ready', 'close', 'visible-change', 'clear', 'change', 'update:modelValue'],
-	setup(props, { attrs, emit, expose }) {
+	setup(props, { expose }) {
 		const { t } = useLocale();
-		const instance = getCurrentInstance();
-		const its = useAttrs({ merge: false });
-		const formItem = inject<any>('vc-form-item', {});
 		const treeSelectId = ref(getUid('tree-select'));
 
-		const isHover = ref(false);
-		const isActive = ref(false);
-		const isLoading = ref(false);
-		const searchValue = ref('');
-		const searchRegex = computed(() => createSearchRegex(searchValue.value));
-		const currentValue = ref<Array<string | number>>([]);
+		// 弹层内容（树 / 级联列），方向键与回车交给它处理
+		const content = ref<any>();
+		const select = useSelect('tree-select', { navigator: () => content.value });
+		const { its, isActive, searchValue, searchRegex, searchMode, isRemote, close, toggle, focus } = select;
+		const { currentValue, multiple, sync: syncValue, handleClear } = useSelectValue(select);
+
+		// 当前数据中每个值对应的节点；只记父级，路径在用到时（已选值）再沿父级取
+		const nodes = computed(() => {
+			const map = new Map<string | number, TreeNode>();
+			walkTree(props.data as TreeData[], (item, ancestors) => {
+				if (item.value == null) return false;
+				map.set(item.value, { item, parent: map.get(ancestors[ancestors.length - 2]?.value) });
+			});
+			return map;
+		});
+
+		const getSelectedNode = (v: string | number) => {
+			let node = nodes.value.get(v);
+			if (!node) return;
+			const result: SelectedNode = { path: [], labels: [] };
+			for (; node; node = node.parent) {
+				result.path.unshift(node.item.value);
+				result.labels.unshift(node.item.label || '');
+			}
+			return result;
+		};
+
+		// 已选值的路径与文字；远程搜索时，不在当前结果里的沿用上次查到的
+		const getSelected = useSelectedCache<SelectedNode>(isRemote);
+		const selected = computed(() => {
+			return getSelected(currentValue.value, getSelectedNode);
+		});
 
 		const currentValueGroups = computed(() => {
 			if (props.checkStrictly) return;
-			if (!props.data?.length || !Array.isArray(currentValue.value) || !currentValue.value.length) {
-				return [];
-			}
-			const pathMap = new Map<string | number, (string | number)[]>();
-			const traverse = (data: TreeData[], path: (string | number)[] = []) => {
-				data.forEach((item) => {
-					const v = item.value;
-					if (v == null) return;
-					const fullPath = [...path, v];
-					pathMap.set(v, fullPath);
-					if (item.children?.length) traverse(item.children, fullPath);
-				});
-			};
-			traverse(props.data as TreeData[]);
 
-			const allPaths = currentValue.value.map(v => pathMap.get(v)).filter(Boolean) as (string | number)[][];
+			const allPaths = currentValue.value
+				.map(v => selected.value.get(v)?.path)
+				.filter(Boolean) as (string | number)[][];
 
 			return allPaths.filter(path =>
 				!allPaths.some(other =>
@@ -65,51 +92,23 @@ export const TreeSelect = defineComponent({
 			);
 		});
 
-		const source = computed(() => {
-			return flattenData(props.data, { parent: true, cascader: true });
-		});
-
-		const labelMap = computed(() => {
-			return source.value.reduce((pre, cur) => {
-				pre[cur.value] = cur.label || '';
-				return pre;
-			}, {});
-		});
-
-		const icon = computed(() => {
-			return isActive.value ? 'up' : 'down';
-		});
-
-		const multiple = computed(() => {
-			return props.max > 1;
-		});
-
-		const showClear = computed(() => {
-			const value = currentValue.value.length > 0;
-			const basic = props.clearable && !props.disabled && isHover.value;
-			return (typeof value === 'number' || value) && basic;
-		});
-
-		const classes = computed(() => {
-			return {
-				'is-disabled': props.disabled
-			};
-		});
-
-		const displayTags = computed(() => {
-			if (!props.data.length) {
+		const displayTags = computed<DisplayTag[]>(() => {
+			if (!props.data.length && !isRemote()) {
 				return [];
 			}
 			if (props.checkStrictly) {
-				return currentValue.value.map((v: any) => ({
-					value: v,
-					label: labelMap.value[v] || ''
-				}));
+				return currentValue.value.map((v: any) => {
+					const labels = selected.value.get(v)?.labels;
+					return {
+						value: v,
+						label: labels?.[labels.length - 1] || ''
+					};
+				});
 			}
 
 			return (currentValueGroups.value || []).map((path) => {
 				const value = path[path.length - 1];
-				const label = path.map(v => labelMap.value[v] || '').filter(Boolean).join(' / ');
+				const label = (selected.value.get(value)?.labels || []).filter(Boolean).join(' / ');
 				return {
 					path,
 					value,
@@ -119,7 +118,7 @@ export const TreeSelect = defineComponent({
 		});
 
 		const tags = computed(() => {
-			return displayTags.value.map((item: any) => ({
+			return displayTags.value.map(item => ({
 				...item,
 				// 值本身可能含分隔符，用 JSON 避免不同路径拼出相同的 key
 				key: item.path ? JSON.stringify(item.path) : item.value
@@ -130,48 +129,11 @@ export const TreeSelect = defineComponent({
 			return typeof props.autoWidth === 'boolean' ? props.autoWidth : !!props.cascader;
 		});
 
-		/**
-		 * v-model 同步, 外部的数据改变时不会触发
-		 */
 		const sync = () => {
-			const v = toModelValue(currentValue.value, {
-				modelValue: props.modelValue,
-				max: props.max,
-				numerable: props.numerable,
-				separator: props.separator,
-				nullValue: props.nullValue
-			});
-
-			const labels = displayTags.value.map(item => item.label);
-
-			emit('update:modelValue', v, labels);
-			emit('change', v, labels);
-
-			// form表单
-			formItem?.change?.(currentValue.value);
+			syncValue(displayTags.value.map(item => item.label));
 		};
 
-		/**
-		 * 默认防抖
-		 */
-		const _loadData = debounce(function () {
-			const remote = props.loadData?.(searchValue.value, instance);
-
-			if (remote && remote.then) {
-				isLoading.value = true;
-				remote.finally(() => {
-					isLoading.value = false;
-				});
-			} else {
-				throw new VcError('tree-select', 'loadData 返回值需要Promise');
-			}
-		}, 250, { leading: false });
-
-		const close = () => {
-			isActive.value = false;
-		};
-
-		const handleClose = (item: { value: string | number; path?: (string | number)[] }) => {
+		const handleRemove = (item: DisplayTag) => {
 			if (props.checkStrictly) {
 				const index = currentValue.value.findIndex(v => v === item.value);
 				if (index === -1) return;
@@ -185,47 +147,14 @@ export const TreeSelect = defineComponent({
 			sync();
 		};
 
-		const handleClear = (e) => {
-			if (!showClear.value) return;
-			e.stopPropagation();
-
-			emit('clear');
-
-			currentValue.value = [];
-			isActive.value = false;
-
-			sync();
-		};
-
-		const handleSearch = (v) => {
-			searchValue.value = v;
-			props.loadData && _loadData();
-		};
-
 		const handleChange = (_: any, data: any) => {
-			currentValue.value = data.checkedValues;
+			// 远程搜索时 data 只是当前关键词的结果：不在其中的已选值不受这次勾选影响
+			currentValue.value = isRemote()
+				? [...currentValue.value.filter(v => !nodes.value.has(v)), ...data.checkedValues]
+				: data.checkedValues;
 
 			sync();
 		};
-
-		// 关闭时（点击外部 / 清空 / close / toggle）重置搜索，下次打开恢复完整视图
-		watch(isActive, (v) => {
-			!v && searchValue.value && handleSearch('');
-		});
-
-		watch(
-			() => props.modelValue,
-			(v) => {
-				v = toCurrentValue(v, {
-					numerable: props.numerable,
-					separator: props.separator
-				});
-				if (isEqualWith(v, currentValue.value)) return;
-
-				currentValue.value = v;
-			},
-			{ immediate: true }
-		);
 
 		expose({
 			treeSelectId,
@@ -236,145 +165,74 @@ export const TreeSelect = defineComponent({
 			current: currentValue,
 			currentValueGroups,
 			// for portal
-			toggle(v?: boolean) {
-				v = typeof v === 'boolean' ? v : !isActive.value;
-				isActive.value = v;
-			}
+			toggle
 		});
+
+		const renderTrigger = () => {
+			return (
+				<SelectTrigger
+					{...select.trigger.value}
+					placeholder={its.value.attrs?.placeholder ?? t('vc.TreeSelect.placeholder')}
+					text={displayTags.value[0]?.label || props.extra}
+					tags={multiple.value ? tags.value : void 0}
+					clearable={props.clearable && currentValue.value.length > 0}
+					onClear={handleClear}
+					onRemove={handleRemove}
+				/>
+			);
+		};
+
+		const renderHeader = () => {
+			return (<SelectSearch {...select.search.value} />);
+		};
+
+		const renderContent = () => {
+			return props.cascader
+				? (
+						<TreeSelectContentCascader
+							ref={content}
+							value={currentValue.value}
+							data={props.data as TreeData[]}
+							checkStrictly={props.checkStrictly}
+							renderNodeLabel={props.renderNodeLabel}
+							numerable={props.numerable}
+							separator={props.separator}
+							max={props.max}
+							nullValue={props.nullValue as never}
+							searchRegex={searchRegex.value}
+							remote={isRemote()}
+							onChange={handleChange}
+						/>
+					)
+				: (
+						<TreeSelectContent
+							ref={content}
+							value={currentValue.value}
+							data={props.data}
+							checkStrictly={props.checkStrictly}
+							renderNodeLabel={props.renderNodeLabel}
+							searchValue={searchValue.value}
+							searchRegex={searchRegex.value}
+							remote={isRemote()}
+							onChange={handleChange}
+							onLeave={focus}
+						/>
+					);
+		};
+
 		return () => {
 			return (
 				<Popover
-					modelValue={isActive.value}
-					{
-						...its.value.attrs
-					}
-					arrow={props.arrow}
-					trigger={props.trigger}
-					tag={props.tag}
-					placement={props.placement}
+					{...select.popover.value}
 					autoWidth={autoWidth.value}
-					disabled={props.disabled}
-					portal={props.portal}
-					portalClass={[['is-padding-none', props.portalClass]]}
 					// 树：由内置的 Scroller 限高滚动；级联：各列在高度上限内收缩并自行滚动
 					scrollable={!props.cascader}
-					scrollerOptions={{ maxHeight: 200 }}
-					class={[classes.value, its.value.class, 'vc-tree-select']}
-					style={its.value.style}
-					animation="y"
-					// @ts-ignore
-					onMouseenter={() => (isHover.value = true)}
-					onMouseleave={() => (isHover.value = false)}
-					onReady={() => emit('ready')}
-					onClose={() => emit('close')}
-					onVisibleChange={() => emit('visible-change', isActive.value)}
-					onUpdate:modelValue={(v: boolean) => (isActive.value = v)}
+					scrollerOptions={scrollerOptions}
 				>
 					{{
-						default: () => {
-							return (
-								<Input
-									id={props.id}
-									disabled={props.disabled}
-									modelValue={displayTags.value[0]?.label || props.extra}
-									allow-dispatch={false}
-									class="vc-tree-select__input"
-									// @ts-ignore
-									readonly={true}
-									placeholder={attrs.placeholder ?? t('vc.TreeSelect.placeholder')}
-								>
-									{{
-										content: multiple.value && displayTags.value.length > 0
-											? () => {
-													return (
-														<SelectTags
-															class={[classes.value, 'vc-tree-select__tags']}
-															data={tags.value}
-															maxTags={props.maxTags}
-															maxTagLines={props.maxTagLines}
-															closable={!props.disabled}
-															onClose={(item: any) => handleClose(item)}
-														/>
-													);
-												}
-											: null,
-										append: () => {
-											return (
-												<div class="vc-tree-select__append">
-													<Icon
-														type={showClear.value ? 'clear' : icon.value}
-														class={[{ 'is-arrow': !showClear.value }, 'vc-tree-select__icon']}
-														// @ts-ignore
-														onClick={handleClear}
-													/>
-												</div>
-											);
-										}
-									}}
-								</Input>
-							);
-						},
-						header: (props.searchable || isLoading.value)
-							? () => {
-									return (
-										<Fragment>
-											{
-												props.searchable && (
-													<div class="vc-tree-select__search">
-														<InputSearch
-															class="vc-tree-select__search-input"
-															modelValue={searchValue.value}
-															// @ts-ignore
-															placeholder={props.searchPlaceholder}
-															onInput={handleSearch}
-														/>
-													</div>
-												)
-											}
-											{
-												isLoading.value && (
-													<div class="vc-tree-select__loading">
-														<Spin size={16} />
-													</div>
-												)
-											}
-										</Fragment>
-									);
-								}
-							: undefined,
-						content: () => {
-							return (
-								props.cascader
-									? (
-											<TreeSelectContentCascader
-												value={currentValue.value}
-												data={props.data as TreeData[]}
-												checkStrictly={props.checkStrictly}
-												renderNodeLabel={props.renderNodeLabel}
-												numerable={props.numerable}
-												separator={props.separator}
-												max={props.max}
-												nullValue={props.nullValue as never}
-												searchValue={searchValue.value}
-												searchRegex={searchRegex.value}
-												remote={!!props.loadData}
-												onChange={handleChange}
-											/>
-										)
-									: (
-											<TreeSelectContent
-												value={currentValue.value}
-												data={props.data}
-												checkStrictly={props.checkStrictly}
-												renderNodeLabel={props.renderNodeLabel}
-												searchValue={searchValue.value}
-												searchRegex={searchRegex.value}
-												remote={!!props.loadData}
-												onChange={handleChange}
-											/>
-										)
-							);
-						}
+						default: renderTrigger,
+						header: searchMode.value === 'popover' ? renderHeader : void 0,
+						content: renderContent
 					}}
 				</Popover>
 			);

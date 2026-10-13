@@ -1,71 +1,55 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, getCurrentInstance, inject, ref, computed, watch, Fragment } from 'vue';
-import { debounce, isEqualWith } from 'lodash-es';
-import { useAttrs } from '@deot/vc-hooks';
+import { defineComponent, ref, computed } from 'vue';
 import { getUid } from '@deot/helper-utils';
-import { getLabel, createSearchRegex, flattenData, toCurrentValue, toModelValue } from './utils';
-import { VcError } from '../vc/index';
-import { Input, InputSearch } from '../input/index';
+import { getLabel, flattenData } from './utils';
 import { Popover } from '../popover/index';
-import { Spin } from '../spin/index';
-import { Icon } from '../icon/index';
-import { Customer } from '../customer/index';
-import { Option } from './option.tsx';
-import { OptionGroup } from './option-group.tsx';
+import { Option, OptionGroup } from './select-option';
 import { props as selectProps } from './select-props';
-import { SelectAll } from './select-all.tsx';
-import { SelectTags } from './select-tags.tsx';
+import { SelectAll, SelectSearch } from './select-search';
+import { SelectTrigger, keepFocus } from './select-trigger';
+import type { SelectTag } from './select-trigger';
+import { useSelect, useSelectValue, useSelectedCache } from './hooks/use-select';
+import { useNavigate } from './hooks/use-navigate';
 import { useLocale } from '../locale';
 
 const COMPONENT_NAME = 'vc-select';
+
+// 选项由 Popover 内置的 Scroller 滚动
+const scrollerOptions = { maxHeight: 200, wrapperClass: 'vc-select__options' };
 
 export const Select = defineComponent({
 	name: COMPONENT_NAME,
 	props: selectProps,
 	emits: ['ready', 'close', 'visible-change', 'clear', 'change', 'update:modelValue'],
-	setup(props, { emit, slots, expose }) {
+	setup(props, { slots, expose }) {
 		const { t } = useLocale();
-		const instance = getCurrentInstance();
-		const its = useAttrs({ merge: false });
-		const formItem = inject<any>('vc-form-item', {});
 		const selectId = ref(getUid('select'));
 
-		const isHover = ref(false);
-		const isActive = ref(false);
-		const isLoading = ref(false);
-		const searchValue = ref('');
-		const currentValue = ref<Array<string | number>>([]);
+		const select = useSelect('select', { navigator: () => navigate });
+		const { its, isActive, searchValue, searchRegex, searchMode, isSearching, isRemote, close, toggle } = select;
+		const { currentValue, multiple, sync: syncValue, handleClear } = useSelectValue(select);
+
+		// 选项的键盘高亮：打开时为已选中的一项；搜索词、数据变化后选项增减，为第一项
+		const navigate = useNavigate({
+			selector: '.vc-select-option:not([disabled])',
+			prefer: '.is-select',
+			source: () => [searchValue.value, props.data]
+		});
 
 		const source = computed(() => {
 			return flattenData(props.data, { parent: true, cascader: true });
 		});
-		const icon = computed(() => {
-			return isActive.value ? 'up' : 'down';
-		});
 
-		const multiple = computed(() => {
-			return props.max > 1;
-		});
-
-		const showClear = computed(() => {
-			const value = currentValue.value.length > 0;
-			const basic = props.clearable && !props.disabled && isHover.value;
-			return (typeof value === 'number' || value) && basic;
-		});
-
-		const classes = computed(() => {
-			return {
-				'is-disabled': props.disabled
-			};
-		});
-
+		// 已选值的文字；远程搜索时，不在当前结果里的沿用上次查到的
+		const getSelected = useSelectedCache<string>(isRemote);
 		const currentLabel = computed(() => {
-			if (!props.data.length) {
+			if (!props.data.length && !isRemote()) {
 				return [];
 			}
 
-			return currentValue.value.map(getLabel.bind(null, source.value));
+			const labels = getSelected(currentValue.value, v => getLabel(source.value, v));
+			return currentValue.value.map(v => labels.get(v) || '');
 		});
 
 		const tags = computed(() => {
@@ -76,14 +60,16 @@ export const Select = defineComponent({
 			}));
 		});
 
-		const searchRegex = computed(() => createSearchRegex(searchValue.value));
-
 		const optionMap = ref<any>({});
 		const options = computed(() => {
 			return Object.values(optionMap.value);
 		});
 		const showSelectAll = computed(() => {
-			return props.searchable && multiple.value && searchValue.value.trim().length > 0 && options.value.length > 0;
+			return multiple.value && isSearching.value && options.value.length > 0;
+		});
+		// 弹层顶部：搜索栏；内联搜索时只在出现全选时显示
+		const showHeader = computed(() => {
+			return searchMode.value === 'popover' || showSelectAll.value;
 		});
 		const setOption = (item: any, el: any) => {
 			if (el) {
@@ -93,40 +79,9 @@ export const Select = defineComponent({
 			}
 		};
 
-		/**
-		 * v-model 同步, 外部的数据改变时不会触发
-		 */
 		const sync = () => {
-			const v = toModelValue(currentValue.value, {
-				modelValue: props.modelValue,
-				max: props.max,
-				numerable: props.numerable,
-				separator: props.separator,
-				nullValue: props.nullValue
-			});
-
-			emit('update:modelValue', v, currentLabel.value);
-			emit('change', v, currentLabel.value);
-
-			// form表单
-			formItem?.change?.(currentValue.value);
+			syncValue(currentLabel.value);
 		};
-
-		/**
-		 * 默认防抖
-		 */
-		const _loadData = debounce(function () {
-			const remote = props.loadData?.(searchValue.value, instance);
-
-			if (remote && remote.then) {
-				isLoading.value = true;
-				remote.finally(() => {
-					isLoading.value = false;
-				});
-			} else {
-				throw new VcError('select', 'loadData 返回值需要Promise');
-			}
-		}, 250, { leading: false });
 
 		const add = (v: any) => {
 			if (!multiple.value) {
@@ -147,44 +102,9 @@ export const Select = defineComponent({
 			sync();
 		};
 
-		const close = () => {
-			isActive.value = false;
+		const handleRemove = (item: SelectTag) => {
+			remove(item.value);
 		};
-
-		const handleClear = (e: any) => {
-			if (!showClear.value) return;
-			e.stopPropagation();
-
-			emit('clear');
-
-			currentValue.value = [];
-			isActive.value = false;
-
-			sync();
-		};
-
-		const handleClose = (v: any) => {
-			remove(v);
-		};
-
-		const handleSearch = (v: string) => {
-			searchValue.value = v;
-			props.loadData && _loadData();
-		};
-
-		watch(
-			() => props.modelValue,
-			(v) => {
-				v = toCurrentValue(v, {
-					numerable: props.numerable,
-					separator: props.separator
-				});
-				if (isEqualWith(v, currentValue.value)) return;
-
-				currentValue.value = v;
-			},
-			{ immediate: true }
-		);
 
 		expose({
 			selectId,
@@ -196,193 +116,95 @@ export const Select = defineComponent({
 			isActive,
 			current: currentValue,
 			// for portal
-			toggle(v?: boolean) {
-				v = typeof v === 'boolean' ? v : !isActive.value;
-				isActive.value = v;
-			}
+			toggle
 		});
+
+		const renderTrigger = () => {
+			return (
+				<SelectTrigger
+					{...select.trigger.value}
+					placeholder={its.value.attrs?.placeholder ?? t('vc.Select.placeholder')}
+					label={props.label}
+					text={currentLabel.value[0] || props.extra}
+					tags={multiple.value ? tags.value : void 0}
+					clearable={props.clearable && currentValue.value.length > 0}
+					onClear={handleClear}
+					onRemove={handleRemove}
+				>
+					{{ prepend: slots.prepend }}
+				</SelectTrigger>
+			);
+		};
+
+		// Popover 的插槽在浮层打开时取定：始终提供 header，不需要时不渲染内容
+		const renderHeader = () => {
+			return showHeader.value && (
+				<SelectSearch {...select.search.value} input={searchMode.value === 'popover'}>
+					{ showSelectAll.value && (<SelectAll data={options.value} />) }
+				</SelectSearch>
+			);
+		};
+
+		const renderOption = (item: any) => {
+			return (
+				<Option
+					ref={el => setOption(item, el)}
+					key={item.value}
+					row={item}
+					value={item.value}
+					label={item.label}
+					disabled={item.disabled}
+					filterable={item.filterable}
+					render={props.renderOption}
+					renderLabel={props.renderLabel}
+				>
+					{{ default: slots?.option, label: slots?.label }}
+				</Option>
+			);
+		};
+
+		const renderItem = (item: any) => {
+			if (!Array.isArray(item.children) || !item.children.length) return renderOption(item);
+			return (
+				<OptionGroup
+					row={item}
+					value={item.value}
+					label={item.label}
+					key={item.value}
+					render={props.renderOptionGroup}
+				>
+					{{
+						optionGroup: slots?.optionGroup,
+						label: slots?.label,
+						default: () => item.children.map(renderOption)
+					}}
+				</OptionGroup>
+			);
+		};
+
+		// 点击选项时焦点留在搜索输入框
+		const renderContent = () => {
+			return (
+				<div
+					ref={navigate.setRoot}
+					onMousedown={keepFocus}
+					onMouseover={navigate.handleMouseover}
+				>
+					{ props.data ? props.data.map(renderItem) : slots?.default?.() }
+				</div>
+			);
+		};
+
 		return () => {
 			return (
 				<Popover
-					modelValue={isActive.value}
-					{
-						...its.value.attrs
-					}
-					arrow={props.arrow}
-					trigger={props.trigger}
-					tag={props.tag}
-					placement={props.placement}
-					auto-width={props.autoWidth}
-					disabled={props.disabled}
-					portal={props.portal}
-					portalClass={[['is-padding-none', props.portalClass]]}
-					scrollerOptions={{ maxHeight: 200, wrapperClass: 'vc-select__options' }}
-					class={[classes.value, its.value.class, 'vc-select']}
-					style={its.value.style}
-					animation="y"
-					// @ts-ignore
-					onMouseenter={() => (isHover.value = true)}
-					onMouseleave={() => (isHover.value = false)}
-					onReady={() => emit('ready')}
-					onClose={() => emit('close')}
-					onVisibleChange={() => emit('visible-change', isActive.value)}
-					onUpdate:modelValue={(v: boolean) => (isActive.value = v)}
+					{...select.popover.value}
+					scrollerOptions={scrollerOptions}
 				>
 					{{
-						default: () => {
-							return (
-								<Input
-									id={props.id}
-									disabled={props.disabled}
-									modelValue={currentLabel.value[0] || props.extra}
-									allow-dispatch={false}
-									class="vc-select__input"
-									// @ts-ignore
-									readonly={true}
-									placeholder={its.value.attrs?.placeholder ?? t('vc.Select.placeholder')}
-								>
-									{{
-										prepend: slots.prepend || props.label
-											? () => (
-													slots.prepend
-														? slots.prepend()
-														: (
-																<div class="vc-select__prepend">
-																	<Customer wrap tag="span" class="vc-select__label" render={props.label} />
-																</div>
-															)
-												)
-											: null,
-										content: multiple.value && (currentValue.value && currentValue.value.length > 0)
-											? () => {
-													return (
-														<SelectTags
-															class={[classes.value, 'vc-select__tags']}
-															data={tags.value}
-															maxTags={props.maxTags}
-															maxTagLines={props.maxTagLines}
-															closable={!props.disabled}
-															onClose={(item: any) => handleClose(item.value)}
-														/>
-													);
-												}
-											: null,
-										append: () => {
-											return (
-												<div class="vc-select__append">
-													<Icon
-														type={showClear.value ? 'clear' : icon.value}
-														class={[{ 'is-arrow': !showClear.value }, 'vc-select__icon']}
-														// @ts-ignore
-														onClick={handleClear}
-													/>
-												</div>
-											);
-										}
-									}}
-								</Input>
-							);
-						},
-						// 搜索、加载在固定区；选项由 Popover 内置的 Scroller 滚动（高度上限见 scrollerOptions）
-						header: (props.searchable || isLoading.value)
-							? () => {
-									return (
-										<Fragment>
-											{
-												props.searchable && (
-													<div class="vc-select__search">
-														<InputSearch
-															modelValue={searchValue.value}
-															// @ts-ignore
-															placeholder={props.searchPlaceholder}
-															onInput={handleSearch}
-														/>
-														{
-															showSelectAll.value && (
-																<SelectAll data={options.value} />
-															)
-														}
-													</div>
-												)
-											}
-											{
-												isLoading.value && (
-													<div class="vc-select__loading">
-														<Spin size={16} />
-													</div>
-												)
-											}
-										</Fragment>
-									);
-								}
-							: undefined,
-						content: () => {
-							return (
-								props.data
-									? (
-											<div>
-												{
-													props.data.map((item: any) => {
-														return Array.isArray(item.children) && item.children.length
-															? (
-																	<OptionGroup
-																		row={item}
-																		value={item.value}
-																		label={item.label}
-																		key={item.value}
-																		render={props.renderOptionGroup}
-																	>
-
-																		{{
-																			optionGroup: slots?.optionGroup,
-																			label: slots?.label,
-																			default: () => {
-																				return item.children.map(($item: any) => {
-																					return (
-																						<Option
-																							ref={el => setOption($item, el)}
-																							key={$item.value}
-																							row={$item}
-																							value={$item.value}
-																							label={$item.label}
-																							disabled={$item.disabled}
-																							filterable={$item.filterable}
-																							render={props.renderOption}
-																							renderLabel={props.renderLabel}
-																						>
-																							{{
-																								default: slots?.option,
-																								label: slots?.label
-																							}}
-																						</Option>
-																					);
-																				});
-																			}
-																		}}
-																	</OptionGroup>
-																)
-															: (
-																	<Option
-																		ref={el => setOption(item, el)}
-																		key={item.value}
-																		row={item}
-																		value={item.value}
-																		label={item.label}
-																		disabled={item.disabled}
-																		filterable={item.filterable}
-																		render={props.renderOption}
-																		renderLabel={props.renderLabel}
-																	>
-																		{{ default: slots?.option, label: slots?.label }}
-																	</Option>
-																);
-													})
-												}
-											</div>
-										)
-									: slots?.default?.()
-							);
-						}
+						default: renderTrigger,
+						header: renderHeader,
+						content: renderContent
 					}}
 				</Popover>
 			);

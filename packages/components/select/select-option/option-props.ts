@@ -1,5 +1,5 @@
 import type { ExtractPropTypes } from 'vue';
-import { renderType } from '../customer/customer-props';
+import { renderType } from '../../customer/customer-props';
 
 export const props = {
 	value: {

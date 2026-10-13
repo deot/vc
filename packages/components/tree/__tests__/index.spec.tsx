@@ -8,8 +8,11 @@ import { vi, onTestFinished } from 'vitest';
 import { TreeNode, TreeStore } from '../store';
 import { getChildState, markNodeData } from '../store/tree-node';
 import { props as treeNodeContentProps } from '../tree-node-content-props';
-import { TreeSelectContent, renderHighlight } from '../tree-select-content';
+import { TreeSelectContent } from '../tree-select-content';
+import { renderHighlight } from '../../select/select-search';
+import { createSearchRegex } from '../../select/utils';
 import { TreeSelectContentCascader } from '../tree-select-content-cascader';
+import { getFocusableItems } from '../use-keydown';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -18,6 +21,9 @@ const flush = async () => {
 	await sleep(0);
 	await nextTick();
 };
+
+// 内联搜索的输入框在触发器内
+const getSearchInput = () => document.querySelector('.vc-tree-select input[type="text"]') as HTMLInputElement;
 
 const fireMouse = (
 	el: Element,
@@ -148,11 +154,11 @@ describe('Tree locale', () => {
 		expect(wrapper.find('input').attributes('placeholder')).toBe('请选择');
 		await wrapper.trigger('click');
 		await flush();
-		const input = document.querySelector('.vc-tree-select__search input') as HTMLInputElement;
+		const input = getSearchInput();
 		input.value = 'missing';
 		input.dispatchEvent(new Event('input', { bubbles: true }));
 		await flush();
-		const empty = () => document.querySelector(cascader ? '.vc-tree-select__empty' : '.vc-tree__empty-text')?.textContent;
+		const empty = () => document.querySelector(cascader ? '.vc-select-paths__empty' : '.vc-tree__empty-text')?.textContent;
 		expect(empty()).toBe('暂无匹配数据');
 		VcInstance.configure({ locale: enUS });
 		await nextTick();
@@ -1188,7 +1194,7 @@ describe('TreeSelect interaction', () => {
 		await wrapper.trigger('click');
 		await nextTick();
 
-		const input = document.querySelector('.vc-tree-select__search input') as HTMLInputElement;
+		const input = getSearchInput();
 		expect(input).not.toBeNull();
 		input.value = 'foo';
 		input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1544,7 +1550,7 @@ describe('Tree store & node unit', () => {
 		await wrapper.trigger('click');
 		await nextTick();
 
-		const input = document.querySelector('.vc-tree-select__search input') as HTMLInputElement;
+		const input = getSearchInput();
 		expect(input).not.toBeNull();
 		input.value = 'foo';
 		input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1808,7 +1814,7 @@ describe('TreeSelect searchable', () => {
 	});
 
 	const typeSearch = async (keyword: string) => {
-		const input = document.querySelector('.vc-tree-select__search input') as HTMLInputElement;
+		const input = getSearchInput();
 		input.value = keyword;
 		input.dispatchEvent(new Event('input', { bubbles: true }));
 		await flush();
@@ -1816,33 +1822,39 @@ describe('TreeSelect searchable', () => {
 
 	it('renderHighlight', () => {
 		expect(renderHighlight('abc')).toBe('abc');
-		expect(renderHighlight('', /a/i)).toBe('');
-		expect(renderHighlight('abc', new RegExp(''))).toBe('abc');
-		const nodes = renderHighlight('aXbxc', /x/i) as any[];
+		expect(renderHighlight('', createSearchRegex('a'))).toBe('');
+		expect(renderHighlight(null, createSearchRegex('a'))).toBe('');
+		// 没有关键词、没有命中时原样返回
+		expect(renderHighlight('abc', createSearchRegex(''))).toBe('abc');
+		expect(renderHighlight('abc', createSearchRegex('x'))).toBe('abc');
+		const nodes = renderHighlight('aXbxc', createSearchRegex('x')) as any[];
 		expect(nodes.length).toBe(5);
 		expect(nodes[0]).toBe('a');
+		expect(nodes[1].children).toEqual(['X']);
 		expect(nodes[4]).toBe('c');
+		// 命中在首尾时不留空片段
+		expect((renderHighlight('xax', createSearchRegex('x')) as any[]).length).toBe(3);
 	});
 
-	it.each([false, true])('cascader checked class tracks selection (search=%s)', async (searching) => {
+	it.each([false, true])('cascader checkbox tracks selection (search=%s)', async (searching) => {
 		const wrapper = mount(TreeSelectContentCascader, {
 			props: {
 				value: ['a'],
 				data: [{ value: 'a', label: '甲' }],
-				searchValue: searching ? '甲' : '',
-				searchRegex: /甲/i
+				searchRegex: createSearchRegex(searching ? '甲' : '')
 			},
 			attachTo: document.body
 		});
 		await flush();
-		const row = () => wrapper.find(searching ? '.vc-tree-select__search-item' : '.vc-tree-select__cascader-item');
-		expect(row().classes()).toContain('is-checked');
+		const row = () => wrapper.find(searching ? '.vc-select-paths__item' : '.vc-tree-select__cascader-item');
+		const isChecked = () => (row().find('input[type="checkbox"]').element as HTMLInputElement).checked;
+		expect(isChecked()).toBe(true);
 		await row().trigger('click');
 		await flush();
-		expect(row().classes()).not.toContain('is-checked');
+		expect(isChecked()).toBe(false);
 		await row().trigger('click');
 		await flush();
-		expect(row().classes()).toContain('is-checked');
+		expect(isChecked()).toBe(true);
 		wrapper.unmount();
 	});
 
@@ -1860,7 +1872,7 @@ describe('TreeSelect searchable', () => {
 			.map(el => el.textContent);
 		expect(visible.some(t => t?.includes('三级 2-1-1'))).toBe(true);
 		expect(visible.some(t => t?.includes('一级 1'))).toBe(false);
-		expect(document.querySelector('.vc-tree-select__highlight')?.textContent).toBe('2-1-1');
+		expect(document.querySelector('.vc-select-highlight')?.textContent).toBe('2-1-1');
 
 		const checkbox = document.querySelector('.vc-tree-node:not(.is-hidden) .vc-checkbox input[type="checkbox"]') as HTMLInputElement;
 		checkbox.click();
@@ -1876,7 +1888,7 @@ describe('TreeSelect searchable', () => {
 		const popover = wrapper.findComponent({ name: 'vc-popover' });
 		(popover.vm as any).$emit('update:modelValue', false);
 		await flush();
-		expect((document.querySelector('.vc-tree-select__search input') as HTMLInputElement).value).toBe('');
+		expect(getSearchInput().value).toBe('');
 		expect(document.querySelectorAll('.vc-tree-node.is-hidden').length).toBe(0);
 
 		wrapper.unmount();
@@ -1923,7 +1935,7 @@ describe('TreeSelect searchable', () => {
 		await flush();
 
 		expect(value.value).toEqual([]);
-		expect((document.querySelector('.vc-tree-select__search input') as HTMLInputElement).value).toBe('');
+		expect(getSearchInput().value).toBe('');
 
 		wrapper.unmount();
 	});
@@ -1938,7 +1950,7 @@ describe('TreeSelect searchable', () => {
 		await flush();
 
 		await typeSearch('2-1-1');
-		const items = document.querySelectorAll('.vc-tree-select__search-item');
+		const items = document.querySelectorAll('.vc-select-paths__item');
 		expect(items.length).toBe(1);
 		expect(items[0].textContent).toContain('一级 2 / 二级 2-1 / 三级 2-1-1');
 		expect(document.querySelector('.vc-tree-select__cascader-columns')?.getAttribute('style')).toContain('display: none');
@@ -1948,16 +1960,16 @@ describe('TreeSelect searchable', () => {
 		expect(value.value).toContain('2-1-1');
 		expect(value.value).toContain('2-1');
 
-		const checkbox = document.querySelector('.vc-tree-select__search-item input[type="checkbox"]') as HTMLInputElement;
+		const checkbox = document.querySelector('.vc-select-paths__item input[type="checkbox"]') as HTMLInputElement;
 		checkbox.click();
 		await flush();
 		expect(value.value).not.toContain('2-1-1');
 
 		await typeSearch('不存在');
-		expect(document.querySelector('.vc-tree-select__empty')?.textContent).toBe('暂无匹配数据');
+		expect(document.querySelector('.vc-select-paths__empty')?.textContent).toBe('暂无匹配数据');
 
 		await typeSearch('');
-		expect(document.querySelector('.vc-tree-select__search-results')).toBeNull();
+		expect(document.querySelector('.vc-select-paths')).toBeNull();
 		expect(document.querySelectorAll('.vc-tree-select__cascader-column').length).toBeGreaterThan(0);
 
 		wrapper.unmount();
@@ -1968,12 +1980,12 @@ describe('TreeSelect searchable', () => {
 			const spy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(columnsWidth);
 			const wrapper = mount(TreeSelectContentCascader as any, {
 				attachTo: document.body,
-				props: { value: [], data: freshData(), searchValue: '' }
+				props: { value: [], data: freshData(), searchRegex: createSearchRegex('') }
 			});
 			await flush();
-			await wrapper.setProps({ searchValue: '一级', searchRegex: /一级/i });
+			await wrapper.setProps({ searchRegex: createSearchRegex('一级') });
 			await flush();
-			const width = (document.querySelector('.vc-tree-select__search-results') as HTMLElement).style.width;
+			const width = (document.querySelector('.vc-select-paths') as HTMLElement).style.width;
 			spy.mockRestore();
 			wrapper.unmount();
 			return width;
@@ -1989,13 +2001,12 @@ describe('TreeSelect searchable', () => {
 			props: {
 				value: [],
 				data: freshData(),
-				searchValue: 'zzz',
-				searchRegex: /zzz/i,
+				searchRegex: createSearchRegex('zzz'),
 				remote: true
 			}
 		});
 		await flush();
-		expect(document.querySelectorAll('.vc-tree-select__search-item').length).toBeGreaterThan(3);
+		expect(document.querySelectorAll('.vc-select-paths__item').length).toBeGreaterThan(3);
 		wrapper.unmount();
 	});
 
@@ -2006,32 +2017,31 @@ describe('TreeSelect searchable', () => {
 			props: {
 				value: [],
 				data: [{ value: 'a', label: 'A', disabled: true }],
-				searchValue: 'A',
-				searchRegex: /A/i,
+				searchRegex: createSearchRegex('A'),
 				onChange
 			}
 		});
 		await flush();
-		(document.querySelector('.vc-tree-select__search-item') as HTMLElement).click();
+		(document.querySelector('.vc-select-paths__item') as HTMLElement).click();
 		await flush();
 		expect(onChange).not.toHaveBeenCalled();
 		wrapper.unmount();
 	});
 
-	it('clear icon hides after mouseleave, arrow class applies', async () => {
+	it('clear icon renders only with a value, arrow class applies to the suffix icon', async () => {
 		const value = ref<any[]>(['1']);
 		const wrapper = mount(() => (
 			<TreeSelect v-model={value.value} data={data} clearable />
 		), { attachTo: document.body });
 		await flush();
 
-		expect(wrapper.find('.vc-tree-select__icon').classes()).toContain('is-arrow');
-		fireMouse(wrapper.element, 'mouseenter');
+		// 清空图标始终在节点中，由样式在悬停时显示
+		expect(wrapper.find('.vc-select-trigger__clear').exists()).toBe(true);
+		expect(wrapper.find('.vc-select-trigger__icon').classes()).toContain('is-arrow');
+
+		value.value = [];
 		await flush();
-		expect(wrapper.find('.vc-tree-select__icon').classes()).not.toContain('is-arrow');
-		fireMouse(wrapper.element, 'mouseleave');
-		await flush();
-		expect(wrapper.find('.vc-tree-select__icon').classes()).toContain('is-arrow');
+		expect(wrapper.find('.vc-select-trigger__clear').exists()).toBe(false);
 
 		wrapper.unmount();
 	});
@@ -2044,14 +2054,14 @@ describe('TreeSelect 弹层滚动', () => {
 
 	it('树模式：搜索在固定区，树由 Popover 内置的 Scroller 限高滚动', async () => {
 		const wrapper = mount(() => (
-			<TreeSelect data={freshData()} max={99} searchable />
+			<TreeSelect data={freshData()} max={99} searchable="popover" />
 		), { attachTo: document.body });
 		await flush();
 		await wrapper.trigger('click');
 		await flush();
 
 		const popup = document.querySelector('.vc-popover-wrapper') as HTMLElement;
-		expect(popup.querySelector('.vc-popover-wrapper__header > .vc-tree-select__search')).not.toBeNull();
+		expect(popup.querySelector('.vc-popover-wrapper__header > .vc-select-search')).not.toBeNull();
 		const content = popup.querySelector('.vc-popover-wrapper__content') as HTMLElement;
 		expect(content.classList.contains('vc-scroller')).toBe(true);
 		expect(content.style.maxHeight).toBe('200px');
@@ -2074,6 +2084,352 @@ describe('TreeSelect 弹层滚动', () => {
 		expect(content.classList.contains('is-unscrollable')).toBe(true);
 		expect(content.classList.contains('vc-scroller')).toBe(false);
 		expect(popup.querySelector('.vc-tree-select__cascader-column > .vc-scroller.vc-tree-select__cascader-column-wrapper')).not.toBeNull();
+
+		wrapper.unmount();
+	});
+});
+
+describe('TreeSelect 内联搜索与键盘', () => {
+	// 每个用例一份数据；不在渲染函数里创建，否则每次渲染都会换一份数据
+	let treeData: any[];
+	beforeEach(() => {
+		treeData = freshData();
+	});
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	// 统一的 Keyboard 在 document 的捕获阶段分发；Tree 自身的键盘逻辑读取 keyCode
+	const keyCodes: Record<string, number> = { ArrowUp: 38, ArrowDown: 40, ArrowLeft: 37, ArrowRight: 39, Enter: 13 };
+	const press = (key: string, el: Element = document.body) => {
+		const event = new KeyboardEvent('keydown', { key, keyCode: keyCodes[key], bubbles: true, cancelable: true } as any);
+		el.dispatchEvent(event);
+		return event;
+	};
+	const typeSearch = async (keyword: string) => {
+		const input = getSearchInput();
+		input.value = keyword;
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		await flush();
+	};
+	const isOpen = () => {
+		return Array.from(document.querySelectorAll<HTMLElement>('.vc-popover-wrapper')).some(el => el.style.display !== 'none');
+	};
+	const getSelected = () => Array.from(document.querySelectorAll('.vc-tree-select__cascader-column'))
+		.map(column => column.querySelector('.is-select .vc-tree-select__cascader-label')?.textContent || '');
+
+	it('输入框在触发器的标签之后；输入为空时退格移除最后一个标签', async () => {
+		const value = ref<any[]>(['1-1-1', '2-1-1']);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={treeData} max={99} searchable clearable />
+		), { attachTo: document.body });
+		await flush();
+
+		const input = getSearchInput();
+		expect(input.closest('.vc-select-tags__suffix')).not.toBeNull();
+		expect(wrapper.findAll('.vc-select-tags > .vc-tag').length).toBe(2);
+		// 不可搜索时的搜索栏、加载态不再出现在弹层内
+		await wrapper.find('.vc-tag').trigger('click');
+		await flush();
+		expect(document.querySelector('.vc-popover-wrapper__header')).toBeNull();
+		expect(document.activeElement).toBe(input);
+
+		input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+		await flush();
+		expect(value.value).toEqual(['1', '1-1', '1-1-1']);
+
+		wrapper.unmount();
+	});
+
+	it('checkStrictly：退格移除最后一个值', async () => {
+		const value = ref<any[]>(['1', '2-1']);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={treeData} max={99} searchable checkStrictly />
+		), { attachTo: document.body });
+		await flush();
+
+		getSearchInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+		await flush();
+		expect(value.value).toEqual(['1']);
+
+		wrapper.unmount();
+	});
+
+	it('getFocusableItems 只取可见的节点：排除禁用、被过滤隐藏、所在分组收起的节点', async () => {
+		const wrapper = mountTree({
+			data: [
+				{ value: 'a', label: 'A', children: [{ value: 'a1', label: 'A1' }] },
+				{ value: 'b', label: 'B', disabled: true },
+				{ value: 'c', label: 'C', children: [{ value: 'c1', label: 'C1' }] }
+			],
+			expandedValues: ['a'],
+			renderNodeAfterExpand: false
+		});
+		await flush();
+		const texts = () => getFocusableItems(wrapper.element).map(item => item.querySelector('.vc-tree-node__content')!.textContent!.trim());
+		expect(texts()).toEqual(['A', 'A1', 'C']);
+		expect(getFocusableItems(null)).toEqual([]);
+		wrapper.unmount();
+	});
+
+	it('树形：↓ 把焦点交给树里第一个可见节点，之后由 Tree 自身处理；Esc 关闭并回到输入框', async () => {
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={treeData} max={99} searchable />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+		await typeSearch('2-1-1');
+
+		const input = getSearchInput();
+		const getFocused = () => document.activeElement?.querySelector('.vc-tree-node__content')?.textContent?.trim();
+		// 焦点在输入框内：↑ 与回车被消费但不做处理
+		expect(press('ArrowUp', input).defaultPrevented).toBe(true);
+		expect(press('Enter', input).defaultPrevented).toBe(true);
+		expect(document.activeElement).toBe(input);
+
+		expect(press('ArrowDown', input).defaultPrevented).toBe(true);
+		expect(getFocused()).toContain('一级 2');
+
+		// 焦点已在树内：只在可见节点间移动（跳过被过滤隐藏的节点）
+		press('ArrowDown', document.activeElement!);
+		expect(getFocused()).toContain('二级 2-1');
+		press('ArrowDown', document.activeElement!);
+		expect(getFocused()).toBe('三级 2-1-1');
+		press('ArrowDown', document.activeElement!);
+		expect(getFocused()).toContain('一级 2');
+		// 第一个节点再向上：回到输入框
+		expect(press('ArrowUp', document.activeElement!).defaultPrevented).toBe(true);
+		expect(document.activeElement).toBe(input);
+
+		press('ArrowDown', input);
+		press('ArrowDown', document.activeElement!);
+		press('ArrowDown', document.activeElement!);
+		press('ArrowUp', document.activeElement!);
+		expect(getFocused()).toContain('二级 2-1');
+		press('ArrowDown', document.activeElement!);
+		press('Enter', document.activeElement!);
+		await flush();
+		expect(value.value).toContain('2-1-1');
+		expect(isOpen()).toBe(true);
+
+		expect(press('Escape', document.activeElement!).defaultPrevented).toBe(true);
+		await flush();
+		expect(isOpen()).toBe(false);
+		expect(document.activeElement).toBe(input);
+
+		wrapper.unmount();
+	});
+
+	it('级联列：方向键等同鼠标移入，回车切换路径末端一项的勾选', async () => {
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={treeData} max={99} searchable cascader />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+
+		// 没有路径时回车不处理
+		press('Enter');
+		await flush();
+		expect(value.value).toEqual([]);
+
+		press('ArrowDown');
+		await flush();
+		expect(getSelected()).toEqual(['一级 1', '']);
+		press('ArrowDown');
+		press('ArrowRight');
+		await flush();
+		expect(getSelected()).toEqual(['一级 2', '二级 2-1', '']);
+		press('ArrowDown');
+		await flush();
+		expect(getSelected()).toEqual(['一级 2', '二级 2-2', '']);
+		press('ArrowLeft');
+		await flush();
+		expect(getSelected()).toEqual(['一级 2', '']);
+		press('ArrowUp');
+		press('ArrowRight');
+		press('ArrowRight');
+		await flush();
+		expect(getSelected()).toEqual(['一级 1', '二级 1-1', '三级 1-1-1']);
+
+		press('Enter');
+		await flush();
+		await flush();
+		expect(value.value).toContain('1-1-1');
+		expect(isOpen()).toBe(true);
+		press('Enter');
+		await flush();
+		await flush();
+		expect(value.value).not.toContain('1-1-1');
+
+		wrapper.unmount();
+	});
+
+	it('级联搜索：上下移动高亮，回车切换勾选；有搜索词时左右键不处理', async () => {
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={treeData} max={99} searchable cascader />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+		// 逗号分隔的关键词任一命中即可
+		await typeSearch('2-1-1,2-2-1');
+
+		const getActive = () => document.querySelector('.vc-select-paths__item[data-active]')?.textContent;
+		expect(getActive()).toContain('三级 2-1-1');
+		expect(press('ArrowLeft').defaultPrevented).toBe(false);
+		press('ArrowDown');
+		expect(getActive()).toContain('三级 2-2-1');
+
+		press('Enter');
+		await flush();
+		await flush();
+		expect(value.value).toContain('2-2-1');
+		expect(document.querySelector<HTMLInputElement>('.vc-select-paths__item[data-active] input[type="checkbox"]')!.checked).toBe(true);
+
+		// 点击复选框时焦点留在输入框
+		const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+		document.querySelector('.vc-select-paths__item input[type="checkbox"]')!.dispatchEvent(event);
+		expect(event.defaultPrevented).toBe(true);
+
+		wrapper.unmount();
+	});
+
+	it('远程搜索：关闭时不调用 loadData，下次打开时按空关键词加载一次', async () => {
+		vi.useFakeTimers();
+		const loadData = vi.fn<(keyword: string) => Promise<void>>(() => Promise.resolve());
+		const wrapper = mount(() => (
+			<TreeSelect data={treeData} max={99} searchable loadData={loadData} />
+		), { attachTo: document.body });
+		try {
+			await nextTick();
+			await wrapper.trigger('click');
+			await nextTick();
+			const getKeywords = () => loadData.mock.calls.map(args => args[0]);
+
+			const input = getSearchInput();
+			input.value = '2-1';
+			input.dispatchEvent(new Event('input', { bubbles: true }));
+			await vi.advanceTimersByTimeAsync(250);
+			expect(getKeywords()).toEqual(['2-1']);
+
+			const popover = wrapper.findComponent({ name: 'vc-popover' }).vm as any;
+			popover.$emit('update:modelValue', false);
+			await vi.advanceTimersByTimeAsync(500);
+			expect(input.value).toBe('');
+			expect(getKeywords()).toEqual(['2-1']);
+
+			popover.$emit('update:modelValue', true);
+			await nextTick();
+			expect(getKeywords()).toEqual(['2-1', '']);
+		} finally {
+			vi.useRealTimers();
+			wrapper.unmount();
+		}
+	});
+
+	it('远程搜索：还没有数据时，打开即按空关键词加载一次', async () => {
+		const loadData = vi.fn<(keyword: string) => Promise<void>>(() => Promise.resolve());
+		const wrapper = mount(() => (
+			<TreeSelect data={[]} max={99} searchable loadData={loadData} />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+		expect(loadData.mock.calls.map(args => args[0])).toEqual(['']);
+
+		wrapper.unmount();
+	});
+
+	it('远程搜索（checkStrictly）：已选值不在新的搜索结果里时，标签保留；再勾选时原已选值不丢', async () => {
+		const source = ref<any[]>(treeData);
+		const value = ref<any[]>(['1', '2-1']);
+		const loadData = vi.fn(() => Promise.resolve());
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={source.value} max={99} maxTagLines={0} searchable checkStrictly loadData={loadData} />
+		), { attachTo: document.body });
+		await flush();
+		const getTags = () => wrapper.findAll('.vc-select-tags > .vc-tag').map(tag => tag.text());
+		expect(getTags()).toEqual(['一级 1', '二级 2-1']);
+
+		// 搜索结果只有“一级 3”这一棵
+		source.value = treeData.filter(item => item.value === '3');
+		await flush();
+		expect(getTags()).toEqual(['一级 1', '二级 2-1']);
+
+		await wrapper.find('.vc-select-tags__suffix').trigger('click');
+		await flush();
+		(document.querySelector('.vc-tree-select__options .vc-checkbox input[type="checkbox"]') as HTMLInputElement).click();
+		await flush();
+		expect(value.value).toEqual(['1', '2-1', '3']);
+		expect(getTags()).toEqual(['一级 1', '二级 2-1', '一级 3']);
+
+		// 移除不在当前数据里的标签
+		await wrapper.find('.vc-select-tags > .vc-tag .vc-tag__close').trigger('click');
+		await flush();
+		expect(value.value).toEqual(['2-1', '3']);
+
+		wrapper.unmount();
+	});
+
+	it('远程搜索（父子联动）：路径标签在搜索结果变化后保留，再勾选时原已选值不丢', async () => {
+		const source = ref<any[]>(treeData);
+		const value = ref<any[]>(['1', '1-1', '1-1-1']);
+		const loadData = vi.fn(() => Promise.resolve());
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={source.value} max={99} maxTagLines={0} searchable loadData={loadData} />
+		), { attachTo: document.body });
+		await flush();
+		const getTags = () => wrapper.findAll('.vc-select-tags > .vc-tag').map(tag => tag.text());
+		expect(getTags()).toEqual(['一级 1 / 二级 1-1 / 三级 1-1-1']);
+
+		source.value = [{ value: '4', label: '一级 4', children: [] }];
+		await flush();
+		expect(getTags()).toEqual(['一级 1 / 二级 1-1 / 三级 1-1-1']);
+
+		await wrapper.find('.vc-select-tags__suffix').trigger('click');
+		await flush();
+		(document.querySelector('.vc-tree-select__options .vc-checkbox input[type="checkbox"]') as HTMLInputElement).click();
+		await flush();
+		expect(value.value).toEqual(['1', '1-1', '1-1-1', '4']);
+		expect(getTags()).toEqual(['一级 1 / 二级 1-1 / 三级 1-1-1', '一级 4']);
+
+		wrapper.unmount();
+	});
+
+	it('本地数据：数据里没有的已选值没有标签', async () => {
+		const source = ref<any[]>(treeData);
+		const wrapper = mount(() => (
+			<TreeSelect modelValue={['1', '2-1']} data={source.value} max={99} maxTagLines={0} checkStrictly />
+		), { attachTo: document.body });
+		await flush();
+		source.value = treeData.filter(item => item.value === '3');
+		await flush();
+		expect(wrapper.findAll('.vc-select-tags > .vc-tag').map(tag => tag.text())).toEqual(['', '']);
+
+		wrapper.unmount();
+	});
+
+	it('popover 搜索：搜索栏在弹层顶部并自动聚焦，触发器只读', async () => {
+		const wrapper = mount(() => (
+			<TreeSelect data={treeData} max={99} searchable="popover" />
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.find('input').attributes('readonly')).toBeDefined();
+
+		await wrapper.trigger('click');
+		await flush();
+		const search = document.querySelector('.vc-select-search input') as HTMLInputElement;
+		expect(document.activeElement).toBe(search);
+
+		search.value = '2-1-1';
+		search.dispatchEvent(new Event('input', { bubbles: true }));
+		await flush();
+		expect(document.querySelector('.vc-select-highlight')?.textContent).toBe('2-1-1');
 
 		wrapper.unmount();
 	});

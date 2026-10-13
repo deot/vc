@@ -1,3 +1,7 @@
 @use "./tree";
 @use "./tree-select";
-@use "../select/select-tags";
+@use "../select/select-trigger/select-trigger";
+@use "../select/select-trigger/select-tags";
+@use "../select/select-search/select-search";
+@use "../select/select-search/select-paths";
+@use "../select/select-search/highlight";

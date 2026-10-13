@@ -57,7 +57,7 @@
 		/>
 
 		<p style="margin-top: 16px;">
-			可搜索（searchable）：空格或逗号分隔多个关键词；树形模式保留层级过滤，级联模式展示扁平路径列表
+			可搜索（searchable）：空格分隔的关键词需同时命中，逗号分隔的各组任一命中；树形模式保留层级过滤，级联模式展示扁平路径列表
 		</p>
 		<TreeSelect
 			v-model="valueSearch"

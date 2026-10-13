@@ -2,20 +2,22 @@
 
 import { defineComponent, ref, watch, computed, nextTick, inject } from 'vue';
 import { isEqualWith } from 'lodash-es';
-import { useAttrs } from '@deot/vc-hooks';
 import { scrollIntoView } from '@deot/helper-dom';
 import { getSelectedData } from './utils';
 import { VcError } from '../vc/index';
-import { Input } from '../input/index';
 import { Popover } from '../popover/index';
-import { Icon } from '../icon/index';
 import { useLocale } from '../locale';
 import { CascaderColumn } from './column';
 import { Scroller } from '../scroller/index';
+import { SelectTrigger, keepFocus } from '../select/select-trigger';
+import { SelectSearch, SelectPaths } from '../select/select-search';
+import { useSelect } from '../select/hooks/use-select';
+import { useColumnNavigate } from '../select/hooks/use-navigate';
 
 import { toCurrentValue, toModelValue } from '../select/utils';
 
 import type { TreeData, TreeValue, TreeLabel } from '../select/utils';
+import type { SelectPath } from '../select/select-search';
 import type { FormItemProvide } from '../form/types';
 import type { CellChangeOptions } from './types';
 import { props as cascaderProps } from './cascader-props';
@@ -26,25 +28,19 @@ export const Cascader = defineComponent({
 	name: COMPONENT_NAME,
 	inheritAttrs: false,
 	props: cascaderProps,
-	emits: ['update:modelValue', 'visible-change', 'ready', 'change', 'close'],
+	emits: ['update:modelValue', 'visible-change', 'ready', 'change', 'clear', 'close'],
 	setup(props, { emit, slots }) {
 		const { t } = useLocale();
 		const formItem = inject('vc-form-item', {} as FormItemProvide);
-		const its = useAttrs({ merge: false });
 
-		const isHover = ref(false);
-		const isActive = ref(false);
+		// loadData 用于加载子节点，搜索只在已有数据内进行
+		const select = useSelect('cascader', { remote: false, navigator: () => navigator });
+		const { its, isActive, searchRegex, searchMode, isSearching } = select;
+
 		const currentValue = ref<TreeValue[]>([]);
 		const rebuildData = ref<TreeData[]>([]);
 		const colRef = ref({});
-
-		const icon = computed(() => {
-			return isActive.value ? 'up' : 'down';
-		});
-
-		const showClear = computed(() => {
-			return currentValue.value && currentValue.value.length && props.clearable && !props.disabled && isHover.value;
-		});
+		const columnsRef = ref<any>();
 
 		const columns = computed(() => {
 			return Array.from({ length: currentValue.value.length + 1 }).map((_, index) => index);
@@ -71,6 +67,11 @@ export const Cascader = defineComponent({
 		const formatLabel = computed(() => {
 			return props.formatter(currentLabel.value) || props.extra;
 		});
+
+		// 自定义触发区内没有输入框，内联搜索退为弹层搜索栏
+		const getSearchMode = () => {
+			return slots.default && searchMode.value ? 'popover' : searchMode.value;
+		};
 
 		const setColRef = (el: any, index: number) => {
 			el && (colRef.value[index] = el);
@@ -176,9 +177,8 @@ export const Cascader = defineComponent({
 			});
 		};
 
-		const handleClear = (e: Event) => {
-			if (!showClear.value) return;
-			e.stopPropagation();
+		const handleClear = () => {
+			emit('clear');
 
 			currentValue.value.splice(0, currentValue.value.length);
 			isActive.value = false;
@@ -239,6 +239,29 @@ export const Cascader = defineComponent({
 		};
 
 		/**
+		 * 搜索结果：叶子节点可选；changeOnSelect 时任意一级可选
+		 * 子节点待加载（children 为空数组且有 loadData）的节点不是叶子
+		 * @param item ~
+		 * @returns ~
+		 */
+		const isSelectable = (item: TreeData) => {
+			return props.changeOnSelect || !(item.children && (item.children.length > 0 || props.loadData));
+		};
+
+		const isChecked = ({ values }: SelectPath) => {
+			return values.length === currentValue.value.length && values.every((v, i) => v == currentValue.value[i]);
+		};
+
+		// 选中搜索结果：写入整条路径并提交
+		const handleSelect = ({ values }: SelectPath) => {
+			currentValue.value = [...values];
+			rebuildData.value = makeRebuildData();
+
+			sync(true);
+			isActive.value = false;
+		};
+
+		/**
 		 * 在关闭的时候，让重新打开的值一致
 		 * 暂时不用rebuildData.value, ready时会再次触发
 		 */
@@ -254,10 +277,20 @@ export const Cascader = defineComponent({
 			emit('close');
 		};
 
-		// 可能存在强制关闭的情况
-		const handleDestroy = () => {
-			isActive.value && (isActive.value = false);
-		};
+		// 方向键：搜索时在结果列表内移动，否则在级联列内移动（等同鼠标移入）；回车等同点击
+		const { paths, searchWidth, navigator } = useColumnNavigate({
+			getPath: () => currentValue.value,
+			getColumns: () => rebuildData.value as any,
+			hover: (item, columnIndex, rowIndex) => handleCellChange({ value: item.value, rowIndex, columnIndex }),
+			getItem: (columnIndex, rowIndex) => {
+				return colRef.value[columnIndex]?.$el.querySelectorAll('.vc-cascader-column__item')[rowIndex];
+			},
+			enter: () => {
+				currentValue.value.length && sync();
+			},
+			isSearching: () => isSearching.value,
+			getView: () => columnsRef.value?.$el
+		});
 
 		watch(
 			() => props.data,
@@ -278,94 +311,90 @@ export const Cascader = defineComponent({
 			},
 			{ immediate: true }
 		);
+
+		const renderTrigger = () => {
+			if (slots.default) {
+				return slots.default({
+					label: currentLabel.value,
+					value: currentValue.value,
+					active: isActive.value
+				});
+			}
+			return (
+				<SelectTrigger
+					{...select.trigger.value}
+					placeholder={its.value.attrs?.placeholder ?? t('vc.Cascader.placeholder')}
+					text={formatLabel.value}
+					clearable={props.clearable && currentValue.value.length > 0}
+					onClear={handleClear}
+				/>
+			);
+		};
+
+		const renderHeader = () => {
+			return (<SelectSearch {...select.search.value} />);
+		};
+
+		const renderColumn = (index: number) => {
+			if (!rebuildData.value[index] || !rebuildData.value[index].length) return;
+			return (
+				<CascaderColumn
+					ref={(el: any) => setColRef(el, index)}
+					key={index}
+					index={index}
+					value={currentValue.value[index]}
+					data={rebuildData.value[index] as any}
+					onChange={handleCellChange}
+					onClick={handleCellClick}
+				/>
+			);
+		};
+
+		// 点击选项时焦点留在搜索输入框
+		const renderContent = () => {
+			return isSearching.value
+				? (
+						<SelectPaths
+							ref={paths}
+							class="vc-cascader__paths"
+							data={props.data}
+							regex={searchRegex.value}
+							path
+							selectable={isSelectable}
+							checked={isChecked}
+							width={searchWidth.value}
+							emptyText={t('vc.Cascader.noMatch')}
+							// @ts-ignore
+							onMousedown={keepFocus}
+							onSelect={handleSelect}
+						/>
+					)
+				: (
+						<Scroller
+							ref={columnsRef}
+							class="vc-cascader__columns"
+							contentClass="vc-cascader__content"
+							// @ts-ignore
+							onMousedown={keepFocus}
+						>
+							{ columns.value.map(renderColumn) }
+						</Scroller>
+					);
+		};
+
 		return () => {
 			return (
 				<Popover
-					modelValue={isActive.value}
-					{
-						...its.value.attrs
-					}
-					arrow={props.arrow}
-					trigger={props.trigger}
-					tag={props.tag}
-					placement={props.placement}
-					auto-width={props.autoWidth}
-					disabled={props.disabled}
-					portal={props.portal}
-					portalClass={[['is-padding-none', props.portalClass]]}
+					{...select.popover.value}
 					// 各列在高度上限内收缩并自行滚动
 					scrollable={false}
-					class={[its.value.class, 'vc-cascader']}
-					style={its.value.style}
-					animation="y"
-					// @ts-ignore
-					onMouseenter={() => (isHover.value = true)}
-					onMouseleave={() => (isHover.value = false)}
 					onReady={handleReady}
 					onClose={handleClose}
-					onDestroy={handleDestroy}
-					onVisibleChange={() => emit('visible-change', isActive.value)}
-					onUpdate:modelValue={(v: boolean) => (isActive.value = v)}
 				>
 					{{
-						default: () => {
-							if (slots.default) {
-								return slots.default({
-									label: currentLabel.value,
-									value: currentValue.value,
-									active: isActive.value
-								});
-							}
-							return (
-								<Input
-									id={props.id}
-									disabled={props.disabled}
-									modelValue={formatLabel.value}
-									allow-dispatch={false}
-									class="vc-cascader__input"
-									// @ts-ignore
-									readonly={true}
-									placeholder={its.value.attrs?.placeholder ?? t('vc.Cascader.placeholder')}
-								>
-									{{
-										append: () => {
-											return (
-												<div class="vc-cascader__append">
-													<Icon
-														type={showClear.value ? 'clear' : icon.value}
-														class={[{ 'is-arrow': !showClear }, 'vc-cascader__icon']}
-														// @ts-ignore
-														onClick={handleClear}
-													/>
-												</div>
-											);
-										}
-									}}
-								</Input>
-							);
-						},
-						content: () => {
-							return (
-								<Scroller class="vc-cascader__columns" contentClass="vc-cascader__content">
-									{
-										columns.value.map((_, index) => {
-											if (!rebuildData.value[index] || !rebuildData.value[index].length) return;
-											return (
-												<CascaderColumn
-													ref={(el: any) => setColRef(el, index)}
-													key={index}
-													index={index}
-													value={currentValue.value[index]}
-													data={rebuildData.value[index] as any}
-													onChange={handleCellChange}
-													onClick={handleCellClick}
-												/>
-											);
-										})
-									}
-								</Scroller>
-							);
-						}
+						default: renderTrigger,
+						header: getSearchMode() === 'popover' ? renderHeader : void 0,
+						content: renderContent
 					}}
 				</Popover>
 			);

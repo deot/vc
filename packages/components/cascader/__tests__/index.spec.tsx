@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { Cascader, MCascader } from '@deot/vc-components';
+import { Cascader, MCascader, VcInstance } from '@deot/vc-components';
+import { enUS, zhCN } from '@deot/vc-locale';
 import { CascaderView } from '../cascader-view';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
@@ -355,21 +356,27 @@ describe('Cascader interaction', () => {
 		wrapper.unmount();
 	});
 
-	it('clearable: hover & click clear icon empties value', async () => {
+	it('clearable: click clear icon empties value and emits clear before the model update', async () => {
+		const calls: string[] = [];
 		const value = ref([...selectedValue]);
 		const wrapper = mount(() => (
-			<Cascader v-model={value.value} data={options} clearable />
+			<Cascader
+				v-model={value.value}
+				data={options}
+				clearable
+				onClear={() => calls.push('clear')}
+				onChange={() => calls.push('change')}
+			/>
 		), { attachTo: document.body });
 		await nextTick();
 
-		fireMouse(wrapper.element, 'mouseenter');
-		await nextTick();
-
-		const icon = wrapper.find('.vc-cascader__icon');
+		// 清空图标始终在节点中，由样式在悬停时显示
+		const icon = wrapper.find('.vc-select-trigger__clear');
 		expect(icon.exists()).toBe(true);
 		await icon.trigger('click');
 		await flush();
 
+		expect(calls).toEqual(['clear', 'change']);
 		expect(value.value.length).toBe(0);
 		expect((wrapper.find('input').element as HTMLInputElement).value).toBe('');
 
@@ -512,6 +519,256 @@ describe('Cascader 弹层滚动', () => {
 		expect(list.matches('.vc-scroller.vc-cascader-column__wrapper')).toBe(true);
 		expect(getCells(0).length).toBe(options.length);
 		expect(getCells(0)[0].closest('.vc-scroller')).toBe(list);
+
+		wrapper.unmount();
+	});
+});
+
+describe('Cascader 搜索与键盘', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	const typeInto = (input: HTMLInputElement, value: string) => {
+		input.value = value;
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+	};
+	// 统一的 Keyboard 在 document 的捕获阶段分发
+	const press = (key: string) => {
+		const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+		document.body.dispatchEvent(event);
+		return event;
+	};
+	const getPaths = () => Array.from(document.querySelectorAll<HTMLElement>('.vc-select-paths__item'));
+	const getTexts = () => getPaths().map(item => item.textContent);
+	const getSelected = () => Array.from(getCols()).map(column => column.querySelector('.is-select')?.textContent || '');
+	const isOpen = () => {
+		return Array.from(document.querySelectorAll<HTMLElement>('.vc-popover-wrapper')).some(el => el.style.display !== 'none');
+	};
+
+	it('内联搜索：按整条路径匹配，只列出末级并高亮；点击后写入路径、提交并关闭', async () => {
+		const onChange = vi.fn();
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} searchable onChange={onChange} />
+		), { attachTo: document.body });
+		await nextTick();
+
+		const input = wrapper.find('input');
+		expect(input.attributes('readonly')).toBeUndefined();
+		await input.trigger('click');
+		await flush();
+		expect(getCols().length).toBe(1);
+
+		typeInto(input.element as HTMLInputElement, 'hangzhou');
+		await flush();
+		expect(getTexts()).toEqual(['Zhejiang / Hangzhou / West Lake', 'Zhejiang / Hangzhou / Bin Jiang']);
+		expect(getCols().length).toBe(0);
+		expect(getPaths()[0].querySelector('.vc-select-highlight')!.textContent).toBe('Hangzhou');
+
+		// 点击结果时焦点留在输入框
+		const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+		getPaths()[1].dispatchEvent(event);
+		expect(event.defaultPrevented).toBe(true);
+
+		getPaths()[1].click();
+		await flush();
+		expect(value.value).toEqual(['zhejiang', 'hangzhou', 'binjiang']);
+		expect(onChange).toHaveBeenCalledTimes(1);
+		expect(onChange.mock.calls[0][1]).toEqual(['Zhejiang', 'Hangzhou', 'Bin Jiang']);
+		expect(isOpen()).toBe(false);
+		// 关闭后重置搜索词，回显走 placeholder
+		expect((input.element as HTMLInputElement).value).toBe('');
+		expect(input.attributes('placeholder')).toBe('Zhejiang / Hangzhou / Bin Jiang');
+
+		// 再次搜索时，当前值按已选中显示
+		typeInto(input.element as HTMLInputElement, 'hangzhou');
+		await flush();
+		expect(getPaths().map(item => item.classList.contains('is-checked'))).toEqual([false, true]);
+
+		wrapper.unmount();
+	});
+
+	it('changeOnSelect：任意一级可选', async () => {
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} searchable changeOnSelect />
+		), { attachTo: document.body });
+		await nextTick();
+
+		const input = wrapper.find('input');
+		await input.trigger('click');
+		await flush();
+		typeInto(input.element as HTMLInputElement, 'ningbo');
+		await flush();
+		expect(getTexts()).toEqual(['Zhejiang / NingBo', 'Zhejiang / NingBo / Jiang Bei', 'Zhejiang / NingBo / Jiang Dong']);
+
+		getPaths()[0].click();
+		await flush();
+		expect(value.value).toEqual(['zhejiang', 'ningbo']);
+		expect(isOpen()).toBe(false);
+
+		wrapper.unmount();
+	});
+
+	it('待加载子节点的节点不可选，搜索不调用 loadData；没有匹配时的提示跟随语言', async () => {
+		const locale = VcInstance.options.locale;
+		const loadData = vi.fn(() => Promise.resolve([]));
+		const data = [
+			{ value: 'a', label: 'Alpha', children: [] },
+			{ value: 'b', label: 'Beta' }
+		];
+		const wrapper = mount(() => (
+			<Cascader data={data} searchable loadData={loadData} />
+		), { attachTo: document.body });
+		try {
+			VcInstance.configure({ locale: zhCN });
+			await nextTick();
+			const input = wrapper.find('input');
+			await input.trigger('click');
+			await flush();
+
+			typeInto(input.element as HTMLInputElement, 'a');
+			await flush();
+			await sleep(300);
+			expect(getTexts()).toEqual(['Beta']);
+			expect(loadData).not.toHaveBeenCalled();
+
+			typeInto(input.element as HTMLInputElement, 'zzz');
+			await flush();
+			expect(document.querySelector('.vc-select-paths__empty')!.textContent).toBe('暂无匹配数据');
+			VcInstance.configure({ locale: enUS });
+			await nextTick();
+			expect(document.querySelector('.vc-select-paths__empty')!.textContent).toBe('No matching data');
+		} finally {
+			wrapper.unmount();
+			VcInstance.configure({ locale });
+		}
+	});
+
+	it('searchable="popover"：触发器只读，搜索栏在弹层顶部并自动聚焦', async () => {
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} searchable="popover" searchPlaceholder="搜索" />
+		), { attachTo: document.body });
+		await nextTick();
+		expect(wrapper.find('input').attributes('readonly')).toBeDefined();
+
+		await wrapper.trigger('click');
+		await flush();
+		const search = document.querySelector('.vc-popover-wrapper__header .vc-select-search input') as HTMLInputElement;
+		expect(search.getAttribute('placeholder')).toBe('搜索');
+		expect(document.activeElement).toBe(search);
+
+		typeInto(search, 'nanjing');
+		await flush();
+		expect(getTexts()).toEqual(['Jiangsu / Nanjing / Zhong Hua Men']);
+
+		wrapper.unmount();
+	});
+
+	it('自定义触发区：内联搜索改用弹层搜索栏', async () => {
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} searchable>
+				{{ default: ({ label }: any) => (<div class="custom-trigger">{ label.join('/') }</div>) }}
+			</Cascader>
+		), { attachTo: document.body });
+		await nextTick();
+		expect(wrapper.find('input').exists()).toBe(false);
+
+		await wrapper.find('.custom-trigger').trigger('click');
+		await flush();
+		const search = document.querySelector('.vc-select-search input') as HTMLInputElement;
+		expect(search).not.toBeNull();
+
+		typeInto(search, 'west');
+		await flush();
+		getPaths()[0].click();
+		await flush();
+		expect(value.value).toEqual(['zhejiang', 'hangzhou', 'xihu']);
+		expect(wrapper.find('.custom-trigger').text()).toBe('Zhejiang/Hangzhou/West Lake');
+
+		wrapper.unmount();
+	});
+
+	it('不可搜索时没有搜索栏', async () => {
+		const wrapper = mount(() => (<Cascader data={options} />), { attachTo: document.body });
+		await nextTick();
+		await wrapper.trigger('click');
+		await flush();
+		expect(document.querySelector('.vc-popover-wrapper__header')).toBeNull();
+		expect(wrapper.find('input').attributes('readonly')).toBeDefined();
+		wrapper.unmount();
+	});
+
+	it('键盘：↑ ↓ 在当前列内移动，← → 回到父级 / 进入子级，回车提交', async () => {
+		const value = ref<any[]>([...selectedValue]);
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} />
+		), { attachTo: document.body });
+		await nextTick();
+		await wrapper.trigger('click');
+		await flush();
+		expect(getSelected()).toEqual(['Zhejiang', 'Hangzhou', 'West Lake']);
+
+		expect(press('ArrowDown').defaultPrevented).toBe(true);
+		await flush();
+		expect(getSelected()).toEqual(['Zhejiang', 'Hangzhou', 'Bin Jiang']);
+		press('ArrowDown');
+		await flush();
+		expect(getSelected()).toEqual(['Zhejiang', 'Hangzhou', 'West Lake']);
+
+		expect(press('ArrowLeft').defaultPrevented).toBe(true);
+		await flush();
+		press('ArrowDown');
+		await flush();
+		expect(getSelected()).toEqual(['Zhejiang', 'NingBo', '']);
+
+		// 未到末级时回车不提交
+		press('Enter');
+		await flush();
+		expect(value.value).toEqual(selectedValue);
+		expect(isOpen()).toBe(true);
+
+		press('ArrowRight');
+		await flush();
+		expect(getSelected()).toEqual(['Zhejiang', 'NingBo', 'Jiang Bei']);
+		press('Enter');
+		await flush();
+		expect(value.value).toEqual(['zhejiang', 'ningbo', 'jiangbei']);
+		expect(isOpen()).toBe(false);
+
+		wrapper.unmount();
+	});
+
+	it('键盘：没有路径时回车不处理；搜索时回车选中高亮的结果', async () => {
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} searchable />
+		), { attachTo: document.body });
+		await nextTick();
+		const input = wrapper.find('input');
+		await input.trigger('click');
+		await flush();
+
+		press('Enter');
+		await flush();
+		expect(value.value).toEqual([]);
+		expect(isOpen()).toBe(true);
+
+		typeInto(input.element as HTMLInputElement, 'jiang');
+		await flush();
+		const getActive = () => document.querySelector('.vc-select-paths__item[data-active]')?.textContent;
+		expect(getActive()).toBe('Zhejiang / Hangzhou / West Lake');
+		// 有搜索词时左右键用于移动光标
+		expect(press('ArrowRight').defaultPrevented).toBe(false);
+		press('ArrowDown');
+		expect(getActive()).toBe('Zhejiang / Hangzhou / Bin Jiang');
+		press('Enter');
+		await flush();
+		expect(value.value).toEqual(['zhejiang', 'hangzhou', 'binjiang']);
+		expect(isOpen()).toBe(false);
 
 		wrapper.unmount();
 	});

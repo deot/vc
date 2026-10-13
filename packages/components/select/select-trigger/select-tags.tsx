@@ -3,9 +3,9 @@
 import { defineComponent, ref, shallowRef, computed, watch, onMounted, onUpdated, onBeforeUnmount } from 'vue';
 import type { PropType } from 'vue';
 import { Resize } from '@deot/helper-resize';
-import { Tag } from '../tag/index';
-import { Scroller } from '../scroller/index';
-import { useHoverPopover } from '../popover/use-hover-popover';
+import { Tag } from '../../tag/index';
+import { Scroller } from '../../scroller/index';
+import { useHoverPopover } from '../../popover/use-hover-popover';
 import { fitTags } from './utils';
 import type { FitTagsResult } from './utils';
 
@@ -33,7 +33,7 @@ interface Measured {
 const toNumber = (v: string) => parseFloat(v) || 0;
 
 /**
- * Select / TreeSelect 多选时的标签区：按可用宽度与行数自适应折叠
+ * Select / TreeSelect 多选时的标签区：按可用宽度与行数自适应折叠；默认插槽跟在 tag 之后
  */
 export const SelectTags = defineComponent({
 	name: COMPONENT_NAME,
@@ -50,10 +50,15 @@ export const SelectTags = defineComponent({
 		closable: {
 			type: Boolean,
 			default: false
+		},
+		// 末行在 tag 之后为默认插槽（如内联的搜索输入框）预留的宽度；为 0 时插槽只占该行剩余的宽度
+		reserve: {
+			type: Number,
+			default: 0
 		}
 	},
 	emits: ['close'],
-	setup(props, { emit }) {
+	setup(props, { emit, slots }) {
 		const wrapper = ref<HTMLElement>();
 		const measure = ref<HTMLElement>();
 
@@ -98,7 +103,8 @@ export const SelectTags = defineComponent({
 				width: width.value,
 				lines: props.maxTagLines,
 				plusWidth: m.plusWidth,
-				total: total.value
+				total: total.value,
+				reserve: props.reserve
 			});
 		});
 
@@ -227,6 +233,11 @@ export const SelectTags = defineComponent({
 			wrapper.value && Resize.off(wrapper.value, refreshWidth);
 		});
 
+		// 只设基准宽度：折行时据此决定是否另起一行；容器比它还窄时可收缩，不溢出
+		const suffixStyle = computed(() => {
+			return props.reserve ? { flexBasis: `${props.reserve}px` } : void 0;
+		});
+
 		return () => {
 			const { count, shrink } = fit.value;
 			const rest = total.value - count;
@@ -264,6 +275,13 @@ export const SelectTags = defineComponent({
 							>
 								{ `+${rest}...` }
 							</Tag>
+						)
+					}
+					{
+						slots.default && (
+							<div class="vc-select-tags__suffix" style={suffixStyle.value}>
+								{ slots.default() }
+							</div>
 						)
 					}
 					{

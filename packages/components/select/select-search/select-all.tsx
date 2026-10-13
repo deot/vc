@@ -2,7 +2,7 @@
 
 import { defineComponent, computed } from 'vue';
 import { getInstance } from '@deot/vc-hooks';
-import { useLocale } from '../locale';
+import { useLocale } from '../../locale';
 
 const COMPONENT_NAME = 'vc-select-all';
 

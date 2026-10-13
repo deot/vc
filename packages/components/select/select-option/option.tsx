@@ -2,8 +2,9 @@
 
 import { defineComponent, computed, withModifiers } from 'vue';
 import { getInstance } from '@deot/vc-hooks';
-import { Customer } from '../customer';
-import { Icon } from '../icon';
+import { Customer } from '../../customer';
+import { Icon } from '../../icon';
+import { renderHighlight } from '../select-search/highlight';
 import { props as optionProps } from './option-props';
 
 const COMPONENT_NAME = 'vc-select-option';
@@ -59,8 +60,10 @@ export const Option = defineComponent({
 			owner.exposed.add(props.value, formatterLabel.value);
 		};
 
-		const handlePrevent = (e: any) => {
-			e.preventDefault();
+		// 命中关键词的部分高亮；拆成多段时包一层，避免各段成为独立的 flex 子项
+		const renderText = () => {
+			const text = renderHighlight(formatterLabel.value, owner.exposed.searchRegex.value);
+			return typeof text === 'string' ? text : (<span>{ text }</span>);
 		};
 
 		expose({
@@ -80,15 +83,14 @@ export const Option = defineComponent({
 			return (
 				<div
 					// @ts-ignore
-					disabled={props.disabled && 'disabled'}
+					disabled={props.disabled ? 'disabled' : void 0}
 					class={[{ 'is-select': isChecked.value, 'is-last': isLast.value }, 'vc-select-option']}
 					onClick={withModifiers(handleClick, ['stop'])}
-					onMousedown={handlePrevent}
 				>
 					{
 						renderLabel
 							? (<Customer render={renderLabel} {...customOptions.value} />)
-							: formatterLabel.value
+							: renderText()
 					}
 					{ isChecked.value && (<Icon type="correct" />) }
 				</div>

@@ -1,4 +1,4 @@
-@use '../style/helper' as *;
+@use '../../style/helper' as *;
 
 $component-name: vc-select-option;
 $color-dark-lighter: varfix(color-dark-lighter, select-option);
@@ -17,13 +17,13 @@ $background-color-primary-light: varfix(background-color-primary-light, select-o
 	justify-content: space-between;
 	align-items: center;
 
-	&:not([disabled="disabled"]):hover {
+	// 键盘与鼠标共用的高亮，见 use-navigate；背景只表示高亮，已选中用主色文字与勾表示
+	&[data-active] {
 		background-color: $background-color-primary-light;
 	}
 
 	@include when(select) {
 		color: $color-primary;
-		background-color: $background-color-primary-light;
 
 		.vc-icon {
 			color: inherit;

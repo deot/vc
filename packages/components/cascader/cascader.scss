@@ -1,6 +1,7 @@
 @use '../style/helper' as *;
 
 $component-name: vc-cascader;
+$color-primary: varfix(color-primary, cascader);
 $color-dark-extralight: varfix(color-dark-extralight, cascader);
 
 @include block($component-name) {
@@ -10,33 +11,9 @@ $color-dark-extralight: varfix(color-dark-extralight, cascader);
 	line-height: 1;
 	cursor: text;
 
-	@include element(input) {
-		cursor: pointer;
-
-		input {
-			cursor: pointer;
-		}
-
-		.vc-input__append {
-			z-index: 0;
-		}
-	}
-
 	@include element(append) {
-		position: relative;
-		padding: 0 unitfix(10) 0 unitfix(2);
-		font-size: unitfix(12);
-		line-height: unitfix(32);
 		color: $color-dark-extralight;
-		text-align: center;
-		white-space: nowrap;
 		cursor: pointer;
-	}
-
-	@include element(icon) {
-		@include when(arrow) {
-			transform: scale(0.8);
-		}
 	}
 
 	// 列太多时横向滚动；高度随弹层的上限收缩（弹层 scrollable=false）
@@ -53,5 +30,16 @@ $color-dark-extralight: varfix(color-dark-extralight, cascader);
 		flex-wrap: nowrap;
 		width: max-content;
 		min-height: 0;
+	}
+
+	// 搜索结果：行距与各列的选项一致，当前值按选中项显示
+	@include element(paths) {
+		.vc-select-paths__item {
+			padding: unitfix(7) unitfix(16);
+
+			@include when(checked) {
+				color: $color-primary;
+			}
+		}
 	}
 }

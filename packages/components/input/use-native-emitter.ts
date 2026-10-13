@@ -7,8 +7,8 @@ export const useNativeEmitter = (
 ) => {
 	const exposed = {
 		/* istanbul ignore next -- @preserve */
-		focus() {
-			input.value?.focus?.();
+		focus(options?: FocusOptions) {
+			input.value?.focus?.(options);
 		},
 		/* istanbul ignore next -- @preserve */
 		blur() {

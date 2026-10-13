@@ -1,4 +1,4 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
 import { pick } from 'lodash-es';
 import { props as inputProps } from '../input/input-props';
 import { props as popoverProps } from '../popover/popover-props';
@@ -61,9 +61,11 @@ export const props = {
 		type: Number,
 		default: 1
 	},
+	// true / 'inline'：在触发器内直接输入；'popover'：弹层顶部的搜索栏
 	searchable: {
-		type: Boolean,
-		default: false
+		type: [Boolean, String] as PropType<boolean | 'inline' | 'popover'>,
+		default: false,
+		validator: (v: any) => typeof v === 'boolean' || ['inline', 'popover'].includes(v)
 	},
 	loadData: {
 		type: Function,

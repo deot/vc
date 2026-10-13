@@ -249,6 +249,61 @@ p {
 ```
 :::
 
+### 搜索
+
+`searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入，已选路径以占位文字的形式保留；`searchable="popover"` 改为在浮层顶部显示搜索栏。使用默认插槽替换输入框后没有内联的输入位置，这时两种取值都使用浮层搜索栏。
+
+输入关键词后，浮层从级联列换成扁平的路径列表：路径上任意一级的文字命中即列出，空格分隔的关键词需同时命中（可以分别落在不同层级），英文逗号分隔的各组任一命中即可。默认只列出末级节点，`changeOnSelect` 时任意一级都可选。点击结果会写入整条路径、提交并关闭；没有匹配时显示 `vc.Cascader.noMatch`。关闭浮层会清空搜索词。
+
+搜索只在已有的 `data` 内进行，不发起请求：`loadData` 仍然只用于加载子节点，尚未加载的节点搜不到，待加载子节点的节点也不会作为结果。
+
+输入框聚焦时按 Enter 打开浮层，Esc 关闭，Tab 关闭并移到下一个可聚焦元素。浮层打开后：
+
+| 浮层内容 | 按键 |
+| --- | --- |
+| 级联列 | ↑ / ↓ 在当前列内移动，← / → 回到父级或进入子级（搜索词为空时），Enter 等同点击当前项 |
+| 搜索结果 | ↑ / ↓ 移动高亮，Enter 选中高亮的路径 |
+
+:::playground
+<!--
+<config lang="json5">
+{ previewInset: 20 }
+</config>
+-->
+```vue
+<template>
+	<div class="cascader-search-demo">
+		<Cascader v-model="path" :data="options" searchable clearable search-placeholder="输入分组或条目名称" />
+		<p>已提交路径：{{ path.length ? path.join(' / ') : '无' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Cascader } from '@deot/vc';
+
+const path = ref([]);
+const options = ['A', 'B'].map(group => ({
+	value: `group-${group}`,
+	label: `分组 ${group}`,
+	children: [1, 2].map(index => ({
+		value: `group-${group}-${index}`,
+		label: `子分组 ${group}${index}`,
+		children: [1, 2, 3].map(item => ({
+			value: `item-${group}-${index}-${item}`,
+			label: `条目 ${group}${index}-${item}`
+		}))
+	}))
+}));
+</script>
+
+<style scoped>
+.cascader-search-demo { width: min(100%, 360px); }
+.cascader-search-demo p { margin: 12px 0 0; overflow-wrap: anywhere; }
+</style>
+```
+:::
+
 ### 异步加载子节点
 
 给待加载节点设置 `children: []`，并传入 `loadData`。鼠标移入该节点时显示加载状态，回调不接收参数，返回子节点数组（或解析为数组的 Promise）。组件会将返回结果插入原节点的 `children`，所以数据源需允许修改；已加载的非空子节点不会重复请求。
@@ -435,7 +490,7 @@ p {
 
 ## 主题与局部覆盖
 
-全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-cascader-column-<参数>`、`--vc-cascader-<参数>`。局部参数仅提供组件级入口；表中括号标明对应命名空间。
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-cascader-column-<参数>`、`--vc-cascader-<参数>`；搜索结果与搜索命中的文字使用 `--vc-select-paths-<参数>`、`--vc-select-highlight-<参数>`。局部参数仅提供组件级入口；表中括号标明对应命名空间。
 
 内嵌或复用的 [spin](../spin/README.md#主题与局部覆盖)、[input](../input/README.md#主题与局部覆盖)、[popover](../popover/README.md#主题与局部覆盖) 使用各自的主题入口。
 
@@ -443,11 +498,11 @@ p {
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
-| color-dark-lighter | 级联选项文字（cascader-column） | 亮色：`#515151`；暗色：`#D9D9D9` |
-| color-dark-extralight | 输入区附加图标（cascader） | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-dark-lighter | 级联选项文字（cascader-column）；搜索结果文字（select-paths） | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-extralight | 输入区附加图标（cascader）；搜索结果的空状态文字（select-paths） | 亮色：`#909399`；暗色：`#B9B9B9` |
 | color-neutral-light | 级联列分隔线（cascader-column） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
-| color-primary | 选中选项文字（cascader-column） | `#456CF6` |
-| background-color-primary-light | 选项悬停及当前浏览选项背景（cascader-column） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
+| color-primary | 选中选项文字（cascader-column）；搜索结果中当前路径的文字（cascader）；搜索命中的文字（select-highlight） | `#456CF6` |
+| background-color-primary-light | 选项悬停及当前浏览选项背景（cascader-column）；搜索结果的高亮背景（select-paths） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
 
 ### 局部
 
@@ -463,12 +518,14 @@ p {
 | modelValue | 选择路径，推荐用数组；也接收标量或由 `separator` 分隔的字符串 | `string \| number \| (string \| number)[]` | - | `undefined` |
 | formatter | 根据路径文本生成输入框内容 | `(labels: string[]) => string` | - | `labels => labels.join(' / ')` |
 | changeOnSelect | 点击任意一级即提交并关闭；否则只提交叶子节点 | `boolean` | - | `false` |
+| searchable | 开启搜索：`true` / `'inline'` 在输入框内直接输入，`'popover'` 在浮层顶部显示搜索栏；见[搜索](#搜索) | `boolean \| 'inline' \| 'popover'` | - | `false` |
+| searchPlaceholder | 搜索时的占位文字：内联搜索为浮层打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
 | disabled | 禁止打开和清空 | `boolean` | - | `false` |
 | clearable | 移入输入框时显示清除按钮 | `boolean` | - | `false` |
 | placeholder | 透传给默认输入框的占位文本，支持显式空字符串覆盖 | `string` | - | 当前语言的 `vc.Cascader.placeholder`，中文为 `请选择` |
 | extra | `formatter` 返回空值时展示的输入框内容 | `string` | - | `''` |
 | id | 默认 Input 根节点的 id，替换触发区后不使用 | `string` | - | - |
-| loadData | 为 `children: []` 的节点加载子节点；不接收参数，会修改原数据 | `() => CascaderOption[] \| Promise<CascaderOption[]>` | - | - |
+| loadData | 为 `children: []` 的节点加载子节点；不接收参数，会修改原数据，不参与搜索 | `() => CascaderOption[] \| Promise<CascaderOption[]>` | - | - |
 | trigger | 浮层打开方式；子列始终由鼠标移入展开 | `string` | `click`、`hover`、`strictHover`、`focus`、`custom` | `click` |
 | tag | 触发区根元素类型；`focus` 时需让根元素可聚焦 | `string` | - | `div` |
 | placement | 浮层位置 | `string` | `top`、`top-left`、`top-right`、`bottom`、`bottom-left`、`bottom-right`、`left`、`left-top`、`left-bottom`、`right`、`right-top`、`right-bottom` | `bottom-left` |
@@ -486,7 +543,8 @@ p {
 | --- | --- | --- | --- |
 | update:modelValue | 提交选择或清空，用于 `v-model` | `(value, labels)` | 数组输入返回路径数组；非数组输入按值转换规则返回标量或字符串。`labels` 为路径文本数组 |
 | change | 与 `update:modelValue` 同时触发，包括清空 | `(value, labels)` | 同上；清空数组路径时为 `([], [])` |
-| visible-change | 通过浮层触发器或外部点击改变可见状态时触发 | `(isVisible: boolean)` | 当前可见状态；选择或清空引起的内部关闭不触发此事件 |
+| clear | 点击清空按钮时触发，先于模型更新 | - | - |
+| visible-change | 通过浮层触发器、外部点击、输入或按 Enter 改变可见状态时触发 | `(isVisible: boolean)` | 当前可见状态；选择、清空、Esc 或 Tab 引起的内部关闭不触发此事件 |
 | ready | 浮层初始化完成 | `()` | 不等于打开动画完成 |
 | close | 关闭动画完成后触发，未提交的临时路径恢复为 modelValue | `()` | 选择、清空或外部点击关闭均可触发 |
 
@@ -494,7 +552,7 @@ p {
 
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
-| default | 替换整个默认输入框和清除按钮 | `{ label: string[], value: (string \| number)[], active: boolean }`；`value` 为当前浏览路径，`active` 为展开状态 |
+| default | 替换整个默认输入框和清除按钮；开启搜索时改用浮层搜索栏 | `{ label: string[], value: (string \| number)[], active: boolean }`；`value` 为当前浏览路径，`active` 为展开状态 |
 
 ### 数据格式与值转换
 
@@ -510,7 +568,7 @@ interface CascaderOption {
 
 数组形式的 `modelValue` 会保存完整路径，并在清空时返回 `[]`。字符串输入先按 `separator` 解析；非数组输入在默认 `max: 1` 下只输出路径首项，`max > 1` 时按 `separator` 连接。`numerable` 配合字符串输入时，当前实现输出由逗号连接的数字路径；需要稳定的完整路径时使用数组。
 
-组件虽然继承了 Select 的一些声明，但没有搜索、多选、`renderOption` 等对应渲染能力；没有独立 `clear` 事件、公开实例方法或 `readonly` 开关，默认输入框本身始终只读。
+组件虽然继承了 Select 的一些声明，但没有多选、远程搜索、`renderOption` 等对应渲染能力；没有公开实例方法或 `readonly` 开关，默认输入框只在开启内联搜索时可输入。
 
 ### 移动端
 
@@ -518,7 +576,7 @@ interface CascaderOption {
 
 ### 主题
 
-输入框和浮层分别使用 Input、Popover 的主题。Cascader 的箭头/清除图标可通过 `--vc-cascader-color-dark-extralight` 覆盖；列样式支持以下组件变量，并回退到同名全局变量：
+输入框和浮层分别使用 Input、Popover 的主题。Cascader 的箭头/清除图标可通过 `--vc-cascader-color-dark-extralight` 覆盖，搜索结果中当前路径的文字可通过 `--vc-cascader-color-primary` 覆盖；列样式支持以下组件变量，并回退到同名全局变量：
 
 | 变量 | 用途 |
 | --- | --- |

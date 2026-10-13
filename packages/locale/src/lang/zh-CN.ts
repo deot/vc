@@ -12,7 +12,8 @@ export const zhCN: Language = {
 			progress: '第 {current} 步，共 {total} 步'
 		},
 		Cascader: {
-			placeholder: '请选择'
+			placeholder: '请选择',
+			noMatch: '暂无匹配数据'
 		},
 		ColorPicker: {
 			clearText: '清空',
