@@ -16,14 +16,15 @@ $component-name: vc-divider;
 		margin: 24px 0;
 	}
 
+	// 竖线像文字一样排版：中心落在父级字体字符框的中心
 	@include when(vertical) {
-		position: relative;
-		top: -0.06em;
-		display: inline-block;
+		display: inline-flex;
 		width: 1px;
 		height: .9em;
 		margin: 0 12px;
-		vertical-align: middle;
+		align-items: center;
+
+		@include text-strut(0);
 	}
 
 	@include element(text) {

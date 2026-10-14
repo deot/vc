@@ -22,11 +22,12 @@ $component-name: vc-switch;
 	cursor: pointer;
 	box-sizing: border-box;
 
+	@include text-strut(0);
+
 	@include element(wrapper) {
 		position: relative;
 		display: flex;
 		width: 100%;
-		vertical-align: middle;
 		background-color: $color-light-deepest;
 		border: 1px solid $color-light-deepest;
 		border-radius: 20px;

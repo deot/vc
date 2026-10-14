@@ -54,7 +54,6 @@ $color-dark-extralight: varfix(color-dark-extralight, image);
 		align-items: center;
 		font-size: unitfix(14px);
 		color: $color-dark-extralight;
-		vertical-align: middle;
 	}
 
 	@include element(inner) {

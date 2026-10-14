@@ -4,4 +4,9 @@ $component-name: vc-checkbox-group;
 
 @include block($component-name) {
 	font-size: unitfix(12);
+
+	// 组内的选项之间留出间距；单独使用时不带多余的间距
+	> .vc-checkbox {
+		padding-right: unitfix(8);
+	}
 }

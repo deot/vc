@@ -11,17 +11,18 @@ $border-color: varfix(border-color, m-checkbox);
 $component-name: vcm-checkbox;
 
 @include block($component-name) {
-	display: inline-block;
-	margin-right: unitfix(12);
+	display: inline-flex;
 	font-size: unitfix(16);
 	cursor: pointer;
+	align-items: center;
+
+	@include text-strut;
 
 	@include element(wrapper) {
 		position: relative;
 		display: inline-block;
 		line-height: 1;
 		white-space: nowrap;
-		vertical-align: middle;
 		cursor: pointer;
 
 		@include when(sibling, true) {

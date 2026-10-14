@@ -14,20 +14,19 @@ $component-name: vc-radio;
 	position: relative;
 	display: inline-flex;
 	padding: unitfix(6) 0;
-	margin-right: unitfix(24);
 	font-size: unitfix(12);
 	line-height: unitfix(20);
 	white-space: nowrap;
-	vertical-align: middle;
 	cursor: pointer;
 	align-items: center;
+
+	@include text-strut;
 
 	@include element(wrapper) {
 		position: relative;
 		display: inline-flex;
 		line-height: inherit;
 		white-space: nowrap;
-		vertical-align: middle;
 		cursor: pointer;
 
 		@include when(sibling, true) {

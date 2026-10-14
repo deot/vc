@@ -111,9 +111,14 @@ $component-name: vc-tree-select;
 		}
 	}
 
+	// 复选框与文字之间的间距
 	@include element(cascader-checkbox) {
 		display: inline-flex;
 		align-items: center;
+
+		> .vc-checkbox {
+			padding-right: unitfix(8);
+		}
 	}
 
 	@include element(cascader-label) {

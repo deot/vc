@@ -15,11 +15,21 @@ $size: unitfix(32);
 	font-size: unitfix(12);
 	line-height: unset;
 
+	// 组内的选项之间留出间距；单独使用时不带多余的间距
+	> .vc-radio {
+		margin-right: unitfix(24);
+	}
+
+	> .vc-radio-button {
+		margin-right: unitfix(4);
+	}
+
 	@include when(vertical) {
 		flex-direction: column;
 
+		// 纵向排列时每项独占一行，仍按 flex 让指示器与文字居中
 		.vc-radio {
-			display: block;
+			display: flex;
 			height: unitfix(30);
 			line-height: unitfix(30);
 		}

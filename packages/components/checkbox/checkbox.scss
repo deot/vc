@@ -12,19 +12,20 @@ $component-name: vc-checkbox;
 
 @include block($component-name) {
 	display: inline-flex;
-	padding: unitfix(6) unitfix(8) unitfix(6) 0;
+	padding: unitfix(6) 0;
 	font-size: unitfix(12);
 	line-height: unitfix(20);
 	cursor: pointer;
 	box-sizing: border-box;
 	align-items: center;
 
+	@include text-strut;
+
 	@include element(wrapper) {
 		position: relative;
 		display: inline-flex;
 		line-height: inherit;
 		white-space: nowrap;
-		vertical-align: middle;
 		cursor: pointer;
 
 		@include when(sibling, true) {

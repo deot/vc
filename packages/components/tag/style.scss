@@ -48,12 +48,6 @@ $component-name: vc-tag;
 	font-size: 12px;
 	line-height: 22px;
 	color: $foreground-color;
-
-	/**
-	 * 居中对齐
-	 * @type {[type]}
-	 */
-	vertical-align: middle;
 	cursor: pointer;
 	background: $color-light-deep;
 	border-radius: 3px;
@@ -61,10 +55,13 @@ $component-name: vc-tag;
 
 	@include border('', $color-neutral-light, 3);
 
+	// 标签根节点的伪元素用于边框，字符框占位放在 wrapper 上：首项可能是圆点，基线仍取文字
 	@include element(wrapper) {
 		display: flex;
 		padding: 0 8px;
 		align-items: center;
+
+		@include text-strut(0);
 	}
 
 	@include element(close) {

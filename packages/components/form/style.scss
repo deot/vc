@@ -33,7 +33,6 @@ $foreground-color: varfix(foreground-color, form);
 		line-height: unitfix(20);
 		color: $color-dark-light;
 		text-align: right;
-		vertical-align: middle;
 		box-sizing: border-box;
 	}
 
@@ -101,9 +100,10 @@ $foreground-color: varfix(foreground-color, form);
 		}
 	}
 
+	// 标签独占一行：块级排版，不受行盒基线影响
 	@include when(top) {
 		@include element(label) {
-			display: inline-block;
+			display: block;
 			float: none;
 			padding: 0 0 unitfix(6);
 		}

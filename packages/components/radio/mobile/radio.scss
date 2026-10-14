@@ -12,20 +12,20 @@ $component-name: vcm-radio;
 
 @include block($component-name) {
 	position: relative;
-	display: inline-block;
-	margin-right: unitfix(24);
+	display: inline-flex;
 	font-size: unitfix(16);
 	line-height: 1;
 	white-space: nowrap;
-	vertical-align: middle;
 	cursor: pointer;
+	align-items: center;
+
+	@include text-strut;
 
 	@include element(wrapper) {
 		position: relative;
 		display: inline-block;
 		line-height: 1;
 		white-space: nowrap;
-		vertical-align: middle;
 		cursor: pointer;
 
 		@include when(sibling, true) {

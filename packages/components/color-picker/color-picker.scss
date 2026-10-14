@@ -48,12 +48,13 @@ $swatch-border-color: color-mix(in srgb, #{$color-contrast-dark} 15%, transparen
 @include block($component-name) {
 	display: inline-flex;
 
+	@include text-strut(0);
+
 	@include element(box) {
 		position: relative;
 		display: inline-block;
 		width: 100%;
 		line-height: 0;
-		vertical-align: middle;
 		cursor: pointer;
 
 		&:hover {

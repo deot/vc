@@ -69,6 +69,11 @@ $component-name: vc-tree;
 			padding: unitfix(6);
 		}
 
+		// 复选框至少一行高（20px），去掉上下内边距，落在 26px 的节点内；右侧留出与文字的间距
+		& > .vc-checkbox {
+			padding: 0 unitfix(8) 0 0;
+		}
+
 		&:hover,
 		.vc-tree-node:focus > &:hover {
 			background-color: $background-color-primary-light;

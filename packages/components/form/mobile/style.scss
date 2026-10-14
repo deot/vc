@@ -46,7 +46,6 @@ $background-color-lightest: varfix(background-color-lightest, form);
 		line-height: unitfix(24);
 		color: $color-dark;
 		text-align: right;
-		vertical-align: middle;
 		box-sizing: border-box;
 	}
 
@@ -71,9 +70,10 @@ $background-color-lightest: varfix(background-color-lightest, form);
 		}
 	}
 
+	// 标签独占一行：块级排版，不受行盒基线影响
 	@include when(top) {
 		@include element(label) {
-			display: inline-block;
+			display: block;
 			float: none;
 			padding: 0 0 unitfix(10);
 		}

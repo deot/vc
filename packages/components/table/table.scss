@@ -164,7 +164,6 @@ $sizes: (
 			width: 8px;
 			height: 8px;
 			margin-right: 5px;
-			vertical-align: middle;
 			background: $color-error;
 			border-radius: 50%;
 			content: "";
@@ -214,8 +213,10 @@ $sizes: (
 		.vc-table__cell {
 			text-overflow: unset!important;
 
+			// 紧凑排列：不占内边距，也不撑出一行高，只按单元格的行对齐
 			.vc-checkbox {
 				padding: 0;
+				line-height: 0;
 			}
 		}
 

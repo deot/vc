@@ -11,11 +11,9 @@ $component-name: vc-radio-button;
 	position: relative;
 	display: inline-flex;
 	padding: unitfix(3) 0;
-	margin-right: unitfix(4);
 	font-size: unitfix(12);
 	line-height: unitfix(20);
 	white-space: nowrap;
-	vertical-align: middle;
 	cursor: pointer;
 
 	input {

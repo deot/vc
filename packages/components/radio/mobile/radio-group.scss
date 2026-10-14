@@ -7,9 +7,15 @@ $component-name: vcm-radio-group;
 	font-size: unitfix(16);
 	line-height: unset;
 
+	// 组内的选项之间留出间距；单独使用时不带多余的间距
+	> .vcm-radio {
+		margin-right: unitfix(24);
+	}
+
 	@include when(vertical) {
+		// 纵向排列时每项独占一行，仍按 flex 让指示器与文字居中
 		.vcm-radio {
-			display: block;
+			display: flex;
 			height: unitfix(24);
 			line-height: unitfix(24);
 		}

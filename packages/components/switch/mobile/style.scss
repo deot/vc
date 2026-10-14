@@ -20,11 +20,10 @@ $thumb-border-color: color-mix(in srgb, #{$color-contrast-dark} 13%, transparent
 
 @include block($component-name) {
 	position: relative;
-	display: inline-block;
+	display: inline-flex;
 	width: 51px;
 	height: 31px;
 	line-height: 32px;
-	vertical-align: middle;
 	cursor: pointer;
 	background-color: $color-light-deepest;
 	border: 2px solid $color-light-deepest;
@@ -32,6 +31,9 @@ $thumb-border-color: color-mix(in srgb, #{$color-contrast-dark} 13%, transparent
 	box-sizing: border-box;
 	transition: all .2s ease-in-out;
 	user-select: none;
+
+	// 子元素都是绝对定位，基线由字符框占位提供，开关像文字一样与同行文字对齐
+	@include text-strut(0);
 
 	@include element(content) {
 		position: absolute;

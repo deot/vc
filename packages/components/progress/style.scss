@@ -11,17 +11,14 @@ $color-success: varfix(color-success, progress);
 	color: $color-dark-lightest;
 }
 
+// 进度条与百分比横向排列并垂直居中；百分比占 30px，与进度条间隔 3px
 @include block(vc-progress-line) {
-	@include element(wrapper) {
-		display: inline-block;
-		width: 100%;
-		vertical-align: middle;
-		box-sizing: border-box;
+	display: flex;
+	align-items: center;
 
-		@include when(text, true) {
-			padding-right: unitfix(33);
-			margin-right: unitfix(-30);
-		}
+	@include element(wrapper) {
+		min-width: 0;
+		flex: 1;
 
 		@include element(box) {
 			width: 100%;
@@ -63,9 +60,10 @@ $color-success: varfix(color-success, progress);
 	}
 
 	@include element(percent) {
-		display: inline-block;
+		width: unitfix(30);
+		margin-left: unitfix(3);
 		line-height: 1;
-		vertical-align: middle;
+		flex: none;
 
 		@include element(icon) {
 			@include when(success) {

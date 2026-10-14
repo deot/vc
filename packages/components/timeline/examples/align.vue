@@ -77,7 +77,8 @@ const options = reactive({
 	gap: 24px;
 }
 
-.controls label {
+/* 只作用于自己的开关标签，不影响 Radio（Radio 也是 label 元素） */
+.controls > label {
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
