@@ -155,3 +155,5 @@ export * from './upload';
 export * from './upload/index.m';
 export * from './upload-picker';
 export * from './upload-picker/index.m';
+export * from './watermark';
+export * from './watermark/index.m';

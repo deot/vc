@@ -1,0 +1,35 @@
+@use '../style/helper' as *;
+
+$component-name: vc-watermark;
+
+// 中性灰：亮色与暗色背景下都可见
+$color: varfix(color, watermark, rgb(128 128 128 / 20%));
+$font-size: varfix(font-size, watermark);
+
+@include block($component-name) {
+	position: relative;
+
+	@include element(layer) {
+		position: absolute;
+		z-index: 1;
+		font-size: $font-size;
+		font-style: normal;
+		font-weight: normal;
+		line-height: normal;
+		color: $color;
+		pointer-events: none;
+		background-repeat: repeat;
+		inset: 0;
+
+		// 颜色与字体被画进位图，无法随样式变化；借 transitionend 得知其变化后重绘
+		transition: 1ms;
+		transition-behavior: allow-discrete;
+		transition-property: color, font-size, font-style, font-weight, font-family, line-height;
+
+		// 满屏：相对视口定位，默认盖住弹层与提示
+		@include when(fullscreen) {
+			position: fixed;
+			z-index: 5000;
+		}
+	}
+}

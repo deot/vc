@@ -101,7 +101,8 @@ import {
 	MTree,
 	MTreeSelect,
 	MUpload,
-	MUploadPicker
+	MUploadPicker,
+	MWatermark
 } from '@deot/vc-components';
 
 export const MobileComponents = {
@@ -204,5 +205,6 @@ export const MobileComponents = {
 	MTree,
 	MTreeSelect,
 	MUpload,
-	MUploadPicker
+	MUploadPicker,
+	MWatermark
 };

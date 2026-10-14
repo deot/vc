@@ -100,7 +100,8 @@ import {
 	Tree,
 	TreeSelect,
 	Upload,
-	UploadPicker
+	UploadPicker,
+	Watermark
 } from '@deot/vc-components';
 
 export const DesktopComponents = {
@@ -202,5 +203,6 @@ export const DesktopComponents = {
 	Tree,
 	TreeSelect,
 	Upload,
-	UploadPicker
+	UploadPicker,
+	Watermark
 };

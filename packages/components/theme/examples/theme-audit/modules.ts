@@ -73,6 +73,7 @@ import Transition from './modules/transition.vue';
 import Tree from './modules/tree.vue';
 import Upload from './modules/upload.vue';
 import UploadPicker from './modules/upload-picker.vue';
+import Watermark from './modules/watermark.vue';
 
 export const MODULES = {
 	ActionSheet,
@@ -147,5 +148,6 @@ export const MODULES = {
 	Transition,
 	Tree,
 	Upload,
-	UploadPicker
+	UploadPicker,
+	Watermark
 } as Record<AuditComponentName, Component>;
