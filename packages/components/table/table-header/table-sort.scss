@@ -10,7 +10,6 @@ $color-primary-light: varfix(color-primary-light, table-sort);
 	width: 14px;
 	height: 20px;
 	overflow: initial;
-	vertical-align: middle;
 	cursor: pointer;
 	flex-direction: column;
 	align-items: center;
@@ -22,13 +21,14 @@ $color-primary-light: varfix(color-primary-light, table-sort);
 		height: 0;
 		border: 5px solid transparent;
 
+		// 两个三角的可见部分（各 5px，间隔 2px）在 20px 盒子里上下对称
 		@include modifier(ascending) {
-			top: -2px;
+			top: -1px;
 			border-bottom-color: $color-light-deepest;
 		}
 
 		@include modifier(descending) {
-			bottom: 0;
+			bottom: -1px;
 			border-top-color: $color-light-deepest;
 		}
 
