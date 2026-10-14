@@ -2,12 +2,12 @@
 
 import { computed, defineComponent, onMounted, ref, shallowRef, watch } from 'vue';
 import {
-	appendTimestamp,
 	isBlob,
-	isDataURL,
 	normalizeOutputSize
 } from '../image-crop/utils';
 import { props as imageProcessorProps } from './image-processor-props';
+import { loadImage } from './utils';
+import type { CrossOrigin } from './utils';
 
 const COMPONENT_NAME = 'vc-image-processor';
 const DEFAULT_OUTPUT_SIZE = 100;
@@ -21,7 +21,6 @@ export type ImageEnhancer = (
 	options?: ImageProcessorOptions
 ) => ImageData | void | Promise<ImageData | void>;
 
-type CrossOrigin = '' | 'anonymous' | 'use-credentials';
 type CanvasSize = [number, number];
 
 const normalizeColor = (color: number[] = DEFAULT_TARGET_COLOR) => {
@@ -40,7 +39,6 @@ const normalizeColor = (color: number[] = DEFAULT_TARGET_COLOR) => {
 	});
 };
 
-const isBlobURL = (value: string) => /^blob:/i.test(value);
 const isUint8ClampedArray = (value: unknown) => {
 	return Object.prototype.toString.call(value) === '[object Uint8ClampedArray]';
 };
@@ -51,11 +49,6 @@ const isImageData = (value: unknown): value is ImageData => {
 		&& isUint8ClampedArray((value as ImageData).data)
 		&& typeof (value as ImageData).width === 'number'
 		&& typeof (value as ImageData).height === 'number';
-};
-const withCacheStamp = (url: string) => {
-	if (isDataURL(url) || isBlobURL(url)) return url;
-
-	return appendTimestamp(url);
 };
 
 const readBlobAsDataUrl = (blob: Blob) => {
@@ -70,21 +63,6 @@ const readBlobAsDataUrl = (blob: Blob) => {
 		reader.onload = () => resolve(String(reader.result || ''));
 		reader.onerror = () => reject(reader.error || new Error('Failed to read image blob.'));
 		reader.readAsDataURL(blob);
-	});
-};
-
-const loadImage = (url: string, crossOrigin: CrossOrigin) => {
-	return new Promise<HTMLImageElement>((resolve, reject) => {
-		const image = new Image();
-		const source = withCacheStamp(url);
-
-		if (!isDataURL(source) && !isBlobURL(source) && crossOrigin !== '') {
-			image.crossOrigin = crossOrigin;
-		}
-
-		image.onload = () => resolve(image);
-		image.onerror = () => reject(new Error(`Failed to load image: ${url}`));
-		image.src = source;
 	});
 };
 

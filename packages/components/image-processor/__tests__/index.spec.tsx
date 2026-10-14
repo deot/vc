@@ -4,6 +4,7 @@ import { vi } from 'vitest';
 import { nextTick } from 'vue';
 import { ImageProcessor, MImageProcessor } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
+import { installImageMock } from './fixtures/image';
 
 const SVG_SOURCE = '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="rgb(10,20,30)"/></svg>';
 const DATA_URL = `data:image/svg+xml,${encodeURIComponent(SVG_SOURCE)}`;
@@ -76,74 +77,8 @@ const getPixel = (canvas: HTMLCanvasElement, x = 0, y = 0) => {
 	return Array.from(getContext(canvas).getImageData(x, y, 1, 1).data);
 };
 
-const installImageMock = (pixel = [10, 20, 30, 255], shouldFail = false) => {
-	const NativeImage = globalThis.Image;
-	const requests: Array<{ crossOrigin: string | null; src: string }> = [];
-	const ImageMock = vi.fn(function () {
-		const image = createCanvasSource(pixel) as any;
-		let src = '';
-
-		image.crossOrigin = '';
-		image.onload = undefined;
-		image.onerror = undefined;
-
-		Object.defineProperty(image, 'src', {
-			configurable: true,
-			get() {
-				return src;
-			},
-			set(value: string) {
-				src = value;
-				requests.push({
-					crossOrigin: image.crossOrigin,
-					src: value
-				});
-				setTimeout(() => {
-					if (shouldFail) {
-						image.onerror?.();
-					} else {
-						image.onload?.();
-					}
-				}, 0);
-			}
-		});
-
-		return image;
-	});
-
-	Object.defineProperty(globalThis, 'Image', {
-		configurable: true,
-		writable: true,
-		value: ImageMock
-	});
-
-	if (typeof window !== 'undefined') {
-		Object.defineProperty(window, 'Image', {
-			configurable: true,
-			writable: true,
-			value: ImageMock
-		});
-	}
-
-	return {
-		requests,
-		restore: () => {
-			Object.defineProperty(globalThis, 'Image', {
-				configurable: true,
-				writable: true,
-				value: NativeImage
-			});
-
-			if (typeof window !== 'undefined') {
-				Object.defineProperty(window, 'Image', {
-					configurable: true,
-					writable: true,
-					value: NativeImage
-				});
-			}
-		}
-	};
-};
+// 加载完成的图片：一块 1×1 的画布
+const createImage = () => createCanvasSource([10, 20, 30, 255]);
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -193,7 +128,7 @@ describe('image-processor.tsx', () => {
 	});
 
 	it('draws data URLs without an enhancer', async () => {
-		const imageMock = installImageMock();
+		const imageMock = installImageMock(createImage);
 
 		try {
 			const wrapper = mount(ImageProcessor, {
@@ -215,7 +150,7 @@ describe('image-processor.tsx', () => {
 
 	it('sets crossOrigin and cache stamp for remote URLs', async () => {
 		vi.spyOn(Date, 'now').mockReturnValue(123);
-		const imageMock = installImageMock();
+		const imageMock = installImageMock(createImage);
 
 		try {
 			const wrapper = mount(ImageProcessor, {
@@ -239,7 +174,7 @@ describe('image-processor.tsx', () => {
 	});
 
 	it('draws Blob/File sources', async () => {
-		const imageMock = installImageMock();
+		const imageMock = installImageMock(createImage);
 		const source = typeof File === 'undefined'
 			? new Blob([SVG_SOURCE], { type: 'image/svg+xml' })
 			: new File([SVG_SOURCE], 'pixel.svg', { type: 'image/svg+xml' });
@@ -448,7 +383,7 @@ describe('ImageProcessor.Enhancer', () => {
 	});
 
 	it('getImageData reports image load errors', async () => {
-		const imageMock = installImageMock([10, 20, 30, 255], true);
+		const imageMock = installImageMock(createImage, true);
 
 		try {
 			await expect(
