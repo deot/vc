@@ -11,6 +11,8 @@ export * from './alert';
 export * from './alert/index.m';
 export * from './artboard';
 export * from './artboard/index.m';
+export * from './badge';
+export * from './badge/index.m';
 export * from './button';
 export * from './button/index.m';
 export * from './calendar';

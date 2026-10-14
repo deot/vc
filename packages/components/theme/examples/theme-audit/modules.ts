@@ -4,6 +4,7 @@ import ActionSheet from './modules/action-sheet.vue';
 import Affix from './modules/affix.vue';
 import Alert from './modules/alert.vue';
 import Artboard from './modules/artboard.vue';
+import Badge from './modules/badge.vue';
 import Button from './modules/button.vue';
 import Calendar from './modules/calendar.vue';
 import Card from './modules/card.vue';
@@ -80,6 +81,7 @@ export const MODULES = {
 	Affix,
 	Alert,
 	Artboard,
+	Badge,
 	Button,
 	Calendar,
 	Card,

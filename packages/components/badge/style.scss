@@ -1,0 +1,150 @@
+@use '../style/helper' as *;
+
+$color-contrast-light: varfix(color-contrast-light, badge);
+$color-error: varfix(color-error, badge);
+$color-neutral: varfix(color-neutral, badge);
+$color-primary: varfix(color-primary, badge);
+$color-success: varfix(color-success, badge);
+$color-warning: varfix(color-warning, badge);
+$background-color-lightest: varfix(background-color-lightest, badge);
+$foreground-color: varfix(foreground-color, badge);
+$component-name: vc-badge;
+$height: 20px;
+$dot-size: 6px;
+$translate: translate(50%, -50%); // 角标的中心落在内容的右上角
+$overshoot: cubic-bezier(.3, 1.3, .3, 1);
+
+@include block($component-name) {
+	position: relative;
+	display: inline-block;
+	line-height: 1;
+
+	@include element((value, dot, custom)) {
+		position: absolute;
+		top: unitfix(2px);
+		right: unitfix(2px);
+		z-index: 2;
+		overflow: hidden;
+		text-align: center;
+		border-radius: unitfix($height);
+		transform: $translate;
+		transform-origin: 100% 0;
+		box-sizing: border-box;
+	}
+
+	@include element(value) {
+		height: unitfix($height);
+		min-width: unitfix($height);
+		padding: 0 unitfix(6px);
+		font-size: unitfix(12px);
+		font-weight: 500;
+		line-height: unitfix($height);
+		color: $color-contrast-light;
+		white-space: nowrap;
+		background-color: $color-error;
+		box-shadow: 0 0 0 unitfix(2px) $background-color-lightest;
+	}
+
+	// 数字变化时重新挂载，从无到有缩放
+	@include element(content) {
+		@include when(changed) {
+			display: inline-block;
+			animation: vc-badge-scale .5s $overshoot;
+		}
+	}
+
+	@include element(dot) {
+		width: unitfix($dot-size);
+		height: unitfix($dot-size);
+		background-color: $color-error;
+		border-radius: 50%;
+		box-shadow: 0 0 0 unitfix(2px) $background-color-lightest;
+	}
+
+	@include element(custom) {
+		background-color: $background-color-lightest;
+	}
+
+	// 没有默认插槽时徽标在行内显示
+	@include when(standalone) {
+		@include element((value, dot, custom)) {
+			position: relative;
+			top: auto;
+			right: auto;
+			display: inline-block;
+			transform: none;
+		}
+	}
+
+	@include element(status) {
+		display: inline-flex;
+		align-items: center;
+	}
+
+	@include element(status-dot) {
+		display: inline-block;
+		width: unitfix($dot-size);
+		height: unitfix($dot-size);
+		border-radius: 50%;
+
+		@include when(default) {
+			background-color: $color-neutral;
+		}
+
+		@include when(pending) {
+			background-color: $color-primary;
+		}
+
+		@include when(success) {
+			background-color: $color-success;
+		}
+
+		@include when(warning) {
+			background-color: $color-warning;
+		}
+
+		@include when(error) {
+			background-color: $color-error;
+		}
+	}
+
+	// 以文字的基线作为整个徽标的基线，与旁边的文字对齐（圆点仍上下居中）
+	@include element(label) {
+		align-self: baseline;
+		margin-left: unitfix(8px);
+		font-size: unitfix(14px);
+		line-height: unitfix(22px);
+		color: $foreground-color;
+	}
+}
+
+// 进出场：缩放以徽标中心为原点
+.vc-badge__zoom-enter-active,
+.vc-badge__zoom-leave-active {
+	transition: opacity .3s $overshoot, transform .3s $overshoot;
+	transform-origin: center;
+}
+
+.vc-badge__zoom-enter-from,
+.vc-badge__zoom-leave-to {
+	transform: $translate scale(.2);
+}
+
+.vc-badge__zoom-leave-to {
+	opacity: 0;
+}
+
+.vc-badge.is-standalone > .vc-badge__zoom-enter-from,
+.vc-badge.is-standalone > .vc-badge__zoom-leave-to {
+	transform: scale(.2);
+}
+
+@keyframes vc-badge-scale {
+	from {
+		transform: scale(0);
+	}
+
+	to {
+		transform: scale(1);
+	}
+}
