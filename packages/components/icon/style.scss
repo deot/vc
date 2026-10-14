@@ -1,22 +1,23 @@
+@use '../style/helper' as *;
+
+// 像文字一样排版：根节点是一个字符框，基线取自按父级字体排版的零宽字符，图标在框内居中；不需要 vertical-align
 .vc-icon {
-	display: inline-block;
+	display: inline-flex;
 	line-height: 0;
-	vertical-align: middle;
+	align-items: center;
+	justify-content: center;
+
+	@include text-strut;
 
 	> svg {
 		width: 1em;
 		height: 1em;
 		overflow: hidden;
-		vertical-align: -0.15em; // 居中
-		// padding: 0.05em;
 		fill: currentcolor;
 	}
 
-	// size有值时，外层为固定盒子，图标居中
+	// size有值时，外层为固定盒子，图标居中；flex 父容器空间不足时不被压缩
 	&.is-size {
-		display: inline-flex;
 		flex-shrink: 0;
-		align-items: center;
-		justify-content: center;
 	}
 }

@@ -60,19 +60,22 @@ const handleIconClick = (item, e) => {
 .vc-icon-basic {
 	display: flex;
 	flex-wrap: wrap;
+
 	div {
 		width: 200px;
 		padding: 20px;
 		text-align: center;
 		cursor: pointer;
 	}
+
 	i {
-		font-size: 30px
+		font-size: 30px;
 	}
+
 	svg {
 		width: 1em;
 		height: 1em;
-		fill: currentColor;
+		fill: currentcolor;
 		overflow: hidden;
 	}
 }

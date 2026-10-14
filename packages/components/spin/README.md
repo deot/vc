@@ -8,7 +8,7 @@
 
 ### 基础用法
 
-`size` 控制默认图标的尺寸，单位为 px。
+`size` 控制默认图标的尺寸，单位为 px。图标与 Icon 一样像文字排版：与文字混排时，中心落在父级字体字符框的中心。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
@@ -118,7 +118,7 @@ foreground、background 显式属性优先于默认值中的 CSS 变量；默认
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| size | 默认图标尺寸，同时设置图标容器的字号，单位 px | `number` | - | `28` |
+| size | 默认图标尺寸，单位 px；使用 `loading` 插槽时作为插槽容器的字号 | `number` | - | `28` |
 | foreground | 圆环长弧的描边颜色 | `string` | - | `var(--vc-spin-foreground-color, #ccc)` |
 | background | 圆环短弧的描边颜色 | `string` | - | `var(--vc-spin-color-primary, var(--vc-color-primary))` |
 | fixed | 预留属性，当前无效果 | `boolean` | - | `false` |

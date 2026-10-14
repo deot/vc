@@ -173,11 +173,6 @@ const input4 = ref('');
 	width: 16px;
 	font-size: 12px;
 }
-.v-input-icon .icon {
-	display: inline-block;
-	vertical-align: middle;
-	line-height: 0;
-}
 </style>
 ```
 :::

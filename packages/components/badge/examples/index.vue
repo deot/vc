@@ -56,7 +56,7 @@
 				<a href="javascript:void(0)">链接</a>
 			</Badge>
 			<Badge :value="9" dot :offset="[2, -2]">
-				<Icon type="message" style="font-size: 18px; color: #888; vertical-align: -3px;" />
+				<Icon type="message" style="font-size: 18px; color: #888;" />
 			</Badge>
 			<Badge :value="5" :offset="[-6, 6]">
 				<span class="badge-demo__box" />

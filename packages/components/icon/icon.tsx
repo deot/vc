@@ -52,8 +52,7 @@ export const Icon = defineComponent({
 							? {
 									color,
 									width: `${box[0]}px`,
-									height: `${box[1]}px`,
-									fontSize: `${Math.min(glyph[0], glyph[1])}px`
+									height: `${box[1]}px`
 								}
 							: (color ? { color } : undefined)
 					}
@@ -62,7 +61,7 @@ export const Icon = defineComponent({
 						viewBox={viewBox.value}
 						xmlns="http://www.w3.org/2000/svg"
 						style={
-							size && glyph[0] !== glyph[1]
+							size
 								? { width: `${glyph[0]}px`, height: `${glyph[1]}px` }
 								: undefined
 						}

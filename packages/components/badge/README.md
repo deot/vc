@@ -168,7 +168,6 @@ import { Badge, Icon } from '@deot/vc';
 .icon {
 	font-size: 18px;
 	color: #888;
-	vertical-align: -3px;
 }
 .box {
 	display: block;

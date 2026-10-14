@@ -24,7 +24,7 @@
 			</div>
 		</div>
 
-		<p>与文字混排：按 vertical-align: middle 对齐，是否传 size 都一致（中文旁比文字中心低约 0.1em）</p>
+		<p>与文字混排：图标像文字一样排版，中心落在父级字体字符框的中心，是否传 size 都一致</p>
 		<div class="icon-size__text">
 			文字
 			<Icon :type="controls.type" :color="color" />
@@ -37,7 +37,7 @@
 			文字
 		</div>
 
-		<p>需要精确居中时，放进 align-items: center 的 flex 容器</p>
+		<p>放进 align-items: center 的 flex 容器：按容器居中</p>
 		<div class="icon-size__center">
 			<span>文字</span>
 			<Icon :type="controls.type" :color="color" />
@@ -74,13 +74,13 @@ const color = computed(() => (controls.color === 'none' ? undefined : controls.c
 
 const CASES = [
 	{ label: '不传', desc: '外层与图标均为 1em', size: undefined },
-	{ label: '12', desc: '外层 12×12，图标 12×12，font-size 12', size: 12 },
-	{ label: '[20, 12]', desc: '外层 20×20，图标 12×12，font-size 12', size: [20, 12] },
+	{ label: '12', desc: '外层 12×12，图标 12×12', size: 12 },
+	{ label: '[20, 12]', desc: '外层 20×20，图标 12×12', size: [20, 12] },
 	{ label: '[[20], [12]]', desc: '同上', size: [[20], [12]] },
-	{ label: '[[100, 24], 12]', desc: '外层 100×24，图标 12×12，font-size 12', size: [[100, 24], 12] },
+	{ label: '[[100, 24], 12]', desc: '外层 100×24，图标 12×12', size: [[100, 24], 12] },
 	{ label: '[[100, 24], [12, 12]]', desc: '同上', size: [[100, 24], [12, 12]] },
-	{ label: '[[100, 24]]', desc: '外层 100×24，图标 100×24，font-size 24', size: [[100, 24]] },
-	{ label: '[[24, 100]]', desc: '外层 24×100，图标 24×100，font-size 24', size: [[24, 100]] }
+	{ label: '[[100, 24]]', desc: '外层 100×24，图标 100×24', size: [[100, 24]] },
+	{ label: '[[24, 100]]', desc: '外层 24×100，图标 24×100', size: [[24, 100]] }
 ];
 </script>
 

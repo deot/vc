@@ -9,18 +9,18 @@ export const Spin = defineComponent({
 	name: COMPONENT_NAME,
 	props: spinProps,
 	setup(props, { slots }) {
+		// loading 插槽的内容按 size 设置字号；默认图标按 px 设置尺寸，字符框跟随外层字体
 		return () => {
 			return (
 				<div class="vc-spin">
-					<span style={{ fontSize: `${props.size}px` }}>
+					<span style={slots.loading ? { fontSize: `${props.size}px` } : undefined}>
 						{
-							slots?.loading?.() || (
+							slots.loading?.() || (
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									version="1.1"
 									viewBox="0 0 32 32"
-									width="100%"
-									height="100%"
+									style={{ width: `${props.size}px`, height: `${props.size}px` }}
 								>
 									<path
 										stroke={props.foreground}

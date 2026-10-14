@@ -12,16 +12,13 @@ $block: vc-date-header;
 	border-bottom: 1px solid $color-neutral-light;
 	user-select: none;
 
+	// 箭头（Icon 根节点）与标题同高，图标在其中居中，与年月文字的字符框中心一致
 	@include element(arrow) {
-		display: inline-block;
+		display: inline-flex;
 		width: 20px;
-		height: 24px;
-		margin-top: 2px;
+		height: 100%;
 		font-size: 14px;
-		line-height: 26px;
 		color: $color-dark-extralight;
-		text-align: center;
-		vertical-align: unset;
 		cursor: pointer;
 		transition: color .2s ease-in-out;
 

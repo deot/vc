@@ -207,3 +207,21 @@
 		}
 	}
 }
+
+/**
+ * 字符框占位：按当前字号排版的零宽字符（隐藏，不计入可访问名称），放在 flex 容器的首位并居中，容器的基线取自它
+ * - 容器像文字一样排版：盒子中心落在父级字体字符框的中心，跟随父级的字号、字体与 vertical-align，不需要 vertical-align
+ * - $line-height：不传时继承容器的行高（容器内容至少一行高）；传 0 时不影响容器尺寸
+ * - 转义原样输出，产物不含非 ASCII 字符
+ */
+@mixin text-strut($line-height: null) {
+	&::before {
+		content: #{'"\\200b"'};
+		visibility: hidden;
+		align-self: center;
+
+		@if $line-height {
+			line-height: $line-height;
+		}
+	}
+}

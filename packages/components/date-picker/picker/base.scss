@@ -42,11 +42,6 @@ $component-name: vc-date-picker;
 			font-size: 14px;
 			cursor: pointer;
 		}
-
-		.vc-icon {
-			vertical-align: unset;
-		}
-
 	}
 
 	@include element(tags) {

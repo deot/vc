@@ -80,7 +80,7 @@ $foreground-color: varfix(foreground-color, input);
 
 	@include pseudo(hover) {
 		@include element(icon-clear){
-			display: block;
+			display: flex;
 		}
 	}
 

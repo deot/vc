@@ -54,49 +54,46 @@ describe('index.ts', () => {
 	});
 
 	it('size', () => {
-		// [size, 外层宽高, 图标宽高, font-size]
+		// [size, 外层宽高, 图标宽高]
 		const cases: any[] = [
-			[12, [12, 12], [12, 12], 12],
-			[[20, 12], [20, 20], [12, 12], 12],
-			[[[20], [12]], [20, 20], [12, 12], 12],
-			[[[100, 24], 12], [100, 24], [12, 12], 12],
-			[[[100, 24], [12, 12]], [100, 24], [12, 12], 12],
-			[[[100, 24]], [100, 24], [100, 24], 24],
-			[[[24, 100]], [24, 100], [24, 100], 24]
+			[12, [12, 12], [12, 12]],
+			[[20, 12], [20, 20], [12, 12]],
+			[[[20], [12]], [20, 20], [12, 12]],
+			[[[100, 24], 12], [100, 24], [12, 12]],
+			[[[100, 24], [12, 12]], [100, 24], [12, 12]],
+			[[[100, 24]], [100, 24], [100, 24]],
+			[[[24, 100]], [24, 100], [24, 100]]
 		];
 
-		cases.forEach(([size, box, glyph, fontSize]) => {
+		cases.forEach(([size, box, glyph]) => {
 			const wrapper = mount(() => (
 				<Icon type="search" size={size} color="red" />
 			));
 			const el = wrapper.element as HTMLElement;
-			const svg = wrapper.find('svg');
+			const svg = wrapper.find('svg').element as SVGElement;
 
 			expect(wrapper.classes()).toEqual(['vc-icon', 'is-size']);
 			expect(el.style.color).toBe('red');
 			expect(el.style.width).toBe(`${box[0]}px`);
 			expect(el.style.height).toBe(`${box[1]}px`);
-			expect(el.style.fontSize).toBe(`${fontSize}px`);
-
-			// 图标为方形时由1em控制，不输出style
-			if (glyph[0] === glyph[1]) {
-				expect(svg.attributes('style')).toBeUndefined();
-			} else {
-				expect((svg.element as any).style.width).toBe(`${glyph[0]}px`);
-				expect((svg.element as any).style.height).toBe(`${glyph[1]}px`);
-			}
+			// 根节点不设置字号，字符框跟随外层字体；对齐由字符框决定，不输出 vertical-align
+			expect(el.style.fontSize).toBe('');
+			expect(el.style.verticalAlign).toBe('');
+			expect(svg.style.width).toBe(`${glyph[0]}px`);
+			expect(svg.style.height).toBe(`${glyph[1]}px`);
 			wrapper.unmount();
 		});
 	});
 
 	it('size, 透传的style可覆盖', () => {
 		const wrapper = mount(() => (
-			<Icon type="search" size={[20, 12]} style="font-size: 15px" />
+			<Icon type="search" size={[20, 12]} style="width: 30px; vertical-align: middle" />
 		));
 		const el = wrapper.element as HTMLElement;
 
-		expect(el.style.width).toBe('20px');
-		expect(el.style.fontSize).toBe('15px');
+		expect(el.style.width).toBe('30px');
+		expect(el.style.height).toBe('20px');
+		expect(el.style.verticalAlign).toBe('middle');
 	});
 
 	it('icon waiting, coverage', async () => {

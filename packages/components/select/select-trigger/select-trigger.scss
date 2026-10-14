@@ -47,7 +47,7 @@ $color-dark-light: varfix(color-dark-light, select-trigger);
 
 	&:hover {
 		.vc-select-trigger__clear {
-			display: inline-block;
+			display: inline-flex;
 
 			+ .vc-select-trigger__icon {
 				display: none;

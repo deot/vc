@@ -363,10 +363,11 @@ $sizes: (
 		}
 	}
 
+	// 展开图标：与单元格行高一致，图标按文字的方式对齐，与同行文字、树形列的展开图标等高
 	@include element(expand-icon) {
 		display: inline-block;
 		width: 20px;
-		height: 23px;
+		height: $line-height;
 		font-size: 12px;
 		line-height: $line-height;
 		color: $color-light-deepest;
@@ -403,8 +404,6 @@ $sizes: (
 	}
 
 	@include element(tree-icon) {
-		width: 20px;
-		height: 20px;
 		min-width: 20px;
 		margin-right: 3px;
 		text-align: center;

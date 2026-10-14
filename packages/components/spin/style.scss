@@ -1,14 +1,24 @@
+@use '../style/helper' as *;
+
 .vc-spin {
 	display: inline-block;
 	line-height: 0;
-	vertical-align: middle;
+
+	// 图标所在的字符框：与 Icon 相同，像文字一样跟随父级字体排版，不需要 vertical-align
+	> span {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+
+		@include text-strut;
+	}
 }
 
+// 默认图标的尺寸由组件按 size 设置；loading 插槽中的 svg 跟随容器字号
 .vc-spin svg {
 	width: 1em;
 	height: 1em;
 	overflow: hidden;
-	vertical-align: -0.15em; // 居中
 	animation: vc-spin-circle 1s linear infinite;
 	fill: currentcolor;
 }

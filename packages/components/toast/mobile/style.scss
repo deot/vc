@@ -45,8 +45,9 @@ $surface-color: color-mix(in srgb, #{$color-contrast-dark} 75%, transparent);
 		@include position-center;
 	}
 
+	// 加载图标与下方文字的间距
 	@include element(loading) {
-		line-height: unitfix(24);
+		margin-bottom: unitfix(4);
 	}
 
 	@include element(content) {
