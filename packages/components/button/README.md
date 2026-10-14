@@ -85,7 +85,7 @@ import { Button } from '@deot/vc';
 
 ### 图标与形状
 
-`icon` 添加内置图标，图标尺寸随 `size` 调整：small 为 `12px`、medium 为 `14px`、large 为 `16px`；图标与文字同时存在时，间距为 `6px`。自定义 `icon` 插槽继承相同字号，显式设置尺寸的内容由调用方控制。`circle` 使用胶囊形圆角。无默认插槽时配合 `round` 可创建圆形图标按钮。
+`icon` 添加内置图标，图标尺寸随 `size` 调整：small 为 `12px`、medium 为 `14px`、large 为 `16px`；图标与文字同时存在时，间距为 `6px`。自定义 `icon` 插槽继承相同字号，显式设置尺寸的内容由调用方控制。`circle` 使用胶囊形圆角。无默认插槽时配合 `round` 可创建圆形图标按钮。只有图标的按钮（含圆形）与同尺寸的文字按钮等高，放在同一行时上下对齐。
 
 :::playground
 <!--
@@ -152,7 +152,7 @@ import { Button } from '@deot/vc';
 
 ### 异步加载
 
-当 `click` 处理函数返回 Promise 时，按钮会展示加载图标，并在 Promise 结束后自动移除。
+当 `click` 处理函数返回 Promise 时，按钮会展示加载图标，并在 Promise 结束后自动移除。加载图标位于最前，与图标、文字之间的间距为 `6px`；按钮设置了 `icon` 时两者同时显示，只有图标的圆形按钮（`round`）放不下两者，加载中只显示加载图标。
 
 :::playground
 <!--

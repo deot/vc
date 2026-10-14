@@ -27,6 +27,7 @@ export const Button = defineComponent({
 			'is-circle': props.circle || group.circle,
 			'is-alone': !slots?.default,
 			'is-with-icon': Boolean(props.icon || slots.icon),
+			'is-loading': isLoading.value,
 			'is-round': props.round,
 			'is-long': props.long,
 			'is-disabled': props.disabled,
@@ -51,6 +52,8 @@ export const Button = defineComponent({
 		};
 
 		return () => {
+			// 只有图标的圆形按钮放不下加载图标与图标，加载中只显示加载图标
+			const showIcon = !(isLoading.value && props.round && !slots.default);
 			return (
 				<Debounce
 					tag={props.tag}
@@ -64,25 +67,6 @@ export const Button = defineComponent({
 					onMouseleave={() => isHover.value = false}
 				>
 					{
-						props.icon
-						&& (
-							<span class="vc-button__icon">
-								<Icon type={props.icon} />
-							</span>
-						)
-					}
-					{
-						slots.icon && (
-							<span class="vc-button__icon">
-								{
-									slots.icon({
-										hover: isHover.value
-									})
-								}
-							</span>
-						)
-					}
-					{
 						isLoading.value && (
 							<Spin
 								size={12}
@@ -94,6 +78,26 @@ export const Button = defineComponent({
 								background="var(--vc-button-color-primary, var(--vc-color-primary))"
 								class="vc-button__loading"
 							/>
+						)
+					}
+					{
+						showIcon
+						&& props.icon
+						&& (
+							<span class="vc-button__icon">
+								<Icon type={props.icon} />
+							</span>
+						)
+					}
+					{
+						showIcon && slots.icon && (
+							<span class="vc-button__icon">
+								{
+									slots.icon({
+										hover: isHover.value
+									})
+								}
+							</span>
 						)
 					}
 

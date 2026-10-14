@@ -163,11 +163,6 @@ $box-shadow: varfix(box-shadow, modal);
 		@include when(confirm) {
 			padding: unitfix(0) unitfix(28) unitfix(32);
 			border-top: none;
-
-			button {
-				display: inline-block;
-				vertical-align: middle;
-			}
 		}
 	}
 

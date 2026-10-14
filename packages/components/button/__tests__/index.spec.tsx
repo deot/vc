@@ -139,6 +139,40 @@ describe('index.ts', () => {
 		expect(wrapper.findComponent(Spin).exists()).toBeFalsy();
 	});
 
+	it('click, loading, is-loading 与 icon 并存，loading 在前', async () => {
+		expect.assertions(5);
+		const handler = async () => {
+			await Utils.sleep(10);
+
+			expect(wrapper.classes()).toContain('is-loading');
+			expect(wrapper.findComponent(Icon).exists()).toBeTruthy();
+			expect(wrapper.findComponent(Spin).exists()).toBeTruthy();
+			expect(wrapper.element.firstElementChild!.classList.contains('vc-spin')).toBeTruthy();
+		};
+
+		const wrapper = mount(() => <Button icon="search" onClick={handler}>搜索</Button>);
+
+		await wrapper.trigger('click');
+		await Utils.sleep(30);
+		expect(wrapper.classes()).not.toContain('is-loading');
+	});
+
+	it('click, loading, 只有图标的圆形按钮只显示 loading', async () => {
+		expect.assertions(3);
+		const handler = async () => {
+			await Utils.sleep(10);
+
+			expect(wrapper.findComponent(Spin).exists()).toBeTruthy();
+			expect(wrapper.findComponent(Icon).exists()).toBeFalsy();
+		};
+
+		const wrapper = mount(() => <Button icon="search" round onClick={handler} />);
+
+		await wrapper.trigger('click');
+		await Utils.sleep(30);
+		expect(wrapper.findComponent(Icon).exists()).toBeTruthy();
+	});
+
 	it('click, loading, foreground', async () => {
 		expect.assertions(1);
 		const handler = async () => {

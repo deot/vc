@@ -136,7 +136,9 @@ $component-name: vc-button;
 }
 
 
+// 加载图标、图标、文字横向排列并垂直居中；无论是否带图标、是否加载中都是同一套布局
 @include block($component-name) {
+	display: inline-flex;
 	padding: unitfix(5) unitfix(16);
 	font-size: unitfix(13);
 	font-weight: 400;
@@ -156,10 +158,17 @@ $component-name: vc-button;
 		border .2s linear,
 		box-shadow .2s linear;
 	user-select: none;
+	align-items: center;
+	justify-content: center;
 
-	@include element(loading) {
-		vertical-align: middle;
+	// 各部分之间的间距；用外边距而不是 gap，基线占位不参与间距，按钮被外部改为非 flex 时间距也不变
+	> * + * {
+		margin-left: unitfix(6);
 	}
+
+	// 字符框占位：按钮的基线取自它，与同一行的其它按钮一致，只有图标时同样适用；
+	// 按按钮的行高排版，内容区至少一行高，只有图标的按钮与文字按钮等高
+	@include text-strut;
 
 	@include element(icon) {
 		display: inline-flex;
@@ -170,16 +179,6 @@ $component-name: vc-button;
 		height: 1em;
 		font-size: unitfix(14);
 		line-height: 1;
-	}
-
-	@include when(with-icon) {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-
-		&:not(.is-alone) > .vc-button__icon {
-			margin-right: unitfix(6);
-		}
 	}
 
 	@include when(circle) {
@@ -354,21 +353,24 @@ $component-name: vc-button;
 		}
 	}
 
+	// 只有图标的圆形按钮：与同尺寸的文字按钮等高；保留上下内边距，内容区与文字行同高，基线位置一致
 	@include when(alone) {
 		& {
 			@include when(round) {
-				width: unitfix(30);
-				height: unitfix(30);
-				padding: 0;
+				width: unitfix(32);
+				height: unitfix(32);
+				padding-right: 0;
+				padding-left: 0;
 				font-size: unitfix(13);
 				border-radius: 50%;
 			}
 
 			@include when(large) {
 				@include when(round) {
-					width: unitfix(36);
-					height: unitfix(36);
-					padding: 0;
+					width: unitfix(38);
+					height: unitfix(38);
+					padding-right: 0;
+					padding-left: 0;
 					font-size: unitfix(14);
 					border-radius: 50%;
 				}
@@ -376,9 +378,10 @@ $component-name: vc-button;
 
 			@include when(small) {
 				@include when(round) {
-					width: unitfix(24);
-					height: unitfix(24);
-					padding: 0;
+					width: unitfix(26);
+					height: unitfix(26);
+					padding-right: 0;
+					padding-left: 0;
 					font-size: unitfix(12);
 					border-radius: 50%;
 				}

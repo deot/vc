@@ -8,18 +8,12 @@ $color-neutral-light: varfix(color-neutral-light, button-group);
 
 	@include block(vc-button) {
 		position: relative;
-		display: block;
+		display: flex;
 		float: left;
 		margin-left: -1px;
 
 		&:not(:only-child) {
 			border-radius: 0;
-		}
-
-		@include when(with-icon) {
-			display: flex;
-			align-items: center;
-			justify-content: center;
 		}
 
 		&:first-child {
