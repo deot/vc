@@ -74,7 +74,8 @@ const mockVerticalGeometry = (
 	content: HTMLElement,
 	options: {
 		clientSize?: number;
-		listStart?: number;
+		// 函数形式用来模拟前置内容伸缩：列表根随之整体平移
+		listStart?: number | (() => number);
 		listSize?: number;
 		contentStart?: () => number;
 		contentSize?: number;
@@ -84,14 +85,15 @@ const mockVerticalGeometry = (
 		clientSize = 200,
 		listStart = 500,
 		listSize = 400,
-		contentStart = () => listStart,
 		contentSize = listSize
 	} = options;
+	const start = typeof listStart === 'function' ? listStart : () => listStart;
+	const { contentStart = start } = options;
 	const restores = [
 		defineGetter(viewport, 'clientHeight', () => clientSize),
 		defineGetter(viewport, 'scrollHeight', () => 4000),
 		setRect(viewport, () => rect(100, 0, 600, clientSize)),
-		setRect(root, () => rect(100 + listStart - viewport.scrollTop, 0, 600, listSize)),
+		setRect(root, () => rect(100 + start() - viewport.scrollTop, 0, 600, listSize)),
 		setRect(content, () => rect(100 + contentStart() - viewport.scrollTop, 0, 600, contentSize))
 	];
 	return () => restores.forEach(restore => restore());
@@ -833,16 +835,18 @@ describe('RecycleList fill=false: content before the list changes', () => {
 	// 前置内容的增量，折合 6 行
 	const SHIFT = 240;
 
-	// 50 行 × 40px，视口 200px；列表起点（contentStart）可变，用来模拟前置内容的伸缩
+	// 50 行 × 40px，视口 200px；列表起点可变，用来模拟前置内容的伸缩（列表根与 content 一起平移）；
+	// headerSize 只移动 content，模拟列表自己的 header 变化
+	// overscan 固定为 50，可见范围的换算不受默认值影响
 	const setup = async () => {
 		const listRef = ref<any>();
-		const geometry = { contentStart: 500 };
+		const geometry = { listStart: 500, headerSize: 0 };
 		const data = Array.from({ length: 50 }, (_, id) => ({ id }));
 		const wrapper = mount(() => (
 			<div class="viewport" style="overflow-y: auto; height: 200px;">
 				<div class="page">
 					<div class="before" />
-					<RecycleList ref={listRef} fill={false} disabled data={data} estimateSize={ITEM_SIZE}>
+					<RecycleList ref={listRef} fill={false} disabled data={data} estimateSize={ITEM_SIZE} overscan={50}>
 						{{ default: ({ row }: any) => <div>{row.id}</div> }}
 					</RecycleList>
 				</div>
@@ -855,13 +859,23 @@ describe('RecycleList fill=false: content before the list changes', () => {
 			viewport,
 			wrapper.find('.vc-recycle-list').element as HTMLElement,
 			wrapper.find('.vc-recycle-list__content').element as HTMLElement,
-			{ listSize: 2000, contentStart: () => geometry.contentStart }
+			{
+				listSize: 2000,
+				listStart: () => geometry.listStart,
+				contentStart: () => geometry.listStart + geometry.headerSize
+			}
 		);
 		await listRef.value.refreshViewport();
 
+		const page = wrapper.find('.page').element;
 		const scroll = async (value: number) => {
 			viewport.scrollTop = value;
 			viewport.dispatchEvent(new Event('scroll'));
+			await flush();
+		};
+		// 列表之前的内容伸缩：祖先尺寸变化的回调随之而来
+		const resizePage = async () => {
+			observerOf(page).trigger(page);
 			await flush();
 		};
 		const range = () => {
@@ -871,8 +885,10 @@ describe('RecycleList fill=false: content before the list changes', () => {
 		return {
 			wrapper,
 			viewport,
+			page,
 			geometry,
 			scroll,
+			resizePage,
 			range,
 			destroy: () => {
 				restore();
@@ -881,48 +897,201 @@ describe('RecycleList fill=false: content before the list changes', () => {
 		};
 	};
 
-	it('re-measures the list position on every carrier scroll', async () => {
-		const { geometry, scroll, range, destroy } = await setup();
+	it('keeps the list in place when content before it changes while the viewport is inside the list', async () => {
+		const { wrapper, viewport, page, geometry, scroll, resizePage, range, destroy } = await setup();
+		await scroll(900);
+		const visible = range();
+		expect(visible[0]).toBeGreaterThan(0);
+
+		// 列表到承载者之间的祖先被观察；列表根自身不算
+		expect(observerOf(page)).toBeTruthy();
+		expect(observerOf(wrapper.find('.vc-recycle-list').element)).toBeUndefined();
+
+		// 前置内容变高：滚动位置同步平移，视口里还是同样的行（与浏览器的滚动锚定一致）
+		geometry.listStart += SHIFT;
+		await resizePage();
+		expect(viewport.scrollTop).toBe(900 + SHIFT);
+		expect(range()).toEqual(visible);
+
+		// 变回去；承载者自身的尺寸变化同样会重新测量
+		geometry.listStart -= SHIFT;
+		observerOf(viewport).trigger(viewport);
+		await flush();
+		expect(viewport.scrollTop).toBe(900);
+		expect(range()).toEqual(visible);
+
+		destroy();
+		expect(observerOf(page)).toBeUndefined();
+	});
+
+	it('catches the shift when a scroll measures it before the resize callback', async () => {
+		const { viewport, geometry, scroll, range, destroy } = await setup();
+		await scroll(900);
+		const visible = range();
+
+		// 平移后先到的是滚动事件：同样按平移量补偿
+		geometry.listStart += SHIFT;
+		await scroll(900);
+		expect(viewport.scrollTop).toBe(900 + SHIFT);
+		expect(range()).toEqual(visible);
+		destroy();
+	});
+
+	it('carries sub-pixel shifts over instead of dropping or jittering them', async () => {
+		const { viewport, geometry, scroll, resizePage, destroy } = await setup();
+		await scroll(900);
+		// 与浏览器一样，写入的滚动位置被取整
+		const writes = vi.fn();
+		let current = 900;
+		Object.defineProperty(viewport, 'scrollTop', {
+			configurable: true,
+			get: () => current,
+			set: (v) => {
+				writes(v);
+				current = Math.round(v);
+			}
+		});
+
+		// 来回的亚像素抖动：不写滚动位置
+		geometry.listStart += 0.4;
+		await resizePage();
+		geometry.listStart -= 0.4;
+		await resizePage();
+		expect(writes).not.toHaveBeenCalled();
+
+		// 连续的小平移（如展开动画）：零头累计到 1px 再写，写入后的取整误差留到下一次
+		for (let i = 0; i < 10; i++) {
+			geometry.listStart += 13.7;
+			await resizePage();
+		}
+		expect(current).toBe(900 + 137);
+
+		delete (viewport as any).scrollTop;
+		destroy();
+	});
+
+	it('lets the list move when the viewport starts before it', async () => {
+		const { viewport, geometry, scroll, resizePage, range, destroy } = await setup();
+		// 同样的视口与列表相对位置：视口起点比列表起点晚 140px
+		await scroll(640);
+		const expected = range();
+
+		// 视口 [400, 600) 起点在列表（500 起）之前：不跟随列表平移，列表收起 240px 后视口落进列表
+		await scroll(400);
+		geometry.listStart -= SHIFT;
+		await resizePage();
+		expect(viewport.scrollTop).toBe(400);
+		expect(range()).toEqual(expected);
+		destroy();
+	});
+
+	it('follows a header change inside the list without scrolling', async () => {
+		const { viewport, geometry, scroll, resizePage, range, destroy } = await setup();
 		await scroll(900);
 		const [first, last] = range();
-		expect(first).toBeGreaterThan(0);
 
-		// 前置内容变高后继续滚动：同样的滚动位置对应更靠前的行
-		geometry.contentStart += SHIFT;
-		await scroll(901);
+		// 列表自己的 header 变高：列表根不动，只有 content 下移，同样的滚动位置对应更靠前的行
+		geometry.headerSize += SHIFT;
+		await resizePage();
+		expect(viewport.scrollTop).toBe(900);
 		expect(range()).toEqual([first - SHIFT / ITEM_SIZE, last - SHIFT / ITEM_SIZE]);
 
-		// 变回去
-		geometry.contentStart -= SHIFT;
+		// 滚动时同样按新位置重算
+		geometry.headerSize -= SHIFT;
 		await scroll(900);
 		expect(range()).toEqual([first, last]);
 		destroy();
 	});
 
-	it('follows the shift without scrolling when an ancestor inside the carrier resizes', async () => {
-		const { wrapper, viewport, geometry, scroll, range, destroy } = await setup();
-		await scroll(900);
-		const [first, last] = range();
+	it('only moves a shared carrier once for the list the viewport is in', async () => {
+		const data = Array.from({ length: 50 }, (_, id) => ({ id }));
+		const geometry = { shift: 0 };
+		const wrapper = mount(() => (
+			<div class="viewport" style="overflow-y: auto; height: 200px;">
+				<div class="page">
+					<RecycleList class="first" fill={false} disabled data={data} estimateSize={ITEM_SIZE}>
+						{{ default: ({ row }: any) => <div>{row.id}</div> }}
+					</RecycleList>
+					<RecycleList class="second" fill={false} disabled data={data} estimateSize={ITEM_SIZE}>
+						{{ default: ({ row }: any) => <div>{row.id}</div> }}
+					</RecycleList>
+				</div>
+			</div>
+		), { attachTo: document.body });
+		await flush();
 
-		// 列表到承载者之间的祖先被观察；列表根自身不算
+		const viewport = wrapper.find('.viewport').element as HTMLElement;
+		const geometryOf = (selector: string, start: number) => mockVerticalGeometry(
+			viewport,
+			wrapper.find(`${selector}`).element as HTMLElement,
+			wrapper.find(`${selector} .vc-recycle-list__content`).element as HTMLElement,
+			{ listSize: 2000, listStart: () => start + geometry.shift }
+		);
+		const restores = [geometryOf('.first', 500), geometryOf('.second', 2600)];
+		viewport.scrollTop = 3000;
+		viewport.dispatchEvent(new Event('scroll'));
+		await flush();
+
+		// 两个列表都被前置内容推走 240px；视口在第二个列表里，滚动位置只平移一次
+		// 共用模式下每个列表各有一个观察器，祖先变化时都会回调
+		geometry.shift = SHIFT;
 		const page = wrapper.find('.page').element;
-		const observer = observerOf(page);
-		expect(observer).toBeTruthy();
-		expect(observerOf(wrapper.find('.vc-recycle-list').element)).toBeUndefined();
-
-		geometry.contentStart += SHIFT;
-		observer.trigger(page);
+		const pageObservers = observers.filter(ro => ro.targets.has(page));
+		expect(pageObservers.length).toBe(2);
+		pageObservers.forEach(ro => ro.trigger(page));
 		await flush();
-		expect(range()).toEqual([first - SHIFT / ITEM_SIZE, last - SHIFT / ITEM_SIZE]);
+		expect(viewport.scrollTop).toBe(3000 + SHIFT);
 
-		// 承载者自身的尺寸变化走视口变化的处理，同样按新位置重算
-		geometry.contentStart -= SHIFT;
-		observerOf(viewport).trigger(viewport);
+		// 两个回调的先后不影响结果
+		geometry.shift = 0;
+		pageObservers.reverse().forEach(ro => ro.trigger(page));
 		await flush();
-		expect(range()).toEqual([first, last]);
+		expect(viewport.scrollTop).toBe(3000);
 
-		destroy();
-		expect(observerOf(page)).toBeUndefined();
+		restores.reverse().forEach(restore => restore());
+		wrapper.unmount();
+	});
+
+	it('stays at the end of an inverted list when content before it collapses right after the alignment', async () => {
+		const data = ref<any[]>([]);
+		const listRef = ref<any>();
+		const geometry = { listStart: 800 };
+		const wrapper = mount(() => (
+			<div class="viewport" style="overflow-y: auto; height: 200px;">
+				<div class="page">
+					<div class="before" />
+					<RecycleList ref={listRef} fill={false} inverted disabled data={data.value} estimateSize={ITEM_SIZE}>
+						{{ default: ({ row }: any) => <div>{row.id}</div> }}
+					</RecycleList>
+				</div>
+			</div>
+		), { attachTo: document.body });
+		await flush();
+
+		const viewport = wrapper.find('.viewport').element as HTMLElement;
+		const restore = mockVerticalGeometry(
+			viewport,
+			wrapper.find('.vc-recycle-list').element as HTMLElement,
+			wrapper.find('.vc-recycle-list__content').element as HTMLElement,
+			{ listSize: 400, listStart: () => geometry.listStart }
+		);
+
+		data.value = Array.from({ length: 10 }, (_, id) => ({ id }));
+		for (let i = 0; i < 30 && viewport.scrollTop === 0; i++) {
+			await sleep(5);
+		}
+		// 贴到列表末端：800 + 400 - 200
+		expect(viewport.scrollTop).toBe(1000);
+
+		// 贴底后紧接着（仍在屏蔽滚动事件的那一帧里）前置内容收起 300px：视口随列表回到末端，不越过末端
+		geometry.listStart -= 300;
+		const page = wrapper.find('.page').element;
+		observerOf(page).trigger(page);
+		await flush();
+		expect(viewport.scrollTop).toBe(700);
+
+		restore();
+		wrapper.unmount();
 	});
 
 	it('observes every ancestor up to the document root when Window carries the scroll', async () => {

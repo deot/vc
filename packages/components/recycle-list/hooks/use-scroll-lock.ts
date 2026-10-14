@@ -13,17 +13,22 @@ const SCROLL_LOCK_MS = 16.7;
  */
 export const useScrollLock = () => {
 	let locked = false;
+	// 处在 lock 与 unlock 之间的流程数（可能并发）：流程自己换算目标位置，不含 unlock 之后屏蔽事件的那一帧
+	let running = 0;
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
 	onBeforeUnmount(() => clearTimeout(timer));
 
 	return {
 		isLocked: () => locked,
+		isRunning: () => running > 0,
 		lock: () => {
 			clearTimeout(timer);
 			locked = true;
+			running++;
 		},
 		unlock: () => {
+			running = Math.max(0, running - 1);
 			clearTimeout(timer);
 			timer = setTimeout(() => (locked = false), SCROLL_LOCK_MS);
 		}

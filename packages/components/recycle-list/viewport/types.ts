@@ -73,6 +73,12 @@ export type ViewportHandlers = {
 	 * 列表在承载者里的位置变了（列表之前的内容伸缩），视口与列表的尺寸都没变
 	 */
 	onShift: () => void;
+	/**
+	 * 重新测量时发现列表整体平移了 delta，且视口起点原本落在列表范围内
+	 *
+	 * 承载者的滚动锚定已关闭（见 registry），由组件把滚动位置同步平移，列表在视口中保持不动
+	 */
+	onDisplace: (delta: number) => void;
 };
 
 /**

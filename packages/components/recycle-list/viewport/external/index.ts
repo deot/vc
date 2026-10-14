@@ -40,6 +40,8 @@ export class ExternalViewport implements ScrollSource {
 
 	private cache: Bounds = { listStart: 0, listEnd: 0, contentStart: 0 };
 	private dirty = true;
+	// cache 是否来自一次真实测量；之前没有测量过就无从比较平移
+	private measured = false;
 	private unregister?: () => void;
 	private offScroll?: () => void;
 
@@ -86,7 +88,12 @@ export class ExternalViewport implements ScrollSource {
 	 * 重新量列表根与 content 的位置
 	 *
 	 * listEnd 取"根元素底部"与"content 起点 + 内容总尺寸"的较大者：
-	 * 布局刚更新、DOM 尚未 patch 时，根元素 rect 还是旧值，用 contentSize 兜底
+	 * 布局刚更新、DOM 尚未 patch 时，根元素 rect 还是旧值，用 contentSize 兜底。
+	 *
+	 * 与上一次测量相比列表起点变了，说明列表之前的内容变高或变矮、把列表整体推走（滚动不改变这个坐标）。
+	 * 视口起点原本落在列表里时交给组件同步平移滚动位置，与浏览器的滚动锚定一致；
+	 * 在这里统一判断而不是只在祖先尺寸回调里：滚动事件可能先于回调完成重新测量，平移就会被漏掉。
+	 * 共用承载者的多个列表互不重叠，只有视口起点所在的那个会平移
 	 */
 	private refreshBounds() {
 		if (!this.dirty) return;
@@ -95,6 +102,7 @@ export class ExternalViewport implements ScrollSource {
 		const content = this.anchors.content();
 		const listStart = this.carrier.getElementStart(root);
 		const contentStart = content ? this.carrier.getElementStart(content) : listStart;
+		const previous = this.measured ? this.cache : undefined;
 		this.cache = {
 			listStart,
 			contentStart,
@@ -104,6 +112,15 @@ export class ExternalViewport implements ScrollSource {
 			)
 		};
 		this.dirty = false;
+		this.measured = true;
+
+		if (!previous) return;
+		const delta = listStart - previous.listStart;
+		if (!delta) return;
+		const offset = this.offset;
+		if (offset >= previous.listStart && offset < previous.listEnd) {
+			this.handlers.onDisplace(delta);
+		}
 	}
 
 	bounds() {

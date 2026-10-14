@@ -103,13 +103,14 @@ export const RecycleList = defineComponent({
 			{
 				onScroll: () => handleExternalScroll(),
 				onResize: () => handleViewportResize(),
-				onShift: () => handleViewportShift()
+				onShift: () => handleViewportShift(),
+				onDisplace: delta => handleDisplace(delta)
 			},
 			K
 		);
 
 		// 程序化滚动期间屏蔽滚动处理，避免误触发 loadData / 广播
-		const { isLocked, lock, unlock } = useScrollLock();
+		const { isLocked, isRunning, lock, unlock } = useScrollLock();
 
 		const hasRealNodes = () => store.nodes.real.size > 0;
 
@@ -773,6 +774,32 @@ export const RecycleList = defineComponent({
 		const handleViewportShift = () => {
 			viewport.invalidate();
 			setVisibleItemRange();
+		};
+
+		/**
+		 * 列表被之前的内容整体推走、视口原本在列表里（见 ExternalViewport.refreshBounds）：滚动位置随之平移，列表在视口中保持不动
+		 *
+		 * 例如倒序列表刚贴到末尾，前置内容随即收起：不平移的话视口会越过列表末端。
+		 * 程序化滚动的流程进行中不处理：倒序补建、贴底等流程已按 content 起点的变化换算目标位置，再平移会重复；
+		 * 流程结束后屏蔽 scroll 事件的那一帧照常处理，贴底后紧接着的平移就落在这一帧里。
+		 *
+		 * 滚动位置写入后会被取整：不足 1px 的部分留到下一次一起补，连续的小平移（如前置内容的展开动画）不会越积越偏，
+		 * 来回的亚像素抖动相互抵消，不写滚动位置
+		 * @param delta 列表起点的平移量
+		 */
+		let displaceRemainder = 0;
+		const handleDisplace = (delta: number) => {
+			if (isRunning()) return;
+			const offset = viewport.offset;
+			const target = offset + delta + displaceRemainder;
+			if (Math.abs(target - offset) < 1) {
+				displaceRemainder += delta;
+				return;
+			}
+			viewport.scrollTo(target);
+			// 写入被夹到边界时差值会很大，不再累计
+			const rest = target - viewport.offset;
+			displaceRemainder = Math.abs(rest) < 1 ? rest : 0;
 		};
 
 		/**
