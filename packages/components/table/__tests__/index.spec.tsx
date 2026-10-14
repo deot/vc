@@ -2451,7 +2451,7 @@ describe('Table virtual + scroll', () => {
 		expect(onScroll).not.toHaveBeenCalled();
 		wrapper.unmount();
 
-		// 未传时沿用 Table 的默认批次
+		// 未传时沿用 Table 的默认批次与预渲染距离（表体由滚轮驱动，不用 RecycleList 为原生滚动留的余量）
 		const plain = mount(() => (
 			<Table data={buildData(3)} primaryKey="id" height={200}>
 				<TableColumn label="名称" prop="name" />
@@ -2459,7 +2459,33 @@ describe('Table virtual + scroll', () => {
 		), { attachTo: document.body });
 		await flush();
 		expect(plain.findComponent({ name: 'vc-recycle-list' }).props('batchCount')).toBe(100);
+		expect(plain.findComponent({ name: 'vc-recycle-list' }).props('overscan')).toBe(50);
 		plain.unmount();
+	});
+
+	it.each([
+		['plain', {}],
+		['fixed height', { height: 200 }],
+		['external virtualized', { virtualized: true }]
+	])('drives the %s body by wheel whatever RecycleList defaults to', async (_label, attrs) => {
+		const wrapper = mount(() => (
+			<Table
+				data={buildData(20)}
+				primaryKey="id"
+				{...attrs}
+				recycleListOptions={{ scrollerOptions: { wheel: false, native: true } } as any}
+			>
+				<TableColumn label="名称" prop="name" />
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+
+		// 表头、固定列与表体同帧更新依赖滚轮驱动：不随 RecycleList 的默认值变化，也不能经 recycleListOptions 关闭
+		const body = wrapper.find('.vc-table__body-wrapper');
+		const scroller = body.classes().includes('vc-scroller') ? body : body.find('.vc-recycle-list__wrapper');
+		expect(scroller.classes()).toContain('is-wheel');
+		expect(scroller.classes()).not.toContain('is-native');
+		wrapper.unmount();
 	});
 });
 

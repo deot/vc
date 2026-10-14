@@ -2039,22 +2039,29 @@ describe('index.ts', () => {
 			expect(wrap.attributes('style') ?? '').toContain('height: 300px');
 		});
 
-		it('drives the inner Scroller by wheel unless scrollerOptions.wheel=false', () => {
+		it('scrolls the inner Scroller natively unless scrollerOptions.wheel=true', () => {
+			// 默认原生滚动：即使不使用原生滚动条也不接管滚轮
 			const w1 = mount(() => (
 				<RecycleList scrollerOptions={{ native: false } as any} />
 			));
-			expect(w1.find('.vc-recycle-list__wrapper').classes()).toContain('is-wheel');
+			expect(w1.find('.vc-recycle-list__wrapper').classes()).not.toContain('is-wheel');
 
 			const w2 = mount(() => (
-				<RecycleList scrollerOptions={{ native: false, wheel: false } as any} />
+				<RecycleList scrollerOptions={{ native: false, wheel: true } as any} />
 			));
-			expect(w2.find('.vc-recycle-list__wrapper').classes()).not.toContain('is-wheel');
+			expect(w2.find('.vc-recycle-list__wrapper').classes()).toContain('is-wheel');
 
-			// undefined 视为未设置，不覆盖默认的滚轮驱动
+			// 使用原生滚动条时 wheel 不生效
 			const w3 = mount(() => (
-				<RecycleList scrollerOptions={{ native: false, wheel: undefined } as any} />
+				<RecycleList scrollerOptions={{ native: true, wheel: true } as any} />
 			));
-			expect(w3.find('.vc-recycle-list__wrapper').classes()).toContain('is-wheel');
+			expect(w3.find('.vc-recycle-list__wrapper').classes()).not.toContain('is-wheel');
+
+			// fill=false 时同样不注入 wheel
+			const w4 = mount(() => (
+				<RecycleList fill={false} scrollerOptions={{ native: false } as any} />
+			));
+			expect(w4.find('.vc-recycle-list__wrapper').classes()).not.toContain('is-wheel');
 		});
 	});
 

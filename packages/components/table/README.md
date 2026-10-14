@@ -1327,6 +1327,26 @@ Window / Scroller
 
 同时传入 `height` 和 `max-height` 时继续由 `height` 优先。
 
+#### 快速滚动时的露白
+
+外部视口虚拟化的纵向滚动由页面或外层容器的原生滚动承载，scroll 事件晚于实际滚动，新行会晚一帧出现：极快地滚动时，表体边缘可能短暂露白，拖动滚动条通常不会。设置了 `height` 的表体由滚轮驱动，行与滚动位置在同一帧更新，不受影响。
+
+视口外预渲染的距离 `overscan` 默认为 `50`，可以经 `recycle-list-options` 调大，代价是多渲染视口外的行，由业务按行的轻重与滚动习惯取舍。下面是一组实测参考（生产构建，500 行，行高 96px，单元格含多段文本截断）：
+
+| `overscan` | 静止时渲染的行数 | 6000px/s 快速滚动 | 12000px/s 极快滚动 |
+| --- | --- | --- | --- |
+| `50`（默认） | 11 | 约一半的帧露白 | 大部分帧露白 |
+| `300` | 17 | 不露白 | 少量帧露白 |
+| `450` | 18 | 不露白 | 偶发一帧 |
+
+- 建议：外部视口虚拟化时按需设为 `300`～`450`，设置了 `height` 时保持默认即可。
+- 同样的距离，行越矮对应的行数越多；也可以改用按行数计的 `bufferCount`。
+- 性能较弱的设备上主线程跟不上滚动，调大 `overscan` 只能减少、不能完全消除极快滚动时的露白。
+
+```vue
+<Table virtualized :recycle-list-options="{ overscan: 450 }" :data="rows" />
+```
+
 #### Affix 兼容性
 
 下面在预览窗口内滚动页面，表头吸顶，合计行和横向滚动条吸底。Table 本身未设置 `height`，因此吸附与外部视口虚拟化可以同时生效。
@@ -1601,7 +1621,7 @@ const handleToggle = () => { isEmpty.value = !isEmpty.value; };
 | highlight | 是否要高亮当前行 | `boolean` | - | `false` |
 | currentRowValue | 当前行的`[id]/value`唯一值（树形表格含子行），只写属性 | `string`、 `number` | - | - |
 | rowHeight | 固定行高，数字及数字字符串按 px 解析；缺省由内容撑开。虚拟化表格（`height` 或 `virtualized`）设置后按行高直接算出每行尺寸，跳过隐藏测量并一次构建全部行，滚动不再逐批停顿；展开行的内容在渲染出来后按实际高度校正；运行时修改行高，未渲染的行也立即按新行高重排。也可以传函数 `({ row, rowIndex }) => string \| number \| undefined` 按行给出行高：返回 `undefined` 的行由内容撑开并照常测量（合并块里任一行没给出高度时整块照常测量）；函数在构建时对每行调用一次，引用变化时对已构建的行重新调用并只重排取值变了的行，建议传稳定的引用；函数内读取的数据变化不会重估未渲染的行（滚到时按实际高度校正），需要立即生效时换一个函数引用 | `string \| number \| Function` | - | - |
-| recycleListOptions | 透传给内部 [RecycleList](../recycle-list) 的属性，仅在走虚拟列表时（`height` 或 `virtualized`）生效，如 `bufferCount`（可见行前后多渲染的行数，快速滚动时减少露白）、`overscan`、`batchCount`（默认 `100`）、`threshold`。`data`、`store`、`disabled`、`fill`、`vertical`、`inverted`、`columns`、`gap`、`pullable`、`loadData`、`lazyTail`、`scrollerOptions`、`estimateSize`、`style`、`class` 与事件由 Table 控制，传入无效 | `object` | - | - |
+| recycleListOptions | 透传给内部 [RecycleList](../recycle-list) 的属性，仅在走虚拟列表时（`height` 或 `virtualized`）生效，如 `bufferCount`（可见行前后多渲染的行数，快速滚动时减少露白）、`overscan`（默认 `50`；外部视口虚拟化快速滚动露白时可调大，见「快速滚动时的露白」）、`batchCount`（默认 `100`）、`threshold`。`data`、`store`、`disabled`、`fill`、`vertical`、`inverted`、`columns`、`gap`、`pullable`、`loadData`、`lazyTail`、`scrollerOptions`、`estimateSize`、`style`、`class` 与事件由 Table 控制，传入无效 | `object` | - | - |
 | rowClass | 行的 `className`，仅作用于单行块对应的 `vc-table__tr`；存在 `getSpan` 合并时不生效，请用 `cell-class`。支持字符串或 `Function({ row, rowIndex })`。 | `string \| ((context: { row: any; rowIndex: number }) => string)` | - | - |
 | rowStyle | 行的 `style`，仅作用于单行块对应的 `vc-table__tr`；存在 `getSpan` 合并时不生效，请用 `cell-style`。支持对象或 `Function({ row, rowIndex })`。 | `CSSProperties \| ((context: { row: any; rowIndex: number }) => CSSProperties)` | - | - |
 | cellClass | 单元格的 `className` 的回调方法，也可以使用字符串为所有单元格设置一个固定的 `className`。 | `string \| ((context: { row: any; column: any; rowIndex: number; columnIndex: number }) => string)` | - | - |

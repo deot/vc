@@ -1,4 +1,4 @@
-<!-- 最基本的用法：远程分页 + 下拉刷新；可切换方向、列数（瀑布流）、倒序、每页条数（不足一屏时自动续载） -->
+<!-- 最基本的用法：远程分页 + 下拉刷新；可切换方向、列数（瀑布流）、倒序、每页条数（不足一屏时自动续载）、滚动驱动（默认原生滚动） -->
 <template>
 	<div class="recycle-basic">
 		<div class="recycle-basic__controls">
@@ -22,6 +22,7 @@
 				:columns="isVertical ? controls.columns : 1"
 				:gap="10"
 				:load-data="loadData"
+				:scroller-options="SCROLLER_OPTIONS[controls.drive]"
 			>
 				<template #default="{ row }">
 					<div
@@ -55,8 +56,19 @@ const CONTROLS = [
 	{ key: 'direction', label: '方向', data: [{ value: 'vertical', label: '纵向' }, { value: 'horizontal', label: '横向' }] },
 	{ key: 'columns', label: '列数（纵向）', data: [{ value: 1, label: '1 列' }, { value: 3, label: '3 列（瀑布流）' }, { value: 5, label: '5 列（瀑布流）' }] },
 	{ key: 'order', label: '顺序', data: [{ value: 'normal', label: '正序（可下拉刷新）' }, { value: 'inverted', label: '倒序（inverted）' }] },
-	{ key: 'pageSize', label: '每页条数', data: [{ value: 30, label: '30 条 × 5 页' }, { value: 3, label: '3 条 × 20 页（不足一屏）' }] }
+	{ key: 'pageSize', label: '每页条数', data: [{ value: 30, label: '30 条 × 5 页' }, { value: 3, label: '3 条 × 20 页（不足一屏）' }] },
+	{
+		key: 'drive',
+		label: '滚动驱动',
+		data: [{ value: 'native', label: '原生（默认）' }, { value: 'bar', label: '原生 + 自绘滚动条' }, { value: 'wheel', label: '滚轮驱动' }]
+	}
 ];
+// 自绘滚动条仍是原生滚动；滚轮驱动只在不使用原生滚动条时生效，因此同时关闭 native
+const SCROLLER_OPTIONS = {
+	native: undefined,
+	bar: { native: false },
+	wheel: { native: false, wheel: true }
+};
 const controls = reactive(Object.fromEntries(CONTROLS.map(({ key, data }) => [key, data[0].value])));
 const isVertical = computed(() => controls.direction === 'vertical');
 const isInverted = computed(() => controls.order === 'inverted');

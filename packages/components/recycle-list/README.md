@@ -715,7 +715,7 @@ const store = new RecycleListStore({
 | batchCount | 每次构建/测量的节点批次大小；有 placeholder 时亦作为请求期间预分配的占位节点数 | `number` | - | `20` |
 | bufferCount | 在可见数据索引前后额外渲染的节点数量 | `number` | - | `0` |
 | estimateSize | 预估尺寸（主轴，px），数字或 `({ row, index }) => number \| undefined`（`row` 为 `data` 中的一项，`index` 为它的下标，与默认插槽一致）。给出尺寸的项不进隐藏池测量，本地数据一次构建全部，内容尺寸从一开始就完整；渲染出来后按实际尺寸校正（按锚点补偿，画面不跳）。返回 `undefined` 的项照常测量。取值或函数变化时，只有预估值变了的项换用新值（之前测过的尺寸也随之作废），预估值没变的项不动，因此可以直接写内联函数 | `number \| Function` | - | - |
-| overscan | 视口上下（横向时左右）额外预渲染距离，单位 px | `number` | - | `50` |
+| overscan | 视口上下（横向时左右）额外预渲染距离，单位 px；默认原生滚动时 scroll 事件晚于实际滚动，留出余量避免快速滚动时边缘露白，滚轮驱动（`scrollerOptions.wheel`）时可调小 | `number` | - | `300` |
 | threshold | 距离列表加载边缘小于等于该值时触发加载，单位 px | `number` | - | `100` |
 | loadData | 获取更多数据，签名为 `({ page, loaded }) => response` | `Function` | - | `() => false` |
 | columns | 多列数量；不定高时支持瀑布流 | `number` | - | `1` |
@@ -733,9 +733,9 @@ const store = new RecycleListStore({
 
 #### scrollerOptions
 
-- 传给内部 Scroller 的属性；`wheel` 默认为 `true`，在不使用原生滚动条（`native=false` 或 `always=true`）时由滚轮驱动，虚拟内容与滚动位置在同一帧更新。
-- `native` 的默认值取决于浏览器滚动条是否占宽：滚动条不占宽（如悬浮滚动条）时为 `true`，此时为原生滚动。需要滚轮驱动时显式设置 `native: false`。
-- 滚轮驱动时根节点为 `overflow: hidden`，键盘无法原生滚动。需要时可设 `wheel: false` 改用原生滚动，或通过 `wrapperStyle` 覆盖 `overflow`。
+- 传给内部 Scroller 的属性；默认原生滚动，键盘、触摸、页内查找等由浏览器处理，各平台表现一致。
+- 需要虚拟内容与滚动位置在同一帧更新时设置 `wheel: true`，由滚轮驱动；它只在不使用原生滚动条（`native: false` 或 `always: true`）时生效，此时根节点为 `.vc-scroller.is-wheel`、`overflow: hidden`，键盘无法滚动。`native` 的默认值取决于浏览器滚动条是否占宽，滚动条不占宽（如悬浮滚动条）时为 `true`。
+- 原生滚动时 scroll 事件晚于实际滚动，`overscan` 默认留出 300px 余量；更快的滚动仍露白时可再调大 `overscan` 或 `bufferCount`。
 - `fill=false` 时主轴展开规则优先，交叉轴选项继续生效。
 
 #### loadData 契约

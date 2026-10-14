@@ -70,19 +70,18 @@ export const RecycleList = defineComponent({
 			node => handleRowResize(node)
 		);
 
-		// 默认滚轮驱动（native=false 时生效）：虚拟内容与滚动位置在同一帧更新；仅显式传 false 时关闭，undefined 视为未设置
+		// 默认原生滚动；需要虚拟内容与滚动位置在同一帧更新时由调用方传 wheel（Table 即如此）
 		// fill=false 时主轴交给外部承载者：内部 wrapper 沿主轴随内容展开，不能再被 scrollerOptions 限高/限宽
 		const resolvedScrollerOptions = computed(() => {
 			const options: any = props.scrollerOptions || {};
-			const source = { ...options, wheel: options.wheel ?? true };
-			if (props.fill) return source;
+			if (props.fill) return options;
 			const mainStyle = props.vertical
 				? { height: 'auto', maxHeight: 'none' }
 				: { width: 'max-content' };
 			return {
-				...source,
+				...options,
 				...(props.vertical ? { height: '', maxHeight: '' } : {}),
-				wrapperStyle: [source.wrapperStyle, mainStyle]
+				wrapperStyle: [options.wrapperStyle, mainStyle]
 			};
 		});
 

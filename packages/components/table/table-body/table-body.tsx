@@ -118,7 +118,7 @@ export const TableBody = defineComponent({
 				barTo: fluid ? barAnchor : `.${table.tableId}`,
 				// 悬停整个表格（含已吸底的 dock）时显示滚动条
 				barTriggerElement: `.${table.tableId}`,
-				// 滚轮驱动：表头、固定列与表体在同一帧更新
+				// 滚轮驱动：表头、固定列与表体在同一帧更新；RecycleList 默认原生滚动，这里固定开启
 				wheel: true,
 				native: false,
 				always: false,
@@ -161,7 +161,8 @@ export const TableBody = defineComponent({
 			};
 		});
 
-		// 透传给 RecycleList 的属性：Table 的默认批次可被覆盖；保留键与事件被忽略（键名按 camelCase 比较，兼容 'buffer-count' 写法）
+		// 透传给 RecycleList 的属性：Table 的默认批次与预渲染距离可被覆盖；保留键与事件被忽略（键名按 camelCase 比较，兼容 'buffer-count' 写法）
+		// 表体由滚轮驱动，虚拟内容与滚动位置同帧更新，不需要 RecycleList 为原生滚动留的余量，overscan 固定为 50，渲染行数不变
 		const recycleListOptions = computed(() => {
 			const options = table.props.recycleListOptions || {};
 			return Object.keys(options).reduce((pre, key) => {
@@ -170,7 +171,7 @@ export const TableBody = defineComponent({
 					pre[name] = options[key];
 				}
 				return pre;
-			}, { batchCount: 100 } as Record<string, unknown>);
+			}, { batchCount: 100, overscan: 50 } as Record<string, unknown>);
 		});
 
 		const renderers = {

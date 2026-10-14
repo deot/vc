@@ -29,10 +29,10 @@ export const props = {
 	// 函数入参与默认插槽一致：row 为 data 中的一项，index 为它的下标；返回 undefined 的项照常测量
 	estimateSize: [Number, Function] as PropType<number | ((data: { row: any; index: number }) => number | undefined)>,
 
-	// 视口外额外预渲染距离（px）
+	// 视口外额外预渲染距离（px）；默认原生滚动时 scroll 事件晚于实际滚动，留出余量避免快速滚动时边缘露白
 	overscan: {
 		type: Number,
-		default: 50
+		default: 300
 	},
 
 	// 距离加载边缘小于等于该值时触发加载（px）
