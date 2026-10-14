@@ -91,13 +91,11 @@ export const useSelect = (name: string, options: Options = {}) => {
 		isRemote() && loadData();
 	};
 
-	// 关闭时（点击外部 / 选中 / 清空 / close / toggle）重置搜索词，下次打开恢复完整视图
-	// 	- 关闭不是用户发起的搜索：不调用 loadData，尚未发出的那一次也取消（否则会在关闭后以空关键词发出）
+	// 关闭（点击外部 / 选中 / 清空 / close / toggle）后重置搜索词，下次打开恢复完整视图，见 listeners.onClose
+	// 	- 关闭不是用户发起的搜索：不调用 loadData，尚未发出的那一次也取消（否则会在关闭后发出）
 	// 	- 打开时数据对不上空关键词（见 isStale；还没加载过时看有没有数据），按空关键词立即加载一次；输入而打开时只按输入的关键词搜索
 	watch(isActive, (v) => {
 		if (!v) {
-			if (!searchValue.value) return;
-			searchValue.value = '';
 			loadData.cancel();
 		} else if (isRemote() && !searchValue.value && (isStale ?? !props.data?.length)) {
 			loadData();
@@ -158,10 +156,15 @@ export const useSelect = (name: string, options: Options = {}) => {
 	);
 	onBeforeUnmount(() => unsubscribe?.());
 
-	// 引用不变，不随渲染重建
+	// 引用不变，不随渲染重建；组件另传的同名监听会与之合并（都执行），不必再 emit
 	const listeners = {
 		'onReady': () => emit('ready'),
-		'onClose': () => emit('close'),
+		// 弹层关闭动画结束后才重置搜索词：淡出过程中内容保持关闭前的样子，不会先变回完整列表再消失
+		// 动画结束前再次打开时沿用原来的搜索词
+		'onClose': () => {
+			searchValue.value = '';
+			emit('close');
+		},
 		'onVisibleChange': () => emit('visible-change', isActive.value),
 		'onUpdate:modelValue': (v: boolean) => (isActive.value = v),
 		'onFocusin': () => (isFocus.value = true),
@@ -198,7 +201,8 @@ export const useSelect = (name: string, options: Options = {}) => {
 			maxTags: props.maxTags,
 			maxTagLines: props.maxTagLines,
 			searchable: searchMode.value === 'inline',
-			searchValue: searchValue.value,
+			// 关闭后输入框立即显示回显；搜索词本身在弹层关闭动画结束后才重置
+			searchValue: isActive.value ? searchValue.value : '',
 			active: isActive.value,
 			focused: isFocus.value,
 			loading: isLoading.value,

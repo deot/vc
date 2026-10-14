@@ -546,6 +546,45 @@ describe('Cascader 搜索与键盘', () => {
 		return Array.from(document.querySelectorAll<HTMLElement>('.vc-popover-wrapper')).some(el => el.style.display !== 'none');
 	};
 
+	it('ready、close 各只触发一次；关闭动画结束后才重置搜索词，淡出期间结果列表不变', async () => {
+		const onReady = vi.fn();
+		const onClose = vi.fn();
+		const wrapper = mount(() => (
+			<Cascader data={options} searchable onReady={onReady} onClose={onClose} />
+		), {
+			attachTo: document.body,
+			// @vue/test-utils 默认把 Transition 换成桩，弹层的离场回调（close）不会触发
+			global: { stubs: { transition: false } }
+		});
+		const input = wrapper.find('input');
+		await input.trigger('click');
+		await sleep(350);
+		expect(onReady).toHaveBeenCalledTimes(1);
+
+		typeInto(input.element as HTMLInputElement, 'West');
+		await flush();
+		expect(getTexts()).toEqual(['Zhejiang / Hangzhou / West Lake']);
+
+		press('Escape');
+		await flush();
+		// 输入框立即显示回显，弹层淡出期间仍是搜索结果
+		expect((input.element as HTMLInputElement).value).toBe('');
+		expect(getTexts()).toEqual(['Zhejiang / Hangzhou / West Lake']);
+		expect(onClose).not.toHaveBeenCalled();
+
+		await sleep(250);
+		await flush();
+		expect(onClose).toHaveBeenCalledTimes(1);
+
+		// 再打开是级联列
+		await input.trigger('click');
+		await flush();
+		expect(getPaths().length).toBe(0);
+		expect(getCols().length).toBeGreaterThan(0);
+
+		wrapper.unmount();
+	});
+
 	it('内联搜索：按整条路径匹配，只列出末级并高亮；点击后写入路径、提交并关闭', async () => {
 		const onChange = vi.fn();
 		const value = ref<any[]>([]);

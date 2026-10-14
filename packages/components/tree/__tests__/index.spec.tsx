@@ -16,6 +16,10 @@ import { getFocusableItems } from '../use-keydown';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
+// @vue/test-utils 默认把 Transition 换成桩（对 Portal 里的弹层同样生效），弹层的离场回调（Popover 的 close）不会触发
+// 依赖关闭动画结束的用例改走真实的过渡
+const realTransition = { global: { stubs: { transition: false } } };
+
 const flush = async () => {
 	await nextTick();
 	await sleep(0);
@@ -1862,7 +1866,7 @@ describe('TreeSelect searchable', () => {
 		const value = ref<any[]>([]);
 		const wrapper = mount(() => (
 			<TreeSelect v-model={value.value} data={data} max={99} searchable />
-		), { attachTo: document.body });
+		), { attachTo: document.body, ...realTransition });
 		await flush();
 		await wrapper.trigger('click');
 		await flush();
@@ -1888,7 +1892,16 @@ describe('TreeSelect searchable', () => {
 		const popover = wrapper.findComponent({ name: 'vc-popover' });
 		(popover.vm as any).$emit('update:modelValue', false);
 		await flush();
+		// 输入框立即显示回显；弹层淡出期间树保持过滤后的样子
 		expect(getSearchInput().value).toBe('');
+		expect(document.querySelectorAll('.vc-tree-node.is-hidden').length).toBeGreaterThan(0);
+
+		// 关闭动画结束后搜索词重置，再打开是完整的树
+		await sleep(250);
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+		expect(document.querySelectorAll('.vc-tree-node').length).toBeGreaterThan(0);
 		expect(document.querySelectorAll('.vc-tree-node.is-hidden').length).toBe(0);
 
 		wrapper.unmount();
@@ -2300,11 +2313,14 @@ describe('TreeSelect 内联搜索与键盘', () => {
 	});
 
 	it('远程搜索：关闭时不调用 loadData，下次打开时按空关键词加载一次', async () => {
-		vi.useFakeTimers();
+		// 搜索词在弹层关闭动画结束后才重置：走真实的过渡（见 realTransition），动画用到 requestAnimationFrame，防抖用到 Date
+		vi.useFakeTimers({
+			toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date']
+		});
 		const loadData = vi.fn<(keyword: string) => Promise<void>>(() => Promise.resolve());
 		const wrapper = mount(() => (
 			<TreeSelect data={treeData} max={99} searchable loadData={loadData} />
-		), { attachTo: document.body });
+		), { attachTo: document.body, ...realTransition });
 		try {
 			await nextTick();
 			await wrapper.trigger('click');

@@ -149,12 +149,10 @@ export const Cascader = defineComponent({
 		};
 
 		/**
-		 * 初始化完成后格式化数据
+		 * 初始化完成后格式化数据；ready 由 useSelect 的监听抛出
 		 */
 		const handleReady = () => {
 			rebuildData.value = makeRebuildData();
-
-			emit('ready');
 
 			/**
 			 * 滚动到初始位置
@@ -262,7 +260,7 @@ export const Cascader = defineComponent({
 		};
 
 		/**
-		 * 在关闭的时候，让重新打开的值一致
+		 * 在关闭的时候，让重新打开的值一致；close 由 useSelect 的监听抛出
 		 * 暂时不用rebuildData.value, ready时会再次触发
 		 */
 		const handleClose = () => {
@@ -273,8 +271,6 @@ export const Cascader = defineComponent({
 			if (!isEqualWith(currentValue.value, v)) {
 				currentValue.value = [...v];
 			}
-
-			emit('close');
 		};
 
 		// 方向键：搜索时在结果列表内移动，否则在级联列内移动（等同鼠标移入）；回车等同点击

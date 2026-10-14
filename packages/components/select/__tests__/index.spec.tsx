@@ -27,6 +27,16 @@ const flush = async () => {
 	await nextTick();
 };
 
+// @vue/test-utils 默认把 Transition 换成桩（对 Portal 里的弹层同样生效），弹层的离场回调（Popover 的 close）不会触发
+// 依赖关闭动画结束的用例改走真实的过渡
+const realTransition = { global: { stubs: { transition: false } } };
+
+// 弹层关闭动画（150ms）结束：搜索词在这之后才重置
+const flushLeave = async () => {
+	await sleep(250);
+	await flush();
+};
+
 const fireMouse = (
 	el: Element,
 	type: 'mouseenter' | 'mouseleave' | 'mousedown' | 'mouseup' | 'click'
@@ -1121,12 +1131,15 @@ describe('Select grouped & search', () => {
 	});
 
 	it('远程搜索：关闭时不调用 loadData，下次打开时按空关键词加载一次', async () => {
-		vi.useFakeTimers();
+		// 搜索词在弹层关闭动画结束后才重置：走真实的过渡（见 realTransition），动画用到 requestAnimationFrame，防抖用到 Date
+		vi.useFakeTimers({
+			toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date']
+		});
 		const loadData = vi.fn<(keyword: string) => Promise<void>>(() => Promise.resolve());
 		const value = ref<any>();
 		const wrapper = mount(() => (
 			<Select v-model={value.value} data={cityList} searchable loadData={loadData} />
-		), { attachTo: document.body });
+		), { attachTo: document.body, ...realTransition });
 		try {
 			await nextTick();
 			const input = wrapper.find('input');
@@ -1732,7 +1745,7 @@ describe('Select 内联搜索', () => {
 	it('打开后点击输入区不关闭，点击后缀图标关闭；关闭时重置搜索词', async () => {
 		const wrapper = mount(() => (
 			<Select data={cityList} searchable />
-		), { attachTo: document.body });
+		), { attachTo: document.body, ...realTransition });
 		await nextTick();
 
 		const input = wrapper.find('input');
@@ -1750,8 +1763,11 @@ describe('Select 内联搜索', () => {
 
 		await wrapper.find('.vc-select-trigger__icon').trigger('click');
 		await flush();
+		// 输入框立即显示回显；弹层淡出期间内容保持关闭前的样子，不变回完整列表
 		expect((input.element as HTMLInputElement).value).toBe('');
+		expect(getOptions().length).toBe(1);
 
+		await flushLeave();
 		await input.trigger('click');
 		await flush();
 		expect(getOptions().length).toBe(cityList.length);
