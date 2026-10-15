@@ -252,7 +252,6 @@ class DateUtilManager {
 			SSS: [THREE_DIGITS_REGEX, (d: any, v: any) => {
 				d.millisecond = v;
 			}],
-			D: [TWO_DIGITS_REGEX, this.noop],
 			ddd: [WORD_REGEX, this.noop],
 			MMM: [WORD_REGEX, this.monthUpdate('monthNamesShort')],
 			MMMM: [WORD_REGEX, this.monthUpdate('monthNames')],
@@ -276,7 +275,7 @@ class DateUtilManager {
             }]
             /* eslint-enable */
 		};
-		this.parseFlags.DD = this.parseFlags.d;
+		this.parseFlags.D = this.parseFlags.DD = this.parseFlags.d;
 		this.parseFlags.dddd = this.parseFlags.ddd;
 
 		this.parseFlags.Do = this.parseFlags.dd = this.parseFlags.d;

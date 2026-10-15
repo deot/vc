@@ -4,7 +4,7 @@ import { defineComponent, computed } from 'vue';
 import { useLocale } from '../../../locale';
 
 import { getDateTimestamp } from '../../helper/date-utils';
-import { value2Array, getMonthEndDay } from '../../helper/utils';
+import { value2Array, isDisabledMonth } from '../../helper/utils';
 
 const COMPONENT_NAME = 'vc-month-table';
 
@@ -31,18 +31,12 @@ export const MonthTable = defineComponent({
 	],
 	setup(props, { emit }) {
 		const { t } = useLocale();
-		const getDisabledMonth = (year: number, month: number) => {
-			const monthDay = getMonthEndDay(year, month);
-
-			for (let i = 1; i <= monthDay; i++) { // 只要某一天被禁用了,就禁用该月份
-				const startDate = new Date(year, month, i, 0, 0, 0);
-				const endDate = new Date(year, month, i, 23, 59, 59);
-				if (props.disabledDate!(startDate) || props.disabledDate!(endDate)) {
-					return true;
-				}
-			}
-			return false;
-		};
+		// 各月是否禁用只随年份与 disabledDate 变化：单独缓存，选择、悬停、键入引起的重算不再逐日判断
+		const disabledMonths = computed(() => {
+			const year = props.panelDate!.getFullYear();
+			const disabledDate = props.disabledDate as ((date: Date) => boolean) | undefined;
+			return Array.from({ length: 12 }, (_, month) => typeof disabledDate === 'function' && isDisabledMonth(year, month, disabledDate));
+		});
 
 		const rows = computed(() => {
 			const $rows: any = [[], [], [], []];
@@ -57,7 +51,7 @@ export const MonthTable = defineComponent({
 					cell.inRange = time > getDateTimestamp(props.rangeState.from) && time < getDateTimestamp(props.rangeState.to);
 					cell.start = props.rangeState.from && time === getDateTimestamp(props.rangeState.from);
 					cell.end = props.rangeState.to && time === getDateTimestamp(props.rangeState.to);
-					cell.disabled = typeof props.disabledDate === 'function' && getDisabledMonth(year, cell.month);
+					cell.disabled = disabledMonths.value[cell.month];
 					cell.customClass = typeof props.cellClassName === 'function' && props.cellClassName(cell.month);
 					cell.selected = selectedMonth.some((month) => {
 						return month && (year === month.getFullYear()) && (cell.month === month.getMonth());

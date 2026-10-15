@@ -1,5 +1,6 @@
 import { preZero } from '@deot/helper-utils';
 import { DateUtil } from './date';
+import { getDayCountOfMonth } from './date-utils';
 import { translate } from '../../locale';
 import { VcInstance } from '../../vc';
 
@@ -11,23 +12,14 @@ const formatYearQuarter = (year: number, quarter: string) => {
 	}, locale);
 };
 
-const isShortMonth = (month) => {
-	return [4, 6, 9, 11].indexOf(month) > -1;
-};
-
-const isLeapYear = (year) => {
-	return (year % 400 === 0) || (year % 100 !== 0 && year % 4 === 0);
-};
-
-export const getMonthEndDay = (year, month) => {
-	month = Number(month);
-	if (isShortMonth(month)) {
-		return 30;
-	} else if (month === 2) {
-		return isLeapYear(year) ? 29 : 28;
-	} else {
-		return 31;
-	}
+/**
+ * 某月的天数（移动端按 1 ~ 12 计月份）；0 ~ 11 用 getDayCountOfMonth
+ * @param year ~
+ * @param month 1 ~ 12
+ * @returns ~
+ */
+export const getMonthEndDay = (year: number, month: number | string) => {
+	return getDayCountOfMonth(year, Number(month) - 1);
 };
 
 export const value2date = (v = []) => {
@@ -321,6 +313,23 @@ export const TYPE_VALUE_RESOLVER_MAP = {
 			}
 		}
 	}
+};
+
+/**
+ * 月份是否被禁用：只要其中某一天（当天的开始或结束）被禁用，就禁用该月份
+ * @param year ~
+ * @param month 0 ~ 11
+ * @param disabledDate ~
+ * @returns ~
+ */
+export const isDisabledMonth = (year: number, month: number, disabledDate: (date: Date) => boolean) => {
+	const monthDay = getDayCountOfMonth(year, month);
+	for (let i = 1; i <= monthDay; i++) {
+		if (disabledDate(new Date(year, month, i, 0, 0, 0)) || disabledDate(new Date(year, month, i, 23, 59, 59))) {
+			return true;
+		}
+	}
+	return false;
 };
 
 export const value2Array = (val) => {

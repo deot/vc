@@ -15,6 +15,7 @@ import {
 	pickerValueToDates,
 	type PickerUnit
 } from './utils';
+import { getMonthEndDay } from '../helper/utils';
 import type { PickerColumn, PickerValue } from '../../picker/types';
 
 const COMPONENT_NAME = 'vcm-date-picker-view';
@@ -70,7 +71,7 @@ export const MDatePickerView = defineComponent({
 				case 'D':
 					return [
 						compareBoundary(props.minDate, ['Y', 'M']) ? Number(min.D) : 1,
-						compareBoundary(props.maxDate, ['Y', 'M']) ? Number(max.D) : getMonthEndDaySafe(currentYear, currentMonth)
+						compareBoundary(props.maxDate, ['Y', 'M']) ? Number(max.D) : getMonthEndDay(currentYear, currentMonth)
 					];
 				case 'H':
 					if (props.type === 'time') {
@@ -203,11 +204,3 @@ export const MDatePickerView = defineComponent({
 		};
 	}
 });
-
-const getMonthEndDaySafe = (year: number, month: number) => {
-	if (month === 4 || month === 6 || month === 9 || month === 11) return 30;
-	if (month === 2) {
-		return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0 ? 29 : 28;
-	}
-	return 31;
-};

@@ -36,19 +36,10 @@ export const getDateTimestamp = (time: number | string | Date) => {
  * @returns number
  */
 export const getDayCountOfMonth = (year: number, month: number) => {
-	if (month === 3 || month === 5 || month === 8 || month === 10) {
-		return 30;
-	}
-
-	if (month === 1) {
-		if ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0) {
-			return 29;
-		} else {
-			return 28;
-		}
-	}
-
-	return 31;
+	// 下个月的第 0 天即本月最后一天；用 setFullYear，0 ~ 99 年不会被当成 1900 ~ 1999 年
+	const date = new Date(0);
+	date.setFullYear(year, month + 1, 0);
+	return date.getDate();
 };
 
 export const changeYearMonthAndClampDate = (date: Date, year: number, month: number) => {

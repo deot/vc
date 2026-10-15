@@ -3,7 +3,7 @@
 import { DatePicker } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
-import { vi } from 'vitest';
+import { vi, onTestFinished } from 'vitest';
 
 import { TimePicker } from '../picker/time-picker';
 import {
@@ -38,6 +38,7 @@ import {
 	formatDate,
 	parseDate,
 	TYPE_VALUE_RESOLVER_MAP,
+	isDisabledMonth,
 	value2Array,
 	isEmpty,
 	setNewYear,
@@ -2298,17 +2299,6 @@ describe('helper/utils unit', () => {
 		expect(parseMode('something-else')).toBe('something-else');
 	});
 
-	it('getMonthEndDay covers short / leap year / 31', () => {
-		expect(getMonthEndDay(2023, 4)).toBe(30);
-		expect(getMonthEndDay(2024, 2)).toBe(29);
-		expect(getMonthEndDay(2023, 2)).toBe(28);
-		expect(getMonthEndDay(2023, 1)).toBe(31);
-		// 100 不是闰年
-		expect(getMonthEndDay(1900, 2)).toBe(28);
-		// 400 是闰年
-		expect(getMonthEndDay(2000, 2)).toBe(29);
-	});
-
 	it('toDate / formatDate / parseDate 边界', () => {
 		expect(toDate('not a date')).toBe(null);
 		expect(toDate(0) instanceof Date).toBe(true);
@@ -2476,18 +2466,6 @@ describe('helper/date-utils unit', () => {
 		expect(typeof getDateTimestamp(d.getTime())).toBe('number');
 		expect(typeof getDateTimestamp('2023-01-01')).toBe('number');
 		expect(Number.isNaN(getDateTimestamp({} as any))).toBe(true);
-	});
-
-	it('getDayCountOfMonth 各月天数', () => {
-		expect(getDayCountOfMonth(2023, 3)).toBe(30); // 4 月
-		expect(getDayCountOfMonth(2023, 5)).toBe(30); // 6 月
-		expect(getDayCountOfMonth(2023, 8)).toBe(30); // 9 月
-		expect(getDayCountOfMonth(2023, 10)).toBe(30); // 11 月
-		expect(getDayCountOfMonth(2024, 1)).toBe(29); // 闰 2 月
-		expect(getDayCountOfMonth(2023, 1)).toBe(28); // 平 2 月
-		expect(getDayCountOfMonth(1900, 1)).toBe(28); // 100 非闰
-		expect(getDayCountOfMonth(2000, 1)).toBe(29); // 400 闰
-		expect(getDayCountOfMonth(2023, 0)).toBe(31); // 1 月
 	});
 
 	it('changeYearMonthAndClampDate 处理大日期回退', () => {
@@ -3224,5 +3202,59 @@ describe('时间列与弹层滚动', () => {
 		expect(content.classList.contains('is-unscrollable')).toBe(false);
 
 		wrapper.unmount();
+	});
+});
+
+describe('月份的禁用判断、单个 D 的解析', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('isDisabledMonth 按该月实际天数判断，不会查到下个月、也不漏掉月末', () => {
+		// 只允许到 4 月 30 日：4 月整月可选，5 月禁用
+		const untilApril = (date: Date) => date.getTime() > new Date(2024, 3, 30, 23, 59, 59).getTime();
+		expect(isDisabledMonth(2024, 3, untilApril)).toBe(false);
+		expect(isDisabledMonth(2024, 4, untilApril)).toBe(true);
+		// 只禁用 3 月 30 日：3 月禁用
+		const march30 = (date: Date) => date.getMonth() === 2 && date.getDate() === 30;
+		expect(isDisabledMonth(2024, 2, march30)).toBe(true);
+		// 只禁用 3 月 1 日：2 月不受影响
+		const march1 = (date: Date) => date.getMonth() === 2 && date.getDate() === 1;
+		expect(isDisabledMonth(2024, 1, march1)).toBe(false);
+	});
+
+	it('月份面板与键入一致：只允许到 4 月 30 日时 4 月可选', async () => {
+		const disabledDate = (date: Date) => date.getTime() > new Date(2024, 3, 30, 23, 59, 59).getTime();
+		const wrapper = mount(() => (
+			<MonthTable panelDate={new Date(2024, 0, 1)} value={[]} disabledDate={disabledDate} />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await flush();
+		const cells = Array.from(document.querySelectorAll('.vc-month-table__cell'));
+		expect(cells.map(cell => cell.classList.contains('is-disabled'))).toEqual([
+			false, false, false, false, true, true, true, true, true, true, true, true
+		]);
+	});
+
+	it('getMonthEndDay（1 ~ 12）与 getDayCountOfMonth（0 ~ 11）一致', () => {
+		for (const year of [1900, 2000, 2023, 2024]) {
+			for (let month = 0; month < 12; month++) {
+				expect(getMonthEndDay(year, month + 1)).toBe(getDayCountOfMonth(year, month));
+				expect(getDayCountOfMonth(year, month)).toBe(new Date(year, month + 1, 0).getDate());
+			}
+		}
+		// 0 ~ 99 年不会被当成 1900 ~ 1999 年（公元 4 年、0 年为闰年）
+		expect(getDayCountOfMonth(4, 1)).toBe(29);
+		expect(getDayCountOfMonth(0, 1)).toBe(29);
+	});
+
+	it('format 里单个 D（日期不补零）能解析', async () => {
+		expect(formatDate(parseDate('2024-3-15', 'YYYY-M-D'), 'YYYY-MM-DD')).toBe('2024-03-15');
+		const wrapper = mount(() => (
+			<DatePicker modelValue="2024-3-15" format="YYYY-M-D" />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await flush();
+		expect((wrapper.find('input').element as HTMLInputElement).value).toBe('2024-3-15');
 	});
 });
