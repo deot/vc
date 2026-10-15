@@ -13,6 +13,7 @@ pnpm add @deot/vc-hooks vue
 - `getInstance`
 - `useAttrs`
 - `useDrag`
+- `useKeyboard`
 - `useScrollbar`
 
 这些能力也会从聚合包 `@deot/vc` 重新导出。

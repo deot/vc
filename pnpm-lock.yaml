@@ -57,6 +57,9 @@ importers:
 
   packages/hooks:
     dependencies:
+      '@deot/vc-shared':
+        specifier: ^1.2.0
+        version: link:../shared
       vue:
         specifier: '*'
         version: 3.5.43(typescript@6.0.3)

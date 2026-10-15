@@ -26,6 +26,8 @@
       "optional": true
     }
   },
-  "dependencies": {},
+  "dependencies": {
+    "@deot/vc-shared": "^1.2.0"
+  },
   "devDependencies": {}
 }
