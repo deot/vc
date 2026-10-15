@@ -22,6 +22,11 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
+	// 可直接在输入框里键入；季度、多选及使用默认插槽时不生效
+	editable: {
+		type: Boolean,
+		default: true
+	},
 	modelValue: [Date, Array, String],
 	multiple: Boolean,
 	open: Boolean,

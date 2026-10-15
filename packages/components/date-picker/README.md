@@ -173,6 +173,50 @@ const timeOptions = ref({
 ```
 :::
 
+### 手动输入
+
+默认可以直接在输入框里键入：值合法时面板跳到该值，按 Enter、焦点离开或点击外部时提交，输入框随后按 `format` 显示。数字可以不补零、分隔符可以不同，例如 `2024-3-5`、`2024/03/05` 都按 `YYYY-MM-DD` 解析为 3 月 5 日；超出范围（2 月 30 日、25 点）或被禁用的值不会生效，关闭后恢复原值。
+
+- 范围在一个输入框里输入起止，中间用 `separator`（默认 `' - '`）分隔；起止颠倒时自动调换。
+- 禁用判断与面板一致：`disabledDate` 按当天判断，`month` / `monthrange` 只要当月有一天被禁用就禁用，`year` 不判断；带时间的类型还会检查 `timePickerOptions` 里禁用的时、分、秒和 `disabledTime`。
+- 带确认栏时（`datetime`、`datetimerange` 或 `confirm`），键入只预览，按 Enter 等同点“确定”（经过 `onBeforeOk`），焦点离开或直接关闭不提交，与在面板上点选后不确定一致。
+- 清空文字后提交：`clearable` 时等同点清除（经过 `onBeforeClear`），否则恢复原值。
+- 季度显示的是季度名称、多选是逗号拼接的列表，无法从文字解析，输入框始终只读；用默认插槽替换输入框时也没有输入。不需要输入时设置 `editable` 为 `false`。
+
+| 按键 | 行为 |
+| --- | --- |
+| Enter | 输入框聚焦时：关闭状态下打开浮层；有键入的文字时按上面的规则提交（不合法时不处理）；否则关闭浮层，带确认栏时等同点“确定” |
+| Esc | 放弃键入的文字并关闭浮层；按键不再传给页面，所在的 Modal 不会一起关闭 |
+| Tab | 关闭浮层，按上面的规则提交或放弃，焦点照常移走 |
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+```vue
+<template>
+	<div class="date-picker-editable-demo">
+		<DatePicker v-model="date" clearable placeholder="如 2024-3-5" />
+		<DatePicker v-model="range" type="daterange" clearable placeholder="如 2024-3-1 - 2024-3-15" />
+		<DatePicker v-model="datetime" type="datetime" placeholder="键入后按 Enter 确定" />
+		<p>date：{{ date || '无' }}；range：{{ range.join(' ~ ') || '无' }}；datetime：{{ datetime || '无' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { DatePicker } from '@deot/vc';
+
+const date = ref('2024-03-15');
+const range = ref(['2024-03-01', '2024-03-15']);
+const datetime = ref('');
+</script>
+
+<style scoped>
+.date-picker-editable-demo { display: grid; gap: 12px; max-width: 360px; }
+.date-picker-editable-demo p { margin: 0; overflow-wrap: anywhere; }
+</style>
+```
+:::
+
 ### 移动端日期时间选择
 
 点击触发内容打开滚轮；确认后提交格式化字符串，取消不提交。`format="HH:mm"` 只显示时、分列。
@@ -284,6 +328,7 @@ const time = ref();
 | placeholder | 占位文本，允许空字符串 | `string` | - | 当前语言的“请选择” |
 | disabled | 禁用选择器 | `boolean` | - | `false` |
 | clearable | 有值且悬停时显示清除图标 | `boolean` | - | `true` |
+| editable | 可直接在输入框里键入，见[手动输入](#手动输入)；季度、多选时始终只读 | `boolean` | - | `true` |
 | confirm | 显示确认栏；日期时间和多选自动启用 | `boolean` | - | `false` |
 | multiple | 多日期选择，仅用于 `date`，提交限制见注意事项 | `boolean` | - | `false` |
 | changeOnSelect | 选择时立即提交并关闭，即使开启了确认栏 | `boolean` | - | `false` |
@@ -316,7 +361,7 @@ const time = ref();
 | change | 普通选择、确认或清空后触发 | `(value, reset)` | `reset(value)` 仅重置内部显示值 |
 | ok | 确认且通过前置回调后触发 | `(value, reset)` | 同 `change` |
 | clear | 清空后触发 | `value` | 清空后的值 |
-| visible-change | 显示状态变化 | `visible: boolean` | 是否展开 |
+| visible-change | 点击触发器、点击外部、键入或按 Enter 改变显示状态时触发；选择、清空、Esc、Tab、Enter 引起的关闭不触发 | `visible: boolean` | 是否展开 |
 | ready | 弹层就绪 | - | - |
 | close | 弹层关闭 | - | - |
 | error | 前置回调同步抛错 | `error` | 捕获的错误 |
@@ -401,3 +446,6 @@ const time = ref();
 - locale 控制面板文案和季度摘要；`format` 中的英文月份、星期和 AM/PM 格式标记保持现有解析与输出规则，不随界面语言改变。
 - 当前桌面端 `multiple` 提交路径会将数组当作单值处理，可能报错；在修复前不要依赖多日期提交。该限制不影响日期范围模式。
 - 农历、周数显示不是当前公开能力。
+- 可输入时，浮层打开后点击输入框只移动光标，不再关闭浮层；点后缀图标仍可切换。输入框聚焦时 Enter 会被处理，放在原生 `<form>` 里不会触发隐式提交。
+- 关闭浮层时回到已提交的值：传了 `modelValue`（`v-model` 或 `:model-value`）时以它为准，调用方可以不接受某次修改；不传时为最后一次提交的值。`modelValue` 换成内容相同的新数组（如模板里内联的 `[start, end]`）时，不会打断面板上进行中的选择。
+- 时间列显示出来时（打开浮层、切到时间视图）定位到选中的时间。

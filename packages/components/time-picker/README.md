@@ -77,6 +77,40 @@ const handleClear = () => { status.value = '已清空'; };
 ```
 :::
 
+### 手动输入
+
+默认可以直接在输入框里键入：值合法时时间列滚到该值，按 Enter、焦点离开或点击外部时提交，输入框随后按 `format` 显示。数字可以不补零，例如 `9:5:7` 提交为 `09:05:07`；超出范围（25 点）或被禁用的时间（`disabledHours`、`disabledMinutes`、`disabledSeconds`、`disabledTime`）不会生效，关闭后恢复原值。
+
+- `timerange` 在一个输入框里输入起止，中间用 `separator` 分隔，起止颠倒时自动调换。
+- 开启 `confirm` 时，键入只预览，按 Enter 等同点“确定”，焦点离开或直接关闭不提交。
+- Esc 放弃键入的文字并关闭面板，Tab 关闭并按上面的规则提交；完整的规则与按键见 [DatePicker 的手动输入](../date-picker/README.md#手动输入)。不需要输入时设置 `editable` 为 `false`。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+```vue
+<template>
+	<div class="time-picker-editable-demo">
+		<TimePicker v-model="time" :disabled-hours="[12, 13]" placeholder="如 9:5:7" />
+		<TimePicker v-model="range" type="timerange" format="HH:mm" placeholder="如 9:00 - 18:00" />
+		<p>time：{{ time || '无' }}；range：{{ range.join(' ~ ') || '无' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { TimePicker } from '@deot/vc';
+
+const time = ref('08:30:00');
+const range = ref(['09:00', '18:00']);
+</script>
+
+<style scoped>
+.time-picker-editable-demo { display: grid; gap: 12px; max-width: 360px; }
+.time-picker-editable-demo p { margin: 0; overflow-wrap: anywhere; }
+</style>
+```
+:::
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-date-picker-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
@@ -122,6 +156,7 @@ TimePicker 共用 DatePicker 时间面板，使用 date-picker 命名空间；In
 | placeholder | 占位文本，允许空字符串 | `string` | - | 当前语言的“请选择” |
 | disabled | 禁用选择器 | `boolean` | - | `false` |
 | clearable | 有值且悬停时显示清除图标 | `boolean` | - | `true` |
+| editable | 可直接在输入框里键入，见[手动输入](#手动输入) | `boolean` | - | `true` |
 | separator | 范围显示与字符串解析的分隔符 | `string` | - | `' - '` |
 | nullValue | 单值清空后的替代值；范围清空返回空数组 | `string \| number \| object` | - | `''` |
 | id | 内部输入框 ID | `string` | - | - |
@@ -129,6 +164,7 @@ TimePicker 共用 DatePicker 时间面板，使用 date-picker 命名空间；In
 | trigger | Popover 触发方式 | `string` | 同 Popover | `click` |
 | tag | 触发容器标签 | `string` | - | `div` |
 | arrow | 显示弹层箭头 | `boolean` | - | `false` |
+| portal | 弹层是否挂载到 body；`false` 时挂到组件根节点内 | `boolean` | - | `true` |
 | portalClass | 弹层附加 class | `string \| object \| unknown[]` | - | - |
 
 ### 事件
@@ -139,7 +175,7 @@ TimePicker 共用 DatePicker 时间面板，使用 date-picker 命名空间；In
 | change | 选择、确认或清空后提交 | `(value, reset)` | reset 仅重置内部显示值 |
 | ok | 确认并通过前置回调后触发 | `(value, reset)` | 同 change |
 | clear | 清空后触发 | `value` | 清空后的值 |
-| visible-change | 面板显示状态变化 | `visible: boolean` | 是否展开 |
+| visible-change | 点击触发器、点击外部、键入或按 Enter 改变面板显示状态时触发；清空、Esc、Tab、Enter 引起的关闭不触发 | `visible: boolean` | 是否展开 |
 | ready | 弹层就绪 | - | - |
 | close | 面板关闭 | - | - |
 | error | 前置回调同步抛错 | `error` | 捕获的错误 |
@@ -156,6 +192,6 @@ TimePicker 共用 DatePicker 时间面板，使用 date-picker 命名空间；In
 
 - 普通模式选择后提交时间，面板保持打开；启用 confirm 时由确定按钮提交。
 - 使用 `type`、`id`、`visible-change`，没有 `mode`、`element-id` 或 `open-change` API。
-- 当前实现没有独立的 size、readonly 属性。内部输入框只读，但仍可点击打开面板。
-- 当前声明的 portal 属性未传递到 Popover，不能用 `:portal="false"` 改变挂载位置。
+- 当前实现没有独立的 size 属性。输入框默认可输入，`editable` 为 `false` 时只读，仍可点击打开面板。
+- 时间列显示出来时（打开面板）定位到选中的时间；键入或点选后带动画滚到新值。
 - 共用面板的内置文案通过 `vc.DatePicker` locale 子树配置；共用样式使用 `--vc-date-picker-*` 主题覆盖。

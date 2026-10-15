@@ -5,16 +5,8 @@ import { defineComponent, ref, computed } from 'vue';
 import { nextMonth, prevMonth, nextYear, prevYear, getDateOfTime, changeYearMonthAndClampDate } from '../helper/date-utils';
 
 import { props as dateProps } from './base-date-props';
+import { useRangeValue } from './use-range-value';
 import { YearTable, MonthTable, DateTable, DateHeader, Confirm, TimeSelect, ShortcutsSelect } from './base';
-
-const isEqualYearAndMonth = (value: any) => {
-	if (!value[0] || !value[1]) { return false; }
-	const startYear = value[0].getFullYear();
-	const startMonth = value[0].getMonth();
-	const endYear = value[1].getFullYear();
-	const endMonth = value[1].getMonth();
-	return startYear === endYear && startMonth === endMonth;
-};
 
 const isOverRightPanel = (panelDate: Date, rightPanelDate: Date) => {
 	const panelYear = panelDate.getFullYear();
@@ -74,18 +66,9 @@ export const DateRangePanel = defineComponent({
 	],
 	setup(props, { emit }) {
 		const { t } = useLocale();
-		const dates = ref(props.value!);
-		const leftPanelDate = ref(props.value![0] || props.startDate! || new Date());
-		const rightPanelDate = ref(
-			props.splitPanels && !isEqualYearAndMonth(props.value)
-				? props.value![1] || nextMonth(leftPanelDate.value)
-				: nextMonth(leftPanelDate.value)
-		);
-		const rangeState = ref<any>({
-			from: props.value![0] || '',
-			to: props.value![1] || '',
-			selecting: false,
-			marker: null, // 第一次点下的日期
+		const { dates, leftPanelDate, rightPanelDate, rangeState } = useRangeValue(props, {
+			next: nextMonth,
+			isSamePanel: (start, end) => start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth()
 		});
 		const rightCurrentView = ref('daterange');
 		const leftCurrentView = ref('daterange');

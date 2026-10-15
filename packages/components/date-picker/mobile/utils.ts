@@ -6,6 +6,7 @@ import {
 	getMonthEndDay,
 	getQuarter,
 	isEmpty,
+	isValidDate,
 	value2Array
 } from '../helper/utils';
 import type { PickerColumn, PickerValue } from '../../picker/types';
@@ -107,10 +108,6 @@ export const clampDate = (date: Date, minDate: Date, maxDate: Date) => {
 
 export const getDefaultDate = (minDate: Date, maxDate: Date) => {
 	return clampDate(new Date(), minDate, maxDate);
-};
-
-const isValidDate = (value: any): value is Date => {
-	return value instanceof Date && !isNaN(value.getTime());
 };
 
 export const parseModelValueToDates = (

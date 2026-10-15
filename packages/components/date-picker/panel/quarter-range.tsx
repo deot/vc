@@ -3,14 +3,8 @@
 import { defineComponent, ref } from 'vue';
 import { nextYear, prevYear } from '../helper/date-utils';
 import { props as dateProps } from './base-date-props';
+import { useRangeValue, isSameYear } from './use-range-value';
 import { Confirm, ShortcutsSelect, QuarterTable, DateHeader } from './base';
-
-const isEqualYear = (value: Date[]) => {
-	if (!value[0] || !value[1]) { return false; }
-	const startYear = value[0].getFullYear();
-	const endYear = value[1].getFullYear();
-	return startYear === endYear;
-};
 
 const COMPONENT_NAME = 'vc-quarterrange-panel';
 
@@ -33,19 +27,7 @@ export const QuarterRangePanel = defineComponent({
 		'ok'
 	],
 	setup(props, { emit }) {
-		const dates = ref(props.value!);
-		const leftPanelDate = ref(props.value![0] || props.startDate || new Date());
-		const rightPanelDate = ref(
-			props.splitPanels && !isEqualYear(props.value!)
-				? props.value![1] || nextYear(leftPanelDate.value)
-				: nextYear(leftPanelDate.value)
-		);
-		const rangeState = ref<any>({
-			from: props.value![0] || '',
-			to: props.value![1] || '',
-			selecting: false,
-			marker: null, // 第一次点下的季度
-		});
+		const { dates, leftPanelDate, rightPanelDate, rangeState } = useRangeValue(props, { next: nextYear, isSamePanel: isSameYear });
 		const currentView = ref('quarterrange');
 
 		const handlePanelChange = (panelDate: Date, type: string, position: string) => {

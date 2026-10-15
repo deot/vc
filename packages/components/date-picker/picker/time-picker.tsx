@@ -3,6 +3,7 @@
 import { ref, watch, computed, shallowRef, getCurrentInstance } from 'vue';
 import { props as timePickerProps, Props } from './time-picker-props';
 import { createPicker } from './base';
+import { isDisabledTime } from '../helper/utils';
 
 import { TimePanel, TimeRangePanel } from '../panel';
 
@@ -26,6 +27,9 @@ export const TimePicker = createPicker(COMPONENT_NAME, timePickerProps, () => {
 		};
 	});
 
+	// 键入的时间是否被禁用，与时间列一致
+	const isDisabled = (date: Date) => isDisabledTime(date, props);
+
 	watch(
 		() => props.type,
 		(v) => {
@@ -38,6 +42,7 @@ export const TimePicker = createPicker(COMPONENT_NAME, timePickerProps, () => {
 		icon,
 		panel,
 		panelOptions,
+		isDisabled,
 		// 时间面板的各列在高度上限内收缩并自行滚动（见 panel/style/time.scss），弹层不再内置滚动
 		scrollable: false
 	};

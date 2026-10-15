@@ -27,6 +27,12 @@ $component-name: vc-date-picker;
 		}
 	}
 
+	@include when(editable) {
+		.vc-date-picker__input input {
+			cursor: text;
+		}
+	}
+
 	@include element(append) {
 		position: relative;
 		padding: 0 10px 0 2px;

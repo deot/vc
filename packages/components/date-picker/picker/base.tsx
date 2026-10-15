@@ -7,6 +7,7 @@ import { Input } from '../../input';
 import { Popover } from '../../popover';
 import { Icon } from '../../icon';
 import { useLocale } from '../../locale';
+import { keepFocus } from '../../popover/utils';
 import { useBase } from './use-base';
 
 export const createPicker = (name: string, pickerProps: object, usePicker: Function) => defineComponent({
@@ -26,26 +27,85 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 	],
 	setup(props, { slots, emit }) {
 		const { t } = useLocale();
+		const { icon, panel, panelOptions, scrollable = true, isDisabled } = usePicker();
 		const {
 			its,
 			isHover,
 			isActive,
+			isEditable,
 			currentValue,
 			focusedDate,
 			showClear,
 			classes,
 			isConfirm,
-			visibleValue,
 			showTime,
+			inputValue,
+			inputListeners,
 
 			handleIconClick,
 			handlePick,
 			handleClear,
 			handleOK,
 			handleClose
-		} = useBase();
+		} = useBase({ isDisabled });
 
-		const { icon, panel, panelOptions, scrollable = true } = usePicker();
+		// 可输入时，点后缀图标、面板不让输入框失焦
+		const handleMousedown = (e: MouseEvent) => {
+			isEditable.value && keepFocus(e);
+		};
+
+		const renderAppend = () => {
+			return (
+				<div class={[{ 'is-clear': showClear.value }, 'vc-date-picker__append']} onMousedown={handleMousedown}>
+					<Icon
+						type={showClear.value ? 'clear' : icon.value}
+						// @ts-ignore
+						onClick={handleIconClick}
+					/>
+				</div>
+			);
+		};
+
+		const renderInput = () => {
+			return (
+				<Input
+					{...inputListeners}
+					id={props.id}
+					disabled={props.disabled}
+					modelValue={inputValue.value}
+					allowDispatch={false}
+					class="vc-date-picker__input"
+					// @ts-ignore
+					readonly={!isEditable.value}
+					placeholder={props.placeholder ?? t('vc.DatePicker.placeholder')}
+				>
+					{{ append: renderAppend }}
+				</Input>
+			);
+		};
+
+		const renderContent = () => {
+			return h(panel.value, {
+				key: props.type,
+				type: props.type,
+				value: currentValue.value,
+				confirm: isConfirm.value,
+				startDate: props.startDate,
+				focusedDate: focusedDate.value,
+				splitPanels: props.splitPanels,
+				showTime: showTime.value,
+				format: props.format,
+				steps: props.steps,
+				multiple: props.multiple,
+				...panelOptions.value,
+
+				onPick: handlePick,
+				onClear: handleClear,
+				onOk: handleOK,
+				onMousedown: handleMousedown
+			});
+		};
+
 		return () => {
 			return (
 				<Popover
@@ -75,54 +135,8 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 					onUpdate:modelValue={v => isActive.value = v}
 				>
 					{{
-						default: slots.default
-							? slots.default
-							: () => (
-									<Input
-										id={props.id}
-										disabled={props.disabled}
-										modelValue={visibleValue.value}
-										allowDispatch={false}
-										class="vc-date-picker__input"
-										// @ts-ignore
-										readonly={true}
-										placeholder={props.placeholder ?? t('vc.DatePicker.placeholder')}
-									>
-										{{
-											append: () => {
-												return (
-													<div class={[{ 'is-clear': showClear.value }, 'vc-date-picker__append']}>
-														<Icon
-															type={showClear.value ? 'clear' : icon.value}
-															// @ts-ignore
-															onClick={handleIconClick}
-														/>
-													</div>
-												);
-											}
-										}}
-									</Input>
-								),
-						content: () => {
-							return h(panel.value, {
-								key: props.type,
-								type: props.type,
-								value: currentValue.value,
-								confirm: isConfirm.value,
-								startDate: props.startDate,
-								focusedDate: focusedDate.value,
-								splitPanels: props.splitPanels,
-								showTime: showTime.value,
-								format: props.format,
-								steps: props.steps,
-								multiple: props.multiple,
-								...panelOptions.value,
-
-								onPick: handlePick,
-								onClear: handleClear,
-								onOk: handleOK
-							});
-						}
+						default: slots.default || renderInput,
+						content: renderContent
 					}}
 				</Popover>
 			);

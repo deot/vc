@@ -38,6 +38,7 @@ import {
 	formatDate,
 	parseDate,
 	TYPE_VALUE_RESOLVER_MAP,
+	isSameDigits,
 	isDisabledMonth,
 	value2Array,
 	isEmpty,
@@ -63,13 +64,7 @@ import {
 	getDateOfTime
 } from '../helper/date-utils';
 
-const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
-
-const flush = async () => {
-	await nextTick();
-	await sleep(0);
-	await nextTick();
-};
+import { sleep, flush, press, typeInto, mountAttached, mountTyping, clickOutside } from './fixtures/editable';
 
 const getPortal = () => document.querySelector('.vc-popover-wrapper') as HTMLElement | null;
 
@@ -3205,6 +3200,438 @@ describe('时间列与弹层滚动', () => {
 	});
 });
 
+describe('DatePicker 手动输入（editable）', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	const isOpen = () => {
+		const portal = getPortal();
+		return !!portal && portal.style.display !== 'none';
+	};
+	const getHeader = () => Array.from(document.querySelectorAll('.vc-date-header__label')).map(el => el.textContent).join(' ');
+	const getSelected = () => document.querySelector('.vc-date-table__cell.is-selected')?.textContent;
+	const getSelectedCount = () => document.querySelectorAll('.vc-date-table__cell.is-selected').length;
+	// 键入后按 Enter，再让输入框失焦
+	const enterInto = async (input: HTMLInputElement, text: string) => {
+		input.focus();
+		await typeInto(input, text);
+		press('Enter');
+		await flush();
+		input.blur();
+	};
+
+	it('isSameDigits：数字逐个相同即可，不看补零与分隔符', () => {
+		expect(isSameDigits('2024-3-5', '2024-03-05')).toBe(true);
+		expect(isSameDigits('2024/03/05', '2024-03-05')).toBe(true);
+		expect(isSameDigits('2024-02-30', '2024-03-01')).toBe(false);
+		expect(isSameDigits('2024-03-015', '2024-03-01')).toBe(false);
+	});
+
+	it.each([
+		['date', '2024-03-15', '2024-03-15'],
+		['date', ' 2024-3-5 ', '2024-03-05'],
+		['date', '2024/03/05', '2024-03-05'],
+		['date', '2024-02-30', null],
+		['date', '2024-13-01', null],
+		['date', '2024-03', null],
+		['date', '2024-03-015', null],
+		['datetime', '2024-03-15 9:5:0', '2024-03-15 09:05:00'],
+		['datetime', '2024-03-15 25:00:00', null],
+		['month', '2024-3', '2024-03'],
+		['year', '2025', '2025'],
+		['daterange', '2024-03-20 - 2024-03-01', ['2024-03-01', '2024-03-20']],
+		['daterange', '2024-03-01', null],
+		['daterange', '2024-03-01 - 2024-02-30', null]
+	])('解析键入的文字：%s「%s」', async (type, text, expected) => {
+		const onChange = vi.fn();
+		const { input } = await mountTyping(() => (<DatePicker type={type as string} onChange={onChange} />));
+		await enterInto(input, text as string);
+		if (expected === null) {
+			expect(onChange).not.toHaveBeenCalled();
+		} else {
+			expect(onChange.mock.calls[0][0]).toEqual(expected);
+		}
+	});
+
+	it('合法输入时面板即时跳到该值，Enter 提交并关闭，输入框显示规范格式', async () => {
+		const value = ref<any>('2023-01-10');
+		const onChange = vi.fn();
+		const { input, type } = await mountTyping(() => (
+			<DatePicker v-model={value.value} onChange={onChange} />
+		));
+
+		await type('2024-3-15');
+		expect(isOpen()).toBe(true);
+		expect(getHeader()).toContain('2024');
+		expect(getSelected()).toBe('15');
+		// 预览不提交
+		expect(onChange).not.toHaveBeenCalled();
+		expect(input.value).toBe('2024-3-15');
+
+		expect(press('Enter').defaultPrevented).toBe(true);
+		await flush();
+		expect(onChange).toHaveBeenCalledTimes(1);
+		expect(value.value).toBe('2024-03-15');
+		expect(isOpen()).toBe(false);
+		expect(input.value).toBe('2024-03-15');
+		// 焦点仍在输入框
+		expect(document.activeElement).toBe(input);
+	});
+
+	it('失焦、点外部时提交；值没变时不发 change', async () => {
+		const value = ref<any>('2023-01-10');
+		const onChange = vi.fn();
+		const { input, type } = await mountTyping(() => (
+			<DatePicker v-model={value.value} onChange={onChange} />
+		));
+
+		await type('2024/04/02');
+		input.blur();
+		await flush();
+		expect(value.value).toBe('2024-04-02');
+		expect(onChange).toHaveBeenCalledTimes(1);
+
+		input.focus();
+		await type('2024-05-06');
+		await clickOutside();
+		expect(value.value).toBe('2024-05-06');
+		expect(isOpen()).toBe(false);
+
+		input.focus();
+		await type('2024-5-6');
+		press('Enter');
+		await flush();
+		expect(onChange).toHaveBeenCalledTimes(2);
+		expect(input.value).toBe('2024-05-06');
+	});
+
+	it('不合法的输入：面板不动，Enter 不处理，关闭后恢复', async () => {
+		const value = ref<any>('2023-01-10');
+		const onChange = vi.fn();
+		const { input, type } = await mountTyping(() => (
+			<DatePicker v-model={value.value} onChange={onChange} />
+		));
+
+		await type('2024-02-30');
+		expect(getSelected()).toBe('10');
+		press('Enter');
+		await flush();
+		expect(isOpen()).toBe(true);
+		expect(input.value).toBe('2024-02-30');
+
+		await clickOutside();
+		expect(onChange).not.toHaveBeenCalled();
+		expect(input.value).toBe('2023-01-10');
+	});
+
+	it('disabledDate 禁用的日期视为不合法', async () => {
+		const value = ref<any>('2023-01-10');
+		const { input, type } = await mountTyping(() => (
+			<DatePicker v-model={value.value} disabledDate={(date: Date) => date.getDate() === 13} />
+		));
+
+		await type('2024-03-13');
+		expect(getSelected()).toBe('10');
+		input.blur();
+		await flush();
+		expect(value.value).toBe('2023-01-10');
+		expect(input.value).toBe('2023-01-10');
+	});
+
+	it('Esc 放弃输入并关闭，按键不再传给页面；Tab 关闭并提交', async () => {
+		const value = ref<any>('2023-01-10');
+		const outside = vi.fn();
+		document.addEventListener('keydown', outside);
+		onTestFinished(() => document.removeEventListener('keydown', outside));
+		const { input, type } = await mountTyping(() => (
+			<DatePicker v-model={value.value} />
+		));
+
+		await type('2024-03-15');
+		expect(press('Escape').defaultPrevented).toBe(true);
+		await flush();
+		expect(outside).not.toHaveBeenCalled();
+		expect(isOpen()).toBe(false);
+		expect(value.value).toBe('2023-01-10');
+		expect(input.value).toBe('2023-01-10');
+
+		await type('2024-03-16');
+		expect(press('Tab').defaultPrevented).toBe(false);
+		await flush();
+		expect(isOpen()).toBe(false);
+		expect(value.value).toBe('2024-03-16');
+	});
+
+	it('关闭状态下输入会打开浮层并发 visible-change；打开后点击输入框不关闭', async () => {
+		const onVisibleChange = vi.fn();
+		const { wrapper, input, type } = await mountTyping(() => (
+			<DatePicker modelValue="2023-01-10" onVisibleChange={onVisibleChange} />
+		));
+
+		await type('2');
+		expect(isOpen()).toBe(true);
+		expect(onVisibleChange).toHaveBeenCalledWith(true);
+
+		await wrapper.find('input').trigger('click');
+		await flush();
+		await sleep(20);
+		expect(isOpen()).toBe(true);
+		expect(input.value).toBe('2');
+	});
+
+	it('Enter：没有输入时，关闭状态下打开浮层，打开状态下关闭', async () => {
+		const { input } = await mountTyping(() => (
+			<DatePicker modelValue="2023-01-10" />
+		));
+
+		press('Enter');
+		await flush();
+		await sleep(20);
+		expect(isOpen()).toBe(true);
+		press('Enter');
+		await flush();
+		expect(isOpen()).toBe(false);
+		expect(input.value).toBe('2023-01-10');
+	});
+
+	it('清空文字后提交：clearable 时等同点清除', async () => {
+		const value = ref<any>('2023-01-10');
+		const onClear = vi.fn();
+		const { input, type } = await mountTyping(() => (
+			<DatePicker v-model={value.value} onClear={onClear} />
+		));
+
+		await type('');
+		press('Enter');
+		await flush();
+		expect(onClear).toHaveBeenCalledTimes(1);
+		expect(value.value).toBe('');
+		expect(input.value).toBe('');
+	});
+
+	it('清空文字后提交：clearable 为 false 时恢复', async () => {
+		const value = ref<any>('2023-01-10');
+		const { input, type } = await mountTyping(() => (
+			<DatePicker v-model={value.value} clearable={false} />
+		));
+
+		await type('');
+		input.blur();
+		await flush();
+		expect(value.value).toBe('2023-01-10');
+		expect(input.value).toBe('2023-01-10');
+	});
+
+	it('确认栏模式：Enter 等同确定（经过 onBeforeOk），直接关闭不提交', async () => {
+		const value = ref<any>('2023-01-10 08:00:00');
+		const onOk = vi.fn();
+		const onBeforeOk = vi.fn();
+		const { input, type } = await mountTyping(() => (
+			<DatePicker v-model={value.value} type="datetime" onOk={onOk} onBeforeOk={onBeforeOk} />
+		));
+
+		await type('2024-03-15 10:20:30');
+		input.blur();
+		await flush();
+		// 失焦不提交
+		expect(value.value).toBe('2023-01-10 08:00:00');
+
+		input.focus();
+		await type('2024-03-15 10:20:30');
+		await clickOutside();
+		expect(value.value).toBe('2023-01-10 08:00:00');
+		expect(input.value).toBe('2023-01-10 08:00:00');
+
+		input.focus();
+		await type('2024-03-15 10:20:30');
+		press('Enter');
+		await flush();
+		expect(onBeforeOk).toHaveBeenCalledTimes(1);
+		expect(onOk).toHaveBeenCalledTimes(1);
+		expect(value.value).toBe('2024-03-15 10:20:30');
+		expect(isOpen()).toBe(false);
+	});
+
+	it('不绑 v-model：放弃输入时回到最后一次提交的值', async () => {
+		const { input, type } = await mountTyping(() => (
+			<DatePicker />
+		));
+
+		await type('2024-03-15');
+		press('Enter');
+		await flush();
+		expect(input.value).toBe('2024-03-15');
+
+		await type('2024-03-16');
+		press('Escape');
+		await flush();
+		expect(input.value).toBe('2024-03-15');
+	});
+
+	it('确认栏模式、不绑 v-model：点选后直接关闭，输入框立即回到原值', async () => {
+		const { wrapper, input } = await mountTyping(() => (
+			<DatePicker type="datetime" />
+		));
+		await wrapper.find('input').trigger('click');
+		await flush();
+		await sleep(20);
+		await flush();
+		(document.querySelector('.vc-date-table__cell.is-normal:not(.is-disabled)') as HTMLElement).click();
+		await flush();
+		expect(input.value).not.toBe('');
+
+		await clickOutside();
+		expect(input.value).toBe('');
+	});
+
+	it('editable 为 false、多选、季度时输入框只读', async () => {
+		const wrapper = await mountAttached(() => (
+			<div>
+				<DatePicker class="is-default" />
+				<DatePicker class="is-off" editable={false} />
+				<DatePicker class="is-multiple" multiple />
+				<DatePicker class="is-quarter" type="quarter" />
+				<DatePicker class="is-quarterrange" type="quarterrange" />
+			</div>
+		));
+		const isReadonly = (name: string) => (wrapper.find(`.${name} input`).element as HTMLInputElement).readOnly;
+		expect(isReadonly('is-default')).toBe(false);
+		expect(isReadonly('is-off')).toBe(true);
+		expect(isReadonly('is-multiple')).toBe(true);
+		expect(isReadonly('is-quarter')).toBe(true);
+		expect(isReadonly('is-quarterrange')).toBe(true);
+		expect(wrapper.find('.is-default').classes()).toContain('is-editable');
+		expect(wrapper.find('.is-off').classes()).not.toContain('is-editable');
+	});
+
+	it('点面板、后缀图标不让输入框失焦', async () => {
+		const { wrapper, type } = await mountTyping(() => (
+			<DatePicker modelValue="2023-01-10" />
+		));
+		await type('2024');
+		for (const el of [document.querySelector('.vc-date-panel'), wrapper.find('.vc-date-picker__append').element]) {
+			const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+			el!.dispatchEvent(event);
+			expect(event.defaultPrevented).toBe(true);
+		}
+	});
+
+	it('范围：按分隔符拆成起止两段，颠倒时调换，面板跳到起止所在的月份', async () => {
+		const value = ref<any>(['2023-01-01', '2023-01-05']);
+		const onChange = vi.fn();
+		const { input, type } = await mountTyping(() => (
+			<DatePicker v-model={value.value} type="daterange" onChange={onChange} />
+		));
+
+		await type('2024-05-20 - 2024-03-1');
+		expect(getHeader()).toMatch(/2024.*03.*2024.*05/);
+		expect(Array.from(document.querySelectorAll('.vc-date-table__cell.is-selected')).map(el => el.textContent)).toEqual(['1', '20']);
+		press('Enter');
+		await flush();
+		expect(value.value).toEqual(['2024-03-01', '2024-05-20']);
+		expect(onChange).toHaveBeenCalledTimes(1);
+		expect(input.value).toBe('2024-03-01 - 2024-05-20');
+	});
+
+	it('范围：缺少分隔符、任一段不合法时不生效，关闭后恢复', async () => {
+		const value = ref<any>(['2023-01-01', '2023-01-05']);
+		const { input, type } = await mountTyping(() => (
+			<DatePicker v-model={value.value} type="daterange" />
+		));
+
+		await type('2024-03-01');
+		press('Enter');
+		await flush();
+		expect(isOpen()).toBe(true);
+		await type('2024-03-01 - 2024-02-30');
+		await clickOutside();
+		expect(value.value).toEqual(['2023-01-01', '2023-01-05']);
+		expect(input.value).toBe('2023-01-01 - 2023-01-05');
+	});
+
+	it('datetimerange：Enter 等同确定；monthrange 可输入', async () => {
+		const range = ref<any>([]);
+		const months = ref<any>([]);
+		const onOk = vi.fn();
+		const wrapper = await mountAttached(() => (
+			<div>
+				<DatePicker v-model={range.value} type="datetimerange" class="is-datetime" onOk={onOk} />
+				<DatePicker v-model={months.value} type="monthrange" class="is-month" />
+			</div>
+		));
+		const getInput = (selector: string) => wrapper.find(selector).element as HTMLInputElement;
+		await enterInto(getInput('.is-datetime input'), '2024-03-01 08:00:00 - 2024-03-02 18:30:00');
+		expect(onOk).toHaveBeenCalledTimes(1);
+		expect(range.value).toEqual(['2024-03-01 08:00:00', '2024-03-02 18:30:00']);
+
+		await enterInto(getInput('.is-month input'), '2024-1 - 2024-5');
+		expect(months.value).toEqual(['2024-01', '2024-05']);
+	});
+
+	it('datetime：timePickerOptions 里禁用的时间视为不合法', async () => {
+		const onOk = vi.fn();
+		const { input } = await mountTyping(() => (
+			<DatePicker type="datetime" timePickerOptions={{ disabledHours: [9] }} onOk={onOk} />
+		));
+		await enterInto(input, '2024-03-15 09:30:00');
+		expect(onOk).not.toHaveBeenCalled();
+		await enterInto(input, '2024-03-15 10:30:00');
+		expect(onOk).toHaveBeenCalledTimes(1);
+	});
+
+	it('范围面板跟随外部值', async () => {
+		const value = ref<Date[]>([new Date(2024, 0, 10), new Date(2024, 0, 20)]);
+		await mountAttached(() => (
+			<DateRangePanel value={value.value} focusedDate={new Date(2024, 0, 10)} splitPanels onPick={(v: Date[]) => (value.value = v)} />
+		));
+		expect(getHeader()).toMatch(/2024.*01.*2024.*02/);
+
+		value.value = [new Date(2025, 4, 1), new Date(2025, 7, 1)];
+		await flush();
+		expect(getHeader()).toMatch(/2025.*05.*2025.*08/);
+	});
+
+	it('modelValue 换成内容相同的新数组时，不打断面板上未确定的点选', async () => {
+		const tick = ref(0);
+		await mountAttached(() => (
+			<div data-tick={tick.value}>
+				<DatePicker modelValue={['2024-01-10 00:00:00', '2024-01-20 00:00:00']} type="datetimerange" open />
+			</div>
+		));
+		await sleep(20);
+		// 点下起点后只剩起点显示为选中；被打断时会回到原来的起止两个
+		expect(getSelectedCount()).toBe(2);
+		(document.querySelector('.vc-date-table__cell.is-normal') as HTMLElement).click();
+		await flush();
+		expect(getSelectedCount()).toBe(1);
+		// 父组件重新渲染，内联的数组是新建的
+		tick.value++;
+		await flush();
+		expect(getSelectedCount()).toBe(1);
+	});
+
+	it('面板跟随外部值：多选时面板自己发出的值不让日历跳回', async () => {
+		const value = ref<Date[]>([new Date(2024, 0, 10)]);
+		await mountAttached(() => (
+			<DatePanel value={value.value} focusedDate={new Date(2024, 0, 10)} multiple onPick={(v: Date[]) => (value.value = v)} />
+		));
+		// 翻到下一个月再点选
+		(document.querySelector('.vc-date-header__arrow.is-next:not(.is-next-year)') as HTMLElement).click();
+		await flush();
+		(document.querySelector('.vc-date-table__cell.is-normal') as HTMLElement).click();
+		await flush();
+		expect(value.value.length).toBe(2);
+		// 仍停在翻到的 2 月，没有跳回第一个已选日期所在的 1 月
+		expect(getHeader()).toMatch(/2024.*02/);
+
+		// 外部换成新数组：面板跟随
+		value.value = [new Date(2025, 5, 1)];
+		await flush();
+		expect(getHeader()).toMatch(/2025.*06/);
+	});
+});
+
 describe('月份的禁用判断、单个 D 的解析', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';
@@ -3225,11 +3652,9 @@ describe('月份的禁用判断、单个 D 的解析', () => {
 
 	it('月份面板与键入一致：只允许到 4 月 30 日时 4 月可选', async () => {
 		const disabledDate = (date: Date) => date.getTime() > new Date(2024, 3, 30, 23, 59, 59).getTime();
-		const wrapper = mount(() => (
+		await mountAttached(() => (
 			<MonthTable panelDate={new Date(2024, 0, 1)} value={[]} disabledDate={disabledDate} />
-		), { attachTo: document.body });
-		onTestFinished(() => wrapper.unmount());
-		await flush();
+		));
 		const cells = Array.from(document.querySelectorAll('.vc-month-table__cell'));
 		expect(cells.map(cell => cell.classList.contains('is-disabled'))).toEqual([
 			false, false, false, false, true, true, true, true, true, true, true, true
@@ -3250,11 +3675,9 @@ describe('月份的禁用判断、单个 D 的解析', () => {
 
 	it('format 里单个 D（日期不补零）能解析', async () => {
 		expect(formatDate(parseDate('2024-3-15', 'YYYY-M-D'), 'YYYY-MM-DD')).toBe('2024-03-15');
-		const wrapper = mount(() => (
+		const wrapper = await mountAttached(() => (
 			<DatePicker modelValue="2024-3-15" format="YYYY-M-D" />
-		), { attachTo: document.body });
-		onTestFinished(() => wrapper.unmount());
-		await flush();
+		));
 		expect((wrapper.find('input').element as HTMLInputElement).value).toBe('2024-3-15');
 	});
 });

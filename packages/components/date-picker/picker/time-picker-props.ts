@@ -1,4 +1,4 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
 
 export const props = {
 	type: {
@@ -7,23 +7,23 @@ export const props = {
 		validator: (v: string) => /(time|timerange)/.test(v)
 	},
 	disabledTime: {
-		type: Function,
+		type: Function as PropType<(date: Date) => boolean>,
 		default: () => false
 	},
 	disabledHours: {
-		type: Array,
+		type: Array as PropType<number[]>,
 		default: () => {
 			return [];
 		}
 	},
 	disabledMinutes: {
-		type: Array,
+		type: Array as PropType<number[]>,
 		default: () => {
 			return [];
 		}
 	},
 	disabledSeconds: {
-		type: Array,
+		type: Array as PropType<number[]>,
 		default: () => {
 			return [];
 		}

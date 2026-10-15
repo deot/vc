@@ -1,7 +1,7 @@
 /** @jsxImportSource vue */
 
 import { useLocale } from '../../locale';
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, computed } from 'vue';
 import { getDateOfTime, clearTime } from '../helper/date-utils';
 import { props as timeProps } from './base-time-props';
 import { Confirm, TimeSelect, DateHeader } from './base';
@@ -31,13 +31,12 @@ export const TimeRangePanel = defineComponent({
 	],
 	setup(props, { emit }) {
 		const { t } = useLocale();
-		const dates = ref(props.value!);
 		const showSeconds = computed(() => {
 			return !(props.format || '').match(/mm$/);
 		});
+		// 面板上的值即 props.value（由 picker 写回）
 		const timeSlots = computed(() => {
-			const leftDate = dates.value[0];
-			const rightDate = dates.value[1];
+			const [leftDate, rightDate] = props.value!;
 			if (!leftDate || !rightDate) {
 				return {
 					left: {},
@@ -59,15 +58,14 @@ export const TimeRangePanel = defineComponent({
 		});
 
 		const handlePick = (type: string, value: any) => {
-			let leftNewDate = dates.value[0] || clearTime(new Date());
-			let rightNewDate = dates.value[1] || clearTime(new Date());
+			let leftNewDate = props.value![0] || clearTime(new Date());
+			let rightNewDate = props.value![1] || clearTime(new Date());
 			type === 'left' && (leftNewDate = getDateOfTime(leftNewDate, value));
 			type === 'right' && (rightNewDate = getDateOfTime(rightNewDate, value));
 			if (leftNewDate > rightNewDate) {
 				rightNewDate = getDateOfTime(rightNewDate, getComparedDate(leftNewDate, rightNewDate));
 			}
-			dates.value = [leftNewDate, rightNewDate];
-			emit('pick', dates.value);
+			emit('pick', [leftNewDate, rightNewDate]);
 		};
 
 		const handleClear = () => {
@@ -75,7 +73,7 @@ export const TimeRangePanel = defineComponent({
 		};
 
 		const handleOK = () => {
-			emit('ok', dates.value);
+			emit('ok', props.value);
 		};
 
 		return () => {

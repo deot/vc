@@ -315,6 +315,42 @@ export const TYPE_VALUE_RESOLVER_MAP = {
 	}
 };
 
+export const isValidDate = (value: any): value is Date => {
+	return value instanceof Date && !isNaN(value.getTime());
+};
+
+const getDigits = (text: string) => (text.match(/\d+/g) || []).map(Number).join();
+
+/**
+ * 两段文字里的数字是否逐个相同：键入的文字解析后按格式输出，以此判断没有溢出（如 2 月 30 日、25 点）
+ * 	- 数字可以不补零、分隔符可以不同（如 2024-4-2、2024/04/02）
+ * @param a ~
+ * @param b ~
+ * @returns ~
+ */
+export const isSameDigits = (a: string, b: string) => getDigits(a) === getDigits(b);
+
+export interface DisabledTimeOptions {
+	disabledHours?: number[];
+	disabledMinutes?: number[];
+	disabledSeconds?: number[];
+	disabledTime?: (date: Date) => boolean;
+}
+
+/**
+ * 时间是否被禁用：时、分、秒在禁用列表里，或 disabledTime 判为禁用（与时间列的选项一致）
+ * @param date ~
+ * @param options ~
+ * @returns ~
+ */
+export const isDisabledTime = (date: Date, options: DisabledTimeOptions) => {
+	const { disabledHours, disabledMinutes, disabledSeconds, disabledTime } = options;
+	return !!disabledHours?.includes(date.getHours())
+		|| !!disabledMinutes?.includes(date.getMinutes())
+		|| !!disabledSeconds?.includes(date.getSeconds())
+		|| !!disabledTime?.(date);
+};
+
 /**
  * 月份是否被禁用：只要其中某一天（当天的开始或结束）被禁用，就禁用该月份
  * @param year ~

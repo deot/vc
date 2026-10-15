@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, computed } from 'vue';
 import { getDateOfTime, clearTime } from '../helper/date-utils';
 import { props as timeProps } from './base-time-props';
 import { Confirm, TimeSelect } from './base';
@@ -16,23 +16,20 @@ export const TimePanel = defineComponent({
 		'ok'
 	],
 	setup(props, { emit }) {
-		const dates = ref(props.value!);
-
 		const showSeconds = computed(() => {
 			return !(props.format || '').match(/mm$/);
 		});
+		// 面板上的值即 props.value（由 picker 写回）
 		const timeSlots = computed(() => {
-			const date = dates.value[0];
+			const date = props.value![0];
 			if (!date) return [];
 			return [date.getHours(), date.getMinutes(), date.getSeconds()];
 		});
 
 		const handlePick = (value: any) => {
 			// TODO confirm为false 不能实时响应，但不关闭弹层
-			const date = dates.value[0] || clearTime(new Date());
-			const newDate = getDateOfTime(date, value);
-			dates.value = [newDate];
-			emit('pick', dates.value);
+			const date = props.value![0] || clearTime(new Date());
+			emit('pick', [getDateOfTime(date, value)]);
 		};
 
 		const handleClear = () => {
@@ -40,7 +37,7 @@ export const TimePanel = defineComponent({
 		};
 
 		const handleOK = () => {
-			emit('ok', dates.value);
+			emit('ok', props.value);
 		};
 
 		return () => {
