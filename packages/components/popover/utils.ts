@@ -90,3 +90,13 @@ export const measureText = (value: string) => {
 	wrapper.remove();
 	return size;
 };
+
+/**
+ * 在弹层内容、触发器的非输入区域按下鼠标时不转移焦点（焦点留在触发器的输入框）；可输入文字的节点、复选框等仍可点击
+ * @param e ~
+ */
+export const keepFocus = (e: MouseEvent) => {
+	const el = e.target as HTMLInputElement;
+	const isEditable = el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !/^(checkbox|radio)$/.test(el.type));
+	!isEditable && e.preventDefault();
+};

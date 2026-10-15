@@ -6,7 +6,7 @@ import { renderType } from '../customer/customer-props';
 import { useLocale } from '../locale';
 import { renderHighlight } from '../select/select-search';
 import type { SearchRegex } from '../select/utils';
-import { keepFocus } from '../select/select-trigger';
+import { keepFocus } from '../popover/utils';
 import { Tree } from './tree';
 import { getFocusableItems } from './use-keydown';
 

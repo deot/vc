@@ -2,7 +2,7 @@
 
 import { defineComponent, ref, nextTick, onMounted } from 'vue';
 import { InputSearch } from '../../input/index';
-import { keepFocus } from '../select-trigger';
+import { keepFocus } from '../../popover/utils';
 
 const COMPONENT_NAME = 'vc-select-search';
 

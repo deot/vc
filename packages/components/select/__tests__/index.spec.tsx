@@ -5,7 +5,7 @@ import { enUS, zhCN } from '@deot/vc-locale';
 import { Option, OptionGroup } from '../select-option';
 import { SelectAll, SelectPaths } from '../select-search';
 import { fitTags } from '../select-trigger/utils';
-import { keepFocus } from '../select-trigger';
+import { keepFocus } from '../../popover/utils';
 import { scrollIntoScroller, useColumnNavigate, getPathsWidth } from '../hooks/use-navigate';
 import {
 	createSearchRegex,

@@ -6,6 +6,7 @@ import { Input } from '../../input/index';
 import { Icon } from '../../icon/index';
 import { Spin } from '../../spin/index';
 import { Customer } from '../../customer/index';
+import { keepFocus } from '../../popover/utils';
 import { valueType } from '../../customer/customer-props';
 import { SelectTags } from './select-tags';
 import type { SelectTag } from './select-tags';
@@ -14,16 +15,6 @@ const COMPONENT_NAME = 'vc-select-trigger';
 
 // 多选时，内联的搜索输入框在弹层打开期间预留的最小宽度
 const SEARCH_MIN_WIDTH = 64;
-
-/**
- * 点击可输入文字的节点以外的位置时不转移焦点（焦点留在搜索输入框）；复选框等仍可点击
- * @param e ~
- */
-export const keepFocus = (e: MouseEvent) => {
-	const el = e.target as HTMLInputElement;
-	const isEditable = el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !/^(checkbox|radio)$/.test(el.type));
-	!isEditable && e.preventDefault();
-};
 
 /**
  * Select / TreeSelect / Cascader 的触发器：回显（单选文字 / 多选标签）、内联搜索、后缀图标

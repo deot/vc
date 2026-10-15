@@ -12,7 +12,7 @@ import { useLocale } from '../locale';
 import { Tree } from './tree';
 import { SelectPaths } from '../select/select-search';
 import type { SelectPath } from '../select/select-search';
-import { keepFocus } from '../select/select-trigger';
+import { keepFocus } from '../popover/utils';
 import { useColumnNavigate } from '../select/hooks/use-navigate';
 
 const COMPONENT_NAME = 'vc-tree-select-content-cascader';
