@@ -13,7 +13,7 @@ import {
 	Fragment
 } from 'vue';
 import { debounce } from 'lodash-es';
-import { useScrollbar, useDrag } from '@deot/vc-hooks';
+import { useScrollbar, useDrag, useKeyboard } from '@deot/vc-hooks';
 import type { DragPoint } from '@deot/vc-hooks';
 
 import { Icon } from '../icon';
@@ -21,7 +21,6 @@ import { Button } from '../button';
 import { TransitionScale, TransitionFade } from '../transition';
 import { Customer } from '../customer';
 import { Scroller } from '../scroller';
-import { Keyboard } from '@deot/vc-shared';
 import { VcInstance } from '../vc';
 import { useLocale } from '../locale';
 
@@ -197,15 +196,7 @@ export const ModalView = defineComponent({
 			handleClose(e, true);
 			return true;
 		};
-		let unsubscribe: (() => void) | null = null;
-		watch(
-			() => isActive.value,
-			(v) => {
-				unsubscribe?.();
-				unsubscribe = v ? Keyboard.on(handleEscClose) : null;
-			},
-			{ flush: 'post' }
-		);
+		useKeyboard({ enabled: () => isActive.value, handler: handleEscClose, flush: 'post' });
 
 		const renderContent = () => {
 			return (
@@ -270,7 +261,6 @@ export const ModalView = defineComponent({
 
 		onUnmounted(() => {
 			document.removeEventListener('click', handleClick, true);
-			unsubscribe?.();
 		});
 
 		watch(

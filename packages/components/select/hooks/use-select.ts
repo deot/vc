@@ -1,7 +1,6 @@
-import { computed, getCurrentInstance, inject, ref, watch, onBeforeUnmount } from 'vue';
+import { computed, getCurrentInstance, inject, ref, watch } from 'vue';
 import { debounce, isEqualWith } from 'lodash-es';
-import { useAttrs } from '@deot/vc-hooks';
-import { Keyboard } from '@deot/vc-shared';
+import { useAttrs, useKeyboard } from '@deot/vc-hooks';
 import { VcError } from '../../vc/index';
 import { createSearchRegex, toCurrentValue, toModelValue } from '../utils';
 import type { Props } from '../select-props';
@@ -146,15 +145,7 @@ export const useSelect = (name: string, options: Options = {}) => {
 		}
 	};
 
-	let unsubscribe: (() => void) | null = null;
-	watch(
-		() => isActive.value || isFocus.value,
-		(v) => {
-			unsubscribe?.();
-			unsubscribe = v ? Keyboard.on(handleKeyboard) : null;
-		}
-	);
-	onBeforeUnmount(() => unsubscribe?.());
+	useKeyboard({ enabled: () => isActive.value || isFocus.value, handler: handleKeyboard });
 
 	// 引用不变，不随渲染重建；组件另传的同名监听会与之合并（都执行），不必再 emit
 	const listeners = {

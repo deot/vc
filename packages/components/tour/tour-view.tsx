@@ -14,7 +14,7 @@ import { useLocale } from '../locale';
 import { props as tourProps, emits as tourEmits } from './tour-props';
 import { useTour } from './use-tour';
 import { usePosition } from './use-position';
-import { useKeyboard } from './use-keyboard';
+import { useTourKeyboard } from './use-keyboard';
 import { TourMask } from './mask';
 import type { TourAction } from './types';
 
@@ -38,7 +38,7 @@ export const TourView = defineComponent({
 		const position = usePosition(tour.isActive, tour.element, tour.options, tour.refresh, () => popover.value?.update());
 		const centerCard = shallowRef<HTMLElement>();
 		const card = computed(() => (tour.element.value ? popover.value?.$el : centerCard.value));
-		useKeyboard(tour, card);
+		useTourKeyboard(tour, card);
 		expose({
 			...tour.api,
 			close: tour.handleClose,

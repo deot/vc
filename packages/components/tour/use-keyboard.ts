@@ -1,7 +1,7 @@
-import { watch, nextTick, onBeforeUnmount } from 'vue';
+import { watch, nextTick } from 'vue';
 import type { Ref } from 'vue';
 import { findLastIndex } from 'lodash-es';
-import { Keyboard } from '@deot/vc-shared';
+import { useKeyboard } from '@deot/vc-hooks';
 import { isInArea, getAreaNode } from '../popover/utils';
 import type { useTour } from './use-tour';
 
@@ -19,7 +19,7 @@ const isFocusable = (node: Element): node is HTMLElement => {
 	return node.matches(focusSelector) && !node.matches(':disabled') && !node.closest('[inert]') && node.getClientRects().length > 0;
 };
 
-export const useKeyboard = (tour: ReturnType<typeof useTour>, card: Ref<HTMLElement | undefined>) => {
+export const useTourKeyboard = (tour: ReturnType<typeof useTour>, card: Ref<HTMLElement | undefined>) => {
 	const focusCard = () => card.value?.focus({ preventScroll: true });
 	const getFocusable = (area: Element) => [area, ...area.querySelectorAll(focusSelector)].filter(isFocusable);
 	// 焦点在卡片或目标打开的子弹层（挂 body，如 Select 下拉的搜索框）内时，返回其在卡片/目标内的触发节点
@@ -60,7 +60,7 @@ export const useKeyboard = (tour: ReturnType<typeof useTour>, card: Ref<HTMLElem
 		return true;
 	};
 	const handleKeyboard = (event: KeyboardEvent) => {
-		if (!tour.isActive.value || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return false;
+		if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return false;
 		if (event.key === 'Tab') return trapFocus(event);
 		const origin = event.target instanceof Node ? getPopupOrigin(event.target) : null;
 		if (event.key === 'Escape') {
@@ -86,18 +86,14 @@ export const useKeyboard = (tour: ReturnType<typeof useTour>, card: Ref<HTMLElem
 		if (isInsideCard) return;
 		if ((tour.options.value.disableActiveInteraction && isInsideElement) || (tour.options.value.mask && !isInsideElement)) focusCard();
 	};
-	let unsubscribe = () => {};
-	const detach = () => {
-		unsubscribe();
-		document.removeEventListener('focusin', handleFocus, true);
-	};
+	useKeyboard({ enabled: () => tour.isActive.value, handler: handleKeyboard, flush: 'post' });
+
 	watch(
 		() => tour.isActive.value,
-		(isActive) => {
-			detach();
+		(isActive, _, onCleanup) => {
 			if (!isActive) return;
-			unsubscribe = Keyboard.on(handleKeyboard);
 			document.addEventListener('focusin', handleFocus, true);
+			onCleanup(() => document.removeEventListener('focusin', handleFocus, true));
 		},
 		{ flush: 'post' }
 	);
@@ -111,6 +107,4 @@ export const useKeyboard = (tour: ReturnType<typeof useTour>, card: Ref<HTMLElem
 		},
 		{ flush: 'post' }
 	);
-
-	onBeforeUnmount(detach);
 };
