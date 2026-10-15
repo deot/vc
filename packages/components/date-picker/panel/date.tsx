@@ -52,12 +52,8 @@ export const DatePanel = defineComponent({
 		});
 
 		const timeSlots = computed(() => {
-			/**
-			 * currentView.value !== 'time' 由于time-select是用v-show控制显示隐藏，
-			 * 所以在面板为time时，才去更改timeSlots, time-select才会触发watch
-			 */
 			const date = dates.value[0];
-			if (!date || currentView.value !== 'time') return [];
+			if (!date) return [];
 			return [date.getHours(), date.getMinutes(), date.getSeconds()];
 		});
 

@@ -4,7 +4,6 @@ import { defineComponent, ref, computed } from 'vue';
 import { getDateOfTime, clearTime } from '../helper/date-utils';
 import { props as timeProps } from './base-time-props';
 import { Confirm, TimeSelect } from './base';
-import { useReady } from './use-ready';
 
 const COMPONENT_NAME = 'vc-time-panel';
 
@@ -17,7 +16,6 @@ export const TimePanel = defineComponent({
 		'ok'
 	],
 	setup(props, { emit }) {
-		const isReady = useReady();
 		const dates = ref(props.value!);
 
 		const showSeconds = computed(() => {
@@ -25,7 +23,7 @@ export const TimePanel = defineComponent({
 		});
 		const timeSlots = computed(() => {
 			const date = dates.value[0];
-			if (!date || !isReady.value) return [];
+			if (!date) return [];
 			return [date.getHours(), date.getMinutes(), date.getSeconds()];
 		});
 

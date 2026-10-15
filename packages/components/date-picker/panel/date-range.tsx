@@ -101,7 +101,7 @@ export const DateRangePanel = defineComponent({
 		const timeSlots = computed(() => {
 			const leftDate = dates.value[0];
 			const rightDate = dates.value[1];
-			if (!leftDate || !rightDate || (rightCurrentView.value !== 'timerange' && leftCurrentView.value !== 'timerange')) {
+			if (!leftDate || !rightDate) {
 				return {
 					left: {},
 					right: {}

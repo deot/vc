@@ -1,8 +1,9 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, watch, computed, reactive } from 'vue';
+import { defineComponent, ref, watch, computed, reactive, onMounted, onBeforeUnmount } from 'vue';
 import { preZero } from '@deot/helper-utils';
 import { scrollIntoView } from '@deot/helper-dom';
+import { Resize } from '@deot/helper-resize';
 import { startCase } from 'lodash-es';
 import { clearTime, getDateOfTime } from '../../helper/date-utils';
 import { Scroller } from '../../../scroller';
@@ -64,17 +65,16 @@ export const TimeSelect = defineComponent({
 	],
 	setup(props, { emit }) {
 		const spinerSteps = ref([1, 1, 1].map((one, i) => Math.abs(props.steps[i] as number) || one));
-		const compiled = ref(false);
-		const isFirst = ref(false);
 		const focusedColumn = ref(-1);
 		const focusedTime = ref([0, 0, 0]); // [hh, mm, ss]
 		const refs = reactive({});
-		// 各列是 Scroller，记录其根节点（滚动容器）
+		// 各列是 Scroller：记下实例，用到时再取其根节点（滚动容器）；Scroller 刚挂载时它自己的节点引用还没写入
 		const setRef = (key: string) => (el: any) => {
 			if (el) {
-				refs[key] = el.wrapper;
+				refs[key] = el;
 			}
 		};
+		const getList = (type: string) => refs[type]?.wrapper as HTMLElement | undefined;
 
 		const getHoursDisabledStatus = (hours: number) => {
 			if (typeof props.disabledTime !== 'function') return;
@@ -110,7 +110,6 @@ export const TimeSelect = defineComponent({
 		const handleClick = (type: string, cell: any) => {
 			if (cell.disabled) return;
 			const data = { [type]: cell.text };
-			isFirst.value = false;
 			emit('pick', data);
 		};
 
@@ -134,16 +133,6 @@ export const TimeSelect = defineComponent({
 				index -= _count;
 			}
 			return index;
-		};
-
-		const scroll = (type: string, index: number) => {
-			const from = refs[type].scrollTop;
-			const to = 24 * getScrollIndex(type, index);
-			scrollIntoView(refs[type], {
-				from,
-				to,
-				duration: isFirst.value ? 0 : 500, // 首次展示时不执行滚动动画
-			});
 		};
 
 		const hoursList = computed(() => {
@@ -227,19 +216,39 @@ export const TimeSelect = defineComponent({
 			return seconds;
 		});
 
-		[
-			['hours', hoursList],
-			['minutes', minutesList],
-			['seconds', secondsList]
-		].forEach((item) => {
-			watch(
-				() => props[item[0] as string],
-				(v) => {
-					if (!compiled.value) return;
-					scroll(item[0] as string, (item[1] as any).value.findIndex((obj: any) => { return obj.text == v; }));
-				}
-			);
+		const lists = { hours: hoursList, minutes: minutesList, seconds: secondsList };
+		const types = Object.keys(lists);
+		// 各列是否可见（有尺寸）：弹层关闭、被 v-show 隐藏（如日期时间面板的日期视图）时为 false
+		const visible = { hours: false, minutes: false, seconds: false };
+
+		// 滚到选中项，每行 24px
+		const scroll = (type: string, animated: boolean) => {
+			const el = getList(type);
+			const index = lists[type].value.findIndex((obj: any) => obj.text == props[type]);
+			if (!el || index === -1) return;
+			scrollIntoView(el, { from: el.scrollTop, to: 24 * getScrollIndex(type, index), duration: animated ? 500 : 0 });
+		};
+
+		// 列变为可见时（打开弹层、切到时间视图）直接定位到选中项；可见期间选中项变化（点选、键入）带动画滚过去
+		const handleResize = (entries: ResizeObserverEntry[]) => {
+			entries.forEach(({ target }) => {
+				const type = types.find(key => getList(key) === target);
+				if (!type) return;
+				const isVisible = (target as HTMLElement).clientHeight > 0;
+				isVisible && !visible[type] && scroll(type, false);
+				visible[type] = isVisible;
+			});
+		};
+		types.forEach((type) => {
+			watch(() => props[type], () => visible[type] && scroll(type, true));
 		});
+		onMounted(() => {
+			types.forEach((type) => {
+				const el = getList(type);
+				el && Resize.on(el, handleResize, { shared: true });
+			});
+		});
+		onBeforeUnmount(() => Resize.disconnect(handleResize));
 
 		return () => {
 			return (

@@ -5,7 +5,6 @@ import { defineComponent, ref, computed } from 'vue';
 import { getDateOfTime, clearTime } from '../helper/date-utils';
 import { props as timeProps } from './base-time-props';
 import { Confirm, TimeSelect, DateHeader } from './base';
-import { useReady } from './use-ready';
 
 const getComparedDate = (leftDate: Date, rightDate: Date) => {
 	const lhours = leftDate.getHours();
@@ -32,7 +31,6 @@ export const TimeRangePanel = defineComponent({
 	],
 	setup(props, { emit }) {
 		const { t } = useLocale();
-		const isReady = useReady();
 		const dates = ref(props.value!);
 		const showSeconds = computed(() => {
 			return !(props.format || '').match(/mm$/);
@@ -40,7 +38,7 @@ export const TimeRangePanel = defineComponent({
 		const timeSlots = computed(() => {
 			const leftDate = dates.value[0];
 			const rightDate = dates.value[1];
-			if (!leftDate || !rightDate || !isReady.value) {
+			if (!leftDate || !rightDate) {
 				return {
 					left: {},
 					right: {}
