@@ -461,6 +461,27 @@ describe('index.ts', () => {
 		hidden.unmount();
 	});
 
+	it('showTip: 拖动和外部改值时提示跟随', async () => {
+		const { wrapper, value } = mountControlled({ showTip: 'always' });
+		const button = wrapper.find('.vc-slider__btn-wrapper').element;
+		const tip = () => document.querySelector('.vc-popover-wrapper__content')?.textContent;
+
+		await flush();
+		expect(tip()).toBe('25');
+
+		mouseDown(button, 25);
+		mouseMove(60);
+		await flush();
+		expect(tip()).toBe('60');
+
+		mouseUp();
+		value.value = 40;
+		await flush();
+		expect(tip()).toBe('40');
+
+		wrapper.unmount();
+	});
+
 	it('touch: 支持触摸拖动', async () => {
 		const { wrapper, value } = mountControlled();
 		const button = wrapper.find('.vc-slider__btn-wrapper').element;

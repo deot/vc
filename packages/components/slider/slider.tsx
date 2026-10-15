@@ -318,10 +318,13 @@ export const Slider = defineComponent({
 			maxVisible
 		});
 
+		// 提示在弹层（独立的 portal 应用）中渲染：要在插槽内读取 computed，弹层才会随值重新渲染
+		const renderMinTip = () => minTip.value;
+		const renderMaxTip = () => maxTip.value;
+
 		const renderButton = (type: SliderButtonType) => {
 			const isMin = type === 'min';
 			const visible = isMin ? minPopoverVisible.value : maxPopoverVisible.value;
-			const tip = isMin ? minTip.value : maxTip.value;
 
 			return (
 				<Popover
@@ -344,7 +347,7 @@ export const Slider = defineComponent({
 								onMouseleave={() => handleLeave(type)}
 							/>
 						),
-						content: () => tip
+						content: isMin ? renderMinTip : renderMaxTip
 					}}
 				/>
 			);
