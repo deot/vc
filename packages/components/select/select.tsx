@@ -8,7 +8,6 @@ import { Option, OptionGroup } from './select-option';
 import { props as selectProps } from './select-props';
 import { SelectAll, SelectSearch } from './select-search';
 import { SelectTrigger } from './select-trigger';
-import { keepFocus } from '../popover/utils';
 import type { SelectTag } from './select-trigger';
 import { useSelect, useSelectValue, useSelectedCache } from './hooks/use-select';
 import { useNavigate } from './hooks/use-navigate';
@@ -182,12 +181,10 @@ export const Select = defineComponent({
 			);
 		};
 
-		// 点击选项时焦点留在搜索输入框
 		const renderContent = () => {
 			return (
 				<div
 					ref={navigate.setRoot}
-					onMousedown={keepFocus}
 					onMouseover={navigate.handleMouseover}
 				>
 					{ props.data ? props.data.map(renderItem) : slots?.default?.() }

@@ -5,7 +5,6 @@ import { enUS, zhCN } from '@deot/vc-locale';
 import { Option, OptionGroup } from '../select-option';
 import { SelectAll, SelectPaths } from '../select-search';
 import { fitTags } from '../select-trigger/utils';
-import { keepFocus } from '../../popover/utils';
 import { scrollIntoScroller, useColumnNavigate, getPathsWidth } from '../hooks/use-navigate';
 import {
 	createSearchRegex,
@@ -1858,11 +1857,11 @@ describe('Select 内联搜索', () => {
 		expect((wrapper.find('.vc-select-tags__suffix').element as HTMLElement).style.flexBasis).toBe('64px');
 		expect(document.activeElement).toBe(input.element);
 
-		// 打开后点击标签区不关闭
+		// 打开后点击标签区与后缀图标一样关闭，焦点仍在输入框
 		await wrapper.find('.vc-tag').trigger('click');
 		await flush();
-		expect(document.querySelector('.vc-popover-wrapper')).not.toBeNull();
-		expect(tags.props('reserve')).toBe(64);
+		expect(tags.props('reserve')).toBe(0);
+		expect(document.activeElement).toBe(input.element);
 
 		wrapper.unmount();
 	});
@@ -2139,25 +2138,6 @@ describe('Select 键盘', () => {
 		await flush();
 		wrapper.unmount();
 		expect(press('Escape').defaultPrevented).toBe(false);
-	});
-
-	it('keepFocus：点击可输入文字的节点以外不转移焦点', () => {
-		const fire = (el: HTMLElement) => {
-			document.body.appendChild(el);
-			const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
-			el.addEventListener('mousedown', keepFocus);
-			el.dispatchEvent(event);
-			return event.defaultPrevented;
-		};
-		const create = (tag: string, type?: string) => {
-			const el = document.createElement(tag);
-			type && el.setAttribute('type', type);
-			return el;
-		};
-		expect(fire(create('div'))).toBe(true);
-		expect(fire(create('input', 'checkbox'))).toBe(true);
-		expect(fire(create('input', 'text'))).toBe(false);
-		expect(fire(create('textarea'))).toBe(false);
 	});
 
 	it('scrollIntoScroller：只调整所在 Scroller 的滚动位置', () => {

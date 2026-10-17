@@ -352,10 +352,6 @@ export const useBase = (options: Options = {}) => {
 		onBlur: () => {
 			isFocus.value = false;
 			isImmediate() && submitInput();
-		},
-		// 可输入时，浮层打开后点击输入框只移动光标，不再关闭浮层（冒泡到 Popover 会切换为关闭）
-		onClick: (e: MouseEvent) => {
-			isEditable.value && isActive.value && e.stopPropagation();
 		}
 	};
 

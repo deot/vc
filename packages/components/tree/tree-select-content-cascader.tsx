@@ -12,7 +12,6 @@ import { useLocale } from '../locale';
 import { Tree } from './tree';
 import { SelectPaths } from '../select/select-search';
 import type { SelectPath } from '../select/select-search';
-import { keepFocus } from '../popover/utils';
 import { useColumnNavigate } from '../select/hooks/use-navigate';
 
 const COMPONENT_NAME = 'vc-tree-select-content-cascader';
@@ -187,7 +186,7 @@ export const TreeSelectContentCascader = defineComponent({
 
 		return () => {
 			return (
-				<div ref={rootRef} class="vc-tree-select__cascader" onMousedown={keepFocus}>
+				<div ref={rootRef} class="vc-tree-select__cascader">
 					<Tree
 						ref={treeRef}
 						class="vc-tree-select__cascader-tree-hidden"

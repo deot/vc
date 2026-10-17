@@ -91,14 +91,26 @@ export const measureText = (value: string) => {
 	return size;
 };
 
+// 文字输入框：按下鼠标时获得焦点并放置光标（含只读的）
+const isTextField = (el: HTMLInputElement) => {
+	return el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !/^(checkbox|radio)$/.test(el.type)) || !!el.isContentEditable;
+};
+
 /**
- * 在弹层内容、触发器的非输入区域按下鼠标时不转移焦点（焦点留在触发器的输入框）；可输入文字的节点、复选框等仍可点击
+ * 能否在节点上输入文字（只读的输入框不能）
+ * @param el ~
+ * @returns ~
+ */
+export const isEditable = (el: EventTarget | null) => {
+	return !!el && isTextField(el as HTMLInputElement) && !(el as HTMLInputElement).readOnly;
+};
+
+/**
+ * 在弹层内容、触发器的非输入区域按下鼠标时不转移焦点（焦点留在触发器的输入框）；文字输入框照常获得焦点，复选框等仍可点击
  * @param e ~
  */
 export const keepFocus = (e: MouseEvent) => {
-	const el = e.target as HTMLInputElement;
-	const isEditable = el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !/^(checkbox|radio)$/.test(el.type));
-	!isEditable && e.preventDefault();
+	!isTextField(e.target as HTMLInputElement) && e.preventDefault();
 };
 
 /**

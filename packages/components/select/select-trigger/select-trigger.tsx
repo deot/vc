@@ -6,7 +6,6 @@ import { Input } from '../../input/index';
 import { Icon } from '../../icon/index';
 import { Spin } from '../../spin/index';
 import { Customer } from '../../customer/index';
-import { keepFocus } from '../../popover/utils';
 import { valueType } from '../../customer/customer-props';
 import { SelectTags } from './select-tags';
 import type { SelectTag } from './select-tags';
@@ -95,17 +94,6 @@ export const SelectTrigger = defineComponent({
 			emit('search', v);
 		};
 
-		// 内联搜索：弹层打开后点击输入区不再关闭（冒泡到 Popover 会切换为关闭）
-		const handleClick = (e: MouseEvent) => {
-			if (!props.searchable || props.disabled) return;
-			focus();
-			props.active && e.stopPropagation();
-		};
-
-		const handleMousedown = (e: MouseEvent) => {
-			props.searchable && keepFocus(e);
-		};
-
 		// 输入为空时退格：移除最后一个；长按删除文字时不连带移除
 		const handleKeydown = (e: KeyboardEvent) => {
 			if (e.key !== 'Backspace' || e.repeat || e.isComposing || props.searchValue || !props.tags?.length) return;
@@ -174,7 +162,7 @@ export const SelectTrigger = defineComponent({
 		// 清空图标由样式在悬停时替换后缀图标，悬停不触发渲染；加载中只显示加载图标
 		const renderAppend = () => {
 			return (
-				<div class={[`${props.name}__append`, 'vc-select-trigger__append']} onMousedown={handleMousedown}>
+				<div class={[`${props.name}__append`, 'vc-select-trigger__append']}>
 					{
 						props.clearable && !props.disabled && !props.loading && (
 							<Icon
@@ -212,8 +200,6 @@ export const SelectTrigger = defineComponent({
 					readonly={!props.searchable}
 					placeholder={placeholder.value}
 					onInput={handleSearch}
-					onClick={handleClick}
-					onMousedown={handleMousedown}
 				>
 					{{
 						prepend: slots.prepend || props.label ? renderPrepend : null,

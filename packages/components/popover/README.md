@@ -310,6 +310,101 @@ const container = ref();
 ```
 :::
 
+### 可输入的触发器
+
+触发器是输入框时（如可搜索的下拉、可键入的日期），设置 `keepFocus` 让焦点留在输入框：在浮层内、触发器的非输入区域（图标、标签等）按下鼠标不转移焦点，文字输入框照常获得焦点，复选框等照常可点；浮层打开时点击触发器里的输入框只移动光标、不关闭浮层，这次点击照常冒泡到祖先节点，点击其他区域照常切换。只读的输入框不算可输入。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+```vue
+<template>
+	<div class="keep-focus-demo">
+		<Popover
+			v-model="isVisible"
+			trigger="click"
+			placement="bottom-left"
+			keep-focus
+			@visible-change="visible => visible && handleVisibleChange(true)"
+			@close="handleVisibleChange(false)"
+		>
+			<Input
+				v-model="keyword"
+				placeholder="输入或选择城市"
+				@input="isVisible = true"
+				@focus="isFocused = true"
+				@blur="isFocused = false"
+			/>
+			<template #content>
+				<ul class="keep-focus-demo__list">
+					<li v-for="city in matched" :key="city" @click="handleSelect(city)">
+						{{ city }}
+					</li>
+					<li v-if="!matched.length" class="is-empty">
+						无匹配
+					</li>
+				</ul>
+			</template>
+		</Popover>
+		<p>焦点{{ isFocused ? '在' : '不在' }}输入框内</p>
+	</div>
+</template>
+
+<script setup>
+import { ref, computed, inject } from 'vue';
+import { Popover, Input } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const handleVisibleChange = playground.run(320);
+
+const cities = ['北京', '上海', '广州', '深圳', '杭州', '成都'];
+const keyword = ref('');
+const isVisible = ref(false);
+const isFocused = ref(false);
+const matched = computed(() => cities.filter(city => city.includes(keyword.value)));
+
+const handleSelect = (city) => {
+	keyword.value = city;
+	isVisible.value = false;
+};
+</script>
+
+<style scoped>
+.keep-focus-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+}
+
+.keep-focus-demo p {
+	margin: 0;
+	color: var(--vc-color-dark-light);
+}
+
+.keep-focus-demo__list {
+	width: 180px;
+	margin: 0;
+	padding: 4px 0;
+	list-style: none;
+}
+
+.keep-focus-demo__list li {
+	padding: 6px 12px;
+	cursor: pointer;
+}
+
+.keep-focus-demo__list li:hover {
+	background: var(--vc-background-color-primary-light);
+}
+
+.keep-focus-demo__list li.is-empty {
+	cursor: default;
+	color: var(--vc-color-dark-extralight);
+}
+</style>
+```
+:::
+
 ### 嵌套弹层
 
 挂载到 body 的子弹层（`Popover.open`、内容区中的 Select / Popover 等）在 DOM 上不在当前浮层内。只要子弹层的触发器位于当前 Popover 的触发器或浮层内，在子弹层中点击不视为点击外部，当前浮层保持打开（可多层嵌套）。hover 触发的嵌套需要内层设置 `portal="false"`。
@@ -493,7 +588,9 @@ onUnmounted(() => leaf?.destroy());
 | animation | TransitionScale 动画模式，未设置时使用 `part` | `string` | - | - |
 | theme | 浮层主题 | `string` | `light`、`dark`、`none` | `light` |
 | to | 浮层挂载容器，CSS 选择器或元素，优先于 `portal`；应为包含触发器的定位容器 | `string \| HTMLElement` | - | - |
-| portal | 是否挂载到 body，`false` 时挂到 Popover 根节点 | `boolean` | - | `true` || arrow | 是否显示箭头 | `boolean` | - | `true` |
+| portal | 是否挂载到 body，`false` 时挂到 Popover 根节点 | `boolean` | - | `true` |
+| keepFocus | 焦点留在触发器的输入框：在浮层内、触发器的非输入区域按下鼠标不转移焦点；浮层打开时点击触发器的输入框不关闭 | `boolean` | - | `false` |
+| arrow | 是否显示箭头 | `boolean` | - | `true` |
 | autoWidth | `true` 按内容确定宽度，`false` 跟随触发元素宽度 | `boolean` | - | `true` |
 | always | 禁止交互关闭；需配合 `modelValue: true` 初始显示，仍可通过 modelValue 关闭 | `boolean` | - | `false` |
 | tag | 触发器根节点标签 | `string` | - | `span` |
@@ -528,7 +625,7 @@ onUnmounted(() => leaf?.destroy());
 | --- | --- | --- | --- |
 | Popover.open | 创建独立浮层 | `options`：浮层属性与 Portal 配置 | `PortalLeaf` |
 
-`open` 使用独立浮层，支持上述外观属性（`animation`、`placement`、`theme`、`content`、`arrow`、`autoWidth`、`portalClass`、`portalStyle`），以及以下选项。声明式组件的 `trigger`、`disabled`、`outsideClickable`、`to`、`portal` 不控制静态浮层。静态浮层是独立的应用实例，不继承调用处的上下文；需要路由、状态或全局组件时，通过 Portal 的 `uses`、`components`、`install` 等配置注入，见 Portal 文档。
+`open` 使用独立浮层，支持上述外观属性（`animation`、`placement`、`theme`、`content`、`arrow`、`autoWidth`、`portalClass`、`portalStyle`）与 `keepFocus`，以及以下选项。声明式组件的 `trigger`、`disabled`、`outsideClickable`、`to`、`portal` 不控制静态浮层。静态浮层是独立的应用实例，不继承调用处的上下文；需要路由、状态或全局组件时，通过 Portal 的 `uses`、`components`、`install` 等配置注入，见 Portal 文档。
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |

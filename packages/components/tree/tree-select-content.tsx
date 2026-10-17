@@ -6,7 +6,6 @@ import { renderType } from '../customer/customer-props';
 import { useLocale } from '../locale';
 import { renderHighlight } from '../select/select-search';
 import type { SearchRegex } from '../select/utils';
-import { keepFocus } from '../popover/utils';
 import { Tree } from './tree';
 import { getFocusableItems } from './use-keydown';
 
@@ -110,7 +109,7 @@ export const TreeSelectContent = defineComponent({
 		return () => {
 			const searching = !!props.searchValue.trim();
 			return (
-				<div ref={root} class="vc-tree-select__options" onMousedown={keepFocus}>
+				<div ref={root} class="vc-tree-select__options">
 					<Tree
 						ref={treeRef}
 						model-value={props.value}

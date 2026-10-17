@@ -55,6 +55,8 @@ export const props = {
 		default: true
 	},
 	// 内置 Scroller 的属性；设置 height / maxHeight 时内容区按该高度滚动
-	scrollerOptions: Object as PropType<Partial<ScrollerProps>>
+	scrollerOptions: Object as PropType<Partial<ScrollerProps>>,
+	// 焦点留在触发器的输入框：在浮层内、触发器的非输入区域按下鼠标不转移焦点；浮层打开时点击触发器的输入框不关闭
+	keepFocus: Boolean
 };
 export type Props = ExtractPropTypes<typeof props>;

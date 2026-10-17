@@ -2,7 +2,6 @@
 
 import { defineComponent, ref, nextTick, onMounted } from 'vue';
 import { InputSearch } from '../../input/index';
-import { keepFocus } from '../../popover/utils';
 
 const COMPONENT_NAME = 'vc-select-search';
 
@@ -38,7 +37,7 @@ export const SelectSearch = defineComponent({
 
 		return () => {
 			return (
-				<div class={[{ 'is-plain': !props.input }, 'vc-select-search']} onMousedown={keepFocus}>
+				<div class={[{ 'is-plain': !props.input }, 'vc-select-search']}>
 					{
 						props.input && (
 							<InputSearch

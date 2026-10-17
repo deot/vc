@@ -6,7 +6,7 @@ import { Resize } from '@deot/helper-resize';
 import { defineComponent, nextTick, ref, provide, inject, getCurrentInstance, KeepAlive } from 'vue';
 import { vi, onTestFinished } from 'vitest';
 import { useHoverPopover } from '../use-hover-popover';
-import { getAreaNode } from '../utils';
+import { getAreaNode, isEditable, keepFocus } from '../utils';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -2387,5 +2387,128 @@ describe('Popover 渲染在组件树内（Teleport）', () => {
 		const el = getWrapperEl()!;
 		expect(el.classList.contains('is-bottom')).toBe(true);
 		expect(el.style.top).toBe('334px');
+	});
+});
+
+describe('Popover keepFocus', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	// 派发可取消的 mousedown，返回是否阻止了默认行为（即不转移焦点）
+	const press = (el: Element) => {
+		const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+		el.dispatchEvent(event);
+		return event.defaultPrevented;
+	};
+
+	const mountTrigger = (enabled: boolean, readonly = false) => {
+		const visible = ref(false);
+		const onAncestorClick = vi.fn();
+		const wrapper = mount(() => (
+			<div onClick={onAncestorClick}>
+				<Popover v-model={visible.value} trigger="click" keepFocus={enabled}>
+					{{
+						default: () => (
+							<span>
+								<input class="c-input" readonly={readonly} />
+								<i class="c-icon" />
+							</span>
+						),
+						content: () => (
+							<div>
+								<input class="c-content-input" />
+								<span class="c-option">x</span>
+							</div>
+						)
+					}}
+				</Popover>
+			</div>
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		return { wrapper, visible, onAncestorClick };
+	};
+
+	it('keepFocus / isEditable：文字输入框照常获得焦点，只读的不能输入', () => {
+		const create = (tag: string, attrs: Record<string, string> = {}) => {
+			const el = document.createElement(tag);
+			Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
+			el.addEventListener('mousedown', keepFocus);
+			document.body.appendChild(el);
+			return el;
+		};
+		const els = [
+			create('div'),
+			create('input', { type: 'checkbox' }),
+			create('input', { type: 'text' }),
+			create('textarea'),
+			create('input', { readonly: '' })
+		];
+		expect(els.map(press)).toEqual([true, true, false, false, false]);
+		expect(els.map(isEditable)).toEqual([false, false, true, true, false]);
+		expect(isEditable(null)).toBe(false);
+	});
+
+	it('开启时：在浮层内、触发器的非输入区域按下鼠标不转移焦点，文字输入框照常获得焦点', async () => {
+		const { wrapper } = mountTrigger(true);
+		await wrapper.find('.c-input').trigger('click');
+		await flush();
+
+		expect(press(document.querySelector('.c-option')!)).toBe(true);
+		expect(press(document.querySelector('.c-content-input')!)).toBe(false);
+		expect(press(wrapper.find('.c-icon').element)).toBe(true);
+		expect(press(wrapper.find('.c-input').element)).toBe(false);
+	});
+
+	it('开启时：打开后点击触发器的输入框不关闭、照常冒泡，点击其他区域照常切换', async () => {
+		const { wrapper, visible, onAncestorClick } = mountTrigger(true);
+		const input = wrapper.find('.c-input');
+		await input.trigger('click');
+		expect(visible.value).toBe(true);
+
+		await input.trigger('click');
+		expect(visible.value).toBe(true);
+		expect(onAncestorClick).toHaveBeenCalledTimes(2);
+
+		await wrapper.find('.c-icon').trigger('click');
+		expect(visible.value).toBe(false);
+	});
+
+	it('开启时：只读的输入框不算可输入，打开后点击照常关闭', async () => {
+		const { wrapper, visible } = mountTrigger(true, true);
+		const input = wrapper.find('.c-input');
+		await input.trigger('click');
+		expect(visible.value).toBe(true);
+
+		await input.trigger('click');
+		expect(visible.value).toBe(false);
+	});
+
+	it('未开启时行为不变：按下鼠标不阻止默认行为，打开后点击输入框关闭', async () => {
+		const { wrapper, visible } = mountTrigger(false);
+		const input = wrapper.find('.c-input');
+		await input.trigger('click');
+		await flush();
+
+		expect(press(document.querySelector('.c-option')!)).toBe(false);
+		expect(press(wrapper.find('.c-icon').element)).toBe(false);
+
+		await input.trigger('click');
+		expect(visible.value).toBe(false);
+	});
+
+	it('Popover.open({ keepFocus: true })：在浮层内按下鼠标不转移焦点', async () => {
+		const triggerEl = document.createElement('button');
+		document.body.appendChild(triggerEl);
+		const leaf = Popover.open({
+			name: 'keep-focus',
+			triggerElement: triggerEl,
+			keepFocus: true,
+			content: () => (<span class="c-static">x</span>) as any
+		});
+		onTestFinished(() => leaf.destroy());
+		await flush();
+
+		expect(press(document.querySelector('.c-static')!)).toBe(true);
 	});
 });

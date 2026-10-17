@@ -19,7 +19,7 @@ import type { ComponentInternalInstance } from 'vue';
 import type { PopoverViewStyle } from './types';
 import { props as popoverViewProps } from './popover-view-props';
 import usePos, { getClip, fitMaxSize, getMount } from './use-pos';
-import { setTrigger, isInArea, getIsolatedContexts } from './utils';
+import { setTrigger, isInArea, getIsolatedContexts, keepFocus } from './utils';
 import { TransitionScale } from '../transition';
 import { Customer } from '../customer';
 import { Portal } from '../portal';
@@ -210,8 +210,9 @@ export const PopoverView = defineComponent({
 			}, 200);
 		};
 
-		const handleMouseDown = () => {
-			isPressMouse = true;
+		const handleMouseDown = (e: MouseEvent) => {
+			props.keepFocus && keepFocus(e);
+			!props.hover && (isPressMouse = true);
 		};
 
 		/**
@@ -353,7 +354,7 @@ export const PopoverView = defineComponent({
 							vShow={isActive.value}
 							style={[wrapperStyle.value, wrapperW.value, props.portalStyle]}
 							class={[wrapperClasses.value, props.portalClass, 'vc-popover-wrapper']}
-							onMousedown={() => !props.hover && handleMouseDown()}
+							onMousedown={handleMouseDown}
 							onMouseenter={e => props.hover && handleChange(e, { visible: true })}
 							onMouseleave={e => props.hover && handleChange(e, { visible: false })}
 						>

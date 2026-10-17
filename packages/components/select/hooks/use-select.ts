@@ -177,7 +177,9 @@ export const useSelect = (name: string, options: Options = {}) => {
 			portalClass: [['is-padding-none', props.portalClass]],
 			class: [{ 'is-disabled': props.disabled }, its.value.class, `vc-${name}`],
 			style: its.value.style,
-			animation: 'y'
+			animation: 'y',
+			// 点选项、搜索栏、标签与图标时焦点留在输入框（内联搜索、弹层搜索栏或只读的回显框）
+			keepFocus: true
 		};
 	});
 

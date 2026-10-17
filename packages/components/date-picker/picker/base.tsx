@@ -7,7 +7,6 @@ import { Input } from '../../input';
 import { Popover } from '../../popover';
 import { Icon } from '../../icon';
 import { useLocale } from '../../locale';
-import { keepFocus } from '../../popover/utils';
 import { useBase } from './use-base';
 
 export const createPicker = (name: string, pickerProps: object, usePicker: Function) => defineComponent({
@@ -49,14 +48,9 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 			handleClose
 		} = useBase({ isDisabled });
 
-		// 可输入时，点后缀图标、面板不让输入框失焦
-		const handleMousedown = (e: MouseEvent) => {
-			isEditable.value && keepFocus(e);
-		};
-
 		const renderAppend = () => {
 			return (
-				<div class={[{ 'is-clear': showClear.value }, 'vc-date-picker__append']} onMousedown={handleMousedown}>
+				<div class={[{ 'is-clear': showClear.value }, 'vc-date-picker__append']}>
 					<Icon
 						type={showClear.value ? 'clear' : icon.value}
 						// @ts-ignore
@@ -101,8 +95,7 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 
 				onPick: handlePick,
 				onClear: handleClear,
-				onOk: handleOK,
-				onMousedown: handleMousedown
+				onOk: handleOK
 			});
 		};
 
@@ -123,6 +116,8 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 					portalClass={['is-padding-none', 'vc-date-picker--portal', props.portalClass]}
 					// 面板能自行收缩并滚动时（时间面板）由 picker 声明为 false；带日历的面板放不下时整体滚动
 					scrollable={scrollable}
+					// 可输入时，点后缀图标、面板不让输入框失焦，打开后点击输入框只移动光标
+					keepFocus={isEditable.value}
 					class={[classes.value, its.value.class, 'vc-date-picker']}
 					style={its.value.style}
 					animation="y"

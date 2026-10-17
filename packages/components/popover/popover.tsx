@@ -5,7 +5,7 @@ import type { ComponentInternalInstance } from 'vue';
 import { pick } from 'lodash-es';
 import { props as popoverProps, viewKeys } from './popover-props';
 import { PopoverView } from './popover-view';
-import { isInArea } from './utils';
+import { isInArea, isEditable, keepFocus } from './utils';
 
 const COMPONENT_NAME = 'vc-popover';
 
@@ -87,6 +87,12 @@ export const Popover = defineComponent({
 			}
 		};
 
+		// keepFocus：浮层打开时点击触发器的输入框只移动光标，不关闭
+		const handleClick = (e: MouseEvent) => {
+			if (props.keepFocus && isActive.value && isEditable(e.target)) return;
+			handleChange(e, { visible: !isActive.value });
+		};
+
 		// 关闭动画结束后卸载浮层
 		const handleClose = () => {
 			isRendered.value = false;
@@ -165,7 +171,8 @@ export const Popover = defineComponent({
 				onBlur: (e: any) => isFocus.value && handleChange(e, { visible: false }),
 				onMouseenter: (e: any) => (isHover.value || isStrictHover.value) && handleChange(e, { visible: true }),
 				onMouseleave: (e: any) => (isHover.value || isStrictHover.value) && handleChange(e, { visible: false }),
-				onClick: (e: any) => isClick.value && handleChange(e, { visible: !isActive.value })
+				onMousedown: (e: MouseEvent) => props.keepFocus && keepFocus(e),
+				onClick: (e: MouseEvent) => isClick.value && handleClick(e)
 			}, [slots.default?.(), renderPopup()]);
 		};
 	}

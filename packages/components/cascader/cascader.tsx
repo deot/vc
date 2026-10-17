@@ -10,7 +10,6 @@ import { useLocale } from '../locale';
 import { CascaderColumn } from './column';
 import { Scroller } from '../scroller/index';
 import { SelectTrigger } from '../select/select-trigger';
-import { keepFocus } from '../popover/utils';
 import { SelectSearch, SelectPaths } from '../select/select-search';
 import { useSelect } from '../select/hooks/use-select';
 import { useColumnNavigate } from '../select/hooks/use-navigate';
@@ -347,7 +346,6 @@ export const Cascader = defineComponent({
 			);
 		};
 
-		// 点击选项时焦点留在搜索输入框
 		const renderContent = () => {
 			return isSearching.value
 				? (
@@ -361,8 +359,6 @@ export const Cascader = defineComponent({
 							checked={isChecked}
 							width={searchWidth.value}
 							emptyText={t('vc.Cascader.noMatch')}
-							// @ts-ignore
-							onMousedown={keepFocus}
 							onSelect={handleSelect}
 						/>
 					)
@@ -371,8 +367,6 @@ export const Cascader = defineComponent({
 							ref={columnsRef}
 							class="vc-cascader__columns"
 							contentClass="vc-cascader__content"
-							// @ts-ignore
-							onMousedown={keepFocus}
 						>
 							{ columns.value.map(renderColumn) }
 						</Scroller>
