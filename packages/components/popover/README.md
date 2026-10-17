@@ -175,7 +175,7 @@ const placements = [
 
 ### 自定义内容与受控状态
 
-`content` 插槽优先于同名属性。浮层放不下时按所在一侧的可用空间限制尺寸，内容区在 Scroller 内滚动；需要固定在顶部、底部的内容（如标题、操作按钮）放到 `header`、`footer` 插槽，不随内容滚动。插槽在浮层打开时取定：要在打开期间按条件显示，始终提供该插槽并在其中按条件渲染，没有渲染出内容时不占位。`scrollerOptions` 透传内置 Scroller 的属性（如 `maxHeight`、`native`、`always`）；设置 `always` 后滚动条常显，并在各系统下统一使用自绘滚动条。内容需要自己滚动时（如多列各自滚动、虚拟列表）设置 `scrollable` 为 `false`：内容区变为纵向 flex 容器，内容的根节点设置 `min-height: 0` 后在浮层的高度上限内收缩，由其内部的滚动容器滚动。通过 `trigger="custom"` 和 `v-model` 自行控制显隐；需要禁止外部点击关闭时，设置 `outsideClickable` 为 `false`。
+`content` 插槽优先于同名属性。浮层放不下时按所在一侧的可用空间限制尺寸，内容区在 Scroller 内滚动；需要固定在顶部、底部的内容（如标题、操作按钮）放到 `header`、`footer` 插槽，不随内容滚动，没有渲染出内容时不占位。插槽与属性在浮层打开期间实时生效。`scrollerOptions` 透传内置 Scroller 的属性（如 `maxHeight`、`native`、`always`）；设置 `always` 后滚动条常显，并在各系统下统一使用自绘滚动条。内容需要自己滚动时（如多列各自滚动、虚拟列表）设置 `scrollable` 为 `false`：内容区变为纵向 flex 容器，内容的根节点设置 `min-height: 0` 后在浮层的高度上限内收缩，由其内部的滚动容器滚动。通过 `trigger="custom"` 和 `v-model` 自行控制显隐；需要禁止外部点击关闭时，设置 `outsideClickable` 为 `false`。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
@@ -249,7 +249,9 @@ const handleClose = () => {
 
 ### 挂载容器
 
-默认挂载到 `document.body`：触发器所在的滚动容器滚动时，click 等浮层跟随（与滚动同一帧重新定位；触发器位于滚轮驱动的 Scroller 内时，如 Table 表体，订阅其滚动通知），hover 浮层立即关闭（否则会随触发器移到静止的鼠标下并截住滚轮）；触发器滚出容器可视区时浮层隐藏（不关闭），滚回后恢复。`portal="false"` 将浮层挂到 Popover 根节点；`getPopupContainer` 优先指定挂载容器，应返回包含触发器的定位容器，此时容器的 `overflow` 可能裁剪浮层。
+默认挂载到 `document.body`：触发器所在的滚动容器滚动时，click 等浮层跟随（与滚动同一帧重新定位；触发器位于滚轮驱动的 Scroller 内时，如 Table 表体，订阅其滚动通知），hover 浮层立即关闭（否则会随触发器移到静止的鼠标下并截住滚轮）；触发器滚出容器可视区时浮层隐藏（不关闭），滚回后恢复。`portal="false"` 将浮层挂到 Popover 根节点；`to` 优先指定挂载容器（CSS 选择器或元素），应为包含触发器的定位容器，此时容器的 `overflow` 可能裁剪浮层。
+
+浮层渲染在组件树内（挂载位置由 Teleport 决定），内容继承外层的 `provide`、路由、状态与全局组件。表单、组与布局类的上下文在浮层边界隔离：浮层里的输入框不参与外层表单项的校验，复选框、单选框不加入外层的组，按钮不继承外层按钮组的尺寸，树节点、Affix 的上下文也不延续到浮层内。浮层在打开时挂载、关闭动画结束后卸载；所在页面被 KeepAlive 缓存而失活时立即关闭。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
@@ -257,7 +259,7 @@ const handleClose = () => {
 <template>
 	<div ref="container" class="container-demo">
 		<Popover
-			:get-popup-container="getPopupContainer"
+			:to="container"
 			trigger="click"
 			content="挂载在定位容器内"
 			@visible-change="visible => visible && handleVisibleChange('container', true)"
@@ -290,7 +292,6 @@ const handleVisibleChange = (key, visible) => {
 };
 
 const container = ref();
-const getPopupContainer = () => container.value;
 </script>
 
 <style scoped>
@@ -491,9 +492,8 @@ onUnmounted(() => leaf?.destroy());
 | content | 内容。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | animation | TransitionScale 动画模式，未设置时使用 `part` | `string` | - | - |
 | theme | 浮层主题 | `string` | `light`、`dark`、`none` | `light` |
-| getPopupContainer | 返回浮层挂载容器，优先于 `portal` | `() => HTMLElement` | - | - |
-| portal | 是否挂载到 body，`false` 时挂到 Popover 根节点 | `boolean` | - | `true` |
-| arrow | 是否显示箭头 | `boolean` | - | `true` |
+| to | 浮层挂载容器，CSS 选择器或元素，优先于 `portal`；应为包含触发器的定位容器 | `string \| HTMLElement` | - | - |
+| portal | 是否挂载到 body，`false` 时挂到 Popover 根节点 | `boolean` | - | `true` || arrow | 是否显示箭头 | `boolean` | - | `true` |
 | autoWidth | `true` 按内容确定宽度，`false` 跟随触发元素宽度 | `boolean` | - | `true` |
 | always | 禁止交互关闭；需配合 `modelValue: true` 初始显示，仍可通过 modelValue 关闭 | `boolean` | - | `false` |
 | tag | 触发器根节点标签 | `string` | - | `span` |
@@ -528,7 +528,7 @@ onUnmounted(() => leaf?.destroy());
 | --- | --- | --- | --- |
 | Popover.open | 创建独立浮层 | `options`：浮层属性与 Portal 配置 | `PortalLeaf` |
 
-`open` 使用独立浮层，支持上述外观属性（`animation`、`placement`、`theme`、`content`、`arrow`、`autoWidth`、`portalClass`、`portalStyle`），以及以下选项。声明式组件的 `trigger`、`disabled`、`outsideClickable` 不控制静态浮层。
+`open` 使用独立浮层，支持上述外观属性（`animation`、`placement`、`theme`、`content`、`arrow`、`autoWidth`、`portalClass`、`portalStyle`），以及以下选项。声明式组件的 `trigger`、`disabled`、`outsideClickable`、`to`、`portal` 不控制静态浮层。静态浮层是独立的应用实例，不继承调用处的上下文；需要路由、状态或全局组件时，通过 Portal 的 `uses`、`components`、`install` 等配置注入，见 Portal 文档。
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
@@ -544,7 +544,7 @@ onUnmounted(() => leaf?.destroy());
 
 `onChange` 的 `info` 包含 `context`（浮层内部组件实例）；悬停事件另含 `visible: boolean`，外部点击时不包含 `visible`；滚动容器滚动、触发器被移除引起的关闭另含 `immediate: true`（不走 hover 的延时关闭）。`leaf.wrapper?.toggle(false)` 可执行关闭动画，`leaf.destroy()` 立即销毁。触发节点只移动、尺寸不变且不是由滚动引起时（如由调用方改变位置），可调用 `leaf.wrapper?.update()` 重新定位。其他 Portal 通用配置见 Portal 文档。
 
-`PopoverView` 是 `Popover.open` 渲染的浮层组件，需要自行管理挂载位置与显隐时（如 Tour 的气泡）可直接渲染，属性同上方 open 选项表。
+`PopoverView` 是 `Popover.open` 渲染的浮层组件，需要自行管理挂载位置与显隐时（如 Tour 的气泡）可直接渲染，属性同上方 open 选项表。定位按浮层实际所在的节点计算：在 body 下按页面定位，在触发器内以触发器为原点，在其他容器内以该容器为原点（容器应包含触发器）。
 
 ### 移动端
 
@@ -553,3 +553,16 @@ onUnmounted(() => leaf?.destroy());
 ### 注意事项
 
 `content` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。浮层默认挂载到 body，局部祖先上的主题变量不会自动继承到浮层，可在全局或 `portalStyle` 上设置覆盖值。
+
+<!--
+## 变更说明
+
+### getPopupContainer 改为 to
+- `getPopupContainer`（返回元素的函数）改为 `to`，接受 CSS 选择器或元素，不保留旧名。
+- `Popover.open`、`PopoverView` 不再接受 `getPopupContainer` 与 `portal`：挂载位置由 Portal 的 `element` 决定，定位按浮层实际所在的节点计算。
+
+### 声明式浮层渲染在组件树内
+- 原先每次打开新建一个应用实例渲染浮层，插槽与属性在打开时取定；现在通过 Teleport 渲染，打开期间实时生效。
+- 浮层内容继承外层的上下文；Portal 的 `install`、`uses` 等全局配置只作用于 `Popover.open`。
+- `Portal.clear()` 不再关闭声明式浮层；所在页面被 KeepAlive 缓存而失活时，由 Popover 自行关闭。
+-->

@@ -120,7 +120,8 @@ export const props = {
 		type: Array as PropType<Record<string, any>[]>,
 		default: () => []
 	},
-	getPopupContainer: Function as PropType<() => HTMLElement>,
+	// 声明式组件的挂载容器：CSS 选择器或元素，默认 body（静态调用使用 Portal 的 element）
+	to: [String, Object] as PropType<string | HTMLElement>,
 	zIndex: Number,
 	scrollable: {
 		type: Boolean,

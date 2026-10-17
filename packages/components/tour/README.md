@@ -74,7 +74,7 @@ const handleAdd = () => { itemCount.value++; };
 
 Tour 参数、事件回调和 Portal 的 `slots/components/uses/install/onDestroyed` 等配置放在同一个对象中。`Tour.open(options)` 同步返回可等待的 `PortalLeaf`，挂载后可以通过 `leaf.wrapper` 调用实例方法，结束后通过 `await leaf` 获取结果。
 
-静态调用通过 Portal 的 `element` 指定挂载容器，支持选择器或 DOM 元素；声明式组件使用 `getPopupContainer`。默认挂载到 body。
+静态调用通过 Portal 的 `element` 指定挂载容器，声明式组件使用 `to`，都支持选择器或 DOM 元素。默认挂载到 body。
 
 操作 `onClick(event, context)` 返回 `false`、抛错或 Promise 拒绝时保留当前步骤，其余结果继续。等待期间禁止其他导航和普通关闭。左右键、目标点击、蒙层推进和实例方法复用对应回调；`goTo` 和外部 `current` 更新直接请求指定步骤。
 
@@ -372,7 +372,7 @@ Tour.open({ cache: 'feature-guide-v1', steps: [{ element: '#feature-entry', titl
 | modelValue | 声明式组件是否请求打开，支持 `v-model`；静态调用无需传入 | `boolean` | - | `false` |
 | current | 步骤下标，从 0 开始，支持 `v-model:current`；未绑定时内部管理 | `number` | - | `undefined` |
 | steps | 静态步骤数组；有声明式 TourStep 时优先使用声明，不合并 | `object[]` | - | `[]` |
-| getPopupContainer | 声明式组件打开时指定 Portal 挂载容器，默认使用 body；静态调用使用 Portal 的 element | `() => HTMLElement` | - | - |
+| to | 声明式组件的挂载容器，CSS 选择器或元素，默认使用 body；静态调用使用 Portal 的 element | `string \| HTMLElement` | - | - |
 | zIndex | 覆盖自动计算的浮层层级 | `number` | - | - |
 | scrollable | 允许背景滚动；为 true 时自身不持锁，仍保留其他浮层的滚动锁 | `boolean` | - | `false` |
 | wrapperClass | 整个引导的类名 | `string \| object \| any[]` | - | - |
@@ -500,7 +500,7 @@ Tour.open({ cache: 'feature-guide-v1', steps: [{ element: '#feature-entry', titl
 - 有目标的步骤在引导根节点内渲染 Popover 的气泡，以高亮区为触发节点，定位、翻转、限高和箭头沿用 Popover；显隐由引导控制，点击外部不会关闭，跟随引导根节点淡入淡出。无目标的步骤居中显示，不使用气泡。
 - 卡片或目标中打开的子弹层（如 Select 下拉）获得焦点时视为在引导内：Tab 从触发控件的位置继续，ESC 先让焦点回到触发控件，再次按下才关闭引导，左右键交给子弹层处理、不切步。
 - Portal 创建的 app 不继承调用方插件和 provide，需要通过 uses/components/install 显式注入，卡片与气泡内容都在该 app 中；Portal 配置用法见 [Portal](../portal/README.md)。
-- `getPopupContainer` 指向带 `transform` 等会改变 fixed 定位参照的容器时，气泡贴边仍以页面视口为准。
+- `to` 指向带 `transform` 等会改变 fixed 定位参照的容器时，气泡贴边仍以页面视口为准。
 - title / content 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。需要组合其他组件时使用渲染函数或插槽。
 - `MTour`、`MTourStep` 分别是 `Tour`、`TourStep` 的别名，使用同一实现与样式，可从 `@deot/vc` 导入。
 
@@ -510,3 +510,10 @@ Tour.open({ cache: 'feature-guide-v1', steps: [{ element: '#feature-entry', titl
 - [方向、目标交互、异步等待和长内容](./examples/options.vue)
 - [缓存与重新演示](./examples/cache.vue)
 - [窄视口与主题](./examples/responsive.vue)
+
+<!--
+## 变更说明
+
+### getPopupContainer 改为 to
+- 声明式组件的 `getPopupContainer`（返回元素的函数）改为 `to`，接受 CSS 选择器或元素，与静态调用的 `element` 一致；不保留旧名。
+-->

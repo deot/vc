@@ -5,6 +5,8 @@ import {
 	getCurrentInstance,
 	ref,
 	computed,
+	watch,
+	provide,
 	onMounted,
 	onUnmounted,
 	Comment,
@@ -16,8 +18,8 @@ import { isEqual } from 'lodash-es';
 import type { ComponentInternalInstance } from 'vue';
 import type { PopoverViewStyle } from './types';
 import { props as popoverViewProps } from './popover-view-props';
-import usePos, { getClip, fitMaxSize } from './use-pos';
-import { setTrigger, isInArea } from './utils';
+import usePos, { getClip, fitMaxSize, getMount } from './use-pos';
+import { setTrigger, isInArea, getIsolatedContexts } from './utils';
 import { TransitionScale } from '../transition';
 import { Customer } from '../customer';
 import { Portal } from '../portal';
@@ -47,6 +49,8 @@ export const PopoverView = defineComponent({
 		} = usePos();
 		const instance = getCurrentInstance() as (ComponentInternalInstance & { vnode: any });
 		const { vnode } = instance;
+		// 浮层内容继承外层的上下文，但不属于外层的表单、组与布局，见 getIsolatedContexts
+		Object.entries(getIsolatedContexts()).forEach(([key, value]) => provide(key, value));
 		const isActive = ref(false);
 		const wrapperStyle = ref({} as PopoverViewStyle);
 		const arrowStyle = ref({});
@@ -156,23 +160,16 @@ export const PopoverView = defineComponent({
 			const triggerRect = triggerEl.getBoundingClientRect();
 			const { hidden, viewport, boundary } = getClip(scrollers, triggerRect);
 
-			const { portal, getPopupContainer } = props;
-
-			const rect = getRect({
-				portal,
-				triggerEl,
-				el: vnode.el,
-				hasContainer: !!getPopupContainer
-			});
+			const mount = getMount(vnode.el, props.triggerElement as Element);
+			const rect = getRect({ mount, triggerEl, el: vnode.el });
 
 			// 挂在 body 上的 hover 弹层（提示等）只按视口翻转：不受容器裁剪，而朝下翻转会挡住向下移动的鼠标（如 Table 前几行）
 			// 其余弹层按容器可视区翻转：click 弹层（下拉）尽量留在容器内，挂在容器内的弹层会被容器裁剪
-			const inBody = props.portal && !getPopupContainer;
 			const fit = () => getFitPos({
 				triggerEl,
 				el: vnode.el,
 				placement: props.placement,
-				boundary: props.hover && inBody ? viewport : boundary
+				boundary: props.hover && mount === 'body' ? viewport : boundary
 			});
 			// 容器尺寸不超过实际方向所在一侧的可用空间
 			const { placement: result, reached } = fitMaxSize(containerRef.value!, {
@@ -197,9 +194,8 @@ export const PopoverView = defineComponent({
 			isEqual(wrapperStyle.value, $wrapperStyle) || (wrapperStyle.value = $wrapperStyle);
 			isEqual(arrowStyle.value, $arrowStyle) || (arrowStyle.value = $arrowStyle);
 			popupSize = getPopupSize();
-			// 自适应高度
-			if (props.autoWidth) return;
-			const width = `${triggerEl!.getBoundingClientRect().width}px`;
+			// autoWidth 为 false 时与触发节点同宽
+			const width = props.autoWidth ? 'auto' : `${triggerEl.getBoundingClientRect().width}px`;
 			wrapperW.value.width !== width && (wrapperW.value = { width });
 		};
 
@@ -288,6 +284,13 @@ export const PopoverView = defineComponent({
 			getPopupSize() !== popupSize && setPopupStyle();
 		};
 
+		// 打开期间影响位置的属性变化：DOM 更新后重新定位（内容、插槽的变化改变尺寸时由 Resize 处理）
+		watch(
+			() => [props.placement, props.arrow, props.autoWidth, props.portalStyle, props.scrollable],
+			(v, old) => isEqual(v, old) || setPopupStyle(),
+			{ flush: 'post' }
+		);
+
 		onMounted(() => {
 			isActive.value = true;
 			// 登记触发节点，供外层弹层判断点击区域
@@ -327,8 +330,7 @@ export const PopoverView = defineComponent({
 			// 触发节点只移动、尺寸不变时（滚动与 Resize 之外），由调用方触发重新定位
 			update: setPopupStyle
 		});
-		// 固定区（header / footer）：插槽在弹层创建时取定，要按条件显示时由插槽自己决定渲染什么（其中的响应式依赖会让弹层重新渲染），
-		// 没有渲染出内容时不输出外层节点
+		// 固定区（header / footer）：没有渲染出内容时不输出外层节点
 		const renderFixed = (name: 'header' | 'footer') => {
 			const nodes = slots[name]?.();
 			return hasContent(nodes) && (<div class={`vc-popover-wrapper__${name}`}>{nodes}</div>);

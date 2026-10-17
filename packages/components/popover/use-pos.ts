@@ -149,17 +149,31 @@ export const getClip = (scrollers: HTMLElement[], triggerRect: DOMRect) => {
 	return { hidden, viewport, boundary: intersect(viewport, clip) };
 };
 
+/**
+ * 弹层的挂载位置，决定定位的坐标系
+ * 	- body：页面坐标（默认）
+ * 	- inline：触发器根节点内（Popover 的 portal=false），以触发器为原点
+ * 	- container：其它容器（Popover 的 to、Popover.open 的 element），以容器为原点，容器应包含触发器
+ * @param el 弹层节点
+ * @param root 触发器根节点
+ * @returns ~
+ */
+export const getMount = (el: HTMLElement, root: Element) => {
+	const parent = el.parentElement;
+	return !parent || parent === document.body ? 'body' : parent === root ? 'inline' : 'container';
+};
+
 export default () => {
-	const getRect = ({ portal, hasContainer, triggerEl, el }) => {
+	const getRect = ({ mount, triggerEl, el }) => {
 		let rect: PopoverRect;
-		if (hasContainer) { // 基于传入的容器节点
+		if (mount === 'container') {
 			const elRect = triggerEl.getBoundingClientRect();
 			const parentRect = el.parentElement.getBoundingClientRect();
 			const y = elRect.y - parentRect.y;
 			const x = elRect.x - parentRect.x;
 
 			if (x < 0 || y < 0) {
-				throw new VcError('popover', 'getPopupContainer选择节点应为容器元素');
+				throw new VcError('popover', '浮层的挂载容器应包含触发器');
 			}
 			rect = {
 				y,
@@ -167,7 +181,7 @@ export default () => {
 				height: elRect.height,
 				width: elRect.width
 			};
-		} else if (!portal) { // 基于父节点
+		} else if (mount === 'inline') {
 			rect = {
 				y: 0,
 				x: 0,

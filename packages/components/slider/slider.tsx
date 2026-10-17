@@ -318,7 +318,6 @@ export const Slider = defineComponent({
 			maxVisible
 		});
 
-		// 提示在弹层（独立的 portal 应用）中渲染：要在插槽内读取 computed，弹层才会随值重新渲染
 		const renderMinTip = () => minTip.value;
 		const renderMaxTip = () => maxTip.value;
 

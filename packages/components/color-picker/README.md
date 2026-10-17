@@ -399,7 +399,7 @@ const handleChange = (value, currentColor) => {
 | arrow | 是否显示浮层箭头 | `boolean` | - | `false` |
 | portalClass | 浮层附加 class | `string \| object \| any[]` | - | - |
 
-其他 attrs 透传给 [Popover](../popover/README.md)，例如 `placement`、`portalStyle`、`getPopupContainer`。`ColorPicker` 的 `modelValue` 始终表示色值。
+其他 attrs 透传给 [Popover](../popover/README.md)，例如 `placement`、`portalStyle`、`to`。`ColorPicker` 的 `modelValue` 始终表示色值。
 
 ### ColorPicker 事件
 

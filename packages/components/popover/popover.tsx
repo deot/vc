@@ -1,13 +1,11 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, h, ref, computed, watch, getCurrentInstance, onMounted, onUnmounted } from 'vue';
+import { defineComponent, h, ref, computed, watch, getCurrentInstance, onMounted, onDeactivated, Teleport } from 'vue';
 import type { ComponentInternalInstance } from 'vue';
 import { pick } from 'lodash-es';
 import { props as popoverProps, viewKeys } from './popover-props';
-import { getUid } from '@deot/helper-utils';
-import { PopoverPortal } from './popover-view';
+import { PopoverView } from './popover-view';
 import { isInArea } from './utils';
-import type { PortalLeaf } from '../portal/portal-leaf';
 
 const COMPONENT_NAME = 'vc-popover';
 
@@ -18,8 +16,14 @@ export const Popover = defineComponent({
 	setup(props, { emit, slots }) {
 		const instance = getCurrentInstance() as ComponentInternalInstance;
 
-		const popoverId = getUid('popover');
 		const isActive = ref(false);
+		// 浮层是否挂载：打开时挂载，关闭动画结束后卸载（见 handleClose）
+		const isRendered = ref(false);
+		// 离场动画中再次打开时换一个 key 重新挂载：重新触发 ready、入场动画与挂载时的自动聚焦
+		const renderKey = ref(0);
+		const viewRef = ref<{ $el: Element; toggle: (v?: boolean) => void; update: () => void }>();
+		let isMounted = false;
+
 		const isHover = computed(() => {
 			return props.trigger === 'hover' && !props.always;
 		});
@@ -35,18 +39,19 @@ export const Popover = defineComponent({
 			return props.trigger === 'focus' && !props.always;
 		});
 
+		// 浮层渲染在根节点内（Teleport 不传送）
+		const isInline = computed(() => !props.portal && !props.to);
+		const viewProps = computed(() => pick(props, viewKeys));
+
 		const sync = () => {
 			emit('update:modelValue', isActive.value);
 			emit('visible-change', isActive.value);
 		};
 
 		let timer: any;
-		let popperInstance: PortalLeaf | null;
 
 		/**
-		 * portal: false
-		 * 是直接挂在父节点上的，
-		 * 点击pop内容区域时click事件冒泡，导致执行了该toggle方法
+		 * 浮层渲染在根节点内时，浮层内的点击冒泡到根节点，不应切换
 		 * visible: true, false, undefined(处理 doc click)
 		 * @param e ~
 		 * @param root0 ~
@@ -60,8 +65,8 @@ export const Popover = defineComponent({
 			// 新的触发会取消未执行的延时关闭（hover / strictHover 都会设置）
 			clearTimeout(timer);
 
-			const wrapperEl = popperInstance?.wrapper?.$el;
-			if (!props.portal && wrapperEl && isInArea(e, wrapperEl)) return;
+			const wrapperEl = viewRef.value?.$el;
+			if (isInline.value && wrapperEl && isInArea(e, wrapperEl)) return;
 
 			// document click（弹层内的点击已由弹层自身排除）：触发节点在触发区内的子弹层（如 Select 的标签列表）也视为触发区
 			if (visible === undefined) {
@@ -82,41 +87,10 @@ export const Popover = defineComponent({
 			}
 		};
 
-		const refresh = () => {
-			if (isActive.value) {
-				const el = props.getPopupContainer
-					? props.getPopupContainer()
-					: props.portal
-						? document.body
-						: instance.vnode.el;
-				popperInstance = PopoverPortal.popup({
-					element: el,
-					alone: false, // 由当前组件控制hover/click等情况
-					name: popoverId,
-					triggerElement: instance.vnode.el as Element,
-					onChange: handleChange,
-					// @ts-ignore
-					onClose: () => {
-						emit('close');
-						popperInstance = null;
-					},
-					// @ts-ignore
-					onReady: () => {
-						emit('ready');
-					},
-					hover: isHover.value,
-
-					/**
-					 * 传送门通信控制
-					 */
-					slots,
-					parent: instance.parent!,
-					// 只传弹层的属性：trigger、tag 等属于触发器，否则会成为弹层根节点的 attrs（tag 还会被 Portal 当作挂载容器的标签）
-					...pick(props, viewKeys)
-				}) as PortalLeaf;
-			} else if (popperInstance && popperInstance.wrapper) {
-				popperInstance.wrapper.toggle(false);
-			}
+		// 关闭动画结束后卸载浮层
+		const handleClose = () => {
+			isRendered.value = false;
+			emit('close');
 		};
 
 		watch(
@@ -127,20 +101,62 @@ export const Popover = defineComponent({
 			{ immediate: true }
 		);
 
-		watch(
-			() => isActive.value,
-			() => {
-				refresh();
+		// 挂载前打开的由 onMounted 渲染（不在服务端输出浮层）
+		watch(isActive, (v) => {
+			if (!isMounted) return;
+			if (v) {
+				isRendered.value && renderKey.value++;
+				isRendered.value = true;
+			} else if (viewRef.value) {
+				viewRef.value.toggle(false);
+			} else {
+				isRendered.value = false;
 			}
+		});
+
+		// 挂载位置变化（Teleport 移动浮层）后，按新的坐标系重新定位
+		watch(
+			() => [props.to, props.portal],
+			() => viewRef.value?.update(),
+			{ flush: 'post' }
 		);
 
 		onMounted(() => {
-			isActive.value && refresh();
+			isMounted = true;
+			isActive.value && (isRendered.value = true);
 		});
 
-		onUnmounted(() => {
-			popperInstance && popperInstance.destroy();
+		// KeepAlive 失活（如切换缓存的页面）：浮层在 Teleport 的目标里，不随页面移走，直接卸载
+		onDeactivated(() => {
+			if (!isRendered.value) return;
+			isRendered.value = false;
+			if (isActive.value) {
+				isActive.value = false;
+				sync();
+			}
+			emit('close');
 		});
+
+		// 只传弹层的属性：trigger、tag 等属于触发器；插槽只传浮层用的，触发器的 default 不传
+		const renderPopup = () => isRendered.value && (
+			<Teleport to={props.to || 'body'} disabled={isInline.value}>
+				<PopoverView
+					// 切换触发方式时重新挂载：弹层按 hover 绑定、解绑的监听要对得上
+					key={`${renderKey.value}-${isHover.value}`}
+					ref={viewRef}
+					{...viewProps.value}
+					triggerElement={instance.vnode.el!}
+					alone={false} // 由当前组件控制hover/click等情况
+					hover={isHover.value}
+					onChange={handleChange}
+					onReady={() => emit('ready')}
+					onClose={handleClose}
+				>
+					{{ header: slots.header, content: slots.content, footer: slots.footer }}
+				</PopoverView>
+			</Teleport>
+		);
+
 		return () => {
 			return h(props.tag, {
 				class: 'vc-popover',
@@ -150,7 +166,7 @@ export const Popover = defineComponent({
 				onMouseenter: (e: any) => (isHover.value || isStrictHover.value) && handleChange(e, { visible: true }),
 				onMouseleave: (e: any) => (isHover.value || isStrictHover.value) && handleChange(e, { visible: false }),
 				onClick: (e: any) => isClick.value && handleChange(e, { visible: !isActive.value })
-			}, slots.default?.());
+			}, [slots.default?.(), renderPopup()]);
 		};
 	}
 });

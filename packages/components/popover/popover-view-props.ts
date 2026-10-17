@@ -23,11 +23,6 @@ export const props = {
 		validator: (v: string) => /(light|dark|none)/.test(v)
 	},
 	content: valueType,
-	getPopupContainer: Function,
-	portal: {
-		type: Boolean,
-		default: true
-	},
 	arrow: { // 是否显示箭头
 		type: Boolean,
 		default: true

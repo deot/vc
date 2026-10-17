@@ -90,10 +90,14 @@ describe('Tour', () => {
 		expect(container.childElementCount).toBe(0);
 	});
 
-	it('声明式入口将 getPopupContainer 交给 Portal，卸载时清理整个实例', async () => {
+	it.each([
+		['元素', (container: HTMLElement) => container],
+		['选择器', () => '#tour-to']
+	])('声明式入口将 to（%s）交给 Portal，卸载时清理整个实例', async (_, getTo) => {
 		const container = document.createElement('section');
+		container.id = 'tour-to';
 		document.body.appendChild(container);
-		const wrapper = create({ getPopupContainer: () => container });
+		const wrapper = create({ to: getTo(container) });
 		await settle();
 		expect(container.querySelector('.vc-tour__card')).not.toBeNull();
 		expect(container.querySelector('.vc-tour__mask')).not.toBeNull();

@@ -967,5 +967,6 @@ Viewer.popup({ name: '业务名称', title: '详情' }, { name: 'portal-detail' 
 - `alive` 复用会替换句柄上的 `target`。不要把多次复用视作相互独立的请求；旧的等待者不会自动取消。需要分别返回结果的业务弹窗，使用默认模式或 `multiple`。
 - `multiple` 会生成不同标识，因此不能同时期待它按同一个标识复用 `alive` 实例。
 - 页面卸载时清理自己持有的服务或 leaf。全局 `clear/clearAll` 会影响其他 Portal 服务，应只用于明确的全局清理场景。
+- 声明式的 Popover（以及基于它的 Select、DatePicker、Dropdown 等）通过 Teleport 渲染浮层，不经过 Portal：`clear/clearAll` 不会关闭它们，全局 Portal 配置（`install`、`uses` 等）也不作用于它们；它们随所在组件卸载，所在页面被 KeepAlive 缓存而失活时自行关闭。`Popover.open` 仍由 Portal 创建。
 - 命令式 `popup()` 直接使用 `document`，应在浏览器挂载完成后或事件回调中调用。Portal 不负责 SSR 渲染。
 - Portal 不提供主题色与默认操作文案。Modal/Drawer 等包装组件负责自身 locale/theme；传送至 body 的内容不会继承原局部 DOM 祖先上的 CSS 变量，需要在实际挂载祖先或内容自身设置。

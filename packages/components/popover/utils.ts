@@ -100,3 +100,20 @@ export const keepFocus = (e: MouseEvent) => {
 	const isEditable = el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !/^(checkbox|radio)$/.test(el.type));
 	!isEditable && e.preventDefault();
 };
+
+/**
+ * 浮层边界上隔离的上下文：浮层内容继承外层的 provide（路由、状态、配置等），但不属于外层的表单、组与布局
+ * 	- 如 FormItem 内 Select 下拉里的输入框不参与该项的校验，CheckboxGroup 内浮层里的复选框不加入该组，
+ * 	  ButtonGroup 的尺寸不作用于浮层里的按钮，Tree 节点内浮层里的树不受外层手风琴影响，Affix 内浮层里的 Tabs 不按外层吸顶偏移
+ * 	- 值与各消费方 inject 的默认值一致；每个浮层一份，消费方改写时互不影响
+ * @returns key 与值
+ */
+export const getIsolatedContexts = () => ({
+	'vc-form': undefined,
+	'vc-form-item': {},
+	'vc-checkbox-group': {},
+	'vc-radio-group': {},
+	'vc-button-group': { size: '', vertical: false, circle: false },
+	'vc-tree-node-map': null,
+	'vc-affix': null
+});

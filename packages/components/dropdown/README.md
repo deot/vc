@@ -232,7 +232,7 @@ const handleClose = () => {
 | arrow | 是否显示箭头 | `boolean` | - | `false` |
 | portalClass | 浮层附加类名 | `string \| object` | - | - |
 
-其他属性透传给 Popover，例如 `portal`、`portalStyle`、`getPopupContainer`、`outsideClickable` 和 `tag`；`class`、`style` 应用于触发根节点。`focus` 模式可搭配 `tabindex="0"`。当前不支持 `contextMenu` 触发。
+其他属性透传给 Popover，例如 `portal`、`portalStyle`、`to`、`outsideClickable` 和 `tag`；`class`、`style` 应用于触发根节点。`focus` 模式可搭配 `tabindex="0"`。当前不支持 `contextMenu` 触发。
 
 ### Dropdown 事件
 

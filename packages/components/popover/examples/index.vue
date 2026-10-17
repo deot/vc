@@ -13,7 +13,7 @@
 		<div ref="parent" class="demo__container">
 			<div class="demo__left" style="margin-top: 32px; margin-bottom: 32px">
 				<Popover
-					:get-popup-container="getPopupContainer"
+					:to="parent"
 					:model-value="true"
 					:trigger="trigger"
 					always
@@ -63,7 +63,7 @@
 			<div class="demo__middle">
 				<div class="g-jc-sb">
 					<Popover
-						:get-popup-container="getPopupContainer"
+						:to="parent"
 						:trigger="trigger"
 						placement="top-left"
 						content="TopLeft"
@@ -74,7 +74,7 @@
 						</Button>
 						<template #content>
 							<div style="height: 100px; width: 200px">
-								getPopupContainer
+								to
 							</div>
 						</template>
 					</Popover>
@@ -112,7 +112,7 @@
 				</div>
 				<div class="g-jc-sb">
 					<Popover
-						:get-popup-container="getPopupContainer"
+						:to="parent"
 						:trigger="trigger"
 						placement="bottom-left"
 						content="BottomLeft"
@@ -123,7 +123,7 @@
 						</Button>
 						<template #content>
 							<div style="height: 100px; width: 200px">
-								getPopupContainer
+								to
 							</div>
 						</template>
 					</Popover>
@@ -162,7 +162,7 @@
 			</div>
 			<div class="demo__right" style="margin-top: 32px; margin-bottom: 32px">
 				<Popover
-					:get-popup-container="getPopupContainer"
+					:to="parent"
 					:trigger="trigger"
 					placement="right-top"
 					content="RightTop"
@@ -172,7 +172,7 @@
 					</Button>
 					<template #content>
 						<div style="height: 100px; width: 200px">
-							getPopupContainer
+							to
 						</div>
 					</template>
 				</Popover>
@@ -228,10 +228,6 @@ onMounted(() => {
 		content.value = 111111;
 	}, 5000);
 });
-
-const getPopupContainer = () => {
-	return parent.value;
-};
 
 const handleVisibleChange = (visible) => {
 	console.log('visible: ', visible);

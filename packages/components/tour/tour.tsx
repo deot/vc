@@ -76,7 +76,7 @@ export const Tour = defineComponent({
 			if (tourInstance) return;
 			tourInstance = TourPortal.popup({
 				...getOptions(),
-				element: props.getPopupContainer?.() || 'body',
+				element: props.to || 'body',
 				slots,
 				parent: instance.parent!,
 				onDestroyed: () => {

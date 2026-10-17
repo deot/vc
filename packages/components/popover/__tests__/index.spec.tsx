@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
-import { Popover, PopoverView, Select, Scroller } from '@deot/vc-components';
+import { Popover, PopoverView, Select, Scroller, Checkbox, CheckboxGroup, Button, ButtonGroup } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Resize } from '@deot/helper-resize';
-import { defineComponent, nextTick, ref } from 'vue';
+import { defineComponent, nextTick, ref, provide, inject, getCurrentInstance, KeepAlive } from 'vue';
 import { vi, onTestFinished } from 'vitest';
 import { useHoverPopover } from '../use-hover-popover';
 import { getAreaNode } from '../utils';
@@ -321,7 +321,7 @@ describe('Popover v-model & always & outsideClickable', () => {
 	});
 });
 
-describe('Popover 容器 (portal / getPopupContainer)', () => {
+describe('Popover 挂载位置 (portal / to)', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';
 	});
@@ -359,17 +359,16 @@ describe('Popover 容器 (portal / getPopupContainer)', () => {
 		wrapper.unmount();
 	});
 
-	it('getPopupContainer: 弹层挂到自定义容器', async () => {
+	it.each([
+		['元素', (container: HTMLElement) => container],
+		['选择器', () => '#popover-to']
+	])('to（%s）：弹层挂到指定容器，优先于 portal=false', async (_, getTo) => {
 		const container = document.createElement('div');
-		container.className = 'custom-container';
+		container.id = 'popover-to';
 		document.body.appendChild(container);
 
 		const wrapper = mount(() => (
-			<Popover
-				trigger="click"
-				content="custom-content"
-				getPopupContainer={() => container}
-			>
+			<Popover trigger="click" content="custom-content" portal={false} to={getTo(container)}>
 				<button>btn</button>
 			</Popover>
 		), { attachTo: document.body });
@@ -377,11 +376,46 @@ describe('Popover 容器 (portal / getPopupContainer)', () => {
 		await flush();
 
 		const wrapperEl = getWrapperEl();
-		expect(wrapperEl).not.toBeNull();
-		expect(container.contains(wrapperEl!)).toBe(true);
+		expect(container.contains(wrapperEl)).toBe(true);
+		expect(wrapper.element.contains(wrapperEl)).toBe(false);
 
 		wrapper.unmount();
-		document.body.removeChild(container);
+		expect(getWrapperEl()).toBeNull();
+	});
+
+	it('打开期间改 portal / to：弹层移到新的位置，按新的坐标系重新定位', async () => {
+		const container = document.createElement('div');
+		document.body.appendChild(container);
+		setRect(container, { x: 20, y: 10, left: 20, top: 10 });
+		const to = ref<HTMLElement>();
+		const portal = ref(true);
+		const wrapper = mount(() => (
+			<Popover modelValue={true} trigger="click" content="x" placement="bottom-left" portal={portal.value} to={to.value}>
+				<button>btn</button>
+			</Popover>
+		), { attachTo: document.body });
+		setRect(wrapper.element, { x: 100, y: 50, width: 80, height: 30, left: 100, top: 50, right: 180, bottom: 80 });
+		await flush();
+		const el = getWrapperEl()!;
+		resize(wrapper.element);
+		await nextTick();
+		expect(wrapper.element.contains(el)).toBe(false);
+		expect([el.style.left, el.style.top]).toEqual(['100px', '84px']);
+
+		to.value = container;
+		await flush();
+		expect(getWrapperEl()).toBe(el);
+		expect(container.contains(el)).toBe(true);
+		expect([el.style.left, el.style.top]).toEqual(['80px', '74px']);
+
+		to.value = undefined;
+		portal.value = false;
+		await flush();
+		// 以触发节点为原点：jsdom 中 offsetHeight 为 0
+		expect(wrapper.element.contains(el)).toBe(true);
+		expect([el.style.left, el.style.top]).toEqual(['0px', '4px']);
+
+		wrapper.unmount();
 	});
 });
 
@@ -537,17 +571,20 @@ describe('Popover 内容渲染', () => {
 		wrapper.unmount();
 	});
 
-	it('Popover 只把弹层的属性交给 Portal：trigger / tag 等不落到弹层根节点', async () => {
+	it('Popover 只把弹层的属性交给 PopoverView：trigger / tag / to 等不落到弹层根节点', async () => {
 		const wrapper = mount(() => (
-			<Popover trigger="click" tag="section" content="x" outsideClickable={false}>
+			<Popover trigger="click" tag="section" content="x" outsideClickable={false} to="body" portal={false}>
 				<button>btn</button>
 			</Popover>
 		), { attachTo: document.body });
 		await wrapper.trigger('click');
 		await flush();
 
+		const view = wrapper.findComponent(PopoverView);
+		expect(view.vm.$attrs).toEqual({});
+		expect(view.props('content')).toBe('x');
 		const el = getWrapperEl()!;
-		['trigger', 'tag', 'disabled', 'outsideclickable'].forEach(key => expect(el.hasAttribute(key)).toBe(false));
+		['trigger', 'tag', 'disabled', 'outsideclickable', 'to', 'portal'].forEach(key => expect(el.hasAttribute(key)).toBe(false));
 
 		wrapper.unmount();
 	});
@@ -827,7 +864,7 @@ describe('Popover 事件 (ready / close / visible-change / update:modelValue)', 
 		document.body.removeChild(outside);
 	});
 
-	it('卸载时销毁 portal 实例（不抛错）', async () => {
+	it('卸载时立即移除弹层（不抛错）', async () => {
 		const visible = ref(true);
 		const wrapper = mount(() => (
 			<Popover v-model={visible.value} content="x">
@@ -839,7 +876,7 @@ describe('Popover 事件 (ready / close / visible-change / update:modelValue)', 
 
 		wrapper.unmount();
 		await flush();
-		// 卸载后 portal 节点立即移除（不依赖动画收尾）
+		// 卸载后弹层节点立即移除（不依赖动画收尾）
 		expect(getWrapperEl()).toBeNull();
 	});
 });
@@ -1095,21 +1132,15 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		wrapper.unmount();
 	});
 
-	it('getRect: getPopupContainer 节点定位 (hasContainer=true)', async () => {
+	it('getRect：挂在 to 指定的容器内时，以容器为原点定位', async () => {
 		const container = document.createElement('div');
-		container.className = 'pos-container';
 		container.style.cssText = 'position: absolute; left: 0; top: 0;';
 		document.body.appendChild(container);
 		// container 必须能让 getBoundingClientRect 返回（jsdom 默认全 0）
-		setRect(container, { x: 0, y: 0, width: 1000, height: 800 });
+		setRect(container, { x: 20, y: 10, left: 20, top: 10, width: 1000, height: 800 });
 
 		const wrapper = mount(() => (
-			<Popover
-				trigger="click"
-				content="x"
-				placement="bottom"
-				getPopupContainer={() => container}
-			>
+			<Popover trigger="click" content="x" placement="bottom" to={container}>
 				<button>btn</button>
 			</Popover>
 		), { attachTo: document.body });
@@ -1118,13 +1149,12 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		setRect(wrapper.element, { x: 100, y: 50, width: 80, height: 30, top: 50, left: 100, bottom: 80, right: 180 });
 		await wrapper.trigger('click');
 		await flush();
+		resize(wrapper.element);
+		await nextTick();
 
-		// 触发 setPopupStyle
-		const triggerRz = (wrapper.element as any).__rz__;
-		triggerRz?.handleResize?.([{ target: wrapper.element }]);
-		await flush();
-
-		expect(getWrapperEl()).not.toBeNull();
+		// 弹层宽度在 jsdom 中为 0：居中时 left = 触发节点中心
+		const el = getWrapperEl()!;
+		expect([el.style.left, el.style.top]).toEqual(['120px', '74px']);
 
 		wrapper.unmount();
 		document.body.removeChild(container);
@@ -2154,5 +2184,208 @@ describe('Popover 触发节点被移除', () => {
 		expect(isShown(getWrapperEl())).toBe(false);
 
 		wrapper.unmount();
+	});
+});
+
+describe('Popover 渲染在组件树内（Teleport）', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('打开期间：按条件提供的插槽、插槽捕获的值、content / theme 实时生效', async () => {
+		const count = ref(0);
+		const showHeader = ref(false);
+		const theme = ref('light');
+		const wrapper = mount(defineComponent({
+			setup() {
+				return () => {
+					// 插槽捕获渲染时的值，而不是在插槽里读响应式数据
+					const value = count.value;
+					return (
+						<Popover modelValue={true} theme={theme.value} content={`content ${value}`}>
+							{{
+								default: () => <button>btn</button>,
+								...(showHeader.value ? { header: () => <span class="c-header">{value}</span> } : {})
+							}}
+						</Popover>
+					);
+				};
+			}
+		}), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await flush();
+
+		const container = document.querySelector('.vc-popover-wrapper__container')!;
+		expect(container.querySelector('.c-header')).toBeNull();
+		expect(container.querySelector('.vc-popover-wrapper__content')!.textContent).toBe('content 0');
+		expect(container.classList.contains('is-light')).toBe(true);
+
+		count.value = 1;
+		showHeader.value = true;
+		theme.value = 'dark';
+		await flush();
+		expect(container.querySelector('.vc-popover-wrapper__header > .c-header')!.textContent).toBe('1');
+		expect(container.querySelector('.vc-popover-wrapper__content')!.textContent).toBe('content 1');
+		expect(container.classList.contains('is-dark')).toBe(true);
+	});
+
+	it('浮层内容继承外层的 provide 与应用上下文', async () => {
+		let injected: any;
+		let appContext: any;
+		const Probe = defineComponent({
+			setup() {
+				injected = inject('outer-key');
+				appContext = getCurrentInstance()!.appContext;
+				return () => null;
+			}
+		});
+		const wrapper = mount(defineComponent({
+			setup() {
+				provide('outer-key', 'outer');
+				return () => (
+					<Popover modelValue={true}>
+						{{ default: () => <button>btn</button>, content: () => <Probe /> }}
+					</Popover>
+				);
+			}
+		}), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await flush();
+
+		expect(injected).toBe('outer');
+		expect(appContext).toBe(wrapper.vm.$.appContext);
+	});
+
+	it('表单、组与布局类上下文在浮层边界隔离：取各自消费方的默认值', async () => {
+		const keys = ['vc-form', 'vc-form-item', 'vc-checkbox-group', 'vc-radio-group', 'vc-button-group', 'vc-tree-node-map', 'vc-affix'];
+		let values: any[] = [];
+		const Probe = defineComponent({
+			setup() {
+				values = keys.map(key => inject(key, 'none'));
+				return () => null;
+			}
+		});
+		const wrapper = mount(defineComponent({
+			setup() {
+				keys.forEach(key => provide(key, { outer: true }));
+				return () => (
+					<Popover modelValue={true}>
+						{{ default: () => <button>btn</button>, content: () => <Probe /> }}
+					</Popover>
+				);
+			}
+		}), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await flush();
+
+		expect(values).toEqual([undefined, {}, {}, {}, { size: '', vertical: false, circle: false }, null, null]);
+	});
+
+	it('CheckboxGroup / ButtonGroup 内的浮层：里面的复选框、按钮不受外层的组影响', async () => {
+		const wrapper = mount(() => (
+			<CheckboxGroup modelValue={['a']}>
+				<Checkbox label="a" class="c-outer" />
+				<ButtonGroup circle>
+					<Popover modelValue={true}>
+						{{
+							default: () => <button>btn</button>,
+							content: () => (
+								<div>
+									<Checkbox label="a" class="c-checkbox" />
+									<Button class="c-button">x</Button>
+								</div>
+							)
+						}}
+					</Popover>
+				</ButtonGroup>
+			</CheckboxGroup>
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await flush();
+
+		expect(document.querySelector('.c-outer')!.classList.contains('is-checked')).toBe(true);
+		expect(document.querySelector('.c-checkbox')!.classList.contains('is-checked')).toBe(false);
+		expect(document.querySelector('.c-button')!.classList.contains('is-circle')).toBe(false);
+	});
+
+	it('KeepAlive 失活时立即关闭并卸载弹层，同步 v-model 并触发 close', async () => {
+		const visible = ref(true);
+		const active = ref(true);
+		const onClose = vi.fn();
+		const Page = defineComponent({
+			name: 'page',
+			setup: () => () => (
+				<Popover v-model={visible.value} content="x" onClose={onClose}>
+					<button>btn</button>
+				</Popover>
+			)
+		});
+		const Other = defineComponent({ name: 'other', setup: () => () => <div /> });
+		const wrapper = mount(() => <KeepAlive>{active.value ? <Page /> : <Other />}</KeepAlive>, { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await flush();
+		expect(getWrapperEl()).not.toBeNull();
+
+		active.value = false;
+		await flush();
+		expect(getWrapperEl()).toBeNull();
+		expect(visible.value).toBe(false);
+		expect(onClose).toHaveBeenCalledTimes(1);
+
+		active.value = true;
+		await flush();
+		expect(getWrapperEl()).toBeNull();
+	});
+
+	it('关闭动画结束后卸载弹层；离场中再次打开时重新挂载，ready 再次触发', async () => {
+		const visible = ref(true);
+		const onReady = vi.fn();
+		const onClose = vi.fn();
+		const wrapper = mount(() => (
+			<Popover v-model={visible.value} content="x" onReady={onReady} onClose={onClose}>
+				<button>btn</button>
+			</Popover>
+		), { attachTo: document.body, global: { stubs: { transition: false } } });
+		onTestFinished(() => wrapper.unmount());
+		await flush();
+		const first = getWrapperEl();
+		expect(onReady).toHaveBeenCalledTimes(1);
+
+		visible.value = false;
+		await flush();
+		// 离场中
+		expect(getWrapperEl()).toBe(first);
+
+		visible.value = true;
+		await flush();
+		expect(document.querySelectorAll('.vc-popover-wrapper')).toHaveLength(1);
+		expect(getWrapperEl()).not.toBe(first);
+		expect(onReady).toHaveBeenCalledTimes(2);
+		expect(onClose).not.toHaveBeenCalled();
+
+		visible.value = false;
+		await sleep(400);
+		await flush();
+		expect(getWrapperEl()).toBeNull();
+		expect(onClose).toHaveBeenCalledTimes(1);
+	});
+
+	it('打开期间改 placement：重新定位', async () => {
+		const placement = ref('top');
+		const wrapper = mount(() => (
+			<Popover modelValue={true} content="x" placement={placement.value}>
+				<button>btn</button>
+			</Popover>
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		setRect(wrapper.element, { x: 400, y: 300, width: 80, height: 30, left: 400, top: 300, right: 480, bottom: 330 });
+		await flush();
+		expect(getWrapperEl()!.classList.contains('is-top')).toBe(true);
+
+		placement.value = 'bottom';
+		await flush();
+		const el = getWrapperEl()!;
+		expect(el.classList.contains('is-bottom')).toBe(true);
+		expect(el.style.top).toBe('334px');
 	});
 });

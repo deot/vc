@@ -356,7 +356,7 @@ const handleOk = () => {
 | width | 弹层宽度（不含箭头一侧的间距），内部追加 px；字符串也应为数值字符串，最小宽度为 218px（默认缩放） | `string \| number` | - | - |
 | portalClass | 浮层外层类名 | `string \| object` | - | - |
 
-其他属性透传给内部 [Popover](../popover/README.md)，例如 `portal`、`portalStyle`、`getPopupContainer`、`arrow`、`theme`、`disabled` 和 `outsideClickable`。`class`、`style` 作用于触发器，浮层默认挂载到 body；浮层的样式与主题覆盖应通过 `portalClass`、`portalStyle` 或全局变量设置。
+其他属性透传给内部 [Popover](../popover/README.md)，例如 `portal`、`portalStyle`、`to`、`arrow`、`theme`、`disabled` 和 `outsideClickable`。`class`、`style` 作用于触发器，浮层默认挂载到 body；浮层的样式与主题覆盖应通过 `portalClass`、`portalStyle` 或全局变量设置。
 
 ### 事件
 

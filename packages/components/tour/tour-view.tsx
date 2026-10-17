@@ -237,7 +237,6 @@ export const TourView = defineComponent({
 										<PopoverView
 											ref={popover}
 											triggerElement={position.anchor}
-											getPopupContainer={() => position.root.value}
 											alone={false}
 											theme="light"
 											animation="none"

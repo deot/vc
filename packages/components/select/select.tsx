@@ -137,9 +137,8 @@ export const Select = defineComponent({
 			);
 		};
 
-		// Popover 的插槽在浮层打开时取定：始终提供 header，不需要时不渲染内容
 		const renderHeader = () => {
-			return showHeader.value && (
+			return (
 				<SelectSearch {...select.search.value} input={searchMode.value === 'popover'}>
 					{ showSelectAll.value && (<SelectAll data={options.value} />) }
 				</SelectSearch>
@@ -204,7 +203,7 @@ export const Select = defineComponent({
 				>
 					{{
 						default: renderTrigger,
-						header: renderHeader,
+						header: showHeader.value ? renderHeader : undefined,
 						content: renderContent
 					}}
 				</Popover>
