@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
 import {
-	ImagePreview,
 	MUpload,
 	MUploadPicker,
 	Upload,
@@ -14,8 +13,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { UploadCallback } from '../../upload/types';
 import { getAvailableIndex, getAvailableItems } from '../utils';
 import type { PickerType } from '../types';
-import { VideoPreview } from '../../file-preview/preview/video';
-import { AudioPreview } from '../../file-preview/preview/audio';
+import { Portal } from '../../portal';
 import { ImageItem } from '../item/image';
 import { VideoItem } from '../item/video';
 import { AudioItem } from '../item/audio';
@@ -146,28 +144,25 @@ describe('UploadPicker', () => {
 	});
 
 	it('opens desktop and mobile media previews', async () => {
-		const videoPopup = vi.spyOn(VideoPreview, 'popup').mockReturnValue({} as any);
-		const audioPopup = vi.spyOn(AudioPreview, 'popup').mockReturnValue({} as any);
-
 		for (const Component of [UploadPicker, MUploadPicker]) {
 			const wrapper = mount(Component, {
 				props: { modelValue: [files[1], files[2]], picker: ['video', 'audio'] }
 			});
 
 			await wrapper.find('button[aria-label="预览视频"]').trigger('click');
-			await wrapper.find('button[aria-label="预览音频"]').trigger('click');
-		}
+			await nextTick();
+			expect(document.querySelector('.vc-video-slide video')?.getAttribute('src')).toBe(files[1].value);
+			Portal.clear(true);
 
-		expect(videoPopup).toHaveBeenCalledTimes(2);
-		expect(videoPopup).toHaveBeenLastCalledWith({ src: files[1].value });
-		expect(audioPopup).toHaveBeenCalledTimes(2);
-		expect(audioPopup).toHaveBeenLastCalledWith({ src: files[2].value });
-		videoPopup.mockRestore();
-		audioPopup.mockRestore();
+			await wrapper.find('button[aria-label="预览音频"]').trigger('click');
+			await nextTick();
+			expect(document.querySelector('.vc-audio-slide audio')?.getAttribute('src')).toBe(files[2].value);
+			Portal.clear(true);
+			wrapper.unmount();
+		}
 	});
 
 	it('previews desktop and mobile images without failed items', async () => {
-		const open = vi.spyOn(ImagePreview, 'open').mockReturnValue({} as any);
 		const second = { ...files[0], label: 'second.jpg', value: 'https://cdn.test/second.jpg' };
 
 		for (const [Component, UploadComponent] of [[UploadPicker, Upload], [MUploadPicker, MUpload]] as const) {
@@ -184,16 +179,14 @@ describe('UploadPicker', () => {
 			expect(images).toHaveLength(2);
 			(images[1].vm.$.vnode.props as any).onClick(new MouseEvent('click'));
 			await nextTick();
+			expect(document.querySelector('.vc-file-viewer__counter')?.textContent).toBe('2 / 2');
+			expect(document.querySelector('.vc-file-viewer__slide.is-active .vc-image-slide__media')?.getAttribute('src')).toBe(second.value);
+			Portal.clear(true);
+			wrapper.unmount();
 		}
-
-		expect(open).toHaveBeenCalledTimes(2);
-		expect(open).toHaveBeenLastCalledWith({ current: 1, data: [files[0].value, second.value] });
-		open.mockRestore();
 	});
 
-	it('opens files in a new window on desktop and mobile', async () => {
-		const windowOpen = vi.spyOn(window, 'open').mockReturnValue(null);
-
+	it('opens files in the viewer with a new-window link on desktop and mobile', async () => {
 		for (const [Component, selector] of [
 			[UploadPicker, '.vc-upload-picker-file-item__title'],
 			[MUploadPicker, '.vcm-upload-picker-file-item__title']
@@ -202,17 +195,19 @@ describe('UploadPicker', () => {
 				props: { modelValue: [files[3]], picker: ['file'] }
 			});
 			await wrapper.find(selector).trigger('click');
+			await nextTick();
+			expect(document.querySelector('.vc-file-slide__frame')?.getAttribute('src')).toBe(files[3].value);
+			const link = document.querySelector('.vc-file-slide__open') as HTMLAnchorElement;
+			expect([link.getAttribute('href'), link.target, link.rel]).toEqual([files[3].value, '_blank', 'noopener noreferrer']);
+			Portal.clear(true);
+			wrapper.unmount();
 		}
-
-		expect(windowOpen).toHaveBeenCalledTimes(2);
-		expect(windowOpen).toHaveBeenLastCalledWith(files[3].value, '_blank', 'noopener');
-		windowOpen.mockRestore();
 	});
 
 	it('lets the global FilePreview enhancer take over previews', async () => {
-		const videoPopup = vi.spyOn(VideoPreview, 'popup').mockReturnValue({} as any);
 		const enhancer = vi.fn(() => true);
 		VcInstance.options.FilePreview!.enhancer = enhancer;
+		Portal.clear(true);
 		try {
 			const wrapper = mount(UploadPicker, {
 				props: {
@@ -231,10 +226,10 @@ describe('UploadPicker', () => {
 					expect.objectContaining({ type: 'video', source: 'https://cdn.test/clip.mp4', name: 'clip.mp4' })
 				]
 			});
-			expect(videoPopup).not.toHaveBeenCalled();
+			expect(document.querySelector('.vc-file-viewer')).toBeNull();
 		} finally {
 			VcInstance.options.FilePreview!.enhancer = undefined;
-			videoPopup.mockRestore();
+			Portal.clear(true);
 		}
 	});
 

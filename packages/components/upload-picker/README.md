@@ -4,7 +4,7 @@
 
 ### 何时使用
 
-需要在表单内管理上传后的文件列表时使用。图片可放大预览，音视频可打开播放器，点击普通文件的名称在新窗口打开。预览与 `FilePreview` 共用同一套流程和全局配置。
+需要在表单内管理上传后的文件列表时使用。图片、音视频、文件都在查看器中预览：图片可缩放，音视频可播放，PDF 与 Office 文件内嵌预览并提供新窗口打开。预览与 `FilePreview` 共用同一套流程和全局配置。
 
 ### 基础用法
 
@@ -273,7 +273,7 @@ onBeforeUnmount(() => urls.forEach(url => URL.revokeObjectURL(url)));
 
 ### 预览
 
-- 点击图片、视频/音频的播放按钮、普通文件的名称时，调用 `FilePreview.open`：先执行全局 `VcInstance.options.FilePreview.enhancer`，返回真值（或 resolve 真值）表示已接管；否则图片打开多图预览，音视频打开播放弹窗，普通文件在新窗口打开。
+- 点击图片、视频/音频的播放按钮、普通文件的名称时，调用 `FilePreview.open`：先执行全局 `VcInstance.options.FilePreview.enhancer`，返回真值（或 resolve 真值）表示已接管；否则打开查看器，包含同一类型中上传成功的项，并定位到点击的那一项。
 - 预览数据只包含当前类型中上传成功的项，按类型内顺序排列。`enhancer` 收到 `{ current, data, instance }`：`data` 每项为 `{ ...内部项, type, source, name }`，`source`、`name` 分别取自 `keyValue.value`、`keyValue.label`；`instance` 为 UploadPicker 实例。
 - 原 `imagePreviewOptions` 与 `VcInstance.options.ImagePreview.enhancer` 已移除，改用 `VcInstance.options.FilePreview.enhancer`，对所有文件类型生效。
 

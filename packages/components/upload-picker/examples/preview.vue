@@ -1,6 +1,6 @@
 <template>
 	<div style="padding: 20px; background: var(--vc-background-color-lightest);">
-		<p>预览统一走 FilePreview.open：图片（多图，跳过上传失败项）、视频、音频弹窗，文件点击名称在新窗口打开</p>
+		<p>预览统一走 FilePreview.open：同类型的项进入同一个查看器（跳过上传失败项）；文件页内嵌 PDF / Office，并提供新窗口打开</p>
 		<p>VcInstance.options.FilePreview 与 FilePreview 共用：getFileType 影响分组，enhancer 可接管预览</p>
 		<div class="toolbar">
 			<label><input v-model="useGetFileType" type="checkbox"> getFileType（识别 xxx.jpg!4-4；UploadPicker 在解析 modelValue 时读取，这里切换后重新挂载）</label>

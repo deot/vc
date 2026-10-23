@@ -469,11 +469,15 @@ describe('EditorView and utils', () => {
 		await wrapper.find('p').trigger('click');
 		expect(previewOpen).not.toHaveBeenCalled();
 
+		const images = wrapper.findAll('img').map(i => i.element);
 		await wrapper.findAll('img')[1].trigger('click');
 		expect(previewOpen).toHaveBeenCalledTimes(1);
 		expect(previewOpen).toHaveBeenCalledWith({
 			current: 1,
-			data: ['https://example.com/first.png', 'https://example.com/second.png']
+			data: [
+				{ source: 'https://example.com/first.png', element: images[0] },
+				{ source: 'https://example.com/second.png', element: images[1] }
+			]
 		});
 
 		wrapper.unmount();
@@ -485,10 +489,11 @@ describe('EditorView and utils', () => {
 		const wrapper = mount(() => (<EditorView value={value.value} />), { attachTo: document.body });
 		await flush();
 
+		const same = wrapper.findAll('img').map(i => i.element);
 		await wrapper.findAll('img')[1].trigger('click');
 		expect(previewOpen).toHaveBeenLastCalledWith({
 			current: 1,
-			data: ['https://example.com/same.png', 'https://example.com/same.png']
+			data: same.map(element => ({ source: 'https://example.com/same.png', element }))
 		});
 
 		value.value = '<img src="https://example.com/next.png">';
@@ -496,7 +501,7 @@ describe('EditorView and utils', () => {
 		await wrapper.find('img').trigger('click');
 		expect(previewOpen).toHaveBeenLastCalledWith({
 			current: 0,
-			data: ['https://example.com/next.png']
+			data: [{ source: 'https://example.com/next.png', element: wrapper.find('img').element }]
 		});
 
 		wrapper.unmount();
@@ -708,7 +713,10 @@ describe('Editor extends', () => {
 		module.handlePreview({ target });
 		expect(previewOpen).toHaveBeenCalledWith({
 			current: 1,
-			data: ['https://site/a.png', 'https://site/b.png']
+			data: [
+				expect.objectContaining({ source: 'https://site/a.png' }),
+				expect.objectContaining({ source: 'https://site/b.png' })
+			]
 		});
 
 		editor.options[EXTENDS_CONTEXT_KEY].previewable = false;

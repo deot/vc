@@ -54,7 +54,8 @@ export const insertLetterSpacingStyle = (value: string[], id: string) => {
 };
 
 /**
- * 预览容器内的全部图片，并定位到被点击的那张；按节点定位，相同地址的图片也能对上
+ * 预览容器内的全部图片，并定位到被点击的那张；按节点定位，相同地址的图片也能对上。
+ * 每张图都作为缩略图传入：切到哪一张，关闭时就回到哪一张
  * @param container 图片所在的容器
  * @param target 被点击的图片
  */
@@ -62,6 +63,6 @@ export const previewImages = (container: Element, target: Element) => {
 	const images = Array.from(container.querySelectorAll('img'));
 	ImagePreview.open({
 		current: images.indexOf(target as HTMLImageElement),
-		data: images.map(it => it.currentSrc || it.src)
+		data: images.map(img => ({ source: img.currentSrc || img.src, element: img }))
 	});
 };
