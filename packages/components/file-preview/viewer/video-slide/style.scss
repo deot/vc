@@ -1,0 +1,28 @@
+@use '../../../style/helper' as *;
+
+$component-name: vc-video-slide;
+
+@include block($component-name) {
+	position: absolute;
+
+	// 空白处交给蒙层：点在画面外关闭。宽屏上下留空，竖屏左右留空
+	pointer-events: none;
+	inset: 0;
+
+	@include flex-cc;
+
+	// 按视频自己的比例居中，不超过这一页。flex 项默认最小尺寸是内容，竖屏会撑出去
+	@include element(media) {
+		max-width: 100%;
+		max-height: 100%;
+		min-width: 0;
+		min-height: 0;
+		pointer-events: auto;
+		outline: none;
+		visibility: hidden;
+
+		@include when(ready) {
+			visibility: visible;
+		}
+	}
+}

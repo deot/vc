@@ -203,6 +203,8 @@ FilePreview 与 UploadPicker 共用此配置，Editor 只读取文件类型和�
 | getFileType | 接收 `{ source }`，`source` 为地址或文件名，识别 `image`、`video`、`audio` 或 `file`；返回空值或非法类型时回退内置规则 | `undefined` |
 | getFileName | 接收 `{ source }`，从地址推导缺省名称；数据中的显式名称优先，返回空值时回退内置规则 | `undefined` |
 | enhancer | 接收 `{ current, data, instance }`；返回真值或 resolve 真值时接管预览 | `undefined` |
+| renderSlide | 接收 `{ type, row, index, active, close, instance }`，返回 VNode 时替换查看器中的这一页；返回 `false` 或空值时使用内置页 | `undefined` |
+| imageOptions | 图片页配置。`fit` 为初始展示：`max-edge` 放大到长边贴齐视口；`actual` 按自然像素，超出视口时同比例缩小。`max`、`min` 为相对初始尺寸的最大、最小倍数 | `{ fit: 'max-edge', max: 10, min: 1 }` |
 
 ```js
 import { VcInstance } from '@deot/vc';

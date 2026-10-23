@@ -1,6 +1,6 @@
 ## 文件预览（FilePreview）
 
-展示一组文件（图片、视频、音频、其他文件），点击后按类型打开预览。`ImagePreview.open` 用于直接打开图片预览。
+展示一组文件（图片、视频、音频、其他文件），点击后在同一个查看器中预览。`ImagePreview.open` 用于直接打开图片预览。
 
 ### 何时使用
 
@@ -9,7 +9,7 @@
 
 ### 基础用法
 
-`data` 可以是逗号分隔的字符串、地址数组或对象数组。默认 `type="mix"`：按 `data` 顺序混编成紧凑的卡片（按内容宽度，超出最大宽度时省略名称），图片和提供 `thumbnail` 的视频显示缩略图，其余只显示名称。点击后：图片打开多图预览（只包含图片项），视频、音频打开播放弹窗，其他文件在新窗口打开。
+`data` 可以是逗号分隔的字符串、地址数组或对象数组。默认 `type="mix"`：按 `data` 顺序混编成紧凑的卡片（按内容宽度，超出最大宽度时省略名称），图片和提供 `thumbnail` 的视频显示缩略图，其余只显示名称。点击后打开查看器，包含 `data` 中的全部项并定位到点击的那一项：图片可缩放、拖动，视频、音频使用原生播放控件，PDF 与 Office 文件内嵌预览。“新窗口打开”使用当前预览地址（Office 为在线预览地址）；“下载”使用文件本身的地址。没有内嵌预览时，文件名与按钮分两行。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
@@ -171,6 +171,18 @@ const data = [
 ```
 :::
 
+### 查看器交互
+
+查看器的手势基于 `@deot/vc-hooks` 的 `useGesture`，鼠标、触摸和笔共用：
+
+- 打开：图片、视频、音频和文件都从点中的元素往外放大，关闭时缩回这个元素现在的位置。画面按封面铺进元素的盒子，窗口跟着收到画面自己的盒子上。点中的元素里有已加载的图片时，用它垫底立即放大，大图解码完再换上（与 PhotoSwipe 的 `msrc` 相同）：数据带 `width`、`height` 时按它摆放，否则先按这张图的比例摆放，大图同比例时原位换上，比例不同再过渡到大图自己的位置。没有可用的图片时，图片解码完、视频拿到真实尺寸后才开始放大。图片超过 2 秒仍未加载完时显示加载中。点在列表项里、但不在该项缩略图上时，从这一项开始，而不是缩略图。没有可测量的元素时淡入。数据项带 `element` 时，切换到哪一项，关闭时就回到哪一项现在的位置；没有 `element` 的项关闭时淡出。
+- 切换：左右拖动超过 80px 或快速甩动；也可以使用左右按钮、键盘 `←`、`→`。两项时左右箭头都保留，任一方向都切到另一项。只有一项时不循环，拖过端点有阻尼。三项起循环。只挂载当前项与左右相邻项。
+- 图片：鼠标单击图片、触屏双击在初始尺寸与 4 倍之间切换，不超过 `max`。放大、缩小按钮每次 2 倍，范围是初始尺寸的 `min`～`max` 倍（默认 1～10），到边界后按钮不可用。滚轮、双指捏合以指针或双指中心缩放，同样不超过 `max`、不低于 `min`；捏合可临时缩到初始尺寸的一半，松手回弹，低于 80% 则关闭。放大后可拖动，拖到边缘后继续拖动则切换。向左、向右旋转每次 90°，保持当前相对倍率并重新居中。
+- 关闭：关闭按钮、`Esc`、点击空白处（鼠标和触屏）、向上或向下拖动后松手、双指缩小到初始尺寸的 80% 以下松手。纵向拖动时内容以 0.6 的阻尼跟随，蒙层按这段位移相对视口高度的三分之一变淡；松手时沿该方向的预测位置超过三分之一视口的 0.4，就从当前位置缩回触发元素，没有可测量的元素则淡出，向上和向下同一条线。未超过时内容和蒙层一起弹回。
+- 触屏点按图片切换工具栏的显示，点空白处关闭。`Tab` 只在查看器内循环，关闭后焦点回到打开前的元素。查看器打开在 Modal 等弹层之上时，`Esc` 只关闭查看器。
+- 文件：PDF（`http`、`https`、`blob` 地址）与 Office 文件（`doc`、`docx`、`xls`、`xlsx`、`ppt`、`pptx`，`http`、`https` 地址，经 `view.officeapps.live.com`）以 iframe 内嵌，第一次切到该项时才加载，之后保留。Office 在线预览要求地址可被公网访问。
+- 全局 `renderSlide` 可以替换任意一页，返回 `false` 或空值时使用内置页。
+
 ### 全局配置
 
 `VcInstance.options.FilePreview` 由 FilePreview、UploadPicker 与 Editor 共用：
@@ -178,6 +190,8 @@ const data = [
 - `getFileType({ source })`：自定义类型识别，返回空值时回退内置规则。
 - `getFileName({ source })`：自定义从地址推导文件名，返回空值时回退内置规则；数据中显式的 `name`（UploadPicker 为 `label`）优先。
 - `enhancer({ current, data, instance })`：预览前调用，返回真值（或 resolve 真值）表示已接管，不再执行内置预览（Editor 不使用）。
+- `renderSlide({ type, row, index, active, close, instance })`：替换查看器中的某一页。
+- `imageOptions`：`fit` 为初始展示方式，默认 `max-edge`。`max`、`min` 为相对初始尺寸的最大、最小倍数，默认 `10` 和 `1`。
 
 示例中带处理后缀的图片地址（内置规则会识别为文件）被识别为图片，文件名去掉时间戳前缀，文件交给 `enhancer` 处理。
 
@@ -232,7 +246,7 @@ onBeforeUnmount(() => VcInstance.configure({ FilePreview: original }));
 
 ### 图片预览（ImagePreview）
 
-`ImagePreview.open` 直接打开图片预览（基于 PhotoSwipe），不经过 `enhancer`。
+`ImagePreview.open` 直接用查看器打开一组图片，不经过 `enhancer`。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
@@ -262,7 +276,7 @@ const handleClick = () => {
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-file-preview-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
 
-尺寸变量由 size 修饰类写在根节点，单实例调整时应作用于对应 FilePreview 根节点。音视频预览背景使用 color-contrast-dark，关闭控件使用 color-contrast-light；默认不随亮暗主题反转，仍可通过变量覆盖。媒体浮层挂载在 Portal 中，变量需作用于实际浮层或其祖先。
+尺寸变量由 size 修饰类写在根节点，单实例调整时应作用于对应 FilePreview 根节点。查看器的蒙层固定为 80% 不透明的黑色（与 PhotoSwipe 一致），控件与文字使用 color-contrast-light，不随亮暗主题反转。查看器挂载在 Portal 中，变量需作用于实际浮层或其祖先。
 
 ⚠ color-mix：缩略图播放圆形底色由 color-contrast-dark 40% 与透明色混合，增强声明仅在 `@supports` 内生效；不支持时使用 Sass 编译的 `rgba(0, 0, 0, .4)`。降级值不会随变量覆盖变化。
 
@@ -270,8 +284,8 @@ const handleClick = () => {
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
-| color-contrast-dark | 音视频预览背景；缩略图播放圆形底色的派生基色 | `#000000`（亮暗主题相同） |
-| color-contrast-light | 音视频预览关闭控件及缩略图播放标记 | `#FFFFFF`（亮暗主题相同） |
+| color-contrast-dark | 缩略图播放圆形底色的派生基色 | `#000000`（亮暗主题相同） |
+| color-contrast-light | 查看器控件与文字、缩略图播放标记 | `#FFFFFF`（亮暗主题相同） |
 | color-dark-light | 卡片文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
 | color-primary | 可预览卡片悬停文字、类型标记及扩展名 | `#456CF6` |
 | color-primary-lighter | 类型标记及扩展名背景 | `rgba(45, 140, 240, 0.2)` |
@@ -316,6 +330,8 @@ const handleClick = () => {
 | type | 文件类型；不传或不合法时通过 `getFileType` 识别 | `'image' \| 'video' \| 'audio' \| 'file'` |
 | name | 名称；不传或为空字符串时通过 `getFileName` 推导，内置规则取地址最后一段（去掉 `?`、`#` 之后的部分并解码） | `string` |
 | thumbnail | 图片、视频的展示缩略图；音频和普通文件忽略此字段 | `string` |
+| width / height | 图片的自然宽高；都大于 0 时查看器不等待图片解码，直接按此尺寸放置 | `number` |
+| element | 缩略图元素：查看器打开时从它放大，关闭时回到它。FilePreview 列表会自动传入各项的缩略图 | `Element` |
 
 其他字段原样保留，可在插槽和 `enhancer` 中读取。
 
@@ -323,13 +339,13 @@ const handleClick = () => {
 
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
-| default | 替换每一项的内容；外层不再绑定点击 | `{ row, index, preview }`：`row` 为解析后的数据项，`index` 为解析后列表中的索引，`preview()` 打开该项的预览并返回 Promise |
+| default | 替换每一项的内容；外层不再绑定点击 | `{ row, index, preview }`：`row` 为解析后的数据项，`index` 为解析后列表中的索引，`preview()` 打开该项的预览，返回值同 `FilePreview.open` |
 
 ### FilePreview 方法
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| FilePreview.open | 先调用全局 `enhancer`，未接管时按类型打开内置预览 | `{ data, current?, instance? }`：`data` 同属性 `data`，`current` 为解析后列表的索引，默认 `0`；`instance` 默认 `null` | `Promise<void>`；调用完成不表示预览已关闭 |
+| FilePreview.open | 先调用全局 `enhancer`，未接管时打开查看器 | `{ data, current?, instance?, onClose? }`：`data` 同属性 `data`；`current` 为解析后列表的索引，越界时回退到 `0`；`instance` 默认 `null`；`onClose` 在查看器关闭后调用 | 查看器句柄（`destroy()` 立即销毁）；`data` 为空或被接管时为 `undefined`；`enhancer` 返回 Promise 时返回 resolve 为句柄或 `undefined` 的 Promise |
 
 ### ImagePreview 方法
 
@@ -337,9 +353,9 @@ const handleClick = () => {
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| ImagePreview.open | 直接打开 PhotoSwipe 图片预览，不经过 `FilePreview.enhancer` | `{ data, current?, ...photoswipeOptions }`：`current` 从 `0` 开始，默认 `0`；`data` 为地址数组或对象数组，图片地址依次取 `value`、`source`、`src`，可带 `width`、`height` | `Promise<void>`；调用完成不表示预览已关闭 |
+| ImagePreview.open | 直接用查看器打开图片，不经过 `FilePreview.enhancer` | `{ data, current?, onClose? }`：`current` 从 `0` 开始，越界时回退到 `0`；`data` 为地址数组或对象数组，图片地址依次取 `value`、`source`、`src`，可带 `width`、`height`、`element`；名称同样经过全局 `getFileName` | 查看器句柄；没有有效图片时为 `undefined` |
 
-其他选项透传给 PhotoSwipe；本封装不把 `onClose` 绑定到 PhotoSwipe 的关闭事件。`closeTitle`、`zoomTitle`、`arrowPrevTitle`、`arrowNextTitle`、`errorMsg` 默认使用当前 locale，可以通过同名选项覆盖（包括空字符串）。切换语言后，下次打开图片预览使用新语言；音视频弹窗的关闭按钮名称随语言实时更新。
+查看器的按钮名称、加载失败文案使用 `vc.FilePreview` 下的 locale，切换语言后实时更新。
 
 ### 全局配置
 
@@ -350,6 +366,8 @@ const handleClick = () => {
 | getFileType | 自定义类型识别，`source` 为地址或文件名；返回空值或非法类型时回退内置规则 | `(data: { source: string }) => 'image' \| 'video' \| 'audio' \| 'file' \| null \| undefined \| void` |
 | getFileName | 自定义从地址推导文件名，`source` 为地址；返回空值时回退内置规则。只在数据未提供名称时调用 | `(data: { source: string }) => string \| null \| undefined \| void` |
 | enhancer | 预览前调用；返回真值（或 resolve 真值）表示已接管，不再执行内置预览。`data` 为解析后的列表，`instance` 为调用方组件内部实例或 `null` | `({ current, data, instance }) => unknown` |
+| renderSlide | 替换查看器中的某一页：返回 VNode 时使用它，返回 `false`、`null`、`undefined` 或不返回时使用内置页。`close()` 关闭查看器 | `({ type, row, index, active, close, instance }) => VNode \| false \| null \| undefined \| void` |
+| imageOptions | 图片页配置。`fit` 为初始展示：`max-edge` 整图可见，小图放大到长边贴齐视口；`actual` 按自然像素，超出视口时同比例缩小。`max`、`min` 为相对初始尺寸的最大、最小倍数，限制按钮、滚轮和捏合的稳定缩放 | `{ fit?: 'max-edge' \| 'actual'; max?: number; min?: number }`，默认 `{ fit: 'max-edge', max: 10, min: 1 }` |
 
 ### 使用注意
 
@@ -358,7 +376,7 @@ const handleClick = () => {
   - video：`mp4`、`mov`、`avi`、`mpg`、`mpeg`、`rmvb`
   - audio：`mp3`、`aac`、`wav`、`flac`、`ape`、`ogg`、`m4a`
   - 其余为 file。没有扩展名的地址可在数据项中传 `type`，或配置 `getFileType`。
-- 内置预览：图片打开多图预览，只包含 `data` 中的图片项；视频、音频打开播放弹窗；其他文件通过 `window.open` 在新窗口打开。Office、PDF 等在线预览可通过 `enhancer` 接入。
+- 内置预览：全部类型进入同一个查看器，交互见上文“查看器交互”。需要接入其他在线预览服务时，可用 `renderSlide` 替换文件页，或用 `enhancer` 整体接管。
 - 属性 `type` 表示展示方式，数据项的 `type` 表示文件类型，两者含义不同。
 - 颜色使用主题变量，可通过以下变量单独覆盖：
   - `--vc-file-preview-background-color`：卡片、方格底色
@@ -366,15 +384,20 @@ const handleClick = () => {
   - `--vc-file-preview-color-primary`：悬停文字、音频标记、扩展名
   - `--vc-file-preview-color-primary-lighter`：音频标记与扩展名底色
   - `--vc-file-preview-background-color-primary-light`：可预览卡片悬停底色
-  - `--vc-file-preview-color-contrast-dark`、`--vc-file-preview-color-contrast-light`：播放底色的派生基色、播放标记及音视频浮层控件
+  - `--vc-file-preview-color-contrast-dark`、`--vc-file-preview-color-contrast-light`：播放底色的派生基色、播放标记及查看器控件
   - `--vc-file-preview-box-shadow`：方格悬停阴影
-- 音视频预览弹窗挂载在页面外层，覆盖变量需设置在其能继承的祖先（如 `:root`）上。
-- 图片预览使用 PhotoSwipe 自带的深色画布及 `--pswp-*` 变量，保持媒体显示与控件对比度，不随页面主题反转。
+- 查看器挂载在页面外层，覆盖变量需设置在其能继承的祖先（如 `:root`）上。
 - 尺寸默认按 Sass `$scale` 缩放；由根节点上按 `size` 设置的变量控制，可在 `style` 中覆盖：
   - 方格：`--vc-file-preview-square-size`、`--vc-file-preview-square-radius`、`--vc-file-preview-play-size`
   - 卡片：`--vc-file-preview-card-width`（最大宽度）、`--vc-file-preview-card-height`、`--vc-file-preview-card-padding`、`--vc-file-preview-card-radius`、`--vc-file-preview-thumbnail-size`、`--vc-file-preview-dot-size`、`--vc-file-preview-text-size`、`--vc-file-preview-inner-gap`
   - 间距：`--vc-file-preview-gap`
 - `MFilePreview`、`MImagePreview` 分别是 `FilePreview`、`ImagePreview` 的别名。
+
+### 从 PhotoSwipe 版本迁移
+
+- 不再依赖 `photoswipe`；`ImagePreview.open` 不再透传 PhotoSwipe 选项，`vc.ImagePreview` 下的 locale 合并到 `vc.FilePreview`。
+- 图片、视频、音频、文件进入同一个查看器；文件不再直接 `window.open`。“新窗口打开”指向当前预览地址，“下载”指向文件本身的地址。
+- `FilePreview.open`、`ImagePreview.open` 同步返回查看器句柄，不再返回 `Promise<void>`（`enhancer` 返回 Promise 时除外）。
 
 ### 从 ImagePreview 迁移
 

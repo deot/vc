@@ -72,6 +72,9 @@ export const getFileExtension = (v: string) => {
 	return match ? match[1].toUpperCase() : '';
 };
 
+// 越界、非整数时回退到第一项
+export const resolveCurrent = (data: unknown[], current = 0) => (data[current] ? current : 0);
+
 export const normalize = (data?: FilePreviewData | null): FilePreviewItem[] => {
 	const source = typeof data === 'string'
 		? data.split(',')

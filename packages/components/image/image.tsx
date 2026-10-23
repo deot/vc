@@ -5,7 +5,7 @@ import { IS_SERVER } from '@deot/vc-shared';
 import { useAttrs } from '@deot/vc-hooks';
 import * as $ from '@deot/helper-dom';
 import { throttle } from 'lodash-es';
-// 叶子模块（只依赖photoswipe），避免与FilePreview（依赖Image）形成循环引用
+// 叶子模块：只打开查看器，避免与 FilePreview（依赖 Image）形成循环引用
 import { ImagePreview } from '../file-preview/image-preview';
 import { useLocale } from '../locale';
 import { useMeasuring } from '../measuring';
@@ -233,11 +233,7 @@ export const Image = defineComponent({
 
 		const handlePreview = () => {
 			if (!props.previewable || !previewSrc.value) return;
-			ImagePreview.open({
-				current: 0,
-				data: [previewSrc.value] as any,
-				onClose() {}
-			});
+			ImagePreview.open({ data: [previewSrc.value] });
 		};
 
 		watch(

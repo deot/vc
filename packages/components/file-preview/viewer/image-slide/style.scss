@@ -1,0 +1,50 @@
+@use '../../../style/helper' as *;
+@use '../variables' as *;
+
+$color-contrast-light: varfix(color-contrast-light, file-preview);
+$component-name: vc-image-slide;
+
+@include block($component-name) {
+	position: absolute;
+	inset: 0;
+
+	@include element((media, placeholder)) {
+		position: absolute;
+		top: 0;
+		left: 0;
+		max-width: none;
+		transform-origin: 0 0;
+		user-select: none;
+
+		@include when(animating) {
+			transition: transform $duration $easing;
+		}
+	}
+
+	// 解码完才显示，避免先以原始尺寸或半张图闪一下；叠在缩略图上，点按仍落在大图上
+	@include element(media) {
+		opacity: 0;
+
+		@include when(ready) {
+			cursor: zoom-in;
+			opacity: 1;
+		}
+
+		@include when(zoomed) {
+			cursor: zoom-out;
+		}
+	}
+
+	@include element((loading, error)) {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+
+	@include element(error) {
+		margin: 0;
+		font-size: unitfix(14);
+		color: $color-contrast-light;
+	}
+}

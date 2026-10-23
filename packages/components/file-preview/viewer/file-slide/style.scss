@@ -1,0 +1,85 @@
+@use '../../../style/helper' as *;
+
+$color-contrast-light: varfix(color-contrast-light, file-preview);
+$component-name: vc-file-slide;
+
+@include block($component-name) {
+	@include flex-cc;
+
+	position: absolute;
+	flex-direction: column;
+	padding: unitfix(24);
+	color: $color-contrast-light;
+
+	// 避开顶部关闭、左右切换；四周留白也和铺满视口的图片区分开
+	inset: unitfix(72);
+
+	@include when(frame, true) {
+		align-items: stretch;
+		justify-content: flex-start;
+		padding: 0;
+		overflow: hidden;
+		border-radius: unitfix(8);
+
+		@include element(meta, false) {
+			flex-direction: row;
+			padding: unitfix(16);
+		}
+
+		@include element(file, false) {
+			flex: 1;
+		}
+
+		@include element(actions, false) {
+			margin-left: auto;
+		}
+	}
+
+	@include element(meta) {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: unitfix(16);
+		max-width: 100%;
+	}
+
+	@include element(file) {
+		display: flex;
+		align-items: center;
+		gap: unitfix(12);
+		max-width: 100%;
+		min-width: 0;
+	}
+
+	@include element(name) {
+		@include ellipsis;
+
+		min-width: 0;
+		margin: 0;
+	}
+
+	@include element(actions) {
+		display: flex;
+		gap: unitfix(8);
+		flex: none;
+	}
+
+	@include element((open, download)) {
+		padding: unitfix(6) unitfix(10);
+		font-size: unitfix(12);
+		line-height: unitfix(16);
+		color: $color-contrast-light;
+		text-decoration: none;
+		background: rgb(255 255 255 / 16%);
+		border-radius: unitfix(4);
+		flex: none;
+	}
+
+	@include element(frame) {
+		width: 100%;
+		min-height: 0;
+		background: #fff;
+		border: 0;
+		flex: 1;
+	}
+}

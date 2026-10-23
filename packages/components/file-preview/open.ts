@@ -1,36 +1,43 @@
 import { VcInstance } from '../vc';
-import { ImagePreview } from './image-preview';
-import { VideoPreview } from './preview/video';
-import { AudioPreview } from './preview/audio';
-import { normalize } from './utils';
 import type { FilePreviewOpenOptions } from './types';
+import { normalize, resolveCurrent } from './utils';
+import { getTriggerElement, openViewer } from './viewer';
 
-// 先交给全局enhancer，未接管时按文件类型走内置预览
-export const open = async (options: FilePreviewOpenOptions) => {
-	const { current = 0, instance = null } = options;
+const isPromise = (value: unknown): value is Promise<unknown> => (
+	!!value && typeof (value as Promise<unknown>).then === 'function'
+);
+
+// 先交给全局 enhancer。未接管时，图片、视频、音频、文件都进同一个查看器
+export const open = (options: FilePreviewOpenOptions) => {
+	const triggerElement = getTriggerElement();
+	const { instance = null } = options;
 	const data = normalize(options.data);
-	const item = data[current];
-	if (!item) return;
-
+	const current = resolveCurrent(data, options.current);
 	const { enhancer } = VcInstance.options.FilePreview || {};
-	if (typeof enhancer === 'function' && await enhancer({ current, data, instance })) return;
 
-	switch (item.type) {
-		case 'image': {
-			const images = data.filter(i => i.type === 'image');
-			ImagePreview.open({
-				current: images.indexOf(item),
-				data: images.map(i => i.source)
-			});
-			return;
-		}
-		case 'video':
-			VideoPreview.popup({ src: item.source });
-			return;
-		case 'audio':
-			AudioPreview.popup({ src: item.source });
-			return;
-		default:
-			window.open(item.source, '_blank', 'noopener');
+	const launch = () => openViewer({
+		data,
+		current,
+		instance,
+		triggerElement,
+		onClose: options.onClose
+	});
+
+	if (typeof enhancer !== 'function') return launch();
+
+	const taken = enhancer({ current, data, instance });
+	// Promise 不能直接 resolve 成 PortalLeaf，否则会等到预览关闭才结束
+	if (isPromise(taken)) {
+		return taken.then((value) => {
+			if (value) return;
+			const leaf = launch();
+			if (!leaf) return;
+			return {
+				destroy: () => leaf.destroy(),
+				target: leaf.target
+			};
+		});
 	}
+	if (taken) return;
+	return launch();
 };

@@ -113,7 +113,13 @@ export const defaults: ResolvedOptions = {
 	FilePreview: {
 		getFileType: nil,
 		getFileName: nil,
-		enhancer: nil
+		enhancer: nil,
+		renderSlide: nil,
+		imageOptions: {
+			fit: 'max-edge',
+			max: 10,
+			min: 1
+		}
 	},
 	Tour: {
 		cache: true,

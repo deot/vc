@@ -1,0 +1,200 @@
+@use '../../style/helper' as *;
+@use './variables' as *;
+
+$color-contrast-light: varfix(color-contrast-light, file-preview);
+$component-name: vc-file-viewer;
+
+// PhotoSwipe 默认 --pswp-bg 与 bgOpacity
+$bg-color: #000;
+$bg-opacity: 0.8;
+$bg-dimmed: calc(var(--vc-file-viewer-dim, 1) * #{$bg-opacity});
+
+// 淡入淡出改整层透明度；从元素放大、缩回时整层不动，蒙层从接近透明过渡到 0.8，和画面同一段过渡
+@include block($component-name) {
+	position: fixed;
+	z-index: $popup-zindex;
+	overflow: hidden;
+	outline: none;
+	opacity: 0;
+	transition: opacity $duration $easing;
+	touch-action: none;
+	inset: 0;
+
+	// 拖动、捏合时由 --vc-file-viewer-dim 压暗，松手后过渡回去
+	@include element(bg) {
+		position: absolute;
+		background: $bg-color;
+		opacity: $bg-dimmed;
+		transition: opacity $duration $easing;
+		inset: 0;
+		will-change: opacity;
+	}
+
+	@include element(bar) {
+		position: absolute;
+		z-index: 2;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity $duration $easing;
+		inset: 0;
+	}
+
+	@include when(zoom) {
+		opacity: 1;
+
+		@include element(bg) {
+			opacity: 0.005;
+		}
+	}
+
+	@include when(open) {
+		opacity: 1;
+
+		@include element(bg) {
+			opacity: $bg-dimmed;
+		}
+
+		@include element(bar) {
+			opacity: 1;
+		}
+	}
+
+	@include when(idle) {
+		@include element(bar) {
+			opacity: 0;
+		}
+	}
+
+	@include when(dragging) {
+		@include element(bg) {
+			transition: none;
+		}
+	}
+
+	@include element((stage, slide)) {
+		position: absolute;
+		inset: 0;
+	}
+
+	@include element(stage) {
+		@include when(sliding) {
+			transition: transform $duration $easing;
+		}
+	}
+
+	// 放大的图片超出视口时不盖到相邻项上，开合缩放的画面也只在这一页里露出
+	@include element(slide) {
+		overflow: hidden;
+	}
+
+	@include element((tool, counter)) {
+		position: absolute;
+		color: $color-contrast-light;
+		pointer-events: auto;
+	}
+
+	@include element(tool) {
+		@include flex-cc;
+
+		width: unitfix(44);
+		height: unitfix(44);
+		padding: 0;
+		cursor: pointer;
+		background: rgb(0 0 0 / 35%);
+		border: 0;
+		border-radius: 50%;
+
+		&:disabled {
+			cursor: default;
+			opacity: 0.35;
+		}
+	}
+
+	// 旋转和缩放收成一条，与关闭按钮同高、顶边对齐
+	@include element(cluster) {
+		position: absolute;
+		top: unitfix(12);
+		right: unitfix(48);
+		display: flex;
+		height: unitfix(28);
+		padding: unitfix(2);
+		pointer-events: auto;
+		background: rgb(0 0 0 / 35%);
+		border-radius: unitfix(999);
+		box-sizing: border-box;
+		align-items: center;
+
+		@include element(tool, false) {
+			position: static;
+			width: unitfix(28);
+			height: unitfix(24);
+			font-size: unitfix(13);
+			background: transparent;
+			border-radius: unitfix(999);
+
+			&:hover:not(:disabled) {
+				background: rgb(255 255 255 / 12%);
+			}
+		}
+
+		@include element(lens, false) {
+			width: unitfix(12);
+			height: unitfix(12);
+			background-size: #{unitfix(12)} #{unitfix(2)};
+
+			@include when(plus) {
+				background-size: #{unitfix(12)} #{unitfix(2)}, #{unitfix(2)} #{unitfix(12)};
+			}
+		}
+	}
+
+	@include element(split) {
+		width: 1px;
+		height: unitfix(10);
+		margin: 0 unitfix(2);
+		background: rgb(255 255 255 / 28%);
+		flex-shrink: 0;
+	}
+
+	@include element(close) {
+		top: unitfix(12);
+		right: unitfix(12);
+		width: unitfix(28);
+		height: unitfix(28);
+		font-size: unitfix(12);
+	}
+
+	// 暂时没有放大、缩小图标：缩小是一横，放大是一横一竖
+	@include element(lens) {
+		display: block;
+		width: unitfix(14);
+		height: unitfix(14);
+		background: linear-gradient(currentcolor, currentcolor) center / #{unitfix(14)} #{unitfix(2)} no-repeat;
+
+		@include when(plus) {
+			background:
+				linear-gradient(currentcolor, currentcolor) center / #{unitfix(14)} #{unitfix(2)} no-repeat,
+				linear-gradient(currentcolor, currentcolor) center / #{unitfix(2)} #{unitfix(14)} no-repeat;
+		}
+	}
+
+	@include element(prev) {
+		top: 50%;
+		left: unitfix(12);
+		transform: translateY(-50%);
+	}
+
+	@include element(next) {
+		top: 50%;
+		right: unitfix(12);
+		transform: translateY(-50%);
+	}
+
+	@include element(counter) {
+		top: unitfix(12);
+		left: unitfix(16);
+		height: unitfix(28);
+		font-size: unitfix(13);
+		line-height: unitfix(28);
+	}
+}

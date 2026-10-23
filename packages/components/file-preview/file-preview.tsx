@@ -24,7 +24,14 @@ export const FilePreview = defineComponent({
 			return buckets.filter(group => group.length);
 		});
 
-		const preview = (index: number) => open({ data: list.value, current: index, instance });
+		// 查看器从各项看得到的那块放大打开，切到哪一项关闭时就回到哪一项：方格、卡片里的缩略图，其余用这一项本身
+		const items: Array<Element | null> = [];
+		const elementOf = (item: Element | null) => item?.querySelector('.vc-file-preview__square, .vc-file-preview__thumbnail') ?? item;
+		const preview = (index: number) => open({
+			data: list.value.map((row, i) => ({ ...row, element: elementOf(items[i]) })),
+			current: index,
+			instance
+		});
 
 		const renderThumbnail = (row: FilePreviewItem, className: string) => {
 			return (
@@ -77,6 +84,9 @@ export const FilePreview = defineComponent({
 			return (
 				<div
 					key={`${index}-${row.source}`}
+					ref={(el) => {
+						items[index] = el as Element | null;
+					}}
 					title={row.name}
 					class={[`is-${row.type}`, { 'is-previewable': clickable }, 'vc-file-preview__item']}
 					onClick={clickable ? () => preview(index) : undefined}

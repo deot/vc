@@ -1,4 +1,4 @@
-import type { ComponentInternalInstance } from 'vue';
+import type { ComponentInternalInstance, VNode } from 'vue';
 
 export type FilePreviewFileType = 'image' | 'video' | 'audio' | 'file';
 
@@ -7,6 +7,10 @@ export interface FilePreviewItem {
 	source: string;
 	name: string;
 	thumbnail?: string;
+	/**
+	 * 缩略图元素：打开时从它放大，关闭时回到它；没有时只有点击打开的那一项使用点击的元素
+	 */
+	element?: Element | null;
 	[key: string]: any;
 }
 
@@ -20,10 +24,37 @@ export interface FilePreviewEnhancerPayload {
 	instance: ComponentInternalInstance | null;
 }
 
+export type FilePreviewImageFit = 'max-edge' | 'actual';
+
+export interface FilePreviewImageOptions {
+	/**
+	 * 初始展示。max-edge 放大到长边贴齐视口；actual 按自然像素，超出视口才缩小
+	 */
+	fit?: FilePreviewImageFit;
+	/**
+	 * 相对初始尺寸的最大倍数。按钮、滚轮和捏合的稳定缩放都不超过它。默认 10
+	 */
+	max?: number;
+	/**
+	 * 相对初始尺寸的最小倍数。缩小按钮和滚轮不低于它。默认 1。捏合仍可临时缩得更小，用于关闭
+	 */
+	min?: number;
+}
+
+export interface FilePreviewSlideContext {
+	type: FilePreviewFileType;
+	row: FilePreviewItem;
+	index: number;
+	close: () => void;
+	instance: ComponentInternalInstance | null;
+	active: boolean;
+}
+
 export interface FilePreviewOpenOptions {
 	data: FilePreviewData;
 	current?: number;
 	instance?: ComponentInternalInstance | null;
+	onClose?: () => void;
 }
 
 export interface FilePreviewOptions {
@@ -39,4 +70,12 @@ export interface FilePreviewOptions {
 	 * 返回真值（或 resolve 真值）表示已接管，不再执行内置预览
 	 */
 	enhancer?: (payload: FilePreviewEnhancerPayload) => unknown;
+	/**
+	 * 替换某一页。返回 VNode 时用它；返回 false、null、undefined 或不返回时用内置页
+	 */
+	renderSlide?: (data: FilePreviewSlideContext) => VNode | false | null | undefined | void;
+	/**
+	 * 图片页配置
+	 */
+	imageOptions?: FilePreviewImageOptions;
 }

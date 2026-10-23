@@ -1,0 +1,27 @@
+@use '../../../style/helper' as *;
+
+$color-contrast-light: varfix(color-contrast-light, file-preview);
+$component-name: vc-audio-slide;
+
+@include block($component-name) {
+	@include flex-cc;
+
+	position: absolute;
+	flex-direction: column;
+	padding: unitfix(24);
+	inset: 0;
+
+	@include element(name) {
+		margin: 0 0 unitfix(16);
+		font-size: unitfix(14);
+		color: $color-contrast-light;
+	}
+
+	@include element(stage) {
+		width: min(100%, #{unitfix(420)});
+	}
+
+	@include element(media) {
+		width: 100%;
+	}
+}
