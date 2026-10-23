@@ -13,6 +13,7 @@ pnpm add @deot/vc-hooks vue
 - `getInstance`
 - `useAttrs`
 - `useDrag`
+- `useGesture`
 - `useKeyboard`
 - `useScrollbar`
 
