@@ -16,7 +16,7 @@
     "docs:dev": "doc dev --workspace .",
     "dev": "ddc dev --vue-package 'components,hooks,index'",
     "update": "ddc update",
-    "build": "ddc build --vue-package 'components,hooks,index' --script-formats=es,cjs,umd,iife --external vue",
+    "build": "ddc build --vue-package 'components,hooks,index' --umd-package 'index' --umd-external 'vue'",
     "test": "ddc test --vue-package 'components,hooks,index'",
     "add": "ddc add",
     "release": "ddc release",
@@ -42,7 +42,7 @@
   },
   "homepage": "https://github.com/deot/vc#readme",
   "devDependencies": {
-    "@deot/dev": "^2.9.20",
-    "@deot/docs": "^1.1.7"
+    "@deot/dev": "^2.10.0",
+    "@deot/docs": "^1.2.7"
   }
 }

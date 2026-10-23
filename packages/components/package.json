@@ -7,7 +7,6 @@
   "exports": {
     ".": {
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
       "types": "./dist/index.d.ts"
     },
     "./style.css": "./dist/index.style.css"
@@ -29,7 +28,6 @@
     "@zumer/snapdom": "*",
     "echarts": "*",
     "lodash-es": "*",
-    "photoswipe": "*",
     "quill": "*",
     "vue": "*"
   },
@@ -46,9 +44,6 @@
     "lodash-es": {
       "optional": true
     },
-    "photoswipe": {
-      "optional": true
-    },
     "quill": {
       "optional": true
     },
@@ -63,7 +58,6 @@
     "@zumer/snapdom": "^3.1.0",
     "echarts": "^6.1.0",
     "lodash-es": "^4.17.21",
-    "photoswipe": "^5.4.4",
     "quill": "^2.0.3"
   }
 }

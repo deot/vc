@@ -5,10 +5,7 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<meta charset="UTF-8">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-client/dist/index.style.css">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-renderer/dist/index.style.css">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-markdown/dist/index.style.css">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@deot/docs-playground/dist/index.style.css">
+	<meta name="description" content="面向 Vue 3 的桌面端与移动端组件库，提供表单校验、数据展示、文件上传预览和交互反馈，支持按需引入、主题配置和国际化。">
 </head>
 <body>
 	<div id="app"></div>
@@ -123,12 +120,12 @@
 					'defer',
 					'expand',
 					'fragment',
+					'gesture',
 					'popup',
 					'portal',
 					'print',
 					'resizer',
 					'snapshot',
-					'touch',
 					'transition'
 				]
 			}
@@ -195,23 +192,21 @@
 
 		const createHomeDocument = (lang) => {
 			const t = (zh, en) => (lang === 'zh-CN' ? zh : en);
-			const accent = '#2563eb';
-			const accentSecondary = '#14b8a6';
-			const accents = [accent, accentSecondary, '#8b5cf6'];
+			const accent = 'var(--docs-color-primary)';
+			const accents = [accent, 'light-dark(#415ac8, #acb9ff)', 'light-dark(#5276d9, #a7c2ff)'];
 			const action = (label, to, variant = 'solid') => ({
 				label,
 				to: `/${lang}${to}`,
 				variant,
 				size: 'large',
-				color: accent,
-				textColor: variant === 'solid' ? '#ffffff' : accent
+				color: variant === 'solid' ? '#456CF6' : ''
 			});
 			const stack = {
 				marginTop: 0,
-				marginBottom: 80,
+				marginBottom: 64,
 				paddingTop: 0,
 				paddingBottom: 0,
-				maxWidth: 1200
+				maxWidth: 1536
 			};
 			const block = (id, type, props, appearance = stack) => ({
 				id,
@@ -220,8 +215,39 @@
 			});
 			const cards = items => items.map((item, index) => ({
 				...item,
-				accent: item.accent || accents[index]
+				accent: item.accent || accents[index % accents.length]
 			}));
+			const inputExample = [
+				'<template>',
+				'  <Input v-model="name" clearable />',
+				'  <p>{{ name }}</p>',
+				'</template>',
+				'<script setup lang="ts">',
+				"import { ref } from 'vue';",
+				"import { Input } from '@deot/vc';",
+				'',
+				"const name = ref('Hello World!');",
+				'<\/script>'
+			].join('\n');
+			const configurationExample = [
+				"import { createApp } from 'vue';",
+				"import { Button, Input, defineVcPlugin, enUS } from '@deot/vc';",
+				"import App from './App.vue';",
+				'',
+				`// ${t('按需注册：只注册选中的 Button 和 Input。', 'Register only the selected Button and Input components.')}`,
+				'const createVcPlugin = defineVcPlugin({ Button, Input });',
+				'',
+				`// ${t('全量注册：用下方导入替换上面的组件导入和工厂声明。', 'For full registration, replace the component import and factory above with:')}`,
+				"// import { createVcPlugin, enUS } from '@deot/vc/full';",
+				'',
+				`// ${t('两种方式均可在安装插件时设置语言。', 'Both approaches accept locale settings when installing the plugin.')}`,
+				'createApp(App)',
+				'  .use(createVcPlugin({ locale: enUS }))',
+				"  .mount('#app');",
+				'',
+				`// ${t('在应用根节点切换亮暗主题。', 'Switch light and dark themes at the application root.')}`,
+				"document.documentElement.setAttribute('data-vc-theme', 'dark');"
+			].join('\n');
 
 			return {
 				schemaVersion: 2,
@@ -230,103 +256,209 @@
 					mode: 'sortable',
 					maxWidth: 1920,
 					minHeight: 600,
-					background: '#ffffff'
+					contentWidth: 1536,
+					sidePattern: true,
+					background: ''
 				},
 				blocks: [
 					block('home-hero', 'hero', {
 						eyebrow: '@deot/vc',
-						title: t('面向 Vue 3 的桌面端与移动端组件库', 'Vue 3 components for desktop and mobile'),
+						title: t('面向 Vue 3 的多端组件库', 'Vue 3 components for desktop and mobile'),
 						description: t(
-							'统一导出组件、Hooks、语言包与共享能力，支持按需引入和 tree-shaking。',
-							'Components, hooks, locales and shared utilities with focused imports and tree-shaking.'
+							[
+								'按需组合组件，支持主题配置与国际化。',
+								'覆盖表单录入、数据展示、文件上传与交互反馈。',
+								'配合 Hooks 与 TypeScript，构建日常业务界面。'
+							].join('\n'),
+							[
+								'Compose components on demand, with themes and localization.',
+								'Cover forms, data display, file uploads and feedback.',
+								'Build everyday interfaces with Hooks and TypeScript.'
+							].join('\n')
 						),
 						align: 'left',
-						accent,
-						accentSecondary,
-						background: '',
 						showVisual: true,
-						minHeight: 500,
+						visual: {
+							type: 'code',
+							title: 'App.vue',
+							language: 'html',
+							content: inputExample
+						},
+						minHeight: 520,
 						highlights: [
-							{ value: String(components.length), label: t('组件文档', 'Component docs') },
-							{ value: 'Vue 3', label: t('框架', 'Framework') },
-							{ value: 'Desktop / Mobile', label: t('多端组件', 'Multiple targets') }
+							{ value: String(components.length), label: t('组件文档', 'Component docs'), color: accent },
+							{ value: 'Desktop / Mobile', label: t('按场景选择', 'Choose by use case'), color: accent },
+							{ value: 'ESM', label: 'Tree-shaking', color: accent }
 						],
 						actions: [
 							action(t('开始使用', 'Get Started'), '/packages/guide'),
 							action(t('浏览组件', 'Browse Components'), '/components/button', 'outline')
 						]
-					}, { ...stack, marginBottom: 64, fullWidth: true }),
+					}, { ...stack, marginBottom: 40, fullWidth: true }),
 					block('home-features', 'features', {
 						eyebrow: t('能力', 'Capabilities'),
-						title: t('从基础控件到复杂交互', 'From primitives to rich interactions'),
+						title: t('让组件承接具体的业务交互', 'Components for the work your interface does'),
 						description: t(
-							'组件按使用场景组织，并为桌面端和移动端保留清晰的实现边界。',
-							'Components are organized by use case with clear desktop and mobile variants.'
+							'基础控件可以直接使用，表单、表格、上传与弹层也可以组合成完整流程。',
+							'Use basic controls on their own, or combine forms, tables, uploads and overlays into a complete workflow.'
 						),
+						align: 'center',
 						columns: 3,
 						gap: 24,
 						items: cards([
 							{
-								title: t('完整组件体系', 'Complete component set'),
+								title: t('输入与校验', 'Input and validation'),
 								description: t(
-									'覆盖通用、布局、数据录入、展示、导航和反馈场景。',
-									'Covers general, layout, data entry, display, navigation, and feedback.'
+									'输入、选择、日期和颜色控件配合 Form 使用，支持字段规则、异步校验、重置和错误定位。',
+									'Combine inputs, selectors, date and color pickers with Form for field rules, asynchronous validation, resets and error scrolling.'
 								),
-								badge: 'Components',
+								badge: 'Form · Input · Picker',
+								icon: 'edit'
+							},
+							{
+								title: t('表格与长列表', 'Tables and long lists'),
+								accent: 'light-dark(#168a7e, #83cabe)',
+								description: t(
+									'Table 提供列配置、选择、排序和树形数据；RecycleList 按视口渲染，支持动态尺寸、瀑布流与异步加载。',
+									'Table supports columns, selection, sorting and tree data. RecycleList renders the viewport with dynamic sizes, masonry layouts and asynchronous loading.'
+								),
+								badge: 'Table · RecycleList',
 								icon: 'grid'
 							},
 							{
-								title: t('桌面与移动端', 'Desktop and mobile'),
-								description: t('同一包内提供对应的桌面端与 M 前缀移动端能力。', 'Desktop components and M-prefixed mobile variants live in one package.'),
-								badge: 'Desktop / Mobile',
-								icon: 'link'
+								title: t('文件选择与预览', 'Files and previews'),
+								accent: 'light-dark(#288ca6, #8ccbdc)',
+								description: t(
+									'Upload 负责文件选择、预处理、上传与进度；UploadPicker 管理已选文件，FilePreview 提供图片预览、音视频播放和普通文件原始地址跳转。',
+									'Upload handles selection, preprocessing, requests and progress. UploadPicker manages selected files; FilePreview previews images, plays audio and video, and opens other files at their original URLs.'
+								),
+								badge: 'Upload · UploadPicker · FilePreview',
+								icon: 'upload'
 							},
 							{
-								title: t('模块化导出', 'Modular exports'),
-								description: t('可使用聚合包，也可按组件、Hooks、语言包分层引入。', 'Use the aggregate package or import components, hooks and locales separately.'),
-								badge: 'ESM',
+								title: t('反馈与任务引导', 'Feedback and guidance'),
+								accent: 'light-dark(#b7802e, #d9b77c)',
+								description: t(
+									'消息、确认框、抽屉与移动端操作面板承接临时任务；Tour 将页面元素串成分步引导。',
+									'Messages, confirmations, drawers and mobile action sheets support temporary tasks. Tour guides users through page elements step by step.'
+								),
+								badge: 'Message · Modal · Tour',
+								icon: 'info'
+							},
+							{
+								title: t('主题与语言', 'Themes and language'),
+								accent: 'light-dark(#785bd6, #bda8ef)',
+								description: t(
+									'通过 CSS 变量和 data-vc-theme 适配亮暗界面；VcInstance 配置语言与组件默认行为，内置中文和英文语言数据。',
+									'Use CSS variables and data-vc-theme for light and dark interfaces. VcInstance configures language and component defaults, with Chinese and English locale data included.'
+								),
+								badge: 'Theme · VcInstance · Locale',
+								icon: 'setting'
+							},
+							{
+								title: t('按需组合', 'Compose what you need'),
+								accent: 'light-dark(#b85f80, #dda0b7)',
+								description: t(
+									'主入口使用 ESM 具名导出；组件、Hooks、语言和共享工具也有独立包，配套 TypeScript 类型声明。',
+									'Import named ESM exports from the main entry, or use separate packages for components, hooks, locales and shared utilities, with TypeScript declarations.'
+								),
+								badge: 'ESM · TypeScript · Hooks',
 								icon: 'filter'
 							}
 						])
 					}),
 					block('home-steps', 'steps', {
 						eyebrow: t('快速开始', 'Quick start'),
-						title: t('三步开始使用组件', 'Start using components in three steps'),
+						title: t('从一个 Vue 单文件组件开始', 'Start with a Vue single-file component'),
+						align: 'center',
 						columns: 3,
 						items: cards([
 							{ title: t('安装', 'Install'), description: 'pnpm add @deot/vc vue', icon: '01' },
-							{ title: t('引入组件', 'Import'), description: "import { Button } from '@deot/vc'", icon: '02' },
-							{ title: t('使用组件', 'Use'), description: '<Button>确定</Button>', icon: '03' }
+							{ title: t('按需引入', 'Import'), description: "import { Button, Form, FormItem, Input } from '@deot/vc';", icon: '02' },
+							{ title: t('绑定数据', 'Bind data'), description: t('用 v-model 连接输入值，通过 FormItem 的 prop 和 required 声明字段。', 'Bind the input with v-model. Declare its field and required rule with FormItem.'), icon: '03' }
 						])
+					}),
+					block('home-configuration', 'code', {
+						eyebrow: t('应用配置', 'Application setup'),
+						title: t('从组件引入到应用配置', 'From component imports to application setup'),
+						description: t(
+							'在 <script setup> 中从主入口按需引入即可使用，无需全局注册。需要全局注册时，用 defineVcPlugin 选择组件，或从 /full 引入全量工厂；两者均可配置语言，亮暗主题通过根节点属性切换。',
+							'Named imports from the main entry work directly in <script setup>, without global registration. For global use, select components with defineVcPlugin or import the full factory from /full. Both accept locale settings; switch light and dark themes at the root.'
+						),
+						align: 'center',
+						filename: 'main.ts',
+						language: 'typescript',
+						content: configurationExample,
+						folds: [],
+						highlightLines: [2, 6, 9, 13, 17]
+					}),
+					block('home-faq', 'faq', {
+						eyebrow: t('使用说明', 'Usage notes'),
+						title: t('选择适合项目的引入方式', 'Choose the right entry for your project'),
+						align: 'center',
+						items: [
+							{
+								question: t('按需引入和全量注册怎样选择？', 'Named imports or global registration?'),
+								answer: t(
+									'从 @deot/vc 主入口按需引入组件，交给构建工具进行 tree-shaking；需要全局注册其中一部分时，用主入口的 defineVcPlugin 挑选组件。全量注册则从 @deot/vc/full、/desktop 或 /mobile 导入 createVcPlugin，这些入口会引用各自包含的全部组件。',
+									'Use named imports from @deot/vc for tree-shaking, or defineVcPlugin from the main entry to register a selected set globally. For full registration, import createVcPlugin from @deot/vc/full, /desktop or /mobile; each entry includes its full component set.'
+								)
+							},
+							{
+								question: t('桌面端与移动端组件如何使用？', 'How do desktop and mobile components differ?'),
+								answer: t(
+									'两类组件从同一包导出，移动端通常使用 M 前缀，例如 Button 与 MButton。部分能力共用实现，部分按触控场景单独实现；按具体组件文档选择，不会根据设备自动替换。',
+									'Both are exported from the same package. Mobile components usually use an M prefix, such as MButton. Some share an implementation and others are tailored for touch. Choose explicitly; components do not switch automatically by device.'
+								)
+							},
+							{
+								question: t('图表、编辑器等依赖如何处理？', 'What about charts and editors?'),
+								answer: t(
+									'Chart、Editor、Snapshot 和文件预览中的图片预览分别使用 ECharts、Quill、snapdom 和 PhotoSwipe。用到对应能力时，按组件文档安装依赖，并准备好所需的浏览器环境。',
+									'Chart, Editor, Snapshot and image previews use ECharts, Quill, snapdom and PhotoSwipe respectively. Install the dependencies for the capabilities you use and provide the browser environment described in each component guide.'
+								)
+							}
+						]
 					}),
 					block('home-cta', 'cta', {
 						eyebrow: t('组件文档', 'Component docs'),
-						title: t('按场景查找所需组件', 'Find the right component by use case'),
-						description: t('从侧栏进入各组件的示例、API 与桌面/移动端说明。', 'Open examples, APIs and desktop/mobile notes from the sidebar.'),
+						title: t('从当前页面需要的交互开始', 'Start with the interaction your page needs'),
+						description: t('查看组件示例与 API，或先配置应用的语言、主题和全局默认行为。', 'Explore examples and APIs, or set up language, themes and component defaults for your app.'),
 						align: 'center',
-						accent,
-						accentSecondary,
-						background: '',
-						actions: [action(t('查看 Button', 'Open Button'), '/components/button')]
+						actions: [
+							action(t('浏览组件', 'Browse Components'), '/components/button'),
+							action(t('全局配置', 'Global configuration'), '/components/vc', 'outline')
+						]
 					}, { ...stack, marginBottom: 0, fullWidth: true })
 				]
 			};
 		};
-
-		const pathSegments = location.pathname.split('/');
-		const localeIndex = pathSegments.findIndex(segment => Boolean(locales[segment]));
-		const basePath = localeIndex >= 0
-			? `${pathSegments.slice(0, localeIndex).join('/')}/`
-			: location.pathname.endsWith('/')
-				? location.pathname
-				: new URL('./', location.href).pathname;
-		const docsBase = new URL(basePath, location.origin).href;
+		const logo = `data:image/svg+xml,${encodeURIComponent(`
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+				<rect width="64" height="64" rx="16" fill="#456CF6"/>
+				<g fill="#fff">
+					<rect x="12" y="12" width="16" height="16" rx="4"/>
+					<rect x="36" y="12" width="16" height="16" rx="4"/>
+					<rect x="24" y="36" width="16" height="16" rx="4"/>
+				</g>
+			</svg>
+		`)}`;
 
 		window.$docs = {
-			base: docsBase,
 			namespace: '@deot/vc-site',
 			repository: 'https://github.com/deot/vc',
-			theme: { default: 'system' },
+			theme: {
+				default: 'system',
+				colors: {
+					'color-primary': { light: '#456CF6', dark: '#9aafff' },
+					'color-secondary': { light: '#6c7ef8', dark: '#bdcaff' }
+				}
+			},
+			layout: {
+				header: {
+					brand: { logo, label: '@deot/vc', value: '/' }
+				}
+			},
 			locales,
 			routes: Object.fromEntries([
 				['/', {
@@ -378,37 +510,44 @@
 					if (route) return `/${lang}${route}${target.search}${target.hash}`;
 					return `${new URL(path, repositoryBlob).href}${target.search}${target.hash}`;
 				}
-			},
-			modules: {
-				'vue': 'https://cdn.jsdelivr.net/npm/vue@3.5.39/dist/vue.esm-browser.prod.js',
-				'@deot/vc': 'https://cdn.jsdelivr.net/npm/@deot/vc/dist/index.js',
-				'@deot/vc-components': 'https://cdn.jsdelivr.net/npm/@deot/vc-components/dist/index.js',
-				'@deot/vc-hooks': 'https://cdn.jsdelivr.net/npm/@deot/vc-hooks/dist/index.js',
-				'@deot/vc-locale': 'https://cdn.jsdelivr.net/npm/@deot/vc-locale/dist/index.js',
-				'@deot/vc-shared': 'https://cdn.jsdelivr.net/npm/@deot/vc-shared/dist/index.js',
-				'@deot/helper-cache': 'https://cdn.jsdelivr.net/npm/@deot/helper-cache/+esm',
-				'@deot/helper-dom': 'https://cdn.jsdelivr.net/npm/@deot/helper-dom/+esm',
-				'@deot/helper-load': 'https://cdn.jsdelivr.net/npm/@deot/helper-load/+esm',
-				'@deot/helper-resize': 'https://cdn.jsdelivr.net/npm/@deot/helper-resize/+esm',
-				'@deot/helper-scheduler': 'https://cdn.jsdelivr.net/npm/@deot/helper-scheduler/+esm',
-				'@deot/helper-utils': 'https://cdn.jsdelivr.net/npm/@deot/helper-utils/+esm',
-				'@deot/helper-validator': 'https://cdn.jsdelivr.net/npm/@deot/helper-validator/+esm',
-				'@deot/helper-wheel': 'https://cdn.jsdelivr.net/npm/@deot/helper-wheel/+esm',
-				'@zumer/snapdom': 'https://cdn.jsdelivr.net/npm/@zumer/snapdom@3.1.1/+esm',
-				'echarts': 'https://cdn.jsdelivr.net/npm/echarts@6.1.0/+esm',
-				'lodash-es': 'https://cdn.jsdelivr.net/npm/lodash-es@4.18.1/+esm',
-				'photoswipe': 'https://cdn.jsdelivr.net/npm/photoswipe@5.4.4/dist/photoswipe.esm.js',
-				'photoswipe/lightbox': 'https://cdn.jsdelivr.net/npm/photoswipe@5.4.4/dist/photoswipe-lightbox.esm.js',
-				'quill': 'https://cdn.jsdelivr.net/npm/quill@2.0.3/+esm'
-			},
-			styles: {
-				'@deot/style': 'https://cdn.jsdelivr.net/npm/@deot/style/dist/index.css',
-				'@deot/vc-components': 'https://cdn.jsdelivr.net/npm/@deot/vc-components/dist/index.style.css',
-				'photoswipe': 'https://cdn.jsdelivr.net/npm/photoswipe@5.4.4/dist/photoswipe.css',
-				'quill': 'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css'
 			}
 		};
+		if (window.__DOCS_RUNTIME__?.mode === 'development') {
+			window.$docs.modules = {
+				'@deot/vc': '/__docs/module/@deot/vc',
+				'@deot/vc-components': '/__docs/module/@deot/vc-components',
+				'@deot/vc-hooks': '/__docs/module/@deot/vc-hooks',
+				'@deot/vc-locale': '/__docs/module/@deot/vc-locale',
+				'@deot/vc-shared': '/__docs/module/@deot/vc-shared'
+			};
+			window.$docs.styles = {
+				'@deot/vc-components/dist/index.style.css': '/packages/components/dist/index.style.css'
+			};
+		}
 	</script>
-	<script type="module" src="https://cdn.jsdelivr.net/npm/@deot/docs-client/+esm"></script>
+	<script>
+		const entries = [
+			'https://cdn.jsdelivr.net/npm/@deot/docs-launch/+esm',
+			'https://esm.unpkg.com/@deot/docs-launch/dist/index.js'
+		];
+		const controller = new AbortController();
+		const timer = setTimeout(() => controller.abort(), 15000);
+		const fail = () => {
+			document.querySelector('#app').textContent = '文档入口加载失败，请刷新重试。';
+		};
+		Promise.any(entries.map(async (src) => {
+			const response = await fetch(src, { signal: controller.signal });
+			if (!response.ok || !/(?:java|ecma)script/i.test(response.headers.get('content-type'))) {
+				throw new Error(`Invalid launch response: ${src}`);
+			}
+			return { cdn: src.match(/^https?:.*?(?=@deot\/docs-launch)/)?.[0], source: await response.text() };
+		})).finally(() => {
+			clearTimeout(timer);
+			controller.abort();
+		}).then(({ cdn, source }) => {
+			window.$docs.runtime = { mode: 'production', ...window.$docs.runtime, cdn };
+			document.body.appendChild(Object.assign(document.createElement('script'), { type: 'module', textContent: source, onerror: fail }));
+		}).catch(fail);
+	</script>
 </body>
 </html>
