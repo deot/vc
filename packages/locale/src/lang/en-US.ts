@@ -203,14 +203,16 @@ export const enUS: Language = {
 			copySuccess: 'Copied successfully'
 		},
 		FilePreview: {
-			close: 'Close'
-		},
-		ImagePreview: {
-			closeTitle: 'Close (Esc)',
-			zoomTitle: 'Zoom',
-			arrowPrevTitle: 'Previous image',
-			arrowNextTitle: 'Next image',
-			errorMsg: 'Failed to load image'
+			close: 'Close',
+			prev: 'Previous',
+			next: 'Next',
+			zoomIn: 'Zoom in',
+			zoomOut: 'Zoom out',
+			rotateLeft: 'Rotate left',
+			rotateRight: 'Rotate right',
+			loadError: 'The image cannot be loaded',
+			open: 'Open in new window',
+			download: 'Download'
 		},
 		Image: {
 			loadError: 'Failed to load image'

@@ -203,14 +203,16 @@ export const zhCN: Language = {
 			copySuccess: '复制成功'
 		},
 		FilePreview: {
-			close: '关闭'
-		},
-		ImagePreview: {
-			closeTitle: '关闭(Esc)',
-			zoomTitle: '缩放',
-			arrowPrevTitle: '上一张',
-			arrowNextTitle: '下一张',
-			errorMsg: '网络异常 图片加载失败'
+			close: '关闭',
+			prev: '上一个',
+			next: '下一个',
+			zoomIn: '放大',
+			zoomOut: '缩小',
+			rotateLeft: '向左旋转',
+			rotateRight: '向右旋转',
+			loadError: '网络异常 图片加载失败',
+			open: '新窗口打开',
+			download: '下载'
 		},
 		Image: {
 			loadError: '加载失败'

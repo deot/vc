@@ -68,7 +68,7 @@ describe('locale', () => {
 	});
 
 	it('keeps file preview family keys, leaf types and placeholders aligned', () => {
-		for (const name of ['FilePreview', 'ImagePreview']) {
+		for (const name of ['FilePreview']) {
 			const zh = zhCN.vc[name];
 			const en = enUS.vc[name];
 			const paths = getLeafPaths(zh);
