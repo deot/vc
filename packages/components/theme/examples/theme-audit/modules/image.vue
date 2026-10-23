@@ -16,33 +16,22 @@
 </template>
 <script setup>
 import { onBeforeUnmount, watch } from 'vue';
-import PhotoSwipeLightbox from 'photoswipe/lightbox';
-import { Image, Button } from '@deot/vc';
+import { Image, Button, ImagePreview } from '@deot/vc';
 import { svgImage } from '../sample';
 
 const props = defineProps({ mobile: Boolean, overlayGeneration: Number });
 const imageUrl = svgImage();
-const lightboxes = new Set();
+const leaves = new Set();
 const handleClose = () => {
-	lightboxes.forEach(lightbox => lightbox.destroy());
-	lightboxes.clear();
+	leaves.forEach(leaf => leaf.destroy());
+	leaves.clear();
 };
 const handlePreview = () => {
-	const lightbox = new PhotoSwipeLightbox({
-		pswpModule: () => import('photoswipe'),
-		dataSource: [{
-			src: imageUrl,
-			width: 320,
-			height: 180
-		}],
-		closeTitle: '关闭',
-		zoomTitle: '缩放'
+	const leaf = ImagePreview.open({
+		data: [{ src: imageUrl, width: 320, height: 180 }],
+		onClose: () => leaves.delete(leaf)
 	});
-	lightboxes.add(lightbox);
-	lightbox.on('destroy',
-		() => { lightboxes.delete(lightbox); });
-	lightbox.init();
-	lightbox.loadAndOpen(0);
+	leaf && leaves.add(leaf);
 };
 watch(() => props.overlayGeneration,
 	handleClose);

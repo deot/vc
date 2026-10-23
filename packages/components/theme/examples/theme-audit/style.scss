@@ -589,7 +589,7 @@
 	height: 240px;
 }
 
-@include block(audit-touch) {
+@include block(audit-gesture) {
 	min-height: 100px;
 	touch-action: none;
 }

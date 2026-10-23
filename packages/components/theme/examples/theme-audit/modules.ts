@@ -29,6 +29,7 @@ import Expand from './modules/expand.vue';
 import FilePreview from './modules/file-preview.vue';
 import Form from './modules/form.vue';
 import Fragment from './modules/fragment.vue';
+import Gesture from './modules/gesture.vue';
 import Icon from './modules/icon.vue';
 import Image from './modules/image.vue';
 import ImageCrop from './modules/image-crop.vue';
@@ -68,7 +69,6 @@ import Theme from './modules/theme.vue';
 import Timeline from './modules/timeline.vue';
 import TimePicker from './modules/time-picker.vue';
 import Toast from './modules/toast.vue';
-import Touch from './modules/touch.vue';
 import Tour from './modules/tour.vue';
 import Transition from './modules/transition.vue';
 import Tree from './modules/tree.vue';
@@ -106,6 +106,7 @@ export const MODULES = {
 	FilePreview,
 	Form,
 	Fragment,
+	Gesture,
 	Icon,
 	Image,
 	ImageCrop,
@@ -145,7 +146,6 @@ export const MODULES = {
 	Timeline,
 	TimePicker,
 	Toast,
-	Touch,
 	Tour,
 	Transition,
 	Tree,

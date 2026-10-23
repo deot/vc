@@ -5,7 +5,7 @@
 			<component
 				:is="mobile ? MUploadPicker : UploadPicker" v-model="values[`picker-${disabled}`]"
 				:disabled="disabled" :picker="['image', 'video', 'audio', 'file']"
-				:upload-options="uploadOptions" @click.capture="handlePickerPreview"
+				:upload-options="uploadOptions"
 			/>
 		</div>
 		<div v-for="state in ['上传中', '失败']" :key="state" class="audit-sample" :data-state="`真实项目组件 · ${state}`">
@@ -36,10 +36,7 @@
 </template>
 <script setup>
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
-import PhotoSwipeLightbox from 'photoswipe/lightbox';
-import { UploadPicker, Button, MUploadPicker } from '@deot/vc';
-import { AudioPreview } from '../../../../file-preview/preview/audio';
-import { VideoPreview } from '../../../../file-preview/preview/video';
+import { UploadPicker, Button, MUploadPicker, FilePreview } from '@deot/vc';
 import { ImageItem } from '../../../../upload-picker/item/image';
 import { VideoItem } from '../../../../upload-picker/item/video';
 import { AudioItem } from '../../../../upload-picker/item/audio';
@@ -57,13 +54,10 @@ const videoUrl = ref('');
 const imageUrl = svgImage();
 const urls = new Set();
 const leaves = new Set();
-const lightboxes = new Set();
 const fileMessage = ref('可选择本地音视频检查真实播放；未选择时展示内容区与播放控件。');
 const handleClose = () => {
 	leaves.forEach(leaf => leaf.destroy());
 	leaves.clear();
-	lightboxes.forEach(lightbox => lightbox.destroy());
-	lightboxes.clear();
 };
 const handleFile = (event) => {
 	const file = event.target.files?.[0];
@@ -88,40 +82,12 @@ const handleFile = (event) => {
 	fileMessage.value = `已选本地文件：${file.name}，不上传`;
 };
 const handlePreview = (type) => {
-	if (type === 'image') {
-		const lightbox = new PhotoSwipeLightbox({
-			pswpModule: () => import('photoswipe'),
-			dataSource: [{
-				src: imageUrl,
-				width: 320,
-				height: 180
-			}],
-			closeTitle: '关闭',
-			zoomTitle: '缩放'
-		});
-		lightboxes.add(lightbox);
-		lightbox.on('destroy',
-			() => { lightboxes.delete(lightbox); });
-		lightbox.init();
-		lightbox.loadAndOpen(0);
-	} else if (type === 'audio' || type === 'video') {
-		const leaf = (type === 'audio' ? AudioPreview : VideoPreview).popup({ src: type === 'audio' ? audioUrl.value : videoUrl.value });
-		leaves.add(leaf);
-		leaf.target.catch(() => { }).finally(() => { leaves.delete(leaf); });
-	}
-};
-const handlePickerPreview = (event) => {
-	const target = event.target;
-	if (target.closest('.vc-upload-picker__delete, .vcm-upload-picker__delete'))
-		return;
-	const item = target.closest('[class*="-image-item"], [class*="-video-item"], [class*="-audio-item"], [class*="-file-item"]');
-	if (!item)
-		return;
-	event.stopPropagation();
-	event.preventDefault();
-	const type = ['image', 'video', 'audio', 'file'].find(value => item.className.includes(`-${value}-item`));
-	if (type)
-		handlePreview(type);
+	const source = { image: imageUrl, audio: audioUrl.value, video: videoUrl.value }[type];
+	const leaf = FilePreview.open({
+		data: [{ source, type, width: type === 'image' ? 320 : void 0, height: type === 'image' ? 180 : void 0 }],
+		onClose: () => leaves.delete(leaf)
+	});
+	leaf?.destroy && leaves.add(leaf);
 };
 watch(() => props.overlayGeneration,
 	handleClose);

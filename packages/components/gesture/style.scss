@@ -1,0 +1,10 @@
+@use '../style/helper' as *;
+
+$component-name: vc-gesture;
+
+@include block($component-name) {
+	@include when(prevent) {
+		touch-action: none;
+		user-select: none;
+	}
+}
