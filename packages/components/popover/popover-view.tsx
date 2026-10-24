@@ -142,6 +142,12 @@ export const PopoverView = defineComponent({
 
 		// 弹层尺寸（上次计算后），见 handlePopupResize
 		let popupSize = '';
+		// 指针在弹层内时，交叉轴保持上次的位置（相对触发节点），尺寸变小时补足到按方向算出的位置，见 getPopupStyle 的 keep；移出后按当前尺寸重新对齐
+		// 如贴边靠右的 Cascader 收起列：左缘不动、空出的部分由弹层的底色占满，内容不在指针下平移（否则指针下换了一项，又引起展开 / 收起）
+		let isPointerIn = false;
+		let keptEdge: number | undefined;
+		// 上次计算是否保持了位置或补足了尺寸：移出时只在此时重新计算
+		let isHeld = false;
 		const getPopupSize = () => `${vnode.el.offsetWidth}x${vnode.el.offsetHeight}`;
 
 		/**
@@ -155,6 +161,11 @@ export const PopoverView = defineComponent({
 				handleTriggerRemoved();
 				return;
 			}
+
+			// 补足的尺寸先去掉：方向与上限按内容的实际尺寸计算
+			const container = containerRef.value!;
+			const { style } = container;
+			(style.minWidth || style.minHeight) && (style.minWidth = style.minHeight = '');
 
 			const triggerEl = getHackContainer();
 			const triggerRect = triggerEl.getBoundingClientRect();
@@ -172,7 +183,7 @@ export const PopoverView = defineComponent({
 				boundary: props.hover && mount === 'body' ? viewport : boundary
 			});
 			// 容器尺寸不超过实际方向所在一侧的可用空间
-			const { placement: result, reached } = fitMaxSize(containerRef.value!, {
+			const { placement: result, reached } = fitMaxSize(container, {
 				scroller: scrollerRef.value?.wrapper,
 				el: vnode.el,
 				placement: props.placement,
@@ -181,11 +192,15 @@ export const PopoverView = defineComponent({
 			});
 			isReached.value = reached;
 
-			const { wrapperStyle: $wrapperStyle, arrowStyle: $arrowStyle } = getPopupStyle({
+			const { wrapperStyle: $wrapperStyle, arrowStyle: $arrowStyle, edge, fill, vertical, held } = getPopupStyle({
 				rect,
 				el: vnode.el,
-				placement: result
+				placement: result,
+				keep: isPointerIn ? keptEdge : void 0,
+				keepEnd: props.keepEdge === 'end'
 			});
+			keptEdge = edge;
+			isHeld = held;
 			// 触发节点滚出滚动容器可视区时隐藏（不关闭），滚回后恢复
 			hidden && ($wrapperStyle.visibility = 'hidden');
 
@@ -193,10 +208,19 @@ export const PopoverView = defineComponent({
 			fitPos.value = result;
 			isEqual(wrapperStyle.value, $wrapperStyle) || (wrapperStyle.value = $wrapperStyle);
 			isEqual(arrowStyle.value, $arrowStyle) || (arrowStyle.value = $arrowStyle);
-			popupSize = getPopupSize();
 			// autoWidth 为 false 时与触发节点同宽
 			const width = props.autoWidth ? 'auto' : `${triggerEl.getBoundingClientRect().width}px`;
 			wrapperW.value.width !== width && (wrapperW.value = { width });
+
+			// 补足的尺寸最后直接写入容器：此前的读取都不必重新布局；去掉、补回在同一次计算内完成，尺寸不变时不触发 Resize
+			// 补足后的尺寸可由当前尺寸推出（最小尺寸优先于上限），不再读取
+			const { offsetWidth, offsetHeight } = vnode.el;
+			if (fill) {
+				vertical
+					? (style.minWidth = `${container.offsetWidth + fill}px`)
+					: (style.minHeight = `${container.offsetHeight + fill}px`);
+			}
+			popupSize = vertical ? `${offsetWidth + fill}x${offsetHeight}` : `${offsetWidth}x${offsetHeight + fill}`;
 		};
 
 		let isPressMouse = false;
@@ -236,6 +260,18 @@ export const PopoverView = defineComponent({
 		const handleChange = (e: Event, { visible }) => {
 			props.alone && handleTriggerChange(e);
 			!props.alone && props.onChange(e, { visible, context: instance });
+		};
+
+		// 指针进出弹层：保持 / 释放交叉轴的位置（见 isPointerIn），hover 弹层同时控制显示
+		const handleMouseEnter = (e: MouseEvent) => {
+			isPointerIn = true;
+			props.hover && handleChange(e, { visible: true });
+		};
+
+		const handleMouseLeave = (e: MouseEvent) => {
+			isPointerIn = false;
+			isHeld && setPopupStyle();
+			props.hover && handleChange(e, { visible: false });
 		};
 
 		/**
@@ -287,8 +323,9 @@ export const PopoverView = defineComponent({
 
 		// 打开期间影响位置的属性变化：DOM 更新后重新定位（内容、插槽的变化改变尺寸时由 Resize 处理）
 		watch(
-			() => [props.placement, props.arrow, props.autoWidth, props.portalStyle, props.scrollable],
-			(v, old) => isEqual(v, old) || setPopupStyle(),
+			() => [props.placement, props.arrow, props.autoWidth, props.portalStyle, props.scrollable, props.keepEdge],
+			// 方向、内容的排布变化后保持的一边可能不同，不再沿用
+			(v, old) => isEqual(v, old) || (keptEdge = void 0, setPopupStyle()),
 			{ flush: 'post' }
 		);
 
@@ -355,8 +392,8 @@ export const PopoverView = defineComponent({
 							style={[wrapperStyle.value, wrapperW.value, props.portalStyle]}
 							class={[wrapperClasses.value, props.portalClass, 'vc-popover-wrapper']}
 							onMousedown={handleMouseDown}
-							onMouseenter={e => props.hover && handleChange(e, { visible: true })}
-							onMouseleave={e => props.hover && handleChange(e, { visible: false })}
+							onMouseenter={handleMouseEnter}
+							onMouseleave={handleMouseLeave}
 						>
 							<div ref={containerRef} class={[themeClasses.value, 'vc-popover-wrapper__container']}>
 								{renderFixed('header')}

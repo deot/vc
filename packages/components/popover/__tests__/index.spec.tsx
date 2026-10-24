@@ -1244,6 +1244,127 @@ describe('Popover 位置自适应 (use-pos)', () => {
 		wrapper.unmount();
 	});
 
+	it('指针在弹层内时内容变窄：起始边不动（内容不在指针下平移），弹层仍伸到对齐位置的另一边缘（白底占满），移出后恢复', async () => {
+		// bottom-left：900px 宽时右侧超出，靠右（left = 1024 - 8 - 900）
+		const wrapper = await openAt('bottom-left', 300, 100);
+		onTestFinished(() => wrapper.unmount());
+		await resizeTo(900, 100);
+		expect(getWrapperEl()!.style.left).toBe('116px');
+
+		// 指针移入后变窄（如 Cascader 收起列）：左缘不动；按方向本应在 300 ~ 900，弹层伸到 900（容器补宽 184）
+		fireEvent(getWrapperEl()!, 'mouseenter');
+		setOffset(getContainer(), 600, 100);
+		await resizeTo(600, 100);
+		expect(getWrapperEl()!.style.left).toBe('116px');
+		expect(getContainer().style.minWidth).toBe('784px');
+		expect(getArrow().style.left).toBe('224px'); // 340 - 116
+
+		// 移出后按当前尺寸重新对齐，不再补宽
+		fireEvent(getWrapperEl()!, 'mouseleave');
+		await flush();
+		expect(getWrapperEl()!.style.left).toBe('300px');
+		expect(getContainer().style.minWidth).toBe('');
+	});
+
+	it('指针在弹层内：保持的位置随触发节点移动；变宽放不下时照常修正，不再补宽', async () => {
+		const wrapper = await openAt('bottom-left', 300, 100);
+		onTestFinished(() => wrapper.unmount());
+		await resizeTo(900, 100);
+		fireEvent(getWrapperEl()!, 'mouseenter');
+		setOffset(getContainer(), 600, 100);
+		await resizeTo(600, 100);
+		expect(getWrapperEl()!.style.left).toBe('116px');
+
+		// 触发节点左移 50px（如页面横向滚动）：保持的位置跟着移动，补宽不变
+		setRect(wrapper.element, triggerRect(250, 100));
+		document.dispatchEvent(new Event('scroll'));
+		await nextTick();
+		expect(getWrapperEl()!.style.left).toBe('66px');
+		expect(getContainer().style.minWidth).toBe('784px');
+
+		// 变宽放不下：照常修正（1024 - 8 - 960），已伸到对齐位置，不补宽
+		setOffset(getContainer(), 960, 100);
+		await resizeTo(960, 100);
+		expect(getWrapperEl()!.style.left).toBe('56px');
+		expect(getContainer().style.minWidth).toBe('');
+	});
+
+	it('指针在弹层内时内容变矮（左右方向）：上缘不动，弹层仍伸到对齐位置的下缘，箭头指向触发节点中心', async () => {
+		// right：740px 高时修正到顶部（留 8px）
+		const wrapper = await openAt('right', 500, 700);
+		onTestFinished(() => wrapper.unmount());
+		await resizeTo(200, 740);
+		expect(getWrapperEl()!.style.top).toBe('8px');
+
+		// 按方向本应是 right-bottom（430 ~ 730）：上缘保持 8，伸到 730（容器补高 422）
+		fireEvent(getWrapperEl()!, 'mouseenter');
+		setOffset(getContainer(), 200, 300);
+		await resizeTo(200, 300);
+		expect(getWrapperEl()!.style.top).toBe('8px');
+		expect(getContainer().style.minHeight).toBe('722px');
+		expect(getArrow().style.top).toBe('707px'); // 715 - 8
+	});
+
+	it('指针在弹层内、自动翻转为右对齐（要求 bottom-left）时：内容仍从左排，保持左缘并补宽（如贴边的 Cascader）', async () => {
+		// 右侧放不下 400：翻转为 bottom-right，left = 980 - 400
+		const wrapper = await openAt('bottom-left', 900, 100);
+		onTestFinished(() => wrapper.unmount());
+		await resizeTo(400, 100);
+		expect(getWrapperEl()!.style.left).toBe('580px');
+
+		// 变窄到 200：按方向本应在 780 ~ 980；左缘保持 580，补宽 200
+		fireEvent(getWrapperEl()!, 'mouseenter');
+		setOffset(getContainer(), 200, 100);
+		await resizeTo(200, 100);
+		expect(getWrapperEl()!.style.left).toBe('580px');
+		expect(getContainer().style.minWidth).toBe('400px');
+	});
+
+	it('指针在弹层内、显式 bottom-right 但内容从左排（keepEdge 默认 start）：仍保持左缘并补宽', async () => {
+		// bottom-right：右缘对齐触发节点右缘 580
+		const wrapper = await openAt('bottom-right', 500, 100);
+		onTestFinished(() => wrapper.unmount());
+		await resizeTo(400, 100);
+		expect(getWrapperEl()!.style.left).toBe('180px');
+
+		// 变窄到 200：按方向本应在 380 ~ 580；左缘保持 180，补宽 200
+		fireEvent(getWrapperEl()!, 'mouseenter');
+		setOffset(getContainer(), 200, 100);
+		await resizeTo(200, 100);
+		expect(getWrapperEl()!.style.left).toBe('180px');
+		expect(getContainer().style.minWidth).toBe('400px');
+	});
+
+	it('指针在弹层内、keepEdge="end"（内容靠右排）：保持右缘，变窄时从左侧收窄，不补宽', async () => {
+		const wrapper = mount(() => (
+			<Popover trigger="click" content="x" placement="bottom-right" keepEdge="end">
+				<button>btn</button>
+			</Popover>
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+		setRect(wrapper.element, triggerRect(500, 100));
+		await wrapper.trigger('click');
+		await flush();
+		await resizeTo(400, 100);
+		expect(getWrapperEl()!.style.left).toBe('180px');
+
+		fireEvent(getWrapperEl()!, 'mouseenter');
+		setOffset(getContainer(), 200, 100);
+		await resizeTo(200, 100);
+		expect(getWrapperEl()!.style.left).toBe('380px');
+		expect(getContainer().style.minWidth).toBe('');
+	});
+
+	it('指针不在弹层内时内容变窄：照常对齐（如提示文字变短后仍居中）', async () => {
+		const wrapper = await openAt('bottom', 500, 400);
+		onTestFinished(() => wrapper.unmount());
+		await resizeTo(300, 100);
+		expect(getWrapperEl()!.style.left).toBe('390px'); // 540 - 150
+		await resizeTo(200, 100);
+		expect(getWrapperEl()!.style.left).toBe('440px'); // 540 - 100
+	});
+
 	// 视口 1024×768，弹层 200×100；触发节点左上角在 (500, 300)
 	const openSized = async (placement: string, width: number, height: number) => {
 		const wrapper = mount(() => (

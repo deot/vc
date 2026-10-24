@@ -3,7 +3,7 @@ import type { PopoverRect } from './types';
 import { getPadding } from '../scroller/utils';
 
 const EXTRA_DISTANCE = 4; // 额外的距离
-const VIEWPORT_GAP = 8; // 与视口边缘的留白
+export const VIEWPORT_GAP = 8; // 与视口边缘的留白
 const ARROW_INSET = 12; // 箭头中心距弹层边缘的最小距离（避开圆角）
 const ARROW_OFFSET = 16 + 9 / 2; // 角落方向箭头中心距对齐边的距离（9px 的箭头距边 16px）
 
@@ -298,7 +298,19 @@ export default () => {
 
 		return placement;
 	};
-	const getPopupStyle = ({ rect, placement, el }) => {
+	/**
+	 * 弹层位置与箭头样式
+	 * @param options ~
+	 * @param options.rect 触发节点的矩形（弹层坐标系），见 getRect
+	 * @param options.placement 实际方向
+	 * @param options.el 弹层节点
+	 * @param options.keep 交叉轴上保持的一边相对触发节点的位置（上次返回的 edge）：传入时保持在此处（只在超出视口时修正），
+	 * 	并补足尺寸使弹层仍伸到按方向算出的位置的另一边，用于指针在弹层内时内容不平移，也不脱离对齐的位置
+	 * @param options.keepEnd 上下方向保持末尾边（Popover 的 keepEdge 为 end，如 Cascader 向左展开），否则保持起始边；左右方向的内容从上往下排，总是保持上缘
+	 * @returns wrapperStyle / arrowStyle；edge：本次保持的一边相对触发节点的位置；fill：交叉轴上需补足的尺寸；
+	 * 	vertical：交叉轴为横向（补足宽度）；held：位置或尺寸与按方向算出的不同（释放时需重新计算）
+	 */
+	const getPopupStyle = ({ rect, placement, el, keep = void 0 as number | undefined, keepEnd = false }) => {
 		let wrapperStyle: any;
 		let arrowStyle: any;
 		// top / left 方向以靠近触发节点的一边定位，再用 translate 移开自身尺寸：内容长高 / 变宽时朝远离触发节点的方向伸展
@@ -400,7 +412,7 @@ export default () => {
 				break;
 		}
 
-		if (!wrapperStyle) return { wrapperStyle, arrowStyle };
+		if (!wrapperStyle) return { wrapperStyle, arrowStyle, edge: void 0, fill: 0, vertical: false, held: false };
 
 		const vertical = /^(top|bottom)/.test(placement);
 		const size = vertical ? el.offsetWidth : el.offsetHeight;
@@ -411,8 +423,10 @@ export default () => {
 		}
 
 		// 交叉轴限制在视口内（四周留白，如 Cascader 展开、内容变宽后）：上下方向修正 left，左右方向修正 top
-		// 位置被修正时，箭头改为指向触发节点中心
+		// 传入 keep 时保持的一边从保持的位置开始修正，另一边伸到按方向算出的位置；位置或尺寸与按方向算出的不同时，箭头改为指向触发节点中心
 		const key = vertical ? 'left' : 'top';
+		const start = vertical ? rect.x : rect.y;
+		const isEnd = vertical && keepEnd;
 		const container = el.parentElement;
 		// 弹层坐标系原点的视口坐标：挂 body 时为页面滚动的反向，否则为挂载容器的位置
 		const origin = !container || container === document.body
@@ -420,16 +434,26 @@ export default () => {
 			: container.getBoundingClientRect()[key];
 		const viewport = getViewport()[vertical ? 'right' : 'bottom'];
 		const value = parseFloat(wrapperStyle[key]);
-		const fixed = Math.max(VIEWPORT_GAP - origin, Math.min(value, viewport - VIEWPORT_GAP - size - origin));
-		if (fixed !== value) {
-			wrapperStyle[key] = `${fixed}px`;
+		const clamp = (v: number) => Math.max(VIEWPORT_GAP - origin, Math.min(v, viewport - VIEWPORT_GAP - size - origin));
+		// 按方向算出的位置；保持时的位置（起始边）
+		const fixed = clamp(value);
+		const kept = keep === undefined ? fixed : clamp(isEnd ? start + keep - size : start + keep);
+		// 保持起始边时向后补足，保持末尾边时向前补足
+		const fill = Math.max(isEnd ? kept - fixed : fixed - kept, 0);
+		const position = isEnd ? kept - fill : kept;
+		if (position !== value || fill) {
+			wrapperStyle[key] = `${position}px`;
 			const triggerCenter = vertical ? rect.x + rect.width / 2 : rect.y + rect.height / 2;
-			arrowStyle = getArrowStyle(key, triggerCenter - fixed, size);
+			arrowStyle = getArrowStyle(key, triggerCenter - position, size + fill);
 		}
 
 		return {
 			wrapperStyle,
-			arrowStyle
+			arrowStyle,
+			edge: (isEnd ? position + size + fill : position) - start,
+			fill,
+			vertical,
+			held: position !== fixed || !!fill
 		};
 	};
 

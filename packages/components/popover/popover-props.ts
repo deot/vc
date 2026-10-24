@@ -15,7 +15,8 @@ export const viewKeys = [
 	'always',
 	'scrollable',
 	'scrollerOptions',
-	'keepFocus'
+	'keepFocus',
+	'keepEdge'
 ] as const;
 
 export const props = {

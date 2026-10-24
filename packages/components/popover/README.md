@@ -592,6 +592,7 @@ onUnmounted(() => leaf?.destroy());
 | keepFocus | 焦点留在触发器的输入框：在浮层内、触发器的非输入区域按下鼠标不转移焦点；浮层打开时点击触发器的输入框不关闭 | `boolean` | - | `false` |
 | arrow | 是否显示箭头 | `boolean` | - | `true` |
 | autoWidth | `true` 按内容确定宽度，`false` 跟随触发元素宽度 | `boolean` | - | `true` |
+| keepEdge | 指针在浮层内、内容变窄时保持不动的一边（上下方向）：空出的部分由浮层底色补足，内容不在指针下平移，指针移出后重新对齐。内容靠右排时（如 Cascader 向左展开）设为 `end` | `string` | `start`、`end` | `start` |
 | always | 禁止交互关闭；需配合 `modelValue: true` 初始显示，仍可通过 modelValue 关闭 | `boolean` | - | `false` |
 | tag | 触发器根节点标签 | `string` | - | `span` |
 | disabled | 禁用交互触发，不阻止外部 modelValue 控制 | `boolean` | - | `false` |
@@ -625,7 +626,7 @@ onUnmounted(() => leaf?.destroy());
 | --- | --- | --- | --- |
 | Popover.open | 创建独立浮层 | `options`：浮层属性与 Portal 配置 | `PortalLeaf` |
 
-`open` 使用独立浮层，支持上述外观属性（`animation`、`placement`、`theme`、`content`、`arrow`、`autoWidth`、`portalClass`、`portalStyle`）与 `keepFocus`，以及以下选项。声明式组件的 `trigger`、`disabled`、`outsideClickable`、`to`、`portal` 不控制静态浮层。静态浮层是独立的应用实例，不继承调用处的上下文；需要路由、状态或全局组件时，通过 Portal 的 `uses`、`components`、`install` 等配置注入，见 Portal 文档。
+`open` 使用独立浮层，支持上述外观属性（`animation`、`placement`、`theme`、`content`、`arrow`、`autoWidth`、`portalClass`、`portalStyle`）与 `keepFocus`、`keepEdge`，以及以下选项。声明式组件的 `trigger`、`disabled`、`outsideClickable`、`to`、`portal` 不控制静态浮层。静态浮层是独立的应用实例，不继承调用处的上下文；需要路由、状态或全局组件时，通过 Portal 的 `uses`、`components`、`install` 等配置注入，见 Portal 文档。
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |

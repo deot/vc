@@ -57,6 +57,11 @@ export const props = {
 	// 内置 Scroller 的属性；设置 height / maxHeight 时内容区按该高度滚动
 	scrollerOptions: Object as PropType<Partial<ScrollerProps>>,
 	// 焦点留在触发器的输入框：在浮层内、触发器的非输入区域按下鼠标不转移焦点；浮层打开时点击触发器的输入框不关闭
-	keepFocus: Boolean
+	keepFocus: Boolean,
+	// 指针在浮层内、内容变窄时保持不动的一边（上下方向），另一边由底色补足；内容靠右排时（如 Cascader 向左展开）为 end
+	keepEdge: {
+		type: String as PropType<'start' | 'end'>,
+		default: 'start'
+	}
 };
 export type Props = ExtractPropTypes<typeof props>;
