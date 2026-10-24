@@ -27,6 +27,40 @@ const triggerScroll = async () => {
 	await nextTick();
 };
 
+// 记录所有 ResizeObserver 实例：测试里按被观察的元素找到对应的观察器再触发回调
+const observers: any[] = [];
+const MockResizeObserver = (globalThis as any).ResizeObserver;
+(globalThis as any).ResizeObserver = class extends MockResizeObserver {
+	constructor(cb: any) {
+		super(cb);
+		observers.push(this);
+	}
+};
+const observerOf = (el: Element) => observers.find(ro => ro.targets.has(el));
+
+/**
+ * 模拟浏览器布局：行内写了宽高就以行内为准，否则外层宽度取容器给的宽度、高度取内容高度
+ * 用来复现"激活后外层被自己写上的宽高锁住"的问题（jsdom 不做布局）
+ * @param root 外层
+ * @param content 固定层
+ * @param layout 布局给出的尺寸，测试中可直接改写
+ * @param layout.top 外层顶部
+ * @param layout.width 容器给外层的宽度
+ * @param layout.height 内容高度
+ * @returns 还原
+ */
+const mockLayout = (root: HTMLElement, content: HTMLElement, layout: { top: number; width: number; height: number }) => {
+	const px = (value: string, fallback: number) => (value ? parseFloat(value) : fallback);
+	const rectOf = (el: HTMLElement) => {
+		const width = px(el.style.width, layout.width);
+		const height = px(el.style.height, layout.height);
+		const { top } = layout;
+		return { top, bottom: top + height, left: 0, right: width, width, height, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
+	};
+	const spies = [root, content].map(el => vi.spyOn(el, 'getBoundingClientRect').mockImplementation(() => rectOf(el)));
+	return () => spies.forEach(spy => spy.mockRestore());
+};
+
 describe('index.ts', () => {
 	it('basic', () => {
 		expect(typeof Affix).toBe('object');
@@ -81,18 +115,19 @@ describe('index.ts', () => {
 		await nextTick();
 		expect(wrapper.find('.vc-affix__fixed').exists()).toBe(false);
 
-		const root = wrapper.find('.vc-affix').element;
-		const spy = mockRect(root, { top: -100, bottom: -60, width: 200, height: 40 });
+		const root = wrapper.find('.vc-affix').element as HTMLElement;
+		const restore = mockLayout(root, root.firstElementChild as HTMLElement, { top: -100, width: 200, height: 40 });
 
 		await triggerScroll();
 
+		// 固定层写宽度与偏移，外层只写占位高度
 		const inner = wrapper.find('.vc-affix__fixed');
 		expect(inner.exists()).toBe(true);
 		expect(inner.attributes('style')).toContain('top: 20px');
 		expect(inner.attributes('style')).toContain('width: 200px');
-		expect(inner.attributes('style')).toContain('height: 40px');
+		expect(root.style.height).toBe('40px');
 
-		spy.mockRestore();
+		restore();
 		wrapper.unmount();
 	});
 
@@ -572,5 +607,139 @@ describe('index.ts', () => {
 		affixSpy.mockRestore();
 		delete (scrollerEl as any).offsetHeight;
 		wrapper.unmount();
+	});
+
+	describe('fixed: size follows the layout while pinned', () => {
+		const mountPinned = (props: Record<string, any> = {}) => {
+			const exposed = ref<any>();
+			const wrapper = mount(() => (
+				<Affix ref={exposed} {...props}>{SLOT_TEXT}</Affix>
+			), { attachTo: document.body });
+			const root = () => wrapper.find('.vc-affix').element as HTMLElement;
+			const content = () => root().firstElementChild as HTMLElement;
+			return { wrapper, exposed, root, content };
+		};
+
+		it('pinned at width 0 recovers once the container has a size', async () => {
+			// 首帧滚动容器 0×0 时已判定为吸底：之后容器有了宽度，固定层要跟上，不必等滚回原位
+			const { wrapper, exposed, root, content } = mountPinned({ placement: 'bottom' });
+			await nextTick();
+
+			const layout = { top: 9000, width: 0, height: 52 };
+			const restore = mockLayout(root(), content(), layout);
+			await triggerScroll();
+			expect(wrapper.find('.vc-affix__fixed').exists()).toBe(true);
+
+			layout.width = 976;
+			exposed.value.refresh();
+			await nextTick();
+			expect(content().style.width).toBe('976px');
+
+			restore();
+			wrapper.unmount();
+		});
+
+		it('writes only the placeholder height on the outer element, only the width on the fixed layer', async () => {
+			const { wrapper, root, content } = mountPinned({ offset: 20 });
+			await nextTick();
+
+			const restore = mockLayout(root(), content(), { top: -100, width: 200, height: 40 });
+			await triggerScroll();
+
+			expect(root().style.width).toBe('');
+			expect(root().style.height).toBe('40px');
+			expect(content().style.width).toBe('200px');
+			expect(content().style.height).toBe('');
+
+			restore();
+			wrapper.unmount();
+		});
+
+		it('placeholder height follows the content height while pinned', async () => {
+			const { wrapper, exposed, root, content } = mountPinned({ offset: 20 });
+			await nextTick();
+
+			const layout = { top: -100, width: 200, height: 40 };
+			const restore = mockLayout(root(), content(), layout);
+			await triggerScroll();
+			expect(root().style.height).toBe('40px');
+
+			layout.height = 60;
+			exposed.value.refresh();
+			await nextTick();
+			expect(root().style.height).toBe('60px');
+
+			restore();
+			wrapper.unmount();
+		});
+
+		it('refreshes when the outer element or the content resizes', async () => {
+			const { wrapper, root, content } = mountPinned({ offset: 20 });
+			await nextTick();
+
+			const layout = { top: -100, width: 200, height: 40 };
+			const restore = mockLayout(root(), content(), layout);
+			await triggerScroll();
+
+			// 容器变宽（如侧栏折叠）：外层尺寸变化，不滚动也要更新固定层宽度
+			layout.width = 500;
+			observerOf(root())!.cb([{ target: root() }]);
+			await nextTick();
+			expect(content().style.width).toBe('500px');
+
+			// 内容变高：固定层尺寸变化，更新占位高度
+			layout.height = 60;
+			observerOf(content())!.cb([{ target: content() }]);
+			await nextTick();
+			expect(root().style.height).toBe('60px');
+
+			restore();
+			wrapper.unmount();
+		});
+
+		it('placement=bottom refreshes when the window height changes', async () => {
+			const original = Object.getOwnPropertyDescriptor(window, 'innerHeight');
+			const setInnerHeight = (value: number) => {
+				Object.defineProperty(window, 'innerHeight', { configurable: true, value });
+			};
+			setInnerHeight(800);
+
+			const { wrapper, root, content } = mountPinned({ placement: 'bottom' });
+			await nextTick();
+
+			const restore = mockLayout(root(), content(), { top: 660, width: 200, height: 40 });
+			await triggerScroll();
+			expect(wrapper.find('.vc-affix__fixed').exists()).toBe(false);
+
+			// 只改窗口高度：元素尺寸不变，但底部 700 已落在新视口（600）之外，应吸底
+			setInnerHeight(600);
+			window.dispatchEvent(new Event('resize'));
+			await nextTick();
+			expect(wrapper.find('.vc-affix__fixed').exists()).toBe(true);
+
+			restore();
+			wrapper.unmount();
+			if (original) {
+				Object.defineProperty(window, 'innerHeight', original);
+			} else {
+				delete (window as any).innerHeight;
+			}
+		});
+
+		it('stops observing sizes on unmount', async () => {
+			const removeSpy = vi.spyOn(window, 'removeEventListener');
+			const { wrapper, root, content } = mountPinned();
+			await nextTick();
+
+			const el = root();
+			const inner = content();
+			expect(observerOf(el)).toBeTruthy();
+			wrapper.unmount();
+
+			expect(observerOf(el)).toBeUndefined();
+			expect(observerOf(inner)).toBeUndefined();
+			expect(removeSpy).toHaveBeenCalledWith('resize', expect.any(Function));
+			removeSpy.mockRestore();
+		});
 	});
 });

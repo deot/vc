@@ -1,11 +1,13 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, reactive, shallowRef, computed, onMounted, onBeforeUnmount, provide, nextTick } from 'vue';
+import { defineComponent, ref, reactive, shallowRef, computed, watch, onMounted, onBeforeUnmount, provide, nextTick } from 'vue';
+import { Resize } from '@deot/helper-resize';
 import { props as affixProps } from './affix-props';
 import { getViewportRect } from '../scroller/utils';
 import { ScrollerManager } from '../scroller/manager';
 
 const COMPONENT_NAME = 'vc-affix';
+const SHARED = { shared: true };
 
 export const Affix = defineComponent({
 	name: COMPONENT_NAME,
@@ -14,7 +16,8 @@ export const Affix = defineComponent({
 	setup(props, { slots, expose, emit }) {
 		const scroller = shallowRef<any>(); // 当前元素所在的滚动容器（最近一层，可能为 window），吸附位置以它为参照
 		const base = shallowRef<HTMLElement>(); // 当前元素（props.tagret）的参考容器
-		const current = shallowRef<HTMLDivElement>(); // 当前元素
+		const current = shallowRef<HTMLDivElement>(); // 当前元素（外层）：宽度由布局决定，吸附时只写占位高度
+		const content = shallowRef<HTMLDivElement>(); // 固定层：高度由内容撑开，吸附时只写宽度
 
 		const currentRect = reactive({
 			top: 0,
@@ -37,8 +40,7 @@ export const Affix = defineComponent({
 			}
 			if (!isActive.value) return {};
 			return {
-				height: `${currentRect.height}px`,
-				width: `${currentRect.width}px`
+				height: `${currentRect.height}px`
 			};
 		});
 
@@ -46,7 +48,6 @@ export const Affix = defineComponent({
 			if (!props.fixed || !isActive.value) return {};
 			const offset = `${props.offset}px`;
 			return {
-				height: `${currentRect.height}px`,
 				width: `${currentRect.width}px`,
 				top: props.placement === 'top' ? offset : '',
 				bottom: props.placement === 'bottom' ? offset : '',
@@ -55,14 +56,22 @@ export const Affix = defineComponent({
 			};
 		});
 
+		/**
+		 * fixed：宽度与位置取外层，高度取固定层，都不量自己写上的值，吸附期间容器或内容变化也能跟上；
+		 * bottom 按内容高度推算，外层的占位高度可能还是上一次的值
+		 * sticky：不写尺寸，外层即内容
+		 */
 		const setCurrentRect = () => {
 			const rect = current.value?.getBoundingClientRect?.();
 			if (!rect) return;
+			const height = props.fixed
+				? content.value?.getBoundingClientRect?.().height ?? rect.height
+				: rect.height;
 			Object.assign(currentRect, {
 				top: rect.top,
-				bottom: rect.bottom,
+				bottom: rect.top + height,
 				width: rect.width,
-				height: rect.height
+				height
 			});
 		};
 
@@ -128,6 +137,19 @@ export const Affix = defineComponent({
 			emit('update:modelValue', isActive.value);
 		};
 
+		/**
+		 * 尺寸变化时重算，不必等下一次滚动：外层随容器宽度变化，固定层随内容高度变化；
+		 * 窗口尺寸变化时吸附线也会变（如只改窗口高度时吸底），一并重算
+		 */
+		const handleResize = () => {
+			refresh();
+		};
+		watch([current, content], () => {
+			Resize.disconnect(handleResize);
+			current.value && Resize.on(current.value, handleResize, SHARED);
+			content.value && Resize.on(content.value, handleResize, SHARED);
+		}, { flush: 'post' });
+
 		onMounted(() => {
 			if (typeof props.target === 'string') {
 				base.value = document.querySelector<HTMLElement>(props.target) ?? (void 0);
@@ -141,9 +163,14 @@ export const Affix = defineComponent({
 			}
 
 			onScroll(refresh, { first: true });
+			window.addEventListener('resize', handleResize);
 		});
 
-		onBeforeUnmount(() => unsubscribe());
+		onBeforeUnmount(() => {
+			unsubscribe();
+			Resize.disconnect(handleResize);
+			window.removeEventListener('resize', handleResize);
+		});
 
 		expose({ refresh, onScroll, offScroll });
 		provide('vc-affix', {
@@ -162,6 +189,7 @@ export const Affix = defineComponent({
 					style={currentStyle.value}
 				>
 					<div
+						ref={content}
 						class={{ 'vc-affix__fixed': props.fixed && isActive.value }}
 						style={contentStyle.value}
 					>
