@@ -1,8 +1,8 @@
 ## 过渡动画（Transition）
 
-基于 Vue 的 `Transition` 和 `TransitionGroup` 封装进入、离开与列表位移动画，并提供淡入淡出、缩放、滑动、缩放弹出和折叠五种预置效果。
+基于 Vue 的 `Transition` 和 `TransitionGroup` 封装进入、离开与列表位移动画，并提供淡入淡出、缩放、滑动、缩放弹出、折叠，以及从触发元素展开六种预置效果。
 
-`MTransition`、`MTransitionFade`、`MTransitionScale`、`MTransitionSlide`、`MTransitionZoom`、`MTransitionCollapse` 分别是对应组件的移动端入口别名，API 与原组件一致。
+`MTransition`、`MTransitionFade`、`MTransitionScale`、`MTransitionSlide`、`MTransitionZoom`、`MTransitionCollapse`、`MTransitionReveal` 分别是对应组件的移动端入口别名，API 与原组件一致。
 
 ### 何时使用
 
@@ -247,6 +247,80 @@ const handleRemove = () => {
 ```
 :::
 
+### 从触发元素展开
+
+`TransitionReveal` 让子元素从触发元素展开，关闭时缩回该元素当时的位置。动画分两层：父元素是窗口，用 `clip-path` 从触发元素的盒子裁到子元素的盒子；子元素是画面，用 `transform` 从触发元素的大小放大回原位。两层是同一段 333ms 动画，四边始终对齐。因此父元素应只包含这一个子元素，并且自身不缩放、不旋转（平移不影响）。
+
+不传 `trigger-element` 时，取打开那次点击的元素；点在按钮或链接里的文字、图标上时，从整个按钮或链接展开。不是由点击打开、元素已移出文档或没有尺寸时，改为淡入淡出。展开或缩回还没结束又切换时，沿原路返回。
+
+子元素和触发元素长得不一样时（例如按钮打开卡片、对话框），第一帧会是一块裁成按钮大小的卡片盖在按钮上，显得突兀。有三种处理，可以叠加：
+
+- `offset`：裁掉靠近触发元素的一段。数值是打开时间轴上的毫秒数：打开立即从这一刻的姿态弹出，关闭停在同一个姿态就结束。缓动起步慢、收尾更慢，同一段路程在关闭结尾占的时间更长，所以关闭裁掉的毫秒数会更多（`offset` 为 `80` 时，打开跳过 21% 的路程、播 253ms，关闭在 175ms 结束）。展开途中反向时退回到起始的那个姿态。固定的毫秒数保证不了触发元素上没有残影：要走多远才离开按钮，取决于按钮和画面的相对位置。设为 `'auto'` 时，每次开合按当时的布局算出窗口刚离开触发元素（留 8px）的姿态，打开从这里开始、关闭停在这里；画面终点本身就压着触发元素时，改为在原位淡入淡出。`Modal` 使用的是 `'auto'`，并打开了 `opacity`，蒙层通过 `companion` 和弹窗同一段时间淡入淡出。
+- `opacity`：画面在实际播放的这一段里从透明匀速淡入、关闭时匀速淡出到透明（透明度不跟随位置的缓动，否则起步慢，前几十毫秒几乎看不见）。和 `offset` 一起用时，第一帧和最后一帧都是透明的，不会以半透明出现或突然消失。
+- `delay`：窗口照常从触发元素展开，画面晚一点淡入、关闭时提前淡出。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="reveal-basic">
+		<!-- 按钮默认 250ms 防抖，展开途中再点才能触发退回 -->
+		<Button :wait="0" @click="isVisible = !isVisible">
+			{{ isVisible ? '收起' : '展开' }}
+		</Button>
+		<!-- 窗口：只放这一个子元素，自身不缩放、不旋转 -->
+		<div class="reveal-basic__frame">
+			<TransitionReveal offset="auto" opacity>
+				<div v-show="isVisible" class="reveal-basic__panel">
+					<p>标题</p>
+					<p>从点中的按钮展开，收起时缩回按钮</p>
+				</div>
+			</TransitionReveal>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, TransitionReveal } from '@deot/vc';
+
+const isVisible = ref(false);
+</script>
+
+<style scoped>
+.reveal-basic {
+	position: relative;
+	height: 220px;
+}
+
+.reveal-basic__frame {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+.reveal-basic__panel {
+	position: absolute;
+	top: 60px;
+	left: 120px;
+	width: 280px;
+	padding: 12px 16px;
+	border-radius: 8px;
+	background: var(--vc-background-color);
+	box-shadow: 0 6px 24px rgb(0 0 0 / 16%);
+	color: var(--vc-foreground-color);
+	pointer-events: auto;
+}
+</style>
+```
+:::
+
 ### 内存排查
 
 Chrome DevTools 打开时会持有播放过动画的元素：即使手动回收（Collect garbage），DOM 节点与 JS 堆也只增不减，关闭 DevTools 后才会回收。Performance Monitor、Animations 面板打开时最明显，Vue 原生 `Transition` 同样如此（Chrome 154 实测）。
@@ -257,7 +331,7 @@ Chrome DevTools 打开时会持有播放过动画的元素：即使手动回收�
 
 ### Transition 系列公共属性
 
-下列属性由六个 Transition 组件共同声明。设置 `group` 后，组件使用 Vue 的 `TransitionGroup`，否则使用 `Transition`。
+下列属性由 Transition、TransitionFade、TransitionScale、TransitionSlide、TransitionZoom、TransitionCollapse 六个组件共同声明，`TransitionReveal` 不使用，见下方单独的属性表。设置 `group` 后，组件使用 Vue 的 `TransitionGroup`，否则使用 `Transition`。
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
@@ -282,6 +356,18 @@ Chrome DevTools 打开时会持有播放过动画的元素：即使手动回收�
 | `TransitionSlide` | `vc-transition-slide` | `left`、`right`、`top`、`bottom`、`left-part`、`right-part`、`top-part`、`bottom-part`、`none` | `left` | `{ animationFillMode: 'both', animationTimingFunction: undefined }` |
 | `TransitionZoom` | `vc-transition-zoom` | `x`、`y`、`center`、`none` | `x` | `{ animationFillMode: 'both', animationTimingFunction: undefined }` |
 | `TransitionCollapse` | `vc-transition` | `none`；内置折叠动画不读取 `prefix` 和 `mode` | `none` | `{ animationFillMode: 'both', animationTimingFunction: 'ease-out' }` |
+
+### TransitionReveal 属性
+
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| trigger-element | 打开时从它展开，关闭时缩回它当时的位置；传 `null` 时淡入淡出 | `Element \| null` | - | 打开那次点击的元素 |
+| offset | 打开时间轴上靠近触发元素的一段裁掉多少毫秒：打开（`enter`）立即从这一刻的姿态开始，关闭（`leave`）停在同一个姿态结束（按缓动换算，关闭实际裁掉的毫秒数更多）；淡入淡出时同样适用。超过 333 时按 332 处理。`'auto'` 按布局取窗口刚离开触发元素（留 8px）的姿态，终点仍压着触发元素时淡入淡出 | `number \| 'auto' \| { enter?: number; leave?: number }` | - | `0` |
+| opacity | 画面在实际播放的这一段里匀速淡入、淡出；与 `delay` 一起用时从两者中较晚的一刻开始淡入 | `boolean` | - | `false` |
+| companion | 与画面同一段时间匀速淡入淡出的元素，如蒙层；它的显示、隐藏由使用方控制，应在关闭的 `after-leave` 之后才隐藏 | `Element \| null` | - | `null` |
+| delay | 画面晚多少毫秒开始淡入（`enter`）、提前多少毫秒淡出完（`leave`），单位为毫秒；窗口照常展开、缩回。与系列公共属性的 `delay` 不同，它不推迟整段动画。超过 333 时按 332 处理；淡入淡出时不使用 | `number \| { enter?: number; leave?: number }` | - | `0` |
+
+`TransitionReveal` 用 `enter`、`leave` 钩子播放动画并在结束时调用 `done`，请监听 `before-enter`、`after-enter`、`before-leave`、`after-leave`。
 
 ### Transition 系列事件
 

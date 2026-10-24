@@ -4,6 +4,7 @@ import {
 	Transition,
 	TransitionCollapse,
 	TransitionFade,
+	TransitionReveal,
 	TransitionScale,
 	TransitionSlide,
 	TransitionZoom
@@ -15,6 +16,7 @@ describe('index.ts', () => {
 		expect(typeof Transition).toBe('object');
 		expect(typeof TransitionCollapse).toBe('object');
 		expect(typeof TransitionFade).toBe('object');
+		expect(typeof TransitionReveal).toBe('object');
 		expect(typeof TransitionScale).toBe('object');
 		expect(typeof TransitionSlide).toBe('object');
 		expect(typeof TransitionZoom).toBe('object');

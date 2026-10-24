@@ -9,11 +9,12 @@
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Button, TransitionFade, TransitionScale, TransitionSlide, TransitionCollapse, TransitionZoom } from '@deot/vc';
+import { Button, TransitionFade, TransitionReveal, TransitionScale, TransitionSlide, TransitionCollapse, TransitionZoom } from '@deot/vc';
 
 const visible = ref(true);
 const effects = [
 	{ name: 'Fade', component: TransitionFade }, { name: 'Scale', component: TransitionScale },
-	{ name: 'Slide', component: TransitionSlide }, { name: 'Collapse', component: TransitionCollapse }, { name: 'Zoom', component: TransitionZoom }
+	{ name: 'Slide', component: TransitionSlide }, { name: 'Collapse', component: TransitionCollapse }, { name: 'Zoom', component: TransitionZoom },
+	{ name: 'Reveal', component: TransitionReveal }
 ];
 </script>
