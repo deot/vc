@@ -150,6 +150,8 @@ export const useViewer = (props: Props, onFulfilled: () => void) => {
 		// 两项时先把已渲染的那份挪到滑入的一侧，和位移同一拍生效
 		count.value === 2 && (lead.value = step);
 		await slideTo(-step * viewport.value.w);
+		// 切换途中关闭了：留在原来的一项，缩回它的触发元素
+		if (isClosing) return;
 		// 函数 ref 切走时不会置空：先清掉，新的当前项渲染时再登记。自定义页、非图片页就留空
 		activeReveal.value = null;
 		activeImage.value = null;
@@ -167,6 +169,14 @@ export const useViewer = (props: Props, onFulfilled: () => void) => {
 		isClosing = true;
 		gesture.cancel();
 		isDragging.value = false;
+		// 切换途中关闭：舞台停在此刻画到的位置（铺满根元素，两者盒子之差就是位移），渲染后再按这里量
+		if (isSliding.value && stage.value && root.value) {
+			const now = stage.value.getBoundingClientRect();
+			const box = root.value.getBoundingClientRect();
+			offset.value = { x: now.left - box.left, y: now.top - box.top };
+			isSliding.value = false;
+			await nextTick();
+		}
 		// 拖动停在哪就从哪缩回：舞台不归零，窗口和画面按当前的位置量；缩不回去（没有触发元素或量不到）时淡出
 		activeReveal.value && activeImage.value?.straighten();
 		const leaving = activeReveal.value?.leave();

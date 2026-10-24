@@ -1349,6 +1349,39 @@ describe('FilePreview', () => {
 		expect(document.querySelector('.vc-file-viewer')).toBeNull();
 	});
 
+	it('stops a running slide where it is and closes back to the current item', async () => {
+		const onClose = vi.fn();
+		const trigger = createTrigger('img', rectOf(12, 16, 80, 40));
+		trigger.addEventListener('click', () => {
+			ImagePreview.open({ data: [{ src: photo, width: 400, height: 200 }, { src: banner, width: 400, height: 200 }], onClose });
+		});
+		trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		await nextTick();
+		await load(activeMedia(), 400, 200);
+		await endMotion();
+
+		key('ArrowRight');
+		await nextTick();
+		expect(stage().style.transform).toBe('translate3d(-1024px, 0px, 0)');
+		expect(stage().classList.contains('is-sliding')).toBe(true);
+
+		// 切换过渡进行到 -400px 时关闭：舞台停在这里，从这里缩回缩略图
+		stage().getBoundingClientRect = () => rectOf(-400, 0, 1024, 768);
+		key('Escape');
+		await flush();
+		expect(stage().style.transform).toBe('translate3d(-400px, 0px, 0)');
+		expect(stage().classList.contains('is-sliding')).toBe(false);
+		expect(motion()?.clip[1]).toBe('inset(16px 532px 712px 412px)');
+		expect(isOpen()).toBe(false);
+
+		// 切换的等待结束后不再换到下一项
+		await endTransition(stage());
+		expect(activeSlide()?.getAttribute('data-index')).toBe('0');
+		await endMotion();
+		expect(onClose).toHaveBeenCalledTimes(1);
+		expect(document.querySelector('.vc-file-viewer')).toBeNull();
+	});
+
 	it('drags up to close from the raised position and lands on the same thumbnail', async () => {
 		const trigger = createTrigger('img', rectOf(12, 16, 80, 40));
 		trigger.addEventListener('click', () => {

@@ -23,16 +23,18 @@ export const thumbnailOf = (el: Element | null) => {
 // 读一次布局，让此前写入的样式先生效，之后的改动才有过渡
 export const reflow = (el?: Element | null) => el?.getBoundingClientRect();
 
-// 等元素自身的过渡结束，忽略子元素冒泡上来的 transitionend；未触发时按时长兜底
+// 等元素自身的过渡结束或被取消，忽略子元素冒泡上来的事件；都未触发时按时长兜底
 export const waitTransition = (el?: Element | null) => {
 	return new Promise<void>((resolve) => {
 		const done = (e?: Event) => {
 			if (e && e.target !== el) return;
 			el?.removeEventListener('transitionend', done);
+			el?.removeEventListener('transitioncancel', done);
 			clearTimeout(timer);
 			resolve();
 		};
 		const timer = setTimeout(done, REVEAL_DURATION + 50);
 		el?.addEventListener('transitionend', done);
+		el?.addEventListener('transitioncancel', done);
 	});
 };
