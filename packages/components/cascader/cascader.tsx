@@ -19,7 +19,6 @@ import { toCurrentValue, toModelValue } from '../select/utils';
 import type { TreeData, TreeValue, TreeLabel } from '../select/utils';
 import type { SelectPath } from '../select/select-search';
 import type { FormItemProvide } from '../form/types';
-import type { CellChangeOptions } from './types';
 import { props as cascaderProps } from './cascader-props';
 
 const COMPONENT_NAME = 'vc-cascader';
@@ -185,11 +184,13 @@ export const Cascader = defineComponent({
 		};
 
 		/**
-		 * 改变后的回调
-		 * @param options 改变后的值
+		 * 移入某项（鼠标或方向键）：展开下一级，见 useColumnNavigate 的 hover
+		 * @param item 该项
+		 * @param columnIndex 列
+		 * @param rowIndex 行
 		 */
-		const handleCellChange = async (options: CellChangeOptions) => {
-			const { value, rowIndex, columnIndex } = options || {};
+		const handleCellChange = async (item: TreeData, columnIndex: number, rowIndex: number) => {
+			const { value } = item;
 			try {
 				const len = currentValue.value.slice(columnIndex).length;
 				currentValue.value.splice(columnIndex, len, value);
@@ -274,10 +275,10 @@ export const Cascader = defineComponent({
 		};
 
 		// 方向键：搜索时在结果列表内移动，否则在级联列内移动（等同鼠标移入）；回车等同点击
-		const { paths, searchWidth, navigator } = useColumnNavigate({
+		const { paths, searchWidth, navigator, handleMove } = useColumnNavigate({
 			getPath: () => currentValue.value,
 			getColumns: () => rebuildData.value as any,
-			hover: (item, columnIndex, rowIndex) => handleCellChange({ value: item.value, rowIndex, columnIndex }),
+			hover: handleCellChange,
 			getItem: (columnIndex, rowIndex) => {
 				return colRef.value[columnIndex]?.$el.querySelectorAll('.vc-cascader-column__item')[rowIndex];
 			},
@@ -340,7 +341,7 @@ export const Cascader = defineComponent({
 					index={index}
 					value={currentValue.value[index]}
 					data={rebuildData.value[index] as any}
-					onChange={handleCellChange}
+					onChange={handleMove}
 					onClick={handleCellClick}
 				/>
 			);

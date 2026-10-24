@@ -5,7 +5,7 @@ import { enUS, zhCN } from '@deot/vc-locale';
 import { CascaderView } from '../cascader-view';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
-import { vi } from 'vitest';
+import { vi, onTestFinished } from 'vitest';
 import * as Dom from '@deot/helper-dom';
 
 vi.mock('@deot/helper-dom', { spy: true });
@@ -20,7 +20,7 @@ const flush = async () => {
 
 const fireMouse = (
 	el: Element,
-	type: 'mouseenter' | 'mouseleave' | 'mousedown' | 'mouseup' | 'click'
+	type: 'mouseenter' | 'mousemove' | 'mouseleave' | 'mousedown' | 'mouseup' | 'click'
 ) => {
 	el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true }));
 };
@@ -217,7 +217,7 @@ describe('Cascader interaction', () => {
 		wrapper.unmount();
 	});
 
-	it('cell mouseenter highlights and click syncs value', async () => {
+	it('cell mousemove highlights and click syncs value', async () => {
 		const value = ref<any[]>([...selectedValue]);
 		const wrapper = mount(() => (
 			<Cascader v-model={value.value} data={options} />
@@ -231,7 +231,7 @@ describe('Cascader interaction', () => {
 		expect(lastCol.length).toBe(2);
 
 		const target = lastCol[1] as HTMLElement;
-		fireMouse(target, 'mouseenter');
+		fireMouse(target, 'mousemove');
 		await flush();
 		expect(getCells(2)[1].className).toContain('is-select');
 
@@ -240,6 +240,31 @@ describe('Cascader interaction', () => {
 		expect(value.value[2]).toBe('binjiang');
 
 		wrapper.unmount();
+	});
+
+	it('选项只响应真实的指针移动：内容在静止的指针下平移时补发的 mouseenter 不改变路径', async () => {
+		const wrapper = mount(() => (
+			<Cascader data={options} />
+		), { attachTo: document.body });
+		// 断言失败时也卸载，不影响后续用例
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await flush();
+		expect(getCols().length).toBe(1);
+
+		// 只有 mouseenter（布局变化后浏览器补发，没有 mousemove）：不展开
+		fireMouse(getCells(0)[0], 'mouseenter');
+		await flush();
+		expect(getCols().length).toBe(1);
+		expect(getCells(0)[0].className).not.toContain('is-select');
+
+		// 指针在选项上移动：展开下一级
+		fireMouse(getCells(0)[0], 'mousemove');
+		await flush();
+		expect(getCols().length).toBe(2);
+		expect(getCells(0)[0].className).toContain('is-select');
 	});
 
 	it('emits change & update:modelValue when selecting a leaf', async () => {
@@ -254,19 +279,19 @@ describe('Cascader interaction', () => {
 		await flush();
 
 		const cellInCol0 = getCells(0)[0] as HTMLElement; // zhejiang
-		fireMouse(cellInCol0, 'mouseenter');
+		fireMouse(cellInCol0, 'mousemove');
 		await flush();
 		cellInCol0.click();
 		await flush();
 
 		const cellInCol1 = getCells(1)[0] as HTMLElement; // hangzhou
-		fireMouse(cellInCol1, 'mouseenter');
+		fireMouse(cellInCol1, 'mousemove');
 		await flush();
 		cellInCol1.click();
 		await flush();
 
 		const cellInCol2 = getCells(2)[0] as HTMLElement; // xihu (leaf)
-		fireMouse(cellInCol2, 'mouseenter');
+		fireMouse(cellInCol2, 'mousemove');
 		await flush();
 		cellInCol2.click();
 		await flush();
@@ -289,7 +314,7 @@ describe('Cascader interaction', () => {
 		await flush();
 
 		const cell = getCells(0)[0] as HTMLElement; // zhejiang (parent)
-		fireMouse(cell, 'mouseenter');
+		fireMouse(cell, 'mousemove');
 		await flush();
 		cell.click();
 		await flush();
@@ -414,7 +439,7 @@ describe('Cascader interaction', () => {
 
 		expect(getCols().length).toBe(1);
 		const cell = getCells(0)[0] as HTMLElement;
-		fireMouse(cell, 'mouseenter');
+		fireMouse(cell, 'mousemove');
 
 		// 等待 loadData 异步完成
 		await sleep(10);
@@ -459,7 +484,7 @@ describe('Cascader interaction', () => {
 
 		// 选择一个 leaf 触发 sync(isLast=true) 关闭面板
 		const cell = getCells(2)[0] as HTMLElement;
-		fireMouse(cell, 'mouseenter');
+		fireMouse(cell, 'mousemove');
 		await flush();
 		cell.click();
 		await flush();

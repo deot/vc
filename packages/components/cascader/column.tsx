@@ -31,22 +31,26 @@ export const CascaderColumn = defineComponent({
 			emit('click');
 		};
 
-		const handleEnter = (value: string | number, rowIndex: number) => {
-			emit('change', { value, rowIndex, columnIndex: props.index });
+		// 指针在某项上移动（不用 mouseenter，见 useColumnNavigate 的 handleMove）：在列上统一监听，由 Cascader 判断是否需要处理
+		const handleMove = (e: MouseEvent) => {
+			const el = (e.target as Element).closest<HTMLElement>('.vc-cascader-column__item');
+			if (!el) return;
+			const rowIndex = +el.dataset.index!;
+			emit('change', props.data[rowIndex], props.index, rowIndex);
 		};
 
 		return () => {
 			return (
-				<div class="vc-cascader-column">
+				<div class="vc-cascader-column" onMousemove={handleMove}>
 					<Scroller class="vc-cascader-column__wrapper">
 						{
 							props.data.map((item: any, index: number) => {
 								return (
 									<div
 										key={index}
+										data-index={index}
 										class={[{ 'is-select': props.value == item.value }, 'vc-cascader-column__item']}
 										onClick={handleClick}
-										onMouseenter={() => handleEnter(item.value, index)}
 									>
 										<span>{item.label}</span>
 										{

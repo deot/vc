@@ -31,7 +31,7 @@ const getSearchInput = () => document.querySelector('.vc-tree-select input[type=
 
 const fireMouse = (
 	el: Element,
-	type: 'mouseenter' | 'mouseleave' | 'mousedown' | 'mouseup' | 'click'
+	type: 'mouseenter' | 'mousemove' | 'mouseleave' | 'mousedown' | 'mouseup' | 'click'
 ) => {
 	el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true }));
 };
@@ -1102,7 +1102,7 @@ describe('TreeSelect interaction', () => {
 		expect(document.querySelectorAll('.vc-tree-select__cascader-column').length).toBe(1);
 
 		const firstRow = document.querySelector('.vc-tree-select__cascader-item') as HTMLElement;
-		fireMouse(firstRow, 'mouseenter');
+		fireMouse(firstRow, 'mousemove');
 		await flush();
 
 		const firstLabel = document.querySelector('.vc-tree-select__cascader-label') as HTMLElement;
@@ -1121,6 +1121,32 @@ describe('TreeSelect interaction', () => {
 		expect(value.value.length).toBeLessThan(5);
 
 		wrapper.unmount();
+	});
+
+	it('cascader：选项只响应真实的指针移动，内容在静止的指针下平移时补发的 mouseenter 不改变路径', async () => {
+		const wrapper = mount(() => (
+			<TreeSelect data={freshData()} max={99} cascader />
+		), { attachTo: document.body });
+		// 断言失败时也卸载，不影响后续用例
+		onTestFinished(() => wrapper.unmount());
+		await flush();
+
+		await wrapper.trigger('click');
+		await flush();
+		const getColumns = () => document.querySelectorAll('.vc-tree-select__cascader-column');
+		const getRow = () => document.querySelector('.vc-tree-select__cascader-item') as HTMLElement;
+		expect(getColumns().length).toBe(1);
+
+		// 只有 mouseenter（布局变化后浏览器补发，没有 mousemove）：不展开
+		fireMouse(getRow(), 'mouseenter');
+		await flush();
+		expect(getColumns().length).toBe(1);
+
+		// 指针在选项上移动：展开下一级
+		fireMouse(getRow(), 'mousemove');
+		await flush();
+		expect(getColumns().length).toBe(2);
+		expect(getRow().className).toContain('is-select');
 	});
 
 	it('checkStrictly tag close removes single value', async () => {
@@ -1594,7 +1620,7 @@ describe('Tree store & node unit', () => {
 		expect(w2.find('.vc-tree-select__cascader-item').exists()).toBe(true);
 		// 触发 hover/checkbox/click 路径，覆盖 getNodeState/handleHover/handleCheckboxChange/handleLabelClick
 		const item = document.querySelector('.vc-tree-select__cascader-item') as HTMLElement;
-		fireMouse(item, 'mouseenter');
+		fireMouse(item, 'mousemove');
 		await flush();
 		const checkbox = document.querySelector('.vc-tree-select__cascader-checkbox input') as HTMLInputElement;
 		checkbox?.click();

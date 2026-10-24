@@ -132,11 +132,12 @@ export const getPathsWidth = (el?: HTMLElement | null) => {
 };
 
 /**
- * 级联列（Cascader / TreeSelect 级联模式）的键盘与搜索结果切换
+ * 级联列（Cascader / TreeSelect 级联模式）的鼠标移入、键盘与搜索结果切换
+ * 	- 鼠标：指针在某项上移动时等同移入该项，见 handleMove
  * 	- 方向键：在路径末端所在的列内上下移动，左右回到父级 / 进入子级
  * 	- 搜索时由搜索结果列表接管
  * @param options ~
- * @returns paths：搜索结果列表（SelectPaths）的 ref；searchWidth：它的宽度；navigator：交给键盘
+ * @returns paths：搜索结果列表（SelectPaths）的 ref；searchWidth：它的宽度；navigator：交给键盘；handleMove：绑在各项的 mousemove 上
  */
 export const useColumnNavigate = (options: ColumnNavigateOptions) => {
 	const { getPath, getColumns, hover, getItem, enter, isSearching, getView } = options;
@@ -193,5 +194,20 @@ export const useColumnNavigate = (options: ColumnNavigateOptions) => {
 		enter: () => (isSearching() ? paths.value?.enter?.() : enter())
 	};
 
-	return { paths, searchWidth, navigator };
+	/**
+	 * 指针在某项上移动：等同移入该项
+	 * 	- 不用 mouseenter：列数、列宽变化使内容在静止的指针下平移时（如弹层贴边），浏览器会补发 mouseenter 但不补发 mousemove，
+	 * 	  响应它会连锁展开 / 收起（指针下换了一项，又引起平移）
+	 * 	- 已是路径末端的一项不重复处理（在同一项内移动时每次都会触发）
+	 * @param item ~
+	 * @param columnIndex ~
+	 * @param rowIndex ~
+	 */
+	const handleMove = (item: ColumnItem, columnIndex: number, rowIndex: number) => {
+		const path = getPath();
+		if (path.length === columnIndex + 1 && path[columnIndex] == item.value) return;
+		hover(item, columnIndex, rowIndex);
+	};
+
+	return { paths, searchWidth, navigator, handleMove };
 };

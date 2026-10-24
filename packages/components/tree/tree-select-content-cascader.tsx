@@ -84,11 +84,6 @@ export const TreeSelectContentCascader = defineComponent({
 
 		const searching = computed(() => !!props.searchRegex?.highlight);
 
-		const handleHover = (value: TreeValue, columnIndex: number) => {
-			const len = currentValue.value.length - columnIndex;
-			currentValue.value.splice(columnIndex, len, value);
-		};
-
 		const sync = async () => {
 			await nextTick();
 			const tree = treeRef.value;
@@ -164,10 +159,12 @@ export const TreeSelectContentCascader = defineComponent({
 		const renderPrefix = ({ item }: SelectPath) => renderCheckbox(item, getNodeState(item));
 
 		// 方向键：搜索时在结果列表内移动，否则在级联列内移动（等同鼠标移入）
-		const { paths, searchWidth, navigator } = useColumnNavigate({
+		const { paths, searchWidth, navigator, handleMove } = useColumnNavigate({
 			getPath: () => currentValue.value,
 			getColumns: () => rebuildData.value,
-			hover: (item, columnIndex) => handleHover(item.value, columnIndex),
+			hover: (item, columnIndex) => {
+				currentValue.value.splice(columnIndex, currentValue.value.length - columnIndex, item.value);
+			},
 			getItem: (columnIndex, rowIndex) => {
 				const column = rootRef.value?.querySelectorAll('.vc-tree-select__cascader-column')[columnIndex];
 				return column?.querySelectorAll('.vc-tree-select__cascader-item')[rowIndex];
@@ -181,6 +178,16 @@ export const TreeSelectContentCascader = defineComponent({
 			isSearching: () => searching.value,
 			getView: () => rootRef.value
 		});
+
+		// 指针在某项上移动（不用 mouseenter，见 useColumnNavigate 的 handleMove）：在列区统一监听，按 data-index 找到该项
+		const handleItemMove = (e: MouseEvent) => {
+			const el = (e.target as Element).closest<HTMLElement>('.vc-tree-select__cascader-item');
+			const column = el?.closest<HTMLElement>('.vc-tree-select__cascader-column');
+			if (!el || !column) return;
+			const columnIndex = +column.dataset.index!;
+			const rowIndex = +el.dataset.index!;
+			handleMove(rebuildData.value[columnIndex][rowIndex], columnIndex, rowIndex);
+		};
 
 		expose(navigator);
 
@@ -222,27 +229,28 @@ export const TreeSelectContentCascader = defineComponent({
 						vShow={!searching.value}
 						class="vc-tree-select__cascader-columns"
 						contentClass="vc-tree-select__cascader-columns-content"
+						onMousemove={handleItemMove}
 					>
 						{
 							columns.value.map((columnIndex) => {
 								const col = rebuildData.value[columnIndex];
 								if (!col || !col.length) return null;
 								return (
-									<div class="vc-tree-select__cascader-column" key={columnIndex}>
+									<div class="vc-tree-select__cascader-column" key={columnIndex} data-index={columnIndex}>
 										<Scroller height={180} class="vc-tree-select__cascader-column-wrapper">
 											{
-												col.map((item: TreeData) => {
+												col.map((item: TreeData, rowIndex: number) => {
 													const state = getNodeState(item);
 													const isSelect = currentValue.value[columnIndex] === item.value;
 													const child = hasChildren(item);
 													return (
 														<div
 															key={item.value}
+															data-index={rowIndex}
 															class={[
 																'vc-tree-select__cascader-item',
 																{ 'is-select': isSelect, 'is-disabled': !!item.disabled }
 															]}
-															onMouseenter={() => handleHover(item.value, columnIndex)}
 															onClick={() => handleLabelClick(!state.checked, item)}
 														>
 															{renderCheckbox(item, state)}
