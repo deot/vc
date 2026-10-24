@@ -1,6 +1,5 @@
 <template>
 	<Modal
-		ref="target"
 		v-model="isVisible"
 		title="title2"
 		@ok="handleOk"
@@ -22,7 +21,6 @@ defineProps({
 
 const emit = defineEmits(['portal-fulfilled', 'portal-rejected']);
 
-const target = ref(null);
 const isVisible = ref(false);
 const items = ref([1]);
 let timer;
@@ -31,7 +29,6 @@ onMounted(() => {
 	isVisible.value = true;
 	timer = setInterval(() => {
 		items.value = Array.from({ length: Math.ceil(Math.random() * 30) + 5 }, (e, i) => i);
-		target.value?.resetOrigin();
 	}, 2000);
 });
 

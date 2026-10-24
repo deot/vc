@@ -6,22 +6,17 @@ import {
 	watch,
 	computed,
 	defineComponent,
-	onMounted,
-	onUnmounted,
-	onUpdated,
 	getCurrentInstance,
 	Fragment
 } from 'vue';
-import { debounce } from 'lodash-es';
 import { useScrollbar, useDrag, useKeyboard } from '@deot/vc-hooks';
 import type { DragPoint } from '@deot/vc-hooks';
 
 import { Icon } from '../icon';
 import { Button } from '../button';
-import { TransitionScale, TransitionFade } from '../transition';
+import { TransitionReveal } from '../transition';
 import { Customer } from '../customer';
 import { Scroller } from '../scroller';
-import { VcInstance } from '../vc';
 import { useLocale } from '../locale';
 
 import { props as modalProps } from './modal-view-props';
@@ -41,11 +36,14 @@ export const ModalView = defineComponent({
 		// $refs
 		const container = shallowRef<HTMLElement>();
 		const wrapper = shallowRef<HTMLElement>();
+		const maskElement = shallowRef<HTMLElement>();
 		const header = shallowRef<HTMLElement>();
 
 		const x = ref(props.x!);
 		const y = ref(props.y!);
 		const isActive = ref(false);
+		// 蒙层打开时显示，弹窗缩回结束才隐藏；透明度由弹窗的 TransitionReveal 带着一起淡入淡出
+		const isMaskShown = ref(false);
 		const okText = computed(() => {
 			return typeof props.okText === 'undefined'
 				? t('vc.Modal.okButtonText')
@@ -117,32 +115,14 @@ export const ModalView = defineComponent({
 
 		let startX = 0;
 		let startY = 0;
-		// Portal调用时，可作为初始值
-		let originX = VcInstance.globalEvent.x;
-		let originY = VcInstance.globalEvent.y;
 
-		/**
-		 * 设置原始坐标
-		 */
-		const resetOrigin = debounce(function () {
-			const el = container.value;
-
-			if (!el) return;
-
-			// wrapper 铺满视口，offsetLeft / offsetTop 即容器在视口中的位置
-			el.style.transformOrigin = `${originX - el.offsetLeft}px ${originY - el.offsetTop}px 0`;
-		}, 250, { leading: true });
-
-		const handleEnter = () => {
-			if (instance.isUnmounted) return;
-			resetOrigin();
-		};
 		/**
 		 * 动画执行后关闭, 关闭事件都会被执行
 		 * visible-change 由移除之后触发
 		 * 同时portal-fulfilled兼容portal设计
 		 */
 		const handleRemove = () => {
+			isMaskShown.value = false;
 			!instance.isUnmounted && (
 				emit('close'),
 				emit('portal-fulfilled'),
@@ -207,13 +187,6 @@ export const ModalView = defineComponent({
 			);
 		};
 
-		const handleClick = (e: MouseEvent) => {
-			// isActive click先触发,后设置后
-			if (props.draggable && isActive.value && originX) return;
-			originX = e.x;
-			originY = e.y;
-		};
-
 		const handleMouseMove = (e: DragPoint) => {
 			x.value += e.clientX - startX;
 			y.value += e.clientY - startY;
@@ -240,27 +213,10 @@ export const ModalView = defineComponent({
 			return true;
 		};
 
-		// 标题栏拖动只用鼠标；位置随拖动即时生效，mouseup 丢失时与松开同样处理
+		// 标题栏拖动只用鼠标；位置随拖动即时生效
 		const drag = useDrag({
 			start: (_, point) => handleMouseDown(point),
-			move: (_, point) => handleMouseMove(point),
-			// 放手后重新设置原点
-			end: () => resetOrigin()
-		});
-
-		onMounted(() => {
-			document.addEventListener('click', handleClick, true);
-		});
-
-		onUpdated(() => {
-			/**
-			 * 非拖动状态下, 外部,会触发设置初始值
-			 */
-			!props.draggable && isActive.value && resetOrigin();
-		});
-
-		onUnmounted(() => {
-			document.removeEventListener('click', handleClick, true);
+			move: (_, point) => handleMouseMove(point)
 		});
 
 		watch(
@@ -271,35 +227,37 @@ export const ModalView = defineComponent({
 			{ immediate: true }
 		);
 
+		// 同步置上：与弹窗同一次渲染里显示，展开的第一帧蒙层就在
+		watch(isActive, v => v && (isMaskShown.value = true), { flush: 'sync', immediate: true });
+
 		expose({
 			isActive, // for portal
 			toggle(v?: boolean) {
 				v = typeof v === 'boolean' ? v : !isActive.value;
 				isActive.value = v;
-			},
-			resetOrigin
+			}
 		});
 		return () => {
 			const contentClass = [{ 'is-confirm': props.mode }, props.contentClass, 'vc-modal__content'];
 			return (
 				<div class="vc-modal">
-					<TransitionFade delay={40}>
-						<div
-							v-show={props.mask && isActive.value}
-							class="vc-modal__mask"
-							// @ts-ignore
-							onClick={e => handleClose(e, props.maskClosable)}
-						/>
-					</TransitionFade>
+					<div
+						v-show={props.mask && isMaskShown.value}
+						ref={maskElement}
+						class="vc-modal__mask"
+						onClick={e => handleClose(e, props.maskClosable)}
+					/>
+					{/* 从打开那次点击的元素展开、缩回；wrapper 铺满视口且不缩放，是展开的窗口。按布局从刚离开按钮的姿态立即弹出，按钮上不留残影 */}
 					<div
 						ref={wrapper}
 						style={props.wrapperStyle}
 						class={[props.wrapperClass, 'vc-modal__wrapper']}
 					>
-						<TransitionScale
-							mode="part"
-							// @ts-ignore
-							onEnter={handleEnter}
+						<TransitionReveal
+							offset="auto"
+							opacity
+							companion={maskElement.value}
+							// @ts-ignore 事件由 attrs 透传给内部 Transition
 							onAfterLeave={handleRemove}
 						>
 							<div
@@ -412,7 +370,7 @@ export const ModalView = defineComponent({
 									)
 								}
 							</div>
-						</TransitionScale>
+						</TransitionReveal>
 					</div>
 				</div>
 			);

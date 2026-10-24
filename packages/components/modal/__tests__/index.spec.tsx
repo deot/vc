@@ -24,8 +24,8 @@ const flush = async () => {
 	await nextTick();
 };
 
-// 等待 TransitionScale / TransitionFade 的离场动画完成。默认 duration=300ms,
-// 通过 use-transition 的 createNext 设置 setTimeout(done, duration) 触发 onAfterLeave。
+// 等待 TransitionReveal / TransitionFade 的离场动画完成（不超过 333ms）：
+// jsdom 下 WAAPI 由 z.test.setup.ts 按时长结束，蒙层由 use-transition 的 createNext 按 setTimeout(done, duration) 结束，之后触发 onAfterLeave。
 const flushTransition = async (extra = 600) => {
 	await nextTick();
 	await Utils.sleep(extra);
@@ -1235,23 +1235,7 @@ describe('ModalView expose', () => {
 		document.body.style.removeProperty('overflow');
 	});
 
-	it('resetOrigin: 缩放原点为点击位置相对容器的偏移（wrapper 铺满视口，offsetLeft / offsetTop 即视口坐标）', async () => {
-		const original = VcInstance.globalEvent;
-		VcInstance.globalEvent = { x: 300, y: 200 } as MouseEvent;
-		const wrapper = mount(ModalView, { attachTo: document.body });
-		await flush();
-
-		const container = wrapper.find('.vc-modal__container').element as HTMLElement;
-		Object.defineProperty(container, 'offsetLeft', { configurable: true, value: 100 });
-		Object.defineProperty(container, 'offsetTop', { configurable: true, value: 50 });
-		(wrapper.vm as any).resetOrigin();
-
-		expect(container.style.transformOrigin).toMatch(/^200px 150px 0/);
-		wrapper.unmount();
-		VcInstance.globalEvent = original;
-	});
-
-	it('expose: isActive / toggle / resetOrigin 都可访问', async () => {
+	it('expose: isActive / toggle 都可访问', async () => {
 		const wrapper = mount(ModalView, {
 			attachTo: document.body,
 			props: { modelValue: false }
@@ -1261,7 +1245,6 @@ describe('ModalView expose', () => {
 		const vm = wrapper.vm as any;
 		expect(vm.isActive).toBe(false);
 		expect(typeof vm.toggle).toBe('function');
-		expect(typeof vm.resetOrigin).toBe('function');
 
 		vm.toggle();
 		await flush();
@@ -1274,27 +1257,161 @@ describe('ModalView expose', () => {
 		vm.toggle(true);
 		await flush();
 		expect(vm.isActive).toBe(true);
+		wrapper.unmount();
+	});
+});
 
-		expect(() => vm.resetOrigin()).not.toThrow();
+describe('ModalView 展开与缩回', () => {
+	const rectOf = (left: number, top: number, width: number, height: number) => ({
+		x: left,
+		y: top,
+		left,
+		top,
+		width,
+		height,
+		right: left + width,
+		bottom: top + height,
+		toJSON() { return {}; }
+	}) as DOMRect;
+
+	const keyframesOf = (el: Element, key: string) => {
+		return el.getAnimations().map(item => (item.effect as KeyframeEffect).getKeyframes().map(frame => frame[key]));
+	};
+
+	// 打开在点击分发的过程中：jsdom 里派发是同步的，按分发中的事件模拟
+	const openBy = async (vm: any, target: EventTarget | null) => {
+		const previous = VcInstance.globalEvent;
+		VcInstance.globalEvent = { eventPhase: target ? 2 : 0, target } as any;
+		vm.toggle(true);
+		await nextTick();
+		VcInstance.globalEvent = previous;
+	};
+
+	// jsdom 不排版：wrapper 铺满 1024×768，弹窗 400×200 居中，按钮在左上角
+	const setup = () => {
+		const button = document.createElement('button');
+		const label = document.createElement('span');
+		button.append(label);
+		button.getBoundingClientRect = () => rectOf(10, 20, 100, 40);
+		document.body.append(button);
+		const wrapper = mount(ModalView, { attachTo: document.body });
+		const frame = wrapper.find('.vc-modal__wrapper').element as HTMLElement;
+		const container = wrapper.find('.vc-modal__container').element as HTMLElement;
+		frame.getBoundingClientRect = () => rectOf(0, 0, 1024, 768);
+		container.getBoundingClientRect = () => rectOf(312, 284, 400, 200);
+		return { wrapper, vm: wrapper.vm as any, button, label, frame, container };
+	};
+
+	afterEach(() => {
+		document.body.innerHTML = '';
+		document.body.style.removeProperty('overflow');
+	});
+
+	it('立即从按钮附近弹出，关闭时缩回按钮附近，窗口和画面同一条缓动', async () => {
+		const { wrapper, vm, label, frame, container } = setup();
+		const mask = wrapper.find('.vc-modal__mask').element as HTMLElement;
+		const timingsOf = (el: Element) => el.getAnimations().map(item => item.effect!.getTiming());
+		const zoomed = { clip: 'inset(20px 914px 708px 10px)', transform: 'translate3d(-302px, -269px, 0) scale(0.25)' };
+		const rest = { clip: 'inset(284px 312px 284px 312px)', transform: 'translate3d(0px, 0px, 0) scale(1)' };
+
+		// 点在按钮里的文字上，也从整个按钮展开
+		await openBy(vm, label);
+		expect(keyframesOf(frame, 'clipPath')).toEqual([[zoomed.clip, rest.clip]]);
+		expect(keyframesOf(container, 'transform')[0]).toEqual([zoomed.transform, rest.transform]);
+		// 立即弹出：按布局从窗口刚离开按钮（留 8px）的姿态开始。往下离开按钮要走 18.2% 的路程，即第 76.2ms
+		const [move, fade] = timingsOf(container);
+		expect(move).toMatchObject({ duration: 333, easing: 'cubic-bezier(0.4, 0, 0.22, 1)' });
+		expect(move.delay).toBeCloseTo(-76.16, 1);
+		expect(timingsOf(frame)[0].delay).toBeCloseTo(-76.16, 1);
+		// 弹窗和蒙层在剩下的约 257ms 里从透明匀速淡入，同一刻结束
+		expect(keyframesOf(container, 'opacity')[1]).toEqual([0, 1]);
+		expect(keyframesOf(mask, 'opacity')).toEqual([[0, 1]]);
+		[fade, ...timingsOf(mask)].forEach((item) => {
+			expect(item).toMatchObject({ delay: 0, easing: 'linear' });
+			expect(item.duration).toBeCloseTo(256.84, 1);
+		});
+		expect(mask.style.display).toBe('');
+
+		[container, frame, mask].forEach(el => el.getAnimations().forEach(item => item.finish()));
+		await flush();
+		expect(container.getAnimations()).toHaveLength(0);
+
+		await wrapper.find('.vc-modal__close').trigger('click');
+		await nextTick();
+		expect(keyframesOf(frame, 'clipPath')).toEqual([[rest.clip, zoomed.clip]]);
+		expect(keyframesOf(container, 'transform')[0]).toEqual([rest.transform, zoomed.transform]);
+		// 停在打开第一帧的姿态：关闭结尾裁掉约 151ms，弹窗和蒙层在这约 182ms 里淡出到透明，同一刻结束
+		[timingsOf(container)[0], ...timingsOf(frame)].forEach((item) => {
+			expect(item.duration).toBe(333);
+			expect(item.endDelay).toBeCloseTo(-151.35, 1);
+		});
+		expect(keyframesOf(container, 'opacity')[1]).toEqual([1, 0]);
+		expect(keyframesOf(mask, 'opacity')).toEqual([[1, 0]]);
+		[timingsOf(container)[1], ...timingsOf(mask)].forEach((item) => {
+			expect(item.duration).toBeCloseTo(181.65, 1);
+			expect(item.endDelay).toBeCloseTo(0, 6);
+		});
+		expect(wrapper.emitted('close')).toBeFalsy();
+		// 缩回结束前蒙层一直显示
+		expect(mask.style.display).toBe('');
+
+		[container, frame, mask].forEach(el => el.getAnimations().forEach(item => item.finish()));
+		await flush();
+		expect(container.style.display).toBe('none');
+		expect(mask.style.display).toBe('none');
+		expect(wrapper.emitted('close')).toBeTruthy();
 		wrapper.unmount();
 	});
 
-	it('handleClick (document capture): 点击会被记录到 originX/originY', async () => {
-		const wrapper = mount(ModalView, {
-			attachTo: document.body,
-			props: { modelValue: true }
-		});
+	it('关闭时还在展开：沿原路退回，不从头再来', async () => {
+		const { wrapper, vm, button, frame, container } = setup();
+		await openBy(vm, button);
+		const [clip] = frame.getAnimations();
+		const [move, opacity] = container.getAnimations();
+		const mask = wrapper.find('.vc-modal__mask').element;
+		const [maskFade] = mask.getAnimations();
+
+		vm.toggle(false);
+		await nextTick();
+		expect(frame.getAnimations()).toEqual([clip]);
+		expect(container.getAnimations()).toEqual([move, opacity]);
+		expect(mask.getAnimations()).toEqual([maskFade]);
+		[move, opacity, maskFade].forEach(item => expect(item.playbackRate).toBe(-1));
+
+		[clip, move, opacity, maskFade].forEach(item => item.finish());
+		await flush();
+		expect(container.style.display).toBe('none');
+		expect(wrapper.emitted('close')).toBeTruthy();
+		wrapper.unmount();
+	});
+
+	it('不是点击打开、触发元素移出文档时淡入淡出', async () => {
+		const { wrapper, vm, button, frame, container } = setup();
+		await openBy(vm, null);
+		expect(frame.getAnimations()).toHaveLength(0);
+		const mask = wrapper.find('.vc-modal__mask').element;
+		const finish = () => [container, frame, mask].forEach(el => el.getAnimations().forEach(item => item.finish()));
+		// 没有按钮可离开：整段淡入，蒙层同一段
+		expect(keyframesOf(container, 'opacity')).toEqual([[0, 1]]);
+		expect(keyframesOf(mask, 'opacity')).toEqual([[0, 1]]);
+		expect(container.getAnimations()[0].effect!.getTiming()).toMatchObject({ delay: 0, duration: 333 });
+		finish();
 		await flush();
 
-		// 不应抛出 (handleClick 走 default 分支并赋值 originX/originY)
-		expect(() => {
-			document.body.dispatchEvent(new MouseEvent('click', {
-				bubbles: true,
-				clientX: 80,
-				clientY: 90
-			}));
-		}).not.toThrow();
+		vm.toggle(false);
+		await nextTick();
+		finish();
+		await flush();
 
+		await openBy(vm, button);
+		finish();
+		await flush();
+		button.remove();
+		vm.toggle(false);
+		await nextTick();
+		expect(frame.getAnimations()).toHaveLength(0);
+		expect(keyframesOf(container, 'opacity')).toEqual([[1, 0]]);
+		expect(container.getAnimations()[0].effect!.getTiming()).toMatchObject({ endDelay: 0, duration: 333 });
 		wrapper.unmount();
 	});
 });
@@ -1305,8 +1422,7 @@ describe('ModalView 关闭事件 (close / update:modelValue / visible-change / p
 		document.body.style.removeProperty('overflow');
 	});
 
-	// handleRemove 在 TransitionScale 的 onAfterLeave 触发,
-	// 默认 duration=300ms, 设置 animationDuration 后 Vue 内部 setTimeout 兜底 timeout+1ms 触发 done
+	// handleRemove 在 TransitionReveal 的 onAfterLeave 触发：WAAPI 动画（不超过 333ms）结束后调用 done
 	it('关闭后 (动画结束) 触发 close / update:modelValue=false / visible-change=false / portal-fulfilled', async () => {
 		const wrapper = mount(ModalView, {
 			attachTo: document.body,
