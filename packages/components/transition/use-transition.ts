@@ -5,6 +5,7 @@ import {
 	TransitionGroup
 } from 'vue';
 import type { Component } from 'vue';
+import { timingOf } from './transition-props';
 import type { Props } from './transition-props';
 
 const trim = (str: string) => str.trim().replace(/\s+/g, ' ');
@@ -65,10 +66,10 @@ export const useTransition = () => {
 
 	// hooks
 	const handleBeforeEnter = (el: HTMLElement) => {
-		const duration = (props.duration as any).enter || props.duration;
+		const duration = timingOf(props.duration, 'enter');
 		el.style.animationDuration = `${duration}ms`;
 
-		const delay = (props.delay as any).enter || props.delay;
+		const delay = timingOf(props.delay, 'enter');
 		el.style.animationDelay = `${delay}ms`;
 
 		resetStyles(el);
@@ -88,7 +89,7 @@ export const useTransition = () => {
 		};
 	};
 	const handleEnter = async (el: HTMLElement, done: () => any) => {
-		const duration = (props.duration as any).enter || props.duration;
+		const duration = timingOf(props.duration, 'enter');
 		const next = createNext(done, duration);
 		try {
 			await attrs.onEnter?.(el, next);
@@ -104,10 +105,10 @@ export const useTransition = () => {
 	};
 
 	const handleBeforeLeave = (el: HTMLElement) => {
-		const duration = (props.duration as any).leave || props.duration;
+		const duration = timingOf(props.duration, 'leave');
 		el.style.animationDuration = `${duration}ms`;
 
-		const delay = (props.delay as any).leave || props.delay;
+		const delay = timingOf(props.delay, 'leave');
 		el.style.animationDelay = `${delay}ms`;
 
 		resetStyles(el);
@@ -117,7 +118,7 @@ export const useTransition = () => {
 
 	// 如果第二个参数为done, 且接收的话, 由用户管理结束
 	const handleLeave = async (el: HTMLElement, done: () => any) => {
-		const duration = (props.duration as any).leave || props.duration;
+		const duration = timingOf(props.duration, 'leave');
 		const next = createNext(done, duration);
 		try {
 			resetAbsolute(el);

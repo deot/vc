@@ -1,4 +1,10 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
+
+// 毫秒数，或进入、离开各自的毫秒数
+export type Timing = number | { enter?: number; leave?: number };
+
+// 取进入或离开的那一份；对象里没给时为 0
+export const timingOf = (value: Timing, phase: 'enter' | 'leave') => (typeof value === 'number' ? value : value[phase] ?? 0);
 
 export const props = {
 	/**
@@ -6,14 +12,14 @@ export const props = {
 	 * {enter: 300, leave: 300}
 	 */
 	duration: {
-		type: [Number, Object],
+		type: [Number, Object] as PropType<Timing>,
 		default: 300
 	},
 	/**
 	 * 进入/离开延迟时间
 	 */
 	delay: {
-		type: [Number, Object],
+		type: [Number, Object] as PropType<Timing>,
 		default: 0
 	},
 	/**

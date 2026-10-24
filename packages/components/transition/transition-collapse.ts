@@ -1,5 +1,5 @@
 import { defineComponent, h } from 'vue';
-import { props as transitionProps } from './transition-props';
+import { props as transitionProps, timingOf } from './transition-props';
 import { useTransition } from './use-transition';
 
 const COMPONENT_NAME = 'vc-transition-collapse';
@@ -22,7 +22,7 @@ export const TransitionCollapse = defineComponent({
 		};
 
 		const handleBeforeEnter = (el: HTMLElement) => {
-			const duration = (props.duration as any).enter || props.duration;
+			const duration = timingOf(props.duration, 'enter');
 
 			el.style.transition = getTransitionStyle(duration);
 			/* istanbul ignore next -- @preserve */
@@ -43,7 +43,7 @@ export const TransitionCollapse = defineComponent({
 		};
 
 		const handleEnter = async (el: HTMLElement, done: () => any) => {
-			const duration = (props.duration as any).enter || props.duration;
+			const duration = timingOf(props.duration, 'enter');
 			const next = createNext(done, duration);
 			try {
 				el.dataset.oldOverflow = el.style.overflow;
@@ -93,10 +93,10 @@ export const TransitionCollapse = defineComponent({
 		};
 
 		const handleLeave = (el: HTMLElement, done: () => any) => {
-			const duration = (props.duration as any).leave || props.duration;
+			const duration = timingOf(props.duration, 'leave');
 			const next = createNext(done, duration);
 			try {
-				const leaveDuration = (props.duration as any).leave || props.duration;
+				const leaveDuration = timingOf(props.duration, 'leave');
 				/* istanbul ignore next -- @preserve */
 				if (el.scrollHeight !== 0) {
 					/**
