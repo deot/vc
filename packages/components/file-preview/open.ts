@@ -1,7 +1,7 @@
 import { VcInstance } from '../vc';
 import type { FilePreviewOpenOptions } from './types';
 import { normalize, resolveCurrent } from './utils';
-import { getTriggerElement, openViewer } from './viewer';
+import { openViewer } from './viewer';
 
 const isPromise = (value: unknown): value is Promise<unknown> => (
 	!!value && typeof (value as Promise<unknown>).then === 'function'
@@ -9,7 +9,7 @@ const isPromise = (value: unknown): value is Promise<unknown> => (
 
 // 先交给全局 enhancer。未接管时，图片、视频、音频、文件都进同一个查看器
 export const open = (options: FilePreviewOpenOptions) => {
-	const triggerElement = getTriggerElement();
+	const triggerElement = VcInstance.getTriggerElement();
 	const { instance = null } = options;
 	const data = normalize(options.data);
 	const current = resolveCurrent(data, options.current);

@@ -4,7 +4,7 @@ import { FilePreview, ImagePreview, MFilePreview, MImagePreview } from '@deot/vc
 import { mount } from '@vue/test-utils';
 import { h, nextTick, ref } from 'vue';
 import { zhCN, enUS } from '@deot/vc-locale';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Utils } from '@deot/dev-test';
 import { VcInstance } from '../../vc';
 import { Portal } from '../../portal';
@@ -38,6 +38,23 @@ const flush = async () => {
 
 const endTransition = async (el: Element) => {
 	el.dispatchEvent(new Event('transitionend'));
+	await flush();
+};
+
+// 当前页开合动画的起点和终点：窗口的 clip-path、画面的 transform；没有进行中的动画时为 undefined
+const motion = () => {
+	const [clip] = reveal().getAnimations();
+	const [move] = revealBody().getAnimations();
+	if (!clip || !move) return;
+	const keyframes = (item: Animation) => (item.effect as KeyframeEffect).getKeyframes();
+	return {
+		clip: keyframes(clip).map(frame => frame.clipPath),
+		transform: keyframes(move).map(frame => frame.transform)
+	};
+};
+
+const endMotion = async () => {
+	[reveal(), revealBody()].forEach(el => el.getAnimations().forEach(item => item.finish()));
 	await flush();
 };
 
@@ -93,6 +110,16 @@ const rectOf = (left: number, top: number, width: number, height: number) => ({
 	bottom: top + height,
 	toJSON() { return {}; }
 }) as DOMRect;
+
+// jsdom 不排版：查看器的窗口和画面铺满 1024×768，拖动时跟着舞台走
+const layout = HTMLElement.prototype.getBoundingClientRect;
+beforeEach(() => {
+	vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+		if (!this.matches('.vc-reveal, .vc-reveal__body')) return layout.call(this);
+		const [, x = 0, y = 0] = /translate3d\((-?[\d.]+)px, (-?[\d.]+)px/.exec(stage()?.style.transform || '') || [];
+		return rectOf(+x, +y, window.innerWidth, window.innerHeight);
+	});
+});
 
 afterEach(() => {
 	Portal.clear(true);
@@ -558,28 +585,18 @@ describe('FilePreview', () => {
 		await nextTick();
 		const media = activeMedia();
 		expect(media.style.transform).toBe('translate3d(0px, 128px, 0) rotate(0deg) scale(1.024)');
-		expect(reveal().style.clipPath).toBe('');
+		expect(motion()).toBeUndefined();
 		expect(isOpen()).toBe(false);
 
-		// 起点：画面按 cover 铺进 100x40，窗口就是这一块。加载、解码、起点各隔一拍
-		Utils.def(media, 'naturalWidth', 1000);
-		Utils.def(media, 'naturalHeight', 500);
-		media.dispatchEvent(new Event('load'));
-		await nextTick();
-		await nextTick();
-		expect(revealBody().style.transform).toBe('translate3d(10px, 2.5px, 0) scale(0.09765625)');
-		expect(reveal().style.clipPath).toBe('inset(20px 914px 708px 10px)');
-		expect(isOpen()).toBe(false);
-
-		// 终点：画面回到自己的位置，窗口收到画面自己的盒子上，蒙层同一拍淡入
-		await flush();
-		expect(revealBody().style.transform).toBe('translate3d(0px, 0px, 0) scale(1)');
-		expect(reveal().style.clipPath).toBe('inset(128px 0px 128px 0px)');
-		expect(reveal().classList.contains('is-animating')).toBe(true);
+		// 画面按 cover 铺进 100x40、窗口就是这一块，再回到自己的位置、窗口收到画面的盒子上；蒙层同一拍淡入
+		await load(media, 1000, 500);
+		expect(motion()).toEqual({
+			clip: ['inset(20px 914px 708px 10px)', 'inset(128px 0px 128px 0px)'],
+			transform: ['translate3d(10px, 2.5px, 0) scale(0.09765625)', 'translate3d(0px, 0px, 0) scale(1)']
+		});
 		expect(isOpen()).toBe(true);
-		await endTransition(revealBody());
-		expect(reveal().style.clipPath).toBe('');
-		expect(reveal().classList.contains('is-animating')).toBe(false);
+		await endMotion();
+		expect(motion()).toBeUndefined();
 
 		Portal.clear(true);
 		ImagePreview.open({ data: [{ src: photo, width: 1000, height: 500 }] });
@@ -589,8 +606,8 @@ describe('FilePreview', () => {
 	});
 
 	it('zooms video, audio and file open from the clicked element and back', async () => {
-		const start = 'translate3d(10px, 2.5px, 0) scale(0.09765625)';
-		const clip = 'inset(20px 914px 708px 10px)';
+		const zoomed = { clip: 'inset(20px 914px 708px 10px)', transform: 'translate3d(10px, 2.5px, 0) scale(0.09765625)' };
+		const rest = { clip: 'inset(0px 0px 0px 0px)', transform: 'translate3d(0px, 0px, 0) scale(1)' };
 		const sources = { audio: sound, file: report };
 		for (const type of ['audio', 'file'] as const) {
 			const trigger = createTrigger('button', rectOf(10, 20, 100, 40));
@@ -598,32 +615,19 @@ describe('FilePreview', () => {
 				FilePreview.open({ data: [{ source: sources[type], type, name: type }] });
 			});
 			trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-			await nextTick();
-			const shell = reveal();
-			const body = revealBody();
 			expect(viewerEl().classList.contains('is-zoom')).toBe(true);
 			expect(isOpen()).toBe(false);
-			expect(body.style.transform).toBe(start);
-			expect(shell.style.clipPath).toBe(clip);
-			expect(document.querySelector(`.vc-${type}-slide`)).toBeTruthy();
-
 			await flush();
-			expect(body.style.transform).toBe('translate3d(0px, 0px, 0) scale(1)');
-			expect(shell.style.clipPath).toBe('inset(0px 0px 0px 0px)');
-			expect(shell.classList.contains('is-animating')).toBe(true);
+			expect(motion()).toEqual({ clip: [zoomed.clip, rest.clip], transform: [zoomed.transform, rest.transform] });
 			expect(isOpen()).toBe(true);
-			await endTransition(body);
-			expect(shell.style.clipPath).toBeFalsy();
+			expect(document.querySelector(`.vc-${type}-slide`)).toBeTruthy();
+			await endMotion();
 
-			// 关闭先落回静止位置，下一拍再缩回，蒙层和工具栏同一拍淡出，整层不淡出
+			// 缩回和蒙层、工具栏的淡出同一拍开始，整层不淡出
 			pointer(stage(), 'pointerdown', 12, 700);
 			pointer(stage(), 'pointerup', 12, 700);
 			await nextTick();
-			expect(body.style.transform).toBe('translate3d(0px, 0px, 0) scale(1)');
-			expect(isOpen()).toBe(true);
-			await flush();
-			expect(body.style.transform).toBe(start);
-			expect(shell.style.clipPath).toBe(clip);
+			expect(motion()).toEqual({ clip: [rest.clip, zoomed.clip], transform: [rest.transform, zoomed.transform] });
 			expect(isOpen()).toBe(false);
 			expect(viewerEl().classList.contains('is-zoom')).toBe(true);
 			Portal.clear(true);
@@ -636,24 +640,22 @@ describe('FilePreview', () => {
 			FilePreview.open({ data: [{ source: movie, type: 'video' }] });
 		});
 		trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-		await nextTick();
-		// 还没有画面尺寸时不先按整页放大，那是元素自己的起始位置
-		expect(revealBody().style.transform).toBe('');
-		expect(reveal().style.clipPath).toBe('');
+		await flush();
+		// 还没有画面尺寸时不先按整页放大
+		expect(motion()).toBeUndefined();
 		loadVideo(512, 384);
-		await nextTick();
+		await flush();
 
 		// 512×384 在 1024×768 里保持原尺寸并居中，再按 cover 铺满 100×40
-		expect(revealBody().style.transform).toBe('translate3d(-40px, -35px, 0) scale(0.1953125)');
-		expect(reveal().style.clipPath).toBe('inset(20px 914px 708px 10px)');
+		const zoomed = { clip: 'inset(20px 914px 708px 10px)', transform: 'translate3d(-40px, -35px, 0) scale(0.1953125)' };
+		const rest = { clip: 'inset(192px 256px 192px 256px)', transform: 'translate3d(0px, 0px, 0) scale(1)' };
+		expect(motion()).toEqual({ clip: [zoomed.clip, rest.clip], transform: [zoomed.transform, rest.transform] });
 
-		await flush();
-		expect(revealBody().style.transform).toBe('translate3d(0px, 0px, 0) scale(1)');
+		await endMotion();
 		pointer(stage(), 'pointerdown', 12, 700);
 		pointer(stage(), 'pointerup', 12, 700);
-		await flush();
-		expect(revealBody().style.transform).toBe('translate3d(-40px, -35px, 0) scale(0.1953125)');
-		expect(reveal().style.clipPath).toBe('inset(20px 914px 708px 10px)');
+		await nextTick();
+		expect(motion()).toEqual({ clip: [rest.clip, zoomed.clip], transform: [rest.transform, zoomed.transform] });
 	});
 
 	it('starts from the clicked item when the click is outside its thumbnail', async () => {
@@ -671,8 +673,9 @@ describe('FilePreview', () => {
 		name.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 		await nextTick();
 		loadVideo(512, 384);
-		await nextTick();
-		expect(reveal().style.clipPath).toBe('inset(0px 824px 736px 0px)');
+		await flush();
+		// 点在名称上：从整项 200×32 放大到 512×384 居中的画面
+		expect(motion()?.clip[0]).toBe('inset(0px 824px 736px 0px)');
 
 		Portal.clear(true);
 		thumb.addEventListener('click', () => {
@@ -681,8 +684,9 @@ describe('FilePreview', () => {
 		thumb.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 		await nextTick();
 		loadVideo(512, 384);
-		await nextTick();
-		expect(reveal().style.clipPath).toBe('inset(4px 998px 742px 4px)');
+		await flush();
+		expect(motion()?.clip[0]).toBe('inset(4px 998px 742px 4px)');
+		expect(motion()?.transform[0]).toBe('translate3d(-14.333333333333332px, -7px, 0) scale(0.057291666666666664)');
 	});
 
 	it('measures the element when the picture size arrives', async () => {
@@ -694,8 +698,9 @@ describe('FilePreview', () => {
 		await nextTick();
 		trigger.getBoundingClientRect = () => rectOf(0, 0, 10, 10);
 		loadVideo(512, 384);
-		await nextTick();
-		expect(reveal().style.clipPath).toBe('inset(0px 1014px 758px 0px)');
+		await flush();
+		expect(motion()?.clip[0]).toBe('inset(0px 1014px 758px 0px)');
+		expect(motion()?.transform[0]).toBe('translate3d(-8.333333333333334px, -5px, 0) scale(0.026041666666666668)');
 	});
 
 	it('drags a video down to close and lands back on the trigger', async () => {
@@ -707,8 +712,7 @@ describe('FilePreview', () => {
 		await nextTick();
 		loadVideo(512, 384);
 		await flush();
-		const body = revealBody();
-		await endTransition(body);
+		await endMotion();
 
 		pointer(stage(), 'pointerdown', 300, 200);
 		pointer(stage(), 'pointermove', 305, 420);
@@ -716,13 +720,12 @@ describe('FilePreview', () => {
 		expect(stage().style.transform).toBe('translate3d(0px, 132px, 0)');
 		expect((document.querySelector('.vc-file-viewer__bg') as HTMLElement).style.getPropertyValue('--vc-file-viewer-dim')).toBe('0.484375');
 
-		// 拖动并进起点、舞台归零，再从这里缩回
+		// 舞台停在拖到的位置，从这里缩回触发元素
 		pointer(stage(), 'pointerup', 305, 420);
 		await nextTick();
-		expect(stage().style.transform).toBe('translate3d(0px, 0px, 0)');
-		expect(body.style.transform).toBe('translate3d(0px, 132px, 0) scale(1)');
-		await flush();
-		expect(body.style.transform).toBe('translate3d(-40px, -35px, 0) scale(0.1953125)');
+		expect(stage().style.transform).toBe('translate3d(0px, 132px, 0)');
+		expect(motion()?.transform[1]).toBe('translate3d(-40px, -167px, 0) scale(0.1953125)');
+		expect(motion()?.clip[1]).toBe('inset(-112px 914px 840px 10px)');
 		expect(isOpen()).toBe(false);
 		expect(viewerEl().classList.contains('is-zoom')).toBe(true);
 	});
@@ -755,10 +758,9 @@ describe('FilePreview', () => {
 		Utils.def(activeMedia(), 'naturalWidth', 200);
 		Utils.def(activeMedia(), 'naturalHeight', 100);
 		activeMedia().dispatchEvent(new Event('load'));
-		await nextTick();
-		await nextTick();
-		expect(revealBody().style.transform).toBe('translate3d(8px, 4px, 0) scale(0.0390625)');
-		expect(reveal().style.clipPath).toBe('inset(9px 976px 739px 8px)');
+		await flush();
+		expect(motion()?.transform[0]).toBe('translate3d(8px, 4px, 0) scale(0.0390625)');
+		expect(motion()?.clip[0]).toBe('inset(9px 976px 739px 8px)');
 
 		// 不在点击过程中、目标不是节点时不作为触发元素
 		Portal.clear(true);
@@ -786,14 +788,14 @@ describe('FilePreview', () => {
 		// 点中的元素里没有可用的缩略图：解码前不摆放、不放大，蒙层也不出现
 		expect(media.style.transform).toBe('');
 		expect(media.classList.contains('is-ready')).toBe(false);
-		expect(reveal().style.clipPath).toBe('');
+		expect(motion()).toBeUndefined();
 		expect(isOpen()).toBe(false);
 
 		finish();
 		await flush();
 		expect(media.style.transform).toBe('translate3d(0px, 128px, 0) rotate(0deg) scale(1.024)');
 		expect(media.classList.contains('is-ready')).toBe(true);
-		expect(reveal().style.clipPath).toBe('inset(128px 0px 128px 0px)');
+		expect(motion()?.clip[1]).toBe('inset(128px 0px 128px 0px)');
 		expect(isOpen()).toBe(true);
 	});
 
@@ -812,8 +814,7 @@ describe('FilePreview', () => {
 		const placeholder = activeSlide()?.querySelector('.vc-image-slide__placeholder') as HTMLImageElement;
 		expect(placeholder.getAttribute('src')).toBe(thumb.src);
 		expect(placeholder.style.transform).toBe(activeMedia().style.transform);
-		expect(reveal().style.clipPath).toBe('inset(20px 914px 708px 10px)');
-		await flush();
+		expect(motion()?.clip[0]).toBe('inset(20px 914px 708px 10px)');
 		expect(isOpen()).toBe(true);
 
 		// 大图解码完换上
@@ -836,7 +837,7 @@ describe('FilePreview', () => {
 		// 不等大图：按缩略图 2:1 的比例放到长边贴齐的位置，立即从缩略图放大
 		const placeholder = activeSlide()?.querySelector('.vc-image-slide__placeholder') as HTMLImageElement;
 		expect(placeholder.style.transform).toBe('translate3d(0px, 128px, 0) rotate(0deg) scale(5.12)');
-		expect(reveal().style.clipPath).toBe('inset(128px 0px 128px 0px)');
+		expect(motion()?.clip).toEqual(['inset(20px 914px 698px 10px)', 'inset(128px 0px 128px 0px)']);
 		expect(isOpen()).toBe(true);
 
 		// 大图同比例：原位换上，不再过渡
@@ -862,10 +863,10 @@ describe('FilePreview', () => {
 		const media = activeMedia() as HTMLImageElement;
 		await load(media, 1000, 500);
 		expect(media.style.transform).toBe('translate3d(128px, 192px, 0) rotate(0deg) scale(0.768)');
-		expect(reveal().style.clipPath).toBe('inset(0px 128px 0px 128px)');
-		await endTransition(revealBody());
-		await flush();
-		expect(reveal().style.clipPath).toBe('');
+		expect(motion()?.clip[1]).toBe('inset(0px 128px 0px 128px)');
+		// 放大结束、窗口不再裁在方形上，再过渡到长边贴齐的位置
+		await endMotion();
+		expect(motion()).toBeUndefined();
 		expect(media.style.transform).toBe('translate3d(0px, 128px, 0) rotate(0deg) scale(1.024)');
 		expect(media.classList.contains('is-animating')).toBe(true);
 	});
@@ -1302,14 +1303,14 @@ describe('FilePreview', () => {
 		trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 		await nextTick();
 		await load(activeMedia(), 400, 200);
-		await endTransition(revealBody());
+		await endMotion();
 
 		vi.useFakeTimers();
 		pointer(stage(), 'pointerdown', 12, 700);
 		pointer(stage(), 'pointerup', 12, 700);
 		await flush();
 		expect(isOpen()).toBe(false);
-		expect(reveal().classList.contains('is-animating')).toBe(true);
+		expect(motion()?.transform[1]).toBe('translate3d(12px, 6px, 0) scale(0.078125)');
 		vi.useRealTimers();
 	});
 
@@ -1322,8 +1323,7 @@ describe('FilePreview', () => {
 		trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 		await nextTick();
 		await load(activeMedia(), 400, 200);
-		const body = revealBody();
-		await endTransition(body);
+		await endMotion();
 
 		pointer(stage(), 'pointerdown', 300, 200);
 		pointer(stage(), 'pointermove', 305, 420);
@@ -1334,17 +1334,17 @@ describe('FilePreview', () => {
 		expect(viewerEl().classList.contains('is-dragging')).toBe(true);
 		expect(stage().style.transform).toBe('translate3d(0px, 132px, 0)');
 
-		// 拖动并进起点、舞台归零，再从这里缩回缩略图
+		// 舞台停在拖到的位置，从这里缩回缩略图
 		pointer(stage(), 'pointerup', 305, 420);
 		await nextTick();
-		expect(stage().style.transform).toBe('translate3d(0px, 0px, 0)');
-		expect(body.style.transform).toBe('translate3d(0px, 132px, 0) scale(1)');
-		await flush();
-		expect(body.style.transform).toBe('translate3d(12px, 6px, 0) scale(0.078125)');
-		expect(reveal().style.clipPath).toBe('inset(16px 932px 712px 12px)');
+		expect(stage().style.transform).toBe('translate3d(0px, 132px, 0)');
+		expect(motion()).toEqual({
+			clip: ['inset(128px 0px 128px 0px)', 'inset(-116px 932px 844px 12px)'],
+			transform: ['translate3d(0px, 0px, 0) scale(1)', 'translate3d(12px, -126px, 0) scale(0.078125)']
+		});
 		expect(isOpen()).toBe(false);
 
-		await endTransition(body);
+		await endMotion();
 		expect(onClose).toHaveBeenCalledTimes(1);
 		expect(document.querySelector('.vc-file-viewer')).toBeNull();
 	});
@@ -1357,8 +1357,7 @@ describe('FilePreview', () => {
 		trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 		await nextTick();
 		await load(activeMedia(), 400, 200);
-		const body = revealBody();
-		await endTransition(body);
+		await endMotion();
 
 		pointer(stage(), 'pointerdown', 300, 400);
 		pointer(stage(), 'pointermove', 295, 180);
@@ -1368,9 +1367,8 @@ describe('FilePreview', () => {
 
 		pointer(stage(), 'pointerup', 295, 180);
 		await nextTick();
-		expect(body.style.transform).toBe('translate3d(0px, -132px, 0) scale(1)');
-		await flush();
-		expect(body.style.transform).toBe('translate3d(12px, 6px, 0) scale(0.078125)');
+		expect(stage().style.transform).toBe('translate3d(0px, -132px, 0)');
+		expect(motion()?.transform[1]).toBe('translate3d(12px, 138px, 0) scale(0.078125)');
 		expect(isOpen()).toBe(false);
 	});
 
@@ -1420,7 +1418,8 @@ describe('FilePreview', () => {
 		await endTransition(stage());
 		button('close').click();
 		await flush();
-		expect(reveal().style.clipPath).toBe('inset(60px 874px 676px 10px)');
+		expect(motion()?.clip[1]).toBe('inset(60px 874px 676px 10px)');
+		expect(motion()?.transform[1]).toBe('translate3d(10px, 23.5px, 0) scale(0.13671875)');
 		wrapper.unmount();
 	});
 
@@ -1448,7 +1447,7 @@ describe('FilePreview', () => {
 		await load(activeMedia(), 200, 100);
 		button('close').click();
 		await flush();
-		expect(revealBody().style.transform).toBe('translate3d(60px, 10px, 0) scale(0.078125)');
+		expect(motion()?.transform[1]).toBe('translate3d(60px, 10px, 0) scale(0.078125)');
 		wrapper.unmount();
 	});
 
@@ -1470,7 +1469,7 @@ describe('FilePreview', () => {
 		await load(activeMedia(), 200, 100);
 		button('close').click();
 		await flush();
-		expect(revealBody().style.transform).toBe('translate3d(100px, 92.5px, 0) scale(0.05859375)');
+		expect(motion()?.transform[1]).toBe('translate3d(100px, 92.5px, 0) scale(0.05859375)');
 	});
 
 	it('pinches to zoom, rebounds above the close ratio and closes below it', async () => {

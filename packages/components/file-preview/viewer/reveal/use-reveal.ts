@@ -2,7 +2,7 @@ import { inject } from 'vue';
 import type { InjectionKey } from 'vue';
 import type { Rect, Size } from '../utils';
 
-// 画面静止时在视口里的盒子；返回 null 时按整页
+// 画面静止时在这一页里的盒子；返回 null 时按整页
 export type RevealSubject = (viewport: Size) => Rect | null;
 
 export type RevealContext = {

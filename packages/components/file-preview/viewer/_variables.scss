@@ -1,3 +1,3 @@
-// 与 PhotoSwipe 一致的开合动画；TS 只用 utils.ts 的 DURATION 作兜底
+// 与 transition/reveal.ts 的 REVEAL_DURATION、REVEAL_EASING 一致
 $duration: .333s;
 $easing: cubic-bezier(.4, 0, .22, 1);

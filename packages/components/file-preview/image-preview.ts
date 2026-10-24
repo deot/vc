@@ -1,6 +1,7 @@
+import { VcInstance } from '../vc';
 import type { FilePreviewItem, FilePreviewItemInput } from './types';
 import { normalize } from './utils';
-import { getTriggerElement, openViewer } from './viewer';
+import { openViewer } from './viewer';
 
 type ImageInput = string | (Partial<FilePreviewItem> & {
 	// 兼容旧数据的地址字段，优先级 value > source > src
@@ -28,7 +29,7 @@ export const ImagePreview = {
 	open: (options: ImagePreviewOpenOptions = {}) => openViewer({
 		data: normalize((options.data || []).flatMap(toImage)),
 		current: options.current,
-		triggerElement: getTriggerElement(),
+		triggerElement: VcInstance.getTriggerElement(),
 		onClose: options.onClose
 	})
 };

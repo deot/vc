@@ -167,14 +167,11 @@ export const useViewer = (props: Props, onFulfilled: () => void) => {
 		isClosing = true;
 		gesture.cancel();
 		isDragging.value = false;
-		const reveal = activeReveal.value;
-		if (reveal && triggerElementOf(current.value)?.isConnected) {
-			// 拖动停在舞台上：并进起点、舞台归零，再从这里缩回触发元素
-			const shift = offset.value;
-			isSliding.value = false;
-			offset.value = { x: 0, y: 0 };
-			activeImage.value?.straighten();
-			await reveal.leave(shift);
+		// 拖动停在哪就从哪缩回：舞台不归零，窗口和画面按当前的位置量；缩不回去（没有触发元素或量不到）时淡出
+		activeReveal.value && activeImage.value?.straighten();
+		const leaving = activeReveal.value?.leave();
+		if (leaving) {
+			await leaving;
 		} else {
 			isZoom.value = false;
 			isOpen.value = false;
