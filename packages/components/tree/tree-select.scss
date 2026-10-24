@@ -34,6 +34,25 @@ $component-name: vc-tree-select;
 		min-height: 0;
 		flex: 1;
 		flex-direction: row;
+
+		// 向左展开（expandDirection）：另外镜像复选框的间距，文字靠右
+		@include when(reverse) {
+			@include cascade-reverse(
+				'.vc-tree-select__cascader-columns-content',
+				'.vc-tree-select__cascader-column',
+				'.vc-tree-select__cascader-item',
+				'.vc-tree-select__cascader-icon'
+			);
+
+			.vc-tree-select__cascader-checkbox > .vc-checkbox {
+				padding-right: 0;
+				padding-left: unitfix(8);
+			}
+
+			.vc-tree-select__cascader-label {
+				text-align: right;
+			}
+		}
 	}
 
 	@include element(cascader-tree-hidden) {

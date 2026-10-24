@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { MTree, MTreeSelect, Tree, TreeSelect, VcInstance } from '@deot/vc-components';
+import { MTree, MTreeSelect, Popover, Tree, TreeSelect, VcInstance } from '@deot/vc-components';
 import { enUS, zhCN } from '@deot/vc-locale';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
@@ -2474,5 +2474,76 @@ describe('TreeSelect 内联搜索与键盘', () => {
 		expect(document.querySelector('.vc-select-highlight')?.textContent).toBe('2-1-1');
 
 		wrapper.unmount();
+	});
+
+	// 触发器在视口（1024 宽）中的位置：左缘 x、宽 120
+	const placeTrigger = (el: Element, x: number) => {
+		(el as any).getBoundingClientRect = () => ({
+			x, y: 0, width: 120, height: 32, left: x, right: x + 120, top: 0, bottom: 32, toJSON: () => ({})
+		});
+	};
+	// 列宽：方向按根列宽度 × 数据层级估算所需宽度
+	const mockColumnWidth = (selector: string, width: number) => {
+		const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth')!;
+		Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+			configurable: true,
+			get(this: HTMLElement) {
+				return this.matches(selector) ? width : original.get!.call(this);
+			}
+		});
+		onTestFinished(() => {
+			Object.defineProperty(HTMLElement.prototype, 'offsetWidth', original);
+		});
+	};
+	const isReverse = () => !!document.querySelector('.vc-tree-select__cascader.is-reverse');
+	const getPopoverProp = (wrapper: any, key: string) => wrapper.findComponent(Popover as any).props(key);
+	const getPlacement = (wrapper: any) => getPopoverProp(wrapper, 'placement');
+
+	it('cascader + expandDirection="left"：列向左展开，弹层与触发器右对齐，← 进入下一级、→ 回到上一级', async () => {
+		const wrapper = mount(() => (
+			<TreeSelect data={treeData} max={99} cascader expandDirection="left" />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+		expect(isReverse()).toBe(true);
+		expect(getPlacement(wrapper)).toBe('bottom-right');
+		expect(getPopoverProp(wrapper, 'keepEdge')).toBe('end');
+
+		press('ArrowDown');
+		await flush();
+		expect(getSelected()).toEqual(['一级 1', '']);
+		press('ArrowLeft');
+		await flush();
+		expect(getSelected()).toEqual(['一级 1', '二级 1-1', '']);
+		press('ArrowRight');
+		await flush();
+		expect(getSelected()).toEqual(['一级 1', '']);
+	});
+
+	it('cascader + expandDirection="auto"：右侧放不下时向左展开；树形模式忽略', async () => {
+		// 3 级 × 150 = 450；右侧 1024 - 8 - 900 = 116 放不下
+		mockColumnWidth('.vc-tree-select__cascader-column', 150);
+		const cascader = ref(true);
+		const wrapper = mount(() => (
+			<TreeSelect data={treeData} max={99} cascader={cascader.value} expandDirection="auto" />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await flush();
+		placeTrigger(wrapper.element, 900);
+		await wrapper.trigger('click');
+		await flush();
+		expect(isReverse()).toBe(true);
+		expect(getPlacement(wrapper)).toBe('bottom-right');
+
+		// 树形模式：方向不变
+		await wrapper.trigger('click');
+		await flush();
+		cascader.value = false;
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+		expect(getPlacement(wrapper)).toBe('bottom-left');
 	});
 });

@@ -1,6 +1,7 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import { props as selectProps } from '../select/select-props';
 import { TreeData } from '../select/utils';
+import { expandDirection } from '../select/hooks/use-column-direction';
 
 export const props = {
 	...selectProps,
@@ -19,6 +20,8 @@ export const props = {
 	autoWidth: {
 		type: Boolean,
 		default: true
-	}
+	},
+	// 展开方向，见 use-column-direction
+	expandDirection
 };
 export type Props = ExtractPropTypes<typeof props>;

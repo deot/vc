@@ -2,12 +2,13 @@
 
 import { defineComponent, ref, computed } from 'vue';
 import { getUid } from '@deot/helper-utils';
-import { walkTree } from '../select/utils';
+import { walkTree, getTreeDepth } from '../select/utils';
 import type { TreeData } from '../select/utils';
 import { Popover } from '../popover/index';
 import { SelectTrigger } from '../select/select-trigger';
 import { SelectSearch } from '../select/select-search';
 import { useSelect, useSelectValue, useSelectedCache } from '../select/hooks/use-select';
+import { useColumnDirection } from '../select/hooks/use-column-direction';
 import { useLocale } from '../locale';
 import { TreeSelectContent } from './tree-select-content';
 import { TreeSelectContentCascader } from './tree-select-content-cascader';
@@ -46,6 +47,13 @@ export const TreeSelect = defineComponent({
 		// 弹层内容（树 / 级联列），方向键与回车交给它处理
 		const content = ref<any>();
 		const select = useSelect('tree-select', { navigator: () => content.value });
+		// 级联列的展开方向：弹层挂载时判断
+		const direction = useColumnDirection({
+			getDirection: () => (props.cascader ? props.expandDirection : 'right'),
+			getPlacement: () => props.placement,
+			getColumn: () => content.value?.$el?.querySelector?.('.vc-tree-select__cascader-column'),
+			getDepth: () => getTreeDepth(props.data as TreeData[])
+		});
 		const { its, isActive, searchValue, searchRegex, searchMode, isRemote, close, toggle, focus } = select;
 		const { currentValue, multiple, sync: syncValue, handleClear } = useSelectValue(select);
 
@@ -201,6 +209,7 @@ export const TreeSelect = defineComponent({
 							nullValue={props.nullValue as never}
 							searchRegex={searchRegex.value}
 							remote={isRemote()}
+							reverse={direction.isReverse.value}
 							onChange={handleChange}
 						/>
 					)
@@ -224,10 +233,13 @@ export const TreeSelect = defineComponent({
 			return (
 				<Popover
 					{...select.popover.value}
+					placement={direction.placement.value}
+					keepEdge={direction.keepEdge.value}
 					autoWidth={autoWidth.value}
 					// 树：由内置的 Scroller 限高滚动；级联：各列在高度上限内收缩并自行滚动
 					scrollable={!props.cascader}
 					scrollerOptions={scrollerOptions}
+					onReady={direction.update}
 				>
 					{{
 						default: renderTrigger,

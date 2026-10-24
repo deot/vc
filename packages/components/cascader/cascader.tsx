@@ -13,8 +13,9 @@ import { SelectTrigger } from '../select/select-trigger';
 import { SelectSearch, SelectPaths } from '../select/select-search';
 import { useSelect } from '../select/hooks/use-select';
 import { useColumnNavigate } from '../select/hooks/use-navigate';
+import { useColumnDirection } from '../select/hooks/use-column-direction';
 
-import { toCurrentValue, toModelValue } from '../select/utils';
+import { toCurrentValue, toModelValue, getTreeDepth } from '../select/utils';
 
 import type { TreeData, TreeValue, TreeLabel } from '../select/utils';
 import type { SelectPath } from '../select/select-search';
@@ -40,6 +41,15 @@ export const Cascader = defineComponent({
 		const rebuildData = ref<TreeData[]>([]);
 		const colRef = ref({});
 		const columnsRef = ref<any>();
+
+		// 展开方向：弹层挂载时判断，见 handleReady
+		const direction = useColumnDirection({
+			getDirection: () => props.expandDirection,
+			getPlacement: () => props.placement,
+			getColumn: () => colRef.value[0]?.$el,
+			// loadData 按需加载子节点，层级无法预知
+			getDepth: () => (props.loadData ? Infinity : getTreeDepth(props.data))
+		});
 
 		const columns = computed(() => {
 			return Array.from({ length: currentValue.value.length + 1 }).map((_, index) => index);
@@ -158,6 +168,7 @@ export const Cascader = defineComponent({
 			 * TODO: 是否移入col单独处理
 			 */
 
+			direction.update();
 			nextTick(() => {
 				currentValue.value.forEach((item, index) => {
 					const el = colRef.value[index] && colRef.value[index].$el;
@@ -286,7 +297,8 @@ export const Cascader = defineComponent({
 				currentValue.value.length && sync();
 			},
 			isSearching: () => isSearching.value,
-			getView: () => columnsRef.value?.$el
+			getView: () => columnsRef.value?.$el,
+			isReverse: () => direction.isReverse.value
 		});
 
 		watch(
@@ -366,7 +378,7 @@ export const Cascader = defineComponent({
 				: (
 						<Scroller
 							ref={columnsRef}
-							class="vc-cascader__columns"
+							class={['vc-cascader__columns', { 'is-reverse': direction.isReverse.value }]}
 							contentClass="vc-cascader__content"
 						>
 							{ columns.value.map(renderColumn) }
@@ -378,6 +390,8 @@ export const Cascader = defineComponent({
 			return (
 				<Popover
 					{...select.popover.value}
+					placement={direction.placement.value}
+					keepEdge={direction.keepEdge.value}
 					// 各列在高度上限内收缩并自行滚动
 					scrollable={false}
 					onReady={handleReady}

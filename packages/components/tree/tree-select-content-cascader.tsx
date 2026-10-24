@@ -53,6 +53,11 @@ export const TreeSelectContentCascader = defineComponent({
 		remote: {
 			type: Boolean,
 			default: false
+		},
+		// 向左展开，见 useColumnDirection
+		reverse: {
+			type: Boolean,
+			default: false
 		}
 	},
 	emits: ['change'],
@@ -176,7 +181,8 @@ export const TreeSelectContentCascader = defineComponent({
 				item && handleLabelClick(!getNodeState(item).checked, item);
 			},
 			isSearching: () => searching.value,
-			getView: () => rootRef.value
+			getView: () => rootRef.value,
+			isReverse: () => props.reverse
 		});
 
 		// 指针在某项上移动（不用 mouseenter，见 useColumnNavigate 的 handleMove）：在列区统一监听，按 data-index 找到该项
@@ -193,7 +199,7 @@ export const TreeSelectContentCascader = defineComponent({
 
 		return () => {
 			return (
-				<div ref={rootRef} class="vc-tree-select__cascader">
+				<div ref={rootRef} class={['vc-tree-select__cascader', { 'is-reverse': props.reverse }]}>
 					<Tree
 						ref={treeRef}
 						class="vc-tree-select__cascader-tree-hidden"

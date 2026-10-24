@@ -179,7 +179,7 @@ const handleDrop = ({ data: row, targetNode, position, from, to }) => {
 
 `TreeSelect` 默认 `max = Infinity`，显示多选标签；`max = 1` 切换为单标签展示。当前实现不按 `max` 限制勾选数量，单标签展示也不等同于互斥单选。
 
-`cascader` 开启鼠标悬停展开的级联列。`searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入（输入框跟在标签之后，输入为空时按 Backspace 移除最后一个标签），`searchable="popover"` 改为在面板顶部显示搜索栏。空格分隔的关键词需同时命中，英文逗号分隔的各组任一命中即可：树形模式保留层级，级联模式显示完整路径列表。关闭面板会清空搜索。非独立勾选时，搜索结果中的父节点仍会联动所有子孙节点，包括隐藏节点。
+`cascader` 开启鼠标悬停展开的级联列，`expandDirection` 控制级联列的展开方向，取值与 [Cascader](../cascader/README.md#展开方向) 相同。`searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入（输入框跟在标签之后，输入为空时按 Backspace 移除最后一个标签），`searchable="popover"` 改为在面板顶部显示搜索栏。空格分隔的关键词需同时命中，英文逗号分隔的各组任一命中即可：树形模式保留层级，级联模式显示完整路径列表。关闭面板会清空搜索。非独立勾选时，搜索结果中的父节点仍会联动所有子孙节点，包括隐藏节点。
 
 多选标签默认只占一行；超出宽度的标签折叠为 `+N...`，悬停可查看并移除。`maxTags` 限制可见标签数，`maxTagLines` 控制行数，设为 `0` 表示不限制。非 `checkStrictly` 时标签展示完整路径。
 
@@ -420,6 +420,7 @@ TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字
 | searchPlaceholder | 搜索时的占位文案：内联搜索为面板打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
 | loadData | 防抖搜索回调，需自行更新 `data`；调用时机见[远程搜索](#远程搜索) | `(keyword: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | cascader | 使用级联列面板 | `boolean` | - | `false` |
+| expandDirection | 级联列的展开方向（仅 `cascader`）：`left` 向左展开，`auto` 右侧放不下时朝空间更大的一侧 | `string` | `right`、`left`、`auto` | `'right'` |
 | autoWidth | 面板按内容计算宽度 | `boolean` | - | 未指定时跟随 `cascader` |
 | portal | 下拉挂到 body；`false` 挂在组件根节点内，可能被祖先 overflow 裁剪 | `boolean` | - | `true` |
 | portalClass | 面板附加类名 | `string \| object \| any[]` | - | - |

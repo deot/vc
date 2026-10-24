@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Cascader, MCascader, VcInstance } from '@deot/vc-components';
+import { Cascader, MCascader, Popover, VcInstance } from '@deot/vc-components';
 import { enUS, zhCN } from '@deot/vc-locale';
 import { CascaderView } from '../cascader-view';
 import { mount } from '@vue/test-utils';
@@ -834,6 +834,128 @@ describe('Cascader 搜索与键盘', () => {
 		expect(value.value).toEqual(['zhejiang', 'hangzhou', 'binjiang']);
 		expect(isOpen()).toBe(false);
 
+		wrapper.unmount();
+	});
+
+	// 触发器在视口（1024 宽）中的位置：左缘 x、宽 120
+	const placeTrigger = (el: Element, x: number) => {
+		(el as any).getBoundingClientRect = () => ({
+			x, y: 0, width: 120, height: 32, left: x, right: x + 120, top: 0, bottom: 32, toJSON: () => ({})
+		});
+	};
+	// 列宽：方向按根列宽度 × 数据层级估算所需宽度
+	const mockColumnWidth = (selector: string, width: number) => {
+		const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth')!;
+		Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+			configurable: true,
+			get(this: HTMLElement) {
+				return this.matches(selector) ? width : original.get!.call(this);
+			}
+		});
+		onTestFinished(() => {
+			Object.defineProperty(HTMLElement.prototype, 'offsetWidth', original);
+		});
+	};
+	const isReverse = () => !!document.querySelector('.vc-cascader__columns.is-reverse');
+	const getPopoverProp = (wrapper: any, key: string) => wrapper.findComponent(Popover as any).props(key);
+	const getPlacement = (wrapper: any) => getPopoverProp(wrapper, 'placement');
+
+	it('expandDirection 默认 right：向右展开，弹层方向不变', async () => {
+		const wrapper = mount(() => (
+			<Cascader data={options} />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+		await wrapper.trigger('click');
+		await flush();
+		expect(isReverse()).toBe(false);
+		expect(getPlacement(wrapper)).toBe('bottom-left');
+		expect(getPopoverProp(wrapper, 'keepEdge')).toBe('start');
+	});
+
+	it('expandDirection="left"：列向左展开，弹层与触发器右对齐（方向里的 left / right 互换），← 进入下一级、→ 回到上一级', async () => {
+		const wrapper = mount(() => (
+			<Cascader data={options} expandDirection="left" placement="top-left" />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+		await wrapper.trigger('click');
+		await flush();
+		expect(isReverse()).toBe(true);
+		expect(getPlacement(wrapper)).toBe('top-right');
+		// 内容靠右排：弹层变窄时保持右缘
+		expect(getPopoverProp(wrapper, 'keepEdge')).toBe('end');
+
+		press('ArrowDown');
+		await flush();
+		expect(getSelected()).toEqual(['Zhejiang', '']);
+		expect(press('ArrowLeft').defaultPrevented).toBe(true);
+		await flush();
+		expect(getSelected()).toEqual(['Zhejiang', 'Hangzhou', '']);
+		expect(press('ArrowRight').defaultPrevented).toBe(true);
+		await flush();
+		expect(getSelected()).toEqual(['Zhejiang', '']);
+	});
+
+	it('expandDirection="auto"：右侧放得下（根列宽 × 层级）时向右，放不下时选空间更大的一侧', async () => {
+		// 3 级 × 150 = 450
+		mockColumnWidth('.vc-cascader-column', 150);
+		const open = async (x: number) => {
+			const wrapper = mount(() => (
+				<Cascader data={options} expandDirection="auto" />
+			), { attachTo: document.body });
+			// 断言失败时也卸载
+			onTestFinished(() => {
+				!wrapper.vm.$.isUnmounted && wrapper.unmount();
+			});
+			await nextTick();
+			placeTrigger(wrapper.element, x);
+			await wrapper.trigger('click');
+			await flush();
+			return wrapper;
+		};
+
+		// 靠左：右侧 1024 - 8 - 20 = 996，放得下
+		let wrapper = await open(20);
+		expect(isReverse()).toBe(false);
+		expect(getPlacement(wrapper)).toBe('bottom-left');
+		wrapper.unmount();
+		await flush();
+
+		// 靠右：右侧 1024 - 8 - 900 = 116 放不下，左侧 1020 - 8 = 1012 更大
+		wrapper = await open(900);
+		expect(isReverse()).toBe(true);
+		expect(getPlacement(wrapper)).toBe('bottom-right');
+		wrapper.unmount();
+	});
+
+	it('expandDirection="auto"：有 loadData（层级未知）时选空间更大的一侧', async () => {
+		mockColumnWidth('.vc-cascader-column', 150);
+		const loadData = () => Promise.resolve([]);
+		const open = async (x: number) => {
+			const wrapper = mount(() => (
+				<Cascader data={options} loadData={loadData} expandDirection="auto" />
+			), { attachTo: document.body });
+			// 断言失败时也卸载
+			onTestFinished(() => {
+				!wrapper.vm.$.isUnmounted && wrapper.unmount();
+			});
+			await nextTick();
+			placeTrigger(wrapper.element, x);
+			await wrapper.trigger('click');
+			await flush();
+			return wrapper;
+		};
+
+		// 右侧 1024 - 8 - 300 = 716 > 左侧 420 - 8 = 412
+		let wrapper = await open(300);
+		expect(isReverse()).toBe(false);
+		wrapper.unmount();
+		await flush();
+
+		// 右侧 416 < 左侧 712
+		wrapper = await open(600);
+		expect(isReverse()).toBe(true);
 		wrapper.unmount();
 	});
 });

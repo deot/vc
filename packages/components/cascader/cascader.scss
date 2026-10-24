@@ -22,6 +22,16 @@ $color-dark-extralight: varfix(color-dark-extralight, cascader);
 		display: flex;
 		min-height: 0;
 		flex-direction: column;
+
+		// 向左展开（expandDirection）
+		@include when(reverse) {
+			@include cascade-reverse(
+				'.vc-cascader__content',
+				'.vc-cascader-column',
+				'.vc-cascader-column__item',
+				'.vc-cascader-column__icon'
+			);
+		}
 	}
 
 	// 默认不换行

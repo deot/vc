@@ -122,6 +122,8 @@ interface ColumnNavigateOptions {
 	isSearching: () => boolean;
 	// 级联列的容器：搜索结果沿用它的宽度
 	getView: () => HTMLElement | null | undefined;
+	// 向左展开（见 use-column-direction）：← 进入下一级，→ 回到上一级
+	isReverse?: () => boolean;
 }
 
 // 搜索结果的宽度沿用进入搜索前的级联列，并限制在该范围内，避免弹层宽度随结果跳动
@@ -140,7 +142,7 @@ export const getPathsWidth = (el?: HTMLElement | null) => {
  * @returns paths：搜索结果列表（SelectPaths）的 ref；searchWidth：它的宽度；navigator：交给键盘；handleMove：绑在各项的 mousemove 上
  */
 export const useColumnNavigate = (options: ColumnNavigateOptions) => {
-	const { getPath, getColumns, hover, getItem, enter, isSearching, getView } = options;
+	const { getPath, getColumns, hover, getItem, enter, isSearching, getView, isReverse } = options;
 	const paths = ref<Navigator | null>();
 
 	// 默认 flush: 'pre'，此时 DOM 仍是列视图
@@ -190,7 +192,7 @@ export const useColumnNavigate = (options: ColumnNavigateOptions) => {
 
 	const navigator: Navigator = {
 		move: step => (isSearching() ? paths.value?.move?.(step) : move(step)),
-		shift,
+		shift: step => shift(isReverse?.() ? -step : step),
 		enter: () => (isSearching() ? paths.value?.enter?.() : enter())
 	};
 

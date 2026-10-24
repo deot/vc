@@ -81,6 +81,19 @@ export const walkTree = (
 	});
 };
 
+/**
+ * 树形数据的层级（最深一条路径的节点数）
+ * @param data ~
+ * @returns ~
+ */
+export const getTreeDepth = (data: TreeData[]) => {
+	let depth = 0;
+	walkTree(data, (_, ancestors) => {
+		depth = Math.max(depth, ancestors.length);
+	});
+	return depth;
+};
+
 export const getLabel = (data: TreeData, v: TreeValue): TreeLabel => {
 	if (typeof v === 'undefined' || v === '') return '';
 	const { label = '' } = data.find((i: TreeData) => i.value == v) || {};

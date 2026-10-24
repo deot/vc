@@ -1,6 +1,7 @@
 import type { ExtractPropTypes } from 'vue';
 import { pick } from 'lodash-es';
 import { props as selectProps } from '../select/select-props';
+import { expandDirection } from '../select/hooks/use-column-direction';
 import { props as treeProps } from './tree-props';
 
 const treeKeys = [
@@ -24,5 +25,7 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
+	// 级联列的展开方向（仅级联模式），见 use-column-direction
+	expandDirection
 };
 export type Props = ExtractPropTypes<typeof props>;

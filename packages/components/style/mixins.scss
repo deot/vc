@@ -225,3 +225,28 @@
 		}
 	}
 }
+
+/**
+ * 级联列向左展开（Cascader / TreeSelect 级联模式的 expandDirection，加在列区的 is-reverse 上）
+ * - 第一列在右侧、下一级向左：列区内容反向并靠右（用 margin 而不是对齐方式，横向溢出时仍能滚动到）
+ * - 各项镜像，箭头朝左；分隔线（border(right) 的 ::after）移到左侧
+ */
+@mixin cascade-reverse($content, $column, $item, $icon) {
+	#{$content} {
+		margin-left: auto;
+		flex-direction: row-reverse;
+	}
+
+	#{$column}::after {
+		right: auto;
+		left: 0;
+	}
+
+	#{$item} {
+		flex-direction: row-reverse;
+	}
+
+	#{$icon} {
+		rotate: 180deg;
+	}
+}

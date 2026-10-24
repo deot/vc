@@ -189,6 +189,16 @@ p {
 ```
 :::
 
+### 展开方向
+
+`expandDirection` 控制下一级出现在哪一侧：
+
+- 默认 `right`：向右展开。右侧放不下时浮层整体左移，贴住视口右边；指针在浮层内时，收起列不会让浮层平移，空出的部分由浮层底色占满，指针移出后浮层收回。
+- `left`：向左展开。第一列贴着触发区，下一级出现在左侧，浮层与触发区右对齐（`placement` 的左右对齐互换）。此时 ← 进入下一级，→ 回到上一级。
+- `auto`：每次打开时判断。右侧放得下（第一列宽度 × 数据层级）就向右；放不下时朝空间更大的一侧展开。有 `loadData` 时层级未知，直接朝空间更大的一侧。
+
+适合放在页面右侧的触发区：向左展开时，增删列都发生在远离触发区的一端，已有的列不移动。
+
 ### 选择任意一级
 
 开启 `changeOnSelect` 后，点击任意一级都会提交当前路径并关闭浮层。鼠标移入仍只展开或高亮，不会触发 `change`。
@@ -531,6 +541,7 @@ p {
 | placement | 浮层位置 | `string` | `top`、`top-left`、`top-right`、`bottom`、`bottom-left`、`bottom-right`、`left`、`left-top`、`left-bottom`、`right`、`right-top`、`right-bottom` | `bottom-left` |
 | arrow | 显示浮层箭头 | `boolean` | - | `false` |
 | autoWidth | 浮层根据内容宽度布局；`false` 时使用触发区宽度 | `boolean` | - | `true` |
+| expandDirection | 展开方向；见[展开方向](#展开方向) | `string` | `right`、`left`、`auto` | `right` |
 | portal | 将浮层挂到 body；`false` 时挂到组件根节点内 | `boolean` | - | `true` |
 | portalClass | 浮层附加 class | `string \| object \| unknown[]` | - | - |
 | separator | 字符串路径解析时的分隔符 | `string` | - | `','` |
