@@ -263,7 +263,7 @@ export const Cascader = defineComponent({
 			getPath: () => currentValue.value,
 			getColumns: () => rebuildData.value,
 			hover: handleCellChange,
-			getItem: (columnIndex, rowIndex) => columnsRef.value?.getItem(columnIndex, rowIndex),
+			scrollTo: (columnIndex, rowIndex) => columnsRef.value?.scrollToItem(columnIndex, rowIndex),
 			enter: () => {
 				currentValue.value.length && sync();
 			},

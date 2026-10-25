@@ -171,7 +171,7 @@ export const TreeSelectContentCascader = defineComponent({
 			hover: (item, columnIndex) => {
 				currentValue.value.splice(columnIndex, currentValue.value.length - columnIndex, item.value);
 			},
-			getItem: (columnIndex, rowIndex) => columnsRef.value?.getItem(columnIndex, rowIndex),
+			scrollTo: (columnIndex, rowIndex) => columnsRef.value?.scrollToItem(columnIndex, rowIndex),
 			// 回车：切换路径末端一项的勾选
 			enter: () => {
 				const index = currentValue.value.length - 1;

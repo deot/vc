@@ -384,7 +384,7 @@ const loadOptions = async (query) => {
 | label | 选项或分组文字；列表中缺省时显示 value，已选文字需提供 label | `string \| number` | - | - |
 | disabled | 禁用选项；分组项不支持整体禁用 | `boolean` | - | `false` |
 | filterable | 是否参与本地搜索过滤；false 时始终显示 | `boolean` | - | `true` |
-| children | 非空时显示为分组，只渲染一层子选项 | `object[]` | - | - |
+| children | 非空时显示为分组，只渲染一层子选项；搜索时没有命中项的分组连同标题一起隐藏 | `object[]` | - | - |
 
 ### 当前行为说明
 

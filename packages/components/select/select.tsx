@@ -3,17 +3,25 @@
 import { defineComponent, ref, computed, nextTick } from 'vue';
 import { getUid } from '@deot/helper-utils';
 import { getLabel, flattenData } from './utils';
+import type { TreeData } from './utils';
 import { Popover } from '../popover/index';
 import { Option, OptionGroup } from './select-option';
 import { props as selectProps } from './select-props';
 import { SelectAll, SelectSearch } from './select-search';
 import { SelectTrigger } from './select-trigger';
+import { SelectList } from './select-list';
 import type { SelectTag } from './select-trigger';
 import { useSelect, useSelectValue, useSelectedCache } from './hooks/use-select';
 import { useNavigate } from './hooks/use-navigate';
 import { useLocale } from '../locale';
 
 const COMPONENT_NAME = 'vc-select';
+
+// 列表的一行：分组标题或选项
+interface SelectRow {
+	item: TreeData;
+	group?: boolean;
+}
 
 // 选项由 Popover 内置的 Scroller 滚动
 const scrollerOptions = { maxHeight: 200, wrapperClass: 'vc-select__options' };
@@ -27,15 +35,8 @@ export const Select = defineComponent({
 		const selectId = ref(getUid('select'));
 
 		const select = useSelect('select', { navigator: () => navigate });
-		const { its, isActive, searchValue, searchRegex, searchMode, isSearching, isRemote, close, toggle } = select;
+		const { its, isActive, searchRegex, searchMode, isSearching, isRemote, close, toggle } = select;
 		const { currentValue, multiple, sync: syncValue, handleClear } = useSelectValue(select);
-
-		// 选项的键盘高亮：打开时为首个已选中的一项（弹层就绪后滚动到它，见 scrollIntoSelected）；搜索词、数据变化后选项增减，为第一项
-		const navigate = useNavigate({
-			selector: '.vc-select-option:not([disabled])',
-			prefer: '.is-select',
-			source: () => [searchValue.value, props.data]
-		});
 
 		const source = computed(() => {
 			return flattenData(props.data, { parent: true, cascader: true });
@@ -60,25 +61,35 @@ export const Select = defineComponent({
 			}));
 		});
 
-		const optionMap = ref<any>({});
-		const options = computed(() => {
-			return Object.values(optionMap.value);
+		/**
+		 * 列表的行：分组标题与选项铺平，按搜索词过滤（filterable 为 false 的选项不参与）；没有命中项的分组不显示
+		 */
+		const rows = computed<SelectRow[]>(() => {
+			const regex = searchRegex.value;
+			const match = (item: TreeData) => item.filterable === false || regex.test(String(item.label || item.value).trim());
+			const result: SelectRow[] = [];
+			(props.data as TreeData[] || []).forEach((item) => {
+				if (!Array.isArray(item.children) || !item.children.length) {
+					match(item) && result.push({ item });
+					return;
+				}
+				const children = item.children.filter(match);
+				children.length && result.push({ item, group: true }, ...children.map(child => ({ item: child })));
+			});
+			return result;
+		});
+
+		// 搜索结果中可选的值，供全选
+		const selectableValues = computed(() => {
+			return rows.value.filter(row => !row.group && !row.item.disabled).map(row => row.item.value);
 		});
 		const showSelectAll = computed(() => {
-			return multiple.value && isSearching.value && options.value.length > 0;
+			return multiple.value && isSearching.value && selectableValues.value.length > 0;
 		});
 		// 弹层顶部：搜索栏；内联搜索时只在出现全选时显示
 		const showHeader = computed(() => {
 			return searchMode.value === 'popover' || showSelectAll.value;
 		});
-		const setOption = (item: any, el: any) => {
-			if (el) {
-				optionMap.value[item.value] = el;
-			} else {
-				delete optionMap.value[item.value];
-			}
-		};
-
 		const sync = () => {
 			syncValue(currentLabel.value);
 		};
@@ -106,6 +117,31 @@ export const Select = defineComponent({
 			remove(item.value);
 		};
 
+		/**
+		 * 点击（或回车）一个选项：单选时已选中则关闭，多选时切换
+		 * @param v 选项的值
+		 */
+		const pick = (v: any) => {
+			const isChecked = currentValue.value.includes(v);
+			if (!multiple.value && isChecked) {
+				close();
+			} else if (isChecked) {
+				remove(v);
+			} else {
+				add(v);
+			}
+		};
+
+		// 选项的键盘高亮：打开时为首个已选中的一项（弹层就绪后滚动到它，见 scrollIntoSelected）；搜索词、数据变化后选项增减，为第一项
+		// 自定义整个选项（option 插槽、renderOption）时不参与
+		const navigate = useNavigate<SelectRow>({
+			getList: () => rows.value,
+			isEnabled: ({ item, group }) => !group && !item.disabled && !slots.option && !props.renderOption,
+			prefer: ({ item }) => currentValue.value.includes(item.value),
+			select: ({ item }) => pick(item.value),
+			source: rows
+		});
+
 		// 打开时高亮的即首个已选项；弹层在 ready 之后才显示（此前为 display: none，无法测量）
 		const scrollIntoSelected = () => {
 			nextTick(navigate.scrollIntoActive);
@@ -115,8 +151,8 @@ export const Select = defineComponent({
 			selectId,
 			add,
 			remove,
+			pick,
 			close,
-			searchRegex,
 			multiple,
 			isActive,
 			current: currentValue,
@@ -144,7 +180,7 @@ export const Select = defineComponent({
 		const renderHeader = () => {
 			return (
 				<SelectSearch {...select.search.value} input={searchMode.value === 'popover'}>
-					{ showSelectAll.value && (<SelectAll data={options.value} />) }
+					{ showSelectAll.value && (<SelectAll data={selectableValues.value} />) }
 				</SelectSearch>
 			);
 		};
@@ -152,13 +188,12 @@ export const Select = defineComponent({
 		const renderOption = (item: any) => {
 			return (
 				<Option
-					ref={el => setOption(item, el)}
 					key={item.value}
 					row={item}
 					value={item.value}
 					label={item.label}
 					disabled={item.disabled}
-					filterable={item.filterable}
+					regex={searchRegex.value}
 					render={props.renderOption}
 					renderLabel={props.renderLabel}
 				>
@@ -167,33 +202,30 @@ export const Select = defineComponent({
 			);
 		};
 
-		const renderItem = (item: any) => {
-			if (!Array.isArray(item.children) || !item.children.length) return renderOption(item);
+		const renderGroup = (item: any) => {
 			return (
 				<OptionGroup
 					row={item}
 					value={item.value}
 					label={item.label}
-					key={item.value}
+					key={`group:${item.value}`}
 					render={props.renderOptionGroup}
 				>
-					{{
-						optionGroup: slots?.optionGroup,
-						label: slots?.label,
-						default: () => item.children.map(renderOption)
-					}}
+					{{ optionGroup: slots?.optionGroup, label: slots?.label }}
 				</OptionGroup>
 			);
 		};
 
+		const renderRow = ({ row }: { row: SelectRow }) => {
+			return row.group ? renderGroup(row.item) : renderOption(row.item);
+		};
+
 		const renderContent = () => {
+			if (!props.data) return slots?.default?.();
 			return (
-				<div
-					ref={navigate.setRoot}
-					onMouseover={navigate.handleMouseover}
-				>
-					{ props.data ? props.data.map(renderItem) : slots?.default?.() }
-				</div>
+				<SelectList ref={navigate.setList} data={rows.value} onHover={navigate.hover}>
+					{{ default: renderRow, $stable: true }}
+				</SelectList>
 			);
 		};
 

@@ -6,6 +6,7 @@ import { Scroller } from '../../scroller/index';
 import { walkTree } from '../utils';
 import type { TreeData, TreeValue, SearchRegex } from '../utils';
 import { useNavigate } from '../hooks/use-navigate';
+import { SelectList } from '../select-list';
 import { renderHighlight } from './highlight';
 
 const COMPONENT_NAME = 'vc-select-paths';
@@ -62,19 +63,24 @@ export const SelectPaths = defineComponent({
 			return props.width ? { width: `${props.width}px` } : void 0;
 		});
 
-		// 结果变化后默认高亮第一项，回车即可选中
-		const navigate = useNavigate({ selector: '.vc-select-paths__item:not(.is-disabled)', source: results });
-
 		const handleSelect = (data: SelectPath) => {
 			!data.item.disabled && emit('select', data);
 		};
+
+		// 结果变化后默认高亮第一项，回车即可选中
+		const navigate = useNavigate<SelectPath>({
+			getList: () => results.value,
+			isEnabled: data => !data.item.disabled,
+			select: handleSelect,
+			source: results
+		});
 
 		expose({
 			move: navigate.move,
 			enter: navigate.enter
 		});
 
-		const renderItem = (data: SelectPath) => {
+		const renderItem = ({ row: data }: { row: SelectPath }) => {
 			const { item, labels, values } = data;
 			const last = labels.length - 1;
 			return (
@@ -99,16 +105,17 @@ export const SelectPaths = defineComponent({
 		return () => {
 			return (
 				<Scroller
-					ref={navigate.setRoot}
 					class="vc-select-paths"
 					style={style.value}
 					max-height="200px"
-					// @ts-ignore
-					onMouseover={navigate.handleMouseover}
 				>
 					{
 						results.value.length
-							? results.value.map(renderItem)
+							? (
+									<SelectList ref={navigate.setList} data={results.value} onHover={navigate.hover}>
+										{{ default: renderItem, $stable: true }}
+									</SelectList>
+								)
 							: (<div class="vc-select-paths__empty">{ props.emptyText }</div>)
 					}
 				</Scroller>

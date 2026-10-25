@@ -43,9 +43,6 @@ export const OptionGroup = defineComponent({
 									</div>
 								)
 					}
-					<div>
-						{ slots?.default?.() }
-					</div>
 				</div>
 			);
 		};

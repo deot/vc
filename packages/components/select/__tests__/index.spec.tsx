@@ -1546,6 +1546,33 @@ describe('Select expose & misc', () => {
 		wrapper.unmount();
 	});
 
+	it('search hides groups without matching options; group titles are rows of their own', async () => {
+		const wrapper = mount(() => (
+			<Select data={groupedData} searchable />
+		), { attachTo: document.body });
+		await nextTick();
+		await wrapper.find('input').trigger('click');
+		await flush();
+
+		// 分组标题与选项同为列表的行
+		const rows = Array.from(document.querySelectorAll('.vc-select-list > *'));
+		expect(rows.map(row => row.classList[row.classList.length - 1])).toEqual([
+			'vc-select-option-group',
+			'vc-select-option',
+			'vc-select-option',
+			'vc-select-option-group',
+			'vc-select-option',
+			'vc-select-option'
+		]);
+
+		typeInto(wrapper.find('input').element as HTMLInputElement, 'Paris');
+		await flush();
+		expect(Array.from(document.querySelectorAll('.vc-select-option-group__title')).map(el => el.textContent)).toEqual(['Other Cities']);
+		expect(Array.from(getOptions()).map(el => el.textContent)).toEqual(['Paris']);
+
+		wrapper.unmount();
+	});
+
 	it('default option group title uses option-group__title', async () => {
 		const wrapper = mount(() => (
 			<Select data={groupedData} />
@@ -2109,6 +2136,55 @@ describe('Select 键盘', () => {
 		visible.unmount();
 	});
 
+	it('分组：方向键与鼠标移入跳过分组标题', async () => {
+		const value = ref<any>();
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={groupedData} />
+		), { attachTo: document.body });
+		await nextTick();
+		await wrapper.trigger('click');
+		await flush();
+
+		expect(getActive()).toBe('New York');
+		press('ArrowDown');
+		press('ArrowDown');
+		expect(getActive()).toBe('Ottawa');
+		press('ArrowUp');
+		expect(getActive()).toBe('London');
+		getOptionGroups()[1].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+		expect(getActive()).toBe('London');
+		expect(document.querySelectorAll('[data-active]').length).toBe(1);
+
+		press('Enter');
+		await flush();
+		expect(value.value).toBe('2');
+
+		wrapper.unmount();
+	});
+
+	it('自定义整个选项（renderOption）时不参与键盘高亮', async () => {
+		const value = ref<any>();
+		const wrapper = mount(() => (
+			<Select
+				v-model={value.value}
+				data={data}
+				renderOption={({ row, store }: any) => (<div class="custom" onClick={store.click}>{row.label}</div>)}
+			/>
+		), { attachTo: document.body });
+		await nextTick();
+		await wrapper.trigger('click');
+		await flush();
+
+		expect(document.querySelectorAll('.custom').length).toBe(4);
+		press('ArrowDown');
+		press('Enter');
+		await flush();
+		expect(document.querySelectorAll('[data-active]').length).toBe(0);
+		expect(value.value).toBeUndefined();
+
+		wrapper.unmount();
+	});
+
 	it('多选：回车切换选中且不关闭', async () => {
 		const value = ref<any[]>(['1']);
 		const wrapper = mount(() => (
@@ -2230,11 +2306,11 @@ describe('Select 键盘', () => {
 		const hover = vi.fn((item: any, columnIndex: number) => {
 			path = [...path.slice(0, columnIndex), item.value];
 		});
-		const getItem = vi.fn();
+		const scrollTo = vi.fn();
 		const enter = vi.fn();
 		const isSearching = ref(false);
 		const create = (options: any) => useColumnNavigate({
-			getItem,
+			scrollTo,
 			enter,
 			isSearching: () => isSearching.value,
 			getView: () => ({ offsetWidth: 300 }) as HTMLElement,
@@ -2271,7 +2347,7 @@ describe('Select 键盘', () => {
 		expect(path).toEqual(['a']);
 
 		await nextTick();
-		expect(getItem).toHaveBeenCalled();
+		expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
 
 		// 无路径时向上从最后一项开始；整列都禁用、列为空时不动
 		path = [];

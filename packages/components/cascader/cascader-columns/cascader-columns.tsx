@@ -5,7 +5,8 @@ import type { PropType } from 'vue';
 import { Icon } from '../../icon/index';
 import { Spin } from '../../spin/index';
 import { Scroller } from '../../scroller/index';
-import { scrollIntoScroller } from '../../select/hooks/use-navigate';
+import { SelectList } from '../../select/select-list';
+import type { SelectListAlign, SelectListExposed } from '../../select/select-list';
 import type { TreeData, TreeValue } from '../../select/utils';
 
 const COMPONENT_NAME = 'vc-cascader-columns';
@@ -41,13 +42,16 @@ export const CascaderColumns = defineComponent({
 	emits: ['move', 'click'],
 	setup(props, { emit, slots, expose }) {
 		const scroller = ref<any>();
+		// 各列的列表
+		const lists: Array<SelectListExposed | null> = [];
 
 		const getColumn = (columnIndex: number) => {
 			return scroller.value?.$el.querySelectorAll('.vc-cascader-column')[columnIndex] as HTMLElement | undefined;
 		};
 
-		const getItem = (columnIndex: number, rowIndex: number) => {
-			return getColumn(columnIndex)?.querySelectorAll('.vc-cascader-column__item')[rowIndex];
+		// 把某一项滚动到所在列的可视范围
+		const scrollToItem = (columnIndex: number, rowIndex: number, align?: SelectListAlign) => {
+			lists[columnIndex]?.scrollToIndex(rowIndex, align);
 		};
 
 		const getCell = (e: MouseEvent): CascaderCell | undefined => {
@@ -72,12 +76,13 @@ export const CascaderColumns = defineComponent({
 
 		// 各列滚动到路径上的一项（不在可视范围内时置顶）
 		const scrollIntoSelected = () => {
-			scroller.value?.$el.querySelectorAll('.vc-cascader-column__item.is-select').forEach((el: Element) => {
-				scrollIntoScroller(el, 'start');
+			props.value.forEach((value, columnIndex) => {
+				const rowIndex = props.data[columnIndex]?.findIndex(item => item.value == value) ?? -1;
+				scrollToItem(columnIndex, rowIndex, 'start');
 			});
 		};
 
-		expose({ getColumn, getItem, scrollIntoSelected });
+		expose({ getColumn, scrollToItem, scrollIntoSelected });
 
 		const renderItem = (item: TreeData, columnIndex: number, rowIndex: number) => {
 			const cell = { item, columnIndex, rowIndex };
@@ -111,7 +116,9 @@ export const CascaderColumns = defineComponent({
 			return (
 				<div key={columnIndex} data-index={columnIndex} class="vc-cascader-column">
 					<Scroller class="vc-cascader-column__wrapper">
-						{ list.map((item, rowIndex) => renderItem(item, columnIndex, rowIndex)) }
+						<SelectList ref={(vm: any) => (lists[columnIndex] = vm)} data={list}>
+							{{ default: ({ row, index }: { row: TreeData; index: number }) => renderItem(row, columnIndex, index), $stable: true }}
+						</SelectList>
 					</Scroller>
 				</div>
 			);

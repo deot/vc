@@ -96,7 +96,21 @@ describe('cascader-columns', () => {
 		const vm = wrapper.vm as any;
 		await nextTick();
 		expect(vm.getColumn(1)).toBe(getCols(wrapper)[1].element);
-		expect(vm.getItem(1, 1)).toBe(getCells(wrapper, 1)[1].element);
-		expect(vm.getItem(2, 0)).toBeUndefined();
+		// 行带列表给的下标
+		expect(getCells(wrapper, 1).map((cell: any) => cell.attributes('data-index'))).toEqual(['0', '1']);
+
+		// 列内可视 0 ~ 20，每项高 20：第 2 项在可视范围之下，贴近底边；不存在的列不处理
+		const rect = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+			const index = (this as HTMLElement).dataset.index;
+			const [top, bottom] = this.classList.contains('vc-cascader-column__item') ? [+index! * 20, +index! * 20 + 20] : [0, 20];
+			return { top, bottom, left: 0, right: 0, width: 0, height: bottom - top, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
+		});
+		const height = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(20);
+		const scroller = getCols(wrapper)[1].find('.vc-scroller').element as HTMLElement;
+		vm.scrollToItem(1, 1);
+		expect(scroller.scrollTop).toBe(20);
+		vm.scrollToItem(2, 0);
+		rect.mockRestore();
+		height.mockRestore();
 	});
 });

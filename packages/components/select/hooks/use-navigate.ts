@@ -2,6 +2,7 @@ import { nextTick, ref, watch } from 'vue';
 import type { WatchSource } from 'vue';
 import { getViewportRect } from '../../scroller/utils';
 import { ScrollerManager } from '../../scroller/manager';
+import type { SelectListExposed } from '../select-list';
 
 /**
  * 弹层打开时响应方向键与回车的对象；方法返回 false 表示不处理（按键交还给浏览器或焦点所在的节点）
@@ -36,76 +37,84 @@ export const scrollIntoScroller = (el?: Element | null, align: 'nearest' | 'star
 	instance ? instance.scrollTo({ y }) : (scroller.scrollTop = y);
 };
 
-interface NavigateOptions {
-	// 可高亮的列表项
-	selector: string;
-	// 列表挂载（弹层打开）时优先高亮的列表项，如已选中的一项；没有匹配时为第一项
-	prefer?: string;
+// 从 from 起按 step 方向找第一个可用项，首尾循环；没有可用项时为 -1
+export const findEnabled = <T>(list: T[], from: number, step: number, isEnabled: (item: T, index: number) => boolean) => {
+	const size = list.length;
+	for (let i = 0; i < size; i++) {
+		const index = (((from + step * i) % size) + size) % size;
+		if (isEnabled(list[index], index)) return index;
+	}
+	return -1;
+};
+
+interface NavigateOptions<T> {
+	// 列表的数据（与 SelectList 的 data 一致）
+	getList: () => T[];
+	// 可高亮的项（如未禁用、默认渲染的选项）
+	isEnabled: (item: T, index: number) => boolean;
+	// 列表挂载（弹层打开）时优先高亮的项，如首个已选中的一项；没有时为第一个可用项
+	prefer?: (item: T, index: number) => boolean;
+	// 回车：选中高亮的项
+	select: (item: T, index: number) => void;
 	// 列表内容的来源（搜索词、数据）：变化后默认高亮第一项，回车即可选中
 	source?: WatchSource;
 }
 
 /**
- * 列表的键盘高亮：按 DOM 顺序在匹配 selector 的节点间移动，鼠标移入与键盘共用同一个高亮
- * 	- 高亮用 data-active 标记，不经过响应式状态：移动时不触发列表项渲染，Vue 更新 class 也不会抹掉它
+ * 列表的键盘高亮：按数据下标在可用项间移动，鼠标移入与键盘共用同一个高亮
+ * 	- 只记下标，高亮的呈现交给 SelectList（直接写在行的节点上，不触发渲染；虚拟列表中尚未渲染的行滚入时补上）
  * @param options ~
- * @returns setRoot：列表容器的 ref；handleMouseover：绑在列表容器上；move / enter：交给键盘；scrollIntoActive：把高亮项滚动到可视范围（不在其中时置顶）
+ * @returns setList：SelectList 的 ref；hover：交给 SelectList 的 hover；move / enter：交给键盘；scrollIntoActive：把高亮项滚动到可视范围（不在其中时置顶）
  */
-export const useNavigate = (options: NavigateOptions) => {
-	const { selector, prefer, source } = options;
-	let root: Element | null = null;
-	let active: Element | null = null;
+export const useNavigate = <T>(options: NavigateOptions<T>) => {
+	const { getList, isEnabled, prefer, select, source } = options;
+	let list: SelectListExposed | null = null;
+	let active = -1;
 
-	const getItems = () => Array.from(root?.querySelectorAll(selector) || []);
-
-	const set = (el: Element | null, scroll?: boolean) => {
-		if (el !== active) {
-			active?.removeAttribute('data-active');
-			el?.setAttribute('data-active', '');
-			active = el;
-		}
-		scroll && scrollIntoScroller(el);
+	const set = (index: number, scroll?: boolean) => {
+		active = index;
+		list?.highlight(index);
+		scroll && list?.scrollToIndex(index, 'nearest');
 	};
 
-	const reset = (preferred?: string) => {
-		const items = getItems();
-		set((preferred && items.find(item => item.matches(preferred))) || items[0] || null);
+	const reset = (preferred?: NavigateOptions<T>['prefer']) => {
+		const items = getList();
+		const index = preferred ? items.findIndex((item, i) => isEnabled(item, i) && preferred(item, i)) : -1;
+		set(index !== -1 ? index : findEnabled(items, 0, 1, isEnabled));
 	};
 
-	const setRoot = (el: any) => {
-		// 组件实例取其根节点
-		el = el?.$el || el || null;
-		if (el === root) return;
-		root = el;
-		el && reset(prefer);
+	const setList = (vm: any) => {
+		vm = vm || null;
+		if (vm === list) return;
+		list = vm;
+		vm && reset(prefer);
 	};
 
 	const move = (step: number) => {
-		const items = getItems();
+		const items = getList();
 		if (!items.length) return;
-		const index = active ? items.indexOf(active) : -1;
-		const next = index === -1
-			? (step > 0 ? 0 : items.length - 1)
-			: (index + step + items.length) % items.length;
-		set(items[next], true);
+		const from = active === -1 ? (step > 0 ? 0 : items.length - 1) : active + step;
+		const index = findEnabled(items, from, step, isEnabled);
+		index !== -1 && set(index, true);
 	};
 
 	const enter = () => {
-		active?.isConnected && (active as HTMLElement).click();
+		const item = getList()[active];
+		item !== undefined && isEnabled(item, active) && select(item, active);
 	};
 
-	const handleMouseover = (e: MouseEvent) => {
-		const el = (e.target as Element).closest?.(selector);
-		el && root?.contains(el) && set(el);
+	const hover = (index: number) => {
+		const item = getList()[index];
+		item !== undefined && isEnabled(item, index) && set(index);
 	};
 
 	const scrollIntoActive = () => {
-		scrollIntoScroller(active, 'start');
+		list?.scrollToIndex(active, 'start');
 	};
 
 	source && watch(source, () => reset(), { flush: 'post' });
 
-	return { setRoot, handleMouseover, move, enter, scrollIntoActive };
+	return { setList, hover, move, enter, scrollIntoActive };
 };
 
 interface ColumnItem {
@@ -121,8 +130,8 @@ interface ColumnNavigateOptions {
 	getColumns: () => ColumnItem[][];
 	// 等同鼠标移入该项
 	hover: (item: ColumnItem, columnIndex: number, rowIndex: number) => void;
-	// 该项的节点，用于滚动到可视范围
-	getItem: (columnIndex: number, rowIndex: number) => Element | null | undefined;
+	// 把该项滚动到可视范围
+	scrollTo: (columnIndex: number, rowIndex: number) => void;
 	// 回车（不在搜索时）
 	enter: () => void;
 	// 是否在搜索：搜索时改为显示扁平的搜索结果（SelectPaths），方向键与回车交给它
@@ -149,7 +158,7 @@ export const getPathsWidth = (el?: HTMLElement | null) => {
  * @returns paths：搜索结果列表（SelectPaths）的 ref；searchWidth：它的宽度；navigator：交给键盘；handleMove：交给级联列（CascaderColumns）的 move
  */
 export const useColumnNavigate = (options: ColumnNavigateOptions) => {
-	const { getPath, getColumns, hover, getItem, enter, isSearching, getView, isInverted } = options;
+	const { getPath, getColumns, hover, scrollTo, enter, isSearching, getView, isInverted } = options;
 	const paths = ref<Navigator | null>();
 
 	// 默认 flush: 'pre'，此时 DOM 仍是列视图
@@ -158,20 +167,12 @@ export const useColumnNavigate = (options: ColumnNavigateOptions) => {
 		v && (searchWidth.value = getPathsWidth(getView()));
 	});
 
-	// 从 from 起按 step 方向找第一个可用项，首尾循环
-	const find = (list: ColumnItem[], from: number, step: number) => {
-		const size = list.length;
-		for (let i = 0; i < size; i++) {
-			const index = (((from + step * i) % size) + size) % size;
-			if (!list[index].disabled) return index;
-		}
-		return -1;
-	};
+	const find = (list: ColumnItem[], from: number, step: number) => findEnabled(list, from, step, item => !item.disabled);
 
 	const go = (list: ColumnItem[], columnIndex: number, rowIndex: number) => {
 		if (rowIndex === -1) return;
 		hover(list[rowIndex], columnIndex, rowIndex);
-		nextTick(() => scrollIntoScroller(getItem(columnIndex, rowIndex)));
+		nextTick(() => scrollTo(columnIndex, rowIndex));
 	};
 
 	const move = (step: number) => {
