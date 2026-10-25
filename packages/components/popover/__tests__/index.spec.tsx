@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Popover, PopoverView, Select, Scroller, Checkbox, CheckboxGroup, Button, ButtonGroup } from '@deot/vc-components';
+import { Popover, PopoverView, Select, Scroller, Checkbox, CheckboxGroup, Button, ButtonGroup, Slider } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Resize } from '@deot/helper-resize';
 import { defineComponent, nextTick, ref, provide, inject, getCurrentInstance, KeepAlive } from 'vue';
@@ -2456,6 +2456,41 @@ describe('Popover 渲染在组件树内（Teleport）', () => {
 		active.value = true;
 		await flush();
 		expect(getWrapperEl()).toBeNull();
+	});
+
+	it('KeepAlive 重新激活：单向传入 modelValue 为 true 的弹层（含 Slider 的 always 提示）恢复显示', async () => {
+		const active = ref(true);
+		const onVisibleChange = vi.fn();
+		const Page = defineComponent({
+			name: 'page',
+			setup: () => () => (
+				<div>
+					<Popover modelValue={true} content="x" portalClass="c-one-way" onVisibleChange={onVisibleChange}>
+						<button>btn</button>
+					</Popover>
+					<Slider modelValue={30} showTip="always" />
+				</div>
+			)
+		});
+		const Other = defineComponent({ name: 'other', setup: () => () => <div /> });
+		const wrapper = mount(() => <KeepAlive>{active.value ? <Page /> : <Other />}</KeepAlive>, { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await flush();
+		const getVisible = () => [
+			document.querySelectorAll('.c-one-way').length,
+			Array.from(document.querySelectorAll<HTMLElement>('.vc-slider .vc-popover-wrapper')).filter(el => el.style.display !== 'none').length
+		];
+		expect(getVisible()).toEqual([1, 1]);
+
+		active.value = false;
+		await flush();
+		expect(document.querySelector('.c-one-way')).toBeNull();
+		expect(onVisibleChange).toHaveBeenLastCalledWith(false);
+
+		active.value = true;
+		await flush();
+		expect(getVisible()).toEqual([1, 1]);
+		expect(onVisibleChange).toHaveBeenLastCalledWith(true);
 	});
 
 	it('关闭动画结束后卸载弹层；离场中再次打开时重新挂载，ready 再次触发', async () => {

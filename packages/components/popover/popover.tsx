@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, h, ref, computed, watch, getCurrentInstance, onMounted, onDeactivated, Teleport } from 'vue';
+import { defineComponent, h, ref, computed, watch, getCurrentInstance, onMounted, onActivated, onDeactivated, Teleport } from 'vue';
 import type { ComponentInternalInstance } from 'vue';
 import { pick } from 'lodash-es';
 import { props as popoverProps, viewKeys } from './popover-props';
@@ -141,6 +141,13 @@ export const Popover = defineComponent({
 				sync();
 			}
 			emit('close');
+		});
+
+		// 重新激活：调用方仍要求打开时恢复（单向传入的 modelValue 不会随失活变为 false，如 Slider 的 always 提示）
+		onActivated(() => {
+			if (!props.modelValue || isActive.value) return;
+			isActive.value = true;
+			sync();
 		});
 
 		// 只传弹层的属性：trigger、tag 等属于触发器；插槽只传浮层用的，触发器的 default 不传
