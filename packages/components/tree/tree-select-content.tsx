@@ -1,13 +1,14 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, watch } from 'vue';
+import { defineComponent, ref, watch, onMounted } from 'vue';
 import type { PropType } from 'vue';
 import { renderType } from '../customer/customer-props';
 import { useLocale } from '../locale';
 import { renderHighlight } from '../select/select-search';
 import type { SearchRegex } from '../select/utils';
 import { Tree } from './tree';
-import { getFocusableItems } from './use-keydown';
+import type { TreeNode } from './store';
+import { useNavigate } from '../select/hooks/use-navigate';
 
 const COMPONENT_NAME = 'vc-tree-select-content';
 
@@ -38,11 +39,11 @@ export const TreeSelectContent = defineComponent({
 			default: false
 		}
 	},
-	emits: ['change', 'leave'],
+	emits: ['change'],
 	setup(props, { emit, expose }) {
 		const { t } = useLocale();
-		const root = ref<HTMLElement>();
 		const treeRef = ref<any>(null);
+		const getRows = (): TreeNode[] => treeRef.value?.getRows() || [];
 
 		const filterNode = (keyword: string, data: any, node: any) => {
 			if (!keyword || props.remote || !props.searchRegex) return true;
@@ -88,28 +89,65 @@ export const TreeSelectContent = defineComponent({
 			{ flush: 'post' }
 		);
 
-		// 方向键：焦点不在树内时，↓ 把焦点交给树；已在树内时由 Tree 自身的键盘逻辑接管，
-		// 只有在第一个节点上再按 ↑ 时离开树（回到搜索输入框）
-		const isFocusInside = () => !!root.value?.contains(document.activeElement);
-		expose({
-			move(step: number) {
-				const items = getFocusableItems(root.value);
-				if (isFocusInside()) {
-					if (step > 0 || document.activeElement !== items[0]) return false;
-					emit('leave');
-				} else if (step > 0) {
-					(items.find(item => item.tabIndex === 0) || items[0])?.focus();
-				}
-			},
-			enter() {
-				if (isFocusInside()) return false;
+		/**
+		 * 键盘高亮（与 Select / Cascader 一致）：焦点留在触发器或搜索栏
+		 * 	- ↑ ↓ 在可见节点间移动；← → 收起 / 展开，已收起时回到父节点、已展开时进入第一个子节点；回车切换勾选
+		 * 	- 打开时高亮第一个勾选的节点（弹层就绪后滚动到它），搜索词、数据变化后为第一个节点
+		 * 	- 鼠标在节点上移动时高亮跟随
+		 */
+		const navigate = useNavigate<TreeNode>({
+			getList: getRows,
+			isEnabled: node => !node.getter.disabled,
+			prefer: node => node.states.checked,
+			select: node => treeRef.value?.toggleCheck(node),
+			source: () => [props.searchValue, props.data]
+		});
+
+		// 展开 / 收起使行增减：高亮按节点重新对上
+		watch(getRows, () => navigate.sync(), { flush: 'post' });
+
+		const shift = (step: number) => {
+			const rows = getRows();
+			const index = navigate.getActive();
+			const node = rows[index];
+			if (!node) return;
+			const { isLeaf, expanded } = node.states;
+			if (step > 0) {
+				if (isLeaf) return;
+				expanded
+					? rows[index + 1]?.parentNode === node && navigate.activate(index + 1)
+					: treeRef.value?.toggleNode(node);
+			} else if (!isLeaf && expanded) {
+				treeRef.value?.toggleNode(node);
+			} else if (node.parentNode && node.parentNode.states.level > 0) {
+				navigate.activate(rows.indexOf(node.parentNode));
 			}
+		};
+
+		// 只在指针移到另一行时处理
+		let hovered: Element | null = null;
+		const handleMousemove = (e: MouseEvent) => {
+			const row = (e.target as Element).closest?.('[role="treeitem"]') || null;
+			if (row === hovered) return;
+			hovered = row;
+			const index = row ? treeRef.value?.getIndex(row) ?? -1 : -1;
+			index !== -1 && navigate.hover(index);
+		};
+
+		// 挂载后再交给高亮：此时 Tree 内部的列表也已就绪（在 ref 回调里交，Tree 的列表 ref 可能还没赋值）
+		onMounted(() => navigate.setList(treeRef.value));
+
+		expose({
+			move: navigate.move,
+			shift,
+			enter: navigate.enter,
+			scrollIntoActive: navigate.scrollIntoActive
 		});
 
 		return () => {
 			const searching = !!props.searchValue.trim();
 			return (
-				<div ref={root} class="vc-tree-select__options">
+				<div class="vc-tree-select__options" onMousemove={handleMousemove}>
 					<Tree
 						ref={treeRef}
 						model-value={props.value}

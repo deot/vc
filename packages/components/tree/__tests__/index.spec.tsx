@@ -12,7 +12,6 @@ import { TreeSelectContent } from '../tree-select-content';
 import { renderHighlight } from '../../select/select-search';
 import { createSearchRegex } from '../../select/utils';
 import { TreeSelectContentCascader } from '../tree-select-content-cascader';
-import { getFocusableItems } from '../use-keydown';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -36,8 +35,9 @@ const fireMouse = (
 	el.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true }));
 };
 
+const KEYS: Record<number, string> = { 13: 'Enter', 32: ' ', 37: 'ArrowLeft', 38: 'ArrowUp', 39: 'ArrowRight', 40: 'ArrowDown' };
 const fireKey = (el: Element, keyCode: number) => {
-	el.dispatchEvent(new KeyboardEvent('keydown', { keyCode, bubbles: true } as any));
+	el.dispatchEvent(new KeyboardEvent('keydown', { key: KEYS[keyCode], keyCode, bubbles: true, cancelable: true } as any));
 };
 
 const dataTransferStub = () => ({
@@ -504,7 +504,7 @@ describe('Tree interaction', () => {
 	});
 
 	it('keyboard navigation: up/down/left/space', async () => {
-		const wrapper = mountTree({ data, showCheckbox: true, defaultExpandAll: true });
+		const wrapper = mountTree({ data: freshData(), showCheckbox: true, defaultExpandAll: true });
 		await flush();
 
 		const items = wrapper.findAll('.vc-tree-node[role="treeitem"]');
@@ -519,11 +519,14 @@ describe('Tree interaction', () => {
 		await flush();
 		expect(document.activeElement).toBe(items[0].element);
 
-		// left/right -> click 当前 item
+		// ← 收起展开的节点，→ 再展开
 		fireKey(items[0].element, 37);
 		await flush();
+		expect(items[0].attributes('aria-expanded')).toBe('false');
+		await sleep(400);
 		fireKey(items[0].element, 39);
 		await flush();
+		expect(items[0].attributes('aria-expanded')).toBe('true');
 
 		// space -> 切换 checkbox
 		const before = (wrapper.vm as any).getCheckedValues().length;
@@ -1938,12 +1941,12 @@ describe('Tree store & node unit', () => {
 		fireKey(wrapper.element, 40);
 		fireKey(wrapper.element, 38);
 		await flush();
-		// 第一个 item up 不越界
+		// 第一个 item 按 up 回到最后一个（首尾循环）
 		const items = wrapper.findAll('.vc-tree-node[role="treeitem"]');
 		(items[0].element as HTMLElement).focus();
 		fireKey(items[0].element, 38);
 		await flush();
-		expect(document.activeElement).toBe(items[0].element);
+		expect(document.activeElement).toBe(items[items.length - 1].element);
 
 		// 最后一个 item 按 down 应回到第一个（line 34 wrap-around）
 		const last = items[items.length - 1].element as HTMLElement;
@@ -2332,24 +2335,66 @@ describe('TreeSelect 内联搜索与键盘', () => {
 		wrapper.unmount();
 	});
 
-	it('getFocusableItems 只取可见的节点：排除禁用、被过滤隐藏、所在分组收起的节点', async () => {
+	it('Tree 键盘：↑ ↓ 跳过禁用节点；→ 展开 / 进入子节点，← 收起 / 回到父节点；回车切换勾选；Tab 停留点跟随焦点', async () => {
 		const wrapper = mountTree({
 			data: [
 				{ value: 'a', label: 'A', children: [{ value: 'a1', label: 'A1' }] },
 				{ value: 'b', label: 'B', disabled: true },
 				{ value: 'c', label: 'C', children: [{ value: 'c1', label: 'C1' }] }
 			],
-			expandedValues: ['a'],
-			renderNodeAfterExpand: false
+			showCheckbox: true,
+			modelValue: ['c1']
 		});
 		await flush();
-		const texts = () => getFocusableItems(wrapper.element).map(item => item.querySelector('.vc-tree-node__content')!.textContent!.trim());
-		expect(texts()).toEqual(['A', 'A1', 'C']);
-		expect(getFocusableItems(null)).toEqual([]);
+		const rowOf = (label: string) => Array.from(wrapper.element.querySelectorAll('.vc-tree-node'))
+			.find((el: any) => el.querySelector(':scope > .vc-tree-node__content').textContent.trim() === label) as HTMLElement;
+		const focused = () => (document.activeElement as HTMLElement).querySelector(':scope > .vc-tree-node__content')?.textContent?.trim();
+		const pressOnFocused = (key: string) => {
+			const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+			document.activeElement!.dispatchEvent(event);
+			return event;
+		};
+
+		// 初始 Tab 停留点：第一个勾选的可用节点（C 的子节点全部勾选，C 也是勾选的）
+		expect(rowOf('C').getAttribute('tabindex')).toBe('0');
+		expect(wrapper.element.querySelectorAll('[tabindex="0"]').length).toBe(1);
+		// 复选框不占用 Tab
+		expect(rowOf('A').querySelector('input')!.getAttribute('tabindex')).toBe('-1');
+
+		rowOf('A').focus();
+		expect(rowOf('A').getAttribute('tabindex')).toBe('0');
+		expect(pressOnFocused('ArrowDown').defaultPrevented).toBe(true);
+		await flush();
+		// 跳过禁用的 B
+		expect(focused()).toBe('C');
+		expect(rowOf('C').getAttribute('tabindex')).toBe('0');
+		expect(rowOf('A').getAttribute('tabindex')).toBe('-1');
+
+		// → 展开，再 → 进入第一个子节点
+		pressOnFocused('ArrowRight');
+		await sleep(400);
+		await flush();
+		expect(rowOf('C').getAttribute('aria-expanded')).toBe('true');
+		pressOnFocused('ArrowRight');
+		await flush();
+		expect(focused()).toBe('C1');
+		// ← 回到父节点，再 ← 收起
+		pressOnFocused('ArrowLeft');
+		await flush();
+		expect(focused()).toBe('C');
+		pressOnFocused('ArrowLeft');
+		await flush();
+		expect(rowOf('C').getAttribute('aria-expanded')).toBe('false');
+
+		// 回车切换勾选
+		rowOf('A').focus();
+		pressOnFocused('Enter');
+		await flush();
+		expect((wrapper.vm as any).getCheckedValues()).toEqual(expect.arrayContaining(['a', 'a1', 'c1']));
 		wrapper.unmount();
 	});
 
-	it('树形：↓ 把焦点交给树里第一个可见节点，之后由 Tree 自身处理；Esc 关闭并回到输入框', async () => {
+	it('树形：键盘高亮（焦点留在输入框）；↑ ↓ 移动、← → 收起 / 展开、回车切换勾选，鼠标移入共用高亮；Esc 关闭', async () => {
 		const value = ref<any[]>([]);
 		const wrapper = mount(() => (
 			<TreeSelect v-model={value.value} data={treeData} max={99} searchable />
@@ -2360,41 +2405,74 @@ describe('TreeSelect 内联搜索与键盘', () => {
 		await typeSearch('2-1-1');
 
 		const input = getSearchInput();
-		const getFocused = () => document.activeElement?.querySelector('.vc-tree-node__content')?.textContent?.trim();
-		// 焦点在输入框内：↑ 与回车被消费但不做处理
-		expect(press('ArrowUp', input).defaultPrevented).toBe(true);
-		expect(press('Enter', input).defaultPrevented).toBe(true);
-		expect(document.activeElement).toBe(input);
-
+		const getActive = () => document.querySelector('.vc-tree-node[data-active] > .vc-tree-node__content')?.textContent?.trim();
+		// 搜索后高亮第一个节点
+		expect(getActive()).toContain('一级 2');
 		expect(press('ArrowDown', input).defaultPrevented).toBe(true);
-		expect(getFocused()).toContain('一级 2');
-
-		// 焦点已在树内：只在可见节点间移动（跳过被过滤隐藏的节点）
-		press('ArrowDown', document.activeElement!);
-		expect(getFocused()).toContain('二级 2-1');
-		press('ArrowDown', document.activeElement!);
-		expect(getFocused()).toBe('三级 2-1-1');
-		press('ArrowDown', document.activeElement!);
-		expect(getFocused()).toContain('一级 2');
-		// 第一个节点再向上：回到输入框
-		expect(press('ArrowUp', document.activeElement!).defaultPrevented).toBe(true);
-		expect(document.activeElement).toBe(input);
-
+		expect(getActive()).toContain('二级 2-1');
 		press('ArrowDown', input);
-		press('ArrowDown', document.activeElement!);
-		press('ArrowDown', document.activeElement!);
-		press('ArrowUp', document.activeElement!);
-		expect(getFocused()).toContain('二级 2-1');
-		press('ArrowDown', document.activeElement!);
-		press('Enter', document.activeElement!);
+		expect(getActive()).toBe('三级 2-1-1');
+		// 首尾循环；焦点始终在输入框
+		press('ArrowDown', input);
+		expect(getActive()).toContain('一级 2');
+		press('ArrowUp', input);
+		expect(getActive()).toBe('三级 2-1-1');
+		expect(document.activeElement).toBe(input);
+		expect(document.querySelectorAll('.vc-tree [data-active]').length).toBe(1);
+
+		// 回车切换勾选，弹层不关闭
+		press('Enter', input);
 		await flush();
 		expect(value.value).toContain('2-1-1');
 		expect(isOpen()).toBe(true);
 
-		expect(press('Escape', document.activeElement!).defaultPrevented).toBe(true);
+		// 鼠标在节点上移动：高亮跟随
+		const row = Array.from(document.querySelectorAll('.vc-tree-node'))
+			.find(el => el.querySelector(':scope > .vc-tree-node__content')!.textContent!.includes('二级 2-1')) as HTMLElement;
+		row.querySelector('.vc-tree-node__content')!.dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+		expect(getActive()).toContain('二级 2-1');
+
+		expect(press('Escape', input).defaultPrevented).toBe(true);
 		await flush();
 		expect(isOpen()).toBe(false);
 		expect(document.activeElement).toBe(input);
+
+		wrapper.unmount();
+	});
+
+	it('树形：没有搜索词时 ← → 收起 / 展开高亮的节点，已收起时回到父节点、已展开时进入第一个子节点；打开时高亮首个勾选的节点', async () => {
+		const value = ref<any[]>(['2-1-1']);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={treeData} max={99} searchable />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+
+		const input = getSearchInput();
+		const getActive = () => document.querySelector('.vc-tree-node[data-active] > .vc-tree-node__content')?.textContent?.trim();
+		const rowOf = (label: string) => Array.from(document.querySelectorAll('.vc-tree-node'))
+			.find(el => el.querySelector(':scope > .vc-tree-node__content')!.textContent!.trim().startsWith(label)) as HTMLElement;
+		// 已选值的节点随 expandedValues 展开；打开时高亮第一个勾选的节点（2-1 的子节点全部勾选，2-1 也是勾选的）
+		expect(getActive()).toContain('二级 2-1');
+		press('ArrowDown', input);
+		expect(getActive()).toBe('三级 2-1-1');
+
+		// ← 回到父节点，再 ← 收起
+		press('ArrowLeft', input);
+		expect(getActive()).toContain('二级 2-1');
+		press('ArrowLeft', input);
+		await sleep(400);
+		await flush();
+		expect(rowOf('二级 2-1').getAttribute('aria-expanded')).toBe('false');
+		expect(getActive()).toContain('二级 2-1');
+		// → 展开，再 → 进入第一个子节点
+		press('ArrowRight', input);
+		await sleep(400);
+		await flush();
+		expect(rowOf('二级 2-1').getAttribute('aria-expanded')).toBe('true');
+		press('ArrowRight', input);
+		expect(getActive()).toBe('三级 2-1-1');
 
 		wrapper.unmount();
 	});

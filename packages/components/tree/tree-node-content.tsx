@@ -10,7 +10,6 @@ import { Spin } from '../spin';
 import { Icon } from '../icon';
 import { props as treeNodeProps } from './tree-node-content-props';
 import type {
-	TreeCheckPayload,
 	TreeCurrentChangePayload,
 	TreeNodeEventPayload,
 	TreeProvide
@@ -139,15 +138,17 @@ export const TreeNodeContent = defineComponent({
 		const instance = getCurrentInstance()!;
 		const tree = inject<TreeProvide>('vc-tree')!;
 
-		const handleCheckChange = async (_: boolean, e: any) => {
-			props.node.setChecked(e.target.checked, !tree.props.checkStrictly);
-			await nextTick();
-			tree.emit('check', {
-				node: props.node,
-				data: props.node.states.data,
-				checked: props.node.states.checked,
-				...tree.sync()
-			} satisfies TreeCheckPayload);
+		// 行的根节点在组件生命周期内不变：挂载时登记即可
+		onMounted(() => tree.registerRow(props.node, instance));
+		onBeforeUnmount(() => tree.unregisterRow(props.node, instance));
+
+		const handleCheckChange = (checked: boolean) => {
+			tree.toggleCheck(props.node, checked);
+		};
+
+		// 复选框不单独占用 Tab：键盘焦点在行上，空格 / 回车切换勾选
+		const handleCheckboxMounted = (vnode: any) => {
+			vnode.el?.querySelector?.('input')?.setAttribute('tabindex', '-1');
 		};
 
 		// 节点事件（node-click / node-contextmenu）的参数
@@ -179,10 +180,7 @@ export const TreeNodeContent = defineComponent({
 				handleExpandIconClick();
 			}
 			if (tree.props.checkOnClickNode && !props.node.getter.disabled) {
-				const checked = !props.node.states.checked;
-				handleCheckChange(checked, {
-					target: { checked }
-				});
+				tree.toggleCheck(props.node);
 			}
 			tree.emit('node-click', toNodePayload(e));
 		};
@@ -269,6 +267,7 @@ export const TreeNodeContent = defineComponent({
 									onChange={handleCheckChange}
 									// @ts-ignore
 									onClick={withModifiers(() => {}, ['stop'])}
+									onVnodeMounted={handleCheckboxMounted}
 								/>
 							)
 						}

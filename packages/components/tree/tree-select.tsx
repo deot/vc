@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, ref, computed, nextTick } from 'vue';
 import { getUid } from '@deot/helper-utils';
 import { walkTree, getTreeDepth } from '../select/utils';
 import type { TreeData } from '../select/utils';
@@ -54,7 +54,7 @@ export const TreeSelect = defineComponent({
 			getColumn: () => content.value?.$el?.querySelector?.('.vc-cascader-column'),
 			getDepth: () => getTreeDepth(props.data as TreeData[])
 		});
-		const { its, isActive, searchValue, searchRegex, searchMode, isRemote, close, toggle, focus } = select;
+		const { its, isActive, searchValue, searchRegex, searchMode, isRemote, close, toggle } = select;
 		const { currentValue, multiple, sync: syncValue, handleClear } = useSelectValue(select);
 
 		// 当前数据中每个值对应的节点；只记父级，路径在用到时（已选值）再沿父级取
@@ -155,6 +155,12 @@ export const TreeSelect = defineComponent({
 			sync();
 		};
 
+		// 弹层就绪（此前为 display: none，无法测量）：判断级联列的展开方向；树形模式把高亮的节点（首个勾选的节点）滚动到可视范围
+		const handleReady = () => {
+			direction.update();
+			!props.cascader && nextTick(() => content.value?.scrollIntoActive?.());
+		};
+
 		const handleChange = (_: any, data: any) => {
 			// 远程搜索时 data 只是当前关键词的结果：不在其中的已选值不受这次勾选影响
 			currentValue.value = isRemote()
@@ -225,7 +231,6 @@ export const TreeSelect = defineComponent({
 							searchRegex={searchRegex.value}
 							remote={isRemote()}
 							onChange={handleChange}
-							onLeave={focus}
 						/>
 					);
 		};
@@ -240,7 +245,7 @@ export const TreeSelect = defineComponent({
 					// 树：由内置的 Scroller 限高滚动；级联：各列在高度上限内收缩并自行滚动
 					scrollable={!props.cascader}
 					scrollerOptions={scrollerOptions}
-					onReady={direction.update}
+					onReady={handleReady}
 				>
 					{{
 						default: renderTrigger,

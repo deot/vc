@@ -52,6 +52,11 @@ $component-name: vc-tree;
 		}
 	}
 
+	// TreeSelect 的键盘与鼠标共用的高亮（焦点留在输入框），见 use-navigate
+	&[data-active] > .vc-tree-node__content {
+		background-color: $background-color-primary-light;
+	}
+
 	@include when(drop-inner) {
 		> .vc-tree-node__content .vc-tree-node__label {
 			color: $color-contrast-light;

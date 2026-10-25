@@ -1,71 +1,115 @@
-import { ref, watch, onMounted, onUpdated, getCurrentInstance, onUnmounted } from 'vue';
+import { nextTick } from 'vue';
+import type { TreeNode } from './store';
+import { findEnabled } from '../select/hooks/use-navigate';
+
+interface KeydownOptions {
+	// 铺平的可见节点
+	getRows: () => TreeNode[];
+	// 行节点（元素）对应的树节点；不是行时为 undefined
+	getNode: (el: Element) => TreeNode | undefined;
+	// 树节点所在的行；未渲染时为 undefined
+	getElement: (node: TreeNode) => Element | undefined;
+	// 把第 index 行滚动到可视范围
+	scrollToIndex: (index: number) => void;
+	toggle: (node: TreeNode) => void;
+	toggleCheck: (node: TreeNode) => void;
+	showCheckbox: () => boolean;
+}
+
+const isEnabled = (node: TreeNode) => !node.getter.disabled;
 
 /**
- * 可由键盘聚焦的节点：未禁用、未被过滤隐藏，且不在收起的分组内
- * @param el 树或其容器
- * @returns ~
+ * 树的键盘：焦点在行上时，按铺平的可见节点移动（与 WAI-ARIA 的 tree 一致）
+ * 	- ↑ ↓：上一个 / 下一个可用节点，首尾循环
+ * 	- →：收起的节点展开；已展开时进入第一个子节点
+ * 	- ←：展开的节点收起；已收起时回到父节点
+ * 	- Enter / 空格：显示复选框时切换勾选
+ * 	- 只有一个行可以 Tab 进入（roving tabindex）：初始为第一个勾选的可用节点，否则第一个可用节点；之后跟随焦点
+ * @param options ~
+ * @returns handleKeydown / handleFocusin：绑在树的根节点上；initTabStop：挂载后调用
  */
-export const getFocusableItems = (el?: Element | null) => {
-	return Array.from(el?.querySelectorAll<HTMLElement>('.is-focusable[role=treeitem]') || [])
-		.filter(item => !item.closest('.vc-tree-node.is-hidden, .vc-tree-node__children[aria-expanded="false"]'));
-};
+export const useKeydown = (options: KeydownOptions) => {
+	const { getRows, getNode, getElement, scrollToIndex, toggle, toggleCheck, showCheckbox } = options;
+	let tabStop: Element | null = null;
 
-export const useKeydown = () => {
-	const { vnode } = getCurrentInstance()!;
-	const checkboxItems = ref([]);
-
-	const initTabIndex = () => {
-		checkboxItems.value = vnode.el!.querySelectorAll('input[type=checkbox]');
-		const item = vnode.el!.querySelector('.is-checked[role=treeitem]')
-			|| vnode.el!.querySelector('.is-focusable[role=treeitem]');
-		item?.setAttribute('tabindex', 0);
+	const setTabStop = (el?: Element | null) => {
+		if (el === tabStop) return;
+		tabStop?.setAttribute('tabindex', '-1');
+		el?.setAttribute('tabindex', '0');
+		tabStop = el || null;
 	};
 
-	const handleKeydown = (ev) => {
-		const currentItem = ev.target;
-		if (currentItem.className.indexOf('vc-tree-node') === -1) return;
-		const keyCode = ev.keyCode;
-		// 只在可见的节点间移动（被过滤隐藏、所在分组收起的节点无法聚焦）
-		const items = getFocusableItems(vnode.el as Element);
-		const currentIndex = items.indexOf(currentItem);
-		let nextIndex: number;
-		if ([38, 40].indexOf(keyCode) > -1) { // up、down
-			ev.preventDefault();
-			if (keyCode === 38) { // up
-				nextIndex = currentIndex > 0 ? currentIndex - 1 : 0;
-			} else {
-				nextIndex = (currentIndex < items.length - 1) ? currentIndex + 1 : 0;
+	const focus = (node: TreeNode) => {
+		const index = getRows().indexOf(node);
+		index !== -1 && scrollToIndex(index);
+		// 虚拟列表中滚入的行在下一次更新后才渲染
+		nextTick(() => {
+			const el = getElement(node) as HTMLElement | undefined;
+			if (!el) return;
+			setTabStop(el);
+			el.focus({ preventScroll: true });
+		});
+	};
+
+	const handleKeydown = (e: KeyboardEvent) => {
+		// 只处理行自身（复选框等内部元素有自己的按键）
+		const node = getNode(e.target as Element);
+		if (!node) return;
+		const rows = getRows();
+		const index = rows.indexOf(node);
+		const { isLeaf, expanded } = node.states;
+		switch (e.key) {
+			case 'ArrowDown':
+			case 'ArrowUp': {
+				e.preventDefault();
+				const step = e.key === 'ArrowDown' ? 1 : -1;
+				const next = findEnabled(rows, index === -1 ? 0 : index + step, step, isEnabled);
+				next !== -1 && focus(rows[next]);
+				break;
 			}
-			items[nextIndex]?.focus(); // 选中
-		}
-		if ([37, 39].indexOf(keyCode) > -1) { // left、right 展开
-			ev.preventDefault();
-			currentItem.click(); // 选中
-		}
-		const hasInput = currentItem.querySelector('[type="checkbox"]');
-		if ([13, 32].indexOf(keyCode) > -1 && hasInput) { // space enter选中checkbox
-			ev.preventDefault();
-			hasInput.click();
+			case 'ArrowRight': {
+				e.preventDefault();
+				if (isLeaf) break;
+				if (!expanded) {
+					toggle(node);
+				} else if (rows[index + 1]?.parentNode === node) {
+					focus(rows[index + 1]);
+				}
+				break;
+			}
+			case 'ArrowLeft': {
+				e.preventDefault();
+				const parent = node.parentNode;
+				if (!isLeaf && expanded) {
+					toggle(node);
+				} else if (parent && parent.states.level > 0) {
+					focus(parent);
+				}
+				break;
+			}
+			case 'Enter':
+			case ' ': {
+				if (!showCheckbox() || !isEnabled(node)) break;
+				e.preventDefault();
+				toggleCheck(node);
+				break;
+			}
+			default:
+				break;
 		}
 	};
 
-	watch(
-		() => checkboxItems.value,
-		(v) => {
-			Array.prototype.forEach.call(v, (checkbox) => {
-				checkbox.setAttribute('tabindex', -1);
-			});
-		}
-	);
+	// 点击等方式聚焦到行：Tab 停留点跟随
+	const handleFocusin = (e: FocusEvent) => {
+		const el = e.target as Element;
+		getNode(el) && setTabStop(el);
+	};
 
-	onMounted(() => {
-		initTabIndex();
-		vnode.el!.addEventListener('keydown', handleKeydown);
-	});
+	const initTabStop = () => {
+		const rows = getRows();
+		const node = rows.find(item => isEnabled(item) && item.states.checked) || rows.find(isEnabled);
+		setTabStop(node && getElement(node));
+	};
 
-	onUpdated(() => {
-		checkboxItems.value = vnode.el!.querySelectorAll('input[type=checkbox]');
-	});
-
-	onUnmounted(() => vnode.el!.removeEventListener('keydown', handleKeydown));
+	return { handleKeydown, handleFocusin, initTabStop };
 };

@@ -15,8 +15,13 @@ export interface TreeProvide {
 	toggle: (node: TreeNode, instance: ComponentInternalInstance) => Promise<void>;
 	// 按当前勾选同步 v-model，返回勾选数据
 	sync: () => Pick<TreeCheckPayload, 'checkedNodes' | 'checkedValues' | 'halfCheckedNodes' | 'halfCheckedValues'>;
+	// 切换勾选：联动后发出 check 并同步 v-model
+	toggleCheck: (node: TreeNode, checked?: boolean) => Promise<void>;
 	// 渲染一行（铺平的列表与动画块共用）
 	renderNode: (node: TreeNode) => VNode;
+	// 行挂载 / 卸载时登记，供按节点找行
+	registerRow: (node: TreeNode, row: ComponentInternalInstance) => void;
+	unregisterRow: (node: TreeNode, row: ComponentInternalInstance) => void;
 };
 
 /**

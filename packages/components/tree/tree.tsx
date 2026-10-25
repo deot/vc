@@ -1,16 +1,17 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, provide, ref, computed, watch, getCurrentInstance, shallowReactive, inject } from 'vue';
+import { defineComponent, provide, ref, computed, watch, getCurrentInstance, shallowReactive, inject, nextTick, onMounted } from 'vue';
 import type { ComponentInternalInstance } from 'vue';
 import { isEqualWith } from 'lodash-es';
 import type { TreeNode } from './store/tree-node';
-import type { TreeCheckChangePayload, TreeNodeExpandChangePayload, TreeProvide } from './types';
+import type { TreeCheckChangePayload, TreeCheckPayload, TreeNodeExpandChangePayload, TreeProvide } from './types';
 import { KEY_VALUE } from './store/constant';
 import { TreeStore } from './store/tree-store';
 import { toCurrentValue, toModelValue } from '../select/utils';
 import { Customer } from '../customer';
 import { useLocale } from '../locale';
 import { SelectList } from '../select/select-list';
+import type { SelectListAlign, SelectListExposed } from '../select/select-list';
 import { TreeNodeContent, collectVisibleNodes } from './tree-node-content.tsx';
 import { useDragNode } from './use-drag-node';
 import { useKeydown } from './use-keydown';
@@ -78,6 +79,20 @@ export const Tree = defineComponent({
 
 		// 铺平的可见节点：逐行渲染；展开的节点才下钻，正在动画的节点的子孙在它的动画块里
 		const rows = computed(() => collectVisibleNodes(root.childNodes, motions));
+		const list = ref<SelectListExposed>();
+
+		// 已渲染的行（含动画块里的）：节点 <-> 行组件实例 / 元素，供键盘、高亮与拖拽按节点找行
+		const rowInstances = new Map<TreeNode, ComponentInternalInstance>();
+		const rowNodes = new WeakMap<Element, TreeNode>();
+		const registerRow = (node: TreeNode, row: ComponentInternalInstance) => {
+			rowInstances.set(node, row);
+			rowNodes.set(row.vnode.el as Element, node);
+		};
+		const unregisterRow = (node: TreeNode, row: ComponentInternalInstance) => {
+			rowInstances.get(node) === row && rowInstances.delete(node);
+		};
+		const getElement = (node: TreeNode) => rowInstances.get(node)?.vnode.el as Element | undefined;
+		const getNodeOf = (el: Element) => rowNodes.get(el);
 
 		const isEmpty = computed(() => {
 			const { childNodes } = root;
@@ -258,6 +273,34 @@ export const Tree = defineComponent({
 			emit('node-expand-change', toPayload(true));
 		};
 
+		/**
+		 * 切换勾选（复选框、键盘、TreeSelect 的回车共用）：联动上下级后发出 check，并同步 v-model
+		 * @param node ~
+		 * @param checked 默认取反
+		 */
+		const toggleCheck = async (node: TreeNode, checked = !node.states.checked) => {
+			if (node.getter.disabled) return;
+			node.setChecked(checked, !props.checkStrictly);
+			await nextTick();
+			emit('check', {
+				node,
+				data: node.states.data,
+				checked: node.states.checked,
+				...sync()
+			} satisfies TreeCheckPayload);
+		};
+
+		const keydown = useKeydown({
+			getRows: () => rows.value,
+			getNode: getNodeOf,
+			getElement,
+			scrollToIndex: index => list.value?.scrollToIndex(index, 'nearest'),
+			toggle: node => toggle(node, rowInstances.get(node)!),
+			toggleCheck,
+			showCheckbox: () => props.showCheckbox
+		});
+		onMounted(keydown.initTabStop);
+
 		const renderNode = (node: TreeNode) => {
 			return (
 				<TreeNodeContent
@@ -275,7 +318,6 @@ export const Tree = defineComponent({
 			store.updateChildren(key, data);
 		};
 
-		useKeydown();
 		provide('vc-tree', {
 			props,
 			store,
@@ -285,8 +327,11 @@ export const Tree = defineComponent({
 			instance: instance!,
 			motions,
 			toggle,
+			toggleCheck,
 			sync,
-			renderNode
+			renderNode,
+			registerRow,
+			unregisterRow
 		} satisfies TreeProvide);
 
 		expose({
@@ -310,6 +355,17 @@ export const Tree = defineComponent({
 			insertBefore,
 			insertAfter,
 			updateKeyChildren,
+			// 以下供 TreeSelect 的键盘高亮使用：铺平的可见节点、行的高亮与滚动、按元素找行的下标
+			getRows: () => rows.value,
+			highlight: (index: number) => list.value?.highlight(index),
+			scrollToIndex: (index: number, align?: SelectListAlign) => list.value?.scrollToIndex(index, align),
+			getIndex: (target: Element) => {
+				const row = target.closest?.('[role="treeitem"]');
+				const node = row && getNodeOf(row);
+				return node ? rows.value.indexOf(node) : -1;
+			},
+			toggleNode: (node: TreeNode) => toggle(node, rowInstances.get(node)!),
+			toggleCheck
 		});
 		return () => {
 			const dragState = drag.state;
@@ -325,8 +381,10 @@ export const Tree = defineComponent({
 						'vc-tree'
 					]}
 					role="tree"
+					onKeydown={keydown.handleKeydown}
+					onFocusin={keydown.handleFocusin}
 				>
-					<SelectList data={rows.value}>
+					<SelectList ref={list} data={rows.value}>
 						{{ default: ({ row }: { row: TreeNode }) => renderNode(row), $stable: true }}
 					</SelectList>
 					{

@@ -74,17 +74,21 @@ interface NavigateOptions<T> {
 
 /**
  * 列表的键盘高亮：按数据下标在可用项间移动，鼠标移入与键盘共用同一个高亮
- * 	- 只记下标，高亮的呈现交给 SelectList（直接写在行的节点上，不触发渲染；虚拟列表中尚未渲染的行滚入时补上）
+ * 	- 高亮的呈现交给 SelectList（直接写在行的节点上，不触发渲染；虚拟列表中尚未渲染的行滚入时补上）
+ * 	- 记下高亮的项：列表增减（如树展开、收起）后调用 sync 按项重新对上下标
  * @param options ~
- * @returns setList：SelectList 的 ref；hover：交给 SelectList 的 hover；move / enter：交给键盘；scrollIntoActive：把高亮项滚动到可视范围（不在其中时置顶）
+ * @returns setList：SelectList 的 ref；hover：交给 SelectList 的 hover；move / enter：交给键盘；scrollIntoActive：把高亮项滚动到可视范围（不在其中时置顶）；
+ * getActive / activate：读取、设置（并滚动到）高亮的下标；sync：列表变化后按项对上下标
  */
 export const useNavigate = <T>(options: NavigateOptions<T>) => {
 	const { getList, isEnabled, prefer, select, source } = options;
 	let list: SelectListExposed | null = null;
 	let active = -1;
+	let activeItem: T | undefined;
 
 	const set = (index: number, scroll?: boolean) => {
 		active = index;
+		activeItem = getList()[index];
 		list?.highlight(index);
 		scroll && list?.scrollToIndex(index, 'nearest');
 	};
@@ -124,10 +128,25 @@ export const useNavigate = <T>(options: NavigateOptions<T>) => {
 		list?.scrollToIndex(active, 'start');
 	};
 
+	const sync = () => {
+		if (activeItem === undefined) return;
+		const index = getList().indexOf(activeItem);
+		index === -1 ? reset() : index !== active && set(index);
+	};
+
 	// 内容变化后高亮第一项并滚动到它（列表变短时滚动位置可能停在末尾，回车会选中看不见的一项）
 	source && watch(source, () => reset(void 0, true), { flush: 'post' });
 
-	return { setList, hover, move, enter, scrollIntoActive };
+	return {
+		setList,
+		hover,
+		move,
+		enter,
+		scrollIntoActive,
+		sync,
+		getActive: () => active,
+		activate: (index: number) => index !== -1 && set(index, true)
+	};
 };
 
 interface ColumnItem {
