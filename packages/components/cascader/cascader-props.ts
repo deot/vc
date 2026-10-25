@@ -1,7 +1,7 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import { props as selectProps } from '../select/select-props';
 import { TreeData } from '../select/utils';
-import { expandDirection } from '../select/hooks/use-column-direction';
+import { expandDirection } from './hooks/use-column-direction';
 
 export const props = {
 	...selectProps,

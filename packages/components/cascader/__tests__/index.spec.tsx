@@ -192,7 +192,7 @@ describe('Cascader interaction', () => {
 		await wrapper.trigger('click');
 		await flush();
 
-		const content = document.querySelector('.vc-cascader__content');
+		const content = document.querySelector('.vc-cascader-columns__content');
 		expect(content).not.toBeNull();
 		expect(content?.children.length).toBe(0);
 
@@ -539,7 +539,7 @@ describe('Cascader 弹层滚动', () => {
 		expect(content.classList.contains('is-unscrollable')).toBe(true);
 		expect(content.classList.contains('vc-scroller')).toBe(false);
 		const columns = content.querySelector(':scope > .vc-scroller.vc-cascader__columns')!;
-		expect(columns.querySelector(':scope > .vc-cascader__content > .vc-cascader-column')).not.toBeNull();
+		expect(columns.querySelector(':scope > .vc-cascader-columns__content > .vc-cascader-column')).not.toBeNull();
 		const list = getCols()[0].firstElementChild as HTMLElement;
 		expect(list.matches('.vc-scroller.vc-cascader-column__wrapper')).toBe(true);
 		expect(getCells(0).length).toBe(options.length);
@@ -856,7 +856,7 @@ describe('Cascader 搜索与键盘', () => {
 			Object.defineProperty(HTMLElement.prototype, 'offsetWidth', original);
 		});
 	};
-	const isReverse = () => !!document.querySelector('.vc-cascader__columns.is-reverse');
+	const isInverted = () => !!document.querySelector('.vc-cascader__columns.is-inverted');
 	const getPopoverProp = (wrapper: any, key: string) => wrapper.findComponent(Popover as any).props(key);
 	const getPlacement = (wrapper: any) => getPopoverProp(wrapper, 'placement');
 
@@ -868,7 +868,7 @@ describe('Cascader 搜索与键盘', () => {
 		await nextTick();
 		await wrapper.trigger('click');
 		await flush();
-		expect(isReverse()).toBe(false);
+		expect(isInverted()).toBe(false);
 		expect(getPlacement(wrapper)).toBe('bottom-left');
 		expect(getPopoverProp(wrapper, 'keepEdge')).toBe('start');
 	});
@@ -881,7 +881,7 @@ describe('Cascader 搜索与键盘', () => {
 		await nextTick();
 		await wrapper.trigger('click');
 		await flush();
-		expect(isReverse()).toBe(true);
+		expect(isInverted()).toBe(true);
 		expect(getPlacement(wrapper)).toBe('top-right');
 		// 内容靠右排：弹层变窄时保持右缘
 		expect(getPopoverProp(wrapper, 'keepEdge')).toBe('end');
@@ -917,14 +917,14 @@ describe('Cascader 搜索与键盘', () => {
 
 		// 靠左：右侧 1024 - 8 - 20 = 996，放得下
 		let wrapper = await open(20);
-		expect(isReverse()).toBe(false);
+		expect(isInverted()).toBe(false);
 		expect(getPlacement(wrapper)).toBe('bottom-left');
 		wrapper.unmount();
 		await flush();
 
 		// 靠右：右侧 1024 - 8 - 900 = 116 放不下，左侧 1020 - 8 = 1012 更大
 		wrapper = await open(900);
-		expect(isReverse()).toBe(true);
+		expect(isInverted()).toBe(true);
 		expect(getPlacement(wrapper)).toBe('bottom-right');
 		wrapper.unmount();
 	});
@@ -949,13 +949,13 @@ describe('Cascader 搜索与键盘', () => {
 
 		// 右侧 1024 - 8 - 300 = 716 > 左侧 420 - 8 = 412
 		let wrapper = await open(300);
-		expect(isReverse()).toBe(false);
+		expect(isInverted()).toBe(false);
 		wrapper.unmount();
 		await flush();
 
 		// 右侧 416 < 左侧 712
 		wrapper = await open(600);
-		expect(isReverse()).toBe(true);
+		expect(isInverted()).toBe(true);
 		wrapper.unmount();
 	});
 });

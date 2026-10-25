@@ -30,16 +30,16 @@ interface Options {
  * 	- auto：右侧放得下（第一列宽 × 层级）时向右，否则朝空间更大的一侧
  * 	- 弹层挂载时调用 update：等各列渲染后（首次绘制前）判断，一次打开期间不变
  * @param options ~
- * @returns isReverse：是否向左展开；placement、keepEdge：交给弹层；update：判断方向
+ * @returns isInverted：是否向左展开；placement、keepEdge：交给弹层；update：判断方向
  */
 export const useColumnDirection = (options: Options) => {
 	const { getDirection, getPlacement, getColumn, getDepth } = options;
 	const instance = getCurrentInstance()!;
-	const isReverse = ref(false);
+	const isInverted = ref(false);
 
 	const placement = computed(() => {
 		const value = getPlacement();
-		return isReverse.value
+		return isInverted.value
 			? value.replace(/^(top|bottom)-(left|right)$/, (_, main, align) => `${main}-${align === 'left' ? 'right' : 'left'}`)
 			: value;
 	});
@@ -47,7 +47,7 @@ export const useColumnDirection = (options: Options) => {
 	const measure = () => {
 		const direction = getDirection();
 		if (direction !== 'auto') {
-			isReverse.value = direction === 'left';
+			isInverted.value = direction === 'left';
 			return;
 		}
 		// 左对齐时向右的可用宽度、右对齐时向左的可用宽度；左侧不比右侧宽时不必估算（层级需要遍历数据）
@@ -56,13 +56,13 @@ export const useColumnDirection = (options: Options) => {
 		const after = right - rect.left;
 		const before = rect.right - left;
 		const width = getColumn()?.offsetWidth || 0;
-		isReverse.value = !!width && before > after && width * getDepth() > after;
+		isInverted.value = !!width && before > after && width * getDepth() > after;
 	};
 
 	const update = () => nextTick(measure);
 
 	// 向左展开时内容靠右排：弹层变窄时保持右缘（Popover 的 keepEdge）
-	const keepEdge = computed(() => (isReverse.value ? 'end' : 'start'));
+	const keepEdge = computed(() => (isInverted.value ? 'end' : 'start'));
 
-	return { isReverse, placement, keepEdge, update };
+	return { isInverted, placement, keepEdge, update };
 };

@@ -27,7 +27,14 @@ $component-name: vc-tree-select;
 		}
 	}
 
+	// 级联列（CascaderColumns）沿用 TreeSelect 的主题变量；各项更紧凑，前面有复选框
 	@include element(cascader) {
+		--vc-cascader-column-color-dark-lighter: #{$color-dark-lighter};
+		--vc-cascader-column-color-dark-extralight: #{$color-dark-extralight};
+		--vc-cascader-column-color-neutral-light: #{$color-neutral-light};
+		--vc-cascader-column-color-primary: #{$color-primary};
+		--vc-cascader-column-background-color-primary-light: #{$background-color-primary-light};
+
 		position: relative;
 		display: flex;
 		min-width: min-content;
@@ -35,23 +42,8 @@ $component-name: vc-tree-select;
 		flex: 1;
 		flex-direction: row;
 
-		// 向左展开（expandDirection）：另外镜像复选框的间距，文字靠右
-		@include when(reverse) {
-			@include cascade-reverse(
-				'.vc-tree-select__cascader-columns-content',
-				'.vc-tree-select__cascader-column',
-				'.vc-tree-select__cascader-item',
-				'.vc-tree-select__cascader-icon'
-			);
-
-			.vc-tree-select__cascader-checkbox > .vc-checkbox {
-				padding-right: 0;
-				padding-left: unitfix(8);
-			}
-
-			.vc-tree-select__cascader-label {
-				text-align: right;
-			}
+		.vc-cascader-column__item {
+			padding: unitfix(2) unitfix(8);
 		}
 	}
 
@@ -66,67 +58,16 @@ $component-name: vc-tree-select;
 		opacity: 0;
 	}
 
-	// 纵向 flex：内容作为 flex 子项收缩后高度确定，各列才能随之收缩（百分比高度在这里不生效）
 	@include element(cascader-columns) {
-		display: flex;
 		min-width: 0;
 		flex: 1;
-		flex-direction: column;
-	}
 
-	// 高度随弹层的上限收缩（弹层 scrollable=false），各列在其中自行滚动
-	@include element(cascader-columns-content) {
-		display: flex;
-		flex-direction: row;
-		width: max-content;
-		min-height: 0;
-	}
-
-	@include element(cascader-column) {
-		display: flex;
-		min-height: 0;
-		padding: unitfix(5) 0 !important;
-		margin: 0;
-		box-sizing: border-box;
-		flex-direction: column;
-
-		@include border(right, $color-neutral-light);
-
-		&:last-child {
-			&::before,
-			&::after {
-				display: none;
+		// 向左展开（expandDirection）：镜像复选框的间距
+		@include when(inverted) {
+			.vc-tree-select__cascader-checkbox > .vc-checkbox {
+				padding-right: 0;
+				padding-left: unitfix(8);
 			}
-		}
-	}
-
-	@include element(cascader-column-wrapper) {
-		min-width: unitfix(100);
-	}
-
-	@include element(cascader-item) {
-		display: flex;
-		padding: unitfix(2) unitfix(8);
-		font-size: unitfix(12) !important;
-		line-height: unitfix(16);
-		color: $color-dark-lighter;
-		white-space: nowrap;
-		cursor: pointer;
-		justify-content: space-between;
-		align-items: center;
-
-		&:not(.is-disabled):hover {
-			background-color: $background-color-primary-light;
-		}
-
-		@include when(select) {
-			color: $color-primary;
-			background-color: $background-color-primary-light;
-		}
-
-		@include when(disabled) {
-			color: $color-dark-extralight;
-			cursor: not-allowed;
 		}
 	}
 
@@ -138,16 +79,5 @@ $component-name: vc-tree-select;
 		> .vc-checkbox {
 			padding-right: unitfix(8);
 		}
-	}
-
-	@include element(cascader-label) {
-		flex: 1;
-		flex-shrink: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	@include element(cascader-icon) {
-		transform: scale(0.7);
 	}
 }

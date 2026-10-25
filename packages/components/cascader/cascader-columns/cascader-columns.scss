@@ -1,0 +1,115 @@
+@use '../../style/helper' as *;
+
+$color-dark-lighter: varfix(color-dark-lighter, cascader-column);
+$color-dark-extralight: varfix(color-dark-extralight, cascader-column);
+$color-neutral-light: varfix(color-neutral-light, cascader-column);
+$color-primary: varfix(color-primary, cascader-column);
+$background-color-primary-light: varfix(background-color-primary-light, cascader-column);
+
+// 列太多时横向滚动；高度随弹层的上限收缩（弹层 scrollable=false）
+// 纵向 flex：内容作为 flex 子项收缩后高度确定，各列才能随之收缩（百分比高度在这里不生效）
+@include block(vc-cascader-columns) {
+	display: flex;
+	min-height: 0;
+	flex-direction: column;
+
+	// 默认不换行
+	@include element(content) {
+		display: flex;
+		flex-wrap: nowrap;
+		width: max-content;
+		min-height: 0;
+	}
+
+	/**
+	 * 向左展开（expandDirection）
+	 * - 第一列在右侧、下一级向左：内容反向并靠右（用 margin 而不是对齐方式，横向溢出时仍能滚动到）
+	 * - 各项镜像，箭头朝左；分隔线（border(right) 的 ::after）移到左侧
+	 */
+	@include when(inverted) {
+		.vc-cascader-columns__content {
+			margin-left: auto;
+			flex-direction: row-reverse;
+		}
+
+		.vc-cascader-column::after {
+			right: auto;
+			left: 0;
+		}
+
+		.vc-cascader-column__item {
+			flex-direction: row-reverse;
+		}
+
+		.vc-cascader-column__label {
+			text-align: right;
+		}
+
+		.vc-cascader-column__icon {
+			rotate: 180deg;
+		}
+	}
+}
+
+// 高度随弹层的上限收缩，列表在其中滚动
+@include block(vc-cascader-column) {
+	display: flex;
+	min-height: 0;
+	padding: unitfix(5) 0!important;
+	margin: 0;
+	box-sizing: border-box;
+	flex-direction: column;
+
+	@include border(right, $color-neutral-light);
+
+	&:last-child {
+		&::before, &::after {
+			display: none;
+		}
+	}
+
+	// Scroller 根节点即滚动容器
+	@include element(wrapper) {
+		height: unitfix(180);
+		min-width: unitfix(100);
+	}
+
+	@include element(item) {
+		display: flex;
+		padding: unitfix(7) unitfix(16);
+		font-size: unitfix(12)!important;
+		line-height: unitfix(16);
+		color: $color-dark-lighter;
+		white-space: nowrap;
+		cursor: pointer;
+		justify-content: space-between;
+		align-items: center;
+
+		&:not(.is-disabled):hover {
+			background-color: $background-color-primary-light;
+		}
+
+		@include when(select) {
+			color: $color-primary;
+			background-color: $background-color-primary-light;
+		}
+
+		@include when(disabled) {
+			color: $color-dark-extralight;
+			cursor: not-allowed;
+		}
+	}
+
+	// 占满箭头前的空间（列宽随内容，不会截断）
+	@include element(label) {
+		flex: 1;
+	}
+
+	@include element(icon) {
+		transform: scale(0.7);
+	}
+
+	@include element(loading) {
+		margin-right: unitfix(5);
+	}
+}

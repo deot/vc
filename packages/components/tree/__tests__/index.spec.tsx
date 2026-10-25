@@ -1099,13 +1099,13 @@ describe('TreeSelect interaction', () => {
 
 		await wrapper.trigger('click');
 		await flush();
-		expect(document.querySelectorAll('.vc-tree-select__cascader-column').length).toBe(1);
+		expect(document.querySelectorAll('.vc-cascader-column').length).toBe(1);
 
-		const firstRow = document.querySelector('.vc-tree-select__cascader-item') as HTMLElement;
+		const firstRow = document.querySelector('.vc-cascader-column__item') as HTMLElement;
 		fireMouse(firstRow, 'mousemove');
 		await flush();
 
-		const firstLabel = document.querySelector('.vc-tree-select__cascader-label') as HTMLElement;
+		const firstLabel = document.querySelector('.vc-cascader-column__label') as HTMLElement;
 		firstLabel?.click();
 		await flush();
 		const firstCheckbox = document.querySelector('.vc-tree-select__cascader-checkbox input[type="checkbox"]') as HTMLInputElement;
@@ -1133,8 +1133,8 @@ describe('TreeSelect interaction', () => {
 
 		await wrapper.trigger('click');
 		await flush();
-		const getColumns = () => document.querySelectorAll('.vc-tree-select__cascader-column');
-		const getRow = () => document.querySelector('.vc-tree-select__cascader-item') as HTMLElement;
+		const getColumns = () => document.querySelectorAll('.vc-cascader-column');
+		const getRow = () => document.querySelector('.vc-cascader-column__item') as HTMLElement;
 		expect(getColumns().length).toBe(1);
 
 		// 只有 mouseenter（布局变化后浏览器补发，没有 mousemove）：不展开
@@ -1617,15 +1617,22 @@ describe('Tree store & node unit', () => {
 			}
 		});
 		await flush();
-		expect(w2.find('.vc-tree-select__cascader-item').exists()).toBe(true);
+		expect(w2.find('.vc-cascader-column__item').exists()).toBe(true);
+		// 自定义标签渲染在 label 内，复选框在其前面
+		const labels = [...document.querySelectorAll('.vc-cascader-column__label')];
+		expect(labels.length).toBe(freshData().length);
+		labels.forEach((el, index) => {
+			expect(el.querySelector(':scope > .custom-label')?.textContent).toBe(freshData()[index].label);
+			expect(el.previousElementSibling?.matches('.vc-tree-select__cascader-checkbox')).toBe(true);
+		});
 		// 触发 hover/checkbox/click 路径，覆盖 getNodeState/handleHover/handleCheckboxChange/handleLabelClick
-		const item = document.querySelector('.vc-tree-select__cascader-item') as HTMLElement;
+		const item = document.querySelector('.vc-cascader-column__item') as HTMLElement;
 		fireMouse(item, 'mousemove');
 		await flush();
 		const checkbox = document.querySelector('.vc-tree-select__cascader-checkbox input') as HTMLInputElement;
 		checkbox?.click();
 		await flush();
-		const label = document.querySelector('.vc-tree-select__cascader-label') as HTMLElement;
+		const label = document.querySelector('.vc-cascader-column__label') as HTMLElement;
 		label?.click();
 		await flush();
 		w2.unmount();
@@ -1876,7 +1883,7 @@ describe('TreeSelect searchable', () => {
 			attachTo: document.body
 		});
 		await flush();
-		const row = () => wrapper.find(searching ? '.vc-select-paths__item' : '.vc-tree-select__cascader-item');
+		const row = () => wrapper.find(searching ? '.vc-select-paths__item' : '.vc-cascader-column__item');
 		const isChecked = () => (row().find('input[type="checkbox"]').element as HTMLInputElement).checked;
 		expect(isChecked()).toBe(true);
 		await row().trigger('click');
@@ -2009,7 +2016,7 @@ describe('TreeSelect searchable', () => {
 
 		await typeSearch('');
 		expect(document.querySelector('.vc-select-paths')).toBeNull();
-		expect(document.querySelectorAll('.vc-tree-select__cascader-column').length).toBeGreaterThan(0);
+		expect(document.querySelectorAll('.vc-cascader-column').length).toBeGreaterThan(0);
 
 		wrapper.unmount();
 	});
@@ -2122,7 +2129,7 @@ describe('TreeSelect 弹层滚动', () => {
 		const content = popup.querySelector('.vc-popover-wrapper__content') as HTMLElement;
 		expect(content.classList.contains('is-unscrollable')).toBe(true);
 		expect(content.classList.contains('vc-scroller')).toBe(false);
-		expect(popup.querySelector('.vc-tree-select__cascader-column > .vc-scroller.vc-tree-select__cascader-column-wrapper')).not.toBeNull();
+		expect(popup.querySelector('.vc-cascader-column > .vc-scroller.vc-cascader-column__wrapper')).not.toBeNull();
 
 		wrapper.unmount();
 	});
@@ -2154,8 +2161,8 @@ describe('TreeSelect 内联搜索与键盘', () => {
 	const isOpen = () => {
 		return Array.from(document.querySelectorAll<HTMLElement>('.vc-popover-wrapper')).some(el => el.style.display !== 'none');
 	};
-	const getSelected = () => Array.from(document.querySelectorAll('.vc-tree-select__cascader-column'))
-		.map(column => column.querySelector('.is-select .vc-tree-select__cascader-label')?.textContent || '');
+	const getSelected = () => Array.from(document.querySelectorAll('.vc-cascader-column'))
+		.map(column => column.querySelector('.is-select .vc-cascader-column__label')?.textContent || '');
 
 	it('输入框在触发器的标签之后；输入为空时退格移除最后一个标签', async () => {
 		const value = ref<any[]>(['1-1-1', '2-1-1']);
@@ -2495,7 +2502,7 @@ describe('TreeSelect 内联搜索与键盘', () => {
 			Object.defineProperty(HTMLElement.prototype, 'offsetWidth', original);
 		});
 	};
-	const isReverse = () => !!document.querySelector('.vc-tree-select__cascader.is-reverse');
+	const isInverted = () => !!document.querySelector('.vc-tree-select__cascader-columns.is-inverted');
 	const getPopoverProp = (wrapper: any, key: string) => wrapper.findComponent(Popover as any).props(key);
 	const getPlacement = (wrapper: any) => getPopoverProp(wrapper, 'placement');
 
@@ -2507,7 +2514,7 @@ describe('TreeSelect 内联搜索与键盘', () => {
 		await flush();
 		await wrapper.trigger('click');
 		await flush();
-		expect(isReverse()).toBe(true);
+		expect(isInverted()).toBe(true);
 		expect(getPlacement(wrapper)).toBe('bottom-right');
 		expect(getPopoverProp(wrapper, 'keepEdge')).toBe('end');
 
@@ -2524,7 +2531,7 @@ describe('TreeSelect 内联搜索与键盘', () => {
 
 	it('cascader + expandDirection="auto"：右侧放不下时向左展开；树形模式忽略', async () => {
 		// 3 级 × 150 = 450；右侧 1024 - 8 - 900 = 116 放不下
-		mockColumnWidth('.vc-tree-select__cascader-column', 150);
+		mockColumnWidth('.vc-cascader-column', 150);
 		const cascader = ref(true);
 		const wrapper = mount(() => (
 			<TreeSelect data={treeData} max={99} cascader={cascader.value} expandDirection="auto" />
@@ -2534,7 +2541,7 @@ describe('TreeSelect 内联搜索与键盘', () => {
 		placeTrigger(wrapper.element, 900);
 		await wrapper.trigger('click');
 		await flush();
-		expect(isReverse()).toBe(true);
+		expect(isInverted()).toBe(true);
 		expect(getPlacement(wrapper)).toBe('bottom-right');
 
 		// 树形模式：方向不变

@@ -122,8 +122,8 @@ interface ColumnNavigateOptions {
 	isSearching: () => boolean;
 	// 级联列的容器：搜索结果沿用它的宽度
 	getView: () => HTMLElement | null | undefined;
-	// 向左展开（见 use-column-direction）：← 进入下一级，→ 回到上一级
-	isReverse?: () => boolean;
+	// 向左展开（见 cascader/hooks/use-column-direction）：← 进入下一级，→ 回到上一级
+	isInverted?: () => boolean;
 }
 
 // 搜索结果的宽度沿用进入搜索前的级联列，并限制在该范围内，避免弹层宽度随结果跳动
@@ -139,10 +139,10 @@ export const getPathsWidth = (el?: HTMLElement | null) => {
  * 	- 方向键：在路径末端所在的列内上下移动，左右回到父级 / 进入子级
  * 	- 搜索时由搜索结果列表接管
  * @param options ~
- * @returns paths：搜索结果列表（SelectPaths）的 ref；searchWidth：它的宽度；navigator：交给键盘；handleMove：绑在各项的 mousemove 上
+ * @returns paths：搜索结果列表（SelectPaths）的 ref；searchWidth：它的宽度；navigator：交给键盘；handleMove：交给级联列（CascaderColumns）的 move
  */
 export const useColumnNavigate = (options: ColumnNavigateOptions) => {
-	const { getPath, getColumns, hover, getItem, enter, isSearching, getView, isReverse } = options;
+	const { getPath, getColumns, hover, getItem, enter, isSearching, getView, isInverted } = options;
 	const paths = ref<Navigator | null>();
 
 	// 默认 flush: 'pre'，此时 DOM 仍是列视图
@@ -192,7 +192,7 @@ export const useColumnNavigate = (options: ColumnNavigateOptions) => {
 
 	const navigator: Navigator = {
 		move: step => (isSearching() ? paths.value?.move?.(step) : move(step)),
-		shift: step => shift(isReverse?.() ? -step : step),
+		shift: step => shift(isInverted?.() ? -step : step),
 		enter: () => (isSearching() ? paths.value?.enter?.() : enter())
 	};
 
@@ -201,11 +201,12 @@ export const useColumnNavigate = (options: ColumnNavigateOptions) => {
 	 * 	- 不用 mouseenter：列数、列宽变化使内容在静止的指针下平移时（如弹层贴边），浏览器会补发 mouseenter 但不补发 mousemove，
 	 * 	  响应它会连锁展开 / 收起（指针下换了一项，又引起平移）
 	 * 	- 已是路径末端的一项不重复处理（在同一项内移动时每次都会触发）
-	 * @param item ~
-	 * @param columnIndex ~
-	 * @param rowIndex ~
+	 * @param cell 该项及其所在的列、行
+	 * @param cell.item ~
+	 * @param cell.columnIndex ~
+	 * @param cell.rowIndex ~
 	 */
-	const handleMove = (item: ColumnItem, columnIndex: number, rowIndex: number) => {
+	const handleMove = ({ item, columnIndex, rowIndex }: { item: ColumnItem; columnIndex: number; rowIndex: number }) => {
 		const path = getPath();
 		if (path.length === columnIndex + 1 && path[columnIndex] == item.value) return;
 		hover(item, columnIndex, rowIndex);

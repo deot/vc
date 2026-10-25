@@ -1,7 +1,7 @@
 import type { ExtractPropTypes } from 'vue';
 import { pick } from 'lodash-es';
 import { props as selectProps } from '../select/select-props';
-import { expandDirection } from '../select/hooks/use-column-direction';
+import { expandDirection } from '../cascader/hooks/use-column-direction';
 import { props as treeProps } from './tree-props';
 
 const treeKeys = [

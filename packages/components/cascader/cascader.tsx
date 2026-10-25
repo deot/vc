@@ -7,13 +7,12 @@ import { getSelectedData } from './utils';
 import { VcError } from '../vc/index';
 import { Popover } from '../popover/index';
 import { useLocale } from '../locale';
-import { CascaderColumn } from './column';
-import { Scroller } from '../scroller/index';
 import { SelectTrigger } from '../select/select-trigger';
 import { SelectSearch, SelectPaths } from '../select/select-search';
+import { CascaderColumns } from './cascader-columns';
 import { useSelect } from '../select/hooks/use-select';
 import { useColumnNavigate } from '../select/hooks/use-navigate';
-import { useColumnDirection } from '../select/hooks/use-column-direction';
+import { useColumnDirection } from './hooks/use-column-direction';
 
 import { toCurrentValue, toModelValue, getTreeDepth } from '../select/utils';
 
@@ -38,22 +37,18 @@ export const Cascader = defineComponent({
 		const { its, isActive, searchRegex, searchMode, isSearching } = select;
 
 		const currentValue = ref<TreeValue[]>([]);
-		const rebuildData = ref<TreeData[]>([]);
-		const colRef = ref({});
+		const rebuildData = ref<TreeData[][]>([]);
 		const columnsRef = ref<any>();
 
 		// 展开方向：弹层挂载时判断，见 handleReady
 		const direction = useColumnDirection({
 			getDirection: () => props.expandDirection,
 			getPlacement: () => props.placement,
-			getColumn: () => colRef.value[0]?.$el,
+			getColumn: () => columnsRef.value?.getColumn(0),
 			// loadData 按需加载子节点，层级无法预知
 			getDepth: () => (props.loadData ? Infinity : getTreeDepth(props.data))
 		});
 
-		const columns = computed(() => {
-			return Array.from({ length: currentValue.value.length + 1 }).map((_, index) => index);
-		});
 		/**
 		 * TODO: 初始化时，存在查找耗时
 		 */
@@ -80,10 +75,6 @@ export const Cascader = defineComponent({
 		// 自定义触发区内没有输入框，内联搜索退为弹层搜索栏
 		const getSearchMode = () => {
 			return slots.default && searchMode.value ? 'popover' : searchMode.value;
-		};
-
-		const setColRef = (el: any, index: number) => {
-			el && (colRef.value[index] = el);
 		};
 
 		/**
@@ -143,14 +134,14 @@ export const Cascader = defineComponent({
 		 * 调整数据
 		 * @returns 每列的数据
 		 */
-		const makeRebuildData = (): TreeData[] => {
-			if (!props.data.length) return [] as TreeData[];
+		const makeRebuildData = (): TreeData[][] => {
+			if (!props.data.length) return [];
 			let temp: TreeData[] = props.data;
 			const data = currentValue.value.slice(0).reduce((pre, cur, index) => {
 				pre[index] = temp && makeData(temp);
 				temp = ((temp && temp.find(i => i.value == cur)) || {}).children || [];
 				return pre;
-			}, [] as TreeData[]);
+			}, [] as TreeData[][]);
 
 			temp && data.push(makeData(temp));
 
@@ -171,13 +162,13 @@ export const Cascader = defineComponent({
 			direction.update();
 			nextTick(() => {
 				currentValue.value.forEach((item, index) => {
-					const el = colRef.value[index] && colRef.value[index].$el;
+					const el = columnsRef.value?.getColumn(index);
 					const source = rebuildData.value[index];
 
 					if (source && el) {
 						const $instance = source.findIndex((i: TreeData) => item == i.value);
 						// 列内的 Scroller 根节点即滚动容器
-						const scroller = el.firstElementChild;
+						const scroller = el.firstElementChild as HTMLElement;
 						const rowHeight = scroller.querySelector('.vc-cascader-column__item')?.clientHeight || 0;
 						scrollIntoView(scroller, { to: $instance * rowHeight });
 					}
@@ -288,17 +279,15 @@ export const Cascader = defineComponent({
 		// 方向键：搜索时在结果列表内移动，否则在级联列内移动（等同鼠标移入）；回车等同点击
 		const { paths, searchWidth, navigator, handleMove } = useColumnNavigate({
 			getPath: () => currentValue.value,
-			getColumns: () => rebuildData.value as any,
+			getColumns: () => rebuildData.value,
 			hover: handleCellChange,
-			getItem: (columnIndex, rowIndex) => {
-				return colRef.value[columnIndex]?.$el.querySelectorAll('.vc-cascader-column__item')[rowIndex];
-			},
+			getItem: (columnIndex, rowIndex) => columnsRef.value?.getItem(columnIndex, rowIndex),
 			enter: () => {
 				currentValue.value.length && sync();
 			},
 			isSearching: () => isSearching.value,
 			getView: () => columnsRef.value?.$el,
-			isReverse: () => direction.isReverse.value
+			isInverted: () => direction.isInverted.value
 		});
 
 		watch(
@@ -344,21 +333,6 @@ export const Cascader = defineComponent({
 			return (<SelectSearch {...select.search.value} />);
 		};
 
-		const renderColumn = (index: number) => {
-			if (!rebuildData.value[index] || !rebuildData.value[index].length) return;
-			return (
-				<CascaderColumn
-					ref={(el: any) => setColRef(el, index)}
-					key={index}
-					index={index}
-					value={currentValue.value[index]}
-					data={rebuildData.value[index] as any}
-					onChange={handleMove}
-					onClick={handleCellClick}
-				/>
-			);
-		};
-
 		const renderContent = () => {
 			return isSearching.value
 				? (
@@ -376,13 +350,15 @@ export const Cascader = defineComponent({
 						/>
 					)
 				: (
-						<Scroller
+						<CascaderColumns
 							ref={columnsRef}
-							class={['vc-cascader__columns', { 'is-reverse': direction.isReverse.value }]}
-							contentClass="vc-cascader__content"
-						>
-							{ columns.value.map(renderColumn) }
-						</Scroller>
+							class="vc-cascader__columns"
+							data={rebuildData.value}
+							value={currentValue.value}
+							inverted={direction.isInverted.value}
+							onMove={handleMove}
+							onClick={handleCellClick}
+						/>
 					);
 		};
 

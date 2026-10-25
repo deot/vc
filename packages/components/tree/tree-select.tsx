@@ -8,7 +8,7 @@ import { Popover } from '../popover/index';
 import { SelectTrigger } from '../select/select-trigger';
 import { SelectSearch } from '../select/select-search';
 import { useSelect, useSelectValue, useSelectedCache } from '../select/hooks/use-select';
-import { useColumnDirection } from '../select/hooks/use-column-direction';
+import { useColumnDirection } from '../cascader/hooks/use-column-direction';
 import { useLocale } from '../locale';
 import { TreeSelectContent } from './tree-select-content';
 import { TreeSelectContentCascader } from './tree-select-content-cascader';
@@ -51,7 +51,7 @@ export const TreeSelect = defineComponent({
 		const direction = useColumnDirection({
 			getDirection: () => (props.cascader ? props.expandDirection : 'right'),
 			getPlacement: () => props.placement,
-			getColumn: () => content.value?.$el?.querySelector?.('.vc-tree-select__cascader-column'),
+			getColumn: () => content.value?.$el?.querySelector?.('.vc-cascader-column'),
 			getDepth: () => getTreeDepth(props.data as TreeData[])
 		});
 		const { its, isActive, searchValue, searchRegex, searchMode, isRemote, close, toggle, focus } = select;
@@ -209,7 +209,7 @@ export const TreeSelect = defineComponent({
 							nullValue={props.nullValue as never}
 							searchRegex={searchRegex.value}
 							remote={isRemote()}
-							reverse={direction.isReverse.value}
+							inverted={direction.isInverted.value}
 							onChange={handleChange}
 						/>
 					)

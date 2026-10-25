@@ -16,32 +16,6 @@ $color-dark-extralight: varfix(color-dark-extralight, cascader);
 		cursor: pointer;
 	}
 
-	// 列太多时横向滚动；高度随弹层的上限收缩（弹层 scrollable=false）
-	// 纵向 flex：内容作为 flex 子项收缩后高度确定，各列才能随之收缩（百分比高度在这里不生效）
-	@include element(columns) {
-		display: flex;
-		min-height: 0;
-		flex-direction: column;
-
-		// 向左展开（expandDirection）
-		@include when(reverse) {
-			@include cascade-reverse(
-				'.vc-cascader__content',
-				'.vc-cascader-column',
-				'.vc-cascader-column__item',
-				'.vc-cascader-column__icon'
-			);
-		}
-	}
-
-	// 默认不换行
-	@include element(content) {
-		display: flex;
-		flex-wrap: nowrap;
-		width: max-content;
-		min-height: 0;
-	}
-
 	// 搜索结果：行距与各列的选项一致，当前值按选中项显示
 	@include element(paths) {
 		.vc-select-paths__item {
