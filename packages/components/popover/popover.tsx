@@ -93,6 +93,11 @@ export const Popover = defineComponent({
 			handleChange(e, { visible: !isActive.value });
 		};
 
+		// keepFocus：焦点已在触发器内时，按下鼠标不转移焦点；焦点在别处时照常（如页面上的其他输入框照常失焦）
+		const handleMousedown = (e: MouseEvent) => {
+			props.keepFocus && (instance.vnode.el as Element).contains(document.activeElement) && keepFocus(e);
+		};
+
 		// 关闭动画结束后卸载浮层
 		const handleClose = () => {
 			isRendered.value = false;
@@ -178,7 +183,7 @@ export const Popover = defineComponent({
 				onBlur: (e: any) => isFocus.value && handleChange(e, { visible: false }),
 				onMouseenter: (e: any) => (isHover.value || isStrictHover.value) && handleChange(e, { visible: true }),
 				onMouseleave: (e: any) => (isHover.value || isStrictHover.value) && handleChange(e, { visible: false }),
-				onMousedown: (e: MouseEvent) => props.keepFocus && keepFocus(e),
+				onMousedown: handleMousedown,
 				onClick: (e: MouseEvent) => isClick.value && handleClick(e)
 			}, [slots.default?.(), renderPopup()]);
 		};

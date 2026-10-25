@@ -2607,12 +2607,23 @@ describe('Popover keepFocus', () => {
 
 	it('开启时：在浮层内、触发器的非输入区域按下鼠标不转移焦点，文字输入框照常获得焦点', async () => {
 		const { wrapper } = mountTrigger(true);
+		(wrapper.find('.c-input').element as HTMLInputElement).focus();
 		await wrapper.find('.c-input').trigger('click');
 		await flush();
 
 		expect(press(document.querySelector('.c-option')!)).toBe(true);
 		expect(press(document.querySelector('.c-content-input')!)).toBe(false);
 		expect(press(wrapper.find('.c-icon').element)).toBe(true);
+		expect(press(wrapper.find('.c-input').element)).toBe(false);
+	});
+
+	it('开启时：焦点不在触发器内（如在页面上的其他输入框）时，在触发器上按下鼠标照常转移焦点', async () => {
+		const { wrapper } = mountTrigger(true);
+		const other = document.createElement('input');
+		document.body.appendChild(other);
+		other.focus();
+
+		expect(press(wrapper.find('.c-icon').element)).toBe(false);
 		expect(press(wrapper.find('.c-input').element)).toBe(false);
 	});
 
