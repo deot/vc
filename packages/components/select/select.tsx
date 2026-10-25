@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, computed } from 'vue';
+import { defineComponent, ref, computed, nextTick } from 'vue';
 import { getUid } from '@deot/helper-utils';
 import { getLabel, flattenData } from './utils';
 import { Popover } from '../popover/index';
@@ -30,7 +30,7 @@ export const Select = defineComponent({
 		const { its, isActive, searchValue, searchRegex, searchMode, isSearching, isRemote, close, toggle } = select;
 		const { currentValue, multiple, sync: syncValue, handleClear } = useSelectValue(select);
 
-		// 选项的键盘高亮：打开时为已选中的一项；搜索词、数据变化后选项增减，为第一项
+		// 选项的键盘高亮：打开时为首个已选中的一项（弹层就绪后滚动到它，见 scrollIntoSelected）；搜索词、数据变化后选项增减，为第一项
 		const navigate = useNavigate({
 			selector: '.vc-select-option:not([disabled])',
 			prefer: '.is-select',
@@ -104,6 +104,11 @@ export const Select = defineComponent({
 
 		const handleRemove = (item: SelectTag) => {
 			remove(item.value);
+		};
+
+		// 打开时高亮的即首个已选项；弹层在 ready 之后才显示（此前为 display: none，无法测量）
+		const scrollIntoSelected = () => {
+			nextTick(navigate.scrollIntoActive);
 		};
 
 		expose({
@@ -197,6 +202,7 @@ export const Select = defineComponent({
 				<Popover
 					{...select.popover.value}
 					scrollerOptions={scrollerOptions}
+					onReady={scrollIntoSelected}
 				>
 					{{
 						default: renderTrigger,

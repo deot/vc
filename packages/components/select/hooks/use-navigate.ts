@@ -18,13 +18,16 @@ export interface Navigator {
 /**
  * 把节点滚动到其所在 Scroller 的可视范围内；只调整该容器，不滚动页面
  * @param el ~
+ * @param align 已完整可见时不动；否则 nearest：贴近离得近的一边，start：置顶
  */
-export const scrollIntoScroller = (el?: Element | null) => {
+export const scrollIntoScroller = (el?: Element | null, align: 'nearest' | 'start' = 'nearest') => {
 	const scroller = el?.closest<HTMLElement>('.vc-scroller');
 	if (!el || !scroller) return;
 	const { top, bottom, scale } = getViewportRect(scroller);
 	const rect = el.getBoundingClientRect();
-	const offset = rect.top < top ? rect.top - top : rect.bottom > bottom ? rect.bottom - bottom : 0;
+	const offset = rect.top < top || (align === 'start' && rect.bottom > bottom)
+		? rect.top - top
+		: rect.bottom > bottom ? rect.bottom - bottom : 0;
 	if (!offset) return;
 
 	// 经 Scroller 写入：自绘滚动条同步更新
@@ -46,7 +49,7 @@ interface NavigateOptions {
  * 列表的键盘高亮：按 DOM 顺序在匹配 selector 的节点间移动，鼠标移入与键盘共用同一个高亮
  * 	- 高亮用 data-active 标记，不经过响应式状态：移动时不触发列表项渲染，Vue 更新 class 也不会抹掉它
  * @param options ~
- * @returns setRoot：列表容器的 ref；handleMouseover：绑在列表容器上；move / enter：交给键盘
+ * @returns setRoot：列表容器的 ref；handleMouseover：绑在列表容器上；move / enter：交给键盘；scrollIntoActive：把高亮项滚动到可视范围（不在其中时置顶）
  */
 export const useNavigate = (options: NavigateOptions) => {
 	const { selector, prefer, source } = options;
@@ -96,9 +99,13 @@ export const useNavigate = (options: NavigateOptions) => {
 		el && root?.contains(el) && set(el);
 	};
 
+	const scrollIntoActive = () => {
+		scrollIntoScroller(active, 'start');
+	};
+
 	source && watch(source, () => reset(), { flush: 'post' });
 
-	return { setRoot, handleMouseover, move, enter };
+	return { setRoot, handleMouseover, move, enter, scrollIntoActive };
 };
 
 interface ColumnItem {

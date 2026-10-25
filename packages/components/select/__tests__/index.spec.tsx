@@ -2070,6 +2070,45 @@ describe('Select 键盘', () => {
 		wrapper.unmount();
 	});
 
+	it('打开时把首个已选项（按选项顺序）滚动到可视范围，不在其中时置顶', async () => {
+		const many = Array.from({ length: 20 }, (_, i) => ({ value: `${i}`, label: `Item ${i}` }));
+		// 内容区可视 0 ~ 100，每项高 20 且不随滚动位置变化：滚动量即该项的 top
+		const spy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+			const index = Array.from(getOptions()).indexOf(this);
+			const [top, bottom] = this.classList.contains('vc-select__options') ? [0, 100] : index === -1 ? [0, 0] : [index * 20, index * 20 + 20];
+			return { top, bottom, left: 0, right: 0, width: 0, height: bottom - top, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
+		});
+		const heightSpy = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function (this: HTMLElement) {
+			return this.classList.contains('vc-select__options') ? 100 : 0;
+		});
+		onTestFinished(() => (spy.mockRestore(), heightSpy.mockRestore()));
+		// 关闭后的弹层在离场动画结束前仍在节点中，取最后打开的一个
+		const getScrollTop = () => Array.from(document.querySelectorAll('.vc-select__options')).pop()!.scrollTop;
+
+		const value = ref<any>(['15', '12']);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={many} max={5} />
+		), { attachTo: document.body });
+		await nextTick();
+		await wrapper.trigger('click');
+		await flush();
+		expect(getActive()).toBe('Item 12');
+		expect(getScrollTop()).toBe(240);
+		wrapper.unmount();
+
+		// 已在可视范围内时不滚动
+		value.value = ['3'];
+		const visible = mount(() => (
+			<Select v-model={value.value} data={many} max={5} />
+		), { attachTo: document.body });
+		await nextTick();
+		await visible.trigger('click');
+		await flush();
+		expect(getActive()).toBe('Item 3');
+		expect(getScrollTop()).toBe(0);
+		visible.unmount();
+	});
+
 	it('多选：回车切换选中且不关闭', async () => {
 		const value = ref<any[]>(['1']);
 		const wrapper = mount(() => (
@@ -2163,6 +2202,13 @@ describe('Select 键盘', () => {
 		spy.mockReturnValue(rect(150, 180));
 		scrollIntoScroller(item);
 		expect(scroller.scrollTop).toBe(50);
+
+		// start：完整可见时不动，否则置顶（在下方时也是）
+		scrollIntoScroller(item, 'start');
+		expect(scroller.scrollTop).toBe(50);
+		spy.mockReturnValue(rect(290, 320));
+		scrollIntoScroller(item, 'start');
+		expect(scroller.scrollTop).toBe(240);
 
 		// 不在 Scroller 内、节点为空时不处理
 		scrollIntoScroller(document.body);
