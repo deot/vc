@@ -3,7 +3,7 @@
 import { defineComponent, cloneVNode, isVNode, onMounted, ref, watch } from 'vue';
 import type { PropType, VNode } from 'vue';
 import { RecycleList } from '../../recycle-list/index';
-import { scrollIntoScroller } from '../hooks/use-navigate';
+import { getScrollOffset, scrollIntoScroller } from '../hooks/use-navigate';
 
 const COMPONENT_NAME = 'vc-select-list';
 
@@ -19,8 +19,9 @@ export interface SelectListExposed {
  * 	- 默认全部渲染，行即根节点的子元素，按位置对应下标，不额外包装
  * 	- virtualized 时交给 RecycleList（fill=false：沿用所在的滚动容器，如弹层或列的 Scroller），只渲染视口附近的行；
  * 	  行的根节点补上登记用的钩子，记下各行节点对应的下标
+ * 	- 虚拟化时行高按渲染出来的行估计：各行等高（默认渲染）时，滚动条长度与定位从一开始就准确
  * 	- 高亮（data-active）直接写在行的节点上，不经过响应式状态：移动高亮不触发任何行的渲染；虚拟列表中尚未渲染的行挂载时补上
- * 	- 指针移入某行时发出 hover（下标）
+ * 	- 指针在某行上移动时发出 hover（下标）；不用 mouseover：键盘移动使列表在静止的指针下滚动时，浏览器会补发它，高亮会被拉回指针下的一行
  * 	- 插槽在本组件渲染时调用，依赖由本组件收集：调用方传入插槽时标记 $stable，父级重渲染时列表不必跟着重渲染（大量行时代价可观）
  */
 export const SelectList = defineComponent({
@@ -31,8 +32,11 @@ export const SelectList = defineComponent({
 			default: () => []
 		},
 		virtualized: Boolean,
-		// 虚拟化时的预估行高（px），渲染后按实际尺寸校正
-		estimateSize: Number
+		// 虚拟化时的初始预估行高（px）；行渲染出来后改用实际高度，见 handleRowResize
+		estimateSize: {
+			type: Number,
+			default: 30
+		}
 	},
 	emits: ['hover'],
 	setup(props, { slots, emit, expose }) {
@@ -43,6 +47,8 @@ export const SelectList = defineComponent({
 		const indexes = new WeakMap<Element, number>();
 		let active = -1;
 		let activeEl: Element | null = null;
+		// 渲染出来的行的实际高度，代替调用方给的预估值
+		const measured = ref<number>();
 
 		const getRow = (index: number) => {
 			return (props.virtualized ? rows.get(index) : root.value?.children[index]) || null;
@@ -60,11 +66,15 @@ export const SelectList = defineComponent({
 			mark(getRow(index));
 		};
 
+		// 把某一行滚动到可视范围：已完整可见时不动；否则 nearest 贴近离得近的一边，start 置顶
 		const scrollToIndex = (index: number, align: SelectListAlign = 'nearest') => {
 			if (index < 0) return;
-			props.virtualized
-				? recycleList?.scrollToIndex(index, { align })
-				: scrollIntoScroller(getRow(index), align);
+			const el = getRow(index);
+			if (!props.virtualized) return scrollIntoScroller(el, align);
+			// 虚拟化：已渲染且完整可见的行不动（RecycleList 的 start 总是置顶）；所在的滚动容器即列表外层的 Scroller
+			const scroller = root.value?.closest<HTMLElement>('.vc-scroller');
+			if (el && scroller && !getScrollOffset(el, scroller, align)) return;
+			recycleList?.scrollToIndex(index, { align });
 		};
 
 		// 指针所在的行：虚拟化时为登记过的行节点，否则为根节点的哪一个子元素
@@ -78,9 +88,9 @@ export const SelectList = defineComponent({
 			return el ? Array.prototype.indexOf.call(root.value!.children, el) : -1;
 		};
 
-		const handleMouseover = (e: MouseEvent) => {
+		const handleMousemove = (e: MouseEvent) => {
 			const index = getIndex(e.target as Element);
-			index !== -1 && emit('hover', index);
+			index !== -1 && index !== active && emit('hover', index);
 		};
 
 		// 数据变化后行随之增减、移动：高亮按下标重新对上（虚拟化时由行的钩子处理）；
@@ -106,6 +116,20 @@ export const SelectList = defineComponent({
 			el === activeEl && (activeEl = null);
 		};
 
+		/**
+		 * RecycleList 按实际尺寸校正了行：取一行的实际高度作为其余行的预估值
+		 * 	- 预估值不对时，未渲染的行按它排布，滚动条长度与远处的定位都有偏差；调用方难以给准（主题、自定义渲染、复选框等前缀）
+		 * 	- 只在高度变化时更新，一般只发生一次
+		 */
+		const handleRowResize = () => {
+			for (const el of rows.values()) {
+				const height = (el as HTMLElement).offsetHeight;
+				if (!height) continue;
+				measured.value !== height && (measured.value = height);
+				return;
+			}
+		};
+
 		const renderRow = (row: unknown, index: number) => {
 			return slots.default?.({ row, index }).find(isVNode) || null;
 		};
@@ -122,7 +146,7 @@ export const SelectList = defineComponent({
 
 		return () => {
 			return (
-				<div ref={root} class="vc-select-list" onMouseover={handleMouseover}>
+				<div ref={root} class="vc-select-list" onMousemove={handleMousemove}>
 					{
 						props.virtualized
 							? (
@@ -131,7 +155,8 @@ export const SelectList = defineComponent({
 										fill={false}
 										disabled
 										data={props.data}
-										estimateSize={props.estimateSize}
+										estimateSize={measured.value || props.estimateSize}
+										onRow-resize={handleRowResize}
 									>
 										{{ default: ({ row, index }: any) => renderTrackedRow(row, index) }}
 									</RecycleList>

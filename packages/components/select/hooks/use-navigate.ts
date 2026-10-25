@@ -17,22 +17,34 @@ export interface Navigator {
 }
 
 /**
- * 把节点滚动到其所在 Scroller 的可视范围内；只调整该容器，不滚动页面
+ * 节点滚动到 Scroller 可视范围内所需的滚动量（滚动坐标）
  * @param el ~
- * @param align 已完整可见时不动；否则 nearest：贴近离得近的一边，start：置顶
+ * @param scroller ~
+ * @param align 已完整可见时为 0；否则 nearest：贴近离得近的一边，start：置顶
+ * @returns 滚动量
  */
-export const scrollIntoScroller = (el?: Element | null, align: 'nearest' | 'start' = 'nearest') => {
-	const scroller = el?.closest<HTMLElement>('.vc-scroller');
-	if (!el || !scroller) return;
+export const getScrollOffset = (el: Element, scroller: HTMLElement, align: 'nearest' | 'start' = 'nearest') => {
 	const { top, bottom, scale } = getViewportRect(scroller);
 	const rect = el.getBoundingClientRect();
 	const offset = rect.top < top || (align === 'start' && rect.bottom > bottom)
 		? rect.top - top
 		: rect.bottom > bottom ? rect.bottom - bottom : 0;
+	return offset / scale;
+};
+
+/**
+ * 把节点滚动到其所在 Scroller 的可视范围内；只调整该容器，不滚动页面
+ * @param el ~
+ * @param align 见 getScrollOffset
+ */
+export const scrollIntoScroller = (el?: Element | null, align: 'nearest' | 'start' = 'nearest') => {
+	const scroller = el?.closest<HTMLElement>('.vc-scroller');
+	if (!el || !scroller) return;
+	const offset = getScrollOffset(el, scroller, align);
 	if (!offset) return;
 
 	// 经 Scroller 写入：自绘滚动条同步更新
-	const y = scroller.scrollTop + offset / scale;
+	const y = scroller.scrollTop + offset;
 	const instance = ScrollerManager.get(scroller);
 	instance ? instance.scrollTo({ y }) : (scroller.scrollTop = y);
 };
@@ -77,10 +89,10 @@ export const useNavigate = <T>(options: NavigateOptions<T>) => {
 		scroll && list?.scrollToIndex(index, 'nearest');
 	};
 
-	const reset = (preferred?: NavigateOptions<T>['prefer']) => {
+	const reset = (preferred?: NavigateOptions<T>['prefer'], scroll?: boolean) => {
 		const items = getList();
 		const index = preferred ? items.findIndex((item, i) => isEnabled(item, i) && preferred(item, i)) : -1;
-		set(index !== -1 ? index : findEnabled(items, 0, 1, isEnabled));
+		set(index !== -1 ? index : findEnabled(items, 0, 1, isEnabled), scroll);
 	};
 
 	const setList = (vm: any) => {
@@ -112,7 +124,8 @@ export const useNavigate = <T>(options: NavigateOptions<T>) => {
 		list?.scrollToIndex(active, 'start');
 	};
 
-	source && watch(source, () => reset(), { flush: 'post' });
+	// 内容变化后高亮第一项并滚动到它（列表变短时滚动位置可能停在末尾，回车会选中看不见的一项）
+	source && watch(source, () => reset(void 0, true), { flush: 'post' });
 
 	return { setList, hover, move, enter, scrollIntoActive };
 };

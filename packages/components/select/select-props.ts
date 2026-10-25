@@ -70,6 +70,11 @@ export const props = {
 	loadData: {
 		type: Function,
 	},
+	// 只渲染视口附近的选项（RecycleList），用于大量数据；搜索结果同样生效
+	virtualized: {
+		type: Boolean,
+		default: false
+	},
 	extra: {
 		type: String,
 		default: ''

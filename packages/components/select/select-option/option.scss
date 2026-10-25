@@ -10,7 +10,9 @@ $background-color-primary-light: varfix(background-color-primary-light, select-o
 	display: flex;
 	padding: unitfix(7) unitfix(16);
 	font-size: unitfix(12)!important;
-	line-height: normal;
+
+	// 整数行高：行高不随字体变化，虚拟化时按预估高度排布不会累积误差
+	line-height: unitfix(16);
 	color: $color-dark-lighter;
 	white-space: nowrap;
 	cursor: pointer;

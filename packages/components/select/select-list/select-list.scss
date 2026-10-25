@@ -1,0 +1,8 @@
+@use '../../style/helper' as *;
+
+@include block(vc-select-list) {
+	// 虚拟化时（RecycleList）不显示加载完成 / 空状态区：数据都是本地的，空结果由各组件自己提示
+	.vc-recycle-list__scroll-state {
+		display: none;
+	}
+}

@@ -2084,10 +2084,10 @@ describe('Select 键盘', () => {
 		expect(getActive()).toBe('New York');
 
 		const last = getOptions()[getOptions().length - 1];
-		last.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+		last.dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
 		expect(getActive()).toBe('Ottawa');
 		// 禁用项不高亮
-		getOptions()[1].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+		getOptions()[1].dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
 		expect(getActive()).toBe('Ottawa');
 
 		press('Enter');
@@ -2151,7 +2151,7 @@ describe('Select 键盘', () => {
 		expect(getActive()).toBe('Ottawa');
 		press('ArrowUp');
 		expect(getActive()).toBe('London');
-		getOptionGroups()[1].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+		getOptionGroups()[1].dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
 		expect(getActive()).toBe('London');
 		expect(document.querySelectorAll('[data-active]').length).toBe(1);
 
@@ -2181,6 +2181,38 @@ describe('Select 键盘', () => {
 		await flush();
 		expect(document.querySelectorAll('[data-active]').length).toBe(0);
 		expect(value.value).toBeUndefined();
+
+		wrapper.unmount();
+	});
+
+	it('virtualized：只渲染部分选项；搜索、方向键、回车与全选作用于全部数据', async () => {
+		const many = Array.from({ length: 500 }, (_, i) => ({ value: i, label: `Item ${i}` }));
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={many} max={999} searchable virtualized />
+		), { attachTo: document.body });
+		await nextTick();
+		await wrapper.find('input').trigger('click');
+		await flush();
+
+		const popup = document.querySelector('.vc-select__options')!;
+		expect(popup.querySelector('.vc-recycle-list')).not.toBeNull();
+		expect(getOptions().length).toBeGreaterThan(0);
+		expect(getOptions().length).toBeLessThan(500);
+		expect(getActive()).toBe('Item 0');
+		press('ArrowDown');
+		expect(getActive()).toBe('Item 1');
+		press('Enter');
+		await flush();
+		expect(value.value).toEqual([1]);
+
+		// 搜索：空格分隔的词需同时命中，即所有含 4 的项；全选作用于全部结果
+		typeInto(wrapper.find('input').element as HTMLInputElement, 'Item 4');
+		await flush();
+		expect(getActive()).toBe('Item 4');
+		(document.querySelector('.vc-select-all') as HTMLElement).click();
+		await flush();
+		expect(value.value.length).toBe(1 + many.filter(item => item.label.includes('4')).length);
 
 		wrapper.unmount();
 	});
@@ -2501,7 +2533,7 @@ describe('SelectPaths', () => {
 		expect(getActive()).toBe('分组 A');
 
 		// 鼠标移入共用同一个高亮
-		getItems()[1].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+		getItems()[1].dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
 		expect(getActive()).toBe('分组 B');
 
 		// 没有结果时不处理

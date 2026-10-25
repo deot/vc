@@ -288,6 +288,43 @@ const loadOptions = async (query) => {
 ```
 :::
 
+### 大量数据
+
+`virtualized` 开启后只渲染下拉可视范围附近的选项（基于 [RecycleList](../recycle-list/README.md)），搜索结果同样如此，打开、搜索和方向键的耗时不随选项数量增长；分组、全选、键盘与打开时定位到已选项的行为不变。选项少（几百个以内）时不必开启。
+
+:::playground
+<!--
+<config lang="json5">
+{ previewInset: 20 }
+</config>
+-->
+```vue
+<template>
+	<div class="select-demo">
+		<Select v-model="selectedValue" :data="options" virtualized searchable clearable />
+		<p>当前值：{{ selectedValue }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Select } from '@deot/vc';
+
+const options = Array.from({ length: 10000 }, (_, index) => ({ value: index + 1, label: `条目 ${index + 1}` }));
+const selectedValue = ref(5000);
+</script>
+
+<style scoped>
+.select-demo { width: min(100%, 320px); }
+.select-demo p { margin: 12px 0 0; }
+</style>
+```
+:::
+
+- 行高按渲染出来的选项估计，各项等高时滚动条长度与定位从一开始就准确；自定义渲染（`renderOption` 等）的选项高度不一致时，未渲染的部分按已渲染的估计，滚动到时校正。
+- 弹层宽度不随选项文字撑开：默认与触发器同宽；`autoWidth` 时只能按当前渲染出的选项计算，滚动时可能变化，建议给定宽度。
+- 浏览器的页内查找只能找到已渲染的选项。
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-select-option-<参数>`、`--vc-select-all-<参数>`、`--vc-select-<参数>`、`--vc-select-option-group-<参数>`、`--vc-select-trigger-<参数>`、`--vc-select-highlight-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
@@ -325,6 +362,7 @@ const loadOptions = async (query) => {
 | disabled | 禁用选择器 | `boolean` | - | `false` |
 | clearable | 悬停时显示清空按钮 | `boolean` | - | `false` |
 | searchable | 开启搜索：`true` / `'inline'` 在输入框内直接输入，`'popover'` 在下拉顶部显示搜索栏 | `boolean \| 'inline' \| 'popover'` | - | `false` |
+| virtualized | 只渲染下拉可视范围附近的选项，用于大量数据；见[大量数据](#大量数据) | `boolean` | - | `false` |
 | searchPlaceholder | 搜索时的占位文字：内联搜索为下拉打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
 | placeholder | 输入框占位文字，通过 attribute 传入；支持空字符串覆盖 | `string` | - | 当前语言的“请选择” |
 | loadData | 搜索回调，须返回 Promise，由调用方更新 data；调用时机见[远程搜索](#远程搜索) | `(query: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |

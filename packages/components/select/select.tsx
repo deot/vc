@@ -223,7 +223,12 @@ export const Select = defineComponent({
 		const renderContent = () => {
 			if (!props.data) return slots?.default?.();
 			return (
-				<SelectList ref={navigate.setList} data={rows.value} onHover={navigate.hover}>
+				<SelectList
+					ref={navigate.setList}
+					data={rows.value}
+					virtualized={props.virtualized}
+					onHover={navigate.hover}
+				>
 					{{ default: renderRow, $stable: true }}
 				</SelectList>
 			);
