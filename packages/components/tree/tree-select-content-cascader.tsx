@@ -1,13 +1,13 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, computed, nextTick } from 'vue';
+import { defineComponent, ref, computed, nextTick, watch } from 'vue';
 import type { PropType } from 'vue';
 import { renderType } from '../customer/customer-props';
 import type { TreeData, TreeValue, SearchRegex } from '../select/utils';
 import { Checkbox } from '../checkbox/index';
 import { Customer } from '../customer/index';
 import { useLocale } from '../locale';
-import { Tree } from './tree';
+import { TreeStore, KEY_VALUE } from './store';
 import { SelectPaths } from '../select/select-search';
 import type { SelectPath } from '../select/select-search';
 import { CascaderColumns } from '../cascader/cascader-columns';
@@ -32,22 +32,6 @@ export const TreeSelectContentCascader = defineComponent({
 			default: false
 		},
 		renderNodeLabel: renderType,
-		numerable: {
-			type: Boolean,
-			default: false
-		},
-		separator: {
-			type: String,
-			default: ','
-		},
-		max: {
-			type: Number,
-			default: 1
-		},
-		nullValue: {
-			type: [Number, String, Object] as PropType<unknown>,
-			default: void 0
-		},
 		searchRegex: RegExp as PropType<SearchRegex>,
 		// 远程搜索时数据已由 loadData 过滤，本地仅高亮
 		remote: {
@@ -68,8 +52,19 @@ export const TreeSelectContentCascader = defineComponent({
 	emits: ['change'],
 	setup(props, { emit, expose }) {
 		const { t } = useLocale();
-		const treeRef = ref<any>(null);
 		const columnsRef = ref<any>();
+		// 勾选状态（父子联动）只需要树的 store，不渲染树：节点的状态是响应式的，列与搜索结果的复选框直接读取
+		const store = new TreeStore({
+			data: props.data,
+			keyValue: { ...KEY_VALUE },
+			checkStrictly: props.checkStrictly,
+			checkedValues: [...props.value]
+		});
+		watch(() => props.value, v => store.setCheckedValues([...v]));
+		watch(() => props.data, v => store.setData(v));
+		watch(() => props.checkStrictly, (v) => {
+			store.checkStrictly = v;
+		});
 		/** hover 展开路径，与 Cascader 一致 */
 		const currentValue = ref<TreeValue[]>([]);
 		const rebuildData = computed(() => {
@@ -85,56 +80,34 @@ export const TreeSelectContentCascader = defineComponent({
 			data.push(temp);
 			return data;
 		});
-		/** 驱动列区在 TreeStore 更新后重绘 */
-		const panelTick = ref(0);
-
 		const searching = computed(() => !!props.searchRegex?.highlight);
 
 		const sync = async () => {
 			await nextTick();
-			const tree = treeRef.value;
-			if (!tree) return;
-			const data = {
-				checkedNodes: tree.getCheckedNodes(),
-				checkedValues: tree.getCheckedValues(),
-				halfCheckedNodes: tree.getHalfCheckedNodes(),
-				halfCheckedValues: tree.getHalfCheckedValues()
-			};
-			panelTick.value++;
-			emit('change', null, data);
+			emit('change', null, {
+				checkedNodes: store.getCheckedNodes(),
+				checkedValues: store.getCheckedValues(),
+				halfCheckedNodes: store.getHalfCheckedNodes(),
+				halfCheckedValues: store.getHalfCheckedValues()
+			});
 		};
 
 		const getNodeState = (item: TreeData) => {
-			// 依赖 panelTick，勾选后重绘
-			void panelTick.value;
-			const tree = treeRef.value;
-			if (!tree) {
-				return { checked: false, indeterminate: false };
-			}
-			const node = tree.getNode(item);
-			if (!node) {
-				return { checked: false, indeterminate: false };
-			}
+			const node = store.getNode(item);
 			return {
-				checked: !!node.states.checked,
-				indeterminate: !!node.states.indeterminate
+				checked: !!node?.states.checked,
+				indeterminate: !!node?.states.indeterminate
 			};
 		};
 
-		const handleCheckboxChange = async (v: any, item: TreeData) => {
-			const tree = treeRef.value;
-			if (!tree) return;
-			tree.setChecked(item, v, !props.checkStrictly);
-
+		const handleCheckboxChange = (v: any, item: TreeData) => {
+			store.setChecked(item, v, !props.checkStrictly);
 			sync();
 		};
 
 		const handleLabelClick = (v: any, item: TreeData) => {
 			if (item.disabled) return;
-			const tree = treeRef.value;
-			if (!tree) return;
-			tree.setChecked(item, v, !props.checkStrictly);
-
+			store.setChecked(item, v, !props.checkStrictly);
 			sync();
 		};
 
@@ -163,7 +136,7 @@ export const TreeSelectContentCascader = defineComponent({
 		const renderPrefix = ({ item }: SelectPath | CascaderCell) => renderCheckbox(item);
 
 		const renderLabel = ({ item }: CascaderCell) => {
-			const node = props.renderNodeLabel && treeRef.value?.getNode?.(item);
+			const node = props.renderNodeLabel && store.getNode(item);
 			return node
 				? (<Customer render={props.renderNodeLabel} store={node} row={item} />)
 				: item.label;
@@ -193,21 +166,6 @@ export const TreeSelectContentCascader = defineComponent({
 		return () => {
 			return (
 				<div class="vc-tree-select__cascader">
-					<Tree
-						ref={treeRef}
-						class="vc-tree-select__cascader-tree-hidden"
-						model-value={props.value}
-						expanded-values={props.value}
-						data={props.data}
-						checkStrictly={props.checkStrictly}
-						allowDispatch={false}
-						showCheckbox={true}
-						renderNodeLabel={props.renderNodeLabel}
-						numerable={props.numerable}
-						separator={props.separator}
-						max={props.max}
-						nullValue={props.nullValue}
-					/>
 					{
 						searching.value && (
 							<SelectPaths
