@@ -299,7 +299,7 @@ export const TableHeader = defineComponent({
 							? (
 									<Icon
 										type="o-info"
-										class="vc-table__tooltip"
+										class="vc-table__tooltip vc-drag-ignore"
 										onMouseenter={(e: MouseEvent) => handleCellMouseEnter(e, columnStates)}
 									/>
 								)

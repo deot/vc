@@ -7,8 +7,8 @@ import type { Store } from '../store';
 import type { TableColumnDropPosition, TableColumnMove } from '../store/modules/drag';
 import type { TableColumnNode } from '../table-column/table-column-node';
 import type { TableColumnDragPayload, TableColumnDragEndPayload, TableColumnDropPayload } from '../types';
-import { INTERACTIVE_SELECTOR, createGhost, createIndicator, getEdgeDelta, scrollBody, toRootOffset, usePointerDrag } from './drag-helpers';
-import type { PointerDragState, RootOffset } from './drag-helpers';
+import { INTERACTIVE_SELECTOR, createGhost, createIndicator, getEdgeDelta, scrollByDelta, toRootOffset, useDragDrop } from '../../drag';
+import type { DragDropState, RootOffset } from '../../drag';
 
 type Options = {
 	store: Store;
@@ -66,10 +66,7 @@ type DragSession = {
 };
 
 // 拖拽状态：source 为被拖动的列（原列节点）
-type DragState = PointerDragState<TableColumnNode, DragSession>;
-
-// 表头中不发起列拖拽的元素：排序、筛选、提示图标，以及复选框等交互元素
-const HEADER_INTERACTIVE_SELECTOR = `${INTERACTIVE_SELECTOR},.vc-table-sort,.vc-table-filter,.vc-table__tooltip`;
+type DragState = DragDropState<TableColumnNode, DragSession>;
 
 // 拖拽中挂在表格根节点上：限定变暗样式的作用范围
 const ROOT_DRAGGING_CLASS = 'is-column-dragging';
@@ -78,7 +75,7 @@ const ROOT_DRAGGING_CLASS = 'is-column-dragging';
 const UNBOUNDED: Range = { left: -Infinity, right: Infinity };
 
 /**
- * 列拖拽（draggable 第二项），按下到结束的生命周期见 usePointerDrag：
+ * 列拖拽（draggable 第二项），按下到结束的生命周期见 useDragDrop：
  * 	- 从表头单元格按下（排序、筛选、提示图标、交互元素与列宽拖拽区除外）；
  * 	- 只在同一父级内移动，分组表头连同子列一起移动；顶层不跨固定分组；
  * 	- 激活后被拖列（表头与表体单元格）变暗，竖向插入线标出落点，跟随块（表头单元格的克隆）随指针横向移动，
@@ -171,7 +168,7 @@ export const useColumnDrag = (options: Options) => {
 	 */
 	const createColumnGhost = (root: HTMLElement, cell: HTMLElement) => {
 		const rect = cell.getBoundingClientRect();
-		const { ghost, clone } = createGhost(root, cell, 'vc-table__thead', 'is-column');
+		const { ghost, clone } = createGhost(root, cell, 'vc-table__thead', 'vc-table__drag-ghost is-column');
 		Object.assign(clone.style, { position: 'relative', left: '0', right: 'auto', width: '100%', height: '100%' });
 		ghost.style.width = `${rect.width}px`;
 		ghost.style.height = `${rect.height}px`;
@@ -271,7 +268,7 @@ export const useColumnDrag = (options: Options) => {
 
 		const cell = target.closest<HTMLElement>('.vc-table__th');
 		if (!cell || !header.contains(cell) || cell.closest('.vc-table') !== root) return null;
-		const interactive = target.closest(HEADER_INTERACTIVE_SELECTOR);
+		const interactive = target.closest(INTERACTIVE_SELECTOR);
 		if (interactive && cell.contains(interactive)) return null;
 
 		const column = getAllColumnNodes(store.states._columns).find(item => cell.classList.contains(item.states.id));
@@ -297,7 +294,7 @@ export const useColumnDrag = (options: Options) => {
 			grabOffset: current.startX - cell.getBoundingClientRect().left,
 			ghost,
 			ghostWidth: ghost.offsetWidth,
-			indicator: createIndicator(root, 'is-vertical'),
+			indicator: createIndicator(root, 'vc-table__drop-indicator is-vertical'),
 			style: createDimmedStyle(root, column),
 			scrollable: !store.drag.getColumnSide(column),
 			candidates,
@@ -329,7 +326,7 @@ export const useColumnDrag = (options: Options) => {
 		const bodyRange = { left: bodyRect.left, right: bodyRect.left + body.clientWidth };
 		const range = session.scrollable ? getScrollRange(session, bodyRange) : UNBOUNDED;
 		const delta = session.scrollable ? getEdgeDelta(current.clientX, range.left, range.right) : 0;
-		const scrolled = !!delta && scrollBody(body, bodyScroller.value, 'x', delta);
+		const scrolled = !!delta && scrollByDelta(body, bodyScroller.value, 'x', delta);
 
 		updateDrop(current, session, hitTest(current, session, range));
 		const dock = bottomWrapper.value?.getBoundingClientRect();
@@ -367,7 +364,7 @@ export const useColumnDrag = (options: Options) => {
 		emit('column-dragend', { ...payload, dropped } satisfies TableColumnDragEndPayload);
 	};
 
-	const drag = usePointerDrag({ root: tableWrapper, resolve: resolveSource, activate, start, update, finish });
+	const drag = useDragDrop({ root: tableWrapper, bodyClass: 'vc-table-dragging', resolve: resolveSource, activate, start, update, finish });
 
 	// 拖拽期间列变化（增删、隐藏、外部写回顺序）：取消
 	watch(() => store.states.originColumns, drag.cancel);

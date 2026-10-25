@@ -97,7 +97,7 @@ export const cellForced: Record<string, Partial<TableColumnStates>> = {
 			};
 			return (
 				<div
-					class={['vc-table__expand-icon', { 'is-expand': store.expand.isExpanded(row) }]}
+					class={['vc-table__expand-icon vc-drag-ignore', { 'is-expand': store.expand.isExpanded(row) }]}
 					onClick={handleClick}
 				>
 					<Icon type="triangle-up" />
@@ -191,7 +191,7 @@ export const treeCellPrefix = ({ row, treeNode, store }: Pick<TableColumnRenderD
 		treeNode.expandable
 			? (
 					<span
-						class={['vc-table__expand-icon', 'vc-table__tree-icon', { 'is-expand': treeNode.expanded }]}
+						class={['vc-table__expand-icon vc-table__tree-icon vc-drag-ignore', { 'is-expand': treeNode.expanded }]}
 						onClick={handleClick}
 					>
 						{ treeNode.loading ? <Spin size={12} /> : <Icon type="triangle-up" /> }

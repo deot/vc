@@ -18,11 +18,11 @@ import {
 	createIndicator,
 	getEdgeDelta,
 	getNextOffset,
-	scrollBody,
+	scrollByDelta,
 	toRootOffset,
-	usePointerDrag
-} from './drag-helpers';
-import type { PointerDragState, RootOffset } from './drag-helpers';
+	useDragDrop
+} from '../../drag';
+import type { DragDropState, RootOffset } from '../../drag';
 
 type Options = {
 	props: Props;
@@ -102,7 +102,7 @@ type DragSession = {
 };
 
 // 拖拽状态：source 为被拖动的块（states.list 中的块）
-type DragState = PointerDragState<any, DragSession>;
+type DragState = DragDropState<any, DragSession>;
 
 // 树形表格：指针在收起节点的中间区域停留（ms）后自动展开
 const HOVER_EXPAND = 600;
@@ -117,7 +117,7 @@ const Y_KEYS: AxisKeys = {
 };
 
 /**
- * 拖拽排序（以块为单位），按下到结束的生命周期见 usePointerDrag：
+ * 拖拽排序（以块为单位），按下到结束的生命周期见 useDragDrop：
  * 	- 整行拖拽（draggable 第一项）从单元格任意位置按下，锚点拖拽从 `.vc-table__drag-handle`（type="drag" 列）按下；
  * 	- 激活后源块变暗，插入线标出落点，跟随行（块 grid 的克隆）随指针纵向移动，指针靠近边缘时自动滚动；
  * 	- 松手时顺序有变化则发出 update:data（新数组）与 block-drop，树形表格先原地修改；之后总会发出 block-dragend；
@@ -354,7 +354,7 @@ export const useBlockDrag = (options: Options) => {
 	const scrollInner = (delta: number) => {
 		const el = bodyXWrapper.value;
 		const scroller = bodyScroller.value;
-		return !!el && !!scroller && scrollBody(el, scroller, 'y', delta);
+		return !!el && !!scroller && scrollByDelta(el, scroller, 'y', delta);
 	};
 
 	/**
@@ -399,7 +399,7 @@ export const useBlockDrag = (options: Options) => {
 	const createBlockGhost = (root: HTMLElement, blockEl: HTMLElement, offset: RootOffset) => {
 		const body = bodyXWrapper.value!;
 		// 表体内的单元格样式（固定列底色、斑马纹等）限定在 .vc-table__tbody 下
-		const { ghost, clone, content } = createGhost(root, blockEl, 'vc-table__tbody');
+		const { ghost, clone, content } = createGhost(root, blockEl, 'vc-table__tbody', 'vc-table__drag-ghost');
 		clone.removeAttribute('data-row-start');
 		clone.classList.remove('is-dragging');
 		clone.querySelectorAll('.hover-row, .hover-related').forEach((node) => {
@@ -566,7 +566,7 @@ export const useBlockDrag = (options: Options) => {
 			grabOffset: current.startY - blockEl.getBoundingClientRect().top,
 			ghost,
 			ghostHeight: ghost.offsetHeight,
-			indicator: createIndicator(root),
+			indicator: createIndicator(root, 'vc-table__drop-indicator'),
 			outer,
 			blockEls: virtual.value ? null : els,
 			dimmed: [],
@@ -648,7 +648,7 @@ export const useBlockDrag = (options: Options) => {
 		return { source: block, byHandle };
 	};
 
-	const drag = usePointerDrag({ root: tableWrapper, resolve: resolveSource, activate, start, update, finish });
+	const drag = useDragDrop({ root: tableWrapper, bodyClass: 'vc-table-dragging', resolve: resolveSource, activate, start, update, finish });
 
 	/**
 	 * 拖拽期间块列表重建（数据或列变化、树形表格展开 / 收起、懒加载完成）：

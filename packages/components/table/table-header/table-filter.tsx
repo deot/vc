@@ -241,7 +241,7 @@ export const TableFilter = defineComponent({
 					portalClass={props.portalClass}
 					// 选项由弹层内置的 Scroller 限高滚动
 					scrollerOptions={{ maxHeight: 160 }}
-					class="vc-table-filter"
+					class="vc-table-filter vc-drag-ignore"
 					// @ts-ignore
 					onVisibleChange={handleVisibleChange}
 					onUpdate:modelValue={(v: boolean) => (isVisible.value = v)}

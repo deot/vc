@@ -1,0 +1,22 @@
+// 拖放的公用类（见 drag-drop.ts）：只负责脚本写入位置所依赖的定位与指针穿透；颜色、尺寸、层级由组件类负责
+
+// 拖拽中挂在 body 上：全局 move 光标、禁止选中文本
+.vc-dragging,
+.vc-dragging * {
+	cursor: move !important;
+	user-select: none !important;
+}
+
+// 插入线：位置与尺寸由脚本写入
+.vc-drag__indicator {
+	position: absolute;
+	pointer-events: none;
+	box-sizing: border-box;
+}
+
+// 跟随元素：随指针移动，不遮挡落点的命中
+.vc-drag__ghost {
+	position: absolute;
+	overflow: hidden;
+	pointer-events: none;
+}

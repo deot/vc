@@ -305,14 +305,12 @@ $sizes: (
 
 	// 插入线：落点之前 / 之后（树形表格按层级缩进），不允许放置时为错误色；
 	// 树形表格 inner 时改为框住目标行（高度由脚本写入），叠在跟随行之上
+	// 定位与指针穿透见公用类 vc-drag__indicator
 	@include element(drop-indicator) {
-		position: absolute;
 		z-index: 11;
 		height: 2px;
 		margin-top: -1px;
-		pointer-events: none;
 		background-color: $color-primary;
-		box-sizing: border-box;
 
 		@include when(disabled) {
 			background-color: $color-error;
@@ -338,12 +336,10 @@ $sizes: (
 	}
 
 	// 跟随行：块 grid 的克隆，容器与表体等宽，横向滚动位置与表体一致
+	// 定位、裁剪与指针穿透见公用类 vc-drag__ghost
 	@include element(drag-ghost) {
-		position: absolute;
 		z-index: 10;
 		max-height: 50vh;
-		overflow: hidden;
-		pointer-events: none;
 		background-color: $background-color-lightest;
 		box-shadow: $box-shadow-floating;
 		transition: opacity 0.15s;
@@ -784,11 +780,4 @@ $sizes: (
 	> div.vc-scroller-track {
 		z-index: 5;
 	}
-}
-
-// 拖拽排序中挂在 body 上：全局 move 光标、禁止选中文本
-.vc-table-dragging,
-.vc-table-dragging * {
-	cursor: move !important;
-	user-select: none !important;
 }

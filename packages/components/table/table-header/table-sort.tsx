@@ -13,7 +13,7 @@ export const TableSort = defineComponent({
 
 		return () => {
 			return (
-				<span class="vc-table-sort">
+				<span class="vc-table-sort vc-drag-ignore">
 					<span
 						class={[
 							{ 'is-ascending': props.order === 'ascending' },
