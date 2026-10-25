@@ -61,10 +61,7 @@ export const Tree = defineComponent({
 			filterNode: props.filterNode
 		});
 		const root = store.root;
-		const dropIndicator = ref<HTMLElement>();
 		const formItem = inject<any>('vc-form-item', {});
-
-		const drag = useDragNode(store, dropIndicator);
 
 		// 节点的勾选 / 半选状态变化：由 store 在同一轮写入结束后发出，未渲染的节点也会发出
 		store.onCheckChange = node => emit('check-change', {
@@ -93,6 +90,9 @@ export const Tree = defineComponent({
 		};
 		const getElement = (node: TreeNode) => rowInstances.get(node)?.vnode.el as Element | undefined;
 		const getNodeOf = (el: Element) => rowNodes.get(el);
+
+		const rootEl = ref<HTMLElement | null>(null);
+		const drag = useDragNode({ props, store, emit, root: rootEl, getNode: getNodeOf, getElement });
 
 		const isEmpty = computed(() => {
 			const { childNodes } = root;
@@ -304,7 +304,8 @@ export const Tree = defineComponent({
 		const renderNode = (node: TreeNode) => {
 			return (
 				<TreeNodeContent
-					key={getNodeKey(node)}
+					// 按节点对象（id）区分：拖放、setData 等重新创建节点时行重新挂载，行与节点的登记随之更新
+					key={node.id}
 					node={node}
 					renderNodeLabel={props.renderNodeLabel}
 					showCheckbox={props.showCheckbox}
@@ -323,7 +324,6 @@ export const Tree = defineComponent({
 			store,
 			root,
 			emit,
-			drag,
 			instance: instance!,
 			motions,
 			toggle,
@@ -380,9 +380,13 @@ export const Tree = defineComponent({
 						},
 						'vc-tree'
 					]}
+					ref={rootEl}
 					role="tree"
 					onKeydown={keydown.handleKeydown}
 					onFocusin={keydown.handleFocusin}
+					onMousedown={drag.handleMousedown}
+					// 拖拽的触摸按下为 passive，不影响滚动
+					{...{ onTouchstartPassive: drag.handleTouchstart }}
 				>
 					<SelectList ref={list} data={rows.value}>
 						{{ default: ({ row }: { row: TreeNode }) => renderNode(row), $stable: true }}
@@ -398,12 +402,6 @@ export const Tree = defineComponent({
 							</div>
 						)
 					}
-					<div
-						ref={dropIndicator}
-						// @ts-ignore
-						vShow={dragState.showDropIndicator}
-						class="vc-tree__drop-indicator"
-					/>
 				</div>
 			);
 		};

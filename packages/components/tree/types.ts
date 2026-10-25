@@ -7,7 +7,6 @@ export interface TreeProvide {
 	store: TreeStore;
 	root: TreeNode;
 	instance: ComponentInternalInstance;
-	drag: any;
 	emit: any;
 	// 正在展开 / 收起动画的节点
 	motions: Map<TreeNode, 'expand' | 'collapse'>;
@@ -114,7 +113,8 @@ export interface TreeAllowDropPayload extends TreeNodePayload, TreeMove {
  * node-dragstart 的参数
  */
 export interface TreeNodeDragPayload extends TreeNodePayload {
-	event: DragEvent;
+	// 最近一次的指针事件（鼠标或触摸）
+	event: MouseEvent | TouchEvent;
 }
 
 /**

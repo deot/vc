@@ -2,7 +2,12 @@ import { onBeforeUnmount } from 'vue';
 import type { Ref } from 'vue';
 import { clamp } from 'lodash-es';
 import { raf, caf } from '@deot/helper-utils';
+import { getScroller } from '@deot/helper-dom';
 import type { Nullable } from '@deot/helper-shared';
+import { SCROLLER_REG } from '../scroller/utils';
+import { isWindow } from '../recycle-list/viewport/external/dom';
+import { ExternalCarrier } from '../recycle-list/viewport/external/carrier';
+import type { AxisKeys } from '../recycle-list/viewport/types';
 
 // 拖放（Table 的行 / 列拖拽、Tree 的节点拖拽共用；用鼠标与触摸事件实现，不用原生拖拽）：阈值、长按、自动滚动的参数，交互元素排除、插入线、跟随元素与拖拽的生命周期
 // 创建的元素与 body 带公用类（vc-drag__*、vc-dragging，见 style.scss，只负责定位等机制），外观由调用方传入的组件类负责
@@ -70,6 +75,60 @@ export const scrollByDelta = (el: HTMLElement, scroller: any, axis: 'x' | 'y', d
 	} else {
 		el[axis === 'x' ? 'scrollLeft' : 'scrollTop'] = next;
 	}
+	return true;
+};
+
+// 纵向滚动承载者的属性名
+const Y_KEYS: AxisKeys = {
+	axis: 'y',
+	scrollAxis: 'scrollTop',
+	clientSize: 'clientHeight',
+	scrollSize: 'scrollHeight',
+	offsetSize: 'offsetHeight'
+};
+
+/**
+ * 组件外纵向滚动的承载者：从组件向上找纵向可滚动的祖先（VC Scroller 按类名识别），找不到时为窗口。
+ * 当前纵向不可滚动的祖先跳过，如只横向滚动的包裹元素（overflow-x 非 visible 时 overflow-y 的计算值为 auto）
+ * @param root 组件根节点
+ * @returns 承载者
+ */
+export const resolveOuterCarrier = (root: HTMLElement) => {
+	let el = root.parentElement;
+	while (el) {
+		const target = getScroller(el, { direction: 'y', className: SCROLLER_REG });
+		if (!target || isWindow(target)) break;
+		if (target.scrollHeight > target.clientHeight) {
+			return new ExternalCarrier(target, Y_KEYS);
+		}
+		el = target.parentElement;
+	}
+	return new ExternalCarrier(window, Y_KEYS);
+};
+
+/**
+ * 外部滚动承载者的纵向视口（与窗口取交集），视口坐标
+ * @param outer 外部滚动承载者
+ * @returns 纵向范围
+ */
+export const getOuterViewport = (outer: ExternalCarrier) => {
+	const top = outer.contentOrigin;
+	return {
+		top: Math.max(0, top),
+		bottom: Math.min(window.innerHeight, top + outer.clientSize)
+	};
+};
+
+/**
+ * 按增量滚动外部滚动承载者（窗口、元素或外层 VC Scroller）
+ * @param outer 外部滚动承载者
+ * @param delta 纵向增量
+ * @returns 是否滚动了
+ */
+export const scrollOuter = (outer: ExternalCarrier, delta: number) => {
+	const next = getNextOffset(outer.mainOffset, outer.scrollSize - outer.clientSize, delta);
+	if (next == null) return false;
+	outer.setMainOffset(next);
 	return true;
 };
 
@@ -168,6 +227,8 @@ export type DragDropState<T, S> = {
 	timer: any;
 	// 激活（越过阈值或长按）后的拖拽会话；未激活时为 null
 	session: Nullable<S>;
+	// 最近一次的原生事件（按下、移动或松开），供组件事件的 event 参数
+	event: Event;
 };
 
 type DragDropOptions<T, S> = {
@@ -297,9 +358,11 @@ export const useDragDrop = <T, S>(options: DragDropOptions<T, S>) => {
 	 * @param current 拖拽状态
 	 * @param x 指针横坐标
 	 * @param y 指针纵坐标
+	 * @param e 原生事件
 	 * @returns 是否处于拖拽中
 	 */
-	const moveTo = (current: DragDropState<T, S>, x: number, y: number) => {
+	const moveTo = (current: DragDropState<T, S>, x: number, y: number, e: Event) => {
+		current.event = e;
 		current.clientX = x;
 		current.clientY = y;
 		if (!current.session) {
@@ -321,12 +384,14 @@ export const useDragDrop = <T, S>(options: DragDropOptions<T, S>) => {
 			finish(false);
 			return;
 		}
-		moveTo(current, e.clientX, e.clientY) && e.preventDefault();
+		moveTo(current, e.clientX, e.clientY, e) && e.preventDefault();
 	};
 
 	// 只有左键松开才结束
 	const handleMouseup = (e: MouseEvent) => {
-		e.button === 0 && state && !state.touch && finish(true);
+		if (e.button !== 0 || !state || state.touch) return;
+		state.event = e;
+		finish(true);
 	};
 
 	/**
@@ -345,7 +410,7 @@ export const useDragDrop = <T, S>(options: DragDropOptions<T, S>) => {
 		}
 		e.stopPropagation();
 		e.cancelable && e.preventDefault();
-		moveTo(current, touch.clientX, touch.clientY);
+		moveTo(current, touch.clientX, touch.clientY, e);
 	};
 
 	const handleTouchend = (e: TouchEvent) => {
@@ -353,6 +418,7 @@ export const useDragDrop = <T, S>(options: DragDropOptions<T, S>) => {
 		if (!current || !current.touch) return;
 		// 容器 Scroller 的触摸惯性由 touchend 触发
 		isOwned(current) && e.stopPropagation();
+		current.event = e;
 		finish(true);
 	};
 
@@ -399,8 +465,8 @@ export const useDragDrop = <T, S>(options: DragDropOptions<T, S>) => {
 		fn('blur', handleBlur);
 	}
 
-	const start = (source: T, x: number, y: number, touch: boolean, byHandle: boolean) => {
-		state = { source, startX: x, startY: y, clientX: x, clientY: y, touch, byHandle, timer: null, session: null };
+	const start = (source: T, x: number, y: number, touch: boolean, byHandle: boolean, event: Event) => {
+		state = { source, startX: x, startY: y, clientX: x, clientY: y, touch, byHandle, timer: null, session: null, event };
 		toggleListeners(true);
 		return state;
 	};
@@ -414,7 +480,7 @@ export const useDragDrop = <T, S>(options: DragDropOptions<T, S>) => {
 		if (e.button !== 0 || state) return false;
 		const resolved = options.resolve(e.target as HTMLElement, e);
 		if (!resolved) return false;
-		start(resolved.source, e.clientX, e.clientY, false, resolved.byHandle);
+		start(resolved.source, e.clientX, e.clientY, false, resolved.byHandle, e);
 		return true;
 	};
 
@@ -428,7 +494,7 @@ export const useDragDrop = <T, S>(options: DragDropOptions<T, S>) => {
 		if (state || !touch || e.touches.length !== 1) return false;
 		const resolved = options.resolve(e.target as HTMLElement, touch);
 		if (!resolved) return false;
-		const current = start(resolved.source, touch.clientX, touch.clientY, true, resolved.byHandle);
+		const current = start(resolved.source, touch.clientX, touch.clientY, true, resolved.byHandle, e);
 		if (resolved.byHandle) return true;
 		current.timer = setTimeout(() => {
 			current.timer = null;

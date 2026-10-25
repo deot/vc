@@ -40,12 +40,28 @@ const fireKey = (el: Element, keyCode: number) => {
 	el.dispatchEvent(new KeyboardEvent('keydown', { key: KEYS[keyCode], keyCode, bubbles: true, cancelable: true } as any));
 };
 
-const dataTransferStub = () => ({
-	effectAllowed: '',
-	dropEffect: '',
-	setData: vi.fn(),
-	getData: vi.fn(() => '')
-});
+// 指针拖拽（Tree 用 useDragDrop，不用原生拖拽）：经过的节点由 elementFromPoint 命中，jsdom 没有实现，这里返回 under
+let under: Element | null = null;
+(document as any).elementFromPoint = () => under;
+const asElement = (el: any) => (el?.element || el) as Element;
+const contentOf = (el: any) => asElement(el).querySelector(':scope > .vc-tree-node__content') || asElement(el);
+// 在节点上按下，越过阈值（4px）后开始拖拽
+const pointerDragStart = async (el: any, clientY = 10) => {
+	under = null;
+	contentOf(el).dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0, buttons: 1, clientX: 10, clientY }));
+	window.dispatchEvent(new MouseEvent('mousemove', { cancelable: true, buttons: 1, clientX: 10, clientY: clientY + 10 }));
+	await sleep(30);
+};
+// 指针移到节点上的 clientY 处（等一帧更新）
+const pointerDragOver = async (el: any, clientY: number) => {
+	under = contentOf(el);
+	window.dispatchEvent(new MouseEvent('mousemove', { cancelable: true, buttons: 1, clientX: 10, clientY }));
+	await sleep(30);
+};
+const pointerDragEnd = async () => {
+	window.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
+	await flush();
+};
 
 const getTreeCheckboxes = () => {
 	return document.querySelectorAll('.vc-tree .vc-checkbox input[type="checkbox"]');
@@ -336,19 +352,18 @@ describe('Tree interaction', () => {
 		await nextTick();
 		expect(loadData).toHaveBeenCalledTimes(1);
 		expect((wrapper.vm as any).getNode('4-1')).toBeTruthy();
+		// 拖拽按帧更新：改回真实定时器
+		vi.useRealTimers();
 
 		const node = wrapper.find('.vc-tree-node');
-		expect(node.attributes('draggable')).toBe('true');
-		await node.trigger('dragstart', { dataTransfer: dataTransferStub() });
+		// 展开图标带 vc-drag-ignore：从它按下不发起拖拽
+		expect(wrapper.find('.vc-tree-node__expand-icon').classes()).toContain('vc-drag-ignore');
+		await pointerDragStart(node);
 		await nextTick();
 		expect(wrapper.classes()).toContain('is-dragging');
 		expect(onDragStart).toHaveBeenCalled();
 
-		await node.trigger('dragover', {
-			preventDefault: vi.fn(),
-			dataTransfer: dataTransferStub(),
-			clientY: 1
-		});
+		await pointerDragOver(node, 1);
 		await nextTick();
 		expect(onDragOver).toHaveBeenCalled();
 		expect(onDragEnd).not.toHaveBeenCalled();
@@ -373,17 +388,10 @@ describe('Tree interaction', () => {
 		await flush();
 
 		const nodes = wrapper.findAll('.vc-tree-node');
-		await nodes[0].trigger('dragstart', { dataTransfer: dataTransferStub() });
-		await nodes[1].trigger('dragover', {
-			clientY: 999,
-			preventDefault: vi.fn(),
-			dataTransfer: dataTransferStub()
-		});
+		await pointerDragStart(nodes[0]);
+		await pointerDragOver(nodes[1], 999);
 		await flush();
-		await nodes[0].trigger('dragend', {
-			preventDefault: vi.fn(),
-			dataTransfer: dataTransferStub()
-		});
+		await pointerDragEnd();
 		await flush();
 
 		expect(onDragEnter).toHaveBeenCalled();
@@ -415,23 +423,12 @@ describe('Tree interaction', () => {
 		await flush();
 
 		const nodes = wrapper.findAll('.vc-tree-node');
-		await nodes[0].trigger('dragstart', { dataTransfer: dataTransferStub() });
-		await nodes[1].trigger('dragover', {
-			clientY: 0,
-			preventDefault: vi.fn(),
-			dataTransfer: dataTransferStub()
-		});
+		await pointerDragStart(nodes[0]);
+		await pointerDragOver(nodes[1], 0);
 		// 移到第三个节点，触发 drag-leave 旧节点
-		await nodes[2].trigger('dragover', {
-			clientY: 0,
-			preventDefault: vi.fn(),
-			dataTransfer: dataTransferStub()
-		});
+		await pointerDragOver(nodes[2], 0);
 		await flush();
-		await nodes[0].trigger('dragend', {
-			preventDefault: vi.fn(),
-			dataTransfer: dataTransferStub()
-		});
+		await pointerDragEnd();
 		await flush();
 
 		expect(allowDrag).toHaveBeenCalled();
@@ -454,7 +451,7 @@ describe('Tree interaction', () => {
 		await flush();
 
 		const node = wrapper.find('.vc-tree-node');
-		await node.trigger('dragstart', { dataTransfer: dataTransferStub() });
+		await pointerDragStart(node);
 		await flush();
 
 		expect(onDragStart).not.toHaveBeenCalled();
@@ -578,13 +575,9 @@ describe('Tree interaction', () => {
 		await flush();
 
 		const nodes = wrapper.findAll('.vc-tree-node');
-		await nodes[0].trigger('dragstart', { dataTransfer: dataTransferStub() });
+		await pointerDragStart(nodes[0]);
 		// dropType='none'：所有方向均禁止
-		await nodes[1].trigger('dragover', {
-			clientY: 0,
-			preventDefault: vi.fn(),
-			dataTransfer: dataTransferStub()
-		});
+		await pointerDragOver(nodes[1], 0);
 		await flush();
 		expect(wrapper.classes()).toContain('is-drop-not-allow');
 
@@ -600,17 +593,10 @@ describe('Tree interaction', () => {
 		});
 		await flush();
 		const ns = w2.findAll('.vc-tree-node');
-		await ns[0].trigger('dragstart', { dataTransfer: dataTransferStub() });
-		await ns[1].trigger('dragover', {
-			clientY: -1,
-			preventDefault: vi.fn(),
-			dataTransfer: dataTransferStub()
-		});
+		await pointerDragStart(ns[0]);
+		await pointerDragOver(ns[1], -1);
 		await flush();
-		await ns[0].trigger('dragend', {
-			preventDefault: vi.fn(),
-			dataTransfer: dataTransferStub()
-		});
+		await pointerDragEnd();
 		await flush();
 
 		w2.unmount();
@@ -773,13 +759,10 @@ describe('Tree event payloads', () => {
 	const valueOf = (node: any) => (node ? node.states.data.value : null);
 	const placeOf = ({ parent, index }: any) => ({ parent: valueOf(parent), index });
 
-	const dragStart = (el: any) => el.trigger('dragstart', { dataTransfer: dataTransferStub() });
-	const dragOver = (el: any, clientY: number) => el.trigger('dragover', {
-		clientY,
-		preventDefault: vi.fn(),
-		dataTransfer: dataTransferStub()
-	});
-	const dragEnd = (el: any) => el.trigger('dragend', { preventDefault: vi.fn(), dataTransfer: dataTransferStub() });
+	const dragStart = (el: any) => pointerDragStart(el);
+	const dragOver = (el: any, clientY: number) => pointerDragOver(el, clientY);
+	// 松手与节点无关：调用处传入的被拖节点忽略
+	const dragEnd = pointerDragEnd as (el?: any) => Promise<void>;
 
 	it('node-click / current-change：{ node, data, instance, event } / { node, data, oldNode }；当前节点不变时不发出 current-change', async () => {
 		const onNodeClick = vi.fn();
@@ -955,6 +938,47 @@ describe('Tree event payloads', () => {
 		wrapper.unmount();
 	});
 
+	it('指针拖拽：跟随元素与插入线带公用类，事件的 event 为指针事件；Esc 取消不移动；从展开图标按下不发起拖拽', async () => {
+		const onNodeDragstart = vi.fn();
+		const onNodeDrop = vi.fn();
+		const onNodeDragend = vi.fn();
+		const wrapper = mountTree({ data: buildData(), draggable: true, onNodeDragstart, onNodeDrop, onNodeDragend });
+		await flush();
+		const root = wrapper.element as HTMLElement;
+
+		// 展开图标带 vc-drag-ignore
+		const icon = nodeOf(wrapper, 'P1').find('.vc-tree-node__expand-icon').element;
+		icon.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0, buttons: 1, clientX: 10, clientY: 10 }));
+		window.dispatchEvent(new MouseEvent('mousemove', { cancelable: true, buttons: 1, clientX: 10, clientY: 30 }));
+		await sleep(30);
+		expect(onNodeDragstart).not.toHaveBeenCalled();
+		window.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
+		await flush();
+
+		await dragStart(nodeOf(wrapper, 'P3'));
+		expect(onNodeDragstart.mock.calls[0][0].event).toBeInstanceOf(MouseEvent);
+		expect(document.body.classList.contains('vc-dragging')).toBe(true);
+		expect(root.querySelector('.vc-drag__ghost.vc-tree__drag-ghost')!.textContent).toBe('P3');
+		await dragOver(nodeOf(wrapper, 'P2'), BEFORE);
+		const indicator = root.querySelector('.vc-drag__indicator.vc-tree__drop-indicator') as HTMLElement;
+		expect(indicator.style.display).toBe('');
+		await dragOver(nodeOf(wrapper, 'P2'), INNER);
+		expect(indicator.style.display).toBe('none');
+		expect(nodeOf(wrapper, 'P2').classes()).toContain('is-drop-inner');
+
+		// Esc 取消：不移动，node-dragend 的 dropped 为 false，跟随元素、插入线与高亮清除
+		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', cancelable: true }));
+		await flush();
+		expect(onNodeDrop).not.toHaveBeenCalled();
+		expect(onNodeDragend.mock.calls[0][0]).toMatchObject({ dropped: false, position: null });
+		expect(labels(wrapper)).toEqual(['P1', 'P2', 'P3']);
+		expect(root.querySelector('.vc-drag__ghost')).toBeNull();
+		expect(root.querySelector('.vc-drag__indicator')).toBeNull();
+		expect(root.querySelector('.is-drop-inner')).toBeNull();
+		expect(document.body.classList.contains('vc-dragging')).toBe(false);
+		wrapper.unmount();
+	});
+
 	it('allowDrag / allowDrop：对象参数；三个区域分别询问，各自带 from / to（to.index 按移除被拖节点之后计算）', async () => {
 		const allowDrag = vi.fn(() => true);
 		const allowDrop = vi.fn(() => true);
@@ -1073,11 +1097,7 @@ describe('Tree drop zones', () => {
 	const nodeOf = (wrapper: any, label: string) => {
 		return wrapper.findAll('.vc-tree-node').find((el: any) => el.find('.vc-tree-node__content').text() === label)!;
 	};
-	const dragOver = (el: any, clientY: number) => el.trigger('dragover', {
-		clientY,
-		preventDefault: vi.fn(),
-		dataTransfer: dataTransferStub()
-	});
+	const dragOver = (el: any, clientY: number) => pointerDragOver(el, clientY);
 	const mountZones = (props: Record<string, any> = {}) => mountTree({
 		data: [
 			{ value: 'p1', label: 'P1', children: [{ value: 'c1', label: 'C1' }] },
@@ -1095,11 +1115,11 @@ describe('Tree drop zones', () => {
 		await flush();
 		expect(nodeOf(wrapper, 'P1').classes()).toContain('is-expanded');
 
-		await nodeOf(wrapper, 'P2').trigger('dragstart', { dataTransfer: dataTransferStub() });
+		await pointerDragStart(nodeOf(wrapper, 'P2'));
 		await dragOver(nodeOf(wrapper, 'P1'), 10);
 		await flush();
 		expect(wrapper.classes()).toContain('is-drop-inner');
-		await nodeOf(wrapper, 'P2').trigger('dragend', { preventDefault: vi.fn(), dataTransfer: dataTransferStub() });
+		await pointerDragEnd();
 		await flush();
 		expect(onNodeDrop.mock.calls[0][0].position).toBe('inner');
 		wrapper.unmount();
@@ -1112,14 +1132,14 @@ describe('Tree drop zones', () => {
 		await flush();
 
 		// P3 与 P1 不相邻（P1 的下一个同级节点是 P2），P1 的 after 区域不会因为相邻而被去掉
-		await nodeOf(wrapper, 'P3').trigger('dragstart', { dataTransfer: dataTransferStub() });
+		await pointerDragStart(nodeOf(wrapper, 'P3'));
 		// 内容行的下四分之一：收起的节点为 after，展开的节点让给 inner
 		await dragOver(nodeOf(wrapper, 'P1'), 18);
 		await flush();
 		expect(wrapper.classes()).toContain('is-drop-inner');
 		// 仍会询问 after（由组件按结构排除）
 		expect(allowDrop.mock.calls.map(([e]: any) => e.position)).toEqual(['before', 'inner', 'after']);
-		await nodeOf(wrapper, 'P3').trigger('dragend', { preventDefault: vi.fn(), dataTransfer: dataTransferStub() });
+		await pointerDragEnd();
 		await flush();
 		expect(onNodeDrop.mock.calls[0][0].position).toBe('inner');
 		wrapper.unmount();
@@ -1128,7 +1148,7 @@ describe('Tree drop zones', () => {
 	it('inner 时高亮目标节点的标签', async () => {
 		const wrapper = mountZones();
 		await flush();
-		await nodeOf(wrapper, 'P1').trigger('dragstart', { dataTransfer: dataTransferStub() });
+		await pointerDragStart(nodeOf(wrapper, 'P1'));
 		await dragOver(nodeOf(wrapper, 'P2'), 10);
 		await flush();
 		const target = nodeOf(wrapper, 'P2');
@@ -1869,34 +1889,23 @@ describe('Tree store & node unit', () => {
 		// 反向 sibling：拖动 p2 dragover p1 → p1.getNextSiblingNode() === p2，dropNext=false
 		const tops = wrapper.findAll('.vc-tree[role="tree"] > .vc-select-list > .vc-tree-node');
 		const [p1, p2] = tops;
-		await p2.trigger('dragstart', { dataTransfer: dataTransferStub() });
-		await p1.trigger('dragover', {
-			clientY: 1,
-			preventDefault: vi.fn(),
-			dataTransfer: dataTransferStub()
-		});
+		await pointerDragStart(p2);
+		await pointerDragOver(p1, 1);
 		await flush();
-		await p2.trigger('dragend', {
-			preventDefault: vi.fn(),
-			dataTransfer: dataTransferStub()
-		});
+		await pointerDragEnd();
 		await flush();
 
 		// drop child onto parent：parent.contains(child, false) === true，dropInner=false
 		const all = wrapper.findAll('.vc-tree-node');
 		const child = all[1]; // c1 是 p1 的子节点
-		await child.trigger('dragstart', { dataTransfer: dataTransferStub() });
-		await all[0].trigger('dragover', {
-			clientY: 0,
-			preventDefault: vi.fn(),
-			dataTransfer: dataTransferStub()
-		});
+		await pointerDragStart(child);
+		await pointerDragOver(all[0], 0);
 		await flush();
 
 		wrapper.unmount();
 	});
 
-	it('drag: setData throws caught + sibling drag adjusts dropPrev/Next', async () => {
+	it('drag: sibling drag adjusts dropPrev/Next', async () => {
 		const wrapper = mountTree({
 			data: [
 				{ value: 's1', label: 'S1' },
@@ -1907,28 +1916,12 @@ describe('Tree store & node unit', () => {
 		await flush();
 
 		const nodes = wrapper.findAll('.vc-tree-node');
-		const errorSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-		// setData 抛错被 try/catch 兜住
-		await nodes[0].trigger('dragstart', {
-			dataTransfer: {
-				effectAllowed: '',
-				dropEffect: '',
-				setData: () => { throw new Error('boom'); }
-			}
-		});
-		errorSpy.mockRestore();
+		await pointerDragStart(nodes[0]);
 
 		// 拖到自己的下一个兄弟（dropTreeNode.getPreviousSiblingNode() === draggingTreeNode）
-		await nodes[1].trigger('dragover', {
-			clientY: 1,
-			preventDefault: vi.fn(),
-			dataTransfer: dataTransferStub()
-		});
+		await pointerDragOver(nodes[1], 1);
 		await flush();
-		await nodes[0].trigger('dragend', {
-			preventDefault: vi.fn(),
-			dataTransfer: dataTransferStub()
-		});
+		await pointerDragEnd();
 		await flush();
 
 		wrapper.unmount();

@@ -1,12 +1,8 @@
 import { watch, toRaw } from 'vue';
 import type { Ref } from 'vue';
-import { getScroller } from '@deot/helper-dom';
 import type { Nullable } from '@deot/helper-shared';
 import { Utils } from '@deot/vc-shared';
-import { SCROLLER_REG } from '../../scroller/utils';
-import { isWindow } from '../../recycle-list/viewport/external/dom';
 import { ExternalCarrier } from '../../recycle-list/viewport/external/carrier';
-import type { AxisKeys } from '../../recycle-list/viewport/types';
 import type { Store } from '../store';
 import type { TableDropPosition, TableMove } from '../store/modules';
 import type { Props } from '../table-props';
@@ -17,8 +13,10 @@ import {
 	createGhost,
 	createIndicator,
 	getEdgeDelta,
-	getNextOffset,
+	getOuterViewport,
+	resolveOuterCarrier,
 	scrollByDelta,
+	scrollOuter,
 	toRootOffset,
 	useDragDrop
 } from '../../drag';
@@ -107,15 +105,6 @@ type DragState = DragDropState<any, DragSession>;
 // 树形表格：指针在收起节点的中间区域停留（ms）后自动展开
 const HOVER_EXPAND = 600;
 
-// 外部滚动承载者的纵向属性名
-const Y_KEYS: AxisKeys = {
-	axis: 'y',
-	scrollAxis: 'scrollTop',
-	clientSize: 'clientHeight',
-	scrollSize: 'scrollHeight',
-	offsetSize: 'offsetHeight'
-};
-
 /**
  * 拖拽排序（以块为单位），按下到结束的生命周期见 useDragDrop：
  * 	- 整行拖拽（draggable 第一项）从单元格任意位置按下，锚点拖拽从 `.vc-table__drag-handle`（type="drag" 列）按下；
@@ -157,38 +146,6 @@ export const useBlockDrag = (options: Options) => {
 			next = next.nextElementSibling as Nullable<HTMLElement>;
 		}
 		return { top: rect.top, bottom };
-	};
-
-	/**
-	 * 表格外纵向滚动的承载者：从表格向上找纵向可滚动的祖先（VC Scroller 按类名识别），找不到时为窗口。
-	 * 当前纵向不可滚动的祖先跳过，如只横向滚动的包裹元素（overflow-x 非 visible 时 overflow-y 的计算值为 auto）
-	 * @param root 表格根节点
-	 * @returns 承载者
-	 */
-	const resolveOuter = (root: HTMLElement) => {
-		let el = root.parentElement;
-		while (el) {
-			const target = getScroller(el, { direction: 'y', className: SCROLLER_REG });
-			if (!target || isWindow(target)) break;
-			if (target.scrollHeight > target.clientHeight) {
-				return new ExternalCarrier(target, Y_KEYS);
-			}
-			el = target.parentElement;
-		}
-		return new ExternalCarrier(window, Y_KEYS);
-	};
-
-	/**
-	 * 外部滚动承载者的视口（与窗口取交集）
-	 * @param outer 外部滚动承载者
-	 * @returns 纵向范围
-	 */
-	const getOuterViewport = (outer: ExternalCarrier): Range => {
-		const top = outer.contentOrigin;
-		return {
-			top: Math.max(0, top),
-			bottom: Math.min(window.innerHeight, top + outer.clientSize)
-		};
 	};
 
 	/**
@@ -355,19 +312,6 @@ export const useBlockDrag = (options: Options) => {
 		const el = bodyXWrapper.value;
 		const scroller = bodyScroller.value;
 		return !!el && !!scroller && scrollByDelta(el, scroller, 'y', delta);
-	};
-
-	/**
-	 * 滚动外部滚动承载者（窗口、元素或外层 VC Scroller）
-	 * @param outer 外部滚动承载者
-	 * @param delta 纵向增量
-	 * @returns 是否滚动了
-	 */
-	const scrollOuter = (outer: ExternalCarrier, delta: number) => {
-		const next = getNextOffset(outer.mainOffset, outer.scrollSize - outer.clientSize, delta);
-		if (next == null) return false;
-		outer.setMainOffset(next);
-		return true;
 	};
 
 	/**
@@ -558,7 +502,7 @@ export const useBlockDrag = (options: Options) => {
 		const blockEl = els.find(el => Number(el.dataset.rowStart) === current.source.rowStart);
 		if (!root || !body || !blockEl) return null;
 
-		const outer = resolveOuter(root);
+		const outer = resolveOuterCarrier(root);
 		const visible = getVisibleRect(outer)!;
 		const offset = toRootOffset(root);
 		const ghost = createBlockGhost(root, blockEl, offset);

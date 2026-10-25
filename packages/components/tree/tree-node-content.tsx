@@ -193,26 +193,6 @@ export const TreeNodeContent = defineComponent({
 			tree.emit('node-contextmenu', toNodePayload(e));
 		};
 
-		const handleDragStart = (e: any) => {
-			if (!tree.props.draggable) return;
-			tree.drag.emit('dragstart', e, instance);
-		};
-
-		const handleDragOver = (e: any) => {
-			if (!tree.props.draggable) return;
-			tree.drag.emit('dragover', e, instance);
-			e.preventDefault();
-		};
-
-		const handleDrop = (e: any) => {
-			e.preventDefault();
-		};
-
-		const handleDragEnd = (e: any) => {
-			if (!tree.props.draggable) return;
-			tree.drag.emit('dragend', e, instance);
-		};
-
 		return () => {
 			const { node } = props;
 			const { expanded, isLeaf } = node.states;
@@ -232,15 +212,10 @@ export const TreeNodeContent = defineComponent({
 					aria-level={node.states.level}
 					aria-disabled={node.getter.disabled}
 					aria-checked={node.states.checked}
-					draggable={tree.props.draggable}
 					role="treeitem"
 					tabindex="-1"
 					onClick={withModifiers(handleClick, ['stop'])}
 					onContextmenu={handleContextMenu}
-					onDragstart={withModifiers(handleDragStart, ['stop'])}
-					onDragover={withModifiers(handleDragOver, ['stop'])}
-					onDragend={withModifiers(handleDragEnd, ['stop'])}
-					onDrop={withModifiers(handleDrop, ['stop'])}
 				>
 					<div
 						style={[{ 'padding-left': (node.states.level - 1) * tree.props.indent + 'px' }]}
@@ -252,7 +227,8 @@ export const TreeNodeContent = defineComponent({
 									'is-expand': !isLeaf && expanded,
 									'is-leaf': isLeaf
 								},
-								'vc-tree-node__expand-icon'
+								// 从展开图标按下不发起拖拽
+								'vc-tree-node__expand-icon vc-drag-ignore'
 							]}
 							onClick={withModifiers(handleExpandIconClick, ['stop'])}
 						>

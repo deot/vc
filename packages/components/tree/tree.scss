@@ -8,6 +8,7 @@ $color-primary: varfix(color-primary, tree);
 $color-primary-lighter: varfix(color-primary-lighter, tree);
 $background-color-lightest: varfix(background-color-lightest, tree);
 $background-color-primary-light: varfix(background-color-primary-light, tree);
+$box-shadow-floating: varfix(box-shadow-floating, tree);
 $component-name: vc-tree;
 
 @include block($component-name) {
@@ -33,12 +34,20 @@ $component-name: vc-tree;
 		transform: translate(-50%, -50%);
 	}
 
+	// 插入线：定位与指针穿透见公用类 vc-drag__indicator，left / top 由脚本写入
 	@include element(drop-indicator) {
-		position: absolute;
 		right: 0;
-		left: 0;
+		z-index: 2;
 		height: 1px;
 		background-color: $color-primary;
+	}
+
+	// 跟随元素：被拖行内容的克隆，随指针纵向移动；定位与指针穿透见公用类 vc-drag__ghost
+	@include element(drag-ghost) {
+		z-index: 1;
+		background-color: $background-color-lightest;
+		opacity: 0.9;
+		box-shadow: $box-shadow-floating;
 	}
 }
 
@@ -84,16 +93,9 @@ $component-name: vc-tree;
 			background-color: $background-color-primary-light;
 		}
 
-		.vc-tree.is-dragging & {
-			cursor: move;
-
-			& * {
-				pointer-events: none;
-			}
-		}
-
-		.vc-tree.is-dragging.is-drop-not-allow & {
-			cursor: not-allowed;
+		// 拖拽中的光标由 body 上的公用类 vc-dragging 设为 move；不允许放置时改为 not-allowed（需要压过它的 !important）
+		.vc-dragging .vc-tree.is-dragging.is-drop-not-allow & {
+			cursor: not-allowed !important;
 		}
 	}
 

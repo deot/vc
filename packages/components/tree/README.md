@@ -139,7 +139,9 @@ const loadData = async (node) => {
 
 ### 拖拽节点
 
-设置 `draggable` 后，行的上、中、下区域分别表示 `before`、`inner`、`after`；`inner` 将节点追加到目标的子节点末尾。已展开且有子节点的行没有 `after` 区域。
+设置 `draggable` 后，从节点任意位置按下并移动超过 4px 开始拖拽（触摸设备需长按约 300ms），被拖节点的克隆随指针移动；行的上、中、下区域分别表示 `before`、`inner`、`after`，`inner` 将节点追加到目标的子节点末尾。已展开且有子节点的行没有 `after` 区域。指针靠近树所在滚动容器（浮层、外层 Scroller 或页面）的上下边缘时自动滚动；按 Esc 取消。
+
+拖拽基于鼠标与触摸事件实现，不使用浏览器原生拖拽，因此事件参数里的 `event` 为最近一次的 `MouseEvent` / `TouchEvent`（没有 `dataTransfer`）。从输入框、按钮、链接、复选框、展开图标上按下不会发起拖拽；自定义标签里的其他交互元素加上 class `vc-drag-ignore` 也不会。
 
 `allowDrag({ node, data })` 决定能否开始拖拽；`allowDrop({ node, data, targetNode, position, from, to })` 分别判断三个落点区域，被拒绝的区域让给相邻区域。`from`、`to` 为 `{ parent, index }`，根级 `parent` 为 `null`，`to.index` 按移除被拖节点后的下标计算。成功移动会先发出 `node-drop`，再发出 `node-dragend`。
 
@@ -367,7 +369,7 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 | node-dragstart | 开始拖拽 | `({ node, data, event })` | `node` / `data` 为被拖节点 |
 | node-dragenter / node-dragleave / node-dragover | 进入 / 离开 / 经过目标 | `({ node, data, targetNode, event })` | `targetNode` 为目标节点 |
 | node-drop | 成功移动节点 | `({ node, data, targetNode, position, from, to, event })` | `position` 为 `before` / `inner` / `after`；位置定义见“拖拽节点” |
-| node-dragend | 拖拽结束 | `({ node, data, targetNode, position, dropped, event })` | `dropped` 表示是否移动；无落点时 `targetNode` / `position` 为 `null` |
+| node-dragend | 拖拽结束 | `({ node, data, targetNode, position, dropped, event })` | `dropped` 表示是否移动；无落点或按 Esc 取消时 `position` 为 `null`。各拖拽事件的 `event` 为最近一次的 `MouseEvent` / `TouchEvent` |
 
 ### Tree 方法
 
