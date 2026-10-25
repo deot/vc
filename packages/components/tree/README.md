@@ -420,6 +420,7 @@ TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字
 | searchPlaceholder | 搜索时的占位文案：内联搜索为面板打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
 | loadData | 防抖搜索回调，需自行更新 `data`；调用时机见[远程搜索](#远程搜索) | `(keyword: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | cascader | 使用级联列面板 | `boolean` | - | `false` |
+| virtualized | 级联列与搜索结果只渲染可视范围附近的项，列宽固定（同 Cascader 的[大量数据](../cascader/README.md#大量数据)）；当前只作用于 `cascader` 模式 | `boolean` | - | `false` |
 | expandDirection | 级联列的展开方向（仅 `cascader`）：`left` 向左展开，`auto` 右侧放不下时朝空间更大的一侧 | `string` | `right`、`left`、`auto` | `'right'` |
 | autoWidth | 面板按内容计算宽度 | `boolean` | - | 未指定时跟随 `cascader` |
 | portal | 下拉挂到 body；`false` 挂在组件根节点内，可能被祖先 overflow 裁剪 | `boolean` | - | `true` |

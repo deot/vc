@@ -1123,6 +1123,35 @@ describe('TreeSelect interaction', () => {
 		wrapper.unmount();
 	});
 
+	it('cascader + virtualized：列与搜索结果只渲染部分项，勾选作用于对应节点', async () => {
+		const groups = Array.from({ length: 300 }, (_, i) => ({ value: `${i}`, label: `Group ${i}` }));
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={groups} max={999} cascader virtualized searchable />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.find('input').trigger('click');
+		await flush();
+
+		const column = document.querySelector('.vc-cascader-column')!;
+		expect(column.classList.contains('is-virtual')).toBe(true);
+		expect(column.querySelectorAll('.vc-cascader-column__item').length).toBeLessThan(300);
+
+		const input = wrapper.find('input').element as HTMLInputElement;
+		input.value = 'Group 29';
+		input.dispatchEvent(new Event('input', { bubbles: true }));
+		await flush();
+		const paths = document.querySelectorAll('.vc-select-paths__item');
+		expect(document.querySelector('.vc-select-paths .vc-recycle-list')).not.toBeNull();
+		expect(paths[0].textContent).toBe('Group 29');
+		expect(paths[1].textContent).toBe('Group 129');
+		(paths[1] as HTMLElement).click();
+		await flush();
+		expect(value.value).toEqual(['129']);
+
+		wrapper.unmount();
+	});
+
 	it('cascader：选项只响应真实的指针移动，内容在静止的指针下平移时补发的 mouseenter 不改变路径', async () => {
 		const wrapper = mount(() => (
 			<TreeSelect data={freshData()} max={99} cascader />

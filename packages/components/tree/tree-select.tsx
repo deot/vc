@@ -210,6 +210,7 @@ export const TreeSelect = defineComponent({
 							searchRegex={searchRegex.value}
 							remote={isRemote()}
 							inverted={direction.isInverted.value}
+							virtualized={props.virtualized}
 							onChange={handleChange}
 						/>
 					)

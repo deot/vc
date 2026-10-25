@@ -58,6 +58,11 @@ export const TreeSelectContentCascader = defineComponent({
 		inverted: {
 			type: Boolean,
 			default: false
+		},
+		// 只渲染视口附近的项与搜索结果，见 SelectList
+		virtualized: {
+			type: Boolean,
+			default: false
 		}
 	},
 	emits: ['change'],
@@ -211,6 +216,7 @@ export const TreeSelectContentCascader = defineComponent({
 								regex={props.searchRegex}
 								remote={props.remote}
 								width={searchWidth.value}
+								virtualized={props.virtualized}
 								emptyText={t('vc.TreeSelect.noMatch')}
 								onSelect={handleSelect}
 							>
@@ -226,6 +232,7 @@ export const TreeSelectContentCascader = defineComponent({
 						data={rebuildData.value}
 						value={currentValue.value}
 						inverted={props.inverted}
+						virtualized={props.virtualized}
 						onMove={handleMove}
 						onClick={handleSelect}
 					>
