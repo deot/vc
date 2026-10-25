@@ -496,6 +496,7 @@ const handleMode = () => { isExternal.value = !isExternal.value; };
 
 - `scrollTo(0)` 和 `reset()` 把整个外部主轴承载者移动到绝对坐标 `0`，不是移动到 RecycleList 的起点；`inverted` 下 `reset()` 不移动，见下方「拉动刷新」。
 - `scrollTo(number | { x, y })` 继续使用原有参数补零与分轴规则。纵向 external 时 Y 写入外部容器、X 写入内部 wrapper；横向 external 时相反。
+- 承载者或其祖先带 `transform` 缩放（如浮层的展开动画）时，几何按缩放比例换算回滚动坐标，可以放在正在执行缩放动画的浮层里。
 - `scrollToIndex(index, offset)` 表示定位列表 item，会自动使用 `contentStart + item.position + offset`，因此不会受到前置内容影响；`align: 'nearest'` 时按同一坐标判断 item 是否已在外部视口内。
 - `scroll` 事件仍返回兼容的 `{ target: { scrollLeft, scrollTop } }` 结构；外部主轴与内部交叉轴滚动都会触发该事件。
 

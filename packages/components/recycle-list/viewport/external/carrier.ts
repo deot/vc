@@ -81,15 +81,29 @@ export class ExternalCarrier {
 	}
 
 	/**
-	 * 承载者内容区在客户区坐标中的起点：Window 为 0，元素为自身 rect 加边框
+	 * 承载者内容区在客户区坐标中的起点与主轴缩放：Window 为 0、1；元素为自身 rect 加边框
+	 * 	- 缩放来自祖先的 transform（如弹层的展开动画）：客户区中的距离除以它，才是滚动坐标中的距离
+	 * @returns 起点与缩放
+	 */
+	get frame() {
+		if (isWindow(this.target)) return { origin: 0, scale: 1 };
+		const el = this.target;
+		const rect = el.getBoundingClientRect();
+		const vertical = this.keys.axis === 'y';
+		const size = vertical ? el.offsetHeight : el.offsetWidth;
+		const scale = (size && (vertical ? rect.height : rect.width) / size) || 1;
+		return {
+			origin: vertical ? rect.top + el.clientTop * scale : rect.left + el.clientLeft * scale,
+			scale
+		};
+	}
+
+	/**
+	 * 承载者内容区在客户区坐标中的起点，见 frame
 	 * @returns 起点
 	 */
 	get contentOrigin() {
-		if (isWindow(this.target)) return 0;
-		const rect = this.target.getBoundingClientRect();
-		return this.keys.axis === 'y'
-			? rect.top + this.target.clientTop
-			: rect.left + this.target.clientLeft;
+		return this.frame.origin;
 	}
 
 	/**
@@ -100,10 +114,11 @@ export class ExternalCarrier {
 	 */
 	getElementBounds(el: HTMLElement) {
 		const rect = el.getBoundingClientRect();
-		const base = this.mainOffset - this.contentOrigin;
+		const { origin, scale } = this.frame;
+		const base = this.mainOffset;
 		return this.keys.axis === 'y'
-			? { start: base + rect.top, end: base + rect.bottom }
-			: { start: base + rect.left, end: base + rect.right };
+			? { start: base + (rect.top - origin) / scale, end: base + (rect.bottom - origin) / scale }
+			: { start: base + (rect.left - origin) / scale, end: base + (rect.right - origin) / scale };
 	}
 
 	getElementStart(el: HTMLElement) {

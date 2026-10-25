@@ -91,6 +91,8 @@ const mockVerticalGeometry = (
 	const { contentStart = start } = options;
 	const restores = [
 		defineGetter(viewport, 'clientHeight', () => clientSize),
+		// 与 rect 一致（未缩放）
+		defineGetter(viewport, 'offsetHeight', () => clientSize),
 		defineGetter(viewport, 'scrollHeight', () => 4000),
 		setRect(viewport, () => rect(100, 0, 600, clientSize)),
 		setRect(root, () => rect(100 + start() - viewport.scrollTop, 0, 600, listSize)),
@@ -118,6 +120,7 @@ const mockHorizontalGeometry = (
 	} = options;
 	const restores = [
 		defineGetter(viewport, 'clientWidth', () => clientSize),
+		defineGetter(viewport, 'offsetWidth', () => clientSize),
 		defineGetter(viewport, 'scrollWidth', () => 5000),
 		setRect(viewport, () => rect(0, 80, clientSize, 240)),
 		setRect(root, () => rect(0, 80 + listStart - viewport.scrollLeft, listSize, 240)),
@@ -436,6 +439,40 @@ describe('RecycleList fill=false', () => {
 		expect(viewport.scrollTop).toBe(885);
 
 		restore();
+		wrapper.unmount();
+	});
+
+	it('measures bounds in scroll coordinates when an ancestor is scaled (e.g. an opening popup)', async () => {
+		const listRef = ref<any>();
+		const wrapper = mount(() => (
+			<div class="viewport" style="overflow-y: auto; height: 200px;">
+				<RecycleList ref={listRef} fill={false} disabled data={[{ id: 1 }, { id: 2 }]} batchCount={10}>
+					{{ default: ({ row }: any) => <div>{row.id}</div> }}
+				</RecycleList>
+			</div>
+		), { attachTo: document.body });
+		await flush();
+
+		const viewport = wrapper.find('.viewport').element as HTMLElement;
+		const root = wrapper.find('.vc-recycle-list').element as HTMLElement;
+		const content = wrapper.find('.vc-recycle-list__content').element as HTMLElement;
+		// 视口高 200、content 在滚动坐标 300 处；祖先 scaleY(0.5)：客户区中的距离都减半
+		const scale = 0.5;
+		const restores = [
+			defineGetter(viewport, 'clientHeight', () => 200),
+			defineGetter(viewport, 'offsetHeight', () => 200),
+			defineGetter(viewport, 'scrollHeight', () => 4000),
+			setRect(viewport, () => rect(100, 0, 600, 200 * scale)),
+			setRect(root, () => rect(100 + (300 - viewport.scrollTop) * scale, 0, 600, 400 * scale)),
+			setRect(content, () => rect(100 + (300 - viewport.scrollTop) * scale, 0, 600, 400 * scale))
+		];
+		await listRef.value.refreshLayout();
+		listRef.value.store.states.rebuildData[1].states.position = 160;
+		viewport.scrollTop = 0;
+		listRef.value.scrollToIndex(1);
+		expect(viewport.scrollTop).toBe(460);
+
+		restores.forEach(restore => restore());
 		wrapper.unmount();
 	});
 
