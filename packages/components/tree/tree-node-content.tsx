@@ -1,85 +1,143 @@
 /** @jsxImportSource vue */
 
-import { getCurrentInstance, defineComponent, inject, ref, watch, nextTick, withModifiers, toRaw } from 'vue';
-import { isEqualWith } from 'lodash-es';
-import type { TreeNode, TreeStore } from './store';
-import { TransitionCollapse } from '../transition';
+import { getCurrentInstance, defineComponent, inject, ref, computed, nextTick, watch, onMounted, onBeforeUnmount, withModifiers, toRaw } from 'vue';
+import type { PropType } from 'vue';
+import { raf, caf } from '@deot/helper-utils';
+import type { TreeNode } from './store';
 import { Checkbox } from '../checkbox';
 import { Customer } from '../customer';
 import { Spin } from '../spin';
 import { Icon } from '../icon';
-import { toModelValue } from '../select/utils';
-import { useCollectNode } from './use-collect-node';
 import { props as treeNodeProps } from './tree-node-content-props';
 import type {
-	TreeCheckChangePayload,
 	TreeCheckPayload,
 	TreeCurrentChangePayload,
 	TreeNodeEventPayload,
-	TreeNodeExpandChangePayload,
 	TreeProvide
 } from './types';
 
 const COMPONENT_NAME = 'vc-tree-node';
 
+// 展开 / 收起动画的时长（ms），与 TransitionCollapse 的默认值一致
+const DURATION = 300;
+// 估算动画块可容纳的行数时，读不到行高的兜底（px）
+const ROW_HEIGHT = 26;
+
+/**
+ * 按可见规则收集 node 之下的节点（未被过滤隐藏；展开的才下钻，正在动画的节点视为收起）
+ * @param nodes 起点的子节点
+ * @param motions 正在动画的节点
+ * @param limit 最多收集的数量
+ * @returns 节点列表
+ */
+export const collectVisibleNodes = (nodes: TreeNode[], motions: Map<TreeNode, unknown>, limit = Infinity) => {
+	const result: TreeNode[] = [];
+	const walk = (list: TreeNode[]) => {
+		for (const node of list) {
+			if (result.length >= limit) return;
+			if (!node.states.visible) continue;
+			result.push(node);
+			node.states.expanded && !motions.has(node) && walk(node.childNodes);
+		}
+	};
+	walk(nodes);
+	return result;
+};
+
+/**
+ * 展开 / 收起的动画块：节点正在展开或收起时，它的子孙不在铺平的列表里，而是在这里渲染，并在高度上过渡
+ * 	- 展开：高度 0 → 内容高度；收起：内容高度 → 0；结束后移出动画，展开的子孙回到铺平的列表
+ * 	- 只渲染可视范围能容纳的行数：子孙很多时也只多渲染一屏，超出部分在动画中本来就看不见
+ * 	- 懒加载：展开时子节点尚未加载，等加载完成（节点变为展开）再开始；加载失败或没有子节点时直接结束
+ */
+const TreeNodeMotion = defineComponent({
+	name: 'vc-tree-node-motion',
+	props: {
+		node: {
+			type: Object as PropType<TreeNode>,
+			required: true
+		},
+		direction: {
+			type: String as PropType<'expand' | 'collapse'>,
+			required: true
+		}
+	},
+	setup(props) {
+		const tree = inject<TreeProvide>('vc-tree')!;
+		const el = ref<HTMLElement>();
+		let timer: any;
+		let frame: any;
+		let started = false;
+
+		// 可视范围能容纳的行数：所在 Scroller（如弹层）或窗口的高度 / 行高
+		const getLimit = () => {
+			const rootEl = tree.instance.vnode.el as HTMLElement | null;
+			const rowHeight = (rootEl?.querySelector('.vc-tree-node__content') as HTMLElement | null)?.offsetHeight || ROW_HEIGHT;
+			const viewport = (rootEl?.closest('.vc-scroller') as HTMLElement | null)?.clientHeight || window.innerHeight;
+			return Math.ceil(viewport / rowHeight) + 1;
+		};
+		const limit = getLimit();
+
+		const list = computed(() => {
+			if (props.direction === 'expand' && !props.node.states.expanded) return [];
+			return collectVisibleNodes(props.node.childNodes, tree.motions, limit);
+		});
+
+		const done = () => {
+			clearTimeout(timer);
+			caf(frame);
+			tree.motions.get(props.node) === props.direction && tree.motions.delete(props.node);
+		};
+
+		const start = () => {
+			if (started || !el.value) return;
+			// 展开时子节点还在加载
+			if (!list.value.length) {
+				(props.direction === 'collapse' || props.node.states.expanded) && done();
+				return;
+			}
+			started = true;
+			const target = el.value;
+			const full = target.scrollHeight;
+			const [from, to] = props.direction === 'expand' ? [0, full] : [full, 0];
+			target.style.height = `${from}px`;
+			// 起始高度渲染一帧后再设置过渡与目标高度：同一帧内回流后立即设置，Chrome 有时不开始过渡（与 Vue Transition 的 nextFrame 一致）
+			frame = raf(() => {
+				frame = raf(() => {
+					target.style.transition = `height ${DURATION}ms ease-in-out`;
+					target.style.height = `${to}px`;
+				});
+			});
+			// 结束不依赖帧回调：页面在后台不渲染时也按时移出动画
+			timer = setTimeout(done, DURATION + 50);
+		};
+
+		watch(() => list.value.length, () => nextTick(start));
+		onMounted(start);
+		onBeforeUnmount(() => {
+			clearTimeout(timer);
+			caf(frame);
+		});
+
+		return () => {
+			return (
+				<div ref={el} class="vc-tree-node__motion" role="group">
+					{ list.value.map(node => tree.renderNode(node)) }
+				</div>
+			);
+		};
+	}
+});
+
+/**
+ * 树的一行：节点自身的内容；铺平渲染，子孙是列表里的其他行（展开 / 收起动画期间在行内的动画块中）
+ */
 export const TreeNodeContent = defineComponent({
 	name: COMPONENT_NAME,
 	props: treeNodeProps,
-	emits: ['node-expand'],
-	setup(props, { emit }) {
+	setup(props) {
 		const instance = getCurrentInstance()!;
-		const collector = useCollectNode();
-
 		const tree = inject<TreeProvide>('vc-tree')!;
-		const formItem = inject<any>('vc-form-item', {});
-
-		const expanded = ref(!!props.node.states.expanded);
-		const childNodeRendered = ref(!!props.node.states.expanded);
-		const oldChecked = ref(false);
-		const oldIndeterminate = ref(false);
-
-		const sync = () => {
-			const store = tree.store as TreeStore;
-			const data = {
-				checkedNodes: store.getCheckedNodes(),
-				checkedValues: store.getCheckedValues(),
-				halfCheckedNodes: store.getHalfCheckedNodes(),
-				halfCheckedValues: store.getHalfCheckedValues(),
-			};
-
-			const v = toModelValue(data.checkedValues, {
-				modelValue: tree.props.modelValue,
-				max: tree.props.max,
-				numerable: tree.props.numerable,
-				separator: tree.props.separator,
-				nullValue: tree.props.nullValue
-			});
-			// for v-model
-			if (!isEqualWith(v, tree.props.modelValue)) {
-				tree.emit('update:modelValue', v, data);
-				tree.emit('change', v, data);
-				props.allowDispatch && formItem?.change?.();
-			}
-
-			return data;
-		};
-		const getNodeKey = (node: TreeNode) => {
-			return node.states.data[tree.store.keyValue.value];
-		};
-
-		const handleSelectChange = (checked: boolean, indeterminate: boolean) => {
-			// 选中或半选任一变化即发出
-			if (oldChecked.value !== checked || oldIndeterminate.value !== indeterminate) {
-				tree.emit('check-change', {
-					node: props.node,
-					data: props.node.states.data,
-					checked,
-					indeterminate
-				} satisfies TreeCheckChangePayload);
-			}
-			oldChecked.value = checked;
-			oldIndeterminate.value = indeterminate;
-		};
 
 		const handleCheckChange = async (_: boolean, e: any) => {
 			props.node.setChecked(e.target.checked, !tree.props.checkStrictly);
@@ -88,17 +146,9 @@ export const TreeNodeContent = defineComponent({
 				node: props.node,
 				data: props.node.states.data,
 				checked: props.node.states.checked,
-				...sync()
+				...tree.sync()
 			} satisfies TreeCheckPayload);
 		};
-
-		// 展开 / 收起的参数
-		const toExpandPayload = (value: boolean): TreeNodeExpandChangePayload => ({
-			node: props.node,
-			data: props.node.states.data,
-			expanded: value,
-			instance
-		});
 
 		// 节点事件（node-click / node-contextmenu）的参数
 		const toNodePayload = (e: Event): TreeNodeEventPayload => ({
@@ -108,17 +158,8 @@ export const TreeNodeContent = defineComponent({
 			event: e
 		});
 
-		const handleExpandIconClick = async () => {
-			if (props.node.states.isLeaf) return;
-			if (expanded.value) {
-				tree.emit('node-expand-change', toExpandPayload(false));
-				props.node.collapse();
-			} else {
-				await props.node.expand();
-				sync();
-				// 交给父级：accordion 时先收起同级节点，再发出 node-expand-change
-				emit('node-expand', toExpandPayload(true));
-			}
+		const handleExpandIconClick = () => {
+			tree.toggle(props.node, instance);
 		};
 
 		const handleClick = (e: Event) => {
@@ -133,8 +174,6 @@ export const TreeNodeContent = defineComponent({
 					oldNode
 				} satisfies TreeCurrentChangePayload);
 			}
-
-			tree.currentNodeInstance.value = instance;
 
 			if (tree.props.expandOnClickNode) {
 				handleExpandIconClick();
@@ -154,11 +193,6 @@ export const TreeNodeContent = defineComponent({
 				e.preventDefault();
 			}
 			tree.emit('node-contextmenu', toNodePayload(e));
-		};
-
-		const handleChildNodeExpand = (payload: TreeNodeExpandChangePayload) => {
-			collector.broadcast(payload.node);
-			tree.emit('node-expand-change', payload);
 		};
 
 		const handleDragStart = (e: any) => {
@@ -181,58 +215,23 @@ export const TreeNodeContent = defineComponent({
 			tree.drag.emit('dragend', e, instance);
 		};
 
-		watch(
-			() => {
-				const childrenKey = tree.store.keyValue.children;
-				return props.node.states.data[childrenKey];
-			},
-			(v) => {
-				handleSelectChange(props.node.states.checked, v);
-			}
-		);
-
-		watch(
-			() => props.node.states.indeterminate,
-			(v) => {
-				handleSelectChange(props.node.states.checked, v);
-			}
-		);
-
-		watch(
-			() => props.node.states.checked,
-			(v) => {
-				handleSelectChange(v, props.node.states.indeterminate);
-			}
-		);
-
-		watch(
-			() => props.node.states.expanded,
-			(v) => {
-				if (v) {
-					childNodeRendered.value = true;
-				}
-				nextTick(() => expanded.value = v);
-			},
-			{ deep: true }
-		);
-
 		return () => {
 			const { node } = props;
+			const { expanded, isLeaf } = node.states;
+			const motion = tree.motions.get(node);
 			return (
 				<div
-					// @ts-ignore
-					vShow={node.states.visible}
 					class={[
 						{
-							'is-expanded': expanded.value,
+							'is-expanded': expanded,
 							'is-current': node.states.isCurrent,
-							'is-hidden': !node.states.visible,
 							'is-focusable': !node.getter.disabled,
 							'is-checked': !node.getter.disabled && node.states.checked
 						},
 						'vc-tree-node'
 					]}
-					aria-expanded={expanded.value}
+					aria-expanded={isLeaf ? void 0 : expanded}
+					aria-level={node.states.level}
 					aria-disabled={node.getter.disabled}
 					aria-checked={node.states.checked}
 					draggable={tree.props.draggable}
@@ -252,8 +251,8 @@ export const TreeNodeContent = defineComponent({
 						<span
 							class={[
 								{
-									'is-expand': !node.states.isLeaf && expanded.value,
-									'is-leaf': node.states.isLeaf
+									'is-expand': !isLeaf && expanded,
+									'is-leaf': isLeaf
 								},
 								'vc-tree-node__expand-icon'
 							]}
@@ -267,7 +266,6 @@ export const TreeNodeContent = defineComponent({
 									modelValue={node.states.checked}
 									indeterminate={node.states.indeterminate}
 									disabled={!!node.getter.disabled}
-									onUpdate:modelValue={v => node.states.checked = v}
 									onChange={handleCheckChange}
 									// @ts-ignore
 									onClick={withModifiers(() => {}, ['stop'])}
@@ -290,37 +288,7 @@ export const TreeNodeContent = defineComponent({
 								: <span class="vc-tree-node__label">{node.getter.label}</span>
 						}
 					</div>
-					<TransitionCollapse>
-						{
-							(!props.renderNodeAfterExpand || childNodeRendered.value) && (
-								<div
-									// @ts-ignore
-									vShow={expanded.value}
-									aria-expanded={expanded.value}
-									class="vc-tree-node__children"
-									role="group"
-								>
-									{
-										node.childNodes.map((child: TreeNode) => {
-											return (
-												<TreeNodeContent
-													key={getNodeKey(child)}
-													renderNodeLabel={props.renderNodeLabel}
-													renderNodeAfterExpand={props.renderNodeAfterExpand}
-													showCheckbox={props.showCheckbox}
-													allowDispatch={props.allowDispatch}
-													accordion={props.accordion}
-													node={child}
-													// @ts-ignore
-													onNodeExpand={handleChildNodeExpand}
-												/>
-											);
-										})
-									}
-								</div>
-							)
-						}
-					</TransitionCollapse>
+					{ motion && (<TreeNodeMotion key={motion} node={node} direction={motion} />) }
 				</div>
 			);
 		};

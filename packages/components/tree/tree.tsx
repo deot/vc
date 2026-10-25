@@ -1,18 +1,19 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, provide, ref, computed, watch, getCurrentInstance } from 'vue';
+import { defineComponent, provide, ref, computed, watch, getCurrentInstance, shallowReactive, inject } from 'vue';
 import type { ComponentInternalInstance } from 'vue';
+import { isEqualWith } from 'lodash-es';
 import type { TreeNode } from './store/tree-node';
-import type { TreeNodeExpandChangePayload } from './types';
+import type { TreeCheckChangePayload, TreeNodeExpandChangePayload, TreeProvide } from './types';
 import { KEY_VALUE } from './store/constant';
 import { TreeStore } from './store/tree-store';
-import { toCurrentValue } from '../select/utils';
+import { toCurrentValue, toModelValue } from '../select/utils';
 import { Customer } from '../customer';
 import { useLocale } from '../locale';
-import { TreeNodeContent } from './tree-node-content.tsx';
+import { SelectList } from '../select/select-list';
+import { TreeNodeContent, collectVisibleNodes } from './tree-node-content.tsx';
 import { useDragNode } from './use-drag-node';
 import { useKeydown } from './use-keydown';
-import { useCollectNode } from './use-collect-node';
 
 import { props as treeProps } from './tree-props';
 
@@ -59,11 +60,24 @@ export const Tree = defineComponent({
 			filterNode: props.filterNode
 		});
 		const root = store.root;
-		const currentNodeInstance = ref<ComponentInternalInstance>();
 		const dropIndicator = ref<HTMLElement>();
+		const formItem = inject<any>('vc-form-item', {});
 
 		const drag = useDragNode(store, dropIndicator);
-		const collector = useCollectNode();
+
+		// 节点的勾选 / 半选状态变化：由 store 在同一轮写入结束后发出，未渲染的节点也会发出
+		store.onCheckChange = node => emit('check-change', {
+			node,
+			data: node.states.data,
+			checked: node.states.checked,
+			indeterminate: node.states.indeterminate
+		} satisfies TreeCheckChangePayload);
+
+		// 正在展开 / 收起动画的节点，见 TreeNodeMotion
+		const motions = shallowReactive(new Map<TreeNode, 'expand' | 'collapse'>());
+
+		// 铺平的可见节点：逐行渲染；展开的节点才下钻，正在动画的节点的子孙在它的动画块里
+		const rows = computed(() => collectVisibleNodes(root.childNodes, motions));
 
 		const isEmpty = computed(() => {
 			const { childNodes } = root;
@@ -190,10 +204,70 @@ export const Tree = defineComponent({
 			store.insertAfter(data, refNode);
 		};
 
-		// 根级节点展开：accordion 时先收起同级节点，再发出 node-expand-change
-		const handleNodeExpand = (payload: TreeNodeExpandChangePayload) => {
-			collector.broadcast(payload.node);
-			emit('node-expand-change', payload);
+		/**
+		 * 按当前勾选同步 v-model
+		 * @returns 勾选数据
+		 */
+		const sync = () => {
+			const data = {
+				checkedNodes: store.getCheckedNodes(),
+				checkedValues: store.getCheckedValues(),
+				halfCheckedNodes: store.getHalfCheckedNodes(),
+				halfCheckedValues: store.getHalfCheckedValues()
+			};
+
+			const v = toModelValue(data.checkedValues, {
+				modelValue: props.modelValue,
+				max: props.max,
+				numerable: props.numerable,
+				separator: props.separator,
+				nullValue: props.nullValue
+			});
+			if (!isEqualWith(v, props.modelValue)) {
+				emit('update:modelValue', v, data);
+				emit('change', v, data);
+				props.allowDispatch && formItem?.change?.();
+			}
+
+			return data;
+		};
+
+		/**
+		 * 用户发起的展开 / 收起（点击图标或节点）：带动画；展开后 accordion 收起同级节点，再发出 node-expand-change
+		 * 	- 动画进行中再次点击：立即结束当前动画，按新的方向开始，快速连点不丢操作
+		 * @param node ~
+		 * @param row 节点所在行的组件实例
+		 */
+		const toggle = async (node: TreeNode, row: ComponentInternalInstance) => {
+			if (node.states.isLeaf) return;
+			motions.delete(node);
+			const toPayload = (expanded: boolean): TreeNodeExpandChangePayload => ({ node, data: node.states.data, expanded, instance: row });
+			if (node.states.expanded) {
+				emit('node-expand-change', toPayload(false));
+				motions.set(node, 'collapse');
+				node.collapse();
+				return;
+			}
+			// 先进入动画再展开：子孙直接出现在动画块里，不在铺平的列表里闪现
+			motions.set(node, 'expand');
+			await node.expand();
+			// 加载失败等未能展开
+			!node.states.expanded && motions.get(node) === 'expand' && motions.delete(node);
+			sync();
+			props.accordion && node.collapseSiblings();
+			emit('node-expand-change', toPayload(true));
+		};
+
+		const renderNode = (node: TreeNode) => {
+			return (
+				<TreeNodeContent
+					key={getNodeKey(node)}
+					node={node}
+					renderNodeLabel={props.renderNodeLabel}
+					showCheckbox={props.showCheckbox}
+					allowDispatch={props.allowDispatch}
+				/>
+			);
 		};
 
 		const updateKeyChildren = (key: any, data: any) => {
@@ -208,9 +282,12 @@ export const Tree = defineComponent({
 			root,
 			emit,
 			drag,
-			instance,
-			currentNodeInstance
-		});
+			instance: instance!,
+			motions,
+			toggle,
+			sync,
+			renderNode
+		} satisfies TreeProvide);
 
 		expose({
 			filter,
@@ -232,7 +309,6 @@ export const Tree = defineComponent({
 			append,
 			insertBefore,
 			insertAfter,
-			handleNodeExpand,
 			updateKeyChildren,
 		});
 		return () => {
@@ -250,23 +326,9 @@ export const Tree = defineComponent({
 					]}
 					role="tree"
 				>
-					{
-						root.childNodes.map((child: TreeNode) => {
-							return (
-								<TreeNodeContent
-									key={getNodeKey(child)}
-									renderNodeLabel={props.renderNodeLabel}
-									renderNodeAfterExpand={props.renderNodeAfterExpand}
-									showCheckbox={props.showCheckbox}
-									allowDispatch={props.allowDispatch}
-									accordion={props.accordion}
-									node={child}
-									// @ts-ignore
-									onNodeExpand={handleNodeExpand}
-								/>
-							);
-						})
-					}
+					<SelectList data={rows.value}>
+						{{ default: ({ row }: { row: TreeNode }) => renderNode(row), $stable: true }}
+					</SelectList>
 					{
 						isEmpty.value && (
 							<div class="vc-tree__empty-block">

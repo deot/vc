@@ -35,19 +35,28 @@ export const getChildState = (nodes: TreeNode[]) => {
 	return { all, none, allWithoutDisable, half: !all && !none };
 };
 
+/**
+ * 写入勾选状态：所有写入都经过这里，store 据此在同一轮写入结束后发出变化（见 TreeStore.markCheckChange）
+ * @param node ~
+ * @param checked ~
+ * @param indeterminate ~
+ */
+const setCheckState = (node: TreeNode, checked: boolean, indeterminate: boolean) => {
+	node.store.markCheckChange(node);
+	node.states.checked = checked;
+	node.states.indeterminate = indeterminate;
+};
+
 const reInitChecked = (node: TreeNode) => {
 	if (node.childNodes.length === 0) return;
 
 	const { all, none, half } = getChildState(node.childNodes);
 	if (all) {
-		node.states.checked = true;
-		node.states.indeterminate = false;
+		setCheckState(node, true, false);
 	} else if (half) {
-		node.states.checked = false;
-		node.states.indeterminate = true;
+		setCheckState(node, false, true);
 	} else if (none) {
-		node.states.checked = false;
-		node.states.indeterminate = false;
+		setCheckState(node, false, false);
 	}
 
 	const parent = node.parentNode;
@@ -358,6 +367,11 @@ export class TreeNode {
 		this.states.expanded = false;
 	}
 
+	// 收起同级的其他节点（accordion）
+	collapseSiblings() {
+		this.parentNode?.childNodes.forEach(node => node !== this && node.collapse());
+	}
+
 	shouldLoadData() {
 		return this.store.lazy
 			&& this.store.loadData
@@ -381,8 +395,7 @@ export class TreeNode {
 	}
 
 	async setChecked(value: boolean | string, deep?: boolean, recursion?: boolean, passValue?: boolean) {
-		this.states.indeterminate = value === 'half';
-		this.states.checked = value === true;
+		setCheckState(this, value === true, value === 'half');
 
 		if (this.store.checkStrictly) return;
 
@@ -390,7 +403,7 @@ export class TreeNode {
 			const { all, allWithoutDisable } = getChildState(this.childNodes);
 
 			if (!this.states.isLeaf && (!all && allWithoutDisable)) {
-				this.states.checked = false;
+				setCheckState(this, false, this.states.indeterminate);
 				value = false;
 			}
 
@@ -405,8 +418,7 @@ export class TreeNode {
 					}
 					const { half, all: $all } = getChildState(childNodes);
 					if (!$all) {
-						this.states.checked = $all;
-						this.states.indeterminate = half;
+						setCheckState(this, $all, half);
 					}
 				}
 			};
@@ -486,7 +498,8 @@ export class TreeNode {
 			const children: any[] = await this.store.loadData(this);
 			this.states.loaded = true;
 			this.states.loading = false;
-			this.childNodes = [];
+			// 原地清空：childNodes 是响应式数组，铺平的可见节点（Tree 的 rows）依赖它
+			this.childNodes.splice(0, this.childNodes.length);
 
 			this.doCreateChildren(children, defaultProps);
 

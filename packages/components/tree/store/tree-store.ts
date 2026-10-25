@@ -27,6 +27,11 @@ export class TreeStore {
 
 	loadData: any;
 
+	// 节点的勾选 / 半选状态变化：同一轮写入（如一次勾选引起的上下联动）结束后，每个变了的节点发出一次
+	onCheckChange?: (node: TreeNode) => void;
+	// 本轮写入前的状态
+	private pendingChecks = new Map<TreeNode, [boolean, boolean]>();
+
 	constructor(options: Partial<TreeStore>) {
 		for (const option in options) {
 			if (hasOwn(options, option)) {
@@ -45,6 +50,24 @@ export class TreeStore {
 		});
 		// 不处理自动加载一次
 		this._initDefaultCheckedNodes();
+	}
+
+	/**
+	 * 节点的勾选状态即将写入：记下写入前的状态，本轮写入结束后（微任务）比较，变了的发出 onCheckChange
+	 * @param node ~
+	 */
+	markCheckChange(node: TreeNode) {
+		if (!this.onCheckChange || this.pendingChecks.has(node)) return;
+		this.pendingChecks.size === 0 && queueMicrotask(() => this.flushCheckChanges());
+		this.pendingChecks.set(node, [node.states.checked, node.states.indeterminate]);
+	}
+
+	flushCheckChanges() {
+		const pending = this.pendingChecks;
+		this.pendingChecks = new Map();
+		pending.forEach(([checked, indeterminate], node) => {
+			(node.states.checked !== checked || node.states.indeterminate !== indeterminate) && this.onCheckChange?.(node);
+		});
 	}
 
 	filter(value: any) {

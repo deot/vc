@@ -636,6 +636,108 @@ describe('Tree interaction', () => {
 	});
 });
 
+describe('Tree 逐行渲染与展开动画', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	const treeData = () => [
+		{
+			value: 'p1',
+			label: 'P1',
+			children: [{ value: 'c1', label: 'C1' }, { value: 'c2', label: 'C2', children: [{ value: 'g1', label: 'G1' }] }]
+		},
+		{ value: 'p2', label: 'P2', children: [{ value: 'c3', label: 'C3' }] }
+	];
+	// 列表的行（不含动画块里的）
+	const rowsOf = (wrapper: any) => Array.from(wrapper.element.querySelectorAll(':scope > .vc-select-list > .vc-tree-node'))
+		.map((el: any) => el.querySelector(':scope > .vc-tree-node__content').textContent);
+	const motionOf = (wrapper: any) => Array.from(wrapper.element.querySelectorAll('.vc-tree-node__motion > .vc-tree-node'))
+		.map((el: any) => el.querySelector(':scope > .vc-tree-node__content').textContent);
+	const iconOf = (wrapper: any, label: string) => {
+		const row = Array.from(wrapper.element.querySelectorAll('.vc-tree-node'))
+			.find((el: any) => el.querySelector(':scope > .vc-tree-node__content').textContent === label) as HTMLElement;
+		return row.querySelector(':scope > .vc-tree-node__content .vc-tree-node__expand-icon') as HTMLElement;
+	};
+
+	it('可见节点逐行渲染：行是同级元素，层级由 aria-level 表达；收起的子孙不渲染', async () => {
+		const wrapper = mountTree({ data: treeData(), expandedValues: ['p1'] });
+		await flush();
+		expect(rowsOf(wrapper)).toEqual(['P1', 'C1', 'C2', 'P2']);
+		const levels = Array.from(wrapper.element.querySelectorAll('.vc-tree-node')).map((el: any) => el.getAttribute('aria-level'));
+		expect(levels).toEqual(['1', '2', '2', '1']);
+		// 叶子没有 aria-expanded
+		expect(wrapper.element.querySelectorAll('.vc-tree-node')[1].hasAttribute('aria-expanded')).toBe(false);
+		wrapper.unmount();
+	});
+
+	it('展开 / 收起：过渡期间子孙在节点的动画块里，结束后回到列表；过渡中再次点击立即反向', async () => {
+		const wrapper = mountTree({ data: treeData() });
+		await flush();
+		expect(rowsOf(wrapper)).toEqual(['P1', 'P2']);
+
+		iconOf(wrapper, 'P1').click();
+		await flush();
+		expect(rowsOf(wrapper)).toEqual(['P1', 'P2']);
+		expect(motionOf(wrapper)).toEqual(['C1', 'C2']);
+		await sleep(400);
+		await flush();
+		expect(motionOf(wrapper)).toEqual([]);
+		expect(rowsOf(wrapper)).toEqual(['P1', 'C1', 'C2', 'P2']);
+
+		// 收起：子孙移到动画块，从高度过渡到 0
+		iconOf(wrapper, 'P1').click();
+		await flush();
+		expect(rowsOf(wrapper)).toEqual(['P1', 'P2']);
+		expect(motionOf(wrapper)).toEqual(['C1', 'C2']);
+		// 过渡中再次点击：反向展开
+		iconOf(wrapper, 'P1').click();
+		await flush();
+		expect(motionOf(wrapper)).toEqual(['C1', 'C2']);
+		await sleep(400);
+		await flush();
+		expect(rowsOf(wrapper)).toEqual(['P1', 'C1', 'C2', 'P2']);
+		wrapper.unmount();
+	});
+
+	it('accordion：展开时收起同级节点', async () => {
+		const wrapper = mountTree({ data: treeData(), expandedValues: ['p1'], accordion: true });
+		await flush();
+		iconOf(wrapper, 'P2').click();
+		await sleep(400);
+		await flush();
+		expect(rowsOf(wrapper)).toEqual(['P1', 'P2', 'C3']);
+		wrapper.unmount();
+	});
+
+	it('懒加载：子节点加载后出现在列表里，之后追加的子节点同样出现', async () => {
+		const loadData = vi.fn(async () => [{ value: 'l1', label: 'L1' }]);
+		const wrapper = mountTree({ data: [{ value: 'r', label: 'R' }], lazy: true, loadData });
+		await flush();
+		iconOf(wrapper, 'R').click();
+		await flush();
+		await sleep(400);
+		await flush();
+		expect(rowsOf(wrapper)).toEqual(['R', 'L1']);
+		(wrapper.vm as any).append({ value: 'l2', label: 'L2' }, 'r');
+		await flush();
+		expect(rowsOf(wrapper)).toEqual(['R', 'L1', 'L2']);
+		wrapper.unmount();
+	});
+
+	it('check-change：收起而未渲染的节点也会发出，每个节点一次', async () => {
+		const onCheckChange = vi.fn();
+		const wrapper = mountTree({ data: treeData(), showCheckbox: true, onCheckChange });
+		await flush();
+		(wrapper.element.querySelector('.vc-tree-node input[type="checkbox"]') as HTMLInputElement).click();
+		await flush();
+		const values = onCheckChange.mock.calls.map(([e]: any) => e.data.value).sort();
+		expect(values).toEqual(['c1', 'c2', 'g1', 'p1']);
+		expect(onCheckChange.mock.calls.every(([e]: any) => e.checked && !e.indeterminate)).toBe(true);
+		wrapper.unmount();
+	});
+});
+
 describe('Tree event payloads', () => {
 	// 节点高 20px（jsdom 没有排版）：上四分之一为 before，中间为 inner，下四分之一为 after；
 	// 高度为 0 时各区域的阈值都是 0，被拒绝的区域无法让出
@@ -1762,7 +1864,7 @@ describe('Tree store & node unit', () => {
 		await flush();
 
 		// 反向 sibling：拖动 p2 dragover p1 → p1.getNextSiblingNode() === p2，dropNext=false
-		const tops = wrapper.findAll('.vc-tree[role="tree"] > .vc-tree-node');
+		const tops = wrapper.findAll('.vc-tree[role="tree"] > .vc-select-list > .vc-tree-node');
 		const [p1, p2] = tops;
 		await p2.trigger('dragstart', { dataTransfer: dataTransferStub() });
 		await p1.trigger('dragover', {
@@ -1934,13 +2036,13 @@ describe('TreeSelect searchable', () => {
 		await flush();
 
 		await typeSearch('2-1-1');
-		const visible = Array.from(document.querySelectorAll('.vc-tree-node:not(.is-hidden) > .vc-tree-node__content'))
+		const visible = Array.from(document.querySelectorAll('.vc-tree-node > .vc-tree-node__content'))
 			.map(el => el.textContent);
 		expect(visible.some(t => t?.includes('三级 2-1-1'))).toBe(true);
 		expect(visible.some(t => t?.includes('一级 1'))).toBe(false);
 		expect(document.querySelector('.vc-select-highlight')?.textContent).toBe('2-1-1');
 
-		const checkbox = document.querySelector('.vc-tree-node:not(.is-hidden) .vc-checkbox input[type="checkbox"]') as HTMLInputElement;
+		const checkbox = document.querySelector('.vc-tree-node .vc-checkbox input[type="checkbox"]') as HTMLInputElement;
 		checkbox.click();
 		await flush();
 		expect(value.value.length).toBeGreaterThan(0);
@@ -1954,17 +2056,17 @@ describe('TreeSelect searchable', () => {
 		const popover = wrapper.findComponent({ name: 'vc-popover' });
 		(popover.vm as any).$emit('update:modelValue', false);
 		await flush();
-		// 输入框立即显示回显；弹层淡出期间树保持过滤后的样子
+		// 输入框立即显示回显；弹层淡出期间树保持过滤后的样子（被过滤的节点不渲染）
+		const labels = () => Array.from(document.querySelectorAll('.vc-tree-node__content')).map(el => el.textContent);
 		expect(getSearchInput().value).toBe('');
-		expect(document.querySelectorAll('.vc-tree-node.is-hidden').length).toBeGreaterThan(0);
+		expect(labels().some(t => t?.includes('一级 1'))).toBe(false);
 
 		// 关闭动画结束后搜索词重置，再打开是完整的树
 		await sleep(250);
 		await flush();
 		await wrapper.trigger('click');
 		await flush();
-		expect(document.querySelectorAll('.vc-tree-node').length).toBeGreaterThan(0);
-		expect(document.querySelectorAll('.vc-tree-node.is-hidden').length).toBe(0);
+		expect(labels().some(t => t?.includes('一级 1'))).toBe(true);
 
 		wrapper.unmount();
 	});

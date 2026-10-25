@@ -120,13 +120,9 @@ $component-name: vc-tree;
 		color: $color-dark-extralight;
 	}
 
-	& > .vc-tree-node__children {
+	// 展开 / 收起的动画块：子孙在其中渲染，高度由脚本过渡（见 TreeNodeMotion）
+	@include element(motion) {
 		overflow: hidden;
-		background-color: transparent;
-	}
-
-	&.is-expanded > .vc-tree-node__children {
-		display: block;
 	}
 }
 

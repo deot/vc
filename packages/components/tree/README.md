@@ -8,7 +8,7 @@
 
 ### 基础用法
 
-每个节点提供全树唯一的 `value` 和显示用的 `label`，通过 `children` 组织子节点。点击标签会设置当前节点，默认也会展开或收起；`accordion` 使同级节点互斥展开。
+每个节点提供全树唯一的 `value` 和显示用的 `label`，通过 `children` 组织子节点。点击标签会设置当前节点，默认也会展开或收起（带高度过渡，过渡中再次点击立即反向）；`accordion` 使同级节点互斥展开。可见节点逐行渲染（行是同级元素，层级由缩进与 `aria-level` 表达），收起的子孙不渲染。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 20 }</config> -->
@@ -321,7 +321,7 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 | accordion | 同级节点互斥展开 | `boolean` | - | `false` |
 | currentNodeValue | 初始化当前节点值；后续修改使用实例方法 | `Value` | - | `undefined` |
 | highlightCurrent | 高亮当前节点 | `boolean` | - | `false` |
-| renderNodeAfterExpand | 首次展开后才渲染子节点 | `boolean` | - | `true` |
+| renderNodeAfterExpand | 已废弃，不再生效：节点逐行渲染，收起的子孙本来就不渲染 | `boolean` | - | `true` |
 | renderNodeLabel | 自定义标签，参数为 `{ row, store }` | `(props: { row: NodeData; store: Node }) => VNodeChild` | - | - |
 | lazy | 开启子节点懒加载 | `boolean` | - | `false` |
 | loadData | 懒加载回调，返回子数据 | `(node: Node) => Promise<NodeData[]>` | - | - |
@@ -357,7 +357,7 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 | --- | --- | --- | --- |
 | update:modelValue / change | 交互导致勾选值变化 | `(value, summary)` | `summary` 包含 `checkedNodes`、`checkedValues`、`halfCheckedNodes`、`halfCheckedValues` |
 | check | 用户切换勾选后 | `({ node, data, checked, checkedNodes, checkedValues, halfCheckedNodes, halfCheckedValues })` | 含本次节点和整棵树状态 |
-| check-change | 节点勾选或半选状态变化 | `({ node, data, checked, indeterminate })` | 联动时可针对多个节点触发 |
+| check-change | 节点勾选或半选状态变化 | `({ node, data, checked, indeterminate })` | 联动时可针对多个节点触发；同一次操作引起的变化在其结束后每个节点发出一次，收起而未渲染的节点也会发出 |
 | node-click | 点击节点 | `({ node, data, instance, event })` | `instance` 为节点组件实例，`event` 为原生事件 |
 | node-contextmenu | 右键节点 | `({ node, data, instance, event })` | 注册监听时阻止原生右键菜单 |
 | current-change | 点击切换当前节点 | `({ node, data, oldNode })` | `oldNode` 无前值时为 `null`；重复点击同节点不触发 |

@@ -1,4 +1,4 @@
-import type { ComponentInternalInstance, Ref } from 'vue';
+import type { ComponentInternalInstance, VNode } from 'vue';
 import type { Props } from './tree-props';
 import type { TreeStore, TreeNode } from './store';
 
@@ -6,10 +6,17 @@ export interface TreeProvide {
 	props: Props;
 	store: TreeStore;
 	root: TreeNode;
-	currentNodeInstance: Ref<ComponentInternalInstance>;
 	instance: ComponentInternalInstance;
 	drag: any;
 	emit: any;
+	// 正在展开 / 收起动画的节点
+	motions: Map<TreeNode, 'expand' | 'collapse'>;
+	// 用户发起的展开 / 收起（带动画、accordion、node-expand-change）
+	toggle: (node: TreeNode, instance: ComponentInternalInstance) => Promise<void>;
+	// 按当前勾选同步 v-model，返回勾选数据
+	sync: () => Pick<TreeCheckPayload, 'checkedNodes' | 'checkedValues' | 'halfCheckedNodes' | 'halfCheckedValues'>;
+	// 渲染一行（铺平的列表与动画块共用）
+	renderNode: (node: TreeNode) => VNode;
 };
 
 /**
