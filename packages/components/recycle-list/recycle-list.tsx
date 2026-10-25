@@ -36,6 +36,11 @@ import { Measuring } from '../measuring';
 const isTouch = typeof document !== 'undefined' && 'ontouchend' in document;
 const COMPONENT_NAME = 'vc-recycle-list';
 
+export interface ScrollToIndexOptions {
+	offset?: number;
+	align?: 'start' | 'nearest';
+}
+
 export const RecycleList = defineComponent({
 	name: COMPONENT_NAME,
 	props: recycleListProps,
@@ -228,16 +233,25 @@ export const RecycleList = defineComponent({
 		/**
 		 * 滚动到第 index 项；交叉轴归零
 		 * @param index 数据索引（rebuildData 下标）
-		 * @param offset 额外偏移
+		 * @param options 数字视为 offset；对象：
+		 * 	- offset：额外偏移，加在滚动目标上
+		 * 	- align：start（默认）置顶；nearest 已完整可见时不动，否则贴近离得近的一边（比视口大时置顶）
 		 */
-		const scrollToIndex = (index: number, offset = 0) => {
+		const scrollToIndex = (index: number, options: number | ScrollToIndexOptions = 0) => {
+			const { offset = 0, align = 'start' } = typeof options === 'number' ? { offset: options } : options;
 			const item = store.states.rebuildData[index];
 			if (!(item?.states.position >= 0)) return;
 			const state = viewport.state();
 			if (!state) return;
 			// item.position 以 content 为原点；外部滚动源需换算到承载者坐标
-			const base = viewport.contentOrigin(state);
-			scrollTo({ [K.axis]: base + item.states.position + offset, [K.crossAxis]: 0 });
+			const start = viewport.contentOrigin(state) + item.states.position;
+			let target = start;
+			if (align === 'nearest') {
+				const end = start + item.states.size;
+				if (start >= state.viewportStart && end <= state.viewportEnd) return;
+				start >= state.viewportStart && item.states.size <= state.clientSize && (target = end - state.clientSize);
+			}
+			scrollTo({ [K.axis]: target + offset, [K.crossAxis]: 0 });
 		};
 
 		/**

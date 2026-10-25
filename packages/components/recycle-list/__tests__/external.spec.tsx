@@ -439,6 +439,75 @@ describe('RecycleList fill=false', () => {
 		wrapper.unmount();
 	});
 
+	it('scrollToIndex align nearest keeps visible items and scrolls to the nearer edge otherwise', async () => {
+		const listRef = ref<any>();
+		const wrapper = mount(() => (
+			<div class="viewport" style="overflow-y: auto; height: 200px;">
+				<RecycleList ref={listRef} fill={false} disabled data={[{ id: 1 }, { id: 2 }]} batchCount={10}>
+					{{ default: ({ row }: any) => <div>{row.id}</div> }}
+				</RecycleList>
+			</div>
+		), { attachTo: document.body });
+		await flush();
+
+		const viewport = wrapper.find('.viewport').element as HTMLElement;
+		const root = wrapper.find('.vc-recycle-list').element as HTMLElement;
+		const content = wrapper.find('.vc-recycle-list__content').element as HTMLElement;
+		const inner = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+		// 视口 200，content 起点 500
+		const restore = mockVerticalGeometry(viewport, root, content);
+		await listRef.value.refreshLayout();
+		const item = listRef.value.store.states.rebuildData[1];
+		const place = (position: number, size: number) => {
+			item.states.position = position;
+			item.states.size = size;
+		};
+		const nearest = { align: 'nearest' };
+
+		// 完整可见：主轴与交叉轴都不动
+		place(160, 40);
+		viewport.scrollTop = 550;
+		inner.scrollLeft = 44;
+		listRef.value.scrollToIndex(1, nearest);
+		expect(viewport.scrollTop).toBe(550);
+		expect(inner.scrollLeft).toBe(44);
+
+		// 在视口下方：底边贴齐视口底边（700 - 200）
+		viewport.scrollTop = 300;
+		listRef.value.scrollToIndex(1, nearest);
+		expect(viewport.scrollTop).toBe(500);
+		expect(inner.scrollLeft).toBe(0);
+
+		// 在视口上方：置顶
+		viewport.scrollTop = 800;
+		listRef.value.scrollToIndex(1, nearest);
+		expect(viewport.scrollTop).toBe(660);
+
+		// 露出一部分也算不可见
+		viewport.scrollTop = 680;
+		listRef.value.scrollToIndex(1, nearest);
+		expect(viewport.scrollTop).toBe(660);
+
+		// 比视口大：置顶
+		place(160, 300);
+		viewport.scrollTop = 300;
+		listRef.value.scrollToIndex(1, nearest);
+		expect(viewport.scrollTop).toBe(660);
+
+		// offset 加在滚动目标上；start 与数字参数一致
+		place(160, 40);
+		viewport.scrollTop = 300;
+		listRef.value.scrollToIndex(1, { align: 'nearest', offset: 8 });
+		expect(viewport.scrollTop).toBe(508);
+		listRef.value.scrollToIndex(1, { offset: -10 });
+		expect(viewport.scrollTop).toBe(650);
+		listRef.value.scrollToIndex(1, { align: 'start' });
+		expect(viewport.scrollTop).toBe(660);
+
+		restore();
+		wrapper.unmount();
+	});
+
 	it('reset moves the external main carrier to absolute zero', async () => {
 		const listRef = ref<any>();
 		const wrapper = mount(() => (

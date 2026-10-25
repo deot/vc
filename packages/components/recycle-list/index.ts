@@ -7,3 +7,4 @@ export {
 	RecycleListStore
 };
 export type { RecycleListLoadState } from './store';
+export type { ScrollToIndexOptions as RecycleListScrollToIndexOptions } from './recycle-list.tsx';

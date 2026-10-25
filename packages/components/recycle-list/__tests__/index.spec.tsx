@@ -1247,6 +1247,36 @@ describe('index.ts', () => {
 			expect(wrapEl.scrollTop).toBe(210);
 		});
 
+		it('scrollToIndex align nearest only scrolls items outside the viewport', async () => {
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} data={buildItems(3)}>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await nextTick();
+
+			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+			Object.defineProperty(wrapEl, 'clientHeight', { configurable: true, get: () => 100 });
+			const target = listRef.value.store.states.rebuildData[1];
+			target.states.position = 200;
+			target.states.size = 40;
+
+			wrapEl.scrollTop = 150;
+			listRef.value.scrollToIndex(1, { align: 'nearest' });
+			expect(wrapEl.scrollTop).toBe(150);
+
+			wrapEl.scrollTop = 0;
+			listRef.value.scrollToIndex(1, { align: 'nearest' });
+			expect(wrapEl.scrollTop).toBe(140);
+
+			wrapEl.scrollTop = 300;
+			listRef.value.scrollToIndex(1, { align: 'nearest' });
+			expect(wrapEl.scrollTop).toBe(200);
+		});
+
 		it('reset clears state and re-loads data', async () => {
 			const loadData = vi.fn(async () => buildItems(3));
 			const listRef = ref<any>();
