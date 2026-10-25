@@ -5,6 +5,7 @@ import type { PropType } from 'vue';
 import { Icon } from '../../icon/index';
 import { Spin } from '../../spin/index';
 import { Scroller } from '../../scroller/index';
+import { scrollIntoScroller } from '../../select/hooks/use-navigate';
 import type { TreeData, TreeValue } from '../../select/utils';
 
 const COMPONENT_NAME = 'vc-cascader-columns';
@@ -69,7 +70,14 @@ export const CascaderColumns = defineComponent({
 			cell && emit('click', cell);
 		};
 
-		expose({ getColumn, getItem });
+		// 各列滚动到路径上的一项（不在可视范围内时置顶）
+		const scrollIntoSelected = () => {
+			scroller.value?.$el.querySelectorAll('.vc-cascader-column__item.is-select').forEach((el: Element) => {
+				scrollIntoScroller(el, 'start');
+			});
+		};
+
+		expose({ getColumn, getItem, scrollIntoSelected });
 
 		const renderItem = (item: TreeData, columnIndex: number, rowIndex: number) => {
 			const cell = { item, columnIndex, rowIndex };

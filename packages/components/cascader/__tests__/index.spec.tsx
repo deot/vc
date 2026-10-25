@@ -6,9 +6,6 @@ import { CascaderView } from '../cascader-view';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi, onTestFinished } from 'vitest';
-import * as Dom from '@deot/helper-dom';
-
-vi.mock('@deot/helper-dom', { spy: true });
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -165,21 +162,23 @@ describe('Cascader interaction', () => {
 		wrapper.unmount();
 	});
 
-	it('scrolls to the default selection using the rendered row height', async () => {
-		const rowHeight = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(60);
-		const scroll = vi.mocked(Dom.scrollIntoView).mockImplementation(async () => {});
+	it('scrolls each column to the item on the path, to the top when out of view', async () => {
+		// 列内可视 0 ~ 100，每项高 60 且不随滚动位置变化：滚动量即该项的 top
+		const rect = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+			const isItem = this.classList.contains('vc-cascader-column__item');
+			const [top, bottom] = isItem ? [+(this as HTMLElement).dataset.index! * 60, +(this as HTMLElement).dataset.index! * 60 + 60] : [0, 100];
+			return { top, bottom, left: 0, right: 0, width: 0, height: bottom - top, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
+		});
+		const height = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(100);
+		onTestFinished(() => (rect.mockRestore(), height.mockRestore()));
 		const wrapper = mount(() => (
 			<Cascader modelValue={['zhejiang', 'hangzhou', 'binjiang']} data={options} />
 		), { attachTo: document.body });
-		try {
-			await wrapper.trigger('click');
-			await flush();
-			expect(scroll).toHaveBeenCalledWith(getCols()[2].firstChild, { to: 60 });
-		} finally {
-			wrapper.unmount();
-			scroll.mockRestore();
-			rowHeight.mockRestore();
-		}
+		await wrapper.trigger('click');
+		await flush();
+		// 第三列的 Bin Jiang（第 2 项）超出可视范围，置顶；前两列的已在可视范围内
+		expect(Array.from(getCols()).map(col => col.querySelector('.vc-scroller')!.scrollTop)).toEqual([0, 0, 60]);
+		wrapper.unmount();
 	});
 
 	it('empty data when dataSource is empty', async () => {

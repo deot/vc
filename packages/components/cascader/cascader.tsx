@@ -2,7 +2,6 @@
 
 import { defineComponent, ref, watch, computed, nextTick, inject } from 'vue';
 import { isEqualWith } from 'lodash-es';
-import { scrollIntoView } from '@deot/helper-dom';
 import { getSelectedData } from './utils';
 import { VcError } from '../vc/index';
 import { Popover } from '../popover/index';
@@ -154,26 +153,9 @@ export const Cascader = defineComponent({
 		const handleReady = () => {
 			rebuildData.value = makeRebuildData();
 
-			/**
-			 * 滚动到初始位置
-			 * TODO: 是否移入col单独处理
-			 */
-
 			direction.update();
-			nextTick(() => {
-				currentValue.value.forEach((item, index) => {
-					const el = columnsRef.value?.getColumn(index);
-					const source = rebuildData.value[index];
-
-					if (source && el) {
-						const $instance = source.findIndex((i: TreeData) => item == i.value);
-						// 列内的 Scroller 根节点即滚动容器
-						const scroller = el.firstElementChild as HTMLElement;
-						const rowHeight = scroller.querySelector('.vc-cascader-column__item')?.clientHeight || 0;
-						scrollIntoView(scroller, { to: $instance * rowHeight });
-					}
-				});
-			});
+			// 弹层在 ready 之后才显示（此前为 display: none，无法测量）
+			nextTick(() => columnsRef.value?.scrollIntoSelected());
 		};
 
 		const handleClear = () => {
