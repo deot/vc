@@ -39,7 +39,9 @@ export const SelectPaths = defineComponent({
 		// 是否已选中
 		checked: Function as PropType<(data: SelectPath) => boolean>,
 		width: Number,
-		emptyText: String
+		emptyText: String,
+		// 只渲染视口附近的结果，见 SelectList
+		virtualized: Boolean
 	},
 	emits: ['select'],
 	setup(props, { emit, slots, expose }) {
@@ -112,7 +114,12 @@ export const SelectPaths = defineComponent({
 					{
 						results.value.length
 							? (
-									<SelectList ref={navigate.setList} data={results.value} onHover={navigate.hover}>
+									<SelectList
+										ref={navigate.setList}
+										data={results.value}
+										virtualized={props.virtualized}
+										onHover={navigate.hover}
+									>
 										{{ default: renderItem, $stable: true }}
 									</SelectList>
 								)

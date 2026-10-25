@@ -570,6 +570,44 @@ describe('Cascader 搜索与键盘', () => {
 		return Array.from(document.querySelectorAll<HTMLElement>('.vc-popover-wrapper')).some(el => el.style.display !== 'none');
 	};
 
+	it('virtualized：各列与搜索结果只渲染部分项，列宽固定、文字带 title；方向键在全部数据中移动', async () => {
+		const data = Array.from({ length: 300 }, (_, i) => ({
+			value: `${i}`,
+			label: `Group ${i}`,
+			children: [{ value: `${i}-0`, label: `Leaf ${i}-0` }]
+		}));
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={data} searchable virtualized />
+		), { attachTo: document.body });
+		await nextTick();
+		await wrapper.find('input').trigger('click');
+		await flush();
+
+		const column = getCols()[0];
+		expect(column.classList.contains('is-virtual')).toBe(true);
+		expect(column.querySelector('.vc-recycle-list')).not.toBeNull();
+		expect(getCells(0).length).toBeLessThan(300);
+		expect(column.querySelector('.vc-cascader-column__label')!.getAttribute('title')).toBe('Group 0');
+
+		press('ArrowDown');
+		press('ArrowDown');
+		press('ArrowRight');
+		await flush();
+		expect(getSelected()).toEqual(['Group 1', 'Leaf 1-0']);
+
+		typeInto(wrapper.find('input').element as HTMLInputElement, 'Leaf');
+		await flush();
+		expect(document.querySelector('.vc-select-paths .vc-recycle-list')).not.toBeNull();
+		expect(getPaths().length).toBeLessThan(300);
+		press('ArrowDown');
+		press('Enter');
+		await flush();
+		expect(value.value).toEqual(['1', '1-0']);
+
+		wrapper.unmount();
+	});
+
 	it('ready、close 各只触发一次；关闭动画结束后才重置搜索词，淡出期间结果列表不变', async () => {
 		const onReady = vi.fn();
 		const onClose = vi.fn();

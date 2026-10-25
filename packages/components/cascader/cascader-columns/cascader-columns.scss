@@ -6,6 +6,9 @@ $color-neutral-light: varfix(color-neutral-light, cascader-column);
 $color-primary: varfix(color-primary, cascader-column);
 $background-color-primary-light: varfix(background-color-primary-light, cascader-column);
 
+// 虚拟化时的列宽：只渲染了可见的项，列宽无法随内容撑开
+$width: varfix(width, cascader-column, unitfix(160));
+
 // 列太多时横向滚动；高度随弹层的上限收缩（弹层 scrollable=false）
 // 纵向 flex：内容作为 flex 子项收缩后高度确定，各列才能随之收缩（百分比高度在这里不生效）
 @include block(vc-cascader-columns) {
@@ -103,6 +106,19 @@ $background-color-primary-light: varfix(background-color-primary-light, cascader
 	// 占满箭头前的空间（列宽随内容，不会截断）
 	@include element(label) {
 		flex: 1;
+	}
+
+	// 虚拟化：固定列宽，文字超出时省略（悬停显示完整文字）
+	@include when(virtual) {
+		.vc-cascader-column__wrapper {
+			width: $width;
+		}
+
+		.vc-cascader-column__label {
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
 	}
 
 	@include element(icon) {

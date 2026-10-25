@@ -498,6 +498,46 @@ p {
 ```
 :::
 
+### 大量数据
+
+`virtualized` 开启后每一列与搜索结果都只渲染可视范围附近的项（基于 [RecycleList](../recycle-list/README.md)），列中项数很多时打开、展开下一级与搜索不再随数量变慢。由于只渲染了部分项，列宽无法随文字撑开，改为固定宽度（`--vc-cascader-column-width`，默认 `160px`），超出的文字显示省略号，悬停显示完整文字。
+
+:::playground
+<!--
+<config lang="json5">
+{ previewInset: 20 }
+</config>
+-->
+```vue
+<template>
+	<div class="cascader-demo">
+		<Cascader v-model="value" :data="options" virtualized searchable clearable />
+		<p>当前值：{{ value }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Cascader } from '@deot/vc';
+
+const options = Array.from({ length: 5000 }, (_, index) => ({
+	value: `${index + 1}`,
+	label: `分组 ${index + 1}`,
+	children: Array.from({ length: 10 }, (__, child) => ({
+		value: `${index + 1}-${child + 1}`,
+		label: `条目 ${index + 1}-${child + 1}`
+	}))
+}));
+const value = ref(['2500', '2500-3']);
+</script>
+
+<style scoped>
+.cascader-demo { width: min(100%, 320px); }
+.cascader-demo p { margin: 12px 0 0; }
+</style>
+```
+:::
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-cascader-column-<参数>`、`--vc-cascader-<参数>`；搜索结果与搜索命中的文字使用 `--vc-select-paths-<参数>`、`--vc-select-highlight-<参数>`。局部参数仅提供组件级入口；表中括号标明对应命名空间。
@@ -516,7 +556,9 @@ p {
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| width | `virtualized` 时的列宽（cascader-column） | `160px` |
 
 ## API
 
@@ -535,6 +577,7 @@ p {
 | placeholder | 透传给默认输入框的占位文本，支持显式空字符串覆盖 | `string` | - | 当前语言的 `vc.Cascader.placeholder`，中文为 `请选择` |
 | extra | `formatter` 返回空值时展示的输入框内容 | `string` | - | `''` |
 | id | 默认 Input 根节点的 id，替换触发区后不使用 | `string` | - | - |
+| virtualized | 每一列与搜索结果只渲染可视范围附近的项，列宽固定；见[大量数据](#大量数据) | `boolean` | - | `false` |
 | loadData | 为 `children: []` 的节点加载子节点；不接收参数，会修改原数据，不参与搜索 | `() => CascaderOption[] \| Promise<CascaderOption[]>` | - | - |
 | trigger | 浮层打开方式；子列始终由鼠标移入展开 | `string` | `click`、`hover`、`strictHover`、`focus`、`custom` | `click` |
 | tag | 触发区根元素类型；`focus` 时需让根元素可聚焦 | `string` | - | `div` |

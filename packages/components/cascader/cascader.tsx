@@ -327,6 +327,7 @@ export const Cascader = defineComponent({
 							selectable={isSelectable}
 							checked={isChecked}
 							width={searchWidth.value}
+							virtualized={props.virtualized}
 							emptyText={t('vc.Cascader.noMatch')}
 							onSelect={handleSelect}
 						/>
@@ -338,6 +339,7 @@ export const Cascader = defineComponent({
 							data={rebuildData.value}
 							value={currentValue.value}
 							inverted={direction.isInverted.value}
+							virtualized={props.virtualized}
 							onMove={handleMove}
 							onClick={handleCellClick}
 						/>

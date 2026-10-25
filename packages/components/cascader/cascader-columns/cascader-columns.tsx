@@ -37,7 +37,9 @@ export const CascaderColumns = defineComponent({
 			type: Array as PropType<TreeValue[]>,
 			default: () => []
 		},
-		inverted: Boolean
+		inverted: Boolean,
+		// 各列只渲染视口附近的项（见 SelectList）；列宽固定，文字超出时省略
+		virtualized: Boolean
 	},
 	emits: ['move', 'click'],
 	setup(props, { emit, slots, expose }) {
@@ -96,7 +98,7 @@ export const CascaderColumns = defineComponent({
 					]}
 				>
 					{ slots.prefix?.(cell) }
-					<span class="vc-cascader-column__label">
+					<span class="vc-cascader-column__label" title={props.virtualized && !slots.label ? item.label : void 0}>
 						{ slots.label ? slots.label(cell) : item.label }
 					</span>
 					{
@@ -114,9 +116,13 @@ export const CascaderColumns = defineComponent({
 			const list = props.data[columnIndex];
 			if (!list || !list.length) return null;
 			return (
-				<div key={columnIndex} data-index={columnIndex} class="vc-cascader-column">
+				<div key={columnIndex} data-index={columnIndex} class={['vc-cascader-column', { 'is-virtual': props.virtualized }]}>
 					<Scroller class="vc-cascader-column__wrapper">
-						<SelectList ref={(vm: any) => (lists[columnIndex] = vm)} data={list}>
+						<SelectList
+							ref={(vm: any) => (lists[columnIndex] = vm)}
+							data={list}
+							virtualized={props.virtualized}
+						>
 							{{ default: ({ row, index }: { row: TreeData; index: number }) => renderItem(row, columnIndex, index), $stable: true }}
 						</SelectList>
 					</Scroller>
