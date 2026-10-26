@@ -2,7 +2,7 @@ import { toRaw } from 'vue';
 import { isEqualWith, difference } from 'lodash-es';
 import { hasOwn } from '@deot/helper-utils';
 import type { Nullable } from '@deot/helper-shared';
-import { TreeNode, getRawValue } from './tree-node';
+import { TreeNode, getRawValue, syncCheckFromChildren } from './tree-node';
 import { KEY_NODE, KEY_VALUE } from './constant';
 
 export class TreeStore {
@@ -36,6 +36,8 @@ export class TreeStore {
 	private expandedSet?: [(string | number)[], Set<string | number>];
 	// 开始筛选时已展开节点的值，清空关键词时据此恢复，见 filter
 	private expandedBeforeFilter?: Set<string | number>;
+	// 批量写入勾选期间推迟重算的节点，按层存放，见 batchCheck
+	private deferredChecks?: Map<number, Set<TreeNode>>;
 
 	constructor(options: Partial<TreeStore>) {
 		for (const option in options) {
@@ -65,6 +67,72 @@ export class TreeStore {
 		if (!this.onCheckChange || this.pendingChecks.has(node)) return;
 		this.pendingChecks.size === 0 && queueMicrotask(() => this.flushCheckChanges());
 		this.pendingChecks.set(node, [node.states.checked, node.states.indeterminate]);
+	}
+
+	/**
+	 * 批量写入勾选：逐个调用 fn 写入节点，期间父节点的重算（reInitChecked）推迟，按层从深到浅、每个节点只算一次
+	 * 	- 逐个写入时每个节点都会让父节点重新统计一遍全部兄弟（N 个叶子 × 兄弟数）
+	 * 	- 与逐个写入结果一致：写入一个节点只读写它自己的子树，写入前先算完不浅于它的待算节点，它读到的与逐个写入时相同；每个待算节点在子节点都定下来后算，结果也相同
+	 * @param nodes 要写入的节点
+	 * @param fn 写入
+	 */
+	batchCheck(nodes: TreeNode[], fn: (node: TreeNode) => void) {
+		// 嵌套调用时沿用外层的登记，由外层收尾
+		const outer = !!this.deferredChecks;
+		outer || (this.deferredChecks = new Map());
+		try {
+			nodes.forEach((node) => {
+				this.flushDeferredChecks(toRaw(node.states).level);
+				fn(node);
+			});
+			outer || this.flushDeferredChecks(1);
+		} finally {
+			outer || (this.deferredChecks = undefined);
+		}
+	}
+
+	/**
+	 * 批量写入期间登记要重算的节点，见 batchCheck
+	 * @param node ~
+	 * @returns 是否已推迟
+	 */
+	deferCheck(node: TreeNode) {
+		if (!this.deferredChecks) return false;
+		// 逐个写入时此刻会依次写入它和各级祖先：按同样的顺序记下写入前的状态，check-change 的顺序不变
+		if (this.onCheckChange) {
+			let current: TreeNode | null = node;
+			for (; current && toRaw(current.states).level > 0; current = this.checkStrictly ? null : current.parentNode) {
+				this.markCheckChange(current);
+			}
+		}
+		this.enqueueCheck(node);
+		return true;
+	}
+
+	private enqueueCheck(node: TreeNode) {
+		const level = toRaw(node.states).level;
+		let nodes = this.deferredChecks!.get(level);
+		nodes || this.deferredChecks!.set(level, (nodes = new Set()));
+		nodes.add(node);
+	}
+
+	/**
+	 * 从深到浅重算层级不小于 minLevel 的待算节点，父节点登记到上一层，同在范围内的随后算
+	 * @param minLevel ~
+	 */
+	private flushDeferredChecks(minLevel: number) {
+		const deferred = this.deferredChecks!;
+		if (!deferred.size) return;
+		const levels = [...deferred.keys()].filter(level => level >= minLevel).sort((a, b) => b - a);
+		if (!levels.length) return;
+		for (let level = levels[0]; level >= minLevel; level--) {
+			const nodes = deferred.get(level);
+			if (!nodes) continue;
+			deferred.delete(level);
+			nodes.forEach((node) => {
+				syncCheckFromChildren(node) && this.enqueueCheck(node.parentNode!);
+			});
+		}
 	}
 
 	flushCheckChanges() {
@@ -230,13 +298,8 @@ export class TreeStore {
 			return;
 		}
 
-		const anchorIds = this._getCascadeCheckedAnchorIds(checkedValues);
-		anchorIds.forEach((id) => {
-			const node = nodesMap[id];
-			if (node) {
-				node.setChecked(true, true);
-			}
-		});
+		const anchors = this._getCascadeCheckedAnchorIds(checkedValues).map(id => nodesMap[id]).filter(Boolean);
+		this.batchCheck(anchors, node => node.setChecked(true, true));
 	}
 
 	_initDefaultCheckedNode(node: TreeNode) {
@@ -262,9 +325,8 @@ export class TreeStore {
 	setCheckedValues(newVal: any) {
 		if (!isEqualWith(newVal, this.checkedValues)) {
 			// 额外处理, 移除checkbox
-			difference(this.checkedValues as any, newVal).forEach((key: any) => {
-				this.nodesMap[key] && this.nodesMap[key].setChecked(false, !this.checkStrictly);
-			});
+			const removed = difference(this.checkedValues as any, newVal).map((key: any) => this.nodesMap[key]).filter(Boolean);
+			this.batchCheck(removed, node => node.setChecked(false, !this.checkStrictly));
 
 			this.checkedValues = newVal;
 			this._initDefaultCheckedNodes();

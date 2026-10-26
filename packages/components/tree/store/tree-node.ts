@@ -56,9 +56,12 @@ const setCheckState = (node: TreeNode, checked: boolean, indeterminate: boolean)
 	node.states.indeterminate = indeterminate;
 };
 
-const reInitChecked = (node: TreeNode) => {
-	if (node.childNodes.length === 0) return;
-
+/**
+ * 按子节点的勾选汇总写入自身的勾选状态（不向上传递）
+ * @param node ~
+ * @returns 是否继续重算父节点
+ */
+export const syncCheckFromChildren = (node: TreeNode) => {
 	const { all, none, half } = getChildState(node.childNodes);
 	if (all) {
 		setCheckState(node, true, false);
@@ -69,11 +72,18 @@ const reInitChecked = (node: TreeNode) => {
 	}
 
 	const parent = node.parentNode;
-	if (!parent || parent.states.level === 0) return;
+	return !!parent && parent.states.level !== 0 && !node.store.checkStrictly;
+};
 
-	if (!node.store.checkStrictly) {
-		reInitChecked(parent);
-	}
+/**
+ * 按子节点重算勾选状态，并逐级向上重算祖先
+ * 	- 批量写入期间（见 TreeStore.batchCheck）只登记节点，由 store 按层从深到浅各算一次
+ * @param node ~
+ */
+const reInitChecked = (node: TreeNode) => {
+	if (node.childNodes.length === 0) return;
+	if (node.store.deferCheck(node)) return;
+	syncCheckFromChildren(node) && reInitChecked(node.parentNode!);
 };
 
 /**

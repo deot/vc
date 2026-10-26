@@ -1922,6 +1922,54 @@ describe('Tree store & node unit', () => {
 		}
 	});
 
+	it('store: batched cascade checks match checking node by node (states and check-change order)', async () => {
+		// 固定种子的随机树：含禁用节点，深度不一
+		let seed = 7;
+		const random = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+		let uid = 0;
+		const createNodes = (depth: number): any[] => Array.from({ length: Math.floor(random() * 5) }, () => {
+			const value = `n${uid++}`;
+			const children = depth < 4 && random() < 0.6 ? createNodes(depth + 1) : [];
+			return { value, label: value, disabled: random() < 0.2, ...(children.length ? { children } : {}) };
+		});
+		const pick = (values: string[]) => values.filter(() => random() < 0.35);
+
+		const run = async (source: any[], steps: string[][], byNode: boolean) => {
+			const spy = byNode ? vi.spyOn(TreeStore.prototype, 'deferCheck').mockReturnValue(false) : null;
+			try {
+				const events: string[] = [];
+				const store = new TreeStore({
+					data: JSON.parse(JSON.stringify(source)),
+					checkedValues: steps[0],
+					onCheckChange: ({ getter, states }: TreeNode) => events.push(`${getter.value}:${states.checked}:${states.indeterminate}`)
+				} as any);
+				const snapshots: string[][] = [];
+				const snapshot = async () => {
+					await flush();
+					snapshots.push([
+						...Object.entries(store.nodesMap).map(([key, { states }]) => `${key}:${states.checked}:${states.indeterminate}`),
+						...events.splice(0)
+					]);
+				};
+				await snapshot();
+				for (const values of steps.slice(1)) {
+					store.setCheckedValues(values);
+					await snapshot();
+				}
+				return snapshots;
+			} finally {
+				spy?.mockRestore();
+			}
+		};
+
+		for (let i = 0; i < 30; i++) {
+			const source = createNodes(0).concat(createNodes(0));
+			const values = Object.keys(new TreeStore({ data: JSON.parse(JSON.stringify(source)) } as any).nodesMap);
+			const steps = [pick(values), pick(values), [], pick(values)];
+			expect(await run(source, steps, false)).toEqual(await run(source, steps, true));
+		}
+	});
+
 	it('node: non-leaf with disabled child + checked siblings flips checked=false', () => {
 		const source = [
 			{
