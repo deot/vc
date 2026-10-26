@@ -45,7 +45,7 @@ const handleNodeClick = ({ data: row }) => { current.value = row.label; };
 
 `showCheckbox` 开启勾选，`v-model` 保存节点值。默认父子联动，`checkStrictly` 可切换为独立勾选。节点的 `disabled` 只限制交互勾选，不禁止展开或设置当前节点。
 
-调用 `filter(value)` 时，必须提供 `filterNode(value, data, node)`；命中节点的祖先会保留显示。`renderNodeLabel` 接收 `{ row, store }`，分别为原始数据和节点对象。
+调用 `filter(value)` 时，必须提供 `filterNode(value, data, node)`；命中节点的祖先会保留显示并展开。以空值（如 `''`）调用时清除筛选，并恢复第一次筛选前的展开状态：筛选期间展开的节点收起，筛选期间手动收起的保持收起。`renderNodeLabel` 接收 `{ row, store }`，分别为原始数据和节点对象。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 20 }</config> -->
@@ -414,7 +414,7 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| filter | 筛选节点，必须配置 `filterNode` | `(value: any)` | `void` |
+| filter | 筛选节点，必须配置 `filterNode`；空值清除筛选并恢复筛选前的展开状态 | `(value: any)` | `void` |
 | getNode | 按值、原始数据或节点对象查找 | `(data: Value \| NodeData \| Node)` | `Node \| null` |
 | getNodeKey | 读取节点的值字段 | `(node: Node)` | `Value` |
 | getNodePath | 读取从根级到目标的原始数据路径 | `(data: Value \| NodeData \| Node)` | `NodeData[]`，找不到时为 `[]` |

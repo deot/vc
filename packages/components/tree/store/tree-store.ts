@@ -34,6 +34,8 @@ export class TreeStore {
 	private pendingChecks = new Map<TreeNode, [boolean, boolean]>();
 	// expandedValues 的查找表，随数组引用重建
 	private expandedSet?: [(string | number)[], Set<string | number>];
+	// 开始筛选时已展开节点的值，清空关键词时据此恢复，见 filter
+	private expandedBeforeFilter?: Set<string | number>;
 
 	constructor(options: Partial<TreeStore>) {
 		for (const option in options) {
@@ -82,28 +84,58 @@ export class TreeStore {
 		return this.expandedSet[1].has(value);
 	}
 
+	/**
+	 * 筛选节点：有关键词时展开命中节点的祖先；清空关键词时收起筛选期间展开的节点，恢复筛选前的展开状态
+	 * 	- 在事件处理中调用：遍历原始数组与原始状态，值变化时才经代理写入
+	 * @param value 关键词
+	 */
 	filter(value: any) {
 		const filterNode = this.filterNode;
 		const lazy = this.lazy;
-		const traverse = function (node: TreeNode) {
-			const childNodes = node.childNodes;
+		if (value && !this.expandedBeforeFilter) {
+			const expanded = new Set<string | number>();
+			this._walkRaw(node => toRaw(node.states).expanded && expanded.add(getRawValue(node)));
+			this.expandedBeforeFilter = expanded;
+		}
 
-			childNodes.forEach((child) => {
-				child.states.visible = filterNode.call(child, value, child.states.data, child);
+		const traverse = function (node: TreeNode) {
+			const childNodes = toRaw(node.childNodes);
+			const states = toRaw(node.states);
+
+			for (let i = 0, j = childNodes.length; i < j; i++) {
+				const child = childNodes[i];
+				const visible = !!filterNode.call(child, value, toRaw(child.states).data, child);
+				toRaw(child.states).visible !== visible && (child.states.visible = visible);
 
 				traverse(child);
-			});
+			}
 
-			if (!node.states.visible && childNodes.length) {
-				node.states.visible = childNodes.some(child => child.states.visible);
+			if (!states.visible && childNodes.length && childNodes.some(child => toRaw(child.states).visible)) {
+				node.states.visible = true;
 			}
 			if (!value) return;
 
-			// 已展开的不必再展开（expand 是异步的，逐个调用会为每个节点建一个 Promise）
-			if (node.states.visible && !node.states.isLeaf && !node.states.expanded && !lazy) node.expand();
+			if (states.visible && !states.isLeaf && !states.expanded && !lazy) node.states.expanded = true;
 		};
 
 		traverse(this.root);
+
+		if (!value && this.expandedBeforeFilter) {
+			const expanded = this.expandedBeforeFilter;
+			this.expandedBeforeFilter = undefined;
+			this._walkRaw(node => toRaw(node.states).expanded && !expanded.has(getRawValue(node)) && node.collapse());
+		}
+	}
+
+	_walkRaw(fn: (node: TreeNode) => void) {
+		const walk = (node: TreeNode) => {
+			const childNodes = toRaw(node.childNodes);
+			for (let i = 0, j = childNodes.length; i < j; i++) {
+				fn(childNodes[i]);
+				walk(childNodes[i]);
+			}
+		};
+		walk(this.root);
 	}
 
 	setData(newVal: object) {
@@ -406,8 +438,26 @@ export class TreeStore {
 
 		values.forEach((v) => {
 			const node = this.getNode(v);
-			if (node) node.expand(this.autoExpandParent);
+			if (node) this.expandNode(node);
 		});
+	}
+
+	/**
+	 * 按 expandedValues 展开节点（autoExpandParent 时连同祖先）
+	 * 	- 不需要加载时同步写入，已展开的跳过：不像 expand 那样为每个值建一个 Promise
+	 * @param node ~
+	 */
+	expandNode(node: TreeNode) {
+		if (node.shouldLoadData()) {
+			node.expand(this.autoExpandParent);
+			return;
+		}
+		if (this.autoExpandParent) {
+			for (let parent = node.parentNode; parent && toRaw(parent.states).level > 0; parent = parent.parentNode) {
+				toRaw(parent.states).expanded || (parent.states.expanded = true);
+			}
+		}
+		toRaw(node.states).expanded || (node.states.expanded = true);
 	}
 
 	setChecked(v: any, checked?: boolean, deep?: boolean) {

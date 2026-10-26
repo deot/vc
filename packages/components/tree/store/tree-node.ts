@@ -196,7 +196,7 @@ export class TreeNode {
 		const key = store.primaryKey;
 		const value = data[key];
 		if (key && store.hasExpandedValue(value)) {
-			this.expand(store.autoExpandParent);
+			store.expandNode(this);
 		}
 
 		if (key && store.currentNodeValue !== undefined && value === store.currentNodeValue) {

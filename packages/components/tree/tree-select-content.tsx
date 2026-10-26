@@ -58,37 +58,10 @@ export const TreeSelectContent = defineComponent({
 			return <span>{renderHighlight(label, props.searchRegex)}</span>;
 		};
 
-		const eachNode = (fn: (node: any) => void) => {
-			const tree = treeRef.value;
-			const walk = (nodes: any[]) => nodes.forEach((node) => {
-				fn(node);
-				walk(node.childNodes || []);
-			});
-			walk(props.data.map(item => tree?.getNode(item)).filter(Boolean));
-		};
-
-		/**
-		 * 搜索会展开所有命中节点，退出搜索时恢复搜索前的展开状态
-		 */
-		let expandedSnapshot: Set<string | number> | null = null;
+		// 搜索展开命中节点的祖先，清空搜索词时恢复搜索前的展开状态，见 TreeStore.filter
 		watch(
 			() => [props.searchValue.trim(), props.data] as const,
-			([keyword]) => {
-				const tree = treeRef.value;
-				if (!tree) return;
-				if (keyword && !expandedSnapshot) {
-					expandedSnapshot = new Set();
-					eachNode(node => node.states.expanded && expandedSnapshot!.add(tree.getNodeKey(node)));
-				}
-
-				tree.filter(keyword);
-
-				if (!keyword && expandedSnapshot) {
-					const snapshot = expandedSnapshot;
-					eachNode(node => node.states.expanded && !snapshot.has(tree.getNodeKey(node)) && node.collapse());
-					expandedSnapshot = null;
-				}
-			},
+			([keyword]) => treeRef.value?.filter(keyword),
 			{ flush: 'post' }
 		);
 

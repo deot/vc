@@ -1620,6 +1620,31 @@ describe('Tree store & node unit', () => {
 		store.filter('');
 	});
 
+	it('store: filter restores the expanded state when the keyword is cleared', () => {
+		const store = new TreeStore({
+			data: freshData(),
+			filterNode: (keyword: string, row: any) => !keyword || String(row.label || '').includes(keyword),
+			expandedValues: ['1']
+		} as any);
+		const expanded = () => Object.keys(store.nodesMap).filter(key => store.nodesMap[key].states.expanded).sort();
+		expect(expanded()).toEqual(['1']);
+
+		store.filter('三级');
+		expect(expanded()).toEqual(['1', '1-1', '2', '2-1', '2-2', '3', '3-1', '3-2']);
+		// 搜索期间收起的保持收起；换关键词不重新记录
+		store.getNode('1')!.collapse();
+		store.filter('三级 2');
+		store.filter('');
+		expect(expanded()).toEqual([]);
+		expect(Object.values(store.nodesMap).every(node => node.states.visible)).toBe(true);
+
+		// 再次搜索按当时的状态记录
+		store.getNode('3')!.expand();
+		store.filter('三级');
+		store.filter('');
+		expect(expanded()).toEqual(['3']);
+	});
+
 	it('store: append/remove/insert/updateChildren/_setCheckedValues/setChecked', () => {
 		const source = freshData();
 		const store = new TreeStore({ data: source } as any);
