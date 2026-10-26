@@ -283,6 +283,7 @@ export class TreeStore {
 
 	/**
 	 * 勾选与半选的节点及其值（同步 v-model 用），遍历一次
+	 * 	- 在事件处理中调用，不需要依赖追踪：遍历原始数组与原始状态，不经过响应式代理（5 万节点每次勾选约 30 → 19ms）
 	 * @returns 勾选数据
 	 */
 	getCheckedState() {
@@ -290,18 +291,22 @@ export class TreeStore {
 		const checkedNodes: TreeNode[] = [];
 		const halfCheckedNodes: TreeNode[] = [];
 		const traverse = (node: TreeNode) => {
-			node.childNodes.forEach((child) => {
-				child.states.checked && checkedNodes.push(child);
-				child.states.indeterminate && halfCheckedNodes.push(child);
+			const children = toRaw(node.childNodes);
+			for (let i = 0, j = children.length; i < j; i++) {
+				const child = children[i];
+				const states = toRaw(child.states);
+				states.checked && checkedNodes.push(child);
+				states.indeterminate && halfCheckedNodes.push(child);
 				traverse(child);
-			});
+			}
 		};
 		traverse(this.root);
+		const toValue = (node: TreeNode) => toRaw(node.states).data[key];
 		return {
 			checkedNodes,
-			checkedValues: checkedNodes.map(node => node.states.data[key]),
+			checkedValues: checkedNodes.map(toValue),
 			halfCheckedNodes,
-			halfCheckedValues: halfCheckedNodes.map(node => node.states.data[key])
+			halfCheckedValues: halfCheckedNodes.map(toValue)
 		};
 	}
 

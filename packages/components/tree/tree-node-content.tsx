@@ -240,7 +240,12 @@ export const TreeNodeContent = defineComponent({
 							]}
 							onClick={handleIconClick}
 						>
-							<Icon type="triangle-up" />
+							{
+								// 叶子节点的图标不可见（is-leaf 透明），只为占位：用与 Icon 相同结构的静态元素，不为每片叶子建组件
+								isLeaf
+									? (<i class="vc-icon"><svg xmlns="http://www.w3.org/2000/svg" /></i>)
+									: (<Icon type="triangle-up" />)
+							}
 						</span>
 						{
 							showCheckbox && (
