@@ -286,7 +286,6 @@ describe('table/block-drag', () => {
 		expect(indicator.style.display).toBe('');
 		// 插入线在第 3 行之后
 		expect(indicator.style.top).toBe(`${BODY_TOP + 4 * ROW}px`);
-		expect(document.body.classList.contains('vc-table-dragging')).toBe(true);
 		// 公用类（定位、光标等机制）与 Table 的组件类（外观）同时存在
 		expect(document.body.classList.contains('vc-dragging')).toBe(true);
 		expect(ghost.classList.contains('vc-drag__ghost')).toBe(true);
@@ -298,7 +297,6 @@ describe('table/block-drag', () => {
 		await flush();
 		expect(root.querySelector('.vc-table__drag-ghost')).toBeNull();
 		expect(root.querySelector('.vc-table__drop-indicator')).toBeNull();
-		expect(document.body.classList.contains('vc-table-dragging')).toBe(false);
 		expect(document.body.classList.contains('vc-dragging')).toBe(false);
 		expect(wrapper.findAll('.vc-table__body-wrapper .is-dragging').length).toBe(0);
 		expect(tableRef.value.store.states.dragging).toBe(false);

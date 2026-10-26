@@ -1,6 +1,5 @@
 import { onBeforeUnmount } from 'vue';
 import type { Ref } from 'vue';
-import { clamp } from 'lodash-es';
 import { raf, caf } from '@deot/helper-utils';
 import { getScroller } from '@deot/helper-dom';
 import type { Nullable } from '@deot/helper-shared';
@@ -36,55 +35,36 @@ export const INTERACTIVE_SELECTOR = [
 	'.vc-drag-ignore'
 ].join(',');
 
+/**
+ * 按下的元素是否是拖拽源内部的交互元素（见 INTERACTIVE_SELECTOR）：只认拖拽源内部的，外层的 label 等不影响拖拽
+ * @param target 按下的元素
+ * @param container 拖拽源（行、单元格等）
+ * @returns 是否不发起拖拽
+ */
+export const isInteractive = (target: Element, container: Element) => {
+	const el = target.closest(INTERACTIVE_SELECTOR);
+	return !!el && container.contains(el);
+};
+
 // 拖拽中挂在 body 上的公用类：全局 move 光标、禁止选中文本
 const BODY_DRAGGING_CLASS = 'vc-dragging';
 
-// 公用类加上调用方的组件类
-const toClassName = (base: string, className?: string) => (className ? `${base} ${className}` : base);
-
 const preventDefault = (e: Event) => e.preventDefault();
 
-/**
- * 滚动 delta 后的位置
- * @param offset 当前位置
- * @param max 最大位置
- * @param delta 增量
- * @returns 新位置；不可滚动或已到边界时为 null
- */
-export const getNextOffset = (offset: number, max: number, delta: number) => {
-	if (max <= 0) return null;
-	const next = clamp(offset + delta, 0, max);
-	return Math.abs(next - offset) < 0.5 ? null : next;
-};
-
-/**
- * 按增量滚动容器（拖拽到边缘时的自动滚动）：交给容器的 Scroller 以同步滚动条
- * @param el 滚动容器
- * @param scroller 容器的 Scroller 实例；没有时直接写滚动位置
- * @param axis 滚动方向
- * @param delta 增量
- * @returns 是否滚动了
- */
-export const scrollByDelta = (el: HTMLElement, scroller: any, axis: 'x' | 'y', delta: number) => {
-	const next = axis === 'x'
-		? getNextOffset(el.scrollLeft, el.scrollWidth - el.clientWidth, delta)
-		: getNextOffset(el.scrollTop, el.scrollHeight - el.clientHeight, delta);
-	if (next == null) return false;
-	if (scroller) {
-		scroller.scrollTo({ [axis]: next });
-	} else {
-		el[axis === 'x' ? 'scrollLeft' : 'scrollTop'] = next;
-	}
-	return true;
-};
-
-// 纵向滚动承载者的属性名
-const Y_KEYS: AxisKeys = {
+// 纵向 / 横向滚动承载者的属性名
+export const Y_KEYS: AxisKeys = {
 	axis: 'y',
 	scrollAxis: 'scrollTop',
 	clientSize: 'clientHeight',
 	scrollSize: 'scrollHeight',
 	offsetSize: 'offsetHeight'
+};
+export const X_KEYS: AxisKeys = {
+	axis: 'x',
+	scrollAxis: 'scrollLeft',
+	clientSize: 'clientWidth',
+	scrollSize: 'scrollWidth',
+	offsetSize: 'offsetWidth'
 };
 
 /**
@@ -120,17 +100,24 @@ export const getOuterViewport = (outer: ExternalCarrier) => {
 };
 
 /**
- * 按增量滚动外部滚动承载者（窗口、元素或外层 VC Scroller）
+ * 元素在外部滚动视口中的可见范围（视口坐标），以及上下两端是否被视口遮住
+ * @param rect 元素的纵向范围
+ * @param rect.top ~
+ * @param rect.bottom ~
  * @param outer 外部滚动承载者
- * @param delta 纵向增量
- * @returns 是否滚动了
+ * @returns 可见范围与遮挡情况
  */
-export const scrollOuter = (outer: ExternalCarrier, delta: number) => {
-	const next = getNextOffset(outer.mainOffset, outer.scrollSize - outer.clientSize, delta);
-	if (next == null) return false;
-	outer.setMainOffset(next);
-	return true;
+export const getOuterRange = (rect: { top: number; bottom: number }, outer: ExternalCarrier) => {
+	const viewport = getOuterViewport(outer);
+	return {
+		top: Math.max(rect.top, viewport.top),
+		bottom: Math.min(rect.bottom, viewport.bottom),
+		clippedTop: rect.top < viewport.top - 0.5,
+		clippedBottom: rect.bottom > viewport.bottom + 0.5
+	};
 };
+
+export type OuterRange = ReturnType<typeof getOuterRange>;
 
 /**
  * 指针靠近范围边缘时的滚动增量：越靠近边缘越快
@@ -155,12 +142,26 @@ export const getEdgeDelta = (pointer: number, start: number, end: number) => {
 };
 
 /**
+ * 指针靠近范围上下边缘、且范围在该方向被外部视口遮住时，滚动外部承载者
+ * @param outer 外部滚动承载者
+ * @param range 可见范围（见 getOuterRange；调用方可先去掉被遮住的部分，如吸顶表头）
+ * @param pointer 指针纵坐标
+ * @returns 是否滚动了
+ */
+export const autoScrollOuter = (outer: ExternalCarrier, range: OuterRange, pointer: number) => {
+	const delta = getEdgeDelta(pointer, range.top, range.bottom);
+	if (!delta) return false;
+	const clipped = delta < 0 ? range.clippedTop : range.clippedBottom;
+	return clipped && outer.scrollBy(delta);
+};
+
+/**
  * 根节点（position: relative）坐标系下的偏移
  * @param root 组件根节点
+ * @param rect 已读取的根节点 rect，省去再读一次
  * @returns 偏移
  */
-export const toRootOffset = (root: HTMLElement) => {
-	const rect = root.getBoundingClientRect();
+export const toRootOffset = (root: HTMLElement, rect = root.getBoundingClientRect()) => {
 	return { top: rect.top + root.clientTop, left: rect.left + root.clientLeft };
 };
 
@@ -172,9 +173,9 @@ export type RootOffset = ReturnType<typeof toRootOffset>;
  * @param className 组件类名（外观），如 vc-table__drop-indicator
  * @returns 插入线
  */
-export const createIndicator = (root: HTMLElement, className?: string) => {
+export const createIndicator = (root: HTMLElement, className: string) => {
 	const el = document.createElement('div');
-	el.className = toClassName('vc-drag__indicator', className);
+	el.className = `vc-drag__indicator ${className}`;
 	el.setAttribute('aria-hidden', 'true');
 	el.style.display = 'none';
 	root.appendChild(el);
@@ -190,9 +191,9 @@ export const createIndicator = (root: HTMLElement, className?: string) => {
  * @param className 组件类名（外观），如 vc-table__drag-ghost
  * @returns 跟随元素与其中的克隆
  */
-export const createGhost = (root: HTMLElement, source: HTMLElement, contentClass: string, className?: string) => {
+export const createGhost = (root: HTMLElement, source: HTMLElement, contentClass: string, className: string) => {
 	const ghost = document.createElement('div');
-	ghost.className = toClassName('vc-drag__ghost', className);
+	ghost.className = `vc-drag__ghost ${className}`;
 	ghost.setAttribute('aria-hidden', 'true');
 	ghost.setAttribute('inert', '');
 
@@ -228,14 +229,12 @@ export type DragDropState<T, S> = {
 	// 激活（越过阈值或长按）后的拖拽会话；未激活时为 null
 	session: Nullable<S>;
 	// 最近一次的原生事件（按下、移动或松开），供组件事件的 event 参数
-	event: Event;
+	event: MouseEvent | TouchEvent;
 };
 
 type DragDropOptions<T, S> = {
 	// 组件根节点：松手后吞掉落在其中的 click
 	root: Ref<Nullable<HTMLElement>>;
-	// 拖拽中加在 body 上的组件类（公用类 vc-dragging 之外）
-	bodyClass?: string;
 	/**
 	 * 按下位置对应的拖拽源
 	 * @param target 按下的元素
@@ -287,7 +286,6 @@ type DragDropOptions<T, S> = {
 export const useDragDrop = <T, S>(options: DragDropOptions<T, S>) => {
 	let state: Nullable<DragDropState<T, S>> = null;
 	let frame: Nullable<number> = null;
-	const bodyClasses = options.bodyClass ? [BODY_DRAGGING_CLASS, options.bodyClass] : [BODY_DRAGGING_CLASS];
 
 	// 指针离按下点的距离（横纵取大）
 	const getDistance = (current: DragDropState<T, S>, x: number, y: number) => {
@@ -329,7 +327,7 @@ export const useDragDrop = <T, S>(options: DragDropOptions<T, S>) => {
 		const session = options.activate(current);
 		if (!session) return false;
 		current.session = session;
-		document.body.classList.add(...bodyClasses);
+		document.body.classList.add(BODY_DRAGGING_CLASS);
 		window.getSelection?.()?.removeAllRanges();
 		schedule();
 		options.start(current, session);
@@ -348,7 +346,7 @@ export const useDragDrop = <T, S>(options: DragDropOptions<T, S>) => {
 		toggleListeners(false);
 		cancelUpdate();
 		if (!current.session) return;
-		document.body.classList.remove(...bodyClasses);
+		document.body.classList.remove(BODY_DRAGGING_CLASS);
 		suppressClick();
 		options.finish(current, current.session, commit);
 	}
@@ -361,7 +359,7 @@ export const useDragDrop = <T, S>(options: DragDropOptions<T, S>) => {
 	 * @param e 原生事件
 	 * @returns 是否处于拖拽中
 	 */
-	const moveTo = (current: DragDropState<T, S>, x: number, y: number, e: Event) => {
+	const moveTo = (current: DragDropState<T, S>, x: number, y: number, e: MouseEvent | TouchEvent) => {
 		current.event = e;
 		current.clientX = x;
 		current.clientY = y;
@@ -465,7 +463,7 @@ export const useDragDrop = <T, S>(options: DragDropOptions<T, S>) => {
 		fn('blur', handleBlur);
 	}
 
-	const start = (source: T, x: number, y: number, touch: boolean, byHandle: boolean, event: Event) => {
+	const start = (source: T, x: number, y: number, touch: boolean, byHandle: boolean, event: MouseEvent | TouchEvent) => {
 		state = { source, startX: x, startY: y, clientX: x, clientY: y, touch, byHandle, timer: null, session: null, event };
 		toggleListeners(true);
 		return state;

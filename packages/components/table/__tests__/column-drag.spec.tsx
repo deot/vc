@@ -398,7 +398,7 @@ describe('table/column-drag', () => {
 			expect(indicator.classList.contains('is-vertical')).toBe(true);
 			expect(indicator.style.display).toBe('');
 			expect(indicator.style.left).toBe('500px');
-			expect(document.body.classList.contains('vc-table-dragging')).toBe(true);
+			expect(document.body.classList.contains('vc-dragging')).toBe(true);
 			expect(wrapper.element.classList.contains('is-column-dragging')).toBe(true);
 			// 被拖列变暗：表头按 id、表体按 data-column
 			const style = wrapper.element.querySelector('style')!.textContent!;
@@ -427,7 +427,7 @@ describe('table/column-drag', () => {
 			expect(wrapper.element.querySelector('.vc-table__drag-ghost')).toBeNull();
 			expect(wrapper.element.querySelector('style')).toBeNull();
 			expect(wrapper.element.classList.contains('is-column-dragging')).toBe(false);
-			expect(document.body.classList.contains('vc-table-dragging')).toBe(false);
+			expect(document.body.classList.contains('vc-dragging')).toBe(false);
 			expect(vm.store.states.dragging).toBe(false);
 		});
 
@@ -645,7 +645,7 @@ describe('table/column-drag', () => {
 			expect(root.querySelector('.vc-table__drag-ghost')).toBeNull();
 			expect(root.querySelector('.vc-table__drop-indicator')).toBeNull();
 			expect(root.querySelector('style')).toBeNull();
-			expect(document.body.classList.contains('vc-table-dragging')).toBe(false);
+			expect(document.body.classList.contains('vc-dragging')).toBe(false);
 			expect(result.vm.store.states.dragging).toBe(false);
 		});
 

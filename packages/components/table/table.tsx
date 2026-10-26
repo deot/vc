@@ -366,7 +366,6 @@ export const Table = defineComponent({
 			headerWrapper,
 			bottomWrapper,
 			bodyXWrapper,
-			bodyScroller,
 			virtual: usesRecycleList
 		});
 
@@ -378,7 +377,6 @@ export const Table = defineComponent({
 			headerWrapper,
 			bottomWrapper,
 			bodyXWrapper,
-			bodyScroller,
 			// 表头按下列宽拖拽区时置位（先于根节点的按下处理），此时不发起列拖拽
 			resizing: resizeProxyVisible
 		});

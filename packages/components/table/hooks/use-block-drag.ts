@@ -9,14 +9,14 @@ import type { Props } from '../table-props';
 import type { TableBlockDragPayload, TableBlockDragEndPayload, TableBlockDropPayload } from '../types';
 import { clamp } from 'lodash-es';
 import {
-	INTERACTIVE_SELECTOR,
+	Y_KEYS,
+	autoScrollOuter,
 	createGhost,
 	createIndicator,
 	getEdgeDelta,
-	getOuterViewport,
+	getOuterRange,
+	isInteractive,
 	resolveOuterCarrier,
-	scrollByDelta,
-	scrollOuter,
 	toRootOffset,
 	useDragDrop
 } from '../../drag';
@@ -30,8 +30,6 @@ type Options = {
 	headerWrapper: Ref<Nullable<HTMLElement>>;
 	bottomWrapper: Ref<Nullable<HTMLElement>>;
 	bodyXWrapper: Ref<Nullable<HTMLElement>>;
-	// 表体的 Scroller 实例（设置了 height / maxHeight 时承载纵向滚动）
-	bodyScroller: Ref<any>;
 	// 表体为虚拟列表（RecycleList）：滚动时块节点随之增删
 	virtual: Ref<boolean>;
 };
@@ -85,7 +83,11 @@ type DragSession = {
 	grabOffset: number;
 	ghost: HTMLElement;
 	ghostHeight: number;
+	// 已写入跟随行的横向滚动位置：与表体比较时不必读回（读取会在写入 top 之后强制重排）
+	ghostScrollLeft: number;
 	indicator: HTMLElement;
+	// 表体自身的纵向滚动（设置了 height / maxHeight 时承载滚动）
+	inner: ExternalCarrier;
 	// 表格外的纵向滚动承载者：流式高度下由它承载滚动
 	outer: ExternalCarrier;
 	// 已渲染的块根节点：非虚拟表格在块列表变化前不变，查询一次后缓存；虚拟表格为 null，每帧查询
@@ -115,7 +117,7 @@ const HOVER_EXPAND = 600;
  * @returns 根节点上的按下处理
  */
 export const useBlockDrag = (options: Options) => {
-	const { props, store, emit, tableWrapper, headerWrapper, bottomWrapper, bodyXWrapper, bodyScroller, virtual } = options;
+	const { props, store, emit, tableWrapper, headerWrapper, bottomWrapper, bodyXWrapper, virtual } = options;
 
 	// ---------------------------------------------------------------------
 	// 几何
@@ -158,9 +160,8 @@ export const useBlockDrag = (options: Options) => {
 		const body = bodyXWrapper.value;
 		if (!body) return null;
 		const rect = body.getBoundingClientRect();
-		const viewport = getOuterViewport(outer);
-		let top = Math.max(rect.top, viewport.top);
-		let bottom = Math.min(rect.bottom, viewport.bottom);
+		const range = getOuterRange(rect, outer);
+		let { top, bottom } = range;
 		if (headerWrapper.value) {
 			top = Math.max(top, headerWrapper.value.getBoundingClientRect().bottom);
 		}
@@ -174,8 +175,8 @@ export const useBlockDrag = (options: Options) => {
 			bottom: Math.max(top, bottom),
 			left: rect.left,
 			width: body.clientWidth,
-			clippedTop: rect.top < viewport.top - 0.5,
-			clippedBottom: rect.bottom > viewport.bottom + 0.5
+			clippedTop: range.clippedTop,
+			clippedBottom: range.clippedBottom
 		};
 	};
 
@@ -304,17 +305,6 @@ export const useBlockDrag = (options: Options) => {
 	// 自动滚动
 	// ---------------------------------------------------------------------
 	/**
-	 * 滚动表体自身（设置了 height / maxHeight 时）
-	 * @param delta 纵向增量
-	 * @returns 是否滚动了
-	 */
-	const scrollInner = (delta: number) => {
-		const el = bodyXWrapper.value;
-		const scroller = bodyScroller.value;
-		return !!el && !!scroller && scrollByDelta(el, scroller, 'y', delta);
-	};
-
-	/**
 	 * 指针靠近可见范围上下边缘时滚动：表体自身可滚动时优先；
 	 * 表体在该方向被外部滚动视口遮住时（流式高度、表格大于视口），滚动外部承载者
 	 * @param current 拖拽状态
@@ -325,9 +315,7 @@ export const useBlockDrag = (options: Options) => {
 	const autoScroll = (current: DragState, session: DragSession, visible: VisibleRect) => {
 		const delta = getEdgeDelta(current.clientY, visible.top, visible.bottom);
 		if (!delta) return false;
-		if (scrollInner(delta)) return true;
-		const clipped = delta < 0 ? visible.clippedTop : visible.clippedBottom;
-		return clipped && scrollOuter(session.outer, delta);
+		return session.inner.scrollBy(delta) || autoScrollOuter(session.outer, visible, current.clientY);
 	};
 
 	// ---------------------------------------------------------------------
@@ -369,7 +357,10 @@ export const useBlockDrag = (options: Options) => {
 		// 跟随行高于可见范围时顶部对齐
 		const top = Math.max(Math.min(current.clientY - session.grabOffset, visible.bottom - session.ghostHeight), visible.top);
 		ghost.style.top = `${top - offset.top}px`;
-		ghost.scrollLeft !== scrollLeft && (ghost.scrollLeft = scrollLeft);
+		if (session.ghostScrollLeft !== scrollLeft) {
+			ghost.scrollLeft = scrollLeft;
+			session.ghostScrollLeft = scrollLeft;
+		}
 	};
 
 	/**
@@ -510,7 +501,9 @@ export const useBlockDrag = (options: Options) => {
 			grabOffset: current.startY - blockEl.getBoundingClientRect().top,
 			ghost,
 			ghostHeight: ghost.offsetHeight,
+			ghostScrollLeft: body.scrollLeft,
 			indicator: createIndicator(root, 'vc-table__drop-indicator'),
+			inner: new ExternalCarrier(body, Y_KEYS),
 			outer,
 			blockEls: virtual.value ? null : els,
 			dimmed: [],
@@ -583,8 +576,7 @@ export const useBlockDrag = (options: Options) => {
 		const byHandle = !!handle && cell.contains(handle);
 		if (!byHandle) {
 			if (!store.drag.draggable.value[0]) return null;
-			const interactive = target.closest(INTERACTIVE_SELECTOR);
-			if (interactive && cell.contains(interactive)) return null;
+			if (isInteractive(target, cell)) return null;
 		}
 
 		const block = store.drag.getBlockByRowIndex(Number(cell.dataset.row));
@@ -592,7 +584,7 @@ export const useBlockDrag = (options: Options) => {
 		return { source: block, byHandle };
 	};
 
-	const drag = useDragDrop({ root: tableWrapper, bodyClass: 'vc-table-dragging', resolve: resolveSource, activate, start, update, finish });
+	const drag = useDragDrop({ root: tableWrapper, resolve: resolveSource, activate, start, update, finish });
 
 	/**
 	 * 拖拽期间块列表重建（数据或列变化、树形表格展开 / 收起、懒加载完成）：

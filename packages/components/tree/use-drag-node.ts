@@ -1,18 +1,17 @@
-import { shallowReactive, toRaw } from 'vue';
+import { toRaw } from 'vue';
 import type { Ref } from 'vue';
 import type { Nullable } from '@deot/helper-shared';
 import {
-	INTERACTIVE_SELECTOR,
+	autoScrollOuter,
 	createGhost,
 	createIndicator,
-	getEdgeDelta,
-	getOuterViewport,
+	getOuterRange,
+	isInteractive,
 	resolveOuterCarrier,
-	scrollOuter,
 	toRootOffset,
 	useDragDrop
 } from '../drag';
-import type { DragDropState } from '../drag';
+import type { DragDropState, RootOffset } from '../drag';
 import type { ExternalCarrier } from '../recycle-list/viewport/external/carrier';
 import type { TreeStore, TreeNode } from './store';
 import type { Props } from './tree-props';
@@ -53,16 +52,25 @@ const getPlace = (node: TreeNode): TreeDropPlace => {
  * @param node 被拖节点
  * @param target 目标节点
  * @param position 区域
+ * @param from 被拖节点移动前的位置（拖动中不变，可传入已算好的）
  * @returns 移动前后的位置
  */
-const getMove = (node: TreeNode, target: TreeNode, position: TreeDropPosition): TreeMove => {
+const getMove = (node: TreeNode, target: TreeNode, position: TreeDropPosition, from = getPlace(node)): TreeMove => {
 	const parent = position === 'inner' ? target : target.parentNode!;
 	let index = position === 'inner'
 		? target.childNodes.length
 		: indexIn(parent, target) + (position === 'after' ? 1 : 0);
 	// 同一父节点内，被拖节点在插入位置之前：移除后插入位置前移一位
 	if (toRaw(node.parentNode) === toRaw(parent) && indexIn(parent, node) < index) index--;
-	return { from: getPlace(node), to: { parent: toParent(parent), index } };
+	return { from, to: { parent: toParent(parent), index } };
+};
+
+// ancestor 是否是 node 的祖先：沿父节点向上，只与层级深度有关
+const isAncestor = (ancestor: TreeNode, node: TreeNode) => {
+	for (let parent = node.parentNode; parent; parent = parent.parentNode) {
+		if (parent === ancestor) return true;
+	}
+	return false;
 };
 
 type DragOptions = {
@@ -76,6 +84,18 @@ type DragOptions = {
 	getElement: (node: TreeNode) => Element | undefined;
 };
 
+// 能否放到目标节点的各个区域
+type DropFlags = {
+	// 使用方（allowDrop）允许任一区域：允许时目标才成为落点
+	allowed: boolean;
+	// 使用方允许 inner
+	userInner: boolean;
+	// 再去掉不改变位置、放进自身子树的区域后
+	prev: boolean;
+	inner: boolean;
+	next: boolean;
+};
+
 // 激活后的拖拽会话
 type DragSession = {
 	ghost: HTMLElement;
@@ -83,8 +103,16 @@ type DragSession = {
 	// 按下点到被拖行顶部的距离：跟随元素保持这段距离
 	grabY: number;
 	outer: ExternalCarrier;
+	// 被拖节点拖动前的位置（拖动中不变）
+	from: TreeDropPlace;
+	// 当前落点
+	dropNode: TreeNode | null;
+	dropType: TreeDropPosition | null;
 	// 当前落点所在的行（inner 时加 is-drop-inner）
 	dropEl: Element | null;
+	// 上一次判断过的目标节点及其结果：目标不变时不再重复询问 allowDrop、查找兄弟与祖先
+	flagsOf: TreeNode | null;
+	flags: DropFlags | null;
 };
 
 type DragState = DragDropState<TreeNode, DragSession>;
@@ -96,27 +124,45 @@ type DragState = DragDropState<TreeNode, DragSession>;
  * 	- 指针靠近树所在滚动容器的上下边缘时自动滚动；Esc、失焦取消
  * 	- 松手：有落点时移动节点，先发出 node-drop，再发出 node-dragend；各事件的 event 为最近一次的指针事件
  * @param options ~
- * @returns state：拖拽状态（根节点的类名用）；handleMousedown / handleTouchstart：绑在根节点上
+ * 	- 根节点在拖拽中带 is-dragging，不能放下时带 is-drop-not-allow，inner 时带 is-drop-inner（命令式写入，拖动过程不触发渲染）
+ * @returns handleMousedown / handleTouchstart：绑在根节点上
  */
 export const useDragNode = (options: DragOptions) => {
 	const { props, store, emit, root, getNode, getElement } = options;
-	const state = shallowReactive({
-		draggingNode: null as TreeNode | null,
-		dropNode: null as TreeNode | null,
-		dropType: '' as TreeDropPosition | 'none' | '',
-		allowDrop: true
-	});
+
+	const toggleRootClass = (name: string, value: boolean) => root.value?.classList.toggle(name, value);
 
 	// 询问能否放到目标节点的某个区域
-	const canDrop = (node: TreeNode, target: TreeNode, position: TreeDropPosition) => {
+	const canDrop = (node: TreeNode, target: TreeNode, position: TreeDropPosition, from: TreeDropPlace) => {
 		if (typeof props.allowDrop !== 'function') return true;
 		return !!props.allowDrop({
 			node,
 			data: node.states.data,
 			targetNode: target,
 			position,
-			...getMove(node, target, position)
+			...getMove(node, target, position, from)
 		} satisfies TreeAllowDropPayload);
+	};
+
+	// 能否放到目标节点的各个区域（同一目标只判断一次）
+	const getFlags = (session: DragSession, node: TreeNode, dropNode: TreeNode): DropFlags => {
+		if (session.flagsOf === dropNode && session.flags) return session.flags;
+		const prev = canDrop(node, dropNode, 'before', session.from);
+		const userInner = canDrop(node, dropNode, 'inner', session.from);
+		const next = canDrop(node, dropNode, 'after', session.from);
+		// 放进自身或自己的子孙：都不行
+		const self = node === dropNode || isAncestor(node, dropNode);
+		const flags = {
+			allowed: prev || userInner || next,
+			userInner,
+			// 紧挨着的前一个 / 后一个、已是它的子节点：放下后位置不变
+			prev: prev && !self && dropNode.getPreviousSiblingNode() !== node,
+			inner: userInner && !self && node.parentNode !== dropNode,
+			next: next && !self && dropNode.getNextSiblingNode() !== node
+		};
+		session.flagsOf = dropNode;
+		session.flags = flags;
+		return flags;
 	};
 
 	const resolve = (target: HTMLElement) => {
@@ -124,8 +170,7 @@ export const useDragNode = (options: DragOptions) => {
 		if (!props.draggable || !el || !target?.closest) return null;
 		const row = target.closest('[role="treeitem"]');
 		if (!row || !el.contains(row)) return null;
-		const interactive = target.closest(INTERACTIVE_SELECTOR);
-		if (interactive && row.contains(interactive)) return null;
+		if (isInteractive(target, row)) return null;
 		const node = getNode(row);
 		if (!node) return null;
 		if (typeof props.allowDrag === 'function' && !props.allowDrag({ node, data: node.states.data })) return null;
@@ -147,22 +192,28 @@ export const useDragNode = (options: DragOptions) => {
 			indicator: createIndicator(el, 'vc-tree__drop-indicator'),
 			grabY: current.startY - rect.top,
 			outer: resolveOuterCarrier(el),
-			dropEl: null
+			from: getPlace(current.source),
+			dropNode: null,
+			dropType: null,
+			dropEl: null,
+			flagsOf: null,
+			flags: null
 		};
 	};
 
 	const start = (current: DragState) => {
 		const node = current.source;
-		state.draggingNode = node;
-		emit('node-dragstart', { node, data: node.states.data, event: current.event as any } satisfies TreeNodeDragPayload);
+		toggleRootClass('is-dragging', true);
+		emit('node-dragstart', { node, data: node.states.data, event: current.event } satisfies TreeNodeDragPayload);
 	};
 
 	/**
-	 * 指针所在的节点：计算落点区域，更新插入线与 inner 高亮，发出 dragenter / dragleave / dragover
+	 * 指针所在的节点：计算落点区域，更新插入线与 inner 高亮，发出 dragenter / dragleave / dragover（先读后写）
 	 * @param current 拖拽状态
 	 * @param session 拖拽会话
+	 * @param offset 根节点偏移（本帧已测量）
 	 */
-	const hover = (current: DragState, session: DragSession) => {
+	const hover = (current: DragState, session: DragSession, offset: RootOffset) => {
 		const el = root.value!;
 		const hit = document.elementFromPoint(current.clientX, current.clientY);
 		const row = hit?.closest?.('[role="treeitem"]');
@@ -171,44 +222,26 @@ export const useDragNode = (options: DragOptions) => {
 		if (!row || !dropNode) return;
 
 		const node = current.source;
-		const oldDropNode = state.dropNode;
 		const payload = (targetNode: TreeNode): TreeNodeDragOverPayload => ({
 			node,
 			data: node.states.data,
 			targetNode,
-			event: current.event as any
+			event: current.event
 		});
 
-		let dropPrev = canDrop(node, dropNode, 'before');
-		const userAllowDropInner = canDrop(node, dropNode, 'inner');
-		let dropInner = userAllowDropInner;
-		let dropNext = canDrop(node, dropNode, 'after');
-		if ((dropPrev || dropInner || dropNext) && oldDropNode !== dropNode) {
-			oldDropNode && emit('node-dragleave', payload(oldDropNode));
-			emit('node-dragenter', payload(dropNode));
-		}
-		if (dropPrev || dropInner || dropNext) {
-			state.dropNode = dropNode;
+		const flags = getFlags(session, node, dropNode);
+		if (flags.allowed) {
+			const oldDropNode = session.dropNode;
+			if (oldDropNode !== dropNode) {
+				oldDropNode && emit('node-dragleave', payload(oldDropNode));
+				emit('node-dragenter', payload(dropNode));
+			}
+			session.dropNode = dropNode;
 		}
 
-		if (dropNode.getNextSiblingNode() === node) {
-			dropNext = false;
-		}
+		const { prev: dropPrev, inner: dropInner } = flags;
 		// 展开且有子节点：它的下方紧接第一个子节点，插入线会画在两者之间，而 after 会放到整棵子树之后
-		if (dropNode.states.expanded && dropNode.childNodes.length) {
-			dropNext = false;
-		}
-		if (dropNode.getPreviousSiblingNode() === node) {
-			dropPrev = false;
-		}
-		if (dropNode.contains(node, false)) {
-			dropInner = false;
-		}
-		if (node === dropNode || node.contains(dropNode)) {
-			dropPrev = false;
-			dropInner = false;
-			dropNext = false;
-		}
+		const dropNext = flags.next && !(dropNode.states.expanded && dropNode.childNodes.length);
 
 		// 按节点自己的内容行划分区域
 		const content = row.querySelector(':scope > .vc-tree-node__content')!;
@@ -216,26 +249,23 @@ export const useDragNode = (options: DragOptions) => {
 		const prevPercent = dropPrev ? (dropInner ? 0.25 : (dropNext ? 0.45 : 1)) : -1;
 		const nextPercent = dropNext ? (dropInner ? 0.75 : (dropPrev ? 0.55 : 0)) : 1;
 		const distance = current.clientY - target.top;
-		let dropType: TreeDropPosition | 'none';
+		let dropType: TreeDropPosition | null = null;
 		if (distance < target.height * prevPercent) {
 			dropType = 'before';
 		} else if (distance > target.height * nextPercent) {
 			dropType = 'after';
 		} else if (dropInner) {
 			dropType = 'inner';
-		} else {
-			dropType = 'none';
 		}
+		const icon = content.querySelector('.vc-tree-node__expand-icon')!.getBoundingClientRect();
 
 		// 插入线：展开图标之后，落点之前 / 之后
-		const offset = toRootOffset(el);
-		const icon = content.querySelector('.vc-tree-node__expand-icon')!.getBoundingClientRect();
 		const showIndicator = dropType === 'before' || dropType === 'after';
 		session.indicator.style.display = showIndicator ? '' : 'none';
 		session.indicator.style.top = `${(dropType === 'before' ? icon.top : icon.bottom) - offset.top}px`;
 		session.indicator.style.left = `${icon.right - offset.left}px`;
 
-		// inner 时高亮目标行（命令式：拖动过程不触发行的渲染）
+		// inner 时高亮目标行
 		const innerEl = dropType === 'inner' ? row : null;
 		if (session.dropEl !== innerEl) {
 			session.dropEl?.classList.remove('is-drop-inner');
@@ -243,25 +273,23 @@ export const useDragNode = (options: DragOptions) => {
 			session.dropEl = innerEl;
 		}
 
-		state.allowDrop = showIndicator || userAllowDropInner;
-		state.dropType = dropType;
+		session.dropType = dropType;
+		toggleRootClass('is-drop-not-allow', !showIndicator && !flags.userInner);
+		toggleRootClass('is-drop-inner', dropType === 'inner');
 		emit('node-dragover', payload(dropNode));
 	};
 
 	const update = (current: DragState, session: DragSession) => {
 		const el = root.value;
 		if (!el) return;
-		const offset = toRootOffset(el);
+		// 指针靠近树的可见范围上下边缘、且树在该方向被滚动容器遮住时，滚动容器；滚动后重新测量
+		let rect = el.getBoundingClientRect();
+		const scrolled = autoScrollOuter(session.outer, getOuterRange(rect, session.outer), current.clientY);
+		scrolled && (rect = el.getBoundingClientRect());
+		const offset = toRootOffset(el, rect);
+
+		hover(current, session, offset);
 		session.ghost.style.top = `${current.clientY - session.grabY - offset.top}px`;
-
-		// 指针靠近树的可见范围上下边缘、且树在该方向被滚动容器遮住时，滚动容器
-		const rect = el.getBoundingClientRect();
-		const viewport = getOuterViewport(session.outer);
-		const delta = getEdgeDelta(current.clientY, Math.max(rect.top, viewport.top), Math.min(rect.bottom, viewport.bottom));
-		const clipped = delta < 0 ? rect.top < viewport.top - 0.5 : rect.bottom > viewport.bottom + 0.5;
-		const scrolled = !!delta && clipped && scrollOuter(session.outer, delta);
-
-		hover(current, session);
 		return scrolled;
 	};
 
@@ -271,14 +299,12 @@ export const useDragNode = (options: DragOptions) => {
 		session.dropEl?.classList.remove('is-drop-inner');
 
 		const node = current.source;
-		const dropNode = state.dropNode;
-		const position = commit && dropNode && state.dropType && state.dropType !== 'none'
-			? state.dropType
-			: null;
+		const { dropNode } = session;
+		const position = commit && dropNode ? session.dropType : null;
 		// 移动前计算位置
-		const move = dropNode && position ? getMove(node, dropNode, position) : null;
+		const move = dropNode && position ? getMove(node, dropNode, position, session.from) : null;
 
-		if (dropNode && position) {
+		if (move && dropNode) {
 			const copy = { data: node.states.data };
 			node.remove();
 			const newNode = position === 'before'
@@ -290,7 +316,7 @@ export const useDragNode = (options: DragOptions) => {
 		}
 
 		// 先 node-drop，再 node-dragend
-		const base = { node, data: node.states.data, event: current.event as any };
+		const base = { node, data: node.states.data, event: current.event };
 		move && emit('node-drop', {
 			...base,
 			targetNode: dropNode!,
@@ -304,16 +330,14 @@ export const useDragNode = (options: DragOptions) => {
 			dropped: !!move
 		} satisfies TreeNodeDragEndPayload);
 
-		state.draggingNode = null;
-		state.dropNode = null;
-		state.dropType = '';
-		state.allowDrop = true;
+		toggleRootClass('is-dragging', false);
+		toggleRootClass('is-drop-not-allow', false);
+		toggleRootClass('is-drop-inner', false);
 	};
 
 	const drag = useDragDrop<TreeNode, DragSession>({ root, resolve, activate, start, update, finish });
 
 	return {
-		state,
 		handleMousedown: drag.handleMousedown,
 		handleTouchstart: drag.handleTouchstart
 	};

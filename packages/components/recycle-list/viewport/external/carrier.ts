@@ -78,6 +78,21 @@ export class ExternalCarrier {
 	}
 
 	/**
+	 * 按增量滚动主轴（如拖拽到边缘时的自动滚动），限制在可滚动范围内
+	 * @param delta 增量
+	 * @returns 是否滚动了；不可滚动或已到边界时为 false
+	 */
+	scrollBy(delta: number) {
+		const max = this.scrollSize - this.clientSize;
+		if (max <= 0) return false;
+		const offset = this.mainOffset;
+		const next = Math.min(Math.max(offset + delta, 0), max);
+		if (Math.abs(next - offset) < 0.5) return false;
+		this.setMainOffset(next);
+		return true;
+	}
+
+	/**
 	 * 订阅承载者的滚动，见 ScrollerManager.listen
 	 * @param listener 滚动回调
 	 * @returns 取消订阅

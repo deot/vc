@@ -95,7 +95,7 @@ $component-name: vc-tree;
 		}
 
 		// 拖拽中的光标由 body 上的公用类 vc-dragging 设为 move；不允许放置时改为 not-allowed（需要压过它的 !important）
-		.vc-dragging .vc-tree.is-dragging.is-drop-not-allow & {
+		.vc-tree.is-drop-not-allow & {
 			cursor: not-allowed !important;
 		}
 	}

@@ -363,18 +363,10 @@ export const Tree = defineComponent({
 			toggleCheck
 		});
 		return () => {
-			const dragState = drag.state;
 			return (
 				<div
-					class={[
-						{
-							'vc-tree--highlight-current': props.highlightCurrent,
-							'is-dragging': !!dragState.draggingNode,
-							'is-drop-not-allow': !dragState.allowDrop,
-							'is-drop-inner': dragState.dropType === 'inner'
-						},
-						'vc-tree'
-					]}
+					// 拖拽中的 is-dragging / is-drop-not-allow / is-drop-inner 由 useDragNode 直接写在根节点上
+					class={[{ 'vc-tree--highlight-current': props.highlightCurrent }, 'vc-tree']}
 					ref={rootEl}
 					role="tree"
 					onKeydown={keydown.handleKeydown}
