@@ -1,13 +1,14 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, cloneVNode, isVNode, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { defineComponent, cloneVNode, isVNode, onMounted, ref, watch } from 'vue';
 import type { PropType, VNode } from 'vue';
-import { debounce } from 'lodash-es';
 import { RecycleList } from '../../recycle-list/index';
-import { SCROLL_IDLE, isScrollOf, useScrollListener } from '../../scroller/scroll-idle';
-import { getScrollOffset, scrollIntoScroller } from '../hooks/use-navigate';
+import { isScrollOf, useScrollIdle } from '../../scroller/scroll-idle';
+import { getScrollOffset, scrollIntoScroller } from './scroll';
 
 const COMPONENT_NAME = 'vc-select-list';
+// 虚拟化时的初始预估行高（px）；行渲染出来后改用实际高度，见 handleRowResize
+const ESTIMATE_SIZE = 30;
 
 export type SelectListAlign = 'start' | 'nearest';
 
@@ -35,12 +36,7 @@ export const SelectList = defineComponent({
 			type: Array as PropType<unknown[]>,
 			default: () => []
 		},
-		virtualized: Boolean,
-		// 虚拟化时的初始预估行高（px）；行渲染出来后改用实际高度，见 handleRowResize
-		estimateSize: {
-			type: Number,
-			default: 30
-		}
+		virtualized: Boolean
 	},
 	emits: ['hover'],
 	setup(props, { slots, emit, expose }) {
@@ -75,11 +71,18 @@ export const SelectList = defineComponent({
 			if (index < 0) return;
 			const el = getRow(index);
 			if (!props.virtualized) return scrollIntoScroller(el, align);
-			// 虚拟化：已渲染且完整可见的行不动（RecycleList 的 start 总是置顶）；所在的滚动容器即列表外层的 Scroller
-			const scroller = root.value?.closest<HTMLElement>('.vc-scroller');
-			if (el && scroller && !getScrollOffset(el, scroller, align)) return;
+			// 虚拟化：nearest 交给 RecycleList（已完整可见时不动）；它的 start 总是置顶，已渲染且完整可见的行在这里拦下
+			// 所在的滚动容器即列表外层的 Scroller
+			if (align === 'start' && el) {
+				const scroller = root.value?.closest<HTMLElement>('.vc-scroller');
+				if (scroller && !getScrollOffset(el, scroller, align)) return;
+			}
 			recycleList?.scrollToIndex(index, { align });
 		};
+
+		// 默认渲染时上一次指针所在的行及其下标：在同一行内移动不必再在全部行中查找
+		let lastRow: Element | null = null;
+		let lastIndex = -1;
 
 		// 指针所在的行：虚拟化时为登记过的行节点，否则为根节点的哪一个子元素
 		const getIndex = (target: Element) => {
@@ -88,8 +91,15 @@ export const SelectList = defineComponent({
 				while (el && el !== root.value && !indexes.has(el)) el = el.parentElement;
 				return el && indexes.has(el) ? indexes.get(el)! : -1;
 			}
+			const children = root.value!.children;
 			while (el && el.parentElement !== root.value) el = el.parentElement;
-			return el ? Array.prototype.indexOf.call(root.value!.children, el) : -1;
+			if (!el) return -1;
+			// 行可能随数据移动：缓存的下标仍对得上才沿用
+			if (el !== lastRow || children[lastIndex] !== el) {
+				lastRow = el;
+				lastIndex = Array.prototype.indexOf.call(children, el);
+			}
+			return lastIndex;
 		};
 
 		const handleMousemove = (e: MouseEvent) => {
@@ -104,21 +114,11 @@ export const SelectList = defineComponent({
 		onMounted(sync);
 
 		// 滚动期间的标记：带动了列表的滚动才算（所在的滚动容器或页面）
-		let isScrolling = false;
-		const settle = debounce(() => {
-			isScrolling = false;
-			root.value?.classList.remove('is-scrolling');
-		}, SCROLL_IDLE);
-		useScrollListener((target) => {
-			const el = root.value;
-			if (!el || !isScrollOf(target, el)) return;
-			if (!isScrolling) {
-				isScrolling = true;
-				el.classList.add('is-scrolling');
-			}
-			settle();
+		useScrollIdle({
+			isRelevant: target => !!root.value && isScrollOf(target, root.value),
+			onStart: () => root.value?.classList.add('is-scrolling'),
+			onEnd: () => root.value?.classList.remove('is-scrolling')
 		});
-		onBeforeUnmount(() => settle.cancel());
 
 		expose({ scrollToIndex, highlight } satisfies SelectListExposed);
 
@@ -177,7 +177,7 @@ export const SelectList = defineComponent({
 										fill={false}
 										disabled
 										data={props.data}
-										estimateSize={measured.value || props.estimateSize}
+										estimateSize={measured.value || ESTIMATE_SIZE}
 										onRow-resize={handleRowResize}
 									>
 										{{ default: ({ row, index }: any) => renderTrackedRow(row, index) }}

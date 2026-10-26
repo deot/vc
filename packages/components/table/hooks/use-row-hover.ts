@@ -3,7 +3,7 @@ import type { Nullable } from '@deot/helper-shared';
 import { raf } from '@deot/helper-utils';
 import { debounce } from 'lodash-es';
 import { IS_SERVER } from '@deot/vc-shared';
-import { SCROLL_IDLE, isScrollOf, useScrollListener } from '../../scroller/scroll-idle';
+import { isScrollOf, useScrollIdle } from '../../scroller/scroll-idle';
 import type { TableProvide } from '../types';
 
 // 鼠标停留多久才高亮（ms）：快速划过不逐行闪
@@ -42,7 +42,6 @@ export const useRowHover = (table: TableProvide, getRoot: () => Nullable<HTMLEle
 	// 鼠标所在的块：高亮时优先在它里面找，不必查询整个表体
 	let hint: Nullable<HTMLElement> = null;
 	let highlighted: Element[] = [];
-	let isScrolling = false;
 	const pointer = { x: -1, y: -1 };
 
 	const clear = () => {
@@ -92,7 +91,7 @@ export const useRowHover = (table: TableProvide, getRoot: () => Nullable<HTMLEle
 	 * @param cellEl 单元格元素
 	 */
 	const enter = (cellEl: HTMLElement) => {
-		if (isScrolling) return;
+		if (scroll.isScrolling()) return;
 		hint = cellEl.parentElement;
 		setHoverIndex(Number(cellEl.dataset.row));
 	};
@@ -113,32 +112,30 @@ export const useRowHover = (table: TableProvide, getRoot: () => Nullable<HTMLEle
 		pointer.y = e.clientY;
 	};
 
-	const resume = debounce(() => {
-		isScrolling = false;
-		const root = getRoot();
-		const cellEl = !root || pointer.x < 0 ? null : resolveCellEl(document.elementFromPoint?.(pointer.x, pointer.y), root);
-		cellEl && enter(cellEl);
-	}, SCROLL_IDLE);
-
-	useScrollListener((target) => {
-		const root = getRoot();
-		// 拖拽排序中不处理：拖拽自己会带动滚动，命中判断不依赖悬停；已停用（KeepAlive）的表格也不处理
-		if (!root?.isConnected || store.states.dragging) return;
-		// 带动了行的滚动才算：页面、外层容器、表体自己的滚动容器；单元格里的滚动区域不算
-		const wrapper = table.bodyXWrapper.value;
-		if (!wrapper || !isScrollOf(target, wrapper)) return;
-		if (!isScrolling) {
-			isScrolling = true;
+	const scroll = useScrollIdle({
+		isRelevant: (target) => {
+			const root = getRoot();
+			// 拖拽排序中不处理：拖拽自己会带动滚动，命中判断不依赖悬停；已停用（KeepAlive）的表格也不处理
+			if (!root?.isConnected || store.states.dragging) return false;
+			// 带动了行的滚动才算：页面、外层容器、表体自己的滚动容器；单元格里的滚动区域不算
+			const wrapper = table.bodyXWrapper.value;
+			return !!wrapper && isScrollOf(target, wrapper);
+		},
+		onStart: () => {
 			hint = null;
 			setHoverIndex.cancel();
 			store.row.setHoverIndex(null);
+		},
+		// 停下后按鼠标位置找回其下的行
+		onEnd: () => {
+			const root = getRoot();
+			const cellEl = !root || pointer.x < 0 ? null : resolveCellEl(document.elementFromPoint?.(pointer.x, pointer.y), root);
+			cellEl && enter(cellEl);
 		}
-		resume();
 	});
 
 	onBeforeUnmount(() => {
 		setHoverIndex.cancel();
-		resume.cancel();
 	});
 
 	return { enter, leave, track };

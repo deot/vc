@@ -2,7 +2,7 @@
 
 import { defineComponent, ref, computed, nextTick } from 'vue';
 import { getUid } from '@deot/helper-utils';
-import { getLabel, flattenData } from './utils';
+import { getLabel, flattenData, getOptionText } from './utils';
 import type { TreeData } from './utils';
 import { Popover } from '../popover/index';
 import { Option, OptionGroup } from './select-option';
@@ -66,7 +66,7 @@ export const Select = defineComponent({
 		 */
 		const rows = computed<SelectRow[]>(() => {
 			const regex = searchRegex.value;
-			const match = (item: TreeData) => item.filterable === false || regex.test(String(item.label || item.value).trim());
+			const match = (item: TreeData) => item.filterable === false || regex.test(getOptionText(item));
 			const result: SelectRow[] = [];
 			(props.data as TreeData[] || []).forEach((item) => {
 				if (!Array.isArray(item.children) || !item.children.length) {
@@ -132,12 +132,15 @@ export const Select = defineComponent({
 			}
 		};
 
+		// 已选的值：打开时逐项判断是否已选，用 Set 查找
+		const selectedValues = computed(() => new Set(currentValue.value));
+
 		// 选项的键盘高亮：打开时为首个已选中的一项（弹层就绪后滚动到它，见 scrollIntoSelected）；搜索词、数据变化后选项增减，为第一项
 		// 自定义整个选项（option 插槽、renderOption）时不参与
 		const navigate = useNavigate<SelectRow>({
 			getList: () => rows.value,
 			isEnabled: ({ item, group }) => !group && !item.disabled && !slots.option && !props.renderOption,
-			prefer: ({ item }) => currentValue.value.includes(item.value),
+			prefer: ({ item }) => selectedValues.value.has(item.value),
 			select: ({ item }) => pick(item.value),
 			source: rows
 		});

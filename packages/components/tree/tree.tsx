@@ -224,12 +224,7 @@ export const Tree = defineComponent({
 		 * @returns 勾选数据
 		 */
 		const sync = () => {
-			const data = {
-				checkedNodes: store.getCheckedNodes(),
-				checkedValues: store.getCheckedValues(),
-				halfCheckedNodes: store.getHalfCheckedNodes(),
-				halfCheckedValues: store.getHalfCheckedValues()
-			};
+			const data = store.getCheckedState();
 
 			const v = toModelValue(data.checkedValues, {
 				modelValue: props.modelValue,

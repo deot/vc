@@ -6,6 +6,7 @@ import { Customer } from '../../customer';
 import { Icon } from '../../icon';
 import { renderHighlight } from '../select-search/highlight';
 import { props as optionProps } from './option-props';
+import { getOptionText } from '../utils';
 
 const COMPONENT_NAME = 'vc-select-option';
 
@@ -44,7 +45,7 @@ export const Option = defineComponent({
 
 		// 命中关键词的部分高亮；拆成多段时包一层，避免各段成为独立的 flex 子项
 		const renderText = () => {
-			const text = renderHighlight(String(props.label || props.value).trim(), props.regex);
+			const text = renderHighlight(getOptionText(props), props.regex);
 			return typeof text === 'string' ? text : (<span>{ text }</span>);
 		};
 

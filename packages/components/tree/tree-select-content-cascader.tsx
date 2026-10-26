@@ -1,8 +1,9 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, computed, nextTick, watch } from 'vue';
+import { defineComponent, ref, computed, watch } from 'vue';
 import type { PropType } from 'vue';
 import { renderType } from '../customer/customer-props';
+import { findIndexByValue } from '../select/utils';
 import type { TreeData, TreeValue, SearchRegex } from '../select/utils';
 import { Checkbox } from '../checkbox/index';
 import { Customer } from '../customer/index';
@@ -82,14 +83,11 @@ export const TreeSelectContentCascader = defineComponent({
 		});
 		const searching = computed(() => !!props.searchRegex?.highlight);
 
-		const sync = async () => {
-			await nextTick();
-			emit('change', null, {
-				checkedNodes: store.getCheckedNodes(),
-				checkedValues: store.getCheckedValues(),
-				halfCheckedNodes: store.getHalfCheckedNodes(),
-				halfCheckedValues: store.getHalfCheckedValues()
-			});
+		const sync = () => {
+			const data = store.getCheckedState();
+			// 先记下这次的勾选值：父级随后传回相同的 value 时 setCheckedValues 判断相等直接跳过，不必按它把整棵树再写一遍
+			store.checkedValues = data.checkedValues;
+			emit('change', null, data);
 		};
 
 		const getNodeState = (item: TreeData) => {
@@ -100,14 +98,10 @@ export const TreeSelectContentCascader = defineComponent({
 			};
 		};
 
-		const handleCheckboxChange = (v: any, item: TreeData) => {
-			store.setChecked(item, v, !props.checkStrictly);
-			sync();
-		};
-
-		const handleLabelClick = (v: any, item: TreeData) => {
+		// 切换一项的勾选（复选框、点击级联列的项、选中搜索结果、回车）；禁用的项不处理
+		const toggle = (item: TreeData, checked = !getNodeState(item).checked) => {
 			if (item.disabled) return;
-			store.setChecked(item, v, !props.checkStrictly);
+			store.setChecked(item, checked, !props.checkStrictly);
 			sync();
 		};
 
@@ -122,16 +116,14 @@ export const TreeSelectContentCascader = defineComponent({
 						modelValue={state.checked}
 						indeterminate={state.indeterminate}
 						disabled={!!item.disabled}
-						onChange={v => handleCheckboxChange(v, item)}
+						onChange={v => toggle(item, !!v)}
 					/>
 				</span>
 			);
 		};
 
 		// 选中搜索结果 / 点击级联列的项：切换勾选
-		const handleSelect = ({ item }: SelectPath | CascaderCell) => {
-			handleLabelClick(!getNodeState(item).checked, item);
-		};
+		const handleSelect = ({ item }: SelectPath | CascaderCell) => toggle(item);
 
 		const renderPrefix = ({ item }: SelectPath | CascaderCell) => renderCheckbox(item);
 
@@ -153,8 +145,9 @@ export const TreeSelectContentCascader = defineComponent({
 			// 回车：切换路径末端一项的勾选
 			enter: () => {
 				const index = currentValue.value.length - 1;
-				const item = rebuildData.value[index]?.find(i => i.value === currentValue.value[index]);
-				item && handleLabelClick(!getNodeState(item).checked, item);
+				const list = rebuildData.value[index];
+				const item = list?.[findIndexByValue(list, currentValue.value[index])];
+				item && toggle(item);
 			},
 			isSearching: () => searching.value,
 			getView: () => columnsRef.value?.$el,

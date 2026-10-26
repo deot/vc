@@ -1,4 +1,5 @@
 import { onMounted, onBeforeUnmount } from 'vue';
+import { debounce } from 'lodash-es';
 import type { Nullable } from '@deot/helper-shared';
 
 // 滚动停止多久后才算停下（ms）
@@ -43,6 +44,39 @@ export const useScrollListener = (fn?: Listener) => {
 	let unlisten: (() => void) | undefined;
 	onMounted(() => (unlisten = listenScroll(fn)));
 	onBeforeUnmount(() => unlisten?.());
+};
+
+interface ScrollIdleOptions {
+	// 这次滚动是否相关（如带动了关心的节点）
+	isRelevant: (target: Nullable<EventTarget>) => boolean;
+	// 相关的滚动开始
+	onStart?: () => void;
+	// 停下 SCROLL_IDLE 后
+	onEnd?: () => void;
+}
+
+/**
+ * 组件内使用：相关的滚动开始时调用 onStart，停下 SCROLL_IDLE 后调用 onEnd（持续滚动会顺延）；卸载时取消还在等待的 onEnd
+ * @param options ~
+ * @returns isScrolling：是否在滚动中
+ */
+export const useScrollIdle = (options: ScrollIdleOptions) => {
+	const { isRelevant, onStart, onEnd } = options;
+	let isScrolling = false;
+	const settle = debounce(() => {
+		isScrolling = false;
+		onEnd?.();
+	}, SCROLL_IDLE);
+	useScrollListener((target) => {
+		if (!isRelevant(target)) return;
+		if (!isScrolling) {
+			isScrolling = true;
+			onStart?.();
+		}
+		settle();
+	});
+	onBeforeUnmount(() => settle.cancel());
+	return { isScrolling: () => isScrolling };
 };
 
 /**

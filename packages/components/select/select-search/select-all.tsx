@@ -23,16 +23,11 @@ export const SelectAll = defineComponent({
 		 * 判断是否所有可选项都已选中
 		 */
 		const isAllSelected = computed(() => {
-			if (!owner?.exposed || props.data.length === 0) {
-				return false;
-			}
 			const current = owner.exposed.current.value || [];
 			return props.data.every((value: any) => current.includes(value));
 		});
 
 		const handleSelectAll = () => {
-			if (!owner?.exposed) return;
-
 			const current = owner.exposed.current.value || [];
 			const { add, remove } = owner.exposed;
 
@@ -47,11 +42,6 @@ export const SelectAll = defineComponent({
 		};
 
 		return () => {
-			// 如果没有可选项，不显示按钮
-			if (props.data.length === 0) {
-				return null;
-			}
-
 			return (
 				<div
 					class={[{ 'is-selected': isAllSelected.value }, 'vc-select-all']}

@@ -7,6 +7,7 @@ import { Spin } from '../../spin/index';
 import { Scroller } from '../../scroller/index';
 import { SelectList } from '../../select/select-list';
 import type { SelectListAlign, SelectListExposed } from '../../select/select-list';
+import { findIndexByValue } from '../../select/utils';
 import type { TreeData, TreeValue } from '../../select/utils';
 
 const COMPONENT_NAME = 'vc-cascader-columns';
@@ -79,8 +80,7 @@ export const CascaderColumns = defineComponent({
 		// 各列滚动到路径上的一项（不在可视范围内时置顶）
 		const scrollIntoSelected = () => {
 			props.value.forEach((value, columnIndex) => {
-				const rowIndex = props.data[columnIndex]?.findIndex(item => item.value == value) ?? -1;
-				scrollToItem(columnIndex, rowIndex, 'start');
+				scrollToItem(columnIndex, findIndexByValue(props.data[columnIndex], value), 'start');
 			});
 		};
 

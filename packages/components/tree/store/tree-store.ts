@@ -280,6 +280,30 @@ export class TreeStore {
 		return checkedNodes;
 	}
 
+	/**
+	 * 勾选与半选的节点及其值（同步 v-model 用），遍历一次
+	 * @returns 勾选数据
+	 */
+	getCheckedState() {
+		const key = this.primaryKey;
+		const checkedNodes: TreeNode[] = [];
+		const halfCheckedNodes: TreeNode[] = [];
+		const traverse = (node: TreeNode) => {
+			node.childNodes.forEach((child) => {
+				child.states.checked && checkedNodes.push(child);
+				child.states.indeterminate && halfCheckedNodes.push(child);
+				traverse(child);
+			});
+		};
+		traverse(this.root);
+		return {
+			checkedNodes,
+			checkedValues: checkedNodes.map(node => node.states.data[key]),
+			halfCheckedNodes,
+			halfCheckedValues: halfCheckedNodes.map(node => node.states.data[key])
+		};
+	}
+
 	getCheckedValues(leafOnly = false) {
 		return this.getCheckedNodes(leafOnly).map(node => node.states.data[this.primaryKey]);
 	}

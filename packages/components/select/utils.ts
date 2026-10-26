@@ -94,6 +94,25 @@ export const getTreeDepth = (data: TreeData[]) => {
 	return depth;
 };
 
+/**
+ * 选项（或分组标题）显示与搜索用的文字：label，没有时为 value；过滤（Select）与高亮（Option）共用，两者才能对上
+ * @param item 选项
+ * @param item.label ~
+ * @param item.value ~
+ * @returns 文字
+ */
+export const getOptionText = (item: { label?: any; value?: any }) => String(item.label || item.value).trim();
+
+/**
+ * 一列中值为 value 的项的下标；路径里的值可能已转为字符串（如经过 v-model），按 == 比较
+ * @param list 一列的数据
+ * @param value 值
+ * @returns 下标；没有时为 -1
+ */
+export const findIndexByValue = (list: TreeData[] | undefined, value: TreeValue) => {
+	return list ? list.findIndex(item => item.value == value) : -1;
+};
+
 export const getLabel = (data: TreeData, v: TreeValue): TreeLabel => {
 	if (typeof v === 'undefined' || v === '') return '';
 	const { label = '' } = data.find((i: TreeData) => i.value == v) || {};

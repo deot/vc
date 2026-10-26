@@ -2,6 +2,7 @@
 
 import { defineComponent, computed } from 'vue';
 import { props as optionGroupProps } from './option-group-props';
+import { getOptionText } from '../utils';
 import { Customer } from '../../customer';
 
 const COMPONENT_NAME = 'vc-select-option-group';
@@ -10,10 +11,7 @@ export const OptionGroup = defineComponent({
 	name: COMPONENT_NAME,
 	props: optionGroupProps,
 	setup(props, { slots }) {
-		const formatterLabel = computed(() => {
-			const v = String(props.label || props.value);
-			return v.trim();
-		});
+		const formatterLabel = computed(() => getOptionText(props));
 
 		const customOptions = computed(() => {
 			return {

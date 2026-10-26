@@ -1,8 +1,7 @@
 import { nextTick, ref, watch } from 'vue';
 import type { WatchSource } from 'vue';
-import { getViewportRect } from '../../scroller/utils';
-import { ScrollerManager } from '../../scroller/manager';
 import type { SelectListExposed } from '../select-list';
+import { findIndexByValue } from '../utils';
 
 /**
  * 弹层打开时响应方向键与回车的对象；方法返回 false 表示不处理（按键交还给浏览器或焦点所在的节点）
@@ -16,39 +15,6 @@ export interface Navigator {
 	enter?: () => boolean | void;
 }
 
-/**
- * 节点滚动到 Scroller 可视范围内所需的滚动量（滚动坐标）
- * @param el ~
- * @param scroller ~
- * @param align 已完整可见时为 0；否则 nearest：贴近离得近的一边，start：置顶
- * @returns 滚动量
- */
-export const getScrollOffset = (el: Element, scroller: HTMLElement, align: 'nearest' | 'start' = 'nearest') => {
-	const { top, bottom, scale } = getViewportRect(scroller);
-	const rect = el.getBoundingClientRect();
-	const offset = rect.top < top || (align === 'start' && rect.bottom > bottom)
-		? rect.top - top
-		: rect.bottom > bottom ? rect.bottom - bottom : 0;
-	return offset / scale;
-};
-
-/**
- * 把节点滚动到其所在 Scroller 的可视范围内；只调整该容器，不滚动页面
- * @param el ~
- * @param align 见 getScrollOffset
- */
-export const scrollIntoScroller = (el?: Element | null, align: 'nearest' | 'start' = 'nearest') => {
-	const scroller = el?.closest<HTMLElement>('.vc-scroller');
-	if (!el || !scroller) return;
-	const offset = getScrollOffset(el, scroller, align);
-	if (!offset) return;
-
-	// 经 Scroller 写入：自绘滚动条同步更新
-	const y = scroller.scrollTop + offset;
-	const instance = ScrollerManager.get(scroller);
-	instance ? instance.scrollTo({ y }) : (scroller.scrollTop = y);
-};
-
 // 从 from 起按 step 方向找第一个可用项，首尾循环；没有可用项时为 -1
 export const findEnabled = <T>(list: T[], from: number, step: number, isEnabled: (item: T, index: number) => boolean) => {
 	const size = list.length;
@@ -57,6 +23,12 @@ export const findEnabled = <T>(list: T[], from: number, step: number, isEnabled:
 		if (isEnabled(list[index], index)) return index;
 	}
 	return -1;
+};
+
+// current（-1 表示没有）之后按 step 方向的第一个可用项：没有 current 时从首（step > 0）或尾开始；首尾循环
+export const findNext = <T>(list: T[], current: number, step: number, isEnabled: (item: T, index: number) => boolean) => {
+	const from = current === -1 ? (step > 0 ? 0 : list.length - 1) : current + step;
+	return findEnabled(list, from, step, isEnabled);
 };
 
 interface NavigateOptions<T> {
@@ -109,8 +81,7 @@ export const useNavigate = <T>(options: NavigateOptions<T>) => {
 	const move = (step: number) => {
 		const items = getList();
 		if (!items.length) return;
-		const from = active === -1 ? (step > 0 ? 0 : items.length - 1) : active + step;
-		const index = findEnabled(items, from, step, isEnabled);
+		const index = findNext(items, active, step, isEnabled);
 		index !== -1 && set(index, true);
 	};
 
@@ -174,6 +145,8 @@ interface ColumnNavigateOptions {
 	isInverted?: () => boolean;
 }
 
+const isItemEnabled = (item: ColumnItem) => !item.disabled;
+
 // 搜索结果的宽度沿用进入搜索前的级联列，并限制在该范围内，避免弹层宽度随结果跳动
 const MIN_WIDTH = 240;
 const MAX_WIDTH = 360;
@@ -199,8 +172,6 @@ export const useColumnNavigate = (options: ColumnNavigateOptions) => {
 		v && (searchWidth.value = getPathsWidth(getView()));
 	});
 
-	const find = (list: ColumnItem[], from: number, step: number) => findEnabled(list, from, step, item => !item.disabled);
-
 	const go = (list: ColumnItem[], columnIndex: number, rowIndex: number) => {
 		if (rowIndex === -1) return;
 		hover(list[rowIndex], columnIndex, rowIndex);
@@ -212,9 +183,7 @@ export const useColumnNavigate = (options: ColumnNavigateOptions) => {
 		const columnIndex = Math.max(path.length - 1, 0);
 		const list = getColumns()[columnIndex] || [];
 		if (!list.length) return;
-		const current = list.findIndex(item => item.value == path[columnIndex]);
-		const from = current === -1 ? (step > 0 ? 0 : list.length - 1) : current + step;
-		go(list, columnIndex, find(list, from, step));
+		go(list, columnIndex, findNext(list, findIndexByValue(list, path[columnIndex]), step, isItemEnabled));
 	};
 
 	const shift = (step: number) => {
@@ -222,11 +191,11 @@ export const useColumnNavigate = (options: ColumnNavigateOptions) => {
 		const columns = getColumns();
 		if (step > 0) {
 			const list = (path.length && columns[path.length]) || [];
-			list.length && go(list, path.length, find(list, 0, 1));
+			list.length && go(list, path.length, findEnabled(list, 0, 1, isItemEnabled));
 		} else if (path.length > 1) {
 			const columnIndex = path.length - 2;
 			const list = columns[columnIndex] || [];
-			go(list, columnIndex, list.findIndex(item => item.value == path[columnIndex]));
+			go(list, columnIndex, findIndexByValue(list, path[columnIndex]));
 		}
 	};
 

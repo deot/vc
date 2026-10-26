@@ -5,7 +5,8 @@ import { enUS, zhCN } from '@deot/vc-locale';
 import { Option, OptionGroup } from '../select-option';
 import { SelectAll, SelectPaths } from '../select-search';
 import { fitTags } from '../select-trigger/utils';
-import { scrollIntoScroller, useColumnNavigate, getPathsWidth } from '../hooks/use-navigate';
+import { useColumnNavigate, getPathsWidth } from '../hooks/use-navigate';
+import { scrollIntoScroller } from '../select-list/scroll';
 import {
 	createSearchRegex,
 	flattenData,
@@ -1626,9 +1627,17 @@ describe('Option / OptionGroup / SelectAll components', () => {
 		expect(typeof SelectAll).toBe('object');
 	});
 
-	it('SelectAll renders nothing when no selectable options', () => {
-		const wrapper = mount(SelectAll, { props: { data: [] } });
-		expect(wrapper.html()).toBe('');
+	it('Select 搜索结果没有可选项时不渲染 SelectAll', async () => {
+		const wrapper = mount(() => (
+			<Select modelValue={[]} data={cityList} max={5} searchable="popover" />
+		), { attachTo: document.body });
+		await nextTick();
+		await wrapper.trigger('click');
+		await flush();
+
+		typeInto(getSearchInput(), 'zzz-no-match');
+		await flush();
+		expect(document.querySelector('.vc-select-all')).toBeNull();
 		wrapper.unmount();
 	});
 });
