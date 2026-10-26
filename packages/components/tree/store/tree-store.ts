@@ -1,7 +1,8 @@
+import { toRaw } from 'vue';
 import { isEqualWith, difference } from 'lodash-es';
 import { hasOwn } from '@deot/helper-utils';
 import type { Nullable } from '@deot/helper-shared';
-import { TreeNode } from './tree-node';
+import { TreeNode, getRawValue } from './tree-node';
 import { KEY_NODE, KEY_VALUE } from './constant';
 
 export class TreeStore {
@@ -31,6 +32,8 @@ export class TreeStore {
 	onCheckChange?: (node: TreeNode) => void;
 	// 本轮写入前的状态
 	private pendingChecks = new Map<TreeNode, [boolean, boolean]>();
+	// expandedValues 的查找表，随数组引用重建
+	private expandedSet?: [(string | number)[], Set<string | number>];
 
 	constructor(options: Partial<TreeStore>) {
 		for (const option in options) {
@@ -68,6 +71,15 @@ export class TreeStore {
 		pending.forEach(([checked, indeterminate], node) => {
 			(node.states.checked !== checked || node.states.indeterminate !== indeterminate) && this.onCheckChange?.(node);
 		});
+	}
+
+	hasExpandedValue(value: string | number) {
+		const values = this.expandedValues;
+		if (!values || !values.length) return false;
+		if (this.expandedSet?.[0] !== values) {
+			this.expandedSet = [values, new Set(values)];
+		}
+		return this.expandedSet[1].has(value);
 	}
 
 	filter(value: any) {
@@ -228,21 +240,21 @@ export class TreeStore {
 
 	registerNode(node: TreeNode) {
 		const key = this.primaryKey;
-		if (!key || !node || !node.states.data) return;
+		if (!key || !node || !toRaw(node.states).data) return;
 
-		const nodeValue = node.getter.value;
+		const nodeValue = getRawValue(node);
 		if (nodeValue !== undefined) this.nodesMap[nodeValue] = node;
 	}
 
 	deregisterNode(node: TreeNode) {
 		const key = this.primaryKey;
-		if (!key || !node || !node.states.data) return;
+		if (!key || !node || !toRaw(node.states).data) return;
 
 		node.childNodes.forEach((child) => {
 			this.deregisterNode(child);
 		});
 
-		const nodeValue = node.getter.value;
+		const nodeValue = getRawValue(node);
 		delete this.nodesMap[nodeValue];
 	}
 

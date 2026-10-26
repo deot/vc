@@ -1,4 +1,4 @@
-import { reactive, computed } from 'vue';
+import { reactive, toRaw, markRaw } from 'vue';
 import { hasOwn } from '@deot/helper-utils';
 import type { Nullable } from '@deot/helper-shared';
 import type { TreeStore } from './tree-store';
@@ -67,9 +67,16 @@ const reInitChecked = (node: TreeNode) => {
 	}
 };
 
-const getPropertyFromData = (node: TreeNode, prop: string) => {
+/**
+ * 按 keyValue 读取节点数据上的字段
+ * @param node ~
+ * @param prop ~
+ * @param data 默认经过 states 读（在 effect 中会被追踪）；构造、登记等不需要追踪的场合传原始数据，避免为每个数据对象建代理
+ * @returns ~
+ */
+const getPropertyFromData = (node: TreeNode, prop: string, data: any = node.states.data) => {
 	const keyValue = node.store.keyValue;
-	const data = node.states.data || {};
+	data = data || {};
 	const config = keyValue[prop];
 
 	if (typeof config === 'function') {
@@ -82,32 +89,55 @@ const getPropertyFromData = (node: TreeNode, prop: string) => {
 	}
 };
 
+/**
+ * 不经过代理读取节点的值（nodesMap 的键）
+ * @param node ~
+ * @returns ~
+ */
+export const getRawValue = (node: TreeNode) => getPropertyFromData(node, 'value', toRaw(node.states).data);
+
+// 每次读取时按 keyValue 现读：在渲染等 effect 中读取会追踪 states.data，其余场合不建依赖
+class TreeNodeGetter {
+	constructor(readonly node: TreeNode) {}
+
+	get label() {
+		return getPropertyFromData(this.node, 'label');
+	}
+
+	get value() {
+		return getPropertyFromData(this.node, 'value');
+	}
+
+	get disabled() {
+		return getPropertyFromData(this.node, 'disabled');
+	}
+}
+
+const createStates = () => ({
+	checked: false,
+	indeterminate: false,
+	expanded: false,
+	visible: true,
+	isCurrent: false,
+	isLeaf: false,
+	isLeafByUser: false,
+	loading: false,
+	level: 0,
+	loaded: false,
+	data: null as any
+});
+
+type States = ReturnType<typeof createStates>;
 type Options = Omit<Partial<TreeNode>, 'states'> & {
-	states?: Partial<TreeNode['states']>;
+	states?: Partial<States>;
 };
 let nodeIdSeed = 0;
 
 export class TreeNode {
 	id = nodeIdSeed++;
-	states = reactive({
-		checked: false,
-		indeterminate: false,
-		expanded: false,
-		visible: true,
-		isCurrent: false,
-		isLeaf: false,
-		isLeafByUser: false,
-		loading: false,
-		level: 0,
-		loaded: false,
-		data: null as any
-	});
+	states: States;
 
-	getter = reactive({
-		label: computed(() => getPropertyFromData(this, 'label')),
-		value: computed(() => getPropertyFromData(this, 'value')),
-		disabled: computed(() => getPropertyFromData(this, 'disabled')),
-	});
+	getter = new TreeNodeGetter(this);
 
 	childNodes: TreeNode[] = reactive([]);
 
@@ -115,70 +145,70 @@ export class TreeNode {
 	parentNode: Nullable<TreeNode> = null;
 
 	constructor(options: Options) {
+		// 节点自身不做深层代理（states / childNodes 已各自 reactive）
+		markRaw(this);
+		let initial: Partial<States> | undefined;
 		for (const name in options) {
 			if (hasOwn(options, name)) {
 				if (name === 'states') {
-					Object.assign(this.states, options[name]);
+					initial = options[name];
 				} else {
 					this[name] = options[name];
 				}
 			}
 		}
 		const store = this.store;
-		const { keyValue } = store;
-
-		this.states.loaded = !!(this.states.data[keyValue.children]);
-		this.states.loading = false;
-
-		if (this.parentNode) {
-			this.states.level = this.parentNode.states.level + 1;
-		}
-
 		if (!store) {
 			throw new Error('[Node]store is required!');
 		}
+		const { keyValue } = store;
+
+		// 构造期间直接写原始对象：此时还没有 effect 订阅这个节点
+		const data = toRaw(initial?.data ?? null);
+		const raw: States = { ...createStates(), ...initial, data };
+		raw.loaded = !!(data && data[keyValue.children]);
+		raw.loading = false;
+		if (this.parentNode) {
+			raw.level = this.parentNode.states.level + 1;
+		}
+		this.states = reactive(raw);
+
 		store.registerNode(this);
 
 		if (keyValue && typeof keyValue.isLeaf !== 'undefined') {
-			const isLeaf = getPropertyFromData(this, keyValue.isLeaf);
+			const isLeaf = getPropertyFromData(this, keyValue.isLeaf, data);
 			if (typeof isLeaf === 'boolean') {
-				this.states.isLeafByUser = isLeaf;
+				raw.isLeafByUser = isLeaf;
 			}
 		}
 
-		if (this.states.data) {
-			this.setData(this.states.data);
-			if (store.defaultExpandAll && this.states.data[keyValue.children]) {
-				this.states.expanded = true;
-			}
+		if (!data) return;
+
+		this.createChildNodes(data, toRaw(this.childNodes));
+		if (store.defaultExpandAll && data[keyValue.children]) {
+			raw.expanded = true;
 		}
 
-		// 自动加载
-		// if (this.states.level > 0 && store.lazy && store.defaultExpandAll) {
-		// 	this.expand();
-		// }
-
-		if (!Array.isArray(this.states.data)) {
-			markNodeData(this, this.states.data);
+		if (!Array.isArray(data)) {
+			markNodeData(this, data);
 		}
-		if (!this.states.data) return;
-		const expandedValues = store.expandedValues;
+
 		const key = store.primaryKey;
-		const value = this.states.data[key];
-		if (key && expandedValues && expandedValues.indexOf(value) !== -1) {
+		const value = data[key];
+		if (key && store.hasExpandedValue(value)) {
 			this.expand(store.autoExpandParent);
 		}
 
 		if (key && store.currentNodeValue !== undefined && value === store.currentNodeValue) {
 			store.currentNode = this;
-			store.currentNode.states.isCurrent = true;
+			raw.isCurrent = true;
 		}
 
 		if (store.lazy) {
 			store._initDefaultCheckedNode(this);
 		}
 
-		this.updateLeafState();
+		raw.isLeaf = this.getLeafState();
 	}
 
 	getNextSiblingNode() {
@@ -204,6 +234,7 @@ export class TreeNode {
 	}
 
 	setData(data: object) {
+		data = toRaw(data);
 		if (!Array.isArray(data)) {
 			markNodeData(this, data);
 		}
@@ -211,16 +242,26 @@ export class TreeNode {
 		this.states.data = data;
 		this.childNodes.forEach(child => this.store.deregisterNode(child));
 		this.childNodes.splice(0, this.childNodes.length);
+		this.createChildNodes(data, this.childNodes);
+		this.updateLeafState();
+	}
 
-		let children: any[];
-		if (this.states.level === 0 && this.states.data instanceof Array) {
-			children = this.states.data;
-		} else {
-			children = getPropertyFromData(this, 'children') || [];
-		}
+	/**
+	 * 按数据建子节点
+	 * @param data 原始数据
+	 * @param target 写入的数组：构造中的节点直接写原始数组，已有节点经过代理（Tree 的 rows 依赖它）
+	 */
+	private createChildNodes(data: any, target: TreeNode[]) {
+		const children: any[] = (this.states.level === 0 && Array.isArray(data))
+			? data
+			: getPropertyFromData(this, 'children', data) || [];
 
 		for (let i = 0, j = children.length; i < j; i++) {
-			this.insertChild({ data: children[i] });
+			target.push(new TreeNode({
+				parentNode: this,
+				store: this.store,
+				states: { data: children[i] }
+			}));
 		}
 	}
 
@@ -248,7 +289,7 @@ export class TreeNode {
 		}
 	}
 
-	insertChild(states: Partial<TreeNode['states']>, index?: number, batch?: any) {
+	insertChild(states: Partial<States>, index?: number, batch?: any) {
 		if (!states) throw new Error('insertChild error: states is required.');
 
 		if (!batch) {
@@ -264,10 +305,8 @@ export class TreeNode {
 		const child = new TreeNode({
 			parentNode: this,
 			store: this.store,
-			states: states as any
+			states
 		});
-
-		child.states.level = this.states.level + 1;
 
 		if (typeof index === 'undefined' || index < 0) {
 			this.childNodes.push(child as TreeNode);
@@ -280,7 +319,7 @@ export class TreeNode {
 		return child;
 	}
 
-	insertBefore(states: Partial<TreeNode['states']>, ref?: TreeNode) {
+	insertBefore(states: Partial<States>, ref?: TreeNode) {
 		let index = -1;
 		if (ref) {
 			index = this.childNodes.indexOf(ref);
@@ -288,7 +327,7 @@ export class TreeNode {
 		return this.insertChild(states, index);
 	}
 
-	insertAfter(states: Partial<TreeNode['states']>, ref?: TreeNode) {
+	insertAfter(states: Partial<States>, ref?: TreeNode) {
 		let index = -1;
 		if (ref) {
 			index = this.childNodes.indexOf(ref);
@@ -378,20 +417,16 @@ export class TreeNode {
 			&& !this.states.loaded;
 	}
 
+	getLeafState() {
+		const { lazy } = this.store;
+		const { loaded, isLeafByUser } = this.states;
+		if (lazy && !loaded && typeof isLeafByUser !== 'undefined') return isLeafByUser;
+		if (!lazy || loaded) return this.childNodes.length === 0;
+		return false;
+	}
+
 	updateLeafState() {
-		if (this.store.lazy
-			&& !this.states.loaded
-			&& typeof this.states.isLeafByUser !== 'undefined'
-		) {
-			this.states.isLeaf = this.states.isLeafByUser;
-			return;
-		}
-		const childNodes = this.childNodes;
-		if (!this.store.lazy || (this.store.lazy && this.states.loaded)) {
-			this.states.isLeaf = !childNodes || childNodes.length === 0;
-			return;
-		}
-		this.states.isLeaf = false;
+		this.states.isLeaf = this.getLeafState();
 	}
 
 	async setChecked(value: boolean | string, deep?: boolean, recursion?: boolean, passValue?: boolean) {
