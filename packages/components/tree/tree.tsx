@@ -4,17 +4,18 @@ import { defineComponent, provide, ref, computed, watch, getCurrentInstance, sha
 import type { ComponentInternalInstance } from 'vue';
 import { isEqualWith } from 'lodash-es';
 import type { TreeNode } from './store/tree-node';
-import type { TreeCheckChangePayload, TreeCheckPayload, TreeNodeExpandChangePayload, TreeProvide } from './types';
+import type { TreeCheckChangePayload, TreeCheckPayload, TreeHighlightProvide, TreeNodeExpandChangePayload, TreeProvide } from './types';
 import { KEY_VALUE } from './store/constant';
 import { TreeStore } from './store/tree-store';
 import { toCurrentValue, toModelValue } from '../select/utils';
 import { Customer } from '../customer';
 import { useLocale } from '../locale';
 import { SelectList } from '../select/select-list';
-import type { SelectListAlign, SelectListExposed } from '../select/select-list';
+import type { SelectListExposed } from '../select/select-list';
+import { useNavigate } from '../select/hooks/use-navigate';
 import { TreeNodeContent, collectVisibleNodes } from './tree-node-content.tsx';
 import { useDragNode } from './use-drag-node';
-import { useKeydown } from './use-keydown';
+import { useKeydown, isNodeEnabled, resolveShift } from './use-keydown';
 
 import { props as treeProps } from './tree-props';
 
@@ -82,22 +83,31 @@ export const Tree = defineComponent({
 		const rowInstances = new Map<TreeNode, ComponentInternalInstance>();
 		const rowNodes = new WeakMap<Element, TreeNode>();
 		const registerRow = (node: TreeNode, row: ComponentInternalInstance) => {
+			const el = row.vnode.el as Element;
 			rowInstances.set(node, row);
-			rowNodes.set(row.vnode.el as Element, node);
+			rowNodes.set(el, node);
+			keydown.handleRowMounted(node, el);
 		};
 		const unregisterRow = (node: TreeNode, row: ComponentInternalInstance) => {
 			rowInstances.get(node) === row && rowInstances.delete(node);
 		};
 		const getElement = (node: TreeNode) => rowInstances.get(node)?.vnode.el as Element | undefined;
 		const getNodeOf = (el: Element) => rowNodes.get(el);
+		/**
+		 * 元素所在的行及其节点（拖拽、悬停高亮用）；嵌套在节点内容里的其他树的行不属于本树（不在登记中）
+		 * @param target 元素
+		 * @returns 行与节点；不在本树的行上时为 undefined
+		 */
+		const getNodeAt = (target: EventTarget | null) => {
+			const row = (target as Element | null)?.closest?.('[role="treeitem"]');
+			const node = row && rowNodes.get(row);
+			return node ? { row: row!, node } : void 0;
+		};
 
 		const rootEl = ref<HTMLElement | null>(null);
-		const drag = useDragNode({ props, store, emit, root: rootEl, getNode: getNodeOf, getElement });
+		const drag = useDragNode({ props, store, emit, root: rootEl, getNodeAt, getElement });
 
-		const isEmpty = computed(() => {
-			const { childNodes } = root;
-			return !childNodes || childNodes.length === 0 || childNodes.every(({ states }) => !states.visible);
-		});
+		const isEmpty = computed(() => !rows.value.length);
 
 		watch(
 			() => props.modelValue,
@@ -225,6 +235,8 @@ export const Tree = defineComponent({
 		 */
 		const sync = () => {
 			const data = store.getCheckedState();
+			// 先记下这次的勾选值：父级随后传回相同的 modelValue 时 setCheckedValues 判断相等直接跳过，不必按它把整棵树再写一遍
+			store.checkedValues = data.checkedValues;
 
 			const v = toModelValue(data.checkedValues, {
 				modelValue: props.modelValue,
@@ -246,9 +258,9 @@ export const Tree = defineComponent({
 		 * 用户发起的展开 / 收起（点击图标或节点）：带动画；展开后 accordion 收起同级节点，再发出 node-expand-change
 		 * 	- 动画进行中再次点击：立即结束当前动画，按新的方向开始，快速连点不丢操作
 		 * @param node ~
-		 * @param row 节点所在行的组件实例
+		 * @param row 节点所在行的组件实例；虚拟列表中行未渲染时为 undefined
 		 */
-		const toggle = async (node: TreeNode, row: ComponentInternalInstance) => {
+		const toggle = async (node: TreeNode, row = rowInstances.get(node)) => {
 			if (node.states.isLeaf) return;
 			motions.delete(node);
 			const toPayload = (expanded: boolean): TreeNodeExpandChangePayload => ({ node, data: node.states.data, expanded, instance: row });
@@ -260,10 +272,12 @@ export const Tree = defineComponent({
 			}
 			// 先进入动画再展开：子孙直接出现在动画块里，不在铺平的列表里闪现
 			motions.set(node, 'expand');
+			// 懒加载的子节点会继承勾选状态，加载后才需要同步 v-model
+			const loads = node.shouldLoadData();
 			await node.expand();
 			// 加载失败等未能展开
 			!node.states.expanded && motions.get(node) === 'expand' && motions.delete(node);
-			sync();
+			loads && sync();
 			props.accordion && node.collapseSiblings();
 			emit('node-expand-change', toPayload(true));
 		};
@@ -290,11 +304,48 @@ export const Tree = defineComponent({
 			getNode: getNodeOf,
 			getElement,
 			scrollToIndex: index => list.value?.scrollToIndex(index, 'nearest'),
-			toggle: node => toggle(node, rowInstances.get(node)!),
+			toggle,
 			toggleCheck,
 			showCheckbox: () => props.showCheckbox
 		});
 		onMounted(keydown.initTabStop);
+
+		/**
+		 * TreeSelect（树形模式）注入时改用与 Select / Cascader 一致的键盘高亮：焦点留在触发器或搜索栏
+		 * 	- ↑ ↓ 在可见节点间移动；← → 见 resolveShift；回车切换勾选
+		 * 	- 打开时高亮第一个勾选的节点（弹层就绪后由 scrollIntoActive 滚动到它），source 变化后为第一个节点
+		 * 	- 指针在节点上移动时高亮跟随；展开 / 收起使行增减时按节点重新对上
+		 */
+		const highlight = inject<TreeHighlightProvide | null>('vc-tree-highlight', null);
+		const navigate = highlight && useNavigate<TreeNode>({
+			getList: () => rows.value,
+			isEnabled: isNodeEnabled,
+			prefer: node => node.states.checked,
+			select: node => toggleCheck(node),
+			source: highlight.source
+		});
+		if (navigate) {
+			watch(rows, () => navigate.sync(), { flush: 'post' });
+			onMounted(() => navigate.setList(list.value));
+		}
+
+		const shift = (step: number) => {
+			const node = rows.value[navigate!.getActive()];
+			const target = node && resolveShift(rows.value, node, step);
+			if (!target) return;
+			'toggle' in target ? toggle(target.toggle) : navigate!.activate(target.index);
+		};
+
+		// 只在指针移到另一行时处理
+		let hovered: Element | null = null;
+		const handleMousemove = (e: MouseEvent) => {
+			const hit = getNodeAt(e.target);
+			const row = hit?.row || null;
+			if (row === hovered) return;
+			hovered = row;
+			const index = hit ? rows.value.indexOf(hit.node) : -1;
+			index !== -1 && navigate!.hover(index);
+		};
 
 		const renderNode = (node: TreeNode) => {
 			return (
@@ -302,9 +353,6 @@ export const Tree = defineComponent({
 					// 按节点对象（id）区分：拖放、setData 等重新创建节点时行重新挂载，行与节点的登记随之更新
 					key={node.id}
 					node={node}
-					renderNodeLabel={props.renderNodeLabel}
-					showCheckbox={props.showCheckbox}
-					allowDispatch={props.allowDispatch}
 				/>
 			);
 		};
@@ -317,13 +365,11 @@ export const Tree = defineComponent({
 		provide('vc-tree', {
 			props,
 			store,
-			root,
 			emit,
 			instance: instance!,
 			motions,
 			toggle,
 			toggleCheck,
-			sync,
 			renderNode,
 			registerRow,
 			unregisterRow
@@ -350,17 +396,13 @@ export const Tree = defineComponent({
 			insertBefore,
 			insertAfter,
 			updateKeyChildren,
-			// 以下供 TreeSelect 的键盘高亮使用：铺平的可见节点、行的高亮与滚动、按元素找行的下标
-			getRows: () => rows.value,
-			highlight: (index: number) => list.value?.highlight(index),
-			scrollToIndex: (index: number, align?: SelectListAlign) => list.value?.scrollToIndex(index, align),
-			getIndex: (target: Element) => {
-				const row = target.closest?.('[role="treeitem"]');
-				const node = row && getNodeOf(row);
-				return node ? rows.value.indexOf(node) : -1;
-			},
-			toggleNode: (node: TreeNode) => toggle(node, rowInstances.get(node)!),
-			toggleCheck
+			// TreeSelect 注入高亮时（见 navigate）：交给它的键盘
+			...(navigate && {
+				move: navigate.move,
+				shift,
+				enter: navigate.enter,
+				scrollIntoActive: navigate.scrollIntoActive
+			})
 		});
 		return () => {
 			return (
@@ -371,6 +413,7 @@ export const Tree = defineComponent({
 					role="tree"
 					onKeydown={keydown.handleKeydown}
 					onFocusin={keydown.handleFocusin}
+					onMousemove={navigate ? handleMousemove : void 0}
 					onMousedown={drag.handleMousedown}
 					// 拖拽的触摸按下为 passive，不影响滚动
 					{...{ onTouchstartPassive: drag.handleTouchstart }}

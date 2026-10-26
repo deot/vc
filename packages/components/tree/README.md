@@ -402,7 +402,7 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 | node-click | 点击节点 | `({ node, data, instance, event })` | `instance` 为节点组件实例，`event` 为原生事件 |
 | node-contextmenu | 右键节点 | `({ node, data, instance, event })` | 注册监听时阻止原生右键菜单 |
 | current-change | 点击切换当前节点 | `({ node, data, oldNode })` | `oldNode` 无前值时为 `null`；重复点击同节点不触发 |
-| node-expand-change | 点击展开 / 收起 | `({ node, data, expanded, instance })` | `expanded` 为当前操作的展开状态 |
+| node-expand-change | 点击展开 / 收起 | `({ node, data, expanded, instance })` | `expanded` 为当前操作的展开状态；`instance` 为节点组件实例，虚拟化时行未渲染（如键盘操作已滚出视口的节点）为 `undefined` |
 | node-dragstart | 开始拖拽 | `({ node, data, event })` | `node` / `data` 为被拖节点 |
 | node-dragenter / node-dragleave / node-dragover | 进入 / 离开 / 经过目标 | `({ node, data, targetNode, event })` | `targetNode` 为目标节点 |
 | node-drop | 成功移动节点 | `({ node, data, targetNode, position, from, to, event })` | `position` 为 `before` / `inner` / `after`；位置定义见“拖拽节点” |

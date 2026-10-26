@@ -184,7 +184,7 @@ export class TreeNode {
 
 		if (!data) return;
 
-		this.createChildNodes(data, toRaw(this.childNodes));
+		this.createChildNodes(this.childrenOf(data), toRaw(this.childNodes));
 		if (store.defaultExpandAll && data[keyValue.children]) {
 			raw.expanded = true;
 		}
@@ -242,25 +242,29 @@ export class TreeNode {
 		this.states.data = data;
 		this.childNodes.forEach(child => this.store.deregisterNode(child));
 		this.childNodes.splice(0, this.childNodes.length);
-		this.createChildNodes(data, this.childNodes);
+		this.createChildNodes(this.childrenOf(data), this.childNodes);
 		this.updateLeafState();
 	}
 
-	/**
-	 * 按数据建子节点
-	 * @param data 原始数据
-	 * @param target 写入的数组：构造中的节点直接写原始数组，已有节点经过代理（Tree 的 rows 依赖它）
-	 */
-	private createChildNodes(data: any, target: TreeNode[]) {
-		const children: any[] = (this.states.level === 0 && Array.isArray(data))
+	// 数据中的子节点数据：根节点的数据即子节点数组
+	private childrenOf(data: any): any[] {
+		return (this.states.level === 0 && Array.isArray(data))
 			? data
 			: getPropertyFromData(this, 'children', data) || [];
+	}
 
+	/**
+	 * 按子节点数据建子节点
+	 * @param children 子节点数据（原始数据）
+	 * @param target 写入的数组：构造中的节点直接写原始数组，已有节点经过代理（Tree 的 rows 依赖它）
+	 * @param defaultProps 子节点的初始状态（如懒加载时继承的勾选）
+	 */
+	private createChildNodes(children: any[], target: TreeNode[], defaultProps: Partial<States> = {}) {
 		for (let i = 0, j = children.length; i < j; i++) {
 			target.push(new TreeNode({
 				parentNode: this,
 				store: this.store,
-				states: { data: children[i] }
+				states: { ...defaultProps, data: children[i] }
 			}));
 		}
 	}
@@ -397,9 +401,8 @@ export class TreeNode {
 	}
 
 	doCreateChildren(array: any[], defaultProps = {}) {
-		array.forEach((item) => {
-			this.insertChild({ data: item, ...defaultProps }, undefined, true);
-		});
+		this.createChildNodes(array, this.childNodes, defaultProps);
+		this.updateLeafState();
 	}
 
 	collapse() {

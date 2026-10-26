@@ -79,8 +79,8 @@ type DragOptions = {
 	emit: (event: any, ...args: any[]) => void;
 	// 树的根节点（position: relative）
 	root: Ref<Nullable<HTMLElement>>;
-	// 行（元素）对应的节点 / 节点所在的行
-	getNode: (el: Element) => TreeNode | undefined;
+	// 元素所在的行及其节点 / 节点所在的行
+	getNodeAt: (target: EventTarget | null) => { row: Element; node: TreeNode } | undefined;
 	getElement: (node: TreeNode) => Element | undefined;
 };
 
@@ -128,7 +128,7 @@ type DragState = DragDropState<TreeNode, DragSession>;
  * @returns handleMousedown / handleTouchstart：绑在根节点上
  */
 export const useDragNode = (options: DragOptions) => {
-	const { props, store, emit, root, getNode, getElement } = options;
+	const { props, store, emit, root, getNodeAt, getElement } = options;
 
 	const toggleRootClass = (name: string, value: boolean) => root.value?.classList.toggle(name, value);
 
@@ -166,13 +166,9 @@ export const useDragNode = (options: DragOptions) => {
 	};
 
 	const resolve = (target: HTMLElement) => {
-		const el = root.value;
-		if (!props.draggable || !el || !target?.closest) return null;
-		const row = target.closest('[role="treeitem"]');
-		if (!row || !el.contains(row)) return null;
-		if (isInteractive(target, row)) return null;
-		const node = getNode(row);
-		if (!node) return null;
+		const hit = props.draggable && root.value ? getNodeAt(target) : void 0;
+		if (!hit || isInteractive(target, hit.row)) return null;
+		const { node } = hit;
 		if (typeof props.allowDrag === 'function' && !props.allowDrag({ node, data: node.states.data })) return null;
 		return { source: node, byHandle: false };
 	};
@@ -214,12 +210,10 @@ export const useDragNode = (options: DragOptions) => {
 	 * @param offset 根节点偏移（本帧已测量）
 	 */
 	const hover = (current: DragState, session: DragSession, offset: RootOffset) => {
-		const el = root.value!;
-		const hit = document.elementFromPoint(current.clientX, current.clientY);
-		const row = hit?.closest?.('[role="treeitem"]');
-		const dropNode = row && el.contains(row) ? getNode(row) : void 0;
+		const hit = getNodeAt(document.elementFromPoint(current.clientX, current.clientY));
 		// 不在节点上：保持上一个落点
-		if (!row || !dropNode) return;
+		if (!hit) return;
+		const { row, node: dropNode } = hit;
 
 		const node = current.source;
 		const payload = (targetNode: TreeNode): TreeNodeDragOverPayload => ({

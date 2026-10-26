@@ -2,9 +2,8 @@ import { pick } from 'lodash-es';
 import type { ExtractPropTypes, PropType } from 'vue';
 import { props as selectProps } from '../select/select-props';
 import { KEY_VALUE } from './store/constant';
-import { props as treeNodeContentProps } from './tree-node-content-props';
 import type { TreeAllowDragPayload, TreeAllowDropPayload } from './types';
-import { valueType } from '../customer/customer-props';
+import { renderType, valueType } from '../customer/customer-props';
 
 const selectKeys = [
 	'separator',
@@ -14,17 +13,26 @@ const selectKeys = [
 	'virtualized'
 ] as const;
 
-const treeNodeContentKeys = [
-	'renderNodeLabel',
-	'renderNodeAfterExpand',
-	'showCheckbox',
-	'accordion',
-	'allowDispatch'
-] as const;
-
 export const props = {
 	...(pick(selectProps, selectKeys) as Pick<typeof selectProps, typeof selectKeys[number]>),
-	...(pick(treeNodeContentProps, treeNodeContentKeys) as Pick<typeof treeNodeContentProps, typeof treeNodeContentKeys[number]>),
+	renderNodeLabel: renderType,
+	// 已废弃：铺平渲染后不再区分，保留以兼容
+	renderNodeAfterExpand: {
+		type: Boolean,
+		default: true
+	},
+	showCheckbox: {
+		type: Boolean,
+		default: false
+	},
+	accordion: {
+		type: Boolean,
+		default: false
+	},
+	allowDispatch: {
+		type: Boolean,
+		default: true
+	},
 	// 暂不支持，仅作为默认值
 	max: {
 		type: Number,

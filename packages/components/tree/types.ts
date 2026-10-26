@@ -1,19 +1,16 @@
-import type { ComponentInternalInstance, VNode } from 'vue';
+import type { ComponentInternalInstance, VNode, WatchSource } from 'vue';
 import type { Props } from './tree-props';
 import type { TreeStore, TreeNode } from './store';
 
 export interface TreeProvide {
 	props: Props;
 	store: TreeStore;
-	root: TreeNode;
 	instance: ComponentInternalInstance;
 	emit: any;
 	// 正在展开 / 收起动画的节点
 	motions: Map<TreeNode, 'expand' | 'collapse'>;
 	// 用户发起的展开 / 收起（带动画、accordion、node-expand-change）
-	toggle: (node: TreeNode, instance: ComponentInternalInstance) => Promise<void>;
-	// 按当前勾选同步 v-model，返回勾选数据
-	sync: () => Pick<TreeCheckPayload, 'checkedNodes' | 'checkedValues' | 'halfCheckedNodes' | 'halfCheckedValues'>;
+	toggle: (node: TreeNode, instance?: ComponentInternalInstance) => Promise<void>;
 	// 切换勾选：联动后发出 check 并同步 v-model
 	toggleCheck: (node: TreeNode, checked?: boolean) => Promise<void>;
 	// 渲染一行（铺平的列表与动画块共用）
@@ -22,6 +19,14 @@ export interface TreeProvide {
 	registerRow: (node: TreeNode, row: ComponentInternalInstance) => void;
 	unregisterRow: (node: TreeNode, row: ComponentInternalInstance) => void;
 };
+
+/**
+ * TreeSelect（树形模式）注入：Tree 改用与 Select 一致的键盘高亮（焦点留在触发器或搜索栏）
+ */
+export interface TreeHighlightProvide {
+	// 列表内容的来源（搜索词、数据）：变化后高亮第一项
+	source: WatchSource;
+}
 
 /**
  * 拖拽落点：相对目标节点之前 / 之后，或成为它的子节点
@@ -66,7 +71,8 @@ export interface TreeNodeEventPayload extends TreeNodePayload {
  */
 export interface TreeNodeExpandChangePayload extends TreeNodePayload {
 	expanded: boolean;
-	instance: ComponentInternalInstance;
+	// 节点组件实例；虚拟化时行未渲染（如键盘操作已滚出视口的节点）为 undefined
+	instance?: ComponentInternalInstance;
 }
 
 /**

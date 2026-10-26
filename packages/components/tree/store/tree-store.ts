@@ -99,7 +99,8 @@ export class TreeStore {
 			}
 			if (!value) return;
 
-			if (node.states.visible && !node.states.isLeaf && !lazy) node.expand();
+			// 已展开的不必再展开（expand 是异步的，逐个调用会为每个节点建一个 Promise）
+			if (node.states.visible && !node.states.isLeaf && !node.states.expanded && !lazy) node.expand();
 		};
 
 		traverse(this.root);
@@ -309,22 +310,7 @@ export class TreeStore {
 	}
 
 	getHalfCheckedNodes() {
-		const nodesData: TreeNode[] = [];
-		const traverse = function (node: TreeNode) {
-			const childNodes = node.childNodes;
-
-			childNodes.forEach((child) => {
-				if (child.states.indeterminate) {
-					nodesData.push(child);
-				}
-
-				traverse(child);
-			});
-		};
-
-		traverse(this.root);
-
-		return nodesData;
+		return this.getCheckedState().halfCheckedNodes;
 	}
 
 	getHalfCheckedValues() {

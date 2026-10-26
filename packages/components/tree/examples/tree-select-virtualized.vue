@@ -56,7 +56,7 @@ const data = computed(() => Array.from({ length: controls.count }, (_, index) =>
 const value = ref([]);
 // 数量、模式变化时重新挂载
 const remountKey = computed(() => Object.values(controls).join('-'));
-watch(remountKey, () => (value.value = []), { immediate: true });
+watch(remountKey, () => (value.value = []));
 
 window.$perf?.observe();
 watch(controls, () => window.$perf?.reset());

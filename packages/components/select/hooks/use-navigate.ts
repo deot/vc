@@ -25,6 +25,12 @@ export const findEnabled = <T>(list: T[], from: number, step: number, isEnabled:
 	return -1;
 };
 
+// 符合 prefer 的第一个可用项，没有时为第一个可用项；都没有时为 -1
+export const findPreferred = <T>(list: T[], isEnabled: (item: T, index: number) => boolean, prefer?: (item: T, index: number) => boolean) => {
+	const index = prefer ? list.findIndex((item, i) => isEnabled(item, i) && prefer(item, i)) : -1;
+	return index !== -1 ? index : findEnabled(list, 0, 1, isEnabled);
+};
+
 // current（-1 表示没有）之后按 step 方向的第一个可用项：没有 current 时从首（step > 0）或尾开始；首尾循环
 export const findNext = <T>(list: T[], current: number, step: number, isEnabled: (item: T, index: number) => boolean) => {
 	const from = current === -1 ? (step > 0 ? 0 : list.length - 1) : current + step;
@@ -66,9 +72,7 @@ export const useNavigate = <T>(options: NavigateOptions<T>) => {
 	};
 
 	const reset = (preferred?: NavigateOptions<T>['prefer'], scroll?: boolean) => {
-		const items = getList();
-		const index = preferred ? items.findIndex((item, i) => isEnabled(item, i) && preferred(item, i)) : -1;
-		set(index !== -1 ? index : findEnabled(items, 0, 1, isEnabled), scroll);
+		set(findPreferred(getList(), isEnabled, preferred), scroll);
 	};
 
 	const setList = (vm: any) => {

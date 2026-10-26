@@ -17,6 +17,9 @@ import type {
 
 const COMPONENT_NAME = 'vc-tree-node';
 
+// 复选框上的点击不冒泡到行（行的点击会选中当前节点、按设置展开或勾选）
+const stopClick = withModifiers(() => {}, ['stop']);
+
 // 展开 / 收起动画的时长（ms），与 TransitionCollapse 的默认值一致
 const DURATION = 300;
 // 估算动画块可容纳的行数时，读不到行高的兜底（px）
@@ -82,9 +85,13 @@ const TreeNodeMotion = defineComponent({
 			return collectVisibleNodes(props.node.childNodes, tree.motions, limit);
 		});
 
-		const done = () => {
+		const stop = () => {
 			clearTimeout(timer);
 			caf(frame);
+		};
+
+		const done = () => {
+			stop();
 			tree.motions.get(props.node) === props.direction && tree.motions.delete(props.node);
 		};
 
@@ -113,10 +120,7 @@ const TreeNodeMotion = defineComponent({
 
 		watch(() => list.value.length, () => nextTick(start));
 		onMounted(start);
-		onBeforeUnmount(() => {
-			clearTimeout(timer);
-			caf(frame);
-		});
+		onBeforeUnmount(stop);
 
 		return () => {
 			return (
@@ -179,11 +183,13 @@ export const TreeNodeContent = defineComponent({
 			if (tree.props.expandOnClickNode) {
 				handleExpandIconClick();
 			}
-			if (tree.props.checkOnClickNode && !props.node.getter.disabled) {
-				tree.toggleCheck(props.node);
-			}
+			// 禁用的节点由 toggleCheck 忽略
+			tree.props.checkOnClickNode && tree.toggleCheck(props.node);
 			tree.emit('node-click', toNodePayload(e));
 		};
+
+		const handleRowClick = withModifiers(handleClick, ['stop']);
+		const handleIconClick = withModifiers(handleExpandIconClick, ['stop']);
 
 		const handleContextMenu = (e: any) => {
 			if (tree.instance.vnode.props!['onNodeContextmenu']) {
@@ -196,6 +202,8 @@ export const TreeNodeContent = defineComponent({
 		return () => {
 			const { node } = props;
 			const { expanded, isLeaf } = node.states;
+			const disabled = !!node.getter.disabled;
+			const { showCheckbox, renderNodeLabel } = tree.props;
 			const motion = tree.motions.get(node);
 			return (
 				<div
@@ -203,18 +211,18 @@ export const TreeNodeContent = defineComponent({
 						{
 							'is-expanded': expanded,
 							'is-current': node.states.isCurrent,
-							'is-focusable': !node.getter.disabled,
-							'is-checked': !node.getter.disabled && node.states.checked
+							'is-focusable': !disabled,
+							'is-checked': !disabled && node.states.checked
 						},
 						'vc-tree-node'
 					]}
 					aria-expanded={isLeaf ? void 0 : expanded}
 					aria-level={node.states.level}
-					aria-disabled={node.getter.disabled}
+					aria-disabled={disabled}
 					aria-checked={node.states.checked}
 					role="treeitem"
 					tabindex="-1"
-					onClick={withModifiers(handleClick, ['stop'])}
+					onClick={handleRowClick}
 					onContextmenu={handleContextMenu}
 				>
 					<div
@@ -230,19 +238,19 @@ export const TreeNodeContent = defineComponent({
 								// 从展开图标按下不发起拖拽
 								'vc-tree-node__expand-icon vc-drag-ignore'
 							]}
-							onClick={withModifiers(handleExpandIconClick, ['stop'])}
+							onClick={handleIconClick}
 						>
 							<Icon type="triangle-up" />
 						</span>
 						{
-							props.showCheckbox && (
+							showCheckbox && (
 								<Checkbox
 									modelValue={node.states.checked}
 									indeterminate={node.states.indeterminate}
-									disabled={!!node.getter.disabled}
+									disabled={disabled}
 									onChange={handleCheckChange}
 									// @ts-ignore
-									onClick={withModifiers(() => {}, ['stop'])}
+									onClick={stopClick}
 									onVnodeMounted={handleCheckboxMounted}
 								/>
 							)
@@ -258,8 +266,8 @@ export const TreeNodeContent = defineComponent({
 						}
 
 						{
-							props.renderNodeLabel
-								? (<Customer render={props.renderNodeLabel} store={node} row={node.states.data} />)
+							renderNodeLabel
+								? (<Customer render={renderNodeLabel} store={node} row={node.states.data} />)
 								: <span class="vc-tree-node__label">{node.getter.label}</span>
 						}
 					</div>

@@ -7,7 +7,6 @@ import { nextTick, ref } from 'vue';
 import { vi, onTestFinished } from 'vitest';
 import { TreeNode, TreeStore } from '../store';
 import { getChildState, markNodeData } from '../store/tree-node';
-import { props as treeNodeContentProps } from '../tree-node-content-props';
 import { TreeSelectContent } from '../tree-select-content';
 import { renderHighlight } from '../../select/select-search';
 import { createSearchRegex } from '../../select/utils';
@@ -1804,10 +1803,6 @@ describe('Tree store & node unit', () => {
 		errorSpy.mockRestore();
 		wrapper.unmount();
 		vi.useRealTimers();
-	});
-
-	it('default prop factories', () => {
-		expect((treeNodeContentProps.node as any).default()).toEqual({});
 	});
 
 	it('TreeSelectContent / Cascader default props + renderNodeLabel', async () => {
