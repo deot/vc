@@ -15,19 +15,28 @@ export const markNodeData = (node: TreeNode, data?: object) => {
 	});
 };
 
+/**
+ * 子节点的勾选汇总
+ * 	- 只在写入勾选状态时调用，不需要依赖追踪：遍历原始数组与原始状态，不经过响应式代理（级联勾选时每个节点都会让父节点重新统计一遍全部兄弟）
+ * @param nodes 子节点
+ * @returns ~
+ */
 export const getChildState = (nodes: TreeNode[]) => {
+	nodes = toRaw(nodes);
 	let all = true;
 	let none = true;
 	let allWithoutDisable = true;
 	for (let i = 0, j = nodes.length; i < j; i++) {
 		const node = nodes[i];
-		if (node.states.checked !== true || node.states.indeterminate) {
+		const states = toRaw(node.states);
+		if (states.checked !== true || states.indeterminate) {
 			all = false;
-			if (!node.getter.disabled) {
+			// 已确定为 false 后不必再读 disabled
+			if (allWithoutDisable && !getPropertyFromData(node, 'disabled', states.data)) {
 				allWithoutDisable = false;
 			}
 		}
-		if (node.states.checked !== false || node.states.indeterminate) {
+		if (states.checked !== false || states.indeterminate) {
 			none = false;
 		}
 	}

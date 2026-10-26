@@ -7,6 +7,7 @@ import { nextTick, ref } from 'vue';
 import { vi, onTestFinished } from 'vitest';
 import { TreeNode, TreeStore } from '../store';
 import { getChildState, markNodeData } from '../store/tree-node';
+import { KEY_VALUE } from '../store/constant';
 import { TreeSelectContent } from '../tree-select-content';
 import { renderHighlight } from '../../select/select-search';
 import { createSearchRegex } from '../../select/utils';
@@ -1893,6 +1894,32 @@ describe('Tree store & node unit', () => {
 		await node.setChecked(true, false); // deep=false 不向下递归避免无限懒加载
 		expect(loadData).toHaveBeenCalled();
 		expect(node.states.loaded).toBe(true);
+	});
+
+	it('node helpers: getChildState allWithoutDisable follows keyValue.disabled', () => {
+		const children = [
+			{ value: 'a', label: 'A', off: true },
+			{ value: 'b', label: 'B' },
+			{ value: 'c', label: 'C', off: true }
+		];
+		const cases: [any, boolean][] = [
+			[void 0, true],
+			['off', false],
+			[(row: any) => row.value !== 'b', false]
+		];
+		for (const [disabled, ignoresOff] of cases) {
+			const store = new TreeStore({
+				data: [{ value: 'p', label: 'P', children: JSON.parse(JSON.stringify(children)) }],
+				keyValue: { ...KEY_VALUE, ...(disabled ? { disabled } : {}) }
+			} as any);
+			const parent = store.getNode('p') as TreeNode;
+			// 传入响应式的 childNodes
+			expect(getChildState(parent.childNodes)).toEqual({ all: false, none: true, allWithoutDisable: false, half: false });
+
+			(store.getNode('b') as TreeNode).setChecked(true, false);
+			// 只有「b」勾选：未勾选的 a、c 被视为禁用时 allWithoutDisable 为 true
+			expect(getChildState(parent.childNodes)).toMatchObject({ all: false, half: true, allWithoutDisable: !ignoresOff });
+		}
 	});
 
 	it('node: non-leaf with disabled child + checked siblings flips checked=false', () => {
