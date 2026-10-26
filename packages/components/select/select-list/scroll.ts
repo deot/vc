@@ -1,6 +1,8 @@
 import { getViewportRect } from '../../scroller/utils';
-import { ScrollerManager } from '../../scroller/manager';
+import { ExternalCarrier, getAxisKeys } from '../../scroller/carrier';
 import type { SelectListAlign } from './select-list';
+
+const Y_KEYS = getAxisKeys(true);
 
 /**
  * 节点滚动到 Scroller 可视范围内所需的滚动量（滚动坐标）
@@ -27,10 +29,6 @@ export const scrollIntoScroller = (el?: Element | null, align: SelectListAlign =
 	const scroller = el?.closest<HTMLElement>('.vc-scroller');
 	if (!el || !scroller) return;
 	const offset = getScrollOffset(el, scroller, align);
-	if (!offset) return;
-
-	// 经 Scroller 写入：自绘滚动条同步更新
-	const y = scroller.scrollTop + offset;
-	const instance = ScrollerManager.get(scroller);
-	instance ? instance.scrollTo({ y }) : (scroller.scrollTop = y);
+	// 经承载者写入：是 VC Scroller 时交给它，自绘滚动条同步更新
+	offset && new ExternalCarrier(scroller, Y_KEYS).scrollBy(offset);
 };

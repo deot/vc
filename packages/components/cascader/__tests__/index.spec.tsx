@@ -170,7 +170,9 @@ describe('Cascader interaction', () => {
 			return { top, bottom, left: 0, right: 0, width: 0, height: bottom - top, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
 		});
 		const height = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(100);
-		onTestFinished(() => (rect.mockRestore(), height.mockRestore()));
+		// 内容总高：滚动经承载者写入，限制在可滚动范围内
+		const scrollHeight = vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(1000);
+		onTestFinished(() => (rect.mockRestore(), height.mockRestore(), scrollHeight.mockRestore()));
 		const wrapper = mount(() => (
 			<Cascader modelValue={['zhejiang', 'hangzhou', 'binjiang']} data={options} />
 		), { attachTo: document.body });

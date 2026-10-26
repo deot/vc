@@ -12,7 +12,7 @@ import {
 	useDragDrop
 } from '../drag';
 import type { DragDropState, RootOffset } from '../drag';
-import type { ExternalCarrier } from '../recycle-list/viewport/external/carrier';
+import type { ExternalCarrier } from '../scroller/carrier';
 import type { TreeStore, TreeNode } from './store';
 import type { Props } from './tree-props';
 import type {

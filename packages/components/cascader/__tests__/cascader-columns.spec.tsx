@@ -106,11 +106,14 @@ describe('cascader-columns', () => {
 			return { top, bottom, left: 0, right: 0, width: 0, height: bottom - top, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
 		});
 		const height = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(20);
+		// 内容总高：滚动经承载者写入，限制在可滚动范围内
+		const scrollHeight = vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(1000);
 		const scroller = getCols(wrapper)[1].find('.vc-scroller').element as HTMLElement;
 		vm.scrollToItem(1, 1);
 		expect(scroller.scrollTop).toBe(20);
 		vm.scrollToItem(2, 0);
 		rect.mockRestore();
 		height.mockRestore();
+		scrollHeight.mockRestore();
 	});
 });

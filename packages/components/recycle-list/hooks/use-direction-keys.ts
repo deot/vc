@@ -1,4 +1,5 @@
 import { watch, reactive, getCurrentInstance } from 'vue';
+import { getAxisKeys } from '../../scroller/carrier';
 
 /**
  * 按滚动方向生成 DOM / 样式属性名：vertical 时主轴为 Y、交叉轴为 X，反之亦然
@@ -7,11 +8,11 @@ import { watch, reactive, getCurrentInstance } from 'vue';
  */
 const getKeys = (v: boolean) => {
 	return {
+		// 主轴的 axis / scrollAxis / clientSize / scrollSize / offsetSize（滚动承载者共用）
+		...getAxisKeys(v),
+
 		// size
 		size: v ? 'width' : 'height',
-		scrollSize: v ? 'scrollHeight' : 'scrollWidth',
-		clientSize: v ? 'clientHeight' : 'clientWidth',
-		offsetSize: v ? 'offsetHeight' : 'offsetWidth',
 		contentSize: v ? 'height' : 'width',
 		columnSize: v ? 'width' : 'height',
 
@@ -28,9 +29,7 @@ const getKeys = (v: boolean) => {
 		pullTail: v ? 'UP' : 'LEFT',
 
 		// 主轴 x/y
-		axis: v ? 'y' : 'x',
 		translateAxis: v ? 'translateY' : 'translateX',
-		scrollAxis: v ? 'scrollTop' : 'scrollLeft',
 		offsetPosition: v ? 'offsetTop' : 'offsetLeft',
 		screenAxis: v ? 'screenY' : 'screenX',
 

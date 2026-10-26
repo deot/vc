@@ -1,4 +1,4 @@
-import { isWindow, getScrollingElement } from './dom';
+import { isWindow, getScrollingElement } from '../../../scroller/utils';
 
 type ViewportRegistry = {
 	/**

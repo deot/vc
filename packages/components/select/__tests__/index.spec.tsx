@@ -2117,7 +2117,9 @@ describe('Select 键盘', () => {
 		const heightSpy = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function (this: HTMLElement) {
 			return this.classList.contains('vc-select__options') ? 100 : 0;
 		});
-		onTestFinished(() => (spy.mockRestore(), heightSpy.mockRestore()));
+		// 内容总高：滚动经承载者写入，限制在可滚动范围内
+		const scrollHeightSpy = vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(1000);
+		onTestFinished(() => (spy.mockRestore(), heightSpy.mockRestore(), scrollHeightSpy.mockRestore()));
 		// 关闭后的弹层在离场动画结束前仍在节点中，取最后打开的一个
 		const getScrollTop = () => Array.from(document.querySelectorAll('.vc-select__options')).pop()!.scrollTop;
 
@@ -2305,6 +2307,7 @@ describe('Select 键盘', () => {
 		const rect = (top: number, bottom: number) => ({ top, bottom }) as DOMRect;
 		vi.spyOn(scroller, 'getBoundingClientRect').mockReturnValue(rect(100, 300));
 		Object.defineProperty(scroller, 'clientHeight', { value: 200 });
+		Object.defineProperty(scroller, 'scrollHeight', { value: 1000 });
 		const spy = vi.spyOn(item, 'getBoundingClientRect');
 
 		scroller.scrollTop = 50;

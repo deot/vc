@@ -8,7 +8,7 @@ import type { TableColumnDropPosition, TableColumnMove } from '../store/modules/
 import type { TableColumnNode } from '../table-column/table-column-node';
 import type { TableColumnDragPayload, TableColumnDragEndPayload, TableColumnDropPayload } from '../types';
 import { X_KEYS, createGhost, createIndicator, getEdgeDelta, isInteractive, toRootOffset, useDragDrop } from '../../drag';
-import { ExternalCarrier } from '../../recycle-list/viewport/external/carrier';
+import { ExternalCarrier } from '../../scroller/carrier';
 import type { DragDropState, RootOffset } from '../../drag';
 
 type Options = {

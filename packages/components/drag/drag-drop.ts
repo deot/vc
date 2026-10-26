@@ -3,10 +3,8 @@ import type { Ref } from 'vue';
 import { raf, caf } from '@deot/helper-utils';
 import { getScroller } from '@deot/helper-dom';
 import type { Nullable } from '@deot/helper-shared';
-import { SCROLLER_REG } from '../scroller/utils';
-import { isWindow } from '../recycle-list/viewport/external/dom';
-import { ExternalCarrier } from '../recycle-list/viewport/external/carrier';
-import type { AxisKeys } from '../recycle-list/viewport/types';
+import { SCROLLER_REG, isWindow } from '../scroller/utils';
+import { ExternalCarrier, getAxisKeys } from '../scroller/carrier';
 
 // 拖放（Table 的行 / 列拖拽、Tree 的节点拖拽共用；用鼠标与触摸事件实现，不用原生拖拽）：阈值、长按、自动滚动的参数，交互元素排除、插入线、跟随元素与拖拽的生命周期
 // 创建的元素与 body 带公用类（vc-drag__*、vc-dragging，见 style.scss，只负责定位等机制），外观由调用方传入的组件类负责
@@ -52,20 +50,8 @@ const BODY_DRAGGING_CLASS = 'vc-dragging';
 const preventDefault = (e: Event) => e.preventDefault();
 
 // 纵向 / 横向滚动承载者的属性名
-export const Y_KEYS: AxisKeys = {
-	axis: 'y',
-	scrollAxis: 'scrollTop',
-	clientSize: 'clientHeight',
-	scrollSize: 'scrollHeight',
-	offsetSize: 'offsetHeight'
-};
-export const X_KEYS: AxisKeys = {
-	axis: 'x',
-	scrollAxis: 'scrollLeft',
-	clientSize: 'clientWidth',
-	scrollSize: 'scrollWidth',
-	offsetSize: 'offsetWidth'
-};
+export const Y_KEYS = getAxisKeys(true);
+export const X_KEYS = getAxisKeys(false);
 
 /**
  * 组件外纵向滚动的承载者：从组件向上找纵向可滚动的祖先（VC Scroller 按类名识别），找不到时为窗口。

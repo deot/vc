@@ -29,6 +29,24 @@ export const getScrollBarWidth = () => {
 
 // Scroller 的根节点即滚动容器；按 class 识别，不依赖样式是否已加载（滚轮驱动时为 overflow: hidden）
 // getScroller 以整个 className 字符串匹配，须按完整 class 匹配，避免命中 vc-scroller__content、vc-scroller-track 等
+/**
+ * 是否为 Window（含 jsdom：全局 window 是代理，instanceof 不成立）；普通对象与元素均返回 false
+ * @param target 滚动承载目标
+ * @returns 是否 Window
+ */
+export const isWindow = (target: object): target is Window => {
+	return (target as Window).window === target;
+};
+
+/**
+ * Window 实际承载滚动的元素（优先 scrollingElement，兼容旧内核回退到 documentElement）
+ * @param win Window
+ * @returns 滚动元素
+ */
+export const getScrollingElement = (win: Window) => {
+	return (win.document.scrollingElement || win.document.documentElement) as HTMLElement;
+};
+
 export const SCROLLER_REG = /(?:^|\s)vc-scroller(?:\s|$)/;
 export const getScroller = (el: any) => {
 	return getScroller$(el, { className: SCROLLER_REG });
@@ -63,12 +81,9 @@ export const getScale = (el: HTMLElement, axis: 'x' | 'y' = 'y', rect = el.getBo
  * @returns 可视区四边与缩放比例
  */
 export const getViewportRect = (el: HTMLElement | Window) => {
-	// 不用 instanceof Window：jsdom 等环境下全局 window 是代理，instanceof 不成立
-	if ((el as Window).window === el) {
-		const win = el as Window;
-		return { top: 0, right: win.innerWidth, bottom: win.innerHeight, left: 0, scale: 1 };
+	if (isWindow(el)) {
+		return { top: 0, right: el.innerWidth, bottom: el.innerHeight, left: 0, scale: 1 };
 	}
-	el = el as HTMLElement;
 	const rect = el.getBoundingClientRect();
 	const scale = getScale(el, 'y', rect);
 	const [paddingTop, paddingRight, paddingBottom, paddingLeft] = getPadding(el);

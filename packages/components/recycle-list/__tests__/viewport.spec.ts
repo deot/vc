@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { ExternalCarrier, resolveExternalCarrier } from '../viewport/external/carrier';
+import { ExternalCarrier, resolveExternalCarrier } from '../../scroller/carrier';
 import { invalidateViewport, registerViewport } from '../viewport/external/registry';
 import { ScrollerManager } from '../../scroller/manager';
 import type { ScrollerInstance } from '../../scroller/manager';

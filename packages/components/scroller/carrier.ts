@@ -1,25 +1,37 @@
 import { getScroller } from '@deot/helper-dom';
-import { SCROLLER_REG, getScale } from '../../../scroller/utils';
-import { ScrollerManager } from '../../../scroller/manager';
-import type { ScrollerInstance } from '../../../scroller/manager';
-import type { AxisKeys } from '../types';
-import { isWindow, getScrollingElement } from './dom';
+import { SCROLLER_REG, getScale, isWindow, getScrollingElement } from './utils';
+import { ScrollerManager } from './manager';
+import type { ScrollerInstance } from './manager';
 
 /**
- * 外部滚动承载者：统一 Window / 滚动元素 / VC Scroller 的主轴读写
- *
- * 承载者是 VC Scroller 的根节点时，滚动与订阅交给其实例（见 ScrollerManager），以同步其自绘滚动条
- *
- * 只负责"承载者本身"的几何与事件，不知道列表的存在；
- * 列表相关的边界缓存见 ExternalViewport
- * 原 viewport.ts 的 ExternalViewport
+ * 主轴的 DOM 属性名
+ * @param vertical 是否纵向
+ * @returns 属性名映射
  */
+export const getAxisKeys = (vertical: boolean) => ({
+	axis: vertical ? 'y' : 'x',
+	scrollAxis: vertical ? 'scrollTop' : 'scrollLeft',
+	clientSize: vertical ? 'clientHeight' : 'clientWidth',
+	scrollSize: vertical ? 'scrollHeight' : 'scrollWidth',
+	offsetSize: vertical ? 'offsetHeight' : 'offsetWidth'
+} as const);
+
+export type AxisKeys = ReturnType<typeof getAxisKeys>;
+
+// 承载者此刻的几何，见 ExternalCarrier.frame
 export interface CarrierFrame {
 	origin: number;
 	scale: number;
 	offset: number;
 }
 
+/**
+ * 滚动承载者：统一 Window / 滚动元素 / VC Scroller 的主轴读写（RecycleList 的外部滚动、拖拽的自动滚动、SelectList 的滚动到可视范围共用）
+ *
+ * 承载者是 VC Scroller 的根节点时，滚动与订阅交给其实例（见 ScrollerManager），以同步其自绘滚动条
+ *
+ * 只负责"承载者本身"的几何与事件，不知道列表的存在；列表相关的边界缓存见 RecycleList 的 ExternalViewport
+ */
 export class ExternalCarrier {
 	target: Window | HTMLElement;
 	scroller?: ScrollerInstance;
