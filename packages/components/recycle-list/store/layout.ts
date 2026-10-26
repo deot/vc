@@ -143,7 +143,7 @@ export class Layout {
 	}
 
 	/**
-	 * 从 startScan 起按扫描序贪心放置，写 column（正序同时写 position）并续写列索引
+	 * 从 startScan 起按扫描序贪心放置，写 column（正序同时写 position，均经 raw）并续写列索引
 	 *
 	 * inverted 下此时算出的是"距列底"的偏移，先暂存到 laidOffsets，
 	 * 等总高确定后由 resolveInvertedPositions 换算
@@ -152,6 +152,7 @@ export class Layout {
 	 * @param startScan 重排起始扫描位
 	 * @param sizes 起点处的列高（原地累加）
 	 * @param columns 正序下待续写的列索引；inverted 为 null
+	 * @returns 是否有节点的 column / position 变了
 	 */
 	private place(
 		rebuildData: RecycleListItemNodeRaw[],
@@ -161,6 +162,7 @@ export class Layout {
 		columns: number[][] | null
 	) {
 		const inverted = this.laidInverted;
+		let changed = false;
 		for (let scan = startScan; scan < length; scan++) {
 			if (scan % CHUNK_SIZE === 0) {
 				this.checkpoints[scan / CHUNK_SIZE] = sizes.slice();
@@ -176,17 +178,22 @@ export class Layout {
 			const column = pickColumn(sizes, inverted);
 			const offset = sizes[column];
 
-			if (raw.column !== column) node.states.column = column;
+			if (raw.column !== column) {
+				raw.column = column;
+				changed = true;
+			}
 			if (inverted) {
 				this.laidOffsets[scan] = offset;
 			} else if (raw.position !== offset) {
-				node.states.position = offset;
+				raw.position = offset;
+				changed = true;
 			}
 
 			sizes[column] = offset + raw.size;
 			this.laidSizes[scan] = raw.size;
 			columns?.[column].push(scan);
 		}
+		return changed;
 	}
 
 	/**
@@ -196,15 +203,21 @@ export class Layout {
 	 * @param rebuildData 当前节点列表
 	 * @param length rebuildData 长度
 	 * @param sizes 最终列高
+	 * @returns 是否有节点的 position 变了
 	 */
 	private resolveInvertedPositions(rebuildData: RecycleListItemNodeRaw[], length: number, sizes: number[]) {
+		let changed = false;
 		for (let index = 0; index < length; index++) {
 			const node = rebuildData[index];
 			if (!node) continue;
 			const raw = node.raw;
 			const position = sizes[raw.column] - this.laidOffsets[length - 1 - index] - raw.size;
-			if (raw.position !== position) node.states.position = position;
+			if (raw.position !== position) {
+				raw.position = position;
+				changed = true;
+			}
 		}
+		return changed;
 	}
 
 	/**
@@ -245,8 +258,10 @@ export class Layout {
 
 		// 正序下扫描位等于数组下标，列索引可以截断后续写；inverted 位置需整体换算，索引只能全量重建
 		const columns = inverted ? null : position.truncate(startScan, cols);
-		this.place(rebuildData, length, startScan, sizes, columns);
-		if (inverted) this.resolveInvertedPositions(rebuildData, length, sizes);
+		let changed = this.place(rebuildData, length, startScan, sizes, columns);
+		if (inverted) changed = this.resolveInvertedPositions(rebuildData, length, sizes) || changed;
+		// 几何经 raw 写入：有变化时统一触发一次依赖几何的渲染
+		changed && states.layoutVersion++;
 
 		this.commit(sizes);
 		columns

@@ -1997,6 +1997,48 @@ describe('index.ts', () => {
 			expect(store.scroll.leafs.length).toBe(2);
 		});
 
+		it('Store 构造只取被接管的属性：组件 props 里的 data 等不进 store.props，undefined 不覆盖默认值', () => {
+			const loadData = vi.fn();
+			const store = new RecycleListStore({ data: buildItems(3), batchCount: 7, bufferCount: undefined, loadData } as any);
+			expect('data' in store.props).toBe(false);
+			expect(store.props.batchCount).toBe(7);
+			expect(store.props.bufferCount).toBe(0);
+			expect(store.props.loadData).toBe(loadData);
+		});
+
+		it('几何经 raw 写入：重排有变化时 layoutVersion 加一，可见分组随之更新；没有变化时不加', () => {
+			const store = new RecycleListStore({ estimateSize: 20 } as any);
+			store.setData(buildItems(5));
+			const version = store.states.layoutVersion;
+			store.states.lastItemIndex = 4;
+			expect(store.states.data[0].length).toBe(5);
+			expect(store.states.rebuildData.map(node => node.raw.position)).toEqual([0, 20, 40, 60, 80]);
+
+			// 同样的几何再排一次：不触发
+			store.layout.refresh();
+			expect(store.states.layoutVersion).toBe(version);
+
+			// 改尺寸后重排：后续节点的位置更新，分组重算
+			store.nodes.setSize(store.states.rebuildData[0], 50);
+			store.layout.refresh();
+			expect(store.states.layoutVersion).toBe(version + 1);
+			expect(store.states.rebuildData.map(node => node.raw.position)).toEqual([0, 50, 70, 90, 110]);
+			expect(store.states.data[0][1].states.position).toBe(50);
+		});
+
+		it('整体重测时跳过尺寸仍是预估值的节点；实测过的节点照常重建', () => {
+			const store = new RecycleListStore({ estimateSize: 20 } as any);
+			store.setData(buildItems(5));
+			const [first, second] = store.states.rebuildData;
+			store.nodes.setSize(second, 33);
+			store.layout.refresh();
+			const rebuilt = store.nodes.build(0, 5, { force: true });
+			expect(rebuilt).not.toContain(first);
+			expect(rebuilt).toEqual([second]);
+			// 实测过的节点回到预估值，等待重测
+			expect(second.raw.size).toBe(20);
+		});
+
 		it('Store.setData returns true on first call and false when same array passed again', () => {
 			const store = new RecycleListStore({});
 			const data = buildItems(3);

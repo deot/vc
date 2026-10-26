@@ -64,7 +64,7 @@ export class Nodes {
 		this.byIndex.set(index, node);
 		if (!node.raw.size && !node.raw.isPlaceholder) {
 			node.estimate = this.estimate(node.raw.data, index);
-			node.estimate && (node.states.size = node.estimate);
+			node.estimate && (node.raw.size = node.estimate);
 		}
 		this.sync(node);
 		return node;
@@ -77,10 +77,28 @@ export class Nodes {
 	 * @returns 预估尺寸
 	 */
 	estimate(data: any, index: number) {
-		const { estimateSize } = this.store.props;
+		// 构建时逐项调用：读原始对象，不经响应式代理（estimateSize 的变化由组件同步后调用 reestimate）
+		const { estimateSize } = toRaw(this.store.props);
 		if (!estimateSize || !data) return 0;
 		const size = typeof estimateSize === 'function' ? estimateSize({ row: data, index }) : estimateSize;
 		return typeof size === 'number' && size > 0 ? size : 0;
+	}
+
+	/**
+	 * 节点的尺寸是否就是它当前数据的预估值且已排过位：这样的节点重建（清空几何再取预估）结果不变
+	 * @param node 目标节点
+	 * @param index 数据索引
+	 * @returns 是否可以跳过重建
+	 */
+	private isSettled(node: RecycleListItemNodeRaw, index: number) {
+		const { raw } = node;
+		const data = this.store.local.originalData[index];
+		return !raw.isPlaceholder
+			&& raw.column >= 0
+			&& node.estimate > 0
+			&& raw.size === node.estimate
+			&& !!data && raw.data === toRaw(data)
+			&& this.estimate(data, index) === node.estimate;
 	}
 
 	/**
@@ -111,9 +129,9 @@ export class Nodes {
 	 * @returns 节点；不存在时为 undefined
 	 */
 	get(index: number) {
-		return this.store.props.inverted
+		return toRaw(this.store.props).inverted
 			? this.byIndex.get(index)
-			: this.store.states.rebuildData[index];
+			: toRaw(this.store.states.rebuildData)[index];
 	}
 
 	/**
@@ -146,7 +164,7 @@ export class Nodes {
 	 * @param size 实测尺寸
 	 */
 	setSize(node: RecycleListItemNodeRaw, size: number) {
-		if (node.raw.size !== size) node.states.size = size;
+		node.raw.size = size;
 		this.sync(node);
 	}
 
@@ -210,13 +228,18 @@ export class Nodes {
 		const { reversed, force, keep } = options;
 		const nodes: RecycleListItemNodeRaw[] = [];
 		const created: RecycleListItemNodeRaw[] = [];
+		// 逐项循环里不经响应式代理读取：rebuildData 的写入仍经 states（会触发更新）
+		const inverted = toRaw(props).inverted;
+		const rebuildData = toRaw(states.rebuildData);
 
 		for (let step = start; step < end; step++) {
 			const index = reversed ? end - 1 - (step - start) : step;
-			const existing = this.get(index);
+			const existing = inverted ? this.byIndex.get(index) : rebuildData[index];
 			// 尺寸为 0 表示既没测出来也没有预估，不能当成已完成
 			if (!force && existing && !existing.raw.isPlaceholder && existing.raw.size > 0) continue;
 			if (existing && keep?.has(existing)) continue;
+			// 整体重测时，尺寸仍是预估值、预估值也没变的节点重建后完全一样：跳过，避免等高的长列表每次重测都整表重写
+			if (force && existing && this.isSettled(existing, index)) continue;
 
 			if (existing) {
 				nodes.push(this.rebind(existing, index, local.originalData[index]));
@@ -319,7 +342,7 @@ export class Nodes {
 		// 数据项（raw）-> 原来承载它的节点；raw.data 经响应式写入，存的就是 raw
 		const byData = new Map<any, RecycleListItemNodeRaw>();
 		const byIndex = new Map<number, RecycleListItemNodeRaw>();
-		this.store.states.rebuildData.forEach((node) => {
+		toRaw(this.store.states.rebuildData).forEach((node) => {
 			if (!node) return;
 			byIndex.set(node.raw.index, node);
 			!node.raw.isPlaceholder && !byData.has(node.raw.data) && byData.set(node.raw.data, node);
@@ -351,7 +374,7 @@ export class Nodes {
 			if (!size) return this.rebind(existing, index, data);
 			existing.reuse({ index, data });
 			existing.estimate = estimate;
-			if (existing.raw.size !== size) existing.states.size = size;
+			existing.raw.size = size;
 			return this.attach(index, existing);
 		});
 	}

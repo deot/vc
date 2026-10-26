@@ -68,6 +68,10 @@ export type RecycleListStates = {
 	 */
 	pendingVersion: number;
 	/**
+	 * 节点几何（column / position）的变更计数：几何经 raw 写入不触发响应式，重排有变化时加一，驱动 data 与列的 translate
+	 */
+	layoutVersion: number;
+	/**
 	 * 按列分组的可见节点（含缓冲），供模板渲染
 	 */
 	data: RecycleListItemNodeRaw[][];
@@ -125,18 +129,20 @@ export class BaseWatcher {
 		firstItemIndex: 0,
 		lastItemIndex: 0,
 		data: computed(() => {
+			void this.states.layoutVersion;
 			const base = Array.from({ length: this.props.columns }).map(() => [] as RecycleListItemNodeRaw[]);
 			return this.states.rebuildData
 				.slice(
 					Math.max(0, this.states.firstItemIndex - this.props.bufferCount),
 					Math.min(this.states.rebuildData.length, this.states.lastItemIndex + this.props.bufferCount + 1)
 				).reduce((pre, cur) => {
-					cur && cur.states.column >= 0 && pre[cur.states.column].push(cur);
+					cur && cur.raw.column >= 0 && pre[cur.raw.column].push(cur);
 					return pre;
 				}, base);
 		}),
 
 		pendingVersion: 0,
+		layoutVersion: 0,
 		// pending 是普通 Set，靠 pendingVersion 建立依赖
 		preData: computed(() => {
 			void this.states.pendingVersion;

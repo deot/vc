@@ -1,5 +1,4 @@
 import { reactive } from 'vue';
-import { merge } from 'lodash-es';
 import { hasOwn } from '@deot/helper-utils';
 import { props } from '../recycle-list-props';
 import type { Props } from '../recycle-list-props';
@@ -70,7 +69,12 @@ export class Store extends BaseWatcher {
 
 	constructor(options: Partial<Props>) {
 		super();
-		merge(this.props, options);
+		// 只取被 store 接管的属性：组件直接传入整份 props 时其中含 data，深度合并会把每条数据拷贝进响应式的 store.props。
+		// 与原先的 merge 一致，值为 undefined 的键不覆盖默认值
+		STORE_PROP_KEYS.forEach((key) => {
+			const value = options[key];
+			value !== undefined && ((this.props as any)[key] = value);
+		});
 	}
 
 	/**

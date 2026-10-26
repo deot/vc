@@ -15,37 +15,21 @@ type Options = {
 export class RecycleListItemNode {
 	id = getUid('recycle-list-item');
 
-	states: {
-		/**
-		 * 数据索引（originalData 下标）
-		 */
-		index: number;
-		data: any;
-		/**
-		 * 主轴尺寸：实测值，或尚未渲染时的预估值（estimateSize / 替换数据前的旧尺寸）；0 表示既未测量也无预估
-		 */
-		size: number;
-		/**
-		 * 主轴位置（content 坐标系）；-1000 表示尚未布局
-		 */
-		position: number;
-		/**
-		 * 所属列；-1 表示尚未布局
-		 */
-		column: number;
-		/**
-		 * 没有数据的骨架占位
-		 */
-		isPlaceholder: boolean;
-	};
-
 	/**
-	 * states 的原始对象，供布局重排的热路径读取几何信息
+	 * 节点状态（原始对象）：构建、重排的热路径直接读写它
 	 *
-	 * 重排每轮都要遍历比较 size，走响应式代理的开销会被放大到不可接受；
-	 * 写入仍必须经过 states，否则不会触发渲染更新
+	 * 几何（size / position / column）只经 raw 读写：重排与构建每轮都要遍历上万个节点，逐个经响应式代理的开销不可接受。
+	 * 依赖几何的渲染（可见节点分组、列的 translate）改为依赖 store.states.layoutVersion，重排结束时统一触发一次。
+	 * index / data / isPlaceholder 经 states 写入，行的内容依赖它们
 	 */
-	raw: RecycleListItemNode['states'];
+	raw: RecycleListItemStates;
+
+	// states 的响应式代理，首次访问时才创建：没有渲染过、内容也没变过的节点（长列表的绝大多数）不必各建一个代理
+	private reactiveStates?: RecycleListItemStates;
+
+	get states(): RecycleListItemStates {
+		return this.reactiveStates || (this.reactiveStates = reactive(this.raw));
+	}
 
 	/**
 	 * 这条数据上一次求得的预估尺寸（estimateSize），没有时为 0
@@ -61,17 +45,15 @@ export class RecycleListItemNode {
 
 	constructor(options: Options) {
 		markRaw(this);
-		// 初值一次写进字面量：逐个经响应式代理写入，在一次构建上万项（有预估尺寸时）时开销明显。
 		// data 存原始对象，与经代理写入（setData）时一致
-		this.states = reactive({
+		this.raw = {
 			index: options.index,
 			data: options.data ? toRaw(options.data) : {},
 			size: 0,
 			position: -1000,
 			column: -1,
 			isPlaceholder: !options.data
-		});
-		this.raw = toRaw(this.states);
+		};
 	}
 
 	setData(data?: any) {
@@ -87,21 +69,44 @@ export class RecycleListItemNode {
 	 * @returns 节点自身
 	 */
 	reuse(options: Options) {
-		this.states.index = options.index;
-		this.setData(options.data);
+		// 只在变了时写入：整体替换数据时多数节点认领回自己的数据项，逐个经代理写入相同的值也有开销
+		this.raw.index !== options.index && (this.states.index = options.index);
+		const data = options.data ? toRaw(options.data) : void 0;
+		(this.raw.isPlaceholder ? data : this.raw.data !== data) && this.setData(data);
 		return this;
 	}
 
 	// 复用节点：更新 index/data 并清空布局，保持 id 稳定
 	rebind(options: Options) {
 		this.estimate = 0;
-		this.states.index = options.index;
-		this.states.size = 0;
-		this.states.position = -1000;
-		this.states.column = -1;
-		this.setData(options.data);
+		this.raw.size = 0;
+		this.raw.position = -1000;
+		this.raw.column = -1;
+		this.reuse(options);
 		return this;
 	}
 }
 
-export type RecycleListItemStates = RecycleListItemNode['states'];
+export type RecycleListItemStates = {
+	/**
+	 * 数据索引（originalData 下标）
+	 */
+	index: number;
+	data: any;
+	/**
+	 * 主轴尺寸：实测值，或尚未渲染时的预估值（estimateSize / 替换数据前的旧尺寸）；0 表示既未测量也无预估
+	 */
+	size: number;
+	/**
+	 * 主轴位置（content 坐标系）；-1000 表示尚未布局
+	 */
+	position: number;
+	/**
+	 * 所属列；-1 表示尚未布局
+	 */
+	column: number;
+	/**
+	 * 没有数据的骨架占位
+	 */
+	isPlaceholder: boolean;
+};

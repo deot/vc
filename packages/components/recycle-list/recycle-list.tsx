@@ -1054,7 +1054,7 @@ export const RecycleList = defineComponent({
 						[K.columnSize]: store.states.columnSize,
 						[K.paddingColumnHead]: `${column.offset[0]}px`,
 						[K.paddingColumnTail]: `${column.offset[1]}px`,
-						transform: `${K.translateAxis}(${store.states.data[columnIndex][0]?.states.position || 0}px)`
+						transform: `${K.translateAxis}(${store.states.data[columnIndex][0]?.raw.position || 0}px)`
 					}}
 					class={[{ 'is-inverted': store.props.inverted }, 'vc-recycle-list__column']}
 				>
