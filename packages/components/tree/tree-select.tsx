@@ -226,6 +226,7 @@ export const TreeSelect = defineComponent({
 							searchValue={searchValue.value}
 							searchRegex={searchRegex.value}
 							remote={isRemote()}
+							virtualized={props.virtualized}
 							onChange={handleChange}
 						/>
 					);

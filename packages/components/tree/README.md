@@ -179,6 +179,42 @@ const handleDrop = ({ data: row, targetNode, position, from, to }) => {
 ```
 :::
 
+### 大量数据
+
+`virtualized` 开启后只渲染滚动容器可视范围附近的节点（基于 [RecycleList](../recycle-list/README.md)），节点很多、展开很深时挂载、展开与滚动的耗时不随节点数增长。树沿用所在的滚动容器：最近的外层 Scroller 或可滚动的祖先（在 TreeSelect 里即浮层），没有时为页面，因此需要放在有固定高度的滚动容器里，或者让页面本身滚动。展开动画、键盘、勾选、筛选与拖拽的行为不变；拖到滚动容器边缘时自动滚动。
+
+:::playground
+<!--
+<config lang="json5">
+{ previewInset: 20 }
+</config>
+-->
+```vue
+<template>
+	<Scroller height="320px" class="tree-demo">
+		<Tree :data="data" virtualized show-checkbox />
+	</Scroller>
+</template>
+
+<script setup>
+import { Scroller, Tree } from '@deot/vc';
+
+const data = Array.from({ length: 100 }, (_, i) => ({
+	value: `${i + 1}`,
+	label: `分组 ${i + 1}`,
+	children: Array.from({ length: 100 }, (__, j) => ({ value: `${i + 1}-${j + 1}`, label: `条目 ${i + 1}-${j + 1}` }))
+}));
+</script>
+
+<style scoped>
+.tree-demo { max-width: 360px; border: 1px solid var(--vc-color-light-deeper); }
+</style>
+```
+:::
+
+- 行高按渲染出来的行估计，各行等高时滚动条长度与定位从一开始就准确；自定义标签使行高不一致时，未渲染的部分按已渲染的估计，滚动到时校正。
+- 浏览器的页内查找只能找到已渲染的节点。
+
 ### 树选择与级联搜索
 
 `TreeSelect` 默认 `max = Infinity`，显示多选标签；`max = 1` 切换为单标签展示。当前实现不按 `max` 限制勾选数量，单标签展示也不等同于互斥单选。
@@ -331,6 +367,7 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 | loadData | 懒加载回调，返回子数据 | `(node: Node) => Promise<NodeData[]>` | - | - |
 | filterNode | `filter()` 的筛选回调 | `(value: any, data: NodeData, node: Node) => boolean` | - | - |
 | indent | 每级缩进，单位 px | `number` | - | `18` |
+| virtualized | 只渲染滚动容器可视范围附近的节点，用于大量数据；见[大量数据](#大量数据) | `boolean` | - | `false` |
 | draggable | 开启节点拖拽 | `boolean` | - | `false` |
 | allowDrag | 拖拽许可 | `({ node, data }) => boolean` | - | - |
 | allowDrop | 落点许可，参数见“拖拽节点” | `({ node, data, targetNode, position, from, to }) => boolean` | - | - |
@@ -424,7 +461,7 @@ TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字
 | searchPlaceholder | 搜索时的占位文案：内联搜索为面板打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
 | loadData | 防抖搜索回调，需自行更新 `data`；调用时机见[远程搜索](#远程搜索) | `(keyword: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | cascader | 使用级联列面板 | `boolean` | - | `false` |
-| virtualized | 级联列与搜索结果只渲染可视范围附近的项，列宽固定（同 Cascader 的[大量数据](../cascader/README.md#大量数据)）；当前只作用于 `cascader` 模式 | `boolean` | - | `false` |
+| virtualized | 只渲染可视范围附近的节点：树形模式同 Tree 的[大量数据](#大量数据)；级联模式各列与搜索结果同 Cascader 的[大量数据](../cascader/README.md#大量数据)，列宽固定 | `boolean` | - | `false` |
 | expandDirection | 级联列的展开方向（仅 `cascader`）：`left` 向左展开，`auto` 右侧放不下时朝空间更大的一侧 | `string` | `right`、`left`、`auto` | `'right'` |
 | autoWidth | 面板按内容计算宽度 | `boolean` | - | 未指定时跟随 `cascader` |
 | portal | 下拉挂到 body；`false` 挂在组件根节点内，可能被祖先 overflow 裁剪 | `boolean` | - | `true` |

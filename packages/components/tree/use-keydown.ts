@@ -1,4 +1,5 @@
 import { nextTick } from 'vue';
+import { raf } from '@deot/helper-utils';
 import type { TreeNode } from './store';
 import { findEnabled } from '../select/hooks/use-navigate';
 
@@ -17,6 +18,9 @@ interface KeydownOptions {
 }
 
 const isEnabled = (node: TreeNode) => !node.getter.disabled;
+
+// 虚拟列表中滚入的行要等列表处理完滚动才渲染：聚焦时最多再等的帧数
+const MAX_FRAMES = 6;
 
 /**
  * 树的键盘：焦点在行上时，按铺平的可见节点移动（与 WAI-ARIA 的 tree 一致）
@@ -42,13 +46,17 @@ export const useKeydown = (options: KeydownOptions) => {
 	const focus = (node: TreeNode) => {
 		const index = getRows().indexOf(node);
 		index !== -1 && scrollToIndex(index);
-		// 虚拟列表中滚入的行在下一次更新后才渲染
-		nextTick(() => {
+		let frames = 0;
+		const attempt = () => {
 			const el = getElement(node) as HTMLElement | undefined;
-			if (!el) return;
+			if (!el) {
+				++frames <= MAX_FRAMES && raf(attempt);
+				return;
+			}
 			setTabStop(el);
 			el.focus({ preventScroll: true });
-		});
+		};
+		nextTick(attempt);
 	};
 
 	const handleKeydown = (e: KeyboardEvent) => {

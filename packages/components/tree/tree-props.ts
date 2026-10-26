@@ -9,7 +9,9 @@ import { valueType } from '../customer/customer-props';
 const selectKeys = [
 	'separator',
 	'numerable',
-	'nullValue'
+	'nullValue',
+	// 只渲染视口附近的行（RecycleList），沿用所在的滚动容器（外层 Scroller、浮层或页面）
+	'virtualized'
 ] as const;
 
 const treeNodeContentKeys = [

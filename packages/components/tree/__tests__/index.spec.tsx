@@ -727,6 +727,66 @@ describe('Tree 逐行渲染与展开动画', () => {
 	});
 });
 
+describe('Tree virtualized', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	const bigData = () => Array.from({ length: 300 }, (_, i) => ({
+		value: `${i}`,
+		label: `Group ${i}`,
+		children: [{ value: `${i}-0`, label: `Leaf ${i}-0` }]
+	}));
+
+	it('只渲染部分行；展开、勾选与 check 事件照常', async () => {
+		const onCheck = vi.fn();
+		const wrapper = mount(() => (
+			<div class="vc-scroller" style="height: 200px; overflow: auto">
+				<Tree data={bigData()} virtualized showCheckbox onCheck={onCheck} />
+			</div>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(30);
+		const rows = () => Array.from((wrapper.element as HTMLElement).querySelectorAll<HTMLElement>('.vc-tree-node'));
+		const texts = () => rows().map(el => el.querySelector(':scope > .vc-tree-node__content')!.textContent);
+		expect(wrapper.find('.vc-tree .vc-recycle-list').exists()).toBe(true);
+		expect(rows().length).toBeGreaterThan(0);
+		expect(rows().length).toBeLessThan(300);
+
+		const first = rows()[0] as HTMLElement;
+		(first.querySelector('.vc-tree-node__expand-icon') as HTMLElement).click();
+		await sleep(400);
+		await flush();
+		expect(texts().slice(0, 3)).toEqual(['Group 0', 'Leaf 0-0', 'Group 1']);
+
+		(rows()[1].querySelector('input[type="checkbox"]') as HTMLInputElement).click();
+		await flush();
+		expect(onCheck.mock.calls.at(-1)![0]).toMatchObject({ checkedValues: ['0', '0-0'] });
+		wrapper.unmount();
+	});
+
+	it('TreeSelect 树形模式：virtualized 透传给树，高亮与回车照常', async () => {
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={bigData()} max={999} virtualized />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+		await sleep(30);
+		const tree = document.querySelector('.vc-tree-select__options .vc-tree')!;
+		expect(tree.querySelector('.vc-recycle-list')).not.toBeNull();
+		expect(tree.querySelectorAll('.vc-tree-node').length).toBeLessThan(300);
+		expect(tree.querySelector('.vc-tree-node[data-active] > .vc-tree-node__content')!.textContent).toBe('Group 0');
+
+		document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+		document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+		await flush();
+		expect(value.value).toEqual(['1', '1-0']);
+		wrapper.unmount();
+	});
+});
+
 describe('Tree event payloads', () => {
 	// 节点高 20px（jsdom 没有排版）：上四分之一为 before，中间为 inner，下四分之一为 after；
 	// 高度为 0 时各区域的阈值都是 0，被拒绝的区域无法让出

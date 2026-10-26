@@ -388,7 +388,7 @@ export const Tree = defineComponent({
 					// 拖拽的触摸按下为 passive，不影响滚动
 					{...{ onTouchstartPassive: drag.handleTouchstart }}
 				>
-					<SelectList ref={list} data={rows.value}>
+					<SelectList ref={list} data={rows.value} virtualized={props.virtualized}>
 						{{ default: ({ row }: { row: TreeNode }) => renderNode(row), $stable: true }}
 					</SelectList>
 					{

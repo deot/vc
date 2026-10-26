@@ -117,17 +117,18 @@ export const SelectList = defineComponent({
 		};
 
 		/**
-		 * RecycleList 按实际尺寸校正了行：取一行的实际高度作为其余行的预估值
+		 * RecycleList 按实际尺寸校正了行：取已渲染行中最矮的高度作为其余行的预估值
 		 * 	- 预估值不对时，未渲染的行按它排布，滚动条长度与远处的定位都有偏差；调用方难以给准（主题、自定义渲染、复选框等前缀）
+		 * 	- 取最矮的：个别行因额外内容变高（如树正在展开的行带着动画块）时不影响其余行的估计
 		 * 	- 只在高度变化时更新，一般只发生一次
 		 */
 		const handleRowResize = () => {
-			for (const el of rows.values()) {
-				const height = (el as HTMLElement).offsetHeight;
-				if (!height) continue;
-				measured.value !== height && (measured.value = height);
-				return;
-			}
+			let height = 0;
+			rows.forEach((el) => {
+				const value = (el as HTMLElement).offsetHeight;
+				value && (height = height ? Math.min(height, value) : value);
+			});
+			height && measured.value !== height && (measured.value = height);
 		};
 
 		const renderRow = (row: unknown, index: number) => {

@@ -37,6 +37,11 @@ export const TreeSelectContent = defineComponent({
 		remote: {
 			type: Boolean,
 			default: false
+		},
+		// 只渲染视口附近的节点，见 Tree
+		virtualized: {
+			type: Boolean,
+			default: false
 		}
 	},
 	emits: ['change'],
@@ -157,6 +162,7 @@ export const TreeSelectContent = defineComponent({
 						allowDispatch={false}
 						showCheckbox={true}
 						filterNode={filterNode}
+						virtualized={props.virtualized}
 						emptyText={searching ? t('vc.TreeSelect.noMatch') : void 0}
 						renderNodeLabel={props.renderNodeLabel || renderLabel}
 						onChange={(_: any, data: any) => emit('change', _, data)}
