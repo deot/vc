@@ -639,4 +639,6 @@ interface CascaderOption {
 | `--vc-cascader-column-color-primary` | 当前浏览选项的文本 |
 | `--vc-cascader-column-background-color-primary-light` | 选项悬停及当前浏览选项的背景 |
 
+列滚动期间不显示选项的悬停背景：滚动的列表带 `.vc-select-list.is-scrolling`，停止约 150ms 后移除，选项从静止的鼠标下经过时不逐项闪；自定义选项内容的悬停样式也可以用它限定。
+
 `portal: true` 时浮层位于 body 下，列变量需设置在浮层祖先（例如 body）或通过 `portalClass` 对浮层设置。

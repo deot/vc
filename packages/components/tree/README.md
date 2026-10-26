@@ -500,6 +500,8 @@ TreeSelect 实例还暴露 `treeSelectId`、`isActive`、`multiple`、`current`�
 
 Tree 使用 `--vc-tree-*`，TreeSelect 使用 `--vc-tree-select-*` 组件覆盖变量，默认回退到共享亮暗主题。Tree 悬停背景使用 `background-color-primary-light`，非悬停时的焦点及当前节点高亮使用 `color-primary-lighter`；TreeSelect 选项背景使用自身命名空间的 `background-color-primary-light`。拖入高亮文字使用 `color-contrast-light`，默认保持白色，以配合主色背景。
 
+滚动期间不显示节点的悬停背景（Tree 与 TreeSelect 的两种模式）：滚动的列表带 `.vc-select-list.is-scrolling`，停止约 150ms 后移除，节点从静止的鼠标下经过时不逐行闪；自定义节点内容的悬停样式也可以用它限定。
+
 内置文案使用 `vc.Tree.emptyText`、`vc.TreeSelect.placeholder`、`vc.TreeSelect.noMatch`；通过 `VcInstance.configure({ locale })` 切换语言。节点标签、自定义渲染和显式传入的文案由调用方管理。
 
 更多交互细节可参考[节点事件示例](./examples/events.vue)、[拖拽示例](./examples/drag.vue)、[标签折叠示例](./examples/tree-select-tags.vue)、[搜索与键盘示例](./examples/tree-select-search.vue)与[挂载位置示例](./examples/tree-select-portal.vue)。

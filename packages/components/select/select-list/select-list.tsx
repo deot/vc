@@ -1,8 +1,10 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, cloneVNode, isVNode, onMounted, ref, watch } from 'vue';
+import { defineComponent, cloneVNode, isVNode, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { PropType, VNode } from 'vue';
+import { debounce } from 'lodash-es';
 import { RecycleList } from '../../recycle-list/index';
+import { SCROLL_IDLE, isScrollOf, useScrollListener } from '../../scroller/scroll-idle';
 import { getScrollOffset, scrollIntoScroller } from '../hooks/use-navigate';
 
 const COMPONENT_NAME = 'vc-select-list';
@@ -22,6 +24,8 @@ export interface SelectListExposed {
  * 	- 虚拟化时行高按渲染出来的行估计：各行等高（默认渲染）时，滚动条长度与定位从一开始就准确
  * 	- 高亮（data-active）直接写在行的节点上，不经过响应式状态：移动高亮不触发任何行的渲染；虚拟列表中尚未渲染的行挂载时补上
  * 	- 指针在某行上移动时发出 hover（下标）；不用 mouseover：键盘移动使列表在静止的指针下滚动时，浏览器会补发它，高亮会被拉回指针下的一行
+ * 	- 滚动期间根节点带 is-scrolling：各行的 :hover 样式据此暂停，行从静止的指针下经过时不逐行闪；停下 SCROLL_IDLE 后移除，
+ * 	  浏览器按指针位置恢复 :hover。类名直接写在节点上，不触发渲染
  * 	- 插槽在本组件渲染时调用，依赖由本组件收集：调用方传入插槽时标记 $stable，父级重渲染时列表不必跟着重渲染（大量行时代价可观）
  */
 export const SelectList = defineComponent({
@@ -98,6 +102,23 @@ export const SelectList = defineComponent({
 		const sync = () => !props.virtualized && mark(getRow(active));
 		watch(() => props.data, sync, { flush: 'post' });
 		onMounted(sync);
+
+		// 滚动期间的标记：带动了列表的滚动才算（所在的滚动容器或页面）
+		let isScrolling = false;
+		const settle = debounce(() => {
+			isScrolling = false;
+			root.value?.classList.remove('is-scrolling');
+		}, SCROLL_IDLE);
+		useScrollListener((target) => {
+			const el = root.value;
+			if (!el || !isScrollOf(target, el)) return;
+			if (!isScrolling) {
+				isScrolling = true;
+				el.classList.add('is-scrolling');
+			}
+			settle();
+		});
+		onBeforeUnmount(() => settle.cancel());
 
 		expose({ scrollToIndex, highlight } satisfies SelectListExposed);
 

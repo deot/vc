@@ -99,4 +99,39 @@ describe('select-list virtualized', () => {
 		expect(getActive(wrapper)).toBeUndefined();
 		wrapper.unmount();
 	});
+	it('滚动期间根节点带 is-scrolling（只算带动了列表的滚动），停下后移除，重渲染不丢', async () => {
+		vi.useFakeTimers();
+		const data = ref<any[]>([{ id: 1, label: 'A' }]);
+		const wrapper = mount(() => (
+			<div class="outer">
+				<SelectList data={data.value}>
+					{{ default: renderRow }}
+				</SelectList>
+				<div class="other" />
+			</div>
+		), { attachTo: document.body });
+		const list = wrapper.find('.vc-select-list').element;
+		const scroll = (el: Element) => el.dispatchEvent(new Event('scroll'));
+
+		// 与列表无关的滚动不算
+		scroll(wrapper.find('.other').element);
+		expect(list.classList.contains('is-scrolling')).toBe(false);
+
+		// 所在容器滚动：立即带上；持续滚动顺延，重渲染不覆盖
+		scroll(wrapper.find('.outer').element);
+		expect(list.classList.contains('is-scrolling')).toBe(true);
+		vi.advanceTimersByTime(100);
+		scroll(wrapper.find('.outer').element);
+		data.value = [{ id: 1, label: 'A' }, { id: 2, label: 'B' }];
+		await nextTick();
+		vi.advanceTimersByTime(100);
+		expect(list.classList.contains('is-scrolling')).toBe(true);
+
+		// 停下 SCROLL_IDLE 后移除
+		vi.advanceTimersByTime(100);
+		expect(list.classList.contains('is-scrolling')).toBe(false);
+
+		wrapper.unmount();
+		vi.useRealTimers();
+	});
 });

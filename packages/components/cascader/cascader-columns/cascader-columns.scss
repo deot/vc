@@ -88,7 +88,8 @@ $width: varfix(width, cascader-column, unitfix(160));
 		justify-content: space-between;
 		align-items: center;
 
-		&:not(.is-disabled):hover {
+		// 滚动期间（列表带 is-scrolling，见 SelectList）不显示悬停：项从静止的指针下经过时不逐行闪
+		.vc-select-list:not(.is-scrolling) &:not(.is-disabled):hover {
 			background-color: $background-color-primary-light;
 		}
 

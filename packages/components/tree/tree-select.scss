@@ -19,11 +19,10 @@ $component-name: vc-tree-select;
 
 	// 背景只表示当前高亮（键盘聚焦 / 鼠标悬停），已勾选由复选框表示
 	@include element(options) {
-		.vc-tree-node:not([aria-disabled="true"]) {
-			&:focus > .vc-tree-node__content,
-			> .vc-tree-node__content:hover {
-				background-color: $background-color-primary-light;
-			}
+		// 悬停在滚动期间不显示，见 tree.scss
+		.vc-tree-node:not([aria-disabled="true"]):focus > .vc-tree-node__content,
+		.vc-select-list:not(.is-scrolling) .vc-tree-node:not([aria-disabled="true"]) > .vc-tree-node__content:hover {
+			background-color: $background-color-primary-light;
 		}
 	}
 

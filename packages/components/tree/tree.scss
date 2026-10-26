@@ -88,8 +88,9 @@ $component-name: vc-tree;
 			padding: 0 unitfix(8) 0 0;
 		}
 
-		&:hover,
-		.vc-tree-node:focus > &:hover {
+		// 滚动期间（列表带 is-scrolling，见 SelectList）不显示悬停：节点从静止的指针下经过时不逐行闪；
+		// 限定后优先级已高于聚焦（:focus > &），悬停时照样覆盖聚焦的背景
+		.vc-select-list:not(.is-scrolling) &:hover {
 			background-color: $background-color-primary-light;
 		}
 
@@ -133,10 +134,12 @@ $component-name: vc-tree;
 	}
 }
 
-.vc-tree--highlight-current .vc-tree-node.is-current > .vc-tree-node__content {
-	background-color: $color-primary-lighter;
+.vc-tree--highlight-current {
+	.vc-tree-node.is-current > .vc-tree-node__content {
+		background-color: $color-primary-lighter;
+	}
 
-	&:hover {
+	.vc-select-list:not(.is-scrolling) .vc-tree-node.is-current > .vc-tree-node__content:hover {
 		background-color: $background-color-primary-light;
 	}
 }
