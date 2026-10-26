@@ -91,13 +91,15 @@ export const TreeSelect = defineComponent({
 				.map(v => selected.value.get(v)?.path)
 				.filter(Boolean) as (string | number)[][];
 
-			return allPaths.filter(path =>
-				!allPaths.some(other =>
-					other !== path
-					&& other.length > path.length
-					&& path.every((v, i) => v === other[i])
-				)
-			);
+			// 只保留不是其他已选路径前缀的路径：按值建前缀树，终点没有子节点的保留（不两两比较路径）
+			type Trie = Map<string | number, Trie>;
+			const root: Trie = new Map();
+			const ends = allPaths.map(path => path.reduce((level, v) => {
+				let next = level.get(v);
+				next || level.set(v, (next = new Map()));
+				return next;
+			}, root));
+			return allPaths.filter((_, i) => ends[i].size === 0);
 		});
 
 		const displayTags = computed<DisplayTag[]>(() => {

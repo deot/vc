@@ -2739,6 +2739,49 @@ describe('TreeSelect 内联搜索与键盘', () => {
 		wrapper.unmount();
 	});
 
+	it('currentValueGroups：只保留不是其他已选路径前缀的路径，与逐条比较一致', async () => {
+		// 值严格比较：1 与 '1' 是不同的节点
+		const groupData = [
+			{
+				value: 1,
+				label: 'A',
+				children: [
+					{ value: '1', label: 'A1', children: [{ value: '1-1', label: 'A11' }] },
+					{ value: '1-2', label: 'A12' }
+				]
+			},
+			{ value: '2', label: 'B', children: [{ value: 2, label: 'B2' }] },
+			{ value: 3, label: 'C' }
+		];
+		const pairwise = (paths: any[][]) => paths.filter(path => !paths.some(other =>
+			other !== path && other.length > path.length && path.every((v, i) => v === other[i])
+		));
+		// 每个值的完整路径（同一个值取同一个数组，与组件内的缓存一致）
+		const pathOf = new Map<any, any[]>();
+		const walk = (items: any[], parent: any[]) => items.forEach((item) => {
+			const path = [...parent, item.value];
+			pathOf.set(item.value, path);
+			walk(item.children || [], path);
+		});
+		walk(groupData, []);
+		const wrapper = mountTreeSelect({ data: groupData, max: 99, modelValue: [] });
+		const cases: [any[], any[][]][] = [
+			[[1, '1', '1-1', '1-2'], [[1, '1', '1-1'], [1, '1-2']]],
+			[['2', 2], [['2', 2]]],
+			[[1, 3, '1-2'], [[3], [1, '1-2']]],
+			[['1', 1], [[1, '1']]],
+			[[2, '1-1', '1-1'], [['2', 2], [1, '1', '1-1'], [1, '1', '1-1']]]
+		];
+		for (const [value, expected] of cases) {
+			await wrapper.setProps({ modelValue: value });
+			await flush();
+			const groups = (wrapper.vm as any).currentValueGroups;
+			expect(groups).toEqual(expected);
+			expect(groups).toEqual(pairwise(value.map(v => pathOf.get(v)!)));
+		}
+		wrapper.unmount();
+	});
+
 	it('远程搜索（父子联动）：路径标签在搜索结果变化后保留，再勾选时原已选值不丢', async () => {
 		const source = ref<any[]>(treeData);
 		const value = ref<any[]>(['1', '1-1', '1-1-1']);
