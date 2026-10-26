@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, provide, ref, watch } from 'vue';
+import { defineComponent, provide, ref, shallowRef, watch } from 'vue';
 import type { PropType } from 'vue';
 import { renderType } from '../customer/customer-props';
 import { useLocale } from '../locale';
@@ -65,6 +65,13 @@ export const TreeSelectContent = defineComponent({
 			{ flush: 'post' }
 		);
 
+		/**
+		 * 按已选值展开（已选节点及其祖先）：只在打开面板（弹层每次打开重新挂载）与数据变化时，勾选不展开节点
+		 * 	- 每次勾选都按全部已选值展开时，勾选收起的父节点会展开整棵子树，列表行数跳变
+		 */
+		const expandedValues = shallowRef(props.value);
+		watch(() => props.data, () => (expandedValues.value = props.value));
+
 		// 键盘高亮（与 Select / Cascader 一致，见 Tree 的 navigate）：搜索词、数据变化后为第一个节点
 		provide('vc-tree-highlight', { source: () => [props.searchValue, props.data] } satisfies TreeHighlightProvide);
 
@@ -82,7 +89,7 @@ export const TreeSelectContent = defineComponent({
 					<Tree
 						ref={treeRef}
 						model-value={props.value}
-						expanded-values={props.value}
+						expanded-values={expandedValues.value}
 						data={props.data}
 						checkStrictly={props.checkStrictly}
 						allowDispatch={false}

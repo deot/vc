@@ -2172,6 +2172,38 @@ describe('TreeSelect searchable', () => {
 		wrapper.unmount();
 	});
 
+	it('tree mode: checking does not expand nodes, reopening expands the checked ones', async () => {
+		const value = ref<any[]>([]);
+		const source = freshData();
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={source} max={99} />
+		), { attachTo: document.body, ...realTransition });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+
+		const expanded = () => Array.from(document.querySelectorAll('.vc-tree-node[aria-expanded="true"]'))
+			.map(el => el.querySelector('.vc-tree-node__content')?.textContent?.trim());
+		expect(expanded()).toEqual([]);
+
+		// 勾选收起的「一级 2」：联动勾选子孙，但不展开
+		(getTreeCheckboxes()[1] as HTMLInputElement).click();
+		await flush();
+		expect(value.value).toEqual(expect.arrayContaining(['2', '2-1', '2-1-1', '2-2', '2-2-1']));
+		expect(expanded()).toEqual([]);
+
+		// 重新打开：按已选值展开已选节点与祖先
+		const popover = wrapper.findComponent({ name: 'vc-popover' });
+		(popover.vm as any).$emit('update:modelValue', false);
+		await sleep(250);
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+		expect(expanded()).toEqual(['一级 2', '二级 2-1', '二级 2-2']);
+
+		wrapper.unmount();
+	});
+
 	it('closing via clear icon also resets search', async () => {
 		const value = ref<any[]>(['1']);
 		const wrapper = mount(() => (
