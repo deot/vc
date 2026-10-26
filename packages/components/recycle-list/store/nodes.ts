@@ -246,7 +246,7 @@ export class Nodes {
 				continue;
 			}
 			const node = this.create(index, local.originalData[index]);
-			props.inverted
+			inverted
 				? created.push(node)
 				: (states.rebuildData[index] = node);
 			nodes.push(node);

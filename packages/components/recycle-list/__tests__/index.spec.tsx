@@ -916,11 +916,11 @@ describe('index.ts', () => {
 			const expectConsistent = (wrapper: any, states: any, cols: number, rowSize?: number) => {
 				const sizes = Array.from({ length: cols }, () => 0);
 				states.rebuildData.forEach((node: any) => {
-					expect(node.states.column).toBeGreaterThanOrEqual(0);
-					expect(node.states.column).toBeLessThan(cols);
-					expect(node.states.size).toBeGreaterThan(0);
-					expect(node.states.position).toBe(sizes[node.states.column]);
-					sizes[node.states.column] += node.states.size;
+					expect(node.raw.column).toBeGreaterThanOrEqual(0);
+					expect(node.raw.column).toBeLessThan(cols);
+					expect(node.raw.size).toBeGreaterThan(0);
+					expect(node.raw.position).toBe(sizes[node.raw.column]);
+					sizes[node.raw.column] += node.raw.size;
 				});
 				expect(states.contentMaxSize).toBe(Math.max(...sizes));
 
@@ -931,10 +931,10 @@ describe('index.ts', () => {
 					let top = Number(/\(([-\d.]+)px\)/.exec(column.attributes('style') || '')?.[1] || 0);
 					column.findAll('.vc-recycle-list__item').forEach((row: any) => {
 						const node = states.rebuildData[Number(row.text())];
-						expect(node.states.column).toBe(index);
+						expect(node.raw.column).toBe(index);
 						if (rowSize) {
-							expect(node.states.size).toBe(rowSize);
-							expect(node.states.position).toBe(top);
+							expect(node.raw.size).toBe(rowSize);
+							expect(node.raw.position).toBe(top);
 							top += rowSize;
 						}
 						shown++;
@@ -955,12 +955,12 @@ describe('index.ts', () => {
 				wrapper.findAll('.vc-recycle-list__column').forEach((column: any, index: number) => {
 					const nodes = states.data[index];
 					const columnEnd = states.rebuildData
-						.filter((node: any) => node.states.column === index)
-						.reduce((sum: number, node: any) => sum + node.states.size, 0);
+						.filter((node: any) => node.raw.column === index)
+						.reduce((sum: number, node: any) => sum + node.raw.size, 0);
 					expect(column.findAll('.vc-recycle-list__item').length).toBe(nodes.length);
-					expect(nodes[0].states.position).toBeLessThanOrEqual(scrollTop);
+					expect(nodes[0].raw.position).toBeLessThanOrEqual(scrollTop);
 					const last = nodes[nodes.length - 1];
-					expect(last.states.position + last.states.size).toBeGreaterThanOrEqual(Math.min(viewportEnd, columnEnd));
+					expect(last.raw.position + last.raw.size).toBeGreaterThanOrEqual(Math.min(viewportEnd, columnEnd));
 				});
 			};
 
@@ -973,7 +973,7 @@ describe('index.ts', () => {
 			const settleRendered = async (wrapper: any, states: any, rowSize: number) => {
 				for (let i = 0; i < 10; i++) {
 					const rows = wrapper.findAll(ROW);
-					if (rows.every((row: any) => states.rebuildData[Number(row.text())].states.size === rowSize)) return;
+					if (rows.every((row: any) => states.rebuildData[Number(row.text())].raw.size === rowSize)) return;
 					rows.forEach((row: any) => observerOf(row.element).trigger(row.element));
 					await flushLayout(2);
 				}
@@ -1042,7 +1042,7 @@ describe('index.ts', () => {
 					expectConsistent(wrapper, states, to, rowSize);
 					expectViewportCovered(wrapper, states);
 					// 停在顶部时一直渲染着的行已按 DOM 重测，其余在隐藏池重测，全部是新尺寸
-					scrollTop === 0 && states.rebuildData.forEach((node: any) => expect(node.states.size).toBe(rowSize));
+					scrollTop === 0 && states.rebuildData.forEach((node: any) => expect(node.raw.size).toBe(rowSize));
 				} finally {
 					wrapper.unmount();
 					Object.defineProperty(HTMLElement.prototype, 'offsetHeight', offsetHeight);
@@ -1122,7 +1122,7 @@ describe('index.ts', () => {
 			await sleep(20);
 
 			expect(build).not.toHaveBeenCalled();
-			expect(store.states.rebuildData[0].states.size).toBe(80);
+			expect(store.states.rebuildData[0].raw.size).toBe(80);
 			restoreLarger();
 			wrapper.unmount();
 		});
@@ -1158,7 +1158,7 @@ describe('index.ts', () => {
 			const store = listRef.value.store;
 			const placeholders = () => store.states.rebuildData.filter((node: any) => node.states.isPlaceholder);
 			const firstBatch = new Set(placeholders());
-			expect(placeholders().map((node: any) => node.states.size)).toEqual([30, 30]);
+			expect(placeholders().map((node: any) => node.raw.size)).toEqual([30, 30]);
 
 			// 骨架自身尺寸变了（例如列表变宽），下一批占位应按新尺寸测量
 			heights.value = 50;
@@ -1168,10 +1168,10 @@ describe('index.ts', () => {
 			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
 			wrapEl.dispatchEvent(new Event('scroll'));
 			const nextBatch = () => placeholders().filter((node: any) => !firstBatch.has(node));
-			const pending = () => nextBatch().length < 2 || nextBatch().some((node: any) => node.states.size === 0);
+			const pending = () => nextBatch().length < 2 || nextBatch().some((node: any) => node.raw.size === 0);
 			for (let i = 0; i < 40 && pending(); i++) await sleep(0);
 
-			expect(nextBatch().map((node: any) => node.states.size)).toEqual([50, 50]);
+			expect(nextBatch().map((node: any) => node.raw.size)).toEqual([50, 50]);
 
 			Object.defineProperty(proto, 'offsetHeight', descriptor);
 			wrapper.unmount();
@@ -1240,7 +1240,7 @@ describe('index.ts', () => {
 			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
 			const target = listRef.value.store.states.rebuildData[1];
 			if (target) {
-				target.states.position = 200;
+				target.raw.position = 200;
 			}
 
 			listRef.value.scrollToIndex(1, 10);
@@ -1261,8 +1261,8 @@ describe('index.ts', () => {
 			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
 			Object.defineProperty(wrapEl, 'clientHeight', { configurable: true, get: () => 100 });
 			const target = listRef.value.store.states.rebuildData[1];
-			target.states.position = 200;
-			target.states.size = 40;
+			target.raw.position = 200;
+			target.raw.size = 40;
 
 			wrapEl.scrollTop = 150;
 			listRef.value.scrollToIndex(1, { align: 'nearest' });
@@ -2023,7 +2023,7 @@ describe('index.ts', () => {
 			store.layout.refresh();
 			expect(store.states.layoutVersion).toBe(version + 1);
 			expect(store.states.rebuildData.map(node => node.raw.position)).toEqual([0, 50, 70, 90, 110]);
-			expect(store.states.data[0][1].states.position).toBe(50);
+			expect(store.states.data[0][1].raw.position).toBe(50);
 		});
 
 		it('整体重测时跳过尺寸仍是预估值的节点；实测过的节点照常重建', () => {
@@ -2258,12 +2258,12 @@ describe('index.ts', () => {
 				const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
 				const triggerPosition = 80;
 				const anchor = store.states.rebuildData.find((item: any) => {
-					const head = item.states.position + store.states.columnFillSize[item.states.column];
-					return head <= triggerPosition && head + item.states.size >= triggerPosition;
+					const head = item.raw.position + store.states.columnFillSize[item.raw.column];
+					return head <= triggerPosition && head + item.raw.size >= triggerPosition;
 				});
 				expect(anchor).toBeDefined();
-				const anchorOffset = anchor.states.position
-					+ store.states.columnFillSize[anchor.states.column]
+				const anchorOffset = anchor.raw.position
+					+ store.states.columnFillSize[anchor.raw.column]
 					- triggerPosition;
 
 				listRef.value.scrollTo(triggerPosition);
@@ -2277,8 +2277,8 @@ describe('index.ts', () => {
 				expect(wrapper.findAll('.vc-recycle-list__column .row').length).toBeGreaterThan(0);
 				expect(wrapEl.scrollTop).toBe(2080);
 				const pendingAnchor = store.states.rebuildData.find((item: any) => item.states.index === anchor.states.index);
-				const pendingOffset = pendingAnchor.states.position
-					+ store.states.columnFillSize[pendingAnchor.states.column]
+				const pendingOffset = pendingAnchor.raw.position
+					+ store.states.columnFillSize[pendingAnchor.raw.column]
 					- wrapEl.scrollTop;
 				expect(pendingOffset).toBe(anchorOffset);
 
@@ -2289,8 +2289,8 @@ describe('index.ts', () => {
 				await nextTick();
 
 				const changedAnchor = store.states.rebuildData.find((item: any) => item.states.index === anchor.states.index);
-				const changedOffset = changedAnchor.states.position
-					+ store.states.columnFillSize[changedAnchor.states.column]
+				const changedOffset = changedAnchor.raw.position
+					+ store.states.columnFillSize[changedAnchor.raw.column]
 					- wrapEl.scrollTop;
 				expect(changedOffset).toBe(anchorOffset);
 			} finally {
@@ -2346,7 +2346,7 @@ describe('index.ts', () => {
 
 			resolveFn(buildItems(20));
 			const isLayoutComplete = () => listRef.value.store.states.rebuildData.every((item: any) => {
-				return !item.states.isPlaceholder && item.states.position >= 0;
+				return !item.states.isPlaceholder && item.raw.position >= 0;
 			});
 			for (let i = 0; i < 20 && !isLayoutComplete(); i++) {
 				await sleep(0);
@@ -2354,7 +2354,7 @@ describe('index.ts', () => {
 			await nextTick();
 
 			expect(listRef.value.store.states.rebuildData.every((item: any) => !item.states.isPlaceholder)).toBe(true);
-			expect(listRef.value.store.states.rebuildData.every((item: any) => item.states.position >= 0)).toBe(true);
+			expect(listRef.value.store.states.rebuildData.every((item: any) => item.raw.position >= 0)).toBe(true);
 			restore();
 			wrapper.unmount();
 		});
@@ -2365,7 +2365,7 @@ describe('index.ts', () => {
 		const landPage = (store: any, start: number, count: number, size = 50) => {
 			store.local.write(start, buildItems(count, 1, start));
 			store.nodes.build(start, start + count).forEach((node: any) => {
-				node.states.size = size;
+				node.raw.size = size;
 			});
 			store.layout.refresh();
 		};
@@ -2431,7 +2431,7 @@ describe('index.ts', () => {
 			const store = new RecycleListStore({ columns: 2 });
 			store.setData([{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }]);
 			store.states.rebuildData.forEach((it: any, i: number) => {
-				it.states.size = (i + 1) * 10; // 10, 20, 30, 40
+				it.raw.size = (i + 1) * 10; // 10, 20, 30, 40
 			});
 
 			store.layout.refresh();
@@ -2450,16 +2450,16 @@ describe('index.ts', () => {
 			const total = 600; // 需要超过一个重排块(256)，否则增量路径不会跳过前面的块
 			const store = new RecycleListStore({ batchCount: total });
 			store.setData(buildItems(total));
-			store.states.rebuildData.forEach((it: any) => { it.states.size = 50; });
+			store.states.rebuildData.forEach((it: any) => { it.raw.size = 50; });
 			store.layout.refresh();
 			expect(store.states.contentMaxSize).toBe(total * 50);
 
 			store.nodes.build(0, total, { force: true });
-			store.states.rebuildData.forEach((it: any) => { it.states.size = 50; });
+			store.states.rebuildData.forEach((it: any) => { it.raw.size = 50; });
 			store.layout.refresh();
 
-			expect(store.states.rebuildData.every((it: any) => it.states.column >= 0)).toBe(true);
-			expect(store.states.rebuildData.every((it: any, i: number) => it.states.position === i * 50)).toBe(true);
+			expect(store.states.rebuildData.every((it: any) => it.raw.column >= 0)).toBe(true);
+			expect(store.states.rebuildData.every((it: any, i: number) => it.raw.position === i * 50)).toBe(true);
 			expect(store.states.contentMaxSize).toBe(total * 50);
 		});
 
@@ -2500,7 +2500,7 @@ describe('index.ts', () => {
 			expect(a.states.isPlaceholder).toBe(false);
 			expect(a.states.data).toEqual({ value: 'a' });
 			expect(a.states.index).toBe(0);
-			expect(a.states.size).toBe(0);
+			expect(a.raw.size).toBe(0);
 			expect(b.states.isPlaceholder).toBe(true);
 			expect(typeof a.id).toBe('string');
 		});
@@ -2531,9 +2531,9 @@ describe('index.ts', () => {
 			geometry: { position: number; size: number; column?: number }
 		) => {
 			const node = RecycleListItemNode.of({ index, data: { id: index } });
-			node.states.position = geometry.position;
-			node.states.size = geometry.size;
-			node.states.column = geometry.column ?? 0;
+			node.raw.position = geometry.position;
+			node.raw.size = geometry.size;
+			node.raw.column = geometry.column ?? 0;
 			return store.nodes.attach(index, node);
 		};
 
@@ -2661,9 +2661,9 @@ describe('index.ts', () => {
 			const store = new RecycleListStore({ columns: 1, inverted: true });
 			store.setData([{ id: 0 }, { id: 1 }, { id: 2 }]);
 			store.states.rebuildData.forEach((it: any, i: number) => {
-				it.states.size = 50;
-				it.states.column = 0;
-				it.states.position = i * 50;
+				it.raw.size = 50;
+				it.raw.column = 0;
+				it.raw.position = i * 50;
 			});
 			store.layout.refresh();
 			expect(() => store.position.updateVisibleRange(60, 200)).not.toThrow();
@@ -2677,16 +2677,16 @@ describe('index.ts', () => {
 			const store = new RecycleListStore({ columns: cols, inverted, batchCount: 12, bufferCount: 0 });
 			store.setData(Array.from({ length: 12 }).map((_, id) => ({ id })));
 			const sizes = [100, 20, 80, 40, 120, 30, 60, 90, 25, 110, 35, 70];
-			store.states.rebuildData.forEach((item: any, index: number) => { item.states.size = sizes[index]; });
+			store.states.rebuildData.forEach((item: any, index: number) => { item.raw.size = sizes[index]; });
 			store.layout.refresh();
 
 			for (let headPosition = 0; headPosition <= store.states.contentMaxSize; headPosition += 10) {
 				const tailPosition = headPosition + 75;
 				const visible = store.states.rebuildData
 					.map((item: any, index: number) => {
-						const offset = inverted ? store.states.columnFillSize[item.states.column] : 0;
-						const head = item.states.position + offset;
-						const tail = head + item.states.size;
+						const offset = inverted ? store.states.columnFillSize[item.raw.column] : 0;
+						const head = item.raw.position + offset;
+						const tail = head + item.raw.size;
 						return head <= tailPosition && tail >= headPosition ? index : -1;
 					})
 					.filter((index: number) => index >= 0);
@@ -2722,8 +2722,8 @@ describe('index.ts', () => {
 			expect([store.states.firstItemIndex, store.states.lastItemIndex]).toEqual([1, 1]);
 			const positionSource = store.position.source;
 
-			store.states.rebuildData[0].states.size = 200;
-			store.states.rebuildData[1].states.position = 200;
+			store.states.rebuildData[0].raw.size = 200;
+			store.states.rebuildData[1].raw.position = 200;
 			store.position.updateVisibleRange(150, 150);
 
 			expect(store.position.source).toBe(positionSource);
@@ -2755,7 +2755,7 @@ describe('index.ts', () => {
 		it('Layout.refresh handles inverted multi-column', () => {
 			const store = new RecycleListStore({ columns: 2, inverted: true });
 			store.setData([{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }]);
-			store.states.rebuildData.forEach((it: any) => { it.states.size = 50; });
+			store.states.rebuildData.forEach((it: any) => { it.raw.size = 50; });
 			store.layout.refresh();
 			expect(store.states.contentMaxSize).toBeGreaterThan(0);
 			expect(store.states.columnFillSize.length).toBe(2);
@@ -2771,8 +2771,8 @@ describe('index.ts', () => {
 			// 首轮：空洞写入 laidSizes=0
 			store.layout.refresh();
 			expect((store.layout as any).laidSizes[1]).toBe(0);
-			expect(store.states.rebuildData[0].states.position).toBe(0);
-			expect(store.states.rebuildData[2].states.position).toBe(40);
+			expect(store.states.rebuildData[0].raw.position).toBe(0);
+			expect(store.states.rebuildData[2].raw.position).toBe(40);
 			expect(store.states.contentMaxSize).toBe(60);
 
 			// 次轮：同引用、空洞仍在 → findDirtyScan 走 laidSizes===0 的 continue
@@ -2787,7 +2787,7 @@ describe('index.ts', () => {
 			expect((store.layout as any).laidSource).toBe(toRaw(store.states.rebuildData));
 			store.layout.refresh();
 			expect((store.layout as any).laidSizes[1]).toBe(0);
-			expect(store.states.rebuildData[2].states.position).toBe(40);
+			expect(store.states.rebuildData[2].raw.position).toBe(40);
 			expect(store.states.contentMaxSize).toBe(60);
 		});
 
@@ -3509,8 +3509,8 @@ describe('index.ts', () => {
 			const expectLaidOutByData = (states: any) => {
 				const nodes = states.rebuildData;
 				nodes.forEach((node: any, i: number) => {
-					expect(node.states.size).toBe(heightOf(node.states.data.id));
-					i > 0 && expect(node.states.position).toBe(nodes[i - 1].states.position + nodes[i - 1].states.size);
+					expect(node.raw.size).toBe(heightOf(node.states.data.id));
+					i > 0 && expect(node.raw.position).toBe(nodes[i - 1].raw.position + nodes[i - 1].raw.size);
 				});
 			};
 
@@ -3601,8 +3601,8 @@ describe('index.ts', () => {
 				await flushMicrotasks();
 
 				expect(measuredIds).toEqual([]);
-				expect(states.rebuildData[2].states.size).toBe(77);
-				expect(states.rebuildData[3].states.position).toBe(states.rebuildData[2].states.position + 77);
+				expect(states.rebuildData[2].raw.size).toBe(77);
+				expect(states.rebuildData[3].raw.position).toBe(states.rebuildData[2].raw.position + 77);
 				restore();
 			});
 
@@ -3619,17 +3619,17 @@ describe('index.ts', () => {
 				expect(states.preData.length).toBe(0);
 				expect(measuredIds).toEqual([]);
 				expect(shown()[0].text()).toBe('100');
-				expect(states.rebuildData[0].states.size).toBe(heightOf(100));
-				expect(states.rebuildData[29].states.size).toBe(heightOf(29));
+				expect(states.rebuildData[0].raw.size).toBe(heightOf(100));
+				expect(states.rebuildData[29].raw.size).toBe(heightOf(29));
 
 				// 视口外的项渲染出来时再按实际尺寸校正
 				const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
-				wrapEl.scrollTop = states.rebuildData[20].states.position;
+				wrapEl.scrollTop = states.rebuildData[20].raw.position;
 				wrapEl.dispatchEvent(new Event('scroll'));
 				await flushMicrotasks();
 				triggerRendered(wrapper, 120);
 				await flushMicrotasks();
-				expect(states.rebuildData[20].states.size).toBe(heightOf(120));
+				expect(states.rebuildData[20].raw.size).toBe(heightOf(120));
 				restore();
 			});
 
@@ -3645,7 +3645,7 @@ describe('index.ts', () => {
 				expect(measuredIds).toEqual([]);
 				expect(shown().length).toBeGreaterThan(0);
 				const first = states.rebuildData.find((node: any) => node.states.data.id === Number(shown()[0].text()));
-				expect(first.states.size).toBe(heightOf(first.states.data.id));
+				expect(first.raw.size).toBe(heightOf(first.states.data.id));
 				restore();
 			});
 		});
@@ -3668,8 +3668,8 @@ describe('index.ts', () => {
 			const expectLaidOut = (states: any, heightOf: (id: number) => number) => {
 				const nodes = states.rebuildData;
 				nodes.forEach((node: any, i: number) => {
-					expect(node.states.size).toBe(heightOf(node.states.data.id));
-					i > 0 && expect(node.states.position).toBe(nodes[i - 1].states.position + nodes[i - 1].states.size);
+					expect(node.raw.size).toBe(heightOf(node.states.data.id));
+					i > 0 && expect(node.raw.position).toBe(nodes[i - 1].raw.position + nodes[i - 1].raw.size);
 				});
 			};
 
@@ -3695,7 +3695,7 @@ describe('index.ts', () => {
 				const { states, wrapper, restore } = await setup(30, 30, heightOf);
 				const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
 				// 视口上沿停在第 8 行起点之上 10px：第 6 行在视口上方，只因 overscan 被渲染出来
-				wrapEl.scrollTop = states.rebuildData[8].states.position - 10;
+				wrapEl.scrollTop = states.rebuildData[8].raw.position - 10;
 				wrapEl.dispatchEvent(new Event('scroll'));
 				await flushMicrotasks();
 
@@ -3769,7 +3769,7 @@ describe('index.ts', () => {
 				triggerRendered(wrapper, 3);
 				await flushMicrotasks();
 
-				expect(states.rebuildData[3].states.size).toBe(23);
+				expect(states.rebuildData[3].raw.size).toBe(23);
 				expect(states.preData.length).toBe(0);
 				restore();
 			});
@@ -3835,8 +3835,8 @@ describe('index.ts', () => {
 
 				expect(build).not.toHaveBeenCalled();
 				expect(measuredIds).toEqual([]);
-				rendered.forEach(id => expect(states.rebuildData[id].states.size).toBe(60));
-				expect(states.rebuildData[29].states.size).toBe(40);
+				rendered.forEach(id => expect(states.rebuildData[id].raw.size).toBe(60));
+				expect(states.rebuildData[29].raw.size).toBe(40);
 				restore();
 			});
 		});
@@ -3925,7 +3925,7 @@ describe('index.ts', () => {
 				const heights: Record<number, number> = {};
 				const heightOf = (id: number) => heights[id] ?? 20 + id;
 				const { data, states, wrapper, restore } = await setup(30, 30, heightOf);
-				const sizeOf = (id: number) => states.rebuildData.find((node: any) => node.states.data.id === id).states.size;
+				const sizeOf = (id: number) => states.rebuildData.find((node: any) => node.states.data.id === id).raw.size;
 
 				// 删掉一行后其余行前移：元素跟着节点走，回调仍落到原来那条数据上
 				data.value = data.value.filter(item => item.id !== 1);
@@ -3943,7 +3943,7 @@ describe('index.ts', () => {
 			it('corrects the rows that changed in one callback with a single relayout', async () => {
 				const heights: Record<number, number> = {};
 				const { list, states, wrapper, restore } = await setup(30, 30, id => heights[id] ?? 40);
-				const sizeOf = (id: number) => states.rebuildData.find((node: any) => node.states.data.id === id).states.size;
+				const sizeOf = (id: number) => states.rebuildData.find((node: any) => node.states.data.id === id).raw.size;
 				const rows = rowsOf(wrapper).slice(0, 3);
 				const ids = rows.map(el => Number(el.textContent));
 				const refresh = vi.spyOn(list.store.layout, 'refresh');
@@ -4034,8 +4034,8 @@ describe('index.ts', () => {
 				triggerRendered(wrapper, 2);
 				await flushMicrotasks();
 
-				expect(states.rebuildData[2].states.size).toBe(90);
-				expect(states.rebuildData[3].states.position).toBe(states.rebuildData[2].states.position + 90);
+				expect(states.rebuildData[2].raw.size).toBe(90);
+				expect(states.rebuildData[3].raw.position).toBe(states.rebuildData[2].raw.position + 90);
 				wrapper.unmount();
 				offsetWidth
 					? Object.defineProperty(HTMLElement.prototype, 'offsetWidth', offsetWidth)
@@ -4069,7 +4069,7 @@ describe('index.ts', () => {
 
 				for (let i = 0; i < 40 && states.preData.length > 0; i++) await sleep(0);
 				expect(measuredIds.sort((a, b) => a - b)).toEqual(Array.from({ length: 10 }, (_, i) => i * 10 + 3));
-				expect(states.rebuildData[3].states.size).toBe(90);
+				expect(states.rebuildData[3].raw.size).toBe(90);
 				expect(states.contentMaxSize).toBe(90 * 10 + 40 * 90);
 				restore();
 			});
@@ -4093,10 +4093,10 @@ describe('index.ts', () => {
 				triggerRendered(wrapper, 2);
 				await flushMicrotasks();
 
-				expect(states.rebuildData[2].states.size).toBe(heightOf(2));
+				expect(states.rebuildData[2].raw.size).toBe(heightOf(2));
 				// 没渲染过的项仍是估计值
-				expect(states.rebuildData[50].states.size).toBe(30);
-				expect(states.rebuildData[3].states.position).toBe(states.rebuildData[2].states.position + heightOf(2));
+				expect(states.rebuildData[50].raw.size).toBe(30);
+				expect(states.rebuildData[3].raw.position).toBe(states.rebuildData[2].raw.position + heightOf(2));
 				restore();
 			});
 
@@ -4112,8 +4112,8 @@ describe('index.ts', () => {
 				expect(states.rebuildData.length).toBe(100);
 				expect(pooled().length).toBe(0);
 				// 没渲染过的项换成新的预估值；渲染中的行随即按 DOM 校正
-				expect(states.rebuildData[99].states.size).toBe(60);
-				expect(states.rebuildData[0].states.size).toBe(40);
+				expect(states.rebuildData[99].raw.size).toBe(60);
+				expect(states.rebuildData[0].raw.size).toBe(40);
 
 				// 撤掉预估：已有的尺寸原样保留（同样只是估计值），不重建列表，也不把已构建的数据放进隐藏池
 				options.estimateSize = undefined;
@@ -4121,7 +4121,7 @@ describe('index.ts', () => {
 				expect(states.rebuildData.length).toBe(100);
 				expect(states.preData.length).toBe(0);
 				expect(pooled().length).toBe(0);
-				expect(states.rebuildData[99].states.size).toBe(60);
+				expect(states.rebuildData[99].raw.size).toBe(60);
 				restore();
 			});
 
@@ -4131,7 +4131,7 @@ describe('index.ts', () => {
 				const { states, list, wrapper, restore } = await setup(100, 20, () => 50, options);
 				triggerRendered(wrapper, 0);
 				await flushMicrotasks();
-				const sizes = () => states.rebuildData.map((node: any) => node.states.size);
+				const sizes = () => states.rebuildData.map((node: any) => node.raw.size);
 				expect(sizes()[0]).toBe(50);
 				expect(sizes()[99]).toBe(30);
 				const before = sizes();
@@ -4165,7 +4165,7 @@ describe('index.ts', () => {
 
 				await flushLayout();
 				const { states } = listRef.value.store;
-				expect(states.rebuildData.map((node: any) => node.states.size)).toEqual([32, 32, 32, 32, 32]);
+				expect(states.rebuildData.map((node: any) => node.raw.size)).toEqual([32, 32, 32, 32, 32]);
 				expect(wrapper.findAll('.vc-recycle-list__pool .x').length).toBe(0);
 				offsetHeight.mockRestore();
 				wrapper.unmount();
@@ -4273,8 +4273,8 @@ describe('index.ts', () => {
 
 			// 给每个 rebuildData item 一个 size 与 position，使 handleResize 内部判断为 isNeedRefreshLayout
 			listRef.value.store.states.rebuildData.forEach((it: any, i: number) => {
-				it.states.size = 80;
-				it.states.position = i * 80;
+				it.raw.size = 80;
+				it.raw.position = i * 80;
 				it.states.isPlaceholder = false;
 			});
 

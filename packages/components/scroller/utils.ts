@@ -45,6 +45,18 @@ export const getPadding = (el: Element) => {
 };
 
 /**
+ * 元素受祖先 transform（如 scale）影响的缩放比例：视口中的尺寸与 CSS 尺寸之比
+ * @param el 目标元素
+ * @param axis 按哪个方向的尺寸计算
+ * @param rect 已读取的 rect，省去再读一次
+ * @returns 缩放比例；尺寸为 0 时为 1
+ */
+export const getScale = (el: HTMLElement, axis: 'x' | 'y' = 'y', rect = el.getBoundingClientRect()) => {
+	const size = axis === 'y' ? el.offsetHeight : el.offsetWidth;
+	return (size && (axis === 'y' ? rect.height : rect.width) / size) || 1;
+};
+
+/**
  * 滚动容器的可视区：去掉边框与 padding 后的区域（即 position: sticky 的参照区域），坐标相对浏览器视口
  * 祖先存在 transform: scale 时，边框与 padding 按同一比例换算，scale 用于把 CSS px 换算为视口 px
  * @param el 滚动容器或 window
@@ -58,7 +70,7 @@ export const getViewportRect = (el: HTMLElement | Window) => {
 	}
 	el = el as HTMLElement;
 	const rect = el.getBoundingClientRect();
-	const scale = el.offsetHeight ? rect.height / el.offsetHeight : 1;
+	const scale = getScale(el, 'y', rect);
 	const [paddingTop, paddingRight, paddingBottom, paddingLeft] = getPadding(el);
 	const top = rect.top + (el.clientTop + paddingTop) * scale;
 	const left = rect.left + (el.clientLeft + paddingLeft) * scale;

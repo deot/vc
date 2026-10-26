@@ -100,16 +100,16 @@ export class ExternalViewport implements ScrollSource {
 		const root = this.anchors.root();
 		if (!root) return;
 		const content = this.anchors.content();
-		const listStart = this.carrier.getElementStart(root);
-		const contentStart = content ? this.carrier.getElementStart(content) : listStart;
+		// 承载者只量一次，换算根与 content 共用
+		const frame = this.carrier.frame;
+		const list = this.carrier.getElementBounds(root, frame);
+		const listStart = list.start;
+		const contentStart = content ? this.carrier.getElementBounds(content, frame).start : listStart;
 		const previous = this.measured ? this.cache : undefined;
 		this.cache = {
 			listStart,
 			contentStart,
-			listEnd: Math.max(
-				this.carrier.getElementEnd(root),
-				contentStart + this.anchors.contentSize()
-			)
+			listEnd: Math.max(list.end, contentStart + this.anchors.contentSize())
 		};
 		this.dirty = false;
 		this.measured = true;

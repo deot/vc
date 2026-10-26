@@ -87,8 +87,8 @@ describe('ExternalCarrier', () => {
 			expect(viewport.mainOffset).toBe(125);
 			expect(viewport.clientSize).toBe(600);
 			expect(viewport.scrollSize).toBe(2400);
-			expect(viewport.getElementStart(element)).toBe(200);
-			expect(viewport.getElementEnd(element)).toBe(280);
+			expect(viewport.getElementBounds(element).start).toBe(200);
+			expect(viewport.getElementBounds(element).end).toBe(280);
 
 			viewport.setMainOffset(340);
 			expect(scrolling.scrollTop).toBe(340);
@@ -111,8 +111,8 @@ describe('ExternalCarrier', () => {
 			expect(viewport.mainOffset).toBe(45);
 			expect(viewport.clientSize).toBe(880);
 			expect(viewport.scrollSize).toBe(3200);
-			expect(viewport.getElementStart(element)).toBe(75);
-			expect(viewport.getElementEnd(element)).toBe(175);
+			expect(viewport.getElementBounds(element).start).toBe(75);
+			expect(viewport.getElementBounds(element).end).toBe(175);
 
 			const off = viewport.on(listener);
 			window.dispatchEvent(new Event('scroll'));
@@ -154,13 +154,13 @@ describe('ExternalCarrier', () => {
 			expect(vertical.mainOffset).toBe(200);
 			expect(vertical.clientSize).toBe(400);
 			expect(vertical.scrollSize).toBe(1800);
-			expect(vertical.getElementStart(element)).toBe(247);
-			expect(vertical.getElementEnd(element)).toBe(307);
+			expect(vertical.getElementBounds(element).start).toBe(247);
+			expect(vertical.getElementBounds(element).end).toBe(307);
 			expect(horizontal.mainOffset).toBe(80);
 			expect(horizontal.clientSize).toBe(500);
 			expect(horizontal.scrollSize).toBe(2200);
-			expect(horizontal.getElementStart(element)).toBe(116);
-			expect(horizontal.getElementEnd(element)).toBe(216);
+			expect(horizontal.getElementBounds(element).start).toBe(116);
+			expect(horizontal.getElementBounds(element).end).toBe(216);
 
 			vertical.setMainOffset(360);
 			horizontal.setMainOffset(460);

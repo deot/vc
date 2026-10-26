@@ -239,17 +239,18 @@ export const RecycleList = defineComponent({
 		 */
 		const scrollToIndex = (index: number, options: number | ScrollToIndexOptions = 0) => {
 			const { offset = 0, align = 'start' } = typeof options === 'number' ? { offset: options } : options;
-			const item = store.states.rebuildData[index];
-			if (!(item?.states.position >= 0)) return;
+			const raw = store.states.rebuildData[index]?.raw;
+			if (!raw || !(raw.position >= 0)) return;
 			const state = viewport.state();
 			if (!state) return;
-			// item.position 以 content 为原点；外部滚动源需换算到承载者坐标
-			const start = viewport.contentOrigin(state) + item.states.position;
+			// position 以 content 为原点；外部滚动源需换算到承载者坐标
+			const start = viewport.contentOrigin(state) + raw.position;
 			let target = start;
 			if (align === 'nearest') {
-				const end = start + item.states.size;
-				if (start >= state.viewportStart && end <= state.viewportEnd) return;
-				start >= state.viewportStart && item.states.size <= state.clientSize && (target = end - state.clientSize);
+				const end = start + raw.size;
+				const isBelowStart = start >= state.viewportStart;
+				if (isBelowStart && end <= state.viewportEnd) return;
+				isBelowStart && raw.size <= state.clientSize && (target = end - state.clientSize);
 			}
 			scrollTo({ [K.axis]: target + offset, [K.crossAxis]: 0 });
 		};
@@ -349,7 +350,7 @@ export const RecycleList = defineComponent({
 			setVisibleItemRange(true);
 			measured.length > 0 && emit(
 				'row-resize',
-				measured.map(node => ({ size: node.states.size, index: node.states.index }))
+				measured.map(node => ({ size: node.raw.size, index: node.raw.index }))
 			);
 
 			// 仍有并发的布局时不写入进度、不放行等待者
@@ -643,7 +644,7 @@ export const RecycleList = defineComponent({
 			if (!state) return firstItemIndex;
 			const start = state.viewportStart - state.contentStart;
 			for (let i = firstItemIndex; i <= lastItemIndex; i++) {
-				const position = rebuildData[i]?.states.position;
+				const position = rebuildData[i]?.raw.position;
 				if (typeof position === 'number' && position >= start) return i;
 			}
 			return firstItemIndex;
@@ -655,9 +656,9 @@ export const RecycleList = defineComponent({
 		 */
 		const preserveAnchor = async (update: () => unknown) => {
 			const anchorIndex = getAnchorIndex();
-			const oldPosition = store.states.rebuildData[anchorIndex]?.states.position;
+			const oldPosition = store.states.rebuildData[anchorIndex]?.raw.position;
 			await update();
-			const newPosition = store.states.rebuildData[anchorIndex]?.states.position;
+			const newPosition = store.states.rebuildData[anchorIndex]?.raw.position;
 
 			// item 尚未完成初始定位（position = -1000）时不补偿
 			if (typeof oldPosition === 'number' && oldPosition >= 0 && typeof newPosition === 'number') {
@@ -708,7 +709,7 @@ export const RecycleList = defineComponent({
 			// 写回尺寸不改位置，锚点的原位置在重排前读取仍然有效
 			await preserveAnchor(() => store.layout.refresh());
 			syncVisibleRange();
-			emit('row-resize', changed.map(node => ({ size: node.states.size, index: node.states.index })));
+			emit('row-resize', changed.map(node => ({ size: node.raw.size, index: node.raw.index })));
 		};
 
 		/**

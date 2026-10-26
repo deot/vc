@@ -2301,12 +2301,12 @@ describe('Table virtual + scroll', () => {
 			), { attachTo: document.body });
 			await settleList();
 			const { states } = (wrapper.findComponent({ name: 'vc-recycle-list' }).vm as any).$.exposed.store;
-			expect(states.rebuildData[499].states.size).toBe(40);
+			expect(states.rebuildData[499].raw.size).toBe(40);
 
 			// 行高变了：没渲染到的行不必等滚到才校正，内容高度随即更新
 			rowHeight.value = 60;
 			await settleList();
-			expect(states.rebuildData[499].states.size).toBe(60);
+			expect(states.rebuildData[499].raw.size).toBe(60);
 			expect(states.rebuildData.length).toBe(500);
 			wrapper.unmount();
 		});
@@ -2327,7 +2327,7 @@ describe('Table virtual + scroll', () => {
 			const list = wrapper.findComponent({ name: 'vc-recycle-list' });
 			const { states } = (list.vm as any).$.exposed.store;
 			// 前两行合并成一块（40 + 60），其余每行一块
-			expect(states.rebuildData.map((node: any) => node.states.size)).toEqual([100, 40, 60, 40, 60]);
+			expect(states.rebuildData.map((node: any) => node.raw.size)).toEqual([100, 40, 60, 40, 60]);
 			expect(states.contentMaxSize).toBe(300);
 
 			// 渲染出来的行高逐行指定：合并块里各行可以不等高
@@ -2365,12 +2365,12 @@ describe('Table virtual + scroll', () => {
 			await settleList();
 			const { states } = (wrapper.findComponent({ name: 'vc-recycle-list' }).vm as any).$.exposed.store;
 			expect(states.rebuildData.length).toBe(500);
-			expect(states.rebuildData[499].states.size).toBe(40);
+			expect(states.rebuildData[499].raw.size).toBe(40);
 
 			rowHeight.value = ({ rowIndex }: any) => (rowIndex % 2 ? 60 : 40);
 			await settleList();
-			expect(states.rebuildData[498].states.size).toBe(40);
-			expect(states.rebuildData[499].states.size).toBe(60);
+			expect(states.rebuildData[498].raw.size).toBe(40);
+			expect(states.rebuildData[499].raw.size).toBe(60);
 			wrapper.unmount();
 		});
 

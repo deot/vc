@@ -102,7 +102,7 @@ describe('RecycleList measurement', () => {
 
 		expect(states.preData.length).toBe(0);
 		states.rebuildData.forEach((node: any) => {
-			expect([node.states.data.id, node.states.size]).toEqual([node.states.data.id, heightOf(node.states.data.id)]);
+			expect([node.states.data.id, node.raw.size]).toEqual([node.states.data.id, heightOf(node.states.data.id)]);
 		});
 		wrapper.unmount();
 	});
@@ -124,7 +124,7 @@ describe('RecycleList measurement', () => {
 		runTask();
 		await flushMicrotasks();
 
-		const sizeOf = (node: any) => node.states.size;
+		const sizeOf = (node: any) => node.raw.size;
 		const first = states.rebuildData.slice(0, 10).map(sizeOf);
 		const second = states.rebuildData.slice(10, 20).map(sizeOf);
 		// 第一批已经量到真实尺寸并排版，第二批还在池里排队
@@ -134,7 +134,7 @@ describe('RecycleList measurement', () => {
 
 		await drain(states);
 		states.rebuildData.forEach((node: any) => {
-			expect(node.states.size).toBe(heightOf(node.states.data.id));
+			expect(node.raw.size).toBe(heightOf(node.states.data.id));
 		});
 		wrapper.unmount();
 	});

@@ -3,6 +3,7 @@
 import { RecycleList, RecycleListStore, Scroller } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
+import type { Ref } from 'vue';
 import { vi } from 'vitest';
 import * as drag from '../../../hooks/__tests__/fixtures/drag';
 
@@ -79,26 +80,48 @@ const mockVerticalGeometry = (
 		listSize?: number;
 		contentStart?: () => number;
 		contentSize?: number;
+		// 祖先的 transform 缩放（如弹层的展开动画）：客户区中的距离与尺寸都乘上它，offsetHeight 不变
+		scale?: number;
 	} = {}
 ) => {
 	const {
 		clientSize = 200,
 		listStart = 500,
 		listSize = 400,
-		contentSize = listSize
+		contentSize = listSize,
+		scale = 1
 	} = options;
 	const start = typeof listStart === 'function' ? listStart : () => listStart;
 	const { contentStart = start } = options;
 	const restores = [
 		defineGetter(viewport, 'clientHeight', () => clientSize),
-		// 与 rect 一致（未缩放）
 		defineGetter(viewport, 'offsetHeight', () => clientSize),
 		defineGetter(viewport, 'scrollHeight', () => 4000),
-		setRect(viewport, () => rect(100, 0, 600, clientSize)),
-		setRect(root, () => rect(100 + start() - viewport.scrollTop, 0, 600, listSize)),
-		setRect(content, () => rect(100 + contentStart() - viewport.scrollTop, 0, 600, contentSize))
+		setRect(viewport, () => rect(100, 0, 600, clientSize * scale)),
+		setRect(root, () => rect(100 + (start() - viewport.scrollTop) * scale, 0, 600, listSize * scale)),
+		setRect(content, () => rect(100 + (contentStart() - viewport.scrollTop) * scale, 0, 600, contentSize * scale))
 	];
 	return () => restores.forEach(restore => restore());
+};
+
+// 高 200 的原生滚动容器里放一个两项的列表；返回各层节点
+const mountInViewport = async (listRef: Ref<any>) => {
+	const wrapper = mount(() => (
+		<div class="viewport" style="overflow-y: auto; height: 200px;">
+			<RecycleList ref={listRef} fill={false} disabled data={[{ id: 1 }, { id: 2 }]} batchCount={10}>
+				{{ default: ({ row }: any) => <div>{row.id}</div> }}
+			</RecycleList>
+		</div>
+	), { attachTo: document.body });
+	await flush();
+	const find = (selector: string) => wrapper.find(selector).element as HTMLElement;
+	return {
+		wrapper,
+		viewport: find('.viewport'),
+		root: find('.vc-recycle-list'),
+		content: find('.vc-recycle-list__content'),
+		inner: find('.vc-recycle-list__wrapper')
+	};
 };
 
 const mockHorizontalGeometry = (
@@ -407,25 +430,12 @@ describe('RecycleList fill=false', () => {
 	it('scrollToIndex includes contentStart, resets the cross axis, and refreshes moved headers', async () => {
 		const listRef = ref<any>();
 		let contentStart = 540;
-		const wrapper = mount(() => (
-			<div class="viewport" style="overflow-y: auto; height: 200px;">
-				<div class="before" />
-				<RecycleList ref={listRef} fill={false} disabled data={[{ id: 1 }, { id: 2 }]} batchCount={10}>
-					{{ default: ({ row }: any) => <div>{row.id}</div> }}
-				</RecycleList>
-			</div>
-		), { attachTo: document.body });
-		await flush();
-
-		const viewport = wrapper.find('.viewport').element as HTMLElement;
-		const root = wrapper.find('.vc-recycle-list').element as HTMLElement;
-		const content = wrapper.find('.vc-recycle-list__content').element as HTMLElement;
-		const inner = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+		const { wrapper, viewport, root, content, inner } = await mountInViewport(listRef);
 		const restore = mockVerticalGeometry(viewport, root, content, {
 			contentStart: () => contentStart
 		});
 		await listRef.value.refreshLayout();
-		listRef.value.store.states.rebuildData[1].states.position = 160;
+		listRef.value.store.states.rebuildData[1].raw.position = 160;
 
 		inner.scrollLeft = 44;
 		listRef.value.scrollToIndex(1, -10);
@@ -434,7 +444,7 @@ describe('RecycleList fill=false', () => {
 
 		contentStart = 720;
 		await listRef.value.refreshLayout();
-		listRef.value.store.states.rebuildData[1].states.position = 160;
+		listRef.value.store.states.rebuildData[1].raw.position = 160;
 		listRef.value.scrollToIndex(1, 5);
 		expect(viewport.scrollTop).toBe(885);
 
@@ -444,60 +454,29 @@ describe('RecycleList fill=false', () => {
 
 	it('measures bounds in scroll coordinates when an ancestor is scaled (e.g. an opening popup)', async () => {
 		const listRef = ref<any>();
-		const wrapper = mount(() => (
-			<div class="viewport" style="overflow-y: auto; height: 200px;">
-				<RecycleList ref={listRef} fill={false} disabled data={[{ id: 1 }, { id: 2 }]} batchCount={10}>
-					{{ default: ({ row }: any) => <div>{row.id}</div> }}
-				</RecycleList>
-			</div>
-		), { attachTo: document.body });
-		await flush();
-
-		const viewport = wrapper.find('.viewport').element as HTMLElement;
-		const root = wrapper.find('.vc-recycle-list').element as HTMLElement;
-		const content = wrapper.find('.vc-recycle-list__content').element as HTMLElement;
+		const { wrapper, viewport, root, content } = await mountInViewport(listRef);
 		// 视口高 200、content 在滚动坐标 300 处；祖先 scaleY(0.5)：客户区中的距离都减半
-		const scale = 0.5;
-		const restores = [
-			defineGetter(viewport, 'clientHeight', () => 200),
-			defineGetter(viewport, 'offsetHeight', () => 200),
-			defineGetter(viewport, 'scrollHeight', () => 4000),
-			setRect(viewport, () => rect(100, 0, 600, 200 * scale)),
-			setRect(root, () => rect(100 + (300 - viewport.scrollTop) * scale, 0, 600, 400 * scale)),
-			setRect(content, () => rect(100 + (300 - viewport.scrollTop) * scale, 0, 600, 400 * scale))
-		];
+		const restore = mockVerticalGeometry(viewport, root, content, { listStart: 300, scale: 0.5 });
 		await listRef.value.refreshLayout();
-		listRef.value.store.states.rebuildData[1].states.position = 160;
+		listRef.value.store.states.rebuildData[1].raw.position = 160;
 		viewport.scrollTop = 0;
 		listRef.value.scrollToIndex(1);
 		expect(viewport.scrollTop).toBe(460);
 
-		restores.forEach(restore => restore());
+		restore();
 		wrapper.unmount();
 	});
 
 	it('scrollToIndex align nearest keeps visible items and scrolls to the nearer edge otherwise', async () => {
 		const listRef = ref<any>();
-		const wrapper = mount(() => (
-			<div class="viewport" style="overflow-y: auto; height: 200px;">
-				<RecycleList ref={listRef} fill={false} disabled data={[{ id: 1 }, { id: 2 }]} batchCount={10}>
-					{{ default: ({ row }: any) => <div>{row.id}</div> }}
-				</RecycleList>
-			</div>
-		), { attachTo: document.body });
-		await flush();
-
-		const viewport = wrapper.find('.viewport').element as HTMLElement;
-		const root = wrapper.find('.vc-recycle-list').element as HTMLElement;
-		const content = wrapper.find('.vc-recycle-list__content').element as HTMLElement;
-		const inner = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+		const { wrapper, viewport, root, content, inner } = await mountInViewport(listRef);
 		// 视口 200，content 起点 500
 		const restore = mockVerticalGeometry(viewport, root, content);
 		await listRef.value.refreshLayout();
 		const item = listRef.value.store.states.rebuildData[1];
 		const place = (position: number, size: number) => {
-			item.states.position = position;
-			item.states.size = size;
+			item.raw.position = position;
+			item.raw.size = size;
 		};
 		const nearest = { align: 'nearest' };
 

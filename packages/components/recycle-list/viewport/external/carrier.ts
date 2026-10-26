@@ -1,5 +1,5 @@
 import { getScroller } from '@deot/helper-dom';
-import { SCROLLER_REG } from '../../../scroller/utils';
+import { SCROLLER_REG, getScale } from '../../../scroller/utils';
 import { ScrollerManager } from '../../../scroller/manager';
 import type { ScrollerInstance } from '../../../scroller/manager';
 import type { AxisKeys } from '../types';
@@ -14,6 +14,12 @@ import { isWindow, getScrollingElement } from './dom';
  * 列表相关的边界缓存见 ExternalViewport
  * 原 viewport.ts 的 ExternalViewport
  */
+export interface CarrierFrame {
+	origin: number;
+	scale: number;
+	offset: number;
+}
+
 export class ExternalCarrier {
 	target: Window | HTMLElement;
 	scroller?: ScrollerInstance;
@@ -81,21 +87,21 @@ export class ExternalCarrier {
 	}
 
 	/**
-	 * 承载者内容区在客户区坐标中的起点与主轴缩放：Window 为 0、1；元素为自身 rect 加边框
+	 * 承载者此刻的几何：内容区在客户区坐标中的起点、主轴缩放与滚动位置
+	 * 	- 起点：Window 为 0；元素为自身 rect 加边框
 	 * 	- 缩放来自祖先的 transform（如弹层的展开动画）：客户区中的距离除以它，才是滚动坐标中的距离
-	 * @returns 起点与缩放
+	 * 	- 同一次测量要换算多个元素时先取一次，传给 getElementBounds
+	 * @returns 起点、缩放与滚动位置
 	 */
-	get frame() {
-		if (isWindow(this.target)) return { origin: 0, scale: 1 };
+	get frame(): CarrierFrame {
+		const offset = this.mainOffset;
+		if (isWindow(this.target)) return { origin: 0, scale: 1, offset };
 		const el = this.target;
+		const { axis } = this.keys;
 		const rect = el.getBoundingClientRect();
-		const vertical = this.keys.axis === 'y';
-		const size = vertical ? el.offsetHeight : el.offsetWidth;
-		const scale = (size && (vertical ? rect.height : rect.width) / size) || 1;
-		return {
-			origin: vertical ? rect.top + el.clientTop * scale : rect.left + el.clientLeft * scale,
-			scale
-		};
+		const scale = getScale(el, axis, rect);
+		const origin = axis === 'y' ? rect.top + el.clientTop * scale : rect.left + el.clientLeft * scale;
+		return { origin, scale, offset };
 	}
 
 	/**
@@ -108,25 +114,15 @@ export class ExternalCarrier {
 
 	/**
 	 * 元素在承载者滚动坐标系中的起止（已含当前滚动偏移）
-	 * 原 getElementStart / getElementEnd 的公共部分
 	 * @param el 目标元素
+	 * @param frame 承载者的几何，默认现量
 	 * @returns 起止位置
 	 */
-	getElementBounds(el: HTMLElement) {
+	getElementBounds(el: HTMLElement, frame = this.frame) {
 		const rect = el.getBoundingClientRect();
-		const { origin, scale } = this.frame;
-		const base = this.mainOffset;
-		return this.keys.axis === 'y'
-			? { start: base + (rect.top - origin) / scale, end: base + (rect.bottom - origin) / scale }
-			: { start: base + (rect.left - origin) / scale, end: base + (rect.right - origin) / scale };
-	}
-
-	getElementStart(el: HTMLElement) {
-		return this.getElementBounds(el).start;
-	}
-
-	getElementEnd(el: HTMLElement) {
-		return this.getElementBounds(el).end;
+		const { origin, scale, offset } = frame;
+		const [start, end] = this.keys.axis === 'y' ? [rect.top, rect.bottom] : [rect.left, rect.right];
+		return { start: offset + (start - origin) / scale, end: offset + (end - origin) / scale };
 	}
 }
 

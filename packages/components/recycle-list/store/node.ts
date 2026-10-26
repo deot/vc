@@ -27,7 +27,11 @@ export class RecycleListItemNode {
 	// states 的响应式代理，首次访问时才创建：没有渲染过、内容也没变过的节点（长列表的绝大多数）不必各建一个代理
 	private reactiveStates?: RecycleListItemStates;
 
-	get states(): RecycleListItemStates {
+	/**
+	 * 行的内容依赖的状态（响应式）；类型上不含几何，几何只能经 raw 读写
+	 * @returns 响应式状态
+	 */
+	get states(): Pick<RecycleListItemStates, 'index' | 'data' | 'isPlaceholder'> {
 		return this.reactiveStates || (this.reactiveStates = reactive(this.raw));
 	}
 
