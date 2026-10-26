@@ -894,6 +894,26 @@ describe('RecycleList fill=false', () => {
 		wrapper.unmount();
 	});
 
+	it('does not compensate again for the scroll written by its own displacement (outer VC Scroller notifies synchronously)', async () => {
+		const listRef = ref<any>();
+		const data = Array.from({ length: 200 }, (_, i) => ({ id: i }));
+		const wrapper = mount(() => (
+			<Scroller height={200}>
+				<RecycleList ref={listRef} fill={false} disabled data={data} estimateSize={20}>
+					{{ default: ({ row }: any) => <div>{row.id}</div> }}
+				</RecycleList>
+			</Scroller>
+		), { attachTo: document.body });
+		await flush();
+
+		// jsdom 中元素的位置都为 0：列表起点随滚动位置一起变，看起来就像被前置内容推走了。
+		// 平移写入的滚动经 VC Scroller 同步通知、重新测量，这期间不再按新的测量平移，否则会一直平移下去
+		const outer = wrapper.findAll('.vc-scroller')[0].element as HTMLElement;
+		expect(() => listRef.value.scrollToIndex(50)).not.toThrow();
+		expect(Number.isFinite(outer.scrollTop)).toBe(true);
+		wrapper.unmount();
+	});
+
 	it('does not re-measure every node when only the external carrier resizes', async () => {
 		const listRef = ref<any>();
 		const wrapper = mount(() => (

@@ -42,6 +42,8 @@ export class ExternalViewport implements ScrollSource {
 	private dirty = true;
 	// cache 是否来自一次真实测量；之前没有测量过就无从比较平移
 	private measured = false;
+	// 正在交给组件平移：平移写入的滚动可能同步触发滚动回调并重新测量（如承载者是 VC Scroller），这期间只更新缓存，不再按它平移
+	private displacing = false;
 	private unregister?: () => void;
 	private offScroll?: () => void;
 
@@ -93,7 +95,8 @@ export class ExternalViewport implements ScrollSource {
 	 * 与上一次测量相比列表起点变了，说明列表之前的内容变高或变矮、把列表整体推走（滚动不改变这个坐标）。
 	 * 视口起点原本落在列表里时交给组件同步平移滚动位置，与浏览器的滚动锚定一致；
 	 * 在这里统一判断而不是只在祖先尺寸回调里：滚动事件可能先于回调完成重新测量，平移就会被漏掉。
-	 * 共用承载者的多个列表互不重叠，只有视口起点所在的那个会平移
+	 * 共用承载者的多个列表互不重叠，只有视口起点所在的那个会平移。
+	 * 平移本身写入的滚动不再引起平移（见 displacing）：滚动不改变列表起点，重新测量出的差值只会来自测量本身的误差
 	 */
 	private refreshBounds() {
 		if (!this.dirty) return;
@@ -114,12 +117,17 @@ export class ExternalViewport implements ScrollSource {
 		this.dirty = false;
 		this.measured = true;
 
-		if (!previous) return;
+		if (!previous || this.displacing) return;
 		const delta = listStart - previous.listStart;
 		if (!delta) return;
 		const offset = this.offset;
 		if (offset >= previous.listStart && offset < previous.listEnd) {
-			this.handlers.onDisplace(delta);
+			this.displacing = true;
+			try {
+				this.handlers.onDisplace(delta);
+			} finally {
+				this.displacing = false;
+			}
 		}
 	}
 
