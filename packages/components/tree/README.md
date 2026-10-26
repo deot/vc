@@ -504,4 +504,4 @@ Tree 使用 `--vc-tree-*`，TreeSelect 使用 `--vc-tree-select-*` 组件覆盖�
 
 内置文案使用 `vc.Tree.emptyText`、`vc.TreeSelect.placeholder`、`vc.TreeSelect.noMatch`；通过 `VcInstance.configure({ locale })` 切换语言。节点标签、自定义渲染和显式传入的文案由调用方管理。
 
-更多交互细节可参考[节点事件示例](./examples/events.vue)、[拖拽示例](./examples/drag.vue)、[标签折叠示例](./examples/tree-select-tags.vue)、[搜索与键盘示例](./examples/tree-select-search.vue)与[挂载位置示例](./examples/tree-select-portal.vue)。
+更多交互细节可参考[节点事件示例](./examples/events.vue)、[搜索树示例](./examples/search.vue)、[拖拽示例](./examples/drag.vue)、[标签折叠示例](./examples/tree-select-tags.vue)、[搜索与键盘示例](./examples/tree-select-search.vue)与[挂载位置示例](./examples/tree-select-portal.vue)。
