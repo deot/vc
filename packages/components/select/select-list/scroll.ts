@@ -11,7 +11,7 @@ const Y_KEYS = getAxisKeys(true);
  * @param align 已完整可见时为 0；否则 nearest：贴近离得近的一边，start：置顶
  * @returns 滚动量
  */
-export const getScrollOffset = (el: Element, scroller: HTMLElement, align: SelectListAlign = 'nearest') => {
+const getScrollOffset = (el: Element, scroller: HTMLElement, align: SelectListAlign = 'nearest') => {
 	const { top, bottom, scale } = getViewportRect(scroller);
 	const rect = el.getBoundingClientRect();
 	const offset = rect.top < top || (align === 'start' && rect.bottom > bottom)

@@ -3,6 +3,7 @@
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi } from 'vitest';
+import { RecycleList } from '../../recycle-list';
 import { SelectList } from '../select-list';
 
 const renderRow = ({ row }: any) => (<div key={row.id} class="row">{row.label}</div>);
@@ -97,6 +98,26 @@ describe('select-list virtualized', () => {
 		// 尚未渲染的行：高亮先记下
 		listRef.value.highlight(499);
 		expect(getActive(wrapper)).toBeUndefined();
+		wrapper.unmount();
+	});
+
+	it('scrollToIndex 交给 RecycleList，已完整可见时由它跳过（ifNeeded）', async () => {
+		const listRef = ref<any>();
+		const data = Array.from({ length: 50 }, (_, id) => ({ id, label: `L${id}` }));
+		const wrapper = mount(() => (
+			<div class="vc-scroller" style="height: 200px; overflow: auto">
+				<SelectList ref={listRef} data={data} virtualized>
+					{{ default: renderRow }}
+				</SelectList>
+			</div>
+		), { attachTo: document.body });
+		await nextTick();
+		const spy = vi.spyOn((wrapper.findComponent(RecycleList).vm as any).$.exposed, 'scrollToIndex');
+
+		listRef.value.scrollToIndex(3, 'start');
+		expect(spy).toHaveBeenLastCalledWith(3, { align: 'start', ifNeeded: true });
+		listRef.value.scrollToIndex(4);
+		expect(spy).toHaveBeenLastCalledWith(4, { align: 'nearest', ifNeeded: true });
 		wrapper.unmount();
 	});
 	it('滚动期间根节点带 is-scrolling（只算带动了列表的滚动），停下后移除，重渲染不丢', async () => {

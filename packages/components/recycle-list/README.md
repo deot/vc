@@ -497,7 +497,7 @@ const handleMode = () => { isExternal.value = !isExternal.value; };
 - `scrollTo(0)` 和 `reset()` 把整个外部主轴承载者移动到绝对坐标 `0`，不是移动到 RecycleList 的起点；`inverted` 下 `reset()` 不移动，见下方「拉动刷新」。
 - `scrollTo(number | { x, y })` 继续使用原有参数补零与分轴规则。纵向 external 时 Y 写入外部容器、X 写入内部 wrapper；横向 external 时相反。
 - 承载者或其祖先带 `transform` 缩放（如浮层的展开动画）时，几何按缩放比例换算回滚动坐标，可以放在正在执行缩放动画的浮层里。
-- `scrollToIndex(index, offset)` 表示定位列表 item，会自动使用 `contentStart + item.position + offset`，因此不会受到前置内容影响；`align: 'nearest'` 时按同一坐标判断 item 是否已在外部视口内。
+- `scrollToIndex(index, offset)` 表示定位列表 item，会自动使用 `contentStart + item.position + offset`，因此不会受到前置内容影响；`align: 'nearest'` 或 `ifNeeded: true` 时按同一坐标判断 item 是否已在外部视口内。
 - `scroll` 事件仍返回兼容的 `{ target: { scrollLeft, scrollTop } }` 结构；外部主轴与内部交叉轴滚动都会触发该事件。
 
 ### inverted、pullable 与共享 Store
@@ -771,7 +771,7 @@ const store = new RecycleListStore({
 | refreshViewport | 刷新视口几何与可见范围，并按已渲染行的实际尺寸校正一次；代价只与当前渲染的行数相关 | - | `Promise<void>` |
 | refreshLayout | 重新测量全部已构建的行并刷新布局：正在渲染的行原地按实际尺寸重测，其余行在隐藏测量池中分片重测；代价随已构建行数增长 | - | `Promise<void>` |
 | scrollTo | 滚动到 wrapper 的绝对坐标，数字表示主轴位置，对象中缺省轴归零 | `options: number \| { x?: number; y?: number }, force?: boolean`；`force` 强制写入相同坐标 | `void` |
-| scrollToIndex | 定位当前已构建并具有布局位置的 item，交叉轴归零；尚未构建的索引不触发加载或滚动。`align` 为 `start` 时置顶；为 `nearest` 时 item 已完整可见则不滚动（交叉轴也不动），否则贴近离得近的一边，比视口大时置顶，适合键盘逐项移动；`offset` 加在滚动目标上 | `index: number, options?: number \| { offset?: number; align?: 'start' \| 'nearest' }`，数字视为 `offset`；`offset` 默认 `0`，`align` 默认 `'start'` | `void` |
+| scrollToIndex | 定位当前已构建并具有布局位置的 item，交叉轴归零；尚未构建的索引不触发加载或滚动。`align` 为 `start` 时置顶；为 `nearest` 时 item 已完整可见则不滚动（交叉轴也不动），否则贴近离得近的一边，比视口大时置顶，适合键盘逐项移动；`ifNeeded` 为 `true` 时 item 已完整可见则不滚动（交叉轴也不动），否则按 `align` 定位，如打开时滚动到已选项（`start` + `ifNeeded`）；`nearest` 始终如此，`ifNeeded` 对它没有影响；`offset` 加在滚动目标上 | `index: number, options?: number \| { offset?: number; align?: 'start' \| 'nearest'; ifNeeded?: boolean }`，数字视为 `offset`；`offset` 默认 `0`，`align` 默认 `'start'`，`ifNeeded` 默认 `false` | `void` |
 
 ### 插槽
 

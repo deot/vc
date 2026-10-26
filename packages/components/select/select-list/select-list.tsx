@@ -4,7 +4,7 @@ import { defineComponent, cloneVNode, isVNode, onMounted, ref, watch } from 'vue
 import type { PropType, VNode } from 'vue';
 import { RecycleList } from '../../recycle-list/index';
 import { isScrollOf, useScrollIdle } from '../../scroller/scroll-idle';
-import { getScrollOffset, scrollIntoScroller } from './scroll';
+import { scrollIntoScroller } from './scroll';
 
 const COMPONENT_NAME = 'vc-select-list';
 // 虚拟化时的初始预估行高（px）；行渲染出来后改用实际高度，见 handleRowResize
@@ -69,15 +69,8 @@ export const SelectList = defineComponent({
 		// 把某一行滚动到可视范围：已完整可见时不动；否则 nearest 贴近离得近的一边，start 置顶
 		const scrollToIndex = (index: number, align: SelectListAlign = 'nearest') => {
 			if (index < 0) return;
-			const el = getRow(index);
-			if (!props.virtualized) return scrollIntoScroller(el, align);
-			// 虚拟化：nearest 交给 RecycleList（已完整可见时不动）；它的 start 总是置顶，已渲染且完整可见的行在这里拦下
-			// 所在的滚动容器即列表外层的 Scroller
-			if (align === 'start' && el) {
-				const scroller = root.value?.closest<HTMLElement>('.vc-scroller');
-				if (scroller && !getScrollOffset(el, scroller, align)) return;
-			}
-			recycleList?.scrollToIndex(index, { align });
+			if (!props.virtualized) return scrollIntoScroller(getRow(index), align);
+			recycleList?.scrollToIndex(index, { align, ifNeeded: true });
 		};
 
 		// 默认渲染时上一次指针所在的行及其下标：在同一行内移动不必再在全部行中查找

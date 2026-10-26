@@ -524,6 +524,68 @@ describe('RecycleList fill=false', () => {
 		wrapper.unmount();
 	});
 
+	it('scrollToIndex ifNeeded keeps visible items and aligns by align otherwise', async () => {
+		const listRef = ref<any>();
+		const { wrapper, viewport, root, content, inner } = await mountInViewport(listRef);
+		// 视口 200，content 起点 500
+		const restore = mockVerticalGeometry(viewport, root, content);
+		await listRef.value.refreshLayout();
+		const item = listRef.value.store.states.rebuildData[1];
+		const place = (position: number, size: number) => {
+			item.raw.position = position;
+			item.raw.size = size;
+		};
+		const ifNeeded = { align: 'start', ifNeeded: true };
+
+		// 完整可见：主轴与交叉轴都不动
+		place(160, 40);
+		viewport.scrollTop = 550;
+		inner.scrollLeft = 44;
+		listRef.value.scrollToIndex(1, ifNeeded);
+		expect(viewport.scrollTop).toBe(550);
+		expect(inner.scrollLeft).toBe(44);
+
+		// 在视口下方：start 置顶（不是贴底）
+		viewport.scrollTop = 300;
+		listRef.value.scrollToIndex(1, ifNeeded);
+		expect(viewport.scrollTop).toBe(660);
+		expect(inner.scrollLeft).toBe(0);
+
+		// 在视口上方：置顶
+		viewport.scrollTop = 800;
+		listRef.value.scrollToIndex(1, ifNeeded);
+		expect(viewport.scrollTop).toBe(660);
+
+		// 露出一部分也算不可见
+		viewport.scrollTop = 480;
+		listRef.value.scrollToIndex(1, ifNeeded);
+		expect(viewport.scrollTop).toBe(660);
+
+		// 比视口大：始终不算完整可见，置顶
+		place(160, 300);
+		viewport.scrollTop = 600;
+		listRef.value.scrollToIndex(1, ifNeeded);
+		expect(viewport.scrollTop).toBe(660);
+		listRef.value.scrollToIndex(1, ifNeeded);
+		expect(viewport.scrollTop).toBe(660);
+
+		// offset 加在滚动目标上；可见时连同 offset 一起跳过
+		place(160, 40);
+		viewport.scrollTop = 300;
+		listRef.value.scrollToIndex(1, { ...ifNeeded, offset: -10 });
+		expect(viewport.scrollTop).toBe(650);
+		listRef.value.scrollToIndex(1, { ...ifNeeded, offset: 8 });
+		expect(viewport.scrollTop).toBe(650);
+
+		// nearest：ifNeeded 不改变行为
+		viewport.scrollTop = 300;
+		listRef.value.scrollToIndex(1, { align: 'nearest', ifNeeded: true });
+		expect(viewport.scrollTop).toBe(500);
+
+		restore();
+		wrapper.unmount();
+	});
+
 	it('reset moves the external main carrier to absolute zero', async () => {
 		const listRef = ref<any>();
 		const wrapper = mount(() => (
