@@ -292,6 +292,8 @@ const loadOptions = async (query) => {
 
 `virtualized` 开启后只渲染下拉可视范围附近的选项（基于 [RecycleList](../recycle-list/README.md)），搜索结果同样如此，打开、搜索和方向键的耗时不随选项数量增长；分组、全选、键盘与打开时定位到已选项的行为不变。选项少（几百个以内）时不必开启。
 
+未开启时，搜索只渲染命中的选项，清空搜索词会重新渲染全部选项，耗时与打开下拉相当；选项上万时建议开启。
+
 :::playground
 <!--
 <config lang="json5">
