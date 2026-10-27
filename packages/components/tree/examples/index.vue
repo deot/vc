@@ -3,16 +3,14 @@
 		<Button @click="isLazy = !isLazy">
 			lazy {{ isLazy }}
 		</Button>
-		<Button @click="isCheckStrictly = !isCheckStrictly">
-			单选独立 {{ isCheckStrictly }}
-		</Button>
+		<Select v-model="checkStrategy" :data="CHECK_STRATEGIES" label="checkStrategy" style="width: 280px;" />
 		<Tree
 			:key="isLazy"
 			v-model="value"
 			:data="data"
 			:load-data="loadData"
 			:lazy="isLazy"
-			:check-strictly="isCheckStrictly"
+			:check-strategy="checkStrategy"
 			:render="renderContent"
 			show-checkbox
 			accordion
@@ -27,7 +25,7 @@
 		<TreeSelect
 			v-model="value"
 			:data="data"
-			:check-strictly="isCheckStrictly"
+			:check-strategy="checkStrategy"
 			:max="99"
 			clearable
 		/>
@@ -50,7 +48,7 @@
 		<TreeSelect
 			v-model="value"
 			:data="data"
-			:check-strictly="isCheckStrictly"
+			:check-strategy="checkStrategy"
 			:max="99"
 			cascader
 			clearable
@@ -62,7 +60,7 @@
 		<TreeSelect
 			v-model="valueSearch"
 			:data="bigData"
-			:check-strictly="isCheckStrictly"
+			:check-strategy="checkStrategy"
 			:max="999"
 			:max-tags="3"
 			searchable
@@ -72,7 +70,7 @@
 		<TreeSelect
 			v-model="valueSearch"
 			:data="bigData"
-			:check-strictly="isCheckStrictly"
+			:check-strategy="checkStrategy"
 			:max="999"
 			:max-tags="3"
 			searchable
@@ -85,7 +83,7 @@
 		<TreeSelect
 			v-model="valueAsync"
 			:data="dataAsync"
-			:check-strictly="isCheckStrictly"
+			:check-strategy="checkStrategy"
 			clearable
 		/>
 	</div>
@@ -95,6 +93,7 @@ import { ref, onMounted } from 'vue';
 import { random, cloneDeep } from 'lodash-es';
 import { Tree, TreeSelect } from '..';
 import { Button } from '../../button';
+import { Select } from '../../select';
 
 const DEFAULT_DATA = [
 	{
@@ -190,7 +189,13 @@ const BIG_DATA = GROUPS.map((region, i) => ({
 }));
 
 const isLazy = ref(true);
-const isCheckStrictly = ref(false);
+const CHECK_STRATEGIES = [
+	{ value: 'all', label: 'all（联动，回填全部）' },
+	{ value: 'parent', label: 'parent（联动，只回填父节点）' },
+	{ value: 'child', label: 'child（联动，只回填子节点）' },
+	{ value: 'strict', label: 'strict（父子独立）' }
+];
+const checkStrategy = ref('all');
 const value = ref([]);
 const data = ref(DEFAULT_DATA);
 const bigData = ref(BIG_DATA);

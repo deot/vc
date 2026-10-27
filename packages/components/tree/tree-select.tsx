@@ -84,8 +84,11 @@ export const TreeSelect = defineComponent({
 			return getSelected(currentValue.value, getSelectedNode);
 		});
 
+		// 父子独立勾选
+		const strict = computed(() => props.checkStrategy === 'strict');
+
 		const currentValueGroups = computed(() => {
-			if (props.checkStrictly) return;
+			if (strict.value) return;
 
 			const allPaths = currentValue.value
 				.map(v => selected.value.get(v)?.path)
@@ -106,7 +109,7 @@ export const TreeSelect = defineComponent({
 			if (!props.data.length && !isRemote()) {
 				return [];
 			}
-			if (props.checkStrictly) {
+			if (strict.value) {
 				return currentValue.value.map((v: any) => {
 					const labels = selected.value.get(v)?.labels;
 					return {
@@ -144,7 +147,7 @@ export const TreeSelect = defineComponent({
 		};
 
 		/**
-		 * 移除标签：独立勾选时只移除这一项；联动时连同它的祖先（不再全选）与子孙
+		 * 移除标签：独立勾选时只移除这一项；联动时连同它的祖先（不再全选）与子孙，各种回填方式的值通用
 		 * @param item ~
 		 */
 		const handleRemove = (item: DisplayTag) => {
@@ -209,7 +212,7 @@ export const TreeSelect = defineComponent({
 							ref={content}
 							value={currentValue.value}
 							data={props.data as TreeData[]}
-							checkStrictly={props.checkStrictly}
+							checkStrategy={props.checkStrategy}
 							renderNodeLabel={props.renderNodeLabel}
 							searchRegex={searchRegex.value}
 							remote={isRemote()}
@@ -223,7 +226,7 @@ export const TreeSelect = defineComponent({
 							ref={content}
 							value={currentValue.value}
 							data={props.data}
-							checkStrictly={props.checkStrictly}
+							checkStrategy={props.checkStrategy}
 							renderNodeLabel={props.renderNodeLabel}
 							searchValue={searchValue.value}
 							searchRegex={searchRegex.value}

@@ -9,9 +9,7 @@
 			>
 				{{ item }}{{ width === item ? ' ✓' : '' }}
 			</Button>
-			<Button @click="isCheckStrictly = !isCheckStrictly">
-				单选独立 {{ isCheckStrictly }}
-			</Button>
+			<Select v-model="checkStrategy" :data="CHECK_STRATEGIES" label="checkStrategy" style="width: 280px;" />
 		</div>
 		<p>悬停 +N... 查看（并可移除）被折叠的标签；悬停被截断的标签查看完整内容</p>
 
@@ -21,7 +19,7 @@
 				<TreeSelect
 					v-model="value"
 					:data="data"
-					:check-strictly="isCheckStrictly"
+					:check-strategy="checkStrategy"
 					:max="99"
 					:max-tags="4"
 					clearable
@@ -33,7 +31,7 @@
 				<TreeSelect
 					v-model="value"
 					:data="data"
-					:check-strictly="isCheckStrictly"
+					:check-strategy="checkStrategy"
 					:max="99"
 					cascader
 					clearable
@@ -45,7 +43,7 @@
 				<TreeSelect
 					v-model="value"
 					:data="data"
-					:check-strictly="isCheckStrictly"
+					:check-strategy="checkStrategy"
 					:max="99"
 					:max-tags="0"
 				/>
@@ -56,7 +54,7 @@
 				<TreeSelect
 					v-model="value"
 					:data="data"
-					:check-strictly="isCheckStrictly"
+					:check-strategy="checkStrategy"
 					:max="99"
 					:max-tags="4"
 					:max-tag-lines="0"
@@ -68,7 +66,7 @@
 				<TreeSelect
 					v-model="value"
 					:data="data"
-					:check-strictly="isCheckStrictly"
+					:check-strategy="checkStrategy"
 					:max="99"
 					:max-tag-lines="2"
 				/>
@@ -79,7 +77,7 @@
 				<TreeSelect
 					v-model="value"
 					:data="data"
-					:check-strictly="isCheckStrictly"
+					:check-strategy="checkStrategy"
 					:max="99"
 					disabled
 				/>
@@ -92,10 +90,17 @@
 import { ref } from 'vue';
 import { TreeSelect } from '..';
 import { Button } from '../../button';
+import { Select } from '../../select';
 
 const widths = ['120px', '240px', '360px', '100%'];
 const width = ref('240px');
-const isCheckStrictly = ref(false);
+const CHECK_STRATEGIES = [
+	{ value: 'all', label: 'all（联动，回填全部）' },
+	{ value: 'parent', label: 'parent（联动，只回填父节点）' },
+	{ value: 'child', label: 'child（联动，只回填子节点）' },
+	{ value: 'strict', label: 'strict（父子独立）' }
+];
+const checkStrategy = ref('all');
 
 const data = ['分组 A', '分组 B', '分组 C'].map((region, i) => ({
 	value: `${i}`,

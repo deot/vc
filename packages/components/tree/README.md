@@ -43,7 +43,16 @@ const handleNodeClick = ({ data: row }) => { current.value = row.label; };
 
 ### 勾选、筛选与自定义标签
 
-`showCheckbox` 开启勾选，`v-model` 保存节点值。默认父子联动，`checkStrictly` 可切换为独立勾选。节点的 `disabled` 只限制交互勾选，不禁止展开或设置当前节点。
+`showCheckbox` 开启勾选，`v-model` 保存节点值。`checkStrategy` 决定勾选是否联动、以及 `v-model` 回填哪些节点：
+
+| 取值 | 勾选 | 回填 | 示例（父节点 `p` 与它的子节点 `c1`、`c2` 都已勾选） |
+| --- | --- | --- | --- |
+| `all`（默认） | 父子联动 | 全部勾选的节点 | `['p', 'c1', 'c2']` |
+| `parent` | 父子联动 | 子孙全选时只回填父节点 | `['p']` |
+| `child` | 父子联动 | 只回填最深的勾选节点；懒加载未展开的父节点也算 | `['c1', 'c2']` |
+| `strict` | 父子独立 | 勾选的节点 | `['p', 'c1', 'c2']` |
+
+传入的值不必与回填方式一致：联动时，值里的父节点表示整棵子树勾选，三种形态都能还原出同样的勾选状态，下次交互再按当前方式回填；运行时切换 `checkStrategy` 不会主动改写 `v-model`。节点的 `disabled` 只限制交互勾选，不禁止展开或设置当前节点；子孙里有未勾选的禁用节点时，父节点不会变为勾选，`parent` 回填的是能勾选的子节点。
 
 调用 `filter(value)` 时，必须提供 `filterNode(value, data, node)`；命中节点的祖先会保留显示并展开。以空值（如 `''`）调用时清除筛选，并恢复第一次筛选前的展开状态：筛选期间展开的节点收起，筛选期间手动收起的保持收起。`renderNodeLabel` 接收 `{ row, store }`，分别为原始数据和节点对象。
 
@@ -53,12 +62,12 @@ const handleNodeClick = ({ data: row }) => { current.value = row.label; };
 <template>
 	<div class="tree-demo">
 		<Input v-model="keyword" placeholder="筛选节点" @input="handleFilter" />
-		<Checkbox v-model="isStrict">父子独立勾选</Checkbox>
+		<Select v-model="checkStrategy" :data="strategies" />
 		<Tree
 			ref="tree"
 			v-model="values"
 			:data="data"
-			:check-strictly="isStrict"
+			:check-strategy="checkStrategy"
 			:filter-node="filterNode"
 			:render-node-label="renderLabel"
 			:expand-on-click-node="false"
@@ -76,12 +85,13 @@ const handleNodeClick = ({ data: row }) => { current.value = row.label; };
 </template>
 <script setup>
 import { h, ref } from 'vue';
-import { Button, Checkbox, Input, Tree } from '@deot/vc';
+import { Button, Input, Select, Tree } from '@deot/vc';
 
 const tree = ref();
 const keyword = ref('');
 const values = ref([]);
-const isStrict = ref(false);
+const strategies = ['all', 'parent', 'child', 'strict'].map(value => ({ value, label: value }));
+const checkStrategy = ref('all');
 const result = ref('');
 const data = [{ value: 'group-a', label: '分组 A', children: [
 	{ value: 'item-a', label: '条目 A' },
@@ -221,7 +231,7 @@ const data = Array.from({ length: 100 }, (_, i) => ({
 
 `cascader` 开启鼠标悬停展开的级联列，`expandDirection` 控制级联列的展开方向，取值与 [Cascader](../cascader/README.md#展开方向) 相同。`searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入（输入框跟在标签之后，输入为空时按 Backspace 移除最后一个标签），`searchable="popover"` 改为在面板顶部显示搜索栏。空格分隔的关键词需同时命中，英文逗号分隔的各组任一命中即可：树形模式保留层级，级联模式显示完整路径列表。关闭面板会清空搜索。树形模式打开面板时展开已选节点及其祖先，勾选不会展开节点；搜索展开命中节点的祖先，清空搜索词后恢复搜索前的展开状态。非独立勾选时，搜索结果中的父节点仍会联动所有子孙节点，包括隐藏节点。
 
-多选标签默认只占一行；超出宽度的标签折叠为 `+N...`，悬停可查看并移除。`maxTags` 限制可见标签数，`maxTagLines` 控制行数，设为 `0` 表示不限制。非 `checkStrictly` 时标签展示完整路径。
+多选标签默认只占一行；超出宽度的标签折叠为 `+N...`，悬停可查看并移除。`maxTags` 限制可见标签数，`maxTagLines` 控制行数，设为 `0` 表示不限制。`checkStrategy` 与 Tree 相同；联动时标签展示完整路径，只显示没有被其他已选节点包含的那一层：`all` / `child` 为最深的勾选节点，`parent` 为子孙全选的父节点。移除标签时连同它的祖先与子孙一起移出值。
 
 输入框聚焦时按 Enter 打开面板，Esc 关闭并把焦点还给输入框，Tab 关闭并移到下一个可聚焦元素。面板打开后的按键随内容而定：
 
@@ -240,14 +250,14 @@ const data = Array.from({ length: 100 }, (_, i) => ({
 	<div class="tree-select-demo">
 		<div class="tree-select-demo__actions">
 			<Checkbox v-model="isCascader">级联列</Checkbox>
-			<Checkbox v-model="isStrict">独立勾选</Checkbox>
 			<Checkbox v-model="isDisabled">禁用</Checkbox>
+			<Select v-model="checkStrategy" :data="strategies" />
 		</div>
 		<TreeSelect
 			v-model="values"
 			:data="data"
 			:cascader="isCascader"
-			:check-strictly="isStrict"
+			:check-strategy="checkStrategy"
 			:disabled="isDisabled"
 			:max-tags="2"
 			searchable
@@ -259,10 +269,11 @@ const data = Array.from({ length: 100 }, (_, i) => ({
 </template>
 <script setup>
 import { ref } from 'vue';
-import { Checkbox, TreeSelect } from '@deot/vc';
+import { Checkbox, Select, TreeSelect } from '@deot/vc';
 
 const isCascader = ref(false);
-const isStrict = ref(false);
+const strategies = ['all', 'parent', 'child', 'strict'].map(value => ({ value, label: value }));
+const checkStrategy = ref('all');
 const isDisabled = ref(false);
 const values = ref(['item-a1', 'item-b1']);
 const data = [
@@ -287,7 +298,15 @@ TreeSelect 的 `loadData(keyword, instance)` 用于搜索，不是 Tree 的懒�
 ```vue
 <template>
 	<div class="tree-select-demo">
-		<TreeSelect v-model="values" :data="data" :load-data="loadData" searchable check-strictly clearable search-placeholder="输入条目 A 或 B" />
+		<TreeSelect
+			v-model="values"
+			:data="data"
+			:load-data="loadData"
+			check-strategy="strict"
+			searchable
+			clearable
+			search-placeholder="输入条目 A 或 B"
+		/>
 		<p>节点值：{{ values.join(', ') || '无' }}</p>
 	</div>
 </template>
@@ -351,7 +370,7 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 | keyValue | 节点字段映射，见下表；替代旧文档的 `treeProps` / `nodeKey` | `Record<string, string>` | - | 见下表 |
 | emptyText | 空状态文案，`empty` 插槽优先；支持空字符串覆盖。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | 当前语言的“暂无数据” |
 | showCheckbox | 显示复选框 | `boolean` | - | `false` |
-| checkStrictly | 父子独立勾选 | `boolean` | - | `false` |
+| checkStrategy | 勾选联动与 `v-model` 回填方式，见上文“勾选、筛选与自定义标签” | `string` | `all`、`parent`、`child`、`strict` | `'all'` |
 | checkDescendants | 懒加载时，深度勾选可触发未加载子节点的加载 | `boolean` | - | `false` |
 | expandedValues | 要展开的节点值；更新时展开列出的节点，不自动收起其他节点 | `Value[]` | - | `[]` |
 | defaultExpandAll | 默认展开已有子数据的节点 | `boolean` | - | `false` |
@@ -396,8 +415,8 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
-| update:modelValue / change | 交互导致勾选值变化 | `(value, summary)` | `summary` 包含 `checkedNodes`、`checkedValues`、`halfCheckedNodes`、`halfCheckedValues` |
-| check | 用户切换勾选后 | `({ node, data, checked, checkedNodes, checkedValues, halfCheckedNodes, halfCheckedValues })` | 含本次节点和整棵树状态 |
+| update:modelValue / change | 交互导致勾选值变化 | `(value, summary)` | `summary` 包含 `checkedNodes`、`checkedValues`、`halfCheckedNodes`、`halfCheckedValues`；`checkedNodes` / `checkedValues` 按 `checkStrategy` 回填 |
+| check | 用户切换勾选后 | `({ node, data, checked, checkedNodes, checkedValues, halfCheckedNodes, halfCheckedValues })` | 含本次节点和整棵树状态；`checkedNodes` / `checkedValues` 同 `update:modelValue` |
 | check-change | 节点勾选或半选状态变化 | `({ node, data, checked, indeterminate })` | 联动时可针对多个节点触发；同一次操作引起的变化在其结束后每个节点发出一次，收起而未渲染的节点也会发出 |
 | node-click | 点击节点 | `({ node, data, instance, event })` | `instance` 为节点组件实例，`event` 为原生事件 |
 | node-contextmenu | 右键节点 | `({ node, data, instance, event })` | 注册监听时阻止原生右键菜单 |
@@ -410,7 +429,7 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 
 ### Tree 方法
 
-通过组件 ref 调用。程序化勾选方法直接修改树状态，不主动发出 `update:modelValue` / `change`；需要同步外部值时优先修改 `v-model`，或读取 `getCheckedValues()` 后自行赋值。
+通过组件 ref 调用。程序化勾选方法直接修改树状态，不主动发出 `update:modelValue` / `change`；需要同步外部值时优先修改 `v-model`，或读取 `getCheckedValues()` 后自行赋值。`getCheckedNodes` / `getCheckedValues` 读取全部勾选节点，不按 `checkStrategy` 过滤。
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
@@ -448,7 +467,7 @@ TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字
 | --- | --- | --- | --- | --- |
 | modelValue | 选中的节点值，支持 `v-model` | `string \| number \| any[]` | - | `undefined` |
 | data | 节点数据 | `NodeData[]` | - | `[]` |
-| checkStrictly | 父子独立勾选 | `boolean` | - | `false` |
+| checkStrategy | 勾选联动与 `v-model` 回填方式，同 Tree | `string` | `all`、`parent`、`child`、`strict` | `'all'` |
 | renderNodeLabel | 自定义树节点 / 级联列标签；级联搜索结果使用路径文本 | `(props: { row: NodeData; store: Node }) => VNodeChild` | - | - |
 | max | `> 1` 显示多选标签；影响非数组值输出形式，不限制勾选数 | `number` | `>= 1` | `Infinity` |
 | maxTags | 最多显示的标签数，`0` 或不传表示不限 | `number` | `>= 0` | - |

@@ -280,11 +280,10 @@ describe('Tree interaction', () => {
 		wrapper.unmount();
 	});
 
-	it('checkStrictly switch and expose api', async () => {
+	it('checkStrategy switch and expose api', async () => {
 		const wrapper = mountTree({
 			data,
-			showCheckbox: true,
-			checkStrictly: false
+			showCheckbox: true
 		});
 		await flush();
 
@@ -298,7 +297,7 @@ describe('Tree interaction', () => {
 		expect(vm.getCheckedValues()).toContain('2-1-1');
 		expect(vm.getHalfCheckedValues().length).toBeGreaterThan(0);
 
-		await wrapper.setProps({ checkStrictly: true });
+		await wrapper.setProps({ checkStrategy: 'strict' });
 		vm.setCheckedValues(['2']);
 		await flush();
 		expect(vm.getCheckedValues()).toContain('2');
@@ -324,6 +323,108 @@ describe('Tree interaction', () => {
 		expect(vm.getNode('4-1')).toBeTruthy();
 
 		wrapper.unmount();
+	});
+
+	describe('checkStrategy', () => {
+		const mountChecked = (checkStrategy: string, modelValue: any[] = []) => {
+			const onCheck = vi.fn();
+			const value = ref<any[]>(modelValue);
+			const wrapper = mount(() => (
+				<Tree
+					v-model={value.value}
+					data={freshData()}
+					checkStrategy={checkStrategy as any}
+					showCheckbox
+					defaultExpandAll
+					onCheck={onCheck}
+				/>
+			), { attachTo: document.body });
+			onTestFinished(() => wrapper.unmount());
+			const tree = () => wrapper.findComponent(Tree).vm as any;
+			return { value, onCheck, tree };
+		};
+		// 默认展开时的行：1, 1-1, 1-1-1, 2, 2-1, 2-1-1, 2-2, 2-2-1, 3, …
+		const clickRow = async (index: number) => {
+			(getTreeCheckboxes()[index] as HTMLInputElement).click();
+			await flush();
+		};
+
+		it.each([
+			['all', ['2', '2-1', '2-1-1', '2-2', '2-2-1']],
+			['parent', ['2']],
+			['child', ['2-1-1', '2-2-1']]
+		])('%s：勾选父节点后回填', async (strategy, expected) => {
+			const { value, onCheck } = mountChecked(strategy);
+			await flush();
+			await clickRow(3);
+			expect(value.value).toEqual(expected);
+			expect(onCheck.mock.calls.at(-1)![0].checkedValues).toEqual(expected);
+			// 半选不受影响
+			expect(onCheck.mock.calls.at(-1)![0].halfCheckedValues).toEqual([]);
+		});
+
+		it.each([
+			['all', ['2-1', '2-1-1']],
+			['parent', ['2-1']],
+			['child', ['2-1-1']]
+		])('%s：只勾选部分子孙时回填', async (strategy, expected) => {
+			const { value, onCheck } = mountChecked(strategy);
+			await flush();
+			await clickRow(4);
+			expect(value.value).toEqual(expected);
+			expect(onCheck.mock.calls.at(-1)![0].halfCheckedValues).toEqual(['2']);
+		});
+
+		it('三种形态的值初始化后状态一致，取消勾选按同一形态回填', async () => {
+			const full = ['2', '2-1', '2-1-1', '2-2', '2-2-1'];
+			for (const [strategy, initial] of [['all', full], ['parent', ['2']], ['child', ['2-1-1', '2-2-1']]] as const) {
+				const { value, tree } = mountChecked(strategy, [...initial]);
+				await flush();
+				expect(tree().getCheckedValues().sort()).toEqual(full);
+				// 取消 2-2-1：2 变为半选
+				await clickRow(7);
+				expect(value.value).toEqual({ all: ['2-1', '2-1-1'], parent: ['2-1'], child: ['2-1-1'] }[strategy]);
+				expect(tree().getHalfCheckedValues()).toEqual(['2']);
+				document.body.innerHTML = '';
+			}
+		});
+
+		it('运行时切换：strict 不联动，切回联动后按新方式回填', async () => {
+			const strategy = ref<any>('strict');
+			const value = ref<any[]>([]);
+			const wrapper = mount(() => (
+				<Tree v-model={value.value} data={freshData()} checkStrategy={strategy.value} showCheckbox defaultExpandAll />
+			), { attachTo: document.body });
+			onTestFinished(() => wrapper.unmount());
+			await flush();
+			await clickRow(3);
+			expect(value.value).toEqual(['2']);
+
+			strategy.value = 'parent';
+			await flush();
+			// 切换不主动回填
+			expect(value.value).toEqual(['2']);
+			await clickRow(0);
+			expect(value.value).toEqual(['1', '2']);
+		});
+
+		it('child：懒加载未展开的勾选父节点保留', async () => {
+			const value = ref<any[]>(['p']);
+			const wrapper = mount(() => (
+				<Tree
+					v-model={value.value}
+					data={[{ value: 'p', label: 'P' }, { value: 'q', label: 'Q' }]}
+					loadData={() => Promise.resolve([{ value: 'p-1', label: 'P-1', isLeaf: true }])}
+					checkStrategy="child"
+					showCheckbox
+					lazy
+				/>
+			), { attachTo: document.body });
+			onTestFinished(() => wrapper.unmount());
+			await flush();
+			await clickRow(1);
+			expect(value.value).toEqual(['p', 'q']);
+		});
 	});
 
 	it('lazy load + draggable dragstart/dragover', async () => {
@@ -1363,13 +1464,13 @@ describe('TreeSelect interaction', () => {
 		expect(getRow().className).toContain('is-select');
 	});
 
-	it('checkStrictly tag close removes single value', async () => {
+	it('strict: tag close removes single value', async () => {
 		const value = ref<any[]>(['1', '2']);
 		const wrapper = mountTreeSelect({
 			'modelValue': value.value,
 			data,
 			'max': 99,
-			'checkStrictly': true,
+			'checkStrategy': 'strict',
 			'onUpdate:modelValue': (v: any[]) => {
 				value.value = v;
 				wrapper.setProps({ modelValue: v });
@@ -1400,10 +1501,74 @@ describe('TreeSelect interaction', () => {
 		expect(value.value).toEqual(['2-1', '2-1-1']);
 	});
 
+	describe('checkStrategy', () => {
+		const getTags = (wrapper: any) => wrapper.findAll('.vc-select-tags > .vc-tag').map((tag: any) => tag.text());
+		const mountSelect = (checkStrategy: string, modelValue: any[] = [], cascader = false) => {
+			const value = ref<any[]>(modelValue);
+			const wrapper = mount(() => (
+				<TreeSelect
+					v-model={value.value}
+					data={freshData()}
+					checkStrategy={checkStrategy as any}
+					cascader={cascader}
+					max={99}
+					maxTagLines={0}
+				/>
+			), { attachTo: document.body });
+			onTestFinished(() => wrapper.unmount());
+			return { value, wrapper };
+		};
+
+		it.each([
+			['tree', false],
+			['cascader', true]
+		])('%s：勾选父节点后按方式回填，标签跟随', async (_, cascader) => {
+			for (const [strategy, expected, tags] of [
+				['all', ['2', '2-1', '2-1-1', '2-2', '2-2-1'], ['一级 2 / 二级 2-1 / 三级 2-1-1', '一级 2 / 二级 2-2 / 三级 2-2-1']],
+				['parent', ['2'], ['一级 2']],
+				['child', ['2-1-1', '2-2-1'], ['一级 2 / 二级 2-1 / 三级 2-1-1', '一级 2 / 二级 2-2 / 三级 2-2-1']]
+			] as const) {
+				const { value, wrapper } = mountSelect(strategy, [], cascader);
+				await flush();
+				await wrapper.trigger('click');
+				await flush();
+				// 第一级：1, 2, 3, 4
+				const selector = cascader
+					? '.vc-tree-select__cascader-checkbox input[type="checkbox"]'
+					: '.vc-tree .vc-checkbox input[type="checkbox"]';
+				(document.querySelectorAll(selector)[1] as HTMLInputElement).click();
+				await flush();
+				expect(value.value).toEqual(expected);
+				expect(getTags(wrapper)).toEqual(tags);
+				wrapper.unmount();
+				document.body.innerHTML = '';
+			}
+		});
+
+		it('parent：父节点值显示为一个标签，部分勾选显示到最上层的勾选节点', async () => {
+			const { wrapper } = mountSelect('parent', ['1', '2-1']);
+			await flush();
+			expect(getTags(wrapper)).toEqual(['一级 1', '一级 2 / 二级 2-1']);
+		});
+
+		it.each([
+			['parent', ['1', '2-1'], ['1']],
+			['child', ['1-1-1', '2-1-1', '2-2-1'], ['1-1-1', '2-2-1']],
+			['all', ['1', '1-1', '1-1-1', '2-1', '2-1-1'], ['2-1', '2-1-1']]
+		])('%s：移除标签后的值与回填方式同一形态', async (strategy, initial, expected) => {
+			const { value, wrapper } = mountSelect(strategy, [...initial]);
+			await flush();
+			const index = strategy === 'all' ? 0 : 1;
+			await wrapper.findAll('.vc-tag__close')[index].trigger('click');
+			await flush();
+			expect(value.value).toEqual(expected);
+		});
+	});
+
 	it('multiple: clicking tag toggles popover', async () => {
 		const value = ref<any[]>(['1', '2']);
 		const wrapper = mount(() => (
-			<TreeSelect v-model={value.value} data={data} max={99} checkStrictly />
+			<TreeSelect v-model={value.value} data={data} max={99} checkStrategy="strict" />
 		), { attachTo: document.body });
 		await flush();
 
@@ -1425,7 +1590,7 @@ describe('TreeSelect interaction', () => {
 	it('multiple: clicking tag close does not open popover', async () => {
 		const value = ref<any[]>(['1', '2']);
 		const wrapper = mount(() => (
-			<TreeSelect v-model={value.value} data={data} max={99} checkStrictly />
+			<TreeSelect v-model={value.value} data={data} max={99} checkStrategy="strict" />
 		), { attachTo: document.body });
 		await flush();
 
@@ -2129,10 +2294,10 @@ describe('Tree store & node unit', () => {
 			checkedValues: ['2-1-1', '2-1']
 		} as any);
 		expect(store.getCurrentNode()?.getter.value).toBe('2');
-		// strictly 模式
+		// strict 模式
 		const store2 = new TreeStore({
 			data: freshData(),
-			checkStrictly: true,
+			checkStrategy: 'strict',
 			checkedValues: ['1', '2']
 		} as any);
 		expect(store2.getCheckedValues().sort()).toEqual(['1', '2']);
@@ -2515,10 +2680,10 @@ describe('TreeSelect 内联搜索与键盘', () => {
 		wrapper.unmount();
 	});
 
-	it('checkStrictly：退格移除最后一个值', async () => {
+	it('strict：退格移除最后一个值', async () => {
 		const value = ref<any[]>(['1', '2-1']);
 		const wrapper = mount(() => (
-			<TreeSelect v-model={value.value} data={treeData} max={99} searchable checkStrictly />
+			<TreeSelect v-model={value.value} data={treeData} max={99} searchable checkStrategy="strict" />
 		), { attachTo: document.body });
 		await flush();
 
@@ -2797,12 +2962,12 @@ describe('TreeSelect 内联搜索与键盘', () => {
 		wrapper.unmount();
 	});
 
-	it('远程搜索（checkStrictly）：已选值不在新的搜索结果里时，标签保留；再勾选时原已选值不丢', async () => {
+	it('远程搜索（strict）：已选值不在新的搜索结果里时，标签保留；再勾选时原已选值不丢', async () => {
 		const source = ref<any[]>(treeData);
 		const value = ref<any[]>(['1', '2-1']);
 		const loadData = vi.fn(() => Promise.resolve());
 		const wrapper = mount(() => (
-			<TreeSelect v-model={value.value} data={source.value} max={99} maxTagLines={0} searchable checkStrictly loadData={loadData} />
+			<TreeSelect v-model={value.value} data={source.value} max={99} maxTagLines={0} searchable checkStrategy="strict" loadData={loadData} />
 		), { attachTo: document.body });
 		await flush();
 		const getTags = () => wrapper.findAll('.vc-select-tags > .vc-tag').map(tag => tag.text());
@@ -2899,7 +3064,7 @@ describe('TreeSelect 内联搜索与键盘', () => {
 	it('本地数据：数据里没有的已选值没有标签', async () => {
 		const source = ref<any[]>(treeData);
 		const wrapper = mount(() => (
-			<TreeSelect modelValue={['1', '2-1']} data={source.value} max={99} maxTagLines={0} checkStrictly />
+			<TreeSelect modelValue={['1', '2-1']} data={source.value} max={99} maxTagLines={0} checkStrategy="strict" />
 		), { attachTo: document.body });
 		await flush();
 		source.value = treeData.filter(item => item.value === '3');

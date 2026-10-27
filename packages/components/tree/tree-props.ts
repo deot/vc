@@ -2,7 +2,7 @@ import { pick } from 'lodash-es';
 import type { ExtractPropTypes, PropType } from 'vue';
 import { props as selectProps } from '../select/select-props';
 import { KEY_VALUE } from './store/constant';
-import type { TreeAllowDragPayload, TreeAllowDropPayload } from './types';
+import type { TreeAllowDragPayload, TreeAllowDropPayload, TreeCheckStrategy } from './types';
 import { renderType, valueType } from '../customer/customer-props';
 
 const selectKeys = [
@@ -48,9 +48,10 @@ export const props = {
 		type: valueType,
 		default: undefined
 	},
-	checkStrictly: {
-		type: Boolean,
-		default: false
+	// 勾选联动与 v-model 回填方式，见 TreeCheckStrategy
+	checkStrategy: {
+		type: String as PropType<TreeCheckStrategy>,
+		default: 'all'
 	},
 	defaultExpandAll: Boolean,
 	expandOnClickNode: {

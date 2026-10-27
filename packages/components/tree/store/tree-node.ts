@@ -72,7 +72,7 @@ export const syncCheckFromChildren = (node: TreeNode) => {
 	}
 
 	const parent = node.parentNode;
-	return !!parent && parent.states.level !== 0 && !node.store.checkStrictly;
+	return !!parent && parent.states.level !== 0 && !node.store.strict;
 };
 
 /**
@@ -409,7 +409,7 @@ export class TreeNode {
 			if (data instanceof Array) {
 				if (this.states.checked) {
 					this.setChecked(true, true);
-				} else if (!this.store.checkStrictly) {
+				} else if (!this.store.strict) {
 					reInitChecked(this);
 				}
 				done();
@@ -454,7 +454,7 @@ export class TreeNode {
 	async setChecked(value: boolean | string, deep?: boolean, recursion?: boolean, passValue?: boolean) {
 		setCheckState(this, value === true, value === 'half');
 
-		if (this.store.checkStrictly) return;
+		if (this.store.strict) return;
 
 		if (!(this.shouldLoadData() && !this.store.checkDescendants)) {
 			const { all, allWithoutDisable } = getChildState(this.childNodes);

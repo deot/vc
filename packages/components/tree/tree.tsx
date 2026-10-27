@@ -50,7 +50,7 @@ export const Tree = defineComponent({
 			keyValue: { ...KEY_VALUE, ...props.keyValue },
 			loadData: props.loadData,
 			currentNodeValue: props.currentNodeValue,
-			checkStrictly: props.checkStrictly,
+			checkStrategy: props.checkStrategy,
 			checkDescendants: props.checkDescendants,
 			checkedValues: toCurrentValue(props.modelValue, {
 				numerable: props.numerable,
@@ -130,9 +130,9 @@ export const Tree = defineComponent({
 		);
 
 		watch(
-			() => props.checkStrictly,
-			(v: boolean) => {
-				store.checkStrictly = v;
+			() => props.checkStrategy,
+			(v) => {
+				store.checkStrategy = v;
 			}
 		);
 
@@ -289,7 +289,7 @@ export const Tree = defineComponent({
 		 */
 		const toggleCheck = async (node: TreeNode, checked = !node.states.checked) => {
 			if (node.getter.disabled) return;
-			node.setChecked(checked, !props.checkStrictly);
+			node.setChecked(checked, !store.strict);
 			await nextTick();
 			emit('check', {
 				node,

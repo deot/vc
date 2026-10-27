@@ -5,7 +5,7 @@ import { expandDirection } from '../cascader/hooks/use-column-direction';
 import { props as treeProps } from './tree-props';
 
 const treeKeys = [
-	'checkStrictly',
+	'checkStrategy',
 	'data',
 	'max',
 	'renderNodeLabel'

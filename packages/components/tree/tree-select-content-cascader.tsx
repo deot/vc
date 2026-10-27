@@ -9,6 +9,7 @@ import { Checkbox } from '../checkbox/index';
 import { Customer } from '../customer/index';
 import { useLocale } from '../locale';
 import { TreeStore, KEY_VALUE } from './store';
+import type { TreeCheckStrategy } from './types';
 import { SelectPaths } from '../select/select-search';
 import type { SelectPath } from '../select/select-search';
 import { CascaderColumns } from '../cascader/cascader-columns';
@@ -28,9 +29,9 @@ export const TreeSelectContentCascader = defineComponent({
 			type: Array as PropType<TreeData[]>,
 			default: () => []
 		},
-		checkStrictly: {
-			type: Boolean,
-			default: false
+		checkStrategy: {
+			type: String as PropType<TreeCheckStrategy>,
+			default: 'all'
 		},
 		renderNodeLabel: renderType,
 		searchRegex: RegExp as PropType<SearchRegex>,
@@ -58,13 +59,13 @@ export const TreeSelectContentCascader = defineComponent({
 		const store = new TreeStore({
 			data: props.data,
 			keyValue: { ...KEY_VALUE },
-			checkStrictly: props.checkStrictly,
+			checkStrategy: props.checkStrategy,
 			checkedValues: [...props.value]
 		});
 		watch(() => props.value, v => store.setCheckedValues([...v]));
 		watch(() => props.data, v => store.setData(v));
-		watch(() => props.checkStrictly, (v) => {
-			store.checkStrictly = v;
+		watch(() => props.checkStrategy, (v) => {
+			store.checkStrategy = v;
 		});
 		/** hover 展开路径，与 Cascader 一致 */
 		const currentValue = ref<TreeValue[]>([]);
@@ -101,7 +102,7 @@ export const TreeSelectContentCascader = defineComponent({
 		// 切换一项的勾选（复选框、点击级联列的项、选中搜索结果、回车）；禁用的项不处理
 		const toggle = (item: TreeData, checked = !getNodeState(item).checked) => {
 			if (item.disabled) return;
-			store.setChecked(item, checked, !props.checkStrictly);
+			store.setChecked(item, checked, !store.strict);
 			sync();
 		};
 

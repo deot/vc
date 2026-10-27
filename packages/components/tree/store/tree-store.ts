@@ -4,6 +4,7 @@ import { hasOwn } from '@deot/helper-utils';
 import type { Nullable } from '@deot/helper-shared';
 import { TreeNode, getRawValue, syncCheckFromChildren } from './tree-node';
 import { KEY_NODE, KEY_VALUE } from './constant';
+import type { TreeCheckStrategy } from '../types';
 
 export class TreeStore {
 	primaryKey: string = KEY_NODE;
@@ -21,7 +22,8 @@ export class TreeStore {
 	expandedValues: (string | number)[] = [];
 
 	lazy = false;
-	checkStrictly = false;
+	// 勾选联动与回填方式，见 getCheckedState
+	checkStrategy: TreeCheckStrategy = 'all';
 	autoExpandParent = true;
 	checkDescendants = false;
 	defaultExpandAll = false;
@@ -57,6 +59,11 @@ export class TreeStore {
 		});
 		// 不处理自动加载一次
 		this._initDefaultCheckedNodes();
+	}
+
+	// 父子独立勾选
+	get strict() {
+		return this.checkStrategy === 'strict';
 	}
 
 	/**
@@ -101,7 +108,7 @@ export class TreeStore {
 		// 逐个写入时此刻会依次写入它和各级祖先：按同样的顺序记下写入前的状态，check-change 的顺序不变
 		if (this.onCheckChange) {
 			let current: TreeNode | null = node;
-			for (; current && toRaw(current.states).level > 0; current = this.checkStrictly ? null : current.parentNode) {
+			for (; current && toRaw(current.states).level > 0; current = this.strict ? null : current.parentNode) {
 				this.markCheckChange(current);
 			}
 		}
@@ -288,7 +295,7 @@ export class TreeStore {
 		const checkedValues = this.checkedValues || [];
 		const nodesMap = this.nodesMap;
 
-		if (this.checkStrictly) {
+		if (this.strict) {
 			checkedValues.forEach((id: string | number) => {
 				const node = nodesMap[id];
 				if (node) {
@@ -308,7 +315,7 @@ export class TreeStore {
 		const nodeValue = node.getter.value;
 		if (checkedValues.indexOf(nodeValue) === -1) return;
 
-		if (this.checkStrictly) {
+		if (this.strict) {
 			node.setChecked(true, false);
 			return;
 		}
@@ -326,7 +333,7 @@ export class TreeStore {
 		if (!isEqualWith(newVal, this.checkedValues)) {
 			// 额外处理, 移除checkbox
 			const removed = difference(this.checkedValues as any, newVal).map((key: any) => this.nodesMap[key]).filter(Boolean);
-			this.batchCheck(removed, node => node.setChecked(false, !this.checkStrictly));
+			this.batchCheck(removed, node => node.setChecked(false, !this.strict));
 
 			this.checkedValues = newVal;
 			this._initDefaultCheckedNodes();
@@ -377,24 +384,29 @@ export class TreeStore {
 
 	/**
 	 * 勾选与半选的节点及其值（同步 v-model 用），遍历一次
+	 * 	- 勾选的节点按 checkStrategy 回填：strict / all 全部；parent 父节点未勾选的；child 没有勾选的子节点的
 	 * 	- 在事件处理中调用，不需要依赖追踪：遍历原始数组与原始状态，不经过响应式代理（5 万节点每次勾选约 30 → 19ms）
 	 * @returns 勾选数据
 	 */
 	getCheckedState() {
 		const key = this.primaryKey;
+		const strategy = this.checkStrategy;
 		const checkedNodes: TreeNode[] = [];
 		const halfCheckedNodes: TreeNode[] = [];
-		const traverse = (node: TreeNode) => {
+		const hasCheckedChild = (node: TreeNode) => toRaw(node.childNodes).some(child => toRaw(child.states).checked);
+		const traverse = (node: TreeNode, parentChecked: boolean) => {
 			const children = toRaw(node.childNodes);
 			for (let i = 0, j = children.length; i < j; i++) {
 				const child = children[i];
 				const states = toRaw(child.states);
-				states.checked && checkedNodes.push(child);
+				states.checked
+				&& (strategy === 'parent' ? !parentChecked : strategy !== 'child' || !hasCheckedChild(child))
+				&& checkedNodes.push(child);
 				states.indeterminate && halfCheckedNodes.push(child);
-				traverse(child);
+				traverse(child, states.checked);
 			}
 		};
-		traverse(this.root);
+		traverse(this.root, false);
 		const toValue = (node: TreeNode) => toRaw(node.states).data[key];
 		return {
 			checkedNodes,
@@ -461,7 +473,7 @@ export class TreeStore {
 					cache[parent.states.data[key]] = true;
 					parent = parent.parentNode;
 				}
-				if (node.states.isLeaf || this.checkStrictly) {
+				if (node.states.isLeaf || this.strict) {
 					node.setChecked(true, false);
 				} else {
 					node.setChecked(true, true);

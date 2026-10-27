@@ -23,7 +23,7 @@
 				:data="data"
 				:max="99"
 				:cascader="controls.content === 'cascader'"
-				:check-strictly="controls.checkStrictly === 'on'"
+				:check-strategy="controls.checkStrategy"
 				:max-tag-lines="controls.maxTagLines"
 				:searchable="controls.searchable !== 'off' && controls.searchable"
 				search-placeholder="输入条目或分组名称"
@@ -46,7 +46,16 @@ const CONTROLS = [
 		data: [{ value: 'inline', label: 'inline（触发器内输入）' }, { value: 'popover', label: 'popover（弹层搜索栏）' }, { value: 'off', label: '关闭' }]
 	},
 	{ key: 'content', label: '内容', data: [{ value: 'tree', label: '树形' }, { value: 'cascader', label: '级联列' }] },
-	{ key: 'checkStrictly', label: 'checkStrictly', data: [{ value: 'off', label: '关闭（父子联动）' }, { value: 'on', label: '开启（各自独立）' }] },
+	{
+		key: 'checkStrategy',
+		label: 'checkStrategy',
+		data: [
+			{ value: 'all', label: 'all（联动，回填全部）' },
+			{ value: 'parent', label: 'parent（联动，只回填父节点）' },
+			{ value: 'child', label: 'child（联动，只回填子节点）' },
+			{ value: 'strict', label: 'strict（父子独立）' }
+		]
+	},
 	{ key: 'maxTagLines', label: 'maxTagLines', data: [{ value: 1, label: '1' }, { value: 2, label: '2' }, { value: 0, label: '0（不限行）' }] },
 	{ key: 'width', label: '宽度', data: [320, 200, 120].map(value => ({ value, label: `${value}px` })) }
 ];
@@ -69,7 +78,7 @@ const data = ['A', 'B', 'C'].map(group => ({
 const value = ref([]);
 // 内容形态、勾选方式变化时值回到初始状态
 watch(
-	() => [controls.content, controls.checkStrictly],
+	() => [controls.content, controls.checkStrategy],
 	() => {
 		value.value = ['A-1-1', 'A-1-2', 'B-2-1'];
 	},

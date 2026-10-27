@@ -7,7 +7,7 @@ import { useLocale } from '../locale';
 import { renderHighlight } from '../select/select-search';
 import type { SearchRegex } from '../select/utils';
 import { Tree } from './tree';
-import type { TreeHighlightProvide } from './types';
+import type { TreeCheckStrategy, TreeHighlightProvide } from './types';
 
 const COMPONENT_NAME = 'vc-tree-select-content';
 
@@ -22,9 +22,9 @@ export const TreeSelectContent = defineComponent({
 			type: Array,
 			default: () => []
 		},
-		checkStrictly: {
-			type: Boolean,
-			default: false
+		checkStrategy: {
+			type: String as PropType<TreeCheckStrategy>,
+			default: 'all'
 		},
 		renderNodeLabel: renderType,
 		searchValue: {
@@ -91,7 +91,7 @@ export const TreeSelectContent = defineComponent({
 						model-value={props.value}
 						expanded-values={expandedValues.value}
 						data={props.data}
-						checkStrictly={props.checkStrictly}
+						checkStrategy={props.checkStrategy}
 						allowDispatch={false}
 						showCheckbox={true}
 						filterNode={filterNode}

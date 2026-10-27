@@ -29,6 +29,15 @@ export interface TreeHighlightProvide {
 }
 
 /**
+ * 勾选联动与 v-model 回填方式
+ * 	- strict：父子独立勾选，回填勾选的节点
+ * 	- all：父子联动，回填全部勾选的节点
+ * 	- parent：父子联动，子孙全选时只回填父节点
+ * 	- child：父子联动，只回填最深的勾选节点（未加载子节点的父节点也算）
+ */
+export type TreeCheckStrategy = 'strict' | 'all' | 'parent' | 'child';
+
+/**
  * 拖拽落点：相对目标节点之前 / 之后，或成为它的子节点
  */
 export type TreeDropPosition = 'before' | 'after' | 'inner';
