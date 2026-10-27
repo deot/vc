@@ -1,5 +1,13 @@
 # @deot/vc-locale ChangeLog
 
+## v1.2.4
+
+_2026-10-27_
+
+### Features
+
+- feat: add file-preview viewer texts ([3645b85](https://github.com/deot/vc/commit/3645b856a2ecdd9fa2d5e0ac29e6580033ce11be))
+
 ## v1.2.0
 
 _2026-10-06_
