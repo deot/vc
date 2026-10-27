@@ -1387,6 +1387,19 @@ describe('TreeSelect interaction', () => {
 		wrapper.unmount();
 	});
 
+	it('移除标签：半选的祖先不进值', async () => {
+		const value = ref<any[]>(['2-1', '2-1-1', '3-1', '3-1-1']);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={data} max={99} maxTagLines={0} />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await flush();
+
+		await wrapper.findAll('.vc-tag__close')[1].trigger('click');
+		await flush();
+		expect(value.value).toEqual(['2-1', '2-1-1']);
+	});
+
 	it('multiple: clicking tag toggles popover', async () => {
 		const value = ref<any[]>(['1', '2']);
 		const wrapper = mount(() => (
@@ -2496,7 +2509,8 @@ describe('TreeSelect 内联搜索与键盘', () => {
 
 		input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
 		await flush();
-		expect(value.value).toEqual(['1', '1-1', '1-1-1']);
+		// 只移除这个标签对应的值，不补入其他值
+		expect(value.value).toEqual(['1-1-1']);
 
 		wrapper.unmount();
 	});

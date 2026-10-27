@@ -143,17 +143,17 @@ export const TreeSelect = defineComponent({
 			syncValue(displayTags.value.map(item => item.label));
 		};
 
+		/**
+		 * 移除标签：独立勾选时只移除这一项；联动时连同它的祖先（不再全选）与子孙
+		 * @param item ~
+		 */
 		const handleRemove = (item: DisplayTag) => {
-			if (props.checkStrictly) {
-				const index = currentValue.value.findIndex(v => v === item.value);
-				if (index === -1) return;
-				currentValue.value = currentValue.value.filter((_, i) => i !== index);
-			} else if (item.path) {
-				const remaining = (currentValueGroups.value || []).filter(
-					p => !(p.length === item.path!.length && p.every((v, i) => v === item.path![i]))
-				);
-				currentValue.value = [...new Set(remaining.flat())];
-			}
+			const { value, path } = item;
+			currentValue.value = currentValue.value.filter((v) => {
+				if (v === value) return false;
+				if (!path) return true;
+				return !path.includes(v) && !selected.value.get(v)?.path.includes(value);
+			});
 			sync();
 		};
 
