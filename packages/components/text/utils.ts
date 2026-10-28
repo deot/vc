@@ -1,10 +1,10 @@
 import { getStyle } from '@deot/helper-dom';
 import { Utils } from '@deot/vc-shared';
 
+// 不设 overflow：Firefox 使用经典滚动条时，overflow: auto 会为滚动条留出宽度，测出的可用宽度偏窄
 const HIDDEN_TEXT_STYLE = `
 	position: absolute!important;
 	word-break: break-all!important;
-	overflow: auto!important;
 	opacity: 0!important;
 	z-index: -1000!important;
 	top: 0!important;
@@ -30,11 +30,35 @@ const SIZING_STYLE = [
 ];
 
 let hiddenEl;
+let range: Range;
+
+/**
+ * 排版后的行数：同一行的各段在纵向上重叠。
+ * 不按高度折算：line-height 为 normal 时，中西文落到不同字体，各行高度不一；内联的 1.5 / em / % 也读不出像素值
+ * @param el 隐藏节点
+ * @param max 超过即停
+ * @returns 行数（最多 max + 1）
+ */
+const countLines = (el: HTMLElement, max: number) => {
+	range ||= document.createRange();
+	range.selectNodeContents(el);
+	const rects = range.getClientRects();
+	let count = 0;
+	let bottom = -Infinity;
+	for (let i = 0; i < rects.length && count <= max; i++) {
+		const rect = rects[i];
+		if (rect.top >= bottom - 1) {
+			count++;
+			bottom = rect.bottom;
+		} else {
+			bottom = Math.max(bottom, rect.bottom);
+		}
+	}
+	return count;
+};
 
 export const getFitIndex = (options = {}) => {
 	const { el, line, value, ellipsis, slice, indent = 0 } = options as any;
-
-	let lineHeight = parseInt(getStyle(el, 'line-height'), 10);
 
 	if (!hiddenEl) {
 		hiddenEl = document.createElement('div');
@@ -47,31 +71,20 @@ export const getFitIndex = (options = {}) => {
 		? hiddenEl.setAttribute('wrap', el.getAttribute('wrap'))
 		: hiddenEl.removeAttribute('wrap');
 
-	const {
-		paddingSize, borderSize,
-		boxSizing, sizingStyle,
-	} = Utils.getComputedStyle(el, SIZING_STYLE);
+	const { sizingStyle } = Utils.getComputedStyle(el, SIZING_STYLE);
 	const textIndent = `text-indent: ${parseInt(getStyle(el, 'text-indent'), 10) + indent}px;`;
 	hiddenEl.setAttribute('style', `${sizingStyle};${textIndent};${HIDDEN_TEXT_STYLE}`);
-	let sideHeight = paddingSize || 0;
-	// content + padding + border
-	boxSizing === 'border-box' && (sideHeight += borderSize);
-
-	if (Number.isNaN(lineHeight)) {
-		hiddenEl.innerText = '.';
-		lineHeight = hiddenEl.clientHeight - sideHeight;
-	}
 
 	const source = typeof value === 'number' ? `${value}` : (value || '');
 	const hasSlice = slice !== undefined && slice !== null;
 	// 与 String.prototype.slice 语义一致: slice=-5 取末尾 5 字符, slice=0 取整串
 	const sliceText = hasSlice ? source.slice(slice) : '';
 
-	// 每次写入文本再读 clientHeight 都会强制一次排版。高度随字符数单调不减（word-break: break-all），
+	// 每次写入文本再读行数都会强制一次排版。行数随字符数单调不减（word-break: break-all），
 	// 所以整串放得下就直接返回；溢出时用二分代替逐字扫描，排版次数从 O(n) 降到 O(log n)，结果不变
 	const exceeds = (text: string) => {
 		hiddenEl.innerText = text;
-		return hiddenEl.clientHeight - sideHeight > lineHeight * line;
+		return countLines(hiddenEl, line) > line;
 	};
 
 	if (!source || !exceeds(source)) return -1;

@@ -3,27 +3,42 @@
 import { getFitIndex } from '../utils';
 
 /**
- * jsdom 不会真正进行文本布局, clientHeight 永远为 0。
- * 这里通过 patch HTMLDivElement.prototype.clientHeight 让其根据当前 innerText 长度
- * 模拟 "每个字符占一行高度" 的虚拟布局, 以便覆盖 getFitIndex 的截断与回退分支。
+ * jsdom 不会真正进行文本布局, Range.getClientRects 拿不到行。
+ * 这里模拟 "每个字符占一行" 的虚拟布局: 文本每个字符一行;
+ * fragments=true 时每行给出多段高度不一、互相重叠的矩形 (line-height: normal 下中西文混排的样子), 仍应算一行。
+ * innerText 赋值按浏览器行为清空子节点。
  */
 const charHeight = 10; // 模拟每行高度 10px
 
-const installVirtualLayout = (paddingPx = 0) => {
-	const desc = Object.getOwnPropertyDescriptor(HTMLDivElement.prototype, 'clientHeight');
-	Object.defineProperty(HTMLDivElement.prototype, 'clientHeight', {
+const installVirtualLayout = (fragments = false) => {
+	const innerText = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'innerText');
+	const getClientRects = Object.getOwnPropertyDescriptor(Range.prototype, 'getClientRects');
+	Object.defineProperty(HTMLElement.prototype, 'innerText', {
 		configurable: true,
-		get(this: HTMLDivElement) {
-			const text = (this as any).innerText || '';
-			return text.length * charHeight + paddingPx;
+		get(this: HTMLElement) { return this.textContent; },
+		set(this: HTMLElement, v: string) { this.textContent = `${v}`; }
+	});
+	Object.defineProperty(Range.prototype, 'getClientRects', {
+		configurable: true,
+		value(this: Range) {
+			const el = this.startContainer as HTMLElement;
+			const count = (el.textContent || '').length;
+			const rects: any[] = [];
+			for (let i = 0; i < count; i++) {
+				const top = i * charHeight;
+				fragments
+					? rects.push({ top, bottom: top + 8 }, { top: top + 2, bottom: top + charHeight }, { top: top + 7, bottom: top + 7 })
+					: rects.push({ top, bottom: top + charHeight });
+			}
+			return rects;
 		}
 	});
+	const restore = (proto: any, key: string, desc?: PropertyDescriptor) => {
+		desc ? Object.defineProperty(proto, key, desc) : delete proto[key];
+	};
 	return () => {
-		if (desc) {
-			Object.defineProperty(HTMLDivElement.prototype, 'clientHeight', desc);
-		} else {
-			delete (HTMLDivElement.prototype as any).clientHeight;
-		}
+		restore(HTMLElement.prototype, 'innerText', innerText);
+		restore(Range.prototype, 'getClientRects', getClientRects);
 	};
 };
 
@@ -96,13 +111,20 @@ describe('utils.ts > getFitIndex', () => {
 		expect(a).toBe(b);
 	});
 
-	it('当宿主元素有有效 line-height 时跳过 NaN 兜底分支', () => {
+	it('按排版行数判断, 与宿主 line-height 写法无关', () => {
 		restoreLayout = installVirtualLayout();
-		const el = createEl({ lineHeight: '20px' });
-		// line=2 -> 阈值 20*2=40; 6 chars => 60>40 => endIndex 由首轮设置
-		// 回退: i=2, innerText='ab'+ellipsis(3)=5 => 50>40, 不命中
-		//       i=1, 'a'+'...'=4 chars => 40<=40, 命中 endIndex=1
-		expect(getFitIndex({ el, line: 2, value: 'abcdef', ellipsis: '...' })).toBe(1);
+		// line=2: 'abc' 首次溢出 (endIndex=2), 回退取 i < 2 中放得下的最大值 1
+		['normal', '20px', '1.5', '1.5em', '150%'].forEach((lineHeight) => {
+			const el = createEl({ lineHeight });
+			expect(getFitIndex({ el, line: 2, value: 'abcdef', ellipsis: '' }), lineHeight).toBe(1);
+		});
+	});
+
+	it('同一行内高度不一、互相重叠的多段矩形算一行', () => {
+		restoreLayout = installVirtualLayout(true);
+		const el = createEl();
+		expect(getFitIndex({ el, line: 10, value: 'abcdefghij', ellipsis: '' })).toBe(-1);
+		expect(getFitIndex({ el, line: 10, value: 'abcdefghijkl', ellipsis: '' })).toBe(9);
 	});
 
 	it('当宿主有 wrap 属性时同步给隐藏节点, 否则移除', () => {
@@ -116,14 +138,6 @@ describe('utils.ts > getFitIndex', () => {
 		el.removeAttribute('wrap');
 		getFitIndex({ el, line: 2, value: 'abcdef', ellipsis: '...' });
 		expect(hidden.getAttribute('wrap')).toBeNull();
-	});
-
-	it('boxSizing=border-box 时把 borderSize 计入 sideHeight', () => {
-		restoreLayout = installVirtualLayout();
-		const el = createEl({ boxSizing: 'border-box', borderTopWidth: '5px', borderBottomWidth: '5px' });
-		// 不抛错且能正常返回 (具体值不强校验)
-		const idx = getFitIndex({ el, line: 2, value: 'abcdefghij', ellipsis: '...' });
-		expect(typeof idx).toBe('number');
 	});
 
 	it('多次调用复用同一隐藏节点 (不会重复创建)', () => {
@@ -235,12 +249,12 @@ describe('utils.ts > getFitIndex', () => {
 
 describe('utils.ts > getFitIndex 测量次数', () => {
 	let restoreLayout: (() => void) | null = null;
-	// 每次读取 clientHeight 在浏览器里都是一次强制排版
+	// 每次读取行矩形在浏览器里都是一次强制排版
 	let reads: ReturnType<typeof vi.spyOn>;
 
 	beforeEach(() => {
 		restoreLayout = installVirtualLayout();
-		reads = vi.spyOn(HTMLDivElement.prototype, 'clientHeight', 'get');
+		reads = vi.spyOn(Range.prototype, 'getClientRects');
 	});
 
 	afterEach(() => {
@@ -279,8 +293,7 @@ describe('utils.ts > getFitIndex 测量次数', () => {
 	it('放得下时只量一次', () => {
 		const el = createEl();
 		expect(getFitIndex({ el, line: 50, value: 'a'.repeat(40), ellipsis: '...' })).toBe(-1);
-		// 读 line-height 兜底一次（jsdom 下 line-height 为 NaN）+ 整串一次
-		expect(reads).toHaveBeenCalledTimes(2);
+		expect(reads).toHaveBeenCalledTimes(1);
 	});
 
 	it('溢出时按二分测量，次数与长度成对数关系', () => {
