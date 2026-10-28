@@ -57,6 +57,11 @@ export const props = {
 	theme: {
 		type: String,
 		default: 'dark'
+	},
+	// 提供 expand 插槽时生效：是否显示全文
+	expanded: {
+		type: Boolean,
+		default: false
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

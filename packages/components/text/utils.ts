@@ -30,6 +30,8 @@ const SIZING_STYLE = [
 ];
 
 let hiddenEl;
+// 末尾入口的占位（Text 的 expand 插槽）
+let suffixEl;
 let range: Range;
 
 /**
@@ -58,7 +60,7 @@ const countLines = (el: HTMLElement, max: number) => {
 };
 
 export const getFitIndex = (options = {}) => {
-	const { el, line, value, ellipsis, slice, indent = 0 } = options as any;
+	const { el, line, value, ellipsis, slice, indent = 0, suffixWidth = 0 } = options as any;
 
 	if (!hiddenEl) {
 		hiddenEl = document.createElement('div');
@@ -75,6 +77,12 @@ export const getFitIndex = (options = {}) => {
 	const textIndent = `text-indent: ${parseInt(getStyle(el, 'text-indent'), 10) + indent}px;`;
 	hiddenEl.setAttribute('style', `${sizingStyle};${textIndent};${HIDDEN_TEXT_STYLE}`);
 
+	if (suffixWidth && !suffixEl) {
+		suffixEl = document.createElement('span');
+		suffixEl.style.display = 'inline-block';
+	}
+	suffixWidth && (suffixEl.style.width = `${suffixWidth}px`);
+
 	const source = typeof value === 'number' ? `${value}` : (value || '');
 	const hasSlice = slice !== undefined && slice !== null;
 	// 与 String.prototype.slice 语义一致: slice=-5 取末尾 5 字符, slice=0 取整串
@@ -82,18 +90,20 @@ export const getFitIndex = (options = {}) => {
 
 	// 每次写入文本再读行数都会强制一次排版。行数随字符数单调不减（word-break: break-all），
 	// 所以整串放得下就直接返回；溢出时用二分代替逐字扫描，排版次数从 O(n) 降到 O(log n)，结果不变
-	const exceeds = (text: string) => {
+	const exceeds = (text: string, withSuffix = false) => {
 		hiddenEl.innerText = text;
+		withSuffix && suffixWidth && hiddenEl.appendChild(suffixEl);
 		return countLines(hiddenEl, line) > line;
 	};
 
+	// 是否截断与首个溢出位置只看原文：原文放得下就不需要入口
 	if (!source || !exceeds(source)) return -1;
 
 	// 首个溢出位置：source.slice(0, i + 1) 溢出的最小 i（整串已知溢出，搜不到时即末位）
 	const endIndex = Utils.bisectFirst(source.length - 1, i => exceeds(source.slice(0, i + 1)));
 
-	// 回退：加上 ellipsis 与 sliceText 后仍放得下的最长前缀 source.slice(0, i)，i < endIndex
-	const fitIndex = Utils.bisectLast(endIndex, i => !exceeds(source.slice(0, i) + ellipsis + sliceText));
+	// 回退：加上 ellipsis、sliceText 与末尾入口后仍放得下的最长前缀 source.slice(0, i)，i < endIndex
+	const fitIndex = Utils.bisectLast(endIndex, i => !exceeds(source.slice(0, i) + ellipsis + sliceText, true));
 	if (fitIndex >= 0) return fitIndex;
 
 	// 边界: slice 让 ellipsis+sliceText 始终撑爆 line 行 (典型 slice=0)

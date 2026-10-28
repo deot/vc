@@ -18,7 +18,8 @@ const RENDER_ROW = textProps.renderRow.default;
 export const Text = defineComponent({
 	name: COMPONENT_NAME,
 	props: textProps,
-	setup(props, { emit }) {
+	emits: ['clip', 'update:expanded', 'expand-change'],
+	setup(props, { emit, slots }) {
 		const instance = getCurrentInstance()!;
 
 		const isActive = ref(false);
@@ -30,28 +31,36 @@ export const Text = defineComponent({
 		const hasClipListener = !!instance.vnode.props?.onClip;
 		// 在虚拟列表的隐藏测量池里（那份渲染只用来量尺寸，不会展示）
 		const measuring = useMeasuring();
+		// 提供 expand 插槽即开启展开 / 收起，初始化时确定
+		const hasExpand = !!slots.expand;
+		const isExpanded = ref(hasExpand && props.expanded);
+		const expand = ref<HTMLElement>();
 		/**
 		 * 能否交给 CSS 截断：默认省略符，没有 slice / renderRow / 尾部缩进，也没有监听 clip。
 		 * 此时不测量、不监听尺寸，挂载成本只有一个元素；是否截断到鼠标移入时才判断。
-		 * 测量池里一律用 CSS 截断：高度与测量后的结果一致，不必真的去量
+		 * 测量池里一律用 CSS 截断：高度与测量后的结果一致，不必真的去量（展开时显示全文，不截断）
+		 * 有 expand 插槽时要给入口留出宽度，只能 JS 测量
 		 */
 		const isClamp = computed(() => {
-			return props.line > 0 && (measuring || (
+			return props.line > 0 && !isExpanded.value && (measuring || (
 				props.ellipsis === ELLIPSIS
 				&& props.renderRow === RENDER_ROW
 				&& !hasSlice.value
 				&& !props.indent
 				&& !hasClipListener
+				&& !hasExpand
 			));
 		});
 		// CSS 截断时，鼠标移入那一刻内容是否被截断
 		const isClamped = ref(false);
-		// endIndex===0 在带 slice 场景下也代表"已截断 (前缀为空)"
-		const truncated = computed(() => {
+		// 内容超出 line 行；endIndex===0 在带 slice 场景下也代表"已截断 (前缀为空)"
+		const overflow = computed(() => {
 			return isClamp.value
 				? isClamped.value
 				: endIndex.value > 0 || (endIndex.value === 0 && hasSlice.value);
 		});
+		// 展开时超出也显示全文
+		const truncated = computed(() => overflow.value && !isExpanded.value);
 		const displayValue = computed(() => {
 			const sliceText = hasSlice.value ? props.value.slice(props.slice as number) : '';
 			return truncated.value
@@ -62,7 +71,8 @@ export const Text = defineComponent({
 
 		const styles = computed(() => {
 			return {
-				cursor: truncated.value ? 'pointer' : 'unset',
+				// 有展开入口时不弹全文
+				cursor: truncated.value && !hasExpand ? 'pointer' : 'unset',
 				visibility: isMeasuring.value ? 'hidden' : void 0,
 				flexShrink: props.shrink === void 0 ? void 0 : Number(props.shrink)
 			};
@@ -80,7 +90,9 @@ export const Text = defineComponent({
 					value,
 					ellipsis,
 					slice,
-					indent
+					indent,
+					// 入口跟在省略符后，按整体宽度预留
+					suffixWidth: hasExpand ? Math.ceil(expand.value?.getBoundingClientRect().width || 0) : 0
 				});
 				isActive.value = true;
 			}
@@ -94,7 +106,7 @@ export const Text = defineComponent({
 		let poper;
 		// 用 mouseenter 与根节点：renderRow 返回元素时，mouseover 在子元素间移动会反复触发，e.target 也会落到子元素上
 		// 滚动期间内容从静止的鼠标下经过也会触发移入：等滚动停下、鼠标仍在上面才算悬停
-		measuring || useScrollListener();
+		measuring || hasExpand || useScrollListener();
 		const handleMouseEnter = (e: any) => {
 			const el = e.currentTarget;
 			whenScrollIdle(el, () => {
@@ -122,6 +134,30 @@ export const Text = defineComponent({
 			() => [props.value, props.indent, props.line, props.slice, props.ellipsis],
 			() => isClamp.value || calcPosition()
 		);
+
+		const toggle = () => {
+			isExpanded.value = !isExpanded.value;
+			emit('update:expanded', isExpanded.value);
+			emit('expand-change', isExpanded.value);
+		};
+
+		watch(() => props.expanded, v => (isExpanded.value = hasExpand && v));
+		// 入口文案随状态变化，宽度可能不同：渲染后重新测量
+		watch(isExpanded, () => isClamp.value || calcPosition(), { flush: 'post' });
+
+		// 未超出时不占位，但仍渲染以便测量宽度
+		const renderExpand = (hidden: boolean) => {
+			if (!hasExpand) return null;
+			return (
+				<span
+					ref={expand}
+					class={['vc-text__expand', { 'is-hidden': hidden }]}
+					onClick={toggle}
+				>
+					{ slots.expand!({ expanded: isExpanded.value }) }
+				</span>
+			);
+		};
 
 		// 只有 JS 测量要监听尺寸（测量池里 line=0 的那份也不必：不截断）
 		const bindResize = () => {
@@ -161,7 +197,7 @@ export const Text = defineComponent({
 						// @ts-ignore
 						class="vc-text is-clamp"
 						style={[styles.value, { '--vc-text-line': props.line }]}
-						onMouseenter={handleMouseEnter}
+						onMouseenter={hasExpand ? void 0 : handleMouseEnter}
 					>
 						{ props.value }
 					</Content>
@@ -172,7 +208,7 @@ export const Text = defineComponent({
 					// @ts-ignore
 					class="vc-text"
 					style={styles.value}
-					onMouseenter={handleMouseEnter}
+					onMouseenter={hasExpand ? void 0 : handleMouseEnter}
 				>
 					{
 						isActive.value
@@ -182,6 +218,7 @@ export const Text = defineComponent({
 							// 首次测量前用隐藏全文撑开 intrinsic width，避免 Flex 父级按空内容收缩
 							: (props.resize !== false ? props.value : null)
 					}
+					{ renderExpand(isActive.value && !overflow.value) }
 				</Content>
 			);
 		};

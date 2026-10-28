@@ -788,3 +788,149 @@ describe('Text CSS 截断 (默认省略符且无 slice / renderRow / indent / cl
 		wrapper.unmount();
 	});
 });
+
+describe('Text 展开 / 收起 (expand 插槽)', () => {
+	beforeEach(() => {
+		mockedGetFitIndex.mockReset();
+		mockedGetFitIndex.mockReturnValue(-1);
+	});
+
+	afterEach(() => {
+		document.body.innerHTML = '';
+		vi.restoreAllMocks();
+	});
+
+	const expand = ({ expanded }: any) => (expanded ? '收起' : '展开');
+
+	it('提供插槽即走 JS 测量，并给入口预留宽度', async () => {
+		mockedGetFitIndex.mockReturnValue(3);
+		const wrapper = mount(() => (
+			<Text value="abcdefghij" line={2} resize={true} v-slots={{ expand }} />
+		), { attachTo: document.body });
+		expect(wrapper.classes()).not.toContain('is-clamp');
+
+		vi.spyOn(wrapper.find('.vc-text__expand').element, 'getBoundingClientRect').mockReturnValue({ width: 27.2 } as any);
+		triggerResize(wrapper.element);
+		await flush();
+
+		expect((mockedGetFitIndex.mock.calls[0] as any)[0].suffixWidth).toBe(28);
+		expect(wrapper.text()).toBe('abc…展开');
+		expect(wrapper.find('.vc-text__expand').classes()).not.toContain('is-hidden');
+		wrapper.unmount();
+	});
+
+	it('未超出时入口隐藏但仍渲染', async () => {
+		const wrapper = mount(() => (
+			<Text value="short" line={2} resize={true} v-slots={{ expand }} />
+		), { attachTo: document.body });
+		triggerResize(wrapper.element);
+		await flush();
+
+		expect(wrapper.find('.vc-text__expand').classes()).toContain('is-hidden');
+		wrapper.unmount();
+	});
+
+	it('点击入口切换全文与截断，发出 update:expanded 与 expand-change', async () => {
+		mockedGetFitIndex.mockReturnValue(3);
+		const onUpdate = vi.fn();
+		const onExpandChange = vi.fn();
+		const wrapper = mount(() => (
+			<Text
+				value="abcdefghij"
+				line={2}
+				resize={true}
+				v-slots={{ expand }}
+				{...{ 'onUpdate:expanded': onUpdate }}
+				onExpandChange={onExpandChange}
+			/>
+		), { attachTo: document.body });
+		triggerResize(wrapper.element);
+		await flush();
+
+		await wrapper.find('.vc-text__expand').trigger('click');
+		await flush();
+		expect(wrapper.text()).toBe('abcdefghij收起');
+		expect(onUpdate).toHaveBeenLastCalledWith(true);
+		expect(onExpandChange).toHaveBeenLastCalledWith(true);
+		// 入口文案变了，重新测量一次
+		expect(mockedGetFitIndex).toHaveBeenCalledTimes(2);
+
+		await wrapper.find('.vc-text__expand').trigger('click');
+		await flush();
+		expect(wrapper.text()).toBe('abc…展开');
+		expect(onUpdate).toHaveBeenLastCalledWith(false);
+		expect(onExpandChange).toHaveBeenLastCalledWith(false);
+		wrapper.unmount();
+	});
+
+	it('v-model:expanded 外部赋值切换显示，不发 expand-change', async () => {
+		mockedGetFitIndex.mockReturnValue(3);
+		const expanded = ref(true);
+		const onExpandChange = vi.fn();
+		const wrapper = mount(() => (
+			<Text
+				value="abcdefghij"
+				line={2}
+				resize={true}
+				expanded={expanded.value}
+				v-slots={{ expand }}
+				onExpandChange={onExpandChange}
+			/>
+		), { attachTo: document.body });
+		triggerResize(wrapper.element);
+		await flush();
+		expect(wrapper.text()).toBe('abcdefghij收起');
+
+		expanded.value = false;
+		await flush();
+		expect(wrapper.text()).toBe('abc…展开');
+		expect(onExpandChange).not.toHaveBeenCalled();
+		wrapper.unmount();
+	});
+
+	it('没有插槽时 expanded 不生效', async () => {
+		mockedGetFitIndex.mockReturnValue(3);
+		const wrapper = mount(() => (
+			<Text value="abcdefghij" line={2} resize={true} ellipsis="..." expanded={true} />
+		), { attachTo: document.body });
+		triggerResize(wrapper.element);
+		await flush();
+
+		expect(wrapper.text()).toBe('abc...');
+		expect(wrapper.find('.vc-text__expand').exists()).toBe(false);
+		wrapper.unmount();
+	});
+
+	it('不弹出悬停全文，光标不变', async () => {
+		const popoverOpen = vi.spyOn(Popover, 'open').mockReturnValue({ destroy: vi.fn() } as any);
+		mockedGetFitIndex.mockReturnValue(3);
+		const wrapper = mount(() => (
+			<Text value="abcdefghij" line={2} resize={true} v-slots={{ expand }} />
+		), { attachTo: document.body });
+		triggerResize(wrapper.element);
+		await flush();
+
+		await wrapper.trigger('mouseenter');
+		await Utils.sleep(200);
+		expect(popoverOpen).not.toHaveBeenCalled();
+		expect(wrapper.attributes('style')).toContain('cursor: unset');
+		wrapper.unmount();
+	});
+
+	it('测量池里：收起用 CSS 截断，展开显示全文与入口', async () => {
+		const wrapper = mount(() => (
+			<Measuring>
+				<Text class="collapsed" value="abcdefg" line={2} v-slots={{ expand }} />
+				<Text class="expanded" value="abcdefg" line={2} expanded={true} v-slots={{ expand }} />
+			</Measuring>
+		), { attachTo: document.body });
+		await flush();
+
+		expect(wrapper.find('.collapsed').classes()).toContain('is-clamp');
+		const expanded = wrapper.find('.expanded');
+		expect(expanded.classes()).not.toContain('is-clamp');
+		expect(expanded.text()).toBe('abcdefg收起');
+		expect(expanded.find('.vc-text__expand').classes()).not.toContain('is-hidden');
+		wrapper.unmount();
+	});
+});

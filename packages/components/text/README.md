@@ -155,6 +155,71 @@ const fileName = '2026年第三季度示例内容说明与结构展示文档.fin
 ```
 :::
 
+### 展开 / 收起
+
+提供`expand`插槽即开启：内容超出`line`时，插槽内容跟在省略符后面作为展开入口，点击后显示全文并在末尾显示收起入口。插槽参数`expanded`为当前是否展开；需要从外部控制或读取时使用`v-model:expanded`。
+
+入口按整体宽度预留，不会拆到两行；需要贴右显示时给`.vc-text__expand`设置`float: right`。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="expand-demo">
+		<div class="expand-demo__item">
+			<span class="expand-demo__label">跟在省略符后（{{ expanded ? '已展开' : '已收起' }}）</span>
+			<Text v-model:expanded="expanded" :value="content" :line="2">
+				<template #expand="{ expanded: v }">
+					<span class="expand-demo__link">{{ v ? '收起' : '展开' }}</span>
+				</template>
+			</Text>
+		</div>
+		<div class="expand-demo__item is-float">
+			<span class="expand-demo__label">右浮动</span>
+			<Text :value="content" :line="2">
+				<template #expand="{ expanded: v }">
+					<span class="expand-demo__link">{{ v ? '收起' : '展开' }}</span>
+				</template>
+			</Text>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Text } from '@deot/vc';
+
+const content = '这是一段较长的说明文字，超出两行后会在省略符后显示展开入口。点击入口查看全文，全文末尾会显示收起入口，再次点击回到截断状态。';
+const expanded = ref(false);
+</script>
+
+<style scoped>
+.expand-demo {
+	display: grid;
+	gap: 20px;
+	width: 100%;
+	max-width: 320px;
+}
+
+.expand-demo__label {
+	display: block;
+	margin-bottom: 8px;
+	font-size: 13px;
+	opacity: 0.65;
+}
+
+.expand-demo__link {
+	margin-left: 4px;
+	color: var(--vc-color-primary);
+}
+
+.expand-demo__item.is-float :deep(.vc-text__expand) {
+	float: right;
+}
+</style>
+```
+:::
+
 ## API
 
 ### 属性
@@ -174,19 +239,30 @@ const fileName = '2026年第三季度示例内容说明与结构展示文档.fin
 | placement | 全文 Popover 的位置 | `string` | `top`、`left`、`right`、`bottom`、`bottom-left`、`bottom-right`、`top-left`、`top-right`、`right-top`、`right-bottom`、`left-top`、`left-bottom` | `'top'` |
 | portalClass | 全文 Popover 的类名 | `object \| string \| any[]` | - | `undefined` |
 | portalStyle | 全文 Popover 的样式；未提供有效值时使用 Text 根节点的宽度，始终附加 `word-break: break-all` | `object \| string \| any[]` | - | `undefined` |
+| expanded | 是否显示全文，支持 `v-model:expanded`；只在提供 `expand` 插槽时生效 | `boolean` | - | `false` |
 
 ### 事件
 
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
 | clip | 每次计算完成时触发，包括未截断时；监听它会使组件改用 JS 测量 | `(index: number) => void` | `-1` 表示无需截断；正数为前缀结束下标；`0` 在传入 `slice` 时表示空前缀，未传 `slice` 时仍显示原文 |
+| update:expanded | 点击入口切换展开状态时触发 | `(expanded: boolean) => void` | 切换后是否展开 |
+| expand-change | 点击入口切换展开状态时触发；外部修改 `expanded` 不触发 | `(expanded: boolean) => void` | 切换后是否展开 |
+
+### 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| expand | 展开 / 收起入口；提供即开启。内容超出 `line` 时显示：收起时跟在省略符（及 `slice` 尾部）后，展开时跟在全文后；未超出时不显示。点击入口外层切换状态 | `{ expanded: boolean }` |
 
 ### 使用注意
 
 - `MText` 是 `Text` 的别名，属性和事件相同，全文提示仍由鼠标悬停触发。
 - 全文提示在所在的滚动容器（或页面）滚动期间不弹出：内容从静止的鼠标下经过不算悬停，滚动停止后鼠标仍在该文字上时再弹出。
-- 内容通过 `value` 或 `renderRow` 提供；组件没有内容插槽或公开方法。
-- 截断方式：`line > 0`、`ellipsis` 为默认值、且没有 `slice`、`renderRow`、`indent`，也没有监听 `clip` 时，由 CSS 截断（`line-clamp`）。这时不测量、不监听尺寸，DOM 中是完整文本，是否截断到鼠标移入时才判断，截断才弹出全文。其余情况走 JS 测量，以下几条只针对 JS 测量。
+- 内容通过 `value` 或 `renderRow` 提供；`expand` 插槽只用于展开入口，组件没有内容插槽或公开方法。
+- 截断方式：`line > 0`、`ellipsis` 为默认值、且没有 `slice`、`renderRow`、`indent`、`expand` 插槽，也没有监听 `clip` 时，由 CSS 截断（`line-clamp`）。这时不测量、不监听尺寸，DOM 中是完整文本，是否截断到鼠标移入时才判断，截断才弹出全文。其余情况走 JS 测量，以下几条只针对 JS 测量。
 - 默认在首次尺寸回调前以隐藏全文参与布局。初始化传入 `resize=false` 时不会首次计算，内容为空；后续修改 `value`、`line`、`indent`、`slice` 或 `ellipsis` 仍会触发计算。
 - `resize` 的监听与防抖策略在初始化时确定，不支持通过运行时切换该属性重建监听。
 - 自定义 `renderRow` 的额外节点不会参与原始文本测量；字号、宽度和省略符应保持可容纳，`line` 不是强制 CSS 裁剪。
+- `expand` 插槽是否提供在初始化时确定。提供后不再弹出悬停全文；是否截断只看原文，原文放得下就不显示入口；截断位置按入口外层 `.vc-text__expand` 的宽度预留，切换后按新入口的宽度重新计算。
+- 在虚拟列表中使用 `expand` 插槽时，用 `v-model:expanded` 保存每行的展开状态：行被回收后重新渲染会回到 `expanded` 的值，测量池也按它计算高度。

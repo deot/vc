@@ -14,4 +14,17 @@ $component-name: vc-text;
 	@include when(clamp) {
 		@include text-line(var(--vc-text-line));
 	}
+
+	// expand 插槽的入口：作为整体测量宽度，不拆行
+	@include element(expand) {
+		display: inline-block;
+		white-space: nowrap;
+		cursor: pointer;
+
+		// 未超出时不占位，仍可测量宽度
+		@include when(hidden) {
+			position: absolute;
+			visibility: hidden;
+		}
+	}
 }

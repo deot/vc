@@ -4,7 +4,7 @@ import { getFitIndex } from '../utils';
 
 /**
  * jsdom 不会真正进行文本布局, Range.getClientRects 拿不到行。
- * 这里模拟 "每个字符占一行" 的虚拟布局: 文本每个字符一行;
+ * 这里模拟 "每个字符占一行" 的虚拟布局: 文本每个字符一行, 末尾占位 span 每 10px 宽算一行;
  * fragments=true 时每行给出多段高度不一、互相重叠的矩形 (line-height: normal 下中西文混排的样子), 仍应算一行。
  * innerText 赋值按浏览器行为清空子节点。
  */
@@ -22,7 +22,8 @@ const installVirtualLayout = (fragments = false) => {
 		configurable: true,
 		value(this: Range) {
 			const el = this.startContainer as HTMLElement;
-			const count = (el.textContent || '').length;
+			const suffix = [...el.querySelectorAll('span')].reduce((sum, span) => sum + parseInt(span.style.width, 10), 0);
+			const count = (el.textContent || '').length + Math.ceil(suffix / charHeight);
 			const rects: any[] = [];
 			for (let i = 0; i < count; i++) {
 				const top = i * charHeight;
@@ -244,6 +245,19 @@ describe('utils.ts > getFitIndex', () => {
 			ellipsis: '...',
 			slice: 20
 		})).toBe(7);
+	});
+
+	it('suffixWidth: 是否截断看原文，回退时给末尾入口留出宽度', () => {
+		restoreLayout = installVirtualLayout();
+		const el = createEl();
+
+		// 原文 10 字符刚好 10 行，加上入口会超，但不截断
+		expect(getFitIndex({ el, line: 10, value: 'abcdefghij', ellipsis: '', suffixWidth: 20 })).toBe(-1);
+		// 12 字符：无入口回退到 9，入口占 2 字符宽度时回退到 8
+		expect(getFitIndex({ el, line: 10, value: 'abcdefghijkl', ellipsis: '' })).toBe(9);
+		expect(getFitIndex({ el, line: 10, value: 'abcdefghijkl', ellipsis: '', suffixWidth: 20 })).toBe(8);
+		// 与 ellipsis / slice 一起计入：i + 1 + 2 + 2 <= 10
+		expect(getFitIndex({ el, line: 10, value: 'abcdefghijkl', ellipsis: '…', slice: -2, suffixWidth: 20 })).toBe(5);
 	});
 });
 
