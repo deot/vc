@@ -20,7 +20,8 @@ export type RevealOptions = {
 	// 画面晚多少毫秒开始淡入（isLeave 时提前多少毫秒淡出完），窗口照常展开、缩回；大于 0 时同样淡入淡出
 	delay?: number;
 	// 打开时间轴上靠近触发元素的一段裁掉多少毫秒：打开从这一刻的姿态开始，isLeave 时停在同一个姿态结束。
-	// 'auto' 按布局算：从窗口刚离开触发元素（留 8px）的姿态开始；终点仍压着触发元素时返回 null，由调用方淡入淡出
+	// 'auto' 按布局算：从窗口刚离开触发元素（留 8px）的姿态开始，最多从路程 40% 处开始；
+	// 触发元素离画面很近或被画面盖住时也从 40% 处长出来，不退化成原位淡入淡出
 	offset?: number | 'auto';
 	// 与画面同一条时间轴淡入淡出的元素，如蒙层
 	companion?: Element | null;
@@ -41,8 +42,11 @@ export const toRect = (el?: Element | null): RevealRect | null => {
 // 透明度匀速变化：缓动起步慢，透明度跟着它走时前几十毫秒几乎看不见
 const opacityOf = (isLeave?: boolean): Keyframe[] => [{ opacity: isLeave ? 1 : 0 }, { opacity: isLeave ? 0 : 1 }];
 const LINEAR = 'linear';
-// offset 为 'auto' 时，窗口离开触发元素至少留的间距
+// offset 为 'auto' 时，窗口离开触发元素至少留的间距，以及起点最多到路程的多少
 const GAP = 8;
+const MAX_PROGRESS = 0.4;
+// 裁掉一段后至少播放的毫秒数：剩下的姿态不变，按比例放慢，不会一闪而过
+const MIN_PLAYED = 240;
 
 const insetOf = (rect: RevealRect, box: RevealRect) => {
 	const right = box.left + box.width - rect.left - rect.width;
@@ -119,13 +123,15 @@ const fadeAlong = (el: Element, isLeave: boolean | undefined, start: number): [E
  * @returns 进行中的动画
  */
 const play = (effects: [Element, Keyframe[], KeyframeAnimationOptions?][], isLeave: boolean | undefined, cut: number): RevealMotion => {
+	// 剩下的不足 MIN_PLAYED 时，各段计时同乘一个系数：缓动按迭代进度算，姿态不变，仍同一刻结束
+	const scale = Math.max(MIN_PLAYED / (REVEAL_DURATION - cut), 1);
 	const animations = effects.map(([el, keyframes, timing = {}]) => el.animate(keyframes, {
-		duration: REVEAL_DURATION,
 		easing: REVEAL_EASING,
 		fill: 'both',
 		...timing,
-		delay: (timing.delay || 0) - (isLeave ? 0 : cut),
-		endDelay: (timing.endDelay || 0) - (isLeave ? cut : 0)
+		duration: Number(timing.duration ?? REVEAL_DURATION) * scale,
+		delay: ((timing.delay || 0) - (isLeave ? 0 : cut)) * scale,
+		endDelay: ((timing.endDelay || 0) - (isLeave ? cut : 0)) * scale
 	}));
 	return {
 		// 取消时同样结束等待
@@ -153,9 +159,9 @@ export const reveal = (options: RevealOptions): RevealMotion | null => {
 	const x = trigger.left + trigger.width / 2 - origin.left - (local.left + local.width / 2) * scale;
 	const y = trigger.top + trigger.height / 2 - origin.top - (local.top + local.height / 2) * scale;
 	const subject = { ...local, left: origin.left + local.left, top: origin.top + local.top };
-	const progress = options.offset === 'auto' ? clearOf(trigger, subject) : 0;
-	if (progress === null) return null;
-	const cut = options.offset === 'auto' ? cutAt(progress, isLeave) : cutOf(options.offset, isLeave);
+	const cut = options.offset === 'auto'
+		? cutAt(Math.min(clearOf(trigger, subject) ?? MAX_PROGRESS, MAX_PROGRESS), isLeave)
+		: cutOf(options.offset, isLeave);
 	const zoomed = { clipPath: insetOf(trigger, box), transform: `translate3d(${x}px, ${y}px, 0) scale(${scale})` };
 	const rest = { clipPath: insetOf(subject, box), transform: 'translate3d(0px, 0px, 0) scale(1)' };
 	const [from, to] = isLeave ? [rest, zoomed] : [zoomed, rest];

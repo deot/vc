@@ -22,6 +22,10 @@ const rectOf = (left: number, top: number, width: number, height: number) => ({
 	toJSON() { return {}; }
 }) as DOMRect;
 
+// 一段动画实际播放多久，以及裁掉的部分占整条时间轴的比例（拉长时两者都按同一系数变化，比例不变）
+const playedOf = (timing: EffectTiming) => (timing.delay || 0) + Number(timing.duration) + (timing.endDelay || 0);
+const cutRatioOf = (timing: EffectTiming) => -((timing.delay || 0) + (timing.endDelay || 0)) / Number(timing.duration);
+
 const framesOf = (el: Element, key: string) => {
 	return el.getAnimations().map(item => (item.effect as KeyframeEffect).getKeyframes().map(frame => frame[key]));
 };
@@ -172,15 +176,21 @@ describe('reveal.ts', () => {
 		opening.cancel();
 		await opening.finished;
 
-		// 关闭：停在打开第一帧的姿态。缓动收尾慢，80ms 的路程（21%）在关闭结尾要裁掉约 158ms，在 175ms 结束
+		// 关闭：停在打开第一帧的姿态。缓动收尾慢，80ms 的路程（21%）在关闭结尾要裁掉约 158ms，
+		// 剩下的约 175ms 不足 240ms，按比例放慢到 240ms，裁掉的比例不变
 		const leaving = reveal({ frame, body, trigger, isLeave: true, offset: 80 })!;
-		timings().forEach(item => expect(item.endDelay).toBeCloseTo(-158.44, 1));
+		timings().forEach((item) => {
+			expect(cutRatioOf(item)).toBeCloseTo(158.44 / 333, 4);
+			expect(playedOf(item)).toBeCloseTo(240, 6);
+		});
 		leaving.cancel();
 		await leaving.finished;
 
-		// 与 delay 叠加：画面从实际播放的第一帧和 delay 中较晚的一刻淡入，仍同一刻结束
+		// 与 delay 叠加：画面从实际播放的第一帧和 delay 中较晚的一刻淡入，仍同一刻结束（剩 213ms，放慢到 240ms）
 		const both = reveal({ frame, body, trigger, offset: 120, delay: 80 })!;
-		expect(timings()).toMatchObject([{ delay: -120 }, { delay: -120 }, { delay: 0, duration: 213 }]);
+		timings().slice(0, 2).forEach(item => expect(cutRatioOf(item)).toBeCloseTo(120 / 333, 6));
+		expect(timings()[2]).toMatchObject({ delay: 0 });
+		timings().forEach(item => expect(playedOf(item)).toBeCloseTo(240, 6));
 		both.cancel();
 		await both.finished;
 		const bothLeave = reveal({ frame, body, trigger, isLeave: true, offset: 40, delay: 80 })!;
@@ -192,7 +202,8 @@ describe('reveal.ts', () => {
 
 		// 夹到时间轴内；0 时不改计时
 		const longer = reveal({ frame, body, trigger, offset: 1000 })!;
-		expect(timings()[0]).toMatchObject({ delay: -332 });
+		expect(cutRatioOf(timings()[0])).toBeCloseTo(332 / 333, 6);
+		expect(playedOf(timings()[0])).toBeCloseTo(240, 6);
 		longer.cancel();
 		await longer.finished;
 		const none = reveal({ frame, body, trigger, offset: -10 })!;
@@ -200,11 +211,10 @@ describe('reveal.ts', () => {
 		none.cancel();
 		await none.finished;
 
-		// 淡入淡出同样裁掉
-		// 淡入淡出同样裁掉，透明度在剩下的一段里匀速走完，不以半透明消失
+		// 淡入淡出同样裁掉，透明度在剩下的一段里匀速走完，不以半透明消失；剩下的不足 240ms 时放慢
 		const fading = fade(body, true, 80);
 		expect(body.getAnimations()[0].effect!.getTiming()).toMatchObject({ endDelay: 0, easing: 'linear' });
-		expect(body.getAnimations()[0].effect!.getTiming().duration).toBeCloseTo(174.56, 1);
+		expect(body.getAnimations()[0].effect!.getTiming().duration).toBeCloseTo(240, 6);
 		fading.cancel();
 		await fading.finished;
 	});
@@ -233,12 +243,14 @@ describe('reveal.ts', () => {
 		expect(await run({})).toEqual([]);
 		// 整段淡入、淡出
 		expect(await run({ opacity: true })).toMatchObject([{ opacity: [0, 1], delay: 0, duration: 333 }]);
-		// 与 offset 一起：从播放的第一帧开始淡入，关闭到结束那一刻淡完，不以半透明出现或消失
-		expect(await run({ opacity: true, offset: 110 })).toMatchObject([{ opacity: [0, 1], delay: 0, duration: 223 }]);
+		// 与 offset 一起：从播放的第一帧开始淡入，关闭到结束那一刻淡完，不以半透明出现或消失（剩下的放慢到 240ms）
+		const [enter] = await run({ opacity: true, offset: 110 });
+		expect(enter).toMatchObject({ opacity: [0, 1], delay: 0 });
+		expect(enter.duration).toBeCloseTo(240, 6);
 		const [leave] = await run({ opacity: true, offset: 110, isLeave: true });
 		expect(leave.opacity).toEqual([1, 0]);
 		expect(leave.endDelay).toBeCloseTo(0, 6);
-		expect(leave.duration).toBeCloseTo(128.89, 1);
+		expect(leave.duration).toBeCloseTo(240, 6);
 	});
 
 	it('starts where the window leaves the trigger with offset auto, and fades the companion along', async () => {
@@ -252,26 +264,39 @@ describe('reveal.ts', () => {
 		const trigger = { left: 0, top: 0, width: 20, height: 10 };
 		const timingsOf = (el: Element) => el.getAnimations().map(item => item.effect!.getTiming());
 
-		// 往右离开 20px 宽的 trigger 再留 8px：走到路程 56%（第 127.6ms）；往下要 90%，取较小的
+		// 往右离开 20px 宽的 trigger 再留 8px 要走到路程 56%，往下要 90%：都超过上限，从路程 40%（第 106ms）开始。
+		// 剩下的约 227ms 放慢到 240ms
 		const opening = reveal({ frame, body, trigger, offset: 'auto', companion: mask })!;
-		[...timingsOf(frame), ...timingsOf(body)].forEach(item => expect(item.delay).toBeCloseTo(-127.6, 1));
-		// 蒙层在剩下的一段里从透明匀速淡入
+		[...timingsOf(frame), ...timingsOf(body)].forEach((item) => {
+			expect(cutRatioOf(item)).toBeCloseTo(106.01 / 333, 4);
+			expect(playedOf(item)).toBeCloseTo(240, 6);
+		});
+		// 蒙层在剩下的一段里从透明匀速淡入，同一刻结束
 		expect(framesOf(mask, 'opacity')).toEqual([[0, 1]]);
 		expect(timingsOf(mask)[0]).toMatchObject({ delay: 0, easing: 'linear' });
-		expect(timingsOf(mask)[0].duration).toBeCloseTo(205.4, 1);
+		expect(timingsOf(mask)[0].duration).toBeCloseTo(240, 6);
 		opening.cancel();
 		await opening.finished;
 
-		// 关闭停在同一个姿态
+		// 关闭停在同一个姿态（关闭时间轴上路程 60% 处，裁掉约 199ms），剩下的放慢到 240ms
 		const leaving = reveal({ frame, body, trigger, offset: 'auto', isLeave: true, companion: mask })!;
-		[...timingsOf(frame), ...timingsOf(body)].forEach(item => expect(item.endDelay).toBeCloseTo(-221.89, 1));
+		[...timingsOf(frame), ...timingsOf(body)].forEach((item) => {
+			expect(cutRatioOf(item)).toBeCloseTo(199.21 / 333, 4);
+			expect(playedOf(item)).toBeCloseTo(240, 6);
+		});
 		expect(framesOf(mask, 'opacity')).toEqual([[1, 0]]);
-		expect(timingsOf(mask)[0].duration).toBeCloseTo(111.11, 1);
+		expect(timingsOf(mask)[0].duration).toBeCloseTo(240, 6);
 		leaving.cancel();
 		await leaving.finished;
 
-		// 画面终点仍压着 trigger：交给调用方淡入淡出，蒙层同一段、不裁
-		expect(reveal({ frame, body, trigger: { left: 60, top: 30, width: 20, height: 10 }, offset: 'auto' })).toBeNull();
+		// 画面终点压着 trigger：不退化成原位淡入淡出，同样从路程 40% 处长出来
+		const covered = reveal({ frame, body, trigger: { left: 60, top: 30, width: 20, height: 10 }, offset: 'auto' })!;
+		expect(framesOf(frame, 'clipPath')).toHaveLength(1);
+		expect(cutRatioOf(timingsOf(body)[0])).toBeCloseTo(106.01 / 333, 4);
+		covered.cancel();
+		await covered.finished;
+
+		// 没有触发元素时的淡入淡出：auto 不裁，蒙层同一段
 		const fading = fade(body, false, 'auto', mask);
 		expect(timingsOf(body)).toMatchObject([{ delay: 0, duration: 333 }]);
 		expect(timingsOf(mask)).toMatchObject([{ delay: 0, duration: 333 }]);

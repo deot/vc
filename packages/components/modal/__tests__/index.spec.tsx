@@ -1340,15 +1340,15 @@ describe('ModalView 展开与缩回', () => {
 		await nextTick();
 		expect(keyframesOf(frame, 'clipPath')).toEqual([[rest.clip, zoomed.clip]]);
 		expect(keyframesOf(container, 'transform')[0]).toEqual([rest.transform, zoomed.transform]);
-		// 停在打开第一帧的姿态：关闭结尾裁掉约 151ms，弹窗和蒙层在这约 182ms 里淡出到透明，同一刻结束
+		// 停在打开第一帧的姿态：关闭结尾裁掉约 151ms，剩下的约 182ms 放慢到 240ms；弹窗和蒙层同一刻淡出到透明
 		[timingsOf(container)[0], ...timingsOf(frame)].forEach((item) => {
-			expect(item.duration).toBe(333);
-			expect(item.endDelay).toBeCloseTo(-151.35, 1);
+			expect(-Number(item.endDelay) / Number(item.duration)).toBeCloseTo(151.35 / 333, 4);
+			expect(Number(item.duration) + Number(item.endDelay)).toBeCloseTo(240, 6);
 		});
 		expect(keyframesOf(container, 'opacity')[1]).toEqual([1, 0]);
 		expect(keyframesOf(mask, 'opacity')).toEqual([[1, 0]]);
 		[timingsOf(container)[1], ...timingsOf(mask)].forEach((item) => {
-			expect(item.duration).toBeCloseTo(181.65, 1);
+			expect(item.duration).toBeCloseTo(240, 6);
 			expect(item.endDelay).toBeCloseTo(0, 6);
 		});
 		expect(wrapper.emitted('close')).toBeFalsy();
@@ -1360,6 +1360,19 @@ describe('ModalView 展开与缩回', () => {
 		expect(container.style.display).toBe('none');
 		expect(mask.style.display).toBe('none');
 		expect(wrapper.emitted('close')).toBeTruthy();
+		wrapper.unmount();
+	});
+
+	it('按钮在弹窗的范围内时，同样从按钮方向展开，不退化成原位淡入淡出', async () => {
+		const { wrapper, vm, button, frame } = setup();
+		// 按钮落在弹窗最终的 (312,284)–(712,484) 之内：离不开按钮，从路程 40% 处长出来
+		button.getBoundingClientRect = () => rectOf(340, 300, 100, 32);
+		await openBy(vm, button);
+		const [clip] = keyframesOf(frame, 'clipPath');
+		expect(clip[1]).toBe('inset(284px 312px 284px 312px)');
+		const timing = frame.getAnimations()[0].effect!.getTiming();
+		expect(-Number(timing.delay) / Number(timing.duration)).toBeCloseTo(106.01 / 333, 4);
+		expect(Number(timing.delay) + Number(timing.duration)).toBeCloseTo(240, 6);
 		wrapper.unmount();
 	});
 
