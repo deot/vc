@@ -221,7 +221,7 @@ export const useColumnNavigate = (options: ColumnNavigateOptions) => {
 	 */
 	const handleMove = ({ item, columnIndex, rowIndex }: { item: ColumnItem; columnIndex: number; rowIndex: number }) => {
 		const path = getPath();
-		if (path.length === columnIndex + 1 && path[columnIndex] == item.value) return;
+		if (path.length === columnIndex + 1 && path[columnIndex] === item.value) return;
 		hover(item, columnIndex, rowIndex);
 	};
 

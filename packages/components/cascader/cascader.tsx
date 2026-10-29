@@ -51,21 +51,19 @@ export const Cascader = defineComponent({
 		/**
 		 * v-model -> 路径
 		 * 	- all：值即路径
-		 * 	- child：值为最后一级（传数组时取最后一项），从 data 中找出路径；值在不同分支重复时，保留当前路径
+		 * 	- child：值为最后一级（传数组时取最后一项，字符串不拆分），从 data 中找出路径；值在不同分支重复时，保留当前路径
+		 * 	- 都按 === 比较，numerable 时字符串先转为数字
 		 * @param v ~
 		 * @returns ~
 		 */
 		const toPath = (v: any): TreeValue[] => {
-			if (props.checkStrategy !== 'child') {
-				return toCurrentValue(v, {
-					numerable: props.numerable,
-					separator: props.separator
-				});
-			}
-			Array.isArray(v) && (v = v[v.length - 1]);
-			if (typeof v === 'undefined' || v === null || v === '') return [];
+			const options = { numerable: props.numerable, separator: props.separator };
+			if (props.checkStrategy !== 'child') return toCurrentValue(v, options);
+
+			const [value] = toCurrentValue((Array.isArray(v) ? v : [v]).slice(-1), options);
+			if (typeof value === 'undefined' || value === null || value === '') return [];
 			const path = currentValue.value;
-			return path.length && path[path.length - 1] == v ? path : getValuePath(props.data, v);
+			return path.length && path[path.length - 1] === value ? path : getValuePath(props.data, value);
 		};
 
 		/**
@@ -161,7 +159,7 @@ export const Cascader = defineComponent({
 			let temp: TreeData[] = props.data;
 			const data = currentValue.value.slice(0).reduce((pre, cur, index) => {
 				pre[index] = temp && makeData(temp);
-				temp = ((temp && temp.find(i => i.value == cur)) || {}).children || [];
+				temp = ((temp && temp.find(i => i.value === cur)) || {}).children || [];
 				return pre;
 			}, [] as TreeData[][]);
 
@@ -206,7 +204,7 @@ export const Cascader = defineComponent({
 				 * TODO: 提前缓存index
 				 */
 				const children = currentValue.value.reduce((pre: TreeData[] | undefined, cur) => {
-					const target = (pre && pre.find((i: TreeData) => i.value == cur)) || {};
+					const target = (pre && pre.find((i: TreeData) => i.value === cur)) || {};
 
 					return target.children ? target.children : undefined;
 				}, props.data);
@@ -255,7 +253,7 @@ export const Cascader = defineComponent({
 		};
 
 		const isChecked = ({ values }: SelectPath) => {
-			return values.length === currentValue.value.length && values.every((v, i) => v == currentValue.value[i]);
+			return values.length === currentValue.value.length && values.every((v, i) => v === currentValue.value[i]);
 		};
 
 		// 选中搜索结果：写入整条路径并提交

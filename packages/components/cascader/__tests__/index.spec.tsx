@@ -498,6 +498,65 @@ describe('Cascader interaction', () => {
 	});
 });
 
+describe('Cascader value 严格比较', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	// 数字 value：1 / 11 / 111
+	const numbers = [
+		{ value: 1, label: 'One', children: [
+			{ value: 11, label: 'One-One', children: [{ value: 111, label: 'One-One-One' }] }
+		] },
+		{ value: 2, label: 'Two', children: [] as any[] }
+	];
+	const getInputValue = (wrapper: any) => (wrapper.find('input').element as HTMLInputElement).value;
+	const mountWith = (props: Record<string, any>) => {
+		const wrapper = mount(() => <Cascader data={numbers} {...props} />, { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		return wrapper;
+	};
+
+	it('字符串与数字不相等：数字 data 配字符串路径不回显', async () => {
+		const wrapper = mountWith({ modelValue: ['1', '11', '111'] });
+		await nextTick();
+		expect(getInputValue(wrapper)).toBe('');
+
+		await wrapper.trigger('click');
+		await flush();
+		expect(getCols().length).toBe(1);
+		expect(document.querySelector('.vc-cascader-column__item.is-select')).toBeNull();
+	});
+
+	it('numerable：字符串数组、逗号字符串都转为数字后回显', async () => {
+		const wrapper = mountWith({ modelValue: ['1', '11', '111'], numerable: true });
+		await nextTick();
+		expect(getInputValue(wrapper)).toBe('One / One-One / One-One-One');
+
+		const another = mountWith({ modelValue: '1,11', numerable: true, max: 3 });
+		await nextTick();
+		expect(getInputValue(another)).toBe('One / One-One');
+	});
+
+	it('child：字符串需配合 numerable', async () => {
+		const strict = mountWith({ modelValue: '111', checkStrategy: 'child' });
+		await nextTick();
+		expect(getInputValue(strict)).toBe('');
+
+		const value = ref<any>('111');
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={numbers} checkStrategy="child" numerable />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+		expect(getInputValue(wrapper)).toBe('One / One-One / One-One-One');
+
+		value.value = ['1', '11'];
+		await flush();
+		expect(getInputValue(wrapper)).toBe('One / One-One');
+	});
+});
+
 describe('Cascader checkStrategy="child"', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';

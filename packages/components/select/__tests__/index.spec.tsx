@@ -250,6 +250,11 @@ describe('utils', () => {
 		expect(toCurrentValue(null as any, { numerable: false, separator: ',' } as any)).toEqual([]);
 	});
 
+	it('toCurrentValue: numerable 对数组、单值同样生效，空串不转换', () => {
+		expect(toCurrentValue(['1', 2, ''], { numerable: true, separator: ',' } as any)).toEqual([1, 2, '']);
+		expect(toCurrentValue(1 as any, { numerable: true, separator: ',' } as any)).toEqual([1]);
+	});
+
 	it('toModelValue: array input returns array', () => {
 		const r = toModelValue(['1', '2'], { modelValue: ['1', '2'], max: 5, separator: ',', numerable: false, nullValue: undefined } as any);
 		expect(r).toEqual(['1', '2']);

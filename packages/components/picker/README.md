@@ -323,7 +323,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | showToolbar | 显示工具栏 | `boolean` | - | `true` |
 | renderLabel | 自定义选项渲染函数，接收含 label、row、index 的对象 | `(options: { label: any; row: any; index: number }) => VNodeChild` | - | - |
 | separator | 字符串模型的分隔符 | `string` | - | `','` |
-| numerable | 解析字符串模型时把各项转为 number | `boolean` | - | `false` |
+| numerable | 把模型中的字符串转为 number（字符串模型、数组各项） | `boolean` | - | `false` |
 | nullValue | 传入内部值规范化函数的空值参数；不提供清空交互 | `PickerModelValue` | - | `undefined` |
 
 ### Picker 事件
@@ -368,7 +368,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | renderLabel | 自定义选项渲染，接收含 label、row、index 的对象 | `(options: { label: any; row: any; index: number }) => VNodeChild` | - | - |
 | allowDispatch | 选择变化时通知注入的 FormItem | `boolean` | - | `true` |
 | separator | 字符串模型的分隔符 | `string` | - | `','` |
-| numerable | 解析字符串模型时把各项转为 number | `boolean` | - | `false` |
+| numerable | 把模型中的字符串转为 number（字符串模型、数组各项） | `boolean` | - | `false` |
 | nullValue | 内部值规范化函数的空值参数 | `PickerModelValue` | - | `undefined` |
 
 ### PickerView 事件

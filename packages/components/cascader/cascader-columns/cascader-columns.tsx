@@ -94,7 +94,7 @@ export const CascaderColumns = defineComponent({
 					data-index={rowIndex}
 					class={[
 						'vc-cascader-column__item',
-						{ 'is-select': props.value[columnIndex] == item.value, 'is-disabled': !!item.disabled }
+						{ 'is-select': props.value[columnIndex] === item.value, 'is-disabled': !!item.disabled }
 					]}
 				>
 					{ slots.prefix?.(cell) }

@@ -153,7 +153,7 @@ const options = [
 
 ### 字符串多选
 
-以数组初始化时返回数组；以字符串初始化多选时，使用 `separator` 连接选中值。数字选项搭配字符串模型时，可使用 `numerable`，并保持默认逗号分隔符。
+以数组初始化时返回数组；以字符串初始化多选时，使用 `separator` 连接选中值。数字选项搭配字符串模型或字符串数组时，可使用 `numerable`，并保持默认逗号分隔符。
 
 :::playground
 <!--
@@ -371,7 +371,7 @@ const selectedValue = ref(5000);
 | label | 输入框前置文字；prepend 插槽优先。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | extra | 单选 label 为空或无法匹配时显示的文字 | `string` | - | `''` |
 | separator | 字符串模型拆分和多选连接的分隔符 | `string` | - | `','` |
-| numerable | 将字符串模型解析为数字值 | `boolean` | - | `false` |
+| numerable | 把模型中的字符串转为数字（字符串模型、数组各项、单值） | `boolean` | - | `false` |
 | nullValue | 已声明的清空值配置；当前实现未应用，见下方说明 | `number \| string \| object` | - | `undefined` |
 | id | 传给内部 Input 根节点的 id | `string` | - | - |
 | trigger | 弹层触发方式 | `string` | `hover / strictHover / click / focus / custom` | `'click'` |

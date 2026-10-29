@@ -11,7 +11,9 @@
 		</div>
 
 		<p>
-			all：v-model 为完整路径；child：只存最深一级的 value，回显时从 data 中找出路径（传数组时取最后一项）；v-model 是数组时输出 [最后一级]、清空为 []，否则输出单值。开启 changeOnSelect 时，child 回填所点的那一级。
+			all：v-model 为完整路径；child：只存最深一级的 value，回显时从 data 中找出路径（传数组时取最后一项）；
+			v-model 是数组时输出 [最后一级]、清空为 []，否则输出单值。开启 changeOnSelect 时，child 回填所点的那一级。
+			value 按 === 比较：数字 data 配字符串初始值时需开启 numerable。
 			data 延迟到达时，值先设好、data 到达后再回显。切换选项时恢复初始值。
 		</p>
 
@@ -22,6 +24,7 @@
 			:check-strategy="controls.checkStrategy"
 			:change-on-select="!!controls.changeOnSelect"
 			:searchable="!!controls.searchable"
+			:numerable="!!controls.numerable"
 			class="check-strategy-demo__trigger"
 			clearable
 			@change="handleChange"
@@ -59,7 +62,8 @@ const CONTROLS = [
 	{ key: 'initial', label: '初始值', data: INITIAL_VALUES },
 	{ key: 'valueType', label: 'data 的 value', data: [{ value: 'string', label: '字符串' }, { value: 'number', label: '数字' }] },
 	{ key: 'delay', label: 'data', data: [{ value: 0, label: '立即' }, { value: 1000, label: '延迟 1 秒' }] },
-	{ key: 'searchable', label: 'searchable', data: [{ value: 0, label: '否' }, { value: 1, label: '是' }] }
+	{ key: 'searchable', label: 'searchable', data: [{ value: 0, label: '否' }, { value: 1, label: '是' }] },
+	{ key: 'numerable', label: 'numerable', data: [{ value: 0, label: '否' }, { value: 1, label: '是' }] }
 ];
 
 // Select 的值不支持布尔：开关用 0 / 1

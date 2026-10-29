@@ -76,7 +76,7 @@ export const TreeSelectContentCascader = defineComponent({
 			currentValue.value.forEach((cur) => {
 				const col = temp;
 				data.push(col);
-				const next = (temp.find(i => i.value == cur) || {}).children || [];
+				const next = (temp.find(i => i.value === cur) || {}).children || [];
 				temp = next;
 			});
 			data.push(temp);

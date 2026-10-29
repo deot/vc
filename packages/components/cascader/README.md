@@ -266,7 +266,7 @@ p {
 - 默认 `all`：回填全部选中节点，即完整路径。
 - `child`：只回填最深的选中节点。开启 `changeOnSelect` 时回填所点的那一级，不一定是叶子。
 
-`child` 时，输入的值按 `value ==` 在 `data` 中深度优先查找，找到第一个匹配的节点后还原路径并回显；值在不同分支重复时，保留当前选中的分支。传数组时取最后一项，字符串不按 `separator` 拆分。输出的形状跟随当前 `v-model`：是数组时输出 `[最后一级]`、清空为 `[]`；否则输出最后一级的值、清空为 `nullValue`。`change` 的第二个参数和 `formatter` 收到的仍是完整路径的文本。`data` 晚于值到达时会重新查找；配合 `loadData` 时，尚未加载的节点找不到，回显为空。
+`child` 时，输入的值按 `value ===` 在 `data` 中深度优先查找，找到第一个匹配的节点后还原路径并回显；值在不同分支重复时，保留当前选中的分支。传数组时取最后一项，字符串不按 `separator` 拆分；`data` 的 value 是数字、输入却是字符串（如来自 URL）时开启 `numerable`。输出的形状跟随当前 `v-model`：是数组时输出 `[最后一级]`、清空为 `[]`；否则输出最后一级的值、清空为 `nullValue`。`change` 的第二个参数和 `formatter` 收到的仍是完整路径的文本。`data` 晚于值到达时会重新查找；配合 `loadData` 时，尚未加载的节点找不到，回显为空。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
@@ -655,7 +655,7 @@ const value = ref(['2500', '2500-3']);
 | portal | 将浮层挂到 body；`false` 时挂到组件根节点内 | `boolean` | - | `true` |
 | portalClass | 浮层附加 class | `string \| object \| unknown[]` | - | - |
 | separator | 字符串路径解析时的分隔符 | `string` | - | `','` |
-| numerable | 将字符串路径中的每项转为数字 | `boolean` | - | `false` |
+| numerable | 把输入中的字符串转为数字（字符串路径、数组各项、`child` 的单值）；value 按 `===` 比较，数字 `data` 配字符串输入时需开启 | `boolean` | - | `false` |
 | max | 继承的值转换参数：非数组 modelValue 且 `max > 1` 时将路径连接为字符串；不提供多选能力 | `number` | `>= 1` | `1` |
 
 ### 事件
