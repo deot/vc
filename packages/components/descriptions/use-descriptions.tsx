@@ -9,6 +9,7 @@ import { Icon } from '../icon';
 import { useHoverPopover } from '../popover/use-hover-popover';
 import { VcInstance } from '../vc';
 import { useResponsive } from '../grid/hooks/use-responsive';
+import { getLabelWidth } from '../form/utils';
 import { layout, resolveTracks, resolveSpan, getCellStyle } from '../grid/utils';
 import type { GridLayoutCell } from '../grid/utils';
 import { parse, getValue, isEmpty } from './utils';
@@ -78,10 +79,7 @@ export const useDescriptions = (options: { Clipboard: typeof Clipboard }) => {
 		entries.forEach(({ target }) => {
 			const index = indexOf.get(target);
 			if (index === undefined || !target.parentElement) return;
-			const style = window.getComputedStyle(target.parentElement);
-			const extra = ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth']
-				.reduce((sum, key) => sum + (Number.parseFloat(style[key]) || 0), 0);
-			const width = Math.ceil(target.getBoundingClientRect().width + extra);
+			const width = getLabelWidth(target);
 			next[index] !== width && (next[index] = width, changed = true);
 		});
 		changed && (naturalWidths.value = next);
