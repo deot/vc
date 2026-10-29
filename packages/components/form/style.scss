@@ -36,6 +36,12 @@ $foreground-color: varfix(foreground-color, form);
 		box-sizing: border-box;
 	}
 
+	// Form的labelWidth为auto时包住标签内容，用来量自然宽度
+	@include element(label-content) {
+		display: inline-block;
+		white-space: nowrap;
+	}
+
 	@include share-rule(form-error-tip) {
 		display: inline-block;
 		margin-right: unitfix(4);

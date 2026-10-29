@@ -12,9 +12,10 @@ export const props = {
 	rules: {
 		type: Object as PropType<Record<string, FormRule>>
 	},
-	labelWidth: {
-		type: Number,
-	},
+	/**
+	 * 标签宽度（px）；auto时参与对齐的标签取其中最宽的
+	 */
+	labelWidth: [Number, String] as PropType<number | 'auto'>,
 	showMessage: {
 		type: Boolean,
 		default: true

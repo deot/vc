@@ -3,7 +3,9 @@ import type { SetupContext, VNode, ComponentInternalInstance } from 'vue';
 import { cloneDeep } from 'lodash-es';
 import { Validator } from '@deot/helper-validator';
 import { getPropByPath } from '@deot/helper-utils';
+import { Resize } from '@deot/helper-resize';
 import { VcError } from '../vc';
+import { getLabelWidth } from './utils';
 import type { Props } from './form-item-props';
 
 import type { FormItemProvide, FormProvide, FormRule } from './types';
@@ -105,15 +107,41 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		return !!props.label || slots.label;
 	});
 
+	/**
+	 * Form的labelWidth为auto：标签内容包一层，监听它的尺寸，自然宽度记到Form上，各项取其中最宽的
+	 * 项上写了labelWidth、标签在上方、inline、嵌套时不参与
+	 */
+	const isAutoWidth = computed(() => {
+		return props.labelWidth === undefined
+			&& form.props.labelWidth === 'auto'
+			&& labelPosition.value !== 'top'
+			&& !form.props.inline
+			&& !isNested.value;
+	});
+
+	let labelContent: Element | null = null;
+	const handleLabelResize = (entries: ResizeObserverEntry[]) => {
+		entries.forEach(({ target }) => {
+			target === labelContent && form.setLabelWidth(instance.uid, getLabelWidth(target));
+		});
+	};
+	// 固定引用，避免每次渲染先置空再重新监听
+	const observeLabel = (el: any) => {
+		if (el === labelContent) return;
+		labelContent && (Resize.disconnect(handleLabelResize), form.setLabelWidth(instance.uid));
+		labelContent = el;
+		el && Resize.on(el, handleLabelResize, { shared: true });
+	};
+
+	const toPx = (width?: number | string) => (typeof width === 'number' && width > 0 ? `${width}px` : '');
+
 	const labelStyle = computed(() => {
-		const labelWidth = props.labelWidth === 0 || props.labelWidth
-			? props.labelWidth
-			: isNested.value
-				? 0
-				: form.props.labelWidth;
+		const labelWidth = isAutoWidth.value
+			? form.labelWidth.value
+			: props.labelWidth ?? (isNested.value ? 0 : form.props.labelWidth);
 		return [
 			{
-				width: labelPosition.value !== 'top' && labelWidth && labelWidth > 0 ? `${labelWidth}px` : 'auto',
+				width: (labelPosition.value !== 'top' && toPx(labelWidth)) || 'auto',
 				textAlign: labelPosition.value === 'top' ? 'left' : labelPosition.value
 			},
 			form.props.labelStyle,
@@ -123,12 +151,12 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 	});
 
 	const contentStyle = computed(() => {
-		const labelWidth = props.labelWidth === 0 || props.labelWidth ? props.labelWidth : form.props.labelWidth;
+		const labelWidth = isAutoWidth.value ? form.labelWidth.value : props.labelWidth ?? form.props.labelWidth;
 		return [
 			{
 				marginLeft: labelPosition.value === 'top' || (!hasLabel.value && isNested.value)
 					? 0
-					: labelWidth && labelWidth > 0 ? `${labelWidth}px` : 'unset',
+					: toPx(labelWidth) || 'unset',
 				marginBottom: isNested.value && !isNestedLast.value ? `20px` : 0
 			},
 			form.props.contentStyle,
@@ -367,6 +395,8 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		contentClass,
 		errorClass,
 		showError,
-		labelPosition
+		labelPosition,
+		isAutoWidth,
+		observeLabel
 	};
 };

@@ -1,4 +1,4 @@
-import { provide, getCurrentInstance } from 'vue';
+import { provide, getCurrentInstance, shallowRef, computed } from 'vue';
 import type { VNode, SetupContext, ComponentInternalInstance } from 'vue';
 import { getPropByPath } from '@deot/helper-utils';
 import { VcError } from '../vc/index';
@@ -28,8 +28,20 @@ export const useForm = (expose: SetupContext['expose'], options: FormOptions = {
 
 	const fields: ComponentInternalInstance[] = [];
 
+	// labelWidth为auto：按项（uid）记下标签的自然宽度，取最宽的
+	const labelWidths = shallowRef<Record<number, number>>({});
+	const labelWidth = computed(() => Math.max(0, ...Object.values(labelWidths.value)));
+	const setLabelWidth = (uid: number, width?: number) => {
+		if (labelWidths.value[uid] === width) return;
+		const next = { ...labelWidths.value };
+		width ? (next[uid] = width) : delete next[uid];
+		labelWidths.value = next;
+	};
+
 	provide<FormProvide>('vc-form', {
 		props,
+		labelWidth,
+		setLabelWidth,
 		add: (field) => {
 			field && fields.push(field);
 		},

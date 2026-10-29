@@ -25,7 +25,9 @@ export const MFormItem = defineComponent({
 			errorClass,
 			isNested,
 			showError,
-			validateMessage
+			validateMessage,
+			isAutoWidth,
+			observeLabel
 		} = it;
 
 		const errorColorClass = 'vcm-form-item__error';
@@ -63,7 +65,11 @@ export const MFormItem = defineComponent({
 									style={labelStyle.value}
 									class={['vcm-form-item__label', ...labelClass.value]}
 								>
-									{ renderLabel() }
+									{
+										isAutoWidth.value
+											? <span ref={observeLabel} class="vcm-form-item__label-content">{ renderLabel() }</span>
+											: renderLabel()
+									}
 								</label>
 							)
 						}

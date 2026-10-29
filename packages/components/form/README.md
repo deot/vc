@@ -86,7 +86,7 @@ p { margin: 12px 0 0; overflow-wrap: anywhere; }
 
 ### 行内布局与标签对齐
 
-`inline` 将表单项排列为行内块。`labelPosition` 支持 `left / right / top`；设为 `top` 后不再使用标签宽度。FormItem 可以单独覆盖对齐方式和宽度。
+`inline` 将表单项排列为行内块。`labelPosition` 支持 `left / right / top`；设为 `top` 后不再使用标签宽度。`labelWidth` 为数字时固定宽度；为 `'auto'` 时表单内的标签取其中最宽的（含必填标记），各项内容对齐；不设置时每个标签按自身内容排版。FormItem 可以单独覆盖对齐方式和宽度。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 20 }</config> -->
@@ -101,11 +101,17 @@ p { margin: 12px 0 0; overflow-wrap: anywhere; }
 					<option value="top">顶部对齐</option>
 				</select>
 			</label>
+			<label>标签宽度
+				<select v-model="width">
+					<option :value="72">72</option>
+					<option value="auto">auto</option>
+				</select>
+			</label>
 			<label><input v-model="isInline" type="checkbox"> 行内布局</label>
 		</div>
-		<Form :model="model" :label-position="position" :label-width="72" :inline="isInline" @submit.prevent>
-			<FormItem label="名称"><Input v-model="model.name" /></FormItem>
-			<FormItem label="分类"><Input v-model="model.category" /></FormItem>
+		<Form :model="model" :label-position="position" :label-width="width" :inline="isInline" @submit.prevent>
+			<FormItem label="名称" required><Input v-model="model.name" /></FormItem>
+			<FormItem label="分类说明"><Input v-model="model.category" /></FormItem>
 		</Form>
 	</div>
 </template>
@@ -115,6 +121,7 @@ import { reactive, ref } from 'vue';
 import { Form, FormItem, Input } from '@deot/vc';
 
 const position = ref('right');
+const width = ref(72);
 const isInline = ref(false);
 const model = reactive({ name: '', category: '' });
 </script>
@@ -346,7 +353,7 @@ p { margin: 12px 0 0; }
 | rules | 按字段路径配置规则；字段值运行时支持单条规则或规则数组，也支持嵌套对象 | `Record<string, FormRule>` | - | - |
 | inline | 行内布局 | `boolean` | - | `false` |
 | labelPosition | 标签位置 | `string` | `left / right / top` | `'right'` |
-| labelWidth | 标签宽度，单位 px | `number` | - | - |
+| labelWidth | 标签宽度，单位 px；`'auto'` 时参与的标签取其中最宽的。标签在上方、`inline`、嵌套项和自身设置了 labelWidth 的项不参与 | `number \| 'auto'` | - | - |
 | showMessage | 显示错误信息；也控制移动端校验 Toast | `boolean` | - | `true` |
 | autocomplete | 根元素 autocomplete 属性 | `string` | `on / off` | `'off'` |
 | styleless | 所有表单项只渲染 default/error 插槽，Form 根元素仍保留 | `boolean` | - | `false` |
@@ -381,7 +388,7 @@ p { margin: 12px 0 0; }
 | --- | --- | --- | --- | --- |
 | prop | 对应 model 的字段路径 | `string` | - | - |
 | label | 标签。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md)；label 插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
-| labelWidth | 覆盖标签宽度；嵌套项的标签默认宽度为 0 | `number` | - | 继承 Form |
+| labelWidth | 覆盖标签宽度，设置后不参与 Form 的 `'auto'`；嵌套项的标签默认宽度为 0 | `number` | - | 继承 Form |
 | labelPosition | 覆盖标签位置 | `string` | `left / right / top` | 继承 Form |
 | labelFor | 标签关联目标；当前桌面端将 for 放在标签外层 div，不能依赖它实现原生聚焦；移动端放在 label 上 | `string` | - | - |
 | required | 标记必填；没有匹配规则时生成必填规则，字符串同时作为错误文案 | `boolean \| string` | - | `false` |
@@ -452,6 +459,7 @@ p { margin: 12px 0 0; }
 - 非空的 FormItem.rules 优先；否则查找 Form.rules。数组路径中的中间数字下标会被移除后查找规则，例如 `contacts.0.name` 查找 `contacts.name`；查找抛错时才尝试完整 prop 键。
 - 布尔 required 主要控制必填标记和无匹配规则时的兜底，不会额外插入已有规则列表。需要保证必填时请在规则中明确写入 `required: true` 和 message。
 - `reset()` 恢复挂载时保存的字段初始值，并非一律清空，也不替换整个 model。
+- `labelWidth: 'auto'` 监听每个标签内容的尺寸：标签文字、插槽内容、字体或字号变化，以及表单项增删后，宽度随之更新，在绘制前完成。标签不换行。
 
 ### 主题
 

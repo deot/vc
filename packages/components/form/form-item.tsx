@@ -25,10 +25,13 @@ export const FormItem = defineComponent({
 			contentClass,
 			errorClass,
 			showError,
-			validateMessage
+			validateMessage,
+			isAutoWidth,
+			observeLabel
 		} = it;
 
 		const errorColorClass = 'vc-form-item__error';
+		const renderLabel = () => <Customer wrap tag="label" render={slots.label || props.label} />;
 		return () => {
 			if (isStyleless.value) return [
 				slots.default?.(),
@@ -50,7 +53,11 @@ export const FormItem = defineComponent({
 								// @ts-ignore
 								for={props.labelFor}
 							>
-								<Customer wrap tag="label" render={slots.label || props.label} />
+								{
+									isAutoWidth.value
+										? <span ref={observeLabel} class="vc-form-item__label-content">{ renderLabel() }</span>
+										: renderLabel()
+								}
 							</div>
 						)
 					}

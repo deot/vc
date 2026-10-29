@@ -6,6 +6,37 @@ import { mount } from '@vue/test-utils';
 import { Input } from './fixtures/input';
 import { Select } from './fixtures/select';
 
+// 记录所有 ResizeObserver 实例：按被观察的元素找到对应的观察器再触发回调
+const observers: any[] = [];
+const MockResizeObserver = (globalThis as any).ResizeObserver;
+(globalThis as any).ResizeObserver = class extends MockResizeObserver {
+	constructor(cb: any) {
+		super(cb);
+		observers.push(this);
+	}
+};
+const observerOf = (el: Element) => observers.find(ro => ro.targets.has(el));
+const triggerResize = async (els: Element[]) => {
+	els.forEach(el => observerOf(el).trigger(el));
+	await nextTick();
+};
+
+// 宽度按文字长度模拟（带小数时向上取整）；必填项标签的 ::before 视为 6px 宽、右边距 4px
+const mockLabelSize = () => {
+	const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+		return { width: this.textContent!.length * 10 + 0.4 } as DOMRect;
+	});
+	const getComputedStyle = window.getComputedStyle;
+	const style = vi.spyOn(window, 'getComputedStyle').mockImplementation((el, pseudo) => {
+		if (!pseudo) return getComputedStyle(el);
+		const required = pseudo === '::before' && !!el.parentElement?.classList.contains('is-required');
+		return (required
+			? { content: '"*"', display: 'inline-block', width: '6px', marginLeft: '0px', marginRight: '4px' }
+			: { content: 'none' }) as CSSStyleDeclaration;
+	});
+	return () => (rect.mockRestore(), style.mockRestore());
+};
+
 describe('index.ts', () => {
 	it('basic', () => {
 		expect(typeof Form).toBe('object');
@@ -886,5 +917,74 @@ describe('index.ts', () => {
 		await nextTick();
 		expect(errors[0]).toEqual({ prop: 'input', message: '移动端必填' });
 		expect(wrapper.find('.vcm-form-item__error').text()).toBe('移动端必填');
+	});
+
+	it('labelWidth: auto, 取最宽（含必填标记）, 内容变化与增删时更新, 不参与的项', async () => {
+		const restore = mockLabelSize();
+		const long = ref(false);
+		const extra = ref(true);
+		const position = ref<any>('right');
+		const inline = ref(false);
+		const wrapper = mount(() => (
+			<Form labelWidth="auto" labelPosition={position.value} inline={inline.value}>
+				<FormItem label="a" required />
+				<FormItem label={long.value ? 'cccccc' : 'cc'} />
+				{ extra.value && <FormItem label="dddd" /> }
+				<FormItem label="fixed" labelWidth={60} />
+				<FormItem label="nest">
+					<FormItem label="nested-label" />
+				</FormItem>
+				<FormItem />
+			</Form>
+		));
+		const contents = () => wrapper.findAll('.vc-form-item__label-content').map(item => item.element);
+		const widths = () => wrapper.findAll('.vc-form-item__label').map(item => (item.element as HTMLElement).style.width);
+		const margins = () => wrapper.findAll('.vc-form-item__content').map(item => (item.element as HTMLElement).style.marginLeft);
+
+		// 尺寸回调之前按内容排版；固定宽度与嵌套项不包裹
+		expect(widths()).toEqual(['auto', 'auto', 'auto', '60px', 'auto', 'auto']);
+		expect(contents()).toHaveLength(4);
+		await triggerResize(contents());
+		// a + * = 11 + 10 → 21；dddd → 41；nest → 41
+		expect(widths()).toEqual(['41px', '41px', '41px', '60px', '41px', 'auto']);
+		expect(margins()).toEqual(['41px', '41px', '41px', '60px', '41px', 'unset', '41px']);
+
+		long.value = true;
+		await nextTick();
+		await triggerResize(contents());
+		expect(widths().slice(0, 3)).toEqual(['61px', '61px', '61px']);
+
+		long.value = false;
+		extra.value = false;
+		await nextTick();
+		await triggerResize(contents());
+		expect(widths().slice(0, 2)).toEqual(['41px', '41px']);
+		expect(widths()[2]).toBe('60px');
+
+		position.value = 'top';
+		await nextTick();
+		expect(contents()).toHaveLength(0);
+		expect(widths()).toEqual(['auto', 'auto', 'auto', 'auto', 'auto']);
+
+		position.value = 'right';
+		inline.value = true;
+		await nextTick();
+		expect(contents()).toHaveLength(0);
+		restore();
+	});
+
+	it('MForm: labelWidth auto', async () => {
+		const restore = mockLabelSize();
+		const wrapper = mount(() => (
+			<MForm labelWidth="auto">
+				<MFormItem label="a" />
+				<MFormItem label="bbbbb" />
+			</MForm>
+		));
+		const contents = () => wrapper.findAll('.vcm-form-item__label-content').map(item => item.element);
+		await triggerResize(contents());
+		const widths = wrapper.findAll('.vcm-form-item__label').map(item => (item.element as HTMLElement).style.width);
+		expect(widths).toEqual(['51px', '51px']);
+		restore();
 	});
 });
