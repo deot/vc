@@ -153,6 +153,31 @@ VcInstance.configure({
 });
 ```
 
+### Descriptions 全局配置
+
+注册自定义的值类型，或覆盖内置类型。详见 [Descriptions](../descriptions/README.md)。
+
+| 配置项 | 具体作用 | 默认值 |
+| --- | --- | --- |
+| renderValue | 接收 `{ value, row, index, data, instance }`，类型从 `row.type` 读取；返回 VNode 时使用它，返回 `false` 或空值时使用内置类型。值为空时不调用，显示 `placeholder` | `undefined` |
+
+```js
+import { h } from 'vue';
+import { VcInstance, Table, TableColumn } from '@deot/vc';
+
+VcInstance.configure({
+	Descriptions: {
+		renderValue: ({ value, row }) => {
+			if (row.type === 'price') return h('span', `¥ ${Number(value).toFixed(2)}`);
+			if (row.type === 'table') {
+				const { columns, ...rest } = row.options;
+				return h(Table, { ...rest, data: value }, () => columns.map(column => h(TableColumn, column)));
+			}
+		}
+	}
+});
+```
+
 ### Image 全局配置
 
 统一转换原图和缩略图地址，例如为相对地址补齐资源服务器前缀。详见 [Image](../image/README.md)。

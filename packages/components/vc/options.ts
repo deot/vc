@@ -3,6 +3,7 @@ import type { Language } from '@deot/vc-locale';
 import { zhCN } from '@deot/vc-locale';
 import { VARIABLES } from '../theme/constant';
 import type { CustomerData, CustomerRender } from '../customer/types';
+import type { DescriptionsOptions } from '../descriptions/types';
 import type { FilePreviewOptions } from '../file-preview/types';
 import type { ImageFormatter } from '../image/image-props';
 import type { SnapshotDownload } from '../snapshot/snapshot-props';
@@ -27,6 +28,7 @@ export type Options = Partial<{
 		formatter?: ImageFormatter;
 	};
 	FilePreview: FilePreviewOptions;
+	Descriptions: DescriptionsOptions;
 	Tour: TourConfig;
 	Portal: {
 		[key: string]: any;
@@ -72,6 +74,9 @@ export const defaults: ResolvedOptions = {
 	sanitize: nil,
 	Customer: {
 		formatter: nil
+	},
+	Descriptions: {
+		renderValue: nil
 	},
 	Editor: {
 		options: nil,

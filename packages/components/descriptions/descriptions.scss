@@ -1,0 +1,271 @@
+@use '../style/helper' as *;
+
+$component-name: vc-descriptions;
+$color-dark-light: varfix(color-dark-light, descriptions);
+$color-dark-lighter: varfix(color-dark-lighter, descriptions);
+$color-dark-lightest: varfix(color-dark-lightest, descriptions);
+$color-neutral-light: varfix(color-neutral-light, descriptions);
+$color-primary: varfix(color-primary, descriptions);
+$background-color-light: varfix(background-color-light, descriptions);
+$background-color-lightest: varfix(background-color-lightest, descriptions);
+$cell-padding: var(--vc-descriptions-cell-padding-y) var(--vc-descriptions-cell-padding-x);
+
+// medium与bms卡片一致；border主题的单元格内边距另算
+$sizes: (
+	mini: (font-size: 12px, line-height: 18px, row-gap: 4px, cell-padding-y: 3px, cell-padding-x: 12px),
+	small: (font-size: 13px, line-height: 20px, row-gap: 8px, cell-padding-y: 5px, cell-padding-x: 16px),
+	medium: (font-size: 13px, line-height: 20px, row-gap: 12px, cell-padding-y: 7px, cell-padding-x: 16px),
+	large: (font-size: 14px, line-height: 22px, row-gap: 16px, cell-padding-y: 9px, cell-padding-x: 20px)
+);
+
+@include block($component-name) {
+	font-size: var(--vc-descriptions-font-size);
+	line-height: var(--vc-descriptions-line-height);
+	color: $color-dark-light;
+
+	@each $size, $values in $sizes {
+		@include when($size) {
+			@each $key, $value in $values {
+				--vc-descriptions-#{$key}: #{unitfix($value)};
+			}
+		}
+	}
+
+	@include element(header) {
+		display: flex;
+		margin-bottom: unitfix(16);
+		align-items: center;
+		justify-content: space-between;
+		gap: unitfix(16);
+	}
+
+	@include element(title) {
+		min-width: 0;
+		font-size: unitfix(16);
+		font-weight: 600;
+		line-height: unitfix(24);
+	}
+
+	@include element(extra) {
+		flex: none;
+	}
+
+	@include element(group) {
+		& + & {
+			padding-top: var(--vc-descriptions-row-gap);
+			margin-top: var(--vc-descriptions-row-gap);
+			border-top: 1px solid $color-neutral-light;
+		}
+	}
+
+	@include element(group-label) {
+		margin-bottom: unitfix(12);
+		font-size: unitfix(14);
+		font-weight: 500;
+		line-height: unitfix(22);
+		color: $color-dark-lighter;
+	}
+
+	@include element(body) {
+		display: grid;
+		margin: 0;
+		gap: var(--vc-descriptions-row-gap) unitfix(16);
+	}
+
+	@include element(item) {
+		display: flex;
+		min-width: 0;
+	}
+
+	@include element(label) {
+		display: flex;
+		flex: none;
+		font-weight: 500;
+		color: $color-dark-lightest;
+		white-space: nowrap;
+		box-sizing: border-box;
+	}
+
+	// labelWidth为auto时包住标签内容，用来量自然宽度
+	@include element(label-content) {
+		display: inline-flex;
+		flex: none;
+	}
+
+	@include element(tooltip) {
+		margin-left: unitfix(2);
+		cursor: help;
+	}
+
+	@include element(colon) {
+		margin: 0 unitfix(4);
+	}
+
+	@include element(value) {
+		flex: 1;
+		min-width: 0;
+		margin: 0;
+		font-weight: 500;
+		overflow-wrap: anywhere;
+	}
+
+	// 小图：默认与行高一致，不撑高这一行
+	@include element(images) {
+		display: inline-flex;
+		flex-wrap: wrap;
+		vertical-align: top;
+		gap: unitfix(4);
+	}
+
+	@include element(image) {
+		display: inline-flex;
+		width: var(--vc-descriptions-image-size, var(--vc-descriptions-line-height));
+		height: var(--vc-descriptions-image-size, var(--vc-descriptions-line-height));
+		overflow: hidden;
+		border-radius: unitfix(2);
+
+		> .vc-image {
+			width: 100%;
+			height: 100%;
+		}
+
+		@include when(previewable) {
+			cursor: pointer;
+		}
+	}
+
+	// 内部的Text截断时基线在底边，用字符框占位让它像文字一样排版
+	@include element(link) {
+		display: inline-flex;
+		max-width: 100%;
+		color: $color-primary;
+		text-decoration: none;
+		cursor: pointer;
+
+		@include text-strut;
+	}
+
+	@include element(copy) {
+		display: inline-flex;
+		max-width: 100%;
+		align-items: center;
+
+		@include text-strut;
+
+		> .vc-text {
+			width: auto;
+			min-width: 0;
+		}
+	}
+
+	@include element(copy-icon) {
+		display: inline-flex;
+		flex: none;
+		margin-left: unitfix(4);
+		font-size: unitfix(12);
+		color: $color-primary;
+		cursor: pointer;
+	}
+
+	@include when(right) {
+		.vc-descriptions__label {
+			justify-content: flex-end;
+		}
+
+		// 图标放到文字前面，各行的文字和冒号都贴着右边线
+		&:not(.is-inline) .vc-descriptions__tooltip {
+			order: -1;
+			margin-right: unitfix(2);
+			margin-left: 0;
+		}
+	}
+
+	@include when(top) {
+		.vc-descriptions__item {
+			flex-direction: column;
+		}
+
+		.vc-descriptions__label {
+			margin-bottom: unitfix(4);
+		}
+	}
+
+	@include when(inline) {
+		.vc-descriptions__item {
+			display: block;
+		}
+
+		&:not(.is-top) .vc-descriptions__label {
+			display: inline-flex;
+		}
+
+		.vc-descriptions__value {
+			display: inline;
+		}
+	}
+
+	// inverted为fill的反色
+	@each $theme, $background in (fill: $background-color-light, inverted: $background-color-lightest) {
+		@include when($theme) {
+			.vc-descriptions__content {
+				padding: unitfix(20);
+				background: $background;
+				border-radius: unitfix(8);
+			}
+		}
+	}
+
+	@include when(border) {
+		.vc-descriptions__group + .vc-descriptions__group {
+			padding-top: 0;
+			border-top: 0;
+		}
+
+		.vc-descriptions__body {
+			overflow: hidden;
+			border: 1px solid $color-neutral-light;
+			border-radius: unitfix(8);
+			gap: 0;
+		}
+
+		.vc-descriptions__item {
+			border-right: 1px solid $color-neutral-light;
+			border-bottom: 1px solid $color-neutral-light;
+
+			&.is-last-column {
+				border-right: 0;
+			}
+
+			&.is-last-row {
+				border-bottom: 0;
+			}
+		}
+
+		.vc-descriptions__label,
+		.vc-descriptions__value {
+			padding: $cell-padding;
+		}
+
+		.vc-descriptions__label {
+			background: $background-color-light;
+			border-right: 1px solid $color-neutral-light;
+		}
+
+		&.is-top .vc-descriptions__label {
+			margin: 0;
+			border-right: 0;
+			border-bottom: 1px solid $color-neutral-light;
+		}
+
+		&.is-inline .vc-descriptions__item {
+			padding: $cell-padding;
+		}
+
+		&.is-inline .vc-descriptions__label,
+		&.is-inline .vc-descriptions__value {
+			padding: 0;
+			background: none;
+			border: 0;
+		}
+	}
+}

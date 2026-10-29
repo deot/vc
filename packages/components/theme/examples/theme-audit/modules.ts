@@ -21,6 +21,7 @@ import Customer from './modules/customer.vue';
 import DatePicker from './modules/date-picker.vue';
 import Debounce from './modules/debounce.vue';
 import Defer from './modules/defer.vue';
+import Descriptions from './modules/descriptions.vue';
 import Divider from './modules/divider.vue';
 import Drawer from './modules/drawer.vue';
 import Dropdown from './modules/dropdown.vue';
@@ -99,6 +100,7 @@ export const MODULES = {
 	DatePicker,
 	Debounce,
 	Defer,
+	Descriptions,
 	Divider,
 	Drawer,
 	Dropdown,

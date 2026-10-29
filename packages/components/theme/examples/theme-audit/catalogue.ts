@@ -26,7 +26,7 @@ export const GROUPS = [
 		id: 'display',
 		label: '数据展示',
 		names: [
-			'Badge', 'Calendar', 'Card', 'Carousel', 'Chart', 'Collapse', 'Countdown', 'Counter', 'FilePreview', 'Image',
+			'Badge', 'Calendar', 'Card', 'Carousel', 'Chart', 'Collapse', 'Countdown', 'Counter', 'Descriptions', 'FilePreview', 'Image',
 			'ImageProcessor', 'List', 'Marquee', 'Popover', 'Progress', 'RecycleList', 'Table', 'Tag', 'Timeline', 'Tree'
 		]
 	},
