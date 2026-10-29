@@ -3,6 +3,7 @@
 import { Cascader, MCascader, Popover, VcInstance } from '@deot/vc-components';
 import { enUS, zhCN } from '@deot/vc-locale';
 import { CascaderView } from '../cascader-view';
+import { Form, FormItem } from '../../form';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi, onTestFinished } from 'vitest';
@@ -494,6 +495,314 @@ describe('Cascader interaction', () => {
 		expect(popoverWrapper.style.display).toBe('none');
 
 		wrapper.unmount();
+	});
+});
+
+describe('Cascader checkStrategy="child"', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	// 点击某一列的某一项（先移入展开）
+	const pick = async (columnIndex: number, rowIndex: number) => {
+		const cell = getCells(columnIndex)[rowIndex] as HTMLElement;
+		fireMouse(cell, 'mousemove');
+		await flush();
+		cell.click();
+		await flush();
+	};
+	const getInputValue = (wrapper: any) => (wrapper.find('input').element as HTMLInputElement).value;
+
+	it('值为最后一级：从 data 找出路径回显；传数组时取最后一项', async () => {
+		const value = ref<any>('binjiang');
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} checkStrategy="child" />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+		expect(getInputValue(wrapper)).toBe('Zhejiang / Hangzhou / Bin Jiang');
+
+		await wrapper.trigger('click');
+		await flush();
+		expect(getCols().length).toBe(3);
+		expect(getCells(2)[1].className).toContain('is-select');
+
+		value.value = ['zhejiang', 'ningbo', 'jiangdong'];
+		await flush();
+		expect(getInputValue(wrapper)).toBe('Zhejiang / NingBo / Jiang Dong');
+
+		// 找不到的值不显示
+		value.value = 'missing';
+		await flush();
+		expect(getInputValue(wrapper)).toBe('');
+	});
+
+	it('选中叶子只发出最后一级，change 的第二个参数仍是完整路径的文字', async () => {
+		const onChange = vi.fn();
+		const value = ref<any>();
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} checkStrategy="child" onChange={onChange} />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await flush();
+		await pick(0, 1);
+		await pick(1, 0);
+		await pick(2, 0);
+
+		expect(value.value).toBe('zhonghuamen');
+		expect(onChange).toHaveBeenCalledTimes(1);
+		expect(onChange.mock.calls[0]).toEqual(['zhonghuamen', ['Jiangsu', 'Nanjing', 'Zhong Hua Men']]);
+		expect(getInputValue(wrapper)).toBe('Jiangsu / Nanjing / Zhong Hua Men');
+	});
+
+	it('changeOnSelect：发出所点的那一级', async () => {
+		const value = ref<any>();
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} checkStrategy="child" changeOnSelect />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await flush();
+		await pick(0, 0);
+		expect(value.value).toBe('zhejiang');
+
+		await wrapper.trigger('click');
+		await flush();
+		await pick(1, 1);
+		expect(value.value).toBe('ningbo');
+		expect(getInputValue(wrapper)).toBe('Zhejiang / NingBo');
+	});
+
+	it('清空发出 nullValue', async () => {
+		const value = ref<any>('xihu');
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} checkStrategy="child" nullValue="" clearable />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+
+		await wrapper.find('.vc-select-trigger__clear').trigger('click');
+		await flush();
+		expect(value.value).toBe('');
+		expect(getInputValue(wrapper)).toBe('');
+	});
+
+	it('值为数组时输出仍为数组：选中为 [最后一级]，清空为 []', async () => {
+		const value = ref<any>(['zhejiang', 'hangzhou', 'xihu']);
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} checkStrategy="child" clearable />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await flush();
+		await pick(0, 1);
+		await pick(1, 0);
+		await pick(2, 0);
+		expect(value.value).toEqual(['zhonghuamen']);
+		expect(getInputValue(wrapper)).toBe('Jiangsu / Nanjing / Zhong Hua Men');
+
+		await wrapper.find('.vc-select-trigger__clear').trigger('click');
+		await flush();
+		expect(value.value).toEqual([]);
+		expect(getInputValue(wrapper)).toBe('');
+
+		// 清空后仍是数组，下次选中仍输出数组
+		await wrapper.trigger('click');
+		await flush();
+		await pick(0, 0);
+		await pick(1, 1);
+		await pick(2, 0);
+		expect(value.value).toEqual(['jiangbei']);
+	});
+
+	it('changeOnSelect + 数组值：发出 [所点的那一级]', async () => {
+		const value = ref<any>([]);
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} checkStrategy="child" changeOnSelect />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await flush();
+		await pick(0, 0);
+		expect(value.value).toEqual(['zhejiang']);
+		expect(getInputValue(wrapper)).toBe('Zhejiang');
+	});
+
+	it('data 晚于值到达时重新查找路径', async () => {
+		const data = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Cascader modelValue="jiangbei" data={data.value} checkStrategy="child" />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+		expect(getInputValue(wrapper)).toBe('');
+
+		data.value = options;
+		await flush();
+		expect(getInputValue(wrapper)).toBe('Zhejiang / NingBo / Jiang Bei');
+
+		await wrapper.trigger('click');
+		await flush();
+		expect(getCols().length).toBe(3);
+		expect(getCells(1)[1].className).toContain('is-select');
+	});
+
+	it('值在不同分支重复时保留选中的分支', async () => {
+		const data = [
+			{ value: 'a', label: 'A', children: [{ value: 'same', label: 'Same A' }] },
+			{ value: 'b', label: 'B', children: [{ value: 'same', label: 'Same B' }] }
+		];
+		const value = ref<any>();
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={data} checkStrategy="child" />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await flush();
+		await pick(0, 1);
+		await pick(1, 0);
+		expect(value.value).toBe('same');
+		expect(getInputValue(wrapper)).toBe('B / Same B');
+	});
+
+	it('关闭时丢弃未提交的路径，重新打开回到值所在的路径', async () => {
+		const wrapper = mount(() => (
+			<Cascader modelValue="xihu" data={options} checkStrategy="child" />
+		), {
+			attachTo: document.body,
+			// 默认的 Transition 桩不会触发离场回调（close）
+			global: { stubs: { transition: false } }
+		});
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await sleep(350);
+		fireMouse(getCells(0)[1], 'mousemove');
+		await flush();
+		expect(getCells(0)[1].className).toContain('is-select');
+
+		document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+		await sleep(350);
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+		expect(getCells(0)[0].className).toContain('is-select');
+		expect(getCells(2)[0].className).toContain('is-select');
+	});
+
+	it('FormItem 必填：清空后报错，选中叶子后通过', async () => {
+		const model = ref<any>({ code: 'xihu' });
+		const wrapper = mount(() => (
+			<Form model={model.value} rules={{ code: [{ required: true, message: '必填', trigger: 'change' }] }}>
+				<FormItem prop="code">
+					<Cascader v-model={model.value.code} data={options} checkStrategy="child" clearable />
+				</FormItem>
+			</Form>
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await flush();
+		const item = () => wrapper.find('.vc-form-item');
+
+		await wrapper.find('.vc-select-trigger__clear').trigger('click');
+		await sleep(50);
+		await flush();
+		expect(model.value.code).toBeUndefined();
+		expect(item().classes()).toContain('is-error');
+
+		await wrapper.find('.vc-cascader').trigger('click');
+		await flush();
+		await pick(0, 1);
+		await pick(1, 0);
+		await pick(2, 0);
+		await sleep(50);
+		await flush();
+		expect(model.value.code).toBe('zhonghuamen');
+		expect(item().classes()).not.toContain('is-error');
+	});
+
+	it('loadData：未加载的值不回显，加载到 data 后回显', async () => {
+		const data = ref<any[]>([{ value: 'beijing', label: '北京', children: [] }]);
+		const loadData = vi.fn(async () => [{ value: 'gugong', label: '故宫' }]);
+		const wrapper = mount(() => (
+			<Cascader modelValue="gugong" data={data.value} loadData={loadData} checkStrategy="child" />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+		expect(getInputValue(wrapper)).toBe('');
+
+		await wrapper.trigger('click');
+		await flush();
+		fireMouse(getCells(0)[0], 'mousemove');
+		await sleep(10);
+		await flush();
+		expect(loadData).toHaveBeenCalledTimes(1);
+		expect(getInputValue(wrapper)).toBe('北京 / 故宫');
+	});
+
+	it('运行时切换 checkStrategy 不发出事件，下次提交按新方式', async () => {
+		const onChange = vi.fn();
+		const strategy = ref<'all' | 'child'>('all');
+		const value = ref<any>([...selectedValue]);
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} checkStrategy={strategy.value} onChange={onChange} />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+
+		strategy.value = 'child';
+		await flush();
+		expect(onChange).not.toHaveBeenCalled();
+		// 数组取最后一项，回显不变
+		expect(getInputValue(wrapper)).toBe('Zhejiang / Hangzhou / West Lake');
+
+		await wrapper.trigger('click');
+		await flush();
+		await pick(2, 1);
+		// 值仍是数组：输出 [最后一级]
+		expect(value.value).toEqual(['binjiang']);
+	});
+
+	it('默认插槽的 value 是路径', async () => {
+		const wrapper = mount(() => (
+			<Cascader modelValue="binjiang" data={options} checkStrategy="child">
+				{{ default: ({ value, label }: any) => (<span class="slot">{ `${value.join(',')}|${label.join(',')}` }</span>) }}
+			</Cascader>
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+		expect(wrapper.find('.slot').text()).toBe('zhejiang,hangzhou,binjiang|Zhejiang,Hangzhou,Bin Jiang');
+	});
+
+	it('搜索选中只发出最后一级', async () => {
+		const value = ref<any>();
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} checkStrategy="child" searchable />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+
+		const input = wrapper.find('input');
+		await input.trigger('click');
+		await flush();
+		(input.element as HTMLInputElement).value = 'bin';
+		input.element.dispatchEvent(new Event('input', { bubbles: true }));
+		await flush();
+
+		document.querySelector<HTMLElement>('.vc-select-paths__item')!.click();
+		await flush();
+		expect(value.value).toBe('binjiang');
 	});
 });
 

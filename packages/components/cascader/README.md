@@ -259,6 +259,72 @@ p {
 ```
 :::
 
+### 只提交最后一级
+
+`checkStrategy` 决定 `v-model` 回填路径上的哪些节点，与 TreeSelect 的 [checkStrategy](../tree/README.md#勾选筛选与自定义标签) 同义（把选中的路径看成一串选中的节点）：
+
+- 默认 `all`：回填全部选中节点，即完整路径。
+- `child`：只回填最深的选中节点。开启 `changeOnSelect` 时回填所点的那一级，不一定是叶子。
+
+`child` 时，输入的值按 `value ==` 在 `data` 中深度优先查找，找到第一个匹配的节点后还原路径并回显；值在不同分支重复时，保留当前选中的分支。传数组时取最后一项，字符串不按 `separator` 拆分。输出的形状跟随当前 `v-model`：是数组时输出 `[最后一级]`、清空为 `[]`；否则输出最后一级的值、清空为 `nullValue`。`change` 的第二个参数和 `formatter` 收到的仍是完整路径的文本。`data` 晚于值到达时会重新查找；配合 `loadData` 时，尚未加载的节点找不到，回显为空。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="cascader-demo">
+		<Cascader
+			v-model="value"
+			:data="data"
+			check-strategy="child"
+			clearable
+			@visible-change="isVisible => isVisible && handleVisibleChange(true)"
+			@close="handleVisibleChange(false)"
+			@change="handleChange"
+		/>
+		<p>已提交值：{{ value }}</p>
+		<p>已提交文本：{{ labels.join(' / ') || '尚未选择' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { inject, ref } from 'vue';
+import { Cascader } from '@deot/vc';
+
+const data = [
+	{ value: 'group-a', label: '分组 A', children: [
+		{ value: 'item-a-1', label: '条目 A-1' },
+		{ value: 'item-a-2', label: '条目 A-2' }
+	] },
+	{ value: 'group-b', label: '分组 B', children: [
+		{ value: 'item-b-1', label: '条目 B-1' },
+		{ value: 'item-b-2', label: '条目 B-2' }
+	] }
+];
+const value = ref('item-b-1');
+const labels = ref([]);
+const handleChange = (nextValue, nextLabels) => {
+	labels.value = nextLabels;
+};
+const playground = inject('docs:playground');
+const handleVisibleChange = playground.run(320);
+</script>
+
+<style scoped>
+.cascader-demo {
+	display: grid;
+	gap: 12px;
+	max-width: 320px;
+}
+p {
+	margin: 0;
+	line-height: 1.6;
+	overflow-wrap: anywhere;
+}
+</style>
+```
+:::
+
 ### 搜索
 
 `searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入，已选路径以占位文字的形式保留；`searchable="popover"` 改为在浮层顶部显示搜索栏。使用默认插槽替换输入框后没有内联的输入位置，这时两种取值都使用浮层搜索栏。
@@ -567,9 +633,10 @@ const value = ref(['2500', '2500-3']);
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | data | 树形数据；节点包含 `value`、`label`、可选 `children` | `CascaderOption[]` | - | `[]` |
-| modelValue | 选择路径，推荐用数组；也接收标量或由 `separator` 分隔的字符串 | `string \| number \| (string \| number)[]` | - | `undefined` |
+| modelValue | 选择路径，推荐用数组；也接收标量或由 `separator` 分隔的字符串。`checkStrategy: 'child'` 时为最后一级的值，或只含它的数组 | `string \| number \| (string \| number)[]` | - | `undefined` |
 | formatter | 根据路径文本生成输入框内容 | `(labels: string[]) => string` | - | `labels => labels.join(' / ')` |
 | changeOnSelect | 点击任意一级即提交并关闭；否则只提交叶子节点 | `boolean` | - | `false` |
+| checkStrategy | `v-model` 回填完整路径还是只回填最后一级；见[只提交最后一级](#只提交最后一级) | `string` | `all`、`child` | `'all'` |
 | searchable | 开启搜索：`true` / `'inline'` 在输入框内直接输入，`'popover'` 在浮层顶部显示搜索栏；见[搜索](#搜索) | `boolean \| 'inline' \| 'popover'` | - | `false` |
 | searchPlaceholder | 搜索时的占位文字：内联搜索为浮层打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
 | disabled | 禁止打开和清空 | `boolean` | - | `false` |
@@ -596,7 +663,7 @@ const value = ref(['2500', '2500-3']);
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
 | update:modelValue | 提交选择或清空，用于 `v-model` | `(value, labels)` | 数组输入返回路径数组；非数组输入按值转换规则返回标量或字符串。`labels` 为路径文本数组 |
-| change | 与 `update:modelValue` 同时触发，包括清空 | `(value, labels)` | 同上；清空数组路径时为 `([], [])` |
+| change | 与 `update:modelValue` 同时触发，包括清空 | `(value, labels)` | 同上；清空数组路径时为 `([], [])`；`checkStrategy: 'child'` 时 `value` 为最后一级的值（数组值时为 `[最后一级]`），清空为 `nullValue`（数组值时为 `[]`） |
 | clear | 点击清空按钮时触发，先于模型更新 | - | - |
 | visible-change | 通过浮层触发器、外部点击、输入或按 Enter 改变可见状态时触发 | `(isVisible: boolean)` | 当前可见状态；选择、清空、Esc 或 Tab 引起的内部关闭不触发此事件 |
 | ready | 浮层初始化完成 | `()` | 不等于打开动画完成 |
@@ -620,7 +687,7 @@ interface CascaderOption {
 }
 ```
 
-数组形式的 `modelValue` 会保存完整路径，并在清空时返回 `[]`。字符串输入先按 `separator` 解析；非数组输入在默认 `max: 1` 下只输出路径首项，`max > 1` 时按 `separator` 连接。`numerable` 配合字符串输入时，当前实现输出由逗号连接的数字路径；需要稳定的完整路径时使用数组。
+数组形式的 `modelValue` 会保存完整路径，并在清空时返回 `[]`。字符串输入先按 `separator` 解析；非数组输入在默认 `max: 1` 下只输出路径首项，`max > 1` 时按 `separator` 连接。`numerable` 配合字符串输入时，当前实现输出由逗号连接的数字路径；需要稳定的完整路径时使用数组。以上规则只用于默认的 `checkStrategy: 'all'`，`child` 见[只提交最后一级](#只提交最后一级)。
 
 组件虽然继承了 Select 的一些声明，但没有多选、远程搜索、`renderOption` 等对应渲染能力；没有公开实例方法或 `readonly` 开关，默认输入框只在开启内联搜索时可输入。
 

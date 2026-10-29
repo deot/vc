@@ -2,7 +2,7 @@
 
 import { defineComponent, ref, watch, computed, nextTick, inject } from 'vue';
 import { isEqualWith } from 'lodash-es';
-import { getSelectedData } from './utils';
+import { getSelectedData, getValuePath } from './utils';
 import { VcError } from '../vc/index';
 import { Popover } from '../popover/index';
 import { useLocale } from '../locale';
@@ -49,19 +49,51 @@ export const Cascader = defineComponent({
 		});
 
 		/**
+		 * v-model -> 路径
+		 * 	- all：值即路径
+		 * 	- child：值为最后一级（传数组时取最后一项），从 data 中找出路径；值在不同分支重复时，保留当前路径
+		 * @param v ~
+		 * @returns ~
+		 */
+		const toPath = (v: any): TreeValue[] => {
+			if (props.checkStrategy !== 'child') {
+				return toCurrentValue(v, {
+					numerable: props.numerable,
+					separator: props.separator
+				});
+			}
+			Array.isArray(v) && (v = v[v.length - 1]);
+			if (typeof v === 'undefined' || v === null || v === '') return [];
+			const path = currentValue.value;
+			return path.length && path[path.length - 1] == v ? path : getValuePath(props.data, v);
+		};
+
+		/**
+		 * 路径 -> v-model，形状跟随当前 v-model（同 toModelValue）
+		 * 	- child：数组时为 [最后一级]，清空为 []；否则为最后一级，清空为 nullValue
+		 * @param path ~
+		 * @returns ~
+		 */
+		const toValue = (path: TreeValue[]) => {
+			if (props.checkStrategy === 'child') {
+				const value = path.slice(-1);
+				return Array.isArray(props.modelValue) ? value : path.length ? value[0] : props.nullValue;
+			}
+			return toModelValue(path, {
+				modelValue: props.modelValue,
+				max: props.max,
+				numerable: props.numerable,
+				separator: props.separator,
+				nullValue: props.nullValue
+			});
+		};
+
+		/**
 		 * TODO: 初始化时，存在查找耗时
 		 */
 		const currentLabel = computed(() => {
 			const { label: $label } = getSelectedData(
-				props.changeOnSelect
-					? currentValue.value
-					: toCurrentValue(
-							props.modelValue,
-							{
-								numerable: props.numerable,
-								separator: props.separator
-							}
-						),
+				props.changeOnSelect ? currentValue.value : toPath(props.modelValue),
 				props.data
 			) || {};
 			return ($label || []).filter(i => i) as TreeLabel[];
@@ -81,16 +113,7 @@ export const Cascader = defineComponent({
 		 * @param force ~
 		 */
 		const sync = (force?: boolean) => {
-			const value = toModelValue(
-				currentValue.value,
-				{
-					modelValue: props.modelValue,
-					max: props.max,
-					numerable: props.numerable,
-					separator: props.separator,
-					nullValue: props.nullValue
-				}
-			);
+			const value = toValue(currentValue.value);
 			(props.changeOnSelect) && (
 				emit('update:modelValue', value, currentLabel.value),
 				emit('change', value, currentLabel.value)
@@ -249,10 +272,7 @@ export const Cascader = defineComponent({
 		 * 暂时不用rebuildData.value, ready时会再次触发
 		 */
 		const handleClose = () => {
-			const v = toCurrentValue(props.modelValue, {
-				numerable: props.numerable,
-				separator: props.separator
-			});
+			const v = toPath(props.modelValue);
 			if (!isEqualWith(currentValue.value, v)) {
 				currentValue.value = [...v];
 			}
@@ -275,6 +295,8 @@ export const Cascader = defineComponent({
 		watch(
 			() => props.data,
 			() => {
+				// 只回填最后一级时，路径从 data 中查找：data 晚于值到达时重新查找（浮层打开时不打断当前路径）
+				props.checkStrategy === 'child' && !isActive.value && (currentValue.value = [...toPath(props.modelValue)]);
 				rebuildData.value = makeRebuildData();
 			}
 		);
@@ -282,12 +304,8 @@ export const Cascader = defineComponent({
 		watch(
 			() => props.modelValue,
 			(v) => {
-				v = toCurrentValue(v, {
-					numerable: props.numerable,
-					separator: props.separator
-				});
-				// 不使用currentValue.value = v; 避免同步修改源数据，这里有取消操作
-				currentValue.value = v && v.length > 0 ? [...v] : [];
+				// 拷贝一份，避免同步修改源数据，这里有取消操作
+				currentValue.value = [...toPath(v)];
 			},
 			{ immediate: true }
 		);

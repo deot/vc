@@ -37,3 +37,18 @@ export const getSelectedData = (value: TreeValue[] = [], source: TreeData[] = []
 		data
 	});
 };
+
+/**
+ * 某个值所在的路径：深度优先找第一个 value 与之相等（==）的节点
+ * @param data 树形数据
+ * @param value 值
+ * @returns 从根到该节点的各级 value；找不到时为空数组
+ */
+export const getValuePath = (data: TreeData[] = [], value: TreeValue): TreeValue[] => {
+	for (const item of data) {
+		if (item.value == value) return [item.value];
+		const path = item.children?.length ? getValuePath(item.children, value) : [];
+		if (path.length) return [item.value, ...path];
+	}
+	return [];
+};
