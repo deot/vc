@@ -1,29 +1,12 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, provide, h, cloneVNode, computed, ref, watch, Fragment } from 'vue';
-import type { VNode } from 'vue';
+import { defineComponent, provide, h, cloneVNode, computed, ref, watch } from 'vue';
+import { getChildren } from '../fragment/utils';
 import { props as stepsProps } from './steps-props';
 import type { StepStatus } from './steps-props';
 import { Step } from './step';
 
 const COMPONENT_NAME = 'vc-steps';
-
-/**
- * 展开v-for, <template>产生的Fragment, 只保留Step
- * @param vnodes ~
- * @param items ~
- * @returns ~
- */
-const getItems = (vnodes: VNode[] = [], items: VNode[] = []) => {
-	vnodes.forEach((vnode) => {
-		if (vnode.type === Fragment && Array.isArray(vnode.children)) {
-			getItems(vnode.children as VNode[], items);
-		} else if (vnode.type === Step) {
-			items.push(vnode);
-		}
-	});
-	return items;
-};
 
 export const Steps = defineComponent({
 	name: COMPONENT_NAME,
@@ -87,7 +70,7 @@ export const Steps = defineComponent({
 		});
 
 		return () => {
-			const items = getItems(slots.default?.());
+			const items = getChildren(slots.default?.(), [Step]);
 			// Step单独设置的status优先
 			const statuses = items.map((vnode, index) => vnode.props?.status || getStatus(index + 1));
 

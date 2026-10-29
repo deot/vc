@@ -1,29 +1,12 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, provide, h, cloneVNode, Fragment } from 'vue';
-import type { VNode } from 'vue';
+import { defineComponent, provide, h, cloneVNode } from 'vue';
+import { getChildren } from '../fragment/utils';
 import { props as timelineProps } from './timeline-props';
 import { TimelineItem } from './timeline-item';
 import { Spin } from '../spin';
 
 const COMPONENT_NAME = 'vc-timeline';
-
-/**
- * 展开v-for, <template>产生的Fragment, 只保留TimelineItem
- * @param vnodes ~
- * @param items ~
- * @returns ~
- */
-const getItems = (vnodes: VNode[] = [], items: VNode[] = []) => {
-	vnodes.forEach((vnode) => {
-		if (vnode.type === Fragment && Array.isArray(vnode.children)) {
-			getItems(vnode.children as VNode[], items);
-		} else if (vnode.type === TimelineItem) {
-			items.push(vnode);
-		}
-	});
-	return items;
-};
 
 export const Timeline = defineComponent({
 	name: COMPONENT_NAME,
@@ -42,7 +25,7 @@ export const Timeline = defineComponent({
 		};
 
 		return () => {
-			const items = getItems(slots.default?.());
+			const items = getChildren(slots.default?.(), [TimelineItem]);
 
 			if (props.showPending) {
 				items.push(
