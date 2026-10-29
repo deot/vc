@@ -30,6 +30,7 @@ import FilePreview from './modules/file-preview.vue';
 import Form from './modules/form.vue';
 import Fragment from './modules/fragment.vue';
 import Gesture from './modules/gesture.vue';
+import Grid from './modules/grid.vue';
 import Icon from './modules/icon.vue';
 import Image from './modules/image.vue';
 import ImageCrop from './modules/image-crop.vue';
@@ -107,6 +108,7 @@ export const MODULES = {
 	Form,
 	Fragment,
 	Gesture,
+	Grid,
 	Icon,
 	Image,
 	ImageCrop,

@@ -1,0 +1,37 @@
+@use '../style/helper' as *;
+
+$justify-values: (start, center, end, stretch);
+$align-values: (start, center, end, stretch, baseline);
+
+// Grid上为整体（*-items），GridItem上为单项（*-self）
+@mixin alignment($suffix) {
+	@each $value in $justify-values {
+		@include when(justify-#{$value}) {
+			justify-#{$suffix}: $value;
+		}
+	}
+
+	@each $value in $align-values {
+		@include when(align-#{$value}) {
+			align-#{$suffix}: $value;
+		}
+	}
+}
+
+@include block(vc-grid) {
+	display: grid;
+
+	@include alignment(items);
+
+	@each $value in (start, center, end, space-between, space-around, space-evenly) {
+		@include when(justify-content-#{$value}) {
+			justify-content: $value;
+		}
+	}
+}
+
+@include block(vc-grid-item) {
+	min-width: 0;
+
+	@include alignment(self);
+}

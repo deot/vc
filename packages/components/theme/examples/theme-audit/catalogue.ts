@@ -7,7 +7,7 @@ export const GROUPS = [
 	{
 		id: 'layout',
 		label: '布局',
-		names: ['Affix', 'Divider']
+		names: ['Affix', 'Divider', 'Grid']
 	},
 	{
 		id: 'navigation',

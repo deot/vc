@@ -63,6 +63,8 @@ export * from './fragment';
 export * from './fragment/index.m';
 export * from './gesture';
 export * from './gesture/index.m';
+export * from './grid';
+export * from './grid/index.m';
 export * from './snapshot';
 export * from './snapshot/index.m';
 export * from './icon';
