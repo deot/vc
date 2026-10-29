@@ -67,6 +67,22 @@ export const resolveFileName = (v: string) => {
 	return typeof name === 'string' && name ? name : getFileName(v);
 };
 
+/**
+ * 按协议白名单放行地址（相对地址按当前页面解析），返回解析后的地址；不在白名单或无法解析时为undefined
+ * @param source ~
+ * @param protocols 如 ['http:', 'https:']
+ * @returns ~
+ */
+export const allowedUrl = (source: string, protocols: string[]) => {
+	if (!source) return;
+	try {
+		const url = new URL(source, window.location.href);
+		return protocols.includes(url.protocol) ? url.href : undefined;
+	} catch {
+		return;
+	}
+};
+
 export const getFileExtension = (v: string) => {
 	const match = stripQuery(v).match(/\.([a-z0-9]{1,8})$/i);
 	return match ? match[1].toUpperCase() : '';
