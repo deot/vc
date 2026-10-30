@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, nextTick, onBeforeUnmount, provide, shallowRef } from 'vue';
+import { defineComponent, nextTick, onBeforeUnmount, provide, ref, shallowRef } from 'vue';
 import { reveal, toRect } from '../../../transition/transition-reveal/reveal';
 import type { RevealMotion } from '../../../transition/transition-reveal/reveal';
 import { props as revealProps } from './reveal-props';
@@ -31,6 +31,8 @@ export const Reveal = defineComponent({
 		// 最近一次量到的起点：打开的那一项在调用 open 时（与点击同一刻）先量一次。
 		// 起点元素之后被移除、隐藏（如图片解码期间、关闭前）时，打开、缩回都用这里
 		let last = props.animated ? toRect(props.triggerElement) : null;
+		// 要放大打开的那一项，开始放大前不显示：画面可能在等大图的尺寸，先露出来会是一块没裁切的整图
+		const isPending = ref(props.animated);
 
 		// 动画开始的那一拍通知查看器，蒙层和工具栏一起动；缩不回去时也通知
 		const play = (isLeave: boolean) => {
@@ -40,6 +42,7 @@ export const Reveal = defineComponent({
 			motion = trigger && frame.value && body.value
 				? reveal({ frame: frame.value, body: body.value, trigger, subject: subject?.(props.viewport), isLeave })
 				: null;
+			isPending.value = false;
 			emit('animate');
 			return motion;
 		};
@@ -71,7 +74,7 @@ export const Reveal = defineComponent({
 		expose({ leave: () => play(true)?.finished });
 
 		return () => (
-			<div ref={frame} class="vc-reveal">
+			<div ref={frame} class={['vc-reveal', { 'is-pending': isPending.value }]}>
 				<div ref={body} class="vc-reveal__body">
 					{slots.default?.()}
 				</div>

@@ -21,6 +21,11 @@ $component-name: vc-image-slide;
 		}
 	}
 
+	// 按大图的比例摆放时（数据给了宽高、大图已缓存），缩略图按封面铺满，不拉伸
+	@include element(placeholder) {
+		object-fit: cover;
+	}
+
 	// 解码完才显示，避免先以原始尺寸或半张图闪一下；叠在缩略图上，点按仍落在大图上
 	@include element(media) {
 		opacity: 0;

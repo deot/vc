@@ -14,7 +14,10 @@
 			type="group"
 		/>
 
-		<p>图片：有 thumbnail 时展示缩略图，预览使用 source</p>
+		<p>
+			图片：有 thumbnail 时展示缩略图，预览使用 source。thumb-1 给了 width、height，打开时直接按大图的比例放大；
+			thumb-2 没给，先等一下大图的尺寸（最多 100ms），缓存里的图能等到，直接按大图的比例放大；走网络等不到时先按缩略图的比例放大，尺寸一到再过渡
+		</p>
 		<FilePreview :data="thumbnails" type="group" />
 
 		<p>视频：无 thumbnail 时展示首帧</p>
@@ -45,7 +48,11 @@ const dataSource = ref([
 ]);
 
 const thumbnails = [
-	{ source: 'https://dummyimage.com/1800x600/555/fff.png?text=source-1', thumbnail: 'https://dummyimage.com/96x96/2d8cf0/fff.png?text=thumb-1' },
+	{
+		source: 'https://dummyimage.com/1800x600/555/fff.png?text=source-1',
+		thumbnail: 'https://dummyimage.com/96x96/2d8cf0/fff.png?text=thumb-1',
+
+	},
 	{ source: 'https://dummyimage.com/600x1800/555/fff.png?text=source-2', thumbnail: 'https://dummyimage.com/96x96/1db88c/fff.png?text=thumb-2' }
 ];
 

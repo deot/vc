@@ -6,6 +6,11 @@ $component-name: vc-reveal;
 	position: absolute;
 	inset: 0;
 
+	// 开始放大前不显示
+	@include when(pending) {
+		visibility: hidden;
+	}
+
 	@include element(body) {
 		position: absolute;
 		inset: 0;

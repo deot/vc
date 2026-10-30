@@ -1,6 +1,7 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, nextTick, onBeforeUnmount, ref, shallowRef, watch } from 'vue';
+import { computed, defineComponent, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
+import { caf, raf } from '@deot/helper-utils';
 import { useLocale } from '../../../locale';
 import { Spin } from '../../../spin';
 import { useReveal } from '../reveal';
@@ -13,6 +14,9 @@ import { frameRect, imageTransform } from './utils';
 const COMPONENT_NAME = 'vc-image-slide';
 // 超过该时长（ms）仍未显示时出现加载中
 const LOADING_DELAY = 2000;
+// 数据没给宽高时，最多等这么久（ms）拿大图的尺寸再放大：缓存里的图一两帧就有，一次放大到位；
+// 走网络的通常更久，先按缩略图的比例放大，尺寸到了再过渡
+const SIZE_WAIT = 100;
 
 export type ImageSlideExposed = {
 	isZoomed: boolean;
@@ -65,31 +69,54 @@ export const ImageSlide = defineComponent({
 			return frame && natural.value ? frameRect(frame, natural.value) : null;
 		};
 
-		// 有缩略图垫底时立即放大，否则等大图解码完，放大的不会是一块空白
+		// 有缩略图垫底时立即放大（数据没给宽高时先等一下大图的尺寸，最多 SIZE_WAIT），否则等大图解码完，放大的不会是一块空白
 		let opening: Promise<void> | void;
+		let isOpening = false;
+		const isWaiting = ref(!given.value && !!thumbnail);
+		const waitTimer = isWaiting.value ? setTimeout(() => (isWaiting.value = false), SIZE_WAIT) : 0;
 		watch(
-			() => hasPlaceholder.value || isReady.value,
+			() => (hasPlaceholder.value && !isWaiting.value) || isReady.value,
 			(v) => {
-				v && (opening = reveal?.ready(subject));
+				if (!v || isOpening) return;
+				isOpening = true;
+				opening = reveal?.ready(subject);
 			},
 			{ immediate: true }
 		);
 
-		// 解码完再换上大图，尺寸也在这时换，缩略图和大图不会叠着错位
+		// 拿到大图的尺寸：还没开始放大时直接按它摆放，一次放大到位；
+		// 已按缩略图摆放的，放进同一个盒子，比例不同或 fit 为 actual 时，等放大结束、窗口不再裁在缩略图的盒子上，下一拍再过渡到初始位置
+		const settle = async (size: Size) => {
+			if (measured.value) return;
+			const prev = natural.value;
+			measured.value = size;
+			isWaiting.value = false;
+			if (!prev || prev === natural.value) return;
+			if (!isOpening) return zoom.reset();
+			if (zoom.refit(prev)) return;
+			await opening;
+			await nextTick();
+			reflow(media.value);
+			zoom.reset(true);
+		};
+
+		// 下载到头部就有尺寸，逐帧看一眼，不必等整张图解码完
+		let frame: ReturnType<typeof raf> | undefined;
+		const watchSize = () => {
+			const el = media.value;
+			if (!el || given.value || measured.value || isError.value) return;
+			if (el.naturalWidth) return settle({ w: el.naturalWidth, h: el.naturalHeight });
+			frame = raf(watchSize);
+		};
+		onMounted(watchSize);
+
+		// 解码完再换上大图，缩略图和大图不会叠着错位
 		const handleLoad = async () => {
 			const el = media.value!;
 			if (isReady.value) return;
 			await el.decode?.().catch(() => {});
-			const prev = natural.value;
-			measured.value = { w: el.naturalWidth, h: el.naturalHeight };
+			settle({ w: el.naturalWidth, h: el.naturalHeight });
 			isReady.value = true;
-			// 先按缩略图摆放的：放进同一个盒子；比例不同或 fit 为 actual 时再过渡到初始位置。
-			// 等放大结束、窗口不再裁在缩略图的盒子上，下一拍再动
-			if (!prev || prev === natural.value || zoom.refit(prev)) return;
-			await opening;
-			await nextTick();
-			reflow(el);
-			zoom.reset(true);
 		};
 
 		const handleError = () => {
@@ -101,7 +128,11 @@ export const ImageSlide = defineComponent({
 			isLoading.value = true;
 		}, LOADING_DELAY);
 
-		onBeforeUnmount(() => clearTimeout(timer));
+		onBeforeUnmount(() => {
+			clearTimeout(timer);
+			clearTimeout(waitTimer);
+			frame && caf(frame);
+		});
 
 		expose({
 			isZoomed: zoom.isZoomed,

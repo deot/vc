@@ -54,6 +54,9 @@ const motion = () => {
 	};
 };
 
+// 数据没给宽高时，等大图尺寸的上限（与 image-slide 一致）
+const SIZE_WAIT = 100;
+
 const endMotion = async () => {
 	[reveal(), revealBody()].forEach(el => el.getAnimations().forEach(item => item.finish()));
 	await flush();
@@ -895,9 +898,11 @@ describe('FilePreview', () => {
 			ImagePreview.open({ data: ['https://cdn.test/full.jpg'] });
 		});
 		thumb.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		// 数据没给宽高：先等一下大图的尺寸，等不到再按缩略图放大
+		await Utils.sleep(SIZE_WAIT);
 		await flush();
 
-		// 不等大图：按缩略图 2:1 的比例放到长边贴齐的位置，立即从缩略图放大
+		// 等不到大图的尺寸：按缩略图 2:1 的比例放到长边贴齐的位置，从缩略图放大
 		const placeholder = activeSlide()?.querySelector('.vc-image-slide__placeholder') as HTMLImageElement;
 		expect(placeholder.style.transform).toBe('translate3d(0px, 128px, 0) rotate(0deg) scale(5.12)');
 		expect(motion()?.clip).toEqual(['inset(20px 914px 698px 10px)', 'inset(128px 0px 128px 0px)']);
@@ -919,6 +924,7 @@ describe('FilePreview', () => {
 			ImagePreview.open({ data: ['https://cdn.test/full.jpg'] });
 		});
 		thumb.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		await Utils.sleep(SIZE_WAIT);
 		await flush();
 		expect(activeSlide()?.querySelector('.vc-image-slide__placeholder')?.getAttribute('style')).toContain('scale(7.68)');
 
@@ -932,6 +938,72 @@ describe('FilePreview', () => {
 		expect(motion()).toBeUndefined();
 		expect(media.style.transform).toBe('translate3d(0px, 128px, 0) rotate(0deg) scale(1.024)');
 		expect(media.classList.contains('is-animating')).toBe(true);
+	});
+
+	it('waits briefly for the image size and zooms to its own ratio at once when it arrives in time', async () => {
+		const thumb = createTrigger('img', rectOf(10, 20, 100, 100)) as HTMLImageElement;
+		thumb.src = 'https://cdn.test/thumb.jpg';
+		Utils.def(thumb, 'naturalWidth', 100);
+		Utils.def(thumb, 'naturalHeight', 100);
+		thumb.addEventListener('click', () => {
+			ImagePreview.open({ data: ['https://cdn.test/full.jpg'] });
+		});
+		thumb.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		await flush();
+		// 还在等尺寸，没有开始放大，画面先不显示
+		expect(motion()).toBeUndefined();
+		expect(reveal().classList.contains('is-pending')).toBe(true);
+
+		// 下载到头部就有尺寸（还没 load）：直接按大图长边贴齐摆放，一次放大到大图的盒子
+		const media = activeMedia() as HTMLImageElement;
+		Utils.def(media, 'naturalWidth', 1000);
+		Utils.def(media, 'naturalHeight', 500);
+		await Utils.sleep(20);
+		await flush();
+		expect(media.style.transform).toBe('translate3d(0px, 128px, 0) rotate(0deg) scale(1.024)');
+		expect(motion()?.clip[1]).toBe('inset(128px 0px 128px 0px)');
+		expect(reveal().classList.contains('is-pending')).toBe(false);
+		// 解码完原位换上，不再过渡
+		await load(media, 1000, 500);
+		await endMotion();
+		expect(media.classList.contains('is-animating')).toBe(false);
+	});
+
+	it('lays a cached image out by its own size at once, without the thumbnail ratio step', async () => {
+		// 大图已在缓存里（如再次打开）：挂载时 complete 且有尺寸
+		const proto = HTMLImageElement.prototype;
+		const isCached = (img: HTMLImageElement) => img.getAttribute('src') === 'https://cdn.test/cached.jpg';
+		const getterOf = (name: 'complete' | 'naturalWidth' | 'naturalHeight') => Object.getOwnPropertyDescriptor(proto, name)!.get!;
+		const original = { complete: getterOf('complete'), naturalWidth: getterOf('naturalWidth'), naturalHeight: getterOf('naturalHeight') };
+		vi.spyOn(proto, 'complete', 'get').mockImplementation(function (this: HTMLImageElement) {
+			return isCached(this) || original.complete.call(this);
+		});
+		vi.spyOn(proto, 'naturalWidth', 'get').mockImplementation(function (this: HTMLImageElement) {
+			return isCached(this) ? 1000 : original.naturalWidth.call(this);
+		});
+		vi.spyOn(proto, 'naturalHeight', 'get').mockImplementation(function (this: HTMLImageElement) {
+			return isCached(this) ? 500 : original.naturalHeight.call(this);
+		});
+
+		const thumb = createTrigger('img', rectOf(10, 20, 100, 100)) as HTMLImageElement;
+		thumb.src = 'https://cdn.test/thumb.jpg';
+		Utils.def(thumb, 'naturalWidth', 100);
+		Utils.def(thumb, 'naturalHeight', 100);
+		thumb.addEventListener('click', () => {
+			ImagePreview.open({ data: ['https://cdn.test/cached.jpg'] });
+		});
+		thumb.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		await flush();
+
+		// 方形缩略图、2:1 大图：直接按大图长边贴齐摆放，窗口一次放大到大图的盒子
+		const media = activeMedia() as HTMLImageElement;
+		expect(media.style.transform).toBe('translate3d(0px, 128px, 0) rotate(0deg) scale(1.024)');
+		expect(motion()?.clip[1]).toBe('inset(128px 0px 128px 0px)');
+		// 换上大图时原位，不再过渡
+		await load(media, 1000, 500);
+		await endMotion();
+		expect(media.style.transform).toBe('translate3d(0px, 128px, 0) rotate(0deg) scale(1.024)');
+		expect(media.classList.contains('is-animating')).toBe(false);
 	});
 
 	it('fits by the long edge or by actual pixels', async () => {
