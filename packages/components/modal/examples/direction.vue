@@ -3,6 +3,7 @@
 		<p class="direction-demo__tip">
 			点任一方向的按钮：弹窗从按钮的方向展开、立即弹出，关闭时缩回按钮附近。按钮离弹窗远时，第一帧和最后一帧都离开按钮 8px，按钮上不留残影；
 			离得近或被弹窗盖住（Center）时，从路程 40% 处长出来。切换尺寸可以看同一个按钮离弹窗远近不同时的效果。
+			Dropdown：先展开下拉菜单，再点菜单项打开弹窗，弹窗从点中的菜单项展开。
 		</p>
 		<div class="direction-demo__controls">
 			<Select
@@ -23,6 +24,17 @@
 			>
 				{{ item.label }}
 			</Button>
+			<!-- 先展开下拉菜单，再从菜单项打开弹窗 -->
+			<Dropdown class="direction-demo__dropdown" placement="bottom-left" @click="handleMenu">
+				<Button>Dropdown</Button>
+				<template #content>
+					<DropdownMenu>
+						<DropdownItem v-for="item in MENU" :key="item" :value="item">
+							{{ item }}
+						</DropdownItem>
+					</DropdownMenu>
+				</template>
+			</Dropdown>
 		</div>
 		<ModalView
 			:key="controls.size"
@@ -41,6 +53,7 @@
 import { computed, reactive, ref } from 'vue';
 import { Modal, ModalView } from '..';
 import { Button } from '../../button';
+import { Dropdown, DropdownMenu, DropdownItem } from '../../dropdown';
 import { Select } from '../../select';
 
 // 四周 12 个方向，外加正中间一个（会被弹窗最终位置盖住）
@@ -59,6 +72,8 @@ const PLACEMENTS = [
 	{ label: 'BR', style: { bottom: 0, right: '15%' } },
 	{ label: 'Center', style: { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' } }
 ];
+
+const MENU = ['选项一', '选项二', '选项三'];
 
 const SIZES = {
 	small: { width: 360, height: 'auto' },
@@ -80,6 +95,10 @@ const size = computed(() => SIZES[controls.size]);
 
 const isVisible = ref(false);
 const title = ref('');
+
+const handleMenu = (value) => {
+	handleOpen(`Dropdown · ${value}`);
+};
 
 const handleOpen = (label) => {
 	title.value = `从 ${label} 打开`;
@@ -127,6 +146,13 @@ const handleOpen = (label) => {
 	&__button {
 		position: absolute;
 		width: 80px;
+	}
+
+	// 左上象限：菜单向下展开，菜单项离弹窗有一段距离
+	&__dropdown {
+		position: absolute;
+		top: 20%;
+		left: 30%;
 	}
 }
 </style>

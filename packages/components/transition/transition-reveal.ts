@@ -2,7 +2,7 @@ import { defineComponent, h, mergeProps, Transition } from 'vue';
 import type { PropType } from 'vue';
 import { VcInstance } from '../vc';
 import { fade, reveal, toRect } from './reveal';
-import type { RevealMotion } from './reveal';
+import type { RevealMotion, RevealRect } from './reveal';
 import { timingOf } from './transition-props';
 import type { Timing } from './transition-props';
 
@@ -19,7 +19,7 @@ export const TransitionReveal = defineComponent({
 	props: {
 		/**
 		 * 打开时从它展开，关闭时缩回它当时的位置；不传时取打开那次点击的元素。
-		 * 为 null、已移出文档或没有尺寸时淡入淡出
+		 * 为 null、打开时已移出文档或没有尺寸时淡入淡出；关闭前才消失的（如随下拉菜单收起的菜单项）缩回打开时它所在的位置
 		 */
 		triggerElement: {
 			type: Object as PropType<Element | null>,
@@ -58,11 +58,15 @@ export const TransitionReveal = defineComponent({
 	inheritAttrs: false,
 	setup(props, { slots, attrs }) {
 		let clicked: Element | null = null;
+		// 打开时量到的触发元素位置：关闭时它已不在文档里（如随下拉菜单收起的菜单项），缩回到这里
+		let opened: RevealRect | null = null;
 		// 每个元素进行中的开合；v-if 切换时新旧元素各走各的
 		const running = new WeakMap<Element, { motion: RevealMotion; done: () => void; isLeave: boolean }>();
 
 		const start = (el: Element, isLeave: boolean) => {
-			const trigger = toRect(props.triggerElement === undefined ? clicked : props.triggerElement);
+			const target = props.triggerElement === undefined ? clicked : props.triggerElement;
+			const trigger = toRect(target) || (isLeave && target ? opened : null);
+			isLeave || (opened = trigger);
 			const frame = el.parentElement;
 			const phase = isLeave ? 'leave' : 'enter';
 			const delay = timingOf(props.delay, phase);
@@ -87,7 +91,7 @@ export const TransitionReveal = defineComponent({
 				next.done();
 				next.motion.cancel();
 				// 缩回结束后不再引用触发元素，它被移除后可以回收；下次打开重新取
-				next.isLeave && (clicked = null);
+				next.isLeave && (clicked = null, opened = null);
 			});
 		};
 

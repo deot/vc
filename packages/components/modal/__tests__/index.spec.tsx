@@ -1398,7 +1398,7 @@ describe('ModalView 展开与缩回', () => {
 		wrapper.unmount();
 	});
 
-	it('不是点击打开、触发元素移出文档时淡入淡出', async () => {
+	it('不是点击打开时淡入淡出；按钮在关闭前移出文档时缩回打开时的位置', async () => {
 		const { wrapper, vm, button, frame, container } = setup();
 		await openBy(vm, null);
 		expect(frame.getAnimations()).toHaveLength(0);
@@ -1419,12 +1419,19 @@ describe('ModalView 展开与缩回', () => {
 		await openBy(vm, button);
 		finish();
 		await flush();
+		// 按钮随下拉菜单之类一起消失：仍缩回打开时它所在的 (10,20,100,40)，并淡出
 		button.remove();
 		vm.toggle(false);
 		await nextTick();
+		expect(keyframesOf(frame, 'clipPath')[0][1]).toBe('inset(20px 914px 708px 10px)');
+		expect(keyframesOf(container, 'opacity')[1]).toEqual([1, 0]);
+		finish();
+		await flush();
+
+		// 缩回结束后忘掉这个位置：再由非点击打开时淡入
+		await openBy(vm, null);
 		expect(frame.getAnimations()).toHaveLength(0);
-		expect(keyframesOf(container, 'opacity')).toEqual([[1, 0]]);
-		expect(container.getAnimations()[0].effect!.getTiming()).toMatchObject({ endDelay: 0, duration: 333 });
+		expect(keyframesOf(container, 'opacity')).toEqual([[0, 1]]);
 		wrapper.unmount();
 	});
 });

@@ -393,6 +393,39 @@ describe('TransitionReveal', () => {
 		wrapper.unmount();
 	});
 
+	it('shrinks back to where the trigger was when it is gone before the close', async () => {
+		const button = document.createElement('button');
+		button.getBoundingClientRect = () => rectOf(10, 20, 40, 20);
+		document.body.append(button);
+		rects.set('frame', rectOf(0, 0, 200, 100));
+		rects.set('panel', rectOf(40, 30, 80, 40));
+		const { shown, wrapper } = mountReveal();
+		const frame = wrapper.find('.frame').element;
+		const panel = wrapper.find('.panel').element;
+		const toggle = async (value: boolean, target: Element | null) => {
+			const previous = VcInstance.globalEvent;
+			VcInstance.globalEvent = { eventPhase: target ? 2 : 0, target } as any;
+			shown.value = value;
+			await nextTick();
+			VcInstance.globalEvent = previous;
+		};
+		const finish = async () => {
+			[frame, panel].forEach(el => el.getAnimations().forEach(item => item.finish()));
+			for (let i = 0; i < 6; i++) await nextTick();
+		};
+
+		await toggle(true, button);
+		const [opening] = framesOf(frame, 'clipPath');
+		await finish();
+
+		// 如随下拉菜单收起的菜单项：关闭前已移出文档，缩回打开时它所在的位置
+		button.remove();
+		await toggle(false, null);
+		expect(framesOf(frame, 'clipPath')).toEqual([[opening[1], opening[0]]]);
+		await finish();
+		wrapper.unmount();
+	});
+
 	it('keeps the trigger when a close is reversed, and forgets it after the close ends', async () => {
 		const button = document.createElement('button');
 		button.getBoundingClientRect = () => rectOf(10, 20, 40, 20);
