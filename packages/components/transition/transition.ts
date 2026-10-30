@@ -1,6 +1,6 @@
 import { defineComponent, h } from 'vue';
 import { props as transitionProps } from './transition-props';
-import { useTransition } from './use-transition';
+import { useTransition } from './hooks/use-transition';
 
 const COMPONENT_NAME = 'vc-transition';
 

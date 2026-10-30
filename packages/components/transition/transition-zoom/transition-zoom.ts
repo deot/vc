@@ -1,18 +1,18 @@
 import { defineComponent, h } from 'vue';
 import type { PropType } from 'vue';
-import { props as transitionProps } from './transition-props';
-import { useTransition } from './use-transition';
+import { props as transitionProps } from '../transition-props';
+import { useTransition } from '../hooks/use-transition';
 
-const COMPONENT_NAME = 'vc-transition-scale';
+const COMPONENT_NAME = 'vc-transition-zoom';
 
-export const TransitionScale = defineComponent({
+export const TransitionZoom = defineComponent({
 	name: COMPONENT_NAME,
 	props: {
 		...transitionProps,
 		mode: {
-			type: String as PropType<'x' | 'y' | 'part' | 'both' | 'none' | string>,
-			default: 'both',
-			validator: (v: string) => /(part|both|y|x|none)/.test(v)
+			type: String as PropType<'x' | 'y' | 'center' | 'none' | string>,
+			default: 'x',
+			validator: (v: string) => /^(x|y|center|none)$/.test(v)
 		},
 		// inheritAttrs必须是false
 		style: {
@@ -24,7 +24,7 @@ export const TransitionScale = defineComponent({
 		},
 		prefix: {
 			type: String,
-			default: 'vc-transition-scale'
+			default: 'vc-transition-zoom'
 		}
 	},
 	// 当不声明emits的情况下，事件存在于attrs中

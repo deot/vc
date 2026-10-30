@@ -1,6 +1,6 @@
-import { CLICKABLE, REVEAL_DURATION } from '../../transition/reveal';
+import { CLICKABLE, REVEAL_DURATION } from '../../transition/transition-reveal/reveal';
 
-export type { RevealRect as Rect } from '../../transition/reveal';
+export type { RevealRect as Rect } from '../../transition/transition-reveal/reveal';
 export type Size = { w: number; h: number };
 export type Point = { x: number; y: number };
 

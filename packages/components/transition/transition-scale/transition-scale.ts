@@ -1,13 +1,19 @@
 import { defineComponent, h } from 'vue';
-import { props as transitionProps } from './transition-props';
-import { useTransition } from './use-transition';
+import type { PropType } from 'vue';
+import { props as transitionProps } from '../transition-props';
+import { useTransition } from '../hooks/use-transition';
 
-const COMPONENT_NAME = 'vc-transition-fade';
+const COMPONENT_NAME = 'vc-transition-scale';
 
-export const TransitionFade = defineComponent({
+export const TransitionScale = defineComponent({
 	name: COMPONENT_NAME,
 	props: {
 		...transitionProps,
+		mode: {
+			type: String as PropType<'x' | 'y' | 'part' | 'both' | 'none' | string>,
+			default: 'both',
+			validator: (v: string) => /(part|both|y|x|none)/.test(v)
+		},
 		// inheritAttrs必须是false
 		style: {
 			type: Object,
@@ -18,13 +24,14 @@ export const TransitionFade = defineComponent({
 		},
 		prefix: {
 			type: String,
-			default: 'vc-transition-fade'
+			default: 'vc-transition-scale'
 		}
 	},
 	// 当不声明emits的情况下，事件存在于attrs中
 	inheritAttrs: false,
 	setup(props, { slots, attrs }) {
 		const { Wrapper, listeners, classes } = useTransition();
+
 		return () => {
 			return h(
 				Wrapper.value,

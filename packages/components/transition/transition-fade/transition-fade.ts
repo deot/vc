@@ -1,19 +1,13 @@
 import { defineComponent, h } from 'vue';
-import type { PropType } from 'vue';
-import { props as transitionProps } from './transition-props';
-import { useTransition } from './use-transition';
+import { props as transitionProps } from '../transition-props';
+import { useTransition } from '../hooks/use-transition';
 
-const COMPONENT_NAME = 'vc-transition-zoom';
+const COMPONENT_NAME = 'vc-transition-fade';
 
-export const TransitionZoom = defineComponent({
+export const TransitionFade = defineComponent({
 	name: COMPONENT_NAME,
 	props: {
 		...transitionProps,
-		mode: {
-			type: String as PropType<'x' | 'y' | 'center' | 'none' | string>,
-			default: 'x',
-			validator: (v: string) => /^(x|y|center|none)$/.test(v)
-		},
 		// inheritAttrs必须是false
 		style: {
 			type: Object,
@@ -24,14 +18,13 @@ export const TransitionZoom = defineComponent({
 		},
 		prefix: {
 			type: String,
-			default: 'vc-transition-zoom'
+			default: 'vc-transition-fade'
 		}
 	},
 	// 当不声明emits的情况下，事件存在于attrs中
 	inheritAttrs: false,
 	setup(props, { slots, attrs }) {
 		const { Wrapper, listeners, classes } = useTransition();
-
 		return () => {
 			return h(
 				Wrapper.value,

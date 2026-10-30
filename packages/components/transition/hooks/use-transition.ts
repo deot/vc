@@ -5,8 +5,8 @@ import {
 	TransitionGroup
 } from 'vue';
 import type { Component } from 'vue';
-import { timingOf } from './transition-props';
-import type { Props } from './transition-props';
+import { timingOf } from '../transition-props';
+import type { Props } from '../transition-props';
 
 const trim = (str: string) => str.trim().replace(/\s+/g, ' ');
 export const useTransition = () => {

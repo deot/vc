@@ -9,7 +9,7 @@ config.global.stubs.transition = false;
 import { TransitionReveal } from '@deot/vc-components';
 import { VcInstance } from '../../vc';
 import { clickOn } from '../../vc/__tests__/fixtures/click';
-import { fade, reveal, toRect } from '../reveal';
+import { fade, reveal, toRect } from '../transition-reveal/reveal';
 
 const rectOf = (left: number, top: number, width: number, height: number) => ({
 	x: left,

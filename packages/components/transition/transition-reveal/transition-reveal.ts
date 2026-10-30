@@ -1,10 +1,10 @@
 import { defineComponent, h, mergeProps, Transition } from 'vue';
 import type { PropType } from 'vue';
-import { VcInstance } from '../vc';
+import { VcInstance } from '../../vc';
 import { CLICKABLE, fade, reveal, toRect } from './reveal';
 import type { RevealMotion, RevealRect } from './reveal';
-import { timingOf } from './transition-props';
-import type { Timing } from './transition-props';
+import { timingOf } from '../transition-props';
+import type { Timing } from '../transition-props';
 
 const COMPONENT_NAME = 'vc-transition-reveal';
 

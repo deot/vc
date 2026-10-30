@@ -1,8 +1,8 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, nextTick, onBeforeUnmount, provide, shallowRef } from 'vue';
-import { reveal, toRect } from '../../../transition/reveal';
-import type { RevealMotion } from '../../../transition/reveal';
+import { reveal, toRect } from '../../../transition/transition-reveal/reveal';
+import type { RevealMotion } from '../../../transition/transition-reveal/reveal';
 import { props as revealProps } from './reveal-props';
 import { REVEAL_KEY } from './use-reveal';
 import type { RevealSubject } from './use-reveal';
@@ -15,7 +15,7 @@ export type RevealExposed = {
 
 /**
  * 打开时画面从 triggerElement 放大到自己的位置，关闭时缩回它现在的位置。
- * 外层是不缩放的窗口，内层是画面，动画见 transition/reveal
+ * 外层是不缩放的窗口，内层是画面，动画见 transition/transition-reveal/reveal
  */
 export const Reveal = defineComponent({
 	name: COMPONENT_NAME,
