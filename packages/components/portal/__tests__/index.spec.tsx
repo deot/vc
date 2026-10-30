@@ -4,6 +4,8 @@ import { defineComponent, h, inject, nextTick, provide, ref } from 'vue';
 import { Portal, PortalView } from '@deot/vc-components';
 import { Utils } from '@deot/dev-test';
 import { mount } from '@vue/test-utils';
+import { setFlagsFromString } from 'node:v8';
+import { runInNewContext } from 'node:vm';
 import { PortalLeaf } from '../portal-leaf';
 
 describe('index.ts', () => {
@@ -337,6 +339,40 @@ describe('index.ts', () => {
 		expect(leaf.wrapper).toBeUndefined();
 		expect(leaf.propsData).toBeUndefined();
 		expect(leaf.container).toBeUndefined();
+	});
+
+	it('destroy 后调用方仍持有 leaf：传入的 props、slots、onBeforeCreate、onDestroyed 都可回收', async () => {
+		setFlagsFromString('--expose-gc');
+		const gc = runInNewContext('gc') as () => void;
+		// 只把弱引用留在外面；放进 options 的对象各自独立，看哪一个还被留住
+		const open = () => {
+			const values = {
+				props: { size: 1 },
+				slots: { default: () => null },
+				onBeforeCreate: () => ({}),
+				onDestroyed: () => {}
+			};
+			const leaf = Modal.popup({
+				extra: values.props,
+				slots: values.slots,
+				onBeforeCreate: values.onBeforeCreate,
+				onDestroyed: values.onDestroyed
+			});
+			const refs = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, new WeakRef(value)]));
+			return { leaf, refs };
+		};
+		const { leaf, refs } = open();
+		await nextTick();
+		leaf.destroy();
+		await Utils.sleep(0);
+		gc();
+		await Utils.sleep(0);
+		gc();
+		const retained = Object.keys(refs).filter(key => refs[key].deref());
+		expect(retained).toEqual([]);
+		// leaf 仍可用：之后 resolve 照常结束 Promise
+		leaf.resolve(1);
+		expect(await leaf.target).toBe(1);
 	});
 
 	it('destroy, string', async () => {

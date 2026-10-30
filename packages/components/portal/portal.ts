@@ -11,6 +11,134 @@ import { PortalLeaf } from './portal-leaf';
 
 const COMPONENT_NAME = 'vc-portal';
 
+/**
+ * 下一拍执行 alive 的更新。放在 render 之外：options 只被这一次回调留住，不进 leaf 上方法所在的作用域
+ * @param next 弹层上的更新方法
+ * @param options 本次传入的配置
+ */
+const updateLater = (next: (options: PortalOptions) => void, options: PortalOptions) => {
+	nextTick(() => next(options));
+};
+
+type SetupOptions = {
+	wrapper: Component;
+	leaf: PortalLeaf;
+	container: HTMLElement;
+	propsData: Record<string, any>;
+	slots: PortalOptions['slots'];
+	alive: PortalOptions['alive'];
+	aliveRules: PortalOptions['aliveRules'];
+	aliveVisibleKey: PortalOptions['aliveVisibleKey'];
+	leaveDelay: PortalOptions['leaveDelay'];
+	onBeforeCreate: PortalOptions['onBeforeCreate'];
+	isDestroyed: () => boolean;
+	onFulfilled: (...args: any[]) => void;
+	onRejected: (...args: any[]) => void;
+	onDestroyed: (...args: any[]) => void;
+};
+
+/**
+ * 弹层 app 的 setup。放在 render 之外的独立作用域：它留住的组件、props、slots 随 app 卸载释放，
+ * 不会因为调用方仍持有已销毁的 leaf（destroy / resolve / reject 与 render 同一作用域）而被留住
+ * @param options 渲染所需
+ * @returns setup
+ */
+const createSetup = (options: SetupOptions) => () => {
+	const {
+		wrapper,
+		leaf,
+		container,
+		propsData,
+		slots,
+		alive,
+		aliveRules,
+		aliveVisibleKey,
+		leaveDelay,
+		onBeforeCreate,
+		isDestroyed,
+		onFulfilled,
+		onRejected,
+		onDestroyed
+	} = options;
+
+	if (alive) {
+		const handleExtra = (e: Event) => {
+			// close默认不传，用户可传递参数判断输入自己的触发的close
+			try {
+				const path = (e as any).path || DOM.composedPath(e);
+				/* istanbul ignore else -- @preserve */
+				if (
+					container
+					&& e.target
+					&& !container.contains(e.target as HTMLElement)
+					&& !path?.some((item: any) => VcUtils.matchesElementRules(item, aliveRules!))
+				) {
+					/* istanbul ignore else -- @preserve */
+					if (
+						leaf.wrapper
+						&& leaf.wrapper?.[aliveVisibleKey!]
+					) {
+						typeof leaf.wrapper[aliveVisibleKey!] === 'function'
+							? leaf.wrapper[aliveVisibleKey!](false)
+							: (leaf.wrapper[aliveVisibleKey!] = false);
+					}
+
+					// 注意这里`leaf.target`会一直处于pending状态
+					// 与leaf.destroy()一致：alive复用后执行最后一次传入的onDestroyed
+					leaveDelay ? setTimeout(() => leaf.destroy(), leaveDelay) : leaf.destroy();
+				}
+			} catch (error) {
+				/* istanbul ignore next -- @preserve */
+				throw new VcError('portal', error);
+			}
+		};
+
+		onMounted(() => {
+			document.addEventListener('click', handleExtra, true);
+		});
+
+		onBeforeUnmount(() => {
+			document.removeEventListener('click', handleExtra, true);
+		});
+	}
+
+	const propsData1 = ref(propsData);
+	const propsData2 = ref();
+	leaf.propsData = propsData1;
+
+	const allowMounted = ref(typeof onBeforeCreate !== 'function');
+	if (!allowMounted.value) {
+		const result = onBeforeCreate!(propsData);
+
+		if (result && result.then) {
+			result.then((response: any) => {
+				if (isDestroyed()) return;
+				allowMounted.value = true;
+				propsData2.value = response;
+			}).catch((error: any) => {
+				onDestroyed(error); // 直接移除，无需考虑是否用onRejected
+			});
+		} else {
+			allowMounted.value = true;
+			propsData2.value = result;
+		}
+	}
+
+	return () => allowMounted.value && h(
+		wrapper,
+		{
+			...propsData1.value,
+			...propsData2.value,
+			ref: (vm: any) => (leaf.wrapper = vm),
+			onPortalFulfilled: onFulfilled,
+			onPortalRejected: onRejected,
+			onPortalDestroyed: onDestroyed,
+		},
+
+		slots || undefined
+	);
+};
+
 export class Portal<T extends Component> {
 	/**
 	 * 清理Portals类型组件
@@ -168,7 +296,7 @@ export class Portal<T extends Component> {
 			autoDestroy,
 			multiple,
 			fragment,
-			onDestroyed,
+			onDestroyed: onDestroyed$,
 			onBeforeCreate,
 			insertion,
 
@@ -196,6 +324,8 @@ export class Portal<T extends Component> {
 		const propsData$ = propsData || rest;
 
 		let leaf = new PortalLeaf(target);
+		// leaf 上的 destroy / resolve / reject 只留住这一层作用域：用完即清，组件与 props 交给 createSetup 的作用域
+		let onDestroyed = onDestroyed$;
 
 		const isDestroyed = () => {
 			const leaf$ = Portal.leafs.get(name!);
@@ -207,6 +337,7 @@ export class Portal<T extends Component> {
 			if (isDestroyed()) return;
 
 			onDestroyed?.(...args);
+			onDestroyed = undefined;
 			leaf.app?.unmount();
 
 			// 使用leaf上的容器：alive复用时本次新建的container未使用
@@ -240,90 +371,27 @@ export class Portal<T extends Component> {
 			leaf.propsData!.value = propsData$;
 			const next = leaf.wrapper?.[aliveUpdateKey!];
 			// update，赋值完成后，避免函数内的props还是上一个传递值
-			next && nextTick(() => next(options));
+			next && updateLater(next, options);
 		} else {
-			const wrapper = this.wrapper;
 			const app = createApp({
 				name: COMPONENT_NAME,
 				parent,
-				setup() {
-					if (alive) {
-						const handleExtra = (e: Event) => {
-							// close默认不传，用户可传递参数判断输入自己的触发的close
-							try {
-								const path = (e as any).path || DOM.composedPath(e);
-								/* istanbul ignore else -- @preserve */
-								if (
-									container
-									&& e.target
-									&& !container.contains(e.target as HTMLElement)
-									&& !path?.some((item: any) => VcUtils.matchesElementRules(item, aliveRules!))
-								) {
-									/* istanbul ignore else -- @preserve */
-									if (
-										leaf.wrapper
-										&& leaf.wrapper?.[aliveVisibleKey!]
-									) {
-										typeof leaf.wrapper[aliveVisibleKey!] === 'function'
-											? leaf.wrapper[aliveVisibleKey!](false)
-											: (leaf.wrapper[aliveVisibleKey!] = false);
-									}
-
-									// 注意这里`leaf.target`会一直处于pending状态
-									// 与leaf.destroy()一致：alive复用后执行最后一次传入的onDestroyed
-									leaveDelay ? setTimeout(() => leaf.destroy(), leaveDelay) : leaf.destroy();
-								}
-							} catch (error) {
-								/* istanbul ignore next -- @preserve */
-								throw new VcError('portal', error);
-							}
-						};
-
-						onMounted(() => {
-							document.addEventListener('click', handleExtra, true);
-						});
-
-						onBeforeUnmount(() => {
-							document.removeEventListener('click', handleExtra, true);
-						});
-					}
-
-					const propsData1 = ref(propsData$);
-					const propsData2 = ref();
-					leaf.propsData = propsData1;
-
-					const allowMounted = ref(typeof onBeforeCreate !== 'function');
-					if (!allowMounted.value) {
-						const result = onBeforeCreate!(propsData$);
-
-						if (result && result.then) {
-							result.then((response: any) => {
-								if (isDestroyed()) return;
-								allowMounted.value = true;
-								propsData2.value = response;
-							}).catch((error: any) => {
-								$onDestroyed(error); // 直接移除，无需考虑是否用onRejected
-							});
-						} else {
-							allowMounted.value = true;
-							propsData2.value = result;
-						}
-					}
-
-					return () => allowMounted.value && h(
-						wrapper,
-						{
-							...propsData1.value,
-							...propsData2.value,
-							ref: (vm: any) => (leaf.wrapper = vm),
-							onPortalFulfilled: (...args: any[]) => $onFulfilled(...args),
-							onPortalRejected: (...args: any[]) => $onRejected(...args),
-							onPortalDestroyed: (...args: any[]) => $onDestroyed(...args),
-						},
-
-						slots || undefined
-					);
-				}
+				setup: createSetup({
+					wrapper: this.wrapper,
+					leaf,
+					container,
+					propsData: propsData$,
+					slots,
+					alive,
+					aliveRules,
+					aliveVisibleKey,
+					leaveDelay,
+					onBeforeCreate,
+					isDestroyed,
+					onFulfilled: $onFulfilled,
+					onRejected: $onRejected,
+					onDestroyed: $onDestroyed
+				})
 			});
 
 			leaf.app = app;
