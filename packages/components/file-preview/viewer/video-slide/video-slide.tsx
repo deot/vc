@@ -28,6 +28,9 @@ export const VideoSlide = defineComponent({
 			};
 		};
 
+		// 拿到尺寸前先显示加载中
+		reveal?.wait();
+
 		// 未拿到尺寸时只有默认的 300×150，不从它放大
 		const handleLoadedMetadata = () => {
 			isReady.value = true;

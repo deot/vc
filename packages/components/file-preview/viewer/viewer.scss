@@ -47,6 +47,21 @@ $bg-dimmed: calc(var(--vc-file-viewer-dim, 1) * #{$bg-opacity});
 		}
 	}
 
+	// 打开的那一项还在等就位：蒙层先淡入，中间显示加载中
+	@include when(loading) {
+		@include element(bg) {
+			opacity: $bg-dimmed;
+		}
+	}
+
+	@include element(loading) {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		z-index: 1;
+		transform: translate(-50%, -50%);
+	}
+
 	@include when(open) {
 		opacity: 1;
 

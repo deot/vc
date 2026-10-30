@@ -69,6 +69,9 @@ export const ImageSlide = defineComponent({
 			return frame && natural.value ? frameRect(frame, natural.value) : null;
 		};
 
+		// 没有缩略图垫底：等大图解码完再放大，期间显示加载中
+		thumbnail || reveal?.wait();
+
 		// 有缩略图垫底时立即放大（数据没给宽高时先等一下大图的尺寸，最多 SIZE_WAIT），否则等大图解码完，放大的不会是一块空白
 		let opening: Promise<void> | void;
 		let isOpening = false;

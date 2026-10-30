@@ -40,6 +40,10 @@ export interface FilePreviewImageOptions {
 	 * 相对初始尺寸的最小倍数。缩小按钮和滚轮不低于它。默认 1。捏合仍可临时缩得更小，用于关闭
 	 */
 	min?: number;
+	/**
+	 * 打开时是否用点中的缩略图垫底、立即放大，大图解码完再换上；为 false 时先淡入蒙层、显示加载中，大图就位后再放大。默认 true
+	 */
+	placeholder?: boolean;
 }
 
 export interface FilePreviewSlideContext {
@@ -60,6 +64,11 @@ export interface FilePreviewOpenOptions {
 	 * 不传时用打开项的 element，没有时取最近一次点击的位置；传 null 时不用点击的位置
 	 */
 	triggerElement?: Element | VirtualElement | null;
+	/**
+	 * 图片是否用点中的缩略图垫底、立即放大，大图解码完再换上；为 false 时先淡入蒙层、显示加载中，大图就位后再放大。
+	 * 不传时用全局 imageOptions.placeholder，默认 true
+	 */
+	placeholder?: boolean;
 	onClose?: () => void;
 }
 

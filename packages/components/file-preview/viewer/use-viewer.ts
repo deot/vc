@@ -63,6 +63,10 @@ export const useViewer = (props: Props, onFulfilled: () => void) => {
 	const isSliding = ref(false);
 	const isDragging = ref(false);
 	const isOpen = ref(false);
+	// 打开的那一项还在等就位：蒙层先淡入，中间显示加载中，开始放大时收起
+	const isLoading = ref(false);
+	let isWaiting = false;
+	let isMounted = false;
 	const isIdle = ref(false);
 	const isVisible = ref(true);
 	const viewport = ref<Size>({ w: window.innerWidth, h: window.innerHeight });
@@ -88,7 +92,8 @@ export const useViewer = (props: Props, onFulfilled: () => void) => {
 		return {
 			fit: (options?.fit === 'actual' ? 'actual' : 'max-edge') as FilePreviewImageFit,
 			max,
-			min: Math.min(positive(options?.min, 1), max)
+			min: Math.min(positive(options?.min, 1), max),
+			placeholder: props.placeholder ?? options?.placeholder !== false
 		};
 	});
 
@@ -129,6 +134,7 @@ export const useViewer = (props: Props, onFulfilled: () => void) => {
 		{
 			'is-zoom': isZoom.value,
 			'is-open': isOpen.value,
+			'is-loading': isLoading.value,
 			'is-idle': isIdle.value,
 			'is-dragging': isDragging.value
 		}
@@ -147,6 +153,9 @@ export const useViewer = (props: Props, onFulfilled: () => void) => {
 		const index = indexOf(step);
 		if (isSliding.value || isClosing || index < 0) return;
 		isNavigated.value = true;
+		// 打开的那一项还在加载时切走：不再等它，直接整层打开
+		isWaiting = false;
+		isLoading.value && (isLoading.value = false, isOpen.value = true);
 		// 两项时先把已渲染的那份挪到滑入的一侧，和位移同一拍生效
 		count.value === 2 && (lead.value = step);
 		await slideTo(-step * viewport.value.w);
@@ -162,6 +171,20 @@ export const useViewer = (props: Props, onFulfilled: () => void) => {
 	// 开合过渡开始的那一拍：蒙层、工具栏和画面一起动
 	const handleAnimate = () => {
 		isOpen.value = !isClosing;
+		isWaiting = false;
+		isLoading.value = false;
+	};
+
+	// 挂载、插入文档后再显示：先读一次布局，蒙层才会从接近透明淡入，而不是一出现就压暗
+	const showLoading = () => {
+		if (!isWaiting || isClosing || isOpen.value) return;
+		reflow(root.value);
+		isLoading.value = true;
+	};
+
+	const handleWait = () => {
+		isWaiting = true;
+		isMounted && showLoading();
 	};
 
 	const close = async () => {
@@ -179,12 +202,15 @@ export const useViewer = (props: Props, onFulfilled: () => void) => {
 		}
 		// 拖动停在哪就从哪缩回：舞台不归零，窗口和画面按当前的位置量；缩不回去（没有触发元素或量不到）时淡出
 		activeReveal.value && activeImage.value?.straighten();
-		const leaving = activeReveal.value?.leave();
+		// 还在加载、没放大过的：整层淡出
+		const leaving = !isLoading.value && activeReveal.value?.leave();
 		if (leaving) {
 			await leaving;
 		} else {
 			isZoom.value = false;
 			isOpen.value = false;
+			isWaiting = false;
+			isLoading.value = false;
 			await waitTransition(root.value);
 		}
 		isVisible.value = false;
@@ -336,8 +362,9 @@ export const useViewer = (props: Props, onFulfilled: () => void) => {
 		window.addEventListener('resize', handleResize);
 		// Portal 挂载完才把节点插入文档：插入后再聚焦；从元素放大时由 Reveal 在放大那一拍打开
 		await nextTick();
+		isMounted = true;
 		root.value?.querySelector<HTMLElement>('.vc-file-viewer__close')?.focus();
-		if (isZoom.value && activeReveal.value) return;
+		if (isZoom.value && activeReveal.value) return showLoading();
 		reflow(root.value);
 		isOpen.value = true;
 	});
@@ -366,6 +393,8 @@ export const useViewer = (props: Props, onFulfilled: () => void) => {
 		listeners: gesture.listeners,
 		go,
 		close,
-		handleAnimate
+		handleAnimate,
+		handleWait,
+		isLoading
 	};
 };

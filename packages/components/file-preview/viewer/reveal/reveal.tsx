@@ -20,7 +20,7 @@ export type RevealExposed = {
 export const Reveal = defineComponent({
 	name: COMPONENT_NAME,
 	props: revealProps,
-	emits: ['animate'],
+	emits: ['animate', 'wait'],
 	setup(props, { slots, emit, expose }) {
 		const frame = shallowRef<HTMLElement>();
 		const body = shallowRef<HTMLElement>();
@@ -63,6 +63,9 @@ export const Reveal = defineComponent({
 		});
 
 		provide(REVEAL_KEY, {
+			wait: () => {
+				props.animated && isPending.value && emit('wait');
+			},
 			ready: (fn) => {
 				if (isReady) return;
 				isReady = true;

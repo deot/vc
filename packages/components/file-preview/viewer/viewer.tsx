@@ -3,6 +3,7 @@
 import { computed, defineComponent } from 'vue';
 import type { VNode } from 'vue';
 import { Icon } from '../../icon';
+import { Spin } from '../../spin';
 import { useLocale } from '../../locale';
 import { VcInstance } from '../../vc';
 import { props as viewerProps } from './viewer-props';
@@ -50,7 +51,7 @@ export const FileViewer = defineComponent({
 						max={imageOptions.value.max}
 						min={imageOptions.value.min}
 						viewport={viewer.viewport.value}
-						placeholder={slide.isAnimated ? thumbnailOf(slide.triggerElement) : void 0}
+						placeholder={slide.isAnimated && imageOptions.value.placeholder ? thumbnailOf(slide.triggerElement) : void 0}
 					/>
 				);
 			}
@@ -79,6 +80,7 @@ export const FileViewer = defineComponent({
 					viewport={viewer.viewport.value}
 					triggerElement={slide.triggerElement}
 					onAnimate={viewer.handleAnimate}
+					onWait={viewer.handleWait}
 				>
 					{renderContent(slide)}
 				</Reveal>
@@ -89,6 +91,7 @@ export const FileViewer = defineComponent({
 			return (
 				<div ref={viewer.root} class={viewer.classes.value} role="dialog" aria-modal="true" tabindex={-1}>
 					<div class="vc-file-viewer__bg" style={viewer.bgStyle.value} />
+					{ viewer.isLoading.value && <Spin class="vc-file-viewer__loading" size={32} /> }
 					<div
 						ref={viewer.stage}
 						class={['vc-file-viewer__stage', { 'is-sliding': viewer.isSliding.value }]}

@@ -38,6 +38,14 @@ export const props = {
 	previewable: {
 		type: Boolean,
 		default: true
+	},
+	/**
+	 * 图片是否用点中的缩略图垫底、立即放大，大图解码完再换上；为 false 时先淡入蒙层、显示加载中，大图就位后再放大。
+	 * 不传时用全局 imageOptions.placeholder，默认 true
+	 */
+	placeholder: {
+		type: Boolean,
+		default: undefined
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

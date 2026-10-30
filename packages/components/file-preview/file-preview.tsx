@@ -34,7 +34,8 @@ export const FilePreview = defineComponent({
 				data,
 				current: index,
 				instance,
-				triggerElement: e && !data[index].element?.contains(e.target as Node) ? items[index] : undefined
+				triggerElement: e && !data[index].element?.contains(e.target as Node) ? items[index] : undefined,
+				placeholder: props.placeholder
 			});
 		};
 

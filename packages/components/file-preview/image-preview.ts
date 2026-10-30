@@ -18,6 +18,10 @@ export type ImagePreviewOpenOptions = {
 	 * 同 FilePreview.open 的 triggerElement
 	 */
 	triggerElement?: Element | VirtualElement | null;
+	/**
+	 * 同 FilePreview.open 的 placeholder
+	 */
+	placeholder?: boolean;
 	onClose?: () => void;
 };
 
@@ -30,9 +34,9 @@ const toImage = (input: ImageInput): FilePreviewItemInput[] => {
 
 // 不经过 FilePreview.enhancer，避免和图片组件互相引用
 export const ImagePreview = {
-	open: ({ data, current, triggerElement, onClose }: ImagePreviewOpenOptions = {}) => {
+	open: ({ data, current, triggerElement, placeholder, onClose }: ImagePreviewOpenOptions = {}) => {
 		const list = normalize((data || []).flatMap(toImage));
 		const index = resolveCurrent(list, current);
-		return openViewer({ data: list, current: index, triggerElement: resolveTrigger(triggerElement, list[index]?.element), onClose });
+		return openViewer({ data: list, current: index, triggerElement: resolveTrigger(triggerElement, list[index]?.element), placeholder, onClose });
 	}
 };

@@ -175,7 +175,7 @@ const data = [
 
 查看器的手势基于 `@deot/vc-hooks` 的 `useGesture`，鼠标、触摸和笔共用：
 
-- 打开：图片、视频、音频和文件都从起点往外放大，关闭时缩回起点。起点依次取传入的 `triggerElement`、打开项的 `element`、最近一次点击的位置（被点的元素在打开前已被移除时，取点下的那个点）。画面按封面铺进元素的盒子，窗口跟着收到画面自己的盒子上。起点（点击位置即点中的元素）里有已加载的图片时，用它垫底立即放大，大图解码完再换上（与 PhotoSwipe 的 `msrc` 相同）：数据带 `width`、`height` 时按它摆放；没带时先等一下大图的尺寸（下载到头部就有，不必等整张图解码，最多等 100ms，缓存里的图一两帧内就有），等到了直接按大图的尺寸放大；等不到时先按这张图的比例放大，尺寸一到再过渡到大图自己的位置，同比例时原位换上。按大图比例摆放时缩略图按封面铺满、不拉伸；开始放大前画面不显示。没有可用的图片时，图片解码完、视频拿到真实尺寸后才开始放大。图片超过 2 秒仍未加载完时显示加载中。列表里点在某一项、但不在该项缩略图上时，从这一项开始，而不是缩略图。点在按钮、链接里的文字或图标上时，与 Modal 一样从整个按钮或链接开始。Image 组件预览时把自己作为 `element` 传入，外层包着链接或按钮时仍从这张图开始。没有起点时淡入。打开的那一项在调用 `open` 时先量一次起点，起点元素之后被移除、隐藏（如图片解码期间、关闭前）时，打开、关闭都用这个位置。数据项带 `element` 时，切换到哪一项，关闭时就回到哪一项现在的位置；没有 `element` 的项关闭时淡出。
+- 打开：图片、视频、音频和文件都从起点往外放大，关闭时缩回起点。起点依次取传入的 `triggerElement`、打开项的 `element`、最近一次点击的位置（被点的元素在打开前已被移除时，取点下的那个点）。画面按封面铺进元素的盒子，窗口跟着收到画面自己的盒子上。起点（点击位置即点中的元素）里有已加载的图片时，用它垫底立即放大，大图解码完再换上（与 PhotoSwipe 的 `msrc` 相同）：数据带 `width`、`height` 时按它摆放；没带时先等一下大图的尺寸（下载到头部就有，不必等整张图解码，最多等 100ms，缓存里的图一两帧内就有），等到了直接按大图的尺寸放大；等不到时先按这张图的比例放大，尺寸一到再过渡到大图自己的位置，同比例时原位换上。按大图比例摆放时缩略图按封面铺满、不拉伸；开始放大前画面不显示。没有可用的图片时，图片解码完、视频拿到真实尺寸后才开始放大。图片超过 2 秒仍未加载完时显示加载中。列表里点在某一项、但不在该项缩略图上时，从这一项开始，而不是缩略图。点在按钮、链接里的文字或图标上时，与 Modal 一样从整个按钮或链接开始。Image 组件预览时把自己作为 `element` 传入，外层包着链接或按钮时仍从这张图开始。没有起点时淡入。`placeholder` 为 `false` 时图片不用缩略图垫底；没有缩略图垫底的图片、等尺寸的视频，打开时先淡入蒙层、在中间显示加载中，就位后再从起点放大，期间切到别的项或关闭则不再等待。打开的那一项在调用 `open` 时先量一次起点，起点元素之后被移除、隐藏（如图片解码期间、关闭前）时，打开、关闭都用这个位置。数据项带 `element` 时，切换到哪一项，关闭时就回到哪一项现在的位置；没有 `element` 的项关闭时淡出。
 - 切换：左右拖动超过 80px 或快速甩动；也可以使用左右按钮、键盘 `←`、`→`。两项时左右箭头都保留，任一方向都切到另一项。只有一项时不循环，拖过端点有阻尼。三项起循环。只挂载当前项与左右相邻项。
 - 图片：鼠标单击图片、触屏双击在初始尺寸与 4 倍之间切换，不超过 `max`。放大、缩小按钮每次 2 倍，范围是初始尺寸的 `min`～`max` 倍（默认 1～10），到边界后按钮不可用。滚轮、双指捏合以指针或双指中心缩放，同样不超过 `max`、不低于 `min`；捏合可临时缩到初始尺寸的一半，松手回弹，低于 80% 则关闭。放大后可拖动，拖到边缘后继续拖动则切换。向左、向右旋转每次 90°，保持当前相对倍率并重新居中。
 - 关闭：关闭按钮、`Esc`、点击空白处（鼠标和触屏）、向上或向下拖动后松手、双指缩小到初始尺寸的 80% 以下松手。纵向拖动时内容以 0.6 的阻尼跟随，蒙层按这段位移相对视口高度的三分之一变淡；松手时沿该方向的预测位置超过三分之一视口的 0.4，就从当前位置缩回触发元素，没有可测量的元素则淡出，向上和向下同一条线。未超过时内容和蒙层一起弹回。
@@ -191,7 +191,7 @@ const data = [
 - `getFileName({ source })`：自定义从地址推导文件名，返回空值时回退内置规则；数据中显式的 `name`（UploadPicker 为 `label`）优先。
 - `enhancer({ current, data, instance })`：预览前调用，返回真值（或 resolve 真值）表示已接管，不再执行内置预览（Editor 不使用）。
 - `renderSlide({ type, row, index, active, close, instance })`：替换查看器中的某一页。
-- `imageOptions`：`fit` 为初始展示方式，默认 `max-edge`。`max`、`min` 为相对初始尺寸的最大、最小倍数，默认 `10` 和 `1`。
+- `imageOptions`：`fit` 为初始展示方式，默认 `max-edge`。`max`、`min` 为相对初始尺寸的最大、最小倍数，默认 `10` 和 `1`。`placeholder` 为打开图片时是否用缩略图垫底，默认 `true`。
 
 示例中带处理后缀的图片地址（内置规则会识别为文件）被识别为图片，文件名去掉时间戳前缀，文件交给 `enhancer` 处理。
 
@@ -321,6 +321,7 @@ const handleClick = () => {
 | size | 尺寸 | `'mini' \| 'small' \| 'medium' \| 'large'` | `mini` / `small` / `medium` / `large` | `medium` |
 | vertical | 纵向排列；`group` 时作用于每组 | `boolean` | - | `false` |
 | previewable | 点击是否预览；使用 `default` 插槽时由插槽调用 `preview` | `boolean` | - | `true` |
+| placeholder | 打开图片时是否用点中的缩略图垫底、立即放大，大图解码完再换上；为 `false` 时先淡入蒙层、显示加载中，大图就位后再放大。不传时用全局 `imageOptions.placeholder` | `boolean` | - | `true` |
 
 数据项（字符串会解析为 `{ source }`）：
 
@@ -345,7 +346,7 @@ const handleClick = () => {
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| FilePreview.open | 先调用全局 `enhancer`，未接管时打开查看器 | `{ data, current?, instance?, triggerElement?, onClose? }`：`data` 同属性 `data`；`current` 为解析后列表的索引，越界时回退到 `0`；`instance` 默认 `null`；`triggerElement` 为打开时放大的起点，可以是元素或 `VirtualElement`（只有一个盒子的替身）；不传时用打开项的 `element`，没有时取最近一次点击的位置；传 `null` 时不用点击位置，只看打开项的 `element`，都没有时淡入；`onClose` 在查看器关闭后调用 | 查看器句柄（`destroy()` 立即销毁）；`data` 为空或被接管时为 `undefined`；`enhancer` 返回 Promise 时返回 resolve 为句柄或 `undefined` 的 Promise |
+| FilePreview.open | 先调用全局 `enhancer`，未接管时打开查看器 | `{ data, current?, instance?, triggerElement?, placeholder?, onClose? }`：`data` 同属性 `data`；`current` 为解析后列表的索引，越界时回退到 `0`；`instance` 默认 `null`；`placeholder` 同组件属性；`triggerElement` 为打开时放大的起点，可以是元素或 `VirtualElement`（只有一个盒子的替身）；不传时用打开项的 `element`，没有时取最近一次点击的位置；传 `null` 时不用点击位置，只看打开项的 `element`，都没有时淡入；`onClose` 在查看器关闭后调用 | 查看器句柄（`destroy()` 立即销毁）；`data` 为空或被接管时为 `undefined`；`enhancer` 返回 Promise 时返回 resolve 为句柄或 `undefined` 的 Promise |
 
 ### ImagePreview 方法
 
@@ -353,7 +354,7 @@ const handleClick = () => {
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| ImagePreview.open | 直接用查看器打开图片，不经过 `FilePreview.enhancer` | `{ data, current?, triggerElement?, onClose? }`：`triggerElement` 同 `FilePreview.open`；`current` 从 `0` 开始，越界时回退到 `0`；`data` 为地址数组或对象数组，图片地址依次取 `value`、`source`、`src`，可带 `width`、`height`、`element`；名称同样经过全局 `getFileName` | 查看器句柄；没有有效图片时为 `undefined` |
+| ImagePreview.open | 直接用查看器打开图片，不经过 `FilePreview.enhancer` | `{ data, current?, triggerElement?, placeholder?, onClose? }`：`triggerElement`、`placeholder` 同 `FilePreview.open`；`current` 从 `0` 开始，越界时回退到 `0`；`data` 为地址数组或对象数组，图片地址依次取 `value`、`source`、`src`，可带 `width`、`height`、`element`；名称同样经过全局 `getFileName` | 查看器句柄；没有有效图片时为 `undefined` |
 
 查看器的按钮名称、加载失败文案使用 `vc.FilePreview` 下的 locale，切换语言后实时更新。
 
@@ -367,7 +368,7 @@ const handleClick = () => {
 | getFileName | 自定义从地址推导文件名，`source` 为地址；返回空值时回退内置规则。只在数据未提供名称时调用 | `(data: { source: string }) => string \| null \| undefined \| void` |
 | enhancer | 预览前调用；返回真值（或 resolve 真值）表示已接管，不再执行内置预览。`data` 为解析后的列表，`instance` 为调用方组件内部实例或 `null` | `({ current, data, instance }) => unknown` |
 | renderSlide | 替换查看器中的某一页：返回 VNode 时使用它，返回 `false`、`null`、`undefined` 或不返回时使用内置页。`close()` 关闭查看器 | `({ type, row, index, active, close, instance }) => VNode \| false \| null \| undefined \| void` |
-| imageOptions | 图片页配置。`fit` 为初始展示：`max-edge` 整图可见，小图放大到长边贴齐视口；`actual` 按自然像素，超出视口时同比例缩小。`max`、`min` 为相对初始尺寸的最大、最小倍数，限制按钮、滚轮和捏合的稳定缩放 | `{ fit?: 'max-edge' \| 'actual'; max?: number; min?: number }`，默认 `{ fit: 'max-edge', max: 10, min: 1 }` |
+| imageOptions | 图片页配置。`fit` 为初始展示：`max-edge` 整图可见，小图放大到长边贴齐视口；`actual` 按自然像素，超出视口时同比例缩小。`max`、`min` 为相对初始尺寸的最大、最小倍数，限制按钮、滚轮和捏合的稳定缩放。`placeholder` 为打开时是否用缩略图垫底，组件属性、`open` 选项可覆盖 | `{ fit?: 'max-edge' \| 'actual'; max?: number; min?: number; placeholder?: boolean }`，默认 `{ fit: 'max-edge', max: 10, min: 1, placeholder: true }` |
 
 ### 使用注意
 

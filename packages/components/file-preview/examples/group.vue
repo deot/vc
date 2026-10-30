@@ -16,9 +16,13 @@
 
 		<p>
 			图片：有 thumbnail 时展示缩略图，预览使用 source。thumb-1 给了 width、height，打开时直接按大图的比例放大；
-			thumb-2 没给，先等一下大图的尺寸（最多 100ms），缓存里的图能等到，直接按大图的比例放大；走网络等不到时先按缩略图的比例放大，尺寸一到再过渡
+			thumb-2 没给，先等一下大图的尺寸（最多 100ms），缓存里的图能等到，直接按大图的比例放大；走网络等不到时先按缩略图的比例放大，尺寸一到再过渡。
+			取消 placeholder 后不用缩略图垫底：先淡入蒙层、显示加载中，大图就位后再放大（视频等尺寸时也是这样）
 		</p>
-		<FilePreview :data="thumbnails" type="group" />
+		<div class="toolbar">
+			<label><input v-model="placeholder" type="checkbox"> placeholder</label>
+		</div>
+		<FilePreview :data="thumbnails" :placeholder="placeholder" type="group" />
 
 		<p>视频：无 thumbnail 时展示首帧</p>
 		<FilePreview :data="videos" type="group" />
@@ -31,6 +35,7 @@ import { FilePreview } from '..';
 const sizes = ['mini', 'small', 'medium', 'large'];
 const size = ref('medium');
 const vertical = ref(false);
+const placeholder = ref(true);
 
 const dataSource = ref([
 	{ source: 'https://dummyimage.com/1800x600/555/fff.png?text=1', name: '1.png' },

@@ -969,6 +969,66 @@ describe('FilePreview', () => {
 		expect(media.classList.contains('is-animating')).toBe(false);
 	});
 
+	it('opens with the mask and a loading spinner instead of the thumbnail when placeholder is false', async () => {
+		const isLoading = () => viewerEl().classList.contains('is-loading') && !!viewerEl().querySelector('.vc-file-viewer__loading');
+		const thumb = createTrigger('img', rectOf(10, 20, 100, 100)) as HTMLImageElement;
+		thumb.src = 'https://cdn.test/thumb.jpg';
+		Utils.def(thumb, 'naturalWidth', 100);
+		Utils.def(thumb, 'naturalHeight', 100);
+		thumb.addEventListener('click', () => {
+			ImagePreview.open({ data: [{ src: photo, width: 1000, height: 500 }], placeholder: false });
+		});
+		thumb.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		await flush();
+		// 不用缩略图垫底：蒙层淡入、显示加载中，还没放大
+		expect(activeSlide()?.querySelector('.vc-image-slide__placeholder')).toBeNull();
+		expect(isLoading()).toBe(true);
+		expect(motion()).toBeUndefined();
+
+		// 大图就位后从缩略图放大，加载中收起
+		await load(activeMedia(), 1000, 500);
+		expect(motion()?.clip[0]).toBe('inset(20px 914px 648px 10px)');
+		expect(isLoading()).toBe(false);
+		expect(isOpen()).toBe(true);
+
+		// 全局关掉，单次打开传 true 时仍用缩略图垫底
+		Portal.clear(true);
+		VcInstance.options.FilePreview!.imageOptions = { placeholder: false };
+		thumb.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		await flush();
+		expect(isLoading()).toBe(true);
+		Portal.clear(true);
+		ImagePreview.open({ data: [{ src: photo, width: 1000, height: 500, element: thumb }], placeholder: true });
+		await flush();
+		expect(activeSlide()?.querySelector('.vc-image-slide__placeholder')).toBeTruthy();
+		expect(isLoading()).toBe(false);
+	});
+
+	it('shows loading while a video waits for its size, and fades out when closed before it is ready', async () => {
+		const trigger = createTrigger('button', rectOf(10, 20, 100, 40));
+		trigger.addEventListener('click', () => {
+			FilePreview.open({ data: [{ source: movie, type: 'video' }] });
+		});
+		trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		await flush();
+		expect(viewerEl().classList.contains('is-loading')).toBe(true);
+		loadVideo(512, 384);
+		await flush();
+		expect(viewerEl().classList.contains('is-loading')).toBe(false);
+		expect(motion()?.clip[0]).toBe('inset(20px 914px 708px 10px)');
+
+		// 还在加载时关闭：整层淡出，不缩回
+		Portal.clear(true);
+		trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		await flush();
+		expect(viewerEl().classList.contains('is-loading')).toBe(true);
+		button('close').click();
+		await flush();
+		expect(motion()).toBeUndefined();
+		expect(viewerEl().classList.contains('is-loading')).toBe(false);
+		expect(viewerEl().classList.contains('is-zoom')).toBe(false);
+	});
+
 	it('lays a cached image out by its own size at once, without the thumbnail ratio step', async () => {
 		// 大图已在缓存里（如再次打开）：挂载时 complete 且有尺寸
 		const proto = HTMLImageElement.prototype;
