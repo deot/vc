@@ -12,7 +12,8 @@ export class TreeStore {
 
 	currentNode: Nullable<TreeNode> = null;
 	currentNodeValue?: string | number;
-	nodesMap: Record<string | number, TreeNode> = {};
+	// 值 -> 节点，按 === 查找（字符串与数字不同，需要时由 numerable 转换）
+	nodesMap = new Map<string | number, TreeNode>();
 	root: TreeNode;
 
 	data: any;
@@ -49,7 +50,7 @@ export class TreeStore {
 		}
 
 		this.primaryKey = this.keyValue.value || this.primaryKey;
-		this.nodesMap = {};
+		this.nodesMap = new Map();
 
 		this.root = new TreeNode({
 			store: this,
@@ -226,7 +227,7 @@ export class TreeStore {
 	getNode(v: object | string | number | TreeNode): Nullable<TreeNode> {
 		if (v instanceof TreeNode) return v;
 		const key = typeof v !== 'object' ? v : v[this.primaryKey];
-		return this.nodesMap[key] || null;
+		return this.nodesMap.get(key) || null;
 	}
 
 	insertBefore(data: object, refData: object) {
@@ -270,7 +271,7 @@ export class TreeStore {
 		const anchors: (string | number)[] = [];
 
 		for (const id of checkedValues) {
-			const node = nodesMap[id];
+			const node = nodesMap.get(id);
 			if (!node) continue;
 
 			const hasSelectedChildInSet = node.childNodes.some(child =>
@@ -282,8 +283,8 @@ export class TreeStore {
 		}
 
 		anchors.sort((a, b) => {
-			const na = nodesMap[a];
-			const nb = nodesMap[b];
+			const na = nodesMap.get(a);
+			const nb = nodesMap.get(b);
 			if (!na || !nb) return 0;
 			return nb.states.level - na.states.level;
 		});
@@ -297,7 +298,7 @@ export class TreeStore {
 
 		if (this.strict) {
 			checkedValues.forEach((id: string | number) => {
-				const node = nodesMap[id];
+				const node = nodesMap.get(id);
 				if (node) {
 					node.setChecked(true, false);
 				}
@@ -305,7 +306,7 @@ export class TreeStore {
 			return;
 		}
 
-		const anchors = this._getCascadeCheckedAnchorIds(checkedValues).map(id => nodesMap[id]).filter(Boolean);
+		const anchors = this._getCascadeCheckedAnchorIds(checkedValues).map(id => nodesMap.get(id)!).filter(Boolean);
 		this.batchCheck(anchors, node => node.setChecked(true, true));
 	}
 
@@ -332,7 +333,7 @@ export class TreeStore {
 	setCheckedValues(newVal: any) {
 		if (!isEqualWith(newVal, this.checkedValues)) {
 			// 额外处理, 移除checkbox
-			const removed = difference(this.checkedValues as any, newVal).map((key: any) => this.nodesMap[key]).filter(Boolean);
+			const removed = difference(this.checkedValues as any, newVal).map((key: any) => this.nodesMap.get(key)!).filter(Boolean);
 			this.batchCheck(removed, node => node.setChecked(false, !this.strict));
 
 			this.checkedValues = newVal;
@@ -345,7 +346,7 @@ export class TreeStore {
 		if (!key || !node || !toRaw(node.states).data) return;
 
 		const nodeValue = getRawValue(node);
-		if (nodeValue !== undefined) this.nodesMap[nodeValue] = node;
+		if (nodeValue !== undefined) this.nodesMap.set(nodeValue, node);
 	}
 
 	deregisterNode(node: TreeNode) {
@@ -357,7 +358,7 @@ export class TreeStore {
 		});
 
 		const nodeValue = getRawValue(node);
-		delete this.nodesMap[nodeValue];
+		this.nodesMap.delete(nodeValue);
 	}
 
 	getCheckedNodes(leafOnly = false, includeHalfChecked = false) {
@@ -429,19 +430,11 @@ export class TreeStore {
 	}
 
 	_getAllNodes() {
-		const allNodes: TreeNode[] = [];
-		const nodesMap = this.nodesMap;
-		for (const nodeKey in nodesMap) {
-			if (hasOwn(nodesMap, nodeKey)) {
-				allNodes.push(nodesMap[nodeKey]);
-			}
-		}
-
-		return allNodes;
+		return [...this.nodesMap.values()];
 	}
 
 	updateChildren(key: string, data: any[]) {
-		const node = this.nodesMap[key];
+		const node = this.nodesMap.get(key);
 		if (!node) return;
 		const childNodes = node.childNodes;
 		for (let i = childNodes.length - 1; i >= 0; i--) {
@@ -454,23 +447,22 @@ export class TreeStore {
 		}
 	}
 
-	_setCheckedValues(key: string | number, leafOnly = false, checkedValues: Record<string | number, boolean>) {
+	_setCheckedValues(key: string | number, leafOnly = false, checkedValues: Set<string | number>) {
 		const allNodes = this._getAllNodes().sort((a, b) => b.states.level - a.states.level);
-		const cache = Object.create(null);
-		const keys = Object.keys(checkedValues);
+		const cache = new Set<string | number>();
 		allNodes.forEach(node => node.setChecked(false, false));
 		for (let i = 0, j = allNodes.length; i < j; i++) {
 			const node = allNodes[i];
-			const nodeKey = node.states.data[key].toString();
-			const checked = keys.indexOf(nodeKey) > -1;
+			const nodeKey = node.states.data[key];
+			const checked = checkedValues.has(nodeKey);
 			if (!checked) {
-				if (node.states.checked && !cache[nodeKey]) {
+				if (node.states.checked && !cache.has(nodeKey)) {
 					node.setChecked(false, false);
 				}
 			} else {
 				let parent = node.parentNode;
 				while (parent && parent.states.level > 0) {
-					cache[parent.states.data[key]] = true;
+					cache.add(parent.states.data[key]);
 					parent = parent.parentNode;
 				}
 				if (node.states.isLeaf || this.strict) {
@@ -498,12 +490,7 @@ export class TreeStore {
 
 	setCheckedNodes(array: TreeNode[], leafOnly = false) {
 		const key = this.primaryKey;
-		const checkedMap: Record<string | number, boolean> = {};
-		array.forEach((item) => {
-			checkedMap[(item || {})[key]] = true;
-		});
-
-		this._setCheckedValues(key, leafOnly, checkedMap);
+		this._setCheckedValues(key, leafOnly, new Set(array.map(item => (item || {})[key])));
 	}
 
 	setExpandedValues(values: (string | number)[]) {
@@ -557,7 +544,7 @@ export class TreeStore {
 
 	setUserCurrentNode(node: TreeNode) {
 		const key = node[this.primaryKey];
-		const currNode = this.nodesMap[key];
+		const currNode = this.nodesMap.get(key)!;
 		this.setCurrentNode(currNode);
 	}
 

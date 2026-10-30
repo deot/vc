@@ -1799,13 +1799,39 @@ describe('Tree store & node unit', () => {
 		store.filter('');
 	});
 
+	it('store: nodesMap 按 === 查找，原型上的属性名不会被当作节点', () => {
+		const store = new TreeStore({
+			data: [{ value: 1, label: 'One', children: [{ value: 11, label: 'One-One' }] }]
+		} as any);
+		expect(store.getNode(11)!.getter.label).toBe('One-One');
+		expect(store.getNode('11')).toBeNull();
+		expect(store.getNode('constructor')).toBeNull();
+		expect(store.getNode('toString')).toBeNull();
+		expect(store.getNode('__proto__')).toBeNull();
+	});
+
+	it('numerable：字符串勾选值转为数字后勾选；不开启时不匹配', async () => {
+		const numbers = [{ value: 1, label: 'One', children: [{ value: 11, label: 'One-One' }, { value: 12, label: 'One-Two' }] }];
+		const getChecked = () => Array.from(document.querySelectorAll('.vc-tree-node.is-checked > .vc-tree-node__content'))
+			.map(el => el.textContent?.trim());
+		const strict = mount(() => <Tree data={numbers} modelValue={['11']} checkable defaultExpandAll />, { attachTo: document.body });
+		await flush();
+		expect(getChecked()).toEqual([]);
+		strict.unmount();
+
+		const wrapper = mount(() => <Tree data={numbers} modelValue={['11']} checkable defaultExpandAll numerable />, { attachTo: document.body });
+		await flush();
+		expect(getChecked()).toEqual(['One-One']);
+		wrapper.unmount();
+	});
+
 	it('store: filter restores the expanded state when the keyword is cleared', () => {
 		const store = new TreeStore({
 			data: freshData(),
 			filterNode: (keyword: string, row: any) => !keyword || String(row.label || '').includes(keyword),
 			expandedValues: ['1']
 		} as any);
-		const expanded = () => Object.keys(store.nodesMap).filter(key => store.nodesMap[key].states.expanded).sort();
+		const expanded = () => [...store.nodesMap].filter(([, node]) => node.states.expanded).map(([key]) => key).sort();
 		expect(expanded()).toEqual(['1']);
 
 		store.filter('三级');
@@ -1815,7 +1841,7 @@ describe('Tree store & node unit', () => {
 		store.filter('三级 2');
 		store.filter('');
 		expect(expanded()).toEqual([]);
-		expect(Object.values(store.nodesMap).every(node => node.states.visible)).toBe(true);
+		expect([...store.nodesMap.values()].every(node => node.states.visible)).toBe(true);
 
 		// 再次搜索按当时的状态记录
 		store.getNode('3')!.expand();
@@ -2125,7 +2151,7 @@ describe('Tree store & node unit', () => {
 				const snapshot = async () => {
 					await flush();
 					snapshots.push([
-						...Object.entries(store.nodesMap).map(([key, { states }]) => `${key}:${states.checked}:${states.indeterminate}`),
+						...[...store.nodesMap].map(([key, { states }]) => `${key}:${states.checked}:${states.indeterminate}`),
 						...events.splice(0)
 					]);
 				};
@@ -2142,7 +2168,7 @@ describe('Tree store & node unit', () => {
 
 		for (let i = 0; i < 30; i++) {
 			const source = createNodes(0).concat(createNodes(0));
-			const values = Object.keys(new TreeStore({ data: JSON.parse(JSON.stringify(source)) } as any).nodesMap);
+			const values = [...new TreeStore({ data: JSON.parse(JSON.stringify(source)) } as any).nodesMap.keys()] as string[];
 			const steps = [pick(values), pick(values), [], pick(values)];
 			expect(await run(source, steps, false)).toEqual(await run(source, steps, true));
 		}

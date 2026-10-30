@@ -391,7 +391,7 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 | allowDrag | 拖拽许可 | `({ node, data }) => boolean` | - | - |
 | allowDrop | 落点许可，参数见“拖拽节点” | `({ node, data, targetNode, position, from, to }) => boolean` | - | - |
 | separator | 字符串勾选值的分隔符 | `string` | - | `','` |
-| numerable | 字符串输入值是否转为数字 | `boolean` | - | `false` |
+| numerable | 把输入值中的字符串转为数字；value 按 `===` 比较，数字 `data` 配字符串值时需开启 | `boolean` | - | `false` |
 | max | 非数组输入时，`1` 输出首个值，`> 1` 输出分隔符字符串；不限制勾选数 | `number` | `>= 1` | `Infinity` |
 | nullValue | 已声明的兼容属性，当前转换逻辑不使用它替代空值 | `number \| string \| object` | - | `undefined` |
 | iconClass | 已声明的兼容属性，当前渲染未使用 | `string` | - | - |
@@ -491,7 +491,7 @@ TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字
 | tag | 触发器根元素 | `string` | - | `'div'` |
 | id | 输入框 id | `string` | - | - |
 | separator | 字符串值分隔符 | `string` | - | `','` |
-| numerable | 字符串输入值转为数字 | `boolean` | - | `false` |
+| numerable | 把输入值中的字符串转为数字；value 按 `===` 比较，数字 `data` 配字符串值时需开启 | `boolean` | - | `false` |
 | nullValue | 兼容属性，当前空值转换不使用该替代值 | `number \| string \| object` | - | `undefined` |
 
 继承声明的 `renderOption`、`renderOptionGroup`、`renderLabel`、`label` 当前不参与 TreeSelect 渲染；自定义节点内容请使用 `renderNodeLabel`。

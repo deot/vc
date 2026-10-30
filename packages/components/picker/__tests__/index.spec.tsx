@@ -264,6 +264,22 @@ describe('PickerView', () => {
 		wrapper.unmount();
 	});
 
+	it('value 按 === 比较：数字选项配字符串值时需开启 numerable', async () => {
+		const data = [{ value: 1, label: 'One' }, { value: 2, label: 'Two' }];
+		expect(getSelectedData(['2'], data).label).toEqual([]);
+		expect(getSelectedData([2], data).label).toEqual(['Two']);
+
+		const value = ref<any>(['2']);
+		const wrapper = mount(() => (
+			<PickerView v-model={value.value} data={data} cascader={false} columns={1} numerable />
+		), { attachTo: document.body });
+		await flush();
+		const col = wrapper.findComponent(PickerCol);
+		expect(col.props('value')).toBe(2);
+
+		wrapper.unmount();
+	});
+
 	it('supports string modelValue with separator', async () => {
 		const value = ref<any>('2026|spring');
 		const onChange = vi.fn();

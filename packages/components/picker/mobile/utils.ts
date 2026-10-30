@@ -44,7 +44,7 @@ export const getSelectedData = (
 				const column = source[index] as PickerColumn | undefined;
 				if (!column) return;
 
-				const target = column.map(normalizeRow).find(it => it.value == item);
+				const target = column.map(normalizeRow).find(it => it.value === item);
 				if (!target) return;
 
 				data.push(target);
@@ -52,7 +52,7 @@ export const getSelectedData = (
 			});
 		} else {
 			value.reduce((pre: PickerColumn, cur) => {
-				const target = pre.map(normalizeRow).find(it => it.value == cur);
+				const target = pre.map(normalizeRow).find(it => it.value === cur);
 				if (!target) return [];
 
 				data.push(target);

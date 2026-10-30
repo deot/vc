@@ -41,7 +41,7 @@ export const PickerView = defineComponent({
 				data[index] = makeColumnData(temp);
 
 				const target = (
-					temp.find(i => i.value == currentValue.value[index])
+					temp.find(i => i.value === currentValue.value[index])
 					|| temp[0]
 					|| {}
 				) as PickerData;
@@ -58,7 +58,7 @@ export const PickerView = defineComponent({
 			rebuildData.value.forEach((item, index) => {
 				if (index < colIndex) return;
 
-				const target = item.find(row => row.value == next[index]) || item[0];
+				const target = item.find(row => row.value === next[index]) || item[0];
 				if (target) {
 					next.splice(index, 1, target.value);
 				} else {

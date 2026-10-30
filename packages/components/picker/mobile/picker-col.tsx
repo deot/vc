@@ -38,7 +38,7 @@ export const PickerCol = defineComponent({
 		const startTime = ref(0);
 
 		const selectedIndex = computed(() => {
-			const index = props.data.findIndex(item => getRowValue(item) == props.value);
+			const index = props.data.findIndex(item => getRowValue(item) === props.value);
 			return index >= 0 ? index : 0;
 		});
 

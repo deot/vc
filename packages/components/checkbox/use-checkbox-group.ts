@@ -19,8 +19,8 @@ export const useCheckboxGroup = () => {
 	);
 
 	const reset = (v: any) => {
-		const index = currentValue.value.findIndex(i => i == v);
-		index == -1
+		const index = currentValue.value.indexOf(v);
+		index === -1
 			? currentValue.value.push(v)
 			: currentValue.value.splice(index, 1);
 	};

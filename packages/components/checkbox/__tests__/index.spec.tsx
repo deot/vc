@@ -191,6 +191,23 @@ describe('checkbox-group.tsx', () => {
 
 		expect(onChange).toHaveBeenCalledWith([], expect.anything(), expect.any(Function));
 	});
+
+	it('value 按 === 比较：字符串不匹配数字，勾选与取消一致', async () => {
+		const onChange = vi.fn();
+		const wrapper = mount(() => (
+			<CheckboxGroup
+				modelValue={['1']}
+				onChange={onChange}
+				v-slots={{ default: () => [<Checkbox value={1} label="One" />] }}
+			/>
+		));
+		await nextTick();
+		expect(wrapper.find('.vc-checkbox').classes()).not.toContain('is-checked');
+
+		// 未勾选的项点击后是加入，而不是删掉字符串 '1'
+		await wrapper.find('input').trigger('change');
+		expect(onChange).toHaveBeenCalledWith(['1', 1], expect.anything(), expect.any(Function));
+	});
 });
 
 describe('mobile', () => {
