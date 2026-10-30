@@ -130,7 +130,7 @@ import { Image } from '@deot/vc';
 | fit | 图片如何适应容器，同原生 `object-fit` | `string` | `fill`、`contain`、`cover`、`none`、`scale-down` | - |
 | lazy | 是否在滚动容器中延迟加载 | `boolean` | - | `false` |
 | wrapper | 懒加载时使用的滚动容器元素或选择器；未提供时自动查找 | `HTMLElement \| string` | - | - |
-| previewable | 点击已加载图片时是否打开预览 | `boolean` | - | `true` |
+| previewable | 点击已加载图片时是否打开预览；预览从这张图放大、关闭时缩回这张图 | `boolean` | - | `true` |
 
 
 ### 事件

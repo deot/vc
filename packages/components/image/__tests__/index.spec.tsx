@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Image } from '@deot/vc-components';
+import { Image, ImagePreview } from '@deot/vc-components';
 import { enUS, zhCN } from '@deot/vc-locale';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
@@ -49,6 +49,27 @@ describe('index.ts', () => {
 		VcInstance.configure({ locale: enUS });
 		await nextTick();
 		expect(wrapper.find('.vc-image__error').text()).toBe('Failed to load image');
+	});
+
+	it('passes itself to the preview, so a link around it does not become the zoom origin', async () => {
+		class LoadImage {
+			onload: ((event: Event) => void) | null = null;
+			onerror: ((event: Event) => void) | null = null;
+			setAttribute() {}
+			set src(_value: string) {
+				setTimeout(() => this.onload?.(new Event('load')));
+			}
+		}
+		vi.stubGlobal('Image', LoadImage);
+		const open = vi.spyOn(ImagePreview, 'open').mockImplementation(() => undefined as any);
+		const wrapper = mount(() => (<a href="#"><Image src="preview.png" previewable /></a>), { attachTo: document.body });
+		await new Promise(resolve => setTimeout(resolve, 10));
+		await nextTick();
+		const img = wrapper.find('img');
+		await img.trigger('click');
+		expect(open).toHaveBeenCalledWith({ data: [{ src: 'preview.png', element: img.element }] });
+		open.mockRestore();
+		wrapper.unmount();
 	});
 
 	describe('formatter', () => {

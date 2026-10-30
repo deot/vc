@@ -1,14 +1,12 @@
 import { defineComponent, h, mergeProps, Transition } from 'vue';
 import type { PropType } from 'vue';
 import { VcInstance } from '../vc';
-import { fade, reveal, toRect } from './reveal';
+import { CLICKABLE, fade, reveal, toRect } from './reveal';
 import type { RevealMotion, RevealRect } from './reveal';
 import { timingOf } from './transition-props';
 import type { Timing } from './transition-props';
 
 const COMPONENT_NAME = 'vc-transition-reveal';
-// 点在按钮、链接里的文字或图标上时，从整个按钮展开
-const CLICKABLE = 'button, a, [role="button"]';
 
 /**
  * 子元素从触发元素展开、缩回原处。父元素是裁切的窗口：动画期间写入 clip-path，

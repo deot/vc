@@ -33,6 +33,9 @@ export const REVEAL_DURATION = 333;
 export const REVEAL_EASING = `cubic-bezier(${CURVE.join(', ')})`;
 
 // 元素在视口里的盒子；不在文档里或没有尺寸时为 null
+// 点在按钮、链接里的文字或图标上时，从整个按钮、链接展开
+export const CLICKABLE = 'button, a, [role="button"]';
+
 export const toRect = (el?: Element | null): RevealRect | null => {
 	if (!el?.isConnected) return null;
 	const { left, top, width, height } = el.getBoundingClientRect();

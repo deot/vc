@@ -1,13 +1,14 @@
-import { REVEAL_DURATION } from '../../transition/reveal';
+import { CLICKABLE, REVEAL_DURATION } from '../../transition/reveal';
 
 export type { RevealRect as Rect } from '../../transition/reveal';
 export type Size = { w: number; h: number };
 export type Point = { x: number; y: number };
 
-// 点在缩略图上用缩略图。点在同一项的其它位置时，缩略图只是项的开头，改从这一项开始
+// 点在缩略图上用缩略图。点在同一项的其它位置时，缩略图只是项的开头，改从这一项开始；
+// 点在按钮、链接里的文字或图标上时，与 Modal 一样从整个按钮、链接开始（取最近的一层）
 export const resolveTriggerElement = (stored: Element | null, clicked: Element | null) => {
 	if (clicked?.isConnected && !(stored?.isConnected && (stored === clicked || stored.contains(clicked)))) {
-		return clicked.closest('.vc-file-preview__item') ?? clicked;
+		return clicked.closest(`.vc-file-preview__item, ${CLICKABLE}`) ?? clicked;
 	}
 	return stored || clicked || null;
 };

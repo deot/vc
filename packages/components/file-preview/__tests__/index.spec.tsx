@@ -788,6 +788,19 @@ describe('FilePreview', () => {
 		expect(viewerEl().classList.contains('is-zoom')).toBe(true);
 	});
 
+	it('zooms from the whole button when the click lands on its label, like Modal', async () => {
+		const trigger = createTrigger('button', rectOf(10, 20, 100, 40));
+		const label = document.createElement('span');
+		label.getBoundingClientRect = () => rectOf(30, 30, 40, 20);
+		trigger.append(label);
+		trigger.addEventListener('click', () => {
+			FilePreview.open({ data: [{ source: report, type: 'file', name: 'a' }] });
+		});
+		label.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		await flush();
+		expect(motion()?.clip[0]).toBe('inset(20px 914px 708px 10px)');
+	});
+
 	it('zooms from triggerElement instead of the click, and keeps the click with null', async () => {
 		const anchor = createTrigger('div', rectOf(10, 20, 100, 40));
 		const clicked = createTrigger('button', rectOf(500, 20, 100, 40));

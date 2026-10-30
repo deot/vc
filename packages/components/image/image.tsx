@@ -231,9 +231,10 @@ export const Image = defineComponent({
 			return !isSupportObjectFit && props.fit !== ObjectFit.FILL;
 		});
 
-		const handlePreview = () => {
+		// 把自己交给预览：从这张图放大、缩回，外层包着链接、按钮时也不改从它们开始
+		const handlePreview = (e: MouseEvent) => {
 			if (!props.previewable || !previewSrc.value) return;
-			ImagePreview.open({ data: [previewSrc.value] });
+			ImagePreview.open({ data: [{ src: previewSrc.value, element: e.currentTarget as Element }] });
 		};
 
 		watch(
