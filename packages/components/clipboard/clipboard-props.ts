@@ -1,7 +1,8 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
+import type { ClipboardValue } from './utils';
 
 export const props = {
-	value: String,
+	value: [String, Object] as PropType<ClipboardValue>,
 	tag: {
 		type: [String, Object, Function],
 		default: 'div'

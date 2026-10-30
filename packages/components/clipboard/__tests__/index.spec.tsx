@@ -7,16 +7,26 @@ import { mount } from '@vue/test-utils';
 import { markRaw } from 'vue';
 import { copyToClipboard, toggleSelection, group } from '../utils';
 
+// jsdom 未实现 execCommand 和 ClipboardEvent，按浏览器行为派发 copy 事件并记录写入的格式
+let written: Record<string, string>;
+let prevented: boolean;
+const mockCopy = () => vi.fn(() => {
+	written = {};
+	const e = new Event('copy', { cancelable: true }) as any;
+	e.clipboardData = { setData: (type: string, value: string) => { written[type] = value; } };
+	document.dispatchEvent(e);
+	prevented = e.defaultPrevented;
+	return true;
+});
+
 beforeEach(() => {
-	// jsdom 未实现 execCommand, 默认 mock 成功
-	document.execCommand = vi.fn(() => true);
+	written = {};
+	document.execCommand = mockCopy();
 });
 
 afterEach(() => {
 	VcInstance.configure({ locale: zhCN });
 	vi.restoreAllMocks();
-	// @ts-ignore
-	delete (window as any).clipboardData;
 });
 
 describe('index.ts', () => {
@@ -132,6 +142,21 @@ describe('clipboard.tsx', () => {
 		expect(success).not.toHaveBeenCalled();
 	});
 
+	it('value: 对象按 MIME 类型写入，before / after 透传对象', async () => {
+		const value = { 'text/plain': 'a\tb', 'text/html': '<table><tr><td>a</td><td>b</td></tr></table>' };
+		const onBefore = vi.fn((_e: any, v: any) => ({ ...v, 'text/html': `<b>${v['text/html']}</b>` }));
+		const onAfter = vi.fn();
+		const wrapper = mount(() => (
+			<Clipboard value={value} onBefore={onBefore} onAfter={onAfter} />
+		));
+
+		await wrapper.trigger('click');
+
+		expect(onBefore).toHaveBeenCalledWith(expect.anything(), value);
+		expect(written).toEqual({ 'text/plain': 'a\tb', 'text/html': `<b>${value['text/html']}</b>` });
+		expect(onAfter).toHaveBeenCalledWith(written);
+	});
+
 	it('error: onBefore 抛错时触发 error 事件', async () => {
 		const onError = vi.fn();
 		const error = new Error('boom');
@@ -147,11 +172,6 @@ describe('clipboard.tsx', () => {
 
 	it('click: 复制失败时不调用提示与 onAfter', async () => {
 		(document.execCommand as any) = vi.fn(() => { throw new Error('fail'); });
-		// @ts-ignore
-		(window as any).clipboardData = {
-			setData: () => { throw new Error('fail'); }
-		};
-		vi.spyOn(console, 'log').mockImplementation(() => {});
 		const success = vi.spyOn(Message, 'success').mockImplementation(() => ({}) as any);
 		const onAfter = vi.fn();
 		const wrapper = mount(() => (<Clipboard value="hello" onAfter={onAfter} />));
@@ -164,30 +184,66 @@ describe('clipboard.tsx', () => {
 });
 
 describe('utils.ts', () => {
-	it('copyToClipboard: 成功返回 true', () => {
+	it('copyToClipboard: 成功返回 true，字符串只写纯文本', () => {
 		expect(copyToClipboard('hello')).toBe(true);
+		expect(written).toEqual({ 'text/plain': 'hello' });
 	});
 
-	it('copyToClipboard: execCommand 失败时降级到 clipboardData', () => {
+	it('copyToClipboard: 对象一次写入多种格式，事件被阻止默认行为', () => {
+		expect(copyToClipboard({ 'text/plain': 'a', 'text/html': '<b>a</b>' })).toBe(true);
+		expect(written).toEqual({ 'text/plain': 'a', 'text/html': '<b>a</b>' });
+		expect(prevented).toBe(true);
+	});
+
+	it('copyToClipboard: 结束后移除 copy 监听，不影响用户之后的复制', () => {
+		copyToClipboard({ 'text/html': '<b>a</b>' });
+		written = {};
+		const e = new Event('copy', { cancelable: true }) as any;
+		e.clipboardData = { setData: (type: string, value: string) => { written[type] = value; } };
+		document.dispatchEvent(e);
+
+		expect(written).toEqual({});
+		expect(e.defaultPrevented).toBe(false);
+	});
+
+	it('copyToClipboard: execCommand 返回 false 或抛错时返回 false', () => {
 		(document.execCommand as any) = vi.fn(() => false);
-		const setData = vi.fn();
-		// @ts-ignore
-		(window as any).clipboardData = { setData };
+		expect(copyToClipboard('hello')).toBe(false);
 
-		expect(copyToClipboard('hello')).toBe(true);
-		expect(setData).toHaveBeenCalledWith('text', 'hello');
+		(document.execCommand as any) = vi.fn(() => { throw new Error('fail'); });
+		expect(copyToClipboard('hello')).toBe(false);
 	});
 
-	it('copyToClipboard: 降级写入抛错时返回 undefined', () => {
-		(document.execCommand as any) = vi.fn(() => { throw new Error('fail'); });
-		// @ts-ignore
-		(window as any).clipboardData = {
-			setData: () => { throw new Error('fail'); }
-		};
-		const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+	it('copyToClipboard: 未传内容时写入空文本', () => {
+		expect(copyToClipboard()).toBe(true);
+		expect(written).toEqual({ 'text/plain': '' });
+	});
 
-		expect(copyToClipboard('hello')).toBeUndefined();
-		expect(log).toHaveBeenCalled();
+	it('copyToClipboard: copy 事件没有 clipboardData 时交给浏览器默认行为', () => {
+		(document.execCommand as any) = vi.fn(() => {
+			const e = new Event('copy', { cancelable: true });
+			document.dispatchEvent(e);
+			prevented = e.defaultPrevented;
+			return true;
+		});
+
+		expect(copyToClipboard('hello')).toBe(true);
+		expect(prevented).toBe(false);
+	});
+
+	it('copyToClipboard: 有选区但没有 activeElement 时仍能复制', () => {
+		const el = document.createElement('div');
+		el.textContent = 'hello';
+		document.body.appendChild(el);
+		const range = document.createRange();
+		range.selectNodeContents(el);
+		document.getSelection()!.addRange(range);
+		vi.spyOn(document, 'activeElement', 'get').mockReturnValue(null);
+
+		expect(copyToClipboard('hello')).toBe(true);
+		expect(written).toEqual({ 'text/plain': 'hello' });
+
+		document.body.removeChild(el);
 	});
 
 	it('toggleSelection: 无选区时返回空函数', () => {
@@ -249,7 +305,7 @@ describe('utils.ts', () => {
 		document.body.removeChild(textarea);
 	});
 
-	it('toggleSelection: activeElement 为空时提前返回', () => {
+	it('toggleSelection: activeElement 为空时同样清除并还原选区', () => {
 		const el = document.createElement('div');
 		el.textContent = 'hello';
 		document.body.appendChild(el);
@@ -261,7 +317,10 @@ describe('utils.ts', () => {
 		selection.addRange(range);
 
 		const spy = vi.spyOn(document, 'activeElement', 'get').mockReturnValue(null);
-		expect(toggleSelection()).toBeUndefined();
+		const restore = toggleSelection();
+		expect(selection.rangeCount).toBe(0);
+		restore();
+		expect(selection.rangeCount).toBe(1);
 
 		spy.mockRestore();
 		document.body.removeChild(el);
@@ -286,11 +345,9 @@ describe('utils.ts', () => {
 	});
 
 	it('group.clear: 复制空字符串', () => {
-		const spy = vi.fn(() => true);
-		(document.execCommand as any) = spy;
-
 		expect(group.clear()).toBe(true);
-		expect(spy).toHaveBeenCalledWith('copy');
+		expect(document.execCommand).toHaveBeenCalledWith('copy');
+		expect(written).toEqual({ 'text/plain': '' });
 	});
 
 	it('group.get: 读取剪贴板内容', async () => {

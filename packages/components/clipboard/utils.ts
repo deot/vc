@@ -15,8 +15,7 @@ export const toggleSelection = () => {
 		ranges.push(selection.getRangeAt(i));
 	}
 
-	if (!active) return;
-	switch (active.tagName.toUpperCase()) { // .toUpperCase handles XHTML
+	switch (active?.tagName.toUpperCase()) { // .toUpperCase handles XHTML
 		case 'INPUT':
 		case 'TEXTAREA':
 			active.blur();
@@ -39,65 +38,64 @@ export const toggleSelection = () => {
 	};
 };
 
-export const copyToClipboard = (value: string) => {
-	let reselectPrevious: any;
-	let range: any;
-	let selection: any;
-	let mark: any;
-	let success: any;
+/**
+ * 复制内容：字符串即纯文本；对象以 MIME 类型为键，一次写入多种格式，如
+ * { 'text/plain': text, 'text/html': html }
+ */
+export type ClipboardValue = string | Record<string, string>;
+
+export const copyToClipboard = (value: ClipboardValue = '') => {
+	const data = typeof value === 'string' ? { 'text/plain': value } : value;
+	// 在copy事件里写入，保证每种格式都是原样内容，而不是浏览器对选区的序列化
+	const handleCopy = (e: ClipboardEvent) => {
+		if (!e.clipboardData) return;
+		e.preventDefault();
+		Object.keys(data).forEach((type) => {
+			e.clipboardData!.setData(type, data[type]);
+		});
+	};
+
+	// 取消用户选中的文字
+	const reselectPrevious = toggleSelection();
+	const range = document.createRange();
+	const selection = document.getSelection()!;
+
+	const mark = document.createElement('span') as any;
+	mark.textContent = data['text/plain'] || '';
+	// 重置span元素的用户样式
+	mark.style.all = 'unset';
+	// 防止滚动到页面的末尾
+	mark.style.position = 'fixed';
+	mark.style.top = 0;
+	mark.style.clip = 'rect(0, 0, 0, 0)';
+	// 用于保存空格和换行符
+	mark.style.whiteSpace = 'pre';
+	// 不要继承user-select(可能是“none”)
+	mark.style.webkitUserSelect = 'text';
+	mark.style.MozUserSelect = 'text';
+	mark.style.msUserSelect = 'text';
+	mark.style.userSelect = 'text';
+
+	document.body.appendChild(mark);
+
+	// 设置Range的范围，包括referenceNode和它的所有后代(子孙)节点
+	range.selectNode(mark);
+	selection.addRange(range);
+	document.addEventListener('copy', handleCopy);
+
+	let success = false;
 	try {
-		// 取消用户选中的文字
-		reselectPrevious = toggleSelection();
-
-		range = document.createRange();
-		selection = document.getSelection();
-
-		mark = document.createElement('span');
-		mark.textContent = value;
-		// 重置span元素的用户样式
-		mark.style.all = 'unset';
-		// 防止滚动到页面的末尾
-		mark.style.position = 'fixed';
-		mark.style.top = 0;
-		mark.style.clip = 'rect(0, 0, 0, 0)';
-		// 用于保存空格和换行符
-		mark.style.whiteSpace = 'pre';
-		// 不要继承user-select(可能是“none”)
-		mark.style.webkitUserSelect = 'text';
-		mark.style.MozUserSelect = 'text';
-		mark.style.msUserSelect = 'text';
-		mark.style.userSelect = 'text';
-
-		document.body.appendChild(mark);
-
-		// 设置Range的范围，包括referenceNode和它的所有后代(子孙)节点
-		range.selectNode(mark);
-		selection.addRange(range);
-
-		if (!document.execCommand('copy')) {
-			throw new Error('copy command was unsuccessful');
-		}
-		success = true;
+		success = document.execCommand('copy');
 	} catch {
-		// IE
-		try {
-			// @ts-ignore
-			window.clipboardData && window.clipboardData.setData('text', value);
-			success = true;
-		} catch (error) {
-			console.log(error);
-		}
+		// execCommand不可用时视为失败
 	} finally {
-		if (selection) {
-			if (typeof selection.removeRange == 'function') {
-				selection.removeRange(range);
-			} else {
-				selection.removeAllRanges();
-			}
+		document.removeEventListener('copy', handleCopy);
+		if (typeof selection.removeRange == 'function') {
+			selection.removeRange(range);
+		} else {
+			selection.removeAllRanges();
 		}
-		if (mark) {
-			document.body.removeChild(mark);
-		}
+		document.body.removeChild(mark);
 		reselectPrevious();
 	}
 	return success;
