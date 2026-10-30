@@ -1,4 +1,5 @@
 import type { ComponentInternalInstance, ExtractPropTypes, PropType } from 'vue';
+import type { VirtualElement } from '../../vc';
 import type { FilePreviewItem } from '../types';
 
 export const props = {
@@ -15,9 +16,9 @@ export const props = {
 		default: null
 	},
 	/**
-	 * 点击打开的元素：当前项没有 element 时，打开的那一项用它放大与回退
+	 * 打开那一项的起点（open 时已按 triggerElement、element、点击位置的顺序取好），其余项用各自的 element
 	 */
-	triggerElement: Object as PropType<Element | null>,
+	triggerElement: Object as PropType<Element | VirtualElement | null>,
 	onClose: Function as PropType<() => void>
 };
 export type Props = ExtractPropTypes<typeof props>;

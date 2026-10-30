@@ -1,8 +1,8 @@
 import { createApp, defineComponent } from 'vue';
-import { vi } from 'vitest';
-import { VcError, VcInstance, defineVcPlugin } from '@deot/vc-components';
-import { Utils } from '@deot/dev-test';
+import { VcError, VcInstance, VirtualElement, defineVcPlugin } from '@deot/vc-components';
 import { enUS, zhCN } from '@deot/vc-locale';
+import { fireMouse } from '../../../hooks/__tests__/fixtures/drag';
+import { rectOf } from './fixtures/click';
 
 // @vitest-environment jsdom
 describe('index.ts', () => {
@@ -48,72 +48,86 @@ describe('index.ts', () => {
 		VcInstance.configure({ locale: zhCN });
 	});
 
-	it('VcInstance, getTriggerElement', async () => {
-		const click = (target: EventTarget) => target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-		const button = document.createElement('button');
-		const text = document.createTextNode('a');
-		button.append(text);
-		document.body.append(button);
-
-		await Utils.sleep(0);
-		VcInstance.getTriggerElement();
-		expect(VcInstance.getTriggerElement()).toBeNull();
-
-		// 点击所在的任务里（含处理函数和之后的微任务）总是返回它；文本节点取所在元素
-		let during: Element | null = null;
-		button.addEventListener('click', () => (during = VcInstance.getTriggerElement()), { once: true });
-		click(text);
-		expect(during).toBe(button);
-		await Promise.resolve();
-		expect(VcInstance.getTriggerElement()).toBe(button);
-		// 点击所在的任务里取过：之后的任务不再给
-		await Utils.sleep(0);
-		expect(VcInstance.getTriggerElement()).toBeNull();
-
-		// 之后的任务（如请求回来）：只给第一个来取的
-		click(button);
-		await Utils.sleep(0);
-		expect(VcInstance.getTriggerElement()).toBe(button);
-		expect(VcInstance.getTriggerElement()).toBeNull();
-
-		// 新的点击替换旧的
-		const other = document.createElement('a');
-		document.body.append(other);
-		click(button);
-		click(other);
-		await Utils.sleep(0);
-		expect(VcInstance.getTriggerElement()).toBe(other);
-
-		// 已移出文档
-		click(button);
-		await Utils.sleep(0);
-		button.remove();
-		expect(VcInstance.getTriggerElement()).toBeNull();
-
-		// 不是元素也不是节点
-		click(document);
-		await Utils.sleep(0);
-		expect(VcInstance.getTriggerElement()).toBeNull();
-		other.remove();
+	it('VirtualElement', () => {
+		const rect = { left: 1, top: 2, width: 3, height: 4 };
+		const el = document.createElement('div');
+		const virtual = new VirtualElement(rect, el);
+		// 盒子按创建时的值保存，之后改动传入的对象不影响
+		rect.left = 100;
+		expect(virtual.getBoundingClientRect()).toEqual({ left: 1, top: 2, width: 3, height: 4 });
+		expect(virtual.contextElement).toBe(el);
+		expect(new VirtualElement(rect).contextElement).toBeUndefined();
 	});
 
-	it('VcInstance, getTriggerElement 在假定时器下也在点击的任务结束后释放', async () => {
+	it('VirtualElement.fromEvent', () => {
 		const button = document.createElement('button');
+		const label = document.createElement('span');
+		button.append(label);
 		document.body.append(button);
-		await Utils.sleep(0);
-		VcInstance.getTriggerElement();
-		vi.useFakeTimers();
-		button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-		// 定时器不走，靠消息排到之后的任务
-		await new Promise((resolve) => {
-			const channel = new MessageChannel();
-			channel.port1.onmessage = () => (channel.port1.close(), resolve(null));
-			channel.port2.postMessage(null);
-		});
-		vi.useRealTimers();
-		expect(VcInstance.getTriggerElement()).toBe(button);
-		expect(VcInstance.getTriggerElement()).toBeNull();
+		button.getBoundingClientRect = () => rectOf(10, 20, 100, 40);
+		const eventOf = (target: EventTarget, init?: MouseEventInit) => fireMouse(target, 'contextmenu', init);
+
+		// 点在按钮里：取整个按钮此刻的盒子
+		const inside = eventOf(label, { detail: 1, clientX: 40, clientY: 30 });
+		expect(VirtualElement.fromEvent(inside)!.getBoundingClientRect()).toEqual({ left: 10, top: 20, width: 100, height: 40 });
+		expect(VirtualElement.fromEvent(inside)!.contextElement).toBe(button);
+		// 按钮已不在：取点下的那个点；没有坐标时为 null
 		button.remove();
+		expect(VirtualElement.fromEvent(inside)!.getBoundingClientRect()).toEqual({ left: 40, top: 30, width: 0, height: 0 });
+		expect(VirtualElement.fromEvent(eventOf(label))).toBeNull();
+		// 点在页面空白处：取点下的那个点
+		expect(VirtualElement.fromEvent(eventOf(document.body, { detail: 1, clientX: 5, clientY: 6 }))!.getBoundingClientRect())
+			.toEqual({ left: 5, top: 6, width: 0, height: 0 });
+	});
+
+	it('VirtualElement.fromClick', () => {
+		const click = (target: EventTarget, init?: MouseEventInit) => fireMouse(target, 'click', init);
+		const button = document.createElement('button');
+		const label = document.createElement('span');
+		const text = document.createTextNode('a');
+		label.append(text);
+		button.append(label);
+		document.body.append(button);
+		button.getBoundingClientRect = () => rectOf(10, 20, 100, 40);
+		label.getBoundingClientRect = () => rectOf(30, 30, 20, 10);
+
+		// 点在按钮里的文字、文本节点上，取整个按钮；用到时才量，量的是它此刻的盒子
+		click(text, { detail: 1, clientX: 40, clientY: 35 });
+		const trigger = VirtualElement.fromClick()!;
+		expect(trigger).toBeInstanceOf(VirtualElement);
+		expect(trigger.getBoundingClientRect()).toEqual({ left: 10, top: 20, width: 100, height: 40 });
+		expect(trigger.contextElement).toBe(button);
+		button.getBoundingClientRect = () => rectOf(10, 120, 100, 40);
+		// 取到的结果之后不变；再取量的是按钮此刻的位置
+		expect(trigger.getBoundingClientRect()).toEqual({ left: 10, top: 20, width: 100, height: 40 });
+		expect(VirtualElement.fromClick()!.getBoundingClientRect()).toEqual({ left: 10, top: 120, width: 100, height: 40 });
+
+		// 按钮被移除、隐藏后：退到点下的那个点
+		button.remove();
+		expect(VirtualElement.fromClick()!.getBoundingClientRect()).toEqual({ left: 40, top: 35, width: 0, height: 0 });
+		document.body.append(button);
+		button.getBoundingClientRect = () => rectOf(0, 0, 0, 0);
+		expect(VirtualElement.fromClick()!.getBoundingClientRect()).toEqual({ left: 40, top: 35, width: 0, height: 0 });
+
+		// 键盘、el.click() 没有坐标：按钮不在时为 null
+		click(button);
+		expect(VirtualElement.fromClick()).toBeNull();
+
+		// 不在按钮、链接里时取元素本身
+		const cell = document.createElement('div');
+		cell.getBoundingClientRect = () => rectOf(0, 0, 50, 20);
+		document.body.append(cell);
+		click(cell);
+		expect(VirtualElement.fromClick()!.getBoundingClientRect()).toEqual({ left: 0, top: 0, width: 50, height: 20 });
+
+		// 点在页面空白处、不是节点时清掉
+		click(document.body, { detail: 1, clientX: 5, clientY: 5 });
+		expect(VirtualElement.fromClick()).toBeNull();
+		click(cell);
+		click(document);
+		expect(VirtualElement.fromClick()).toBeNull();
+		button.remove();
+		cell.remove();
 	});
 
 	it('defineVcPlugin', () => {

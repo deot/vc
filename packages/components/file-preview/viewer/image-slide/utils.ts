@@ -1,5 +1,6 @@
 import type { FilePreviewImageFit } from '../../types';
-import type { Point, Rect, Size } from '../utils';
+import type { RectLike } from '../../../vc';
+import type { Point, Size } from '../utils';
 
 export type Frame = { x: number; y: number; scale: number };
 
@@ -77,7 +78,7 @@ export const pan = (frame: Frame, delta: Point, natural: Size, viewport: Size) =
 };
 
 // 未旋转时 frame 在视口里的盒子
-export const frameRect = (frame: Frame, natural: Size): Rect => ({
+export const frameRect = (frame: Frame, natural: Size): RectLike => ({
 	left: frame.x,
 	top: frame.y,
 	width: natural.w * frame.scale,

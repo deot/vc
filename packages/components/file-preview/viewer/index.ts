@@ -1,4 +1,5 @@
 import type { ComponentInternalInstance } from 'vue';
+import type { VirtualElement } from '../../vc';
 import { Portal } from '../../portal';
 import type { FilePreviewItem } from '../types';
 import { resolveCurrent } from '../utils';
@@ -9,7 +10,7 @@ export type ViewerOpenOptions = {
 	data: FilePreviewItem[];
 	current?: number;
 	instance?: ComponentInternalInstance | null;
-	triggerElement?: Element | null;
+	triggerElement?: Element | VirtualElement | null;
 	onClose?: () => void;
 };
 

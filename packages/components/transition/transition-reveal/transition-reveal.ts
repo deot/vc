@@ -1,8 +1,9 @@
 import { defineComponent, h, mergeProps, Transition } from 'vue';
 import type { PropType } from 'vue';
-import { VcInstance } from '../../vc';
-import { CLICKABLE, fade, reveal, toRect } from './reveal';
-import type { RevealMotion, RevealRect } from './reveal';
+import type { RectLike } from '../../vc';
+import { VirtualElement } from '../../vc';
+import { fade, reveal, toRect } from './reveal';
+import type { RevealMotion } from './reveal';
 import { timingOf } from '../transition-props';
 import type { Timing } from '../transition-props';
 
@@ -16,11 +17,11 @@ export const TransitionReveal = defineComponent({
 	name: COMPONENT_NAME,
 	props: {
 		/**
-		 * 打开时从它展开，关闭时缩回它当时的位置；不传时取打开那次点击的元素。
-		 * 为 null、打开时已移出文档或没有尺寸时淡入淡出；关闭前才消失的（如随下拉菜单收起的菜单项）缩回打开时它所在的位置
+		 * 打开时从它展开，关闭时缩回它当时的位置；可以是元素或 VirtualElement。
+		 * 不传时取最近一次点击的位置（打开时量）；为 null、量不到尺寸时淡入淡出；元素在关闭前消失时缩回打开时的位置
 		 */
 		triggerElement: {
-			type: Object as PropType<Element | null>,
+			type: Object as PropType<Element | VirtualElement | null>,
 			default: undefined
 		},
 		/**
@@ -55,16 +56,15 @@ export const TransitionReveal = defineComponent({
 	// 当不声明emits的情况下，事件存在于attrs中
 	inheritAttrs: false,
 	setup(props, { slots, attrs }) {
-		// 打开时点中的元素；弱引用，弹层开着时它被移除也能回收（回收了说明已不在文档里，缩回 opened）
-		let clicked: WeakRef<Element> | null = null;
-		// 打开时量到的触发元素位置：关闭时它已不在文档里（如随下拉菜单收起的菜单项），缩回到这里
-		let opened: RevealRect | null = null;
+		// 打开时量到的位置：不传时关闭缩回这里；传入的元素在关闭前消失时也缩回这里
+		let opened: RectLike | null = null;
 		// 每个元素进行中的开合；v-if 切换时新旧元素各走各的
-		const running = new WeakMap<Element, { motion: RevealMotion; done: () => void; isLeave: boolean }>();
+		const running = new WeakMap<Element, { motion: RevealMotion; done: () => void }>();
 
 		const start = (el: Element, isLeave: boolean) => {
-			const target = props.triggerElement === undefined ? clicked?.deref() : props.triggerElement;
-			// 显式传 null 时淡出；其余量不到时缩回打开时的位置（没有时为 null）
+			const { triggerElement } = props;
+			// 不传时打开取最近一次点击的位置；传 null、没有点击时淡入淡出
+			const target = triggerElement === undefined && !isLeave ? VirtualElement.fromClick() : triggerElement;
 			const trigger = toRect(target) || (isLeave && target !== null ? opened : null);
 			isLeave || (opened = trigger);
 			const frame = el.parentElement;
@@ -81,29 +81,19 @@ export const TransitionReveal = defineComponent({
 			// 开合途中反向：沿原路退回
 			if (current) {
 				current.done = done;
-				current.isLeave = isLeave;
 				return current.motion.reverse();
 			}
-			const next = { motion: start(el, isLeave), done, isLeave };
+			const next = { motion: start(el, isLeave), done };
 			running.set(el, next);
 			next.motion.finished.then(() => {
 				running.delete(el);
 				next.done();
 				next.motion.cancel();
-				// 缩回结束后不再引用触发元素，它被移除后可以回收；下次打开重新取
-				next.isLeave && (clicked = null, opened = null);
 			});
 		};
 
 		const listeners = {
 			css: false,
-			onBeforeEnter: () => {
-				// 传了 triggerElement 时不取点击记录，留给其它弹层
-				if (props.triggerElement !== undefined) return;
-				const el = VcInstance.getTriggerElement();
-				const button = el?.closest(CLICKABLE) || el;
-				clicked = button && new WeakRef(button);
-			},
 			onEnter: (el: Element, done: () => void) => run(el, false, done),
 			onLeave: (el: Element, done: () => void) => run(el, true, done)
 		};

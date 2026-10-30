@@ -1,4 +1,7 @@
-export type RevealRect = { left: number; top: number; width: number; height: number };
+import { toRect } from '../../vc/virtual-element';
+import type { RectLike } from '../../vc';
+
+export { toRect };
 
 export type RevealMotion = {
 	finished: Promise<void>;
@@ -11,9 +14,9 @@ export type RevealOptions = {
 	frame: Element;
 	// 缩放的画面，transform 写在它上面
 	body: Element;
-	trigger: RevealRect;
+	trigger: RectLike;
 	// 画面静止时露出的盒子，相对 body 的左上角；缺省为整个 body
-	subject?: RevealRect | null;
+	subject?: RectLike | null;
 	isLeave?: boolean;
 	// 画面在播放的这一段里从透明淡入，isLeave 时淡出到透明；默认不透明
 	opacity?: boolean;
@@ -32,16 +35,6 @@ const CURVE = [0.4, 0, 0.22, 1];
 export const REVEAL_DURATION = 333;
 export const REVEAL_EASING = `cubic-bezier(${CURVE.join(', ')})`;
 
-// 元素在视口里的盒子；不在文档里或没有尺寸时为 null
-// 点在按钮、链接里的文字或图标上时，从整个按钮、链接展开
-export const CLICKABLE = 'button, a, [role="button"]';
-
-export const toRect = (el?: Element | null): RevealRect | null => {
-	if (!el?.isConnected) return null;
-	const { left, top, width, height } = el.getBoundingClientRect();
-	return width > 0 && height > 0 ? { left, top, width, height } : null;
-};
-
 // 透明度匀速变化：缓动起步慢，透明度跟着它走时前几十毫秒几乎看不见
 const opacityOf = (isLeave?: boolean): Keyframe[] => [{ opacity: isLeave ? 1 : 0 }, { opacity: isLeave ? 0 : 1 }];
 const LINEAR = 'linear';
@@ -51,7 +44,7 @@ const MAX_PROGRESS = 0.4;
 // 裁掉一段后至少播放的毫秒数：剩下的姿态不变，按比例放慢，不会一闪而过
 const MIN_PLAYED = 240;
 
-const insetOf = (rect: RevealRect, box: RevealRect) => {
+const insetOf = (rect: RectLike, box: RectLike) => {
 	const right = box.left + box.width - rect.left - rect.width;
 	const bottom = box.top + box.height - rect.top - rect.height;
 	return `inset(${rect.top - box.top}px ${right}px ${bottom}px ${rect.left - box.left}px)`;
@@ -98,7 +91,7 @@ const cutOf = (offset?: number, isLeave?: boolean) => {
  * @param subject 画面静止时的盒子
  * @returns 路程进度；走到终点仍压着 trigger 时为 null
  */
-const clearOf = (trigger: RevealRect, subject: RevealRect) => {
+const clearOf = (trigger: RectLike, subject: RectLike) => {
 	const [l, t, r, b] = [trigger.left, trigger.top, trigger.left + trigger.width, trigger.top + trigger.height];
 	const [L, T, R, B] = [subject.left, subject.top, subject.left + subject.width, subject.top + subject.height];
 	const progress = Math.min(

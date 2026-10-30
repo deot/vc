@@ -1,4 +1,5 @@
 import type { ExtractPropTypes, PropType } from 'vue';
+import type { VirtualElement } from '../vc';
 import { valueType } from '../customer/customer-props';
 import type { Props as ScrollerProps } from '../scroller/scroller-props';
 
@@ -34,10 +35,11 @@ export const props = {
 		default: true,
 	},
 	/**
-	 * 打开时从它展开，关闭时缩回它；不传时取打开它的那次点击（请求回来后才打开也算），传 null 时淡入淡出
+	 * 打开时从它展开，关闭时缩回它；可以是元素或 VirtualElement。
+	 * 不传时取最近一次点击的位置（打开时量，请求回来后才打开也算），传 null 时淡入淡出
 	 */
 	triggerElement: {
-		type: Object as PropType<Element | null>,
+		type: Object as PropType<Element | VirtualElement | null>,
 		default: undefined
 	},
 	closable: {

@@ -3,25 +3,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { nextTick, ref } from 'vue';
 import { config, mount } from '@vue/test-utils';
+import { Utils } from '@deot/dev-test';
 
 // 走真实 Transition，进入和离开钩子才会播放动画
 config.global.stubs.transition = false;
-import { TransitionReveal } from '@deot/vc-components';
-import { VcInstance } from '../../vc';
-import { clickOn } from '../../vc/__tests__/fixtures/click';
+import { TransitionReveal, VirtualElement } from '@deot/vc-components';
+import { clickOn, rectOf } from '../../vc/__tests__/fixtures/click';
 import { fade, reveal, toRect } from '../transition-reveal/reveal';
-
-const rectOf = (left: number, top: number, width: number, height: number) => ({
-	x: left,
-	y: top,
-	left,
-	top,
-	width,
-	height,
-	right: left + width,
-	bottom: top + height,
-	toJSON() { return {}; }
-}) as DOMRect;
 
 // 一段动画实际播放多久，以及裁掉的部分占整条时间轴的比例（拉长时两者都按同一系数变化，比例不变）
 const playedOf = (timing: EffectTiming) => (timing.delay || 0) + Number(timing.duration) + (timing.endDelay || 0);
@@ -307,9 +295,11 @@ describe('TransitionReveal', () => {
 		HTMLElement.prototype.getBoundingClientRect = layout;
 		rects.clear();
 		document.body.innerHTML = '';
+		// 清掉最近一次点击的位置，各用例互不影响
+		clickOn(null);
 	});
 
-	const mountReveal = (trigger?: Element | null, delay?: number | { enter?: number; leave?: number }) => {
+	const mountReveal = (trigger?: Element | VirtualElement | null, delay?: number | { enter?: number; leave?: number }) => {
 		const shown = ref(false);
 		const wrapper = mount({
 			setup: () => ({ shown, trigger, delay }),
@@ -324,6 +314,32 @@ describe('TransitionReveal', () => {
 		}, { attachTo: document.body });
 		return { shown, wrapper };
 	};
+
+	it('expands from the clicked point when the button is gone before opening, and shrinks back there', async () => {
+		const button = document.createElement('button');
+		button.getBoundingClientRect = () => rectOf(10, 20, 40, 20);
+		document.body.append(button);
+		rects.set('frame', rectOf(0, 0, 200, 100));
+		rects.set('panel', rectOf(40, 30, 80, 40));
+		const { shown, wrapper } = mountReveal();
+		const frame = wrapper.find('.frame').element;
+
+		// 如点下拉菜单项后先请求：请求回来时菜单已收起，菜单项被移出文档，退到点下的那个点（按钮中心 30,30）
+		await clickOn(button);
+		button.remove();
+		await Utils.sleep(0);
+		shown.value = true;
+		await nextTick();
+		expect(framesOf(frame, 'clipPath')).toEqual([['inset(30px 170px 70px 30px)', 'inset(30px 80px 30px 40px)']]);
+		frame.getAnimations().forEach(item => item.finish());
+		wrapper.find('.panel').element.getAnimations().forEach(item => item.finish());
+		for (let i = 0; i < 6; i++) await nextTick();
+
+		shown.value = false;
+		await nextTick();
+		expect(framesOf(frame, 'clipPath')[0][1]).toBe('inset(30px 170px 70px 30px)');
+		wrapper.unmount();
+	});
 
 	it('expands from the clicked button and returns along the same animation', async () => {
 		const button = document.createElement('button');
@@ -394,7 +410,7 @@ describe('TransitionReveal', () => {
 		wrapper.unmount();
 	});
 
-	it('keeps the trigger when a close is reversed, and forgets it after the close ends', async () => {
+	it('keeps the trigger when a close is reversed, and fades once the click is cleared', async () => {
 		const button = document.createElement('button');
 		button.getBoundingClientRect = () => rectOf(10, 20, 40, 20);
 		document.body.append(button);
@@ -423,7 +439,7 @@ describe('TransitionReveal', () => {
 		expect(framesOf(frame, 'clipPath')).toHaveLength(1);
 		await finish();
 
-		// 缩回结束后忘掉触发元素：不是点击打开时淡入
+		// 点在页面空白处后再打开：淡入
 		await toggle(true, null);
 		expect(framesOf(panel, 'opacity')).toEqual([[0, 1]]);
 		wrapper.unmount();
@@ -462,13 +478,43 @@ describe('TransitionReveal', () => {
 		rects.set('panel', rectOf(50, 20, 100, 40));
 		const { shown, wrapper } = mountReveal(trigger);
 		const button = document.createElement('button');
+		button.getBoundingClientRect = () => rectOf(100, 50, 40, 20);
 		document.body.append(button);
 		await clickOn(button);
 		shown.value = true;
 		await nextTick();
 		expect(framesOf(wrapper.find('.frame').element, 'clipPath')[0][0]).toBe('inset(0px 180px 90px 0px)');
-		// 不取点击记录，留给其它弹层
-		expect(VcInstance.getTriggerElement()).toBe(button);
+		wrapper.unmount();
+	});
+
+	it('expands from a zero-size VirtualElement such as a caret', async () => {
+		rects.set('frame', rectOf(0, 0, 200, 100));
+		rects.set('panel', rectOf(50, 20, 100, 40));
+		const { shown, wrapper } = mountReveal(new VirtualElement({ left: 5, top: 5, width: 0, height: 0 }));
+		shown.value = true;
+		await nextTick();
+		expect(framesOf(wrapper.find('.frame').element, 'clipPath')[0][0]).toBe('inset(5px 195px 95px 5px)');
+		wrapper.unmount();
+	});
+
+	it('shrinks back to where triggerElement was when it is removed before closing', async () => {
+		const trigger = document.createElement('a');
+		trigger.getBoundingClientRect = () => rectOf(0, 0, 20, 10);
+		document.body.append(trigger);
+		rects.set('frame', rectOf(0, 0, 200, 100));
+		rects.set('panel', rectOf(50, 20, 100, 40));
+		const { shown, wrapper } = mountReveal(trigger);
+		const frame = wrapper.find('.frame').element;
+		shown.value = true;
+		await nextTick();
+		[frame, wrapper.find('.panel').element].forEach(el => el.getAnimations().forEach(item => item.finish()));
+		for (let i = 0; i < 6; i++) await nextTick();
+
+		// 传入的元素关闭前已被移除：缩回打开时它所在的位置
+		trigger.remove();
+		shown.value = false;
+		await nextTick();
+		expect(framesOf(frame, 'clipPath')[0][1]).toBe('inset(0px 180px 90px 0px)');
 		wrapper.unmount();
 	});
 

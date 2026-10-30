@@ -14,7 +14,7 @@ export type RevealExposed = {
 };
 
 /**
- * 打开时画面从 triggerElement 放大到自己的位置，关闭时缩回它现在的位置。
+ * 打开时画面从 triggerElement 放大到自己的位置，关闭时缩回它现在的位置；量不到时用最近一次量到的位置。
  * 外层是不缩放的窗口，内层是画面，动画见 transition/transition-reveal/reveal
  */
 export const Reveal = defineComponent({
@@ -28,10 +28,14 @@ export const Reveal = defineComponent({
 		let motion: RevealMotion | null = null;
 		let isReady = false;
 		let isStopped = false;
+		// 最近一次量到的起点：打开的那一项在调用 open 时（与点击同一刻）先量一次。
+		// 起点元素之后被移除、隐藏（如图片解码期间、关闭前）时，打开、缩回都用这里
+		let last = props.animated ? toRect(props.triggerElement) : null;
 
 		// 动画开始的那一拍通知查看器，蒙层和工具栏一起动；缩不回去时也通知
 		const play = (isLeave: boolean) => {
-			const trigger = toRect(props.triggerElement);
+			const trigger = toRect(props.triggerElement) || last;
+			last = trigger;
 			motion?.cancel();
 			motion = trigger && frame.value && body.value
 				? reveal({ frame: frame.value, body: body.value, trigger, subject: subject?.(props.viewport), isLeave })

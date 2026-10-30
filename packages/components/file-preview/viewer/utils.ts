@@ -1,20 +1,12 @@
-import { CLICKABLE, REVEAL_DURATION } from '../../transition/transition-reveal/reveal';
+import type { VirtualElement } from '../../vc';
+import { REVEAL_DURATION } from '../../transition/transition-reveal/reveal';
 
-export type { RevealRect as Rect } from '../../transition/transition-reveal/reveal';
 export type Size = { w: number; h: number };
 export type Point = { x: number; y: number };
 
-// 点在缩略图上用缩略图。点在同一项的其它位置时，缩略图只是项的开头，改从这一项开始；
-// 点在按钮、链接里的文字或图标上时，与 Modal 一样从整个按钮、链接开始（取最近的一层）
-export const resolveTriggerElement = (stored: Element | null, clicked: Element | null) => {
-	if (clicked?.isConnected && !(stored?.isConnected && (stored === clicked || stored.contains(clicked)))) {
-		return clicked.closest(`.vc-file-preview__item, ${CLICKABLE}`) ?? clicked;
-	}
-	return stored || clicked || null;
-};
-
-// 点中元素里已加载的图片：大图解码前垫在下面，和 PhotoSwipe 的 msrc 一样
-export const thumbnailOf = (el: Element | null) => {
+// 起点元素里已加载的图片：大图解码前垫在下面，和 PhotoSwipe 的 msrc 一样；替身取它对应的元素（点击位置即点中的元素）
+export const thumbnailOf = (trigger: Element | VirtualElement | null) => {
+	const el = trigger instanceof Element ? trigger : trigger?.contextElement;
 	const img = el instanceof HTMLImageElement ? el : el?.querySelector('img');
 	const src = img?.currentSrc || img?.src;
 	if (!img || !src || !img.naturalWidth || !img.naturalHeight) return;

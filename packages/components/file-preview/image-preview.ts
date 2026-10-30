@@ -1,6 +1,6 @@
-import { VcInstance } from '../vc';
+import type { VirtualElement } from '../vc';
 import type { FilePreviewItem, FilePreviewItemInput } from './types';
-import { normalize } from './utils';
+import { normalize, resolveCurrent, resolveTrigger } from './utils';
 import { openViewer } from './viewer';
 
 type ImageInput = string | (Partial<FilePreviewItem> & {
@@ -17,7 +17,7 @@ export type ImagePreviewOpenOptions = {
 	/**
 	 * 同 FilePreview.open 的 triggerElement
 	 */
-	triggerElement?: Element | null;
+	triggerElement?: Element | VirtualElement | null;
 	onClose?: () => void;
 };
 
@@ -30,10 +30,9 @@ const toImage = (input: ImageInput): FilePreviewItemInput[] => {
 
 // 不经过 FilePreview.enhancer，避免和图片组件互相引用
 export const ImagePreview = {
-	open: ({ data, current, triggerElement = VcInstance.getTriggerElement(), onClose }: ImagePreviewOpenOptions = {}) => openViewer({
-		data: normalize((data || []).flatMap(toImage)),
-		current,
-		triggerElement,
-		onClose
-	})
+	open: ({ data, current, triggerElement, onClose }: ImagePreviewOpenOptions = {}) => {
+		const list = normalize((data || []).flatMap(toImage));
+		const index = resolveCurrent(list, current);
+		return openViewer({ data: list, current: index, triggerElement: resolveTrigger(triggerElement, list[index]?.element), onClose });
+	}
 };

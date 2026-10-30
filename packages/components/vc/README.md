@@ -107,7 +107,20 @@ export const restoreLocale = () => VcInstance.configure({ locale: originalLocale
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
 | configure | 按顶层键替换配置；省略参数或传入 `locale: undefined` 时保留当前语言 | `options?: VcOptions` | `typeof VcInstance`，可链式调用 |
-| getTriggerElement | 打开弹层的那次点击点中的元素（文本节点取所在元素），弹窗、预览据此从它展开。点击所在的任务里总是返回它；之后的任务里（如请求回来后才打开）返回最近一次点击的元素，一次点击只给一处用，点击所在的任务里取过之后也不再给；已移出文档时为 `null`。之后的任务里只弱引用该元素，移除后可以回收 | - | `Element \| null` |
+
+### VirtualElement
+
+元素的替身：只有一个固定的盒子，可以代替元素给出位置，用作弹窗、预览的 `triggerElement`，如选中文字的位置 `new VirtualElement(range.getBoundingClientRect())`、图表上的一个点；宽高为 0 时就是一个点（如光标），从这一点展开。弹窗、预览不传 `triggerElement` 时，用 `VirtualElement.fromClick()` 取最近一次点击的位置。
+
+| 成员 | 说明 | 类型 |
+| --- | --- | --- |
+| constructor | 由盒子创建；`element` 可选，弱引用，只用来补充位置以外的信息 | `(rect: RectLike, element?: Element \| null)` |
+| getBoundingClientRect | 返回创建时的盒子，之后不变 | `() => RectLike` |
+| contextElement | 对应的元素，可能已不在文档里或已被回收 | `Element \| undefined` |
+| fromClick | 静态方法：最近一次点击的位置。点击时只记下点中的按钮、链接（文字、图标取整个按钮、链接，否则取元素本身；弱引用）和点下的坐标，不读布局；调用时才量：按钮还在取它此刻的盒子，已被移除或隐藏时取点下的那个点（如请求回来时下拉菜单已收起）；还没有点击、点在页面空白处、键盘点击后按钮已不在时为 `null`。点击记录在模块加载时自动开始 | `() => VirtualElement \| null` |
+| fromEvent | 静态方法：由一个鼠标事件量出替身，调用时就量（如右键菜单、自己的点击处理里、`await` 之前）；点中的按钮、链接还在时取它此刻的盒子，否则取点下的那个点，都没有时为 `null` | `(e: MouseEvent) => VirtualElement \| null` |
+
+`RectLike` 为 `{ left, top, width, height }`。
 
 ### VcOptions 配置项
 

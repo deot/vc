@@ -247,7 +247,7 @@ export const ModalView = defineComponent({
 						class="vc-modal__mask"
 						onClick={e => handleClose(e, props.maskClosable)}
 					/>
-					{/* 从打开那次点击的元素展开、缩回；wrapper 铺满视口且不缩放，是展开的窗口。按布局从刚离开按钮的姿态立即弹出，按钮上不留残影 */}
+					{/* 从最近一次点击的位置展开、缩回；wrapper 铺满视口且不缩放，是展开的窗口。按布局从刚离开按钮的姿态立即弹出，按钮上不留残影 */}
 					<div
 						ref={wrapper}
 						style={props.wrapperStyle}

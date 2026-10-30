@@ -1,12 +1,13 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import { useGesture, useKeyboard, useScrollbar } from '@deot/vc-hooks';
+import type { VirtualElement } from '../../vc';
 import type { GestureMoveEndEvent, GestureMoveEvent, GestureMoveStartEvent, GesturePinchEvent, GestureTapEvent } from '@deot/vc-hooks';
 import { VcInstance } from '../../vc';
 import type { FilePreviewImageFit } from '../types';
 import type { ImageSlideExposed } from './image-slide';
 import type { RevealExposed } from './reveal';
 import type { Props } from './viewer-props';
-import { reflow, resolveTriggerElement, waitTransition } from './utils';
+import { reflow, waitTransition } from './utils';
 import type { Point, Size } from './utils';
 
 type Mode = 'pan' | 'swipe' | 'close' | 'pinch' | null;
@@ -19,7 +20,7 @@ export type Slide = {
 	isActive: boolean;
 	// 打开的那一项、还没切换过：画面就位后从触发元素放大
 	isAnimated: boolean;
-	triggerElement: Element | null;
+	triggerElement: Element | VirtualElement | null;
 	style: Record<string, string>;
 };
 
@@ -99,11 +100,10 @@ export const useViewer = (props: Props, onFulfilled: () => void) => {
 	const hasPrev = computed(() => indexOf(-1) >= 0);
 	const hasNext = computed(() => indexOf(1) >= 0);
 
-	// 点在缩略图上就从缩略图放大。点在同一项的其它位置（名称、空白）时，缩略图只是项的开头，改从这一项开始
-	const triggerElementOf = (index: number) => resolveTriggerElement(
-		props.data[index]?.element ?? null,
-		index === openedIndex ? props.triggerElement ?? null : null
-	);
+	// 打开的那一项用打开时取好的起点，其余项用各自的 element
+	const triggerElementOf = (index: number) => (
+		index === openedIndex ? props.triggerElement : props.data[index]?.element
+	) ?? null;
 	// 有触发元素时从它放大，蒙层跟着淡入；否则整层淡入。缩不回去时改为整层淡出
 	const isZoom = ref(!!triggerElementOf(openedIndex));
 

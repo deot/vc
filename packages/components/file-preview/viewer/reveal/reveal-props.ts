@@ -1,4 +1,5 @@
 import type { ExtractPropTypes, PropType } from 'vue';
+import type { VirtualElement } from '../../../vc';
 import type { Size } from '../utils';
 
 export const props = {
@@ -13,6 +14,6 @@ export const props = {
 	/**
 	 * 打开时从它放大，关闭时缩回它现在的位置
 	 */
-	triggerElement: Object as PropType<Element | null>
+	triggerElement: Object as PropType<Element | VirtualElement | null>
 };
 export type Props = ExtractPropTypes<typeof props>;

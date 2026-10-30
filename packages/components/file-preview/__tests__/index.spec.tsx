@@ -7,6 +7,7 @@ import { zhCN, enUS } from '@deot/vc-locale';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Utils } from '@deot/dev-test';
 import { VcInstance } from '../../vc';
+import { clickOn, rectOf } from '../../vc/__tests__/fixtures/click';
 import { Portal } from '../../portal';
 import { getBaseScale, zoomAt } from '../viewer/image-slide/utils';
 import { ImageSlide } from '../viewer/image-slide';
@@ -99,18 +100,6 @@ const createTrigger = (tag: string, rect: DOMRect) => {
 	return el;
 };
 
-const rectOf = (left: number, top: number, width: number, height: number) => ({
-	x: left,
-	y: top,
-	left,
-	top,
-	width,
-	height,
-	right: left + width,
-	bottom: top + height,
-	toJSON() { return {}; }
-}) as DOMRect;
-
 // jsdom 不排版：查看器的窗口和画面铺满 1024×768，拖动时跟着舞台走
 const layout = HTMLElement.prototype.getBoundingClientRect;
 beforeEach(() => {
@@ -124,6 +113,8 @@ beforeEach(() => {
 afterEach(() => {
 	Portal.clear(true);
 	document.body.innerHTML = '';
+	// 清掉最近一次点击的位置，各用例互不影响
+	clickOn(null);
 	VcInstance.configure({ locale: zhCN });
 	VcInstance.options.FilePreview = { getFileType: undefined, getFileName: undefined, enhancer: undefined };
 	vi.restoreAllMocks();
@@ -273,14 +264,9 @@ describe('FilePreview', () => {
 		});
 		expect(document.querySelector('.vc-file-viewer')).toBeNull();
 
-		// 接管时不用掉那次点击，留给 enhancer 自己打开的弹层
 		VcInstance.options.FilePreview!.enhancer = () => Promise.resolve(true);
-		const clicked = createTrigger('button', rectOf(10, 20, 100, 40));
-		clicked.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 		await FilePreview.open({ data: [photo] });
 		expect(document.querySelector('.vc-file-viewer')).toBeNull();
-		await Utils.sleep(0);
-		expect(VcInstance.getTriggerElement()).toBe(clicked);
 
 		VcInstance.options.FilePreview!.enhancer = () => false;
 		const leaf = FilePreview.open({ data: [photo] }) as any;
@@ -603,9 +589,9 @@ describe('FilePreview', () => {
 		await endMotion();
 		expect(motion()).toBeUndefined();
 
-		// 之后的任务里不是点击打开：这次点击已经用过
+		// 点在页面空白处之后再打开：没有点击位置，淡入
 		Portal.clear(true);
-		await Utils.sleep(0);
+		clickOn(null);
 		ImagePreview.open({ data: [{ src: photo, width: 1000, height: 500 }] });
 		expect(viewerEl().classList.contains('is-zoom')).toBe(false);
 		await flush();
@@ -666,40 +652,40 @@ describe('FilePreview', () => {
 	});
 
 	it('starts from the clicked item when the click is outside its thumbnail', async () => {
-		const item = createTrigger('div', rectOf(0, 0, 200, 32));
-		item.className = 'vc-file-preview__item';
-		const thumb = document.createElement('div');
-		thumb.getBoundingClientRect = () => rectOf(4, 4, 22, 22);
-		const name = document.createElement('span');
-		name.textContent = 'flower.mp4';
-		name.getBoundingClientRect = () => rectOf(40, 8, 80, 16);
-		item.append(thumb, name);
-		name.addEventListener('click', () => {
-			FilePreview.open({ data: [{ source: movie, type: 'video', element: thumb }] });
+		const wrapper = mount(FilePreview, {
+			props: { data: [{ source: movie, type: 'video', thumbnail: banner, name: 'flower.mp4' }] },
+			attachTo: document.body
 		});
+		const item = wrapper.find('.vc-file-preview__item').element as HTMLElement;
+		const thumb = wrapper.find('.vc-file-preview__thumbnail').element as HTMLElement;
+		const name = wrapper.find('.vc-file-preview__name').element as HTMLElement;
+		item.getBoundingClientRect = () => rectOf(0, 0, 200, 32);
+		thumb.getBoundingClientRect = () => rectOf(4, 4, 22, 22);
+		name.getBoundingClientRect = () => rectOf(40, 8, 80, 16);
+
+		// 点在名称上：从整项 200×32 放大到 512×384 居中的画面
 		name.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 		await nextTick();
 		loadVideo(512, 384);
 		await flush();
-		// 点在名称上：从整项 200×32 放大到 512×384 居中的画面
 		expect(motion()?.clip[0]).toBe('inset(0px 824px 736px 0px)');
 
+		// 点在缩略图上：从缩略图放大
 		Portal.clear(true);
-		thumb.addEventListener('click', () => {
-			FilePreview.open({ data: [{ source: movie, type: 'video', element: thumb }] });
-		});
 		thumb.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 		await nextTick();
 		loadVideo(512, 384);
 		await flush();
 		expect(motion()?.clip[0]).toBe('inset(4px 998px 742px 4px)');
 		expect(motion()?.transform[0]).toBe('translate3d(-14.333333333333332px, -7px, 0) scale(0.057291666666666664)');
+		wrapper.unmount();
 	});
 
 	it('measures the element when the picture size arrives', async () => {
 		const trigger = createTrigger('button', rectOf(10, 20, 100, 40));
 		trigger.addEventListener('click', () => {
-			FilePreview.open({ data: [{ source: movie, type: 'video' }] });
+			// 传入的元素按画面就位时它所在的位置量
+			FilePreview.open({ data: [{ source: movie, type: 'video', element: trigger }] });
 		});
 		trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 		await nextTick();
@@ -769,9 +755,9 @@ describe('FilePreview', () => {
 		expect(motion()?.transform[0]).toBe('translate3d(8px, 4px, 0) scale(0.0390625)');
 		expect(motion()?.clip[0]).toBe('inset(9px 976px 739px 8px)');
 
-		// 这次点击已经打开过预览：之后再打开不从它放大
+		// 点在页面空白处之后再打开：没有点击位置，不放大
 		Portal.clear(true);
-		await Utils.sleep(0);
+		clickOn(null);
 		ImagePreview.open({ data: [{ src: photo, width: 20, height: 20 }] });
 		expect(viewerEl().classList.contains('is-zoom')).toBe(false);
 	});
@@ -788,6 +774,36 @@ describe('FilePreview', () => {
 		expect(viewerEl().classList.contains('is-zoom')).toBe(true);
 	});
 
+	it('zooms from the clicked point when the button is gone before opening', async () => {
+		const trigger = createTrigger('button', rectOf(10, 20, 100, 40));
+		trigger.addEventListener('click', async () => {
+			// 如点下拉菜单项后先请求：请求回来时菜单项已被移出文档，退到点下的那个点
+			trigger.remove();
+			await Utils.sleep(0);
+			FilePreview.open({ data: [{ source: report, type: 'file', name: 'a' }] });
+		});
+		trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1, clientX: 60, clientY: 40 }));
+		await Utils.sleep(10);
+		await flush();
+		expect(motion()?.clip[0]).toBe('inset(40px 964px 728px 60px)');
+	});
+
+	it('zooms from where the element was at open when it is gone before the image decodes, and shrinks back there', async () => {
+		const thumb = createTrigger('div', rectOf(10, 20, 100, 40));
+		ImagePreview.open({ data: [{ src: photo, width: 1000, height: 500, element: thumb }] });
+		await nextTick();
+		// 解码期间起点元素被移除：仍从调用 open 时它所在的位置放大
+		thumb.remove();
+		await load(activeMedia(), 1000, 500);
+		expect(motion()?.clip[0]).toBe('inset(20px 914px 708px 10px)');
+		await endMotion();
+
+		// 关闭时同样缩回这个位置，不淡出
+		document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+		await nextTick();
+		expect(motion()?.clip[1]).toBe('inset(20px 914px 708px 10px)');
+	});
+
 	it('zooms from the whole button when the click lands on its label, like Modal', async () => {
 		const trigger = createTrigger('button', rectOf(10, 20, 100, 40));
 		const label = document.createElement('span');
@@ -801,16 +817,15 @@ describe('FilePreview', () => {
 		expect(motion()?.clip[0]).toBe('inset(20px 914px 708px 10px)');
 	});
 
-	it('zooms from triggerElement instead of the click, and keeps the click with null', async () => {
+	it('zooms from triggerElement instead of the click, and ignores the click with null', async () => {
 		const anchor = createTrigger('div', rectOf(10, 20, 100, 40));
 		const clicked = createTrigger('button', rectOf(500, 20, 100, 40));
-		clicked.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-		await Utils.sleep(0);
+		clickOn(clicked);
 		FilePreview.open({ data: [{ source: report, type: 'file', name: 'a' }], triggerElement: anchor });
 		await flush();
 		expect(motion()?.clip[0]).toBe('inset(20px 914px 708px 10px)');
 
-		// null：不用点击的元素，淡入；点击记录留给之后打开的
+		// null：不用点击的位置，淡入；不传时仍从点击的位置放大
 		Portal.clear(true);
 		ImagePreview.open({ data: [{ src: photo, width: 20, height: 20 }], triggerElement: null });
 		expect(viewerEl().classList.contains('is-zoom')).toBe(false);

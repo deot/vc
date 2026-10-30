@@ -1,4 +1,4 @@
-import { VcInstance } from '../vc';
+import { VcInstance, VirtualElement } from '../vc';
 import type { FilePreviewData, FilePreviewFileType, FilePreviewItem } from './types';
 
 const fileRegExps = {
@@ -90,6 +90,16 @@ export const getFileExtension = (v: string) => {
 
 // 越界、非整数时回退到第一项
 export const resolveCurrent = (data: unknown[], current = 0) => (data[current] ? current : 0);
+
+/**
+ * 打开时的起点：传入的 triggerElement，其次打开项自己的 element，再其次最近一次点击的位置（传 null 时不用点击）
+ * @param trigger 传入的 triggerElement
+ * @param element 打开项自己的 element
+ * @returns 起点；没有时为 null
+ */
+export const resolveTrigger = (trigger: Element | VirtualElement | null | undefined, element?: Element | null) => {
+	return trigger || element || (trigger === undefined ? VirtualElement.fromClick() : null);
+};
 
 export const normalize = (data?: FilePreviewData | null): FilePreviewItem[] => {
 	const source = typeof data === 'string'

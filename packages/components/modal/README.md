@@ -493,7 +493,7 @@ onUnmounted(() => {
 | width | 自定义宽度，单位为 px | `number` | - | 由 `size` 与 `mode` 计算 |
 | height | 数字为固定高度，单位为 px；`'auto'` 时高度跟随内容，不使用 `size` 预设的最小高度；不传时以 `size` 预设的高度为最小高度 | `number \| 'auto'` | - | - |
 | mask | 是否显示遮罩 | `boolean` | - | `true` |
-| triggerElement | 打开时从它展开，关闭时缩回它（已不在文档里时缩回打开时的位置）；传 `null` 时原位淡入淡出，如定时器、推送打开的弹窗 | `Element \| null` | - | 打开它的那次点击的元素，请求回来后才打开也算；一次点击只给一个弹层 |
+| triggerElement | 打开时从它展开，关闭时缩回它（已不在文档里时缩回打开时的位置）；可以是元素或 `VirtualElement`（只有一个盒子的替身）；传 `null` 时原位淡入淡出，如定时器、推送打开的弹窗 | `Element \| VirtualElement \| null` | - | 最近一次点击的位置，请求回来后才打开、被点的元素已移除也算 |
 | closable | 非 `mode` 布局下是否显示关闭图标 | `boolean` | - | `true` |
 | maskClosable | 是否允许点击遮罩关闭 | `boolean` | - | `true` |
 | escClosable | 是否允许按 `Escape` 关闭；多个弹层叠加时一次只关闭最后打开的一个，其中的下拉打开时先关闭下拉，输入法组合中不响应 | `boolean` | - | `true` |
@@ -610,7 +610,6 @@ const handleSubmit = async () => {
 | content | 内容；`false` 隐藏，其余取值与 title 相同 | `string \| number \| boolean \| Function \| { type: string; value: any }` | - | - |
 | width | 对话框宽度，单位为 px | `number` | - | `270` |
 | mask | 是否显示遮罩 | `boolean` | - | `true` |
-| triggerElement | 打开时从它展开，关闭时缩回它（已不在文档里时缩回打开时的位置）；传 `null` 时原位淡入淡出，如定时器、推送打开的弹窗 | `Element \| null` | - | 打开它的那次点击的元素，请求回来后才打开也算；一次点击只给一个弹层 |
 | maskClosable | 是否允许点击遮罩关闭 | `boolean` | - | `true` |
 | closeWithCancel | 点击遮罩关闭时是否先执行 `onCancel` / `cancel` | `boolean` | - | `true` |
 | okText | 默认确定按钮文案；传 `false` 或空字符串时隐藏 | `string \| boolean` | - | 当前 locale 的“确定” |

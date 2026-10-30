@@ -7,7 +7,7 @@ import { Utils } from '@deot/dev-test';
 import { h, nextTick } from 'vue';
 import { vi } from 'vitest';
 import * as drag from '../../../hooks/__tests__/fixtures/drag';
-import { clickOn } from '../../vc/__tests__/fixtures/click';
+import { clickOn, rectOf } from '../../vc/__tests__/fixtures/click';
 
 // @vue/test-utils 默认通过全局 transformVNodeArgs 把 Transition/TransitionGroup
 // 替换为 stub (createApp 也受影响), 会导致 v-show 拿不到 vnode.transition,
@@ -17,6 +17,8 @@ config.global.stubs['transition-group'] = false;
 
 afterEach(() => {
 	VcInstance.configure({ locale: zhCN });
+	// 清掉最近一次点击的位置，各用例互不影响
+	clickOn(null);
 });
 
 const flush = async () => {
@@ -1263,24 +1265,12 @@ describe('ModalView expose', () => {
 });
 
 describe('ModalView 展开与缩回', () => {
-	const rectOf = (left: number, top: number, width: number, height: number) => ({
-		x: left,
-		y: top,
-		left,
-		top,
-		width,
-		height,
-		right: left + width,
-		bottom: top + height,
-		toJSON() { return {}; }
-	}) as DOMRect;
-
 	const keyframesOf = (el: Element, key: string) => {
 		return el.getAnimations().map(item => (item.effect as KeyframeEffect).getKeyframes().map(frame => frame[key]));
 	};
 
-	// 真实点击 target 后在同一个任务里打开；null 表示不是点击打开
-	const openBy = async (vm: any, target: EventTarget | null) => {
+	// 点击 target 后打开；null 表示点在页面空白处
+	const openBy = async (vm: any, target: Element | null) => {
 		await clickOn(target);
 		vm.toggle(true);
 		await nextTick();
@@ -1377,7 +1367,25 @@ describe('ModalView 展开与缩回', () => {
 		wrapper.unmount();
 	});
 
-	it('请求回来后才打开：仍从点击的按钮展开、缩回；一次点击只给一个弹窗', async () => {
+	it('按钮在请求回来前已移出文档（如下拉菜单项）：从点下的那个点展开、缩回', async () => {
+		const { wrapper, vm, button, frame, finish } = setup();
+		await clickOn(button);
+		button.remove();
+		await Utils.sleep(0);
+		vm.toggle(true);
+		await nextTick();
+		// 点在按钮中心 (60, 40)
+		expect(keyframesOf(frame, 'clipPath')).toEqual([['inset(40px 964px 728px 60px)', 'inset(284px 312px 284px 312px)']]);
+		finish();
+		await flush();
+
+		vm.toggle(false);
+		await nextTick();
+		expect(keyframesOf(frame, 'clipPath')[0][1]).toBe('inset(40px 964px 728px 60px)');
+		wrapper.unmount();
+	});
+
+	it('请求回来后才打开：仍从点击的按钮展开、缩回；之后再打开也从这次点击的位置', async () => {
 		const { wrapper, vm, button, frame, container, finish } = setup();
 		await clickOn(button);
 		// 点击已分发完，等到之后的任务（如请求回来）才打开
@@ -1394,16 +1402,15 @@ describe('ModalView 展开与缩回', () => {
 		finish();
 		await flush();
 
-		// 这次点击已经给过弹窗：之后再打开淡入淡出
-		await Utils.sleep(0);
+		// 没有新的点击：再打开仍从最近一次点击的位置展开，与过去按点击坐标缩放一致
 		vm.toggle(true);
 		await nextTick();
-		expect(frame.getAnimations()).toHaveLength(0);
-		expect(keyframesOf(container, 'opacity')).toEqual([[0, 1]]);
+		expect(keyframesOf(frame, 'clipPath')[0][0]).toBe('inset(20px 914px 708px 10px)');
+		expect(container.getAnimations()).toHaveLength(2);
 		wrapper.unmount();
 	});
 
-	it('triggerElement：传元素时从它展开、缩回，传 null 时淡入淡出且不用掉那次点击', async () => {
+	it('triggerElement：传元素时从它展开、缩回，传 null 时不看点击、淡入淡出', async () => {
 		const { wrapper, vm, button, frame, container, finish } = setup();
 		const anchor = document.createElement('div');
 		anchor.getBoundingClientRect = () => rectOf(900, 700, 100, 40);
@@ -1421,20 +1428,11 @@ describe('ModalView 展开与缩回', () => {
 		finish();
 		await flush();
 
-		// null：淡入淡出；点击记录留给之后打开的其它弹层
+		// null：即使刚点过按钮也淡入淡出
 		await wrapper.setProps({ triggerElement: null });
-		await openBy(vm, null);
-		button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-		await Utils.sleep(0);
-		vm.toggle(false);
-		await nextTick();
-		finish();
-		await flush();
-		vm.toggle(true);
-		await nextTick();
+		await openBy(vm, button);
 		expect(frame.getAnimations()).toHaveLength(0);
 		expect(keyframesOf(container, 'opacity')).toEqual([[0, 1]]);
-		expect(VcInstance.getTriggerElement()).toBe(button);
 		wrapper.unmount();
 	});
 
@@ -1496,7 +1494,7 @@ describe('ModalView 展开与缩回', () => {
 		finish();
 		await flush();
 
-		// 缩回结束后忘掉这个位置：再由非点击打开时淡入
+		// 点在页面空白处后再打开：淡入
 		await openBy(vm, null);
 		expect(frame.getAnimations()).toHaveLength(0);
 		expect(keyframesOf(container, 'opacity')).toEqual([[0, 1]]);

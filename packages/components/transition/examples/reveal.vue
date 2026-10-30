@@ -74,7 +74,7 @@ const CONTROLS = [
 		key: 'trigger',
 		label: 'triggerElement',
 		data: [
-			{ value: 'click', label: '不传：打开那次点击的元素' },
+			{ value: 'click', label: '不传：最近一次点击的位置' },
 			{ value: 'fixed', label: '固定元素' },
 			{ value: 'none', label: 'null：淡入淡出' }
 		]

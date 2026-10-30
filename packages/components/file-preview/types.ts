@@ -1,4 +1,5 @@
 import type { ComponentInternalInstance, VNode } from 'vue';
+import type { VirtualElement } from '../vc';
 
 export type FilePreviewFileType = 'image' | 'video' | 'audio' | 'file';
 
@@ -8,7 +9,7 @@ export interface FilePreviewItem {
 	name: string;
 	thumbnail?: string;
 	/**
-	 * 缩略图元素：打开时从它放大，关闭时回到它；没有时只有点击打开的那一项使用点击的元素
+	 * 缩略图元素：打开时从它放大，关闭时回到它；没有时打开的那一项从最近一次点击的位置放大
 	 */
 	element?: Element | null;
 	[key: string]: any;
@@ -55,9 +56,10 @@ export interface FilePreviewOpenOptions {
 	current?: number;
 	instance?: ComponentInternalInstance | null;
 	/**
-	 * 从它放大、缩回它；不传时取打开它的那次点击（请求回来后才打开也算），传 null 时不用点击的元素
+	 * 从它放大、缩回它；可以是元素或 VirtualElement。
+	 * 不传时用打开项的 element，没有时取最近一次点击的位置；传 null 时不用点击的位置
 	 */
-	triggerElement?: Element | null;
+	triggerElement?: Element | VirtualElement | null;
 	onClose?: () => void;
 }
 

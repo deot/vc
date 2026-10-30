@@ -27,11 +27,16 @@ export const FilePreview = defineComponent({
 		// 查看器从各项看得到的那块放大打开，切到哪一项关闭时就回到哪一项：方格、卡片里的缩略图，其余用这一项本身
 		const items: Array<Element | null> = [];
 		const elementOf = (item: Element | null) => item?.querySelector('.vc-file-preview__square, .vc-file-preview__thumbnail') ?? item;
-		const preview = (index: number) => open({
-			data: list.value.map((row, i) => ({ ...row, element: elementOf(items[i]) })),
-			current: index,
-			instance
-		});
+		// 点在缩略图上从缩略图放大；点在同一项的其它位置（名称、空白）时，缩略图只是项的开头，改从这一项开始
+		const preview = (index: number, e?: MouseEvent) => {
+			const data = list.value.map((row, i) => ({ ...row, element: elementOf(items[i]) }));
+			open({
+				data,
+				current: index,
+				instance,
+				triggerElement: e && !data[index].element?.contains(e.target as Node) ? items[index] : undefined
+			});
+		};
 
 		const renderThumbnail = (row: FilePreviewItem, className: string) => {
 			return (
@@ -89,7 +94,7 @@ export const FilePreview = defineComponent({
 					}}
 					title={row.name}
 					class={[`is-${row.type}`, { 'is-previewable': clickable }, 'vc-file-preview__item']}
-					onClick={clickable ? () => preview(index) : undefined}
+					onClick={clickable ? (e: MouseEvent) => preview(index, e) : undefined}
 				>
 					{
 						slots.default
