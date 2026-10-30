@@ -14,6 +14,10 @@ type ImageInput = string | (Partial<FilePreviewItem> & {
 export type ImagePreviewOpenOptions = {
 	data?: ImageInput[];
 	current?: number;
+	/**
+	 * 同 FilePreview.open 的 triggerElement
+	 */
+	triggerElement?: Element | null;
 	onClose?: () => void;
 };
 
@@ -26,10 +30,10 @@ const toImage = (input: ImageInput): FilePreviewItemInput[] => {
 
 // 不经过 FilePreview.enhancer，避免和图片组件互相引用
 export const ImagePreview = {
-	open: (options: ImagePreviewOpenOptions = {}) => openViewer({
-		data: normalize((options.data || []).flatMap(toImage)),
-		current: options.current,
-		triggerElement: VcInstance.getTriggerElement(),
-		onClose: options.onClose
+	open: ({ data, current, triggerElement = VcInstance.getTriggerElement(), onClose }: ImagePreviewOpenOptions = {}) => openViewer({
+		data: normalize((data || []).flatMap(toImage)),
+		current,
+		triggerElement,
+		onClose
 	})
 };

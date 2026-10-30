@@ -9,7 +9,7 @@ const isPromise = (value: unknown): value is Promise<unknown> => (
 
 // 先交给全局 enhancer。未接管时，图片、视频、音频、文件都进同一个查看器
 export const open = (options: FilePreviewOpenOptions) => {
-	const { instance = null, onClose } = options;
+	const { instance = null, triggerElement, onClose } = options;
 	const data = normalize(options.data);
 	const current = resolveCurrent(data, options.current);
 	const { enhancer } = VcInstance.options.FilePreview || {};
@@ -19,7 +19,7 @@ export const open = (options: FilePreviewOpenOptions) => {
 		data,
 		current,
 		instance,
-		triggerElement: VcInstance.getTriggerElement(),
+		triggerElement: triggerElement === undefined ? VcInstance.getTriggerElement() : triggerElement,
 		onClose
 	});
 

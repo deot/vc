@@ -788,6 +788,24 @@ describe('FilePreview', () => {
 		expect(viewerEl().classList.contains('is-zoom')).toBe(true);
 	});
 
+	it('zooms from triggerElement instead of the click, and keeps the click with null', async () => {
+		const anchor = createTrigger('div', rectOf(10, 20, 100, 40));
+		const clicked = createTrigger('button', rectOf(500, 20, 100, 40));
+		clicked.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		await Utils.sleep(0);
+		FilePreview.open({ data: [{ source: report, type: 'file', name: 'a' }], triggerElement: anchor });
+		await flush();
+		expect(motion()?.clip[0]).toBe('inset(20px 914px 708px 10px)');
+
+		// null：不用点击的元素，淡入；点击记录留给之后打开的
+		Portal.clear(true);
+		ImagePreview.open({ data: [{ src: photo, width: 20, height: 20 }], triggerElement: null });
+		expect(viewerEl().classList.contains('is-zoom')).toBe(false);
+		Portal.clear(true);
+		ImagePreview.open({ data: [{ src: photo, width: 20, height: 20 }] });
+		expect(viewerEl().classList.contains('is-zoom')).toBe(true);
+	});
+
 	it('waits for the image to decode before zooming open', async () => {
 		const thumb = createTrigger('img', rectOf(10, 20, 100, 40));
 		thumb.addEventListener('click', () => {

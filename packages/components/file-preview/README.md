@@ -345,7 +345,7 @@ const handleClick = () => {
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| FilePreview.open | 先调用全局 `enhancer`，未接管时打开查看器 | `{ data, current?, instance?, onClose? }`：`data` 同属性 `data`；`current` 为解析后列表的索引，越界时回退到 `0`；`instance` 默认 `null`；`onClose` 在查看器关闭后调用 | 查看器句柄（`destroy()` 立即销毁）；`data` 为空或被接管时为 `undefined`；`enhancer` 返回 Promise 时返回 resolve 为句柄或 `undefined` 的 Promise |
+| FilePreview.open | 先调用全局 `enhancer`，未接管时打开查看器 | `{ data, current?, instance?, triggerElement?, onClose? }`：`data` 同属性 `data`；`current` 为解析后列表的索引，越界时回退到 `0`；`instance` 默认 `null`；`triggerElement` 为打开时放大的起点，不传时取打开它的那次点击（请求回来后才打开也算，一次点击只给一个弹层），传 `null` 时不用点击的元素，只看数据项的 `element`，都没有时淡入；`onClose` 在查看器关闭后调用 | 查看器句柄（`destroy()` 立即销毁）；`data` 为空或被接管时为 `undefined`；`enhancer` 返回 Promise 时返回 resolve 为句柄或 `undefined` 的 Promise |
 
 ### ImagePreview 方法
 
@@ -353,7 +353,7 @@ const handleClick = () => {
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| ImagePreview.open | 直接用查看器打开图片，不经过 `FilePreview.enhancer` | `{ data, current?, onClose? }`：`current` 从 `0` 开始，越界时回退到 `0`；`data` 为地址数组或对象数组，图片地址依次取 `value`、`source`、`src`，可带 `width`、`height`、`element`；名称同样经过全局 `getFileName` | 查看器句柄；没有有效图片时为 `undefined` |
+| ImagePreview.open | 直接用查看器打开图片，不经过 `FilePreview.enhancer` | `{ data, current?, triggerElement?, onClose? }`：`triggerElement` 同 `FilePreview.open`；`current` 从 `0` 开始，越界时回退到 `0`；`data` 为地址数组或对象数组，图片地址依次取 `value`、`source`、`src`，可带 `width`、`height`、`element`；名称同样经过全局 `getFileName` | 查看器句柄；没有有效图片时为 `undefined` |
 
 查看器的按钮名称、加载失败文案使用 `vc.FilePreview` 下的 locale，切换语言后实时更新。
 

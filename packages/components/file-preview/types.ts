@@ -54,6 +54,10 @@ export interface FilePreviewOpenOptions {
 	data: FilePreviewData;
 	current?: number;
 	instance?: ComponentInternalInstance | null;
+	/**
+	 * 从它放大、缩回它；不传时取打开它的那次点击（请求回来后才打开也算），传 null 时不用点击的元素
+	 */
+	triggerElement?: Element | null;
 	onClose?: () => void;
 }
 
