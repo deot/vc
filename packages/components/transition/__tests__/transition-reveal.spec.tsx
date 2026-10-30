@@ -8,6 +8,7 @@ import { config, mount } from '@vue/test-utils';
 config.global.stubs.transition = false;
 import { TransitionReveal } from '@deot/vc-components';
 import { VcInstance } from '../../vc';
+import { clickOn } from '../../vc/__tests__/fixtures/click';
 import { fade, reveal, toRect } from '../reveal';
 
 const rectOf = (left: number, top: number, width: number, height: number) => ({
@@ -45,36 +46,6 @@ describe('reveal.ts', () => {
 		expect(toRect(el)).toBeNull();
 		el.getBoundingClientRect = () => rectOf(1, 2, 3, 4);
 		expect(toRect(el)).toEqual({ left: 1, top: 2, width: 3, height: 4 });
-	});
-
-	it('reads the clicked node only while the click dispatches', () => {
-		const previous = VcInstance.globalEvent;
-		VcInstance.globalEvent = {} as any;
-		expect(VcInstance.getTriggerElement()).toBeNull();
-
-		const el = document.createElement('div');
-		VcInstance.globalEvent = { eventPhase: 2, target: el } as any;
-		expect(VcInstance.getTriggerElement()).toBe(el);
-
-		const text = document.createTextNode('a');
-		el.append(text);
-		VcInstance.globalEvent = { eventPhase: 2, target: text } as any;
-		expect(VcInstance.getTriggerElement()).toBe(el);
-
-		VcInstance.globalEvent = { eventPhase: 2, target: Object.create(null) } as any;
-		expect(VcInstance.getTriggerElement()).toBeNull();
-
-		// 分发结束后 eventPhase 回到 0，不再算这次点击
-		document.body.append(el);
-		let during: Element | null = null;
-		el.addEventListener('click', () => {
-			during = VcInstance.getTriggerElement();
-		});
-		el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-		expect(during).toBe(el);
-		expect(VcInstance.globalEvent.eventPhase).toBe(0);
-		expect(VcInstance.getTriggerElement()).toBeNull();
-		VcInstance.globalEvent = previous;
 	});
 
 	it('expands from the trigger into the subject and shrinks back', async () => {
@@ -364,12 +335,10 @@ describe('TransitionReveal', () => {
 		rects.set('panel', rectOf(40, 30, 80, 40));
 
 		const { shown, wrapper } = mountReveal();
-		const previous = VcInstance.globalEvent;
 		// 点在按钮里的文字上，从整个按钮展开
-		VcInstance.globalEvent = { eventPhase: 2, target: label } as any;
+		await clickOn(label);
 		shown.value = true;
 		await nextTick();
-		VcInstance.globalEvent = previous;
 
 		const frame = wrapper.find('.frame').element;
 		const panel = wrapper.find('.panel').element;
@@ -387,6 +356,7 @@ describe('TransitionReveal', () => {
 		expect((panel as HTMLElement).style.display).toBe('none');
 
 		// 不是点击打开时淡入
+		await clickOn(null);
 		shown.value = true;
 		await nextTick();
 		expect(framesOf(panel, 'opacity')).toEqual([[0, 1]]);
@@ -403,11 +373,9 @@ describe('TransitionReveal', () => {
 		const frame = wrapper.find('.frame').element;
 		const panel = wrapper.find('.panel').element;
 		const toggle = async (value: boolean, target: Element | null) => {
-			const previous = VcInstance.globalEvent;
-			VcInstance.globalEvent = { eventPhase: target ? 2 : 0, target } as any;
+			await clickOn(target);
 			shown.value = value;
 			await nextTick();
-			VcInstance.globalEvent = previous;
 		};
 		const finish = async () => {
 			[frame, panel].forEach(el => el.getAnimations().forEach(item => item.finish()));
@@ -436,11 +404,9 @@ describe('TransitionReveal', () => {
 		const frame = wrapper.find('.frame').element;
 		const panel = wrapper.find('.panel').element;
 		const toggle = async (value: boolean, target: Element | null) => {
-			const previous = VcInstance.globalEvent;
-			VcInstance.globalEvent = { eventPhase: target ? 2 : 0, target } as any;
+			await clickOn(target);
 			shown.value = value;
 			await nextTick();
-			VcInstance.globalEvent = previous;
 		};
 		const finish = async () => {
 			[frame, panel].forEach(el => el.getAnimations().forEach(item => item.finish()));
@@ -472,24 +438,20 @@ describe('TransitionReveal', () => {
 		const panel = wrapper.find('.panel').element;
 		expect(framesOf(wrapper.find('.frame').element, 'clipPath')).toEqual([]);
 		expect(framesOf(panel, 'opacity')).toEqual([[0, 1]]);
-		panel.getAnimations()[0].finish();
-		await nextTick();
+		wrapper.unmount();
 
+		// 点击打开，但内容没有尺寸：同样淡入
 		rects.set('panel', rectOf(0, 0, 0, 0));
 		const button = document.createElement('button');
 		button.getBoundingClientRect = () => rectOf(10, 20, 40, 20);
 		document.body.append(button);
-		const previous = VcInstance.globalEvent;
-		VcInstance.globalEvent = { eventPhase: 2, target: button } as any;
-		shown.value = false;
+		const clicked = mountReveal();
+		await clickOn(button);
+		clicked.shown.value = true;
 		await nextTick();
-		panel.getAnimations()[0]?.finish();
-		await nextTick();
-		shown.value = true;
-		await nextTick();
-		VcInstance.globalEvent = previous;
-		expect(framesOf(panel, 'opacity')).toEqual([[0, 1]]);
-		wrapper.unmount();
+		expect(framesOf(clicked.wrapper.find('.frame').element, 'clipPath')).toEqual([]);
+		expect(framesOf(clicked.wrapper.find('.panel').element, 'opacity')).toEqual([[0, 1]]);
+		clicked.wrapper.unmount();
 	});
 
 	it('uses triggerElement instead of the click', async () => {
@@ -499,9 +461,14 @@ describe('TransitionReveal', () => {
 		rects.set('frame', rectOf(0, 0, 200, 100));
 		rects.set('panel', rectOf(50, 20, 100, 40));
 		const { shown, wrapper } = mountReveal(trigger);
+		const button = document.createElement('button');
+		document.body.append(button);
+		await clickOn(button);
 		shown.value = true;
 		await nextTick();
 		expect(framesOf(wrapper.find('.frame').element, 'clipPath')[0][0]).toBe('inset(0px 180px 90px 0px)');
+		// 不取点击记录，留给其它弹层
+		expect(VcInstance.getTriggerElement()).toBe(button);
 		wrapper.unmount();
 	});
 

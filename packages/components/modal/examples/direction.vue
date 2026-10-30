@@ -4,6 +4,7 @@
 			点任一方向的按钮：弹窗从按钮的方向展开、立即弹出，关闭时缩回按钮附近。按钮离弹窗远时，第一帧和最后一帧都离开按钮 8px，按钮上不留残影；
 			离得近或被弹窗盖住（Center）时，从路程 40% 处长出来。切换尺寸可以看同一个按钮离弹窗远近不同时的效果。
 			Dropdown：先展开下拉菜单，再点菜单项打开弹窗，弹窗从点中的菜单项展开。
+			请求后打开：点击后先显示加载中，等请求回来才打开，弹窗仍从这个按钮展开。
 		</p>
 		<div class="direction-demo__controls">
 			<Select
@@ -35,6 +36,10 @@
 					</DropdownMenu>
 				</template>
 			</Dropdown>
+			<!-- 点击后先请求，回来才打开：点击早已分发完 -->
+			<Button class="direction-demo__request" @click="handleRequest">
+				请求后打开
+			</Button>
 		</div>
 		<ModalView
 			:key="controls.size"
@@ -54,6 +59,7 @@ import { computed, reactive, ref } from 'vue';
 import { Modal, ModalView } from '..';
 import { Button } from '../../button';
 import { Dropdown, DropdownMenu, DropdownItem } from '../../dropdown';
+import { Message } from '../../message';
 import { Select } from '../../select';
 
 // 四周 12 个方向，外加正中间一个（会被弹窗最终位置盖住）
@@ -98,6 +104,14 @@ const title = ref('');
 
 const handleMenu = (value) => {
 	handleOpen(`Dropdown · ${value}`);
+};
+
+// 模拟请求：加载中 600ms
+const handleRequest = async () => {
+	const loading = Message.loading('加载中...');
+	await new Promise(resolve => setTimeout(resolve, 600));
+	loading.destroy();
+	handleOpen('请求后打开');
 };
 
 const handleOpen = (label) => {
@@ -153,6 +167,13 @@ const handleOpen = (label) => {
 		position: absolute;
 		top: 20%;
 		left: 30%;
+	}
+
+	// 和 Dropdown 左右对称
+	&__request {
+		position: absolute;
+		top: 20%;
+		right: 30%;
 	}
 }
 </style>

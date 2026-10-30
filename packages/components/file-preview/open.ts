@@ -9,18 +9,18 @@ const isPromise = (value: unknown): value is Promise<unknown> => (
 
 // 先交给全局 enhancer。未接管时，图片、视频、音频、文件都进同一个查看器
 export const open = (options: FilePreviewOpenOptions) => {
-	const triggerElement = VcInstance.getTriggerElement();
-	const { instance = null } = options;
+	const { instance = null, onClose } = options;
 	const data = normalize(options.data);
 	const current = resolveCurrent(data, options.current);
 	const { enhancer } = VcInstance.options.FilePreview || {};
 
+	// 真正打开查看器时才取那次点击：enhancer 接管时留给它自己打开的弹层
 	const launch = () => openViewer({
 		data,
 		current,
 		instance,
-		triggerElement,
-		onClose: options.onClose
+		triggerElement: VcInstance.getTriggerElement(),
+		onClose
 	});
 
 	if (typeof enhancer !== 'function') return launch();

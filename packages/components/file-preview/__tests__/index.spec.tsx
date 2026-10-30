@@ -273,9 +273,14 @@ describe('FilePreview', () => {
 		});
 		expect(document.querySelector('.vc-file-viewer')).toBeNull();
 
+		// 接管时不用掉那次点击，留给 enhancer 自己打开的弹层
 		VcInstance.options.FilePreview!.enhancer = () => Promise.resolve(true);
+		const clicked = createTrigger('button', rectOf(10, 20, 100, 40));
+		clicked.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 		await FilePreview.open({ data: [photo] });
 		expect(document.querySelector('.vc-file-viewer')).toBeNull();
+		await Utils.sleep(0);
+		expect(VcInstance.getTriggerElement()).toBe(clicked);
 
 		VcInstance.options.FilePreview!.enhancer = () => false;
 		const leaf = FilePreview.open({ data: [photo] }) as any;
@@ -598,7 +603,9 @@ describe('FilePreview', () => {
 		await endMotion();
 		expect(motion()).toBeUndefined();
 
+		// 之后的任务里不是点击打开：这次点击已经用过
 		Portal.clear(true);
+		await Utils.sleep(0);
 		ImagePreview.open({ data: [{ src: photo, width: 1000, height: 500 }] });
 		expect(viewerEl().classList.contains('is-zoom')).toBe(false);
 		await flush();
@@ -762,13 +769,23 @@ describe('FilePreview', () => {
 		expect(motion()?.transform[0]).toBe('translate3d(8px, 4px, 0) scale(0.0390625)');
 		expect(motion()?.clip[0]).toBe('inset(9px 976px 739px 8px)');
 
-		// 不在点击过程中、目标不是节点时不作为触发元素
+		// 这次点击已经打开过预览：之后再打开不从它放大
 		Portal.clear(true);
-		const previous = VcInstance.globalEvent;
-		VcInstance.globalEvent = { eventPhase: 2, target: Object.create(null) } as any;
+		await Utils.sleep(0);
 		ImagePreview.open({ data: [{ src: photo, width: 20, height: 20 }] });
 		expect(viewerEl().classList.contains('is-zoom')).toBe(false);
-		VcInstance.globalEvent = previous;
+	});
+
+	it('zooms from the clicked thumbnail when it opens after a request', async () => {
+		const thumb = createTrigger('img', rectOf(10, 20, 100, 40));
+		thumb.addEventListener('click', async () => {
+			// 点击已分发完，等到之后的任务（如请求回来）才打开
+			await Utils.sleep(0);
+			FilePreview.open({ data: [{ source: photo, type: 'image', width: 200, height: 100 }] });
+		});
+		thumb.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		await Utils.sleep(10);
+		expect(viewerEl().classList.contains('is-zoom')).toBe(true);
 	});
 
 	it('waits for the image to decode before zooming open', async () => {

@@ -57,15 +57,17 @@ export const TransitionReveal = defineComponent({
 	// 当不声明emits的情况下，事件存在于attrs中
 	inheritAttrs: false,
 	setup(props, { slots, attrs }) {
-		let clicked: Element | null = null;
+		// 打开时点中的元素；弱引用，弹层开着时它被移除也能回收（回收了说明已不在文档里，缩回 opened）
+		let clicked: WeakRef<Element> | null = null;
 		// 打开时量到的触发元素位置：关闭时它已不在文档里（如随下拉菜单收起的菜单项），缩回到这里
 		let opened: RevealRect | null = null;
 		// 每个元素进行中的开合；v-if 切换时新旧元素各走各的
 		const running = new WeakMap<Element, { motion: RevealMotion; done: () => void; isLeave: boolean }>();
 
 		const start = (el: Element, isLeave: boolean) => {
-			const target = props.triggerElement === undefined ? clicked : props.triggerElement;
-			const trigger = toRect(target) || (isLeave && target ? opened : null);
+			const target = props.triggerElement === undefined ? clicked?.deref() : props.triggerElement;
+			// 显式传 null 时淡出；其余量不到时缩回打开时的位置（没有时为 null）
+			const trigger = toRect(target) || (isLeave && target !== null ? opened : null);
 			isLeave || (opened = trigger);
 			const frame = el.parentElement;
 			const phase = isLeave ? 'leave' : 'enter';
@@ -98,8 +100,11 @@ export const TransitionReveal = defineComponent({
 		const listeners = {
 			css: false,
 			onBeforeEnter: () => {
+				// 传了 triggerElement 时不取点击记录，留给其它弹层
+				if (props.triggerElement !== undefined) return;
 				const el = VcInstance.getTriggerElement();
-				clicked = el?.closest(CLICKABLE) || el;
+				const button = el?.closest(CLICKABLE) || el;
+				clicked = button && new WeakRef(button);
 			},
 			onEnter: (el: Element, done: () => void) => run(el, false, done),
 			onLeave: (el: Element, done: () => void) => run(el, true, done)

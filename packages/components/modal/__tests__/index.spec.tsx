@@ -7,6 +7,7 @@ import { Utils } from '@deot/dev-test';
 import { h, nextTick } from 'vue';
 import { vi } from 'vitest';
 import * as drag from '../../../hooks/__tests__/fixtures/drag';
+import { clickOn } from '../../vc/__tests__/fixtures/click';
 
 // @vue/test-utils 默认通过全局 transformVNodeArgs 把 Transition/TransitionGroup
 // 替换为 stub (createApp 也受影响), 会导致 v-show 拿不到 vnode.transition,
@@ -1278,13 +1279,11 @@ describe('ModalView 展开与缩回', () => {
 		return el.getAnimations().map(item => (item.effect as KeyframeEffect).getKeyframes().map(frame => frame[key]));
 	};
 
-	// 打开在点击分发的过程中：jsdom 里派发是同步的，按分发中的事件模拟
+	// 真实点击 target 后在同一个任务里打开；null 表示不是点击打开
 	const openBy = async (vm: any, target: EventTarget | null) => {
-		const previous = VcInstance.globalEvent;
-		VcInstance.globalEvent = { eventPhase: target ? 2 : 0, target } as any;
+		await clickOn(target);
 		vm.toggle(true);
 		await nextTick();
-		VcInstance.globalEvent = previous;
 	};
 
 	// jsdom 不排版：wrapper 铺满 1024×768，弹窗 400×200 居中，按钮在左上角
@@ -1299,7 +1298,10 @@ describe('ModalView 展开与缩回', () => {
 		const container = wrapper.find('.vc-modal__container').element as HTMLElement;
 		frame.getBoundingClientRect = () => rectOf(0, 0, 1024, 768);
 		container.getBoundingClientRect = () => rectOf(312, 284, 400, 200);
-		return { wrapper, vm: wrapper.vm as any, button, label, frame, container };
+		const mask = wrapper.find('.vc-modal__mask').element as HTMLElement;
+		// 让进行中的开合立即播完
+		const finish = () => [container, frame, mask].forEach(el => el.getAnimations().forEach(item => item.finish()));
+		return { wrapper, vm: wrapper.vm as any, button, label, frame, container, mask, finish };
 	};
 
 	afterEach(() => {
@@ -1308,8 +1310,7 @@ describe('ModalView 展开与缩回', () => {
 	});
 
 	it('立即从按钮附近弹出，关闭时缩回按钮附近，窗口和画面同一条缓动', async () => {
-		const { wrapper, vm, label, frame, container } = setup();
-		const mask = wrapper.find('.vc-modal__mask').element as HTMLElement;
+		const { wrapper, vm, label, frame, container, mask } = setup();
 		const timingsOf = (el: Element) => el.getAnimations().map(item => item.effect!.getTiming());
 		const zoomed = { clip: 'inset(20px 914px 708px 10px)', transform: 'translate3d(-302px, -269px, 0) scale(0.25)' };
 		const rest = { clip: 'inset(284px 312px 284px 312px)', transform: 'translate3d(0px, 0px, 0) scale(1)' };
@@ -1376,12 +1377,37 @@ describe('ModalView 展开与缩回', () => {
 		wrapper.unmount();
 	});
 
+	it('请求回来后才打开：仍从点击的按钮展开、缩回；一次点击只给一个弹窗', async () => {
+		const { wrapper, vm, button, frame, container, finish } = setup();
+		await clickOn(button);
+		// 点击已分发完，等到之后的任务（如请求回来）才打开
+		await Utils.sleep(0);
+		vm.toggle(true);
+		await nextTick();
+		expect(keyframesOf(frame, 'clipPath')).toEqual([['inset(20px 914px 708px 10px)', 'inset(284px 312px 284px 312px)']]);
+		finish();
+		await flush();
+
+		vm.toggle(false);
+		await nextTick();
+		expect(keyframesOf(frame, 'clipPath')[0][1]).toBe('inset(20px 914px 708px 10px)');
+		finish();
+		await flush();
+
+		// 这次点击已经给过弹窗：之后再打开淡入淡出
+		await Utils.sleep(0);
+		vm.toggle(true);
+		await nextTick();
+		expect(frame.getAnimations()).toHaveLength(0);
+		expect(keyframesOf(container, 'opacity')).toEqual([[0, 1]]);
+		wrapper.unmount();
+	});
+
 	it('关闭时还在展开：沿原路退回，不从头再来', async () => {
-		const { wrapper, vm, button, frame, container } = setup();
+		const { wrapper, vm, button, frame, container, mask } = setup();
 		await openBy(vm, button);
 		const [clip] = frame.getAnimations();
 		const [move, opacity] = container.getAnimations();
-		const mask = wrapper.find('.vc-modal__mask').element;
 		const [maskFade] = mask.getAnimations();
 
 		vm.toggle(false);
@@ -1399,11 +1425,9 @@ describe('ModalView 展开与缩回', () => {
 	});
 
 	it('不是点击打开时淡入淡出；按钮在关闭前移出文档时缩回打开时的位置', async () => {
-		const { wrapper, vm, button, frame, container } = setup();
+		const { wrapper, vm, button, frame, container, mask, finish } = setup();
 		await openBy(vm, null);
 		expect(frame.getAnimations()).toHaveLength(0);
-		const mask = wrapper.find('.vc-modal__mask').element;
-		const finish = () => [container, frame, mask].forEach(el => el.getAnimations().forEach(item => item.finish()));
 		// 没有按钮可离开：整段淡入，蒙层同一段
 		expect(keyframesOf(container, 'opacity')).toEqual([[0, 1]]);
 		expect(keyframesOf(mask, 'opacity')).toEqual([[0, 1]]);
