@@ -1,5 +1,31 @@
 # @deot/vc-components ChangeLog
 
+## v1.2.5
+
+_2026-10-30_
+
+### Bugfixes
+
+- fix: text, count laid-out lines instead of dividing height by line-height ([eab6e5c](https://github.com/deot/vc/commit/eab6e5c5a518eec101d686a8a09b76e056ae2259))
+
+### Features
+
+- feat: tree, match values strictly with a Map and align picker and checkbox group ([4c0c2b3](https://github.com/deot/vc/commit/4c0c2b3f91e2ac7c9629cbcfb2968a43c3e48968))
+- feat: cascader, match values strictly and let numerable convert arrays and scalars ([624e15e](https://github.com/deot/vc/commit/624e15e7e6383555660192ca9d8ab23a4f4cb7b0))
+- feat: cascader, add checkStrategy to keep only the last level in v-model ([66c1f15](https://github.com/deot/vc/commit/66c1f15533c0265cb3fb09822ff797bbe391f1be))
+- feat: form, align labels to the widest one with labelWidth auto ([7a70530](https://github.com/deot/vc/commit/7a70530a81a985781086af418fc67fa97158b040))
+- feat: descriptions, add Descriptions with themes, built-in value types and a global renderValue hook ([4980d90](https://github.com/deot/vc/commit/4980d900e8d5c37328faca970aa69834864f1446))
+- feat: grid, add Grid and GridItem with track templates, responsive values and getSpan ([1df1da7](https://github.com/deot/vc/commit/1df1da77da456974692fd372f9c9e8b23905889c))
+- feat: text, expand and collapse the full text through an expand slot ([2cf8a2e](https://github.com/deot/vc/commit/2cf8a2ee3fbefce7cabe658c412ab13650b29738))
+- feat: transition, cap the auto start and keep a minimum duration for reveal ([6921121](https://github.com/deot/vc/commit/69211216d1037431090a3b99b44099cfdf587e39))
+
+### Updates
+
+- style: form, share getLabelWidth with descriptions ([fd10de7](https://github.com/deot/vc/commit/fd10de7ed856df6a278a86fc68d295f154eecdde))
+- style: file-preview, export allowedUrl for other components ([68e5612](https://github.com/deot/vc/commit/68e5612f4c5c2f50f10d782e23b975db84fe300e))
+- style: share getChildren to flatten fragment children ([77cb7f7](https://github.com/deot/vc/commit/77cb7f7c9d445866b0ab06bea4ee3ac5b894c280))
+- chore(shared): force-publish `1.2.4` -> `1.2.5`
+
 ## v1.2.4
 
 _2026-10-27_

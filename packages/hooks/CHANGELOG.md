@@ -1,5 +1,13 @@
 # @deot/vc-hooks ChangeLog
 
+## v1.2.5
+
+_2026-10-30_
+
+### Updates
+
+- chore(shared): force-publish `1.2.4` -> `1.2.5`
+
 ## v1.2.4
 
 _2026-10-27_
