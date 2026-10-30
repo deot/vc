@@ -254,6 +254,7 @@ export const ModalView = defineComponent({
 						class={[props.wrapperClass, 'vc-modal__wrapper']}
 					>
 						<TransitionReveal
+							triggerElement={props.triggerElement}
 							offset="auto"
 							opacity
 							companion={maskElement.value}

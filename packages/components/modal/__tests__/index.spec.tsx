@@ -1403,6 +1403,50 @@ describe('ModalView 展开与缩回', () => {
 		wrapper.unmount();
 	});
 
+	it('triggerElement：传元素时从它展开、缩回，传 null 时淡入淡出且不用掉那次点击', async () => {
+		const { wrapper, vm, button, frame, container, finish } = setup();
+		const anchor = document.createElement('div');
+		anchor.getBoundingClientRect = () => rectOf(900, 700, 100, 40);
+		document.body.append(anchor);
+
+		// 不看点了哪个按钮，从传入的元素展开
+		await wrapper.setProps({ triggerElement: anchor });
+		await openBy(vm, button);
+		expect(keyframesOf(frame, 'clipPath')[0][0]).toBe('inset(700px 24px 28px 900px)');
+		finish();
+		await flush();
+		vm.toggle(false);
+		await nextTick();
+		expect(keyframesOf(frame, 'clipPath')[0][1]).toBe('inset(700px 24px 28px 900px)');
+		finish();
+		await flush();
+
+		// null：淡入淡出；点击记录留给之后打开的其它弹层
+		await wrapper.setProps({ triggerElement: null });
+		await openBy(vm, null);
+		button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		await Utils.sleep(0);
+		vm.toggle(false);
+		await nextTick();
+		finish();
+		await flush();
+		vm.toggle(true);
+		await nextTick();
+		expect(frame.getAnimations()).toHaveLength(0);
+		expect(keyframesOf(container, 'opacity')).toEqual([[0, 1]]);
+		expect(VcInstance.getTriggerElement()).toBe(button);
+		wrapper.unmount();
+	});
+
+	it('Modal.info 透传 triggerElement', async () => {
+		const anchor = document.createElement('div');
+		document.body.append(anchor);
+		const leaf = Modal.info({ content: 'x', triggerElement: anchor });
+		await flush();
+		expect((leaf.wrapper as any).$props.triggerElement).toBe(anchor);
+		Modal.destroy();
+	});
+
 	it('关闭时还在展开：沿原路退回，不从头再来', async () => {
 		const { wrapper, vm, button, frame, container, mask } = setup();
 		await openBy(vm, button);

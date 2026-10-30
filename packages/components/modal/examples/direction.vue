@@ -5,6 +5,7 @@
 			离得近或被弹窗盖住（Center）时，从路程 40% 处长出来。切换尺寸可以看同一个按钮离弹窗远近不同时的效果。
 			Dropdown：先展开下拉菜单，再点菜单项打开弹窗，弹窗从点中的菜单项展开。
 			请求后打开：点击后先显示加载中，等请求回来才打开，弹窗仍从这个按钮展开。
+			定时打开：模拟定时器、推送打开的弹窗，和点击无关，传 triggerElement: null 原位淡入淡出。
 		</p>
 		<div class="direction-demo__controls">
 			<Select
@@ -40,6 +41,9 @@
 			<Button class="direction-demo__request" @click="handleRequest">
 				请求后打开
 			</Button>
+			<Button class="direction-demo__timer" @click="handleTimer">
+				定时打开
+			</Button>
 		</div>
 		<ModalView
 			:key="controls.size"
@@ -47,6 +51,7 @@
 			:width="size.width"
 			:height="size.height"
 			:title="title"
+			:trigger-element="triggerElement"
 		>
 			<p>第一行说明文字</p>
 			<p>第二行说明文字，长度略长一些</p>
@@ -101,6 +106,8 @@ const size = computed(() => SIZES[controls.size]);
 
 const isVisible = ref(false);
 const title = ref('');
+// 不传（undefined）时取打开它的那次点击
+const triggerElement = ref();
 
 const handleMenu = (value) => {
 	handleOpen(`Dropdown · ${value}`);
@@ -114,8 +121,14 @@ const handleRequest = async () => {
 	handleOpen('请求后打开');
 };
 
-const handleOpen = (label) => {
+// 模拟和点击无关的弹窗：1 秒后打开，原位淡入淡出
+const handleTimer = () => {
+	setTimeout(() => handleOpen('定时器', null), 1000);
+};
+
+const handleOpen = (label, element) => {
 	title.value = `从 ${label} 打开`;
+	triggerElement.value = element;
 	if (controls.mode === 'view') {
 		isVisible.value = true;
 		return;
@@ -124,7 +137,8 @@ const handleOpen = (label) => {
 		title: title.value,
 		content: '第一行说明文字',
 		width: size.value.width,
-		height: size.value.height
+		height: size.value.height,
+		triggerElement: element
 	});
 };
 </script>
@@ -173,6 +187,13 @@ const handleOpen = (label) => {
 	&__request {
 		position: absolute;
 		top: 20%;
+		right: 30%;
+	}
+
+	// 在 Dropdown、请求后打开的下方
+	&__timer {
+		position: absolute;
+		top: calc(20% + 48px);
 		right: 30%;
 	}
 }
