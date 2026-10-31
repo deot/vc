@@ -231,7 +231,7 @@ $component-name: vc-button;
 	}
 
 	@include when(text) {
-		color: $color-dark-light;
+		color: $color-primary;
 		background-color: transparent;
 		border-color: transparent;
 

@@ -79,7 +79,7 @@ describe('ButtonGroup clipped viewport layout', () => {
 		await launch.browser.close();
 	});
 
-	describe.each([
+	describe.each([true, false].flatMap(solid => [
 		{ vertical: false, circle: false, count: 3 },
 		{ vertical: true, circle: false, count: 3 },
 		{ vertical: false, circle: true, count: 3 },
@@ -88,11 +88,13 @@ describe('ButtonGroup clipped viewport layout', () => {
 		{ vertical: true, circle: false, count: 1 },
 		{ vertical: false, circle: true, count: 1 },
 		{ vertical: true, circle: true, count: 1 }
-	])('vertical=$vertical circle=$circle count=$count', ({ vertical, circle, count }) => {
-		it.each(['small', 'medium', 'large'] as const)('%s: contains every edge and overlaps only adjacent borders', async (size) => {
+	].map(item => ({ ...item, solid }))))('vertical=$vertical circle=$circle count=$count solid=$solid', ({ vertical, circle, count, solid }) => {
+		// 带边框的按钮叠边，填充按钮之间留 1px 缝
+		const gap = solid ? -1 : 1;
+		it.each(['small', 'medium', 'large'] as const)('%s: contains every edge and separates adjacent buttons', async (size) => {
 			const classes = `is-${size} ${vertical ? 'is-vertical' : ''} ${circle ? 'is-circle' : ''}`;
 			const buttons = Array.from({ length: count }, () => `
-				<button class="vc-button is-default is-solid is-${size} ${circle ? 'is-circle' : ''}"><span>Button</span></button>
+				<button class="vc-button is-default ${solid ? 'is-solid' : ''} is-${size} ${circle ? 'is-circle' : ''}"><span>Button</span></button>
 			`).join('');
 			await page.setContent(`
 				<style>
@@ -133,8 +135,8 @@ describe('ButtonGroup clipped viewport layout', () => {
 			expect(layout.group.left).toBe(layout.viewport.left);
 			expect(layout.group.top).toBe(layout.viewport.top);
 			layout.buttons.forEach((button, index) => {
-				expect(button.marginLeft).toBe(!vertical && index > 0 ? '-1px' : '0px');
-				expect(button.marginTop).toBe(vertical && index > 0 ? '-1px' : '0px');
+				expect(button.marginLeft).toBe(!vertical && index > 0 ? `${gap}px` : '0px');
+				expect(button.marginTop).toBe(vertical && index > 0 ? `${gap}px` : '0px');
 				expect(button.left).toBeGreaterThanOrEqual(layout.viewport.left);
 				expect(button.top).toBeGreaterThanOrEqual(layout.viewport.top);
 				expect(button.right).toBeLessThanOrEqual(layout.viewport.right);
@@ -142,7 +144,7 @@ describe('ButtonGroup clipped viewport layout', () => {
 				expect(button.height).toBe({ small: 26, medium: 32, large: 38 }[size]);
 				if (index > 0) {
 					const previous = layout.buttons[index - 1];
-					expect(vertical ? button.top - previous.bottom : button.left - previous.right).toBe(-1);
+					expect(vertical ? button.top - previous.bottom : button.left - previous.right).toBe(gap);
 				}
 				const first = index === 0;
 				const last = index === count - 1;

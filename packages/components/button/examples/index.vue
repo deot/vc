@@ -1,5 +1,5 @@
 <template>
-	<div style="width: 100%;text-align: center">
+	<div style="width: 100%;text-align: center;">
 		<div class="box-wrapper">
 			<Button :wait="5000" type="default" @click="handleClick">
 				default
@@ -165,6 +165,27 @@
 				<Button type="success" @click="handlePromise2">
 					Promise2
 				</Button>
+			</ButtonGroup>
+		</div>
+		<div>
+			<ButtonGroup>
+				<Button solid>solid</Button>
+				<Button solid>solid</Button>
+				<Button solid>solid</Button>
+			</ButtonGroup>
+			<ButtonGroup>
+				<Button type="primary" solid>solid</Button>
+				<Button type="primary" solid>solid</Button>
+			</ButtonGroup>
+			<ButtonGroup>
+				<Button>default</Button>
+				<Button disabled>disabled</Button>
+				<Button disabled>disabled</Button>
+			</ButtonGroup>
+			<ButtonGroup>
+				<Button type="primary">primary</Button>
+				<Button type="primary" disabled>disabled</Button>
+				<Button type="primary" icon="down" />
 			</ButtonGroup>
 		</div>
 	</div>

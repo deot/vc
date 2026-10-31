@@ -1,7 +1,5 @@
 @use '../style/helper' as *;
 
-$color-neutral-light: varfix(color-neutral-light, button-group);
-
 @include block(vc-button-group) {
 	display: inline-block;
 	border-radius: unitfix(8);
@@ -10,7 +8,19 @@ $color-neutral-light: varfix(color-neutral-light, button-group);
 		position: relative;
 		display: flex;
 		float: left;
-		margin-left: -1px;
+
+		// 填充按钮之间留 1px 缝透出背景，作为分界；带边框的按钮叠边，避免边框叠成 2px
+		+ .vc-button {
+			margin-left: 1px;
+		}
+
+		&.is-solid,
+		&.is-dashed {
+			+ .is-solid,
+			+ .is-dashed {
+				margin-left: -1px;
+			}
+		}
 
 		&:not(:only-child) {
 			border-radius: 0;
@@ -36,12 +46,6 @@ $color-neutral-light: varfix(color-neutral-light, button-group);
 		}
 	}
 
-	@include block(vc-button) {
-		@include when(default) {
-			border-color: $color-neutral-light;
-		}
-	}
-
 	@include when(small) {
 		border-radius: unitfix(3);
 	}
@@ -50,8 +54,20 @@ $color-neutral-light: varfix(color-neutral-light, button-group);
 		@include block(vc-button) {
 			float: none;
 			width: 100%; // button 元素即使 display: block 也按内容收缩
-			margin-top: -1px;
-			margin-left: 0;
+
+			+ .vc-button {
+				margin-top: 1px;
+				margin-left: 0;
+			}
+
+			&.is-solid,
+			&.is-dashed {
+				+ .is-solid,
+				+ .is-dashed {
+					margin-top: -1px;
+					margin-left: 0;
+				}
+			}
 
 			&:first-child {
 				margin-top: 0;
