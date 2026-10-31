@@ -45,12 +45,13 @@ $size: unitfix(32);
 			padding: 0 unitfix(12);
 			margin: 0;
 			font-size: unitfix(12);
-			line-height: $size;
+			line-height: calc(#{$size} - #{unitfix(2)});
 			color: $color-dark-lightest;
 			cursor: pointer;
 			background: $background-color-lightest;
 			border: unitfix(1) solid $color-light-deepest;
 			border-left: 0;
+			box-sizing: border-box; // 含边框的总高度为32px
 			transition: all .2s ease-in-out;
 
 			&:hover {
