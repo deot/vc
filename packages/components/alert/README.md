@@ -9,7 +9,7 @@
 
 ### 基础用法
 
-通过 `type` 设置提示类型。传入 `description` 后，组件会使用带说明文字的布局。
+通过 `type` 设置提示类型。传入 `description` 后，组件会使用带说明文字的布局：标题加粗，说明文字使用次级颜色，图标与标题首行对齐。
 
 :::playground
 <!--
@@ -63,17 +63,22 @@ const isClosed = ref(false);
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-alert-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
 
-⚠ color-mix：四种状态的背景由对应状态色 8% 与 background-color-lightest 92% 混合，边框按 40% / 60% 混合。不支持时，背景使用 background-color-light，边框使用对应状态色。
+⚠ color-mix：四种状态的背景由对应状态色 8% 与 background-color-lightest 92% 混合，边框按 30% / 70% 混合。不支持时，背景使用 background-color-light，边框使用对应状态色。
 
 ### 全局
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
-| color-dark-lighter | 普通文字 | 亮色：`#515151`；暗色：`#D9D9D9` |
-| color-error | 对应状态文字、图标、边框及浅底派生色 | `#F53F3F` |
-| color-primary | 对应状态文字、图标、边框及浅底派生色 | `#456CF6` |
-| color-success | 对应状态文字、图标、边框及浅底派生色 | `#1DB88C` |
-| color-warning | 对应状态文字、图标、边框及浅底派生色 | `#E6A23C` |
+| color-dark-light | 标题文字、关闭入口悬停 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-dark-lighter | 说明文字 | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-lightest | 关闭入口 | 亮色：`#64758B`；暗色：`#C9C9C9` |
+| color-error | 对应状态的图标、强调文字（`<em>`）、边框及浅底派生色 | `#F53F3F` |
+| color-primary | 对应状态的图标、强调文字（`<em>`）、边框及浅底派生色 | `#456CF6` |
+| color-success | 对应状态的图标、强调文字（`<em>`）、边框及浅底派生色 | `#1DB88C` |
+| color-warning | 对应状态的图标、强调文字（`<em>`）、边框及浅底派生色 | `#E6A23C` |
+| font-size-small | 单行提示文字、说明文字 | `13px` |
+| font-size | 带说明时的标题 | `14px` |
+| line-height-large | 文字行高 | `20px` |
 | background-color-light | 不支持混合色时的状态背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
 | background-color-lightest | 状态背景和边框的混合表面色 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 

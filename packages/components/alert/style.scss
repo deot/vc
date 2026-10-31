@@ -1,12 +1,17 @@
 @use '../style/helper' as *;
 
+$color-dark-light: varfix(color-dark-light, alert);
 $color-dark-lighter: varfix(color-dark-lighter, alert);
+$color-dark-lightest: varfix(color-dark-lightest, alert);
 $color-error: varfix(color-error, alert);
 $color-primary: varfix(color-primary, alert);
 $color-success: varfix(color-success, alert);
 $color-warning: varfix(color-warning, alert);
 $background-color-light: varfix(background-color-light, alert);
 $background-color-lightest: varfix(background-color-lightest, alert);
+$font-size: varfix(font-size, alert);
+$font-size-small: varfix(font-size-small, alert);
+$line-height-large: varfix(line-height-large, alert);
 $component-name: vc-alert;
 
 @mixin alert-type($type-color, $border-color, $background-color) {
@@ -16,74 +21,53 @@ $component-name: vc-alert;
 	@supports (color: color-mix(in srgb, black, white)) {
 		& {
 			background-color: color-mix(in srgb, #{$type-color} 8%, #{$background-color-lightest});
-			border-color: color-mix(in srgb, #{$type-color} 40%, #{$background-color-lightest});
+			border-color: color-mix(in srgb, #{$type-color} 30%, #{$background-color-lightest});
 		}
 	}
 
-	@include element((icon, desc)) {
+	@include element(icon) {
 		color: $type-color;
 	}
 
-	@include element(message) {
+	@include element(title) {
 		> em {
-			color: $type-color;
-		}
-	}
-
-	@include when(desc, true) {
-		@include element(title) {
 			color: $type-color;
 		}
 	}
 }
 
 @include block($component-name) {
-	position: relative;
-	min-height: unitfix(32);
-	padding: unitfix(4) unitfix(10);
+	display: flex;
+	padding: unitfix(5) unitfix(11);
 	overflow: hidden;
-	font-size: unitfix(14);
-	color: $color-dark-lighter;
+	font-size: $font-size-small;
+	line-height: $line-height-large;
+	color: $color-dark-light;
 	border-style: solid;
 	border-width: unitfix(1);
 	border-radius: unitfix(4);
 	box-sizing: border-box;
+	align-items: flex-start;
+
+	// 图标与关闭入口固定为首行高度并居中，与首行文字对齐
+	@include element((icon, close)) {
+		display: flex;
+		height: $line-height-large;
+		align-items: center;
+		flex-shrink: 0;
+	}
 
 	@include element(icon) {
-		position: absolute;
-		top: unitfix(15);
-		left: unitfix(12);
-		font-size: unitfix(16);
-		transform: translate3d(0, -50%, 0);
-	}
-
-	@include when(icon, true) {
-		padding-left: unitfix(38);
-	}
-
-	@include when(desc, true) {
-		padding: unitfix(8) unitfix(8) unitfix(8) unitfix(44);
-		font-size: unitfix(13);
-
-		@include element(icon) {
-			top: unitfix(20);
-			font-size: unitfix(20);
-		}
-
-		@include element(title) {
-			margin-bottom: unitfix(5);
-			font-size: unitfix(15);
-			font-weight: 500;
-		}
+		margin-right: unitfix(8);
+		font-size: unitfix(12);
 	}
 
 	@include element(content) {
-		display: flex;
+		min-width: 0;
+		flex: 1;
 	}
 
-	@include element(message) {
-		flex: 1;
-
+	@include element(title) {
 		> em {
 			margin: 0 unitfix(3);
 			font-style: normal;
@@ -91,13 +75,38 @@ $component-name: vc-alert;
 	}
 
 	@include element(desc) {
-		opacity: 0.7;
+		color: $color-dark-lighter;
 	}
 
 	@include element(close) {
-		margin: 0 unitfix(4) 0 unitfix(12);
-		font-size: unitfix(10);
+		margin-left: unitfix(12);
+		font-size: unitfix(12);
+		color: $color-dark-lightest;
 		cursor: pointer;
+		transition: color 0.2s;
+
+		&:hover {
+			color: $color-dark-light;
+		}
+	}
+
+	// 带说明：标题与正文同字号加粗，说明文字小一号，整体紧凑
+	@include when(desc, true) {
+		padding: unitfix(9) unitfix(11);
+
+		@include element(icon) {
+			font-size: unitfix(14);
+		}
+
+		@include element(title) {
+			margin-bottom: unitfix(2);
+			font-size: $font-size;
+			font-weight: 500;
+		}
+
+		@include element(desc) {
+			font-size: $font-size-small;
+		}
 	}
 
 	@include when(info) {

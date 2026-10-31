@@ -49,25 +49,22 @@ export const Alert = defineComponent({
 							>
 								{
 									showIcon.value && (
-										<Icon
-											type={iconType.value}
-											class="vc-alert__icon"
-										/>
+										<div class="vc-alert__icon">
+											<Icon type={iconType.value} />
+										</div>
 									)
 								}
 								<div class="vc-alert__content">
-									<div class="vc-alert__message">
-										<Customer wrap class="vc-alert__title" render={slots.default || props.title} />
-										{ !!description && (<Customer wrap class="vc-alert__desc" render={description} />) }
-									</div>
-									{
-										props.closable && (
-											<div class="vc-alert__close" onClick={handleClose}>
-												{ slots.close ? slots.close() : (<Icon type="close" />) }
-											</div>
-										)
-									}
+									<Customer wrap class="vc-alert__title" render={slots.default || props.title} />
+									{ !!description && (<Customer wrap class="vc-alert__desc" render={description} />) }
 								</div>
+								{
+									props.closable && (
+										<div class="vc-alert__close" onClick={handleClose}>
+											{ slots.close ? slots.close() : (<Icon type="close" />) }
+										</div>
+									)
+								}
 							</div>
 						)
 					}
