@@ -1,9 +1,5 @@
-.vc-tabs-pane {
-	flex-shrink: 0;
-	width: 100%;
-}
+@use './shared';
 
-.vc-tabs.is-animated .vc-tabs-pane {
-	opacity: 1;
-	transition: opacity .3s cubic-bezier(.35, 0, .25, 1);
+.vc-tabs-pane {
+	@include shared.pane;
 }

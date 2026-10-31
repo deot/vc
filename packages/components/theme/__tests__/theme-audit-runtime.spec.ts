@@ -307,7 +307,7 @@ describe('Theme audit demo: mobile tabs',
 					const tabs = wrapper.findAllComponents(MTabs);
 					expect(tabs).toHaveLength(2);
 					expect(wrapper.text()).not.toContain('黑金');
-					expect(tabs.map(tab => tab.props('showStep'))).toEqual([false, true]);
+					expect(tabs.map(tab => tab.props('stepper'))).toEqual([false, true]);
 					for (const tab of tabs) {
 						expect(tab.props('theme')).toBe('light');
 						expect(tab.props('barStyle')).toEqual({ position: 'relative', top: 'auto' });

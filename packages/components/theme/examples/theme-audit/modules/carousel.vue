@@ -2,7 +2,7 @@
 	<div class="audit-stack audit-carousel">
 		<div v-for="dots in ['bottom', 'outside']" :key="dots" class="audit-sample" :data-state="`指示器 ${dots} · 箭头 hover`">
 			<div class="audit-sample__label">指示器 {{ dots }} · 箭头 hover</div>
-			<component :is="mobile ? MCarousel : Carousel" :dots="dots" :height="150" :autoplay="false" arrow="always">
+			<component :is="mobile ? MCarousel : Carousel" :dots="dots" :height="150" :autoplay="false" stepper="always">
 				<component :is="mobile ? MCarouselItem : CarouselItem" v-for="index in 3" :key="index" :name="String(index)" :label="`主题 ${index}`">
 					<img :src="svgImage(`Slide ${index}`, index === 2 ? '#1DB88C' : '#456CF6')"
 						:alt="`Slide ${index}`" class="audit-carousel__image">

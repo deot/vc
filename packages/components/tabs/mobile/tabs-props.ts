@@ -1,8 +1,12 @@
 import type { ExtractPropTypes } from 'vue';
+import { omit } from 'lodash-es';
 import { props as tabsProps } from '../tabs-props';
 
+// 外观（type、size）与标签栏位置（placement）只属于桌面端
+const desktopKeys = ['type', 'size', 'placement'] as const;
+
 export const props = {
-	...tabsProps,
+	...(omit(tabsProps, desktopKeys) as Omit<typeof tabsProps, typeof desktopKeys[number]>),
 	theme: {
 		type: String,
 		default: 'light',
@@ -32,7 +36,8 @@ export const props = {
 		type: Number,
 		default: 0
 	},
-	showStep: {
+	// 移动端以触摸滑动为主，默认不显示翻页按钮
+	stepper: {
 		type: Boolean,
 		default: false
 	}

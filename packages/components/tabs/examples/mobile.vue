@@ -1,5 +1,5 @@
 <template>
-	<div style="background: var(--vc-background-color)">
+	<div style="background: var(--vc-background-color);">
 		<div :style="{ height: `${height}px` }" />
 		<MButton @click="isAnimated = !isAnimated">
 			animated: {{ isAnimated }}
@@ -7,8 +7,8 @@
 		<MButton @click="theme = theme === 'light' ? 'dark' : 'light'">
 			theme: {{ theme }}
 		</MButton>
-		<MButton @click="isStepVisible = !isStepVisible">
-			showStep: {{ isStepVisible }}
+		<MButton @click="isStepperVisible = !isStepperVisible">
+			stepper: {{ isStepperVisible }}
 		</MButton>
 		<MButton @click="handleClear">
 			清除定时器
@@ -20,7 +20,7 @@
 			:theme="theme"
 			:average="false"
 			:sticky="true"
-			:show-step="isStepVisible"
+			:stepper="isStepperVisible"
 			closable
 			style="margin-top: 20px;"
 			@click="handleClick"
@@ -121,7 +121,7 @@ const height = ref(0);
 const value = ref(6);
 const isAnimated = ref(false);
 const theme = ref('light');
-const isStepVisible = ref(true);
+const isStepperVisible = ref(true);
 const list = ref(Array.from({ length: 200 }, (_, i) => i));
 
 const handleClick = () => {

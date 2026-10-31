@@ -1,5 +1,5 @@
 <template>
-	<div style="background: var(--vc-background-color)">
+	<div style="background: var(--vc-background-color);">
 		<Tabs
 			v-model="current"
 			:animated="isAnimated"

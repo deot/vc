@@ -1,4 +1,5 @@
 @use '../../style/helper' as *;
+@use '../shared';
 
 $color-dark-lighter: varfix(color-dark-lighter, tabs);
 $color-shadow-fixed: varfix(color-shadow-fixed, tabs);
@@ -7,23 +8,23 @@ $foreground-color-dark: varfix(foreground-color-dark, tabs);
 $component-name: vcm-tabs;
 $dark-background-color: varfix(dark-background-color, tabs, #333);
 $dark-color: varfix(dark-color, tabs, #E7C083);
-$dark-step-shadow-color: varfix(dark-step-shadow-color, tabs, #242421);
+$dark-stepper-shadow-color: varfix(dark-stepper-shadow-color, tabs, #242421);
 
 @include block($component-name) {
 	width: 100%;
 	overflow: hidden;
 
-	@include element(step) {
+	@include element(stepper) {
 		display: flex;
 		width: 40px;
 		justify-content: center;
 		align-items: center;
 
-		@include when(left) {
+		@include when(prev) {
 			box-shadow: 1px 0 5px 1px $color-shadow-fixed;
 		}
 
-		@include when(right) {
+		@include when(next) {
 			box-shadow: -1px 0 5px 1px $color-shadow-fixed;
 		}
 	}
@@ -85,19 +86,13 @@ $dark-step-shadow-color: varfix(dark-step-shadow-color, tabs, #242421);
 	}
 
 	@include element(content) {
-		display: flex;
-		flex-direction: row;
+		@include shared.content;
 	}
 
+	// 面板的切换动画见use-tabs的animate
 	@include when(animated) {
 		@include element(afloat) {
-			transition: transform .3s ease-in-out;
-			transform-origin: 0 0;
-		}
-
-		@include element(content) {
-			will-change: transform;
-			transition: transform .3s cubic-bezier(.35, 0, .25, 1);
+			transition: transform .3s ease-in-out, width .3s ease-in-out;
 		}
 	}
 
@@ -139,15 +134,15 @@ $dark-step-shadow-color: varfix(dark-step-shadow-color, tabs, #242421);
 			border-radius: 2px;
 		}
 
-		@include element(step) {
+		@include element(stepper) {
 			color: $dark-color;
 
-			@include when(left) {
-				box-shadow: 1px 0 5px 1px $dark-step-shadow-color;
+			@include when(prev) {
+				box-shadow: 1px 0 5px 1px $dark-stepper-shadow-color;
 			}
 
-			@include when(right) {
-				box-shadow: -1px 0 5px 1px $dark-step-shadow-color;
+			@include when(next) {
+				box-shadow: -1px 0 5px 1px $dark-stepper-shadow-color;
 			}
 		}
 	}

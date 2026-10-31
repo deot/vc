@@ -1,6 +1,5 @@
 import { getCurrentInstance, computed, watch, ref, provide, onMounted, onBeforeUnmount, nextTick, inject } from 'vue';
 import { Resize } from '@deot/helper-resize';
-import { getUid } from '@deot/helper-utils';
 import { scrollIntoView } from '@deot/helper-dom';
 import { getScroller, getViewportRect } from '../scroller/utils';
 
@@ -10,20 +9,17 @@ export default (options: any = {}) => {
 	const instance = getCurrentInstance()!;
 	const { props, emit } = instance;
 
-	const tabsId = ref(getUid('tabs'));
 	// tabs-children数据
 	const list = ref<any[]>([]);
-	// tabs-nav-item底部宽度，偏移值
+	// 面板实例，键为 list 中的 props
+	const panes = new WeakMap<object, any>();
+	// 滑块在排列方向上的长度与偏移
 	const afloatWidth = ref(0);
 	const afloatOffset = ref(0);
 	// 当前的active
 	const currentValue = ref<any>(undefined);
-	// tabs-nav滚动偏移值
-	const scrollOffset = ref(0);
-	// 可滚动
-	const scrollable = ref(false);
-	// 正在切换
-	const timer = ref<any>(null);
+	// 连续点击的间隔限制
+	let timer: any;
 
 	const getTabPaneValue = (nav: any, index: number) => {
 		return typeof nav?.value === 'undefined' ? index : nav.value;
@@ -33,32 +29,57 @@ export default (options: any = {}) => {
 		return list.value.findIndex((nav, index) => getTabPaneValue(nav, index) === v);
 	};
 
+	// 标签栏在左右两侧时纵向排列（只有桌面端有 placement）
+	const isVertical = computed(() => {
+		return props.placement === 'left' || props.placement === 'right';
+	});
+
 	const afloatStyle = computed(() => {
-		const style = {
-			width: `${afloatWidth.value}px`,
-			transform: `translate3d(${afloatOffset.value}px, 0px, 0px)`
-		};
-
-		return style;
+		const length = `${afloatWidth.value}px`;
+		const offset = `${afloatOffset.value}px`;
+		return isVertical.value
+			? { height: length, transform: `translate3d(0px, ${offset}, 0px)` }
+			: { width: length, transform: `translate3d(${offset}, 0px, 0px)` };
 	});
 
-	const contentStyle = computed(() => {
-		const index = getTabIndex(currentValue.value);
-		const precent = index === 0 ? '0%' : `-${index}00%`;
+	let motion: Animation | undefined;
 
-		const style = {
-			transform: ''
-		};
-		if (index > -1) {
-			style.transform = `translate3d(${precent}, 0px, 0px)`;
-		}
-		return style;
-	});
+	/**
+	 * animated：进入的面板沿标签栏的排列方向滑入并淡入（标签栏在上下时横向，在左右时纵向）
+	 * 切到后面的标签从后方（右 / 下）进入，切到前面的从前方进入；离开的面板直接隐藏
+	 * @param el 进入的面板
+	 * @param direction 1 为向后切换，-1 为向前
+	 */
+	const animate = (el: HTMLElement | undefined, direction: number) => {
+		const content = options.content.value as HTMLElement | undefined;
+		if (!el?.animate || !content) return;
+		motion?.cancel();
+
+		const offset = `${direction * 24}px`;
+		const transform = isVertical.value ? `translate3d(0px, ${offset}, 0px)` : `translate3d(${offset}, 0px, 0px)`;
+		const current = el.animate(
+			[{ opacity: 0, transform }, { opacity: 1, transform: 'none' }],
+			{ duration: 300, easing: 'cubic-bezier(.35, 0, .25, 1)' }
+		);
+
+		motion = current;
+		// 滑动期间内容区裁切溢出，页面不会出现临时的滚动条；直接改类名，不触发重新渲染
+		content.classList.add('is-switching');
+		// 被下一次切换取消时，由下一次负责收尾
+		current.finished.catch(() => {}).then(() => {
+			if (motion !== current) return;
+			motion = undefined;
+			content.classList.remove('is-switching');
+		});
+	};
 
 	const classes = computed(() => {
 		return {
 			'is-animated': props.animated,
 			[`is-${props.type}`]: !!props.type,
+			[`is-${props.size}`]: !!props.size,
+			[`is-${props.placement}`]: !!props.placement,
+			'is-vertical': isVertical.value,
 			[`is-${props.theme}`]: !!props.theme,
 		};
 	});
@@ -67,11 +88,23 @@ export default (options: any = {}) => {
 		return list.value.some(item => !!item.anchor);
 	});
 
+	// 渲染完成后刷新滑块并让选中项可见
+	const sync = () => {
+		options.refreshAfloat?.();
+		options.scrollToActive?.();
+	};
+
 	/**
-	 * 下层值变化：刷新tabs
+	 * 面板的值或标签变化、尺寸变化：同一轮只刷新一次
 	 */
+	let isRefreshing = false;
 	const refresh = () => {
-		options?.refreshAfloat?.();
+		if (isRefreshing) return;
+		isRefreshing = true;
+		nextTick(() => {
+			isRefreshing = false;
+			!instance.isUnmounted && sync();
+		});
 	};
 
 	let scrollToAnchorTimer: any;
@@ -137,9 +170,9 @@ export default (options: any = {}) => {
 	};
 
 	const handleChange = (index: number, scrollTo = true) => {
-		if (timer.value) return;
+		if (timer) return;
 
-		timer.value = setTimeout(() => timer.value = null, 300);
+		timer = setTimeout(() => timer = null, 300);
 
 		const nav = list.value[index];
 		if (nav.disabled) return;
@@ -159,27 +192,29 @@ export default (options: any = {}) => {
 		emit('tab-remove', getTabPaneValue(nav, index), index);
 	};
 
+	// 移动端：标签栏尺寸变化时重新计算滚动（桌面端由 Scroller 处理，不传 wrapper）
 	const handleResize = () => {
 		if (instance.isUnmounted) return;
-		options?.refreshScroll?.();
-		options?.refreshAfloat?.();
+		options.refreshScroll?.();
+		options.refreshAfloat?.();
 	};
 
 	onMounted(() => {
-		options.wrapper.value && Resize.on(options.wrapper.value, handleResize);
-		options.scrollToActive && nextTick(options.scrollToActive);
+		options.wrapper?.value && Resize.on(options.wrapper.value, handleResize);
 		affix?.onScroll?.(handleAffixScroll);
 	});
 
 	onBeforeUnmount(() => {
-		options.wrapper.value && Resize.off(options.wrapper.value, handleResize);
-		timer.value && clearTimeout(timer.value);
+		motion?.cancel();
+		options.wrapper?.value && Resize.off(options.wrapper.value, handleResize);
+		timer && clearTimeout(timer);
 		affix?.offScroll?.(handleAffixScroll);
 		scrollToAnchorTimer && clearTimeout(scrollToAnchorTimer);
 	});
 
 	const add = (item: any, setValue: any) => {
 		if (!item) return;
+		panes.set(item.props, item);
 		// vnode动态时排序
 		nextTick(() => {
 			typeof currentValue.value === 'undefined' && (
@@ -190,8 +225,8 @@ export default (options: any = {}) => {
 
 			if (options.content.value) {
 				const index = Array
-					.from(options.content.value.children)
-					.filter(i => /vcm?-tabs-pane/.test((i as any).className))
+					.from(options.content.value.children as HTMLCollection)
+					.filter(i => /vcm?-tabs-pane/.test(i.className))
 					.indexOf(item.vnode.el);
 
 				if (index != -1) {
@@ -233,34 +268,29 @@ export default (options: any = {}) => {
 		{ immediate: true }
 	);
 
+	// 选中项或标签数量变化：渲染完成后刷新；切换选中项时播放面板动画（首次选中，即原值不在列表中时不播放）
 	watch(
-		() => currentValue.value,
-		() => {
-			options.refreshAfloat?.();
-			options.scrollToActive?.();
-		}
-	);
-
-	watch(
-		() => list.value.length,
-		() => {
-			options.refreshAfloat?.();
-			options.scrollToActive?.();
-		}
+		[() => currentValue.value, () => list.value.length],
+		([v], [old]) => {
+			sync();
+			if (!props.animated || v === old) return;
+			const from = getTabIndex(old);
+			const to = getTabIndex(v);
+			if (from === -1 || to === -1) return;
+			animate(panes.get(list.value[to])?.vnode.el, to > from ? 1 : -1);
+		},
+		{ flush: 'post' }
 	);
 
 	return {
-		tabsId,
 		list,
-		timer,
 		afloatWidth,
 		afloatOffset,
 		currentValue,
-		scrollOffset,
-		scrollable,
+		isVertical,
 		afloatStyle,
-		contentStyle,
 		classes,
+		refresh,
 
 		getTabIndex,
 		getTabPaneValue,

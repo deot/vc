@@ -1,9 +1,5 @@
-.vcm-tabs-pane {
-	flex-shrink: 0;
-	width: 100%;
-}
+@use '../shared';
 
-.vcm-tabs.is-animated .vcm-tabs-pane{
-	opacity: 1;
-	transition: opacity .3s cubic-bezier(.35, 0, .25, 1);
+.vcm-tabs-pane {
+	@include shared.pane;
 }

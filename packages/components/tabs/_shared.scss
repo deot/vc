@@ -1,0 +1,16 @@
+@use '../style/helper' as *;
+
+// 桌面端与移动端共用：面板重叠在同一格，高度由当前面板决定（其余面板高度为0）
+@mixin content {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+
+	// animated：进入的面板滑动期间裁切溢出，见use-tabs的animate
+	@include when(switching) {
+		overflow: clip;
+	}
+}
+
+@mixin pane {
+	grid-area: 1 / 1;
+}

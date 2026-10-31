@@ -1,14 +1,14 @@
 <template>
-	<div style="padding: 10px 200px">
+	<div style="padding: 10px 200px;">
 		<Scroller
 			height="400px"
 			:always="true"
 			:native="false"
-			style="background: gray; padding: 0 10px"
+			style=" padding: 0 10px;background: gray;"
 		>
 			<Customer :render="renderItems" :length="5" id="anchor-0" />
 			<Affix :fixed="false" :offset="30">
-				<Tabs :model-value="0" style="background: white">
+				<Tabs :model-value="0" style="background: white;">
 					<TabsPane label="1" anchor="#anchor-1" />
 					<TabsPane label="2" anchor="#anchor-2" />
 				</Tabs>

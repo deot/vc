@@ -30,6 +30,8 @@ export const MTabs = defineComponent({
 		const scrollViewW = ref(0); // 滚动容器宽度
 		const scrollContentW = ref(0); // 滚动内容宽度
 		const baseX = ref(0);
+		const scrollOffset = ref(0); // 标签栏的滚动偏移
+		const scrollable = ref(false);
 
 		const isDark = computed(() => {
 			return props.theme === 'dark';
@@ -53,7 +55,7 @@ export const MTabs = defineComponent({
 		const handleTouchstart = (e: any) => {
 			isTouching.value = true;
 			startX.value = e.touches[0].pageX;
-			baseX.value = tabs.scrollOffset.value;
+			baseX.value = scrollOffset.value;
 		};
 
 		const handleTouchmove = throttle((e: any) => {
@@ -61,15 +63,15 @@ export const MTabs = defineComponent({
 			// 与touchstart时触点位置的距离偏移值，大于0时为触点向右移，反之向左
 			const changedX = touchPageX - startX.value;
 			if (changedX > 0) {
-				if (tabs.scrollOffset.value >= 0) {
-					tabs.scrollOffset.value = 0;
+				if (scrollOffset.value >= 0) {
+					scrollOffset.value = 0;
 					return;
 				}
-			} else if (Math.abs(tabs.scrollOffset.value) + scrollViewW.value >= scrollContentW.value) {
-				tabs.scrollOffset.value = -(scrollContentW.value - scrollViewW.value);
+			} else if (Math.abs(scrollOffset.value) + scrollViewW.value >= scrollContentW.value) {
+				scrollOffset.value = -(scrollContentW.value - scrollViewW.value);
 				return;
 			}
-			tabs.scrollOffset.value = baseX.value + touchPageX - startX.value;
+			scrollOffset.value = baseX.value + touchPageX - startX.value;
 		}, 17);
 
 		const handleTouchend = () => {
@@ -78,13 +80,13 @@ export const MTabs = defineComponent({
 		};
 
 		const handleStep = (flag: number) => {
-			if (!tabs.scrollable.value) return;
+			if (!scrollable.value) return;
 			const moveX = flag * scrollViewW.value;
-			let offsetX = tabs.scrollOffset.value + moveX;
+			let offsetX = scrollOffset.value + moveX;
 			if (offsetX < -(scrollContentW.value - scrollViewW.value) || offsetX > 0) {
 				offsetX = flag === -1 ? -(scrollContentW.value - scrollViewW.value) : 0;
 			}
-			tabs.scrollOffset.value = offsetX;
+			scrollOffset.value = offsetX;
 		};
 
 		/**
@@ -102,7 +104,7 @@ export const MTabs = defineComponent({
 		 * 将选中的item滚动至可视区（尽量往中间靠）
 		 */
 		const scrollToActive = () => {
-			if (!tabs.scrollable.value) return;
+			if (!scrollable.value) return;
 			const activeEl = instance.vnode.el!.querySelector(`.vcm-tabs__item[data-id="${tabs.currentValue.value}"]`);
 
 			if (!activeEl) return;
@@ -128,7 +130,7 @@ export const MTabs = defineComponent({
 					offset = targetOffset - offsetLeft; // 可以滚动到正中间的理想情况
 				}
 			}
-			tabs.scrollOffset.value = offset;
+			scrollOffset.value = offset;
 		};
 
 		const operateDOMScrollEvents = (type: string) => {
@@ -151,12 +153,12 @@ export const MTabs = defineComponent({
 			if (scrollContentW.value > scrollViewW.value) {
 				operateDOMScrollEvents('remove');
 				operateDOMScrollEvents('add');
-				tabs.scrollable.value = true;
-			} else if (tabs.scrollable.value) {
+				scrollable.value = true;
+			} else if (scrollable.value) {
 				operateDOMScrollEvents('remove');
-				tabs.scrollable.value = false;
+				scrollable.value = false;
 			}
-			tabs.scrollable.value && scrollToActive();
+			scrollable.value && scrollToActive();
 		};
 
 		/**
@@ -217,7 +219,7 @@ export const MTabs = defineComponent({
 		const scrollStyle = computed(() => {
 			return {
 				transition: isTouching.value ? '' : 'transform 300ms ease-in-out',
-				transform: `translate3d(${tabs.scrollOffset.value}px, 0, 0)`
+				transform: `translate3d(${scrollOffset.value}px, 0, 0)`
 			};
 		});
 
@@ -245,7 +247,7 @@ export const MTabs = defineComponent({
 		);
 
 		watch(
-			() => props.showStep,
+			() => props.stepper,
 			() => nextTick(refreshScroll)
 		);
 		return () => {
@@ -260,8 +262,8 @@ export const MTabs = defineComponent({
 							>
 								{ slots.prepend?.() }
 								{
-									props.showStep && tabs.scrollable.value && (
-										<div class="vcm-tabs__step is-left" onClick={() => handleStep(1)}>
+									props.stepper && scrollable.value && (
+										<div class="vcm-tabs__stepper is-prev" onClick={() => handleStep(1)}>
 											<Icon type="left" />
 										</div>
 									)
@@ -325,8 +327,8 @@ export const MTabs = defineComponent({
 									</div>
 								</div>
 								{
-									props.showStep && tabs.scrollable.value && (
-										<div class="vcm-tabs__step is-right" onClick={() => handleStep(-1)}>
+									props.stepper && scrollable.value && (
+										<div class="vcm-tabs__stepper is-next" onClick={() => handleStep(-1)}>
 											<Icon type="right" />
 										</div>
 									)
@@ -343,7 +345,6 @@ export const MTabs = defineComponent({
 					}
 					<div
 						ref={content}
-						style={tabs.contentStyle.value}
 						class="vcm-tabs__content"
 					>
 						{ slots.default?.() }

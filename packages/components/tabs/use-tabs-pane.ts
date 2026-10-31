@@ -22,8 +22,21 @@ export default () => {
 		return state;
 	});
 
+	// 未设置时继承 Tabs（同 CollapseItem）
+	const lazy = computed(() => {
+		return typeof props.lazy === 'boolean' ? props.lazy : (tabs.props?.lazy ?? true);
+	});
+
+	const alive = computed(() => {
+		return typeof props.alive === 'boolean' ? props.alive : (tabs.props?.alive ?? true);
+	});
+
+	/**
+	 * 激活时渲染；隐藏时 alive 为 false 则卸载，否则已渲染过（或不懒加载）的保留
+	 * 面板容器始终保留，切换动画的位置不受影响
+	 */
 	const isReady = computed(() => {
-		return !props.lazy || isLoaded.value || isActive.value;
+		return isActive.value || (alive.value && (isLoaded.value || !lazy.value));
 	});
 
 	const style = computed(() => {

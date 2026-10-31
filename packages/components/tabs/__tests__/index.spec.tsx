@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Tabs, TabsPane, MTabs, MTabsPane } from '@deot/vc-components';
+import { Tabs, TabsPane, MTabs, MTabsPane, Scroller } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
 import { defineComponent, h, nextTick, ref } from 'vue';
@@ -12,9 +12,83 @@ const flush = async () => {
 	await nextTick();
 };
 
+// 记录所有 ResizeObserver 实例：触发观察某元素的全部观察器（Scroller 自己与 Tabs 的共享观察器）
+const observers: any[] = [];
+const MockResizeObserver = (globalThis as any).ResizeObserver;
+(globalThis as any).ResizeObserver = class extends MockResizeObserver {
+	constructor(cb: any) {
+		super(cb);
+		observers.push(this);
+	}
+};
+const triggerResize = (el: Element) => {
+	observers.filter(ro => ro.targets.has(el)).forEach(ro => ro.trigger(el));
+};
+
 const mockSize = (el: HTMLElement, width: number) => {
 	const def = vi.spyOn(el, 'offsetWidth', 'get').mockImplementation(() => width);
 	return () => def.mockRestore();
+};
+
+/**
+ * 标签栏溢出：模拟 Scroller 根节点的尺寸与可写的 scrollLeft，每个标签等宽排列
+ * @param wrapper ~
+ * @param options ~
+ * @param options.client 可视宽度
+ * @param options.scroll 内容宽度
+ * @param options.item 每个标签的宽度
+ * @returns Scroller 根节点
+ */
+const mockOverflow = async (wrapper: any, options: { client: number; scroll: number; item: number }) => {
+	const el = wrapper.find('.vc-tabs__scroll').element as HTMLElement;
+	let scrollLeft = 0;
+	Object.defineProperty(el, 'scrollLeft', { get: () => scrollLeft, set: (v: number) => (scrollLeft = v), configurable: true });
+	Object.defineProperty(el, 'clientWidth', { get: () => options.client, configurable: true });
+	Object.defineProperty(el, 'scrollWidth', { get: () => options.scroll, configurable: true });
+	wrapper.findAll('.vc-tabs__item').forEach((item: any, index: number) => {
+		Object.defineProperty(item.element, 'offsetLeft', { get: () => index * options.item, configurable: true });
+		Object.defineProperty(item.element, 'offsetWidth', { get: () => options.item, configurable: true });
+	});
+	await wrapper.findComponent(Scroller).vm.refresh();
+	await flush();
+	return el;
+};
+
+/**
+ * 临时替换 Element.animate：记录每次调用的元素、关键帧与计时，由测试决定结束或取消
+ * @returns 调用记录与还原函数
+ */
+const mockAnimate = () => {
+	const calls: any[] = [];
+	const proto = HTMLElement.prototype as any;
+	const original = proto.animate;
+	proto.animate = function (keyframes: Keyframe[], timing: KeyframeAnimationOptions) {
+		let resolve: any;
+		let reject: any;
+		const finished = new Promise((res, rej) => {
+			resolve = res;
+			reject = rej;
+		});
+		const animation = {
+			el: this,
+			keyframes,
+			timing,
+			finished,
+			finish: () => resolve(),
+			cancel: vi.fn(() => reject(new Error('cancel')))
+		};
+		calls.push(animation);
+		return animation;
+	};
+	return { calls, restore: () => (proto.animate = original) };
+};
+
+// 等平滑滚动结束，并像浏览器一样派发scroll让Scroller同步位置
+const settle = async (el: HTMLElement) => {
+	await flush();
+	await Utils.sleep(400);
+	el.dispatchEvent(new Event('scroll'));
+	await flush();
 };
 
 describe('index.ts', () => {
@@ -195,6 +269,232 @@ describe('index.ts', () => {
 		expect(wrapper.find('.vc-tabs__afloat').exists()).toBe(false);
 	});
 
+	it('type / size: root carries is-<type> / is-<size>, only line has afloat', async () => {
+		const types = ['line', 'card', 'button', 'capsule', 'text', 'round'] as const;
+		const sizes = ['mini', 'small', 'medium', 'large'] as const;
+		for (const type of types) {
+			for (const size of sizes) {
+				const wrapper = mount(() => (
+					<Tabs type={type} size={size}>
+						<TabsPane label="a">A</TabsPane>
+					</Tabs>
+				));
+				await flush();
+				expect(wrapper.classes()).toEqual(expect.arrayContaining([`is-${type}`, `is-${size}`]));
+				expect(wrapper.find('.vc-tabs__afloat').exists()).toBe(type === 'line');
+				wrapper.unmount();
+			}
+		}
+
+		const wrapper = mount(() => (<Tabs />));
+		expect(wrapper.classes()).toEqual(expect.arrayContaining(['is-line', 'is-medium']));
+	});
+
+	it('type / size validators', () => {
+		const { type, size } = (Tabs as any).props;
+		expect(type.validator('round')).toBe(true);
+		expect(type.validator('rounded')).toBe(false);
+		expect(type.validator('default')).toBe(false);
+		expect(size.validator('large')).toBe(true);
+		expect(size.validator('default')).toBe(false);
+	});
+
+	it('placement: root carries is-<placement>, left/right also is-vertical; extra sits at the end of the bar', async () => {
+		for (const placement of ['top', 'bottom', 'left', 'right'] as const) {
+			const wrapper = mount(() => (
+				<Tabs placement={placement} v-slots={{ extra: () => <span class="my-extra">extra</span> }}>
+					<TabsPane label="a">A</TabsPane>
+				</Tabs>
+			));
+			await flush();
+			expect(wrapper.classes()).toContain(`is-${placement}`);
+			expect(wrapper.classes().includes('is-vertical')).toBe(placement === 'left' || placement === 'right');
+			expect(wrapper.find('.vc-tabs__bar > .vc-tabs__extra:last-child .my-extra').exists()).toBe(true);
+			wrapper.unmount();
+		}
+
+		const wrapper = mount(() => (<Tabs />));
+		expect(wrapper.classes()).toContain('is-top');
+		expect(wrapper.find('.vc-tabs__extra').exists()).toBe(false);
+		expect((Tabs as any).props.placement.validator('left')).toBe(true);
+		expect((Tabs as any).props.placement.validator('start')).toBe(false);
+	});
+
+	it('placement: afloat follows the active item along the bar axis', async () => {
+		const value = ref<any>('a');
+		const placement = ref<any>('top');
+		const wrapper = mount(() => (
+			<Tabs modelValue={value.value} placement={placement.value}>
+				<TabsPane label="a" value="a" />
+				<TabsPane label="b" value="b" />
+			</Tabs>
+		), { attachTo: document.body });
+		await flush();
+
+		wrapper.findAll('.vc-tabs__item').forEach((item: any, index: number) => {
+			Object.defineProperty(item.element, 'offsetLeft', { get: () => index * 80, configurable: true });
+			Object.defineProperty(item.element, 'offsetWidth', { get: () => 80, configurable: true });
+			Object.defineProperty(item.element, 'offsetTop', { get: () => index * 40, configurable: true });
+			Object.defineProperty(item.element, 'offsetHeight', { get: () => 40, configurable: true });
+		});
+		const afloat = () => (wrapper.find('.vc-tabs__afloat').element as HTMLElement).style;
+
+		value.value = 'b';
+		await flush();
+		expect(afloat().width).toBe('80px');
+		expect(afloat().transform).toBe('translate3d(80px, 0px, 0px)');
+
+		placement.value = 'left';
+		value.value = 'a';
+		await flush();
+		value.value = 'b';
+		await flush();
+		expect(afloat().height).toBe('40px');
+		expect(afloat().width).toBe('');
+		expect(afloat().transform).toBe('translate3d(0px, 40px, 0px)');
+
+		wrapper.unmount();
+	});
+
+	it('placement=left: overflow scrolls vertically with up / down stepper buttons', async () => {
+		const value = ref<any>(0);
+		const wrapper = mount(() => (
+			<Tabs modelValue={value.value} placement="left">
+				{Array.from({ length: 10 }, (_, i) => (
+					<TabsPane key={i} label={`tab-${i}`} value={i} />
+				))}
+			</Tabs>
+		), { attachTo: document.body });
+		await flush();
+
+		const el = wrapper.find('.vc-tabs__scroll').element as HTMLElement;
+		let scrollTop = 0;
+		Object.defineProperty(el, 'scrollTop', { get: () => scrollTop, set: (v: number) => (scrollTop = v), configurable: true });
+		Object.defineProperty(el, 'clientHeight', { get: () => 120, configurable: true });
+		Object.defineProperty(el, 'scrollHeight', { get: () => 400, configurable: true });
+		wrapper.findAll('.vc-tabs__item').forEach((item: any, index: number) => {
+			Object.defineProperty(item.element, 'offsetTop', { get: () => index * 40, configurable: true });
+			Object.defineProperty(item.element, 'offsetHeight', { get: () => 40, configurable: true });
+		});
+		await (wrapper.findComponent(Scroller).vm as any).refresh();
+		await flush();
+
+		expect(wrapper.find('.vc-tabs__stepper.is-prev .vc-icon').exists()).toBe(true);
+		expect(wrapper.find('.vc-tabs__stepper.is-prev').classes()).toContain('is-disabled');
+
+		await wrapper.find('.vc-tabs__stepper.is-next').trigger('click');
+		await flush();
+		await Utils.sleep(400);
+		expect(el.scrollTop).toBe(120);
+
+		// 选中项在可视区下方：末端对齐可视区底部
+		value.value = 7;
+		await flush();
+		await Utils.sleep(400);
+		expect(el.scrollTop).toBe(200);
+
+		wrapper.unmount();
+	});
+
+	it('MTabs does not declare desktop-only type / size / placement', () => {
+		const props = (MTabs as any).props;
+		expect(props.type).toBeUndefined();
+		expect(props.size).toBeUndefined();
+		expect(props.placement).toBeUndefined();
+		expect(props.closable).toBeDefined();
+	});
+
+	it('animated: the entering pane slides in along the bar axis, direction follows the switch', async () => {
+		const { calls, restore } = mockAnimate();
+		const value = ref<any>('a');
+		const placement = ref<any>('top');
+		const wrapper = mount(() => (
+			<Tabs modelValue={value.value} placement={placement.value} animated>
+				<TabsPane label="a" value="a">A</TabsPane>
+				<TabsPane label="b" value="b">B</TabsPane>
+				<TabsPane label="c" value="c">C</TabsPane>
+			</Tabs>
+		));
+		await flush();
+		// 首次选中不播放
+		expect(calls).toHaveLength(0);
+
+		const panes = wrapper.findAll('.vc-tabs-pane').map(i => i.element);
+		const content = wrapper.find('.vc-tabs__content');
+
+		value.value = 'c';
+		await flush();
+		expect(calls).toHaveLength(1);
+		expect(calls[0].el).toBe(panes[2]);
+		expect(calls[0].keyframes[0]).toEqual({ opacity: 0, transform: 'translate3d(24px, 0px, 0px)' });
+		expect(calls[0].keyframes[1]).toEqual({ opacity: 1, transform: 'none' });
+		expect(content.classes()).toContain('is-switching');
+
+		// 结束前再次切换：取消上一段，裁切保留到新的一段结束
+		value.value = 'a';
+		await flush();
+		expect(calls[0].cancel).toHaveBeenCalled();
+		expect(calls[1].el).toBe(panes[0]);
+		expect(calls[1].keyframes[0].transform).toBe('translate3d(-24px, 0px, 0px)');
+		await flush();
+		expect(content.classes()).toContain('is-switching');
+		calls[1].finish();
+		await flush();
+		expect(content.classes()).not.toContain('is-switching');
+
+		// 左右位置：纵向
+		placement.value = 'left';
+		value.value = 'b';
+		await flush();
+		expect(calls[2].keyframes[0].transform).toBe('translate3d(0px, 24px, 0px)');
+		calls[2].finish();
+
+		wrapper.unmount();
+		restore();
+	});
+
+	it('animated: not played without animated, for unknown values or on MTabs first selection', async () => {
+		const { calls, restore } = mockAnimate();
+		const value = ref<any>('a');
+		const wrapper = mount(() => (
+			<Tabs modelValue={value.value}>
+				<TabsPane label="a" value="a" />
+				<TabsPane label="b" value="b" />
+			</Tabs>
+		));
+		await flush();
+		value.value = 'b';
+		await flush();
+		expect(calls).toHaveLength(0);
+
+		const animatedValue = ref<any>('a');
+		const wrapper2 = mount(() => (
+			<MTabs modelValue={animatedValue.value} animated>
+				<MTabsPane label="a" value="a" />
+				<MTabsPane label="b" value="b" />
+			</MTabs>
+		));
+		await flush();
+		animatedValue.value = 'missing';
+		await flush();
+		expect(calls).toHaveLength(0);
+
+		// 移动端同样播放，横向
+		animatedValue.value = 'b';
+		await flush();
+		animatedValue.value = 'a';
+		await flush();
+		expect(calls).toHaveLength(1);
+		expect(calls[0].keyframes[0].transform).toBe('translate3d(-24px, 0px, 0px)');
+		expect(wrapper2.find('.vcm-tabs__content').classes()).toContain('is-switching');
+
+		// 卸载时取消进行中的动画
+		wrapper2.unmount();
+		expect(calls[0].cancel).toHaveBeenCalled();
+		wrapper.unmount();
+		restore();
+	});
+
 	it('animated=true adds is-animated class', async () => {
 		const wrapper = mount(() => (
 			<Tabs animated>
@@ -222,6 +522,29 @@ describe('index.ts', () => {
 		await closes[1].trigger('click');
 		expect(onRemove).toHaveBeenCalledTimes(1);
 		expect(onRemove).toHaveBeenLastCalledWith('c', 2);
+	});
+
+	it('close button: is-closable on the item, no switch on click, hidden for disabled panes', async () => {
+		const onRemove = vi.fn();
+		const onChange = vi.fn();
+		const wrapper = mount(() => (
+			<Tabs modelValue="a" type="card" closable onTabRemove={onRemove} onChange={onChange}>
+				<TabsPane label="a" value="a" closable>A</TabsPane>
+				<TabsPane label="b" value="b" closable>B</TabsPane>
+				<TabsPane label="c" value="c" closable disabled>C</TabsPane>
+			</Tabs>
+		));
+		await flush();
+
+		const items = wrapper.findAll('.vc-tabs__item');
+		expect(items.map(i => i.classes().includes('is-closable'))).toEqual([true, true, false]);
+		expect(items[2].find('.vc-tabs__close').exists()).toBe(false);
+
+		await items[1].find('.vc-tabs__close').trigger('click');
+		await flush();
+		expect(onRemove).toHaveBeenLastCalledWith('b', 1);
+		expect(onChange).not.toHaveBeenCalled();
+		expect(items[0].classes()).toContain('is-active');
 	});
 
 	it('disabled pane is not switchable', async () => {
@@ -283,6 +606,109 @@ describe('index.ts', () => {
 		expect(wrapper.find('.eager-b').exists()).toBe(true);
 	});
 
+	it('alive=false: hidden panes unmount their content, the pane element stays', async () => {
+		const value = ref<any>('a');
+		const wrapper = mount(() => (
+			<Tabs modelValue={value.value} alive={false}>
+				<TabsPane label="a" value="a"><input class="alive-a" /></TabsPane>
+				<TabsPane label="b" value="b"><input class="alive-b" /></TabsPane>
+			</Tabs>
+		));
+		await flush();
+		expect(wrapper.find('.alive-a').exists()).toBe(true);
+
+		value.value = 'b';
+		await flush();
+		expect(wrapper.find('.alive-a').exists()).toBe(false);
+		expect(wrapper.find('.alive-b').exists()).toBe(true);
+		expect(wrapper.findAll('.vc-tabs-pane')).toHaveLength(2);
+
+		// 重新激活后重建
+		(wrapper.find('.alive-b').element as HTMLInputElement).value = 'typed';
+		value.value = 'a';
+		await flush();
+		value.value = 'b';
+		await flush();
+		expect((wrapper.find('.alive-b').element as HTMLInputElement).value).toBe('');
+	});
+
+	it('alive: TabsPane overrides Tabs in both directions', async () => {
+		const value = ref<any>('a');
+		const wrapper = mount(() => (
+			<Tabs modelValue={value.value} alive={false}>
+				<TabsPane label="a" value="a" alive><span class="keep" /></TabsPane>
+				<TabsPane label="b" value="b"><span class="drop" /></TabsPane>
+				<TabsPane label="c" value="c" />
+			</Tabs>
+		));
+		await flush();
+		value.value = 'b';
+		await flush();
+		value.value = 'c';
+		await flush();
+		expect(wrapper.find('.keep').exists()).toBe(true);
+		expect(wrapper.find('.drop').exists()).toBe(false);
+
+		const value2 = ref<any>('a');
+		const wrapper2 = mount(() => (
+			<Tabs modelValue={value2.value}>
+				<TabsPane label="a" value="a" alive={false}><span class="drop" /></TabsPane>
+				<TabsPane label="b" value="b" />
+			</Tabs>
+		));
+		await flush();
+		value2.value = 'b';
+		await flush();
+		expect(wrapper2.find('.drop').exists()).toBe(false);
+	});
+
+	it('lazy: Tabs lazy=false renders every pane up front, TabsPane overrides it', async () => {
+		const wrapper = mount(() => (
+			<Tabs modelValue="a" lazy={false}>
+				<TabsPane label="a" value="a"><span class="eager-a" /></TabsPane>
+				<TabsPane label="b" value="b"><span class="eager-b" /></TabsPane>
+				<TabsPane label="c" value="c" lazy><span class="lazy-c" /></TabsPane>
+			</Tabs>
+		));
+		await flush();
+		expect(wrapper.find('.eager-b').exists()).toBe(true);
+		expect(wrapper.find('.lazy-c').exists()).toBe(false);
+
+		// alive=false 时不保留隐藏面板，lazy=false 也不提前渲染
+		const wrapper2 = mount(() => (
+			<Tabs modelValue="a" lazy={false} alive={false}>
+				<TabsPane label="a" value="a" />
+				<TabsPane label="b" value="b"><span class="eager-b" /></TabsPane>
+			</Tabs>
+		));
+		await flush();
+		expect(wrapper2.find('.eager-b').exists()).toBe(false);
+	});
+
+	it('alive / lazy are inherited by MTabsPane as well', async () => {
+		const value = ref<any>('a');
+		const wrapper = mount(() => (
+			<MTabs modelValue={value.value} alive={false}>
+				<MTabsPane label="a" value="a"><span class="m-a" /></MTabsPane>
+				<MTabsPane label="b" value="b"><span class="m-b" /></MTabsPane>
+			</MTabs>
+		));
+		await flush();
+		value.value = 'b';
+		await flush();
+		expect(wrapper.find('.m-a').exists()).toBe(false);
+		expect(wrapper.find('.m-b').exists()).toBe(true);
+
+		const wrapper2 = mount(() => (
+			<MTabs modelValue="a" lazy={false}>
+				<MTabsPane label="a" value="a" />
+				<MTabsPane label="b" value="b"><span class="m-eager" /></MTabsPane>
+			</MTabs>
+		));
+		await flush();
+		expect(wrapper2.find('.m-eager').exists()).toBe(true);
+	});
+
 	it('dynamic add / remove panes', async () => {
 		const list = ref(['a', 'b']);
 		const wrapper = mount(defineComponent({
@@ -336,7 +762,7 @@ describe('index.ts', () => {
 		expect(wrapper.findAll('.vc-tabs__item').map(el => el.text())).toEqual(['A', 'C', 'B']);
 	});
 
-	it('prev/next click controls scrollOffset within bounds', async () => {
+	it('overflow: stepper buttons appear, disabled at both ends, prev/next scroll one viewport', async () => {
 		const wrapper = mount(() => (
 			<Tabs modelValue={0}>
 				{Array.from({ length: 10 }, (_, i) => (
@@ -344,44 +770,135 @@ describe('index.ts', () => {
 				))}
 			</Tabs>
 		), { attachTo: document.body });
-
 		await flush();
+		expect(wrapper.find('.vc-tabs__stepper').exists()).toBe(false);
 
-		const scrollEl = wrapper.find('.vc-tabs__scroll').element as HTMLElement;
-		const navEl = wrapper.find('.vc-tabs__nav').element as HTMLElement;
+		const el = await mockOverflow(wrapper, { client: 300, scroll: 1000, item: 100 });
+		expect(wrapper.find('.vc-tabs__stepper.is-prev').classes()).toContain('is-disabled');
+		expect(wrapper.find('.vc-tabs__stepper.is-next').classes()).not.toContain('is-disabled');
 
-		const restoreScroll = mockSize(scrollEl, 300);
-		const restoreNav = mockSize(navEl, 1000);
+		const next = wrapper.find('.vc-tabs__stepper.is-next');
+		await next.trigger('click');
+		await settle(el);
+		expect(el.scrollLeft).toBe(300);
+		expect(wrapper.find('.vc-tabs__stepper.is-prev').classes()).not.toContain('is-disabled');
 
-		// 触发 resize -> refreshScroll
-		window.dispatchEvent(new Event('resize'));
-		// useTabs 走的是 Resize.on(wrapper.value, handleResize)，未必由 window resize 触发
-		// 改为通过修改 modelValue 让 watch -> refreshAfloat -> refreshScroll 链路触发
-		await wrapper.setProps?.({});
-		// 手动触发：点击一次让 watch 跑起来
-		const items = wrapper.findAll('.vc-tabs__item');
-		await items[1].trigger('click');
+		await next.trigger('click');
+		await settle(el);
+		await next.trigger('click');
+		await settle(el);
+		// 上界：scrollWidth - clientWidth
+		expect(el.scrollLeft).toBe(700);
+		expect(wrapper.find('.vc-tabs__stepper.is-next').classes()).toContain('is-disabled');
+
+		const prev = wrapper.find('.vc-tabs__stepper.is-prev');
+		await prev.trigger('click');
+		await settle(el);
+		expect(el.scrollLeft).toBe(400);
+		await prev.trigger('click');
+		await settle(el);
+		await prev.trigger('click');
+		await settle(el);
+		// 下界：0
+		expect(el.scrollLeft).toBe(0);
+
+		wrapper.unmount();
+	});
+
+	it('overflow: stepper=false hides the prev / next buttons, the bar still scrolls', async () => {
+		const value = ref<any>(0);
+		const wrapper = mount(() => (
+			<Tabs modelValue={value.value} stepper={false}>
+				{Array.from({ length: 10 }, (_, i) => (
+					<TabsPane key={i} label={`tab-${i}`} value={i} />
+				))}
+			</Tabs>
+		), { attachTo: document.body });
 		await flush();
+		const el = await mockOverflow(wrapper, { client: 300, scroll: 1000, item: 100 });
+		expect(wrapper.find('.vc-tabs__stepper').exists()).toBe(false);
 
-		// 此时应可滚动
-		expect(wrapper.find('.vc-tabs__icon.is-left').exists()).toBe(true);
-		expect(wrapper.find('.vc-tabs__icon.is-right').exists()).toBe(true);
+		value.value = 8;
+		await settle(el);
+		expect(el.scrollLeft).toBe(600);
 
-		const next = wrapper.find('.vc-tabs__icon.is-right');
-		const prev = wrapper.find('.vc-tabs__icon.is-left');
+		wrapper.unmount();
+	});
 
-		await next.trigger('click');
-		await next.trigger('click');
-		await next.trigger('click');
-		// 上界：scrollOffset 不超过 totalWidth - boxWidth
-		await prev.trigger('click');
-		await prev.trigger('click');
-		await prev.trigger('click');
-		await prev.trigger('click');
-		// 下界：不会小于 0
+	it('overflow: wheel scrolls the bar along its axis, vertical delta included', async () => {
+		const wrapper = mount(() => (
+			<Tabs modelValue={0}>
+				{Array.from({ length: 10 }, (_, i) => (
+					<TabsPane key={i} label={`tab-${i}`} value={i} />
+				))}
+			</Tabs>
+		), { attachTo: document.body });
+		await flush();
+		const el = await mockOverflow(wrapper, { client: 300, scroll: 1000, item: 100 });
 
-		restoreScroll();
-		restoreNav();
+		const wheel = (deltaX: number, deltaY: number) => {
+			const e = new WheelEvent('wheel', { deltaX, deltaY, deltaMode: 0, bubbles: true, cancelable: true });
+			el.dispatchEvent(e);
+			return e;
+		};
+
+		const e1 = wheel(0, 120);
+		await Utils.sleep(30);
+		expect(el.scrollLeft).toBe(120);
+		// 标签栏在滚动，页面不跟着滚
+		expect(e1.defaultPrevented).toBe(true);
+
+		wheel(80, 0);
+		await Utils.sleep(30);
+		expect(el.scrollLeft).toBe(200);
+
+		// 已在起点：同原生滚动，刚滚到边界时停顿一下（helper-wheel 的 native），之后交给页面
+		el.scrollLeft = 0;
+		el.dispatchEvent(new Event('scroll'));
+		wheel(0, -120);
+		await Utils.sleep(50);
+		const e2 = wheel(0, -120);
+		await Utils.sleep(30);
+		expect(el.scrollLeft).toBe(0);
+		expect(e2.defaultPrevented).toBe(false);
+
+		wrapper.unmount();
+	});
+
+	it('overflow: changing the active pane scrolls it into view; resizing keeps it there without animation', async () => {
+		const value = ref<any>(0);
+		const wrapper = mount(() => (
+			<Tabs modelValue={value.value}>
+				{Array.from({ length: 10 }, (_, i) => (
+					<TabsPane key={i} label={`tab-${i}`} value={i} />
+				))}
+			</Tabs>
+		), { attachTo: document.body });
+		await flush();
+		const el = await mockOverflow(wrapper, { client: 300, scroll: 1000, item: 100 });
+
+		// 超出右侧：末端对齐可视区右边
+		value.value = 8;
+		await settle(el);
+		expect(el.scrollLeft).toBe(600);
+
+		// 超出左侧：起点对齐可视区左边
+		value.value = 2;
+		await settle(el);
+		expect(el.scrollLeft).toBe(200);
+
+		// 已在可视区内：不滚动
+		value.value = 4;
+		await settle(el);
+		expect(el.scrollLeft).toBe(200);
+
+		// 可视区尺寸变化：立即定位
+		value.value = 9;
+		await flush();
+		el.scrollLeft = 0;
+		triggerResize(el);
+		expect(el.scrollLeft).toBe(700);
+
 		wrapper.unmount();
 	});
 
@@ -505,72 +1022,28 @@ describe('index.ts', () => {
 		document.body.removeChild(scroller);
 	});
 
-	it('scrollToActive: scrolls active item into view when scrollable', async () => {
+	it('resizing the bar or the tab list refreshes the afloat, observers are released on unmount', async () => {
 		const wrapper = mount(() => (
-			<Tabs modelValue={0}>
-				{Array.from({ length: 6 }, (_, i) => (
-					<TabsPane key={i} label={`tab-${i}`} value={i} />
-				))}
+			<Tabs modelValue={1}>
+				<TabsPane label="a" value={0} />
+				<TabsPane label="b" value={1} />
 			</Tabs>
 		), { attachTo: document.body });
 		await flush();
 
-		const scrollEl = wrapper.find('.vc-tabs__scroll').element as HTMLElement;
-		const navEl = wrapper.find('.vc-tabs__nav').element as HTMLElement;
-		mockSize(scrollEl, 200);
-		mockSize(navEl, 1200);
-
-		scrollEl.getBoundingClientRect = () => ({ top: 0, left: 0, right: 200, bottom: 0, width: 200, height: 0, x: 0, y: 0, toJSON: () => ({}) });
-		navEl.getBoundingClientRect = () => ({ top: 0, left: 0, right: 1200, bottom: 0, width: 1200, height: 0, x: 0, y: 0, toJSON: () => ({}) });
-
-		const items = wrapper.findAll('.vc-tabs__item');
-		// 设全部 item 的 bounding，让不同分支命中
-		const rect = (left: number, right: number) => ({
-			top: 0, left, right, bottom: 0, width: right - left, height: 0, x: 0, y: 0, toJSON: () => ({})
-		});
-		(items[1].element as HTMLElement).getBoundingClientRect = () => rect(100, 500);
-		(items[2].element as HTMLElement).getBoundingClientRect = () => rect(-100, 50);
-		(items[5].element as HTMLElement).getBoundingClientRect = () => rect(1000, 1100);
-
-		// 先 click 让 scrollable=true 并触发 watch
-		await items[1].trigger('click');
+		const nav = wrapper.find('.vc-tabs__nav').element as HTMLElement;
+		const item = nav.children[1] as HTMLElement;
+		Object.defineProperty(item, 'offsetLeft', { get: () => 90, configurable: true });
+		Object.defineProperty(item, 'offsetWidth', { get: () => 60, configurable: true });
+		triggerResize(nav);
 		await flush();
-		await Utils.sleep(310);
+		const afloat = (wrapper.find('.vc-tabs__afloat').element as HTMLElement).style;
+		expect(afloat.width).toBe('60px');
+		expect(afloat.transform).toBe('translate3d(90px, 0px, 0px)');
 
-		// items[5].right > scroll.right -> 进 itemBounding.right > scrollBounding.right 分支
-		await items[5].trigger('click');
-		await flush();
-		await Utils.sleep(310);
-
-		// items[2].left < scroll.left -> 进 itemBounding.left < scrollBounding.left 分支
-		await items[2].trigger('click');
-		await flush();
-
-		// 让 navBounding.right < scrollBounding.right —— 缩小 nav 模拟
-		navEl.getBoundingClientRect = () => ({ top: 0, left: 0, right: 100, bottom: 0, width: 100, height: 0, x: 0, y: 0, toJSON: () => ({}) });
-		await Utils.sleep(310);
-		await items[1].trigger('click');
-		await flush();
-
+		const count = observers.filter(ro => ro.targets.has(nav)).length;
 		wrapper.unmount();
-	});
-
-	it('handleResize triggers refreshScroll / refreshAfloat via Resize.on listeners', async () => {
-		const wrapper = mount(() => (
-			<Tabs modelValue={0}>
-				<TabsPane label="a" value="a" />
-				<TabsPane label="b" value="b" />
-			</Tabs>
-		), { attachTo: document.body });
-		await flush();
-
-		const bar = wrapper.find('.vc-tabs__bar').element as any;
-		// helper-resize 在 wrapper.value 上挂了 __rz__，直接调它 handleResize
-		expect(bar.__rz__).toBeTruthy();
-		bar.__rz__.handleResize([{ target: bar }]);
-		await flush();
-
-		wrapper.unmount();
+		expect(observers.filter(ro => ro.targets.has(nav)).length).toBeLessThan(count);
 	});
 
 	it('scrollToAnchor: clearing pending timer + affix bottom placement', async () => {
@@ -905,9 +1378,9 @@ describe('mobile', () => {
 		wrapper.unmount();
 	});
 
-	it('showStep + scrollable shows step icons and handleStep moves offset', async () => {
+	it('stepper + scrollable shows step icons and handleStep moves offset', async () => {
 		const wrapper = mount(() => (
-			<MTabs modelValue={0} showStep>
+			<MTabs modelValue={0} stepper>
 				{Array.from({ length: 10 }, (_, i) => (
 					<MTabsPane key={i} label={`tab-${i}`} value={i} />
 				))}
@@ -927,11 +1400,11 @@ describe('mobile', () => {
 		await items[1].trigger('click');
 		await flush();
 
-		expect(wrapper.find('.vcm-tabs__step.is-left').exists()).toBe(true);
-		expect(wrapper.find('.vcm-tabs__step.is-right').exists()).toBe(true);
+		expect(wrapper.find('.vcm-tabs__stepper.is-prev').exists()).toBe(true);
+		expect(wrapper.find('.vcm-tabs__stepper.is-next').exists()).toBe(true);
 
-		const next = wrapper.find('.vcm-tabs__step.is-right');
-		const prev = wrapper.find('.vcm-tabs__step.is-left');
+		const next = wrapper.find('.vcm-tabs__stepper.is-next');
+		const prev = wrapper.find('.vcm-tabs__stepper.is-prev');
 		await next.trigger('click');
 		await prev.trigger('click');
 		await flush();
@@ -984,7 +1457,7 @@ describe('mobile', () => {
 
 	it('handleStep clamps offsetX at boundaries', async () => {
 		const wrapper = mount(() => (
-			<MTabs modelValue={0} showStep>
+			<MTabs modelValue={0} stepper>
 				{Array.from({ length: 10 }, (_, i) => (
 					<MTabsPane key={i} label={`tab-${i}`} value={i} />
 				))}
@@ -1001,8 +1474,8 @@ describe('mobile', () => {
 		await items[1].trigger('click');
 		await flush();
 
-		const next = wrapper.find('.vcm-tabs__step.is-right');
-		const prev = wrapper.find('.vcm-tabs__step.is-left');
+		const next = wrapper.find('.vcm-tabs__stepper.is-next');
+		const prev = wrapper.find('.vcm-tabs__stepper.is-prev');
 
 		// 多次 next 触发 offsetX < -(content - view) 的越界 clamp
 		await next.trigger('click');
@@ -1021,15 +1494,15 @@ describe('mobile', () => {
 		wrapper.unmount();
 	});
 
-	it('reactive showStep watch + refreshScroll fall back when content shrinks', async () => {
-		const showStep = ref(false);
+	it('reactive stepper watch + refreshScroll fall back when content shrinks', async () => {
+		const stepper = ref(false);
 		const navWidth = ref(1000);
 		const scrollWidth = ref(200);
 
 		const Wrapper = defineComponent({
 			setup() {
 				return () => (
-					<MTabs modelValue={0} showStep={showStep.value}>
+					<MTabs modelValue={0} stepper={stepper.value}>
 						{Array.from({ length: 10 }, (_, i) => (
 							<MTabsPane key={i} label={`tab-${i}`} value={i} />
 						))}
@@ -1051,8 +1524,8 @@ describe('mobile', () => {
 		await flush();
 		expect(wrapper.find('.vcm-tabs__scroll').exists()).toBe(true);
 
-		// 切换 showStep -> 触发 watch -> nextTick(refreshScroll)
-		showStep.value = true;
+		// 切换 stepper -> 触发 watch -> nextTick(refreshScroll)
+		stepper.value = true;
 		await flush();
 		// 反向：让 nav 缩小到比 scroll 小 -> refreshScroll 会把 scrollable 回 false
 		navWidth.value = 100;

@@ -148,7 +148,7 @@ const handleNext = () => carouselRef.value?.next();
 
 ### 指示器与箭头
 
-`dots="outside"` 将指示器放到容器外，`arrow="always"` 让横向桌面轮播始终显示切换箭头。两者都可以通过绑定布尔值 `false` 隐藏。
+`dots="outside"` 将指示器放到容器外，`stepper="always"` 让横向桌面轮播始终显示前后翻页按钮。两者都可以通过绑定布尔值 `false` 隐藏。
 
 :::playground
 <!--
@@ -174,7 +174,7 @@ const handleNext = () => carouselRef.value?.next();
 			:height="180"
 			:autoplay="false"
 			dots="outside"
-			arrow="always"
+			stepper="always"
 		>
 			<CarouselItem name="design" label="设计">
 				<div class="slide slide--1">
@@ -458,13 +458,13 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 | trigger | 桌面端指示器的切换方式 | `string` | `hover`、`click` | `hover` |
 | autoplay | 是否自动切换 | `boolean` | - | `true` |
 | dots | 指示点位置或是否隐藏指示点 | `string \| boolean` | `bottom`、`outside`、`false` | `Carousel: 'bottom'`；`MCarousel: false` |
-| arrow | 桌面端横向轮播的箭头显示方式 | `string \| boolean` | `hover`、`always`、`false` | `hover` |
+| stepper | 桌面端横向轮播的前后翻页按钮显示方式 | `string \| boolean` | `hover`、`always`、`false` | `hover` |
 | loop | 是否循环切换 | `boolean` | - | `true` |
 | vertical | 是否使用纵向轮播 | `boolean` | - | `false` |
 | draggable | 是否允许鼠标拖拽或触摸滑动切换 | `boolean` | - | `true` |
 | indicator | 是否显示“当前项 / 总数”计数器，仅 `MCarousel` 支持；卡片模式下始终隐藏 | `boolean` | - | `true` |
 
-`MCarousel` 不渲染切换箭头，指示点只响应点击，因此 `arrow` 和 `trigger` 不改变移动端渲染行为。
+`MCarousel` 不渲染前后翻页按钮，指示点只响应点击，因此 `stepper` 和 `trigger` 不改变移动端渲染行为。
 
 ### Carousel 与 MCarousel 事件
 

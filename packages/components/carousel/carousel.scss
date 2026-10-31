@@ -5,10 +5,10 @@ $color-contrast-dark: varfix(color-contrast-dark, carousel);
 $color-contrast-dark-frozen: themefrozen(color-contrast-dark);
 $color-contrast-light: varfix(color-contrast-light, carousel);
 $color-light-deepest: varfix(color-light-deepest, carousel);
-$background-color-arrow: color-mix(in srgb, #{$color-contrast-dark} 11%, transparent);
-$background-color-arrow-fallback: color.change($color-contrast-dark-frozen, $alpha: .11);
-$background-color-arrow-hover: color-mix(in srgb, #{$color-contrast-dark} 23%, transparent);
-$background-color-arrow-hover-fallback: color.change($color-contrast-dark-frozen, $alpha: .23);
+$background-color-stepper: color-mix(in srgb, #{$color-contrast-dark} 11%, transparent);
+$background-color-stepper-fallback: color.change($color-contrast-dark-frozen, $alpha: .11);
+$background-color-stepper-hover: color-mix(in srgb, #{$color-contrast-dark} 23%, transparent);
+$background-color-stepper-hover-fallback: color.change($color-contrast-dark-frozen, $alpha: .23);
 $component-name: vc-carousel;
 
 @include block($component-name) {
@@ -27,7 +27,8 @@ $component-name: vc-carousel;
 		height: 300px;
 	}
 
-	@include element(arrow) {
+	// 前后翻页按钮
+	@include element(stepper) {
 		position: absolute;
 		top: 50%;
 		z-index: 10;
@@ -40,11 +41,11 @@ $component-name: vc-carousel;
 		color: $color-contrast-light;
 		text-align: center;
 		cursor: pointer;
-		background-color: $background-color-arrow-fallback;
+		background-color: $background-color-stepper-fallback;
 
 		@supports (color: color-mix(in srgb, black, white)) {
 			& {
-				background-color: $background-color-arrow;
+				background-color: $background-color-stepper;
 			}
 		}
 
@@ -53,20 +54,20 @@ $component-name: vc-carousel;
 		outline: none;
 		transition: .3s;
 
-		@include when(left-arrow) {
+		@include when(prev) {
 			left: 16px;
 		}
 
-		@include when(right-arrow) {
+		@include when(next) {
 			right: 16px;
 		}
 
 		&:hover {
-			background-color: $background-color-arrow-hover-fallback;
+			background-color: $background-color-stepper-hover-fallback;
 
 			@supports (color: color-mix(in srgb, black, white)) {
 				& {
-					background-color: $background-color-arrow-hover;
+					background-color: $background-color-stepper-hover;
 				}
 			}
 		}

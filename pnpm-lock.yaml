@@ -31,8 +31,8 @@ importers:
         version: 3.5.43(typescript@6.0.3)
     devDependencies:
       '@deot/helper':
-        specifier: ^1.1.22
-        version: 1.1.22
+        specifier: ^1.1.23
+        version: 1.1.23
       '@deot/style':
         specifier: ^1.3.0
         version: 1.3.0
@@ -487,6 +487,9 @@ packages:
   '@deot/helper-dom@1.1.6':
     resolution: {integrity: sha512-JYw3oDotb3US7kPJlA8oby8br/wmbFfxEQX6l0lgpji2sV4OSzplKwkfZ4bykQQniADMvURZD1SYdFnXNP2uBQ==}
 
+  '@deot/helper-dom@1.1.7':
+    resolution: {integrity: sha512-+2GMN/Ay7VezLbi5q5ml+qyxp2VEToCur7WB8mNP1pvPdu3LQTxsKTwJ76EAOxtYEq5lpikok4pnAaPMTqjO8Q==}
+
   '@deot/helper-emitter@1.1.3':
     resolution: {integrity: sha512-zF0B/aw0vDS8JlWjhZhjngDATKfLBIxmbx9IlZJ+oOUCuJRn75SMaRqOONDIvqrkExBGiMfF6GGvFHlzT6GWRw==}
 
@@ -525,6 +528,9 @@ packages:
 
   '@deot/helper@1.1.22':
     resolution: {integrity: sha512-Sg+d8VzNkSCuJrVvBrCsZHjmpbmhoQKefsw+KPQ3f7jSioQdXD3LtU6nhz7CKh0ohipwdzFHGbaDtSoPbKaihg==}
+
+  '@deot/helper@1.1.23':
+    resolution: {integrity: sha512-a/Y2yerA/FGnoyma1yjkaw7mnj5lZK1dAxrOxu0xiVzmcPsL7Q3rzQ9y3FETpDxZGc3pCpeo7anRP+zB+XwAoA==}
 
   '@deot/http-client@1.1.10':
     resolution: {integrity: sha512-B6gI7KK7hNSCTkOCQmPnnoWN92tRn5g2TxZBB4Fe9hBRRKFKed3RhthvQw+e7xsWahIzKK9df41YXdIjXI4kmQ==}
@@ -5649,6 +5655,8 @@ snapshots:
 
   '@deot/helper-dom@1.1.6': {}
 
+  '@deot/helper-dom@1.1.7': {}
+
   '@deot/helper-emitter@1.1.3': {}
 
   '@deot/helper-fp@1.1.6':
@@ -5688,6 +5696,24 @@ snapshots:
       '@deot/helper-cache': 1.1.11
       '@deot/helper-device': 1.1.3
       '@deot/helper-dom': 1.1.6
+      '@deot/helper-emitter': 1.1.3
+      '@deot/helper-fp': 1.1.6
+      '@deot/helper-is': 1.1.3
+      '@deot/helper-load': 1.1.3
+      '@deot/helper-resize': 1.1.6
+      '@deot/helper-route': 1.1.10
+      '@deot/helper-scheduler': 1.1.9
+      '@deot/helper-shared': 1.1.3
+      '@deot/helper-unicode': 1.1.4
+      '@deot/helper-utils': 1.1.9
+      '@deot/helper-validator': 1.1.4
+      '@deot/helper-wheel': 1.1.8
+
+  '@deot/helper@1.1.23':
+    dependencies:
+      '@deot/helper-cache': 1.1.11
+      '@deot/helper-device': 1.1.3
+      '@deot/helper-dom': 1.1.7
       '@deot/helper-emitter': 1.1.3
       '@deot/helper-fp': 1.1.6
       '@deot/helper-is': 1.1.3

@@ -31,9 +31,89 @@ const value = ref('overview');
 ```
 :::
 
-### 卡片与关闭标签
+### 类型与尺寸
 
-`type="card"` 使用卡片样式。关闭按钮要求父组件和面板同时开启 `closable`，线条样式也支持关闭。`tab-remove` 只通知调用方；删除数据、关闭前确认及删除当前页后的选中值均由调用方处理。
+`type` 提供六种外观：`line`（默认，下划线）、`card`（连体描边）、`button`（灰底按钮）、`capsule`（灰底容器，选中项浮起）、`text`（文字加分隔线）、`round`（圆角胶囊）。除 `line` 外，其余外观与 RadioGroup 的同名 `type` 一致。`size` 可选 `mini` / `small` / `medium` / `large`，默认 `medium`：`line` 的标签栏高度依次为 32 / 36 / 40 / 44px，其余类型的高度依次为 24 / 28 / 32 / 36px。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="tabs-type-demo">
+		<RadioGroup v-model="size" type="capsule" size="small">
+			<Radio v-for="item in sizes" :key="item" :value="item" :label="item" />
+		</RadioGroup>
+		<Tabs v-for="type in types" :key="type" v-model="value" :type="type" :size="size">
+			<TabsPane value="all" :label="type" />
+			<TabsPane value="pending" label="待处理" />
+			<TabsPane value="done" label="已完成" />
+			<TabsPane value="archived" label="已归档" disabled />
+		</Tabs>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Tabs, TabsPane, RadioGroup, Radio } from '@deot/vc';
+
+const types = ['line', 'card', 'button', 'capsule', 'text', 'round'];
+const sizes = ['mini', 'small', 'medium', 'large'];
+const value = ref('pending');
+const size = ref('medium');
+</script>
+
+<style scoped>
+.tabs-type-demo {
+	display: grid;
+	gap: 12px;
+	min-width: 0;
+}
+</style>
+```
+:::
+
+### 标签栏位置
+
+`placement` 设置标签栏相对内容的位置：`top`（默认）、`bottom`、`left`、`right`，各类型都支持。line 的分隔线和下划线在靠内容的一侧。左右两侧时标签纵向排列、宽度一致，`extra` 插槽放在标签栏底部；标签栏默认随内容撑高，给 Tabs 设置高度后，超出的标签可以上下滚动。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="tabs-placement-demo">
+		<RadioGroup v-model="placement" type="capsule" size="small">
+			<Radio v-for="item in placements" :key="item" :value="item" :label="item" />
+		</RadioGroup>
+		<Tabs v-model="value" :placement="placement">
+			<TabsPane value="overview" label="概览">内容概览与最新动态。</TabsPane>
+			<TabsPane value="details" label="详情">完整的内容说明。</TabsPane>
+			<TabsPane value="history" label="历史记录">按时间排列的变更记录。</TabsPane>
+		</Tabs>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Tabs, TabsPane, RadioGroup, Radio } from '@deot/vc';
+
+const placements = ['top', 'bottom', 'left', 'right'];
+const placement = ref('left');
+const value = ref('overview');
+</script>
+
+<style scoped>
+.tabs-placement-demo {
+	display: grid;
+	gap: 12px;
+	min-width: 0;
+}
+</style>
+```
+:::
+
+### 关闭标签
+
+关闭按钮要求父组件和面板同时开启 `closable`，所有类型都支持；禁用的面板不显示关闭按钮。`tab-remove` 只通知调用方；删除数据、关闭前确认及删除当前页后的选中值均由调用方处理。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
@@ -73,6 +153,70 @@ const handleRemove = (removedValue, index) => {
 ```
 :::
 
+### 标签溢出
+
+标签总宽度超出标签栏时，可以用滚轮或触控板横向滚动；纵向滚轮同样会滚动标签栏，滚到两端后再交给页面。溢出时两端显示前后翻页按钮（`stepper`，为 `false` 时不显示），点击翻一屏，滚到端点的按钮置灰。切换选中项、增删标签或标签栏尺寸变化后，选中项会自动滚入可视区。滚动由 [Scroller](../scroller/README.md) 承载，不显示滚动条。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="tabs-overflow-demo">
+		<Tabs v-model="value" type="card">
+			<TabsPane v-for="item in 30" :key="item" :value="item" :label="`条目 ${item}`">
+				条目 {{ item }} 的内容
+			</TabsPane>
+		</Tabs>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Tabs, TabsPane } from '@deot/vc';
+
+const value = ref(24);
+</script>
+
+<style scoped>
+.tabs-overflow-demo {
+	min-width: 0;
+	max-width: 480px;
+}
+</style>
+```
+:::
+
+### 面板的渲染与保留
+
+`lazy`（默认 `true`）让面板首次激活时才渲染内容，`false` 时挂载即渲染全部面板；`alive`（默认 `true`）让隐藏的面板保留内容，`false` 时隐藏即卸载，重新激活后内容（如输入框的值）重建。两者在 Tabs 上统一设置，TabsPane 的同名属性可单独覆盖。`alive` 为 `false` 时隐藏的面板一律不渲染，`lazy` 不再起作用。面板容器始终保留，`animated` 的切换动画不受影响。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<Tabs v-model="value" :alive="false">
+		<TabsPane value="search" label="搜索">
+			<Input v-model="keyword" placeholder="绑定在外部，切换后仍保留" />
+		</TabsPane>
+		<TabsPane value="draft" label="草稿">
+			<Input placeholder="切换后清空" />
+		</TabsPane>
+		<TabsPane value="note" label="备注" alive>
+			<Input placeholder="此面板设置了 alive，切换后保留" />
+		</TabsPane>
+	</Tabs>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Tabs, TabsPane, Input } from '@deot/vc';
+
+const value = ref('search');
+const keyword = ref('');
+</script>
+```
+:::
+
 ### 自定义标签
 
 `label` 插槽接收 `{ row, index }`，其中 `row` 是面板的 props。也可将渲染函数传入面板的 `label`，函数接收 `{ it, index }`。移动端会把标签内容放进一个 `span`，自动下划线按它的宽度计算。
@@ -102,7 +246,7 @@ const value = ref('pending');
 
 ### 移动端
 
-移动端支持标签横向滚动、均分和滚动箭头。`theme="light"` 跟随全局亮暗主题；`theme="dark"` 是深色金色的独立视觉风格，不等同于切换全局主题。
+移动端支持标签横向滚动、均分和翻页按钮（`stepper`）。`theme="light"` 跟随全局亮暗主题；`theme="dark"` 是深色金色的独立视觉风格，不等同于切换全局主题。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, viewport: 375, viewportOptions: ['auto', 375] }</config> -->
@@ -110,7 +254,7 @@ const value = ref('pending');
 <template>
 	<div class="tabs-mobile-demo">
 		<label><input v-model="isDark" type="checkbox"> 深色金色风格</label>
-		<MTabs v-model="value" :theme="isDark ? 'dark' : 'light'" :average="false" show-step>
+		<MTabs v-model="value" :theme="isDark ? 'dark' : 'light'" :average="false" stepper>
 			<MTabsPane v-for="item in 8" :key="item" :value="item" :label="`分类 ${item}`">
 				分类 {{ item }} 的内容
 			</MTabsPane>
@@ -147,13 +291,17 @@ const isDark = ref(false);
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
 | color-dark-lighter | 移动端 light 外观标签文字 | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-light | 桌面端 capsule / text / round 悬停文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
 | color-dark-lightest | 桌面端标签文字 | 亮色：`#64758B`；暗色：`#C9C9C9` |
-| color-neutral-light | 桌面标签底部分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-dark-extralight | 桌面端禁用标签文字 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-neutral-light | 桌面 line 底部分隔线、button 底色与描边、capsule 容器、text 分隔线、round 悬停与选中底色 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
 | color-primary | 桌面端激活标签、悬停文字及指示线 | `#456CF6` |
 | color-shadow-fixed | 移动端普通滚动边缘阴影 | 亮色：`rgb(0 0 0 / 6%)`；暗色：`rgb(0 0 0 / 24%)` |
-| background-color-lightest | 卡片标签及移动端 light 外观背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| background-color | 桌面 card 禁用底色、text 悬停底色 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-lightest | 桌面 card 底色、capsule 选中项底色及移动端 light 外观背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 | border-color | 桌面卡片边框 | `#D5D9E1` |
 | foreground-color-dark | 移动端 light 外观选中文字及指示线 | 亮色：`#000000`；暗色：`#F8F8F8` |
+| foreground-color-inactive | 桌面 capsule 项间分隔线 | 亮色：`#C0C4CC`；暗色：`#737D8C` |
 
 ### 局部
 
@@ -161,7 +309,7 @@ const isDark = ref(false);
 | --- | --- | --- |
 | dark-background-color | 移动端 dark 外观背景 | `#333333` |
 | dark-color | 移动端 dark 外观标签文字 | `#E7C083` |
-| dark-step-shadow-color | 移动端 dark 外观滚动边缘阴影 | `#242421` |
+| dark-stepper-shadow-color | 移动端 dark 外观翻页按钮的阴影 | `#242421` |
 
 ## API
 
@@ -170,9 +318,14 @@ const isDark = ref(false);
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | modelValue | 当前面板的 value，支持 v-model | `string \| number \| boolean` | - | `undefined`，挂载后选中首项 |
-| type | 标签样式 | `string` | `line` / `card` | `line` |
-| animated | 开启切换动画 | `boolean` | - | `false` |
+| type | 标签样式 | `string` | `line` / `card` / `button` / `capsule` / `text` / `round` | `line` |
+| size | 尺寸 | `string` | `mini` / `small` / `medium` / `large` | `medium` |
+| placement | 标签栏相对内容的位置 | `string` | `top` / `bottom` / `left` / `right` | `top` |
+| animated | 切换动画：进入的面板沿标签栏的排列方向滑入并淡入（上下位置横向、左右位置纵向），下划线随之移动 | `boolean` | - | `false` |
 | closable | 与面板 closable 同时为 true 时显示关闭按钮 | `boolean` | - | `false` |
+| stepper | 标签溢出时在标签栏两端显示前后翻页按钮 | `boolean` | - | `true` |
+| lazy | 面板首次激活时才渲染内容；false 时挂载即渲染。TabsPane 可单独覆盖 | `boolean` | - | `true` |
+| alive | 隐藏的面板保留内容；false 时隐藏即卸载。TabsPane 可单独覆盖 | `boolean` | - | `true` |
 | barStyle | 标签栏样式 | `object \| string` | - | - |
 | contentStyle | 内容区样式 | `object \| string` | - | - |
 | barClass | 标签栏类名 | `object \| string` | - | - |
@@ -200,7 +353,7 @@ const isDark = ref(false);
 | --- | --- | --- |
 | default | 放置 TabsPane | - |
 | label | 自定义标签，优先于面板 label | `{ row, index }` |
-| extra | 标签栏右侧附加内容 | - |
+| extra | 标签栏末端的附加内容：标签栏在上下时位于右端，在左右时位于底部 | - |
 
 ### TabsPane 属性
 
@@ -211,8 +364,9 @@ const isDark = ref(false);
 | value | 面板标识，与父组件 modelValue 对应 | `string \| number \| boolean` | - | `undefined`，使用索引 |
 | label | 标签内容。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | anchor | 点击时滚动至目标元素的 CSS 选择器 | `string` | - | - |
-| lazy | 首次激活时渲染内容，之后保留；false 时立即渲染 | `boolean` | - | `true` |
-| closable | 配合父组件 closable 显示关闭按钮 | `boolean` | - | `false` |
+| lazy | 首次激活时才渲染内容；false 时挂载即渲染。未设置时继承父组件 | `boolean` | - | `undefined` |
+| alive | 隐藏后保留内容；false 时隐藏即卸载。未设置时继承父组件 | `boolean` | - | `undefined` |
+| closable | 配合父组件 closable 显示关闭按钮；禁用的面板不显示 | `boolean` | - | `false` |
 | disabled | 禁止点击切换到此面板，不限制外部 modelValue 更新 | `boolean` | - | `false` |
 
 ### TabsPane 插槽
@@ -223,7 +377,7 @@ const isDark = ref(false);
 
 ### MTabs 属性
 
-共享 `Tabs` 的 `modelValue`、`animated`、`closable`；其余有效属性如下。
+共享 `Tabs` 的 `modelValue`、`animated`、`closable`、`lazy`、`alive`、`stepper`（移动端默认 `false`）；其余有效属性如下。
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
@@ -235,9 +389,9 @@ const isDark = ref(false);
 | showWrapper | 是否显示标签栏 | `boolean` | - | `true` |
 | sticky | 相对于页面滚动进行吸顶，不支持内层滚动容器 | `boolean` | - | `false` |
 | offsetTop | 吸顶偏移，单位 px | `number` | - | `0` |
-| showStep | 标签溢出时显示左右滚动按钮 | `boolean` | - | `false` |
+| stepper | 标签溢出时显示左右翻页按钮；移动端以触摸滑动为主，默认不显示 | `boolean` | - | `false` |
 
-移动端继承的 `type` 不提供卡片样式；`barClass`、`contentClass`、`contentStyle`、`affixable`、`affixOptions` 尚未接入移动端渲染。
+`type`、`size`、`placement` 只属于桌面端，MTabs 不声明；`barClass`、`contentClass`、`contentStyle`、`affixable`、`affixOptions` 尚未接入移动端渲染。
 
 ### MTabs 事件
 
@@ -254,6 +408,6 @@ const isDark = ref(false);
 
 ### 布局与主题
 
-在 flex 布局中给标签页所在的弹性子容器设置 `min-width: 0; overflow-x: auto;`，防止内容撑开容器。首次激活后的面板会保留在 DOM 中，切换时通过高度与透明度隐藏。
+在 flex 布局中给标签页所在的弹性子容器设置 `min-width: 0; overflow-x: auto;`，防止内容撑开容器。默认情况下，首次激活后的面板会保留在 DOM 中，切换时通过高度与透明度隐藏；`alive` 为 `false` 时只保留面板容器。
 
-组件颜色通过 `--vc-tabs-*` 变量覆盖，并回退到全局主题。桌面端使用 `color-primary`、`color-dark-lightest`、`border-color`、`color-neutral-light` 和 `background-color-lightest`；移动端普通风格使用 `color-dark-lighter`、`foreground-color-dark`、`background-color-lightest` 和 `color-shadow-fixed`。移动端金色风格提供 `--vc-tabs-dark-background-color`、`--vc-tabs-dark-color`、`--vc-tabs-dark-step-shadow-color`，默认保留深色背景和金色标签。
+组件颜色通过 `--vc-tabs-*` 变量覆盖，并回退到全局主题。桌面端使用 `color-primary`、`color-dark-lightest`、`border-color`、`color-neutral-light` 和 `background-color-lightest`；移动端普通风格使用 `color-dark-lighter`、`foreground-color-dark`、`background-color-lightest` 和 `color-shadow-fixed`。移动端金色风格提供 `--vc-tabs-dark-background-color`、`--vc-tabs-dark-color`、`--vc-tabs-dark-stepper-shadow-color`，默认保留深色背景和金色标签。

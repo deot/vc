@@ -1,231 +1,172 @@
 /** @jsxImportSource vue */
 
-import { getCurrentInstance, defineComponent, ref, computed, nextTick } from 'vue';
+import { defineComponent, ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { Resize } from '@deot/helper-resize';
 import { props as tabsProps } from './tabs-props';
 import { Icon } from '../icon';
 import { CustomerProp } from '../customer/customer-prop';
+import { Scroller } from '../scroller';
 import useTabs from './use-tabs';
+import { useTabsScroll } from './use-tabs-scroll';
 
 const COMPONENT_NAME = 'vc-tabs';
+const SHARED = { shared: true };
+
+// 前后翻页按钮：[方向, 横向图标, 纵向图标]
+const STEPPERS = {
+	prev: [-1, 'left', 'up'],
+	next: [1, 'right', 'down']
+} as const;
 
 export const Tabs = defineComponent({
 	name: COMPONENT_NAME,
 	props: tabsProps,
 	emits: ['update:modelValue', 'change', 'click', 'tab-remove'],
 	setup(props, { slots }) {
-		const instance = getCurrentInstance()!;
-		const wrapper = ref<any>(null);
 		const content = ref<any>(null);
-		const scroll = ref<any>(null);
-		const nav = ref<any>(null);
+		const scroller = ref<any>(null);
 		// eslint-disable-next-line prefer-const
 		let tabs: any;
 
-		/**
-		 * 刷新是否需要滚动条
-		 */
-		const refreshScroll = () => {
-			if (!scroll.value || !nav.value) return;
-			// 容器
-			const boxWidth = scroll.value.offsetWidth;
-			// 总长度
-			const totalWidth = nav.value.offsetWidth;
-
-			if (boxWidth < totalWidth) {
-				tabs.scrollable.value = true;
-				(totalWidth - tabs.scrollOffset.value < boxWidth) && (
-					tabs.scrollOffset.value = totalWidth - boxWidth
-				);
-			} else {
-				tabs.scrollable.value = false;
-				tabs.scrollOffset.value > 0 && (tabs.scrollOffset.value = 0);
-			}
+		// 标签的容器即 Scroller 的 content；滑块放在标签之后，标签的下标与子元素一致
+		const getNav = () => scroller.value?.content as HTMLElement | undefined;
+		const getActiveItem = () => {
+			const index = tabs.getTabIndex(tabs.currentValue.value);
+			return index === -1 ? undefined : getNav()?.children[index] as HTMLElement | undefined;
 		};
 
 		/**
-		 * 刷新当前标签底下的滑块位置
+		 * 刷新当前标签旁的滑块位置：按激活项在nav中的位置，不依赖项的间距
 		 */
 		const refreshAfloat = () => {
-			nextTick(() => {
-				const index = tabs.getTabIndex(tabs.currentValue.value);
-				if (instance.isUnmounted || !nav.value) return;
-				const items = nav.value.querySelectorAll(`.vc-tabs__item`);
-
-				const $ = items[index];
-
-				tabs.afloatWidth.value = $ ? parseFloat($.offsetWidth) : 0;
-
-				if (!Array.from(items).length) return;
-				let offset = 0;
-				if (index > 0) {
-					const gutter = 12; // margin-right -> 12px
-					for (let i = 0; i < index; i++) {
-						offset += parseFloat(items[i].offsetWidth) + gutter;
-					}
-				}
-
-				tabs.afloatOffset.value = offset;
-
-				refreshScroll();
-			});
+			const $ = getActiveItem();
+			const vertical = tabs.isVertical.value;
+			tabs.afloatWidth.value = $ ? (vertical ? $.offsetHeight : $.offsetWidth) : 0;
+			tabs.afloatOffset.value = $ ? (vertical ? $.offsetTop : $.offsetLeft) : 0;
 		};
 
-		const scrollToActive = () => {
-			if (!tabs.scrollable.value) return;
-			// 这里不直接选择is-active,存在延迟
-			const $ = instance.vnode.el!.querySelector(`.vc-tabs__item[name="${tabs.currentValue.value}"]`);
-
-			if (!$) return;
-
-			const itemBounding = $.getBoundingClientRect();
-			const scrollBounding = scroll.value.getBoundingClientRect();
-			const navBounding = nav.value.getBoundingClientRect();
-
-			let offset: any;
-
-			if (navBounding.right < scrollBounding.right) {
-				offset = nav.value.offsetWidth - scrollBounding.width;
-			}
-
-			if (itemBounding.left < scrollBounding.left) {
-				offset = tabs.scrollOffset.value - (scrollBounding.left - itemBounding.left);
-			} else if (itemBounding.right > scrollBounding.right) {
-				offset = tabs.scrollOffset.value + itemBounding.right - scrollBounding.right;
-			}
-
-			if (tabs.scrollOffset.value !== offset) {
-				tabs.scrollOffset.value = offset;
-			}
-		};
+		const scroll = useTabsScroll({
+			scroller,
+			vertical: () => tabs.isVertical.value,
+			getActiveItem
+		});
 
 		tabs = useTabs({
 			content,
-			wrapper,
 			refreshAfloat,
-			refreshScroll,
-			scrollToActive
+			scrollToActive: () => scroll.scrollToActive()
 		});
-		/**
-		 * 上一个
-		 */
-		const handlePrev = () => {
-			const boxWidth = scroll.value.offsetWidth;
 
-			if (!tabs.scrollOffset.value) return;
-
-			tabs.scrollOffset.value = tabs.scrollOffset.value > boxWidth
-				? tabs.scrollOffset.value - boxWidth
-				: 0;
+		// 可视区或标签尺寸变化（翻页按钮出现、容器缩放、切换类型等）：立即刷新，不播放动画
+		const handleResize = () => {
+			refreshAfloat();
+			scroll.scrollToActive(false);
 		};
 
-		/**
-		 * 下一个
-		 */
-		const handleNext = () => {
-			const boxWidth = scroll.value.offsetWidth;
-			const totalWidth = nav.value.offsetWidth;
+		onMounted(() => {
+			[scroller.value?.wrapper, getNav()].forEach(el => el && Resize.on(el, handleResize, SHARED));
+		});
 
-			if (totalWidth - tabs.scrollOffset.value <= boxWidth) return;
+		onBeforeUnmount(() => {
+			Resize.disconnect(handleResize);
+		});
 
-			tabs.scrollOffset.value = totalWidth - tabs.scrollOffset.value > boxWidth * 2
-				? tabs.scrollOffset.value + boxWidth
-				: (totalWidth - boxWidth);
+		// 只有line有滑块
+		const isLine = computed(() => {
+			return props.type === 'line';
+		});
+
+		const renderStepper = (name: keyof typeof STEPPERS) => {
+			if (!props.stepper || !scroll.scrollable.value) return;
+			const [direction, icon, verticalIcon] = STEPPERS[name];
+			const isDisabled = name === 'prev' ? scroll.isStart.value : scroll.isEnd.value;
+			return (
+				<span
+					class={['vc-tabs__stepper', `is-${name}`, { 'is-disabled': isDisabled }]}
+					onClick={() => scroll.step(direction)}
+				>
+					<Icon type={tabs.isVertical.value ? verticalIcon : icon} />
+				</span>
+			);
 		};
 
-		const scrollStyle = computed(() => {
-			const style = {
-				transform: `translate3d(${-tabs.scrollOffset.value}px, 0px, 0px)`
-			};
+		// 标签列表作为 Scroller 的稳定插槽：只由 Scroller 收集依赖，根节点重新渲染时不重建标签
+		const renderNav = () => {
+			const nodes = tabs.list.value.map((item: any, index: number) => {
+				const value = tabs.getTabPaneValue(item, index);
+				// 禁用的面板不能关闭
+				const isClosable = props.closable && item.closable && !item.disabled;
+				return (
+					<div
+						key={index}
+						class={[
+							{
+								'is-active': value === tabs.currentValue.value,
+								'is-disabled': item.disabled,
+								'is-closable': isClosable
+							},
+							'vc-tabs__item'
+						]}
+						onClick={() => tabs.handleChange(index)}
+					>
+						<CustomerProp
+							tag="span"
+							render={slots.label}
+							source={item}
+							name="label"
+							row={item}
+							it={item}
+							index={index}
+						/>
+						{
+							isClosable && (
+								<span
+									class="vc-tabs__close"
+									onClick={(e: MouseEvent) => {
+										e.stopPropagation();
+										tabs.handleRemove(index);
+									}}
+								>
+									<Icon type="close" />
+								</span>
+							)
+						}
+					</div>
+				);
+			});
+			isLine.value && nodes.push(<div key="afloat" style={tabs.afloatStyle.value} class="vc-tabs__afloat" />);
+			return nodes;
+		};
 
-			return style;
-		});
-
-		const isCard = computed(() => {
-			return props.type === 'card';
-		});
 		return () => {
 			return (
 				<div class={[tabs.classes.value, 'vc-tabs']}>
-					<div class="vc-tabs__extra">
-						{ slots.extra?.() }
-					</div>
 					<div
-						ref={wrapper}
-						style={[props.barStyle, { padding: tabs.scrollable.value ? '0 24px' : 0 }]}
+						style={props.barStyle}
 						class={[props.barClass, 'vc-tabs__bar']}
 					>
+						{ renderStepper('prev') }
+						<Scroller
+							ref={scroller}
+							class="vc-tabs__scroll"
+							contentClass="vc-tabs__nav"
+							native={false}
+							showBar={false}
+						>
+							{{ default: renderNav, $stable: true }}
+						</Scroller>
+						{ renderStepper('next') }
 						{
-							tabs.scrollable.value && (
-								<Icon
-									class="vc-tabs__icon is-left"
-									type="left"
-									// @ts-ignore
-									onClick={handlePrev}
-								/>
+							slots.extra && (
+								<div class="vc-tabs__extra">
+									{ slots.extra() }
+								</div>
 							)
 						}
-						{
-							tabs.scrollable.value && (
-								<Icon
-									class="vc-tabs__icon is-right"
-									type="right"
-									// @ts-ignore
-									onClick={handleNext}
-								/>
-							)
-						}
-
-						<div ref={scroll} class="vc-tabs__scroll">
-							<div ref={nav} style={scrollStyle.value} class="vc-tabs__nav">
-								{ !isCard.value && <div style={tabs.afloatStyle.value} class="vc-tabs__afloat" /> }
-								{
-									tabs.list.value.map((item, index) => {
-										return (
-											<div
-												key={index}
-												// @ts-ignore
-												name={tabs.getTabPaneValue(item, index)}
-												class={[
-													{
-														'is-active': tabs.getTabPaneValue(item, index) === tabs.currentValue.value,
-														'is-disabled': item.disabled
-													},
-													'vc-tabs__item'
-												]}
-												onClick={() => tabs.handleChange(index)}
-											>
-												<CustomerProp
-													tag="span"
-													render={slots.label}
-													source={item}
-													name="label"
-													row={item}
-													it={item}
-													index={index}
-												/>
-												{
-													props.closable && item.closable && (
-														<Icon
-															class="vc-tabs__close"
-															type="close"
-															// @ts-ignore
-															onClick={(e: MouseEvent) => {
-																e.stopPropagation();
-																tabs.handleRemove(index);
-															}}
-														/>
-													)
-												}
-											</div>
-										);
-									})
-								}
-							</div>
-						</div>
 					</div>
 					<div
 						ref={content}
-						style={[props.contentStyle, tabs.contentStyle.value]}
+						style={props.contentStyle}
 						class={[props.contentClass, 'vc-tabs__content']}
 					>
 						{ slots.default?.() }

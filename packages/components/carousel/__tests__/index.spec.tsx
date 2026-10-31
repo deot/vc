@@ -511,8 +511,8 @@ describe('index.ts', () => {
 		});
 	});
 
-	describe('arrow', () => {
-		it('renders arrow buttons by default (hover mode)', async () => {
+	describe('stepper', () => {
+		it('renders stepper buttons by default (hover mode)', async () => {
 			const wrapper = mount(() => (
 				<Carousel autoplay={false}>
 					<CarouselItem />
@@ -520,68 +520,68 @@ describe('index.ts', () => {
 				</Carousel>
 			));
 			await flushAll();
-			expect(wrapper.find('.vc-carousel__arrow.is-left-arrow').exists()).toBe(true);
-			expect(wrapper.find('.vc-carousel__arrow.is-right-arrow').exists()).toBe(true);
+			expect(wrapper.find('.vc-carousel__stepper.is-prev').exists()).toBe(true);
+			expect(wrapper.find('.vc-carousel__stepper.is-next').exists()).toBe(true);
 			wrapper.unmount();
 		});
 
-		it('arrow=false hides arrows', async () => {
+		it('stepper=false hides the buttons', async () => {
 			const wrapper = mount(() => (
-				<Carousel autoplay={false} arrow={false}>
+				<Carousel autoplay={false} stepper={false}>
 					<CarouselItem />
 					<CarouselItem />
 				</Carousel>
 			));
 			await flushAll();
-			expect(wrapper.find('.vc-carousel__arrow').exists()).toBe(false);
+			expect(wrapper.find('.vc-carousel__stepper').exists()).toBe(false);
 			wrapper.unmount();
 		});
 
-		it('vertical=true hides arrows even when arrow prop is set', async () => {
+		it('vertical=true hides the buttons even when stepper is set', async () => {
 			const wrapper = mount(() => (
-				<Carousel autoplay={false} vertical arrow="always">
+				<Carousel autoplay={false} vertical stepper="always">
 					<CarouselItem />
 					<CarouselItem />
 				</Carousel>
 			));
 			await flushAll();
-			expect(wrapper.find('.vc-carousel__arrow').exists()).toBe(false);
+			expect(wrapper.find('.vc-carousel__stepper').exists()).toBe(false);
 			wrapper.unmount();
 		});
 
-		it('right arrow click goes to next item', async () => {
+		it('next button click goes to next item', async () => {
 			const wrapper = mount(() => (
-				<Carousel autoplay={false} arrow="always">
+				<Carousel autoplay={false} stepper="always">
 					<CarouselItem />
 					<CarouselItem />
 					<CarouselItem />
 				</Carousel>
 			));
 			await flushAll();
-			await wrapper.find('.vc-carousel__arrow.is-right-arrow').trigger('click');
+			await wrapper.find('.vc-carousel__stepper.is-next').trigger('click');
 			await flushAll();
 			expect(wrapper.findAll('.vc-carousel-item')[1].classes()).toContain('is-active');
 			wrapper.unmount();
 		});
 
-		it('left arrow click goes to previous item', async () => {
+		it('prev button click goes to previous item', async () => {
 			const wrapper = mount(() => (
-				<Carousel autoplay={false} arrow="always" initialIndex={2}>
+				<Carousel autoplay={false} stepper="always" initialIndex={2}>
 					<CarouselItem />
 					<CarouselItem />
 					<CarouselItem />
 				</Carousel>
 			));
 			await flushAll();
-			await wrapper.find('.vc-carousel__arrow.is-left-arrow').trigger('click');
+			await wrapper.find('.vc-carousel__stepper.is-prev').trigger('click');
 			await flushAll();
 			expect(wrapper.findAll('.vc-carousel-item')[1].classes()).toContain('is-active');
 			wrapper.unmount();
 		});
 
-		it('hovering arrow buttons does not throw', async () => {
+		it('hovering stepper buttons does not throw', async () => {
 			const wrapper = mount(() => (
-				<Carousel autoplay={false} arrow="always">
+				<Carousel autoplay={false} stepper="always">
 					<CarouselItem />
 					<CarouselItem />
 					<CarouselItem />
@@ -589,18 +589,18 @@ describe('index.ts', () => {
 			), { attachTo: document.body });
 			await flushAll();
 
-			const left = wrapper.find('.vc-carousel__arrow.is-left-arrow').element as HTMLElement;
+			const left = wrapper.find('.vc-carousel__stepper.is-prev').element as HTMLElement;
 			fireMouse(left, 'mouseenter');
 			await flushAll();
 			fireMouse(left, 'mouseleave');
 			await flushAll();
-			expect(wrapper.find('.vc-carousel__arrow.is-left-arrow').exists()).toBe(true);
+			expect(wrapper.find('.vc-carousel__stepper.is-prev').exists()).toBe(true);
 			wrapper.unmount();
 		});
 
-		it('card mode arrow hover marks neighbor items as hovered', async () => {
+		it('card mode stepper hover marks neighbor items as hovered', async () => {
 			const wrapper = mount(() => (
-				<Carousel autoplay={false} card arrow="always">
+				<Carousel autoplay={false} card stepper="always">
 					<CarouselItem />
 					<CarouselItem />
 					<CarouselItem />
@@ -609,10 +609,10 @@ describe('index.ts', () => {
 			restoreSize = mockOffsetSize(wrapper.element as HTMLElement);
 			await flushAll();
 
-			const right = wrapper.find('.vc-carousel__arrow.is-right-arrow').element as HTMLElement;
+			const right = wrapper.find('.vc-carousel__stepper.is-next').element as HTMLElement;
 			fireMouse(right, 'mouseenter');
 			await flushAll();
-			const left = wrapper.find('.vc-carousel__arrow.is-left-arrow').element as HTMLElement;
+			const left = wrapper.find('.vc-carousel__stepper.is-prev').element as HTMLElement;
 			fireMouse(left, 'mouseenter');
 			await flushAll();
 			// 不抛错且活动项依旧是第 0 项

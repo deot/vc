@@ -27,7 +27,8 @@ export const props = {
 		type: [String, Boolean],
 		default: 'bottom' // bottom/outside | false
 	},
-	arrow: {
+	// 前后翻页按钮
+	stepper: {
 		type: [String, Boolean],
 		default: 'hover' // hover/always | false
 	},

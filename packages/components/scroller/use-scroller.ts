@@ -50,14 +50,15 @@ export const useScroller = (expose: SetupContext['expose']) => {
 	const refreshSize = async () => {
 		if (!wrapper.value) return;
 
-		wrapperW.value = wrapper.value.clientWidth;
-		wrapperH.value = wrapper.value.clientHeight;
-
 		const padding = getPadding(wrapper.value);
 		padding.join() !== wrapperPadding.value.join() && (wrapperPadding.value = padding);
 
 		// 实际测试中发现，不使用nextTick会存在contentW和contentH为上一次值的情况
+		// 可视尺寸与内容尺寸在同一时刻读取：分开读取时，依赖两者之差的判断（如是否溢出）会拿到不一致的一对值
 		await nextTick();
+		if (!wrapper.value) return;
+		wrapperW.value = wrapper.value.clientWidth;
+		wrapperH.value = wrapper.value.clientHeight;
 		contentH.value = wrapper.value.scrollHeight;
 		contentW.value = wrapper.value.scrollWidth;
 	};
