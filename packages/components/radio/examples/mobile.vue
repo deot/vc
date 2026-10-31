@@ -33,7 +33,7 @@
 			:model="formValidate"
 			:rules="ruleValidate"
 			:label-width="96"
-			style="padding-left: 56px; margin-top: 21px"
+			style="padding-left: 56px; margin-top: 21px;"
 			@submit.prevent
 		>
 			<MFormItem prop="selectedItem" label="条目：">
@@ -47,7 +47,7 @@
 				<MRadio value="条目 A" />
 			</MFormItem>
 			<MFormItem prop="input" label="条目：">
-				<MInput style="width: 300px" />
+				<MInput style="width: 300px;" />
 			</MFormItem>
 		</MForm>
 	</div>

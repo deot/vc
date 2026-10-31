@@ -13,7 +13,7 @@
 				color: 'color-hover',
 			}
 		}"
-		style="font-size: 30px"
+		style="font-size: 30px;"
 		background-color="color-background"
 		border-color="color-border"
 	>
@@ -55,13 +55,14 @@ const handleChange = () => {
 .v-theme__block {
 	display: inline-block;
 	padding: 10px 5px;
-	border-width: 2px;
 	border-style: solid;
-	&:before {
+	border-width: 2px;
+
+	&::before {
+		display: block;
 		width: 100%;
 		height: 5px;
 		content: ' ';
-		display: block;
 	}
 }
 </style>

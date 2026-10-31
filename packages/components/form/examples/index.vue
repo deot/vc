@@ -4,26 +4,26 @@
 		:model="formData"
 		:rules="formRules"
 		:label-width="96"
-		style="padding-left: 56px; margin-top: 21px"
+		style="padding-left: 56px; margin-top: 21px;"
 		@submit.prevent
 	>
 		<FormItem prop="input" :label-width="0" :show-message="false">
-			<Input v-model="formData.input" style="width: 300px" />
+			<Input v-model="formData.input" style="width: 300px;" />
 		</FormItem>
 		<FormItem prop="input" label="input" :label-width="0">
-			<Input v-model="formData.input" style="width: 300px" />
+			<Input v-model="formData.input" style="width: 300px;" />
 		</FormItem>
 		<FormItem prop="input" label="input">
-			<Input v-model="formData.input" style="width: 300px" />
+			<Input v-model="formData.input" style="width: 300px;" />
 		</FormItem>
 		<FormItem prop="select" label="select" required="必填">
-			<Select v-model="formData.select" style="width: 300px" />
+			<Select v-model="formData.select" style="width: 300px;" />
 		</FormItem>
 		<FormItem prop="datepicker" label="datepicker" required="必填">
-			<DatePicker v-model="formData.datepicker" style="width: 300px" />
+			<DatePicker v-model="formData.datepicker" style="width: 300px;" />
 		</FormItem>
 		<FormItem prop="textarea" label="textarea" required="必填" label-style="padding-top: 0">
-			<Textarea v-model="formData.textarea" style="width: 300px" />
+			<Textarea v-model="formData.textarea" style="width: 300px;" />
 		</FormItem>
 		<FormItem prop="radio" label="radio" required="必填">
 			<RadioGroup v-model="formData.radio">
@@ -62,7 +62,7 @@
 		</FormItem>
 
 		<FormItem prop="nest" label="nest:">
-			<Input v-model="formData.nest.value" style="width: 300px" />
+			<Input v-model="formData.nest.value" style="width: 300px;" />
 			<div style="margin-top: 20px;" />
 			<div style="display: flex; flex-wrap: wrap; background: #faf7f8;">
 				<FormItem prop="nest.value1" label="nest1:" :label-width="0" style="flex: 0 0 100%;">
@@ -74,7 +74,7 @@
 					:label-width="0"
 					style="flex: 0 0 50%;"
 				>
-					<input v-model="formData.nest.value2" style="width: 300px; padding: 6px 0">
+					<input v-model="formData.nest.value2" style="width: 300px; padding: 6px 0;">
 				</FormItem>
 				<FormItem
 					prop="nest.value3"
@@ -82,12 +82,12 @@
 					:label-width="0"
 					style="flex: 0 0 50%;"
 				>
-					<input v-model="formData.nest.value3" style="width: 300px; padding: 6px 0">
+					<input v-model="formData.nest.value3" style="width: 300px; padding: 6px 0;">
 				</FormItem>
 			</div>
 		</FormItem>
 		<FormItem prop="nestTop" label="nestTop:">
-			<Input v-model="formData.nest.value" style="width: 300px" />
+			<Input v-model="formData.nest.value" style="width: 300px;" />
 			<div style="margin-top: 20px;" />
 			<div style="display: flex; flex-wrap: wrap; background: #faf7f8;">
 				<FormItem prop="nestTop.value1" label="nestTop1:" :label-width="0" label-position="top" style="flex: 0 0 50%;">
@@ -112,13 +112,13 @@
 			<FakeArray v-model="formData.array" />
 		</FormItem>
 		<FormItem prop="required" label="required" required="必填" label-position="top" :label-width="0">
-			<FakeTpl v-model="formData.required" style="width: 300px" />
+			<FakeTpl v-model="formData.required" style="width: 300px;" />
 		</FormItem>
 		<FormItem prop="blur" label="blur" label-position="top" :label-width="0">
-			<FakeTpl v-model="formData.blur" style="width: 300px" />
+			<FakeTpl v-model="formData.blur" style="width: 300px;" />
 		</FormItem>
 		<FormItem prop="change" label="change:" label-style="padding: 0">
-			<FakeTpl v-model="formData.change" style="width: 300px" />
+			<FakeTpl v-model="formData.change" style="width: 300px;" />
 		</FormItem>
 		<FormItem prop="swicth" label="swicth:">
 			<Switch v-model="formData.swicth" />
@@ -156,16 +156,16 @@
 				<Button type="primary" @click="handleSubmit">
 					Submit
 				</Button>
-				<Button style="margin-left: 8px" @click="handleReset">
+				<Button style="margin-left: 8px;" @click="handleReset">
 					Reset
 				</Button>
-				<Button style="margin-left: 8px" @click="handleClear">
+				<Button style="margin-left: 8px;" @click="handleClear">
 					Clear
 				</Button>
-				<Button style="margin-left: 8px" @click="handleSort">
+				<Button style="margin-left: 8px;" @click="handleSort">
 					乱序
 				</Button>
-				<Button style="margin-left: 8px" @click="handleOnly">
+				<Button style="margin-left: 8px;" @click="handleOnly">
 					独立验证
 				</Button>
 			</FormItem>
