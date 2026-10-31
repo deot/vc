@@ -24,7 +24,7 @@
 				v-model="value5"
 				:step="10"
 				range
-				show-stops
+				ticks="dot"
 			/>
 		</section>
 
@@ -41,7 +41,7 @@
 			<Slider
 				v-model="value7"
 				:formatter="formatTip"
-				show-tip="always"
+				tooltip="always"
 			/>
 			<Slider
 				v-model="value8"

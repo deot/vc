@@ -2468,7 +2468,7 @@ describe('Popover 渲染在组件树内（Teleport）', () => {
 					<Popover modelValue={true} content="x" portalClass="c-one-way" onVisibleChange={onVisibleChange}>
 						<button>btn</button>
 					</Popover>
-					<Slider modelValue={30} showTip="always" />
+					<Slider modelValue={30} tooltip="always" />
 				</div>
 			)
 		});

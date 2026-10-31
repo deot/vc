@@ -2,7 +2,7 @@
 	<div class="audit-stack">
 		<div v-for="(item, index) in states" :key="index" class="audit-sample" :data-state="item.label">
 			<div class="audit-sample__label">{{ item.label }}</div>
-			<Slider v-model="item.value" :range="item.range" :disabled="item.disabled" show-stops :step="10" />
+			<Slider v-model="item.value" :range="item.range" :disabled="item.disabled" ticks="dot" :step="10" />
 		</div>
 	</div>
 </template>
