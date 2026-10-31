@@ -113,7 +113,7 @@ export const Collapse = defineComponent({
 			return h(
 				props.tag,
 				{
-					class: [{ 'vc-collapse': !props.styleless }]
+					class: [{ 'vc-collapse': !props.styleless, 'is-border': !props.styleless && props.border }]
 				},
 				slots.default?.()
 			);

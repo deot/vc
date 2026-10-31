@@ -1,10 +1,132 @@
 @use '../style/helper' as *;
 
-$component-name: vc-collapse-item;
+$color-dark: varfix(color-dark, collapse);
+$color-dark-lighter: varfix(color-dark-lighter, collapse);
+$color-dark-lightest: varfix(color-dark-lightest, collapse);
+$color-neutral-light: varfix(color-neutral-light, collapse);
+$foreground-color-inactive: varfix(foreground-color-inactive, collapse);
+$background-color-light: varfix(background-color-light, collapse);
+$background-color-lightest: varfix(background-color-lightest, collapse);
+$font-size: varfix(font-size, collapse);
+$font-size-small: varfix(font-size-small, collapse);
+$line-height-large: varfix(line-height-large, collapse);
+$border-radius: unitfix(4);
+$spacing-vertical: unitfix(12);
+$spacing-horizontal: unitfix(16);
 
-@include block($component-name) {
-	@include element(title) {
-		position: relative;
+@include block(vc-collapse) {
+	font-size: $font-size;
+	line-height: $line-height-large;
+	background: $background-color-lightest;
+
+	@include when(border) {
+		@include border('', $color-neutral-light, $border-radius);
+
+		& {
+			overflow: hidden;
+			border-radius: $border-radius;
+		}
+
+		> .vc-collapse-item:last-child::after {
+			display: none;
+		}
+	}
+}
+
+@include block(vc-collapse-item) {
+	@include border(bottom, $color-neutral-light);
+
+	@include element(header) {
+		display: flex;
+		padding: $spacing-vertical $spacing-horizontal;
+		font-weight: 500;
+		color: $color-dark;
 		cursor: pointer;
+		box-sizing: border-box;
+		align-items: center;
+
+		@include when(trigger-arrow) {
+			cursor: default;
+
+			.vc-collapse-item__arrow {
+				cursor: pointer;
+			}
+		}
+	}
+
+	@include element(title) {
+		min-width: 0;
+		flex: 1;
+	}
+
+	// 附加内容与箭头固定一行高并居中，较高的内容（如按钮）占用内边距，不撑高标题栏
+	@include element(extra) {
+		display: flex;
+		height: $line-height-large;
+		margin-left: unitfix(8);
+		align-items: center;
+		font-size: $font-size-small;
+		font-weight: 400;
+		color: $color-dark-lighter;
+		flex-shrink: 0;
+	}
+
+	@include element(arrow) {
+		display: flex;
+		height: $line-height-large;
+		font-size: unitfix(12);
+		color: $color-dark-lightest;
+		flex-shrink: 0;
+		user-select: none;
+		align-items: center;
+		justify-content: center;
+	}
+
+	// 与 Tree、Table 的展开图标一致：收起朝右，展开朝下
+	@include element(icon) {
+		transform: rotate(90deg);
+		transition: transform .2s ease-in-out;
+	}
+
+	.is-arrow-left > .vc-collapse-item__arrow {
+		margin-right: unitfix(8);
+	}
+
+	.is-arrow-right > .vc-collapse-item__arrow {
+		margin-left: unitfix(8);
+	}
+
+	@include element(content) {
+		padding: $spacing-vertical $spacing-horizontal;
+		font-size: $font-size-small;
+		color: $color-dark-lighter;
+		background: $background-color-light;
+	}
+
+	@include when(active) {
+		> .vc-collapse-item__header > .vc-collapse-item__arrow > .vc-collapse-item__icon {
+			transform: rotate(180deg);
+		}
+	}
+
+	// 已展开且不能收起：点击不响应，不显示手型
+	@include when(locked) {
+		> .vc-collapse-item__header,
+		> .vc-collapse-item__header .vc-collapse-item__arrow {
+			cursor: default;
+		}
+	}
+
+	@include when(disabled) {
+		> .vc-collapse-item__header {
+			color: $foreground-color-inactive;
+			cursor: not-allowed;
+
+			.vc-collapse-item__arrow,
+			.vc-collapse-item__extra {
+				color: $foreground-color-inactive;
+				cursor: not-allowed;
+			}
+		}
 	}
 }
