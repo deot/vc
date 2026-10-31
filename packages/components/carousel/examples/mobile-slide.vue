@@ -2,7 +2,7 @@
 <template>
 	<div class="v-carousel-slide" style="padding: 10px;">
 		<h1>宽度要>50%，否则会失效</h1>
-		<div style="background-color: white; padding: 10px 0">
+		<div style="padding: 10px 0; background-color: white;">
 			<MCarousel
 				:height="150"
 				:autoplay="false"
@@ -31,12 +31,13 @@ import { MCarousel, MCarouselItem } from '../index.m';
 body {
 	background: #f5f6fa;
 }
+
 .vcm-carousel-item h3 {
-	color: #475669;
-	font-size: 14px;
-	opacity: 0.75;
-	line-height: 150px;
 	margin: 0;
+	font-size: 14px;
+	line-height: 150px;
+	color: #475669;
+	opacity: 0.75;
 }
 
 .vcm-carousel-item:nth-child(2n) h3 {
@@ -56,8 +57,8 @@ body {
 	.vcm-carousel__button {
 		width: 4px;
 		height: 3px;
-		border-radius: 0;
 		margin: 0 2px;
+		border-radius: 0;
 	}
 
 	.vcm-carousel__dots.is-outside button {

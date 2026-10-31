@@ -1,6 +1,6 @@
 <!-- 仅展示最基本的用法 -->
 <template>
-	<div style="padding: 20px; height: 100vh; -webkit-overflow-scrolling: touch; overflow: auto">
+	<div style="height: 100vh; padding: 20px; overflow: auto; -webkit-overflow-scrolling: touch;">
 		<br>
 		<br>
 		<br>
@@ -67,11 +67,11 @@ import { MCarousel, MCarouselItem } from '../index.m';
 </script>
 <style>
 .vcm-carousel-item h3 {
-	color: #475669;
-	font-size: 14px;
-	opacity: 0.75;
-	line-height: 150px;
 	margin: 0;
+	font-size: 14px;
+	line-height: 150px;
+	color: #475669;
+	opacity: 0.75;
 }
 
 .vcm-carousel-item:nth-child(2n) {
