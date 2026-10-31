@@ -1,7 +1,13 @@
 import { inject, getCurrentInstance, ref, watch, computed } from 'vue';
 import type { CustomerValue } from '../customer/types';
+import type { RadioGroupType } from './types';
 
-export const useRadio = () => {
+type Options = {
+	// 固定的外观，不随分组的type变化（RadioButton为button）
+	variant?: RadioGroupType;
+};
+
+export const useRadio = (options: Options = {}) => {
 	const { props, emit } = getCurrentInstance()!;
 	const group = inject<any>('vc-radio-group', {});
 	const formItem = inject<any>('vc-form-item', {});
@@ -38,6 +44,20 @@ export const useRadio = () => {
 			: props.name;
 	});
 
+	// 外观：固定值 > 分组的type > 默认圆点
+	const variant = computed<RadioGroupType>(() => {
+		return options.variant || group.props?.type || 'default';
+	});
+
+	// 按钮、胶囊等分组样式不渲染圆点
+	const isPlain = computed(() => {
+		return variant.value === 'default';
+	});
+
+	const size = computed(() => {
+		return props.size || group.props?.size || 'medium';
+	});
+
 	const isDisabled = computed(() => {
 		return hasGroup.value
 			? (group.props.disabled || props.disabled)
@@ -49,7 +69,9 @@ export const useRadio = () => {
 			'is-checked': checked.value,
 			'is-disabled': isDisabled.value,
 			'is-focus': isFocus.value,
-			'is-error': !!formItem?.message?.value
+			'is-error': !!formItem?.message?.value,
+			[`is-${size.value}`]: true,
+			[`is-${variant.value}`]: !isPlain.value
 		};
 	});
 
@@ -110,6 +132,9 @@ export const useRadio = () => {
 		classes,
 		styles,
 		hasGroup,
+		variant,
+		isPlain,
+		size,
 		checked,
 		handleChange,
 		handleBlur,

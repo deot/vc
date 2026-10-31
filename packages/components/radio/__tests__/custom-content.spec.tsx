@@ -57,16 +57,18 @@ describe('label', () => {
 				<RadioButton value="b" label={() => (<i class="render">label</i>)} />
 				<RadioButton value="c" label={{ type: 'html', value: MARKUP }} />
 				<RadioButton value="d" label={0} />
-				<RadioButton value="e" />
+				<RadioButton value="e" v-slots={{ default: () => (<i class="slot">slot</i>) }} />
+				<RadioButton value="f" />
 			</RadioGroup>
 		));
 
-		const [text, render, html, zero, value] = wrapper.findAll('.vc-radio-button__label').map(i => i.element.innerHTML);
+		const [text, render, html, zero, slot, value] = wrapper.findAll('.vc-radio__label').map(i => i.element.innerHTML);
 		expect(text).toBe('&lt;b class="inner"&gt;text&lt;/b&gt;');
 		expect(render).toBe('<i class="render">label</i>');
 		expect(html).toBe(MARKUP);
 		expect(zero).toBe('0');
+		expect(slot).toBe('<i class="slot">slot</i>');
 		// 没有 label 时显示 value
-		expect(value).toBe('e');
+		expect(value).toBe('f');
 	});
 });

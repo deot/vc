@@ -123,9 +123,9 @@ const COMPONENT_CASES = [
 	{ key: 'checkbox-alone', label: 'Checkbox 无文字', render: () => h(Checkbox, { modelValue: true }) },
 	{ key: 'radio', label: 'Radio', render: () => h(Radio, { modelValue: true }, () => '选项') },
 	{
-		key: 'radio-button',
-		label: 'RadioGroup 按钮',
-		render: () => h(RadioGroup, { modelValue: 'a', type: 'button' }, () => [
+		key: 'radio-card',
+		label: 'RadioGroup 卡片',
+		render: () => h(RadioGroup, { modelValue: 'a', type: 'card' }, () => [
 			h(Radio, { value: 'a' }, () => '选项一'),
 			h(Radio, { value: 'b' }, () => '选项二')
 		])

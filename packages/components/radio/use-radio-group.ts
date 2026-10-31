@@ -9,7 +9,7 @@ export const useRadioGroup = () => {
 	const classes = computed(() => {
 		return {
 			'is-vertical': props.vertical,
-			'is-button': props.type === 'button'
+			[`is-${props.type}`]: props.type !== 'default'
 		};
 	});
 

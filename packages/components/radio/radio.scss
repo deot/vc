@@ -1,21 +1,39 @@
 @use '../style/helper' as *;
 
-$color-dark-extralight: varfix(color-dark-extralight, radio);
 $color-error: varfix(color-error, radio);
 $color-light-deepest: varfix(color-light-deepest, radio);
 $color-primary: varfix(color-primary, radio);
 $color-primary-lighter: varfix(color-primary-lighter, radio);
 $background-color: varfix(background-color, radio);
 $background-color-lightest: varfix(background-color-lightest, radio);
+
+// 选中且禁用：保留主色、降低不透明度（与分组样式一致）
+$color-primary-disabled: color-mix(in srgb, #{$color-primary} 70%, transparent);
+$color-primary-disabled-border: color-mix(in srgb, #{$color-primary} 50%, transparent);
 $component-name: vc-radio;
 
-// 控制高度32px
+// 尺寸：Radio 与分组样式（按钮、胶囊等）共用；medium为默认高度32px
+$sizes: (
+	mini: (height: 24, font-size: 12, line-height: 18, padding-x: 8, dot: 14),
+	small: (height: 28, font-size: 12, line-height: 20, padding-x: 12, dot: 14),
+	medium: (height: 32, font-size: 12, line-height: 20, padding-x: 12, dot: 14),
+	large: (height: 36, font-size: 14, line-height: 22, padding-x: 12, dot: 16)
+);
+
+@each $size, $values in $sizes {
+	.vc-radio.is-#{$size} {
+		@each $key, $value in $values {
+			--vc-radio-#{$key}: #{unitfix($value)};
+		}
+	}
+}
+
 @include block($component-name) {
 	position: relative;
 	display: inline-flex;
-	padding: unitfix(6) 0;
-	font-size: unitfix(12);
-	line-height: unitfix(20);
+	padding: calc((var(--vc-radio-height) - var(--vc-radio-line-height)) / 2) 0;
+	font-size: var(--vc-radio-font-size);
+	line-height: var(--vc-radio-line-height);
 	white-space: nowrap;
 	cursor: pointer;
 	align-items: center;
@@ -47,8 +65,8 @@ $component-name: vc-radio;
 		top: 0;
 		left: 0;
 		display: inline-flex;
-		width: unitfix(14);
-		height: unitfix(14);
+		width: var(--vc-radio-dot);
+		height: var(--vc-radio-dot);
 		background-color: $background-color-lightest;
 		transition: all .2s ease-in-out;
 
@@ -60,8 +78,8 @@ $component-name: vc-radio;
 		top: unitfix(3);
 		left: unitfix(3);
 		display: table;
-		width: unitfix(8);
-		height: unitfix(8);
+		width: calc(var(--vc-radio-dot) - #{unitfix(6)});
+		height: calc(var(--vc-radio-dot) - #{unitfix(6)});
 		background-color: $color-primary;
 		border-top: 0;
 		border-left: 0;
@@ -102,17 +120,19 @@ $component-name: vc-radio;
 		}
 
 		@include element(inner) {
-			background-color: $color-dark-extralight;
 			animation-name: none;
 		}
 
 		@include when(checked) {
-			@include element(inner) {
-				animation-name: none;
-
+			@include element(border) {
 				&::before, &::after{
-					border-color: $color-dark-extralight;
+					border-color: $color-primary-disabled-border;
 				}
+			}
+
+			@include element(inner) {
+				background-color: $color-primary-disabled;
+				animation-name: none;
 			}
 		}
 	}

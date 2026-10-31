@@ -1,5 +1,9 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
 import { getUid } from '@deot/helper-utils';
+import { RADIO_SIZES } from './radio-props';
+import type { RadioGroupType, RadioSize } from './types';
+
+const TYPES = ['default', 'button', 'card', 'capsule', 'text', 'round'] as const;
 
 export const props = {
 	modelValue: {
@@ -7,8 +11,14 @@ export const props = {
 		default: ''
 	},
 	type: {
-		type: String,
-		default: '', // 'button'
+		type: String as PropType<RadioGroupType>,
+		default: 'default',
+		validator: (v: string) => TYPES.includes(v as any)
+	},
+	size: {
+		type: String as PropType<RadioSize>,
+		default: 'medium',
+		validator: (v: string) => RADIO_SIZES.includes(v as any)
 	},
 	vertical: {
 		type: Boolean,

@@ -34,7 +34,7 @@
 			<Radio label="条目 C" />
 		</RadioGroup>
 
-		<RadioGroup v-model="selectedGroup" type="button" @change="handleChange">
+		<RadioGroup v-model="selectedGroup" type="card" @change="handleChange">
 			<Radio label="分组 A" />
 			<Radio label="分组 B" disabled />
 			<Radio label="分组 C" />
@@ -44,7 +44,7 @@
 			:model="formValidate"
 			:rules="ruleValidate"
 			:label-width="96"
-			style="padding-left: 56px; margin-top: 21px"
+			style="padding-left: 56px; margin-top: 21px;"
 			@submit.prevent
 		>
 			<FormItem prop="selectedItem" label="条目：">
@@ -58,7 +58,7 @@
 				<Radio label="条目 A" />
 			</FormItem>
 			<FormItem prop="input" label="条目：">
-				<Input style="width: 300px" />
+				<Input style="width: 300px;" />
 			</FormItem>
 		</Form>
 	</div>

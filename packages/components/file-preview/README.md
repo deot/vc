@@ -67,7 +67,7 @@ const data = [
 <template>
 	<div class="demo">
 		<div class="toolbar">
-			<RadioGroup v-model="size" type="button">
+			<RadioGroup v-model="size" type="card">
 				<Radio v-for="item in sizes" :key="item" :value="item" :label="item" />
 			</RadioGroup>
 			<Checkbox v-model="isVertical">vertical</Checkbox>

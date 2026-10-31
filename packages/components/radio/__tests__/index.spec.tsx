@@ -3,7 +3,7 @@
 import { vi } from 'vitest';
 import { Radio, RadioButton, RadioGroup, MRadio, MRadioButton, MRadioGroup } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
-import { nextTick } from 'vue';
+import { nextTick, ref } from 'vue';
 
 describe('index.ts', () => {
 	it('basic', () => {
@@ -106,21 +106,12 @@ describe('radio.tsx', () => {
 });
 
 describe('radio-button.tsx', () => {
-	it('create', () => {
+	it('create: 外观固定为 button, 不渲染圆点', () => {
 		const wrapper = mount(() => (<RadioButton label="apple" />));
 
-		expect(wrapper.classes()).toContain('vc-radio-button');
-		expect(wrapper.find('.vc-radio-button__label').text()).toBe('apple');
-	});
-
-	it('labelClass/labelStyle: 应用到 label', () => {
-		const wrapper = mount(() => (
-			<RadioButton label="apple" labelClass="my-label" labelStyle={{ color: 'rgb(255, 0, 0)' }} />
-		));
-
-		const label = wrapper.find('.vc-radio-button__label');
-		expect(label.classes()).toContain('my-label');
-		expect(label.attributes('style')).toContain('rgb(255, 0, 0)');
+		expect(wrapper.classes()).toEqual(expect.arrayContaining(['vc-radio', 'is-button', 'is-medium']));
+		expect(wrapper.find('.vc-radio__border').exists()).toBe(false);
+		expect(wrapper.find('.vc-radio__label').text()).toBe('apple');
 	});
 
 	it('slot: 优先渲染默认插槽', () => {
@@ -128,7 +119,60 @@ describe('radio-button.tsx', () => {
 			<RadioButton label="apple" v-slots={{ default: () => 'banana' }} />
 		));
 
-		expect(wrapper.find('.vc-radio-button__label').text()).toBe('banana');
+		expect(wrapper.find('.vc-radio__label').text()).toBe('banana');
+	});
+
+	it('与圆点项混在同一组: 互斥选中', async () => {
+		const onChange = vi.fn();
+		const wrapper = mount({
+			setup() {
+				const current = ref('apple');
+				return () => (
+					<RadioGroup
+						v-model={current.value}
+						onChange={onChange}
+						v-slots={{
+							default: () => [
+								<RadioButton label="apple" />,
+								<RadioButton label="banana" />,
+								<Radio label="none" />
+							]
+						}}
+					/>
+				);
+			}
+		});
+		const radios = () => wrapper.findAll('.vc-radio');
+
+		expect(radios()[0].classes()).toContain('is-button');
+		expect(radios()[2].classes()).not.toContain('is-button');
+		expect(radios()[2].find('.vc-radio__border').exists()).toBe(true);
+
+		await wrapper.findAll('input')[2].trigger('change');
+		expect(onChange).toHaveBeenCalledWith('none', expect.anything(), expect.any(Function));
+		expect(radios()[0].classes()).not.toContain('is-checked');
+		expect(radios()[2].classes()).toContain('is-checked');
+	});
+
+	it('不随分组 type 变化, 继承分组 size', () => {
+		const wrapper = mount(() => (
+			<RadioGroup
+				type="card"
+				size="small"
+				v-slots={{
+					default: () => [
+						<Radio label="apple" />,
+						<RadioButton label="banana" />
+					]
+				}}
+			/>
+		));
+		const [radio, button] = wrapper.findAll('.vc-radio');
+
+		expect(radio.classes()).toContain('is-card');
+		expect(button.classes()).toContain('is-button');
+		expect(button.classes()).not.toContain('is-card');
+		expect(button.classes()).toContain('is-small');
 	});
 });
 
@@ -145,10 +189,75 @@ describe('radio-group.tsx', () => {
 		expect(wrapper.classes()).toContain('is-vertical');
 	});
 
-	it('type=button: 添加 is-button 类', () => {
-		const wrapper = mount(() => (<RadioGroup type="button" />));
+	it('type=card: 添加 is-card 类', () => {
+		const wrapper = mount(() => (<RadioGroup type="card" />));
 
-		expect(wrapper.classes()).toContain('is-button');
+		expect(wrapper.classes()).toContain('is-card');
+	});
+
+	it('type=default: 不添加类型类', () => {
+		const wrapper = mount(() => (<RadioGroup />));
+
+		expect(wrapper.classes()).not.toContain('is-default');
+	});
+
+	it.each(['button', 'card', 'capsule', 'text', 'round'] as const)('type=%s: 分组与子项添加类型类, 子项不渲染圆点', async (type) => {
+		const onChange = vi.fn();
+		const wrapper = mount(() => (
+			<RadioGroup
+				type={type}
+				modelValue="apple"
+				onChange={onChange}
+				v-slots={{
+					default: () => [
+						<Radio label="apple" />,
+						<Radio label="banana" />
+					]
+				}}
+			/>
+		));
+
+		expect(wrapper.classes()).toContain(`is-${type}`);
+		expect(wrapper.findAll('.vc-radio').every(v => v.classes().includes(`is-${type}`))).toBe(true);
+		expect(wrapper.find('.vc-radio__border').exists()).toBe(false);
+		expect(wrapper.findAll('.vc-radio__label').map(v => v.text())).toEqual(['apple', 'banana']);
+
+		await wrapper.findAll('input')[1].trigger('change');
+		expect(onChange).toHaveBeenCalledWith('banana', expect.anything(), expect.any(Function));
+	});
+
+	it('size: 子项继承分组 size, 自身 size 优先', () => {
+		const wrapper = mount(() => (
+			<RadioGroup
+				size="small"
+				v-slots={{
+					default: () => [
+						<Radio label="apple" />,
+						<Radio label="banana" size="large" />
+					]
+				}}
+			/>
+		));
+
+		expect(wrapper.findAll('.vc-radio')[0].classes()).toContain('is-small');
+		expect(wrapper.findAll('.vc-radio')[1].classes()).toContain('is-large');
+	});
+
+	it('size: 独立使用默认 medium', () => {
+		const wrapper = mount(() => (<Radio />));
+
+		expect(wrapper.classes()).toContain('is-medium');
+	});
+
+	it('size/type: 校验可选值', () => {
+		const { size, type } = RadioGroup.props as any;
+
+		expect(['mini', 'small', 'medium', 'large'].every(v => size.validator(v))).toBe(true);
+		expect(size.validator('default')).toBe(false);
+		expect(['default', 'button', 'card', 'capsule', 'text', 'round'].every(v => type.validator(v))).toBe(true);
+		expect(type.validator('chip')).toBe(false);
+		expect(type.validator('')).toBe(false);
+		expect((Radio.props as any).size.validator('huge')).toBe(false);
 	});
 
 	it('name: 透传到容器', () => {
