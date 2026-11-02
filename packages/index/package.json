@@ -1,6 +1,6 @@
 {
   "name": "@deot/vc",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -44,7 +44,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@deot/vc-components": "^1.2.5",
+    "@deot/vc-components": "^1.2.6",
     "@deot/vc-hooks": "^1.2.5",
     "@deot/vc-locale": "^1.2.5",
     "@deot/vc-shared": "^1.2.5"

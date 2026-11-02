@@ -1,5 +1,38 @@
 # @deot/vc ChangeLog
 
+## v1.2.6
+
+_2026-11-02_
+
+### Bugfixes
+
+- fix(components): button, use the primary color for text buttons and separate grouped buttons ([045b68d](https://github.com/deot/vc/commit/045b68d1d5c772a4a8725ee9b7ddb857d2ee2e98))
+- fix(components): radio, keep the joined button group at 32px including borders ([eaba3a5](https://github.com/deot/vc/commit/eaba3a5430ecbb4f287cd64362ec9cc0c98d7619))
+- fix(components): file-preview, zoom unsized images to their own ratio once the size arrives ([2dd0364](https://github.com/deot/vc/commit/2dd036442e20a82f0facf8e47b34f9f368f8360d))
+- fix(components): file-preview, zoom from the whole button like Modal and let Image pass itself ([a7636ac](https://github.com/deot/vc/commit/a7636ac043b8d276afd840265d73a8f29c9851e9))
+- fix(components): portal, release props and callbacks of a destroyed leaf that is still held ([ab602d3](https://github.com/deot/vc/commit/ab602d3db551b0626cfad857249217ac6dcb98c0))
+- fix(components): vc, open from the clicked element even when the popup opens after a request ([1fae95e](https://github.com/deot/vc/commit/1fae95e487a1718913e5a93cc138075453ce345e))
+- fix(components): transition, close back to where the trigger was when it is gone ([e9d9bee](https://github.com/deot/vc/commit/e9d9bee25d7ee42b791c9ba659ec4ed6330a8625))
+
+### Features
+
+- feat(components): tabs, add type/size/placement/stepper, alive/lazy, scroller overflow and axis-aware animation ([d6bcc55](https://github.com/deot/vc/commit/d6bcc5512a76f5bc124e9a8468cd6db899b1d95f))
+- feat(components): slider, add multiple thumbs, segments, marks, ticks, vertical/inverted, keyboard and size params ([c2be645](https://github.com/deot/vc/commit/c2be645be24019fbc2a557d5962595a4bcaa70f0))
+- feat(components): collapse, add default styles, extra slot, border/disabled/arrow/collapsible and style props ([3b86189](https://github.com/deot/vc/commit/3b861891df8f195e36f1e5b87530bab1ce1fd389))
+- feat(components): radio, add button/card/capsule/text/round group types and four sizes ([aa4b933](https://github.com/deot/vc/commit/aa4b933d4bfbfbd1b1a04c063d410c0a97c986da))
+- feat(components): file-preview, add placeholder and show loading while the opened item is not ready ([39b0423](https://github.com/deot/vc/commit/39b04235620ff858030348aaa1aeaef6ffe7c51a))
+- feat(components): vc, open popups from a VirtualElement measured when they open ([db6a4fe](https://github.com/deot/vc/commit/db6a4fe8910202d444f717957abc4630f9c3cba6))
+- feat(components): clipboard, write several formats at once with a MIME map ([799d0c5](https://github.com/deot/vc/commit/799d0c5824cd1431f543183ad04dfe0eb8627cd2))
+- feat(components): file-preview, add triggerElement to open and ImagePreview.open ([7f42619](https://github.com/deot/vc/commit/7f42619c5babcb6697287f0116bc0d46c068211d))
+- feat(components): modal, add triggerElement to choose where it opens from ([7d7f43d](https://github.com/deot/vc/commit/7d7f43d6335ab2793a0b6f84e9171d1b47bd4aaa))
+
+### Updates
+
+- style(components): carousel, fix stylelint errors in the examples ([394c99b](https://github.com/deot/vc/commit/394c99bea5540a01caa9836959749228e51b880e))
+- style(components): alert, refine layout, text colors and sizes ([9246abe](https://github.com/deot/vc/commit/9246abe3de55fa1c0252e31e42628dfb07045a6d))
+- style(components): fix stylelint errors in the form, radio and theme examples ([dda6f9e](https://github.com/deot/vc/commit/dda6f9e2f52cecd60876a09fe4db379c24096b2b))
+- style(components): transition, group each transition into its own folder ([6f214b1](https://github.com/deot/vc/commit/6f214b1de7afb682738c072e85cf601858c726c4))
+
 ## v1.2.5
 
 _2026-10-30_
