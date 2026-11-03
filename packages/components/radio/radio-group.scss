@@ -1,16 +1,14 @@
 @use '../style/helper' as *;
+@use '../style/segmented' as *;
 
-$color-dark-light: varfix(color-dark-light, radio-group);
 $color-dark-lightest: varfix(color-dark-lightest, radio-group);
 $color-dark-extralight: varfix(color-dark-extralight, radio-group);
 $color-error: varfix(color-error, radio-group);
-$color-neutral-light: varfix(color-neutral-light, radio-group);
 $color-primary: varfix(color-primary, radio-group);
 $color-primary-lighter: varfix(color-primary-lighter, radio-group);
 $background-color: varfix(background-color, radio-group);
 $background-color-lightest: varfix(background-color-lightest, radio-group);
 $border-color: varfix(border-color, radio-group); // 卡片边框与输入框一致
-$foreground-color-inactive: varfix(foreground-color-inactive, radio-group);
 
 // 选中且禁用：保留主色、降低不透明度；文字保持可读，描边更淡
 $color-primary-disabled: color-mix(in srgb, #{$color-primary} 70%, transparent);
@@ -50,9 +48,7 @@ $padding-x: var(--vc-radio-padding-x);
 
 	// 胶囊：灰底容器，选中项浮起
 	@include when(capsule) {
-		padding: unitfix(3);
-		background-color: $color-neutral-light;
-		border-radius: unitfix(6);
+		@include segmented-capsule-container(radio-group);
 	}
 
 	@include when(text) {
@@ -86,23 +82,12 @@ $padding-x: var(--vc-radio-padding-x);
 	}
 }
 
+
+// 按钮、胶囊、文字、圆角：外观在label上（见style/segmented），高度由label的行高决定
 .vc-radio.is-button, .vc-radio.is-capsule, .vc-radio.is-text, .vc-radio.is-round {
 	.vc-radio__label {
 		display: block;
 		transition: color .2s ease-in-out, background-color .2s ease-in-out;
-	}
-
-	&:not(.is-disabled, .is-checked):hover .vc-radio__label {
-		color: $color-dark-light;
-	}
-
-	&.is-checked .vc-radio__label {
-		font-weight: 500;
-		color: $color-primary;
-	}
-
-	&.is-checked.is-disabled .vc-radio__label {
-		color: $color-primary-disabled;
 	}
 
 	// 只响应键盘焦点
@@ -111,20 +96,7 @@ $padding-x: var(--vc-radio-padding-x);
 	}
 }
 
-// 项间分隔线（胶囊、文字）
-.vc-radio.is-capsule + .vc-radio.is-capsule,
-.vc-radio.is-text + .vc-radio.is-text {
-	&::after {
-		position: absolute;
-		top: 50%;
-		display: block;
-		content: '';
-		transform: translateY(-50%);
-		transition: opacity .2s ease-in-out;
-	}
-}
-
-// 按钮：灰底独立项，悬停或选中时描边变为主色；可与圆点项混在同一组
+// 按钮：可与圆点项混在同一组
 .vc-radio.is-button {
 	padding: unitfix(3) 0;
 
@@ -138,41 +110,17 @@ $padding-x: var(--vc-radio-padding-x);
 	}
 
 	.vc-radio__label {
-		padding: 0 unitfix(8);
 		line-height: calc(#{$height} - #{unitfix(6)});
-		background-color: $color-neutral-light; // 暗色主题下background-color与页面同色
-		border-radius: unitfix(6);
-
-		@include border('', $color-neutral-light, 6);
-
-		&::before, &::after {
-			transition: border-color .2s ease-in-out;
-		}
 	}
+}
 
-	&:not(.is-disabled, .is-checked):hover .vc-radio__label {
-		color: $color-primary;
-	}
+@include segmented-button(radio-group, '.vc-radio.is-button', '.vc-radio__label', '.is-checked');
 
-	&:not(.is-disabled):hover .vc-radio__label,
-	&.is-checked .vc-radio__label {
-		&::before, &::after {
-			border-color: $color-primary;
-		}
-	}
+.vc-radio.is-button.is-error .vc-radio__label {
+	color: $color-error;
 
-	&.is-checked.is-disabled .vc-radio__label {
-		&::before, &::after {
-			border-color: $color-primary-disabled-border;
-		}
-	}
-
-	&.is-error .vc-radio__label {
-		color: $color-error;
-
-		&::before, &::after {
-			border-color: $color-error;
-		}
+	&::before, &::after {
+		border-color: $color-error;
 	}
 }
 
@@ -246,82 +194,47 @@ $padding-x: var(--vc-radio-padding-x);
 	}
 }
 
-// 胶囊：项间1px分隔线，悬停或选中项两侧不显示
+
+// 胶囊
 .vc-radio.is-capsule {
 	+ .vc-radio.is-capsule {
 		margin-left: unitfix(3);
-
-		&::after {
-			left: unitfix(-2);
-			width: unitfix(1);
-			height: calc(var(--vc-radio-line-height) - #{unitfix(6)});
-			background-color: $foreground-color-inactive;
-		}
-	}
-
-	&:not(.is-disabled):hover,
-	&.is-checked {
-		&::after,
-		+ .vc-radio::after {
-			opacity: 0;
-		}
 	}
 
 	.vc-radio__label {
-		padding: 0 $padding-x;
 		line-height: calc(#{$height} - #{unitfix(6)});
-		border-radius: unitfix(4);
-	}
-
-	&:not(.is-disabled):hover .vc-radio__label,
-	&.is-checked .vc-radio__label {
-		background-color: $background-color-lightest;
 	}
 }
 
-// 文字：分隔线隔开，悬停浅底
+@include segmented-capsule(radio-group, radio, '.vc-radio.is-capsule', '.vc-radio.is-capsule', '.vc-radio__label', '.is-checked');
+
+// 文字
 .vc-radio.is-text {
 	height: $height;
 
 	+ .vc-radio.is-text {
 		margin-left: unitfix(10);
-
-		&::after {
-			left: unitfix(-6);
-			width: unitfix(2);
-			height: unitfix(12);
-			background-color: $color-neutral-light;
-		}
 	}
 
 	.vc-radio__label {
-		padding: 0 calc(#{$padding-x} - #{unitfix(4)});
 		line-height: calc(#{$height} - #{unitfix(8)});
-		border-radius: unitfix(4);
-	}
-
-	&:not(.is-disabled, .is-checked):hover .vc-radio__label {
-		background-color: $background-color;
 	}
 }
 
-// 圆角：胶囊形独立项，悬停或选中填充底色
+@include segmented-text(radio-group, radio, '.vc-radio.is-text', '.vc-radio.is-text', '.vc-radio__label', '.is-checked');
+
+// 圆角
 .vc-radio.is-round {
 	+ .vc-radio.is-round {
 		margin-left: unitfix(8);
 	}
 
 	.vc-radio__label {
-		padding: 0 calc(#{$padding-x} + #{unitfix(4)});
 		line-height: $height;
-		border-radius: calc(#{$height} / 2);
-	}
-
-	&:not(.is-disabled):hover .vc-radio__label,
-	&.is-checked .vc-radio__label {
-		background-color: $color-neutral-light;
 	}
 }
+
+@include segmented-round(radio-group, radio, '.vc-radio.is-round', '.vc-radio__label', '.is-checked');
 
 // 纵向：每项独占一行，不显示分隔线
 .vc-radio-group.is-vertical {

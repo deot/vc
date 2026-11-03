@@ -1,9 +1,9 @@
 @use 'sass:list';
 @use '../style/helper' as *;
+@use '../style/segmented' as *;
 @use './shared';
 
 $component-name: vc-tabs;
-$color-dark-light: varfix(color-dark-light, tabs);
 $color-dark-lightest: varfix(color-dark-lightest, tabs);
 $color-dark-extralight: varfix(color-dark-extralight, tabs);
 $color-neutral-light: varfix(color-neutral-light, tabs);
@@ -11,7 +11,6 @@ $color-primary: varfix(color-primary, tabs);
 $background-color: varfix(background-color, tabs);
 $background-color-lightest: varfix(background-color-lightest, tabs);
 $border-color: varfix(border-color, tabs);
-$foreground-color-inactive: varfix(foreground-color-inactive, tabs);
 
 // 选中且禁用：保留主色、降低不透明度（同Radio）
 $color-primary-disabled: color-mix(in srgb, #{$color-primary} 70%, transparent);
@@ -20,13 +19,7 @@ $height: var(--vc-tabs-height);
 $padding-x: var(--vc-tabs-padding-x);
 $item: '.#{$component-name}__item';
 
-// 尺寸：line为标签栏高度；其余类型与Radio分组样式一致，medium为默认
-$sizes: (
-	mini: (height: 24, font-size: 12, line-height: 18, padding-x: 8),
-	small: (height: 28, font-size: 12, line-height: 20, padding-x: 12),
-	medium: (height: 32, font-size: 12, line-height: 20, padding-x: 12),
-	large: (height: 36, font-size: 14, line-height: 22, padding-x: 12)
-);
+// 尺寸：其余类型与Radio分组样式一致（见style/segmented），line为标签栏高度；medium为默认
 $line-sizes: (
 	mini: (height: 32, font-size: 12, line-height: 20),
 	small: (height: 36, font-size: 13, line-height: 20),
@@ -55,7 +48,7 @@ $gaps: (line: 12, button: 4, capsule: 3, text: 10, round: 8);
 	}
 }
 
-@include size-vars($sizes, '');
+@include size-vars($segmented-sizes, '');
 @include size-vars($line-sizes, '.is-line');
 
 @include block($component-name) {
@@ -322,126 +315,38 @@ $gaps: (line: 12, button: 4, capsule: 3, text: 10, round: 8);
 		}
 	}
 
-	// 按钮：灰底独立项，悬停或选中时描边变为主色
+	// 按钮、胶囊、文字、圆角：外观见style/segmented（与Radio分组一致），这里只定尺寸
 	@include when(button) {
 		@include element(item) {
 			height: calc(#{$height} - #{unitfix(6)});
-			padding: 0 unitfix(8);
 			margin: unitfix(3) 0;
-			background-color: $color-neutral-light; // 暗色主题下background-color与页面同色
-			border: unitfix(1) solid $color-neutral-light;
-			border-radius: unitfix(6);
-
-			&:not(.is-disabled):hover {
-				color: $color-primary;
-			}
-
-			&:not(.is-disabled):hover,
-			&.is-active {
-				border-color: $color-primary;
-			}
 		}
 	}
 
-	// 选中且禁用的描边（card / button）
-	&.is-card,
-	&.is-button {
-		#{$item}.is-active.is-disabled {
-			border-color: $color-primary-disabled-border;
-		}
+	&.is-card #{$item}.is-active.is-disabled {
+		border-color: $color-primary-disabled-border;
 	}
 
-	// 胶囊：灰底容器，选中项浮起，项间1px分隔线（悬停或选中项两侧不显示）
 	@include when(capsule) {
 		@include element(nav) {
-			padding: unitfix(3);
-			background-color: $color-neutral-light;
-			border-radius: unitfix(6);
+			@include segmented-capsule-container(tabs);
 		}
 
 		@include element(item) {
 			height: calc(#{$height} - #{unitfix(6)});
-			padding: 0 $padding-x;
-			border-radius: unitfix(4);
-
-			+ #{$item}::after {
-				position: absolute;
-				top: 50%;
-				left: unitfix(-2);
-				width: unitfix(1);
-				height: calc(var(--vc-tabs-line-height) - #{unitfix(6)});
-				background-color: $foreground-color-inactive;
-				content: '';
-				transform: translateY(-50%);
-				transition: opacity .2s ease-in-out;
-			}
-
-			&:not(.is-disabled):hover,
-			&.is-active {
-				background-color: $background-color-lightest;
-
-				&::after,
-				+ #{$item}::after {
-					opacity: 0;
-				}
-			}
 		}
 	}
 
-	// 文字：2px分隔线隔开，悬停浅底
 	@include when(text) {
 		@include element(item) {
 			height: calc(#{$height} - #{unitfix(8)});
-			padding: 0 calc(#{$padding-x} - #{unitfix(4)});
 			margin: unitfix(4) 0;
-			border-radius: unitfix(4);
-
-			+ #{$item}::after {
-				position: absolute;
-				top: 50%;
-				left: unitfix(-6);
-				width: unitfix(2);
-				height: unitfix(12);
-				background-color: $color-neutral-light;
-				content: '';
-				transform: translateY(-50%);
-			}
-
-			&:not(.is-disabled, .is-active):hover {
-				background-color: $background-color;
-			}
 		}
 	}
 
-	// 圆角：胶囊形独立项，悬停或选中填充底色
 	@include when(round) {
 		@include element(item) {
 			height: $height;
-			padding: 0 calc(#{$padding-x} + #{unitfix(4)});
-			border-radius: calc(#{$height} / 2);
-
-			&:not(.is-disabled):hover,
-			&.is-active {
-				background-color: $color-neutral-light;
-			}
-		}
-	}
-
-	// 胶囊、文字、圆角：悬停加深文字；按钮、胶囊、文字、圆角：选中加粗
-	&.is-capsule,
-	&.is-text,
-	&.is-round {
-		#{$item}:not(.is-disabled, .is-active):hover {
-			color: $color-dark-light;
-		}
-	}
-
-	&.is-button,
-	&.is-capsule,
-	&.is-text,
-	&.is-round {
-		#{$item}.is-active {
-			font-weight: 500;
 		}
 	}
 
@@ -476,3 +381,8 @@ $gaps: (line: 12, button: 4, capsule: 3, text: 10, round: 8);
 		}
 	}
 }
+
+@include segmented-button(tabs, '.vc-tabs.is-button #{$item}');
+@include segmented-capsule(tabs, tabs, '.vc-tabs.is-capsule #{$item}', $item);
+@include segmented-text(tabs, tabs, '.vc-tabs.is-text #{$item}', $item);
+@include segmented-round(tabs, tabs, '.vc-tabs.is-round #{$item}');

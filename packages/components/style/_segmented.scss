@@ -1,0 +1,209 @@
+@use './helper' as *;
+
+/**
+ * 分组外观：RadioGroup 与 Tabs 的 button / capsule / text / round 共用一套外观
+ *
+ * 只描述外观（底色、描边、圆角、内边距、分隔线、悬停 / 选中 / 禁用），尺寸与间距由各组件按自身结构决定
+ * 参数
+ * 	- $component：主题变量的命名空间（varfix），如 radio-group、tabs
+ * 	- $var：尺寸变量的前缀，读取 --vc-<var>-height / -line-height / -padding-x
+ * 	- $item：项的选择器（已含类型），如 '.vc-radio.is-button'、'.vc-tabs.is-button .vc-tabs__item'
+ * 	- $sibling：相邻项的选择器（用于项间分隔线），如 '.vc-radio'、'.vc-tabs__item'
+ * 	- $surface：呈现外观的元素，项内的选择器（如 '.vc-radio__label'）；为 null 时即项本身
+ * 	- $active：选中的类名，如 '.is-checked'、'.is-active'
+ */
+
+// 尺寸：medium 为默认，高度 32
+$segmented-sizes: (
+	mini: (height: 24, font-size: 12, line-height: 18, padding-x: 8),
+	small: (height: 28, font-size: 12, line-height: 20, padding-x: 12),
+	medium: (height: 32, font-size: 12, line-height: 20, padding-x: 12),
+	large: (height: 36, font-size: 14, line-height: 22, padding-x: 12)
+);
+
+@mixin segmented-surface($surface) {
+	@if $surface {
+		#{$surface} {
+			@content;
+		}
+	} @else {
+		@content;
+	}
+}
+
+// 选中加粗、主色；选中且禁用时淡化（保留主色、降低不透明度）；胶囊 / 文字 / 圆角悬停时加深文字
+@mixin segmented-states($component, $item, $surface, $active, $hover-dark) {
+	$color-dark-light: varfix(color-dark-light, $component);
+	$color-primary: varfix(color-primary, $component);
+
+	#{$item} {
+		@if $hover-dark {
+			&:not(.is-disabled, #{$active}):hover {
+				@include segmented-surface($surface) {
+					color: $color-dark-light;
+				}
+			}
+		}
+
+		&#{$active} {
+			@include segmented-surface($surface) {
+				font-weight: 500;
+				color: $color-primary;
+			}
+		}
+
+		&#{$active}.is-disabled {
+			@include segmented-surface($surface) {
+				color: color-mix(in srgb, #{$color-primary} 70%, transparent);
+			}
+		}
+	}
+}
+
+// 项间分隔线的公共部分：垂直居中于项的左侧
+@mixin segmented-separator {
+	position: absolute;
+	top: 50%;
+	display: block;
+	content: '';
+	transform: translateY(-50%);
+	transition: opacity .2s ease-in-out;
+}
+
+// 按钮：灰底独立项，发丝线描边；悬停或选中时描边变为主色
+@mixin segmented-button($component, $item, $surface: null, $active: '.is-active') {
+	$color-neutral-light: varfix(color-neutral-light, $component);
+	$color-primary: varfix(color-primary, $component);
+
+	@include segmented-states($component, $item, $surface, $active, false);
+
+	#{$item} {
+		@include segmented-surface($surface) {
+			padding: 0 unitfix(8);
+			background-color: $color-neutral-light; // 暗色主题下background-color与页面同色
+			border-radius: unitfix(6);
+
+			@include border('', $color-neutral-light, 6);
+
+			&::before, &::after {
+				transition: border-color .2s ease-in-out;
+			}
+		}
+
+		&:not(.is-disabled, #{$active}):hover {
+			@include segmented-surface($surface) {
+				color: $color-primary;
+			}
+		}
+
+		&:not(.is-disabled):hover,
+		&#{$active} {
+			@include segmented-surface($surface) {
+				&::before, &::after {
+					border-color: $color-primary;
+				}
+			}
+		}
+
+		&#{$active}.is-disabled {
+			@include segmented-surface($surface) {
+				&::before, &::after {
+					border-color: color-mix(in srgb, #{$color-primary} 50%, transparent);
+				}
+			}
+		}
+	}
+}
+
+// 胶囊的容器：灰底，内边距托起选中项
+@mixin segmented-capsule-container($component) {
+	padding: unitfix(3);
+	background-color: varfix(color-neutral-light, $component);
+	border-radius: unitfix(6);
+}
+
+// 胶囊：选中项浮起；项间1px分隔线，悬停或选中项两侧不显示
+@mixin segmented-capsule($component, $var, $item, $sibling, $surface: null, $active: '.is-active') {
+	$padding-x: var(--vc-#{$var}-padding-x);
+
+	@include segmented-states($component, $item, $surface, $active, true);
+
+	#{$item} {
+		+ #{$sibling}::after {
+			@include segmented-separator;
+
+			left: unitfix(-2);
+			width: unitfix(1);
+			height: calc(var(--vc-#{$var}-line-height) - #{unitfix(6)});
+			background-color: varfix(foreground-color-inactive, $component);
+		}
+
+		@include segmented-surface($surface) {
+			padding: 0 $padding-x;
+			border-radius: unitfix(4);
+		}
+
+		&:not(.is-disabled):hover,
+		&#{$active} {
+			&::after,
+			+ #{$sibling}::after {
+				opacity: 0;
+			}
+
+			@include segmented-surface($surface) {
+				background-color: varfix(background-color-lightest, $component);
+			}
+		}
+	}
+}
+
+// 文字：2px分隔线隔开，悬停浅底
+@mixin segmented-text($component, $var, $item, $sibling, $surface: null, $active: '.is-active') {
+	$padding-x: var(--vc-#{$var}-padding-x);
+
+	@include segmented-states($component, $item, $surface, $active, true);
+
+	#{$item} {
+		+ #{$sibling}::after {
+			@include segmented-separator;
+
+			left: unitfix(-6);
+			width: unitfix(2);
+			height: unitfix(12);
+			background-color: varfix(color-neutral-light, $component);
+		}
+
+		@include segmented-surface($surface) {
+			padding: 0 calc(#{$padding-x} - #{unitfix(4)});
+			border-radius: unitfix(4);
+		}
+
+		&:not(.is-disabled, #{$active}):hover {
+			@include segmented-surface($surface) {
+				background-color: varfix(background-color, $component);
+			}
+		}
+	}
+}
+
+// 圆角：胶囊形独立项，悬停或选中填充底色
+@mixin segmented-round($component, $var, $item, $surface: null, $active: '.is-active') {
+	$padding-x: var(--vc-#{$var}-padding-x);
+	$height: var(--vc-#{$var}-height);
+
+	@include segmented-states($component, $item, $surface, $active, true);
+
+	#{$item} {
+		@include segmented-surface($surface) {
+			padding: 0 calc(#{$padding-x} + #{unitfix(4)});
+			border-radius: calc(#{$height} / 2);
+		}
+
+		&:not(.is-disabled):hover,
+		&#{$active} {
+			@include segmented-surface($surface) {
+				background-color: varfix(color-neutral-light, $component);
+			}
+		}
+	}
+}
