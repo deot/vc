@@ -37,15 +37,16 @@ const mockSize = (el: HTMLElement, width: number) => {
  * @param options.client 可视宽度
  * @param options.scroll 内容宽度
  * @param options.item 每个标签的宽度
+ * @param prefix 类名前缀：vc-tabs 或 vcm-tabs
  * @returns Scroller 根节点
  */
-const mockOverflow = async (wrapper: any, options: { client: number; scroll: number; item: number }) => {
-	const el = wrapper.find('.vc-tabs__scroll').element as HTMLElement;
+const mockOverflow = async (wrapper: any, options: { client: number; scroll: number; item: number }, prefix = 'vc-tabs') => {
+	const el = wrapper.find(`.${prefix}__scroll`).element as HTMLElement;
 	let scrollLeft = 0;
 	Object.defineProperty(el, 'scrollLeft', { get: () => scrollLeft, set: (v: number) => (scrollLeft = v), configurable: true });
 	Object.defineProperty(el, 'clientWidth', { get: () => options.client, configurable: true });
 	Object.defineProperty(el, 'scrollWidth', { get: () => options.scroll, configurable: true });
-	wrapper.findAll('.vc-tabs__item').forEach((item: any, index: number) => {
+	wrapper.findAll(`.${prefix}__item`).forEach((item: any, index: number) => {
 		Object.defineProperty(item.element, 'offsetLeft', { get: () => index * options.item, configurable: true });
 		Object.defineProperty(item.element, 'offsetWidth', { get: () => options.item, configurable: true });
 	});
@@ -1378,217 +1379,91 @@ describe('mobile', () => {
 		wrapper.unmount();
 	});
 
-	it('stepper + scrollable shows step icons and handleStep moves offset', async () => {
+	it('scrolls natively along x on a Scroller; stepper (off by default) pages one viewport', async () => {
 		const wrapper = mount(() => (
 			<MTabs modelValue={0} stepper>
-				{Array.from({ length: 10 }, (_, i) => (
+				{Array.from({ length: 12 }, (_, i) => (
 					<MTabsPane key={i} label={`tab-${i}`} value={i} />
 				))}
 			</MTabs>
 		), { attachTo: document.body });
-
 		await flush();
+		expect(wrapper.find('.vcm-tabs__scroll').classes()).toEqual(expect.arrayContaining(['vc-scroller', 'is-x']));
+		expect(wrapper.find('.vcm-tabs__stepper').exists()).toBe(false);
 
-		const scrollEl = wrapper.find('.vcm-tabs__scroll').element as HTMLElement;
-		const navEl = wrapper.find('.vcm-tabs__nav').element as HTMLElement;
-
-		const restoreScroll = mockSize(scrollEl, 200);
-		const restoreNav = mockSize(navEl, 1000);
-
-		// 触发 resize 让 refreshScroll 重新计算
-		const items = wrapper.findAll('.vcm-tabs__item');
-		await items[1].trigger('click');
-		await flush();
-
+		const el = await mockOverflow(wrapper, { client: 200, scroll: 1200, item: 100 }, 'vcm-tabs');
 		expect(wrapper.find('.vcm-tabs__stepper.is-prev').exists()).toBe(true);
-		expect(wrapper.find('.vcm-tabs__stepper.is-next').exists()).toBe(true);
 
-		const next = wrapper.find('.vcm-tabs__stepper.is-next');
-		const prev = wrapper.find('.vcm-tabs__stepper.is-prev');
-		await next.trigger('click');
-		await prev.trigger('click');
-		await flush();
+		await wrapper.find('.vcm-tabs__stepper.is-next').trigger('click');
+		await settle(el);
+		expect(el.scrollLeft).toBe(200);
 
-		restoreScroll();
-		restoreNav();
+		await wrapper.find('.vcm-tabs__stepper.is-prev').trigger('click');
+		await settle(el);
+		expect(el.scrollLeft).toBe(0);
 		wrapper.unmount();
-	});
 
-	it('scrollToActive centers active item when scrollable', async () => {
-		const wrapper = mount(() => (
+		const plain = mount(() => (
 			<MTabs modelValue={0}>
-				{Array.from({ length: 6 }, (_, i) => (
+				{Array.from({ length: 12 }, (_, i) => (
 					<MTabsPane key={i} label={`tab-${i}`} value={i} />
 				))}
 			</MTabs>
 		), { attachTo: document.body });
-
 		await flush();
-		const scrollEl = wrapper.find('.vcm-tabs__scroll').element as HTMLElement;
-		const navEl = wrapper.find('.vcm-tabs__nav').element as HTMLElement;
-		mockSize(scrollEl, 200);
-		mockSize(navEl, 1200);
-		const rect = (left: number, right: number) => ({
-			top: 0, left, right, bottom: 0, width: right - left, height: 0, x: 0, y: 0, toJSON: () => ({})
-		});
-		scrollEl.getBoundingClientRect = () => rect(0, 200);
-		navEl.getBoundingClientRect = () => rect(0, 1200);
-
-		const items = wrapper.findAll('.vcm-tabs__item');
-		// 给中间 item 设可居中的 bounding
-		(items[3].element as HTMLElement).getBoundingClientRect = () => rect(600, 700);
-		await items[3].trigger('click');
-		await flush();
-		await Utils.sleep(310);
-
-		// 给左侧 item bounding 让 offsetLeft 路径生效
-		(items[0].element as HTMLElement).getBoundingClientRect = () => rect(0, 100);
-		await items[0].trigger('click');
-		await flush();
-
-		await Utils.sleep(310);
-		// 给右侧 item bounding 让 right 路径生效
-		(items[5].element as HTMLElement).getBoundingClientRect = () => rect(1100, 1200);
-		await items[5].trigger('click');
-		await flush();
-
-		wrapper.unmount();
+		await mockOverflow(plain, { client: 200, scroll: 1200, item: 100 }, 'vcm-tabs');
+		expect(plain.find('.vcm-tabs__stepper').exists()).toBe(false);
+		plain.unmount();
 	});
 
-	it('handleStep clamps offsetX at boundaries', async () => {
+	it('the selected tab is scrolled to the center, clamped at both ends', async () => {
+		const value = ref<any>(0);
 		const wrapper = mount(() => (
-			<MTabs modelValue={0} stepper>
-				{Array.from({ length: 10 }, (_, i) => (
+			<MTabs modelValue={value.value}>
+				{Array.from({ length: 12 }, (_, i) => (
 					<MTabsPane key={i} label={`tab-${i}`} value={i} />
 				))}
 			</MTabs>
 		), { attachTo: document.body });
 		await flush();
+		const el = await mockOverflow(wrapper, { client: 200, scroll: 1200, item: 100 }, 'vcm-tabs');
 
-		const scrollEl = wrapper.find('.vcm-tabs__scroll').element as HTMLElement;
-		const navEl = wrapper.find('.vcm-tabs__nav').element as HTMLElement;
-		mockSize(scrollEl, 200);
-		mockSize(navEl, 1000);
+		// 300 起、宽 100，居中于 200 的可视区：300 - 50
+		value.value = 3;
+		await settle(el);
+		expect(el.scrollLeft).toBe(250);
 
-		const items = wrapper.findAll('.vcm-tabs__item');
-		await items[1].trigger('click');
-		await flush();
+		value.value = 11;
+		await settle(el);
+		expect(el.scrollLeft).toBe(1000);
 
-		const next = wrapper.find('.vcm-tabs__stepper.is-next');
-		const prev = wrapper.find('.vcm-tabs__stepper.is-prev');
-
-		// 多次 next 触发 offsetX < -(content - view) 的越界 clamp
-		await next.trigger('click');
-		await next.trigger('click');
-		await next.trigger('click');
-		await next.trigger('click');
-		await next.trigger('click');
-		await next.trigger('click');
-		// 多次 prev 触发 offsetX > 0 的越界 clamp
-		await prev.trigger('click');
-		await prev.trigger('click');
-		await prev.trigger('click');
-		await prev.trigger('click');
-		await prev.trigger('click');
+		value.value = 0;
+		await settle(el);
+		expect(el.scrollLeft).toBe(0);
 
 		wrapper.unmount();
 	});
 
-	it('reactive stepper watch + refreshScroll fall back when content shrinks', async () => {
-		const stepper = ref(false);
-		const navWidth = ref(1000);
-		const scrollWidth = ref(200);
-
-		const Wrapper = defineComponent({
-			setup() {
-				return () => (
-					<MTabs modelValue={0} stepper={stepper.value}>
-						{Array.from({ length: 10 }, (_, i) => (
-							<MTabsPane key={i} label={`tab-${i}`} value={i} />
-						))}
-					</MTabs>
-				);
-			}
-		});
-		const wrapper = mount(Wrapper, { attachTo: document.body });
-		await flush();
-
-		const scrollEl = wrapper.find('.vcm-tabs__scroll').element as HTMLElement;
-		const navEl = wrapper.find('.vcm-tabs__nav').element as HTMLElement;
-		const restoreScroll = vi.spyOn(scrollEl, 'offsetWidth', 'get').mockImplementation(() => scrollWidth.value);
-		const restoreNav = vi.spyOn(navEl, 'offsetWidth', 'get').mockImplementation(() => navWidth.value);
-
-		// 让 scrollable=true
-		const items = wrapper.findAll('.vcm-tabs__item');
-		await items[1].trigger('click');
-		await flush();
-		expect(wrapper.find('.vcm-tabs__scroll').exists()).toBe(true);
-
-		// 切换 stepper -> 触发 watch -> nextTick(refreshScroll)
-		stepper.value = true;
-		await flush();
-		// 反向：让 nav 缩小到比 scroll 小 -> refreshScroll 会把 scrollable 回 false
-		navWidth.value = 100;
-		await items[2].trigger('click');
-		await flush();
-
-		restoreScroll.mockRestore();
-		restoreNav.mockRestore();
-		wrapper.unmount();
-	});
-
-	it('touch swipe handles boundary returns and fall through', async () => {
+	it('afloat is centered under the selected tab', async () => {
+		const value = ref<any>(0);
 		const wrapper = mount(() => (
-			<MTabs modelValue={0}>
-				{Array.from({ length: 10 }, (_, i) => (
-					<MTabsPane key={i} label={`tab-${i}`} value={i} />
-				))}
+			<MTabs modelValue={value.value} theme="dark">
+				<MTabsPane label="a" value={0} />
+				<MTabsPane label="b" value={1} />
 			</MTabs>
 		), { attachTo: document.body });
-
-		await flush();
-		const scrollEl = wrapper.find('.vcm-tabs__scroll').element as HTMLElement;
-		const navEl = wrapper.find('.vcm-tabs__nav').element as HTMLElement;
-		const restoreScroll = mockSize(scrollEl, 200);
-		const restoreNav = mockSize(navEl, 1000);
-
-		const items = wrapper.findAll('.vcm-tabs__item');
-		await items[1].trigger('click');
 		await flush();
 
-		const dispatch = (type: string, x: number) => {
-			const evt = new Event(type, { bubbles: true });
-			(evt as any).touches = [{ pageX: x }];
-			window.dispatchEvent(evt);
-		};
+		const item = wrapper.findAll('.vcm-tabs__item')[1].element as HTMLElement;
+		Object.defineProperty(item, 'offsetLeft', { get: () => 100, configurable: true });
+		Object.defineProperty(item, 'offsetWidth', { get: () => 80, configurable: true });
+		value.value = 1;
+		await flush();
 
-		// 1) changedX>0 && scrollOffset>=0 → 触发 line 65-66 return
-		dispatch('touchstart', 100);
-		await Utils.sleep(20);
-		dispatch('touchmove', 200);
-		await Utils.sleep(20);
-
-		// 2) fall through 模式：touchstart 200, touchmove 100 → changedX=-100, abs+view=200<content
-		dispatch('touchstart', 200);
-		await Utils.sleep(20);
-		dispatch('touchmove', 100);
-		await Utils.sleep(20);
-
-		// 让 scrollOffset 变得很负，再触发 line 69-70
-		dispatch('touchstart', 0);
-		await Utils.sleep(20);
-		dispatch('touchmove', -1500);
-		await Utils.sleep(20);
-		// 此时 abs(scrollOffset)+viewW 应已 >= contentW，再次反向 swipe 触发 return
-		dispatch('touchstart', 0);
-		await Utils.sleep(20);
-		dispatch('touchmove', -200);
-		await Utils.sleep(20);
-
-		dispatch('touchend', 0);
-
-		restoreScroll();
-		restoreNav();
+		const afloat = (wrapper.find('.vcm-tabs__afloat').element as HTMLElement).style;
+		// dark 固定 20px：100 + (80 - 20) / 2
+		expect(afloat.width).toBe('20px');
+		expect(afloat.transform).toBe('translate3d(130px, 0px, 0px)');
 		wrapper.unmount();
 	});
 });

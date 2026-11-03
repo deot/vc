@@ -150,6 +150,7 @@ export const Tabs = defineComponent({
 							ref={scroller}
 							class="vc-tabs__scroll"
 							contentClass="vc-tabs__nav"
+							axis={scroll.axis.value}
 							native={false}
 							showBar={false}
 						>

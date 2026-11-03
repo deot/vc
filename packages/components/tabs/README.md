@@ -155,7 +155,7 @@ const handleRemove = (removedValue, index) => {
 
 ### 标签溢出
 
-标签总宽度超出标签栏时，可以用滚轮或触控板横向滚动；纵向滚轮同样会滚动标签栏，滚到两端后再交给页面。溢出时两端显示前后翻页按钮（`stepper`，为 `false` 时不显示），点击翻一屏，滚到端点的按钮置灰。切换选中项、增删标签或标签栏尺寸变化后，选中项会自动滚入可视区。滚动由 [Scroller](../scroller/README.md) 承载，不显示滚动条。
+标签总宽度超出标签栏时，可以用滚轮或触控板横向滚动；纵向滚轮同样会滚动标签栏，滚到两端后再交给页面。溢出时两端显示前后翻页按钮（`stepper`，为 `false` 时不显示），点击翻一屏，滚到端点的按钮置灰。切换选中项、增删标签或标签栏尺寸变化后，选中项会自动滚入可视区。滚动由 [Scroller](../scroller/README.md) 承载（`axis` 锁定为标签栏的排列方向），不显示滚动条；触摸设备上为原生滚动。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
@@ -246,7 +246,7 @@ const value = ref('pending');
 
 ### 移动端
 
-移动端支持标签横向滚动、均分和翻页按钮（`stepper`）。`theme="light"` 跟随全局亮暗主题；`theme="dark"` 是深色金色的独立视觉风格，不等同于切换全局主题。
+移动端标签栏同样由 Scroller 承载，触摸时为原生横向滚动（带惯性），选中的标签尽量滚到中间；另支持均分和翻页按钮（`stepper`）。`theme="light"` 跟随全局亮暗主题；`theme="dark"` 是深色金色的独立视觉风格，不等同于切换全局主题。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, viewport: 375, viewportOptions: ['auto', 375] }</config> -->

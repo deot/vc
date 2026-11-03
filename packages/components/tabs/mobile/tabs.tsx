@@ -1,37 +1,29 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, getCurrentInstance, ref, nextTick, computed, onUnmounted, onMounted, onUpdated, watch } from 'vue';
+import { defineComponent, ref, computed, onUnmounted, onMounted, onUpdated, watch } from 'vue';
 import { throttle, debounce } from 'lodash-es';
+import { Resize } from '@deot/helper-resize';
 import { props as tabsProps } from './tabs-props';
 import { Icon } from '../../icon';
 import { CustomerProp } from '../../customer/customer-prop';
+import { Scroller } from '../../scroller';
 import useTabs from '../use-tabs';
+import { useTabsScroll } from '../use-tabs-scroll';
 
 const COMPONENT_NAME = 'vcm-tabs';
+const SHARED = { shared: true };
 
 export const MTabs = defineComponent({
 	name: COMPONENT_NAME,
 	props: tabsProps,
 	emits: ['update:modelValue', 'change', 'click', 'tab-remove'],
 	setup(props, { slots }) {
-		const instance = getCurrentInstance()!;
-		const wrapper = ref<any>(null);
 		const content = ref<any>(null);
-		const scroll = ref<any>(null);
-		const nav = ref<any>(null);
+		const scroller = ref<any>(null);
 
 		const top = ref(0);
 		const isFixed = ref(false);
 		const placeholderH = ref(53);
-
-		const startX = ref(0);
-
-		const isTouching = ref(false);
-		const scrollViewW = ref(0); // 滚动容器宽度
-		const scrollContentW = ref(0); // 滚动内容宽度
-		const baseX = ref(0);
-		const scrollOffset = ref(0); // 标签栏的滚动偏移
-		const scrollable = ref(false);
 
 		const isDark = computed(() => {
 			return props.theme === 'dark';
@@ -48,46 +40,9 @@ export const MTabs = defineComponent({
 
 		// TODO: 找到父层滚动条
 		const handleScroll = throttle(() => {
-			const scroller = document.scrollingElement || document.documentElement;
-			isFixed.value = (scroller?.scrollTop || 0) + props.offsetTop > top.value;
+			const el = document.scrollingElement || document.documentElement;
+			isFixed.value = (el?.scrollTop || 0) + props.offsetTop > top.value;
 		}, 100);
-
-		const handleTouchstart = (e: any) => {
-			isTouching.value = true;
-			startX.value = e.touches[0].pageX;
-			baseX.value = scrollOffset.value;
-		};
-
-		const handleTouchmove = throttle((e: any) => {
-			const touchPageX = e.touches[0].pageX;
-			// 与touchstart时触点位置的距离偏移值，大于0时为触点向右移，反之向左
-			const changedX = touchPageX - startX.value;
-			if (changedX > 0) {
-				if (scrollOffset.value >= 0) {
-					scrollOffset.value = 0;
-					return;
-				}
-			} else if (Math.abs(scrollOffset.value) + scrollViewW.value >= scrollContentW.value) {
-				scrollOffset.value = -(scrollContentW.value - scrollViewW.value);
-				return;
-			}
-			scrollOffset.value = baseX.value + touchPageX - startX.value;
-		}, 17);
-
-		const handleTouchend = () => {
-			isTouching.value = false;
-			// TODO: 惯性滚动、回弹 （体验优化）
-		};
-
-		const handleStep = (flag: number) => {
-			if (!scrollable.value) return;
-			const moveX = flag * scrollViewW.value;
-			let offsetX = scrollOffset.value + moveX;
-			if (offsetX < -(scrollContentW.value - scrollViewW.value) || offsetX > 0) {
-				offsetX = flag === -1 ? -(scrollContentW.value - scrollViewW.value) : 0;
-			}
-			scrollOffset.value = offsetX;
-		};
 
 		/**
 		 * 使用Resize时, 切换页面失效，换种方案
@@ -95,244 +50,161 @@ export const MTabs = defineComponent({
 		const refreshTop = debounce(() => {
 			if (props.sticky && content.value) {
 				top.value = content.value.offsetTop - placeholderH.value;
-				const scroller = document.scrollingElement || document.documentElement;
-				isFixed.value = (scroller?.scrollTop || 0) + props.offsetTop > top.value;
+				const el = document.scrollingElement || document.documentElement;
+				isFixed.value = (el?.scrollTop || 0) + props.offsetTop > top.value;
 			}
 		}, 250, { leading: true, trailing: true });
 
-		/**
-		 * 将选中的item滚动至可视区（尽量往中间靠）
-		 */
-		const scrollToActive = () => {
-			if (!scrollable.value) return;
-			const activeEl = instance.vnode.el!.querySelector(`.vcm-tabs__item[data-id="${tabs.currentValue.value}"]`);
-
-			if (!activeEl) return;
-			const contentEl = nav.value;
-
-			const activeRect = activeEl.getBoundingClientRect();
-			const viewRect = scroll.value.getBoundingClientRect();
-			const contentRect = contentEl.getBoundingClientRect();
-
-			let offset = 0;
-
-			if (activeRect.width < viewRect.width) {
-				// targetOffset为最理想的情况下，可以滚动到正中间，此时activeEl距scrollView的左右边距
-				const targetOffset = (viewRect.width - activeRect.width) / 2;
-				// offsetLeft其实等价于activeEl.offsetLeft，
-				// 但是调试时发现这两个值在小数位会有差距，offsetLeft一直是整数，所以还是决定用下面这种方式计算offsetLeft
-				const offsetLeft = activeRect.left - contentRect.left;
-				if (offsetLeft - viewRect.left <= targetOffset) { // 左边距离不足以到正中间的情况
-					offset = 0;
-				} else if (contentRect.right - activeRect.right <= targetOffset) { // 右边距离不足以到正中间的情况
-					offset = viewRect.width - contentRect.width; // 负值
-				} else {
-					offset = targetOffset - offsetLeft; // 可以滚动到正中间的理想情况
-				}
-			}
-			scrollOffset.value = offset;
-		};
-
-		const operateDOMScrollEvents = (type: string) => {
-			const fn = type === 'add' ? window.addEventListener : window.removeEventListener;
-			fn('scroll', handleScroll);
-
-			fn('touchstart', handleTouchstart, false);
-			fn('touchmove', handleTouchmove, false);
-			fn('touchend', handleTouchend, false);
+		// 标签的容器即 Scroller 的 content；滑块放在标签之后，标签的下标与子元素一致
+		const getNav = () => scroller.value?.content as HTMLElement | undefined;
+		const getActiveItem = () => {
+			const index = tabs.getTabIndex(tabs.currentValue.value);
+			return index === -1 ? undefined : getNav()?.children[index] as HTMLElement | undefined;
 		};
 
 		/**
-		 * 处理是否需要滚动
-		 */
-		const refreshScroll = () => {
-			const viewEl = scroll.value;
-			if (!viewEl || !nav.value) return;
-			scrollViewW.value = viewEl.offsetWidth;
-			scrollContentW.value = nav.value.offsetWidth;
-			if (scrollContentW.value > scrollViewW.value) {
-				operateDOMScrollEvents('remove');
-				operateDOMScrollEvents('add');
-				scrollable.value = true;
-			} else if (scrollable.value) {
-				operateDOMScrollEvents('remove');
-				scrollable.value = false;
-			}
-			scrollable.value && scrollToActive();
-		};
-
-		/**
-		 * 刷新当前标签底下的滑块位置
+		 * 刷新当前标签底下的滑块：dark 固定 20px，light 默认按标签文字（span）的宽度，居中于标签
 		 */
 		const refreshAfloat = () => {
-			if (!props.showWrapper) return;
+			const $ = getActiveItem();
+			const width = !$
+				? 0
+				: isDark.value
+					? 20
+					: props.autoAfloatWidth
+						? ($.firstElementChild as HTMLElement).offsetWidth
+						: $.offsetWidth;
+			tabs.afloatWidth.value = width;
+			tabs.afloatOffset.value = $ ? $.offsetLeft + ($.offsetWidth - width) / 2 : 0;
+		};
 
-			nextTick(() => {
-				const index = tabs.getTabIndex(tabs.currentValue.value);
-				if (instance.isUnmounted || !nav.value) return;
-				const items = nav.value.querySelectorAll(`.vcm-tabs__item`);
+		// 原生横向滚动（触摸自带惯性）；选中项尽量居中
+		const scroll = useTabsScroll({
+			scroller,
+			vertical: () => false,
+			getActiveItem,
+			align: 'center'
+		});
 
-				const $ = items[index];
+		tabs = useTabs({
+			content,
+			refreshAfloat,
+			scrollToActive: () => scroll.scrollToActive()
+		});
 
-				// 暂时写死42
-				tabs.afloatWidth.value = $
-					? isDark.value
-						? 20
-						: props.autoAfloatWidth
-							? $.querySelector('span').offsetWidth
-							: $.offsetWidth
-					: 0;
-
-				if (!Array.from(items).length) return;
-				let offset = 0;
-				const basicOffset = $ ? ($.offsetWidth - tabs.afloatWidth.value) / 2 : 0;
-
-				if (index > 0) {
-					for (let i = 0; i < index; i++) {
-						offset += parseFloat(items[i].offsetWidth);
-					}
-				}
-
-				tabs.afloatOffset.value = offset + basicOffset;
-				refreshScroll();
-			});
+		// 可视区或标签尺寸变化：立即刷新，不播放动画
+		const handleResize = () => {
+			refreshAfloat();
+			scroll.scrollToActive(false);
 		};
 
 		/**
 		 * TODO: 在height: 100%容器内滚动，让其带有粘性
 		 * @param type ~
 		 */
-		const operateDOMEvents = (type) => {
+		const operateDOMEvents = (type: string) => {
 			if (!props.sticky) return;
 			const fn = type === 'add' ? window.addEventListener : window.removeEventListener;
 			fn('scroll', handleScroll);
 		};
 
-		tabs = useTabs({
-			content,
-			wrapper,
-			refreshAfloat,
-			refreshScroll,
-			scrollToActive
-		});
-
-		const scrollStyle = computed(() => {
-			return {
-				transition: isTouching.value ? '' : 'transform 300ms ease-in-out',
-				transform: `translate3d(${scrollOffset.value}px, 0, 0)`
-			};
-		});
-
 		onMounted(() => {
 			refreshTop();
 			operateDOMEvents('add');
-			nextTick(refreshScroll);
+			[scroller.value?.wrapper, getNav()].forEach(el => el && Resize.on(el, handleResize, SHARED));
 		});
 
 		onUpdated(refreshTop);
 
 		onUnmounted(() => {
 			operateDOMEvents('remove');
-			operateDOMScrollEvents('remove');
+			Resize.disconnect(handleResize);
 		});
 
+		// 外观变化后按新的样式重新计算滑块
 		watch(
-			() => props.theme,
-			refreshAfloat
+			[() => props.theme, () => props.average, () => props.autoAfloatWidth],
+			refreshAfloat,
+			{ flush: 'post' }
 		);
 
-		watch(
-			() => props.average,
-			refreshAfloat
-		);
+		// 标签列表作为 Scroller 的稳定插槽：只由 Scroller 收集依赖
+		const renderNav = () => {
+			const nodes = tabs.list.value.map((item: any, index: number) => {
+				return (
+					<div
+						key={index}
+						class={[
+							{
+								'is-active': tabs.getTabPaneValue(item, index) === tabs.currentValue.value,
+								'is-average': props.average,
+								'is-disabled': item.disabled
+							},
+							'vcm-tabs__item'
+						]}
+						onClick={() => tabs.handleChange(index)}
+					>
+						<CustomerProp
+							wrap
+							tag="span"
+							render={slots.label}
+							source={item}
+							name="label"
+							row={item}
+							it={item}
+							index={index}
+						/>
+						{
+							props.closable && item.closable && (
+								<Icon
+									class="vcm-tabs__close"
+									type="close"
+									// @ts-ignore
+									onClick={(e: MouseEvent) => {
+										e.stopPropagation();
+										tabs.handleRemove(index);
+									}}
+								/>
+							)
+						}
+					</div>
+				);
+			});
+			props.afloat && nodes.push(<div key="afloat" style={tabs.afloatStyle.value} class="vcm-tabs__afloat" />);
+			return nodes;
+		};
 
-		watch(
-			() => props.stepper,
-			() => nextTick(refreshScroll)
-		);
+		const renderStepper = (name: 'prev' | 'next') => {
+			if (!props.stepper || !scroll.scrollable.value) return;
+			return (
+				<div class={['vcm-tabs__stepper', `is-${name}`]} onClick={() => scroll.step(name === 'prev' ? -1 : 1)}>
+					<Icon type={name === 'prev' ? 'left' : 'right'} />
+				</div>
+			);
+		};
+
 		return () => {
 			return (
 				<div class={[tabs.classes.value, 'vcm-tabs']}>
 					{
 						props.showWrapper && (
 							<div
-								ref={wrapper}
 								style={[props.barStyle as any, fixedStyle.value]}
 								class={[{ 'is-fixed': isFixed.value }, 'vcm-tabs__bar']}
 							>
 								{ slots.prepend?.() }
-								{
-									props.stepper && scrollable.value && (
-										<div class="vcm-tabs__stepper is-prev" onClick={() => handleStep(1)}>
-											<Icon type="left" />
-										</div>
-									)
-								}
-								<div
-									ref={scroll}
+								{ renderStepper('prev') }
+								<Scroller
+									ref={scroller}
 									class="vcm-tabs__scroll"
+									contentClass="vcm-tabs__nav"
+									axis="x"
+									native={false}
+									showBar={false}
 								>
-									<div ref={nav} style={scrollStyle.value} class="vcm-tabs__nav">
-										{
-											props.afloat && (
-												<div
-													style={tabs.afloatStyle.value}
-													class="vcm-tabs__afloat"
-												/>
-											)
-										}
-										{
-											tabs.list.value.map((item: any, index: number) => {
-												return (
-													<div
-														key={index}
-														data-id={item.value}
-														class={[
-															{
-																'is-active': tabs.getTabPaneValue(item, index) === tabs.currentValue.value,
-																'is-average': props.average,
-																'is-disabled': item.disabled
-															},
-															'vcm-tabs__item'
-														]}
-														onClick={() => tabs.handleChange(index)}
-													>
-														<CustomerProp
-															wrap
-															tag="span"
-															render={slots.label}
-															source={item}
-															name="label"
-															row={item}
-															it={item}
-															index={index}
-														/>
-														{
-															props.closable && item.closable && (
-																<Icon
-																	class="vcm-tabs__close"
-																	type="close"
-																	// @ts-ignore
-																	onClick={(e: MouseEvent) => {
-																		e.stopPropagation();
-																		tabs.handleRemove(index);
-																	}}
-																/>
-															)
-														}
-													</div>
-												);
-											})
-										}
-									</div>
-								</div>
-								{
-									props.stepper && scrollable.value && (
-										<div class="vcm-tabs__stepper is-next" onClick={() => handleStep(-1)}>
-											<Icon type="right" />
-										</div>
-									)
-								}
+									{{ default: renderNav, $stable: true }}
+								</Scroller>
+								{ renderStepper('next') }
 								{ slots.append?.() }
 							</div>
 						)

@@ -91,14 +91,10 @@ $gaps: (line: 12, button: 4, capsule: 3, text: 10, round: 8);
 		flex-shrink: 0;
 	}
 
-	// Scroller的根节点，不显示滚动条；只在标签栏的排列方向上滚动
+	// Scroller的根节点，不显示滚动条；只在标签栏的排列方向上滚动（axis）
 	@include element(scroll) {
 		min-width: 0;
 		flex: 1 1 auto;
-
-		&.vc-scroller {
-			overflow-y: hidden;
-		}
 	}
 
 	// Scroller的content，宽度随标签撑开以便溢出滚动
@@ -153,10 +149,6 @@ $gaps: (line: 12, button: 4, capsule: 3, text: 10, round: 8);
 
 		@include element(scroll) {
 			min-height: 0;
-
-			&.vc-scroller {
-				overflow: hidden auto;
-			}
 		}
 
 		@include element(nav) {

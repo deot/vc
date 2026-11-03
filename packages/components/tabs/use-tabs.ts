@@ -1,5 +1,4 @@
 import { getCurrentInstance, computed, watch, ref, provide, onMounted, onBeforeUnmount, nextTick, inject } from 'vue';
-import { Resize } from '@deot/helper-resize';
 import { scrollIntoView } from '@deot/helper-dom';
 import { getScroller, getViewportRect } from '../scroller/utils';
 
@@ -192,21 +191,12 @@ export default (options: any = {}) => {
 		emit('tab-remove', getTabPaneValue(nav, index), index);
 	};
 
-	// 移动端：标签栏尺寸变化时重新计算滚动（桌面端由 Scroller 处理，不传 wrapper）
-	const handleResize = () => {
-		if (instance.isUnmounted) return;
-		options.refreshScroll?.();
-		options.refreshAfloat?.();
-	};
-
 	onMounted(() => {
-		options.wrapper?.value && Resize.on(options.wrapper.value, handleResize);
 		affix?.onScroll?.(handleAffixScroll);
 	});
 
 	onBeforeUnmount(() => {
 		motion?.cancel();
-		options.wrapper?.value && Resize.off(options.wrapper.value, handleResize);
 		timer && clearTimeout(timer);
 		affix?.offScroll?.(handleAffixScroll);
 		scrollToAnchorTimer && clearTimeout(scrollToAnchorTimer);
