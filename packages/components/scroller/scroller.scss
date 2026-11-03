@@ -15,6 +15,15 @@ $component-name: vc-scroller;
 		}
 	}
 
+	// axis：只在该方向滚动
+	@include when(x) {
+		overflow-y: hidden;
+	}
+
+	@include when(y) {
+		overflow-x: hidden;
+	}
+
 	// 滚轮驱动（wheel 且非 native）：由 Wheel 写入 scrollTop，用户不能直接滚动；常驻分层，原因见 scroller.tsx
 	@include when(wheel) {
 		overflow: hidden;

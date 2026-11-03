@@ -115,7 +115,9 @@ const handleTop = () => {
 
 ### 横向滚动与定位
 
-内容宽度超过容器时出现横向滚动条。可拖动底部滑块，也可使用 `setScrollLeft()` 定位。
+内容宽度超过容器时出现横向滚动条。可拖动底部滑块，也可使用 `scrollTo()` 定位；传入 `duration`（毫秒）时平滑滚动，新的 `scrollTo`、滚轮、拖动滚动条或卸载都会取消进行中的动画。
+
+`axis="x"`（或 `"y"`）只在该方向滚动：另一方向不可滚动，滚轮的纵横增量都用于该方向，鼠标滚轮也能滚动横向内容；触摸设备上为原生滚动。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
@@ -126,7 +128,7 @@ const handleTop = () => {
 			<Button @click="handleStart">回到起点</Button>
 			<Button @click="handleEnd">查看最后一项</Button>
 		</div>
-		<Scroller ref="scroller" :native="false" always>
+		<Scroller ref="scroller" axis="x" :native="false" always>
 			<div class="cards">
 				<div v-for="item in 8" :key="item" class="card">任务 {{ item }}</div>
 			</div>
@@ -139,10 +141,10 @@ import { ref } from 'vue';
 import { Button, Scroller } from '@deot/vc';
 
 const scroller = ref();
-const handleStart = () => scroller.value.setScrollLeft(0);
+const handleStart = () => scroller.value.scrollTo({ x: 0, duration: 300 });
 const handleEnd = async () => {
 	await scroller.value.refresh();
-	scroller.value.setScrollLeft(scroller.value.scrollWidth - scroller.value.clientWidth);
+	scroller.value.scrollTo({ x: scroller.value.scrollWidth - scroller.value.clientWidth, duration: 300 });
 };
 </script>
 
@@ -276,6 +278,7 @@ const trackId = `scroller-track-${useId()}`;
 | wheel | 由滚轮驱动滚动位置；使用原生滚动条（`native=true` 且未设置 `always`）时不生效。可在运行时切换 | `boolean` | - | `false` |
 | stopPropagation | 滚轮驱动时，被接管的滚轮事件是否停止冒泡 | `boolean` | - | `true` |
 | showBar | 渲染自定义滚动条；不控制原生滚动条 | `boolean` | - | `true` |
+| axis | 只在该方向滚动：另一方向不可滚动，滚轮的纵横增量都用于该方向；触摸为原生滚动。未设置时两个方向都可滚动 | `string` | `x` / `y` | - |
 | always | 自定义滚动条常显，并且不再使用原生滚动条；否则鼠标移入并移动时显示，移出后隐藏 | `boolean` | - | `false` |
 | autoResize | 挂载时监听容器和内容尺寸；建议在挂载前设置 | `boolean` | - | `true` |
 | thumbMinSize | 自定义滑块最小长度，单位 px | `number` | - | `30` |
@@ -321,13 +324,13 @@ const trackId = `scroller-track-${useId()}`;
 | refresh | 更新容器、内容尺寸并同步滚动条 | - | `Promise<void>`（运行时） |
 | setScrollTop | 设置纵向滚动位置并通知监听器 | `value: number`，单位 px | `void` |
 | setScrollLeft | 设置横向滚动位置并通知监听器 | `value: number`，单位 px | `void` |
-| scrollTo | 设置指定轴的位置，未指定的轴保持原值 | `{ x?: number; y?: number }`，单位 px | `void` |
+| scrollTo | 设置指定轴的位置，未指定的轴保持原值；`duration`（毫秒）大于 0 时平滑滚动，新的 scrollTo、滚轮、拖动滚动条与卸载会取消进行中的动画 | `{ x?: number; y?: number; duration?: number }`，单位 px | `void` |
 | on | 注册滚动监听器 | `(event) => void`，与 scroll 事件参数相同 | `void` |
 | off | 移除已注册的监听器 | 注册时的同一函数引用 | `void` |
 
 实例还暴露 `wrapper`、`content` DOM 引用，以及 `scrollLeft`、`scrollTop`、`clientWidth`、`clientHeight`、`scrollWidth`、`scrollHeight` 数值。定位时传入有效范围内的坐标，纵向最大值为 `scrollHeight - clientHeight`，横向为 `scrollWidth - clientWidth`。
 
-当前导出的 `ScrollerExposed` 类型仅声明 `refresh`、`setScrollTop`、`setScrollLeft`，其中 `refresh` 返回值声明为 `void`；上表同时记录了运行时实际暴露的方法。属性类型导出名为 `ScrollerProps`。
+当前导出的 `ScrollerExposed` 类型声明 `refresh`、`scrollTo`、`setScrollTop`、`setScrollLeft`，其中 `refresh` 返回值声明为 `void`；上表同时记录了运行时实际暴露的方法。`scrollTo` 的参数类型导出名为 `ScrollerScrollToOptions`，属性类型导出名为 `ScrollerProps`。
 
 ### MScroller
 

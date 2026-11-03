@@ -1,10 +1,12 @@
 import { getCurrentInstance, computed, onBeforeUnmount, onMounted, ref, provide, reactive, nextTick, watch } from 'vue';
 import { Resize } from '@deot/helper-resize';
+import { scrollIntoView } from '@deot/helper-dom';
 import { getPadding } from './utils';
 import { ScrollerManager } from './manager';
 import type { SetupContext } from 'vue';
 import type { BarExposed } from './bar';
 import type { Props } from './scroller-props';
+import type { ScrollerScrollToOptions } from './types';
 
 export const useScroller = (expose: SetupContext['expose']) => {
 	const instance = getCurrentInstance()!;
@@ -104,7 +106,39 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		listeners.forEach(listener => listener(e));
 	};
 
-	const scrollTo = (options?: any) => {
+	// 进行中的平滑滚动；新的 scrollTo（含滚轮、拖动滚动条）与卸载时取消
+	let motion: AbortController | undefined;
+	const stopMotion = () => {
+		motion?.abort();
+		motion = undefined;
+	};
+
+	/**
+	 * 平滑滚动：逐帧写入滚动位置，由 scroll 事件同步状态与滚动条
+	 * @param options 目标位置与时长
+	 */
+	const animateTo = (options: ScrollerScrollToOptions) => {
+		const el = wrapper.value!;
+		motion = new AbortController();
+		(['x', 'y'] as const).forEach((axis) => {
+			if (typeof options[axis] === 'undefined') return;
+			const [position, scroll, client] = axis === 'x'
+				? ['scrollLeft', 'scrollWidth', 'clientWidth'] as const
+				: ['scrollTop', 'scrollHeight', 'clientHeight'] as const;
+			// 有可滚动范围时限制在范围内，免得动画后段停在边界上空转；尚未量到尺寸时交给浏览器限制
+			const max = el[scroll] - el[client];
+			const to = max > 0 ? Math.min(Math.max(0, options[axis]!), max) : options[axis]!;
+			scrollIntoView(el, { axis, from: el[position], to, duration: options.duration, signal: motion!.signal });
+		});
+	};
+
+	const scrollTo = (options?: ScrollerScrollToOptions) => {
+		stopMotion();
+		if (options?.duration && options.duration > 0 && wrapper.value) {
+			animateTo(options);
+			return;
+		}
+
 		refreshPosition(options);
 
 		if (options && typeof options.x !== 'undefined') {
@@ -132,6 +166,7 @@ export const useScroller = (expose: SetupContext['expose']) => {
 	});
 
 	onBeforeUnmount(() => {
+		stopMotion();
 		if (props.autoResize) {
 			Resize.off(wrapper.value!, refresh);
 			Resize.off(content.value!, refresh);
@@ -177,7 +212,8 @@ export const useScroller = (expose: SetupContext['expose']) => {
 	// 以下两个暴露scroll事件, 从而触发handleScroll
 	expose(exposed);
 	// reactive: xxx.scrollLeft.value -> xxx.scrollLeft
-	provide('vc-scroller', reactive(exposed));
+	const state = reactive(exposed);
+	provide('vc-scroller', state);
 
 	return {
 		bar,
@@ -196,6 +232,7 @@ export const useScroller = (expose: SetupContext['expose']) => {
 		contentW,
 		wrapperPadding,
 
+		state,
 		handleScroll,
 		handleBarChange: scrollTo,
 

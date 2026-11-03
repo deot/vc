@@ -1,4 +1,4 @@
-<!-- 各种布局下的滚动：固定高度、横向、最大高度、双向、滚动条外置、轨道偏移、嵌套、自适应 -->
+<!-- 各种布局下的滚动：固定高度、横向、锁定方向（axis）与平滑定位、最大高度、双向、滚动条外置、轨道偏移、嵌套、自适应 -->
 <template>
 	<div class="scroller-basic">
 		<div class="scroller-basic__controls">
@@ -20,6 +20,19 @@
 
 		<h2>Horizontal</h2>
 		<Scroller v-bind="options">
+			<div style="display: flex;">
+				<p v-for="item in 50" :key="item" class="is-vertical">
+					{{ item }}
+				</p>
+			</div>
+		</Scroller>
+
+		<h2>Axis（axis="x"：纵向滚轮也横向滚动）+ scrollTo duration</h2>
+		<div class="scroller-basic__actions">
+			<Button @click="scrollAxis('start')">平滑滚到开头</Button>
+			<Button @click="scrollAxis('end')">平滑滚到末尾</Button>
+		</div>
+		<Scroller ref="axisScroller" axis="x" v-bind="options">
 			<div style="display: flex;">
 				<p v-for="item in 50" :key="item" class="is-vertical">
 					{{ item }}
@@ -106,9 +119,10 @@
 	</div>
 </template>
 <script setup>
-import { computed, onBeforeUnmount, reactive, watch } from 'vue';
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { Scroller } from '..';
 import { Select } from '../../select';
+import { Button } from '../../button';
 
 // 对照项：每项一个 Select
 const CONTROLS = [
@@ -122,6 +136,13 @@ const options = computed(() => ({
 	native: controls.native === 'on',
 	always: controls.always === 'on'
 }));
+
+// 平滑滚动：滚动中再次点击、滚动滚轮或拖动滚动条都会取消上一段
+const axisScroller = ref();
+const scrollAxis = (to) => {
+	const scroller = axisScroller.value;
+	scroller.scrollTo({ x: to === 'start' ? 0 : scroller.scrollWidth - scroller.clientWidth, duration: 500 });
+};
 
 // 右上角的性能读数：切换对照项后清零
 window.$perf?.observe();
@@ -144,6 +165,12 @@ onBeforeUnmount(() => window.$perf?.disconnect());
 		.vc-select {
 			width: 240px;
 		}
+	}
+
+	&__actions {
+		display: flex;
+		gap: 8px;
+		margin-bottom: 8px;
 	}
 
 	p {

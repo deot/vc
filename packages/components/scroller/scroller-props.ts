@@ -48,6 +48,11 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
+	// 只在该方向滚动：另一方向不可滚动，滚轮的纵横增量都用于该方向（触摸为原生滚动）；不设置时两个方向都可滚动
+	axis: {
+		type: String as PropType<'x' | 'y'>,
+		validator: (v: string) => /^(x|y)$/.test(v)
+	},
 	// 由滚轮驱动滚动（见 use-wheel）；native=true 时不生效
 	wheel: {
 		type: Boolean,

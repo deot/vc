@@ -60,7 +60,7 @@ export const Scroller = defineComponent({
 			return (
 				<div
 					ref={wrapper}
-					class={[wrapperClass.value, COMPONENT_NAME, { 'is-wheel': isWheel.value }]}
+					class={[wrapperClass.value, COMPONENT_NAME, { 'is-wheel': isWheel.value, [`is-${props.axis}`]: !!props.axis }]}
 					style={wrapperStyle.value}
 					onScroll={handleNativeScroll}
 				>

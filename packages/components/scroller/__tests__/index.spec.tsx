@@ -1128,6 +1128,110 @@ describe('index.ts', () => {
 		});
 	});
 
+	describe('axis / scrollTo duration', () => {
+		const mountX = async (props: any = {}) => {
+			const scrollerRef = ref<any>();
+			const wrapper = mount(() => (
+				<Scroller ref={scrollerRef} axis="x" native={false} {...props}>
+					<div style="width: 1000px">x</div>
+				</Scroller>
+			), { attachTo: document.body });
+			await nextTick();
+			const el = wrapper.element as HTMLElement;
+			const restore = mockSize(el, { clientWidth: 200, clientHeight: 40, scrollWidth: 1000, scrollHeight: 40 });
+			await scrollerRef.value.refresh();
+			await nextTick();
+			return { wrapper, el, scrollerRef, restore };
+		};
+		const wheel = (el: Element, deltaX: number, deltaY: number) => {
+			const e = new WheelEvent('wheel', { deltaX, deltaY, deltaMode: 0, bubbles: true, cancelable: true });
+			el.dispatchEvent(e);
+			return e;
+		};
+
+		it('axis locks to one direction: is-x class, both wheel deltas scroll x, passes on at the edge', async () => {
+			const { wrapper, el, scrollerRef, restore } = await mountX();
+			expect(wrapper.classes()).toEqual(expect.arrayContaining(['is-x']));
+			expect(wrapper.classes()).not.toContain('is-wheel');
+
+			const e1 = wheel(el, 0, 120);
+			await sleep(30);
+			expect(e1.defaultPrevented).toBe(true);
+			expect(el.scrollLeft).toBe(120);
+			expect(scrollerRef.value.scrollLeft).toBe(120);
+
+			wheel(el, 80, 0);
+			await sleep(30);
+			expect(el.scrollLeft).toBe(200);
+
+			// 到起点后，向前滚动交给外层（helper-wheel 先停顿一次）
+			await makeScroll(el, 'scrollLeft', 0);
+			wheel(el, 0, -120);
+			await sleep(50);
+			const e2 = wheel(el, 0, -120);
+			await sleep(30);
+			expect(e2.defaultPrevented).toBe(false);
+
+			expect((Scroller as any).props.axis.validator('y')).toBe(true);
+			expect((Scroller as any).props.axis.validator('xy')).toBe(false);
+			restore();
+			wrapper.unmount();
+		});
+
+		it('scrollTo duration animates, and the next scrollTo or a wheel cancels it', async () => {
+			const { wrapper, el, scrollerRef, restore } = await mountX();
+
+			scrollerRef.value.scrollTo({ x: 600, duration: 300 });
+			await sleep(60);
+			expect(el.scrollLeft).toBeGreaterThan(0);
+			expect(el.scrollLeft).toBeLessThan(600);
+			await sleep(400);
+			expect(el.scrollLeft).toBe(600);
+			el.dispatchEvent(new Event('scroll'));
+			await nextTick();
+			// 由 scroll 事件同步
+			expect(scrollerRef.value.scrollLeft).toBe(600);
+
+			// 超出范围的目标限制在可滚动范围内
+			scrollerRef.value.scrollTo({ x: 5000, duration: 100 });
+			await sleep(200);
+			expect(el.scrollLeft).toBe(800);
+
+			// 新的 scrollTo 取消进行中的动画
+			scrollerRef.value.scrollTo({ x: 0, duration: 300 });
+			await sleep(30);
+			scrollerRef.value.scrollTo({ x: 300 });
+			await sleep(400);
+			expect(el.scrollLeft).toBe(300);
+
+			// 滚轮同样取消
+			scrollerRef.value.scrollTo({ x: 0, duration: 300 });
+			await sleep(30);
+			el.dispatchEvent(new Event('scroll'));
+			await nextTick();
+			wheel(el, 0, 50);
+			await sleep(400);
+			const settled = el.scrollLeft;
+			await sleep(100);
+			expect(el.scrollLeft).toBe(settled);
+			expect(settled).toBeGreaterThan(0);
+
+			restore();
+			wrapper.unmount();
+		});
+
+		it('unmount cancels an animation in flight', async () => {
+			const { wrapper, el, scrollerRef, restore } = await mountX();
+			scrollerRef.value.scrollTo({ x: 600, duration: 300 });
+			await sleep(30);
+			const at = el.scrollLeft;
+			wrapper.unmount();
+			await sleep(400);
+			expect(el.scrollLeft).toBe(at);
+			restore();
+		});
+	});
+
 	describe('Bar mode', () => {
 		const flush = async () => {
 			await sleep();
