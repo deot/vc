@@ -103,7 +103,7 @@ const options = [
 - `searchable`（或 `searchable="inline"`）：点击后直接在输入框里输入。单选时已选文字以占位文字的形式保留，输入后显示搜索词；多选时输入框跟在标签之后，下拉打开期间为它留出位置，放不下的标签折叠进 `+N...`，输入为空时按 Backspace 移除最后一个已选值。
 - `searchable="popover"`：输入框保持只读，搜索栏显示在下拉顶部，打开后自动聚焦。触发器较窄、不希望输入框占用标签位置时使用。
 
-两种方式下，关闭下拉都会清空搜索词；下拉关闭但输入框聚焦时，直接输入也会打开下拉。
+两种方式下，关闭下拉都会清空搜索词；多选时选中或取消一项（含全选）后也会清空，便于接着搜下一项，需要在同一批结果里连续选择时设置 `:clear-search-on-select="false"`。下拉关闭但输入框聚焦时，直接输入也会打开下拉。
 
 | 按键 | 行为 |
 | --- | --- |
@@ -240,7 +240,7 @@ const groups = [
 
 ### 远程搜索
 
-`loadData(query, instance)` 必须返回 Promise，搜索输入经过 250ms 防抖后调用；未开启 `searchable` 时不会调用。调用方更新 `data`；Promise 的返回值不会自动成为选项。加载期间输入框后缀显示加载图标，本地文字过滤仍然生效，需要跳过本地过滤的结果可设置 `filterable: false`。打开下拉时，如果还没有数据，或当前数据是按某个关键词加载的，会立即以空关键词调用一次，用于加载默认数据；关闭下拉时只重置搜索词，不调用它。搜索结果里没有已选项时，输入框与标签沿用上次查到的文字。
+`loadData(query, instance)` 必须返回 Promise，搜索输入经过 250ms 防抖后调用；未开启 `searchable` 时不会调用。调用方更新 `data`；Promise 的返回值不会自动成为选项。加载期间输入框后缀显示加载图标，本地文字过滤仍然生效，需要跳过本地过滤的结果可设置 `filterable: false`。打开下拉时，如果还没有数据，或当前数据是按某个关键词加载的，会立即以空关键词调用一次，用于加载默认数据；关闭下拉时只重置搜索词，不调用它；多选时选中后清空搜索词，会立即以空关键词调用一次。搜索结果里没有已选项时，输入框与标签沿用上次查到的文字。
 
 下面用本地延迟模拟请求，不依赖在线接口。
 
@@ -366,6 +366,7 @@ const selectedValue = ref(5000);
 | searchable | 开启搜索：`true` / `'inline'` 在输入框内直接输入，`'popover'` 在下拉顶部显示搜索栏 | `boolean \| 'inline' \| 'popover'` | - | `false` |
 | virtualized | 只渲染下拉可视范围附近的选项，用于大量数据；见[大量数据](#大量数据) | `boolean` | - | `false` |
 | searchPlaceholder | 搜索时的占位文字：内联搜索为下拉打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
+| clearSearchOnSelect | 多选时选中或取消一项（含全选）后清空搜索词；`false` 时保留，可在同一批结果里继续选 | `boolean` | - | `true` |
 | placeholder | 输入框占位文字，通过 attribute 传入；支持空字符串覆盖 | `string` | - | 当前语言的“请选择” |
 | loadData | 搜索回调，须返回 Promise，由调用方更新 data；调用时机见[远程搜索](#远程搜索) | `(query: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | label | 输入框前置文字；prepend 插槽优先。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |

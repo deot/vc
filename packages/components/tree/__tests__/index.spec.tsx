@@ -2507,7 +2507,7 @@ describe('TreeSelect searchable', () => {
 	it('cascader mode: flat path results, check syncs value', async () => {
 		const value = ref<any[]>([]);
 		const wrapper = mount(() => (
-			<TreeSelect v-model={value.value} data={data} max={99} searchable cascader />
+			<TreeSelect v-model={value.value} data={data} max={99} searchable clearSearchOnSelect={false} cascader />
 		), { attachTo: document.body });
 		await flush();
 		await wrapper.trigger('click');
@@ -2682,6 +2682,44 @@ describe('TreeSelect 内联搜索与键盘', () => {
 	const getSelected = () => Array.from(document.querySelectorAll('.vc-cascader-column'))
 		.map(column => column.querySelector('.is-select .vc-cascader-column__label')?.textContent || '');
 
+	it.each([false, true])('多选：勾选后清空搜索词（级联=%s），clearSearchOnSelect 为 false 时保留', async (cascader) => {
+		const clear = ref(true);
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={treeData} max={99} searchable cascader={cascader} clearSearchOnSelect={clear.value} />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+		const check = () => {
+			const selector = cascader ? '.vc-select-paths__item' : '.vc-tree-node:not(.is-hidden) .vc-checkbox input[type="checkbox"]';
+			const items = document.querySelectorAll<HTMLElement>(selector);
+			items[items.length - 1].click();
+		};
+
+		await typeSearch('2-1-1');
+		check();
+		await flush();
+		expect(value.value).toContain('2-1-1');
+		expect(getSearchInput().value).toBe('');
+		if (cascader) {
+			expect(document.querySelector('.vc-select-paths')).toBeNull();
+		} else {
+			expect(document.querySelectorAll('.vc-tree-node.is-hidden').length).toBe(0);
+		}
+		expect(isOpen()).toBe(true);
+
+		clear.value = false;
+		await flush();
+		await typeSearch('2-2-1');
+		check();
+		await flush();
+		expect(value.value).toContain('2-2-1');
+		expect(getSearchInput().value).toBe('2-2-1');
+
+		wrapper.unmount();
+	});
+
 	it('输入框在触发器的标签之后；输入为空时退格移除最后一个标签', async () => {
 		const value = ref<any[]>(['1-1-1', '2-1-1']);
 		const wrapper = mount(() => (
@@ -2782,7 +2820,7 @@ describe('TreeSelect 内联搜索与键盘', () => {
 	it('树形：键盘高亮（焦点留在输入框）；↑ ↓ 移动、← → 收起 / 展开、回车切换勾选，鼠标移入共用高亮；Esc 关闭', async () => {
 		const value = ref<any[]>([]);
 		const wrapper = mount(() => (
-			<TreeSelect v-model={value.value} data={treeData} max={99} searchable />
+			<TreeSelect v-model={value.value} data={treeData} max={99} searchable clearSearchOnSelect={false} />
 		), { attachTo: document.body });
 		await flush();
 		await wrapper.trigger('click');
@@ -2911,7 +2949,7 @@ describe('TreeSelect 内联搜索与键盘', () => {
 	it('级联搜索：上下移动高亮，回车切换勾选；有搜索词时左右键不处理', async () => {
 		const value = ref<any[]>([]);
 		const wrapper = mount(() => (
-			<TreeSelect v-model={value.value} data={treeData} max={99} searchable cascader />
+			<TreeSelect v-model={value.value} data={treeData} max={99} searchable clearSearchOnSelect={false} cascader />
 		), { attachTo: document.body });
 		await flush();
 		await wrapper.trigger('click');

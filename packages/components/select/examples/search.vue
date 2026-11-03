@@ -25,6 +25,7 @@
 				:searchable="controls.searchable !== 'off' && controls.searchable"
 				:load-data="controls.source === 'remote' ? loadData : undefined"
 				:portal="controls.portal === 'body'"
+				:clear-search-on-select="controls.clearSearchOnSelect === 'on'"
 				search-placeholder="输入条目名称"
 				clearable
 				@change="handleChange"
@@ -46,6 +47,7 @@ const CONTROLS = [
 		data: [{ value: 'inline', label: 'inline（触发器内输入）' }, { value: 'popover', label: 'popover（弹层搜索栏）' }, { value: 'off', label: '关闭' }]
 	},
 	{ key: 'mode', label: '选择', data: [{ value: 'single', label: '单选' }, { value: 'multiple', label: '多选' }] },
+	{ key: 'clearSearchOnSelect', label: '多选后', data: [{ value: 'on', label: '选中后清空搜索词' }, { value: 'off', label: '保留搜索词' }] },
 	{ key: 'maxTagLines', label: 'maxTagLines', data: [{ value: 1, label: '1' }, { value: 2, label: '2' }, { value: 0, label: '0（不限行）' }] },
 	{ key: 'width', label: '宽度', data: [320, 200, 120].map(value => ({ value, label: `${value}px` })) },
 	{ key: 'source', label: '数据', data: [{ value: 'local', label: '本地过滤' }, { value: 'remote', label: '远程搜索（loadData）' }] },

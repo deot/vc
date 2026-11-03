@@ -15,7 +15,8 @@ export const SelectAll = defineComponent({
 			default: () => ([])
 		}
 	},
-	setup(props) {
+	emits: ['change'],
+	setup(props, { emit }) {
 		const { t } = useLocale();
 		const owner = getInstance('select', 'selectId') as any;
 
@@ -39,6 +40,7 @@ export const SelectAll = defineComponent({
 					add(value);
 				}
 			});
+			emit('change');
 		};
 
 		return () => {

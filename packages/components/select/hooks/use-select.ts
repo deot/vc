@@ -108,6 +108,19 @@ export const useSelect = (name: string, options: Options = {}) => {
 	};
 
 	/**
+	 * 多选时选中（或取消）一项后清空搜索词，便于接着搜下一项；clearSearchOnSelect 为 false 时保留
+	 * 	- 远程搜索时手上的数据是按旧关键词加载的，按空关键词立即重新加载，输入框与列表保持一致
+	 */
+	const clearSearch = () => {
+		if (!props.clearSearchOnSelect || !searchValue.value) return;
+		searchValue.value = '';
+		if (isRemote()) {
+			loadData();
+			loadData.flush();
+		}
+	};
+
+	/**
 	 * 弹层打开或触发器聚焦期间由统一的 Keyboard 分发，返回 true 表示已处理（不再传给其他订阅与页面）
 	 * @param e ~
 	 * @returns ~
@@ -223,6 +236,7 @@ export const useSelect = (name: string, options: Options = {}) => {
 		close,
 		toggle,
 		focus,
+		clearSearch,
 		popover,
 		trigger: triggerBinds,
 		search

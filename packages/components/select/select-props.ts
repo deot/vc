@@ -67,6 +67,11 @@ export const props = {
 		default: false,
 		validator: (v: any) => typeof v === 'boolean' || ['inline', 'popover'].includes(v)
 	},
+	// 多选时选中（或取消）一项后清空搜索词，便于接着搜下一项；false 时保留，可在同一批结果里继续选
+	clearSearchOnSelect: {
+		type: Boolean,
+		default: true
+	},
 	loadData: {
 		type: Function,
 	},

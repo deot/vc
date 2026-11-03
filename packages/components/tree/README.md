@@ -229,7 +229,7 @@ const data = Array.from({ length: 100 }, (_, i) => ({
 
 `TreeSelect` 默认 `max = Infinity`，显示多选标签；`max = 1` 切换为单标签展示。当前实现不按 `max` 限制勾选数量，单标签展示也不等同于互斥单选。
 
-`cascader` 开启鼠标悬停展开的级联列，`expandDirection` 控制级联列的展开方向，取值与 [Cascader](../cascader/README.md#展开方向) 相同。`searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入（输入框跟在标签之后，输入为空时按 Backspace 移除最后一个标签），`searchable="popover"` 改为在面板顶部显示搜索栏。空格分隔的关键词需同时命中，英文逗号分隔的各组任一命中即可：树形模式保留层级，级联模式显示完整路径列表。关闭面板会清空搜索。树形模式打开面板时展开已选节点及其祖先，勾选不会展开节点；搜索展开命中节点的祖先，清空搜索词后恢复搜索前的展开状态。非独立勾选时，搜索结果中的父节点仍会联动所有子孙节点，包括隐藏节点。
+`cascader` 开启鼠标悬停展开的级联列，`expandDirection` 控制级联列的展开方向，取值与 [Cascader](../cascader/README.md#展开方向) 相同。`searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入（输入框跟在标签之后，输入为空时按 Backspace 移除最后一个标签），`searchable="popover"` 改为在面板顶部显示搜索栏。空格分隔的关键词需同时命中，英文逗号分隔的各组任一命中即可：树形模式保留层级，级联模式显示完整路径列表。关闭面板会清空搜索；多选时勾选或取消一个节点后也会清空，`:clear-search-on-select="false"` 时保留。树形模式打开面板时展开已选节点及其祖先，勾选不会展开节点；搜索展开命中节点的祖先，清空搜索词后恢复搜索前的展开状态。非独立勾选时，搜索结果中的父节点仍会联动所有子孙节点，包括隐藏节点。
 
 多选标签默认只占一行；超出宽度的标签折叠为 `+N...`，悬停可查看并移除。`maxTags` 限制可见标签数，`maxTagLines` 控制行数，设为 `0` 表示不限制。`checkStrategy` 与 Tree 相同；联动时标签展示完整路径，只显示没有被其他已选节点包含的那一层：`all` / `child` 为最深的勾选节点，`parent` 为子孙全选的父节点。移除标签时连同它的祖先与子孙一起移出值。
 
@@ -291,7 +291,7 @@ const data = [
 
 ### 远程搜索
 
-TreeSelect 的 `loadData(keyword, instance)` 用于搜索，不是 Tree 的懒加载回调，未开启 `searchable` 时不会调用。组件以 250ms 防抖调用它，等待期间输入框后缀显示加载图标；调用方需更新 `data`，Promise 的返回值不会自动成为数据源。启用后关闭本地过滤，仅保留匹配高亮。打开下拉时，如果还没有数据，或当前数据是按某个关键词加载的，会立即以空关键词调用一次，用于加载默认数据；关闭下拉时只重置搜索词，不调用它。搜索结果里没有已选节点时，标签沿用上次查到的路径与文字，继续勾选也不会丢掉它们。
+TreeSelect 的 `loadData(keyword, instance)` 用于搜索，不是 Tree 的懒加载回调，未开启 `searchable` 时不会调用。组件以 250ms 防抖调用它，等待期间输入框后缀显示加载图标；调用方需更新 `data`，Promise 的返回值不会自动成为数据源。启用后关闭本地过滤，仅保留匹配高亮。打开下拉时，如果还没有数据，或当前数据是按某个关键词加载的，会立即以空关键词调用一次，用于加载默认数据；关闭下拉时只重置搜索词，不调用它；多选时勾选后清空搜索词，会立即以空关键词调用一次。搜索结果里没有已选节点时，标签沿用上次查到的路径与文字，继续勾选也不会丢掉它们。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 20 }</config> -->
@@ -478,6 +478,7 @@ TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字
 | extra | 无选中标签时的输入框显示值 | `string` | - | `''` |
 | searchable | 开启搜索：`true` / `'inline'` 在输入框内直接输入，`'popover'` 在面板顶部显示搜索栏 | `boolean \| 'inline' \| 'popover'` | - | `false` |
 | searchPlaceholder | 搜索时的占位文案：内联搜索为面板打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
+| clearSearchOnSelect | 多选时勾选或取消一个节点后清空搜索词；`false` 时保留，可在同一批结果里继续勾选 | `boolean` | - | `true` |
 | loadData | 防抖搜索回调，需自行更新 `data`；调用时机见[远程搜索](#远程搜索) | `(keyword: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | cascader | 使用级联列面板 | `boolean` | - | `false` |
 | virtualized | 只渲染可视范围附近的节点：树形模式同 Tree 的[大量数据](#大量数据)；级联模式各列与搜索结果同 Cascader 的[大量数据](../cascader/README.md#大量数据)，列宽固定 | `boolean` | - | `false` |

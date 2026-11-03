@@ -26,6 +26,7 @@
 				:check-strategy="controls.checkStrategy"
 				:max-tag-lines="controls.maxTagLines"
 				:searchable="controls.searchable !== 'off' && controls.searchable"
+				:clear-search-on-select="controls.clearSearchOnSelect === 'on'"
 				search-placeholder="输入条目或分组名称"
 				clearable
 			/>
@@ -46,6 +47,7 @@ const CONTROLS = [
 		data: [{ value: 'inline', label: 'inline（触发器内输入）' }, { value: 'popover', label: 'popover（弹层搜索栏）' }, { value: 'off', label: '关闭' }]
 	},
 	{ key: 'content', label: '内容', data: [{ value: 'tree', label: '树形' }, { value: 'cascader', label: '级联列' }] },
+	{ key: 'clearSearchOnSelect', label: '勾选后', data: [{ value: 'on', label: '勾选后清空搜索词' }, { value: 'off', label: '保留搜索词' }] },
 	{
 		key: 'checkStrategy',
 		label: 'checkStrategy',

@@ -173,6 +173,7 @@ export const TreeSelect = defineComponent({
 				: data.checkedValues;
 
 			sync();
+			multiple.value && select.clearSearch();
 		};
 
 		expose({

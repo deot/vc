@@ -118,18 +118,17 @@ export const Select = defineComponent({
 		};
 
 		/**
-		 * 点击（或回车）一个选项：单选时已选中则关闭，多选时切换
+		 * 点击（或回车）一个选项：单选时已选中则关闭，多选时切换（并清空搜索词，见 clearSearchOnSelect）
 		 * @param v 选项的值
 		 */
 		const pick = (v: any) => {
 			const isChecked = currentValue.value.includes(v);
-			if (!multiple.value && isChecked) {
-				close();
-			} else if (isChecked) {
-				remove(v);
-			} else {
-				add(v);
+			if (!multiple.value) {
+				isChecked ? close() : add(v);
+				return;
 			}
+			isChecked ? remove(v) : add(v);
+			select.clearSearch();
 		};
 
 		// 已选的值：打开时逐项判断是否已选，用 Set 查找
@@ -183,7 +182,7 @@ export const Select = defineComponent({
 		const renderHeader = () => {
 			return (
 				<SelectSearch {...select.search.value} input={searchMode.value === 'popover'}>
-					{ showSelectAll.value && (<SelectAll data={selectableValues.value} />) }
+					{ showSelectAll.value && (<SelectAll data={selectableValues.value} onChange={select.clearSearch} />) }
 				</SelectSearch>
 			);
 		};

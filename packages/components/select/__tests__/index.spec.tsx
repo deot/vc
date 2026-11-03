@@ -92,7 +92,8 @@ describe('Select locale', () => {
 		const locale = VcInstance.options.locale;
 		VcInstance.configure({ locale: zhCN });
 		const wrapper = mount(Select, {
-			props: { data: cityList, max: 5, searchable: true },
+			// 全选后保留搜索词，全选按钮才继续显示
+			props: { data: cityList, max: 5, searchable: true, clearSearchOnSelect: false },
 			attachTo: document.body
 		});
 		try {
@@ -1071,7 +1072,7 @@ describe('Select grouped & search', () => {
 	it.each(searchModes)('searchable (%s) + multiple shows SelectAll', async (mode, searchable, getInput) => {
 		const value = ref<any[]>([]);
 		const wrapper = mount(() => (
-			<Select v-model={value.value} data={cityList} max={5} searchable={searchable} />
+			<Select v-model={value.value} data={cityList} max={5} searchable={searchable} clearSearchOnSelect={false} />
 		), { attachTo: document.body });
 		await nextTick();
 
@@ -1344,7 +1345,16 @@ describe('Select grouped & search', () => {
 			data.value = cityList.filter(item => item.label.includes(keyword));
 		});
 		const wrapper = mount(() => (
-			<Select v-model={value.value} data={data.value} max={5} maxTagLines={0} searchable loadData={loadData} onChange={onChange} />
+			<Select
+				v-model={value.value}
+				data={data.value}
+				max={5}
+				maxTagLines={0}
+				searchable
+				clearSearchOnSelect={false}
+				loadData={loadData}
+				onChange={onChange}
+			/>
 		), { attachTo: document.body });
 		try {
 			await nextTick();
@@ -1710,6 +1720,88 @@ describe('Select 内联搜索', () => {
 	const keydown = (el: Element, key: string, options: KeyboardEventInit = {}) => {
 		el.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...options }));
 	};
+
+	it('多选：选中或取消一项、全选后清空搜索词，弹层不关闭；clearSearchOnSelect 为 false 时保留；单选不受影响', async () => {
+		const clear = ref(true);
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={5} searchable clearSearchOnSelect={clear.value} />
+		), { attachTo: document.body });
+		await nextTick();
+		const input = wrapper.find('input').element as HTMLInputElement;
+		const isOpen = () => Array.from(document.querySelectorAll<HTMLElement>('.vc-popover-wrapper')).some(el => el.style.display !== 'none');
+
+		await wrapper.trigger('click');
+		await flush();
+		typeInto(input, 'New');
+		await flush();
+		expect(getOptions().length).toBe(1);
+
+		(getOptions()[0] as HTMLElement).click();
+		await flush();
+		expect(value.value).toEqual(['1']);
+		expect(input.value).toBe('');
+		expect(getOptions().length).toBe(cityList.length);
+		expect(isOpen()).toBe(true);
+
+		// 取消选中同样清空
+		typeInto(input, 'New');
+		await flush();
+		(getOptions()[0] as HTMLElement).click();
+		await flush();
+		expect(value.value).toEqual([]);
+		expect(input.value).toBe('');
+
+		// 全选当前匹配后清空
+		typeInto(input, 'o');
+		await flush();
+		const matched = getOptions().length;
+		(document.querySelector('.vc-select-all') as HTMLElement).click();
+		await flush();
+		expect(value.value.length).toBe(matched);
+		expect(input.value).toBe('');
+		expect(document.querySelector('.vc-select-all')).toBeNull();
+
+		// 保留：可在同一批结果里继续选
+		clear.value = false;
+		value.value = [];
+		await flush();
+		typeInto(input, 'o');
+		await flush();
+		(getOptions()[0] as HTMLElement).click();
+		await flush();
+		expect(input.value).toBe('o');
+		expect(getOptions().length).toBe(matched);
+
+		wrapper.unmount();
+	});
+
+	it('多选远程搜索：选中后清空搜索词并立即按空关键词重新加载', async () => {
+		vi.useFakeTimers();
+		const loadData = vi.fn<(keyword: string) => Promise<void>>(() => Promise.resolve());
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={5} searchable loadData={loadData} />
+		), { attachTo: document.body });
+		try {
+			await nextTick();
+			const input = wrapper.find('input').element as HTMLInputElement;
+			await wrapper.trigger('click');
+			await nextTick();
+			typeInto(input, 'Lon');
+			await vi.advanceTimersByTimeAsync(250);
+			expect(loadData.mock.calls.map(args => args[0])).toEqual(['Lon']);
+
+			(getOptions()[0] as HTMLElement).click();
+			await nextTick();
+			// 不经过防抖
+			expect(loadData.mock.calls.map(args => args[0])).toEqual(['Lon', '']);
+			expect(input.value).toBe('');
+		} finally {
+			vi.useRealTimers();
+			wrapper.unmount();
+		}
+	});
 
 	it('searchable 只接受布尔值、inline、popover', () => {
 		const { validator } = (Select as any).props.searchable;
