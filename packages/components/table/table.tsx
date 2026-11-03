@@ -335,7 +335,7 @@ export const Table = defineComponent({
 		);
 
 		// 在表头 / 底部 dock 上滚轮时转交给表体滚动；自行管理 Wheel 的挂载与卸载
-		useWheelForward({ headerWrapper, bottomWrapper, bodyXWrapper, bodyScroller });
+		useWheelForward({ headerWrapper, bottomWrapper, bodyScroller });
 
 		// 不论 fit 与否都监听：fit=false 时 scrollX（及固定列阴影）同样依赖容器宽度
 		const bindEvents = () => {

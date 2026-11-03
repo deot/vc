@@ -2,7 +2,6 @@
 
 import { defineComponent, ref, watch, computed, reactive, onMounted, onBeforeUnmount } from 'vue';
 import { preZero } from '@deot/helper-utils';
-import { scrollIntoView } from '@deot/helper-dom';
 import { Resize } from '@deot/helper-resize';
 import { startCase } from 'lodash-es';
 import { clearTime, getDateOfTime } from '../../helper/date-utils';
@@ -223,10 +222,9 @@ export const TimeSelect = defineComponent({
 
 		// 滚到选中项，每行 24px
 		const scroll = (type: string, animated: boolean) => {
-			const el = getList(type);
 			const index = lists[type].value.findIndex((obj: any) => obj.text == props[type]);
-			if (!el || index === -1) return;
-			scrollIntoView(el, { from: el.scrollTop, to: 24 * getScrollIndex(type, index), duration: animated ? 500 : 0 });
+			if (!refs[type] || index === -1) return;
+			refs[type].scrollTo({ y: 24 * getScrollIndex(type, index), duration: animated ? 500 : 0 });
 		};
 
 		// 列变为可见时（打开弹层、切到时间视图）直接定位到选中项；可见期间选中项变化（点选、键入）带动画滚过去

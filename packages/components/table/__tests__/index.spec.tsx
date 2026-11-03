@@ -1892,6 +1892,8 @@ describe('Table virtual + scroll', () => {
 			defineGetter(xWrapper, 'scrollHeight', 600),
 			defineGetter(xWrapper, 'clientHeight', 600)
 		];
+		// 转发按表体 Scroller 记录的尺寸判断能否滚动
+		await (innerScroller.vm as any).refresh();
 
 		const dispatchHorizontalWheel = (selector: string, deltaX: number) => {
 			const el = wrapper.find(selector).element as HTMLElement;
@@ -5571,6 +5573,8 @@ describe('v-model:columns & hidden', () => {
 				defineGetter(xWrapper, 'scrollWidth', 720),
 				defineGetter(xWrapper, 'clientWidth', 240)
 			];
+			// 转发按表体 Scroller 记录的尺寸判断能否滚动
+			await (innerScroller.vm as any).refresh();
 
 			wrapper.find('.vc-table__bottom').element.dispatchEvent(new WheelEvent('wheel', {
 				bubbles: true,
