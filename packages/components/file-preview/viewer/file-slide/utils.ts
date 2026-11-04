@@ -1,33 +1,10 @@
 import type { FilePreviewItem } from '../../types';
-import { getFileExtension, allowedUrl } from '../../utils';
+import { getFileExtension, allowedUrl, parseDataUrl } from '../../utils';
 
 const OFFICE_EXTENSIONS = new Set(['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']);
 
 // 可以转成 blob: 地址在新窗口或 iframe 打开的 data: 类型；blob: 地址继承当前页面的源，html、svg 等打开后会以当前页面的身份运行脚本，只给下载
 const OPENABLE_DATA_TYPES = new Set(['text/plain', 'application/pdf']);
-
-const DATA_URL_HEADER = /^data:([^,]*),/i;
-
-/**
- * 解析 data: 地址的头部，不解码内容；不是 data: 地址时为undefined
- * @param source ~
- * @returns mime 为小写、不含参数的媒体类型，type 为保留参数（如 charset）的 Blob 类型
- */
-export const parseDataUrl = (source: string) => {
-	const match = DATA_URL_HEADER.exec(source || '');
-	if (!match) return;
-	const params = match[1].split(';').map(v => v.trim()).filter(Boolean);
-	const base64 = params[params.length - 1]?.toLowerCase() === 'base64';
-	if (base64) params.pop();
-	// 省略媒体类型时按规范为 text/plain
-	if (!params[0] || params[0].includes('=')) params.unshift('text/plain');
-	return {
-		mime: params[0].toLowerCase(),
-		type: params.join(';'),
-		base64,
-		body: source.slice(match[0].length)
-	};
-};
 
 // %XX 是原始字节，其余字符交给 Blob 按 UTF-8 编码；连续的 %XX 合成一段
 const toBlobParts = (body: string, base64: boolean): BlobPart[] => {
@@ -56,13 +33,12 @@ export const createObjectUrl = (source: string) => {
 	}
 };
 
-// 只在 file 类型下区分 pdf / office，不新增第四种文件类型；data: 地址没有扩展名时看媒体类型
+// 只在 file 类型下区分 pdf / office，不新增第四种文件类型；data: 地址的扩展名由媒体类型推导
 export const getFileViewer = (row: Pick<FilePreviewItem, 'type' | 'name' | 'source'>) => {
 	if (row.type !== 'file') return;
 	const ext = (getFileExtension(row.name) || getFileExtension(row.source)).toLowerCase();
 	if (ext === 'pdf') return 'pdf';
 	if (OFFICE_EXTENSIONS.has(ext)) return 'office';
-	if (parseDataUrl(row.source)?.mime === 'application/pdf') return 'pdf';
 };
 
 // 下载用文件本身的地址，不用 Office 在线预览包装后的地址；data: 地址可以直接下载

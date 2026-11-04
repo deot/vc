@@ -330,7 +330,7 @@ const handleClick = () => {
 | --- | --- | --- |
 | source | 文件地址，预览时使用 | `string` |
 | type | 文件类型；不传或不合法时通过 `getFileType` 识别 | `'image' \| 'video' \| 'audio' \| 'file'` |
-| name | 名称；不传或为空字符串时通过 `getFileName` 推导，内置规则取地址最后一段（去掉 `?`、`#` 之后的部分并解码） | `string` |
+| name | 名称；不传或为空字符串时通过 `getFileName` 推导，内置规则取地址最后一段（去掉 `?`、`#` 之后的部分并解码）；`data` 地址取 `name` 参数（如 `data:text/plain;name=a.txt,…`），没有时为 `file.<扩展名>` | `string` |
 | thumbnail | 图片、视频的展示缩略图；音频和普通文件忽略此字段 | `string` |
 | width / height | 图片的自然宽高；都大于 0 时查看器不等待图片解码，直接按此尺寸放置 | `number` |
 | element | 缩略图元素：查看器打开时从它放大，关闭时回到它。FilePreview 列表会自动传入各项的缩略图 | `Element` |
@@ -378,6 +378,7 @@ const handleClick = () => {
   - video：`mp4`、`mov`、`avi`、`mpg`、`mpeg`、`rmvb`
   - audio：`mp3`、`aac`、`wav`、`flac`、`ape`、`ogg`、`m4a`
   - 其余为 file。没有扩展名的地址可在数据项中传 `type`，或配置 `getFileType`。
+  - `data` 地址按媒体类型的主类型识别：`image/*`、`video/*`、`audio/*` 分别为 image、video、audio，其余为 file；扩展名由媒体类型推导（如 `image/jpeg` 为 `JPG`、`text/plain` 为 `TXT`）。
 - 内置预览：全部类型进入同一个查看器，交互见上文“查看器交互”。需要接入其他在线预览服务时，可用 `renderSlide` 替换文件页，或用 `enhancer` 整体接管。
 - 属性 `type` 表示展示方式，数据项的 `type` 表示文件类型，两者含义不同。
 - 颜色使用主题变量，可通过以下变量单独覆盖：

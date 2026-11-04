@@ -11,8 +11,8 @@ import { clickOn, rectOf } from '../../vc/__tests__/fixtures/click';
 import { Portal } from '../../portal';
 import { getBaseScale, zoomAt } from '../viewer/image-slide/utils';
 import { ImageSlide } from '../viewer/image-slide';
-import { createObjectUrl, getDownloadUrl, getFileUrl, getFileViewer, getFrameSrc, parseDataUrl } from '../viewer/file-slide/utils';
-import { getFileExtension, getFileName, getFileType, normalize, resolveFileName, resolveFileType } from '../utils';
+import { createObjectUrl, getDownloadUrl, getFileUrl, getFileViewer, getFrameSrc } from '../viewer/file-slide/utils';
+import { getFileExtension, getFileName, getFileType, normalize, parseDataUrl, resolveFileName, resolveFileType } from '../utils';
 
 const photo = 'https://cdn.test/photo.jpg';
 const banner = 'https://cdn.test/banner.png';
@@ -545,6 +545,32 @@ describe('FilePreview', () => {
 		expect(parseDataUrl('data:text/plain')).toBeUndefined();
 		expect(parseDataUrl(report)).toBeUndefined();
 		expect(parseDataUrl('')).toBeUndefined();
+	});
+
+	it('detects data url types, names and extensions from the media type', () => {
+		const png = 'data:image/png;base64,iVBORw0KGgo=';
+		expect(getFileType(png)).toBe('image');
+		expect(getFileType('data:image/svg+xml,<svg/>')).toBe('image');
+		expect(getFileType('data:video/mp4;base64,AAAA')).toBe('video');
+		expect(getFileType('data:audio/mpeg;base64,AAAA')).toBe('audio');
+		expect(getFileType('data:text/plain,a.png')).toBe('file');
+		expect(getFileType('data:application/pdf;base64,JVBE')).toBe('file');
+
+		expect(getFileName(png)).toBe('file.png');
+		expect(getFileName('data:image/jpeg;base64,AAAA')).toBe('file.jpg');
+		expect(getFileName('data:text/plain;charset=utf-8,a/b?c#d')).toBe('file.txt');
+		expect(getFileName('data:,hi')).toBe('file.txt');
+		expect(getFileName('data:application/x-unknown-type,')).toBe('file');
+		expect(getFileName('data:text/plain;name=%E8%AF%B4%E6%98%8E.txt;base64,AAAA')).toBe('说明.txt');
+
+		expect(getFileExtension('data:image/svg+xml,<svg/>')).toBe('SVG');
+		expect(getFileExtension('data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,')).toBe('DOCX');
+		expect(getFileExtension('data:text/plain,report.pdf')).toBe('TXT');
+
+		expect(normalize([png, { source: 'data:text/plain,a', name: '说明.txt' }])).toEqual([
+			{ source: png, type: 'image', name: 'file.png' },
+			{ source: 'data:text/plain,a', type: 'file', name: '说明.txt' }
+		]);
 	});
 
 	it('turns plain text and pdf data urls into blob urls', async () => {
