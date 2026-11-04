@@ -149,7 +149,7 @@
 			display: block; // 父类为flex, 使用table无法撑开
 			clear: both;
 			pointer-events: none;
-			border-radius: if(sass(meta.type-of($border-radius) == "number"): unitfix($border-radius); else: inherit);
+			border-radius: if(sass(meta.type-of($border-radius) == "number"): unitfix($border-radius); else: $border-radius);
 			content: " ";
 			box-sizing: border-box;
 		}

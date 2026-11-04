@@ -33,3 +33,22 @@
 	@include generate-theme(false); }
 
 
+
+// 移动端尺寸：750 稿上 1 个单位的长度（750 * --vc-rem = 100vw），480px 起封顶；业务通过 --rem（如 useREM）注入时跟随业务
+// 注册后 :root 计算为绝对长度，JS 读取 --vc-rem 即得 px；不支持 @property 时退回普通变量
+@property --vc-rem {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0.5px;
+}
+
+:root {
+	--vc-rem: var(--rem, calc(100vw / 750));
+}
+
+// 自定义属性解析时不校验值，两条声明无法互为回退，不支持 min() 时只能靠 @supports
+@supports (width: min(1px, 2px)) {
+	:root {
+		--vc-rem: var(--rem, min(calc(100vw / 750), 0.64px));
+	}
+}

@@ -1,6 +1,7 @@
 @use 'sass:meta';
 @use 'sass:map';
 @use 'sass:math';
+@use 'sass:string';
 @use "./default" as *;
 @use "./theme" as *;
 
@@ -45,6 +46,22 @@
 	}
 
 	@return $value;
+}
+
+/**
+ * remfix(32) = calc(var(--vc-rem) * 32)
+ * n 是 750 稿上的长度（375 宽下为 n / 2 px），带单位时去掉单位；字符串原样输出
+ */
+@function remfix($value) {
+	@if meta.type-of($value) == 'number' {
+		@if not math.is-unitless($value) {
+			$value: math.div($value, $value * 0 + 1);
+		}
+	} @else if meta.type-of($value) == 'string' {
+		@return string.unquote($value);
+	}
+
+	@return string.unquote('calc(var(--vc-rem) * #{$value})');
 }
 
 @function percentw($col, $total) {
