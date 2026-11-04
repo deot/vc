@@ -18,6 +18,10 @@ $background-color-lightest: varfix(background-color-lightest, form);
 }
 
 @include block($component-item-name) {
+	& {
+		padding-left: remfix(24);
+	}
+
 	@include element(wrapper) {
 		padding-top: remfix(24);
 		padding-right: remfix(24);

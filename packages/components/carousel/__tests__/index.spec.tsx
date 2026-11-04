@@ -1247,6 +1247,27 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
+		it('height: 数字按 750 稿，字符串原样，不传时随内容', async () => {
+			const height = ref<number | string | undefined>(400);
+			const wrapper = mount(() => (
+				<MCarousel autoplay={false} height={height.value}>
+					<MCarouselItem />
+				</MCarousel>
+			));
+			await flushAll();
+			const content = wrapper.find('.vcm-carousel__wrapper').element as HTMLElement;
+			expect(content.style.height).toBe('calc(var(--vc-rem) * 400)');
+
+			height.value = '50vh';
+			await nextTick();
+			expect(content.style.height).toBe('50vh');
+
+			height.value = undefined;
+			await nextTick();
+			expect(content.style.height).toBe('');
+			wrapper.unmount();
+		});
+
 		it('indicator shows "current / total" by default', async () => {
 			const wrapper = mount(() => (
 				<MCarousel autoplay={false}>

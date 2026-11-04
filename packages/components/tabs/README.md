@@ -388,7 +388,7 @@ const isDark = ref(false);
 | average | 标签均分可用宽度 | `boolean` | - | `true` |
 | showWrapper | 是否显示标签栏 | `boolean` | - | `true` |
 | sticky | 相对于页面滚动进行吸顶，不支持内层滚动容器 | `boolean` | - | `false` |
-| offsetTop | 吸顶偏移，单位 px | `number` | - | `0` |
+| offsetTop | 吸顶偏移，750 稿长度 | `number` | - | `0` |
 | stepper | 标签溢出时显示左右翻页按钮；移动端以触摸滑动为主，默认不显示 | `boolean` | - | `false` |
 
 `type`、`size`、`placement` 只属于桌面端，MTabs 不声明；`barClass`、`contentClass`、`contentStyle`、`affixable`、`affixOptions` 尚未接入移动端渲染。

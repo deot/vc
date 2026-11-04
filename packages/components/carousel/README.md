@@ -335,7 +335,7 @@ import { Carousel, CarouselItem } from '@deot/vc';
 -->
 ```vue
 <template>
-	<MCarousel :height="180" :autoplay="false" dots="bottom">
+	<MCarousel :height="360" :autoplay="false" dots="bottom">
 		<MCarouselItem v-for="item in 4" :key="item">
 			<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
 				{{ item }}
@@ -383,7 +383,7 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 ```vue
 <template>
 	<MCarousel
-		:height="180"
+		:height="360"
 		:autoplay="false"
 		:loop="false"
 		:indicator="false"
@@ -392,8 +392,8 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 		<MCarouselItem
 			v-for="item in 4"
 			:key="item"
-			width="calc(100% - 72px)"
-			:gap="12"
+			width="calc(100% - var(--vc-rem) * 144)"
+			:gap="24"
 		>
 			<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
 				{{ item }}
@@ -452,8 +452,8 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 | --- | --- | --- | --- | --- |
 | t | 自动播放的切换间隔，单位为毫秒 | `number` | - | `3000` |
 | card | 是否启用卡片模式 | `boolean` | - | `false` |
-| gap | 轮播项的默认间距；`CarouselItem.gap` 或 `MCarouselItem.gap` 优先 | `number` | - | `0` |
-| height | 内容区域高度，按 px 设置 | `string \| number` | - | - |
+| gap | 轮播项的默认间距，MCarousel 中为 750 稿长度；`CarouselItem.gap` 或 `MCarouselItem.gap` 优先 | `number` | - | `0` |
+| height | 内容区域高度；数字在 Carousel 中按 px、在 MCarousel 中为 750 稿长度，字符串原样作为 CSS 长度 | `string \| number` | - | - |
 | initialIndex | 初始激活项索引，从 `0` 开始 | `number` | - | `0` |
 | trigger | 桌面端指示器的切换方式 | `string` | `hover`、`click` | `hover` |
 | autoplay | 是否自动切换 | `boolean` | - | `true` |
@@ -495,7 +495,7 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 | name | 轮播项名称，可供 `setActiveItem` 定位 | `string` | - | - |
 | label | 对应指示器的文本。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | width | 卡片宽度；非卡片模式下仅在存在 `gap` 时生效 | `string \| number` | - | `'70%'` |
-| gap | 当前轮播项的间距 | `number` | - | `0` |
+| gap | 当前轮播项的间距，MCarouselItem 中为 750 稿长度 | `number` | - | `0` |
 | scale | 非激活卡片的缩放比例 | `number` | - | `0.83` |
 
 ### CarouselItem 与 MCarouselItem 插槽

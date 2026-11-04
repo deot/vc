@@ -1,12 +1,19 @@
 import { getCurrentInstance, ref, computed, onBeforeMount, onBeforeUnmount, inject } from 'vue';
 import type { SetupContext } from 'vue';
 import { prefixStyle } from '@deot/helper-dom';
+import { Utils } from '@deot/vc-shared';
 import { VcError } from '../vc/index';
 import { Props } from './carousel-item-props';
 
 const TRANSFORM = prefixStyle('transform').camel;
 
-export const useCarouselItem = (expose: SetupContext['expose']) => {
+/**
+ * @param expose ~
+ * @param options ~
+ * @param options.rem gap 为 750 稿长度（移动端），计算位移时换算为 px
+ * @returns ~
+ */
+export const useCarouselItem = (expose: SetupContext['expose'], options: { rem?: boolean } = {}) => {
 	const instance = getCurrentInstance()!;
 	const carousel = inject('vc-carousel', {} as any);
 
@@ -114,7 +121,9 @@ export const useCarouselItem = (expose: SetupContext['expose']) => {
 	const calcSlideOffset = (index: number, activeIndex: number, wrapperWidth: number) => {
 		const { length } = carousel.items.value;
 		const offset = wrapperWidth - (carousel.wrapper?.value?.offsetWidth || 0);
-		const gap = itemGap.value;
+		const gap = options.rem && carousel.wrapper?.value
+			? Utils.remToPx(carousel.wrapper.value, itemGap.value)
+			: itemGap.value;
 
 		if (!gap || isVertical.value) return 0;
 

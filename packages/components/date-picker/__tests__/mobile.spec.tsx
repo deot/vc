@@ -64,7 +64,7 @@ describe('MDatePicker trigger', () => {
 		expect(wrapper.text()).toContain('日期时间');
 		expect(wrapper.text()).toContain('2024-01-02 03:04:05');
 		expect(wrapper.find('.vcm-list-item__icon').exists()).toBe(false);
-		expect(wrapper.find('.vcm-list-item__wrapper > div').attributes('style')).toContain('width: 120px');
+		expect(wrapper.find('.vcm-list-item__wrapper > div').attributes('style')).toContain('width: calc(var(--vc-rem) * 120)');
 
 		wrapper.unmount();
 	});

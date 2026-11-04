@@ -19,6 +19,10 @@ $background-color-lightest: varfix(background-color-lightest, list);
 }
 
 @include block($component-child-name) {
+	& {
+		padding-left: remfix(24);
+	}
+
 	@include element(wrapper) {
 		@include border(bottom, $color-neutral-light);
 

@@ -1355,6 +1355,52 @@ describe('mobile', () => {
 		else delete (document as any).scrollingElement;
 	});
 
+	it('sticky offsetTop: 按 750 稿换算为 px 判断吸顶，固定时 top 随 --vc-rem', async () => {
+		const fakeScroller = { scrollTop: 940 } as any;
+		const desc = Object.getOwnPropertyDescriptor(Document.prototype, 'scrollingElement');
+		Object.defineProperty(document, 'scrollingElement', {
+			configurable: true,
+			get: () => fakeScroller
+		});
+		// jsdom 不计算自定义属性：--vc-rem 取 0.5px（375 宽）
+		const getComputedStyle = window.getComputedStyle;
+		const spy = vi.spyOn(window, 'getComputedStyle').mockImplementation((el: Element, pseudo?: string | null) => {
+			const style = getComputedStyle(el, pseudo);
+			return new Proxy(style, {
+				get: (target, key) => key === 'getPropertyValue'
+					? (name: string) => (name === '--vc-rem' ? '0.5px' : target.getPropertyValue(name))
+					: Reflect.get(target, key)
+			});
+		});
+		const offsetTop = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetTop');
+		Object.defineProperty(HTMLElement.prototype, 'offsetTop', { configurable: true, get: () => 1000 });
+
+		const wrapper = mount(() => (
+			<MTabs modelValue={0} sticky offsetTop={100}>
+				<MTabsPane label="a" value="a">A</MTabsPane>
+			</MTabs>
+		), { attachTo: document.body });
+		await flush();
+
+		// 940 + 50(100 × 0.5px) < 1000：未吸顶；若按 px 解释 100 则会吸顶
+		window.dispatchEvent(new Event('scroll'));
+		await Utils.sleep(120);
+		expect(wrapper.find('.vcm-tabs__bar').classes()).not.toContain('is-fixed');
+
+		fakeScroller.scrollTop = 960;
+		window.dispatchEvent(new Event('scroll'));
+		await Utils.sleep(120);
+		const bar = wrapper.find('.vcm-tabs__bar');
+		expect(bar.classes()).toContain('is-fixed');
+		expect((bar.element as HTMLElement).style.top).toBe('calc(var(--vc-rem) * 100)');
+
+		wrapper.unmount();
+		spy.mockRestore();
+		Object.defineProperty(HTMLElement.prototype, 'offsetTop', offsetTop!);
+		if (desc) Object.defineProperty(document, 'scrollingElement', desc);
+		else delete (document as any).scrollingElement;
+	});
+
 	it('autoAfloatWidth=false uses item.offsetWidth as afloatWidth', async () => {
 		const wrapper = mount(() => (
 			<MTabs modelValue={0} autoAfloatWidth={false}>

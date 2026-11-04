@@ -12,10 +12,8 @@ export const props = {
 		type: valueOrBooleanType
 	},
 
-	width: {
-		type: Number,
-		default: 270
-	},
+	// 750 稿长度；不传时取样式默认值
+	width: Number,
 	modelValue: {
 		type: Boolean,
 		default: false

@@ -32,7 +32,7 @@
 		<MForm
 			:model="formValidate"
 			:rules="ruleValidate"
-			:label-width="96"
+			:label-width="192"
 			style="padding-left: 56px; margin-top: 21px;"
 			@submit.prevent
 		>

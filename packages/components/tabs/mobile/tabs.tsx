@@ -3,6 +3,7 @@
 import { defineComponent, ref, computed, onUnmounted, onMounted, onUpdated, watch } from 'vue';
 import { throttle, debounce } from 'lodash-es';
 import { Resize } from '@deot/helper-resize';
+import { Utils } from '@deot/vc-shared';
 import { props as tabsProps } from './tabs-props';
 import { Icon } from '../../icon';
 import { CustomerProp } from '../../customer/customer-prop';
@@ -18,12 +19,16 @@ export const MTabs = defineComponent({
 	props: tabsProps,
 	emits: ['update:modelValue', 'change', 'click', 'tab-remove'],
 	setup(props, { slots }) {
+		const bar = ref<HTMLElement>();
 		const content = ref<any>(null);
 		const scroller = ref<any>(null);
 
 		const top = ref(0);
 		const isFixed = ref(false);
-		const placeholderH = ref(53);
+		// 吸顶时占位的高度（标签栏高度 + 下边距）；固定后标签栏仍是同一个盒子，可随时量取
+		const placeholderH = ref(0);
+		// offsetTop（750 稿）换算后的 px，随 refreshTop 更新
+		let offsetTopPx = 0;
 
 		const isDark = computed(() => {
 			return props.theme === 'dark';
@@ -31,7 +36,7 @@ export const MTabs = defineComponent({
 
 		const fixedStyle = computed(() => {
 			return isFixed.value
-				? { top: `${props.offsetTop}px` }
+				? { top: `calc(var(--vc-rem) * ${props.offsetTop})` }
 				: {};
 		});
 
@@ -41,7 +46,7 @@ export const MTabs = defineComponent({
 		// TODO: 找到父层滚动条
 		const handleScroll = throttle(() => {
 			const el = document.scrollingElement || document.documentElement;
-			isFixed.value = (el?.scrollTop || 0) + props.offsetTop > top.value;
+			isFixed.value = (el?.scrollTop || 0) + offsetTopPx > top.value;
 		}, 100);
 
 		/**
@@ -49,9 +54,13 @@ export const MTabs = defineComponent({
 		 */
 		const refreshTop = debounce(() => {
 			if (props.sticky && content.value) {
+				if (bar.value) {
+					placeholderH.value = bar.value.offsetHeight + (parseFloat(getComputedStyle(bar.value).marginBottom) || 0);
+				}
+				offsetTopPx = Utils.remToPx(content.value, props.offsetTop);
 				top.value = content.value.offsetTop - placeholderH.value;
 				const el = document.scrollingElement || document.documentElement;
-				isFixed.value = (el?.scrollTop || 0) + props.offsetTop > top.value;
+				isFixed.value = (el?.scrollTop || 0) + offsetTopPx > top.value;
 			}
 		}, 250, { leading: true, trailing: true });
 
@@ -92,9 +101,11 @@ export const MTabs = defineComponent({
 		});
 
 		// 可视区或标签尺寸变化：立即刷新，不播放动画
+		// 视口宽度变化时尺寸随 --vc-rem 缩放，吸顶位置一并重算
 		const handleResize = () => {
 			refreshAfloat();
 			scroll.scrollToActive(false);
+			refreshTop();
 		};
 
 		/**
@@ -188,6 +199,7 @@ export const MTabs = defineComponent({
 					{
 						props.showWrapper && (
 							<div
+								ref={bar}
 								style={[props.barStyle as any, fixedStyle.value]}
 								class={[{ 'is-fixed': isFixed.value }, 'vcm-tabs__bar']}
 							>

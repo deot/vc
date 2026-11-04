@@ -10,7 +10,7 @@ export const MCarouselItem = defineComponent({
 	name: COMPONENT_NAME,
 	props: carouselItemProps,
 	setup(_, { slots, expose }) {
-		const it = useCarouselItem(expose);
+		const it = useCarouselItem(expose, { rem: true });
 		return () => {
 			return (
 				<div

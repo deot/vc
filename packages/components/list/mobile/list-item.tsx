@@ -34,7 +34,7 @@ export const MListItem = defineComponent({
 				: list?.props?.labelWidth;
 
 			return {
-				width: labelWidth > 0 ? `${labelWidth}px` : 'auto'
+				width: labelWidth > 0 ? `calc(var(--vc-rem) * ${labelWidth})` : 'auto'
 			};
 		});
 
@@ -73,7 +73,7 @@ export const MListItem = defineComponent({
 			return (
 				<div
 					class="vcm-list-item"
-					style={{ paddingLeft: `${props.indent}px` }}
+					style={props.indent != null ? { paddingLeft: `calc(var(--vc-rem) * ${props.indent})` } : undefined}
 					onClick={handleLinkTo}
 				>
 					<div

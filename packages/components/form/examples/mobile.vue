@@ -154,7 +154,7 @@ let index = 0;
 const isLoaded = ref(false);
 const form = ref(null);
 const labelPosition = ref('right');
-const labelWidth = ref(120);
+const labelWidth = ref(240);
 const formData = reactive({
 	input1: '',
 	input2: '',
@@ -269,7 +269,7 @@ const handleSort = () => {
 
 const handleChangeLabelPosition = () => {
 	labelPosition.value = labelPosition.value == 'top' ? 'right' : labelPosition.value == 'right' ? 'left' : 'top';
-	labelWidth.value = labelPosition.value !== 'top' ? 120 : 0;
+	labelWidth.value = labelPosition.value !== 'top' ? 240 : 0;
 };
 
 onMounted(() => {

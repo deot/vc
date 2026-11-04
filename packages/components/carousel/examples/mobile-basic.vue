@@ -7,7 +7,7 @@
 		<br>
 		<br>
 		<div>
-			<MCarousel :height="150" :autoplay="true" dots="bottom">
+			<MCarousel :height="300" :autoplay="true" dots="bottom">
 				<MCarouselItem v-for="item in 4" :key="item">
 					<h3>{{ item }}</h3>
 				</MCarouselItem>
@@ -17,7 +17,7 @@
 		<br>
 		<br>
 		<div>
-			<MCarousel :t="4000" :height="200" card>
+			<MCarousel :t="4000" :height="400" card>
 				<MCarouselItem v-for="item in 6" :key="item">
 					<h3 class="medium">
 						{{ item }}
@@ -29,7 +29,7 @@
 		<br>
 		<br>
 		<div>
-			<MCarousel :autoplay="false" :height="200" vertical dots="bottom">
+			<MCarousel :autoplay="false" :height="400" vertical dots="bottom">
 				<MCarouselItem v-for="item in 3" :key="item">
 					<h3 class="medium">
 						{{ item }}

@@ -3,9 +3,7 @@ import { props as formItemProps } from '../form-item-props';
 
 export const props = {
 	...formItemProps,
-	indent: {
-		type: Number,
-		default: 12
-	}
+	// 左内边距，750 稿长度；不传时取样式默认值
+	indent: Number
 };
 export type Props = ExtractPropTypes<typeof props>;

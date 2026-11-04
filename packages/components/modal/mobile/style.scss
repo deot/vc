@@ -34,6 +34,7 @@ $box-shadow: varfix(box-shadow, modal);
 	@include element(container) {
 		position: relative;
 		display: flex;
+		width: remfix(540);
 		margin: auto;
 		pointer-events: auto;
 		background: $background-color-lightest;

@@ -22,7 +22,6 @@ $component-name: vcm-carousel;
 
 	@include element(wrapper) {
 		position: relative;
-		height: remfix(600);
 	}
 
 	@include element(dots) {

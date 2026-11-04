@@ -21,10 +21,8 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
-	indent: {
-		type: Number,
-		default: 12
-	},
+	// 根节点左内边距，750 稿长度；不传时取样式默认值
+	indent: Number,
 
 	// 跳转的地址
 	to: [String, Object, Function],

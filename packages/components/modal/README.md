@@ -608,7 +608,7 @@ const handleSubmit = async () => {
 | mode | 移动端布局模式 | `string` | `alert`、`operation` | `alert` |
 | title | 标题；`false` 隐藏。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| boolean \| Function \| { type: string; value: any }` | - | - |
 | content | 内容；`false` 隐藏，其余取值与 title 相同 | `string \| number \| boolean \| Function \| { type: string; value: any }` | - | - |
-| width | 对话框宽度，单位为 px | `number` | - | `270` |
+| width | 对话框宽度，750 稿长度 | `number` | - | 样式默认 `540` |
 | mask | 是否显示遮罩 | `boolean` | - | `true` |
 | maskClosable | 是否允许点击遮罩关闭 | `boolean` | - | `true` |
 | closeWithCancel | 点击遮罩关闭时是否先执行 `onCancel` / `cancel` | `boolean` | - | `true` |

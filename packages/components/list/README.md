@@ -18,10 +18,10 @@
 -->
 ```vue
 <template>
-	<MList :label-width="80">
+	<MList :label-width="160">
 		<MListItem label="名称" extra="示例名称" :arrow="false" />
 		<MListItem label="状态切换" :extra="isEnabled ? '已开启' : '已关闭'" @click="isEnabled = !isEnabled" />
-		<MListItem label="描述" :label-width="100" extra="点击列表项可切换选项状态" :arrow="false" />
+		<MListItem label="描述" :label-width="200" extra="点击列表项可切换选项状态" :arrow="false" />
 	</MList>
 </template>
 
@@ -93,7 +93,7 @@ const handleOpen = () => { count.value++; };
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | tag | 容器标签 | `string` | - | `'div'` |
-| labelWidth | 子项标签宽度；正数或数字字符串按 px 处理，其他值为自动宽度 | `string \| number` | - | `''` |
+| labelWidth | 子项标签宽度；正数或数字字符串为 750 稿长度，其他值为自动宽度 | `string \| number` | - | `''` |
 | border | 是否显示容器上下边框，不控制子项分隔线 | `boolean` | - | `true` |
 
 ### MList 插槽
@@ -112,7 +112,7 @@ const handleOpen = () => { count.value++; };
 | extra | 右侧内容，取值与 label 相同；extra 插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | arrow | 字符串指定 Icon 类型，`true` 显示右箭头，`false` 或空字符串隐藏 | `string \| boolean` | - | `'right'` |
 | multiple | 标签与内容上下排列 | `boolean` | - | `false` |
-| indent | 根节点左内边距，单位 px | `number` | - | `12` |
+| indent | 根节点左内边距，750 稿长度 | `number` | - | 样式默认 `24` |
 | to | 点击后的目标或回调，详见导航行为 | `string \| object \| Function` | - | - |
 | href | 在当前页面跳转的地址 | `string` | - | - |
 | alone | 强制独立模式；移除内部上下、右侧内边距和底部分隔线，保留 `indent` | `boolean` | - | `false` |

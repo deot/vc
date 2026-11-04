@@ -314,7 +314,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | itemStyle | 每个选项的行内样式；改变高度时应同时设置行高变量 | `Record<string, any>` | - | - |
 | loadData | 数据为空时点击执行；需更新 data | `() => Promise<any> \| any` | - | - |
 | label | 默认触发区域的标题 | `string` | - | - |
-| labelWidth | 默认触发区域标题宽度，传给 MListItem | `string \| number` | - | - |
+| labelWidth | 默认触发区域标题宽度，750 稿长度，传给 MListItem | `string \| number` | - | - |
 | extra | formatter 返回空值时的提示；支持空字符串 | `string` | - | 当前语言的“请选择” |
 | formatter | 格式化选中项的 label 数组 | `(label: any[]) => string` | - | 以 `,` 拼接 |
 | title | 弹层标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |

@@ -1837,15 +1837,18 @@ describe('MModalView 基础渲染 / props', () => {
 		wrapper.unmount();
 	});
 
-	it('basicStyle: width 默认 270px, maxHeight 为视口减去留白', async () => {
+	it('basicStyle: width 按 750 稿，不传时由样式给出；maxHeight 为视口减去留白', async () => {
 		const wrapper = mount(MModalView, {
 			attachTo: document.body,
-			props: { modelValue: true, mode: 'alert', title: 't', content: 'c', width: 320 }
+			props: { modelValue: true, mode: 'alert', title: 't', content: 'c', width: 640 }
 		});
 		await flush();
 		const container = wrapper.find('.vcm-modal__container').element as HTMLElement;
-		expect(container.style.width).toBe('320px');
+		expect(container.style.width).toBe('calc(var(--vc-rem) * 640)');
 		expect(container.style.maxHeight).toBe('calc(100% - var(--vc-rem) * 40)');
+
+		await wrapper.setProps({ width: undefined });
+		expect(container.style.width).toBe('');
 		wrapper.unmount();
 	});
 

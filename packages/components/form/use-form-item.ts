@@ -25,7 +25,13 @@ const toRules = (rules?: FormRule | FormRule[]) => {
 			: [];
 };
 
-export const useFormItem = (expose: SetupContext['expose']) => {
+/**
+ * @param expose ~
+ * @param options ~
+ * @param options.rem 数字长度（labelWidth 等）为 750 稿（移动端）；自动宽度是量取的 px，不受影响
+ * @returns ~
+ */
+export const useFormItem = (expose: SetupContext['expose'], options: { rem?: boolean } = {}) => {
 	const form = inject<FormProvide>('vc-form');
 	const instance = getCurrentInstance()!;
 	const props = instance.props as Props;
@@ -133,7 +139,10 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 		el && Resize.on(el, handleLabelResize, { shared: true });
 	};
 
-	const toPx = (width?: number | string) => (typeof width === 'number' && width > 0 ? `${width}px` : '');
+	const toLength = (width: number | string | undefined, measured: boolean) => {
+		if (typeof width !== 'number' || width <= 0) return '';
+		return options.rem && !measured ? `calc(var(--vc-rem) * ${width})` : `${width}px`;
+	};
 
 	const labelStyle = computed(() => {
 		const labelWidth = isAutoWidth.value
@@ -141,7 +150,7 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 			: props.labelWidth ?? (isNested.value ? 0 : form.props.labelWidth);
 		return [
 			{
-				width: (labelPosition.value !== 'top' && toPx(labelWidth)) || 'auto',
+				width: (labelPosition.value !== 'top' && toLength(labelWidth, isAutoWidth.value)) || 'auto',
 				textAlign: labelPosition.value === 'top' ? 'left' : labelPosition.value
 			},
 			form.props.labelStyle,
@@ -156,8 +165,8 @@ export const useFormItem = (expose: SetupContext['expose']) => {
 			{
 				marginLeft: labelPosition.value === 'top' || (!hasLabel.value && isNested.value)
 					? 0
-					: toPx(labelWidth) || 'unset',
-				marginBottom: isNested.value && !isNestedLast.value ? `20px` : 0
+					: toLength(labelWidth, isAutoWidth.value) || 'unset',
+				marginBottom: isNested.value && !isNestedLast.value ? (options.rem ? 'calc(var(--vc-rem) * 40)' : '20px') : 0
 			},
 			form.props.contentStyle,
 			isNested.value && form.props.nestedContentStyle,

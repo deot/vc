@@ -4,7 +4,7 @@
 		<h1>宽度要>50%，否则会失效</h1>
 		<div style="padding: 10px 0; background-color: white;">
 			<MCarousel
-				:height="150"
+				:height="300"
 				:autoplay="false"
 				:indicator="true"
 				:loop="false"
@@ -14,8 +14,8 @@
 				<MCarouselItem
 					v-for="item in 4"
 					:key="item"
-					:width="`calc(100% - 100px)`"
-					:gap="20"
+					:width="`calc(100% - var(--vc-rem) * 200)`"
+					:gap="40"
 				>
 					<h3>{{ item }}</h3>
 				</MCarouselItem>

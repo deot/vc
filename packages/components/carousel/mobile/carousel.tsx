@@ -76,7 +76,10 @@ export const MCarousel = defineComponent({
 					<div
 						ref={content}
 						style={{
-							height: props.height ? `${props.height}px` : 'auto',
+							// 数字为 750 稿长度，字符串原样作为 CSS 长度；不传时随内容
+							height: !props.height
+								? undefined
+								: typeof props.height === 'number' ? `calc(var(--vc-rem) * ${props.height})` : props.height,
 						}}
 						class="vcm-carousel__wrapper"
 					>

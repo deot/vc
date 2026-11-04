@@ -886,15 +886,20 @@ describe('index.ts', () => {
 		const formData = reactive({ input: '' });
 
 		const wrapper = mount(() => (
-			<MForm ref={form} model={formData}>
+			<MForm ref={form} model={formData} labelWidth={160}>
 				<MFormItem prop="input" label="移动端" indent={20}>
 					<Input v-model={formData.input} />
 				</MFormItem>
+				<MFormItem class="default-indent" label="默认" />
 			</MForm>
 		));
 
+		// 移动端数字长度为 750 稿
 		expect(wrapper.find('.vcm-form-item__label').text()).toBe('移动端');
-		expect(wrapper.find('.vcm-form-item').attributes('style')).toContain('padding-left: 20px');
+		expect(wrapper.find('.vcm-form-item').attributes('style')).toContain('padding-left: calc(var(--vc-rem) * 20)');
+		expect(wrapper.find('.vcm-form-item__label').attributes('style')).toContain('width: calc(var(--vc-rem) * 160)');
+		expect(wrapper.find('.vcm-form-item__content').attributes('style')).toContain('margin-left: calc(var(--vc-rem) * 160)');
+		expect(wrapper.find('.default-indent').attributes('style')).toBeUndefined();
 	});
 
 	it('m-form, failed & showMessage', async () => {

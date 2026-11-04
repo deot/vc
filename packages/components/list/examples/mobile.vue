@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<MList :label-width="100" style="margin: 20px 0;">
+		<MList :label-width="200" style="margin: 20px 0;">
 			<MListItem :arrow="false" label="名称">
 				<template #label="">
 					<div />

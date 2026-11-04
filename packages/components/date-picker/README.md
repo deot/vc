@@ -381,7 +381,7 @@ const time = ref();
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | label | 条目标签 | `string` | - | - |
-| labelWidth | 条目标签宽度 | `string \| number` | - | `''` |
+| labelWidth | 条目标签宽度，750 稿长度，传给 MListItem | `string \| number` | - | `''` |
 | arrow | 条目箭头 | `boolean \| string` | - | `right` |
 | extra | 未选中时的提示，允许空字符串 | `string` | - | 当前语言的“请选择” |
 | formatter | 自定义显示，返回假值时使用默认显示 | `(value, format: string, dates: Date[]) => any` | - | - |

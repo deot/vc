@@ -266,7 +266,7 @@ const handleSubmit = async () => {
 
 ### 移动端
 
-MForm 复用相同的数据、校验和重置逻辑。`showToast` 与 `showMessage` 同时为 `true` 时，手动校验失败会弹出第一条错误；`indent` 控制非嵌套项的左侧缩进。
+MForm 复用相同的数据、校验和重置逻辑。移动端的数字长度（`labelWidth`、`indent`）按 750 稿解释，`750` 即屏幕宽度，见 `--vc-rem`；`labelWidth: 'auto'` 量取的宽度不受影响。`showToast` 与 `showMessage` 同时为 `true` 时，手动校验失败会弹出第一条错误；`indent` 控制非嵌套项的左侧缩进。
 
 :::playground
 <!--
@@ -438,7 +438,7 @@ p { margin: 12px 0 0; }
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| indent | 非嵌套项的左侧缩进，单位 px；嵌套项为 0 | `number` | - | `12` |
+| indent | 非嵌套项的左侧缩进，750 稿长度；嵌套项为 0 | `number` | - | 样式默认 `24` |
 
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |

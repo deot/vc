@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent } from 'vue';
+import { defineComponent, computed } from 'vue';
 import { props as mFormItemProps } from './form-item-props';
 import { useFormItem } from '../use-form-item';
 import { MCustomer } from '../../customer/index.m';
@@ -12,7 +12,7 @@ export const MFormItem = defineComponent({
 	name: COMPONENT_NAME,
 	props: mFormItemProps,
 	setup(props, { slots, expose }) {
-		const it = useFormItem(expose);
+		const it = useFormItem(expose, { rem: true });
 
 		const {
 			isStyleless,
@@ -31,6 +31,12 @@ export const MFormItem = defineComponent({
 		} = it;
 
 		const errorColorClass = 'vcm-form-item__error';
+
+		// 嵌套项不缩进；未传 indent 时取样式默认值
+		const rootStyle = computed(() => {
+			if (isNested.value) return { paddingLeft: 0 };
+			return props.indent != null ? { paddingLeft: `calc(var(--vc-rem) * ${props.indent})` } : undefined;
+		});
 
 		// label 插槽优先；文字直接放在 label 内，渲染函数与 { type, value } 交给 Customer
 		const renderLabel = () => {
@@ -54,7 +60,7 @@ export const MFormItem = defineComponent({
 			];
 			return (
 				<div
-					style={{ paddingLeft: `${isNested.value ? 0 : props.indent}px` }}
+					style={rootStyle.value}
 					class={[classes.value, 'vcm-form-item']}
 				>
 					<div class="vcm-form-item__wrapper">

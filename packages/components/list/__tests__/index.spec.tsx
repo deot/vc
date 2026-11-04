@@ -67,6 +67,18 @@ describe('index.ts', () => {
 		expect(wrapper.find('.item-extra').text()).toBe('custom extra');
 	});
 
+	it('indent: 按 750 稿，不传时由样式给出', async () => {
+		const wrapper = mount(() => (
+			<MList>
+				<MListItem class="item-1" label="a" />
+				<MListItem class="item-2" label="b" indent={48} />
+			</MList>
+		));
+
+		expect((wrapper.find('.item-1').element as HTMLElement).style.paddingLeft).toBe('');
+		expect((wrapper.find('.item-2').element as HTMLElement).style.paddingLeft).toBe('calc(var(--vc-rem) * 48)');
+	});
+
 	it('VcInstance, to -> undefined', async () => {
 		const to = vi.fn();
 		VcInstance.configure({
