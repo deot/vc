@@ -12,7 +12,7 @@ $component-name: vcm-checkbox;
 
 @include block($component-name) {
 	display: inline-flex;
-	font-size: unitfix(16);
+	font-size: remfix(32);
 	cursor: pointer;
 	align-items: center;
 
@@ -26,7 +26,7 @@ $component-name: vcm-checkbox;
 		cursor: pointer;
 
 		@include when(sibling, true) {
-			margin-right: unitfix(12);
+			margin-right: remfix(24);
 		}
 
 		input {
@@ -49,11 +49,11 @@ $component-name: vcm-checkbox;
 		top: 0;
 		left: 0;
 		display: inline-block;
-		width: unitfix(16);
-		height: unitfix(16);
+		width: remfix(32);
+		height: remfix(32);
 		background-color: $background-color-lightest;
 
-		@include border('', $border-color, 2);
+		@include border('', $border-color, remfix(4));
 
 		&::after, &::before {
 			transition: border-color .2s;
@@ -62,12 +62,12 @@ $component-name: vcm-checkbox;
 
 	@include element(inner) {
 		position: absolute;
-		top: unitfix(2);
-		left: unitfix(5); // 有效
+		top: remfix(4);
+		left: remfix(10); // 有效
 		display: table;
-		width: unitfix(6);
-		height: unitfix(10);
-		border: unitfix(2) solid $color-contrast-light;
+		width: remfix(12);
+		height: remfix(20);
+		border: remfix(4) solid $color-contrast-light;
 		border-collapse: initial;
 		border-top: 0;
 		border-left: 0;
@@ -94,7 +94,7 @@ $component-name: vcm-checkbox;
 	@include when(focus) {
 		@include element(border){
 			z-index: 1;
-			box-shadow: 0 0 0 unitfix(2) $color-primary-lighter;
+			box-shadow: 0 0 0 remfix(4) $color-primary-lighter;
 		}
 	}
 
@@ -116,10 +116,10 @@ $component-name: vcm-checkbox;
 		}
 
 		@include element(inner) {
-			top: unitfix(7);
-			left: unitfix(3);
-			width: unitfix(10);
-			height: unitfix(2);
+			top: remfix(14);
+			left: remfix(6);
+			width: remfix(20);
+			height: remfix(4);
 			transform: scale(1);
 		}
 	}

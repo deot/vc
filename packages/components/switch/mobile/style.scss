@@ -21,13 +21,13 @@ $thumb-border-color: color-mix(in srgb, #{$color-contrast-dark} 13%, transparent
 @include block($component-name) {
 	position: relative;
 	display: inline-flex;
-	width: 51px;
-	height: 31px;
-	line-height: 32px;
+	width: remfix(102);
+	height: remfix(62);
+	line-height: remfix(64);
 	cursor: pointer;
 	background-color: $color-light-deepest;
-	border: 2px solid $color-light-deepest;
-	border-radius: 31px;
+	border: remfix(4) solid $color-light-deepest;
+	border-radius: remfix(62);
 	box-sizing: border-box;
 	transition: all .2s ease-in-out;
 	user-select: none;
@@ -37,9 +37,9 @@ $thumb-border-color: color-mix(in srgb, #{$color-contrast-dark} 13%, transparent
 
 	@include element(content) {
 		position: absolute;
-		left: 30px;
-		font-size: 14px;
-		line-height: 28px;
+		left: remfix(60);
+		font-size: remfix(28);
+		line-height: remfix(56);
 		color: $color-contrast-light;
 	}
 
@@ -47,8 +47,8 @@ $thumb-border-color: color-mix(in srgb, #{$color-contrast-dark} 13%, transparent
 		position: absolute;
 		top: -1px;
 		left: -1px;
-		width: 28px;
-		height: 28px;
+		width: remfix(56);
+		height: remfix(56);
 		cursor: pointer;
 		background-color: $color-contrast-light;
 		border: 1px solid $thumb-border-color-fallback;
@@ -59,7 +59,7 @@ $thumb-border-color: color-mix(in srgb, #{$color-contrast-dark} 13%, transparent
 			}
 		}
 
-		border-radius: 28px;
+		border-radius: remfix(56);
 		content: '';
 		box-shadow: $box-shadow-floating;
 		transition: left .2s ease-in-out,width .2s ease-in-out;
@@ -67,11 +67,11 @@ $thumb-border-color: color-mix(in srgb, #{$color-contrast-dark} 13%, transparent
 
 	@include element(loading) {
 		position: absolute;
-		top: 6px;
-		left: 6px;
+		top: remfix(12);
+		left: remfix(12);
 		z-index: 1;
-		width: 14px;
-		height: 14px;
+		width: remfix(28);
+		height: remfix(28);
 		color: $color-primary;
 		opacity: .4;
 	}
@@ -81,16 +81,16 @@ $thumb-border-color: color-mix(in srgb, #{$color-contrast-dark} 13%, transparent
 		border-color: $color-primary;
 
 		@include element(content) {
-			left: 3px;
+			left: remfix(6);
 			color: $color-contrast-light;
 		}
 
 		@include element(inner) {
-			left: 20px;
+			left: remfix(40);
 		}
 
 		@include element(loading) {
-			left: 25px;
+			left: remfix(50);
 		}
 	}
 

@@ -24,11 +24,11 @@ $background-color-lightest: varfix(background-color-lightest, list);
 
 		& {
 			display: flex;
-			padding-top: 12px;
-			padding-right: 12px;
-			padding-bottom: 12px;
-			font-size: 16px;
-			line-height: 24px;
+			padding-top: remfix(24);
+			padding-right: remfix(24);
+			padding-bottom: remfix(24);
+			font-size: remfix(32);
+			line-height: remfix(48);
 			color: $color-dark;
 			background: $background-color-lightest;
 		}
@@ -65,8 +65,8 @@ $background-color-lightest: varfix(background-color-lightest, list);
 	}
 
 	@include element(icon) {
-		margin-left: 5px;
-		font-size: 13px;
+		margin-left: remfix(10);
+		font-size: remfix(26);
 		color: $color-dark-extralight;
 	}
 

@@ -12,15 +12,15 @@ $background-color-lightest: varfix(background-color-lightest, picker);
 		display: flex;
 		align-items: center;
 		background-color: $background-color-lightest;
-		border-bottom: unitfix(1) solid $color-neutral-light;
+		border-bottom: 1px solid $color-neutral-light;
 		box-sizing: border-box;
 	}
 
 	@include element(item) {
-		height: unitfix(44);
-		padding: 0 unitfix(15);
-		font-size: unitfix(17);
-		line-height: unitfix(44);
+		height: remfix(88);
+		padding: 0 remfix(30);
+		font-size: remfix(34);
+		line-height: remfix(88);
 		color: $color-primary;
 
 		@include when(title) {

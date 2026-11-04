@@ -1845,7 +1845,7 @@ describe('MModalView 基础渲染 / props', () => {
 		await flush();
 		const container = wrapper.find('.vcm-modal__container').element as HTMLElement;
 		expect(container.style.width).toBe('320px');
-		expect(container.style.maxHeight).toBe('calc(100% - 20px)');
+		expect(container.style.maxHeight).toBe('calc(100% - var(--vc-rem) * 40)');
 		wrapper.unmount();
 	});
 

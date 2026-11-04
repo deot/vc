@@ -3,7 +3,7 @@
 import { computed, defineComponent, Fragment } from 'vue';
 import { useLocale } from '../../../locale';
 import { Icon } from '../../../icon';
-import { Spin } from '../../../spin';
+import { MSpin } from '../../../spin/index.m';
 import { getAvailableIndex } from '../../utils';
 
 export const MVideoItem = defineComponent({
@@ -38,8 +38,8 @@ export const MVideoItem = defineComponent({
 												typeof value === 'string' && !row.errorFlag
 													? <video src={value} preload="metadata" playsinline />
 													: isError
-														? <div style="padding: 5px">{t('vc.UploadPicker.failed')}</div>
-														: <Spin size={20} />
+														? <div class="vcm-upload-picker-video-item__failed">{t('vc.UploadPicker.failed')}</div>
+														: <MSpin size={40} />
 											}
 										</div>
 										{

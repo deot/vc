@@ -12,20 +12,20 @@ $delete-background: color-mix(in srgb, #{$color-contrast-dark} 40%, transparent)
 
 @include block($component-name) {
 	display: flex;
-	font-size: 12px;
+	font-size: remfix(24);
 	box-sizing: border-box;
 	flex-wrap: wrap;
 
 	@include share-rule(box) {
-		width: 78px;
-		height: 78px;
+		width: remfix(156);
+		height: remfix(156);
 		cursor: pointer;
-		border-radius: 2px;
+		border-radius: remfix(4);
 	}
 
 	@include element(item) {
-		margin-right: 8px;
-		margin-bottom: 8px;
+		margin-right: remfix(16);
+		margin-bottom: remfix(16);
 
 		@include extend-rule(box);
 	}
@@ -37,9 +37,9 @@ $delete-background: color-mix(in srgb, #{$color-contrast-dark} 40%, transparent)
 		top: 0;
 		right: 0;
 		z-index: 10;
-		width: 15px;
-		height: 15px;
-		font-size: 7px;
+		width: remfix(30);
+		height: remfix(30);
+		font-size: remfix(14);
 		color: $color-contrast-light;
 		background: $delete-background-fallback;
 
@@ -49,12 +49,12 @@ $delete-background: color-mix(in srgb, #{$color-contrast-dark} 40%, transparent)
 			}
 		}
 
-		border-radius: 2px;
+		border-radius: remfix(4);
 	}
 
 	@include element(upload) {
-		margin-right: 8px;
-		margin-bottom: 8px;
+		margin-right: remfix(16);
+		margin-bottom: remfix(16);
 	}
 
 	@include element(box) {
@@ -69,7 +69,7 @@ $delete-background: color-mix(in srgb, #{$color-contrast-dark} 40%, transparent)
 	}
 
 	@include element(plus-icon) {
-		font-size: 30px;
+		font-size: remfix(60);
 	}
 
 	.vcm-sort-list > div {

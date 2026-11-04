@@ -63,17 +63,16 @@ export const MTabs = defineComponent({
 		};
 
 		/**
-		 * 刷新当前标签底下的滑块：dark 固定 20px，light 默认按标签文字（span）的宽度，居中于标签
+		 * 刷新当前标签底下的滑块：light 默认按标签文字（span）的宽度，居中于标签；
+		 * dark 取整个标签宽度，短条由样式居中绘制（宽度随 --vc-rem）
 		 */
 		const refreshAfloat = () => {
 			const $ = getActiveItem();
 			const width = !$
 				? 0
-				: isDark.value
-					? 20
-					: props.autoAfloatWidth
-						? ($.firstElementChild as HTMLElement).offsetWidth
-						: $.offsetWidth;
+				: props.autoAfloatWidth && !isDark.value
+					? ($.firstElementChild as HTMLElement).offsetWidth
+					: $.offsetWidth;
 			tabs.afloatWidth.value = width;
 			tabs.afloatOffset.value = $ ? $.offsetLeft + ($.offsetWidth - width) / 2 : 0;
 		};

@@ -16,7 +16,7 @@ $foreground-color-inactive: varfix(foreground-color-inactive, action-sheet);
 	@include element(wrapper) {
 		overflow: hidden;
 		background: transparent;
-		border-radius: unitfix(12) unitfix(12) 0 0;
+		border-radius: remfix(24) remfix(24) 0 0;
 	}
 
 	@include element(container) {
@@ -27,14 +27,14 @@ $foreground-color-inactive: varfix(foreground-color-inactive, action-sheet);
 	@include element(group) {
 		overflow: hidden;
 		background: $background-color-lightest;
-		border-radius: unitfix(12) unitfix(12) 0 0;
+		border-radius: remfix(24) remfix(24) 0 0;
 	}
 
 	@include element(title) {
 		position: relative;
-		padding: unitfix(15) unitfix(16);
-		font-size: unitfix(14);
-		line-height: unitfix(20);
+		padding: remfix(30) remfix(32);
+		font-size: remfix(28);
+		line-height: remfix(40);
 		color: $color-dark-lightest;
 		text-align: center;
 		overflow-wrap: break-word;
@@ -50,10 +50,10 @@ $foreground-color-inactive: varfix(foreground-color-inactive, action-sheet);
 	@include element(item) {
 		position: relative;
 		display: flex;
-		min-height: unitfix(50);
-		padding: unitfix(14) unitfix(16);
-		font-size: unitfix(16);
-		line-height: unitfix(22);
+		min-height: remfix(100);
+		padding: remfix(28) remfix(32);
+		font-size: remfix(32);
+		line-height: remfix(44);
 		text-align: center;
 		cursor: pointer;
 		background: $background-color-lightest;
@@ -100,9 +100,9 @@ $foreground-color-inactive: varfix(foreground-color-inactive, action-sheet);
 
 	@include element(sub-content) {
 		width: 100%;
-		margin-top: unitfix(3);
-		font-size: unitfix(12);
-		line-height: unitfix(18);
+		margin-top: remfix(6);
+		font-size: remfix(24);
+		line-height: remfix(36);
 		color: $color-dark-lightest;
 		overflow-wrap: break-word;
 	}
@@ -121,13 +121,13 @@ $foreground-color-inactive: varfix(foreground-color-inactive, action-sheet);
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		margin-left: unitfix(6);
+		margin-left: remfix(12);
 		transform: translateY(-50%);
 	}
 
 	@include element(gap) {
 		position: relative;
-		height: unitfix(8);
+		height: remfix(16);
 		background: $background-color;
 
 		&::after {
@@ -140,10 +140,10 @@ $foreground-color-inactive: varfix(foreground-color-inactive, action-sheet);
 	}
 
 	@include element(cancel) {
-		min-height: unitfix(50);
-		padding: unitfix(14) unitfix(16);
-		font-size: unitfix(16);
-		line-height: unitfix(22);
+		min-height: remfix(100);
+		padding: remfix(28) remfix(32);
+		font-size: remfix(32);
+		line-height: remfix(44);
 		color: $color-dark-lightest;
 		text-align: center;
 		cursor: pointer;

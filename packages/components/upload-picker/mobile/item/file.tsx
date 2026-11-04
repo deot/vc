@@ -3,7 +3,7 @@
 import { computed, defineComponent, Fragment } from 'vue';
 import { useLocale } from '../../../locale';
 import { Icon } from '../../../icon';
-import { Spin } from '../../../spin';
+import { MSpin } from '../../../spin/index.m';
 import { getAvailableIndex } from '../../utils';
 
 export const MFileItem = defineComponent({
@@ -39,7 +39,7 @@ export const MFileItem = defineComponent({
 												isError
 													? <span>{t('vc.UploadPicker.failed')}</span>
 													: !value
-															? <Spin size={20} />
+															? <MSpin size={40} />
 															: (
 																	<Fragment>
 																		<Icon type="file" class="vcm-upload-picker-file-item__file-icon" />

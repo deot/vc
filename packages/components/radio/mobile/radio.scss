@@ -13,7 +13,7 @@ $component-name: vcm-radio;
 @include block($component-name) {
 	position: relative;
 	display: inline-flex;
-	font-size: unitfix(16);
+	font-size: remfix(32);
 	line-height: 1;
 	white-space: nowrap;
 	cursor: pointer;
@@ -29,15 +29,15 @@ $component-name: vcm-radio;
 		cursor: pointer;
 
 		@include when(sibling, true) {
-			margin-right: unitfix(12);
+			margin-right: remfix(24);
 		}
 
 		input {
 			position: absolute;
 			inset: 0;
 			z-index: 1;
-			width: unitfix(16);
-			height: unitfix(16);
+			width: remfix(32);
+			height: remfix(32);
 			cursor: pointer;
 			opacity: 0;
 		}
@@ -48,8 +48,8 @@ $component-name: vcm-radio;
 		top: 0;
 		left: 0;
 		display: inline-block;
-		width: unitfix(16);
-		height: unitfix(16);
+		width: remfix(32);
+		height: remfix(32);
 		background-color: $background-color-lightest;
 		border-radius: 50%;
 		transition: all .2s ease-in-out;
@@ -59,12 +59,12 @@ $component-name: vcm-radio;
 
 	@include element(inner) {
 		position: absolute;
-		top: unitfix(2);
-		left: unitfix(5); // 有效
+		top: remfix(4);
+		left: remfix(10); // 有效
 		display: table;
-		width: unitfix(6);
-		height: unitfix(10);
-		border: unitfix(2) solid $color-contrast-light;
+		width: remfix(12);
+		height: remfix(20);
+		border: remfix(4) solid $color-contrast-light;
 		border-collapse: initial;
 		border-top: 0;
 		border-left: 0;
@@ -120,7 +120,7 @@ $component-name: vcm-radio;
 	@include when(focus) {
 		@include element(border){
 			z-index: 1;
-			box-shadow: 0 0 0 unitfix(2) $color-primary-lighter;
+			box-shadow: 0 0 0 remfix(4) $color-primary-lighter;
 		}
 	}
 }

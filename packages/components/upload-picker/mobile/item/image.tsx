@@ -4,7 +4,7 @@ import { computed, defineComponent, Fragment } from 'vue';
 import { useLocale } from '../../../locale';
 import { Icon } from '../../../icon';
 import { Image } from '../../../image';
-import { Spin } from '../../../spin';
+import { MSpin } from '../../../spin/index.m';
 import { getAvailableIndex } from '../../utils';
 
 export const MImageItem = defineComponent({
@@ -51,8 +51,8 @@ export const MImageItem = defineComponent({
 														<div class={[props.imageClass, 'vcm-upload-image-item__content']}>
 															{
 																isError
-																	? <div style="padding: 5px">{t('vc.UploadPicker.failed')}</div>
-																	: <Spin size={20} />
+																	? <div class="vcm-upload-image-item__failed">{t('vc.UploadPicker.failed')}</div>
+																	: <MSpin size={40} />
 															}
 														</div>
 													)

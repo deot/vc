@@ -15,7 +15,7 @@ $component-name: vcm-textarea;
 	position: relative;
 	display: inline-flex;
 	width: 100%;
-	min-height: unitfix(24); // 动态计算
+	min-height: remfix(48); // 动态计算
 	line-height: 1.5;
 	cursor: text;
 
@@ -32,13 +32,13 @@ $component-name: vcm-textarea;
 			position: relative;
 			display: block; // 两个文本框默认情况下上下会有一个间距
 			width: 100%;
-			min-height: unitfix(24);
-			padding-right: unitfix(7);
-			padding-left: unitfix(7);
+			min-height: remfix(48);
+			padding-right: remfix(14);
+			padding-left: remfix(14);
 			overflow: auto;
 			font-family: inherit;
 			font-size: inherit;
-			font-size: unitfix(16);
+			font-size: remfix(32);
 			line-height: inherit;
 			color: $color-dark-light;
 			background-color: $background-color-lightest;

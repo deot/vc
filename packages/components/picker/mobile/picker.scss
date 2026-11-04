@@ -7,7 +7,7 @@ $background-color-lightest: varfix(background-color-lightest, picker);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	min-height: unitfix(44);
+	min-height: remfix(88);
 	cursor: pointer;
 	background: $background-color-lightest;
 }

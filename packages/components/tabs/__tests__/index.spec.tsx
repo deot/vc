@@ -1229,7 +1229,7 @@ describe('mobile', () => {
 		expect(wrapper.findAll('.vcm-tabs__item')).toHaveLength(2);
 	});
 
-	it('theme=dark adds is-dark class and afloat width=20', async () => {
+	it('theme=dark adds is-dark class and afloat spans the tab', async () => {
 		const wrapper = mount(() => (
 			<MTabs modelValue={0} theme="dark">
 				<MTabsPane label="a">A</MTabsPane>
@@ -1240,8 +1240,9 @@ describe('mobile', () => {
 		await flush();
 		expect(wrapper.classes()).toContain('is-dark');
 
+		// jsdom 无布局，标签宽为 0；短条由样式在滑块内居中绘制
 		const afloat = wrapper.find('.vcm-tabs__afloat').element as HTMLElement;
-		expect(afloat.style.width).toBe('20px');
+		expect(afloat.style.width).toBe('0px');
 		wrapper.unmount();
 	});
 
@@ -1461,9 +1462,9 @@ describe('mobile', () => {
 		await flush();
 
 		const afloat = (wrapper.find('.vcm-tabs__afloat').element as HTMLElement).style;
-		// dark 固定 20px：100 + (80 - 20) / 2
-		expect(afloat.width).toBe('20px');
-		expect(afloat.transform).toBe('translate3d(130px, 0px, 0px)');
+		// dark 滑块铺满标签，短条由样式居中绘制
+		expect(afloat.width).toBe('80px');
+		expect(afloat.transform).toBe('translate3d(100px, 0px, 0px)');
 		wrapper.unmount();
 	});
 });

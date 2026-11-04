@@ -9,7 +9,7 @@ $surface-color-fallback: color.change($color-contrast-dark-frozen, $alpha: .75);
 $surface-color: color-mix(in srgb, #{$color-contrast-dark} 75%, transparent);
 
 @include block($component-name) {
-	font-size: unitfix(12);
+	font-size: remfix(24);
 
 	@include element(bg) {
 		position: fixed;
@@ -27,7 +27,7 @@ $surface-color: color-mix(in srgb, #{$color-contrast-dark} 75%, transparent);
 		position: fixed;
 		z-index: 4001;
 		max-width: 50%; // 含内边距，与此前的最大宽度一致
-		padding: unitfix(9) unitfix(15);
+		padding: remfix(18) remfix(30);
 		line-height: 1.5;
 		color: $color-contrast-light;
 		text-align: center;
@@ -39,7 +39,7 @@ $surface-color: color-mix(in srgb, #{$color-contrast-dark} 75%, transparent);
 			}
 		}
 
-		border-radius: unitfix(3);
+		border-radius: remfix(6);
 		box-sizing: border-box;
 
 		@include position-center;
@@ -47,7 +47,7 @@ $surface-color: color-mix(in srgb, #{$color-contrast-dark} 75%, transparent);
 
 	// 加载图标与下方文字的间距
 	@include element(loading) {
-		margin-bottom: unitfix(4);
+		margin-bottom: remfix(8);
 	}
 
 	@include element(content) {

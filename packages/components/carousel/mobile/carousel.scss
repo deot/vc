@@ -22,7 +22,7 @@ $component-name: vcm-carousel;
 
 	@include element(wrapper) {
 		position: relative;
-		height: 300px;
+		height: remfix(600);
 	}
 
 	@include element(dots) {
@@ -51,7 +51,7 @@ $component-name: vcm-carousel;
 
 		@include when(outside) {
 			position: static;
-			bottom: 26px;
+			bottom: remfix(52);
 			text-align: center;
 			transform: none;
 
@@ -74,12 +74,12 @@ $component-name: vcm-carousel;
 			.vcm-carousel__button {
 				width: auto;
 				height: auto;
-				padding: 2px 18px;
-				font-size: 12px;
+				padding: remfix(4) remfix(36);
+				font-size: remfix(24);
 			}
 
 			.vcm-carousel__dot {
-				padding: 6px 4px;
+				padding: remfix(12) remfix(8);
 			}
 		}
 	}
@@ -94,15 +94,15 @@ $component-name: vcm-carousel;
 
 		@include when(horizontal) {
 			display: inline-block;
-			padding: 12px 4px;
+			padding: remfix(24) remfix(8);
 		}
 
 		@include when(vertical) {
-			padding: 4px 12px;
+			padding: remfix(8) remfix(24);
 
 			.vcm-carousel__button {
-				width: 2px;
-				height: 15px;
+				width: remfix(4);
+				height: remfix(30);
 			}
 		}
 
@@ -115,10 +115,10 @@ $component-name: vcm-carousel;
 
 	@include element(button) {
 		display: block;
-		width: 8px;
-		height: 8px;
+		width: remfix(16);
+		height: remfix(16);
 		padding: 0;
-		margin: 0 2px;
+		margin: 0 remfix(4);
 		cursor: pointer;
 		background-color: $color-contrast-light;
 		border: none;
@@ -130,12 +130,12 @@ $component-name: vcm-carousel;
 
 	@include element(indicator) {
 		position: absolute;
-		right: 10px;
-		bottom: 10px;
+		right: remfix(20);
+		bottom: remfix(20);
 		z-index: 2;
-		height: 20px;
-		padding: 0 10px;
-		line-height: 20px;
+		height: remfix(40);
+		padding: 0 remfix(20);
+		line-height: remfix(40);
 		color: $color-contrast-light;
 		background: $background-color-indicator-fallback;
 
@@ -145,6 +145,6 @@ $component-name: vcm-carousel;
 			}
 		}
 
-		border-radius: 10px;
+		border-radius: remfix(20);
 	}
 }

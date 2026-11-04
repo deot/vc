@@ -384,7 +384,7 @@ const isDark = ref(false);
 | theme | 标签栏视觉风格 | `string` | `light` / `dark` | `light` |
 | barStyle | 标签栏样式 | `object \| unknown[]` | - | `{}` |
 | afloat | 是否显示下划线 | `boolean` | - | `true` |
-| autoAfloatWidth | light 风格下按标签内 span 宽度计算下划线；false 使用整项宽度，dark 固定为 20px | `boolean` | - | `true` |
+| autoAfloatWidth | light 风格下按标签内 span 宽度计算下划线；false 使用整项宽度，dark 为居中的固定短条 | `boolean` | - | `true` |
 | average | 标签均分可用宽度 | `boolean` | - | `true` |
 | showWrapper | 是否显示标签栏 | `boolean` | - | `true` |
 | sticky | 相对于页面滚动进行吸顶，不支持内层滚动容器 | `boolean` | - | `false` |

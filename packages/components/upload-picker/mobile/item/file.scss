@@ -21,16 +21,16 @@ $color-dark-extralight: varfix(color-dark-extralight, upload-picker);
 		position: relative;
 		width: 100%;
 		height: 100%;
-		padding: 4px;
+		padding: remfix(8);
 		overflow: hidden;
-		border-radius: 2px;
+		border-radius: remfix(4);
 		flex-wrap: wrap;
 	}
 
 	@include element(title) {
 		width: 100%;
 		overflow: hidden;
-		font-size: 12px;
+		font-size: remfix(24);
 		color: $color-dark-lightest;
 		text-align: center;
 		text-overflow: ellipsis;
@@ -39,7 +39,7 @@ $color-dark-extralight: varfix(color-dark-extralight, upload-picker);
 	}
 
 	@include element(file-icon) {
-		font-size: 24px;
+		font-size: remfix(48);
 		color: $color-dark-extralight;
 	}
 }

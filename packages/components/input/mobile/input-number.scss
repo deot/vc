@@ -13,9 +13,9 @@ $component-name: vcm-input-number;
 
 	@include share-rule(m-input-number-icon) {
 		display: block;
-		width: 28px;
-		height: 28px;
-		line-height: 28px;
+		width: remfix(56);
+		height: remfix(56);
+		line-height: remfix(56);
 		color: $color-dark-extralight;
 		text-align: center;
 		cursor: pointer;
@@ -41,38 +41,38 @@ $component-name: vcm-input-number;
 
 	@include element(plus) {
 		position: relative;
-		border-radius: 0 2px 2px 0;
+		border-radius: 0 remfix(4) remfix(4) 0;
 
 		@include extend-rule(m-input-number-icon);
 
 		&::before {
 			@include extend-rule(absolute);
 
-			width: 11px;
-			height: 2px;
+			width: remfix(22);
+			height: remfix(4);
 			content: '';
 		}
 
 		&::after {
 			@include extend-rule(absolute);
 
-			width: 2px;
-			height: 11px;
+			width: remfix(4);
+			height: remfix(22);
 			content: '';
 		}
 	}
 
 	@include element(minus) {
 		position: relative;
-		border-radius: 2px 0 0 2px;
+		border-radius: remfix(4) 0 0 remfix(4);
 
 		@include extend-rule(m-input-number-icon);
 
 		&::before {
 			@include extend-rule(absolute);
 
-			width: 11px;
-			height: 2px;
+			width: remfix(22);
+			height: remfix(4);
 			content: '';
 		}
 	}
@@ -82,11 +82,11 @@ $component-name: vcm-input-number;
 	}
 
 	input {
-		width: 49px;
-		height: 28px;
-		padding: 0 3px;
-		margin: 0 1px;
-		font-size: 13px;
+		width: remfix(98);
+		height: remfix(56);
+		padding: 0 remfix(6);
+		margin: 0 remfix(2);
+		font-size: remfix(26);
 		text-align: center;
 		background-color: $background-color;
 		border-radius: 0; // 不加的话ios端默认带圆角

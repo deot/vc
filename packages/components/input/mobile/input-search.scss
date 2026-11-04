@@ -1,7 +1,7 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-input-search;
-$size: 54px;
+$size: remfix(108);
 $color-dark-extralight: varfix(color-dark-extralight, input);
 $background-color-lightest: varfix(background-color-lightest, input);
 $foreground-color: varfix(foreground-color, input);
@@ -10,36 +10,36 @@ $foreground-color: varfix(foreground-color, input);
 	display: flex;
 	align-items: center;
 	height: $size;
-	padding: 10px;
+	padding: remfix(20);
 
 	.vcm-input {
-		height: 34px;
+		height: remfix(68);
 	}
 
 	.vcm-input__prepend {
-		line-height: 34px;
+		line-height: remfix(68);
 	}
 
 	@include element(content) {
-		padding-right: 14px;
+		padding-right: remfix(28);
 		overflow: hidden;
 		background: $background-color-lightest;
-		border-radius: 16px;
+		border-radius: remfix(32);
 
 		input {
-			padding-top: 6px ;
-			padding-bottom: 5px;
-			font-size: 14px;
+			padding-top: remfix(12) ;
+			padding-bottom: remfix(10);
+			font-size: remfix(28);
 
 			&::placeholder {
-				font-size: 15px;
+				font-size: remfix(30);
 				color: $color-dark-extralight;
 			}
 		}
 
 		@include element(icon){
-			margin-left: 14px;
-			font-size: 15px;
+			margin-left: remfix(28);
+			font-size: remfix(30);
 			color: $color-dark-extralight;
 		}
 
@@ -52,8 +52,8 @@ $foreground-color: varfix(foreground-color, input);
 
 	@include element(btn){
 		height: $size;
-		padding-left: 8px;
-		font-size: 15px;
+		padding-left: remfix(16);
+		font-size: remfix(30);
 		line-height: $size;
 		color: $foreground-color;
 		text-align: right;

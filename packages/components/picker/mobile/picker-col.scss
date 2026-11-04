@@ -4,7 +4,7 @@ $component-name: vcm-picker-col;
 $color-dark: varfix(color-dark, picker);
 $color-neutral-light: varfix(color-neutral-light, picker);
 $background-color-lightest: varfix(background-color-lightest, picker);
-$item-height: varfix(item-height, picker, unitfix(34));
+$item-height: varfix(item-height, picker, remfix(68));
 
 @include block($component-name) {
 	--vcm-picker-item-height: #{$item-height};
@@ -47,8 +47,8 @@ $item-height: varfix(item-height, picker, unitfix(34));
 		width: 100%;
 		height: var(--vcm-picker-item-height);
 		pointer-events: none;
-		border-top: unitfix(1) solid $color-neutral-light;
-		border-bottom: unitfix(1) solid $color-neutral-light;
+		border-top: 1px solid $color-neutral-light;
+		border-bottom: 1px solid $color-neutral-light;
 		box-sizing: border-box;
 	}
 
@@ -60,7 +60,7 @@ $item-height: varfix(item-height, picker, unitfix(34));
 		height: var(--vcm-picker-item-height);
 		padding: 0;
 		overflow: hidden;
-		font-size: unitfix(16);
+		font-size: remfix(32);
 		line-height: var(--vcm-picker-item-height);
 		color: $color-dark;
 		text-align: center;

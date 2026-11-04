@@ -7,7 +7,7 @@ $color-error: varfix(color-error, upload-picker);
 @include block($component-name) {
 	position: relative;
 	display: flex;
-	font-size: 12px;
+	font-size: remfix(24);
 	background-color: $background-color;
 	box-sizing: border-box;
 	flex-wrap: wrap;
@@ -25,6 +25,10 @@ $color-error: varfix(color-error, upload-picker);
 		overflow: hidden;
 		background-color: $background-color;
 		background-size: cover;
-		border-radius: 2px;
+		border-radius: remfix(4);
+	}
+
+	@include element(failed) {
+		padding: remfix(10);
 	}
 }

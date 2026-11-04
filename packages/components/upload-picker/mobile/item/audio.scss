@@ -21,15 +21,19 @@ $color-error: varfix(color-error, upload-picker);
 	@include element(content) {
 		@include flex-cc;
 
-		width: 78px;
-		height: 78px;
+		width: remfix(156);
+		height: remfix(156);
 		overflow: hidden;
-		border-radius: 2px;
+		border-radius: remfix(4);
 
 		> audio {
 			width: 100%;
 			height: 100%;
 		}
+	}
+
+	@include element(failed) {
+		padding: remfix(10);
 	}
 
 	@include element(play) {
@@ -44,8 +48,8 @@ $color-error: varfix(color-error, upload-picker);
 
 		&::before {
 			position: absolute;
-			width: 24px;
-			height: 24px;
+			width: remfix(48);
+			height: remfix(48);
 			border: 1px solid $color-contrast-light;
 			border-radius: 50%;
 			content: '';
@@ -56,9 +60,9 @@ $color-error: varfix(color-error, upload-picker);
 		z-index: 1;
 		width: 0;
 		height: 0;
-		margin-left: 2px;
-		border-top: 5px solid transparent;
-		border-bottom: 5px solid transparent;
-		border-left: 7px solid currentcolor;
+		margin-left: remfix(4);
+		border-top: remfix(10) solid transparent;
+		border-bottom: remfix(10) solid transparent;
+		border-left: remfix(14) solid currentcolor;
 	}
 }

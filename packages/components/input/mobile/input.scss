@@ -10,7 +10,7 @@ $foreground-color: varfix(foreground-color, input);
 	position: relative;
 	display: inline-block;
 	width: 100%;
-	min-height: 24px;
+	min-height: remfix(48);
 	line-height: 1.5;
 	cursor: text;
 	background-color: $background-color-lightest;
@@ -27,11 +27,11 @@ $foreground-color: varfix(foreground-color, input);
 		input {
 			position: relative;
 			width: 100%;
-			padding-right: 7px;
-			padding-left: 7px;
+			padding-right: remfix(14);
+			padding-left: remfix(14);
 			font-family: inherit;
 			font-size: inherit;
-			font-size: 16px;
+			font-size: remfix(32);
 			line-height: inherit;
 			color: $color-dark-light;
 			background-color: unset;
@@ -63,7 +63,7 @@ $foreground-color: varfix(foreground-color, input);
 	}
 
 	@include share-rule(m-input-icon) {
-		font-size: 16px;
+		font-size: remfix(32);
 		color: $color-dark-extralight;
 		text-align: left;
 	}
@@ -96,8 +96,8 @@ $foreground-color: varfix(foreground-color, input);
 		white-space: nowrap;
 
 		@include when(icon) {
-			width: 16px;
-			font-size: 12px;
+			width: remfix(32);
+			font-size: remfix(24);
 			color: $foreground-color;
 			background-color: $background-color-lightest;
 		}

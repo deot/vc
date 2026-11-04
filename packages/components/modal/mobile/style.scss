@@ -37,18 +37,18 @@ $box-shadow: varfix(box-shadow, modal);
 		margin: auto;
 		pointer-events: auto;
 		background: $background-color-lightest;
-		border-radius: unitfix(7);
+		border-radius: remfix(14);
 		box-shadow: $box-shadow;
 		flex-direction: column;
 	}
 
 	@include element(header) {
-		padding: unitfix(24) unitfix(15) unitfix(12);
+		padding: remfix(48) remfix(30) remfix(24);
 	}
 
 	@include element(title) {
 		margin: 0;
-		font-size: unitfix(17);
+		font-size: remfix(34);
 		font-weight: bold;
 		line-height: 1;
 		color: $color-dark;
@@ -58,13 +58,13 @@ $box-shadow: varfix(box-shadow, modal);
 
 	@include element(content) {
 		position: relative;
-		padding: 0 unitfix(24) unitfix(25);
+		padding: 0 remfix(48) remfix(50);
 		overflow-y: auto;
 	}
 
 	@include element(no-title) {
-		padding-top: unitfix(32);
-		padding-bottom: unitfix(32);
+		padding-top: remfix(64);
+		padding-bottom: remfix(64);
 
 		.vcm-modal__html {
 			color: $color-dark;
@@ -72,7 +72,7 @@ $box-shadow: varfix(box-shadow, modal);
 	}
 
 	@include element(html) {
-		font-size: unitfix(15);
+		font-size: remfix(30);
 		line-height: 1.5;
 		color: $color-dark-lighter;
 		text-align: center;
@@ -83,9 +83,9 @@ $box-shadow: varfix(box-shadow, modal);
 	@include element(button) {
 		position: relative;
 		z-index: 1; // android不添加时可能不显示1px描边
-		height: unitfix(50);
-		font-size: unitfix(17);
-		line-height: unitfix(50);
+		height: remfix(100);
+		font-size: remfix(34);
+		line-height: remfix(100);
 		color: $color-primary;
 		text-align: center;
 		overflow-wrap: break-word;
@@ -141,7 +141,7 @@ $box-shadow: varfix(box-shadow, modal);
 		flex-direction: column;
 
 		@include element(button, false) {
-			padding-left: unitfix(15);
+			padding-left: remfix(30);
 			color: $color-dark-light;
 			text-align: left;
 

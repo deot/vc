@@ -3,7 +3,7 @@
 import { computed, defineComponent, Fragment } from 'vue';
 import { useLocale } from '../../../locale';
 import { Icon } from '../../../icon';
-import { Spin } from '../../../spin';
+import { MSpin } from '../../../spin/index.m';
 import { getAvailableIndex } from '../../utils';
 
 export const MAudioItem = defineComponent({
@@ -38,8 +38,8 @@ export const MAudioItem = defineComponent({
 												typeof value === 'string' && !row.errorFlag
 													? <audio src={value} preload="metadata" />
 													: isError
-														? <div style="padding: 5px">{t('vc.UploadPicker.failed')}</div>
-														: <Spin size={20} />
+														? <div class="vcm-upload-picker-audio-item__failed">{t('vc.UploadPicker.failed')}</div>
+														: <MSpin size={40} />
 											}
 										</div>
 										{

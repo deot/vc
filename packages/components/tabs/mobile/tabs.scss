@@ -16,7 +16,7 @@ $dark-stepper-shadow-color: varfix(dark-stepper-shadow-color, tabs, #242421);
 
 	@include element(stepper) {
 		display: flex;
-		width: 40px;
+		width: remfix(80);
 		justify-content: center;
 		align-items: center;
 
@@ -32,7 +32,7 @@ $dark-stepper-shadow-color: varfix(dark-stepper-shadow-color, tabs, #242421);
 	@include element(bar) {
 		position: relative;
 		display: flex;
-		margin-bottom: 8px;
+		margin-bottom: remfix(16);
 		overflow: hidden;
 		align-items: stretch;
 
@@ -62,8 +62,8 @@ $dark-stepper-shadow-color: varfix(dark-stepper-shadow-color, tabs, #242421);
 
 	@include element(item) {
 		position: relative;
-		padding: 15px 10px;
-		font-size: 15px;
+		padding: remfix(30) remfix(20);
+		font-size: remfix(30);
 		line-height: 1;
 		text-align: center;
 		transition: color .3s ease-in-out;
@@ -77,7 +77,7 @@ $dark-stepper-shadow-color: varfix(dark-stepper-shadow-color, tabs, #242421);
 		position: absolute;
 		left: 0;
 		z-index: 1;
-		height: 2px;
+		height: remfix(4);
 		box-sizing: border-box;
 
 	}
@@ -126,9 +126,17 @@ $dark-stepper-shadow-color: varfix(dark-stepper-shadow-color, tabs, #242421);
 		}
 
 		@include element(afloat) {
-			bottom: 6px;
-			background-color: $dark-color;
-			border-radius: 2px;
+			bottom: remfix(12);
+
+			&::before {
+				display: block;
+				width: remfix(40);
+				height: 100%;
+				margin: 0 auto;
+				background-color: $dark-color;
+				border-radius: remfix(4);
+				content: "";
+			}
 		}
 
 		@include element(stepper) {
