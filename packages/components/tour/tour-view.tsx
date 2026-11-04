@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, computed, shallowRef, watch, nextTick, onBeforeUnmount, normalizeStyle, Fragment } from 'vue';
+import { defineComponent, computed, shallowRef, watch, nextTick, normalizeStyle, Fragment } from 'vue';
 import { omit } from 'lodash-es';
 import { getUid } from '@deot/helper-utils';
 import { Button } from '../button';
@@ -104,20 +104,15 @@ export const TourView = defineComponent({
 				queueMicrotask(() => void tour.handleAction('next', 'element', event));
 			}
 		};
-		const detach = () => {
-			document.removeEventListener('click', handleElementClick, true);
-		};
 		watch(
 			() => tour.isActive.value,
-			(isActive) => {
-				detach();
+			(isActive, _, onCleanup) => {
 				if (!isActive) return;
 				document.addEventListener('click', handleElementClick, true);
+				onCleanup(() => document.removeEventListener('click', handleElementClick, true));
 			},
 			{ flush: 'post' }
 		);
-
-		onBeforeUnmount(detach);
 
 		const handleMaskClick = (event: MouseEvent) => {
 			const options = tour.options.value;

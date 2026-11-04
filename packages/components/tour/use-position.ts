@@ -32,17 +32,63 @@ export const usePosition = (
 	let frameId = 0;
 	let animationId = 0;
 	let destination: DOMRect | null = null;
-	let revision = 0;
 	// 层级只受 DOM 结构与样式影响：激活、切换目标、窗口尺寸或外部 DOM 变化后才重新计算，滚动时不必计算
 	let isLayerDirty = true;
-	let detach = () => {};
+
+	// 高于目标与已打开的 Modal / Drawer 及其所有祖先
+	const getLayer = () => {
+		let zIndex = 1002;
+		const layers = [element.value, ...document.querySelectorAll<HTMLElement>('.vc-modal, .vc-drawer')];
+		for (let parent of layers) {
+			for (; parent; parent = parent.parentElement) {
+				zIndex = Math.max(zIndex, (parseInt(getComputedStyle(parent).zIndex) || 0) + 2);
+			}
+		}
+		return zIndex;
+	};
+
+	// 高亮区：目标加 stagePadding，限制在根节点内，坐标相对根节点
+	const getStageRect = (x: number, y: number, width: number, height: number) => {
+		if (!element.value?.isConnected) return null;
+		const target = element.value.getBoundingClientRect();
+		const padding = options.value.stagePadding;
+		const [px, py] = Array.isArray(padding) ? padding : [padding, padding];
+		const left = Math.max(0, Math.min(width, target.left - px - x));
+		const top = Math.max(0, Math.min(height, target.top - py - y));
+		const right = Math.max(left, Math.min(width, target.right + px - x));
+		const bottom = Math.max(top, Math.min(height, target.bottom + py - y));
+		return new DOMRect(left, top, right - left, bottom - top);
+	};
+
+	// 镂空移动到 rect；animate 时从当前位置过渡
+	const moveStage = (rect: DOMRect | null, animate: boolean) => {
+		const { animated, duration } = options.value;
+		// 动画进行中且终点未变（滚动、尺寸变化引起的重新定位）：让动画继续
+		if (!animate && animated && animationId && rect && isSameRect(rect, destination)) return;
+		cancelAnimationFrame(animationId);
+		animationId = 0;
+		destination = rect;
+		const start = stage.value;
+		// 起点与终点相同时（如外部 DOM 变化后重新定位）不重新播放高亮动画
+		if (!animate || !animated || duration <= 0 || !rect || !start || isSameRect(start, rect)) {
+			if (!isSameRect(start, rect)) stage.value = rect;
+			return;
+		}
+		const time = performance.now();
+		const tick = (now: number) => {
+			const progress = Math.min((now - time) / options.value.duration, 1);
+			const eased = 1 - (1 - progress) ** 3;
+			const values = RECT_KEYS.map(key => start[key] + (rect[key] - start[key]) * eased);
+			stage.value = new DOMRect(values[0], values[1], values[2], values[3]);
+			animationId = progress < 1 ? requestAnimationFrame(tick) : 0;
+		};
+		animationId = requestAnimationFrame(tick);
+	};
 
 	const update = (animate = false) => {
 		if (!isActive.value || !root.value) return;
 		const viewport = getViewport();
 		const bounds = root.value.getBoundingClientRect();
-		const x = bounds.x;
-		const y = bounds.y;
 		const width = bounds.width || viewport.right;
 		const height = bounds.height || viewport.bottom;
 		if (size.value.width !== width || size.value.height !== height) {
@@ -54,49 +100,12 @@ export const usePosition = (
 		// 传入 zIndex 时不使用计算出的层级
 		if (isLayerDirty && options.value.zIndex == null) {
 			isLayerDirty = false;
-			let zIndex = 1002;
-			const layers = [element.value, ...document.querySelectorAll<HTMLElement>('.vc-modal, .vc-drawer')];
-			for (let parent of layers) {
-				for (; parent; parent = parent.parentElement) {
-					zIndex = Math.max(zIndex, (parseInt(getComputedStyle(parent).zIndex) || 0) + 2);
-				}
-			}
-			layer.value = zIndex;
+			layer.value = getLayer();
 		}
-		let rect: DOMRect | null = null;
-		if (element.value?.isConnected) {
-			const target = element.value.getBoundingClientRect();
-			const padding = options.value.stagePadding;
-			const [px, py] = Array.isArray(padding) ? padding : [padding, padding];
-			const left = Math.max(0, Math.min(width, target.left - px - x));
-			const top = Math.max(0, Math.min(height, target.top - py - y));
-			const right = Math.max(left, Math.min(width, target.right + px - x));
-			const bottom = Math.max(top, Math.min(height, target.bottom + py - y));
-			rect = new DOMRect(left, top, right - left, bottom - top);
-		}
+		const rect = getStageRect(bounds.x, bounds.y, width, height);
 		const isChanged = !isSameRect(targetStage.value, rect);
 		if (isChanged) targetStage.value = rect;
-		const isMoving = !animate && options.value.animated && animationId && rect && isSameRect(rect, destination);
-		if (!isMoving) cancelAnimationFrame(animationId);
-		// 起点与终点相同时（如外部 DOM 变化后重新定位）不重新播放高亮动画
-		if (animate && rect && stage.value && !isSameRect(stage.value, rect) && options.value.animated && options.value.duration > 0) {
-			const start = stage.value;
-			const end = rect;
-			destination = rect;
-			const time = performance.now();
-			const tick = (now: number) => {
-				const progress = Math.min((now - time) / options.value.duration, 1);
-				const eased = 1 - (1 - progress) ** 3;
-				const values = RECT_KEYS.map(key => start[key] + (end[key] - start[key]) * eased);
-				stage.value = new DOMRect(values[0], values[1], values[2], values[3]);
-				animationId = progress < 1 ? requestAnimationFrame(tick) : 0;
-			};
-			animationId = requestAnimationFrame(tick);
-		} else if (!isMoving) {
-			animationId = 0;
-			destination = rect;
-			if (!isSameRect(stage.value, rect)) stage.value = rect;
-		}
+		moveStage(rect, animate);
 		// 锚点直接写入最终位置（不随高亮动画），与镂空在同一帧更新，再通知气泡重新定位
 		if (isChanged && rect) {
 			Object.assign(anchor.style, {
@@ -120,12 +129,9 @@ export const usePosition = (
 
 	watch(
 		[() => isActive.value, () => element.value],
-		async () => {
-			const token = ++revision;
-			detach();
-			detach = () => {};
+		async ([active, target], _, onCleanup) => {
 			isLayerDirty = true;
-			if (!isActive.value) {
+			if (!active) {
 				cancelAnimationFrame(frameId);
 				cancelAnimationFrame(animationId);
 				animationId = 0;
@@ -133,9 +139,10 @@ export const usePosition = (
 				targetStage.value = null;
 				return;
 			}
+			let isCancelled = false;
+			onCleanup(() => isCancelled = true);
 			await nextTick();
-			if (!isActive.value || !root.value || token !== revision) return;
-			const target = element.value;
+			if (isCancelled || !isActive.value || !root.value) return;
 			const subscription = ScrollerManager.subscribe(target, schedule, { window: true });
 			target && Resize.on(target, schedule);
 			window.addEventListener('resize', scheduleLayer);
@@ -156,12 +163,12 @@ export const usePosition = (
 				characterData: true,
 				attributes: true
 			});
-			detach = () => {
+			onCleanup(() => {
 				subscription.off();
 				target && Resize.off(target, schedule);
 				window.removeEventListener('resize', scheduleLayer);
 				observer.disconnect();
-			};
+			});
 			// 首次定位由 locate（打开、切步、刷新）完成
 		},
 		{ flush: 'post' }
@@ -173,9 +180,8 @@ export const usePosition = (
 		{ deep: true }
 	);
 
+	// 订阅随 watch 停止解除
 	onBeforeUnmount(() => {
-		revision++;
-		detach();
 		cancelAnimationFrame(frameId);
 		cancelAnimationFrame(animationId);
 	});
