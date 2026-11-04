@@ -11,7 +11,7 @@ import { clickOn, rectOf } from '../../vc/__tests__/fixtures/click';
 import { Portal } from '../../portal';
 import { getBaseScale, zoomAt } from '../viewer/image-slide/utils';
 import { ImageSlide } from '../viewer/image-slide';
-import { getFileViewer, getFrameSrc, getSourceUrl } from '../viewer/file-slide/utils';
+import { createObjectUrl, getDownloadUrl, getFileUrl, getFileViewer, getFrameSrc, parseDataUrl } from '../viewer/file-slide/utils';
 import { getFileExtension, getFileName, getFileType, normalize, resolveFileName, resolveFileType } from '../utils';
 
 const photo = 'https://cdn.test/photo.jpg';
@@ -102,6 +102,23 @@ const createTrigger = (tag: string, rect: DOMRect) => {
 	document.body.append(el);
 	return el;
 };
+
+// jsdom 没有 URL.createObjectURL：按 Blob 类型发 blob:test/<type>，记录 Blob 与释放的地址
+const stubObjectUrl = () => {
+	const blobs: Blob[] = [];
+	const revoke = vi.fn();
+	vi.stubGlobal('URL', Object.assign(class extends URL {}, {
+		createObjectURL: (blob: Blob) => (blobs.push(blob), `blob:test/${blob.type}`),
+		revokeObjectURL: revoke
+	}));
+	return { blobs, revoke };
+};
+
+const readBlob = (blob: Blob) => new Promise<string>((resolve) => {
+	const reader = new FileReader();
+	reader.onload = () => resolve(reader.result as string);
+	reader.readAsText(blob);
+});
 
 // jsdom 不排版：查看器的窗口和画面铺满 1024×768，拖动时跟着舞台走
 const layout = HTMLElement.prototype.getBoundingClientRect;
@@ -505,8 +522,8 @@ describe('FilePreview', () => {
 		expect(getFrameSrc({ type: 'file', name: 'a.docx', source: 'blob:https://cdn.test/id' })).toBeUndefined();
 
 		const remote = 'https://cdn.test/a.docx';
-		expect(getSourceUrl({ source: remote })).toBe(remote);
-		expect(getSourceUrl({ source: 'javascript:alert(1)' })).toBeUndefined();
+		expect(getDownloadUrl({ source: remote })).toBe(remote);
+		expect(getDownloadUrl({ source: 'javascript:alert(1)' })).toBeUndefined();
 		expect(getFrameSrc({ type: 'file', name: 'a.docx', source: remote })).toBe(
 			`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(remote)}`
 		);
@@ -514,6 +531,84 @@ describe('FilePreview', () => {
 		expect(getFrameSrc({ type: 'file', name: 'a.pptx', source: 'files/a.pptx' })).toBe(
 			`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(local)}`
 		);
+	});
+
+	it('parses data url headers without decoding the body', () => {
+		expect(parseDataUrl('data:text/plain;charset=utf-8,VC%20Demo')).toEqual({
+			mime: 'text/plain', type: 'text/plain;charset=utf-8', base64: false, body: 'VC%20Demo'
+		});
+		expect(parseDataUrl('DATA:Application/PDF;base64,JVBE')).toEqual({
+			mime: 'application/pdf', type: 'Application/PDF', base64: true, body: 'JVBE'
+		});
+		expect(parseDataUrl('data:,a,b')).toEqual({ mime: 'text/plain', type: 'text/plain', base64: false, body: 'a,b' });
+		expect(parseDataUrl('data:;charset=gbk;base64,')).toMatchObject({ mime: 'text/plain', type: 'text/plain;charset=gbk', base64: true });
+		expect(parseDataUrl('data:text/plain')).toBeUndefined();
+		expect(parseDataUrl(report)).toBeUndefined();
+		expect(parseDataUrl('')).toBeUndefined();
+	});
+
+	it('turns plain text and pdf data urls into blob urls', async () => {
+		const { blobs } = stubObjectUrl();
+		expect(createObjectUrl('data:text/plain;charset=utf-8,VC%20Demo%E4%B8%AD%20文')).toBe('blob:test/text/plain;charset=utf-8');
+		expect(createObjectUrl('data:application/pdf;base64,JVBERi0%3D')).toBe('blob:test/application/pdf');
+		expect(blobs.map(blob => blob.type)).toEqual(['text/plain;charset=utf-8', 'application/pdf']);
+		expect(await readBlob(blobs[0])).toBe('VC Demo中 文');
+		expect(await readBlob(blobs[1])).toBe('%PDF-');
+
+		// html、svg 打开后会以当前页面的源运行脚本，不转换
+		expect(createObjectUrl('data:text/html,<script>alert(1)</script>')).toBeUndefined();
+		expect(createObjectUrl('data:image/svg+xml,<svg onload="alert(1)"/>')).toBeUndefined();
+		expect(createObjectUrl('data:application/pdf;base64,%%%')).toBeUndefined();
+		expect(createObjectUrl(report)).toBeUndefined();
+		expect(blobs).toHaveLength(2);
+
+		expect(getFileUrl({ source: 'data:text/plain,a' }, 'blob:test/0')).toBe('blob:test/0');
+		expect(getFileUrl({ source: 'data:text/html,a' })).toBeUndefined();
+		expect(getFileUrl({ source: report })).toBe(report);
+		expect(getDownloadUrl({ source: 'data:text/html,a' })).toBe('data:text/html,a');
+		expect(getFileViewer({ type: 'file', name: '报告', source: 'data:application/pdf;base64,JVBE' })).toBe('pdf');
+		expect(getFrameSrc({ type: 'file', name: '报告', source: 'data:application/pdf;base64,JVBE' })).toBeUndefined();
+		expect(getFrameSrc({ type: 'file', name: '报告', source: 'data:application/pdf;base64,JVBE' }, 'blob:test/1')).toBe('blob:test/1');
+	});
+
+	it('opens data urls through blob urls, downloads them directly and revokes on close', async () => {
+		const { revoke } = stubObjectUrl();
+		const text = 'data:text/plain;charset=utf-8,VC%20Demo';
+		const textUrl = 'blob:test/text/plain;charset=utf-8';
+		const pdfUrl = 'blob:test/application/pdf';
+		const page = 'data:text/html,<b>x</b>';
+		const pdf = 'data:application/pdf;base64,JVBERi0%3D';
+		const viewer = FilePreview.open({
+			data: [
+				{ source: text, type: 'file', name: '说明.txt' },
+				{ source: page, type: 'file', name: 'page.html' },
+				{ source: pdf, type: 'file', name: '报告' }
+			],
+			current: 0
+		}) as any;
+		await nextTick();
+		const actions = () => [...activeSlide()!.querySelectorAll('a')].map(a => [a.className, a.getAttribute('href'), a.getAttribute('download')]);
+		expect(actions()).toEqual([
+			['vc-file-slide__open', textUrl, null],
+			['vc-file-slide__download', text, '说明.txt']
+		]);
+		expect(activeSlide()?.querySelector('iframe')).toBeNull();
+
+		button('next').click();
+		await endTransition(stage());
+		expect(actions()).toEqual([['vc-file-slide__download', page, 'page.html']]);
+
+		button('next').click();
+		await endTransition(stage());
+		expect(activeSlide()?.querySelector('.vc-file-slide__frame')?.getAttribute('src')).toBe(pdfUrl);
+		expect(actions()).toEqual([
+			['vc-file-slide__open', pdfUrl, null],
+			['vc-file-slide__download', pdf, '报告']
+		]);
+
+		viewer.destroy();
+		await nextTick();
+		expect(revoke.mock.calls.map(([url]) => url).sort()).toEqual([pdfUrl, textUrl]);
 	});
 
 	it('mounts a file frame only after that slide is current, then keeps it', async () => {

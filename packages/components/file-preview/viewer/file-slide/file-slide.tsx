@@ -1,10 +1,10 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, onMounted, ref, watch } from 'vue';
+import { computed, defineComponent, onMounted, ref, shallowRef, watch, watchEffect } from 'vue';
 import { useLocale } from '../../../locale';
 import { useReveal } from '../reveal';
 import { props as slideProps } from '../slide-props';
-import { getFrameSrc, getSourceUrl } from './utils';
+import { createObjectUrl, getDownloadUrl, getFileUrl, getFrameSrc } from './utils';
 
 const COMPONENT_NAME = 'vc-file-slide';
 
@@ -18,10 +18,19 @@ export const FileSlide = defineComponent({
 		const isShown = ref(props.active);
 		watch(() => props.active, v => v && (isShown.value = true));
 
-		const frameSrc = computed(() => getFrameSrc(props.row));
+		// data: 地址转成的 blob: 地址，地址变化或卸载时释放
+		const objectUrl = shallowRef<string>();
+		watchEffect((onCleanup) => {
+			const url = createObjectUrl(props.row.source);
+			objectUrl.value = url;
+			url && onCleanup(() => URL.revokeObjectURL(url));
+		});
+
+		const fileUrl = computed(() => getFileUrl(props.row, objectUrl.value));
+		const frameSrc = computed(() => getFrameSrc(props.row, fileUrl.value));
 		const src = computed(() => (isShown.value ? frameSrc.value : void 0));
-		const sourceUrl = computed(() => getSourceUrl(props.row));
-		const openUrl = computed(() => frameSrc.value || sourceUrl.value);
+		const downloadUrl = computed(() => getDownloadUrl(props.row));
+		const openUrl = computed(() => frameSrc.value || fileUrl.value);
 
 		onMounted(() => reveal?.ready());
 
@@ -32,21 +41,25 @@ export const FileSlide = defineComponent({
 						<p class="vc-file-slide__name">{props.row.name}</p>
 					</div>
 					{
-						openUrl.value && (
+						(openUrl.value || downloadUrl.value) && (
 							<div class="vc-file-slide__actions">
-								<a
-									class="vc-file-slide__open"
-									href={openUrl.value}
-									target="_blank"
-									rel="noopener noreferrer"
-								>
-									{t('vc.FilePreview.open')}
-								</a>
 								{
-									sourceUrl.value && (
+									openUrl.value && (
+										<a
+											class="vc-file-slide__open"
+											href={openUrl.value}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											{t('vc.FilePreview.open')}
+										</a>
+									)
+								}
+								{
+									downloadUrl.value && (
 										<a
 											class="vc-file-slide__download"
-											href={sourceUrl.value}
+											href={downloadUrl.value}
 											download={props.row.name}
 											target="_blank"
 											rel="noopener noreferrer"
