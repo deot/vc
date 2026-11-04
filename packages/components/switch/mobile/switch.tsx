@@ -29,7 +29,7 @@ export const MSwitch = defineComponent({
 					{
 						isLoading.value && (
 							<MSpin
-								size={14}
+								size={28}
 								foreground="currentColor"
 								class="vcm-switch__loading"
 							/>

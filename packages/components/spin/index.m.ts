@@ -1,3 +1,6 @@
-import { Spin } from '.';
+import { MSpin } from './mobile/spin.tsx';
+import './style.scss';
 
-export const MSpin = Spin;
+export {
+	MSpin
+};

@@ -1,6 +1,7 @@
 @use '../style/helper' as *;
 
-.vc-spin {
+.vc-spin,
+.vcm-spin {
 	display: inline-block;
 	line-height: 0;
 
@@ -15,7 +16,8 @@
 }
 
 // 默认图标的尺寸由组件按 size 设置；loading 插槽中的 svg 跟随容器字号
-.vc-spin svg {
+.vc-spin svg,
+.vcm-spin svg {
 	width: 1em;
 	height: 1em;
 	overflow: hidden;

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Spin } from '@deot/vc-components';
+import { Spin, MSpin } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 
 describe('index.ts', () => {
@@ -32,5 +32,16 @@ describe('index.ts', () => {
 
 		expect((wrapper.find('.vc-spin > span').element as HTMLElement).style.fontSize).toBe('20px');
 		expect(wrapper.find('.custom').exists()).toBeTruthy();
+	});
+
+	it('MSpin: size 为 750 稿长度，默认 56', async () => {
+		const wrapper = mount(MSpin);
+		const svg = wrapper.find('svg').element as SVGElement;
+
+		expect(wrapper.classes()).toContain('vcm-spin');
+		expect(svg.style.width).toBe('calc(var(--vc-rem) * 56)');
+
+		await wrapper.setProps({ size: 40 });
+		expect(svg.style.height).toBe('calc(var(--vc-rem) * 40)');
 	});
 });

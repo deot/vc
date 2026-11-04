@@ -116,7 +116,7 @@ export const ActionSheet = defineComponent({
 															{
 																isLoading && (
 																	<MSpin
-																		size={16}
+																		size={32}
 																		class="vcm-action-sheet__loading"
 																	/>
 																)
