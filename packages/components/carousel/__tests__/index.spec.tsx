@@ -909,6 +909,65 @@ describe('index.ts', () => {
 			wrapper.unmount();
 		});
 
+		it('gap is added to the translate as whole px on Carousel', async () => {
+			const wrapper = mount(() => (
+				<Carousel autoplay={false} loop={false}>
+					<CarouselItem gap={20} width="80%" />
+					<CarouselItem gap={20} width="80%" />
+					<CarouselItem gap={20} width="80%" />
+				</Carousel>
+			), { attachTo: document.body });
+			restoreSize = mockOffsetSize(wrapper.element as HTMLElement);
+			await flushAll();
+			const styles = wrapper.findAll('.vc-carousel-item').map(it => it.element.getAttribute('style') || '');
+			expect(styles[0]).toContain('translateX(20px)');
+			expect(styles[1]).toContain('translateX(640px)');
+			expect(styles[2]).toContain('translateX(1200px)');
+			wrapper.unmount();
+		});
+
+		it('MCarousel leaves the gap (750 units) to CSS instead of reading --vc-rem', async () => {
+			const getComputedStyle = vi.spyOn(window, 'getComputedStyle');
+			const wrapper = mount(() => (
+				<MCarousel autoplay={false} loop={false}>
+					<MCarouselItem gap={20} width="80%" />
+					<MCarouselItem gap={20} width="80%" />
+					<MCarouselItem gap={20} width="80%" />
+				</MCarousel>
+			), { attachTo: document.body });
+			restoreSize = mockOffsetSize(wrapper.element as HTMLElement);
+			await flushAll();
+			const root = wrapper.element;
+			fireTouch(root, 'touchstart', 200, 100);
+			fireTouch(root, 'touchmove', 150, 100);
+			await flushAll();
+			const styles = wrapper.findAll('.vcm-carousel-item').map(it => it.element.getAttribute('style') || '');
+			expect(styles[0]).toContain('translateX(calc(-50px + var(--vc-rem) * 20))');
+			expect(styles[1]).toContain('translateX(calc(550px + var(--vc-rem) * 40))');
+			expect(styles[2]).toContain('translateX(1150px)');
+			expect(getComputedStyle.mock.calls.some(([, pseudo]) => pseudo === undefined)).toBe(false);
+			getComputedStyle.mockRestore();
+			fireTouch(root, 'touchend', 150, 100);
+			wrapper.unmount();
+		});
+
+		it('MCarousel card mode also reads gap in 750 units', async () => {
+			const wrapper = mount(() => (
+				<MCarousel autoplay={false} card gap={20}>
+					<MCarouselItem />
+					<MCarouselItem />
+					<MCarouselItem />
+				</MCarousel>
+			), { attachTo: document.body });
+			restoreSize = mockOffsetSize(wrapper.element as HTMLElement);
+			await flushAll();
+			const styles = wrapper.findAll('.vcm-carousel-item').map(it => it.element.getAttribute('style') || '');
+			expect(styles[0]).not.toContain('var(--vc-rem)');
+			expect(styles[1]).toContain('var(--vc-rem) * 20)');
+			expect(styles[2]).toContain('var(--vc-rem) * -20)');
+			wrapper.unmount();
+		});
+
 		it('single-item slide gap centers the item', async () => {
 			const wrapper = mount(() => (
 				<Carousel autoplay={false} loop={false}>
