@@ -61,9 +61,34 @@ tEl.addEventListener('click', () => {
 });
 tEl.dispatchEvent(new Event('click'));
 
+// 切换移动端的 --vc-rem（750 稿 1 单位的长度）：
+// auto 为库的默认值（随视口，480 宽封顶）；0.5px / 0.552px / 0.64px 即 375 / 414 / 480 宽下的尺寸；
+// 1px 放大一倍，便于找出没有跟随缩放的写死 px。点击依次切换，auto 之后回到 0.5px
+const REM_VALUES = ['auto', '0.5px', '0.552px', '0.64px', '1px'];
+const rEl = createButton(44);
+rEl.title = '移动端 --vc-rem（750 稿）';
+let remIndex = 0;
+
+const renderRem = () => {
+	const px = getComputedStyle(document.documentElement).getPropertyValue('--vc-rem').trim();
+	rEl.textContent = `rem: ${REM_VALUES[remIndex]} (${px})`;
+};
+
+rEl.addEventListener('click', () => {
+	remIndex = (remIndex + 1) % REM_VALUES.length;
+	const v = REM_VALUES[remIndex];
+	v === 'auto'
+		? document.documentElement.style.removeProperty('--vc-rem')
+		: document.documentElement.style.setProperty('--vc-rem', v);
+	renderRem();
+});
+// auto 时的取值随视口变化
+window.addEventListener('resize', () => REM_VALUES[remIndex] === 'auto' && renderRem());
+renderRem();
+
 // 性能读数（Chrome）：最长任务（点击清零）与 JS 堆，用于观察 demo 中的卡顿与内存
 // 默认不开启，避免给所有 demo 带来常驻的观察与每秒刷新；需要的 demo 调用 window.$perf.observe()，卸载时 disconnect()
-const pEl = createButton(44);
+const pEl = createButton(66);
 pEl.title = '最长任务（点击清零）/ JS 堆';
 pEl.style.display = 'none';
 
