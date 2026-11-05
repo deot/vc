@@ -6,12 +6,6 @@
 			<Textarea disabled placeholder="禁用文本域：空值" />
 			<Textarea disabled model-value="禁用文本域：已有内容" />
 		</div>
-		<h2>移动端状态对比</h2>
-		<div class="textarea-state-examples">
-			<MTextarea placeholder="普通移动端文本域" />
-			<MTextarea disabled placeholder="禁用移动端文本域：空值" />
-			<MTextarea disabled model-value="禁用移动端文本域：已有内容" />
-		</div>
 		<Textarea
 			v-model="value"
 			placeholder="显示placeholder"
@@ -27,7 +21,7 @@
 		<Form
 			ref="formValidate"
 			:label-width="96"
-			style="padding-left: 56px; margin-top: 21px"
+			style="padding-left: 56px; margin-top: 21px;"
 			@submit.prevent
 		>
 			<FormItem label="test">
@@ -65,7 +59,6 @@
 <script setup>
 import { ref } from 'vue';
 import { Textarea } from '..';
-import { MTextarea } from '../index.m';
 import { Form, FormItem } from '../../form/index';
 
 const value = ref('');

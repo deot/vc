@@ -18,23 +18,10 @@
 			:picker="['image']"
 			output="string"
 		/>
-		<div>移动端样式</div>
-		<MUploadPicker
-			v-model="dataSource"
-			show-error
-			:picker="['image', 'video', 'audio', 'file']"
-		>
-			<template #upload="{ type }">
-				<button type="button">
-					上传 {{ type }}
-				</button>
-			</template>
-		</MUploadPicker>
 	</div>
 </template>
 <script setup>
 import { UploadPicker } from '..';
-import { MUploadPicker } from '../index.m';
 import { ref, watchEffect } from 'vue';
 import { VcInstance } from '../../vc/index';
 

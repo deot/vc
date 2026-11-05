@@ -103,8 +103,8 @@ const handleClick = () => {
 }
 
 .vc-input {
-	margin-bottom: 10px;
-	width: 200px;
 	display: block;
+	width: 200px;
+	margin-bottom: 10px;
 }
 </style>
