@@ -1,11 +1,10 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, computed, onUnmounted, onMounted, onUpdated, watch } from 'vue';
-import { throttle, debounce } from 'lodash-es';
+import { defineComponent, ref, computed, onUnmounted, onMounted, watch } from 'vue';
 import { Resize } from '@deot/helper-resize';
-import { remToPx } from '@deot/vc-shared';
 import { props as tabsProps } from './tabs-props';
 import { Icon } from '../../icon';
+import { MAffix } from '../../affix/index.m';
 import { CustomerProp } from '../../customer/customer-prop';
 import { Scroller } from '../../scroller';
 import useTabs from '../use-tabs';
@@ -19,50 +18,15 @@ export const MTabs = defineComponent({
 	props: tabsProps,
 	emits: ['update:modelValue', 'change', 'click', 'tab-remove'],
 	setup(props, { slots }) {
-		const bar = ref<HTMLElement>();
 		const content = ref<any>(null);
 		const scroller = ref<any>(null);
-
-		const top = ref(0);
-		const isFixed = ref(false);
-		// 吸顶时占位的高度（标签栏高度 + 下边距）；固定后标签栏仍是同一个盒子，可随时量取
-		const placeholderH = ref(0);
-		// offsetTop（750 稿）换算后的 px，随 refreshTop 更新
-		let offsetTopPx = 0;
 
 		const isDark = computed(() => {
 			return props.theme === 'dark';
 		});
 
-		const fixedStyle = computed(() => {
-			return isFixed.value
-				? { top: `calc(var(--vc-rem) * ${props.offsetTop})` }
-				: {};
-		});
-
 		// eslint-disable-next-line prefer-const
 		let tabs: any;
-
-		// TODO: 找到父层滚动条
-		const handleScroll = throttle(() => {
-			const el = document.scrollingElement || document.documentElement;
-			isFixed.value = (el?.scrollTop || 0) + offsetTopPx > top.value;
-		}, 100);
-
-		/**
-		 * 使用Resize时, 切换页面失效，换种方案
-		 */
-		const refreshTop = debounce(() => {
-			if (props.sticky && content.value) {
-				if (bar.value) {
-					placeholderH.value = bar.value.offsetHeight + (parseFloat(getComputedStyle(bar.value).marginBottom) || 0);
-				}
-				offsetTopPx = remToPx(content.value, props.offsetTop);
-				top.value = content.value.offsetTop - placeholderH.value;
-				const el = document.scrollingElement || document.documentElement;
-				isFixed.value = (el?.scrollTop || 0) + offsetTopPx > top.value;
-			}
-		}, 250, { leading: true, trailing: true });
 
 		// 标签的容器即 Scroller 的 content；滑块放在标签之后，标签的下标与子元素一致
 		const getNav = () => scroller.value?.content as HTMLElement | undefined;
@@ -103,33 +67,16 @@ export const MTabs = defineComponent({
 		});
 
 		// 可视区或标签尺寸变化：立即刷新，不播放动画
-		// 视口宽度变化时尺寸随 --vc-rem 缩放，吸顶位置一并重算
 		const handleResize = () => {
 			refreshAfloat();
 			scroll.scrollToActive(false);
-			refreshTop();
-		};
-
-		/**
-		 * TODO: 在height: 100%容器内滚动，让其带有粘性
-		 * @param type ~
-		 */
-		const operateDOMEvents = (type: string) => {
-			if (!props.sticky) return;
-			const fn = type === 'add' ? window.addEventListener : window.removeEventListener;
-			fn('scroll', handleScroll);
 		};
 
 		onMounted(() => {
-			refreshTop();
-			operateDOMEvents('add');
 			[scroller.value?.wrapper, getNav()].forEach(el => el && Resize.on(el, handleResize, SHARED));
 		});
 
-		onUpdated(refreshTop);
-
 		onUnmounted(() => {
-			operateDOMEvents('remove');
 			Resize.disconnect(handleResize);
 		});
 
@@ -195,37 +142,46 @@ export const MTabs = defineComponent({
 			);
 		};
 
+		// 标签栏；吸顶中（active）带 is-fixed
+		const renderBar = ({ active }: { active: boolean }) => {
+			return (
+				<div
+					style={props.barStyle as any}
+					class={[{ 'is-fixed': active }, 'vcm-tabs__bar']}
+				>
+					{ slots.prepend?.() }
+					{ renderStepper('prev') }
+					<Scroller
+						ref={scroller}
+						class="vcm-tabs__scroll"
+						contentClass="vcm-tabs__nav"
+						axis="x"
+						native={false}
+						showBar={false}
+					>
+						{{ default: renderNav, $stable: true }}
+					</Scroller>
+					{ renderStepper('next') }
+					{ slots.append?.() }
+				</div>
+			);
+		};
+
+		// sticky：标签栏由 MAffix（position: sticky）吸附在所在滚动容器（页面或内层容器）的顶部，
+		// 吸附范围为 Tabs 自身，内容滚出后随之离开；不吸顶时 MAffix 直接渲染标签栏
 		return () => {
 			return (
 				<div class={[tabs.classes.value, 'vcm-tabs']}>
 					{
 						props.showWrapper && (
-							<div
-								ref={bar}
-								style={[props.barStyle as any, fixedStyle.value]}
-								class={[{ 'is-fixed': isFixed.value }, 'vcm-tabs__bar']}
+							<MAffix
+								disabled={!props.sticky}
+								fixed={false}
+								offset={props.offsetTop}
+								zIndex={999}
 							>
-								{ slots.prepend?.() }
-								{ renderStepper('prev') }
-								<Scroller
-									ref={scroller}
-									class="vcm-tabs__scroll"
-									contentClass="vcm-tabs__nav"
-									axis="x"
-									native={false}
-									showBar={false}
-								>
-									{{ default: renderNav, $stable: true }}
-								</Scroller>
-								{ renderStepper('next') }
-								{ slots.append?.() }
-							</div>
-						)
-
-					}
-					{
-						isFixed.value && (
-							<div style={{ height: `${placeholderH.value}px` }} class="vcm-tabs__placeholder" />
+								{{ default: renderBar }}
+							</MAffix>
 						)
 					}
 					<div

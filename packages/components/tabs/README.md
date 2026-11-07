@@ -387,7 +387,7 @@ const isDark = ref(false);
 | autoAfloatWidth | light 风格下按标签内 span 宽度计算下划线；false 使用整项宽度，dark 为居中的固定短条 | `boolean` | - | `true` |
 | average | 标签均分可用宽度 | `boolean` | - | `true` |
 | showWrapper | 是否显示标签栏 | `boolean` | - | `true` |
-| sticky | 相对于页面滚动进行吸顶，不支持内层滚动容器 | `boolean` | - | `false` |
+| sticky | 标签栏吸顶：由 `MAffix`（`position: sticky`）吸附在所在滚动容器（页面或内层容器）的顶部，Tabs 滚出后随之离开；Tabs 与滚动容器之间不能有 `overflow` 非 `visible` 的元素 | `boolean` | - | `false` |
 | offsetTop | 吸顶偏移，750 稿长度 | `number` | - | `0` |
 | stepper | 标签溢出时显示左右翻页按钮；移动端以触摸滑动为主，默认不显示 | `boolean` | - | `false` |
 
