@@ -1,0 +1,153 @@
+@use 'sass:map';
+@use '../style/helper' as *;
+
+$color-contrast-light: varfix(color-contrast-light, badge);
+$color-error: varfix(color-error, badge);
+$color-neutral: varfix(color-neutral, badge);
+$color-primary: varfix(color-primary, badge);
+$color-success: varfix(color-success, badge);
+$color-warning: varfix(color-warning, badge);
+$background-color-lightest: varfix(background-color-lightest, badge);
+$foreground-color: varfix(foreground-color, badge);
+$translate: translate(50%, -50%); // 角标的中心落在内容的右上角
+$overshoot: cubic-bezier(.3, 1.3, .3, 1);
+
+// 桌面端与移动端共用；$size 为各处长度：
+// height（数字的高、最小宽、行高、圆角）、padding（数字左右内边距）、font-size、dot（圆点与状态点）、
+// inset（角标向内的偏移）、ring（描边）、label-font-size / label-line-height / label-gap（状态文字）
+@mixin badge($name, $size) {
+	@include block($name) {
+		position: relative;
+		display: inline-block;
+		line-height: 1;
+
+		@include element((value, dot, custom)) {
+			position: absolute;
+			top: map.get($size, inset);
+			right: map.get($size, inset);
+			z-index: 2;
+			overflow: hidden;
+			text-align: center;
+			border-radius: map.get($size, height);
+			transform: $translate;
+			transform-origin: 100% 0;
+			box-sizing: border-box;
+		}
+
+		@include element(value) {
+			height: map.get($size, height);
+			min-width: map.get($size, height);
+			padding: 0 map.get($size, padding);
+			font-size: map.get($size, font-size);
+			font-weight: 500;
+			line-height: map.get($size, height);
+			color: $color-contrast-light;
+			white-space: nowrap;
+			background-color: $color-error;
+			box-shadow: 0 0 0 map.get($size, ring) $background-color-lightest;
+		}
+
+		// 数字变化时重新挂载，从无到有缩放
+		@include element(content) {
+			@include when(changed) {
+				display: inline-block;
+				animation: #{$name}-scale .5s $overshoot;
+			}
+		}
+
+		@include element(dot) {
+			width: map.get($size, dot);
+			height: map.get($size, dot);
+			background-color: $color-error;
+			border-radius: 50%;
+			box-shadow: 0 0 0 map.get($size, ring) $background-color-lightest;
+		}
+
+		@include element(custom) {
+			background-color: $background-color-lightest;
+		}
+
+		// 没有默认插槽时徽标在行内显示
+		@include when(standalone) {
+			@include element((value, dot, custom)) {
+				position: relative;
+				top: auto;
+				right: auto;
+				display: inline-block;
+				transform: none;
+			}
+		}
+
+		@include element(status) {
+			display: inline-flex;
+			align-items: center;
+		}
+
+		@include element(status-dot) {
+			display: inline-block;
+			width: map.get($size, dot);
+			height: map.get($size, dot);
+			border-radius: 50%;
+
+			@include when(default) {
+				background-color: $color-neutral;
+			}
+
+			@include when(pending) {
+				background-color: $color-primary;
+			}
+
+			@include when(success) {
+				background-color: $color-success;
+			}
+
+			@include when(warning) {
+				background-color: $color-warning;
+			}
+
+			@include when(error) {
+				background-color: $color-error;
+			}
+		}
+
+		// 以文字的基线作为整个徽标的基线，与旁边的文字对齐（圆点仍上下居中）
+		@include element(label) {
+			align-self: baseline;
+			margin-left: map.get($size, label-gap);
+			font-size: map.get($size, label-font-size);
+			line-height: map.get($size, label-line-height);
+			color: $foreground-color;
+		}
+	}
+
+	// 进出场：缩放以徽标中心为原点
+	.#{$name}__zoom-enter-active,
+	.#{$name}__zoom-leave-active {
+		transition: opacity .3s $overshoot, transform .3s $overshoot;
+		transform-origin: center;
+	}
+
+	.#{$name}__zoom-enter-from,
+	.#{$name}__zoom-leave-to {
+		transform: $translate scale(.2);
+	}
+
+	.#{$name}__zoom-leave-to {
+		opacity: 0;
+	}
+
+	.#{$name}.is-standalone > .#{$name}__zoom-enter-from,
+	.#{$name}.is-standalone > .#{$name}__zoom-leave-to {
+		transform: scale(.2);
+	}
+
+	@keyframes #{$name}-scale {
+		from {
+			transform: scale(0);
+		}
+
+		to {
+			transform: scale(1);
+		}
+	}
+}

@@ -1,3 +1,6 @@
-import { Badge } from '.';
+import { MBadge } from './mobile/badge.tsx';
+import './mobile/style.scss';
 
-export const MBadge = Badge;
+export {
+	MBadge
+};

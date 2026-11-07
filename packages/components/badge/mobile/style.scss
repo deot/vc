@@ -1,0 +1,15 @@
+@use '../../style/helper' as *;
+@use '../shared';
+
+// 尺寸为 750 稿，375 宽下：数字高 16px、内边距 4px、字号 12px、圆点 8px
+@include shared.badge(vcm-badge, (
+	height: remfix(32),
+	padding: remfix(8),
+	font-size: remfix(24),
+	dot: remfix(16),
+	inset: remfix(4),
+	ring: remfix(4),
+	label-font-size: remfix(28),
+	label-line-height: remfix(44),
+	label-gap: remfix(16)
+));
