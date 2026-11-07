@@ -1,7 +1,7 @@
 @use '../style/helper' as *;
 
-.vc-spin,
-.vcm-spin {
+// Spin 与 MSpin 共用（两端只有 size 的单位不同）
+@include block((vc-spin, vcm-spin)) {
 	display: inline-block;
 	line-height: 0;
 
@@ -13,16 +13,15 @@
 
 		@include text-strut;
 	}
-}
 
-// 默认图标的尺寸由组件按 size 设置；loading 插槽中的 svg 跟随容器字号
-.vc-spin svg,
-.vcm-spin svg {
-	width: 1em;
-	height: 1em;
-	overflow: hidden;
-	animation: vc-spin-circle 1s linear infinite;
-	fill: currentcolor;
+	// 默认图标的尺寸由组件按 size 设置；loading 插槽中的 svg 跟随容器字号
+	svg {
+		width: 1em;
+		height: 1em;
+		overflow: hidden;
+		animation: vc-spin-circle 1s linear infinite;
+		fill: currentcolor;
+	}
 }
 
 @keyframes vc-spin-circle {
