@@ -1,4 +1,9 @@
-import { Collapse, CollapseItem } from '.';
+import { MCollapse } from './mobile/collapse.ts';
+import { MCollapseItem } from './mobile/collapse-item.tsx';
+import './style.scss';
+import './mobile/style.scss';
 
-export const MCollapse = Collapse;
-export const MCollapseItem = CollapseItem;
+export {
+	MCollapse,
+	MCollapseItem
+};

@@ -1,0 +1,66 @@
+@use '../../style/helper' as *;
+
+$color-neutral: varfix(color-neutral, collapse);
+$background-color-primary-light: varfix(background-color-primary-light, collapse);
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放），375 宽下：标题栏高 54px（字号 16px、行高 22px、上下内边距 16px）、左右内边距 16px
+// 内容区字号 14px、上下内边距 12px；箭头 12px、与标题间距 8px；附加内容字号 14px
+// 内容区与标题栏同为白底（移动端页面底色多为浅灰，灰底内容区会与页面混在一起）
+// 结构与颜色沿用 ../style.scss，这里覆盖局部变量（与两端样式的加载顺序无关），另加移动端专有的规则
+// 子元素沿用桌面端类名（vc-collapse-item__*），不用 element()
+@include block((vcm-collapse, vcm-collapse-item)) {
+	@include localvars(collapse, (
+		font-size: remfix(32),
+		line-height: remfix(44),
+		radius: 0,
+		header-padding: remfix(32),
+		extra-gap: remfix(16),
+		extra-font-size: remfix(28),
+		arrow-size: remfix(24),
+		arrow-gap: remfix(16),
+		content-padding: remfix(24) remfix(32),
+		content-font-size: remfix(28),
+		content-background: varfix(background-color-lightest, collapse)
+	));
+}
+
+// border 为上下两条通栏边线：外边框去掉左右两边与圆角，不裁剪内容（与 .vc-collapse 连写，优先于桌面端的外边框）
+@include block(vcm-collapse) {
+	&.vc-collapse {
+		@include when(border) {
+			overflow: visible;
+
+			&::after {
+				border-right-width: 0;
+				border-left-width: 0;
+			}
+		}
+	}
+}
+
+@include block(vcm-collapse-item) {
+	// 项之间的分隔线左侧缩进 16px（与 .vc-collapse-item 连写，优先于桌面端的通栏分隔线）
+	&.vc-collapse-item::after {
+		right: 0;
+		left: remfix(32);
+		width: auto;
+	}
+
+	// 箭头在右侧时与 MListItem 一致：right 图标、color-neutral，收起朝右，展开朝下；在左侧时同桌面端的三角
+	> .is-arrow-right {
+		@include localvars(collapse, (
+			arrow-color: $color-neutral,
+			icon-transform: none,
+			icon-active-transform: rotate(90deg)
+		));
+	}
+
+	// 按下反馈：标题栏整行淡蓝底（同 Select 选项悬停），替换系统的点击高亮；禁用、不可收起、仅箭头可点击时不显示
+	> .vc-collapse-item__header {
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	&:not(.is-disabled, .is-locked) > .vc-collapse-item__header:not(.is-trigger-arrow):active {
+		background: $background-color-primary-light;
+	}
+}

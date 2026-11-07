@@ -1,8 +1,11 @@
 // @vitest-environment jsdom
 
-import { Collapse, CollapseItem } from '@deot/vc-components';
+import { Collapse, CollapseItem, Icon } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
+import * as path from 'node:path';
+import * as sass from 'sass';
 import { nextTick } from 'vue';
+import { MCollapse, MCollapseItem } from '../index.m';
 
 const flush = async () => {
 	for (let i = 0; i < 5; i++) {
@@ -888,5 +891,81 @@ describe('index.ts', () => {
 
 		expect(wrapper.find('.head').text()).toBe('title1');
 		expect(wrapper.find('.body').text()).toBe('content1');
+	});
+
+	it('MCollapse: 与 Collapse 结构相同，根节点另有 vcm- 标记类', async () => {
+		const wrapper = mount(() => (
+			<MCollapse modelValue={[1]}>
+				<MCollapseItem value={1} title="title1" extra="extra1" content="content1" />
+				<MCollapseItem value={2} title="title2" disabled />
+			</MCollapse>
+		));
+		await flush();
+
+		expect(wrapper.classes()).toEqual(expect.arrayContaining(['vc-collapse', 'vcm-collapse', 'is-border']));
+		const items = wrapper.findAll('.vc-collapse-item.vcm-collapse-item');
+		expect(items).toHaveLength(2);
+		expect(items[0].classes()).toContain('is-active');
+		expect(items[1].classes()).toContain('is-disabled');
+		['header', 'title', 'extra', 'arrow', 'icon', 'content'].forEach((part) => {
+			expect(wrapper.find(`.vc-collapse-item__${part}`).exists()).toBe(true);
+		});
+	});
+
+	it('MCollapse: 箭头在右侧时与 MListItem 一致，在左侧时同桌面端', async () => {
+		const wrapper = mount(() => (
+			<MCollapse>
+				<MCollapseItem value={1} title="left" arrow="left" />
+				<MCollapseItem value={2} title="right" arrow="right" />
+			</MCollapse>
+		));
+		await flush();
+
+		const icons = wrapper.findAllComponents(Icon);
+		expect(icons[0].props('type')).toBe('triangle-up');
+		expect(icons[1].props('type')).toBe('right');
+	});
+
+	it('MCollapse: v-model 与 Collapse 一致', async () => {
+		const wrapper = mount({
+			components: { MCollapse, MCollapseItem },
+			data: () => ({ value: [1] as number[] }),
+			template: `
+				<MCollapse v-model="value">
+					<MCollapseItem :value="1">title1</MCollapseItem>
+					<MCollapseItem :value="2">title2</MCollapseItem>
+				</MCollapse>
+			`
+		});
+		await flush();
+		await wrapper.findAll('.vc-collapse-item__header')[1].trigger('click');
+		await flush();
+		expect(wrapper.vm.value).toEqual([1, 2]);
+		expect(wrapper.findAll('.vcm-collapse-item')[1].classes()).toContain('is-active');
+	});
+
+	it('移动端尺寸为 750 稿（375 宽下标题栏高 54px）', () => {
+		const css = sass.compile(path.resolve(process.cwd(), 'packages/components/collapse/mobile/style.scss')).css;
+		const rule = (selector: string) => {
+			const start = css.indexOf(`\n${selector} {`);
+			return start === -1 ? '' : css.slice(start, css.indexOf('}', start));
+		};
+
+		const vars = rule('.vcm-collapse, .vcm-collapse-item');
+		expect(vars).toContain('--vc-collapse-font-size: calc(var(--vc-rem) * 32)');
+		expect(vars).toContain('--vc-collapse-line-height: calc(var(--vc-rem) * 44)');
+		expect(vars).toContain('--vc-collapse-header-padding: calc(var(--vc-rem) * 32)');
+		expect(vars).toContain('--vc-collapse-content-padding: calc(var(--vc-rem) * 24) calc(var(--vc-rem) * 32)');
+		expect(vars).toContain('--vc-collapse-content-font-size: calc(var(--vc-rem) * 28)');
+		// border 为上下两条边线：去掉外边框的左右两边、圆角与裁剪
+		expect(vars).toContain('--vc-collapse-radius: 0');
+		expect(rule('.vcm-collapse.vc-collapse.is-border')).toContain('overflow: visible');
+		expect(rule('.vcm-collapse.vc-collapse.is-border::after')).toContain('border-left-width: 0');
+		expect(rule('.vcm-collapse-item.vc-collapse-item::after')).toContain('left: calc(var(--vc-rem) * 32)');
+		// 箭头在右侧：收起朝右，展开朝下
+		expect(rule('.vcm-collapse-item > .is-arrow-right')).toContain('--vc-collapse-icon-active-transform: rotate(90deg)');
+		// 按下反馈为淡蓝底（同 Select 选项悬停），禁用、不可收起、仅箭头可点击时不显示
+		expect(rule('.vcm-collapse-item:not(.is-disabled, .is-locked) > .vc-collapse-item__header:not(.is-trigger-arrow):active'))
+			.toContain('background-color-primary-light');
 	});
 });

@@ -1,3 +1,4 @@
+@use 'sass:map';
 @use '../style/helper' as *;
 
 $color-dark: varfix(color-dark, collapse);
@@ -5,26 +6,55 @@ $color-dark-lighter: varfix(color-dark-lighter, collapse);
 $color-dark-lightest: varfix(color-dark-lightest, collapse);
 $color-neutral-light: varfix(color-neutral-light, collapse);
 $foreground-color-inactive: varfix(foreground-color-inactive, collapse);
-$background-color-light: varfix(background-color-light, collapse);
 $background-color-lightest: varfix(background-color-lightest, collapse);
-$font-size: varfix(font-size, collapse);
-$font-size-small: varfix(font-size-small, collapse);
-$line-height-large: varfix(line-height-large, collapse);
-$border-radius: unitfix(4);
-$spacing-vertical: unitfix(12);
-$spacing-horizontal: unitfix(16);
+
+// 桌面端尺寸：标题栏与内容区内边距 12px 16px，箭头 12px、与标题间距 8px；border 为 4px 圆角的外边框
+// 写成局部变量 --vc-collapse-<键>（默认值为下表），
+// MCollapse / MCollapseItem 在 .vcm-collapse / .vcm-collapse-item 上覆盖（mobile/style.scss）
+// - line-height：标题栏一行高，附加内容与箭头按此高度居中
+// - arrow-color、icon-transform / icon-active-transform：内置箭头的颜色与收起 / 展开时的旋转（与 Tree、Table 的展开图标一致：收起朝右，展开朝下）
+$sizes: (
+	font-size: varfix(font-size, collapse),
+	line-height: varfix(line-height-large, collapse),
+	radius: unitfix(4),
+	header-padding: unitfix(12) unitfix(16),
+	extra-gap: unitfix(8),
+	extra-font-size: varfix(font-size-small, collapse),
+	arrow-size: unitfix(12),
+	arrow-gap: unitfix(8),
+	arrow-color: $color-dark-lightest,
+	icon-transform: rotate(90deg),
+	icon-active-transform: rotate(180deg),
+	content-padding: unitfix(12) unitfix(16),
+	content-font-size: varfix(font-size-small, collapse),
+	content-background: varfix(background-color-light, collapse)
+);
+
+// font-size 与主题参数 --vc-collapse-font-size 同名，原样使用
+@function v($key) {
+	$value: map.get($sizes, $key);
+
+	@if $key == font-size {
+		@return $value;
+	}
+
+	@return localfix(collapse, $key, $value);
+}
+
+$line-height: v(line-height);
+$radius: v(radius);
 
 @include block(vc-collapse) {
-	font-size: $font-size;
-	line-height: $line-height-large;
+	font-size: v(font-size);
+	line-height: $line-height;
 	background: $background-color-lightest;
 
 	@include when(border) {
-		@include common-border-1px('', $color-neutral-light, $border-radius);
+		@include common-border-1px('', $color-neutral-light, $radius);
 
 		& {
 			overflow: hidden;
-			border-radius: $border-radius;
+			border-radius: $radius;
 		}
 
 		> .vc-collapse-item:last-child::after {
@@ -36,9 +66,10 @@ $spacing-horizontal: unitfix(16);
 @include block(vc-collapse-item) {
 	@include common-border-1px(bottom, $color-neutral-light);
 
+
 	@include element(header) {
 		display: flex;
-		padding: $spacing-vertical $spacing-horizontal;
+		padding: v(header-padding);
 		font-weight: 500;
 		color: $color-dark;
 		cursor: pointer;
@@ -62,10 +93,10 @@ $spacing-horizontal: unitfix(16);
 	// 附加内容与箭头固定一行高并居中，较高的内容（如按钮）占用内边距，不撑高标题栏
 	@include element(extra) {
 		display: flex;
-		height: $line-height-large;
-		margin-left: unitfix(8);
+		height: $line-height;
+		margin-left: v(extra-gap);
 		align-items: center;
-		font-size: $font-size-small;
+		font-size: v(extra-font-size);
 		font-weight: 400;
 		color: $color-dark-lighter;
 		flex-shrink: 0;
@@ -73,9 +104,9 @@ $spacing-horizontal: unitfix(16);
 
 	@include element(arrow) {
 		display: flex;
-		height: $line-height-large;
-		font-size: unitfix(12);
-		color: $color-dark-lightest;
+		height: $line-height;
+		font-size: v(arrow-size);
+		color: v(arrow-color);
 		flex-shrink: 0;
 		user-select: none;
 		align-items: center;
@@ -84,28 +115,28 @@ $spacing-horizontal: unitfix(16);
 
 	// 与 Tree、Table 的展开图标一致：收起朝右，展开朝下
 	@include element(icon) {
-		transform: rotate(90deg);
+		transform: v(icon-transform);
 		transition: transform .2s ease-in-out;
 	}
 
 	.is-arrow-left > .vc-collapse-item__arrow {
-		margin-right: unitfix(8);
+		margin-right: v(arrow-gap);
 	}
 
 	.is-arrow-right > .vc-collapse-item__arrow {
-		margin-left: unitfix(8);
+		margin-left: v(arrow-gap);
 	}
 
 	@include element(content) {
-		padding: $spacing-vertical $spacing-horizontal;
-		font-size: $font-size-small;
+		padding: v(content-padding);
+		font-size: v(content-font-size);
 		color: $color-dark-lighter;
-		background: $background-color-light;
+		background: v(content-background);
 	}
 
 	@include when(active) {
 		> .vc-collapse-item__header > .vc-collapse-item__arrow > .vc-collapse-item__icon {
-			transform: rotate(180deg);
+			transform: v(icon-active-transform);
 		}
 	}
 

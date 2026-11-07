@@ -2,6 +2,8 @@
 
 通过点击标题展开或收起分组内容。默认提供边框、间距与展开箭头；设置 `styleless` 后只保留折叠行为，外观完全由插槽自定义。
 
+移动端入口导出的 `MCollapse`、`MCollapseItem` 与 `Collapse`、`CollapseItem` 的属性、事件、插槽和方法相同，尺寸按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
+
 ### 何时使用
 
 - 分组展示较长内容，按需展开详情。
@@ -324,6 +326,43 @@ const items = [
 ```
 :::
 
+## 移动端
+
+`MCollapse`、`MCollapseItem` 的属性、事件、插槽、方法与 `Collapse`、`CollapseItem` 相同，结构也相同，根节点另有标记类 `.vcm-collapse`、`.vcm-collapse-item`，结构样式、颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 标题栏 | 字号 32（16），行高 44（22），内边距 32（16），单行时高 108（54） |
+| 附加内容 | 字号 28（14），与标题间距 16（8） |
+| 箭头 | 字号 24（12），与标题间距 16（8）；在右侧时与 `MListItem` 的箭头一致（`right` 图标、`color-neutral`，收起朝右、展开朝下），在左侧时同桌面端的三角 |
+| 内容区 | 字号 28（14），行高 44（22），内边距 24（12） 32（16） |
+
+与桌面端的差异：
+
+- `border` 为上下两条通栏边线，没有左右边线和圆角；项之间的分隔线左侧缩进 32（16）。
+- 内容区与标题栏同为白底（`background-color-lightest`），桌面端为灰底。
+- 按下标题栏时整行显示淡蓝底（`background-color-primary-light`，同 Select 选项悬停），替换系统的点击高亮；禁用、不可收起或 `triggerRegion="arrow"` 时不显示。
+
+边框保持 1px（高分屏 0.5px），不随 `--vc-rem` 缩放。
+
+两端的尺寸都写成局部变量 `--vc-collapse-<键>`，桌面端的默认值为 px 或主题参数，移动端在 `.vcm-collapse`、`.vcm-collapse-item` 上覆盖，与样式的加载顺序无关。键为 `font-size`（即主题参数）、`line-height`、`radius`、`header-padding`、`extra-gap`、`extra-font-size`、`arrow-size`、`arrow-gap`、`arrow-color`、`icon-transform`、`icon-active-transform`、`content-padding`、`content-font-size`、`content-background`。
+
+```vue
+<template>
+	<MCollapse v-model="value" accordion>
+		<MCollapseItem :value="1" title="标题一" content="内容一" />
+		<MCollapseItem :value="2" title="标题二" content="内容二" />
+	</MCollapse>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MCollapse, MCollapseItem } from '@deot/vc';
+
+const value = ref(1);
+</script>
+```
+
 ## API
 
 ### Collapse 属性
@@ -401,4 +440,4 @@ const items = [
 - 标题文字可以拖选复制，拖选后松开不会切换面板；双击、三击标题时不会选中文字。
 - `styleless` 下标题栏与内容区没有默认类名，可通过 `headerClass`、`contentClass` 指定。
 - 原 `icon` 插槽已移除，改用 `extra`（附加内容）或 `arrow`（展开指示）插槽。
-- `MCollapse`、`MCollapseItem` 分别是 `Collapse`、`CollapseItem` 的别名，使用同一实现与样式，可从 `@deot/vc` 导入。
+- `MCollapseItem` 需要放在 `MCollapse` 内使用；两端组件共用同一注入键，不要混用。
