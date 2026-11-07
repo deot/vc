@@ -1,5 +1,5 @@
 import { MUploadPicker } from './mobile/upload-picker';
-import './style.scss';
+import './mobile/style.scss';
 
 export type { UploadPickerCallback } from './types';
 
