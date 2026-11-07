@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { nextTick, ref } from 'vue';
-import { Icon, IconManager } from '@deot/vc-components';
+import { Icon, IconManager, MIcon } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
 import { vi } from 'vitest';
@@ -83,6 +83,54 @@ describe('index.ts', () => {
 			expect(svg.style.height).toBe(`${glyph[1]}px`);
 			wrapper.unmount();
 		});
+	});
+
+	it('MIcon, size 为 750 稿长度', () => {
+		// [size, 外层宽高, 图标宽高]
+		const cases: any[] = [
+			[32, [32, 32], [32, 32]],
+			[[48, 32], [48, 48], [32, 32]],
+			[[[200, 48]], [200, 48], [200, 48]]
+		];
+		const rem = (v: number) => `calc(var(--vc-rem) * ${v})`;
+
+		cases.forEach(([size, box, glyph]) => {
+			const wrapper = mount(() => (
+				<MIcon type="search" size={size} color="red" />
+			));
+			const el = wrapper.element as HTMLElement;
+			const svg = wrapper.find('svg').element as SVGElement;
+
+			expect(wrapper.classes()).toEqual(['vcm-icon', 'is-size']);
+			expect(el.style.color).toBe('red');
+			expect(el.style.width).toBe(rem(box[0]));
+			expect(el.style.height).toBe(rem(box[1]));
+			expect(svg.style.width).toBe(rem(glyph[0]));
+			expect(svg.style.height).toBe(rem(glyph[1]));
+			wrapper.unmount();
+		});
+	});
+
+	it('MIcon, 缺省时跟随外层字号，不输出 style', () => {
+		const wrapper = mount(() => (
+			<MIcon type="search" />
+		));
+
+		expect(wrapper.classes()).toEqual(['vcm-icon']);
+		expect(wrapper.attributes('style')).toBeUndefined();
+		expect(wrapper.find('svg').attributes('style')).toBeUndefined();
+	});
+
+	it('MIcon, 与 Icon 共用图标加载', async () => {
+		const type = 'any-mobile-loaded';
+		IconManager.icons[type] = { viewBox: '0 0 16 16', path: [{ d: 'M0 0h16v16H0z', fill: '#f00' }] };
+		const wrapper = mount(() => (
+			<MIcon type={type} inherit />
+		));
+
+		expect(wrapper.find('svg').attributes('viewBox')).toBe('0 0 16 16');
+		expect(wrapper.find('path').attributes('fill')).toBe('#f00');
+		wrapper.unmount();
 	});
 
 	it('size, 透传的style可覆盖', () => {

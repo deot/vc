@@ -3,7 +3,7 @@
 import { defineComponent, ref, computed, onUnmounted, onMounted, watch } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import { props as tabsProps } from './tabs-props';
-import { Icon } from '../../icon';
+import { MIcon } from '../../icon/index.m';
 import { MAffix } from '../../affix/index.m';
 import { CustomerProp } from '../../customer/customer-prop';
 import { Scroller } from '../../scroller';
@@ -115,7 +115,7 @@ export const MTabs = defineComponent({
 						/>
 						{
 							props.closable && item.closable && (
-								<Icon
+								<MIcon
 									class="vcm-tabs__close"
 									type="close"
 									// @ts-ignore
@@ -137,7 +137,7 @@ export const MTabs = defineComponent({
 			if (!props.stepper || !scroll.scrollable.value) return;
 			return (
 				<div class={['vcm-tabs__stepper', `is-${name}`]} onClick={() => scroll.step(name === 'prev' ? -1 : 1)}>
-					<Icon type={name === 'prev' ? 'left' : 'right'} />
+					<MIcon type={name === 'prev' ? 'left' : 'right'} />
 				</div>
 			);
 		};

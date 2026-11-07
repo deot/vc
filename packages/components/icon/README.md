@@ -1,6 +1,6 @@
 ## 图标（Icon）
 
-通过图标名称展示 SVG，支持继承文字颜色或使用图标预设色。`MIcon` 是 `Icon` 的别名，属性和行为相同。
+通过图标名称展示 SVG，支持继承文字颜色或使用图标预设色。`MIcon` 为移动端版本，属性与 `Icon` 相同，`size` 为 750 稿长度。
 
 ### 何时使用
 
@@ -283,6 +283,21 @@ onMounted(async () => {
 ```
 :::
 
+### 移动端
+
+`MIcon` 的根元素为 `.vcm-icon`，排版与 `Icon` 相同。`size` 中的数值是 750 稿长度，样式写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（375 宽下 `size=32` 即 16px）。不传 `size` 时跟随外层字号，移动端组件的字号本身已随 `--vc-rem` 缩放。
+
+```vue
+<template>
+	<MIcon type="success" :size="32" />
+	<MIcon type="success" :size="[48, 32]" />
+</template>
+
+<script setup>
+import { MIcon } from '@deot/vc';
+</script>
+```
+
 ## API
 
 ### 属性
@@ -292,7 +307,7 @@ onMounted(async () => {
 type | 图标名称，对应已加载资源中 `icon-` 前缀之后的名称 | `string` | 已加载的图标名称 | -
 inherit | 是否使用 SVG 路径的预设 `fill`；为 `false` 时继承文字颜色 | `boolean` | - | `false`
 color | 图标颜色，写入根元素的 `color` | `string` | - | -
-size | 尺寸（px）：`数值` 或 `[外层, 里层]`，每层为 `数值` 或 `[宽, 高]`；不传时跟随 `font-size` | `number \| [number \| [number, number?], (number \| [number, number?])?]` | - | -
+size | 尺寸，单位 px（`MIcon` 中为 750 稿长度）：`数值` 或 `[外层, 里层]`，每层为 `数值` 或 `[宽, 高]`；不传时跟随 `font-size` | `number \| [number \| [number, number?], (number \| [number, number?])?]` | - | -
 
 `class`、`style`、`aria-label` 等属性透传到根 `<i>` 元素，透传的 `style` 会覆盖 `size`、`color` 生成的同名样式。组件不提供自定义插槽或实例方法。
 

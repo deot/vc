@@ -3,7 +3,7 @@
 import { defineComponent, inject, computed, getCurrentInstance } from 'vue';
 import { MCustomer } from '../../customer/index.m';
 import { hasCustomerValue } from '../../customer/utils';
-import { Icon } from '../../icon';
+import { MIcon } from '../../icon/index.m';
 import { props as listItemProps } from './list-item-props';
 import { VcInstance } from '../../vc';
 import { toRem } from '@deot/vc-shared';
@@ -89,7 +89,7 @@ export const MListItem = defineComponent({
 							}
 							{
 								props.arrow && (
-									<Icon
+									<MIcon
 										type={icon.value}
 										class="vcm-list-item__icon"
 									/>

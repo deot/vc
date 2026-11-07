@@ -1,7 +1,8 @@
 @use '../style/helper' as *;
 
+// Icon 与 MIcon 共用（两端只有 size 的单位不同）
 // 像文字一样排版：根节点是一个字符框，基线取自按父级字体排版的零宽字符，图标在框内居中；不需要 vertical-align
-.vc-icon {
+@include block((vc-icon, vcm-icon)) {
 	display: inline-flex;
 	line-height: 0;
 	align-items: center;
@@ -17,7 +18,7 @@
 	}
 
 	// size有值时，外层为固定盒子，图标居中；flex 父容器空间不足时不被压缩
-	&.is-size {
+	@include when(size) {
 		flex-shrink: 0;
 	}
 }

@@ -2,7 +2,7 @@
 
 import { computed, defineComponent, Fragment } from 'vue';
 import { useLocale } from '../../../locale';
-import { Icon } from '../../../icon';
+import { MIcon } from '../../../icon/index.m';
 import { MSpin } from '../../../spin/index.m';
 import { getAvailableIndex } from '../../utils';
 
@@ -42,7 +42,7 @@ export const MFileItem = defineComponent({
 															? <MSpin size={40} />
 															: (
 																	<Fragment>
-																		<Icon type="file" class="vcm-upload-picker-file-item__file-icon" />
+																		<MIcon type="file" class="vcm-upload-picker-file-item__file-icon" />
 																		<div
 																			title={label}
 																			class="vcm-upload-picker-file-item__title"
@@ -56,7 +56,7 @@ export const MFileItem = defineComponent({
 										</div>
 										{
 											(!props.disabled || isError) && (
-												<Icon
+												<MIcon
 													type="close"
 													class="vcm-upload-picker__delete"
 													// @ts-ignore
