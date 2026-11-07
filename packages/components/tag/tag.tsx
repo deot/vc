@@ -1,8 +1,6 @@
-/** @jsxImportSource vue */
-
-import { defineComponent, ref, computed, watch } from 'vue';
-import { Icon } from '../icon/index';
+import { defineComponent } from 'vue';
 import { props as tagProps } from './tag-props';
+import { useTag } from './use-tag';
 
 const COMPONENT_NAME = 'vc-tag';
 
@@ -10,68 +8,7 @@ export const Tag = defineComponent({
 	name: COMPONENT_NAME,
 	props: tagProps,
 	emits: ['close', 'change'],
-	setup(props, { emit, slots }) {
-		const isChecked = ref(true);
-		const classes = computed(() => {
-			return {
-				[`is-${props.color}`]: true,
-				[`is-${props.type}`]: true,
-				[`is-unchecked`]: !isChecked.value
-			};
-		});
-
-		const handleClose = (e) => {
-			e.stopPropagation();
-			emit('close', e, props.value || undefined);
-		};
-
-		const handleCheck = (e: any) => {
-			if (!props.checkable) return;
-			e.stopPropagation();
-
-			isChecked.value = !isChecked.value;
-
-			emit('change', isChecked.value, props.value || undefined);
-		};
-
-		watch(
-			() => props.checked,
-			(v) => {
-				isChecked.value = !!v;
-			},
-			{ immediate: true }
-		);
-		return () => {
-			return (
-				<div
-					class={[classes.value, 'vc-tag']}
-					// @ts-ignore
-					onClick={handleCheck}
-				>
-					<div class="vc-tag__wrapper">
-						{
-							props.type === 'dot' && (
-								<div>
-									<span class="vc-tag__dot" />
-								</div>
-							)
-						}
-						<span>
-							{ slots.default?.() }
-						</span>
-						{
-							props.closable && (
-								<Icon
-									type="close"
-									class="vc-tag__close"
-									// @ts-ignore
-									onClick={handleClose}
-								/>
-							)
-						}
-					</div>
-				</div>
-			);
-		};
+	setup(props, context) {
+		return useTag(props, context);
 	}
 });

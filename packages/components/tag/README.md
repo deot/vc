@@ -2,6 +2,8 @@
 
 用于标记属性、分类和展示选择状态的小标签。
 
+移动端入口导出的 `MTag` 与 `Tag` 的属性、事件和插槽相同，尺寸按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
+
 ### 何时使用
 
 - 展示内容的属性或分类。
@@ -80,6 +82,34 @@ const handleChange = (value) => {
 ```
 :::
 
+## 移动端
+
+`MTag` 的属性、事件、插槽、结构与 `Tag` 相同，根节点另有标记类 `.vcm-tag`，结构样式、颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；三种 `type` 等高（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 高度、行高 | 40（20） |
+| 字号 | 24（12） |
+| 左右内边距 | 8（4） |
+| 圆角 | 6（3） |
+| 关闭图标 | 字号 24（12），图形缩放为 0.7 倍，与文字间距 8（4） |
+| 圆点（`dot`） | 16（8），与文字间距 8（4） |
+| 右外边距 | 16（8） |
+
+边框保持 1px（高分屏 0.5px），不随 `--vc-rem` 缩放。
+
+两端的尺寸都写成局部变量 `--vc-tag-<键>`，桌面端的默认值为 px，移动端在 `.vcm-tag` 上覆盖，与样式的加载顺序无关。键为 `height`、`line-height`、`margin`、`font-size`、`radius`、`wrapper-padding`、`close-size`、`close-transform`、`dot-size`、`dot-gap`，以及 `type` 下的 `border-height`、`border-line-height`、`border-close-gap`、`dot-height`、`dot-line-height`、`dot-padding`、`dot-close-gap`。
+
+```vue
+<template>
+	<MTag type="border" color="primary" closable>标签</MTag>
+</template>
+
+<script setup>
+import { MTag } from '@deot/vc';
+</script>
+```
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-tag-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
@@ -139,4 +169,3 @@ const handleChange = (value) => {
 - 当前实现会将 `value` 为 `0` 或空字符串的事件参数转为 `undefined`，需要定位标签时请使用非空字符串或非零数字。
 - 同时开启 `closable` 和 `checkable` 时，点击关闭图标也会冒泡到标签并触发选择切换。只需关闭时，可在 `close` 回调中调用 `event.stopPropagation()`。
 - 标签根节点会阻止点击事件向父节点冒泡。
-- 移动端入口导出的 `MTag` 复用 `Tag` 实现和样式，属性、事件和插槽一致。

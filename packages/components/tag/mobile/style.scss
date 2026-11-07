@@ -1,0 +1,30 @@
+@use '../../style/helper' as *;
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放）：三种 type 等高，375 宽下高 20px、字号 12px、左右内边距 4px
+// 圆角沿用桌面端的 3px 换算后缩放；关闭图标框 12px、图形缩放 0.7（图形约 8px），与文字间距 4px；圆点 8px
+// 结构与颜色沿用 ../style.scss，这里只覆盖尺寸的局部变量（与两端样式的加载顺序无关）
+@include block(vcm-tag) {
+	@include localvars(tag, (
+		height: remfix(40),
+		line-height: remfix(40),
+		margin: 0 remfix(16) 0 0,
+		font-size: remfix(24),
+		radius: remfix(6),
+		wrapper-padding: 0 remfix(8),
+		close-size: remfix(24),
+		dot-size: remfix(16),
+		dot-gap: remfix(8),
+		border-height: remfix(40),
+		border-line-height: remfix(40),
+		border-close-gap: remfix(8),
+		dot-height: remfix(40),
+		dot-line-height: remfix(40),
+		dot-padding: 0,
+		dot-close-gap: remfix(8)
+	));
+
+	// 关闭图标与文字的间距：桌面端只在 border、dot 下设置，这里补上 default（子元素沿用桌面端类名）
+	.vc-tag__close {
+		margin-left: remfix(8);
+	}
+}
