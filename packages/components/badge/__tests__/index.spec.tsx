@@ -16,7 +16,8 @@ const text = (wrapper: any) => indicator(wrapper)?.textContent;
 describe('index.ts', () => {
 	it('basic', () => {
 		expect(typeof Badge).toBe('object');
-		expect(MBadge).toBe(Badge);
+		expect(typeof MBadge).toBe('object');
+		expect(MBadge.name).toBe('vcm-badge');
 	});
 
 	it('create', () => {
@@ -288,5 +289,52 @@ describe('index.ts', () => {
 		await nextTick();
 		expect(kind(wrapper)).toBe('status');
 		expect(wrapper.find('transition-stub').exists()).toBe(false);
+	});
+});
+
+describe('MBadge', () => {
+	const mIndicator = (wrapper: any) => {
+		return wrapper.element.querySelector('.vc-badge__value, .vc-badge__dot, .vc-badge__custom, .vc-badge__status') as HTMLElement | null;
+	};
+
+	it('结构与 Badge 相同，根节点另有标记类 vcm-badge', () => {
+		const wrapper = mount(() => (<MBadge value={9}><Box /></MBadge>));
+
+		expect(wrapper.classes()).toEqual(['vc-badge', 'vcm-badge']);
+		expect(mIndicator(wrapper)!.className).toBe('vc-badge__value');
+		expect(wrapper.find('.vc-badge__content').text()).toBe('9');
+		expect(wrapper.find('transition-stub').attributes('name')).toBe('vc-badge__zoom');
+
+		expect(mount(() => (<MBadge value={9} />)).classes()).toEqual(['vc-badge', 'vcm-badge', 'is-standalone']);
+		expect(mIndicator(mount(() => (<MBadge dot><Box /></MBadge>)))!.className).toBe('vc-badge__dot');
+		expect(mIndicator(mount(() => (<MBadge>{{ dot: () => 'C' }}</MBadge>)))!.className).toBe('vc-badge__custom');
+	});
+
+	it('status / label: 状态点与文字', () => {
+		const wrapper = mount(() => (<MBadge status="success" label="说明" />));
+
+		expect(wrapper.find('.vc-badge__status > .vc-badge__status-dot').classes()).toEqual(['vc-badge__status-dot', 'is-success']);
+		expect(wrapper.find('.vc-badge__label').text()).toBe('说明');
+	});
+
+	it('offset: 750 稿长度, 随 --vc-rem 缩放', () => {
+		const style = (offset: any) => {
+			const el = mIndicator(mount(() => (<MBadge value={9} offset={offset}><Box /></MBadge>)))!;
+			return [el.style.marginRight, el.style.marginTop];
+		};
+
+		expect(style([12, -4])).toEqual(['calc(var(--vc-rem) * -12)', 'calc(var(--vc-rem) * -4)']);
+		expect(style(8)).toEqual(['calc(var(--vc-rem) * -8)', 'calc(var(--vc-rem) * 8)']);
+		expect(style(undefined)).toEqual(['', '']);
+	});
+
+	it('显示规则与 Badge 相同: max 与 value 小于等于0时隐藏', () => {
+		const render = (value: number, max?: number) => mIndicator(mount(() => (<MBadge value={value} max={max} />)))?.textContent;
+
+		expect(render(100)).toBe('99+');
+		expect(render(1000, 999)).toBe('999+');
+		expect(render(1000, 0)).toBe('1000');
+		expect(render(0)).toBeUndefined();
+		expect(render(-1)).toBeUndefined();
 	});
 });

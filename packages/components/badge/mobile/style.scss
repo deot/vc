@@ -1,0 +1,17 @@
+@use '../../style/helper' as *;
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放），375 宽下：数字高 16px、内边距 4px、字号 12px、圆点 8px
+// 结构与颜色沿用 ../style.scss，这里只覆盖尺寸的局部变量（与两端样式的加载顺序无关）
+@include block(vcm-badge) {
+	@include localvars(badge, (
+		height: remfix(32),
+		padding: remfix(8),
+		font-size: remfix(24),
+		dot: remfix(16),
+		inset: remfix(4),
+		ring: remfix(4),
+		label-font-size: remfix(28),
+		label-line-height: remfix(44),
+		label-gap: remfix(16)
+	));
+}

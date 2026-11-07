@@ -1,6 +1,6 @@
 ## 徽标（Badge）
 
-出现在图标或文字的右上角，提示数量或新内容；也可以单独作为状态点使用。`Badge` 与 `MBadge` 指向同一个组件。
+出现在图标或文字的右上角，提示数量或新内容；也可以单独作为状态点使用。`MBadge` 为移动端版本，属性、插槽与 `Badge` 相同，尺寸随 `--vc-rem` 缩放，`offset` 为 750 稿长度。
 
 ### 何时使用
 
@@ -136,7 +136,7 @@ import { Badge } from '@deot/vc';
 
 ### 偏移
 
-`offset` 为 `[水平, 垂直]`，单位为 px，正值向右、向下；数字表示两个方向相同。
+`offset` 为 `[水平, 垂直]`，单位为 px（`MBadge` 中为 750 稿长度），正值向右、向下；数字表示两个方向相同。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
@@ -335,6 +335,34 @@ const count = ref(12);
 ```
 :::
 
+### 移动端
+
+`MBadge` 的结构、显示规则和样式都与 `Badge` 相同，根元素另有标记类 `.vcm-badge`。尺寸写为 `calc(var(--vc-rem) * n)`（n 为 750 稿长度），随 `--vc-rem` 缩放；`offset` 同样是 750 稿长度。
+
+两端的尺寸都写成局部变量 `--vc-badge-<键>`，桌面端的默认值为 px，移动端在 `.vcm-badge` 上覆盖，与样式的加载顺序无关。键为 `height`、`padding`、`font-size`、`dot`、`inset`、`ring`、`label-font-size`、`label-line-height`、`label-gap`。
+
+| 项 | `Badge` | `MBadge`（750 稿） | 375 宽下 |
+| --- | --- | --- | --- |
+| 数字、文字的高度 / 最小宽度 | `20px` | `32` | `16px` |
+| 数字、文字的左右内边距 | `6px` | `8` | `4px` |
+| 数字、文字的字号 | `12px` | `24` | `12px` |
+| 圆点、状态点 | `6px` | `16` | `8px` |
+| 外圈宽度 | `2px` | `4` | `2px` |
+| 状态点旁文字的字号 / 行高 / 间距 | `14px` / `22px` / `8px` | `28` / `44` / `16` | `14px` / `22px` / `8px` |
+
+```vue
+<template>
+	<MBadge :value="5" :offset="[-12, 12]">
+		<span class="box" />
+	</MBadge>
+	<MBadge status="success" label="成功" />
+</template>
+
+<script setup>
+import { MBadge } from '@deot/vc';
+</script>
+```
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-badge-<参数>`。可在组件根节点或其祖先上设置。
@@ -368,7 +396,7 @@ const count = ref(12);
 | status | 显示为状态点 | `string` | `default` / `pending` / `success` / `warning` / `error` | - |
 | label | 状态点旁的文字；设置后也显示为状态点（`status` 未设置时按 `default`）。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md)；`label` 插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | color | 徽标的颜色，任意 CSS 颜色；作用于数字、文字、圆点与状态点 | `string` | - | - |
-| offset | 右上角徽标的偏移 `[水平, 垂直]`，单位为 px，正值向右、向下；数字表示两个方向相同 | `number \| number[]` | - | - |
+| offset | 右上角徽标的偏移 `[水平, 垂直]`，单位为 px（`MBadge` 中为 750 稿长度），正值向右、向下；数字表示两个方向相同 | `number \| number[]` | - | - |
 | dotClass | 徽标元素（数字、文字、圆点、自定义徽标、状态点）的类名 | `string \| object \| array` | - | - |
 | dotStyle | 徽标元素的样式，优先于 `color` 与 `offset` | `string \| object` | - | - |
 
@@ -392,4 +420,4 @@ const count = ref(12);
 - `offset` 通过 `margin-right` / `margin-top` 实现，`dotStyle` 中的同名属性会覆盖它；状态点不受 `offset` 影响。
 - 右上角徽标、独立使用的徽标在出现、隐藏、形态切换时有缩放过渡，状态点没有。数字变化时文字重新缩放；从隐藏到出现只播放进场过渡。
 - `label` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。
-- `MBadge` 是 `Badge` 的别名，使用同一实现与样式，可从 `@deot/vc` 导入。
+- `MBadge` 与 `Badge` 共用同一份逻辑与样式规则，只有尺寸与 `offset` 的单位不同；主题参数相同，`--vc-badge-<参数>` 对两者都生效。

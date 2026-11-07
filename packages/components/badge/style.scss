@@ -1,3 +1,4 @@
+@use 'sass:map';
 @use '../style/helper' as *;
 
 $color-contrast-light: varfix(color-contrast-light, badge);
@@ -8,41 +9,57 @@ $color-success: varfix(color-success, badge);
 $color-warning: varfix(color-warning, badge);
 $background-color-lightest: varfix(background-color-lightest, badge);
 $foreground-color: varfix(foreground-color, badge);
-$component-name: vc-badge;
-$height: 20px;
-$dot-size: 6px;
 $translate: translate(50%, -50%); // 角标的中心落在内容的右上角
 $overshoot: cubic-bezier(.3, 1.3, .3, 1);
 
-@include block($component-name) {
+// 桌面端尺寸：height（数字的高、最小宽、行高、圆角）、padding（数字左右内边距）、font-size、dot（圆点与状态点）、
+// inset（角标向内的偏移）、ring（描边）、label-font-size / label-line-height / label-gap（状态文字）
+// 写成局部变量 --vc-badge-<键>（默认值为下表），MBadge 在 .vcm-badge 上覆盖（mobile/style.scss）
+$sizes: (
+	height: 20px,
+	padding: 6px,
+	font-size: 12px,
+	dot: 6px,
+	inset: 2px,
+	ring: 2px,
+	label-font-size: 14px,
+	label-line-height: 22px,
+	label-gap: 8px
+);
+
+@function v($key) {
+	@return localfix(badge, $key, map.get($sizes, $key));
+}
+
+@include block(vc-badge) {
 	position: relative;
 	display: inline-block;
 	line-height: 1;
 
 	@include element((value, dot, custom)) {
 		position: absolute;
-		top: unitfix(2px);
-		right: unitfix(2px);
+		top: v(inset);
+		right: v(inset);
 		z-index: 2;
 		overflow: hidden;
 		text-align: center;
-		border-radius: unitfix($height);
+		border-radius: v(height);
 		transform: $translate;
 		transform-origin: 100% 0;
 		box-sizing: border-box;
 	}
 
 	@include element(value) {
-		height: unitfix($height);
-		min-width: unitfix($height);
-		padding: 0 unitfix(6px);
-		font-size: unitfix(12px);
+		height: v(height);
+		min-width: v(height);
+		padding: 0 v(padding);
+		font-size: v(font-size);
 		font-weight: 500;
-		line-height: unitfix($height);
+		line-height: v(height);
 		color: $color-contrast-light;
 		white-space: nowrap;
 		background-color: $color-error;
-		box-shadow: 0 0 0 unitfix(2px) $background-color-lightest;
+		box-shadow: 0 0 0 v(ring) $background-color-lightest;
 	}
 
 	// 数字变化时重新挂载，从无到有缩放
@@ -54,11 +71,11 @@ $overshoot: cubic-bezier(.3, 1.3, .3, 1);
 	}
 
 	@include element(dot) {
-		width: unitfix($dot-size);
-		height: unitfix($dot-size);
+		width: v(dot);
+		height: v(dot);
 		background-color: $color-error;
 		border-radius: 50%;
-		box-shadow: 0 0 0 unitfix(2px) $background-color-lightest;
+		box-shadow: 0 0 0 v(ring) $background-color-lightest;
 	}
 
 	@include element(custom) {
@@ -83,8 +100,8 @@ $overshoot: cubic-bezier(.3, 1.3, .3, 1);
 
 	@include element(status-dot) {
 		display: inline-block;
-		width: unitfix($dot-size);
-		height: unitfix($dot-size);
+		width: v(dot);
+		height: v(dot);
 		border-radius: 50%;
 
 		@include when(default) {
@@ -111,9 +128,9 @@ $overshoot: cubic-bezier(.3, 1.3, .3, 1);
 	// 以文字的基线作为整个徽标的基线，与旁边的文字对齐（圆点仍上下居中）
 	@include element(label) {
 		align-self: baseline;
-		margin-left: unitfix(8px);
-		font-size: unitfix(14px);
-		line-height: unitfix(22px);
+		margin-left: v(label-gap);
+		font-size: v(label-font-size);
+		line-height: v(label-line-height);
 		color: $foreground-color;
 	}
 }
