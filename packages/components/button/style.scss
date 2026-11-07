@@ -1,2 +1,545 @@
-@use "./button";
-@use "./button-group";
+@use 'sass:map';
+@use '../style/helper' as *;
+
+/**
+ * 可配制的主题色提取, Button可单独配置，默认使用全局值
+ */
+$color-contrast-light: varfix(color-contrast-light, button);
+$color-dark: varfix(color-dark, button);
+$color-dark-light: varfix(color-dark-light, button);
+$color-dark-lighter: varfix(color-dark-lighter, button);
+$color-disabled: varfix(color-disabled, button);
+$color-disabled-light: varfix(color-disabled-light, button);
+$color-error: varfix(color-error, button);
+$color-error-light: varfix(color-error-light, button);
+$color-light-deep: varfix(color-light-deep, button);
+$color-light-deeper: varfix(color-light-deeper, button);
+$color-light-deepest: varfix(color-light-deepest, button);
+$color-neutral: varfix(color-neutral, button);
+$color-neutral-light: varfix(color-neutral-light, button);
+$color-neutral-deep: varfix(color-neutral-deep, button);
+$color-primary: varfix(color-primary, button);
+$color-primary-light: varfix(color-primary-light, button);
+$color-primary-lighter: varfix(color-primary-lighter, button);
+$color-success: varfix(color-success, button);
+$color-success-light: varfix(color-success-light, button);
+$color-warning: varfix(color-warning, button);
+$color-warning-light: varfix(color-warning-light, button);
+$background-color-light: varfix(background-color-light, button);
+$background-color-lightest: varfix(background-color-lightest, button);
+$foreground-color: varfix(foreground-color, button);
+
+@mixin semantic-solid($color, $color-light) {
+	@include when(solid) {
+		color: $color;
+		background-color: $background-color-lightest;
+
+		&:hover {
+			color: $color-light;
+			border-color: $color-light;
+		}
+	}
+}
+
+@mixin semantic-solid-disabled($type, $color-light) {
+	@include when($type) {
+		@include when(solid) {
+			&,
+			&:hover {
+				color: $color-light;
+				background-color: $background-color-lightest;
+				border-color: currentcolor;
+			}
+
+			@supports (color: color-mix(in srgb, black, white)) {
+				&,
+				&:hover {
+					color: color-mix(in srgb, #{$color-light} 30%, #{$background-color-lightest});
+				}
+			}
+		}
+	}
+}
+
+@mixin button-theme($name, $light) {
+	.#{$name}.is-default:not(.is-disabled) {
+		background-color: if(sass($light): $color-light-deep; else: $background-color-light);
+		border-color: if(sass($light): $color-light-deep; else: $background-color-light);
+
+		&:not(.is-solid):hover {
+			background-color: if(sass($light): $color-light-deeper; else: $color-neutral-light);
+			border-color: if(sass($light): $color-light-deeper; else: $color-neutral-light);
+		}
+
+		&.is-solid {
+			background-color: $background-color-lightest;
+			border-color: $color-neutral;
+
+			&:hover {
+				border-color: $color-neutral-deep;
+			}
+		}
+	}
+
+	.#{$name}.is-default.is-disabled {
+		&,
+		&:hover {
+			color: if(sass($light): $color-neutral; else: $color-dark-lighter);
+			background-color: if(sass($light): $color-light-deep; else: $background-color-light);
+			border-color: if(sass($light): $color-light-deep; else: $background-color-light);
+		}
+
+		&.is-solid {
+			&,
+			&:hover {
+				border-color: if(sass($light): $color-light-deeper; else: $background-color-light);
+			}
+		}
+	}
+
+	.#{$name}.is-text.is-disabled {
+		&,
+		&:hover {
+			color: if(sass($light): $color-neutral; else: $color-dark-lighter);
+		}
+	}
+
+	.#{$name}.is-primary.is-solid:not(.is-disabled) {
+		color: if(sass($light): $color-primary; else: $color-primary-light);
+		border-color: if(sass($light): $color-primary; else: $color-primary-light);
+
+		&:hover {
+			color: if(sass($light): $color-primary-light; else: $color-contrast-light);
+			border-color: currentcolor;
+		}
+	}
+}
+
+
+// 桌面端尺寸（px）：高度由内边距与行高决定，small 26 / medium 32 / large 38 / mini 22
+$sizes: (
+	medium: (
+		padding: unitfix(5) unitfix(16),
+		font-size: unitfix(13),
+		line-height: unitfix(20),
+		radius: unitfix(8),
+		icon-size: unitfix(14),
+		gap: unitfix(6),
+		circle-radius: unitfix(30),
+		alone-size: unitfix(32),
+		alone-font-size: unitfix(13)
+	),
+	large: (
+		padding: unitfix(8) unitfix(20),
+		font-size: unitfix(14),
+		radius: unitfix(8),
+		icon-size: unitfix(16),
+		circle-radius: unitfix(36),
+		alone-size: unitfix(38),
+		alone-font-size: unitfix(14)
+	),
+	small: (
+		padding: unitfix(2) unitfix(8),
+		font-size: unitfix(12),
+		radius: unitfix(3),
+		icon-size: unitfix(12),
+		circle-radius: unitfix(24),
+		alone-size: unitfix(26),
+		alone-font-size: unitfix(12)
+	),
+	mini: (
+		padding: unitfix(1) unitfix(6),
+		font-size: unitfix(12),
+		line-height: unitfix(18),
+		radius: unitfix(3),
+		icon-size: unitfix(12),
+		circle-radius: unitfix(22),
+		alone-size: unitfix(22),
+		alone-font-size: unitfix(12)
+	)
+);
+
+// 尺寸写成局部变量 --vc-button-<档>-<键>（默认值为上表），MButton 在 .vcm-button / .vcm-button-group 上覆盖（mobile/style.scss）
+@function size($size, $key) {
+	$value: map.get(map.get($sizes, $size), $key);
+
+	@if not $value {
+		@return null;
+	}
+
+	@return localfix(button, #{$size}-#{$key}, $value);
+}
+
+@media (prefers-color-scheme: light) {
+	:root {
+		@include button-theme(vc-button, true);
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		@include button-theme(vc-button, false);
+	}
+}
+
+[data-vc-theme="light"] {
+	@include button-theme(vc-button, true);
+}
+
+[data-vc-theme="dark"] {
+	@include button-theme(vc-button, false);
+}
+
+
+// 加载图标、图标、文字横向排列并垂直居中；无论是否带图标、是否加载中都是同一套布局
+@include block(vc-button) {
+	display: inline-flex;
+	height: size(medium, height);
+	padding: size(medium, padding);
+	font-size: size(medium, font-size);
+	font-weight: 400;
+	line-height: size(medium, line-height);
+	cursor: pointer;
+	background: $background-color-lightest;
+	border: unitfix(1) solid transparent;
+	border-color: $color-light-deeper;
+	border-radius: size(medium, radius);
+	outline: 0 none !important;
+	box-sizing: size(medium, box-sizing);
+
+	/**
+	 * 外部v-show控制，主题变更会调用
+	 */
+	transition: color .2s linear, 
+		background-color .2s linear,
+		border .2s linear,
+		box-shadow .2s linear;
+	user-select: none;
+	align-items: center;
+	justify-content: center;
+
+	// 各部分之间的间距；用外边距而不是 gap，基线占位不参与间距，按钮被外部改为非 flex 时间距也不变
+	> * + * {
+		margin-left: size(medium, gap);
+	}
+
+	// 字符框占位：按钮的基线取自它，与同一行的其它按钮一致，只有图标时同样适用；
+	// 按按钮的行高排版，内容区至少一行高，只有图标的按钮与文字按钮等高
+	@include text-strut;
+
+	@include element(icon) {
+		display: inline-flex;
+		flex: 0 0 1em;
+		align-items: center;
+		justify-content: center;
+		width: 1em;
+		height: 1em;
+		font-size: size(medium, icon-size);
+		line-height: 1;
+	}
+
+	@include when(circle) {
+		border-radius: size(medium, circle-radius);
+	}
+
+	@include when(long) {
+		width: 100%;
+	}
+
+	@include when(default) {
+		color: $foreground-color;
+		background-color: $background-color-light;
+		border-color: $background-color-light;
+
+		&:hover {
+			color: $foreground-color;
+			border-color: $color-primary;
+		}
+
+		@include when(solid) {
+			background-color: $background-color-lightest;
+			border-color: $color-neutral;
+
+			&:hover {
+				border-color: $color-primary-light;
+			}
+		}
+	}
+
+	@include when(primary) {
+		color: $color-contrast-light;
+		background-color: $color-primary;
+		border-color: $color-primary;
+
+		&:hover {
+			background-color: $color-primary-light;
+			border-color: $color-primary-light;
+		}
+
+		@include when(solid) {
+			color: $color-primary;
+			background-color: $background-color-lightest;
+
+			&:hover {
+				color: $color-primary-light;
+				border-color: $color-primary-light;
+			}
+		}
+	}
+
+	@include when(text) {
+		color: $color-primary;
+		background-color: transparent;
+		border-color: transparent;
+
+		&:hover {
+			color: $color-primary-light;
+		}
+	}
+
+	@include when(success) {
+		color: $color-contrast-light;
+		background-color: $color-success;
+		border-color: $color-success;
+
+		&:hover {
+			background-color: $color-success-light;
+			border-color: $color-success-light;
+		}
+
+		@include semantic-solid($color-success, $color-success-light);
+	}
+
+	@include when(error) {
+		color: $color-contrast-light;
+		background-color: $color-error;
+		border-color: $color-error;
+
+		&:hover {
+			background-color: $color-error-light;
+			border-color: $color-error-light;
+		}
+
+		@include semantic-solid($color-error, $color-error-light);
+	}
+
+	@include when(warning) {
+		color: $color-contrast-light;
+		background-color: $color-warning;
+		border-color: $color-warning;
+
+		&:hover {
+			background: $color-warning-light;
+			border-color: $color-warning-light;
+		}
+
+		@include semantic-solid($color-warning, $color-warning-light);
+	}
+
+	@include when(disabled) {
+		color: $color-dark-lighter;
+		cursor: not-allowed;
+		background-color: $background-color-light;
+		border-color: $background-color-light;
+
+		&:hover {
+			color: $color-dark-lighter;
+			background: $background-color-light;
+			border-color: $background-color-light;
+		}
+
+		@include when(primary) {
+			color: $color-contrast-light;
+			background-color: $color-primary-lighter;
+			border-color: $color-primary-lighter;
+
+			@supports (color: color-mix(in srgb, black, white)) {
+				& {
+					background-color: color-mix(in srgb, #{$color-primary-light} 30%, #{$background-color-lightest});
+					border-color: color-mix(in srgb, #{$color-primary-light} 30%, #{$background-color-lightest});
+				}
+			}
+
+			@include when(solid) {
+				&,
+				&:hover {
+					color: $color-primary-lighter;
+					background-color: $background-color-lightest;
+					border-color: currentcolor;
+				}
+
+				@supports (color: color-mix(in srgb, black, white)) {
+					&,
+					&:hover {
+						color: color-mix(in srgb, #{$color-primary-light} 30%, #{$background-color-lightest});
+					}
+				}
+			}
+		}
+
+		@include semantic-solid-disabled(success, $color-success-light);
+		@include semantic-solid-disabled(error, $color-error-light);
+		@include semantic-solid-disabled(warning, $color-warning-light);
+	}
+
+	@each $size in (large, small, mini) {
+		$size-map: map.get($sizes, $size);
+
+		@if $size-map {
+			@include when($size) {
+				height: size($size, height);
+				padding: size($size, padding);
+				font-size: size($size, font-size);
+				line-height: size($size, line-height);
+				border-radius: size($size, radius);
+
+				> .vc-button__icon {
+					font-size: size($size, icon-size);
+				}
+
+				@include when(circle) {
+					border-radius: size($size, circle-radius);
+				}
+			}
+		}
+	}
+
+	// 只有图标的圆形按钮：与同尺寸的文字按钮等高；保留上下内边距，内容区与文字行同高，基线位置一致
+	@include when(alone) {
+		& {
+			@include when(round) {
+				width: size(medium, alone-size);
+				height: size(medium, alone-size);
+				padding-right: 0;
+				padding-left: 0;
+				font-size: size(medium, alone-font-size);
+				border-radius: 50%;
+			}
+
+			@each $size in (large, small, mini) {
+				$size-map: map.get($sizes, $size);
+
+				@if $size-map {
+					@include when($size) {
+						@include when(round) {
+							width: size($size, alone-size);
+							height: size($size, alone-size);
+							padding-right: 0;
+							padding-left: 0;
+							font-size: size($size, alone-font-size);
+							border-radius: 50%;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// 按钮组：首尾圆角与组内按钮的尺寸一致（取 radius、circle-radius）
+@include block(vc-button-group) {
+	display: inline-block;
+	border-radius: size(medium, radius);
+
+	@include block(vc-button) {
+		position: relative;
+		display: flex;
+		float: left;
+
+		// 填充按钮之间留 1px 缝透出背景，作为分界；带边框的按钮叠边，避免边框叠成 2px
+		+ .vc-button {
+			margin-left: 1px;
+		}
+
+		&.is-solid,
+		&.is-dashed {
+			+ .is-solid,
+			+ .is-dashed {
+				margin-left: -1px;
+			}
+		}
+
+		&:not(:only-child) {
+			border-radius: 0;
+		}
+
+		&:first-child {
+			margin-left: 0;
+			border-bottom-left-radius: inherit;
+			border-top-left-radius: inherit;
+		}
+
+		&:last-child {
+			border-top-right-radius: inherit;
+			border-bottom-right-radius: inherit;
+		}
+
+		&:only-child {
+			border-radius: inherit;
+		}
+
+		&:hover {
+			z-index: 2;
+		}
+	}
+
+	@each $size in (small, mini) {
+		$size-map: map.get($sizes, $size);
+
+		@if $size-map {
+			@include when($size) {
+				border-radius: size($size, radius);
+			}
+		}
+	}
+
+	@include when(vertical) {
+		@include block(vc-button) {
+			float: none;
+			width: 100%; // button 元素即使 display: block 也按内容收缩
+
+			+ .vc-button {
+				margin-top: 1px;
+				margin-left: 0;
+			}
+
+			&.is-solid,
+			&.is-dashed {
+				+ .is-solid,
+				+ .is-dashed {
+					margin-top: -1px;
+					margin-left: 0;
+				}
+			}
+
+			&:first-child {
+				margin-top: 0;
+				border-top-right-radius: inherit;
+				border-bottom-left-radius: 0;
+			}
+
+			&:last-child {
+				border-top-right-radius: 0;
+				border-bottom-left-radius: inherit;
+			}
+
+			&:only-child {
+				border-radius: inherit;
+			}
+		}
+	}
+
+	@include when(circle) {
+		border-radius: size(medium, circle-radius);
+
+		@each $size in (large, small, mini) {
+			$size-map: map.get($sizes, $size);
+
+			@if $size-map {
+				@include when($size) {
+					border-radius: size($size, circle-radius);
+				}
+			}
+		}
+	}
+}

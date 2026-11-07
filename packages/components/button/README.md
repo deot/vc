@@ -2,7 +2,7 @@
 
 用于触发即时操作，并通过类型、尺寸和形状表达不同的操作层级。
 
-移动端入口导出的 `MButton` 和 `MButtonGroup` 分别是 `Button` 和 `ButtonGroup` 的别名，共用相同的属性、事件和插槽。
+移动端入口导出的 `MButton` 和 `MButtonGroup` 与 `Button`、`ButtonGroup` 的属性、事件和插槽相同，尺寸按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
 
 ### 何时使用
 
@@ -49,7 +49,7 @@ import { Button } from '@deot/vc';
 
 ### 状态与尺寸
 
-`disabled` 禁用按钮；`size` 支持 `large`、`medium` 和 `small`。普通文本按钮的默认高度依次为 `38px`、`32px`、`26px`，内边距依次为 `8px 20px`、`5px 16px`、`2px 8px`；组内按钮沿用同一尺寸样式。
+`disabled` 禁用按钮；`size` 支持 `large`、`medium`、`small` 和 `mini`。普通文本按钮的默认高度依次为 `38px`、`32px`、`26px`、`22px`，内边距依次为 `8px 20px`、`5px 16px`、`2px 8px`、`1px 6px`；组内按钮沿用同一尺寸样式。移动端（`MButton`）的尺寸见 [移动端](#移动端)。
 
 :::playground
 <!--
@@ -66,6 +66,7 @@ import { Button } from '@deot/vc';
 		<Button type="primary" size="large">大按钮</Button>
 		<Button type="primary">中按钮</Button>
 		<Button type="primary" size="small">小按钮</Button>
+		<Button type="primary" size="mini">迷你按钮</Button>
 	</div>
 </template>
 
@@ -85,7 +86,7 @@ import { Button } from '@deot/vc';
 
 ### 图标与形状
 
-`icon` 添加内置图标，图标尺寸随 `size` 调整：small 为 `12px`、medium 为 `14px`、large 为 `16px`；图标与文字同时存在时，间距为 `6px`。自定义 `icon` 插槽继承相同字号，显式设置尺寸的内容由调用方控制。`circle` 使用胶囊形圆角。无默认插槽时配合 `round` 可创建圆形图标按钮。只有图标的按钮（含圆形）与同尺寸的文字按钮等高，放在同一行时上下对齐。
+`icon` 添加内置图标，图标尺寸随 `size` 调整：mini、small 为 `12px`，medium 为 `14px`，large 为 `16px`；图标与文字同时存在时，间距为 `6px`。自定义 `icon` 插槽继承相同字号，显式设置尺寸的内容由调用方控制。`circle` 使用胶囊形圆角。无默认插槽时配合 `round` 可创建圆形图标按钮。只有图标的按钮（含圆形）与同尺寸的文字按钮等高，放在同一行时上下对齐。
 
 :::playground
 <!--
@@ -218,6 +219,31 @@ import { Button, ButtonGroup } from '@deot/vc';
 ```
 :::
 
+## 移动端
+
+`MButton`、`MButtonGroup` 的属性、事件、插槽、结构与 `Button`、`ButtonGroup` 相同，根节点另有标记类 `.vcm-button`、`.vcm-button-group`，结构样式、颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；高度固定，左右内边距与字号如下（括号内为 375 宽下的 px）：
+
+| size | 高度 | 左右内边距 | 字号（图标、加载图标同） | 圆角 |
+| --- | --- | --- | --- | --- |
+| mini | 56（28） | 16（8） | 28（14） | 6（3） |
+| small | 64（32） | 32（16） | 28（14） | 6（3） |
+| medium | 72（36） | 32（16） | 30（15） | 16（8） |
+| large | 88（44） | 32（16） | 32（16） | 16（8） |
+
+图标与文字的间距为 8（4px）；`circle` 与只有图标的 `round` 按钮为半高圆角。
+
+两端的尺寸都写成局部变量 `--vc-button-<size>-<键>`（`size` 为 `mini`、`small`、`medium`、`large`），桌面端的默认值为 px，移动端在 `.vcm-button`、`.vcm-button-group` 上覆盖，与样式的加载顺序无关。键为 `padding`、`font-size`、`line-height`（`medium`、`mini`）、`radius`、`icon-size`、`gap`（`medium`）、`circle-radius`、`alone-size`、`alone-font-size`（只有图标的 `round` 按钮），例如 `--vc-button-small-padding`。
+
+```vue
+<template>
+	<MButton type="primary" size="large" long>提交</MButton>
+</template>
+
+<script setup>
+import { MButton } from '@deot/vc';
+</script>
+```
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-button-<参数>`、`--vc-button-group-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。禁用时悬停保持禁用配色。
@@ -271,7 +297,7 @@ import { Button, ButtonGroup } from '@deot/vc';
 | --- | --- | --- | --- | --- |
 | tag | 渲染使用的 HTML 标签名 | `string` | - | `button` |
 | type | 按钮类型 | `'default' \| 'primary' \| 'text' \| 'success' \| 'error' \| 'warning'` | `default`、`primary`、`text`、`success`、`error`、`warning` | `default` |
-| size | 按钮尺寸 | `'small' \| 'medium' \| 'large'` | `small`、`medium`、`large` | `medium` |
+| size | 按钮尺寸 | `'mini' \| 'small' \| 'medium' \| 'large'` | `mini`、`small`、`medium`、`large` | `medium` |
 | wait | `click` 事件的防抖间隔，单位为毫秒 | `number` | - | `250` |
 | icon | 内置图标名称 | `string` | - | `undefined` |
 | disabled | 是否禁用按钮 | `boolean` | - | `false` |
@@ -301,7 +327,7 @@ import { Button, ButtonGroup } from '@deot/vc';
 | --- | --- | --- | --- | --- |
 | vertical | 是否纵向排列按钮 | `boolean` | - | `false` |
 | circle | 是否统一使用胶囊形圆角 | `boolean` | - | `false` |
-| size | 统一设置组内按钮尺寸，优先于子按钮的 size；首尾外侧圆角与同尺寸普通按钮一致，连接处保持直角 | `string` | `small`、`medium`、`large` | `medium` |
+| size | 统一设置组内按钮尺寸，优先于子按钮的 size；首尾外侧圆角与同尺寸普通按钮一致，连接处保持直角 | `'mini' \| 'small' \| 'medium' \| 'large'` | `mini`、`small`、`medium`、`large` | `medium` |
 | fragment | 是否直接渲染默认插槽而不生成分组容器；开启后排列、首尾圆角和分隔边框样式不生效，size、circle 仍传入子按钮 | `boolean` | - | `false` |
 
 ### ButtonGroup 插槽

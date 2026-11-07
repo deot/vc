@@ -89,6 +89,9 @@
 			<Button size="small">
 				small
 			</Button>
+			<Button size="mini">
+				mini
+			</Button>
 		</div>
 		<div class="box-wrapper">
 			<Button size="large" icon="success">

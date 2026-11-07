@@ -10,7 +10,7 @@ export const props = {
 		default: 'default'
 	},
 	size: {
-		type: String as PropType<'small' | 'medium' | 'large'>,
+		type: String as PropType<'mini' | 'small' | 'medium' | 'large'>,
 		default: 'medium'
 	},
 	wait: {

@@ -1,0 +1,71 @@
+@use 'sass:map';
+@use '../../style/helper' as *;
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放）：375 宽下 mini 28 / small 32 / medium 36 / large 44
+// 结构与颜色沿用 ../style.scss，这里只覆盖尺寸的局部变量（与两端样式的加载顺序无关）；圆角沿用桌面端换算（medium、large 8px，small、mini 3px）
+$sizes: (
+	medium: (
+		height: remfix(72),
+		padding: 0 remfix(32),
+		font-size: remfix(30),
+		line-height: 1.2,
+		radius: remfix(16),
+		icon-size: remfix(30),
+		gap: remfix(8),
+		circle-radius: remfix(72),
+		alone-size: remfix(72),
+		alone-font-size: remfix(30)
+	),
+	large: (
+		height: remfix(88),
+		padding: 0 remfix(32),
+		font-size: remfix(32),
+		radius: remfix(16),
+		icon-size: remfix(32),
+		circle-radius: remfix(88),
+		alone-size: remfix(88),
+		alone-font-size: remfix(32)
+	),
+	small: (
+		height: remfix(64),
+		padding: 0 remfix(32),
+		font-size: remfix(28),
+		radius: remfix(6),
+		icon-size: remfix(28),
+		circle-radius: remfix(64),
+		alone-size: remfix(64),
+		alone-font-size: remfix(28)
+	),
+	mini: (
+		height: remfix(56),
+		padding: 0 remfix(16),
+		font-size: remfix(28),
+		line-height: 1.2,
+		radius: remfix(6),
+		icon-size: remfix(28),
+		circle-radius: remfix(56),
+		alone-size: remfix(56),
+		alone-font-size: remfix(28)
+	)
+);
+
+// 按钮与按钮组都设置：按钮组的圆角取同一组变量
+@include block((vcm-button, vcm-button-group)) {
+	@each $size, $map in $sizes {
+		@each $key, $value in map.remove($map, height) {
+			--vc-button-#{$size}-#{$key}: #{$value};
+		}
+	}
+}
+
+// 固定高度：桌面端由内边距与行高决定、不设 height，这里直接设置
+@include block(vcm-button) {
+	height: map.get($sizes, medium, height);
+	box-sizing: border-box;
+
+	@each $size in (large, small, mini) {
+		@include when($size) {
+			height: map.get($sizes, $size, height);
+		}
+	}
+}

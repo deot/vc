@@ -1,32 +1,13 @@
-/** @jsxImportSource vue */
-
-import { defineComponent, computed, provide } from 'vue';
+import { defineComponent } from 'vue';
 import { props as buttonGroupProps } from './button-group-props';
+import { useButtonGroup } from './use-button-group';
 
 const COMPONENT_NAME = 'vc-button-group';
 
 export const ButtonGroup = defineComponent({
 	name: COMPONENT_NAME,
 	props: buttonGroupProps,
-	setup(props, { slots }) {
-		provide('vc-button-group', props);
-
-		const classes = computed(() => (
-			{
-				'is-vertical': props.vertical,
-				'is-circle': props.circle,
-				[`is-${props.size}`]: !!props.size
-			}
-		));
-
-		return () => {
-			return props.fragment
-				? slots?.default?.()
-				: (
-						<div class={{ 'vc-button-group': true, ...classes.value }}>
-							{slots?.default?.()}
-						</div>
-					);
-		};
+	setup(props, context) {
+		return useButtonGroup(props, context);
 	}
 });

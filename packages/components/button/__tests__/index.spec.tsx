@@ -2,6 +2,9 @@
 
 import { Button, ButtonGroup, Spin, Icon } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
+import * as path from 'node:path';
+import * as sass from 'sass';
+import { MButton, MButtonGroup } from '../index.m';
 import { Utils } from '@deot/dev-test';
 
 describe('index.ts', () => {
@@ -238,5 +241,66 @@ describe('index.ts', () => {
 		));
 
 		expect(wrapper.findComponent(Button).classes()).toContain('is-circle');
+	});
+});
+
+describe('index.m.ts', () => {
+	it('MButton / MButtonGroup 与桌面端结构相同，根节点另有 vcm- 标记类，size 支持 mini', () => {
+		const wrapper = mount(() => (
+			<MButtonGroup size="mini">
+				<MButton>A</MButton>
+			</MButtonGroup>
+		));
+
+		expect(wrapper.classes()).toEqual(expect.arrayContaining(['vc-button-group', 'vcm-button-group', 'is-mini']));
+		const button = wrapper.findComponent(MButton);
+		expect(button.classes()).toEqual(expect.arrayContaining(['vc-button', 'vcm-button', 'is-mini']));
+	});
+
+	it('MButton 的加载图标为 750 稿长度，图标跟随 --vc-button-<档>-icon-size', async () => {
+		expect.assertions(4);
+		const handler = async () => {
+			await Utils.sleep(10);
+			const spin = wrapper.findComponent(Spin);
+			expect(spin.exists()).toBeTruthy();
+			// 750 稿：375 宽下 14px
+			expect(spin.props('size')).toBe('calc(var(--vc-rem) * 28)');
+		};
+		const wrapper = mount(() => <MButton icon="search" onClick={handler}>A</MButton>);
+
+		expect(wrapper.find('.vc-button__icon').findComponent(Icon).exists()).toBeTruthy();
+		await wrapper.trigger('click');
+		await Utils.sleep(10);
+		expect(wrapper.findComponent(Spin).exists()).toBeFalsy();
+	});
+
+	it('Button 的 mini 尺寸', () => {
+		const wrapper = mount(() => <Button size="mini" />);
+
+		expect(wrapper.classes()).toContain('is-mini');
+	});
+
+	it('移动端尺寸为 750 稿（375 宽下 28 / 32 / 36 / 44），只覆盖局部变量与高度', () => {
+		const css = sass.compile(path.resolve(process.cwd(), 'packages/components/button/mobile/style.scss')).css;
+		const rule = (selector: string) => {
+			const start = css.indexOf(`${selector} {`);
+			return start === -1 ? '' : css.slice(start, css.indexOf('}', start));
+		};
+
+		expect(rule('.vcm-button')).toContain('height: calc(var(--vc-rem) * 72)');
+		expect(rule('.vcm-button')).toContain('box-sizing: border-box');
+		expect(rule('.vcm-button.is-large')).toContain('height: calc(var(--vc-rem) * 88)');
+		expect(rule('.vcm-button.is-small')).toContain('height: calc(var(--vc-rem) * 64)');
+		expect(rule('.vcm-button.is-mini')).toContain('height: calc(var(--vc-rem) * 56)');
+		expect(rule('.vcm-button, .vcm-button-group')).toContain('--vc-button-medium-padding: 0 calc(var(--vc-rem) * 32)');
+		expect(rule('.vcm-button, .vcm-button-group')).toContain('--vc-button-mini-line-height: 1.2');
+		expect(css).not.toContain('.vc-button');
+	});
+
+	it('桌面端尺寸写成局部变量，默认值为 px', () => {
+		const css = sass.compile(path.resolve(process.cwd(), 'packages/components/button/style.scss')).css;
+
+		expect(css).toContain('padding: var(--vc-button-medium-padding, 5px 16px)');
+		expect(css).toContain('line-height: var(--vc-button-mini-line-height, 18px)');
 	});
 });

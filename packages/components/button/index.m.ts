@@ -1,4 +1,9 @@
-import { Button, ButtonGroup } from '.';
+import { MButton } from './mobile/button.tsx';
+import { MButtonGroup } from './mobile/button-group.tsx';
+import './style.scss';
+import './mobile/style.scss';
 
-export const MButton = Button;
-export const MButtonGroup = ButtonGroup;
+export {
+	MButton,
+	MButtonGroup
+};

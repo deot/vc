@@ -1,4 +1,4 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
 
 export const props = {
 	vertical: {
@@ -10,7 +10,7 @@ export const props = {
 		default: false
 	},
 	size: {
-		type: String,
+		type: String as PropType<'mini' | 'small' | 'medium' | 'large'>,
 		default: 'medium'
 	},
 	fragment: {
