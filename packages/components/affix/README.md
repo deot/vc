@@ -1,6 +1,6 @@
 ## 固钉（Affix）
 
-将内容固定在视口或滚动容器的顶部、底部。`Affix` 与 `MAffix` 指向同一个组件。
+将内容固定在视口或滚动容器的顶部、底部。`MAffix` 为移动端版本，属性、事件、插槽与 `Affix` 相同，数字 `offset` 为 750 稿长度。
 
 ### 何时使用
 
@@ -138,7 +138,7 @@ const isActive = ref(false);
 | placement | 固定位置 | `string` | `top`、`bottom` | `top` |
 | disabled | 是否禁用固定；禁用时直接渲染默认插槽 | `boolean` | - | `false` |
 | fixed | 是否使用 `position: fixed`；设为 `false` 时使用 `position: sticky`，吸附范围受父元素限制 | `boolean` | - | `true` |
-| offset | 距离顶部或底部的偏移量，单位为 px；`fixed=false` 时相对滚动容器去掉 padding 后的可视区 | `number` | - | `0` |
+| offset | 距离顶部或底部的偏移量：数字单位为 px（`MAffix` 中为 750 稿长度），字符串原样作为 CSS 长度（如 `'var(--header-height)'`），见 [CSS 长度](#css-长度)；`fixed=false` 时相对滚动容器去掉 padding 后的可视区 | `number \| string` | - | `0` |
 | target | 限制固钉活动范围的 CSS 选择器；仅 `fixed=true` 时参与计算 | `string` | - | `undefined` |
 
 ### 事件
@@ -178,6 +178,45 @@ const isActive = ref(false);
 - `target` 仅在 `fixed=true` 时生效；需要限制活动范围时使用 `fixed=true` 与 `target`。
 - 根节点为 `.vc-affix.is-sticky`；是否处于吸附中通过 `v-model` 或插槽参数 `active` 获取。
 
+### CSS 长度
+
+`offset` 可以是任意 CSS 长度字符串，例如顶部栏高度定义在 CSS 变量里，或需要让出刘海屏的安全区。字符串原样写入定位样式，两端都不换算：
+
+```vue
+<template>
+	<div style="--header-height: 48px;">
+		<Affix offset="var(--header-height)">
+			<Button>吸附在顶部栏下方</Button>
+		</Affix>
+		<Affix offset="calc(var(--header-height) + env(safe-area-inset-top))">
+			<Button>同时让出安全区</Button>
+		</Affix>
+	</div>
+</template>
+
+<script setup>
+import { Affix, Button } from '@deot/vc';
+</script>
+```
+
+判断吸附时使用的 px 由根节点内一个不可见的测量节点（`.vc-affix__measurer`，宽度为 offset）给出：变量、`--vc-rem` 因主题、视口或局部覆盖而变化时，测量节点尺寸随之变化并重新读取，滚动时只用缓存的值。测量节点不占位，也不改变内容的定位参照。宽度不能为负，负的偏移只支持数字。
+
+### 移动端
+
+`MAffix` 的数字 `offset` 是 750 稿长度：样式写为 `calc(var(--vc-rem) * offset)`，随 `--vc-rem` 缩放（375 宽下 `offset=88` 即 44px），判断吸附同样读取测量节点，见 [CSS 长度](#css-长度)。字符串与 `Affix` 相同，原样使用。结构与 `Affix` 相同，根节点另有标记类 `.vcm-affix`（`.vc-affix.vcm-affix`），固定层为 `.vc-affix__fixed`。
+
+```vue
+<template>
+	<MAffix :offset="88">
+		<MButton type="primary">距顶部 88（750 稿）</MButton>
+	</MAffix>
+</template>
+
+<script setup>
+import { MAffix, MButton } from '@deot/vc';
+</script>
+```
+
 <!--
 ## 变更说明
 
@@ -186,6 +225,11 @@ const isActive = ref(false);
 - 现在根节点只写占位高度、宽度由布局决定，内容只写宽度、高度由内容撑开。
 - 根节点、内容与窗口尺寸变化时自动重算。
 - 根节点在宽度由内容决定的位置（横向 flex 子项、`inline-block`）吸附时不再保留原宽度。
+
+### offset 支持 CSS 长度字符串
+- `offset` 可以传任意 CSS 长度字符串（如 `'var(--header-height)'`），原样写入定位样式。
+- `Affix` 也渲染测量节点 `.vc-affix__measurer`，判断吸附读取它的计算宽度，与 `MAffix` 一致。
+- `MAffix` 的根节点不再设置 `position: relative`。
 
 ### fixed=false 改用 position: sticky
 - 原先为绝对定位加 JS 滚动补偿，现由浏览器 sticky 吸附，原生滚动时不再抖动。

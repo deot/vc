@@ -121,7 +121,8 @@ export default (options: any = {}) => {
 			to: scroller.scrollTop
 				+ (el.getBoundingClientRect().top - viewport.top) / viewport.scale
 				- (!affix || affix.props.placement !== 'bottom' ? instance.vnode.el!.offsetHeight : 0)
-				- (affix && affix.props.placement !== 'bottom' ? affix.props.offset : 0)
+				// 吸附偏移取 px（MAffix 的 offset 为 750 稿）
+				- (affix && affix.props.placement !== 'bottom' ? affix.getOffset() : 0)
 		});
 		scrollToAnchorTimer && clearTimeout(scrollToAnchorTimer);
 		scrollToAnchorTimer = setTimeout(() => scrollToAnchorTimer = null, 300);

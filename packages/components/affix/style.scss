@@ -1,14 +1,23 @@
 @use '../style/helper' as *;
 
-$component-name: vc-affix;
-
-@include block($component-name) {
-	// fixed=false：在滚动容器内吸附，偏移与层级由行内设置
+// Affix 与 MAffix 共用（MAffix 的根节点另有标记类 vcm-affix，两端只有数字 offset 的单位不同）：偏移与层级由行内设置
+@include block(vc-affix) {
+	// fixed=false 时由 position: sticky 在滚动容器内吸附
 	@include when(sticky) {
 		position: sticky;
 	}
 
 	@include element(fixed) {
 		position: fixed;
+	}
+
+	// offset 的测量节点（宽度 = offset）：不可见、不占位，也不改变内容的定位参照
+	@include element(measurer) {
+		position: absolute;
+		top: 0;
+		left: 0;
+		height: 0;
+		pointer-events: none;
+		visibility: hidden;
 	}
 }

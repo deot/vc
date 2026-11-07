@@ -1,4 +1,4 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
 
 export const props = {
 	modelValue: {
@@ -22,8 +22,11 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
+	/**
+	 * 距离顶部或底部的偏移：数字在 Affix 中为 px、在 MAffix 中为 750 稿长度；字符串原样作为 CSS 长度
+	 */
 	offset: {
-		type: Number,
+		type: [Number, String] as PropType<number | string>,
 		default: 0
 	},
 	// -> 固钉始终保持在容器内， 超过范围则隐藏(请注意容器避免出现滚动条) 仅fixed为true有效
