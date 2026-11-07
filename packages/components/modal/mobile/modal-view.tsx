@@ -15,6 +15,7 @@ import { MCustomer } from '../../customer/index.m';
 import { useLocale } from '../../locale';
 
 import { props as modalProps } from './modal-view-props';
+import { toRem } from '@deot/vc-shared';
 
 const COMPONENT_NAME = 'vc-modal';
 
@@ -105,7 +106,7 @@ export const MModalView = defineComponent({
 
 		const basicStyle = computed(() => {
 			return {
-				width: props.width ? `calc(var(--vc-rem) * ${props.width})` : undefined,
+				width: props.width ? toRem(props.width) : undefined,
 				// 高度上限：视口减去上下各 20 单位（750 稿）的留白。wrapper 铺满视口，百分比即相对视口，随窗口变化
 				maxHeight: 'calc(100% - var(--vc-rem) * 40)',
 			};

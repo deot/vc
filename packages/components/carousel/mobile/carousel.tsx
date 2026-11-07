@@ -5,6 +5,7 @@ import { useDrag } from '@deot/vc-hooks';
 import { useCarousel } from '../use-carousel';
 import { CustomerProp } from '../../customer/customer-prop';
 import { props as carouselProps } from '../carousel-props';
+import { toRem } from '@deot/vc-shared';
 
 const COMPONENT_NAME = 'vcm-carousel';
 
@@ -79,7 +80,7 @@ export const MCarousel = defineComponent({
 							// 数字为 750 稿长度，字符串原样作为 CSS 长度；不传时随内容
 							height: !props.height
 								? undefined
-								: typeof props.height === 'number' ? `calc(var(--vc-rem) * ${props.height})` : props.height,
+								: typeof props.height === 'number' ? toRem(props.height) : props.height,
 						}}
 						class="vcm-carousel__wrapper"
 					>

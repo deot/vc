@@ -5,6 +5,7 @@ import { props as mFormItemProps } from './form-item-props';
 import { useFormItem } from '../use-form-item';
 import { MCustomer } from '../../customer/index.m';
 import { isCustomerData } from '../../customer/utils';
+import { toRem } from '@deot/vc-shared';
 
 const COMPONENT_NAME = 'vcm-form-item';
 
@@ -35,7 +36,7 @@ export const MFormItem = defineComponent({
 		// 嵌套项不缩进；未传 indent 时取样式默认值
 		const rootStyle = computed(() => {
 			if (isNested.value) return { paddingLeft: 0 };
-			return props.indent != null ? { paddingLeft: `calc(var(--vc-rem) * ${props.indent})` } : undefined;
+			return props.indent != null ? { paddingLeft: toRem(props.indent) } : undefined;
 		});
 
 		// label 插槽优先；文字直接放在 label 内，渲染函数与 { type, value } 交给 Customer

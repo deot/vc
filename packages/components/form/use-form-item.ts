@@ -9,6 +9,7 @@ import { getLabelWidth } from './utils';
 import type { Props } from './form-item-props';
 
 import type { FormItemProvide, FormProvide, FormRule } from './types';
+import { toPx, toRem } from '@deot/vc-shared';
 
 const filterEmpty = (val: any) => {
 	if (val instanceof Array) {
@@ -141,7 +142,7 @@ export const useFormItem = (expose: SetupContext['expose'], options: { rem?: boo
 
 	const toLength = (width: number | string | undefined, measured: boolean) => {
 		if (typeof width !== 'number' || width <= 0) return '';
-		return options.rem && !measured ? `calc(var(--vc-rem) * ${width})` : `${width}px`;
+		return options.rem && !measured ? toRem(width) : toPx(width);
 	};
 
 	const labelStyle = computed(() => {
@@ -166,7 +167,7 @@ export const useFormItem = (expose: SetupContext['expose'], options: { rem?: boo
 				marginLeft: labelPosition.value === 'top' || (!hasLabel.value && isNested.value)
 					? 0
 					: toLength(labelWidth, isAutoWidth.value) || 'unset',
-				marginBottom: isNested.value && !isNestedLast.value ? (options.rem ? 'calc(var(--vc-rem) * 40)' : '20px') : 0
+				marginBottom: isNested.value && !isNestedLast.value ? (options.rem ? toRem(40) : toPx(20)) : 0
 			},
 			form.props.contentStyle,
 			isNested.value && form.props.nestedContentStyle,

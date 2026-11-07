@@ -6,6 +6,7 @@ import { hasCustomerValue } from '../../customer/utils';
 import { Icon } from '../../icon';
 import { props as listItemProps } from './list-item-props';
 import { VcInstance } from '../../vc';
+import { toRem } from '@deot/vc-shared';
 
 const COMPONENT_NAME = 'vcm-list-item';
 const HTTP_REGEX = /[a-zA-z]+:\/\/[^\s]*/;
@@ -34,7 +35,7 @@ export const MListItem = defineComponent({
 				: list?.props?.labelWidth;
 
 			return {
-				width: labelWidth > 0 ? `calc(var(--vc-rem) * ${labelWidth})` : 'auto'
+				width: labelWidth > 0 ? toRem(labelWidth) : 'auto'
 			};
 		});
 
@@ -73,7 +74,7 @@ export const MListItem = defineComponent({
 			return (
 				<div
 					class="vcm-list-item"
-					style={props.indent != null ? { paddingLeft: `calc(var(--vc-rem) * ${props.indent})` } : undefined}
+					style={props.indent != null ? { paddingLeft: toRem(props.indent) } : undefined}
 					onClick={handleLinkTo}
 				>
 					<div

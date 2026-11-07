@@ -6,4 +6,5 @@ import * as Utils from './utils';
 
 export * from './constants';
 export * from './keyboard';
+export * from './length';
 export { Utils };

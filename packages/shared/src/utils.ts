@@ -98,23 +98,3 @@ export const bisectLast = (length: number, isMatch: (i: number) => boolean) => {
 	}
 	return last;
 };
-
-/**
- * 750 稿长度换算为 px（移动端组件的数字长度均为 750 稿）
- * --vc-rem 已注册（`@property`）时计算值即 px；不支持时计算值是原始表达式，挂一个探针量一次
- * @param el 读取 --vc-rem 的元素
- * @param value 750 稿长度
- * @returns px
- */
-export const remToPx = (el: HTMLElement, value: number) => {
-	if (!value) return 0;
-	const rem = parseFloat(window.getComputedStyle(el).getPropertyValue('--vc-rem'));
-	if (!Number.isNaN(rem)) return value * rem;
-
-	const probe = document.createElement('div');
-	probe.style.cssText = `position: absolute; visibility: hidden; width: calc(var(--vc-rem) * ${value})`;
-	el.appendChild(probe);
-	const px = probe.getBoundingClientRect().width;
-	probe.remove();
-	return px;
-};
