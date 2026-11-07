@@ -68,7 +68,7 @@ $gaps: (line: 12, button: 4, capsule: 3, text: 10, round: 8);
 		}
 
 		&.is-line.is-#{$placement} .#{$component-name}__bar {
-			@include border($side, $color-neutral-light);
+			@include common-border-1px($side, $color-neutral-light);
 		}
 	}
 

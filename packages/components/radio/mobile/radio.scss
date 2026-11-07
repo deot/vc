@@ -54,7 +54,7 @@ $component-name: vcm-radio;
 		border-radius: 50%;
 		transition: all .2s ease-in-out;
 
-		@include border('', $color-light-deepest, 50%);
+		@include common-border-1px('', $color-light-deepest, 50%);
 	}
 
 	@include element(inner) {

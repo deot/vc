@@ -3,6 +3,8 @@
 @use "./theme" as *;
 @use "./functions" as *;
 
+// flex、ellipsis、text-line、clear-fix、border-1px 等通用 mixin 由 @deot/style 的 common-* 提供（见 helper.scss）
+
 /**
  * 主题会存在特殊场景，需要强制修改
  */
@@ -30,22 +32,6 @@
 	}
 }
 
-@mixin bg-linear($angle: to bottom, $start: #fff, $end: #000) {
-	background: $end;
-	background-image: linear-gradient($angle, $start, $end);
-}
-
-/**
- * 水平垂直居中
- */
-
-@mixin flex-cc {
-	display: flex;
-	box-sizing: border-box;
-	align-items: center;
-	justify-content: center;
-}
-
 /**
  * 定位元素（absolute / fixed）按自身尺寸在包含块内居中
  * 用布局居中，位置对齐到设备像素；transform 的百分比位移遇奇数或小数尺寸会落在非整像素上，线条发虚，
@@ -57,155 +43,6 @@
 	width: fit-content;
 	height: fit-content;
 	margin: auto;
-}
-
-/**
- * 水平垂直居中
- */
-
-@mixin flex {
-	display: flex;
-	box-sizing: border-box;
-}
-
-/**
- * 文字相关
- */
-
-/**
- * 一行文字
- */
-
-@mixin ellipsis {
-	width: auto;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-@mixin text-line($line) {
-	display: -webkit-box;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	-webkit-box-orient: vertical;
-	-webkit-line-clamp: $line;
-}
-
-/**
- * 单词换行
- */
-
-@mixin break {
-	word-break: break-all;
-	overflow-wrap: break-word;
-}
-
-/**
- * [Clearfix 清除浮动]
- * @return {[type]} [description]
- */
-
-@mixin clearfix($content: false) {
-	zoom: 1;
-
-	&::before,
-	&::after {
-		display: block; // 父类为flex, 使用table无法撑开
-		clear: both;
-		content: " ";
-
-		@if $content {
-			@content;
-		} @else {
-			height: 0;
-			font-size: 0;
-			visibility: hidden;
-		}
-	}
-}
-
-/**
- * 1px
- * 已为父元素添加position: relative;
- * 其他只操作before和after;
- * 暂时不抽离公用
- *
- * 高分屏下用 0.5px：浏览器会把 border-width 向下对齐到整数设备像素，且不足 1 个设备像素时取 1，
- * 任意缩放比例下都是实色的整像素线；不用 transform 缩放，缩放后的右、下边缘对不齐设备像素，会发虚或缺失
- *
- * 不用 @supports (border-width: 0.5px) 兜底：它只判断能否解析，不判断能否渲染，
- * 在可运行 Vue 3 的浏览器里恒为真
- */
-
-@mixin border($direction: '', $color: varfix('color-light-deeper'), $border-radius: inherit) {
-	& {
-		position: relative;
-		isolation: isolate; // 伪元素的层级只在自身内部生效
-
-		&::before,
-		&::after {
-			position: absolute;
-			z-index: 1; // 层级应高于其他元素, 否则描边会被遮挡
-			display: block; // 父类为flex, 使用table无法撑开
-			clear: both;
-			pointer-events: none;
-			border-radius: if(sass(meta.type-of($border-radius) == "number"): unitfix($border-radius); else: $border-radius);
-			content: " ";
-			box-sizing: border-box;
-		}
-
-		@if $direction == 'top' {
-			&::before {
-				top: 0;
-				left: 0;
-				width: 100%;
-				border-top: unitfix(1) solid $color;
-			}
-		} @else if $direction == 'right' {
-			&::after {
-				top: 0;
-				right: 0;
-				height: 100%;
-				border-right: unitfix(1) solid $color;
-			}
-		} @else if $direction == 'bottom' {
-			&::after {
-				bottom: 0;
-				left: 0;
-				width: 100%;
-				border-bottom: unitfix(1) solid $color;
-			}
-		} @else if $direction == 'left' {
-			&::before {
-				top: 0;
-				left: 0;
-				height: 100%;
-				border-left: unitfix(1) solid $color;
-			}
-		} @else {
-			&::after {
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				border: unitfix(1) solid $color;
-			}
-		}
-	}
-
-	@media (resolution >= 2dppx) {
-		& {
-			@if $direction == 'top' or $direction == 'left' {
-				&::before {
-					border-width: unitfix(0.5);
-				}
-			} @else {
-				&::after {
-					border-width: unitfix(0.5);
-				}
-			}
-		}
-	}
 }
 
 /**

@@ -53,7 +53,7 @@ $component-name: vcm-checkbox;
 		height: remfix(32);
 		background-color: $background-color-lightest;
 
-		@include border('', $border-color, remfix(4));
+		@include common-border-1px('', $border-color, remfix(4));
 
 		&::after, &::before {
 			transition: border-color .2s;

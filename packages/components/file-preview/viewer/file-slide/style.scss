@@ -4,7 +4,7 @@ $color-contrast-light: varfix(color-contrast-light, file-preview);
 $component-name: vc-file-slide;
 
 @include block($component-name) {
-	@include flex-cc;
+	@include common-flex-cc;
 
 	position: absolute;
 	flex-direction: column;
@@ -52,7 +52,7 @@ $component-name: vc-file-slide;
 	}
 
 	@include element(name) {
-		@include ellipsis;
+		@include common-ellipsis;
 
 		min-width: 0;
 		margin: 0;

@@ -13,8 +13,8 @@ $background-color-lightest: varfix(background-color-lightest, list);
 	}
 
 	@include when(border) {
-		@include border(top, $color-neutral-light);
-		@include border(bottom, $color-neutral-light);
+		@include common-border-1px(top, $color-neutral-light);
+		@include common-border-1px(bottom, $color-neutral-light);
 	}
 }
 
@@ -24,7 +24,7 @@ $background-color-lightest: varfix(background-color-lightest, list);
 	}
 
 	@include element(wrapper) {
-		@include border(bottom, $color-neutral-light);
+		@include common-border-1px(bottom, $color-neutral-light);
 
 		& {
 			display: flex;

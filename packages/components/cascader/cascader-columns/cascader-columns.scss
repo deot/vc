@@ -63,7 +63,7 @@ $width: varfix(width, cascader-column, unitfix(160));
 	box-sizing: border-box;
 	flex-direction: column;
 
-	@include border(right, $color-neutral-light);
+	@include common-border-1px(right, $color-neutral-light);
 
 	&:last-child {
 		&::before, &::after {

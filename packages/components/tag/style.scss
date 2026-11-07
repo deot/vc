@@ -53,7 +53,7 @@ $component-name: vc-tag;
 	border-radius: 3px;
 	box-sizing: border-box;
 
-	@include border('', $color-neutral-light, 3);
+	@include common-border-1px('', $color-neutral-light, 3);
 
 	// 标签根节点的伪元素用于边框，字符框占位放在 wrapper 上：首项可能是圆点，基线仍取文字
 	@include element(wrapper) {

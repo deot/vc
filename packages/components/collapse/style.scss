@@ -20,7 +20,7 @@ $spacing-horizontal: unitfix(16);
 	background: $background-color-lightest;
 
 	@include when(border) {
-		@include border('', $color-neutral-light, $border-radius);
+		@include common-border-1px('', $color-neutral-light, $border-radius);
 
 		& {
 			overflow: hidden;
@@ -34,7 +34,7 @@ $spacing-horizontal: unitfix(16);
 }
 
 @include block(vc-collapse-item) {
-	@include border(bottom, $color-neutral-light);
+	@include common-border-1px(bottom, $color-neutral-light);
 
 	@include element(header) {
 		display: flex;

@@ -39,7 +39,7 @@ $foreground-color-inactive: varfix(foreground-color-inactive, action-sheet);
 		text-align: center;
 		overflow-wrap: break-word;
 
-		@include border(bottom, $color-neutral-light);
+		@include common-border-1px(bottom, $color-neutral-light);
 	}
 
 	@include element(actions) {
@@ -64,7 +64,7 @@ $foreground-color-inactive: varfix(foreground-color-inactive, action-sheet);
 		flex-direction: column;
 
 		&:not(:last-child) {
-			@include border(bottom, $color-neutral-light);
+			@include common-border-1px(bottom, $color-neutral-light);
 		}
 
 		&:active {

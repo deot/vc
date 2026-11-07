@@ -39,7 +39,7 @@ $border-color: varfix(border-color, input);
 		background-color: $background-color-lightest;
 		user-select: none;
 
-		@include border(left, $border-color); // 不占边距
+		@include common-border-1px(left, $border-color); // 不占边距
 		&[disabled="disabled"] {
 			color: $color-dark-extralight;
 			pointer-events: none;
@@ -59,7 +59,7 @@ $border-color: varfix(border-color, input);
 
 	@include element(up) {
 		@include extend-rule(input-number-icon);
-		@include border(bottom, $border-color); // 不占边距
+		@include common-border-1px(bottom, $border-color); // 不占边距
 	}
 
 	@include element(down) {

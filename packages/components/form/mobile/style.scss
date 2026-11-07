@@ -12,8 +12,8 @@ $background-color-lightest: varfix(background-color-lightest, form);
 	background: $background-color-lightest;
 
 	@include when(border) {
-		@include border(top, $color-neutral-light);
-		@include border(bottom, $color-neutral-light);
+		@include common-border-1px(top, $color-neutral-light);
+		@include common-border-1px(bottom, $color-neutral-light);
 	}
 }
 
@@ -27,7 +27,7 @@ $background-color-lightest: varfix(background-color-lightest, form);
 		padding-right: remfix(24);
 		padding-bottom: remfix(24);
 
-		@include border(bottom, $color-neutral-light);
+		@include common-border-1px(bottom, $color-neutral-light);
 	}
 
 	@include pseudo(last-child) {

@@ -19,7 +19,7 @@ $color-error: varfix(color-error, upload-picker);
 	}
 
 	@include element(content) {
-		@include flex-cc;
+		@include common-flex-cc;
 
 		width: 64px;
 		height: 64px;
@@ -33,7 +33,7 @@ $color-error: varfix(color-error, upload-picker);
 	}
 
 	@include element(play) {
-		@include flex-cc;
+		@include common-flex-cc;
 
 		position: absolute;
 		inset: 0;

@@ -57,7 +57,7 @@ $component-name: vc-checkbox;
 		background-color: $background-color-lightest;
 		box-sizing: border-box;
 
-		@include border('', $border-color, 2);
+		@include common-border-1px('', $border-color, 2);
 
 		&::after, &::before {
 			transition: border-color .2s;

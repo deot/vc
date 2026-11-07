@@ -16,7 +16,7 @@ $color-dark-extralight: varfix(color-dark-extralight, upload-picker);
 	}
 
 	@include element(content) {
-		@include flex-cc;
+		@include common-flex-cc;
 
 		position: relative;
 		width: 100%;

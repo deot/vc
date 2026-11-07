@@ -3,7 +3,7 @@
 $component-name: vcm-sort-list;
 
 @include block($component-name) {
-	@include flex;
+	@include common-flex;
 
 	flex-wrap: wrap;
 

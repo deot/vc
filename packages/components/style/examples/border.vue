@@ -86,7 +86,7 @@ $color: #f5222d;
 		&.is-all {
 			border-radius: 8px;
 
-			@include border('', $color, 8);
+			@include common-border-1px('', $color, 8);
 		}
 
 		&.is-square {
@@ -102,28 +102,28 @@ $color: #f5222d;
 			height: 47.7px;
 			border-radius: 50%;
 
-			@include border('', $color, 50%);
+			@include common-border-1px('', $color, 50%);
 		}
 
 		&.is-top {
-			@include border(top, $color);
+			@include common-border-1px(top, $color);
 		}
 
 		&.is-right {
-			@include border(right, $color);
+			@include common-border-1px(right, $color);
 		}
 
 		&.is-bottom {
-			@include border(bottom, $color);
+			@include common-border-1px(bottom, $color);
 		}
 
 		&.is-left {
-			@include border(left, $color);
+			@include common-border-1px(left, $color);
 		}
 
 		&.is-top-bottom {
-			@include border(top, $color);
-			@include border(bottom, $color);
+			@include common-border-1px(top, $color);
+			@include common-border-1px(bottom, $color);
 		}
 	}
 }

@@ -28,7 +28,7 @@ $box-shadow: varfix(box-shadow, modal);
 		z-index: $popup-zindex;
 		pointer-events: none;
 
-		@include flex-cc;
+		@include common-flex-cc;
 	}
 
 	@include element(container) {
@@ -95,7 +95,7 @@ $box-shadow: varfix(box-shadow, modal);
 		&:first-child {
 			color: $color-dark;
 
-			@include border(right, $color-neutral-light);
+			@include common-border-1px(right, $color-neutral-light);
 		}
 	}
 
@@ -103,7 +103,7 @@ $box-shadow: varfix(box-shadow, modal);
 		position: relative;
 		display: flex;
 
-		@include border(top, $color-neutral-light);
+		@include common-border-1px(top, $color-neutral-light);
 
 		@include when(column) {
 			flex-direction: column;
@@ -118,7 +118,7 @@ $box-shadow: varfix(box-shadow, modal);
 				}
 
 				&:not(:first-child) {
-					@include border(top, $color-neutral-light);
+					@include common-border-1px(top, $color-neutral-light);
 				}
 			}
 		}
@@ -147,7 +147,7 @@ $box-shadow: varfix(box-shadow, modal);
 			text-align: left;
 
 			&:not(:first-child) {
-				@include border(top, $color-neutral-light);
+				@include common-border-1px(top, $color-neutral-light);
 			}
 
 			&:first-child {

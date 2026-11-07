@@ -9,7 +9,7 @@ $component-name: vc-video-slide;
 	pointer-events: none;
 	inset: 0;
 
-	@include flex-cc;
+	@include common-flex-cc;
 
 	// 按视频自己的比例居中，不超过这一页。flex 项默认最小尺寸是内容，竖屏会撑出去
 	@include element(media) {

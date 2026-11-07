@@ -14,7 +14,7 @@ $background-color: varfix(background-color, calendar);
 	overflow: hidden;
 
 	@include element(month) {
-		@include flex-cc;
+		@include common-flex-cc;
 
 		font-size: unitfix(24);
 		line-height: unitfix(60);
@@ -23,7 +23,7 @@ $background-color: varfix(background-color, calendar);
 	}
 
 	@include element(week) {
-		@include flex;
+		@include common-flex;
 
 		width: 100%;
 		padding: unitfix(15) 0;
@@ -55,17 +55,17 @@ $background-color: varfix(background-color, calendar);
 }
 
 @include block(vc-calendar-row) {
-	@include flex;
+	@include common-flex;
 
 	@include element(item) {
-		@include flex-cc;
+		@include common-flex-cc;
 
 		flex: 1;
 		font-size: unitfix(16);
 
 		span {
 			@include when(selected) {
-				@include flex-cc;
+				@include common-flex-cc;
 
 				width: unitfix(40);
 				height: unitfix(40);

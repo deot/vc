@@ -34,7 +34,7 @@ $box-shadow: varfix(box-shadow, modal);
 		z-index: $popup-zindex;
 		pointer-events: none;
 
-		@include flex-cc;
+		@include common-flex-cc;
 	}
 
 	@include element(container) {

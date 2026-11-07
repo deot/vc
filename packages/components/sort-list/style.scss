@@ -9,7 +9,7 @@ $mask-background-color-fallback: color.change($color-contrast-dark-frozen, $alph
 $mask-background-color: color-mix(in srgb, #{$color-contrast-dark} 60%, transparent);
 
 @include block($component-name) {
-	@include flex;
+	@include common-flex;
 
 	flex-wrap: wrap;
 

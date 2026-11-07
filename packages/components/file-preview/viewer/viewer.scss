@@ -109,7 +109,7 @@ $bg-dimmed: calc(var(--vc-file-viewer-dim, 1) * #{$bg-opacity});
 	}
 
 	@include element(tool) {
-		@include flex-cc;
+		@include common-flex-cc;
 
 		width: unitfix(44);
 		height: unitfix(44);

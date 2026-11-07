@@ -17,7 +17,7 @@ $foreground-color: varfix(foreground-color, form);
 	margin-bottom: unitfix(24);
 	line-height: 1.5;
 
-	// @include clearfix;
+	// @include common-clear-fix;
 
 	@include element(content) {
 		position: relative;

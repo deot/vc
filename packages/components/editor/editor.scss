@@ -10,7 +10,7 @@ $component-name: vc-editor;
 	display: inline-flex;
 	flex-direction: column;
 
-	@include border('', $border-color, 8); // 不占边距
+	@include common-border-1px('', $border-color, 8); // 不占边距
 
 	@include element(icon) { 
 		line-height: 1;
@@ -44,7 +44,7 @@ $component-name: vc-editor;
 		z-index: 1;
 		border: none;
 
-		@include border('bottom', $color-neutral-light);
+		@include common-border-1px('bottom', $color-neutral-light);
 	}
 
 	.ql-picker-options {

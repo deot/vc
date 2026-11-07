@@ -13,7 +13,7 @@ $component-name: vc-pagination;
 	color: $foreground-color;
 	align-items: center;
 
-	@include clearfix;
+	@include common-clear-fix;
 
 	@include element(item) {
 		height: $size;
@@ -67,7 +67,7 @@ $component-name: vc-pagination;
 		}
 
 		@include when(icon) {
-			@include flex-cc;
+			@include common-flex-cc;
 
 			.vc-icon {
 				font-size: unitfix(12);

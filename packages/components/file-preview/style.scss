@@ -24,7 +24,7 @@ $sizes: (
 
 // 圆形底色中的播放三角，父级需flex-cc；margin-left用于视觉居中
 @mixin play($size) {
-	@include flex-cc;
+	@include common-flex-cc;
 
 	width: $size;
 	height: $size;
@@ -113,7 +113,7 @@ $sizes: (
 	}
 
 	@include element(name) {
-		@include ellipsis;
+		@include common-ellipsis;
 
 		min-width: 0;
 		flex: 1;

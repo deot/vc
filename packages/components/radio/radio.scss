@@ -72,7 +72,7 @@ $sizes: map.deep-merge($segmented-sizes, (
 		background-color: $background-color-lightest;
 		transition: all .2s ease-in-out;
 
-		@include border('', $color-light-deepest, 50%);
+		@include common-border-1px('', $color-light-deepest, 50%);
 	}
 
 	@include element(inner) {

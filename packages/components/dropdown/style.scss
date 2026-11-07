@@ -54,5 +54,5 @@ $background-color-primary-light: varfix(background-color-primary-light, dropdown
 	@include when(divided) {
 		margin-top: unitfix(5);
 
-		@include border('top', $color-neutral-light); }
+		@include common-border-1px('top', $color-neutral-light); }
 }

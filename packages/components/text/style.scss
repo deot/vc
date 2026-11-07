@@ -12,7 +12,7 @@ $component-name: vc-text;
 	// 由 CSS 截断（默认省略符且无 slice / renderRow 等）：行数取 --vc-text-line。
 	// 单行也用 line-clamp 而不是 nowrap：保留 break-all，放在 flex 子项里时最小宽度不会被整段文字撑开
 	@include when(clamp) {
-		@include text-line(var(--vc-text-line));
+		@include common-text-line(var(--vc-text-line), false);
 	}
 
 	// expand 插槽的入口：作为整体测量宽度，不拆行

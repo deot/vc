@@ -1,23 +1,17 @@
 @use 'sass:meta';
 @use 'sass:map';
-@use 'sass:math';
-@use 'sass:string';
-@use "./default" as *;
+@use "./default" as dv;
 @use "./theme" as *;
 
-@function merge($rest...) {
-	$options: ();
-
-	@each $item in $rest {
-		@if  meta.type-of($item) == 'map' {
-			$options: map.merge($options, $item);
-		} @else if meta.type-of($item) == 'list' {
-			$options: map.merge($options, merge($item));
-		}
-	}
-
-	@return $options;
-}
+// merge、unitfix、percentw、remfix 由 @deot/style 提供，单位与缩放取本库的 $unit / $scale
+// remfix(32) = calc(var(--vc-rem) * 32)：--vc-rem 已用 @property 注册初始值，不需要回退值
+@use "../node_modules/@deot/style/src/variables/default" with (
+	$unit: dv.$unit,
+	$scale: dv.$scale,
+	$rem-var: '--vc-rem',
+	$rem-fallback: false
+);
+@forward "../node_modules/@deot/style/src/functions/helper" show merge, unitfix, percentw, remfix;
 
 @function varfix($value, $component-name: false, $default-color: false) {
 	$theme-value: map.get($theme, $value);
@@ -32,40 +26,6 @@
 	} @else {
 		@error "#{$value} is not a valid value.";
 	}
-}
-
-@function unitfix($value, $rest...) {
-	$options: merge((unit: $unit, scale: $scale), $rest...);
-	$unit: map.get($options, 'unit');
-	$scale: map.get($options, 'scale');
-
-	@if meta.type-of($value) == 'number' {
-		$value: if(sass(math.is_unitless($value)): #{$value * $scale}#{$unit}; else: #{$value * $scale});
-	} @else if meta.type-of($value) == 'string' {
-		$value: string.unquote($value);
-	}
-
-	@return $value;
-}
-
-/**
- * remfix(32) = calc(var(--vc-rem) * 32)
- * n 是 750 稿上的长度（375 宽下为 n / 2 px），带单位时去掉单位；字符串原样输出
- */
-@function remfix($value) {
-	@if meta.type-of($value) == 'number' {
-		@if not math.is-unitless($value) {
-			$value: math.div($value, $value * 0 + 1);
-		}
-	} @else if meta.type-of($value) == 'string' {
-		@return string.unquote($value);
-	}
-
-	@return string.unquote('calc(var(--vc-rem) * #{$value})');
-}
-
-@function percentw($col, $total) {
-	@return math.percentage(math.div($col, $total));
 }
 
 @function themefrozen($key, $light: true) {

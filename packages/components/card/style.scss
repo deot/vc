@@ -25,7 +25,7 @@ $border-radius: unitfix(4);
 	}
 
 	@include when(border) {
-		@include border('', $color-neutral-light, $border-radius);
+		@include common-border-1px('', $color-neutral-light, $border-radius);
 
 		&:hover::after {
 			border-color: $color-neutral-light;
@@ -37,7 +37,7 @@ $border-radius: unitfix(4);
 	}
 
 	@include element(header) {
-		@include border(bottom, $color-neutral-light);
+		@include common-border-1px(bottom, $color-neutral-light);
 
 		& {
 			padding: unitfix(14) unitfix(16);

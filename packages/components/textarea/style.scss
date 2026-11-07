@@ -27,7 +27,7 @@ $padding: unitfix(7);
 		background .2s ease-in-out, 
 		box-shadow .2s ease-in-out;
 
-	@include border('', $border-color, 8); // 不占边距
+	@include common-border-1px('', $border-color, 8); // 不占边距
 
 	@include when(focus) {
 		&::after, &::before {

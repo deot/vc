@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "@deot/helper": "^1.1.24",
-    "@deot/style": "^1.3.0",
+    "@deot/style": "^1.3.2",
     "@types/lodash-es": "^4.17.12",
     "@zumer/snapdom": "^3.1.0",
     "echarts": "^6.1.0",

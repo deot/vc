@@ -31,7 +31,7 @@ $delete-background: color-mix(in srgb, #{$color-contrast-dark} 40%, transparent)
 	}
 
 	@include element(delete) {
-		@include flex-cc;
+		@include common-flex-cc;
 
 		position: absolute;
 		top: 0;
@@ -58,7 +58,7 @@ $delete-background: color-mix(in srgb, #{$color-contrast-dark} 40%, transparent)
 	}
 
 	@include element(box) {
-		@include flex-cc;
+		@include common-flex-cc;
 
 		line-height: 1;
 		color: $color-dark-extralight;

@@ -83,7 +83,7 @@ $segmented-sizes: (
 			background-color: $color-neutral-light; // 暗色主题下background-color与页面同色
 			border-radius: unitfix(6);
 
-			@include border('', $color-neutral-light, 6);
+			@include common-border-1px('', $color-neutral-light, 6);
 
 			&::before, &::after {
 				transition: border-color .2s ease-in-out;

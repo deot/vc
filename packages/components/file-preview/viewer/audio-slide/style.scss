@@ -4,7 +4,7 @@ $color-contrast-light: varfix(color-contrast-light, file-preview);
 $component-name: vc-audio-slide;
 
 @include block($component-name) {
-	@include flex-cc;
+	@include common-flex-cc;
 
 	position: absolute;
 	flex-direction: column;
