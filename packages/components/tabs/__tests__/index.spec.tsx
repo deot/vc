@@ -1401,6 +1401,24 @@ describe('mobile', () => {
 		else delete (document as any).scrollingElement;
 	});
 
+	it('does not read the afloat as the active item before the tabs render', async () => {
+		const errors: any[] = [];
+		const onError = (e: any) => errors.push(e);
+		process.on('unhandledRejection', onError);
+		const panes = ['一', '二', '三'];
+		const wrapper = mount(() => (
+			<MTabs modelValue="一">
+				{panes.map(pane => <MTabsPane key={pane} label={pane} value={pane}>{pane}</MTabsPane>)}
+			</MTabs>
+		), { attachTo: document.body });
+		await flush();
+		await Utils.sleep(10);
+		process.off('unhandledRejection', onError);
+		expect(errors).toEqual([]);
+		expect(wrapper.find('.vcm-tabs__item.is-active').text()).toBe('一');
+		wrapper.unmount();
+	});
+
 	it('autoAfloatWidth=false uses item.offsetWidth as afloatWidth', async () => {
 		const wrapper = mount(() => (
 			<MTabs modelValue={0} autoAfloatWidth={false}>

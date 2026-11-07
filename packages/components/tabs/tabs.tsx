@@ -30,9 +30,11 @@ export const Tabs = defineComponent({
 
 		// 标签的容器即 Scroller 的 content；滑块放在标签之后，标签的下标与子元素一致
 		const getNav = () => scroller.value?.content as HTMLElement | undefined;
+		// 面板刚注册时标签可能还没渲染（导航里只有滑块）：只取标签项，渲染后由 Resize 再刷新
 		const getActiveItem = () => {
 			const index = tabs.getTabIndex(tabs.currentValue.value);
-			return index === -1 ? undefined : getNav()?.children[index] as HTMLElement | undefined;
+			const el = index === -1 ? undefined : getNav()?.children[index] as HTMLElement | undefined;
+			return el?.classList.contains('vc-tabs__item') ? el : undefined;
 		};
 
 		/**
