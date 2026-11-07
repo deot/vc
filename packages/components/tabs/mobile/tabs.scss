@@ -12,7 +12,6 @@ $dark-stepper-shadow-color: varfix(dark-stepper-shadow-color, tabs, #242421);
 
 @include block($component-name) {
 	width: 100%;
-	overflow: hidden;
 
 	@include element(stepper) {
 		display: flex;
@@ -36,13 +35,7 @@ $dark-stepper-shadow-color: varfix(dark-stepper-shadow-color, tabs, #242421);
 		overflow: hidden;
 		align-items: stretch;
 
-		@include when(fixed) {
-			position: fixed;
-			z-index: 999;
-			width: 100%;
-
-			// box-shadow: 0px -5px 5px 5px #999;
-		}
+		// sticky 吸顶中带 is-fixed（仅作状态标记，吸附由外层 MAffix 完成）
 	}
 
 	// Scroller的根节点（axis x，原生横向滚动），不显示滚动条

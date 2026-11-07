@@ -1330,52 +1330,30 @@ describe('mobile', () => {
 		wrapper.unmount();
 	});
 
-	it('sticky=true updates isFixed on document scroll', async () => {
-		// jsdom 中 document.scrollingElement 可能为 null，统一伪造
-		const fakeScroller = { scrollTop: 5000 } as any;
-		const desc = Object.getOwnPropertyDescriptor(Document.prototype, 'scrollingElement');
-		Object.defineProperty(document, 'scrollingElement', {
-			configurable: true,
-			get: () => fakeScroller
-		});
-
+	it('sticky=false renders the bar without MAffix', async () => {
 		const wrapper = mount(() => (
-			<MTabs modelValue={0} sticky offsetTop={0}>
+			<MTabs modelValue={0}>
 				<MTabsPane label="a" value="a">A</MTabsPane>
 			</MTabs>
 		), { attachTo: document.body });
-
 		await flush();
-
-		window.dispatchEvent(new Event('scroll'));
-		await Utils.sleep(120);
-
-		expect(wrapper.find('.vcm-tabs__placeholder').exists()).toBe(true);
-		expect(wrapper.find('.vcm-tabs__bar').classes()).toContain('is-fixed');
+		expect(wrapper.find('.vcm-affix').exists()).toBe(false);
+		expect(wrapper.find('.vcm-tabs__bar').exists()).toBe(true);
 		wrapper.unmount();
-		if (desc) Object.defineProperty(document, 'scrollingElement', desc);
-		else delete (document as any).scrollingElement;
 	});
 
-	it('sticky offsetTop: 按 750 稿换算为 px 判断吸顶，固定时 top 随 --vc-rem', async () => {
-		const fakeScroller = { scrollTop: 940 } as any;
-		const desc = Object.getOwnPropertyDescriptor(Document.prototype, 'scrollingElement');
-		Object.defineProperty(document, 'scrollingElement', {
-			configurable: true,
-			get: () => fakeScroller
-		});
-		// jsdom 不计算自定义属性：--vc-rem 取 0.5px（375 宽）
+	it('sticky pins the bar with MAffix (position: sticky, offsetTop in 750 units)', async () => {
+		// jsdom 不做布局：MAffix 测量节点的宽度按 --vc-rem 0.5px 算出
 		const getComputedStyle = window.getComputedStyle;
 		const spy = vi.spyOn(window, 'getComputedStyle').mockImplementation((el: Element, pseudo?: string | null) => {
 			const style = getComputedStyle(el, pseudo);
+			if (!el.classList.contains('vcm-affix__measurer')) return style;
 			return new Proxy(style, {
-				get: (target, key) => key === 'getPropertyValue'
-					? (name: string) => (name === '--vc-rem' ? '0.5px' : target.getPropertyValue(name))
+				get: (target, key) => key === 'width'
+					? `${Number(/\* (-?[\d.]+)\)/.exec((el as HTMLElement).style.width)?.[1] || 0) * 0.5}px`
 					: Reflect.get(target, key)
 			});
 		});
-		const offsetTop = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetTop');
-		Object.defineProperty(HTMLElement.prototype, 'offsetTop', { configurable: true, get: () => 1000 });
 
 		const wrapper = mount(() => (
 			<MTabs modelValue={0} sticky offsetTop={100}>
@@ -1384,23 +1362,32 @@ describe('mobile', () => {
 		), { attachTo: document.body });
 		await flush();
 
-		// 940 + 50(100 × 0.5px) < 1000：未吸顶；若按 px 解释 100 则会吸顶
+		const affix = wrapper.find('.vcm-affix');
+		const affixEl = affix.element as HTMLElement;
+		// 标签栏在 MAffix 内，吸附由 sticky 完成，不再有占位元素
+		expect(affix.classes()).toContain('is-sticky');
+		expect(affixEl.style.top).toBe('calc(var(--vc-rem) * 100)');
+		expect(affixEl.style.zIndex).toBe('999');
+		expect(affix.find('.vcm-tabs__bar').exists()).toBe(true);
+		expect(wrapper.find('.vcm-tabs__placeholder').exists()).toBe(false);
+
+		// 停在吸附线（100 × 0.5 = 50px）上：吸顶中，标签栏带 is-fixed
+		const rect = vi.spyOn(affixEl, 'getBoundingClientRect').mockReturnValue({
+			top: 50, bottom: 95, left: 0, right: 375, width: 375, height: 45, x: 0, y: 50, toJSON: () => ({})
+		} as DOMRect);
 		window.dispatchEvent(new Event('scroll'));
-		await Utils.sleep(120);
+		await flush();
+		expect(wrapper.find('.vcm-tabs__bar').classes()).toContain('is-fixed');
+
+		// 还没到吸附线
+		rect.mockReturnValue({ ...affixEl.getBoundingClientRect(), top: 120, bottom: 165 } as DOMRect);
+		window.dispatchEvent(new Event('scroll'));
+		await flush();
 		expect(wrapper.find('.vcm-tabs__bar').classes()).not.toContain('is-fixed');
 
-		fakeScroller.scrollTop = 960;
-		window.dispatchEvent(new Event('scroll'));
-		await Utils.sleep(120);
-		const bar = wrapper.find('.vcm-tabs__bar');
-		expect(bar.classes()).toContain('is-fixed');
-		expect((bar.element as HTMLElement).style.top).toBe('calc(var(--vc-rem) * 100)');
-
-		wrapper.unmount();
+		rect.mockRestore();
 		spy.mockRestore();
-		Object.defineProperty(HTMLElement.prototype, 'offsetTop', offsetTop!);
-		if (desc) Object.defineProperty(document, 'scrollingElement', desc);
-		else delete (document as any).scrollingElement;
+		wrapper.unmount();
 	});
 
 	it('does not read the afloat as the active item before the tabs render', async () => {
