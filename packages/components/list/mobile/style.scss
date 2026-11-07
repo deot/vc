@@ -2,25 +2,45 @@
 
 $component-name: vcm-list;
 $component-child-name: vcm-list-item;
-$color-dark: varfix(color-dark, list);
+$color-dark-light: varfix(color-dark-light, list);
 $color-dark-extralight: varfix(color-dark-extralight, list);
+$color-neutral: varfix(color-neutral, list);
 $color-neutral-light: varfix(color-neutral-light, list);
+$background-color-light: varfix(background-color-light, list);
 $background-color-lightest: varfix(background-color-lightest, list);
 
 @include block($component-name) {
-	& {
+	@include element((header, footer)) {
+		padding: remfix(24) remfix(32);
+		font-size: remfix(28);
+		line-height: remfix(40);
+		color: $color-dark-extralight;
+	}
+
+	@include element(body) {
 		background: $background-color-lightest;
 	}
 
 	@include when(border) {
-		@include common-border-1px(top, $color-neutral-light);
-		@include common-border-1px(bottom, $color-neutral-light);
+		> .#{$component-name}__body {
+			@include common-border-1px(top, $color-neutral-light);
+			@include common-border-1px(bottom, $color-neutral-light);
+		}
 	}
 }
 
 @include block($component-child-name) {
 	& {
-		padding-left: remfix(24);
+		padding-left: remfix(32);
+		background: $background-color-lightest;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	// 按下反馈覆盖整行，包括左侧缩进
+	@include when(clickable) {
+		&:active {
+			background: $background-color-light;
+		}
 	}
 
 	@include element(wrapper) {
@@ -28,24 +48,41 @@ $background-color-lightest: varfix(background-color-lightest, list);
 
 		& {
 			display: flex;
-			padding-top: remfix(24);
-			padding-right: remfix(24);
-			padding-bottom: remfix(24);
+			min-height: remfix(108);
+			padding: remfix(24) remfix(32) remfix(24) 0;
 			font-size: remfix(32);
-			line-height: remfix(48);
-			color: $color-dark;
-			background: $background-color-lightest;
-		}
-
-		// 单行
-		@include when(line) {
+			line-height: 1.4;
+			color: $color-dark-light;
+			box-sizing: border-box;
 			align-items: center;
-			justify-content: space-between;
 		}
 
-		// 换行
+		@include when(description) {
+			min-height: remfix(148);
+		}
+
+		// 单行：extra 右对齐，最多两行
+		@include when(line) {
+			.#{$component-child-name}__extra {
+				text-align: right;
+
+				@include common-text-line(2, false);
+			}
+		}
+
+		// 换行：label 在上，extra 在下且不限行数
 		@include when(multi) {
 			flex-direction: column;
+			align-items: stretch;
+
+			.#{$component-child-name}__label {
+				margin-right: 0;
+			}
+
+			.#{$component-child-name}__content {
+				justify-content: space-between;
+				margin-top: remfix(8);
+			}
 		}
 
 		@include when(alone) {
@@ -53,28 +90,56 @@ $background-color-lightest: varfix(background-color-lightest, list);
 				display: none;
 			}
 
+			min-height: unset;
 			padding-top: unset;
 			padding-right: unset;
 			padding-bottom: unset;
 		}
 	}
 
+	@include element(icon) {
+		display: flex;
+		flex-shrink: 0;
+		align-items: center;
+		margin-right: remfix(24);
+		font-size: remfix(40);
+		line-height: 0;
+		color: $color-dark-light;
+	}
+
+	@include element(label) {
+		min-width: 0;
+		margin-right: remfix(48);
+	}
+
+	@include element(description) {
+		margin-top: remfix(4);
+		font-size: remfix(28);
+		color: $color-dark-extralight;
+	}
+
 	@include element(content) {
 		display: flex;
+		flex: 1;
 		align-items: center;
+		justify-content: flex-end;
+		min-width: 0;
 	}
 
 	@include element(extra) {
+		min-width: 0;
+		font-size: remfix(28);
 		color: $color-dark-extralight;
 	}
 
-	@include element(icon) {
-		margin-left: remfix(10);
-		font-size: remfix(26);
-		color: $color-dark-extralight;
+	@include element(arrow) {
+		flex-shrink: 0;
+		margin-left: remfix(16);
+		font-size: remfix(24);
+		color: $color-neutral;
 	}
 
-	&:last-child .vcm-list-item__wrapper::after {
+	&:last-child .#{$component-child-name}__wrapper::after {
 		display: none;
 	}
 }

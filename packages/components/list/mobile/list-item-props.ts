@@ -11,6 +11,10 @@ export const props = {
 		type: [String, Number],
 		default: ''
 	},
+	// label 下方的描述
+	description: valueType,
+	// 左侧图标：MIcon 的类型；icon 插槽优先
+	icon: String,
 	extra: valueType,
 	arrow: {
 		type: [String, Boolean],

@@ -15,10 +15,10 @@ describe('MListItem label / extra', () => {
 		));
 
 		const [first, second] = wrapper.findAll('.vcm-list-item__wrapper');
-		expect(first.find(':scope > div:first-child .inner').exists()).toBe(false);
-		expect(first.find(':scope > div:first-child').text()).toBe(MARKUP);
+		expect(first.find('.vcm-list-item__title .inner').exists()).toBe(false);
+		expect(first.find('.vcm-list-item__title').text()).toBe(MARKUP);
 		expect(first.find('.vcm-list-item__extra .inner').exists()).toBe(true);
-		expect(second.find(':scope > div:first-child > .render-label').exists()).toBe(true);
+		expect(second.find('.vcm-list-item__title > .render-label').exists()).toBe(true);
 		expect(second.find('.vcm-list-item__extra > .render-extra').exists()).toBe(true);
 	});
 
@@ -39,7 +39,7 @@ describe('MListItem label / extra', () => {
 			</MList>
 		));
 
-		expect(wrapper.find('.vcm-list-item__wrapper > div:first-child').text()).toBe('slot-label');
+		expect(wrapper.find('.vcm-list-item__title').text()).toBe('slot-label');
 		expect(wrapper.find('.vcm-list-item__extra').text()).toBe('slot-extra');
 	});
 });

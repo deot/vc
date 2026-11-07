@@ -25,7 +25,7 @@ export const MListItem = defineComponent({
 			return {
 				'is-alone': !hasList || props.alone,
 				'is-multi': props.multiple,
-				'is-line': !props.multiple,
+				'is-line': !props.multiple
 			};
 		});
 
@@ -34,14 +34,20 @@ export const MListItem = defineComponent({
 				? props.labelWidth
 				: list?.props?.labelWidth;
 
-			return {
-				width: labelWidth > 0 ? toRem(labelWidth) : 'auto'
-			};
+			// 固定宽度时不被 extra 压缩
+			return labelWidth > 0
+				? { width: toRem(labelWidth), flexShrink: 0 }
+				: { width: 'auto' };
 		});
 
-		const icon = computed(() => {
+		const arrow = computed(() => {
 			return typeof props.arrow === 'string' ? props.arrow : 'right';
 		});
+
+		// 按下反馈：显示箭头、可跳转或监听了 click 时视为可点击；监听只能从 vnode.props 得知（context 不提供）
+		const isClickable = () => {
+			return !!(props.arrow || props.to || props.href || instance.vnode.props?.onClick);
+		};
 
 		const handleLinkTo = (e: Event) => {
 			emit('click', e);
@@ -71,16 +77,31 @@ export const MListItem = defineComponent({
 		};
 		return () => {
 			const extra = slots.extra || props.extra;
+			const description = slots.description || props.description;
 			return (
 				<div
-					class="vcm-list-item"
+					class={['vcm-list-item', { 'is-clickable': isClickable() }]}
 					style={props.indent != null ? { paddingLeft: toRem(props.indent) } : undefined}
 					onClick={handleLinkTo}
 				>
 					<div
-						class={['vcm-list-item__wrapper', classes.value]}
+						class={['vcm-list-item__wrapper', classes.value, { 'is-description': hasCustomerValue(description) }]}
 					>
-						<MCustomer wrap style={labelStyle.value} render={slots.label || props.label} />
+						{
+							(slots.icon || props.icon) && (
+								<div class="vcm-list-item__icon">
+									{slots.icon ? slots.icon() : <MIcon type={props.icon} />}
+								</div>
+							)
+						}
+						<div class="vcm-list-item__label" style={labelStyle.value}>
+							<MCustomer wrap class="vcm-list-item__title" render={slots.label || props.label} />
+							{
+								hasCustomerValue(description) && (
+									<MCustomer wrap class="vcm-list-item__description" render={description} />
+								)
+							}
+						</div>
 						<div class="vcm-list-item__content">
 							{
 								hasCustomerValue(extra)
@@ -90,8 +111,8 @@ export const MListItem = defineComponent({
 							{
 								props.arrow && (
 									<MIcon
-										type={icon.value}
-										class="vcm-list-item__icon"
+										type={arrow.value}
+										class="vcm-list-item__arrow"
 									/>
 								)
 							}
