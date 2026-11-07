@@ -3,7 +3,7 @@
 import { defineComponent, ref, computed, onUnmounted, onMounted, onUpdated, watch } from 'vue';
 import { throttle, debounce } from 'lodash-es';
 import { Resize } from '@deot/helper-resize';
-import { Utils } from '@deot/vc-shared';
+import { remToPx } from '@deot/vc-shared';
 import { props as tabsProps } from './tabs-props';
 import { Icon } from '../../icon';
 import { CustomerProp } from '../../customer/customer-prop';
@@ -57,7 +57,7 @@ export const MTabs = defineComponent({
 				if (bar.value) {
 					placeholderH.value = bar.value.offsetHeight + (parseFloat(getComputedStyle(bar.value).marginBottom) || 0);
 				}
-				offsetTopPx = Utils.remToPx(content.value, props.offsetTop);
+				offsetTopPx = remToPx(content.value, props.offsetTop);
 				top.value = content.value.offsetTop - placeholderH.value;
 				const el = document.scrollingElement || document.documentElement;
 				isFixed.value = (el?.scrollTop || 0) + offsetTopPx > top.value;
