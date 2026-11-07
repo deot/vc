@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Pagination, MPagination, Select, InputNumber, VcInstance } from '@deot/vc-components';
+import { Pagination, MPagination, MButton, Select, InputNumber, VcInstance } from '@deot/vc-components';
 import { enUS, zhCN } from '@deot/vc-locale';
 import { nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
@@ -12,7 +12,6 @@ describe('index.ts', () => {
 
 	it('locale: 文案、提示和条数选项随语言实时更新', async () => {
 		const wrapper = mount(Pagination, { props: { count: 200, current: 10, showSizer: true, showElevator: true } });
-		expect(MPagination).toBe(Pagination);
 		expect(wrapper.find('.vc-pagination__count').text()).toBe('共 200 条');
 		VcInstance.configure({ locale: enUS });
 		await nextTick();
@@ -336,5 +335,140 @@ describe('index.ts', () => {
 		(wrapper.vm as any).resetPage(8);
 		await wrapper.vm.$nextTick();
 		expect(wrapper.find('.vc-pagination__item.is-active').text()).toBe('8');
+	});
+});
+
+describe('MPagination', () => {
+	const sleep = () => new Promise(resolve => setTimeout(resolve));
+	afterEach(() => {
+		VcInstance.configure({ locale: zhCN });
+	});
+
+	const fields = (wrapper: any) => ({
+		previous: wrapper.find('.vcm-pagination__previous .vcm-button'),
+		next: wrapper.find('.vcm-pagination__next .vcm-button')
+	});
+
+	it('独立组件：类名 vcm-pagination，翻页按钮为 MButton', () => {
+		expect(MPagination).not.toBe(Pagination);
+		expect(MPagination.name).toBe('vcm-pagination');
+		const wrapper = mount(MPagination, { props: { count: 60, current: 2 } });
+		expect(wrapper.classes()).toEqual(expect.arrayContaining(['vcm-pagination', 'is-default', 'is-between']));
+		expect(wrapper.findAllComponents(MButton)).toHaveLength(2);
+		expect(wrapper.find('.vcm-pagination__page').text()).toBe('2 / 6');
+		const { previous, next } = fields(wrapper);
+		expect(previous.text()).toBe('上一页');
+		expect(next.text()).toBe('下一页');
+	});
+
+	it('翻页：v-model、change，首末页禁用且不触发事件', async () => {
+		const wrapper = mount(MPagination, { props: { 'count': 25, 'onUpdate:current': (v: number) => wrapper.setProps({ current: v }) } });
+		const { previous, next } = fields(wrapper);
+		expect(previous.classes()).toContain('is-disabled');
+		await previous.trigger('click');
+		expect(wrapper.emitted('change')).toBeUndefined();
+
+		// MButton 的点击经过 Debounce（leading），连续点击之间隔一个宏任务，与真实点击一致
+		await next.trigger('click');
+		await sleep();
+		await next.trigger('click');
+		expect(wrapper.emitted('change')).toEqual([[2], [3]]);
+		expect(wrapper.emitted('update:current')).toEqual([[2], [3]]);
+		expect(wrapper.find('.vcm-pagination__page').text()).toBe('3 / 3');
+		expect(fields(wrapper).next.classes()).toContain('is-disabled');
+		await sleep();
+		await fields(wrapper).next.trigger('click');
+		expect(wrapper.emitted('change')).toHaveLength(2);
+
+		await sleep();
+		await fields(wrapper).previous.trigger('click');
+		expect(wrapper.emitted('change')!.at(-1)).toEqual([2]);
+	});
+
+	it('count 为 0 时显示 1 / 1；count 减少时退到新的末页且不触发事件', async () => {
+		const wrapper = mount(MPagination, { props: { count: 0 } });
+		expect(wrapper.find('.vcm-pagination__page').text()).toBe('1 / 1');
+		expect(wrapper.findAll('.vcm-button.is-disabled')).toHaveLength(2);
+
+		await wrapper.setProps({ count: 100, current: 8 });
+		expect(wrapper.find('.vcm-pagination__page').text()).toBe('8 / 10');
+		await wrapper.setProps({ count: 30 });
+		expect(wrapper.find('.vcm-pagination__page').text()).toBe('3 / 3');
+		expect(wrapper.emitted('change')).toBeUndefined();
+	});
+
+	it('type：text 用文字按钮，simple 只显示页码；nextType 与 justify 的类名', async () => {
+		const wrapper = mount(MPagination, { props: { count: 60, type: 'text', nextType: 'primary', justify: 'center' } });
+		expect(wrapper.classes()).toEqual(expect.arrayContaining(['is-text', 'is-center', 'is-next-primary']));
+		expect(wrapper.findAll('.vcm-button.is-text')).toHaveLength(2);
+
+		await wrapper.setProps({ type: 'default' });
+		expect(fields(wrapper).next.classes()).toContain('is-primary');
+		expect(fields(wrapper).previous.classes()).toContain('is-default');
+
+		await wrapper.setProps({ type: 'simple' });
+		expect(wrapper.find('.vcm-pagination__previous').exists()).toBe(false);
+		expect(wrapper.find('.vcm-pagination__next').exists()).toBe(false);
+		expect(wrapper.find('.vcm-pagination__page').exists()).toBe(true);
+	});
+
+	it('icon 与文字：空字符串时只显示图标，文案随语言更新', async () => {
+		const wrapper = mount(MPagination, { props: { count: 60, icon: true, previousText: '', nextText: '' } });
+		const { previous, next } = fields(wrapper);
+		expect(previous.classes()).toEqual(expect.arrayContaining(['is-alone', 'is-with-icon']));
+		expect(previous.find('.vc-button__icon .vc-icon').exists()).toBe(true);
+		expect(next.find('.vc-button__icon .vc-icon').exists()).toBe(true);
+		expect(previous.text()).toBe('');
+
+		await wrapper.setProps({ previousText: undefined, nextText: undefined });
+		VcInstance.configure({ locale: enUS });
+		await nextTick();
+		expect(fields(wrapper).previous.text()).toBe('Previous page');
+		expect(fields(wrapper).next.classes()).not.toContain('is-alone');
+	});
+
+	it('插槽：previous / next / default 的参数，previous() 与 next() 可翻页', async () => {
+		const wrapper = mount(MPagination, {
+			props: { count: 60, pageSize: 20, current: 2 },
+			slots: {
+				previous: (scope: any) => (
+					<span class="custom-previous" data-disabled={String(scope.disabled)} onClick={scope.previous}>
+						{`${scope.current}/${scope.total}`}
+					</span>
+				),
+				next: (scope: any) => (
+					<span class="custom-next" data-disabled={String(scope.disabled)} onClick={scope.next}>next</span>
+				),
+				default: (scope: any) => `第 ${scope.current} 章 · 共 ${scope.total} 章`
+			}
+		});
+		expect(wrapper.findComponent(MButton).exists()).toBe(false);
+		expect(wrapper.find('.custom-previous').text()).toBe('2/3');
+		expect(wrapper.find('.custom-previous').attributes('data-disabled')).toBe('false');
+		expect(wrapper.find('.vcm-pagination__page').text()).toBe('第 2 章 · 共 3 章');
+
+		await wrapper.find('.custom-next').trigger('click');
+		expect(wrapper.emitted('change')).toEqual([[3]]);
+		expect(wrapper.find('.custom-next').attributes('data-disabled')).toBe('true');
+		await wrapper.find('.custom-previous').trigger('click');
+		expect(wrapper.emitted('change')!.at(-1)).toEqual([2]);
+	});
+
+	it('hideOnSinglePage：只有一页时不渲染', async () => {
+		const wrapper = mount(MPagination, { props: { count: 10, hideOnSinglePage: true } });
+		expect(wrapper.find('.vcm-pagination').exists()).toBe(false);
+		await wrapper.setProps({ count: 11 });
+		expect(wrapper.find('.vcm-pagination').exists()).toBe(true);
+	});
+
+	it('实例方法：previous / next / resetPage', async () => {
+		const wrapper = mount(MPagination, { props: { count: 100 } });
+		const vm = wrapper.vm as any;
+		expect(vm.previous()).toBe(false);
+		vm.next();
+		vm.resetPage(7);
+		await nextTick();
+		expect(wrapper.emitted('change')).toEqual([[2], [7]]);
+		expect(wrapper.find('.vcm-pagination__page').text()).toBe('7 / 10');
 	});
 });

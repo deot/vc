@@ -1,0 +1,101 @@
+@use '../../style/helper' as *;
+
+$color-primary: varfix(color-primary, pagination);
+$color-dark-lighter: varfix(color-dark-lighter, pagination);
+$foreground-color: varfix(foreground-color, pagination);
+$component-name: vcm-pagination;
+
+// 尺寸为 750 稿（随 --vc-rem 缩放）；375 宽下：上下 11px、左右 16px，页码 18px / 22px，居中模式翻页按钮距页码 24px
+// 翻页按钮为 MButton（medium，375 宽下高 36px）
+@include block($component-name) {
+	display: flex;
+	align-items: center;
+	padding: remfix(22) remfix(32);
+	color: $foreground-color;
+
+	// 两侧等分剩余宽度，页码始终居中
+	@include element((previous, next)) {
+		display: flex;
+		flex: 1;
+		min-width: 0;
+	}
+
+	@include element(previous) {
+		justify-content: flex-start;
+	}
+
+	// 只有图标的翻页按钮为方形，与按钮等高
+	@include element((previous, next)) {
+		.vcm-button.is-alone {
+			width: remfix(72);
+			padding: 0;
+		}
+	}
+
+	@include element(next) {
+		justify-content: flex-end;
+
+		// 下一页的图标在文字之后
+		.vcm-button.is-with-icon:not(.is-alone) {
+			> .vc-button__icon {
+				order: 1;
+				margin-left: remfix(8);
+			}
+
+			> .vc-button__icon + * {
+				margin-left: 0;
+			}
+		}
+	}
+
+	@include element(page) {
+		flex: 0 0 auto;
+		font-size: remfix(36);
+		line-height: remfix(44);
+		color: $color-dark-lighter;
+		text-align: center;
+	}
+
+	@include when(center) {
+		@include element(previous) {
+			justify-content: flex-end;
+			margin-right: remfix(48);
+		}
+
+		@include element(next) {
+			justify-content: flex-start;
+			margin-left: remfix(48);
+		}
+	}
+
+	@include when(simple) {
+		justify-content: center;
+	}
+
+	// 文字翻页：去掉按钮的高度、内边距、边框与背景，文字与内容边缘对齐，行高与页码相同；
+	// 文字为前景色（MButton 的 text 为主色），nextType 为 primary 时下一页为主色
+	@include when(text) {
+		.vcm-button {
+			width: auto;
+			height: auto;
+			padding: 0;
+			line-height: remfix(44);
+			background: transparent;
+			border: 0;
+		}
+
+		.vcm-button:not(.is-disabled) {
+			&,
+			&:hover {
+				color: $foreground-color;
+			}
+		}
+
+		&.is-next-primary .#{$component-name}__next .vcm-button:not(.is-disabled) {
+			&,
+			&:hover {
+				color: $color-primary;
+			}
+		}
+	}
+}

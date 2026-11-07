@@ -1,3 +1,6 @@
-import { Pagination } from '.';
+import { MPagination } from './mobile/pagination.tsx';
+import './mobile/style.scss';
 
-export const MPagination = Pagination;
+export {
+	MPagination
+};
