@@ -1,3 +1,6 @@
-import { Icon } from './index';
+import { MIcon } from './mobile/icon.tsx';
+import './style.scss';
 
-export const MIcon = Icon;
+export {
+	MIcon
+};

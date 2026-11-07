@@ -2,7 +2,7 @@
 
 import { computed, defineComponent, Fragment } from 'vue';
 import { MUpload } from '../../upload/index.m';
-import { Icon } from '../../icon';
+import { MIcon } from '../../icon/index.m';
 import { MSortList } from '../../sort-list/index.m';
 import { props as uploadPickerProps } from '../upload-picker-props';
 import { usePicker } from '../use-picker';
@@ -114,7 +114,7 @@ export const MUploadPicker = defineComponent({
 											? slots.upload({ type: picker.type })
 											: (
 													<div class={[props.boxClass, 'vcm-upload-picker__box']}>
-														<Icon type="mini-plus" class="vcm-upload-picker__plus-icon" />
+														<MIcon type="mini-plus" class="vcm-upload-picker__plus-icon" />
 													</div>
 												)
 									}

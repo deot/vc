@@ -2,7 +2,7 @@
 
 import { computed, defineComponent, Fragment } from 'vue';
 import { useLocale } from '../../../locale';
-import { Icon } from '../../../icon';
+import { MIcon } from '../../../icon/index.m';
 import { MSpin } from '../../../spin/index.m';
 import { getAvailableIndex } from '../../utils';
 
@@ -56,7 +56,7 @@ export const MVideoItem = defineComponent({
 										}
 										{
 											(!props.disabled || row.errorFlag) && (
-												<Icon
+												<MIcon
 													type="close"
 													class="vcm-upload-picker__delete"
 													// @ts-ignore

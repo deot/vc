@@ -19,6 +19,9 @@ const IS_SERVER = typeof document === 'undefined';
  * @param key 属性名
  * @returns 属性值
  */
+// 图标中的一条 path：fill 为空字符串时继承文字颜色
+export type IconPath = { d: string; fill: string };
+
 const getAttr = (str: string, key: string) => {
 	const token = `${key}="`;
 	let index = str.lastIndexOf(token);
@@ -35,7 +38,7 @@ const getAttr = (str: string, key: string) => {
 };
 
 class Manager {
-	icons: { [key: string]: { viewBox: string; path: string[] } } = {};
+	icons: { [key: string]: { viewBox: string; path: IconPath[] } } = {};
 
 	events: { [key: string]: Function[] } = {};
 
