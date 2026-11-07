@@ -1,7 +1,7 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, computed } from 'vue';
-import useTextarea from './use-textarea';
+import { defineComponent, computed } from 'vue';
+import { useTextarea } from './use-textarea';
 import { props as textareaProps } from './textarea-props';
 import { getBytesSize } from '../input/utils';
 
@@ -31,9 +31,9 @@ export const Textarea = defineComponent({
 		'cancel',
 		'resize'
 	],
-	setup(props, { expose }) {
-		const textarea = ref<HTMLTextAreaElement>();
+	setup(props, context) {
 		const {
+			textarea,
 			currentValue,
 			classes,
 			contentStyle,
@@ -41,7 +41,7 @@ export const Textarea = defineComponent({
 			binds,
 			calcTextareaStyle,
 			currentMaxlength
-		} = useTextarea(textarea, expose);
+		} = useTextarea(props, context);
 		const indicatorNum = computed(() => {
 			const currentLength = (String(props.modelValue || '')).length;
 			const extraLength = props.bytes ? getBytesSize(props.modelValue as any) || 0 : 0;

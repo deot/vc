@@ -1,5 +1,5 @@
-import { getCurrentInstance, provide, ref, watch, computed, onMounted, nextTick, onBeforeUnmount } from 'vue';
-import type { Ref, SetupContext, ComponentInternalInstance } from 'vue';
+import { provide, ref, watch, computed, onMounted, nextTick, onBeforeUnmount } from 'vue';
+import type { SetupContext, ComponentInternalInstance } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import { getUid } from '@deot/helper-utils';
 import { VcError } from '../vc/index';
@@ -24,10 +24,10 @@ const swallowNextClickFromDrag = () => {
 	setTimeout(() => !invoked && document.removeEventListener('click', swallow, options), 0);
 };
 
-export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLElement | null>, expose: SetupContext['expose']): any => {
-	const instance = getCurrentInstance()!;
-	const props = instance.props as Props;
-	const { emit } = instance;
+export const useCarousel = (props: Props, context: SetupContext<['change']>): any => {
+	const { emit, expose } = context;
+	const wrapper = ref<HTMLElement | null>(null);
+	const content = ref<HTMLElement | null>(null);
 	const items = ref<any[]>([]);
 	const activeIndex = ref(-1);
 	const timer = ref<any>(null);
@@ -266,6 +266,8 @@ export const useCarousel = (wrapper: Ref<HTMLElement | null>, content: Ref<HTMLE
 	});
 
 	return {
+		wrapper,
+		content,
 		carouselId,
 		allowTransition,
 		items,

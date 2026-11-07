@@ -12,8 +12,9 @@ const COMPONENT_NAME = 'vcm-form-item';
 export const MFormItem = defineComponent({
 	name: COMPONENT_NAME,
 	props: mFormItemProps,
-	setup(props, { slots, expose }) {
-		const it = useFormItem(expose, { rem: true });
+	setup(props, context) {
+		const { slots } = context;
+		const it = useFormItem(props, context, { rem: true });
 
 		const {
 			isStyleless,

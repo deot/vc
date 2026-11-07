@@ -10,8 +10,9 @@ export const CheckboxGroup = defineComponent({
 	name: COMPONENT_NAME,
 	props: checkboxGroupProps,
 	emits: ['update:modelValue', 'change'],
-	setup(props, { slots }) {
-		useCheckboxGroup();
+	setup(props, context) {
+		const { slots } = context;
+		useCheckboxGroup(props, context);
 		return () => {
 			if (props.fragment) return slots.default?.();
 			return (

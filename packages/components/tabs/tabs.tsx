@@ -6,7 +6,7 @@ import { props as tabsProps } from './tabs-props';
 import { Icon } from '../icon';
 import { CustomerProp } from '../customer/customer-prop';
 import { Scroller } from '../scroller';
-import useTabs from './use-tabs';
+import { useTabs } from './use-tabs';
 import { useTabsScroll } from './use-tabs-scroll';
 
 const COMPONENT_NAME = 'vc-tabs';
@@ -22,7 +22,8 @@ export const Tabs = defineComponent({
 	name: COMPONENT_NAME,
 	props: tabsProps,
 	emits: ['update:modelValue', 'change', 'click', 'tab-remove'],
-	setup(props, { slots }) {
+	setup(props, context) {
+		const { slots } = context;
 		const content = ref<any>(null);
 		const scroller = ref<any>(null);
 		// eslint-disable-next-line prefer-const
@@ -53,7 +54,7 @@ export const Tabs = defineComponent({
 			getActiveItem
 		});
 
-		tabs = useTabs({
+		tabs = useTabs(props, context, {
 			content,
 			refreshAfloat,
 			scrollToActive: () => scroll.scrollToActive()

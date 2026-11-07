@@ -1,4 +1,5 @@
 import { inject, ref, watch } from 'vue';
+import type { SetupContext } from 'vue';
 import type { Props, SortListPrimaryKey, SortListRow } from './sort-list-props';
 
 export interface SortListCurrent {
@@ -7,9 +8,8 @@ export interface SortListCurrent {
 	type?: 'left' | 'right' | 'drag' | string;
 }
 
-type SortListEmit = (event: 'update:modelValue' | 'change', value: SortListRow[]) => void;
-
-export const useSortList = (props: Props, emit: SortListEmit) => {
+export const useSortList = (props: Props, context: SetupContext<['update:modelValue', 'change']>) => {
+	const { emit } = context;
 	const formItem = inject<any>('vc-form-item', {});
 	const currentValue = ref<SortListRow[]>([]);
 	const dragging = ref(false);

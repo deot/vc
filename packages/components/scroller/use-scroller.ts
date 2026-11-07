@@ -1,4 +1,4 @@
-import { getCurrentInstance, computed, onBeforeUnmount, onMounted, ref, provide, reactive, nextTick, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, provide, reactive, nextTick, watch } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import { scrollIntoView } from '@deot/helper-dom';
 import { getPadding } from './utils';
@@ -8,8 +8,8 @@ import type { BarExposed } from './bar';
 import type { Props } from './scroller-props';
 import type { ScrollerScrollToOptions } from './types';
 
-export const useScroller = (expose: SetupContext['expose']) => {
-	const instance = getCurrentInstance()!;
+export const useScroller = (props: Props, context: SetupContext<['scroll']>) => {
+	const { emit, expose } = context;
 
 	const bar = ref<BarExposed>();
 	const wrapper = ref<HTMLElement>();
@@ -23,8 +23,6 @@ export const useScroller = (expose: SetupContext['expose']) => {
 	const contentW = ref(0);
 	// [上, 右, 下, 左]；sticky 轨道需要抵消滚动容器的 padding，见 Bar
 	const wrapperPadding = ref([0, 0, 0, 0]);
-
-	const props = instance.props as Props;
 
 	const wrapperStyle = computed(() => {
 		const style = {} as Record<string, string>;
@@ -102,7 +100,7 @@ export const useScroller = (expose: SetupContext['expose']) => {
 			currentTarget: delegates
 		};
 
-		instance.emit('scroll', e);
+		emit('scroll', e);
 		listeners.forEach(listener => listener(e));
 	};
 

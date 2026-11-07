@@ -1,4 +1,5 @@
 import { getCurrentInstance, ref, computed, watch, inject } from 'vue';
+import type { SetupContext } from 'vue';
 import type { UploadEventMap } from '../upload/types';
 import { VcError } from '../vc';
 import { open as openFilePreview } from '../file-preview/open';
@@ -25,10 +26,23 @@ import type {
 	UploadPickerCallback
 } from './types';
 
-export const usePicker = (expose: any) => {
+// UploadPicker / MUploadPicker 声明的 emits
+type Emits = [
+	'update:modelValue',
+	'file-success',
+	'file-start',
+	'file-before',
+	'file-error',
+	'error',
+	'complete',
+	'change',
+	'remove-before'
+];
+
+export const usePicker = (props: Props, context: SetupContext<Emits>) => {
+	const { emit, expose } = context;
+	// 是否传了 onFileBefore / onRemoveBefore 只能从 vnode 上读；预览回调需要组件实例
 	const instance = getCurrentInstance()!;
-	const props = instance.props as Props;
-	const { emit } = instance;
 	const formItem = inject<any>('vc-form-item', {});
 
 	const allowKeepString = computed(() => {

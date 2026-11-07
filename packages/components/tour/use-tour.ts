@@ -1,7 +1,8 @@
 import { ref, shallowRef, computed, watch, onMounted, onBeforeUnmount, onUnmounted, nextTick } from 'vue';
+import type { SetupContext } from 'vue';
 import { useScrollbar } from '@deot/vc-hooks';
 import { VcInstance } from '../vc';
-import type { Props } from './tour-props';
+import type { Props, emits } from './tour-props';
 import type { TourAction, TourConfig, TourContext, TourEndType, TourSource, TourStepOptions } from './types';
 import { getElement, waitForElement, saveFocus } from './utils';
 
@@ -33,11 +34,22 @@ const manager = {
 };
 const getConfig = (): TourConfig => VcInstance.options.Tour || {};
 
+// TourView 声明的 emits
+type Emits = [...typeof emits, 'portal-fulfilled'];
+
+/**
+ * @param props ~
+ * @param context ~
+ * @param options ~
+ * @param options.locate 步骤切换后重新定位卡片
+ * @returns ~
+ */
 export const useTour = (
 	props: Omit<Props, 'modelValue'>,
-	emit: (...args: any[]) => void,
-	locate: () => Promise<void>
+	context: SetupContext<Emits>,
+	{ locate }: { locate: () => Promise<void> }
 ) => {
+	const { emit } = context;
 	const isActive = ref(false);
 	const isLeaving = ref(false);
 	const isLoading = ref(false);

@@ -1,13 +1,12 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref } from 'vue';
+import { defineComponent } from 'vue';
 import { useAttrs } from '@deot/vc-hooks';
 import { props as inputProps } from '../input-props';
 
 import { MIcon } from '../../icon/index.m';
 import { MTransitionFade } from '../../transition/index.m';
 import { useInput } from '../use-input';
-import { useNativeEmitter } from '../use-native-emitter';
 
 const COMPONENT_NAME = 'vcm-input';
 
@@ -35,19 +34,18 @@ export const MInput = defineComponent({
 		'enter',
 		'tip'
 	],
-	setup(props, { slots, expose }) {
-		const input = ref<HTMLInputElement>();
+	setup(props, context) {
+		const { slots } = context;
 		const it = useAttrs({ merge: false });
 
-		useNativeEmitter(input, expose);
-
 		const {
+			input,
 			currentValue,
 			currentMaxlength,
 			classes,
 			listeners,
 			handleClear
-		} = useInput(input);
+		} = useInput(props, context);
 
 		const renderInput = (merge: boolean) => {
 			const binds = merge

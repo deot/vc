@@ -1,4 +1,5 @@
 import { getCurrentInstance, ref, shallowRef, watch, computed, inject } from 'vue';
+import type { SetupContext } from 'vue';
 import { isEqual } from 'lodash-es';
 import { hasOwn } from '@deot/helper-utils';
 import { useAttrs, useKeyboard } from '@deot/vc-hooks';
@@ -11,11 +12,16 @@ interface Options {
 	isDisabled?: (date: Date) => boolean;
 }
 
-export const useBase = (options: Options = {}) => {
+// createPicker 生成的组件声明的 emits
+type Emits = ['update:modelValue', 'change', 'clear', 'error', 'close', 'input', 'ready', 'visible-change', 'ok'];
+// 同步值时一并触发的事件
+type SyncEvent = 'change' | 'ok';
+
+export const useBase = (props: Props, context: SetupContext<Emits>, options: Options = {}) => {
 	const { isDisabled } = options;
+	const { emit } = context;
+	// onBeforeClear / onBeforeOk 等回调是否传入只能从 vnode 上读
 	const instance = getCurrentInstance()!;
-	const { emit } = instance;
-	const props = instance.props as Props;
 
 	const isHover = ref(false);
 	const isActive = ref(false);
@@ -139,7 +145,7 @@ export const useBase = (options: Options = {}) => {
 		committedValue.value = [...currentValue.value];
 	};
 
-	const sync = (eventName: string | string[], value: Date[]) => {
+	const sync = (eventName: SyncEvent | SyncEvent[], value: Date[]) => {
 		const formatValue = toModelValue(value);
 		!isControlled() && (committedValue.value = [...value]);
 

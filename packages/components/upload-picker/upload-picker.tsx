@@ -31,7 +31,8 @@ export const UploadPicker = defineComponent({
 		'change',
 		'remove-before'
 	],
-	setup(props, { slots, expose }) {
+	setup(props, context) {
+		const { slots } = context;
 		const { t } = useLocale();
 		const instance = getCurrentInstance()!;
 		const itemMap = {
@@ -49,7 +50,7 @@ export const UploadPicker = defineComponent({
 			// 阻止原生事件，如video, file不走enhancer, 可以跳过;
 			resolveEnhancer(props.enhancer, VcInstance.options.UploadPicker?.enhancer)?.({ instance, type }) && e.stopPropagation();
 		};
-		const base = usePicker(expose);
+		const base = usePicker(props, context);
 		return () => {
 			return (
 				<div class="vc-upload-picker">

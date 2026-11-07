@@ -1,8 +1,10 @@
-import { provide, inject, getCurrentInstance, ref, watch } from 'vue';
+import { provide, inject, ref, watch } from 'vue';
+import type { SetupContext } from 'vue';
+import type { Props } from './checkbox-group-props';
 import { isEqualWith } from 'lodash-es';
 
-export const useCheckboxGroup = () => {
-	const { props, emit } = getCurrentInstance()!;
+export const useCheckboxGroup = (props: Props, context: SetupContext<['update:modelValue', 'change']>) => {
+	const { emit } = context;
 	const formItem = inject<any>('vc-form-item', {});
 
 	const currentValue = ref<any>([]);

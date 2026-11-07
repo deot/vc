@@ -1,15 +1,17 @@
-import { ref, watch, computed, getCurrentInstance } from 'vue';
-import type { Ref } from 'vue';
+import { ref, watch, computed } from 'vue';
+import type { Ref, SetupContext } from 'vue';
 import type { Props } from './input-number-props';
+import { useNativeEmitter } from './use-native-emitter';
 import { useLocale } from '../locale';
 
 type Value = Props['modelValue'];
 
-export const useInputNumber = () => {
+export const useInputNumber = (props: Props, context: SetupContext) => {
 	const { t } = useLocale();
-	const instance = getCurrentInstance()!;
-	const { emit } = instance;
-	const props = instance.props as Props;
+	const { emit, attrs, expose } = context;
+	// 内部 Input 组件，原生 focus / blur / click 转发给它
+	const input = ref<any>();
+	useNativeEmitter(input, expose);
 	const typingValue: Ref<Value> = ref('');
 	const currentValue: Ref<Value> = ref('');
 	const isTyping = ref(false);
@@ -75,7 +77,7 @@ export const useInputNumber = () => {
 	};
 
 	const isAfterAllowChanged = async (e: any, value: Value) => {
-		const onAfter = instance.attrs.onAfter as any;
+		const onAfter = attrs.onAfter as any;
 		if (!onAfter) return true;
 		let allow = false;
 		try {
@@ -215,8 +217,8 @@ export const useInputNumber = () => {
 	};
 
 	const handleStepper = async (e: any, base: number) => {
-		const plus = instance.attrs.onPlus;
-		const minus = instance.attrs.onMinus;
+		const plus = attrs.onPlus;
+		const minus = attrs.onMinus;
 
 		if (base === 1 && typeof plus === 'function') { return plus(); }
 		if (base === -1 && typeof minus === 'function') { return minus(); }
@@ -240,7 +242,7 @@ export const useInputNumber = () => {
 		const value: number = +(currentValue.value || 0) + (props.step as number) * base;
 		const value$ = transformValue(compareWithBoundary(isNaN(value) ? '' : value, 'button'));
 
-		const before = instance.attrs.onBefore as any;
+		const before = attrs.onBefore as any;
 		const state = (await before?.(value$) !== false);
 		state && sync(value$, {});
 		afterDebounce(e, value);
@@ -258,6 +260,7 @@ export const useInputNumber = () => {
 	};
 
 	return {
+		input,
 		listeners,
 		plusDisabled,
 		minusDisabled,

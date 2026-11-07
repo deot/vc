@@ -1,4 +1,6 @@
-import { inject, getCurrentInstance, ref, watch, computed } from 'vue';
+import { inject, ref, watch, computed } from 'vue';
+import type { SetupContext } from 'vue';
+import type { Props } from './radio-props';
 import type { CustomerValue } from '../customer/types';
 import type { RadioGroupType } from './types';
 
@@ -7,8 +9,8 @@ type Options = {
 	variant?: RadioGroupType;
 };
 
-export const useRadio = (options: Options = {}) => {
-	const { props, emit } = getCurrentInstance()!;
+export const useRadio = (props: Props, context: SetupContext<['update:modelValue', 'change']>, options: Options = {}) => {
+	const { emit } = context;
 	const group = inject<any>('vc-radio-group', {});
 	const formItem = inject<any>('vc-form-item', {});
 

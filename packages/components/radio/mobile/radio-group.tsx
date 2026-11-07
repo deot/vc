@@ -10,8 +10,9 @@ export const MRadioGroup = defineComponent({
 	name: COMPONENT_NAME,
 	props: radioGroupProps,
 	emits: ['update:modelValue', 'change'],
-	setup(props, { slots }) {
-		const { classes } = useRadioGroup();
+	setup(props, context) {
+		const { slots } = context;
+		const { classes } = useRadioGroup(props, context);
 		return () => {
 			if (props.fragment) return slots.default?.();
 			return (

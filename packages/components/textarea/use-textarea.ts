@@ -1,16 +1,33 @@
-import { useAttrs, nextTick, inject, ref, computed, watch, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue';
-import type { Ref, SetupContext } from 'vue';
+import { nextTick, inject, ref, computed, watch, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue';
+import type { SetupContext } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import { getComputedHeight } from './utils';
 import { getFitMaxLength, getFitValue } from '../input/utils';
 import { useNativeEmitter } from '../input/use-native-emitter';
 import type { Props } from './textarea-props';
 
-export default (textarea: Ref<HTMLTextAreaElement | undefined>, expose?: SetupContext['expose']) => {
-	const attrs = useAttrs();
+// 与组件声明的 emits 一致
+type Emits = [
+	'update:modelValue',
+	'input',
+	'change',
+	'focus',
+	'blur',
+	'clear',
+	'paste',
+	'keydown',
+	'keypress',
+	'keyup',
+	'enter',
+	'cancel',
+	'resize'
+];
+
+export const useTextarea = (props: Props, context: SetupContext<Emits>) => {
+	const { emit, attrs, expose } = context;
+	// 聚焦时强制刷新输入框的值（$forceUpdate）
 	const instance = getCurrentInstance()!;
-	const props = instance.props as Props;
-	const { emit } = instance;
+	const textarea = ref<HTMLTextAreaElement>();
 	const formItem = inject<any>('vc-form-item', {});
 
 	const currentValue = ref<any>(null);
@@ -198,12 +215,13 @@ export default (textarea: Ref<HTMLTextAreaElement | undefined>, expose?: SetupCo
 	});
 
 	const exposed = useNativeEmitter(textarea);
-	expose?.({
+	expose({
 		...exposed,
 		refresh
 	});
 
 	return {
+		textarea,
 		currentValue,
 		isOnComposition,
 		isFocus,

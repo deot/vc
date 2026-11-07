@@ -26,12 +26,15 @@ export const TourView = defineComponent({
 	// 断言为内置 Omit：lodash 返回的自有 Omit 类型无法写入声明文件（构建 dts 报 TS2883）
 	props: omit(tourProps, ['modelValue']) as Omit<typeof tourProps, 'modelValue'>,
 	emits: [...tourEmits, 'portal-fulfilled'],
-	setup(props, { slots, emit, expose, attrs }) {
+	setup(props, context) {
+		const { slots, expose, attrs } = context;
 		const { t } = useLocale();
 		const titleId = getUid('vc-tour-title');
-		const tour = useTour(props, emit, async () => {
-			await nextTick();
-			position.update(true);
+		const tour = useTour(props, context, {
+			locate: async () => {
+				await nextTick();
+				position.update(true);
+			}
 		});
 		// 有目标时卡片即 Popover 气泡（以锚点为触发节点，显隐由引导控制），否则居中渲染在根节点内
 		const popover = shallowRef<{ update: () => void; $el: HTMLElement }>();

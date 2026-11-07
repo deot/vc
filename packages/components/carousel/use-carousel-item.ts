@@ -2,21 +2,22 @@ import { getCurrentInstance, ref, computed, onBeforeMount, onBeforeUnmount, inje
 import type { SetupContext } from 'vue';
 import { prefixStyle } from '@deot/helper-dom';
 import { VcError } from '../vc/index';
-import { Props } from './carousel-item-props';
+import type { Props } from './carousel-item-props';
 
 const TRANSFORM = prefixStyle('transform').camel;
 
 /**
- * @param expose ~
+ * @param props ~
+ * @param context ~
  * @param options ~
  * @param options.rem gap 为 750 稿长度（移动端），位移中的 gap 由 CSS 按 --vc-rem 换算
  * @returns ~
  */
-export const useCarouselItem = (expose: SetupContext['expose'], options: { rem?: boolean } = {}) => {
+export const useCarouselItem = (props: Props, context: SetupContext, options: { rem?: boolean } = {}) => {
+	const { expose } = context;
+	// 轮播按实例登记各项，并以实例在列表中的位置作为下标
 	const instance = getCurrentInstance()!;
 	const carousel = inject('vc-carousel', {} as any);
-
-	const props = instance.props as Props;
 
 	// 位移 = translate（px）+ gaps × gap；gap 部分交给 CSS，拖动时不需要读取样式
 	const translate = ref(0);

@@ -2,15 +2,15 @@
 
 import { defineComponent } from 'vue';
 import { props as tabsPaneProps } from '../tabs-pane-props';
-import useTabsPane from '../use-tabs-pane';
+import { useTabsPane } from '../use-tabs-pane';
 
 const COMPONENT_NAME = 'vcm-tabs-pane';
 
 export const MTabsPane = defineComponent({
 	name: COMPONENT_NAME,
 	props: tabsPaneProps,
-	setup(_, { slots }) {
-		const tabsPane = useTabsPane()!;
+	setup(props, { slots }) {
+		const tabsPane = useTabsPane(props);
 		return () => {
 			return (
 				<div

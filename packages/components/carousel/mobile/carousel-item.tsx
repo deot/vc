@@ -9,8 +9,9 @@ const COMPONENT_NAME = 'vcm-carousel-item';
 export const MCarouselItem = defineComponent({
 	name: COMPONENT_NAME,
 	props: carouselItemProps,
-	setup(_, { slots, expose }) {
-		const it = useCarouselItem(expose, { rem: true });
+	setup(props, context) {
+		const { slots } = context;
+		const it = useCarouselItem(props, context, { rem: true });
 		return () => {
 			return (
 				<div

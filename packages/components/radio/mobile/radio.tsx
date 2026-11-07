@@ -12,8 +12,9 @@ export const MRadio = defineComponent({
 	name: COMPONENT_NAME,
 	props: radioProps,
 	emits: ['update:modelValue', 'change'],
-	setup(props, { slots }) {
-		const { styles, radioName, checked, classes, computedLabel, isDisabled, handleChange, handleFocus, handleBlur } = useRadio();
+	setup(props, context) {
+		const { slots } = context;
+		const { styles, radioName, checked, classes, computedLabel, isDisabled, handleChange, handleFocus, handleBlur } = useRadio(props, context);
 		return () => {
 			const label = slots.default || computedLabel.value;
 			const hasLabel = hasCustomerValue(label);
