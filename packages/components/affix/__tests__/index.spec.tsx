@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 
 import { Affix, Scroller } from '@deot/vc-components';
+import { MAffix } from '../index.m';
 import { mount } from '@vue/test-utils';
-import { nextTick, ref } from 'vue';
-import { vi } from 'vitest';
+import { defineComponent, inject, nextTick, ref } from 'vue';
+import { vi, beforeEach, afterEach } from 'vitest';
 
 const SLOT_TEXT = 'Affix content';
 
@@ -741,5 +742,190 @@ describe('index.ts', () => {
 			expect(removeSpy).toHaveBeenCalledWith('resize', expect.any(Function));
 			removeSpy.mockRestore();
 		});
+	});
+
+	it('a string offset is used as a CSS length on both, pinning reads the measured px', async () => {
+		// jsdom 不解析 CSS 变量：按 --header-height: 24px 给出测量节点的计算宽度
+		const getComputedStyle = window.getComputedStyle;
+		const restoreStyle = vi.spyOn(window, 'getComputedStyle').mockImplementation((el: Element, pseudo?: string | null) => {
+			const style = getComputedStyle(el, pseudo);
+			if (!/__measurer$/.test(el.className)) return style;
+			return new Proxy(style, {
+				get: (target, key) => {
+					const isVar = key === 'width' && (el as HTMLElement).style.width === 'var(--header-height)';
+					return isVar ? '24px' : Reflect.get(target, key);
+				}
+			});
+		});
+		const wrapper = mount(() => (
+			<div>
+				<Affix offset="var(--header-height)">{SLOT_TEXT}</Affix>
+				<MAffix fixed={false} offset="var(--header-height)">{SLOT_TEXT}</MAffix>
+			</div>
+		), { attachTo: document.body });
+		await nextTick();
+
+		const [desktop, mobile] = wrapper.findAll('.vc-affix, .vcm-affix').map(it => it.element as HTMLElement);
+		expect(mobile.style.top).toBe('var(--header-height)');
+		expect((mobile.querySelector('.vcm-affix__measurer') as HTMLElement).style.width).toBe('var(--header-height)');
+
+		const restore = mockLayout(desktop, desktop.firstElementChild as HTMLElement, { top: 30, width: 200, height: 40 });
+		await triggerScroll();
+		expect(wrapper.find('.vc-affix__fixed').exists()).toBe(false);
+
+		// 顶部 20px 已越过 24px 的吸附线
+		restore();
+		const restore2 = mockLayout(desktop, desktop.firstElementChild as HTMLElement, { top: 20, width: 200, height: 40 });
+		await triggerScroll();
+		const inner = wrapper.find('.vc-affix__fixed');
+		expect(inner.exists()).toBe(true);
+		expect((inner.element as HTMLElement).style.top).toBe('var(--header-height)');
+
+		restore2();
+		restoreStyle.mockRestore();
+		wrapper.unmount();
+	});
+});
+
+describe('index.m.ts', () => {
+	// jsdom 不做布局：测量节点的计算宽度按行内 calc(var(--vc-rem) * n) 与当前 --vc-rem 算出，记录读取次数
+	let reads = 0;
+	let rem = 0.5;
+	let spy: any;
+	beforeEach(() => {
+		reads = 0;
+		rem = 0.5;
+		const getComputedStyle = window.getComputedStyle;
+		spy = vi.spyOn(window, 'getComputedStyle').mockImplementation((el: Element, pseudo?: string | null) => {
+			const style = getComputedStyle(el, pseudo);
+			if (!el.classList.contains('vcm-affix__measurer')) return style;
+			return new Proxy(style, {
+				get: (target, key) => {
+					if (key !== 'width') return Reflect.get(target, key);
+					reads++;
+					const n = Number(/\* (-?[\d.]+)\)/.exec((el as HTMLElement).style.width)?.[1] || 0);
+					return `${n * rem}px`;
+				}
+			});
+		});
+	});
+	afterEach(() => spy.mockRestore());
+
+	const measurerOf = (wrapper: any) => wrapper.find('.vcm-affix__measurer').element as HTMLElement;
+
+	it('renders vcm-affix with the same slot scope', async () => {
+		const wrapper = mount(() => (
+			<MAffix>{{ default: ({ active }: any) => `active: ${active}` }}</MAffix>
+		), { attachTo: document.body });
+		await nextTick();
+		expect(wrapper.classes()).toContain('vcm-affix');
+		expect(wrapper.text()).toBe('active: false');
+		wrapper.unmount();
+	});
+
+	it('offset is in 750 units: CSS uses --vc-rem, pinning compares the measured px', async () => {
+		const wrapper = mount(() => (<MAffix offset={100}>{SLOT_TEXT}</MAffix>), { attachTo: document.body });
+		await nextTick();
+
+		expect(measurerOf(wrapper).style.width).toBe('calc(var(--vc-rem) * 100)');
+		const root = wrapper.find('.vcm-affix').element as HTMLElement;
+		const layout = { top: 60, width: 200, height: 40 };
+		const restore = mockLayout(root, root.firstElementChild as HTMLElement, layout);
+
+		// 100 × 0.5 = 50px：顶部还在 60px，未到吸附线
+		await triggerScroll();
+		expect(wrapper.find('.vcm-affix__fixed').exists()).toBe(false);
+
+		layout.top = 40;
+		await triggerScroll();
+		const inner = wrapper.find('.vcm-affix__fixed');
+		expect(inner.exists()).toBe(true);
+		expect((inner.element as HTMLElement).style.top).toBe('calc(var(--vc-rem) * 100)');
+
+		restore();
+		wrapper.unmount();
+	});
+
+	it('scrolling reads the cached px; a --vc-rem change (measurer resize) measures again', async () => {
+		const wrapper = mount(() => (<MAffix offset={100}>{SLOT_TEXT}</MAffix>), { attachTo: document.body });
+		await nextTick();
+
+		const root = wrapper.find('.vcm-affix').element as HTMLElement;
+		const layout = { top: 60, width: 200, height: 40 };
+		const restore = mockLayout(root, root.firstElementChild as HTMLElement, layout);
+
+		const before = reads;
+		await triggerScroll();
+		await triggerScroll();
+		expect(reads).toBe(before);
+		expect(wrapper.find('.vcm-affix__fixed').exists()).toBe(false);
+
+		// --vc-rem 0.5px → 0.64px（视口、--rem 或局部覆盖）：测量节点变宽，60px 处已越过 64px 的吸附线
+		rem = 0.64;
+		const measurer = measurerOf(wrapper);
+		observerOf(measurer)!.cb([{ target: measurer }]);
+		await nextTick();
+		expect(reads).toBeGreaterThan(before);
+		expect(wrapper.find('.vcm-affix__fixed').exists()).toBe(true);
+
+		restore();
+		wrapper.unmount();
+	});
+
+	it('placement=bottom and sticky also write the offset with --vc-rem', async () => {
+		const wrapper = mount(() => (
+			<div>
+				<MAffix fixed={false} offset={20}>{SLOT_TEXT}</MAffix>
+				<MAffix fixed={false} placement="bottom" offset={30}>{SLOT_TEXT}</MAffix>
+			</div>
+		), { attachTo: document.body });
+		await nextTick();
+		const [top, bottom] = wrapper.findAll('.vcm-affix').map(it => it.element as HTMLElement);
+		expect(top.classList.contains('is-sticky')).toBe(true);
+		expect(top.style.top).toBe('calc(var(--vc-rem) * 20)');
+		expect(bottom.style.bottom).toBe('calc(var(--vc-rem) * 30)');
+		wrapper.unmount();
+	});
+
+	it('provides the px offset to children and follows offset changes', async () => {
+		let affix: any;
+		const Child = defineComponent({
+			setup() {
+				affix = inject('vc-affix');
+				return () => null;
+			}
+		});
+		const offset = ref(100);
+		const wrapper = mount(() => (<MAffix offset={offset.value}><Child /></MAffix>), { attachTo: document.body });
+		await nextTick();
+		expect(affix.getOffset()).toBe(50);
+
+		offset.value = 40;
+		await nextTick();
+		expect(affix.getOffset()).toBe(20);
+		wrapper.unmount();
+	});
+
+	it('Affix measures its px offset the same way, a negative number keeps its sign', async () => {
+		let affix: any;
+		const Child = defineComponent({
+			setup() {
+				affix = inject('vc-affix');
+				return () => null;
+			}
+		});
+		const offset = ref<number | string>(30);
+		const wrapper = mount(() => (<Affix offset={offset.value}><Child /></Affix>), { attachTo: document.body });
+		await nextTick();
+		const measurer = wrapper.find('.vc-affix__measurer').element as HTMLElement;
+		expect(measurer.style.width).toBe('30px');
+		expect(affix.getOffset()).toBe(30);
+
+		// 宽度不能为负：测量节点取绝对值，读出后带上符号
+		offset.value = -10;
+		await nextTick();
+		expect(measurer.style.width).toBe('10px');
+		expect(affix.getOffset()).toBe(-10);
+		wrapper.unmount();
 	});
 });

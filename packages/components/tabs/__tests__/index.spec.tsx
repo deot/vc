@@ -1066,6 +1066,7 @@ describe('index.ts', () => {
 
 		const fakeAffix = {
 			props: { placement: 'bottom', offset: 50 },
+			getOffset: () => 50,
 			onScroll: () => {},
 			offScroll: () => {}
 		};
@@ -1138,6 +1139,7 @@ describe('index.ts', () => {
 		const listeners = new Set<() => void>();
 		const fakeAffix = {
 			props: { placement: 'top', offset: 0 },
+			getOffset: () => 0,
 			onScroll: (cb: () => void) => { listeners.add(cb); },
 			offScroll: (cb: () => void) => { listeners.delete(cb); }
 		};
