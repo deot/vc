@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, withModifiers } from 'vue';
+import { defineComponent, withModifiers } from 'vue';
 import { useDrag } from '@deot/vc-hooks';
 import { useCarousel } from '../use-carousel';
 import { CustomerProp } from '../../customer/customer-prop';
@@ -23,10 +23,10 @@ export const MCarousel = defineComponent({
 		}
 	},
 	emits: ['change'],
-	setup(props, { slots, expose }) {
-		const wrapper = ref<HTMLElement | null>(null);
-		const content = ref<HTMLElement | null>(null);
-		const carousel = useCarousel(wrapper, content, expose);
+	setup(props, context) {
+		const { slots } = context;
+		const carousel = useCarousel(props, context);
+		const { wrapper, content } = carousel;
 
 		let scrollStatus = 0;
 

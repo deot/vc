@@ -27,7 +27,8 @@ export const MUploadPicker = defineComponent({
 		'change',
 		'remove-before'
 	],
-	setup(props, { slots, expose }) {
+	setup(props, context) {
+		const { slots } = context;
 		const itemMap = {
 			image: MImageItem,
 			video: MVideoItem,
@@ -39,7 +40,7 @@ export const MUploadPicker = defineComponent({
 				.map(type => ({ type, item: itemMap[type] }))
 				.filter(picker => !!picker.item);
 		});
-		const base = usePicker(expose);
+		const base = usePicker(props, context);
 
 		return () => (
 			<div class="vcm-upload-picker">

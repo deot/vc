@@ -844,7 +844,7 @@ describe('Tour', () => {
 		const root = mount(defineComponent({
 			props: tourProps,
 			setup(props) {
-				controller = useTour(props, emit, () => new Promise<void>(resolve => release = resolve));
+				controller = useTour(props, { emit } as any, { locate: () => new Promise<void>(resolve => release = resolve) });
 				return () => null;
 			}
 		}), { props: { modelValue: true, duration: 60, steps: [{}] } });

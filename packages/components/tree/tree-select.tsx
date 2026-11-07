@@ -40,13 +40,14 @@ export const TreeSelect = defineComponent({
 	name: COMPONENT_NAME,
 	props: treeSelectProps,
 	emits: ['ready', 'close', 'visible-change', 'clear', 'change', 'update:modelValue'],
-	setup(props, { expose }) {
+	setup(props, context) {
+		const { expose } = context;
 		const { t } = useLocale();
 		const treeSelectId = ref(getUid('tree-select'));
 
 		// 弹层内容（树 / 级联列），方向键与回车交给它处理
 		const content = ref<any>();
-		const select = useSelect('tree-select', { navigator: () => content.value });
+		const select = useSelect(props, context, { name: 'tree-select', navigator: () => content.value });
 		// 级联列的展开方向：弹层挂载时判断
 		const direction = useColumnDirection({
 			getDirection: () => (props.cascader ? props.expandDirection : 'right'),
@@ -55,7 +56,7 @@ export const TreeSelect = defineComponent({
 			getDepth: () => getTreeDepth(props.data as TreeData[])
 		});
 		const { its, isActive, searchValue, searchRegex, searchMode, isRemote, close, toggle } = select;
-		const { currentValue, multiple, sync: syncValue, handleClear } = useSelectValue(select);
+		const { currentValue, multiple, sync: syncValue, handleClear } = useSelectValue(props, context, { select });
 
 		// 当前数据中每个值对应的节点；只记父级，路径在用到时（已选值）再沿父级取
 		const nodes = computed(() => {

@@ -1,8 +1,9 @@
 import { getCurrentInstance, computed, watch, ref, inject, onMounted, onUnmounted, onBeforeUnmount, onBeforeMount } from 'vue';
+import type { Props } from './tabs-pane-props';
 
-export default () => {
+export const useTabsPane = (props: Props) => {
+	// 标签页按实例登记面板，卸载判断也需要实例
 	const instance = getCurrentInstance()!;
-	const { props } = instance;
 
 	const currentValue = ref<any>(void 0);
 	const isLoaded = ref(false);

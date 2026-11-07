@@ -17,15 +17,15 @@ export const Carousel = defineComponent({
 	name: COMPONENT_NAME,
 	props: carouselProps,
 	emits: ['change'],
-	setup(props, { slots, expose }) {
+	setup(props, context) {
+		const { slots } = context;
 		const isHover = ref(false);
-		const wrapper = ref<HTMLElement | null>(null);
-		const content = ref<HTMLElement | null>(null);
 		const stepperDisplay = computed(() => {
 			return props.stepper && !props.vertical;
 		});
 
-		const carousel = useCarousel(wrapper, content, expose);
+		const carousel = useCarousel(props, context);
+		const { wrapper, content } = carousel;
 		const drag = useDrag({
 			start: carousel.handleStart,
 			move: carousel.handleMove,

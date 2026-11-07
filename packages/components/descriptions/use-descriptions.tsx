@@ -1,7 +1,7 @@
 /** @jsxImportSource vue */
 
 import { computed, ref, shallowRef, getCurrentInstance, onBeforeUnmount } from 'vue';
-import type { VNode } from 'vue';
+import type { VNode, SetupContext } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import { Customer } from '../customer';
 import { hasCustomerValue } from '../customer/utils';
@@ -29,14 +29,16 @@ interface LaidItem {
 
 /**
  * Descriptions与MDescriptions共用；两者只有复制提示不同（Clipboard / MClipboard）
+ * @param props ~
+ * @param context ~
+ * @param context.slots ~
  * @param options ~
  * @param options.Clipboard copy类型使用的复制组件
  * @returns render
  */
-export const useDescriptions = (options: { Clipboard: typeof Clipboard }) => {
+export const useDescriptions = (props: Props, { slots }: SetupContext, options: { Clipboard: typeof Clipboard }) => {
+	// 自定义渲染的上下文需要组件实例
 	const instance = getCurrentInstance()!;
-	const props = instance.props as Props;
-	const { slots } = instance;
 	const current = ref<HTMLElement>();
 	const responsive = useResponsive(current);
 	const popover = useHoverPopover();

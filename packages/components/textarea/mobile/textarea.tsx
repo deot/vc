@@ -1,7 +1,7 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref } from 'vue';
-import useTextarea from '../use-textarea';
+import { defineComponent } from 'vue';
+import { useTextarea } from '../use-textarea';
 import { props as textareaProps } from '../textarea-props';
 
 const COMPONENT_NAME = 'vcm-textarea';
@@ -29,9 +29,9 @@ export const MTextarea = defineComponent({
 		'cancel',
 		'resize'
 	],
-	setup(props, { expose }) {
-		const textarea = ref<HTMLTextAreaElement>();
+	setup(props, context) {
 		const {
+			textarea,
 			currentValue,
 			classes,
 			contentStyle,
@@ -39,7 +39,7 @@ export const MTextarea = defineComponent({
 			binds,
 			calcTextareaStyle,
 			currentMaxlength
-		} = useTextarea(textarea, expose);
+		} = useTextarea(props, context);
 		return () => {
 			return (
 				<div class={[classes.value, 'vcm-textarea']}>

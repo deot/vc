@@ -1,11 +1,10 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref } from 'vue';
+import { defineComponent } from 'vue';
 import { props as inputNumberProps } from '../input-number-props';
 
 import { MInput } from './input';
 import { useInputNumber } from '../use-input-number';
-import { useNativeEmitter } from '../use-native-emitter';
 
 const COMPONENT_NAME = 'vcm-input-number';
 
@@ -13,11 +12,9 @@ export const MInputNumber = defineComponent({
 	name: COMPONENT_NAME,
 	props: inputNumberProps,
 	inheritAttrs: false,
-	setup(props, { slots, expose, attrs }) {
-		const input = ref<any>();
-		useNativeEmitter(input, expose);
-
-		const { displayValue, listeners, plusDisabled, minusDisabled, handleStepper } = useInputNumber();
+	setup(props, context) {
+		const { slots, attrs } = context;
+		const { input, displayValue, listeners, plusDisabled, minusDisabled, handleStepper } = useInputNumber(props, context);
 
 		return () => {
 			return (

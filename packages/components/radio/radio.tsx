@@ -1,8 +1,9 @@
 /** @jsxImportSource vue */
 
 import { defineComponent } from 'vue';
-import type { Slots } from 'vue';
+import type { SetupContext } from 'vue';
 import { props as radioProps } from './radio-props';
+import type { Props } from './radio-props';
 import { useRadio } from './use-radio';
 import { Customer } from '../customer';
 import { hasCustomerValue } from '../customer/utils';
@@ -12,12 +13,30 @@ const COMPONENT_NAME = 'vc-radio';
 
 /**
  * Radio 与 RadioButton 共用的渲染
- * @param slots ~
- * @param variant 固定的外观，不传时随分组的type
+ * @param props ~
+ * @param context ~
+ * @param options ~
+ * @param options.variant 固定的外观，不传时随分组的type
  * @returns 渲染函数
  */
-export const useRadioRender = (slots: Slots, variant?: RadioGroupType) => {
-	const { styles, radioName, checked, classes, computedLabel, isDisabled, isPlain, handleChange, handleFocus, handleBlur } = useRadio({ variant });
+export const useRadioRender = (
+	props: Props,
+	context: SetupContext<['update:modelValue', 'change']>,
+	options: { variant?: RadioGroupType } = {}
+) => {
+	const { slots } = context;
+	const {
+		styles,
+		radioName,
+		checked,
+		classes,
+		computedLabel,
+		isDisabled,
+		isPlain,
+		handleChange,
+		handleFocus,
+		handleBlur
+	} = useRadio(props, context, options);
 	return () => {
 		const label = slots.default || computedLabel.value;
 		const input = (
@@ -60,7 +79,7 @@ export const Radio = defineComponent({
 	name: COMPONENT_NAME,
 	props: radioProps,
 	emits: ['update:modelValue', 'change'],
-	setup(_, { slots }) {
-		return useRadioRender(slots);
+	setup(props, context) {
+		return useRadioRender(props, context);
 	}
 });

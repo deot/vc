@@ -12,8 +12,9 @@ export const Checkbox = defineComponent({
 	name: COMPONENT_NAME,
 	props: checkboxProps,
 	emits: ['update:modelValue', 'change'],
-	setup(props, { slots }) {
-		const { checked, classes, computedLabel, handleChange, handleFocus, handleBlur } = useCheckbox();
+	setup(props, context) {
+		const { slots } = context;
+		const { checked, classes, computedLabel, handleChange, handleFocus, handleBlur } = useCheckbox(props, context);
 		return () => {
 			const label = slots.default || computedLabel.value;
 			const hasLabel = hasCustomerValue(label);

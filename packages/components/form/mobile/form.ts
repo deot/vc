@@ -10,8 +10,9 @@ const COMPONENT_NAME = 'vcm-form';
 export const MForm = defineComponent({
 	name: COMPONENT_NAME,
 	props: mFormProps,
-	setup(props, { slots, expose }) {
-		useForm(expose, {
+	setup(props, context) {
+		const { slots } = context;
+		useForm(props, context, {
 			throwToast(message: string) {
 				props.showToast && MToast.info(message);
 			}

@@ -1,11 +1,12 @@
 import { inject, getCurrentInstance, ref, watch, computed } from 'vue';
 import type { SetupContext } from 'vue';
+import type { Props } from './switch-props';
 
-export const useSwitch = (expose: SetupContext['expose']) => {
+export const useSwitch = (props: Props, context: SetupContext<['update:modelValue', 'change', 'click']>) => {
+	const { emit, expose } = context;
+	// 是否传了 onClick：声明在 emits 中的监听不在 attrs 里，只能从 vnode 上读
 	const instance = getCurrentInstance()!;
 	const formItem = inject<any>('vc-form-item', {});
-
-	const { props, emit } = instance;
 
 	const currentValue = ref<any>('');
 	const isLoading = ref(false);

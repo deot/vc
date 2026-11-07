@@ -1,8 +1,10 @@
-import { inject, getCurrentInstance, ref, watch, computed } from 'vue';
+import { inject, ref, watch, computed } from 'vue';
+import type { SetupContext } from 'vue';
+import type { Props } from './checkbox-props';
 import type { CustomerValue } from '../customer/types';
 
-export const useCheckbox = () => {
-	const { props, emit } = getCurrentInstance()!;
+export const useCheckbox = (props: Props, context: SetupContext<['update:modelValue', 'change']>) => {
+	const { emit } = context;
 	const group = inject<any>('vc-checkbox-group', {});
 	const formItem = inject<any>('vc-form-item', {});
 

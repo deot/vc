@@ -11,7 +11,8 @@ export const SortList = defineComponent({
 	name: COMPONENT_NAME,
 	props: sortListProps,
 	emits: ['update:modelValue', 'change'],
-	setup(props, { emit, expose, slots }) {
+	setup(props, context) {
+		const { expose, slots } = context;
 		const {
 			currentValue,
 			dragging,
@@ -22,7 +23,7 @@ export const SortList = defineComponent({
 			handleDragEnter,
 			handleDragOver,
 			handleDragEnd
-		} = useSortList(props, emit);
+		} = useSortList(props, context);
 
 		expose({
 			getSortList

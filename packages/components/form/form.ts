@@ -9,8 +9,9 @@ const COMPONENT_NAME = 'vc-form';
 export const Form = defineComponent({
 	name: COMPONENT_NAME,
 	props: formProps,
-	setup(props, { slots, expose }) {
-		useForm(expose);
+	setup(props, context) {
+		const { slots } = context;
+		useForm(props, context);
 		return () => {
 			return h(
 				props.tag,

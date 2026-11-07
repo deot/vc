@@ -30,13 +30,14 @@ export const Select = defineComponent({
 	name: COMPONENT_NAME,
 	props: selectProps,
 	emits: ['ready', 'close', 'visible-change', 'clear', 'change', 'update:modelValue'],
-	setup(props, { slots, expose }) {
+	setup(props, context) {
+		const { slots, expose } = context;
 		const { t } = useLocale();
 		const selectId = ref(getUid('select'));
 
-		const select = useSelect('select', { navigator: () => navigate });
+		const select = useSelect(props, context, { name: 'select', navigator: () => navigate });
 		const { its, isActive, searchRegex, searchMode, isSearching, isRemote, close, toggle } = select;
-		const { currentValue, multiple, sync: syncValue, handleClear } = useSelectValue(select);
+		const { currentValue, multiple, sync: syncValue, handleClear } = useSelectValue(props, context, { select });
 
 		const source = computed(() => {
 			return flattenData(props.data, { parent: true, cascader: true });

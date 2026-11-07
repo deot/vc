@@ -1,4 +1,4 @@
-import { provide, getCurrentInstance, shallowRef, computed } from 'vue';
+import { provide, shallowRef, computed } from 'vue';
 import type { VNode, SetupContext, ComponentInternalInstance } from 'vue';
 import { getPropByPath } from '@deot/helper-utils';
 import { VcError } from '../vc/index';
@@ -22,9 +22,8 @@ interface FormResetOptions extends FormFieldsOptions {
 	original?: object;
 }
 
-export const useForm = (expose: SetupContext['expose'], options: FormOptions = {}) => {
-	const instance = getCurrentInstance()!;
-	const props = instance.props as Props;
+export const useForm = (props: Props, context: SetupContext, options: FormOptions = {}) => {
+	const { expose } = context;
 
 	const fields: ComponentInternalInstance[] = [];
 

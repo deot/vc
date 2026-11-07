@@ -27,16 +27,17 @@ const toRules = (rules?: FormRule | FormRule[]) => {
 };
 
 /**
- * @param expose ~
+ * @param props ~
+ * @param context ~
  * @param options ~
  * @param options.rem 数字长度（labelWidth 等）为 750 稿（移动端）；自动宽度是量取的 px，不受影响
  * @returns ~
  */
-export const useFormItem = (expose: SetupContext['expose'], options: { rem?: boolean } = {}) => {
+export const useFormItem = (props: Props, context: SetupContext, options: { rem?: boolean } = {}) => {
 	const form = inject<FormProvide>('vc-form');
+	const { slots, expose } = context;
+	// 表单按实例登记字段，标签宽度按 uid 汇总，滚动定位取 vnode.el
 	const instance = getCurrentInstance()!;
-	const props = instance.props as Props;
-	const { slots } = instance;
 
 	if (!form?.props) {
 		throw new VcError('form-item', 'form-item需要在form内使用');

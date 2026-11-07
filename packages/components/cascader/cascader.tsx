@@ -27,12 +27,13 @@ export const Cascader = defineComponent({
 	inheritAttrs: false,
 	props: cascaderProps,
 	emits: ['update:modelValue', 'visible-change', 'ready', 'change', 'clear', 'close'],
-	setup(props, { emit, slots }) {
+	setup(props, context) {
+		const { emit, slots } = context;
 		const { t } = useLocale();
 		const formItem = inject('vc-form-item', {} as FormItemProvide);
 
 		// loadData 用于加载子节点，搜索只在已有数据内进行
-		const select = useSelect('cascader', { remote: false, navigator: () => navigator });
+		const select = useSelect(props, context, { name: 'cascader', remote: false, navigator: () => navigator });
 		const { its, isActive, searchRegex, searchMode, isSearching } = select;
 
 		const currentValue = ref<TreeValue[]>([]);

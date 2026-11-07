@@ -1,8 +1,10 @@
-import { provide, inject, getCurrentInstance, ref, watch, computed } from 'vue';
+import { provide, inject, ref, watch, computed } from 'vue';
+import type { SetupContext } from 'vue';
+import type { Props } from './radio-group-props';
 import { isEqualWith } from 'lodash-es';
 
-export const useRadioGroup = () => {
-	const { props, emit } = getCurrentInstance()!;
+export const useRadioGroup = (props: Props, context: SetupContext<['update:modelValue', 'change']>) => {
+	const { emit } = context;
 	const formItem = inject<any>('vc-form-item', {});
 
 	const currentValue = ref<any>('');

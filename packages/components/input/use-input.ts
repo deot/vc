@@ -1,12 +1,31 @@
 import { ref, inject, watch, computed, getCurrentInstance, nextTick } from 'vue';
-import type { Ref } from 'vue';
+import type { SetupContext } from 'vue';
 import type { Props } from './input-props';
 import { getFitValue, getFitMaxLength } from './utils';
+import { useNativeEmitter } from './use-native-emitter';
 
-export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
+// 与组件声明的 emits 一致
+type Emits = [
+	'update:modelValue',
+	'input',
+	'change',
+	'focus',
+	'blur',
+	'clear',
+	'paste',
+	'keydown',
+	'keypress',
+	'keyup',
+	'enter',
+	'tip'
+];
+
+export const useInput = (props: Props, context: SetupContext<Emits>) => {
+	const { emit, expose } = context;
+	// 聚焦时强制刷新输入框的值（$forceUpdate）
 	const instance = getCurrentInstance()!;
-	const { emit } = instance;
-	const props = instance.props as Props;
+	const input = ref<HTMLInputElement>();
+	useNativeEmitter(input, expose);
 
 	const currentValue = ref<any>(typeof props.modelValue === 'undefined' ? '' : props.modelValue);
 	const isFocus = ref(false);
@@ -183,6 +202,7 @@ export const useInput = (input: Ref<HTMLInputElement | undefined>) => {
 	};
 
 	return {
+		input,
 		currentValue,
 		currentMaxlength,
 		isFocus,

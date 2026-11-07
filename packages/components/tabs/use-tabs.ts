@@ -1,12 +1,25 @@
 import { getCurrentInstance, computed, watch, ref, provide, onMounted, onBeforeUnmount, nextTick, inject } from 'vue';
+import type { SetupContext } from 'vue';
 import { scrollIntoView } from '@deot/helper-dom';
+import type { Props as TabsProps } from './tabs-props';
+import type { Props as MTabsProps } from './mobile/tabs-props';
+
+// Tabs 与 MTabs 共用：只列出这里读取的属性；type/size/placement 只在 Tabs，theme 只在 MTabs
+type Props = Pick<TabsProps, 'animated' | 'modelValue'>
+	& Partial<Pick<TabsProps, 'type' | 'size' | 'placement'>>
+	& Partial<Pick<MTabsProps, 'theme'>>;
 import { getScroller, getViewportRect } from '../scroller/utils';
 
-export default (options: any = {}) => {
+export const useTabs = (
+	props: Props,
+	context: SetupContext<['update:modelValue', 'change', 'click', 'tab-remove']>,
+	options: any = {}
+) => {
+	const { emit } = context;
 	// 目前只支持外置（<Affix><Tabs></Affix>）,后续集成<Tabs affixable affixOptions="{}" />(但这个与锚点无关)
 	const affix = inject('vc-affix', null) as any;
+	// 卸载判断与锚点滚动需要实例（isUnmounted、vnode.el）
 	const instance = getCurrentInstance()!;
-	const { props, emit } = instance;
 
 	// tabs-children数据
 	const list = ref<any[]>([]);

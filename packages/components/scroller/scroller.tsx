@@ -35,9 +35,10 @@ export const Scroller = defineComponent({
 	name: COMPONENT_NAME,
 	props: scrollerProps,
 	emits: ['scroll'],
-	setup(props, { slots, expose }) {
+	setup(props, context) {
+		const { slots } = context;
 		const Content = props.tag;
-		const scroller = useScroller(expose);
+		const scroller = useScroller(props, context);
 		const {
 			bar,
 			wrapper,

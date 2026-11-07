@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, computed, ref, withModifiers } from 'vue';
+import { defineComponent, computed, withModifiers } from 'vue';
 import type { PropType } from 'vue';
 import { useAttrs } from '@deot/vc-hooks';
 
@@ -9,7 +9,6 @@ import { props as inputProps } from './input-props';
 import { Icon } from '../icon/index';
 import { TransitionFade } from '../transition/index';
 import { useInput } from './use-input';
-import { useNativeEmitter } from './use-native-emitter';
 import { getBytesSize } from './utils';
 
 const COMPONENT_NAME = 'vc-input';
@@ -39,19 +38,18 @@ export const Input = defineComponent({
 		'enter',
 		'tip'
 	],
-	setup(props, { slots, expose }) {
-		const input = ref<HTMLInputElement>();
-
-		useNativeEmitter(input, expose);
+	setup(props, context) {
+		const { slots } = context;
 		const it = useAttrs({ merge: false });
 
 		const {
+			input,
 			currentValue,
 			currentMaxlength,
 			classes,
 			listeners,
 			handleClear
-		} = useInput(input);
+		} = useInput(props, context);
 
 		const showIndicatorInline = computed(() => {
 			return typeof props.indicator === 'object' && props.indicator.inline;

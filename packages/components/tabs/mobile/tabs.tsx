@@ -7,7 +7,7 @@ import { MIcon } from '../../icon/index.m';
 import { MAffix } from '../../affix/index.m';
 import { CustomerProp } from '../../customer/customer-prop';
 import { Scroller } from '../../scroller';
-import useTabs from '../use-tabs';
+import { useTabs } from '../use-tabs';
 import { useTabsScroll } from '../use-tabs-scroll';
 
 const COMPONENT_NAME = 'vcm-tabs';
@@ -17,7 +17,8 @@ export const MTabs = defineComponent({
 	name: COMPONENT_NAME,
 	props: tabsProps,
 	emits: ['update:modelValue', 'change', 'click', 'tab-remove'],
-	setup(props, { slots }) {
+	setup(props, context) {
+		const { slots } = context;
 		const content = ref<any>(null);
 		const scroller = ref<any>(null);
 
@@ -60,7 +61,7 @@ export const MTabs = defineComponent({
 			align: 'center'
 		});
 
-		tabs = useTabs({
+		tabs = useTabs(props, context, {
 			content,
 			refreshAfloat,
 			scrollToActive: () => scroll.scrollToActive()

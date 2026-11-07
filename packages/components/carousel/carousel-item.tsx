@@ -9,8 +9,9 @@ const COMPONENT_NAME = 'vc-carousel-item';
 export const CarouselItem = defineComponent({
 	name: COMPONENT_NAME,
 	props: carouselItemProps,
-	setup(_, { slots, expose }) {
-		const it = useCarouselItem(expose);
+	setup(props, context) {
+		const { slots } = context;
+		const it = useCarouselItem(props, context);
 		return () => {
 			return (
 				<div

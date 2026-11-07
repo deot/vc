@@ -12,8 +12,9 @@ export const Switch = defineComponent({
 	props: switchProps,
 	// click -> onClick要被拦截，此处不能放置
 	emits: ['update:modelValue', 'change', 'click'],
-	setup(props, { slots, expose }) {
-		const { checked, classes, currentValue, isLoading, handleToggle } = useSwitch(expose);
+	setup(props, context) {
+		const { slots } = context;
+		const { checked, classes, currentValue, isLoading, handleToggle } = useSwitch(props, context);
 
 		const size = computed(() => {
 			return props.height - props.borderWidth * 4;

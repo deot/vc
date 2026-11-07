@@ -12,8 +12,9 @@ export const MSwitch = defineComponent({
 	props: switchProps,
 	// click -> onClick要被拦截，此处不能放置
 	emits: ['update:modelValue', 'change', 'click'],
-	setup(props, { slots, expose }) {
-		const { classes, currentValue, isLoading, handleToggle } = useSwitch(expose);
+	setup(props, context) {
+		const { slots } = context;
+		const { classes, currentValue, isLoading, handleToggle } = useSwitch(props, context);
 		return () => {
 			return (
 				<span

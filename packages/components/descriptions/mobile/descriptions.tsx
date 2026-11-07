@@ -11,7 +11,7 @@ const COMPONENT_NAME = 'vcm-descriptions';
 export const MDescriptions = defineComponent({
 	name: COMPONENT_NAME,
 	props: descriptionsProps,
-	setup() {
-		return useDescriptions({ Clipboard: MClipboard });
+	setup(props, context) {
+		return useDescriptions(props, context, { Clipboard: MClipboard });
 	}
 });

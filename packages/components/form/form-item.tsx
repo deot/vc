@@ -11,8 +11,9 @@ const COMPONENT_NAME = 'vc-form-item';
 export const FormItem = defineComponent({
 	name: COMPONENT_NAME,
 	props: formItemProps,
-	setup(props, { slots, expose }) {
-		const it = useFormItem(expose);
+	setup(props, context) {
+		const { slots } = context;
+		const it = useFormItem(props, context);
 
 		const {
 			isStyleless,

@@ -1,4 +1,5 @@
 import { computed, getCurrentInstance, inject, ref, watch } from 'vue';
+import type { SetupContext } from 'vue';
 import { debounce, isEqualWith } from 'lodash-es';
 import { useAttrs, useKeyboard } from '@deot/vc-hooks';
 import { VcError } from '../../vc/index';
@@ -8,7 +9,22 @@ import type { Navigator } from './use-navigate';
 
 type SearchMode = '' | 'inline' | 'popover';
 
+// Select / TreeSelect / Cascader 声明的 emits
+type Emits = ['ready', 'close', 'visible-change', 'clear', 'change', 'update:modelValue'];
+
+// 三者共有、这里读取的属性
+type SelectProps = Pick<
+	Props,
+	'arrow' | 'clearSearchOnSelect' | 'data' | 'disabled' | 'id' | 'loadData' | 'maxTagLines' | 'maxTags'
+	| 'placement' | 'portal' | 'portalClass' | 'searchPlaceholder' | 'searchable' | 'tag' | 'trigger'
+> & {
+	// TreeSelect 的默认值为 undefined（按是否级联决定）
+	autoWidth?: boolean;
+};
+
 interface Options {
+	// 组件名（不含 vc- 前缀），用于类名与报错
+	name: string;
 	// 搜索词变化时是否调用 loadData（Cascader 的 loadData 用于加载子节点，不参与搜索）
 	remote?: boolean;
 	// 弹层打开时响应方向键与回车的对象；内容在弹层内，随打开才存在，按键时再取
@@ -17,15 +33,16 @@ interface Options {
 
 /**
  * Select / TreeSelect / Cascader 共用：弹层开关、搜索词与远程搜索、键盘，以及 Popover / SelectTrigger / SelectSearch 的公共绑定
- * @param name 组件名（不含 vc- 前缀），用于类名与报错
+ * @param props ~
+ * @param context ~
  * @param options ~
  * @returns ~
  */
-export const useSelect = (name: string, options: Options = {}) => {
-	const { remote = true, navigator } = options;
+export const useSelect = (props: SelectProps, context: SetupContext<Emits>, options: Options) => {
+	const { name, remote = true, navigator } = options;
+	const { emit } = context;
+	// loadData 的第二个参数是组件实例
 	const instance = getCurrentInstance()!;
-	const props = instance.props as Props;
-	const { emit } = instance;
 	const its = useAttrs({ merge: false });
 
 	// 触发器（SelectTrigger）
@@ -266,13 +283,19 @@ export const useSelectedCache = <T>(isEnabled: () => boolean) => {
 
 /**
  * Select / TreeSelect 共用：选中值与 v-model 的转换、同步、清空
- * @param select useSelect 的返回值
+ * @param props ~
+ * @param context ~
+ * @param options ~
+ * @param options.select useSelect 的返回值
  * @returns ~
  */
-export const useSelectValue = (select: ReturnType<typeof useSelect>) => {
-	const instance = getCurrentInstance()!;
-	const props = instance.props as Props;
-	const { emit } = instance;
+export const useSelectValue = (
+	props: Pick<Props, 'max' | 'modelValue' | 'nullValue' | 'numerable' | 'separator'>,
+	context: SetupContext<Emits>,
+	options: { select: ReturnType<typeof useSelect> }
+) => {
+	const { select } = options;
+	const { emit } = context;
 	const formItem = inject<any>('vc-form-item', {});
 
 	const currentValue = ref<Array<string | number>>([]);

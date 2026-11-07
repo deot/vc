@@ -10,7 +10,7 @@ const COMPONENT_NAME = 'vc-descriptions';
 export const Descriptions = defineComponent({
 	name: COMPONENT_NAME,
 	props: descriptionsProps,
-	setup() {
-		return useDescriptions({ Clipboard });
+	setup(props, context) {
+		return useDescriptions(props, context, { Clipboard });
 	}
 });

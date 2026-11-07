@@ -24,7 +24,8 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 		'visible-change',
 		'ok'
 	],
-	setup(props, { slots, emit }) {
+	setup(props, context) {
+		const { slots, emit } = context;
 		const { t } = useLocale();
 		const { icon, panel, panelOptions, scrollable = true, isDisabled } = usePicker();
 		const {
@@ -46,7 +47,7 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 			handleClear,
 			handleOK,
 			handleClose
-		} = useBase({ isDisabled });
+		} = useBase(props, context, { isDisabled });
 
 		const renderAppend = () => {
 			return (

@@ -9,7 +9,7 @@ export const RadioButton = defineComponent({
 	name: COMPONENT_NAME,
 	props: radioProps,
 	emits: ['update:modelValue', 'change'],
-	setup(_, { slots }) {
-		return useRadioRender(slots, 'button');
+	setup(props, context) {
+		return useRadioRender(props, context, { variant: 'button' });
 	}
 });
