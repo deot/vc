@@ -5,7 +5,7 @@ export const props = {
 		type: Array,
 		default: () => ([])
 	},
-	fragment: {
+	styleless: {
 		type: Boolean,
 		default: false
 	}

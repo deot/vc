@@ -160,14 +160,14 @@ const status = ref('disabled');
 
 ### 移动端
 
-`MCheckbox` 与 `MCheckboxGroup` 使用相同的数据和事件约定，选中色与桌面端一致，使用主色参数。`fragment` 可省略组合外层容器，便于自定义布局。
+`MCheckbox` 与 `MCheckboxGroup` 使用相同的数据和事件约定，选中色与桌面端一致，使用主色参数。`styleless` 可省略组合外层容器，便于自定义布局。
 
 :::playground
 <!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
 ```vue
 <template>
 	<div class="checkbox-demo">
-		<MCheckboxGroup v-model="selectedOptions" fragment>
+		<MCheckboxGroup v-model="selectedOptions" styleless>
 			<MCheckbox value="option-a" label="选项 A" />
 			<MCheckbox value="option-b" label="选项 B" />
 			<MCheckbox value="option-c" label="选项 C（不可选）" disabled />
@@ -252,7 +252,7 @@ const selectedOptions = ref(['option-a']);
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | modelValue | 选中值数组，建议元素为 string、number 或 boolean | `unknown[]` | - | `[]` |
-| fragment | 只渲染默认插槽，省略外层 div 及其样式 | `boolean` | - | `false` |
+| styleless | 只渲染默认插槽，省略外层 div 及其样式 | `boolean` | - | `false` |
 
 ### CheckboxGroup / MCheckboxGroup 事件
 

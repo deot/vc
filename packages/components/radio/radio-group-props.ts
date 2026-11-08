@@ -32,7 +32,7 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
-	fragment: {
+	styleless: {
 		type: Boolean,
 		default: false
 	}

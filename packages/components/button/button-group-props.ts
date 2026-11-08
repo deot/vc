@@ -13,7 +13,7 @@ export const props = {
 		type: String as PropType<'mini' | 'small' | 'medium' | 'large'>,
 		default: 'medium'
 	},
-	fragment: {
+	styleless: {
 		type: Boolean,
 		default: false
 	}

@@ -379,7 +379,7 @@ const selectedOption = ref('option-a');
 | vertical | 垂直排列，胶囊、文字样式下不显示分隔线；卡片模式下无效 | `boolean` | - | `false` |
 | disabled | 禁用组内所有选项 | `boolean` | - | `false` |
 | name | 组内原生 input 共享的 name | `string` | - | 自动生成的唯一名称 |
-| fragment | 不渲染分组容器，保留选择联动；各项的分组样式仍生效，容器上的排列与胶囊底色不生效 | `boolean` | - | `false` |
+| styleless | 不渲染分组容器，保留选择联动；各项的分组样式仍生效，容器上的排列与胶囊底色不生效 | `boolean` | - | `false` |
 
 组内 value/label 应使用与分组 modelValue 类型一致的字符串或数字。
 

@@ -14,7 +14,7 @@ export const RadioGroup = defineComponent({
 		const { slots } = context;
 		const { classes } = useRadioGroup(props, context);
 		return () => {
-			if (props.fragment) return slots.default?.();
+			if (props.styleless) return slots.default?.();
 			return (
 				<div
 					class={[classes.value, 'vc-radio-group']}

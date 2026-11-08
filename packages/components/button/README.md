@@ -328,7 +328,7 @@ import { MButton } from '@deot/vc';
 | vertical | 是否纵向排列按钮 | `boolean` | - | `false` |
 | circle | 是否统一使用胶囊形圆角 | `boolean` | - | `false` |
 | size | 统一设置组内按钮尺寸，优先于子按钮的 size；首尾外侧圆角与同尺寸普通按钮一致，连接处保持直角 | `'mini' \| 'small' \| 'medium' \| 'large'` | `mini`、`small`、`medium`、`large` | `medium` |
-| fragment | 是否直接渲染默认插槽而不生成分组容器；开启后排列、首尾圆角和分隔边框样式不生效，size、circle 仍传入子按钮 | `boolean` | - | `false` |
+| styleless | 是否直接渲染默认插槽而不生成分组容器；开启后排列、首尾圆角和分隔边框样式不生效，size、circle 仍传入子按钮 | `boolean` | - | `false` |
 
 ### ButtonGroup 插槽
 

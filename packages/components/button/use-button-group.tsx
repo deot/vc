@@ -25,7 +25,7 @@ export const useButtonGroup = (props: Props, { slots }: SetupContext, options: {
 	}));
 
 	return () => {
-		return props.fragment
+		return props.styleless
 			? slots.default?.()
 			: (
 					<div class={classes.value}>

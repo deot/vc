@@ -14,7 +14,7 @@ export const MCheckboxGroup = defineComponent({
 		const { slots } = context;
 		useCheckboxGroup(props, context);
 		return () => {
-			if (props.fragment) return slots.default?.();
+			if (props.styleless) return slots.default?.();
 			return (
 				<div class="vcm-checkbox-group">
 					{ slots?.default?.() }

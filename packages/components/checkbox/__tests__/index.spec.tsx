@@ -121,9 +121,9 @@ describe('checkbox-group.tsx', () => {
 		expect(wrapper.classes()).toContain('vc-checkbox-group');
 	});
 
-	it('fragment: 仅渲染插槽内容, 不含包裹容器', () => {
+	it('styleless: 仅渲染插槽内容, 不含包裹容器', () => {
 		const wrapper = mount(() => (
-			<CheckboxGroup fragment v-slots={{ default: () => (<Checkbox label="apple" />) }} />
+			<CheckboxGroup styleless v-slots={{ default: () => (<Checkbox label="apple" />) }} />
 		));
 
 		expect(wrapper.find('.vc-checkbox-group').exists()).toBe(false);
@@ -247,9 +247,9 @@ describe('mobile', () => {
 		expect(wrapper.classes()).toContain('vcm-checkbox-group');
 	});
 
-	it('MCheckboxGroup: fragment 仅渲染插槽内容', () => {
+	it('MCheckboxGroup: styleless 仅渲染插槽内容', () => {
 		const wrapper = mount(() => (
-			<MCheckboxGroup fragment v-slots={{ default: () => (<MCheckbox value="apple" />) }} />
+			<MCheckboxGroup styleless v-slots={{ default: () => (<MCheckbox value="apple" />) }} />
 		));
 
 		expect(wrapper.find('.vcm-checkbox-group').exists()).toBe(false);

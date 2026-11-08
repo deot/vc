@@ -195,8 +195,8 @@ describe('index.ts', () => {
 		expect(wrapper.classes()).toContain('vc-button-group');
 	});
 
-	it('group, fragment', async () => {
-		const wrapper = mount(() => <ButtonGroup fragment size="small"><Button /></ButtonGroup>);
+	it('group, styleless', async () => {
+		const wrapper = mount(() => <ButtonGroup styleless size="small"><Button /></ButtonGroup>);
 
 		expect(wrapper.classes()).not.toContain('vc-button-group');
 		expect(wrapper.findComponent(Button).classes()).toContain('is-small');

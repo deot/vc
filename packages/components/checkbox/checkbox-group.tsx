@@ -14,7 +14,7 @@ export const CheckboxGroup = defineComponent({
 		const { slots } = context;
 		useCheckboxGroup(props, context);
 		return () => {
-			if (props.fragment) return slots.default?.();
+			if (props.styleless) return slots.default?.();
 			return (
 				<div class="vc-checkbox-group">
 					{ slots?.default?.() }

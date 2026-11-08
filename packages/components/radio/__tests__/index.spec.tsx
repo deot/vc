@@ -266,9 +266,9 @@ describe('radio-group.tsx', () => {
 		expect(wrapper.attributes('name')).toBe('fruit');
 	});
 
-	it('fragment: 仅渲染插槽内容, 不含包裹容器', () => {
+	it('styleless: 仅渲染插槽内容, 不含包裹容器', () => {
 		const wrapper = mount(() => (
-			<RadioGroup fragment v-slots={{ default: () => (<Radio label="apple" />) }} />
+			<RadioGroup styleless v-slots={{ default: () => (<Radio label="apple" />) }} />
 		));
 
 		expect(wrapper.find('.vc-radio-group').exists()).toBe(false);
@@ -393,9 +393,9 @@ describe('mobile', () => {
 		expect(wrapper.classes()).toContain('vcm-radio-group');
 	});
 
-	it('MRadioGroup: fragment 仅渲染插槽内容', () => {
+	it('MRadioGroup: styleless 仅渲染插槽内容', () => {
 		const wrapper = mount(() => (
-			<MRadioGroup fragment v-slots={{ default: () => (<MRadio value="apple" />) }} />
+			<MRadioGroup styleless v-slots={{ default: () => (<MRadio value="apple" />) }} />
 		));
 
 		expect(wrapper.find('.vcm-radio-group').exists()).toBe(false);
