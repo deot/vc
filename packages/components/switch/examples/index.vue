@@ -3,10 +3,15 @@
 		<label>自定义值 <Switch v-model="status" checked-value="开" unchecked-value="关" /> {{ status }}</label>
 		<label>默认状态 <Switch :model-value="true" /><Switch :model-value="false" /></label>
 		<label>禁用状态 <Switch :model-value="true" disabled /><Switch :model-value="false" disabled /></label>
-		<label>文案 <Switch v-model="isEnabled" checked-text="开" unchecked-text="关" /></label>
+		<label>
+			文案（轨道随文字加宽，width 为最小宽度）
+			<Switch v-model="isEnabled" checked-text="开" unchecked-text="关" />
+			<Switch v-model="isEnabled" checked-text="已开启" unchecked-text="已关闭" />
+			<Switch v-model="isEnabled" checked-text="开启" unchecked-text="关闭" :width="60" />
+		</label>
 		<label>
 			插槽
-			<Switch :width="64">
+			<Switch>
 				<template #checked>ON</template>
 				<template #unchecked>OFF</template>
 			</Switch>

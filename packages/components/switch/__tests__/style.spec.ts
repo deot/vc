@@ -15,21 +15,22 @@ const valuesFor = (css: postcss.Root, selector: string) => {
 };
 
 describe.each([
-	['desktop', 'vc-switch', '../style.scss'],
-	['mobile', 'vcm-switch', '../mobile/style.scss']
-])('Switch %s theme contrast', (_platform, component, path) => {
+	['desktop', 'vc-switch', '../style.scss', 'color-light-deepest'],
+	['mobile', 'vcm-switch', '../mobile/style.scss', 'color-light-deeper']
+])('Switch %s theme contrast', (platform, component, path, lightTrack) => {
 	const css = postcss.parse(sass.compile(new URL(path, import.meta.url).pathname).css);
-	const wrapper = component === 'vc-switch' ? ` .${component}__wrapper` : '';
-	const ordinary = `.${component}:not(.is-checked, .is-disabled)${wrapper}`;
+	const wrapper = platform === 'desktop' ? ` .${component}__wrapper` : '';
+	const ordinary = `.${component}:not(.is-checked)${wrapper}`;
 	it.each([
-		['light', 'color-light-deepest'],
+		['light', lightTrack],
 		['dark', 'background-color-light']
-	])('uses the %s ordinary track without changing checked or disabled tracks', (mode, parameter) => {
+	])('uses the %s unchecked track without changing the checked track', (mode, parameter) => {
 		const track = `var(--vc-switch-${parameter}, var(--vc-${parameter}))`;
-		expect(valuesFor(css, `[data-vc-theme=${mode}] ${ordinary}`)).toEqual({
-			'background-color': track,
-			'border-color': track
-		});
+		// 桌面端轨道带同色边框，移动端没有边框
+		const expected = platform === 'desktop'
+			? { 'background-color': track, 'border-color': track }
+			: { 'background-color': track };
+		expect(valuesFor(css, `[data-vc-theme=${mode}] ${ordinary}`)).toEqual(expected);
 		let systemTrack: postcss.Rule | undefined;
 		css.walkRules((rule) => {
 			if (rule.selectors.includes(`:root ${ordinary}`) && rule.parent?.type === 'atrule'
@@ -38,36 +39,49 @@ describe.each([
 			}
 		});
 		expect(systemTrack).toBeDefined();
-		expect(systemTrack!.nodes.filter(node => node.type === 'decl').map(node => node.value)).toEqual([track, track]);
+		expect(systemTrack!.nodes.filter(node => node.type === 'decl').map(node => node.value)).toEqual(Object.values(expected));
 	});
 
-	it.each([
-		['light', 'color-contrast-light'],
-		['dark', 'foreground-color-inactive']
-	])('distinguishes the %s disabled foreground from interactive controls', (mode, parameter) => {
-		const foreground = `var(--vc-switch-${parameter}, var(--vc-${parameter}))`;
-		const selector = `[data-vc-theme=${mode}] .${component}.is-disabled`;
-		expect(valuesFor(css, `${selector} .${component}__content`).color).toBe(foreground);
-		expect(valuesFor(css, `${selector} .${component}__inner`)['background-color']).toBe(foreground);
-	});
-
-	it('uses matching selected and disabled tracks on both platforms', () => {
+	it('uses the primary track when checked and dims the whole control when disabled', () => {
 		expect(valuesFor(css, `.${component}.is-checked${wrapper}`)).toMatchObject({
 			'background-color': 'var(--vc-switch-color-primary, var(--vc-color-primary))'
 		});
-		expect(valuesFor(css, `.${component}.is-disabled${wrapper}`)).toMatchObject({
-			'background-color': 'var(--vc-switch-background-color-light, var(--vc-background-color-light))'
+		expect(valuesFor(css, `.${component}.is-disabled`)).toMatchObject({
+			opacity: '0.5'
 		});
-		const disabledChecked = `.${component}.is-disabled.is-checked${wrapper}`;
-		const primary = 'var(--vc-switch-color-primary-light, var(--vc-color-primary-light))';
-		const surface = 'var(--vc-switch-background-color-lightest, var(--vc-background-color-lightest))';
-		expect(valuesFor(css, disabledChecked)['background-color']).toBe(`color-mix(in srgb, ${primary} 30%, ${surface})`);
 	});
 
-	it('retains the contrasting text and thumb independently of the track', () => {
+	it('keeps the thumb and loading colors independent of the track', () => {
 		const contrast = 'var(--vc-switch-color-contrast-light, var(--vc-color-contrast-light))';
-		expect(valuesFor(css, `.${component}__content`).color).toBe(contrast);
 		expect(valuesFor(css, `.${component}__inner`)['background-color']).toBe(contrast);
-		expect(valuesFor(css, `.${component}__loading`).color).toBe('var(--vc-switch-color-primary, var(--vc-color-primary))');
+		// 浅色底环 + 主色转动弧，线宽加粗
+		expect(valuesFor(css, `.${component}__loading path`)).toEqual({
+			'stroke': 'var(--vc-switch-color-primary-lighter, var(--vc-color-primary-lighter))',
+			'stroke-width': '4'
+		});
+		expect(valuesFor(css, `.${component}__loading path + path`)).toEqual({
+			stroke: 'var(--vc-switch-color-primary, var(--vc-color-primary))'
+		});
+	});
+
+	it('shows a focus ring for keyboard focus only', () => {
+		const focusable = platform === 'desktop' ? `.${component}__wrapper` : `.${component}`;
+		expect(valuesFor(css, `${focusable}:focus-visible`)['box-shadow'])
+			.toBe('0 0 0 3px var(--vc-switch-color-primary-lighter, var(--vc-color-primary-lighter))');
+	});
+});
+
+describe('Switch text colors', () => {
+	const contrast = 'var(--vc-switch-color-contrast-light, var(--vc-color-contrast-light))';
+	it('keeps white text on the desktop track', () => {
+		const css = postcss.parse(sass.compile(new URL('../style.scss', import.meta.url).pathname).css);
+		expect(valuesFor(css, '.vc-switch__content').color).toBe(contrast);
+	});
+
+	it('uses secondary text on the light mobile track and white text when checked', () => {
+		const css = postcss.parse(sass.compile(new URL('../mobile/style.scss', import.meta.url).pathname).css);
+		expect(valuesFor(css, '.vcm-switch__content').color)
+			.toBe('var(--vc-switch-foreground-color-light, var(--vc-foreground-color-light))');
+		expect(valuesFor(css, '.vcm-switch.is-checked .vcm-switch__content').color).toBe(contrast);
 	});
 });

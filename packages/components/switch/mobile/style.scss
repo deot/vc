@@ -1,118 +1,107 @@
-@use 'sass:color';
 @use '../../style/helper' as *;
 @use '../theme';
 
-$color-contrast-dark: varfix(color-contrast-dark, switch);
-$color-contrast-dark-frozen: themefrozen(color-contrast-dark);
 $color-contrast-light: varfix(color-contrast-light, switch);
-$color-light-deepest: varfix(color-light-deepest, switch);
+$color-light-deeper: varfix(color-light-deeper, switch);
 $color-primary: varfix(color-primary, switch);
-$color-primary-light: varfix(color-primary-light, switch);
 $color-primary-lighter: varfix(color-primary-lighter, switch);
-$background-color-light: varfix(background-color-light, switch);
-$background-color-lightest: varfix(background-color-lightest, switch);
-$box-shadow-floating: varfix(box-shadow-floating, switch);
+$foreground-color-light: varfix(foreground-color-light, switch);
 $component-name: vcm-switch;
-$thumb-border-color-fallback: color.change($color-contrast-dark-frozen, $alpha: .13);
-$thumb-border-color: color-mix(in srgb, #{$color-contrast-dark} 13%, transparent);
 
-@include theme.switch-themes($component-name);
+@include theme.switch-themes($component-name, $color-light-deeper);
 
+// 轨道最小 102 × 62，内边距 4；滑块 54；文字较长时轨道随之加宽
 @include block($component-name) {
 	position: relative;
 	display: inline-flex;
-	width: remfix(102);
 	height: remfix(62);
+	min-width: remfix(102);
+	padding: remfix(4);
 	line-height: remfix(64);
 	cursor: pointer;
-	background-color: $color-light-deepest;
-	border: remfix(4) solid $color-light-deepest;
+	background-color: $color-light-deeper;
 	border-radius: remfix(62);
+	outline: none;
 	box-sizing: border-box;
-	transition: all .2s ease-in-out;
+	transition: background-color .2s ease-in-out;
 	user-select: none;
+	-webkit-tap-highlight-color: transparent;
 
 	// 子元素都是绝对定位，基线由字符框占位提供，开关像文字一样与同行文字对齐
 	@include text-strut(0);
 
+	// 键盘聚焦时的光环
+	&:focus-visible {
+		box-shadow: 0 0 0 3px $color-primary-lighter;
+	}
+
+	// 文字在流内撑开轨道：离滑块 8，离轨道边缘 7（单个汉字略宽于字号，仍保持 102 宽）；轨道比文字宽时在空余区域内居中
 	@include element(content) {
-		position: absolute;
-		left: remfix(60);
+		display: grid;
+		padding: 0 remfix(3) 0 remfix(62);
 		font-size: remfix(28);
-		line-height: remfix(56);
-		color: $color-contrast-light;
+		line-height: 1;
+		color: $foreground-color-light;
+		white-space: nowrap;
+		flex: 1;
+		place-content: center;
+		place-items: center;
+	}
+
+	// 两段文字叠在同一格，隐藏的一段仍占宽
+	@include element(text) {
+		grid-area: 1 / 1;
+
+		@include when(hidden) {
+			visibility: hidden;
+		}
 	}
 
 	@include element(inner) {
 		position: absolute;
-		top: -1px;
-		left: -1px;
-		width: remfix(56);
-		height: remfix(56);
-		cursor: pointer;
+		top: remfix(4);
+		left: remfix(4);
+		display: flex;
+		width: remfix(54);
+		height: remfix(54);
 		background-color: $color-contrast-light;
-		border: 1px solid $thumb-border-color-fallback;
-
-		@supports (color: color-mix(in srgb, black, white)) {
-			& {
-				border: 1px solid $thumb-border-color;
-			}
-		}
-
-		border-radius: remfix(56);
-		content: '';
-		box-shadow: $box-shadow-floating;
-		transition: left .2s ease-in-out,width .2s ease-in-out;
+		border-radius: 50%;
+		box-shadow: 0 3px 2px rgb(0 0 0 / 12%);
+		transition: left .2s ease-in-out;
+		align-items: center;
+		justify-content: center;
 	}
 
+	// 加载标记放在滑块内并居中：浅色底环 + 主色转动弧，线宽加粗，在白色滑块上清楚可见
 	@include element(loading) {
-		position: absolute;
-		top: remfix(12);
-		left: remfix(12);
-		z-index: 1;
-		width: remfix(28);
-		height: remfix(28);
-		color: $color-primary;
-		opacity: .4;
+		path {
+			stroke: $color-primary-lighter;
+			stroke-width: 4;
+		}
+
+		// Spin 的第二段为转动的弧
+		path + path {
+			stroke: $color-primary;
+		}
 	}
 
 	@include when(checked) {
 		background-color: $color-primary;
-		border-color: $color-primary;
 
 		@include element(content) {
-			left: remfix(6);
+			padding: 0 remfix(62) 0 remfix(3);
 			color: $color-contrast-light;
 		}
 
+		// 轨道宽度可能随文字变化，用百分比贴到右侧
 		@include element(inner) {
-			left: remfix(40);
-		}
-
-		@include element(loading) {
-			left: remfix(50);
+			left: calc(100% - #{remfix(58)});
 		}
 	}
 
+	// 禁用：整体半透明，各状态保持原有配色
 	@include when(disabled) {
 		cursor: not-allowed;
-		background-color: $background-color-light;
-		border-color: $background-color-light;
-
-		@include element(inner) {
-			cursor: not-allowed;
-		}
-
-		@include when(checked) {
-			background-color: $color-primary-lighter;
-			border-color: $color-primary-lighter;
-
-			@supports (color: color-mix(in srgb, black, white)) {
-				& {
-					background-color: color-mix(in srgb, #{$color-primary-light} 30%, #{$background-color-lightest});
-					border-color: color-mix(in srgb, #{$color-primary-light} 30%, #{$background-color-lightest});
-				}
-			}
-		}
+		opacity: .5;
 	}
 }

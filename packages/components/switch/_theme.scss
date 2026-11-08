@@ -1,43 +1,33 @@
 @use '../style/helper' as *;
 
-$color-contrast-light: varfix(color-contrast-light, switch);
-$color-light-deepest: varfix(color-light-deepest, switch);
 $background-color-light: varfix(background-color-light, switch);
-$foreground-color-inactive: varfix(foreground-color-inactive, switch);
 
-@mixin switch-theme($light, $component-name, $track) {
-	.#{$component-name}:not(.is-checked, .is-disabled)#{$track} {
-		$track-color: if(sass($light): $color-light-deepest; else: $background-color-light);
+// 未选中轨道：亮色用传入的 $light-track，暗色统一用 background-color-light（亮色参数在暗色下过亮，滑块与文字难以区分）
+@mixin switch-theme($light, $component-name, $light-track, $track) {
+	.#{$component-name}:not(.is-checked)#{$track} {
+		$track-color: if(sass($light): $light-track; else: $background-color-light);
 
 		background-color: $track-color;
-		border-color: $track-color;
-	}
 
-	.#{$component-name}.is-disabled {
-		$disabled-foreground: if(sass($light): $color-contrast-light; else: $foreground-color-inactive);
-
-		.#{$component-name}__content {
-			color: $disabled-foreground;
-		}
-
-		.#{$component-name}__inner {
-			background-color: $disabled-foreground;
+		// 桌面端轨道带同色边框
+		@if $track != '' {
+			border-color: $track-color;
 		}
 	}
 }
 
-@mixin switch-themes($component-name, $track: '') {
+@mixin switch-themes($component-name, $light-track, $track: '') {
 	@each $mode, $light in light true, dark false {
 		@media (prefers-color-scheme: #{$mode}) {
 			:root {
-				@include switch-theme($light, $component-name, $track);
+				@include switch-theme($light, $component-name, $light-track, $track);
 			}
 		}
 	}
 
 	@each $mode, $light in light true, dark false {
 		[data-vc-theme="#{$mode}"] {
-			@include switch-theme($light, $component-name, $track);
+			@include switch-theme($light, $component-name, $light-track, $track);
 		}
 	}
 }

@@ -3,12 +3,16 @@
 		<label>自定义值 <MSwitch v-model="status" checked-value="开" unchecked-value="关" /> {{ status }}</label>
 		<label>默认状态 <MSwitch :model-value="true" /><MSwitch :model-value="false" /></label>
 		<label>禁用状态 <MSwitch :model-value="true" disabled /><MSwitch :model-value="false" disabled /></label>
-		<label>文案 <MSwitch v-model="isEnabled" checked-text="开" unchecked-text="关" /></label>
+		<label>
+			文案（轨道随文字加宽）
+			<MSwitch v-model="isEnabled" checked-text="开" unchecked-text="关" />
+			<MSwitch v-model="isEnabled" checked-text="已开启" unchecked-text="已关闭" />
+		</label>
 		<label>
 			插槽
 			<MSwitch>
-				<template #checked>开</template>
-				<template #unchecked>关</template>
+				<template #checked>ON</template>
+				<template #unchecked>OFF</template>
 			</MSwitch>
 		</label>
 		<label>重置内部状态 <MSwitch :model-value="false" @change="handleChange" /></label>

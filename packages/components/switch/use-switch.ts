@@ -1,4 +1,4 @@
-import { inject, getCurrentInstance, ref, watch, computed } from 'vue';
+import { inject, getCurrentInstance, ref, watch, computed, h } from 'vue';
 import type { SetupContext } from 'vue';
 import type { Props } from './switch-props';
 
@@ -47,7 +47,7 @@ export const useSwitch = (props: Props, context: SetupContext<['update:modelValu
 		formItem?.change?.(currentValue.value);
 	};
 
-	const handleToggle = (e) => {
+	const handleToggle = (e: Event) => {
 		e.preventDefault();
 
 		if (props.disabled || isLoading.value) {
@@ -79,6 +79,29 @@ export const useSwitch = (props: Props, context: SetupContext<['update:modelValu
 		}
 	};
 
+	// 键盘：Space / Enter 与点击同样切换（沿用 click 的拦截与 Promise 加载）；按住不放时不重复切换
+	const handleKeydown = (e: KeyboardEvent) => {
+		if (e.repeat || (e.key !== ' ' && e.key !== 'Enter')) return;
+		handleToggle(e);
+	};
+
+	/**
+	 * 开、关两段文字叠在同一格里，只显示当前值对应的一段：轨道宽度取较宽的一段，切换时不跳动
+	 * @param name 组件类名
+	 * @returns 文字节点，未设置的一段不渲染
+	 */
+	const renderText = (name: string) => {
+		const { slots } = context;
+		return [
+			[props.checkedValue, slots.checked, props.checkedText],
+			[props.uncheckedValue, slots.unchecked, props.uncheckedText]
+		].map(([value, slot, text]) => (slot || text) && h(
+			'span',
+			{ class: [`${name}__text`, { 'is-hidden': currentValue.value !== value }] },
+			slot ? (slot as () => any)() : text as string
+		));
+	};
+
 	expose({ reset });
 	return {
 		currentValue,
@@ -86,6 +109,8 @@ export const useSwitch = (props: Props, context: SetupContext<['update:modelValu
 		classes,
 		checked,
 		handleToggle,
+		handleKeydown,
+		renderText,
 		sync,
 		reset
 	};
