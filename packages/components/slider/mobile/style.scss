@@ -1,0 +1,42 @@
+@use '../../style/helper' as *;
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放），375 宽下：
+// - 行：上下内边距 11、左右 16（首尾滑块不超出容器），行高 24；有标签时底部内边距 35
+// - 轨道 2；点击区 32；滑块 24，白底、阴影，无边框，悬停、拖动不放大
+// - 垂直方向高 200
+// - 标签圆点 6（实心），标签文字 14 / 20、距轨道 17；刻度圆点 4
+// - 气泡：字号 12 / 17，内边距 8 12，圆角 4（气泡不挂到 body，变量直接继承）
+// 结构与颜色沿用 ../style.scss，这里只覆盖局部变量（与两端样式的加载顺序无关）；子元素沿用桌面端类名
+$thumb-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+
+@include block(vcm-slider) {
+	padding: remfix(22) remfix(32);
+	box-sizing: border-box;
+
+	@include localvars(slider, (
+		min-height: 0,
+		track-size: remfix(4),
+		thumb-size: remfix(48),
+		thumb-border: none,
+		thumb-shadow: $thumb-shadow,
+		thumb-active-transform: none,
+		thumb-active-shadow: $thumb-shadow,
+		hit-size: remfix(64),
+		tick-dot-size: remfix(8),
+		mark-dot-size: remfix(12),
+		mark-dot-border-width: remfix(6),
+		mark-font-size: remfix(28),
+		mark-line-height: remfix(40),
+		mark-gap: remfix(8),
+		marked-padding-bottom: remfix(70),
+		vertical-height: remfix(400),
+		input-width: remfix(220),
+		input-gap: remfix(24)
+	));
+	@include localvars(popover-wrapper, (
+		font-size-small: remfix(24),
+		line-height-large: remfix(34),
+		padding: remfix(16) remfix(24),
+		border-radius: remfix(8)
+	));
+}

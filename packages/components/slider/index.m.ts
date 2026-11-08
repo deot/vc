@@ -1,3 +1,7 @@
-import { Slider } from '.';
+import { MSlider } from './mobile/slider.tsx';
+import './style.scss';
+import './mobile/style.scss';
 
-export const MSlider = Slider;
+export {
+	MSlider
+};

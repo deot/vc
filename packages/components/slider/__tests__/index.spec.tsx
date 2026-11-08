@@ -394,7 +394,7 @@ describe('index.ts', () => {
 		wrapper.unmount();
 	});
 
-	it('tooltip: 支持 hover、focus 和运行时切换', async () => {
+	it('tooltip: 支持 hover、键盘聚焦和运行时切换', async () => {
 		const tooltip = ref<'hover' | 'always' | 'never'>('hover');
 		const wrapper = mount(defineComponent({
 			setup() {
@@ -406,27 +406,40 @@ describe('index.ts', () => {
 					/>
 				);
 			}
-		}));
+		}), { attachTo: document.body });
 		const popovers = () => wrapper.findAllComponents(Popover);
 		const buttons = wrapper.findAll('.vc-slider__button');
 
 		expect(popovers()[0].props('modelValue')).toBe(false);
 
-		await buttons[0].trigger('mouseenter');
+		await buttons[0].trigger('pointerenter', { pointerType: 'mouse' });
 		await flush();
 		expect(popovers()[0].props('modelValue')).toBe(true);
 
-		await buttons[0].trigger('mouseleave');
+		await buttons[0].trigger('pointerleave', { pointerType: 'mouse' });
 		await flush();
 		expect(popovers()[0].props('modelValue')).toBe(false);
 
-		await buttons[1].trigger('focus');
+		// 触摸没有悬停：触摸点按产生的 pointerenter 不显示
+		await buttons[0].trigger('pointerenter', { pointerType: 'touch' });
+		await flush();
+		expect(popovers()[0].props('modelValue')).toBe(false);
+
+		// 键盘聚焦（:focus-visible）显示，失焦收起
+		// 先有一次键盘操作（如 Tab），聚焦才算 :focus-visible；此前的指针事件会让聚焦不算
+		document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+		(buttons[1].element as HTMLElement).focus();
 		await flush();
 		expect(popovers()[1].props('modelValue')).toBe(true);
 
-		await buttons[1].trigger('blur');
+		(buttons[1].element as HTMLElement).blur();
 		await flush();
 		expect(popovers()[1].props('modelValue')).toBe(false);
+
+		// 方向键操作时显示（鼠标点按获得的焦点之后改用键盘）
+		await buttons[1].trigger('keydown', { key: 'ArrowRight' });
+		await flush();
+		expect(popovers()[1].props('modelValue')).toBe(true);
 
 		tooltip.value = 'always';
 		await flush();
@@ -496,6 +509,37 @@ describe('index.ts', () => {
 		await flush();
 
 		expect(value.value).toBe(75);
+
+		wrapper.unmount();
+	});
+
+	it('touch: 拖动时显示气泡，松开收起；只点按不拖动同样收起', async () => {
+		const { wrapper } = mountControlled();
+		const button = wrapper.find('.vc-slider__btn-wrapper').element;
+		const popover = () => wrapper.findComponent(Popover);
+
+		touch(button, 'touchstart', 25);
+		await flush();
+		expect(popover().props('modelValue')).toBe(true);
+
+		touch(button, 'touchend', 25);
+		await flush();
+		expect(popover().props('modelValue')).toBe(false);
+
+		// 触摸点按后浏览器补发的 mousedown / mouseup：不显示
+		mouseDown(button, 25);
+		mouseUp();
+		await flush();
+		expect(popover().props('modelValue')).toBe(false);
+
+		touch(button, 'touchstart', 25);
+		touch(button, 'touchmove', 60);
+		await flush();
+		expect(popover().props('modelValue')).toBe(true);
+
+		touch(button, 'touchend', 60);
+		await flush();
+		expect(popover().props('modelValue')).toBe(false);
 
 		wrapper.unmount();
 	});
@@ -1090,5 +1134,55 @@ describe('index.ts', () => {
 		const multiple = mount(() => <Slider modelValue={[10, 20, 30]} range showInput />);
 		expect(multiple.findComponent({ name: 'vc-input-number' }).exists()).toBe(false);
 		multiple.unmount();
+	});
+});
+
+describe('index.m.ts', () => {
+	it('MSlider: 与 Slider 结构相同，根节点另有标记类 vcm-slider', async () => {
+		const { MSlider } = await import('../index.m');
+		const wrapper = mount(() => <MSlider modelValue={[20, 60]} range marks={{ 0: '0', 100: '100' }} />);
+
+		expect(wrapper.classes()).toEqual(expect.arrayContaining(['vc-slider', 'vcm-slider', 'is-marked']));
+		expect(wrapper.findAll('.vc-slider__button')).toHaveLength(2);
+		expect(wrapper.findAll('.vc-slider__mark')).toHaveLength(2);
+
+		wrapper.unmount();
+	});
+
+	it('MSlider: showInput 使用 MInputNumber', async () => {
+		const { MSlider } = await import('../index.m');
+		const wrapper = mount(() => <MSlider modelValue={20} showInput />);
+
+		expect(wrapper.findComponent({ name: 'vcm-input-number' }).exists()).toBe(true);
+		expect(wrapper.findComponent({ name: 'vc-input-number' }).exists()).toBe(false);
+
+		wrapper.unmount();
+	});
+
+	it('气泡按内容宽度排版（行内 width: max-content）', () => {
+		const wrapper = mount(() => <Slider modelValue={20} />);
+
+		expect(wrapper.findComponent(Popover).props('portalStyle')).toEqual({ width: 'max-content' });
+
+		wrapper.unmount();
+	});
+
+	it('样式：桌面端尺寸为局部变量，移动端只覆盖变量', async () => {
+		const sass = await import('sass');
+		const path = await import('node:path');
+		const desktop = sass.compile(path.resolve(process.cwd(), 'packages/components/slider/style.scss')).css;
+		const mobile = sass.compile(path.resolve(process.cwd(), 'packages/components/slider/mobile/style.scss')).css;
+
+		// 点击区扩到整行；悬停放大只在支持悬停的设备上
+		expect(desktop).toContain('.vc-slider__wrapper::before');
+		expect(desktop).toContain('var(--vc-slider-hit-size, 32px)');
+		expect(desktop).toMatch(/@media \(hover: hover\) \{\s+\.vc-slider__button:hover/);
+		expect(desktop).toContain('border: var(--vc-slider-thumb-border, 2px solid');
+
+		expect(mobile).toContain('--vc-slider-thumb-size: calc(var(--vc-rem) * 48)');
+		expect(mobile).toContain('--vc-slider-thumb-active-transform: none');
+		expect(mobile).toContain('--vc-slider-hit-size: calc(var(--vc-rem) * 64)');
+		expect(mobile).toContain('--vc-popover-wrapper-font-size-small: calc(var(--vc-rem) * 24)');
+		expect(mobile).not.toContain('.vc-slider');
 	});
 });

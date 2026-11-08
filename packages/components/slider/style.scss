@@ -12,17 +12,24 @@ $color-neutral-light: varfix(color-neutral-light, slider);
 $color-shadow-fixed: varfix(color-shadow-fixed, slider);
 $component-name: vc-slider;
 
-// 局部参数：轨道（含选中条）粗细、滑块直径
-$track-size: var(--vc-slider-track-size, #{unitfix(2)});
-$thumb-size: var(--vc-slider-thumb-size, #{unitfix(12)});
+// 尺寸写成局部变量 --vc-slider-<键>（默认值为桌面端的 px），MSlider 在 .vcm-slider 上覆盖（mobile/style.scss）
+// 轨道（含选中条）粗细、滑块直径
+$track-size: localfix(slider, track-size, unitfix(2));
+$thumb-size: localfix(slider, thumb-size, unitfix(12));
+
+// 轨道的点击区：沿交叉轴扩到这个尺寸，与组件的最小高度相同，整行可点
+$hit-size: localfix(slider, hit-size, 32px);
+$tick-dot-size: localfix(slider, tick-dot-size, 4px);
+$mark-dot-size: localfix(slider, mark-dot-size, 8px);
 
 // 轨道上的元素沿交叉轴居中
 $thumb-offset: calc((#{$track-size} - #{$thumb-size}) / 2);
-$tick-dot-offset: calc((#{$track-size} - 4px) / 2);
-$mark-dot-offset: calc((#{$track-size} - 8px) / 2);
+$hit-offset: calc((#{$track-size} - #{$hit-size}) / 2);
+$tick-dot-offset: calc((#{$track-size} - #{$tick-dot-size}) / 2);
+$mark-dot-offset: calc((#{$track-size} - #{$mark-dot-size}) / 2);
 
-// 标签在滑块外侧留 4px
-$mark-offset: calc((#{$track-size} + #{$thumb-size}) / 2 + 4px);
+// 标签在滑块外侧留出 mark-gap
+$mark-offset: calc((#{$track-size} + #{$thumb-size}) / 2 + #{localfix(slider, mark-gap, 4px)});
 
 // 禁用态的主色：color-primary-light 与表面色混合，不支持 color-mix 时降级
 @mixin disabled-primary($property) {
@@ -40,7 +47,7 @@ $mark-offset: calc((#{$track-size} + #{$thumb-size}) / 2 + 4px);
 	display: inline-flex;
 	width: 100%;
 	align-items: center;
-	min-height: 32px;
+	min-height: localfix(slider, min-height, 32px);
 
 	@include element(wrapper) {
 		position: relative;
@@ -48,6 +55,13 @@ $mark-offset: calc((#{$track-size} + #{$thumb-size}) / 2 + 4px);
 		height: $track-size;
 		background-color: $color-neutral-light;
 		border-radius: calc(#{$track-size} / 2);
+
+		// 点击区：轨道太细不好点，沿交叉轴扩到 hit-size；不改布局
+		&::before {
+			position: absolute;
+			inset: $hit-offset 0;
+			content: '';
+		}
 
 		@include when(clickable) {
 			cursor: pointer;
@@ -109,23 +123,27 @@ $mark-offset: calc((#{$track-size} + #{$thumb-size}) / 2 + 4px);
 		flex: none;
 		cursor: grab;
 		background-color: $color-contrast-light;
-		border: 2px solid $color-primary;
+		border: localfix(slider, thumb-border, 2px solid #{$color-primary});
 		border-radius: 50%;
 		outline: 0;
+		box-shadow: localfix(slider, thumb-shadow, none);
 		box-sizing: border-box;
 
 		// 放大时略微回弹
 		transition: transform .2s cubic-bezier(.3, 1.3, .3, 1), box-shadow .2s linear;
 
-		// 12px → 14px
-		&:hover,
-		&.is-dragging {
-			transform: scale(1.17);
-			box-shadow: 0 2px 5px $color-shadow-fixed;
-		}
-
+		// 悬停、拖动时放大（12px → 14px）；悬停只在支持悬停的设备上生效，触屏点按后不会停在放大状态
 		&.is-dragging {
 			cursor: grabbing;
+			transform: localfix(slider, thumb-active-transform, scale(1.17));
+			box-shadow: localfix(slider, thumb-active-shadow, 0 2px 5px #{$color-shadow-fixed});
+		}
+
+		@media (hover: hover) {
+			&:hover {
+				transform: localfix(slider, thumb-active-transform, scale(1.17));
+				box-shadow: localfix(slider, thumb-active-shadow, 0 2px 5px #{$color-shadow-fixed});
+			}
 		}
 
 		// 键盘聚焦时的光环
@@ -141,6 +159,7 @@ $mark-offset: calc((#{$track-size} + #{$thumb-size}) / 2 + 4px);
 			background-color: transparent;
 			border: 0;
 			border-radius: 0;
+			box-shadow: none;
 			justify-content: center;
 			align-items: center;
 
@@ -158,8 +177,8 @@ $mark-offset: calc((#{$track-size} + #{$thumb-size}) / 2 + 4px);
 
 		@include when(dot) {
 			top: $tick-dot-offset;
-			width: 4px;
-			height: 4px;
+			width: $tick-dot-size;
+			height: $tick-dot-size;
 			background-color: $color-light-deepest;
 			border-radius: 50%;
 
@@ -184,10 +203,12 @@ $mark-offset: calc((#{$track-size} + #{$thumb-size}) / 2 + 4px);
 	@include element(mark-dot) {
 		position: absolute;
 		top: $mark-dot-offset;
-		width: 8px;
-		height: 8px;
+		width: $mark-dot-size;
+		height: $mark-dot-size;
 		background-color: $color-contrast-light;
-		border: 2px solid $color-light-deepest;
+
+		// 边框宽度为直径的一半时为实心圆点（MSlider）
+		border: localfix(slider, mark-dot-border-width, 2px) solid $color-light-deepest;
 		border-radius: 50%;
 		box-sizing: border-box;
 
@@ -199,15 +220,15 @@ $mark-offset: calc((#{$track-size} + #{$thumb-size}) / 2 + 4px);
 	@include element(mark) {
 		position: absolute;
 		top: $mark-offset;
-		font-size: 12px;
-		line-height: 1;
+		font-size: localfix(slider, mark-font-size, 12px);
+		line-height: localfix(slider, mark-line-height, 1);
 		color: $color-dark-lightest;
 		white-space: nowrap;
 	}
 
 	// 标签在轨道下方，预留高度
 	@include when(marked) {
-		padding-bottom: 8px;
+		padding-bottom: localfix(slider, marked-padding-bottom, 8px);
 	}
 
 	// 定位元素沿主轴居中：起点为 left / bottom 时向起点方向回退半个自身，right / top 时反向
@@ -229,7 +250,7 @@ $mark-offset: calc((#{$track-size} + #{$thumb-size}) / 2 + 4px);
 
 	@include when(vertical) {
 		width: auto;
-		height: 200px;
+		height: localfix(slider, vertical-height, 200px);
 		min-width: 32px;
 		padding: calc(#{$thumb-size} / 2) 0;
 		box-sizing: border-box;
@@ -260,6 +281,10 @@ $mark-offset: calc((#{$track-size} + #{$thumb-size}) / 2 + 4px);
 			&.is-draggable::before {
 				inset: 0 min(0px, #{$thumb-offset});
 			}
+		}
+
+		.vc-slider__wrapper::before {
+			inset: 0 $hit-offset;
 		}
 
 		.vc-slider__btn-wrapper,
@@ -339,15 +364,15 @@ $mark-offset: calc((#{$track-size} + #{$thumb-size}) / 2 + 4px);
 	}
 
 	@include element(input) {
-		width: 80px;
+		width: localfix(slider, input-width, 80px);
 		flex: none;
 
 		@include when(before) {
-			margin-right: 20px;
+			margin-right: localfix(slider, input-gap, 20px);
 		}
 
 		@include when(after) {
-			margin-left: 20px;
+			margin-left: localfix(slider, input-gap, 20px);
 		}
 	}
 }

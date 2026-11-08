@@ -167,7 +167,7 @@ const marks = { 0: '0', 10: '10', 20: '20', 60: '60', 100: '100' };
 :::
 
 ### 垂直与反向
-`vertical` 为垂直滑块，默认高度 `200px`，可通过 `style` 覆盖；轨道粗细与滑块尺寸见“主题与局部覆盖”中的局部参数 `track-size`、`thumb-size`。`inverted` 交换起点与终点：水平时起点在右侧，垂直时起点在上方。
+`vertical` 为垂直滑块，默认高度 `200px`（局部参数 `vertical-height`），可通过 `style` 覆盖；轨道粗细与滑块尺寸见“主题与局部覆盖”中的局部参数 `track-size`、`thumb-size`。`inverted` 交换起点与终点：水平时起点在右侧，垂直时起点在上方。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
@@ -271,6 +271,12 @@ const marks = { 0: '0', 25: '25', 50: '50', 75: '75', 100: '100' };
 ```
 :::
 
+### 交互
+- 轨道的点击区沿交叉轴扩到整行（局部参数 `hit-size`，默认 `32px`），点在轨道附近即可调整值，不改变布局。
+- 提示：鼠标悬停、拖动时显示；键盘聚焦（`:focus-visible`）或按方向键时显示，失焦收起；鼠标点按获得的焦点不显示。触屏没有悬停，只在按住拖动时显示，松开后收起（只点按不拖动同样收起）。
+- 悬停放大只在支持悬停的设备上生效（`@media (hover: hover)`），触屏点按后不会停在放大状态。
+- 提示不挂到 body，按内容宽度单行排版；最大宽度仍按视口限制。
+
 ### 键盘与无障碍
 滑块聚焦后：方向键按视觉方向移动一步（分段时用当前段的步长，`step` 为 `null` 时跳到相邻标签）；`PageUp` / `PageDown` 移动十步；`Home` / `End` 移到相邻滑块或边界。每次按键依次触发 `change`、`update:modelValue`、`after-change`。
 
@@ -303,6 +309,20 @@ const marks = { 0: '0', 25: '25', 50: '50', 75: '75', 100: '100' };
 | --- | --- | --- |
 | track-size | 轨道与选中条的粗细；标签、刻度、滑块随之居中 | `2px` |
 | thumb-size | 滑块直径；也决定可拖动选中条的命中高度和垂直模式的上下留白 | `12px` |
+| thumb-border | 滑块边框 | `2px solid` 主色 |
+| thumb-shadow | 滑块阴影 | `none` |
+| thumb-active-transform | 悬停、拖动时滑块的变换 | `scale(1.17)` |
+| thumb-active-shadow | 悬停、拖动时滑块的阴影 | `0 2px 5px` color-shadow-fixed |
+| hit-size | 轨道点击区在交叉轴上的尺寸 | `32px` |
+| min-height | 水平滑块的最小高度 | `32px` |
+| vertical-height | 垂直滑块的高度 | `200px` |
+| tick-dot-size | `ticks="dot"` 的圆点直径 | `4px` |
+| mark-dot-size | 标签圆点直径 | `8px` |
+| mark-dot-border-width | 标签圆点的边框宽度；为直径的一半时是实心圆点 | `2px` |
+| mark-font-size / mark-line-height | 标签文字的字号 / 行高 | `12px` / `1` |
+| mark-gap | 标签文字与滑块外侧的距离 | `4px` |
+| marked-padding-bottom | 有标签时底部预留的高度 | `8px` |
+| input-width / input-gap | 输入框的宽度 / 与轨道的间距 | `80px` / `20px` |
 
 ## API
 
@@ -355,4 +375,19 @@ const marks = { 0: '0', 25: '25', 50: '50', 75: '75', 100: '100' };
 
 ### 移动端
 
-`MSlider` 从 `@deot/vc` 导入，与 `Slider` 共用实现、属性和事件，支持触摸拖动；滑块和可拖动的选中条设置了 `touch-action: none`，垂直拖动时页面不会跟着滚动。
+`MSlider` 从 `@deot/vc` 导入，与 `Slider` 的属性、事件、插槽、结构相同，根节点另有标记类 `.vcm-slider`，结构样式、颜色与主题参数共用；`showInput` 的输入框为 `MInputNumber`。支持触摸拖动；滑块和可拖动的选中条设置了 `touch-action: none`，垂直拖动时页面不会跟着滚动。
+
+尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；移动端样式只在 `.vcm-slider` 上覆盖上面的局部参数（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 行 | 上下内边距 22（11）、左右 32（16），首尾滑块不超出容器；行高 48（24） |
+| 轨道 | 粗 4（2），点击区 64（32） |
+| 滑块 | 直径 48（24），白底、阴影 `0 2px 8px rgb(0 0 0 / 10%)`，无边框，悬停、拖动不放大 |
+| 标签 | 圆点 12（6）实心；文字 28 / 40（14 / 20），距轨道 34（17）；有标签时底部内边距 70（35） |
+| 刻度 | `ticks="dot"` 圆点 8（4） |
+| 提示 | 字号 24 / 34（12 / 17），内边距 16 24（8 12），圆角 8（4） |
+| 垂直 | 高 400（200） |
+| 输入框 | 宽 220（110），与轨道间距 24（12） |
+
+提示的尺寸通过 Popover 的局部参数（`--vc-popover-wrapper-*`）设置：提示不挂到 body，在 `.vcm-slider` 上设置即可继承。
