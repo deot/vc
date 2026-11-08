@@ -1,4 +1,5 @@
 @use '../style/helper' as *;
+@use '../style/shared/choice-types' as *;
 
 $component-name: vc-checkbox-group;
 
@@ -17,3 +18,12 @@ $component-name: vc-checkbox-group;
 		align-items: flex-start;
 	}
 }
+
+// 分组样式：与 RadioGroup 相同的外观，尺寸变量（--vc-checkbox-*）由各项的 is-<size> 提供，见checkbox.scss
+.#{$component-name} {
+	&.is-button, &.is-card, &.is-capsule, &.is-text, &.is-round {
+		display: inline-flex;
+	}
+}
+
+@include choice-group-types($component-name, vc-checkbox, checkbox-group, checkbox);

@@ -1,4 +1,5 @@
 @use '../style/helper' as *;
+@use '../style/shared/segmented' as *;
 
 $color-contrast-light: varfix(color-contrast-light, checkbox);
 $color-error: varfix(color-error, checkbox);
@@ -10,11 +11,20 @@ $background-color-lightest: varfix(background-color-lightest, checkbox);
 $border-color: varfix(border-color, checkbox);
 $component-name: vc-checkbox;
 
+// 尺寸：勾选框与分组样式（按钮、胶囊等）共用，取分组外观的尺寸表（见style/shared/segmented）；勾选框大小不随size变化
+@each $size, $values in $segmented-sizes {
+	.vc-checkbox.is-#{$size} {
+		@each $key, $value in $values {
+			--vc-checkbox-#{$key}: #{unitfix($value)};
+		}
+	}
+}
+
 @include block($component-name) {
 	display: inline-flex;
-	padding: unitfix(6) 0;
-	font-size: unitfix(12);
-	line-height: unitfix(20);
+	padding: calc((var(--vc-checkbox-height) - var(--vc-checkbox-line-height)) / 2) 0;
+	font-size: var(--vc-checkbox-font-size);
+	line-height: var(--vc-checkbox-line-height);
 	cursor: pointer;
 	box-sizing: border-box;
 	align-items: center;

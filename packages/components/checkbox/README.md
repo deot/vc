@@ -225,6 +225,58 @@ const selected = ref(['a']);
 ```
 :::
 
+### 分组样式与尺寸
+
+`CheckboxGroup` 的 `type` 与 `RadioGroup` 相同，适合筛选、规格等标签式的多选。设置后不再显示勾选框，整项即按钮，可以同时选中多项：
+
+- `default`：勾选框（默认）
+- `button`：灰底的独立按钮，选中时描边和文字变为主色
+- `card`：连体描边的卡片式按钮
+- `capsule`：灰底容器，选中项浮起
+- `text`：纯文字，项间以分隔线隔开，选中项使用主色
+- `round`：圆角胶囊形的独立项，选中时填充底色
+
+`size` 可选 `mini` / `small` / `medium` / `large`，高度依次为 24 / 28 / 32 / 36px；`large` 的字号为 14px，其余为 12px。勾选框本身的大小不随 size 变化。分组上的 `size` 作用于组内所有选项，选项自身的 `size` 优先。
+
+`max`、`disabled`、`vertical` 对分组样式同样生效；`shape` 和 `#icon` 插槽只作用于勾选框。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="checkbox-demo">
+		<CheckboxGroup v-for="type in types" :key="type" v-model="selected" :type="type" :size="size">
+			<Checkbox value="a" label="选项 A" />
+			<Checkbox value="b" label="选项 B" />
+			<Checkbox value="c" label="选项 C" />
+			<Checkbox value="d" label="不可选" disabled />
+		</CheckboxGroup>
+		<RadioGroup v-model="size" type="capsule">
+			<Radio v-for="item in sizes" :key="item" :value="item" :label="item" />
+		</RadioGroup>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Checkbox, CheckboxGroup, Radio, RadioGroup } from '@deot/vc';
+
+const types = ['button', 'card', 'capsule', 'text', 'round'];
+const sizes = ['mini', 'small', 'medium', 'large'];
+const selected = ref(['a', 'b']);
+const size = ref('medium');
+</script>
+
+<style scoped>
+.checkbox-demo {
+	display: grid;
+	gap: 12px;
+	justify-items: start;
+}
+</style>
+```
+:::
+
 ### 移动端
 
 `MCheckbox` 与 `MCheckboxGroup` 使用相同的数据和事件约定，默认为圆形。尺寸使用 750 稿单位，随 `--vc-rem` 缩放：
@@ -234,6 +286,12 @@ const selected = ref(['a']);
 - 组合横排间距 48；纵向排列时每行至少高 84。
 
 禁用时文字半透明。选中后再禁用的项显示为主色的浅底加白勾。移动端没有焦点光晕。
+
+`MCheckboxGroup` 的 `type`、`size` 与桌面端相同，外观与 `MRadioGroup` 一致：
+- 长度按 375 宽下的 px 换算成 750 稿（× 2），随 `--vc-rem` 缩放；
+- 四档高度在 375 宽下依次为 24 / 28 / 32 / 36（与桌面端相同），字号为 14 / 14 / 14 / 16；
+- `button`、`round` 选项多时换行，横竖间距相同；
+- 没有悬停样式和焦点光晕；`size` 只作用于分组样式，不改变勾选框。
 
 :::playground
 <!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
@@ -246,6 +304,9 @@ const selected = ref(['a']);
 			<MCheckbox value="option-c" label="选项 C（不可选）" disabled />
 		</MCheckboxGroup>
 		<MCheckbox v-model="agreed" shape="square" label="方形" />
+		<MCheckboxGroup v-model="tags" type="round" :max="3">
+			<MCheckbox v-for="item in tagOptions" :key="item" :value="item" :label="item" />
+		</MCheckboxGroup>
 	</div>
 </template>
 
@@ -255,6 +316,8 @@ import { MCheckbox, MCheckboxGroup } from '@deot/vc';
 
 const selectedOptions = ref(['option-a']);
 const agreed = ref(false);
+const tagOptions = ['标签一', '标签二', '较长的标签三', '标签四', '标签五'];
+const tags = ref(['标签一']);
 </script>
 
 <style scoped>
@@ -272,9 +335,9 @@ const agreed = ref(false);
 
 ## 主题与局部覆盖
 
-全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-checkbox-<参数>`、`--vc-m-checkbox-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-checkbox-<参数>`、`--vc-checkbox-group-<参数>`、`--vc-m-checkbox-<参数>`、`--vc-m-checkbox-group-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
 
-桌面端使用 checkbox，移动端使用 m-checkbox；两端选中、半选使用相同的主色参数。勾选标记使用可覆盖的 color-contrast-light。移动端禁用且选中时的底色由 color-primary 混合 50% 透明得到。
+桌面端勾选框使用 checkbox，分组样式使用 checkbox-group；移动端勾选框使用 m-checkbox，分组样式使用 m-checkbox-group（参数与 RadioGroup 的分组样式相同，见 [Radio](../radio/README.md#主题与局部覆盖)）。勾选框两端选中、半选使用相同的主色参数。勾选标记使用可覆盖的 color-contrast-light。移动端禁用且选中时的底色由 color-primary 混合 50% 透明得到。
 
 ### 全局
 
@@ -287,7 +350,11 @@ const agreed = ref(false);
 | color-primary-lighter | 焦点阴影（checkbox） | `rgba(45, 140, 240, 0.2)` |
 | background-color | 禁用勾选框背景（checkbox / m-checkbox） | 亮色：`#F5F6FA`；暗色：`#252B3A` |
 | background-color-lightest | 勾选框背景（checkbox / m-checkbox） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
-| border-color | 勾选框边框及禁用边框（checkbox / m-checkbox） | `#D5D9E1` |
+| border-color | 勾选框边框及禁用边框；卡片边框（checkbox / m-checkbox / checkbox-group / m-checkbox-group） | `#D5D9E1` |
+| color-dark-lightest | 分组样式文字（checkbox-group / m-checkbox-group） | 亮色：`#64758B`；暗色：`#C9C9C9` |
+| color-dark-extralight | 分组样式的禁用文字（checkbox-group / m-checkbox-group） | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-neutral-light | 胶囊容器背景、文字样式分隔线、圆角样式选中背景、按钮背景（checkbox-group / m-checkbox-group） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| foreground-color-inactive | 胶囊样式分隔线（checkbox-group / m-checkbox-group） | 亮色：`#C0C4CC`；暗色：`#737D8C` |
 
 ### 局部
 
@@ -305,6 +372,7 @@ const agreed = ref(false);
 | disabled | 禁用当前选项 | `boolean` | - | `false` |
 | indeterminate | 半选外观，仅控制样式 | `boolean` | - | `false` |
 | shape | 形状；不设时取组合的 shape，再取平台默认 | `string` | `square` / `circle` | Checkbox：`square`；MCheckbox：`circle` |
+| size | 尺寸；桌面端作用于勾选框的行高、字号及分组样式，移动端只作用于分组样式；不设时取分组的 size | `string` | `'mini'` / `'small'` / `'medium'` / `'large'` | `undefined`（按 `'medium'` 显示） |
 | checkedValue | 单独使用时选中对应的值 | `string \| number \| boolean` | - | `true` |
 | uncheckedValue | 单独使用时取消选中对应的值 | `string \| number \| boolean` | - | `false` |
 | name | 传递给原生 input 的 name | `string` | - | - |
@@ -332,6 +400,8 @@ const agreed = ref(false);
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | modelValue | 选中值数组，建议元素为 string、number 或 boolean | `unknown[]` | - | `[]` |
+| type | 组内选项的外观，见[分组样式与尺寸](#分组样式与尺寸) | `string` | `'default'` / `'button'` / `'card'` / `'capsule'` / `'text'` / `'round'` | `'default'` |
+| size | 组内选项的尺寸，选项自身的 size 优先 | `string` | `'mini'` / `'small'` / `'medium'` / `'large'` | `'medium'` |
 | disabled | 禁用全部选项 | `boolean` | - | `false` |
 | max | 最多可选数量，0 表示不限；达到上限后未选中的项禁用 | `number` | - | `0` |
 | vertical | 纵向排列，每项独占一行 | `boolean` | - | `false` |

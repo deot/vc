@@ -1,9 +1,11 @@
 @use '../../style/helper' as *;
 @use '../../style/shared/choice' as *;
+@use '../../style/shared/choice-types' as *;
 
 $component-name: vcm-checkbox;
 
 @include m-choice($component-name, m-checkbox);
+@include m-choice-type-sizes($component-name, m-checkbox);
 
 @include block($component-name) {
 	@include when(square) {

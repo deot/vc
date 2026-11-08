@@ -53,6 +53,32 @@
 			</MCheckboxGroup>
 		</div>
 
+		<div class="demo__title">分组样式（type）</div>
+		<div class="demo__card demo__stack">
+			<MCheckboxGroup v-for="type in types" :key="type" v-model="typed" :type="type">
+				<MCheckbox value="a" label="选项 1" />
+				<MCheckbox value="b" label="选项 2" />
+				<MCheckbox value="c" label="选项 3" />
+				<MCheckbox value="d" label="禁用" disabled />
+			</MCheckboxGroup>
+		</div>
+
+		<div class="demo__title">尺寸（size）</div>
+		<div class="demo__card demo__stack">
+			<MCheckboxGroup v-for="item in sizes" :key="item" v-model="typed" type="button" :size="item">
+				<MCheckbox value="a" :label="item" />
+				<MCheckbox value="b" label="选项 2" />
+				<MCheckbox value="c" label="选项 3" />
+			</MCheckboxGroup>
+		</div>
+
+		<div class="demo__title">筛选标签：换行与上限（type="round" max="3"）</div>
+		<div class="demo__card">
+			<MCheckboxGroup v-model="tags" type="round" :max="3">
+				<MCheckbox v-for="item in tagOptions" :key="item" :value="item" :label="item" />
+			</MCheckboxGroup>
+		</div>
+
 		<div class="demo__title">整组禁用</div>
 		<div class="demo__card">
 			<MCheckboxGroup :model-value="['a']" disabled>
@@ -94,6 +120,12 @@ const limited = ref(['b', 'c']);
 const square = ref(['a']);
 const custom = ref(['a', 'c']);
 
+const types = ['button', 'card', 'capsule', 'text', 'round'];
+const sizes = ['mini', 'small', 'medium', 'large'];
+const typed = ref(['a', 'b']);
+const tagOptions = ['标签一', '标签二', '较长的标签三', '标签四', '标签五', '标签六', '标签七'];
+const tags = ref(['标签一']);
+
 const all = [1, 2, 3, 4];
 const checked = ref([2, 4]);
 const isAll = computed(() => checked.value.length === all.length);
@@ -118,6 +150,12 @@ const handleCheckAll = () => {
 .demo__card {
 	padding: 12px 16px;
 	background: #fff;
+}
+
+.demo__stack {
+	display: grid;
+	gap: 12px;
+	justify-items: start;
 }
 
 .demo__icon {

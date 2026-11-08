@@ -56,6 +56,19 @@ export const useCheckbox = (props: Props, context: SetupContext<['update:modelVa
 		return props.shape || group.props?.shape || options.shape;
 	});
 
+	// 外观：分组的type，默认勾选框；其余为标签式，没有勾选框
+	const variant = computed(() => {
+		return group.props?.type || 'default';
+	});
+
+	const isPlain = computed(() => {
+		return variant.value === 'default';
+	});
+
+	const size = computed(() => {
+		return props.size || group.props?.size || 'medium';
+	});
+
 	const classes = computed(() => {
 		return {
 			'is-indeterminate': props.indeterminate,
@@ -63,7 +76,9 @@ export const useCheckbox = (props: Props, context: SetupContext<['update:modelVa
 			'is-disabled': isDisabled.value,
 			'is-focus': isFocus.value,
 			'is-error': !!formItem?.message?.value,
-			[`is-${shape.value}`]: true
+			[`is-${shape.value}`]: true,
+			[`is-${size.value}`]: true,
+			[`is-${variant.value}`]: !isPlain.value
 		};
 	});
 
@@ -114,6 +129,27 @@ export const useCheckbox = (props: Props, context: SetupContext<['update:modelVa
 
 	return () => {
 		const label = slots.default || computedLabel.value;
+		const input = (
+			<input
+				checked={checked.value}
+				name={props.name}
+				disabled={isDisabled.value}
+				type="checkbox"
+				class={`${name}__input`}
+				onChange={handleChange}
+				onFocus={handleFocus}
+				onBlur={handleBlur}
+			/>
+		);
+		// 按钮、胶囊等分组样式：没有勾选框，整项即按钮
+		if (!isPlain.value) {
+			return (
+				<label class={[classes.value, name]}>
+					{ input }
+					<Customer wrap tag="span" class={`${name}__label`} render={label} />
+				</label>
+			);
+		}
 		const hasLabel = hasCustomerValue(label);
 		// 选项自身的图标插槽优先，其次是分组的
 		const icon = slots.icon || group.slots?.icon;
@@ -129,15 +165,7 @@ export const useCheckbox = (props: Props, context: SetupContext<['update:modelVa
 									</span>
 								)
 					}
-					<input
-						checked={checked.value}
-						name={props.name}
-						disabled={isDisabled.value}
-						type="checkbox"
-						onChange={handleChange}
-						onFocus={handleFocus}
-						onBlur={handleBlur}
-					/>
+					{ input }
 				</span>
 				{ hasLabel && (<Customer tag="span" render={label} />) }
 			</label>

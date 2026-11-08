@@ -404,3 +404,55 @@ describe('icon slot', () => {
 		expect(items[1].find('.own-icon').exists()).toBe(true);
 	});
 });
+
+describe('type / size', () => {
+	it('默认：勾选框外观，size 为 medium', () => {
+		const wrapper = mount(() => (<CheckboxGroup v-slots={{ default: () => (<Checkbox value="a" />) }} />));
+		const item = wrapper.find('.vc-checkbox');
+		expect(item.classes()).toContain('is-medium');
+		expect(item.find('.vc-checkbox__border').exists()).toBe(true);
+		expect(wrapper.classes()).not.toContain('is-default');
+	});
+
+	it('分组样式：没有勾选框，整项即按钮，可多选', async () => {
+		const onChange = vi.fn();
+		const wrapper = mount(() => (
+			<MCheckboxGroup
+				type="round"
+				modelValue={['a']}
+				onChange={onChange}
+				v-slots={{ default: () => [<MCheckbox value="a" label="A" />, <MCheckbox value="b" label="B" />] }}
+			/>
+		));
+		expect(wrapper.classes()).toContain('is-round');
+		const items = wrapper.findAll('.vcm-checkbox');
+		expect(items[0].classes()).toContain('is-round');
+		expect(items[0].find('.vcm-checkbox__border').exists()).toBe(false);
+		expect(items[0].find('.vcm-checkbox__label').text()).toBe('A');
+		expect(items[0].find('input').classes()).toContain('vcm-checkbox__input');
+
+		await wrapper.findAll('input')[1].trigger('change');
+		expect(onChange).toHaveBeenCalledWith(['a', 'b'], expect.anything(), expect.any(Function));
+	});
+
+	it('分组样式不渲染 #icon 插槽', () => {
+		const wrapper = mount(() => (
+			<CheckboxGroup type="button" v-slots={{ icon: () => (<i class="icon" />), default: () => (<Checkbox value="a" />) }} />
+		));
+		expect(wrapper.find('.icon').exists()).toBe(false);
+	});
+
+	it('size：选项自身优先，其次分组', () => {
+		const wrapper = mount(() => (
+			<CheckboxGroup
+				size="small"
+				type="button"
+				v-slots={{ default: () => [<Checkbox value="a" />, <Checkbox value="b" size="large" />] }}
+			/>
+		));
+		const items = wrapper.findAll('.vc-checkbox');
+		expect(items[0].classes()).toContain('is-small');
+		expect(items[1].classes()).toContain('is-large');
+		expect(mount(() => (<Checkbox size="mini" />)).classes()).toContain('is-mini');
+	});
+});

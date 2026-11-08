@@ -4,6 +4,9 @@ import { valueOrBooleanType } from '../customer/customer-props';
 export const CHECKBOX_SHAPES = ['circle', 'square'] as const;
 export type CheckboxShape = typeof CHECKBOX_SHAPES[number];
 
+export const CHECKBOX_SIZES = ['mini', 'small', 'medium', 'large'] as const;
+export type CheckboxSize = typeof CHECKBOX_SIZES[number];
+
 export const props = {
 	disabled: {
 		type: Boolean,
@@ -33,6 +36,13 @@ export const props = {
 	shape: {
 		type: String as PropType<CheckboxShape>,
 		validator: (v: string) => CHECKBOX_SHAPES.includes(v as any)
+	},
+	/**
+	 * 不设时取分组的size，再兜底为medium
+	 */
+	size: {
+		type: String as PropType<CheckboxSize>,
+		validator: (v: string) => CHECKBOX_SIZES.includes(v as any)
 	},
 	// 原生 `name` 属性
 	name: String,

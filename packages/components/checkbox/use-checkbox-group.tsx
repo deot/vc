@@ -12,6 +12,13 @@ export const useCheckboxGroup = (props: Props, context: SetupContext<['update:mo
 
 	const currentValue = ref<any>([]);
 
+	const classes = computed(() => {
+		return {
+			'is-vertical': props.vertical,
+			[`is-${props.type}`]: props.type !== 'default'
+		};
+	});
+
 	// 达到上限：未选中的项不可再选
 	const isFull = computed(() => {
 		return props.max > 0 && currentValue.value.length >= props.max;
@@ -60,7 +67,7 @@ export const useCheckboxGroup = (props: Props, context: SetupContext<['update:mo
 	return () => {
 		if (props.styleless) return slots.default?.();
 		return (
-			<div class={[{ 'is-vertical': props.vertical }, name]}>
+			<div class={[classes.value, name]}>
 				{ slots.default?.() }
 			</div>
 		);

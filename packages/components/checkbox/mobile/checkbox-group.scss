@@ -1,2 +1,9 @@
 @use '../../style/shared/choice' as *;
-@include m-choice-group(vcm-checkbox-group, vcm-checkbox);
+@use '../../style/shared/choice-types' as *;
+
+$component-name: vcm-checkbox-group;
+$item: vcm-checkbox;
+
+// 勾选框外观：与 MRadioGroup 相同；竖排行高不作用于分组样式的项
+@include m-choice-group($component-name, $item, ':not(.is-button, .is-card, .is-capsule, .is-text, .is-round)');
+@include m-choice-group-types($component-name, $item, m-checkbox-group, m-checkbox);
