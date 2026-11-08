@@ -1,0 +1,25 @@
+@use '../../style/helper' as *;
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放），375 宽下：圆角 8px，字号 14px、行高 1.4
+// 标题栏高 46px（标题 16px 加粗、行高 22px，上下内边距 12px）、左右内边距 16px；标题图标与文字间距 8px
+// 附加内容在标题右侧、间距 8px，与标题行垂直居中；主体内边距默认 16px（padding 属性，750 稿）
+// 结构与颜色沿用 ../style.scss，这里只覆盖局部变量（与两端样式的加载顺序无关）
+@include block(vcm-card) {
+	@include localvars(card, (
+		font-size: remfix(28),
+		radius: remfix(16),
+		header-padding: remfix(24) remfix(32),
+		title-font-size: remfix(32),
+		title-line-height: remfix(44),
+		icon-gap: remfix(16),
+		extra-top: remfix(24),
+		extra-right: remfix(32),
+		extra-gap: remfix(16),
+		// 不设悬停浮起阴影：触屏点击后 :hover 会保持
+		transition: none,
+		box-shadow-floating: none
+	));
+
+	// 桌面端不设行高（继承），这里直接设置
+	line-height: 1.4;
+}

@@ -1,3 +1,7 @@
-import { Card } from '.';
+import { MCard } from './mobile/card.tsx';
+import './style.scss';
+import './mobile/style.scss';
 
-export const MCard = Card;
+export {
+	MCard
+};

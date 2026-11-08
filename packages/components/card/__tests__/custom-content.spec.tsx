@@ -26,7 +26,7 @@ describe('title', () => {
 	it('title 插槽仍然替换整个标题', () => {
 		const wrapper = mount(() => (<Card title="title" v-slots={{ title: () => (<i class="slot">slot</i>) }} />));
 
-		expect(wrapper.find('.vc-card__header > .slot').exists()).toBe(true);
+		expect(wrapper.find('.vc-card__header > .vc-card__title > .slot').exists()).toBe(true);
 		expect(wrapper.find('.vc-card__header p').exists()).toBe(false);
 	});
 });

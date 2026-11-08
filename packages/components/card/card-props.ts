@@ -1,4 +1,4 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
 import { valueType } from '../customer/customer-props';
 
 export const props = {
@@ -10,8 +10,9 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
+	// 数字为 px（MCard 为 750 稿），字符串为 CSS 长度
 	padding: {
-		type: Number,
+		type: [Number, String] as PropType<number | string>,
 		default: 16
 	},
 	title: {

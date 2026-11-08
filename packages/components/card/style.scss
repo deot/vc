@@ -1,3 +1,4 @@
+@use 'sass:map';
 @use '../style/helper' as *;
 
 $color-dark: varfix(color-dark, card);
@@ -5,16 +6,47 @@ $color-neutral-light: varfix(color-neutral-light, card);
 $background-color-lightest: varfix(background-color-lightest, card);
 $box-shadow: varfix(box-shadow, card);
 $box-shadow-floating: varfix(box-shadow-floating, card);
-$component-name: vc-card;
-$border-radius: unitfix(4);
 
-@include block($component-name) {
+// 桌面端尺寸：font-size（根节点）、radius、header-padding、title-font-size / title-line-height（标题一行高）、
+// icon-gap（标题图标与文字的间距）、extra-gap（附加内容与标题的间距）、extra-top / extra-right（无标题时附加内容位于右上角的位置）、
+// transition（悬停浮起阴影的过渡；阴影为主题参数 box-shadow-floating）
+// 写成局部变量 --vc-card-<键>（默认值为下表），MCard 在 .vcm-card 上覆盖（mobile/style.scss）
+$sizes: (
+	font-size: unitfix(14),
+	radius: unitfix(4),
+	header-padding: unitfix(14) unitfix(16),
+	title-font-size: unitfix(14),
+	title-line-height: unitfix(20),
+	icon-gap: unitfix(8),
+	extra-top: unitfix(14),
+	extra-right: unitfix(16),
+	extra-gap: unitfix(8),
+	transition: all .2s ease-in-out
+);
+
+@function v($key) {
+	$value: map.get($sizes, $key);
+
+	@if not $value {
+		@return null;
+	}
+
+	@return localfix(card, $key, $value);
+}
+
+$radius: v(radius);
+$title-line-height: v(title-line-height);
+
+@include block(vc-card) {
 	position: relative;
-	font-size: unitfix(14);
+	font-size: v(font-size);
+	line-height: v(line-height);
 	background: $background-color-lightest;
-	border-radius: $border-radius;
+	border-radius: $radius;
 	box-sizing: border-box;
-	transition: all .2s ease-in-out;
+
+	// 悬停浮起阴影；MCard 关闭（触屏点击后 :hover 会保持）
+	transition: v(transition);
 
 	&:hover {
 		box-shadow: $box-shadow-floating;
@@ -25,7 +57,7 @@ $border-radius: unitfix(4);
 	}
 
 	@include when(border) {
-		@include common-border-1px('', $color-neutral-light, $border-radius);
+		@include common-border-1px('', $color-neutral-light, $radius);
 
 		&:hover::after {
 			border-color: $color-neutral-light;
@@ -36,31 +68,59 @@ $border-radius: unitfix(4);
 		box-shadow: $box-shadow;
 	}
 
+	// 有标题时附加内容在标题栏内，排在标题右侧，长标题省略而不被遮挡
 	@include element(header) {
 		@include common-border-1px(bottom, $color-neutral-light);
 
 		& {
-			padding: unitfix(14) unitfix(16);
+			display: flex;
+			padding: v(header-padding);
 			line-height: 1;
+			align-items: center;
 		}
 
+		> .vc-card__extra {
+			margin-left: v(extra-gap);
+			flex-shrink: 0;
+		}
+	}
+
+	// 标题插槽内的 p 同样适用（附加内容在标题栏内，不受影响）
+	@include element(title) {
+		min-width: 0;
+		flex: 1;
+
+		// overflow: hidden 的 inline-block 基线落在底边，行盒会在下方多出字体的下行高度，顶部对齐去掉
 		p {
 			display: inline-block;
 			width: 100%;
-			height: unitfix(20);
+			height: $title-line-height;
 			overflow: hidden;
-			font-size: unitfix(14);
+			font-size: v(title-font-size);
 			font-weight: 700;
-			line-height: unitfix(20);
+			line-height: $title-line-height;
 			color: $color-dark;
 			text-overflow: ellipsis;
 			white-space: nowrap;
+			vertical-align: top;
 		}
 	}
-	
+
+	@include element(icon) {
+		margin-right: v(icon-gap);
+	}
+
+	// 附加内容固定为标题一行高并居中，较高的内容（如按钮）占用内边距，不撑高标题栏
 	@include element(extra) {
+		display: flex;
+		height: $title-line-height;
+		align-items: center;
+	}
+
+	// 无标题时位于右上角，与有标题时的位置一致
+	> .vc-card__extra {
 		position: absolute;
-		top: unitfix(14);
-		right: unitfix(16);
+		top: v(extra-top);
+		right: v(extra-right);
 	}
 }

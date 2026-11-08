@@ -1,6 +1,6 @@
 ## 卡片（Card）
 
-承载标题、操作和主体内容的基础容器。`MCard` 是 `Card` 的移动端入口别名，两者使用相同的属性和插槽。
+承载标题、操作和主体内容的基础容器。移动端入口导出的 `MCard` 与 `Card` 的属性和插槽相同，尺寸按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
 
 ### 何时使用
 
@@ -53,7 +53,7 @@ import { Card } from '@deot/vc';
 
 ### 标题与额外内容
 
-通过 `title` 设置文字标题，或使用 `title` 插槽完全自定义标题；`extra` 插槽显示在右上角。提供 `title` 插槽时，不再渲染 `title` 和 `icon`。
+通过 `title` 设置文字标题，或使用 `title` 插槽完全自定义标题；`extra` 插槽显示在右上角：有标题时位于标题栏内、排在标题右侧，与标题行垂直居中，标题过长时省略而不被遮挡；较高的内容（如按钮）占用标题栏的内边距，不撑高标题栏。`icon` 与标题文字间距 `8px`。提供 `title` 插槽时，不再渲染 `title` 和 `icon`。
 
 :::playground
 <!--
@@ -232,6 +232,41 @@ const handleIncreasePadding = () => {
 ```
 :::
 
+## 移动端
+
+`MCard` 的属性、插槽、结构与 `Card` 相同，根节点另有标记类 `.vcm-card`，结构样式、颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 卡片 | 字号 28（14），行高 1.4，圆角 16（8） |
+| 标题栏 | 标题字号 32（16）加粗，行高 44（22），内边距 24（12） 32（16），高 92（46） |
+| 标题图标 | 与标题文字间距 16（8） |
+| 附加内容 | 与标题间距 16（8），与标题行垂直居中；无标题时距顶 24（12）、距右 32（16） |
+| 主体 | `padding` 为 750 稿长度，默认 32（16） |
+
+与桌面端的差异：
+
+- 没有悬停浮起阴影：触屏点击后 `:hover` 会保持。`shadow` 的静态阴影不变。
+
+边框保持 1px（高分屏 0.5px），不随 `--vc-rem` 缩放。
+
+两端的尺寸都写成局部变量 `--vc-card-<键>`，桌面端的默认值为 px，移动端在 `.vcm-card` 上覆盖，与样式的加载顺序无关。键为 `font-size`、`radius`、`header-padding`、`title-font-size`、`title-line-height`、`icon-gap`、`extra-gap`、`extra-top`、`extra-right`、`transition`；`MCard` 另把主题参数 `--vc-card-box-shadow-floating` 设为 `none`。
+
+```vue
+<template>
+	<MCard title="条目信息">
+		<template #extra>
+			<span>查看全部</span>
+		</template>
+		条目状态：已完成
+	</MCard>
+</template>
+
+<script setup>
+import { MCard } from '@deot/vc';
+</script>
+```
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-card-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
@@ -258,7 +293,7 @@ const handleIncreasePadding = () => {
 | --- | --- | --- | --- | --- |
 | border | 是否显示边框 | `boolean` | - | `true` |
 | shadow | 是否显示静态阴影 | `boolean` | - | `false` |
-| padding | 主体区域的内边距，单位为 `px` | `number` | - | `16` |
+| padding | 主体区域的内边距：数字单位为 `px`（`MCard` 为 750 稿长度），字符串为 CSS 长度 | `number \| string` | - | `16`；`MCard` 为 `32` |
 | title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | icon | 文字标题前的图标类型；提供 `title` 插槽时不生效 | `string` | - | - |
 
@@ -268,4 +303,4 @@ const handleIncreasePadding = () => {
 | --- | --- | --- |
 | default | 卡片主体内容 | - |
 | title | 自定义标题；优先于 `title` 和 `icon` | - |
-| extra | 右上角的额外内容 | - |
+| extra | 右上角的额外内容；有标题时位于标题栏内、标题右侧 | - |
