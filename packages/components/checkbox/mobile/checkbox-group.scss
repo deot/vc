@@ -1,12 +1,2 @@
-@use '../../style/helper' as *;
-
-$component-name: vcm-checkbox-group;
-
-@include block($component-name) {
-	font-size: remfix(32);
-
-	// 组内的选项之间留出间距；单独使用时不带多余的间距
-	> .vcm-checkbox {
-		margin-right: remfix(24);
-	}
-}
+@use '../../style/shared/choice' as *;
+@include m-choice-group(vcm-checkbox-group, vcm-checkbox);

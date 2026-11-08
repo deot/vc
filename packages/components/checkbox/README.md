@@ -227,19 +227,25 @@ const selected = ref(['a']);
 
 ### 移动端
 
-`MCheckbox` 与 `MCheckboxGroup` 使用相同的数据和事件约定，选中色与桌面端一致，使用主色参数。`styleless` 可省略组合外层容器，便于自定义布局。
+`MCheckbox` 与 `MCheckboxGroup` 使用相同的数据和事件约定，默认为圆形。尺寸使用 750 稿单位，随 `--vc-rem` 缩放：
+
+- 图标盒 40，其中圆形直径 36，方形边长 32、圆角 4；
+- 图标与文字间距 16，字号 32，行高 1.4；
+- 组合横排间距 48；纵向排列时每行至少高 84。
+
+禁用时文字半透明。选中后再禁用的项显示为主色的浅底加白勾。移动端没有焦点光晕。
 
 :::playground
 <!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
 ```vue
 <template>
 	<div class="checkbox-demo">
-		<MCheckboxGroup v-model="selectedOptions" styleless>
+		<MCheckboxGroup v-model="selectedOptions" vertical>
 			<MCheckbox value="option-a" label="选项 A" />
 			<MCheckbox value="option-b" label="选项 B" />
 			<MCheckbox value="option-c" label="选项 C（不可选）" disabled />
 		</MCheckboxGroup>
-		<p>已选值：{{ selectedOptions }}</p>
+		<MCheckbox v-model="agreed" shape="square" label="方形" />
 	</div>
 </template>
 
@@ -248,6 +254,7 @@ import { ref } from 'vue';
 import { MCheckbox, MCheckboxGroup } from '@deot/vc';
 
 const selectedOptions = ref(['option-a']);
+const agreed = ref(false);
 </script>
 
 <style scoped>
@@ -267,7 +274,7 @@ const selectedOptions = ref(['option-a']);
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-checkbox-<参数>`、`--vc-m-checkbox-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
 
-桌面端使用 checkbox，移动端使用 m-checkbox；两端选中、半选及焦点使用相同的主色参数。勾选标记使用可覆盖的 color-contrast-light。
+桌面端使用 checkbox，移动端使用 m-checkbox；两端选中、半选使用相同的主色参数。勾选标记使用可覆盖的 color-contrast-light。移动端禁用且选中时的底色由 color-primary 混合 50% 透明得到。
 
 ### 全局
 
@@ -275,9 +282,9 @@ const selectedOptions = ref(['option-a']);
 | --- | --- | --- |
 | color-contrast-light | 勾选标记（checkbox / m-checkbox） | `#FFFFFF`（亮暗主题相同） |
 | color-error | 校验错误边框（checkbox / m-checkbox） | `#F53F3F` |
-| color-light-extradeep | 禁用且选中时的勾选标记（checkbox / m-checkbox） | 亮色：`#B9B9B9`；暗色：`#F8F8F8` |
-| color-primary | 选中及半选背景、边框（checkbox / m-checkbox） | `#456CF6` |
-| color-primary-lighter | 焦点阴影（checkbox / m-checkbox） | `rgba(45, 140, 240, 0.2)` |
+| color-light-extradeep | 禁用且选中时的勾选标记（checkbox） | 亮色：`#B9B9B9`；暗色：`#F8F8F8` |
+| color-primary | 选中及半选背景、边框；移动端禁用且选中的浅底（checkbox / m-checkbox） | `#456CF6` |
+| color-primary-lighter | 焦点阴影（checkbox） | `rgba(45, 140, 240, 0.2)` |
 | background-color | 禁用勾选框背景（checkbox / m-checkbox） | 亮色：`#F5F6FA`；暗色：`#252B3A` |
 | background-color-lightest | 勾选框背景（checkbox / m-checkbox） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 | border-color | 勾选框边框及禁用边框（checkbox / m-checkbox） | `#D5D9E1` |

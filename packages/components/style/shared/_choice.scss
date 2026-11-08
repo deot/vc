@@ -1,0 +1,193 @@
+@use 'sass:math';
+@use '../helper' as *;
+
+/**
+ * 移动端勾选项：MCheckbox 与 MRadio 共用一套外观（750 稿单位）
+ *
+ * 图标盒 40，指示器居中其中；与文字间距 16，字号 32；禁用时文字半透明；无焦点光晕
+ * 参数
+ * 	- $name：块名，如 vcm-checkbox、vcm-radio
+ * 	- $component：主题变量的命名空间（varfix），如 m-checkbox、m-radio
+ */
+
+// 圆形指示器的直径；方形另见 m-choice-indicator 的调用
+$m-choice-circle: 36;
+
+// 指示器尺寸、圆角与居中的勾（勾为旋转后的 L 形，视觉中心比几何中心低，整体上移 2）
+@mixin m-choice-indicator($name, $size, $radius) {
+	.#{$name}__border {
+		width: remfix($size);
+		height: remfix($size);
+		border-radius: $radius;
+
+		&::after {
+			border-radius: $radius;
+		}
+	}
+
+	.#{$name}__inner {
+		top: remfix(math.div($size - 20, 2) - 2);
+		left: remfix(math.div($size - 12, 2));
+	}
+}
+
+@mixin m-choice($name, $component) {
+	$color-contrast-light: varfix(color-contrast-light, $component);
+	$color-error: varfix(color-error, $component);
+	$color-primary: varfix(color-primary, $component);
+	$background-color: varfix(background-color, $component);
+	$background-color-lightest: varfix(background-color-lightest, $component);
+	$border-color: varfix(border-color, $component);
+
+	// 禁用且选中：主色的浅底，勾仍为白色
+	$color-primary-disabled: color-mix(in srgb, #{$color-primary} 50%, transparent);
+
+	@include block($name) {
+		position: relative;
+		display: inline-flex;
+		font-size: remfix(32);
+		line-height: 1.4;
+		cursor: pointer;
+		align-items: center;
+		-webkit-tap-highlight-color: transparent;
+
+		@include text-strut;
+
+		@include element(wrapper) {
+			position: relative;
+			display: inline-flex;
+			width: remfix(40);
+			height: remfix(40);
+			flex-shrink: 0;
+			cursor: pointer;
+			align-items: center;
+			justify-content: center;
+
+			@include when(sibling, true) {
+				margin-right: remfix(16);
+			}
+
+			input {
+				position: absolute;
+				inset: 0;
+				z-index: 1;
+				width: 100%;
+				height: 100%;
+				margin: 0;
+				cursor: pointer;
+				opacity: 0;
+
+				&[disabled] {
+					cursor: not-allowed;
+				}
+			}
+		}
+
+		@include element(border) {
+			position: relative;
+			display: block;
+			background-color: $background-color-lightest;
+			box-sizing: border-box;
+			transition: background-color .2s;
+
+			@include common-border-1px('', $border-color, 50%);
+
+			&::after, &::before {
+				transition: border-color .2s;
+			}
+		}
+
+		@include element(inner) {
+			position: absolute;
+			display: table;
+			width: remfix(12);
+			height: remfix(20);
+			border: remfix(4) solid $color-contrast-light;
+			border-collapse: initial;
+			border-top: 0;
+			border-left: 0;
+			content: '';
+			transform: rotate(45deg) scale(0);
+			box-sizing: border-box;
+			transition: all .2s ease-in-out;
+		}
+
+		@include m-choice-indicator($name, $m-choice-circle, 50%);
+
+		@include when(checked) {
+			@include element(border) {
+				background-color: $color-primary;
+
+				&::after, &::before {
+					border-color: $color-primary;
+				}
+			}
+
+			@include element(inner) {
+				transform: rotate(45deg) scale(1);
+			}
+		}
+
+		@include when(error) {
+			@include element(border) {
+				&::after, &::before {
+					border-color: $color-error;
+				}
+			}
+		}
+
+		@include when(disabled) {
+			cursor: not-allowed;
+
+			.#{$name}__wrapper ~ * {
+				opacity: .5;
+			}
+
+			@include element(border) {
+				background-color: $background-color;
+
+				&::after, &::before {
+					border-color: $border-color;
+				}
+			}
+
+			&.is-checked, &.is-indeterminate {
+				@include element(border) {
+					background-color: $color-primary-disabled;
+
+					&::after, &::before {
+						border-color: transparent;
+					}
+				}
+			}
+		}
+	}
+}
+
+/**
+ * 移动端勾选项分组：横排间距 48，竖排每项独占一行，行高 84
+ * 	- $name：块名，如 vcm-checkbox-group
+ * 	- $item：项的块名，如 vcm-checkbox
+ */
+@mixin m-choice-group($name, $item) {
+	@include block($name) {
+		font-size: remfix(32);
+
+		// 组内的选项之间留出间距；单独使用时不带多余的间距
+		> .#{$item} {
+			margin-right: remfix(48);
+		}
+
+		@include when(vertical) {
+			display: flex;
+			flex-direction: column;
+			align-items: stretch;
+
+			> .#{$item} {
+				display: flex;
+				min-height: remfix(84);
+				margin-right: 0;
+			}
+		}
+	}
+}

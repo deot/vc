@@ -1,5 +1,5 @@
 @use '../style/helper' as *;
-@use '../style/segmented' as *;
+@use '../style/shared/segmented' as *;
 
 $color-dark-lightest: varfix(color-dark-lightest, radio-group);
 $color-dark-extralight: varfix(color-dark-extralight, radio-group);
@@ -83,7 +83,7 @@ $padding-x: var(--vc-radio-padding-x);
 }
 
 
-// 按钮、胶囊、文字、圆角：外观在label上（见style/segmented），高度由label的行高决定
+// 按钮、胶囊、文字、圆角：外观在label上（见style/shared/segmented），高度由label的行高决定
 .vc-radio.is-button, .vc-radio.is-capsule, .vc-radio.is-text, .vc-radio.is-round {
 	.vc-radio__label {
 		display: block;

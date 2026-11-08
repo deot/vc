@@ -1,81 +1,78 @@
 <template>
-	<div style="display: flex; flex-direction: column;">
-		<!-- single -->
-		<MRadio v-model="isSelected" @change="handleChange">
-			{{ isSelected }}
-		</MRadio>
+	<div class="demo">
+		<div class="demo__title">默认</div>
+		<div class="demo__card">
+			<MRadio v-model="single" label="选项内容" />
+			<MRadio :model-value="true" label="选项内容" style="margin-left: 24px;" />
+		</div>
 
-		<!-- group -->
-		<MRadioGroup v-model="selectedOption">
-			<MRadio value="option-a" disabled>
-				<span>选项 A</span>
-			</MRadio>
-			<MRadio value="option-b">
-				<span>选项 B</span>
-			</MRadio>
-			<MRadio value="option-c">
-				<span>选项 C</span>
-			</MRadio>
-		</MRadioGroup>
-		<MRadioGroup v-model="selectedItem" vertical>
-			<MRadio value="条目 A" />
-			<MRadio value="条目 B" />
-			<MRadio value="条目 C" />
-		</MRadioGroup>
+		<div class="demo__title">禁用</div>
+		<div class="demo__card">
+			<MRadio disabled label="未选中禁用" />
+			<MRadio :model-value="true" disabled label="选中禁用" style="margin-left: 24px;" />
+		</div>
 
-		<MRadioGroup v-model="selectedGroup" type="button" @change="handleChange">
-			<MRadio value="分组 A" />
-			<MRadio value="分组 B" disabled />
-			<MRadio value="分组 C" />
-			<MRadio value="分组 D" />
-		</MRadioGroup>
-		<MForm
-			:model="formValidate"
-			:rules="ruleValidate"
-			:label-width="192"
-			style="padding-left: 56px; margin-top: 21px;"
-			@submit.prevent
-		>
-			<MFormItem prop="selectedItem" label="条目：">
-				<MRadioGroup v-model="formValidate.selectedItem">
-					<MRadio value="条目 A" />
-					<MRadio value="条目 B" />
-					<MRadio value="条目 C" />
+		<div class="demo__title">竖排分组（vertical）</div>
+		<div class="demo__card">
+			<MRadioGroup v-model="vertical" vertical>
+				<MRadio value="a" label="选项内容 1" />
+				<MRadio value="b" label="选项内容 2" />
+				<MRadio value="c" label="选项内容 3" />
+			</MRadioGroup>
+		</div>
+
+		<div class="demo__title">横排分组</div>
+		<div class="demo__card">
+			<MRadioGroup v-model="horizontal">
+				<MRadio value="a" label="选项 1" />
+				<MRadio value="b" label="选项 2" />
+				<MRadio value="c" label="选项 3" disabled />
+			</MRadioGroup>
+		</div>
+
+		<div class="demo__title">整组禁用</div>
+		<div class="demo__card">
+			<MRadioGroup model-value="a" disabled>
+				<MRadio value="a" label="选项 1" />
+				<MRadio value="b" label="选项 2" />
+			</MRadioGroup>
+		</div>
+
+		<div class="demo__title">表单中</div>
+		<MForm :model="form" @submit.prevent>
+			<MFormItem prop="value" label="选项">
+				<MRadioGroup v-model="form.value">
+					<MRadio value="a" label="选项 1" />
+					<MRadio value="b" label="选项 2" />
 				</MRadioGroup>
-			</MFormItem>
-			<MFormItem prop="selectedItem" label="条目：">
-				<MRadio value="条目 A" />
-			</MFormItem>
-			<MFormItem prop="input" label="条目：">
-				<MInput style="width: 300px;" />
 			</MFormItem>
 		</MForm>
 	</div>
 </template>
 <script setup>
-import { onUpdated, ref, reactive } from 'vue';
+import { ref, reactive } from 'vue';
 import { MRadio, MRadioGroup } from '../index.m';
 import { MForm, MFormItem } from '../../form/index.m';
-import { MInput } from '../../input/index.m';
 
-const isSelected = ref(false);
-const selectedOption = ref('option-a');
-const selectedItem = ref('条目 B');
-const selectedGroup = ref('分组 A');
-const formValidate = reactive({});
-const ruleValidate = reactive({});
-
-const handleChange = (a) => {
-	console.log(a);
-};
-
-onUpdated(() => {
-	console.log({
-		single: isSelected.value,
-		phone: selectedOption.value,
-		selectedItem: selectedItem.value,
-		city: selectedGroup.value
-	});
-});
-
+const single = ref(false);
+const vertical = ref('b');
+const horizontal = ref('b');
+const form = reactive({ value: 'a' });
 </script>
+<style scoped>
+.demo {
+	min-height: 100vh;
+	background: #f7f8fa;
+}
+
+.demo__title {
+	padding: 16px 16px 8px;
+	font-size: 14px;
+	color: #86909c;
+}
+
+.demo__card {
+	padding: 12px 16px;
+	background: #fff;
+}
+</style>

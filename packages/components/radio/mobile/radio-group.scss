@@ -1,23 +1,2 @@
-@use '../../style/helper' as *;
-
-$component-name: vcm-radio-group;
-
-@include block($component-name) {
-	display: inline-block;
-	font-size: remfix(32);
-	line-height: unset;
-
-	// 组内的选项之间留出间距；单独使用时不带多余的间距
-	> .vcm-radio {
-		margin-right: remfix(48);
-	}
-
-	@include when(vertical) {
-		// 纵向排列时每项独占一行，仍按 flex 让指示器与文字居中
-		.vcm-radio {
-			display: flex;
-			height: remfix(48);
-			line-height: remfix(48);
-		}
-	}
-}
+@use '../../style/shared/choice' as *;
+@include m-choice-group(vcm-radio-group, vcm-radio);

@@ -1,6 +1,6 @@
 @use 'sass:list';
 @use '../style/helper' as *;
-@use '../style/segmented' as *;
+@use '../style/shared/segmented' as *;
 @use './shared';
 
 $component-name: vc-tabs;
@@ -19,7 +19,7 @@ $height: var(--vc-tabs-height);
 $padding-x: var(--vc-tabs-padding-x);
 $item: '.#{$component-name}__item';
 
-// 尺寸：其余类型与Radio分组样式一致（见style/segmented），line为标签栏高度；medium为默认
+// 尺寸：其余类型与Radio分组样式一致（见style/shared/segmented），line为标签栏高度；medium为默认
 $line-sizes: (
 	mini: (height: 32, font-size: 12, line-height: 20),
 	small: (height: 36, font-size: 13, line-height: 20),
@@ -315,7 +315,7 @@ $gaps: (line: 12, button: 4, capsule: 3, text: 10, round: 8);
 		}
 	}
 
-	// 按钮、胶囊、文字、圆角：外观见style/segmented（与Radio分组一致），这里只定尺寸
+	// 按钮、胶囊、文字、圆角：外观见style/shared/segmented（与Radio分组一致），这里只定尺寸
 	@include when(button) {
 		@include element(item) {
 			height: calc(#{$height} - #{unitfix(6)});

@@ -1,92 +1,136 @@
 <template>
-	<div>
-		<MCheckbox v-model="isChecked">
-			{{ isChecked }}
-		</MCheckbox>
-		<MCheckboxGroup v-model="selectedOptions">
-			<MCheckbox value="option-a">
-				<span>选项 A</span>
-			</MCheckbox>
-			<MCheckbox value="option-b">
-				<span>选项 B</span>
-			</MCheckbox>
-			<MCheckbox value="option-c" disabled>
-				<span>选项 C</span>
-			</MCheckbox>
-			<MCheckbox value="option-d" disabled>
-				<span>选项 D</span>
-			</MCheckbox>
-		</MCheckboxGroup>
-		<MCheckboxGroup v-model="selectedItems">
-			<MCheckbox value="条目 B" />
-			<MCheckbox value="条目 A" />
-			<MCheckbox value="条目 C" />
-		</MCheckboxGroup>
+	<div class="demo">
+		<div class="demo__title">默认</div>
+		<div class="demo__card">
+			<MCheckbox v-model="single" label="选项内容" />
+			<MCheckbox :model-value="true" label="选项内容" style="margin-left: 24px;" />
+		</div>
 
-		<!-- indeterminate -->
-		<div style="border-bottom: 1px solid #e9e9e9;padding-bottom:6px;margin-bottom:6px;">
+		<div class="demo__title">禁用</div>
+		<div class="demo__card">
+			<MCheckbox disabled label="未选中禁用" />
+			<MCheckbox :model-value="true" disabled label="选中禁用" style="margin-left: 24px;" />
+		</div>
+
+		<div class="demo__title">竖排分组（vertical）</div>
+		<div class="demo__card">
+			<MCheckboxGroup v-model="vertical" vertical>
+				<MCheckbox value="a" label="选项内容 1" />
+				<MCheckbox value="b" label="选项内容 2" />
+				<MCheckbox value="c" label="选项内容 3" />
+			</MCheckboxGroup>
+		</div>
+
+		<div class="demo__title">横排分组</div>
+		<div class="demo__card">
+			<MCheckboxGroup v-model="horizontal">
+				<MCheckbox value="a" label="选项 1" />
+				<MCheckbox value="b" label="选项 2" />
+				<MCheckbox value="c" label="选项 3" disabled />
+			</MCheckboxGroup>
+		</div>
+
+		<div class="demo__title">最多可选两项（max）</div>
+		<div class="demo__card">
+			<MCheckboxGroup v-model="limited" :max="2" vertical>
+				<MCheckbox value="a" label="选项内容 1" />
+				<MCheckbox value="b" label="选项内容 2" />
+				<MCheckbox value="c" label="选项内容 3" />
+				<MCheckbox value="d" label="选项内容 4" />
+			</MCheckboxGroup>
+		</div>
+
+		<div class="demo__title">全选（indeterminate）</div>
+		<div class="demo__card">
 			<MCheckbox
 				:indeterminate="isIndeterminate"
-				:model-value="isAllChecked"
+				:model-value="isAll"
+				label="全选"
 				@click.prevent="handleCheckAll"
-			>
-				全选
-			</MCheckbox>
+			/>
+			<MCheckboxGroup v-model="checked" vertical>
+				<MCheckbox v-for="item in all" :key="item" :value="item" :label="`选项内容 ${item}`" />
+			</MCheckboxGroup>
 		</div>
-		<MCheckboxGroup v-model="checkedItems" @change="handleChange">
-			<MCheckbox value="条目 B" />
-			<MCheckbox value="条目 A" />
-			<MCheckbox value="条目 C" />
-		</MCheckboxGroup>
+
+		<div class="demo__title">整组禁用</div>
+		<div class="demo__card">
+			<MCheckboxGroup :model-value="['a']" disabled>
+				<MCheckbox value="a" label="选项 1" />
+				<MCheckbox value="b" label="选项 2" />
+			</MCheckboxGroup>
+		</div>
+
+		<div class="demo__title">方形（shape）</div>
+		<div class="demo__card">
+			<MCheckboxGroup v-model="square" shape="square">
+				<MCheckbox value="a" label="选项 1" />
+				<MCheckbox value="b" label="选项 2" />
+				<MCheckbox value="c" label="选项 3" indeterminate />
+			</MCheckboxGroup>
+		</div>
+
+		<div class="demo__title">自定义图标（#icon）</div>
+		<div class="demo__card">
+			<MCheckboxGroup v-model="custom">
+				<template #icon="{ checked: on, disabled }">
+					<span class="demo__icon" :class="{ 'is-on': on, 'is-disabled': disabled }">{{ on ? '★' : '☆' }}</span>
+				</template>
+				<MCheckbox value="a" label="选项 1" />
+				<MCheckbox value="b" label="选项 2" />
+				<MCheckbox value="c" label="选项 3" disabled />
+			</MCheckboxGroup>
+		</div>
 	</div>
 </template>
 <script setup>
-import { onUpdated, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { MCheckbox, MCheckboxGroup } from '../index.m';
 
-const isChecked = ref(true);
-const selectedOptions = ref(['option-b', 'option-c']);
-const selectedItems = ref(['条目 A']);
+const single = ref(false);
+const vertical = ref(['b']);
+const horizontal = ref(['b', 'c']);
+const limited = ref(['b', 'c']);
+const square = ref(['a']);
+const custom = ref(['a', 'c']);
 
-const isIndeterminate = ref(true);
-const isAllChecked = ref(false);
-const checkedItems = ref(['条目 B', '条目 C']);
+const all = [1, 2, 3, 4];
+const checked = ref([2, 4]);
+const isAll = computed(() => checked.value.length === all.length);
+const isIndeterminate = computed(() => checked.value.length > 0 && !isAll.value);
 
 const handleCheckAll = () => {
-	if (isIndeterminate.value) {
-		isAllChecked.value = false;
-	} else {
-		isAllChecked.value = !isAllChecked.value;
-	}
-	isIndeterminate.value = false;
-
-	if (isAllChecked.value) {
-		checkedItems.value = ['条目 B', '条目 A', '条目 C'];
-	} else {
-		checkedItems.value = [];
-	}
+	checked.value = isAll.value ? [] : [...all];
 };
-
-const handleChange = (data) => {
-	if (data.length === 3) {
-		isIndeterminate.value = false;
-		isAllChecked.value = true;
-	} else if (data.length > 0) {
-		isIndeterminate.value = true;
-		isAllChecked.value = false;
-	} else {
-		isIndeterminate.value = false;
-		isAllChecked.value = false;
-	}
-};
-
-onUpdated(() => {
-	console.log({
-		single: isChecked.value,
-		social: selectedOptions.value,
-		fruit: selectedItems.value,
-		checkAll: isAllChecked.value
-	});
-});
-
 </script>
+<style scoped>
+.demo {
+	min-height: 100vh;
+	background: #f7f8fa;
+}
+
+.demo__title {
+	padding: 16px 16px 8px;
+	font-size: 14px;
+	color: #86909c;
+}
+
+.demo__card {
+	padding: 12px 16px;
+	background: #fff;
+}
+
+.demo__icon {
+	font-size: 20px;
+	line-height: 1;
+	color: #c9cdd4;
+}
+
+.demo__icon.is-on {
+	color: #456cf6;
+}
+
+.demo__icon.is-disabled {
+	opacity: .5;
+}
+</style>
