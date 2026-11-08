@@ -1,0 +1,307 @@
+@use '../helper' as *;
+@use './segmented' as *;
+
+// 分组样式（按钮、卡片、胶囊、文字、圆角）的项与容器：Radio 与 Checkbox 的分组、两端共用
+// 外观由各项的 is-<type> 决定（分组的type，RadioButton固定为button），分组只负责排列与容器
+// 参数
+// 	- $group / $item：分组与项的块名，如 vc-radio-group / vc-radio、vcm-checkbox-group / vcm-checkbox
+// 	- $component：主题变量的命名空间（varfix），如 radio-group、m-checkbox-group
+// 	- $var：尺寸变量的前缀，读取 --vc-<var>-height / -font-size / -line-height / -padding-x，由各项的 is-<size> 提供
+// 	- $unit：长度单位，见 style/shared/segmented 的 segmented-length
+// 	- $hover：是否生成悬停与键盘焦点光晕；移动端为 false
+@mixin choice-group-types($group, $item, $component, $var, $unit: px, $hover: true) {
+	$color-dark-lightest: varfix(color-dark-lightest, $component);
+	$color-dark-extralight: varfix(color-dark-extralight, $component);
+	$color-error: varfix(color-error, $component);
+	$color-primary: varfix(color-primary, $component);
+	$color-primary-lighter: varfix(color-primary-lighter, $component);
+	$background-color: varfix(background-color, $component);
+	$background-color-lightest: varfix(background-color-lightest, $component);
+	$border-color: varfix(border-color, $component); // 卡片边框与输入框一致
+
+	// 选中且禁用：保留主色、降低不透明度；文字保持可读，描边更淡
+	$color-primary-disabled: color-mix(in srgb, #{$color-primary} 70%, transparent);
+	$color-primary-disabled-border: color-mix(in srgb, #{$color-primary} 50%, transparent);
+	$height: var(--vc-#{$var}-height);
+	$padding-x: var(--vc-#{$var}-padding-x);
+	$typed: '.#{$item}.is-button, .#{$item}.is-card, .#{$item}.is-capsule, .#{$item}.is-text, .#{$item}.is-round';
+	$labeled: '.#{$item}.is-button, .#{$item}.is-capsule, .#{$item}.is-text, .#{$item}.is-round';
+
+	@include block($group) {
+		// 卡片为连体按钮，纵向排列无效
+		@include when(card) {
+			flex-direction: row;
+			font-size: 0; // 去除间距
+		}
+
+		// 胶囊：灰底容器，选中项浮起
+		@include when(capsule) {
+			@include segmented-capsule-container($component, $unit);
+		}
+
+		@include when(text) {
+			align-items: center;
+		}
+	}
+
+	// 分组样式的项：没有圆点，整项即按钮；原生input透明覆盖整项，保留键盘操作
+	#{$typed} {
+		height: auto;
+		padding: 0;
+		margin: 0;
+		font-size: var(--vc-#{$var}-font-size);
+		line-height: 1; // 高度由各类型的label决定，避免对齐用的占位字符撑高
+		color: $color-dark-lightest;
+
+		&.is-disabled {
+			color: $color-dark-extralight;
+			cursor: not-allowed;
+		}
+
+		.#{$item}__input {
+			position: absolute;
+			inset: 0;
+			z-index: 1;
+			width: 100%;
+			height: 100%;
+			margin: 0;
+			cursor: inherit;
+			opacity: 0;
+		}
+	}
+
+
+	// 按钮、胶囊、文字、圆角：外观在label上（见style/shared/segmented），高度由label的行高决定
+	#{$labeled} {
+		.#{$item}__label {
+			display: block;
+			transition: color .2s ease-in-out, background-color .2s ease-in-out;
+		}
+
+		// 只响应键盘焦点
+		@if $hover {
+			.#{$item}__input:focus-visible + .#{$item}__label {
+				box-shadow: 0 0 0 unitfix(2) $color-primary-lighter;
+			}
+		}
+	}
+
+	// 按钮：可与圆点项混在同一组
+	.#{$item}.is-button {
+		padding: segmented-length(3, $unit) 0;
+
+		+ .#{$item}.is-button {
+			margin-left: segmented-length(4, $unit);
+		}
+
+		// 后面紧跟的圆点项与按钮之间，保持圆点项之间的间距
+		+ .#{$item}:not(.is-button) {
+			margin-left: segmented-length(24, $unit);
+		}
+
+		.#{$item}__label {
+			line-height: calc(#{$height} - #{segmented-length(6, $unit)});
+		}
+	}
+
+	@include segmented-button($component, '.#{$item}.is-button', '.#{$item}__label', '.is-checked', $unit, $hover);
+
+	.#{$item}.is-button.is-error .#{$item}__label {
+		color: $color-error;
+
+		&::before, &::after {
+			border-color: $color-error;
+		}
+	}
+
+	// 卡片：连体描边按钮
+	.#{$item}.is-card {
+		position: relative;
+		display: inline-flex;
+		height: $height;
+		padding: 0 $padding-x;
+		line-height: calc(#{$height} - #{unitfix(2)});
+		cursor: pointer;
+		background: $background-color-lightest;
+		border: unitfix(1) solid $border-color;
+		border-left: 0;
+		box-sizing: border-box; // 含边框的总高度与size一致
+		transition: all .2s ease-in-out;
+
+		@if $hover {
+			&:hover {
+				position: relative;
+				color: $color-primary;
+			}
+		}
+
+		&.is-disabled {
+			color: $color-dark-extralight;
+			cursor: not-allowed;
+			background-color: $background-color;
+			border-color: $border-color;
+		}
+
+		&:first-child {
+			border-left: unitfix(1) solid $border-color;
+			border-radius: segmented-length(4, $unit) 0 0 segmented-length(4, $unit);
+		}
+
+		&.is-checked:first-child {
+			border-color: $color-primary;
+			box-shadow: none;
+		}
+
+		&:last-child {
+			border-radius: 0 segmented-length(4, $unit) segmented-length(4, $unit) 0;
+		}
+
+		&.is-checked:last-child {
+			border-color: $color-primary;
+			box-shadow: unitfix(-1) 0 0 0 $color-primary;
+		}
+
+		&.is-checked {
+			z-index: 1;
+			color: $color-primary;
+			background: $background-color-lightest;
+			border-color: $color-primary;
+			box-shadow: unitfix(-1) 0 0 0 $color-primary;
+		}
+
+		&.is-checked.is-disabled {
+			color: $color-primary-disabled;
+			background: $background-color;
+			border-color: $color-primary-disabled-border;
+			box-shadow: unitfix(-1) 0 0 0 $color-primary-disabled-border;
+
+			&:first-child {
+				box-shadow: none;
+			}
+		}
+
+		@if $hover {
+			&.is-focus {
+				box-shadow: unitfix(-1) 0 0 0 $color-primary, 0 0 0 unitfix(2) $color-primary-lighter;
+				transition: all .2s ease-in-out;
+			}
+		}
+	}
+
+
+	// 胶囊
+	.#{$item}.is-capsule {
+		+ .#{$item}.is-capsule {
+			margin-left: segmented-length(3, $unit);
+		}
+
+		.#{$item}__label {
+			line-height: calc(#{$height} - #{segmented-length(6, $unit)});
+		}
+	}
+
+	@include segmented-capsule($component, $var, '.#{$item}.is-capsule', '.#{$item}.is-capsule', '.#{$item}__label', '.is-checked', $unit, $hover);
+
+	// 文字
+	.#{$item}.is-text {
+		height: $height;
+
+		+ .#{$item}.is-text {
+			margin-left: segmented-length(10, $unit);
+		}
+
+		.#{$item}__label {
+			line-height: calc(#{$height} - #{segmented-length(8, $unit)});
+		}
+	}
+
+	@include segmented-text($component, $var, '.#{$item}.is-text', '.#{$item}.is-text', '.#{$item}__label', '.is-checked', $unit, $hover);
+
+	// 圆角
+	.#{$item}.is-round {
+		+ .#{$item}.is-round {
+			margin-left: segmented-length(8, $unit);
+		}
+
+		.#{$item}__label {
+			line-height: $height;
+		}
+	}
+
+	@include segmented-round($component, $var, '.#{$item}.is-round', '.#{$item}__label', '.is-checked', $unit, $hover);
+
+	// 纵向：每项独占一行，不显示分隔线
+	.#{$group}.is-vertical {
+		&.is-text {
+			align-items: stretch;
+		}
+
+		#{$labeled} {
+			+ .#{$item} {
+				margin-left: 0;
+
+				&::after {
+					display: none;
+				}
+			}
+
+			.#{$item}__label {
+				flex: 1;
+			}
+		}
+
+		.#{$item}.is-capsule + .#{$item} {
+			margin-top: segmented-length(3, $unit);
+		}
+
+		.#{$item}.is-button + .#{$item},
+		.#{$item}.is-round + .#{$item} {
+			margin-top: segmented-length(4, $unit);
+		}
+	}
+}
+
+// 移动端分组样式（按钮、胶囊等）的尺寸，750 稿单位；勾选框与圆点外观不随size变化
+// 375 宽下高度依次为 24 / 28 / 32 / 36，与桌面端相同，字号放大到 14 / 16
+$m-choice-type-sizes: (
+	mini: (height: 48, font-size: 28, line-height: 36, padding-x: 16),
+	small: (height: 56, font-size: 28, line-height: 40, padding-x: 24),
+	medium: (height: 64, font-size: 28, line-height: 40, padding-x: 24),
+	large: (height: 72, font-size: 32, line-height: 44, padding-x: 24)
+);
+
+// 尺寸变量：.<item>.is-<size> 上提供 --vc-<var>-height / -font-size / -line-height / -padding-x
+@mixin m-choice-type-sizes($item, $var) {
+	@each $size, $values in $m-choice-type-sizes {
+		.#{$item}.is-#{$size} {
+			@each $key, $value in $values {
+				--vc-#{$var}-#{$key}: #{remfix($value)};
+			}
+		}
+	}
+}
+
+// 移动端分组样式：与桌面端相同的外观，长度按 375 宽下的 px 换算成 750 稿，无悬停与焦点光晕
+@mixin m-choice-group-types($group, $item, $component, $var) {
+	.#{$group} {
+		&.is-button, &.is-card, &.is-capsule, &.is-text, &.is-round {
+			display: inline-flex;
+		}
+	}
+
+	@include choice-group-types($group, $item, $component, $var, rem, false);
+
+	// 按钮、圆角：选项多时换行；间距改用 gap，换行后每行左对齐（横排与竖排的间距相同）
+	@each $type, $gap in (button: 4, round: 8) {
+		.#{$group}.is-#{$type} {
+			flex-wrap: wrap;
+			gap: segmented-length($gap, rem);
+
+			// 去掉项间的 margin（竖排的 margin-top 选择器更具体，单独覆盖）
+			> .#{$item}.is-#{$type},
+			&.is-vertical > .#{$item}.is-#{$type} + .#{$item} {
+				margin: 0;
+			}
+		}
+	}
+}

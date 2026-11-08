@@ -20,7 +20,7 @@ describe('index.ts', () => {
 });
 
 describe('radio.tsx', () => {
-	it.each([Radio, RadioButton, MRadio])('standalone: uses trueValue/falseValue and reset', async (component) => {
+	it.each([Radio, RadioButton, MRadio, MRadioButton])('standalone: uses trueValue/falseValue and reset', async (component) => {
 		const wrapper = mount(component, { props: { modelValue: 'no', trueValue: 'yes', falseValue: 'no' } });
 		const input = wrapper.find('input');
 		expect((input.element as HTMLInputElement).checked).toBe(false);
@@ -36,7 +36,7 @@ describe('radio.tsx', () => {
 		expect(wrapper.emitted('change')).toHaveLength(1);
 	});
 
-	it.each([Radio, RadioButton, MRadio])('standalone: emits true by default', async (component) => {
+	it.each([Radio, RadioButton, MRadio, MRadioButton])('standalone: emits true by default', async (component) => {
 		const wrapper = mount(component);
 		await wrapper.find('input').setValue(true);
 		expect(wrapper.emitted('change')?.[0]?.[0]).toBe(true);
@@ -359,7 +359,7 @@ describe('mobile', () => {
 	it('basic', () => {
 		expect(typeof MRadio).toBe('object');
 		expect(typeof MRadioGroup).toBe('object');
-		expect(MRadioButton).toBe(MRadio);
+		expect(typeof MRadioButton).toBe('object');
 	});
 
 	it('MRadio: 渲染与文本', () => {
@@ -424,13 +424,58 @@ describe('mobile', () => {
 });
 
 describe('MRadio 外观', () => {
-	it('分组的 type 不改变移动端外观：始终渲染圆点', () => {
+	it.each(['button', 'card', 'capsule', 'text', 'round'] as const)('type=%s: 子项跟随分组的 type, 不渲染圆点', async (type) => {
+		const onChange = vi.fn();
 		const wrapper = mount(() => (
-			<MRadioGroup type="button" v-slots={{ default: () => (<MRadio value="apple" />) }} />
+			<MRadioGroup
+				type={type}
+				size="large"
+				modelValue="apple"
+				onChange={onChange}
+				v-slots={{
+					default: () => [
+						<MRadio label="apple" />,
+						<MRadio label="banana" />
+					]
+				}}
+			/>
+		));
+
+		expect(wrapper.classes()).toContain(`is-${type}`);
+		const items = wrapper.findAll('.vcm-radio');
+		expect(items.every(v => v.classes().includes(`is-${type}`) && v.classes().includes('is-large'))).toBe(true);
+		expect(wrapper.find('.vcm-radio__border').exists()).toBe(false);
+		expect(wrapper.findAll('.vcm-radio__label').map(v => v.text())).toEqual(['apple', 'banana']);
+
+		await wrapper.findAll('input')[1].trigger('change');
+		expect(onChange).toHaveBeenCalledWith('banana', expect.anything(), expect.any(Function));
+	});
+
+	it('type=default: 渲染圆点', () => {
+		const wrapper = mount(() => (
+			<MRadioGroup v-slots={{ default: () => (<MRadio value="apple" />) }} />
 		));
 		const item = wrapper.find('.vcm-radio');
 		expect(item.classes()).not.toContain('is-button');
 		expect(item.find('.vcm-radio__border').exists()).toBe(true);
-		expect(item.find('input').classes()).toContain('vcm-radio__input');
+	});
+
+	it('MRadioButton: 外观固定为 button, 不随分组 type 变化, 可与圆点项混用', () => {
+		const wrapper = mount(() => (
+			<MRadioGroup
+				type="card"
+				size="small"
+				v-slots={{
+					default: () => [
+						<MRadioButton label="apple" />,
+						<MRadio label="banana" />
+					]
+				}}
+			/>
+		));
+		const [button, item] = wrapper.findAll('.vcm-radio');
+		expect(button.classes()).toEqual(expect.arrayContaining(['vcm-radio', 'is-button', 'is-small']));
+		expect(button.find('.vcm-radio__label').text()).toBe('apple');
+		expect(item.classes()).toContain('is-card');
 	});
 });

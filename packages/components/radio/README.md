@@ -260,14 +260,20 @@ const selectedOption = ref('option-a');
 
 ### 移动端
 
-`MRadio` 使用圆形勾选标记，与圆形 `MCheckbox` 外观一致，`MRadioGroup` 支持垂直排列。`MRadioButton` 是 `MRadio` 的别名；移动端没有分组样式和尺寸，`type`、`size` 不改变外观。
+`MRadio` 默认使用圆形勾选标记，与圆形 `MCheckbox` 外观一致，`MRadioGroup` 支持垂直排列。
 
 尺寸使用 750 稿单位，随 `--vc-rem` 缩放：
 - 图标盒 40，圆形直径 36；
 - 图标与文字间距 16，字号 32，行高 1.4；
 - 分组横排间距 48；纵向排列时每行至少高 84。
 
-禁用时文字半透明。选中后再禁用的项显示为主色的浅底加白勾。移动端没有焦点光晕。
+禁用时文字半透明。选中后再禁用的项显示为主色的浅底加白勾。
+
+`MRadioGroup` 的 `type`、`size` 与桌面端相同，`MRadioButton` 对应 `RadioButton`。外观与桌面端一致，差异如下：
+- 长度按 375 宽下的 px 换算成 750 稿（× 2），随 `--vc-rem` 缩放；
+- 四档高度在 375 宽下依次为 24 / 28 / 32 / 36（与桌面端相同），字号为 14 / 14 / 14 / 16（比桌面端大 2）；
+- `button`、`round` 选项多时换行，横竖间距相同；
+- 没有悬停样式和焦点光晕；`size` 只作用于分组样式，不改变勾选标记。
 
 :::playground
 <!--
@@ -282,6 +288,16 @@ const selectedOption = ref('option-a');
 			<MRadio value="option-a" label="选项 A" />
 			<MRadio value="option-b" label="选项 B" />
 			<MRadio value="option-c" label="选项 C（暂不可用）" disabled />
+		</MRadioGroup>
+		<MRadioGroup v-model="selectedOption" type="button">
+			<MRadio value="option-a" label="选项 A" />
+			<MRadio value="option-b" label="选项 B" />
+			<MRadio value="option-c" label="选项 C" disabled />
+		</MRadioGroup>
+		<MRadioGroup v-model="selectedOption" type="capsule">
+			<MRadio value="option-a" label="选项 A" />
+			<MRadio value="option-b" label="选项 B" />
+			<MRadio value="option-c" label="选项 C" />
 		</MRadioGroup>
 		<p>已选值：{{ selectedOption }}</p>
 	</div>
@@ -298,6 +314,7 @@ const selectedOption = ref('option-a');
 .demo {
 	display: grid;
 	gap: 12px;
+	justify-items: start;
 }
 .actions {
 	display: flex;
@@ -310,27 +327,27 @@ const selectedOption = ref('option-a');
 
 ## 主题与局部覆盖
 
-全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-radio-<参数>`、`--vc-radio-group-<参数>`、`--vc-m-radio-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-radio-<参数>`、`--vc-radio-group-<参数>`、`--vc-m-radio-<参数>`、`--vc-m-radio-group-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
 
-桌面端圆点使用 radio，分组样式使用 radio-group，移动端使用 m-radio（与 m-checkbox 相同的一套外观）。桌面端选中且禁用时保留主色、降低不透明度（圆点与各分组样式一致）；移动端勾选标记使用 color-contrast-light，禁用且选中时的底色由 color-primary 混合 50% 透明得到。
+桌面端圆点使用 radio，分组样式使用 radio-group；移动端勾选标记使用 m-radio（与 m-checkbox 相同的一套外观），分组样式使用 m-radio-group。桌面端选中且禁用时保留主色、降低不透明度（圆点与各分组样式一致）；移动端勾选标记使用 color-contrast-light，禁用且选中时的底色由 color-primary 混合 50% 透明得到。
 
 ### 全局
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
 | color-contrast-light | 移动端勾选标记（m-radio） | `#FFFFFF`（亮暗主题相同） |
-| color-dark-light | 胶囊、文字、圆角样式的悬停文字（radio-group） | 亮色：`#080F20`；暗色：`#E8E8E8` |
-| color-dark-lightest | 分组样式文字（radio-group） | 亮色：`#64758B`；暗色：`#C9C9C9` |
-| color-dark-extralight | 桌面端分组样式的禁用文字（radio-group） | 亮色：`#909399`；暗色：`#B9B9B9` |
-| color-error | 校验错误的圆点边框、按钮文字及描边（radio / radio-group / m-radio） | `#F53F3F` |
+| color-dark-light | 桌面端胶囊、文字、圆角样式的悬停文字（radio-group） | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-dark-lightest | 分组样式文字（radio-group / m-radio-group） | 亮色：`#64758B`；暗色：`#C9C9C9` |
+| color-dark-extralight | 分组样式的禁用文字（radio-group / m-radio-group） | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-error | 校验错误的圆点边框、按钮文字及描边（radio / radio-group / m-radio / m-radio-group） | `#F53F3F` |
 | color-light-deepest | 桌面端单选框边框（radio） | 亮色：`#C0C4CC`；暗色：`#E8E8E8` |
-| color-neutral-light | 胶囊容器背景、文字样式分隔线、圆角样式悬停及选中背景、按钮背景（radio-group） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
-| color-primary | 桌面端选中标记、文字及边框，移动端选中背景及边框；桌面端选中且禁用时，文字及选中标记取 70%、描边取 50% 不透明度；移动端禁用且选中的浅底（radio / radio-group / m-radio） | `#456CF6` |
+| color-neutral-light | 胶囊容器背景、文字样式分隔线、圆角样式悬停及选中背景、按钮背景（radio-group / m-radio-group） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 桌面端选中标记、文字及边框，移动端选中背景及边框；桌面端选中且禁用时，文字及选中标记取 70%、描边取 50% 不透明度；移动端禁用且选中的浅底（radio / radio-group / m-radio / m-radio-group） | `#456CF6` |
 | color-primary-lighter | 桌面端焦点阴影（radio / radio-group） | `rgba(45, 140, 240, 0.2)` |
-| background-color | 禁用背景、文字样式悬停背景（radio / radio-group / m-radio） | 亮色：`#F5F6FA`；暗色：`#252B3A` |
-| background-color-lightest | 单选框及卡片背景、胶囊样式悬停及选中项背景（radio / radio-group / m-radio） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
-| border-color | 卡片边框，与输入框相同；移动端单选框边框（radio-group / m-radio） | `#D5D9E1`（亮暗主题相同） |
-| foreground-color-inactive | 胶囊样式分隔线（radio-group） | 亮色：`#C0C4CC`；暗色：`#737D8C` |
+| background-color | 禁用背景、桌面端文字样式悬停背景（radio / radio-group / m-radio / m-radio-group） | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-lightest | 单选框及卡片背景、胶囊样式悬停及选中项背景（radio / radio-group / m-radio / m-radio-group） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| border-color | 卡片边框，与输入框相同；移动端单选框边框（radio-group / m-radio / m-radio-group） | `#D5D9E1`（亮暗主题相同） |
+| foreground-color-inactive | 胶囊样式分隔线（radio-group / m-radio-group） | 亮色：`#C0C4CC`；暗色：`#737D8C` |
 
 ### 局部
 
@@ -351,7 +368,7 @@ const selectedOption = ref('option-a');
 | trueValue | 独立使用时的选中值 | `string \| number \| boolean` | - | `true` |
 | falseValue | 独立使用时 reset(false) 写入的值 | `string \| number \| boolean` | - | `false` |
 | name | 原生 input 的 name，组内由 RadioGroup.name 决定 | `string` | - | `undefined` |
-| size | 尺寸，仅桌面端；不设时取分组的 size | `string` | `'mini'` / `'small'` / `'medium'` / `'large'` | `undefined`（按 `'medium'` 显示） |
+| size | 尺寸，作用于分组样式（含 RadioButton / MRadioButton），不改变移动端勾选标记；不设时取分组的 size | `string` | `'mini'` / `'small'` / `'medium'` / `'large'` | `undefined`（按 `'medium'` 显示） |
 
 自动标签按真值判断，`0`、`false` 等内容请使用默认插槽显示。分组的选择比较使用严格相等，数字 `1` 与字符串 `'1'` 不相等。
 
@@ -376,7 +393,7 @@ const selectedOption = ref('option-a');
 
 ### RadioGroup 属性
 
-`MRadioGroup` 共享属性；其 type、size 不改变外观。
+`MRadioGroup` 共享属性。
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
@@ -411,6 +428,6 @@ const selectedOption = ref('option-a');
 
 ### 主题覆盖
 
-桌面圆点使用 `--vc-radio-*`，分组样式（按钮、卡片、胶囊、文字、圆角，含 `RadioButton`）使用 `--vc-radio-group-*`，移动端使用 `--vc-m-radio-*`。组件覆盖值优先于共享主题值。例如 `--vc-radio-color-primary` 只控制桌面端圆点的选中色，移动端用 `--vc-m-radio-color-primary`。
+桌面圆点使用 `--vc-radio-*`，分组样式（按钮、卡片、胶囊、文字、圆角，含 `RadioButton`）使用 `--vc-radio-group-*`；移动端勾选标记使用 `--vc-m-radio-*`，分组样式（含 `MRadioButton`）使用 `--vc-m-radio-group-*`。组件覆盖值优先于共享主题值。例如 `--vc-radio-color-primary` 只控制桌面端圆点的选中色，移动端用 `--vc-m-radio-color-primary`。
 
 移动端勾选标记使用 `--vc-m-radio-color-contrast-light`（默认白色）；桌面端聚焦光晕使用 `--vc-radio-color-primary-lighter`（默认 `rgba(45, 140, 240, 0.2)`），均可按需覆盖。

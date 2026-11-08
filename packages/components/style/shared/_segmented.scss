@@ -11,6 +11,8 @@
  * 	- $sibling：相邻项的选择器（用于项间分隔线），如 '.vc-radio'、'.vc-tabs__item'
  * 	- $surface：呈现外观的元素，项内的选择器（如 '.vc-radio__label'）；为 null 时即项本身
  * 	- $active：选中的类名，如 '.is-checked'、'.is-active'
+ * 	- $unit：长度单位，px 为桌面端；rem 为移动端，按 375 宽下的 px 换算成 750 稿（× 2）并随 --vc-rem 缩放
+ * 	- $hover：是否生成悬停样式；移动端为 false，触屏点击后悬停状态会残留
  */
 
 // 尺寸：medium 为默认，高度 32
@@ -20,6 +22,29 @@ $segmented-sizes: (
 	medium: (height: 32, font-size: 12, line-height: 20, padding-x: 12),
 	large: (height: 36, font-size: 14, line-height: 22, padding-x: 12)
 );
+
+// 长度：桌面端为 px，移动端为 750 稿（375 宽下的 px × 2）
+@function segmented-length($value, $unit: px) {
+	@if $unit == rem {
+		@return remfix($value * 2);
+	}
+
+	@return unitfix($value);
+}
+
+// 悬停或选中时的样式；不生成悬停时只有选中
+@mixin segmented-on($active, $hover) {
+	@if $hover {
+		&:not(.is-disabled):hover,
+		&#{$active} {
+			@content;
+		}
+	} @else {
+		&#{$active} {
+			@content;
+		}
+	}
+}
 
 @mixin segmented-surface($surface) {
 	@if $surface {
@@ -71,33 +96,35 @@ $segmented-sizes: (
 }
 
 // 按钮：灰底独立项，发丝线描边；悬停或选中时描边变为主色
-@mixin segmented-button($component, $item, $surface: null, $active: '.is-active') {
+@mixin segmented-button($component, $item, $surface: null, $active: '.is-active', $unit: px, $hover: true) {
 	$color-neutral-light: varfix(color-neutral-light, $component);
 	$color-primary: varfix(color-primary, $component);
+	$radius: segmented-length(6, $unit);
 
 	@include segmented-states($component, $item, $surface, $active, false);
 
 	#{$item} {
 		@include segmented-surface($surface) {
-			padding: 0 unitfix(8);
+			padding: 0 segmented-length(8, $unit);
 			background-color: $color-neutral-light; // 暗色主题下background-color与页面同色
-			border-radius: unitfix(6);
+			border-radius: $radius;
 
-			@include common-border-1px('', $color-neutral-light, 6);
+			@include common-border-1px('', $color-neutral-light, if(sass($unit == px): 6; else: $radius));
 
 			&::before, &::after {
 				transition: border-color .2s ease-in-out;
 			}
 		}
 
-		&:not(.is-disabled, #{$active}):hover {
-			@include segmented-surface($surface) {
-				color: $color-primary;
+		@if $hover {
+			&:not(.is-disabled, #{$active}):hover {
+				@include segmented-surface($surface) {
+					color: $color-primary;
+				}
 			}
 		}
 
-		&:not(.is-disabled):hover,
-		&#{$active} {
+		@include segmented-on($active, $hover) {
 			@include segmented-surface($surface) {
 				&::before, &::after {
 					border-color: $color-primary;
@@ -116,35 +143,34 @@ $segmented-sizes: (
 }
 
 // 胶囊的容器：灰底，内边距托起选中项
-@mixin segmented-capsule-container($component) {
-	padding: unitfix(3);
+@mixin segmented-capsule-container($component, $unit: px) {
+	padding: segmented-length(3, $unit);
 	background-color: varfix(color-neutral-light, $component);
-	border-radius: unitfix(6);
+	border-radius: segmented-length(6, $unit);
 }
 
 // 胶囊：选中项浮起；项间1px分隔线，悬停或选中项两侧不显示
-@mixin segmented-capsule($component, $var, $item, $sibling, $surface: null, $active: '.is-active') {
+@mixin segmented-capsule($component, $var, $item, $sibling, $surface: null, $active: '.is-active', $unit: px, $hover: true) {
 	$padding-x: var(--vc-#{$var}-padding-x);
 
-	@include segmented-states($component, $item, $surface, $active, true);
+	@include segmented-states($component, $item, $surface, $active, $hover);
 
 	#{$item} {
 		+ #{$sibling}::after {
 			@include segmented-separator;
 
-			left: unitfix(-2);
+			left: segmented-length(-2, $unit);
 			width: unitfix(1);
-			height: calc(var(--vc-#{$var}-line-height) - #{unitfix(6)});
+			height: calc(var(--vc-#{$var}-line-height) - #{segmented-length(6, $unit)});
 			background-color: varfix(foreground-color-inactive, $component);
 		}
 
 		@include segmented-surface($surface) {
 			padding: 0 $padding-x;
-			border-radius: unitfix(4);
+			border-radius: segmented-length(4, $unit);
 		}
 
-		&:not(.is-disabled):hover,
-		&#{$active} {
+		@include segmented-on($active, $hover) {
 			&::after,
 			+ #{$sibling}::after {
 				opacity: 0;
@@ -158,49 +184,50 @@ $segmented-sizes: (
 }
 
 // 文字：2px分隔线隔开，悬停浅底
-@mixin segmented-text($component, $var, $item, $sibling, $surface: null, $active: '.is-active') {
+@mixin segmented-text($component, $var, $item, $sibling, $surface: null, $active: '.is-active', $unit: px, $hover: true) {
 	$padding-x: var(--vc-#{$var}-padding-x);
 
-	@include segmented-states($component, $item, $surface, $active, true);
+	@include segmented-states($component, $item, $surface, $active, $hover);
 
 	#{$item} {
 		+ #{$sibling}::after {
 			@include segmented-separator;
 
-			left: unitfix(-6);
-			width: unitfix(2);
-			height: unitfix(12);
+			left: segmented-length(-6, $unit);
+			width: segmented-length(2, $unit);
+			height: segmented-length(12, $unit);
 			background-color: varfix(color-neutral-light, $component);
 		}
 
 		@include segmented-surface($surface) {
-			padding: 0 calc(#{$padding-x} - #{unitfix(4)});
-			border-radius: unitfix(4);
+			padding: 0 calc(#{$padding-x} - #{segmented-length(4, $unit)});
+			border-radius: segmented-length(4, $unit);
 		}
 
-		&:not(.is-disabled, #{$active}):hover {
-			@include segmented-surface($surface) {
-				background-color: varfix(background-color, $component);
+		@if $hover {
+			&:not(.is-disabled, #{$active}):hover {
+				@include segmented-surface($surface) {
+					background-color: varfix(background-color, $component);
+				}
 			}
 		}
 	}
 }
 
 // 圆角：胶囊形独立项，悬停或选中填充底色
-@mixin segmented-round($component, $var, $item, $surface: null, $active: '.is-active') {
+@mixin segmented-round($component, $var, $item, $surface: null, $active: '.is-active', $unit: px, $hover: true) {
 	$padding-x: var(--vc-#{$var}-padding-x);
 	$height: var(--vc-#{$var}-height);
 
-	@include segmented-states($component, $item, $surface, $active, true);
+	@include segmented-states($component, $item, $surface, $active, $hover);
 
 	#{$item} {
 		@include segmented-surface($surface) {
-			padding: 0 calc(#{$padding-x} + #{unitfix(4)});
+			padding: 0 calc(#{$padding-x} + #{segmented-length(4, $unit)});
 			border-radius: calc(#{$height} / 2);
 		}
 
-		&:not(.is-disabled):hover,
-		&#{$active} {
+		@include segmented-on($active, $hover) {
 			@include segmented-surface($surface) {
 				background-color: varfix(color-neutral-light, $component);
 			}

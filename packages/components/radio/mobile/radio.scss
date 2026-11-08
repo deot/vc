@@ -1,2 +1,4 @@
 @use '../../style/shared/choice' as *;
+@use '../../style/shared/choice-types' as *;
 @include m-choice(vcm-radio, m-radio);
+@include m-choice-type-sizes(vcm-radio, m-radio);

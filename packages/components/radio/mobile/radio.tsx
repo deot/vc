@@ -9,7 +9,6 @@ export const MRadio = defineComponent({
 	props: radioProps,
 	emits: ['update:modelValue', 'change'],
 	setup(props, context) {
-		// 移动端只有圆点外观，不随分组的type变化
-		return useRadio(props, context, { name: COMPONENT_NAME, variant: 'default' });
+		return useRadio(props, context, { name: COMPONENT_NAME });
 	}
 });

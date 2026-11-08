@@ -10,12 +10,12 @@ import { hasCustomerValue } from '../customer/utils';
 
 type Options = {
 	name: string;
-	// 固定的外观，不随分组的type变化（RadioButton为button，移动端只有圆点）
+	// 固定的外观，不随分组的type变化（RadioButton、MRadioButton为button）
 	variant?: RadioGroupType;
 };
 
 /**
- * Radio、RadioButton 与 MRadio 共用
+ * Radio、RadioButton、MRadio 与 MRadioButton 共用
  * @param props ~
  * @param context ~
  * @param options ~

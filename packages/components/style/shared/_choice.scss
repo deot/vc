@@ -168,8 +168,9 @@ $m-choice-circle: 36;
  * 移动端勾选项分组：横排间距 48，竖排每项独占一行，行高 84
  * 	- $name：块名，如 vcm-checkbox-group
  * 	- $item：项的块名，如 vcm-checkbox
+ * 	- $plain：竖排行高只作用于勾选外观的项，如 MRadio 排除分组样式的项
  */
-@mixin m-choice-group($name, $item) {
+@mixin m-choice-group($name, $item, $plain: '') {
 	@include block($name) {
 		font-size: remfix(32);
 
@@ -183,7 +184,7 @@ $m-choice-circle: 36;
 			flex-direction: column;
 			align-items: stretch;
 
-			> .#{$item} {
+			> .#{$item}#{$plain} {
 				display: flex;
 				min-height: remfix(84);
 				margin-right: 0;
