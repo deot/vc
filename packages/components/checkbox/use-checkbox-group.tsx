@@ -1,13 +1,21 @@
-import { provide, inject, ref, watch } from 'vue';
+/** @jsxImportSource vue */
+
+import { provide, inject, ref, watch, computed } from 'vue';
 import type { SetupContext } from 'vue';
 import type { Props } from './checkbox-group-props';
 import { isEqualWith } from 'lodash-es';
 
-export const useCheckboxGroup = (props: Props, context: SetupContext<['update:modelValue', 'change']>) => {
-	const { emit } = context;
+export const useCheckboxGroup = (props: Props, context: SetupContext<['update:modelValue', 'change']>, options: { name: string }) => {
+	const { emit, slots } = context;
+	const { name } = options;
 	const formItem = inject<any>('vc-form-item', {});
 
 	const currentValue = ref<any>([]);
+
+	// 达到上限：未选中的项不可再选
+	const isFull = computed(() => {
+		return props.max > 0 && currentValue.value.length >= props.max;
+	});
 
 	watch(
 		() => props.modelValue,
@@ -22,9 +30,11 @@ export const useCheckboxGroup = (props: Props, context: SetupContext<['update:mo
 
 	const reset = (v: any) => {
 		const index = currentValue.value.indexOf(v);
-		index === -1
-			? currentValue.value.push(v)
-			: currentValue.value.splice(index, 1);
+		if (index !== -1) {
+			currentValue.value.splice(index, 1);
+		} else if (!isFull.value) {
+			currentValue.value.push(v);
+		}
 	};
 
 	/**
@@ -40,14 +50,19 @@ export const useCheckboxGroup = (props: Props, context: SetupContext<['update:mo
 
 	provide('vc-checkbox-group', {
 		props,
+		slots,
 		currentValue,
+		isFull,
 		reset,
 		sync
 	});
 
-	return {
-		currentValue,
-		sync,
-		reset
+	return () => {
+		if (props.styleless) return slots.default?.();
+		return (
+			<div class={[{ 'is-vertical': props.vertical }, name]}>
+				{ slots.default?.() }
+			</div>
+		);
 	};
 };

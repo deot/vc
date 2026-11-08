@@ -1,5 +1,3 @@
-/** @jsxImportSource vue */
-
 import { defineComponent } from 'vue';
 import { props as radioGroupProps } from './radio-group-props';
 import { useRadioGroup } from './use-radio-group';
@@ -11,19 +9,6 @@ export const RadioGroup = defineComponent({
 	props: radioGroupProps,
 	emits: ['update:modelValue', 'change'],
 	setup(props, context) {
-		const { slots } = context;
-		const { classes } = useRadioGroup(props, context);
-		return () => {
-			if (props.styleless) return slots.default?.();
-			return (
-				<div
-					class={[classes.value, 'vc-radio-group']}
-					// @ts-ignore
-					name={props.name}
-				>
-					{ slots?.default?.() }
-				</div>
-			);
-		};
+		return useRadioGroup(props, context, { name: COMPONENT_NAME });
 	}
 });

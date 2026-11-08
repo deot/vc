@@ -1,10 +1,21 @@
+/** @jsxImportSource vue */
+
 import { inject, ref, watch, computed } from 'vue';
 import type { SetupContext } from 'vue';
-import type { Props } from './checkbox-props';
+import type { Props, CheckboxShape } from './checkbox-props';
 import type { CustomerValue } from '../customer/types';
+import { Customer } from '../customer';
+import { hasCustomerValue } from '../customer/utils';
 
-export const useCheckbox = (props: Props, context: SetupContext<['update:modelValue', 'change']>) => {
-	const { emit } = context;
+type Options = {
+	name: string;
+	// 平台默认形状：选项与分组都未设置时使用
+	shape: CheckboxShape;
+};
+
+export const useCheckbox = (props: Props, context: SetupContext<['update:modelValue', 'change']>, options: Options) => {
+	const { emit, slots } = context;
+	const { name } = options;
 	const group = inject<any>('vc-checkbox-group', {});
 	const formItem = inject<any>('vc-form-item', {});
 
@@ -34,13 +45,25 @@ export const useCheckbox = (props: Props, context: SetupContext<['update:modelVa
 			: currentValue.value === props.checkedValue;
 	});
 
+	// 自身 > 分组 > 达到分组上限时未选中的项
+	const isDisabled = computed(() => {
+		if (props.disabled) return true;
+		if (!hasGroup.value) return false;
+		return group.props.disabled || (group.isFull.value && !checked.value);
+	});
+
+	const shape = computed(() => {
+		return props.shape || group.props?.shape || options.shape;
+	});
+
 	const classes = computed(() => {
 		return {
 			'is-indeterminate': props.indeterminate,
 			'is-checked': checked.value,
-			'is-disabled': props.disabled,
+			'is-disabled': isDisabled.value,
 			'is-focus': isFocus.value,
-			'is-error': !!formItem?.message?.value
+			'is-error': !!formItem?.message?.value,
+			[`is-${shape.value}`]: true
 		};
 	});
 
@@ -67,7 +90,7 @@ export const useCheckbox = (props: Props, context: SetupContext<['update:modelVa
 	};
 
 	const handleChange = (e: any) => {
-		if (props.disabled) {
+		if (isDisabled.value) {
 			return false;
 		}
 		const $checked = e.target.checked;
@@ -89,18 +112,35 @@ export const useCheckbox = (props: Props, context: SetupContext<['update:modelVa
 		isFocus.value = true;
 	};
 
-	return {
-		currentValue,
-		isFocus,
-		classes,
-		hasGroup,
-		checked,
-		handleChange,
-		handleBlur,
-		handleFocus,
-		sync,
-		reset,
-		computedValue,
-		computedLabel
+	return () => {
+		const label = slots.default || computedLabel.value;
+		const hasLabel = hasCustomerValue(label);
+		// 选项自身的图标插槽优先，其次是分组的
+		const icon = slots.icon || group.slots?.icon;
+		return (
+			<label class={[classes.value, name]}>
+				<span class={[{ 'has-sibling': hasLabel }, `${name}__wrapper`]}>
+					{
+						icon
+							? icon({ checked: checked.value, indeterminate: props.indeterminate, disabled: isDisabled.value })
+							: (
+									<span class={`${name}__border`}>
+										<span class={`${name}__inner`} />
+									</span>
+								)
+					}
+					<input
+						checked={checked.value}
+						name={props.name}
+						disabled={isDisabled.value}
+						type="checkbox"
+						onChange={handleChange}
+						onFocus={handleFocus}
+						onBlur={handleBlur}
+					/>
+				</span>
+				{ hasLabel && (<Customer tag="span" render={label} />) }
+			</label>
+		);
 	};
 };

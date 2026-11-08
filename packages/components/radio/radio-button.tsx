@@ -1,6 +1,6 @@
 import { defineComponent } from 'vue';
 import { props as radioProps } from './radio-props';
-import { useRadioRender } from './radio';
+import { useRadio } from './use-radio';
 
 const COMPONENT_NAME = 'vc-radio-button';
 
@@ -10,6 +10,6 @@ export const RadioButton = defineComponent({
 	props: radioProps,
 	emits: ['update:modelValue', 'change'],
 	setup(props, context) {
-		return useRadioRender(props, context, { variant: 'button' });
+		return useRadio(props, context, { name: 'vc-radio', variant: 'button' });
 	}
 });

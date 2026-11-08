@@ -1,10 +1,13 @@
+/** @jsxImportSource vue */
+
 import { provide, inject, ref, watch, computed } from 'vue';
 import type { SetupContext } from 'vue';
 import type { Props } from './radio-group-props';
 import { isEqualWith } from 'lodash-es';
 
-export const useRadioGroup = (props: Props, context: SetupContext<['update:modelValue', 'change']>) => {
-	const { emit } = context;
+export const useRadioGroup = (props: Props, context: SetupContext<['update:modelValue', 'change']>, options: { name: string }) => {
+	const { emit, slots } = context;
+	const { name } = options;
 	const formItem = inject<any>('vc-form-item', {});
 
 	const currentValue = ref<any>('');
@@ -48,10 +51,16 @@ export const useRadioGroup = (props: Props, context: SetupContext<['update:model
 		sync
 	});
 
-	return {
-		currentValue,
-		classes,
-		sync,
-		reset
+	return () => {
+		if (props.styleless) return slots.default?.();
+		return (
+			<div
+				class={[classes.value, name]}
+				// @ts-ignore
+				name={props.name}
+			>
+				{ slots.default?.() }
+			</div>
+		);
 	};
 };

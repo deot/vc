@@ -1,5 +1,3 @@
-/** @jsxImportSource vue */
-
 import { defineComponent } from 'vue';
 import { props as checkboxGroupProps } from '../checkbox-group-props';
 import { useCheckboxGroup } from '../use-checkbox-group';
@@ -11,15 +9,6 @@ export const MCheckboxGroup = defineComponent({
 	props: checkboxGroupProps,
 	emits: ['update:modelValue', 'change'],
 	setup(props, context) {
-		const { slots } = context;
-		useCheckboxGroup(props, context);
-		return () => {
-			if (props.styleless) return slots.default?.();
-			return (
-				<div class="vcm-checkbox-group">
-					{ slots?.default?.() }
-				</div>
-			);
-		};
+		return useCheckboxGroup(props, context, { name: COMPONENT_NAME });
 	}
 });

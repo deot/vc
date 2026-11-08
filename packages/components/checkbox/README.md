@@ -158,6 +158,73 @@ const status = ref('disabled');
 ```
 :::
 
+### 形状、纵向排列与数量上限
+
+- `shape` 可选 `square`（方形）或 `circle`（圆形）。取值优先级为：选项自身 > 组合 > 平台默认；桌面端默认方形，移动端默认圆形。
+- 组合的 `vertical` 让每项独占一行。
+- `max` 限制最多可选的数量，0 表示不限。达到上限后，未选中的项显示为禁用。
+- 组合的 `disabled` 禁用全部选项。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div>
+		<CheckboxGroup v-model="selected" :max="2" shape="circle" vertical>
+			<Checkbox value="a" label="选项 1" />
+			<Checkbox value="b" label="选项 2" />
+			<Checkbox value="c" label="选项 3" />
+		</CheckboxGroup>
+		<p>最多可选两项，已选：{{ selected }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Checkbox, CheckboxGroup } from '@deot/vc';
+
+const selected = ref(['a']);
+</script>
+```
+:::
+
+### 自定义图标
+
+`#icon` 插槽替换内置的勾选框，参数为 `{ checked, indeterminate, disabled }`。写在组合上时作用于组内全部选项，选项自身的插槽优先。原生 input 仍覆盖在图标上，点击和键盘操作不变。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<CheckboxGroup v-model="selected">
+		<template #icon="{ checked }">
+			<span :class="['star', { 'is-on': checked }]">{{ checked ? '★' : '☆' }}</span>
+		</template>
+		<Checkbox value="a" label="收藏 1" />
+		<Checkbox value="b" label="收藏 2" />
+	</CheckboxGroup>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Checkbox, CheckboxGroup } from '@deot/vc';
+
+const selected = ref(['a']);
+</script>
+
+<style scoped>
+.star {
+	line-height: 1;
+	color: #c9cdd4;
+}
+
+.star.is-on {
+	color: #456cf6;
+}
+</style>
+```
+:::
+
 ### 移动端
 
 `MCheckbox` 与 `MCheckboxGroup` 使用相同的数据和事件约定，选中色与桌面端一致，使用主色参数。`styleless` 可省略组合外层容器，便于自定义布局。
@@ -191,6 +258,10 @@ const selectedOptions = ref(['option-a']);
 </style>
 ```
 :::
+
+### 只保留联动（styleless）
+
+`styleless` 不渲染组合的外层容器，只保留选择联动，选项可以放进任意布局，例如表格单元格中。
 
 ## 主题与局部覆盖
 
@@ -226,6 +297,7 @@ const selectedOptions = ref(['option-a']);
 | label | 显示文案；缺省或为空字符串时使用 value；无默认插槽时渲染。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md)，此时需同时提供 value | `string \| number \| boolean \| Function \| { type: string; value: any }` | - | `undefined` |
 | disabled | 禁用当前选项 | `boolean` | - | `false` |
 | indeterminate | 半选外观，仅控制样式 | `boolean` | - | `false` |
+| shape | 形状；不设时取组合的 shape，再取平台默认 | `string` | `square` / `circle` | Checkbox：`square`；MCheckbox：`circle` |
 | checkedValue | 单独使用时选中对应的值 | `string \| number \| boolean` | - | `true` |
 | uncheckedValue | 单独使用时取消选中对应的值 | `string \| number \| boolean` | - | `false` |
 | name | 传递给原生 input 的 name | `string` | - | - |
@@ -246,13 +318,18 @@ const selectedOptions = ref(['option-a']);
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
 | default | 自定义选项内容，优先于 label/value 的显示文案 | - |
+| icon | 自定义勾选图标，替换内置的勾选框；优先于组合的 icon 插槽 | `{ checked: boolean; indeterminate: boolean; disabled: boolean }` |
 
 ### CheckboxGroup / MCheckboxGroup 属性
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | modelValue | 选中值数组，建议元素为 string、number 或 boolean | `unknown[]` | - | `[]` |
-| styleless | 只渲染默认插槽，省略外层 div 及其样式 | `boolean` | - | `false` |
+| disabled | 禁用全部选项 | `boolean` | - | `false` |
+| max | 最多可选数量，0 表示不限；达到上限后未选中的项禁用 | `number` | - | `0` |
+| vertical | 纵向排列，每项独占一行 | `boolean` | - | `false` |
+| shape | 组内选项的形状，选项自身的 shape 优先 | `string` | `square` / `circle` | - |
+| styleless | 只渲染默认插槽，不生成外层容器，保留选择联动；vertical 等容器样式不生效 | `boolean` | - | `false` |
 
 ### CheckboxGroup / MCheckboxGroup 事件
 
@@ -268,3 +345,4 @@ const selectedOptions = ref(['option-a']);
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
 | default | 对应平台的多选框选项及自定义布局 | - |
+| icon | 组内全部选项的勾选图标，选项自身的 icon 插槽优先 | `{ checked: boolean; indeterminate: boolean; disabled: boolean }` |

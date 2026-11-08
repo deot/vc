@@ -81,6 +81,17 @@ $component-name: vc-checkbox;
 		transition: all .2s ease-in-out;
 	}
 
+	// 圆形：勾与半选横线位置不变
+	@include when(circle) {
+		@include element(border) {
+			border-radius: 50%;
+
+			&::after {
+				border-radius: 50%;
+			}
+		}
+	}
+
 	@include when(checked) {
 		@include element(border){
 			background-color: $color-primary;

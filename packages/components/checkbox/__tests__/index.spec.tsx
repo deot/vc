@@ -3,7 +3,7 @@
 import { vi } from 'vitest';
 import { Checkbox, CheckboxGroup, MCheckbox, MCheckboxGroup } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
-import { nextTick } from 'vue';
+import { nextTick, ref } from 'vue';
 
 describe('index.ts', () => {
 	it('basic', () => {
@@ -274,5 +274,133 @@ describe('mobile', () => {
 		await wrapper.findAll('input')[1].trigger('change');
 
 		expect(onChange).toHaveBeenCalledWith(['apple', 'banana'], expect.anything(), expect.any(Function));
+	});
+});
+
+describe('shape', () => {
+	it('平台默认：桌面 square，移动 circle', () => {
+		expect(mount(() => (<Checkbox />)).classes()).toContain('is-square');
+		expect(mount(() => (<MCheckbox />)).classes()).toContain('is-circle');
+	});
+
+	it('优先级：选项自身 > 组合 > 平台默认', () => {
+		const wrapper = mount(() => (
+			<CheckboxGroup
+				shape="circle"
+				v-slots={{
+					default: () => [
+						<Checkbox value="a" />,
+						<Checkbox value="b" shape="square" />
+					]
+				}}
+			/>
+		));
+		const items = wrapper.findAll('.vc-checkbox');
+		expect(items[0].classes()).toContain('is-circle');
+		expect(items[1].classes()).toContain('is-square');
+		expect(items[1].classes()).not.toContain('is-circle');
+	});
+});
+
+describe('group features', () => {
+	it('disabled: 透传给全部选项', () => {
+		const wrapper = mount(() => (
+			<CheckboxGroup disabled v-slots={{ default: () => [<Checkbox value="a" />, <Checkbox value="b" />] }} />
+		));
+		wrapper.findAll('.vc-checkbox').forEach((item) => {
+			expect(item.classes()).toContain('is-disabled');
+		});
+		wrapper.findAll('input').forEach((input) => {
+			expect(input.attributes('disabled')).toBeDefined();
+		});
+	});
+
+	it('vertical: 添加 is-vertical 类', () => {
+		expect(mount(() => (<CheckboxGroup vertical />)).classes()).toContain('is-vertical');
+		expect(mount(() => (<MCheckboxGroup vertical />)).classes()).toContain('is-vertical');
+	});
+
+	it('max: 达到上限后未选中的项禁用且不可选，取消后恢复', async () => {
+		const value = ref<any[]>(['a', 'b']);
+		const onChange = vi.fn();
+		const wrapper = mount(() => (
+			<CheckboxGroup
+				v-model={value.value}
+				max={2}
+				onChange={onChange}
+				v-slots={{ default: () => ['a', 'b', 'c'].map(v => (<Checkbox value={v} />)) }}
+			/>
+		));
+		await nextTick();
+
+		const items = () => wrapper.findAll('.vc-checkbox');
+		expect(items()[0].classes()).not.toContain('is-disabled');
+		expect(items()[2].classes()).toContain('is-disabled');
+
+		// 被禁用的项不响应
+		await wrapper.findAll('input')[2].trigger('change');
+		expect(onChange).not.toHaveBeenCalled();
+		expect(value.value).toEqual(['a', 'b']);
+
+		// 取消一项后恢复可选
+		await wrapper.findAll('input')[0].trigger('change');
+		await nextTick();
+		expect(value.value).toEqual(['b']);
+		expect(items()[2].classes()).not.toContain('is-disabled');
+	});
+
+	it('max: reset 也不超过上限', async () => {
+		let reset: any;
+		const value = ref<any[]>(['a']);
+		const wrapper = mount(() => (
+			<CheckboxGroup
+				v-model={value.value}
+				max={2}
+				onChange={(_: any, __: any, r: any) => { reset = r; }}
+				v-slots={{ default: () => ['a', 'b', 'c'].map(v => (<Checkbox value={v} />)) }}
+			/>
+		));
+		await wrapper.findAll('input')[1].trigger('change');
+		expect(value.value).toEqual(['a', 'b']);
+
+		reset('c');
+		expect(value.value).toEqual(['a', 'b']);
+	});
+});
+
+describe('icon slot', () => {
+	it('选项的 #icon 替换内置勾选框，参数含 checked / indeterminate / disabled', async () => {
+		const wrapper = mount(() => (
+			<Checkbox
+				modelValue={true}
+				indeterminate
+				disabled
+				v-slots={{ icon: (scope: any) => (<i class="icon" data-scope={JSON.stringify(scope)} />) }}
+			/>
+		));
+		await nextTick();
+
+		expect(wrapper.find('.vc-checkbox__border').exists()).toBe(false);
+		expect(wrapper.find('input').exists()).toBe(true);
+		expect(JSON.parse(wrapper.find('.icon').attributes('data-scope')!)).toEqual({ checked: true, indeterminate: true, disabled: true });
+	});
+
+	it('组合的 #icon 作用于组内选项，选项自身的优先', () => {
+		const wrapper = mount(() => (
+			<MCheckboxGroup
+				modelValue={['a']}
+				v-slots={{
+					icon: ({ checked }: any) => (<i class={['group-icon', { on: checked }]} />),
+					default: () => [
+						<MCheckbox value="a" />,
+						<MCheckbox value="b" v-slots={{ icon: () => (<i class="own-icon" />) }} />
+					]
+				}}
+			/>
+		));
+		const items = wrapper.findAll('.vcm-checkbox');
+		expect(items[0].find('.group-icon.on').exists()).toBe(true);
+		expect(items[1].find('.group-icon').exists()).toBe(false);
+		expect(items[1].find('.own-icon').exists()).toBe(true);
 	});
 });

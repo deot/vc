@@ -9,4 +9,11 @@ $component-name: vc-checkbox-group;
 	> .vc-checkbox {
 		padding-right: unitfix(8);
 	}
+
+	// 纵向排列：每项独占一行
+	@include when(vertical) {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+	}
 }

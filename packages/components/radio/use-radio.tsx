@@ -1,16 +1,29 @@
+/** @jsxImportSource vue */
+
 import { inject, ref, watch, computed } from 'vue';
 import type { SetupContext } from 'vue';
 import type { Props } from './radio-props';
 import type { CustomerValue } from '../customer/types';
 import type { RadioGroupType } from './types';
+import { Customer } from '../customer';
+import { hasCustomerValue } from '../customer/utils';
 
 type Options = {
-	// 固定的外观，不随分组的type变化（RadioButton为button）
+	name: string;
+	// 固定的外观，不随分组的type变化（RadioButton为button，移动端只有圆点）
 	variant?: RadioGroupType;
 };
 
-export const useRadio = (props: Props, context: SetupContext<['update:modelValue', 'change']>, options: Options = {}) => {
-	const { emit } = context;
+/**
+ * Radio、RadioButton 与 MRadio 共用
+ * @param props ~
+ * @param context ~
+ * @param options ~
+ * @returns 渲染函数
+ */
+export const useRadio = (props: Props, context: SetupContext<['update:modelValue', 'change']>, options: Options) => {
+	const { emit, slots } = context;
+	const { name } = options;
 	const group = inject<any>('vc-radio-group', {});
 	const formItem = inject<any>('vc-form-item', {});
 
@@ -126,24 +139,40 @@ export const useRadio = (props: Props, context: SetupContext<['update:modelValue
 		isFocus.value = true;
 	};
 
-	return {
-		currentValue,
-		isFocus,
-		isDisabled,
-		radioName,
-		classes,
-		styles,
-		hasGroup,
-		variant,
-		isPlain,
-		size,
-		checked,
-		handleChange,
-		handleBlur,
-		handleFocus,
-		sync,
-		reset,
-		computedValue,
-		computedLabel
+	return () => {
+		const label = slots.default || computedLabel.value;
+		const input = (
+			<input
+				checked={checked.value}
+				name={radioName.value}
+				disabled={isDisabled.value}
+				type="radio"
+				class={`${name}__input`}
+				onChange={handleChange}
+				onFocus={handleFocus}
+				onBlur={handleBlur}
+			/>
+		);
+		// 按钮、胶囊等分组样式：没有圆点，整项即按钮
+		if (!isPlain.value) {
+			return (
+				<label class={[classes.value, name]} style={styles.value}>
+					{ input }
+					<Customer wrap tag="span" class={`${name}__label`} render={label} />
+				</label>
+			);
+		}
+		const hasLabel = hasCustomerValue(label);
+		return (
+			<label class={[classes.value, name]} style={styles.value}>
+				<span class={[{ 'has-sibling': hasLabel }, `${name}__wrapper`]}>
+					<span class={`${name}__border`}>
+						<span class={`${name}__inner`} />
+					</span>
+					{ input }
+				</span>
+				{ hasLabel && (<Customer tag="span" render={label} />) }
+			</label>
+		);
 	};
 };

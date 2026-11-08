@@ -422,3 +422,15 @@ describe('mobile', () => {
 		expect(onChange).toHaveBeenCalledWith('banana', expect.anything(), expect.any(Function));
 	});
 });
+
+describe('MRadio 外观', () => {
+	it('分组的 type 不改变移动端外观：始终渲染圆点', () => {
+		const wrapper = mount(() => (
+			<MRadioGroup type="button" v-slots={{ default: () => (<MRadio value="apple" />) }} />
+		));
+		const item = wrapper.find('.vcm-radio');
+		expect(item.classes()).not.toContain('is-button');
+		expect(item.find('.vcm-radio__border').exists()).toBe(true);
+		expect(item.find('input').classes()).toContain('vcm-radio__input');
+	});
+});
