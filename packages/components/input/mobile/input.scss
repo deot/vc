@@ -3,37 +3,43 @@
 $component-name: vcm-input;
 $color-dark-light: varfix(color-dark-light, input);
 $color-dark-extralight: varfix(color-dark-extralight, input);
+$color-primary: varfix(color-primary, input);
 $background-color-lightest: varfix(background-color-lightest, input);
 $foreground-color: varfix(foreground-color, input);
 
+// 尺寸为 750 稿、随 --vc-rem 缩放，375 宽下：单独使用时为一整行，高 54、左右内边距 16；文字 16 / 行高 22，上下内边距 12
+// 前置 / 后置图标 16，前置与文字间距 12；清除按钮、后置内容与文字间距 16
+// 表单（MForm）、MInputNumber、MInputSearch 内各自覆盖行高与内边距
 @include block($component-name) {
 	position: relative;
 	display: inline-block;
 	width: 100%;
-	min-height: remfix(48);
-	line-height: 1.5;
+	font-size: remfix(32);
+	line-height: remfix(44);
 	cursor: text;
 	background-color: $background-color-lightest;
 
 	@include element(wrapper) {
 		display: flex;
+		min-height: remfix(108);
+		padding: 0 remfix(32);
 		align-items: center;
-		flex: 1;
+		box-sizing: border-box;
 	}
 
 	@include element(content) {
+		min-width: 0;
 		flex: 1;
 
 		input {
 			position: relative;
 			width: 100%;
-			padding-right: remfix(14);
-			padding-left: remfix(14);
+			padding: remfix(24) 0;
 			font-family: inherit;
 			font-size: inherit;
-			font-size: remfix(32);
 			line-height: inherit;
 			color: $color-dark-light;
+			caret-color: $color-primary;
 			background-color: unset;
 			border: none;
 			outline: 0;
@@ -43,10 +49,12 @@ $foreground-color: varfix(foreground-color, input);
 				color: $color-dark-extralight;
 			}
 
+			// iOS 的禁用文字颜色取 -webkit-text-fill-color，并会再降低不透明度
 			&[disabled] {
 				color: $color-dark-extralight;
 				cursor: not-allowed;
 				opacity: 1;
+				-webkit-text-fill-color: $color-dark-extralight;
 			}
 
 			&::-webkit-search-cancel-button {
@@ -54,63 +62,51 @@ $foreground-color: varfix(foreground-color, input);
 			}
 		}
 
+		// 只右对齐，颜色不变
 		@include when(right) {
 			input {
-				color: $color-dark-extralight;
 				text-align: right;
 			}
 		}
 	}
 
-	@include share-rule(m-input-icon) {
-		font-size: remfix(32);
-		color: $color-dark-extralight;
-		text-align: left;
-	}
-
-	/**
-	 * clear
-	 */
-	@include element(icon-clear){
-		@include extend-rule(m-input-icon);
-
+	// 清除按钮：聚焦且有值时显示（有值由组件的 v-show 控制）；不依赖 :hover，触屏点击后 :hover 会保持
+	@include element(icon-clear) {
 		display: none;
+		padding-left: remfix(32);
+		font-size: remfix(32);
 		line-height: inherit;
+		color: $color-dark-extralight;
 	}
 
-	@include pseudo(hover) {
-		@include element(icon-clear){
+	@include when(focus) {
+		@include element(icon-clear) {
 			display: flex;
 		}
 	}
 
-	/**
-	 * prepend/ append
-	 */
-	
 	@include share-rule(m-input-pend) {
 		z-index: 3;
-		height: 100%;
 		line-height: inherit;
 		text-align: center;
 		white-space: nowrap;
 
 		@include when(icon) {
-			width: remfix(32);
-			font-size: remfix(24);
+			display: flex;
+			font-size: remfix(32);
 			color: $foreground-color;
-			background-color: $background-color-lightest;
 		}
 	}
-	
-	/**
-	 * prepend / append
-	 */
+
 	@include element(prepend) {
 		@include extend-rule(m-input-pend);
+
+		padding-right: remfix(24);
 	}
 
 	@include element(append) {
 		@include extend-rule(m-input-pend);
+
+		padding-left: remfix(32);
 	}
 }

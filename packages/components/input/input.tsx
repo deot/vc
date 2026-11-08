@@ -46,6 +46,7 @@ export const Input = defineComponent({
 			input,
 			currentValue,
 			currentMaxlength,
+			hasValue,
 			classes,
 			listeners,
 			handleClear
@@ -134,6 +135,7 @@ export const Input = defineComponent({
 							(!props.disabled && props.clearable) && (
 								<TransitionFade>
 									<Icon
+										v-show={hasValue.value}
 										class="vc-input__icon-clear"
 										type="clear"
 										// @ts-ignore prevent 用于触发focus时，光标聚焦

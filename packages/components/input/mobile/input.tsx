@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent } from 'vue';
+import { defineComponent, withModifiers } from 'vue';
 import { useAttrs } from '@deot/vc-hooks';
 import { props as inputProps } from '../input-props';
 
@@ -42,6 +42,7 @@ export const MInput = defineComponent({
 			input,
 			currentValue,
 			currentMaxlength,
+			hasValue,
 			classes,
 			listeners,
 			handleClear
@@ -108,11 +109,13 @@ export const MInput = defineComponent({
 							!props.disabled && props.clearable && (
 								<MTransitionFade>
 									<MIcon
-										v-show={!!currentValue.value}
+										v-show={hasValue.value}
 										class="vcm-input__icon-clear"
 										type="clear"
+										// 阻止默认行为：输入框不失焦、键盘不收起，触屏上也不再派发 mousedown；mousedown 供桌面浏览器使用
 										// @ts-ignore
-										onTouchstart={handleClear}
+										onTouchstart={withModifiers(handleClear, ['prevent'])}
+										onMousedown={withModifiers(handleClear, ['prevent'])}
 									/>
 								</MTransitionFade>
 							)

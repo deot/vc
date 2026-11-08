@@ -61,7 +61,7 @@ describe('index-search.ts', () => {
 		expect(typeof vm.focus).toBe('function');
 		expect(typeof vm.blur).toBe('function');
 		expect(typeof vm.click).toBe('function');
-		expect(wrapper.classes()).toEqual(['vcm-input-search']);
+		expect(wrapper.classes()).toEqual(['vcm-input-search', 'is-fill', 'is-circle']);
 
 		const content = wrapper.find('.vcm-input-search__content');
 
@@ -95,15 +95,32 @@ describe('index-search.ts', () => {
 
 		expect(handleFocus).toBeCalledTimes(1);
 
+		// 按下时取消：阻止默认行为（触屏上不再派发 mousedown），mousedown 供桌面浏览器使用
 		const cancelBtn = wrapper.find('.vcm-input-search__btn');
-		await cancelBtn.trigger('touchend');
+		const touch = new Event('touchstart', { cancelable: true });
+		cancelBtn.element.dispatchEvent(touch);
+		await nextTick();
+		expect(touch.defaultPrevented).toBe(true);
 		expect(cancelBtn.text()).toBe('any');
 		expect(current.value).toBe('');
 		expect(handleCancel).toBeCalledTimes(1);
 
+		await cancelBtn.trigger('mousedown');
+		expect(handleCancel).toBeCalledTimes(2);
+
 		await wrapper.find('input').trigger('blur');
 		expect(handleBlur).toBeCalledTimes(1);
 		expect(wrapper.find('.vcm-input-search__btn').exists()).toBeFalsy();
+	});
+
+	it('m-input-search：theme / shape 在根节点输出 is-<theme>、is-<shape>，不透传给原生 input', () => {
+		const wrapper = mount(MInputSearch);
+		expect(wrapper.classes()).toEqual(['vcm-input-search', 'is-fill', 'is-circle']);
+
+		const styled = mount(MInputSearch, { props: { theme: 'inverted', shape: 'square' } });
+		expect(styled.classes()).toEqual(['vcm-input-search', 'is-inverted', 'is-square']);
+		expect(styled.find('input').attributes('theme')).toBeUndefined();
+		expect(styled.find('input').attributes('shape')).toBeUndefined();
 	});
 
 	it('enterText', async () => {

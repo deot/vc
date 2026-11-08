@@ -77,21 +77,25 @@ $foreground-color: varfix(foreground-color, input);
 		box-shadow: 0 0 unitfix(1) unitfix(1) $color-primary-lighter;
 	}
 
-	&:hover {
-		border-color: $color-primary;
+	// 悬停：边框由伪元素绘制，给伪元素着色；禁用、出错、已聚焦时不变
+	&:hover:not(.is-disabled, .is-error, .is-focus) {
+		&::after, &::before {
+			border-color: $color-primary;
+		}
 	}
 
 	@include when(disabled) {
 		background: $color-disabled;
 	}
 
+	// 出错时边框为错误色，聚焦也不显示主色光晕
 	@include when(error) {
 		&::after, &::before {
 			border-color: $color-error;
-			box-shadow: none;
 		}
 
 		z-index: 2;
+		box-shadow: none;
 	}
 
 	@include element(wrapper) {
@@ -130,9 +134,11 @@ $foreground-color: varfix(foreground-color, input);
 			cursor: not-allowed;
 			opacity: 1;
 
+			// Safari 的禁用文字颜色取 -webkit-text-fill-color
 			input {
 				color: $color-dark-extralight;
 				cursor: not-allowed;
+				-webkit-text-fill-color: $color-dark-extralight;
 			}
 		}
 	}
@@ -164,7 +170,6 @@ $foreground-color: varfix(foreground-color, input);
 	
 	@include share-rule(input-pend) {
 		z-index: 0; // 让虚线在下方
-		height: 100%;
 		height: unitfix(32);
 		font-size: unitfix(13);
 		line-height: unitfix(32);

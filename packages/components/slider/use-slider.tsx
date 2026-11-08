@@ -8,6 +8,7 @@ import type { Props, SliderValue } from './slider-props';
 import { clamp, getMarks, getRanges, getTickValues, normalizeValue, snap, stepValue, toOffset, toValue } from './utils';
 import type { FormItemProvide } from '../form/types';
 import { InputNumber as DesktopInputNumber } from '../input';
+import type { MInputNumber } from '../input/mobile/input-number';
 import { Popover } from '../popover';
 
 type Emits = ['update:modelValue', 'change', 'after-change'];
@@ -31,7 +32,7 @@ const TOOLTIP_STYLE = { width: 'max-content' };
 export const useSlider = (
 	props: Props,
 	{ emit, expose, slots }: SetupContext<Emits>,
-	options: { mobile?: boolean; InputNumber?: typeof DesktopInputNumber } = {}
+	options: { mobile?: boolean; InputNumber?: typeof DesktopInputNumber | typeof MInputNumber } = {}
 ) => {
 	const InputNumber = options.InputNumber || DesktopInputNumber;
 	const formItem = inject('vc-form-item', {} as FormItemProvide);

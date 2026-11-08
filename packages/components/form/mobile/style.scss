@@ -50,12 +50,16 @@ $font-size: 32;
 
 		// 表单内的输入框：去掉左右内边距，文字与标签、其他控件对齐；单行输入框的高度与内容行高一致
 		.vcm-input {
-			min-height: 0;
 			line-height: remfix($line-height);
 
 			input {
 				padding: 0;
 			}
+		}
+
+		.vcm-input__wrapper {
+			min-height: 0;
+			padding: 0;
 		}
 
 		.vcm-textarea textarea {

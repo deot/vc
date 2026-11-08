@@ -57,6 +57,9 @@ export const useInput = (props: Props, context: SetupContext<Emits>) => {
 		};
 	});
 
+	// 有值时才显示清除按钮；0 也算有值
+	const hasValue = computed(() => String(currentValue.value ?? '') !== '');
+
 	const currentMaxlength = computed(() => {
 		const value = currentValue.value;
 		const { maxlength, bytes } = props;
@@ -205,6 +208,7 @@ export const useInput = (props: Props, context: SetupContext<Emits>) => {
 		input,
 		currentValue,
 		currentMaxlength,
+		hasValue,
 		isFocus,
 		isClearing,
 		isOnComposition,

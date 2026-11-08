@@ -1,95 +1,157 @@
 @use '../../style/helper' as *;
 
-$color-dark-extralight: varfix(color-dark-extralight, input);
-$color-light-deep: varfix(color-light-deep, input);
+$color-dark-light: varfix(color-dark-light, input);
 $color-light-extradeep: varfix(color-light-extradeep, input);
-$color-primary-light: varfix(color-primary-light, input);
+$color-neutral-light: varfix(color-neutral-light, input);
 $color-primary-lighter: varfix(color-primary-lighter, input);
 $background-color: varfix(background-color, input);
 $component-name: vcm-input-number;
 
+// 有步进按钮（is-stepper）时为紧凑的步进器；没有步进按钮（step 为 0 / false）时不加样式，与 MInput 一致（整行、白底、左对齐，表单中同 MInput）
+// 步进器的尺寸为 750 稿、随 --vc-rem 缩放，375 宽下：按钮 28 × 28，输入区 40 × 28、与按钮间隔 1，字号 14；按钮图标 10、线宽 2
+// theme=fill（默认）：按钮与输入区为浅灰底；theme=border：透明底加边框。shape=square（默认）方角；shape=circle 圆形按钮
+// 图标与文字同色；到达边界的按钮图标变浅；按下时按钮为主色浅底
 @include block($component-name) {
-	width: auto;
+	// 宽度随内容：:where 不增加优先级，外部（如 MSlider 的 .vc-slider__input）设置的宽度仍然生效
+	&:where(.is-stepper) {
+		width: auto;
+	}
 
-	@include share-rule(m-input-number-icon) {
-		display: block;
-		width: remfix(56);
-		height: remfix(56);
-		line-height: remfix(56);
-		color: $color-dark-extralight;
-		text-align: center;
-		cursor: pointer;
-		background-color: $background-color;
+	@include when(stepper) {
+		line-height: 1.5;
 
-		&[disabled] {
-			color: $color-light-extradeep;
-			cursor: not-allowed;
+		// 不是整行输入框：去掉 MInput 的行高与左右内边距，步进按钮紧贴输入区
+		.vcm-input__wrapper {
+			min-height: 0;
+			padding: 0;
+		}
+
+		.vcm-input__prepend,
+		.vcm-input__append {
+			padding: 0;
+		}
+
+		@include share-rule(m-input-number-button) {
+			position: relative;
+			display: block;
+			width: remfix(56);
+			height: remfix(56);
+			color: $color-dark-light;
+			cursor: pointer;
+			background-color: $background-color;
+			-webkit-tap-highlight-color: transparent;
+
+			&[disabled] {
+				color: $color-light-extradeep;
+				cursor: not-allowed;
+				opacity: .8;
+			}
+
+			&:active:not([disabled]) {
+				background-color: $color-primary-lighter;
+			}
+		}
+
+		// 加减号：居中的横线与竖线，颜色取按钮的文字颜色
+		@include share-rule(m-input-number-line) {
+			position: absolute;
+			inset: 0;
+			margin: auto;
+			background-color: currentcolor;
+			content: '';
+		}
+
+		@include element(minus) {
+			@include extend-rule(m-input-number-button);
+
+			border-radius: remfix(4) 0 0 remfix(4);
+
+			&::before {
+				@include extend-rule(m-input-number-line);
+
+				width: remfix(20);
+				height: remfix(4);
+			}
+		}
+
+		@include element(plus) {
+			@include extend-rule(m-input-number-button);
+
+			border-radius: 0 remfix(4) remfix(4) 0;
+
+			&::before {
+				@include extend-rule(m-input-number-line);
+
+				width: remfix(20);
+				height: remfix(4);
+			}
+
+			&::after {
+				@include extend-rule(m-input-number-line);
+
+				width: remfix(4);
+				height: remfix(20);
+			}
+		}
+
+		@include when(disabled) {
 			opacity: .8;
 		}
 
-		&:active {
-			background-color: $color-primary-lighter;
-		}
-	}
-	
-	@include share-rule(absolute) {
-		position: absolute;
-		inset: 0;
-		margin: auto;
-		background-color: currentcolor;
-	}
-
-	@include element(plus) {
-		position: relative;
-		border-radius: 0 remfix(4) remfix(4) 0;
-
-		@include extend-rule(m-input-number-icon);
-
-		&::before {
-			@include extend-rule(absolute);
-
-			width: remfix(22);
-			height: remfix(4);
-			content: '';
+		input {
+			width: remfix(80);
+			height: remfix(56);
+			padding: 0 remfix(6);
+			margin: 0 remfix(2);
+			font-size: remfix(28);
+			text-align: center;
+			background-color: $background-color;
+			border-radius: 0; // 不加的话 iOS 端默认带圆角
+			outline: none;
 		}
 
-		&::after {
-			@include extend-rule(absolute);
+		// theme=border：透明底、1px 边框（与 MButton 的边框一样不随 --vc-rem 缩放）
+		// 方角时整体一个外框，输入区两侧为分隔线；圆形时每个按钮各自描边，没有外框
+		@include when(border) {
+			.vcm-input-number__minus,
+			.vcm-input-number__plus,
+			input {
+				background-color: transparent;
+			}
 
-			width: remfix(4);
-			height: remfix(22);
-			content: '';
+			@include when(square) {
+				.vcm-input__wrapper {
+					overflow: hidden;
+					border: 1px solid $color-neutral-light;
+					border-radius: remfix(4);
+				}
+
+				input {
+					margin: 0;
+					border-right: 1px solid $color-neutral-light;
+					border-left: 1px solid $color-neutral-light;
+				}
+			}
+
+			@include when(circle) {
+				.vcm-input-number__minus,
+				.vcm-input-number__plus {
+					border: 1px solid $color-neutral-light;
+					box-sizing: border-box;
+				}
+			}
 		}
-	}
 
-	@include element(minus) {
-		position: relative;
-		border-radius: remfix(4) 0 0 remfix(4);
+		// shape=circle：圆形按钮，输入区透明
+		@include when(circle) {
+			.vcm-input-number__minus,
+			.vcm-input-number__plus {
+				border-radius: 50%;
+			}
 
-		@include extend-rule(m-input-number-icon);
-
-		&::before {
-			@include extend-rule(absolute);
-
-			width: remfix(22);
-			height: remfix(4);
-			content: '';
+			input {
+				background-color: transparent;
+			}
 		}
-	}
-
-	@include when(disabled) {
-		opacity: 0.8;
-	}
-
-	input {
-		width: remfix(98);
-		height: remfix(56);
-		padding: 0 remfix(6);
-		margin: 0 remfix(2);
-		font-size: remfix(26);
-		text-align: center;
-		background-color: $background-color;
-		border-radius: 0; // 不加的话ios端默认带圆角
-		outline: none;
 	}
 }

@@ -1,62 +1,86 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-input-search;
-$size: remfix(108);
 $color-dark-extralight: varfix(color-dark-extralight, input);
+$color-primary: varfix(color-primary, input);
+$background-color: varfix(background-color, input);
 $background-color-lightest: varfix(background-color-lightest, input);
-$foreground-color: varfix(foreground-color, input);
 
+// 尺寸为 750 稿、随 --vc-rem 缩放，375 宽下：栏高 68（上下左右内边距 16）；输入框高 36、左右内边距 14；字号 14、行高 20；搜索图标 16，与文字间距 9
+// theme=fill（默认）白底、输入框浅灰底；theme=inverted 浅灰底、输入框白底。shape=circle（默认）胶囊；shape=square 方角（375 宽下圆角 2）
+// 清空图标在有值时显示（不要求聚焦），与文字间距 16；取消按钮字号 15、主色，与输入框间距 16
 @include block($component-name) {
 	display: flex;
 	align-items: center;
-	height: $size;
-	padding: remfix(20);
-
-	.vcm-input {
-		height: remfix(68);
-	}
-
-	.vcm-input__prepend {
-		line-height: remfix(68);
-	}
+	padding: remfix(32);
+	background-color: $background-color-lightest;
 
 	@include element(content) {
-		padding-right: remfix(28);
-		overflow: hidden;
-		background: $background-color-lightest;
-		border-radius: remfix(32);
+		height: remfix(72);
+		min-width: 0;
+		padding: 0 remfix(28);
+		font-size: remfix(28);
+		line-height: remfix(40);
+		background-color: $background-color;
+		border-radius: remfix(36);
+		box-sizing: border-box;
+		flex: 1;
+
+		// 不是整行输入框：去掉 MInput 的行高与左右内边距
+		.vcm-input__wrapper {
+			height: 100%;
+			min-height: 0;
+			padding: 0;
+		}
 
 		input {
-			padding-top: remfix(12) ;
-			padding-bottom: remfix(10);
-			font-size: remfix(28);
+			padding: 0;
 
 			&::placeholder {
-				font-size: remfix(30);
 				color: $color-dark-extralight;
 			}
 		}
 
-		@include element(icon){
-			margin-left: remfix(28);
-			font-size: remfix(30);
-			color: $color-dark-extralight;
+		.vcm-input__prepend {
+			display: flex;
+			padding-right: remfix(18);
+			align-items: center;
 		}
 
-		@include when(focus) {
-			input {
-				text-align: left;
-			}
-		} 
+		.vcm-input__append {
+			padding-left: remfix(32);
+		}
+
+		.vcm-input__icon-clear {
+			display: flex;
+		}
 	}
 
-	@include element(btn){
-		height: $size;
-		padding-left: remfix(16);
+	@include element(icon) {
+		font-size: remfix(32);
+		color: $color-dark-extralight;
+	}
+
+	@include when(inverted) {
+		background-color: $background-color;
+
+		@include element(content) {
+			background-color: $background-color-lightest;
+		}
+	}
+
+	@include when(square) {
+		@include element(content) {
+			border-radius: remfix(4);
+		}
+	}
+
+	@include element(btn) {
+		padding-left: remfix(32);
 		font-size: remfix(30);
-		line-height: $size;
-		color: $foreground-color;
-		text-align: right;
+		color: $color-primary;
 		white-space: nowrap;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
 	}
 }

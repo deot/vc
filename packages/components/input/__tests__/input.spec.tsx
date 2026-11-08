@@ -288,6 +288,45 @@ describe('index.ts', () => {
 		app.unmount();
 	});
 
+	it('m-input 清除按钮：阻止 touchstart 的默认行为（不失焦），mousedown 也能清除', async () => {
+		const current = ref('123');
+		const handleClear = vi.fn();
+		const wrapper = mount(() => <MInput v-model={current.value} clearable onClear={handleClear} />, { attachTo: document.body });
+		const clear = wrapper.find('.vcm-input__icon-clear');
+
+		const touch = new Event('touchstart', { cancelable: true });
+		clear.element.dispatchEvent(touch);
+		expect(touch.defaultPrevented).toBe(true);
+		expect(current.value).toBe('');
+		await nextTick();
+
+		current.value = '456';
+		await nextTick();
+		const mouse = new MouseEvent('mousedown', { cancelable: true });
+		clear.element.dispatchEvent(mouse);
+		expect(mouse.defaultPrevented).toBe(true);
+		expect(current.value).toBe('');
+		expect(handleClear).toHaveBeenCalledTimes(2);
+
+		wrapper.unmount();
+	});
+
+	it('清除按钮只在有值时显示，0 也算有值', async () => {
+		const current = ref<any>('');
+		const wrapper = mount(() => (
+			<div>
+				<Input v-model={current.value} clearable />
+				<MInput v-model={current.value} clearable />
+			</div>
+		));
+		const clears = () => wrapper.findAll('[class*="__icon-clear"]').map(it => (it.element as HTMLElement).style.display);
+
+		expect(clears()).toEqual(['none', 'none']);
+		current.value = 0;
+		await nextTick();
+		expect(clears()).toEqual(['', '']);
+	});
+
 	it('event:clear', async () => {
 		const current = ref('123');
 		const handleClear = vi.fn();

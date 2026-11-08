@@ -65,12 +65,12 @@ describe('index-number.ts', () => {
 		expect(typeof vm.focus).toBe('function');
 		expect(typeof vm.blur).toBe('function');
 		expect(typeof vm.click).toBe('function');
-		expect(wrapper.classes()).toEqual(['vcm-input', 'vcm-input-number']);
+		expect(wrapper.classes()).toEqual(['vcm-input', 'vcm-input-number', 'is-stepper', 'is-fill', 'is-square']);
 
 		await wrapper.find('input').trigger('focus');
-		expect(wrapper.classes()).toEqual(['vcm-input', 'is-focus', 'vcm-input-number']);
+		expect(wrapper.classes()).toEqual(['vcm-input', 'is-focus', 'vcm-input-number', 'is-stepper', 'is-fill', 'is-square']);
 		await wrapper.setProps({ disabled: true });
-		expect(wrapper.classes()).toEqual(['vcm-input', 'is-focus', 'is-disabled', 'vcm-input-number']);
+		expect(wrapper.classes()).toEqual(['vcm-input', 'is-focus', 'is-disabled', 'vcm-input-number', 'is-stepper', 'is-fill', 'is-square']);
 	});
 
 	it('default: invalid value', async () => {
@@ -429,6 +429,40 @@ describe('index-number.ts', () => {
 
 		await minusEl.trigger('click');
 		expect(current.value).toBe(0);
+	});
+
+	it('inputmode, m-input-number：不允许负数时弹出数字键盘，有小数位时带小数点，可由 attrs 覆盖', () => {
+		const mode = (props: Record<string, any>) => mount(MInputNumber, { props }).find('input').attributes('inputmode');
+
+		expect(mode({})).toBe('numeric');
+		expect(mode({ precision: 2 })).toBe('decimal');
+		expect(mode({ min: -1 })).toBeUndefined();
+		expect(mode({ inputmode: 'text' })).toBe('text');
+	});
+
+	it('m-input-number：有步进按钮时带 is-stepper（紧凑的步进器），没有时与 MInput 一致', () => {
+		expect(mount(MInputNumber).classes()).toEqual(expect.arrayContaining(['vcm-input', 'vcm-input-number', 'is-stepper']));
+
+		for (const step of [0, false, null]) {
+			const wrapper = mount(MInputNumber, { props: { step: step as any } });
+			expect(wrapper.classes()).toEqual(expect.arrayContaining(['vcm-input', 'vcm-input-number']));
+			expect(wrapper.classes()).not.toContain('is-stepper');
+			expect(wrapper.find('.vcm-input-number__plus').exists()).toBe(false);
+		}
+	});
+
+	it('m-input-number：theme / shape 在根节点输出 is-<theme>、is-<shape>，只在有步进按钮时生效，不透传给原生 input', () => {
+		const wrapper = mount(MInputNumber);
+		expect(wrapper.classes()).toEqual(expect.arrayContaining(['is-fill', 'is-square']));
+
+		const styled = mount(MInputNumber, { props: { theme: 'border', shape: 'circle' } });
+		expect(styled.classes()).toEqual(expect.arrayContaining(['is-border', 'is-circle']));
+		expect(styled.find('input').attributes('theme')).toBeUndefined();
+		expect(styled.find('input').attributes('shape')).toBeUndefined();
+
+		const stepless = mount(MInputNumber, { props: { step: false, theme: 'border', shape: 'circle' } });
+		expect(stepless.classes()).not.toContain('is-border');
+		expect(stepless.classes()).not.toContain('is-circle');
 	});
 
 	it('step:0, m-input-number', async () => {

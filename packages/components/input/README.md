@@ -60,7 +60,7 @@ const input = ref('');
 :::
 
 ### 可清空
-使用 `clearable` 属性即可得到一个可清空的输入框
+使用 `clearable` 属性即可得到一个可清空的输入框。有值时才显示清空图标（`0` 也算有值），桌面端悬停时显示，移动端聚焦时显示。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
@@ -199,6 +199,23 @@ const input = ref('');
 
 `MInput` 支持右对齐，`MInputNumber` 在两侧显示步进按钮，`MInputSearch` 聚焦时显示取消操作。使用 `v-model` 同步取消后的空值。
 
+`MInput` 单独使用时为一整行，尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 行 | 高 108（54），左右内边距 32（16） |
+| 文字 | 字号 32（16），行高 44（22），上下内边距 24（12）；光标为主色 |
+| 前置 / 后置图标 | 32（16）；前置与文字间距 24（12），后置与文字间距 32（16） |
+| 清空图标 | 32（16），与文字间距 32（16）；聚焦且有值时显示 |
+
+- 清空图标阻止 `touchstart` 的默认行为：点击时输入框不失焦、键盘不收起；`mousedown` 同样可以清空，便于在桌面浏览器中调试。
+- 禁用时设置 `-webkit-text-fill-color`，iOS 上禁用文字的颜色与 `color-dark-extralight` 一致。
+- 在 `MForm` 中去掉行高与左右内边距，与标签、其他控件对齐；`MInputNumber`、`MInputSearch` 使用各自的尺寸。
+
+`MInputNumber` 有步进按钮时为紧凑的步进器（根节点带 `is-stepper`）；`step` 为 `0`、`false`、`null` 时没有步进按钮，样式与 `MInput` 一致（整行、白底、左对齐，在 `MForm` 中同 `MInput`），与桌面端 `InputNumber` 无步进按钮时即 `Input` 的样式一致。步进器（375 宽下）：按钮 28 × 28，输入区 40 × 28、与按钮间隔 1，字号 14；按钮与输入区为浅灰底（`background-color`），加减号与文字同色，到达边界时变浅，按下时为主色浅底。不允许负数（`min >= 0`）时设置 `inputmode`，弹出数字键盘，`precision` 大于 0 时带小数点；允许负数时保持文本键盘（iOS 的数字键盘没有负号）。可通过 attrs 传入 `inputmode` 覆盖。
+
+`MInputSearch`（375 宽下）：栏高 68、内边距 16、白底；输入框高 36、左右内边距 14、浅灰底、胶囊圆角，字号 14；搜索图标 16，与文字间距 9。清空图标在有值时显示，不要求聚焦；取消按钮为主色、字号 15，与输入框间距 16，按下即取消并让输入框失焦（阻止 `touchstart` 的默认行为，`mousedown` 同样可用）。
+
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, viewport: 375 }</config> -->
 ```vue
@@ -246,7 +263,7 @@ const handleCancel = () => { status.value = '已取消搜索'; };
 | color-disabled | 亮色禁用输入区、附加区及数字按钮背景 | `#EBEEF5` |
 | color-error | 错误边框 | `#F53F3F` |
 | color-light-extradeep | 移动端步进按钮禁用文字 | 亮色：`#B9B9B9`；暗色：`#F8F8F8` |
-| color-primary | 亮色聚焦及悬停边框 | `#456CF6` |
+| color-primary | 亮色聚焦及悬停边框；移动端光标 | `#456CF6` |
 | color-primary-light | 暗色聚焦边框、数字按钮悬停图标 | `#4A96FF` |
 | color-primary-lighter | 焦点阴影及移动端步进按钮激活背景 | `rgba(45, 140, 240, 0.2)` |
 | background-color | 移动端数字输入区及按钮背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
@@ -325,7 +342,7 @@ const handleCancel = () => { status.value = '已取消搜索'; };
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| right | 文字右对齐 | `boolean` | - | `false` |
+| right | 文字右对齐（只改对齐，不改颜色） | `boolean` | - | `false` |
 
 ### InputNumber / MInputNumber 属性
 
@@ -340,6 +357,13 @@ const handleCancel = () => { status.value = '已取消搜索'; };
 | precision | 输入的小数位数上限 | `number` | - | `0` |
 | output | 输入、步进和归整时转换输出 | `string \| Function` | `'number'`、`'string'`、函数 | `'number'` |
 | nullValue | number 输出模式下空值或无效值的结果 | `number \| string \| object` | - | `undefined` |
+
+`MInputNumber` 另有以下属性，只在有步进按钮时生效（没有步进按钮时与 `MInput` 一致）：
+
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| theme | 填充方案：`fill` 按钮与输入区为浅灰底；`border` 透明底加 1px 边框（方角时整体外框、输入区两侧分隔线，圆形时每个按钮各自描边） | `string` | `'fill'`、`'border'` | `'fill'` |
+| shape | 步进按钮的形状：`square` 方角；`circle` 圆形按钮、输入区透明 | `string` | `'square'`、`'circle'` | `'square'` |
 
 `output="string"` 的空值结果为 `''`。自定义 `output(value)` 接收字符串或数字，返回值作为输出。初始值不会自动归整，范围校正在失焦、回车和步进时执行。
 
@@ -395,6 +419,8 @@ disabled 禁用输入，搜索区域仅有禁用外观，当前仍会发出点�
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | cancelText | 聚焦时显示的取消文字，空字符串隐藏操作 | `string` | - | 当前 locale 的“取消” |
+| theme | 填充方案：`fill` 白底、输入框浅灰底；`inverted` 浅灰底、输入框白底 | `string` | `'fill'`、`'inverted'` | `'fill'` |
+| shape | 输入框的形状：`circle` 胶囊；`square` 方角 | `string` | `'circle'`、`'square'` | `'circle'` |
 
 ### MInputSearch 事件
 
