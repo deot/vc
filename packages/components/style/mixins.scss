@@ -32,6 +32,15 @@
 	}
 }
 
+// 批量设置局部变量（见 localfix）：(键: 值) → --vc-<组件>-<键>: 值；值为 null 时跳过（0 照常输出）
+@mixin localvars($component, $map) {
+	@each $key, $value in $map {
+		@if $value {
+			--vc-#{$component}-#{$key}: #{$value};
+		}
+	}
+}
+
 /**
  * 定位元素（absolute / fixed）按自身尺寸在包含块内居中
  * 用布局居中，位置对齐到设备像素；transform 的百分比位移遇奇数或小数尺寸会落在非整像素上，线条发虚，

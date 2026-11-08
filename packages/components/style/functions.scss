@@ -41,3 +41,9 @@
 
 	@return $value;
 }
+
+// 局部变量：var(--vc-<组件>-<键>, 默认值)
+// 两端结构相同的组件，桌面端的尺寸写成它；移动端在标记类（如 .vcm-button）上覆盖变量（localvars），与两端样式的加载顺序无关
+@function localfix($component, $key, $default) {
+	@return #{'var(--vc-#{$component}-#{$key}, '}#{$default}#{')'};
+}
