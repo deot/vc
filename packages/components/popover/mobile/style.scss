@@ -1,0 +1,15 @@
+@use '../../style/helper' as *;
+
+// 移动端外观：只覆盖主题变量，结构与箭头沿用 ../wrapper.scss
+// - 字号、行高、内边距、圆角按 750 稿随 --vc-rem 缩放
+// - 箭头、与触发节点及视口的间距保持 px：定位常量在 use-pos.ts
+// - 用变量覆盖：与两端样式的加载顺序无关，portalClass 上设置的字体仍然优先（默认字体的优先级为 0）
+@include block(vcm-popover-wrapper) {
+	--vc-popover-wrapper-font-size-small: #{remfix(28)};
+	--vc-popover-wrapper-line-height-large: #{remfix(40)};
+	--vc-popover-wrapper-padding: #{remfix(16)} #{remfix(24)};
+	--vc-popover-wrapper-border-radius: #{remfix(8)};
+
+	// 浅色外观的文字与 MList 主文字一致
+	--vc-popover-wrapper-color-dark-lighter: #{varfix(color-dark-light)};
+}

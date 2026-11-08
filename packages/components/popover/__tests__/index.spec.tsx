@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Popover, PopoverView, Select, Scroller, Checkbox, CheckboxGroup, Button, ButtonGroup, Slider } from '@deot/vc-components';
+import { Popover, MPopover, PopoverView, Select, Scroller, Checkbox, CheckboxGroup, Button, ButtonGroup, Slider } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Resize } from '@deot/helper-resize';
 import { defineComponent, nextTick, ref, provide, inject, getCurrentInstance, KeepAlive } from 'vue';
@@ -1405,7 +1405,8 @@ describe('Popover 位置自适应 (use-pos)', () => {
 			const wrapper = await openSized(placement as string, 80, height as number);
 			expect(getWrapperEl()!.classList.contains(`is-${(placement as string).split('-')[0]}`)).toBe(true);
 			expect(getArrow().style[side as string]).toBe(value);
-			expect(getArrow().style.transform).toContain('rotate(45deg)');
+			// 不旋转、不平移：居中由样式的负外边距完成，底边与容器的边对齐到同一像素
+			expect(getArrow().style.transform).toBe('');
 
 			wrapper.unmount();
 		});
@@ -2677,5 +2678,100 @@ describe('Popover keepFocus', () => {
 		await flush();
 
 		expect(press(document.querySelector('.c-static')!)).toBe(true);
+	});
+});
+
+describe('MPopover（移动端）', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('默认点按触发；浮层带移动端外观类，并保留调用方的 portalClass', async () => {
+		const wrapper = mount(() => (
+			<MPopover content="x" portalClass="custom-portal">
+				<button>btn</button>
+			</MPopover>
+		), { attachTo: document.body });
+		await nextTick();
+
+		expect(wrapper.classes()).toContain('vc-popover');
+
+		fireEvent(wrapper.element, 'mouseenter');
+		await flush();
+		expect(getWrapperEl()).toBeNull();
+
+		await wrapper.trigger('click');
+		await flush();
+		const el = getWrapperEl()!;
+		expect(el.style.display).not.toBe('none');
+		expect(el.classList.contains('vcm-popover-wrapper')).toBe(true);
+		expect(el.classList.contains('custom-portal')).toBe(true);
+
+		await wrapper.trigger('click');
+		await flush();
+		expect(el.style.display).toBe('none');
+
+		wrapper.unmount();
+	});
+
+	it('trigger 可显式指定为 hover', async () => {
+		const wrapper = mount(() => (
+			<MPopover trigger="hover" content="x">
+				<button>btn</button>
+			</MPopover>
+		), { attachTo: document.body });
+		await nextTick();
+
+		fireEvent(wrapper.element, 'mouseenter');
+		await flush();
+		expect(getWrapperEl()!.classList.contains('vcm-popover-wrapper')).toBe(true);
+
+		wrapper.unmount();
+	});
+
+	it('转发 v-model / visible-change / ready', async () => {
+		const visible = ref(false);
+		const onVisibleChange = vi.fn();
+		const onReady = vi.fn();
+		const outside = document.createElement('div');
+		document.body.appendChild(outside);
+		const wrapper = mount(() => (
+			<MPopover v-model={visible.value} content="x" onVisibleChange={onVisibleChange} onReady={onReady}>
+				<button>btn</button>
+			</MPopover>
+		), { attachTo: document.body });
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await flush();
+		expect(visible.value).toBe(true);
+		expect(onVisibleChange).toHaveBeenLastCalledWith(true);
+		expect(onReady).toHaveBeenCalled();
+
+		outside.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+		await flush();
+		expect(visible.value).toBe(false);
+		expect(onVisibleChange).toHaveBeenLastCalledWith(false);
+
+		wrapper.unmount();
+	});
+
+	it('MPopover.open：一个参数与两个参数的形式都带移动端外观类', async () => {
+		const triggerEl = document.createElement('button');
+		document.body.appendChild(triggerEl);
+
+		const first = MPopover.open({ name: 'm-open-1', triggerElement: triggerEl, content: 'x', portalClass: 'custom-portal' });
+		await flush();
+		const el = getWrapperEl()!;
+		expect(el.classList.contains('vcm-popover-wrapper')).toBe(true);
+		expect(el.classList.contains('custom-portal')).toBe(true);
+		first.destroy();
+		await flush();
+
+		const second = MPopover.open({ triggerElement: triggerEl, content: 'y' }, { name: 'm-open-2' });
+		await flush();
+		expect(getWrapperEl()!.classList.contains('vcm-popover-wrapper')).toBe(true);
+		second.destroy();
+		await flush();
 	});
 });

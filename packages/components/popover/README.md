@@ -574,6 +574,7 @@ onUnmounted(() => leaf?.destroy());
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
 | border-radius | 弹层圆角 | `4px` |
+| padding | 弹层各分区（header、内容区、footer）的内边距 | `5px 12px` |
 
 ## API
 
@@ -646,7 +647,19 @@ onUnmounted(() => leaf?.destroy());
 
 ### 移动端
 
-`MPopover` 是 `Popover` 的别名，使用同一实现与样式；触屏场景建议使用 `trigger="click"` 或 `custom`。
+`MPopover` 的属性、事件、插槽与 `Popover` 相同，区别只有两点：
+
+- `trigger` 默认为 `click`：点按触发器开关，点外部关闭；
+- 浮层带有移动端外观类 `vcm-popover-wrapper`，字号、行高、内边距、圆角写为 `calc(var(--vc-rem) * n)`（n 为 750 稿长度），随 `--vc-rem` 缩放。箭头与触发器、视口的间距保持 px。
+
+| 项 | `Popover` | `MPopover`（750 稿） | 375 宽下 |
+| --- | --- | --- | --- |
+| 字号 / 行高 | `13px` / `20px` | `28` / `40` | `14px` / `20px` |
+| 内边距 | `5px 12px` | `16 24` | `8px 12px` |
+| 圆角 | `4px` | `8` | `4px` |
+| 浅色外观的文字颜色 | `color-dark-lighter` | `color-dark-light` | - |
+
+移动端外观只覆盖 `--vc-popover-wrapper-*` 变量，结构样式与 `Popover` 共用，全局或 `portalStyle` 上的变量覆盖对两端同样生效。`MPopover.open` 与 `Popover.open` 参数相同，创建的浮层同样带有该类；直接渲染 `PopoverView` 时，在 `portalClass` 中加入 `vcm-popover-wrapper` 即可使用移动端外观。浮层内部元素的类名仍为 `.vc-popover-wrapper__*`。
 
 ### 注意事项
 

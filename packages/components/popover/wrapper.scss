@@ -8,7 +8,13 @@ $color-shadow-fixed: varfix(color-shadow-fixed, popover-wrapper);
 $box-shadow: varfix(box-shadow, popover-wrapper);
 $font-size-small: varfix(font-size-small, popover-wrapper);
 $line-height-large: varfix(line-height-large, popover-wrapper);
-$padding: 5px 12px;
+
+// 各分区（header / content / footer）的内边距，仅组件内的参数
+$padding: var(--vc-popover-wrapper-padding, 5px 12px);
+
+// 有箭头时朝向触发节点一侧留出的空间；箭头（三角形）的高，底边为两倍
+$arrow-gap: 8px;
+$arrow-height: 6px;
 
 // 容器圆角，仅组件内的参数（全局 border-radius 为卡片类的较大圆角）
 $border-radius: var(--vc-popover-wrapper-border-radius, 4px);
@@ -26,19 +32,19 @@ $border-radius: var(--vc-popover-wrapper-border-radius, 4px);
 	// top / left 不加过渡：位置变化时弹层会从鼠标下扫过，触发节点收到多余的 mouseleave / mouseenter
 
 	@include when(top) {
-		padding-bottom: 8px;
+		padding-bottom: $arrow-gap;
 	}
 
 	@include when(bottom) {
-		padding-top: 8px;
+		padding-top: $arrow-gap;
 	}
 
 	@include when(right) {
-		padding-left: 8px;
+		padding-left: $arrow-gap;
 	}
 
 	@include when(left) {
-		padding-right: 8px;
+		padding-right: $arrow-gap;
 	}
 
 	// 最大宽高由 use-pos 的 fitMaxSize 按可用空间写入，不可断行的长串在宽度内换行
@@ -99,106 +105,75 @@ $border-radius: var(--vc-popover-wrapper-border-radius, 4px);
 		}
 	}
 
+	// 箭头：不旋转的三角形（边框绘制），底边贴住容器的边、不重叠
+	// - 底边是盒子自身的边，与容器的边按同样的方式对齐到像素：dark 外观（半透明）没有叠色的细线，也没有缝隙
+	// - 阴影用 drop-shadow，只沿三角形的轮廓，不会透到容器上
+	// - 颜色取 color：未设外观（none）时不显示
+	// - 沿边的位置：居中方向在中线上，其余由 use-pos 写入 left / right / top / bottom；负外边距使该位置为箭头中心
 	@include element(arrow) {
 		position: absolute;
 		display: block;
-		width: 9px;
-		height: 9px;
-		background: transparent;
-		border-color: transparent;
-		border-style: solid;
-		border-width: 4px;
-		transform: rotate(45deg);
-		box-sizing: border-box;
+		width: 0;
+		height: 0;
+		color: transparent;
+		border: $arrow-height solid transparent;
 
+		@include when(light) {
+			color: $color-light;
+		}
+
+		@include when(dark) {
+			color: $color-mask-dark;
+		}
+
+		// 上方的弹层：箭头在容器下方，尖朝下
 		@include when(top-basic) {
-			bottom: 4px;
-			border-top-color: transparent;
-			border-left-color: transparent;
-			box-shadow: 3px 3px 7px $color-shadow-fixed;
+			bottom: $arrow-gap - $arrow-height;
+			margin: 0 (-$arrow-height);
+			border-top-color: currentcolor;
+			border-bottom-width: 0;
+			filter: drop-shadow(0 3px 3px $color-shadow-fixed);
+		}
 
-			@include when(light) {
-				border-right-color: $color-light;
-				border-bottom-color: $color-light;
-			}
+		@include when(bottom-basic) {
+			top: $arrow-gap - $arrow-height;
+			margin: 0 (-$arrow-height);
+			border-bottom-color: currentcolor;
+			border-top-width: 0;
+			filter: drop-shadow(0 -2px 2px $color-shadow-fixed);
+		}
 
-			@include when(dark) {
-				border-right-color: $color-mask-dark;
-				border-bottom-color: $color-mask-dark;
-			}
+		// 左侧的弹层：箭头在容器右侧，尖朝右
+		@include when(left-basic) {
+			right: $arrow-gap - $arrow-height;
+			margin: (-$arrow-height) 0;
+			border-left-color: currentcolor;
+			border-right-width: 0;
+			filter: drop-shadow(3px 0 3px $color-shadow-fixed);
+		}
+
+		@include when(right-basic) {
+			left: $arrow-gap - $arrow-height;
+			margin: (-$arrow-height) 0;
+			border-right-color: currentcolor;
+			border-left-width: 0;
+			filter: drop-shadow(-3px 0 3px $color-shadow-fixed);
 		}
 
 		@include when(top) {
 			left: 50%;
-			transform: translateX(-50%) rotate(45deg);
-		}
-
-		@include when(bottom-basic) {
-			top: 4px;
-			border-right-color: transparent;
-			border-bottom-color: transparent;
-			box-shadow: -2px -2px 5px $color-shadow-fixed;
-
-			@include when(light) {
-				border-top-color: $color-light;
-				border-left-color: $color-light;
-			}
-
-			@include when(dark) {
-				border-top-color: $color-mask-dark;
-				border-left-color: $color-mask-dark;
-			}
-			
 		}
 
 		@include when(bottom) {
 			left: 50%;
-			transform: translateX(-50%) rotate(45deg);
-		}
-
-		@include when(right-basic) {
-			left: 4px;
-			border-top-color: transparent;
-			border-right-color: transparent;
-			box-shadow: -3px 3px 7px $color-shadow-fixed;
-
-			@include when(light) {
-				border-bottom-color: $color-light;
-				border-left-color: $color-light;
-			}
-
-			@include when(dark) {
-				border-bottom-color: $color-mask-dark;
-				border-left-color: $color-mask-dark;
-			}
 		}
 
 		@include when(left) {
 			top: 50%;
-			transform: translateY(-50%) rotate(45deg);
 		}
-
-		@include when(left-basic) {
-			right: 4px;
-			border-bottom-color: transparent;
-			border-left-color: transparent;
-			box-shadow: 3px -3px 7px $color-shadow-fixed;
-
-			@include when(light) {
-				border-top-color: $color-light;
-				border-right-color: $color-light;
-			}
-
-			@include when(dark) {
-				border-top-color: $color-mask-dark;
-				border-right-color: $color-mask-dark;
-			}
-		}
-
 
 		@include when(right) {
 			top: 50%;
-			transform: translateY(-50%) rotate(45deg);
 		}
 	}
 }

@@ -5,7 +5,7 @@ import { getPadding } from '../scroller/utils';
 const EXTRA_DISTANCE = 4; // 额外的距离
 export const VIEWPORT_GAP = 8; // 与视口边缘的留白
 const ARROW_INSET = 12; // 箭头中心距弹层边缘的最小距离（避开圆角）
-const ARROW_OFFSET = 16 + 9 / 2; // 角落方向箭头中心距对齐边的距离（9px 的箭头距边 16px）
+const ARROW_OFFSET = 20.5; // 角落方向箭头中心距对齐边的距离
 
 // 可视边界（视口坐标）
 type Boundary = { top: number; right: number; bottom: number; left: number };
@@ -90,7 +90,7 @@ export const fitMaxSize = (container: HTMLElement, { scroller, el, placement, tr
 };
 
 /**
- * 箭头样式：中心距 side 一边 distance，并限制在弹层内（避开圆角）
+ * 箭头样式：中心距 side 一边 distance，并限制在弹层内（避开圆角）；写入的是箭头中心的位置，样式的负外边距把箭头移到以它为中心
  * @param side 计算距离的一边
  * @param distance 箭头中心距该边的距离
  * @param size 弹层在箭头移动方向上的尺寸
@@ -100,13 +100,13 @@ const getArrowStyle = (side: ArrowSide, distance: number, size: number) => {
 	const value = `${Math.min(Math.max(distance, ARROW_INSET), size - ARROW_INSET)}px`;
 	switch (side) {
 		case 'left':
-			return { left: value, right: 'auto', transform: 'translateX(-50%) rotate(45deg)' };
+			return { left: value, right: 'auto' };
 		case 'right':
-			return { left: 'auto', right: value, transform: 'translateX(50%) rotate(45deg)' };
+			return { left: 'auto', right: value };
 		case 'top':
-			return { top: value, bottom: 'auto', transform: 'translateY(-50%) rotate(45deg)' };
+			return { top: value, bottom: 'auto' };
 		default:
-			return { top: 'auto', bottom: value, transform: 'translateY(50%) rotate(45deg)' };
+			return { top: 'auto', bottom: value };
 	}
 };
 

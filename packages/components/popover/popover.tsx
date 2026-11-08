@@ -9,10 +9,13 @@ import { isInArea, isEditable, keepFocus } from './utils';
 
 const COMPONENT_NAME = 'vc-popover';
 
+// 事件列表：MPopover 按它转发，新增事件时两端一致
+export const emits: Array<'update:modelValue' | 'visible-change' | 'ready' | 'close'> = ['update:modelValue', 'visible-change', 'ready', 'close'];
+
 export const Popover = defineComponent({
 	name: COMPONENT_NAME,
 	props: popoverProps,
-	emits: ['update:modelValue', 'visible-change', 'ready', 'close'],
+	emits,
 	setup(props, { emit, slots }) {
 		const instance = getCurrentInstance() as ComponentInternalInstance;
 
