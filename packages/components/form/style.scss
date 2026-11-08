@@ -75,13 +75,23 @@ $foreground-color: varfix(foreground-color, form);
 		}
 	}
 
+	// errorLayout：overlay 绝对定位在表单项的下外边距里，不占位；flow 在文档流里，出错时表单项变高，长提示可换行
 	@include element(tip) {
-		position: absolute;
-		top: 100%;
-		left: 0;
 		padding-top: unitfix(6);
 		line-height: 1;
 
+		@include when(overlay) {
+			position: absolute;
+			top: 100%;
+			left: 0;
+		}
+
+		@include when(flow) {
+			padding-top: unitfix(4);
+			line-height: 1.4;
+		}
+
+		// 嵌套项的提示排在控件右侧，两种排版相同
 		@include when(nested) {
 			position: unset;
 			top: unset;
@@ -114,14 +124,24 @@ $foreground-color: varfix(foreground-color, form);
 			padding: 0 0 unitfix(6);
 		}
 
+		// 标签在上方的嵌套项：提示排在控件下方
 		@include when(nested) {
 			@include element(tip) {
-				position: absolute;
-				top: 100%;
-				left: 0;
+				display: block;
 				padding-top: unitfix(6);
 				padding-left: 0;
 				line-height: 1;
+
+				@include when(overlay) {
+					position: absolute;
+					top: 100%;
+					left: 0;
+				}
+
+				@include when(flow) {
+					padding-top: unitfix(4);
+					line-height: 1.4;
+				}
 			}
 		}
 	}

@@ -6,7 +6,7 @@
 			v-model="isVisibleByPlacement[index]"
 			:placement="item"
 		>
-			<MForm>
+			<MForm :label-width="0">
 				<MFormItem>
 					<MInput v-model="value" type="text" clearable />
 				</MFormItem>

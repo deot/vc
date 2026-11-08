@@ -7,6 +7,11 @@ $color-error: varfix(color-error, form);
 $color-neutral-light: varfix(color-neutral-light, form);
 $background-color-lightest: varfix(background-color-lightest, form);
 
+// 750 稿：行高 108 = 上下内边距 32 + 内容行高 44
+$item-padding: 32;
+$line-height: 44;
+$font-size: 32;
+
 @include block($component-name) {
 	color: $color-dark;
 	background: $background-color-lightest;
@@ -19,35 +24,51 @@ $background-color-lightest: varfix(background-color-lightest, form);
 
 @include block($component-item-name) {
 	& {
-		padding-left: remfix(24);
+		padding-left: remfix($item-padding);
 	}
 
 	@include element(wrapper) {
-		padding-top: remfix(24);
-		padding-right: remfix(24);
-		padding-bottom: remfix(24);
+		padding-top: remfix($item-padding);
+		padding-right: remfix($item-padding);
+		padding-bottom: remfix($item-padding);
 
 		@include common-border-1px(bottom, $color-neutral-light);
 	}
 
-	@include pseudo(last-child) {
-		@include element(wrapper) {
-			::after {
-				display: none;
-			}
+	// 末项与嵌套项不显示分隔线
+	&:last-child,
+	&.is-nested {
+		> .#{$component-item-name}__wrapper::after {
+			display: none;
 		}
 	}
 
 	@include element(content) {
 		position: relative;
-		font-size: remfix(32);
-		line-height: remfix(48);
+		font-size: remfix($font-size);
+		line-height: remfix($line-height);
+
+		// 表单内的输入框：去掉左右内边距，文字与标签、其他控件对齐；单行输入框的高度与内容行高一致
+		.vcm-input {
+			min-height: 0;
+			line-height: remfix($line-height);
+
+			input {
+				padding: 0;
+			}
+		}
+
+		.vcm-textarea textarea {
+			padding-right: 0;
+			padding-left: 0;
+		}
 	}
 
 	@include element(label) {
 		float: left;
-		font-size: remfix(32);
-		line-height: remfix(48);
+		padding-right: remfix($item-padding);
+		font-size: remfix($font-size);
+		line-height: remfix($line-height);
 		color: $color-dark;
 		text-align: right;
 		box-sizing: border-box;
@@ -59,19 +80,13 @@ $background-color-lightest: varfix(background-color-lightest, form);
 		white-space: nowrap;
 	}
 
-	@include when(required) {
-		> {
-			@include element(label) {
-				&::before {
-					display: inline-block;
-					margin-right: remfix(8);
-					font-size: remfix(24);
-					line-height: 1;
-					color: $color-error;
-					content: '*';
-				}
-			}
-		}
+	// 必填星号悬挂在标签文字左侧，不占宽度：标签对齐方式不同也都贴着文字，auto 宽度也不计入
+	&.is-required > .#{$component-item-name}__wrapper > .#{$component-item-name}__label::before {
+		display: inline-block;
+		width: 0.6em;
+		margin-left: -0.6em;
+		color: $color-error;
+		content: '*';
 	}
 
 	@include when(left) {
@@ -81,11 +96,14 @@ $background-color-lightest: varfix(background-color-lightest, form);
 	}
 
 	// 标签独占一行：块级排版，不受行盒基线影响
+	// 行高 44 时文字上下各多出 6，用 -6 / 26 抵消：文字距上方与距控件都是 32，标签换行时仍有 44 的行距
 	@include when(top) {
 		@include element(label) {
 			display: block;
 			float: none;
-			padding: 0 0 remfix(20);
+			padding: 0 0 remfix($item-padding - 6);
+			margin-top: remfix(-6);
+			text-align: left;
 		}
 	}
 
@@ -94,24 +112,26 @@ $background-color-lightest: varfix(background-color-lightest, form);
 			padding-top: 0;
 			padding-right: 0;
 			padding-bottom: 0;
-
-			::after {
-				border-bottom: unset;
-			}
 		}
 	}
 
+	// errorLayout
+	// - flow：在文档流里，出错时该项变高；距内容 22，下方留白由 wrapper 的下内边距提供
+	// - overlay：绝对定位在 wrapper 的下内边距（32）里，不占位：紧贴内容（内容行高 44 的下半行距已留出 6），单行 24，距分隔线 8
 	@include element(error) {
-		position: absolute;
-		top: 100%;
-		left: 0;
-		padding-top: remfix(6);
-		font-size: remfix(26);
-		line-height: 1;
+		font-size: remfix(24);
 		color: $color-error;
 
-		@include when(nested) {
-			display: inline-block;
+		@include when(flow) {
+			margin-top: remfix(22);
+			line-height: 1.4;
+		}
+
+		@include when(overlay) {
+			position: absolute;
+			top: 100%;
+			left: 0;
+			line-height: 1;
 		}
 	}
 }

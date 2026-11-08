@@ -48,10 +48,12 @@ const handleClick = (_e, item) => {
 <style lang="scss">
 section {
 	display: flex;
+
 	> div {
+		padding: 40px 20px;
 		border: 1px solid #c9c9c9;
-		padding: 40px 20px
 	}
+
 	.red {
 		color: red;
 		border: 1px solid red;

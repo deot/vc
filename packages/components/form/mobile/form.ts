@@ -22,7 +22,7 @@ export const MForm = defineComponent({
 				props.tag,
 				{
 					autocomplete: props.autocomplete,
-					class: 'vcm-form'
+					class: ['vcm-form', { 'is-border': props.border }]
 				},
 				slots
 			);

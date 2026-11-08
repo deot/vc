@@ -93,6 +93,10 @@ export const useFormItem = (props: Props, context: SetupContext, options: { rem?
 		return props.labelPosition || form.props.labelPosition;
 	});
 
+	const errorLayout = computed(() => {
+		return props.errorLayout || form.props.errorLayout;
+	});
+
 	const classes = computed(() => {
 		return {
 			'is-required': isRequired.value && props.asterisk,
@@ -168,7 +172,7 @@ export const useFormItem = (props: Props, context: SetupContext, options: { rem?
 				marginLeft: labelPosition.value === 'top' || (!hasLabel.value && isNested.value)
 					? 0
 					: toLength(labelWidth, isAutoWidth.value) || 'unset',
-				marginBottom: isNested.value && !isNestedLast.value ? (options.rem ? toRem(40) : toPx(20)) : 0
+				marginBottom: isNested.value && !isNestedLast.value ? (options.rem ? toRem(32) : toPx(20)) : 0
 			},
 			form.props.contentStyle,
 			isNested.value && form.props.nestedContentStyle,
@@ -189,7 +193,7 @@ export const useFormItem = (props: Props, context: SetupContext, options: { rem?
 	});
 
 	const errorClass = computed(() => {
-		return [form.props.errorClass, isNested.value && form.props.nestedErrorClass, props.errorClass];
+		return [`is-${errorLayout.value}`, form.props.errorClass, isNested.value && form.props.nestedErrorClass, props.errorClass];
 	});
 
 	const isStyleless = computed(() => {
@@ -397,6 +401,7 @@ export const useFormItem = (props: Props, context: SetupContext, options: { rem?
 		isNested,
 		isStyleless,
 		isNestedLast,
+		errorLayout,
 		validateMessage,
 		classes,
 		labelStyle,

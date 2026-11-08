@@ -46,6 +46,10 @@ export const props = {
 	labelPosition: {
 		type: String as PropType<'left' | 'right' | 'top'>
 	},
+	// 覆盖Form的errorLayout
+	errorLayout: {
+		type: String as PropType<'flow' | 'overlay'>
+	},
 	contentStyle: [Object, String],
 	contentClass: [Object, String],
 	labelStyle: [Object, String],

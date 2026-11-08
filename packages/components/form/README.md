@@ -203,6 +203,8 @@ p { overflow-wrap: anywhere; }
 
 ### 自定义校验与错误插槽
 
+错误信息的排版由 `errorLayout` 控制：`overlay`（Form 默认）绝对定位在表单项下方的留白里，不占位，提示较长时会盖住下一项；`flow`（MForm 默认）放在文档流里，出错时表单项变高，提示可以换行。FormItem 可单独覆盖。嵌套项的提示在桌面端排在控件右侧，两种排版相同。错误元素带 `is-overlay / is-flow` 类名，自定义错误插槽传入的 class 也包含它。
+
 规则中的 `validate(value, context)` 可以返回错误字符串、`false`，或返回一个失败时 reject 的 Promise。返回 `undefined / true` 表示同步通过；Promise resolve 表示异步通过。使用多个规则分别表达必填、格式和自定义检查。
 
 :::playground
@@ -267,6 +269,23 @@ const handleSubmit = async () => {
 ### 移动端
 
 MForm 复用相同的数据、校验和重置逻辑。移动端的数字长度（`labelWidth`、`indent`）按 750 稿解释，`750` 即屏幕宽度，见 `--vc-rem`；`labelWidth: 'auto'` 量取的宽度不受影响。`showToast` 与 `showMessage` 同时为 `true` 时，手动校验失败会弹出第一条错误；`indent` 控制非嵌套项的左侧缩进。
+
+长度按 750 稿书写并随 `--vc-rem` 缩放；括号内为 375 宽下的 px。
+
+| 部位 | 值 |
+| --- | --- |
+| 表单项高度 | 108（54）= 上下内边距 32（16）+ 内容行高 44（22） |
+| 左缩进（`indent` 默认）/ 右内边距 | 32（16） |
+| 标签宽度（`labelWidth` 默认） | 192（96），含与内容之间的间距 32（16） |
+| 标签 / 内容字号 | 32（16） |
+| 顶部标签 | 文字距上方与距控件均为 32（16），换行时行距 44（22） |
+| 错误信息 | 字号 24（12）；flow 距内容 22（11）；overlay 紧贴内容，距分隔线 8（4） |
+| 嵌套项之间的间距 | 32（16） |
+
+- 必填星号悬挂在标签文字左侧，不占宽度，各种对齐方式下都贴着文字。
+- 错误信息默认在文档流里（`errorLayout: 'flow'`）：出错时该项变高，较长的提示换行也不会盖住下一项。设为 `'overlay'` 时不占位，提示放在表单项的下内边距 32（16）里，只容得下一行。
+- 表单内的 MInput、MTextarea 不带左右内边距，文字与标签、其他控件对齐；单独使用时不受影响。
+- 未设置 label 的表单项同样按 `labelWidth` 缩进内容，让控件与上下各项对齐；不需要时传 `:label-width="0"`。
 
 :::playground
 <!--
@@ -353,6 +372,7 @@ p { margin: 12px 0 0; }
 | rules | 按字段路径配置规则；字段值运行时支持单条规则或规则数组，也支持嵌套对象 | `Record<string, FormRule>` | - | - |
 | inline | 行内布局 | `boolean` | - | `false` |
 | labelPosition | 标签位置 | `string` | `left / right / top` | `'right'` |
+| errorLayout | 错误信息的排版：`flow` 在文档流里，出错时表单项变高；`overlay` 绝对定位在表单项下方的留白里，不占位 | `string` | `flow / overlay` | `'overlay'` |
 | labelWidth | 标签宽度，单位 px；`'auto'` 时参与的标签取其中最宽的。标签在上方、`inline`、嵌套项和自身设置了 labelWidth 的项不参与 | `number \| 'auto'` | - | - |
 | showMessage | 显示错误信息；也控制移动端校验 Toast | `boolean` | - | `true` |
 | autocomplete | 根元素 autocomplete 属性 | `string` | `on / off` | `'off'` |
@@ -390,6 +410,7 @@ p { margin: 12px 0 0; }
 | label | 标签。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md)；label 插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | labelWidth | 覆盖标签宽度，设置后不参与 Form 的 `'auto'`；嵌套项的标签默认宽度为 0 | `number` | - | 继承 Form |
 | labelPosition | 覆盖标签位置 | `string` | `left / right / top` | 继承 Form |
+| errorLayout | 覆盖错误信息的排版 | `string` | `flow / overlay` | 继承 Form |
 | labelFor | 标签关联目标；当前桌面端将 for 放在标签外层 div，不能依赖它实现原生聚焦；移动端放在 label 上 | `string` | - | - |
 | required | 标记必填；没有匹配规则时生成必填规则，字符串同时作为错误文案 | `boolean \| string` | - | `false` |
 | asterisk | 是否显示必填标记；不影响校验 | `boolean` | - | `true` |
@@ -425,12 +446,14 @@ p { margin: 12px 0 0; }
 
 ### MForm 属性、插槽和方法
 
-继承 Form 的属性、default 插槽和五个方法，额外属性如下：
+继承 Form 的属性、default 插槽和五个方法；以下为额外属性及移动端默认值不同的属性：
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | showToast | 手动校验失败时弹出第一条错误，需同时启用 showMessage | `boolean` | - | `false` |
-| border | 当前已声明但未绑定边框状态类，设置它不会启用外边框 | `boolean` | - | `false` |
+| labelWidth | 标签宽度，750 稿长度；`'auto'` 时参与的标签取其中最宽的 | `number \| 'auto'` | - | `192` |
+| errorLayout | 错误信息的排版；移动端屏幕窄、提示容易换行，默认放在文档流里 | `string` | `flow / overlay` | `'flow'` |
+| border | 显示表单的上下边框 | `boolean` | - | `false` |
 
 ### MFormItem 属性、插槽和方法
 
@@ -438,15 +461,13 @@ p { margin: 12px 0 0; }
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| indent | 非嵌套项的左侧缩进，750 稿长度；嵌套项为 0 | `number` | - | 样式默认 `24` |
+| indent | 非嵌套项的左侧缩进，750 稿长度；嵌套项为 0 | `number` | - | 样式默认 `32` |
 
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
 | default | 表单控件或嵌套表单项 | - |
 | label | 自定义标签，优先于 label 属性 | - |
 | error | 普通模式只在错误可见时调用；styleless 模式需自行控制显示 | 普通模式：`{ message }`；styleless：`{ show, nested, message, class, style }` |
-
-当前移动端必填标记的样式选择器未匹配实际标签层级，因此不会显示星号；必填校验仍然生效。
 
 ### 校验规则与行为边界
 

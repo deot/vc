@@ -28,6 +28,13 @@ export const props = {
 		type: String as PropType<'left' | 'right' | 'top'>,
 		default: 'right'
 	},
+	/**
+	 * 错误信息的排版：flow 在文档流里，出错时表单项变高；overlay 绝对定位在表单项下方的留白里，不占位
+	 */
+	errorLayout: {
+		type: String as PropType<'flow' | 'overlay'>,
+		default: 'overlay'
+	},
 	autocomplete: {
 		type: String as PropType<'on' | 'off'>,
 		default: 'off'

@@ -3,6 +3,8 @@
 import { nextTick, reactive, ref } from 'vue';
 import { Form, FormItem, MForm, MFormItem } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
+import * as path from 'node:path';
+import * as sass from 'sass';
 import { Input } from './fixtures/input';
 import { Select } from './fixtures/select';
 
@@ -128,6 +130,131 @@ describe('index.ts', () => {
 		await form.value.validate();
 		expect(wrapper.classes()).toContain('vcm-form');
 		expect(wrapper.find('.vcm-form-item').exists()).toBeTruthy();
+	});
+
+	it('m-form, border 绑定 is-border', () => {
+		const wrapper = mount(() => (
+			<MForm border>
+				<MFormItem label="名称" />
+			</MForm>
+		));
+		expect(wrapper.classes()).toContain('is-border');
+		expect(mount(() => <MForm />).classes()).not.toContain('is-border');
+	});
+
+	it('m-form, labelWidth 默认 192（750 稿），内容区与之对齐', () => {
+		const wrapper = mount(() => (
+			<MForm>
+				<MFormItem label="名称">
+					<input />
+				</MFormItem>
+				<MFormItem label="名称" labelPosition="top">
+					<input />
+				</MFormItem>
+			</MForm>
+		));
+		const items = wrapper.findAll('.vcm-form-item');
+		const label = items[0].find('.vcm-form-item__label').element as HTMLElement;
+		const content = items[0].find('.vcm-form-item__content').element as HTMLElement;
+		expect(label.style.width).toBe('calc(var(--vc-rem) * 192)');
+		expect(content.style.marginLeft).toBe('calc(var(--vc-rem) * 192)');
+
+		// 顶部标签不使用宽度
+		expect((items[1].find('.vcm-form-item__label').element as HTMLElement).style.width).toBe('auto');
+	});
+
+	it('m-form, 嵌套项之间的间距为 32（750 稿）', async () => {
+		const wrapper = mount(() => (
+			<MForm>
+				<MFormItem label="嵌套">
+					<MFormItem prop="a">
+						<input />
+					</MFormItem>
+					<MFormItem prop="b">
+						<input />
+					</MFormItem>
+				</MFormItem>
+			</MForm>
+		));
+		await nextTick();
+		const contents = wrapper.findAll('.vcm-form-item.is-nested > .vcm-form-item__wrapper > .vcm-form-item__content');
+		expect(contents).toHaveLength(2);
+		expect((contents[0].element as HTMLElement).style.marginBottom).toBe('calc(var(--vc-rem) * 32)');
+	});
+
+	it('errorLayout：Form 默认 overlay、MForm 默认 flow，FormItem 可覆盖', async () => {
+		const desktop = mount(() => (
+			<Form model={{ a: '', b: '' }}>
+				<FormItem prop="a" required="a">
+					<input />
+				</FormItem>
+				<FormItem prop="b" required="b" errorLayout="flow">
+					<input />
+				</FormItem>
+			</Form>
+		));
+		const tips = desktop.findAll('.vc-form-item__tip');
+		expect(tips[0].classes()).toContain('is-overlay');
+		expect(tips[1].classes()).toContain('is-flow');
+
+		const form = ref();
+		const mobile = mount(() => (
+			<MForm ref={form} model={{ a: '', b: '' }}>
+				<MFormItem prop="a" required="a">
+					<input />
+				</MFormItem>
+				<MFormItem prop="b" required="b" errorLayout="overlay">
+					<input />
+				</MFormItem>
+			</MForm>
+		));
+		await form.value.validate().catch(() => {});
+		await nextTick();
+		const errors = mobile.findAll('.vcm-form-item__error');
+		expect(errors[0].classes()).toContain('is-flow');
+		expect(errors[1].classes()).toContain('is-overlay');
+
+		const overlay = mount(() => (
+			<MForm ref={form} model={{ a: '' }} errorLayout="overlay">
+				<MFormItem prop="a" required="a" v-slots={{ error: ({ message }: any) => message }}>
+					<input />
+				</MFormItem>
+			</MForm>
+		));
+		await form.value.validate().catch(() => {});
+		await nextTick();
+		expect(overlay.find('.vcm-form-item__error').classes()).toContain('is-overlay');
+	});
+
+	it('errorLayout 样式：overlay 绝对定位，flow 在文档流里', () => {
+		const compile = (file: string) => sass.compile(path.resolve(process.cwd(), `packages/components/form/${file}`)).css;
+		const rule = (css: string, selector: string) => {
+			const start = css.indexOf(`${selector} {`);
+			return start === -1 ? '' : css.slice(start, css.indexOf('}', start));
+		};
+		const desktop = compile('style.scss');
+		const mobile = compile('mobile/style.scss');
+
+		expect(rule(desktop, '.vc-form-item__tip')).not.toContain('position');
+		expect(rule(desktop, '.vc-form-item__tip.is-overlay')).toContain('position: absolute');
+		expect(rule(desktop, '.vc-form-item__tip.is-flow')).toContain('line-height: 1.4');
+		expect(rule(mobile, '.vcm-form-item__error.is-overlay')).toContain('position: absolute');
+		expect(rule(mobile, '.vcm-form-item__error.is-flow')).toContain('margin-top: calc(var(--vc-rem) * 22)');
+	});
+
+	it('m-form, 移动端样式：必填星号与分隔线的选择器匹配实际层级', () => {
+		const css = sass.compile(path.resolve(process.cwd(), 'packages/components/form/mobile/style.scss')).css;
+		const rule = (selector: string) => {
+			const start = css.indexOf(`${selector} {`);
+			return start === -1 ? '' : css.slice(start, css.indexOf('}', start));
+		};
+
+		expect(rule('.vcm-form-item.is-required > .vcm-form-item__wrapper > .vcm-form-item__label::before')).toContain('margin-left: -0.6em');
+		expect(css).toContain('.vcm-form-item:last-child > .vcm-form-item__wrapper::after');
+		expect(css).toContain('.vcm-form-item.is-nested > .vcm-form-item__wrapper::after');
+		expect(css).not.toContain('__wrapper ::after');
+		expect(rule('.vcm-form-item__wrapper')).toContain('padding-top: calc(var(--vc-rem) * 32)');
+		expect(rule('.vcm-form-item__label')).toContain('line-height: calc(var(--vc-rem) * 44)');
 	});
 
 	it('failed', async () => {
