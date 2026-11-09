@@ -213,6 +213,118 @@ const isMulti = ref(false);
 ```
 :::
 
+### 多档高度
+
+`snaps` 设置面板的几档高度（只对 `bottom` / `top` 生效），按从低到高排列：数字为 750 稿长度，字符串为 CSS 长度，百分比相对视口高度，`'100%'` 即全屏；需要在顶部露出一点背景时写成 `'calc(100% - 40px)'`。`v-model:snap` 为当前档的序号，默认 `0`（最低一档）。
+
+- 各档都不超过内容自身的高度：内容比最低一档还矮时只剩一档，面板就是内容的高度。
+- 面板内侧显示指示器（`handle`，设置了 `snaps` 时默认显示），点击切换到下一档，到顶后回到最低档。指示器由两段横条组成，拖动时随手指方向倾斜：向上拖成 `^`，向下拖成 `V`，松手后复原。`#handle` 插槽可替换横条（外层 `.vcm-popup__handle` 仍负责点击，并在拖动时带 `is-up` / `is-down`）；尺寸、颜色、倾斜角度也可用局部变量调整。
+- 不在最高档时，纵向拖动只移动面板，内容区不滚动；在最高档时内容能滚就滚，滚到顶后继续下拉回到低档。
+- 松手时按速度吸附到最近的一档；快速上划可直接到顶。低于最低档时继续下拉即关闭（`swipeClosable`，默认跟随 `maskClosable`）；不可滑动关闭时回弹。
+- `#footer` 在任何一档都贴住屏幕底边。
+- 面板铺满视口时（如 `'100%'` 的一档）圆角打平，内侧让出安全区（`env(safe-area-inset-*)`），并带 `is-full`；拖离边缘即恢复圆角。
+- 面板固定为最高档的高度，其余部分在屏幕外，拖动与切换只改 `transform`。
+
+:::playground
+<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+```vue
+<template>
+	<div>
+		<MButton @click="isVisible = true">50% → 顶部留白 40px</MButton>
+		<p>当前档：{{ snap }}</p>
+		<MPopup v-model="isVisible" v-model:snap="snap" :snaps="['50%', 'calc(100% - 40px)']" title="长列表">
+			<div v-for="item in 60" :key="item" style="line-height: 2;">第 {{ item }} 行</div>
+			<template #footer>
+				<MButton type="primary" long @click="isVisible = false">完成</MButton>
+			</template>
+		</MPopup>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MPopup, MButton } from '@deot/vc';
+
+const isVisible = ref(false);
+const snap = ref(0);
+</script>
+```
+:::
+
+### 拖动事件与插槽参数
+
+`header` / `handle` / `footer` 插槽接收同一组参数 `{ snap, full, dragging, close, snapTo, next }`：
+
+- `snap`：当前档的序号；`full`：是否铺满视口；`dragging`：面板是否正在跟手。
+- `close()` 关闭；`snapTo(index)` / `next()` 切换档位，自定义标题栏、指示器、底部按钮可直接使用。
+- 这几个值只在开始 / 结束拖动、吸附到某档、铺满或离开铺满时变化；每个插槽单独渲染，状态变化只更新用到它的插槽，不会重新渲染默认插槽的内容。
+
+面板跟手时依次触发 `dragstart`、`drag`（每次移动）、`dragend`，参数为单个对象：
+
+- `drag`：`{ snap, height, offset, progress, direction, velocity }`。`height` 为面板露出的尺寸；`offset` 为相对按下时移动的距离，向外（关闭方向）为正；`progress` 最低档为 `0`、最高档为 `1`，低于最低档为负，`-1` 为完全滑出（没有 `snaps` 时打开为 `0`）；`direction` 为手指方向 `up` / `down` / `left` / `right`；`velocity` 为速度（px/s），向外为正。
+- `dragend`：`{ snap, close, progress, velocity }`，`snap` 为松手后吸附到的档，`progress` 为目标位置的进度（关闭为 `-1`）。松手后面板以 300ms、`cubic-bezier(0.34, 0.69, 0.1, 1)` 过渡到目标位置，外部样式用同样的过渡即可同步。
+- 内容区滚动、点击指示器或修改 `v-model:snap` 不触发拖动事件，档位变化见 `update:snap`。
+
+`drag` 每帧触发：在回调里直接修改元素的样式（或 CSS 变量），不要写入模板绑定的响应式数据，否则所在组件每帧重新渲染；此时模板里内联的 `:snaps="[...]"` 每次都是新数组，Popup 连同默认插槽的内容也会随之重新渲染（可把 `snaps` 放到常量里）。只需在拖动时切换样式的，用 `dragstart` / `dragend` 或插槽的 `dragging`。
+
+:::playground
+<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+```vue
+<template>
+	<div>
+		<MButton @click="isVisible = true">上拉时收起横幅</MButton>
+		<MPopup
+			v-model="isVisible"
+			:snaps="['50%', '100%']"
+			@drag="handleDrag"
+			@dragend="handleDragEnd"
+			@update:snap="handleSnap"
+		>
+			<template #header="{ snap, full }">
+				{{ full ? '已全屏' : `第 ${snap + 1} 档，上拉查看全部` }}
+			</template>
+			<div ref="banner" class="banner">横幅随上拉渐隐</div>
+			<div v-for="item in 60" :key="item" style="line-height: 2;">第 {{ item }} 行</div>
+			<template #footer="{ dragging, next }">
+				<MButton long :disabled="dragging" @click="next">切换档位</MButton>
+			</template>
+		</MPopup>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MPopup, MButton } from '@deot/vc';
+
+const isVisible = ref(false);
+const banner = ref();
+
+// 进度 0 → 1（最低档 → 最高档）时横幅从不透明到透明
+const setBanner = (progress, animated) => {
+	const el = banner.value;
+	if (!el) return;
+	el.style.transition = animated ? 'opacity 300ms cubic-bezier(0.34, 0.69, 0.1, 1)' : 'none';
+	el.style.opacity = `${1 - Math.min(1, Math.max(0, progress))}`;
+};
+
+const handleDrag = e => setBanner(e.progress, false);
+const handleDragEnd = e => setBanner(e.progress, true);
+// 点击指示器、切换档位按钮不触发拖动事件：档位变化后再同步
+const handleSnap = v => setBanner(v, true);
+</script>
+
+<style>
+.banner {
+	padding: 24px 0;
+	margin-bottom: 12px;
+	text-align: center;
+	background: var(--vc-background-color-light);
+	border-radius: 8px;
+}
+</style>
+```
+:::
+
 ### 局部布局、遮罩与滚动内容
 
 `fixed` 默认为 `true`。设置 `:fixed="false"` 后，内容容器使用绝对定位，可放入具有定位的父容器。遮罩始终使用固定定位，因此局部展示时通常同时设置 `:mask="false"`。
@@ -299,7 +411,7 @@ const handleModalClose = () => { isModalVisible.value = false; };
 | background-color-lightest | light 外观面板背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 | foreground-color | light 外观文字 | 亮色：`#080F20`；暗色：`#F8F8F8` |
 
-另有 `color-dark-light`（标题）、`color-dark-lighter`（内容）、`color-neutral`（关闭按钮），可用 `--vc-popup-<参数>` 覆盖；`dark` 外观下三者跟随面板前景色。
+另有 `color-dark-light`（标题）、`color-dark-lighter`（内容）、`color-neutral`（关闭按钮）、`color-neutral-light`（指示器），可用 `--vc-popup-<参数>` 覆盖；`dark` 外观下三者跟随面板前景色。
 
 ### 局部
 
@@ -315,6 +427,9 @@ const handleModalClose = () => { isModalVisible.value = false; };
 | content-font-size / content-line-height | 内容 | `calc(var(--vc-rem) * 32)` / `1.5`（16） |
 | content-padding-y | 内容区上下内边距 | `calc(var(--vc-rem) * 40)`（20） |
 | footer-padding | 底部内边距 | `0 calc(var(--vc-rem) * 32) calc(var(--vc-rem) * 32)`（0 16 16） |
+| handle-width / handle-height | 指示器横条 | `calc(var(--vc-rem) * 72)` / `calc(var(--vc-rem) * 8)`（36 / 4） |
+| handle-gap | 指示器的上下留白 | `calc(var(--vc-rem) * 16)`（8） |
+| handle-angle | 拖动时两段横条的倾斜角度 | `10deg` |
 
 ## API
 
@@ -335,6 +450,11 @@ const handleModalClose = () => { isModalVisible.value = false; };
 | closable | 标题栏右侧显示关闭按钮 | `boolean` | - | `false` |
 | scrollable | 有标题栏或 content 时，内容区由 `MScroller` 滚动；为 `false` 时内容区不滚动 | `boolean` | - | `true` |
 | swipeClosable | 手势滑动关闭，见 [手势滑动关闭](#手势滑动关闭)；不设置时跟随 `maskClosable` | `boolean \| { directions?: Placement[]; threshold?: number; speed?: number }` | - | - |
+| snaps | 多档高度（`bottom` / `top`），从低到高；数字为 750 稿长度，字符串为 CSS 长度，百分比相对视口高度（`'100%'` 即全屏），见 [多档高度](#多档高度) | `Array<number \| string>` | - | - |
+| snap | 当前档的序号，支持 `v-model:snap` | `number` | - | `0` |
+| handle | 是否显示指示器；不设置时在设置了 `snaps` 时显示 | `boolean` | - | - |
+| contentClass | 内容区（`content` 与默认插槽所在的元素）的 class；有标题栏、content 或 footer 插槽时有效 | `string \| object \| unknown[]` | - | - |
+| contentStyle | 内容区的 style；同上 | `string \| object \| unknown[]` | - | - |
 | wrapperClass | 内容容器的 class | `string \| object \| unknown[]` | - | - |
 | wrapperStyle | 内容容器的 style | `string \| object \| unknown[]` | - | - |
 | scrollRegExp | 额外视为滚动区域的元素（按元素属性匹配，任一规则匹配即可）；`overflow` 为 `auto` / `scroll` 的元素已自动识别 | `{ id?: RegExp; className?: RegExp; tagName?: RegExp }` | - | `{ className: /(vcm?-popup-scrollable)/ }` |
@@ -347,14 +467,19 @@ const handleModalClose = () => { isModalVisible.value = false; };
 | close | 离场动画结束后触发 | - | - |
 | portal-fulfilled | 离场动画结束后通知 Portal 完成 | - | - |
 | visible-change | 打开时传 `true`；关闭时在离场动画结束后传 `false` | `(visible: boolean) => void` | - |
+| update:snap | 拖动松手或点击指示器切换档位后触发 | `(snap: number) => void` | 档的序号 |
+| dragstart | 面板开始跟手 | `(e: { snap, height }) => void` | 见 [拖动事件与插槽参数](#拖动事件与插槽参数) |
+| drag | 面板跟手移动，每次移动触发 | `(e: { snap, height, offset, progress, direction, velocity }) => void` | 同上 |
+| dragend | 松手 | `(e: { snap, close, progress, velocity }) => void` | 同上 |
 
 ### 插槽
 
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
 | default | 弹出层内容，隐藏时仍保留挂载；有标题栏或 content 时放在内容区 | - |
-| header | 替换标题（关闭按钮仍在右侧） | - |
-| footer | 内容区之后的底部，不随内容滚动 | - |
+| header | 替换标题（关闭按钮仍在右侧） | `{ snap, full, dragging, close, snapTo, next }` |
+| footer | 内容区之后的底部，不随内容滚动 | 同上 |
+| handle | 替换指示器的横条 | 同上 |
 
 ### 方法
 

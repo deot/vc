@@ -8,8 +8,10 @@ import { hasCustomerValue } from '../../customer/utils';
 import { MIcon } from '../../icon/index.m';
 import { MScroller } from '../../scroller/index.m';
 import { usePopupTouch, EASING } from './use-popup-touch';
+import { usePopupSnaps } from './use-popup-snaps';
 
 import { props as popupProps } from './popup-props';
+import type { PopupSlotProps } from './popup-props';
 
 const COMPONENT_NAME = 'vc-popup';
 
@@ -25,7 +27,11 @@ export const MPopup = defineComponent({
 		'update:modelValue',
 		'close',
 		'portal-fulfilled',
-		'visible-change'
+		'visible-change',
+		'update:snap',
+		'dragstart',
+		'drag',
+		'dragend'
 	],
 	setup(props, { emit, slots, expose }) {
 		const instance = getCurrentInstance()!;
@@ -63,16 +69,40 @@ export const MPopup = defineComponent({
 			}
 		};
 
+		const snaps = usePopupSnaps(props, {
+			root,
+			wrapper,
+			mask,
+			isActive,
+			emitSnap: index => emit('update:snap', index)
+		});
+
+		// 面板是否在跟手：只给插槽参数用，Popup 自身的渲染不读取
+		const dragging = ref(false);
+		// 有监听时才生成拖动事件的 payload（drag 每帧触发）
+		const notify = (name: string, build: () => unknown) => {
+			const vnodeProps = instance.vnode.props;
+			const key = `on${name[0].toUpperCase()}${name.slice(1)}`;
+			vnodeProps && (vnodeProps[key] || vnodeProps[`${key}Once`]) && emit(name as any, build());
+		};
+
 		const touch = usePopupTouch(props, {
 			root,
 			wrapper,
 			mask,
 			isActive,
+			snaps,
+			dragging,
+			notify,
 			close: () => {
 				isSwiped.value = true;
 				isActive.value = false;
 			}
 		});
+
+		// 指示器：设置了 snaps 时默认显示
+		const showHandle = computed(() => props.handle ?? snaps.enabled.value);
+		const contentClass = computed(() => ['vcm-popup__content', props.contentClass] as any);
 
 		watch(isActive, (v) => {
 			if (!v) return;
@@ -87,6 +117,7 @@ export const MPopup = defineComponent({
 		 */
 		const handleRemove = () => {
 			touch.reset();
+			snaps.reset();
 			isSwiped.value = false;
 			!instance.isUnmounted && (
 				emit('close'),
@@ -106,20 +137,51 @@ export const MPopup = defineComponent({
 			},
 		});
 
+		// header / handle / footer 插槽的参数：取值时才读取状态；插槽各自在 MCustomer 中渲染，状态变化只更新用到它的插槽
+		const slotProps: PopupSlotProps = {
+			get snap() {
+				return snaps.index.value;
+			},
+			get full() {
+				return snaps.isFull.value;
+			},
+			get dragging() {
+				return dragging.value;
+			},
+			close: () => handleClose(),
+			snapTo: (index: number) => snaps.snapTo(index),
+			next: () => snaps.next()
+		};
+		const renderHeaderSlot = () => slots.header!(slotProps);
+		const renderHandleSlot = () => slots.handle!(slotProps);
+		const renderFooterSlot = () => slots.footer!(slotProps);
+
+		// 指示器：bottom 在面板顶部，top 在面板底部；拖动时按方向加 is-up / is-down（两段横条倾斜成 ^ / V），#handle 插槽可替换横条
+		const renderHandle = () => showHandle.value && (
+			<div class="vcm-popup__handle" onClick={snaps.next}>
+				{slots.handle ? <MCustomer render={renderHandleSlot} /> : <span class="vcm-popup__indicator" />}
+			</div>
+		);
+
 		// 有标题栏、content 或 footer 插槽时，面板分为标题栏、内容区、底部；否则默认插槽直接放在面板内
 		const renderPanel = () => {
 			const hasHeader = !!slots.header || props.closable || (props.title !== false && hasCustomerValue(props.title));
 			const hasContent = hasCustomerValue(props.content);
-			if (!hasHeader && !hasContent && !slots.footer) return { structured: false, nodes: slots.default?.() };
+			const isTop = props.placement === 'top';
+			if (!hasHeader && !hasContent && !slots.footer) {
+				return { structured: false, nodes: [!isTop && renderHandle(), slots.default?.(), isTop && renderHandle()] };
+			}
 
 			const body = [
 				hasContent && <MCustomer render={props.content} />,
 				slots.default?.()
 			];
 			return { structured: true, nodes: [
+				!isTop && renderHandle(),
 				hasHeader && (
 					<div class="vcm-popup__header">
-						<MCustomer class="vcm-popup__title" render={slots.header || props.title} />
+						{/* wrap：#header 插槽与空标题也有 .vcm-popup__title（占满剩余宽度，关闭按钮在右侧） */}
+						<MCustomer class="vcm-popup__title" wrap render={slots.header ? renderHeaderSlot : props.title} />
 						{
 							props.closable && (
 								<span class="vcm-popup__close" onClick={() => handleClose()}>
@@ -131,12 +193,17 @@ export const MPopup = defineComponent({
 				),
 				props.scrollable
 					? (
-							<MScroller class="vcm-popup__scroller" contentClass="vcm-popup__content">
+							<MScroller
+								class={['vcm-popup__scroller', { 'is-locked': snaps.isLocked.value }]}
+								contentClass={contentClass.value}
+								contentStyle={props.contentStyle as any}
+							>
 								{body}
 							</MScroller>
 						)
-					: (<div class="vcm-popup__content">{body}</div>),
-				slots.footer && (<div class="vcm-popup__footer">{slots.footer()}</div>)
+					: (<div class={contentClass.value} style={props.contentStyle as any}>{body}</div>),
+				slots.footer && (<div class="vcm-popup__footer"><MCustomer render={renderFooterSlot} /></div>),
+				isTop && renderHandle()
 			] };
 		};
 
@@ -174,7 +241,12 @@ export const MPopup = defineComponent({
 							style={[{ position: props.fixed ? 'fixed' : 'absolute' }, props.wrapperStyle as any]}
 							class={[
 								props.wrapperClass,
-								{ 'is-structured': panel.structured },
+								{
+									'is-structured': panel.structured,
+									'is-snapped': snaps.enabled.value,
+									'is-full': snaps.isFull.value,
+									'is-handled': showHandle.value
+								},
 								'vcm-popup__wrapper'
 							]}
 						>

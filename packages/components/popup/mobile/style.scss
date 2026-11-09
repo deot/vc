@@ -9,6 +9,7 @@ $color-dark-light: varfix(color-dark-light, popup);
 $color-dark-lighter: varfix(color-dark-lighter, popup);
 $color-mask: varfix(color-mask, popup);
 $color-neutral: varfix(color-neutral, popup);
+$color-neutral-light: varfix(color-neutral-light, popup);
 $background-color-lightest: varfix(background-color-lightest, popup);
 $foreground-color: varfix(foreground-color, popup);
 $component-name: vcm-popup;
@@ -16,11 +17,12 @@ $dark-background-color-fallback: color.change($color-contrast-dark-frozen, $alph
 $dark-background-color: color-mix(in srgb, #{$color-contrast-dark} 30%, transparent);
 
 // 尺寸（750 稿，随 --vc-rem 缩放；括号内为 375 宽）写成局部变量 --vc-popup-<键>，可单独覆盖
-// - radius：面板靠屏幕内侧的圆角 24（12）
+// - radius：面板靠屏幕内侧的圆角 24（12）；多档高度铺满视口时（is-full）为 0
 // - gap：有标题栏或 content 时，面板与对边的最小距离 80（40），内容过长时内容区滚动
 // - title-*：标题字号 34（17）加粗（600），行高 88（44）；padding-x：标题栏与内容区左右内边距 32（16）
 // - close-size / close-area：关闭图标 32（16），点击区域 88（44）
 // - content-*：内容字号 32（16），行高 1.5，上下内边距 40（20）
+// - handle-*：指示器 72 × 8（36 × 4，两段各一半），上下留白 16（8）；拖动时两段各倾斜 handle-angle，成 ^ / V
 $sizes: (
 	radius: remfix(24),
 	gap: remfix(80),
@@ -32,7 +34,11 @@ $sizes: (
 	content-font-size: remfix(32),
 	content-line-height: 1.5,
 	content-padding-y: remfix(40),
-	footer-padding: 0 remfix(32) remfix(32)
+	footer-padding: 0 remfix(32) remfix(32),
+	handle-width: remfix(72),
+	handle-height: remfix(8),
+	handle-gap: remfix(16),
+	handle-angle: 10deg
 );
 
 @function v($key) {
@@ -68,8 +74,15 @@ $corners: (
 			left: 0;
 			padding-bottom: env(safe-area-inset-bottom);
 
-			@include when(structured) {
+			// 多档高度时高度由档位决定（可全屏），不受限制
+			&.is-structured:not(.is-snapped) {
 				max-height: calc(100% - #{v(gap)});
+			}
+
+			// 多档高度铺满视口时：圆角打平，内侧让出安全区（刘海、状态栏）
+			&.is-full {
+				padding-top: env(safe-area-inset-top);
+				border-radius: 0;
 			}
 		}
 	}
@@ -81,8 +94,15 @@ $corners: (
 			left: 0;
 			padding-top: env(safe-area-inset-top);
 
-			@include when(structured) {
+			// 多档高度时高度由档位决定（可全屏），不受限制
+			&.is-structured:not(.is-snapped) {
 				max-height: calc(100% - #{v(gap)});
+			}
+
+			// 多档高度铺满视口时：圆角打平，内侧让出安全区（底部横条）
+			&.is-full {
+				padding-bottom: env(safe-area-inset-bottom);
+				border-radius: 0;
 			}
 		}
 	}
@@ -210,6 +230,66 @@ $corners: (
 	@include element(scroller) {
 		min-height: 0;
 		flex: 1 1 auto;
+
+		// 多档高度不在最高档时：内容的下半部分在屏幕外，不滚动
+		@include when(locked) {
+			overflow: hidden !important;
+		}
+	}
+
+	// 指示器：点击区域为整行，横条居中；#handle 插槽替换横条（.vcm-popup__indicator）
+	@include element(handle) {
+		display: flex;
+		padding: v(handle-gap) 0;
+		cursor: pointer;
+		justify-content: center;
+		flex-shrink: 0;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	// 横条：两段各一半，拖动时向中间靠拢并倾斜，向上拖成 ^，向下拖成 V
+	@include element(indicator) {
+		display: flex;
+
+		&::before,
+		&::after {
+			display: block;
+			width: calc(#{v(handle-width)} / 2);
+			height: v(handle-height);
+			background-color: $color-neutral-light;
+			border-radius: v(handle-height);
+			content: '';
+			transition: transform .15s ease-out;
+		}
+	}
+
+	@include element(handle) {
+		@include when(down) {
+			.#{$component-name}__indicator::before {
+				transform: translateX(calc(#{v(handle-height)} / 2)) rotate(#{v(handle-angle)});
+			}
+
+			.#{$component-name}__indicator::after {
+				transform: translateX(calc(#{v(handle-height)} / -2)) rotate(calc(-1 * #{v(handle-angle)}));
+			}
+		}
+
+		@include when(up) {
+			.#{$component-name}__indicator::before {
+				transform: translateX(calc(#{v(handle-height)} / 2)) rotate(calc(-1 * #{v(handle-angle)}));
+			}
+
+			.#{$component-name}__indicator::after {
+				transform: translateX(calc(#{v(handle-height)} / -2)) rotate(#{v(handle-angle)});
+			}
+		}
+	}
+
+	// 有指示器时，标题栏紧接在指示器之后
+	@include element(handle) {
+		+ .#{$component-name}__header {
+			margin-top: calc(-1 * #{v(handle-gap)});
+		}
 	}
 
 	@include element(content) {
@@ -219,8 +299,10 @@ $corners: (
 		color: $color-dark-lighter;
 	}
 
+	// 多档高度时 footer 贴住屏幕底边、盖在内容区上，背景取面板的背景
 	@include element(footer) {
 		padding: v(footer-padding);
+		background-color: inherit;
 		flex-shrink: 0;
 	}
 

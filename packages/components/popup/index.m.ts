@@ -30,3 +30,13 @@ const open = (options: Options = {}) => {
 const destroy = () => PopupPortal.destroy();
 
 export const MPopup = Object.assign(Popup$, { open, destroy });
+export type {
+	PopupPlacement,
+	PopupDirection,
+	PopupSwipeOptions,
+	PopupDragDirection,
+	PopupDragStartEvent,
+	PopupDragEvent,
+	PopupDragEndEvent,
+	PopupSlotProps
+} from './mobile/popup-props';
