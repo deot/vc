@@ -1,131 +1,119 @@
 <template>
-	<div>
-		<MPopup
-			v-for="(item, index) in placements"
-			:key="`popup__${item}`"
-			v-model="isVisibleByPlacement[index]"
-			:placement="item"
-		>
-			<MForm :label-width="0">
-				<MFormItem>
-					<MInput v-model="value" type="text" clearable />
-				</MFormItem>
-				<MFormItem>
-					<MInput v-model="value" type="text" clearable />
-				</MFormItem>
-				<MFormItem>
-					<MInput v-model="value" type="text" clearable />
-				</MFormItem>
-				<MFormItem>
-					<MInput v-model="value" type="text" clearable />
-				</MFormItem>
-			</MForm>
-			{{ item }}
+	<div class="vcm-popup-example">
+		<MList header="弹出位置">
+			<MListItem
+				v-for="item in placements"
+				:key="item"
+				:label="item"
+				@click="handleOpen(item)"
+			/>
+		</MList>
+
+		<MList header="标题与内容">
+			<MListItem label="title + content + closable" @click="isStructured = true" />
+			<MListItem label="长内容（内容区滚动，标题栏与底部固定）" @click="isLong = true" />
+			<MListItem label="MPopup.open" @click="handlePortal" />
+		</MList>
+
+		<MList header="面板外观">
+			<MListItem label="theme" :extra="theme" @click="handleTheme" />
+		</MList>
+
+		<p class="vcm-popup-example__message">{{ message }}</p>
+
+		<!-- placement 可在运行时切换，同一个实例即可 -->
+		<MPopup v-model="isVisible" :placement="placement" :theme="theme">
+			<div :class="['vcm-popup-example__panel', `is-${placement}`]">
+				placement: {{ placement }}
+			</div>
 		</MPopup>
 
-		<MButton
-			v-for="(item, index) in placements"
-			:key="`button__${item}`"
-			:placement="item"
-			@click="handleNormal(item, index)"
-		>
-			normal: {{ item }} {{ isVisibleByPlacement[index] }}
-		</MButton>
+		<MPopup
+			v-model="isStructured"
+			title="标题"
+			content="内容区的文字，点击遮罩或右上角关闭。"
+			closable
+			@visible-change="handleVisibleChange"
+		/>
 
-		<MButton
-			v-for="(item, index) in placements"
-			:key="`portal__${item}`"
-			:placement="item"
-			@click="handlePortal(item, index)"
-		>
-			portal: {{ item }}
-		</MButton>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<br>
-		<div>2222</div>
+		<MPopup v-model="isLong" title="长内容" closable>
+			<div v-for="item in 30" :key="item" style="line-height: 2;">第 {{ item }} 行</div>
+			<template #footer>
+				<MButton type="primary" long @click="isLong = false">完成</MButton>
+			</template>
+		</MPopup>
 	</div>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue';
-import * as Device from '@deot/helper-device';
-import { Tip } from './popup';
+import { ref } from 'vue';
 import { MPopup } from '../index.m';
 import { MButton } from '../../button/index.m';
-import { MInput } from '../../input/index.m';
-import { MForm, MFormItem } from '../../form/index.m';
+import { MList, MListItem } from '../../list/index.m';
 
-const value = ref('');
-const placements = ref(['top', 'bottom', 'center', 'left', 'right']);
-const isVisibleByPlacement = ref([false, false, false, false, false]);
+const placements = ['bottom', 'top', 'left', 'right', 'center'];
+const themes = ['light', 'dark', 'none'];
+const placement = ref('bottom');
+const theme = ref('light');
+const isVisible = ref(false);
+const isStructured = ref(false);
+const isLong = ref(false);
+const message = ref('');
 
-const handleNormal = (_, index) => {
-	isVisibleByPlacement.value.splice(index, 0, !isVisibleByPlacement.value[index]);
+const handleOpen = (v) => {
+	placement.value = v;
+	isVisible.value = true;
 };
 
-const handlePortal = async (placement) => {
-	await Tip.popup({ placement });
-	console.log('success');
+const handleTheme = () => {
+	theme.value = themes[(themes.indexOf(theme.value) + 1) % themes.length];
 };
 
-onMounted(() => {
-	// hack for wechat, 测试弹层下输入框
-	if (!Device.ios
-		|| !Device.wechat
-		|| !Device.wechatVersion >= '6.7.4'
-	) return;
+const handleVisibleChange = (v) => {
+	message.value = `visible-change: ${v}`;
+};
 
-	const handleFn = (e) => {
-		document.body.scrollTop = document.body.scrollTop + 0;
-		e.target.removeEventListener('blur', handleFn);
-	};
-
-	document.addEventListener('click', (e) => {
-		const tag = e.target.nodeName.toLowerCase();
-		if (!/^(input|textarea)$/.test(tag)) return;
-		e.target.addEventListener('blur', handleFn);
-	}, true);
-});
+const handlePortal = () => {
+	MPopup.open({
+		title: 'MPopup.open',
+		content: '以 Portal 打开，onClose 在离场动画结束后触发。',
+		closable: true,
+		onClose: () => {
+			message.value = 'MPopup.open 已关闭';
+		}
+	});
+};
 </script>
+<style lang="scss">
+.vcm-popup-example {
+	min-height: 100vh;
+	padding: 12px 0;
+	background: var(--vc-background-color-light);
+
+	&__message {
+		padding: 0 16px;
+		color: var(--vc-color-dark-lighter);
+	}
+
+	&__panel {
+		display: flex;
+		padding: 16px;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+
+		&.is-bottom, &.is-top {
+			height: 200px;
+		}
+
+		&.is-left, &.is-right {
+			width: 240px;
+			height: 100%;
+		}
+
+		&.is-center {
+			width: 240px;
+			height: 160px;
+		}
+	}
+}
+</style>

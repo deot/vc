@@ -1,15 +1,51 @@
 @use 'sass:color';
+@use 'sass:map';
 @use '../../style/helper' as *;
 
 $color-contrast-dark: varfix(color-contrast-dark, popup);
 $color-contrast-dark-frozen: themefrozen(color-contrast-dark);
 $color-contrast-light: varfix(color-contrast-light, popup);
+$color-dark-light: varfix(color-dark-light, popup);
+$color-dark-lighter: varfix(color-dark-lighter, popup);
 $color-mask: varfix(color-mask, popup);
+$color-neutral: varfix(color-neutral, popup);
 $background-color-lightest: varfix(background-color-lightest, popup);
 $foreground-color: varfix(foreground-color, popup);
 $component-name: vcm-popup;
 $dark-background-color-fallback: color.change($color-contrast-dark-frozen, $alpha: .3);
 $dark-background-color: color-mix(in srgb, #{$color-contrast-dark} 30%, transparent);
+
+// 尺寸（750 稿，随 --vc-rem 缩放；括号内为 375 宽）写成局部变量 --vc-popup-<键>，可单独覆盖
+// - radius：面板靠屏幕内侧的圆角 24（12）
+// - gap：有标题栏或 content 时，面板与对边的最小距离 80（40），内容过长时内容区滚动
+// - title-*：标题字号 34（17）加粗（600），行高 88（44）；padding-x：标题栏与内容区左右内边距 32（16）
+// - close-size / close-area：关闭图标 32（16），点击区域 88（44）
+// - content-*：内容字号 32（16），行高 1.5，上下内边距 40（20）
+$sizes: (
+	radius: remfix(24),
+	gap: remfix(80),
+	padding-x: remfix(32),
+	title-font-size: remfix(34),
+	title-line-height: remfix(88),
+	close-size: remfix(32),
+	close-area: remfix(88),
+	content-font-size: remfix(32),
+	content-line-height: 1.5,
+	content-padding-y: remfix(40),
+	footer-padding: 0 remfix(32) remfix(32)
+);
+
+@function v($key) {
+	@return localfix(popup, $key, map.get($sizes, $key));
+}
+
+$radius: v(radius);
+$corners: (
+	bottom: (top-left, top-right),
+	top: (bottom-left, bottom-right),
+	left: (top-right, bottom-right),
+	right: (top-left, bottom-left)
+);
 
 @include block($component-name) {
 	@include element(mask) {
@@ -22,6 +58,7 @@ $dark-background-color: color-mix(in srgb, #{$color-contrast-dark} 30%, transpar
 
 	@include element(wrapper) {
 		z-index: 1000;
+		box-sizing: border-box;
 	}
 
 	@include when(bottom) {
@@ -29,8 +66,11 @@ $dark-background-color: color-mix(in srgb, #{$color-contrast-dark} 30%, transpar
 			right: 0;
 			bottom: 0;
 			left: 0;
+			padding-bottom: env(safe-area-inset-bottom);
 
-			// padding-bottom: env(safe-area-inset-bottom);
+			@include when(structured) {
+				max-height: calc(100% - #{v(gap)});
+			}
 		}
 	}
 
@@ -39,8 +79,11 @@ $dark-background-color: color-mix(in srgb, #{$color-contrast-dark} 30%, transpar
 			top: 0;
 			right: 0;
 			left: 0;
+			padding-top: env(safe-area-inset-top);
 
-			// padding-top: env(safe-area-inset-bottom);
+			@include when(structured) {
+				max-height: calc(100% - #{v(gap)});
+			}
 		}
 	}
 
@@ -49,6 +92,10 @@ $dark-background-color: color-mix(in srgb, #{$color-contrast-dark} 30%, transpar
 			top: 0;
 			bottom: 0;
 			left: 0;
+
+			@include when(structured) {
+				max-width: calc(100% - #{v(gap)});
+			}
 		}
 	}
 
@@ -57,12 +104,21 @@ $dark-background-color: color-mix(in srgb, #{$color-contrast-dark} 30%, transpar
 			top: 0;
 			right: 0;
 			bottom: 0;
+
+			@include when(structured) {
+				max-width: calc(100% - #{v(gap)});
+			}
 		}
 	}
 
 	@include when(center) {
 		@include element(wrapper) {
 			@include position-center;
+
+			@include when(structured) {
+				max-width: calc(100% - #{v(gap)});
+				max-height: calc(100% - #{v(gap)});
+			}
 		}
 	}
 
@@ -73,7 +129,9 @@ $dark-background-color: color-mix(in srgb, #{$color-contrast-dark} 30%, transpar
 	}
 
 	@include when(dark) {
+		// 有面板外观时内容不溢出圆角
 		@include element(wrapper) {
+			overflow: hidden;
 			color: $color-contrast-light;
 			background: $dark-background-color-fallback;
 
@@ -87,8 +145,97 @@ $dark-background-color: color-mix(in srgb, #{$color-contrast-dark} 30%, transpar
 
 	@include when(light) {
 		@include element(wrapper) {
+			overflow: hidden;
 			color: $foreground-color;
 			background-color: $background-color-lightest;
+		}
+	}
+
+	// 靠屏幕内侧的圆角
+	@each $placement, $list in $corners {
+		@include when($placement) {
+			@include element(wrapper) {
+				@each $corner in $list {
+					border-#{$corner}-radius: $radius;
+				}
+			}
+		}
+	}
+
+	@include when(center) {
+		@include element(wrapper) {
+			border-radius: $radius;
+		}
+	}
+
+	// 标题栏、内容区、底部：标题栏与底部固定，内容区滚动
+	@include element(wrapper) {
+		@include when(structured) {
+			display: flex;
+			flex-direction: column;
+		}
+	}
+
+	@include element(header) {
+		display: flex;
+		padding: 0 v(padding-x);
+		align-items: center;
+		flex-shrink: 0;
+	}
+
+	@include element(title) {
+		min-width: 0;
+		font-size: v(title-font-size);
+		font-weight: 600;
+		line-height: v(title-line-height);
+		color: $color-dark-light;
+		flex: 1;
+	}
+
+	// 点击区域大于图标，图标的右边与内边距对齐
+	@include element(close) {
+		display: flex;
+		width: v(close-area);
+		height: v(close-area);
+		margin-right: calc((#{v(close-size)} - #{v(close-area)}) / 2);
+		font-size: v(close-size);
+		color: $color-neutral;
+		cursor: pointer;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	@include element(scroller) {
+		min-height: 0;
+		flex: 1 1 auto;
+	}
+
+	@include element(content) {
+		padding: v(content-padding-y) v(padding-x);
+		font-size: v(content-font-size);
+		line-height: v(content-line-height);
+		color: $color-dark-lighter;
+	}
+
+	@include element(footer) {
+		padding: v(footer-padding);
+		flex-shrink: 0;
+	}
+
+	// 深色面板的文字跟随面板前景色
+	@include when(dark) {
+		@include element(title) {
+			color: inherit;
+		}
+
+		@include element(content) {
+			color: inherit;
+		}
+
+		@include element(close) {
+			color: inherit;
 		}
 	}
 }

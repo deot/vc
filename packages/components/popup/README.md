@@ -4,7 +4,7 @@
 
 ### 何时使用
 
-用于临时操作面板、内容预览和移动端选项列表。内容与关闭按钮由默认插槽提供。
+用于临时操作面板、内容预览和移动端选项列表。可以只放默认插槽，也可以用 `title`、`content`、`closable` 组成带标题栏的面板；沿弹出方向滑动即可关闭（`swipeClosable`）。桌面端的侧边面板请使用 [Drawer](../drawer/README.md)。
 
 ### 基础用法
 
@@ -56,7 +56,9 @@ const handleClosed = () => {
 
 ### 弹出位置与面板外观
 
-四个边缘位置使用滑动动画，`center` 使用淡入淡出。此例为每个位置保留独立实例，因为动画组件在初始化时按 `placement` 选择。
+四个边缘位置使用滑动动画，`center` 使用淡入淡出；`placement` 可在运行时切换。进入 450ms、离开 240ms，曲线 `cubic-bezier(0.34, 0.69, 0.1, 1)`。
+
+面板靠屏幕内侧的两个角为 24（375 宽下 12px）的圆角，`center` 四角都圆；底部弹出时让出 `safe-area-inset-bottom`，顶部弹出时让出 `safe-area-inset-top`。
 
 `theme="light"` 使用随全局亮暗主题变化的默认面板；`dark` 保留白字半透明深色外观；`none` 不设置面板前景和背景。`wrapperClass`、`wrapperStyle` 作用于内容容器。
 
@@ -85,7 +87,6 @@ const handleClosed = () => {
 			@close="handleClosed"
 			:theme="theme"
 			wrapper-class="demo-panel"
-			:wrapper-style="{ borderRadius: '12px', maxWidth: '100%' }"
 		>
 			<div class="content">
 				<h3>{{ item.label }}面板</h3>
@@ -124,8 +125,91 @@ const handleClosed = () => {
 <style scoped>
 .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
 .content { box-sizing: border-box; min-width: 240px; padding: 24px; }
-:deep(.demo-panel) { overflow: hidden; }
 </style>
+```
+:::
+
+### 标题与内容
+
+有 `title`、`#header` 插槽或 `closable` 时显示标题栏（标题 34、字重 600、行高 88，即 375 宽下 17 / 44px），关闭按钮在右侧；`content` 与默认插槽依次放在内容区（字号 32、内边距 40 32），`#footer` 在内容区之后。三者都没有时，默认插槽直接放在面板内，不加任何结构。
+
+`scrollable` 默认为 `true`：内容区由 `MScroller`（原生滚动）承载，面板与对边至少留出 80（40px），内容过长时只有内容区滚动，标题栏与底部固定。
+
+:::playground
+<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+```vue
+<template>
+	<div>
+		<MButton @click="isVisible = true">标题与内容</MButton>
+		<MButton @click="handleOpen">MPopup.open</MButton>
+		<p>{{ message }}</p>
+		<MPopup v-model="isVisible" title="标题" closable>
+			<div v-for="item in 30" :key="item" style="line-height: 2;">第 {{ item }} 行</div>
+			<template #footer>
+				<MButton type="primary" long @click="isVisible = false">完成</MButton>
+			</template>
+		</MPopup>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MPopup, MButton } from '@deot/vc';
+
+const isVisible = ref(false);
+const message = ref('');
+const handleOpen = () => {
+	MPopup.open({
+		title: 'MPopup.open',
+		content: '以 Portal 打开，onClose 在离场动画结束后触发。',
+		closable: true,
+		onClose: () => { message.value = 'MPopup.open 已关闭'; }
+	});
+};
+</script>
+```
+:::
+
+### 手势滑动关闭
+
+默认沿弹出方向拖动面板即可关闭（`swipeClosable` 不设置时跟随 `maskClosable`，默认开启；遮罩不可关闭的面板也不会被滑动关闭，可用 `:swipe-closable="true"` 单独开启）：面板跟手移动，遮罩随之变淡；松手时拖动超过面板尺寸的 30%，或速度超过 200px/s，从当前位置继续滑出并关闭，否则回弹。传对象可配置：
+
+- `directions`：可滑动关闭的方向，可指定多个，如 `['bottom', 'right']`；默认为弹出方向，`center` 需要指定。
+- `threshold`：关闭所需的拖动比例，默认 `0.3`。
+- `speed`：关闭所需的速度（px/s），默认 `200`。
+
+与内部滚动区域的关系：
+
+- 第一次移动确定手势方向。触点所在的滚动区域（计算样式 `overflow` 为 `auto` / `scroll`，内置的内容区即是）在该方向上还能滚动时，整个手势交给滚动；已滚到边界时才由面板跟手，例如内容滚到顶后继续下拉才会关闭。
+- 内层组件自行处理的手势不触发关闭：`MCarousel`、`MPicker` 的列会阻止事件继续传递，在它们上面的拖动只作用于它们自己。
+- 只响应触摸，鼠标拖动不会关闭。
+
+:::playground
+<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+```vue
+<template>
+	<div>
+		<MButton @click="isVisible = true">下滑关闭</MButton>
+		<MButton @click="isMulti = true">下滑或右滑关闭</MButton>
+		<MPopup v-model="isVisible" title="下滑关闭">
+			<div v-for="item in 40" :key="item" style="line-height: 2;">第 {{ item }} 行</div>
+		</MPopup>
+		<MPopup
+			v-model="isMulti"
+			:swipe-closable="{ directions: ['bottom', 'right'] }"
+			title="多个方向"
+			content="向下或向右滑动关闭；拖动不到 30% 时回弹。"
+		/>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MPopup, MButton } from '@deot/vc';
+
+const isVisible = ref(false);
+const isMulti = ref(false);
+</script>
 ```
 :::
 
@@ -133,7 +217,9 @@ const handleClosed = () => {
 
 `fixed` 默认为 `true`。设置 `:fixed="false"` 后，内容容器使用绝对定位，可放入具有定位的父容器。遮罩始终使用固定定位，因此局部展示时通常同时设置 `:mask="false"`。
 
-遮罩在所有位置均有效；设置 `:mask-closable="false"` 可禁止点击遮罩关闭。关闭入口需由调用方提供。触屏滚动区域应添加 `vcm-popup-scrollable`（或 `vc-popup-scrollable`），并设置高度和 `overflow`；`scrollRegExp` 可自定义匹配规则。
+遮罩在所有位置均有效；设置 `:mask-closable="false"` 可禁止点击遮罩关闭，此时需提供其他关闭入口（如 `closable`）。
+
+打开期间锁定页面滚动（`body` 的 `overflow`），并阻止触摸滚动穿透到页面：面板内计算样式 `overflow` 为 `auto` / `scroll` 的区域自动识别为滚动区域，滚到边界后不再带动页面。`scrollRegExp` 可额外指定滚动区域，一般不需要。
 
 :::playground
 <!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
@@ -213,9 +299,22 @@ const handleModalClose = () => { isModalVisible.value = false; };
 | background-color-lightest | light 外观面板背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 | foreground-color | light 外观文字 | 亮色：`#080F20`；暗色：`#F8F8F8` |
 
+另有 `color-dark-light`（标题）、`color-dark-lighter`（内容）、`color-neutral`（关闭按钮），可用 `--vc-popup-<参数>` 覆盖；`dark` 外观下三者跟随面板前景色。
+
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+尺寸为 750 稿（随 `--vc-rem` 缩放），括号内为 375 宽下的 px。
+
+| 参数 | 使用位置 | 默认值 |
+| --- | --- | --- |
+| radius | 面板靠屏幕内侧的圆角 | `calc(var(--vc-rem) * 24)`（12） |
+| gap | 有标题栏或 content 时，面板与对边的最小距离 | `calc(var(--vc-rem) * 80)`（40） |
+| padding-x | 标题栏与内容区的左右内边距 | `calc(var(--vc-rem) * 32)`（16） |
+| title-font-size / title-line-height | 标题 | `calc(var(--vc-rem) * 34)` / `calc(var(--vc-rem) * 88)`（17 / 44） |
+| close-size / close-area | 关闭图标与点击区域 | `calc(var(--vc-rem) * 32)` / `calc(var(--vc-rem) * 88)`（16 / 44） |
+| content-font-size / content-line-height | 内容 | `calc(var(--vc-rem) * 32)` / `1.5`（16） |
+| content-padding-y | 内容区上下内边距 | `calc(var(--vc-rem) * 40)`（20） |
+| footer-padding | 底部内边距 | `0 calc(var(--vc-rem) * 32) calc(var(--vc-rem) * 32)`（0 16 16） |
 
 ## API
 
@@ -227,13 +326,18 @@ const handleModalClose = () => { isModalVisible.value = false; };
 | --- | --- | --- | --- | --- |
 | modelValue | 是否显示，支持 `v-model` | `boolean` | - | `false` |
 | fixed | 内容容器是否使用固定定位；为 `false` 时使用绝对定位 | `boolean` | - | `true` |
-| placement | 弹出位置，建议初始化时确定 | `string` | `top`、`bottom`、`left`、`right`、`center` | `bottom` |
+| placement | 弹出位置，可在运行时切换 | `string` | `top`、`bottom`、`left`、`right`、`center` | `bottom` |
 | theme | 面板外观 | `string` | `light`、`dark`、`none` | `light` |
 | mask | 是否显示遮罩，适用于所有位置 | `boolean` | - | `true` |
 | maskClosable | 是否允许点击遮罩关闭 | `boolean` | - | `true` |
+| title | 标题，使用 Customer 渲染；`false` 不显示 | `CustomerValue \| boolean` | - | - |
+| content | 内容，在默认插槽之前，使用 Customer 渲染 | `CustomerValue` | - | - |
+| closable | 标题栏右侧显示关闭按钮 | `boolean` | - | `false` |
+| scrollable | 有标题栏或 content 时，内容区由 `MScroller` 滚动；为 `false` 时内容区不滚动 | `boolean` | - | `true` |
+| swipeClosable | 手势滑动关闭，见 [手势滑动关闭](#手势滑动关闭)；不设置时跟随 `maskClosable` | `boolean \| { directions?: Placement[]; threshold?: number; speed?: number }` | - | - |
 | wrapperClass | 内容容器的 class | `string \| object \| unknown[]` | - | - |
 | wrapperStyle | 内容容器的 style | `string \| object \| unknown[]` | - | - |
-| scrollRegExp | 按事件路径上的元素属性匹配可滚动区域，任一规则匹配即可 | `{ id?: RegExp; className?: RegExp; tagName?: RegExp }` | - | `{ className: /(vcm?-popup-scrollable)/ }` |
+| scrollRegExp | 额外视为滚动区域的元素（按元素属性匹配，任一规则匹配即可）；`overflow` 为 `auto` / `scroll` 的元素已自动识别 | `{ id?: RegExp; className?: RegExp; tagName?: RegExp }` | - | `{ className: /(vcm?-popup-scrollable)/ }` |
 
 ### 事件
 
@@ -242,13 +346,15 @@ const handleModalClose = () => { isModalVisible.value = false; };
 | update:modelValue | 离场动画结束后同步关闭状态 | `(value: boolean) => void` | 当前实现只发出 `false` |
 | close | 离场动画结束后触发 | - | - |
 | portal-fulfilled | 离场动画结束后通知 Portal 完成 | - | - |
-| visible-change | 离场动画结束后触发；打开时不触发 | `(visible: boolean) => void` | 当前实现只发出 `false` |
+| visible-change | 打开时传 `true`；关闭时在离场动画结束后传 `false` | `(visible: boolean) => void` | - |
 
 ### 插槽
 
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
-| default | 弹出层内容，隐藏时仍保留挂载 | - |
+| default | 弹出层内容，隐藏时仍保留挂载；有标题栏或 content 时放在内容区 | - |
+| header | 替换标题（关闭按钮仍在右侧） | - |
+| footer | 内容区之后的底部，不随内容滚动 | - |
 
 ### 方法
 
@@ -258,8 +364,11 @@ const handleModalClose = () => { isModalVisible.value = false; };
 | --- | --- | --- | --- |
 | toggle | 修改内部可见状态；省略参数时切换。打开时不会同步 `modelValue`，通常优先使用 `v-model` | `value?: boolean` | `void` |
 
-实例还暴露 `isActive`，供 Portal 读取内部可见状态。组件本身没有静态 `open` 方法，也不会自动 Teleport 到 `body`；存在裁剪或层叠上下文时，请自行选择挂载位置或配合 `Portal` 使用。
+实例还暴露 `isActive`，供 Portal 读取内部可见状态。组件不会自动 Teleport 到 `body`；存在裁剪或层叠上下文时，请使用 `MPopup.open` 或自行选择挂载位置。
 
-### 主题变量
+### 静态方法
 
-默认面板与遮罩支持 `--vc-popup-background-color-lightest`、`--vc-popup-foreground-color`、`--vc-popup-color-mask`，分别回退到同名全局 token。`dark` 外观使用 `--vc-popup-background-color-translucent`（默认 `rgb(0 0 0 / 30%)`）与 `--vc-popup-foreground-color-inverse`（默认 `#fff`）；`none` 不设置面板颜色。
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| MPopup.open | 以 Portal 打开弹出层，参数同组件属性；内容用 `content`，`onClose` 在离场动画结束后触发 | `options` | `PortalLeaf` |
+| MPopup.destroy | 销毁所有以 `open` 打开的弹出层 | - | - |
