@@ -530,7 +530,7 @@ onUnmounted(() => {
 | ok | 点击确定按钮时调用 | `(event: MouseEvent) => unknown` | 返回 Promise 时会在其 resolve 后关闭 |
 | cancel | 点击取消按钮或由关闭动作触发时调用 | `(event: MouseEvent \| KeyboardEvent) => unknown` | 返回 Promise 时会在其 resolve 后关闭 |
 | close | 离场动画结束后触发 | `() => void` | - |
-| visible-change | 离场动画结束后触发 | `(visible: false) => void` | 当前实现仅在关闭后传 `false` |
+| visible-change | 打开时传 `true`；关闭时在离场动画结束后传 `false` | `(visible: boolean) => void` | - |
 | portal-fulfilled | 离场动画结束后触发，供 Portal 调用兼容 | `() => void` | - |
 
 `ok` / `cancel` 回调返回 Promise 时，对话框会等待 Promise resolve 后关闭；返回除 `true` 以外的 truthy 非 Promise 值会阻止关闭。

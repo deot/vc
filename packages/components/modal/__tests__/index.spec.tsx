@@ -1529,6 +1529,17 @@ describe('ModalView 关闭事件 (close / update:modelValue / visible-change / p
 		wrapper.unmount();
 	}, 10000);
 
+	it('打开时触发 visible-change=true', async () => {
+		const wrapper = mount(ModalView, { attachTo: document.body, props: { modelValue: false } });
+		await flush();
+		expect(wrapper.emitted('visible-change')).toBeFalsy();
+
+		await wrapper.setProps({ modelValue: true });
+		await flush();
+		expect(wrapper.emitted('visible-change')).toEqual([[true]]);
+		wrapper.unmount();
+	});
+
 	it('已 unmount 后 handleRemove 不会抛错 / 不再 emit', async () => {
 		const wrapper = mount(ModalView, {
 			attachTo: document.body,

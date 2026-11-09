@@ -359,8 +359,8 @@ onUnmounted(() => {
 | title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md)；布尔值不渲染标题内容 | `string \| number \| boolean \| Function \| { type: string; value: any }` | - | - |
 | content | 内容，取值与 title 相同（布尔值除外）；与默认插槽同时显示 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | placement | 滑入方向 | `string` | `top`、`right`、`bottom`、`left` | `'right'` |
-| width | 左右抽屉宽度，单位 px | `number` | - | `600` |
-| height | 上下抽屉高度，单位 px | `number` | - | `300` |
+| width | 左右抽屉宽度：数字单位为 px，字符串为 CSS 长度（如 `'50%'`） | `number \| string` | - | `600` |
+| height | 上下抽屉高度：数字单位为 px，字符串为 CSS 长度 | `number \| string` | - | `300` |
 | mask | 显示遮罩 | `boolean` | - | `true` |
 | maskClosable | 点击遮罩可关闭 | `boolean` | - | `true` |
 | scrollable | 内容区是否由内置的 Scroller 滚动；`false` 时由内容自行收缩并滚动（内容的根节点需设置 `min-height: 0`） | `boolean` | - | `true` |
@@ -387,7 +387,7 @@ onUnmounted(() => {
 | --- | --- | --- | --- |
 | update:modelValue | 离场动画结束后同步关闭状态 | `false` | 仅关闭时触发 |
 | close | 离场动画结束后触发 | - | JSX 对应 onClose |
-| visible-change | 离场动画结束后触发；打开时不触发 | `false` | JSX 对应 onVisibleChange |
+| visible-change | 打开时传 `true`；关闭时在离场动画结束后传 `false` | `(visible: boolean) => void` | JSX 对应 onVisibleChange |
 
 模板可通过 `@ok`、`@cancel` 传入上述 `onOk`、`onCancel` 回调。它们是带返回值的回调属性。
 
@@ -442,5 +442,5 @@ const confirm = () => new Promise((resolve, reject) => {
 
 - onOk/onCancel 返回 Promise 时，兑现后关闭；拒绝时保持打开，组件没有内置错误提示。
 - 同步返回假值（包括 false、undefined）或 true 时关闭；返回其他真值时保持打开。不要用 false 阻止关闭。
-- toggle(true) 不发出 update:modelValue 或 visible-change；关闭动画结束后才发出 false。
+- toggle(true) 不发出 update:modelValue，发出 visible-change(true)；关闭动画结束后才发出 false。
 - title / content 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。

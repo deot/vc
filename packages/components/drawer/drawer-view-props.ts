@@ -12,12 +12,13 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
+	// 数字为 px，字符串为 CSS 长度
 	width: {
-		type: Number,
+		type: [Number, String] as PropType<number | string>,
 		default: 600
 	},
 	height: {
-		type: Number,
+		type: [Number, String] as PropType<number | string>,
 		default: 300
 	},
 	mask: {

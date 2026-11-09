@@ -245,6 +245,18 @@ describe('DrawerView size 与自定义尺寸', () => {
 		wrapper.unmount();
 	});
 
+	it('width / height 接受 CSS 长度字符串', async () => {
+		const wrapper = mount(DrawerView, {
+			attachTo: document.body,
+			props: { modelValue: true, width: '50%' }
+		});
+		await flush();
+		expect((wrapper.find('.vc-drawer__wrapper').element as HTMLElement).style.width).toBe('50%');
+		await wrapper.setProps({ placement: 'top', height: 'calc(100% - 40px)' });
+		expect((wrapper.find('.vc-drawer__wrapper').element as HTMLElement).style.height).toBe('calc(100% - 40px)');
+		wrapper.unmount();
+	});
+
 	it('placement=bottom: wrapper 使用 height, 默认 300px', async () => {
 		const wrapper = mount(DrawerView, {
 			attachTo: document.body,
@@ -881,6 +893,17 @@ describe('DrawerView 关闭事件 (close / update:modelValue / visible-change)',
 
 		wrapper.unmount();
 	}, 10000);
+
+	it('打开时触发 visible-change=true', async () => {
+		const wrapper = mount(DrawerView, { attachTo: document.body, props: { modelValue: false } });
+		await flush();
+		expect(wrapper.emitted('visible-change')).toBeFalsy();
+
+		await wrapper.setProps({ modelValue: true });
+		await flush();
+		expect(wrapper.emitted('visible-change')).toEqual([[true]]);
+		wrapper.unmount();
+	});
 
 	it('已 unmount 后 handleRemove 不会抛错 / 不再 emit', async () => {
 		const wrapper = mount(DrawerView, {

@@ -230,6 +230,9 @@ export const ModalView = defineComponent({
 		// 同步置上：与弹窗同一次渲染里显示，展开的第一帧蒙层就在
 		watch(isActive, v => v && (isMaskShown.value = true), { flush: 'sync', immediate: true });
 
+		// 打开时通知；关闭在离场动画结束后（handleRemove）
+		watch(isActive, v => v && emit('visible-change', true));
+
 		expose({
 			isActive, // for portal
 			toggle(v?: boolean) {

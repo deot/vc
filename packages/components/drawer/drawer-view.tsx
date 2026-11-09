@@ -2,6 +2,7 @@
 
 import { defineComponent, ref, computed, watch, getCurrentInstance, Fragment } from 'vue';
 import { useScrollbar } from '@deot/vc-hooks';
+import { toPx } from '@deot/vc-shared';
 import { Button } from '../button';
 import { Icon } from '../icon';
 import { Customer } from '../customer';
@@ -30,8 +31,8 @@ export const DrawerView = defineComponent({
 		});
 		const style = computed(() => {
 			return props.placement === 'top' || props.placement === 'bottom'
-				? { height: `${props.height}px` }
-				: { width: `${props.width}px` };
+				? { height: toPx(props.height) }
+				: { width: toPx(props.width) };
 		});
 
 		watch(
@@ -41,6 +42,9 @@ export const DrawerView = defineComponent({
 			},
 			{ immediate: true }
 		);
+
+		// 打开时通知；关闭在离场动画结束后（handleRemove）
+		watch(isActive, v => v && emit('visible-change', true));
 
 		const handleBefore = (e: any, hook: any) => {
 			if (!isActive.value) return;
