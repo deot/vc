@@ -2,7 +2,7 @@ import { nextTick, inject, ref, computed, watch, onMounted, onBeforeUnmount, get
 import type { SetupContext } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import { getComputedHeight } from './utils';
-import { getFitMaxLength, getFitValue } from '../input/utils';
+import { getFitMaxLength, getFitValue, getBytesLength } from '../input/utils';
 import { useNativeEmitter } from '../input/use-native-emitter';
 import type { Props } from './textarea-props';
 
@@ -13,13 +13,11 @@ type Emits = [
 	'change',
 	'focus',
 	'blur',
-	'clear',
 	'paste',
 	'keydown',
 	'keypress',
 	'keyup',
 	'enter',
-	'cancel',
 	'resize'
 ];
 
@@ -42,6 +40,23 @@ export const useTextarea = (props: Props, context: SetupContext<Emits>) => {
 		return Array.isArray(value) || !maxlength || !bytes
 			? maxlength
 			: getFitMaxLength(value, maxlength);
+	});
+
+	// 计数：bytes 时按加权长度（与输入限制一致），inverted 时为剩余数；超出 maxlength（如外部直接赋值）时 exceeded 为 true
+	const indicator = computed(() => {
+		const { maxlength } = props;
+		const value = currentValue.value;
+		if (!props.indicator || typeof maxlength === 'undefined' || Array.isArray(value)) return;
+		const text = value == null ? '' : String(value);
+		const length = props.bytes ? getBytesLength(text) : text.length;
+		const current = typeof props.indicator === 'object' && props.indicator.inverted
+			? maxlength - length
+			: length;
+
+		return {
+			text: `${current}/${maxlength}`,
+			exceeded: length > maxlength
+		};
 	});
 
 	const sync = (v: string, e: any, force?: boolean) => {
@@ -230,6 +245,7 @@ export const useTextarea = (props: Props, context: SetupContext<Emits>) => {
 		classes,
 		listeners,
 		binds,
-		currentMaxlength
+		currentMaxlength,
+		indicator
 	};
 };

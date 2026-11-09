@@ -64,6 +64,11 @@ describe('index.ts', () => {
 		expect(wrapper.html()).toMatch('2/2');
 	});
 
+	it('indicator:bytes 中文算一个长度', async () => {
+		const wrapper = mount(() => (<Input modelValue="中文" maxlength={2} bytes indicator />));
+		expect(wrapper.html()).toMatch('2/2');
+	});
+
 	it('indicator:inverted', async () => {
 		const current = ref('abcd');
 		const wrapper = mount(() => (

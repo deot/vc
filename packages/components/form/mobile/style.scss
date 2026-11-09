@@ -62,9 +62,9 @@ $font-size: 32;
 			padding: 0;
 		}
 
-		.vcm-textarea textarea {
-			padding-right: 0;
-			padding-left: 0;
+		.vcm-textarea {
+			padding: 0;
+			line-height: remfix($line-height);
 		}
 	}
 

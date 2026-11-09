@@ -9,9 +9,10 @@ const COMPONENT_NAME = 'vcm-textarea';
 export const MTextarea = defineComponent({
 	name: COMPONENT_NAME,
 	props: Object.assign({}, textareaProps, {
-		align: {
-			type: String,
-			default: 'left'
+		// 文字右对齐，与 MInput 的 right 一致
+		right: {
+			type: Boolean,
+			default: false
 		}
 	}),
 	emits: [
@@ -20,13 +21,11 @@ export const MTextarea = defineComponent({
 		'change',
 		'focus',
 		'blur',
-		'clear',
 		'paste',
 		'keydown',
 		'keypress',
 		'keyup',
 		'enter',
-		'cancel',
 		'resize'
 	],
 	setup(props, context) {
@@ -38,13 +37,14 @@ export const MTextarea = defineComponent({
 			listeners,
 			binds,
 			calcTextareaStyle,
-			currentMaxlength
+			currentMaxlength,
+			indicator
 		} = useTextarea(props, context);
 		return () => {
 			return (
-				<div class={[classes.value, 'vcm-textarea']}>
+				<div class={[classes.value, 'vcm-textarea', { 'is-right': props.right }]}>
 					<div class="vcm-textarea__wrapper">
-						<div style={contentStyle.value} class={['vcm-textarea__content']}>
+						<div style={contentStyle.value} class="vcm-textarea__content">
 							{ /* @ts-ignore */ }
 							<textarea
 								ref={textarea}
@@ -56,6 +56,14 @@ export const MTextarea = defineComponent({
 							/>
 						</div>
 					</div>
+					{
+						// 计数始终在框内右下角，排在文本区下方
+						indicator.value && (
+							<div class={[props.indicateClass, { 'is-exceeded': indicator.value.exceeded }, 'vcm-textarea__indicator']}>
+								{indicator.value.text}
+							</div>
+						)
+					}
 				</div>
 			);
 		};

@@ -38,17 +38,35 @@ $padding: unitfix(7);
 		box-shadow: 0 0 unitfix(1) unitfix(1) $color-primary-lighter;
 	}
 
+	// 出错时边框为错误色，聚焦也不显示主色光晕
 	@include when(error) {
 		&::after, &::before {
 			border-color: $color-error;
-			box-shadow: none;
 		}
 
 		z-index: 2;
+		box-shadow: none;
 	}
 
-	&:hover {
-		border-color: $color-primary;
+	// 悬停：边框由伪元素绘制，给伪元素着色；禁用、出错、已聚焦时不变
+	&:hover:not(.is-disabled, .is-error, .is-focus) {
+		&::after, &::before {
+			border-color: $color-primary;
+		}
+	}
+
+	// 计数在框外（默认）：根节点下方留出计数的高度，不与后面的内容、表单的错误提示重叠
+	@include when(indicator, true) {
+		margin-bottom: unitfix(18);
+	}
+
+	// 计数在框内：文本区底部留出计数的高度，不压住最后一行
+	@include when(indicator-inline) {
+		margin-bottom: 0;
+
+		textarea {
+			padding-bottom: unitfix(18);
+		}
 	}
 
 	// 根节点的伪元素用于边框，字符框占位放在 wrapper 上，并与输入框的首行对齐：多行时像文字一样以首行对齐
@@ -105,6 +123,11 @@ $padding: unitfix(7);
 			right: unitfix(4);
 			bottom: unitfix(0);
 		}
+
+		// 超出 maxlength（如外部直接赋值）
+		@include when(exceeded) {
+			color: $color-error;
+		}
 	}
 
 	@include when(disabled) {
@@ -115,11 +138,12 @@ $padding: unitfix(7);
 			background-color: $background-color-light;
 			opacity: 1;
 
-			// hack需要设置
+			// Safari 的禁用文字颜色取 -webkit-text-fill-color
 			textarea {
 				color: $color-dark-extralight;
 				cursor: not-allowed;
 				background-color: $background-color-light;
+				-webkit-text-fill-color: $color-dark-extralight;
 			}
 		}
 	}

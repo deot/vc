@@ -1,34 +1,25 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, computed } from 'vue';
+import { defineComponent } from 'vue';
 import { useTextarea } from './use-textarea';
 import { props as textareaProps } from './textarea-props';
-import { getBytesSize } from '../input/utils';
 
 const COMPONENT_NAME = 'vc-textarea';
 
 export const Textarea = defineComponent({
 	name: COMPONENT_NAME,
-	props: Object.assign({}, textareaProps, {
-		indicator: {
-			type: [Boolean, Object],
-			default: false
-		},
-		indicateClass: String
-	}),
+	props: textareaProps,
 	emits: [
 		'update:modelValue',
 		'input',
 		'change',
 		'focus',
 		'blur',
-		'clear',
 		'paste',
 		'keydown',
 		'keypress',
 		'keyup',
 		'enter',
-		'cancel',
 		'resize'
 	],
 	setup(props, context) {
@@ -40,26 +31,26 @@ export const Textarea = defineComponent({
 			listeners,
 			binds,
 			calcTextareaStyle,
-			currentMaxlength
+			currentMaxlength,
+			indicator
 		} = useTextarea(props, context);
-		const indicatorNum = computed(() => {
-			const currentLength = (String(props.modelValue || '')).length;
-			const extraLength = props.bytes ? getBytesSize(props.modelValue as any) || 0 : 0;
-			const length = props.indicator && (props.indicator as any).inverted
-				? props.maxlength! + extraLength - currentLength
-				: currentLength - extraLength;
-			return `${length}/${props.maxlength}`;
-		});
-
-		const indicateInline = computed(() => {
-			return props.indicator && (props.indicator as any).inline;
-		});
 
 		return () => {
+			// 计数在框外（默认）时根节点留出它的高度，在框内（inline）时文本区底部留出它的高度
+			const inline = typeof props.indicator === 'object' && !!props.indicator.inline;
 			return (
-				<div class={[classes.value, 'vc-textarea']}>
+				<div
+					class={[
+						classes.value,
+						'vc-textarea',
+						{
+							'has-indicator': !!indicator.value,
+							'is-indicator-inline': !!indicator.value && inline
+						}
+					]}
+				>
 					<div class="vc-textarea__wrapper">
-						<div style={contentStyle.value} class={['vc-textarea__content']}>
+						<div style={contentStyle.value} class="vc-textarea__content">
 							{ /* @ts-ignore */ }
 							<textarea
 								ref={textarea}
@@ -71,17 +62,18 @@ export const Textarea = defineComponent({
 							/>
 						</div>
 						{
-							props.indicator && (
+							indicator.value && (
 								<div
 									class={[
 										props.indicateClass,
 										{
-											'is-inline': indicateInline.value
+											'is-inline': inline,
+											'is-exceeded': indicator.value.exceeded
 										},
 										'vc-textarea__indicator'
 									]}
 								>
-									{indicatorNum.value}
+									{indicator.value.text}
 								</div>
 							)
 						}

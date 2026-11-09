@@ -28,9 +28,9 @@ export const getFitMaxLength = (value: number | string, maxlength: number) => {
 	return 2 * maxlength - it.unicodeLength;
 };
 
-// 计算bytes大小
-export const getBytesSize = (value: number | string) => {
+// bytes 模式下的长度：可打印 ASCII 算半个、其他 UTF-16 码元算一个（向上取整），与 getFitValue 的限制一致
+export const getBytesLength = (value: number | string) => {
 	const it = getInfo(value);
 
-	return Math.ceil(it.asciiLength / 2) - it.unicodeLength;
+	return Math.ceil(it.asciiLength / 2) + it.unicodeLength;
 };

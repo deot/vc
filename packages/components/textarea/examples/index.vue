@@ -53,6 +53,13 @@
 					indicator
 				/>
 			</FormItem>
+			<FormItem label="框内计数">
+				<Textarea
+					v-model="value"
+					:maxlength="200"
+					:indicator="{ inline: true }"
+				/>
+			</FormItem>
 		</Form>
 	</div>
 </template>

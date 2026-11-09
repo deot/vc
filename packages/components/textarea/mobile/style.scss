@@ -2,67 +2,84 @@
 
 $color-dark-light: varfix(color-dark-light, textarea);
 $color-dark-extralight: varfix(color-dark-extralight, textarea);
-$color-light-deep: varfix(color-light-deep, textarea);
-$color-light-deeper: varfix(color-light-deeper, textarea);
+$color-error: varfix(color-error, textarea);
 $color-primary: varfix(color-primary, textarea);
-$color-primary-lighter: varfix(color-primary-lighter, textarea);
-$background-color-light: varfix(background-color-light, textarea);
 $background-color-lightest: varfix(background-color-lightest, textarea);
-$foreground-color: varfix(foreground-color, textarea);
 $component-name: vcm-textarea;
 
+// 尺寸为 750 稿、随 --vc-rem 缩放，375 宽下：单独使用时为一整块，内边距 16，文字 16 / 行高 22，与 MInput 一致
+// 高度由 rows（默认 2 行）或 autosize 决定；有计数（indicator）时排在文本区下方；表单（MForm）内去掉内边距，见 form/mobile/style.scss
 @include block($component-name) {
 	position: relative;
 	display: inline-flex;
 	width: 100%;
-	min-height: remfix(48); // 动态计算
-	line-height: 1.5;
+	flex-direction: column;
+	padding: remfix(32);
+	font-size: remfix(32);
+	line-height: remfix(44);
 	cursor: text;
+	background-color: $background-color-lightest;
+	box-sizing: border-box;
 
 	@include element(wrapper) {
 		display: flex;
-		align-items: center;
+		min-width: 0;
 		flex: 1;
 	}
 
-	@include element(content){
+	@include element(content) {
+		min-width: 0;
 		flex: 1;
 
 		textarea {
 			position: relative;
-			display: block; // 两个文本框默认情况下上下会有一个间距
+			display: block; // 两个文本域默认情况下上下会有一个间距
 			width: 100%;
-			min-height: remfix(48);
-			padding-right: remfix(14);
-			padding-left: remfix(14);
+			padding: 0; // 去掉原生的 2px 内边距
+			margin: 0;
 			overflow: auto;
 			font-family: inherit;
 			font-size: inherit;
-			font-size: remfix(32);
 			line-height: inherit;
 			color: $color-dark-light;
-			background-color: $background-color-lightest;
+			caret-color: $color-primary;
+			background-color: transparent;
 			border: none;
 			outline: 0;
-			resize: none;  // 不形式拖拽按钮
+			box-sizing: border-box;
+			resize: none; // 不显示拖拽按钮
 
 			&::placeholder {
 				color: $color-dark-extralight;
 			}
 
+			// iOS 的禁用文字颜色取 -webkit-text-fill-color，并会再降低不透明度
 			&[disabled] {
 				color: $color-dark-extralight;
 				cursor: not-allowed;
-				background-color: $background-color-light;
 				opacity: 1;
+				-webkit-text-fill-color: $color-dark-extralight;
 			}
 		}
+	}
 
-		@include when(right) {
-			textarea {
-				color: $color-dark-extralight;
-				text-align: right;
-			}
+	// 计数：右下角，排在文本区下方（与文字间距 8），字号 28 / 行高 40；超出 maxlength 时为错误色
+	@include element(indicator) {
+		margin-top: remfix(16);
+		font-size: remfix(28);
+		line-height: remfix(40);
+		color: $color-dark-extralight;
+		text-align: right;
+
+		@include when(exceeded) {
+			color: $color-error;
+		}
+	}
+
+	// 只右对齐，颜色不变（与 MInput 的 right 一致）
+	@include when(right) {
+		textarea {
+			text-align: right;
 		}
 	}
 }

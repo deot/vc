@@ -1,4 +1,4 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
 import { pick } from 'lodash-es';
 import { props as inputProps } from '../input/input-props';
 
@@ -29,6 +29,12 @@ export const props = {
 	},
 	textareaStyle: {
 		type: [Object, Array]
-	}
+	},
+	// 计数：需同时设置 maxlength；inverted 显示剩余数，inline（仅 Textarea）放在框内右下角；MTextarea 始终在框内
+	indicator: {
+		type: [Boolean, Object] as PropType<boolean | { inverted?: boolean; inline?: boolean }>,
+		default: false
+	},
+	indicateClass: String
 };
 export type Props = ExtractPropTypes<typeof props>;

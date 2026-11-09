@@ -34,6 +34,14 @@ describe('index.ts', () => {
 		expect(wrapper.find('textarea').exists()).toBe(true);
 	});
 
+	it('MTextarea: right 让文字右对齐（根节点 is-right），不透传给原生 textarea', async () => {
+		const wrapper = mount(() => (<MTextarea right />));
+
+		expect(wrapper.classes()).toContain('is-right');
+		expect(wrapper.find('textarea').attributes('right')).toBeUndefined();
+		expect(mount(() => (<MTextarea />)).classes()).not.toContain('is-right');
+	});
+
 	it('classes:focus/blur/disabled', async () => {
 		const wrapper = mount(Textarea);
 
@@ -111,6 +119,47 @@ describe('index.ts', () => {
 		));
 
 		expect(wrapper.html()).toMatch('2/2');
+	});
+
+	it('indicator:bytes 与输入限制同一套加权长度（中文算一个，ASCII 算半个）', async () => {
+		const wrapper = mount(() => (<Textarea modelValue="中文" maxlength={2} bytes indicator />));
+		expect(wrapper.find('.vc-textarea__indicator').text()).toBe('2/2');
+
+		const mixed = mount(() => (<Textarea modelValue="中a" maxlength={2} bytes indicator={{ inverted: true }} />));
+		expect(mixed.find('.vc-textarea__indicator').text()).toBe('0/2');
+	});
+
+	it('indicator: 不绑定 v-model 时随输入更新；超出 maxlength 时为 is-exceeded', async () => {
+		const wrapper = mount(() => (<Textarea maxlength={3} indicator />));
+		await wrapper.find('textarea').setValue('ab');
+		expect(wrapper.find('.vc-textarea__indicator').text()).toBe('2/3');
+		expect(wrapper.find('.vc-textarea__indicator').classes()).not.toContain('is-exceeded');
+
+		const exceeded = mount(() => (<Textarea modelValue="abcd" maxlength={3} indicator />));
+		expect(exceeded.find('.vc-textarea__indicator').classes()).toContain('is-exceeded');
+	});
+
+	it('indicator: 框外时根节点 has-indicator（留出高度），框内时另有 is-indicator-inline', async () => {
+		const outside = mount(() => (<Textarea maxlength={10} indicator />));
+		expect(outside.classes()).toContain('has-indicator');
+		expect(outside.classes()).not.toContain('is-indicator-inline');
+
+		const inside = mount(() => (<Textarea maxlength={10} indicator={{ inline: true }} />));
+		expect(inside.classes()).toEqual(expect.arrayContaining(['has-indicator', 'is-indicator-inline']));
+
+		const none = mount(() => (<Textarea indicator />));
+		expect(none.classes()).not.toContain('has-indicator');
+	});
+
+	it('MTextarea: indicator 在框内、排在文本区下方', async () => {
+		const wrapper = mount(() => (<MTextarea modelValue="abcd" maxlength={3} indicator indicateClass="custom" />));
+		const indicator = wrapper.find('.vcm-textarea > .vcm-textarea__indicator');
+		expect(indicator.text()).toBe('4/3');
+		expect(indicator.classes()).toEqual(expect.arrayContaining(['is-exceeded', 'custom']));
+		expect(wrapper.find('.vcm-textarea__wrapper .vcm-textarea__indicator').exists()).toBe(false);
+
+		const inverted = mount(() => (<MTextarea modelValue="ab" maxlength={10} indicator={{ inverted: true }} />));
+		expect(inverted.find('.vcm-textarea__indicator').text()).toBe('8/10');
 	});
 
 	it('indicator:inline & indicateClass', async () => {
@@ -400,7 +449,7 @@ describe('index.ts', () => {
 			/>
 		));
 
-		// 空值时 getBytesSize 为 0，覆盖 indicator 中 `|| 0` 分支
+		// 空值时计数为 0
 		expect(wrapper.html()).toMatch('0/10');
 
 		// 值未超过 maxlength，fitValue === value，覆盖不截断分支

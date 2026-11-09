@@ -75,7 +75,7 @@ const limitedValue = ref('第一行\n第二行');
 
 ### 长度限制与计数
 
-`maxlength` 限制输入长度，`indicator` 显示已输入长度，`inverted` 显示剩余长度。计数读取 `modelValue`，请同时绑定 `v-model` 和 `maxlength`。外置计数需预留底部空间。
+`maxlength` 限制输入长度，`indicator` 显示已输入长度，`inverted` 显示剩余长度；需同时设置 `maxlength`。计数默认在框外右下方，组件下方自动留出它的高度，不与后面的内容或表单的错误提示重叠；`inline` 放在框内右下角，文本区底部同样留出它的高度。值超过 `maxlength`（如外部直接赋值）时计数显示为错误色。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
@@ -122,7 +122,18 @@ const value = ref('');
 
 ### 移动端
 
-`MTextarea` 共享输入和自适应高度逻辑，采用无边框样式，禁用原生拖拽缩放，不提供计数器。
+`MTextarea` 共享输入、计数和自适应高度逻辑，采用无边框样式，禁用原生拖拽缩放。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放，与 `MInput` 一致（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 单独使用 | 白底一整块，内边距 32（16） |
+| 文字 | 字号 32（16），行高 44（22）；高度由 `rows`（默认 2 行）或 `autosize` 决定 |
+| 光标 | `color-primary` |
+| 禁用 | 文字为 `color-dark-extralight`，同时设置 `-webkit-text-fill-color`，iOS 上颜色与设定一致 |
+| 计数（`indicator`） | 始终在框内右下角，排在文本区下方，与文字间距 16（8）；字号 28（14），行高 40（20），`color-dark-extralight`，超出时为 `color-error` |
+| 表单（`MForm`）中 | 去掉内边距，首行与标签对齐 |
+
+`right` 让文字右对齐，颜色不变，与 `MInput` 的 `right` 一致。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, viewport: 375, viewportOptions: ['auto', 375] }</config> -->
@@ -152,11 +163,11 @@ const value = ref('');
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
 | color-dark-light | 输入文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
-| color-dark-extralight | 占位、字数提示、桌面及移动端禁用文字、移动端右对齐文字 | 亮色：`#909399`；暗色：`#B9B9B9` |
-| color-error | 错误边框 | `#F53F3F` |
-| color-primary | 焦点及悬停边框 | `#456CF6` |
+| color-dark-extralight | 占位、字数提示、桌面及移动端禁用文字 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-error | 错误边框；计数超出 maxlength | `#F53F3F` |
+| color-primary | 焦点及悬停边框；移动端光标 | `#456CF6` |
 | color-primary-lighter | 焦点阴影 | `rgba(45, 140, 240, 0.2)` |
-| background-color-light | 桌面及移动端禁用背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+| background-color-light | 桌面端禁用背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
 | background-color-lightest | 文本域背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 | border-color | 桌面端边框 | `#D5D9E1` |
 
@@ -183,8 +194,8 @@ const value = ref('');
 | rows | 默认可见行数 | `number` | - | `2` |
 | autosize | 自适应高度，可指定行数范围 | `boolean \| { minRows?: number; maxRows?: number }` | - | `false` |
 | textareaStyle | 原生 textarea 样式；自动计算的高度样式后合并 | `object \| object[]` | - | - |
-| indicator | 仅 Textarea：计数，inverted 显示剩余数，inline 放在框内右下角 | `boolean \| { inverted?: boolean; inline?: boolean }` | - | `false` |
-| indicateClass | 仅 Textarea：计数元素的 class | `string` | - | - |
+| indicator | 计数，需同时设置 maxlength；inverted 显示剩余数，inline 放在框内右下角（仅 Textarea，MTextarea 始终在框内） | `boolean \| { inverted?: boolean; inline?: boolean }` | - | `false` |
+| indicateClass | 计数元素的 class | `string` | - | - |
 
 `placeholder`、`readonly`、`name`、`autofocus`、`autocomplete`、`spellcheck` 通过 attrs 传给原生 textarea，不是声明的 props，组件不设置默认值。`autocomplete` 使用原生字符串值（如 `on`、`off`）。其他 attrs 默认落在外层容器上，不保证传给原生 textarea，例如 `cols`。
 
@@ -219,9 +230,9 @@ const value = ref('');
 
 ### MTextarea 属性
 
-公共属性见上表。移动端额外声明 `align: string`，默认 `left`，但当前渲染没有应用该属性，设置它不会改变对齐。需要对齐时可使用 `textareaStyle` 的 `textAlign`。
+公共属性见上表。移动端另有 `right: boolean`（默认 `false`）：文字右对齐，与 `MInput` 一致。原先声明但没有生效的 `align` 已移除。
 
 ### 当前行为说明
 
-- 两个组件均不渲染插槽，不提供 `clearable` 或清空按钮。`clear`、`cancel` 虽在 emits 中声明，当前实现没有触发路径。
-- `bytes` 的输入限制与桌面计数器目前采用不同计算方式：计数为“字符串长度减去（可打印 ASCII 数的一半向上取整，再减去其他代码单元数）”。例如 `abcd` 显示 2，`中文` 显示 4；剩余计数为 maxlength 减去该值。因此不建议把 `bytes + indicator` 当作精确的剩余输入量提示。
+- 两个组件均不渲染插槽，不提供 `clearable` 或清空按钮。
+- `bytes` 时计数与输入限制使用同一套加权长度：可打印 ASCII 算半个（合计向上取整），其他代码单元算一个。例如 `abcd` 与 `中文` 都显示 2。

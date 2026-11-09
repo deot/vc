@@ -9,7 +9,7 @@ import { props as inputProps } from './input-props';
 import { Icon } from '../icon/index';
 import { TransitionFade } from '../transition/index';
 import { useInput } from './use-input';
-import { getBytesSize } from './utils';
+import { getBytesLength } from './utils';
 
 const COMPONENT_NAME = 'vc-input';
 
@@ -60,7 +60,7 @@ export const Input = defineComponent({
 			if (typeof props.maxlength === 'undefined' || Array.isArray(currentValue.value)) return;
 			const { maxlength } = props;
 			const value = String(currentValue.value);
-			const length = props.bytes ? getBytesSize(value) : value.length;
+			const length = props.bytes ? getBytesLength(value) : value.length;
 
 			const current = typeof props.indicator === 'object' && props.indicator.inverted
 				? maxlength - length
