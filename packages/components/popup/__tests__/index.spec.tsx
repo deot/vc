@@ -5,7 +5,7 @@ import { mount, config } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
 import { nextTick, ref } from 'vue';
 import { vi } from 'vitest';
-import { fireTouch } from '../../../hooks/__tests__/fixtures/drag';
+import { fireTouch, fireMouse } from '../../../hooks/__tests__/fixtures/drag';
 import { resolveHeights, pickSnap } from '../mobile/use-popup-snaps';
 
 // 走真实 Transition 生命周期，onAfterLeave 才会触发
@@ -28,6 +28,12 @@ const visibleWrapper = () => [...document.querySelectorAll<HTMLElement>('.vcm-po
 const sizeOf = (el: HTMLElement, width: number, height: number) => {
 	Object.defineProperty(el, 'offsetWidth', { configurable: true, value: width });
 	Object.defineProperty(el, 'offsetHeight', { configurable: true, value: height });
+};
+
+// jsdom 不做布局：给滚动区域内容高度与可视高度
+const fakeScroll = (el: HTMLElement, scrollHeight: number, clientHeight: number) => {
+	Object.defineProperty(el, 'scrollHeight', { configurable: true, value: scrollHeight });
+	Object.defineProperty(el, 'clientHeight', { configurable: true, value: clientHeight });
 };
 
 // 一次拖动：start → 若干 move → end；返回各次 move 事件
@@ -262,8 +268,7 @@ describe('index.ts', () => {
 			));
 			const list = panel.querySelector<HTMLElement>('.list')!;
 			const item = panel.querySelector<HTMLElement>('.item')!;
-			Object.defineProperty(list, 'scrollHeight', { configurable: true, value: 1000 });
-			Object.defineProperty(list, 'clientHeight', { configurable: true, value: 300 });
+			fakeScroll(list, 1000, 300);
 			list.scrollTop = 100;
 
 			// 已滚动：下拉交给滚动，不跟手、不阻止
@@ -293,30 +298,51 @@ describe('index.ts', () => {
 			expect(visible.value).toBe(true);
 			wrapper.unmount();
 		});
-	});
 
-	it('拖动事件（没有 snaps）：打开为 0，向关闭方向为负', async () => {
-		const visible = ref(true);
-		const onDrag = vi.fn();
-		const onDragend = vi.fn();
-		const wrapper = mount(() => (
-			<MPopup v-model={visible.value} onDrag={onDrag} onDragend={onDragend}><div class="body">x</div></MPopup>
-		), { attachTo: document.body });
-		await flush();
-		const panel = visibleWrapper()!;
-		sizeOf(panel, 375, 400);
+		it('鼠标拖动同样可以滑动关闭；轻点指示器之外的抖动不算拖动', async () => {
+			const { wrapper, visible, panel } = await mountSwipe();
+			fireMouse(panel, 'mousedown', { clientX: 100, clientY: 100 });
+			fireMouse(document, 'mousemove', { clientX: 100, clientY: 102 });
+			expect(panel.style.transform).toBe('');
+			fireMouse(document, 'mousemove', { clientX: 100, clientY: 300 });
+			expect(panel.style.transform).toBe('translateY(200px)');
+			fireMouse(document, 'mouseup', { clientX: 100, clientY: 300 });
+			await flushLeave();
+			expect(visible.value).toBe(false);
+			wrapper.unmount();
+		});
 
-		fireTouch(panel, 'touchstart', { clientX: 100, clientY: 100 });
-		fireTouch(panel, 'touchmove', { clientX: 100, clientY: 140 });
-		fireTouch(panel, 'touchmove', { clientX: 100, clientY: 120 });
-		expect(onDrag).toHaveBeenLastCalledWith({ snap: 0, height: 380, offset: 20, progress: -0.05, direction: 'up', velocity: expect.any(Number) });
-		// 慢速松手：回弹，速度按静止处理
-		await Utils.sleep(150);
-		fireTouch(panel, 'touchend', { clientX: 100, clientY: 120 });
-		expect(onDragend).toHaveBeenLastCalledWith({ snap: 0, close: false, progress: 0, velocity: 0 });
-		await flushLeave();
-		expect(visible.value).toBe(true);
-		wrapper.unmount();
+		it('滑出关闭中再次触摸：不打断关闭', async () => {
+			const { wrapper, visible, panel } = await mountSwipe();
+			swipe(panel, [100, 100], [100, 300]);
+			// 滑出过程中（240ms 内）再按下拖动
+			fireTouch(panel, 'touchstart', { clientX: 100, clientY: 300 });
+			fireTouch(panel, 'touchmove', { clientX: 100, clientY: 200 });
+			fireTouch(panel, 'touchend', { clientX: 100, clientY: 200 });
+			await flushLeave();
+			expect(visible.value).toBe(false);
+			wrapper.unmount();
+		});
+
+		it('拖动事件（没有 snaps）：打开为 0，向关闭方向为负', async () => {
+			const onDrag = vi.fn();
+			const onDragend = vi.fn();
+			const { wrapper, visible, panel } = await mountSwipe({ onDrag, onDragend });
+
+			fireTouch(panel, 'touchstart', { clientX: 100, clientY: 100 });
+			fireTouch(panel, 'touchmove', { clientX: 100, clientY: 140 });
+			fireTouch(panel, 'touchmove', { clientX: 100, clientY: 120 });
+			expect(onDrag).toHaveBeenLastCalledWith({
+				snap: 0, height: 380, offset: 20, progress: -0.05, direction: 'up', velocity: expect.any(Number)
+			});
+			// 慢速松手：回弹，速度按静止处理
+			await Utils.sleep(150);
+			fireTouch(panel, 'touchend', { clientX: 100, clientY: 120 });
+			expect(onDragend).toHaveBeenLastCalledWith({ snap: 0, close: false, progress: 0, velocity: 0 });
+			await flushLeave();
+			expect(visible.value).toBe(true);
+			wrapper.unmount();
+		});
 	});
 
 	it('swipeClosable 不设置时跟随 maskClosable；关闭时只阻止滚动穿透', async () => {
@@ -469,8 +495,7 @@ describe('snaps', () => {
 		const scroller = wrapper.find('.vcm-popup__scroller').element as HTMLElement;
 		const body = panel.querySelector<HTMLElement>('.body')!;
 		scroller.style.overflowY = 'auto';
-		Object.defineProperty(scroller, 'scrollHeight', { configurable: true, value: 2000 });
-		Object.defineProperty(scroller, 'clientHeight', { configurable: true, value: 700 });
+		fakeScroll(scroller, 2000, 700);
 
 		// 上拉：滚动内容
 		const [up] = swipe(body, [100, 500], [100, 200]);
@@ -542,6 +567,24 @@ describe('snaps', () => {
 
 		expect(panel.style.bottom).toBe('0px');
 		expect(wrapper.find('.vcm-popup__scroller').classes()).not.toContain('is-locked');
+		wrapper.unmount();
+	});
+
+	it('档位过渡中被抓住：从面板此刻的位置继续跟手，不跳回过渡前的档', async () => {
+		const { wrapper, panel, onSnap } = await mountSnaps();
+		// 点击指示器：过渡到最高档（jsdom 没有过渡，计算样式即目标位置）
+		await wrapper.find('.vcm-popup__handle').trigger('click');
+		expect(panel.style.transform).toBe('translateY(-400px)');
+		await Utils.sleep(50);
+
+		fireTouch(panel, 'touchstart', { clientX: 100, clientY: 300 });
+		fireTouch(panel, 'touchmove', { clientX: 100, clientY: 310 });
+		// 从此刻的位置（最高档）下移 10，而不是从最低档的位置
+		expect(panel.style.transform).toBe('translateY(-390px)');
+		fireTouch(panel, 'touchend', { clientX: 100, clientY: 310 });
+		await flush(400);
+		expect(panel.style.bottom).toBe('0px');
+		expect(onSnap).toHaveBeenLastCalledWith(1);
 		wrapper.unmount();
 	});
 

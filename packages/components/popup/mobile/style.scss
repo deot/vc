@@ -73,17 +73,6 @@ $corners: (
 			bottom: 0;
 			left: 0;
 			padding-bottom: env(safe-area-inset-bottom);
-
-			// 多档高度时高度由档位决定（可全屏），不受限制
-			&.is-structured:not(.is-snapped) {
-				max-height: calc(100% - #{v(gap)});
-			}
-
-			// 多档高度铺满视口时：圆角打平，内侧让出安全区（刘海、状态栏）
-			&.is-full {
-				padding-top: env(safe-area-inset-top);
-				border-radius: 0;
-			}
 		}
 	}
 
@@ -93,17 +82,27 @@ $corners: (
 			right: 0;
 			left: 0;
 			padding-top: env(safe-area-inset-top);
+		}
+	}
 
-			// 多档高度时高度由档位决定（可全屏），不受限制
-			&.is-structured:not(.is-snapped) {
-				max-height: calc(100% - #{v(gap)});
+	// 有标题栏的面板与对边留出距离；多档高度时高度由档位决定（可全屏），不受限制
+	@each $placement in (bottom, top) {
+		@include when($placement) {
+			@include element(wrapper) {
+				&.is-structured:not(.is-snapped) {
+					max-height: calc(100% - #{v(gap)});
+				}
 			}
+		}
+	}
 
-			// 多档高度铺满视口时：圆角打平，内侧让出安全区（底部横条）
-			&.is-full {
-				padding-bottom: env(safe-area-inset-bottom);
-				border-radius: 0;
-			}
+	// 多档高度铺满视口时：圆角打平，两侧都让出安全区（刘海、状态栏、底部横条）
+	@include element(wrapper) {
+		@include when(full) {
+			--vc-popup-radius: 0;
+
+			padding-top: env(safe-area-inset-top);
+			padding-bottom: env(safe-area-inset-bottom);
 		}
 	}
 
@@ -238,6 +237,7 @@ $corners: (
 	}
 
 	// 指示器：点击区域为整行，横条居中；#handle 插槽替换横条（.vcm-popup__indicator）
+	// 拖动时（is-down / is-up）两段横条倾斜 tilt：向下拖成 V，向上拖成 ^
 	@include element(handle) {
 		display: flex;
 		padding: v(handle-gap) 0;
@@ -245,50 +245,43 @@ $corners: (
 		justify-content: center;
 		flex-shrink: 0;
 		-webkit-tap-highlight-color: transparent;
+
+		@include when(down) {
+			--vc-popup-handle-tilt: #{v(handle-angle)};
+		}
+
+		@include when(up) {
+			--vc-popup-handle-tilt: calc(-1 * #{v(handle-angle)});
+		}
+
+		// 有指示器时，标题栏紧接在指示器之后
+		+ .#{$component-name}__header {
+			margin-top: calc(-1 * #{v(handle-gap)});
+		}
 	}
 
-	// 横条：两段各一半，拖动时向中间靠拢并倾斜，向上拖成 ^，向下拖成 V
+	// 横条：两段在中间重叠一个横条高度，静止时拼成一条（圆角端不露缝），倾斜时圆角端叠在一起成为拐角；总宽仍为 handle-width
 	@include element(indicator) {
 		display: flex;
 
 		&::before,
 		&::after {
 			display: block;
-			width: calc(#{v(handle-width)} / 2);
+			width: calc((#{v(handle-width)} + #{v(handle-height)}) / 2);
 			height: v(handle-height);
 			background-color: $color-neutral-light;
 			border-radius: v(handle-height);
 			content: '';
 			transition: transform .15s ease-out;
 		}
-	}
 
-	@include element(handle) {
-		@include when(down) {
-			.#{$component-name}__indicator::before {
-				transform: translateX(calc(#{v(handle-height)} / 2)) rotate(#{v(handle-angle)});
-			}
-
-			.#{$component-name}__indicator::after {
-				transform: translateX(calc(#{v(handle-height)} / -2)) rotate(calc(-1 * #{v(handle-angle)}));
-			}
+		&::before {
+			transform: rotate(var(--vc-popup-handle-tilt, 0deg));
 		}
 
-		@include when(up) {
-			.#{$component-name}__indicator::before {
-				transform: translateX(calc(#{v(handle-height)} / 2)) rotate(calc(-1 * #{v(handle-angle)}));
-			}
-
-			.#{$component-name}__indicator::after {
-				transform: translateX(calc(#{v(handle-height)} / -2)) rotate(#{v(handle-angle)});
-			}
-		}
-	}
-
-	// 有指示器时，标题栏紧接在指示器之后
-	@include element(handle) {
-		+ .#{$component-name}__header {
-			margin-top: calc(-1 * #{v(handle-gap)});
+		&::after {
+			margin-left: calc(-1 * #{v(handle-height)});
+			transform: rotate(calc(-1 * var(--vc-popup-handle-tilt, 0deg)));
 		}
 	}
 
