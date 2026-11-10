@@ -1652,6 +1652,38 @@ describe('MModalView 基础渲染 / props', () => {
 		wrapper.unmount();
 	});
 
+	it('触摸滚动不外溢：遮罩上的拖动被阻止，内容区能滚时交给滚动，关闭后不再拦截', async () => {
+		const wrapper = mount(MModalView, {
+			attachTo: document.body,
+			props: { modelValue: true, mode: 'alert', title: '提示', content: '内容' }
+		});
+		await flush();
+		const move = (el: Element, from: number, to: number) => {
+			drag.fireTouch(el, 'touchstart', { clientX: 0, clientY: from });
+			const e = drag.fireTouch(el, 'touchmove', { clientX: 0, clientY: to });
+			drag.fireTouch(el, 'touchend', { clientX: 0, clientY: to });
+			return e.defaultPrevented;
+		};
+
+		const mask = wrapper.find('.vcm-modal__mask').element;
+		expect(move(mask, 100, 300)).toBe(true);
+
+		// jsdom 不加载样式：内容区的 overflow 与尺寸手动给出
+		const content = wrapper.find('.vcm-modal__content').element as HTMLElement;
+		content.style.overflowY = 'auto';
+		Object.defineProperty(content, 'scrollHeight', { configurable: true, value: 600 });
+		Object.defineProperty(content, 'clientHeight', { configurable: true, value: 200 });
+		const html = wrapper.find('.vcm-modal__html').element;
+		expect(move(html, 300, 100)).toBe(false);
+		// 已在顶部，继续下拉不能滚动：阻止
+		expect(move(html, 100, 300)).toBe(true);
+
+		await wrapper.setProps({ modelValue: false });
+		await flush();
+		expect(move(mask, 100, 300)).toBe(false);
+		wrapper.unmount();
+	});
+
 	it('toggle expose 方法切换 isActive (含 toggle 无参数取反)', async () => {
 		const wrapper = mount(MModalView, { props: { modelValue: false } });
 		await flush();

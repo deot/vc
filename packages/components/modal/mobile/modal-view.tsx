@@ -8,7 +8,7 @@ import {
 	getCurrentInstance,
 	Fragment
 } from 'vue';
-import { useScrollbar } from '@deot/vc-hooks';
+import { useScrollbar, useScrollContain } from '@deot/vc-hooks';
 
 import { MTransitionZoom, MTransitionFade } from '../../transition/index.m';
 import { MCustomer } from '../../customer/index.m';
@@ -28,6 +28,8 @@ export const MModalView = defineComponent({
 		const { t } = useLocale();
 
 		const isActive = ref(false);
+		const root = ref<HTMLElement>();
+		const container = ref<HTMLElement>();
 		const okText = computed(() => {
 			return typeof props.okText === 'undefined'
 				? t('vc.Modal.okButtonText')
@@ -121,6 +123,8 @@ export const MModalView = defineComponent({
 		});
 
 		useScrollbar(isActive);
+		// 触摸滚动不外溢：内容区照常滚动，滚到边界或在遮罩上拖动时页面不随之滚动
+		const { listeners } = useScrollContain({ root, panel: container, enabled: () => isActive.value });
 		watch(
 			() => props.modelValue,
 			(v) => {
@@ -153,7 +157,7 @@ export const MModalView = defineComponent({
 
 		return () => {
 			return (
-				<div class="vcm-modal">
+				<div ref={root} class="vcm-modal" {...listeners}>
 					<MTransitionFade duration={200}>
 						<div
 							v-show={props.mask && isActive.value}
@@ -173,6 +177,7 @@ export const MModalView = defineComponent({
 							onAfterLeave={handleRemove}
 						>
 							<div
+								ref={container}
 								v-show={isActive.value}
 								style={[basicStyle.value]}
 								class="vcm-modal__container"
