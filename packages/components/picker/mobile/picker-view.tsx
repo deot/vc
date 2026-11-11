@@ -21,6 +21,8 @@ export const PickerView = defineComponent({
 
 		const source = computed(() => props.data || []);
 		const colCount = computed(() => Math.max(props.columns || 1, 1));
+		// 只在级联时隐藏空列：非级联的列由 data 直接给出
+		const hideEmpty = computed(() => props.hideEmptyColumns && props.cascader);
 
 		const makePlainColumns = () => {
 			const currentSource = source.value;
@@ -127,18 +129,25 @@ export const PickerView = defineComponent({
 			return (
 				<div class="vcm-picker-view">
 					{
-						Array.from({ length: colCount.value }).map((_, index) => (
-							<PickerCol
-								key={index}
-								index={index}
-								data={rebuildData.value[index] || []}
-								value={currentValue.value[index]}
-								itemStyle={props.itemStyle}
-								renderLabel={props.renderLabel}
-								onChange={(v: PickerData) => handleColChange(v, index)}
-							/>
-						))
+						Array.from({ length: colCount.value }).map((_, index) => {
+							const data = rebuildData.value[index] || [];
+							if (hideEmpty.value && !data.length) return null;
+							return (
+								<PickerCol
+									key={index}
+									index={index}
+									data={data}
+									value={currentValue.value[index]}
+									itemStyle={props.itemStyle}
+									renderLabel={props.renderLabel}
+									onChange={(v: PickerData) => handleColChange(v, index)}
+								/>
+							);
+						})
 					}
+					{/* 遮罩与选中框：整个面板一份 */}
+					<div class="vcm-picker-view__mask" />
+					<div class="vcm-picker-view__indicator" />
 				</div>
 			);
 		};

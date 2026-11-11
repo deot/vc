@@ -30,7 +30,7 @@ const getDirection = (axis: ScrollContainAxis, delta: number): PopupDirection =>
  *
  * - 内容区还能朝手指方向滚动时交给滚动；否则沿允许的方向跟手关闭，或阻止滚动穿透
  * - 多档高度：不在最高档时纵向拖动只移动面板；在最高档时内容能滚就滚，滚到顶后下拉移动面板
- * - stopPropagation 的内层组件（如 PickerCol）的手势不会到这里
+ * - 内层组件已处理的手势（如 PickerCol 的纵向拖动阻止了默认行为）由 useScrollContain 跳过
  * - 桌面端的鼠标拖动同样可以滑动关闭、拖动档位（不涉及滚动）
  * @param props ~
  * @param options ~

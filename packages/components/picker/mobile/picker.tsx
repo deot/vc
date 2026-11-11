@@ -81,6 +81,7 @@ export const Picker = defineComponent({
 					data: source.value,
 					columns: props.columns,
 					cascader: props.cascader,
+					hideEmptyColumns: props.hideEmptyColumns,
 					itemStyle: props.itemStyle,
 					title: props.title,
 					cancelText: props.cancelText,

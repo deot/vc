@@ -354,6 +354,42 @@ describe('PickerView', () => {
 
 		wrapper.unmount();
 	});
+
+	it('遮罩与选中框整个面板只有一份', async () => {
+		const wrapper = mount(() => <PickerView data={regionData} columns={3} />);
+		await flush();
+
+		expect(wrapper.findAll('.vcm-picker-col')).toHaveLength(3);
+		expect(wrapper.findAll('.vcm-picker-view__mask')).toHaveLength(1);
+		expect(wrapper.findAll('.vcm-picker-view__indicator')).toHaveLength(1);
+		wrapper.unmount();
+	});
+
+	it('hideEmptyColumns：级联时不渲染没有数据的列，值也不补该列', async () => {
+		const data = [
+			{ value: 'a', label: 'A', children: [{ value: 'a1', label: 'A1' }] },
+			{ value: 'b', label: 'B', children: [{ value: 'b1', label: 'B1', children: [{ value: 'b11', label: 'B11' }] }] }
+		];
+		const value = ref<any[]>(['a']);
+		const wrapper = mount(() => (
+			<PickerView v-model={value.value} data={data} columns={3} hideEmptyColumns />
+		));
+		await flush();
+		expect(wrapper.findAll('.vcm-picker-col')).toHaveLength(2);
+
+		await wrapper.findAll('.vcm-picker-col')[0].findAll('.vcm-picker-col__item')[1].trigger('click');
+		await flush();
+		expect(value.value).toEqual(['b', 'b1', 'b11']);
+		expect(wrapper.findAll('.vcm-picker-col')).toHaveLength(3);
+
+		// 默认（或非级联时）保留空列
+		const plain = mount(() => <PickerView modelValue={['a']} data={data} columns={3} />);
+		await flush();
+		expect(plain.findAll('.vcm-picker-col')).toHaveLength(3);
+
+		wrapper.unmount();
+		plain.unmount();
+	});
 });
 
 describe('PickerCol', () => {
@@ -394,7 +430,7 @@ describe('PickerCol', () => {
 				onChange={onChange}
 			/>
 		), { attachTo: document.body });
-		vi.spyOn(wrapper.find('.vcm-picker-col__indicator').element, 'getBoundingClientRect')
+		vi.spyOn(wrapper.find('.vcm-picker-col__item').element, 'getBoundingClientRect')
 			.mockReturnValue({ height: 68 } as DOMRect);
 
 		await dragCol(wrapper.element, 0, -68);
@@ -429,29 +465,186 @@ describe('PickerCol', () => {
 		wrapper.unmount();
 	});
 
-	it('uses speed calculation for medium-duration drags', async () => {
-		vi.useFakeTimers();
+	describe('松手：慢拖吸附到最近一项，快滑按惯性', () => {
+		const letters = 'abcdefghijklmnopqrstuvwxyz'.split('').map(value => ({ value, label: value.toUpperCase() }));
+		const swipe = async (wrapper: any, distance: number, ms: number) => {
+			fireMouse(wrapper.element, 'mousedown', 0);
+			fireMouse(wrapper.element, 'mousemove', -distance);
+			vi.advanceTimersByTime(ms);
+			fireMouse(wrapper.element, 'mouseup', -distance);
+			await nextTick();
+		};
+
+		it('慢拖或位移不足 2 行：吸附到最近一项', async () => {
+			vi.useFakeTimers();
+			const onChange = vi.fn();
+			const wrapper = mount(() => <PickerCol value="a" data={letters} onChange={onChange} />, { attachTo: document.body });
+			await nextTick();
+
+			// 行高 44：10px 不够半行，不变
+			await swipe(wrapper, 10, 100);
+			expect(onChange).not.toHaveBeenCalled();
+
+			// 慢拖 70px：最近的是第 2 项
+			await swipe(wrapper, 70, 600);
+			expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 'c' }));
+			expect(wrapper.find('.vcm-picker-col__wrapper').attributes('style')).toContain('200ms ease');
+			wrapper.unmount();
+		});
+
+		it('快滑超过 2 行：按减速度算终点，越界时取末项', async () => {
+			vi.useFakeTimers();
+			const onChange = vi.fn();
+			const wrapper = mount(() => <PickerCol value="a" data={letters} onChange={onChange} />, { attachTo: document.body });
+			await nextTick();
+
+			// 100px / 100ms：速度 2px/ms，终点 = 100 + 2 / 0.003 ≈ 767px，第 17 项
+			await swipe(wrapper, 100, 100);
+			expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 'r' }));
+			expect(wrapper.find('.vcm-picker-col__wrapper').attributes('style')).toContain('400ms cubic-bezier(.17, .89, .45, 1)');
+
+			vi.advanceTimersByTime(400);
+			const short = mount(() => <PickerCol value="a" data={letters.slice(0, 5)} onChange={onChange} />, { attachTo: document.body });
+			await nextTick();
+			await swipe(short, 100, 100);
+			expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 'e' }));
+			expect(short.find('.vcm-picker-col__wrapper').attributes('style')).toContain('cubic-bezier(.25, .46, .45, .94)');
+
+			wrapper.unmount();
+			short.unmount();
+		});
+
+		it('越界阻尼：超出首项的部分只走 1/4', async () => {
+			const wrapper = mount(() => <PickerCol value="a" data={letters} />, { attachTo: document.body });
+			await nextTick();
+
+			fireMouse(wrapper.element, 'mousedown', 0);
+			fireMouse(wrapper.element, 'mousemove', 40);
+			await flush();
+			// 向下拖 40px：位置 -40 → -10
+			expect(wrapper.find('.vcm-picker-col__wrapper').attributes('style')).toContain('* 0 + 10px');
+			fireMouse(wrapper.element, 'mouseup', 40);
+			wrapper.unmount();
+		});
+	});
+
+	// value 跟随 change，与 PickerView 中一致
+	const mountControlled = (values: string[], initial: string) => {
+		const value = ref(initial);
+		const onChange = vi.fn((row: any) => (value.value = row.value));
+		const wrapper = mount(() => (
+			<PickerCol value={value.value} data={values.map(v => ({ value: v }))} onChange={onChange} />
+		), { attachTo: document.body });
+		return { wrapper, onChange, value };
+	};
+
+	it('点击选项：滚到该项；拖动后松开不算点击；点当前项不触发', async () => {
+		const { wrapper, onChange } = mountControlled(['a', 'b', 'c'], 'a');
+		await flush();
+		const items = wrapper.findAll('.vcm-picker-col__item');
+		expect(items[0].classes()).toContain('is-selected');
+
+		await items[0].trigger('click');
+		expect(onChange).not.toHaveBeenCalled();
+
+		await items[2].trigger('click');
+		expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 'c' }));
+		expect(wrapper.findAll('.vcm-picker-col__item')[2].classes()).toContain('is-selected');
+
+		// 拖动：松开时吸附（10px 不足半行，仍为 c），随后的 click 不算点击
+		await sleep(250);
+		onChange.mockClear();
+		fireMouse(wrapper.element, 'mousedown', 0);
+		fireMouse(wrapper.element, 'mousemove', -10);
+		fireMouse(wrapper.element, 'mouseup', -10);
+		await wrapper.findAll('.vcm-picker-col__item')[1].trigger('click');
+		expect(onChange).not.toHaveBeenCalled();
+		wrapper.unmount();
+	});
+
+	it('触摸：纵向拖动阻止默认行为，横向不处理也不阻止', async () => {
 		const onChange = vi.fn();
 		const wrapper = mount(() => (
-			<PickerCol
-				value="a"
-				data={[
-					{ value: 'a', label: 'A' },
-					{ value: 'b', label: 'B' },
-					{ value: 'c', label: 'C' }
-				]}
-				onChange={onChange}
-			/>
+			<PickerCol value="a" data={['a', 'b', 'c'].map(value => ({ value }))} onChange={onChange} />
 		), { attachTo: document.body });
+		await flush();
+		const col = wrapper.element;
+
+		drag.fireTouch(col, 'touchstart', { screenX: 0, screenY: 0 });
+		const horizontal = drag.fireTouch(col, 'touchmove', { screenX: -60, screenY: -10 });
+		drag.fireTouch(col, 'touchend', { screenX: -60, screenY: -10 });
+		await flush();
+		expect(horizontal.defaultPrevented).toBe(false);
+		expect(onChange).not.toHaveBeenCalled();
+
+		const start = drag.fireTouch(col, 'touchstart', { screenX: 0, screenY: 0 });
+		const vertical = drag.fireTouch(col, 'touchmove', { screenX: -10, screenY: -44 });
+		drag.fireTouch(col, 'touchend', { screenX: -10, screenY: -44 });
+		await flush();
+		// touchstart 不阻止：轻点仍会触发 click
+		expect(start.defaultPrevented).toBe(false);
+		expect(vertical.defaultPrevented).toBe(true);
+		expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 'b' }));
+		wrapper.unmount();
+	});
+
+	it('滚动中按住：停在当前画面位置，这次轻点不算点击', async () => {
+		vi.useFakeTimers();
+		const { wrapper, onChange } = mountControlled(['a', 'b', 'c', 'd', 'e'], 'a');
 		await nextTick();
 
+		await wrapper.findAll('.vcm-picker-col__item')[4].trigger('click');
+		expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 'e' }));
+
+		// 动画进行到第 1 项附近：计算样式的位移为 -50px
+		const el = wrapper.find('.vcm-picker-col__wrapper').element as HTMLElement;
+		const getComputedStyle = window.getComputedStyle;
+		const spy = vi.spyOn(window, 'getComputedStyle').mockImplementation((target: Element, pseudo?: string | null) => {
+			const style = getComputedStyle(target, pseudo);
+			if (target !== el) return style;
+			const matrix = 'matrix(1, 0, 0, 1, 0, -50)';
+			return new Proxy(style, { get: (t, k) => (k === 'transform' || k === 'webkitTransform' ? matrix : Reflect.get(t, k)) });
+		});
+
+		onChange.mockClear();
 		fireMouse(wrapper.element, 'mousedown', 0);
-		vi.advanceTimersByTime(100);
-		fireMouse(wrapper.element, 'mouseup', -10);
 		await nextTick();
+		// 停在原处：选中项 e 在 176px，画面在 50px，相对位移 -126px，不再过渡
+		expect(el.getAttribute('style')).toContain('* -4 + 126px');
+		expect(el.getAttribute('style')).toContain('transition: none');
+		fireMouse(wrapper.element, 'mouseup', 0);
+		await nextTick();
+		await wrapper.findAll('.vcm-picker-col__item')[1].trigger('click');
+		// 松开后吸附到最近的第 1 项；轻点不算点击
+		expect(onChange).toHaveBeenCalledTimes(1);
+		expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 'b' }));
 
-		expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ value: 'b' }));
+		spy.mockRestore();
+		wrapper.unmount();
+	});
 
+	it('滚轮：一格一项，触控板的小增量累积后滚一项，到首项 / 末项后不阻止', async () => {
+		const { wrapper, onChange } = mountControlled(['a', 'b', 'c'], 'b');
+		await flush();
+		const wheel = (deltaY: number) => {
+			const e = new WheelEvent('wheel', { deltaY, bubbles: true, cancelable: true });
+			wrapper.element.dispatchEvent(e);
+			return e;
+		};
+
+		expect(wheel(100).defaultPrevented).toBe(true);
+		expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 'c' }));
+		await flush();
+
+		// 已在末项（动画中的目标）：不再阻止，页面照常滚动
+		expect(wheel(100).defaultPrevented).toBe(false);
+
+		onChange.mockClear();
+		wheel(-20);
+		wheel(-20);
+		expect(onChange).not.toHaveBeenCalled();
+		wheel(-20);
+		expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 'b' }));
 		wrapper.unmount();
 	});
 
@@ -470,7 +663,7 @@ describe('PickerCol', () => {
 				wrapper,
 				onChange,
 				col: wrapper.element,
-				// 列的位移：calc(var(--vcm-picker-item-height) * -index - {offset}px)
+				// 列的位移：calc(var(--vcm-picker-item-height) * -index ∓ |offset|px)
 				style: () => wrapper.find('.vcm-picker-col__wrapper').element.getAttribute('style') || ''
 			};
 		};

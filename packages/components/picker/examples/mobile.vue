@@ -1,34 +1,40 @@
 <template>
 	<div class="vcm-picker-example">
-		<Picker
-			v-model="value"
-			:data="groupData"
-			:columns="3"
-			label="所在分组"
-			@change="handleChange"
-		/>
+		<MList>
+			<Picker
+				v-model="value"
+				:data="groupData"
+				:columns="3"
+				label="所在分组"
+				@change="handleChange"
+			/>
+		</MList>
 		<div class="vcm-picker-example__value">
 			当前值：{{ formatValue(value) }}
 		</div>
 
-		<Picker
-			v-model="stringValue"
-			:data="groupData"
-			:columns="3"
-			label="字符串值"
-		/>
+		<MList>
+			<Picker
+				v-model="stringValue"
+				:data="groupData"
+				:columns="3"
+				label="字符串值"
+			/>
+		</MList>
 		<div class="vcm-picker-example__value">
 			当前值：{{ formatValue(stringValue) }}
 		</div>
 
-		<Picker
-			v-model="stringArrayValue"
-			:data="seasonData"
-			:cascader="false"
-			:columns="2"
-			separator="|"
-			label="字符串数组"
-		/>
+		<MList>
+			<Picker
+				v-model="stringArrayValue"
+				:data="seasonData"
+				:cascader="false"
+				:columns="2"
+				separator="|"
+				label="字符串数组"
+			/>
+		</MList>
 		<div class="vcm-picker-example__value">
 			当前值：{{ formatValue(stringArrayValue) }}
 		</div>
@@ -50,14 +56,16 @@
 			当前值：{{ formatValue(asyncValue) }}
 		</div>
 
-		<Picker
-			v-model="seasonValue"
-			:data="seasonData"
-			:cascader="false"
-			:columns="2"
-			extra="选择年份和季节"
-			label="季节"
-		/>
+		<MList>
+			<Picker
+				v-model="seasonValue"
+				:data="seasonData"
+				:cascader="false"
+				:columns="2"
+				extra="选择年份和季节"
+				label="季节"
+			/>
+		</MList>
 		<div class="vcm-picker-example__value">
 			当前值：{{ formatValue(seasonValue) }}
 		</div>
@@ -72,6 +80,50 @@
 		</div>
 		<div class="vcm-picker-example__value">
 			当前值：{{ formatValue(viewValue) }}
+		</div>
+
+		<div class="vcm-picker-example__actions">
+			<Button
+				v-for="count in [3, 5, 7]"
+				:key="count"
+				:type="rows === count ? 'primary' : 'default'"
+				@click="rows = count"
+			>
+				{{ count }} 行
+			</Button>
+		</div>
+		<div class="vcm-picker-example__panel" :style="{ '--vc-picker-rows': rows }">
+			<PickerView
+				v-model="rowsValue"
+				:data="seasonData"
+				:cascader="false"
+				:columns="2"
+			/>
+		</div>
+
+		<MList>
+			<Picker
+				v-model="unevenValue"
+				:data="unevenData"
+				:columns="3"
+				hide-empty-columns
+				label="层级不齐"
+			/>
+		</MList>
+		<div class="vcm-picker-example__value">
+			当前值：{{ formatValue(unevenValue) }}（hideEmptyColumns：没有下一级时不显示空列）
+		</div>
+
+		<div class="vcm-picker-example__panel is-selected-custom">
+			<PickerView
+				v-model="selectedValue"
+				:data="seasonData"
+				:cascader="false"
+				:columns="2"
+			/>
+		</div>
+		<div class="vcm-picker-example__value">
+			当前值：{{ formatValue(selectedValue) }}（选中项用 is-selected 类加粗、主色）
 		</div>
 
 		<div class="vcm-picker-example__actions">
@@ -99,6 +151,7 @@
 <script setup>
 import { ref } from 'vue';
 import { Button } from '../../button';
+import { MList } from '../../list/index.m';
 import { MPicker } from '../index.m';
 import { Picker, PickerPopup, PickerView } from '..';
 
@@ -141,7 +194,36 @@ const seasonData = [
 	]
 ];
 
+const unevenData = [
+	{
+		value: 'a',
+		label: '分组 A',
+		children: [
+			{ value: 'a1', label: '子组 A-1' },
+			{ value: 'a2', label: '子组 A-2' }
+		]
+	},
+	{
+		value: 'b',
+		label: '分组 B',
+		children: [
+			{
+				value: 'b1',
+				label: '子组 B-1',
+				children: [
+					{ value: 'b11', label: '条目 B-1-1' },
+					{ value: 'b12', label: '条目 B-1-2' }
+				]
+			}
+		]
+	}
+];
+
 const value = ref(['110000', '110100', '110101']);
+const rows = ref(5);
+const rowsValue = ref(['2026', 'summer']);
+const unevenValue = ref(['a', 'a1']);
+const selectedValue = ref(['2025', 'autumn']);
 const stringValue = ref('110000,110100,110101');
 const stringArrayValue = ref('2026|summer');
 const asyncValue = ref([]);
@@ -195,6 +277,11 @@ const handlePickerChange = (next, index) => {
 
 	&__panel {
 		background: #fff;
+
+		&.is-selected-custom .vcm-picker-col__item.is-selected {
+			font-weight: 600;
+			color: var(--vc-color-primary);
+		}
 	}
 
 	&__actions {

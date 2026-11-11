@@ -1,68 +1,36 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-picker-col;
-$color-dark: varfix(color-dark, picker);
-$color-neutral-light: varfix(color-neutral-light, picker);
-$background-color-lightest: varfix(background-color-lightest, picker);
-$item-height: varfix(item-height, picker, remfix(68));
+$color-dark-light: varfix(color-dark-light, picker);
+
+// 行高与可见行数：--vc-picker-item-height（默认 88，375 宽下 44px）、--vc-picker-rows（奇数，默认 5）
+// 在 PickerView 或任一祖先上覆盖；列高与上下留白都由这两个变量算出
+@include block(($component-name, vcm-picker-view)) {
+	--vcm-picker-item-height: #{varfix(item-height, picker, remfix(88))};
+	--vcm-picker-rows: var(--vc-picker-rows, 5);
+	--vcm-picker-gap: calc(var(--vcm-picker-item-height) * (var(--vcm-picker-rows) - 1) / 2);
+}
 
 @include block($component-name) {
-	--vcm-picker-item-height: #{$item-height};
-
 	position: relative;
 	width: 100%;
-	height: calc(var(--vcm-picker-item-height) * 7);
+	height: calc(var(--vcm-picker-item-height) * var(--vcm-picker-rows));
+	min-width: 0;
 	overflow: hidden;
-
-	@include element(mask) {
-		position: absolute;
-		top: 0;
-		left: 0;
-		z-index: 3;
-		width: 100%;
-		height: 100%;
-		margin: 0 auto;
-		pointer-events: none;
-		background-image:
-			linear-gradient(
-				180deg,
-				$background-color-lightest,
-				transparent
-			),
-			linear-gradient(
-				0deg,
-				$background-color-lightest,
-				transparent
-			);
-		background-position: top, bottom;
-		background-repeat: no-repeat;
-		background-size: 100% calc(var(--vcm-picker-item-height) * 3);
-	}
-
-	@include element(indicator) {
-		position: absolute;
-		top: calc(var(--vcm-picker-item-height) * 3);
-		left: 0;
-		z-index: 3;
-		width: 100%;
-		height: var(--vcm-picker-item-height);
-		pointer-events: none;
-		border-top: 1px solid $color-neutral-light;
-		border-bottom: 1px solid $color-neutral-light;
-		box-sizing: border-box;
-	}
+	flex: 1;
 
 	@include element(wrapper) {
-		padding: calc(var(--vcm-picker-item-height) * 3) 0;
+		padding: var(--vcm-picker-gap) 0;
+		will-change: transform;
 	}
 
 	@include element(item) {
 		height: var(--vcm-picker-item-height);
-		padding: 0;
+		padding: 0 remfix(8);
 		overflow: hidden;
 		font-size: remfix(32);
 		line-height: var(--vcm-picker-item-height);
-		color: $color-dark;
+		color: $color-dark-light;
 		text-align: center;
 		text-overflow: ellipsis;
 		white-space: nowrap;

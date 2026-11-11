@@ -20,6 +20,11 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
+	// 级联时不渲染没有数据的列（层级不齐的数据），其余列平分宽度
+	hideEmptyColumns: {
+		type: Boolean,
+		default: false
+	},
 	allowDispatch: {
 		type: Boolean,
 		default: true

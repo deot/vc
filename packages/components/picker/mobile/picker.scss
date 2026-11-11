@@ -1,13 +1,8 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-picker;
-$background-color-lightest: varfix(background-color-lightest, picker);
 
+// 触发器：默认内容为 MListItem（铺满宽度）；自定义插槽的内容自行布局
 @include block($component-name) {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	min-height: remfix(88);
 	cursor: pointer;
-	background: $background-color-lightest;
 }

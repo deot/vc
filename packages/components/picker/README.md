@@ -278,6 +278,29 @@ p { margin: 0; overflow-wrap: anywhere; }
 ```
 :::
 
+## 尺寸与手势
+
+尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 滚轮 | 行高 88（44），5 行，高 440（220）；选项字号 32（16），颜色 `color-dark-light` |
+| 遮罩与选中框 | 整个面板一份：上下各 2 行遮罩，由背景色渐变到 70% 的背景色；选中框上下为发丝线 |
+| 标题栏 | 高 108（54），无分隔线；取消 / 确定字号 30（15）、左右内边距 32（16），主色；标题字号 34（17）、600 加粗，与 MPopup 的标题一致 |
+
+行高与行数可通过 `--vc-picker-item-height`、`--vc-picker-rows` 在 PickerView 或其祖先上调整，例如 `style="--vc-picker-rows: 3"`。
+
+手势：
+
+- 点击选项：滚到该项并选中；拖动后松开不算点击。
+- 拖动：纵向跟手，拖过首项或末项时越界部分只走 1/4；横向滑动不处理，也不阻止默认行为，外层的横向滑动照常工作。
+- 松手：快滑（300ms 内位移超过 2 行）按惯性滚动后停在最近一项；否则 200ms 吸附到最近一项。
+- 滚动中按住：停在当前位置，可继续拖动；这次轻点不算点击。
+- 鼠标滚轮：一格滚一项，触控板的小幅滚动累积后滚一项；已在首项或末项时页面照常滚动。
+- 选中值不变时不触发 `change`、`picker-change`。
+
+当前选中项带有 `is-selected` 类（`.vcm-picker-col__item.is-selected`），可用于自定义选中样式。
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-picker-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
@@ -288,8 +311,8 @@ p { margin: 0; overflow-wrap: anywhere; }
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
-| color-dark | 滚动选项和标题文字 | 亮色：`#000000`；暗色：`#FFFFFF` |
-| color-neutral-light | 选中区域及头部分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-dark-light | 滚动选项和标题文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-neutral-light | 选中框上下的发丝线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
 | color-primary | 头部操作文字 | `#456CF6` |
 | background-color-lightest | 选择器、滚动列及渐变遮罩背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 
@@ -297,7 +320,8 @@ p { margin: 0; overflow-wrap: anywhere; }
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
-| item-height | 滚动选项行高 | `34px` |
+| item-height | 滚动选项行高 | `calc(var(--vc-rem) * 88)`（375 宽下 44px） |
+| rows | 可见行数，奇数，最少 3；视图高度、遮罩和选中框位置随之计算 | `5` |
 
 ## API
 
@@ -311,6 +335,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | data | 联动树或独立列数据 | `PickerSource` | - | `[]` |
 | columns | 列数 | `number` | - | `1` |
 | cascader | 是否联动下级列 | `boolean` | - | `true` |
+| hideEmptyColumns | 联动时不渲染没有数据的列（层级不齐的数据），其余列平分宽度 | `boolean` | - | `false` |
 | itemStyle | 每个选项的行内样式；改变高度时应同时设置行高变量 | `Record<string, any>` | - | - |
 | loadData | 数据为空时点击执行；需更新 data | `() => Promise<any> \| any` | - | - |
 | label | 默认触发区域的标题 | `string` | - | - |
@@ -364,6 +389,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | data | 联动树或独立列数据 | `PickerSource` | - | `[]` |
 | columns | 列数，渲染时最少一列 | `number` | - | `1` |
 | cascader | 是否联动下级列 | `boolean` | - | `true` |
+| hideEmptyColumns | 联动时不渲染没有数据的列（层级不齐的数据），其余列平分宽度 | `boolean` | - | `false` |
 | itemStyle | 每个选项的行内样式 | `Record<string, any>` | - | - |
 | renderLabel | 自定义选项渲染，接收含 label、row、index 的对象 | `(options: { label: any; row: any; index: number }) => VNodeChild` | - | - |
 | allowDispatch | 选择变化时通知注入的 FormItem | `boolean` | - | `true` |
@@ -440,4 +466,4 @@ type PickerSource = PickerColumn | PickerColumn[];
 
 默认文案读取 `vc.Picker.extra`、`vc.Picker.cancelText`、`vc.Picker.okText`，会跟随 `VcInstance.configure({ locale })` 更新；显式文本属性优先。
 
-样式支持 `--vc-picker-background-color-lightest`、`--vc-picker-color-dark`、`--vc-picker-color-primary`、`--vc-picker-color-neutral-light`，缺省时使用同名全局主题变量。`--vc-picker-item-height` 控制滚轮行高，默认随 SCSS 缩放的 `34px`；视图高度、遮罩和拖动计算与此行高保持一致。通过 `open` 创建的弹层挂载在 body，组件变量需要设置在可覆盖该弹层的祖先元素上。
+样式支持 `--vc-picker-background-color-lightest`、`--vc-picker-color-dark-light`、`--vc-picker-color-primary`、`--vc-picker-color-neutral-light`，缺省时使用同名全局主题变量。`--vc-picker-item-height` 控制滚轮行高（750 稿 88，随 `--vc-rem` 缩放），`--vc-picker-rows` 控制可见行数（默认 5）；视图高度、遮罩和拖动计算与之保持一致。通过 `open` 创建的弹层挂载在 body，组件变量需要设置在可覆盖该弹层的祖先元素上。

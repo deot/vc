@@ -1,14 +1,54 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-picker-view;
+$color-neutral-light: varfix(color-neutral-light, picker);
 $background-color-lightest: varfix(background-color-lightest, picker);
 
 @include block($component-name) {
+	position: relative;
 	display: flex;
 	align-items: center;
-	flex: 1;
 	flex-direction: row;
 	overflow: hidden;
 	background-color: $background-color-lightest;
 	box-sizing: border-box;
+	user-select: none;
+
+	// 遮罩：整个面板一份，选中框上下各 (rows - 1) / 2 行；由背景色渐变到 70% 的背景色，未选中的项淡化但仍可读
+	@include element(mask) {
+		position: absolute;
+		inset: 0;
+		z-index: 3;
+		pointer-events: none;
+		background-image:
+			linear-gradient(to bottom, $background-color-lightest, transparent),
+			linear-gradient(to top, $background-color-lightest, transparent);
+		background-position: top, bottom;
+		background-repeat: no-repeat;
+		background-size: 100% var(--vcm-picker-gap);
+
+		@supports (color: color-mix(in srgb, black, white)) {
+			& {
+				background-image:
+					linear-gradient(to bottom, $background-color-lightest 0%, color-mix(in srgb, #{$background-color-lightest} 70%, transparent) 65%),
+					linear-gradient(to top, $background-color-lightest 0%, color-mix(in srgb, #{$background-color-lightest} 70%, transparent) 65%);
+			}
+		}
+	}
+
+	// 选中框：整个面板一条，上下为发丝线
+	@include element(indicator) {
+		@include common-border-1px(top, $color-neutral-light);
+		@include common-border-1px(bottom, $color-neutral-light);
+
+		& {
+			position: absolute;
+			top: var(--vcm-picker-gap);
+			left: 0;
+			z-index: 3;
+			width: 100%;
+			height: var(--vcm-picker-item-height);
+			pointer-events: none;
+		}
+	}
 }

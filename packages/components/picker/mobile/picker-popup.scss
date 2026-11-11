@@ -1,35 +1,38 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-picker-popup;
-$color-dark: varfix(color-dark, picker);
-$color-neutral-light: varfix(color-neutral-light, picker);
+$color-dark-light: varfix(color-dark-light, picker);
 $color-primary: varfix(color-primary, picker);
 $background-color-lightest: varfix(background-color-lightest, picker);
 
+// 标题栏高 108（375 宽下 54px），不画分隔线；取消 / 确定字号 30、左右内边距 32，主色；标题与 MPopup 的标题一致（34、600）
 @include block($component-name) {
 	@include element(header) {
 		position: relative;
 		display: flex;
+		height: remfix(108);
 		align-items: center;
 		background-color: $background-color-lightest;
-		border-bottom: 1px solid $color-neutral-light;
 		box-sizing: border-box;
 	}
 
 	@include element(item) {
-		height: remfix(88);
-		padding: 0 remfix(30);
-		font-size: remfix(34);
-		line-height: remfix(88);
+		padding: 0 remfix(32);
+		font-size: remfix(30);
+		line-height: remfix(108);
 		color: $color-primary;
+		-webkit-tap-highlight-color: transparent;
 
 		@include when(title) {
-			flex: 1;
+			min-width: 0;
 			overflow: hidden;
-			color: $color-dark;
+			font-size: remfix(34);
+			font-weight: 600;
+			color: $color-dark-light;
 			text-align: center;
 			text-overflow: ellipsis;
 			white-space: nowrap;
+			flex: 1;
 		}
 	}
 }
