@@ -1,11 +1,7 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { FilePreviewData } from './types';
-
-const FILE_PREVIEW_TYPES = ['mix', 'group'] as const;
-const FILE_PREVIEW_SIZES = ['mini', 'small', 'medium', 'large'] as const;
-
-type FilePreviewType = typeof FILE_PREVIEW_TYPES[number];
-type FilePreviewSize = typeof FILE_PREVIEW_SIZES[number];
+import { FILE_ITEM_LAYOUTS, FILE_ITEM_SIZES } from './item';
+import type { FileItemLayout, FileItemSize } from './item';
 
 export const props = {
 	/**
@@ -16,21 +12,17 @@ export const props = {
 		default: () => []
 	},
 	/**
-	 * 展示方式（与数据项的文件类型type无关）：mix按data顺序混编，group按image/video/audio/file分组
+	 * 布局（与数据项的文件类型 type 无关）：list 整行，grid 方格，group 图片、视频为方格在前，音频、文件为整行在后；
+	 * 不传时按数据自动选择：只有图片、视频为 grid，只有音频、文件为 list，两者都有为 group
 	 */
 	type: {
-		type: String as PropType<FilePreviewType>,
-		default: 'mix',
-		validator: (v: string) => FILE_PREVIEW_TYPES.includes(v as any)
+		type: String as PropType<FileItemLayout>,
+		validator: (v: string) => FILE_ITEM_LAYOUTS.includes(v as FileItemLayout)
 	},
 	size: {
-		type: String as PropType<FilePreviewSize>,
+		type: String as PropType<FileItemSize>,
 		default: 'medium',
-		validator: (v: string) => FILE_PREVIEW_SIZES.includes(v as any)
-	},
-	vertical: {
-		type: Boolean,
-		default: false
+		validator: (v: string) => FILE_ITEM_SIZES.includes(v as FileItemSize)
 	},
 	/**
 	 * 点击是否预览；使用default插槽时由插槽调用preview

@@ -69,6 +69,11 @@ export interface FilePreviewOpenOptions {
 	 * 不传时用全局 imageOptions.placeholder，默认 true
 	 */
 	placeholder?: boolean;
+	/**
+	 * 移动端查看器（MFilePreview.open、MUploadPicker 使用）：只保留关闭按钮，计数在底部
+	 * @internal
+	 */
+	mobile?: boolean;
 	onClose?: () => void;
 }
 

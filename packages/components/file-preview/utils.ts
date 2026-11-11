@@ -162,6 +162,11 @@ export const getFileExtension = (v: string) => {
 	return match ? match[1].toUpperCase() : '';
 };
 
+// 文件项的扩展名：先看名称，没有再看地址（大写）
+export const getItemExtension = (row: { name?: string; source?: string }) => {
+	return getFileExtension(row.name || '') || getFileExtension(row.source || '');
+};
+
 // 越界、非整数时回退到第一项
 export const resolveCurrent = (data: unknown[], current = 0) => (data[current] ? current : 0);
 

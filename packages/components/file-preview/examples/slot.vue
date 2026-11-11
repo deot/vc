@@ -1,7 +1,7 @@
 <template>
 	<div style="padding: 20px; background: var(--vc-background-color-lightest);">
 		<p>default 插槽：{ row, index, preview }；使用插槽后外层不再自动预览，由 preview() 触发（同样会先经过全局 enhancer）</p>
-		<FilePreview :data="dataSource" vertical>
+		<FilePreview :data="dataSource" type="list">
 			<template #default="{ row, index, preview }">
 				<div class="row">
 					<span class="index">{{ index + 1 }}</span>

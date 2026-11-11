@@ -9,7 +9,7 @@ const isPromise = (value: unknown): value is Promise<unknown> => (
 
 // 先交给全局 enhancer。未接管时，图片、视频、音频、文件都进同一个查看器
 export const open = (options: FilePreviewOpenOptions) => {
-	const { instance = null, placeholder, onClose } = options;
+	const { instance = null, placeholder, mobile, onClose } = options;
 	const data = normalize(options.data);
 	const current = resolveCurrent(data, options.current);
 	// 调用时就取：enhancer 返回 Promise 时，之后可能又有别的点击
@@ -22,6 +22,7 @@ export const open = (options: FilePreviewOpenOptions) => {
 		instance,
 		triggerElement,
 		placeholder,
+		mobile,
 		onClose
 	});
 

@@ -1,0 +1,78 @@
+@use '../../style/helper' as *;
+
+$color-contrast-light: varfix(color-contrast-light, file-preview);
+
+// 项的移动端尺寸与方格排布见 ../item/mobile.scss（标记类 vcm-file-items，与 MUploadPicker 共用）
+
+// 查看器：只保留右上角的关闭按钮（切换、缩放由手势完成），蒙层 0.9，计数在底部通栏
+@include block(vcm-file-viewer) {
+	@include localvars(file-viewer, (
+		bg-opacity: 0.9
+	));
+
+	// 关闭按钮：375 宽下与桌面端同为 28px，避开顶部安全区
+	.vc-file-viewer__close {
+		top: calc(#{remfix(24)} + env(safe-area-inset-top));
+		right: remfix(24);
+		width: remfix(56);
+		height: remfix(56);
+		font-size: remfix(24);
+	}
+
+	// 写在 .vcm-file-viewer 下，优先于桌面端左上角的位置
+	.vc-file-viewer__counter {
+		inset: auto 0 0;
+		height: auto;
+		padding: remfix(24) remfix(40);
+		padding-bottom: calc(#{remfix(24)} + env(safe-area-inset-bottom));
+		font-size: remfix(28);
+		line-height: remfix(40);
+		background: linear-gradient(to bottom, transparent, rgb(0 0 0 / 30%));
+	}
+
+	// 加载图标：白色弧线在半透明白色底环上
+	.vc-file-viewer__loading path {
+		stroke: rgb(255 255 255 / 30%);
+
+		& + path {
+			stroke: $color-contrast-light;
+		}
+	}
+
+	// 文件页：没有按钮要避开，四周留白收小；文件名与打开、下载按钮按移动端尺寸
+	// 顶部让出关闭按钮（24 + 56 + 24），底部让出计数条（上下内边距 24 + 行高 40），都加上安全区
+	.vc-file-slide {
+		inset: calc(#{remfix(104)} + env(safe-area-inset-top)) remfix(32) calc(#{remfix(88)} + env(safe-area-inset-bottom));
+
+		&:not(.has-frame) {
+			padding: remfix(32);
+		}
+
+		// 内嵌预览（iframe）时，标题栏的内边距
+		&.has-frame .vc-file-slide__meta {
+			padding: remfix(24);
+		}
+	}
+
+	.vc-file-slide__meta {
+		gap: remfix(32);
+	}
+
+	.vc-file-slide__name {
+		font-size: remfix(32);
+		line-height: remfix(44);
+	}
+
+	.vc-file-slide__actions {
+		gap: remfix(16);
+	}
+
+	.vc-file-slide__open,
+	.vc-file-slide__download,
+	.vc-file-slide__copy {
+		padding: 0 remfix(32);
+		font-size: remfix(28);
+		line-height: remfix(64);
+		border-radius: remfix(8);
+	}
+}

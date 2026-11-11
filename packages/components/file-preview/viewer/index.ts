@@ -12,6 +12,7 @@ export type ViewerOpenOptions = {
 	instance?: ComponentInternalInstance | null;
 	triggerElement?: Element | VirtualElement | null;
 	placeholder?: boolean;
+	mobile?: boolean;
 	onClose?: () => void;
 };
 
@@ -21,7 +22,7 @@ const portal = new Portal(FileViewer, {
 });
 
 export const openViewer = (options: ViewerOpenOptions) => {
-	const { data, current, instance = null, triggerElement = null, placeholder, onClose } = options;
+	const { data, current, instance = null, triggerElement = null, placeholder, mobile, onClose } = options;
 	if (!data.length) return;
 	return portal.popup({
 		data,
@@ -29,6 +30,7 @@ export const openViewer = (options: ViewerOpenOptions) => {
 		instance,
 		triggerElement,
 		placeholder,
+		mobile,
 		onClose
 	});
 };

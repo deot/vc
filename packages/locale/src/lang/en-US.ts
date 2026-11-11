@@ -212,7 +212,8 @@ export const enUS: Language = {
 			rotateRight: 'Rotate right',
 			loadError: 'The image cannot be loaded',
 			open: 'Open in new window',
-			download: 'Download'
+			download: 'Download',
+			copyLink: 'Copy link'
 		},
 		Image: {
 			loadError: 'Failed to load image'

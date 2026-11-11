@@ -26,6 +26,10 @@ export const props = {
 		type: Boolean,
 		default: undefined
 	},
+	/**
+	 * 移动端：根节点加标记类 vcm-file-viewer，只保留关闭按钮（切换、缩放由手势完成），计数在底部
+	 */
+	mobile: Boolean,
 	onClose: Function as PropType<() => void>
 };
 export type Props = ExtractPropTypes<typeof props>;

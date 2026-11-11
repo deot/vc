@@ -1,5 +1,5 @@
 import type { FilePreviewItem } from '../../types';
-import { getFileExtension, allowedUrl, parseDataUrl } from '../../utils';
+import { getItemExtension, allowedUrl, parseDataUrl } from '../../utils';
 
 const OFFICE_EXTENSIONS = new Set(['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']);
 
@@ -36,7 +36,7 @@ export const createObjectUrl = (source: string) => {
 // 只在 file 类型下区分 pdf / office，不新增第四种文件类型；data: 地址的扩展名由媒体类型推导
 export const getFileViewer = (row: Pick<FilePreviewItem, 'type' | 'name' | 'source'>) => {
 	if (row.type !== 'file') return;
-	const ext = (getFileExtension(row.name) || getFileExtension(row.source)).toLowerCase();
+	const ext = getItemExtension(row).toLowerCase();
 	if (ext === 'pdf') return 'pdf';
 	if (OFFICE_EXTENSIONS.has(ext)) return 'office';
 };

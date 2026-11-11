@@ -1,0 +1,22 @@
+@use '../../style/helper' as *;
+@use './sizes' as *;
+
+// MFilePreview、MUploadPicker 根节点的标记类：各档尺寸按桌面端 px ×2 换成 750 稿（375 宽下与桌面端同 px），随 --vc-rem 缩放
+// 方格以边长为最小值均分铺满一行，右侧不留空；屏幕变宽时每行多放几个
+@include block(vcm-file-items) {
+	@each $size, $values in $tile-sizes {
+		@each $key, $value in $values {
+			--vc-file-item-tile-#{$size}-#{$key}: #{remfix($value * 2)};
+		}
+	}
+
+	@each $size, $values in $row-sizes {
+		@each $key, $value in $values {
+			--vc-file-item-row-#{$size}-#{$key}: #{remfix($value * 2)};
+		}
+	}
+
+	.vc-file-grid {
+		grid-template-columns: repeat(auto-fill, minmax(var(--vc-file-tile-size), 1fr));
+	}
+}

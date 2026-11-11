@@ -1,8 +1,7 @@
 <template>
 	<div style="padding: 20px; background: var(--vc-background-color-lightest);">
-		<p>type="group"：按 image → video → audio → file 分组；预览顺序仍按 data 原始顺序</p>
+		<p>type="group"：图片、视频为方格在前，音频、文件为整行在后；预览顺序仍按 data 原始顺序</p>
 		<div class="toolbar">
-			<label><input v-model="vertical" type="checkbox"> vertical</label>
 			<button v-for="item in sizes" :key="item" :class="{ 'is-active': size === item }" @click="size = item">
 				{{ item }}
 			</button>
@@ -10,7 +9,6 @@
 		<FilePreview
 			:data="dataSource"
 			:size="size"
-			:vertical="vertical"
 			type="group"
 		/>
 
@@ -34,7 +32,6 @@ import { FilePreview } from '..';
 
 const sizes = ['mini', 'small', 'medium', 'large'];
 const size = ref('medium');
-const vertical = ref(false);
 const placeholder = ref(true);
 
 const dataSource = ref([

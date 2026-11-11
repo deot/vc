@@ -143,15 +143,89 @@ afterEach(() => {
 });
 
 describe('FilePreview', () => {
-	it('exports the component, ImagePreview and mobile aliases', () => {
+	it('exports the component, ImagePreview and the mobile components', () => {
 		expect(typeof FilePreview).toBe('object');
 		expect(typeof FilePreview.open).toBe('function');
 		expect(typeof ImagePreview.open).toBe('function');
-		expect(MFilePreview).toBe(FilePreview);
-		expect(MImagePreview).toBe(ImagePreview);
+		expect(typeof MFilePreview.open).toBe('function');
+		expect(typeof MImagePreview.open).toBe('function');
 
 		const wrapper = mount(() => (<FilePreview />));
 		expect(wrapper.classes()).toContain('vc-file-preview');
+		expect(wrapper.classes()).not.toContain('vcm-file-preview');
+	});
+
+	it('MFilePreview: 与 FilePreview 结构相同，根节点另有标记类 vcm-file-preview，点开为移动端查看器', async () => {
+		const wrapper = mount(() => (<MFilePreview data={['/a.png', '/doc.pdf']} type="group" size="small" />), { attachTo: document.body });
+		expect(wrapper.classes()).toEqual(expect.arrayContaining([
+			'vc-file-preview', 'vcm-file-preview', 'is-group', 'is-tile-small', 'is-row-small'
+		]));
+
+		await wrapper.find('.vc-file-preview__item.is-image').trigger('click');
+		await nextTick();
+		const viewer = document.querySelector('.vc-file-viewer')!;
+		expect(viewer.classList.contains('vcm-file-viewer')).toBe(true);
+		// 只保留关闭按钮，切换、旋转、缩放由手势完成
+		expect([...viewer.querySelectorAll('.vc-file-viewer__tool')].map(el => el.classList.contains('vc-file-viewer__close'))).toEqual([true]);
+		expect(viewer.querySelector('.vc-file-viewer__counter')?.textContent).toBe('1 / 2');
+		Portal.clear(true);
+		wrapper.unmount();
+	});
+
+	it('移动端文件页：http(s) 地址只有「复制链接」，复制后原地显示复制成功；blob:、data: 地址仍为下载', async () => {
+		const execCommand = document.execCommand;
+		document.execCommand = vi.fn(() => true);
+		vi.useFakeTimers();
+		try {
+			MFilePreview.open({ data: [{ source: 'https://cdn.test/doc.pdf', name: 'doc.pdf' }] });
+			await nextTick();
+			expect(document.querySelector('.vc-file-slide__open')).toBeNull();
+			expect(document.querySelector('.vc-file-slide__download')).toBeNull();
+			const copy = document.querySelector('.vc-file-slide__copy') as HTMLButtonElement;
+			const label = copy.textContent;
+			copy.click();
+			await nextTick();
+			expect(document.execCommand).toHaveBeenCalledWith('copy');
+			expect(copy.textContent).not.toBe(label);
+			vi.advanceTimersByTime(2000);
+			await nextTick();
+			expect(copy.textContent).toBe(label);
+			Portal.clear(true);
+
+			MFilePreview.open({ data: [{ source: 'data:text/plain,hello', name: 'a.txt', type: 'file' }] });
+			await nextTick();
+			expect(document.querySelector('.vc-file-slide__copy')).toBeNull();
+			expect(document.querySelector('.vc-file-slide__open')).toBeNull();
+			expect(document.querySelector('.vc-file-slide__download')).not.toBeNull();
+			Portal.clear(true);
+
+			// 桌面端不变
+			FilePreview.open({ data: [{ source: 'https://cdn.test/doc.pdf', name: 'doc.pdf' }] });
+			await nextTick();
+			expect(document.querySelector('.vc-file-slide__copy')).toBeNull();
+			expect(document.querySelector('.vc-file-slide__open')).not.toBeNull();
+			expect(document.querySelector('.vc-file-slide__download')).not.toBeNull();
+			Portal.clear(true);
+		} finally {
+			vi.useRealTimers();
+			document.execCommand = execCommand;
+		}
+	});
+
+	it('MFilePreview.open / MImagePreview.open 打开移动端查看器，FilePreview.open 仍为桌面端', async () => {
+		for (const [open, mobile] of [
+			[() => MFilePreview.open({ data: ['/a.png'] }), true],
+			[() => MImagePreview.open({ data: ['/a.png'] }), true],
+			[() => FilePreview.open({ data: ['/a.png'] }), false]
+		] as const) {
+			open();
+			await nextTick();
+			const viewer = document.querySelector('.vc-file-viewer')!;
+			expect(viewer.classList.contains('vcm-file-viewer')).toBe(mobile);
+			expect(!!viewer.querySelector('.vc-file-viewer__close')).toBe(true);
+			expect(!!viewer.querySelector('.vc-file-viewer__rotate-left')).toBe(!mobile);
+			Portal.clear(true);
+		}
 	});
 
 	it('recognizes normal and query-string URLs', () => {
@@ -310,9 +384,10 @@ describe('FilePreview', () => {
 		expect(await FilePreview.open({ data: [] })).toBeUndefined();
 	});
 
-	it('renders mix items in data order with thumbnails for images', async () => {
+	it('renders list rows in data order with thumbnails for images and videos', () => {
 		const wrapper = mount(FilePreview, {
 			props: {
+				type: 'list',
 				data: [
 					{ source: photo, thumbnail: banner },
 					report,
@@ -323,61 +398,54 @@ describe('FilePreview', () => {
 			}
 		});
 		const root = wrapper.find('.vc-file-preview');
-		expect(root.classes()).toEqual(expect.arrayContaining(['is-mix', 'is-medium']));
-		expect(root.classes()).not.toContain('is-vertical');
-		expect(wrapper.findAll('.vc-file-preview__group')).toHaveLength(0);
-		expect(wrapper.findAll('.vc-file-preview__square')).toHaveLength(0);
+		expect(root.classes()).toEqual(expect.arrayContaining(['vc-file-items', 'is-list', 'is-row-medium', 'is-tile-medium']));
+		expect(wrapper.findAll('.vc-file-tile')).toHaveLength(0);
 
-		const items = wrapper.findAll('.vc-file-preview__item');
+		const items = wrapper.findAll('.vc-file-list > .vc-file-preview__item');
 		expect(items.map(i => kindOf(i.element))).toEqual(['image', 'file', 'video', 'audio', 'video']);
 		expect(items.map(i => i.attributes('title'))).toEqual(['photo.jpg', 'report.pdf', 'movie.mp4', 'sound.mp3', 'clip.mov']);
-		expect(items.every(i => i.classes('is-previewable'))).toBe(true);
-		expect(wrapper.findAll('.vc-file-preview__card')).toHaveLength(5);
-		expect(wrapper.findAll('.vc-file-preview__extension')).toHaveLength(0);
-		expect(wrapper.findAll('.vc-file-preview__dot')).toHaveLength(0);
+		expect(items.every(i => i.classes('vc-file-row') && i.classes('is-clickable'))).toBe(true);
+		// 图片、视频行首为缩略图（没有 thumbnail 的视频取首帧），文件为扩展名，音频为图标
+		expect(wrapper.findAll('.vc-file-row__media')).toHaveLength(3);
+		expect(wrapper.findAll('.vc-file-row__ext').map(i => i.text())).toEqual(['PDF']);
+		expect(wrapper.findAll('.vc-file-row__icon')).toHaveLength(1);
+		expect(wrapper.find('.vc-file-row__media video').attributes())
+			.toEqual(expect.objectContaining({ src: 'https://cdn.test/clip.mov', preload: 'metadata' }));
 
 		const images = wrapper.findAllComponents({ name: 'vc-image' });
 		expect(images.map(i => [i.props('src'), i.props('thumbnail'), i.props('previewable')])).toEqual([
 			[photo, banner, false],
 			[banner, undefined, false]
 		]);
-
-		await wrapper.setProps({ size: 'large', vertical: true, data: report });
-		expect(root.classes()).toEqual(expect.arrayContaining(['is-large', 'is-vertical']));
-		expect(wrapper.findAll('.vc-file-preview__item')).toHaveLength(1);
 	});
 
-	it('renders group items by file type with squares, dots and extensions', () => {
+	it('renders grid tiles for every type: media fill the tile, audio and files show a sign and the name', () => {
 		const wrapper = mount(FilePreview, {
-			props: {
-				type: 'group',
-				size: 'mini',
-				data: [
-					report,
-					photo,
-					sound,
-					movie,
-					{ source: readme, type: 'file' },
-					banner,
-					{ source: 'https://cdn.test/cover.mp4', thumbnail: banner }
-				]
-			}
+			props: { type: 'grid', size: 'small', data: [photo, report, movie, sound] }
 		});
-		expect(wrapper.find('.vc-file-preview').classes()).toEqual(expect.arrayContaining(['is-group', 'is-mini']));
+		expect(wrapper.find('.vc-file-preview').classes()).toEqual(expect.arrayContaining(['is-grid', 'is-tile-small']));
+		const tiles = wrapper.findAll('.vc-file-grid > .vc-file-tile');
+		expect(tiles.map(i => kindOf(i.element))).toEqual(['image', 'file', 'video', 'audio']);
+		expect(wrapper.findAll('.vc-file-tile__media')).toHaveLength(2);
+		expect(wrapper.findAll('.vc-file-tile__play')).toHaveLength(1);
+		expect(wrapper.findAll('.vc-file-tile__ext').map(i => i.text())).toEqual(['PDF']);
+		expect(wrapper.findAll('.vc-file-tile__name').map(i => i.text())).toEqual(['report.pdf', 'sound.mp3']);
+	});
 
-		const groups = wrapper.findAll('.vc-file-preview__group');
-		expect(groups.map(g => kindOf(g.element))).toEqual(['image', 'video', 'audio', 'file']);
-		expect(groups.map(g => g.findAll('.vc-file-preview__item').length)).toEqual([2, 2, 1, 2]);
+	it('groups media tiles before rows and picks the layout from the data when type is not set', () => {
+		const data = [report, photo, sound, movie, { source: readme, type: 'file' as const }, banner];
+		const group = mount(FilePreview, { props: { type: 'group', size: 'mini', data } });
+		expect(group.find('.vc-file-preview').classes()).toEqual(expect.arrayContaining(['is-group', 'is-tile-mini', 'is-row-mini']));
+		expect(group.findAll('.vc-file-grid > .vc-file-tile').map(i => i.attributes('title'))).toEqual(['photo.jpg', 'movie.mp4', 'banner.png']);
+		expect(group.findAll('.vc-file-list > .vc-file-row').map(i => i.attributes('title'))).toEqual(['report.pdf', 'sound.mp3', 'readme']);
+		// 方格在前、整行在后
+		expect(group.find('.vc-file-preview').element.firstElementChild!.classList.contains('vc-file-grid')).toBe(true);
 
-		expect(groups[0].findAll('.vc-file-preview__square')).toHaveLength(2);
-		expect(groups[0].findAll('.vc-file-preview__play')).toHaveLength(0);
-		expect(groups[1].findAll('.vc-file-preview__square')).toHaveLength(2);
-		expect(groups[1].findAll('.vc-file-preview__play')).toHaveLength(2);
-		expect(groups[1].find('video').attributes()).toEqual(expect.objectContaining({ src: movie, preload: 'metadata' }));
-		expect(groups[1].findComponent({ name: 'vc-image' }).props('src')).toBe(banner);
-		expect(groups[2].findAll('.vc-file-preview__dot')).toHaveLength(1);
-		expect(groups[3].findAll('.vc-file-preview__extension').map(i => i.text())).toEqual(['PDF']);
-		expect(groups[3].findAll('.vc-file-preview__name').map(i => i.text())).toEqual(['report.pdf', 'readme']);
+		const layoutOf = (input: any[]) => mount(FilePreview, { props: { data: input } }).find('.vc-file-preview').classes();
+		expect(layoutOf([photo, movie])).toContain('is-grid');
+		expect(layoutOf([report, sound])).toContain('is-list');
+		expect(layoutOf(data)).toContain('is-group');
+		expect(layoutOf([])).toContain('is-grid');
 	});
 
 	it('keeps the original data index when previewing grouped items', async () => {
@@ -408,23 +476,23 @@ describe('FilePreview', () => {
 		});
 		await wrapper.findAll('.vc-file-preview__item')[0].trigger('click');
 		const { data } = (enhancer.mock.calls[0] as any)[0];
-		// 方格用方格，卡片用这一项
-		const squares = wrapper.findAll('.vc-file-preview__square').map(i => i.element);
+		// 方格用方格里的媒体，整行的音频、文件用这一项
+		const media = wrapper.findAll('.vc-file-tile__media').map(i => i.element);
 		const itemOf = (name: string) => wrapper.find(`.vc-file-preview__item[title="${name}"]`).element;
-		expect(data.map((row: any) => row.element)).toEqual([squares[0], itemOf('report.pdf'), squares[1], itemOf('sound.mp3')]);
+		expect(data.map((row: any) => row.element)).toEqual([media[0], itemOf('report.pdf'), media[1], itemOf('sound.mp3')]);
 
-		// 带缩略图的卡片用缩略图
-		const mix = mount(FilePreview, { props: { data: [{ source: photo, thumbnail: banner }, report] } });
-		await mix.findAll('.vc-file-preview__item')[1].trigger('click');
-		const thumbnail = mix.find('.vc-file-preview__thumbnail').element;
-		const item = mix.findAll('.vc-file-preview__item')[1].element;
+		// 整行里有缩略图时用缩略图
+		const list = mount(FilePreview, { props: { type: 'list', data: [{ source: photo, thumbnail: banner }, report] } });
+		await list.findAll('.vc-file-preview__item')[1].trigger('click');
+		const thumbnail = list.find('.vc-file-row__media').element;
+		const item = list.findAll('.vc-file-preview__item')[1].element;
 		expect((enhancer.mock.calls[1] as any)[0].data.map((row: any) => row.element)).toEqual([thumbnail, item]);
 	});
 
 	it('passes the component instance to the enhancer', async () => {
 		const enhancer = vi.fn(() => true);
 		VcInstance.options.FilePreview!.enhancer = enhancer;
-		const wrapper = mount(FilePreview, { props: { data: [report, photo] } });
+		const wrapper = mount(FilePreview, { props: { type: 'list', data: [report, photo] } });
 
 		await wrapper.findAll('.vc-file-preview__item')[1].trigger('click');
 		expect(enhancer).toHaveBeenCalledWith(expect.objectContaining({
@@ -437,7 +505,7 @@ describe('FilePreview', () => {
 		const wrapper = mount(FilePreview, { props: { data: [photo], previewable: false } });
 		const item = wrapper.find('.vc-file-preview__item');
 
-		expect(item.classes()).not.toContain('is-previewable');
+		expect(item.classes()).not.toContain('is-clickable');
 		await item.trigger('click');
 		expect(document.querySelector('.vc-file-viewer')).toBeNull();
 	});
@@ -448,7 +516,7 @@ describe('FilePreview', () => {
 		const scopes: any[] = [];
 		const data = ref<any[]>([report, photo]);
 		const wrapper = mount(() => (
-			<FilePreview data={data.value} previewable={false}>
+			<FilePreview type="list" data={data.value} previewable={false}>
 				{{
 					default: (scope: any) => {
 						scopes.push(scope);
@@ -459,8 +527,8 @@ describe('FilePreview', () => {
 		));
 
 		expect(wrapper.findAll('.custom').map(i => i.text())).toEqual(['report.pdf', 'photo.jpg']);
-		expect(wrapper.findAll('.vc-file-preview__card')).toHaveLength(0);
-		expect(wrapper.findAll('.vc-file-preview__item.is-previewable')).toHaveLength(0);
+		expect(wrapper.findAll('.vc-file-row')).toHaveLength(0);
+		expect(wrapper.findAll('.vc-file-preview__item.is-clickable')).toHaveLength(0);
 		expect(scopes[1]).toEqual(expect.objectContaining({ index: 1, row: expect.objectContaining({ type: 'image', source: photo }) }));
 
 		await wrapper.findAll('.vc-file-preview__item')[1].trigger('click');
@@ -479,7 +547,8 @@ describe('FilePreview', () => {
 
 	it('validates type and size', () => {
 		const { type, size } = (FilePreview as any).props;
-		expect(['mix', 'group'].map(type.validator)).toEqual([true, true]);
+		expect(['list', 'grid', 'group'].map(type.validator)).toEqual([true, true, true]);
+		expect(['mix'].map(type.validator)).toEqual([false]);
 		expect(type.validator('image')).toBe(false);
 		expect(['mini', 'small', 'medium', 'large'].map(size.validator)).toEqual([true, true, true, true]);
 		expect(size.validator('default')).toBe(false);
@@ -777,12 +846,12 @@ describe('FilePreview', () => {
 
 	it('starts from the clicked item when the click is outside its thumbnail', async () => {
 		const wrapper = mount(FilePreview, {
-			props: { data: [{ source: movie, type: 'video', thumbnail: banner, name: 'flower.mp4' }] },
+			props: { type: 'list', data: [{ source: movie, type: 'video', thumbnail: banner, name: 'flower.mp4' }] },
 			attachTo: document.body
 		});
 		const item = wrapper.find('.vc-file-preview__item').element as HTMLElement;
-		const thumb = wrapper.find('.vc-file-preview__thumbnail').element as HTMLElement;
-		const name = wrapper.find('.vc-file-preview__name').element as HTMLElement;
+		const thumb = wrapper.find('.vc-file-row__media').element as HTMLElement;
+		const name = wrapper.find('.vc-file-row__name').element as HTMLElement;
 		item.getBoundingClientRect = () => rectOf(0, 0, 200, 32);
 		thumb.getBoundingClientRect = () => rectOf(4, 4, 22, 22);
 		name.getBoundingClientRect = () => rectOf(40, 8, 80, 16);

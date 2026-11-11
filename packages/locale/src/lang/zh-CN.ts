@@ -212,7 +212,8 @@ export const zhCN: Language = {
 			rotateRight: '向右旋转',
 			loadError: '网络异常 图片加载失败',
 			open: '新窗口打开',
-			download: '下载'
+			download: '下载',
+			copyLink: '复制链接'
 		},
 		Image: {
 			loadError: '加载失败'

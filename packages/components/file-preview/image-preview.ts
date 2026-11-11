@@ -22,6 +22,11 @@ export type ImagePreviewOpenOptions = {
 	 * 同 FilePreview.open 的 placeholder
 	 */
 	placeholder?: boolean;
+	/**
+	 * 移动端查看器（MImagePreview.open 使用）：只保留关闭按钮，计数在底部
+	 * @internal
+	 */
+	mobile?: boolean;
 	onClose?: () => void;
 };
 
@@ -34,9 +39,16 @@ const toImage = (input: ImageInput): FilePreviewItemInput[] => {
 
 // 不经过 FilePreview.enhancer，避免和图片组件互相引用
 export const ImagePreview = {
-	open: ({ data, current, triggerElement, placeholder, onClose }: ImagePreviewOpenOptions = {}) => {
+	open: ({ data, current, triggerElement, placeholder, mobile, onClose }: ImagePreviewOpenOptions = {}) => {
 		const list = normalize((data || []).flatMap(toImage));
 		const index = resolveCurrent(list, current);
-		return openViewer({ data: list, current: index, triggerElement: resolveTrigger(triggerElement, list[index]?.element), placeholder, onClose });
+		return openViewer({
+			data: list,
+			current: index,
+			triggerElement: resolveTrigger(triggerElement, list[index]?.element),
+			placeholder,
+			mobile,
+			onClose
+		});
 	}
 };

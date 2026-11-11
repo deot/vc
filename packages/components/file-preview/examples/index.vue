@@ -1,8 +1,12 @@
 <template>
 	<div style="padding: 20px; background: var(--vc-background-color-lightest);">
-		<p>type="mix"（默认）：按 data 顺序混编，图片显示缩略图，其余只显示名称</p>
+		<p>type：不传时按数据自动选择（只有图片、视频为 grid，只有音频、文件为 list，两者都有为 group）</p>
 		<div class="toolbar">
-			<label><input v-model="vertical" type="checkbox"> vertical</label>
+			<button v-for="item in types" :key="item" :class="{ 'is-active': type === item }" @click="type = item">
+				{{ item || 'auto' }}
+			</button>
+		</div>
+		<div class="toolbar">
 			<label><input v-model="previewable" type="checkbox"> previewable</label>
 			<button v-for="item in sizes" :key="item" :class="{ 'is-active': size === item }" @click="size = item">
 				{{ item }}
@@ -10,8 +14,8 @@
 		</div>
 		<FilePreview
 			:data="dataSource"
+			:type="type || undefined"
 			:size="size"
-			:vertical="vertical"
 			:previewable="previewable"
 		/>
 
@@ -25,7 +29,8 @@ import { FilePreview } from '..';
 
 const sizes = ['mini', 'small', 'medium', 'large'];
 const size = ref('medium');
-const vertical = ref(false);
+const types = ['', 'list', 'grid', 'group'];
+const type = ref('');
 const previewable = ref(true);
 
 const dataSource = ref([

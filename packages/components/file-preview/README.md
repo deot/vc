@@ -9,7 +9,9 @@
 
 ### 基础用法
 
-`data` 可以是逗号分隔的字符串、地址数组或对象数组。默认 `type="mix"`：按 `data` 顺序混编成紧凑的卡片（按内容宽度，超出最大宽度时省略名称），图片和提供 `thumbnail` 的视频显示缩略图，其余只显示名称。点击后打开查看器，包含 `data` 中的全部项并定位到点击的那一项：图片可缩放、拖动，视频、音频使用原生播放控件，PDF 与 Office 文件内嵌预览。“新窗口打开”使用当前预览地址（Office 为在线预览地址）；“下载”使用文件本身的地址。没有内嵌预览时，文件名与按钮分两行。
+`data` 可以是逗号分隔的字符串、地址数组或对象数组。点击后打开查看器，包含 `data` 中的全部项并定位到点击的那一项：图片可缩放、拖动，视频、音频使用原生播放控件，PDF 与 Office 文件内嵌预览。“新窗口打开”使用当前预览地址（Office 为在线预览地址）；“下载”使用文件本身的地址。没有内嵌预览时，文件名与按钮分两行。
+
+文件项与 `UploadPicker` 共用两种样式：整行（缩略图或文件标记、文件名）与方格（图片、视频铺满，音频、文件为标记加文件名）。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
@@ -32,20 +34,34 @@ const data = [
 ```
 :::
 
-### 分组展示
+### 布局
 
-`type="group"` 按图片、视频、音频、文件的顺序分组：图片、视频使用方格，音频卡片带播放标记，文件卡片带扩展名。分组只影响展示，预览时的顺序与索引仍按 `data` 原始顺序。
+`type` 有三种取值：
+
+- `list`：全部为整行，竖向排列；图片、视频行首为缩略图，音频为图标，文件带扩展名角标。行的最大宽度为 `--vc-file-preview-row-max-width`（默认 480px）。
+- `grid`：全部为方格，按边长自动换行；音频、文件的方格为标记加两行文件名。
+- `group`：图片、视频的方格在前，音频、文件的整行在后。
+
+不传 `type` 时按数据自动选择：只有图片、视频为 `grid`，只有音频、文件为 `list`，两者都有为 `group`。布局只影响展示，预览时的顺序与索引仍按 `data` 原始顺序。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
 ```vue
 <template>
-	<FilePreview :data="data" type="group" />
+	<div class="demo">
+		<RadioGroup v-model="type" type="card">
+			<Radio v-for="item in types" :key="item" :value="item" :label="item || 'auto'" />
+		</RadioGroup>
+		<FilePreview :data="data" :type="type || undefined" />
+	</div>
 </template>
 
 <script setup>
-import { FilePreview } from '@deot/vc';
+import { ref } from 'vue';
+import { FilePreview, RadioGroup, Radio } from '@deot/vc';
 
+const types = ['', 'list', 'grid', 'group'];
+const type = ref('');
 const data = [
 	{ source: 'https://dummyimage.com/1800x600/555/fff.png?text=1', name: '1.png' },
 	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '示例文件-2026.pdf' },
@@ -54,12 +70,25 @@ const data = [
 	'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3'
 ];
 </script>
+
+<style scoped>
+.demo { display: grid; gap: 16px; }
+</style>
 ```
 :::
 
-### 尺寸、方向与缩略图
+### 尺寸与缩略图
 
-`size` 控制方格、卡片与文字的尺寸，默认 `medium`（方格 96px，卡片高 32px、最大宽 200px）。`vertical` 使每组内纵向排列。图片和视频的 `thumbnail` 优先用于展示，预览使用 `source`；分组展示的视频没有 `thumbnail` 时使用原生 `<video preload="metadata">` 展示，能否显示首帧取决于浏览器及媒体资源。`previewable` 为 `false` 时禁用默认文件项的点击预览。
+`size` 控制方格与整行的尺寸，默认 `medium`：
+
+| size | 方格边长 | 行高 | 行内字号 | 行首缩略图 |
+| --- | --- | --- | --- | --- |
+| mini | 48px | 28px | 12px | 20px |
+| small | 64px | 36px | 13px | 24px |
+| medium | 96px | 46px | 14px | 32px |
+| large | 128px | 56px | 14px | 40px |
+
+图片和视频的 `thumbnail` 优先用于展示，预览使用 `source`；视频没有 `thumbnail` 时使用原生 `<video preload="metadata">` 展示，能否显示首帧取决于浏览器及媒体资源。`previewable` 为 `false` 时禁用默认文件项的点击预览。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
@@ -70,13 +99,11 @@ const data = [
 			<RadioGroup v-model="size" type="card">
 				<Radio v-for="item in sizes" :key="item" :value="item" :label="item" />
 			</RadioGroup>
-			<Checkbox v-model="isVertical">vertical</Checkbox>
 			<Checkbox v-model="isPreviewable">previewable</Checkbox>
 		</div>
 		<FilePreview
 			:data="data"
 			:size="size"
-			:vertical="isVertical"
 			:previewable="isPreviewable"
 			type="group"
 		/>
@@ -89,7 +116,6 @@ import { FilePreview, RadioGroup, Radio, Checkbox } from '@deot/vc';
 
 const sizes = ['mini', 'small', 'medium', 'large'];
 const size = ref('medium');
-const isVertical = ref(false);
 const isPreviewable = ref(true);
 const data = [
 	{
@@ -101,7 +127,8 @@ const data = [
 		source: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
 		thumbnail: 'https://dummyimage.com/96x96/1db88c/fff.png?text=cover'
 	},
-	'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4'
+	'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '示例文件-2026.pdf' }
 ];
 </script>
 
@@ -125,7 +152,7 @@ const data = [
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
 ```vue
 <template>
-	<FilePreview :data="data" vertical>
+	<FilePreview :data="data" type="list">
 		<template #default="{ row, preview }">
 			<div class="row">
 				<span class="name">{{ row.name }}</span>
@@ -273,43 +300,85 @@ const handleClick = () => {
 ```
 :::
 
+### 移动端
+
+`MFilePreview` 的属性、插槽、结构与 `FilePreview` 相同，根节点另有标记类 `.vcm-file-preview`，结构样式与主题参数共用；各档尺寸按 750 稿随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+
+| size | 方格边长 | 行高 | 行内字号 | 行首缩略图 |
+| --- | --- | --- | --- | --- |
+| mini | 96（48） | 56（28） | 24（12） | 40（20） |
+| small | 128（64） | 72（36） | 26（13） | 48（24） |
+| medium | 192（96） | 92（46） | 28（14） | 64（32） |
+| large | 256（128） | 112（56） | 28（14） | 80（40） |
+
+方格以 `size` 为最小边长，均分铺满一行（`repeat(auto-fill, minmax(边长, 1fr))`）：屏幕变宽时每行多放几个，而不是把每格放大。
+
+从 `MFilePreview` 点开，或调用 `MFilePreview.open`、`MImagePreview.open`（参数同 `FilePreview.open`、`ImagePreview.open`）时，打开移动端查看器：
+
+- 只保留右上角的关闭按钮（56，即 375 宽下 28px，避开顶部安全区）；切换、旋转、缩放按钮不显示，由手势完成：双击或捏合缩放，左右滑动切换；点按空白处、向上或向下拖动、捏小同样关闭。
+- 计数在底部通栏、左对齐，字号 28（14），底部渐变加深并留出安全区；蒙层为 90% 不透明的黑色。
+- 文件页左右留白 32（16），顶部让出关闭按钮、底部让出计数的高度；文件名 32（16）。
+- 「新窗口打开」「下载」统一为一个「复制链接」（高 64，即 32px），复制文件本身的地址，复制后按钮原地显示「复制成功」两秒：手机浏览器对跨域地址多不认 `download`，微信等内嵌浏览器常拦截新窗口。`blob:`、`data:` 地址复制出去无法打开，这类仍只提供「下载」。
+
+```vue
+<template>
+	<MFilePreview :data="files" />
+</template>
+
+<script setup>
+import { MFilePreview } from '@deot/vc';
+
+const files = ['https://dummyimage.com/600x400/555/fff.png?text=1', 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'];
+</script>
+```
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-file-preview-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
 
-尺寸变量由 size 修饰类写在根节点，单实例调整时应作用于对应 FilePreview 根节点。查看器的蒙层固定为 80% 不透明的黑色（与 PhotoSwipe 一致），控件与文字使用 color-contrast-light，不随亮暗主题反转。查看器挂载在 Portal 中，变量需作用于实际浮层或其祖先。
+文件项（方格、整行）与 `UploadPicker` 共用：当前尺寸由根节点上的 `is-tile-<size>`、`is-row-<size>` 写成 `--vc-file-tile-<键>`、`--vc-file-row-<键>`，单实例调整时在 FilePreview 根节点的 `style` 上覆盖这些变量；各档的默认值来自 `--vc-file-item-tile-<size>-<键>`、`--vc-file-item-row-<size>-<键>`（如 `--vc-file-item-tile-small-size`），`MFilePreview`、`MUploadPicker` 在根节点的标记类 `.vcm-file-items` 上覆盖这些变量。可点击（可预览）的项带 `is-clickable`：手形光标，整行在有悬停的设备上加深底色。查看器的蒙层为黑色，不透明度取 `--vc-file-viewer-bg-opacity`（默认 0.8；移动端查看器为 0.9），控件与文字使用 color-contrast-light，不随亮暗主题反转。查看器挂载在 Portal 中，变量需作用于实际浮层或其祖先。
 
-⚠ color-mix：缩略图播放圆形底色由 color-contrast-dark 40% 与透明色混合，增强声明仅在 `@supports` 内生效；不支持时使用 Sass 编译的 `rgba(0, 0, 0, .4)`。降级值不会随变量覆盖变化。
+⚠ color-mix：根节点上的 `--vc-file-primary-10`、`--vc-file-primary-20` 为 color-primary-light 10%、20% 与透明色混合（整行底色与悬停、UploadPicker 的上传按钮与进度轨道），缩略图播放圆形底色为 color-contrast-dark 40%；增强声明仅在 `@supports` 内生效，不支持时使用 Sass 编译的固定值，不会随变量覆盖变化。方格、行首缩略图的浅灰底为 `--vc-file-surface`。
 
 ### 全局
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
-| color-contrast-dark | 缩略图播放圆形底色的派生基色 | `#000000`（亮暗主题相同） |
-| color-contrast-light | 查看器控件与文字、缩略图播放标记 | `#FFFFFF`（亮暗主题相同） |
-| color-dark-light | 卡片文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
-| color-primary | 可预览卡片悬停文字、类型标记及扩展名 | `#456CF6` |
-| color-primary-lighter | 类型标记及扩展名背景 | `rgba(45, 140, 240, 0.2)` |
-| background-color | 卡片及方格背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
-| background-color-primary-light | 可预览卡片悬停背景 | 亮色：`#E6F7FF`；暗色：`#273E5E` |
-| box-shadow | 方格悬停阴影 | 亮色：`0 0 8px 0 rgba(0, 0, 0, 0.1)`；暗色：`0 0 8px 0 rgba(255, 255, 255, 0.05)` |
+| color-contrast-dark | 方格播放圆形底色的派生基色 | `#000000`（亮暗主题相同） |
+| color-contrast-light | 查看器控件与文字、方格播放标记 | `#FFFFFF`（亮暗主题相同） |
+| color-dark-light | 整行文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-dark-lighter | 方格文件名，音频、文件图标 | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-primary | 扩展名角标文字 | `#456CF6` |
+| color-primary-light | 整行底色（10%，悬停 20%） | `#4A96FF` |
+| color-primary-lighter | 扩展名角标底色 | `rgba(45, 140, 240, 0.2)` |
+| background-color | 方格及行首缩略图底色（亮色） | 亮色：`#F5F6FA`；暗色：`#252B3A`（此处不使用） |
+| background-color-light | 方格底色（暗色；暗色下 background-color 与页面底色相同） | 亮色：`#F7F8FA`（此处不使用）；暗色：`#2D3444` |
 
 ### 局部
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
-| card-height | 卡片高度 | mini：`24px`；small：`28px`；medium：`32px`；large：`40px` |
-| card-padding | 卡片左右内边距 | mini：`6px`；small：`8px`；medium：`8px`；large：`10px` |
-| card-radius | 卡片圆角 | mini：`4px`；small：`4px`；medium：`6px`；large：`6px` |
-| card-width | 卡片最大宽度 | mini：`160px`；small：`180px`；medium：`200px`；large：`240px` |
-| dot-size | 类型标记尺寸 | mini：`14px`；small：`16px`；medium：`18px`；large：`22px` |
-| gap | 文件项目间距 | mini：`6px`；small：`8px`；medium：`8px`；large：`12px` |
-| inner-gap | 卡片内部间距 | mini：`4px`；small：`6px`；medium：`6px`；large：`8px` |
-| play-size | 播放标记尺寸 | mini：`16px`；small：`22px`；medium：`28px`；large：`36px` |
-| square-radius | 方格圆角 | mini：`4px`；small：`6px`；medium：`8px`；large：`8px` |
-| square-size | 方格尺寸 | mini：`48px`；small：`64px`；medium：`96px`；large：`128px` |
-| text-size | 卡片字号 | mini：`12px`；small：`12px`；medium：`13px`；large：`14px` |
-| thumbnail-size | 缩略图尺寸 | mini：`16px`；small：`20px`；medium：`22px`；large：`28px` |
+| row-max-width | 整行列表的最大宽度 | `480px` |
+
+各档尺寸（桌面端，px）：
+
+| 键 | 说明 | mini | small | medium | large |
+| --- | --- | --- | --- | --- | --- |
+| tile-size | 方格边长 | 48 | 64 | 96 | 128 |
+| tile-radius | 方格圆角 | 4 | 6 | 8 | 8 |
+| tile-icon | 方格内音频、文件图标 | 16 | 20 | 28 | 36 |
+| tile-ext | 方格内扩展名字号 | 10 | 10 | 12 | 13 |
+| tile-name | 方格内文件名字号 | 10 | 11 | 12 | 13 |
+| tile-play | 方格播放标记 | 16 | 22 | 28 | 36 |
+| tile-gap | 方格间距 | 6 | 8 | 8 | 12 |
+| row-height | 行高 | 28 | 36 | 46 | 56 |
+| row-padding | 行左右内边距 | 8 | 10 | 12 | 14 |
+| row-font | 行内字号 | 12 | 13 | 14 | 14 |
+| row-media | 行首缩略图 | 20 | 24 | 32 | 40 |
+| row-icon | 行首图标 | 14 | 14 | 16 | 18 |
+| row-ext | 行首扩展名字号 | 10 | 10 | 11 | 12 |
+| row-radius | 行圆角 | 4 | 6 | 8 | 8 |
+| row-gap | 行间距与行内元素间距 | 6 | 8 | 8 | 10 |
 
 ## API
 
@@ -318,9 +387,8 @@ const handleClick = () => {
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | data | 文件数据；字符串按逗号分隔，数组项为地址或数据项对象，没有 `source` 的项会被忽略 | `string \| (string \| object)[]` | - | `[]` |
-| type | 展示方式（与数据项的文件类型无关）：`mix` 按顺序混编，`group` 按文件类型分组 | `'mix' \| 'group'` | `mix` / `group` | `mix` |
+| type | 布局（与数据项的文件类型无关）：`list` 全部整行，`grid` 全部方格，`group` 图片、视频方格在前、音频、文件整行在后；不传时按数据自动选择 | `'list' \| 'grid' \| 'group'` | `list` / `grid` / `group` | - |
 | size | 尺寸 | `'mini' \| 'small' \| 'medium' \| 'large'` | `mini` / `small` / `medium` / `large` | `medium` |
-| vertical | 纵向排列；`group` 时作用于每组 | `boolean` | - | `false` |
 | previewable | 点击是否预览；使用 `default` 插槽时由插槽调用 `preview` | `boolean` | - | `true` |
 | placeholder | 打开图片时是否用点中的缩略图垫底、立即放大，大图解码完再换上；为 `false` 时先淡入蒙层、显示加载中，大图就位后再放大。不传时用全局 `imageOptions.placeholder` | `boolean` | - | `true` |
 
@@ -381,20 +449,15 @@ const handleClick = () => {
   - `data` 地址按媒体类型的主类型识别：`image/*`、`video/*`、`audio/*` 分别为 image、video、audio，其余为 file；扩展名由媒体类型推导（如 `image/jpeg` 为 `JPG`、`text/plain` 为 `TXT`）。
 - 内置预览：全部类型进入同一个查看器，交互见上文“查看器交互”。需要接入其他在线预览服务时，可用 `renderSlide` 替换文件页，或用 `enhancer` 整体接管。
 - 属性 `type` 表示展示方式，数据项的 `type` 表示文件类型，两者含义不同。
-- 颜色使用主题变量，可通过以下变量单独覆盖：
-  - `--vc-file-preview-background-color`：卡片、方格底色
-  - `--vc-file-preview-color-dark-light`：名称
-  - `--vc-file-preview-color-primary`：悬停文字、音频标记、扩展名
-  - `--vc-file-preview-color-primary-lighter`：音频标记与扩展名底色
-  - `--vc-file-preview-background-color-primary-light`：可预览卡片悬停底色
-  - `--vc-file-preview-color-contrast-dark`、`--vc-file-preview-color-contrast-light`：播放底色的派生基色、播放标记及查看器控件
-  - `--vc-file-preview-box-shadow`：方格悬停阴影
-- 查看器挂载在页面外层，覆盖变量需设置在其能继承的祖先（如 `:root`）上。
-- 尺寸默认按 Sass `$scale` 缩放；由根节点上按 `size` 设置的变量控制，可在 `style` 中覆盖：
-  - 方格：`--vc-file-preview-square-size`、`--vc-file-preview-square-radius`、`--vc-file-preview-play-size`
-  - 卡片：`--vc-file-preview-card-width`（最大宽度）、`--vc-file-preview-card-height`、`--vc-file-preview-card-padding`、`--vc-file-preview-card-radius`、`--vc-file-preview-thumbnail-size`、`--vc-file-preview-dot-size`、`--vc-file-preview-text-size`、`--vc-file-preview-inner-gap`
-  - 间距：`--vc-file-preview-gap`
-- `MFilePreview`、`MImagePreview` 分别是 `FilePreview`、`ImagePreview` 的别名。
+- 颜色、尺寸变量见[主题与局部覆盖](#主题与局部覆盖)。
+- `MFilePreview` 与 `FilePreview` 结构相同、尺寸按 750 稿；`MFilePreview.open`、`MImagePreview.open` 打开移动端查看器，见[移动端](#移动端)。
+
+### 从 mix / group 迁移
+
+- `type` 改为 `list`、`grid`、`group`，默认不传、按数据自动选择；原来的 `mix`（紧凑卡片）去掉，原来的 `group`（按图片、视频、音频、文件四组）改为媒体方格在前、其余整行在后。
+- `vertical` 去掉：`list` 本身竖排，`grid` 自动换行。
+- 可预览项的类名 `is-previewable` 改为 `is-clickable`（与 UploadPicker 共用），整行只在可点击时有悬停色。
+- 卡片、方格的局部变量（`card-*`、`square-*`、`thumbnail-size`、`dot-size`、`text-size`、`inner-gap`、`gap`、`play-size`）改为 `--vc-file-tile-*`、`--vc-file-row-*`，见[局部](#局部)；`box-shadow`、`background-color-primary-light` 不再使用。
 
 ### 从 PhotoSwipe 版本迁移
 

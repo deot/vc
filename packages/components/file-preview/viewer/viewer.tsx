@@ -1,7 +1,8 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent } from 'vue';
+import { computed, defineComponent, Fragment } from 'vue';
 import type { VNode } from 'vue';
+import { toRem } from '@deot/vc-shared';
 import { Icon } from '../../icon';
 import { Spin } from '../../spin';
 import { useLocale } from '../../locale';
@@ -57,7 +58,7 @@ export const FileViewer = defineComponent({
 			}
 			if (row.type === 'video') return <VideoSlide row={row} active={slide.isActive} />;
 			if (row.type === 'audio') return <AudioSlide row={row} active={slide.isActive} />;
-			return <FileSlide row={row} active={slide.isActive} />;
+			return <FileSlide row={row} active={slide.isActive} mobile={props.mobile} />;
 		};
 
 		// 全局 renderSlide 返回 VNode 时替换该页，返回 false 或空值时用内置页
@@ -87,11 +88,82 @@ export const FileViewer = defineComponent({
 			);
 		};
 
+		// 切换、旋转、缩放按钮；移动端不渲染，由手势完成（双击与捏合缩放、左右滑切换）
+		const renderTools = () => (
+			<Fragment>
+				{
+					viewer.hasPrev.value && (
+						<button
+							type="button"
+							class="vc-file-viewer__tool vc-file-viewer__prev"
+							aria-label={t('vc.FilePreview.prev')}
+							onClick={() => viewer.go(-1)}
+						>
+							<Icon type="left" />
+						</button>
+					)
+				}
+				{
+					viewer.hasNext.value && (
+						<button
+							type="button"
+							class="vc-file-viewer__tool vc-file-viewer__next"
+							aria-label={t('vc.FilePreview.next')}
+							onClick={() => viewer.go(1)}
+						>
+							<Icon type="right" />
+						</button>
+					)
+				}
+				{
+					isImage.value && (
+						<div class="vc-file-viewer__cluster">
+							<button
+								type="button"
+								class="vc-file-viewer__tool vc-file-viewer__rotate-left"
+								aria-label={t('vc.FilePreview.rotateLeft')}
+								onClick={() => activeImage.value?.rotateBy(-90)}
+							>
+								<Icon type="rotate-left" />
+							</button>
+							<button
+								type="button"
+								class="vc-file-viewer__tool vc-file-viewer__rotate-right"
+								aria-label={t('vc.FilePreview.rotateRight')}
+								onClick={() => activeImage.value?.rotateBy(90)}
+							>
+								<Icon type="rotate-right" />
+							</button>
+							<span class="vc-file-viewer__split" aria-hidden="true" />
+							<button
+								type="button"
+								class="vc-file-viewer__tool vc-file-viewer__zoom-out"
+								aria-label={t('vc.FilePreview.zoomOut')}
+								disabled={!activeImage.value?.canZoomOut}
+								onClick={() => activeImage.value?.zoomOut()}
+							>
+								<span class="vc-file-viewer__lens" />
+							</button>
+							<button
+								type="button"
+								class="vc-file-viewer__tool vc-file-viewer__zoom-in"
+								aria-label={t('vc.FilePreview.zoomIn')}
+								disabled={!activeImage.value?.canZoomIn}
+								onClick={() => activeImage.value?.zoomIn()}
+							>
+								<span class="vc-file-viewer__lens is-plus" />
+							</button>
+						</div>
+					)
+				}
+			</Fragment>
+		);
+
 		return () => {
 			return (
 				<div ref={viewer.root} class={viewer.classes.value} role="dialog" aria-modal="true" tabindex={-1}>
 					<div class="vc-file-viewer__bg" style={viewer.bgStyle.value} />
-					{ viewer.isLoading.value && <Spin class="vc-file-viewer__loading" size={32} /> }
+					{ viewer.isLoading.value && <Spin class="vc-file-viewer__loading" size={props.mobile ? toRem(56) : 32} /> }
 					<div
 						ref={viewer.stage}
 						class={['vc-file-viewer__stage', { 'is-sliding': viewer.isSliding.value }]}
@@ -113,71 +185,7 @@ export const FileViewer = defineComponent({
 					</div>
 					<div class="vc-file-viewer__bar">
 						<div class="vc-file-viewer__counter" aria-live="polite">{`${current.value + 1} / ${count.value}`}</div>
-						{
-							viewer.hasPrev.value && (
-								<button
-									type="button"
-									class="vc-file-viewer__tool vc-file-viewer__prev"
-									aria-label={t('vc.FilePreview.prev')}
-									onClick={() => viewer.go(-1)}
-								>
-									<Icon type="left" />
-								</button>
-							)
-						}
-						{
-							viewer.hasNext.value && (
-								<button
-									type="button"
-									class="vc-file-viewer__tool vc-file-viewer__next"
-									aria-label={t('vc.FilePreview.next')}
-									onClick={() => viewer.go(1)}
-								>
-									<Icon type="right" />
-								</button>
-							)
-						}
-						{
-							isImage.value && (
-								<div class="vc-file-viewer__cluster">
-									<button
-										type="button"
-										class="vc-file-viewer__tool vc-file-viewer__rotate-left"
-										aria-label={t('vc.FilePreview.rotateLeft')}
-										onClick={() => activeImage.value?.rotateBy(-90)}
-									>
-										<Icon type="rotate-left" />
-									</button>
-									<button
-										type="button"
-										class="vc-file-viewer__tool vc-file-viewer__rotate-right"
-										aria-label={t('vc.FilePreview.rotateRight')}
-										onClick={() => activeImage.value?.rotateBy(90)}
-									>
-										<Icon type="rotate-right" />
-									</button>
-									<span class="vc-file-viewer__split" aria-hidden="true" />
-									<button
-										type="button"
-										class="vc-file-viewer__tool vc-file-viewer__zoom-out"
-										aria-label={t('vc.FilePreview.zoomOut')}
-										disabled={!activeImage.value?.canZoomOut}
-										onClick={() => activeImage.value?.zoomOut()}
-									>
-										<span class="vc-file-viewer__lens" />
-									</button>
-									<button
-										type="button"
-										class="vc-file-viewer__tool vc-file-viewer__zoom-in"
-										aria-label={t('vc.FilePreview.zoomIn')}
-										disabled={!activeImage.value?.canZoomIn}
-										onClick={() => activeImage.value?.zoomIn()}
-									>
-										<span class="vc-file-viewer__lens is-plus" />
-									</button>
-								</div>
-							)
-						}
+						{ !props.mobile && renderTools() }
 						<button
 							type="button"
 							class="vc-file-viewer__tool vc-file-viewer__close"

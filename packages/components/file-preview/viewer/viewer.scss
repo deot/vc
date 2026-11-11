@@ -4,9 +4,9 @@
 $color-contrast-light: varfix(color-contrast-light, file-preview);
 $component-name: vc-file-viewer;
 
-// PhotoSwipe 默认 --pswp-bg 与 bgOpacity
+// PhotoSwipe 默认 --pswp-bg 与 bgOpacity；MFilePreview 的查看器在 .vcm-file-viewer 上覆盖为 0.9
 $bg-color: #000;
-$bg-opacity: 0.8;
+$bg-opacity: localfix(file-viewer, bg-opacity, 0.8);
 $bg-dimmed: calc(var(--vc-file-viewer-dim, 1) * #{$bg-opacity});
 
 // 淡入淡出改整层透明度；从元素放大、缩回时整层不动，蒙层从接近透明过渡到 0.8，和画面同一段过渡

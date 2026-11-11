@@ -64,13 +64,17 @@ $component-name: vc-file-slide;
 		flex: none;
 	}
 
-	@include element((open, download)) {
+	// copy 为移动端的「复制链接」（button），与两个链接同样式
+	@include element((open, download, copy)) {
 		padding: unitfix(6) unitfix(10);
+		font-family: inherit;
 		font-size: unitfix(12);
 		line-height: unitfix(16);
 		color: $color-contrast-light;
 		text-decoration: none;
+		cursor: pointer;
 		background: rgb(255 255 255 / 16%);
+		border: 0;
 		border-radius: unitfix(4);
 		flex: none;
 	}

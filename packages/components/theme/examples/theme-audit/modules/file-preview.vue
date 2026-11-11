@@ -1,6 +1,6 @@
 <template>
 	<div class="audit-stack">
-		<div v-for="type in ['mix', 'group']" :key="type" class="audit-sample" :data-state="`${type} · 图片 / 视频 / 音频 / 文件 · hover`">
+		<div v-for="type in ['list', 'grid', 'group']" :key="type" class="audit-sample" :data-state="`${type} · 图片 / 视频 / 音频 / 文件 · hover`">
 			<div class="audit-sample__label">{{ type }} · 图片 / 视频 / 音频 / 文件 · hover</div>
 			<FilePreview :type="type" :previewable="false" :data="data" />
 		</div>

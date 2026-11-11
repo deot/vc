@@ -132,6 +132,7 @@ export const useViewer = (props: Props, onFulfilled: () => void) => {
 	const classes = computed(() => [
 		'vc-file-viewer',
 		{
+			'vcm-file-viewer': props.mobile,
 			'is-zoom': isZoom.value,
 			'is-open': isOpen.value,
 			'is-loading': isLoading.value,

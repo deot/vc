@@ -1,0 +1,15 @@
+// 文件项的尺寸（桌面端 px；移动端按 ×2 换成 750 稿，375 宽下与桌面端同 px）
+// 方格 tile：size 边长、radius、icon 图标、ext 扩展名字号、name 文件名字号、play 播放标记、gap 方格间距
+// 整行 row：height 行高、padding 左右内边距、font 字号、media 缩略图、icon 图标、ext 扩展名字号、radius、gap 行间距与元素间距
+$tile-sizes: (
+	mini: (size: 48, radius: 4, icon: 16, ext: 10, name: 10, play: 16, gap: 6),
+	small: (size: 64, radius: 6, icon: 20, ext: 10, name: 11, play: 22, gap: 8),
+	medium: (size: 96, radius: 8, icon: 28, ext: 12, name: 12, play: 28, gap: 8),
+	large: (size: 128, radius: 8, icon: 36, ext: 13, name: 13, play: 36, gap: 12)
+);
+$row-sizes: (
+	mini: (height: 28, padding: 8, font: 12, media: 20, icon: 14, ext: 10, radius: 4, gap: 6),
+	small: (height: 36, padding: 10, font: 13, media: 24, icon: 14, ext: 10, radius: 6, gap: 8),
+	medium: (height: 46, padding: 12, font: 14, media: 32, icon: 16, ext: 11, radius: 8, gap: 8),
+	large: (height: 56, padding: 14, font: 14, media: 40, icon: 18, ext: 12, radius: 8, gap: 10)
+);

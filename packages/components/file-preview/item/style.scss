@@ -1,0 +1,249 @@
+@use 'sass:color';
+@use '../../style/helper' as *;
+@use './sizes' as *;
+
+$color-contrast-light: varfix(color-contrast-light, file-preview);
+$color-contrast-dark-frozen: themefrozen(color-contrast-dark);
+$color-dark-light: varfix(color-dark-light, file-preview);
+$color-dark-lighter: varfix(color-dark-lighter, file-preview);
+$color-primary: varfix(color-primary, file-preview);
+$color-primary-light: varfix(color-primary-light, file-preview);
+$color-primary-lighter: varfix(color-primary-lighter, file-preview);
+$color-primary-light-frozen: themefrozen(color-primary-light);
+$background-color: varfix(background-color, file-preview);
+$background-color-light: varfix(background-color-light, file-preview);
+
+// 尺寸：外层（FilePreview、UploadPicker 的根节点，带 vc-file-items）按 is-tile-<size>、is-row-<size> 写入当前尺寸
+// 各档的值写成局部变量 --vc-file-item-<tile|row>-<size>-<键>，移动端在标记类上覆盖
+@each $size, $values in $tile-sizes {
+	.vc-file-items.is-tile-#{$size} {
+		@each $key, $value in $values {
+			--vc-file-tile-#{$key}: #{localfix(file-item, tile-#{$size}-#{$key}, $value * 1px)};
+		}
+	}
+}
+
+@each $size, $values in $row-sizes {
+	.vc-file-items.is-row-#{$size} {
+		@each $key, $value in $values {
+			--vc-file-row-#{$key}: #{localfix(file-item, row-#{$size}-#{$key}, $value * 1px)};
+		}
+	}
+}
+
+// 根节点上的共用颜色：方格、行首缩略图、添加方格的浅灰底；主色浅色 10%、20%（整行底色、上传按钮、进度轨道）
+// 浅灰底在暗色主题下用 background-color-light：那里 background-color 与页面底色相同
+.vc-file-items {
+	--vc-file-surface: #{$background-color};
+	--vc-file-primary-10: #{color.change($color-primary-light-frozen, $alpha: 0.1)};
+	--vc-file-primary-20: #{color.change($color-primary-light-frozen, $alpha: 0.2)};
+
+	@supports (color: color-mix(in srgb, black, white)) {
+		& {
+			--vc-file-primary-10: color-mix(in srgb, #{$color-primary-light} 10%, transparent);
+			--vc-file-primary-20: color-mix(in srgb, #{$color-primary-light} 20%, transparent);
+		}
+	}
+}
+
+@mixin file-item-theme($light) {
+	.vc-file-items {
+		--vc-file-surface: #{if(sass($light): $background-color; else: $background-color-light)};
+	}
+}
+
+@media (prefers-color-scheme: light) {
+	:root {
+		@include file-item-theme(true);
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		@include file-item-theme(false);
+	}
+}
+
+[data-vc-theme="light"] {
+	@include file-item-theme(true);
+}
+
+[data-vc-theme="dark"] {
+	@include file-item-theme(false);
+}
+
+// 方格：按边长自动排列，每行放几个由容器宽度决定
+.vc-file-grid {
+	display: grid;
+	gap: var(--vc-file-tile-gap);
+	grid-template-columns: repeat(auto-fill, var(--vc-file-tile-size));
+}
+
+// 整行：竖向排列，最大宽度可配置
+.vc-file-list {
+	display: flex;
+	max-width: var(--vc-file-preview-row-max-width, 480px);
+	flex-direction: column;
+	gap: var(--vc-file-row-gap);
+}
+
+// group：方格在前、整行在后
+.vc-file-items.is-group {
+	display: flex;
+	flex-direction: column;
+	gap: var(--vc-file-tile-gap);
+}
+
+// 可点击的项（传了点击）：手形光标；整行在有悬停的设备上加深底色
+.vc-file-tile.is-clickable,
+.vc-file-row.is-clickable {
+	cursor: pointer;
+}
+
+// 两种项共有的部分：缩略图铺满、音频与文件的图标、扩展名角标
+.vc-file-tile__image,
+.vc-file-row__image {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.vc-file-tile__icon,
+.vc-file-row__icon {
+	color: $color-dark-lighter;
+	flex-shrink: 0;
+}
+
+.vc-file-tile__ext,
+.vc-file-row__ext {
+	padding: 0 0.4em;
+	font-weight: 500;
+	line-height: 1.6;
+	color: $color-primary;
+	background-color: $color-primary-lighter;
+	border-radius: 3px;
+	flex-shrink: 0;
+}
+
+@include block(vc-file-tile) {
+	position: relative;
+	width: 100%;
+	font-size: var(--vc-file-tile-name);
+	color: $color-dark-lighter;
+	background-color: var(--vc-file-surface);
+	border-radius: var(--vc-file-tile-radius);
+	box-sizing: border-box;
+	aspect-ratio: 1;
+
+	@include element((media, file)) {
+		position: absolute;
+		overflow: hidden;
+		border-radius: inherit;
+		inset: 0;
+	}
+
+	@include element(play) {
+		@include common-flex-cc;
+
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: var(--vc-file-tile-play);
+		height: var(--vc-file-tile-play);
+		color: $color-contrast-light;
+		background-color: color.change($color-contrast-dark-frozen, $alpha: 0.4);
+		border-radius: 50%;
+		transform: translate(-50%, -50%);
+
+		&::after {
+			margin-left: calc(var(--vc-file-tile-play) * 0.1);
+			border-top: calc(var(--vc-file-tile-play) * 0.2) solid transparent;
+			border-bottom: calc(var(--vc-file-tile-play) * 0.2) solid transparent;
+			border-left: calc(var(--vc-file-tile-play) * 0.3) solid currentcolor;
+			content: '';
+		}
+	}
+
+	// 音频、文件：标记居中，文件名在下方两行省略
+	@include element(file) {
+		display: flex;
+		padding: 0 calc(var(--vc-file-tile-size) * 0.08);
+		text-align: center;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: calc(var(--vc-file-tile-size) * 0.06);
+	}
+
+	@include element(icon) {
+		font-size: var(--vc-file-tile-icon);
+	}
+
+	@include element(ext) {
+		font-size: var(--vc-file-tile-ext);
+	}
+
+	@include element(name) {
+		@include common-text-line(2, false);
+
+		max-width: 100%;
+		line-height: 1.3;
+		word-break: break-all;
+	}
+}
+
+@include block(vc-file-row) {
+	position: relative;
+	display: flex;
+	width: 100%;
+	height: var(--vc-file-row-height);
+	padding: 0 var(--vc-file-row-padding);
+	font-size: var(--vc-file-row-font);
+	color: $color-dark-light;
+	background-color: var(--vc-file-primary-10);
+	border-radius: var(--vc-file-row-radius);
+	box-sizing: border-box;
+	transition: background-color 0.3s ease;
+	align-items: center;
+	gap: var(--vc-file-row-gap);
+
+	@media (hover: hover) {
+		&.is-clickable:hover {
+			background-color: var(--vc-file-primary-20);
+		}
+	}
+
+	@include element(media) {
+		width: var(--vc-file-row-media);
+		height: var(--vc-file-row-media);
+		overflow: hidden;
+		background-color: var(--vc-file-surface);
+		border-radius: 4px;
+		flex-shrink: 0;
+	}
+
+	@include element(icon) {
+		font-size: var(--vc-file-row-icon);
+	}
+
+	@include element(ext) {
+		font-size: var(--vc-file-row-ext);
+	}
+
+	@include element(name) {
+		@include common-ellipsis;
+
+		min-width: 0;
+		flex: 1;
+	}
+
+	// 底部进度条的轨道：裁在行的圆角内
+	@include element(track) {
+		position: absolute;
+		overflow: hidden;
+		pointer-events: none;
+		border-radius: inherit;
+		inset: 0;
+	}
+}

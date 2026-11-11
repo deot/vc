@@ -1,125 +1,13 @@
-/** @jsxImportSource vue */
-
-import { defineComponent, computed, getCurrentInstance } from 'vue';
-import { Image } from '../image/index';
+import { defineComponent } from 'vue';
 import { props as filePreviewProps } from './file-preview-props';
-import { FILE_TYPES, getFileExtension, normalize } from './utils';
-import { open } from './open';
-import type { FilePreviewItem } from './types';
+import { useFilePreview } from './use-file-preview';
 
 const COMPONENT_NAME = 'vc-file-preview';
 
 export const FilePreview = defineComponent({
 	name: COMPONENT_NAME,
 	props: filePreviewProps,
-	setup(props, { slots }) {
-		const instance = getCurrentInstance()!;
-		const list = computed(() => normalize(props.data));
-
-		// 分组时仍使用data中的原始索引，预览顺序与混编一致
-		const groups = computed(() => {
-			if (props.type !== 'group') return [];
-			const buckets = FILE_TYPES.map(() => [] as { row: FilePreviewItem; index: number }[]);
-			list.value.forEach((row, index) => buckets[FILE_TYPES.indexOf(row.type)].push({ row, index }));
-			return buckets.filter(group => group.length);
-		});
-
-		// 查看器从各项看得到的那块放大打开，切到哪一项关闭时就回到哪一项：方格、卡片里的缩略图，其余用这一项本身
-		const items: Array<Element | null> = [];
-		const elementOf = (item: Element | null) => item?.querySelector('.vc-file-preview__square, .vc-file-preview__thumbnail') ?? item;
-		// 点在缩略图上从缩略图放大；点在同一项的其它位置（名称、空白）时，缩略图只是项的开头，改从这一项开始
-		const preview = (index: number, e?: MouseEvent) => {
-			const data = list.value.map((row, i) => ({ ...row, element: elementOf(items[i]) }));
-			open({
-				data,
-				current: index,
-				instance,
-				triggerElement: e && !data[index].element?.contains(e.target as Node) ? items[index] : undefined,
-				placeholder: props.placeholder
-			});
-		};
-
-		const renderThumbnail = (row: FilePreviewItem, className: string) => {
-			return (
-				<Image
-					// @ts-ignore
-					src={row.type === 'image' ? row.source : row.thumbnail}
-					thumbnail={row.type === 'image' ? row.thumbnail : undefined}
-					fit="cover"
-					previewable={false}
-					class={className}
-				/>
-			);
-		};
-
-		// group中的图片、视频使用方格
-		const renderSquare = (row: FilePreviewItem) => {
-			return (
-				<div class="vc-file-preview__square">
-					{
-						row.type === 'image' || row.thumbnail
-							? renderThumbnail(row, 'vc-file-preview__media')
-							: <video src={row.source} class="vc-file-preview__media" preload="metadata" muted playsinline />
-					}
-					{ row.type === 'video' && <span class="vc-file-preview__play" /> }
-				</div>
-			);
-		};
-
-		const renderCard = (row: FilePreviewItem) => {
-			const isGroup = props.type === 'group';
-			const extension = isGroup && row.type === 'file'
-				? getFileExtension(row.name) || getFileExtension(row.source)
-				: '';
-			// group中的图片、视频走方格，这里只有mix会带缩略图
-			const hasThumbnail = row.type === 'image' || (row.type === 'video' && !!row.thumbnail);
-			return (
-				<div class={[{ 'is-thumbnail': hasThumbnail }, 'vc-file-preview__card']}>
-					{ hasThumbnail && renderThumbnail(row, 'vc-file-preview__thumbnail') }
-					{ isGroup && row.type === 'audio' && <span class="vc-file-preview__dot" /> }
-					{ extension && <span class="vc-file-preview__extension">{extension}</span> }
-					<span class="vc-file-preview__name">{row.name}</span>
-				</div>
-			);
-		};
-
-		const renderItem = (row: FilePreviewItem, index: number) => {
-			const isSquare = props.type === 'group' && (row.type === 'image' || row.type === 'video');
-			// 使用插槽时由插槽调用preview，外层不再绑定点击
-			const clickable = !slots.default && props.previewable;
-			return (
-				<div
-					key={`${index}-${row.source}`}
-					ref={(el) => {
-						items[index] = el as Element | null;
-					}}
-					title={row.name}
-					class={[`is-${row.type}`, { 'is-previewable': clickable }, 'vc-file-preview__item']}
-					onClick={clickable ? (e: MouseEvent) => preview(index, e) : undefined}
-				>
-					{
-						slots.default
-							? slots.default({ row, index, preview: () => preview(index) })
-							: isSquare ? renderSquare(row) : renderCard(row)
-					}
-				</div>
-			);
-		};
-
-		return () => {
-			return (
-				<div class={[`is-${props.type}`, `is-${props.size}`, { 'is-vertical': props.vertical }, 'vc-file-preview']}>
-					{
-						props.type === 'group'
-							? groups.value.map(group => (
-									<div key={group[0].row.type} class={[`is-${group[0].row.type}`, 'vc-file-preview__group']}>
-										{ group.map(({ row, index }) => renderItem(row, index)) }
-									</div>
-								))
-							: list.value.map((row, index) => renderItem(row, index))
-					}
-				</div>
-			);
-		};
+	setup(props, context) {
+		return useFilePreview(props, context);
 	}
 });
