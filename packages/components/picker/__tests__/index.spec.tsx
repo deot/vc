@@ -14,11 +14,13 @@ import { PickerCore } from '../mobile/picker-core';
 import { props as pickerProps } from '../mobile/picker-props';
 import { props as pickerViewProps } from '../mobile/picker-view-props';
 import {
+	findEnabledIndex,
 	getRowLabel,
 	getSelectedData,
 	isColumnGroup,
 	makeColumnData,
-	normalizeRow
+	normalizeRow,
+	resolveRow
 } from '../mobile/utils';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
@@ -1173,5 +1175,125 @@ describe('PickerCol renderLabel', () => {
 		await wrapper.setProps({ value: 1 });
 		expect(rowLabel).toHaveBeenCalledTimes(1);
 		wrapper.unmount();
+	});
+});
+
+describe('禁用行', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	// a b c d e f：b、d、e 禁用
+	const rows = ['a', 'b', 'c', 'd', 'e', 'f'].map(value => ({ value, disabled: ['b', 'd', 'e'].includes(value) }));
+	const mountCol = (initial: string) => {
+		const value = ref(initial);
+		const onChange = vi.fn((row: any) => (value.value = row.value));
+		const wrapper = mount(() => (
+			<PickerCol value={value.value} data={rows} onChange={onChange} />
+		), { attachTo: document.body });
+		return { wrapper, onChange, value };
+	};
+
+	it('findEnabledIndex / resolveRow：向两侧找最近的可选行，距离相同时先找指定方向', () => {
+		expect(findEnabledIndex(rows, 1)).toBe(2);
+		expect(findEnabledIndex(rows, 1, -1)).toBe(0);
+		expect(findEnabledIndex(rows, 3)).toBe(2);
+		expect(findEnabledIndex(rows, 4)).toBe(5);
+		expect(findEnabledIndex(rows, 99)).toBe(5);
+		expect(findEnabledIndex(rows.map(row => ({ ...row, disabled: true })), 2)).toBe(-1);
+		expect(findEnabledIndex([], 0)).toBe(-1);
+
+		expect(resolveRow(rows, 'b')!.value).toBe('c');
+		expect(resolveRow(rows, 'x')!.value).toBe('a');
+		const allDisabled = rows.map(row => ({ ...row, disabled: true }));
+		expect(resolveRow(allDisabled, 'c')!.value).toBe('c');
+		expect(resolveRow(allDisabled, 'x')!.value).toBe('a');
+	});
+
+	it('禁用行带 is-disabled；点按禁用行不响应', async () => {
+		const { wrapper, onChange } = mountCol('a');
+		await flush();
+		const items = wrapper.findAll('.vcm-picker-col__item');
+		expect(items[1].classes()).toContain('is-disabled');
+		expect(items[0].classes()).not.toContain('is-disabled');
+
+		await items[1].trigger('click');
+		expect(onChange).not.toHaveBeenCalled();
+
+		await items[2].trigger('click');
+		expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 'c' }));
+		wrapper.unmount();
+	});
+
+	it('拖动停在禁用行：回弹到最近的可选行，距离相同时取移动方向一侧', async () => {
+		// 从 a 拖 1 行停在 b（禁用）：a、c 距离相同，取移动方向（向下一行）的 c
+		const first = mountCol('a');
+		await flush();
+		await dragCol(first.wrapper.element, 0, -44);
+		expect(first.onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 'c' }));
+		first.wrapper.unmount();
+
+		// 从 f 拖 1 行停在 e（禁用）：最近的可选行是 f（原位），值不变
+		const second = mountCol('f');
+		await flush();
+		await dragCol(second.wrapper.element, 0, 44);
+		expect(second.onChange).not.toHaveBeenCalled();
+		second.wrapper.unmount();
+
+		// 从 f 拖 2 行停在 d（禁用）：c、f 中 c 更近
+		const third = mountCol('f');
+		await flush();
+		await dragCol(third.wrapper.element, 0, 88);
+		expect(third.onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 'c' }));
+		third.wrapper.unmount();
+	});
+
+	it('滚轮跳过禁用行；该方向上没有可选行时不阻止', async () => {
+		const { wrapper, onChange } = mountCol('c');
+		await flush();
+		const wheel = (deltaY: number) => {
+			const e = new WheelEvent('wheel', { deltaY, bubbles: true, cancelable: true });
+			wrapper.element.dispatchEvent(e);
+			return e;
+		};
+
+		expect(wheel(100).defaultPrevented).toBe(true);
+		expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 'f' }));
+		await flush();
+
+		expect(wheel(100).defaultPrevented).toBe(false);
+		await sleep(200);
+
+		expect(wheel(-100).defaultPrevented).toBe(true);
+		expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 'c' }));
+		wrapper.unmount();
+	});
+
+	it('PickerView：初始值为禁用值时显示最近的可选行，值不在数据里时取第一个可选行；联动的下级同样适用', async () => {
+		const plain = mount(() => (
+			<PickerView modelValue={['b']} data={rows} cascader={false} />
+		), { attachTo: document.body });
+		await flush();
+		expect(plain.find('.vcm-picker-col__item.is-selected').text()).toBe('c');
+		plain.unmount();
+
+		const data = [
+			{ value: 'x', disabled: true, children: [{ value: 'x1' }] },
+			{
+				value: 'y',
+				children: [
+					{ value: 'y1', disabled: true },
+					{ value: 'y2' }
+				]
+			}
+		];
+		const value = ref<any[]>([]);
+		const cascader = mount(() => (
+			<PickerView v-model={value.value} data={data} columns={2} />
+		), { attachTo: document.body });
+		await flush();
+		const selected = cascader.findAll('.vcm-picker-col__item.is-selected').map(item => item.text());
+		expect(selected).toEqual(['y', 'y2']);
+		cascader.unmount();
 	});
 });

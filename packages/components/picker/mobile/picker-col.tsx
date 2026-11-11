@@ -5,7 +5,7 @@ import { prefixStyle } from '@deot/helper-dom';
 import { useDrag } from '@deot/vc-hooks';
 import { cloneDeep } from 'lodash-es';
 import { Customer } from '../../customer';
-import { getRowLabel, getRowValue } from './utils';
+import { findEnabledIndex, getRowLabel, getRowValue } from './utils';
 import type { PickerData, PickerValue } from '../types';
 import { renderType } from '../../customer/customer-props';
 import type { PropType } from 'vue';
@@ -111,8 +111,11 @@ export const PickerCol = defineComponent({
 
 		// 滚到 index（带动画），值变化时立即 emit
 		// 位移与过渡在同一次更新里切换：浏览器从当前画面位置（含进行中的过渡）过渡到目标项
+		// 落在禁用行上时改到最近的可选行，距离相同时取移动方向一侧；整列都被禁用时回到选中项
 		const scrollTo = (index: number, ms: number, ease = EASE) => {
-			const target = clamp(index);
+			const clamped = clamp(index);
+			const enabled = findEnabledIndex(props.data, clamped, clamped < selectedIndex.value ? -1 : 1);
+			const target = enabled >= 0 ? enabled : selectedIndex.value;
 			clearTimer();
 			animatingIndex.value = target;
 			offset.value = 0;
@@ -214,22 +217,32 @@ export const PickerCol = defineComponent({
 			cancel: reset
 		});
 
-		// 点击某一项：滚到该项；拖动过的手势不算点击
+		// 点击某一项：滚到该项；拖动过的手势不算点击，禁用行不响应
 		const handleItemClick = (index: number) => {
 			if (moved) {
 				moved = false;
 				return;
 			}
+			if (props.data[index]?.disabled) return;
 			measure();
 			scrollTo(index, SNAP_DURATION);
 		};
 
-		// 滚轮：一格一项；已在首项或末项时不阻止，页面照常滚动
+		// 该方向上的下一个可选行；没有时为 -1
+		const nextEnabled = (index: number, step: number) => {
+			for (let i = index + step; i >= 0 && i <= maxIndex.value; i += step) {
+				if (!props.data[i].disabled) return i;
+			}
+			return -1;
+		};
+
+		// 滚轮：一格一项，跳过禁用行；该方向上已没有可选行时不阻止，页面照常滚动
 		const handleWheel = (e: WheelEvent) => {
 			if (!props.data.length || !e.deltaY) return;
 			const step = Math.sign(e.deltaY);
 			const index = currentIndex.value;
-			if ((step < 0 && index === 0) || (step > 0 && index === maxIndex.value)) {
+			const next = nextEnabled(index, step);
+			if (next < 0) {
 				wheelDelta = 0;
 				return;
 			}
@@ -241,7 +254,7 @@ export const PickerCol = defineComponent({
 			if (Math.abs(wheelDelta) < WHEEL_STEP) return;
 			wheelDelta = 0;
 			measure();
-			scrollTo(index + step, WHEEL_DURATION);
+			scrollTo(next, WHEEL_DURATION);
 		};
 
 		onBeforeUnmount(clearTimer);
@@ -280,7 +293,7 @@ export const PickerCol = defineComponent({
 								<div
 									key={index}
 									style={props.itemStyle}
-									class={['vcm-picker-col__item', { 'is-selected': index === current }]}
+									class={['vcm-picker-col__item', { 'is-selected': index === current, 'is-disabled': item.disabled }]}
 									onClick={() => handleItemClick(index)}
 								>
 									{ renderItem(item, index) }

@@ -5,7 +5,7 @@ import { isEqualWith } from 'lodash-es';
 import { toCurrentValue, toModelValue } from '../../select/utils';
 import { props as pickerViewProps } from './picker-view-props';
 import { PickerCol } from './picker-col';
-import { getSelectedData, isColumnGroup, makeColumnData } from './utils';
+import { getSelectedData, isColumnGroup, makeColumnData, resolveRow } from './utils';
 import type { PickerColumn, PickerData, PickerModelValue, PickerValue } from '../types';
 
 const COMPONENT_NAME = 'vcm-picker-view';
@@ -42,11 +42,8 @@ export const PickerView = defineComponent({
 			for (let index = 0; index < colCount.value; index++) {
 				data[index] = makeColumnData(temp);
 
-				const target = (
-					temp.find(i => i.value === currentValue.value[index])
-					|| temp[0]
-					|| {}
-				) as PickerData;
+				// 与 resetDefault 一致：值不在数据里或被禁用时取最近的可选行
+				const target = (resolveRow(temp, currentValue.value[index]) || {}) as PickerData;
 
 				temp = target.children || [];
 			}
@@ -60,7 +57,7 @@ export const PickerView = defineComponent({
 			rebuildData.value.forEach((item, index) => {
 				if (index < colIndex) return;
 
-				const target = item.find(row => row.value === next[index]) || item[0];
+				const target = resolveRow(item, next[index]);
 				if (target) {
 					next.splice(index, 1, target.value);
 				} else {

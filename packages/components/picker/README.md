@@ -278,6 +278,45 @@ p { margin: 0; overflow-wrap: anywhere; }
 ```
 :::
 
+### 禁用选项
+
+数据项设置 `disabled: true` 时置灰且不能选中：滚动停在禁用项上时回弹到最近的可选项（距离相同时取滚动方向一侧），点击不响应，鼠标滚轮跳过。初始值不在数据里时取第一个可选项，落在禁用项上时取最近的可选项；联动数据的各级都适用。整列都被禁用时保持原值。
+
+:::playground
+<!--
+<config lang="json5">
+{ viewport: 375, previewInset: 16 }
+</config>
+-->
+```vue
+<template>
+	<div class="demo">
+		<PickerView v-model="value" :data="data" :cascader="false" />
+		<p>选中：{{ value }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { PickerView } from '@deot/vc';
+
+const data = [
+	{ value: 'a', label: '选项 A' },
+	{ value: 'b', label: '选项 B（禁用）', disabled: true },
+	{ value: 'c', label: '选项 C' },
+	{ value: 'd', label: '选项 D（禁用）', disabled: true },
+	{ value: 'e', label: '选项 E' }
+];
+const value = ref(['b']);
+</script>
+
+<style scoped>
+.demo { display: grid; gap: 12px; }
+p { margin: 0; overflow-wrap: anywhere; }
+</style>
+```
+:::
+
 ## 尺寸与手势
 
 尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
@@ -292,14 +331,14 @@ p { margin: 0; overflow-wrap: anywhere; }
 
 手势：
 
-- 点击选项：滚到该项并选中；拖动后松开不算点击。
+- 点击选项：滚到该项并选中；拖动后松开不算点击；禁用项不响应。
 - 拖动：纵向跟手，拖过首项或末项时越界部分只走 1/4；横向滑动不处理，也不阻止默认行为，外层的横向滑动照常工作。
-- 松手：快滑（300ms 内位移超过 2 行）按惯性滚动后停在最近一项；否则 200ms 吸附到最近一项。
+- 松手：快滑（300ms 内位移超过 2 行）按惯性滚动后停在最近一项；否则 200ms 吸附到最近一项；停在禁用项上时改为最近的可选项。
 - 滚动中按住：停在当前位置，可继续拖动；这次轻点不算点击。
-- 鼠标滚轮：一格滚一项，触控板的小幅滚动累积后滚一项；已在首项或末项时页面照常滚动。
+- 鼠标滚轮：一格滚一项，跳过禁用项，触控板的小幅滚动累积后滚一项；该方向上已没有可选项时页面照常滚动。
 - 选中值不变时不触发 `change`、`picker-change`。
 
-当前选中项带有 `is-selected` 类（`.vcm-picker-col__item.is-selected`），可用于自定义选中样式。
+当前选中项带有 `is-selected` 类（`.vcm-picker-col__item.is-selected`），禁用项带有 `is-disabled` 类，可用于自定义样式。
 
 ## 主题与局部覆盖
 
@@ -313,6 +352,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | --- | --- | --- |
 | color-dark-light | 滚动选项和标题文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
 | color-neutral-light | 选中框上下的发丝线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| foreground-color-inactive | 禁用选项的文字 | 亮色：`#C0C4CC`；暗色：`#737D8C` |
 | color-primary | 头部操作文字 | `#456CF6` |
 | background-color-lightest | 选择器、滚动列及渐变遮罩背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 
@@ -450,6 +490,7 @@ interface PickerData {
 	[key: string]: any;
 	value?: PickerValue;
 	label?: any;
+	disabled?: boolean;
 	children?: PickerData[];
 	hasChildren?: boolean;
 	loading?: boolean;
@@ -458,7 +499,7 @@ type PickerColumn = PickerData[];
 type PickerSource = PickerColumn | PickerColumn[];
 ```
 
-`label` 缺省时使用 `value`；label 也可为渲染函数。`cascader=true` 时使用 `PickerData[]` 树，`cascader=false` 时使用单列数据或 `PickerColumn[]`。
+`label` 缺省时使用 `value`；label 也可为渲染函数。`disabled` 为 `true` 时该项置灰且不能选中，见 [禁用选项](#禁用选项)。`cascader=true` 时使用 `PickerData[]` 树，`cascader=false` 时使用单列数据或 `PickerColumn[]`。
 
 数组模型回写数组；非数组模型在单列时回写该项值，多列时按 `separator` 拼接。当前 `numerable=true` 且模型为字符串时，回写会使用数组字符串化的逗号分隔，因此需要自定义分隔符时建议使用数组模型。`Picker` 打开弹层时将模型转为内部数组，最终确认再按外部模型转换。
 

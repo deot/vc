@@ -2,6 +2,7 @@
 
 $component-name: vcm-picker-col;
 $color-dark-light: varfix(color-dark-light, picker);
+$foreground-color-inactive: varfix(foreground-color-inactive, picker);
 
 // 行高与可见行数：--vc-picker-item-height（默认 88，375 宽下 44px）、--vc-picker-rows（奇数，默认 5）
 // 在 PickerView 或任一祖先上覆盖；列高与上下留白都由这两个变量算出
@@ -35,5 +36,10 @@ $color-dark-light: varfix(color-dark-light, picker);
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		box-sizing: border-box;
+
+		// 禁用行：置灰，滚动停在上面时回弹到最近的可选行，点按不响应
+		@include when(disabled) {
+			color: $foreground-color-inactive;
+		}
 	}
 }
