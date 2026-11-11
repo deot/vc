@@ -1,25 +1,22 @@
 /** @jsxImportSource vue */
 
 import { computed, defineComponent, inject, ref, watch } from 'vue';
-import { isEqualWith } from 'lodash-es';
+import { isEqual } from 'lodash-es';
 import { MPickerView } from '../../picker/index.m';
 import { useLocale } from '../../locale';
 import { props as datePickerViewProps } from './date-picker-view-props';
 import {
-	dateToPickerValue,
-	formatDatesToModelValue,
-	getDefaultDate,
-	getPickerUnits,
-	makeColumn,
-	parseModelValueToDates,
-	pickerValueToDates,
-	type PickerUnit
+	createContext,
+	formatPointText,
+	formatPoints,
+	isRangeType,
+	resolveColumns,
+	resolvePoints,
+	valuesToDate
 } from './utils';
-import { getMonthEndDay } from '../helper/utils';
-import type { PickerColumn, PickerValue } from '../../picker/types';
+import type { PickerColumn, PickerData, PickerValue } from '../../picker/types';
 
 const COMPONENT_NAME = 'vcm-date-picker-view';
-const FULL_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 
 export const MDatePickerView = defineComponent({
 	name: COMPONENT_NAME,
@@ -28,146 +25,71 @@ export const MDatePickerView = defineComponent({
 	setup(props, { emit }) {
 		const { t, locale } = useLocale();
 		const formItem = inject<any>('vc-form-item', {});
-		const currentValue = ref<PickerValue[]>([]);
-		const rebuildData = ref<PickerColumn[]>([]);
 
-		const units = computed(() => getPickerUnits(props.type, props.format));
-		const cols = computed(() => units.value.length);
+		// 选中的点：单值 [date]，范围 [start, end]
+		const points = ref<Date[]>([]);
+		// 范围时滚轮编辑的一侧：0 开始，1 结束
+		const active = ref<0 | 1>(0);
+		const values = ref<PickerValue[]>([]);
+		const columns = ref<PickerColumn[]>([]);
+		// 最近一次发出的值：v-model 回传时不再重新解析
+		let emitted: any;
 
-		const getPartMap = (date: Date) => {
-			const values = dateToPickerValue(date, 'datetime', FULL_DATETIME_FORMAT);
-			return {
-				Y: values[0],
-				M: values[1],
-				D: values[2],
-				H: values[3],
-				m: values[4],
-				s: values[5]
-			} as Record<PickerUnit, PickerValue>;
-		};
+		const context = computed(() => createContext(props, t));
+		const isRange = computed(() => isRangeType(context.value.type));
 
-		const compareBoundary = (date: Date, targetUnits: PickerUnit[]) => {
-			const partMap = getPartMap(date);
-			return targetUnits.every((unit) => {
-				const index = units.value.indexOf(unit);
-				return index < 0 || currentValue.value[index] == partMap[unit];
-			});
-		};
+		// 结束一侧不早于开始值
+		const getBound = (side: number) => (side === 1 ? points.value[0] : void 0);
 
-		const getRange = (unit: PickerUnit) => {
-			const min = getPartMap(props.minDate);
-			const max = getPartMap(props.maxDate);
-			const currentYear = Number(currentValue.value[units.value.indexOf('Y')]) || new Date().getFullYear();
-			const currentMonth = Number(currentValue.value[units.value.indexOf('M')]) || 1;
-
-			switch (unit) {
-				case 'Y':
-					return [Number(min.Y), Number(max.Y)];
-				case 'M':
-					return [
-						compareBoundary(props.minDate, ['Y']) ? Number(min.M) : 1,
-						compareBoundary(props.maxDate, ['Y']) ? Number(max.M) : 12
-					];
-				case 'D':
-					return [
-						compareBoundary(props.minDate, ['Y', 'M']) ? Number(min.D) : 1,
-						compareBoundary(props.maxDate, ['Y', 'M']) ? Number(max.D) : getMonthEndDay(currentYear, currentMonth)
-					];
-				case 'H':
-					if (props.type === 'time') {
-						return [props.startHour, props.endHour];
-					}
-					return [
-						compareBoundary(props.minDate, ['Y', 'M', 'D']) ? Number(min.H) : 0,
-						compareBoundary(props.maxDate, ['Y', 'M', 'D']) ? Number(max.H) : 23
-					];
-				case 'm':
-					if (props.type === 'time') return [0, 59];
-					return [
-						compareBoundary(props.minDate, ['Y', 'M', 'D', 'H']) ? Number(min.m) : 0,
-						compareBoundary(props.maxDate, ['Y', 'M', 'D', 'H']) ? Number(max.m) : 59
-					];
-				case 's':
-					if (props.type === 'time') return [0, 59];
-					return [
-						compareBoundary(props.minDate, ['Y', 'M', 'D', 'H', 'm']) ? Number(min.s) : 0,
-						compareBoundary(props.maxDate, ['Y', 'M', 'D', 'H', 'm']) ? Number(max.s) : 59
-					];
-				case 'Q':
-					return [1, 4];
-				default:
-					return [0, 0];
-			}
-		};
-
-		const makeRebuildData = () => {
-			return units.value.map((unit) => {
-				const [start, end] = getRange(unit);
-				return makeColumn(unit, start, end, t);
-			});
-		};
-
-		const normalizeCurrentValue = () => {
-			const next = currentValue.value.slice(0, cols.value);
-
-			rebuildData.value.forEach((column, index) => {
-				const target = column.find(row => row.value == next[index]) || column[0];
-				if (target) {
-					next.splice(index, 1, target.value);
-				} else {
-					next.splice(index, 1);
-				}
-			});
-
-			if (isEqualWith(next, currentValue.value)) return false;
-			currentValue.value = next;
-			return true;
-		};
-
-		const rebuild = () => {
-			for (let i = 0; i <= cols.value; i++) {
-				rebuildData.value = makeRebuildData();
-				if (!normalizeCurrentValue()) return;
-			}
-
-			rebuildData.value = makeRebuildData();
+		// 按当前一侧的点生成各列，并把校正后的日期写回
+		const refresh = () => {
+			const side = active.value;
+			const result = resolveColumns(context.value, points.value[side], getBound(side));
+			points.value.splice(side, 1, result.date);
+			values.value = result.values;
+			columns.value = result.columns;
 		};
 
 		const setValue = (value: any) => {
-			const dates = parseModelValueToDates(value, props.type, props.format);
-			const date = dates[0] || getDefaultDate(props.minDate, props.maxDate);
-
-			currentValue.value = dateToPickerValue(date, props.type, props.format);
-			rebuild();
+			if (!isRange.value) active.value = 0;
+			points.value = resolvePoints(value, context.value);
+			refresh();
 		};
 
 		const sync = () => {
-			const dates = pickerValueToDates(
-				currentValue.value,
-				props.type,
-				props.format,
-				props.minDate,
-				props.maxDate
-			);
-			const modelValue = formatDatesToModelValue(dates, props.type, props.format, props.nullValue);
-
-			emit('update:modelValue', modelValue);
-			emit('change', modelValue);
-
-			props.allowDispatch && formItem?.change?.(modelValue);
+			const value = formatPoints(points.value, context.value, props.nullValue);
+			emitted = value;
+			emit('update:modelValue', value);
+			emit('change', value);
+			props.allowDispatch && formItem?.change?.(value);
 		};
 
-		const handlePickerChange = (value: PickerValue, index: number, row: any) => {
-			currentValue.value.splice(index, 1, value);
-			rebuild();
+		const handlePickerChange = (value: PickerValue, index: number, row: PickerData) => {
+			const side = active.value;
+			const next = values.value.slice();
+			next.splice(index, 1, value);
+			points.value.splice(side, 1, valuesToDate(context.value, next, points.value[side]));
+			refresh();
+
+			// 开始值改到结束值之后：结束值跟到开始值
+			if (isRange.value && side === 0 && points.value[1] < points.value[0]) {
+				points.value.splice(1, 1, resolveColumns(context.value, points.value[0], points.value[0]).date);
+			}
 
 			emit('picker-change', value, index, row);
 			sync();
 		};
 
+		const handleSide = (side: 0 | 1) => {
+			if (active.value === side) return;
+			active.value = side;
+			refresh();
+		};
+
 		watch(
 			() => props.modelValue,
 			(v) => {
+				if (emitted !== void 0 && isEqual(v, emitted)) return;
 				setValue(v);
 			},
 			{ immediate: true, deep: true }
@@ -178,28 +100,52 @@ export const MDatePickerView = defineComponent({
 				locale.value,
 				props.type,
 				props.format,
-				props.minDate,
-				props.maxDate,
-				props.startHour,
-				props.endHour
+				props.disabledDate,
+				props.timePickerOptions,
+				props.steps,
+				props.yearRange,
+				props.separator
 			],
 			() => {
+				emitted = void 0;
 				setValue(props.modelValue);
-			}
+			},
+			{ deep: true }
 		);
+
+		const renderRange = () => {
+			const item = (side: 0 | 1) => (
+				<span
+					class={['vcm-date-picker-view__range-item', { 'is-active': active.value === side }]}
+					onClick={() => handleSide(side)}
+				>
+					{ points.value[side] && formatPointText(points.value[side], context.value) }
+				</span>
+			);
+			return (
+				<div class="vcm-date-picker-view__range">
+					{ item(0) }
+					<span class="vcm-date-picker-view__separator">~</span>
+					{ item(1) }
+				</div>
+			);
+		};
 
 		return () => {
 			return (
-				<MPickerView
-					modelValue={currentValue.value}
-					data={rebuildData.value}
-					columns={cols.value}
-					cascader={false}
-					allowDispatch={false}
-					{...{
-						'onPicker-change': handlePickerChange
-					}}
-				/>
+				<div class="vcm-date-picker-view">
+					{ isRange.value && renderRange() }
+					<MPickerView
+						modelValue={values.value}
+						data={columns.value}
+						columns={columns.value.length}
+						cascader={false}
+						allowDispatch={false}
+						{...{
+							'onPicker-change': handlePickerChange
+						}}
+					/>
+				</div>
 			);
 		};
 	}

@@ -30,10 +30,6 @@ import {
 	DEFAULT_FORMATS
 } from '../constants';
 import {
-	value2date,
-	date2value,
-	parseMode,
-	getMonthEndDay,
 	toDate,
 	formatDate,
 	parseDate,
@@ -2255,45 +2251,6 @@ describe('Base sub-components direct mount', () => {
 });
 
 describe('helper/utils unit', () => {
-	it('value2date with empty / partial values uses defaults', () => {
-		const d1 = value2date([2023, 6, 15, 10, 30] as any);
-		expect(d1.getFullYear()).toBe(2023);
-		expect(d1.getMonth()).toBe(5);
-		expect(d1.getDate()).toBe(15);
-		expect(d1.getHours()).toBe(10);
-		expect(d1.getMinutes()).toBe(30);
-
-		const d2 = value2date();
-		expect(d2 instanceof Date).toBe(true);
-
-		const d3 = value2date([2024, 2] as any);
-		expect(d3.getFullYear()).toBe(2024);
-		expect(d3.getMonth()).toBe(1);
-	});
-
-	it('date2value handles string / Date / undefined', () => {
-		expect(date2value(undefined as any)).toBeUndefined();
-		const arr = date2value(new Date(2023, 5, 9, 8, 7));
-		expect(arr).toEqual(['2023', '06', '09', '08', '07']);
-		// 字符串
-		const arr2 = date2value('2023-05-09 08:07' as any);
-		expect(Array.isArray(arr2)).toBe(true);
-		// 自定义 mode
-		const arr3 = date2value(new Date(2023, 5, 9), 'YMD');
-		expect(arr3).toEqual(['2023', '06', '09']);
-	});
-
-	it('parseMode covers all supported value', () => {
-		expect(parseMode('datetime')).toBe('YMDHm');
-		expect(parseMode('date')).toBe('YMD');
-		expect(parseMode('time')).toBe('Hm');
-		expect(parseMode('yearmonth')).toBe('YM');
-		expect(parseMode('year')).toBe('Y');
-		expect(parseMode('month')).toBe('M');
-		expect(parseMode('quarter')).toBe('YQ');
-		expect(parseMode('something-else')).toBe('something-else');
-	});
-
 	it('toDate / formatDate / parseDate 边界', () => {
 		expect(toDate('not a date')).toBe(null);
 		expect(toDate(0) instanceof Date).toBe(true);
@@ -3661,10 +3618,9 @@ describe('月份的禁用判断、单个 D 的解析', () => {
 		]);
 	});
 
-	it('getMonthEndDay（1 ~ 12）与 getDayCountOfMonth（0 ~ 11）一致', () => {
+	it('getDayCountOfMonth（0 ~ 11）与 Date 的月末一致', () => {
 		for (const year of [1900, 2000, 2023, 2024]) {
 			for (let month = 0; month < 12; month++) {
-				expect(getMonthEndDay(year, month + 1)).toBe(getDayCountOfMonth(year, month));
 				expect(getDayCountOfMonth(year, month)).toBe(new Date(year, month + 1, 0).getDate());
 			}
 		}

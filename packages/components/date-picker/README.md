@@ -219,7 +219,7 @@ const datetime = ref('');
 
 ### 移动端日期时间选择
 
-点击触发内容打开滚轮；确认后提交格式化字符串，取消不提交。`format="HH:mm"` 只显示时、分列。
+点击触发内容打开滚轮；确认后提交格式化字符串，取消不提交。`format="HH:mm"` 只显示时、分列。`type` 与桌面端对齐：`year`、`month`、`quarter`、`date`、`datetime`、`time`，以及范围类 `daterange`、`datetimerange`、`monthrange`、`quarterrange`、`timerange`；值的格式与桌面端相同。
 
 :::playground
 <!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
@@ -242,11 +242,11 @@ const datetime = ref('');
 		</MDatePicker>
 		<h2>年月</h2>
 		<MDatePicker
-			v-model="yearmonth"
+			v-model="month"
 			:arrow="false"
-			type="yearmonth"
-			@visible-change="visible => visible && handleVisibleChange('yearmonth', true)"
-			@close="handleVisibleChange('yearmonth', false)"
+			type="month"
+			@visible-change="visible => visible && handleVisibleChange('month', true)"
+			@close="handleVisibleChange('month', false)"
 		>
 			<template #default="it">
 				<h2>
@@ -284,11 +284,56 @@ const handleVisibleChange = (key, visible) => {
 };
 
 const value = ref(new Date());
-const yearmonth = ref(new Date());
+const month = ref(new Date());
 const time = ref();
 </script>
 ```
 :::
+
+### 移动端范围选择
+
+范围类在滚轮上方显示起止栏：点哪一侧就编辑哪一侧，默认是开始。结束一侧早于开始值的年、月、日、时等置灰；开始值改到结束值之后时，结束值跟到开始值。点「确定」时一起提交 `[开始, 结束]`；触发项用 `separator`（默认 `' - '`）连接起止。
+
+:::playground
+<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+```vue
+<template>
+	<div style="display: grid; gap: 12px">
+		<MDatePickerView v-model="value" type="daterange" />
+		<p style="margin: 0">{{ value }}</p>
+	</div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { MDatePickerView } from '@deot/vc';
+
+const value = ref(['2024-03-10', '2024-03-20']);
+</script>
+```
+:::
+
+### 移动端的禁用与范围
+
+与桌面端相同，用 `disabledDate` 按天判断、用 `timePickerOptions` 和 `steps` 限制时分秒；年份滚轮的范围由 `yearRange` 决定。
+
+- 不可选的项置灰，停在上面时回弹到最近的可选项，点击不响应。不存在的日期（如 2 月 30 日）不显示。
+- 年、季度、月只在其中每一天都被 `disabledDate` 禁用时置灰，保证可选的日期一定能滚到；`disabledDate` 只传入 `Date`（当天 0 点）。
+- 时、分、秒与桌面端的时间列相同：在 `disabledHours` 等列表里，或 `disabledTime` 判断首尾两个时刻都禁用时置灰；`filterable: true` 时隐藏。
+- 初始值或今天落在置灰项上时，显示并提交最近的可选值。
+
+```vue
+<template>
+	<MDatePicker
+		v-model="value"
+		type="datetime"
+		format="YYYY-MM-DD HH:mm"
+		:disabled-date="date => date.getDay() === 0 || date.getDay() === 6"
+		:steps="[1, 15]"
+		:time-picker-options="{ disabledHours: [0, 1, 2, 3, 4, 5, 6, 7, 8, 19, 20, 21, 22, 23] }"
+		:year-range="[2020, 2030]"
+	/>
+</template>
+```
 
 ## 主题与局部覆盖
 
@@ -304,6 +349,9 @@ const time = ref();
 | --- | --- | --- |
 | color-contrast-light | 日、月、季度、年表中的选中文字 | `#FFFFFF`（亮暗主题相同） |
 | color-dark-lighter | 弹层文字 | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-light | 移动端范围起止栏中当前一侧的文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| foreground-color-inactive | 移动端范围起止栏中另一侧的文字与分隔符 | 亮色：`#C0C4CC`；暗色：`#737D8C` |
+| background-color-lighter | 移动端范围起止栏背景 | 亮色：`#FAFAFA`；暗色：`#292F3E` |
 | color-dark-extralight | 导航箭头、表头、禁用及相邻日期文字 | 亮色：`#909399`；暗色：`#B9B9B9` |
 | color-neutral-light | 日期头、时间列、确认区及范围面板分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
 | color-primary | 选中日期、今天标记及导航激活状态 | `#456CF6` |
@@ -376,7 +424,7 @@ const time = ref();
 
 ### MDatePicker 属性
 
-支持下方 MDatePickerView 的 `modelValue`、`type`、`format`、`minDate`、`maxDate`、`startHour`、`endHour`、`nullValue`，另有：
+支持下方 MDatePickerView 的 `modelValue`、`type`、`format`、`disabledDate`、`timePickerOptions`、`steps`、`yearRange`、`separator`、`nullValue`，另有：
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
@@ -385,6 +433,8 @@ const time = ref();
 | arrow | 条目箭头 | `boolean \| string` | - | `right` |
 | extra | 未选中时的提示，允许空字符串 | `string` | - | 当前语言的“请选择” |
 | formatter | 自定义显示，返回假值时使用默认显示 | `(value, format: string, dates: Date[]) => any` | - | - |
+
+`formatter` 的 `dates` 为选中的点：单值为 `[date]`，范围为 `[start, end]`，季度取季度的第一天。
 | title | 弹层标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | cancelText | 取消文案，允许空字符串 | `string` | - | 当前语言的“取消” |
 | okText | 确认文案，允许空字符串 | `string` | - | 当前语言的“确定” |
@@ -394,7 +444,7 @@ const time = ref();
 
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
-| update:modelValue | 确认后更新绑定值 | `value` | 格式化字符串，季度为起止日期字符串数组 |
+| update:modelValue | 确认后更新绑定值 | `value` | 格式化字符串；季度与范围类为字符串数组 |
 | change | 确认后提交值 | `value` | 同上 |
 | ok | 点击确定 | `value` | 同上 |
 | cancel | 点击取消，不提交值 | - | - |
@@ -420,13 +470,14 @@ const time = ref();
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| modelValue | 日期输入；季度使用起止日期数组 | `Date \| Date[] \| string \| string[]` | - | - |
-| type | 滚轮类型 | `string` | `datetime`、`date`、`time`、`yearmonth`、`year`、`month`、`quarter` | `datetime` |
+| modelValue | 日期输入，格式同桌面端：单值为字符串或 `Date`；季度与范围类为数组 | `Date \| Date[] \| string \| string[]` | - | - |
+| type | 滚轮类型 | `string` | `year`、`month`、`quarter`、`date`、`datetime`、`time`、`daterange`、`datetimerange`、`monthrange`、`quarterrange`、`timerange` | `datetime` |
 | format | 解析与输出格式，也决定时分秒列 | `string` | - | 按类型决定 |
-| minDate | 日期下界 | `Date` | - | `1940-01-01 00:00` |
-| maxDate | 日期上界 | `Date` | - | 创建组件时当前时间加 50 年 |
-| startHour | time 模式小时下界 | `number` | `0`–`23` | `0` |
-| endHour | time 模式小时上界 | `number` | `0`–`23` | `23` |
+| disabledDate | 按天判断是否禁用；年、季度、月中每一天都被禁用时该行置灰 | `(date: Date) => boolean` | - | - |
+| timePickerOptions | 时、分、秒的禁用：`disabledTime(date)`、`disabledHours`、`disabledMinutes`、`disabledSeconds`、`filterable`（隐藏禁用项），同桌面端 | `object` | - | `{}` |
+| steps | 时、分、秒的步长 | `number[]` | - | `[]` |
+| yearRange | 年份滚轮的范围 | `[number, number]` | - | `[1900, 2100]` |
+| separator | 范围的显示文字与字符串解析的分隔符 | `string` | - | `' - '` |
 | allowDispatch | 更新时通知所属表单项 | `boolean` | - | `true` |
 | nullValue | 空日期格式化结果 | `string \| number \| object` | - | `''` |
 
@@ -434,14 +485,14 @@ const time = ref();
 
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
-| update:modelValue | 滚动选择后更新绑定值 | `value` | 格式化字符串，季度为字符串数组 |
+| update:modelValue | 滚动选择后更新绑定值 | `value` | 格式化字符串；季度与范围类为字符串数组 |
 | change | 滚动选择后触发 | `value` | 同上 |
 | picker-change | 单列选中项变化 | `(value, index, row)` | 单列值、列索引、数据项 |
 
 ### 格式与注意事项
 
 - `date` / `daterange` 默认 `YYYY-MM-DD`，`datetime` / `datetimerange` 默认 `YYYY-MM-DD HH:mm:ss`，`year` 默认 `YYYY`，`month` / `monthrange` 默认 `YYYY-MM`。季度输出日期默认 `YYYY-MM-DD`。
-- 移动端 `time` 默认 `HH:mm:ss`，`yearmonth` 和 `month` 均选择年、月。季度输出起止日期数组。
+- 移动端 `time` / `timerange` 默认 `HH:mm:ss`，`month` 选择年、月。季度输出起止日期数组，`quarterrange` 输出开始季度第一天与结束季度最后一天。
 - 日期字符串应与 `format` 一致。范围和季度推荐使用数组，避免分隔符歧义。
 - locale 控制面板文案和季度摘要；`format` 中的英文月份、星期和 AM/PM 格式标记保持现有解析与输出规则，不随界面语言改变。
 - 当前桌面端 `multiple` 提交路径会将数组当作单值处理，可能报错；在修复前不要依赖多日期提交。该限制不影响日期范围模式。

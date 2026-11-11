@@ -33,18 +33,27 @@
 			<code>{{ stringify(date) }}</code>
 		</div>
 		<MDatePicker
-			v-model="yearmonth"
+			v-model="month"
 			label="年月"
-			type="yearmonth"
+			type="month"
 			title="选择年月"
 		/>
 		<div class="vcm-date-picker-basic__output">
-			<span>yearmonth</span>
-			<code>{{ stringify(yearmonth) }}</code>
+			<span>month</span>
+			<code>{{ stringify(month) }}</code>
+		</div>
+		<MDatePicker
+			v-model="year"
+			label="年"
+			type="year"
+			title="选择年份"
+		/>
+		<div class="vcm-date-picker-basic__output">
+			<span>year</span>
+			<code>{{ stringify(year) }}</code>
 		</div>
 		<MDatePicker
 			v-model="quarter"
-			:min-date="new Date('2022/01/01')"
 			format="YYYY/MM/DD"
 			label="季度"
 			type="quarter"
@@ -85,7 +94,7 @@
 			<MFormItem prop="start" label="开始时间">
 				<MDatePicker
 					v-model="formValidate.start"
-					:max-date="formValidate.end ? new Date(formValidate.end) : undefined"
+					:disabled-date="date => !!formValidate.end && date > new Date(formValidate.end)"
 					type="datetime"
 				/>
 				<div class="vcm-date-picker-basic__output">
@@ -96,7 +105,7 @@
 			<MFormItem prop="end" label="结束时间">
 				<MDatePicker
 					v-model="formValidate.end"
-					:min-date="formValidate.start ? new Date(formValidate.start) : undefined"
+					:disabled-date="date => !!formValidate.start && date < new Date(new Date(formValidate.start).setHours(0, 0, 0, 0))"
 					type="datetime"
 				/>
 				<div class="vcm-date-picker-basic__output">
@@ -135,7 +144,8 @@ const form = ref(null);
 const datetime = ref('2024/01/01 08:30:15');
 const datetimeWithoutSecond = ref('2024/01/01 08:30:15');
 const date = ref('2024/01/01');
-const yearmonth = ref('2024/01/01');
+const month = ref('2024-01');
+const year = ref('2024');
 const quarter = ref(['2024/01/01', '2024/03/31']);
 const time = ref('08:30:15');
 const viewValue = ref('2024/01/01 08:30:15');

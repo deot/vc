@@ -8,7 +8,7 @@ import { MPickerPopup } from '../../picker/index.m';
 import { MDatePickerView } from './date-picker-view';
 import { props as pickerPopupProps } from '../../picker/mobile/picker-popup-props';
 import { props as datePickerViewProps } from './date-picker-view-props';
-import { normalizeModelValue } from './utils';
+import { createContext, formatPoints, resolvePoints } from './utils';
 import type { PropType } from 'vue';
 
 const COMPONENT_NAME = 'vcm-date-picker-core';
@@ -24,10 +24,11 @@ const viewKeys = [
 	'modelValue',
 	'type',
 	'format',
-	'minDate',
-	'maxDate',
-	'startHour',
-	'endHour',
+	'disabledDate',
+	'timePickerOptions',
+	'steps',
+	'yearRange',
+	'separator',
 	'nullValue'
 ] as const;
 
@@ -61,16 +62,10 @@ export const MDatePickerCore = defineComponent({
 		const isActive = ref(false);
 		const currentValue = ref<any>('');
 
-		const getNormalizedValue = (value: any, force = true) => {
-			return normalizeModelValue(
-				value,
-				props.type,
-				props.format,
-				props.minDate,
-				props.maxDate,
-				props.nullValue,
-				force
-			);
+		// 弹层打开时没有值或值落在禁用项上：校正后作为确定时提交的值（与视图显示的一致）
+		const getNormalizedValue = (value: any) => {
+			const context = createContext(props);
+			return formatPoints(resolvePoints(value, context), context, props.nullValue);
 		};
 
 		watch(
@@ -139,10 +134,11 @@ export const MDatePickerCore = defineComponent({
 						modelValue={currentValue.value}
 						type={props.type}
 						format={props.format}
-						minDate={props.minDate}
-						maxDate={props.maxDate}
-						startHour={props.startHour}
-						endHour={props.endHour}
+						disabledDate={props.disabledDate}
+						timePickerOptions={props.timePickerOptions}
+						steps={props.steps}
+						yearRange={props.yearRange}
+						separator={props.separator}
 						nullValue={props.nullValue}
 						allowDispatch={false}
 						// @ts-ignore

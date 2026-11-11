@@ -6,6 +6,7 @@ import { vi } from 'vitest';
 import { fireMouse } from '../../../hooks/__tests__/fixtures/drag';
 import { MDatePicker, MDatePickerView } from '../index.m';
 import { MDatePickerCore } from '../mobile/date-picker-core';
+import { createContext, formatPoints, isSpanDisabled, parsePoints, resolveColumns, resolvePoints } from '../mobile/utils';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 const flush = async () => {
@@ -310,45 +311,27 @@ describe('MDatePickerView type and format', () => {
 		wrapper.unmount();
 	});
 
-	it('supports date, yearmonth, year and month type columns', async () => {
+	it('date、year、month 的列数；不存在的日期不显示', async () => {
 		const dateWrapper = mount(() => (
-			<MDatePickerView
-				modelValue={new Date(2024, 1, 29)}
-				type="date"
-				minDate={new Date(2024, 0, 1)}
-				maxDate={new Date(2024, 11, 31)}
-			/>
+			<MDatePickerView modelValue={new Date(2024, 1, 29)} type="date" />
 		), { attachTo: document.body });
 		await flush();
-		expect(dateWrapper.findAll('.vcm-picker-col')).toHaveLength(3);
+		const cols = dateWrapper.findAll('.vcm-picker-col');
+		expect(cols).toHaveLength(3);
 		expect(dateWrapper.text()).toContain('29日');
+		// 2024 年 2 月有 29 天
+		expect(cols[2].findAll('.vcm-picker-col__item')).toHaveLength(29);
 		dateWrapper.unmount();
 
-		const yearmonthWrapper = mount(() => (
-			<MDatePickerView
-				modelValue={new Date(2024, 5, 1)}
-				type="yearmonth"
-			/>
-		), { attachTo: document.body });
-		await flush();
-		expect(yearmonthWrapper.findAll('.vcm-picker-col')).toHaveLength(2);
-		yearmonthWrapper.unmount();
-
 		const yearWrapper = mount(() => (
-			<MDatePickerView
-				modelValue={new Date(2024, 0, 1)}
-				type="year"
-			/>
+			<MDatePickerView modelValue={new Date(2024, 0, 1)} type="year" />
 		), { attachTo: document.body });
 		await flush();
 		expect(yearWrapper.findAll('.vcm-picker-col')).toHaveLength(1);
 		yearWrapper.unmount();
 
 		const monthWrapper = mount(() => (
-			<MDatePickerView
-				modelValue={new Date(2024, 5, 1)}
-				type="month"
-			/>
+			<MDatePickerView modelValue={new Date(2024, 5, 1)} type="month" />
 		), { attachTo: document.body });
 		await flush();
 		expect(monthWrapper.findAll('.vcm-picker-col')).toHaveLength(2);
@@ -371,5 +354,241 @@ describe('MDatePickerView type and format', () => {
 		expect(wrapper.findAll('.vcm-picker-col')).toHaveLength(5);
 
 		wrapper.unmount();
+	});
+});
+
+const selectedTexts = (root: { findAll: (s: string) => any[] }) => {
+	return root.findAll('.vcm-picker-col__item.is-selected').map((item: any) => item.text());
+};
+const disabledTexts = (col: any) => col.findAll('.vcm-picker-col__item.is-disabled').map((item: any) => item.text());
+
+describe('mobile/utils', () => {
+	it('createContext：未知 type 回到 datetime，steps 取自 steps 或 timePickerOptions.steps', () => {
+		expect(createContext({ type: 'yearmonth' }).type).toBe('datetime');
+		expect(createContext({ type: 'time', steps: [2, 5] }).steps).toEqual([2, 5, 1]);
+		expect(createContext({ type: 'time', timePickerOptions: { steps: [1, 15, 30] } }).steps).toEqual([1, 15, 30]);
+		expect(createContext({ type: 'date' }).yearRange).toEqual([1900, 2100]);
+	});
+
+	it('isSpanDisabled：逐天判断，遇到可选日期即停止，结果按 disabledDate 缓存', () => {
+		const disabledDate = vi.fn((date: Date) => date.getDate() !== 15);
+		const start = new Date(2024, 0, 1);
+		const end = new Date(2024, 0, 31, 23, 59, 59);
+		expect(isSpanDisabled(start, end, disabledDate)).toBe(false);
+		expect(disabledDate).toHaveBeenCalledTimes(15);
+		expect(isSpanDisabled(start, end, disabledDate)).toBe(false);
+		expect(disabledDate).toHaveBeenCalledTimes(15);
+		expect(isSpanDisabled(start, end, () => true)).toBe(true);
+	});
+
+	it('值的格式与桌面端相同：单值为字符串，季度与范围为数组', () => {
+		const date = new Date(2024, 4, 6, 7, 8, 9);
+		const format = (type: string, extra: Record<string, any> = {}) => {
+			const ctx = createContext({ type, ...extra });
+			return formatPoints(resolvePoints([date, new Date(2024, 7, 1)], ctx), ctx);
+		};
+		const single = (type: string) => {
+			const ctx = createContext({ type });
+			return formatPoints(resolvePoints(date, ctx), ctx);
+		};
+		expect(single('date')).toBe('2024-05-06');
+		expect(single('datetime')).toBe('2024-05-06 07:08:09');
+		expect(single('month')).toBe('2024-05');
+		expect(single('year')).toBe('2024');
+		expect(single('time')).toBe('07:08:09');
+		expect(single('quarter')).toEqual(['2024-04-01', '2024-06-30']);
+
+		expect(format('daterange')).toEqual(['2024-05-06', '2024-08-01']);
+		expect(format('monthrange')).toEqual(['2024-05', '2024-08']);
+		expect(format('quarterrange')).toEqual(['2024-04-01', '2024-09-30']);
+		expect(format('datetimerange')).toEqual(['2024-05-06 07:08:09', '2024-08-01 00:00:00']);
+
+		// 字符串按 separator 解析
+		const ctx = createContext({ type: 'daterange', separator: ' ~ ' });
+		expect(parsePoints('2024-01-02 ~ 2024-01-05', ctx).map(d => d.getDate())).toEqual([2, 5]);
+		expect(parsePoints('', ctx)).toEqual([]);
+		expect(formatPoints([], ctx, null)).toBe(null);
+	});
+
+	it('resolvePoints：结束早于开始时取开始值；落在禁用日上时取最近的可选日', () => {
+		const range = createContext({ type: 'daterange' });
+		const points = resolvePoints([new Date(2024, 0, 10), new Date(2024, 0, 5)], range);
+		expect(points.map(d => d.getDate())).toEqual([10, 10]);
+
+		const ctx = createContext({ type: 'date', disabledDate: (d: Date) => d.getDay() === 0 || d.getDay() === 6 });
+		// 2024-01-06 为周六：最近的可选日为 01-05（周五）
+		expect(resolvePoints(new Date(2024, 0, 6), ctx)[0].getDate()).toBe(5);
+	});
+
+	it('resolveColumns：月末校正、步长外的分钟取最近的一档', () => {
+		const ctx = createContext({ type: 'datetime', steps: [1, 15] });
+		const { values, date } = resolveColumns(ctx, new Date(2023, 1, 28, 10, 38, 20));
+		expect(values).toEqual(['2023', '02', '28', '10', '45', '20']);
+		expect(date.getMinutes()).toBe(45);
+	});
+});
+
+describe('MDatePickerView disabledDate / timePickerOptions / yearRange', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('disabledDate：日按天置灰；年、月只在每一天都被禁用时置灰', async () => {
+		// 只允许 2024-03-10 ~ 2024-05-20
+		const disabledDate = (d: Date) => d < new Date(2024, 2, 10) || d > new Date(2024, 4, 20);
+		const wrapper = mount(() => (
+			<MDatePickerView modelValue={new Date(2024, 2, 15)} type="date" disabledDate={disabledDate} yearRange={[2023, 2025]} />
+		), { attachTo: document.body });
+		await flush();
+
+		const cols = wrapper.findAll('.vcm-picker-col');
+		expect(disabledTexts(cols[0])).toEqual(['2023年', '2025年']);
+		expect(disabledTexts(cols[1])).toEqual(['01月', '02月', '06月', '07月', '08月', '09月', '10月', '11月', '12月']);
+		expect(disabledTexts(cols[2])).toEqual(['01日', '02日', '03日', '04日', '05日', '06日', '07日', '08日', '09日']);
+		wrapper.unmount();
+	});
+
+	it('初始值落在禁用项上：显示最近的可选值，确定时提交校正后的值', async () => {
+		const onOk = vi.fn();
+		const leaf = MDatePicker.open({
+			type: 'date',
+			value: '2024-03-01',
+			disabledDate: (d: Date) => d < new Date(2024, 2, 10),
+			onOk
+		});
+		await flush();
+		const selected = Array.from(document.querySelectorAll('.vcm-picker-col__item.is-selected')).map(el => el.textContent);
+		expect(selected).toEqual(['2024年', '03月', '10日']);
+
+		(document.querySelector('.vcm-picker-popup__item.is-right') as HTMLElement).click();
+		await flush();
+		expect(onOk).toHaveBeenCalledWith('2024-03-10');
+		leaf.destroy();
+	});
+
+	it('timePickerOptions 与 steps：禁用的时、分置灰，filterable 时隐藏；按步长生成', async () => {
+		const wrapper = mount(MDatePickerView, {
+			attachTo: document.body,
+			props: {
+				modelValue: '09:30',
+				type: 'time',
+				format: 'HH:mm',
+				steps: [1, 15],
+				timePickerOptions: {
+					disabledHours: [0, 1, 2, 3, 4, 5, 6, 7],
+					disabledTime: (d: Date) => d.getHours() === 12
+				}
+			}
+		});
+		await flush();
+
+		let cols = wrapper.findAll('.vcm-picker-col');
+		expect(cols[0].findAll('.vcm-picker-col__item')).toHaveLength(24);
+		expect(disabledTexts(cols[0])).toEqual(['00时', '01时', '02时', '03时', '04时', '05时', '06时', '07时', '12时']);
+		expect(cols[1].findAll('.vcm-picker-col__item').map(item => item.text())).toEqual(['00分', '15分', '30分', '45分']);
+
+		await wrapper.setProps({ timePickerOptions: { disabledHours: [0, 1, 2, 3, 4, 5, 6, 7], filterable: true } });
+		await flush();
+		cols = wrapper.findAll('.vcm-picker-col');
+		expect(cols[0].findAll('.vcm-picker-col__item')).toHaveLength(16);
+		wrapper.unmount();
+	});
+
+	it('yearRange：年份列的范围', async () => {
+		const wrapper = mount(() => (
+			<MDatePickerView modelValue="2020" type="year" yearRange={[2018, 2022]} />
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.findAll('.vcm-picker-col__item').map(item => item.text())).toEqual(['2018年', '2019年', '2020年', '2021年', '2022年']);
+		wrapper.unmount();
+	});
+});
+
+describe('MDatePickerView 范围', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('起止栏：点哪一侧就编辑哪一侧，结束一侧早于开始值的项置灰', async () => {
+		const value = ref<any>(['2024-03-10', '2024-03-20']);
+		const wrapper = mount(() => (
+			<MDatePickerView v-model={value.value} type="daterange" yearRange={[2023, 2025]} />
+		), { attachTo: document.body });
+		await flush();
+
+		const items = wrapper.findAll('.vcm-date-picker-view__range-item');
+		expect(items.map(item => item.text())).toEqual(['2024-03-10', '2024-03-20']);
+		expect(items[0].classes()).toContain('is-active');
+		expect(wrapper.find('.vcm-date-picker-view__separator').text()).toBe('~');
+		expect(selectedTexts(wrapper)).toEqual(['2024年', '03月', '10日']);
+
+		await items[1].trigger('click');
+		await flush();
+		expect(wrapper.findAll('.vcm-date-picker-view__range-item')[1].classes()).toContain('is-active');
+		expect(selectedTexts(wrapper)).toEqual(['2024年', '03月', '20日']);
+		const cols = wrapper.findAll('.vcm-picker-col');
+		expect(disabledTexts(cols[0])).toEqual(['2023年']);
+		expect(disabledTexts(cols[1])).toEqual(['01月', '02月']);
+		expect(disabledTexts(cols[2])).toHaveLength(9);
+
+		await emitPickerChange(wrapper, '25', 2);
+		expect(value.value).toEqual(['2024-03-10', '2024-03-25']);
+		wrapper.unmount();
+	});
+
+	it('开始值改到结束值之后：结束值跟到开始值', async () => {
+		const value = ref<any>(['2024-03-10', '2024-03-20']);
+		const wrapper = mount(() => (
+			<MDatePickerView v-model={value.value} type="daterange" />
+		), { attachTo: document.body });
+		await flush();
+
+		await emitPickerChange(wrapper, '04', 1);
+		expect(value.value).toEqual(['2024-04-10', '2024-04-10']);
+		expect(wrapper.findAll('.vcm-date-picker-view__range-item').map(item => item.text())).toEqual(['2024-04-10', '2024-04-10']);
+		wrapper.unmount();
+	});
+
+	it('datetimerange 六列、quarterrange 显示季度名、timerange 三列', async () => {
+		const datetime = mount(() => (
+			<MDatePickerView modelValue={['2024-03-10 08:00:00', '2024-03-10 18:30:00']} type="datetimerange" />
+		), { attachTo: document.body });
+		await flush();
+		expect(datetime.findAll('.vcm-picker-col')).toHaveLength(6);
+		datetime.unmount();
+
+		const quarter = mount(() => (
+			<MDatePickerView modelValue={['2024-01-01', '2024-06-30']} type="quarterrange" />
+		), { attachTo: document.body });
+		await flush();
+		expect(quarter.findAll('.vcm-date-picker-view__range-item').map(item => item.text())).toEqual(['2024年第一季度', '2024年第二季度']);
+		quarter.unmount();
+
+		const time = mount(() => (
+			<MDatePickerView modelValue={['08:00:00', '18:00:00']} type="timerange" />
+		), { attachTo: document.body });
+		await flush();
+		expect(time.findAll('.vcm-picker-col')).toHaveLength(3);
+		time.unmount();
+	});
+
+	it('MDatePicker：触发项用 separator 连接起止；open 没有值时起止都为今天', async () => {
+		const wrapper = mount(() => (
+			<MDatePicker modelValue={['2024-03-10', '2024-03-20']} type="daterange" separator=" 至 " />
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.text()).toContain('2024-03-10 至 2024-03-20');
+		wrapper.unmount();
+
+		const onOk = vi.fn();
+		const leaf = MDatePicker.open({ type: 'monthrange', onOk });
+		await flush();
+		expect(document.querySelectorAll('.vcm-date-picker-view__range-item')).toHaveLength(2);
+		(document.querySelector('.vcm-picker-popup__item.is-right') as HTMLElement).click();
+		await flush();
+		const [start, end] = onOk.mock.calls[0][0];
+		expect(start).toMatch(/^\d{4}-\d{2}$/);
+		expect(end).toBe(start);
+		leaf.destroy();
 	});
 });

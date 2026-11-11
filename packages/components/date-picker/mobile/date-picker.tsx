@@ -5,12 +5,7 @@ import { MListItem } from '../../list/index.m';
 import { useLocale } from '../../locale';
 import { props as datePickerProps } from './date-picker-props';
 import { MDatePickerPortal } from './date-picker-core';
-import {
-	formatDatesToModelValue,
-	formatDatesToText,
-	getEffectiveFormat,
-	parseModelValueToDates
-} from './utils';
+import { createContext, formatPoints, formatPointsText, parsePoints } from './utils';
 
 const COMPONENT_NAME = 'vcm-date-picker';
 
@@ -33,21 +28,17 @@ export const MDatePicker = defineComponent({
 		const currentValue = ref<any>(props.modelValue);
 		const pickerInstance = ref<any>();
 
-		const dates = computed(() => {
-			return parseModelValueToDates(currentValue.value, props.type, props.format);
-		});
+		const context = computed(() => createContext(props, t));
+		const points = computed(() => parsePoints(currentValue.value, context.value));
 
+		// 范围用 separator 连接起止；季度显示季度名
 		const formatterValue = computed(() => {
-			if (!dates.value.length) return extra.value;
+			if (!points.value.length) return extra.value;
 
-			const value = formatDatesToModelValue(dates.value, props.type, props.format, props.nullValue);
-			const customValue = props.formatter?.(
-				value,
-				getEffectiveFormat(props.type, props.format),
-				dates.value
-			);
+			const value = formatPoints(points.value, context.value, props.nullValue);
+			const customValue = props.formatter?.(value, context.value.format, points.value);
 
-			return customValue || formatDatesToText(dates.value, props.type, props.format, t) || extra.value;
+			return customValue || formatPointsText(points.value, context.value) || extra.value;
 		});
 
 		watch(
@@ -73,10 +64,11 @@ export const MDatePicker = defineComponent({
 			pickerInstance.value = MDatePickerPortal.popup({
 				type: props.type,
 				format: props.format,
-				minDate: props.minDate,
-				maxDate: props.maxDate,
-				startHour: props.startHour,
-				endHour: props.endHour,
+				disabledDate: props.disabledDate,
+				timePickerOptions: props.timePickerOptions,
+				steps: props.steps,
+				yearRange: props.yearRange,
+				separator: props.separator,
 				title: props.title,
 				cancelText: props.cancelText,
 				okText: props.okText,

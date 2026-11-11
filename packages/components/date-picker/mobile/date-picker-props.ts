@@ -21,10 +21,11 @@ const viewKeys = [
 	'modelValue',
 	'type',
 	'format',
-	'minDate',
-	'maxDate',
-	'startHour',
-	'endHour',
+	'disabledDate',
+	'timePickerOptions',
+	'steps',
+	'yearRange',
+	'separator',
 	'nullValue'
 ] as const;
 

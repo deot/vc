@@ -1,0 +1,48 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-date-picker-view;
+$color-dark-light: varfix(color-dark-light, date-picker);
+$foreground-color-inactive: varfix(foreground-color-inactive, date-picker);
+$background-color-lighter: varfix(background-color-lighter, date-picker);
+
+// 范围选择的起止栏（750 稿）：在滚轮上方，点哪一侧就切到哪一侧
+// 高至少 96（375 宽下 48），左右内边距 32，字号 32；当前一侧为主文字色，另一侧为不可用色
+@include block($component-name) {
+	@include element(range) {
+		display: flex;
+		min-height: remfix(96);
+		padding: 0 remfix(32);
+		font-size: remfix(32);
+		color: $foreground-color-inactive;
+		background-color: $background-color-lighter;
+		box-sizing: border-box;
+		align-items: stretch;
+	}
+
+	// 两侧等宽；日期时间较长时在宽度内折行，栏随之变高
+	@include element(range-item) {
+		display: flex;
+		min-width: 0;
+		padding: remfix(16) 0;
+		line-height: 1.4;
+		text-align: center;
+		cursor: pointer;
+		overflow-wrap: anywhere;
+		flex: 1 1 0;
+		align-items: center;
+		justify-content: center;
+		-webkit-tap-highlight-color: transparent;
+
+		@include when(active) {
+			color: $color-dark-light;
+		}
+	}
+
+	@include element(separator) {
+		display: flex;
+		min-width: remfix(96);
+		flex: 0 1 auto;
+		align-items: center;
+		justify-content: center;
+	}
+}
