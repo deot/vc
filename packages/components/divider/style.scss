@@ -1,53 +1,105 @@
+@use 'sass:map';
 @use '../style/helper' as *;
 
 $color-dark: varfix(color-dark, divider);
 $color-neutral-light: varfix(color-neutral-light, divider);
-$background-color-lightest: varfix(background-color-lightest, divider);
-$component-name: vc-divider;
 
-@include block($component-name) {
+// 桌面端尺寸：写成局部变量 --vc-divider-<键>（默认值为下表），MDivider 在 .vcm-divider 上覆盖（mobile/style.scss）
+// - height：水平分割线的高度；为 1px 时文字在高度方向溢出、居中，不占高度
+// - gap：文字与两侧线的间距；side-width：文字在左 / 右侧时，该侧短线的宽度
+// - line-width / line-style：线宽与线型（dashed 时为虚线）
+$sizes: (
+	margin: unitfix(24) 0,
+	height: unitfix(1),
+	vertical-margin: 0 unitfix(12),
+	gap: unitfix(20),
+	side-width: unitfix(20),
+	font-size: unitfix(14),
+	font-weight: 500,
+	text-color: $color-dark,
+	line-width: unitfix(1),
+	line-style: solid
+);
+
+@function v($key) {
+	@return localfix(divider, $key, map.get($sizes, $key));
+}
+
+$line: v(line-width) v(line-style) $color-neutral-light;
+
+// 线由根节点的 ::before / ::after 画出，文字夹在中间：不需要底色遮挡，放在任意背景上都一样
+@include block(vc-divider) {
 	position: relative;
-	background-color: $color-neutral-light;
 
 	@include when(horizontal) {
-		display: block;
+		display: flex;
 		width: 100%;
-		height: 1px;
-		margin: 24px 0;
+		height: v(height);
+		margin: v(margin);
+		box-sizing: border-box;
+		align-items: center;
+
+		&::before {
+			border-top: $line;
+			content: '';
+			flex: 1 1 0;
+		}
+	}
+
+	@include when(with-text) {
+		&::before {
+			margin-right: v(gap);
+		}
+
+		&::after {
+			margin-left: v(gap);
+			border-top: $line;
+			content: '';
+			flex: 1 1 0;
+		}
+
+		@include when(left) {
+			&::before {
+				max-width: v(side-width);
+			}
+		}
+
+		@include when(right) {
+			&::after {
+				max-width: v(side-width);
+			}
+		}
 	}
 
 	// 竖线像文字一样排版：中心落在父级字体字符框的中心
 	@include when(vertical) {
 		display: inline-flex;
-		width: 1px;
+		width: 0;
 		height: .9em;
-		margin: 0 12px;
+		margin: v(vertical-margin);
+		border-left: $line;
 		align-items: center;
 
 		@include text-strut(0);
 	}
 
+	// 虚线：竖线的 ::before 是排版用的零宽字符，只改水平线的伪元素
+	@include when(dashed) {
+		@include when(horizontal) {
+			&::before,
+			&::after {
+				border-top-style: dashed;
+			}
+		}
+
+		@include when(vertical) {
+			border-left-style: dashed;
+		}
+	}
+
 	@include element(text) {
-		position: absolute;
-		padding: 0 20px;
-		font-size: 14px;
-		font-weight: 500;
-		color: $color-dark;
-		background-color: $background-color-lightest;
-
-		@include when(left) {
-			left: 20px;
-			transform: translateY(-50%);
-		}
-
-		@include when(center)  {
-			left: 50%;
-			transform: translateX(-50%) translateY(-50%);
-		}
-
-		@include when(right)  {
-			right: 20px;
-			transform: translateY(-50%);
-		}
+		font-size: v(font-size);
+		font-weight: v(font-weight);
+		color: v(text-color);
 	}
 }

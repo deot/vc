@@ -11,6 +11,11 @@ export const props = {
 		validator(val: string): boolean {
 			return ['left', 'center', 'right'].indexOf(val) !== -1;
 		}
+	},
+	// 虚线
+	dashed: {
+		type: Boolean,
+		default: false
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

@@ -1,0 +1,30 @@
+@use '../../style/helper' as *;
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放），375 宽下：四周内边距 16px，文字 14px、与线间距 12px，左 / 右侧短线 28px；高分屏为 0.5px 细线
+// 结构与颜色沿用 ../style.scss，这里只覆盖局部变量（与两端样式的加载顺序无关）；不设外边距，高度随文字
+@include block(vcm-divider) {
+	@include localvars(divider, (
+		margin: 0,
+		height: auto,
+		vertical-margin: 0 remfix(24),
+		gap: remfix(24),
+		side-width: remfix(56),
+		font-size: remfix(28),
+		font-weight: 400,
+		text-color: varfix(color-dark-lighter, divider)
+	));
+
+	// 桌面端不设内边距，这里直接设置
+	@include when(horizontal) {
+		padding: remfix(32);
+	}
+}
+
+// 细线：与 MList、MCollapse 的 1px 边框一致，高分屏为 0.5px
+@media (resolution >= 2dppx) {
+	@supports (border-width: 0.5px) {
+		@include block(vcm-divider) {
+			--vc-divider-line-width: 0.5px;
+		}
+	}
+}

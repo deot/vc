@@ -1,3 +1,7 @@
-import { Divider } from '.';
+import { MDivider } from './mobile/divider.tsx';
+import './style.scss';
+import './mobile/style.scss';
 
-export const MDivider = Divider;
+export {
+	MDivider
+};
