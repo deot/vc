@@ -73,6 +73,12 @@ export const props = {
 	// 增强器，如：原生选取
 	enhancer: Function as PropType<UploadEnhancer>,
 
+	/**
+	 * 选中的文件通过 accept、max 校验后交给它，不再由本组件上传（UploadPicker 的唯一入口按类型分发给各类型的 Upload）
+	 * @internal
+	 */
+	distribute: Function as PropType<(files: File[]) => void>,
+
 	// 并行上传
 	parallel: {
 		type: Boolean,

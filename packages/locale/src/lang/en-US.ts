@@ -25,11 +25,15 @@ export const enUS: Language = {
 			okText: 'OK'
 		},
 		UploadPicker: {
+			image: 'Image',
+			video: 'Video',
+			audio: 'Audio',
+			file: 'File',
+			cancel: 'Cancel',
 			upload: 'Upload',
 			failed: 'Upload failed',
-			receiving: 'Receiving on server...',
-			previewAudio: 'Preview audio',
-			previewVideo: 'Preview video'
+			retry: 'Retry',
+			receiving: 'Receiving on server...'
 		},
 		Upload: {
 			remoteError: 'Upload response failed. Please try again',

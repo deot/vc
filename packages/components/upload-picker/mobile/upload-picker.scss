@@ -1,78 +1,34 @@
-@use 'sass:color';
 @use '../../style/helper' as *;
+@use '../sizes' as *;
 
-$color-contrast-dark: varfix(color-contrast-dark, upload-picker);
-$color-contrast-dark-frozen: themefrozen(color-contrast-dark);
-$color-contrast-light: varfix(color-contrast-light, upload-picker);
-$color-dark-extralight: varfix(color-dark-extralight, upload-picker);
-$background-color: varfix(background-color, upload-picker);
-$component-name: vcm-upload-picker;
-$delete-background-fallback: color.change($color-contrast-dark-frozen, $alpha: .4);
-$delete-background: color-mix(in srgb, #{$color-contrast-dark} 40%, transparent);
-
-@include block($component-name) {
-	display: flex;
-	font-size: remfix(24);
-	box-sizing: border-box;
-	flex-wrap: wrap;
-
-	@include share-rule(box) {
-		width: remfix(156);
-		height: remfix(156);
-		cursor: pointer;
-		border-radius: remfix(4);
+// MUploadPicker：结构、样式同桌面端（vc-upload-picker）；项的尺寸与方格排布见 file-preview/item/mobile.scss（vcm-file-items）
+// 这里把入口、状态的尺寸按 750 稿覆盖局部变量，删除改为右上角的角标
+@include block(vcm-upload-picker) {
+	@each $key, $value in $sizes {
+		--vc-upload-picker-#{$key}: #{remfix($value * 2)};
 	}
 
-	@include element(item) {
-		margin-right: remfix(16);
-		margin-bottom: remfix(16);
-
-		@include extend-rule(box);
+	// 添加方格随格子铺满
+	.vc-upload-picker__box {
+		width: 100%;
 	}
 
-	@include element(delete) {
-		@include common-flex-cc;
-
-		position: absolute;
+	// 删除：右上角的半透明黑底角标，与项的右上角贴合，只有左下角为圆角
+	.vc-upload-picker__delete {
 		top: 0;
 		right: 0;
-		z-index: 10;
-		width: remfix(30);
-		height: remfix(30);
-		font-size: remfix(14);
-		color: $color-contrast-light;
-		background: $delete-background-fallback;
-
-		@supports (color: color-mix(in srgb, black, white)) {
-			& {
-				background: $delete-background;
-			}
-		}
-
-		border-radius: remfix(4);
+		z-index: 2;
+		display: flex;
+		width: remfix(36);
+		height: remfix(36);
+		font-size: remfix(24);
+		background: rgb(0 0 0 / 30%);
+		border-radius: 0 var(--vc-file-tile-radius);
+		align-items: center;
+		justify-content: center;
 	}
 
-	@include element(upload) {
-		margin-right: remfix(16);
-		margin-bottom: remfix(16);
-	}
-
-	@include element(box) {
-		@include common-flex-cc;
-
-		line-height: 1;
-		color: $color-dark-extralight;
-		background-color: $background-color;
-		flex-direction: column;
-
-		@include extend-rule(box);
-	}
-
-	@include element(plus-icon) {
-		font-size: remfix(60);
-	}
-
-	.vcm-sort-list > div {
-		margin: 0;
+	.vc-file-row .vc-upload-picker__delete {
+		border-radius: 0 var(--vc-file-row-radius);
 	}
 }

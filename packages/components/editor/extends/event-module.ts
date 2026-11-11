@@ -2,14 +2,14 @@ import type Quill from 'quill';
 import { previewImages } from '../utils';
 import { Upload } from '../../upload';
 import { EXTENDS_CONTEXT_KEY } from './constant';
-import { IMAGE_ACCEPTS, VIDEO_ACCEPTS } from '../../upload-picker/utils';
+import { ACCEPTS } from '../../upload-picker/utils';
 import { resolveFileName, resolveFileType } from '../../file-preview/utils';
 
 const MODULE_NAME = 'modules/EventExtend';
 
 const accepts = {
-	image: IMAGE_ACCEPTS,
-	video: VIDEO_ACCEPTS
+	image: ACCEPTS.image,
+	video: ACCEPTS.video
 };
 
 const getResponseValue = (response: unknown) => {

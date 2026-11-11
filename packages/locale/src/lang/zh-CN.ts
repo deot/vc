@@ -25,11 +25,15 @@ export const zhCN: Language = {
 			okText: '确定'
 		},
 		UploadPicker: {
+			image: '图片',
+			video: '视频',
+			audio: '音频',
+			file: '文件',
+			cancel: '取消',
 			upload: '上传',
 			failed: '上传失败',
-			receiving: '服务器正在接收...',
-			previewAudio: '预览音频',
-			previewVideo: '预览视频'
+			retry: '重试',
+			receiving: '服务器正在接收...'
 		},
 		Upload: {
 			remoteError: '上传远程失败，请重试',

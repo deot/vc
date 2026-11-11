@@ -10,15 +10,12 @@
 		</div>
 		<div v-for="state in ['上传中', '失败']" :key="state" class="audit-sample" :data-state="`真实项目组件 · ${state}`">
 			<div class="audit-sample__label">真实项目组件 · {{ state }}</div>
-			<div :class="mobile ? 'vcm-upload-picker' : 'vc-upload-picker'">
-				<div class="audit-row">
-					<component
-						:is="component" v-for="(component, index) in itemComponents" :key="index"
-						:row="{ value: null, percent: state === '上传中' ? 48 : 0, errorFlag: state === '失败', label: `${state}-${index}` }"
-						:index="index" :data="[]" :key-value="{ value: 'value', label: 'label' }" disabled
-					/>
-				</div>
-			</div>
+			<component
+				:is="mobile ? MUploadPicker : UploadPicker"
+				:ref="el => stateRefs[state] = el"
+				:picker="['image', 'file']"
+				:upload-options="stateOptions[state]"
+			/>
 		</div>
 		<div class="audit-sample" data-state="本地媒体">
 			<div class="audit-sample__label">本地媒体</div>
@@ -35,16 +32,8 @@
 	</div>
 </template>
 <script setup>
-import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { UploadPicker, Button, MUploadPicker, FilePreview } from '@deot/vc';
-import { ImageItem } from '../../../../upload-picker/item/image';
-import { VideoItem } from '../../../../upload-picker/item/video';
-import { AudioItem } from '../../../../upload-picker/item/audio';
-import { FileItem } from '../../../../upload-picker/item/file';
-import { MImageItem } from '../../../../upload-picker/mobile/item/image';
-import { MVideoItem } from '../../../../upload-picker/mobile/item/video';
-import { MAudioItem } from '../../../../upload-picker/mobile/item/audio';
-import { MFileItem } from '../../../../upload-picker/mobile/item/file';
 import { svgImage } from '../sample';
 
 const props = defineProps({ mobile: Boolean, overlayGeneration: Number });
@@ -92,9 +81,35 @@ const handlePreview = (type) => {
 watch(() => props.overlayGeneration,
 	handleClose);
 onBeforeUnmount(() => { handleClose(); urls.forEach(url => URL.revokeObjectURL(url)); });
-const itemComponents = computed(() => props.mobile
-	? [MImageItem, MVideoItem, MAudioItem, MFileItem]
-	: [ImageItem, VideoItem, AudioItem, FileItem]);
+// 上传中、失败：真实上传一张图片和一个文件，请求一直挂起或直接失败
+const stateRefs = {};
+const pending = () => new Promise(() => {});
+const stateOptions = {
+	上传中: Object.fromEntries(['image', 'file'].map(type => [type, { onRequest: pending }])),
+	失败: Object.fromEntries(['image', 'file'].map(type => [type, {
+		onRequest: () => {
+			throw new Error('模拟失败');
+		}
+	}]))
+};
+const stateFiles = () => [
+	new File(['<svg xmlns="http://www.w3.org/2000/svg"/>'], '主题图片.svg', { type: 'image/svg+xml' }),
+	new File(['Theme'], '说明.txt', { type: 'text/plain' })
+];
+onMounted(() => {
+	Object.values(stateRefs).forEach((picker) => {
+		// 各类型隐藏的 Upload 的选择框，顺序同 picker
+		const inputs = picker?.$el?.querySelectorAll('.vc-upload-picker__uploader > input[type="file"]') || [];
+		stateFiles().forEach((file, index) => {
+			const input = inputs[index];
+			if (!input) return;
+			const transfer = new DataTransfer();
+			transfer.items.add(file);
+			input.files = transfer.files;
+			input.dispatchEvent(new Event('change'));
+		});
+	});
+});
 for (const disabled of [false, true]) {
 	values[`picker-${disabled}`] = [
 		{ value: imageUrl, label: '主题图片.svg', type: 'image' },

@@ -237,6 +237,11 @@ export const createUpload = (feedback: UploadFeedback) => defineComponent({
 				return;
 			}
 
+			if (props.distribute) {
+				props.distribute(rawFiles);
+				return;
+			}
+
 			const files = rawFiles.map((file, index): UploadFile => ({
 				uploadId: getUid(),
 				current: index + 1,

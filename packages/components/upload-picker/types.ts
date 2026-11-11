@@ -1,10 +1,14 @@
 import type { ComponentInternalInstance } from 'vue';
 import type { UploadCallback } from '../upload/types';
+import type { FilePreviewFileType } from '../file-preview/types';
 
-export type PickerType = 'image' | 'video' | 'audio' | 'file';
+export type PickerType = FilePreviewFileType;
 
-// 上传入口的增强：返回 true 表示已自行处理，不再走默认上传
-export type PickerEnhancer = (data: { instance: ComponentInternalInstance; type: string }) => any;
+/**
+ * 上传入口的增强：返回真值表示已自行处理，不再打开原生选择
+ * type 为这次要选的类型；桌面端有多种类型时一次选择所有类型，type 为空，types 为可选的类型
+ */
+export type PickerEnhancer = (data: { instance: ComponentInternalInstance; type?: PickerType; types: PickerType[] }) => any;
 
 type UploadPickerCallbackName
 	= 'onFileBefore'
@@ -34,7 +38,8 @@ export interface UploadPickerCallback {
 	onFileStart(payload: UploadPickerPayload<'onFileStart'>): void;
 	onFileSuccess(payload: UploadPickerPayload<'onFileSuccess'>): void;
 	onFileError(payload: UploadPickerPayload<'onFileError'>): void;
-	onError(payload: UploadPickerPayload<'onError'>): void;
+	// 唯一入口（多种类型一次选择）校验不通过时 type 为空
+	onError(payload: UploadPickerBasePayload<'onError'> & { type?: PickerType }): void;
 	onComplete(payload: UploadPickerPayload<'onComplete'>): void;
 }
 

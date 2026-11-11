@@ -1,5 +1,7 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import type { PickerEnhancer, PickerType } from './types';
+import { FILE_ITEM_LAYOUTS, FILE_ITEM_SIZES } from '../file-preview/item';
+import type { FileItemLayout, FileItemSize } from '../file-preview/item';
 
 export const props = {
 	picker: {
@@ -58,31 +60,41 @@ export const props = {
 		default: false
 	},
 	/**
+	 * 布局：list 全部整行；grid 全部方格；group 图片、视频为方格在前，音频、文件为整行在后
+	 * 不传时按 picker 自动选择：只有图片、视频为 grid，只有音频、文件为 list，两者都有为 group
+	 */
+	type: {
+		type: String as PropType<FileItemLayout>,
+		validator: (v: string) => FILE_ITEM_LAYOUTS.includes(v as FileItemLayout)
+	},
+	/**
+	 * 尺寸：不传时方格为 small（64），整行为 medium（行高 46）
+	 */
+	size: {
+		type: String as PropType<FileItemSize>,
+		validator: (v: string) => FILE_ITEM_SIZES.includes(v as FileItemSize)
+	},
+	/**
 	 * 上传成功后对数据的格式化
 	 */
 	formatter: Function as PropType<(response: any, file: any, type: PickerType) => any>,
-	// TODO 下面两个重复了，需删除
 	/**
-	 * 盒子className
+	 * 默认上传入口（添加方格或上传按钮）的 className
 	 */
 	boxClass: String,
-	imageClass: String,
-	videoClass: String,
-	audioClass: String,
-	fileClass: String,
-	compressOptions: {
-		type: Object,
-		default: () => {
-			return {
-				compress: false, // 是否开启图片压缩
-				width: 0, // 图片缩放最大宽度，为0默认源图片宽度
-				height: 0, // 图片缩放最大高度，为0默认源图片高度
-				filetype: 'image/jpeg', // 文件类型
-				encoderOptions: 0.92 // 在指定图片格式为 image/jpeg 或 image/webp的情况下，可以从 0 到 1 的区间内选择图片的质量。如果超出取值范围，使用默认值 0.92
-			};
-		}
-	},
 	showError: Boolean,
 	enhancer: [Function, Boolean] as PropType<PickerEnhancer | boolean>
 };
 export type Props = ExtractPropTypes<typeof props>;
+
+export const emits = [
+	'update:modelValue',
+	'file-success',
+	'file-start',
+	'file-before',
+	'file-error',
+	'error',
+	'complete',
+	'change',
+	'remove-before'
+] as const;

@@ -11,6 +11,7 @@ import { uploadFile, insertFile, registerExtends, EXTENDS_CONTEXT_KEY } from './
 import { Spin } from '../spin';
 import { props as editorProps } from './editor-props';
 import { resolveEnhancer } from '../upload-picker/utils';
+import type { PickerType } from '../upload-picker/types';
 import { useLocale } from '../locale';
 
 const COMPONENT_NAME = 'vc-editor';
@@ -173,9 +174,10 @@ export const Editor = defineComponent({
 			});
 		};
 
-		const handleUpload = async (e: any, type: string) => {
+		const handleUpload = async (e: any, type: PickerType) => {
 			const enhancer = resolveEnhancer(props.enhancer, VcInstance.options.Editor?.enhancer, VcInstance.options.UploadPicker?.enhancer);
-			if (await enhancer?.({ instance: instance!, type })) return;
+			// 与 UploadPicker 的 enhancer 同一签名：每次只选一种类型
+			if (await enhancer?.({ instance: instance!, type, types: [type] })) return;
 			// 默认上传
 			uploadFile(type, getFakeEventExtend());
 		};

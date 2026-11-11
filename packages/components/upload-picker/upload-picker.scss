@@ -1,32 +1,63 @@
+@use 'sass:map';
 @use '../style/helper' as *;
+@use './sizes' as *;
 
 $color-contrast-light: varfix(color-contrast-light, upload-picker);
+$color-dark-light: varfix(color-dark-light, upload-picker);
 $color-dark-extralight: varfix(color-dark-extralight, upload-picker);
+$color-error: varfix(color-error, upload-picker);
 $color-neutral-light: varfix(color-neutral-light, upload-picker);
+$color-primary: varfix(color-primary, upload-picker);
 $color-primary-light: varfix(color-primary-light, upload-picker);
-$background-color: varfix(background-color, upload-picker);
 $component-name: vc-upload-picker;
 
+@function size($key) {
+	@return localfix(upload-picker, $key, map.get($sizes, $key) * 1px);
+}
+
+// 文件项（方格、整行）、布局、尺寸与共用颜色（--vc-file-surface、--vc-file-primary-10/20）来自 file-preview/item
+// 这里只有上传入口、上传状态与删除；list、group 的入口按钮在上方，只占自身宽度，列表、方格占满一行
 @include block($component-name) {
 	display: flex;
-	font-size: 12px;
+	font-size: size(font);
 	box-sizing: border-box;
-	flex-wrap: wrap;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--vc-file-row-gap);
 
-	@include share-rule(box) {
-		width: 64px;
-		height: 64px;
+	> .vc-file-grid,
+	> .vc-file-list {
+		width: 100%;
+	}
+
+	// 桌面端入口外的 Upload、排序列表都不占位置，其中的元素直接参与排列
+	@include element((upload, sort)) {
+		display: contents;
+	}
+
+	@include element(sort) {
+		> .vc-sort-list__item,
+		> .vcm-sort-list__item {
+			margin: 0;
+			text-align: inherit;
+		}
+	}
+
+	// 各类型隐藏的 Upload
+	@include element(uploader) {
+		display: none;
+	}
+
+	@include element(custom) {
 		cursor: pointer;
-		border-radius: 4px;
 	}
 
-	@include element(item) {
-		margin-right: 12px;
-		margin-bottom: 12px;
-
-		@include extend-rule(box);
+	// 失败的方格：红色描边（不改变尺寸）
+	.vc-file-tile.is-error {
+		box-shadow: inset 0 0 0 1px $color-error;
 	}
 
+	// 删除：浮在右上角的圆形按钮（方格、整行相同）
 	@include element(delete) {
 		position: absolute;
 		top: -6px;
@@ -36,33 +67,162 @@ $component-name: vc-upload-picker;
 		height: 14px;
 		font-size: 14px;
 		color: $color-contrast-light;
+		cursor: pointer;
 		background-color: $color-primary-light;
-		border-radius: 7px;
+		border-radius: 50%;
 	}
 
-	@include element(upload) {
-		margin-right: 12px;
-		margin-bottom: 12px;
-	}
-
+	// 添加方格：虚线框、加号与「上传」，大小同方格
 	@include element(box) {
-		display: flex;
+		@include common-flex-cc;
+
+		width: var(--vc-file-tile-size);
+		font-size: var(--vc-file-tile-name);
 		line-height: 1;
 		color: $color-dark-extralight;
-		background-color: $background-color;
+		cursor: pointer;
+		background-color: var(--vc-file-surface);
 		border: 1px dashed $color-neutral-light;
-		align-items: center;
-		justify-content: center;
+		border-radius: var(--vc-file-tile-radius);
+		box-sizing: border-box;
+		transition: border-color 0.2s, color 0.2s;
 		flex-direction: column;
+		aspect-ratio: 1;
 
-		@include extend-rule(box);
+		// 只在有悬停的设备上（触屏点按后不留悬停色）
+		@media (hover: hover) {
+			&:hover {
+				color: $color-primary;
+				border-color: $color-primary;
+			}
+		}
 	}
 
 	@include element(plus-icon) {
-		font-size: 14px;
+		font-size: var(--vc-file-tile-icon);
 	}
 
-	.vc-sort-list > div {
-		margin: 0;
+	@include element(box-text) {
+		margin-top: calc(var(--vc-file-tile-size) * 0.08);
+	}
+
+	// 方格的覆盖层（上传中、失败）：盖住方格内容，内容纵向居中
+	@include element(overlay) {
+		position: absolute;
+		display: flex;
+		padding: 0 size(overlay-padding);
+		font-size: var(--vc-file-tile-name);
+		line-height: 1.3;
+		text-align: center;
+		background-color: inherit;
+		border-radius: inherit;
+		inset: 0;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: size(overlay-gap);
+	}
+
+	// 上传中：上方为百分比（服务端接收中为文字），下方为带轨道的细进度条
+	@include element(state) {
+		padding: 0 calc(var(--vc-file-tile-size) * 0.12);
+		gap: calc(var(--vc-file-tile-size) * 0.08);
+
+		.vc-upload-picker__percent {
+			font-weight: 500;
+			color: $color-dark-light;
+		}
+	}
+
+	// 方格进度条的轨道：主色浅色 20%
+	@include element(meter) {
+		position: relative;
+		width: 100%;
+		height: size(meter);
+		overflow: hidden;
+		background-color: var(--vc-file-primary-20);
+		border-radius: size(meter);
+
+		.vc-upload-picker__bar {
+			height: 100%;
+			border-radius: inherit;
+		}
+	}
+
+	@include element((receiving, percent)) {
+		color: $color-dark-extralight;
+		flex-shrink: 0;
+	}
+
+	// 进度条：按比例横向缩放；整行里贴在底部
+	@include element(bar) {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 100%;
+		height: size(bar);
+		background-color: $color-primary;
+		transition: transform 0.2s;
+		transform-origin: left;
+	}
+
+	// 失败：「上传失败」与可点的「重试」；整行里在右侧，方格里在覆盖层上下排列
+	@include element(failed) {
+		display: flex;
+		color: $color-error;
+		align-items: center;
+		gap: size(failed-gap);
+		flex-shrink: 0;
+
+		&.vc-upload-picker__overlay {
+			gap: size(overlay-gap);
+		}
+	}
+
+	@include element(retry) {
+		padding: 0;
+		font-family: inherit;
+		font-size: inherit;
+		line-height: inherit;
+		color: $color-primary;
+		cursor: pointer;
+		background: none;
+		border: 0;
+	}
+
+	// 列表上方的上传按钮：主色浅色 10% 的底与 20% 的描边；悬停（触屏为按下）时文字与描边为主色、底色 20%
+	@include element(trigger) {
+		display: inline-flex;
+		padding: size(trigger-padding-y) size(trigger-padding-x);
+		font-family: inherit;
+		font-size: size(trigger-font);
+		line-height: size(trigger-line);
+		color: $color-dark-light;
+		cursor: pointer;
+		background: var(--vc-file-primary-10);
+		border: 1px solid var(--vc-file-primary-20);
+		border-radius: size(trigger-radius);
+		transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+		align-items: center;
+		gap: size(trigger-gap);
+		-webkit-tap-highlight-color: transparent;
+
+		@media (hover: hover) {
+			&:hover {
+				color: $color-primary;
+				background: var(--vc-file-primary-20);
+				border-color: $color-primary;
+			}
+		}
+
+		&:active {
+			color: $color-primary;
+			background: var(--vc-file-primary-20);
+			border-color: $color-primary;
+		}
+	}
+
+	@include element(trigger-icon) {
+		font-size: size(trigger-icon);
 	}
 }

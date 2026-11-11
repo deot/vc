@@ -1,5 +1,5 @@
 import { getUid } from '@deot/helper-utils';
-import type { PickerEnhancer } from './types';
+import type { PickerEnhancer, PickerType } from './types';
 
 export const PICKER_ITEM_KEY = '__vcUploadPickerKey';
 
@@ -12,35 +12,49 @@ export const withPickerItemKey = <T extends Record<string, any>>(item: T, key?: 
 	return item;
 };
 
-const isAvailableItem = (item: any, valueKey: string) => {
-	return item?.status !== 0 && !item?.errorFlag && !!item?.[valueKey];
+/**
+ * 上传成功、可以预览的项：没有失败标记，且有字符串地址
+ * @param row 列表项
+ * @param valueKey 地址字段
+ * @returns ~
+ */
+export const isDoneItem = (row: Record<string, any>, valueKey: string) => {
+	const value = row[valueKey];
+	return row.status !== 0 && !row.errorFlag && typeof value === 'string' && !!value;
 };
 
-// 获取过滤上传失败及未完成项后的索引；使用分类内原始索引计算，避免相同文件地址始终命中第一项
-export const getAvailableIndex = (row: any, data: any[], typeIndex: string | number, valueKey: string) => {
-	if (!isAvailableItem(row, valueKey)) return -1;
-
-	const index = Number(typeIndex);
-	if (Number.isInteger(index) && index >= 0) {
-		return data.slice(0, index).filter(item => isAvailableItem(item, valueKey)).length;
-	}
-
-	return data.filter(item => isAvailableItem(item, valueKey)).findIndex(item => item === row);
+/**
+ * 文件项的显示状态，两端共用
+ * @param row 列表项
+ * @param keyValue 取文件名、地址的字段
+ * @param keyValue.label ~
+ * @param keyValue.value ~
+ * @returns label 文件名；isError 上传失败；isDone 已有地址；percent 上传进度（0～100 的整数）
+ */
+export const getRowState = (row: Record<string, any>, keyValue: { label: string; value: string }) => {
+	const isDone = isDoneItem(row, keyValue.value);
+	return {
+		label: row[keyValue.label] || row.name || row[keyValue.value],
+		isError: row.status === 0 || !!row.errorFlag,
+		isDone,
+		percent: Math.min(100, Math.max(0, Math.round(Number(row.percent) || 0)))
+	};
 };
 
-export const getAvailableItems = <T = any>(data: T[], valueKey: string) => {
-	return data.filter(item => isAvailableItem(item, valueKey));
+// 各类型默认的 accept；file 为常见文档：Word、Excel（含 csv）、PowerPoint、PDF、纯文本、HTML
+export const ACCEPTS: Record<PickerType, string> = {
+	image: 'image/*',
+	video: 'video/*',
+	audio: 'audio/*',
+	file: [
+		'.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+		'.csv,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+		'.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation',
+		'.pdf,application/pdf',
+		'text/plain',
+		'text/html'
+	].join(',')
 };
-
-export const IMAGE_ACCEPTS = 'image/*';
-export const VIDEO_ACCEPTS = 'video/*';
-export const AUDIO_ACCEPTS = 'audio/*';
-export const DOC_ACCEPTS = '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-export const EXCEL_ACCEPTS = '.csv,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-export const PPT_ACCEPTS = '.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation';
-export const PDF_ACCEPTS = '.pdf,application/pdf';
-export const TXT_ACCEPTS = 'text/plain';
-export const HTML_ACCEPTS = 'text/html';
 
 /**
  * 取出要执行的 enhancer：属性传了函数就用它；属性为真时用全局配置里第一个有值的

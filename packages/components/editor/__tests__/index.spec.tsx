@@ -316,7 +316,7 @@ describe('Editor component', () => {
 		await flush();
 
 		await wrapper.findAll('.vc-editor__icon .vc-icon')[0].trigger('click');
-		expect(propEnhancer).toHaveBeenCalledWith({ instance: expect.anything(), type: 'video' });
+		expect(propEnhancer).toHaveBeenCalledWith({ instance: expect.anything(), type: 'video', types: ['video'] });
 		expect(uploadOpen).not.toHaveBeenCalled();
 		wrapper.unmount();
 
@@ -324,7 +324,7 @@ describe('Editor component', () => {
 		const wrapper2 = mount(() => (<Editor enhancer />), { attachTo: document.body });
 		await flush();
 		await wrapper2.findAll('.vc-editor__icon .vc-icon')[1].trigger('click');
-		expect(VcInstance.options.UploadPicker!.enhancer).toHaveBeenCalledWith({ instance: expect.anything(), type: 'image' });
+		expect(VcInstance.options.UploadPicker!.enhancer).toHaveBeenCalledWith({ instance: expect.anything(), type: 'image', types: ['image'] });
 
 		wrapper2.unmount();
 	});

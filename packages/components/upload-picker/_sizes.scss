@@ -1,0 +1,17 @@
+// 上传入口、状态的尺寸（桌面端 px；MUploadPicker 按 ×2 换成 750 稿，375 宽下与桌面端同 px）
+// 局部变量 --vc-upload-picker-<键>，可单独覆盖
+$sizes: (
+	font: 12,
+	trigger-padding-y: 4,
+	trigger-padding-x: 16,
+	trigger-font: 13,
+	trigger-line: 20,
+	trigger-radius: 8,
+	trigger-gap: 4,
+	trigger-icon: 14,
+	bar: 2,
+	meter: 3,
+	failed-gap: 8,
+	overlay-padding: 4,
+	overlay-gap: 2
+);
