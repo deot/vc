@@ -343,6 +343,20 @@ onMounted(() => {
 
 `MModalView` 用于声明式渲染；`MModal.alert` 创建确认框，`MModal.operation` 创建操作列表。
 
+尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 弹窗 | 宽 540（270），圆角 16（8） |
+| 标题 | 字号 34（17），字重 600，行高 52（26）；标题栏内边距 40 32 0（20 16 0），只有标题时底部同为 40（20） |
+| 正文 | 字号 30（15），行高 44（22）；内边距 8 32 40（4 16 20），没有标题时顶部为 40（20）并改用主文字颜色 |
+| 按钮 | 高 88（44），字号 32（16）；取消为 `color-dark-light`、确定为主色，三个及以上竖排、只有一个按钮时都为主色 |
+
+- 标题、正文默认居中；正文的对齐可通过 `contentStyle`（如 `text-align: left`）调整，标题可通过 `header` 插槽自定义。
+- `data` 中的项设置 `disabled: true` 时置灰，点击既不触发回调也不关闭。
+- 打开时从 0.5 倍放大并回弹（450ms），关闭时缩小淡出（150ms）。
+- 分隔线保持 1px（高分屏 0.5px），不随 `--vc-rem` 缩放。
+
 :::playground
 <!--
 <config lang="json5">
@@ -457,14 +471,14 @@ onUnmounted(() => {
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
-| color-dark | 移动端标题、无标题正文及取消按钮 | 亮色：`#000000`；暗色：`#FFFFFF` |
-| color-dark-light | 桌面端标题及移动端操作文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-dark-light | 桌面端标题；移动端标题、无标题正文、取消按钮及操作文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
 | color-dark-lighter | 移动端正文 | 亮色：`#515151`；暗色：`#D9D9D9` |
 | color-dark-lightest | 桌面端关闭图标 | 亮色：`#64758B`；暗色：`#C9C9C9` |
 | color-error | 错误图标 | `#F53F3F` |
 | color-mask | 遮罩背景 | 亮色：`rgb(0 0 0 / 40%)`；暗色：`rgb(255 255 255 / 40%)` |
 | color-neutral-light | 桌面标题、底部及移动端按钮分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
 | color-primary | 信息图标及移动端确认按钮 | `#456CF6` |
+| foreground-color-inactive | 移动端禁用按钮的文字 | 亮色：`#C0C4CC`；暗色：`#737D8C` |
 | color-success | 成功图标 | `#1DB88C` |
 | color-warning | 警告图标 | `#E6A23C` |
 | background-color-lightest | 弹窗面板背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
@@ -588,7 +602,7 @@ const confirm = () => new Promise((resolve, reject) => {
 	});
 });
 
-const handleSubmit = async () => {
+export const handleSubmit = async () => {
 	try {
 		await confirm();
 	} catch {
@@ -614,9 +628,12 @@ const handleSubmit = async () => {
 | closeWithCancel | 点击遮罩关闭时是否先执行 `onCancel` / `cancel` | `boolean` | - | `true` |
 | okText | 默认确定按钮文案；传 `false` 或空字符串时隐藏 | `string \| boolean` | - | 当前 locale 的“确定” |
 | cancelText | 默认取消按钮文案；传 `false` 或空字符串时隐藏 | `string \| boolean` | - | 当前 locale 的“取消” |
-| wrapperStyle | wrapper 的行内样式；wrapper 铺满视口并负责居中，自身不接收事件 | `object` | - | - |
+| wrapperClass | wrapper 的类名；wrapper 铺满视口并负责居中，自身不接收事件 | `string \| object \| array` | - | - |
+| wrapperStyle | wrapper 的行内样式 | `string \| object \| array` | - | - |
+| contentClass | 内容区（`.vcm-modal__content`）的类名 | `string \| object \| array` | - | - |
+| contentStyle | 内容区的行内样式，如 `text-align: left` 让正文左对齐 | `string \| object \| array` | - | - |
 | footer | `alert` 模式下是否渲染页脚 | `boolean` | - | `true` |
-| data | 自定义按钮列表；`operation` 模式的数据源 | `Array<{ content?: string \| boolean; style?: object; onClick?: Function }>` | - | 取消、确定两个默认项 |
+| data | 自定义按钮列表；`operation` 模式的数据源 | `Array<{ content?: string \| boolean; style?: object; disabled?: boolean; onClick?: Function }>` | - | 取消、确定两个默认项 |
 | onOk | 默认确定按钮回调；与 `ok` 事件监听器等价 | `Function` | - | - |
 | onCancel | 默认取消按钮回调；与 `cancel` 事件监听器等价 | `Function` | - | - |
 
@@ -628,6 +645,7 @@ const handleSubmit = async () => {
 | --- | --- | --- | --- | --- |
 | content | 按钮内容，取值与 title 相同；falsy 值不渲染 | `string \| number \| boolean \| Function \| { type: string; value: any }` | - | - |
 | style | 按钮行内样式 | `object` | - | - |
+| disabled | 是否禁用：置灰，点击既不触发 `onClick` 也不关闭 | `boolean` | - | `false` |
 | onClick | 点击回调 | `(event: MouseEvent) => unknown` | - | - |
 
 ### MModalView 事件

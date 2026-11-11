@@ -1,170 +1,143 @@
 <template>
-	<div style="padding: 100px">
+	<div class="vcm-modal-example">
+		<MList header="组件用法（v-model）">
+			<MListItem label="标题 + 内容" @click="isBasic = true" />
+			<MListItem label="只有标题" @click="isTitleOnly = true" />
+			<MListItem label="只有内容" @click="isContentOnly = true" />
+			<MListItem label="一个按钮" @click="isAlone = true" />
+			<MListItem label="正文左对齐（contentStyle）" @click="isLeft = true" />
+			<MListItem label="自定义内容（默认插槽）" @click="isSlot = true" />
+		</MList>
+
+		<MList header="方法调用（MModal.alert / operation）">
+			<MListItem label="确定后等待 Promise 结束再关闭" @click="handleAsync" />
+			<MListItem label="三个按钮（竖排）" @click="handleColumn" />
+			<MListItem label="按钮禁用（disabled）" @click="handleDisabled" />
+			<MListItem label="操作列表（operation）" @click="handleOperation" />
+		</MList>
+
+		<p class="vcm-modal-example__message">{{ message }}</p>
+
 		<MModalView
-			v-model="isVisible1"
-			:mask-closable="true"
-			title="标题1"
-			content="输入内容不一致，请重试，请重试"
-			@close="handleClose"
-			@cancel="handleCancel"
-			@ok="handleOk"
+			v-model="isBasic"
+			title="标题文字"
+			content="这里是一段说明文字，默认居中显示，超过一行时自动换行。"
+			@ok="log('ok')"
+			@cancel="log('cancel')"
+			@close="log('close')"
 		/>
 		<MModalView
-			v-model="isVisible2"
-			:mode="mode"
-			:mask-closable="true"
-			title="标题1"
-			@close="handleClose"
-			@cancel="handleCancel"
-			@ok="handleOk"
-		>
-			<div @click="handleClick4">
-				portal: 确定，取消
-			</div>
-			<!-- <vcm-input v-model="value" /> -->
-		</MModalView>
+			v-model="isTitleOnly"
+			title="这里是一段较长的标题文字，没有内容时上下留白相同"
+			@ok="log('ok')"
+		/>
 		<MModalView
-			v-model="isVisible3"
-			:mode="mode"
-			:mask-closable="true"
+			v-model="isContentOnly"
+			content="没有标题时，正文作为主文字显示。"
+			@ok="log('ok')"
+		/>
+		<MModalView
+			v-model="isAlone"
+			title="标题文字"
+			content="只有一个按钮时为主色。"
 			:cancel-text="false"
-			title="标题1"
-			content="确认"
-			@close="handleClose"
-			@cancel="handleCancel"
-			@ok="handleOk"
+			ok-text="知道了"
+			@ok="log('ok')"
 		/>
 		<MModalView
-			v-model="isVisible4"
-			:mask-closable="true"
-			content="输入内容不一致，请重试，请重试"
-			@close="handleClose"
-			@cancel="handleCancel"
-			@ok="handleOk"
+			v-model="isLeft"
+			title="标题文字"
+			content-style="text-align: left"
+			content="较长的说明文字适合左对齐：这里是第一句说明，这里是第二句说明，这里是第三句说明，这里是第四句说明。"
+			@ok="log('ok')"
 		/>
-		<div @click="handleClick1">
-			normal: 基本
-		</div>
-		<div @click="handleClick2">
-			normal: 自定义slot content
-		</div>
-		<div @click="handleClick3">
-			normal: 1个按钮
-		</div>
-		<div @click="handleClick4">
-			portal: 确定，取消
-		</div>
-		<div @click="handleClick5">
-			portal: 多个按钮
-		</div>
-		<div @click="handleClick6">
-			portal: operation
-		</div>
-		<div @click="handleClick7">
-			normal: 无标题
-		</div>
+		<MModalView v-model="isSlot" title="标题文字" @ok="log('ok')">
+			<div class="vcm-modal-example__slot">
+				<span>选项一</span>
+				<span>选项二</span>
+			</div>
+		</MModalView>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
 import { MModal, MModalView } from '../index.m';
-import { VcInstance } from '../../vc/index';
+import { MList, MListItem } from '../../list/index.m';
 
-window.vc = VcInstance;
+const isBasic = ref(false);
+const isTitleOnly = ref(false);
+const isContentOnly = ref(false);
+const isAlone = ref(false);
+const isLeft = ref(false);
+const isSlot = ref(false);
+const message = ref('');
 
-const mode = ref('alert');
-const isVisible1 = ref(false);
-const isVisible2 = ref(false);
-const isVisible3 = ref(false);
-const isVisible4 = ref(false);
-
-const handleClose = () => {
-	console.log('关闭后都会触发');
+const log = (v) => {
+	message.value = v;
 };
 
-const handleCancel = () => {
-	console.log('点击取消这个按钮时回调');
-};
-
-const handleOk = () => {
-	console.log('点击确定这个按钮时回调');
-	return new Promise((resolve) => {
-		setTimeout(resolve, 3000);
-	});
-};
-
-const handleClick1 = () => {
-	isVisible1.value = !isVisible1.value;
-};
-
-const handleClick2 = () => {
-	isVisible2.value = !isVisible2.value;
-};
-
-const handleClick3 = () => {
-	isVisible3.value = !isVisible3.value;
-};
-
-const handleClick4 = () => {
+const handleAsync = () => {
 	MModal.alert({
-		title: '标题1',
-		content: '啦啦',
+		title: '标题文字',
+		content: '点击确定后等待 1 秒再关闭。',
 		onOk: () => {
-			console.log('点击确定这个按钮时回调');
+			log('ok: 等待中');
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					log('ok: 已关闭');
+					resolve();
+				}, 1000);
+			});
 		},
-		onCancel: () => {
-			setTimeout(() => {
-				console.log('点击确定这个按钮时回调');
-			}, 3000);
-			return true;
-		},
-		onClose: () => {
-			console.log('关闭后都会触发');
-		}
+		onCancel: () => log('cancel'),
+		onClose: () => log('close')
 	});
 };
 
-const handleClick5 = () => {
+const handleColumn = () => {
 	MModal.alert({
-		title: '标题1',
-		content: '啦啦',
+		title: '标题文字',
+		content: '三个及以上按钮时竖向排列。',
 		data: [
-			{
-				content: '1',
-				onClick: () => console.log(`点击了第1个按钮`)
-			},
-			{
-				content: '2',
-				onClick: () => console.log(`点击了第2个按钮`)
-			},
-			{
-				content: '3',
-				onClick: () => console.log(`点击了第3个按钮`)
-			}
+			{ content: '选项一', onClick: () => log('选项一') },
+			{ content: '选项二', onClick: () => log('选项二') },
+			{ content: '选项三', onClick: () => log('选项三') }
 		]
 	});
 };
 
-const handleClick6 = () => {
+const handleDisabled = () => {
+	MModal.alert({
+		title: '标题文字',
+		content: '禁用的按钮置灰，点击既不触发回调也不关闭。',
+		data: [
+			{ content: '取消', onClick: () => log('取消') },
+			{ content: '确定', disabled: true, onClick: () => log('确定') }
+		]
+	});
+};
+
+const handleOperation = () => {
 	MModal.operation({
 		data: [
-			{
-				content: '1',
-				onClick: () => console.log(`点击了第1个按钮`)
-			},
-			{
-				content: '2',
-				onClick: () => console.log(`点击了第2个按钮`)
-			},
-			{
-				content: '3',
-				onClick: () => console.log(`点击了第3个按钮`)
-			}
+			{ content: '选项一', onClick: () => log('选项一') },
+			{ content: '选项二', onClick: () => log('选项二') },
+			{ content: '选项三（禁用）', disabled: true, onClick: () => log('选项三') }
 		]
 	});
 };
-
-const handleClick7 = () => {
-	isVisible4.value = !isVisible4.value;
-};
 </script>
+<style lang="scss">
+.vcm-modal-example {
+	&__message {
+		padding: 0 16px;
+		font-size: 12px;
+		color: #909399;
+	}
+
+	&__slot {
+		display: flex;
+		justify-content: space-around;
+	}
+}
+</style>

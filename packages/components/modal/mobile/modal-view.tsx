@@ -17,7 +17,7 @@ import { useLocale } from '../../locale';
 import { props as modalProps } from './modal-view-props';
 import { toRem } from '@deot/vc-shared';
 
-const COMPONENT_NAME = 'vc-modal';
+const COMPONENT_NAME = 'vcm-modal';
 
 export const MModalView = defineComponent({
 	name: COMPONENT_NAME,
@@ -114,6 +114,13 @@ export const MModalView = defineComponent({
 			};
 		});
 
+		// 有 header 插槽时同样算作有标题；插槽不是响应式的，每次渲染时读取
+		const getContentClass = () => [
+			'vcm-modal__content',
+			{ 'vcm-modal__no-title': !(props.title || slots.header) },
+			props.contentClass
+		];
+
 		const footerClasses = computed(() => {
 			const len = currentData.value.filter((i: any) => i.content).length;
 			return {
@@ -141,6 +148,7 @@ export const MModalView = defineComponent({
 			},
 		});
 		// 底部与操作列表两种布局共用
+		// disabled 的按钮置灰，点击既不触发回调也不关闭
 		const renderButtons = () => currentData.value.map((item: any, index) => {
 			if (!item.content) return null;
 			return (
@@ -148,9 +156,9 @@ export const MModalView = defineComponent({
 					key={index}
 					wrap
 					style={item.style}
-					class="vcm-modal__button"
+					class={['vcm-modal__button', { 'is-disabled': item.disabled }]}
 					render={item.content}
-					onClick={(e: any) => handleBefore(e, item.onClick)}
+					onClick={(e: any) => !item.disabled && handleBefore(e, item.onClick)}
 				/>
 			);
 		});
@@ -158,7 +166,7 @@ export const MModalView = defineComponent({
 		return () => {
 			return (
 				<div ref={root} class="vcm-modal" {...listeners}>
-					<MTransitionFade duration={200}>
+					<MTransitionFade duration={{ enter: 300, leave: 150 }}>
 						<div
 							v-show={props.mask && isActive.value}
 							class="vcm-modal__mask"
@@ -167,12 +175,14 @@ export const MModalView = defineComponent({
 						/>
 					</MTransitionFade>
 					<div
-						style={[props.wrapperStyle || {}]}
-						class="vcm-modal__wrapper"
+						style={props.wrapperStyle as any}
+						class={['vcm-modal__wrapper', props.wrapperClass]}
 					>
+						{/* 进入时从 0.5 倍放大并回弹，离开时缩小淡出，关键帧见 ./style.scss 的 vcm-modal-zoom */}
 						<MTransitionZoom
-							mode="center"
-							duration={200}
+							mode="none"
+							prefix="vcm-modal-zoom"
+							duration={{ enter: 450, leave: 150 }}
 							// @ts-ignore
 							onAfterLeave={handleRemove}
 						>
@@ -188,7 +198,7 @@ export const MModalView = defineComponent({
 												<Fragment>
 													{
 														(props.title || slots.header) && (
-															<div class="vcm-modal__header">
+															<div class={['vcm-modal__header', { 'is-alone': !(props.content || slots.default) }]}>
 																<MCustomer class="vcm-modal__title" render={slots.header || props.title} />
 															</div>
 														)
@@ -197,7 +207,8 @@ export const MModalView = defineComponent({
 													{
 														(props.content || slots.default) && (
 															<div
-																class={[{ 'vcm-modal__no-title': !props.title }, 'vcm-modal__content']}
+																class={getContentClass()}
+																style={props.contentStyle as any}
 															>
 																{
 																	(typeof props.content !== 'function' || slots.default)

@@ -5,6 +5,8 @@ import { enUS, zhCN } from '@deot/vc-locale';
 import { mount, config } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
 import { h, nextTick } from 'vue';
+import * as path from 'node:path';
+import * as sass from 'sass';
 import { vi } from 'vitest';
 import * as drag from '../../../hooks/__tests__/fixtures/drag';
 import { clickOn, rectOf } from '../../vc/__tests__/fixtures/click';
@@ -1910,6 +1912,86 @@ describe('MModalView 基础渲染 / props', () => {
 		const w = wrapper.find('.vcm-modal__wrapper').element as HTMLElement;
 		expect(w.style.backgroundColor).toBe('rgb(0, 0, 0)');
 		wrapper.unmount();
+	});
+
+	it('wrapperClass / contentClass / contentStyle 落在 wrapper 与内容区上', async () => {
+		const wrapper = mount(MModalView, {
+			attachTo: document.body,
+			props: {
+				modelValue: true,
+				title: 't',
+				content: 'c',
+				wrapperClass: 'custom-wrapper',
+				contentClass: ['custom-content'],
+				contentStyle: 'text-align: left'
+			}
+		});
+		await flush();
+		expect(wrapper.find('.vcm-modal__wrapper').classes()).toContain('custom-wrapper');
+		const content = wrapper.find('.vcm-modal__content');
+		expect(content.classes()).toContain('custom-content');
+		expect((content.element as HTMLElement).style.textAlign).toBe('left');
+		wrapper.unmount();
+	});
+
+	it('只有标题时 header 带 is-alone；有 header 插槽时内容区不算无标题', async () => {
+		const titleOnly = mount(MModalView, { attachTo: document.body, props: { modelValue: true, title: 't' } });
+		await flush();
+		expect(titleOnly.find('.vcm-modal__header').classes()).toContain('is-alone');
+		expect(titleOnly.find('.vcm-modal__content').exists()).toBe(false);
+		titleOnly.unmount();
+
+		const slotHeader = mount(MModalView, {
+			attachTo: document.body,
+			props: { modelValue: true, content: 'c' },
+			slots: { header: () => 'H' }
+		});
+		await flush();
+		expect(slotHeader.find('.vcm-modal__header').classes()).not.toContain('is-alone');
+		expect(slotHeader.find('.vcm-modal__content').classes()).not.toContain('vcm-modal__no-title');
+		slotHeader.unmount();
+	});
+
+	it('data[].disabled: 按钮置灰，点击不触发回调、不关闭', async () => {
+		const onClick = vi.fn();
+		const wrapper = mount(MModalView, {
+			attachTo: document.body,
+			props: {
+				modelValue: true,
+				title: 't',
+				data: [
+					{ content: '取消' },
+					{ content: '确定', disabled: true, onClick }
+				]
+			}
+		});
+		await flush();
+		const buttons = wrapper.findAll('.vcm-modal__footer .vcm-modal__button');
+		expect(buttons[0].classes()).not.toContain('is-disabled');
+		expect(buttons[1].classes()).toContain('is-disabled');
+
+		await buttons[1].trigger('click');
+		await flush();
+		expect(onClick).not.toHaveBeenCalled();
+		expect((wrapper.vm as any).isActive).toBe(true);
+		wrapper.unmount();
+	});
+
+	it('移动端样式：750 稿尺寸与进出场关键帧', () => {
+		const css = sass.compile(path.resolve(process.cwd(), 'packages/components/modal/mobile/style.scss')).css;
+		const rule = (selector: string) => {
+			const start = css.indexOf(`\n${selector} {`);
+			return start === -1 ? '' : css.slice(start, css.indexOf('}', start));
+		};
+
+		expect(rule('.vcm-modal__title')).toContain('line-height: calc(var(--vc-rem) * 52)');
+		expect(rule('.vcm-modal__title')).toContain('font-weight: 600');
+		expect(rule('.vcm-modal__html')).toContain('line-height: calc(var(--vc-rem) * 44)');
+		expect(rule('.vcm-modal__button')).toContain('height: calc(var(--vc-rem) * 88)');
+		expect(rule('.vcm-modal__button')).toContain('font-size: calc(var(--vc-rem) * 32)');
+		expect(rule('.vcm-modal__content')).toContain('text-align: center');
+		expect(rule('.vcm-modal-zoom.is-in')).toContain('animation-name: vcm-modal-zoom-in');
+		expect(css).toMatch(/@keyframes vcm-modal-zoom-in \{\s*from \{\s*opacity: 0;\s*transform: scale\(0\.5\);/);
 	});
 
 	it('mask=true 时渲染 mask, 点击 mask 触发 handleClose (closeWithCancel=true 走 cancel)', async () => {

@@ -1,7 +1,6 @@
 @use '../../style/helper' as *;
 
 $component-name: vcm-modal;
-$color-dark: varfix(color-dark, modal);
 $color-dark-light: varfix(color-dark-light, modal);
 $color-dark-lighter: varfix(color-dark-lighter, modal);
 $color-mask: varfix(color-mask, modal);
@@ -9,6 +8,9 @@ $color-neutral-light: varfix(color-neutral-light, modal);
 $color-primary: varfix(color-primary, modal);
 $background-color-lightest: varfix(background-color-lightest, modal);
 $box-shadow: varfix(box-shadow, modal);
+$foreground-color-inactive: varfix(foreground-color-inactive, modal);
+
+// 尺寸为 750 稿、随 --vc-rem 缩放，375 宽下：宽 270、圆角 8；标题 17（600）/ 26，正文 15 / 22；左右内边距 16；按钮高 44、字号 16
 
 @include block($component-name) {
 	@include element(mask) {
@@ -38,45 +40,51 @@ $box-shadow: varfix(box-shadow, modal);
 		margin: auto;
 		pointer-events: auto;
 		background: $background-color-lightest;
-		border-radius: remfix(14);
+		border-radius: remfix(16);
 		box-shadow: $box-shadow;
 		flex-direction: column;
 	}
 
+	// 对齐写在 header / content 上，title、正文继承：contentStyle 设置 text-align 即可改变正文的对齐
 	@include element(header) {
-		padding: remfix(48) remfix(30) remfix(24);
+		padding: remfix(40) remfix(32) 0;
+		text-align: center;
+
+		// 只有标题：上下留白相同
+		@include when(alone) {
+			padding-bottom: remfix(40);
+		}
 	}
 
 	@include element(title) {
 		margin: 0;
 		font-size: remfix(34);
-		font-weight: bold;
-		line-height: 1;
-		color: $color-dark;
-		text-align: center;
+		font-weight: 600;
+		line-height: remfix(52);
+		color: $color-dark-light;
 		overflow-wrap: break-word;
 	}
 
 	@include element(content) {
 		position: relative;
-		padding: 0 remfix(48) remfix(50);
+		padding: remfix(8) remfix(32) remfix(40);
 		overflow-y: auto;
+		text-align: center;
 	}
 
+	// 没有标题时正文即主文字
 	@include element(no-title) {
-		padding-top: remfix(64);
-		padding-bottom: remfix(64);
+		padding-top: remfix(40);
 
 		.vcm-modal__html {
-			color: $color-dark;
+			color: $color-dark-light;
 		}
 	}
 
 	@include element(html) {
 		font-size: remfix(30);
-		line-height: 1.5;
+		line-height: remfix(44);
 		color: $color-dark-lighter;
-		text-align: center;
 		word-break: break-all;
 		overflow-wrap: break-word;
 	}
@@ -84,16 +92,17 @@ $box-shadow: varfix(box-shadow, modal);
 	@include element(button) {
 		position: relative;
 		z-index: 1; // android不添加时可能不显示1px描边
-		height: remfix(100);
-		font-size: remfix(34);
-		line-height: remfix(100);
+		height: remfix(88);
+		font-size: remfix(32);
+		line-height: remfix(88);
 		color: $color-primary;
 		text-align: center;
 		overflow-wrap: break-word;
+		-webkit-tap-highlight-color: transparent;
 		flex: 1;
 
 		&:first-child {
-			color: $color-dark;
+			color: $color-dark-light;
 
 			@include common-border-1px(right, $color-neutral-light);
 		}
@@ -142,7 +151,7 @@ $box-shadow: varfix(box-shadow, modal);
 		flex-direction: column;
 
 		@include element(button, false) {
-			padding-left: remfix(30);
+			padding-left: remfix(32);
 			color: $color-dark-light;
 			text-align: left;
 
@@ -156,5 +165,50 @@ $box-shadow: varfix(box-shadow, modal);
 				}
 			}
 		}
+	}
+
+	// 禁用的按钮：放在各布局的配色之后，并带上根节点，优先于竖排、单个按钮时的主色
+	.vcm-modal__button.is-disabled {
+		&,
+		&:first-child {
+			color: $foreground-color-inactive;
+		}
+	}
+}
+
+// 弹窗的进出场（MTransitionZoom 的 prefix）：进入时从 0.5 倍放大并回弹，离开时缩小淡出
+.vcm-modal-zoom {
+	@include when(in) {
+		animation-name: vcm-modal-zoom-in;
+		animation-timing-function: cubic-bezier(.2, 1.23, .25, 1);
+	}
+
+	@include when(out) {
+		animation-name: vcm-modal-zoom-out;
+		animation-timing-function: cubic-bezier(.48, .04, .52, .96);
+	}
+}
+
+@keyframes vcm-modal-zoom-in {
+	from {
+		opacity: 0;
+		transform: scale(.5);
+	}
+
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes vcm-modal-zoom-out {
+	from {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	to {
+		opacity: 0;
+		transform: scale(.5);
 	}
 }
