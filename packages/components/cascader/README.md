@@ -605,27 +605,153 @@ const value = ref(['2500', '2500-3']);
 ```
 :::
 
+### 移动端选择
+
+`MCascader` 是独立的移动端组件：默认渲染 MListItem，点击后从底部弹出。弹层上方的标签切换层级，待选的一级显示「请选择」，下方是选项列表，选中项为主色并打勾。`v-model` 的形状与转换规则与桌面端相同（`checkStrategy`、`separator`、`numerable`、`nullValue`、`max`）。
+
+- 默认选到最后一级即提交并关闭，标题栏右侧有关闭按钮。
+- `confirm`：显示「取消 / 确定」工具栏，选到最后一级不自动关闭，由「确定」提交；路径还没到最后一级时「确定」置灰。
+- `changeOnSelect`：可以停在任意一级，同样显示工具栏，点「确定」提交当前路径；选到最后一级时，没开 `confirm` 仍自动提交并关闭。
+- `clearable`：有选中路径时，层级标签栏右端显示「清空」。没开 `confirm` 时清空即提交空值并关闭；开了 `confirm` 时只清空弹层内的路径，由「确定」提交空值。
+- `searchable`：列表上方显示搜索框，规则同桌面端：按整条路径匹配，只列出最后一级，开启 `changeOnSelect` 时任意一级都可选。
+- 节点的 `disabled: true` 置灰且不可点。
+
+:::playground
+<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+```vue
+<template>
+	<div style="display: grid; gap: 12px; max-width: 420px">
+		<MCascader
+			v-model="value"
+			:data="data"
+			label="选择条目"
+			title="选择条目"
+			@visible-change="visible => visible && handleVisibleChange('basic', true)"
+			@close="handleVisibleChange('basic', false)"
+		/>
+		<MCascader
+			v-model="anyLevel"
+			:data="data"
+			label="任意一级"
+			change-on-select
+			searchable
+			clearable
+			@visible-change="visible => visible && handleVisibleChange('any', true)"
+			@close="handleVisibleChange('any', false)"
+		/>
+		<p>value：{{ value }}；anyLevel：{{ anyLevel }}</p>
+	</div>
+</template>
+<script setup>
+import { ref, inject } from 'vue';
+import { MCascader } from '@deot/vc';
+
+const data = [
+	{ value: 'a', label: '分组 A', children: [
+		{ value: 'a-1', label: '条目 A-1', children: [
+			{ value: 'a-1-1', label: '细项 A-1-1' },
+			{ value: 'a-1-2', label: '细项 A-1-2', disabled: true }
+		] },
+		{ value: 'a-2', label: '条目 A-2' }
+	] },
+	{ value: 'b', label: '分组 B', children: [
+		{ value: 'b-1', label: '条目 B-1' },
+		{ value: 'b-2', label: '条目 B-2' }
+	] }
+];
+const value = ref([]);
+const anyLevel = ref([]);
+
+const playground = inject('docs:playground');
+const visibleStates = {};
+const handlePreview = playground.run(560);
+const handleVisibleChange = (key, visible) => {
+	visibleStates[key] = visible;
+	return handlePreview(Object.values(visibleStates).some(Boolean));
+};
+</script>
+```
+:::
+
+### 移动端内嵌视图与直接调用
+
+`MCascaderView` 是弹层里的内容，也可以直接放在页面中，提交规则同上：选到最后一级（或开启 `changeOnSelect` 时任意一级）才更新 `v-model`，每次点选都触发 `select`。`loadData` 与桌面端相同，点击待加载的节点时该行显示加载图标。
+
+`MCascader.open(options)` 直接打开弹层，通过 `onOk(value, labels)` 接收结果，返回的 Portal 实例可调用 `destroy()`。
+
+:::playground
+<!-- <config lang="json5">{ viewport: 375, previewInset: 0 }</config> -->
+```vue
+<template>
+	<div>
+		<MCascaderView v-model="value" :data="data" :load-data="loadData" @select="handleSelect" />
+		<p style="padding: 0 16px">{{ value }} {{ selected }}</p>
+		<p style="padding: 0 16px; color: var(--vc-color-primary)" @click="handleOpen">MCascader.open 直接调用：{{ opened }}</p>
+	</div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { MCascader, MCascaderView } from '@deot/vc';
+
+const data = ref([
+	{ value: 'x', label: '分组 X', children: [] },
+	{ value: 'y', label: '分组 Y', children: [] }
+]);
+const value = ref([]);
+const selected = ref('');
+const opened = ref([]);
+
+// row 为待加载的节点，values / labels 为从根到它的路径
+const loadData = ({ row }) => new Promise(resolve => setTimeout(() => resolve([
+	{ value: `${row.value}-1`, label: `${row.label}-1` },
+	{ value: `${row.value}-2`, label: `${row.label}-2` }
+]), 600));
+
+const handleSelect = ({ labels, leaf }) => {
+	selected.value = `${labels.join(' / ')}${leaf ? '' : '…'}`;
+};
+
+const handleOpen = () => {
+	MCascader.open({
+		value: opened.value,
+		data: data.value,
+		title: '直接调用',
+		onOk: (v) => {
+			opened.value = v;
+		}
+	});
+};
+</script>
+```
+:::
+
 ## 主题与局部覆盖
 
-全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-cascader-column-<参数>`、`--vc-cascader-<参数>`；搜索结果与搜索命中的文字使用 `--vc-select-paths-<参数>`、`--vc-select-highlight-<参数>`。局部参数仅提供组件级入口；表中括号标明对应命名空间。
+全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-cascader-column-<参数>`、`--vc-cascader-<参数>`，移动端视图使用 `--vc-cascader-view-<参数>`；搜索结果与搜索命中的文字使用 `--vc-select-paths-<参数>`、`--vc-select-highlight-<参数>`。局部参数仅提供组件级入口；表中括号标明对应命名空间。
 
-内嵌或复用的 [spin](../spin/README.md#主题与局部覆盖)、[input](../input/README.md#主题与局部覆盖)、[popover](../popover/README.md#主题与局部覆盖) 使用各自的主题入口。
+内嵌或复用的 [spin](../spin/README.md#主题与局部覆盖)、[input](../input/README.md#主题与局部覆盖)、[popover](../popover/README.md#主题与局部覆盖)，以及移动端的 [tabs](../tabs/README.md#主题与局部覆盖)、[popup](../popup/README.md#主题与局部覆盖)、[picker](../picker/README.md#主题与局部覆盖)（工具栏） 使用各自的主题入口。
 
 ### 全局
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
-| color-dark-lighter | 级联选项文字（cascader-column）；搜索结果文字（select-paths） | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-dark-lighter | 级联选项文字（cascader-column）；搜索结果文字（select-paths）；移动端选项与已选层级的标签（cascader-view） | 亮色：`#515151`；暗色：`#D9D9D9` |
 | color-dark-extralight | 输入区附加图标（cascader）；搜索结果的空状态文字（select-paths） | 亮色：`#909399`；暗色：`#B9B9B9` |
 | color-neutral-light | 级联列分隔线（cascader-column） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
 | color-primary | 选中选项文字（cascader-column）；搜索结果中当前路径的文字（cascader）；搜索命中的文字（select-highlight） | `#456CF6` |
 | background-color-primary-light | 选项悬停及当前浏览选项背景（cascader-column）；搜索结果的高亮背景（select-paths） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
+| color-dark-extralight | 移动端待选一级的标签、「清空」、无搜索结果的提示（cascader-view） | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-primary | 移动端选中项、标签下划线、搜索命中的文字（cascader-view） | `#456CF6` |
+| foreground-color-inactive | 移动端禁用项（cascader-view） | 亮色：`#C0C4CC`；暗色：`#737D8C` |
+| background-color-light | 移动端选项按下时的背景（cascader-view） | 亮色：`#F7F8FA`；暗色：`#2D3444` |
+| background-color-lightest | 移动端视图背景（cascader-view） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 
 ### 局部
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
 | width | `virtualized` 时的列宽（cascader-column） | `160px` |
+| height | 移动端选项列表的高度（cascader-view）；搜索结果铺满标签栏与列表的区域，键入搜索时视图高度不变 | 750 稿 768（375 宽下 384px） |
 
 ## API
 
@@ -678,7 +804,7 @@ const value = ref(['2500', '2500-3']);
 
 ### 数据格式与值转换
 
-以下类型用于说明节点结构，无需导入。节点级的 `disabled`、自定义 `loading` 或 `hasChildren` 不控制当前列行为；展开和加载状态由 `children` 与 `loadData` 推导。
+以下类型用于说明节点结构，无需导入。桌面端节点级的 `disabled`、自定义 `loading` 或 `hasChildren` 不控制当前列行为（移动端的 `disabled` 置灰且不可点）；展开和加载状态由 `children` 与 `loadData` 推导。
 
 ```ts
 interface CascaderOption {
@@ -692,9 +818,83 @@ interface CascaderOption {
 
 组件虽然继承了 Select 的一些声明，但没有多选、远程搜索、`renderOption` 等对应渲染能力；没有公开实例方法或 `readonly` 开关，默认输入框只在开启内联搜索时可输入。
 
-### 移动端
+### MCascader 属性
 
-`MCascader` 是 `Cascader` 的别名，使用相同的 props、事件和样式。当前没有独立移动端滚轮面板、`header` 属性或公开 `CascaderView`；子列交互仍依赖鼠标移入。
+`MCascader` 是独立的移动端组件，见[移动端选择](#移动端选择)。支持下方 MCascaderView 的全部属性（`allowDispatch` 除外），另有：
+
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| label | 条目标签 | `string \| number \| Function \| { type: string; value: any }` | - | - |
+| labelWidth | 条目标签宽度，750 稿长度，传给 MListItem | `string \| number` | - | `''` |
+| arrow | 条目箭头 | `boolean \| string` | - | `right` |
+| extra | `formatter` 返回空值时显示的文字，允许空字符串 | `string` | - | 当前语言的 `vc.Cascader.placeholder` |
+| formatter | 根据路径文字生成显示内容，同桌面端 | `(labels: string[]) => any` | - | `labels => labels.join(' / ')` |
+| title | 弹层标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
+| confirm | 选到最后一级（或清空）不自动提交，由「确定」提交；为 `true` 或开启 `changeOnSelect` 时显示「取消 / 确定」工具栏 | `boolean` | - | `false` |
+| cancelText | 工具栏的取消文案，允许空字符串 | `string` | - | 当前语言的 `vc.Picker.cancelText` |
+| okText | 工具栏的确定文案，允许空字符串 | `string` | - | 当前语言的 `vc.Picker.okText` |
+
+### MCascader 事件
+
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue | 提交后更新绑定值 | `(value, labels)` | 形状同桌面端；`labels` 为路径文字 |
+| change | 提交时触发 | `(value, labels)` | 同上 |
+| ok | 提交时触发（选到最后一级自动提交，或点「确定」） | `(value, labels)` | 同上 |
+| cancel | 点「取消」，不提交 | - | - |
+| select | 弹层内每次点选一项 | `{ row, values, labels, leaf }` | 见 MCascaderView 事件 |
+| clear | 弹层内点击「清空」 | - | - |
+| visible-change | 弹层显示状态变化 | `(visible: boolean)` | - |
+| close | 弹层关闭动画完成 | - | - |
+
+### MCascader 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 自定义可点击的触发内容，替代 MListItem | `{ label: string[], value }`，路径文字与当前绑定值 |
+
+### MCascader 方法
+
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| open | 直接打开弹层 | MCascaderView 的属性、`title`、`confirm`、`cancelText`、`okText`，以及 `onOk(value, labels)`、`onCancel()`、`onSelect(payload)`、`onClear()`、`onVisibleChange(visible)`、`onClose()` | Portal 实例，可调用 `destroy()` |
+
+`MCascader.open` 不返回选中结果的 Promise，通过 `onOk` 接收。兼容 `value` 作为初始值的别名，同时传入时以 `modelValue` 为准。`MCascader.View` 与 `MCascaderView` 为同一组件。
+
+### MCascaderView 属性
+
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| data | 树形数据；节点的 `disabled: true` 置灰且不可点 | `CascaderOption[]` | - | `[]` |
+| modelValue | 同桌面端 | `string \| number \| (string \| number)[]` | - | `undefined` |
+| changeOnSelect | 任意一级都提交；否则只在选到最后一级时提交 | `boolean` | - | `false` |
+| checkStrategy | 同桌面端 | `string` | `all`、`child` | `'all'` |
+| loadData | 为 `children: []` 的节点加载子节点，同桌面端 | `({ row, values, labels }) => CascaderOption[] \| Promise<CascaderOption[]>` | - | - |
+| clearable | 有选中路径时在层级标签栏右端显示「清空」，点击后回到第一级并提交空值（`nullValue`，数组值为 `[]`） | `boolean` | - | `false` |
+| searchable | 列表上方显示搜索框 | `boolean` | - | `false` |
+| searchPlaceholder | 搜索框的占位文字 | `string` | - | `''` |
+| placeholder | 待选那一级的标签文字 | `string` | - | 当前语言的 `vc.Cascader.placeholder` |
+| renderLabel | 自定义选项内容；`label` 插槽优先 | `(options: { label, row, index: number, selected: boolean }) => VNodeChild` | - | - |
+| separator | 同桌面端 | `string` | - | `','` |
+| numerable | 同桌面端 | `boolean` | - | `false` |
+| nullValue | 同桌面端 | `number \| string \| object` | - | `undefined` |
+| max | 同桌面端 | `number` | - | `1` |
+| allowDispatch | 提交时通知所属表单项；MCascader 的弹层内为 `false` | `boolean` | - | `true` |
+
+### MCascaderView 事件
+
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue | 选到最后一级（或 `changeOnSelect` 时任意一级）时更新 | `(value, labels)` | 同桌面端 |
+| change | 同 `update:modelValue` | `(value, labels)` | 同上 |
+| select | 每次点选一项或一条搜索结果，在提交之后触发 | `{ row, values, labels, leaf }` | `row` 为所点的节点，`values` / `labels` 为从根到它的路径，`leaf` 为是否已到最后一级 |
+| clear | 点击「清空」，先于提交空值 | - | - |
+
+### MCascaderView 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| label | 自定义选项内容 | `{ label, row, index, selected }` |
 
 ### 主题
 

@@ -42,11 +42,12 @@ describe('Cascader locale', () => {
 		wrapper.unmount();
 	});
 
-	it('uses the same reactive placeholder for the mobile alias', async () => {
+	it('MCascader shows the reactive placeholder as the list item extra', async () => {
 		const wrapper = mount(MCascader);
+		expect(wrapper.text()).toContain('请选择');
 		VcInstance.configure({ locale: enUS });
 		await nextTick();
-		expect(wrapper.find('input').attributes('placeholder')).toBe('Please select');
+		expect(wrapper.text()).toContain('Please select');
 		wrapper.unmount();
 	});
 });

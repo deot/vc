@@ -13,7 +13,8 @@ export const enUS: Language = {
 		},
 		Cascader: {
 			placeholder: 'Please select',
-			noMatch: 'No matching data'
+			noMatch: 'No matching data',
+			clearText: 'Clear'
 		},
 		ColorPicker: {
 			clearText: 'Clear',

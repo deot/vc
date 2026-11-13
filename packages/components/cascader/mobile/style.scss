@@ -1,0 +1,135 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-cascader-view;
+$color-dark-lighter: varfix(color-dark-lighter, cascader-view);
+$color-dark-extralight: varfix(color-dark-extralight, cascader-view);
+$color-primary: varfix(color-primary, cascader-view);
+$foreground-color-inactive: varfix(foreground-color-inactive, cascader-view);
+$background-color-light: varfix(background-color-light, cascader-view);
+$background-color-lightest: varfix(background-color-lightest, cascader-view);
+
+// 750 稿：
+// 标签切换层级（待选的一级为灰色，下划线为主色），下方为固定高度的选项列表，选中项为主色并打勾
+@include block($component-name) {
+	background-color: $background-color-lightest;
+
+	// 层级标签（MTabs）：标签栏高 96（375 宽下 48px），字号 28，下划线为主色；
+	// 标签左右内边距 24，标签栏再缩进 8，第一个标签的文字与选项对齐（32）
+	@include localvars(tabs, (
+		bar-margin-bottom: 0,
+		nav-padding: 0 remfix(8),
+		item-padding: remfix(34) remfix(24),
+		item-font-size: remfix(28),
+		afloat-color: $color-primary
+	));
+
+	// 标签栏与列表所在的区域：搜索结果盖在上面，标签栏与列表保留（不可见），键入时高度不变，退出搜索不用重建
+	@include element(body) {
+		position: relative;
+
+		@include when(searching) {
+			> .vcm-cascader-view__tabs {
+				visibility: hidden;
+			}
+		}
+	}
+
+	// 标签栏右端的「清空」（MTabs 的 append 插槽）
+	@include element(clear) {
+		display: flex;
+		padding: 0 remfix(32);
+		font-size: remfix(28);
+		color: $color-dark-extralight;
+		white-space: nowrap;
+		cursor: pointer;
+		flex-shrink: 0;
+		align-items: center;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	// 已选的级：选项文字色，加粗；待选的一级：灰色，常规字重
+	@include element(tab) {
+		font-weight: 600;
+		color: $color-dark-lighter;
+	}
+
+	@include element(placeholder) {
+		color: $color-dark-extralight;
+	}
+
+	// 列表高 768（375 宽下 384px），原生滚动
+	@include element(options) {
+		height: localfix(cascader-view, height, remfix(768));
+		padding: remfix(12) 0;
+		overflow-y: auto;
+		box-sizing: border-box;
+		overscroll-behavior: contain;
+		-webkit-overflow-scrolling: touch;
+
+		// 搜索结果铺满标签栏与列表的区域
+		@include when(results) {
+			position: absolute;
+			inset: 0;
+			height: auto;
+		}
+	}
+
+	@include element(option) {
+		display: flex;
+		padding: remfix(20) remfix(32);
+		font-size: remfix(28);
+		line-height: remfix(40);
+		color: $color-dark-lighter;
+		cursor: pointer;
+		align-items: center;
+		-webkit-tap-highlight-color: transparent;
+
+		&:active {
+			background-color: $background-color-light;
+		}
+
+		@include when(selected) {
+			font-weight: 600;
+			color: $color-primary;
+		}
+
+		@include when(disabled) {
+			color: $foreground-color-inactive;
+			cursor: not-allowed;
+
+			&:active {
+				background-color: transparent;
+			}
+		}
+
+		// 搜索命中的文字
+		.vc-select-highlight {
+			color: $color-primary;
+		}
+	}
+
+	@include element(label) {
+		min-width: 0;
+		overflow-wrap: anywhere;
+		flex: 1;
+	}
+
+	// 打勾与文字同高（28）
+	@include element(icon) {
+		margin-left: remfix(16);
+		font-size: remfix(28);
+		flex-shrink: 0;
+	}
+
+	@include element(loading) {
+		margin-left: remfix(16);
+		flex-shrink: 0;
+	}
+
+	@include element(empty) {
+		padding: remfix(96) remfix(32);
+		font-size: remfix(28);
+		color: $color-dark-extralight;
+		text-align: center;
+	}
+}

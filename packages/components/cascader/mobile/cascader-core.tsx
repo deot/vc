@@ -1,0 +1,160 @@
+/** @jsxImportSource vue */
+
+import { computed, defineComponent, onMounted, ref, watch } from 'vue';
+import { pick } from 'lodash-es';
+import { Portal } from '../../portal';
+import { MPickerPopup } from '../../picker/index.m';
+import { getPathLabels, toCascaderValue } from '../utils';
+import { MCascaderView } from './cascader-view';
+import { props as cascaderViewProps } from './cascader-view-props';
+import { props as coreProps } from './cascader-core-props';
+import type { MCascaderSelectPayload } from './cascader-view';
+
+const COMPONENT_NAME = 'vcm-cascader-core';
+
+// 透传给 MCascaderView 的属性
+const viewKeys = Object.keys(cascaderViewProps).filter(key => key !== 'modelValue' && key !== 'allowDispatch');
+
+export const MCascaderCore = defineComponent({
+	name: COMPONENT_NAME,
+	props: coreProps,
+	emits: [
+		'update:modelValue',
+		'update:visible',
+		'change',
+		'select',
+		'clear',
+		'cancel',
+		'ok',
+		'close',
+		'portal-fulfilled',
+		'visible-change'
+	],
+	setup(props, { emit }) {
+		const isActive = ref(false);
+		const view = ref<any>();
+		// 弹层内的值：确定时提交，取消时丢弃
+		const currentValue = ref<any>(props.modelValue);
+
+		const hasToolbar = computed(() => props.confirm || props.changeOnSelect);
+
+		// 只提交最后一级时，路径没到最后一级不能确定
+		// clearable 时空路径也可以确定（提交空值）
+		const isOkDisabled = computed(() => {
+			if (!props.confirm || props.changeOnSelect || !view.value) return false;
+			return !view.value.isComplete() && !(props.clearable && !view.value.getPath().length);
+		});
+
+		// 透传给 MCascaderView 的属性
+		const viewProps = computed(() => pick(props, viewKeys));
+
+		watch(
+			() => props.modelValue,
+			(v) => {
+				currentValue.value = v;
+			}
+		);
+
+		watch(
+			() => props.visible,
+			(v) => {
+				isActive.value = v;
+			}
+		);
+
+		watch(
+			() => isActive.value,
+			(v) => {
+				emit('visible-change', v);
+				emit('update:visible', v);
+			}
+		);
+
+		onMounted(() => {
+			isActive.value = props.visible;
+		});
+
+		const handleClose = () => {
+			isActive.value = false;
+			emit('close');
+			emit('portal-fulfilled');
+			emit('update:visible', false);
+		};
+
+		const handleOk = () => {
+			if (isOkDisabled.value) return;
+			const value = currentValue.value;
+			const labels = getPathLabels(value, props);
+
+			isActive.value = false;
+			props.onOk ? props.onOk(value, labels) : emit('ok', value, labels);
+			emit('update:modelValue', value, labels);
+			emit('change', value, labels);
+		};
+
+		const handleCancel = () => {
+			isActive.value = false;
+			props.onCancel ? props.onCancel() : emit('cancel');
+		};
+
+		// 选到最后一级：不需要确认时直接提交并关闭
+		const handleSelect = (payload: MCascaderSelectPayload) => {
+			emit('select', payload);
+			payload.leaf && !props.confirm && handleOk();
+		};
+
+		// 清空：不需要确认时直接提交空值并关闭；否则只清空弹层内的值，由「确定」提交
+		// 视图先发 clear 再提交空值（同桌面端），这里直接取空值
+		const handleClear = () => {
+			currentValue.value = toCascaderValue([], props);
+			emit('clear');
+			!props.confirm && handleOk();
+		};
+
+		const handleChange = (v: any) => {
+			currentValue.value = v;
+		};
+
+		const renderView = () => {
+			return (
+				<MCascaderView
+					ref={view}
+					{...viewProps.value}
+					modelValue={currentValue.value}
+					allowDispatch={false}
+					// @ts-ignore
+					onUpdate:modelValue={handleChange}
+					onSelect={handleSelect}
+					onClear={handleClear}
+				/>
+			);
+		};
+
+		// 没有工具栏时，MPickerPopup 在标题栏显示标题与关闭按钮
+		return () => {
+			return (
+				<MPickerPopup
+					class="vcm-cascader-popup"
+					modelValue={isActive.value}
+					title={props.title}
+					cancelText={props.cancelText}
+					okText={props.okText}
+					okDisabled={isOkDisabled.value}
+					showToolbar={hasToolbar.value}
+					// 各级列表自己滚动：MPopup 的属性，经 MPickerPopup 透传
+					{...{ scrollable: false }}
+					onOk={handleOk}
+					onCancel={handleCancel}
+					onClose={handleClose}
+					onUpdate:modelValue={(v: boolean) => (isActive.value = v)}
+				>
+					{ renderView() }
+				</MPickerPopup>
+			);
+		};
+	}
+});
+
+export const MCascaderPortal = new Portal(MCascaderCore, {
+	promise: false
+});

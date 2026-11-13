@@ -78,7 +78,10 @@ describe('index.ts', () => {
 
 	it('basic', () => {
 		expect(typeof Cascader).toBe('object');
-		expect(MCascader).toBe(Cascader);
+		// 移动端是独立组件：MListItem 触发、弹层内为 MCascaderView
+		expect(MCascader.name).toBe('vcm-cascader');
+		expect(typeof MCascader.open).toBe('function');
+		expect(MCascader.View.name).toBe('vcm-cascader-view');
 	});
 
 	it('create', async () => {

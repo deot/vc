@@ -13,7 +13,8 @@ export const zhCN: Language = {
 		},
 		Cascader: {
 			placeholder: '请选择',
-			noMatch: '暂无匹配数据'
+			noMatch: '暂无匹配数据',
+			clearText: '清空'
 		},
 		ColorPicker: {
 			clearText: '清空',
