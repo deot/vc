@@ -53,8 +53,8 @@ export interface ScrollContainOptions {
 // pending：还没判定；scroll：交给内部滚动；claim：调用方接管；block：阻止滚动穿透；skip：内层组件已处理
 type Mode = 'pending' | 'scroll' | 'claim' | 'block' | 'skip';
 
-// 鼠标从这些元素上按下时不发起拖动（文本输入、选择，以及标记类 vc-drag-ignore）
-const MOUSE_IGNORE = 'input, textarea, select, [contenteditable], .vc-drag-ignore';
+// 从这些元素上按下时不发起拖动（文本输入、选择，以及标记类 vc-drag-ignore）；其它拖动手势（如 MTabs 滑动切换）共用
+export const DRAG_IGNORE = 'input, textarea, select, [contenteditable], .vc-drag-ignore';
 
 // 鼠标移动超过这个距离（px）才判定手势
 const MOUSE_THRESHOLD = 4;
@@ -72,10 +72,23 @@ const swallowClick = () => {
 };
 
 // 计算样式 overflow 为 auto / scroll；该轴为 visible 时取简写
-const isScroller = (el: HTMLElement, axis: ScrollContainAxis) => {
+export const isScroller = (el: HTMLElement, axis: ScrollContainAxis) => {
 	const style = window.getComputedStyle(el);
 	const value = axis === 'y' ? style.overflowY : style.overflowX;
 	return /(auto|scroll)/.test(!value || value === 'visible' ? style.overflow : value);
+};
+
+/**
+ * 手指朝 delta 方向移动时，元素在该轴上还能否滚动：手指向下 / 向右（delta > 0）需要 scrollTop / scrollLeft > 0
+ * @param el 滚动容器
+ * @param axis 轴向
+ * @param delta 手指在该轴上的位移
+ * @returns ~
+ */
+export const canScrollToward = (el: HTMLElement, axis: ScrollContainAxis, delta: number) => {
+	const current = axis === 'y' ? el.scrollTop : el.scrollLeft;
+	const max = axis === 'y' ? el.scrollHeight - el.clientHeight : el.scrollWidth - el.clientWidth;
+	return delta > 0 ? current > 0 : current < max - 1;
 };
 
 /**
@@ -106,11 +119,7 @@ export const useScrollContain = (options: ScrollContainOptions) => {
 	let lastY = 0;
 
 	// 手指朝 delta 方向移动时，内容还能否滚动：手指向下（delta > 0）需要 scrollTop > 0
-	const canScroll = (delta: number) => containers.some((el) => {
-		const current = axis === 'y' ? el.scrollTop : el.scrollLeft;
-		const max = axis === 'y' ? el.scrollHeight - el.clientHeight : el.scrollWidth - el.clientWidth;
-		return delta > 0 ? current > 0 : current < max - 1;
-	});
+	const canScroll = (delta: number) => containers.some(el => canScrollToward(el, axis, delta));
 
 	const isContainer = (el: HTMLElement) => {
 		const rules = options.scrollRegExp?.();
@@ -123,7 +132,7 @@ export const useScrollContain = (options: ScrollContainOptions) => {
 			const target = e.target as HTMLElement;
 			isMouse = e.type === 'mousedown';
 			// 鼠标只用于接管：没有 claim 时不处理
-			if (isMouse && (!options.claim || e.defaultPrevented || target.closest?.(MOUSE_IGNORE))) return false;
+			if (isMouse && (!options.claim || e.defaultPrevented || target.closest?.(DRAG_IGNORE))) return false;
 			if (options.start?.(e, point) === false) return false;
 			const stop = panel?.value;
 			inside = !!stop && stop.contains(target);
