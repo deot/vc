@@ -1628,4 +1628,81 @@ describe('label', () => {
 		restore();
 		wrapper.unmount();
 	});
+
+	describe('MTabs swipeable', () => {
+		// jsdom 没有 Touch：用带 touches / changedTouches 的事件模拟一根手指
+		const touch = (el: Element, type: string, x: number, y: number) => {
+			const point = { identifier: 1, clientX: x, clientY: y, screenX: x, screenY: y, pageX: x, pageY: y };
+			const event = new Event(type, { bubbles: true, cancelable: true });
+			Object.assign(event, {
+				touches: type === 'touchend' ? [] : [point],
+				changedTouches: [point]
+			});
+			el.dispatchEvent(event);
+			return event;
+		};
+		const swipe = async (el: Element, dx: number, dy = 0) => {
+			touch(el, 'touchstart', 200, 200);
+			const move = touch(el, 'touchmove', 200 + dx / 2, 200 + dy / 2);
+			touch(el, 'touchmove', 200 + dx, 200 + dy);
+			touch(el, 'touchend', 200 + dx, 200 + dy);
+			await flush();
+			return move;
+		};
+		const create = (swipeable = true) => {
+			const value = ref<any>('a');
+			const onChange = vi.fn();
+			const onClick = vi.fn();
+			const wrapper = mount(() => (
+				<MTabs v-model={value.value} swipeable={swipeable} onChange={onChange} onClick={onClick}>
+					<MTabsPane label="a" value="a"><p class="content">A</p></MTabsPane>
+					<MTabsPane label="b" value="b" disabled>B</MTabsPane>
+					<MTabsPane label="c" value="c">C</MTabsPane>
+				</MTabs>
+			), { attachTo: document.body });
+			return { value, onChange, onClick, wrapper };
+		};
+
+		it('swipes to the adjacent enabled tab, emits change but not click', async () => {
+			const { value, onChange, onClick, wrapper } = create();
+			await flush();
+			const content = wrapper.find('.vcm-tabs__content').element;
+
+			// 向左滑：跳过禁用的 b 到 c；横向移动阻止默认行为
+			const move = await swipe(content.querySelector('.content')!, -80);
+			expect(move.defaultPrevented).toBe(true);
+			expect(value.value).toBe('c');
+			expect(onChange).toHaveBeenCalledWith('c');
+			expect(onClick).not.toHaveBeenCalled();
+
+			// 已在最后一个：不再切换
+			await Utils.sleep(310);
+			await swipe(content, -80);
+			expect(value.value).toBe('c');
+
+			// 向右滑回到 a
+			await swipe(content, 80);
+			expect(value.value).toBe('a');
+			wrapper.unmount();
+		});
+
+		it('ignores vertical moves, short drags and swipeable false', async () => {
+			const { value, wrapper } = create();
+			await flush();
+			const content = wrapper.find('.vcm-tabs__content').element;
+
+			const move = await swipe(content, -60, -120);
+			expect(move.defaultPrevented).toBe(false);
+			expect(value.value).toBe('a');
+			await swipe(content, -15);
+			expect(value.value).toBe('a');
+			wrapper.unmount();
+
+			const off = create(false);
+			await flush();
+			await swipe(off.wrapper.find('.vcm-tabs__content').element, -80);
+			expect(off.value.value).toBe('a');
+			off.wrapper.unmount();
+		});
+	});
 });

@@ -31,7 +31,7 @@ $dark-stepper-shadow-color: varfix(dark-stepper-shadow-color, tabs, #242421);
 	@include element(bar) {
 		position: relative;
 		display: flex;
-		margin-bottom: remfix(16);
+		margin-bottom: localfix(tabs, bar-margin-bottom, remfix(16));
 		overflow: hidden;
 		align-items: stretch;
 
@@ -51,12 +51,14 @@ $dark-stepper-shadow-color: varfix(dark-stepper-shadow-color, tabs, #242421);
 		display: flex;
 		width: fit-content;
 		min-width: 100%;
+		padding: localfix(tabs, nav-padding, 0);
+		box-sizing: border-box;
 	}
 
 	@include element(item) {
 		position: relative;
-		padding: remfix(30) remfix(20);
-		font-size: remfix(30);
+		padding: localfix(tabs, item-padding, remfix(30) remfix(20));
+		font-size: localfix(tabs, item-font-size, remfix(30));
 		line-height: 1;
 		text-align: center;
 		transition: color .3s ease-in-out;
@@ -101,7 +103,7 @@ $dark-stepper-shadow-color: varfix(dark-stepper-shadow-color, tabs, #242421);
 
 		@include element(afloat) {
 			bottom: 0;
-			background-color: $foreground-color-dark;
+			background-color: localfix(tabs, afloat-color, $foreground-color-dark);
 		}
 	}
 

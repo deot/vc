@@ -175,14 +175,22 @@ export const useTabs = (
 				&& (typeof nextElTop === 'undefined' || scrollTop < nextElTop - allowDistance)
 			) {
 				if (getTabIndex(currentValue.value) !== i) {
-					handleChange(i, false);
+					handleChange(i, { scrollTo: false });
 				}
 				break;
 			}
 		}
 	};
 
-	const handleChange = (index: number, scrollTo = true) => {
+	/**
+	 * 切换到某个标签
+	 * @param index 下标
+	 * @param config ~
+	 * @param config.scrollTo 滚动到它的锚点，默认 true
+	 * @param config.click 触发 click，默认 true；滑动切换时为 false
+	 */
+	const handleChange = (index: number, config: { scrollTo?: boolean; click?: boolean } = {}) => {
+		const { scrollTo = true, click = true } = config;
 		if (timer) return;
 
 		timer = setTimeout(() => timer = null, 300);
@@ -194,7 +202,7 @@ export const useTabs = (
 
 		emit('update:modelValue', currentValue.value);
 		emit('change', currentValue.value);
-		emit('click', currentValue.value);
+		click && emit('click', currentValue.value);
 
 		scrollTo && scrollToAnchor(nav.anchor);
 	};

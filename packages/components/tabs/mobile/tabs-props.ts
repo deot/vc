@@ -36,6 +36,11 @@ export const props = {
 		type: Number,
 		default: 0
 	},
+	// 在内容区左右滑动切换到相邻的标签（跳过禁用的），只识别触摸
+	swipeable: {
+		type: Boolean,
+		default: false
+	},
 	// 移动端以触摸滑动为主，默认不显示翻页按钮
 	stepper: {
 		type: Boolean,

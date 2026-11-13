@@ -10,6 +10,9 @@
 		<MButton @click="isStepperVisible = !isStepperVisible">
 			stepper: {{ isStepperVisible }}
 		</MButton>
+		<MButton @click="isSwipeable = !isSwipeable">
+			swipeable: {{ isSwipeable }}
+		</MButton>
 		<MButton @click="handleClear">
 			清除定时器
 		</MButton>
@@ -21,6 +24,7 @@
 			:average="false"
 			:sticky="true"
 			:stepper="isStepperVisible"
+			:swipeable="isSwipeable"
 			closable
 			style="margin-top: 20px;"
 			@click="handleClick"
@@ -122,6 +126,7 @@ const value = ref(6);
 const isAnimated = ref(false);
 const theme = ref('light');
 const isStepperVisible = ref(true);
+const isSwipeable = ref(true);
 const list = ref(Array.from({ length: 200 }, (_, i) => i));
 
 const handleClick = () => {

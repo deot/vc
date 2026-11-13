@@ -9,6 +9,7 @@ import { CustomerProp } from '../../customer/customer-prop';
 import { Scroller } from '../../scroller';
 import { useTabs } from '../use-tabs';
 import { useTabsScroll } from '../use-tabs-scroll';
+import { useTabsSwipe } from './use-tabs-swipe';
 
 const COMPONENT_NAME = 'vcm-tabs';
 const SHARED = { shared: true };
@@ -65,6 +66,14 @@ export const MTabs = defineComponent({
 			content,
 			refreshAfloat,
 			scrollToActive: () => scroll.scrollToActive()
+		});
+
+		const swipe = useTabsSwipe({
+			enabled: () => props.swipeable,
+			getIndex: () => tabs.getTabIndex(tabs.currentValue.value),
+			getCount: () => tabs.list.value.length,
+			isDisabled: index => !!tabs.list.value[index]?.disabled,
+			change: index => tabs.handleChange(index, { click: false })
 		});
 
 		// 可视区或标签尺寸变化：立即刷新，不播放动画
@@ -188,6 +197,7 @@ export const MTabs = defineComponent({
 					<div
 						ref={content}
 						class="vcm-tabs__content"
+						{...(props.swipeable ? swipe.listeners : {})}
 					>
 						{ slots.default?.() }
 					</div>

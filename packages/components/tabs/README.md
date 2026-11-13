@@ -246,7 +246,7 @@ const value = ref('pending');
 
 ### 移动端
 
-移动端标签栏同样由 Scroller 承载，触摸时为原生横向滚动（带惯性），选中的标签尽量滚到中间；另支持均分和翻页按钮（`stepper`）。`theme="light"` 跟随全局亮暗主题；`theme="dark"` 是深色金色的独立视觉风格，不等同于切换全局主题。
+移动端标签栏同样由 Scroller 承载，触摸时为原生横向滚动（带惯性），选中的标签尽量滚到中间；另支持均分和翻页按钮（`stepper`）。`swipeable` 时在内容区左右滑动切换到相邻的标签（跳过禁用的），配合 `animated` 有滑入动画。`theme="light"` 跟随全局亮暗主题；`theme="dark"` 是深色金色的独立视觉风格，不等同于切换全局主题。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, viewport: 375, viewportOptions: ['auto', 375] }</config> -->
@@ -254,7 +254,7 @@ const value = ref('pending');
 <template>
 	<div class="tabs-mobile-demo">
 		<label><input v-model="isDark" type="checkbox"> 深色金色风格</label>
-		<MTabs v-model="value" :theme="isDark ? 'dark' : 'light'" :average="false" stepper>
+		<MTabs v-model="value" :theme="isDark ? 'dark' : 'light'" :average="false" stepper swipeable animated>
 			<MTabsPane v-for="item in 8" :key="item" :value="item" :label="`分类 ${item}`">
 				分类 {{ item }} 的内容
 			</MTabsPane>
@@ -310,6 +310,11 @@ const isDark = ref(false);
 | dark-background-color | 移动端 dark 外观背景 | `#333333` |
 | dark-color | 移动端 dark 外观标签文字 | `#E7C083` |
 | dark-stepper-shadow-color | 移动端 dark 外观翻页按钮的阴影 | `#242421` |
+| bar-margin-bottom | 移动端标签栏与内容的间距 | 750 稿 16 |
+| nav-padding | 移动端标签列表的内边距（标签栏两端的缩进） | `0` |
+| item-padding | 移动端标签的内边距 | 750 稿 30 20 |
+| item-font-size | 移动端标签的字号 | 750 稿 30 |
+| afloat-color | 移动端 light 外观的指示线颜色 | 同 `foreground-color-dark` |
 
 ## API
 
@@ -390,12 +395,13 @@ const isDark = ref(false);
 | sticky | 标签栏吸顶：由 `MAffix`（`position: sticky`）吸附在所在滚动容器（页面或内层容器）的顶部，Tabs 滚出后随之离开；Tabs 与滚动容器之间不能有 `overflow` 非 `visible` 的元素 | `boolean` | - | `false` |
 | offsetTop | 吸顶偏移，750 稿长度 | `number` | - | `0` |
 | stepper | 标签溢出时显示左右翻页按钮；移动端以触摸滑动为主，默认不显示 | `boolean` | - | `false` |
+| swipeable | 在内容区左右滑动切换到相邻的标签，跳过禁用的。只识别触摸：第一次移动锁定方向，纵向仍交给页面（或弹层）滚动；横向距离超过 50px，或超过 20px 且快速甩动时切换。内容里还能朝手指方向横向滚动的元素优先滚动；不希望触发的区域加类名 `vc-drag-ignore` | `boolean` | - | `false` |
 
 `type`、`size`、`placement` 只属于桌面端，MTabs 不声明；`barClass`、`contentClass`、`contentStyle`、`affixable`、`affixOptions` 尚未接入移动端渲染。
 
 ### MTabs 事件
 
-与 `Tabs` 事件相同。
+与 `Tabs` 事件相同；滑动切换触发 `update:modelValue` 与 `change`，不触发 `click`。
 
 ### MTabs 插槽
 
