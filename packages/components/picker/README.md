@@ -352,7 +352,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | --- | --- | --- |
 | color-dark-light | 滚动选项和标题文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
 | color-neutral-light | 选中框上下的发丝线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
-| foreground-color-inactive | 禁用选项的文字 | 亮色：`#C0C4CC`；暗色：`#737D8C` |
+| foreground-color-inactive | 禁用选项的文字；置灰的「取消」「确定」（PickerPopup） | 亮色：`#C0C4CC`；暗色：`#737D8C` |
 | color-primary | 头部操作文字 | `#456CF6` |
 | background-color-lightest | 选择器、滚动列及渐变遮罩背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 
@@ -460,7 +460,9 @@ p { margin: 0; overflow-wrap: anywhere; }
 | title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | cancelText | 取消文本，空字符串隐藏按钮 | `string` | - | 当前语言的“取消” |
 | okText | 确定文本，空字符串隐藏按钮 | `string` | - | 当前语言的“确定” |
-| showToolbar | 显示工具栏 | `boolean` | - | `true` |
+| showToolbar | 显示工具栏；为 `false` 时标题与关闭按钮显示在 MPopup 的标题栏 | `boolean` | - | `true` |
+| cancelDisabled | 「取消」置灰且不可点 | `boolean` | - | `false` |
+| okDisabled | 「确定」置灰且不可点，如所选内容还不完整时 | `boolean` | - | `false` |
 
 ### PickerPopup 事件
 

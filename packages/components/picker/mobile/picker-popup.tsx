@@ -43,8 +43,22 @@ export const PickerPopup = defineComponent({
 		);
 
 		const handleAction = (event: 'cancel' | 'ok') => {
+			if (event === 'cancel' ? props.cancelDisabled : props.okDisabled) return;
 			isActive.value = false;
 			emit(event);
+		};
+
+		const renderAction = (event: 'cancel' | 'ok') => {
+			const text = event === 'cancel' ? cancelText.value : okText.value;
+			const disabled = event === 'cancel' ? props.cancelDisabled : props.okDisabled;
+			return text && (
+				<div
+					class={['vcm-picker-popup__item', event === 'cancel' ? 'is-left' : 'is-right', { 'is-disabled': disabled }]}
+					onClick={withModifiers(() => handleAction(event), ['stop'])}
+				>
+					{ text }
+				</div>
+			);
 		};
 
 		const handleClose = () => {
@@ -59,33 +73,19 @@ export const PickerPopup = defineComponent({
 						{...its.value.attrs}
 						modelValue={isActive.value}
 						fixed
+						// 没有工具栏时，标题与关闭按钮放在 MPopup 的标题栏；内容（滚轮、级联等）都铺满，不留内边距
+						title={props.showToolbar ? void 0 : props.title}
+						closable={!props.showToolbar}
+						contentClass={['vcm-picker-popup__content', its.value.attrs?.contentClass]}
 						onClose={handleClose}
 						onUpdate:modelValue={(v: boolean) => (isActive.value = v)}
 					>
 						{
 							props.showToolbar && (
 								<div class="vcm-picker-popup__header">
-									{
-										cancelText.value && (
-											<div
-												class="vcm-picker-popup__item is-left"
-												onClick={withModifiers(() => handleAction('cancel'), ['stop'])}
-											>
-												{ cancelText.value }
-											</div>
-										)
-									}
+									{ renderAction('cancel') }
 									<MCustomer wrap class="vcm-picker-popup__item is-title" render={props.title} />
-									{
-										okText.value && (
-											<div
-												class="vcm-picker-popup__item is-right"
-												onClick={withModifiers(() => handleAction('ok'), ['stop'])}
-											>
-												{ okText.value }
-											</div>
-										)
-									}
+									{ renderAction('ok') }
 								</div>
 							)
 						}

@@ -3,6 +3,7 @@
 $component-name: vcm-picker-popup;
 $color-dark-light: varfix(color-dark-light, picker);
 $color-primary: varfix(color-primary, picker);
+$foreground-color-inactive: varfix(foreground-color-inactive, picker);
 $background-color-lightest: varfix(background-color-lightest, picker);
 
 // 标题栏高 108（375 宽下 54px），不画分隔线；取消 / 确定字号 30、左右内边距 32，主色；标题与 MPopup 的标题一致（34、600）
@@ -23,6 +24,10 @@ $background-color-lightest: varfix(background-color-lightest, picker);
 		color: $color-primary;
 		-webkit-tap-highlight-color: transparent;
 
+		@include when(disabled) {
+			color: $foreground-color-inactive;
+		}
+
 		@include when(title) {
 			min-width: 0;
 			overflow: hidden;
@@ -34,5 +39,10 @@ $background-color-lightest: varfix(background-color-lightest, picker);
 			white-space: nowrap;
 			flex: 1;
 		}
+	}
+
+	// 没有工具栏时 MPopup 带标题栏，内容区默认有内边距：滚轮、级联等内容铺满
+	@include element(content) {
+		padding: 0;
 	}
 }

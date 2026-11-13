@@ -825,6 +825,42 @@ describe('PickerPopup', () => {
 		document.body.innerHTML = '';
 	});
 
+	it('cancelDisabled / okDisabled gray out the buttons and ignore taps', async () => {
+		const onOk = vi.fn();
+		const onCancel = vi.fn();
+		const popup = mount(PickerPopup, {
+			attachTo: document.body,
+			props: { okDisabled: true, cancelDisabled: true, onOk, onCancel }
+		});
+		await flush();
+		const ok = popup.find('.is-right');
+		expect(ok.classes()).toContain('is-disabled');
+		await ok.trigger('click');
+		expect(onOk).not.toHaveBeenCalled();
+		const cancel = popup.find('.is-left');
+		expect(cancel.classes()).toContain('is-disabled');
+		await cancel.trigger('click');
+		expect(onCancel).not.toHaveBeenCalled();
+
+		await popup.setProps({ okDisabled: false });
+		expect(popup.find('.is-right').classes()).not.toContain('is-disabled');
+		await popup.find('.is-right').trigger('click');
+		expect(onOk).toHaveBeenCalledTimes(1);
+		popup.unmount();
+	});
+
+	it('without the toolbar, shows the title and close button in the MPopup header', async () => {
+		const popup = mount(PickerPopup, {
+			attachTo: document.body,
+			props: { showToolbar: false, title: '标题' }
+		});
+		await flush();
+		expect(popup.find('.vcm-picker-popup__header').exists()).toBe(false);
+		expect(document.querySelector('.vcm-popup__title')?.textContent).toBe('标题');
+		expect(document.querySelector('.vcm-popup__content')?.classList).toContain('vcm-picker-popup__content');
+		popup.unmount();
+	});
+
 	it('supports visible alias and emits cancel/update events', async () => {
 		const onCancel = vi.fn();
 		const onVisibleChange = vi.fn();
