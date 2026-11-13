@@ -82,6 +82,49 @@ export const walkTree = (
 };
 
 /**
+ * 搜索结果中的一条：命中的节点及从根到它的各级文字与值
+ */
+export interface SelectPath {
+	item: TreeData;
+	labels: string[];
+	values: TreeValue[];
+}
+
+export interface MatchedPathsOptions {
+	regex?: SearchRegex;
+	// 远程搜索时数据已由调用方过滤，本地不再匹配
+	remote?: boolean;
+	// 按整条路径（各级文字用 " / " 连接）匹配；否则只看节点自身的 label
+	path?: boolean;
+	// 可作为结果的节点，默认全部
+	selectable?: (item: TreeData) => boolean;
+}
+
+const getPathText = (item: TreeData) => String(item.label ?? '');
+
+/**
+ * 树形数据中命中搜索的节点，按深度优先的顺序列出它们的路径
+ * @param data 树形数据
+ * @param options ~
+ * @returns ~
+ */
+export const getMatchedPaths = (data: TreeData[], options: MatchedPathsOptions = {}) => {
+	const { regex, path, selectable } = options;
+	const isLocal = !options.remote && !!regex;
+	const result: SelectPath[] = [];
+	walkTree(data, (item, ancestors) => {
+		if (selectable && !selectable(item)) return;
+		// 只看自身文字时先匹配，未命中的节点不必整理路径
+		if (isLocal && !path && !regex.test(getPathText(item))) return;
+		const labels = ancestors.map(getPathText);
+		// path：各级文字连起来匹配，多个关键词可以分别落在不同的层级上
+		if (isLocal && path && !regex.test(labels.join(' / '))) return;
+		result.push({ item, labels, values: ancestors.map(i => i.value) });
+	});
+	return result;
+};
+
+/**
  * 树形数据的层级（最深一条路径的节点数）
  * @param data ~
  * @returns ~

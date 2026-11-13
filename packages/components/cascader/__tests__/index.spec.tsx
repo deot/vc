@@ -447,7 +447,12 @@ describe('Cascader interaction', () => {
 		await sleep(10);
 		await flush();
 
-		expect(loadData).toHaveBeenCalled();
+		expect(loadData).toHaveBeenCalledTimes(1);
+		expect(loadData).toHaveBeenCalledWith({
+			row: data.value[0],
+			values: ['beijing'],
+			labels: ['北京']
+		});
 		expect(getCols().length).toBe(2);
 		expect(getCells(1).length).toBe(3);
 

@@ -3,6 +3,7 @@ import { props as selectProps } from '../select/select-props';
 import { TreeData } from '../select/utils';
 import { expandDirection } from './hooks/use-column-direction';
 import type { TreeCheckStrategy } from '../tree/types';
+import type { CascaderLoadDataPayload } from './utils';
 
 /**
  * v-model 回填路径上的哪些节点，与 TreeSelect 的 checkStrategy 同义
@@ -21,6 +22,8 @@ export const props = {
 		type: Function,
 		default: (v: any[]) => (v && v.join(' / '))
 	},
+	// 为 children: [] 的节点加载子节点：返回的数组写入该节点的 children
+	loadData: Function as PropType<(payload: CascaderLoadDataPayload) => TreeData[] | Promise<TreeData[]> | any>,
 	changeOnSelect: {
 		type: Boolean,
 		default: false

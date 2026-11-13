@@ -2,7 +2,7 @@
 
 import { defineComponent, ref, watch, computed, nextTick, inject } from 'vue';
 import { isEqualWith } from 'lodash-es';
-import { getSelectedData, getValuePath } from './utils';
+import { getSelectedData, getPathRows, toCascaderPath, toCascaderValue } from './utils';
 import { VcError } from '../vc/index';
 import { Popover } from '../popover/index';
 import { useLocale } from '../locale';
@@ -13,7 +13,7 @@ import { useSelect } from '../select/hooks/use-select';
 import { useColumnNavigate } from '../select/hooks/use-navigate';
 import { useColumnDirection } from './hooks/use-column-direction';
 
-import { toCurrentValue, toModelValue, getTreeDepth } from '../select/utils';
+import { getTreeDepth } from '../select/utils';
 
 import type { TreeData, TreeValue, TreeLabel } from '../select/utils';
 import type { SelectPath } from '../select/select-search';
@@ -49,43 +49,11 @@ export const Cascader = defineComponent({
 			getDepth: () => (props.loadData ? Infinity : getTreeDepth(props.data))
 		});
 
-		/**
-		 * v-model -> 路径
-		 * 	- all：值即路径
-		 * 	- child：值为最后一级（传数组时取最后一项，字符串不拆分），从 data 中找出路径；值在不同分支重复时，保留当前路径
-		 * 	- 都按 === 比较，numerable 时字符串先转为数字
-		 * @param v ~
-		 * @returns ~
-		 */
-		const toPath = (v: any): TreeValue[] => {
-			const options = { numerable: props.numerable, separator: props.separator };
-			if (props.checkStrategy !== 'child') return toCurrentValue(v, options);
+		// v-model -> 路径，见 toCascaderPath
+		const toPath = (v: any): TreeValue[] => toCascaderPath(v, props, currentValue.value);
 
-			const [value] = toCurrentValue((Array.isArray(v) ? v : [v]).slice(-1), options);
-			if (typeof value === 'undefined' || value === null || value === '') return [];
-			const path = currentValue.value;
-			return path.length && path[path.length - 1] === value ? path : getValuePath(props.data, value);
-		};
-
-		/**
-		 * 路径 -> v-model，形状跟随当前 v-model（同 toModelValue）
-		 * 	- child：数组时为 [最后一级]，清空为 []；否则为最后一级，清空为 nullValue
-		 * @param path ~
-		 * @returns ~
-		 */
-		const toValue = (path: TreeValue[]) => {
-			if (props.checkStrategy === 'child') {
-				const value = path.slice(-1);
-				return Array.isArray(props.modelValue) ? value : path.length ? value[0] : props.nullValue;
-			}
-			return toModelValue(path, {
-				modelValue: props.modelValue,
-				max: props.max,
-				numerable: props.numerable,
-				separator: props.separator,
-				nullValue: props.nullValue
-			});
-		};
+		// 路径 -> v-model，见 toCascaderValue
+		const toValue = (path: TreeValue[]) => toCascaderValue(path, props);
 
 		/**
 		 * TODO: 初始化时，存在查找耗时
@@ -216,7 +184,13 @@ export const Cascader = defineComponent({
 				if (props.loadData && children && children.length === 0) {
 					rebuildData.value[columnIndex][rowIndex].loading = true;
 
-					const res = await props.loadData();
+					const values = currentValue.value.slice(0, columnIndex + 1);
+					const rows = getPathRows(values, props.data);
+					const res = await props.loadData({
+						row: rows[rows.length - 1],
+						values,
+						labels: rows.map(i => i.label as string)
+					});
 					/**
 					 * TODO: 优化，data -> cloneData?
 					 */

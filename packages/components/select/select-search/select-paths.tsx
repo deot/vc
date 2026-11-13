@@ -3,21 +3,15 @@
 import { defineComponent, computed } from 'vue';
 import type { PropType } from 'vue';
 import { Scroller } from '../../scroller/index';
-import { walkTree } from '../utils';
-import type { TreeData, TreeValue, SearchRegex } from '../utils';
+import { getMatchedPaths } from '../utils';
+import type { TreeData, SearchRegex, SelectPath } from '../utils';
 import { useNavigate } from '../hooks/use-navigate';
 import { SelectList } from '../select-list';
 import { renderHighlight } from './highlight';
 
 const COMPONENT_NAME = 'vc-select-paths';
 
-export interface SelectPath {
-	item: TreeData;
-	labels: string[];
-	values: TreeValue[];
-}
-
-const getText = (item: TreeData) => String(item.label ?? '');
+export type { SelectPath };
 
 /**
  * TreeSelect（级联模式）/ Cascader 的搜索结果：扁平列出命中的节点及其完整路径
@@ -45,21 +39,12 @@ export const SelectPaths = defineComponent({
 	},
 	emits: ['select'],
 	setup(props, { emit, slots, expose }) {
-		const results = computed(() => {
-			const { regex, path, selectable } = props;
-			const isLocal = !props.remote && !!regex;
-			const result: SelectPath[] = [];
-			walkTree(props.data, (item, ancestors) => {
-				if (selectable && !selectable(item)) return;
-				// 只看自身文字时先匹配，未命中的节点不必整理路径
-				if (isLocal && !path && !regex.test(getText(item))) return;
-				const labels = ancestors.map(getText);
-				// path：各级文字连起来匹配，多个关键词可以分别落在不同的层级上
-				if (isLocal && path && !regex.test(labels.join(' / '))) return;
-				result.push({ item, labels, values: ancestors.map(i => i.value) });
-			});
-			return result;
-		});
+		const results = computed(() => getMatchedPaths(props.data, {
+			regex: props.regex,
+			remote: props.remote,
+			path: props.path,
+			selectable: props.selectable
+		}));
 
 		const style = computed(() => {
 			return props.width ? { width: `${props.width}px` } : void 0;

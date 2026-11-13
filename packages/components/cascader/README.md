@@ -382,7 +382,7 @@ const options = ['A', 'B'].map(group => ({
 
 ### 异步加载子节点
 
-给待加载节点设置 `children: []`，并传入 `loadData`。鼠标移入该节点时显示加载状态，回调不接收参数，返回子节点数组（或解析为数组的 Promise）。组件会将返回结果插入原节点的 `children`，所以数据源需允许修改；已加载的非空子节点不会重复请求。
+给待加载节点设置 `children: []`，并传入 `loadData`。鼠标移入该节点时显示加载状态，回调收到 `{ row, values, labels }`：`row` 为该节点（`data` 中的原对象），`values`、`labels` 为从根到它的各级值与文字；返回子节点数组（或解析为数组的 Promise）。组件会将返回结果插入原节点的 `children`，所以数据源需允许修改；已加载的非空子节点不会重复请求。
 
 示例只设置一个待加载父节点，使用本地延时模拟加载。
 
@@ -410,11 +410,12 @@ import { Cascader } from '@deot/vc';
 const value = ref([]);
 const data = ref([{ value: 'group-a', label: '分组 A', children: [] }]);
 const loadCount = ref(0);
-const loadData = () => {
+// row 为待加载的节点，values / labels 为从根到它的路径
+const loadData = ({ row }) => {
 	loadCount.value++;
 	return new Promise(resolve => setTimeout(() => resolve([
-		{ value: 'item-a-1', label: '条目 A-1' },
-		{ value: 'item-a-2', label: '条目 A-2' }
+		{ value: `${row.value}-1`, label: `${row.label} 的条目 1` },
+		{ value: `${row.value}-2`, label: `${row.label} 的条目 2` }
 	]), 600));
 };
 const playground = inject('docs:playground');
@@ -645,7 +646,7 @@ const value = ref(['2500', '2500-3']);
 | extra | `formatter` 返回空值时展示的输入框内容 | `string` | - | `''` |
 | id | 默认 Input 根节点的 id，替换触发区后不使用 | `string` | - | - |
 | virtualized | 每一列与搜索结果只渲染可视范围附近的项，列宽固定；见[大量数据](#大量数据) | `boolean` | - | `false` |
-| loadData | 为 `children: []` 的节点加载子节点；不接收参数，会修改原数据，不参与搜索 | `() => CascaderOption[] \| Promise<CascaderOption[]>` | - | - |
+| loadData | 为 `children: []` 的节点加载子节点；`row` 为该节点，`values` / `labels` 为从根到它的各级值与文字；会修改原数据，不参与搜索 | `({ row, values, labels }) => CascaderOption[] \| Promise<CascaderOption[]>` | - | - |
 | trigger | 浮层打开方式；子列始终由鼠标移入展开 | `string` | `click`、`hover`、`strictHover`、`focus`、`custom` | `click` |
 | tag | 触发区根元素类型；`focus` 时需让根元素可聚焦 | `string` | - | `div` |
 | placement | 浮层位置 | `string` | `top`、`top-left`、`top-right`、`bottom`、`bottom-left`、`bottom-right`、`left`、`left-top`、`left-bottom`、`right`、`right-top`、`right-bottom` | `bottom-left` |
