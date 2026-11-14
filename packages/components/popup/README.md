@@ -281,7 +281,8 @@ const snap = ref(0);
 			@update:snap="handleSnap"
 		>
 			<template #header="{ snap, full }">
-				{{ full ? '已全屏' : `第 ${snap + 1} 档，上拉查看全部` }}
+				<template v-if="full">已全屏</template>
+				<template v-else>第 {{ snap + 1 }} 档，上拉查看全部</template>
 			</template>
 			<div ref="banner" class="banner">横幅随上拉渐隐</div>
 			<div v-for="item in 60" :key="item" style="line-height: 2;">第 {{ item }} 行</div>

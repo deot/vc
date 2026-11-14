@@ -16,7 +16,8 @@
 			@update:snap="handleSnap"
 		>
 			<template #header="{ snap, full }">
-				{{ full ? '已全屏' : `第 ${snap + 1} 档，上拉查看全部` }}
+				<template v-if="full">已全屏</template>
+				<template v-else>第 {{ snap + 1 }} 档，上拉查看全部</template>
 			</template>
 			<div ref="banner" class="vcm-popup-drag-example__banner">横幅随上拉渐隐</div>
 			<p ref="readout" class="vcm-popup-drag-example__readout">拖动面板查看 drag 的参数</p>
