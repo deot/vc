@@ -37,7 +37,7 @@ export const Select = defineComponent({
 
 		const select = useSelect(props, context, { name: 'select', navigator: () => navigate });
 		const { its, isActive, searchRegex, searchMode, isSearching, isRemote, close, toggle } = select;
-		const { currentValue, multiple, sync: syncValue, handleClear } = useSelectValue(props, context, { select });
+		const { currentValue, multiple, isFull, sync: syncValue, handleClear } = useSelectValue(props, context, { select });
 
 		const source = computed(() => {
 			return flattenData(props.data, { parent: true, cascader: true });
@@ -96,6 +96,7 @@ export const Select = defineComponent({
 		};
 
 		const add = (v: any) => {
+			if (isFull.value) return;
 			if (!multiple.value) {
 				currentValue.value = [v];
 				isActive.value = false;
@@ -135,11 +136,14 @@ export const Select = defineComponent({
 		// 已选的值：打开时逐项判断是否已选，用 Set 查找
 		const selectedValues = computed(() => new Set(currentValue.value));
 
+		// 选项是否禁用：自身禁用，或已选满 max 项时未选中的项
+		const isDisabled = (item: TreeData) => !!item.disabled || (isFull.value && !selectedValues.value.has(item.value));
+
 		// 选项的键盘高亮：打开时为首个已选中的一项（弹层就绪后滚动到它，见 scrollIntoSelected）；搜索词、数据变化后选项增减，为第一项
 		// 自定义整个选项（option 插槽、renderOption）时不参与
 		const navigate = useNavigate<SelectRow>({
 			getList: () => rows.value,
-			isEnabled: ({ item, group }) => !group && !item.disabled && !slots.option && !props.renderOption,
+			isEnabled: ({ item, group }) => !group && !isDisabled(item) && !slots.option && !props.renderOption,
 			prefer: ({ item }) => selectedValues.value.has(item.value),
 			select: ({ item }) => pick(item.value),
 			source: rows
@@ -157,6 +161,7 @@ export const Select = defineComponent({
 			pick,
 			close,
 			multiple,
+			isFull,
 			isActive,
 			current: currentValue,
 			// for portal
@@ -195,7 +200,7 @@ export const Select = defineComponent({
 					row={item}
 					value={item.value}
 					label={item.label}
-					disabled={item.disabled}
+					disabled={isDisabled(item)}
 					regex={searchRegex.value}
 					render={props.renderOption}
 					renderLabel={props.renderLabel}

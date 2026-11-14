@@ -3,7 +3,7 @@ import type { SetupContext } from 'vue';
 import { debounce, isEqualWith } from 'lodash-es';
 import { useAttrs, useKeyboard } from '@deot/vc-hooks';
 import { VcError } from '../../vc/index';
-import { createSearchRegex, toCurrentValue, toModelValue } from '../utils';
+import { createSearchRegex, isMaxReached, isMultiple, toCurrentValue, toModelValue } from '../utils';
 import type { Props } from '../select-props';
 import type { Navigator } from './use-navigate';
 
@@ -299,7 +299,9 @@ export const useSelectValue = (
 	const formItem = inject<any>('vc-form-item', {});
 
 	const currentValue = ref<Array<string | number>>([]);
-	const multiple = computed(() => props.max > 1);
+	const multiple = computed(() => isMultiple(props.max));
+	// 多选且已选满 max 项（max 为 0 时不限）
+	const isFull = computed(() => isMaxReached(props.max, currentValue.value.length));
 
 	/**
 	 * v-model 同步, 外部的数据改变时不会触发
@@ -346,6 +348,7 @@ export const useSelectValue = (
 	return {
 		currentValue,
 		multiple,
+		isFull,
 		sync,
 		handleClear
 	};

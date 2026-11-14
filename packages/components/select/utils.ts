@@ -186,6 +186,21 @@ export const flattenData = (data: TreeData, options: FlattenDataOptions = {}): T
 	return result;
 };
 
+/**
+ * 是否多选：max 为 1 时单选，0（不限）或大于 1 时多选
+ * @param max ~
+ * @returns ~
+ */
+export const isMultiple = (max: number) => max !== 1;
+
+/**
+ * 是否已选满：多选且 max 大于 0 时，已选数量达到 max
+ * @param max ~
+ * @param count 已选数量
+ * @returns ~
+ */
+export const isMaxReached = (max: number, count: number) => isMultiple(max) && max > 0 && count >= max;
+
 type ModelValue = string | number | (number | string | any)[] | undefined;
 interface ModelValueOptions {
 	[key: string]: any;
@@ -233,7 +248,7 @@ interface CurrentValueOptions {
 export const toModelValue = (v: CurrentValue, options: CurrentValueOptions): ModelValue => {
 	let value: ModelValue;
 	if (!Array.isArray(options.modelValue)) {
-		value = options.max > 1 ? v.join(options.separator) : v[0];
+		value = isMultiple(options.max) ? v.join(options.separator) : v[0];
 		// 输入如果是字符串的话，那么输出应该保持一致为字符串
 		if (typeof options.modelValue === 'string' && options.numerable) {
 			value = `${v}`;

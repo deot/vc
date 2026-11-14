@@ -50,10 +50,11 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
+	// 1：单选；大于 1：多选，最多选 max 项（达到后未选中的项禁用）；0：多选，不限数量
 	max: {
 		type: Number,
 		default: 1,
-		validator: (v: any) => v >= 1,
+		validator: (v: any) => v >= 0,
 	},
 	maxTags: Number,
 	// 多选标签最多占用的行数，放不下的折叠为 +N...；0 表示不限

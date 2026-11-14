@@ -5,7 +5,7 @@
 			<Select
 				v-model="arrayValue"
 				:data="optionList"
-				:max="2"
+				:max="0"
 				:max-tags="1"
 				clearable
 				searchable
@@ -20,11 +20,36 @@
 			<div>isArray: {{ Array.isArray(arrayValue) }}</div>
 		</section>
 		<section>
+			<h3>最多选 3 项</h3>
+			<Select
+				v-model="limitedValue"
+				:data="optionList"
+				:max="3"
+				clearable
+				searchable
+				style="width: 200px;"
+			/>
+			<div>value: {{ limitedValue }}</div>
+			<div>选满后其余选项置灰</div>
+		</section>
+		<section>
+			<h3>不限数量（max = 0）</h3>
+			<Select
+				v-model="unlimitedValue"
+				:data="optionList"
+				:max="0"
+				clearable
+				searchable
+				style="width: 200px;"
+			/>
+			<div>value: {{ unlimitedValue }}</div>
+		</section>
+		<section>
 			<h3>字符串多选</h3>
 			<Select
 				v-model="stringValue"
 				:data="optionList"
-				:max="2"
+				:max="0"
 				clearable
 				searchable
 				style="width: 200px;"
@@ -46,6 +71,8 @@ import { optionList } from './basic/data';
 
 const arrayValue = ref([]);
 const stringValue = ref('');
+const limitedValue = ref([]);
+const unlimitedValue = ref([]);
 
 const handleChange = (section, value) => {
 	console.log(section, 'change', value);

@@ -736,6 +736,117 @@ describe('Select multiple', () => {
 	});
 });
 
+describe('Select max', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	const press = (key: string) => {
+		document.body.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+	};
+	const getActive = () => document.querySelector('.vc-select-option[data-active]')?.textContent;
+	const isDisabled = (el: Element) => el.hasAttribute('disabled');
+
+	it('选满 max 项后未选中的项禁用、点击无效；取消一项后恢复', async () => {
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={2} />
+		), { attachTo: document.body });
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await flush();
+
+		(getOptions()[0] as HTMLElement).click();
+		await flush();
+		expect(Array.from(getOptions()).some(isDisabled)).toBe(false);
+
+		(getOptions()[2] as HTMLElement).click();
+		await flush();
+		expect(value.value).toEqual(['1', '3']);
+		expect(Array.from(getOptions()).map(isDisabled)).toEqual([false, true, false, true, true, true]);
+
+		(getOptions()[1] as HTMLElement).click();
+		await flush();
+		expect(value.value).toEqual(['1', '3']);
+
+		(getOptions()[0] as HTMLElement).click();
+		await flush();
+		expect(value.value).toEqual(['3']);
+		expect(Array.from(getOptions()).some(isDisabled)).toBe(false);
+
+		wrapper.unmount();
+	});
+
+	it('选满后键盘导航只在已选项之间移动', async () => {
+		const value = ref<any[]>(['1', '3']);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={2} />
+		), { attachTo: document.body });
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await flush();
+		expect(getActive()).toContain('New York');
+
+		press('ArrowDown');
+		await flush();
+		expect(getActive()).toContain('Sydney');
+
+		press('ArrowDown');
+		await flush();
+		expect(getActive()).toContain('New York');
+
+		wrapper.unmount();
+	});
+
+	it('max = 0：多选且不限数量，字符串值用分隔符连接', async () => {
+		const value = ref<any>('');
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={0} />
+		), { attachTo: document.body });
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await flush();
+
+		Array.from(getOptions()).forEach(el => (el as HTMLElement).click());
+		await flush();
+
+		expect(value.value).toBe('1,2,3,4,5,6');
+		expect(Array.from(getOptions()).some(isDisabled)).toBe(false);
+		expect(wrapper.findAll('.vc-tag').length).toBeGreaterThan(0);
+
+		wrapper.unmount();
+	});
+
+	it('全选按列表顺序补到 max 为止，之后为取消全选', async () => {
+		const value = ref<any[]>([]);
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} max={2} searchable="popover" clearSearchOnSelect={false} />
+		), { attachTo: document.body });
+		await nextTick();
+
+		await wrapper.trigger('click');
+		await flush();
+
+		// 含 a 的：Ottawa、Paris、Canberra
+		typeInto(getSearchInput(), 'a');
+		await flush();
+
+		(document.querySelector('.vc-select-all') as HTMLElement).click();
+		await flush();
+		expect(value.value).toEqual(['4', '5']);
+		expect(document.querySelector('.vc-select-all')!.textContent).toBe('取消全选');
+
+		(document.querySelector('.vc-select-all') as HTMLElement).click();
+		await flush();
+		expect(value.value).toEqual([]);
+
+		wrapper.unmount();
+	});
+});
+
 describe('Select maxTagLines', () => {
 	// jsdom 无布局：容器宽度可控，tag 按文字长度 * 10 计宽，margin / padding 为 0
 	const containerWidth = ref(200);
