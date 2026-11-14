@@ -1,5 +1,5 @@
 import { getViewportRect } from '../../scroller/utils';
-import { ExternalCarrier, getAxisKeys } from '../../scroller/carrier';
+import { ExternalCarrier, getAxisKeys } from '../../scroller/core/carrier';
 import type { SelectListAlign } from './select-list';
 
 const Y_KEYS = getAxisKeys(true);

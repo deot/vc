@@ -1,7 +1,7 @@
 import { getCurrentInstance, computed, onBeforeUnmount, onMounted, watch } from 'vue';
-import type { Props } from './scroller-props';
+import type { Props } from '../scroller-props';
 import type { useScrollerState } from './use-scroller';
-import { bindWheel } from './wheel';
+import { bindWheel } from '../core/wheel';
 
 /**
  * 接管滚轮，在rAF中写入滚动位置

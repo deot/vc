@@ -4,7 +4,7 @@ import { ref, reactive, shallowRef, computed, watch, onMounted, onBeforeUnmount,
 import type { SetupContext } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import { getViewportRect } from '../scroller/utils';
-import { ScrollerManager } from '../scroller/manager';
+import { ScrollerManager } from '../scroller/core/manager';
 import type { Props } from './affix-props';
 import { toPx, toRem } from '@deot/vc-shared';
 

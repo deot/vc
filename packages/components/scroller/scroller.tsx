@@ -1,6 +1,6 @@
 import { defineComponent } from 'vue';
 import { props as scrollerProps } from './scroller-props';
-import { useScroller } from './use-scroller';
+import { useScroller } from './hooks/use-scroller';
 
 const COMPONENT_NAME = 'vc-scroller';
 

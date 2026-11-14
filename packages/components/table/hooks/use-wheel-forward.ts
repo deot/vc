@@ -1,6 +1,6 @@
 import { onUnmounted, watch } from 'vue';
 import type { Ref } from 'vue';
-import { bindWheel } from '../../scroller/wheel';
+import { bindWheel } from '../../scroller/core/wheel';
 
 type Options = {
 	headerWrapper: Ref<any>;

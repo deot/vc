@@ -2,7 +2,7 @@ import { watch, toRaw } from 'vue';
 import type { Ref } from 'vue';
 import type { Nullable } from '@deot/helper-shared';
 import { Utils } from '@deot/vc-shared';
-import { ExternalCarrier } from '../../scroller/carrier';
+import { ExternalCarrier } from '../../scroller/core/carrier';
 import type { Store } from '../store';
 import type { TableDropPosition, TableMove } from '../store/modules';
 import type { Props } from '../table-props';

@@ -10,7 +10,7 @@ import type {
 	ViewportOptions,
 	ViewportState
 } from '../types';
-import { ExternalCarrier, resolveExternalCarrier } from '../../../scroller/carrier';
+import { ExternalCarrier, resolveExternalCarrier } from '../../../scroller/core/carrier';
 import { registerViewport, invalidateViewport } from './registry';
 
 const SHARED = { shared: true };

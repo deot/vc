@@ -1,7 +1,7 @@
 import type { DirectionKeys } from '../hooks/use-direction-keys';
 
-// 主轴相关的 DOM 属性名映射，见 scroller/carrier 的 getAxisKeys
-export type { AxisKeys } from '../../scroller/carrier';
+// 主轴相关的 DOM 属性名映射，见 scroller/core/carrier 的 getAxisKeys
+export type { AxisKeys } from '../../scroller/core/carrier';
 
 /**
  * 主轴几何快照：所有值均以滚动源自身的滚动坐标为原点

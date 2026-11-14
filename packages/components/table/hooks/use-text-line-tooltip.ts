@@ -3,7 +3,7 @@ import { getFitIndex } from '../../text/utils';
 import { props as textProps } from '../../text/text-props';
 import { useHoverPopover } from '../../popover/use-hover-popover';
 import { measureText } from '../../popover/utils';
-import { useScrollListener, whenScrollIdle } from '../../scroller/scroll-idle';
+import { useScrollListener, whenScrollIdle } from '../../scroller/core/scroll-idle';
 
 // 提示的目标宽高比（宽 : 高）
 const ASPECT_RATIO = 3;

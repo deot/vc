@@ -1,4 +1,4 @@
-import { getScroller } from './utils';
+import { getScroller } from '../utils';
 
 // 滚动回调：原生 scroll 事件，或 Scroller 的滚动通知（{ target, currentTarget }）
 type Listener = (e: any) => void;

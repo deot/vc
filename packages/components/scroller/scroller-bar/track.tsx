@@ -6,7 +6,7 @@ import { raf } from '@deot/helper-utils';
 import * as $ from '@deot/helper-dom';
 import { useDrag } from '@deot/vc-hooks';
 import type { DragPoint } from '@deot/vc-hooks';
-import { TransitionFade } from '../transition';
+import { TransitionFade } from '../../transition';
 import { props as trackProps } from './track-props';
 
 const COMPONENT_NAME = 'vc-scroller-track';

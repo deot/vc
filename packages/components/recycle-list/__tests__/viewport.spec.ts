@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
-import { ExternalCarrier, resolveExternalCarrier } from '../../scroller/carrier';
+import { ExternalCarrier, resolveExternalCarrier } from '../../scroller/core/carrier';
 import { invalidateViewport, registerViewport } from '../viewport/external/registry';
-import { ScrollerManager } from '../../scroller/manager';
-import type { ScrollerInstance } from '../../scroller/manager';
+import { ScrollerManager } from '../../scroller/core/manager';
+import type { ScrollerInstance } from '../../scroller/core/manager';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const verticalKeys = {

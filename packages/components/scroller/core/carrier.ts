@@ -1,5 +1,5 @@
 import { getScroller } from '@deot/helper-dom';
-import { SCROLLER_REG, getScale, isWindow, getScrollingElement } from './utils';
+import { SCROLLER_REG, getScale, isWindow, getScrollingElement } from '../utils';
 import { ScrollerManager } from './manager';
 import type { ScrollerInstance } from './manager';
 

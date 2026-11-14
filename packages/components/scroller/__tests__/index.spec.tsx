@@ -3,9 +3,9 @@
 import { Customer, Scroller } from '@deot/vc-components';
 import { MScroller } from '../index.m';
 import { SCROLLER_REG, getPadding, getScroller, getViewportRect } from '../utils';
-import { ScrollerManager } from '../manager';
-import { Bar } from '../bar';
-import { Track } from '../track';
+import { ScrollerManager } from '../core/manager';
+import { Bar } from '../scroller-bar/bar';
+import { Track } from '../scroller-bar/track';
 import { mount } from '@vue/test-utils';
 import { defineComponent, getCurrentInstance, nextTick, onMounted, reactive, ref } from 'vue';
 import { onTestFinished, vi } from 'vitest';

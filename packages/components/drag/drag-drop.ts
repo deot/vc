@@ -4,7 +4,7 @@ import { raf, caf } from '@deot/helper-utils';
 import { getScroller } from '@deot/helper-dom';
 import type { Nullable } from '@deot/helper-shared';
 import { SCROLLER_REG, isWindow } from '../scroller/utils';
-import { ExternalCarrier, getAxisKeys } from '../scroller/carrier';
+import { ExternalCarrier, getAxisKeys } from '../scroller/core/carrier';
 
 // 拖放（Table 的行 / 列拖拽、Tree 的节点拖拽共用；用鼠标与触摸事件实现，不用原生拖拽）：阈值、长按、自动滚动的参数，交互元素排除、插入线、跟随元素与拖拽的生命周期
 // 创建的元素与 body 带公用类（vc-drag__*、vc-dragging，见 style.scss，只负责定位等机制），外观由调用方传入的组件类负责

@@ -1,7 +1,7 @@
 import { ref, shallowRef, watch, nextTick, onBeforeUnmount } from 'vue';
 import type { Ref, ComputedRef } from 'vue';
 import { Resize } from '@deot/helper-resize';
-import { ScrollerManager } from '../scroller/manager';
+import { ScrollerManager } from '../scroller/core/manager';
 import { getViewport } from '../popover/use-pos';
 
 const RECT_KEYS = ['x', 'y', 'width', 'height'] as const;

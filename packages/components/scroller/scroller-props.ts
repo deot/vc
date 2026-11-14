@@ -1,6 +1,6 @@
 import type { ExtractPropTypes, StyleValue, PropType } from 'vue';
 import { pick } from 'lodash-es';
-import { props as barProps } from './bar-props';
+import { props as barProps } from './scroller-bar/bar-props';
 
 const barKeys = [
 	'always',

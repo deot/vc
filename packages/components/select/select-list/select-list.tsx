@@ -3,7 +3,7 @@
 import { defineComponent, cloneVNode, isVNode, onMounted, ref, watch } from 'vue';
 import type { PropType, VNode } from 'vue';
 import { RecycleList } from '../../recycle-list/index';
-import { isScrollOf, useScrollIdle } from '../../scroller/scroll-idle';
+import { isScrollOf, useScrollIdle } from '../../scroller/core/scroll-idle';
 import { scrollIntoScroller } from './scroll';
 
 const COMPONENT_NAME = 'vc-select-list';

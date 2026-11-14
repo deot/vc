@@ -24,7 +24,7 @@ import { TransitionScale } from '../transition';
 import { Customer } from '../customer';
 import { Portal } from '../portal';
 import { Scroller } from '../scroller';
-import { ScrollerManager } from '../scroller/manager';
+import { ScrollerManager } from '../scroller/core/manager';
 
 // 同时是 CSS 块名、主题变量前缀（--vc-popover-wrapper-*）与 Popover.open 的默认 Portal 名
 const COMPONENT_NAME = 'vc-popover-wrapper';

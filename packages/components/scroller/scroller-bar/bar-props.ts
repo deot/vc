@@ -1,7 +1,7 @@
 import type { ExtractPropTypes, StyleValue, PropType } from 'vue';
 import { pick } from 'lodash-es';
 import { props as barProps } from './track-props';
-import { getScrollBarWidth } from './utils';
+import { getScrollBarWidth } from '../utils';
 
 const barKeys = [
 	'always',

@@ -3,7 +3,7 @@ import type { Nullable } from '@deot/helper-shared';
 import { raf } from '@deot/helper-utils';
 import { debounce } from 'lodash-es';
 import { IS_SERVER } from '@deot/vc-shared';
-import { isScrollOf, useScrollIdle } from '../../scroller/scroll-idle';
+import { isScrollOf, useScrollIdle } from '../../scroller/core/scroll-idle';
 import type { TableProvide } from '../types';
 
 // 鼠标停留多久才高亮（ms）：快速划过不逐行闪

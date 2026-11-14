@@ -1,5 +1,5 @@
 import { watch, reactive, getCurrentInstance } from 'vue';
-import { getAxisKeys } from '../../scroller/carrier';
+import { getAxisKeys } from '../../scroller/core/carrier';
 
 /**
  * 按滚动方向生成 DOM / 样式属性名：vertical 时主轴为 Y、交叉轴为 X，反之亦然

@@ -4,14 +4,14 @@ import { computed, onBeforeUnmount, onMounted, ref, provide, reactive, nextTick,
 import { Resize } from '@deot/helper-resize';
 import { scrollIntoView } from '@deot/helper-dom';
 import { toPx, toRem } from '@deot/vc-shared';
-import { getPadding } from './utils';
-import { ScrollerManager } from './manager';
-import { Bar } from './bar';
+import { getPadding } from '../utils';
+import { ScrollerManager } from '../core/manager';
+import { Bar } from '../scroller-bar/bar';
 import { useWheel } from './use-wheel';
 import type { SetupContext } from 'vue';
-import type { BarExposed } from './bar';
-import type { Props } from './scroller-props';
-import type { ScrollerScrollToOptions } from './types';
+import type { BarExposed } from '../scroller-bar/bar';
+import type { Props } from '../scroller-props';
+import type { ScrollerScrollToOptions } from '../types';
 
 export type ScrollerOptions = {
 	// 移动端（MScroller）：根节点加标记类 vcm-scroller，数字 height / maxHeight 为 750 稿长度，未设置 always 时始终使用原生滚动条

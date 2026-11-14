@@ -8,7 +8,7 @@ import { Customer } from '../customer';
 import { Popover } from '../popover';
 import { getFitIndex } from './utils';
 import { useMeasuring } from '../measuring';
-import { useScrollListener, whenScrollIdle } from '../scroller/scroll-idle';
+import { useScrollListener, whenScrollIdle } from '../scroller/core/scroll-idle';
 
 const COMPONENT_NAME = 'vc-text';
 
