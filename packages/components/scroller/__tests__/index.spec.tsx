@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { Customer, Scroller } from '@deot/vc-components';
+import { MScroller } from '../index.m';
 import { SCROLLER_REG, getPadding, getScroller, getViewportRect } from '../utils';
 import { ScrollerManager } from '../manager';
 import { Bar } from '../bar';
@@ -1972,6 +1973,64 @@ describe('index.ts', () => {
 			expect(wrapper.findAll('.item').length).toBe(101);
 
 			restore();
+			wrapper.unmount();
+		});
+	});
+
+	describe('MScroller', () => {
+		it('根节点为桌面端结构加标记类 vcm-scroller，仍按 vc-scroller 识别为滚动容器', async () => {
+			const wrapper = mount(() => (<MScroller>content</MScroller>), { attachTo: document.body });
+			await nextTick();
+
+			expect(wrapper.classes()).toEqual(expect.arrayContaining(['vc-scroller', 'vcm-scroller']));
+			expect(SCROLLER_REG.test(wrapper.element.className)).toBe(true);
+			expect(wrapper.find('.vc-scroller__content').exists()).toBe(true);
+			expect(ScrollerManager.get(wrapper.element as HTMLElement)).toBeTruthy();
+
+			wrapper.unmount();
+		});
+
+		it('数字 height / maxHeight 为 750 稿长度，字符串原样使用；桌面端数字仍为 px', () => {
+			const mobile = mount(() => (<MScroller height={400} maxHeight={600} />));
+			const style = (mobile.element as HTMLElement).getAttribute('style')!;
+			expect(style).toContain('height: calc(var(--vc-rem) * 400)');
+			expect(style).toContain('max-height: calc(var(--vc-rem) * 600)');
+
+			const text = mount(() => (<MScroller height="50vh" />));
+			expect((text.element as HTMLElement).style.height).toBe('50vh');
+
+			const desktop = mount(() => (<Scroller height={400} maxHeight={600} />));
+			expect((desktop.element as HTMLElement).style.height).toBe('400px');
+			expect((desktop.element as HTMLElement).style.maxHeight).toBe('600px');
+		});
+
+		it('未设置 always：始终使用原生滚动条，native=false 不生效，wheel 也不接管', async () => {
+			const wrapper = mount(() => (<MScroller native={false} wheel>content</MScroller>), { attachTo: document.body });
+			await nextTick();
+			await nextTick();
+
+			expect(wrapper.classes()).toContain('is-native');
+			expect(wrapper.classes()).not.toContain('is-hidden');
+			expect(wrapper.classes()).not.toContain('is-wheel');
+			expect(wrapper.find('.vc-scroller-track').exists()).toBe(false);
+
+			wrapper.unmount();
+		});
+
+		it('always：隐藏原生滚动条，轨道是根节点的直接子元素', async () => {
+			// 不替换 Transition：测试工具默认的占位元素会多包一层
+			const wrapper = mount(() => (<MScroller always>content</MScroller>), {
+				attachTo: document.body,
+				global: { stubs: { transition: false } }
+			});
+			await nextTick();
+			await nextTick();
+
+			expect(wrapper.classes()).toContain('is-hidden');
+			expect(wrapper.classes()).not.toContain('is-native');
+			// 移动端样式按 .vcm-scroller > .vc-scroller-track 匹配
+			expect(wrapper.element.querySelectorAll(':scope > .vc-scroller-track')).toHaveLength(2);
+
 			wrapper.unmount();
 		});
 	});

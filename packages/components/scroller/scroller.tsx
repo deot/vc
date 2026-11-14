@@ -1,10 +1,6 @@
-/** @jsxImportSource vue */
-
 import { defineComponent } from 'vue';
 import { props as scrollerProps } from './scroller-props';
-import { Bar } from './bar';
 import { useScroller } from './use-scroller';
-import { useWheel } from './use-wheel';
 
 const COMPONENT_NAME = 'vc-scroller';
 
@@ -36,72 +32,6 @@ export const Scroller = defineComponent({
 	props: scrollerProps,
 	emits: ['scroll'],
 	setup(props, context) {
-		const { slots } = context;
-		const Content = props.tag;
-		const scroller = useScroller(props, context);
-		const {
-			bar,
-			wrapper,
-			content,
-			wrapperStyle,
-			wrapperClass,
-			isNative,
-			scrollX,
-			scrollY,
-			wrapperW,
-			wrapperH,
-			contentH,
-			contentW,
-			wrapperPadding,
-			handleBarChange
-		} = scroller;
-		const { isWheel, handleNativeScroll } = useWheel(scroller);
-
-		return () => {
-			return (
-				<div
-					ref={wrapper}
-					class={[wrapperClass.value, COMPONENT_NAME, { 'is-wheel': isWheel.value, [`is-${props.axis}`]: !!props.axis }]}
-					style={wrapperStyle.value}
-					onScroll={handleNativeScroll}
-				>
-					<Content
-						ref={content}
-						// @ts-ignore
-						style={props.contentStyle}
-						class={[props.contentClass, 'vc-scroller__content']}
-					>
-						{ slots.default?.() }
-					</Content>
-					{
-						(props.showBar && !isNative.value && wrapper.value && content.value) && (
-							<Bar
-								ref={bar}
-								mode="sticky"
-								wrapperW={wrapperW.value}
-								wrapperH={wrapperH.value}
-								wrapperPadding={wrapperPadding.value}
-								contentW={contentW.value}
-								contentH={contentH.value}
-								scrollX={scrollX.value}
-								scrollY={scrollY.value}
-								native={false}
-								to={props.barTo}
-								trigger={props.barTriggerElement}
-								always={props.always}
-								thumbMinSize={props.thumbMinSize}
-								thumbStyle={props.thumbStyle}
-								thumbClass={props.thumbClass}
-								trackStyle={props.trackStyle}
-								trackClass={props.trackClass}
-								trackOffsetX={props.trackOffsetX}
-								trackOffsetY={props.trackOffsetY}
-								onChange={handleBarChange}
-							/>
-						)
-					}
-				</div>
-			);
-		};
+		return useScroller(props, context);
 	}
 });

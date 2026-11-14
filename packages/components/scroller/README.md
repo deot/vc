@@ -1,6 +1,6 @@
 ## 滚动容器（Scroller）
 
-为受限高度或宽度的内容提供滚动容器，可使用浏览器滚动条或可拖动的自定义滚动条。
+为受限高度或宽度的内容提供滚动容器，可使用浏览器滚动条或可拖动的自定义滚动条。`MScroller` 为移动端版本，属性、事件、插槽、方法与 `Scroller` 相同，差异见[移动端](#移动端)。
 
 ### 何时使用
 
@@ -240,6 +240,28 @@ const trackId = `scroller-track-${useId()}`;
 ```
 :::
 
+### 移动端
+
+`MScroller` 与 `Scroller` 结构相同，根节点另有标记类 `.vcm-scroller`（`.vc-scroller.vcm-scroller`）。触摸滚动、惯性与回弹都由浏览器处理，不同之处有三点：
+
+- 数字 `height`、`maxHeight` 是 750 稿长度：样式写为 `calc(var(--vc-rem) * height)`，随 `--vc-rem` 缩放（375 宽下 `height=400` 即 200px）。字符串与 `Scroller` 相同，原样使用。
+- 未设置 `always` 时始终使用原生滚动条，`native` 不生效：触摸设备没有悬停，自定义滚动条无从显示。`wheel` 因此也只在设置 `always` 时生效。
+- `always` 的自定义滚动条只作指示：375 宽下滑块粗 3px、离边缘 2px，不响应点按与拖动，轨道下方的内容可以正常点击。
+
+`thumbMinSize`、`trackOffsetX`、`trackOffsetY` 两端都以 px 为单位。
+
+```vue
+<template>
+	<MScroller :height="400" always>
+		<div v-for="item in 20" :key="item">条目 {{ item }}</div>
+	</MScroller>
+</template>
+
+<script setup>
+import { MScroller } from '@deot/vc';
+</script>
+```
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-scroller-track-<参数>`。局部参数仅提供组件级入口；表中括号标明对应命名空间。
@@ -259,6 +281,7 @@ const trackId = `scroller-track-${useId()}`;
 | --- | --- | --- |
 | extend | sticky 垂直轨道延伸区，由组件按布局写入（scroller-track） | `0` |
 | offset | sticky 轨道偏移，由组件按布局写入（scroller-track） | `0px` |
+| radius | 轨道与滑块圆角（scroller-track） | `4px` |
 | size | 滚动轨道粗细（scroller-track） | `6px` |
 
 ## API
@@ -268,8 +291,8 @@ const trackId = `scroller-track-${useId()}`;
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | tag | 内容元素标签，初始化时确定 | `string` | HTML 标签 | `'div'` |
-| height | 滚动容器高度，数字按 px 处理 | `string \| number` | - | `''` |
-| maxHeight | 滚动容器最大高度，数字按 px 处理 | `string \| number` | - | `''` |
+| height | 滚动容器高度，数字按 px 处理（`MScroller` 为 750 稿长度） | `string \| number` | - | `''` |
+| maxHeight | 滚动容器最大高度，数字按 px 处理（`MScroller` 为 750 稿长度） | `string \| number` | - | `''` |
 | wrapperStyle | 滚动容器样式，与 `style` 作用于同一元素；合并顺序为 wrapperStyle → height/maxHeight → `style`，后者覆盖前者 | `StyleValue` | - | `''` |
 | wrapperClass | 滚动容器 class，与 `class` 作用于同一元素 | `StyleValue` | - | `''` |
 | contentStyle | 内容元素样式 | `StyleValue` | - | `''` |
@@ -279,7 +302,7 @@ const trackId = `scroller-track-${useId()}`;
 | stopPropagation | 滚轮驱动时，被接管的滚轮事件是否停止冒泡 | `boolean` | - | `true` |
 | showBar | 渲染自定义滚动条；不控制原生滚动条 | `boolean` | - | `true` |
 | axis | 只在该方向滚动：另一方向不可滚动，滚轮的纵横增量都用于该方向；触摸为原生滚动。未设置时两个方向都可滚动 | `string` | `x` / `y` | - |
-| always | 自定义滚动条常显，并且不再使用原生滚动条；否则鼠标移入并移动时显示，移出后隐藏 | `boolean` | - | `false` |
+| always | 自定义滚动条常显，并且不再使用原生滚动条；否则鼠标移入并移动时显示，移出后隐藏（`MScroller` 未设置时使用原生滚动条） | `boolean` | - | `false` |
 | autoResize | 挂载时监听容器和内容尺寸；建议在挂载前设置 | `boolean` | - | `true` |
 | thumbMinSize | 自定义滑块最小长度，单位 px | `number` | - | `30` |
 | thumbStyle | 自定义滑块样式 | `StyleValue` | - | - |
@@ -334,7 +357,7 @@ const trackId = `scroller-track-${useId()}`;
 
 ### MScroller
 
-`MScroller` 是 `Scroller` 的别名，属性、事件、插槽和方法一致，可从 `@deot/vc` 导入。
+属性、事件、插槽和方法与 `Scroller` 一致，可从 `@deot/vc` 导入；与 `Scroller` 的差异见[移动端](#移动端)。
 
 ### 主题
 
@@ -345,8 +368,11 @@ const trackId = `scroller-track-${useId()}`;
 | `--vc-scroller-track-color-dark-extralight` | 滑块普通状态 | `--vc-color-dark-extralight` |
 | `--vc-scroller-track-color-dark-lightest` | 滑块 hover 状态 | `--vc-color-dark-lightest` |
 | `--vc-scroller-track-size` | 轨道粗细（竖向为宽度、横向为高度） | `6px` |
+| `--vc-scroller-track-radius` | 轨道与滑块的圆角 | `4px` |
 
 调整轨道粗细请使用 `--vc-scroller-track-size`，不要通过 `trackStyle` 写死宽高：轨道依赖该变量贴住右边与底边。
+
+`MScroller` 在 `.vcm-scroller` 上把这两个变量设为 750 稿长度：轨道粗细 14（滑块 6 加两侧各 4 的留白，留白由滑块的透明边框让出）、圆角 7；滑块颜色取 `--vc-scroller-track-color-dark-lightest`。
 
 滚动容器的 padding 在尺寸刷新时读取（挂载、尺寸变化或调用 `refresh()`）；只修改 padding 而尺寸不变时，调用 `refresh()` 同步滚动条位置。
 

@@ -1,6 +1,6 @@
 import { getCurrentInstance, computed, onBeforeUnmount, onMounted, watch } from 'vue';
 import type { Props } from './scroller-props';
-import type { useScroller } from './use-scroller';
+import type { useScrollerState } from './use-scroller';
 import { bindWheel } from './wheel';
 
 /**
@@ -8,10 +8,10 @@ import { bindWheel } from './wheel';
  * 1. 滚轮驱动：wheel=true 且不使用原生滚动条（native=false 或 always=true）；容器 overflow: hidden，触摸为模拟滚动
  * 2. axis：只在该方向滚动，纵横增量都用于该方向；容器可原生滚动，触摸交给浏览器
  * 运行时切换会重新绑定
- * @param scroller useScroller 的返回值
+ * @param scroller useScrollerState 的返回值
  * @returns isWheel 是否由滚轮驱动；handleNativeScroll 根节点的 scroll 处理
  */
-export const useWheel = (scroller: ReturnType<typeof useScroller>) => {
+export const useWheel = (scroller: ReturnType<typeof useScrollerState>) => {
 	const instance = getCurrentInstance()!;
 	const props = instance.props as Props;
 	const { wrapper, scrollX, scrollY, isNative, state, handleScroll } = scroller;

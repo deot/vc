@@ -1,0 +1,28 @@
+@use '../../style/helper' as *;
+
+// always 的自绘滚动条（750 稿，随 --vc-rem 缩放）：仿系统滚动条，375 宽下滑块粗 3px、离边缘 2px、全圆角
+// 结构与颜色沿用 ../track.scss，这里只覆盖局部变量（与两端样式的加载顺序无关）
+// 轨道粗细 = 滑块 + 两侧留白：留白由滑块的透明边框让出，轨道贴边的计算不变
+// 滑块更细，颜色加深一档（桌面端悬停时的颜色）
+$thumb-size: 6;
+$thumb-gap: 4;
+$color-dark-lightest: varfix(color-dark-lightest, scroller-track);
+
+@include block(vcm-scroller) {
+	@include localvars(scroller-track, (
+		size: remfix($thumb-size + $thumb-gap * 2),
+		radius: remfix($thumb-size * 0.5 + $thumb-gap)
+	));
+
+	// 只作指示：不拦截点按（轨道下方的内容可点，也不会误触跳转）；轨道是根节点的直接子元素，不影响嵌套的滚动容器
+	> .vc-scroller-track {
+		pointer-events: none;
+
+		> .vc-scroller-track__thumb {
+			background-color: $color-dark-lightest;
+			border: remfix($thumb-gap) solid transparent;
+			box-sizing: border-box;
+			background-clip: padding-box;
+		}
+	}
+}

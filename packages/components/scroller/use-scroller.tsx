@@ -1,15 +1,34 @@
+/** @jsxImportSource vue */
+
 import { computed, onBeforeUnmount, onMounted, ref, provide, reactive, nextTick, watch } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import { scrollIntoView } from '@deot/helper-dom';
+import { toPx, toRem } from '@deot/vc-shared';
 import { getPadding } from './utils';
 import { ScrollerManager } from './manager';
+import { Bar } from './bar';
+import { useWheel } from './use-wheel';
 import type { SetupContext } from 'vue';
 import type { BarExposed } from './bar';
 import type { Props } from './scroller-props';
 import type { ScrollerScrollToOptions } from './types';
 
-export const useScroller = (props: Props, context: SetupContext<['scroll']>) => {
+export type ScrollerOptions = {
+	// 移动端（MScroller）：根节点加标记类 vcm-scroller，数字 height / maxHeight 为 750 稿长度，未设置 always 时始终使用原生滚动条
+	mobile?: boolean;
+};
+
+/**
+ * 滚动容器的状态：尺寸、位置、滚动条联动与对外暴露的实例
+ * @param props ~
+ * @param context ~
+ * @param options ~
+ * @param options.mobile 见 ScrollerOptions
+ * @returns 状态与方法，供渲染与 useWheel 使用
+ */
+export const useScrollerState = (props: Props, context: SetupContext<['scroll']>, { mobile }: ScrollerOptions = {}) => {
 	const { emit, expose } = context;
+	const toLength = mobile ? toRem : toPx;
 
 	const bar = ref<BarExposed>();
 	const wrapper = ref<HTMLElement>();
@@ -28,17 +47,18 @@ export const useScroller = (props: Props, context: SetupContext<['scroll']>) => 
 		const style = {} as Record<string, string>;
 
 		if (props.height) {
-			style.height = typeof props.height !== 'number' ? props.height : `${props.height}px`;
+			style.height = toLength(props.height);
 		}
 		if (props.maxHeight) {
-			style.maxHeight = typeof props.maxHeight !== 'number' ? props.maxHeight : `${props.maxHeight}px`;
+			style.maxHeight = toLength(props.maxHeight);
 		}
 
 		return [props.wrapperStyle, style];
 	});
 
 	// 是否使用原生滚动条：always（常显）只有自绘滚动条能做到，设置后不再使用原生滚动条
-	const isNative = computed(() => props.native && !props.always);
+	// 移动端没有悬停，自绘滚动条只有常显一种形态：未设置 always 时始终使用原生滚动条（native=false 不生效）
+	const isNative = computed(() => (mobile || props.native) && !props.always);
 
 	const wrapperClass = computed(() => {
 		return [
@@ -235,5 +255,85 @@ export const useScroller = (props: Props, context: SetupContext<['scroll']>) => 
 		handleBarChange: scrollTo,
 
 		refreshPosition
+	};
+};
+
+const COMPONENT_NAME = 'vc-scroller';
+
+/**
+ * Scroller / MScroller 共用的 setup，说明见 scroller.tsx
+ * @param props ~
+ * @param context ~
+ * @param options ~
+ * @returns render
+ */
+export const useScroller = (props: Props, context: SetupContext<['scroll']>, options: ScrollerOptions = {}) => {
+	const { slots } = context;
+	const name = options.mobile ? `${COMPONENT_NAME} vcm-scroller` : COMPONENT_NAME;
+	const Content = props.tag;
+	const scroller = useScrollerState(props, context, options);
+	const {
+		bar,
+		wrapper,
+		content,
+		wrapperStyle,
+		wrapperClass,
+		isNative,
+		scrollX,
+		scrollY,
+		wrapperW,
+		wrapperH,
+		contentH,
+		contentW,
+		wrapperPadding,
+		handleBarChange
+	} = scroller;
+	const { isWheel, handleNativeScroll } = useWheel(scroller);
+
+	return () => {
+		return (
+			<div
+				ref={wrapper}
+				class={[wrapperClass.value, name, { 'is-wheel': isWheel.value, [`is-${props.axis}`]: !!props.axis }]}
+				style={wrapperStyle.value}
+				onScroll={handleNativeScroll}
+			>
+				<Content
+					ref={content}
+					// @ts-ignore
+					style={props.contentStyle}
+					class={[props.contentClass, 'vc-scroller__content']}
+				>
+					{ slots.default?.() }
+				</Content>
+				{
+					(props.showBar && !isNative.value && wrapper.value && content.value) && (
+						<Bar
+							ref={bar}
+							mode="sticky"
+							wrapperW={wrapperW.value}
+							wrapperH={wrapperH.value}
+							wrapperPadding={wrapperPadding.value}
+							contentW={contentW.value}
+							contentH={contentH.value}
+							scrollX={scrollX.value}
+							scrollY={scrollY.value}
+							native={false}
+							to={props.barTo}
+							trigger={props.barTriggerElement}
+							always={props.always}
+							thumbMinSize={props.thumbMinSize}
+							thumbStyle={props.thumbStyle}
+							thumbClass={props.thumbClass}
+							trackStyle={props.trackStyle}
+							trackClass={props.trackClass}
+							trackOffsetX={props.trackOffsetX}
+							trackOffsetY={props.trackOffsetY}
+							onChange={handleBarChange}
+						/>
+					)
+				}
+			</div>
+		);
 	};
 };

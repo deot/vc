@@ -1,3 +1,7 @@
-import { Scroller } from '.';
+import { MScroller } from './mobile/scroller.tsx';
+import './style.scss';
+import './mobile/style.scss';
 
-export const MScroller = Scroller;
+export {
+	MScroller
+};

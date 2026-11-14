@@ -10,7 +10,7 @@ $track-size: var(--vc-scroller-track-size, #{unitfix(6)});
 @include block($component-name) {
 	position: absolute;
 	z-index: 1;
-	border-radius: unitfix(4);
+	border-radius: localfix(scroller-track, radius, unitfix(4));
 
 	@include when(vertical) {
 		top: 0;
