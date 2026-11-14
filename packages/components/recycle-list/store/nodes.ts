@@ -71,17 +71,17 @@ export class Nodes {
 	}
 
 	/**
-	 * 数据项的预估尺寸（props.estimateSize）；没有配置、没有数据或返回无效值时为 0
+	 * 数据项的预估尺寸（props.estimateSize，按 states.unit 换算成 px）；没有配置、没有数据或返回无效值时为 0
 	 * @param data 行数据
 	 * @param index 数据索引
-	 * @returns 预估尺寸
+	 * @returns 预估尺寸（px）
 	 */
 	estimate(data: any, index: number) {
 		// 构建时逐项调用：读原始对象，不经响应式代理（estimateSize 的变化由组件同步后调用 reestimate）
 		const { estimateSize } = toRaw(this.store.props);
 		if (!estimateSize || !data) return 0;
 		const size = typeof estimateSize === 'function' ? estimateSize({ row: data, index }) : estimateSize;
-		return typeof size === 'number' && size > 0 ? size : 0;
+		return typeof size === 'number' && size > 0 ? size * toRaw(this.store.states).unit : 0;
 	}
 
 	/**

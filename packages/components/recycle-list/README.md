@@ -1,6 +1,6 @@
 ## 可回收列表（RecycleList）
 
-只渲染视口附近节点的高性能列表，支持动态尺寸、瀑布流、横向列表、倒置列表和异步加载。
+只渲染视口附近节点的高性能列表，支持动态尺寸、瀑布流、横向列表、倒置列表和异步加载。`MRecycleList` 为移动端版本，属性、事件、插槽、方法与 `RecycleList` 相同，差异见[移动端](#移动端)。
 
 ### 何时使用
 
@@ -508,7 +508,7 @@ const handleMode = () => { isExternal.value = !isExternal.value; };
 
 ### 拉动刷新（pullable）
 
-在刷新一侧的端点拉动超过提示条的尺寸（默认 30px）后松手，触发静默刷新 `reset(true)`：旧内容保留，新数据到达后整体替换。
+在刷新一侧的端点拉动超过提示条的尺寸（默认 30px，`MRecycleList` 为 750 稿的 88）后松手，触发静默刷新 `reset(true)`：旧内容保留，新数据到达后整体替换。
 
 | 模式 | 刷新一侧 | 手势（纵向 / 横向） | 提示条位置 | `type` |
 | --- | --- | --- | --- | --- |
@@ -518,8 +518,8 @@ const handleMode = () => { isExternal.value = !isExternal.value; };
 - 只有主轴停在该端点时才进入拉动，否则拖动就是普通滚动。内部模式看内部 Scroller 是否在起点 / 末端（末端有 1px 容差）；`fill=false` 时以外部主轴承载者的绝对坐标为准：正序要求位于 `0`，`inverted` 要求滚到承载者的绝对末端，后置内容也要滚完。
 - 刷新期间加载状态区只隐藏、不移除，列表不会因此位移。正序的 `reset()` 仍回到起点；`inverted` 下 `reset()` 不改变滚动位置，首批数据到达后贴到列表尾部。
 - 鼠标拖动只响应主键。按下后在 document 上跟踪移动与松开，拖出列表后松手也能正常结束；拉动期间不会选中文字，根节点带 `is-pulling` 类。触摸拖动不受影响。
-- 提示条内容可用 `renderRefresh({ status, type })` 定制，`status` 为 `2` 拉动中、`3` 可释放、`4` 刷新中，其余（`0` / `1`）为空闲；默认 `0` 不显示内容，`1` 显示 `~`。
-- 提示条平时贴在视口外，沿主轴的尺寸默认 30px（内容更高时以实际尺寸为准）。触发刷新的拉动距离、刷新中停留的位置都取它的实际尺寸，在每次拉动开始时读取。
+- 提示条内容可用 `renderRefresh({ status, type, mobile })` 定制，`status` 为 `2` 拉动中、`3` 可释放、`4` 刷新中，其余（`0` / `1`）为空闲；默认 `0` 不显示内容，`1` 显示 `~`。
+- 提示条平时贴在视口外，沿主轴的尺寸由 `--vc-recycle-list-pull-size` 决定（内容更高时以实际尺寸为准）。触发刷新的拉动距离、刷新中停留的位置都取它的实际尺寸，在每次拉动开始时读取。
 - `inverted + fill=false` 时，如果自定义的 `complete` / `empty` 比加载区矮，刷新开始时首部会变高，列表整体下移这段差值，直到新数据到达。需要时给这两个 slot 设置不低于加载区的最小高度。
 
 ### 倒置消息列表与上拉刷新
@@ -716,22 +716,22 @@ const store = new RecycleListStore({
 | disabled | 是否禁止触发远程 `loadData`；不阻止本地 `data` 分批构建 | `boolean` | - | `false` |
 | batchCount | 每次构建/测量的节点批次大小；有 placeholder 时亦作为请求期间预分配的占位节点数 | `number` | - | `20` |
 | bufferCount | 在可见数据索引前后额外渲染的节点数量 | `number` | - | `0` |
-| estimateSize | 预估尺寸（主轴，px），数字或 `({ row, index }) => number \| undefined`（`row` 为 `data` 中的一项，`index` 为它的下标，与默认插槽一致）。给出尺寸的项不进隐藏池测量，本地数据一次构建全部，内容尺寸从一开始就完整；渲染出来后按实际尺寸校正（按锚点补偿，画面不跳）。返回 `undefined` 的项照常测量。取值或函数变化时，只有预估值变了的项换用新值（之前测过的尺寸也随之作废），预估值没变的项不动，因此可以直接写内联函数 | `number \| Function` | - | - |
+| estimateSize | 预估尺寸（主轴，px；`MRecycleList` 为 750 稿长度），数字或 `({ row, index }) => number \| undefined`（`row` 为 `data` 中的一项，`index` 为它的下标，与默认插槽一致）。给出尺寸的项不进隐藏池测量，本地数据一次构建全部，内容尺寸从一开始就完整；渲染出来后按实际尺寸校正（按锚点补偿，画面不跳）。返回 `undefined` 的项照常测量。取值或函数变化时，只有预估值变了的项换用新值（之前测过的尺寸也随之作废），预估值没变的项不动，因此可以直接写内联函数 | `number \| Function` | - | - |
 | overscan | 视口上下（横向时左右）额外预渲染距离，单位 px；默认原生滚动时 scroll 事件晚于实际滚动，留出余量避免快速滚动时边缘露白，滚轮驱动（`scrollerOptions.wheel`）时可调小 | `number` | - | `300` |
 | threshold | 距离列表加载边缘小于等于该值时触发加载，单位 px | `number` | - | `100` |
 | loadData | 获取更多数据，签名为 `({ page, loaded }) => response` | `Function` | - | `() => false` |
 | columns | 多列数量；不定高时支持瀑布流 | `number` | - | `1` |
-| gap | 多列间距 | `number` | - | `0` |
+| gap | 多列间距，单位 px；`MRecycleList` 为 750 稿长度 | `number` | - | `0` |
 | inverted | 是否倒置 | `boolean` | - | `false` |
 | lazyTail | 是否延迟展示「加载方向末端」的 slot，直到列表到达末尾（远程全部加载完；`disabled` 时为本地数据全部构建完）；末端随 `inverted` 翻转 | `boolean` | - | `false` |
 | pullable | 是否启用拉动刷新：正序下拉（横向右拉），`inverted` 时上拉（横向左拉） | `boolean` | - | `false` |
 | vertical | 是否以 Y 轴为主轴 | `boolean` | - | `true` |
 | scrollerOptions | 内部 Scroller 的属性，见下方 scrollerOptions 说明 | `object` | - | - |
-| renderEmpty | 空数据渲染函数 | `Function` | - | - |
-| renderComplete | 加载完成渲染函数 | `Function` | - | - |
-| renderLoading | 加载中渲染函数 | `Function` | - | - |
-| renderPlaceholder | 占位节点渲染函数 | `Function` | - | - |
-| renderRefresh | 刷新提示渲染函数，参数为 `{ status, type }`，见上文「拉动刷新」 | `Function` | - | - |
+| renderEmpty | 空数据渲染函数，参数为 `{ mobile }` | `Function` | - | - |
+| renderComplete | 加载完成渲染函数，参数为 `{ mobile }` | `Function` | - | - |
+| renderLoading | 加载中渲染函数，参数为 `{ mobile }` | `Function` | - | - |
+| renderPlaceholder | 占位节点渲染函数，参数为 `{ mobile }` | `Function` | - | - |
+| renderRefresh | 刷新提示渲染函数，参数为 `{ status, type, mobile }`，见上文「拉动刷新」 | `Function` | - | - |
 
 #### scrollerOptions
 
@@ -779,17 +779,72 @@ const store = new RecycleListStore({
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
 | default | 行内容；尺寸未知的项会先在隐藏测量池中渲染一次，避免在渲染过程中执行副作用 | `{ row, index }`，`index` 为当前数据索引 |
-| placeholder | 未加载数据时的占位内容，如骨架屏 | - |
-| loading | 加载更多提示 | - |
-| complete | 无更多数据提示 | - |
-| empty | 首次加载后无数据提示 | - |
+| placeholder | 未加载数据时的占位内容，如骨架屏 | `{ mobile }` |
+| loading | 加载更多提示 | `{ mobile }` |
+| complete | 无更多数据提示 | `{ mobile }` |
+| empty | 首次加载后无数据提示 | `{ mobile }` |
 | header | RecycleList 内部头部；`inverted + lazyTail` 时延迟到加载完成才渲染 | - |
 | footer | RecycleList 内部尾部；`lazyTail` 时延迟到加载完成才渲染（非 inverted） | - |
 
 `placeholder`、`loading`、`complete`、`empty` 插槽优先于对应的 `render*` 属性；属性优先于 `VcInstance.configure({ RecycleList: { renderEmpty, renderComplete, renderLoading, renderPlaceholder, renderRefresh } })` 全局配置。刷新提示通过 `renderRefresh` 定制，没有 `refresh` 插槽。默认空状态、完成状态及拉动提示随 locale 切换。
 
-### 移动端与共享 Store
+`render*` 与对应插槽的参数 `mobile` 标识当前是哪一端：`RecycleList` 为 `false`，`MRecycleList` 为 `true`。全局配置两端共用一份，需要区分时按它分支：
 
-`MRecycleList` 是 `RecycleList` 的别名，属性、事件、插槽和方法一致。`RecycleListStore` 与 `RecycleListLoadState` 可从 `@deot/vc` 导入。
+```js
+import { VcInstance } from '@deot/vc';
 
-使用 `new RecycleListStore({ loadData, columns, gap })` 创建共享实例并传给多个列表。传入 `store` 后，`batchCount`、`bufferCount`、`estimateSize`、`inverted`、`columns`、`gap`、`loadData` 由 Store 接管，列表对应属性不再同步到 Store。
+VcInstance.configure({
+	RecycleList: {
+		renderEmpty: ({ mobile }) => (mobile ? '暂无内容' : '暂无数据，换个条件试试')
+	}
+});
+```
+
+### 移动端
+
+`MRecycleList` 与 `RecycleList` 结构相同，根节点另有标记类 `.vcm-recycle-list`（`.vc-recycle-list.vcm-recycle-list`），属性、事件、插槽和方法一致。虚拟滚动本身两端通用，不同之处有四点：
+
+- 数字 `gap`、`estimateSize`（含函数的返回值）是 750 稿长度，按 `--vc-rem` 当前的 px 换算（375 宽下 `gap=24` 即 12px）；`--vc-rem` 变化（旋转屏幕、视口跨过 480px、业务调整 `--rem`）时自动重新换算并重排。`overscan`、`threshold` 两端都以 px 为单位。
+- 方法与事件里的尺寸、位置都是实测的 px：`scrollTo` / `scrollToIndex` 的 `offset`、`row-resize` 的尺寸等。
+- 内部滚动容器为 `MScroller`：未设置 `always` 时使用原生滚动条，`scrollerOptions` 的数字 `height`、`maxHeight` 是 750 稿长度。
+- 默认内容按 750 稿：刷新提示条高 88（也是触发刷新的拉动距离），加载中 / 已全部加载 / 空状态上下留白 24、行高 44，文字 28、次要文字色。对应的局部变量见下表，可在 `.vcm-recycle-list` 或外层覆盖。
+
+| 局部变量 | 说明 | `RecycleList` | `MRecycleList` |
+| --- | --- | --- | --- |
+| `--vc-recycle-list-pull-size` | 刷新提示条沿主轴的尺寸 | `30px` | `calc(var(--vc-rem) * 88)` |
+| `--vc-recycle-list-state-padding` | 加载中 / 已全部加载 / 空状态沿主轴的留白 | `10px` | `calc(var(--vc-rem) * 24)` |
+| `--vc-recycle-list-state-line-height` | 默认提示文字的行高 | `20px` | `calc(var(--vc-rem) * 44)` |
+
+```vue
+<template>
+	<MRecycleList
+		pullable
+		:columns="2"
+		:gap="24"
+		:estimate-size="estimateSize"
+		:load-data="loadData"
+	>
+		<template #default="{ row }">
+			<div :style="{ height: `calc(var(--vc-rem) * ${row.size})` }">{{ row.id }}</div>
+		</template>
+	</MRecycleList>
+</template>
+
+<script setup>
+import { MRecycleList } from '@deot/vc';
+
+// 与样式一致的 750 稿高度
+const estimateSize = ({ row }) => row.size;
+const loadData = ({ page, loaded }) => (page > 3
+	? []
+	: Array.from({ length: 20 }).map((_, index) => ({ id: loaded + index, size: 200 + (index % 3) * 60 })));
+</script>
+```
+
+需要在业务代码里把 750 稿长度算成 px 时，可用 `@deot/vc-hooks` 的 `useRem()`：返回全局共享的只读 `ref`，值为 750 稿上 1 个单位当前的 px。
+
+### 共享 Store
+
+`RecycleListStore` 与 `RecycleListLoadState` 可从 `@deot/vc` 导入。
+
+使用 `new RecycleListStore({ loadData, columns, gap })` 创建共享实例并传给多个列表。传入 `store` 后，`batchCount`、`bufferCount`、`estimateSize`、`inverted`、`columns`、`gap`、`loadData` 由 Store 接管，列表对应属性不再同步到 Store。Store 上的 `gap`、`estimateSize` 与列表属性单位相同：交给 `MRecycleList` 使用时为 750 稿长度。

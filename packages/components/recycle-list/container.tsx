@@ -131,6 +131,7 @@ export const Container = defineComponent({
 					render={props.render || renderDefault}
 					status={status.value}
 					type={props.inverted ? K.pullTail : K.pullHead}
+					mobile={props.mobile}
 				/>
 			</div>
 		);

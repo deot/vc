@@ -95,8 +95,10 @@ describe('index.ts', () => {
 		expect(typeof RecycleListStore).toBe('function');
 	});
 
-	it('MRecycleList re-exports RecycleList from index.m', () => {
-		expect(MRecycleList).toBe(RecycleList);
+	it('MRecycleList is a separate component sharing the props of RecycleList', () => {
+		expect(MRecycleList).not.toBe(RecycleList);
+		expect(MRecycleList.name).toBe('vcm-recycle-list');
+		expect(MRecycleList.props).toBe(RecycleList.props);
 	});
 
 	it('create', async () => {

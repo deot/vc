@@ -47,6 +47,15 @@ export type RecycleListStates = {
 	 */
 	loaded: number;
 	/**
+	 * 每个长度单位对应的 px：gap / estimateSize 按它换算。
+	 * 桌面端为 1（即 px）；移动端（MRecycleList）这两个属性是 750 稿长度，由组件写入 --vc-rem 当前的 px 值
+	 */
+	unit: number;
+	/**
+	 * 列间距（px）：props.gap * unit
+	 */
+	gap: number;
+	/**
 	 * 每列交叉轴尺寸（百分比）；单列时不设
 	 */
 	columnSize: string | undefined;
@@ -104,13 +113,19 @@ export class BaseWatcher {
 			return this.states.loadings.length > 0;
 		}),
 
+		unit: 1,
+
+		gap: computed(() => {
+			return this.props.gap * this.states.unit;
+		}),
+
 		columnSize: computed(() => {
 			if (this.props.columns === 1) return;
 			return `${100 / this.props.columns}%`;
 		}),
 
 		columnOffsetGap: computed(() => {
-			return this.props.gap * (this.props.columns - 1) / this.props.columns;
+			return this.states.gap * (this.props.columns - 1) / this.props.columns;
 		}),
 
 		// 每列的 padding 之和恒为 columnOffsetGap，相邻两列"前尾 + 后头"恰为 gap
@@ -120,7 +135,7 @@ export class BaseWatcher {
 			for (let i = 1; i < v.length; i++) {
 				const pre = v[i - 1].offset;
 
-				v[i].offset = [this.props.gap - pre[1], this.states.columnOffsetGap - this.props.gap + pre[1]];
+				v[i].offset = [this.states.gap - pre[1], this.states.columnOffsetGap - this.states.gap + pre[1]];
 			}
 
 			return v;

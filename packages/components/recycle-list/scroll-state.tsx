@@ -2,6 +2,7 @@
 
 import { defineComponent } from 'vue';
 import type { PropType } from 'vue';
+import { toRem } from '@deot/vc-shared';
 import { Customer } from '../customer';
 import { Spin } from '../spin';
 import { useLocale } from '../locale';
@@ -23,6 +24,8 @@ export const ScrollState = defineComponent({
 		disabled: Boolean,
 		// 有骨架时由骨架表达加载中
 		hasPlaceholder: Boolean,
+		// 移动端（MRecycleList）：默认加载图标为 750 稿尺寸，渲染函数的参数 mobile 为 true
+		mobile: Boolean,
 		renderer: {
 			type: Object as PropType<Record<string, any>>,
 			required: true
@@ -31,14 +34,14 @@ export const ScrollState = defineComponent({
 	setup(props, { slots }) {
 		const { t } = useLocale();
 		/**
-		 * 按 slot → render 属性 → 默认内容的优先级渲染一种状态
+		 * 按 slot → render 属性 → 默认内容的优先级渲染一种状态；渲染函数（含 slot）的参数为 { mobile }
 		 * @param name 状态名
 		 * @param fallback 默认内容
 		 * @returns 状态内容
 		 */
 		const renderState = (name: 'loading' | 'complete' | 'empty', fallback: () => any) => {
 			const render = slots[name] || props.renderer[name];
-			return render ? (<Customer render={render} />) : fallback();
+			return render ? (<Customer render={render} mobile={props.mobile} />) : fallback();
 		};
 
 		return () => {
@@ -52,7 +55,9 @@ export const ScrollState = defineComponent({
 								class="vc-recycle-list__loading"
 								style={{ visibility: loadState.isLoading && !loadState.isSilentRefresh ? 'visible' : 'hidden' }}
 							>
-								{ renderState('loading', () => (<div class="vc-recycle-list__center"><Spin size={20} /></div>)) }
+								{ renderState('loading', () => (
+									<div class="vc-recycle-list__center"><Spin size={props.mobile ? toRem(40) : 20} /></div>
+								)) }
 							</div>
 						)
 					}

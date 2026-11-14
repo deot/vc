@@ -35,6 +35,7 @@ export type Options = Partial<{
 		// 弹层挂载成独立应用时调用，用来注册全局插件
 		install?: (app: App) => any;
 	};
+	// RecycleList 与 MRecycleList 共用：渲染函数的第一个参数带 mobile（MRecycleList 为 true），renderRefresh 为 { status, type, mobile }
 	RecycleList: Partial<Record<'renderRefresh' | 'renderPlaceholder' | 'renderLoading' | 'renderComplete' | 'renderEmpty', CustomerRender>>;
 	TableColumn: {
 		line?: number;

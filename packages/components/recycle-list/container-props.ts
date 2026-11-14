@@ -19,6 +19,8 @@ export const props = {
 		type: Function as PropType<() => boolean>,
 		default: () => true
 	},
+	// 移动端（MRecycleList）：渲染函数的参数 mobile 为 true
+	mobile: Boolean,
 	render: renderType
 };
 export type Props = ExtractPropTypes<typeof props>;

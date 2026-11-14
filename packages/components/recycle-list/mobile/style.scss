@@ -1,0 +1,27 @@
+@use '../../style/helper' as *;
+
+$color-dark-extralight: varfix(color-dark-extralight, recycle-list);
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放），375 宽下：刷新提示条高 44px（也是触发刷新的拉动距离）；
+// 加载中 / 已全部加载 / 空状态上下留白 12px、行高 22px；提示文字 14px、次要文字色（与 MList 的首尾说明一致）
+// 结构沿用 ../style.scss，这里覆盖局部变量（与两端样式的加载顺序无关），另加移动端专有的规则
+// 子元素沿用桌面端类名（vc-recycle-list__*），不用 element()
+@include block(vcm-recycle-list) {
+	@include localvars(recycle-list, (
+		pull-size: remfix(88),
+		state-padding: remfix(24),
+		state-line-height: remfix(44)
+	));
+
+	// 桌面端的提示文字跟随外层，这里给出移动端的字号与颜色；提示条居中
+	> .vc-recycle-list__pull {
+		font-size: remfix(28);
+		color: $color-dark-extralight;
+		text-align: center;
+	}
+
+	.vc-recycle-list__scroll-state {
+		font-size: remfix(28);
+		color: $color-dark-extralight;
+	}
+}

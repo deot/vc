@@ -1,6 +1,20 @@
+@use 'sass:map';
 @use '../style/helper' as *;
 
 $component-name: vc-recycle-list;
+
+// 尺寸写成局部变量 --vc-recycle-list-<key>，移动端在 mobile/style.scss 里覆盖
+$sizes: (
+	// 刷新提示条沿主轴的尺寸：也是触发刷新的拉动距离（由 Container 读取实际尺寸）
+	pull-size: 30px,
+	// 加载中 / 已全部加载 / 空状态
+	state-padding: 10px,
+	state-line-height: 20px
+);
+
+@function v($key) {
+	@return localfix(recycle-list, $key, map.get($sizes, $key));
+}
 
 @include block($component-name) {
 	position: relative;
@@ -16,8 +30,8 @@ $component-name: vc-recycle-list;
 	@include element(pull) {
 		position: absolute;
 		inset: auto 0 100%;
-		min-height: 30px;
-		line-height: 30px;
+		min-height: v(pull-size);
+		line-height: v(pull-size);
 		transition: transform 300ms ease-out;
 	}
 
@@ -80,21 +94,21 @@ $component-name: vc-recycle-list;
 	// scroll-state
 	@include element(loading) {
 		display: flex;
-		padding: 10px 0;
+		padding: v(state-padding) 0;
 		justify-content: center;
 	}
 
 	@include element(center) {
-		line-height: 20px;
+		line-height: v(state-line-height);
 		text-align: center;
 	}
 
 	@include element(complete) {
-		padding: 10px 0;
+		padding: v(state-padding) 0;
 	}
 
 	@include element(empty) {
-		padding: 10px 0;
+		padding: v(state-padding) 0;
 	}
 
 
@@ -138,7 +152,7 @@ $component-name: vc-recycle-list;
 		@include element(pull) {
 			inset: 0 100% 0 auto;
 			display: flex;
-			min-width: 30px;
+			min-width: v(pull-size);
 			min-height: 0;
 			justify-content: center;
 			writing-mode: vertical-rl;
@@ -154,7 +168,7 @@ $component-name: vc-recycle-list;
 
 		@include element(scroll-state) {
 			display: flex;
-			padding: 0 10px;
+			padding: 0 v(state-padding);
 			align-items: center;
 		}
 	}	

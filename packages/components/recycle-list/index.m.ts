@@ -1,3 +1,7 @@
-import { RecycleList } from '.';
+import { MRecycleList } from './mobile/recycle-list.tsx';
+import './style.scss';
+import './mobile/style.scss';
 
-export const MRecycleList = RecycleList;
+export {
+	MRecycleList
+};
