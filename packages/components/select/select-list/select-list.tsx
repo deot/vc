@@ -1,14 +1,15 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, cloneVNode, isVNode, onMounted, ref, watch } from 'vue';
-import type { PropType, VNode } from 'vue';
+import type { Component, PropType, VNode } from 'vue';
+import { useRem } from '@deot/vc-hooks';
 import { RecycleList } from '../../recycle-list/index';
 import { isScrollOf, useScrollIdle } from '../../scroller/core/scroll-idle';
 import { scrollIntoScroller } from './scroll';
 
 const COMPONENT_NAME = 'vc-select-list';
-// 虚拟化时的初始预估行高（px）；行渲染出来后改用实际高度，见 handleRowResize
-const ESTIMATE_SIZE = 30;
+// 虚拟化时的初始预估行高（桌面端 px、移动端 750 稿）；行渲染出来后改用实际高度，见 handleRowResize
+const ESTIMATE_SIZE = [30, 88];
 
 export type SelectListAlign = 'start' | 'nearest';
 
@@ -28,6 +29,8 @@ export interface SelectListExposed {
  * 	- 滚动期间根节点带 is-scrolling：各行的 :hover 样式据此暂停，行从静止的指针下经过时不逐行闪；停下 SCROLL_IDLE 后移除，
  * 	  浏览器按指针位置恢复 :hover。类名直接写在节点上，不触发渲染
  * 	- 插槽在本组件渲染时调用，依赖由本组件收集：调用方传入插槽时标记 $stable，父级重渲染时列表不必跟着重渲染（大量行时代价可观）
+ * 	- 移动端（内部属性 mobile / recycleList，由 MTree 等传入）：虚拟列表换成 MRecycleList，它的 estimateSize 是 750 稿长度，
+ * 	  实测的行高（px）按 1 个单位的 px 换算后再交给它
  */
 export const SelectList = defineComponent({
 	name: COMPONENT_NAME,
@@ -36,7 +39,14 @@ export const SelectList = defineComponent({
 			type: Array as PropType<unknown[]>,
 			default: () => []
 		},
-		virtualized: Boolean
+		virtualized: Boolean,
+		// 内部使用：移动端
+		mobile: Boolean,
+		// 内部使用：虚拟化时的列表组件，默认桌面端的 RecycleList
+		recycleList: {
+			type: Object as PropType<Component>,
+			default: () => RecycleList
+		}
 	},
 	emits: ['hover'],
 	setup(props, { slots, emit, expose }) {
@@ -47,8 +57,14 @@ export const SelectList = defineComponent({
 		const indexes = new WeakMap<Element, number>();
 		let active = -1;
 		let activeEl: Element | null = null;
-		// 渲染出来的行的实际高度，代替调用方给的预估值
+		// 渲染出来的行的实际高度（px），代替初始的预估值
 		const measured = ref<number>();
+		// 750 稿上 1 个单位的 px
+		const rem = props.mobile ? useRem() : undefined;
+		const getEstimateSize = () => {
+			if (!measured.value) return ESTIMATE_SIZE[+props.mobile];
+			return rem?.value ? measured.value / rem.value : measured.value;
+		};
 
 		const getRow = (index: number) => {
 			return (props.virtualized ? rows.get(index) : root.value?.children[index]) || null;
@@ -160,21 +176,22 @@ export const SelectList = defineComponent({
 		};
 
 		return () => {
+			const List = props.recycleList as any;
 			return (
 				<div ref={root} class="vc-select-list" onMousemove={handleMousemove}>
 					{
 						props.virtualized
 							? (
-									<RecycleList
+									<List
 										ref={(v: any) => (recycleList = v)}
 										fill={false}
 										disabled
 										data={props.data}
-										estimateSize={measured.value || ESTIMATE_SIZE}
+										estimateSize={getEstimateSize()}
 										onRow-resize={handleRowResize}
 									>
 										{{ default: ({ row, index }: any) => renderTrackedRow(row, index) }}
-									</RecycleList>
+									</List>
 								)
 							: props.data.map(renderRow)
 					}
