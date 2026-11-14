@@ -5,25 +5,25 @@ import { debounce } from 'lodash-es';
 import { Resize } from '@deot/helper-resize';
 import { getUid } from '@deot/helper-utils';
 import { IS_SERVER } from '@deot/vc-shared';
-import { parseHeight } from './utils';
+import { parseHeight } from '../utils';
 
-import { Store, useStates } from './store';
+import { Store, useStates } from '../store';
 
 // Table
-import { TableBody } from './table-body';
-import { TableHeader } from './table-header';
-import { TableFooter } from './table-footer';
-import { Affix } from '../affix';
-import { Customer } from '../customer';
-import { useLocale } from '../locale';
+import { TableBody } from '../table-body';
+import { TableHeader } from '../table-header';
+import { TableFooter } from '../table-footer';
+import { Affix } from '../../affix';
+import { Customer } from '../../customer';
+import { useLocale } from '../../locale';
 
-import { props as tableProps } from './table-props';
-import { useLazyTail } from './hooks/use-lazy-tail';
-import { usePropsSync } from './hooks/use-props-sync';
-import { useScrollSync } from './hooks/use-scroll-sync';
-import { useWheelForward } from './hooks/use-wheel-forward';
-import { useBlockDrag } from './hooks/use-block-drag';
-import { useColumnDrag } from './hooks/use-column-drag';
+import { props as tableProps } from '../table-props';
+import { useLazyTail } from './use-lazy-tail';
+import { usePropsSync } from './use-props-sync';
+import { useScrollSync } from './use-scroll-sync';
+import { useWheelForward } from './use-wheel-forward';
+import { useBlockDrag } from './use-block-drag';
+import { useColumnDrag } from './use-column-drag';
 import type { Nullable } from '@deot/helper-shared';
 
 const COMPONENT_NAME = 'vc-table';
