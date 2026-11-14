@@ -20,9 +20,12 @@ $box-shadow-floating: varfix(box-shadow-floating, table);
 // 旧叠色入口只在使用方显式覆盖时生效，默认使用主题中的准确底色。
 $surface-tint: varfix(surface-tint, table, transparent);
 $stripe-tint: varfix(stripe-tint, table, transparent);
-$gap-h: 12px;
+
+// 单元格的左右内边距、首末列的外侧内边距、行高：经根节点上的变量下发（见 block 开头），移动端在 mobile/style.scss 里改写
+$gap-h: var(--vc-table-cell-padding-x);
+$edge-h: var(--vc-table-edge-padding-x);
+$line-height: var(--vc-table-line-height);
 $gap-v: 8px;
-$line-height: 20px;
 
 // 除 medium（默认，即根节点上的默认变量）外的尺寸：字号、表头 / 单元格的上下内边距
 $sizes: (
@@ -36,6 +39,25 @@ $sizes: (
 	// 嵌套表格的根节点会重新声明默认值，因此单元格只取最近一层表格的值，不会继承外层的尺寸 / 边框。
 	// 边框、过渡仍只在对应修饰类下声明（不覆盖使用方的样式）；边框变量只含线宽与线型，颜色在单元格上求值
 	--vc-table-font-size: 13px;
+	--vc-table-line-height: 20px;
+	--vc-table-cell-padding-x: 12px;
+	--vc-table-edge-padding-x: 12px;
+
+	// 展开图标（展开列、树形列）：宽度、图标字号、与文字的间距
+	--vc-table-expand-icon-size: 20px;
+	--vc-table-expand-icon-font-size: 12px;
+	--vc-table-expand-icon-gap: 3px;
+
+	// 展开行内容的内边距
+	--vc-table-expanded-padding: 20px 50px;
+
+	// 拖拽把手：边长、图标字号
+	--vc-table-drag-handle-size: 20px;
+	--vc-table-drag-handle-font-size: 14px;
+
+	// 数据为空：占位高度、文案的上方留白
+	--vc-table-empty-height: 60px;
+	--vc-table-empty-padding: 20px;
 
 	// 拖拽排序中被拖动的块 / 列的透明度（列的变暗样式由脚本注入，同样引用它）
 	--vc-table-dragging-opacity: 0.4;
@@ -194,18 +216,18 @@ $sizes: (
 		display: flex;
 		width: 100%;
 		height: 100%;
-		padding-top: 20px;
+		padding-top: var(--vc-table-empty-padding);
 		pointer-events: none;
 		justify-content: center;
 		align-items: center;
 	}
 
 	@include element(empty-placeholder) {
-		min-height: 60px;
+		min-height: var(--vc-table-empty-height);
 	}
 
 	@include element(empty-text) {
-		line-height: 60px;
+		line-height: var(--vc-table-empty-height);
 		color: $color-dark-extralight;
 	}
 
@@ -251,24 +273,29 @@ $sizes: (
 		display: inline-flex;
 		justify-content: center;
 		align-items: center;
-		width: 20px;
-		height: 20px;
-		font-size: 14px;
+		width: var(--vc-table-drag-handle-size);
+		height: var(--vc-table-drag-handle-size);
+		font-size: var(--vc-table-drag-handle-font-size);
 		color: $color-light-deepest;
 		cursor: move;
 		touch-action: none;
 		transition: color 0.2s;
 
-		&:hover {
-			color: $color-dark-extralight;
+		// 触屏点按后悬停态会一直停留，只在可悬停的设备上生效
+		@media (hover: hover) {
+			&:hover {
+				color: $color-dark-extralight;
+			}
 		}
 
 		@include when(disabled) {
 			cursor: not-allowed;
 			opacity: 0.5;
 
-			&:hover {
-				color: $color-light-deepest;
+			@media (hover: hover) {
+				&:hover {
+					color: $color-light-deepest;
+				}
 			}
 		}
 	}
@@ -363,9 +390,9 @@ $sizes: (
 	// 展开图标：与单元格行高一致，图标按文字的方式对齐，与同行文字、树形列的展开图标等高
 	@include element(expand-icon) {
 		display: inline-block;
-		width: 20px;
+		width: var(--vc-table-expand-icon-size);
 		height: $line-height;
-		font-size: 12px;
+		font-size: var(--vc-table-expand-icon-font-size);
 		line-height: $line-height;
 		color: $color-light-deepest;
 		cursor: pointer;
@@ -387,7 +414,7 @@ $sizes: (
 
 		// 纯属为了增加权重
 		&[class*="cell"] {
-			padding: 20px 50px;
+			padding: var(--vc-table-expanded-padding);
 		}
 
 		&:hover {
@@ -395,20 +422,20 @@ $sizes: (
 		}
 	}
 
-	// 树形列：按层级缩进；展开图标 20px + 3px 间距，叶子行以同宽占位对齐
+	// 树形列：按层级缩进；展开图标（默认 20px）+ 间距（默认 3px），叶子行以同宽占位对齐
 	@include element(indent) {
 		display: inline-block;
 	}
 
 	@include element(tree-icon) {
-		min-width: 20px;
-		margin-right: 3px;
+		min-width: var(--vc-table-expand-icon-size);
+		margin-right: var(--vc-table-expand-icon-gap);
 		text-align: center;
 	}
 
 	@include element(placeholder) {
 		display: inline-block;
-		width: 23px;
+		width: calc(var(--vc-table-expand-icon-size) + var(--vc-table-expand-icon-gap));
 	}
 	
 	// 公共布局层：CSS Grid（separate 语义，边框由 cell 自带的右/下 border 表达，
@@ -421,11 +448,11 @@ $sizes: (
 
 		// grid 下 cell 无行容器，:first-child/:last-child 失效，按列坐标补内边距
 		> .is-grid-first {
-			padding-left: $gap-h;
+			padding-left: $edge-h;
 		}
 
 		> .is-grid-last {
-			padding-right: $gap-h;
+			padding-right: $edge-h;
 		}
 	}
 
@@ -475,7 +502,7 @@ $sizes: (
 		.vc-table__tr .vc-table__th {
 			font-size: var(--vc-table-font-size);
 			font-weight: 500;
-			line-height: 20px;
+			line-height: $line-height;
 			color: $foreground-color-light;
 			background: linear-gradient($surface-tint, $surface-tint) $background-color-light;
 		}
@@ -692,8 +719,10 @@ $sizes: (
 
 	// 合计行的悬停高亮。表体的行由 JS 加 hover-row / hover-related（见 use-row-hover）：
 	// 滚动期间要暂停、合并块要带上关联的格子，只用一套机制
-	.vc-table__footer .vc-table__tr:hover > .vc-table__td {
-		background: linear-gradient($surface-tint, $surface-tint) $background-color-light;
+	@media (hover: hover) {
+		.vc-table__footer .vc-table__tr:hover > .vc-table__td {
+			background: linear-gradient($surface-tint, $surface-tint) $background-color-light;
+		}
 	}
 
 	// 固定列横向滚动阴影：用 ::after 渐变替代 box-shadow，避免单边阴影缺陷

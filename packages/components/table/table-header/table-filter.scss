@@ -9,8 +9,8 @@ $foreground-color-inactive: varfix(foreground-color-inactive, table-filter);
 
 @include block(vc-table-filter) {
 	display: inline-flex;
-	width: 20px;
-	height: 20px;
+	width: localfix(table-filter, size, 20px);
+	height: localfix(table-filter, size, 20px);
 	cursor: pointer;
 	justify-content: center;
 	align-items: center;

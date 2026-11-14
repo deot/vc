@@ -4,11 +4,14 @@ $color-light-deepest: varfix(color-light-deepest, table-sort);
 $color-primary: varfix(color-primary, table-sort);
 $color-primary-light: varfix(color-primary-light, table-sort);
 
+// 尺寸按 1 个单位（默认 1px）缩放，移动端在 ../mobile/style.scss 里改写
+$unit: localfix(table-sort, unit, 1px);
+
 @include block(vc-table-sort) {
 	position: relative;
 	display: inline-flex;
-	width: 14px;
-	height: 20px;
+	width: calc(#{$unit} * 14);
+	height: calc(#{$unit} * 20);
 	overflow: initial;
 	cursor: pointer;
 	flex-direction: column;
@@ -16,19 +19,19 @@ $color-primary-light: varfix(color-primary-light, table-sort);
 
 	@include element(icon) {
 		position: absolute;
-		left: 3px;
+		left: calc(#{$unit} * 3);
 		width: 0;
 		height: 0;
-		border: 5px solid transparent;
+		border: calc(#{$unit} * 5) solid transparent;
 
 		// 两个三角的可见部分（各 5px，间隔 2px）在 20px 盒子里上下对称
 		@include modifier(ascending) {
-			top: -1px;
+			top: calc(#{$unit} * -1);
 			border-bottom-color: $color-light-deepest;
 		}
 
 		@include modifier(descending) {
-			bottom: -1px;
+			bottom: calc(#{$unit} * -1);
 			border-top-color: $color-light-deepest;
 		}
 
