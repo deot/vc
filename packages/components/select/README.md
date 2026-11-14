@@ -1,6 +1,6 @@
 ## 选择器（Select）
 
-从数据列表中单选或多选，支持分组、搜索和自定义选项。移动端导出 `MSelect`，与 `Select` 使用同一实现。
+从数据列表中单选或多选，支持分组、搜索和自定义选项。移动端使用独立的 `MSelect`，见[移动端选择](#移动端选择)。
 
 ### 何时使用
 
@@ -327,9 +327,130 @@ const selectedValue = ref(5000);
 - 弹层宽度不随选项文字撑开：默认与触发器同宽；`autoWidth` 时只能按当前渲染出的选项计算，滚动时可能变化，建议给定宽度。
 - 浏览器的页内查找只能找到已渲染的选项。
 
+### 移动端选择
+
+`MSelect` 是独立的移动端组件：默认渲染 MListItem，点击后从底部弹出列表，选中项为主色并打勾。`v-model` 的形状与转换规则与桌面端相同（`max`、`separator`、`numerable`），`data` 中带 `children` 的项显示为分组，分组标题滚动时吸顶。
+
+- 单选默认点一项即提交并关闭，标题栏右侧有关闭按钮；点已选中的项直接关闭。
+- `confirm`：由「确定」提交。`true` 或 `'top'` 为顶部的「取消 / 确定」工具栏；`'bottom'` 为底部的大按钮，标题栏保留关闭按钮。
+- 多选（`max` 不为 `1`）总是由「确定」提交，`confirm` 为 `false` 时按 `'top'`。列表上方显示「已选 N/max」，选满后其余选项置灰；`max` 为 `0` 时不限数量。
+- `clearable`：有已选项时，列表上方显示「清空」；`confirm` 为 `'bottom'` 时改为底部的「清空」按钮。不需要确认时清空即提交并关闭，否则只清空弹层内的值，由「确定」提交。没开 `clearable` 时，一项都没选不能确定。
+- `searchable`：列表上方显示搜索框，规则同桌面端，没有命中项的分组连同标题一起隐藏。
+- 选项的 `description` 显示在文字下方；`renderLabel` 或 `#label` 插槽自定义选项文字，如加上标签。
+
+:::playground
+<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+```vue
+<template>
+	<div style="display: grid; gap: 12px; max-width: 420px">
+		<MSelect
+			v-model="single"
+			:data="data"
+			label="单选"
+			title="选择条目"
+			clearable
+			@visible-change="visible => handleVisibleChange('single', visible)"
+		/>
+		<MSelect
+			v-model="multiple"
+			:data="data"
+			:max="3"
+			label="最多 3 项"
+			title="选择条目"
+			searchable
+			clearable
+			@visible-change="visible => handleVisibleChange('multiple', visible)"
+		/>
+		<MSelect
+			v-model="bottom"
+			:data="grouped"
+			:max="0"
+			label="底部按钮"
+			title="选择条目"
+			confirm="bottom"
+			clearable
+			@visible-change="visible => handleVisibleChange('bottom', visible)"
+		/>
+		<p>single：{{ single }}；multiple：{{ multiple }}；bottom：{{ bottom }}</p>
+	</div>
+</template>
+<script setup>
+import { ref, inject } from 'vue';
+import { MSelect } from '@deot/vc';
+
+const data = [
+	{ value: 1, label: '条目一', description: '说明文字' },
+	{ value: 2, label: '条目二' },
+	{ value: 3, label: '条目三', disabled: true },
+	{ value: 4, label: '条目四' },
+	{ value: 5, label: '条目五' }
+];
+const grouped = [
+	{ value: 'a', label: '分组 A', children: [{ value: 'a-1', label: '条目 A-1' }, { value: 'a-2', label: '条目 A-2' }] },
+	{ value: 'b', label: '分组 B', children: [{ value: 'b-1', label: '条目 B-1' }, { value: 'b-2', label: '条目 B-2' }] }
+];
+const single = ref();
+const multiple = ref([]);
+const bottom = ref([]);
+
+const playground = inject('docs:playground');
+const visibleStates = {};
+const handlePreview = playground.run(560);
+const handleVisibleChange = (key, visible) => {
+	visibleStates[key] = visible;
+	return handlePreview(Object.values(visibleStates).some(Boolean));
+};
+</script>
+```
+:::
+
+### 移动端内嵌视图与直接调用
+
+`MSelectView` 是弹层里的内容，也可以直接放在页面中：每次点选都更新 `v-model` 并触发 `select`。
+
+`MSelect.open(options)` 直接打开弹层，通过 `onOk(value, labels)` 接收结果，返回的 Portal 实例可调用 `destroy()`。
+
+:::playground
+<!-- <config lang="json5">{ viewport: 375, previewInset: 0 }</config> -->
+```vue
+<template>
+	<div>
+		<MSelectView v-model="value" :data="data" :max="2" @select="handleSelect" />
+		<p style="padding: 0 16px">{{ value }} {{ selected }}</p>
+		<p style="padding: 0 16px; color: var(--vc-color-primary)" @click="handleOpen">MSelect.open 直接调用：{{ opened }}</p>
+	</div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { MSelect, MSelectView } from '@deot/vc';
+
+const data = Array.from({ length: 6 }, (_, i) => ({ value: i + 1, label: `条目 ${i + 1}` }));
+const value = ref([]);
+const selected = ref('');
+const opened = ref();
+
+const handleSelect = ({ value: v, selected: isSelected }) => {
+	selected.value = `${v} ${isSelected ? '选中' : '取消'}`;
+};
+
+const handleOpen = () => {
+	MSelect.open({
+		value: opened.value,
+		data,
+		title: '直接调用',
+		searchable: true,
+		onOk: (v) => {
+			opened.value = v;
+		}
+	});
+};
+</script>
+```
+:::
+
 ## 主题与局部覆盖
 
-全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-select-option-<参数>`、`--vc-select-all-<参数>`、`--vc-select-<参数>`、`--vc-select-option-group-<参数>`、`--vc-select-trigger-<参数>`、`--vc-select-highlight-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
+全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-select-option-<参数>`、`--vc-select-all-<参数>`、`--vc-select-<参数>`、`--vc-select-option-group-<参数>`、`--vc-select-trigger-<参数>`、`--vc-select-highlight-<参数>` 覆盖；移动端视图使用 `--vc-select-view-<参数>`，见 [MSelectView 主题](#mselectview-主题)。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
 
 `portal: true` 时，选项变量需设置在浮层祖先（例如 body）或通过 `portalClass` 为浮层配置，触发器上的局部变量不会自动传入浮层。
 
@@ -436,3 +557,94 @@ const selectedValue = ref(5000);
 - 输入框聚焦时按 Enter 会打开下拉并阻止默认行为，放在原生 `<form>` 里不会触发隐式提交。
 - 方向键高亮只作用于默认渲染的选项；用 `option` 插槽或 `renderOption` 自定义整个选项时不参与。
 - 默认占位符和全选按钮跟随 locale；searchPlaceholder、label、extra 和 data 文案由调用方提供。
+
+### MSelect 属性
+
+`MSelect` 是独立的移动端组件，见[移动端选择](#移动端选择)。支持下方 MSelectView 的全部属性（`allowDispatch` 除外），另有：
+
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| label | 条目标签 | `string \| number \| Function \| { type: string; value: any }` | - | - |
+| labelWidth | 条目标签宽度，750 稿长度，传给 MListItem | `string \| number` | - | `''` |
+| arrow | 条目箭头；禁用时不显示 | `boolean \| string` | - | `right` |
+| disabled | 禁用，点击不打开 | `boolean` | - | `false` |
+| extra | `formatter` 返回空值时显示的文字，允许空字符串 | `string` | - | 当前语言的 `vc.Select.placeholder` |
+| formatter | 根据选中项的文字生成显示内容 | `(labels: string[], value) => any` | - | `labels => labels.join(', ')` |
+| title | 弹层标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
+| confirm | 由「确定」提交：`true` / `'top'` 为顶部的「取消 / 确定」，`'bottom'` 为底部的「清空 / 确定」按钮；多选为 `false` 时按 `'top'` | `boolean \| string` | `true`、`false`、`top`、`bottom` | `false` |
+| cancelText | 顶部工具栏的取消文案，允许空字符串 | `string` | - | 当前语言的 `vc.Picker.cancelText` |
+| okText | 确定按钮的文案，允许空字符串 | `string` | - | 当前语言的 `vc.Picker.okText` |
+
+### MSelect 事件
+
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue | 提交后更新绑定值 | `(value, labels)` | 形状同桌面端；`labels` 为选中项的文字 |
+| change | 提交时触发 | `(value, labels)` | 同上 |
+| ok | 提交时触发（单选点选自动提交，或点「确定」） | `(value, labels)` | 同上 |
+| cancel | 点「取消」，不提交 | - | - |
+| select | 弹层内每次点选一项 | `{ row, value, selected }` | 见 MSelectView 事件 |
+| clear | 弹层内点击「清空」 | - | - |
+| visible-change | 弹层显示状态变化 | `(visible: boolean)` | - |
+| close | 弹层关闭动画完成 | - | - |
+
+### MSelect 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 自定义可点击的触发内容，替代 MListItem | `{ label: string[], value }`，选中项的文字与当前绑定值 |
+| label | 自定义弹层中的选项文字，优先于 `renderLabel` | `{ label, row, index, selected }` |
+
+### MSelect 方法
+
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| open | 直接打开弹层 | MSelectView 的属性、`title`、`confirm`、`cancelText`、`okText`，以及 `onOk(value, labels)`、`onCancel()`、`onSelect(payload)`、`onClear()`、`onVisibleChange(visible)`、`onClose()` | Portal 实例，可调用 `destroy()` |
+
+`MSelect.open` 不返回选中结果的 Promise，通过 `onOk` 接收。兼容 `value` 作为初始值的别名，同时传入时以 `modelValue` 为准。`MSelect.View` 与 `MSelectView` 为同一组件。
+
+### MSelectView 属性
+
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| data | 选项，带 `children` 的项为分组；数据项另支持 `description`（文字下方的说明） | `SelectOption[]` | - | `[]` |
+| modelValue | 同桌面端 | `string \| number \| (string \| number)[]` | - | `undefined` |
+| max | `1` 单选；大于 `1` 多选，最多选 `max` 项，选满后未选中的项禁用；`0` 多选且不限数量 | `number` | `>= 0` | `1` |
+| clearable | 有已选项时在列表上方显示「清空」，点击后提交空值（`nullValue`，数组值为 `[]`，字符串多选为 `''`） | `boolean` | - | `false` |
+| searchable | 列表上方显示搜索框 | `boolean` | - | `false` |
+| searchPlaceholder | 搜索框的占位文字 | `string` | - | `''` |
+| renderLabel | 自定义选项文字；`label` 插槽优先 | `(options: { label, row, index: number, selected: boolean }) => VNodeChild` | - | - |
+| separator | 同桌面端 | `string` | - | `','` |
+| numerable | 同桌面端 | `boolean` | - | `false` |
+| nullValue | 同桌面端 | `number \| string \| object` | - | `undefined` |
+| allowDispatch | 提交时通知所属表单项；MSelect 的弹层内为 `false` | `boolean` | - | `true` |
+
+`renderLabel` 的 `index` 为选项在当前列表中的位置，不计分组标题。
+
+### MSelectView 事件
+
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue | 每次点选后更新 | `(value, labels)` | 同桌面端 |
+| change | 同 `update:modelValue` | `(value, labels)` | 同上 |
+| select | 每次点选一项，在更新之后触发；单选点已选中的项也触发 | `{ row, value, selected }` | `selected` 为点选后该项是否选中 |
+| clear | 点击「清空」，先于提交空值 | - | - |
+
+### MSelectView 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| label | 自定义选项文字 | `{ label, row, index, selected }` |
+
+### MSelectView 主题
+
+列表高度可通过 `--vc-select-view-height` 覆盖（默认 768，750 稿）。颜色使用以下组件变量，并回退到同名全局变量：
+
+| 变量 | 用途 |
+| --- | --- |
+| `--vc-select-view-color-dark-lighter` | 选项文字 |
+| `--vc-select-view-color-dark-extralight` | 分组标题、已选数量、「清空」、说明文字、无结果提示 |
+| `--vc-select-view-color-primary` | 选中项与搜索命中的文字 |
+| `--vc-select-view-foreground-color-inactive` | 禁用及选满后不可选的选项 |
+| `--vc-select-view-background-color-light` | 选项按下时的背景 |
+| `--vc-select-view-background-color-lightest` | 视图与分组标题的背景 |

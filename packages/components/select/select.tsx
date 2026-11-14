@@ -2,8 +2,8 @@
 
 import { defineComponent, ref, computed, nextTick } from 'vue';
 import { getUid } from '@deot/helper-utils';
-import { getLabel, flattenData, getOptionText } from './utils';
-import type { TreeData } from './utils';
+import { getLabel, flattenData, getSelectRows } from './utils';
+import type { TreeData, SelectRow } from './utils';
 import { Popover } from '../popover/index';
 import { Option, OptionGroup } from './select-option';
 import { props as selectProps } from './select-props';
@@ -16,12 +16,6 @@ import { useNavigate } from './hooks/use-navigate';
 import { useLocale } from '../locale';
 
 const COMPONENT_NAME = 'vc-select';
-
-// 列表的一行：分组标题或选项
-interface SelectRow {
-	item: TreeData;
-	group?: boolean;
-}
 
 // 选项由 Popover 内置的 Scroller 滚动
 const scrollerOptions = { maxHeight: 200, wrapperClass: 'vc-select__options' };
@@ -62,23 +56,8 @@ export const Select = defineComponent({
 			}));
 		});
 
-		/**
-		 * 列表的行：分组标题与选项铺平，按搜索词过滤（filterable 为 false 的选项不参与）；没有命中项的分组不显示
-		 */
-		const rows = computed<SelectRow[]>(() => {
-			const regex = searchRegex.value;
-			const match = (item: TreeData) => item.filterable === false || regex.test(getOptionText(item));
-			const result: SelectRow[] = [];
-			(props.data as TreeData[] || []).forEach((item) => {
-				if (!Array.isArray(item.children) || !item.children.length) {
-					match(item) && result.push({ item });
-					return;
-				}
-				const children = item.children.filter(match);
-				children.length && result.push({ item, group: true }, ...children.map(child => ({ item: child })));
-			});
-			return result;
-		});
+		// 列表的行：分组标题与选项，按搜索词过滤
+		const rows = computed(() => getSelectRows(props.data as TreeData[], searchRegex.value));
 
 		// 搜索结果中可选的值，供全选
 		const selectableValues = computed(() => {

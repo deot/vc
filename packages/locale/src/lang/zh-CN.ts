@@ -154,7 +154,11 @@ export const zhCN: Language = {
 		Select: {
 			placeholder: '请选择',
 			selectAll: '全选',
-			deselectAll: '取消全选'
+			deselectAll: '取消全选',
+			noMatch: '暂无匹配数据',
+			clearText: '清空',
+			selected: '已选 {count}',
+			selectedMax: '已选 {count}/{max}'
 		},
 		InputNumber: {
 			maxExceeded: '数值不能超过{max}',

@@ -154,7 +154,11 @@ export const enUS: Language = {
 		Select: {
 			placeholder: 'Please select',
 			selectAll: 'Select all',
-			deselectAll: 'Deselect all'
+			deselectAll: 'Deselect all',
+			noMatch: 'No matching data',
+			clearText: 'Clear',
+			selected: '{count} selected',
+			selectedMax: '{count}/{max} selected'
 		},
 		InputNumber: {
 			maxExceeded: 'Value cannot exceed {max}',

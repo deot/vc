@@ -1,0 +1,129 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-select-view;
+$color-dark-lighter: varfix(color-dark-lighter, select-view);
+$color-dark-extralight: varfix(color-dark-extralight, select-view);
+$color-primary: varfix(color-primary, select-view);
+$foreground-color-inactive: varfix(foreground-color-inactive, select-view);
+$background-color-light: varfix(background-color-light, select-view);
+$background-color-lightest: varfix(background-color-lightest, select-view);
+
+// 750 稿，选项与 MCascaderView 相同：
+// 搜索框、多选的汇总栏（已选数量与「清空」）、固定高度的选项列表；分组标题吸顶，选中项为主色并打勾
+@include block($component-name) {
+	background-color: $background-color-lightest;
+
+	// 汇总栏高 72：左侧已选数量，右侧「清空」
+	@include element(summary) {
+		display: flex;
+		height: remfix(72);
+		padding: 0 remfix(32);
+		font-size: remfix(26);
+		color: $color-dark-extralight;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	@include element(clear) {
+		padding: remfix(16) 0 remfix(16) remfix(32);
+		font-size: remfix(28);
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	// 列表高 768（375 宽下 384px），原生滚动；搜索时高度不变
+	@include element(options) {
+		position: relative;
+		height: localfix(select-view, height, remfix(768));
+		padding-bottom: remfix(12);
+		overflow-y: auto;
+		box-sizing: border-box;
+		overscroll-behavior: contain;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	// 分组标题：字号 24，浅灰，滚动时吸顶
+	@include element(group) {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		padding: remfix(20) remfix(32) remfix(8);
+		font-size: remfix(24);
+		line-height: remfix(36);
+		color: $color-dark-extralight;
+		background-color: $background-color-lightest;
+	}
+
+	@include element(option) {
+		display: flex;
+		padding: remfix(20) remfix(32);
+		font-size: remfix(28);
+		line-height: remfix(40);
+		color: $color-dark-lighter;
+		cursor: pointer;
+		align-items: center;
+		-webkit-tap-highlight-color: transparent;
+
+		&:active {
+			background-color: $background-color-light;
+		}
+
+		@include when(selected) {
+			font-weight: 600;
+			color: $color-primary;
+		}
+
+		@include when(disabled) {
+			color: $foreground-color-inactive;
+			cursor: not-allowed;
+
+			&:active {
+				background-color: transparent;
+			}
+		}
+
+		// 搜索命中的文字
+		.vc-select-highlight {
+			color: $color-primary;
+		}
+	}
+
+	@include element(content) {
+		min-width: 0;
+		flex: 1;
+	}
+
+	@include element(label) {
+		overflow-wrap: anywhere;
+	}
+
+	// 标签下方的说明：字号 24，常规字重，浅灰
+	@include element(description) {
+		margin-top: remfix(4);
+		font-size: remfix(24);
+		font-weight: 400;
+		line-height: remfix(36);
+		color: $color-dark-extralight;
+		overflow-wrap: anywhere;
+	}
+
+	// 打勾与文字同高（28）
+	@include element(icon) {
+		margin-left: remfix(16);
+		font-size: remfix(28);
+		flex-shrink: 0;
+	}
+
+	@include element(empty) {
+		padding: remfix(96) remfix(32);
+		font-size: remfix(28);
+		color: $color-dark-extralight;
+		text-align: center;
+	}
+}
+
+@include block(vcm-select) {
+	@include when(disabled) {
+		opacity: 0.5;
+	}
+}

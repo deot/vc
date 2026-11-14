@@ -187,6 +187,34 @@ export const flattenData = (data: TreeData, options: FlattenDataOptions = {}): T
 };
 
 /**
+ * 列表的一行：分组标题或选项
+ */
+export interface SelectRow {
+	item: TreeData;
+	group?: boolean;
+}
+
+/**
+ * Select / MSelectView 的列表行：分组标题与选项铺平，按搜索词过滤（filterable 为 false 的选项不参与）；没有命中项的分组不显示
+ * @param data 选项，带 children 的为分组
+ * @param regex 搜索词的正则，见 createSearchRegex
+ * @returns ~
+ */
+export const getSelectRows = (data: TreeData[] | undefined, regex: RegExp): SelectRow[] => {
+	const match = (item: TreeData) => item.filterable === false || regex.test(getOptionText(item));
+	const result: SelectRow[] = [];
+	(data || []).forEach((item) => {
+		if (!Array.isArray(item.children) || !item.children.length) {
+			match(item) && result.push({ item });
+			return;
+		}
+		const children = item.children.filter(match);
+		children.length && result.push({ item, group: true }, ...children.map(child => ({ item: child })));
+	});
+	return result;
+};
+
+/**
  * 是否多选：max 为 1 时单选，0（不限）或大于 1 时多选
  * @param max ~
  * @returns ~
@@ -200,6 +228,16 @@ export const isMultiple = (max: number) => max !== 1;
  * @returns ~
  */
 export const isMaxReached = (max: number, count: number) => isMultiple(max) && max > 0 && count >= max;
+
+/**
+ * 选中的值对应的文字
+ * @param values 选中的值
+ * @param source 铺平的选项（见 flattenData）
+ * @returns ~
+ */
+export const getSelectLabels = (values: TreeValue[], source: TreeData) => {
+	return values.map(v => getLabel(source, v));
+};
 
 type ModelValue = string | number | (number | string | any)[] | undefined;
 interface ModelValueOptions {

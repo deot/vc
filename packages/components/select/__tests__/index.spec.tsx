@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Select, MSelect, VcInstance, Popover } from '@deot/vc-components';
+import { Select, VcInstance, Popover } from '@deot/vc-components';
 import { enUS, zhCN } from '@deot/vc-locale';
 import { Option, OptionGroup } from '../select-option';
 import { SelectAll, SelectPaths } from '../select-search';
@@ -97,7 +97,6 @@ describe('Select locale', () => {
 			attachTo: document.body
 		});
 		try {
-			expect(MSelect).toBe(Select);
 			expect(wrapper.find('input').attributes('placeholder')).toBe('请选择');
 			await wrapper.trigger('click');
 			await flush();
