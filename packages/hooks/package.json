@@ -18,9 +18,13 @@
     "access": "public"
   },
   "peerDependencies": {
+    "@deot/helper": "*",
     "vue": "*"
   },
   "peerDependenciesMeta": {
+    "@deot/helper": {
+      "optional": true
+    },
     "vue": {
       "optional": true
     }
@@ -28,5 +32,7 @@
   "dependencies": {
     "@deot/vc-shared": "^1.2.5"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@deot/helper": "^1.1.24"
+  }
 }

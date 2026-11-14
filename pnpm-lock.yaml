@@ -60,6 +60,10 @@ importers:
       vue:
         specifier: '*'
         version: 3.5.43(typescript@6.0.3)
+    devDependencies:
+      '@deot/helper':
+        specifier: ^1.1.24
+        version: 1.1.24
 
   packages/index:
     dependencies:
