@@ -28,7 +28,7 @@ export const open = (options: FilePreviewOpenOptions) => {
 
 	if (typeof enhancer !== 'function') return launch();
 
-	const taken = enhancer({ current, data, instance });
+	const taken = enhancer({ current, data, instance, mobile: !!mobile });
 	// Promise 不能直接 resolve 成 PortalLeaf，否则会等到预览关闭才结束
 	if (isPromise(taken)) {
 		return taken.then((value) => {

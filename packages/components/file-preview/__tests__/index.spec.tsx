@@ -228,6 +228,23 @@ describe('FilePreview', () => {
 		}
 	});
 
+	it('全局 enhancer / renderSlide 的参数带 mobile', async () => {
+		const enhancer = vi.fn(() => false);
+		const renderSlide = vi.fn(() => false as const);
+		VcInstance.options.FilePreview!.enhancer = enhancer;
+		VcInstance.options.FilePreview!.renderSlide = renderSlide;
+		for (const [open, mobile] of [
+			[() => MFilePreview.open({ data: ['/a.png'] }), true],
+			[() => FilePreview.open({ data: ['/a.png'] }), false]
+		] as const) {
+			open();
+			await nextTick();
+			expect(enhancer).toHaveBeenLastCalledWith(expect.objectContaining({ mobile }));
+			expect(renderSlide).toHaveBeenLastCalledWith(expect.objectContaining({ mobile }));
+			Portal.clear(true);
+		}
+	});
+
 	it('recognizes normal and query-string URLs', () => {
 		expect(getFileType('PHOTO.HEIC?x=1')).toBe('image');
 		expect(getFileType('movie.mov#time=2')).toBe('video');
@@ -354,7 +371,8 @@ describe('FilePreview', () => {
 				{ source: report, type: 'file', name: 'report.pdf' },
 				{ source: photo, type: 'image', name: 'photo.jpg' }
 			],
-			instance
+			instance,
+			mobile: false
 		});
 		expect(document.querySelector('.vc-file-viewer')).toBeNull();
 

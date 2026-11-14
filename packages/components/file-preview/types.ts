@@ -23,6 +23,8 @@ export interface FilePreviewEnhancerPayload {
 	current: number;
 	data: FilePreviewItem[];
 	instance: ComponentInternalInstance | null;
+	// 由移动端入口（MFilePreview、MImagePreview、MUploadPicker）触发
+	mobile: boolean;
 }
 
 export type FilePreviewImageFit = 'max-edge' | 'actual';
@@ -53,6 +55,8 @@ export interface FilePreviewSlideContext {
 	close: () => void;
 	instance: ComponentInternalInstance | null;
 	active: boolean;
+	// 移动端查看器
+	mobile: boolean;
 }
 
 export interface FilePreviewOpenOptions {

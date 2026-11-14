@@ -71,7 +71,8 @@ export const FileViewer = defineComponent({
 				index: slide.index,
 				active: slide.isActive,
 				close: closeSlide,
-				instance: props.instance ?? null
+				instance: props.instance ?? null,
+				mobile: !!props.mobile
 			});
 			if (custom) return custom as VNode;
 			return (

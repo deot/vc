@@ -342,6 +342,7 @@ describe('UploadPicker', () => {
 
 			expect(enhancer).toHaveBeenCalledWith({
 				current: 1,
+				mobile: false,
 				instance: wrapper.vm.$,
 				data: [
 					expect.objectContaining({ type: 'video', source: files[1].value, name: 'movie.mp4' }),

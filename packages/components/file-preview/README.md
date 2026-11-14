@@ -217,8 +217,9 @@ const data = [
 
 - `getFileType({ source })`：自定义类型识别，返回空值时回退内置规则。
 - `getFileName({ source })`：自定义从地址推导文件名，返回空值时回退内置规则；数据中显式的 `name`（UploadPicker 为 `label`）优先。
-- `enhancer({ current, data, instance })`：预览前调用，返回真值（或 resolve 真值）表示已接管，不再执行内置预览（Editor 不使用）。
-- `renderSlide({ type, row, index, active, close, instance })`：替换查看器中的某一页。
+- `enhancer({ current, data, instance, mobile })`：预览前调用，返回真值（或 resolve 真值）表示已接管，不再执行内置预览（Editor 不使用）。
+- `renderSlide({ type, row, index, active, close, instance, mobile })`：替换查看器中的某一页。
+- `enhancer`、`renderSlide` 的参数 `mobile` 标识当前是哪一端：由 `MFilePreview`、`MImagePreview`、`MUploadPicker` 触发时为 `true`，一份全局配置可按它区分两端。
 - `imageOptions`：`fit` 为初始展示方式，默认 `max-edge`。`max`、`min` 为相对初始尺寸的最大、最小倍数，默认 `10` 和 `1`。`placeholder` 为打开图片时是否用缩略图垫底，默认 `true`。
 
 示例中带处理后缀的图片地址（内置规则会识别为文件）被识别为图片，文件名去掉时间戳前缀，文件交给 `enhancer` 处理。
@@ -435,8 +436,8 @@ const files = ['https://dummyimage.com/600x400/555/fff.png?text=1', 'https://www
 | --- | --- | --- |
 | getFileType | 自定义类型识别，`source` 为地址或文件名；返回空值或非法类型时回退内置规则 | `(data: { source: string }) => 'image' \| 'video' \| 'audio' \| 'file' \| null \| undefined \| void` |
 | getFileName | 自定义从地址推导文件名，`source` 为地址；返回空值时回退内置规则。只在数据未提供名称时调用 | `(data: { source: string }) => string \| null \| undefined \| void` |
-| enhancer | 预览前调用；返回真值（或 resolve 真值）表示已接管，不再执行内置预览。`data` 为解析后的列表，`instance` 为调用方组件内部实例或 `null` | `({ current, data, instance }) => unknown` |
-| renderSlide | 替换查看器中的某一页：返回 VNode 时使用它，返回 `false`、`null`、`undefined` 或不返回时使用内置页。`close()` 关闭查看器 | `({ type, row, index, active, close, instance }) => VNode \| false \| null \| undefined \| void` |
+| enhancer | 预览前调用；返回真值（或 resolve 真值）表示已接管，不再执行内置预览。`data` 为解析后的列表，`instance` 为调用方组件内部实例或 `null`，`mobile` 为是否由移动端入口触发 | `({ current, data, instance, mobile }) => unknown` |
+| renderSlide | 替换查看器中的某一页：返回 VNode 时使用它，返回 `false`、`null`、`undefined` 或不返回时使用内置页。`close()` 关闭查看器，`mobile` 为是否为移动端查看器 | `({ type, row, index, active, close, instance, mobile }) => VNode \| false \| null \| undefined \| void` |
 | imageOptions | 图片页配置。`fit` 为初始展示：`max-edge` 整图可见，小图放大到长边贴齐视口；`actual` 按自然像素，超出视口时同比例缩小。`max`、`min` 为相对初始尺寸的最大、最小倍数，限制按钮、滚轮和捏合的稳定缩放。`placeholder` 为打开时是否用缩略图垫底，组件属性、`open` 选项可覆盖 | `{ fit?: 'max-edge' \| 'actual'; max?: number; min?: number; placeholder?: boolean }`，默认 `{ fit: 'max-edge', max: 10, min: 1, placeholder: true }` |
 
 ### 使用注意
