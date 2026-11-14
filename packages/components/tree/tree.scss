@@ -1,3 +1,4 @@
+@use 'sass:map';
 @use '../style/helper' as *;
 
 $color-contrast-light: varfix(color-contrast-light, tree);
@@ -11,9 +12,27 @@ $background-color-primary-light: varfix(background-color-primary-light, tree);
 $box-shadow-floating: varfix(box-shadow-floating, tree);
 $component-name: vc-tree;
 
+// 桌面端尺寸：行高 26px、字号 12px，展开图标 12px、四周内边距 6px；复选框、加载图标与文字间距 8px
+// 写成局部变量 --vc-tree-<键>（默认值为下表），MTree 在 .vcm-tree 上覆盖（mobile/style.scss）
+// - focus-background：行聚焦时的底色（点击或键盘移动到该行）
+$sizes: (
+	font-size: unitfix(12),
+	row-height: unitfix(26),
+	icon-size: unitfix(12),
+	icon-padding: unitfix(6),
+	checkbox-gap: unitfix(8),
+	loading-gap: unitfix(8),
+	empty-height: unitfix(60),
+	focus-background: $color-primary-lighter
+);
+
+@function v($key) {
+	@return localfix(tree, $key, map.get($sizes, $key));
+}
+
 @include block($component-name) {
 	position: relative;
-	font-size: unitfix(12);
+	font-size: v(font-size);
 	color: $color-dark-lighter;
 	cursor: default;
 	background: $background-color-lightest;
@@ -22,7 +41,7 @@ $component-name: vc-tree;
 		position: relative;
 		width: 100%;
 		height: 100%;
-		min-height: unitfix(60);
+		min-height: v(empty-height);
 		text-align: center;
 	}
 
@@ -57,7 +76,7 @@ $component-name: vc-tree;
 
 	&:focus { /* focus */
 		> .vc-tree-node__content {
-			background-color: $color-primary-lighter;
+			background-color: v(focus-background);
 		}
 	}
 
@@ -76,22 +95,25 @@ $component-name: vc-tree;
 	@include element(content) {
 		display: flex;
 		align-items: center;
-		height: unitfix(26);
+		height: v(row-height);
 		cursor: pointer;
 
 		& > .vc-tree-node__expand-icon {
-			padding: unitfix(6);
+			padding: v(icon-padding);
 		}
 
 		// 复选框至少一行高（20px），去掉上下内边距，落在 26px 的节点内；右侧留出与文字的间距
 		& > .vc-checkbox {
-			padding: 0 unitfix(8) 0 0;
+			padding: 0 v(checkbox-gap) 0 0;
 		}
 
 		// 滚动期间（列表带 is-scrolling，见 SelectList）不显示悬停：节点从静止的指针下经过时不逐行闪；
 		// 限定后优先级已高于聚焦（:focus > &），悬停时照样覆盖聚焦的背景
-		.vc-select-list:not(.is-scrolling) &:hover {
-			background-color: $background-color-primary-light;
+		// 只在可悬停的设备上生效：触屏点按后悬停会一直停留
+		@media (hover: hover) {
+			.vc-select-list:not(.is-scrolling) &:hover {
+				background-color: $background-color-primary-light;
+			}
 		}
 
 		// 拖拽中的光标由 body 上的公用类 vc-dragging 设为 move；不允许放置时改为 not-allowed（需要压过它的 !important）
@@ -101,7 +123,7 @@ $component-name: vc-tree;
 	}
 
 	@include element(expand-icon) {
-		font-size: unitfix(12);
+		font-size: v(icon-size);
 		color: $color-dark-lightest;
 		cursor: pointer;
 
@@ -123,7 +145,7 @@ $component-name: vc-tree;
 	}
 
 	@include element(loading-icon) {
-		margin-right: unitfix(8);
+		margin-right: v(loading-gap);
 		font-size: unitfix(14);
 		color: $color-dark-extralight;
 	}
@@ -139,7 +161,9 @@ $component-name: vc-tree;
 		background-color: $color-primary-lighter;
 	}
 
-	.vc-select-list:not(.is-scrolling) .vc-tree-node.is-current > .vc-tree-node__content:hover {
-		background-color: $background-color-primary-light;
+	@media (hover: hover) {
+		.vc-select-list:not(.is-scrolling) .vc-tree-node.is-current > .vc-tree-node__content:hover {
+			background-color: $background-color-primary-light;
+		}
 	}
 }
