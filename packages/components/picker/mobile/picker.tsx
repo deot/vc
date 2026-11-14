@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, inject, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, defineComponent, nextTick, ref, watch } from 'vue';
 import { isEqualWith } from 'lodash-es';
 import { MListItem } from '../../list/index.m';
 import { toCurrentValue, toModelValue } from '../../select/utils';
@@ -9,6 +9,7 @@ import { useLocale } from '../../locale';
 import { props as pickerProps } from './picker-props';
 import { PickerPortal } from './picker-core';
 import { getSelectedData } from './utils';
+import { usePickerTrigger } from './use-picker-portal';
 import type { PickerModelValue, PickerValue } from '../types';
 
 const COMPONENT_NAME = 'vcm-picker';
@@ -25,11 +26,10 @@ export const Picker = defineComponent({
 		'change',
 		'close'
 	],
-	setup(props, { emit, slots }) {
+	setup(props, context) {
+		const { slots } = context;
 		const { t } = useLocale();
-		const formItem = inject<any>('vc-form-item', {});
 		const currentValue = ref<PickerValue[]>([]);
-		const pickerInstance = ref<any>();
 
 		const source = computed(() => props.data || []);
 
@@ -52,10 +52,6 @@ export const Picker = defineComponent({
 			{ immediate: true, deep: true }
 		);
 
-		onBeforeUnmount(() => {
-			pickerInstance.value?.destroy?.();
-		});
-
 		/**
 		 * 弹层提交的值写回触发器，返回按外部 v-model 规范后的值
 		 * @param value 弹层提交的值
@@ -75,11 +71,11 @@ export const Picker = defineComponent({
 			}) as PickerModelValue;
 		};
 
-		const sync = (value: PickerModelValue, label: any[], data: any[]) => {
-			emit('update:modelValue', value, label, data);
-			emit('change', value, label, data);
-			formItem?.change?.(value);
-		};
+		const trigger = usePickerTrigger(context, {
+			portal: PickerPortal,
+			accept: apply,
+			forward: ['picker-change']
+		});
 
 		const handleClick = async () => {
 			try {
@@ -88,7 +84,7 @@ export const Picker = defineComponent({
 					await nextTick();
 				}
 
-				pickerInstance.value = PickerPortal.popup({
+				trigger.open({
 					data: source.value,
 					columns: props.columns,
 					cascader: props.cascader,
@@ -99,22 +95,7 @@ export const Picker = defineComponent({
 					confirm: props.confirm,
 					okText: props.okText,
 					modelValue: currentValue.value.slice(0),
-					renderLabel: props.renderLabel,
-					onVisibleChange: (v: boolean) => emit('visible-change', v),
-					onPickerChange: (v: PickerValue, index: number, row: any) => emit('picker-change', v, index, row),
-					onClose: () => emit('close'),
-					onOk: (value: PickerModelValue, label: any[], data: any[]) => {
-						const modelValue = apply(value);
-						emit('ok', modelValue, label, data);
-						sync(modelValue, label, data);
-					},
-					// 不需要确认时，滚轮停下即提交
-					onChange: (value: PickerModelValue, label: any[], data: any[]) => {
-						// 确定时弹层同样发出 change，由 onOk 处理
-						if (props.confirm) return;
-						sync(apply(value), label, data);
-					},
-					onCancel: () => emit('cancel')
+					renderLabel: props.renderLabel
 				});
 			} catch (e) {
 				throw new VcError('picker', e);

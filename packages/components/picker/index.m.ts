@@ -2,17 +2,10 @@ import { Picker } from './mobile/picker.tsx';
 import { PickerPopup } from './mobile/picker-popup.tsx';
 import { PickerView } from './mobile/picker-view.tsx';
 import { PickerPortal } from './mobile/picker-core';
+import { createPickerOpen } from './mobile/use-picker-portal';
 import './mobile/style.scss';
 
-export const open = (options: Record<string, any> = {}) => {
-	const { value, modelValue, ...rest } = options;
-	const hasModelValue = Object.prototype.hasOwnProperty.call(options, 'modelValue');
-
-	return PickerPortal.popup({
-		...rest,
-		modelValue: hasModelValue ? modelValue : value
-	});
-};
+export const open = createPickerOpen(PickerPortal);
 
 export const MPicker = Object.assign(Picker, {
 	open,

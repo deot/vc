@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, inject, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, defineComponent, ref, watch } from 'vue';
 import { omit, pick } from 'lodash-es';
 import { MListItem } from '../../list/index.m';
 import { useLocale } from '../../locale';
@@ -8,6 +8,7 @@ import { getPathLabels } from '../utils';
 import { props as cascaderProps, coreOmitKeys } from './cascader-props';
 import { props as coreProps } from './cascader-core-props';
 import { MCascaderPortal } from './cascader-core';
+import { usePickerTrigger } from '../../picker/mobile/use-picker-portal';
 
 const COMPONENT_NAME = 'vcm-cascader';
 
@@ -27,12 +28,15 @@ export const MCascader = defineComponent({
 		'change',
 		'close'
 	],
-	setup(props, { emit, slots }) {
+	setup(props, context) {
+		const { slots } = context;
 		const { t } = useLocale();
-		const formItem = inject<any>('vc-form-item', {});
 		const currentValue = ref<any>(props.modelValue);
-		// 打开的弹层（Portal 实例）
-		let portal: any;
+		const trigger = usePickerTrigger(context, {
+			portal: MCascaderPortal,
+			accept: (value: any) => (currentValue.value = value),
+			forward: ['select', 'clear']
+		});
 
 		// 当前值的路径文字
 		const labels = computed(() => getPathLabels(currentValue.value, props));
@@ -49,26 +53,10 @@ export const MCascader = defineComponent({
 			}
 		);
 
-		onBeforeUnmount(() => {
-			portal?.destroy?.();
-		});
-
 		const handleClick = () => {
-			portal = MCascaderPortal.popup({
+			trigger.open({
 				...pick(props, coreKeys),
-				modelValue: currentValue.value,
-				onVisibleChange: (v: boolean) => emit('visible-change', v),
-				onSelect: (payload: any) => emit('select', payload),
-				onClear: () => emit('clear'),
-				onClose: () => emit('close'),
-				onOk: (value: any, $labels: string[]) => {
-					currentValue.value = value;
-					emit('ok', value, $labels);
-					emit('update:modelValue', value, $labels);
-					emit('change', value, $labels);
-					formItem?.change?.(value);
-				},
-				onCancel: () => emit('cancel')
+				modelValue: currentValue.value
 			});
 		};
 

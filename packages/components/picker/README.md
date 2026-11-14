@@ -481,6 +481,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | --- | --- | --- |
 | default | 弹层内容 | - |
 | footer | 弹层底部，如按钮；传给 MPopup 的 `footer` 插槽 | 同 MPopup 的 `footer` 插槽：`{ close, snap, full, dragging, snapTo, next }` |
+| footer-extra | `confirm` 为 `'bottom'` 时，底部「确定」之前的额外内容（如「清空」按钮，加 `vcm-picker-popup__button` 与「确定」平分宽度）；footer 插槽替换整个底部时无效 | - |
 
 ### 数据与值类型
 

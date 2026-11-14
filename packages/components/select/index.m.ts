@@ -1,17 +1,10 @@
 import { MSelect as Select } from './mobile/select';
 import { MSelectView } from './mobile/select-view';
 import { MSelectPortal } from './mobile/select-core';
+import { createPickerOpen } from '../picker/mobile/use-picker-portal';
 import './mobile/style.scss';
 
-const open = (options: Record<string, any> = {}) => {
-	const { value, modelValue, ...rest } = options;
-	const hasModelValue = Object.prototype.hasOwnProperty.call(options, 'modelValue');
-
-	return MSelectPortal.popup({
-		...rest,
-		modelValue: hasModelValue ? modelValue : value
-	});
-};
+const open = createPickerOpen(MSelectPortal);
 
 export const MSelect = Object.assign(Select, {
 	open,

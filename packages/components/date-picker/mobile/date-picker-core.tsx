@@ -1,15 +1,15 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, onMounted, ref, watch } from 'vue';
+import { defineComponent, ref, watch } from 'vue';
 import { pick } from 'lodash-es';
 import { Portal } from '../../portal';
 import { useLocale } from '../../locale';
 import { MPickerPopup } from '../../picker/index.m';
 import { MDatePickerView } from './date-picker-view';
 import { props as pickerPopupProps } from '../../picker/mobile/picker-popup-props';
+import { pickerCoreProps, pickerCoreEmits, usePickerCore } from '../../picker/mobile/use-picker-portal';
 import { props as datePickerViewProps } from './date-picker-view-props';
 import { createContext, formatPoints, resolvePoints } from './utils';
-import type { PropType } from 'vue';
 
 const COMPONENT_NAME = 'vcm-date-picker-core';
 
@@ -39,27 +39,13 @@ export const MDatePickerCore = defineComponent({
 		...(pick(datePickerViewProps, viewKeys) as Pick<typeof datePickerViewProps, typeof viewKeys[number]>),
 		cancelText: String,
 		okText: String,
-		visible: {
-			type: Boolean,
-			default: true
-		},
-		onOk: Function as PropType<(value: any) => void>,
-		onCancel: Function as PropType<() => void>
+		...pickerCoreProps
 	},
-	emits: [
-		'update:modelValue',
-		'update:visible',
-		'change',
-		'cancel',
-		'ok',
-		'close',
-		'portal-fulfilled',
-		'picker-change',
-		'visible-change'
-	],
-	setup(props, { emit }) {
+	emits: [...pickerCoreEmits, 'picker-change'],
+	setup(props, setupContext) {
+		const { emit } = setupContext;
 		const { t } = useLocale();
-		const isActive = ref(false);
+		const core = usePickerCore(props, setupContext);
 		const currentValue = ref<any>('');
 
 		// 弹层打开时没有值或值落在禁用项上：校正后作为确定时提交的值（与视图显示的一致）
@@ -76,40 +62,11 @@ export const MDatePickerCore = defineComponent({
 			{ immediate: true, deep: true }
 		);
 
-		watch(
-			() => props.visible,
-			(v) => {
-				isActive.value = v;
-			}
-		);
-
-		watch(
-			() => isActive.value,
-			(v) => {
-				emit('visible-change', v);
-				emit('update:visible', v);
-			}
-		);
-
-		onMounted(() => {
-			isActive.value = props.visible !== false;
-		});
-
-		const handleClose = () => {
-			isActive.value = false;
-			emit('close');
-			emit('portal-fulfilled');
-			emit('update:visible', false);
-		};
-
 		const handleOk = () => {
 			const value = getNormalizedValue(currentValue.value);
 
 			currentValue.value = value;
-			isActive.value = false;
-			props.onOk ? props.onOk(value) : emit('ok', value);
-			emit('update:modelValue', value);
-			emit('change', value);
+			core.ok(value);
 		};
 
 		// 不需要确认：滚轮停下即提交，弹层保持打开
@@ -117,28 +74,18 @@ export const MDatePickerCore = defineComponent({
 			currentValue.value = v;
 			if (props.confirm) return;
 
-			const value = getNormalizedValue(v);
-			emit('update:modelValue', value);
-			emit('change', value);
-		};
-
-		const handleCancel = () => {
-			isActive.value = false;
-			props.onCancel ? props.onCancel() : emit('cancel');
+			core.commit(getNormalizedValue(v));
 		};
 
 		return () => {
 			return (
 				<MPickerPopup
-					modelValue={isActive.value}
+					{...core.getPopupProps()}
 					title={props.title}
 					cancelText={props.cancelText ?? t('vc.DatePicker.cancelText')}
 					okText={props.okText ?? t('vc.DatePicker.okText')}
 					confirm={props.confirm}
 					onOk={handleOk}
-					onCancel={handleCancel}
-					onClose={handleClose}
-					onUpdate:modelValue={(v: boolean) => (isActive.value = v)}
 				>
 					<MDatePickerView
 						modelValue={currentValue.value}

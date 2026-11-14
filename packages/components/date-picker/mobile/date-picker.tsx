@@ -1,10 +1,11 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, inject, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, defineComponent, ref, watch } from 'vue';
 import { MListItem } from '../../list/index.m';
 import { useLocale } from '../../locale';
 import { props as datePickerProps } from './date-picker-props';
 import { MDatePickerPortal } from './date-picker-core';
+import { usePickerTrigger } from '../../picker/mobile/use-picker-portal';
 import { createContext, formatPoints, formatPointsText, parsePoints } from './utils';
 
 const COMPONENT_NAME = 'vcm-date-picker';
@@ -21,12 +22,11 @@ export const MDatePicker = defineComponent({
 		'change',
 		'close'
 	],
-	setup(props, { emit, slots }) {
+	setup(props, setupContext) {
+		const { slots } = setupContext;
 		const { t } = useLocale();
 		const extra = computed(() => props.extra ?? t('vc.DatePicker.placeholder'));
-		const formItem = inject<any>('vc-form-item', {});
 		const currentValue = ref<any>(props.modelValue);
-		const pickerInstance = ref<any>();
 
 		const context = computed(() => createContext(props, t));
 		const points = computed(() => parsePoints(currentValue.value, context.value));
@@ -49,19 +49,14 @@ export const MDatePicker = defineComponent({
 			{ deep: true }
 		);
 
-		onBeforeUnmount(() => {
-			pickerInstance.value?.destroy?.();
+		const trigger = usePickerTrigger(setupContext, {
+			portal: MDatePickerPortal,
+			accept: (value: any) => (currentValue.value = value),
+			forward: ['picker-change']
 		});
 
-		const sync = (value: any) => {
-			currentValue.value = value;
-			emit('update:modelValue', value);
-			emit('change', value);
-			formItem?.change?.(value);
-		};
-
 		const handleClick = () => {
-			pickerInstance.value = MDatePickerPortal.popup({
+			trigger.open({
 				type: props.type,
 				format: props.format,
 				disabledDate: props.disabledDate,
@@ -74,19 +69,7 @@ export const MDatePicker = defineComponent({
 				okText: props.okText,
 				confirm: props.confirm,
 				nullValue: props.nullValue,
-				modelValue: currentValue.value,
-				onVisibleChange: (v: boolean) => emit('visible-change', v),
-				onPickerChange: (v: any, index: number, row: any) => emit('picker-change', v, index, row),
-				onClose: () => emit('close'),
-				onOk: (value: any) => {
-					emit('ok', value);
-					sync(value);
-				},
-				// 不需要确认时，滚轮停下即提交
-				onChange: (value: any) => {
-					!props.confirm && sync(value);
-				},
-				onCancel: () => emit('cancel')
+				modelValue: currentValue.value
 			});
 		};
 

@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, onMounted, ref, watch } from 'vue';
+import { defineComponent, ref, watch } from 'vue';
 import { pick } from 'lodash-es';
 import { Portal } from '../../portal';
 import { toCurrentValue, toModelValue } from '../../select/utils';
@@ -9,8 +9,8 @@ import { PickerView } from './picker-view';
 import { props as pickerPopupProps } from './picker-popup-props';
 import { props as pickerViewProps } from './picker-view-props';
 import { getSelectedData } from './utils';
+import { pickerCoreProps, pickerCoreEmits, usePickerCore } from './use-picker-portal';
 import type { PickerModelValue, PickerValue } from '../types';
-import type { PropType } from 'vue';
 
 const COMPONENT_NAME = 'vcm-picker-core';
 
@@ -39,26 +39,12 @@ export const PickerCore = defineComponent({
 	props: {
 		...(pick(pickerPopupProps, popupKeys) as Pick<typeof pickerPopupProps, typeof popupKeys[number]>),
 		...(pick(pickerViewProps, viewKeys) as Pick<typeof pickerViewProps, typeof viewKeys[number]>),
-		visible: {
-			type: Boolean,
-			default: true
-		},
-		onOk: Function as PropType<(value: PickerModelValue, label: any[], data: any[]) => void>,
-		onCancel: Function as PropType<() => void>
+		...pickerCoreProps
 	},
-	emits: [
-		'update:modelValue',
-		'update:visible',
-		'change',
-		'cancel',
-		'ok',
-		'close',
-		'portal-fulfilled',
-		'picker-change',
-		'visible-change'
-	],
-	setup(props, { emit }) {
-		const isActive = ref(false);
+	emits: [...pickerCoreEmits, 'picker-change'],
+	setup(props, context) {
+		const { emit } = context;
+		const core = usePickerCore(props, context);
 		const currentValue = ref<PickerValue[]>([]);
 
 		watch(
@@ -71,32 +57,6 @@ export const PickerCore = defineComponent({
 			},
 			{ immediate: true, deep: true }
 		);
-
-		watch(
-			() => props.visible,
-			(v) => {
-				isActive.value = v;
-			}
-		);
-
-		watch(
-			() => isActive.value,
-			(v) => {
-				emit('visible-change', v);
-				emit('update:visible', v);
-			}
-		);
-
-		onMounted(() => {
-			isActive.value = props.visible !== false;
-		});
-
-		const handleClose = () => {
-			isActive.value = false;
-			emit('close');
-			emit('portal-fulfilled');
-			emit('update:visible', false);
-		};
 
 		const getCommitted = () => {
 			const value = currentValue.value.slice(0);
@@ -112,11 +72,7 @@ export const PickerCore = defineComponent({
 
 		const handleOk = () => {
 			const { modelValue, label, data } = getCommitted();
-
-			isActive.value = false;
-			props.onOk ? props.onOk(modelValue, label, data) : emit('ok', modelValue, label, data);
-			emit('update:modelValue', modelValue, label, data);
-			emit('change', modelValue, label, data);
+			core.ok(modelValue, label, data);
 		};
 
 		// 不需要确认：滚轮停下即提交，弹层保持打开
@@ -128,27 +84,18 @@ export const PickerCore = defineComponent({
 			if (props.confirm) return;
 
 			const { modelValue, label, data } = getCommitted();
-			emit('update:modelValue', modelValue, label, data);
-			emit('change', modelValue, label, data);
-		};
-
-		const handleCancel = () => {
-			isActive.value = false;
-			props.onCancel ? props.onCancel() : emit('cancel');
+			core.commit(modelValue, label, data);
 		};
 
 		return () => {
 			return (
 				<PickerPopup
-					modelValue={isActive.value}
+					{...core.getPopupProps()}
 					title={props.title}
 					cancelText={props.cancelText}
 					okText={props.okText}
 					confirm={props.confirm}
 					onOk={handleOk}
-					onCancel={handleCancel}
-					onClose={handleClose}
-					onUpdate:modelValue={(v: boolean) => (isActive.value = v)}
 				>
 					<PickerView
 						modelValue={currentValue.value}

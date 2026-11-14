@@ -1,6 +1,7 @@
 import { omit, pick } from 'lodash-es';
-import type { ExtractPropTypes, PropType } from 'vue';
+import type { ExtractPropTypes } from 'vue';
 import { props as pickerPopupProps } from '../../picker/mobile/picker-popup-props';
+import { pickerCoreProps } from '../../picker/mobile/use-picker-portal';
 import { props as selectViewProps } from './select-view-props';
 
 const popupKeys = [
@@ -21,12 +22,7 @@ export const props = {
 		...pickerPopupProps.confirm,
 		default: false
 	},
-	visible: {
-		type: Boolean,
-		default: true
-	},
-	onOk: Function as PropType<(value: any, labels: string[]) => void>,
-	onCancel: Function as PropType<() => void>
+	...pickerCoreProps
 };
 
 export type Props = ExtractPropTypes<typeof props>;

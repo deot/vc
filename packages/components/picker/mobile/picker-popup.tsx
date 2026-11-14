@@ -68,10 +68,11 @@ export const PickerPopup = defineComponent({
 			emit('close');
 		};
 
-		// 底部的「确定」：footer 插槽可替换（如再加「清空」），按钮用 .vcm-picker-popup__button 平分宽度
+		// 底部的「确定」：footer 插槽可整个替换；footer-extra 插槽在「确定」之前（如「清空」），按钮用 .vcm-picker-popup__button 平分宽度
 		const renderFooter = () => {
 			return (
 				<div class="vcm-picker-popup__footer">
+					{ slots['footer-extra']?.() }
 					<MButton
 						class="vcm-picker-popup__button"
 						type="primary"

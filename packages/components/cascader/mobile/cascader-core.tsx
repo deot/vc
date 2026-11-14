@@ -1,10 +1,11 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, onMounted, ref, watch } from 'vue';
+import { computed, defineComponent, ref, watch } from 'vue';
 import { pick } from 'lodash-es';
 import { Portal } from '../../portal';
 import { MPickerPopup } from '../../picker/index.m';
 import { getConfirmMode } from '../../picker/mobile/picker-popup-props';
+import { pickerCoreEmits, usePickerCore } from '../../picker/mobile/use-picker-portal';
 import { getPathLabels, toCascaderValue } from '../utils';
 import { MCascaderView } from './cascader-view';
 import { props as cascaderViewProps } from './cascader-view-props';
@@ -19,20 +20,10 @@ const viewKeys = Object.keys(cascaderViewProps).filter(key => key !== 'modelValu
 export const MCascaderCore = defineComponent({
 	name: COMPONENT_NAME,
 	props: coreProps,
-	emits: [
-		'update:modelValue',
-		'update:visible',
-		'change',
-		'select',
-		'clear',
-		'cancel',
-		'ok',
-		'close',
-		'portal-fulfilled',
-		'visible-change'
-	],
-	setup(props, { emit }) {
-		const isActive = ref(false);
+	emits: [...pickerCoreEmits, 'select', 'clear'],
+	setup(props, context) {
+		const { emit } = context;
+		const core = usePickerCore(props, context);
 		const view = ref<any>();
 		// 弹层内的值：确定时提交，取消时丢弃
 		const currentValue = ref<any>(props.modelValue);
@@ -57,46 +48,12 @@ export const MCascaderCore = defineComponent({
 			}
 		);
 
-		watch(
-			() => props.visible,
-			(v) => {
-				isActive.value = v;
-			}
-		);
-
-		watch(
-			() => isActive.value,
-			(v) => {
-				emit('visible-change', v);
-				emit('update:visible', v);
-			}
-		);
-
-		onMounted(() => {
-			isActive.value = props.visible;
-		});
-
-		const handleClose = () => {
-			isActive.value = false;
-			emit('close');
-			emit('portal-fulfilled');
-			emit('update:visible', false);
-		};
-
 		const handleOk = () => {
 			if (isOkDisabled.value) return;
 			const value = currentValue.value;
 			const labels = getPathLabels(value, props);
 
-			isActive.value = false;
-			props.onOk ? props.onOk(value, labels) : emit('ok', value, labels);
-			emit('update:modelValue', value, labels);
-			emit('change', value, labels);
-		};
-
-		const handleCancel = () => {
-			isActive.value = false;
-			props.onCancel ? props.onCancel() : emit('cancel');
+			core.ok(value, labels);
 		};
 
 		// 选到最后一级：不需要确认时直接提交并关闭
@@ -137,16 +94,13 @@ export const MCascaderCore = defineComponent({
 			return (
 				<MPickerPopup
 					class="vcm-cascader-popup"
-					modelValue={isActive.value}
+					{...core.getPopupProps()}
 					title={props.title}
 					cancelText={props.cancelText}
 					okText={props.okText}
 					okDisabled={isOkDisabled.value}
 					confirm={mode.value}
 					onOk={handleOk}
-					onCancel={handleCancel}
-					onClose={handleClose}
-					onUpdate:modelValue={(v: boolean) => (isActive.value = v)}
 				>
 					{ renderView() }
 				</MPickerPopup>

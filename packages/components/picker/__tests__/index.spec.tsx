@@ -900,6 +900,21 @@ describe('PickerPopup', () => {
 		popup.unmount();
 	});
 
+	it('footer-extra renders before the bottom OK button', async () => {
+		const onOk = vi.fn();
+		const popup = mount(PickerPopup, {
+			attachTo: document.body,
+			props: { confirm: 'bottom', title: '标题', onOk },
+			slots: {
+				'footer-extra': () => h('button', { class: 'vcm-picker-popup__button extra' }, '清空')
+			}
+		});
+		await flush();
+		const buttons = Array.from(document.querySelectorAll('.vcm-picker-popup__footer > *')).map(el => el.textContent);
+		expect(buttons).toEqual(['清空', '确定']);
+		popup.unmount();
+	});
+
 	it('passes the footer slot through to MPopup with its slot props', async () => {
 		const footer = vi.fn((props: any) => h('button', { class: 'footer-button', onClick: props.close }, '确定'));
 		const popup = mount(PickerPopup, {

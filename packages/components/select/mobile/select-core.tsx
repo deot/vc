@@ -1,10 +1,11 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, onMounted, ref, watch } from 'vue';
+import { computed, defineComponent, ref, watch } from 'vue';
 import { pick } from 'lodash-es';
 import { Portal } from '../../portal';
 import { MPickerPopup } from '../../picker/index.m';
 import { getConfirmMode } from '../../picker/mobile/picker-popup-props';
+import { pickerCoreEmits, usePickerCore } from '../../picker/mobile/use-picker-portal';
 import { MButton } from '../../button/index.m';
 import { useLocale } from '../../locale';
 import { flattenData, getSelectLabels, isMultiple, toCurrentValue, toModelValue } from '../utils';
@@ -21,21 +22,11 @@ const viewKeys = Object.keys(selectViewProps).filter(key => key !== 'modelValue'
 export const MSelectCore = defineComponent({
 	name: COMPONENT_NAME,
 	props: coreProps,
-	emits: [
-		'update:modelValue',
-		'update:visible',
-		'change',
-		'select',
-		'clear',
-		'cancel',
-		'ok',
-		'close',
-		'portal-fulfilled',
-		'visible-change'
-	],
-	setup(props, { emit }) {
+	emits: [...pickerCoreEmits, 'select', 'clear'],
+	setup(props, context) {
+		const { emit } = context;
 		const { t } = useLocale();
-		const isActive = ref(false);
+		const core = usePickerCore(props, context);
 		const view = ref<any>();
 		// 弹层内的值：确定时提交，取消时丢弃
 		const currentValue = ref<any>(props.modelValue);
@@ -60,46 +51,13 @@ export const MSelectCore = defineComponent({
 			}
 		);
 
-		watch(
-			() => props.visible,
-			(v) => {
-				isActive.value = v;
-			}
-		);
-
-		watch(
-			() => isActive.value,
-			(v) => {
-				emit('visible-change', v);
-				emit('update:visible', v);
-			}
-		);
-
-		onMounted(() => {
-			isActive.value = props.visible;
-		});
-
-		const handleClose = () => {
-			isActive.value = false;
-			emit('close');
-			emit('portal-fulfilled');
-		};
-
 		const handleOk = () => {
 			if (mode.value && isOkDisabled.value) return;
 			const value = currentValue.value;
 			const source = flattenData(props.data, { parent: true, cascader: true });
 			const labels = getSelectLabels(toCurrentValue(value, props), source);
 
-			isActive.value = false;
-			props.onOk ? props.onOk(value, labels) : emit('ok', value, labels);
-			emit('update:modelValue', value, labels);
-			emit('change', value, labels);
-		};
-
-		const handleCancel = () => {
-			isActive.value = false;
-			props.onCancel ? props.onCancel() : emit('cancel');
+			core.ok(value, labels);
 		};
 
 		// 不需要确认时（单选），点一项即提交并关闭
@@ -135,34 +93,18 @@ export const MSelectCore = defineComponent({
 			);
 		};
 
-		// 底部按钮：可清空时「清空」与「确定」各占一半，否则只有「确定」
-		const renderFooter = () => {
+		// 'bottom' 且可清空：「确定」前加「清空」，各占一半
+		const renderClear = () => {
 			return (
-				<div class="vcm-picker-popup__footer">
-					{
-						props.clearable && (
-							<MButton
-								class="vcm-picker-popup__button"
-								size="large"
-								round
-								disabled={isEmpty.value}
-								onClick={() => view.value?.clear()}
-							>
-								{ t('vc.Select.clearText') }
-							</MButton>
-						)
-					}
-					<MButton
-						class="vcm-picker-popup__button"
-						type="primary"
-						size="large"
-						round
-						disabled={isOkDisabled.value}
-						onClick={handleOk}
-					>
-						{ props.okText ?? t('vc.Picker.okText') }
-					</MButton>
-				</div>
+				<MButton
+					class="vcm-picker-popup__button"
+					size="large"
+					round
+					disabled={isEmpty.value}
+					onClick={() => view.value?.clear()}
+				>
+					{ t('vc.Select.clearText') }
+				</MButton>
 			);
 		};
 
@@ -171,21 +113,17 @@ export const MSelectCore = defineComponent({
 			return (
 				<MPickerPopup
 					class={['vcm-select-popup', mode.value === 'bottom' && 'is-bottom']}
-					modelValue={isActive.value}
+					{...core.getPopupProps()}
 					title={props.title}
 					cancelText={props.cancelText}
 					okText={props.okText}
 					okDisabled={isOkDisabled.value}
 					confirm={mode.value}
 					onOk={handleOk}
-					onCancel={handleCancel}
-					onClose={handleClose}
-					onUpdate:modelValue={(v: boolean) => (isActive.value = v)}
 				>
 					{{
-						default: renderView,
-						// 'bottom'：在 MPickerPopup 默认的「确定」前加「清空」
-						footer: mode.value === 'bottom' ? renderFooter : void 0
+						'default': renderView,
+						'footer-extra': props.clearable ? renderClear : void 0
 					}}
 				</MPickerPopup>
 			);
