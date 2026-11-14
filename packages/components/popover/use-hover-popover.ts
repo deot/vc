@@ -7,9 +7,10 @@ import { Popover } from './index';
  * hover 触发的提示弹层（如截断文字的完整内容）
  * 	- 同一时刻只保留一个弹层，打开新的时销毁上一个，组件卸载时销毁；
  * 	- 弹层只监听 triggerEl 的移入 / 移出，调用方须在 triggerEl（或与其重合的容器）移入时调用 open。
+ * @param create 创建浮层的方法，默认 Popover.open；移动端传入带移动端外观的版本（MPopover.open）
  * @returns open / close / isActive / sync
  */
-export const useHoverPopover = () => {
+export const useHoverPopover = (create: typeof Popover.open = Popover.open) => {
 	let poper: Nullable<PortalLeaf> = null;
 	let trigger: Nullable<Element> = null;
 
@@ -34,7 +35,7 @@ export const useHoverPopover = () => {
 		if (isActive(triggerEl)) return;
 		close();
 		trigger = triggerEl;
-		const leaf: PortalLeaf = Popover.open({
+		const leaf: PortalLeaf = create({
 			element: document.body,
 			triggerElement: triggerEl,
 			hover: true,
