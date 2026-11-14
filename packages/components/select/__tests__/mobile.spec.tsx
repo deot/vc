@@ -77,7 +77,7 @@ describe('MSelectView', () => {
 		expect(getOption('选项一').classList).toContain('is-selected');
 		expect(getOption('选项二').querySelector('.vcm-select-view__description')!.textContent).toBe('说明文字');
 		// 单选且不可清空：没有汇总栏
-		expect(document.querySelector('.vcm-select-view__summary')).toBeNull();
+		expect(document.querySelector('.vcm-select-summary')).toBeNull();
 
 		await clickOption('选项三');
 		expect(value.value).toBe(3);
@@ -102,7 +102,7 @@ describe('MSelectView', () => {
 			<MSelectView v-model={value.value} data={createData()} max={max.value} />
 		), { attachTo: document.body });
 		await flush();
-		const count = () => document.querySelector('.vcm-select-view__count')!.textContent;
+		const count = () => document.querySelector('.vcm-select-summary__count')!.textContent;
 		expect(count()).toBe('已选 0/2');
 
 		await clickOption('选项一');
@@ -189,11 +189,11 @@ describe('MSelectView', () => {
 			/>
 		), { attachTo: document.body });
 		await flush();
-		(document.querySelector('.vcm-select-view__clear') as HTMLElement).click();
+		(document.querySelector('.vcm-select-summary__clear') as HTMLElement).click();
 		await flush();
 		expect(calls).toEqual(['clear', 'change:']);
 		expect(value.value).toBe('');
-		expect(document.querySelector('.vcm-select-view__clear')).toBeNull();
+		expect(document.querySelector('.vcm-select-summary__clear')).toBeNull();
 		wrapper.unmount();
 	});
 
@@ -308,7 +308,7 @@ describe('MSelect', () => {
 		expect(document.querySelector('.vcm-picker-popup__header')).toBeNull();
 		expect(document.querySelector('.vcm-select-popup')!.classList).toContain('is-bottom');
 		// 汇总栏不再显示清空
-		expect(document.querySelector('.vcm-select-view__clear')).toBeNull();
+		expect(document.querySelector('.vcm-select-summary__clear')).toBeNull();
 
 		const [clear, ok] = getFooterButtons();
 		expect(clear.textContent).toBe('清空');
@@ -340,7 +340,7 @@ describe('MSelect', () => {
 		await flush();
 		await wrapper.find('.vcm-select').trigger('click');
 		await flush();
-		(document.querySelector('.vcm-select-view__clear') as HTMLElement).click();
+		(document.querySelector('.vcm-select-summary__clear') as HTMLElement).click();
 		await flush();
 		expect(onClear).toHaveBeenCalledTimes(1);
 		expect(value.value).toBe(undefined);

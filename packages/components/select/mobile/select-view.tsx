@@ -17,6 +17,7 @@ import {
 } from '../utils';
 import { renderHighlight } from '../select-search/highlight';
 import { scrollToCenter } from '../select-list/scroll';
+import { MSelectSummary } from './select-summary';
 import { props as selectViewProps } from './select-view-props';
 import type { TreeData, TreeValue } from '../utils';
 
@@ -155,27 +156,6 @@ export const MSelectView = defineComponent({
 			);
 		};
 
-		// 多选：已选数量（及上限）；clearable 且有已选项时右侧「清空」
-		const renderSummary = () => {
-			const hasClear = props.clearable && values.value.length > 0;
-			if (!multiple.value && !hasClear) return null;
-			const count = values.value.length;
-			return (
-				<div class="vcm-select-view__summary">
-					<span class="vcm-select-view__count">
-						{
-							multiple.value && (
-								props.max > 0
-									? t('vc.Select.selectedMax', { count, max: props.max })
-									: t('vc.Select.selected', { count })
-							)
-						}
-					</span>
-					{ hasClear && (<span class="vcm-select-view__clear" onClick={clear}>{ t('vc.Select.clearText') }</span>) }
-				</div>
-			);
-		};
-
 		// 分组标题与选项；选项的 index 为它在列表中（不含分组标题）的位置
 		const renderRows = () => {
 			let index = 0;
@@ -206,7 +186,13 @@ export const MSelectView = defineComponent({
 							</div>
 						)
 					}
-					{ renderSummary() }
+					<MSelectSummary
+						count={values.value.length}
+						max={props.max}
+						multiple={multiple.value}
+						clearable={props.clearable}
+						onClear={clear}
+					/>
 					<div ref={list} class="vcm-select-view__options" onClick={handleOptionsClick}>
 						{
 							rows.value.length

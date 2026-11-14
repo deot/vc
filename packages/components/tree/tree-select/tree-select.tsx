@@ -2,39 +2,24 @@
 
 import { defineComponent, ref, computed, nextTick } from 'vue';
 import { getUid } from '@deot/helper-utils';
-import { walkTree, getTreeDepth } from '../../select/utils';
+import { getTreeDepth } from '../../select/utils';
 import type { TreeData } from '../../select/utils';
 import { Popover } from '../../popover/index';
 import { SelectTrigger } from '../../select/select-trigger';
 import { SelectSearch } from '../../select/select-search';
-import { useSelect, useSelectValue, useSelectedCache } from '../../select/hooks/use-select';
+import { useSelect, useSelectValue } from '../../select/hooks/use-select';
 import { useColumnDirection } from '../../cascader/hooks/use-column-direction';
 import { useLocale } from '../../locale';
 import { TreeSelectContent } from './tree-select-content';
 import { TreeSelectContentCascader } from './tree-select-content-cascader';
 import { props as treeSelectProps } from './tree-select-props';
+import { useTreeSelectValue } from './use-tree-select-value';
+import type { TreeSelectDisplayTag } from './use-tree-select-value';
 
 const COMPONENT_NAME = 'vc-tree-select';
 
 // 树：由 Popover 内置的 Scroller 限高滚动
 const scrollerOptions = { maxHeight: 200 };
-
-interface TreeNode {
-	item: TreeData;
-	parent?: TreeNode;
-}
-
-interface SelectedNode {
-	path: (string | number)[];
-	// 路径上各级的文字
-	labels: string[];
-}
-
-interface DisplayTag {
-	value: string | number;
-	label: string;
-	path?: (string | number)[];
-}
 
 export const TreeSelect = defineComponent({
 	name: COMPONENT_NAME,
@@ -58,78 +43,7 @@ export const TreeSelect = defineComponent({
 		const { its, isActive, searchValue, searchRegex, searchMode, isRemote, close, toggle } = select;
 		const { currentValue, multiple, sync: syncValue, handleClear } = useSelectValue(props, context, { select });
 
-		// 当前数据中每个值对应的节点；只记父级，路径在用到时（已选值）再沿父级取
-		const nodes = computed(() => {
-			const map = new Map<string | number, TreeNode>();
-			walkTree(props.data as TreeData[], (item, ancestors) => {
-				if (item.value == null) return false;
-				map.set(item.value, { item, parent: map.get(ancestors[ancestors.length - 2]?.value) });
-			});
-			return map;
-		});
-
-		const getSelectedNode = (v: string | number) => {
-			let node = nodes.value.get(v);
-			if (!node) return;
-			const result: SelectedNode = { path: [], labels: [] };
-			for (; node; node = node.parent) {
-				result.path.unshift(node.item.value);
-				result.labels.unshift(node.item.label || '');
-			}
-			return result;
-		};
-
-		// 已选值的路径与文字；远程搜索时，不在当前结果里的沿用上次查到的
-		const getSelected = useSelectedCache<SelectedNode>(isRemote);
-		const selected = computed(() => {
-			return getSelected(currentValue.value, getSelectedNode);
-		});
-
-		// 父子独立勾选
-		const strict = computed(() => props.checkStrategy === 'strict');
-
-		const currentValueGroups = computed(() => {
-			if (strict.value) return;
-
-			const allPaths = currentValue.value
-				.map(v => selected.value.get(v)?.path)
-				.filter(Boolean) as (string | number)[][];
-
-			// 只保留不是其他已选路径前缀的路径：按值建前缀树，终点没有子节点的保留（不两两比较路径）
-			type Trie = Map<string | number, Trie>;
-			const root: Trie = new Map();
-			const ends = allPaths.map(path => path.reduce((level, v) => {
-				let next = level.get(v);
-				next || level.set(v, (next = new Map()));
-				return next;
-			}, root));
-			return allPaths.filter((_, i) => ends[i].size === 0);
-		});
-
-		const displayTags = computed<DisplayTag[]>(() => {
-			if (!props.data.length && !isRemote()) {
-				return [];
-			}
-			if (strict.value) {
-				return currentValue.value.map((v: any) => {
-					const labels = selected.value.get(v)?.labels;
-					return {
-						value: v,
-						label: labels?.[labels.length - 1] || ''
-					};
-				});
-			}
-
-			return (currentValueGroups.value || []).map((path) => {
-				const value = path[path.length - 1];
-				const label = (selected.value.get(value)?.labels || []).filter(Boolean).join(' / ');
-				return {
-					path,
-					value,
-					label
-				};
-			});
-		});
+		const { currentValueGroups, displayTags, labels, remove, apply } = useTreeSelectValue(props, { currentValue, isRemote });
 
 		const tags = computed(() => {
 			return displayTags.value.map(item => ({
@@ -144,20 +58,12 @@ export const TreeSelect = defineComponent({
 		});
 
 		const sync = () => {
-			syncValue(displayTags.value.map(item => item.label));
+			syncValue(labels.value);
 		};
 
-		/**
-		 * 移除标签：独立勾选时只移除这一项；联动时连同它的祖先（不再全选）与子孙，各种回填方式的值通用
-		 * @param item ~
-		 */
-		const handleRemove = (item: DisplayTag) => {
-			const { value, path } = item;
-			currentValue.value = currentValue.value.filter((v) => {
-				if (v === value) return false;
-				if (!path) return true;
-				return !path.includes(v) && !selected.value.get(v)?.path.includes(value);
-			});
+		// 移除标签，见 useTreeSelectValue 的 remove
+		const handleRemove = (item: TreeSelectDisplayTag) => {
+			remove(item);
 			sync();
 		};
 
@@ -173,11 +79,7 @@ export const TreeSelect = defineComponent({
 		};
 
 		const handleChange = (_: any, data: any) => {
-			// 远程搜索时 data 只是当前关键词的结果：不在其中的已选值不受这次勾选影响
-			currentValue.value = isRemote()
-				? [...currentValue.value.filter(v => !nodes.value.has(v)), ...data.checkedValues]
-				: data.checkedValues;
-
+			apply(data.checkedValues);
 			sync();
 			multiple.value && select.clearSearch();
 		};
