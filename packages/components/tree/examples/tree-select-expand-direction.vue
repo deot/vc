@@ -20,7 +20,7 @@
 				:key="controls.depth"
 				v-model="value"
 				:data="data"
-				:max="99"
+				:max="0"
 				:expand-direction="controls.expandDirection"
 				cascader
 				class="tree-select-expand-direction-demo__trigger"

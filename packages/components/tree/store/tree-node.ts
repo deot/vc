@@ -50,7 +50,7 @@ export const getChildState = (nodes: TreeNode[]) => {
  * @param checked ~
  * @param indeterminate ~
  */
-const setCheckState = (node: TreeNode, checked: boolean, indeterminate: boolean) => {
+export const setCheckState = (node: TreeNode, checked: boolean, indeterminate: boolean) => {
 	node.store.markCheckChange(node);
 	node.states.checked = checked;
 	node.states.indeterminate = indeterminate;

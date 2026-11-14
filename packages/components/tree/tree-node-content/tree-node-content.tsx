@@ -149,8 +149,16 @@ export const TreeNodeContent = defineComponent({
 		onMounted(() => tree.registerRow(props.node, instance));
 		onBeforeUnmount(() => tree.unregisterRow(props.node, instance));
 
-		const handleCheckChange = (checked: boolean) => {
-			tree.toggleCheck(props.node, checked);
+		/**
+		 * 复选框切换：写入被拒绝（已选满、超过上限、子节点全部禁用时改回）后，复选框按节点的实际状态复原
+		 * @param checked ~
+		 * @param _ 原生事件
+		 * @param reset Checkbox 提供：只改它的内部状态
+		 */
+		const handleCheckChange = async (checked: boolean, _: Event, reset?: (checked: boolean) => void) => {
+			await tree.toggleCheck(props.node, checked);
+			const actual = !!props.node.states.checked;
+			actual !== checked && reset?.(actual);
 		};
 
 		// 复选框不单独占用 Tab：键盘焦点在行上，空格 / 回车切换勾选
@@ -183,7 +191,9 @@ export const TreeNodeContent = defineComponent({
 				} satisfies TreeCurrentChangePayload);
 			}
 
-			if (tree.props.expandOnClickNode) {
+			// 单选时点可选的节点只选中、不展开（展开点图标）；不可选的父节点照常展开
+			const selects = tree.props.checkOnClickNode && store.single && store.isCheckable(props.node);
+			if (tree.props.expandOnClickNode && !selects) {
 				handleExpandIconClick();
 			}
 			// 禁用的节点由 toggleCheck 忽略
@@ -204,9 +214,14 @@ export const TreeNodeContent = defineComponent({
 
 		return () => {
 			const { node } = props;
-			const { expanded, isLeaf } = node.states;
+			const { store } = tree;
+			const { expanded, isLeaf, checked, indeterminate } = node.states;
 			const disabled = !!node.getter.disabled;
 			const { showCheckbox, renderNodeLabel } = tree.props;
+			// 复选框不可勾选：禁用；单选时不可选；已选满时未勾选（含半选）的节点
+			const uncheckable = disabled
+				|| !store.isCheckable(node)
+				|| (!checked && store.full);
 			const motion = tree.motions.get(node);
 			return (
 				<div
@@ -215,14 +230,14 @@ export const TreeNodeContent = defineComponent({
 							'is-expanded': expanded,
 							'is-current': node.states.isCurrent,
 							'is-focusable': !disabled,
-							'is-checked': !disabled && node.states.checked
+							'is-checked': !disabled && checked
 						},
 						'vc-tree-node'
 					]}
 					aria-expanded={isLeaf ? void 0 : expanded}
 					aria-level={node.states.level}
 					aria-disabled={disabled}
-					aria-checked={node.states.checked}
+					aria-checked={checked}
 					role="treeitem"
 					tabindex="-1"
 					onClick={handleRowClick}
@@ -253,9 +268,9 @@ export const TreeNodeContent = defineComponent({
 						{
 							showCheckbox && (
 								<Checkbox
-									modelValue={node.states.checked}
-									indeterminate={node.states.indeterminate}
-									disabled={disabled}
+									modelValue={checked}
+									indeterminate={indeterminate}
+									disabled={uncheckable}
 									onChange={handleCheckChange}
 									// @ts-ignore
 									onClick={stopClick}

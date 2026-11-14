@@ -167,6 +167,11 @@ export const TreeSelect = defineComponent({
 			!props.cascader && nextTick(() => content.value?.scrollIntoActive?.());
 		};
 
+		// 单选：选中一个节点后关闭（点已选中的节点也关闭），同 Select
+		const handleSelect = () => {
+			multiple.value || close();
+		};
+
 		const handleChange = (_: any, data: any) => {
 			// 远程搜索时 data 只是当前关键词的结果：不在其中的已选值不受这次勾选影响
 			currentValue.value = isRemote()
@@ -220,7 +225,9 @@ export const TreeSelect = defineComponent({
 							remote={isRemote()}
 							inverted={direction.isInverted.value}
 							virtualized={props.virtualized}
+							max={props.max}
 							onChange={handleChange}
+							onSelect={handleSelect}
 						/>
 					)
 				: (
@@ -234,7 +241,9 @@ export const TreeSelect = defineComponent({
 							searchRegex={searchRegex.value}
 							remote={isRemote()}
 							virtualized={props.virtualized}
+							max={props.max}
 							onChange={handleChange}
+							onSelect={handleSelect}
 						/>
 					);
 		};

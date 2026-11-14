@@ -14,6 +14,11 @@ const treeKeys = [
 export const props = {
 	...selectProps,
 	...(pick(treeProps, treeKeys) as Pick<typeof treeProps, typeof treeKeys[number]>),
+	// 同 Select：1 为单选（点节点选中并关闭，没有复选框）；大于 1 为多选，最多 max 项；0 为不限
+	max: {
+		...treeProps.max,
+		default: 1
+	},
 	autoWidth: {
 		type: Boolean,
 		default: void 0

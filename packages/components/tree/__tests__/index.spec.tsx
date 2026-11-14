@@ -1347,7 +1347,7 @@ describe('TreeSelect interaction', () => {
 	it('basic / open / clearable', async () => {
 		const value = ref<any[]>([]);
 		const wrapper = mount(() => (
-			<TreeSelect v-model={value.value} data={data} clearable extra="未选择" />
+			<TreeSelect v-model={value.value} data={data} max={0} clearable extra="未选择" />
 		), { attachTo: document.body });
 		await flush();
 
@@ -3259,7 +3259,7 @@ describe('Tree / TreeSelect 值的转换', () => {
 		const value = ref<any>('1');
 		const nullable = ref<any>(null);
 		const wrapper = mount(() => (
-			<TreeSelect v-model={value.value} data={flat} clearable nullValue={nullable.value} />
+			<TreeSelect v-model={value.value} data={flat} max={0} clearable nullValue={nullable.value} />
 		), { attachTo: document.body });
 		await flush();
 

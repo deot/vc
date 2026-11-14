@@ -1,8 +1,8 @@
-import { toRaw } from 'vue';
+import { shallowRef, toRaw } from 'vue';
 import { isEqualWith, difference } from 'lodash-es';
 import { hasOwn } from '@deot/helper-utils';
 import type { Nullable } from '@deot/helper-shared';
-import { TreeNode, getRawValue, syncCheckFromChildren } from './tree-node';
+import { TreeNode, getRawValue, setCheckState, syncCheckFromChildren } from './tree-node';
 import { KEY_NODE, KEY_VALUE } from './constant';
 import type { TreeCheckStrategy } from '../types';
 
@@ -25,6 +25,10 @@ export class TreeStore {
 	lazy = false;
 	// 勾选联动与回填方式，见 getCheckedState
 	checkStrategy: TreeCheckStrategy = 'all';
+	// 勾选数量，与 Select 的 max 同义：1 为互斥单选（父子不联动），大于 1 为多选的上限（按回填的值计数），0 为不限
+	max = 0;
+	// 已选满 max 项，见 full
+	private fullRef = shallowRef(false);
 	autoExpandParent = true;
 	checkDescendants = false;
 	defaultExpandAll = false;
@@ -60,11 +64,96 @@ export class TreeStore {
 		});
 		// 不处理自动加载一次
 		this._initDefaultCheckedNodes();
+		this.max > 1 && this.updateFull();
 	}
 
-	// 父子独立勾选
+	// 互斥单选
+	get single() {
+		return this.max === 1;
+	}
+
+	/**
+	 * 已选满 max 项（max 大于 1 时）：未勾选的节点不可再勾选，行与级联列的复选框据此禁用
+	 * 	- 经节点（响应式代理）取到的 store 也是代理，ref 会被自动解包：读写都经过原始对象
+	 * @returns ~
+	 */
+	get full() {
+		return toRaw(this).fullRef.value;
+	}
+
+	// 父子独立勾选：单选时没有联动
 	get strict() {
-		return this.checkStrategy === 'strict';
+		return this.checkStrategy === 'strict' || this.single;
+	}
+
+	/**
+	 * 节点能否被选中（单选）：checkStrategy 为 child 时只有叶子可选，其余任意节点可选
+	 * @param node ~
+	 * @returns ~
+	 */
+	isCheckable(node: TreeNode) {
+		return !(this.single && this.checkStrategy === 'child' && !toRaw(node.states).isLeaf);
+	}
+
+	/**
+	 * 按回填的数量更新 full（max 大于 1 时）
+	 * @param count 回填的数量；不传时重新统计
+	 */
+	updateFull(count?: number) {
+		const raw = toRaw(this);
+		const full = this.max > 1 && (count ?? this.getCheckedState().checkedValues.length) >= this.max;
+		raw.fullRef.value !== full && (raw.fullRef.value = full);
+	}
+
+	/**
+	 * 用户切换一个节点的勾选（复选框、点行、键盘、级联列共用），按 max 处理
+	 * 	- 单选：只勾选该节点并取消其它；已选中时不变（仍算一次有效的选择）；不可选的节点不处理
+	 * 	- 有上限：已选满时不能再勾选；勾选后回填的数量超过上限则撤回（写入前后的状态在同一轮内，不发出 check-change）
+	 * 	- 其余：按 checkStrategy 联动
+	 * @param node ~
+	 * @param checked 默认取反
+	 * @returns 是否完成了一次有效的操作（禁用、不可选、超过上限时为 false）
+	 */
+	toggleChecked(node: TreeNode, checked = !node.states.checked) {
+		if (node.getter.disabled) return false;
+		if (this.single) {
+			if (checked && !this.isCheckable(node)) return false;
+			if (!!node.states.checked === checked) return checked;
+			checked && this.nodesMap.forEach((item) => {
+				const states = toRaw(item.states);
+				(states.checked || states.indeterminate) && toRaw(item) !== toRaw(node) && setCheckState(item, false, false);
+			});
+			node.setChecked(checked, false);
+			return true;
+		}
+		if (!checked || this.max <= 1) {
+			node.setChecked(checked, !this.strict);
+			this.max > 1 && this.updateFull();
+			return true;
+		}
+		if (this.full) return false;
+		// 记下会被改写的节点（它的子树与各级祖先），超过上限时原样恢复
+		const snapshot: [TreeNode, boolean, boolean][] = [];
+		const record = (item: TreeNode) => {
+			const states = toRaw(item.states);
+			snapshot.push([item, states.checked, states.indeterminate]);
+		};
+		const walk = (item: TreeNode) => {
+			record(item);
+			this.strict || toRaw(item.childNodes).forEach(walk);
+		};
+		walk(node);
+		if (!this.strict) {
+			for (let parent = node.parentNode; parent && toRaw(parent.states).level > 0; parent = parent.parentNode) record(parent);
+		}
+		node.setChecked(true, !this.strict);
+		const count = this.getCheckedState().checkedValues.length;
+		if (count > this.max) {
+			snapshot.forEach(([item, value, indeterminate]) => setCheckState(item, value, indeterminate));
+			return false;
+		}
+		this.updateFull(count);
+		return true;
 	}
 
 	/**
@@ -338,6 +427,7 @@ export class TreeStore {
 
 			this.checkedValues = newVal;
 			this._initDefaultCheckedNodes();
+			this.max > 1 && this.updateFull();
 		}
 	}
 

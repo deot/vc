@@ -59,6 +59,13 @@ $component-name: vc-tree-select;
 		}
 	}
 
+	// 单选：选中的项（max 为 1，没有复选框）
+	@include element(cascader-label) {
+		@include when(checked) {
+			color: $color-primary;
+		}
+	}
+
 	// 复选框与文字之间的间距
 	@include element(cascader-checkbox) {
 		display: inline-flex;

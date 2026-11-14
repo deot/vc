@@ -20,7 +20,7 @@
 					v-model="value"
 					:data="data"
 					:check-strategy="checkStrategy"
-					:max="99"
+					:max="0"
 					:max-tags="4"
 					clearable
 				/>
@@ -32,7 +32,7 @@
 					v-model="value"
 					:data="data"
 					:check-strategy="checkStrategy"
-					:max="99"
+					:max="0"
 					cascader
 					clearable
 				/>
@@ -44,7 +44,7 @@
 					v-model="value"
 					:data="data"
 					:check-strategy="checkStrategy"
-					:max="99"
+					:max="0"
 					:max-tags="0"
 				/>
 			</div>
@@ -55,7 +55,7 @@
 					v-model="value"
 					:data="data"
 					:check-strategy="checkStrategy"
-					:max="99"
+					:max="0"
 					:max-tags="4"
 					:max-tag-lines="0"
 				/>
@@ -67,7 +67,7 @@
 					v-model="value"
 					:data="data"
 					:check-strategy="checkStrategy"
-					:max="99"
+					:max="0"
 					:max-tag-lines="2"
 				/>
 			</div>
@@ -78,7 +78,7 @@
 					v-model="value"
 					:data="data"
 					:check-strategy="checkStrategy"
-					:max="99"
+					:max="0"
 					disabled
 				/>
 			</div>

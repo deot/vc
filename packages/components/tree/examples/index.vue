@@ -26,7 +26,7 @@
 			v-model="value"
 			:data="data"
 			:check-strategy="checkStrategy"
-			:max="99"
+			:max="0"
 			clearable
 		/>
 
@@ -49,7 +49,7 @@
 			v-model="value"
 			:data="data"
 			:check-strategy="checkStrategy"
-			:max="99"
+			:max="0"
 			cascader
 			clearable
 		/>
@@ -61,7 +61,7 @@
 			v-model="valueSearch"
 			:data="bigData"
 			:check-strategy="checkStrategy"
-			:max="999"
+			:max="0"
 			:max-tags="3"
 			searchable
 			search-placeholder="搜索条目 / 分组"
@@ -71,7 +71,7 @@
 			v-model="valueSearch"
 			:data="bigData"
 			:check-strategy="checkStrategy"
-			:max="999"
+			:max="0"
 			:max-tags="3"
 			searchable
 			cascader
@@ -84,6 +84,7 @@
 			v-model="valueAsync"
 			:data="dataAsync"
 			:check-strategy="checkStrategy"
+			:max="0"
 			clearable
 		/>
 	</div>

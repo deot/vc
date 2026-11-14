@@ -52,6 +52,14 @@ const handleNodeClick = ({ data: row }) => { current.value = row.label; };
 | `child` | 父子联动 | 只回填最深的勾选节点；懒加载未展开的父节点也算 | `['c1', 'c2']` |
 | `strict` | 父子独立 | 勾选的节点 | `['p', 'c1', 'c2']` |
 
+`max` 限制勾选的数量，与 [Select](../select/README.md) 同义（Tree 默认 `0`）：
+
+| 取值 | 勾选 |
+| --- | --- |
+| `0`（默认） | 不限数量 |
+| 大于 `1` | 最多 `max` 项，按回填的值计数（与 `checkStrategy` 有关）；选满后未勾选、半选的节点不可勾选，已勾选的可以取消；一次勾选会使回填的数量超过上限时，整次不生效 |
+| `1` | 互斥单选，父子不联动；`checkStrategy` 为 `child` 时只有叶子可选，其余取值任意节点可选。不显示复选框、开启 `checkOnClickNode` 时，点行即选中（展开点图标），选中的节点为主色 |
+
 传入的值不必与回填方式一致：联动时，值里的父节点表示整棵子树勾选，三种形态都能还原出同样的勾选状态，下次交互再按当前方式回填；运行时切换 `checkStrategy` 不会主动改写 `v-model`。节点的 `disabled` 只限制交互勾选，不禁止展开或设置当前节点；子孙里有未勾选的禁用节点时，父节点不会变为勾选，`parent` 回填的是能勾选的子节点。
 
 调用 `filter(value)` 时，必须提供 `filterNode(value, data, node)`；命中节点的祖先会保留显示并展开。以空值（如 `''`）调用时清除筛选，并恢复第一次筛选前的展开状态：筛选期间展开的节点收起，筛选期间手动收起的保持收起。`renderNodeLabel` 接收 `{ row, store }`，分别为原始数据和节点对象。
@@ -227,7 +235,7 @@ const data = Array.from({ length: 100 }, (_, i) => ({
 
 ### 树选择与级联搜索
 
-`TreeSelect` 默认 `max = Infinity`，显示多选标签；`max = 1` 切换为单标签展示。当前实现不按 `max` 限制勾选数量，单标签展示也不等同于互斥单选。
+`max` 与 Select 同义，`TreeSelect` 默认 `1`：单选时没有复选框，点节点（级联模式点项）即选中并关闭面板，再次点已选中的节点只关闭；选中的节点为主色，级联模式打开时展开到已选的节点。`checkStrategy` 为 `child` 时只有叶子可选，其余取值任意节点可选，单选时父子不联动。多选写 `:max="0"`（不限）或具体的上限，选满后未勾选的节点不可勾选。
 
 `cascader` 开启鼠标悬停展开的级联列，`expandDirection` 控制级联列的展开方向，取值与 [Cascader](../cascader/README.md#展开方向) 相同。`searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入（输入框跟在标签之后，输入为空时按 Backspace 移除最后一个标签），`searchable="popover"` 改为在面板顶部显示搜索栏。空格分隔的关键词需同时命中，英文逗号分隔的各组任一命中即可：树形模式保留层级，级联模式显示完整路径列表。关闭面板会清空搜索；多选时勾选或取消一个节点后也会清空，`:clear-search-on-select="false"` 时保留。树形模式打开面板时展开已选节点及其祖先，勾选不会展开节点；搜索展开命中节点的祖先，清空搜索词后恢复搜索前的展开状态。非独立勾选时，搜索结果中的父节点仍会联动所有子孙节点，包括隐藏节点。
 
@@ -237,11 +245,11 @@ const data = Array.from({ length: 100 }, (_, i) => ({
 
 | 面板内容 | 按键 |
 | --- | --- |
-| 树形 | 焦点留在输入框，↑ / ↓ 在可见节点间移动高亮（首尾循环）；← / → 收起或展开高亮的节点，已收起时 ← 回到父节点、已展开时 → 进入第一个子节点（搜索词为空时）；Enter 切换勾选。打开时高亮第一个勾选的节点 |
-| 级联列 | ↑ / ↓ 在当前列内移动，← / → 回到父级或进入子级（搜索词为空时），Enter 切换勾选 |
-| 级联搜索结果 | ↑ / ↓ 移动高亮，Enter 切换勾选 |
+| 树形 | 焦点留在输入框，↑ / ↓ 在可见节点间移动高亮（首尾循环）；← / → 收起或展开高亮的节点，已收起时 ← 回到父节点、已展开时 → 进入第一个子节点（搜索词为空时）；Enter 切换勾选（单选时选中并关闭）。打开时高亮第一个勾选的节点 |
+| 级联列 | ↑ / ↓ 在当前列内移动，← / → 回到父级或进入子级（搜索词为空时），Enter 切换勾选（单选时选中并关闭） |
+| 级联搜索结果 | ↑ / ↓ 移动高亮，Enter 切换勾选（单选时选中并关闭） |
 
-背景色只表示当前高亮（键盘移动或鼠标悬停），是否勾选由复选框表示。
+背景色只表示当前高亮（键盘移动或鼠标悬停），是否勾选由复选框表示（单选时为主色文字）。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 20 }</config> -->
@@ -259,6 +267,7 @@ const data = Array.from({ length: 100 }, (_, i) => ({
 			:cascader="isCascader"
 			:check-strategy="checkStrategy"
 			:disabled="isDisabled"
+			:max="0"
 			:max-tags="2"
 			searchable
 			clearable
@@ -302,6 +311,7 @@ TreeSelect 的 `loadData(keyword, instance)` 用于搜索，不是 Tree 的懒�
 			v-model="values"
 			:data="data"
 			:load-data="loadData"
+			:max="0"
 			check-strategy="strict"
 			searchable
 			clearable
@@ -389,7 +399,7 @@ TreeSelect 没有额外的局部 CSS 主题参数。
 | defaultExpandAll | 默认展开已有子数据的节点 | `boolean` | - | `false` |
 | autoExpandParent | 按 `expandedValues` 展开时同时展开祖先 | `boolean` | - | `true` |
 | expandOnClickNode | 点击标签也展开 / 收起 | `boolean` | - | `true` |
-| checkOnClickNode | 点击标签也切换勾选 | `boolean` | - | `false` |
+| checkOnClickNode | 点击标签也切换勾选；`max` 为 `1` 时点可选的节点只选中、不展开 | `boolean` | - | `false` |
 | accordion | 同级节点互斥展开 | `boolean` | - | `false` |
 | currentNodeValue | 初始化当前节点值；后续修改使用实例方法 | `Value` | - | `undefined` |
 | highlightCurrent | 高亮当前节点 | `boolean` | - | `false` |
@@ -405,7 +415,7 @@ TreeSelect 没有额外的局部 CSS 主题参数。
 | allowDrop | 落点许可，参数见“拖拽节点” | `({ node, data, targetNode, position, from, to }) => boolean` | - | - |
 | separator | 字符串勾选值的分隔符 | `string` | - | `','` |
 | numerable | 把输入值中的字符串转为数字；value 按 `===` 比较，数字 `data` 配字符串值时需开启 | `boolean` | - | `false` |
-| max | 非数组输入时，`1` 输出首个值，`> 1` 输出分隔符字符串；不限制勾选数 | `number` | `>= 1` | `Infinity` |
+| max | 勾选数量：`1` 为互斥单选，大于 `1` 为最多 `max` 项，`0` 为不限，见上文“勾选、筛选与自定义标签”；非数组的 `v-model` 在 `1` 时输出该值，其余按 `separator` 连接 | `number` | `>= 0` | `0` |
 | nullValue | 清空时返回的值：值不是数组且为空时生效（数组值清空仍为 `[]`）；不设置时字符串值为 `''` | `number \| string \| object` | - | `undefined` |
 | iconClass | 已声明的兼容属性，当前渲染未使用 | `string` | - | - |
 | allowDispatch | 交互改变值时通知 FormItem | `boolean` | - | `true` |
@@ -482,7 +492,7 @@ TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字
 | data | 节点数据 | `NodeData[]` | - | `[]` |
 | checkStrategy | 勾选联动与 `v-model` 回填方式，同 Tree | `string` | `all`、`parent`、`child`、`strict` | `'all'` |
 | renderNodeLabel | 自定义树节点 / 级联列标签；级联搜索结果使用路径文本 | `(props: { row: NodeData; store: Node }) => VNodeChild` | - | - |
-| max | `> 1` 显示多选标签；影响非数组值输出形式，不限制勾选数 | `number` | `>= 1` | `Infinity` |
+| max | 同 Select：`1` 为单选（没有复选框，点节点选中并关闭），大于 `1` 为多选、最多 `max` 项，`0` 为多选不限；多选时显示标签 | `number` | `>= 0` | `1` |
 | maxTags | 最多显示的标签数，`0` 或不传表示不限 | `number` | `>= 0` | - |
 | maxTagLines | 标签最多行数，`0` 表示不限 | `number` | `>= 0` | `1` |
 | disabled | 禁用交互 | `boolean` | - | `false` |
@@ -592,4 +602,4 @@ Tree 使用 `--vc-tree-*`，TreeSelect 使用 `--vc-tree-select-*` 组件覆盖�
 
 内置文案使用 `vc.Tree.emptyText`、`vc.TreeSelect.placeholder`、`vc.TreeSelect.noMatch`；通过 `VcInstance.configure({ locale })` 切换语言。节点标签、自定义渲染和显式传入的文案由调用方管理。
 
-更多交互细节可参考[节点事件示例](./examples/events.vue)、[搜索树示例](./examples/search.vue)、[拖拽示例](./examples/drag.vue)、[标签折叠示例](./examples/tree-select-tags.vue)、[搜索与键盘示例](./examples/tree-select-search.vue)与[挂载位置示例](./examples/tree-select-portal.vue)。
+更多交互细节可参考[勾选数量示例](./examples/max.vue)、[节点事件示例](./examples/events.vue)、[搜索树示例](./examples/search.vue)、[拖拽示例](./examples/drag.vue)、[标签折叠示例](./examples/tree-select-tags.vue)、[搜索与键盘示例](./examples/tree-select-search.vue)与[挂载位置示例](./examples/tree-select-portal.vue)。

@@ -33,11 +33,11 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
-	// 暂不支持，仅作为默认值
+	// 勾选数量，与 Select 同义：1 为互斥单选（父子不联动）；大于 1 为多选，最多 max 项（按回填的值计数），选满后未勾选的节点不可勾选；0 为不限
 	max: {
 		type: Number,
-		default: Infinity,
-		validator: (v: any) => v >= 1,
+		default: 0,
+		validator: (v: any) => v >= 0,
 	},
 	// 确保所有value是唯一的; 否则会出现问题
 	data: {

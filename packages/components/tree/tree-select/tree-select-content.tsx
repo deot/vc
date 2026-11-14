@@ -41,9 +41,15 @@ export const TreeSelectContent = defineComponent({
 		virtualized: {
 			type: Boolean,
 			default: false
+		},
+		// 见 TreeSelect 的 max：为 1 时没有复选框，点节点选中
+		max: {
+			type: Number,
+			default: 0
 		}
 	},
-	emits: ['change'],
+	// select：一次有效的选择（单选时点已选中的节点也算），TreeSelect 单选时据此关闭
+	emits: ['change', 'select'],
 	setup(props, { emit, expose }) {
 		const { t } = useLocale();
 		const treeRef = ref<any>(null);
@@ -84,6 +90,7 @@ export const TreeSelectContent = defineComponent({
 
 		return () => {
 			const searching = !!props.searchValue.trim();
+			const single = props.max === 1;
 			return (
 				<div class="vc-tree-select__options">
 					<Tree
@@ -92,13 +99,16 @@ export const TreeSelectContent = defineComponent({
 						expanded-values={expandedValues.value}
 						data={props.data}
 						checkStrategy={props.checkStrategy}
+						max={props.max}
 						allowDispatch={false}
-						showCheckbox={true}
+						showCheckbox={!single}
+						checkOnClickNode={single}
 						filterNode={filterNode}
 						virtualized={props.virtualized}
 						emptyText={searching ? t('vc.TreeSelect.noMatch') : void 0}
 						renderNodeLabel={props.renderNodeLabel || renderLabel}
 						onChange={(_: any, data: any) => emit('change', _, data)}
+						onCheck={(payload: any) => emit('select', payload)}
 					/>
 				</div>
 			);

@@ -156,6 +156,11 @@ $sizes: (
 	}
 }
 
+// 单选且没有复选框（max 为 1）：选中的节点以主色标出，同 Select 的已选项
+.vc-tree.is-single .vc-tree-node.is-checked > .vc-tree-node__content {
+	color: $color-primary;
+}
+
 .vc-tree--highlight-current {
 	.vc-tree-node.is-current > .vc-tree-node__content {
 		background-color: $color-primary-lighter;

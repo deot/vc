@@ -49,9 +49,15 @@ export const TreeSelectContentCascader = defineComponent({
 		virtualized: {
 			type: Boolean,
 			default: false
+		},
+		// 见 TreeSelect 的 max：为 1 时没有复选框，点项选中
+		max: {
+			type: Number,
+			default: 0
 		}
 	},
-	emits: ['change'],
+	// select：一次有效的选择（单选时点已选中的项也算），TreeSelect 单选时据此关闭
+	emits: ['change', 'select'],
 	setup(props, { emit, expose }) {
 		const { t } = useLocale();
 		const columnsRef = ref<any>();
@@ -60,6 +66,7 @@ export const TreeSelectContentCascader = defineComponent({
 			data: props.data,
 			keyValue: { ...KEY_VALUE },
 			checkStrategy: props.checkStrategy,
+			max: props.max,
 			checkedValues: [...props.value]
 		});
 		watch(() => props.value, v => store.setCheckedValues([...v]));
@@ -67,8 +74,26 @@ export const TreeSelectContentCascader = defineComponent({
 		watch(() => props.checkStrategy, (v) => {
 			store.checkStrategy = v;
 		});
-		/** hover 展开路径，与 Cascader 一致 */
-		const currentValue = ref<TreeValue[]>([]);
+		watch(() => props.max, (v) => {
+			store.max = v;
+			store.updateFull();
+		});
+
+		/**
+		 * 节点的路径（各级的值）
+		 * @param value ~
+		 * @returns 不在数据中时为空
+		 */
+		const getPath = (value?: TreeValue) => {
+			const path: TreeValue[] = [];
+			for (let node = value != null ? store.getNode(value) : null; node && node.states.level > 0; node = node.parentNode) {
+				path.unshift(node.getter.value);
+			}
+			return path;
+		};
+
+		/** hover 展开路径，与 Cascader 一致；单选时打开即展开到已选的节点 */
+		const currentValue = ref<TreeValue[]>(props.max === 1 ? getPath(props.value[0]) : []);
 		const rebuildData = computed(() => {
 			if (!props.data.length) return [];
 			let temp: TreeData[] = props.data;
@@ -99,15 +124,28 @@ export const TreeSelectContentCascader = defineComponent({
 			};
 		};
 
-		// 切换一项的勾选（复选框、点击级联列的项、选中搜索结果、回车）；禁用的项不处理
-		const toggle = (item: TreeData, checked = !getNodeState(item).checked) => {
-			if (item.disabled) return;
-			store.setChecked(item, checked, !store.strict);
-			sync();
+		/**
+		 * 切换一项的勾选（复选框、点击级联列的项、选中搜索结果、回车），按 max 与 checkStrategy 写入（见 TreeStore.toggleChecked）
+		 * 	- 禁用、单选时不可选、已选满时不处理
+		 * 	- 单选时点已选中的项：值不变，只发出 select
+		 * @param item ~
+		 * @param checked 默认取反；单选时为选中
+		 */
+		const toggle = (item: TreeData, checked = store.single || !getNodeState(item).checked) => {
+			const node = store.getNode(item);
+			if (!node) return;
+			if (!(store.single && checked && node.states.checked)) {
+				if (!store.toggleChecked(node, checked)) return;
+				sync();
+			}
+			emit('select', { item, checked: node.states.checked });
 		};
 
 		const renderCheckbox = (item: TreeData) => {
 			const state = getNodeState(item);
+			const node = store.getNode(item);
+			// 不可勾选：禁用；已选满时未勾选（含半选）的项
+			const disabled = !!item.disabled || (!!node && !state.checked && store.full);
 			return (
 				<span
 					class="vc-tree-select__cascader-checkbox"
@@ -116,8 +154,13 @@ export const TreeSelectContentCascader = defineComponent({
 					<Checkbox
 						modelValue={state.checked}
 						indeterminate={state.indeterminate}
-						disabled={!!item.disabled}
-						onChange={v => toggle(item, !!v)}
+						disabled={disabled}
+						// 写入被拒绝（已选满、超过上限）后，复选框按节点的实际状态复原
+						onChange={(v: any, _: Event, reset?: (checked: boolean) => void) => {
+							toggle(item, !!v);
+							const actual = getNodeState(item).checked;
+							actual !== !!v && reset?.(actual);
+						}}
 					/>
 				</span>
 			);
@@ -128,11 +171,15 @@ export const TreeSelectContentCascader = defineComponent({
 
 		const renderPrefix = ({ item }: SelectPath | CascaderCell) => renderCheckbox(item);
 
+		// 单选：选中的项以主色标出（样式见 tree-select.scss）
 		const renderLabel = ({ item }: CascaderCell) => {
-			const node = props.renderNodeLabel && store.getNode(item);
-			return node
+			const node = store.getNode(item);
+			const label = props.renderNodeLabel && node
 				? (<Customer render={props.renderNodeLabel} store={node} row={item} />)
 				: item.label;
+			return store.single && node?.states.checked
+				? (<span class="vc-tree-select__cascader-label is-checked">{ label }</span>)
+				: label;
 		};
 
 		// 方向键：搜索时在结果列表内移动，否则在级联列内移动（等同鼠标移入）
@@ -172,7 +219,7 @@ export const TreeSelectContentCascader = defineComponent({
 								emptyText={t('vc.TreeSelect.noMatch')}
 								onSelect={handleSelect}
 							>
-								{{ prefix: renderPrefix }}
+								{{ prefix: store.single ? void 0 : renderPrefix }}
 							</SelectPaths>
 						)
 					}
@@ -188,7 +235,7 @@ export const TreeSelectContentCascader = defineComponent({
 						onMove={handleMove}
 						onClick={handleSelect}
 					>
-						{{ prefix: renderPrefix, label: renderLabel }}
+						{{ prefix: store.single ? void 0 : renderPrefix, label: renderLabel }}
 					</CascaderColumns>
 				</div>
 			);

@@ -17,7 +17,7 @@
 						<TreeSelect
 							v-model="values[String(portal)]"
 							:data="data"
-							:max="99"
+							:max="0"
 							:portal="portal"
 							:portal-class="`tree-select-portal-demo__popup-${portal}`"
 							@ready="handleReady(portal)"

@@ -25,7 +25,7 @@
 					v-model="value"
 					:data="data"
 					:check-strategy="checkStrategy"
-					:max="99"
+					:max="0"
 					:max-tag-lines="0"
 					clearable
 				/>
@@ -34,7 +34,7 @@
 					v-model="value"
 					:data="data"
 					:check-strategy="checkStrategy"
-					:max="99"
+					:max="0"
 					:max-tag-lines="0"
 					cascader
 					clearable

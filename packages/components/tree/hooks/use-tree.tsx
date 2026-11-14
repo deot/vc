@@ -71,6 +71,7 @@ export const useTree = (
 		loadData: props.loadData,
 		currentNodeValue: props.currentNodeValue,
 		checkStrategy: props.checkStrategy,
+		max: props.max,
 		checkDescendants: props.checkDescendants,
 		checkedValues: toCurrentValue(props.modelValue, {
 			numerable: props.numerable,
@@ -153,6 +154,14 @@ export const useTree = (
 		() => props.checkStrategy,
 		(v) => {
 			store.checkStrategy = v;
+		}
+	);
+
+	watch(
+		() => props.max,
+		(v) => {
+			store.max = v;
+			store.updateFull();
 		}
 	);
 
@@ -303,13 +312,14 @@ export const useTree = (
 	};
 
 	/**
-	 * 切换勾选（复选框、键盘、TreeSelect 的回车共用）：联动上下级后发出 check，并同步 v-model
+	 * 切换勾选（复选框、点行、键盘、TreeSelect 的回车共用）：按 max 与 checkStrategy 写入（见 TreeStore.toggleChecked）后发出 check，并同步 v-model
+	 * 	- 禁用、单选时不可选、已选满时不处理
+	 * 	- 单选时点已选中的节点仍发出 check（值不变，不发出 change），TreeSelect 据此关闭弹层
 	 * @param node ~
-	 * @param checked 默认取反
+	 * @param checked 默认取反；单选时为选中
 	 */
-	const toggleCheck = async (node: TreeNode, checked = !node.states.checked) => {
-		if (node.getter.disabled) return;
-		node.setChecked(checked, !store.strict);
+	const toggleCheck = async (node: TreeNode, checked = store.single || !node.states.checked) => {
+		if (!store.toggleChecked(node, checked)) return;
 		await nextTick();
 		emit('check', {
 			node,
@@ -326,7 +336,8 @@ export const useTree = (
 		scrollToIndex: index => list.value?.scrollToIndex(index, 'nearest'),
 		toggle,
 		toggleCheck,
-		showCheckbox: () => props.showCheckbox
+		// 回车 / 空格切换勾选：显示复选框，或单选时点行选中
+		showCheckbox: () => props.showCheckbox || (store.single && props.checkOnClickNode)
 	});
 	onMounted(keydown.initTabStop);
 
@@ -430,7 +441,14 @@ export const useTree = (
 		return (
 			<div
 				// 拖拽中的 is-dragging / is-drop-not-allow / is-drop-inner 由 useDragNode 直接写在根节点上
-				class={[{ 'vc-tree--highlight-current': props.highlightCurrent }, name]}
+				class={[
+					{
+						'vc-tree--highlight-current': props.highlightCurrent,
+						// 单选且没有复选框：选中的节点以主色标出（样式见 tree.scss）
+						'is-single': store.single && !props.showCheckbox
+					},
+					name
+				]}
 				ref={rootEl}
 				role="tree"
 				onKeydown={keydown.handleKeydown}

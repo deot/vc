@@ -21,7 +21,7 @@
 				:key="controls.content"
 				v-model="value"
 				:data="data"
-				:max="99"
+				:max="0"
 				:cascader="controls.content === 'cascader'"
 				:check-strategy="controls.checkStrategy"
 				:max-tag-lines="controls.maxTagLines"

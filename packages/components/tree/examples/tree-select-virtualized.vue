@@ -19,7 +19,7 @@
 			:key="remountKey"
 			v-model="value"
 			:data="data"
-			:max="99999"
+			:max="0"
 			:cascader="controls.mode === 'cascader'"
 			:virtualized="controls.virtualized === 'on'"
 			:searchable="controls.searchable"
