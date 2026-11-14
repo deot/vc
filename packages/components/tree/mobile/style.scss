@@ -1,4 +1,5 @@
 @use '../../style/helper' as *;
+@use './tree-select/style' as tree-select;
 
 $color-primary-lighter: varfix(color-primary-lighter, tree);
 $background-color-primary-light: varfix(background-color-primary-light, tree);
@@ -54,6 +55,18 @@ $background-color-primary-light: varfix(background-color-primary-light, tree);
 
 	.vc-tree-node:focus-visible > .vc-tree-node__content {
 		background-color: $color-primary-lighter;
+	}
+
+	// 单选且没有复选框（max 为 1）：选中的节点为主色（见 ../tree.scss）加粗，行尾打勾（同 MSelect 的已选项）
+	&.is-single .vc-tree-node.is-checked > .vc-tree-node__content {
+		font-weight: 600;
+	}
+
+	.vc-tree-node__checked-icon {
+		padding-left: remfix(16);
+		margin-left: auto;
+		font-size: remfix(28);
+		flex-shrink: 0;
 	}
 
 	// 按下的反馈：与桌面端悬停同色（与 .vc-tree 连写：优先于聚焦、当前节点的底色）

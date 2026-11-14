@@ -131,9 +131,10 @@ describe('index.ts', () => {
 
 	it('basic', () => {
 		expect(typeof Tree).toBe('object');
-		// MTree 为独立的移动端组件（见 mobile.spec.tsx），MTreeSelect 暂时沿用 TreeSelect
+		// MTree、MTreeSelect 为独立的移动端组件（见 mobile.spec.tsx、mobile-tree-select.spec.tsx）
 		expect(MTree).not.toBe(Tree);
-		expect(MTreeSelect).toBe(TreeSelect);
+		expect(MTreeSelect).not.toBe(TreeSelect);
+		expect(typeof (MTreeSelect as any).open).toBe('function');
 	});
 
 	it('create', async () => {

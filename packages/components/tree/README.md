@@ -1,6 +1,6 @@
 ## 树形控件（Tree）
 
-`Tree` 展示层级数据，支持展开、勾选、筛选、懒加载和拖拽；`TreeSelect` 将树形选择放入下拉面板，也支持级联列展示。移动端入口导出的 `MTree` 与 `Tree` 的属性、事件和方法相同，尺寸按 750 稿随 `--vc-rem` 缩放，见[移动端](#移动端)；`MTreeSelect` 暂时沿用 `TreeSelect`。
+`Tree` 展示层级数据，支持展开、勾选、筛选、懒加载和拖拽；`TreeSelect` 将树形选择放入下拉面板，也支持级联列展示。移动端入口导出的 `MTree` 与 `Tree` 的属性、事件和方法相同，尺寸按 750 稿随 `--vc-rem` 缩放，见[移动端](#移动端)；`MTreeSelect` 为从底部弹出的树选择，见 [MTreeSelect](#mtreeselect)。
 
 ### 何时使用
 
@@ -541,7 +541,7 @@ TreeSelect 实例还暴露 `treeSelectId`、`isActive`、`multiple`、`current`�
 
 ### 移动端
 
-`MTree` 与 `Tree` 结构相同，根节点另有标记类 `.vcm-tree`（`.vc-tree.vcm-tree`），属性、事件和方法一致；展开动画、勾选联动、筛选、懒加载、虚拟化、拖拽与键盘两端通用。`MTreeSelect` 暂时沿用 `TreeSelect`（内部为桌面端的 Tree）。
+`MTree` 与 `Tree` 结构相同，根节点另有标记类 `.vcm-tree`（`.vc-tree.vcm-tree`），属性、事件和方法一致；展开动画、勾选联动、`max`、筛选、懒加载、虚拟化、拖拽与键盘两端通用。树选择见下方 [MTreeSelect](#mtreeselect)。
 
 :::playground
 <!-- <config lang="json5">{ viewport: 375, previewInset: 0 }</config> -->
@@ -589,10 +589,91 @@ const data = [
 | 聚焦底色 | 点击或键盘移动到的行显示 `color-primary-lighter` | 只在键盘操作（外接键盘）时显示，手指点按后不残留；`highlightCurrent` 的当前节点照常高亮 |
 | 虚拟化 | 内部为 `RecycleList` | 内部为 `MRecycleList`，使用原生滚动与系统滚动条 |
 | 拖拽 | 按住节点拖动 | 长按节点约 300ms 后拖动，期间不触发页面滚动与系统菜单 |
+| 单选的选中节点 | 主色文字 | 主色加粗，行尾打勾（同 MSelect 的已选项） |
 
 点行的行为与桌面端一致：默认展开 / 收起，勾选点多选框；需要点行勾选时开启 `checkOnClickNode`。
 
 两端的尺寸都写成局部变量 `--vc-tree-<键>`（见[局部](#局部)），移动端在 `.vcm-tree` 上覆盖，与样式的加载顺序无关。悬停样式只在可悬停的设备上生效（`@media (hover: hover)`）。
+
+### MTreeSelect
+
+`MTreeSelect` 是独立的移动端组件：点击触发区（默认为 `MListItem`）从底部弹出，弹层中依次为搜索框（`searchable`）、汇总栏与固定高度的 `MTree`。值的形状与转换、`max`、`checkStrategy` 与桌面端 `TreeSelect` 相同，选择、搜索与回填沿用桌面端的树形模式；没有级联列模式（逐级选择用 [MCascader](../cascader/README.md)）、标签折叠与远程搜索。
+
+:::playground
+<!-- <config lang="json5">{ viewport: 375, previewInset: 0 }</config> -->
+```vue
+<template>
+	<MTreeSelect v-model="single" :data="data" label="单选" title="选择分类" />
+	<MTreeSelect
+		v-model="multiple"
+		:data="data"
+		:max="3"
+		check-strategy="child"
+		label="多选（最多 3 项）"
+		title="选择条目"
+		searchable
+		clearable
+	/>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { MTreeSelect } from '@deot/vc';
+
+const single = ref('');
+const multiple = ref([]);
+const data = Array.from({ length: 4 }, (_, i) => ({
+	value: `${i + 1}`,
+	label: `分类 ${i + 1}`,
+	children: Array.from({ length: 3 }, (__, j) => ({ value: `${i + 1}-${j + 1}`, label: `条目 ${i + 1}-${j + 1}` }))
+}));
+</script>
+```
+:::
+
+- 单选（`max` 为 `1`，默认）：没有复选框，点节点即选中（展开点图标），选中的节点为主色加粗、行尾打勾；`confirm` 为 `false` 时点选即提交并关闭，否则由「确定」提交。`checkStrategy` 为 `child` 时只有叶子可选，点父节点仍是展开。
+- 多选：多选框 + 汇总栏「已选 N 项」（有上限时带上限，数量为回填的值的个数），选满后未勾选的节点不可勾选；总是需要「确定」，`confirm` 为 `false` 时按 `'top'`。
+- 清空（`clearable`）：`confirm` 为 `'bottom'` 时在底部「清空 / 确定」，其余在汇总栏右端；不需要确定时清空即提交空值并关闭。不可清空时，一项都没选不能确定。
+- 弹层内的值在「确定」时提交，取消时丢弃；打开时已选节点及其祖先展开，第一个已选节点滚到列表中间。
+- 显示的文字同桌面端的标签：联动时为没有被其他已选节点包含的那一层的完整路径（各级以 ` / ` 连接），独立勾选时为节点自身的文字。
+- 树的滚动区高度为局部变量 `--vc-tree-select-panel-height`（默认 750 稿 768）。
+
+#### MTreeSelect 属性
+
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| modelValue / data / max / checkStrategy / separator / numerable / nullValue / renderNodeLabel / virtualized | 同 TreeSelect | - | - | 同 TreeSelect（`max` 为 `1`） |
+| clearable | 可清空，见上文 | `boolean` | - | `false` |
+| searchable | 树上方显示搜索框，按节点文字匹配（规则同桌面端），命中节点的祖先自动展开 | `boolean` | - | `false` |
+| searchPlaceholder | 搜索框的占位文字 | `string` | - | `''` |
+| label | 条目标签 | `string \| number \| Function \| { type: string; value: any }` | - | - |
+| labelWidth | 条目标签宽度，750 稿长度，传给 MListItem | `string \| number` | - | `''` |
+| arrow | 条目箭头；禁用时不显示 | `boolean \| string` | - | `right` |
+| disabled | 禁用，点击不打开 | `boolean` | - | `false` |
+| extra | `formatter` 返回空值时显示的文字，允许空字符串 | `string` | - | 当前语言的 `vc.TreeSelect.placeholder` |
+| formatter | 根据已选项的文字生成显示内容 | `(labels: string[], value) => any` | - | `labels => labels.join(', ')` |
+| title | 弹层标题，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
+| confirm | 由「确定」提交：`true` / `'top'` 为顶部的「取消 / 确定」，`'bottom'` 为底部的「清空 / 确定」按钮；多选为 `false` 时按 `'top'` | `boolean \| string` | `true`、`false`、`top`、`bottom` | `false` |
+| cancelText | 顶部工具栏的取消文案 | `string` | - | 当前语言的 `vc.Picker.cancelText` |
+| okText | 确定按钮的文案 | `string` | - | 当前语言的 `vc.Picker.okText` |
+
+#### MTreeSelect 事件
+
+| 事件名 | 说明 | 回调参数 | 参数说明 |
+| --- | --- | --- | --- |
+| update:modelValue | 提交后更新绑定值 | `(value, labels)` | 形状同桌面端；`labels` 为显示的文字 |
+| change | 提交时触发 | `(value, labels)` | 同上 |
+| ok | 提交时触发（单选点选自动提交，或点「确定」） | `(value, labels)` | 同上 |
+| cancel | 点「取消」，不提交 | - | - |
+| clear | 弹层内点击「清空」 | - | - |
+| visible-change | 弹层显示状态变化 | `(visible: boolean)` | - |
+| close | 弹层关闭动画完成 | - | - |
+
+#### MTreeSelect 插槽与方法
+
+| 名称 | 说明 | 参数 / 返回值 |
+| --- | --- | --- |
+| default 插槽 | 自定义可点击的触发内容，替代 MListItem | `{ label: string[], value }`，显示的文字与当前绑定值 |
+| open 方法 | 直接打开弹层，通过 `onOk(value, labels)` 接收结果；兼容 `value` 作为初始值的别名，同时传入时以 `modelValue` 为准 | 参数为弹层的属性（上表中除触发区以外的）与 `onOk`、`onCancel()`、`onClear()`、`onVisibleChange(visible)`、`onClose()`；返回 Portal 实例，可调用 `destroy()` |
 
 ### 主题与语言
 

@@ -1,0 +1,27 @@
+@use '../../../style/helper' as *;
+@use '../../../select/mobile/select-summary';
+
+$background-color-lightest: varfix(background-color-lightest, tree-select-panel);
+
+// 750 稿：搜索框、汇总栏（已选数量与「清空」，见 select-summary.scss）、固定高度的树（原生滚动）
+// 树沿用 MTree 的尺寸（行高 88、字号 28）；单选时选中的节点为主色加粗，行尾打勾
+@include block(vcm-tree-select-panel) {
+	background-color: $background-color-lightest;
+
+	// 树的滚动区：固定高度，搜索时不变（局部变量 --vc-tree-select-panel-height，默认 768）
+	@include element(options) {
+		position: relative;
+		height: localfix(tree-select-panel, height, remfix(768));
+		padding-bottom: remfix(12);
+		overflow-y: auto;
+		box-sizing: border-box;
+		overscroll-behavior: contain;
+		-webkit-overflow-scrolling: touch;
+	}
+}
+
+@include block(vcm-tree-select) {
+	@include when(disabled) {
+		opacity: 0.5;
+	}
+}

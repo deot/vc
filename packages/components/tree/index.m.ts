@@ -1,10 +1,16 @@
 import { MTree } from './mobile/tree.tsx';
-import { TreeSelect } from './tree-select';
+import { MTreeSelect as TreeSelect } from './mobile/tree-select/tree-select.tsx';
+import { MTreeSelectPortal } from './mobile/tree-select/tree-select-core.tsx';
+import { createPickerOpen } from '../picker/mobile/use-picker-portal';
 import './style.scss';
 import './mobile/style.scss';
 
-// 暂无移动端的版本：沿用桌面端
-export const MTreeSelect = TreeSelect;
+const open = createPickerOpen(MTreeSelectPortal);
+
+export const MTreeSelect = Object.assign(TreeSelect, {
+	open
+});
+
 export {
 	MTree
 };

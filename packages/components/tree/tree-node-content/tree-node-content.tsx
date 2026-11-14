@@ -293,6 +293,12 @@ export const TreeNodeContent = defineComponent({
 								? (<Customer render={renderNodeLabel} store={node} row={node.states.data} />)
 								: <span class="vc-tree-node__label">{node.getter.label}</span>
 						}
+						{
+							// 移动端单选且没有复选框：选中的节点行尾打勾（同 MSelect 的已选项）
+							tree.mobile && store.single && !showCheckbox && checked && (
+								<Icon type="correct" class="vc-tree-node__checked-icon" />
+							)
+						}
 					</div>
 					{ motion && (<TreeNodeMotion key={motion} node={node} direction={motion} />) }
 				</div>

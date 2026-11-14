@@ -1,4 +1,4 @@
-<!-- 移动端：行高 / 缩进（750 稿）、多选、懒加载、筛选、虚拟化、长按拖拽 -->
+<!-- 移动端：行高 / 缩进（750 稿）、多选、懒加载、筛选、虚拟化、长按拖拽；MTreeSelect -->
 <template>
 	<div class="tree-mobile">
 		<p class="tree-mobile__tip">
@@ -71,6 +71,48 @@
 			<MTree :data="bigData" virtualized show-checkbox />
 		</MScroller>
 
+		<!-- 树选择：单选点节点即提交；多选带汇总栏，max 限量；searchable / clearable / confirm -->
+		<template v-else-if="type === 'treeSelect'">
+			<MForm :model="model" label-width="auto">
+				<MFormItem prop="single" label="单选" required="请选择分类">
+					<MTreeSelect v-model="model.single" :data="selectData" title="选择分类" />
+				</MFormItem>
+				<MFormItem prop="leaf" label="只选叶子">
+					<MTreeSelect v-model="model.leaf" :data="selectData" check-strategy="child" title="选择条目" clearable />
+				</MFormItem>
+				<MFormItem prop="limited" label="多选（最多 3 项）">
+					<MTreeSelect
+						v-model="model.limited"
+						:data="selectData"
+						:max="3"
+						check-strategy="child"
+						title="选择条目"
+						searchable
+						clearable
+					/>
+				</MFormItem>
+				<MFormItem prop="unlimited" label="多选（不限）">
+					<MTreeSelect
+						v-model="model.unlimited"
+						:data="selectData"
+						:max="0"
+						title="选择分类"
+						confirm="bottom"
+						searchable
+						clearable
+					/>
+				</MFormItem>
+			</MForm>
+			<div class="tree-mobile__types">
+				<MButton size="small" @click="handleOpen">
+					MTreeSelect.open
+				</MButton>
+			</div>
+			<p class="tree-mobile__tip">
+				{{ JSON.stringify(model) }}；open：{{ opened || '无' }}
+			</p>
+		</template>
+
 		<!-- 拖拽：长按节点发起，拖到节点的上 / 中 / 下放在它之前 / 之内 / 之后 -->
 		<template v-else>
 			<p class="tree-mobile__tip">
@@ -87,11 +129,12 @@
 	</div>
 </template>
 <script setup>
-import { ref, watch } from 'vue';
+import { reactive, ref, watch } from 'vue';
 import { MButton } from '../../button/index.m';
+import { MForm, MFormItem } from '../../form/index.m';
 import { MInput } from '../../input/index.m';
 import { MScroller } from '../../scroller/index.m';
-import { MTree } from '../index.m';
+import { MTree, MTreeSelect } from '../index.m';
 
 const TYPES = [
 	{ value: 'basic', label: '基础' },
@@ -99,7 +142,8 @@ const TYPES = [
 	{ value: 'lazy', label: '懒加载' },
 	{ value: 'filter', label: '筛选' },
 	{ value: 'virtualized', label: '大量数据' },
-	{ value: 'drag', label: '拖拽' }
+	{ value: 'drag', label: '拖拽' },
+	{ value: 'treeSelect', label: '树选择' }
 ];
 
 const type = ref('basic');
@@ -163,6 +207,27 @@ const bigData = Array.from({ length: 50 }, (_, i) => ({
 
 const filterNode = (value, row) => !value || row.label.includes(value);
 watch(keyword, value => filterTree.value?.filter(value));
+
+// 树选择
+const selectData = Array.from({ length: 6 }, (_, i) => ({
+	value: `${i + 1}`,
+	label: `分类 ${i + 1}`,
+	children: Array.from({ length: 4 }, (__, j) => ({
+		value: `${i + 1}-${j + 1}`,
+		label: j === 3 ? `条目 ${i + 1}-${j + 1}，名称较长的一项，超出屏幕宽度时省略` : `条目 ${i + 1}-${j + 1}`,
+		disabled: i === 1 && j === 1
+	}))
+}));
+const model = reactive({ single: '', leaf: '', limited: [], unlimited: [] });
+const opened = ref('');
+const handleOpen = () => {
+	MTreeSelect.open({
+		data: selectData,
+		title: '直接打开',
+		searchable: true,
+		onOk: (value, labels) => (opened.value = labels.join('、'))
+	});
+};
 
 const handleDrop = ({ data, targetNode, position }) => {
 	dropText.value = `${data.label} → ${targetNode.states.data.label}（${position}）`;
