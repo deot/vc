@@ -1,14 +1,25 @@
 import { VcError } from '../vc/index';
 import type { TableColumnNode } from './table-column/table-column-node';
 /**
+ * 数字长度换算成 px 并取整（布局按整数 px 累加，避免固定列之间出现半像素的缝）；字符串原样返回
+ * @param v 长度
+ * @param unit 1 个单位的 px（store.states.unit）：桌面端为 1，移动端的数字为 750 稿
+ * @returns ~
+ */
+export const scaleLength = <T>(v: T, unit = 1): T => {
+	return (typeof v === 'number' && unit !== 1 ? Math.round(v * unit) : v) as T;
+};
+
+/**
  * 10px -> 10
  * 10 -> 10
  * @param v ~
+ * @param unit 见 scaleLength
  * @returns ~
  */
-export const parseHeight = (v?: number | string): null | number => {
+export const parseHeight = (v?: number | string, unit = 1): null | number => {
 	if (typeof v === 'number') {
-		return v;
+		return scaleLength(v, unit);
 	}
 	if (v && typeof v === 'string') {
 		if (/^\d+(?:px)?/.test(v)) {
@@ -26,10 +37,11 @@ export type TableRowHeight = string | number | ((data: { row: any; rowIndex: num
  * @param rowHeight table 的 rowHeight
  * @param row 行数据
  * @param rowIndex 行号
+ * @param unit 见 scaleLength
  * @returns 行高（px）；null 表示该行由内容撑开
  */
-export const getRowHeight = (rowHeight: TableRowHeight | undefined, row: any, rowIndex: number): null | number => {
-	return parseHeight(typeof rowHeight === 'function' ? rowHeight({ row, rowIndex }) : rowHeight);
+export const getRowHeight = (rowHeight: TableRowHeight | undefined, row: any, rowIndex: number, unit = 1): null | number => {
+	return parseHeight(typeof rowHeight === 'function' ? rowHeight({ row, rowIndex }) : rowHeight, unit);
 };
 
 export const parseWidth = (v?: number | string): null | number => {

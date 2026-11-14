@@ -1,6 +1,5 @@
 import { defineComponent, ref, getCurrentInstance, computed, inject, camelize } from 'vue';
 import type { Nullable } from '@deot/helper-shared';
-import { RecycleList } from '../../recycle-list';
 import { NormalList } from './normal-list';
 
 import { useStates } from '../store';
@@ -10,8 +9,7 @@ import { getColumnLine } from '../table-column/table-column-config';
 import { useRowHover, resolveCellEl } from '../hooks/use-row-hover';
 import { useTextLineTooltip } from '../hooks/use-text-line-tooltip';
 import { TableBodyBlock } from './table-body-block';
-import { Scroller } from '../../scroller/scroller';
-import type { TableCellEventPayload } from '../types';
+import type { TableCellEventPayload, TableComponents } from '../types';
 
 export const TableBody = defineComponent({
 	name: 'vc-table-body',
@@ -22,6 +20,7 @@ export const TableBody = defineComponent({
 	setup(props, { emit, expose, slots }) {
 		const instance = getCurrentInstance()!;
 		const table: any = inject('vc-table');
+		const { Scroller, RecycleList } = table.components as TableComponents;
 
 		const states = useStates({
 			list: 'list'
@@ -37,7 +36,7 @@ export const TableBody = defineComponent({
 			return el?.nodeType === 1 ? el as HTMLElement : null;
 		};
 		const hover = useRowHover(table, getRoot);
-		const textLineTooltip = useTextLineTooltip();
+		const textLineTooltip = useTextLineTooltip({ mobile: table.mobile, open: table.components.Popover.open });
 
 		/**
 		 * 单元格事件的参数（同一次操作的 cell-* 与 row-* 共用一个对象）
@@ -77,8 +76,8 @@ export const TableBody = defineComponent({
 			activeCell = cell;
 			hover.enter(cell.cell);
 			table.emit('cell-mouseenter', cell);
-			// 多行省略被截断时展示完整内容
-			textLineTooltip.open(cell.cell.querySelector('.vc-table__text-line'), getColumnLine(cell.column, 'line'), cell.cell);
+			// 多行省略被截断时展示完整内容（移动端在点按时，见 handleEvent）
+			table.mobile || showTextLine(cell);
 		};
 
 		const handleMouseLeave = (e: MouseEvent) => {
@@ -86,10 +85,15 @@ export const TableBody = defineComponent({
 			hover.leave(true);
 		};
 
+		const showTextLine = (cell: TableCellEventPayload) => {
+			textLineTooltip.open(cell.cell.querySelector('.vc-table__text-line'), getColumnLine(cell.column, 'line'), cell.cell);
+		};
+
 		const handleEvent = (e: MouseEvent, name: string) => {
 			const cell = resolveCell(e);
 			if (!cell) return;
 			name === 'click' && table.store.row.set(cell.row);
+			name === 'click' && table.mobile && showTextLine(cell);
 			table.emit(`cell-${name}`, cell);
 			table.emit(`row-${name}`, cell);
 		};
@@ -146,18 +150,21 @@ export const TableBody = defineComponent({
 		 */
 		const estimateSize = computed(() => {
 			const { rowHeight } = table.props;
+			const { unit } = table.store.states;
+			// 行高换算成 px 后与表体的 grid 行高一致；MRecycleList 的预估尺寸是 750 稿，再换算回去
+			const toSize = (height: number) => (table.mobile ? height / unit : height);
 			if (typeof rowHeight !== 'function') {
-				const height = parseHeight(rowHeight);
-				return height ? ({ row: block }: { row: any }) => block.rows.length * height : void 0;
+				const height = parseHeight(rowHeight, unit);
+				return height ? ({ row: block }: { row: any }) => toSize(block.rows.length * height) : void 0;
 			}
 			return ({ row: block }: { row: any }) => {
 				let size = 0;
 				for (const { data, index } of block.rows) {
-					const height = getRowHeight(rowHeight, data, index);
+					const height = getRowHeight(rowHeight, data, index, unit);
 					if (!height) return void 0;
 					size += height;
 				}
-				return size;
+				return toSize(size);
 			};
 		});
 

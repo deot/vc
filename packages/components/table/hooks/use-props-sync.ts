@@ -22,18 +22,19 @@ export const usePropsSync = (props: Props, store: Store, options: Options) => {
 	const { isReady, updateLayout } = options;
 	const { layout } = store;
 
+	// 数字高度按 store.states.unit 换算（见 layout.setHeight）：unit 变化时重算
 	watch(
-		() => props.height,
-		(v) => {
-			layout.setHeight(v);
+		() => [props.height, store.states.unit],
+		() => {
+			layout.setHeight(props.height);
 		},
 		{ immediate: true }
 	);
 
 	watch(
-		() => props.maxHeight,
-		(v) => {
-			layout.setMaxHeight(v);
+		() => [props.maxHeight, store.states.unit],
+		() => {
+			layout.setMaxHeight(props.maxHeight);
 		},
 		{ immediate: true }
 	);

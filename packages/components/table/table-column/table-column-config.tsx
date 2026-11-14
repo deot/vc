@@ -2,12 +2,17 @@
 
 import type { VNodeChild } from 'vue';
 import { getPropByPath } from '@deot/helper-utils';
-import { Checkbox } from '../../checkbox';
+import { toPx, toRem } from '@deot/vc-shared';
 import { Icon } from '../../icon';
-import { Spin } from '../../spin';
 import { VcInstance } from '../../vc';
 import type { TableColumnRenderData, TableColumnStates } from './table-column-node';
+import type { Store } from '../store/store';
+import type { TableProvide } from '../types';
 
+// Table 提供的上下文（即 provide('vc-table') 的内容）：渲染回调只拿得到 store
+const getContext = (store: Store): TableProvide => store.table.exposed;
+
+// 特殊列的预设宽度（桌面端 px；移动端见 table-column-node 的 PRESET_WIDTH）
 export const cellStarts: Record<string, Partial<TableColumnStates>> = {
 	default: {},
 	selection: {
@@ -33,6 +38,7 @@ export const cellStarts: Record<string, Partial<TableColumnStates>> = {
 export const cellForced: Record<string, Partial<TableColumnStates>> = {
 	selection: {
 		renderHeader({ store }) {
+			const { Checkbox } = getContext(store).components;
 			return (
 				<Checkbox
 					modelValue={store.states.isAllSelected}
@@ -47,6 +53,7 @@ export const cellForced: Record<string, Partial<TableColumnStates>> = {
 			);
 		},
 		renderCell({ row, column, store, level, selected }: TableColumnRenderData) {
+			const { Checkbox } = getContext(store).components;
 			return (
 				<Checkbox
 					// 树形子行按 expandSelectable 决定是否可选择
@@ -184,9 +191,10 @@ export const treeCellPrefix = ({ row, treeNode, store }: Pick<TableColumnRenderD
 		e.stopPropagation();
 		store.tree.toggle(row);
 	};
+	const { mobile, components: { Spin } } = getContext(store);
 	return [
 		treeNode.indent
-			? <span class="vc-table__indent" style={{ paddingLeft: `${treeNode.indent}px` }} />
+			? <span class="vc-table__indent" style={{ paddingLeft: (mobile ? toRem : toPx)(treeNode.indent) }} />
 			: null,
 		treeNode.expandable
 			? (
@@ -194,7 +202,7 @@ export const treeCellPrefix = ({ row, treeNode, store }: Pick<TableColumnRenderD
 						class={['vc-table__expand-icon vc-table__tree-icon vc-drag-ignore', { 'is-expand': treeNode.expanded }]}
 						onClick={handleClick}
 					>
-						{ treeNode.loading ? <Spin size={12} /> : <Icon type="triangle-up" /> }
+						{ treeNode.loading ? <Spin size={mobile ? 24 : 12} /> : <Icon type="triangle-up" /> }
 					</span>
 				)
 			: <span class="vc-table__placeholder" />

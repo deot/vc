@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { MTable, MTableColumn, Table, TableColumn } from '@deot/vc-components';
+import { MTable, MTableColumn, Spin, Table, TableColumn } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick, reactive, ref, toRaw } from 'vue';
 import { vi } from 'vitest';
@@ -98,7 +98,9 @@ describe('index.ts', () => {
 	it('basic exports', () => {
 		expect(typeof Table).toBe('object');
 		expect(typeof TableColumn).toBe('object');
-		expect(MTable).toBe(Table);
+		// MTable 为独立的移动端组件（见 mobile.spec.tsx），列只收集配置、两端共用
+		expect(typeof MTable).toBe('object');
+		expect(MTable).not.toBe(Table);
 		expect(MTableColumn).toBe(TableColumn);
 	});
 
@@ -3416,8 +3418,10 @@ describe('Additional source-path coverage', () => {
 
 	it('treeCellPrefix unit: indent + icon / spin + placeholder, click toggles the node', async () => {
 		const { treeCellPrefix } = await import('../table-column/table-column-config');
+		// 渲染回调经 store.table.exposed 取 Table 提供的上下文（两端各自的组件、是否移动端）
 		const fakeStore = {
-			tree: { toggle: vi.fn() }
+			tree: { toggle: vi.fn() },
+			table: { exposed: { mobile: false, components: { Spin } } }
 		};
 		const node = (extra: Record<string, any> = {}) => ({
 			level: 1, indent: 20, expandable: true, expanded: false, loading: false, ...extra

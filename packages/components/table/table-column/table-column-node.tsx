@@ -6,7 +6,7 @@ import { hasOwn } from '@deot/helper-utils';
 import { merge } from 'lodash-es';
 import type { Nullable } from '@deot/helper-shared';
 import { cellStarts, cellForced, defaultRenderCell, defaultRenderHeader, treeCellPrefix } from './table-column-config';
-import { parseWidth, parseMinWidth } from '../utils';
+import { parseWidth, parseMinWidth, scaleLength } from '../utils';
 import type { TableColumnProps } from './table-column-props';
 import type { CustomerData } from '../../customer/types';
 import type { TableProvide } from '../types';
@@ -97,13 +97,26 @@ const DERIVED_KEYS = ['realAlign', 'realHeaderAlign'] as const;
 // 需归一化（resolveWidth / resolveMinWidth）后再写入 states 的 props
 const WIDTH_KEYS = ['width', 'minWidth'];
 
-// 宽度归一化：无法解析（如 'auto'）或缺省时回退为该类型的预设值，不保留原始字符串
-const resolveWidth = (type: string, value?: number | string) => {
-	return parseWidth(value) || cellStarts[type]?.width;
+// 缺省的最小列宽、特殊列（selection / expand / index / drag，见 cellStarts）的预设宽度：[桌面端 px, 移动端 750 稿]
+const MIN_WIDTH = [80, 160];
+const PRESET_WIDTH = [cellStarts.selection.width!, 96];
+
+// 数字长度的换算方式：移动端的数字为 750 稿，按 unit（store.states.unit）换算成 px
+type Scale = { mobile: boolean; unit: number };
+
+const getPreset = (type: string, key: 'width' | 'minWidth', { mobile, unit }: Scale) => {
+	return cellStarts[type]?.[key] && scaleLength(PRESET_WIDTH[+mobile], unit);
 };
 
-const resolveMinWidth = (type: string, value?: number | string) => {
-	return parseMinWidth(value) || cellStarts[type]?.minWidth || 80;
+// 宽度归一化（px）：无法解析（如 'auto'）或缺省时回退为该类型的预设值，不保留原始字符串
+const resolveWidth = (type: string, value: number | string | undefined, scale: Scale) => {
+	return parseWidth(scaleLength(value, scale.unit)) || getPreset(type, 'width', scale);
+};
+
+const resolveMinWidth = (type: string, value: number | string | undefined, scale: Scale) => {
+	return parseMinWidth(scaleLength(value, scale.unit))
+		|| getPreset(type, 'minWidth', scale)
+		|| scaleLength(MIN_WIDTH[+scale.mobile], scale.unit);
 };
 
 const assignStates = (target: TableColumnStates, source: Partial<TableColumnStates>) => {
@@ -164,6 +177,10 @@ export class TableColumnNode {
 		options.states && assignStates(this.states, options.states);
 	}
 
+	private get scale(): Scale {
+		return { mobile: !!this.table.mobile, unit: this.table.store.states.unit };
+	}
+
 	/**
 	 * 由组件 props 初始化 states，并绑定 props 监听
 	 * 	1) defaults + cellStarts + props 合并（merge 跳过 undefined，保留 cellStarts 的宽度等预设）
@@ -219,14 +236,14 @@ export class TableColumnNode {
 		watch(() => props.fixed, () => {
 			this.table.store.scheduleLayout(true);
 		});
-		// 与 applyWidth 一致的归一化
-		watch(() => resolveWidth(this.states.type, props.width), (v) => {
+		// 与 applyWidth 一致的归一化；换算单位（scale）变化时一并重算
+		watch(() => resolveWidth(this.states.type, props.width, this.scale), (v) => {
 			this.states.width = v;
 			this.states.realWidth = v;
 			this.states.resized = false;
 			this.table.store.scheduleLayout(false);
 		});
-		watch(() => resolveMinWidth(this.states.type, props.minWidth), (v) => {
+		watch(() => resolveMinWidth(this.states.type, props.minWidth, this.scale), (v) => {
 			this.states.minWidth = v;
 			this.table.store.scheduleLayout(false);
 		});
@@ -258,8 +275,8 @@ export class TableColumnNode {
 	 * @returns ~
 	 */
 	private applyWidth(column: Partial<TableColumnStates>, props: TableColumnProps) {
-		column.width = resolveWidth(props.type, props.width);
-		column.minWidth = resolveMinWidth(props.type, props.minWidth);
+		column.width = resolveWidth(props.type, props.width, this.scale);
+		column.minWidth = resolveMinWidth(props.type, props.minWidth, this.scale);
 
 		column.realWidth = typeof column.width === 'undefined' ? column.minWidth : column.width;
 		return column;

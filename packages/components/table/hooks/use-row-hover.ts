@@ -91,7 +91,8 @@ export const useRowHover = (table: TableProvide, getRoot: () => Nullable<HTMLEle
 	 * @param cellEl 单元格元素
 	 */
 	const enter = (cellEl: HTMLElement) => {
-		if (scroll.isScrolling()) return;
+		// 触屏没有悬停：点按后模拟出的 mouseover 不高亮（否则会一直停留在点过的行上）
+		if (table.mobile || scroll.isScrolling()) return;
 		hint = cellEl.parentElement;
 		setHoverIndex(Number(cellEl.dataset.row));
 	};

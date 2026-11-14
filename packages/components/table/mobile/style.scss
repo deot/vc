@@ -1,0 +1,113 @@
+@use 'sass:map';
+@use '../../style/helper' as *;
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放）。375 宽下 medium：字号 14px、行高 20px、表头与单元格上下留白 12px（单行 44px）
+// 结构与颜色沿用 ../table.scss，这里只改写变量、补移动端专有的规则（与两端样式的加载顺序无关）
+// 子元素沿用桌面端类名（vc-table__*），不用 element()
+$sizes: (
+	medium: (font-size: 28, line-height: 40, th: 24, td: 24),
+	large: (font-size: 30, line-height: 44, th: 28, td: 28),
+	small: (font-size: 26, line-height: 36, th: 18, td: 18),
+	mini: (font-size: 24, line-height: 32, th: 12, td: 12)
+);
+
+// 图标（展开、拖拽把手、筛选）的可点区域向外扩到整格：图标本身只有 20px 左右
+@mixin hit-area($inset) {
+	position: relative;
+
+	&::after {
+		position: absolute;
+		inset: $inset;
+		content: "";
+	}
+}
+
+@include block(vcm-table) {
+	// 表头的排序、筛选图标与行等高（桌面端固定 20px，即 medium 的行高），随尺寸一起缩放，不撑高表头
+	@include localvars(table-sort, (
+		unit: calc(var(--vc-table-line-height) / 20)
+	));
+	@include localvars(table-filter, (
+		size: var(--vc-table-line-height)
+	));
+
+	-webkit-tap-highlight-color: transparent;
+
+	// 根节点自己声明了变量的默认值（嵌套表格不继承外层的尺寸），用复合选择器改写
+	&.vc-table {
+		// 单元格左右留白 8px（相邻两列的文字相隔 16px），首末列外侧再留 8px：文字离表格边缘 16px，与 MList 一致
+		--vc-table-cell-padding-x: #{remfix(16)};
+		--vc-table-edge-padding-x: #{remfix(16)};
+		--vc-table-expand-icon-size: #{remfix(40)};
+		--vc-table-expand-icon-font-size: #{remfix(24)};
+		--vc-table-expand-icon-gap: #{remfix(8)};
+		--vc-table-expanded-padding: #{remfix(24)} #{remfix(32)};
+		--vc-table-drag-handle-size: #{remfix(40)};
+		--vc-table-drag-handle-font-size: #{remfix(32)};
+		--vc-table-empty-height: #{remfix(160)};
+		--vc-table-empty-padding: #{remfix(40)};
+	}
+
+	// 尺寸：桌面端只调字号与上下留白，这里行高也随尺寸变化；合计行只在 medium 下保留最小高度
+	@each $size, $config in $sizes {
+		&.vc-table--#{$size} {
+			--vc-table-font-size: #{remfix(map.get($config, font-size))};
+			--vc-table-line-height: #{remfix(map.get($config, line-height))};
+			--vc-table-th-padding-y: #{remfix(map.get($config, th))};
+			--vc-table-td-padding-y: #{remfix(map.get($config, td))};
+			--vc-table-footer-min-height: #{if($size == medium, remfix(88), auto)};
+		}
+	}
+
+	// 表体走原生滚动（MScroller）：桌面端由滚轮驱动，表体自身裁剪溢出；这里交还给滚动容器
+	// 固定高度时滚动容器是虚拟列表内部的 MScroller，不受表体裁剪的影响
+	.vc-table__body-wrapper.vcm-scroller {
+		overflow: auto;
+	}
+
+	// 多选框：只按单元格的行高占位（与桌面端一致），不撑高行；small / mini 的行高小于图标盒，图标居中溢出、不裁剪
+	.vc-table__selection-column .vcm-checkbox {
+		height: var(--vc-table-line-height);
+		line-height: 0;
+	}
+
+	// 与行等高的行内盒子（多选框、展开图标、把手）贴行框顶部：按基线对齐时，盒内字号与单元格不同会把行撑高 1px
+	.vc-table__selection-column .vcm-checkbox,
+	.vc-table__expand-icon,
+	.vc-table__drag-handle {
+		vertical-align: top;
+	}
+
+	// 多选列、展开列、把手列只有图标：不裁剪，展开图标与把手的可点区域扩到整格
+	.vc-table__selection-column,
+	.vc-table__expand-column,
+	.vc-table__drag-column {
+		> .vc-table__cell {
+			overflow: visible;
+		}
+	}
+
+	.vc-table__expand-column .vc-table__expand-icon,
+	.vc-table__drag-handle {
+		@include hit-area(calc(var(--vc-table-td-padding-y) * -1) remfix(-16));
+	}
+
+	// 树形列的展开图标在文字前，单元格要裁剪溢出的文字：只向左右扩
+	.vc-table__tree-icon {
+		@include hit-area(0 remfix(-12));
+	}
+
+	// 表头：label 自己裁剪，单元格不再裁剪，筛选图标的可点区域扩到表头的整个高度
+	.vc-table__th > .vc-table__cell {
+		overflow: visible;
+	}
+
+	.vc-table-filter {
+		@include hit-area(calc(var(--vc-table-th-padding-y) * -1) remfix(-12));
+	}
+
+	// 排序由点整个表头单元格切换，三角只作指示
+	.vc-table-sort {
+		pointer-events: none;
+	}
+}

@@ -167,4 +167,32 @@ export const props = {
 	allowDrop: Function as PropType<(data: TableAllowDropPayload) => boolean>
 };
 export type Props = ExtractPropTypes<typeof props>;
+
+export const emits = [
+	'select',
+	'select-all',
+	'selection-change',
+	'cell-mouseenter',
+	'cell-mouseleave',
+	'cell-click',
+	'cell-dblclick',
+	'cell-contextmenu',
+	'row-click',
+	'row-contextmenu',
+	'row-dblclick',
+	'header-click',
+	'header-contextmenu',
+	'current-change',
+	'column-resize',
+	'expand-change',
+	'sort-change',
+	'update:sort',
+	'update:columns',
+	'load-change',
+	'update:data',
+	'block-dragstart',
+	'block-drop',
+	'block-dragend'
+] as const;
+export type TableEmits = (typeof emits)[number][];
 export type TableProps = Props;

@@ -3,16 +3,15 @@ import type { Nullable } from '@deot/helper-shared';
 import { IS_SERVER } from '@deot/vc-shared';
 import { useDrag } from '@deot/vc-hooks';
 import type { DragPoint } from '@deot/vc-hooks';
-import { Popover } from '../../popover';
 import { Icon } from '../../icon';
 import { useStates } from '../store';
 import { TableGrid } from '../table-grid';
 import { TableSort } from './table-sort';
-import { TableFilter } from './table-filter';
 import { getColumnLine } from '../table-column/table-column-config';
 import { useTextLineTooltip } from '../hooks/use-text-line-tooltip';
 import type { TableColumnResizePayload, TableHeaderEventPayload, TableProvide } from '../types';
 import type { TableColumnNode, TableColumnStates } from '../table-column/table-column-node';
+import type { PortalLeaf } from '../../portal/portal-leaf';
 
 export const TableHeader = defineComponent({
 	name: 'vc-table-header',
@@ -32,6 +31,8 @@ export const TableHeader = defineComponent({
 	setup(props) {
 		const table = inject<TableProvide>('vc-table')!;
 		const instance = getCurrentInstance()!;
+		const { mobile } = table;
+		const { Filter, Popover } = table.components;
 
 		const draggingColumn = ref<Nullable<TableColumnNode>>(null);
 		const dragging = ref(false);
@@ -39,12 +40,14 @@ export const TableHeader = defineComponent({
 		// 按下的表头列
 		let resizeColumn: Nullable<TableColumnNode> = null;
 
+		// 触屏不支持拖动调整列宽：表头右缘的拖拽区太窄，且与横向滚动冲突
 		const allowDrag = computed(() => {
+			if (mobile) return false;
 			return typeof props.resizable === 'boolean' ? props.resizable : props.border;
 		});
 
 		const dragLineClass = computed(() => {
-			if (props.border || !props.resizable) return;
+			if (mobile || props.border || !props.resizable) return;
 
 			return 'has-drag-line';
 		});
@@ -120,6 +123,8 @@ export const TableHeader = defineComponent({
 		};
 
 		const handleHeaderClick = (e: MouseEvent, column: TableColumnNode) => {
+			// 触屏点不准上下两个三角：点整个表头单元格，按 升序 → 降序 → 取消 循环；点筛选、说明图标另有含义，不排序
+			mobile && !(e.target as Element).closest?.('.vc-table-filter, .vc-table__tooltip') && toggleSort(column.states);
 			table.emit('header-click', { column: column.states, event: e } satisfies TableHeaderEventPayload);
 		};
 
@@ -240,27 +245,57 @@ export const TableHeader = defineComponent({
 			table.emit('sort-change', v);
 		};
 
-		const handleCellMouseEnter = (e: MouseEvent, column: TableColumnStates) => {
+		const SORT_ORDERS = ['', 'ascending', 'descending'];
+		const getSortOrder = (column: TableColumnStates) => (column.prop === props.sort.prop ? props.sort.order : '');
+		const toggleSort = (column: TableColumnStates) => {
+			if (!column.sortable || !column.prop) return;
+			const index = SORT_ORDERS.indexOf(getSortOrder(column) || '');
+			handleSort(column.prop, SORT_ORDERS[(index + 1) % SORT_ORDERS.length]);
+		};
+
+		// 移动端：说明弹层与它的触发图标，用来识别「再点同一个图标」
+		let tooltipLeaf: Nullable<PortalLeaf> = null;
+		let tooltipTrigger: Nullable<EventTarget> = null;
+
+		// 表头说明（tooltip）：桌面端悬停图标弹出；移动端点图标弹出，再点图标或点别处关闭
+		const handleTooltip = (e: MouseEvent, column: TableColumnStates) => {
 			// 拖拽排序中不弹出提示
 			if (table.store.states.dragging) return;
+			const trigger = e.currentTarget;
+			// 再点同一个图标：这次点按已把弹层关掉（弹层按外部点击处理），不再重新打开
+			if (mobile && tooltipTrigger === trigger && !tooltipLeaf?.wrapper?.isActive) {
+				tooltipTrigger = null;
+				return;
+			}
 			const { tooltip } = column;
-			Popover.open({
+			const leaf: PortalLeaf = Popover.open({
 				element: document.body,
 				name: 'vc-table-header-popover', // 确保不重复创建
-				triggerElement: e.currentTarget,
-				hover: true,
+				triggerElement: trigger,
+				hover: !mobile,
 				theme: 'dark',
 				placement: 'top',
 				// 函数由这里调用：弹层只拿得到内容，拿不到列
 				content: typeof tooltip === 'function' ? () => tooltip({ column, store: table.store }) : tooltip,
-				alone: true
+				alone: true,
+				...(mobile && {
+					onDestroyed: () => {
+						if (tooltipLeaf !== leaf) return;
+						tooltipLeaf = null;
+						tooltipTrigger = null;
+					}
+				})
 			});
+			if (mobile) {
+				tooltipLeaf = leaf;
+				tooltipTrigger = trigger;
+			}
 		};
 
-		const textLineTooltip = useTextLineTooltip();
+		const textLineTooltip = useTextLineTooltip({ mobile, open: Popover.open });
 
-		// 默认 label 为多行省略（header-line），被截断时展示完整内容；自定义表头内没有 text-line，不处理
-		const handleLabelMouseEnter = (e: MouseEvent, column: TableColumnStates) => {
+		// 默认 label 为多行省略（header-line），被截断时展示完整内容（桌面端悬停、移动端点按）；自定义表头内没有 text-line，不处理
+		const handleLabelTooltip = (e: MouseEvent, column: TableColumnStates) => {
 			if (table.store.states.dragging) return;
 			const label = e.currentTarget as HTMLElement;
 			textLineTooltip.open(label.querySelector(':scope > .vc-table__text-line'), getColumnLine(column, 'headerLine'), label);
@@ -280,7 +315,7 @@ export const TableHeader = defineComponent({
 				>
 					<div
 						class="vc-table__th-label"
-						onMouseenter={(e: MouseEvent) => handleLabelMouseEnter(e, columnStates)}
+						{...{ [mobile ? 'onClick' : 'onMouseenter']: (e: MouseEvent) => handleLabelTooltip(e, columnStates) }}
 					>
 						{
 							columnStates.renderHeader
@@ -300,7 +335,7 @@ export const TableHeader = defineComponent({
 									<Icon
 										type="o-info"
 										class="vc-table__tooltip vc-drag-ignore"
-										onMouseenter={(e: MouseEvent) => handleCellMouseEnter(e, columnStates)}
+										{...{ [mobile ? 'onClick' : 'onMouseenter']: (e: MouseEvent) => handleTooltip(e, columnStates) }}
 									/>
 								)
 							: null
@@ -309,7 +344,7 @@ export const TableHeader = defineComponent({
 						columnStates.sortable
 							? (
 									<TableSort
-										order={columnStates.prop === props.sort.prop ? props.sort.order : ''}
+										order={getSortOrder(columnStates)}
 										onClick={(order: string) => handleSort(columnStates.prop!, order)}
 									/>
 								)
@@ -318,7 +353,7 @@ export const TableHeader = defineComponent({
 					{
 						// filter-options 原样透传（含 onChange / onUpdate:modelValue 监听）
 						columnStates.filterOptions
-							? <TableFilter {...columnStates.filterOptions} />
+							? <Filter {...columnStates.filterOptions} {...(mobile ? { title: columnStates.label } : null)} />
 							: null
 					}
 				</div>
@@ -368,9 +403,14 @@ export const TableHeader = defineComponent({
 							column.states.stickyStyle
 						],
 						attrs: {
-							onMousemove: (e: MouseEvent) => handleMouseMove(e, column),
-							onMouseout: handleMouseOut,
-							onMousedown: (e: MouseEvent) => handleMouseDown(e, column),
+							// 列宽拖拽的鼠标监听：移动端不绑定
+							...(mobile
+								? null
+								: {
+										onMousemove: (e: MouseEvent) => handleMouseMove(e, column),
+										onMouseout: handleMouseOut,
+										onMousedown: (e: MouseEvent) => handleMouseDown(e, column)
+									}),
 							onClick: (e: MouseEvent) => handleHeaderClick(e, column),
 							onContextmenu: (e: MouseEvent) => handleHeaderContextMenu(e, column)
 						},

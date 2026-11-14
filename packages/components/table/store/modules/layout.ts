@@ -45,13 +45,16 @@ export class Layout {
 	setHeight(value: any, prop = 'height') {
 		if (IS_SERVER) return;
 		const el = this.table.vnode.el;
-		value = parseHeight(value);
+		const { unit } = this.store.states;
+		// 保留传入的值：根节点还没挂载时稍后重试，须从未换算的值重新算
+		const source = value;
+		value = parseHeight(value, unit);
 
 		// 清除：移除残留的内联样式；另一者仍生效时沿用它的高度，否则重置由高度派生的布局状态
 		if (value === null) {
 			el && (el.style[prop] = '');
 			const { height, maxHeight } = this.table.props;
-			const rest = parseHeight(prop === 'height' ? maxHeight : height);
+			const rest = parseHeight(prop === 'height' ? maxHeight : height, unit);
 			this.states.height = rest;
 			if (rest === null) {
 				this.states.bodyHeight = null;
@@ -60,7 +63,7 @@ export class Layout {
 		}
 
 		this.states.height = value;
-		if (!el) return nextTick(() => this.setHeight(value, prop));
+		if (!el) return nextTick(() => this.setHeight(source, prop));
 
 		if (value) {
 			el.style[prop] = `${value}px`;

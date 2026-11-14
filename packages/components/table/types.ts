@@ -1,10 +1,17 @@
 import type { ComputedRef, Ref } from 'vue';
 import type { Nullable } from '@deot/helper-shared';
+import type { Affix } from '../affix';
+import type { Checkbox } from '../checkbox';
+import type { Popover } from '../popover';
+import type { RecycleList } from '../recycle-list';
+import type { Scroller } from '../scroller/scroller';
+import type { Spin } from '../spin';
 import type { Store } from './store/store';
 import type { Props as TableProps } from './table-props';
 import type { TableColumnNode, TableColumnStates } from './table-column/table-column-node';
 import type { TableColumnDropPosition, TableDropPlace, TableDropPosition } from './store/modules/drag';
 import type { TableColumnSyncItem } from './store/modules/column';
+import type { TableFilter } from './table-header/table-filter';
 
 /**
  * vc-table-column provide 的上下文（多级表头时子列消费）。
@@ -15,11 +22,30 @@ export interface TableColumnProvide {
 }
 
 /**
+ * Table 内部用到的、两端各有一个版本的组件：类型取桌面端的，移动端的版本共用同一份 props
+ */
+export interface TableComponents {
+	Affix: typeof Affix;
+	Checkbox: typeof Checkbox;
+	// 表头筛选：桌面端为下拉面板，移动端为底部弹层
+	Filter: typeof TableFilter;
+	// 省略提示、表头说明的浮层：只用到 open
+	Popover: Pick<typeof Popover, 'open'>;
+	RecycleList: typeof RecycleList;
+	Scroller: typeof Scroller;
+	Spin: typeof Spin;
+}
+
+/**
  * vc-table provide 的上下文（即 table.tsx 的 exposed）。
  * 仅声明列路径消费到的字段，其余字段按需补充。
  */
 export interface TableProvide {
 	tableId: string;
+	// 是否为移动端（MTable）
+	mobile: boolean;
+	// 内部用到的组件（MTable 为移动端的版本）
+	components: TableComponents;
 	store: Store;
 	props: TableProps;
 	emit: (event: string, ...args: unknown[]) => void;

@@ -1592,13 +1592,22 @@ const handleToggle = () => { isEmpty.value = !isEmpty.value; };
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
+| cell-padding-x | 相邻两列文字之间的留白（每格左右各一半） | `12px` |
+| drag-handle-size / drag-handle-font-size | 拖拽把手的尺寸、图标字号 | `20px` / `14px` |
 | dragging-opacity | 被拖动的行、列透明度 | `0.4` |
+| edge-padding-x | 首末列外侧额外的留白 | `12px` |
+| empty-height / empty-padding | 空状态的最小高度、顶部留白 | `60px` / `20px` |
+| expand-icon-size / expand-icon-font-size / expand-icon-gap | 展开图标（展开列、树形列）的尺寸、图标字号、与文字的间距 | `20px` / `12px` / `3px` |
+| expanded-padding | 展开区内边距 | `20px 50px` |
 | font-size | 表头、单元格字号 | medium：`13px`；large：`14px`；small / mini：`12px` |
 | footer-min-height | 合计单元格最小高度 | medium：`44px`；其他尺寸：`auto` |
+| line-height | 表头、单元格行高 | `20px` |
 | td-padding-y | 单元格上下内边距 | medium：`8px`；large：`12px`；small：`6px`；mini：`4px` |
 | th-padding-y | 表头上下内边距 | medium：`10px`；large：`12px`；small：`8px`；mini：`6px` |
 
 多选筛选的选项采用 `12px` 字号、`26px` 行高；重置和确认复用 Button 的 `small` 尺寸，按钮颜色通过 `--vc-button-<参数>` 覆盖。
+
+排序三角、筛选图标的大小分别由 `--vc-table-sort-unit`（`1px`，三角按它的倍数绘制）、`--vc-table-filter-size`（`20px`）控制。移动端的取值见[移动端](#移动端)。
 
 ## API
 
@@ -1636,7 +1645,7 @@ const handleToggle = () => { isEmpty.value = !isEmpty.value; };
 | lazyTree | 树形数据的子节点是否懒加载，需配合 `load-expand` 使用；通过 `row` 的 `hasChildren` 标记可加载的节点 | `boolean` | - | `false` |
 | loadExpand | 懒加载子节点的方法，返回子行数组或 `Promise<Array>`；`treeNode` 为 `{ level, indent, expandable, expanded, loading }`，`level` 根为 `0` | `(row: any, treeNode: { level: number; indent: number; expandable: boolean; expanded: boolean; loading: boolean }) => any[] \| Promise<any[]>` | - | - |
 | keyValue | 树形数据的字段映射 | `{ children: string; hasChildren: string }` | - | `{ children: 'children', hasChildren: 'hasChildren' }` |
-| indent | 树形数据每一层的缩进（px） | `number` | - | `16` |
+| indent | 树形数据每一层的缩进（px；`MTable` 为 750 稿） | `number` | - | `16`；`MTable` 为 `32` |
 | expandedValues | 设置 `Table` 当前展开的行（展开行与树形节点），需要设置 `primary-key` 属性才能使用，该属性为展开行的 `[id]/value` 数组；未列出的行取 `default-expand-all`。 | `Array` | - | - |
 | expandSelectable | 树形子行是否可选择；为 `false` 时子行的勾选框隐藏，全选只作用于根行 | `boolean` | - | `true` |
 | showSummary | 是否在表尾显示合计行 | `boolean` | - | `false` |
@@ -1793,7 +1802,89 @@ VcInstance.configure({
 
 ### 移动端
 
-`MTable`、`MTableColumn` 分别是 `Table`、`TableColumn` 的别名，使用相同的属性、插槽、样式和行为。
+`MTable` 与 `Table` 结构相同，根节点另有标记类 `.vcm-table`（`.vc-table.vcm-table`），属性、事件、插槽和方法一致；`MTableColumn` 即 `TableColumn`。固定列、合并单元格、树形、展开行、虚拟滚动、合计行两端通用，不同之处如下。
+
+:::playground
+<!-- <config lang="json5">{ viewport: 375, previewInset: 0 }</config> -->
+```vue
+<template>
+	<MTable v-model:sort="sort" :data="rows" primary-key="id" divider>
+		<MTableColumn type="selection" fixed="left" />
+		<MTableColumn prop="name" label="名称" :width="160" fixed="left" />
+		<MTableColumn prop="count" label="数量" :width="180" align="right" sortable />
+		<MTableColumn prop="remark" label="备注" :width="320" :line="1" />
+		<MTableColumn prop="date" label="日期" :min-width="240" />
+	</MTable>
+</template>
+<script setup>
+import { ref, computed } from 'vue';
+import { MTable, MTableColumn } from '@deot/vc';
+
+const data = Array.from({ length: 8 }).map((_, index) => ({
+	id: index + 1,
+	name: `条目 ${index + 1}`,
+	count: (index * 37) % 200,
+	remark: `这是第 ${index + 1} 条的备注，内容较长时按行数截断并省略`,
+	date: `2026-01-${String(index + 1).padStart(2, '0')}`
+}));
+const sort = ref({});
+// 排序只给出状态，数据由外部处理
+const rows = computed(() => {
+	const { prop, order } = sort.value;
+	if (!prop || !order) return data;
+	return [...data].sort((a, b) => (a[prop] - b[prop]) * (order === 'ascending' ? 1 : -1));
+});
+</script>
+```
+:::
+
+#### 单位
+
+- 数字长度是 750 稿，按 `--vc-rem` 当前的 px 换算并取整（375 宽下 `width=200` 即 100px）：Table 的 `height`、`maxHeight`、`rowHeight`（含函数的返回值）、`indent`，TableColumn 的 `width`、`minWidth`。字符串（如 `'120px'`）两端都原样处理。
+- `--vc-rem` 变化（旋转屏幕、视口跨过 480px、业务调整 `--rem`）时自动重新换算并重排。
+- 默认值按 750 稿给出：未设置宽度的列最小宽度 `160`（桌面端 `80px`），`selection` / `index` / `expand` / `drag` 列宽 `96`（桌面端 `60px`），`indent` 为 `32`（桌面端 `16px`）。
+- 事件与方法里的尺寸仍是实测的 px；`recycleListOptions` 的 `overscan`、`threshold` 两端都以 px 为单位。
+
+#### 交互
+
+| 功能 | `Table` | `MTable` |
+| --- | --- | --- |
+| 滚动 | 滚轮 + 自绘滚动条 | 原生滚动与系统滚动条（内部为 `MScroller` / `MRecycleList`） |
+| 排序 | 点上、下三角 | 点整个表头单元格，按 升序 → 降序 → 取消 循环；三角只作指示。点筛选图标、说明图标不排序，`header-click` 照常触发 |
+| 筛选 | 图标下方的下拉面板 | 点图标从底部弹出（[MSelect](../select#移动端选择) 的弹层），标题为列的 `label`。单选第一项为「全部」，点选即生效；多选由底部的「确定」生效，「清空」后确定即取消筛选，选满 `max` 后其余选项置灰 |
+| 截断提示（`line` / `header-line`） | 悬停弹出 | 点被截断的单元格或表头文字弹出；再点同一处、点别处、开始滚动时关闭 |
+| 表头说明（`tooltip`） | 悬停图标弹出 | 点图标弹出；再点图标或点别处关闭 |
+| 行悬停高亮 | 有 | 无；`cell-mouseenter` 等事件照常 |
+| 调整列宽 | 拖动表头右缘 | 不支持，`resizable` 不生效 |
+| 拖拽排序 | 鼠标按下后拖动 | 把手（`type="drag"`）直接拖动；整行拖拽、列拖拽（表头）长按约 300ms 后拖动，未长按的滑动照常滚动，拖完不触发排序 |
+| 吸顶 / 吸底（`affix`） | `Affix` | `MAffix`，配置对象里的数字 `offset` 为 750 稿 |
+
+- `filter-options` 的 `data`、`max`、`modelValue`、`separator`、`numerable`、`icon`、`onChange`、`onUpdate:modelValue` 含义不变；`portalClass` 在移动端不生效。
+- 表头与表体是两个横向滚动容器，表头跟随表体的滚动事件。触屏的原生滚动先于事件发生，快速横滑时表头会比表体滞后一帧（375 宽下以 1500px/s 滑动约差 25px），停下后对齐。
+
+#### 尺寸
+
+`size` 同时调整字号、行高与上下内边距（桌面端行高固定为 `20px`）。下表为 750 稿，375 宽下单行 medium 为 44px：
+
+| `size` | 字号 | 行高 | 表头、单元格上下内边距 | 单行高度 |
+| --- | --- | --- | --- | --- |
+| `medium` | 28 | 40 | 24 | 88 |
+| `large` | 30 | 44 | 28 | 100 |
+| `small` | 26 | 36 | 18 | 72 |
+| `mini` | 24 | 32 | 12 | 56 |
+
+其余局部变量在 `.vcm-table` 上改写，可在外层或表格上用 `--vc-table-<参数>` 继续覆盖：
+
+| 参数 | `MTable` 的值（750 稿） |
+| --- | --- |
+| cell-padding-x / edge-padding-x | `16` / `16`（文字离表格边缘 16px @375，与 MList 一致） |
+| expand-icon-size / expand-icon-font-size / expand-icon-gap | `40` / `24` / `8` |
+| expanded-padding | `24 32` |
+| drag-handle-size / drag-handle-font-size | `40` / `32` |
+| empty-height / empty-padding | `160` / `40` |
+| footer-min-height | medium：`88`；其他尺寸：`auto` |
+
+排序三角、筛选图标随行高缩放（与行等高），展开图标、拖拽把手、筛选图标的可点区域向外扩到整格。
 
 ### 布局注意事项
 

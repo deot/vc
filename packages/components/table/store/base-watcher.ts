@@ -75,6 +75,11 @@ export type TableStates = {
 	treeLazyChildren: Record<string, any[]>;
 
 	/**
+	 * 数字长度的 1 个单位对应的 px：桌面端为 1；移动端的数字长度是 750 稿，由 useRem 写入并随环境变化
+	 */
+	unit: number;
+
+	/**
 	 * computeds
 	 */
 	isGroup: boolean;
@@ -126,6 +131,8 @@ export class BaseWatcher {
 		treeExpanded: {},
 		treeLoading: {},
 		treeLazyChildren: {},
+
+		unit: 1,
 
 		isGroup: computed(() => this.states.columns.length > this.states.originColumns.length),
 		expandColumn: computed(() => this.states.columns.find(node => node.states.type === 'expand') || null),
