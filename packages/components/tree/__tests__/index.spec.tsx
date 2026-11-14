@@ -3229,3 +3229,56 @@ describe('TreeSelect 内联搜索与键盘', () => {
 		expect(getPlacement(wrapper)).toBe('bottom-left');
 	});
 });
+
+describe('Tree / TreeSelect 值的转换', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	const flat = [{ value: 1, label: 'One' }, { value: 2, label: 'Two' }, { value: 3, label: 'Three' }];
+
+	it('Tree：numerable 的字符串值按 separator 输出，回传后仍能回显', async () => {
+		const value = ref<any>('1;2');
+		const getChecked = () => Array.from(document.querySelectorAll('.vc-tree-node.is-checked > .vc-tree-node__content'))
+			.map(el => el.textContent?.trim());
+		const wrapper = mount(() => (
+			<Tree v-model={value.value} data={flat} showCheckbox numerable separator=";" />
+		), { attachTo: document.body });
+		await flush();
+		expect(getChecked()).toEqual(['One', 'Two']);
+
+		(getTreeCheckboxes()[2] as HTMLInputElement).click();
+		await flush();
+		expect(String(value.value).split(';').sort()).toEqual(['1', '2', '3']);
+		expect(getChecked()).toEqual(['One', 'Two', 'Three']);
+
+		wrapper.unmount();
+	});
+
+	it('TreeSelect：清空字符串值时返回 nullValue；没有设置时为空字符串', async () => {
+		const value = ref<any>('1');
+		const nullable = ref<any>(null);
+		const wrapper = mount(() => (
+			<TreeSelect v-model={value.value} data={flat} clearable nullValue={nullable.value} />
+		), { attachTo: document.body });
+		await flush();
+
+		const clear = async () => {
+			fireMouse(wrapper.element, 'mouseenter');
+			await flush();
+			await wrapper.find('.vc-tree-select__icon').trigger('click');
+			await flush();
+		};
+
+		await clear();
+		expect(value.value).toBe(null);
+
+		nullable.value = void 0;
+		value.value = '2';
+		await flush();
+		await clear();
+		expect(value.value).toBe('');
+
+		wrapper.unmount();
+	});
+});

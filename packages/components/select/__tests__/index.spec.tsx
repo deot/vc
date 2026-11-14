@@ -847,6 +847,65 @@ describe('Select max', () => {
 	});
 });
 
+describe('Select 值的转换', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	const base = { separator: ',', numerable: false, nullValue: undefined, max: 1 };
+
+	it('toModelValue: numerable 的字符串多选同样按 separator 连接', () => {
+		expect(toModelValue([1, 2], { ...base, modelValue: '', max: 0, separator: ';', numerable: true } as any)).toBe('1;2');
+		expect(toModelValue([1], { ...base, modelValue: '', numerable: true } as any)).toBe('1');
+		expect(toModelValue([], { ...base, modelValue: '', numerable: true } as any)).toBe('');
+	});
+
+	it('toModelValue: 清空时设置了 nullValue 就返回它（数组值仍为 []）', () => {
+		expect(toModelValue([], { ...base, modelValue: 1, nullValue: null } as any)).toBe(null);
+		expect(toModelValue([], { ...base, modelValue: '1,2', max: 0, nullValue: 0 } as any)).toBe(0);
+		expect(toModelValue([], { ...base, modelValue: [1], nullValue: null } as any)).toEqual([]);
+		// 没有设置时保持原来的空值
+		expect(toModelValue([], { ...base, modelValue: 1 } as any)).toBe(undefined);
+		expect(toModelValue([], { ...base, modelValue: '1,2', max: 0 } as any)).toBe('');
+	});
+
+	it('numerable + separator：选中后按 separator 输出，回传后仍能回显', async () => {
+		const numbers = [{ value: 1, label: 'One' }, { value: 2, label: 'Two' }, { value: 3, label: 'Three' }];
+		const value = ref<any>('1;2');
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={numbers} max={0} separator=";" numerable />
+		), { attachTo: document.body });
+		await nextTick();
+		expect(wrapper.findAll('.vc-tag').length).toBe(2);
+
+		await wrapper.trigger('click');
+		await flush();
+		(getOptions()[2] as HTMLElement).click();
+		await flush();
+		expect(value.value).toBe('1;2;3');
+		expect(wrapper.findAll('.vc-tag').length).toBe(3);
+		expect(Array.from(getOptions()).filter(el => el.classList.contains('is-select')).length).toBe(3);
+
+		wrapper.unmount();
+	});
+
+	it('clearable + nullValue：清空单选返回 nullValue', async () => {
+		const value = ref<any>('2');
+		const wrapper = mount(() => (
+			<Select v-model={value.value} data={cityList} clearable nullValue="" />
+		), { attachTo: document.body });
+		await nextTick();
+
+		fireMouse(wrapper.element, 'mouseenter');
+		await nextTick();
+		await wrapper.find('.vc-select__icon').trigger('click');
+		await flush();
+		expect(value.value).toBe('');
+
+		wrapper.unmount();
+	});
+});
+
 describe('Select maxTagLines', () => {
 	// jsdom 无布局：容器宽度可控，tag 按文字长度 * 10 计宽，margin / padding 为 0
 	const containerWidth = ref(200);

@@ -198,6 +198,21 @@ describe('index.ts', () => {
 			nullValue: '',
 			max: 2
 		} as any)).toBe('');
+		// numerable 的字符串模型同样按 separator 拼接；为空时返回 nullValue
+		expect(toModelValue([1, 2], {
+			modelValue: '1|1',
+			separator: '|',
+			numerable: true,
+			nullValue: undefined,
+			max: 2
+		} as any)).toBe('1|2');
+		expect(toModelValue([], {
+			modelValue: '',
+			separator: '|',
+			numerable: false,
+			nullValue: null,
+			max: 2
+		} as any)).toBe(null);
 	});
 });
 

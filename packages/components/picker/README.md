@@ -389,7 +389,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | renderLabel | 自定义选项渲染函数，接收含 label、row、index 的对象 | `(options: { label: any; row: any; index: number }) => VNodeChild` | - | - |
 | separator | 字符串模型的分隔符 | `string` | - | `','` |
 | numerable | 把模型中的字符串转为 number（字符串模型、数组各项） | `boolean` | - | `false` |
-| nullValue | 传入内部值规范化函数的空值参数；不提供清空交互 | `PickerModelValue` | - | `undefined` |
+| nullValue | 非数组模型的值为空时回写的值；不提供清空交互 | `PickerModelValue` | - | `undefined` |
 
 ### Picker 事件
 
@@ -435,7 +435,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | allowDispatch | 选择变化时通知注入的 FormItem | `boolean` | - | `true` |
 | separator | 字符串模型的分隔符 | `string` | - | `','` |
 | numerable | 把模型中的字符串转为 number（字符串模型、数组各项） | `boolean` | - | `false` |
-| nullValue | 内部值规范化函数的空值参数 | `PickerModelValue` | - | `undefined` |
+| nullValue | 同 Picker | `PickerModelValue` | - | `undefined` |
 
 ### PickerView 事件
 
@@ -504,7 +504,7 @@ type PickerSource = PickerColumn | PickerColumn[];
 
 `label` 缺省时使用 `value`；label 也可为渲染函数。`disabled` 为 `true` 时该项置灰且不能选中，见 [禁用选项](#禁用选项)。`cascader=true` 时使用 `PickerData[]` 树，`cascader=false` 时使用单列数据或 `PickerColumn[]`。
 
-数组模型回写数组；非数组模型在单列时回写该项值，多列时按 `separator` 拼接。当前 `numerable=true` 且模型为字符串时，回写会使用数组字符串化的逗号分隔，因此需要自定义分隔符时建议使用数组模型。`Picker` 打开弹层时将模型转为内部数组，最终确认再按外部模型转换。
+数组模型回写数组；非数组模型在单列时回写该项值，多列时按 `separator` 拼接（`numerable` 时同样如此），值为空时回写 `nullValue`（设置了的话）。`Picker` 打开弹层时将模型转为内部数组，最终确认再按外部模型转换。
 
 ### 主题与语言
 

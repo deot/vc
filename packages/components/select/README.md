@@ -153,7 +153,7 @@ const options = [
 
 ### 字符串多选
 
-以数组初始化时返回数组；以字符串初始化多选时，使用 `separator` 连接选中值。数字选项搭配字符串模型或字符串数组时，可使用 `numerable`，并保持默认逗号分隔符。
+以数组初始化时返回数组；以字符串初始化多选时，使用 `separator` 连接选中值。数字选项搭配字符串模型或字符串数组时，开启 `numerable`，同样按 `separator` 拆分与连接。
 
 :::playground
 <!--
@@ -373,7 +373,7 @@ const selectedValue = ref(5000);
 | extra | 单选 label 为空或无法匹配时显示的文字 | `string` | - | `''` |
 | separator | 字符串模型拆分和多选连接的分隔符 | `string` | - | `','` |
 | numerable | 把模型中的字符串转为数字（字符串模型、数组各项、单值） | `boolean` | - | `false` |
-| nullValue | 已声明的清空值配置；当前实现未应用，见下方说明 | `number \| string \| object` | - | `undefined` |
+| nullValue | 清空时返回的值：值不是数组且为空时生效（数组值清空仍为 `[]`）；不设置时单选为 `undefined`，字符串多选为 `''` | `number \| string \| object` | - | `undefined` |
 | id | 传给内部 Input 根节点的 id | `string` | - | - |
 | trigger | 弹层触发方式 | `string` | `hover / strictHover / click / focus / custom` | `'click'` |
 | tag | 触发容器标签 | `string` | - | `'div'` |
@@ -429,8 +429,7 @@ const selectedValue = ref(5000);
 
 ### 当前行为说明
 
-- 清空数组模型返回 `[]`；普通单选返回 `undefined`；字符串多选返回 `''`。`numerable` 配合字符串模型时，当前输出通过数组转字符串，因此清空返回 `''`，多值输出固定使用逗号。
-- `nullValue` 当前未用于清空结果，为当前实现限制。
+- 清空数组模型返回 `[]`；其它模型设置了 `nullValue` 时返回它，否则普通单选返回 `undefined`，字符串多选返回 `''`。`numerable` 配合字符串单选时输出字符串，清空返回 `''`。
 - 当前不提供 `size`、`not-found`、`element-id` 属性；无匹配选项时列表为空。
 - 内联搜索时输入框的值是搜索词，已选文字以占位文字的形式显示，不能被选中复制；需要可复制时使用 `searchable="popover"`。下拉关闭后焦点仍在输入框，但不显示光标。
 - 内联搜索且下拉打开时，点击输入框只移动光标，不关闭下拉，这次点击照常冒泡到祖先节点；点击标签区（多选）、后缀图标、外部，按 Esc 或选中（单选）关闭。点击选项、标签与图标时焦点留在输入框。

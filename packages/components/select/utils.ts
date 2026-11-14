@@ -240,26 +240,16 @@ interface CurrentValueOptions {
 	nullValue: any;
 };
 /**
- * 根据原始输入将[]输出为[]或以,分割的形式
+ * 选中的值 -> v-model，形状跟随当前 v-model
+ * 	- 数组：原样输出，清空为 []
+ * 	- 其它：清空时为 nullValue（设置了的话）；多选按 separator 连接；单选为该值，字符串输入且 numerable 时输出也为字符串
  * @param v ~
  * @param options ~
- * @returns ~ ~
+ * @returns ~
  */
 export const toModelValue = (v: CurrentValue, options: CurrentValueOptions): ModelValue => {
-	let value: ModelValue;
-	if (!Array.isArray(options.modelValue)) {
-		value = isMultiple(options.max) ? v.join(options.separator) : v[0];
-		// 输入如果是字符串的话，那么输出应该保持一致为字符串
-		if (typeof options.modelValue === 'string' && options.numerable) {
-			value = `${v}`;
-		}
-
-		if (typeof v === 'undefined') {
-			value = options.nullValue;
-		}
-	} else {
-		value = v;
-	}
-
-	return value;
+	if (Array.isArray(options.modelValue)) return v;
+	if (!v.length && typeof options.nullValue !== 'undefined') return options.nullValue;
+	if (isMultiple(options.max)) return v.join(options.separator);
+	return typeof options.modelValue === 'string' && options.numerable ? `${v[0] ?? ''}` : v[0];
 };
