@@ -7,6 +7,7 @@ import { VcInstance } from '../../vc';
 import { Container } from '../container';
 import { ScrollState } from '../scroll-state';
 import * as drag from '../../../hooks/__tests__/fixtures/drag';
+import './fixtures/pull';
 
 enableAutoUnmount(afterEach);
 const originalLocale = VcInstance.options.locale;

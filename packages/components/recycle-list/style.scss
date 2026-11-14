@@ -12,20 +12,20 @@ $component-name: vc-recycle-list;
 		transition: transform 300ms ease-out;
 	}
 
+	// 刷新提示条：平时贴在视口外（起点一侧），随拉动的位移进入视口；内容为空时也保有尺寸
 	@include element(pull) {
 		position: absolute;
-		top: 0;
-		right: 0;
-		left: 0;
+		inset: auto 0 100%;
+		min-height: 30px;
 		line-height: 30px;
 		transition: transform 300ms ease-out;
 	}
 
-	// inverted 在尾部上拉：提示条贴到底部，靠负 margin-bottom 藏到视口外（横向由后面的 is-horizontal 覆盖）
+	// inverted 在尾部上拉：提示条贴在底部之外（横向由后面的 is-horizontal 覆盖）
 	@include when(inverted) {
 		@include element(pull) {
-			top: auto;
-			bottom: 0;
+			top: 100%;
+			bottom: auto;
 		}
 	}
 
@@ -136,20 +136,19 @@ $component-name: vc-recycle-list;
 		}
 
 		@include element(pull) {
-			top: 0;
-			right: unset;
-			bottom: 0;
-			left: 0;
+			inset: 0 100% 0 auto;
 			display: flex;
+			min-width: 30px;
+			min-height: 0;
 			justify-content: center;
 			writing-mode: vertical-rl;
 		}
 
-		// inverted 在尾部左拉：提示条贴到右侧，靠负 margin-right 藏到视口外
+		// inverted 在尾部左拉：提示条贴在右侧之外
 		@include when(inverted) {
 			@include element(pull) {
-				right: 0;
-				left: auto;
+				right: auto;
+				left: 100%;
 			}
 		}
 

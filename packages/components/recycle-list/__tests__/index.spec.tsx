@@ -7,6 +7,7 @@ import { mount } from '@vue/test-utils';
 import { defineComponent, getCurrentInstance, nextTick, onMounted, reactive, ref, toRaw } from 'vue';
 import { vi } from 'vitest';
 import * as drag from '../../../hooks/__tests__/fixtures/drag';
+import { mockPullSize } from './fixtures/pull';
 
 const sleep = (time = 0) => new Promise(resolve => setTimeout(resolve, time));
 
@@ -159,8 +160,8 @@ describe('index.ts', () => {
 
 			const pull = wrapper.find('.vc-recycle-list__pull').element as HTMLElement;
 			expect(pull.previousElementSibling?.classList.contains('vc-recycle-list__container')).toBe(true);
-			// 靠负 margin-bottom 藏在尾部视口外
-			expect(pull.style.marginBottom).toBe('-30px');
+			// 由样式贴在尾部视口外，不写内联的 margin
+			expect(pull.style.marginBottom).toBe('');
 			expect(pull.style.marginTop).toBe('');
 		});
 
@@ -2873,7 +2874,7 @@ describe('index.ts', () => {
 		const mountPullable = (loadData: any, props: Record<string, any> = {}) => {
 			const listRef = ref<any>();
 			const wrapper = mount(() => (
-				<RecycleList ref={listRef} pullable loadData={loadData} pauseOffset={30} {...props} />
+				<RecycleList ref={listRef} pullable loadData={loadData} {...props} />
 			), { attachTo: document.body });
 			const root = wrapper.find('.vc-recycle-list').element;
 			return {
@@ -2919,7 +2920,7 @@ describe('index.ts', () => {
 		it('triggers refresh (re-loadData) when pulled past pauseOffset and released', async () => {
 			const loadData = vi.fn(async () => false);
 			const wrapper = mount(() => (
-				<RecycleList pullable loadData={loadData} pauseOffset={30} />
+				<RecycleList pullable loadData={loadData} />
 			), { attachTo: document.body });
 
 			await nextTick();
@@ -2945,8 +2946,9 @@ describe('index.ts', () => {
 		it('does NOT enter PENDING state when offset stays below pauseOffset', async () => {
 			const loadData = vi.fn(async () => false);
 			const wrapper = mount(() => (
-				<RecycleList pullable loadData={loadData} pauseOffset={50} />
+				<RecycleList pullable loadData={loadData} />
 			), { attachTo: document.body });
+			const restore = mockPullSize(50);
 
 			await nextTick();
 			await sleep(0);
@@ -2965,6 +2967,7 @@ describe('index.ts', () => {
 			await nextTick();
 			// 未达到 pending 阈值，loadData 不应被再次触发
 			expect(loadData.mock.calls.length).toBe(initialCalls);
+			restore();
 			wrapper.unmount();
 		});
 
@@ -3057,7 +3060,8 @@ describe('index.ts', () => {
 			const { wrapper, root, pull } = mountPullable(loadData, { inverted: true, vertical: false });
 			await settle();
 			const initialCalls = loadData.mock.calls.length;
-			expect(pull().style.marginRight).toBe('-30px');
+			// 由样式贴在右侧视口外，不写内联的 margin
+			expect(pull().style.marginRight).toBe('');
 
 			fireHorizontalTouch(root, 'touchstart', 300);
 			fireHorizontalTouch(root, 'touchmove', 280);
@@ -3310,7 +3314,7 @@ describe('index.ts', () => {
 			const loadData = () => new Promise((r) => { resolveFn = r; });
 
 			const wrapper = mount(() => (
-				<RecycleList pullable loadData={loadData as any} pauseOffset={30} />
+				<RecycleList pullable loadData={loadData as any} />
 			), { attachTo: document.body });
 
 			await nextTick();

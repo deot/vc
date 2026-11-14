@@ -20,10 +20,6 @@ const getKeys = (v: boolean) => {
 		paddingColumnHead: v ? 'paddingLeft' : 'paddingTop',
 		paddingColumnTail: v ? 'paddingRight' : 'paddingBottom',
 
-		// margin
-		marginPullHead: v ? 'marginTop' : 'marginLeft',
-		marginPullTail: v ? 'marginBottom' : 'marginRight',
-
 		// 拉动方向（STATUS_MAP 的键）：起点一侧下拉 / 右拉，终点一侧上拉 / 左拉
 		pullHead: v ? 'DOWN' : 'RIGHT',
 		pullTail: v ? 'UP' : 'LEFT',

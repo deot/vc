@@ -27,6 +27,7 @@ export const Container = defineComponent({
 		const vm = getCurrentInstance()!;
 		const K = useDirectionKeys();
 		const current = ref();
+		const pull = ref<HTMLElement>();
 		const offset = ref(0);
 		const status = ref(0);
 
@@ -41,13 +42,11 @@ export const Container = defineComponent({
 				[transformKey]: `${K.translateAxis}(${sign.value * offset.value}px)`,
 			};
 		});
-		const pullStyle = computed(() => {
-			return {
-				[props.inverted ? K.marginPullTail : K.marginPullHead]: `-${props.pauseOffset}px`
-			};
-		});
 
 		let start = 0;
+		// 触发刷新的距离，也是刷新中停留的位置：提示条沿主轴的实际尺寸。
+		// 尺寸由样式决定（见 style.scss），每次手势开始时读取，自定义内容多高都能对上
+		let pauseOffset = 0;
 
 		// 拉动中不再开始新的选区，避免选区扩展与它带来的自动滚动
 		const handleSelectStart = (e: Event) => {
@@ -62,6 +61,7 @@ export const Container = defineComponent({
 			if (!props.pullable) return false;
 
 			start = point[K.screenAxis];
+			pauseOffset = pull.value?.[K.offsetSize] || 0;
 			// 只有鼠标拖动会带出选区
 			e.type === 'mousedown' && document.addEventListener('selectstart', handleSelectStart);
 			return true;
@@ -79,9 +79,9 @@ export const Container = defineComponent({
 				e.preventDefault();
 				// 鼠标拉动不是选文字：清掉按下后顺带拖出的选区
 				e.type === 'mousemove' && window.getSelection()?.removeAllRanges();
-				offset.value = distance < props.pauseOffset * 3 ? distance : props.pauseOffset * 3 + (distance - props.pauseOffset * 3) / 5;
+				offset.value = distance < pauseOffset * 3 ? distance : pauseOffset * 3 + (distance - pauseOffset * 3) / 5;
 				if (status.value == REFRESH) return;
-				if (offset.value <= props.pauseOffset) {
+				if (offset.value <= pauseOffset) {
 					status.value = PULL;
 				} else {
 					status.value = PENDING;
@@ -95,7 +95,7 @@ export const Container = defineComponent({
 
 			if (refresh && status.value == PENDING) {
 				status.value = REFRESH;
-				offset.value = props.pauseOffset;
+				offset.value = pauseOffset;
 				try {
 					await vm.vnode.props?.['onRefresh']?.();
 				} finally {
@@ -103,7 +103,7 @@ export const Container = defineComponent({
 					offset.value = 0;
 				}
 			} else if (status.value == REFRESH) {
-				offset.value = props.pauseOffset;
+				offset.value = pauseOffset;
 			} else {
 				offset.value = 0;
 				status.value = DEFAULT;
@@ -120,10 +120,11 @@ export const Container = defineComponent({
 
 		onBeforeUnmount(removeSelectStart);
 
-		// 刷新提示条：正序在容器前（起点一侧），inverted 在容器后（终点一侧）
+		// 刷新提示条：正序在容器前（起点一侧），inverted 在容器后（终点一侧）；平时由样式贴在视口外
 		const renderPull = () => (
 			<div
-				style={[offsetStyle.value, pullStyle.value]}
+				ref={pull}
+				style={offsetStyle.value}
 				class="vc-recycle-list__pull"
 			>
 				<Customer

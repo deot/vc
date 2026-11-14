@@ -5,6 +5,7 @@ import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import type { Ref } from 'vue';
 import { vi } from 'vitest';
+import './fixtures/pull';
 import * as drag from '../../../hooks/__tests__/fixtures/drag';
 
 const sleep = (time = 0) => new Promise(resolve => setTimeout(resolve, time));
@@ -692,7 +693,7 @@ describe('RecycleList fill=false', () => {
 			.mockResolvedValue(false);
 		const wrapper = mount(() => (
 			<div class="viewport" style="overflow-y: auto; height: 200px;">
-				<RecycleList fill={false} pullable pauseOffset={30} loadData={loadData} />
+				<RecycleList fill={false} pullable loadData={loadData} />
 			</div>
 		), { attachTo: document.body });
 		await flush();
@@ -722,7 +723,7 @@ describe('RecycleList fill=false', () => {
 			.mockResolvedValue(false);
 		const wrapper = mount(() => (
 			<div class="viewport" style="overflow-y: auto; height: 200px;">
-				<RecycleList fill={false} inverted pullable pauseOffset={30} loadData={loadData} />
+				<RecycleList fill={false} inverted pullable loadData={loadData} />
 			</div>
 		), { attachTo: document.body });
 		await flush();
@@ -759,7 +760,7 @@ describe('RecycleList fill=false', () => {
 			.mockResolvedValue(false);
 		const wrapper = mount(() => (
 			<div class="viewport" style="overflow-x: auto; width: 320px;">
-				<RecycleList fill={false} vertical={false} pullable pauseOffset={30} loadData={loadData} />
+				<RecycleList fill={false} vertical={false} pullable loadData={loadData} />
 			</div>
 		), { attachTo: document.body });
 		await flush();
