@@ -541,7 +541,7 @@ describe('Cascader value 严格比较', () => {
 		await nextTick();
 		expect(getInputValue(wrapper)).toBe('One / One-One / One-One-One');
 
-		const another = mountWith({ modelValue: '1,11', numerable: true, max: 3 });
+		const another = mountWith({ modelValue: '1,11', numerable: true });
 		await nextTick();
 		expect(getInputValue(another)).toBe('One / One-One');
 	});
@@ -562,6 +562,61 @@ describe('Cascader value 严格比较', () => {
 		value.value = ['1', '11'];
 		await flush();
 		expect(getInputValue(wrapper)).toBe('One / One-One');
+	});
+});
+
+describe('Cascader 字符串值', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	const pick = async (columnIndex: number, rowIndex: number) => {
+		const cell = getCells(columnIndex)[rowIndex] as HTMLElement;
+		fireMouse(cell, 'mousemove');
+		await flush();
+		cell.click();
+		await flush();
+	};
+	const getInputValue = (wrapper: any) => (wrapper.find('input').element as HTMLInputElement).value;
+
+	it('字符串值输出整条路径（按 separator 连接，与 max 无关），回传后仍能回显', async () => {
+		const value = ref<any>('zhejiang;hangzhou;xihu');
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} separator=";" />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+		expect(getInputValue(wrapper)).toBe('Zhejiang / Hangzhou / West Lake');
+
+		await wrapper.trigger('click');
+		await flush();
+		await pick(0, 0);
+		await pick(1, 1);
+		await pick(2, 1);
+		expect(value.value).toBe('zhejiang;ningbo;jiangdong');
+		await flush();
+		expect(getInputValue(wrapper)).toBe('Zhejiang / NingBo / Jiang Dong');
+	});
+
+	it('清空：字符串值为空字符串，设置了 nullValue 时为它', async () => {
+		const value = ref<any>('zhejiang,hangzhou,xihu');
+		const nullable = ref<any>(void 0);
+		const wrapper = mount(() => (
+			<Cascader v-model={value.value} data={options} clearable nullValue={nullable.value} />
+		), { attachTo: document.body });
+		onTestFinished(() => wrapper.unmount());
+		await nextTick();
+
+		await wrapper.find('.vc-select-trigger__clear').trigger('click');
+		await flush();
+		expect(value.value).toBe('');
+
+		nullable.value = null;
+		value.value = 'zhejiang,hangzhou,xihu';
+		await flush();
+		await wrapper.find('.vc-select-trigger__clear').trigger('click');
+		await flush();
+		expect(value.value).toBe(null);
 	});
 });
 

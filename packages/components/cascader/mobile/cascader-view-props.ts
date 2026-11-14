@@ -13,8 +13,7 @@ const cascaderKeys = [
 	'searchPlaceholder',
 	'separator',
 	'numerable',
-	'nullValue',
-	'max'
+	'nullValue'
 ] as const;
 
 export const props = {

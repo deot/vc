@@ -55,8 +55,12 @@ describe('cascader/mobile utils', () => {
 		expect(toCascaderPath([111], { ...base, checkStrategy: 'child' })).toEqual([1, 11, 111]);
 		expect(toCascaderPath('', { ...base, checkStrategy: 'child' })).toEqual([]);
 
-		const options = { modelValue: [], max: 1, numerable: false, separator: ',', nullValue: null };
+		const options = { modelValue: [], numerable: false, separator: ',', nullValue: null };
 		expect(toCascaderValue([1, 11], { ...options, checkStrategy: 'all' })).toEqual([1, 11]);
+		// 非数组：整条路径按 separator 连接；清空为 nullValue，没有设置时字符串值为 ''
+		expect(toCascaderValue([1, 11], { ...options, modelValue: '', separator: ';', checkStrategy: 'all' })).toBe('1;11');
+		expect(toCascaderValue([], { ...options, modelValue: '1;11', checkStrategy: 'all' })).toBe(null);
+		expect(toCascaderValue([], { ...options, modelValue: '1;11', nullValue: void 0, checkStrategy: 'all' })).toBe('');
 		expect(toCascaderValue([1, 11], { ...options, checkStrategy: 'child' })).toEqual([11]);
 		expect(toCascaderValue([1, 11], { ...options, modelValue: 0, checkStrategy: 'child' })).toBe(11);
 		expect(toCascaderValue([], { ...options, modelValue: 0, checkStrategy: 'child' })).toBe(null);

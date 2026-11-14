@@ -607,7 +607,7 @@ const value = ref(['2500', '2500-3']);
 
 ### 移动端选择
 
-`MCascader` 是独立的移动端组件：默认渲染 MListItem，点击后从底部弹出。弹层上方的标签切换层级，待选的一级显示「请选择」，下方是选项列表，选中项为主色并打勾。`v-model` 的形状与转换规则与桌面端相同（`checkStrategy`、`separator`、`numerable`、`nullValue`、`max`）。
+`MCascader` 是独立的移动端组件：默认渲染 MListItem，点击后从底部弹出。弹层上方的标签切换层级，待选的一级显示「请选择」，下方是选项列表，选中项为主色并打勾。`v-model` 的形状与转换规则与桌面端相同（`checkStrategy`、`separator`、`numerable`、`nullValue`）。
 
 - 默认选到最后一级即提交并关闭，标题栏右侧有关闭按钮。
 - `confirm`：选到最后一级不自动关闭，由「确定」提交；路径还没到最后一级时「确定」置灰。`true` / `'top'` 为顶部的「取消 / 确定」工具栏，`'bottom'` 为底部的「确定」大按钮。
@@ -781,9 +781,9 @@ const handleOpen = () => {
 | expandDirection | 展开方向；见[展开方向](#展开方向) | `string` | `right`、`left`、`auto` | `right` |
 | portal | 将浮层挂到 body；`false` 时挂到组件根节点内 | `boolean` | - | `true` |
 | portalClass | 浮层附加 class | `string \| object \| unknown[]` | - | - |
-| separator | 字符串路径解析时的分隔符 | `string` | - | `','` |
+| separator | 字符串路径解析与输出的分隔符 | `string` | - | `','` |
+| nullValue | 清空时返回的值：值不是数组时生效（数组值清空仍为 `[]`）；不设置时字符串值为 `''`，`checkStrategy: 'child'` 的标量值为 `undefined` | `number \| string \| object` | - | `undefined` |
 | numerable | 把输入中的字符串转为数字（字符串路径、数组各项、`child` 的单值）；value 按 `===` 比较，数字 `data` 配字符串输入时需开启 | `boolean` | - | `false` |
-| max | 继承的值转换参数：非数组 modelValue 且 `max > 1` 时将路径连接为字符串；不提供多选能力 | `number` | `>= 1` | `1` |
 
 ### 事件
 
@@ -814,7 +814,7 @@ interface CascaderOption {
 }
 ```
 
-数组形式的 `modelValue` 会保存完整路径，并在清空时返回 `[]`。字符串输入先按 `separator` 解析；非数组输入在默认 `max: 1` 下只输出路径首项，`max > 1` 时按 `separator` 连接。`numerable` 配合字符串输入时，当前实现输出由逗号连接的数字路径；需要稳定的完整路径时使用数组。以上规则只用于默认的 `checkStrategy: 'all'`，`child` 见[只提交最后一级](#只提交最后一级)。
+数组形式的 `modelValue` 会保存完整路径，并在清空时返回 `[]`。字符串输入先按 `separator` 解析，输出也是按 `separator` 连接的完整路径（`numerable` 时同样如此），清空时返回 `nullValue`，没有设置时为 `''`。以上规则只用于默认的 `checkStrategy: 'all'`，`child` 见[只提交最后一级](#只提交最后一级)。
 
 组件虽然继承了 Select 的一些声明，但没有多选、远程搜索、`renderOption` 等对应渲染能力；没有公开实例方法或 `readonly` 开关，默认输入框只在开启内联搜索时可输入。
 
@@ -878,7 +878,6 @@ interface CascaderOption {
 | separator | 同桌面端 | `string` | - | `','` |
 | numerable | 同桌面端 | `boolean` | - | `false` |
 | nullValue | 同桌面端 | `number \| string \| object` | - | `undefined` |
-| max | 同桌面端 | `number` | - | `1` |
 | allowDispatch | 提交时通知所属表单项；MCascader 的弹层内为 `false` | `boolean` | - | `true` |
 
 ### MCascaderView 事件

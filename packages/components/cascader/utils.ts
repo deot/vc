@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash-es';
-import { toCurrentValue, toModelValue } from '../select/utils';
+import { toCurrentValue } from '../select/utils';
 import type { TreeData, TreeValue, TreeLabel } from '../select/utils';
 
 /**
@@ -83,25 +83,28 @@ export const toCascaderPath = (v: any, options: CascaderPathOptions, current: Tr
 export interface CascaderValueOptions {
 	checkStrategy: string;
 	modelValue: any;
-	max: number;
 	numerable: boolean;
 	separator: string;
 	nullValue: any;
 }
 
 /**
- * 路径 -> v-model，形状跟随当前 v-model（同 toModelValue）
+ * 路径 -> v-model，形状跟随当前 v-model
+ * 	- all：数组时为整条路径，清空为 []；否则为按 separator 连接的整条路径，清空为 nullValue（没有设置时，字符串值为 ''）
  * 	- child：数组时为 [最后一级]，清空为 []；否则为最后一级，清空为 nullValue
  * @param path ~
  * @param options ~
  * @returns ~
  */
 export const toCascaderValue = (path: TreeValue[], options: CascaderValueOptions) => {
+	const { modelValue, nullValue } = options;
 	if (options.checkStrategy === 'child') {
 		const value = path.slice(-1);
-		return Array.isArray(options.modelValue) ? value : path.length ? value[0] : options.nullValue;
+		return Array.isArray(modelValue) ? value : path.length ? value[0] : nullValue;
 	}
-	return toModelValue(path, options);
+	if (Array.isArray(modelValue)) return path;
+	if (!path.length) return typeof nullValue !== 'undefined' ? nullValue : (typeof modelValue === 'string' ? '' : void 0);
+	return path.join(options.separator);
 };
 
 /**
