@@ -32,3 +32,13 @@ export const scrollIntoScroller = (el?: Element | null, align: SelectListAlign =
 	// 经承载者写入：是 VC Scroller 时交给它，自绘滚动条同步更新
 	offset && new ExternalCarrier(scroller, Y_KEYS).scrollBy(offset);
 };
+
+/**
+ * 原生滚动的列表：把其中的节点滚到中间；没有节点时回到顶部（MCascaderView、MSelectView 的选中项）
+ * 	- 列表需为节点的 offsetParent（position 非 static）
+ * @param list 列表
+ * @param el 节点
+ */
+export const scrollToCenter = (list: HTMLElement, el?: HTMLElement | null) => {
+	list.scrollTop = el ? el.offsetTop - (list.clientHeight - el.offsetHeight) / 2 : 0;
+};

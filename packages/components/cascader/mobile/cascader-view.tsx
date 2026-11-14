@@ -11,6 +11,7 @@ import { useLocale } from '../../locale';
 import { createSearchRegex, getMatchedPaths } from '../../select/utils';
 import { renderHighlight } from '../../select/select-search/highlight';
 import { getPathRows, toCascaderPath, toCascaderValue } from '../utils';
+import { scrollToCenter } from '../../select/select-list/scroll';
 import { props as cascaderViewProps } from './cascader-view-props';
 import type { TreeData, TreeValue } from '../../select/utils';
 import type { SelectPath } from '../../select/select-search';
@@ -185,14 +186,8 @@ export const MCascaderView = defineComponent({
 		// 把当前一级的选中项滚到列表中间
 		const scrollIntoSelected = () => {
 			const list = lists[active.value];
-			const el = list?.querySelector<HTMLElement>('.vcm-cascader-view__option.is-selected');
-			if (!list) return;
 			// 换了分支的一级没有选中项：回到顶部
-			if (!el) {
-				list.scrollTop = 0;
-				return;
-			}
-			list.scrollTop = el.offsetTop - (list.clientHeight - el.offsetHeight) / 2;
+			list && scrollToCenter(list, list.querySelector<HTMLElement>('.vcm-cascader-view__option.is-selected'));
 		};
 
 		// 同桌面端：不深度监听，值整体替换时才重新解析

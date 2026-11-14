@@ -1,11 +1,8 @@
 @use '../../style/helper' as *;
+@use '../../style/shared/m-option' as *;
 
 $component-name: vcm-select-view;
-$color-dark-lighter: varfix(color-dark-lighter, select-view);
 $color-dark-extralight: varfix(color-dark-extralight, select-view);
-$color-primary: varfix(color-primary, select-view);
-$foreground-color-inactive: varfix(foreground-color-inactive, select-view);
-$background-color-light: varfix(background-color-light, select-view);
 $background-color-lightest: varfix(background-color-lightest, select-view);
 
 // 750 稿，选项与 MCascaderView 相同：
@@ -31,16 +28,8 @@ $background-color-lightest: varfix(background-color-lightest, select-view);
 		-webkit-tap-highlight-color: transparent;
 	}
 
-	// 列表高 768（375 宽下 384px），原生滚动；搜索时高度不变
-	@include element(options) {
-		position: relative;
-		height: localfix(select-view, height, remfix(768));
-		padding-bottom: remfix(12);
-		overflow-y: auto;
-		box-sizing: border-box;
-		overscroll-behavior: contain;
-		-webkit-overflow-scrolling: touch;
-	}
+	// 选项列表，见 style/shared/_m-option.scss；搜索时高度不变
+	@include m-option-list(select-view, 0 0 remfix(12));
 
 	// 分组标题：字号 24，浅灰，滚动时吸顶
 	@include element(group) {
@@ -52,40 +41,6 @@ $background-color-lightest: varfix(background-color-lightest, select-view);
 		line-height: remfix(36);
 		color: $color-dark-extralight;
 		background-color: $background-color-lightest;
-	}
-
-	@include element(option) {
-		display: flex;
-		padding: remfix(20) remfix(32);
-		font-size: remfix(28);
-		line-height: remfix(40);
-		color: $color-dark-lighter;
-		cursor: pointer;
-		align-items: center;
-		-webkit-tap-highlight-color: transparent;
-
-		&:active {
-			background-color: $background-color-light;
-		}
-
-		@include when(selected) {
-			font-weight: 600;
-			color: $color-primary;
-		}
-
-		@include when(disabled) {
-			color: $foreground-color-inactive;
-			cursor: not-allowed;
-
-			&:active {
-				background-color: transparent;
-			}
-		}
-
-		// 搜索命中的文字
-		.vc-select-highlight {
-			color: $color-primary;
-		}
 	}
 
 	@include element(content) {
@@ -105,20 +60,6 @@ $background-color-lightest: varfix(background-color-lightest, select-view);
 		line-height: remfix(36);
 		color: $color-dark-extralight;
 		overflow-wrap: anywhere;
-	}
-
-	// 打勾与文字同高（28）
-	@include element(icon) {
-		margin-left: remfix(16);
-		font-size: remfix(28);
-		flex-shrink: 0;
-	}
-
-	@include element(empty) {
-		padding: remfix(96) remfix(32);
-		font-size: remfix(28);
-		color: $color-dark-extralight;
-		text-align: center;
 	}
 }
 

@@ -1,0 +1,77 @@
+@use '../helper' as *;
+
+/**
+ * 移动端选项列表：MCascaderView 与 MSelectView 共用一套外观（750 稿单位）
+ *
+ * 列表固定高度、原生滚动（局部变量 --vc-<component>-height，默认 768）；选项字号 28、行高 40、内边距 20 32，
+ * 按下时浅灰底，选中为主色加粗，禁用为 foreground-color-inactive；打勾与文字同高；无结果时居中提示
+ * 在块内调用（@include block(...) { @include m-option-list(...) }）
+ * 参数
+ * 	- $component：主题与局部变量的命名空间，如 cascader-view、select-view
+ * 	- $padding：列表的内边距
+ */
+@mixin m-option-list($component, $padding) {
+	$color-dark-lighter: varfix(color-dark-lighter, $component);
+	$color-dark-extralight: varfix(color-dark-extralight, $component);
+	$color-primary: varfix(color-primary, $component);
+	$foreground-color-inactive: varfix(foreground-color-inactive, $component);
+	$background-color-light: varfix(background-color-light, $component);
+
+	// 列表是选项的 offsetParent：选中项按 offsetTop 滚到中间
+	@include element(options) {
+		position: relative;
+		height: localfix($component, height, remfix(768));
+		padding: $padding;
+		overflow-y: auto;
+		box-sizing: border-box;
+		overscroll-behavior: contain;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	@include element(option) {
+		display: flex;
+		padding: remfix(20) remfix(32);
+		font-size: remfix(28);
+		line-height: remfix(40);
+		color: $color-dark-lighter;
+		cursor: pointer;
+		align-items: center;
+		-webkit-tap-highlight-color: transparent;
+
+		&:active {
+			background-color: $background-color-light;
+		}
+
+		@include when(selected) {
+			font-weight: 600;
+			color: $color-primary;
+		}
+
+		@include when(disabled) {
+			color: $foreground-color-inactive;
+			cursor: not-allowed;
+
+			&:active {
+				background-color: transparent;
+			}
+		}
+
+		// 搜索命中的文字
+		.vc-select-highlight {
+			color: $color-primary;
+		}
+	}
+
+	@include element(icon) {
+		margin-left: remfix(16);
+		font-size: remfix(28);
+		flex-shrink: 0;
+	}
+
+	@include element(empty) {
+		padding: remfix(96) remfix(32);
+		font-size: remfix(28);
+		color: $color-dark-extralight;
+		text-align: center;
+	}
+}

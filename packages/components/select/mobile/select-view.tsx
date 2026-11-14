@@ -16,6 +16,7 @@ import {
 	toModelValue
 } from '../utils';
 import { renderHighlight } from '../select-search/highlight';
+import { scrollToCenter } from '../select-list/scroll';
 import { props as selectViewProps } from './select-view-props';
 import type { TreeData, TreeValue } from '../utils';
 
@@ -111,9 +112,7 @@ export const MSelectView = defineComponent({
 		// 第一个已选项滚到列表中间
 		const scrollIntoSelected = () => {
 			if (!values.value.length || !list.value) return;
-			const el = list.value.querySelector<HTMLElement>('.vcm-select-view__option.is-selected');
-			if (!el) return;
-			list.value.scrollTop = el.offsetTop - (list.value.clientHeight - el.offsetHeight) / 2;
+			scrollToCenter(list.value, list.value.querySelector<HTMLElement>('.vcm-select-view__option.is-selected'));
 		};
 
 		onMounted(() => nextTick(scrollIntoSelected));
