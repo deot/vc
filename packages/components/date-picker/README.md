@@ -438,14 +438,14 @@ const value = ref(['2024-03-10', '2024-03-20']);
 | title | 弹层标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | cancelText | 取消文案，允许空字符串 | `string` | - | 当前语言的“取消” |
 | okText | 确认文案，允许空字符串 | `string` | - | 当前语言的“确定” |
-| showToolbar | 显示标题和操作栏 | `boolean` | - | `true` |
+| confirm | 由「确定」提交：`true` / `'top'` 为顶部的「取消 / 确定」工具栏；`'bottom'` 为底部的「确定」大按钮，标题与关闭按钮在 MPopup 的标题栏；`false` 不需要确认，滚轮停下即提交，标题栏只有关闭按钮 | `boolean \| string` | `true`、`false`、`top`、`bottom` | `true` |
 
 ### MDatePicker 事件
 
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
-| update:modelValue | 确认后更新绑定值 | `value` | 格式化字符串；季度与范围类为字符串数组 |
-| change | 确认后提交值 | `value` | 同上 |
+| update:modelValue | 确认后更新绑定值；`confirm` 为 `false` 时滚轮停下即更新 | `value` | 格式化字符串；季度与范围类为字符串数组 |
+| change | 确认后提交值；`confirm` 为 `false` 时滚轮停下即提交 | `value` | 同上 |
 | ok | 点击确定 | `value` | 同上 |
 | cancel | 点击取消，不提交值 | - | - |
 | picker-change | 滚轮某列选中项改变 | `(value, index, row)` | 单列值、从 0 开始的列索引、含 value/label 的数据项 |

@@ -12,9 +12,10 @@ const popupKeys = [
 export const props = {
 	...(pick(pickerPopupProps, popupKeys) as Pick<typeof pickerPopupProps, typeof popupKeys[number]>),
 	...cascaderViewProps,
-	// 选到最后一级时不自动提交，由「确定」提交；为 true 或开启 changeOnSelect 时显示工具栏
+	// 选到最后一级时不自动提交，由「确定」提交：true / 'top' 为顶部的「取消 / 确定」，'bottom' 为底部的「确定」按钮
+	// 为 false 且开启 changeOnSelect 时按 'top'
 	confirm: {
-		type: Boolean,
+		...pickerPopupProps.confirm,
 		default: false
 	},
 	visible: {

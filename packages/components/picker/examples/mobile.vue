@@ -70,6 +70,30 @@
 			当前值：{{ formatValue(seasonValue) }}
 		</div>
 
+		<MList>
+			<Picker
+				v-model="bottomValue"
+				:data="seasonData"
+				:cascader="false"
+				:columns="2"
+				confirm="bottom"
+				title="底部确定"
+				label="confirm=bottom"
+			/>
+			<Picker
+				v-model="liveValue"
+				:data="seasonData"
+				:cascader="false"
+				:columns="2"
+				:confirm="false"
+				title="停下即提交"
+				label="confirm=false"
+			/>
+		</MList>
+		<div class="vcm-picker-example__value">
+			当前值：{{ formatValue(bottomValue) }} / {{ formatValue(liveValue) }}
+		</div>
+
 		<div class="vcm-picker-example__panel">
 			<PickerView
 				v-model="viewValue"
@@ -221,6 +245,8 @@ const unevenData = [
 
 const value = ref(['110000', '110100', '110101']);
 const rows = ref(5);
+const bottomValue = ref(['2026', 'summer']);
+const liveValue = ref(['2026', 'summer']);
 const rowsValue = ref(['2026', 'summer']);
 const unevenValue = ref(['a', 'a1']);
 const selectedValue = ref(['2025', 'autumn']);

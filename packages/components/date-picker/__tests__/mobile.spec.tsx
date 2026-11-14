@@ -215,6 +215,29 @@ describe('MDatePickerCore branches', () => {
 
 		wrapper.unmount();
 	});
+
+	it('confirm=false：没有按钮，滚轮停下即提交，弹层保持打开', async () => {
+		const wrapper = mount(MDatePickerCore, {
+			attachTo: document.body,
+			props: {
+				modelValue: '2024-01-02',
+				type: 'date',
+				confirm: false
+			}
+		});
+		await flush();
+		expect(wrapper.find('.vcm-picker-popup__header').exists()).toBe(false);
+		// 打开时不提交
+		expect(wrapper.emitted('change')).toBeUndefined();
+
+		await wrapper.findAll('.vcm-picker-col')[2].findAll('.vcm-picker-col__item')[4].trigger('click');
+		await flush();
+		expect(wrapper.emitted('change')?.at(-1)).toEqual(['2024-01-05']);
+		expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['2024-01-05']);
+		expect(wrapper.emitted('ok')).toBeUndefined();
+
+		wrapper.unmount();
+	});
 });
 
 describe('MDatePickerView type and format', () => {

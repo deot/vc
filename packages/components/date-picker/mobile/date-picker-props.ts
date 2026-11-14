@@ -14,7 +14,7 @@ const popupKeys = [
 	'title',
 	'cancelText',
 	'okText',
-	'showToolbar'
+	'confirm'
 ] as const;
 
 const viewKeys = [

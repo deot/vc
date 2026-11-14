@@ -56,15 +56,26 @@ export const Picker = defineComponent({
 			pickerInstance.value?.destroy?.();
 		});
 
-		const sync = (label: any[], data: any[]) => {
-			const value = toModelValue(currentValue.value.slice(0) as any, {
+		/**
+		 * 弹层提交的值写回触发器，返回按外部 v-model 规范后的值
+		 * @param value 弹层提交的值
+		 * @returns ~
+		 */
+		const apply = (value: PickerModelValue) => {
+			currentValue.value = toCurrentValue(value as any, {
+				numerable: props.numerable,
+				separator: props.separator
+			}) as PickerValue[];
+			return toModelValue(currentValue.value.slice(0) as any, {
 				modelValue: props.modelValue as any,
 				numerable: props.numerable,
 				separator: props.separator,
 				nullValue: props.nullValue,
 				max: props.columns
 			}) as PickerModelValue;
+		};
 
+		const sync = (value: PickerModelValue, label: any[], data: any[]) => {
 			emit('update:modelValue', value, label, data);
 			emit('change', value, label, data);
 			formItem?.change?.(value);
@@ -85,7 +96,7 @@ export const Picker = defineComponent({
 					itemStyle: props.itemStyle,
 					title: props.title,
 					cancelText: props.cancelText,
-					showToolbar: props.showToolbar,
+					confirm: props.confirm,
 					okText: props.okText,
 					modelValue: currentValue.value.slice(0),
 					renderLabel: props.renderLabel,
@@ -93,21 +104,15 @@ export const Picker = defineComponent({
 					onPickerChange: (v: PickerValue, index: number, row: any) => emit('picker-change', v, index, row),
 					onClose: () => emit('close'),
 					onOk: (value: PickerModelValue, label: any[], data: any[]) => {
-						const next = toCurrentValue(value as any, {
-							numerable: props.numerable,
-							separator: props.separator
-						}) as PickerValue[];
-						const modelValue = toModelValue(next as any, {
-							modelValue: props.modelValue as any,
-							numerable: props.numerable,
-							separator: props.separator,
-							nullValue: props.nullValue,
-							max: props.columns
-						}) as PickerModelValue;
-
-						currentValue.value = next;
+						const modelValue = apply(value);
 						emit('ok', modelValue, label, data);
-						sync(label, data);
+						sync(modelValue, label, data);
+					},
+					// 不需要确认时，滚轮停下即提交
+					onChange: (value: PickerModelValue, label: any[], data: any[]) => {
+						// 确定时弹层同样发出 change，由 onOk 处理
+						if (props.confirm) return;
+						sync(apply(value), label, data);
 					},
 					onCancel: () => emit('cancel')
 				});

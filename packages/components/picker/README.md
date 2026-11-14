@@ -385,7 +385,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | title | 弹层标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | cancelText | 取消文本，空字符串隐藏按钮 | `string` | - | 当前语言的“取消” |
 | okText | 确定文本，空字符串隐藏按钮 | `string` | - | 当前语言的“确定” |
-| showToolbar | 显示工具栏 | `boolean` | - | `true` |
+| confirm | 由「确定」提交：`true` / `'top'` 为顶部的「取消 / 确定」工具栏；`'bottom'` 为底部的「确定」大按钮，标题与关闭按钮在 MPopup 的标题栏；`false` 不需要确认，滚轮停下即提交（触发 `update:modelValue`、`change`），标题栏只有关闭按钮 | `boolean \| string` | `true`、`false`、`top`、`bottom` | `true` |
 | renderLabel | 自定义选项渲染函数，接收含 label、row、index 的对象 | `(options: { label: any; row: any; index: number }) => VNodeChild` | - | - |
 | separator | 字符串模型的分隔符 | `string` | - | `','` |
 | numerable | 把模型中的字符串转为 number（字符串模型、数组各项） | `boolean` | - | `false` |
@@ -395,8 +395,8 @@ p { margin: 0; overflow-wrap: anywhere; }
 
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
-| update:modelValue | 确认后回写 | `(value, labels, items)` | 选中值、各列 label、选中数据项数组 |
-| change | 确认后触发 | `(value, labels, items)` | 与 update:modelValue 相同 |
+| update:modelValue | 确认后回写；`confirm` 为 `false` 时滚轮停下即回写 | `(value, labels, items)` | 选中值、各列 label、选中数据项数组 |
+| change | 确认后触发；`confirm` 为 `false` 时滚轮停下即触发 | `(value, labels, items)` | 与 update:modelValue 相同 |
 | ok | 点击确定 | `(value, labels, items)` | 同上，在 change 之前触发 |
 | picker-change | 滚动结束时触发，包括尚未确认的选择 | `(value, index, row)` | 当前列的值、列索引、当前项；联动后的完整值在确认时返回 |
 | cancel | 点击取消 | `()` | - |
@@ -417,7 +417,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | Picker.View / MPicker.View | PickerView 的静态组件别名 | - | - |
 | Picker.Popup / MPicker.Popup | PickerPopup 的静态组件别名 | - | - |
 
-`open(options)` 支持 `modelValue`（兼容 `value`）、`data`、`columns`、`cascader`、`itemStyle`、`renderLabel`、`separator`、`numerable`、`nullValue`、`title`、`cancelText`、`okText`、`showToolbar` 和 `visible`（默认 `true`）。`onOk(value, labels, items)`、`onCancel()`、`onChange(value, labels, items)`、`onPickerChange(value, index, row)`、`onVisibleChange(visible)`、`onClose()` 对应弹层事件。该方法不执行 `loadData`，也没有触发区域的 `label`、`extra` 和 `formatter`。
+`open(options)` 支持 `modelValue`（兼容 `value`）、`data`、`columns`、`cascader`、`itemStyle`、`renderLabel`、`separator`、`numerable`、`nullValue`、`title`、`cancelText`、`okText`、`confirm` 和 `visible`（默认 `true`）。`onOk(value, labels, items)`、`onCancel()`、`onChange(value, labels, items)`、`onPickerChange(value, index, row)`、`onVisibleChange(visible)`、`onClose()` 对应弹层事件。该方法不执行 `loadData`，也没有触发区域的 `label`、`extra` 和 `formatter`。
 
 ### PickerView 属性
 
@@ -460,7 +460,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | cancelText | 取消文本，空字符串隐藏按钮 | `string` | - | 当前语言的“取消” |
 | okText | 确定文本，空字符串隐藏按钮 | `string` | - | 当前语言的“确定” |
-| showToolbar | 显示工具栏；为 `false` 时标题与关闭按钮显示在 MPopup 的标题栏 | `boolean` | - | `true` |
+| confirm | 按钮的位置：`true` / `'top'` 为顶部的「取消 / 确定」工具栏；`'bottom'` 为底部的「确定」大按钮（`footer` 插槽可替换）；`false` 不显示按钮。不在顶部时，标题与关闭按钮显示在 MPopup 的标题栏 | `boolean \| string` | `true`、`false`、`top`、`bottom` | `true` |
 | cancelDisabled | 「取消」置灰且不可点 | `boolean` | - | `false` |
 | okDisabled | 「确定」置灰且不可点，如所选内容还不完整时 | `boolean` | - | `false` |
 
@@ -480,6 +480,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
 | default | 弹层内容 | - |
+| footer | 弹层底部，如按钮；传给 MPopup 的 `footer` 插槽 | 同 MPopup 的 `footer` 插槽：`{ close, snap, full, dragging, snapTo, next }` |
 
 ### 数据与值类型
 

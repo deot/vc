@@ -17,7 +17,7 @@ const popupKeys = [
 	'title',
 	'cancelText',
 	'okText',
-	'showToolbar'
+	'confirm'
 ] as const;
 
 const viewKeys = [
@@ -112,6 +112,16 @@ export const MDatePickerCore = defineComponent({
 			emit('change', value);
 		};
 
+		// 不需要确认：滚轮停下即提交，弹层保持打开
+		const handleViewChange = (v: any) => {
+			currentValue.value = v;
+			if (props.confirm) return;
+
+			const value = getNormalizedValue(v);
+			emit('update:modelValue', value);
+			emit('change', value);
+		};
+
 		const handleCancel = () => {
 			isActive.value = false;
 			props.onCancel ? props.onCancel() : emit('cancel');
@@ -124,7 +134,7 @@ export const MDatePickerCore = defineComponent({
 					title={props.title}
 					cancelText={props.cancelText ?? t('vc.DatePicker.cancelText')}
 					okText={props.okText ?? t('vc.DatePicker.okText')}
-					showToolbar={props.showToolbar}
+					confirm={props.confirm}
 					onOk={handleOk}
 					onCancel={handleCancel}
 					onClose={handleClose}
@@ -143,7 +153,7 @@ export const MDatePickerCore = defineComponent({
 						allowDispatch={false}
 						// @ts-ignore
 						onPickerChange={(v: any, index: number, row: any) => emit('picker-change', v, index, row)}
-						onUpdate:modelValue={(v: any) => (currentValue.value = v)}
+						onUpdate:modelValue={handleViewChange}
 					/>
 				</MPickerPopup>
 			);

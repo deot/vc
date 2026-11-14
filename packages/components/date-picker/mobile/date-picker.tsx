@@ -72,7 +72,7 @@ export const MDatePicker = defineComponent({
 				title: props.title,
 				cancelText: props.cancelText,
 				okText: props.okText,
-				showToolbar: props.showToolbar,
+				confirm: props.confirm,
 				nullValue: props.nullValue,
 				modelValue: currentValue.value,
 				onVisibleChange: (v: boolean) => emit('visible-change', v),
@@ -81,6 +81,10 @@ export const MDatePicker = defineComponent({
 				onOk: (value: any) => {
 					emit('ok', value);
 					sync(value);
+				},
+				// 不需要确认时，滚轮停下即提交
+				onChange: (value: any) => {
+					!props.confirm && sync(value);
 				},
 				onCancel: () => emit('cancel')
 			});

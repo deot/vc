@@ -285,6 +285,25 @@ describe('MCascader', () => {
 		wrapper.unmount();
 	});
 
+	it('confirm=\'bottom\'：底部「确定」提交，路径没到最后一级时置灰', async () => {
+		const onOk = vi.fn();
+		const leaf = MCascader.open({ value: [], data: createData(), confirm: 'bottom', onOk });
+		await flush();
+		expect(document.querySelector('.vcm-picker-popup__header')).toBeNull();
+		const ok = () => document.querySelector('.vcm-picker-popup__footer .vcm-picker-popup__button') as HTMLButtonElement;
+		expect(ok().classList).toContain('is-disabled');
+
+		await clickOption('分组 B');
+		await clickOption('条目 B-1');
+		// 不自动关闭
+		expect(onOk).not.toHaveBeenCalled();
+		expect(ok().classList).not.toContain('is-disabled');
+		ok().click();
+		await flush();
+		expect(onOk).toHaveBeenCalledWith([2, 21], ['分组 B', '条目 B-1']);
+		leaf.destroy();
+	});
+
 	it('changeOnSelect：工具栏可在任意一级确定，选到最后一级仍自动关闭', async () => {
 		const onOk = vi.fn();
 		const leaf = MCascader.open({ value: [], data: createData(), changeOnSelect: true, onOk });

@@ -45,4 +45,15 @@ $background-color-lightest: varfix(background-color-lightest, picker);
 	@include element(content) {
 		padding: 0;
 	}
+
+	// 底部按钮（confirm 为 'bottom'）：多个按钮平分宽度，间距 24
+	@include element(footer) {
+		display: flex;
+		padding-top: remfix(16);
+		gap: remfix(24);
+	}
+
+	@include element(button) {
+		flex: 1;
+	}
 }

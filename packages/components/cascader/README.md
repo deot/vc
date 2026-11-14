@@ -610,7 +610,7 @@ const value = ref(['2500', '2500-3']);
 `MCascader` 是独立的移动端组件：默认渲染 MListItem，点击后从底部弹出。弹层上方的标签切换层级，待选的一级显示「请选择」，下方是选项列表，选中项为主色并打勾。`v-model` 的形状与转换规则与桌面端相同（`checkStrategy`、`separator`、`numerable`、`nullValue`、`max`）。
 
 - 默认选到最后一级即提交并关闭，标题栏右侧有关闭按钮。
-- `confirm`：显示「取消 / 确定」工具栏，选到最后一级不自动关闭，由「确定」提交；路径还没到最后一级时「确定」置灰。
+- `confirm`：选到最后一级不自动关闭，由「确定」提交；路径还没到最后一级时「确定」置灰。`true` / `'top'` 为顶部的「取消 / 确定」工具栏，`'bottom'` 为底部的「确定」大按钮。
 - `changeOnSelect`：可以停在任意一级，同样显示工具栏，点「确定」提交当前路径；选到最后一级时，没开 `confirm` 仍自动提交并关闭。
 - `clearable`：有选中路径时，层级标签栏右端显示「清空」。没开 `confirm` 时清空即提交空值并关闭；开了 `confirm` 时只清空弹层内的路径，由「确定」提交空值。
 - `searchable`：列表上方显示搜索框，规则同桌面端：按整条路径匹配，只列出最后一级，开启 `changeOnSelect` 时任意一级都可选。
@@ -830,7 +830,7 @@ interface CascaderOption {
 | extra | `formatter` 返回空值时显示的文字，允许空字符串 | `string` | - | 当前语言的 `vc.Cascader.placeholder` |
 | formatter | 根据路径文字生成显示内容，同桌面端 | `(labels: string[]) => any` | - | `labels => labels.join(' / ')` |
 | title | 弹层标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
-| confirm | 选到最后一级（或清空）不自动提交，由「确定」提交；为 `true` 或开启 `changeOnSelect` 时显示「取消 / 确定」工具栏 | `boolean` | - | `false` |
+| confirm | 选到最后一级（或清空）不自动提交，由「确定」提交：`true` / `'top'` 为顶部的「取消 / 确定」工具栏，`'bottom'` 为底部的「确定」大按钮；为 `false` 且开启 `changeOnSelect` 时按 `'top'` | `boolean \| string` | `true`、`false`、`top`、`bottom` | `false` |
 | cancelText | 工具栏的取消文案，允许空字符串 | `string` | - | 当前语言的 `vc.Picker.cancelText` |
 | okText | 工具栏的确定文案，允许空字符串 | `string` | - | 当前语言的 `vc.Picker.okText` |
 

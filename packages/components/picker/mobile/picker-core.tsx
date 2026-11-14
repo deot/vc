@@ -18,7 +18,7 @@ const popupKeys = [
 	'title',
 	'cancelText',
 	'okText',
-	'showToolbar'
+	'confirm'
 ] as const;
 
 const viewKeys = [
@@ -98,7 +98,7 @@ export const PickerCore = defineComponent({
 			emit('update:visible', false);
 		};
 
-		const handleOk = () => {
+		const getCommitted = () => {
 			const value = currentValue.value.slice(0);
 			const modelValue = toModelValue(value as any, {
 				modelValue: props.modelValue as any,
@@ -107,10 +107,27 @@ export const PickerCore = defineComponent({
 				nullValue: props.nullValue,
 				max: props.columns
 			}) as PickerModelValue;
-			const { label, data } = getSelectedData(value, props.data);
+			return { modelValue, ...getSelectedData(value, props.data) };
+		};
+
+		const handleOk = () => {
+			const { modelValue, label, data } = getCommitted();
 
 			isActive.value = false;
 			props.onOk ? props.onOk(modelValue, label, data) : emit('ok', modelValue, label, data);
+			emit('update:modelValue', modelValue, label, data);
+			emit('change', modelValue, label, data);
+		};
+
+		// 不需要确认：滚轮停下即提交，弹层保持打开
+		const handleViewChange = (v: PickerModelValue) => {
+			currentValue.value = toCurrentValue(v as any, {
+				numerable: props.numerable,
+				separator: props.separator
+			}) as PickerValue[];
+			if (props.confirm) return;
+
+			const { modelValue, label, data } = getCommitted();
 			emit('update:modelValue', modelValue, label, data);
 			emit('change', modelValue, label, data);
 		};
@@ -127,7 +144,7 @@ export const PickerCore = defineComponent({
 					title={props.title}
 					cancelText={props.cancelText}
 					okText={props.okText}
-					showToolbar={props.showToolbar}
+					confirm={props.confirm}
 					onOk={handleOk}
 					onCancel={handleCancel}
 					onClose={handleClose}
@@ -145,10 +162,7 @@ export const PickerCore = defineComponent({
 						separator={props.separator}
 						numerable={props.numerable}
 						nullValue={props.nullValue}
-						onUpdate:modelValue={(v: PickerModelValue) => (currentValue.value = toCurrentValue(v as any, {
-							numerable: props.numerable,
-							separator: props.separator
-						}) as PickerValue[])}
+						onUpdate:modelValue={handleViewChange}
 						{...{
 							'onPicker-change': (v: PickerValue, index: number, row: any) => emit('picker-change', v, index, row)
 						}}

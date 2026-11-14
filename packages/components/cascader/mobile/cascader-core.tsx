@@ -4,6 +4,7 @@ import { computed, defineComponent, onMounted, ref, watch } from 'vue';
 import { pick } from 'lodash-es';
 import { Portal } from '../../portal';
 import { MPickerPopup } from '../../picker/index.m';
+import { getConfirmMode } from '../../picker/mobile/picker-popup-props';
 import { getPathLabels, toCascaderValue } from '../utils';
 import { MCascaderView } from './cascader-view';
 import { props as cascaderViewProps } from './cascader-view-props';
@@ -36,7 +37,8 @@ export const MCascaderCore = defineComponent({
 		// 弹层内的值：确定时提交，取消时丢弃
 		const currentValue = ref<any>(props.modelValue);
 
-		const hasToolbar = computed(() => props.confirm || props.changeOnSelect);
+		// 按钮的位置：changeOnSelect 需要「确定」，没有指定时在顶部
+		const mode = computed(() => getConfirmMode(props.confirm || props.changeOnSelect));
 
 		// 只提交最后一级时，路径没到最后一级不能确定
 		// clearable 时空路径也可以确定（提交空值）
@@ -140,9 +142,7 @@ export const MCascaderCore = defineComponent({
 					cancelText={props.cancelText}
 					okText={props.okText}
 					okDisabled={isOkDisabled.value}
-					showToolbar={hasToolbar.value}
-					// 各级列表自己滚动：MPopup 的属性，经 MPickerPopup 透传
-					{...{ scrollable: false }}
+					confirm={mode.value}
 					onOk={handleOk}
 					onCancel={handleCancel}
 					onClose={handleClose}

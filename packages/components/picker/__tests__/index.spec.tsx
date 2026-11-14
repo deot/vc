@@ -849,15 +849,56 @@ describe('PickerPopup', () => {
 		popup.unmount();
 	});
 
-	it('without the toolbar, shows the title and close button in the MPopup header', async () => {
+	it('confirm=false: no buttons, shows the title and close button in the MPopup header', async () => {
 		const popup = mount(PickerPopup, {
 			attachTo: document.body,
-			props: { showToolbar: false, title: '标题' }
+			props: { confirm: false, title: '标题' }
 		});
 		await flush();
 		expect(popup.find('.vcm-picker-popup__header').exists()).toBe(false);
 		expect(document.querySelector('.vcm-popup__title')?.textContent).toBe('标题');
 		expect(document.querySelector('.vcm-popup__content')?.classList).toContain('vcm-picker-popup__content');
+		expect(document.querySelector('.vcm-popup__footer')).toBeNull();
+		popup.unmount();
+	});
+
+	it('confirm=\'bottom\': a large OK button in the footer emits ok and closes; okDisabled disables it', async () => {
+		const onOk = vi.fn();
+		const popup = mount(PickerPopup, {
+			attachTo: document.body,
+			props: { confirm: 'bottom', title: '标题', okDisabled: true, onOk }
+		});
+		await flush();
+		expect(popup.find('.vcm-picker-popup__header').exists()).toBe(false);
+		expect(document.querySelector('.vcm-popup__title')?.textContent).toBe('标题');
+		const button = () => document.querySelector<HTMLElement>('.vcm-popup__footer .vcm-picker-popup__button')!;
+		expect(button().textContent).toBe('确定');
+		button().click();
+		await flush();
+		expect(onOk).not.toHaveBeenCalled();
+
+		await popup.setProps({ okDisabled: false });
+		button().click();
+		await flush();
+		expect(onOk).toHaveBeenCalledTimes(1);
+		expect(popup.emitted('update:modelValue')?.at(-1)).toEqual([false]);
+		popup.unmount();
+	});
+
+	it('passes the footer slot through to MPopup with its slot props', async () => {
+		const footer = vi.fn((props: any) => h('button', { class: 'footer-button', onClick: props.close }, '确定'));
+		const popup = mount(PickerPopup, {
+			attachTo: document.body,
+			props: { confirm: 'bottom', title: '标题' },
+			slots: {
+				default: () => h('div', { class: 'body' }, '内容'),
+				footer
+			}
+		});
+		await flush();
+		expect(document.querySelector('.vcm-popup__footer .footer-button')?.textContent).toBe('确定');
+		expect(document.querySelector('.vcm-popup__content .body')).not.toBeNull();
+		expect(typeof footer.mock.calls[0][0].close).toBe('function');
 		popup.unmount();
 	});
 
@@ -987,6 +1028,29 @@ describe('PickerCore', () => {
 
 		wrapper.unmount();
 	});
+
+	it('confirm=false: commits on every wheel stop and keeps the popup open', async () => {
+		const wrapper = mount(PickerCore, {
+			attachTo: document.body,
+			props: {
+				data: regionData,
+				modelValue: ['zhejiang', 'hangzhou', 'xihu'],
+				columns: 3,
+				confirm: false
+			}
+		});
+		await flush();
+		expect(wrapper.find('.vcm-picker-popup__header').exists()).toBe(false);
+
+		await wrapper.findAll('.vcm-picker-col')[2].findAll('.vcm-picker-col__item')[1].trigger('click');
+		await flush();
+		expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).toEqual(['zhejiang', 'hangzhou', 'binjiang']);
+		expect(wrapper.emitted('change')).toHaveLength(1);
+		expect(wrapper.emitted('ok')).toBeUndefined();
+		expect(wrapper.emitted('update:visible')?.at(-1)).not.toEqual([false]);
+
+		wrapper.unmount();
+	});
 });
 
 describe('Picker integration', () => {
@@ -1029,6 +1093,27 @@ describe('Picker integration', () => {
 			expect.any(Array)
 		);
 		expect(onChange).toHaveBeenCalled();
+
+		wrapper.unmount();
+	});
+
+	it('confirm=false: the trigger value follows each wheel stop without ok', async () => {
+		const value = ref<any[]>(['zhejiang', 'hangzhou', 'xihu']);
+		const onOk = vi.fn();
+		const onChange = vi.fn();
+		const wrapper = mount(() => (
+			<Picker v-model={value.value} data={regionData} columns={3} confirm={false} onOk={onOk} onChange={onChange} />
+		), { attachTo: document.body });
+		await flush();
+
+		await wrapper.trigger('click');
+		await flush();
+		expect(document.querySelector('.vcm-picker-popup__header')).toBeNull();
+
+		await dragCol(document.querySelectorAll('.vcm-picker-col')[0], 0, -40);
+		expect(value.value).toEqual(['jiangsu', 'nanjing', 'zhonghuamen']);
+		expect(onChange).toHaveBeenCalledTimes(1);
+		expect(onOk).not.toHaveBeenCalled();
 
 		wrapper.unmount();
 	});
