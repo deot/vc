@@ -1,9 +1,24 @@
 import type { ComponentInternalInstance, VNode, WatchSource } from 'vue';
 import type { Props } from './tree-props';
 import type { TreeStore, TreeNode } from './store';
+import type { Checkbox } from '../checkbox';
+import type { RecycleList } from '../recycle-list/index';
+import type { Spin } from '../spin';
+
+/**
+ * 内部用到的、两端实现不同的组件：桌面端为默认值，MTree 传入移动端的版本
+ */
+export interface TreeComponents {
+	Checkbox: typeof Checkbox;
+	RecycleList: typeof RecycleList;
+	Spin: typeof Spin;
+}
 
 export interface TreeProvide {
 	props: Props;
+	// 移动端（MTree）：数字 indent 为 750 稿长度
+	mobile: boolean;
+	components: TreeComponents;
 	store: TreeStore;
 	instance: ComponentInternalInstance;
 	emit: any;

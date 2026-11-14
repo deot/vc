@@ -1,6 +1,6 @@
 ## 树形控件（Tree）
 
-`Tree` 展示层级数据，支持展开、勾选、筛选、懒加载和拖拽；`TreeSelect` 将树形选择放入下拉面板，也支持级联列展示。`MTree`、`MTreeSelect` 分别复用这两个组件。
+`Tree` 展示层级数据，支持展开、勾选、筛选、懒加载和拖拽；`TreeSelect` 将树形选择放入下拉面板，也支持级联列展示。移动端入口导出的 `MTree` 与 `Tree` 的属性、事件和方法相同，尺寸按 750 稿随 `--vc-rem` 缩放，见[移动端](#移动端)；`MTreeSelect` 暂时沿用 `TreeSelect`。
 
 ### 何时使用
 
@@ -355,7 +355,20 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+Tree 的尺寸写成局部变量 `--vc-tree-<键>`，可以在树或它的祖先上覆盖；移动端的取值见[移动端](#移动端)。
+
+| 键 | 说明 | 默认值 |
+| --- | --- | --- |
+| font-size | 节点文字的字号 | `12px` |
+| row-height | 行高 | `26px` |
+| icon-size | 展开图标的大小 | `12px` |
+| icon-padding | 展开图标四周的内边距（可点区域） | `6px` |
+| checkbox-gap | 复选框与文字的间距 | `8px` |
+| loading-gap | 加载图标与文字的间距 | `8px` |
+| empty-height | 空状态的最小高度 | `60px` |
+| focus-background | 行聚焦时的底色 | `color-primary-lighter` |
+
+TreeSelect 没有额外的局部 CSS 主题参数。
 
 ## API
 
@@ -385,7 +398,7 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 | lazy | 开启子节点懒加载 | `boolean` | - | `false` |
 | loadData | 懒加载回调，返回子数据 | `(node: Node) => Promise<NodeData[]>` | - | - |
 | filterNode | `filter()` 的筛选回调 | `(value: any, data: NodeData, node: Node) => boolean` | - | - |
-| indent | 每级缩进，单位 px | `number` | - | `18` |
+| indent | 每级缩进，单位 px；`MTree` 为 750 稿长度，默认 `32` | `number` | - | `18` |
 | virtualized | 只渲染滚动容器可视范围附近的节点，用于大量数据；见[大量数据](#大量数据) | `boolean` | - | `false` |
 | draggable | 开启节点拖拽 | `boolean` | - | `false` |
 | allowDrag | 拖拽许可 | `({ node, data }) => boolean` | - | - |
@@ -515,6 +528,61 @@ TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字
 | toggle | 指定可见性或切换当前状态 | `(visible?: boolean)` | `void` |
 
 TreeSelect 实例还暴露 `treeSelectId`、`isActive`、`multiple`、`current`、`currentValueGroups`、`searchRegex`。通常使用 `v-model` 和上面的方法即可。Tree 与 TreeSelect 都没有消费调用方插槽，标签定制使用 `renderNodeLabel`。
+
+### 移动端
+
+`MTree` 与 `Tree` 结构相同，根节点另有标记类 `.vcm-tree`（`.vc-tree.vcm-tree`），属性、事件和方法一致；展开动画、勾选联动、筛选、懒加载、虚拟化、拖拽与键盘两端通用。`MTreeSelect` 暂时沿用 `TreeSelect`（内部为桌面端的 Tree）。
+
+:::playground
+<!-- <config lang="json5">{ viewport: 375, previewInset: 0 }</config> -->
+```vue
+<template>
+	<MTree v-model="value" :data="data" :expanded-values="['1']" show-checkbox />
+</template>
+<script setup>
+import { ref } from 'vue';
+import { MTree } from '@deot/vc';
+
+const value = ref(['1-1']);
+const data = [
+	{
+		value: '1',
+		label: '分组 1',
+		children: [
+			{ value: '1-1', label: '条目 1-1' },
+			{ value: '1-2', label: '条目 1-2，名称较长的一项，超出屏幕宽度时在末尾显示省略号' }
+		]
+	},
+	{ value: '2', label: '分组 2', children: [{ value: '2-1', label: '条目 2-1' }] }
+];
+</script>
+```
+:::
+
+尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 行 | 高 88（44），字号 28（14），右侧留白 32（16） |
+| 展开图标 | 大小 24（12），左侧留白 32（16）、右侧 16（8），整块高 88（44）可点 |
+| 多选框 | `MCheckbox`，与文字间距 16（8），整行高可点 |
+| 缩进 | `indent` 为 750 稿长度，默认 32（每级 16） |
+| 加载图标 | `MSpin`，大小 24（12） |
+| 空状态 | 最小高度 240（120） |
+
+与桌面端的差异：
+
+| 项 | 桌面端 | 移动端 |
+| --- | --- | --- |
+| 节点文字 | 不换行，超出时横向溢出 | 单行显示，超出省略；`renderNodeLabel` 的内容不受影响 |
+| 悬停 / 按下 | 悬停时显示 `background-color-primary-light` | 没有悬停；按下时显示同一底色，替换系统的点击高亮 |
+| 聚焦底色 | 点击或键盘移动到的行显示 `color-primary-lighter` | 只在键盘操作（外接键盘）时显示，手指点按后不残留；`highlightCurrent` 的当前节点照常高亮 |
+| 虚拟化 | 内部为 `RecycleList` | 内部为 `MRecycleList`，使用原生滚动与系统滚动条 |
+| 拖拽 | 按住节点拖动 | 长按节点约 300ms 后拖动，期间不触发页面滚动与系统菜单 |
+
+点行的行为与桌面端一致：默认展开 / 收起，勾选点多选框；需要点行勾选时开启 `checkOnClickNode`。
+
+两端的尺寸都写成局部变量 `--vc-tree-<键>`（见[局部](#局部)），移动端在 `.vcm-tree` 上覆盖，与样式的加载顺序无关。悬停样式只在可悬停的设备上生效（`@media (hover: hover)`）。
 
 ### 主题与语言
 

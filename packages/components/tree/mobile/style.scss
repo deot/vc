@@ -1,0 +1,63 @@
+@use '../../style/helper' as *;
+
+$color-primary-lighter: varfix(color-primary-lighter, tree);
+$background-color-primary-light: varfix(background-color-primary-light, tree);
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放）。375 宽下：行高 44px、字号 14px；展开图标 12px，
+// 左侧留白 16px（与页面边距一致）、右侧 8px，整块高 44px 可点；多选框与文字间距 8px；行右侧留白 16px
+// 结构与颜色沿用 ../tree.scss，这里覆盖局部变量（与两端样式的加载顺序无关），另加移动端专有的规则
+// 子元素沿用桌面端类名（vc-tree-node__*），不用 element()
+@include block(vcm-tree) {
+	@include localvars(tree, (
+		font-size: remfix(28),
+		row-height: remfix(88),
+		icon-size: remfix(24),
+		icon-padding: 0 remfix(16) 0 remfix(32),
+		checkbox-gap: remfix(16),
+		loading-gap: remfix(16),
+		empty-height: remfix(240),
+		// 聚焦的底色只在键盘操作时显示（外接键盘，见下方 :focus-visible）：手指点按后不残留
+		focus-background: transparent
+	));
+
+	-webkit-tap-highlight-color: transparent;
+
+	.vc-tree-node__content {
+		padding-right: remfix(32);
+
+		// 多选框：点按区域为整行高，与文字的间距也算在内
+		> .vcm-checkbox {
+			padding-right: var(--vc-tree-checkbox-gap);
+			align-self: stretch;
+			flex-shrink: 0;
+		}
+
+		// 展开图标：点按区域为整行高
+		> .vc-tree-node__expand-icon {
+			display: flex;
+			align-self: stretch;
+			align-items: center;
+			flex-shrink: 0;
+		}
+
+		> .vc-tree-node__loading-icon {
+			flex-shrink: 0;
+		}
+	}
+
+	// 文字单行显示，超出省略（自定义的 renderNodeLabel 不受影响）
+	.vc-tree-node__label {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.vc-tree-node:focus-visible > .vc-tree-node__content {
+		background-color: $color-primary-lighter;
+	}
+
+	// 按下的反馈：与桌面端悬停同色（与 .vc-tree 连写：优先于聚焦、当前节点的底色）
+	&.vc-tree .vc-tree-node > .vc-tree-node__content:active {
+		background-color: $background-color-primary-light;
+	}
+}

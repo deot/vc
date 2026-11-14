@@ -101,3 +101,21 @@ export const props = {
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;
+
+export const emits = [
+	'update:modelValue',
+	'change',
+	'check-change',
+	'current-change',
+	'node-click',
+	'node-contextmenu',
+	'node-expand-change',
+	'check',
+	'node-dragstart',
+	'node-dragend',
+	'node-drop',
+	'node-dragleave',
+	'node-dragenter',
+	'node-dragover'
+] as const;
+export type TreeEmits = (typeof emits)[number][];

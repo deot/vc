@@ -3,10 +3,9 @@
 import { getCurrentInstance, defineComponent, inject, ref, computed, nextTick, watch, onMounted, onBeforeUnmount, withModifiers, toRaw } from 'vue';
 import type { PropType } from 'vue';
 import { raf, caf } from '@deot/helper-utils';
+import { toPx, toRem } from '@deot/vc-shared';
 import type { TreeNode } from './store';
-import { Checkbox } from '../checkbox';
 import { Customer } from '../customer';
-import { Spin } from '../spin';
 import { Icon } from '../icon';
 import { props as treeNodeProps } from './tree-node-content-props';
 import type {
@@ -141,6 +140,10 @@ export const TreeNodeContent = defineComponent({
 	setup(props) {
 		const instance = getCurrentInstance()!;
 		const tree = inject<TreeProvide>('vc-tree')!;
+		const { Checkbox, Spin } = tree.components;
+		// 缩进与加载图标：移动端为 750 稿长度
+		const toLength = tree.mobile ? toRem : toPx;
+		const spinSize = tree.mobile ? 24 : 12;
 
 		// 行的根节点在组件生命周期内不变：挂载时登记即可
 		onMounted(() => tree.registerRow(props.node, instance));
@@ -226,7 +229,7 @@ export const TreeNodeContent = defineComponent({
 					onContextmenu={handleContextMenu}
 				>
 					<div
-						style={[{ 'padding-left': (node.states.level - 1) * tree.props.indent + 'px' }]}
+						style={{ 'padding-left': toLength((node.states.level - 1) * tree.props.indent) }}
 						class="vc-tree-node__content"
 					>
 						<span
@@ -264,7 +267,7 @@ export const TreeNodeContent = defineComponent({
 						{
 							node.states.loading && (
 								<Spin
-									size={12}
+									size={spinSize}
 									class="vc-tree-node__loading-icon"
 								/>
 							)

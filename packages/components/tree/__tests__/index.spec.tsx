@@ -132,7 +132,8 @@ describe('index.ts', () => {
 
 	it('basic', () => {
 		expect(typeof Tree).toBe('object');
-		expect(MTree).toBe(Tree);
+		// MTree 为独立的移动端组件（见 mobile.spec.tsx），MTreeSelect 暂时沿用 TreeSelect
+		expect(MTree).not.toBe(Tree);
 		expect(MTreeSelect).toBe(TreeSelect);
 	});
 
