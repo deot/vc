@@ -2,14 +2,14 @@
 
 import { defineComponent, ref, computed, nextTick } from 'vue';
 import { getUid } from '@deot/helper-utils';
-import { walkTree, getTreeDepth } from '../select/utils';
-import type { TreeData } from '../select/utils';
-import { Popover } from '../popover/index';
-import { SelectTrigger } from '../select/select-trigger';
-import { SelectSearch } from '../select/select-search';
-import { useSelect, useSelectValue, useSelectedCache } from '../select/hooks/use-select';
-import { useColumnDirection } from '../cascader/hooks/use-column-direction';
-import { useLocale } from '../locale';
+import { walkTree, getTreeDepth } from '../../select/utils';
+import type { TreeData } from '../../select/utils';
+import { Popover } from '../../popover/index';
+import { SelectTrigger } from '../../select/select-trigger';
+import { SelectSearch } from '../../select/select-search';
+import { useSelect, useSelectValue, useSelectedCache } from '../../select/hooks/use-select';
+import { useColumnDirection } from '../../cascader/hooks/use-column-direction';
+import { useLocale } from '../../locale';
 import { TreeSelectContent } from './tree-select-content';
 import { TreeSelectContentCascader } from './tree-select-content-cascader';
 import { props as treeSelectProps } from './tree-select-props';

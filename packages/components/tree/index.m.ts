@@ -1,5 +1,5 @@
 import { MTree } from './mobile/tree.tsx';
-import { TreeSelect } from './tree-select.tsx';
+import { TreeSelect } from './tree-select';
 import './style.scss';
 import './mobile/style.scss';
 

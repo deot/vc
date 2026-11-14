@@ -1,7 +1,7 @@
 import { defineComponent } from 'vue';
 import { emits as treeEmits } from '../tree-props';
 import { props as treeProps } from './tree-props';
-import { useTree } from '../use-tree';
+import { useTree } from '../hooks/use-tree';
 import type { TreeComponents } from '../types';
 import { MCheckbox } from '../../checkbox/index.m';
 import { MRecycleList } from '../../recycle-list/index.m';

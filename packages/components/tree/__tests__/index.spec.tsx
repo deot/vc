@@ -8,10 +8,9 @@ import { vi, onTestFinished } from 'vitest';
 import { TreeNode, TreeStore } from '../store';
 import { getChildState, markNodeData } from '../store/tree-node';
 import { KEY_VALUE } from '../store/constant';
-import { TreeSelectContent } from '../tree-select-content';
+import { TreeSelectContent, TreeSelectContentCascader } from '../tree-select';
 import { renderHighlight } from '../../select/select-search';
 import { createSearchRegex } from '../../select/utils';
-import { TreeSelectContentCascader } from '../tree-select-content-cascader';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 

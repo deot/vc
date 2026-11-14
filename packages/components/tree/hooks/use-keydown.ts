@@ -1,5 +1,5 @@
-import type { TreeNode } from './store';
-import { findEnabled, findPreferred } from '../select/hooks/use-navigate';
+import type { TreeNode } from '../store';
+import { findEnabled, findPreferred } from '../../select/hooks/use-navigate';
 
 interface KeydownOptions {
 	// 铺平的可见节点

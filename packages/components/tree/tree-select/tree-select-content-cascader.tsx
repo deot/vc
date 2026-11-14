@@ -2,19 +2,19 @@
 
 import { defineComponent, ref, computed, watch } from 'vue';
 import type { PropType } from 'vue';
-import { renderType } from '../customer/customer-props';
-import { findIndexByValue } from '../select/utils';
-import type { TreeData, TreeValue, SearchRegex } from '../select/utils';
-import { Checkbox } from '../checkbox/index';
-import { Customer } from '../customer/index';
-import { useLocale } from '../locale';
-import { TreeStore, KEY_VALUE } from './store';
-import type { TreeCheckStrategy } from './types';
-import { SelectPaths } from '../select/select-search';
-import type { SelectPath } from '../select/select-search';
-import { CascaderColumns } from '../cascader/cascader-columns';
-import type { CascaderCell } from '../cascader/cascader-columns';
-import { useColumnNavigate } from '../select/hooks/use-navigate';
+import { renderType } from '../../customer/customer-props';
+import { findIndexByValue } from '../../select/utils';
+import type { TreeData, TreeValue, SearchRegex } from '../../select/utils';
+import { Checkbox } from '../../checkbox/index';
+import { Customer } from '../../customer/index';
+import { useLocale } from '../../locale';
+import { TreeStore, KEY_VALUE } from '../store';
+import type { TreeCheckStrategy } from '../types';
+import { SelectPaths } from '../../select/select-search';
+import type { SelectPath } from '../../select/select-search';
+import { CascaderColumns } from '../../cascader/cascader-columns';
+import type { CascaderCell } from '../../cascader/cascader-columns';
+import { useColumnNavigate } from '../../select/hooks/use-navigate';
 
 const COMPONENT_NAME = 'vc-tree-select-content-cascader';
 

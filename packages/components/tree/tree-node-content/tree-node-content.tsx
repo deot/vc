@@ -4,15 +4,15 @@ import { getCurrentInstance, defineComponent, inject, ref, computed, nextTick, w
 import type { PropType } from 'vue';
 import { raf, caf } from '@deot/helper-utils';
 import { toPx, toRem } from '@deot/vc-shared';
-import type { TreeNode } from './store';
-import { Customer } from '../customer';
-import { Icon } from '../icon';
+import type { TreeNode } from '../store';
+import { Customer } from '../../customer';
+import { Icon } from '../../icon';
 import { props as treeNodeProps } from './tree-node-content-props';
 import type {
 	TreeCurrentChangePayload,
 	TreeNodeEventPayload,
 	TreeProvide
-} from './types';
+} from '../types';
 
 const COMPONENT_NAME = 'vc-tree-node';
 

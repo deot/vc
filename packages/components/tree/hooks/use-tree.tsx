@@ -3,7 +3,7 @@
 import { provide, ref, computed, watch, getCurrentInstance, shallowReactive, inject, nextTick, onMounted } from 'vue';
 import type { ComponentInternalInstance, SetupContext } from 'vue';
 import { isEqualWith } from 'lodash-es';
-import type { TreeNode } from './store/tree-node';
+import type { TreeNode } from '../store/tree-node';
 import type {
 	TreeCheckChangePayload,
 	TreeCheckPayload,
@@ -11,23 +11,23 @@ import type {
 	TreeHighlightProvide,
 	TreeNodeExpandChangePayload,
 	TreeProvide
-} from './types';
-import { KEY_VALUE } from './store/constant';
-import { TreeStore } from './store/tree-store';
-import { toCurrentValue, toModelValue } from '../select/utils';
-import { Checkbox as DesktopCheckbox } from '../checkbox';
-import { Customer } from '../customer';
-import { useLocale } from '../locale';
-import { RecycleList as DesktopRecycleList } from '../recycle-list/index';
-import { Spin as DesktopSpin } from '../spin';
-import { SelectList } from '../select/select-list';
-import type { SelectListExposed } from '../select/select-list';
-import { useNavigate } from '../select/hooks/use-navigate';
-import { TreeNodeContent, collectVisibleNodes } from './tree-node-content.tsx';
+} from '../types';
+import { KEY_VALUE } from '../store/constant';
+import { TreeStore } from '../store/tree-store';
+import { toCurrentValue, toModelValue } from '../../select/utils';
+import { Checkbox as DesktopCheckbox } from '../../checkbox';
+import { Customer } from '../../customer';
+import { useLocale } from '../../locale';
+import { RecycleList as DesktopRecycleList } from '../../recycle-list/index';
+import { Spin as DesktopSpin } from '../../spin';
+import { SelectList } from '../../select/select-list';
+import type { SelectListExposed } from '../../select/select-list';
+import { useNavigate } from '../../select/hooks/use-navigate';
+import { TreeNodeContent, collectVisibleNodes } from '../tree-node-content';
 import { useDragNode } from './use-drag-node';
 import { useKeydown, isNodeEnabled, resolveShift } from './use-keydown';
 
-import type { Props, TreeEmits } from './tree-props';
+import type { Props, TreeEmits } from '../tree-props';
 
 const COMPONENT_NAME = 'vc-tree';
 

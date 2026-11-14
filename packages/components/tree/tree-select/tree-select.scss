@@ -1,4 +1,4 @@
-@use '../style/helper' as *;
+@use '../../style/helper' as *;
 
 $color-dark-lighter: varfix(color-dark-lighter, tree-select);
 $color-dark-extralight: varfix(color-dark-extralight, tree-select);

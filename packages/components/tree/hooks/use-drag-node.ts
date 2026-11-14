@@ -10,11 +10,11 @@ import {
 	resolveOuterCarrier,
 	toRootOffset,
 	useDragDrop
-} from '../drag';
-import type { DragDropState, RootOffset } from '../drag';
-import type { ExternalCarrier } from '../scroller/core/carrier';
-import type { TreeStore, TreeNode } from './store';
-import type { Props } from './tree-props';
+} from '../../drag';
+import type { DragDropState, RootOffset } from '../../drag';
+import type { ExternalCarrier } from '../../scroller/core/carrier';
+import type { TreeStore, TreeNode } from '../store';
+import type { Props } from '../tree-props';
 import type {
 	TreeAllowDropPayload,
 	TreeDropPlace,
@@ -24,7 +24,7 @@ import type {
 	TreeNodeDragOverPayload,
 	TreeNodeDragPayload,
 	TreeNodeDropPayload
-} from './types';
+} from '../types';
 
 // 节点在父节点子节点中的下标
 const indexIn = (parent: TreeNode, node: TreeNode) => {

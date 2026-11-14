@@ -1,6 +1,6 @@
 import { defineComponent } from 'vue';
 import { props as treeProps, emits as treeEmits } from './tree-props';
-import { useTree } from './use-tree';
+import { useTree } from './hooks/use-tree';
 
 const COMPONENT_NAME = 'vc-tree';
 

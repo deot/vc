@@ -2,12 +2,12 @@
 
 import { defineComponent, provide, ref, shallowRef, watch } from 'vue';
 import type { PropType } from 'vue';
-import { renderType } from '../customer/customer-props';
-import { useLocale } from '../locale';
-import { renderHighlight } from '../select/select-search';
-import type { SearchRegex } from '../select/utils';
-import { Tree } from './tree';
-import type { TreeCheckStrategy, TreeHighlightProvide } from './types';
+import { renderType } from '../../customer/customer-props';
+import { useLocale } from '../../locale';
+import { renderHighlight } from '../../select/select-search';
+import type { SearchRegex } from '../../select/utils';
+import { Tree } from '../tree';
+import type { TreeCheckStrategy, TreeHighlightProvide } from '../types';
 
 const COMPONENT_NAME = 'vc-tree-select-content';
 
