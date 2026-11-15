@@ -15,7 +15,8 @@ describe('index.ts', () => {
 	it('basic', () => {
 		expect(typeof Steps).toBe('object');
 		expect(typeof Step).toBe('object');
-		expect(MSteps).toBe(Steps);
+		expect(typeof MSteps).toBe('object');
+		expect(MSteps).not.toBe(Steps);
 		expect(MStep).toBe(Step);
 	});
 
@@ -369,5 +370,30 @@ describe('index.ts', () => {
 
 		await wrapper.trigger('click');
 		expect(wrapper.classes()).not.toContain('is-clickable');
+	});
+
+	it('MSteps: 与 Steps 结构相同，根节点另有标记类 vcm-steps，labelPosition 默认 bottom', async () => {
+		const current = ref(1);
+		const wrapper = mount(() => (
+			<MSteps modelValue={current.value} clickable onUpdate:modelValue={(v: number) => current.value = v}>
+				<MStep title="A" />
+				<MStep title="B" />
+			</MSteps>
+		));
+
+		expect(wrapper.classes()).toEqual(['vc-steps', 'vcm-steps', 'is-horizontal', 'is-default', 'is-label-bottom', 'is-clickable']);
+		expect(wrapper.findAll('.vc-step__tail').length).toBe(2);
+
+		await items(wrapper)[1].trigger('click');
+		expect(current.value).toBe(2);
+		expect(statuses(wrapper)).toEqual(['is-success', 'is-pending']);
+	});
+
+	it('MSteps: labelPosition 映射同 Steps', () => {
+		const render = (props: any) => mount(() => (<MSteps {...props}><MStep /></MSteps>));
+
+		expect(labelClass(render({ vertical: true }))).toBe('is-label-right');
+		expect(labelClass(render({ labelPosition: 'right' }))).toBe('is-label-right');
+		expect(labelClass(render({ type: 'dot' }))).toBe('is-label-bottom');
 	});
 });

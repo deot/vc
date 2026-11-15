@@ -271,6 +271,46 @@ const current = ref(2);
 ```
 :::
 
+## 移动端
+
+`MSteps` 的属性、事件、插槽、结构与 `Steps` 相同，根节点另有标记类 `.vcm-steps`，结构样式、颜色与主题参数共用；`MStep` 即 `Step`。`labelPosition` 默认为 `bottom`：手机宽度下标题在节点右侧会被挤窄。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 根节点 | 字号 28（14） |
+| 节点 | 36（18），序号字号 24（12），成功 / 失败图标 20（10） |
+| 标题 | 字号 28（14），行高同节点 36（18） |
+| 描述 | 字号 24（12），与标题间距 4（2） |
+| 间距 | 节点与标题 24（12）；连线与节点 18（9）；文字在节点下方时与节点 10（5） |
+| 纵向 | 不设最小高度，内容与下一步间距 50（25），连线与节点间距 10（5） |
+| 圆点 | 16（8），边框 3（1.5），当前步不放大 |
+| `arrow` | 每步高 96（48），左内边距 24（12） |
+
+与桌面端的差异：
+
+- 标题颜色随状态：当前步为主色（`color-primary`），失败步为错误色（`color-error`），未开始与描述同为 `color-dark-extralight`；`arrow` 的底色上仍为对比文字色。
+- 圆点：未开始为灰色空心环（`color-light-deepest`），已完成为主色空心环，当前步与失败步为实心；当前步靠实心区分，不放大。
+- 可点击的步骤去掉系统的点击高亮。
+
+两端的尺寸都写成局部变量 `--vc-steps-<键>`（见“主题与局部覆盖”），移动端在 `.vcm-steps` 上覆盖，与样式的加载顺序无关。
+
+```vue
+<template>
+	<MSteps v-model="current" clickable>
+		<MStep title="提交申请" description="09-01 10:00" />
+		<MStep title="审核中" />
+		<MStep title="完成" />
+	</MSteps>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MSteps, MStep } from '@deot/vc';
+
+const current = ref(2);
+</script>
+```
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-steps-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
@@ -284,11 +324,11 @@ const current = ref(2);
 | color-contrast-light | 当前及错误步骤标记文字、arrow 的 pending/error 标题和描述（含悬停） | `#FFFFFF`（亮暗主题相同） |
 | color-dark-light | 步骤标题 | 亮色：`#080F20`；暗色：`#E8E8E8` |
 | color-dark-lighter | 未激活图标和标题 | 亮色：`#515151`；暗色：`#D9D9D9` |
-| color-dark-extralight | 步骤描述 | 亮色：`#909399`；暗色：`#B9B9B9` |
-| color-error | 错误步骤及错误连接线 | `#F53F3F` |
-| color-light-deepest | 默认点及导航箭头 | 亮色：`#C0C4CC`；暗色：`#E8E8E8` |
+| color-dark-extralight | 步骤描述；移动端未开始步骤的标题 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-error | 错误步骤及错误连接线；移动端失败步骤的标题 | `#F53F3F` |
+| color-light-deepest | 默认点（移动端为空心环）及导航箭头 | 亮色：`#C0C4CC`；暗色：`#E8E8E8` |
 | color-neutral-light | 默认连接线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
-| color-primary | 当前、完成步骤及已完成连接线；可点击步骤悬停文字（arrow 的 pending/error 除外） | `#456CF6` |
+| color-primary | 当前、完成步骤及已完成连接线；可点击步骤悬停文字（arrow 的 pending/error 除外）；移动端当前步骤的标题 | `#456CF6` |
 | color-primary-lighter | 完成步骤背景 | `rgba(45, 140, 240, 0.2)` |
 | background-color | 未激活步骤背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
 | background-color-lightest | 箭头及导航步骤间隔背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
@@ -403,4 +443,4 @@ const current = ref(2);
   - `--vc-steps-color-dark-extralight`：描述
   - `--vc-steps-color-contrast-light`：主色、错误色底色上的文字（含 arrow 悬停），默认 `#fff`
   - `--vc-steps-background-color-lightest`：`arrow` 的分隔缺口与 `navigation` 箭头的背景，应与所在容器的背景一致
-- `MSteps`、`MStep` 分别是 `Steps`、`Step` 的别名，使用同一实现与样式，可从 `@deot/vc` 导入。
+- `MSteps` 与 `Steps` 共用实现，见“移动端”；`MStep` 是 `Step` 的别名。

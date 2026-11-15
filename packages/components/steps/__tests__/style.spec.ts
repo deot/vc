@@ -4,6 +4,7 @@ import postcss from 'postcss';
 
 const compile = (file: string) => postcss.parse(sass.compile(new URL(file, import.meta.url).pathname).css);
 const css = compile('../style.scss');
+const mobileCss = compile('../mobile/style.scss');
 
 const colorsFor = (selector: string) => {
 	const colors: string[] = [];
@@ -63,5 +64,12 @@ describe('Steps local sizes', () => {
 		const icon = declarations(css, '.vc-step__icon');
 		expect(icon.width).toBe('var(--vc-steps-icon-size, 28px)');
 		expect(declarations(css, '.vc-steps')['font-size']).toBe('var(--vc-steps-font-size, 14px)');
+	});
+
+	it('MSteps overrides the variables on .vcm-steps in 750 units', () => {
+		const vars = declarations(mobileCss, '.vcm-steps');
+		expect(vars['--vc-steps-icon-size']).toBe('calc(var(--vc-rem) * 36)');
+		expect(vars['--vc-steps-title-font-size']).toBe('calc(var(--vc-rem) * 28)');
+		expect(vars['--vc-steps-vertical-min-height']).toBe('0');
 	});
 });

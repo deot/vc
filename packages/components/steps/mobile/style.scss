@@ -1,0 +1,70 @@
+@use '../../style/helper' as *;
+
+$color-dark-extralight: varfix(color-dark-extralight, steps);
+$color-error: varfix(color-error, steps);
+$color-light-deepest: varfix(color-light-deepest, steps);
+$color-primary: varfix(color-primary, steps);
+
+// MSteps：结构与 Steps 相同，尺寸按 750 稿覆盖局部变量（括号内为 375 宽下的 px）
+@include block(vcm-steps) {
+	@include localvars(steps, (
+		font-size: remfix(28),
+		icon-size: remfix(36), // 18
+		icon-font-size: remfix(24), // 12
+		status-icon-size: remfix(20), // 10
+		gap: remfix(24), // 12：节点与标题、项与项
+		line-gap: remfix(18), // 9：连线与节点
+		label-gap: remfix(10), // 5：文字在节点下/上方时与节点
+		title-font-size: remfix(28), // 14
+		description-font-size: remfix(24), // 12
+		description-gap: remfix(4),
+		description-width: remfix(280),
+		vertical-min-height: 0,
+		vertical-spacing: remfix(50), // 25：纵向各步之间
+		vertical-line-gap: remfix(10),
+		dot-size: remfix(16), // 8
+		dot-active-size: remfix(16), // 当前步不放大，靠实心区分
+		dot-gap: remfix(8),
+		dot-spacing: remfix(12),
+		dot-vertical-top: remfix(10),
+		dot-vertical-spacing: remfix(24),
+		arrow-height: remfix(96), // 48
+		arrow-padding: remfix(24)
+	));
+
+	// 标题颜色随状态：当前步主色、失败步错误色、未开始与描述同为浅色；arrow 的底色上保留对比文字色
+	&:not(.is-arrow) > .vc-step {
+		&.is-pending > .vc-step__content > .vc-step__title {
+			color: $color-primary;
+		}
+
+		&.is-error > .vc-step__content > .vc-step__title {
+			color: $color-error;
+		}
+
+		&.is-default > .vc-step__content > .vc-step__title {
+			color: $color-dark-extralight;
+		}
+	}
+
+	// 圆点：未开始灰环、已完成主色环、当前（及失败）实心
+	&.vc-steps.is-dot > .vc-step {
+		> .vc-step__dot .vc-step__icon {
+			border: remfix(3) solid transparent;
+		}
+
+		&.is-default > .vc-step__dot .vc-step__icon {
+			background-color: transparent;
+			border-color: $color-light-deepest;
+		}
+
+		&.is-success > .vc-step__dot .vc-step__icon {
+			background-color: transparent;
+			border-color: $color-primary;
+		}
+	}
+
+	> .vc-step.is-clickable {
+		-webkit-tap-highlight-color: transparent;
+	}
+}

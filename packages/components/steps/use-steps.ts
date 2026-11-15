@@ -5,17 +5,21 @@ import type { Props, StepStatus } from './steps-props';
 import { Step } from './step';
 
 /**
- * Steps 的 setup；Step 通过注入键 vc-steps 读取
+ * Steps 与 MSteps 共用；Step 通过注入键 vc-steps 读取
  * @param props ~
  * @param context ~
  * @param context.slots ~
  * @param context.emit ~
+ * @param options ~
+ * @param options.mobile 移动端（MSteps）：根节点加标记类 vcm-steps，尺寸由 mobile/style.scss 覆盖局部变量
  * @returns render
  */
 export const useSteps = (
 	props: Props,
-	{ slots, emit }: SetupContext<['update:modelValue', 'change']>
+	{ slots, emit }: SetupContext<['update:modelValue', 'change']>,
+	options: { mobile?: boolean } = {}
 ) => {
+	const name = options.mobile ? 'vc-steps vcm-steps' : 'vc-steps';
 	const currentValue = ref(props.modelValue);
 
 	// arrow/navigation只支持横向
@@ -81,7 +85,7 @@ export const useSteps = (
 			props.tag,
 			{
 				class: [
-					'vc-steps',
+					name,
 					`is-${isVertical.value ? 'vertical' : 'horizontal'}`,
 					`is-${props.type}`,
 					{
