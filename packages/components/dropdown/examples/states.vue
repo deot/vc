@@ -12,6 +12,15 @@
 			</template>
 		</Dropdown>
 		<p>排序：{{ sort }}；菜单{{ isVisible ? '已展开' : '已关闭' }}</p>
+		<Dropdown caret placement="bottom-left" @click="handleClick">
+			<span>{{ sort === 'time' ? '按时间排序' : '按名称排序' }}</span>
+			<template #content>
+				<DropdownMenu>
+					<DropdownItem value="time" :selected="sort === 'time'" label="按时间排序" />
+					<DropdownItem value="name" :selected="sort === 'name'" label="按名称排序" />
+				</DropdownMenu>
+			</template>
+		</Dropdown>
 	</div>
 </template>
 

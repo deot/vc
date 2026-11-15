@@ -16,7 +16,7 @@ export const Dropdown = defineComponent({
 	setup(props, context) {
 		const { slots, emit } = context;
 		const its = useAttrs({ merge: false });
-		const { isActive, handleChange } = useDropdown(props, context);
+		const { isActive, classes, renderTrigger, handleChange } = useDropdown(props, context);
 
 		const inherit = computed(() => {
 			return {
@@ -42,7 +42,7 @@ export const Dropdown = defineComponent({
 					scrollable={props.scrollable}
 					scrollerOptions={props.scrollerOptions}
 					portalClass={['is-padding-none', 'vc-dropdown-wrapper', props.portalClass]}
-					class={['vc-dropdown', inherit.value.class]}
+					class={[classes.value, inherit.value.class]}
 					style={inherit.value.style}
 					onReady={() => emit('ready')}
 					onClose={() => emit('close')}
@@ -50,7 +50,7 @@ export const Dropdown = defineComponent({
 					onVisibleChange={handleChange}
 				>
 					{{
-						default: () => slots?.default?.(),
+						default: renderTrigger,
 						header: slots.header,
 						content: () => slots?.content?.(),
 						footer: slots.footer

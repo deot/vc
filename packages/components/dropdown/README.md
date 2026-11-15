@@ -60,7 +60,7 @@ const handleClick = (value) => {
 
 ### 点击触发与菜单项状态
 
-`selected` 只控制选中样式，选中值由调用方维护。`disabled` 阻止菜单项事件和关闭；`:closable="false"` 允许连续选择。`divided` 添加上分割线，`arrow` 显示箭头。
+`selected` 只控制选中样式，选中值由调用方维护。`disabled` 阻止菜单项事件和关闭；`:closable="false"` 允许连续选择。`divided` 添加上分割线，`arrow` 显示浮层的箭头，`caret` 在触发内容之后显示箭头（展开时翻转）。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
@@ -87,6 +87,15 @@ const handleClick = (value) => {
 			</template>
 		</Dropdown>
 		<p>排序：{{ sort }}；菜单{{ isVisible ? '已展开' : '已关闭' }}</p>
+		<Dropdown caret placement="bottom-left" @click="handleClick">
+			<span>{{ sort === 'time' ? '按时间排序' : '按名称排序' }}</span>
+			<template #content>
+				<DropdownMenu>
+					<DropdownItem value="time" :selected="sort === 'time'" label="按时间排序" />
+					<DropdownItem value="name" :selected="sort === 'name'" label="按名称排序" />
+				</DropdownMenu>
+			</template>
+		</Dropdown>
 	</div>
 </template>
 
@@ -218,7 +227,22 @@ const handleClose = () => {
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+尺寸写成局部变量 `--vc-dropdown-<键>`，可在组件根节点、菜单弹层或其祖先上单独覆盖。
+
+| 参数 | 使用位置 | 默认值 |
+| --- | --- | --- |
+| icon-size | `caret` 箭头大小 | `12px` |
+| icon-gap | `caret` 箭头与触发内容的间距 | `4px` |
+| icon-color | `caret` 箭头颜色（收起） | `currentcolor` |
+| icon-transform | `caret` 箭头变换（收起） | `scale(0.8)` |
+| icon-active-color | `caret` 箭头颜色（展开） | `currentcolor` |
+| icon-active-transform | `caret` 箭头变换（展开） | `scale(0.8) rotate(180deg)` |
+| menu-min-width | 菜单最小宽度 | `100px` |
+| item-padding | 菜单项内边距 | `7px 16px` |
+| item-font-size | 菜单项字号 | `12px` |
+| item-line-height | 菜单项行高 | `normal` |
+| item-color | 菜单项文字 | 全局 `color-dark-lighter` |
+| divided-gap | `divided` 分割线上方的间距 | `5px` |
 
 ## API
 
@@ -229,7 +253,8 @@ const handleClose = () => {
 | modelValue | 是否显示菜单，支持 `v-model`，适用于所有触发模式 | `boolean` | - | `false` |
 | trigger | 触发方式；`custom` 由调用方控制，`strictHover` 移出触发区即延时关闭，`focus` 需触发根节点可聚焦 | `string` | `hover` / `strictHover` / `click` / `focus` / `custom` | `hover` |
 | placement | 首选弹出位置 | `string` | `top` / `top-left` / `top-right` / `bottom` / `bottom-left` / `bottom-right` / `left` / `left-top` / `left-bottom` / `right` / `right-top` / `right-bottom` | `bottom` |
-| arrow | 是否显示箭头 | `boolean` | - | `false` |
+| arrow | 是否显示浮层的箭头 | `boolean` | - | `false` |
+| caret | 是否在触发内容之后显示箭头；展开时翻转 | `boolean` | - | `false` |
 | portalClass | 浮层附加类名 | `string \| object` | - | - |
 
 其他属性透传给 Popover，例如 `portal`、`portalStyle`、`to`、`outsideClickable` 和 `tag`；`class`、`style` 应用于触发根节点。`focus` 模式可搭配 `tabindex="0"`。当前不支持 `contextMenu` 触发。

@@ -1,3 +1,4 @@
+@use 'sass:map';
 @use '../style/helper' as *;
 
 $component-name: vc-dropdown;
@@ -7,12 +8,49 @@ $color-neutral-light: varfix(color-neutral-light, dropdown);
 $color-primary: varfix(color-primary, dropdown);
 $background-color-primary-light: varfix(background-color-primary-light, dropdown);
 
+// 尺寸写成局部变量 --vc-dropdown-<键>（默认值为下表），可单独覆盖
+// - icon-*：caret 箭头；transform 为收起时，active-transform 为展开时
+// - menu-min-width：菜单最小宽度；item-*：菜单项；divided-gap：divided 分割线上方的间距
+$sizes: (
+	icon-size: unitfix(12),
+	icon-gap: unitfix(4),
+	icon-color: currentcolor,
+	icon-transform: scale(.8),
+	icon-active-color: currentcolor,
+	icon-active-transform: scale(.8) rotate(180deg),
+	menu-min-width: unitfix(100),
+	item-padding: unitfix(7) unitfix(16),
+	item-font-size: unitfix(12),
+	item-line-height: normal,
+	item-color: $color-dark-lighter,
+	divided-gap: unitfix(5)
+);
+
+@function v($key) {
+	@return localfix(dropdown, $key, map.get($sizes, $key));
+}
+
 @include block(vc-dropdown) {
 	display: inline-block;
+
+	> .vc-dropdown__icon {
+		margin-left: v(icon-gap);
+		font-size: v(icon-size);
+		color: v(icon-color);
+		transform: v(icon-transform);
+		transition: transform .2s ease-in-out;
+	}
+
+	@include when(active) {
+		> .vc-dropdown__icon {
+			color: v(icon-active-color);
+			transform: v(icon-active-transform);
+		}
+	}
 }
 
 @include block(vc-dropdown-menu) {
-	min-width: unitfix(100);
+	min-width: v(menu-min-width);
 	padding: 0;
 	margin: 0;
 	list-style: none;
@@ -20,30 +58,34 @@ $background-color-primary-light: varfix(background-color-primary-light, dropdown
 
 @include block(vc-dropdown-item) {
 	position: relative;
-	padding: unitfix(7) unitfix(16);
+	padding: v(item-padding);
 	margin: 0;
 	clear: both;
-	font-size: unitfix(12) !important;
-	line-height: normal;
-	color: $color-dark-lighter;
+	font-size: v(item-font-size) !important;
+	line-height: v(item-line-height);
+	color: v(item-color);
 	white-space: nowrap;
 	list-style: none;
 	cursor: pointer;
 	box-sizing: border-box;
 	transition: background .2s ease-in-out;
 
-
-	&:hover {
-		color: $color-primary;
-		background-color: $background-color-primary-light;
+	// 只在可悬停的设备上：触屏点按后悬停态会一直停留
+	@media (hover: hover) {
+		&:hover {
+			color: $color-primary;
+			background-color: $background-color-primary-light;
+		}
 	}
 
 	@include when(disabled) {
 		color: $color-dark-extralight;
 		cursor: not-allowed;
 
-		&:hover {
-			background-color: transparent;
+		@media (hover: hover) {
+			&:hover {
+				background-color: transparent;
+			}
 		}
 	}
 
@@ -52,7 +94,7 @@ $background-color-primary-light: varfix(background-color-primary-light, dropdown
 	}
 
 	@include when(divided) {
-		margin-top: unitfix(5);
+		margin-top: v(divided-gap);
 
 		@include common-border-1px('top', $color-neutral-light); }
 }

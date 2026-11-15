@@ -1,19 +1,27 @@
+/** @jsxImportSource vue */
+
 import type { SetupContext } from 'vue';
-import { watch, ref } from 'vue';
+import { watch, ref, computed } from 'vue';
 import { getUid } from '@deot/helper-utils';
-import type { Props } from './dropdown-props';
+import { Icon } from '../icon';
+
+interface Props {
+	modelValue: boolean;
+	caret: boolean;
+}
 
 /**
- * Dropdown 与 MDropdown 共用：显隐状态、v-model 同步与 close
+ * 显隐状态、v-model 同步、close 与触发区内容
  * @param props ~
  * @param context ~
+ * @param context.slots ~
  * @param context.emit ~
  * @param context.expose ~
  * @returns ~
  */
 export const useDropdown = (
 	props: Props,
-	{ emit, expose }: SetupContext<['update:modelValue', 'ready', 'close', 'visible-change', 'click']>
+	{ slots, emit, expose }: SetupContext<['update:modelValue', 'ready', 'close', 'visible-change', 'click']>
 ) => {
 	const isActive = ref(false);
 	const dropdownId = ref(getUid('dropdown'));
@@ -49,8 +57,22 @@ export const useDropdown = (
 		dropdownId
 	});
 
+	const classes = computed(() => {
+		return ['vc-dropdown', { 'is-active': isActive.value }];
+	});
+
+	// 触发区：默认插槽，caret 时其后接箭头（与 Select 触发框的箭头一致，展开时由样式翻转）
+	const renderTrigger = () => {
+		return [
+			slots.default?.(),
+			props.caret && (<Icon type="down" class="vc-dropdown__icon" />)
+		];
+	};
+
 	return {
 		isActive,
+		classes,
+		renderTrigger,
 		handleChange,
 		close
 	};

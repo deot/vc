@@ -18,7 +18,13 @@ export const props = {
 		type: String,
 		default: 'hover'
 	},
+	// 弹出浮层的箭头
 	arrow: {
+		type: Boolean,
+		default: false
+	},
+	// 触发区内容之后的箭头，展开时翻转
+	caret: {
 		type: Boolean,
 		default: false
 	},

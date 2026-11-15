@@ -3,11 +3,11 @@ import type { ExtractPropTypes } from 'vue';
 export const props = {
 	value: {
 		type: [String, Number],
-		value: undefined
+		default: undefined
 	},
 	label: {
 		type: [String, Number],
-		value: undefined
+		default: undefined
 	},
 	disabled: {
 		type: Boolean,

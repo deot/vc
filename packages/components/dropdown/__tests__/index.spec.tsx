@@ -456,3 +456,33 @@ describe('Dropdown 固定区与滚动', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('caret', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('默认不渲染；caret 时在触发内容之后渲染箭头，展开时根节点加 is-active', async () => {
+		const plain = mount(() => (<Dropdown>菜单</Dropdown>));
+		expect(plain.find('.vc-dropdown__icon').exists()).toBe(false);
+		plain.unmount();
+
+		const wrapper = mount(() => (
+			<Dropdown caret trigger="click">
+				{{
+					default: () => <span class="label">菜单</span>,
+					content: () => <DropdownMenu><DropdownItem label="驴打滚" /></DropdownMenu>
+				}}
+			</Dropdown>
+		), { attachTo: document.body });
+		const icon = wrapper.find('.vc-dropdown__icon');
+		expect(icon.exists()).toBe(true);
+		expect(wrapper.find('.label').element.nextElementSibling).toBe(icon.element);
+		expect(wrapper.classes()).not.toContain('is-active');
+
+		await wrapper.trigger('click');
+		await flush();
+		expect(wrapper.classes()).toContain('is-active');
+		wrapper.unmount();
+	});
+});
