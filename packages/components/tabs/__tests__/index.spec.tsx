@@ -1067,6 +1067,7 @@ describe('index.ts', () => {
 		const fakeAffix = {
 			props: { placement: 'bottom', offset: 50 },
 			getOffset: () => 50,
+			getScroller: () => scroller,
 			onScroll: () => {},
 			offScroll: () => {}
 		};
@@ -1140,6 +1141,7 @@ describe('index.ts', () => {
 		const fakeAffix = {
 			props: { placement: 'top', offset: 0 },
 			getOffset: () => 0,
+			getScroller: () => scroller,
 			onScroll: (cb: () => void) => { listeners.add(cb); },
 			offScroll: (cb: () => void) => { listeners.delete(cb); }
 		};
@@ -1165,6 +1167,7 @@ describe('index.ts', () => {
 		// 触发 affix scroll callback —— scrollTop=250 落在 a2 与 a3 之间，应切到 a2
 		listeners.forEach(cb => cb());
 		await flush();
+		expect(wrapper.findComponent(Tabs).emitted('update:modelValue')?.at(-1)?.[0]).toBe('a2');
 
 		wrapper.unmount();
 		document.body.removeChild(scroller);

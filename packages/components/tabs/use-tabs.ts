@@ -124,7 +124,7 @@ export const useTabs = (
 		if (!anchor) return;
 		const el = document.querySelector(anchor);
 		if (!el) return;
-		const scroller = getScroller(instance.vnode.el) as any;
+		const scroller = (affix?.getScroller() || getScroller(instance.vnode.el)) as any;
 		// 以滚动容器去掉边框与 padding 后的可视区为参照（与 Affix 的 sticky 吸附线一致）
 		const viewport = getViewportRect(scroller);
 
@@ -147,7 +147,8 @@ export const useTabs = (
 	 */
 	const handleAffixScroll = () => {
 		if (!hasAnchor.value || scrollToAnchorTimer) return;
-		const scroller = getScroller(instance.vnode.el) as any;
+		// 只经 Affix 的滚动回调进入：取它已缓存的滚动容器
+		const scroller = affix.getScroller() as any;
 		const scrollTop = scroller?.scrollTop;
 		if (typeof scrollTop !== 'number') return;
 		const viewport = getViewportRect(scroller);

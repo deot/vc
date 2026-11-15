@@ -160,8 +160,12 @@ const isActive = ref(false);
 | refresh | 重新计算位置并同步固定状态 | - | `void` |
 | onScroll | 在当前滚动源上注册回调；`options.first` 为 `true` 时注册后立即执行 | `handler: () => void`，`options?: { first?: boolean }` | 用于取消注册的 `() => void` |
 | offScroll | 从当前滚动源移除回调 | `handler: () => void` | `void` |
+| getOffset | 吸附偏移换算成的 CSS px（`MAffix` 的数字 `offset` 为 750 稿，字符串为 CSS 长度，均按实际尺寸给出） | - | `number` |
+| getScroller | 固钉所在的滚动容器（最近一层），挂载前为 `undefined` | - | `HTMLElement \| Window \| undefined` |
 
-`onScroll` 的滚动源：固钉所在的滚动容器正是外层 `Scroller` 时订阅其滚动通知（`wheel` 滚轮驱动时与滚动同一帧回调），否则监听该容器的原生 `scroll`。
+`onScroll` 的滚动源：固钉所在的滚动容器正是外层 `Scroller` 时订阅其滚动通知（`wheel` 滚轮驱动时与滚动同一帧回调），否则监听该容器的原生 `scroll`。根节点、内容、`offset` 或窗口尺寸变化时，登记的回调同样会执行，订阅方不必另外监听尺寸变化。
+
+以上方法同样通过 `inject('vc-affix')` 提供给子组件（如 `Tabs` 的锚点滚动）。
 
 ### 使用注意
 

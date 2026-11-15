@@ -254,6 +254,24 @@ describe('index.ts', () => {
 		wrapper.unmount();
 	});
 
+	it('exposes getOffset / getScroller: the px offset and the nearest scroll container', async () => {
+		const wrapper = mount(() => (
+			<div class="affix-outer" style="overflow: auto; height: 100px">
+				<Affix offset={12}>{SLOT_TEXT}</Affix>
+			</div>
+		), { attachTo: document.body });
+		await nextTick();
+		const vm = wrapper.findComponent(Affix).vm as any;
+		expect(vm.getOffset()).toBe(12);
+		expect(vm.getScroller()).toBe(wrapper.find('.affix-outer').element);
+		wrapper.unmount();
+
+		const page = mount(Affix, { attachTo: document.body });
+		await nextTick();
+		expect((page.vm as any).getScroller()).toBe(window);
+		page.unmount();
+	});
+
 	it('target prop scopes the fixed activation', async () => {
 		const wrapper = mount(() => (
 			<div class="affix-target" style="height: 200px">
@@ -725,6 +743,22 @@ describe('index.ts', () => {
 			} else {
 				delete (window as any).innerHeight;
 			}
+		});
+
+		it('size changes run the registered scroll handlers too', async () => {
+			const { wrapper, exposed, root } = mountPinned();
+			await nextTick();
+			const handler = vi.fn();
+			exposed.value.onScroll(handler);
+
+			observerOf(root())!.cb([{ target: root() }]);
+			await nextTick();
+			expect(handler).toHaveBeenCalledTimes(1);
+
+			window.dispatchEvent(new Event('resize'));
+			await nextTick();
+			expect(handler).toHaveBeenCalledTimes(2);
+			wrapper.unmount();
 		});
 
 		it('stops observing sizes on unmount', async () => {

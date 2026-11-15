@@ -176,11 +176,12 @@ export const useAffix = (
 
 	/**
 	 * 尺寸变化时重算，不必等下一次滚动：外层随容器宽度变化，固定层随内容高度变化；
-	 * 窗口尺寸变化时吸附线也会变（如只改窗口高度时吸底），一并重算
+	 * 窗口尺寸变化时吸附线也会变（如只改窗口高度时吸底），一并重算。
+	 * 与滚动走同一组回调（自身的 refresh 也在其中），订阅方（如 Tabs、IndexBar）不必各自监听尺寸变化
 	 */
 	const handleResize = () => {
 		measureOffset();
-		refresh();
+		handlers.forEach(fn => fn());
 	};
 	watch([current, content, measurer], () => {
 		Resize.disconnect(handleResize);
@@ -215,17 +216,20 @@ export const useAffix = (
 		window.removeEventListener('resize', handleResize);
 	});
 
-	// 吸附偏移（CSS px），供子组件（如 Tabs 的锚点滚动）使用
+	// 吸附偏移（CSS px），供锚点滚动等换算吸附线
 	const getOffset = () => offsetPx;
+	// 固钉所在的滚动容器（最近一层，可能为 window）：挂载时已找到，订阅方直接取用，不必再逐层查找
+	const getScroller = () => scroller.value;
 
-	expose({ refresh, onScroll, offScroll });
+	expose({ refresh, onScroll, offScroll, getOffset, getScroller });
 	provide('vc-affix', {
 		props,
 		isActive,
 		refresh,
 		onScroll,
 		offScroll,
-		getOffset
+		getOffset,
+		getScroller
 	});
 
 	return () => {
