@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Timeline, TimelineItem, MTimeline, MTimelineItem } from '@deot/vc-components';
+import { Timeline, TimelineItem, MTimeline, MTimelineItem, Spin } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { h, ref, nextTick } from 'vue';
 
@@ -11,7 +11,8 @@ describe('index.ts', () => {
 	it('basic', () => {
 		expect(typeof Timeline).toBe('object');
 		expect(typeof TimelineItem).toBe('object');
-		expect(MTimeline).toBe(Timeline);
+		expect(typeof MTimeline).toBe('object');
+		expect(MTimeline).not.toBe(Timeline);
 		expect(MTimelineItem).toBe(TimelineItem);
 	});
 
@@ -283,5 +284,20 @@ describe('index.ts', () => {
 		expect(wrapper.attributes('role')).toBe('listitem');
 		expect(wrapper.find('.vc-timeline-item__content').exists()).toBe(false);
 		expect(wrapper.find('.vc-timeline-item__label').text()).toBe('a');
+	});
+
+	it('MTimeline: 与 Timeline 结构相同，根节点另有标记类 vcm-timeline，幽灵节点的 Spin 按 750 稿', () => {
+		const wrapper = mount(() => (
+			<MTimeline showPending>
+				<MTimelineItem label="a">A</MTimelineItem>
+			</MTimeline>
+		));
+
+		expect(wrapper.classes()).toEqual(['vc-timeline', 'vcm-timeline', 'is-vertical', 'is-start']);
+		expect(items(wrapper).length).toBe(2);
+		expect(items(wrapper)[0].find('.vc-timeline-item__content').text()).toBe('A');
+		expect(wrapper.find('.is-pending .vc-spin').exists()).toBe(true);
+		expect(wrapper.findComponent(Spin).props('size')).toBe('calc(var(--vc-rem) * 24)');
+		expect(mount(() => (<Timeline showPending />)).findComponent(Spin).props('size')).toBe(12);
 	});
 });

@@ -1,0 +1,21 @@
+@use '../../style/helper' as *;
+
+// MTimeline：结构与 Timeline 相同，尺寸按 750 稿覆盖局部变量（括号内为 375 宽下的 px），与 MSteps 纵向圆点一致
+@include block(vcm-timeline) {
+	@include localvars(timeline, (
+		font-size: remfix(28), // 14：同 MSteps 标题
+		line-height: 1.5,
+		content-gap: remfix(4), // 2：内容与标签，同 MSteps 标题与描述
+		label-font-size: remfix(24), // 12：同 MSteps 描述
+		label-line-height: 1.5,
+		dot-size: remfix(16), // 8：同 MSteps 圆点
+		dot-border: remfix(3), // 空心圆环，同 MSteps
+		content-spacing: remfix(24), // 12：内容与轴线，同 MSteps 圆点与标题
+		line-spacing: remfix(8), // 4：轴线与节点，同 MSteps 圆点与连线
+		min-height: 0,
+		spacing: remfix(50), // 25：纵向各项之间，同 MSteps
+		label-width: remfix(200),
+		label-space: remfix(100),
+		center-height: remfix(400)
+	));
+}

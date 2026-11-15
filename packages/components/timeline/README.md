@@ -267,6 +267,39 @@ const renderDot = () => h('span', { class: 'check' }, '✓');
 ```
 :::
 
+## 移动端
+
+`MTimeline` 的属性、插槽、结构与 `Timeline` 相同，根节点另有标记类 `.vcm-timeline`，结构样式、颜色与主题参数共用；`MTimelineItem` 即 `TimelineItem`。尺寸按 750 稿设计，与 `MSteps` 纵向圆点一致，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 内容 | 字号 28（14），行高 1.5 |
+| 标签 | 字号 24（12），行高 1.5，与内容间距 4（2） |
+| 节点 | 16（8），空心边框 3（1.5）；幽灵节点的 Spin 24（12） |
+| 间距 | 内容与轴线 24（12），轴线与节点 8（4） |
+| 纵向 | 不设最小高度，内容与下一项间距 50（25） |
+| opposite | 标签最大宽度 200（100），横向时预留高度 100（50） |
+| 横向居中 | 最小高度 400（200） |
+
+两端的尺寸都写成局部变量 `--vc-timeline-<键>`（见“主题与局部覆盖”），移动端在 `.vcm-timeline` 上覆盖，与样式的加载顺序无关。
+
+```vue
+<template>
+	<MTimeline>
+		<MTimelineItem label="09-01 10:00">
+			已下单
+		</MTimelineItem>
+		<MTimelineItem label="09-02 08:00">
+			派送中
+		</MTimelineItem>
+	</MTimeline>
+</template>
+
+<script setup>
+import { MTimeline, MTimelineItem } from '@deot/vc';
+</script>
+```
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-timeline-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
@@ -285,7 +318,24 @@ const renderDot = () => h('span', { class: 'check' }, '✓');
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+尺寸写成局部变量 `--vc-timeline-<键>`，桌面端的默认值在括号内，设在 Timeline 根节点上，TimelineItem 继承：
+
+| 键 | 说明 |
+| --- | --- |
+| font-size | 内容字号（14px） |
+| line-height | 内容行高，无单位；节点在首行内垂直居中（1.5715） |
+| content-gap | 内容与标签的间距（4px） |
+| label-font-size | 标签字号（12px） |
+| label-line-height | 标签行高，无单位（1.667） |
+| dot-size | 节点尺寸（6px） |
+| dot-border | 空心节点的边框（2px） |
+| content-spacing | 内容、标签与轴线的间距（16px） |
+| line-spacing | 轴线与节点的间距（4px） |
+| min-height | 纵向每项的最小高度（78px） |
+| spacing | 纵向内容与下一项的间距（0） |
+| label-width | opposite 时标签的最大宽度（100px） |
+| label-space | 横向 opposite 时为标签预留的高度（50px） |
+| center-height | 横向轴线居中时的最小高度（200px） |
 
 ## API
 
@@ -335,4 +385,4 @@ const renderDot = () => h('span', { class: 'check' }, '✓');
 - `label`、`dot` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。
 - 与幽灵节点相连的那段轴线会被强制设为虚线，覆盖该项的 `lineType`。
 - 颜色使用主题变量，可通过 `--vc-timeline-color-primary`（圆点）、`--vc-timeline-color-neutral-light`（轴线）、`--vc-timeline-color-dark-light`（内容）、`--vc-timeline-color-dark-extralight`（标签）、`--vc-timeline-background-color-lightest`（自定义节点的背景，用于遮挡轴线）单独覆盖。
-- `MTimeline`、`MTimelineItem` 分别是 `Timeline`、`TimelineItem` 的别名，使用同一实现与样式，可从 `@deot/vc` 导入。
+- `MTimeline` 见“移动端”；`MTimelineItem` 即 `TimelineItem`。

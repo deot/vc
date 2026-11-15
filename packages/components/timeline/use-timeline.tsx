@@ -2,22 +2,30 @@
 
 import type { SetupContext } from 'vue';
 import { provide, h, cloneVNode } from 'vue';
+import { toRem } from '@deot/vc-shared';
 import { getChildren } from '../fragment/utils';
 import type { Props } from './timeline-props';
 import { TimelineItem } from './timeline-item';
 import { Spin } from '../spin';
 
 /**
- * Timeline 的 setup；TimelineItem 通过注入键 vc-timeline 读取
+ * Timeline 与 MTimeline 共用；TimelineItem 通过注入键 vc-timeline 读取
  * @param props ~
  * @param context ~
  * @param context.slots ~
+ * @param options ~
+ * @param options.mobile 移动端（MTimeline）：根节点加标记类 vcm-timeline，尺寸由 mobile/style.scss 覆盖局部变量
  * @returns render
  */
 export const useTimeline = (
 	props: Props,
-	{ slots }: SetupContext
+	{ slots }: SetupContext,
+	options: { mobile?: boolean } = {}
 ) => {
+	const name = options.mobile ? 'vc-timeline vcm-timeline' : 'vc-timeline';
+	// 幽灵节点的加载图标：桌面端 12px，移动端 750 稿 24
+	const spinSize = options.mobile ? toRem(24) : 12;
+
 	provide('vc-timeline', props);
 
 	/**
@@ -38,7 +46,7 @@ export const useTimeline = (
 				<TimelineItem class="is-pending">
 					{{
 						default: slots.pending,
-						dot: () => slots['pending-dot']?.() || (<Spin size={12} />)
+						dot: () => slots['pending-dot']?.() || (<Spin size={spinSize} />)
 					}}
 				</TimelineItem>
 			);
@@ -54,7 +62,7 @@ export const useTimeline = (
 			props.tag,
 			{
 				class: [
-					'vc-timeline',
+					name,
 					`is-${props.vertical ? 'vertical' : 'horizontal'}`,
 					`is-${align}`,
 					{ 'is-alternate': props.alternate }

@@ -7,7 +7,7 @@ $component-name: vc-timeline;
 		display: flex;
 
 		&.is-center {
-			min-height: unitfix(200);
+			min-height: localfix(timeline, center-height, unitfix(200)); // 横向居中：两侧各项向中线平移，预留的高度
 			align-items: center;
 		}
 	}
