@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, defineComponent, nextTick, onMounted, ref, toRaw, watch } from 'vue';
 import { Portal } from '../../../portal';
 import { MPickerPopup } from '../../../picker/index.m';
 import { getConfirmMode } from '../../../picker/mobile/picker-popup-props';
@@ -11,6 +11,8 @@ import { useLocale } from '../../../locale';
 import { createSearchRegex, isMultiple, toCurrentValue, toModelValue } from '../../../select/utils';
 import type { TreeValue } from '../../../select/utils';
 import { MSelectSummary } from '../../../select/mobile/select-summary';
+import { useRemoteSearch } from '../../../select/mobile/use-remote-search';
+import { MSpin } from '../../../spin/index.m';
 import { TreeSelectContent } from '../../tree-select/tree-select-content';
 import { useTreeSelectValue } from '../../tree-select/use-tree-select-value';
 import { MTree } from '../tree';
@@ -22,6 +24,7 @@ const COMPONENT_NAME = 'vcm-tree-select-core';
  * 移动端树选择的弹层：MPickerPopup 中依次为搜索框、汇总栏、固定高度的树（MTree）
  * 	- 弹层内的值在「确定」时提交，取消时丢弃；不需要确认时（单选且 confirm 为 false）点一个节点即提交并关闭
  * 	- 选择、搜索、回填与桌面端的树形模式相同（TreeSelectContent）
+ * 	- 远程搜索（searchable + loadData）：数据为 loadData 的结果，只高亮不过滤；结果之外的已选值不受勾选影响，文字沿用上次查到的
  */
 export const MTreeSelectCore = defineComponent({
 	name: COMPONENT_NAME,
@@ -44,7 +47,26 @@ export const MTreeSelectCore = defineComponent({
 			{ immediate: true }
 		);
 
-		const { labels, apply } = useTreeSelectValue(props, { currentValue });
+		// 远程搜索：数据为 loadData 的结果，见 useRemoteSearch
+		const remote = useRemoteSearch(props, keyword);
+		const data = computed(() => remote.getData());
+
+		const { labels, apply } = useTreeSelectValue(
+			{
+				get data() {
+					return data.value;
+				},
+				get checkStrategy() {
+					return props.checkStrategy;
+				}
+			},
+			// 记录表与触发区共用（经 Portal 传入时为响应式代理，取原始对象）
+			{ currentValue, isRemote: remote.isRemote, shared: props.selectedNodes && toRaw(props.selectedNodes) }
+		);
+
+		// 远程搜索时数据随关键词变化：已选值或数据一变就查一次路径与文字，查到的记进记录表，结果里没有时沿用
+		// （文字只在确定时用到，不立即计算的话，勾选后换了关键词再确定，就查不到之前勾选的了）
+		watch(labels, () => {}, { immediate: true });
 
 		const multiple = computed(() => isMultiple(props.max));
 
@@ -65,8 +87,8 @@ export const MTreeSelectCore = defineComponent({
 			core.ok(value, labels.value);
 		};
 
-		const handleChange = (_: any, data: any) => {
-			apply(data.checkedValues);
+		const handleChange = (_: any, state: any) => {
+			apply(state.checkedValues);
 		};
 
 		// 不需要确认时（单选），点一个节点即提交并关闭（点已选中的节点也提交）
@@ -104,7 +126,12 @@ export const MTreeSelectCore = defineComponent({
 									modelValue={keyword.value}
 									// @ts-ignore
 									onUpdate:modelValue={(v: string) => (keyword.value = v)}
-								/>
+								>
+									{{
+										// 远程搜索加载期间：输入框右侧显示加载图标
+										append: remote.loading.value ? () => (<MSpin size={28} class="vcm-tree-select-panel__loading" />) : void 0
+									}}
+								</MInputSearch>
 							</div>
 						)
 					}
@@ -121,7 +148,8 @@ export const MTreeSelectCore = defineComponent({
 							tree={MTree}
 							mobile
 							value={currentValue.value}
-							data={props.data}
+							data={data.value}
+							remote={remote.isRemote()}
 							max={props.max}
 							checkStrategy={props.checkStrategy}
 							renderNodeLabel={props.renderNodeLabel}

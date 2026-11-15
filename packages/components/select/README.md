@@ -336,6 +336,7 @@ const selectedValue = ref(5000);
 - 多选（`max` 不为 `1`）总是由「确定」提交，`confirm` 为 `false` 时按 `'top'`。列表上方显示「已选 N/max」，选满后其余选项置灰；`max` 为 `0` 时不限数量。
 - `clearable`：有已选项时，列表上方显示「清空」；`confirm` 为 `'bottom'` 时改为底部的「清空」按钮。不需要确认时清空即提交并关闭，否则只清空弹层内的值，由「确定」提交。没开 `clearable` 时，一项都没选不能确定。
 - `searchable`：列表上方显示搜索框，规则同桌面端，没有命中项的分组连同标题一起隐藏。
+- 远程搜索（`searchable` + `loadData`）：契约与时机同桌面端的[远程搜索](#远程搜索)——搜索词经 250ms 防抖调用 `loadData(keyword, instance)`，由调用方更新 `data`，加载期间搜索框右侧显示加载图标；打开时还没有数据、或数据是按某个关键词加载的，立即按空关键词加载一次。弹层打开期间 `data` 的变化同步到弹层。`MSelect.open` 没有触发区同步 `data`，`loadData` 的 Promise 解析为数组时直接作为这次的结果。结果里没有已选项时，文字沿用上次查到的。
 - 选项的 `description` 显示在文字下方；`renderLabel` 或 `#label` 插槽自定义选项文字，如加上标签。
 
 :::playground
@@ -613,6 +614,7 @@ const handleOpen = () => {
 | clearable | 有已选项时在列表上方显示「清空」，点击后提交空值（`nullValue`，数组值为 `[]`，字符串多选为 `''`） | `boolean` | - | `false` |
 | searchable | 列表上方显示搜索框 | `boolean` | - | `false` |
 | searchPlaceholder | 搜索框的占位文字 | `string` | - | `''` |
+| loadData | 远程搜索回调，开启 `searchable` 时生效；由调用方更新 `data`，Promise 解析为数组时直接作为结果；时机见[移动端选择](#移动端选择) | `(keyword: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | renderLabel | 自定义选项文字；`label` 插槽优先 | `(options: { label, row, index: number, selected: boolean }) => VNodeChild` | - | - |
 | separator | 同桌面端 | `string` | - | `','` |
 | numerable | 同桌面端 | `boolean` | - | `false` |

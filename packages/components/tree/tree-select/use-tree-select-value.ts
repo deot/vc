@@ -10,7 +10,7 @@ interface TreeNodeLink {
 	parent?: TreeNodeLink;
 }
 
-interface SelectedNode {
+export interface TreeSelectSelectedNode {
 	path: TreeValue[];
 	// 路径上各级的文字
 	labels: string[];
@@ -37,6 +37,8 @@ interface TreeSelectValueOptions {
 	currentValue: Ref<TreeValue[]>;
 	// 远程搜索：data 只是当前关键词的结果，不在其中的已选值沿用上次查到的路径与文字
 	isRemote?: () => boolean;
+	// 共用的已选值路径与文字的记录表（MTreeSelect 的触发区与弹层共用），见 useSelectedCache
+	shared?: Map<TreeValue, TreeSelectSelectedNode>;
 }
 
 /**
@@ -46,7 +48,7 @@ interface TreeSelectValueOptions {
  * @returns ~
  */
 export const useTreeSelectValue = (props: TreeSelectValueProps, options: TreeSelectValueOptions) => {
-	const { currentValue, isRemote = () => false } = options;
+	const { currentValue, isRemote = () => false, shared } = options;
 
 	// 当前数据中每个值对应的节点；只记父级，路径在用到时（已选值）再沿父级取
 	const nodes = computed(() => {
@@ -61,7 +63,7 @@ export const useTreeSelectValue = (props: TreeSelectValueProps, options: TreeSel
 	const getSelectedNode = (v: TreeValue) => {
 		let node = nodes.value.get(v);
 		if (!node) return;
-		const result: SelectedNode = { path: [], labels: [] };
+		const result: TreeSelectSelectedNode = { path: [], labels: [] };
 		for (; node; node = node.parent) {
 			result.path.unshift(node.item.value);
 			result.labels.unshift(node.item.label || '');
@@ -70,7 +72,7 @@ export const useTreeSelectValue = (props: TreeSelectValueProps, options: TreeSel
 	};
 
 	// 已选值的路径与文字；远程搜索时，不在当前结果里的沿用上次查到的
-	const getSelected = useSelectedCache<SelectedNode>(isRemote);
+	const getSelected = useSelectedCache<TreeSelectSelectedNode>(isRemote, shared as Map<unknown, TreeSelectSelectedNode> | undefined);
 	const selected = computed(() => {
 		return getSelected(currentValue.value, getSelectedNode);
 	});

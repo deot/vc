@@ -1,5 +1,7 @@
 import { pick } from 'lodash-es';
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
+import type { TreeValue } from '../../../select/utils';
+import type { TreeSelectSelectedNode } from '../../tree-select/use-tree-select-value';
 import { props as pickerPopupProps } from '../../../picker/mobile/picker-popup-props';
 import { pickerCoreProps } from '../../../picker/mobile/use-picker-portal';
 import { props as treeSelectProps } from '../../tree-select/tree-select-props';
@@ -10,7 +12,7 @@ const popupKeys = [
 	'okText'
 ] as const;
 
-// 与桌面端同名同义：值的形状与转换、数据、勾选数量与回填方式、清空、搜索占位、节点文字、虚拟化
+// 与桌面端同名同义：值的形状与转换、数据、勾选数量与回填方式、清空、搜索占位、节点文字、虚拟化、远程搜索
 const treeSelectKeys = [
 	'modelValue',
 	'data',
@@ -22,7 +24,8 @@ const treeSelectKeys = [
 	'clearable',
 	'searchPlaceholder',
 	'renderNodeLabel',
-	'virtualized'
+	'virtualized',
+	'loadData'
 ] as const;
 
 export const props = {
@@ -33,6 +36,8 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
+	// 内部使用：已选值路径与文字的记录表，与 MTreeSelect 的触发区共用，远程搜索的结果里没有已选值时沿用；由 MTreeSelect 打开弹层时传入
+	selectedNodes: Object as PropType<Map<TreeValue, TreeSelectSelectedNode>>,
 	// 由「确定」提交：false 时单选点一个节点即提交并关闭；true / 'top' 为顶部的「取消 / 确定」；'bottom' 为底部的「清空 / 确定」按钮
 	// 多选总是需要确定，为 false 时按 'top'
 	confirm: {

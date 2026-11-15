@@ -9,8 +9,8 @@ const listItemKeys = [
 	'arrow'
 ] as const;
 
-// 弹层的 visible、回调由 MSelect 自己管理
-export const coreOmitKeys = ['visible', 'onOk', 'onCancel'] as const;
+// 弹层的 visible、回调与已选项的文字由 MSelect 自己管理
+export const coreOmitKeys = ['visible', 'onOk', 'onCancel', 'selectedLabels'] as const;
 
 export const props = {
 	...(pick(listItemProps, listItemKeys) as Pick<typeof listItemProps, typeof listItemKeys[number]>),

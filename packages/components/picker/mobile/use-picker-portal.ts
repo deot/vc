@@ -141,6 +141,15 @@ export const usePickerTrigger = (context: EmitContext, options: PickerTriggerOpt
 	});
 
 	/**
+	 * 更新打开的弹层的属性（如远程搜索时调用方更新的 data）；没有打开时不处理
+	 * @param props 要更新的属性
+	 */
+	const update = (props: Record<string, any>) => {
+		const propsData = leaf?.propsData;
+		propsData && (propsData.value = { ...propsData.value, ...props });
+	};
+
+	/**
 	 * 打开弹层
 	 * @param props 弹层的属性（含 modelValue）
 	 * @returns ~
@@ -163,7 +172,7 @@ export const usePickerTrigger = (context: EmitContext, options: PickerTriggerOpt
 		return leaf;
 	};
 
-	return { open };
+	return { open, update };
 };
 
 /**

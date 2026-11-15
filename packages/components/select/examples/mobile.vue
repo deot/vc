@@ -44,6 +44,18 @@
 					</template>
 				</MSelect>
 			</MFormItem>
+			<MFormItem prop="remote" label="远程搜索">
+				<MSelect
+					v-model="model.remote"
+					:data="remoteData"
+					:load-data="loadRemote"
+					:max="0"
+					title="选择条目"
+					search-placeholder="输入条目编号，如 12"
+					searchable
+					clearable
+				/>
+			</MFormItem>
 			<MFormItem prop="text" label="字符串多选">
 				<MSelect v-model="model.text" :data="data" :max="0" separator=";" />
 			</MFormItem>
@@ -130,8 +142,17 @@ const model = reactive({
 	described: undefined,
 	custom: [],
 	text: '',
-	trigger: []
+	trigger: [],
+	remote: []
 });
+
+// 远程搜索：模拟服务端按关键词返回最多 10 项，空关键词返回前 10 项；由调用方更新 data
+const remoteSource = Array.from({ length: 200 }, (_, i) => ({ value: i + 1, label: `条目 ${i + 1}` }));
+const remoteData = ref([]);
+const loadRemote = async (keyword) => {
+	await new Promise(resolve => setTimeout(resolve, 600));
+	remoteData.value = remoteSource.filter(i => !keyword || i.label.includes(keyword)).slice(0, 10);
+};
 const opened = ref([]);
 
 const stringify = v => JSON.stringify(v);

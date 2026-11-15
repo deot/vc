@@ -263,20 +263,25 @@ export const useSelect = (props: SelectProps, context: SetupContext<Emits>, opti
 /**
  * 已选值在 data 里对应的信息（文字、路径等）
  * 远程搜索时 data 只是当前关键词的结果，已选值可能不在其中：记住上次查到的，查不到时沿用；只保留当前已选值的记录
+ * 	- shared：共用的记录表（移动端的触发区与弹层共用一份），查到的写入其中、不按当前已选值裁剪：
+ * 	  弹层里查到的已选项提交后触发区也能用，取消时触发区原有的记录也不会被弹层裁掉
  * @param isEnabled 是否沿用上次查到的（远程搜索时）
+ * @param shared 共用的记录表（原始对象，不经过响应式代理）
  * @returns 取值函数：values 为当前已选值，find 从当前 data 里查
  */
-export const useSelectedCache = <T>(isEnabled: () => boolean) => {
-	let cache = new Map<unknown, T>();
+export const useSelectedCache = <T>(isEnabled: () => boolean, shared?: Map<unknown, T>) => {
+	let cache = shared || new Map<unknown, T>();
 
 	return (values: unknown[], find: (value: any) => T | undefined | '') => {
 		const isKept = isEnabled();
 		const next = new Map<unknown, T>();
 		values.forEach((value) => {
 			const item = find(value) || (isKept ? cache.get(value) : void 0);
-			item && next.set(value, item);
+			if (!item) return;
+			next.set(value, item);
+			shared && shared.set(value, item);
 		});
-		cache = next;
+		shared || (cache = next);
 		return next;
 	};
 };

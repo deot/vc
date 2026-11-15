@@ -1,14 +1,15 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, inject, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, defineComponent, inject, nextTick, onMounted, ref, toRaw, watch } from 'vue';
 import { MIcon } from '../../icon/index.m';
 import { MInputSearch } from '../../input/index.m';
+import { MSpin } from '../../spin/index.m';
 import { MCustomer } from '../../customer/index.m';
 import { useLocale } from '../../locale';
 import {
 	createSearchRegex,
 	flattenData,
-	getSelectLabels,
+	getLabel,
 	getSelectRows,
 	isMaxReached,
 	isMultiple,
@@ -18,6 +19,8 @@ import {
 import { renderHighlight } from '../select-search/highlight';
 import { scrollToCenter } from '../select-list/scroll';
 import { MSelectSummary } from './select-summary';
+import { useRemoteSearch } from './use-remote-search';
+import { useSelectedCache } from '../hooks/use-select';
 import { props as selectViewProps } from './select-view-props';
 import type { TreeData, TreeValue } from '../utils';
 
@@ -50,10 +53,15 @@ export const MSelectView = defineComponent({
 		const selected = computed(() => new Set(values.value));
 		const isFull = computed(() => isMaxReached(props.max, values.value.length));
 
+		// 远程搜索：数据为 loadData 的结果，见 useRemoteSearch
+		const remote = useRemoteSearch(props, keyword);
+		const data = computed(() => remote.getData() as TreeData[]);
+
+		// 本地按文字过滤，远程搜索时同样生效（同桌面端；跳过过滤的选项设 filterable: false）
 		const regex = computed(() => createSearchRegex(props.searchable ? keyword.value : ''));
-		const rows = computed(() => getSelectRows(props.data as TreeData[], regex.value));
+		const rows = computed(() => getSelectRows(data.value, regex.value));
 		// 铺平的选项（含分组内的），用于查找已选项的文字
-		const source = computed(() => flattenData(props.data, { parent: true, cascader: true }));
+		const source = computed(() => flattenData(data.value, { parent: true, cascader: true }));
 
 		const isDisabled = (row: TreeData) => !!row.disabled || (isFull.value && !selected.value.has(row.value));
 
@@ -66,10 +74,20 @@ export const MSelectView = defineComponent({
 			{ immediate: true }
 		);
 
+		// 已选项的文字：远程搜索的结果里没有时沿用上次查到的；与触发区共用记录表（经 Portal 传入时为响应式代理，取原始对象）
+		const getCached = useSelectedCache<string>(
+			remote.isRemote,
+			props.selectedLabels && (toRaw(props.selectedLabels) as Map<unknown, string>)
+		);
+		const getLabels = () => {
+			const found = getCached(values.value, v => getLabel(source.value, v) as string);
+			return values.value.map(v => found.get(v) ?? '');
+		};
+
 		const sync = () => {
 			// 发出副本：外部持有的数组与视图内的值互不影响
 			const value = toModelValue(values.value.slice(), props);
-			const labels = getSelectLabels(values.value, source.value);
+			const labels = getLabels();
 			emit('update:modelValue', value, labels);
 			emit('change', value, labels);
 			props.allowDispatch && formItem?.change?.(value);
@@ -120,7 +138,8 @@ export const MSelectView = defineComponent({
 
 		expose({
 			clear,
-			scrollIntoSelected
+			scrollIntoSelected,
+			getLabels
 		});
 
 		const renderLabel = (row: TreeData, index: number, isSelected: boolean) => {
@@ -182,7 +201,12 @@ export const MSelectView = defineComponent({
 									modelValue={keyword.value}
 									// @ts-ignore
 									onUpdate:modelValue={(v: string) => (keyword.value = v)}
-								/>
+								>
+									{{
+										// 远程搜索加载期间：输入框右侧显示加载图标
+										append: remote.loading.value ? () => (<MSpin size={28} class="vcm-select-view__loading" />) : void 0
+									}}
+								</MInputSearch>
 							</div>
 						)
 					}
@@ -197,7 +221,8 @@ export const MSelectView = defineComponent({
 						{
 							rows.value.length
 								? renderRows()
-								: (<div class="vcm-select-view__empty">{ t('vc.Select.noMatch') }</div>)
+								// 远程搜索加载期间不提示无结果
+								: !remote.loading.value && (<div class="vcm-select-view__empty">{ t('vc.Select.noMatch') }</div>)
 						}
 					</div>
 				</div>

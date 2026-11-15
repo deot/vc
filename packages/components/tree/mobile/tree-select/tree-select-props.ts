@@ -9,8 +9,8 @@ const listItemKeys = [
 	'arrow'
 ] as const;
 
-// 弹层的 visible、回调由 MTreeSelect 自己管理
-export const coreOmitKeys = ['visible', 'onOk', 'onCancel'] as const;
+// 弹层的 visible、回调与已选值的路径由 MTreeSelect 自己管理
+export const coreOmitKeys = ['visible', 'onOk', 'onCancel', 'selectedNodes'] as const;
 
 export const props = {
 	...(pick(listItemProps, listItemKeys) as Pick<typeof listItemProps, typeof listItemKeys[number]>),

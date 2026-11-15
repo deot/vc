@@ -91,6 +91,19 @@
 						clearable
 					/>
 				</MFormItem>
+				<MFormItem prop="remote" label="远程搜索">
+					<MTreeSelect
+						v-model="model.remote"
+						:data="remoteData"
+						:load-data="loadRemote"
+						:max="0"
+						check-strategy="child"
+						title="选择条目"
+						search-placeholder="输入条目编号，如 3-2"
+						searchable
+						clearable
+					/>
+				</MFormItem>
 				<MFormItem prop="unlimited" label="多选（不限）">
 					<MTreeSelect
 						v-model="model.unlimited"
@@ -218,7 +231,16 @@ const selectData = Array.from({ length: 6 }, (_, i) => ({
 		disabled: i === 1 && j === 1
 	}))
 }));
-const model = reactive({ single: '', leaf: '', limited: [], unlimited: [] });
+const model = reactive({ single: '', leaf: '', limited: [], remote: [], unlimited: [] });
+
+// 远程搜索：模拟服务端按关键词只返回命中的条目（连同分类），空关键词返回全部；由调用方更新 data
+const remoteData = ref([]);
+const loadRemote = async (keyword) => {
+	await new Promise(resolve => setTimeout(resolve, 600));
+	remoteData.value = selectData
+		.map(group => ({ ...group, children: group.children.filter(i => !keyword || i.label.includes(keyword)) }))
+		.filter(group => group.children.length);
+};
 const opened = ref('');
 const handleOpen = () => {
 	MTreeSelect.open({

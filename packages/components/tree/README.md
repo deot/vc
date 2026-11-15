@@ -597,7 +597,7 @@ const data = [
 
 ### MTreeSelect
 
-`MTreeSelect` 是独立的移动端组件：点击触发区（默认为 `MListItem`）从底部弹出，弹层中依次为搜索框（`searchable`）、汇总栏与固定高度的 `MTree`。值的形状与转换、`max`、`checkStrategy` 与桌面端 `TreeSelect` 相同，选择、搜索与回填沿用桌面端的树形模式；没有级联列模式（逐级选择用 [MCascader](../cascader/README.md)）、标签折叠与远程搜索。
+`MTreeSelect` 是独立的移动端组件：点击触发区（默认为 `MListItem`）从底部弹出，弹层中依次为搜索框（`searchable`）、汇总栏与固定高度的 `MTree`。值的形状与转换、`max`、`checkStrategy` 与桌面端 `TreeSelect` 相同，选择、搜索与回填沿用桌面端的树形模式；没有级联列模式（逐级选择用 [MCascader](../cascader/README.md)）与标签折叠。
 
 :::playground
 <!-- <config lang="json5">{ viewport: 375, previewInset: 0 }</config> -->
@@ -635,6 +635,7 @@ const data = Array.from({ length: 4 }, (_, i) => ({
 - 清空（`clearable`）：`confirm` 为 `'bottom'` 时在底部「清空 / 确定」，其余在汇总栏右端；不需要确定时清空即提交空值并关闭。不可清空时，一项都没选不能确定。
 - 弹层内的值在「确定」时提交，取消时丢弃；打开时已选节点及其祖先展开，第一个已选节点滚到列表中间。
 - 显示的文字同桌面端的标签：联动时为没有被其他已选节点包含的那一层的完整路径（各级以 ` / ` 连接），独立勾选时为节点自身的文字。
+- 远程搜索（`searchable` + `loadData`）：契约与时机同桌面端的[远程搜索](#远程搜索)，与 MSelect 相同——250ms 防抖、由调用方更新 `data`、加载期间搜索框右侧显示加载图标、打开时数据缺失或过期则按空关键词加载一次；只高亮不过滤，结果之外的已选值不受勾选影响，文字沿用上次查到的。弹层打开期间 `data` 的变化同步到弹层；`MTreeSelect.open` 时 `loadData` 的 Promise 解析为数组则直接作为结果。
 - 树的滚动区高度为局部变量 `--vc-tree-select-panel-height`（默认 750 稿 768）。
 
 #### MTreeSelect 属性
@@ -645,6 +646,7 @@ const data = Array.from({ length: 4 }, (_, i) => ({
 | clearable | 可清空，见上文 | `boolean` | - | `false` |
 | searchable | 树上方显示搜索框，按节点文字匹配（规则同桌面端），命中节点的祖先自动展开 | `boolean` | - | `false` |
 | searchPlaceholder | 搜索框的占位文字 | `string` | - | `''` |
+| loadData | 远程搜索回调，开启 `searchable` 时生效，见上文 | `(keyword: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | label | 条目标签 | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | labelWidth | 条目标签宽度，750 稿长度，传给 MListItem | `string \| number` | - | `''` |
 | arrow | 条目箭头；禁用时不显示 | `boolean \| string` | - | `right` |

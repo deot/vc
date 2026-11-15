@@ -6,7 +6,9 @@ import { MListItem } from '../../../list/index.m';
 import { useLocale } from '../../../locale';
 import { usePickerTrigger } from '../../../picker/mobile/use-picker-portal';
 import { toCurrentValue } from '../../../select/utils';
+import type { TreeValue } from '../../../select/utils';
 import { useTreeSelectValue } from '../../tree-select/use-tree-select-value';
+import type { TreeSelectSelectedNode } from '../../tree-select/use-tree-select-value';
 import { props as treeSelectProps, coreOmitKeys } from './tree-select-props';
 import { props as coreProps } from './tree-select-core-props';
 import { MTreeSelectPortal } from './tree-select-core';
@@ -44,7 +46,11 @@ export const MTreeSelect = defineComponent({
 		});
 
 		const values = computed(() => toCurrentValue(currentValue.value, props));
-		const { labels } = useTreeSelectValue(props, { currentValue: values });
+		// 远程搜索时 data 只是当前关键词的结果：已选值不在其中时沿用上次查到的路径与文字
+		// 记录表与弹层共用：弹层里查到的已选值（如搜索结果里勾选的）提交后这里也能用
+		const isRemote = () => !!props.loadData && props.searchable;
+		const selectedNodes = new Map<TreeValue, TreeSelectSelectedNode>();
+		const { labels } = useTreeSelectValue(props, { currentValue: values, isRemote, shared: selectedNodes });
 
 		const formatterValue = computed(() => {
 			return (labels.value.length && props.formatter(labels.value, currentValue.value))
@@ -58,11 +64,18 @@ export const MTreeSelect = defineComponent({
 			}
 		);
 
+		// 远程搜索时调用方更新的 data 同步给打开的弹层
+		watch(
+			() => props.data,
+			v => trigger.update({ data: v })
+		);
+
 		const handleClick = () => {
 			if (props.disabled) return;
 			trigger.open({
 				...pick(props, coreKeys),
-				modelValue: currentValue.value
+				modelValue: currentValue.value,
+				selectedNodes
 			});
 		};
 

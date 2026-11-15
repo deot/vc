@@ -8,7 +8,8 @@ import { props as selectProps, coreOmitKeys } from './select-props';
 import { props as coreProps } from './select-core-props';
 import { MSelectPortal } from './select-core';
 import { usePickerTrigger } from '../../picker/mobile/use-picker-portal';
-import { flattenData, getSelectLabels, toCurrentValue } from '../utils';
+import { flattenData, getLabel, toCurrentValue } from '../utils';
+import { useSelectedCache } from '../hooks/use-select';
 
 const COMPONENT_NAME = 'vcm-select';
 
@@ -40,7 +41,16 @@ export const MSelect = defineComponent({
 
 		// 铺平的选项（含分组内的），用于查找已选项的文字
 		const source = computed(() => flattenData(props.data, { parent: true, cascader: true }));
-		const labels = computed(() => getSelectLabels(toCurrentValue(currentValue.value, props), source.value));
+		// 远程搜索时 data 只是当前关键词的结果：已选项不在其中时沿用上次查到的文字
+		// 记录表与弹层共用：弹层里查到的已选项（如搜索结果里选中的）提交后这里也能用
+		const isRemote = () => !!props.loadData && props.searchable;
+		const selectedLabels = new Map<unknown, string>();
+		const getCached = useSelectedCache<string>(isRemote, selectedLabels);
+		const labels = computed(() => {
+			const values = toCurrentValue(currentValue.value, props);
+			const found = getCached(values, v => getLabel(source.value, v) as string);
+			return values.map(v => found.get(v) ?? '');
+		});
 
 		const formatterValue = computed(() => {
 			return (labels.value.length && props.formatter(labels.value, currentValue.value))
@@ -54,13 +64,20 @@ export const MSelect = defineComponent({
 			}
 		);
 
+		// 远程搜索时调用方更新的 data 同步给打开的弹层
+		watch(
+			() => props.data,
+			v => trigger.update({ data: v })
+		);
+
 		const handleClick = () => {
 			if (props.disabled) return;
 			trigger.open({
 				...pick(props, coreKeys),
 				// 选项的 label 插槽在弹层中按 renderLabel 渲染
 				renderLabel: slots.label || props.renderLabel,
-				modelValue: currentValue.value
+				modelValue: currentValue.value,
+				selectedLabels
 			});
 		};
 

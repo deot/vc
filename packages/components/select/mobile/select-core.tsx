@@ -8,7 +8,7 @@ import { getConfirmMode } from '../../picker/mobile/picker-popup-props';
 import { pickerCoreEmits, usePickerCore } from '../../picker/mobile/use-picker-portal';
 import { MButton } from '../../button/index.m';
 import { useLocale } from '../../locale';
-import { flattenData, getSelectLabels, isMultiple, toCurrentValue, toModelValue } from '../utils';
+import { isMultiple, toCurrentValue, toModelValue } from '../utils';
 import { MSelectView } from './select-view';
 import { props as selectViewProps } from './select-view-props';
 import { props as coreProps } from './select-core-props';
@@ -53,11 +53,8 @@ export const MSelectCore = defineComponent({
 
 		const handleOk = () => {
 			if (mode.value && isOkDisabled.value) return;
-			const value = currentValue.value;
-			const source = flattenData(props.data, { parent: true, cascader: true });
-			const labels = getSelectLabels(toCurrentValue(value, props), source);
-
-			core.ok(value, labels);
+			// 文字由视图给出：远程搜索的结果里没有已选项时沿用上次查到的
+			core.ok(currentValue.value, view.value?.getLabels() || []);
 		};
 
 		// 不需要确认时（单选），点一项即提交并关闭
