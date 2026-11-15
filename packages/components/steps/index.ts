@@ -1,4 +1,4 @@
-import { Steps } from './steps.tsx';
+import { Steps } from './steps.ts';
 import { Step } from './step.tsx';
 import './style.scss';
 
