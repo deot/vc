@@ -3,65 +3,87 @@
 $component-name: vc-rate;
 $foreground-color: varfix(foreground-color, rate);
 $foreground-color-inactive: varfix(foreground-color-inactive, rate);
+$color-primary-lighter: varfix(color-primary-lighter, rate);
+
+// 尺寸写成局部变量 --vc-rate-<键>（桌面端默认值为 px），MRate 在 .vcm-rate 上覆盖（见 mobile/style.scss）
+@function v($key, $default) {
+	@return localfix(rate, $key, unitfix($default));
+}
+
+// 选中色：color 属性写在根节点的 --vc-rate-color 上
+$color: localfix(rate, color, #FFB400);
 
 @include block($component-name) {
-	display: inline-block;
-	font-size: unitfix(16);
-	line-height: unset;
-	list-style: none;
+	display: inline-flex;
+	align-items: center;
+	font-size: v(font-size, 14px);
+	color: $foreground-color;
+	outline: none;
+
+	// 键盘聚焦时的光环
+	&:focus-visible > .vc-rate__stars {
+		border-radius: unitfix(4);
+		box-shadow: 0 0 0 3px $color-primary-lighter;
+	}
+
+	// 按下后左右滑动改分，纵向仍可滚动页面
+	@include element(stars) {
+		display: inline-flex;
+		padding: v(padding, 0);
+		gap: v(gap, 8px);
+		cursor: pointer;
+		touch-action: pan-y;
+		user-select: none;
+		-webkit-tap-highlight-color: transparent;
+	}
 
 	@include element(star) {
 		position: relative;
-		display: inline-block;
-		cursor: pointer;
-
-		@include when(not-last) {
-			margin-right: unitfix(8);
-		}
-
-		@include when(half) {
-			.vc-rate__star--first {
-				opacity: 1;
-			}
-		}
+		display: inline-flex;
+		font-size: v(size, 16px);
+		line-height: 1;
 
 		@include when(select) {
-			.vc-rate__star--icon {
-				color: inherit;
+			> .vc-rate__icon {
+				color: $color;
 			}
 		}
+	}
 
-		@include when(disabled) {
-			cursor: unset;
-		}
+	@include element(icon) {
+		display: inline-flex;
+		color: $foreground-color-inactive;
+		white-space: nowrap;
+		transition: color .3s;
 
-		@include modifier(icon) {
-			color: $foreground-color-inactive;
-			transition: all .3s;
-			user-select: none;
-		}
-
-		@include modifier(first) {
+		// 半星：选中色的一层盖在左半边
+		@include when(overlay) {
 			position: absolute;
 			top: 0;
 			left: 0;
 			width: 50%;
 			height: 100%;
 			overflow: hidden;
-			color: inherit;
-			opacity: 0;
-		}
-
-		@include modifier(second) {
-			
+			color: $color;
 		}
 	}
 
 	@include element(tips) {
-		display: inline-block;
-		margin: 0 unitfix(8);
-		font-size: unitfix(14);
-		color: $foreground-color;
-		box-sizing: border-box;
+		margin-left: v(tips-gap, 8px);
+		white-space: nowrap;
+	}
+
+	@include when(readonly) {
+		> .vc-rate__stars {
+			cursor: default;
+		}
+	}
+
+	@include when(disabled) {
+		opacity: .5;
+
+		> .vc-rate__stars {
+			cursor: not-allowed;
+		}
 	}
 }

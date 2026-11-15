@@ -1,4 +1,4 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
 
 export const props = {
 	modelValue: {
@@ -10,10 +10,8 @@ export const props = {
 		type: Number,
 		default: 5
 	},
-	color: {
-		type: String,
-		default: 'var(--vc-rate-color-primary-light, var(--vc-color-primary-light))'
-	},
+	// 选中及半选的颜色；不传时取 --vc-rate-color（默认金色）
+	color: String,
 	icon: {
 		type: String,
 		default: 'star'
@@ -28,13 +26,19 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
+	// 禁用：不可操作，整体半透明
 	disabled: {
+		type: Boolean,
+		default: false
+	},
+	// 只读：仅展示，颜色照常
+	readonly: {
 		type: Boolean,
 		default: false
 	},
 	// 每项的提示
 	tooltip: {
-		type: Array,
+		type: Array as PropType<unknown[]>,
 		default: () => ([])
 	},
 	iconStyle: {
