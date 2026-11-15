@@ -1,4 +1,4 @@
-import { Rate } from './rate.tsx';
+import { Rate } from './rate.ts';
 import './style.scss';
 
 export {
