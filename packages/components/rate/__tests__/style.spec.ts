@@ -4,6 +4,7 @@ import postcss from 'postcss';
 
 const compile = (file: string) => postcss.parse(sass.compile(new URL(file, import.meta.url).pathname).css);
 const css = compile('../style.scss');
+const mobileCss = compile('../mobile/style.scss');
 
 const declarations = (root: postcss.Root, selector: string) => {
 	const map: Record<string, string> = {};
@@ -36,5 +37,14 @@ describe('Rate styles', () => {
 		css.walkRules((rule) => {
 			expect(rule.selector).not.toMatch(/\b(ul|li)\b/);
 		});
+	});
+
+	it('MRate overrides the variables on .vcm-rate in 750 units', () => {
+		const vars = declarations(mobileCss, '.vcm-rate');
+		expect(vars['--vc-rate-size']).toContain('* 48');
+		expect(vars['--vc-rate-gap']).toContain('* 24');
+		expect(vars['--vc-rate-padding']).toContain('* 12');
+		expect(vars['--vc-rate-font-size']).toContain('* 28');
+		expect(vars['--vc-rate-foreground-color-inactive']).toBe('var(--vc-rate-color-neutral-light, var(--vc-color-neutral-light))');
 	});
 });

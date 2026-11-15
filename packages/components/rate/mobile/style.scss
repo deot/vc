@@ -1,0 +1,14 @@
+@use '../../style/helper' as *;
+
+// MRate：结构与 Rate 相同，尺寸按 750 稿覆盖局部变量（括号内为 375 宽下的 px）
+// 星星 24、间距 12，上下各留 6 让点击热区约 36 见方；未选中用浅色线条色
+@include block(vcm-rate) {
+	@include localvars(rate, (
+		font-size: remfix(28), // 14
+		size: remfix(48), // 24
+		gap: remfix(24), // 12
+		padding: remfix(12) 0, // 6
+		tips-gap: remfix(16), // 8
+		foreground-color-inactive: varfix(color-neutral-light, rate)
+	));
+}

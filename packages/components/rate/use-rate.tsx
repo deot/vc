@@ -11,7 +11,7 @@ import { Icon } from '../icon';
 const TAP_THRESHOLD = 3;
 
 /**
- * Rate 的 setup
+ * Rate 与 MRate 共用
  *
  * 分值由指针的横坐标决定：星星之间的间距归最近的星星，开启 half 时按星星左右两半取 x - 0.5 / x；
  * 鼠标悬停预览，按下后左右滑动连续改分，松开时生效；点按当前分值且 clearable 时清零
@@ -19,12 +19,16 @@ const TAP_THRESHOLD = 3;
  * @param context ~
  * @param context.slots ~
  * @param context.emit ~
+ * @param options ~
+ * @param options.mobile 移动端（MRate）：根节点加标记类 vcm-rate，尺寸由 mobile/style.scss 覆盖局部变量
  * @returns render
  */
 export const useRate = (
 	props: Props,
-	{ slots, emit }: SetupContext<['update:modelValue', 'change']>
+	{ slots, emit }: SetupContext<['update:modelValue', 'change']>,
+	options: { mobile?: boolean } = {}
 ) => {
+	const name = options.mobile ? 'vc-rate vcm-rate' : 'vc-rate';
 	const formItem = inject<any>('vc-form-item', {});
 	const starsRef = ref<HTMLElement>();
 	const currentValue = ref(0);
@@ -150,7 +154,7 @@ export const useRate = (
 
 		return (
 			<div
-				class={['vc-rate', { 'is-disabled': props.disabled, 'is-readonly': props.readonly }]}
+				class={[name, { 'is-disabled': props.disabled, 'is-readonly': props.readonly }]}
 				style={props.color ? { '--vc-rate-color': props.color } : undefined}
 				role="slider"
 				tabindex={interactive.value ? 0 : -1}

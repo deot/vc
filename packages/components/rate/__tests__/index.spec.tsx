@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { vi } from 'vitest';
-import { Rate } from '@deot/vc-components';
+import { Rate, MRate } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
@@ -66,6 +66,7 @@ const mountRate = (props: Record<string, any> = {}) => {
 describe('index.ts', () => {
 	it('basic', () => {
 		expect(typeof Rate).toBe('object');
+		expect(typeof MRate).toBe('object');
 	});
 
 	it('create: 结构与无障碍属性', () => {
@@ -423,5 +424,12 @@ describe('index.ts', () => {
 
 		expect(change).toHaveBeenCalledWith(2);
 		wrapper.unmount();
+	});
+
+	it('MRate: 与 Rate 结构相同，根节点另有标记类 vcm-rate', () => {
+		const wrapper = mount(() => (<MRate character={CHAR} modelValue={2} />));
+
+		expect(wrapper.classes()).toEqual(['vc-rate', 'vcm-rate']);
+		expect(wrapper.findAll('.vc-rate__star.is-select').length).toBe(2);
 	});
 });

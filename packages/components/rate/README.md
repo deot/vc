@@ -114,6 +114,34 @@ const levels = ['差', '中', '好'];
 ```
 :::
 
+## 移动端
+
+`MRate` 的属性、事件、插槽、结构与 `Rate` 相同，根节点另有标记类 `.vcm-rate`，结构样式、颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 星星 | 48（24） |
+| 间距 | 24（12），点击热区包含间距 |
+| 上下留白 | 各 12（6），点击热区约 72（36）见方 |
+| 提示文字 | 字号 28（14），与星星间距 16（8） |
+
+与桌面端的差异：未选中的星星用浅色线条色 `color-neutral-light`。两端都可以按住后左右滑动改分，纵向滑动仍然滚动页面；触摸松开后不会再补发鼠标事件，也没有系统的点按高亮。
+
+两端的尺寸都写成局部变量 `--vc-rate-<键>`（见“主题与局部覆盖”），移动端在 `.vcm-rate` 上覆盖，与样式的加载顺序无关。
+
+```vue
+<template>
+	<MRate v-model="value" half clearable />
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MRate } from '@deot/vc';
+
+const value = ref(3.5);
+</script>
+```
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-rate-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
@@ -123,7 +151,8 @@ const levels = ['差', '中', '好'];
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
 | foreground-color | 评分提示文字 | 亮色：`#080F20`；暗色：`#F8F8F8` |
-| foreground-color-inactive | 未选中的星星 | 亮色：`#C0C4CC`；暗色：`#737D8C` |
+| foreground-color-inactive | 未选中的星星（桌面端） | 亮色：`#C0C4CC`；暗色：`#737D8C` |
+| color-neutral-light | 未选中的星星（移动端，写入 `--vc-rate-foreground-color-inactive`） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
 | color-primary-lighter | 键盘聚焦时的光环 | `rgba(45, 140, 240, 0.2)` |
 
 ### 局部
@@ -180,7 +209,3 @@ const levels = ['差', '中', '好'];
 | → / ↑ | 加 1 分（`half` 时 0.5） |
 | ← / ↓ | 减 1 分（`half` 时 0.5） |
 | Home / End | 0 分 / 满分 |
-
-### 移动端
-
-`MRate` 与 `Rate` 使用同一实现，属性、事件及插槽一致，可从 `@deot/vc` 导入。
