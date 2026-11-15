@@ -143,7 +143,7 @@ const labelPosition = ref('right');
 
 ### 点击切换
 
-`clickable` 开启后，点击步骤会更新 `v-model` 并触发 `change`。点击当前步或设置了 `disabled` 的步骤不会触发。
+`clickable` 开启后，点击步骤会更新 `v-model` 并触发 `change`。点击当前步或设置了 `disabled` 的步骤不会触发。可点击的步骤能用 Tab 聚焦，按 Enter / Space 切换；当前步带 `aria-current="step"`。悬停高亮只在可悬停的设备上生效，触屏点按后不会残留。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
@@ -295,7 +295,31 @@ const current = ref(2);
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+尺寸写成局部变量 `--vc-steps-<键>`，桌面端的默认值为 px（括号内），设在 Steps 根节点上，Step 继承：
+
+| 键 | 说明 |
+| --- | --- |
+| font-size | 根节点字号（14px） |
+| icon-size | 节点尺寸，标题在右侧 / 纵向时也是标题行高（28px） |
+| icon-font-size | 序号字号（16px） |
+| status-icon-size | 成功 / 失败图标字号（10px） |
+| gap | 节点与标题、项与项之间的间距（12px） |
+| line-gap | 标题在下方 / 上方时，连线与两端节点的间距（12px） |
+| label-gap | 标题在下方 / 上方时，文字与节点的间距（2px） |
+| title-font-size | 标题字号（16px） |
+| description-font-size | 描述字号（12px） |
+| description-gap | 描述与标题的间距（2px） |
+| description-width | 标题在右侧 / 左侧时描述的最大宽度（140px） |
+| vertical-min-height | 纵向时每步的最小高度（90px） |
+| vertical-spacing | 纵向时内容与下一步的最小间距（12px） |
+| vertical-line-gap | 纵向时连线与两端节点的间距（6px） |
+| dot-size / dot-active-size | 圆点 / 当前步圆点的尺寸（8px / 10px） |
+| dot-gap | 圆点与连线、标题与描述的间距（4px） |
+| dot-spacing | 横向圆点在文字下方时，文字与圆点的间距（17px） |
+| dot-vertical-top / dot-vertical-spacing | 纵向圆点的上边距 / 与文字的间距（8px / 16px） |
+| arrow-height / arrow-padding | `arrow` 每步的高度 / 左内边距（72px / 16px） |
+
+连线保持 1px，不随 `--vc-rem` 缩放。
 
 ## API
 
@@ -360,10 +384,13 @@ const current = ref(2);
   - 纵向（`default`、`dot`）：只支持 `right` / `left`，`bottom` 视为 `right`，`top` 视为 `left`。
   - `dot` 横向：只支持 `bottom` / `top`，`right` 视为 `bottom`，`left` 视为 `top`。
   - `navigation` 的文字固定在节点右侧，`arrow` 没有节点，两者都忽略该属性。
+- 标题在节点下方 / 上方时，各步等分宽度，节点与文字居中，连线连接相邻两个节点；容器较窄时文字换行，不会溢出。
+- 标题在节点右侧 / 左侧（横向）以及 `navigation` 时，标题放不下会显示省略号；最后一步按内容宽度，容器放不下时也随之收缩。
+- 纵向时，内容超过每步的最小高度（90px）后，与下一步之间仍保留 12px 的间距。
 - 某一步的最终状态为 `error` 时（包括 Step 单独设置），前一步的连线显示为错误色；已完成步骤的连线为主色。
 - Steps 的默认插槽只渲染 Step（包括 `v-for`、`<template>` 中的 Step），其他节点会被忽略；被其他组件包裹的 Step 也不会渲染。
 - `title`、`description` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。
-- 自定义节点的尺寸由调用方控制；连线位置按默认节点（默认缩放下为 28px，`dot` 为 8px）计算。组件尺寸随 SCSS `$scale` 配置缩放，自定义节点需同步调整。
+- 自定义节点的尺寸由调用方控制；连线位置按默认节点（默认缩放下为 28px，`dot` 为 8px，即局部变量 `--vc-steps-icon-size`、`--vc-steps-dot-size`）计算。组件尺寸随 SCSS `$scale` 配置缩放，自定义节点需同步调整。
 - 颜色使用主题变量，可通过以下变量单独覆盖：
   - `--vc-steps-color-primary`：当前步、已完成的连线
   - `--vc-steps-color-primary-lighter`：已完成步骤的底色

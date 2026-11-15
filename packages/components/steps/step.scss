@@ -10,8 +10,14 @@ $color-primary: varfix(color-primary, steps);
 $color-primary-lighter: varfix(color-primary-lighter, steps);
 $background-color: varfix(background-color, steps);
 $component-name: vc-step;
-$icon-size: 28px;
-$gap: 12px; // 节点与标题、项与项之间的间距
+
+// 尺寸写成局部变量 --vc-steps-<键>（桌面端默认值为 px），MSteps 在 .vcm-steps 上覆盖，Step 继承
+@function v($key, $default) {
+	@return localfix(steps, $key, unitfix($default));
+}
+
+$icon-size: v(icon-size, 28px);
+$gap: v(gap, 12px); // 节点与标题、项与项之间的间距
 
 /**
  * 默认形态（标题在节点右侧）；其余布局由Steps上的类决定，见steps.scss
@@ -19,7 +25,7 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 @include block($component-name) {
 	position: relative;
 	flex: 1;
-	margin-right: unitfix($gap);
+	margin-right: $gap;
 	overflow: hidden;
 	text-align: left;
 	white-space: nowrap;
@@ -27,15 +33,16 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 	// 该步之后连线的颜色，由连线（伪元素或tail）统一读取
 	--vc-step-line-color: #{$color-neutral-light};
 
+	// 最后一步按内容宽度，容器放不下时也随之收缩（标题显示省略号），不溢出
 	&:last-child {
-		flex: none;
+		flex: 0 1 auto;
 		margin-right: 0;
 	}
 
 	@include element(dot) {
 		display: inline-block;
-		margin-right: unitfix($gap);
-		font-size: unitfix(16px);
+		margin-right: $gap;
+		font-size: v(icon-font-size, 16px);
 		font-weight: 500;
 		vertical-align: top;
 	}
@@ -43,9 +50,9 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 	// 序号与图标均上下左右居中
 	@include element(icon) {
 		display: flex;
-		width: unitfix($icon-size);
-		height: unitfix($icon-size);
-		line-height: unitfix($icon-size - 2px);
+		width: $icon-size;
+		height: $icon-size;
+		line-height: calc(#{$icon-size} - #{unitfix(2px)});
 		border: unitfix(1px) solid transparent;
 		border-radius: 50%;
 		box-sizing: border-box;
@@ -54,7 +61,7 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 
 		// 成功/失败图标的字形接近满格，按10px与序号的视觉大小一致
 		> .vc-icon {
-			font-size: unitfix(10px);
+			font-size: v(status-icon-size, 10px);
 		}
 	}
 
@@ -65,17 +72,27 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 	@include element(title) {
 		position: relative;
 		display: inline-block;
-		padding-right: unitfix($gap);
-		font-size: unitfix(16px);
+		max-width: 100%;
+		padding-right: $gap;
+		font-size: v(title-font-size, 16px);
 		font-weight: normal;
-		line-height: unitfix($icon-size);
+		line-height: $icon-size;
 		color: $color-dark-light;
+		vertical-align: top; // 内层 span 裁切溢出后不再提供基线，顶部对齐，行高不变
+		box-sizing: border-box;
+
+		// 宽度受限时（见steps.scss）显示省略号
+		> span {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
 	}
 
 	@include element(description) {
-		max-width: unitfix(140px);
-		margin-top: unitfix(2px);
-		font-size: unitfix(12px);
+		max-width: v(description-width, 140px);
+		margin-top: v(description-gap, 2px);
+		font-size: v(description-font-size, 12px);
 		color: $color-dark-extralight;
 		white-space: normal;
 	}
@@ -130,5 +147,12 @@ $gap: 12px; // 节点与标题、项与项之间的间距
 
 	@include when(clickable) {
 		cursor: pointer;
+		outline: none;
+
+		// 键盘聚焦时的光环，与 Switch 一致
+		&:focus-visible > .vc-step__content > .vc-step__title {
+			border-radius: unitfix(2px);
+			box-shadow: 0 0 0 unitfix(2px) $color-primary-lighter;
+		}
 	}
 }

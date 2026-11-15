@@ -204,6 +204,37 @@ describe('index.ts', () => {
 		expect(flags(wrapper, 'is-clickable')).toEqual([false, true, false]);
 	});
 
+	it('aria-current / 键盘: 当前步标记 step, 可点击的步骤可聚焦, Enter / Space 切换', async () => {
+		const wrapper = mount(Steps, {
+			props: { clickable: true, modelValue: 2 },
+			slots: { default: () => [h(Step), h(Step), h(Step, { disabled: true })] }
+		});
+
+		expect(items(wrapper).map((item: any) => item.attributes('aria-current'))).toEqual([undefined, 'step', undefined]);
+		expect(items(wrapper).map((item: any) => item.attributes('tabindex'))).toEqual(['0', undefined, undefined]);
+
+		await items(wrapper)[0].trigger('keydown', { key: 'a' });
+		expect(wrapper.emitted('change')).toBeUndefined();
+
+		await items(wrapper)[0].trigger('keydown', { key: 'Enter' });
+		expect(wrapper.emitted('change')).toEqual([[1]]);
+
+		await items(wrapper)[1].trigger('keydown', { key: ' ' });
+		expect(wrapper.emitted('change')).toEqual([[1], [2]]);
+
+		// 不可点击（disabled）时不响应
+		await items(wrapper)[2].trigger('keydown', { key: 'Enter' });
+		expect(wrapper.emitted('change')).toEqual([[1], [2]]);
+	});
+
+	it('clickable: 未开启时不可聚焦', () => {
+		const wrapper = mount(Steps, {
+			slots: { default: () => [h(Step), h(Step)] }
+		});
+
+		expect(items(wrapper).map((item: any) => item.attributes('tabindex'))).toEqual([undefined, undefined]);
+	});
+
 	it('clickable: 未绑定 v-model 时内部切换', async () => {
 		const wrapper = mount(Steps, {
 			props: { clickable: true },

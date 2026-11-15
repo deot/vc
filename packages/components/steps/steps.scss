@@ -1,4 +1,3 @@
-@use 'sass:math';
 @use '../style/helper' as *;
 
 $color-contrast-light: varfix(color-contrast-light, steps);
@@ -12,25 +11,32 @@ $color-primary-lighter: varfix(color-primary-lighter, steps);
 $background-color: varfix(background-color, steps);
 $background-color-lightest: varfix(background-color-lightest, steps);
 $component-name: vc-steps;
-$icon-size: 28px;
-$gap: 12px;
-$line-size: 1px;
-$label-width: 140px; // 标题在节点上方/下方时，内容区的宽度
-$icon-offset: math.div($label-width - $icon-size, 2);
-$icon-center: math.div($icon-size - $line-size, 2);
-$dot-size: 8px;
-$dot-size-active: 10px;
-$dot-gap: 4px;
-$dot-offset: math.div($label-width - $dot-size, 2);
-$dot-center: math.div($dot-size - $line-size, 2);
-$dot-active-offset: math.div($dot-size-active - $dot-size, 2);
-$dot-spacing: 17px; // 横向dot：节点与相邻文字的间距（文字在下方时由行高撑开，上方时保持一致）
-$dot-vertical-top: 8px;
-$dot-vertical-spacing: 16px;
-$arrow-height: 72px;
-$arrow-size: math.div($arrow-height, 2);
-$arrow-gap: 4px;
-$arrow-padding: 16px;
+
+// 尺寸写成局部变量 --vc-steps-<键>（桌面端默认值为 px），MSteps 在 .vcm-steps 上覆盖（见 mobile/style.scss）
+@function v($key, $default) {
+	@return localfix(steps, $key, unitfix($default));
+}
+
+$icon-size: v(icon-size, 28px);
+$gap: v(gap, 12px);
+$line-size: unitfix(1px); // 连线不随 --vc-rem 缩放
+$line-gap: v(line-gap, 12px); // 横向标题在上/下方时，连线与两端节点的间距
+$label-gap: v(label-gap, 2px); // 横向标题在上/下方时，文字与节点的间距
+$icon-center: calc((#{$icon-size} - #{$line-size}) / 2);
+$dot-size: v(dot-size, 8px);
+$dot-size-active: v(dot-active-size, 10px);
+$dot-gap: v(dot-gap, 4px); // 圆点与连线、标题与描述的间距
+$dot-center: calc((#{$dot-size} - #{$line-size}) / 2);
+$dot-active-offset: calc((#{$dot-size-active} - #{$dot-size}) / 2);
+$dot-active-offset-negative: calc((#{$dot-size} - #{$dot-size-active}) / 2);
+$dot-spacing: v(dot-spacing, 17px); // 横向dot：节点与相邻文字的间距（文字在下方时由行高撑开，上方时保持一致）
+$dot-vertical-top: v(dot-vertical-top, 8px);
+$dot-vertical-spacing: v(dot-vertical-spacing, 16px);
+$vertical-line-gap: v(vertical-line-gap, 6px); // 纵向：连线与两端节点的间距
+$arrow-height: v(arrow-height, 72px);
+$arrow-size: calc(#{$arrow-height} / 2);
+$arrow-gap: unitfix(4px);
+$arrow-padding: v(arrow-padding, 16px);
 $step: '.vc-step';
 
 /**
@@ -39,20 +45,27 @@ $step: '.vc-step';
  */
 @include block($component-name) {
 	display: flex;
-	font-size: unitfix(14px);
+	font-size: v(font-size, 14px);
 	line-height: 1.5;
 
 	// 连线：标题在右侧（横向）时接在标题后，在左侧（横向）时接在节点后，其余由tail绘制
 	&.is-label-right:not(.is-vertical):not(.is-lineless) > #{$step}:not(:last-child) > #{$step}__content > #{$step}__title::after,
 	&.is-label-left:not(.is-vertical):not(.is-lineless) > #{$step}:not(:last-child) > #{$step}__dot::after {
 		position: absolute;
-		top: unitfix($icon-center);
+		top: $icon-center;
 		left: 100%;
 		width: unitfix(5000px);
-		height: unitfix($line-size);
+		height: $line-size;
 		background-color: var(--vc-step-line-color);
 		content: '';
 		box-sizing: border-box;
+	}
+
+	// 标题在节点右/左侧（横向）：内容区最多占满节点之后的剩余宽度，标题放不下时显示省略号
+	&.is-label-right:not(.is-vertical) > #{$step} > #{$step}__content,
+	&.is-label-left:not(.is-vertical) > #{$step} > #{$step}__content,
+	&.is-navigation > #{$step} > #{$step}__content {
+		max-width: calc(100% - #{$icon-size} - #{$gap});
 	}
 
 	// 标题在节点左侧
@@ -65,11 +78,11 @@ $step: '.vc-step';
 		> #{$step}__dot {
 			position: relative;
 			margin-right: 0;
-			margin-left: unitfix($gap);
+			margin-left: $gap;
 
 			// 连线与节点的间距，对应标题在右侧时标题的padding-right
 			&::after {
-				margin-left: unitfix($gap);
+				margin-left: $gap;
 			}
 		}
 
@@ -86,19 +99,28 @@ $step: '.vc-step';
 		}
 	}
 
-	// 标题在节点下方/上方：连线在两个节点之间
+	// 标题在节点下方/上方：各步等分宽度，节点与文字居中，连线连接相邻两个节点，窄容器内文字换行
 	&.is-label-bottom > #{$step},
 	&.is-label-top > #{$step} {
+		display: flex;
+		flex: 1;
+		min-width: 0;
+		margin-right: 0;
 		overflow: visible;
+		text-align: center;
+		white-space: normal;
+		flex-direction: column;
+		align-items: center;
 
 		> #{$step}__dot {
-			margin-left: unitfix($icon-offset);
+			margin-right: 0;
 		}
 
 		> #{$step}__content {
 			display: block;
-			width: unitfix($label-width);
-			text-align: center;
+			width: 100%;
+			padding: 0 calc(#{$gap} / 2);
+			box-sizing: border-box;
 
 			> #{$step}__title {
 				padding-right: 0;
@@ -110,38 +132,32 @@ $step: '.vc-step';
 		}
 
 		> #{$step}__tail {
-			left: unitfix($icon-offset + $icon-size + $gap);
-			width: 100%;
-			height: unitfix($line-size);
-			padding-right: unitfix($icon-size + $gap);
+			left: calc(50% + #{$icon-size} / 2 + #{$line-gap});
+			width: calc(100% - #{$icon-size} - #{$line-gap} * 2);
+			height: $line-size;
 		}
 	}
 
 	&.is-label-bottom > #{$step} {
 		> #{$step}__content > #{$step}__title {
-			margin-top: unitfix(2px);
+			margin-top: $label-gap;
 		}
 
 		> #{$step}__tail {
-			top: unitfix($icon-center);
+			top: $icon-center;
 		}
 	}
 
 	// 节点在底部对齐（各项等高）
 	&.is-label-top > #{$step} {
-		display: flex;
 		flex-direction: column-reverse;
 
-		> #{$step}__dot {
-			align-self: flex-start;
-		}
-
 		> #{$step}__content {
-			margin-bottom: unitfix(2px);
+			margin-bottom: $label-gap;
 		}
 
 		> #{$step}__tail {
-			bottom: unitfix($icon-center);
+			bottom: $icon-center;
 		}
 	}
 
@@ -155,8 +171,13 @@ $step: '.vc-step';
 			align-items: flex-start;
 		}
 
+		// 内容超过最小高度时，与下一步之间仍留出间距
 		> #{$step}:not(:last-child) {
-			min-height: unitfix(90px);
+			min-height: v(vertical-min-height, 90px);
+
+			> #{$step}__content {
+				padding-bottom: v(vertical-spacing, 12px);
+			}
 		}
 
 		> #{$step} > #{$step}__content > #{$step}__description {
@@ -164,10 +185,10 @@ $step: '.vc-step';
 		}
 
 		> #{$step} > #{$step}__tail {
-			top: unitfix($icon-size + 6px);
-			bottom: unitfix(6px);
-			left: unitfix($icon-center);
-			width: unitfix($line-size);
+			top: calc(#{$icon-size} + #{$vertical-line-gap});
+			bottom: $vertical-line-gap;
+			left: $icon-center;
+			width: $line-size;
 		}
 
 		// 标题在左侧：节点靠右
@@ -176,7 +197,7 @@ $step: '.vc-step';
 			justify-content: flex-start;
 
 			> #{$step}__tail {
-				right: unitfix($icon-center);
+				right: $icon-center;
 				left: auto;
 			}
 		}
@@ -185,23 +206,18 @@ $step: '.vc-step';
 	// 圆点
 	@include when(dot) {
 		> #{$step} {
-			margin-right: unitfix($dot-size + $dot-gap * 2);
 			overflow: visible;
 
-			&:last-child {
-				margin-right: 0;
-			}
-
 			> #{$step}__dot #{$step}__icon {
-				width: unitfix($dot-size);
-				height: unitfix($dot-size);
+				width: $dot-size;
+				height: $dot-size;
 				line-height: 0;
 				border: 0;
 			}
 
 			&.is-active > #{$step}__dot #{$step}__icon {
-				width: unitfix($dot-size-active);
-				height: unitfix($dot-size-active);
+				width: $dot-size-active;
+				height: $dot-size-active;
 			}
 
 			&.is-default > #{$step}__dot #{$step}__icon {
@@ -213,82 +229,73 @@ $step: '.vc-step';
 			}
 
 			> #{$step}__content > #{$step}__description {
-				margin-top: unitfix($dot-gap);
+				margin-top: $dot-gap;
 			}
 		}
 
-		// 横向：文字在圆点下方/上方
+		// 横向：文字在圆点下方/上方，当前步的圆点放大时上下同时收回，占位不变
 		&.is-horizontal > #{$step} {
-			> #{$step}__dot {
-				margin-left: unitfix($dot-offset);
-			}
-
 			&.is-active > #{$step}__dot {
-				margin-left: unitfix($dot-offset - $dot-active-offset);
+				margin-top: $dot-active-offset-negative;
+				margin-bottom: $dot-active-offset-negative;
 			}
 
 			> #{$step}__tail {
-				left: unitfix($dot-offset + $dot-size + $dot-gap);
-				padding-right: 0;
+				left: calc(50% + #{$dot-size} / 2 + #{$dot-gap});
+				width: calc(100% - #{$dot-size} - #{$dot-gap} * 2);
 			}
 		}
 
 		&.is-label-bottom > #{$step} {
 			> #{$step}__content > #{$step}__title {
-				margin-top: unitfix($dot-gap);
-			}
-
-			&.is-active > #{$step}__dot {
-				margin-top: unitfix(-$dot-active-offset);
+				margin-top: $dot-gap;
 			}
 
 			> #{$step}__tail {
-				top: unitfix($dot-center);
+				top: $dot-center;
 			}
 		}
 
 		&.is-label-top > #{$step} {
 			> #{$step}__content {
-				margin-bottom: unitfix($dot-spacing);
-			}
-
-			// 上下同时收回，占位与未激活时一致，文字不跟着移动
-			&.is-active > #{$step}__dot {
-				margin-top: unitfix(-$dot-active-offset);
-				margin-bottom: unitfix(-$dot-active-offset);
+				margin-bottom: $dot-spacing;
 			}
 
 			> #{$step}__tail {
-				bottom: unitfix($dot-center);
+				bottom: $dot-center;
 			}
 		}
 
 		// 纵向：文字在圆点右侧/左侧
+		&.is-vertical.is-label-right > #{$step}:not(:last-child) {
+			margin-right: calc(#{$dot-size} + #{$dot-gap} * 2);
+		}
+
 		&.is-vertical > #{$step} {
 			> #{$step}__dot {
-				margin-top: unitfix($dot-vertical-top);
-				margin-right: unitfix($dot-vertical-spacing);
+				margin-top: $dot-vertical-top;
+				margin-right: $dot-vertical-spacing;
 			}
 
 			// 四周同时收回：中心与占位都与未激活时一致，切换当前步时文字与高度不变
 			&.is-active > #{$step}__dot {
-				margin-top: unitfix($dot-vertical-top - $dot-active-offset);
-				margin-bottom: unitfix(-$dot-active-offset);
-				margin-left: unitfix(-$dot-active-offset);
+				margin-top: calc(#{$dot-vertical-top} - #{$dot-active-offset});
+				margin-bottom: $dot-active-offset-negative;
+				margin-left: $dot-active-offset-negative;
 			}
 
 			> #{$step}__content {
 				overflow: hidden;
 
 				> #{$step}__title {
-					margin-top: unitfix($dot-vertical-top + math.div($dot-size - $icon-size, 2));
+					margin-top: calc(#{$dot-vertical-top} + (#{$dot-size} - #{$icon-size}) / 2);
 				}
 			}
 
 			> #{$step}__tail {
-				top: unitfix($dot-size + $dot-vertical-top + $dot-gap);
-				bottom: unitfix($dot-gap - $dot-vertical-top);
-				left: unitfix(math.div($dot-size, 2));
+				top: calc(#{$dot-size} + #{$dot-vertical-top} + #{$dot-gap});
+				bottom: calc(#{$dot-gap} - #{$dot-vertical-top});
+				left: calc(#{$dot-size} / 2);
 				transform: translateX(-50%);
 			}
 		}
@@ -296,16 +303,16 @@ $step: '.vc-step';
 		&.is-vertical.is-label-left > #{$step} {
 			> #{$step}__dot {
 				margin-right: 0;
-				margin-left: unitfix($dot-vertical-spacing);
+				margin-left: $dot-vertical-spacing;
 			}
 
 			&.is-active > #{$step}__dot {
-				margin-right: unitfix(-$dot-active-offset);
-				margin-left: unitfix($dot-vertical-spacing);
+				margin-right: $dot-active-offset-negative;
+				margin-left: $dot-vertical-spacing;
 			}
 
 			> #{$step}__tail {
-				right: unitfix(math.div($dot-size, 2));
+				right: calc(#{$dot-size} / 2);
 				left: auto;
 				transform: translateX(50%);
 			}
@@ -317,16 +324,16 @@ $step: '.vc-step';
 		> #{$step} {
 			display: flex;
 			flex: 1;
-			height: unitfix($arrow-height);
+			height: $arrow-height;
 			overflow: visible;
 			align-items: center;
 
 			&:not(:last-child) {
-				margin-right: unitfix($arrow-gap);
+				margin-right: $arrow-gap;
 			}
 
 			> #{$step}__content {
-				padding-left: unitfix($arrow-padding + $arrow-size);
+				padding-left: calc(#{$arrow-padding} + #{$arrow-size});
 				box-sizing: border-box;
 
 				> #{$step}__description {
@@ -337,7 +344,7 @@ $step: '.vc-step';
 			}
 
 			&:first-child > #{$step}__content {
-				padding-left: unitfix($arrow-padding);
+				padding-left: $arrow-padding;
 			}
 
 			&:not(:first-child)::before,
@@ -346,8 +353,8 @@ $step: '.vc-step';
 				top: 0;
 				width: 0;
 				height: 0;
-				border-top: unitfix($arrow-size) solid transparent;
-				border-bottom: unitfix($arrow-size) solid transparent;
+				border-top: $arrow-size solid transparent;
+				border-bottom: $arrow-size solid transparent;
 				content: '';
 			}
 
@@ -355,14 +362,14 @@ $step: '.vc-step';
 			&:not(:first-child)::before {
 				left: 0;
 				z-index: 1;
-				border-left: unitfix($arrow-size) solid $background-color-lightest;
+				border-left: $arrow-size solid $background-color-lightest;
 			}
 
 			// 后箭头：与该项同色
 			&:not(:last-child)::after {
-				right: unitfix(-$arrow-size);
+				right: calc(#{$arrow-size} * -1);
 				z-index: 2;
-				border-left: unitfix($arrow-size) solid;
+				border-left: $arrow-size solid;
 			}
 
 			@each $status, $background, $title, $description in (
@@ -441,23 +448,25 @@ $step: '.vc-step';
 		}
 	}
 
-	// 可点击步骤高亮文字，箭头的状态底色保留对比文字色
+	// 可点击步骤高亮文字（只在可悬停的设备上，触屏点按后不残留），箭头的状态底色保留对比文字色
 	@include when(clickable) {
 		#{$step}__title,
 		#{$step}__description {
 			transition: color 0.1s linear;
 		}
 
-		> #{$step}.is-clickable:hover > #{$step}__content > #{$step}__title,
-		> #{$step}.is-clickable:hover > #{$step}__content > #{$step}__description {
-			color: $color-primary;
-		}
+		@media (hover: hover) {
+			> #{$step}.is-clickable:hover > #{$step}__content > #{$step}__title,
+			> #{$step}.is-clickable:hover > #{$step}__content > #{$step}__description {
+				color: $color-primary;
+			}
 
-		@include when(arrow) {
-			@each $status in pending, error {
-				> #{$step}.is-#{$status}.is-clickable:hover > #{$step}__content > #{$step}__title,
-				> #{$step}.is-#{$status}.is-clickable:hover > #{$step}__content > #{$step}__description {
-					color: $color-contrast-light;
+			@include when(arrow) {
+				@each $status in pending, error {
+					> #{$step}.is-#{$status}.is-clickable:hover > #{$step}__content > #{$step}__title,
+					> #{$step}.is-#{$status}.is-clickable:hover > #{$step}__content > #{$step}__description {
+						color: $color-contrast-light;
+					}
 				}
 			}
 		}

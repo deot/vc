@@ -88,6 +88,13 @@ export const Step = defineComponent({
 			isClickable.value && steps.change(props.index);
 		};
 
+		// 可点击的步骤可用 Tab 聚焦，Enter / Space 切换
+		const handleKeydown = (e: KeyboardEvent) => {
+			if (e.key !== 'Enter' && e.key !== ' ') return;
+			e.preventDefault();
+			handleClick();
+		};
+
 		return () => {
 			return (
 				<div
@@ -101,7 +108,10 @@ export const Step = defineComponent({
 						}
 					]}
 					role="listitem"
+					aria-current={isActive.value ? 'step' : undefined}
+					tabindex={isClickable.value ? 0 : undefined}
 					onClick={handleClick}
+					onKeydown={isClickable.value ? handleKeydown : undefined}
 				>
 					{ steps.hasTail.value && (<div class="vc-step__tail" />) }
 					{ renderDot() }
