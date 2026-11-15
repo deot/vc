@@ -36,6 +36,7 @@ import Icon from './modules/icon.vue';
 import Image from './modules/image.vue';
 import ImageCrop from './modules/image-crop.vue';
 import ImageProcessor from './modules/image-processor.vue';
+import IndexBar from './modules/index-bar.vue';
 import Input from './modules/input.vue';
 import List from './modules/list.vue';
 import Marquee from './modules/marquee.vue';
@@ -115,6 +116,7 @@ export const MODULES = {
 	Image,
 	ImageCrop,
 	ImageProcessor,
+	IndexBar,
 	Input,
 	List,
 	Marquee,

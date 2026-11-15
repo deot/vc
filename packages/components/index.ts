@@ -77,6 +77,8 @@ export * from './image-crop';
 export * from './image-crop/index.m';
 export * from './image-processor';
 export * from './image-processor/index.m';
+export * from './index-bar';
+export * from './index-bar/index.m';
 export * from './input';
 export * from './input/index.m';
 export * from './list';

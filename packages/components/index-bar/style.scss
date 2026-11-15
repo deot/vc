@@ -1,0 +1,150 @@
+@use '../style/helper' as *;
+
+$component-name: vc-index-bar;
+$color-dark-light: varfix(color-dark-light, index-bar);
+$color-dark-extralight: varfix(color-dark-extralight, index-bar);
+$color-primary: varfix(color-primary, index-bar);
+$color-contrast-light: varfix(color-contrast-light, index-bar);
+$background-color-light: varfix(background-color-light, index-bar);
+$background-color-lightest: varfix(background-color-lightest, index-bar);
+
+// 尺寸与侧栏、提示的配色写成局部变量 --vc-index-bar-<键>（桌面端默认值），MIndexBar 在 .vcm-index-bar 上覆盖（见 mobile/style.scss）
+@function v($key, $default) {
+	@return localfix(index-bar, $key, $default);
+}
+
+$sidebar-width: v(sidebar-width, unitfix(24));
+
+@include block($component-name) {
+	position: relative;
+	background: $background-color-lightest;
+
+	// 自带滚动：滚动发生在内部，根节点裁掉吸顶层等溢出
+	@include when(scrollable) {
+		overflow: hidden;
+	}
+
+	> .vc-index-bar__list {
+		height: 100%;
+	}
+
+	// 分组标题：行内与吸顶层共用
+	@include element(title) {
+		display: flex;
+		height: v(title-height, unitfix(32));
+		padding: 0 v(title-padding, unitfix(16));
+		font-size: v(title-font-size, unitfix(12));
+		color: $color-dark-extralight;
+		background: v(title-background, $background-color-light);
+		box-sizing: border-box;
+		align-items: center;
+	}
+
+	// 默认的项：右侧让出侧栏
+	@include element(item) {
+		display: flex;
+		min-height: v(item-height, unitfix(40));
+		padding: v(item-padding, unitfix(8) unitfix(16));
+		padding-right: calc(#{v(item-padding-right, unitfix(16))} + #{$sidebar-width});
+		font-size: v(item-font-size, unitfix(14));
+		line-height: 1.5;
+		color: $color-dark-light;
+		box-sizing: border-box;
+		align-items: center;
+	}
+
+	// 舞台：高度为 0，由 Affix（sticky）带着停在吸附线上；吸顶标题、侧栏以它为参照
+	@include element(stage) {
+		position: relative;
+		height: 0;
+	}
+
+	@include element(sticky) {
+		position: absolute;
+		top: 0;
+		right: 0;
+		left: 0;
+		visibility: hidden;
+		will-change: transform;
+
+		// 吸住后才显示：没吸住时与第一个标题重合
+		@include when(active) {
+			visibility: visible;
+		}
+	}
+
+	// 侧栏层：铺满可见段（--vc-index-bar-visible），本身不接收指针
+	@include element(sidebar) {
+		position: absolute;
+		top: 0;
+		right: 0;
+		left: 0;
+		display: flex;
+		height: var(--vc-index-bar-visible, 0);
+		pointer-events: none;
+		justify-content: flex-end;
+		align-items: center;
+	}
+
+	// 可见段放不下全部项时等比压缩（每项仍等高，按位置取组的计算不变）
+	@include element(sidebar-list) {
+		display: flex;
+		width: $sidebar-width;
+		max-height: 100%;
+		padding: v(sidebar-padding, unitfix(4) 0);
+		pointer-events: auto;
+		cursor: pointer;
+		box-sizing: border-box;
+		user-select: none;
+		touch-action: none;
+		-webkit-tap-highlight-color: transparent;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	@include element(sidebar-item) {
+		display: flex;
+		height: v(sidebar-item-size, unitfix(16));
+		min-width: v(sidebar-item-size, unitfix(16));
+		min-height: 0;
+		padding: v(sidebar-item-padding, 0);
+		margin: v(sidebar-item-gap, unitfix(1)) 0;
+		font-size: v(sidebar-font-size, unitfix(11));
+		line-height: 1;
+		color: $color-dark-extralight;
+		border-radius: v(sidebar-item-radius, 50%);
+		box-sizing: border-box;
+		flex-shrink: 1;
+		justify-content: center;
+		align-items: center;
+
+		@include when(active) {
+			color: v(sidebar-active-color, $color-contrast-light);
+			background: v(sidebar-active-background, $color-primary);
+		}
+	}
+
+	@media (hover: hover) {
+		.vc-index-bar__sidebar-item:not(.is-active):hover {
+			color: $color-primary;
+		}
+	}
+
+	// 拖动侧栏时的提示：桌面端在当前项左侧
+	@include element(tip) {
+		position: absolute;
+		top: var(--vc-index-bar-tip-y, 50%);
+		right: calc(#{$sidebar-width} + #{v(tip-gap, unitfix(12))});
+		display: flex;
+		width: v(tip-size, unitfix(40));
+		height: v(tip-size, unitfix(40));
+		font-size: v(tip-font-size, unitfix(20));
+		color: v(tip-color, $color-contrast-light);
+		pointer-events: none;
+		background: v(tip-background, $color-primary);
+		border-radius: v(tip-radius, 50%);
+		transform: translateY(-50%);
+		justify-content: center;
+		align-items: center;
+	}
+}

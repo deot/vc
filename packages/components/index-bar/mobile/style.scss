@@ -1,0 +1,54 @@
+@use '../../style/helper' as *;
+
+$color-primary: varfix(color-primary, index-bar);
+$color-neutral-light: varfix(color-neutral-light, index-bar);
+
+// MIndexBar：结构与 IndexBar 相同，尺寸按 750 稿覆盖局部变量（括号内为 375 宽下的 px），尺寸参照 arco IndexBar，项与 MList 同节奏
+@include block(vcm-index-bar) {
+	@include localvars(index-bar, (
+		title-height: remfix(48), // 24
+		title-padding: remfix(32), // 16
+		title-font-size: remfix(28), // 14
+		item-height: remfix(108), // 54：同 MListItem
+		item-padding: remfix(24) remfix(32),
+		item-padding-right: remfix(32),
+		item-font-size: remfix(32), // 16
+		sidebar-width: remfix(52), // 字宽 20 + 左右 16
+		sidebar-padding: 0,
+		sidebar-item-size: auto,
+		sidebar-item-padding: remfix(4) 0,
+		sidebar-item-gap: 0,
+		sidebar-item-radius: 0,
+		sidebar-font-size: remfix(20), // 10
+		sidebar-active-color: $color-primary,
+		sidebar-active-background: transparent,
+		tip-size: remfix(96), // 48
+		tip-font-size: remfix(48), // 24
+		tip-radius: remfix(8),
+		tip-color: #fff,
+		tip-background: rgb(0 0 0 / 80%)
+	));
+
+	// 项之间的细线，与 MListItem 一致（左侧缩进）
+	.vc-index-bar__item {
+		@include common-border-1px(bottom, $color-neutral-light);
+
+		&::after {
+			right: 0;
+			left: remfix(32);
+			width: auto;
+		}
+	}
+
+	.vc-index-bar__sidebar-item {
+		line-height: remfix(28);
+	}
+
+	// 提示居中于可见段（toast）
+	.vc-index-bar__tip {
+		top: calc(var(--vc-index-bar-visible, 0px) / 2);
+		right: auto;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+}
