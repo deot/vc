@@ -8,7 +8,7 @@ $color-neutral-light: varfix(color-neutral-light, dropdown);
 $color-primary: varfix(color-primary, dropdown);
 $background-color-primary-light: varfix(background-color-primary-light, dropdown);
 
-// 尺寸写成局部变量 --vc-dropdown-<键>（默认值为下表），可单独覆盖
+// 桌面端尺寸，写成局部变量 --vc-dropdown-<键>（默认值为下表），MDropdown 在 .vcm-dropdown* 上覆盖（mobile/style.scss）
 // - icon-*：caret 箭头；transform 为收起时，active-transform 为展开时
 // - menu-min-width：菜单最小宽度；item-*：菜单项；divided-gap：divided 分割线上方的间距
 $sizes: (

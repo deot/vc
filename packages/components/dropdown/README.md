@@ -222,12 +222,15 @@ const handleClose = () => {
 | color-dark-lighter | 菜单项文字 | 亮色：`#515151`；暗色：`#D9D9D9` |
 | color-dark-extralight | 禁用菜单文字 | 亮色：`#909399`；暗色：`#B9B9B9` |
 | color-neutral-light | 菜单分组分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
-| color-primary | 菜单悬停及选中文字 | `#456CF6` |
+| color-primary | 菜单悬停及选中文字；移动端展开时的触发区与 `caret` | `#456CF6` |
 | background-color-primary-light | 可用菜单项悬停背景 | 亮色：`#E6F7FF`；暗色：`#273E5E` |
+| color-dark-light | 移动端菜单项文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-neutral | 移动端 `caret` 箭头（收起） | 亮色：`#C4C9D2`；暗色：`#E8E8E8` |
+| background-color-light | 移动端菜单项按下背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
 
 ### 局部
 
-尺寸写成局部变量 `--vc-dropdown-<键>`，可在组件根节点、菜单弹层或其祖先上单独覆盖。
+尺寸写成局部变量 `--vc-dropdown-<键>`，`MDropdown` 在 `.vcm-dropdown`、`.vcm-dropdown-menu`、`.vcm-dropdown-item` 上覆盖（见 [移动端](#移动端)），与样式的加载顺序无关。
 
 | 参数 | 使用位置 | 默认值 |
 | --- | --- | --- |
@@ -243,6 +246,51 @@ const handleClose = () => {
 | item-line-height | 菜单项行高 | `normal` |
 | item-color | 菜单项文字 | 全局 `color-dark-lighter` |
 | divided-gap | `divided` 分割线上方的间距 | `5px` |
+
+## 移动端
+
+`MDropdown`、`MDropdownMenu`、`MDropdownItem` 与桌面端的结构相同：默认插槽为触发区，`content` 插槽放 `MDropdownMenu`（`ul`）与 `MDropdownItem`（`li`）。根节点另有标记类 `.vcm-dropdown`、`.vcm-dropdown-menu`、`.vcm-dropdown-item`，颜色与主题参数共用。
+
+弹层不是跟随触发区的气泡，而是占满视口宽度的面板：从触发区下沿向下滑出，其余区域为蒙层，触发区保持可见；`placement` 为 `top*`，或下方剩余空间不足（小于上方且不到视口一半）时，从触发区上沿向上展开。面板为直角，最高为可用高度的 80%，超出时滚动。点击蒙层、面板与触发区以外的区域时关闭。同一时间只展开一个：展开另一个时，前一个立即收起，蒙层保持显示。
+
+尺寸按 750 稿设计，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 菜单项 | 字号 32（16），行高 44（22），内边距 32（16），单行时高 108（54），与 `MList` 一致；占满面板宽度，超出省略 |
+| 选中项 | 文字为主色，右侧对勾 32（16）（`correct` 图标，同 Select 选项） |
+| `caret` | 实心三角 24（12），与文字间距 8（4），收起时 `color-neutral`；展开时与触发区文字一起变为主色 |
+| `divided` | 上方一条细线，没有间距；其余项之间不画线 |
+
+按下菜单项时显示 `background-color-light` 底色（同 `MListItem`），不使用悬停样式。
+
+属性与 `Dropdown` 的差异：
+
+- `trigger` 只有 `click`（默认）与 `custom`。
+- 没有 `arrow`、`scrollable`、`scrollerOptions`；`portalClass`、`portalStyle` 作用于弹层容器。
+- `tag`、`disabled`、`portal`、`to` 为声明的属性（桌面端经 Popover 透传）。
+- `header`、`footer` 插槽放在面板的顶部和底部，不随内容滚动，可放置「重置」「确定」等按钮。
+
+```vue
+<template>
+	<MDropdown caret @click="value => sort = value">
+		{{ sort }}
+		<template #content>
+			<MDropdownMenu>
+				<MDropdownItem v-for="item in sorts" :key="item" :label="item" :selected="sort === item" />
+			</MDropdownMenu>
+		</template>
+	</MDropdown>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MDropdown, MDropdownMenu, MDropdownItem } from '@deot/vc';
+
+const sorts = ['默认排序', '最新', '名称'];
+const sort = ref(sorts[0]);
+</script>
+```
 
 ## API
 
@@ -313,7 +361,7 @@ const handleClose = () => {
 | --- | --- | --- |
 | default | 优先于 `label` 的显示内容；不用于推断回调值 | - |
 
-DropdownItem 应置于 Dropdown 的内容中使用。`MDropdown`、`MDropdownMenu`、`MDropdownItem` 是同一实现的移动端别名，触屏场景建议使用 `trigger="click"`。
+DropdownItem 应置于 Dropdown 的内容中使用。移动端入口导出 `MDropdown`、`MDropdownMenu`、`MDropdownItem`，见 [移动端](#移动端)。
 
 ### 主题
 

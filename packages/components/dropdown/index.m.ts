@@ -1,5 +1,11 @@
-import { Dropdown, DropdownMenu, DropdownItem } from '.';
+import { MDropdown } from './mobile/dropdown.tsx';
+import { MDropdownMenu } from './mobile/dropdown-menu.tsx';
+import { MDropdownItem } from './mobile/dropdown-item.tsx';
+import './style.scss';
+import './mobile/style.scss';
 
-export const MDropdown = Dropdown;
-export const MDropdownMenu = DropdownMenu;
-export const MDropdownItem = DropdownItem;
+export {
+	MDropdown,
+	MDropdownMenu,
+	MDropdownItem
+};

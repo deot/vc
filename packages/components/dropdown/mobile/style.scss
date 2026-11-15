@@ -1,0 +1,110 @@
+@use '../../style/helper' as *;
+
+$color-dark-light: varfix(color-dark-light, dropdown);
+$color-neutral: varfix(color-neutral, dropdown);
+$color-primary: varfix(color-primary, dropdown);
+$background-color-light: varfix(background-color-light, dropdown);
+
+// MDropdown：与 Dropdown 相同的结构，只覆盖局部变量 --vc-dropdown-*（750 稿，随 --vc-rem 缩放；括号内为 375 宽）
+// - 触发区：caret 为实心三角 24（12），与文字间距 8（4），收起时 color-neutral，展开时与文字一起变为主色
+// - 菜单项：整行，字号 32（16），行高 44（22），上下左右内边距 32（16），即行高 108（54），与 MList 一致；选中时右侧对勾 32（16）
+@include block(vcm-dropdown) {
+	@include localvars(dropdown, (
+		icon-size: remfix(24),
+		icon-gap: remfix(8),
+		icon-color: $color-neutral,
+		icon-transform: rotate(180deg),
+		icon-active-color: $color-primary,
+		icon-active-transform: none
+	));
+
+	-webkit-tap-highlight-color: transparent;
+
+	&.vc-dropdown {
+		display: inline-flex;
+		align-items: center;
+	}
+
+	@include when(active) {
+		color: $color-primary;
+	}
+
+	@include when(disabled) {
+		opacity: .5;
+	}
+}
+
+@include block((vcm-dropdown-menu, vcm-dropdown-item)) {
+	@include localvars(dropdown, (
+		menu-min-width: 100%,
+		item-padding: remfix(32),
+		item-font-size: remfix(32),
+		item-line-height: remfix(44),
+		item-color: $color-dark-light,
+		divided-gap: 0
+	));
+}
+
+@include block(vcm-dropdown-item) {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	-webkit-tap-highlight-color: transparent;
+
+	&:not(.is-disabled):active {
+		background-color: $background-color-light;
+	}
+
+	// 右侧给对勾留出位置
+	@include when(selected) {
+		padding-right: remfix(96);
+	}
+
+	> .vc-dropdown-item__icon {
+		position: absolute;
+		top: 50%;
+		right: remfix(32);
+		font-size: remfix(32);
+		transform: translateY(-50%);
+	}
+}
+
+// 弹层：横向占满视口，纵向从触发区下沿到视口底部（向上展开时从视口顶部到触发区上沿），由 mobile/dropdown.tsx 写入 top / bottom
+// 面板（MPopup）在容器内滑出，直角，最高为容器的 80%；蒙层只盖住容器
+@include block(vcm-dropdown-wrapper) {
+	--vc-popup-radius: 0;
+	--vc-popup-gap: 20%;
+
+	position: fixed;
+	right: 0;
+	left: 0;
+	z-index: 1000;
+	overflow: hidden;
+
+	.vcm-popup__mask {
+		position: absolute;
+	}
+
+	.vcm-popup__content {
+		padding: 0;
+	}
+
+	// 容器不贴屏幕边缘：不让出安全区
+	@include when(down) {
+		.vcm-popup.is-top .vcm-popup__wrapper {
+			padding-top: 0;
+		}
+	}
+
+	@include when(up) {
+		.vcm-popup.is-bottom .vcm-popup__wrapper {
+			padding-bottom: 0;
+		}
+	}
+
+	// 从另一个 MDropdown 切换过来：蒙层已经显示，不重新淡入
+	@include when(switched) {
+		.vcm-popup__mask {
+			animation: none !important;
+		}
+	}
+}

@@ -4,6 +4,7 @@ import { Dropdown, DropdownMenu, DropdownItem } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi } from 'vitest';
+import { MDropdown, MDropdownMenu, MDropdownItem } from '../index.m';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -484,5 +485,160 @@ describe('caret', () => {
 		await flush();
 		expect(wrapper.classes()).toContain('is-active');
 		wrapper.unmount();
+	});
+});
+
+describe('MDropdown', () => {
+	const getMobileWrapper = () => [...document.querySelectorAll('.vcm-dropdown-wrapper')]
+		.find(el => (el as HTMLElement).style.display !== 'none') as HTMLElement | undefined;
+
+	const renderMenu = (props: Record<string, any> = {}, label = '菜单') => (
+		<MDropdown caret {...props}>
+			{{
+				default: () => <span class={`trigger-${label}`}>{label}</span>,
+				content: () => (
+					<MDropdownMenu>
+						<MDropdownItem value="1" label="驴打滚" selected />
+						<MDropdownItem value="2" label="炸酱面" />
+					</MDropdownMenu>
+				)
+			}}
+		</MDropdown>
+	);
+
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('与 Dropdown 结构相同，根节点、菜单、菜单项另有 vcm- 标记类；打开前不渲染弹层', async () => {
+		const wrapper = mount(() => renderMenu(), { attachTo: document.body });
+		expect(wrapper.classes()).toEqual(expect.arrayContaining(['vc-dropdown', 'vcm-dropdown']));
+		expect(wrapper.find('.vc-dropdown__icon').exists()).toBe(true);
+		expect(document.querySelector('.vcm-dropdown-wrapper')).toBeNull();
+
+		await wrapper.trigger('click');
+		await flush();
+		const el = getMobileWrapper()!;
+		expect(el).toBeTruthy();
+		expect(el.parentElement).toBe(document.body);
+		expect(el.querySelector('ul.vc-dropdown-menu.vcm-dropdown-menu')).not.toBeNull();
+		const items = el.querySelectorAll('li.vc-dropdown-item.vcm-dropdown-item');
+		expect(items.length).toBe(2);
+		// 选中项右侧显示对勾
+		expect(items[0].querySelector('.vc-dropdown-item__icon')).not.toBeNull();
+		expect(items[1].querySelector('.vc-dropdown-item__icon')).toBeNull();
+		wrapper.unmount();
+	});
+
+	it('桌面端 DropdownItem 选中时不显示对勾', () => {
+		const wrapper = mount(() => (<DropdownItem selected label="驴打滚" />));
+		expect(wrapper.find('.vc-dropdown-item__icon').exists()).toBe(false);
+		wrapper.unmount();
+	});
+
+	it('弹层从触发区下沿开始；剩余空间不足时向上展开', async () => {
+		const wrapper = mount(() => renderMenu(), { attachTo: document.body });
+		const rect = { top: 100, bottom: 140, left: 0, right: 80, width: 80, height: 40, x: 0, y: 100 };
+		const spy = vi.spyOn(wrapper.element, 'getBoundingClientRect').mockImplementation(() => rect as DOMRect);
+
+		await wrapper.trigger('click');
+		await flush();
+		let el = getMobileWrapper()!;
+		expect(el.classList).toContain('is-down');
+		expect(el.style.top).toBe('140px');
+		expect(el.style.bottom).toBe('0px');
+		expect(el.querySelector('.vcm-popup')!.classList).toContain('is-top');
+
+		await wrapper.trigger('click');
+		await flush();
+
+		// 靠近视口底部
+		const bottom = window.innerHeight - 20;
+		Object.assign(rect, { top: bottom - 40, bottom, y: bottom - 40 });
+		await wrapper.trigger('click');
+		await flush();
+		el = getMobileWrapper()!;
+		expect(el.classList).toContain('is-up');
+		expect(el.style.top).toBe('0px');
+		expect(el.style.bottom).toBe(`${window.innerHeight - (bottom - 40)}px`);
+		expect(el.querySelector('.vcm-popup')!.classList).toContain('is-bottom');
+
+		spy.mockRestore();
+		wrapper.unmount();
+	});
+
+	it('点击菜单项触发 click 并关闭；点击蒙层、外部关闭', async () => {
+		const onClick = vi.fn();
+		const visible = ref(false);
+		const props = () => ({
+			'modelValue': visible.value,
+			'onUpdate:modelValue': (v: boolean) => (visible.value = v),
+			onClick
+		});
+		const wrapper = mount(() => renderMenu(props()), { attachTo: document.body });
+
+		await wrapper.trigger('click');
+		await flush();
+		expect(visible.value).toBe(true);
+		(getMobileWrapper()!.querySelectorAll('.vc-dropdown-item')[1] as HTMLElement).click();
+		await flush();
+		expect(onClick.mock.calls[0][0]).toBe('2');
+		expect(visible.value).toBe(false);
+
+		await wrapper.trigger('click');
+		await flush();
+		expect(visible.value).toBe(true);
+		(getMobileWrapper()!.querySelector('.vcm-popup__mask') as HTMLElement).click();
+		await flush();
+		expect(visible.value).toBe(false);
+
+		await wrapper.trigger('click');
+		await flush();
+		expect(visible.value).toBe(true);
+		document.body.click();
+		await flush();
+		expect(visible.value).toBe(false);
+		wrapper.unmount();
+	});
+
+	it('打开另一个时，前一个立即收起，新的蒙层不重新淡入', async () => {
+		const wrapper = mount(() => (
+			<div>
+				{renderMenu({}, 'a')}
+				{renderMenu({}, 'b')}
+			</div>
+		), { attachTo: document.body });
+		const [a, b] = wrapper.findAll('.vcm-dropdown');
+
+		await a.trigger('click');
+		await flush();
+		const first = getMobileWrapper()!;
+
+		(b.element.querySelector('.trigger-b') as HTMLElement).click();
+		await flush();
+		await sleep(10);
+		await flush();
+		expect(a.classes()).not.toContain('is-active');
+		expect(b.classes()).toContain('is-active');
+		expect(first.style.display).toBe('none');
+		const second = getMobileWrapper()!;
+		expect(second).not.toBe(first);
+		expect(second.classList).toContain('is-switched');
+		wrapper.unmount();
+	});
+
+	it('disabled / trigger="custom"：点击触发区不打开', async () => {
+		const disabled = mount(() => renderMenu({ disabled: true }), { attachTo: document.body });
+		await disabled.trigger('click');
+		await flush();
+		expect(disabled.classes()).toEqual(expect.arrayContaining(['is-disabled']));
+		expect(disabled.classes()).not.toContain('is-active');
+		disabled.unmount();
+
+		const custom = mount(() => renderMenu({ trigger: 'custom' }), { attachTo: document.body });
+		await custom.trigger('click');
+		await flush();
+		expect(custom.classes()).not.toContain('is-active');
+		custom.unmount();
 	});
 });
