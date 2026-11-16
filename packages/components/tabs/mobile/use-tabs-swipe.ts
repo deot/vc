@@ -66,7 +66,8 @@ export const useTabsSwipe = (options: TabsSwipeOptions) => {
 			const dy = point.clientY - startY;
 			if (!axis) {
 				if (Math.max(Math.abs(dx), Math.abs(dy)) < AXIS_THRESHOLD) return;
-				axis = Math.abs(dx) > Math.abs(dy) && !canScrollX(target, root!, dx) ? 'x' : 'y';
+				// 内层组件已接管（如 MSwipeAction 滑开操作项，会阻止默认行为）：按纵向处理，不切换
+				axis = !e.defaultPrevented && Math.abs(dx) > Math.abs(dy) && !canScrollX(target, root!, dx) ? 'x' : 'y';
 			}
 			// 横向滑动时不让页面跟着横向滚动
 			axis === 'x' && e.cancelable && e.preventDefault();
