@@ -1,0 +1,120 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-swipe-action;
+$color-neutral-deep: varfix(color-neutral-deep, swipe-action);
+$color-primary: varfix(color-primary, swipe-action);
+$color-success: varfix(color-success, swipe-action);
+$color-warning: varfix(color-warning, swipe-action);
+$color-error: varfix(color-error, swipe-action);
+
+// 轨道与露出区域共用：拖动中为 0，松手后由 useSwipeAction 写入时长与曲线
+$transition: var(--vc-swipe-action-duration, 300ms) var(--vc-swipe-action-timing, ease);
+
+// 尺寸按 750 稿（括号内为 375 宽）：按钮左右内边距 32（16），文字 32 / 44（16 / 22），图标 40（20）与文字间距 8（4）
+@include block($component-name) {
+	position: relative;
+	overflow: hidden;
+	-webkit-tap-highlight-color: transparent;
+
+	@include element(track) {
+		position: relative;
+		transition: transform $transition;
+	}
+
+	// 露出区域：宽度等于位移，按钮按比例定位在其中
+	@include element(actions) {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		transition: width $transition;
+
+		@include when(left) {
+			right: 100%;
+
+			> .#{$component-name}__action {
+				justify-content: flex-end;
+
+				&::after {
+					right: 100%;
+				}
+			}
+		}
+
+		@include when(right) {
+			left: 100%;
+
+			> .#{$component-name}__action {
+				justify-content: flex-start;
+
+				&::after {
+					left: 100%;
+				}
+			}
+		}
+	}
+
+	@include element(action) {
+		position: absolute;
+		top: 0;
+		display: flex;
+		align-items: center;
+		width: max-content;
+		height: 100%;
+		padding: 0 localfix(swipe-action, padding, remfix(32));
+		font-size: localfix(swipe-action, font-size, remfix(32));
+		line-height: localfix(swipe-action, line-height, remfix(44));
+		color: localfix(swipe-action, color, #fff);
+		white-space: nowrap;
+		box-sizing: border-box;
+		transition: left .2s, right .2s;
+
+		// 阻尼、全滑跟手拉开时，按钮之间与外侧的空隙用同色背景补上；外侧的按钮叠在上层，盖住内侧按钮的这一段
+		&::after {
+			position: absolute;
+			top: 0;
+			width: 100vw;
+			height: 100%;
+			background: inherit;
+			content: '';
+		}
+
+		@include when(default) {
+			background: $color-neutral-deep;
+		}
+
+		@include when(primary) {
+			background: $color-primary;
+		}
+
+		@include when(success) {
+			background: $color-success;
+		}
+
+		@include when(warning) {
+			background: $color-warning;
+		}
+
+		@include when(error) {
+			background: $color-error;
+		}
+
+		@include when(disabled) {
+			color: rgb(255 255 255 / 40%);
+		}
+
+		// 全滑：最外侧按钮铺满露出区域，文字贴着内容一侧
+		@include when(full) {
+			width: 100%;
+		}
+	}
+
+	@include element(icon) {
+		flex-shrink: 0;
+		font-size: localfix(swipe-action, icon-size, remfix(40));
+		line-height: 0;
+
+		& + .#{$component-name}__content {
+			margin-left: localfix(swipe-action, icon-gap, remfix(8));
+		}
+	}
+}

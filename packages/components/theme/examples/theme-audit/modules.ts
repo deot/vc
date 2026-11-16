@@ -62,6 +62,7 @@ import Snapshot from './modules/snapshot.vue';
 import SortList from './modules/sort-list.vue';
 import Spin from './modules/spin.vue';
 import Steps from './modules/steps.vue';
+import SwipeAction from './modules/swipe-action.vue';
 import Switch from './modules/switch.vue';
 import Table from './modules/table.vue';
 import Tabs from './modules/tabs.vue';
@@ -142,6 +143,7 @@ export const MODULES = {
 	SortList,
 	Spin,
 	Steps,
+	SwipeAction,
 	Switch,
 	Table,
 	Tabs,
