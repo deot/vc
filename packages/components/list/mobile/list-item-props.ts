@@ -1,5 +1,6 @@
-import type { ExtractPropTypes } from 'vue';
+import type { ExtractPropTypes, PropType } from 'vue';
 import { valueType } from '../../customer/customer-props';
+import type { SwipeActionOptions, SwipeActionValue } from '../../swipe-action/mobile/swipe-action-props';
 
 export const props = {
 	tag: {
@@ -34,6 +35,14 @@ export const props = {
 	href: String,
 
 	// MListItem是否独立存在
-	alone: Boolean
+	alone: Boolean,
+
+	// 滑动操作露出的一侧，支持 v-model:swiped；取值同 MSwipeAction 的 modelValue
+	swiped: {
+		type: [String, Boolean] as PropType<SwipeActionValue>,
+		default: false
+	},
+	// 滑动操作的配置：MSwipeAction 除 modelValue 外的属性（leftActions、rightActions 等）
+	swipeActionOptions: Object as PropType<SwipeActionOptions>
 };
 export type Props = ExtractPropTypes<typeof props>;

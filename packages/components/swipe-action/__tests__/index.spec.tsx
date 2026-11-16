@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { MSwipeAction, SwipeAction, MTabs, MTabsPane } from '@deot/vc-components';
+import { MSwipeAction, SwipeAction, MList, MListItem, MTabs, MTabsPane } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
 import { nextTick, ref } from 'vue';
@@ -395,6 +395,77 @@ describe('swipe-action', () => {
 		await swipe(wrapper.find('.content').element, -80);
 		expect(value.value).toBe('a');
 		expect(getTransform(wrapper)).toBe('translate3d(-120px, 0, 0)');
+		wrapper.unmount();
+	});
+});
+
+describe('MListItem swipe actions', () => {
+	it('keeps the plain DOM without actions', async () => {
+		const wrapper = mount(() => (
+			<MList>
+				<MListItem label="标题" indent={0} />
+			</MList>
+		));
+		const item = wrapper.find('.vcm-list-item');
+		expect(item.classes()).not.toContain('vcm-swipe-action');
+		expect(item.find('.vcm-swipe-action__track').exists()).toBe(false);
+		expect((item.element as HTMLElement).style.paddingLeft).toBe('calc(var(--vc-rem) * 0)');
+	});
+
+	it('reads every option from swipeActionOptions, including disabled', async () => {
+		const options = ref<any>({ rightActions: actions(), disabled: true });
+		const wrapper = mount(() => (
+			<MListItem label="标题" swipeActionOptions={options.value} />
+		), { attachTo: document.body });
+		await flush();
+		const label = wrapper.find('.vcm-list-item__label').element;
+
+		await swipe(label, -60);
+		expect(getTransform(wrapper)).toBe('');
+
+		// 缺省值同 MSwipeAction：threshold 0.15
+		options.value = { rightActions: actions() };
+		await flush();
+		await swipe(label, -15);
+		expect(getTransform(wrapper)).toBe('');
+		await swipe(label, -30);
+		expect(getTransform(wrapper)).toBe('translate3d(-120px, 0, 0)');
+		wrapper.unmount();
+	});
+
+	it('slides the whole row and swallows the click while open', async () => {
+		const onClick = vi.fn();
+		const open = ref<any>(false);
+		const wrapper = mount(() => (
+			<MList>
+				<MListItem
+					v-model:swiped={open.value}
+					label="标题"
+					indent={48}
+					swipeActionOptions={{ rightActions: actions() }}
+					onClick={onClick}
+				/>
+			</MList>
+		), { attachTo: document.body });
+		await flush();
+		const item = wrapper.find('.vcm-list-item');
+		expect(item.classes()).toEqual(expect.arrayContaining(['vcm-swipe-action', 'is-clickable']));
+		// 缩进在轨道上，跟着整行滑动
+		expect((item.element as HTMLElement).style.paddingLeft).toBe('');
+		expect((item.find('.vcm-swipe-action__track').element as HTMLElement).style.paddingLeft).toBe('calc(var(--vc-rem) * 48)');
+
+		await swipe(item.find('.vcm-list-item__label').element, -60);
+		expect(open.value).toBe('right');
+		expect(item.classes()).toContain('is-swiping');
+
+		// 展开时点列表项：只收起
+		await item.find('.vcm-list-item__label').trigger('click');
+		await flush();
+		expect(open.value).toBe(false);
+		expect(onClick).not.toHaveBeenCalled();
+
+		await item.find('.vcm-list-item__label').trigger('click');
+		expect(onClick).toHaveBeenCalledTimes(1);
 		wrapper.unmount();
 	});
 });

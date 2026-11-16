@@ -55,5 +55,41 @@ export const props = {
 
 export type Props = ExtractPropTypes<typeof props>;
 
-// 除 modelValue 外的配置
+// 除 modelValue 外的配置，如 MListItem 的 swipeActionOptions
 export type SwipeActionOptions = Partial<Omit<Props, 'modelValue'>>;
+
+/**
+ * 把「状态 + 配置对象」转成 useSwipeAction 需要的 props（缺省值同 MSwipeAction），读取时才取值，保持响应式
+ * @param getValue 当前状态
+ * @param getOptions 配置
+ * @returns ~
+ */
+export const toSwipeActionProps = (
+	getValue: () => SwipeActionValue | undefined,
+	getOptions: () => SwipeActionOptions | undefined
+): Props => {
+	const empty: SwipeActionItem[] = [];
+	return {
+		get modelValue() {
+			return getValue() || false;
+		},
+		get leftActions() {
+			return getOptions()?.leftActions || empty;
+		},
+		get rightActions() {
+			return getOptions()?.rightActions || empty;
+		},
+		get disabled() {
+			return !!getOptions()?.disabled;
+		},
+		get closeOnClickOutside() {
+			return getOptions()?.closeOnClickOutside ?? props.closeOnClickOutside.default;
+		},
+		get threshold() {
+			return getOptions()?.threshold ?? props.threshold.default;
+		},
+		get duration() {
+			return getOptions()?.duration ?? props.duration.default;
+		}
+	};
+};

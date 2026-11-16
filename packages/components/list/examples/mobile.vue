@@ -31,6 +31,22 @@
 			<MListItem label="较长的标题文字" :label-width="0" extra="0 表示自动宽度" :arrow="false" />
 		</MList>
 
+		<MList header="滑动操作" footer="向左滑露出按钮，更多用法见 MSwipeAction">
+			<MListItem
+				label="标题"
+				extra="内容"
+				:swipe-action-options="{ rightActions: [{ content: '置顶' }, { content: '删除', type: 'error' }] }"
+			/>
+			<MListItem
+				label="标题"
+				:arrow="false"
+				:swipe-action-options="{
+					leftActions: [{ content: '已读', type: 'primary' }],
+					rightActions: [{ content: '删除', type: 'error' }]
+				}"
+			/>
+		</MList>
+
 		<MList header="多行" :border="false">
 			<MListItem label="标题" multiple :arrow="false" extra="multiple 时 label 在上、extra 在下，extra 不限行数，内容换行后保持左对齐，这里补充一些文字用来演示多行效果" />
 		</MList>

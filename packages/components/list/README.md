@@ -113,6 +113,19 @@ const handleOpen = () => { count.value++; };
 ```
 :::
 
+### 滑动操作
+
+在 `swipeActionOptions` 中传入 `leftActions`、`rightActions` 后，可以左右滑动列表项露出操作按钮；展开状态用 `v-model:swiped`。整行连同左侧缩进和分隔线一起滑动；展开时点列表项只会收起，不触发 `click` 和跳转。
+
+按钮字段、二次确认、全滑等用法见 [MSwipeAction](../swipe-action/README.md)。
+
+```vue
+<MListItem
+	label="向左滑动"
+	:swipe-action-options="{ rightActions: [{ content: '置顶' }, { content: '删除', type: 'error', onClick: remove }] }"
+/>
+```
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-list-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
@@ -170,12 +183,15 @@ const handleOpen = () => { count.value++; };
 | to | 点击后的目标或回调，详见导航行为 | `string \| object \| Function` | - | - |
 | href | 在当前页面跳转的地址 | `string` | - | - |
 | alone | 强制独立模式；移除内部上下、右侧内边距、最小高度和底部分隔线，保留 `indent` | `boolean` | - | `false` |
+| swiped | 滑动操作露出按钮的一侧，支持 `v-model:swiped`；`'right'` 为露出右侧按钮 | `'left' \| 'right' \| false` | - | `false` |
+| swipeActionOptions | 滑动操作的配置：[MSwipeAction](../swipe-action/README.md) 除 `modelValue` 外的属性，如 `leftActions`、`rightActions`；两侧都没有按钮时不绑定手势 | `SwipeActionOptions` | - | - |
 
 ### MListItem 事件
 
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
 | click | 点击列表项，导航处理前触发 | `event` | 原始点击事件 |
+| update:swiped | 滑动操作的展开状态变化 | `'left' \| 'right' \| false` | - |
 
 ### MListItem 插槽
 

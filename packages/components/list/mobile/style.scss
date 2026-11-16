@@ -36,10 +36,19 @@ $background-color-lightest: varfix(background-color-lightest, list);
 		-webkit-tap-highlight-color: transparent;
 	}
 
-	// 按下反馈覆盖整行，包括左侧缩进
+	// 按下反馈覆盖整行，包括左侧缩进；滑动或展开操作按钮时不显示
 	@include when(clickable) {
-		&:active {
+		&:not(.is-swiping):active {
 			background: $background-color-light;
+		}
+	}
+
+	// 有操作项（见 MSwipeAction）：缩进改在轨道上，整行连同缩进、分隔线一起滑动
+	&.vcm-swipe-action {
+		padding-left: 0;
+
+		> .vcm-swipe-action__track {
+			padding-left: remfix(32);
 		}
 	}
 

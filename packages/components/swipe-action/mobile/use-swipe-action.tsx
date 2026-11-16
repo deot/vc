@@ -44,7 +44,7 @@ const readTranslate = (el: HTMLElement) => {
 const isSameWidths = (a: number[], b: number[]) => a.length === b.length && a.every((value, index) => value === b[index]);
 
 /**
- * MSwipeAction 与 MListItem 共用：左右滑出操作按钮
+ * MSwipeAction 与 MListItem 共用：左右滑出操作按钮（MListItem 经 toSwipeActionProps 转成相同的 props）
  * 	- 根节点绑定 root、listeners（含捕获阶段的 click），内容放进 renderTrack
  * 	- 按钮宽度只在手势开始、代码打开时测量，长列表中没有额外开销
  * @param props ~

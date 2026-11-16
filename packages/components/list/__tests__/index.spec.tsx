@@ -2,6 +2,7 @@
 
 import { MList, MListItem, VcInstance } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
+import { nextTick, ref } from 'vue';
 
 describe('index.ts', () => {
 	Object.defineProperty(window, 'open', { value: () => {} });
@@ -211,5 +212,29 @@ describe('index.ts', () => {
 
 		await wrapper.find('.item-1').trigger('click');
 		expect(to).toHaveBeenCalledTimes(1);
+	});
+
+	it('swipe actions: v-model:swiped and swipeActionOptions', async () => {
+		const swiped = ref<any>('right');
+		const wrapper = mount(() => (
+			<MList>
+				<MListItem
+					v-model:swiped={swiped.value}
+					label="标题"
+					swipeActionOptions={{ leftActions: [{ content: '已读' }], rightActions: [{ content: '删除', type: 'error' }] }}
+				/>
+			</MList>
+		), { attachTo: document.body });
+		await nextTick();
+
+		const item = wrapper.find('.vcm-list-item');
+		expect(item.classes()).toContain('vcm-swipe-action');
+		expect(item.findAll('.vcm-swipe-action__action').map(action => action.text())).toEqual(['已读', '删除']);
+
+		// 点按钮：没有 onClick 时收起，并以 update:swiped 发出
+		await item.find('.is-error').trigger('click');
+		await nextTick();
+		expect(swiped.value).toBe(false);
+		wrapper.unmount();
 	});
 });
