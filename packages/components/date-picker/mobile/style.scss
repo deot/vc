@@ -46,3 +46,9 @@ $background-color-lighter: varfix(background-color-lighter, date-picker);
 		justify-content: center;
 	}
 }
+
+// 触发器：默认内容为 MListItem
+@include block(vcm-date-picker) {
+	// 外层带 click 监听，浏览器会给它画默认的点按高亮（蓝色），盖住 MListItem 的浅灰按下态
+	-webkit-tap-highlight-color: transparent;
+}

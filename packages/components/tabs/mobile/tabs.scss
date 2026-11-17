@@ -16,6 +16,7 @@ $dark-stepper-shadow-color: varfix(dark-stepper-shadow-color, tabs, #242421);
 	@include element(stepper) {
 		display: flex;
 		width: remfix(80);
+		-webkit-tap-highlight-color: transparent;
 		justify-content: center;
 		align-items: center;
 

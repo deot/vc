@@ -5,4 +5,7 @@ $component-name: vcm-picker;
 // 触发器：默认内容为 MListItem（铺满宽度）；自定义插槽的内容自行布局
 @include block($component-name) {
 	cursor: pointer;
+
+	// 外层带 click 监听，浏览器会给它画默认的点按高亮（蓝色），盖住 MListItem 的浅灰按下态
+	-webkit-tap-highlight-color: transparent;
 }
