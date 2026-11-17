@@ -304,3 +304,50 @@ describe('index.m.ts', () => {
 		expect(css).toContain('line-height: var(--vc-button-mini-line-height, 18px)');
 	});
 });
+
+describe('pressed and hover', () => {
+	const compile = (file: string) => sass.compile(path.resolve(process.cwd(), `packages/components/button/${file}`)).css;
+	// 选择器所在的 @media 条件（逐层向外）
+	const rules = (css: string) => {
+		const list: Array<{ selector: string; media: string[] }> = [];
+		const stack: string[] = [];
+		css.split('\n').forEach((line) => {
+			const text = line.trim();
+			if (text.startsWith('@media')) stack.push(text);
+			else if (text.endsWith('{')) list.push({ selector: text.slice(0, -1).trim(), media: [...stack] });
+			if (text === '}' && line.match(/^\s*/)![0].length < 2 && stack.length && !line.startsWith('  ')) stack.pop();
+		});
+		return list;
+	};
+
+	it('悬停只在能悬停的设备上生效，按下（:active）使用同一套颜色', () => {
+		const css = compile('style.scss');
+		const list = rules(css);
+		const hover = list.filter(it => it.selector.includes(':hover') && !it.selector.includes(':active'));
+
+		expect(hover.length).toBeGreaterThan(0);
+		hover.forEach(it => expect(it.media.some(m => m.includes('(hover: hover)'))).toBe(true));
+		expect(css).toContain('.vc-button.is-primary:active');
+		expect(css).toContain('.vc-button.is-error:active');
+		expect(css).toContain('.vc-button.is-text:active');
+	});
+
+	it('禁用态按下不变色', () => {
+		const css = compile('style.scss');
+
+		const solid = '\\.vc-button\\.is-disabled\\.is-primary\\.is-solid';
+		expect(css).toMatch(new RegExp(`${solid},\\s*${solid}:hover,\\s*${solid}:active`));
+		expect(css).toContain('.vc-button.is-disabled:active');
+	});
+
+	it('移动端去掉系统点按高亮，并为 iOS 的 :active 加上被动 touchstart', () => {
+		const css = compile('mobile/style.scss');
+		const wrapper = mount(() => <MButton>A</MButton>);
+		const desktop = mount(() => <Button>A</Button>);
+
+		expect(css).toContain('-webkit-tap-highlight-color: transparent');
+		// 监听写在根组件（Debounce）上，透传到按钮元素
+		expect(wrapper.findComponent(MButton).vm.$.subTree.props!.onTouchstartPassive).toBeTypeOf('function');
+		expect(desktop.findComponent(Button).vm.$.subTree.props!.onTouchstartPassive).toBeUndefined();
+	});
+});

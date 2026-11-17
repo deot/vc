@@ -24,6 +24,8 @@ export const useButton = (
 ) => {
 	const name = options.mobile ? 'vc-button vcm-button' : 'vc-button';
 	const spinSize = options.mobile ? toRem(28) : 12;
+	// iOS Safari 只在有 touchstart 监听时才触发 :active（按下反馈）；被动监听，不影响滚动
+	const onTouchstartPassive = options.mobile ? () => {} : undefined;
 
 	// onClick 返回的 Promise 决定加载状态：声明在 emits 中的监听不在 attrs 里，只能从 vnode 上读
 	const vm = getCurrentInstance()!;
@@ -78,6 +80,7 @@ export const useButton = (
 				onClick={handleClick}
 				onMouseenter={() => isHover.value = true}
 				onMouseleave={() => isHover.value = false}
+				onTouchstartPassive={onTouchstartPassive}
 			>
 				{
 					isLoading.value && (

@@ -59,7 +59,9 @@ describe('Button semantic solid styles', () => {
 		};
 
 		expect(find(`.vc-button.is-${type}.is-solid`)).toMatchObject({ 'color': color(), 'background-color': surface });
-		expect(find(`.vc-button.is-${type}.is-solid:hover`)).toMatchObject({ 'color': color('-light'), 'border-color': color('-light') });
+		// 悬停只在能悬停的设备上（@media (hover: hover)），按下（:active）使用同一套颜色
+		expect(find(`.vc-button.is-${type}.is-solid:hover`, true)).toMatchObject({ 'color': color('-light'), 'border-color': color('-light') });
+		expect(find(`.vc-button.is-${type}.is-solid:active`)).toMatchObject({ 'color': color('-light'), 'border-color': color('-light') });
 
 		const disabled = `.vc-button.is-disabled.is-${type}.is-solid`;
 		expect(find(disabled)).toMatchObject({ 'color': color('-light'), 'background-color': surface, 'border-color': 'currentcolor' });

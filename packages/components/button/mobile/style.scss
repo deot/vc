@@ -63,6 +63,9 @@ $sizes: (
 	height: map.get($sizes, medium, height);
 	box-sizing: border-box;
 
+	// 去掉系统的点按高亮（深色、部分浏览器不跟随圆角），按下反馈用按钮自身的 :active 颜色
+	-webkit-tap-highlight-color: transparent;
+
 	@each $size in (large, small, mini) {
 		@include when($size) {
 			height: map.get($sizes, $size, height);

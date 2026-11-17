@@ -29,12 +29,25 @@ $background-color-light: varfix(background-color-light, button);
 $background-color-lightest: varfix(background-color-lightest, button);
 $foreground-color: varfix(foreground-color, button);
 
+// 悬停与按下用同一套颜色：悬停只在能悬停的设备上生效（触屏点按后不残留），按下（:active）两端都生效
+@mixin hover {
+	@media (hover: hover) {
+		&:hover {
+			@content;
+		}
+	}
+
+	&:active {
+		@content;
+	}
+}
+
 @mixin semantic-solid($color, $color-light) {
 	@include when(solid) {
 		color: $color;
 		background-color: $background-color-lightest;
 
-		&:hover {
+		@include hover {
 			color: $color-light;
 			border-color: $color-light;
 		}
@@ -45,7 +58,8 @@ $foreground-color: varfix(foreground-color, button);
 	@include when($type) {
 		@include when(solid) {
 			&,
-			&:hover {
+			&:hover,
+			&:active {
 				color: $color-light;
 				background-color: $background-color-lightest;
 				border-color: currentcolor;
@@ -53,7 +67,8 @@ $foreground-color: varfix(foreground-color, button);
 
 			@supports (color: color-mix(in srgb, black, white)) {
 				&,
-				&:hover {
+				&:hover,
+				&:active {
 					color: color-mix(in srgb, #{$color-light} 30%, #{$background-color-lightest});
 				}
 			}
@@ -66,16 +81,18 @@ $foreground-color: varfix(foreground-color, button);
 		background-color: if(sass($light): $color-light-deep; else: $background-color-light);
 		border-color: if(sass($light): $color-light-deep; else: $background-color-light);
 
-		&:not(.is-solid):hover {
-			background-color: if(sass($light): $color-light-deeper; else: $color-neutral-light);
-			border-color: if(sass($light): $color-light-deeper; else: $color-neutral-light);
+		&:not(.is-solid) {
+			@include hover {
+				background-color: if(sass($light): $color-light-deeper; else: $color-neutral-light);
+				border-color: if(sass($light): $color-light-deeper; else: $color-neutral-light);
+			}
 		}
 
 		&.is-solid {
 			background-color: $background-color-lightest;
 			border-color: $color-neutral;
 
-			&:hover {
+			@include hover {
 				border-color: $color-neutral-deep;
 			}
 		}
@@ -83,7 +100,8 @@ $foreground-color: varfix(foreground-color, button);
 
 	.#{$name}.is-default.is-disabled {
 		&,
-		&:hover {
+		&:hover,
+		&:active {
 			color: if(sass($light): $color-neutral; else: $color-dark-lighter);
 			background-color: if(sass($light): $color-light-deep; else: $background-color-light);
 			border-color: if(sass($light): $color-light-deep; else: $background-color-light);
@@ -91,7 +109,8 @@ $foreground-color: varfix(foreground-color, button);
 
 		&.is-solid {
 			&,
-			&:hover {
+			&:hover,
+			&:active {
 				border-color: if(sass($light): $color-light-deeper; else: $background-color-light);
 			}
 		}
@@ -99,7 +118,8 @@ $foreground-color: varfix(foreground-color, button);
 
 	.#{$name}.is-text.is-disabled {
 		&,
-		&:hover {
+		&:hover,
+		&:active {
 			color: if(sass($light): $color-neutral; else: $color-dark-lighter);
 		}
 	}
@@ -108,7 +128,7 @@ $foreground-color: varfix(foreground-color, button);
 		color: if(sass($light): $color-primary; else: $color-primary-light);
 		border-color: if(sass($light): $color-primary; else: $color-primary-light);
 
-		&:hover {
+		@include hover {
 			color: if(sass($light): $color-primary-light; else: $color-contrast-light);
 			border-color: currentcolor;
 		}
@@ -251,7 +271,7 @@ $sizes: (
 		background-color: $background-color-light;
 		border-color: $background-color-light;
 
-		&:hover {
+		@include hover {
 			color: $foreground-color;
 			border-color: $color-primary;
 		}
@@ -260,7 +280,7 @@ $sizes: (
 			background-color: $background-color-lightest;
 			border-color: $color-neutral;
 
-			&:hover {
+			@include hover {
 				border-color: $color-primary-light;
 			}
 		}
@@ -271,7 +291,7 @@ $sizes: (
 		background-color: $color-primary;
 		border-color: $color-primary;
 
-		&:hover {
+		@include hover {
 			background-color: $color-primary-light;
 			border-color: $color-primary-light;
 		}
@@ -280,7 +300,7 @@ $sizes: (
 			color: $color-primary;
 			background-color: $background-color-lightest;
 
-			&:hover {
+			@include hover {
 				color: $color-primary-light;
 				border-color: $color-primary-light;
 			}
@@ -292,7 +312,7 @@ $sizes: (
 		background-color: transparent;
 		border-color: transparent;
 
-		&:hover {
+		@include hover {
 			color: $color-primary-light;
 		}
 	}
@@ -302,7 +322,7 @@ $sizes: (
 		background-color: $color-success;
 		border-color: $color-success;
 
-		&:hover {
+		@include hover {
 			background-color: $color-success-light;
 			border-color: $color-success-light;
 		}
@@ -315,7 +335,7 @@ $sizes: (
 		background-color: $color-error;
 		border-color: $color-error;
 
-		&:hover {
+		@include hover {
 			background-color: $color-error-light;
 			border-color: $color-error-light;
 		}
@@ -328,7 +348,7 @@ $sizes: (
 		background-color: $color-warning;
 		border-color: $color-warning;
 
-		&:hover {
+		@include hover {
 			background: $color-warning-light;
 			border-color: $color-warning-light;
 		}
@@ -342,7 +362,7 @@ $sizes: (
 		background-color: $background-color-light;
 		border-color: $background-color-light;
 
-		&:hover {
+		@include hover {
 			color: $color-dark-lighter;
 			background: $background-color-light;
 			border-color: $background-color-light;
@@ -362,7 +382,8 @@ $sizes: (
 
 			@include when(solid) {
 				&,
-				&:hover {
+				&:hover,
+				&:active {
 					color: $color-primary-lighter;
 					background-color: $background-color-lightest;
 					border-color: currentcolor;
@@ -370,7 +391,8 @@ $sizes: (
 
 				@supports (color: color-mix(in srgb, black, white)) {
 					&,
-					&:hover {
+					&:hover,
+					&:active {
 						color: color-mix(in srgb, #{$color-primary-light} 30%, #{$background-color-lightest});
 					}
 				}
@@ -478,7 +500,9 @@ $sizes: (
 			border-radius: inherit;
 		}
 
-		&:hover {
+		// 层级只决定相邻按钮的边框谁在上面，触屏上残留也看不出：不限于能悬停的设备，按下时同样抬高
+		&:hover,
+		&:active {
 			z-index: 2;
 		}
 	}

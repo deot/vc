@@ -232,6 +232,8 @@ import { Button, ButtonGroup } from '@deot/vc';
 
 图标与文字的间距为 8（4px）；`circle` 与只有图标的 `round` 按钮为半高圆角。
 
+按下反馈：悬停颜色只在能悬停的设备（鼠标）上生效，触屏点按后不会残留；按下时（`:active`）两端都使用同一套悬停色，松开即恢复原色，并跟随按钮的圆角。`MButton` 去掉了系统的点按高亮，并在 iOS 上保证 `:active` 生效。
+
 两端的尺寸都写成局部变量 `--vc-button-<size>-<键>`（`size` 为 `mini`、`small`、`medium`、`large`），桌面端的默认值为 px，移动端在 `.vcm-button`、`.vcm-button-group` 上覆盖，与样式的加载顺序无关。键为 `padding`、`font-size`、`line-height`（`medium`、`mini`）、`radius`、`icon-size`、`gap`（`medium`）、`circle-radius`、`alone-size`、`alone-font-size`（只有图标的 `round` 按钮），例如 `--vc-button-small-padding`。
 
 ```vue
