@@ -1,13 +1,18 @@
 @use 'sass:color';
+@use 'sass:map';
 @use '../style/helper' as *;
+@use './shared' as *;
 
 $color-contrast-dark: varfix(color-contrast-dark, color-picker);
 $color-contrast-dark-frozen: themefrozen(color-contrast-dark);
 $color-dark-light: varfix(color-dark-light, color-picker);
 $color-dark-extralight: varfix(color-dark-extralight, color-picker);
 $color-disabled: varfix(color-disabled, color-picker);
+$color-error: varfix(color-error, color-picker);
 $color-neutral-light: varfix(color-neutral-light, color-picker);
 $color-primary: varfix(color-primary, color-picker);
+$color-primary-light: varfix(color-primary-light, color-picker);
+$color-primary-lighter: varfix(color-primary-lighter, color-picker);
 $background-color-light: varfix(background-color-light, color-picker);
 $background-color-lightest: varfix(background-color-lightest, color-picker);
 $border-color: varfix(border-color, color-picker);
@@ -15,11 +20,38 @@ $component-name: vc-color-picker;
 $swatch-border-color-fallback: color.change($color-contrast-dark-frozen, $alpha: .15);
 $swatch-border-color: color-mix(in srgb, #{$color-contrast-dark} 15%, transparent);
 
-@mixin color-picker-theme($light) {
-	.vc-color-picker.is-disabled {
-		background-color: if(sass($light): $color-disabled; else: $background-color-light);
+// 触发器高度与 Button 四档一致；色块居中，四周留白相同
+$sizes: (
+	mini: (height: 22, swatch: 14),
+	small: (height: 26, swatch: 16),
+	medium: (height: 32, swatch: 20),
+	large: (height: 38, swatch: 24)
+);
 
-		.vc-color-picker__input {
+@mixin trigger-size($size) {
+	$height: map.get($sizes, $size, height);
+	$swatch: map.get($sizes, $size, swatch);
+
+	@include element(trigger) {
+		height: unitfix($height);
+		padding: 0 unitfix(6) 0 unitfix(($height - $swatch) * .5);
+	}
+
+	@include element(swatch) {
+		width: unitfix($swatch);
+		height: unitfix($swatch);
+	}
+}
+
+@mixin color-picker-theme($light) {
+	.vc-color-picker__trigger {
+		&.is-focus, &:focus-visible {
+			&::after, &::before {
+				border-color: if(sass($light): $color-primary; else: $color-primary-light);
+			}
+		}
+
+		&.is-disabled {
 			background-color: if(sass($light): $color-disabled; else: $background-color-light);
 		}
 	}
@@ -47,128 +79,53 @@ $swatch-border-color: color-mix(in srgb, #{$color-contrast-dark} 15%, transparen
 
 @include block($component-name) {
 	display: inline-flex;
+	vertical-align: top;
 
 	@include text-strut(0);
 
-	@include element(box) {
-		position: relative;
-		display: inline-block;
-		width: 100%;
-		line-height: 0;
+	@include element(trigger) {
+		display: inline-flex;
+		gap: unitfix(4);
+		align-items: center;
 		cursor: pointer;
+		background-color: $background-color-lightest;
+		border-radius: unitfix(8);
+		outline: none;
+		box-sizing: border-box;
+		transition: background .2s ease-in-out, box-shadow .2s ease-in-out;
 
-		&:hover {
-			@include element(input) {
+		@include common-border-1px('', $border-color, 8);
+
+		&:hover:not(.is-disabled, .is-focus) {
+			&::after, &::before {
 				border-color: $color-primary;
 			}
 		}
-	}
 
-	@include when(disabled) {
-		color: $color-dark-extralight;
-		cursor: not-allowed;
-		background-color: $color-disabled;
-		opacity: 1;
-
-		@include element(input) {
-			color: $color-dark-extralight;
-		}
-
-		&:hover {
-			@include element(input) {
-				border-color: $border-color;
+		&.is-focus, &:focus-visible {
+			&::after, &::before {
+				border-color: $color-primary;
 			}
+
+			box-shadow: 0 0 unitfix(1) unitfix(1) $color-primary-lighter;
+		}
+
+		@include when(disabled) {
+			cursor: not-allowed;
+			background-color: $color-disabled;
 		}
 	}
 
-	@include element(append) {
-		position: relative;
-		padding: 0 unitfix(10) 0 unitfix(2);
-		font-size: unitfix(12);
-		line-height: unitfix(32);
-		color: $color-dark-extralight;
-		text-align: center;
-		white-space: nowrap;
-	}
-
-	@include element(input) {
-		position: relative;
-		display: inline-block;
-		width: 100%;
-		padding: unitfix(7) unitfix(6) unitfix(6) unitfix(7);
-		font-size: unitfix(14);
-		line-height: 1.5;
-		color: $color-dark-light;
-		background-color: $background-color-lightest;
-		background-image: none;
+	// 透明色下面垫棋盘格；未选择时显示斜线
+	@include element(swatch) {
+		flex: none;
+		background: $checkerboard;
 		border-radius: unitfix(4);
-		box-sizing: border-box;
-		transition: border .2s ease-in-out, background .2s ease-in-out, box-shadow .2s ease-in-out;
-	}
 
-	@include when(large) {
-		@include element(color) {
-			width: unitfix(20);
-			height: unitfix(20);
-		}
-
-		@include element(input) {
-			height: unitfix(40);
-			padding: unitfix(10) unitfix(6) unitfix(6) unitfix(7);
-			font-size: unitfix(16);
-		}
-
-		@include element(icon) {
-			height: unitfix(40);
-			font-size: unitfix(12);
-			line-height: unitfix(40);
-		}
-	}
-
-	@include when(small) {
-		@include element(box) {
-			min-height: unitfix(24);
-		}
-
-		@include element(append) {
-			height: unitfix(24);
-			line-height: unitfix(24);
-		}
-
-		.vc-input__append, .vc-input__prepend {
-			height: unitfix(24);
-			line-height: unitfix(24);
-		}
-
-		@include element(color) {
-			width: unitfix(14);
-			height: unitfix(14);
-		}
-
-		@include element(input) {
-			height: unitfix(24);
-			padding: unitfix(5) unitfix(6) unitfix(4) unitfix(7);
-		}
-
-		@include element(icon) {
-			height: unitfix(24);
-			font-size: unitfix(10);
-			line-height: unitfix(24);
-		}
-	}
-
-	@include element(color) {
-		width: unitfix(18);
-		height: unitfix(18);
-		border-radius: unitfix(2);
-
-		div {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			width: 100%;
+		> span {
+			display: block;
 			height: 100%;
-			border-radius: unitfix(2);
+			border-radius: inherit;
 			box-shadow: inset 0 0 0 unitfix(1) $swatch-border-color-fallback;
 
 			@supports (color: color-mix(in srgb, black, white)) {
@@ -178,50 +135,66 @@ $swatch-border-color: color-mix(in srgb, #{$color-contrast-dark} 15%, transparen
 			}
 		}
 
-		.vc-icon {
-			font-size: unitfix(10);
-			color: $color-dark-extralight;
-			transform: scale(.6);
+		@include when(empty) {
+			> span {
+				background:
+					linear-gradient(to top right, transparent calc(50% - #{unitfix(1)}), $color-error, transparent calc(50% + #{unitfix(1)})),
+					$background-color-lightest;
+			}
 		}
 	}
 
-	@include element(wrapper) {
+	@include element(suffix) {
+		display: flex;
+		font-size: unitfix(12);
+		color: $color-dark-extralight;
+
+		@include when(clear) {
+			cursor: pointer;
+		}
+	}
+
+	@include trigger-size(medium);
+
+	@each $size in (mini, small, large) {
+		@include when($size) {
+			@include trigger-size($size);
+		}
+	}
+
+	@include element(picker) {
 		width: unitfix(256);
+	}
+
+	@include element(view) {
 		padding: unitfix(8) unitfix(8) 0;
 	}
 
-	@include element(confirm) {
+	@include element(footer) {
+		display: flex;
+		gap: unitfix(8);
+		align-items: center;
 		padding: unitfix(8);
 		margin-top: unitfix(8);
-		clear: both;
-		text-align: right;
 		border-top: unitfix(1) solid $color-neutral-light;
-
-		.vc-btn {
-			height: unitfix(24);
-			padding: 0 unitfix(9);
-			line-height: 1.5;
-		}
-
-		.is-default {
-			margin-right: unitfix(2);
-		}
 	}
 
 	@include element(value) {
-		float: left;
-		width: unitfix(138);
-		height: unitfix(24);
-		font-size: unitfix(14);
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		font-size: unitfix(12);
 		line-height: unitfix(24);
-		text-align: left;
+		color: $color-dark-light;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 
-		.vc-input {
-			height: unitfix(24);
+		&.vc-input {
 			min-height: unitfix(24);
 
 			input {
-				padding: unitfix(4) unitfix(7);
+				height: unitfix(24);
+				padding: 0 unitfix(7);
 			}
 		}
 	}

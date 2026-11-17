@@ -1,70 +1,100 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, watch } from 'vue';
+import { defineComponent, watch } from 'vue';
 import { Color } from '../color';
 import { props as pickerViewProps } from './color-picker-view-props';
 import { COLORS } from './constants';
 import { Panel } from '../color-picker-panel';
-import { HueSlider } from '../color-picker-hue-slider';
-import { Alpha } from '../color-picker-alpha';
 import { Predefine } from '../color-picker-predefine';
+import { Slider } from '../../slider';
 
 const COMPONENT_NAME = 'vc-color-picker-view';
+
+// 色相、透明度条的滑块：竖条，样式见 color-picker-view.scss
+const SLIDER_SLOTS = {
+	thumb: () => <span class="vc-color-picker-view__thumb" />
+};
 
 export const ColorPickerView = defineComponent({
 	name: COMPONENT_NAME,
 	props: pickerViewProps,
 	emits: ['change', 'update:modelValue'],
 	setup(props, { emit }) {
-		const recommendColors = ref([...COLORS]);
 		const color = new Color({
-			enableAlpha: props.alpha,
+			alpha: props.alpha,
 			format: props.format,
 			value: props.modelValue
 		});
 
-		const emitChange = () => {
-			emit('update:modelValue', color.states.output, color);
-			emit('change', color.states.output, color);
-		};
+		// 父组件改值或改输出选项带来的输出变化不回抛，只有用户操作才触发事件
+		let external = color.states.output;
 
 		watch(
 			() => props.modelValue,
 			(v) => {
-				if (v !== color.states.output) {
-					color.setColor(v);
-				}
+				if (v === color.states.output) return;
+
+				color.setColor(v);
+				external = color.states.output;
 			}
 		);
 
 		watch(
 			() => [props.alpha, props.format] as const,
 			([alpha, format]) => {
-				color.setOptions({ enableAlpha: alpha, format });
+				color.setOptions({ alpha, format });
+				external = color.states.output;
 			}
 		);
 
 		watch(
 			() => color.states.output,
-			emitChange,
+			(v) => {
+				if (v === external) return;
+
+				external = v;
+				emit('update:modelValue', v, color);
+				emit('change', v, color);
+			}
 		);
 
-		return () => (
-			<>
-				{props.panel && <Panel color={color} />}
-				{props.hue && <HueSlider color={color} />}
-				{props.alpha && <Alpha color={color} />}
-				{
-					props.colors.length > 0 && (
-						<Predefine colors={props.colors} color={color} />
-					)
-				}
-				{
-					!props.colors.length && props.recommend && (
-						<Predefine colors={recommendColors.value} color={color} />
-					)
-				}
-			</>
-		);
+		const handleHue = (v: number) => color.set('hue', v);
+		const handleOpacity = (v: number) => color.set('opacity', v);
+
+		return () => {
+			const colors = props.colors === true ? COLORS : props.colors || [];
+			const { r, g, b } = color.toRgb();
+
+			return (
+				<div class="vc-color-picker-view">
+					{props.panel && <Panel color={color} />}
+					{
+						props.hue && (
+							<Slider
+								class="vc-color-picker-view__hue"
+								modelValue={color.states.hue}
+								max={360}
+								tooltip="never"
+								v-slots={SLIDER_SLOTS}
+								onUpdate:modelValue={handleHue}
+							/>
+						)
+					}
+					{
+						props.alpha && (
+							<Slider
+								class="vc-color-picker-view__alpha"
+								style={{ '--vc-color-picker-alpha-color': `rgb(${r}, ${g}, ${b})` }}
+								modelValue={Math.round(color.states.opacity)}
+								tooltip="never"
+								v-slots={SLIDER_SLOTS}
+								onUpdate:modelValue={handleOpacity}
+							/>
+						)
+					}
+					{colors.length > 0 && <Predefine colors={colors} color={color} />}
+				</div>
+			);
+		};
 	}
 });

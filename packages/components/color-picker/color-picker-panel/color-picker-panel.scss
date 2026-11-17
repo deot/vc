@@ -1,5 +1,6 @@
 @use '../../style/helper' as *;
 
+$color-primary-lighter: varfix(color-primary-lighter, color-picker);
 $component-name: vc-color-picker-panel;
 
 @include block($component-name) {
@@ -8,7 +9,12 @@ $component-name: vc-color-picker-panel;
 	height: unitfix(180);
 	margin: 0 auto;
 	cursor: pointer;
+	outline: none;
 	box-sizing: initial;
+
+	&:focus-visible {
+		box-shadow: 0 0 0 unitfix(3) $color-primary-lighter;
+	}
 
 	@include element(white) {
 		position: absolute;

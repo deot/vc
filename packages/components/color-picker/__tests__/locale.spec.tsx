@@ -28,21 +28,21 @@ describe('ColorPicker locale', () => {
 
 	it.each([ColorPicker, MColorPicker])('updates open panel actions when locale changes', async (component) => {
 		VcInstance.configure({ locale: zhCN });
-		const wrapper = mount(component, { attachTo: document.body });
+		const wrapper = mount(component, { attachTo: document.body, props: { confirm: true } });
 		try {
-			await wrapper.trigger('click');
+			await wrapper.find('.vc-color-picker__trigger').trigger('click');
 			await nextTick();
 			await new Promise(resolve => setTimeout(resolve, 0));
 			await nextTick();
-			const actions = () => Array.from(document.querySelectorAll('.vc-color-picker__confirm button'))
+			const actions = () => Array.from(document.querySelectorAll('.vc-color-picker__footer button'))
 				.map(button => button.textContent?.trim());
-			expect(actions()).toEqual(['清空', '确定']);
+			expect(actions()).toEqual(['确定']);
 			VcInstance.configure({ locale: enUS });
 			await nextTick();
-			expect(actions()).toEqual(['Clear', 'OK']);
+			expect(actions()).toEqual(['OK']);
 			VcInstance.configure({ locale: zhCN });
 			await nextTick();
-			expect(actions()).toEqual(['清空', '确定']);
+			expect(actions()).toEqual(['确定']);
 		} finally {
 			wrapper.unmount();
 		}

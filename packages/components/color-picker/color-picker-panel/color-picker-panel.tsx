@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, nextTick, onMounted, ref, watch } from 'vue';
+import { defineComponent, ref } from 'vue';
 import type { PropType } from 'vue';
 import type { DragPoint } from '@deot/vc-hooks';
 import { Color } from '../color';
@@ -8,19 +8,14 @@ import { useDraggable } from '../hooks/use-draggable';
 
 const COMPONENT_NAME = 'vc-color-picker-panel';
 
-const getRect = (element: HTMLElement) => {
-	const rect = element.getBoundingClientRect();
+const clamp = (value: number) => Math.min(100, Math.max(0, value));
 
-	return {
-		x: rect.x,
-		y: rect.y,
-		top: rect.top,
-		right: rect.right,
-		bottom: rect.bottom,
-		left: rect.left,
-		width: rect.width || element.clientWidth,
-		height: rect.height || element.clientHeight
-	};
+// 方向键对应的通道和方向：左右调饱和度，上下调明度
+const KEYS: Record<string, ['saturation' | 'value', 1 | -1]> = {
+	ArrowLeft: ['saturation', -1],
+	ArrowRight: ['saturation', 1],
+	ArrowUp: ['value', 1],
+	ArrowDown: ['value', -1]
 };
 
 export const Panel = defineComponent({
@@ -33,75 +28,62 @@ export const Panel = defineComponent({
 	},
 	setup(props) {
 		const panel = ref<HTMLElement>();
-		const background = ref('hsl(0, 100%, 50%)');
-		const cursorTop = ref(0);
-		const cursorLeft = ref(0);
 
-		const colorValue = computed(() => {
-			return {
-				hue: props.color.states.hue,
-				saturation: props.color.states.saturation,
-				value: props.color.states.value
-			};
-		});
-
-		const update = () => {
-			if (!panel.value) return;
-
-			const saturation = props.color.states.saturation;
-			const value = props.color.states.value;
-			const { width, height } = getRect(panel.value);
-
-			cursorLeft.value = width ? (saturation * width) / 100 : 0;
-			cursorTop.value = height ? ((100 - value) * height) / 100 : 0;
-			background.value = `hsl(${props.color.states.hue}, 100%, 50%)`;
-		};
-
+		// 只在拖动时测量；光标按百分比定位，不受容器尺寸变化影响
 		const handleDrag = (e: DragPoint) => {
-			if (!panel.value) return;
+			const el = panel.value;
+			if (!el) return;
 
-			const rect = getRect(panel.value);
-			if (!rect.width || !rect.height) return;
+			const rect = el.getBoundingClientRect();
+			const width = rect.width || el.clientWidth;
+			const height = rect.height || el.clientHeight;
+			if (!width || !height) return;
 
-			let left = e.clientX - rect.left;
-			let top = e.clientY - rect.top;
-
-			left = Math.max(0, Math.min(left, rect.width));
-			top = Math.max(0, Math.min(top, rect.height));
-
-			cursorLeft.value = left;
-			cursorTop.value = top;
-			props.color.states.saturation = (left / rect.width) * 100;
-			props.color.states.value = 100 - (top / rect.height) * 100;
+			props.color.set({
+				saturation: clamp(((e.clientX - rect.left) / width) * 100),
+				value: clamp(100 - ((e.clientY - rect.top) / height) * 100)
+			});
 		};
 
 		const listeners = useDraggable(handleDrag);
 
-		onMounted(() => {
-			nextTick(update);
-		});
+		// 方向键 ±1，按住 Shift ±10
+		const handleKeydown = (e: KeyboardEvent) => {
+			const key = KEYS[e.key];
+			if (!key) return;
 
-		watch(colorValue, update);
+			e.preventDefault();
+			const [channel, direction] = key;
+			props.color.set(channel, clamp(Math.round(props.color.states[channel]) + direction * (e.shiftKey ? 10 : 1)));
+		};
 
-		return () => (
-			<div
-				ref={panel}
-				style={{ background: background.value }}
-				class="vc-color-picker-panel"
-				{...listeners}
-			>
-				<div class="vc-color-picker-panel__white" />
-				<div class="vc-color-picker-panel__black" />
+		return () => {
+			const { hue, saturation, value, output } = props.color.states;
+
+			return (
 				<div
-					style={{
-						top: `${cursorTop.value}px`,
-						left: `${cursorLeft.value}px`
-					}}
-					class="vc-color-picker-panel__cursor"
+					ref={panel}
+					style={{ background: `hsl(${hue}, 100%, 50%)` }}
+					class="vc-color-picker-panel"
+					role="slider"
+					tabindex={0}
+					aria-valuetext={output}
+					onKeydown={handleKeydown}
+					{...listeners}
 				>
-					<div />
+					<div class="vc-color-picker-panel__white" />
+					<div class="vc-color-picker-panel__black" />
+					<div
+						style={{
+							top: `${100 - value}%`,
+							left: `${saturation}%`
+						}}
+						class="vc-color-picker-panel__cursor"
+					>
+						<div />
+					</div>
 				</div>
-			</div>
-		);
+			);
+		};
 	}
 });

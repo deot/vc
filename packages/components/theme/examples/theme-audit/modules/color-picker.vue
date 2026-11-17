@@ -8,7 +8,7 @@
 		</div>
 		<div class="audit-sample" data-state="完整面板：滑块、棋盘格和确认区">
 			<div class="audit-sample__label">完整面板：滑块、棋盘格和确认区</div>
-			<ColorPickerView v-model="panel" alpha format="rgb" recommend />
+			<ColorPickerView v-model="panel" alpha format="rgb" colors />
 		</div>
 	</div>
 </template>

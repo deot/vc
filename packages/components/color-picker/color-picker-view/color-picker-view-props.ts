@@ -18,13 +18,10 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
-	recommend: {
-		type: Boolean,
-		default: false
-	},
+	// 预设色：true 使用内置色（ColorPicker.colors），数组为自定义色
 	colors: {
-		type: Array as PropType<string[]>,
-		default: () => []
+		type: [Boolean, Array] as PropType<boolean | string[]>,
+		default: false
 	},
 	format: {
 		type: String as PropType<ColorFormat>,
