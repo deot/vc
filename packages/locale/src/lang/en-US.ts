@@ -17,7 +17,6 @@ export const enUS: Language = {
 			clearText: 'Clear'
 		},
 		ColorPicker: {
-			clearText: 'Clear',
 			confirmText: 'OK'
 		},
 		Picker: {
