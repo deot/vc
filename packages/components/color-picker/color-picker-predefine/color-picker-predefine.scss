@@ -10,19 +10,21 @@ $component-name: vc-color-picker-predefine;
 $swatch-border-color-fallback: color.change($color-contrast-dark-frozen, $alpha: .15);
 $swatch-border-color: color-mix(in srgb, #{$color-contrast-dark} 15%, transparent);
 
+// 色块尺寸、间距、圆角与选中环写成局部变量 --vc-color-picker-<键>（默认值为桌面端的 px），MColorPickerView 在 .vcm-color-picker-view 上覆盖（mobile/style.scss）
+
 @include block($component-name) {
 	display: flex;
 	flex-wrap: wrap;
-	gap: unitfix(6);
+	gap: localfix(color-picker, predefine-gap, unitfix(6));
 
 	@include element(block) {
-		width: unitfix(18);
-		height: unitfix(18);
+		width: localfix(color-picker, predefine-size, unitfix(18));
+		height: localfix(color-picker, predefine-size, unitfix(18));
 		padding: 0;
 		cursor: pointer;
 		background: none;
 		border: 0;
-		border-radius: unitfix(2);
+		border-radius: localfix(color-picker, predefine-radius, unitfix(2));
 		outline: none;
 
 		span {
@@ -43,7 +45,7 @@ $swatch-border-color: color-mix(in srgb, #{$color-contrast-dark} 15%, transparen
 		}
 
 		@include when(selected) {
-			box-shadow: 0 0 unitfix(2) unitfix(1) $color-primary;
+			box-shadow: localfix(color-picker, predefine-selected-shadow, 0 0 unitfix(2) unitfix(1) #{$color-primary});
 		}
 
 		@include when(alpha) {

@@ -3,10 +3,12 @@
 $color-primary-lighter: varfix(color-primary-lighter, color-picker);
 $component-name: vc-color-picker-panel;
 
+// 色板高度、光标尺寸写成局部变量 --vc-color-picker-<键>（默认值为桌面端的 px），MColorPickerView 在 .vcm-color-picker-view 上覆盖（mobile/style.scss）
+
 @include block($component-name) {
 	position: relative;
 	width: 100%;
-	height: unitfix(180);
+	height: localfix(color-picker, panel-height, unitfix(180));
 	margin: 0 auto;
 	cursor: pointer;
 	outline: none;
@@ -34,11 +36,11 @@ $component-name: vc-color-picker-panel;
 		position: absolute;
 
 		div {
-			width: unitfix(4);
-			height: unitfix(4);
+			width: localfix(color-picker, cursor-size, unitfix(4));
+			height: localfix(color-picker, cursor-size, unitfix(4));
 			border-radius: 50%;
-			transform: translate(unitfix(-2), unitfix(-2));
-			box-shadow: 0 0 0 unitfix(1.5) themefrozen(color-light), inset 0 0 unitfix(1) unitfix(1) rgb(0 0 0 / 30%), 0 0 unitfix(1) unitfix(2) rgb(0 0 0 / 40%);
+			transform: translate(-50%, -50%);
+			box-shadow: localfix(color-picker, cursor-shadow, (0 0 0 unitfix(1.5) themefrozen(color-light), inset 0 0 unitfix(1) unitfix(1) rgb(0 0 0 / 30%), 0 0 unitfix(1) unitfix(2) rgb(0 0 0 / 40%)));
 		}
 	}
 }

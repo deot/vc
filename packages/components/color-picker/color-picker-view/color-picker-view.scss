@@ -7,10 +7,12 @@ $color-shadow-fixed: varfix(color-shadow-fixed, color-picker);
 $border-color: varfix(border-color, color-picker);
 $component-name: vc-color-picker-view;
 
+// 间距、色条圆角与滑块写成局部变量 --vc-color-picker-<键>（默认值为桌面端的 px），MColorPickerView 在 .vcm-color-picker-view 上覆盖（mobile/style.scss）
+
 @include block($component-name) {
 	display: flex;
 	flex-direction: column;
-	gap: unitfix(8);
+	gap: localfix(color-picker, view-gap, unitfix(8));
 
 	// 色相、透明度条复用 Slider：轨道画色谱 / 棋盘格渐变，滑块用 #thumb 插槽画成竖条
 	@include element((hue, alpha)) {
@@ -30,27 +32,27 @@ $component-name: vc-color-picker-view;
 
 	@include element(thumb) {
 		display: block;
-		width: unitfix(4);
-		height: unitfix(10);
+		width: localfix(color-picker, thumb-width, unitfix(4));
+		height: localfix(color-picker, thumb-height, unitfix(10));
 		cursor: pointer;
-		background: $color-contrast-light;
-		border: unitfix(1) solid $border-color;
-		border-radius: unitfix(1);
-		box-shadow: 0 0 unitfix(2) $color-shadow-fixed;
+		background: localfix(color-picker, thumb-background, $color-contrast-light);
+		border: localfix(color-picker, thumb-border, unitfix(1) solid $border-color);
+		border-radius: localfix(color-picker, thumb-radius, unitfix(1));
+		box-shadow: localfix(color-picker, thumb-shadow, 0 0 unitfix(2) $color-shadow-fixed);
 		box-sizing: border-box;
 	}
 
 	@include element(hue) {
 		.vc-slider__wrapper {
 			background: linear-gradient(to right, #F00 0%, #FF0 17%, #0F0 33%, #0FF 50%, #00F 67%, #F0F 83%, #F00 100%);
-			border-radius: unitfix(2);
+			border-radius: localfix(color-picker, hue-radius, unitfix(2));
 		}
 	}
 
 	@include element(alpha) {
 		.vc-slider__wrapper {
 			background: linear-gradient(to right, transparent, var(--vc-color-picker-alpha-color)), $checkerboard;
-			border-radius: 0;
+			border-radius: localfix(color-picker, alpha-radius, 0);
 		}
 	}
 }

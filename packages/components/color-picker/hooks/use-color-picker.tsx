@@ -11,6 +11,7 @@ import { Icon } from '../../icon';
 import { Input } from '../../input';
 import { Button } from '../../button';
 import { useLocale } from '../../locale';
+import { useColorInput } from './use-color-input';
 
 type Emits = ['update:modelValue', 'change', 'clear', 'color-change', 'visible-change', 'ready', 'close'];
 
@@ -25,15 +26,9 @@ const toDraft = (value: unknown) => (typeof value === 'string' ? value : '');
  * @param context ~
  * @param context.emit ~
  * @param context.slots ~
- * @param options ~
- * @param options.mobile 移动端：根节点加标记类 vcm-color-picker
  * @returns render
  */
-export const useColorPicker = (
-	props: Props,
-	{ emit, slots }: SetupContext<Emits>,
-	options: { mobile?: boolean } = {}
-) => {
+export const useColorPicker = (props: Props, { emit, slots }: SetupContext<Emits>) => {
 	const { t } = useLocale();
 	const its = useAttrs({ merge: false });
 	const formItem = inject<any>('vc-form-item', {});
@@ -41,14 +36,17 @@ export const useColorPicker = (
 	const isHover = ref(false);
 	// 浮层内的当前色值：confirm 时是未提交的草稿，否则与 v-model 一致
 	const draft = ref(toDraft(props.modelValue));
-	// 输入框正在键入的文本；null 时显示 draft
-	const inputText = ref<string | null>(null);
+	// 浮层底部的色值输入框：失焦或回车时按当前输出格式解析，无法解析时恢复
+	const input = useColorInput(props, {
+		getValue: () => draft.value,
+		commit: value => handleChange(value)
+	});
 
 	watch(
 		() => props.modelValue,
 		(v) => {
 			draft.value = toDraft(v);
-			inputText.value = null;
+			input.reset();
 		}
 	);
 
@@ -63,7 +61,6 @@ export const useColorPicker = (
 		'vc-color-picker',
 		`is-${props.size}`,
 		{
-			'vcm-color-picker': !!options.mobile,
 			'is-disabled': props.disabled
 		}
 	]);
@@ -79,19 +76,9 @@ export const useColorPicker = (
 
 	const handleChange = (value: string) => {
 		draft.value = value;
-		inputText.value = null;
+		input.reset();
 		emit('color-change', value);
 		!props.confirm && commit(value);
-	};
-
-	// 失焦或回车时解析输入：按当前输出格式归一化，无法解析时恢复
-	const handleInputCommit = () => {
-		const text = inputText.value;
-		inputText.value = null;
-		if (text === null) return;
-
-		const color = Color.parse(text, { alpha: props.alpha, format: props.format });
-		color && color.states.output !== draft.value && handleChange(color.states.output);
 	};
 
 	const handleOK = () => {
@@ -129,7 +116,7 @@ export const useColorPicker = (
 	// 离场完成：未确认的修改作废
 	const handleClose = () => {
 		draft.value = toDraft(props.modelValue);
-		inputText.value = null;
+		input.reset();
 		emit('close');
 	};
 
@@ -181,11 +168,11 @@ export const useColorPicker = (
 							? (
 									<Input
 										class="vc-color-picker__value"
-										modelValue={inputText.value ?? draft.value}
+										modelValue={input.getText()}
 										allowDispatch={false}
-										onInput={(value: string) => (inputText.value = value)}
-										onBlur={handleInputCommit}
-										onEnter={handleInputCommit}
+										onInput={input.handleInput}
+										onBlur={input.handleCommit}
+										onEnter={input.handleCommit}
 									/>
 								)
 							: <span class="vc-color-picker__value">{draft.value}</span>
