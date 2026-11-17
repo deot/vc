@@ -1,5 +1,5 @@
 @use 'sass:color';
-@use '../style/helper' as *;
+@use '../../style/helper' as *;
 
 $color-contrast-dark: varfix(color-contrast-dark, color-picker);
 $color-contrast-dark-frozen: themefrozen(color-contrast-dark);

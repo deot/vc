@@ -1,5 +1,5 @@
 import { ColorPicker as ColorPicker$ } from './color-picker.tsx';
-import { ColorPickerView } from './picker-view.tsx';
+import { ColorPickerView } from './color-picker-view';
 import { Color } from './color';
 import './style.scss';
 

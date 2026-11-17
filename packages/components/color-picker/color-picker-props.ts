@@ -1,7 +1,7 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import { pick } from 'lodash-es';
 import { props as popoverProps } from '../popover/popover-props';
-import { props as pickerViewProps } from './picker-view-props';
+import { props as pickerViewProps } from './color-picker-view/color-picker-view-props';
 
 const popoverKeys = [
 	'portalClass'

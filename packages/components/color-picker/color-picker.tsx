@@ -10,7 +10,7 @@ import { Icon } from '../icon/index';
 import { Input } from '../input/index';
 import { Button } from '../button/index';
 import { useLocale } from '../locale';
-import { ColorPickerView } from './picker-view';
+import { ColorPickerView } from './color-picker-view';
 
 const COMPONENT_NAME = 'vc-color-picker';
 

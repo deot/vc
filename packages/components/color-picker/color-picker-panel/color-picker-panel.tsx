@@ -3,8 +3,8 @@
 import { computed, defineComponent, nextTick, onMounted, ref, watch } from 'vue';
 import type { PropType } from 'vue';
 import type { DragPoint } from '@deot/vc-hooks';
-import { Color } from './color';
-import { useDraggable } from './use-draggable';
+import { Color } from '../color';
+import { useDraggable } from '../hooks/use-draggable';
 
 const COMPONENT_NAME = 'vc-color-picker-panel';
 

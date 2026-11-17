@@ -1,5 +1,5 @@
 import type { ExtractPropTypes, PropType } from 'vue';
-import type { ColorFormat } from './color';
+import type { ColorFormat } from '../color';
 
 export const props = {
 	modelValue: {

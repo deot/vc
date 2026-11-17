@@ -1,10 +1,9 @@
-@use '../style/helper' as *;
+@use '../../style/helper' as *;
 
 $color-contrast-light: varfix(color-contrast-light, color-picker);
 $color-shadow-fixed: varfix(color-shadow-fixed, color-picker);
 $border-color: varfix(border-color, color-picker);
-$component-name: vc-color-picker-alpha;
-$alpha-background: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==';
+$component-name: vc-color-picker-hue-slider;
 
 @include block($component-name) {
 	position: relative;
@@ -12,12 +11,12 @@ $alpha-background: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAA
 	height: unitfix(10);
 	margin-top: unitfix(8);
 	cursor: pointer;
-	background: url($alpha-background);
-	box-sizing: border-box;
 
 	@include element(bar) {
-		position: relative;
-		height: 100%;
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(to right, #F00 0%, #FF0 17%, #0F0 33%, #0FF 50%, #00F 67%, #F0F 83%, #F00 100%);
+		border-radius: unitfix(2);
 	}
 
 	@include element(thumb) {

@@ -2,7 +2,7 @@
 
 import { defineComponent, onBeforeMount, ref, watch } from 'vue';
 import type { PropType } from 'vue';
-import { Color } from './color';
+import { Color } from '../color';
 
 const COMPONENT_NAME = 'vc-color-picker-predefine';
 

@@ -3,9 +3,9 @@
 import { ColorPicker, Portal } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { defineComponent, nextTick, ref } from 'vue';
-import { ColorPickerView } from '../picker-view';
+import { ColorPickerView } from '../color-picker-view';
 import { Color } from '../color';
-import { useDraggable } from '../use-draggable';
+import { useDraggable } from '../hooks/use-draggable';
 import * as drag from '../../../hooks/__tests__/fixtures/drag';
 
 const sleep = (ms = 0) => new Promise<void>(resolve => setTimeout(resolve, ms));

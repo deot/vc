@@ -1,13 +1,13 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, ref, watch } from 'vue';
-import { Color } from './color';
-import { props as pickerViewProps } from './picker-view-props';
+import { Color } from '../color';
+import { props as pickerViewProps } from './color-picker-view-props';
 import { COLORS } from './constants';
-import { Panel } from './panel';
-import { HueSlider } from './hue-slider';
-import { Alpha } from './alpha';
-import { Predefine } from './predefine';
+import { Panel } from '../color-picker-panel';
+import { HueSlider } from '../color-picker-hue-slider';
+import { Alpha } from '../color-picker-alpha';
+import { Predefine } from '../color-picker-predefine';
 
 const COMPONENT_NAME = 'vc-color-picker-view';
 
