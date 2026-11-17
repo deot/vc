@@ -1,0 +1,177 @@
+@use '../../style/helper' as *;
+@use '../shared' as *;
+
+$color-dark-light: varfix(color-dark-light, color-picker);
+$color-primary: varfix(color-primary, color-picker);
+$background-color: varfix(background-color, color-picker);
+$background-color-lightest: varfix(background-color-lightest, color-picker);
+$white: themefrozen(color-light);
+$thumb-shadow: 0 remfix(2) remfix(8) rgb(0 0 0 / 20%);
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放），375 宽下：
+// - 各部分间距 16；取值行高 32：色块 32（圆角 4）、输入框高 32（字号 14，灰底，圆角 4）、「清空」字号 14
+// - 色板高 180、圆角 8；光标直径 22（白边 3，填当前颜色）
+// - 色相、透明度条：轨道 12（圆角 6），与色板同宽；滑块直径 28（白边 3，色相条填纯色相，透明度条填当前颜色），触控区 32
+// - 预设色：一行 8 个铺满，间距 10，圆角 4；选中时留出 2 的底色间隙再加 2 的主色环
+// 结构与颜色沿用 ../color-picker-view 等桌面端样式，这里覆盖局部变量 --vc-color-picker-*（与两端样式的加载顺序无关），另加移动端专有的规则
+// 子元素沿用桌面端类名（vc-color-picker-view__*、vc-color-picker-panel__* 等），取值行为移动端专有（vcm-color-picker-view__*）
+@include block(vcm-color-picker-view) {
+	background-color: $background-color-lightest;
+
+	@include localvars(color-picker, (
+		view-gap: remfix(32),
+		panel-height: remfix(360),
+		cursor-size: remfix(44),
+		cursor-shadow: (inset 0 0 0 remfix(6) $white, $thumb-shadow),
+		thumb-width: remfix(56),
+		thumb-height: remfix(56),
+		thumb-border: remfix(6) solid $white,
+		thumb-radius: 50%,
+		thumb-shadow: $thumb-shadow,
+		hue-radius: remfix(12),
+		alpha-radius: remfix(12),
+		predefine-size: auto,
+		predefine-gap: remfix(20),
+		predefine-radius: remfix(8),
+		predefine-selected-shadow: (0 0 0 remfix(4) $background-color-lightest, 0 0 0 remfix(8) $color-primary)
+	));
+
+	// 取值行：高度固定为色块 / 输入框的 64，「清空」出现与否都不变
+	@include element(value) {
+		display: flex;
+		min-height: remfix(64);
+		gap: remfix(24);
+		align-items: center;
+
+		.vc-color-picker__swatch {
+			width: remfix(64);
+			height: remfix(64);
+			border-radius: remfix(8);
+		}
+	}
+
+	// MInput 默认是整行样式，这里改为灰底框
+	@include element(input) {
+		flex: 1;
+		min-width: 0;
+
+		.vcm-input__wrapper {
+			min-height: 0;
+			padding: 0;
+		}
+
+		input {
+			height: remfix(64);
+			padding: 0 remfix(20);
+			font-size: remfix(28);
+			font-variant-numeric: tabular-nums;
+			background-color: $background-color;
+			border-radius: remfix(8);
+		}
+	}
+
+	@include element(text) {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		font-size: remfix(28);
+		color: $color-dark-light;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-variant-numeric: tabular-nums;
+	}
+
+	// 行高等于行高 64，不加上下内边距，否则比色块、输入框高，出现时整行跳动
+	@include element(clear) {
+		padding-left: remfix(8);
+		font-size: remfix(28);
+		line-height: remfix(64);
+		color: $color-primary;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	// 色板：圆角，白、黑渐变层跟随；光标填当前颜色（不透明）
+	.vc-color-picker-panel {
+		border-radius: remfix(16);
+
+		> .vc-color-picker-panel__white,
+		> .vc-color-picker-panel__black {
+			border-radius: inherit;
+		}
+	}
+
+	.vc-color-picker-panel__cursor > div {
+		background-color: var(--vc-color-picker-solid-color);
+	}
+
+	// 色相、透明度条（MSlider）：与色板同宽，行高等于滑块；MSlider 自身的内边距与滑块样式不用
+	.vc-color-picker-view__hue.vcm-slider,
+	.vc-color-picker-view__alpha.vcm-slider {
+		padding: 0;
+
+		@include localvars(slider, (
+			min-height: remfix(56),
+			track-size: remfix(24),
+			thumb-size: remfix(56),
+			hit-size: remfix(64)
+		));
+	}
+
+	.vc-color-picker-view__hue {
+		@include localvars(color-picker, (
+			thumb-background: var(--vc-color-picker-hue-color)
+		));
+	}
+
+	.vc-color-picker-view__alpha {
+		@include localvars(color-picker, (
+			thumb-background: (linear-gradient(var(--vc-color-picker-current-color), var(--vc-color-picker-current-color)), $checkerboard)
+		));
+	}
+
+	// 预设色：一行 8 个铺满
+	.vc-color-picker-predefine {
+		display: grid;
+		grid-template-columns: repeat(8, minmax(0, 1fr));
+	}
+
+	.vc-color-picker-predefine__block {
+		aspect-ratio: 1;
+		-webkit-tap-highlight-color: transparent;
+	}
+}
+
+// 弹层内：四周留白（滑块、光标在边缘时不被裁切）
+@include block(vcm-color-picker-popup) {
+	.vcm-color-picker-view {
+		padding: remfix(24) remfix(32) remfix(32);
+	}
+}
+
+// 触发行：色块 20（圆角 3）+ 文字，间距 8
+@include block(vcm-color-picker) {
+	// 外层带 click 监听，浏览器会给它画默认的点按高亮（蓝色），盖住 MListItem 的浅灰按下态
+	-webkit-tap-highlight-color: transparent;
+
+	@include element(extra) {
+		display: inline-flex;
+		gap: remfix(16);
+		align-items: center;
+		vertical-align: top;
+
+		.vc-color-picker__swatch {
+			width: remfix(40);
+			height: remfix(40);
+			border-radius: remfix(6);
+		}
+	}
+
+	@include element(text) {
+		font-variant-numeric: tabular-nums;
+	}
+
+	@include when(disabled) {
+		opacity: .5;
+	}
+}

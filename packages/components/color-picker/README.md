@@ -1,6 +1,6 @@
 ## 颜色选择器（ColorPicker）
 
-选择颜色：色板、色相条、透明度条、预设色和色值输入，支持 hex（含 8 位）、rgb、hsl、hsv 输出。
+选择颜色：色板、色相条、透明度条、预设色和色值输入，支持 hex（含 8 位）、rgb、hsl、hsv 输出。移动端使用独立的 `MColorPicker`，见[移动端选色](#移动端选色)。
 
 ### 何时使用
 
@@ -423,6 +423,55 @@ const handleChange = (value, currentColor) => {
 ```
 :::
 
+### 移动端选色
+
+`MColorPicker` 是独立的移动端组件：默认渲染 MListItem（色块 + 色值，未选择时为「请选择」），点击后从底部弹出选色视图。`v-model`、`format`、`alpha`、`hue`、`panel`、`colors`、`nullValue`、`clearable`、`editable` 与桌面端同名同义；`confirm` 含义相同，但默认为 `true`（拖动选色需要确认）。尺寸为 750 稿，随 `--vc-rem` 缩放。
+
+- 选色视图与桌面端浮层的区别：顶部是一行取值——色块、色值（`editable` 时可输入，失焦或回车时解析）、「清空」（`clearable` 且有值时）；色板、色相 / 透明度条与预设色加大，滑块为圆形，预设色一行 8 个铺满。
+- 默认由「确定」提交，取消或点蒙层关闭放弃修改。`true` 或 `'top'` 为顶部的「取消 / 确定」工具栏；`'bottom'` 为底部的大按钮，此时「清空」也移到底部，与「确定」平分宽度。没有选色就确定时提交默认色（同桌面端），清空过则提交 `nullValue`。
+- `confirm` 为 `false`：拖动色板、色条或输入色值即提交，弹层保持打开，标题栏右侧有关闭按钮；点预设色提交并关闭（点的就是当前颜色时直接关闭）；清空即提交 `nullValue`，弹层保持打开，可以接着选。
+- 未选择时色板停在默认红色（或清空前的颜色），预设色不标记选中；点选与色板相同的颜色也会提交。
+- `MColorPicker.View`（即 `MColorPickerView`）是内嵌的选色视图；`MColorPicker.open(options)` 直接打开弹层，通过 `onOk(value)` / `onChange(value)` 接收结果。
+
+:::playground
+<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+```vue
+<template>
+	<div style="display: grid; gap: 12px; max-width: 420px">
+		<MColorPicker v-model="basic" label="确定后提交" title="选择颜色" />
+		<MColorPicker v-model="instant" label="选色即提交" title="选择颜色" :confirm="false" colors />
+		<MColorPicker v-model="alpha" label="透明度" title="选择颜色" alpha />
+		<MColorPicker v-model="bottom" label="底部按钮" title="选择颜色" confirm="bottom" colors />
+		<MColorPicker.View v-model="view" colors />
+		<p style="padding: 0 16px; color: var(--vc-color-primary)" @click="handleOpen">MColorPicker.open 直接调用：{{ opened || '-' }}</p>
+		<p>basic：{{ basic }}；instant：{{ instant }}；alpha：{{ alpha }}；bottom：{{ bottom }}；view：{{ view }}</p>
+	</div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { MColorPicker } from '@deot/vc';
+
+const basic = ref('');
+const instant = ref('#456CF6');
+const alpha = ref('rgba(19, 206, 102, 0.8)');
+const bottom = ref('#456CF6');
+const view = ref('#1DB88C');
+const opened = ref('');
+
+const handleOpen = () => {
+	MColorPicker.open({
+		value: opened.value,
+		title: '直接调用',
+		colors: true,
+		onOk: (v) => {
+			opened.value = v;
+		}
+	});
+};
+</script>
+```
+:::
+
 ### 键盘与无障碍
 
 - 触发器可聚焦（`role="button"`、`aria-haspopup`、`aria-expanded`）：`Enter` / 空格 / `↓` 打开浮层，`Esc` 关闭。
@@ -438,28 +487,50 @@ const handleChange = (value, currentColor) => {
 
 色相条、透明度条复用 Slider：轨道粗细写在 `.vc-color-picker-view__hue` / `.vc-color-picker-view__alpha` 上的 Slider 局部参数（`--vc-slider-track-size` 10px），可以在同样的位置覆盖；滑块通过 Slider 的 `#thumb` 插槽画成竖条（`.vc-color-picker-view__thumb`）。浮层内的输入框和按钮使用 Input / Button 各自的主题。
 
+移动端（MColorPickerView）与桌面端渲染相同的色板、色条和预设色，只在 `.vcm-color-picker-view` 上覆盖下方的局部尺寸参数；色相、透明度条为 MSlider，取值行的输入框为 MInput，弹层为 MPickerPopup，各自使用自己的主题。
+
 ### 全局
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
 | color-contrast-dark | 触发器色块及预设色块边框的派生基色 | `#000000`（亮暗主题相同） |
 | color-contrast-light | 色相、透明度条的滑块背景 | `#FFFFFF`（亮暗主题相同） |
-| color-dark-light | 不可编辑时的色值文字 | 亮色：`#080F20`；暗色：`#E8E8E8` |
+| color-dark-light | 不可编辑时的色值文字（含移动端取值行） | 亮色：`#080F20`；暗色：`#E8E8E8` |
 | color-dark-extralight | 触发器箭头及清除图标 | 亮色：`#909399`；暗色：`#B9B9B9` |
 | color-disabled | 亮色禁用触发器背景 | `#EBEEF5` |
 | color-error | 未选择时色块斜线 | `#F53F3F` |
 | color-neutral-light | 底部分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
-| color-primary | 触发器悬停及亮色聚焦边框、预设色选中阴影 | `#456CF6` |
+| color-primary | 触发器悬停及亮色聚焦边框、预设色选中阴影、移动端「清空」文字及预设色选中环 | `#456CF6` |
 | color-primary-light | 暗色聚焦边框 | `#4A96FF` |
 | color-primary-lighter | 触发器聚焦光晕、色板、滑块及预设色的键盘聚焦光环 | `rgba(45, 140, 240, 0.2)` |
 | color-shadow-fixed | 色相、透明度条的滑块阴影 | 亮色：`rgb(0 0 0 / 6%)`；暗色：`rgb(0 0 0 / 24%)` |
 | background-color-light | 暗色禁用触发器背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
-| background-color-lightest | 触发器背景、未选择时色块底色 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| background-color | 移动端取值行输入框的灰底 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-lightest | 触发器背景、未选择时色块底色、移动端视图背景及预设色选中环的间隙 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 | border-color | 触发器边框、色相及透明度条的滑块边框 | `#D5D9E1` |
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+尺寸写成局部参数 `--vc-color-picker-<参数>`，默认值为桌面端的尺寸，MColorPickerView 在 `.vcm-color-picker-view` 上覆盖为 750 稿的值（括号内为 375 宽下）：
+
+| 参数 | 使用位置 | 桌面端 | 移动端 |
+| --- | --- | --- | --- |
+| view-gap | 各部分之间的间距 | `8px` | `16px` |
+| panel-height | 色板高度 | `180px` | `180px` |
+| cursor-size | 色板光标直径 | `4px` | `22px` |
+| cursor-shadow | 色板光标的白边与阴影 | 白边 1.5px + 内外阴影 | 白边 3px + 阴影 |
+| thumb-width / thumb-height | 色相、透明度条的滑块 | `4px` / `10px` | `28px` / `28px` |
+| thumb-background | 滑块填充 | `color-contrast-light` | 色相条为纯色相，透明度条为当前颜色 |
+| thumb-border | 滑块边框 | `1px solid border-color` | `3px solid #FFFFFF` |
+| thumb-radius | 滑块圆角 | `1px` | `50%` |
+| thumb-shadow | 滑块阴影 | `0 0 2px color-shadow-fixed` | `0 1px 4px rgb(0 0 0 / 20%)` |
+| hue-radius / alpha-radius | 色相、透明度条圆角 | `2px` / `0` | `6px` / `6px` |
+| predefine-size | 预设色块尺寸 | `18px` | `auto`（一行 8 个铺满，正方形） |
+| predefine-gap | 预设色块间距 | `6px` | `10px` |
+| predefine-radius | 预设色块圆角 | `2px` | `4px` |
+| predefine-selected-shadow | 预设色选中的光环 | `0 0 2px 1px color-primary` | 2px 底色间隙 + 2px 主色环 |
+
+MColorPickerView 的根节点另有三个由组件写入的参数，用于移动端光标和滑块的填充：`--vc-color-picker-solid-color`（当前颜色，不透明）、`--vc-color-picker-hue-color`（纯色相）、`--vc-color-picker-current-color`（当前颜色，含透明度）。
 
 ## API
 
@@ -554,6 +625,59 @@ Color.parse('not a color'); // null
 | toCss | 可直接用于 CSS 的色值；`alpha` 为 `true` 且不完全不透明时为 `rgba()`，否则为 `rgb()` | - | `string` |
 | compare | 比较颜色是否近似相同 | `color: Color` | `boolean` |
 
-### 移动端
+### MColorPicker 属性
 
-`MColorPicker` / `MColorPickerView` 目前复用桌面实现；`MColorPicker` 可从 `@deot/vc` 导入，独立面板可使用 `MColorPicker.View`。
+`MColorPicker` 是独立的移动端组件，见[移动端选色](#移动端选色)。支持下方 MColorPickerView 的全部属性，另有：
+
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| label | MListItem 左侧标题 | `string` | - | - |
+| labelWidth | 标题宽度 | `string \| number` | - | - |
+| arrow | 右侧箭头，禁用时不显示 | 同 MListItem | - | 同 MListItem |
+| extra | 未选择时显示的文字 | `string` | - | 当前语言的 `vc.ColorPicker.placeholder` |
+| formatter | 生成色块旁的文字 | `(value: string) => any` | - | 原样显示 |
+| disabled | 禁用，不打开弹层 | `boolean` | - | `false` |
+| title | 弹层标题 | `string \| Function` | - | `''` |
+| confirm | 由「确定」提交；`false` 时拖动或输入即提交、弹层保持打开，点预设色提交并关闭 | `boolean \| 'top' \| 'bottom'` | - | `true` |
+| cancelText / okText | 「取消」「确定」文字 | `string` | - | 当前语言的 `vc.Picker.*` |
+
+### MColorPicker 事件
+
+| 事件名 | 说明 | 回调参数 |
+| --- | --- | --- |
+| update:modelValue | 提交色值：确定时；不需要确认时为拖动、输入、清空或点预设色时 | `(value: string \| null) => void` |
+| change | 与 `update:modelValue` 一起触发，并通知表单校验 | `(value: string \| null) => void` |
+| clear | 点击「清空」 | `() => void` |
+| color-change | 弹层内的色值变化（`confirm` 时为未提交的预览） | `(value: string) => void` |
+| ok | 点击「确定」；不需要确认时为点预设色（同时关闭）；先于 `change` | `(value: string \| null) => void` |
+| cancel | 取消或关闭弹层 | `() => void` |
+| visible-change | 弹层开始展开或收起 | `(isVisible: boolean) => void` |
+| close | 弹层离场完成 | `() => void` |
+
+### MColorPicker 插槽
+
+| 名称 | 说明 | 参数 |
+| --- | --- | --- |
+| default | 自定义触发区，同桌面端 | `{ value: string \| null; color: string }` |
+
+### MColorPicker 方法
+
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| open | 直接打开弹层 | MColorPickerView 的属性、`title`、`confirm`、`cancelText`、`okText`，以及 `onOk(value)`、`onChange(value)`、`onCancel()`、`onClear()`、`onColorChange(value)`、`onVisibleChange(visible)`、`onClose()` | Portal 实例，可调用 `destroy()` |
+
+`MColorPicker.open` 不返回结果的 Promise，通过 `onOk`（确定时）或 `onChange`（每次提交，含不需要确认时的拖动与输入）接收。兼容 `value` 作为初始值的别名，同时传入时以 `modelValue` 为准。`MColorPicker.View` 与 `MColorPickerView` 为同一组件；`MColorPicker.Color`、`MColorPicker.colors` 同桌面端。
+
+### MColorPickerView 属性与事件
+
+属性为 ColorPicker 的 `modelValue`、`panel`、`hue`、`alpha`、`colors`、`format`、`editable`、`clearable`、`nullValue`，类型和默认值相同。
+
+| 事件名 | 说明 | 回调参数 |
+| --- | --- | --- |
+| update:modelValue | 用户操作导致色值变化，或清空（值为 `nullValue`，没有第二个参数）；父组件改值或改 `alpha` / `format` 时不触发 | `(value: string \| null, color?: Color) => void` |
+| change | 与 `update:modelValue` 一起触发 | `(value: string \| null, color?: Color) => void` |
+| clear | 点击「清空」，先于提交 `nullValue` | `() => void` |
+
+| 方法名 | 说明 |
+| --- | --- |
+| clear | 清空，同点击「清空」 |

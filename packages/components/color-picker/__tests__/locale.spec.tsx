@@ -26,9 +26,9 @@ describe('ColorPicker locale', () => {
 		}
 	});
 
-	it.each([ColorPicker, MColorPicker])('updates open panel actions when locale changes', async (component) => {
+	it('updates open panel actions when locale changes', async () => {
 		VcInstance.configure({ locale: zhCN });
-		const wrapper = mount(component, { attachTo: document.body, props: { confirm: true } });
+		const wrapper = mount(ColorPicker, { attachTo: document.body, props: { confirm: true } });
 		try {
 			await wrapper.find('.vc-color-picker__trigger').trigger('click');
 			await nextTick();
@@ -43,6 +43,31 @@ describe('ColorPicker locale', () => {
 			VcInstance.configure({ locale: zhCN });
 			await nextTick();
 			expect(actions()).toEqual(['确定']);
+		} finally {
+			wrapper.unmount();
+		}
+	});
+
+	it('MColorPicker: placeholder and clear text follow the locale', async () => {
+		VcInstance.configure({ locale: zhCN });
+		const wrapper = mount(MColorPicker, { attachTo: document.body, props: { modelValue: '' } });
+		try {
+			await nextTick();
+			expect(wrapper.text()).toContain('请选择');
+			VcInstance.configure({ locale: enUS });
+			await nextTick();
+			expect(wrapper.text()).toContain('Please select');
+
+			await wrapper.setProps({ modelValue: '#FF0000' });
+			await wrapper.find('.vcm-color-picker').trigger('click');
+			await nextTick();
+			await new Promise(resolve => setTimeout(resolve, 0));
+			await nextTick();
+			const clear = () => document.querySelector('.vcm-color-picker-view__clear')?.textContent?.trim();
+			expect(clear()).toBe('Clear');
+			VcInstance.configure({ locale: zhCN });
+			await nextTick();
+			expect(clear()).toBe('清空');
 		} finally {
 			wrapper.unmount();
 		}

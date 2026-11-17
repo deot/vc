@@ -26,6 +26,11 @@ export const Predefine = defineComponent({
 		color: {
 			type: Object as PropType<Color>,
 			required: true
+		},
+		// 未选择（MColorPickerView 清空后）：色板仍停在某个颜色，但不标记选中
+		empty: {
+			type: Boolean,
+			default: false
 		}
 	},
 	setup(props) {
@@ -53,7 +58,7 @@ export const Predefine = defineComponent({
 				<div class="vc-color-picker-predefine">
 					{
 						items.value.map((item, index) => {
-							const selected = isSame(item.states, target);
+							const selected = !props.empty && isSame(item.states, target);
 
 							return (
 								<button
