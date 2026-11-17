@@ -274,6 +274,36 @@ export const useSlider = (
 		end: handleDragEnd
 	});
 
+	// 在轨道上按下：最近的滑块跳到按下处并随即进入拖动，之后的 click 不再处理
+	// 只认鼠标：触摸仍按点按跳转，不和页面滚动抢手势
+	const handleTrackDragStart = (e: MouseEvent | TouchEvent, point: DragPoint) => {
+		if (e.type.startsWith('touch') || props.disabled || !props.clickable) return false;
+
+		const target = e.target as HTMLElement;
+		if (target.closest('.vc-slider__btn-wrapper') || (barDraggable.value && target.closest('.vc-slider__bar'))) return false;
+		if (!measure()) return false;
+
+		const value = getValueByRatio(getRatio(point));
+		const index = isRange.value ? getNearestIndex(value) : 0;
+		setValue(index, value);
+		skipClick = true;
+		touching = false;
+		grabOffset = 0;
+		dragging.value = false;
+		dragIndex.value = index;
+	};
+
+	const trackDrag = useDrag({
+		start: handleTrackDragStart,
+		move: (_, point) => handleDrag(point),
+		end: () => {
+			handleDragEnd();
+			// 松开在轨道之外时不会有 click，下一轮事件循环前复位
+			setTimeout(() => { skipClick = false; });
+		},
+		selectable: false
+	});
+
 	const setTipActive = (index: number, value: boolean) => {
 		activeTips.value[index] = value;
 	};
@@ -534,6 +564,7 @@ export const useSlider = (
 						{ 'is-clickable': props.clickable && !props.disabled }
 					]}
 					onClick={handleSliderClick}
+					{...trackDrag.listeners}
 				>
 					<div
 						style={barStyle.value}

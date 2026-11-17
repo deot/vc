@@ -285,6 +285,63 @@ describe('index.ts', () => {
 		expect(onChange).not.toHaveBeenCalled();
 	});
 
+	it('track: 鼠标按住轨道时滑块跳到按下处并随即拖动', async () => {
+		const { wrapper, value, onChange, onAfterChange } = mountControlled();
+		const track = wrapper.find('.vc-slider__wrapper').element;
+
+		mouseDown(track, 40);
+		await flush();
+		expect(value.value).toBe(40);
+		expect(onChange).toHaveBeenLastCalledWith(40, expect.any(Function));
+
+		mouseMove(60);
+		await flush();
+		expect(value.value).toBe(60);
+
+		mouseUp();
+		// 按下已经处理过，随后的 click 不再跳转
+		click(track, 10);
+		await flush();
+		expect(value.value).toBe(60);
+		expect(onAfterChange).toHaveBeenCalledWith(60, expect.any(Function));
+
+		// 松开后的下一次点击照常处理
+		click(track, 10);
+		await flush();
+		expect(value.value).toBe(10);
+
+		wrapper.unmount();
+	});
+
+	it('track: 触摸、禁用或 clickable=false 时按下轨道不拖动', async () => {
+		const { wrapper, value } = mountControlled();
+		const track = wrapper.find('.vc-slider__wrapper').element;
+
+		touch(track, 'touchstart', 40);
+		touch(track, 'touchmove', 60);
+		touch(track, 'touchend', 60);
+		await flush();
+		expect(value.value).toBe(25);
+
+		wrapper.unmount();
+
+		const unclickable = mountControlled({ clickable: false });
+		const unclickableTrack = unclickable.wrapper.find('.vc-slider__wrapper').element;
+		mouseDown(unclickableTrack, 40);
+		mouseMove(60);
+		mouseUp();
+		await flush();
+		expect(unclickable.value.value).toBe(25);
+		unclickable.wrapper.unmount();
+
+		const disabled = mountControlled({ disabled: true });
+		mouseDown(disabled.wrapper.find('.vc-slider__wrapper').element, 40);
+		mouseUp();
+		await flush();
+		expect(disabled.value.value).toBe(25);
+		disabled.wrapper.unmount();
+	});
+
 	it('clickable=false: 禁止轨道点击但保留拖动', async () => {
 		const { wrapper, value } = mountControlled({ clickable: false });
 		const button = wrapper.find('.vc-slider__btn-wrapper').element;
@@ -974,11 +1031,12 @@ describe('index.ts', () => {
 		const bar = plain.wrapper.find('.vc-slider__bar');
 
 		expect(bar.classes()).not.toContain('is-draggable');
+		// 未开启时按住选中条等同按住轨道：最近的滑块跟手（越过相邻滑块时一起推动），而不是整体平移成 [50, 80]
 		mouseDown(bar.element, 30);
 		mouseMove(60);
 		mouseUp();
 		await flush();
-		expect(plain.value.value).toEqual([20, 50]);
+		expect(plain.value.value).toEqual([60, 60]);
 		plain.wrapper.unmount();
 
 		const disabled = mountControlled({ range: { draggable: true }, modelValue: [20, 50], disabled: true });
