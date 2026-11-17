@@ -38,6 +38,8 @@ describe('grid/utils', () => {
 	it('resolveGap: [水平, 垂直]', () => {
 		expect(resolveGap(8)).toBe('8px 8px');
 		expect(resolveGap([16, 4])).toBe('4px 16px');
+		expect(resolveGap([16, 4], v => `${v}u`)).toBe('4u 16u');
+		expect(resolveTracks([100, '1fr'], v => `${v}u`).template).toBe('100u 1fr');
 	});
 
 	it('resolveResponsive: 取当前及更小断点中第一个已设置的值', () => {

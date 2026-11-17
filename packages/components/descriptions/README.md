@@ -301,7 +301,7 @@ VcInstance.configure({
 - copy 类型的复制提示使用 Toast；image、file 类型使用 `MFilePreview`（移动端查看器）。
 - 标签提示（`tooltip`）点按打开 `MPopover`，再点同一处或点别处关闭；桌面端为悬停打开。
 
-两端的尺寸都写成局部变量 `--vc-descriptions-<键>`，桌面端的默认值为 px，移动端在 `.vcm-descriptions` 上覆盖，与样式的加载顺序无关。各尺寸的键为 `<size>-<参数>`（如 `medium-font-size`）；其余键为 `header-margin`、`extra-gap`、`title-font-size`、`title-line-height`、`group-label-margin`、`group-label-font-size`、`group-label-line-height`、`column-gap`、`value-gap`（标签与值的间距，桌面端为 0）、`label-gap`、`tooltip-gap`、`colon-gap`、`image-gap`、`image-radius`、`copy-icon-gap`、`copy-icon-size`、`content-padding`、`radius`。边框保持 1px，不随 `--vc-rem` 缩放。
+两端的尺寸都写成局部变量 `--vc-descriptions-<键>`，桌面端的默认值为 px，移动端在 `.vcm-descriptions` 上覆盖，与样式的加载顺序无关。`columns` 数组中的数字（固定宽度的轨道）在移动端同样按 750 稿换算。各尺寸的键为 `<size>-<参数>`（如 `medium-font-size`）；其余键为 `header-margin`、`extra-gap`、`title-font-size`、`title-line-height`、`group-label-margin`、`group-label-font-size`、`group-label-line-height`、`column-gap`、`value-gap`（标签与值的间距，桌面端为 0）、`label-gap`、`tooltip-gap`、`colon-gap`、`image-gap`、`image-radius`、`copy-icon-gap`、`copy-icon-size`、`content-padding`、`radius`。边框保持 1px，不随 `--vc-rem` 缩放。
 
 ## API
 

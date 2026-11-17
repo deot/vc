@@ -1,3 +1,4 @@
+import { toPx } from '@deot/vc-shared';
 import { VcError } from '../vc';
 import type { GridBreakpoint, GridResponsive, GridColumns, GridGap, GridSpan, GridSpanResult } from './types';
 
@@ -107,15 +108,16 @@ const countTracks = (template: string): number => {
 /**
  * columns转换为grid-template-columns与轨道数
  * @param columns ~
+ * @param toLength 数组中数字的换算（桌面端px，移动端750稿）
  * @returns ~
  */
-export const resolveTracks = (columns: GridColumns) => {
+export const resolveTracks = (columns: GridColumns, toLength: (value: number) => string = toPx) => {
 	if (typeof columns === 'number') {
 		const count = Math.max(1, Math.floor(columns) || 1);
 		return { template: `repeat(${count}, minmax(0, 1fr))`, count };
 	}
 	const template = Array.isArray(columns)
-		? columns.map(v => (typeof v === 'number' ? `${v}px` : v)).join(' ')
+		? columns.map(v => (typeof v === 'number' ? toLength(v) : v)).join(' ')
 		: columns.trim();
 	return { template, count: Math.max(1, countTracks(template)) };
 };
@@ -123,11 +125,12 @@ export const resolveTracks = (columns: GridColumns) => {
 /**
  * gap转换为CSS gap（行 列）
  * @param gap ~
+ * @param toLength 数字的换算（桌面端px，移动端750稿）
  * @returns ~
  */
-export const resolveGap = (gap: GridGap) => {
+export const resolveGap = (gap: GridGap, toLength: (value: number) => string = toPx) => {
 	const [x, y] = Array.isArray(gap) ? gap : [gap, gap];
-	return `${y || 0}px ${x || 0}px`;
+	return `${toLength(y || 0)} ${toLength(x || 0)}`;
 };
 
 /**

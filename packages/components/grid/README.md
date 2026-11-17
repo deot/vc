@@ -172,6 +172,13 @@ const collapsed = ref(true);
 
 当前组件没有 CSS 主题参数，间距由 `gap` 设置。
 
+## 移动端
+
+移动端入口导出 `MGrid`、`MGridItem`，属性、插槽、结构与 `Grid`、`GridItem` 相同。`MGrid` 的根节点另有标记类 `.vcm-grid`；`MGridItem` 就是 `GridItem`。
+
+- `gap` 和 `columns` 数组中的数字按 750 稿换算，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放。例如 `:gap="16"` 在 375 宽下为 8px，`:columns="[160, '1fr']"` 的首列为 80px。字符串原样使用。
+- 断点仍按容器的实际宽度（px）判断，手机上通常落在 `xs`。
+
 ## API
 
 ### Grid 属性
@@ -217,4 +224,3 @@ const collapsed = ref(true);
 - Grid 的默认插槽只渲染 GridItem（包括 `v-for`、`<template>` 中的 GridItem），其他节点会被忽略；被其他组件包裹的 GridItem 也不会渲染。
 - 位置由 Grid 计算后写在每项的 `grid-row` / `grid-column` 上，不依赖浏览器的自动放置；GridItem 自身的 `class`、`style` 会保留。
 - 只有用到响应式对象时才会监听 Grid 的尺寸，断点变化时才重新计算。
-- `MGrid`、`MGridItem` 分别是 `Grid`、`GridItem` 的别名，使用同一实现与样式，可从 `@deot/vc` 导入。

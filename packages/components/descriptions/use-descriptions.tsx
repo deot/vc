@@ -56,7 +56,7 @@ export const useDescriptions = (
 	const responsive = useResponsive(current);
 	const popover = useHoverPopover(options.Popover.open);
 
-	const tracks = computed(() => resolveTracks(responsive.resolve(props.columns, 24)));
+	const tracks = computed(() => resolveTracks(responsive.resolve(props.columns, 24), toLength));
 
 	// 未设置span时每行3项，移动端每行1项
 	const defaultSpan = computed(() => responsive.resolve(props.span, Math.max(1, Math.floor(tracks.value.count / (mobile ? 1 : 3)))));

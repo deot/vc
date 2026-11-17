@@ -1,4 +1,4 @@
-import { Grid, GridItem } from '.';
+import { GridItem } from '.';
 
-export const MGrid = Grid;
+export { MGrid } from './mobile/grid';
 export const MGridItem = GridItem;

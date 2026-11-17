@@ -31,8 +31,23 @@ describe('index.ts', () => {
 	it('basic', () => {
 		expect(typeof Grid).toBe('object');
 		expect(typeof GridItem).toBe('object');
-		expect(MGrid).toBe(Grid);
+		expect(typeof MGrid).toBe('object');
+	});
+
+	it('MGrid: 同结构加vcm-grid标记, gap与columns数组中的数字按750稿; MGridItem同GridItem', () => {
 		expect(MGridItem).toBe(GridItem);
+		const wrapper = mount(() => (
+			<MGrid columns={[160, '1fr']} gap={[16, 8]}>
+				<MGridItem span={1} />
+			</MGrid>
+		));
+		const el = wrapper.element as HTMLElement;
+		expect(el.classList.contains('vc-grid')).toBe(true);
+		expect(el.classList.contains('vcm-grid')).toBe(true);
+		expect(el.getAttribute('style')).toContain('grid-template-columns: calc(var(--vc-rem) * 160) 1fr');
+		expect(el.getAttribute('style')).toContain('gap: calc(var(--vc-rem) * 8) calc(var(--vc-rem) * 16)');
+		expect(wrapper.findAll('.vc-grid-item').length).toBe(1);
+		expect(mount(() => <Grid />).classes()).not.toContain('vcm-grid');
 	});
 
 	it('create: 默认24列, 无间距', () => {
