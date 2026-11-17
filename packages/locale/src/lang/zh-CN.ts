@@ -17,7 +17,9 @@ export const zhCN: Language = {
 			clearText: '清空'
 		},
 		ColorPicker: {
-			confirmText: '确定'
+			placeholder: '请选择',
+			confirmText: '确定',
+			clearText: '清空'
 		},
 		Picker: {
 			extra: '请选择',
