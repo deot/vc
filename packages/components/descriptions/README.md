@@ -1,6 +1,6 @@
 ## 描述列表（Descriptions）
 
-成组展示只读的标签与值，一般用于详情页。按 24 格分列，支持配置和子组件两种写法、分组、合并、四种主题和响应式。
+成组展示只读的标签与值，一般用于详情页。按 24 格分列，支持配置和子组件两种写法、分组、合并、四种主题和响应式。移动端入口导出的 `MDescriptions` 与 `Descriptions` 的属性和插槽相同，尺寸按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
 
 ### 何时使用
 
@@ -272,6 +272,37 @@ VcInstance.configure({
 
 另有 `image-size`：image 类型的小图边长，默认等于 `line-height`，不随 `size` 设置。
 
+## 移动端
+
+`MDescriptions` 的属性、插槽、结构与 `Descriptions` 相同，根节点另有标记类 `.vcm-descriptions`，结构样式、颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+
+| 参数 | mini / small / medium / large |
+| --- | --- |
+| font-size | 24（12） / 26（13） / 28（14） / 30（15） |
+| line-height | 36（18） / 40（20） / 40（20） / 44（22） |
+| row-gap | 8（4） / 16（8） / 24（12） / 32（16） |
+| cell-padding-y | 6（3） / 10（5） / 16（8） / 20（10） |
+| cell-padding-x | 16（8） / 24（12） / 24（12） / 32（16） |
+
+| 项 | 值 |
+| --- | --- |
+| 标题栏 | 标题字号 32（16）加粗，行高 44（22），与内容间距 24（12），与附加内容间距 24（12） |
+| 分组标题 | 字号 28（14），行高 40（20），与内容间距 16（8） |
+| 列间距 | 24（12） |
+| 面板（fill / inverted） | 内边距 32（16），圆角 16（8）；border 主题的外框圆角相同 |
+| 标签 | 与值间距 8（4，冒号之后另有冒号的右间距）；`top` 时与值间距 8（4）；提示图标间距 4（2）；冒号左右 8（4） |
+| image 类型 | 小图间距 8（4），圆角 4（2） |
+| copy 类型 | 图标 24（12），与文字间距 8（4） |
+
+与桌面端的差异：
+
+- 未设置 `span` 时每项占满一行（桌面端为轨道数的 1/3）。
+- 数字长度按 750 稿：`labelWidth`（`'auto'` 量出的宽度仍为 px）、image 类型的 `options.size`。
+- copy 类型的复制提示使用 Toast；image、file 类型使用 `MFilePreview`（移动端查看器）。
+- 标签提示（`tooltip`）点按打开 `MPopover`，再点同一处或点别处关闭；桌面端为悬停打开。
+
+两端的尺寸都写成局部变量 `--vc-descriptions-<键>`，桌面端的默认值为 px，移动端在 `.vcm-descriptions` 上覆盖，与样式的加载顺序无关。各尺寸的键为 `<size>-<参数>`（如 `medium-font-size`）；其余键为 `header-margin`、`extra-gap`、`title-font-size`、`title-line-height`、`group-label-margin`、`group-label-font-size`、`group-label-line-height`、`column-gap`、`value-gap`（标签与值的间距，桌面端为 0）、`label-gap`、`tooltip-gap`、`colon-gap`、`image-gap`、`image-radius`、`copy-icon-gap`、`copy-icon-size`、`content-padding`、`radius`。边框保持 1px，不随 `--vc-rem` 缩放。
+
 ## API
 
 ### Descriptions 属性
@@ -284,9 +315,9 @@ VcInstance.configure({
 | theme | 主题 | `string` | `fill` / `inverted` / `plain` / `border` | `fill` |
 | size | 尺寸 | `string` | `mini` / `small` / `medium` / `large` | `medium` |
 | columns | 列轨道，同 Grid。可写成响应式对象 | `number \| string \| (number \| string)[] \| Responsive` | - | `24` |
-| span | 所有项的默认 span。可写成响应式对象 | `number \| 'auto' \| Responsive` | - | 轨道数的 1/3 |
+| span | 所有项的默认 span。可写成响应式对象 | `number \| 'auto' \| Responsive` | - | 轨道数的 1/3（MDescriptions 为占满一行） |
 | labelPosition | 标签位置 | `string` | `left` / `right` / `top` | `left` |
-| labelWidth | 标签宽度（px）；`'auto'` 时同一列（列起点相同）的标签取其中最宽的。`top` 和 `inline` 时不生效 | `number \| 'auto'` | - | - |
+| labelWidth | 标签宽度（px，MDescriptions 为 750 稿）；`'auto'` 时同一列（列起点相同）的标签取其中最宽的。`top` 和 `inline` 时不生效 | `number \| 'auto'` | - | - |
 | inline | 标签和值在同一单元格内按文字流排列 | `boolean` | - | `false` |
 | colon | 标签后的冒号；`left` / `right` 且主题不是 `border` 时显示 | `boolean \| string` | - | `true`（`:`） |
 | placeholder | 值为空时显示的内容，取值同 `title` | `string \| number \| Function \| { type: string; value: any }` | - | `'-'` |
@@ -351,4 +382,4 @@ VcInstance.configure({
 - `labelWidth: 'auto'` 监听每个标签内容的尺寸：标签文字、插槽内容、字体或字号变化后，同一列的宽度随之更新，在绘制前完成。
 - 有 `title` 时只渲染标题栏和面板，外层卡片的背景和内边距由所在容器（如 Card）提供。
 - copy 类型的复制提示：Descriptions 使用 Message，MDescriptions 使用 Toast。
-- `MDescriptions` 与 Descriptions 的属性、插槽相同，只有复制提示不同；`MDescriptionsItem`、`MDescriptionsGroup` 是对应组件的别名。均可从 `@deot/vc` 导入。
+- `MDescriptions` 与 Descriptions 的属性、插槽相同，差异见[移动端](#移动端)；`MDescriptionsItem`、`MDescriptionsGroup` 是对应组件的别名。均可从 `@deot/vc` 导入。

@@ -8,9 +8,11 @@ import {
 	MDescriptionsItem,
 	MDescriptionsGroup,
 	FilePreview,
+	MFilePreview,
 	Clipboard,
 	MClipboard,
-	Popover
+	Popover,
+	MPopover
 } from '@deot/vc-components';
 import { VcInstance } from '../../vc';
 import { mount } from '@vue/test-utils';
@@ -288,9 +290,21 @@ describe('index.ts', () => {
 		expect(wrapper.findAll('.vc-descriptions__tooltip')).toHaveLength(1);
 		await wrapper.find('.vc-descriptions__tooltip').trigger('mouseenter');
 		const options = open.mock.calls[0][0] as any;
-		expect(options).toMatchObject({ hover: true, theme: 'dark', placement: 'top', autoWidth: false });
+		// autoWidth为false时会与图标同宽，文字逐字换行
+		expect(options).toMatchObject({ hover: true, theme: 'dark', placement: 'top', autoWidth: true });
 		expect(options.content()).toBe('说明');
 		expect((tooltip.mock.calls[0] as any)[0]).toMatchObject({ value: 'NO-1', index: 0, row: { label: 'a' } });
+		open.mockRestore();
+	});
+
+	it('MDescriptions tooltip: 点按打开MPopover（不随移出关闭），悬停不打开', async () => {
+		const open = vi.spyOn(MPopover, 'open').mockImplementation(() => ({}) as any);
+		const wrapper = mount(() => (<MDescriptions data={data} options={[{ label: 'a', prop: 'code', tooltip: '说明' }]} />));
+		const icon = wrapper.find('.vc-descriptions__tooltip');
+		await icon.trigger('mouseenter');
+		expect(open).not.toHaveBeenCalled();
+		await icon.trigger('click');
+		expect(open.mock.calls[0][0]).toMatchObject({ hover: false, autoWidth: true, content: '说明' });
 		open.mockRestore();
 	});
 
@@ -322,6 +336,33 @@ describe('index.ts', () => {
 		expect(widths()).toEqual(['', '']);
 		expect(contents()).toHaveLength(0);
 		rect.mockRestore();
+	});
+
+	it('MDescriptions: 标记类、默认每项占满一行、数字长度按750稿', () => {
+		const options = [{ label: 'a' }, { label: 'b' }];
+		const wrapper = mount(() => (<MDescriptions labelWidth={160} options={options} />));
+		expect(wrapper.classes()).toEqual(expect.arrayContaining(['vc-descriptions', 'vcm-descriptions']));
+		expect(columns(wrapper)).toEqual(['1 / span 24', '1 / span 24']);
+		expect((wrapper.find('.vc-descriptions__label').element as HTMLElement).style.width).toBe('calc(var(--vc-rem) * 160)');
+		expect(mount(() => (<Descriptions options={options} />)).classes()).not.toContain('vcm-descriptions');
+	});
+
+	it('MDescriptions: image / file使用MFilePreview', async () => {
+		const open = vi.spyOn(MFilePreview, 'open').mockImplementation(() => undefined as any);
+		const wrapper = mount(() => (
+			<MDescriptions
+				options={[
+					{ value: 'a.png', type: 'image', options: { size: 64 } },
+					{ value: ['b.pdf'], type: 'file' }
+				]}
+			/>
+		));
+		const image = wrapper.find('.vc-descriptions__image');
+		expect((image.element as HTMLElement).style.width).toBe('calc(var(--vc-rem) * 64)');
+		await image.trigger('click');
+		expect(open).toHaveBeenCalledTimes(1);
+		expect(wrapper.findComponent(MFilePreview).exists()).toBe(true);
+		open.mockRestore();
 	});
 
 	it('MDescriptions: copy类型使用MClipboard', () => {

@@ -2,7 +2,9 @@
 import * as sass from 'sass';
 import postcss from 'postcss';
 
-const css = postcss.parse(sass.compile(new URL('../style.scss', import.meta.url).pathname).css);
+const compile = (file: string) => postcss.parse(sass.compile(new URL(file, import.meta.url).pathname).css);
+const css = compile('../style.scss');
+const mobile = compile('../mobile/style.scss');
 
 const declsFor = (selector: string, property: string) => {
 	const values: string[] = [];
@@ -42,17 +44,18 @@ describe('Descriptions styles', () => {
 		};
 		for (const [size, [fontSize, lineHeight, rowGap]] of Object.entries(sizes)) {
 			const selector = `.vc-descriptions.is-${size}`;
-			expect(declsFor(selector, '--vc-descriptions-font-size'), size).toEqual([fontSize]);
-			expect(declsFor(selector, '--vc-descriptions-line-height'), size).toEqual([lineHeight]);
-			expect(declsFor(selector, '--vc-descriptions-row-gap'), size).toEqual([rowGap]);
+			const local = (key: string, value: string) => `var(--vc-descriptions-${size}-${key}, ${value})`;
+			expect(declsFor(selector, '--vc-descriptions-font-size'), size).toEqual([local('font-size', fontSize)]);
+			expect(declsFor(selector, '--vc-descriptions-line-height'), size).toEqual([local('line-height', lineHeight)]);
+			expect(declsFor(selector, '--vc-descriptions-row-gap'), size).toEqual([local('row-gap', rowGap)]);
 		}
 	});
 
 	it('tooltip icon goes after the label, before it when right aligned', () => {
-		expect(declsFor('.vc-descriptions__tooltip', 'margin-left')).toEqual(['2px']);
+		expect(declsFor('.vc-descriptions__tooltip', 'margin-left')).toEqual(['var(--vc-descriptions-tooltip-gap, 2px)']);
 		const right = '.vc-descriptions.is-right:not(.is-inline) .vc-descriptions__tooltip';
 		expect(declsFor(right, 'order')).toEqual(['-1']);
-		expect(declsFor(right, 'margin-right')).toEqual(['2px']);
+		expect(declsFor(right, 'margin-right')).toEqual(['var(--vc-descriptions-tooltip-gap, 2px)']);
 		expect(declsFor(right, 'margin-left')).toEqual(['0']);
 	});
 
@@ -60,5 +63,25 @@ describe('Descriptions styles', () => {
 		const size = 'var(--vc-descriptions-image-size, var(--vc-descriptions-line-height))';
 		expect(declsFor('.vc-descriptions__image', 'width')).toEqual([size]);
 		expect(declsFor('.vc-descriptions__image', 'height')).toEqual([size]);
+	});
+
+	it('MDescriptions only overrides local variables in 750 units', () => {
+		const decls: Record<string, string> = {};
+		mobile.walkRules((rule) => {
+			expect(rule.selector).toBe('.vcm-descriptions');
+			rule.walkDecls((declaration) => {
+				decls[declaration.prop] = declaration.value;
+			});
+		});
+		expect(Object.keys(decls).every(prop => prop.startsWith('--vc-descriptions-'))).toBe(true);
+		expect(decls['--vc-descriptions-medium-font-size']).toBe('calc(var(--vc-rem) * 28)');
+		expect(decls['--vc-descriptions-medium-row-gap']).toBe('calc(var(--vc-rem) * 24)');
+		expect(decls['--vc-descriptions-content-padding']).toBe('calc(var(--vc-rem) * 32)');
+		// 桌面端读取的每个局部变量，移动端都有对应值
+		const used = new Set<string>();
+		css.walkDecls((declaration) => {
+			for (const [, key] of declaration.value.matchAll(/var\((--vc-descriptions-[a-z-]+), \d/g)) used.add(key);
+		});
+		expect([...used].filter(key => !(key in decls))).toEqual([]);
 	});
 });

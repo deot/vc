@@ -10,6 +10,11 @@ $background-color-light: varfix(background-color-light, descriptions);
 $background-color-lightest: varfix(background-color-lightest, descriptions);
 $cell-padding: var(--vc-descriptions-cell-padding-y) var(--vc-descriptions-cell-padding-x);
 
+// 固定尺寸写成局部变量（见 localfix），移动端在 .vcm-descriptions 上覆盖
+@function v($key, $value) {
+	@return localfix(descriptions, $key, unitfix($value));
+}
+
 // medium与bms卡片一致；border主题的单元格内边距另算
 $sizes: (
 	mini: (font-size: 12px, line-height: 18px, row-gap: 4px, cell-padding-y: 3px, cell-padding-x: 12px),
@@ -26,24 +31,24 @@ $sizes: (
 	@each $size, $values in $sizes {
 		@include when($size) {
 			@each $key, $value in $values {
-				--vc-descriptions-#{$key}: #{unitfix($value)};
+				--vc-descriptions-#{$key}: #{v(#{$size}-#{$key}, $value)};
 			}
 		}
 	}
 
 	@include element(header) {
 		display: flex;
-		margin-bottom: unitfix(16);
+		margin-bottom: v(header-margin, 16);
 		align-items: center;
 		justify-content: space-between;
-		gap: unitfix(16);
+		gap: v(extra-gap, 16);
 	}
 
 	@include element(title) {
 		min-width: 0;
-		font-size: unitfix(16);
+		font-size: v(title-font-size, 16);
 		font-weight: 600;
-		line-height: unitfix(24);
+		line-height: v(title-line-height, 24);
 	}
 
 	@include element(extra) {
@@ -59,17 +64,17 @@ $sizes: (
 	}
 
 	@include element(group-label) {
-		margin-bottom: unitfix(12);
-		font-size: unitfix(14);
+		margin-bottom: v(group-label-margin, 12);
+		font-size: v(group-label-font-size, 14);
 		font-weight: 500;
-		line-height: unitfix(22);
+		line-height: v(group-label-line-height, 22);
 		color: $color-dark-lighter;
 	}
 
 	@include element(body) {
 		display: grid;
 		margin: 0;
-		gap: var(--vc-descriptions-row-gap) unitfix(16);
+		gap: var(--vc-descriptions-row-gap) v(column-gap, 16);
 	}
 
 	@include element(item) {
@@ -77,9 +82,11 @@ $sizes: (
 		min-width: 0;
 	}
 
+	// value-gap：标签与值的间距（冒号之后），inline 时同样生效
 	@include element(label) {
 		display: flex;
 		flex: none;
+		margin-right: v(value-gap, 0);
 		font-weight: 500;
 		color: $color-dark-lightest;
 		white-space: nowrap;
@@ -93,12 +100,12 @@ $sizes: (
 	}
 
 	@include element(tooltip) {
-		margin-left: unitfix(2);
+		margin-left: v(tooltip-gap, 2);
 		cursor: help;
 	}
 
 	@include element(colon) {
-		margin: 0 unitfix(4);
+		margin: 0 v(colon-gap, 4);
 	}
 
 	@include element(value) {
@@ -114,7 +121,7 @@ $sizes: (
 		display: inline-flex;
 		flex-wrap: wrap;
 		vertical-align: top;
-		gap: unitfix(4);
+		gap: v(image-gap, 4);
 	}
 
 	@include element(image) {
@@ -122,7 +129,7 @@ $sizes: (
 		width: var(--vc-descriptions-image-size, var(--vc-descriptions-line-height));
 		height: var(--vc-descriptions-image-size, var(--vc-descriptions-line-height));
 		overflow: hidden;
-		border-radius: unitfix(2);
+		border-radius: v(image-radius, 2);
 
 		> .vc-image {
 			width: 100%;
@@ -161,8 +168,8 @@ $sizes: (
 	@include element(copy-icon) {
 		display: inline-flex;
 		flex: none;
-		margin-left: unitfix(4);
-		font-size: unitfix(12);
+		margin-left: v(copy-icon-gap, 4);
+		font-size: v(copy-icon-size, 12);
 		color: $color-primary;
 		cursor: pointer;
 	}
@@ -175,7 +182,7 @@ $sizes: (
 		// 图标放到文字前面，各行的文字和冒号都贴着右边线
 		&:not(.is-inline) .vc-descriptions__tooltip {
 			order: -1;
-			margin-right: unitfix(2);
+			margin-right: v(tooltip-gap, 2);
 			margin-left: 0;
 		}
 	}
@@ -186,7 +193,7 @@ $sizes: (
 		}
 
 		.vc-descriptions__label {
-			margin-bottom: unitfix(4);
+			margin-bottom: v(label-gap, 4);
 		}
 	}
 
@@ -208,9 +215,9 @@ $sizes: (
 	@each $theme, $background in (fill: $background-color-light, inverted: $background-color-lightest) {
 		@include when($theme) {
 			.vc-descriptions__content {
-				padding: unitfix(20);
+				padding: v(content-padding, 20);
 				background: $background;
-				border-radius: unitfix(8);
+				border-radius: v(radius, 8);
 			}
 		}
 	}
@@ -224,7 +231,7 @@ $sizes: (
 		.vc-descriptions__body {
 			overflow: hidden;
 			border: 1px solid $color-neutral-light;
-			border-radius: unitfix(8);
+			border-radius: v(radius, 8);
 			gap: 0;
 		}
 
@@ -247,6 +254,7 @@ $sizes: (
 		}
 
 		.vc-descriptions__label {
+			margin-right: 0;
 			background: $background-color-light;
 			border-right: 1px solid $color-neutral-light;
 		}

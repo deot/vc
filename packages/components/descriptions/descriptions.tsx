@@ -3,6 +3,8 @@
 import { defineComponent } from 'vue';
 import { props as descriptionsProps } from './descriptions-props';
 import { Clipboard } from '../clipboard';
+import { FilePreview } from '../file-preview';
+import { Popover } from '../popover';
 import { useDescriptions } from './use-descriptions';
 
 const COMPONENT_NAME = 'vc-descriptions';
@@ -11,6 +13,6 @@ export const Descriptions = defineComponent({
 	name: COMPONENT_NAME,
 	props: descriptionsProps,
 	setup(props, context) {
-		return useDescriptions(props, context, { Clipboard });
+		return useDescriptions(props, context, { Clipboard, FilePreview, Popover });
 	}
 });

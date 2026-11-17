@@ -1,0 +1,40 @@
+@use '../../style/helper' as *;
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放），375 宽下 medium：字号 14px、行高 20px、行间距 12px、列间距 12px
+// 标签与值间距 4px（冒号之后另有 4px）；标题 16px / 22px、与内容间距 12px；分组标题 14px / 20px；面板（fill / inverted）内边距 16px、圆角 8px
+// 结构与颜色沿用 ../style.scss，这里只覆盖局部变量（与两端样式的加载顺序无关）
+$sizes: (
+	mini: (font-size: 24, line-height: 36, row-gap: 8, cell-padding-y: 6, cell-padding-x: 16),
+	small: (font-size: 26, line-height: 40, row-gap: 16, cell-padding-y: 10, cell-padding-x: 24),
+	medium: (font-size: 28, line-height: 40, row-gap: 24, cell-padding-y: 16, cell-padding-x: 24),
+	large: (font-size: 30, line-height: 44, row-gap: 32, cell-padding-y: 20, cell-padding-x: 32)
+);
+
+@include block(vcm-descriptions) {
+	@each $size, $values in $sizes {
+		@each $key, $value in $values {
+			--vc-descriptions-#{$size}-#{$key}: #{remfix($value)};
+		}
+	}
+
+	@include localvars(descriptions, (
+		header-margin: remfix(24),
+		extra-gap: remfix(24),
+		title-font-size: remfix(32),
+		title-line-height: remfix(44),
+		group-label-margin: remfix(16),
+		group-label-font-size: remfix(28),
+		group-label-line-height: remfix(40),
+		column-gap: remfix(24),
+		label-gap: remfix(8),
+		tooltip-gap: remfix(4),
+		colon-gap: remfix(8),
+		value-gap: remfix(8),
+		image-gap: remfix(8),
+		image-radius: remfix(4),
+		copy-icon-gap: remfix(8),
+		copy-icon-size: remfix(24),
+		content-padding: remfix(32),
+		radius: remfix(16)
+	));
+}

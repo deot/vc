@@ -3,6 +3,7 @@
 import { computed, ref, shallowRef, getCurrentInstance, onBeforeUnmount } from 'vue';
 import type { VNode, SetupContext } from 'vue';
 import { Resize } from '@deot/helper-resize';
+import { toPx, toRem } from '@deot/vc-shared';
 import { Customer } from '../customer';
 import { hasCustomerValue } from '../customer/utils';
 import { Icon } from '../icon';
@@ -16,6 +17,8 @@ import { parse, getValue, isEmpty } from './utils';
 import type { DescriptionsParsedGroup, DescriptionsParsedItem } from './utils';
 import { renderBuiltin } from './render-value';
 import type { Clipboard } from '../clipboard';
+import type { FilePreview } from '../file-preview';
+import type { Popover } from '../popover';
 import type { Props } from './descriptions-props';
 import type { DescriptionsContext, DescriptionsRow } from './types';
 
@@ -28,29 +31,39 @@ interface LaidItem {
 }
 
 /**
- * Descriptions与MDescriptions共用；两者只有复制提示不同（Clipboard / MClipboard）
+ * Descriptions与MDescriptions共用
+ * 	- 移动端：根节点加标记类vcm-descriptions（样式只覆盖局部变量），数字长度按750稿，默认每项占满一行
  * @param props ~
  * @param context ~
  * @param context.slots ~
  * @param options ~
- * @param options.Clipboard copy类型使用的复制组件
+ * @param options.mobile 移动端
+ * @param options.Clipboard copy类型使用的复制组件（Clipboard / MClipboard）
+ * @param options.FilePreview image、file类型使用的预览组件（FilePreview / MFilePreview）
+ * @param options.Popover 标签提示使用的弹层（Popover / MPopover）
  * @returns render
  */
-export const useDescriptions = (props: Props, { slots }: SetupContext, options: { Clipboard: typeof Clipboard }) => {
+export const useDescriptions = (
+	props: Props,
+	{ slots }: SetupContext,
+	options: { mobile?: boolean; Clipboard: typeof Clipboard; FilePreview: typeof FilePreview; Popover: typeof Popover }
+) => {
+	const { mobile = false } = options;
+	const toLength = mobile ? toRem : toPx;
 	// 自定义渲染的上下文需要组件实例
 	const instance = getCurrentInstance()!;
 	const current = ref<HTMLElement>();
 	const responsive = useResponsive(current);
-	const popover = useHoverPopover();
+	const popover = useHoverPopover(options.Popover.open);
 
 	const tracks = computed(() => resolveTracks(responsive.resolve(props.columns, 24)));
 
-	// 未设置span时每行3项
-	const defaultSpan = computed(() => responsive.resolve(props.span, Math.max(1, Math.floor(tracks.value.count / 3))));
+	// 未设置span时每行3项，移动端每行1项
+	const defaultSpan = computed(() => responsive.resolve(props.span, Math.max(1, Math.floor(tracks.value.count / (mobile ? 1 : 3)))));
 
 	const classes = computed(() => {
 		return [
-			'vc-descriptions',
+			mobile ? 'vc-descriptions vcm-descriptions' : 'vc-descriptions',
 			`is-${props.theme}`,
 			`is-${props.size}`,
 			`is-${props.labelPosition}`,
@@ -98,17 +111,36 @@ export const useDescriptions = (props: Props, { slots }: SetupContext, options: 
 	const getLabelWidthStyle = (start: number) => {
 		if (!isLabelAside.value) return null;
 		const { labelWidth } = props;
-		const width = typeof labelWidth === 'number' ? labelWidth : isAutoWidth.value && columnWidths[start];
+		// auto量出来的是px
+		if (typeof labelWidth === 'number') return { width: toLength(labelWidth) };
+		const width = isAutoWidth.value && columnWidths[start];
 		return width ? { width: `${width}px` } : null;
 	};
 
+	// 移动端：当前提示的触发节点
+	let shown: Element | null = null;
+	/**
+	 * 标签提示：桌面端移入打开；移动端点按打开，再点同一处或点别处关闭
+	 * @param e ~
+	 * @param context ~
+	 */
 	const handleTooltip = (e: MouseEvent, context: DescriptionsContext) => {
+		const trigger = e.currentTarget as Element;
+		// 再点同一处：这次点按已在捕获阶段把弹层关掉（弹层按外部点击处理），不再重新打开
+		if (mobile && shown === trigger && !popover.isActive(trigger)) {
+			shown = null;
+			return;
+		}
 		const { tooltip } = context.row;
-		popover.open(e.currentTarget as Element, {
+		mobile && (shown = trigger);
+		popover.open(trigger, {
 			theme: 'dark',
-			autoWidth: false,
 			// 函数由这里调用：弹层只拿得到内容，拿不到当前项
-			content: typeof tooltip === 'function' ? () => tooltip(context) : tooltip
+			content: typeof tooltip === 'function' ? () => tooltip(context) : tooltip,
+			...(mobile && {
+				hover: false,
+				onDestroyed: () => shown === trigger && (shown = null)
+			})
 		});
 	};
 
@@ -139,8 +171,9 @@ export const useDescriptions = (props: Props, { slots }: SetupContext, options: 
 				<Icon
 					type="o-info"
 					class="vc-descriptions__tooltip"
-					// @ts-ignore 落在Icon的根节点上
-					onMouseenter={(e: MouseEvent) => handleTooltip(e, context)}
+					// @ts-ignore 落在Icon的根节点上；移动端没有悬停，点按打开
+					onMouseenter={mobile ? undefined : (e: MouseEvent) => handleTooltip(e, context)}
+					onClick={mobile ? (e: MouseEvent) => handleTooltip(e, context) : undefined}
 				/>
 			),
 			hasLabel && colon.value && <span class="vc-descriptions__colon">{ colon.value }</span>
@@ -173,7 +206,7 @@ export const useDescriptions = (props: Props, { slots }: SetupContext, options: 
 			const custom = VcInstance.options.Descriptions?.renderValue;
 			// 返回VNode时使用它，返回false或空值时使用内置类型
 			content = (typeof custom === 'function' && custom({ ...context, instance }))
-				|| renderBuiltin(context, { size: props.size, instance, Clipboard: options.Clipboard });
+				|| renderBuiltin(context, { size: props.size, instance, toLength, Clipboard: options.Clipboard, FilePreview: options.FilePreview });
 		}
 		if (!content) {
 			return <Customer tag="span" render={props.placeholder} {...context} />;

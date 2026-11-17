@@ -3,16 +3,20 @@
 import type { ComponentInternalInstance } from 'vue';
 import { Text } from '../text';
 import { Image } from '../image';
-import { FilePreview } from '../file-preview';
 import type { Clipboard as ClipboardComponent } from '../clipboard';
+import type { FilePreview as FilePreviewComponent } from '../file-preview';
 import { normalize, allowedUrl } from '../file-preview/utils';
 import type { DescriptionsContext, DescriptionsSize } from './types';
 
 interface Extra {
 	size: DescriptionsSize;
 	instance: ComponentInternalInstance;
+	// 数字长度：桌面端px，移动端750稿
+	toLength: (value: number | string) => string;
 	// 桌面端Clipboard（Message提示）或移动端MClipboard（Toast提示）
 	Clipboard: typeof ClipboardComponent;
+	// 桌面端FilePreview或移动端MFilePreview（查看器不同）
+	FilePreview: typeof FilePreviewComponent;
 }
 
 const toText = (value: any) => (Array.isArray(value) ? value.join(',') : `${value}`);
@@ -46,12 +50,12 @@ const toImages = (value: any) => {
 	}) as any);
 };
 
-const renderImage = ({ value, row }: DescriptionsContext, { instance }: Extra) => {
+const renderImage = ({ value, row }: DescriptionsContext, { instance, toLength, FilePreview }: Extra) => {
 	const list = toImages(value);
 	if (!list.length) return null;
 	const { size, fit = 'cover', previewable = true, ...rest } = row.options || {};
 	const [width, height] = Array.isArray(size) ? size : [size, size];
-	const style = size ? { width: `${width}px`, height: `${height ?? width}px` } : null;
+	const style = size ? { width: toLength(width), height: toLength(height ?? width) } : null;
 	const handleClick = (e: MouseEvent, current: number) => {
 		const elements = (e.currentTarget as HTMLElement).parentElement!.children;
 		FilePreview.open({
@@ -78,7 +82,7 @@ const renderImage = ({ value, row }: DescriptionsContext, { instance }: Extra) =
 	);
 };
 
-const renderFile = ({ value, row }: DescriptionsContext, { size }: Extra) => {
+const renderFile = ({ value, row }: DescriptionsContext, { size, FilePreview }: Extra) => {
 	return <FilePreview size={size} {...row.options} data={value} />;
 };
 
