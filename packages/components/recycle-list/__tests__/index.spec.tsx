@@ -1280,6 +1280,67 @@ describe('index.ts', () => {
 			expect(wrapEl.scrollTop).toBe(200);
 		});
 
+		it('scrollToIndex align center puts the item in the middle, even when visible', async () => {
+			const listRef = ref<any>();
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} data={buildItems(3)}>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+
+			await nextTick();
+			await nextTick();
+
+			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+			Object.defineProperty(wrapEl, 'clientHeight', { configurable: true, get: () => 100 });
+			const target = listRef.value.store.states.rebuildData[1];
+			target.raw.position = 200;
+			target.raw.size = 40;
+
+			wrapEl.scrollTop = 150;
+			listRef.value.scrollToIndex(1, { align: 'center' });
+			expect(wrapEl.scrollTop).toBe(170);
+
+			// 已完整可见时 ifNeeded 不动
+			wrapEl.scrollTop = 150;
+			listRef.value.scrollToIndex(1, { align: 'center', ifNeeded: true });
+			expect(wrapEl.scrollTop).toBe(150);
+
+			// 靠近开头时不为负
+			target.raw.position = 10;
+			wrapEl.scrollTop = 300;
+			listRef.value.scrollToIndex(1, { align: 'center' });
+			expect(wrapEl.scrollTop).toBe(0);
+		});
+
+		it('scrollToIndex keeps the target aligned while sizes change right after it (e.g. the estimate settles)', async () => {
+			const listRef = ref<any>();
+			const estimateSize = ref(50);
+			const wrapper = mount(() => (
+				<RecycleList ref={listRef} data={buildItems(100)} estimateSize={estimateSize.value}>
+					{{ default: ({ row }: any) => <div class="x">{row.id}</div> }}
+				</RecycleList>
+			), { attachTo: document.body });
+			await sleep(20);
+
+			const wrapEl = wrapper.find('.vc-recycle-list__wrapper').element as HTMLElement;
+			Object.defineProperty(wrapEl, 'clientHeight', { configurable: true, get: () => 100 });
+			const centered = () => {
+				const raw = listRef.value.store.states.rebuildData[60].raw;
+				return Math.max(0, raw.position - (100 - raw.size) / 2);
+			};
+			listRef.value.scrollToIndex(60, { align: 'center' });
+			expect(wrapEl.scrollTop).toBe(centered());
+
+			// 预估值变了：前面的行全部变矮，目标仍然居中（而不是保持首个可见项不动）
+			const before = wrapEl.scrollTop;
+			estimateSize.value = 40;
+			await sleep(20);
+			expect(wrapEl.scrollTop).not.toBe(before);
+			expect(wrapEl.scrollTop).toBe(centered());
+			wrapper.unmount();
+		});
+
 		it('scrollToIndex ifNeeded only scrolls items outside the viewport, to the top', async () => {
 			const listRef = ref<any>();
 			const wrapper = mount(() => (

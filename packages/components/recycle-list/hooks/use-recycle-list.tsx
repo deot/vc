@@ -35,10 +35,12 @@ import { Viewport } from '../viewport';
 import { Measuring } from '../../measuring';
 
 const isTouch = typeof document !== 'undefined' && 'ontouchend' in document;
+// scrollToIndex 定位后重排时重新定位目标项的时长（ms）：覆盖随后几帧内的渲染测量与预估值调整
+const TARGET_ANCHOR_HOLD = 500;
 
 export interface ScrollToIndexOptions {
 	offset?: number;
-	align?: 'start' | 'nearest';
+	align?: 'start' | 'center' | 'nearest';
 	ifNeeded?: boolean;
 }
 
@@ -258,23 +260,58 @@ export const useRecycleList = (
 	 * @param index 数据索引（rebuildData 下标）
 	 * @param options 数字视为 offset；对象：
 	 * 	- offset：额外偏移，加在滚动目标上
-	 * 	- align：start（默认）置顶；nearest 贴近离得近的一边（比视口大时置顶）
+	 * 	- align：start（默认）置顶；center 居中（比视口大时置顶）；nearest 贴近离得近的一边（比视口大时置顶）
 	 * 	- ifNeeded：已完整可见时不动（主轴与交叉轴都不动）；nearest 始终如此
 	 */
-	const scrollToIndex = (index: number, options: number | ScrollToIndexOptions = 0) => {
-		const { offset = 0, align = 'start', ifNeeded = false } = typeof options === 'number' ? { offset: options } : options;
+	/**
+	 * 把第 index 项按 align 定位到视口（scrollToIndex 的定位部分）
+	 * @param index ~
+	 * @param align ~
+	 * @param offset ~
+	 * @param ifNeeded 已完整可见时不动（nearest 始终如此）
+	 * @returns 是否定位了
+	 */
+	const alignToIndex = (index: number, align: ScrollToIndexOptions['align'], offset: number, ifNeeded: boolean) => {
 		const raw = store.states.rebuildData[index]?.raw;
-		if (!raw || !(raw.position >= 0)) return;
+		if (!raw || !(raw.position >= 0)) return false;
 		const state = viewport.state();
-		if (!state) return;
+		if (!state) return false;
 		// position 以 content 为原点；外部滚动源需换算到承载者坐标
 		const start = viewport.contentOrigin(state) + raw.position;
 		const end = start + raw.size;
 		const isBelowStart = start >= state.viewportStart;
-		if ((ifNeeded || align === 'nearest') && isBelowStart && end <= state.viewportEnd) return;
+		if ((ifNeeded || align === 'nearest') && isBelowStart && end <= state.viewportEnd) return false;
 		let target = start;
-		align === 'nearest' && isBelowStart && raw.size <= state.clientSize && (target = end - state.clientSize);
+		if (raw.size <= state.clientSize) {
+			align === 'nearest' && isBelowStart && (target = end - state.clientSize);
+			align === 'center' && (target = Math.max(0, start - (state.clientSize - raw.size) / 2));
+		}
 		scrollTo({ [K.axis]: target + offset, [K.crossAxis]: 0 });
+		return true;
+	};
+
+	/**
+	 * 刚用 scrollToIndex 定位过的项与参数：之后短时间内，行尺寸校正、预估值调整后按同样的参数重新定位它（见 preserveAnchor）
+	 * 	- 定位时它与它之前的行可能还是估计尺寸，随后渲染出来逐个校正；按首个可见项补偿时，两者之间的行变高变矮会把它推离
+	 * 	  定位的位置（如居中的已选项偏到一边）
+	 */
+	let pendingTarget: { index: number; align: ScrollToIndexOptions['align']; offset: number } | null = null;
+	let pendingTimer: ReturnType<typeof setTimeout> | undefined;
+	// 用户开始滚动（滚轮、按下）时放弃：不再把视口拉回定位的项
+	const releaseTarget = () => {
+		pendingTarget = null;
+		pendingTimer && clearTimeout(pendingTimer);
+		pendingTimer = void 0;
+	};
+	const holdTarget = (target: NonNullable<typeof pendingTarget>) => {
+		pendingTarget = target;
+		pendingTimer && clearTimeout(pendingTimer);
+		pendingTimer = setTimeout(releaseTarget, TARGET_ANCHOR_HOLD);
+	};
+
+	const scrollToIndex = (index: number, options: number | ScrollToIndexOptions = 0) => {
+		const { offset = 0, align = 'start', ifNeeded = false } = typeof options === 'number' ? { offset: options } : options;
+		alignToIndex(index, align, offset, ifNeeded) && holdTarget({ index, align, offset });
 	};
 
 	/**
@@ -677,6 +714,13 @@ export const useRecycleList = (
 	 * @param update 改变布局的操作
 	 */
 	const preserveAnchor = async (update: () => unknown) => {
+		// 刚用 scrollToIndex 定位过：重排后按同样的参数重新定位它，见 holdTarget
+		if (pendingTarget) {
+			const { index, align, offset } = pendingTarget;
+			await update();
+			pendingTarget && alignToIndex(index, align, offset, false);
+			return;
+		}
 		const anchorIndex = getAnchorIndex();
 		const oldPosition = store.states.rebuildData[anchorIndex]?.raw.position;
 		await update();
@@ -912,14 +956,19 @@ export const useRecycleList = (
 		loadData();
 		isMounted.value = true;
 		wrapper.value.addEventListener(moveEventName, handleStoreLeafChange);
+		wrapper.value.addEventListener('wheel', releaseTarget, { passive: true });
+		wrapper.value.addEventListener('pointerdown', releaseTarget, { passive: true });
 	});
 
 	onBeforeUnmount(() => {
+		releaseTarget();
 		isMounted.value = false;
 		viewport.unbind();
 		Resize.off(wrapper.value, handleWrapperResize);
 		store.scroll.remove(leaf);
 		wrapper.value.removeEventListener(moveEventName, handleStoreLeafChange);
+		wrapper.value.removeEventListener('wheel', releaseTarget);
+		wrapper.value.removeEventListener('pointerdown', releaseTarget);
 	});
 
 	watch(
@@ -942,11 +991,12 @@ export const useRecycleList = (
 
 	// 列宽变了（列数 / 列间距）：先按已有尺寸同步重排并刷新可见范围，再按新列宽重测
 	const relayoutColumns = async () => {
-		store.layout.refresh();
-		if (!isMounted.value) return;
+		if (!isMounted.value) return void store.layout.refresh();
+		// 尺寸整体变化（rem 变了等）：两步都保持首个可见项不动
+		await preserveAnchor(() => store.layout.refresh());
 		syncVisibleRange();
 		await nextTick();
-		isMounted.value && refreshLayout();
+		isMounted.value && preserveAnchor(refreshLayout);
 	};
 
 	// 1 个单位的 px 变了（旋转屏幕、视口跨过封顶宽度、业务调整 --rem）：预估尺寸与列间距都按新值换算，再走列宽变化的流程
@@ -967,14 +1017,16 @@ export const useRecycleList = (
 		);
 
 		// 预估尺寸变化：预估值变了的已构建节点换用新值（撤掉时保留原尺寸，同样当作估计值），渲染中的行按 DOM 校正，
-		// 剩余的本地数据按新规则构建。
+		// 剩余的本地数据按新规则构建；视口上方的行随之变高变矮时保持首个可见项不动（如刚定位到远处的一项）。
 		// 预估值没变时什么都不做：模板里的内联函数每次渲染都是新引用，不该因此丢掉已测的尺寸或整体重排
 		watch(
 			() => props.estimateSize,
 			async (v) => {
 				store.syncProps({ estimateSize: v });
-				if (!isMounted.value || !store.nodes.reestimate()) return;
-				store.layout.refresh();
+				if (!isMounted.value) return;
+				let changed = false;
+				await preserveAnchor(() => (changed = store.nodes.reestimate()) && store.layout.refresh());
+				if (!changed || !isMounted.value) return;
 				await refreshViewport();
 				isMounted.value && store.local.hasMore && loadData();
 			}
