@@ -3,7 +3,7 @@ import { pick } from 'lodash-es';
 import { props as selectProps } from '../select-props';
 import type { TreeValue } from '../utils';
 
-// 与桌面端同名同义：值的形状与转换、数据（带 children 的为分组）、单选 / 多选与数量上限、清空、搜索占位、选项文字、远程搜索
+// 与桌面端同名同义：值的形状与转换、数据（带 children 的为分组）、单选 / 多选与数量上限、清空、搜索占位、选项文字、远程搜索、虚拟化
 const selectKeys = [
 	'modelValue',
 	'data',
@@ -14,7 +14,8 @@ const selectKeys = [
 	'clearable',
 	'searchPlaceholder',
 	'renderLabel',
-	'loadData'
+	'loadData',
+	'virtualized'
 ] as const;
 
 export const props = {

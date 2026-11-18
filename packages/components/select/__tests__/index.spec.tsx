@@ -6,7 +6,7 @@ import { Option, OptionGroup } from '../select-option';
 import { SelectAll, SelectPaths } from '../select-search';
 import { fitTags } from '../select-trigger/utils';
 import { useColumnNavigate, getPathsWidth } from '../hooks/use-navigate';
-import { scrollIntoScroller } from '../select-list/scroll';
+import { resolveListCarrier, scrollIntoScroller } from '../select-list/scroll';
 import {
 	createSearchRegex,
 	flattenData,
@@ -2595,30 +2595,60 @@ describe('Select 键盘', () => {
 		Object.defineProperty(scroller, 'clientHeight', { value: 200 });
 		Object.defineProperty(scroller, 'scrollHeight', { value: 1000 });
 		const spy = vi.spyOn(item, 'getBoundingClientRect');
+		const carrier = resolveListCarrier(item);
 
 		scroller.scrollTop = 50;
 		spy.mockReturnValue(rect(80, 110));
-		scrollIntoScroller(item);
+		scrollIntoScroller(item, carrier);
 		expect(scroller.scrollTop).toBe(30);
 
 		spy.mockReturnValue(rect(290, 320));
-		scrollIntoScroller(item);
+		scrollIntoScroller(item, carrier);
 		expect(scroller.scrollTop).toBe(50);
 
 		spy.mockReturnValue(rect(150, 180));
-		scrollIntoScroller(item);
+		scrollIntoScroller(item, carrier);
 		expect(scroller.scrollTop).toBe(50);
 
 		// start：完整可见时不动，否则置顶（在下方时也是）
-		scrollIntoScroller(item, 'start');
+		scrollIntoScroller(item, carrier, 'start');
 		expect(scroller.scrollTop).toBe(50);
 		spy.mockReturnValue(rect(290, 320));
-		scrollIntoScroller(item, 'start');
+		scrollIntoScroller(item, carrier, 'start');
 		expect(scroller.scrollTop).toBe(240);
 
-		// 不在 Scroller 内、节点为空时不处理
-		scrollIntoScroller(document.body);
-		scrollIntoScroller(null);
+		// 承载者为 Window、节点为空时不处理
+		expect(resolveListCarrier(document.body).isWindow).toBe(true);
+		scrollIntoScroller(item, resolveListCarrier(document.body));
+		scrollIntoScroller(null, carrier);
+	});
+
+	it('scrollIntoScroller：原生滚动的容器同样处理；center 总是居中', () => {
+		const list = document.createElement('div');
+		list.style.overflowY = 'auto';
+		const item = document.createElement('div');
+		list.appendChild(item);
+		document.body.appendChild(list);
+		const rect = (top: number, bottom: number) => ({ top, bottom }) as DOMRect;
+		vi.spyOn(list, 'getBoundingClientRect').mockReturnValue(rect(100, 300));
+		Object.defineProperty(list, 'clientHeight', { value: 200 });
+		Object.defineProperty(list, 'scrollHeight', { value: 1000 });
+		const spy = vi.spyOn(item, 'getBoundingClientRect');
+		const carrier = resolveListCarrier(item);
+		expect(carrier.target).toBe(list);
+
+		list.scrollTop = 50;
+		// 已完整可见也居中：行中心 165 → 可视区中心 200
+		spy.mockReturnValue(rect(150, 180));
+		scrollIntoScroller(item, carrier, 'center');
+		expect(list.scrollTop).toBe(15);
+
+		// 比可视区高时置顶
+		list.scrollTop = 50;
+		spy.mockReturnValue(rect(150, 400));
+		scrollIntoScroller(item, carrier, 'center');
+		expect(list.scrollTop).toBe(100);
+		list.remove();
 	});
 
 	it('useColumnNavigate：列内上下移动跳过禁用项，左右回到父级 / 进入子级', async () => {

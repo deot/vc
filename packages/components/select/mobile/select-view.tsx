@@ -1,10 +1,11 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, inject, nextTick, onMounted, ref, toRaw, watch } from 'vue';
+import { computed, defineComponent, inject, nextTick, onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue';
 import { MIcon } from '../../icon/index.m';
 import { MInputSearch } from '../../input/index.m';
 import { MSpin } from '../../spin/index.m';
 import { MCustomer } from '../../customer/index.m';
+import { MRecycleList } from '../../recycle-list/index.m';
 import { useLocale } from '../../locale';
 import {
 	createSearchRegex,
@@ -17,12 +18,14 @@ import {
 	toModelValue
 } from '../utils';
 import { renderHighlight } from '../select-search/highlight';
-import { scrollToCenter } from '../select-list/scroll';
+import { SelectList } from '../select-list';
+import { findStickyIndex, getStickyTranslate } from '../../scroller/core/sticky';
+import type { SelectListExposed } from '../select-list';
 import { MSelectSummary } from './select-summary';
 import { useRemoteSearch } from './use-remote-search';
 import { useSelectedCache } from '../hooks/use-select';
 import { props as selectViewProps } from './select-view-props';
-import type { TreeData, TreeValue } from '../utils';
+import type { SelectRow, TreeData, TreeValue } from '../utils';
 
 const COMPONENT_NAME = 'vcm-select-view';
 
@@ -47,7 +50,10 @@ export const MSelectView = defineComponent({
 		// 选中的值
 		const values = ref<TreeValue[]>([]);
 		const keyword = ref('');
-		const list = ref<HTMLElement>();
+		// 行列表：滚动、定位与行的位置都经它
+		const selectList = ref<SelectListExposed>();
+		// 吸顶的分组标题：常驻的节点，分组、显隐与位移都直接写在节点上，不触发渲染
+		const sticky = ref<HTMLElement>();
 
 		const multiple = computed(() => isMultiple(props.max));
 		const selected = computed(() => new Set(values.value));
@@ -60,6 +66,17 @@ export const MSelectView = defineComponent({
 		// 本地按文字过滤，远程搜索时同样生效（同桌面端；跳过过滤的选项设 filterable: false）
 		const regex = computed(() => createSearchRegex(props.searchable ? keyword.value : ''));
 		const rows = computed(() => getSelectRows(data.value, regex.value));
+		// 分组标题所在的行与分组结束的行（其后第一行，没有时为行数），供吸顶标题使用；没有分组时为空
+		const groups = computed(() => {
+			const titles: number[] = [];
+			const ends: number[] = [];
+			rows.value.forEach((row, i) => {
+				if (!row.group) return;
+				titles.push(i);
+				ends.push(i + row.size! + 1);
+			});
+			return { titles, ends };
+		});
 		// 铺平的选项（含分组内的），用于查找已选项的文字
 		const source = computed(() => flattenData(data.value, { parent: true, cascader: true }));
 
@@ -130,11 +147,56 @@ export const MSelectView = defineComponent({
 
 		// 第一个已选项滚到列表中间
 		const scrollIntoSelected = () => {
-			if (!values.value.length || !list.value) return;
-			scrollToCenter(list.value, list.value.querySelector<HTMLElement>('.vcm-select-view__option.is-selected'));
+			const index = rows.value.findIndex(row => !row.group && selected.value.has(row.item.value));
+			index !== -1 && selectList.value?.scrollToIndex(index, 'center');
 		};
 
-		onMounted(() => nextTick(scrollIntoSelected));
+		/**
+		 * 吸顶的分组标题：一个浮层盖在列表顶部（虚拟列表中标题行会被回收，不能用 position: sticky）
+		 * 	- 按标题在列表中的位置与可视区顶边计算当前分组与顶出位移，算法同 IndexBar（scroller/core/sticky）
+		 * 	- 顶边越过分组的结束位置（分组之后是顶层选项）时不显示
+		 * 	- 滚动时每帧最多算一次；只在值变化时写节点
+		 */
+		let frame = 0;
+		let stickyIndex = -2;
+		let stickyTranslate = 0;
+		const updateSticky = () => {
+			frame = 0;
+			const el = sticky.value;
+			const list = selectList.value;
+			const { titles, ends } = groups.value;
+			if (!el || !list || !titles.length) return;
+			const line = list.getScrollLine();
+			let index = findStickyIndex(titles.length, i => list.getRowOffset(titles[i]), line);
+			const end = index === -1 ? undefined : list.getRowOffset(ends[index]);
+			end !== undefined && line >= end && (index = -1);
+			if (index !== stickyIndex) {
+				stickyIndex = index;
+				el.hidden = index === -1;
+				index !== -1 && (el.textContent = String(rows.value[titles[index]].item.label ?? rows.value[titles[index]].item.value));
+			}
+			const translate = index === -1 ? 0 : getStickyTranslate(end, line, el.offsetHeight);
+			if (translate !== stickyTranslate) {
+				stickyTranslate = translate;
+				el.style.transform = translate ? `translateY(${translate}px)` : '';
+			}
+		};
+		const handleScroll = () => {
+			frame || (frame = requestAnimationFrame(updateSticky));
+		};
+		onBeforeUnmount(() => frame && cancelAnimationFrame(frame));
+
+		// 搜索词、数据变化后列表回到顶部（不停在原来滚到的位置）
+		watch(rows, () => {
+			selectList.value?.scrollTo(0);
+			stickyIndex = -2;
+			updateSticky();
+		}, { flush: 'post' });
+
+		onMounted(() => nextTick(() => {
+			scrollIntoSelected();
+			updateSticky();
+		}));
 
 		expose({
 			clear,
@@ -175,19 +237,21 @@ export const MSelectView = defineComponent({
 			);
 		};
 
-		// 分组标题与选项；选项的 index 为它在列表中（不含分组标题）的位置
-		const renderRows = () => {
-			let index = 0;
-			return rows.value.map(({ item, group }, rowIndex) => (
-				group
-					? (
-							<div key={`group:${item.value}`} class="vcm-select-view__group">
-								{ item.label ?? item.value }
-							</div>
-						)
-					: renderOption(item, rowIndex, index++)
-			));
+		// 分组标题或选项
+		const renderRow = ({ row, index }: { row: SelectRow; index: number }) => {
+			return row.group
+				? (
+						<div key={`group:${row.item.value}`} data-index={index} class="vcm-select-view__group">
+							{ row.item.label ?? row.item.value }
+						</div>
+					)
+				: renderOption(row.item, index, row.index!);
 		};
+
+		// 有分组时常驻，内容由 updateSticky 写入
+		const renderSticky = () => groups.value.titles.length > 0 && (
+			<div ref={sticky} class="vcm-select-view__group is-sticky" aria-hidden="true" hidden />
+		);
 
 		return () => {
 			return (
@@ -217,13 +281,31 @@ export const MSelectView = defineComponent({
 						clearable={props.clearable}
 						onClear={clear}
 					/>
-					<div ref={list} class="vcm-select-view__options" onClick={handleOptionsClick}>
-						{
-							rows.value.length
-								? renderRows()
-								// 远程搜索加载期间不提示无结果
-								: !remote.loading.value && (<div class="vcm-select-view__empty">{ t('vc.Select.noMatch') }</div>)
-						}
+					<div class="vcm-select-view__body">
+						<div
+							class="vcm-select-view__options"
+							onClick={handleOptionsClick}
+							// 有分组时才需要算吸顶标题
+							onScroll={groups.value.titles.length ? handleScroll : void 0}
+						>
+							{
+								rows.value.length
+									? (
+											<SelectList
+												ref={selectList}
+												data={rows.value}
+												virtualized={props.virtualized}
+												mobile
+												recycleList={MRecycleList}
+											>
+												{{ default: renderRow, $stable: true }}
+											</SelectList>
+										)
+									// 远程搜索加载期间不提示无结果
+									: !remote.loading.value && (<div class="vcm-select-view__empty">{ t('vc.Select.noMatch') }</div>)
+							}
+						</div>
+						{ renderSticky() }
 					</div>
 				</div>
 			);

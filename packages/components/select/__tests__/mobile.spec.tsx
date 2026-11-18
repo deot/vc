@@ -157,14 +157,15 @@ describe('MSelectView', () => {
 			<MSelectView data={groupedData} searchable searchPlaceholder="搜索条目" />
 		), { attachTo: document.body });
 		await flush();
-		expect(Array.from(document.querySelectorAll('.vcm-select-view__group')).map(i => i.textContent)).toEqual(['分组 A', '分组 B']);
+		const groups = () => Array.from(document.querySelectorAll('.vcm-select-view__group:not(.is-sticky)')).map(i => i.textContent);
+		expect(groups()).toEqual(['分组 A', '分组 B']);
 		const input = document.querySelector('.vcm-select-view__search input') as HTMLInputElement;
 		expect(input.placeholder).toBe('搜索条目');
 
 		input.value = '丙';
 		input.dispatchEvent(new Event('input'));
 		await flush();
-		expect(Array.from(document.querySelectorAll('.vcm-select-view__group')).map(i => i.textContent)).toEqual(['分组 B']);
+		expect(groups()).toEqual(['分组 B']);
 		expect(getOptions().length).toBe(1);
 		expect(document.querySelector('.vcm-select-view__option .vc-select-highlight')!.textContent).toBe('丙');
 
@@ -215,6 +216,89 @@ describe('MSelectView', () => {
 		await flush();
 		expect(getOptions()[1].querySelector('.vcm-select-view__label')!.textContent).toBe('S-选项二-true');
 		slotted.unmount();
+	});
+
+	it('virtualized：交给 MRecycleList，只渲染部分行；点选照常', async () => {
+		const value = ref<any>();
+		const data = Array.from({ length: 500 }, (_, i) => ({ value: i, label: `条目 ${i}` }));
+		const wrapper = mount(() => (
+			<MSelectView v-model={value.value} data={data} virtualized />
+		), { attachTo: document.body });
+		await flush();
+		await sleep(30);
+		expect(document.querySelector('.vcm-select-view__options .vcm-recycle-list')).toBeTruthy();
+		expect(getOptions().length).toBeGreaterThan(0);
+		expect(getOptions().length).toBeLessThan(500);
+		await clickOption('条目 1');
+		expect(value.value).toBe(1);
+		wrapper.unmount();
+	});
+
+	it('搜索词变化后列表回到顶部', async () => {
+		// jsdom 不加载组件样式：列表按原生滚动的容器识别
+		const style = document.createElement('style');
+		style.textContent = '.vcm-select-view__options { overflow-y: auto; }';
+		document.head.appendChild(style);
+		const wrapper = mount(() => (
+			<MSelectView data={createData()} searchable />
+		), { attachTo: document.body });
+		await flush();
+		const list = document.querySelector('.vcm-select-view__options') as HTMLElement;
+		list.scrollTop = 120;
+		const input = document.querySelector('.vcm-select-view__search input') as HTMLInputElement;
+		input.value = '三';
+		input.dispatchEvent(new Event('input'));
+		await flush();
+		expect(list.scrollTop).toBe(0);
+		wrapper.unmount();
+		style.remove();
+	});
+
+	it('分组标题吸顶：按行的位置找到可视区顶边所在的分组，分组结束时被顶出，分组之后的顶层选项不显示', async () => {
+		const style = document.createElement('style');
+		style.textContent = '.vcm-select-view__options { overflow-y: auto; }';
+		document.head.appendChild(style);
+		const wrapper = mount(() => (
+			<MSelectView data={groupedData} />
+		), { attachTo: document.body });
+		await flush();
+		// 行：分组 A(0) 条目甲(1) 条目乙(2) 分组 B(3) 条目丙(4) 独立条目(5)，每行 40px
+		const list = document.querySelector('.vcm-select-view__options') as HTMLElement;
+		const root = document.querySelector('.vc-select-list') as HTMLElement;
+		Array.from(root.children).forEach((el, i) => Object.defineProperty(el, 'offsetTop', { configurable: true, value: i * 40 }));
+		Object.defineProperty(root, 'offsetHeight', { configurable: true, value: 240 });
+		const rect = (top: number) => ({ top, bottom: top + 400, left: 0, right: 300, width: 300, height: 400 }) as DOMRect;
+		vi.spyOn(list, 'getBoundingClientRect').mockReturnValue(rect(100));
+		let line = 0;
+		vi.spyOn(root, 'getBoundingClientRect').mockImplementation(() => rect(100 - line));
+		const sticky = () => document.querySelector<HTMLElement>('.vcm-select-view__group.is-sticky')!;
+		Object.defineProperty(sticky(), 'offsetHeight', { configurable: true, value: 30 });
+		const scroll = async (value: number) => {
+			line = value;
+			list.dispatchEvent(new Event('scroll'));
+			await new Promise(r => requestAnimationFrame(r));
+		};
+
+		// 顶边在条目乙：分组 A
+		await scroll(60);
+		expect(sticky().hidden).toBe(false);
+		expect(sticky().textContent).toBe('分组 A');
+		expect(sticky().getAttribute('aria-hidden')).toBe('true');
+		expect(sticky().style.transform).toBe('');
+
+		// 分组 A 在 120 结束，浮层高 30：顶边到 100 时上移 10px
+		await scroll(100);
+		expect(sticky().style.transform).toBe('translateY(-10px)');
+
+		await scroll(130);
+		expect(sticky().textContent).toBe('分组 B');
+		expect(sticky().style.transform).toBe('');
+
+		// 分组 B 在 200 结束，之后是顶层的独立条目：不显示
+		await scroll(200);
+		expect(sticky().hidden).toBe(true);
+		wrapper.unmount();
+		style.remove();
 	});
 });
 

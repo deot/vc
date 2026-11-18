@@ -192,6 +192,10 @@ export const flattenData = (data: TreeData, options: FlattenDataOptions = {}): T
 export interface SelectRow {
 	item: TreeData;
 	group?: boolean;
+	// 分组标题：过滤后的子项数，其后的这些行属于它
+	size?: number;
+	// 选项：在选项中（不含分组标题）的位置
+	index?: number;
 }
 
 /**
@@ -203,13 +207,14 @@ export interface SelectRow {
 export const getSelectRows = (data: TreeData[] | undefined, regex: RegExp): SelectRow[] => {
 	const match = (item: TreeData) => item.filterable === false || regex.test(getOptionText(item));
 	const result: SelectRow[] = [];
+	let index = 0;
 	(data || []).forEach((item) => {
 		if (!Array.isArray(item.children) || !item.children.length) {
-			match(item) && result.push({ item });
+			match(item) && result.push({ item, index: index++ });
 			return;
 		}
 		const children = item.children.filter(match);
-		children.length && result.push({ item, group: true }, ...children.map(child => ({ item: child })));
+		children.length && result.push({ item, group: true, size: children.length }, ...children.map(child => ({ item: child, index: index++ })));
 	});
 	return result;
 };

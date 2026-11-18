@@ -3,19 +3,24 @@
 import { defineComponent, cloneVNode, isVNode, onMounted, ref, watch } from 'vue';
 import type { Component, PropType, VNode } from 'vue';
 import { useRem } from '@deot/vc-hooks';
+import { getViewportRect } from '../../scroller/utils';
+import type { ExternalCarrier } from '../../scroller/core/carrier';
 import { RecycleList } from '../../recycle-list/index';
 import { isScrollOf, useScrollIdle } from '../../scroller/core/scroll-idle';
-import { scrollIntoScroller } from './scroll';
+import { resolveListCarrier, scrollIntoScroller } from './scroll';
 
 const COMPONENT_NAME = 'vc-select-list';
 // 虚拟化时的初始预估行高（桌面端 px、移动端 750 稿）；行渲染出来后改用实际高度，见 handleRowResize
 const ESTIMATE_SIZE = [30, 88];
 
-export type SelectListAlign = 'start' | 'nearest';
+export type SelectListAlign = 'start' | 'center' | 'nearest';
 
 export interface SelectListExposed {
 	scrollToIndex: (index: number, align?: SelectListAlign) => void;
 	highlight: (index: number) => void;
+	scrollTo: (offset: number) => void;
+	getRowOffset: (index: number) => number | undefined;
+	getScrollLine: () => number;
 }
 
 /**
@@ -23,7 +28,8 @@ export interface SelectListExposed {
  * 	- 默认全部渲染，行即根节点的子元素，按位置对应下标，不额外包装
  * 	- virtualized 时交给 RecycleList（fill=false：沿用所在的滚动容器，如弹层或列的 Scroller），只渲染视口附近的行；
  * 	  行的根节点补上登记用的钩子，记下各行节点对应的下标
- * 	- 虚拟化时行高按渲染出来的行估计：各行等高（默认渲染）时，滚动条长度与定位从一开始就准确
+ * 	- 虚拟化时行高按渲染出来的行估计（中位数）：各行等高（默认渲染）时，滚动条长度与定位从一开始就准确
+ * 	- 滚动容器（所在的 VC Scroller 或原生滚动的元素）首次用到时找一次并缓存；滚动、定位都经它，调用方不直接改 scrollTop
  * 	- 高亮（data-active）直接写在行的节点上，不经过响应式状态：移动高亮不触发任何行的渲染；虚拟列表中尚未渲染的行挂载时补上
  * 	- 指针在某行上移动时发出 hover（下标）；不用 mouseover：键盘移动使列表在静止的指针下滚动时，浏览器会补发它，高亮会被拉回指针下的一行
  * 	- 滚动期间根节点带 is-scrolling：各行的 :hover 样式据此暂停，行从静止的指针下经过时不逐行闪；停下 SCROLL_IDLE 后移除，
@@ -82,11 +88,48 @@ export const SelectList = defineComponent({
 			mark(getRow(index));
 		};
 
-		// 把某一行滚动到可视范围：已完整可见时不动；否则 nearest 贴近离得近的一边，start 置顶
+		// 所在的滚动容器：首次用到时找一次（列表挂载后不会换容器）
+		let carrier: ExternalCarrier | undefined;
+		const getCarrier = () => (carrier ||= resolveListCarrier(root.value!));
+
+		// 把某一行滚动到可视范围：nearest、start 在已完整可见时不动，否则 nearest 贴近离得近的一边，start 置顶；
+		// center 总是居中（如打开时把已选项滚到中间）
 		const scrollToIndex = (index: number, align: SelectListAlign = 'nearest') => {
-			if (index < 0) return;
-			if (!props.virtualized) return scrollIntoScroller(getRow(index), align);
-			recycleList?.scrollToIndex(index, { align, ifNeeded: true });
+			if (index < 0 || !root.value) return;
+			if (!props.virtualized) return scrollIntoScroller(getRow(index), getCarrier(), align);
+			recycleList?.scrollToIndex(index, { align, ifNeeded: align !== 'center' });
+		};
+
+		// 滚动容器滚到 offset（如搜索词变化后回到顶部）；容器为 Window 时不处理
+		const scrollTo = (offset: number) => {
+			const target = root.value && getCarrier();
+			target && !target.isWindow && target.setMainOffset(offset);
+		};
+
+		/**
+		 * 第 index 行在列表中的位置（px，不受祖先缩放影响）：虚拟化时为 RecycleList 的排版结果（未渲染的行为估计值），
+		 * 否则为行的 offsetTop；index 为行数时是列表的总高度。未知时为 undefined
+		 * @param index ~
+		 * @returns ~
+		 */
+		const getRowOffset = (index: number) => {
+			const el = root.value;
+			if (!el) return;
+			if (index >= props.data.length) return el.offsetHeight;
+			if (props.virtualized) {
+				const raw = recycleList?.store?.states.rebuildData[index]?.raw;
+				return raw && raw.position >= 0 ? raw.position as number : undefined;
+			}
+			const row = el.children[index] as HTMLElement | undefined;
+			return row && row.offsetTop - el.offsetTop;
+		};
+
+		// 滚动容器可视区的顶边在列表中的位置（px，列表顶部在可视区之上时为正）
+		const getScrollLine = () => {
+			const el = root.value;
+			if (!el || getCarrier().isWindow) return 0;
+			const { top, scale } = getViewportRect(getCarrier().target as HTMLElement);
+			return (top - el.getBoundingClientRect().top) / scale;
 		};
 
 		// 默认渲染时上一次指针所在的行及其下标：在同一行内移动不必再在全部行中查找
@@ -129,7 +172,7 @@ export const SelectList = defineComponent({
 			onEnd: () => root.value?.classList.remove('is-scrolling')
 		});
 
-		expose({ scrollToIndex, highlight } satisfies SelectListExposed);
+		expose({ scrollToIndex, highlight, scrollTo, getRowOffset, getScrollLine } satisfies SelectListExposed);
 
 		const track = (index: number, el: Element) => {
 			const old = indexes.get(el);
@@ -147,18 +190,21 @@ export const SelectList = defineComponent({
 		};
 
 		/**
-		 * RecycleList 按实际尺寸校正了行：取已渲染行中最矮的高度作为其余行的预估值
+		 * RecycleList 按实际尺寸校正了行：取已渲染行高度的中位数作为其余行的预估值
 		 * 	- 预估值不对时，未渲染的行按它排布，滚动条长度与远处的定位都有偏差；调用方难以给准（主题、自定义渲染、复选框等前缀）
-		 * 	- 取最矮的：个别行因额外内容变高（如树正在展开的行带着动画块）时不影响其余行的估计
-		 * 	- 只在高度变化时更新，一般只发生一次
+		 * 	- 取中位数：个别行变高（如树正在展开的行带着动画块）或少数行较矮（如分组标题）时不影响其余行的估计
+		 * 	- 只在高度变化时更新，一般只发生一次；预估值变化时 RecycleList 保持首个可见项不动，刚定位到的行不会被推走
 		 */
 		const handleRowResize = () => {
-			let height = 0;
+			const heights: number[] = [];
 			rows.forEach((el) => {
 				const value = (el as HTMLElement).offsetHeight;
-				value && (height = height ? Math.min(height, value) : value);
+				value && heights.push(value);
 			});
-			height && measured.value !== height && (measured.value = height);
+			if (!heights.length) return;
+			heights.sort((a, b) => a - b);
+			const height = heights[heights.length >> 1];
+			measured.value !== height && (measured.value = height);
 		};
 
 		const renderRow = (row: unknown, index: number) => {

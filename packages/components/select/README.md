@@ -329,7 +329,7 @@ const selectedValue = ref(5000);
 
 ### 移动端选择
 
-`MSelect` 是独立的移动端组件：默认渲染 MListItem，点击后从底部弹出列表，选中项为主色并打勾。`v-model` 的形状与转换规则与桌面端相同（`max`、`separator`、`numerable`），`data` 中带 `children` 的项显示为分组，分组标题滚动时吸顶。
+`MSelect` 是独立的移动端组件：默认渲染 MListItem，点击后从底部弹出列表，选中项为主色并打勾。`v-model` 的形状与转换规则与桌面端相同（`max`、`separator`、`numerable`），`data` 中带 `children` 的项显示为分组，分组标题滚动时吸顶，下一个分组的标题到达时把它顶出。
 
 - 单选默认点一项即提交并关闭，标题栏右侧有关闭按钮；点已选中的项直接关闭。
 - `confirm`：由「确定」提交。`true` 或 `'top'` 为顶部的「取消 / 确定」工具栏；`'bottom'` 为底部的大按钮，标题栏保留关闭按钮。
@@ -338,6 +338,8 @@ const selectedValue = ref(5000);
 - `searchable`：列表上方显示搜索框，规则同桌面端，没有命中项的分组连同标题一起隐藏。
 - 远程搜索（`searchable` + `loadData`）：契约与时机同桌面端的[远程搜索](#远程搜索)——搜索词经 250ms 防抖调用 `loadData(keyword, instance)`，由调用方更新 `data`，加载期间搜索框右侧显示加载图标；打开时还没有数据、或数据是按某个关键词加载的，立即按空关键词加载一次。弹层打开期间 `data` 的变化同步到弹层。`MSelect.open` 没有触发区同步 `data`，`loadData` 的 Promise 解析为数组时直接作为这次的结果。结果里没有已选项时，文字沿用上次查到的。
 - 选项的 `description` 显示在文字下方；`renderLabel` 或 `#label` 插槽自定义选项文字，如加上标签。
+- 打开时第一个已选项滚到列表中间；搜索词变化后列表回到顶部。
+- `virtualized`：只渲染列表可视范围附近的选项（基于 [MRecycleList](../recycle-list/README.md)），选项上千时打开与搜索不再随数量变慢；分组吸顶、定位到已选项等行为不变。默认不开启。
 
 :::playground
 <!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
@@ -616,6 +618,7 @@ const handleOpen = () => {
 | searchPlaceholder | 搜索框的占位文字 | `string` | - | `''` |
 | loadData | 远程搜索回调，开启 `searchable` 时生效；由调用方更新 `data`，Promise 解析为数组时直接作为结果；时机见[移动端选择](#移动端选择) | `(keyword: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | renderLabel | 自定义选项文字；`label` 插槽优先 | `(options: { label, row, index: number, selected: boolean }) => VNodeChild` | - | - |
+| virtualized | 只渲染列表可视范围附近的选项，用于大量数据；见[移动端选择](#移动端选择) | `boolean` | - | `false` |
 | separator | 同桌面端 | `string` | - | `','` |
 | numerable | 同桌面端 | `boolean` | - | `false` |
 | nullValue | 同桌面端 | `number \| string \| object` | - | `undefined` |
