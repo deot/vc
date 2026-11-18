@@ -664,9 +664,9 @@ Color.parse('not a color'); // null
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| open | 直接打开弹层 | MColorPickerView 的属性、`title`、`confirm`、`cancelText`、`okText`，以及 `onOk(value)`、`onChange(value)`、`onCancel()`、`onClear()`、`onColorChange(value)`、`onVisibleChange(visible)`、`onClose()` | Portal 实例，可调用 `destroy()` |
+| open | 直接打开弹层 | MColorPickerView 的属性、`title`、`confirm`、`cancelText`、`okText`，以及 `onOk(value)`、`onChange(value)`、`onCancel()`、`onClear()`、`onColorChange(value)`、`onVisibleChange(visible)`、`onClose()` | Portal 实例，可 `await` 得到 `{ value }`（同 `onOk`，取消时拒绝），可调用 `destroy()` |
 
-`MColorPicker.open` 不返回结果的 Promise，通过 `onOk`（确定时）或 `onChange`（每次提交，含不需要确认时的拖动与输入）接收。兼容 `value` 作为初始值的别名，同时传入时以 `modelValue` 为准。`MColorPicker.View` 与 `MColorPickerView` 为同一组件；`MColorPicker.Color`、`MColorPicker.colors` 同桌面端。
+`MColorPicker.open` 通过 `onOk`（确定时）或 `onChange`（每次提交，含不需要确认时的拖动与输入）接收结果；返回的 Portal 实例可以 `await`：确定后（关闭动画结束时）得到 `onOk` 的参数组成的对象 `{ value }`，取消、点遮罩等没有确定就关闭时拒绝（只用回调时不会产生未处理的拒绝）；也可调用 `destroy()`。兼容 `value` 作为初始值的别名，同时传入时以 `modelValue` 为准。`MColorPicker.View` 与 `MColorPickerView` 为同一组件；`MColorPicker.Color`、`MColorPicker.colors` 同桌面端。
 
 ### MColorPickerView 属性与事件
 

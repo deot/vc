@@ -675,7 +675,7 @@ const data = Array.from({ length: 4 }, (_, i) => ({
 | 名称 | 说明 | 参数 / 返回值 |
 | --- | --- | --- |
 | default 插槽 | 自定义可点击的触发内容，替代 MListItem | `{ label: string[], value }`，显示的文字与当前绑定值 |
-| open 方法 | 直接打开弹层，通过 `onOk(value, labels)` 接收结果；兼容 `value` 作为初始值的别名，同时传入时以 `modelValue` 为准 | 参数为弹层的属性（上表中除触发区以外的）与 `onOk`、`onCancel()`、`onClear()`、`onVisibleChange(visible)`、`onClose()`；返回 Portal 实例，可调用 `destroy()` |
+| open 方法 | 直接打开弹层，通过 `onOk(value, labels)` 接收结果；兼容 `value` 作为初始值的别名，同时传入时以 `modelValue` 为准 | 参数为弹层的属性（上表中除触发区以外的）与 `onOk`、`onCancel()`、`onClear()`、`onVisibleChange(visible)`、`onClose()`；返回 Portal 实例，可 `await` 得到 `{ value, labels }`（同 `onOk`，取消时拒绝），可调用 `destroy()` |
 
 ### 主题与语言
 

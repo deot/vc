@@ -305,6 +305,9 @@ describe('MCascader', () => {
 		ok().click();
 		await flush();
 		expect(onOk).toHaveBeenCalledWith([2, 21], ['分组 B', '条目 B-1']);
+		// 关闭动画结束后 await 得到 onOk 的参数组成的对象（测试环境的 Transition 为桩，直接发出 close）
+		(document.querySelector('.vcm-picker-popup') as any).__vueParentComponent.emit('close');
+		await expect(leaf).resolves.toEqual({ value: [2, 21], labels: ['分组 B', '条目 B-1'] });
 		leaf.destroy();
 	});
 

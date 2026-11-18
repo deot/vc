@@ -207,7 +207,7 @@ describe('MDatePickerCore branches', () => {
 		await wrapper.findComponent({ name: 'vcm-picker-popup' }).vm.$emit('close');
 		await flush();
 		expect(wrapper.emitted('close')).toHaveLength(1);
-		expect(wrapper.emitted('portal-fulfilled')).toHaveLength(1);
+		expect(wrapper.emitted('portal-fulfilled')).toEqual([[{ value: '2024-01-02 03:04:05' }]]);
 
 		await wrapper.find('.vcm-picker-popup__item.is-left').trigger('click');
 		await flush();
@@ -235,6 +235,12 @@ describe('MDatePickerCore branches', () => {
 		expect(wrapper.emitted('change')?.at(-1)).toEqual(['2024-01-05']);
 		expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['2024-01-05']);
 		expect(wrapper.emitted('ok')).toBeUndefined();
+
+		// 不需要确认时只提交、没有确定：关闭时 open() 拒绝（同 onOk 没有触发）
+		await wrapper.findComponent({ name: 'vcm-picker-popup' }).vm.$emit('close');
+		await flush();
+		expect(wrapper.emitted('portal-fulfilled')).toBeUndefined();
+		expect(wrapper.emitted('portal-rejected')).toHaveLength(1);
 
 		wrapper.unmount();
 	});

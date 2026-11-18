@@ -165,7 +165,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 
 ### 方法调用
 
-`Picker.open` 与 `MPicker.open` 均可打开选择弹层。通过 `onOk` 接收确认结果；`modelValue` 优先于兼容参数 `value`。方法调用需要直接提供数据。
+`Picker.open` 与 `MPicker.open` 均可打开选择弹层。通过 `onOk` 接收确认结果；返回的 Portal 实例可以 `await`：确定后（关闭动画结束时）得到 `onOk` 的参数组成的对象 `{ value, labels, data }`，取消、点遮罩等没有确定就关闭时拒绝（只用回调时不会产生未处理的拒绝）；也可调用 `destroy()`。`modelValue` 优先于兼容参数 `value`。方法调用需要直接提供数据。
 
 :::playground
 <!--
@@ -199,15 +199,14 @@ const handleOpen = playground.run(400, async () => {
 			{ value: 'item-a', label: '条目 A' },
 			{ value: 'item-b', label: '条目 B' }
 		],
-		onOk: (next, labels) => {
-			value.value = next;
-			result.value = `已确认：${labels.join(' / ')}`;
-		},
-		onCancel: () => {
-			result.value = '已取消，保留原值';
-		}
 	});
-	await picker;
+	try {
+		const { value: next, labels } = await picker;
+		value.value = next;
+		result.value = `已确认：${labels.join(' / ')}`;
+	} catch {
+		result.value = '已取消，保留原值';
+	}
 });
 onBeforeUnmount(() => picker?.destroy());
 </script>
@@ -413,7 +412,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| Picker.open / MPicker.open | 创建选择弹层 | `options: Record<string, any>` | `PortalLeaf`，可调用 `destroy()` |
+| Picker.open / MPicker.open | 创建选择弹层 | `options: Record<string, any>` | `PortalLeaf`，可 `await` 得到 `{ value, labels, data }`（同 `onOk`，取消时拒绝），可调用 `destroy()` |
 | Picker.View / MPicker.View | PickerView 的静态组件别名 | - | - |
 | Picker.Popup / MPicker.Popup | PickerPopup 的静态组件别名 | - | - |
 

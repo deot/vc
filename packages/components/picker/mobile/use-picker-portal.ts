@@ -3,7 +3,16 @@ import type { PropType } from 'vue';
 import type { Portal } from '../../portal';
 
 /**
- * 经 Portal 打开的弹层（MPicker、MDatePicker、MCascader、MSelect 的 Core）共用的属性
+ * await open() 的结果：即 onOk 的参数，组成对象（以后新增字段不影响调用方），如 { value, labels }
+ * 确定后关闭动画结束时兑现；没有确定就关闭（取消、遮罩、关闭按钮）时拒绝
+ */
+export interface PickerOpenResult {
+	value: any;
+	[key: string]: any;
+}
+
+/**
+ * 经 Portal 打开的弹层（MPicker、MDatePicker、MCascader、MSelect、MTreeSelect、MColorPicker 的 Core）共用的属性
  * 	- visible：是否显示，打开时为 true
  * 	- onOk / onCancel：传入时代替 ok / cancel 事件（直接调用 open 时使用）
  */
@@ -24,12 +33,18 @@ export const pickerCoreEmits = [
 	'ok',
 	'close',
 	'portal-fulfilled',
+	'portal-rejected',
 	'visible-change'
 ] as const;
 
 // 只用到 emit：各组件的 emits 不同，不按 SetupContext 的事件类型约束
 interface EmitContext {
 	emit: (event: any, ...args: any[]) => void;
+}
+
+interface PickerCoreOptions {
+	// ok 参数中 value 之后各位置的名称，用于 open() 的结果对象，如 ['labels']
+	fields?: string[];
 }
 
 interface PickerCoreProps {
@@ -42,14 +57,18 @@ interface PickerCoreProps {
  * 弹层 Core 的显示状态与提交：
  * 	- ok：关闭并提交（ok，随后 update:modelValue、change）
  * 	- commit：只提交，弹层保持打开（不需要确认时，如滚轮停下）
- * 	- cancel / close：关闭，不提交
+ * 	- cancel / close：关闭，不提交；close 时确定过则以 ok 的参数兑现 open()（PickerOpenResult），否则拒绝
+ * 事件与桌面端一致，均为位置参数 (value, ...)
  * @param props ~
  * @param context ~
+ * @param options ~
  * @returns ~
  */
-export const usePickerCore = (props: PickerCoreProps, context: EmitContext) => {
+export const usePickerCore = (props: PickerCoreProps, context: EmitContext, options: PickerCoreOptions = {}) => {
 	const { emit } = context;
 	const isActive = ref(false);
+	// 本次打开确定（ok）时的参数
+	let confirmed: any[] | undefined;
 
 	watch(
 		() => props.visible,
@@ -73,6 +92,7 @@ export const usePickerCore = (props: PickerCoreProps, context: EmitContext) => {
 	};
 
 	const ok = (...args: any[]) => {
+		confirmed = args;
 		isActive.value = false;
 		props.onOk ? props.onOk(...args) : emit('ok', ...args);
 		commit(...args);
@@ -83,11 +103,18 @@ export const usePickerCore = (props: PickerCoreProps, context: EmitContext) => {
 		props.onCancel ? props.onCancel() : emit('cancel');
 	};
 
+	const toResult = ([value, ...rest]: any[]) => {
+		return (options.fields || []).reduce((pre, key, index) => {
+			pre[key] = rest[index];
+			return pre;
+		}, { value } as PickerOpenResult);
+	};
+
 	// 关闭动画结束（MPickerPopup 的 close）
 	const close = () => {
 		isActive.value = false;
 		emit('close');
-		emit('portal-fulfilled');
+		confirmed ? emit('portal-fulfilled', toResult(confirmed)) : emit('portal-rejected');
 	};
 
 	// 传给 MPickerPopup 的显示状态与事件（ok 由各 Core 处理：提交前要先算出值）
@@ -169,6 +196,8 @@ export const usePickerTrigger = (context: EmitContext, options: PickerTriggerOpt
 				formItem?.change?.(next);
 			}
 		});
+		// 触发区不使用 open() 的结果：取消时的拒绝不作为未处理的错误
+		leaf.catch(() => {});
 		return leaf;
 	};
 
@@ -177,6 +206,8 @@ export const usePickerTrigger = (context: EmitContext, options: PickerTriggerOpt
 
 /**
  * 直接打开弹层的 open(options)：兼容 value 作为初始值，同时传入时以 modelValue 为准
+ * 	- 返回的 Portal 实例可 await：确定后得到 onOk 参数组成的对象（PickerOpenResult），取消时拒绝
+ * 	- 只用回调、不 await 时，取消不会产生未处理的拒绝
  * @param portal ~
  * @returns ~
  */
@@ -184,9 +215,12 @@ export const createPickerOpen = (portal: Portal<any>) => {
 	return (options: Record<string, any> = {}) => {
 		const { value, modelValue, ...rest } = options;
 		const hasModelValue = Object.prototype.hasOwnProperty.call(options, 'modelValue');
-		return portal.popup({
+		const leaf = portal.popup({
 			...rest,
 			modelValue: hasModelValue ? modelValue : value
 		});
+		// 给 Portal 内部的 Promise 挂上处理：await 的调用方仍会收到拒绝
+		leaf.catch(() => {});
+		return leaf;
 	};
 };

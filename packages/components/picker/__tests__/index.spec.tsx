@@ -1030,7 +1030,9 @@ describe('PickerCore', () => {
 		await flush();
 
 		expect(wrapper.emitted('close')).toHaveLength(1);
-		expect(wrapper.emitted('portal-fulfilled')).toHaveLength(1);
+		// 没有确定过：open() 拒绝
+		expect(wrapper.emitted('portal-fulfilled')).toBeUndefined();
+		expect(wrapper.emitted('portal-rejected')).toEqual([[]]);
 
 		wrapper.unmount();
 	});
@@ -1055,6 +1057,15 @@ describe('PickerCore', () => {
 			expect.any(Array)
 		]);
 		expect(wrapper.emitted('change')).toHaveLength(1);
+
+		// 关闭后 open() 的结果：ok 的参数按 fields 命名
+		wrapper.findComponent(PickerPopup).vm.$emit('close');
+		await flush();
+		expect(wrapper.emitted('portal-fulfilled')).toEqual([[{
+			value: ['zhejiang', 'hangzhou', 'xihu'],
+			labels: ['Zhejiang', 'Hangzhou', 'West Lake'],
+			data: expect.any(Array)
+		}]]);
 
 		wrapper.unmount();
 	});
@@ -1266,6 +1277,31 @@ describe('Picker integration', () => {
 		);
 
 		leaf.destroy();
+	});
+
+	// 测试环境的 Transition 为桩，离场动画不会结束：直接发出 MPickerPopup 的 close
+	const emitPopupClose = () => {
+		(document.querySelector('.vcm-picker-popup') as any).__vueParentComponent.emit('close');
+	};
+
+	it('MPicker.open：await 得到 onOk 的结果，取消时拒绝', async () => {
+		const leaf = MPicker.open({ data: regionData, value: ['zhejiang', 'hangzhou', 'xihu'], columns: 3 });
+		await flush();
+		(document.querySelector('.vcm-picker-popup__item.is-right') as HTMLElement).click();
+		await flush();
+		emitPopupClose();
+		await expect(leaf).resolves.toEqual({
+			value: ['zhejiang', 'hangzhou', 'xihu'],
+			labels: ['Zhejiang', 'Hangzhou', 'West Lake'],
+			data: expect.any(Array)
+		});
+
+		const leaf2 = MPicker.open({ data: regionData, columns: 3 });
+		await flush();
+		(document.querySelector('.vcm-picker-popup__item.is-left') as HTMLElement).click();
+		await flush();
+		emitPopupClose();
+		await expect(leaf2).rejects.toBeUndefined();
 	});
 
 	it('MPicker.open supports empty options', async () => {

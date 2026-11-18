@@ -462,9 +462,9 @@ const value = ref(['2024-03-10', '2024-03-20']);
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| open | 直接打开移动端选择器 | 日期属性、工具栏属性及 onOk(value)、onCancel() 等回调 | Portal 实例，可调用 destroy() |
+| open | 直接打开移动端选择器 | 日期属性、工具栏属性及 onOk(value)、onCancel() 等回调 | Portal 实例，可 `await` 得到 `{ value }`（同 `onOk`，取消时拒绝），可调用 `destroy()` |
 
-`MDatePicker.open({ modelValue, type, onOk })` 不返回选中结果的 Promise；通过 `onOk` 接收结果。兼容 `value` 作为初始值别名，同时传入时以 `modelValue` 为准。`MDatePicker.View` 与 `MDatePickerView` 为同一组件。
+`MDatePicker.open({ modelValue, type, onOk })` 通过 `onOk` 接收结果；返回的 Portal 实例可以 `await`：确定后（关闭动画结束时）得到 `onOk` 的参数组成的对象 `{ value }`，取消、点遮罩等没有确定就关闭时拒绝（只用回调时不会产生未处理的拒绝）；也可调用 `destroy()`。兼容 `value` 作为初始值别名，同时传入时以 `modelValue` 为准。`MDatePicker.View` 与 `MDatePickerView` 为同一组件。
 
 ### MDatePickerView 属性
 

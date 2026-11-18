@@ -677,7 +677,7 @@ const handleVisibleChange = (key, visible) => {
 
 `MCascaderView` 是弹层里的内容，也可以直接放在页面中，提交规则同上：选到最后一级（或开启 `changeOnSelect` 时任意一级）才更新 `v-model`，每次点选都触发 `select`。`loadData` 与桌面端相同，点击待加载的节点时该行显示加载图标。
 
-`MCascader.open(options)` 直接打开弹层，通过 `onOk(value, labels)` 接收结果，返回的 Portal 实例可调用 `destroy()`。
+`MCascader.open(options)` 直接打开弹层，通过 `onOk(value, labels)` 接收结果；返回的 Portal 实例可以 `await`：确定后（关闭动画结束时）得到 `onOk` 的参数组成的对象 `{ value, labels }`，取消、点遮罩等没有确定就关闭时拒绝（只用回调时不会产生未处理的拒绝）；也可调用 `destroy()`。
 
 :::playground
 <!-- <config lang="json5">{ viewport: 375, previewInset: 0 }</config> -->
@@ -857,9 +857,9 @@ interface CascaderOption {
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| open | 直接打开弹层 | MCascaderView 的属性、`title`、`confirm`、`cancelText`、`okText`，以及 `onOk(value, labels)`、`onCancel()`、`onSelect(payload)`、`onClear()`、`onVisibleChange(visible)`、`onClose()` | Portal 实例，可调用 `destroy()` |
+| open | 直接打开弹层 | MCascaderView 的属性、`title`、`confirm`、`cancelText`、`okText`，以及 `onOk(value, labels)`、`onCancel()`、`onSelect(payload)`、`onClear()`、`onVisibleChange(visible)`、`onClose()` | Portal 实例，可 `await` 得到 `{ value, labels }`（同 `onOk`，取消时拒绝），可调用 `destroy()` |
 
-`MCascader.open` 不返回选中结果的 Promise，通过 `onOk` 接收。兼容 `value` 作为初始值的别名，同时传入时以 `modelValue` 为准。`MCascader.View` 与 `MCascaderView` 为同一组件。
+兼容 `value` 作为初始值的别名，同时传入时以 `modelValue` 为准。`MCascader.View` 与 `MCascaderView` 为同一组件。
 
 ### MCascaderView 属性
 

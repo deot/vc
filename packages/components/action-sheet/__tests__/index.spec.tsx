@@ -159,7 +159,7 @@ describe('ActionSheet action click', () => {
 		document.body.innerHTML = '';
 	});
 
-	it('无 onClick 时点击 action 关闭并 fulfilled action value', async () => {
+	it('无 onClick 时点击 action 关闭，ok 收到 (action, index)，fulfilled { value, index }', async () => {
 		const style = { color: 'red' };
 		const wrapper = mount(ActionSheet, {
 			attachTo: document.body,
@@ -177,15 +177,18 @@ describe('ActionSheet action click', () => {
 		await flush();
 
 		await wrapper.find('.vcm-action-sheet__item').trigger('click');
-		await flushTransition();
-
-		const value = wrapper.emitted('portal-fulfilled')!.at(-1)![0] as any;
-		expect(value).toEqual({
+		const action = {
 			content: '确认',
 			subContent: '说明',
 			class: 'custom-action',
 			style
-		});
+		};
+		expect(wrapper.emitted('ok')).toEqual([[action, 0]]);
+		await flushTransition();
+
+		expect(wrapper.emitted('close')).toHaveLength(1);
+		expect(wrapper.emitted('portal-fulfilled')).toEqual([[{ value: action, index: 0 }]]);
+		expect(wrapper.emitted('portal-rejected')).toBeFalsy();
 		expect(isVisible(wrapper)).toBe(false);
 
 		wrapper.unmount();
@@ -299,7 +302,7 @@ describe('ActionSheet action click', () => {
 		await flushTransition();
 
 		const value = wrapper.emitted('portal-fulfilled')!.at(-1)![0];
-		expect(value).toEqual({ content: '异步', subContent: '异步说明', onClick });
+		expect(value).toEqual({ value: { content: '异步', subContent: '异步说明', onClick }, index: 0 });
 		expect(isVisible(wrapper)).toBe(false);
 
 		wrapper.unmount();
@@ -363,7 +366,7 @@ describe('ActionSheet close and portal methods', () => {
 		document.body.innerHTML = '';
 	});
 
-	it('cancelText 点击关闭并 fulfilled undefined', async () => {
+	it('cancelText 点击关闭：不触发 ok，close 后 rejected', async () => {
 		const wrapper = mount(ActionSheet, {
 			attachTo: document.body,
 			props: {
@@ -376,7 +379,10 @@ describe('ActionSheet close and portal methods', () => {
 		await wrapper.find('.vcm-action-sheet__cancel').trigger('click');
 		await flushTransition();
 
-		expect(wrapper.emitted('portal-fulfilled')!.at(-1)![0]).toBeUndefined();
+		expect(wrapper.emitted('ok')).toBeFalsy();
+		expect(wrapper.emitted('close')).toHaveLength(1);
+		expect(wrapper.emitted('portal-fulfilled')).toBeFalsy();
+		expect(wrapper.emitted('portal-rejected')).toEqual([[]]);
 		expect(isVisible(wrapper)).toBe(false);
 
 		wrapper.unmount();
@@ -395,7 +401,8 @@ describe('ActionSheet close and portal methods', () => {
 		await wrapper.find('.vcm-popup__mask').trigger('click');
 		await flushTransition();
 
-		expect(wrapper.emitted('portal-fulfilled')).toBeTruthy();
+		expect(wrapper.emitted('portal-fulfilled')).toBeFalsy();
+		expect(wrapper.emitted('portal-rejected')).toEqual([[]]);
 		expect(isVisible(wrapper)).toBe(false);
 
 		wrapper.unmount();
@@ -460,29 +467,61 @@ describe('ActionSheet close and portal methods', () => {
 
 		const fulfilled = wrapper.emitted('portal-fulfilled')!;
 		expect(fulfilled).toHaveLength(1);
-		expect(fulfilled[0][0]).toEqual({ content: '异步', onClick });
+		expect(fulfilled[0][0]).toEqual({ value: { content: '异步', onClick }, index: 0 });
 		expect(isVisible(wrapper)).toBe(false);
 
 		wrapper.unmount();
 	}, 10000);
 
-	it('MActionSheet.open 渲染到 body 并返回 promise-like leaf', async () => {
+	it('MActionSheet.open 渲染到 body，await 得到 onOk 的结果', async () => {
+		const onOk = vi.fn();
 		const onClose = vi.fn();
 		const leaf = MActionSheet.open({
 			title: 'open-title',
+			onOk,
 			onClose,
-			data: [{ content: 'open-action' }]
+			data: [{ content: 'other' }, { content: 'open-action' }]
 		});
 		await flush();
 
 		expect(document.body.querySelector('.vcm-action-sheet')).not.toBeNull();
 		expect(document.body.querySelector('.vcm-action-sheet__title')!.innerHTML).toContain('open-title');
-		(document.body.querySelector('.vcm-action-sheet__item') as HTMLElement).click();
+		(document.body.querySelectorAll('.vcm-action-sheet__item')[1] as HTMLElement).click();
+		expect(onOk).toHaveBeenCalledWith({ content: 'open-action' }, 1);
 		await flushTransition();
 
-		const result = await leaf.target;
-		expect(result).toEqual({ content: 'open-action' });
-		expect(onClose).toHaveBeenCalledWith({ content: 'open-action' });
+		await expect(leaf).resolves.toEqual({ value: { content: 'open-action' }, index: 1 });
+		expect(onClose).toHaveBeenCalledTimes(1);
+		expect(onClose.mock.calls[0]).toHaveLength(0);
+	}, 10000);
+
+	it('MActionSheet.open 没有选中就关闭时拒绝，只用回调时不产生未处理拒绝', async () => {
+		const unhandled = vi.fn();
+		process.on('unhandledRejection', unhandled);
+		const onOk = vi.fn();
+		const onClose = vi.fn();
+		const leaf = MActionSheet.open({
+			cancelText: '取消',
+			onOk,
+			onClose,
+			data: [{ content: 'a' }]
+		});
+		await flush();
+
+		(document.body.querySelector('.vcm-action-sheet__cancel') as HTMLElement).click();
+		await flushTransition();
+
+		await expect(leaf).rejects.toBeUndefined();
+		expect(onOk).not.toHaveBeenCalled();
+		expect(onClose).toHaveBeenCalledTimes(1);
+
+		MActionSheet.open({ cancelText: '取消', data: [{ content: 'b' }] });
+		await flush();
+		(document.body.querySelector('.vcm-action-sheet__cancel') as HTMLElement).click();
+		await flushTransition();
+		await sleep(0);
+		process.off('unhandledRejection', unhandled);
+		expect(unhandled).not.toHaveBeenCalled();
 	}, 10000);
 
 	it('MActionSheet.popup 同 open', async () => {
@@ -495,7 +534,7 @@ describe('ActionSheet close and portal methods', () => {
 		(document.body.querySelector('.vcm-action-sheet__item') as HTMLElement).click();
 		await flushTransition();
 
-		await expect(leaf.target).resolves.toEqual({ content: 'popup-action' });
+		await expect(leaf).resolves.toEqual({ value: { content: 'popup-action' }, index: 0 });
 	}, 10000);
 
 	it('MActionSheet.open 支持空参数', async () => {

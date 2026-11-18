@@ -15,11 +15,12 @@ import { MButton } from '../../button/index.m';
 
 const sleep = delay => new Promise(resolve => setTimeout(resolve, delay));
 
-const handleOpen = async () => {
-	await MActionSheet.open({
+const handleOpen = () => {
+	MActionSheet.open({
 		title: '请选择一个操作',
 		cancelText: '取消',
-		onClose: v => console.log('onClose', v),
+		onOk: (action, index) => console.log('onOk', action, index),
+		onClose: () => console.log('onClose'),
 		data: [
 			{
 				content: '选项一',

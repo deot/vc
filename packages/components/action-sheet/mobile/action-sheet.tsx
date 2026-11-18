@@ -6,7 +6,7 @@ import { hasCustomerValue } from '../../customer/utils';
 import { MPopup } from '../../popup/index.m';
 import { MSpin } from '../../spin/index.m';
 import { props as actionSheetProps } from './action-sheet-props';
-import type { ActionSheetAction, ActionSheetActionValue, ActionSheetContent } from './action-sheet-props';
+import type { ActionSheetAction, ActionSheetContent } from './action-sheet-props';
 
 const COMPONENT_NAME = 'vcm-action-sheet';
 
@@ -18,24 +18,32 @@ const renderContent = (content: ActionSheetContent | undefined, className: strin
 export const ActionSheet = defineComponent({
 	name: COMPONENT_NAME,
 	props: actionSheetProps,
-	emits: ['portal-fulfilled'],
+	// ok 为位置参数 (action, index)；open() 的结果即其组成的对象 { value, index }
+	emits: ['ok', 'close', 'portal-fulfilled', 'portal-rejected'],
 	setup(props, { emit }) {
 		const isActive = ref(false);
 		const loadingIndex = ref(-1);
-		const fulfilledValue = ref<ActionSheetActionValue>();
+		let chosen: { value: ActionSheetAction; index: number } | undefined;
 
 		onMounted(() => {
 			isActive.value = true;
 		});
 
-		const close = (value?: ActionSheetActionValue) => {
-			fulfilledValue.value = value;
+		const close = () => {
 			loadingIndex.value = -1;
 			isActive.value = false;
 		};
 
+		const ok = (action: ActionSheetAction, index: number) => {
+			chosen = { value: action, index };
+			close();
+			emit('ok', action, index);
+		};
+
+		// 关闭动画结束：选中了操作时兑现，否则（取消、遮罩）拒绝
 		const handlePopupFulfilled = () => {
-			emit('portal-fulfilled', fulfilledValue.value);
+			emit('close');
+			chosen ? emit('portal-fulfilled', chosen) : emit('portal-rejected');
 		};
 
 		const handleClose = () => {
@@ -48,7 +56,7 @@ export const ActionSheet = defineComponent({
 
 			try {
 				if (!action.onClick) {
-					close(action);
+					ok(action, index);
 					return;
 				}
 
@@ -61,7 +69,7 @@ export const ActionSheet = defineComponent({
 				if (!isActive.value) return;
 
 				if (response !== false) {
-					close(action);
+					ok(action, index);
 				} else {
 					loadingIndex.value = -1;
 				}

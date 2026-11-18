@@ -44,7 +44,7 @@ export const PickerCore = defineComponent({
 	emits: [...pickerCoreEmits, 'picker-change'],
 	setup(props, context) {
 		const { emit } = context;
-		const core = usePickerCore(props, context);
+		const core = usePickerCore(props, context, { fields: ['labels', 'data'] });
 		const currentValue = ref<PickerValue[]>([]);
 
 		watch(

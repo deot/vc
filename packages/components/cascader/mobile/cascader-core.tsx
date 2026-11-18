@@ -23,7 +23,7 @@ export const MCascaderCore = defineComponent({
 	emits: [...pickerCoreEmits, 'select', 'clear'],
 	setup(props, context) {
 		const { emit } = context;
-		const core = usePickerCore(props, context);
+		const core = usePickerCore(props, context, { fields: ['labels'] });
 		const view = ref<any>();
 		// 弹层内的值：确定时提交，取消时丢弃
 		const currentValue = ref<any>(props.modelValue);

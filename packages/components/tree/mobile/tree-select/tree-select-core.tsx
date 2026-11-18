@@ -33,7 +33,7 @@ export const MTreeSelectCore = defineComponent({
 	setup(props, context) {
 		const { emit } = context;
 		const { t } = useLocale();
-		const core = usePickerCore(props, context);
+		const core = usePickerCore(props, context, { fields: ['labels'] });
 		const list = ref<HTMLElement>();
 		const keyword = ref('');
 

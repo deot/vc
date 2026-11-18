@@ -11,7 +11,7 @@
 
 ### 基础用法
 
-`open` 返回一个可等待的 Portal 实例。选择操作时结果为对应的 `ActionSheetAction`；点击取消按钮或遮罩关闭时结果为 `undefined`。
+`open` 返回一个可等待的 Portal 实例，`await` 的结果即 `onOk` 的参数组成的对象 `{ value, index }`（`value` 为选中的 `ActionSheetAction`），在关闭动画结束后兑现；点击取消按钮或遮罩关闭时拒绝。只用 `onOk` / `onClose` 回调、不 `await` 时，取消不会产生未处理的拒绝。
 
 :::playground
 <!--
@@ -43,27 +43,30 @@ const playground = inject('docs:playground');
 const wait = delay => new Promise(resolve => setTimeout(resolve, delay));
 
 const handleOpen = playground.run(560, async () => {
-	const action = await MActionSheet.open({
-		title: '请选择操作',
-		cancelText: '取消',
-		data: [
-			{
-				content: '保存',
-				subContent: '异步操作完成后关闭',
-				onClick: () => wait(800)
-			},
-			{
-				content: '删除',
-				style: { color: 'var(--vc-color-error)' }
-			},
-			{
-				content: '禁用选项',
-				disabled: true
-			}
-		]
-	});
-
-	result.value = action ? `已选择：${action.content}` : '已取消';
+	try {
+		const { value: action } = await MActionSheet.open({
+			title: '请选择操作',
+			cancelText: '取消',
+			data: [
+				{
+					content: '保存',
+					subContent: '异步操作完成后关闭',
+					onClick: () => wait(800)
+				},
+				{
+					content: '删除',
+					style: { color: 'var(--vc-color-error)' }
+				},
+				{
+					content: '禁用选项',
+					disabled: true
+				}
+			]
+		});
+		result.value = `已选择：${action.content}`;
+	} catch {
+		result.value = '已取消';
+	}
 });
 
 onUnmounted(() => {
@@ -149,13 +152,16 @@ onUnmounted(() => {
 
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
-| portal-fulfilled | 面板关闭完成时触发 | `value` | 选择操作时为 `ActionSheetAction`，取消或点击遮罩时为 `undefined` |
+| ok | 选中操作时触发（异步 `onClick` 完成后） | `(action, index)` | 选中的 `ActionSheetAction` 及其在 `data` 中的位置 |
+| close | 面板关闭动画结束时触发，选中或取消都会触发 | - | - |
+| portal-fulfilled | 选中操作后，关闭动画结束时触发；`open()` 以此兑现 | `{ value, index }` | 同 `ok` 的参数组成的对象 |
+| portal-rejected | 未选中就关闭（取消、遮罩）时，关闭动画结束后触发；`open()` 以此拒绝 | - | - |
 
 ### ActionSheet / MActionSheet 方法
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| open | 在 `body` 中打开动作面板 | `options?`：组件属性以及可选的 `onClose` 回调 | 可等待的 Portal 实例；结果为 `ActionSheetAction \| undefined` |
+| open | 在 `body` 中打开动作面板 | `options?`：组件属性以及可选的 `onOk(action, index)`、`onClose()` 回调 | 可等待的 Portal 实例；可 `await` 得到 `{ value, index }`（同 `onOk`，取消时拒绝） |
 | popup | `open` 的别名 | 同 `open` | 同 `open` |
 | destroy | 销毁由当前动作面板 Portal 创建的全部实例 | - | `void` |
 
