@@ -257,6 +257,27 @@ describe('index.ts', () => {
 		expect(rule('.vcm-form-item__label')).toContain('line-height: calc(var(--vc-rem) * 44)');
 	});
 
+	it('字段 change / blur 校验失败只显示错误，不产生未处理的拒绝', async () => {
+		const unhandled = vi.fn();
+		process.on('unhandledRejection', unhandled);
+		const formData = reactive({ input: 'x' });
+		const wrapper = mount(() => (
+			<Form model={formData}>
+				<FormItem prop="input" label="A" required="必填">
+					<Input v-model={formData.input} />
+				</FormItem>
+			</Form>
+		));
+		const input = wrapper.find('input');
+		await input.setValue('');
+		await input.trigger('blur');
+		await new Promise(r => setTimeout(r, 50));
+		process.off('unhandledRejection', unhandled);
+
+		expect(wrapper.find('.vc-form-item').classes()).toContain('is-error');
+		expect(unhandled).not.toHaveBeenCalled();
+	});
+
 	it('failed', async () => {
 		expect.hasAssertions();
 		const form = ref();

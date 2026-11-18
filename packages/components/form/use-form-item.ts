@@ -304,7 +304,8 @@ export const useFormItem = (props: Props, context: SetupContext, options: { rem?
 			formItem.blur?.();
 			return;
 		}
-		validate('blur');
+		// 结果已写进 validateState / validateMessage，这里吞掉拒绝，避免未处理的 rejection
+		validate('blur').catch(() => {});
 	};
 	const handleFieldChange = () => {
 		// 嵌套
@@ -316,7 +317,7 @@ export const useFormItem = (props: Props, context: SetupContext, options: { rem?
 			validateDisabled = false;
 			return;
 		}
-		validate('change');
+		validate('change').catch(() => {});
 	};
 
 	const getPosition = async () => {
