@@ -376,6 +376,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | cascader | 是否联动下级列 | `boolean` | - | `true` |
 | hideEmptyColumns | 联动时不渲染没有数据的列（层级不齐的数据），其余列平分宽度 | `boolean` | - | `false` |
 | itemStyle | 每个选项的行内样式；改变高度时应同时设置行高变量 | `Record<string, any>` | - | - |
+| virtualized | 每一列只渲染滚轮可见窗口附近的行（可见行数上下各多 3 行，惯性滚动期间覆盖起点到终点），选项上千时打开与拖动不再随数量变慢；行高须一致（由行高变量决定）。`renderLabel` 中有状态的内容滚出窗口时会卸载，需要时设为 `false` 全部渲染 | `boolean` | - | `true` |
 | loadData | 数据为空时点击执行；需更新 data | `() => Promise<any> \| any` | - | - |
 | label | 默认触发区域的标题 | `string` | - | - |
 | labelWidth | 默认触发区域标题宽度，750 稿长度，传给 MListItem | `string \| number` | - | - |
@@ -430,6 +431,7 @@ p { margin: 0; overflow-wrap: anywhere; }
 | cascader | 是否联动下级列 | `boolean` | - | `true` |
 | hideEmptyColumns | 联动时不渲染没有数据的列（层级不齐的数据），其余列平分宽度 | `boolean` | - | `false` |
 | itemStyle | 每个选项的行内样式 | `Record<string, any>` | - | - |
+| virtualized | 每一列只渲染可见窗口附近的行，同 MPicker | `boolean` | - | `true` |
 | renderLabel | 自定义选项渲染，接收含 label、row、index 的对象 | `(options: { label: any; row: any; index: number }) => VNodeChild` | - | - |
 | allowDispatch | 选择变化时通知注入的 FormItem | `boolean` | - | `true` |
 | separator | 字符串模型的分隔符 | `string` | - | `','` |

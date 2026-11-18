@@ -137,6 +137,7 @@ export const PickerView = defineComponent({
 									value={currentValue.value[index]}
 									itemStyle={props.itemStyle}
 									renderLabel={props.renderLabel}
+									virtualized={props.virtualized}
 									onChange={(v: PickerData) => handleColChange(v, index)}
 								/>
 							);

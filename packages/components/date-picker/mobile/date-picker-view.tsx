@@ -140,6 +140,7 @@ export const MDatePickerView = defineComponent({
 						data={columns.value}
 						columns={columns.value.length}
 						cascader={false}
+						virtualized={props.virtualized}
 						allowDispatch={false}
 						{...{
 							'onPicker-change': handlePickerChange

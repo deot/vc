@@ -26,6 +26,11 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
+	// 每一列只渲染可见窗口附近的行，用于选项很多的列
+	virtualized: {
+		type: Boolean,
+		default: true
+	},
 	loadData: Function as PropType<() => Promise<any> | any>,
 	extra: String,
 	formatter: {

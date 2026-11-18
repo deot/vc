@@ -26,6 +26,11 @@ export const props = {
 		type: Array as PropType<number[]>,
 		default: () => DEFAULT_YEAR_RANGE
 	},
+	// 每一列只渲染可见窗口附近的行，同 MPicker
+	virtualized: {
+		type: Boolean,
+		default: true
+	},
 	// 范围的显示文字与字符串解析的分隔符
 	separator: {
 		type: String,

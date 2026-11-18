@@ -424,7 +424,7 @@ const value = ref(['2024-03-10', '2024-03-20']);
 
 ### MDatePicker 属性
 
-支持下方 MDatePickerView 的 `modelValue`、`type`、`format`、`disabledDate`、`timePickerOptions`、`steps`、`yearRange`、`separator`、`nullValue`，另有：
+支持下方 MDatePickerView 的 `modelValue`、`type`、`format`、`disabledDate`、`timePickerOptions`、`steps`、`yearRange`、`virtualized`、`separator`、`nullValue`，另有：
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
@@ -477,6 +477,7 @@ const value = ref(['2024-03-10', '2024-03-20']);
 | timePickerOptions | 时、分、秒的禁用：`disabledTime(date)`、`disabledHours`、`disabledMinutes`、`disabledSeconds`、`filterable`（隐藏禁用项），同桌面端 | `object` | - | `{}` |
 | steps | 时、分、秒的步长 | `number[]` | - | `[]` |
 | yearRange | 年份滚轮的范围 | `[number, number]` | - | `[1900, 2100]` |
+| virtualized | 每一列只渲染可见窗口附近的行，同 [MPicker](../picker/README.md) | `boolean` | - | `true` |
 | separator | 范围的显示文字与字符串解析的分隔符 | `string` | - | `' - '` |
 | allowDispatch | 更新时通知所属表单项 | `boolean` | - | `true` |
 | nullValue | 空日期格式化结果 | `string \| number \| object` | - | `''` |

@@ -482,6 +482,92 @@ describe('PickerCol', () => {
 		wrapper.unmount();
 	});
 
+	describe('virtualized：只渲染可见窗口', () => {
+		// 行高读不到时为 44，可见行数读不到时为 5：窗口为当前行上下各 2 + 3 行
+		const many = Array.from({ length: 200 }, (_, i) => ({ value: i, label: `${i}` }));
+		const getRendered = (wrapper: any) => wrapper.findAll('.vcm-picker-col__item').map((i: any) => +i.text());
+		const span = (start: number, end: number) => Array.from({ length: end - start + 1 }, (_, i) => start + i);
+
+		it('静止时渲染选中行附近的行，前面用占位撑开；拖动时窗口跟随', async () => {
+			const wrapper = mount(() => <PickerCol value={50} data={many} virtualized />, { attachTo: document.body });
+			await nextTick();
+			expect(getRendered(wrapper)).toEqual(span(45, 55));
+			expect(wrapper.find('.vcm-picker-col__spacer').attributes('style')).toContain('calc(var(--vcm-picker-item-height) * 45)');
+			expect(wrapper.find('.vcm-picker-col__item.is-selected').text()).toBe('50');
+
+			// 向上拖 2 行（未松手）：窗口跟到 52 附近，并保留按下时的位置
+			fireMouse(wrapper.element, 'mousedown', 0);
+			fireMouse(wrapper.element, 'mousemove', -88);
+			await nextTick();
+			expect(getRendered(wrapper)).toEqual(span(45, 57));
+			fireMouse(wrapper.element, 'mouseup', -88);
+			wrapper.unmount();
+
+			// 开头的行：不越界
+			const first = mount(() => <PickerCol value={0} data={many} virtualized />, { attachTo: document.body });
+			await nextTick();
+			expect(getRendered(first)).toEqual(span(0, 5));
+			first.unmount();
+		});
+
+		it('MPicker / MPickerView 默认开启；virtualized 为 false 时全部渲染', async () => {
+			expect(pickerProps.virtualized.default).toBe(true);
+			expect(pickerViewProps.virtualized.default).toBe(true);
+			const wrapper = mount(() => <MPickerView data={many} modelValue={[50]} />, { attachTo: document.body });
+			await nextTick();
+			expect(getRendered(wrapper)).toEqual(span(45, 55));
+			wrapper.unmount();
+
+			const all = mount(() => <MPickerView data={many} modelValue={[50]} virtualized={false} />, { attachTo: document.body });
+			await nextTick();
+			expect(getRendered(all)).toHaveLength(200);
+			all.unmount();
+		});
+
+		it('触摸拖动期间按下的那一行留在文档中：后续的 touchmove / touchend 才能冒泡到列上', async () => {
+			const onChange = vi.fn();
+			const wrapper = mount(() => <PickerCol value={50} data={many} virtualized onChange={onChange} />, { attachTo: document.body });
+			await nextTick();
+			const row = wrapper.find('[data-index="50"]').element;
+
+			// 慢慢向上拖 10 行：按下的第 50 行已不在当前位置（60）附近的窗口里
+			fireTouch(row, 'touchstart', 0);
+			for (let i = 1; i <= 10; i++) fireTouch(row, 'touchmove', -44 * i);
+			await nextTick();
+			expect(row.isConnected).toBe(true);
+			expect(getRendered(wrapper)).toEqual(span(45, 65));
+
+			// 超过 300ms 再松手：不触发惯性，停在松手的位置
+			await sleep(310);
+			fireTouch(row, 'touchend', -440);
+			await flush();
+			expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 60 }));
+			wrapper.unmount();
+		});
+
+		it('惯性动画期间覆盖起点到终点，结束后收回；选中结果与不开启时一致', async () => {
+			vi.useFakeTimers();
+			const onChange = vi.fn();
+			const wrapper = mount(() => <PickerCol value={0} data={many} virtualized onChange={onChange} />, { attachTo: document.body });
+			await nextTick();
+
+			// 100px / 100ms：终点为第 17 项（同不开启时）
+			fireMouse(wrapper.element, 'mousedown', 0);
+			fireMouse(wrapper.element, 'mousemove', -100);
+			vi.advanceTimersByTime(100);
+			fireMouse(wrapper.element, 'mouseup', -100);
+			await nextTick();
+			expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ value: 17 }));
+			expect(getRendered(wrapper)).toEqual(span(0, 22));
+
+			vi.advanceTimersByTime(400);
+			await nextTick();
+			// 父级未回写 value：回到选中项 0 附近（受控）；窗口已收回
+			expect(getRendered(wrapper).length).toBeLessThanOrEqual(11);
+			wrapper.unmount();
+		});
+	});
+
 	describe('松手：慢拖吸附到最近一项，快滑按惯性', () => {
 		const letters = 'abcdefghijklmnopqrstuvwxyz'.split('').map(value => ({ value, label: value.toUpperCase() }));
 		const swipe = async (wrapper: any, distance: number, ms: number) => {

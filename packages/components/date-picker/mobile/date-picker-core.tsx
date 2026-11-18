@@ -28,6 +28,7 @@ const viewKeys = [
 	'timePickerOptions',
 	'steps',
 	'yearRange',
+	'virtualized',
 	'separator',
 	'nullValue'
 ] as const;
@@ -95,6 +96,7 @@ export const MDatePickerCore = defineComponent({
 						timePickerOptions={props.timePickerOptions}
 						steps={props.steps}
 						yearRange={props.yearRange}
+						virtualized={props.virtualized}
 						separator={props.separator}
 						nullValue={props.nullValue}
 						allowDispatch={false}

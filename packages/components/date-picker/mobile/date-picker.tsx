@@ -63,6 +63,7 @@ export const MDatePicker = defineComponent({
 				timePickerOptions: props.timePickerOptions,
 				steps: props.steps,
 				yearRange: props.yearRange,
+				virtualized: props.virtualized,
 				separator: props.separator,
 				title: props.title,
 				cancelText: props.cancelText,

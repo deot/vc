@@ -25,6 +25,11 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
+	// 每一列只渲染可见窗口附近的行（默认开启：行高固定、只显示几行，窗口外的行本来就看不见）
+	virtualized: {
+		type: Boolean,
+		default: true
+	},
 	allowDispatch: {
 		type: Boolean,
 		default: true

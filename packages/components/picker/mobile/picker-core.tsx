@@ -28,6 +28,7 @@ const viewKeys = [
 	'columns',
 	'cascader',
 	'hideEmptyColumns',
+	'virtualized',
 	'renderLabel',
 	'separator',
 	'numerable',
@@ -104,6 +105,7 @@ export const PickerCore = defineComponent({
 						itemStyle={props.itemStyle}
 						cascader={props.cascader}
 						hideEmptyColumns={props.hideEmptyColumns}
+						virtualized={props.virtualized}
 						allowDispatch={false}
 						renderLabel={props.renderLabel}
 						separator={props.separator}

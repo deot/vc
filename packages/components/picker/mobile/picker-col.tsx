@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, ref, onBeforeUnmount } from 'vue';
+import { computed, defineComponent, ref, onBeforeUnmount, onMounted, watchEffect } from 'vue';
 import { prefixStyle } from '@deot/helper-dom';
 import { useDrag } from '@deot/vc-hooks';
 import { cloneDeep } from 'lodash-es';
@@ -28,6 +28,10 @@ const EASE_MOMENTUM = 'cubic-bezier(.17, .89, .45, 1)';
 const EASE_BOUNCE = 'cubic-bezier(.25, .46, .45, .94)';
 // 滚轮：一次超过它即滚一项，触控板的小增量累积到它再滚
 const WHEEL_STEP = 50;
+// 只渲染可见窗口（virtualized）时，可见行之外上下各多渲染的行数
+const OVERSCAN = 3;
+// 读不到列高（如未挂载到文档）时的可见行数，同 --vc-picker-rows 的默认值
+const VISIBLE_ROWS = 5;
 const TRANSFORM = prefixStyle('transform').camel;
 const TRANSFORM_KEBAB = prefixStyle('transform').kebab;
 const TRANSITION = prefixStyle('transition').camel;
@@ -42,12 +46,21 @@ export const PickerCol = defineComponent({
 		},
 		itemStyle: Object as PropType<Record<string, any>>,
 		value: [String, Number, Boolean] as PropType<PickerValue>,
-		renderLabel: renderType
+		renderLabel: renderType,
+		// 只渲染可见窗口附近的行，用于选项很多的列
+		virtualized: Boolean
 	},
 	emits: ['change'],
 	setup(props, { emit }) {
+		const root = ref<HTMLElement>();
 		const wrapper = ref<HTMLElement>();
 		const itemHeight = ref(ITEM_HEIGHT);
+		const visibleRows = ref(VISIBLE_ROWS);
+		// 动画的起点（px，从首项算起）：过渡途中不会重新渲染，窗口要覆盖起点到终点
+		const animationFrom = ref<number | null>(null);
+		// 按下时的位置（px）：拖动期间窗口一直包含它。触摸事件只派发给按下的那一行，
+		// 它被移出窗口（从文档中删掉）后 touchmove / touchend 不再冒泡到列上，手势会停在半路
+		const dragFrom = ref<number | null>(null);
 		// 相对选中项的位移（px，向上为正）；位置 = 选中项 × 行高 + offset
 		const offset = ref(0);
 		// 动画：时长为 0 时跟手
@@ -75,21 +88,50 @@ export const PickerCol = defineComponent({
 		const currentIndex = computed(() => (animatingIndex.value >= 0 ? animatingIndex.value : selectedIndex.value));
 		const maxIndex = computed(() => Math.max(props.data.length - 1, 0));
 
-		const style = computed(() => {
-			// 位置 = 选中项 × 行高（随 --vcm-picker-item-height）+ offset
+		// 位移与过渡直接写在节点上，不经过渲染：拖动时 offset 逐帧变化，整列不必逐帧重渲染
+		// 位置 = 选中项 × 行高（随 --vcm-picker-item-height）+ offset
+		watchEffect(() => {
+			const el = wrapper.value;
+			if (!el) return;
 			const sign = offset.value < 0 ? '+' : '-';
-			return {
-				[TRANSFORM]: `translate3d(0, calc(var(--vcm-picker-item-height) * ${-currentIndex.value} ${sign} ${Math.abs(offset.value)}px), 0)`,
-				[TRANSITION]: duration.value ? `${TRANSFORM_KEBAB} ${duration.value}ms ${easing.value}` : 'none'
-			};
-		});
+			const y = `calc(var(--vcm-picker-item-height) * ${-currentIndex.value} ${sign} ${Math.abs(offset.value)}px)`;
+			el.style[TRANSFORM as any] = `translate3d(0, ${y}, 0)`;
+			el.style[TRANSITION as any] = duration.value ? `${TRANSFORM_KEBAB} ${duration.value}ms ${easing.value}` : 'none';
+		}, { flush: 'post' });
 
 		const clamp = (index: number) => Math.min(Math.max(index, 0), maxIndex.value);
 
 		const measure = () => {
-			const item = wrapper.value?.firstElementChild as HTMLElement | null;
+			const item = wrapper.value?.querySelector<HTMLElement>('.vcm-picker-col__item');
 			itemHeight.value = item?.getBoundingClientRect().height || ITEM_HEIGHT;
+			// 列高 = 行高 × 可见行数（picker-col.scss），由它推出可见行数，不必读 CSS 变量
+			props.virtualized && (visibleRows.value = Math.round((root.value?.offsetHeight || 0) / itemHeight.value) || VISIBLE_ROWS);
 		};
+
+		/**
+		 * 渲染的行（virtualized）：当前位置所在的行上下各 (可见行数 - 1) / 2 + OVERSCAN 行；
+		 * 动画期间再并上起点所在的窗口（惯性跨过的行都在其中，结束后收回），拖动期间并上按下时的位置
+		 * 	- 拖动时位置逐帧变化，窗口跟着重算，进出窗口的只有少数几行
+		 * 	- 行高固定（--vcm-picker-item-height），窗口按位置直接算出，不必逐行测量
+		 */
+		const range = computed(() => {
+			const max = maxIndex.value;
+			if (!props.virtualized) return [0, max];
+			const h = itemHeight.value;
+			const half = Math.ceil((visibleRows.value - 1) / 2) + OVERSCAN;
+			const position = (currentIndex.value * h + offset.value) / h;
+			let from = position;
+			let to = position;
+			[animationFrom.value, dragFrom.value].forEach((anchor) => {
+				if (anchor === null) return;
+				from = Math.min(from, anchor / h);
+				to = Math.max(to, anchor / h);
+			});
+			return [Math.max(0, Math.floor(from) - half), Math.min(max, Math.ceil(to) + half)];
+		});
+		// 窗口的起止拆成数字：位置逐帧变化但窗口不变时，不触发渲染
+		const rangeStart = computed(() => range.value[0]);
+		const rangeEnd = computed(() => range.value[1]);
 
 		// 当前位置（px，从首项算起）：动画中读计算样式，停在画面上的位置
 		const readPosition = () => {
@@ -116,6 +158,7 @@ export const PickerCol = defineComponent({
 			const clamped = clamp(index);
 			const enabled = findEnabledIndex(props.data, clamped, clamped < selectedIndex.value ? -1 : 1);
 			const target = enabled >= 0 ? enabled : selectedIndex.value;
+			props.virtualized && (animationFrom.value = readPosition());
 			clearTimer();
 			animatingIndex.value = target;
 			offset.value = 0;
@@ -125,6 +168,7 @@ export const PickerCol = defineComponent({
 				timer = void 0;
 				duration.value = 0;
 				animatingIndex.value = -1;
+				animationFrom.value = null;
 			}, ms);
 
 			if (target !== selectedIndex.value && props.data[target]) {
@@ -150,12 +194,14 @@ export const PickerCol = defineComponent({
 			clearTimer();
 			duration.value = 0;
 			animatingIndex.value = -1;
+			animationFrom.value = null;
 			offset.value = position - selectedIndex.value * itemHeight.value;
 
 			startX = x;
 			startY = y;
 			startTime = Date.now();
 			startPosition = position;
+			props.virtualized && (dragFrom.value = position);
 			direction = e.type === 'mousedown' ? 'y' : '';
 			moved = animating;
 			return true;
@@ -213,16 +259,26 @@ export const PickerCol = defineComponent({
 		const drag = useDrag({
 			start: (e, point) => handleStart(e, point.screenX, point.screenY),
 			move: (e, point) => handleMove(e, point.screenX, point.screenY),
-			end: (_, point) => handleEnd(point.screenY),
-			cancel: reset
+			// 手势结束后不再需要保留按下的那一行（松手后的动画由 animationFrom 覆盖）
+			end: (_, point) => {
+				handleEnd(point.screenY);
+				dragFrom.value = null;
+			},
+			cancel: () => {
+				reset();
+				dragFrom.value = null;
+			}
 		});
 
-		// 点击某一项：滚到该项；拖动过的手势不算点击，禁用行不响应
-		const handleItemClick = (index: number) => {
+		// 点击某一项：滚到该项；拖动过的手势不算点击，禁用行不响应。整列一个监听，按行上的 data-index 找到该项
+		const handleClick = (e: MouseEvent) => {
 			if (moved) {
 				moved = false;
 				return;
 			}
+			const el = (e.target as Element).closest<HTMLElement>('.vcm-picker-col__item');
+			if (!el) return;
+			const index = +el.dataset.index!;
 			if (props.data[index]?.disabled) return;
 			measure();
 			scrollTo(index, SNAP_DURATION);
@@ -257,6 +313,7 @@ export const PickerCol = defineComponent({
 			scrollTo(next, WHEEL_DURATION);
 		};
 
+		onMounted(() => props.virtualized && measure());
 		onBeforeUnmount(clearTimer);
 
 		const renderItem = (item: PickerData, index: number) => {
@@ -264,16 +321,39 @@ export const PickerCol = defineComponent({
 			// label 本身可以是字符串，也可以是渲染函数
 			const render = props.renderLabel || (typeof label === 'function' ? label : void 0);
 
-			// 拖动时整列逐帧重渲染；参数不变，各项不会更新
+			// 只在窗口或选中项变化时重渲染（位移不经过渲染）
 			return render
 				? (<Customer render={render} label={label} row={item} index={index} />)
 				: label;
+		};
+
+		const renderRow = (item: PickerData, index: number, current: number) => {
+			return (
+				<div
+					key={index}
+					data-index={index}
+					style={props.itemStyle}
+					class={['vcm-picker-col__item', { 'is-selected': index === current, 'is-disabled': item.disabled }]}
+				>
+					{ renderItem(item, index) }
+				</div>
+			);
+		};
+
+		// 渲染窗口内的行（不开启 virtualized 时为全部）；窗口之前的行用一个占位撑开，wrapper 的位移与上下留白不变
+		const renderRows = (current: number) => {
+			const start = rangeStart.value;
+			const rows = props.data.slice(start, rangeEnd.value + 1).map((item, i) => renderRow(item, start + i, current));
+			return start
+				? [<div key="spacer" class="vcm-picker-col__spacer" style={{ height: `calc(var(--vcm-picker-item-height) * ${start})` }} />, ...rows]
+				: rows;
 		};
 
 		return () => {
 			const current = currentIndex.value;
 			return (
 				<div
+					ref={root}
 					class="vcm-picker-col"
 					// 触摸不阻止 touchstart 的默认行为：轻点仍会触发 click；纵向拖动在 touchmove 中阻止
 					onTouchstart={drag.listeners.onTouchstart}
@@ -287,19 +367,8 @@ export const PickerCol = defineComponent({
 					}}
 					onWheel={handleWheel}
 				>
-					<div ref={wrapper} style={style.value} class="vcm-picker-col__wrapper">
-						{
-							props.data.map((item, index) => (
-								<div
-									key={index}
-									style={props.itemStyle}
-									class={['vcm-picker-col__item', { 'is-selected': index === current, 'is-disabled': item.disabled }]}
-									onClick={() => handleItemClick(index)}
-								>
-									{ renderItem(item, index) }
-								</div>
-							))
-						}
+					<div ref={wrapper} class="vcm-picker-col__wrapper" onClick={handleClick}>
+						{ renderRows(current) }
 					</div>
 				</div>
 			);

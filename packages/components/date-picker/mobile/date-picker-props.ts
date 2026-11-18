@@ -25,6 +25,7 @@ const viewKeys = [
 	'timePickerOptions',
 	'steps',
 	'yearRange',
+	'virtualized',
 	'separator',
 	'nullValue'
 ] as const;

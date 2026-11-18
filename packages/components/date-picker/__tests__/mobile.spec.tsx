@@ -340,9 +340,10 @@ describe('MDatePickerView type and format', () => {
 		wrapper.unmount();
 	});
 
+	// 以下几条按 DOM 数列中的全部项：关闭 virtualized，全部渲染
 	it('date、year、month 的列数；不存在的日期不显示', async () => {
 		const dateWrapper = mount(() => (
-			<MDatePickerView modelValue={new Date(2024, 1, 29)} type="date" />
+			<MDatePickerView modelValue={new Date(2024, 1, 29)} type="date" virtualized={false} />
 		), { attachTo: document.body });
 		await flush();
 		const cols = dateWrapper.findAll('.vcm-picker-col');
@@ -466,7 +467,13 @@ describe('MDatePickerView disabledDate / timePickerOptions / yearRange', () => {
 		// 只允许 2024-03-10 ~ 2024-05-20
 		const disabledDate = (d: Date) => d < new Date(2024, 2, 10) || d > new Date(2024, 4, 20);
 		const wrapper = mount(() => (
-			<MDatePickerView modelValue={new Date(2024, 2, 15)} type="date" disabledDate={disabledDate} yearRange={[2023, 2025]} />
+			<MDatePickerView
+				modelValue={new Date(2024, 2, 15)}
+				type="date"
+				disabledDate={disabledDate}
+				yearRange={[2023, 2025]}
+				virtualized={false}
+			/>
 		), { attachTo: document.body });
 		await flush();
 
@@ -502,6 +509,7 @@ describe('MDatePickerView disabledDate / timePickerOptions / yearRange', () => {
 				modelValue: '09:30',
 				type: 'time',
 				format: 'HH:mm',
+				virtualized: false,
 				steps: [1, 15],
 				timePickerOptions: {
 					disabledHours: [0, 1, 2, 3, 4, 5, 6, 7],
@@ -541,7 +549,7 @@ describe('MDatePickerView 范围', () => {
 	it('起止栏：点哪一侧就编辑哪一侧，结束一侧早于开始值的项置灰', async () => {
 		const value = ref<any>(['2024-03-10', '2024-03-20']);
 		const wrapper = mount(() => (
-			<MDatePickerView v-model={value.value} type="daterange" yearRange={[2023, 2025]} />
+			<MDatePickerView v-model={value.value} type="daterange" yearRange={[2023, 2025]} virtualized={false} />
 		), { attachTo: document.body });
 		await flush();
 
