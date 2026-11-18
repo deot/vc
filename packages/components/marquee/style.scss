@@ -2,15 +2,101 @@
 
 $component-name: vc-marquee;
 
+// 轨道里两份内容首尾相接，平移 -50% 正好一轮（单份内容 + 尾部间距）
+@keyframes vc-marquee-x {
+	to { transform: translateX(-50%); }
+}
+
+@keyframes vc-marquee-y {
+	to { transform: translateY(-50%); }
+}
+
 @include block($component-name) {
 	overflow: hidden;
 	white-space: nowrap;
 
-	@include element(content) {
-		display: inline-block;
+	@include element(track) {
+		display: flex;
+		width: max-content;
+		will-change: transform;
+	}
 
-		@include when(paused) {
-			animation-play-state: paused;
+	@include element(content) {
+		flex: none;
+	}
+
+	@include when(vertical) {
+		white-space: normal;
+
+		@include element(track) {
+			flex-direction: column;
+			width: auto;
+		}
+	}
+
+	@include when(running) {
+		@include element(track) {
+			animation: vc-marquee-x var(--vc-marquee-duration) linear var(--vc-marquee-delay, 0s) infinite;
+		}
+
+		&.is-horizontal {
+			@include element(content) {
+				padding-right: var(--vc-marquee-gap, 32px);
+			}
+		}
+
+		&.is-vertical {
+			@include element(content) {
+				padding-bottom: var(--vc-marquee-gap, 32px);
+			}
+
+			@include element(track) {
+				animation-name: vc-marquee-y;
+			}
+		}
+
+		&.is-right,
+		&.is-down {
+			@include element(track) {
+				animation-direction: reverse;
+			}
+		}
+	}
+
+	@include when(pause-on-hover) {
+		&:hover {
+			@include element(track) {
+				animation-play-state: paused;
+			}
+		}
+	}
+}
+
+// 减少动态效果：不滚动，只显示一份，溢出部分省略
+@media (prefers-reduced-motion: reduce) {
+	@include block($component-name) {
+		@include element(track) {
+			animation: none !important;
+		}
+
+		@include element(content) {
+			&[aria-hidden] {
+				display: none;
+			}
+		}
+
+		&.is-horizontal {
+			@include element(track) {
+				width: auto;
+			}
+
+			@include element(content) {
+				min-width: 0;
+				padding-right: 0;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				flex: auto;
+			}
 		}
 	}
 }

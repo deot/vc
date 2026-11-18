@@ -6,7 +6,7 @@
 在一小块内容展示通知类的信息时使用。
 
 ### 基础用法
-支持 `content` 和默认插槽，插槽优先。内容宽度小于容器时默认不滚动，等于或超过容器宽度时滚动。
+支持 `content` 和默认插槽，插槽优先。内容超出容器时滚动，两份内容首尾相接无缝循环；未超出时静止显示。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
@@ -48,41 +48,45 @@ const text = ref('ABCDEFG');
 ```
 :::
 
-### 自动滚动
-设置`autoplay`未超出一屏时自动滚动。
+### 方向与间距
+`direction` 设置滚动方向（`up` / `down` 需要给容器设高度），`gap` 设置首尾两份内容的间距；`always` 让未超出的内容也滚动。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
 ```vue
 <template>
-	<div class="v-marquee-autoplay">
-		<Marquee
-			:content="text"
-			autoplay
-			class="_normal"
-		/>
+	<div class="v-marquee-direction">
+		<Marquee :content="text.repeat(4)" direction="right" class="_normal" />
+		<Marquee :content="text" always :gap="80" class="_normal" />
+		<Marquee direction="up" class="_normal _vertical">
+			<div v-for="item in 3" :key="item">第 {{ item }} 条通知</div>
+		</Marquee>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
 import { Marquee } from '@deot/vc';
 
-const text = ref('ABCDEFG');
+const text = ref('ABCDEFG ');
 </script>
 <style>
-.v-marquee-autoplay > ._normal {
+.v-marquee-direction > ._normal {
 	width: min(100%, 240px);
-	display: block;
 	padding: 8px 12px;
 	background: #f6f8fa;
+	margin: 0 0 8px;
 	border-radius: 4px;
+}
+.v-marquee-direction > ._vertical {
+	height: 40px;
+	line-height: 20px;
 }
 </style>
 ```
 :::
 
-### 动画
-通过`animated`控制滚动暂停。
+### 暂停与事件
+`animated` 控制滚动，默认鼠标悬停时暂停（`pauseOnHover`）；`delay` 设置开始前停留的毫秒数；每滚完一轮触发 `loop`。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
@@ -90,73 +94,31 @@ const text = ref('ABCDEFG');
 <template>
 	<div class="v-marquee-animated">
 		<Marquee
-			:content="text.repeat(3)"
-			class="_normal"
+			:content="text.repeat(4)"
 			:animated="isAnimated"
+			:delay="1000"
+			:speed="100"
+			class="_normal"
+			@loop="count++"
 		/>
-		<div>
-			<Button @click="handleClick">切换滚动状态</Button>
-		</div>
+		<Button @click="isAnimated = !isAnimated">切换滚动状态</Button>
+		<span>已滚动 {{ count }} 轮</span>
 	</div>
 </template>
 <script setup>
 import { ref } from 'vue';
 import { Marquee, Button } from '@deot/vc';
 
-const text = ref('ABCDEFG');
+const text = ref('ABCDEFG ');
 const isAnimated = ref(true);
-
-const handleClick = () => {
-	isAnimated.value = !isAnimated.value;
-};
+const count = ref(0);
 </script>
 <style>
 .v-marquee-animated > ._normal {
 	width: min(100%, 240px);
-	display: block;
 	padding: 8px 12px;
 	background: #f6f8fa;
 	margin-bottom: 8px;
-	border-radius: 4px;
-}
-</style>
-```
-:::
-
-### 速度
-通过设置`speed`控制每秒移动多少px。
-
-:::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
-```vue
-<template>
-	<div class="v-marquee-basic">
-		<Marquee
-			:content="text.repeat(3)"
-			:speed="100"
-			class="_normal"
-		/>
-		<Marquee
-			:content="text"
-			autoplay
-			:speed="500"
-			class="_normal"
-		/>
-	</div>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { Marquee } from '@deot/vc';
-
-const text = ref('ABCDEFG');
-</script>
-<style>
-.v-marquee-basic > ._normal {
-	width: min(100%, 240px);
-	display: block;
-	padding: 8px 12px;
-	background: #f6f8fa;
-	margin: 0 0 8px;
 	border-radius: 4px;
 }
 </style>
@@ -167,13 +129,22 @@ const text = ref('ABCDEFG');
 
 ### 属性
 
-| 属性       | 说明               | 类型                  | 可选值 | 默认值     |
-| -------- | ---------------- | ------------------- | --- | ------- |
-| speed    | 速度计算（如：每秒移动50px） | `number`            | -   | 50      |
-| content  | 内容。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md)；默认插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | - |
-| animated | 是否运行动画，设为 `false` 暂停 | `boolean` | - | `true` |
-| autoplay | 未超出一屏时是否滚动       | `boolean`           | -   | `false` |
+| 属性 | 说明 | 类型 | 可选值 | 默认值 |
+| --- | --- | --- | --- | --- |
+| content | 内容。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md)；默认插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | - |
+| speed | 每秒移动的像素数 | `number` | - | `50` |
+| direction | 内容移动的方向 | `string` | `left`、`right`、`up`、`down` | `left` |
+| gap | 首尾两份内容的间距（px），不传时取 `--vc-marquee-gap` | `number` | - | - |
+| animated | 是否滚动，设为 `false` 静止 | `boolean` | - | `true` |
+| always | 内容未超出容器时也滚动 | `boolean` | - | `false` |
+| pauseOnHover | 鼠标悬停时暂停 | `boolean` | - | `true` |
+| delay | 开始滚动前停留的时长（毫秒） | `number` | - | `0` |
 
+### 事件
+
+| 事件名 | 说明 | 回调参数 |
+| --- | --- | --- |
+| loop | 每滚完一轮触发 | - |
 
 ### 插槽
 
@@ -181,10 +152,16 @@ const text = ref('ABCDEFG');
 | --- | --- | --- |
 | default | 自定义内容，优先于 `content` | - |
 
+### CSS 变量
+
+| 变量 | 说明 | 默认值 |
+| --- | --- | --- |
+| `--vc-marquee-gap` | 首尾两份内容的间距 | `32px`（MMarquee 为 750 稿 64） |
+
 ### 注意事项
 
-- `speed` 的单位为 px/s，使用正数。动画时长为「容器宽度 + 内容宽度」除以速度。
+- 滚动时内容会渲染两份（第二份 `aria-hidden`），插槽里的组件会创建两次；一轮距离为「单份内容 + 间距」，时长为该距离除以 `speed`。
+- 容器与内容的尺寸变化（包括插槽内容、渲染函数依赖变化、在弹窗或隐藏状态下挂载）都会自动重新测量。
+- 系统开启「减少动态效果」时不滚动，水平方向溢出部分显示省略号。
 - `content` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。
-- 组件挂载后测量宽度，并在 `content` 或 `speed` 变化时重新计算；容器尺寸、插槽内容及渲染函数内部依赖变化不会自动重新测量。
-- `animated` 和 `autoplay` 只控制暂停条件。若首次测量时处于暂停状态，之后仅切换这两个属性不会初始化动画。
-- 移动端导出 `MMarquee`，与 `Marquee` 共用实现及 API。
+- 移动端导出 `MMarquee`，与 `Marquee` API 相同，根节点另有 `vcm-marquee`，间距按 750 稿缩放。

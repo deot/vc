@@ -1,0 +1,8 @@
+@use '../../style/helper' as *;
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放）：首尾间距 375 宽下 32px；结构沿用 ../style.scss，这里只覆盖局部变量
+@include block(vcm-marquee) {
+	@include localvars(marquee, (
+		gap: remfix(64)
+	));
+}

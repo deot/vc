@@ -1,53 +1,55 @@
 <template>
-	<div style="padding: 20px">
-		<Marquee :content="text" style="background: #f7f7f7" />
-		<Marquee :content="text" autoplay style="background: #f7f7f7" />
-		<br>
-		<Marquee style="background: #f7f7f7">
-			length: 5 - {{ text.repeat(5) }}
+	<div class="v-marquee-example">
+		<Marquee :content="text" class="_box" />
+		<Marquee :content="text" always class="_box" />
+		<Marquee :content="text.repeat(5)" class="_box" @loop="count++" />
+		<Marquee :content="text.repeat(5)" direction="right" :gap="80" class="_box" />
+		<Marquee direction="up" :delay="1000" class="_box _vertical">
+			<div v-for="item in 3" :key="item">
+				第 {{ item }} 条通知
+			</div>
 		</Marquee>
-		<br>
-		<br>
-		<Marquee style="background: #f7f7f7">
-			length: - 10 {{ text.repeat(10) }}
-		</Marquee>
-		<br>
-		<!-- <vc-carousel
-			:height="18"
-			:draggable="false"
-			:t="1"
-			vertical
-			style="background: #f7f7f7"
-		>
-			<vc-carousel-item v-for="item in 3" :key="item">
-				<h3>{{ item }}</h3>
-			</vc-carousel-item>
-		</vc-carousel>
- -->
+		<Marquee :content="text.repeat(5)" :animated="animated" :style="{ width: `${width}px` }" class="_box" />
+		<p>loop: {{ count }}</p>
+		<Button @click="animated = !animated">
+			animated: {{ animated }}
+		</Button>
+		<Button @click="width = width === 240 ? 600 : 240">
+			width: {{ width }}
+		</Button>
 		<Button @click="handleClick">
-			弹窗动画干扰
+			弹窗内
 		</Button>
 	</div>
 </template>
 <script setup lang="jsx">
 import { ref } from 'vue';
 import { Marquee } from '..';
-
 import { Button } from '../../button';
 import { Modal } from '../../modal';
 
-const text = ref('ABCDEFG');
+const text = ref('ABCDEFG ');
+const count = ref(0);
+const animated = ref(true);
+const width = ref(240);
 
 const handleClick = () => {
 	Modal.success({
 		title: 'test',
-		content: () => {
-			return (
-				<Marquee
-					content={text.value.repeat(10)}
-				/>
-			);
-		}
+		content: () => (<Marquee content={text.value.repeat(10)} />)
 	});
 };
 </script>
+<style>
+.v-marquee-example { padding: 20px; }
+.v-marquee-example ._box {
+	width: 240px;
+	padding: 8px 12px;
+	margin-bottom: 8px;
+	background: #f7f7f7;
+}
+.v-marquee-example ._vertical {
+	height: 40px;
+	line-height: 20px;
+}
+</style>
