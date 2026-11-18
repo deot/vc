@@ -365,6 +365,19 @@ export class Portal<T extends Component> {
 		const $onRejected = this.createCallback(() => leaf, leaveDelay, onRejected);
 		const $onFulfilled = this.createCallback(() => leaf, leaveDelay, onFulfilled);
 
+		const append = (root$: HTMLElement | null, child$?: HTMLElement) => {
+			if (!root$ || !child$) return;
+
+			if (insertion === 'first') {
+				const firstEl = root$.firstElementChild;
+				if (firstEl) {
+					root$.insertBefore(child$, firstEl);
+					return;
+				}
+			}
+
+			root$.appendChild(child$);
+		};
 		if (alive && Portal.leafs.has(name!)) {
 			leaf = Portal.leafs.get(name!) as PortalLeaf;
 			leaf.target = target;
@@ -412,6 +425,8 @@ export class Portal<T extends Component> {
 
 			install?.(app);
 
+			// 先插入文档再挂载：组件在 onMounted 中按计算样式找滚动祖先、读尺寸时（如 RecycleList、Affix）才能拿到真实结果
+			append(root, container);
 			app.mount(container);
 		}
 
@@ -429,19 +444,6 @@ export class Portal<T extends Component> {
 		// alive复用：节点仍在首次创建的容器上，本次新建的container不插入
 		if (leaf.container !== container) return leaf;
 
-		const append = (root$: HTMLElement | null, child$?: HTMLElement) => {
-			if (!root$ || !child$) return;
-
-			if (insertion === 'first') {
-				const firstEl = root$.firstElementChild;
-				if (firstEl) {
-					root$.insertBefore(child$, firstEl);
-					return;
-				}
-			}
-
-			root$.appendChild(child$);
-		};
 		/**
 		 * if
 		 * 渲染结果为: <div data-v-app> <wrapper /> </div>
@@ -452,29 +454,12 @@ export class Portal<T extends Component> {
 		 * （因为wrapper没有根节点, childs中的根节点使用v-if，后续不会渲染出来）
 		 *
 		 * else
-		 * 渲染结果为: <wrapper />
+		 * 渲染结果为: <wrapper />，子节点原位移到 root 下，容器移出文档
 		 */
-		if (
-			fragment
-			|| (
-				typeof container._children === 'undefined'
-				&& !Array.from(container.children).length
-			)
-		) {
-			container.parentElement === null && append(root, container);
-		} else if (!container._children) {
-			container._children = [];
-
-			let childs = Array.from(container.children);
-
-			if (insertion === 'first') {
-				childs = childs.reverse();
-			}
-
-			childs.forEach((i) => {
-				append(root, i as HTMLElement);
-				container._children?.push?.(i as HTMLElement);
-			});
+		if (!fragment && container.children.length) {
+			container._children = Array.from(container.children) as HTMLElement[];
+			container._children.forEach(i => root?.insertBefore(i, container));
+			container.remove();
 		}
 
 		return leaf;
