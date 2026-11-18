@@ -10,6 +10,7 @@ import { RecycleList as DesktopRecycleList } from '../recycle-list';
 import { Scroller as DesktopScroller } from '../scroller';
 import { ExternalCarrier, getAxisKeys } from '../scroller/core/carrier';
 import { isWindow } from '../scroller/utils';
+import { findStickyIndex, getStickyTranslate } from '../scroller/core/sticky';
 import { IndexBarSidebar } from './index-bar-sidebar';
 import type { Props, IndexBarGroup, IndexBarValue } from './index-bar-props';
 
@@ -148,24 +149,6 @@ export const useIndexBar = (
 		return (titleOffsets || measureTitles(el))[index];
 	};
 
-	// 最后一个标题不超过 line 的分组；标题位置单调递增
-	const findGroup = (line: number, el: HTMLElement) => {
-		let low = 0;
-		let high = props.data.length - 1;
-		let result = 0;
-		while (low <= high) {
-			const mid = (low + high) >> 1;
-			const offset = getTitleOffset(mid, el);
-			if (offset !== undefined && offset <= line) {
-				result = mid;
-				low = mid + 1;
-			} else {
-				high = mid - 1;
-			}
-		}
-		return result;
-	};
-
 	// -------------------------------------------------------------------
 	// 滚动驱动：当前分组、吸顶标题的顶出、侧栏可见段
 	// -------------------------------------------------------------------
@@ -211,10 +194,9 @@ export const useIndexBar = (
 		const line = (stageRect.top - rect.top) / scale;
 		const active = line > 0.5;
 		// 允许 1px 误差：跳转到的标题恰好停在吸附线上
-		const index = findGroup(line + 1, el);
-		const titleSize = sticky.value?.offsetHeight || 0;
+		const index = Math.max(0, findStickyIndex(props.data.length, i => getTitleOffset(i, el), line + 1));
 		const next = index + 1 < props.data.length ? getTitleOffset(index + 1, el) : rect.height / scale;
-		const translate = next === undefined ? 0 : Math.min(0, next - line - titleSize);
+		const translate = getStickyTranslate(next, line, sticky.value?.offsetHeight || 0);
 		const visible = Math.max(0, (Math.min(viewportBottom, rootRect.bottom) - stageRect.top) / scale);
 
 		stickyIndex.value = index;
