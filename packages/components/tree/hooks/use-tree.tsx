@@ -21,7 +21,7 @@ import { useLocale } from '../../locale';
 import { RecycleList as DesktopRecycleList } from '../../recycle-list/index';
 import { Spin as DesktopSpin } from '../../spin';
 import { SelectList } from '../../select/select-list';
-import type { SelectListExposed } from '../../select/select-list';
+import type { SelectListAlign, SelectListExposed } from '../../select/select-list';
 import { useNavigate } from '../../select/hooks/use-navigate';
 import { TreeNodeContent, collectVisibleNodes } from '../tree-node-content';
 import { useDragNode } from './use-drag-node';
@@ -242,6 +242,19 @@ export const useTree = (
 		return store.getNode(data);
 	};
 
+	/**
+	 * 滚动到节点：祖先未展开时先展开（无动画，不发 node-expand-change），等行列表更新后定位；虚拟列表中尚未渲染的行同样可用
+	 * @param value 节点的值，或节点的数据
+	 * @param scrollOptions ~
+	 * @param scrollOptions.align start（默认）置顶；center 居中；nearest 已完整可见时不动，否则贴近离得近的一边
+	 */
+	const scrollToNode = async (value: any, scrollOptions: { align?: SelectListAlign } = {}) => {
+		const node = store.getNode(value);
+		if (!node) return;
+		node.expandParents() && await nextTick();
+		list.value?.scrollToIndex(rows.value.indexOf(node), scrollOptions.align ?? 'start');
+	};
+
 	const remove = (data: any) => {
 		store.remove(data);
 	};
@@ -424,6 +437,7 @@ export const useTree = (
 		setCurrentNode,
 		setCurrentNodeByData,
 		getNode,
+		scrollToNode,
 		remove,
 		append,
 		insertBefore,

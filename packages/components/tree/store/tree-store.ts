@@ -603,11 +603,7 @@ export class TreeStore {
 			node.expand(this.autoExpandParent);
 			return;
 		}
-		if (this.autoExpandParent) {
-			for (let parent = node.parentNode; parent && toRaw(parent.states).level > 0; parent = parent.parentNode) {
-				toRaw(parent.states).expanded || (parent.states.expanded = true);
-			}
-		}
+		this.autoExpandParent && node.expandParents();
 		toRaw(node.states).expanded || (node.states.expanded = true);
 	}
 

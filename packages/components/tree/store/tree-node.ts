@@ -392,15 +392,23 @@ export class TreeNode {
 		}
 	}
 
+	/**
+	 * 展开全部祖先（根节点之下）；只写未展开的，读状态不经响应式代理
+	 * @returns 是否有祖先由收起变为展开
+	 */
+	expandParents() {
+		let changed = false;
+		for (let parent = this.parentNode; parent && toRaw(parent.states).level > 0; parent = parent.parentNode) {
+			if (toRaw(parent.states).expanded) continue;
+			parent.states.expanded = true;
+			changed = true;
+		}
+		return changed;
+	}
+
 	async expand(expandParent?: boolean) {
 		const done = () => {
-			if (expandParent) {
-				let parent = this.parentNode;
-				while (parent && parent.states.level > 0) {
-					parent.states.expanded = true;
-					parent = parent.parentNode;
-				}
-			}
+			expandParent && this.expandParents();
 			this.states.expanded = true;
 		};
 

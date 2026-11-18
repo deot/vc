@@ -867,6 +867,31 @@ describe('Tree virtualized', () => {
 		wrapper.unmount();
 	});
 
+	it('scrollToNode：展开收起的祖先（不发事件），虚拟列表中未渲染的行也能定位', async () => {
+		const treeRef = ref<any>();
+		const onExpandChange = vi.fn();
+		const wrapper = mount(() => (
+			<div class="vc-scroller" style="height: 200px; overflow: auto">
+				<Tree ref={treeRef} data={bigData()} virtualized onNodeExpandChange={onExpandChange} />
+			</div>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(30);
+		const scroller = wrapper.element as HTMLElement;
+		expect(scroller.scrollTop).toBe(0);
+
+		await treeRef.value.scrollToNode('250-0', { align: 'start' });
+		await flush();
+		expect(treeRef.value.getNode('250').states.expanded).toBe(true);
+		expect(onExpandChange).not.toHaveBeenCalled();
+		// 第 251 行（Group 0…250 之后）按预估行高置顶
+		expect(scroller.scrollTop).toBeGreaterThan(0);
+
+		// 找不到的值不处理
+		await treeRef.value.scrollToNode('none');
+		wrapper.unmount();
+	});
+
 	it('TreeSelect 树形模式：virtualized 透传给树，高亮与回车照常', async () => {
 		const value = ref<any[]>([]);
 		const wrapper = mount(() => (

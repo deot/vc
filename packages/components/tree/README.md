@@ -460,6 +460,7 @@ TreeSelect 没有额外的局部 CSS 主题参数。
 | getNode | 按值、原始数据或节点对象查找 | `(data: Value \| NodeData \| Node)` | `Node \| null` |
 | getNodeKey | 读取节点的值字段 | `(node: Node)` | `Value` |
 | getNodePath | 读取从根级到目标的原始数据路径 | `(data: Value \| NodeData \| Node)` | `NodeData[]`，找不到时为 `[]` |
+| scrollToNode | 滚动到节点，祖先未展开时先展开（无动画，不触发 `node-expand-change`）；`virtualized` 下尚未渲染的节点同样可用。`align` 为 `start` 时节点已完整可见则不动，否则置顶；`center` 总是居中；`nearest` 已完整可见则不动，否则贴近离得近的一边 | `(data: Value \| NodeData \| Node, options?: { align?: 'start' \| 'center' \| 'nearest' })`，`align` 默认 `'start'` | `Promise<void>` |
 | getCheckedNodes | 读取勾选节点，可只取叶节点或包含半选节点 | `(leafOnly = false, includeHalfChecked = false)` | `Node[]` |
 | getCheckedValues | 读取勾选值 | `(leafOnly = false)` | `Value[]` |
 | getHalfCheckedNodes | 读取半选节点 | - | `Node[]` |
