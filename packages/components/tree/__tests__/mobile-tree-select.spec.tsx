@@ -201,6 +201,34 @@ describe('MTreeSelect', () => {
 		leaf.destroy();
 	});
 
+	it('virtualized：打开时滚到已选节点（尚未渲染），搜索后回到顶部', async () => {
+		// jsdom 不加载组件样式：列表按原生滚动的容器识别
+		const style = document.createElement('style');
+		style.textContent = '.vcm-tree-select-panel__options { overflow-y: auto; }';
+		document.head.appendChild(style);
+		const data = Array.from({ length: 300 }, (_, i) => ({
+			value: `${i}`,
+			label: `分组 ${i}`,
+			children: [{ value: `${i}-0`, label: `条目 ${i}-0` }]
+		}));
+		const leaf = MTreeSelect.open({ data, modelValue: '250-0', virtualized: true, searchable: true });
+		await flush();
+		await sleep(50);
+		await flush();
+		const list = document.querySelector<HTMLElement>('.vcm-tree-select-panel__options')!;
+		expect(list.querySelector('.vcm-recycle-list')).toBeTruthy();
+		expect(getRows().length).toBeLessThan(300);
+		expect(list.scrollTop).toBeGreaterThan(0);
+
+		const input = document.querySelector<HTMLInputElement>('.vcm-tree-select-panel__search input')!;
+		input.value = '分组';
+		input.dispatchEvent(new Event('input'));
+		await flush();
+		expect(list.scrollTop).toBe(0);
+		leaf.destroy();
+		style.remove();
+	});
+
 	it('clearable 单选：汇总栏「清空」即提交空值并关闭', async () => {
 		const value = ref<any>('3');
 		const onClear = vi.fn();

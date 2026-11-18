@@ -35,6 +35,7 @@ export const MTreeSelectCore = defineComponent({
 		const { t } = useLocale();
 		const core = usePickerCore(props, context, { fields: ['labels'] });
 		const list = ref<HTMLElement>();
+		const content = ref<any>();
 		const keyword = ref('');
 
 		// 弹层内的值（选中的值）：确定时提交，取消时丢弃
@@ -103,16 +104,17 @@ export const MTreeSelectCore = defineComponent({
 			!mode.value && handleOk();
 		};
 
-		// 第一个已选节点滚到列表中间（已选节点及其祖先在打开时展开，见 TreeSelectContent）
+		// 第一个已选节点滚到列表中间（已选节点及其祖先在打开时展开，见 TreeSelectContent）；虚拟列表中未渲染的节点同样可用
 		const scrollIntoSelected = () => {
-			const el = list.value;
-			const row = el?.querySelector<HTMLElement>('.vc-tree-node.is-checked');
-			if (!el || !row) return;
-			const offset = row.getBoundingClientRect().top - el.getBoundingClientRect().top;
-			el.scrollTop += offset - (el.clientHeight - row.offsetHeight) / 2;
+			currentValue.value.length && content.value?.scrollToNode(currentValue.value[0], { align: 'center' });
 		};
 
 		onMounted(() => nextTick(scrollIntoSelected));
+
+		// 搜索词、数据变化后列表回到顶部
+		watch([keyword, data], () => {
+			list.value && (list.value.scrollTop = 0);
+		}, { flush: 'post' });
 
 		const renderContent = () => {
 			return (
@@ -145,6 +147,7 @@ export const MTreeSelectCore = defineComponent({
 					/>
 					<div ref={list} class="vcm-tree-select-panel__options">
 						<TreeSelectContent
+							ref={content}
 							tree={MTree}
 							mobile
 							value={currentValue.value}

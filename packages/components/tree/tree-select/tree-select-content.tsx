@@ -97,7 +97,8 @@ export const TreeSelectContent = defineComponent({
 			move: (step: number) => treeRef.value?.move(step),
 			shift: (step: number) => treeRef.value?.shift(step),
 			enter: () => treeRef.value?.enter(),
-			scrollIntoActive: () => treeRef.value?.scrollIntoActive()
+			scrollIntoActive: () => treeRef.value?.scrollIntoActive(),
+			scrollToNode: (value: any, options?: any) => treeRef.value?.scrollToNode(value, options)
 		});
 
 		return () => {
