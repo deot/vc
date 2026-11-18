@@ -17,9 +17,7 @@
 	$foreground-color-inactive: varfix(foreground-color-inactive, $component);
 	$background-color-light: varfix(background-color-light, $component);
 
-	// 列表是选项的 offsetParent：选中项按 offsetTop 滚到中间
 	@include element(options) {
-		position: relative;
 		height: localfix($component, height, remfix(768));
 		padding: $padding;
 		overflow-y: auto;

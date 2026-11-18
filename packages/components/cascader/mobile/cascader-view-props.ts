@@ -3,7 +3,7 @@ import { pick } from 'lodash-es';
 import { props as cascaderProps } from '../cascader-props';
 import { renderType } from '../../customer/customer-props';
 
-// 与桌面端同名同义：值的形状与转换、数据、选择任意一级、加载子节点、搜索占位
+// 与桌面端同名同义：值的形状与转换、数据、选择任意一级、加载子节点、搜索占位、虚拟化
 const cascaderKeys = [
 	'modelValue',
 	'data',
@@ -13,7 +13,8 @@ const cascaderKeys = [
 	'searchPlaceholder',
 	'separator',
 	'numerable',
-	'nullValue'
+	'nullValue',
+	'virtualized'
 ] as const;
 
 export const props = {

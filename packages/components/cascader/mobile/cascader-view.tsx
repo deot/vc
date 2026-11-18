@@ -1,17 +1,20 @@
 /** @jsxImportSource vue */
 
 import { computed, defineComponent, inject, nextTick, ref, shallowRef, watch } from 'vue';
+import type { ComputedRef } from 'vue';
 import { isEqual } from 'lodash-es';
 import { MTabs, MTabsPane } from '../../tabs/index.m';
 import { MIcon } from '../../icon/index.m';
 import { MSpin } from '../../spin/index.m';
 import { MInputSearch } from '../../input/index.m';
 import { MCustomer } from '../../customer/index.m';
+import { MRecycleList } from '../../recycle-list/index.m';
 import { useLocale } from '../../locale';
-import { createSearchRegex, getMatchedPaths } from '../../select/utils';
+import { createSearchRegex, findIndexByValue, getMatchedPaths } from '../../select/utils';
 import { renderHighlight } from '../../select/select-search/highlight';
 import { getPathRows, toCascaderPath, toCascaderValue } from '../utils';
-import { scrollToCenter } from '../../select/select-list/scroll';
+import { SelectList } from '../../select/select-list';
+import type { SelectListExposed } from '../../select/select-list';
 import { props as cascaderViewProps } from './cascader-view-props';
 import type { TreeData, TreeValue } from '../../select/utils';
 import type { SelectPath } from '../../select/select-search';
@@ -44,8 +47,9 @@ export const MCascaderView = defineComponent({
 		// 正在加载子节点的一项
 		const loadingRow = shallowRef<TreeData>();
 		const keyword = ref('');
-		// 各级选项列表，按级的下标
-		const lists: Array<HTMLElement | null> = [];
+		// 各级与搜索结果的行列表（按级的下标）：滚动、定位都经它
+		const lists: Array<SelectListExposed | null> = [];
+		const resultsList = ref<SelectListExposed>();
 		// 最近一次发出的值：v-model 回传时不再重新解析
 		let emitted: any;
 		// 最近一次点选：加载期间又点了别的项时，以最后一次为准
@@ -81,14 +85,14 @@ export const MCascaderView = defineComponent({
 		const isSearching = computed(() => props.searchable && !!keyword.value.trim());
 		const regex = computed(() => createSearchRegex(keyword.value));
 
-		// 搜索结果：只列最后一级；changeOnSelect 时任意一级（同桌面端）
+		// 搜索结果：只列最后一级；changeOnSelect 时任意一级（同桌面端）。key 为路径各级的值，渲染时与当前路径比较
 		const results = computed(() => {
 			if (!isSearching.value) return [];
 			return getMatchedPaths(props.data as TreeData[], {
 				regex: regex.value,
 				path: true,
 				selectable: row => props.changeOnSelect || !hasChildren(row)
-			});
+			}).map(result => ({ ...result, key: result.values.join(',') }));
 		});
 
 		// 停在已选的最后一级；还有下一级时停在待选的一级
@@ -185,9 +189,10 @@ export const MCascaderView = defineComponent({
 
 		// 把当前一级的选中项滚到列表中间
 		const scrollIntoSelected = () => {
-			const list = lists[active.value];
+			const level = active.value;
+			const index = findIndexByValue(columns.value[level], path.value[level]);
 			// 换了分支的一级没有选中项：回到顶部
-			list && scrollToCenter(list, list.querySelector<HTMLElement>('.vcm-cascader-view__option.is-selected'));
+			index === -1 ? lists[level]?.scrollTo(0) : lists[level]?.scrollToIndex(index, 'center');
 		};
 
 		// 同桌面端：不深度监听，值整体替换时才重新解析
@@ -216,6 +221,9 @@ export const MCascaderView = defineComponent({
 			{ immediate: true, flush: 'post' }
 		);
 
+		// 搜索词变化后结果列表回到顶部
+		watch(results, () => resultsList.value?.scrollTo(0), { flush: 'post' });
+
 		expose({
 			// 浏览的路径与它是否已到最后一级，供弹层判断「确定」能否点击
 			getPath: () => path.value,
@@ -238,56 +246,82 @@ export const MCascaderView = defineComponent({
 			);
 		};
 
+		// 行列表：virtualized 时交给 MRecycleList，滚动容器仍是外层的列表
+		const renderList = (data: unknown[], renderRow: (scope: { row: any; index: number }) => any, onRef: (v: any) => void) => {
+			return (
+				<SelectList
+					ref={onRef}
+					data={data}
+					virtualized={props.virtualized}
+					mobile
+					recycleList={MRecycleList}
+				>
+					{{ default: renderRow, $stable: true }}
+				</SelectList>
+			);
+		};
+
+		/**
+		 * 各级的选中值与该级正在加载的一项：行插槽只读本级的，点选其它级、加载状态变化时其余各级的列表不重渲染
+		 * @param level ~
+		 * @returns ~
+		 */
+		const levelStates: Array<{ value: ComputedRef<TreeValue>; loading: ComputedRef<TreeData | undefined> }> = [];
+		const getLevelState = (level: number) => (levelStates[level] ||= {
+			value: computed(() => path.value[level]),
+			loading: computed(() => {
+				const row = loadingRow.value;
+				return row && columns.value[level]?.includes(row) ? row : void 0;
+			})
+		});
+
 		const renderOptions = (list: TreeData[], level: number) => {
 			const render = slots.label || props.renderLabel;
-			const current = path.value[level];
+			const state = getLevelState(level);
+			const renderRow = ({ row, index }: { row: TreeData; index: number }) => {
+				const selected = state.value.value === row.value;
+				return renderOption(
+					row.value,
+					index,
+					selected,
+					!!row.disabled,
+					render
+						? (<MCustomer render={render} label={row.label} row={row} index={index} selected={selected} />)
+						: row.label,
+					state.loading.value === row
+						? (<MSpin class="vcm-cascader-view__loading" size={32} />)
+						: selected && renderCheck()
+				);
+			};
 			return (
-				<div
-					ref={(el: any) => (lists[level] = el)}
-					class="vcm-cascader-view__options"
-					onClick={(e: MouseEvent) => handleOptionsClick(e, level)}
-				>
-					{
-						list.map((row, index) => {
-							const selected = current === row.value;
-							return renderOption(
-								row.value,
-								index,
-								selected,
-								!!row.disabled,
-								render
-									? (<MCustomer render={render} label={row.label} row={row} index={index} selected={selected} />)
-									: row.label,
-								loadingRow.value === row
-									? (<MSpin class="vcm-cascader-view__loading" size={32} />)
-									: selected && renderCheck()
-							);
-						})
-					}
+				<div class="vcm-cascader-view__options" onClick={(e: MouseEvent) => handleOptionsClick(e, level)}>
+					{ renderList(list, renderRow, (v: any) => (lists[level] = v)) }
 				</div>
 			);
 		};
 
+		// 当前路径的 key，与搜索结果的 key 比较
+		const pathKey = computed(() => path.value.join(','));
+
 		const renderResults = () => {
 			const list = results.value;
-			const current = path.value.join(',');
+			const renderRow = ({ row, index }: { row: SelectPath & { key: string }; index: number }) => {
+				const selected = row.key === pathKey.value;
+				const last = row.labels.length - 1;
+				return renderOption(
+					row.key,
+					index,
+					selected,
+					!!row.item.disabled,
+					row.labels.map((text, i) => [renderHighlight(text, regex.value), i !== last ? ' / ' : null]),
+					selected && renderCheck()
+				);
+			};
 			return (
 				<div class="vcm-cascader-view__options is-results" onClick={handleResultsClick}>
 					{
 						list.length
-							? list.map(({ item, labels: texts, values }, index) => {
-									const key = values.join(',');
-									const selected = key === current;
-									const last = texts.length - 1;
-									return renderOption(
-										key,
-										index,
-										selected,
-										!!item.disabled,
-										texts.map((text, i) => [renderHighlight(text, regex.value), i !== last ? ' / ' : null]),
-										selected && renderCheck()
-									);
-								})
+							? renderList(list, renderRow, (v: any) => (resultsList.value = v))
 							: (<div class="vcm-cascader-view__empty">{ t('vc.Cascader.noMatch') }</div>)
 					}
 				</div>

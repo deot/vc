@@ -224,6 +224,38 @@ describe('MCascaderView', () => {
 		expect(clear()).toBeNull();
 		wrapper.unmount();
 	});
+
+	it('virtualized：各级与搜索结果交给 MRecycleList，只渲染部分项；点选与搜索照常', async () => {
+		const value = ref<any[]>([]);
+		const data = Array.from({ length: 300 }, (_, i) => ({
+			value: i,
+			label: `分组 ${i}`,
+			children: [{ value: `${i}-0`, label: `条目 ${i}-0` }]
+		}));
+		const wrapper = mount(() => (
+			<MCascaderView v-model={value.value} data={data} virtualized searchable />
+		), { attachTo: document.body });
+		await flush();
+		await sleep(30);
+		expect(getActivePane().querySelector('.vcm-recycle-list')).toBeTruthy();
+		expect(getOptions().length).toBeGreaterThan(0);
+		expect(getOptions().length).toBeLessThan(300);
+
+		await clickOption('分组 1');
+		await sleep(30);
+		await clickOption('条目 1-0');
+		expect(value.value).toEqual([1, '1-0']);
+
+		const input = document.querySelector('.vcm-cascader-view__search input') as HTMLInputElement;
+		input.value = '条目';
+		input.dispatchEvent(new Event('input'));
+		await flush();
+		await sleep(30);
+		const results = document.querySelector('.vcm-cascader-view__options.is-results')!;
+		expect(results.querySelector('.vcm-recycle-list')).toBeTruthy();
+		expect(results.querySelectorAll('.vcm-cascader-view__option').length).toBeLessThan(300);
+		wrapper.unmount();
+	});
 });
 
 describe('MCascader', () => {

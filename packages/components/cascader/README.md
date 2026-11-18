@@ -615,6 +615,8 @@ const value = ref(['2500', '2500-3']);
 - `clearable`：有选中路径时，层级标签栏右端显示「清空」。没开 `confirm` 时清空即提交空值并关闭；开了 `confirm` 时只清空弹层内的路径，由「确定」提交空值。
 - `searchable`：列表上方显示搜索框，规则同桌面端：按整条路径匹配，只列出最后一级，开启 `changeOnSelect` 时任意一级都可选。
 - 节点的 `disabled: true` 置灰且不可点。
+- 切换层级时该级的选中项滚到列表中间；搜索词变化后结果列表回到顶部。
+- `virtualized`：每一级与搜索结果只渲染可视范围附近的项（基于 [MRecycleList](../recycle-list/README.md)），列宽不受影响。默认不开启。
 
 :::playground
 <!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
@@ -875,6 +877,7 @@ interface CascaderOption {
 | searchPlaceholder | 搜索框的占位文字 | `string` | - | `''` |
 | placeholder | 待选那一级的标签文字 | `string` | - | 当前语言的 `vc.Cascader.placeholder` |
 | renderLabel | 自定义选项内容；`label` 插槽优先 | `(options: { label, row, index: number, selected: boolean }) => VNodeChild` | - | - |
+| virtualized | 每一级与搜索结果只渲染可视范围附近的项，用于大量数据 | `boolean` | - | `false` |
 | separator | 同桌面端 | `string` | - | `','` |
 | numerable | 同桌面端 | `boolean` | - | `false` |
 | nullValue | 同桌面端 | `number \| string \| object` | - | `undefined` |
