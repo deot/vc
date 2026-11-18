@@ -3,7 +3,7 @@ import { renderType } from '../../customer/customer-props';
 
 export const props = {
 	value: {
-		type: [String, Number],
+		type: [String, Number, Boolean],
 		required: true
 	},
 	label: {

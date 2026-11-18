@@ -239,7 +239,7 @@ export const getSelectLabels = (values: TreeValue[], source: TreeData) => {
 	return values.map(v => getLabel(source, v));
 };
 
-type ModelValue = string | number | (number | string | any)[] | undefined;
+type ModelValue = string | number | boolean | (number | string | boolean | any)[] | undefined;
 interface ModelValueOptions {
 	[key: string]: any;
 	numerable: boolean;
@@ -268,7 +268,7 @@ export const toCurrentValue = (v: ModelValue, options: ModelValueOptions) => {
 		: v;
 };
 
-type CurrentValue = (number | string)[];
+type CurrentValue = (number | string | boolean)[];
 interface CurrentValueOptions {
 	[key: string]: any;
 	numerable: boolean;

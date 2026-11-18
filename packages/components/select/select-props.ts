@@ -7,7 +7,6 @@ import { renderType, valueType } from '../customer/customer-props';
 const inputKeys = [
 	'id',
 	'disabled',
-	'modelValue',
 	'clearable'
 ] as const;
 
@@ -19,6 +18,11 @@ const popoverKeys = [
 export const props = {
 	...(pick(popoverProps, popoverKeys) as Pick<typeof popoverProps, typeof popoverKeys[number]>),
 	...(pick(inputProps, inputKeys) as Pick<typeof inputProps, typeof inputKeys[number]>),
+	// 选项值可为布尔；显式 default 避免 Vue 把未传的布尔类型 prop 转成 false
+	modelValue: {
+		type: [String, Number, Boolean, Array] as PropType<string | number | boolean | any[]>,
+		default: undefined
+	},
 	renderOption: renderType,
 	renderOptionGroup: renderType,
 	renderLabel: renderType,

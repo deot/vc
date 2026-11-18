@@ -87,6 +87,26 @@ const groupedData = [
 const getOptions = () => document.querySelectorAll('.vc-select-option');
 const getOptionGroups = () => document.querySelectorAll('.vc-select-option-group');
 
+describe('Select boolean value', () => {
+	it('选项值可为布尔：false 显示对应文字，未传值时不当作 false，无 prop 警告', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const data = [{ value: true, label: '开' }, { value: false, label: '关' }];
+		const wrapper = mount(Select, { props: { modelValue: false, data } });
+		const empty = mount(Select, { props: { data } });
+		try {
+			await flush();
+			expect(wrapper.find('input').element.value).toBe('关');
+			expect(empty.vm.$props.modelValue).toBeUndefined();
+			expect(empty.find('input').element.value).toBe('');
+			expect(warn.mock.calls.some(([m]) => String(m).includes('Invalid prop'))).toBe(false);
+		} finally {
+			wrapper.unmount();
+			empty.unmount();
+			warn.mockRestore();
+		}
+	});
+});
+
 describe('Select locale', () => {
 	it('updates placeholder and select-all actions when locale changes', async () => {
 		const locale = VcInstance.options.locale;

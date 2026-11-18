@@ -478,7 +478,7 @@ const handleOpen = () => {
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| modelValue | 选中值；数组模型保持数组输出，非数组多选输出字符串 | `string \| number \| any[]` | - | `undefined` |
+| modelValue | 选中值；数组模型保持数组输出，非数组多选输出字符串 | `string \| number \| boolean \| any[]` | - | `undefined` |
 | data | 选项或一层分组数据，见下文 | `object[]` | - | `[]` |
 | max | `1` 单选；大于 `1` 多选，最多选 `max` 项，选满后未选中的项禁用；`0` 多选且不限数量 | `number` | `>= 0` | `1` |
 | maxTags | 多选最多显示的标签数（上限），其余折叠；`0` 或不传表示不限 | `number` | `>= 0` | `undefined`（不限） |
@@ -543,7 +543,7 @@ const handleOpen = () => {
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| value | 唯一选项值或分组标识，必填；避免字符串和数字混用同一值 | `string \| number` | - | - |
+| value | 唯一选项值或分组标识，必填；避免字符串和数字混用同一值 | `string \| number \| boolean` | - | - |
 | label | 选项或分组文字；列表中缺省时显示 value，已选文字需提供 label | `string \| number` | - | - |
 | disabled | 禁用选项；分组项不支持整体禁用 | `boolean` | - | `false` |
 | filterable | 是否参与本地搜索过滤；false 时始终显示 | `boolean` | - | `true` |
@@ -609,7 +609,7 @@ const handleOpen = () => {
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | data | 选项，带 `children` 的项为分组；数据项另支持 `description`（文字下方的说明） | `SelectOption[]` | - | `[]` |
-| modelValue | 同桌面端 | `string \| number \| (string \| number)[]` | - | `undefined` |
+| modelValue | 同桌面端 | `string \| number \| boolean \| (string \| number \| boolean)[]` | - | `undefined` |
 | max | `1` 单选；大于 `1` 多选，最多选 `max` 项，选满后未选中的项禁用；`0` 多选且不限数量 | `number` | `>= 0` | `1` |
 | clearable | 有已选项时在列表上方显示「清空」，点击后提交空值（`nullValue`，数组值为 `[]`，字符串多选为 `''`） | `boolean` | - | `false` |
 | searchable | 列表上方显示搜索框 | `boolean` | - | `false` |
