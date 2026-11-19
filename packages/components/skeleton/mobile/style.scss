@@ -1,0 +1,29 @@
+@use '../../style/helper' as *;
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放），375 宽下：段落行高 18px、行距 12px，标题 32px 高、下方 16px，
+// 图片 48px、右侧 16px，每份间距 24px，圆角 2px；结构与颜色沿用 ../style.scss，这里只覆盖局部变量
+@include block(vcm-skeleton) {
+	@include localvars(skeleton, (
+		row-height: remfix(36),
+		row-gap: remfix(24),
+		title-height: remfix(64),
+		title-gap: remfix(32),
+		image-size: remfix(96),
+		image-gap: remfix(32),
+		group-gap: remfix(48),
+		radius: remfix(4)
+	));
+}
+
+// 单独使用的 MSkeletonItem：默认行高与圆角为 750 稿；在 MSkeleton 内则跟随根节点（含业务在根节点上的覆盖）
+@include block(vcm-skeleton-item) {
+	@include localvars(skeleton, (
+		row-height: remfix(36),
+		radius: remfix(4)
+	));
+}
+
+.vcm-skeleton .vcm-skeleton-item {
+	--vc-skeleton-row-height: inherit;
+	--vc-skeleton-radius: inherit;
+}

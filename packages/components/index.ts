@@ -123,6 +123,8 @@ export * from './scroller';
 export * from './scroller/index.m';
 export * from './select';
 export * from './select/index.m';
+export * from './skeleton';
+export * from './skeleton/index.m';
 export * from './slider';
 export * from './slider/index.m';
 export * from './sort-list';

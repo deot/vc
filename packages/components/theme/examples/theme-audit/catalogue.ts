@@ -33,7 +33,7 @@ export const GROUPS = [
 	{
 		id: 'feedback',
 		label: '反馈',
-		names: ['ActionSheet', 'Alert', 'Drawer', 'Message', 'Modal', 'Notice', 'Popconfirm', 'Spin', 'SwipeAction', 'Toast', 'Watermark']
+		names: ['ActionSheet', 'Alert', 'Drawer', 'Message', 'Modal', 'Notice', 'Popconfirm', 'Skeleton', 'Spin', 'SwipeAction', 'Toast', 'Watermark']
 	},
 	{
 		id: 'utilities',

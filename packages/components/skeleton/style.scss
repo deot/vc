@@ -1,0 +1,129 @@
+@use 'sass:map';
+@use '../style/helper' as *;
+
+// 尺寸与颜色写成局部变量 --vc-skeleton-<键>（默认值为下表），MSkeleton 在 .vcm-skeleton 上覆盖（mobile/style.scss）
+// - row-height / row-gap：段落行高与行距；last-row-width：行数为数字时末行宽度
+// - title-*：标题条；image-*：左侧图片边长与右侧间距；group-gap：repeat 时每份的间距
+// - color / highlight-color：底色与闪光亮带；duration：闪光一次扫过的时长
+$sizes: (
+	row-height: unitfix(16),
+	row-gap: unitfix(16),
+	last-row-width: 60%,
+	title-height: unitfix(20),
+	title-width: 40%,
+	title-gap: unitfix(24),
+	image-size: unitfix(48),
+	image-gap: unitfix(16),
+	group-gap: unitfix(24),
+	radius: unitfix(4),
+	color: varfix(color-neutral-light),
+	highlight-color: varfix(background-color-light),
+	duration: 1.4s
+);
+
+@function v($key) {
+	@return localfix(skeleton, $key, map.get($sizes, $key));
+}
+
+// 闪光：::after 上的渐变用 transform 平移（合成层完成，不逐帧重绘）；动画写在继承的变量里，
+// 块自身的 is-animated / is-static 优先，否则跟随最近的 Skeleton
+@keyframes vc-skeleton {
+	from {
+		transform: translateX(-100%);
+	}
+
+	to {
+		transform: translateX(100%);
+	}
+}
+
+@include block(vc-skeleton-item) {
+	position: relative;
+	display: block;
+	width: 100%;
+	height: v(row-height);
+	overflow: hidden;
+	background-color: v(color);
+	border-radius: v(radius);
+	flex: none;
+
+	&::after {
+		position: absolute;
+		background-image: linear-gradient(90deg, transparent, v(highlight-color), transparent);
+		content: '';
+		transform: translateX(-100%);
+		animation: var(--vc-skeleton-shimmer, none);
+		inset: 0;
+	}
+
+	// 两端全圆：方块为圆形，长条为胶囊
+	@include when(circle) {
+		border-radius: 9999px;
+	}
+}
+
+.vc-skeleton.is-animated,
+.vc-skeleton-item.is-animated {
+	--vc-skeleton-shimmer: vc-skeleton #{v(duration)} ease infinite;
+}
+
+.vc-skeleton.is-static,
+.vc-skeleton-item.is-static {
+	--vc-skeleton-shimmer: none;
+}
+
+@include block(vc-skeleton) {
+	display: flex;
+	flex-direction: column;
+	gap: v(group-gap);
+
+	@include element(group) {
+		display: flex;
+		gap: v(image-gap);
+		align-items: flex-start;
+
+		@include when(custom) {
+			display: block;
+		}
+	}
+
+	@include element(image) {
+		width: v(image-size);
+		height: v(image-size);
+	}
+
+	@include element(content) {
+		display: flex;
+		min-width: 0;
+		flex-direction: column;
+		gap: v(title-gap);
+		flex: 1;
+	}
+
+	@include element(title) {
+		width: v(title-width);
+		height: v(title-height);
+	}
+
+	@include element(rows) {
+		display: flex;
+		flex-direction: column;
+		gap: v(row-gap);
+	}
+
+	// 行数为数字时末行较短；数组给出的宽度写在行内样式上
+	@include element(row) {
+		&:last-child {
+			width: v(last-row-width);
+		}
+	}
+}
+
+// 减少动态效果：不闪光
+@media (prefers-reduced-motion: reduce) {
+	@include block(vc-skeleton-item) {
+		&::after {
+			animation: none;
+		}
+	}
+}

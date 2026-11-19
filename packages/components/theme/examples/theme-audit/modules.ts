@@ -57,6 +57,7 @@ import RecycleList from './modules/recycle-list.vue';
 import Resizer from './modules/resizer.vue';
 import Scroller from './modules/scroller.vue';
 import Select from './modules/select.vue';
+import Skeleton from './modules/skeleton.vue';
 import Slider from './modules/slider.vue';
 import Snapshot from './modules/snapshot.vue';
 import SortList from './modules/sort-list.vue';
@@ -138,6 +139,7 @@ export const MODULES = {
 	Resizer,
 	Scroller,
 	Select,
+	Skeleton,
 	Slider,
 	Snapshot,
 	SortList,
