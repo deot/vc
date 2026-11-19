@@ -162,7 +162,7 @@ describe('use-gesture.ts', () => {
 
 		vi.advanceTimersByTime(10);
 		firePointer(el, 'pointermove', 30, 25);
-		expect(options.moveStart).toHaveBeenCalledWith(expect.objectContaining({ axis: 'x', offsetX: 20, offsetY: 5 }));
+		expect(options.moveStart).toHaveBeenCalledWith(expect.objectContaining({ axis: 'x', offsetX: 20, offsetY: 5, target: el }));
 		expect(options.move).toHaveBeenLastCalledWith(expect.objectContaining({ x: 20, y: 5, deltaX: 20, deltaY: 5, offsetX: 20, offsetY: 5 }));
 
 		vi.advanceTimersByTime(10);

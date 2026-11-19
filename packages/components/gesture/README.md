@@ -127,7 +127,7 @@ const handleWheel = (e) => {
 | tap | 没有越过 `threshold` 的点按。鼠标立即触发。监听了 double-tap 时，触摸和笔延迟 300 ms 确认，双击时不触发 | `{ x, y, pointerType, target, event }` |
 | double-tap | 触摸或笔在 300 ms 内、相距 30 px 内的两次点按。鼠标单击不进入这个窗口 | 同 tap |
 | long-tap | 按住 800 ms 未移动；触发后松开不再触发 tap | 同 tap |
-| move-start | 单指越过 `threshold`，`axis` 为位移较大的轴 | `{ axis: 'x' \| 'y', offsetX, offsetY, pointerType, event }` |
+| move-start | 单指越过 `threshold`，`axis` 为位移较大的轴，`target` 为按下时的元素 | `{ axis: 'x' \| 'y', target, offsetX, offsetY, pointerType, event }` |
 | move | 单指移动 | `{ x, y, deltaX, deltaY, offsetX, offsetY, pointerType, event }` |
 | move-end | 移动后松开；`canceled` 为 true 表示被系统取消或转为双指 | `{ offsetX, offsetY, velocityX, velocityY, canceled, pointerType, event }` |
 | swipe | 移动后松开，且速度大于 `flickThreshold` | `{ direction, offsetX, offsetY, velocityX, velocityY, pointerType, event }` |

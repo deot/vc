@@ -15,6 +15,8 @@ export interface GestureTapEvent extends GesturePoint {
 export interface GestureMoveStartEvent {
 	// 越过阈值时位移较大的轴
 	axis: 'x' | 'y';
+	// 按下时的元素（同 tap）：指针被捕获后 pointermove 的 target 是捕获元素，按在哪个子元素上要看这里
+	target: EventTarget | null;
 	offsetX: number;
 	offsetY: number;
 	pointerType: string;
@@ -288,6 +290,7 @@ export const useGesture = (options: GestureOptions) => {
 			clearLongTap();
 			options.moveStart?.({
 				axis: Math.abs(offsetX) >= Math.abs(offsetY) ? 'x' : 'y',
+				target: current.target,
 				offsetX,
 				offsetY,
 				pointerType: current.pointerType,
