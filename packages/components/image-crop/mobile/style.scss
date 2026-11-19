@@ -1,0 +1,81 @@
+@use '../../style/helper' as *;
+
+$color-primary: varfix(color-primary, image-crop);
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放）：默认舞台为正方形（满宽时），黑底、遮罩 60%，手柄触控区 40、点 16
+// 结构沿用 ../style.scss，这里只覆盖局部变量（与两端样式的加载顺序无关）
+@include block(vcm-image-crop) {
+	@include localvars(image-crop, (
+		height: remfix(750),
+		padding: remfix(32),
+		background: #000,
+		mask: rgb(0 0 0 / 60%),
+		handle-size: remfix(48),
+		handle-dot: remfix(16)
+	));
+}
+
+// open() 的全屏层
+@include block(vcm-image-crop-portal) {
+	position: fixed;
+	inset: 0;
+	z-index: $popup-zindex;
+	display: flex;
+	flex-direction: column;
+	background: #000;
+
+	// 裁剪区占满工具栏以上的空间
+	// 复合选择器：高于 .vcm-image-crop 上的局部变量
+	@include element(stage) {
+		&.vcm-image-crop {
+			--vc-image-crop-height: auto;
+
+			flex: 1;
+			min-height: 0;
+		}
+	}
+
+	@include element(toolbar) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		height: remfix(108);
+		padding: 0 remfix(32) env(safe-area-inset-bottom);
+		font-size: remfix(32);
+		color: #fff;
+	}
+
+	@include element(tools) {
+		display: flex;
+		gap: remfix(32);
+		align-items: center;
+	}
+
+	@include element(button) {
+		padding: remfix(16) 0;
+		-webkit-tap-highlight-color: transparent;
+
+		@include when(primary) {
+			font-weight: 500;
+			color: $color-primary;
+		}
+
+		@include when(disabled) {
+			opacity: .5;
+		}
+	}
+
+	// 旋转与还原之间的竖线（MDivider）：黑底上改为半透明白；间距由 tools 的 gap 给出
+	// 复合选择器：高于 .vcm-divider 上的局部变量
+	@include element(divider) {
+		&.vcm-divider {
+			--vc-divider-color-neutral-light: rgb(255 255 255 / 30%);
+			--vc-divider-vertical-margin: 0;
+		}
+	}
+
+	// 与按钮文字同高
+	@include element(icon) {
+		font-size: remfix(32);
+	}
+}

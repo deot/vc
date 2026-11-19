@@ -228,6 +228,10 @@ export const enUS: Language = {
 		Image: {
 			loadError: 'Failed to load image'
 		},
+		ImageCrop: {
+			title: 'Crop image',
+			resetText: 'Reset'
+		},
 		Modal: {
 			okButtonText: 'OK',
 			cancelButtonText: 'Cancel'

@@ -228,6 +228,10 @@ export const zhCN: Language = {
 		Image: {
 			loadError: '加载失败'
 		},
+		ImageCrop: {
+			title: '裁剪图片',
+			resetText: '还原'
+		},
 		Modal: {
 			okButtonText: '确定',
 			cancelButtonText: '取消'

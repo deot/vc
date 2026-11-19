@@ -1,14 +1,21 @@
 ## 图片裁剪（ImageCrop）
 
-基于 canvas 的图片裁剪组件，支持缩放、旋转、拖动定位、拖拽导入和导出图片。
+裁剪图片：拖动平移，滚轮或双指缩放，可旋转，可调整裁剪框；导出图片或原图像素坐标。
 
 ### 何时使用
 
-需要在上传前裁剪头像、调整封面比例，或通过拖动、缩放和旋转选择图片区域。
+上传前裁剪头像、封面，或需要把裁剪坐标交给后端处理原图时。
 
 ### 基础用法
 
-通过 `scale`、`rotate` 和 `outputSize` 控制裁剪结果。
+裁剪框按 `aspectRatio` 适配舞台，图片始终铺满裁剪框：
+
+- 拖动平移；滚轮缩放（以指针为中心）；
+- 聚焦后方向键平移 10px（按住 Shift 为 1px），`+` / `-` 缩放。
+
+`zoom` 为 1 时图片刚好铺满裁剪框。旋转时 `zoom` 不变，组件按新角度重新计算铺满所需的缩放。
+
+预览、交互期间不使用 canvas：图片与遮罩都是 DOM 和 CSS，只有导出时才绘制一次。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16 }</config> -->
@@ -17,21 +24,21 @@
 	<div class="crop-demo">
 		<ImageCrop
 			ref="target"
+			v-model:zoom="zoom"
+			v-model:rotate="rotate"
 			:src="src"
-			:scale="scale"
-			:rotate="rotate"
-			:output-size="[750, 500]"
-			:border="40"
-			cross-origin="anonymous"
-			style="width: 100%;"
-			@image-load="handleImageLoad"
-			@image-error="handleImageError"
+			:aspect-ratio="16 / 9"
+			@load="isReady = true"
+			@error="status = '图片加载失败'"
 		/>
-		<label>缩放：{{ scale }}<Slider v-model="scale" :min="1" :max="3" :step="0.01" /></label>
-		<label>旋转：{{ rotate }}°<Slider v-model="rotate" :min="0" :max="360" /></label>
-		<Button type="primary" :disabled="!isReady" @click="handleSave">
-			预览裁剪结果
-		</Button>
+		<label>缩放：{{ zoom.toFixed(2) }}<Slider v-model="zoom" :min="1" :max="4" :step="0.01" /></label>
+		<label>旋转：{{ rotate }}°<Slider v-model="rotate" :min="-180" :max="180" /></label>
+		<div class="crop-demo__actions">
+			<Button icon="rotate-left" @click="rotate -= 90" />
+			<Button icon="rotate-right" @click="rotate += 90" />
+			<Button @click="target.reset()">还原</Button>
+			<Button type="primary" :disabled="!isReady" @click="handleSave">导出</Button>
+		</div>
 		<p>{{ status }}</p>
 		<img v-if="result" :src="result" width="240" alt="裁剪结果">
 	</div>
@@ -49,29 +56,20 @@ const src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
 		<path d="M350 600L680 280L900 460V600Z" fill="#023047"/>
 	</svg>
 `);
-const scale = ref(1);
+const zoom = ref(1);
 const rotate = ref(0);
 const result = ref('');
 const isReady = ref(false);
-const status = ref('正在加载图片');
+const status = ref('');
 
 const handleSave = async () => {
 	try {
-		const { dataURL } = await target.value.getImage();
+		const { dataURL } = await target.value.getImage({ width: 480, type: 'image/jpeg', quality: 0.9 });
 		result.value = dataURL;
-		status.value = '已导出 750 × 500 图片';
+		status.value = '已导出 480 × 270 图片';
 	} catch {
 		status.value = '导出失败，请检查图片的跨域权限';
 	}
-};
-
-const handleImageLoad = () => {
-	isReady.value = true;
-	status.value = '拖动图片调整裁剪位置';
-};
-const handleImageError = () => {
-	isReady.value = false;
-	status.value = '图片加载失败';
 };
 </script>
 <style scoped>
@@ -86,8 +84,9 @@ const handleImageError = () => {
 	gap: 8px;
 }
 
-.crop-demo img {
-	max-width: 100%;
+.crop-demo__actions {
+	display: flex;
+	gap: 8px;
 }
 
 .crop-demo p {
@@ -97,60 +96,223 @@ const handleImageError = () => {
 ```
 :::
 
+### 调整裁剪框与圆形遮罩
+
+`resizable` 时可以拖动裁剪框的边和角调整大小：
+
+- 拖动范围限制在舞台内边距以内，并且不会超出图片；
+- 有 `aspectRatio` 时保持比例；`aspectRatio` 为 `null` 时不限比例，初始取图片的比例；
+- 松开后，裁剪框回到适配舞台的大小并居中，图片随之放大，框内内容不变。
+
+`shape="circle"` 只把遮罩画成圆形，导出的仍是矩形图片。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="crop-demo">
+		<ImageCrop :src="src" :aspect-ratio="null" resizable @change="data = $event" />
+		<ImageCrop :src="src" shape="circle" />
+		<p v-if="data">{{ data.width.toFixed(0) }} × {{ data.height.toFixed(0) }} @ ({{ data.x.toFixed(0) }}, {{ data.y.toFixed(0) }})</p>
+	</div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { ImageCrop } from '@deot/vc';
+
+const data = ref(null);
+const src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
+	<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600">
+		<rect width="900" height="600" fill="#8ecae6"/>
+		<circle cx="450" cy="300" r="160" fill="#ffb703"/>
+	</svg>
+`);
+</script>
+<style scoped>
+.crop-demo {
+	display: grid;
+	gap: 16px;
+	max-width: 560px;
+	--vc-image-crop-height: 280px;
+}
+
+.crop-demo p {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 在弹窗中裁剪（open）
+
+`ImageCrop.open(options)` 在 Modal 中裁剪，下方有旋转按钮和缩放滑块。
+
+- 参数包括裁剪属性（`src` 必填）、导出选项（同 `getImage`），以及 `title`、`okText`、`cancelText`。
+- 确定后先导出，导出完成再关闭弹窗，`await` 得到 `{ dataURL, file?, data }`。确定、取消的默认文案同 Modal。
+- 取消、关闭时拒绝。只用回调、不 `await` 时，取消不会产生未处理的拒绝。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="crop-demo">
+		<Button @click="handleOpen">裁剪头像</Button>
+		<img v-if="result" :src="result" width="96" alt="头像">
+	</div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Button, ImageCrop } from '@deot/vc';
+
+const result = ref('');
+const src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
+	<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600">
+		<rect width="600" height="600" fill="#f3f5f8"/>
+		<circle cx="300" cy="260" r="150" fill="#456cf6"/>
+	</svg>
+`);
+
+const handleOpen = async () => {
+	try {
+		const { dataURL } = await ImageCrop.open({ src, shape: 'circle', width: 192 });
+		result.value = dataURL;
+	} catch {
+		// 已取消
+	}
+};
+</script>
+<style scoped>
+.crop-demo {
+	display: flex;
+	gap: 16px;
+	align-items: center;
+}
+
+.crop-demo img {
+	border-radius: 50%;
+}
+</style>
+```
+:::
+
+### 裁剪数据（getData / setData）
+
+`getData()` 返回原图像素下的 `{ x, y, width, height, rotate }`，`change` 事件的参数也是这个数据。它与 Cropper.js 的语义一致：
+
+1. 先把原图按 `rotate` 顺时针旋转，画布扩展到旋转后的包围盒；
+2. 再从这个画布上取 `(x, y, width, height)`。
+
+后端用同样的顺序处理原图即可，比如 sharp 的 `rotate()` 加 `extract()`。`setData(data)` 用于恢复上一次的裁剪：
+
+- 按宽度对齐当前裁剪框；
+- 不限比例且 `resizable` 时，裁剪框改用数据的比例；
+- 角度通过 `update:rotate` 写回。
+
+## 移动端
+
+`MImageCrop` 的属性、事件、方法和结构都与 `ImageCrop` 相同，根节点另有标记类 `.vcm-image-crop`。
+
+- 交互：单指平移，双指缩放（以双指中心为锚点，跟随双指移动），不监听滚轮。
+- 尺寸：按 750 稿设计，随 `--vc-rem` 缩放。
+- `MImageCrop.open(options)` 打开全屏层：
+  - 黑底，从底部滑入，裁剪区占满；底部为「取消 / 旋转 90° | 还原 / 确定」，取消、确定的默认文案同 MPicker；
+  - 参数与结果同 `ImageCrop.open`，没有标题。
+
+| 项 | 移动端（括号内为 375 宽下的 px） | 桌面端 |
+| --- | --- | --- |
+| 舞台高度 | 750（375） | 360px |
+| 内边距 | 32（16） | 24px |
+| 舞台底色 | `#000` | 棋盘格（同 ColorPicker 的透明底） |
+| 遮罩 | `rgb(0 0 0 / 60%)` | `rgb(0 0 0 / 50%)` |
+| 手柄触控区 / 可见点 | 48（24）/ 16（8） | 16px / 8px |
+
+```vue
+<template>
+	<input type="file" accept="image/*" @change="handleChange">
+</template>
+
+<script setup>
+import { MImageCrop } from '@deot/vc';
+
+const handleChange = async (event) => {
+	const source = event.target.files?.[0];
+	event.target.value = '';
+	if (!source) return;
+	try {
+		const { file } = await MImageCrop.open({ src: source, shape: 'circle', width: 400, filename: 'avatar.png' });
+		return file; // 交给上传
+	} catch {
+		// 已取消
+	}
+};
+</script>
+```
+
+## 主题与局部覆盖
+
+单个组件通过 `--vc-image-crop-<键>` 覆盖。桌面端的默认值见下表，移动端在 `.vcm-image-crop` 上覆盖，与样式的加载顺序无关。
+
+| 键 | 说明 | 桌面端默认值 |
+| --- | --- | --- |
+| `height` | 舞台高度；宽度随容器 | `360px` |
+| `padding` | 裁剪框的活动范围到舞台边缘的距离 | `24px` |
+| `background` | 舞台底色 | 棋盘格（同 ColorPicker 的透明底） |
+| `mask` | 裁剪框外的遮罩 | `rgb(0 0 0 / 50%)` |
+| `frame-color` | 裁剪框边线与手柄 | `rgb(255 255 255 / 80%)` |
+| `handle-size` | 手柄的触控区 | `16px` |
+| `handle-dot` | 手柄可见的点 | `8px` |
+
+聚焦时的描边使用全局参数 `color-primary`。
+
 ## API
 
 ### 属性
 
+`ImageCrop` 和 `MImageCrop` 使用相同属性。
+
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| src | 图片地址或图片文件 | `string \| Blob \| File` | - | - |
-| scale | 缩放值 | `number` | - | `1` |
-| rotate | 旋转角度 | `number` | - | `0` |
-| border | 裁剪遮罩边框，数组为 `[x, y]` | `number \| number[]` | - | `20` |
-| borderRadius | 裁剪区域圆角 | `number` | - | `0` |
-| outputSize | 输出图片尺寸 | `number \| [number] \| [number, number]` | - | `750` |
-| position | 相对图片的裁剪中心；传入后需通过 `position-change` 回写位置 | `{ x: number; y: number }` | - | 未传时内部中心为 `{ x: 0.5, y: 0.5 }` |
-| maskColor | Canvas 遮罩颜色，字符串为 Canvas 支持的颜色，数组为 `[r, g, b, a]` | `string \| number[]` | - | `[0, 0, 0, 0.5]` |
-| crossOrigin | 图片跨域属性 | `string` | `''`、`anonymous`、`use-credentials` | `'anonymous'` |
-| droppable | 是否支持拖拽图片进入组件 | `boolean` | - | `true` |
-
-`outputSize` 归一规则：
-
-| 输入 | 输出 |
-| --- | --- |
-| `750` | `[750, 750]` |
-| `[750]` | `[750, 750]` |
-| `[750, 500]` | `[750, 500]` |
+| src | 图片地址或文件；清空时移除图片 | `string \| Blob \| File` | - | - |
+| aspectRatio | 裁剪框宽高比；`null` 为不限（`resizable` 时可自由调整，否则取图片比例） | `number \| null` | - | `1` |
+| shape | 遮罩形状，导出仍为矩形 | `string` | `square`、`circle` | `square` |
+| zoom | 缩放，`v-model:zoom`；1 为刚好铺满裁剪框（按当前角度） | `number` | - | `1` |
+| maxZoom | 最大缩放 | `number` | - | `4` |
+| rotate | 角度（顺时针），`v-model:rotate`；按钮一次转 90° 时有动画 | `number` | - | `0` |
+| resizable | 可拖动边角调整裁剪框 | `boolean` | - | `false` |
+| disabled | 禁用所有交互 | `boolean` | - | `false` |
+| crossOrigin | 远程图片的跨域属性；只有远程地址会追加时间戳绕过缓存 | `string` | `''`、`anonymous`、`use-credentials` | `'anonymous'` |
 
 ### 事件
 
-| 事件名 | 说明 | 回调参数 | 参数说明 |
-| --- | --- | --- | --- |
-| image-load | 图片加载成功 | `(imageState) => void` | `{ resource, x, y, width, height }`；`resource` 为图片元素，宽高为适配裁剪比例后的尺寸，初始中心为 `0.5, 0.5` |
-| image-error | 图片加载失败 | `(event) => void` | 图片或 FileReader 的错误事件 |
-| image-change | 图片信息变化 | `(type) => void` | `'src'`、`'props'`、`'size'` 或 `'image'`，分别对应图片源、绘制属性、尺寸或内部图片状态变化 |
-| image-drop | 接收到拖入内容，发生在加载完成前 | `(event) => void` | `DragEvent`；优先读取首个文件，否则读取 HTML 中的图片地址 |
-| position-change | 拖动产生新中心位置 | `(position) => void` | `{ x, y }`，相对坐标；不是 `update:position` 事件 |
-| mousemove | 鼠标或单指拖动移动 | `(event) => void` | `MouseEvent \| TouchEvent` |
-| mouseup | 鼠标或单指拖动结束、触摸取消 | `(event) => void` | `MouseEvent \| TouchEvent` |
+| 事件名 | 说明 | 回调参数 |
+| --- | --- | --- |
+| load | 图片加载完成 | `(image: HTMLImageElement) => void` |
+| error | 图片加载失败 | `(error: Error) => void` |
+| change | 裁剪变化：加载后、每次拖动 / 捏合 / 调整结束后、滚轮与键盘停下后、属性变化后 | `(data: { x, y, width, height, rotate }) => void` |
+| update:zoom | 缩放变化 | `(zoom: number) => void` |
+| update:rotate | 角度变化（`reset`、`setData`） | `(rotate: number) => void` |
 
 ### 方法
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| refresh | 重新计算显示尺寸、画布尺寸并重绘 | - | `void` |
-| getDimensions | 获取画布和显示尺寸 | - | `{ canvas: { width, height }, rotate, border, width, height }`；`canvas` 含两侧 border，外层宽高为显示尺寸 |
-| getCroppingRect | 获取相对图片的裁剪矩形 | - | `{ x, y, width, height }`，为缩放及位置计算后的相对值，不是旋转后的包围盒 |
-| getImageToCanvas | 按 `outputSize` 绘制裁剪图片 | - | `HTMLCanvasElement` |
-| getImageScaledToCanvas | 以当前显示尺寸建立画布并绘制图片 | - | `HTMLCanvasElement` |
-| getImage | 转换裁剪图片 | `options?: { isNormal?: boolean; filename?: string; getFile?: boolean }` | Promise，解析得到 `{ dataURL, file? }` |
+| getData | 原图像素下的裁剪数据；图片未加载时为 `null` | - | `{ x, y, width, height, rotate } \| null` |
+| setData | 恢复裁剪 | `data` | - |
+| getCanvas | 裁剪结果画到 canvas；宽高都不传时为原图像素，只传一边时另一边按比例 | `{ width?, height?, fillColor? }` | `HTMLCanvasElement \| null` |
+| getImage | 裁剪结果转为图片（`toBlob` 编码，不阻塞主线程）；传 `filename` 时同时生成 `File`；图片未加载时拒绝 | `{ width?, height?, fillColor?, type?, quality?, filename? }` | `Promise<{ dataURL, file? }>` |
+| reset | 回到 `zoom` 1、角度 0，裁剪框重新适配 | - | - |
 
-`getImage` 默认参数为 `{ isNormal: true, filename: 'image', getFile: false }`。`isNormal: true` 使用 `getImageToCanvas()`；`false` 使用 `getImageScaledToCanvas()`，后者不保证与标准裁剪结果等比例缩放。`getFile: true` 时同时生成文件。组件还通过 ref 暴露 `canvas` 元素，挂载前不可用。
+`getImage` 的 `type` 默认为 `image/png`，`quality` 用于 jpeg、webp。导出 jpeg 时，透明区域可以用 `fillColor` 填充。
+
+### 静态方法
+
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| ImageCrop.open | 在 Modal 中裁剪 | 裁剪属性 + 导出选项 + `title`、`okText`、`cancelText` | `Promise<{ dataURL, file?, data }>`，取消时拒绝 |
+| MImageCrop.open | 全屏裁剪 | 同上（无 `title`） | 同上 |
 
 ### 使用注意
 
-- 通过 CSS `width` 控制显示大小，通过 `outputSize` 控制导出尺寸；不要用 canvas 的 HTML `width` / `height` 属性配置输出大小。
-- `borderRadius` 只影响预览遮罩；导出仍是矩形画布，不包含遮罩。旋转或缩小图片时可能出现透明区域。
-- 远程图片需允许相应的 CORS 请求才能导出；设置 `crossOrigin` 本身不会授予跨域权限。非 data URL 会追加时间戳查询参数。
-- `droppable: false` 仅关闭拖入图片功能，仍可拖动已加载图片。清空 `src` 不会清除已加载的图片。
-- `MImageCrop` 是 `ImageCrop` 的同一实现，属性、事件和方法相同；支持单指拖动，多指手势不执行缩放或旋转。
+- 舞台宽度随容器，高度由 `--vc-image-crop-height` 控制；导出尺寸由 `getImage` / `getCanvas` 的参数决定。
+- 远程图片需要服务端允许跨域，才能导出；设置 `crossOrigin` 本身不会授予跨域权限。
+- 拖入文件不在组件内处理：用 Upload 取得文件后传给 `src`。

@@ -642,6 +642,8 @@
 }
 
 @include block(audit-image-crop) {
+	--vc-image-crop-height: 220px;
+
 	width: 100%;
 
 	@include element(workspace) {
