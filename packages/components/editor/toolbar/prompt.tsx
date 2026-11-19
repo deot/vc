@@ -8,6 +8,7 @@ import { Input } from '../../input';
 import { Button } from '../../button';
 import { useLocale } from '../../locale';
 import type { PromptMode } from './utils';
+import type { EditorComponents } from '../types';
 
 const COMPONENT_NAME = 'vc-editor-prompt';
 
@@ -21,7 +22,10 @@ export const EditorPrompt = defineComponent({
 	name: COMPONENT_NAME,
 	props: {
 		editor: Object as PropType<Quill>,
-		disabled: Boolean
+		disabled: Boolean,
+		// 移动端：输入改为底部弹出层，链接预览仍为浮层
+		mobile: Boolean,
+		components: Object as PropType<Partial<EditorComponents>>
 	},
 	setup(props, { expose }) {
 		const { t } = useLocale();
@@ -33,6 +37,8 @@ export const EditorPrompt = defineComponent({
 		const input = ref<any>();
 
 		let range: Range | undefined;
+		// 移动端输入弹出层
+		let leaf: any;
 		// 光标所在链接的范围；编辑、删除时作用于整个链接
 		let linkRange: Range | undefined;
 
@@ -59,6 +65,8 @@ export const EditorPrompt = defineComponent({
 
 		const close = () => {
 			isActive.value = false;
+			leaf?.wrapper?.toggle?.(false);
+			leaf = undefined;
 		};
 
 		/**
@@ -72,8 +80,19 @@ export const EditorPrompt = defineComponent({
 			linkRange = next === 'link' ? getLinkRange(quill, range) : undefined;
 			mode.value = next;
 			value.value = linkRange ? String(quill.getFormat(linkRange).link || '') : '';
-			position(quill, linkRange || range);
-			isActive.value = true;
+			if (props.mobile && props.components?.Popup) {
+				isActive.value = false;
+				leaf = props.components.Popup.open({
+					title: t(`vc.Editor.${next}`),
+					closable: true,
+					contentClass: 'vcm-editor-prompt-popup',
+					content: renderEditor,
+					onClose: () => (leaf = undefined)
+				});
+			} else {
+				position(quill, linkRange || range);
+				isActive.value = true;
+			}
 			await nextTick();
 			input.value?.focus();
 		};
@@ -122,7 +141,7 @@ export const EditorPrompt = defineComponent({
 		// 光标停在链接里时显示预览，离开时关闭
 		const handleSelectionChange = (current: Range | null) => {
 			const quill = props.editor;
-			if (!quill || !current || (isActive.value && mode.value !== 'preview')) return;
+			if (!quill || !current || leaf || (isActive.value && mode.value !== 'preview')) return;
 			const link = current.length ? undefined : getLinkRange(quill, current);
 			if (!link || props.disabled) {
 				mode.value === 'preview' && close();
@@ -153,6 +172,28 @@ export const EditorPrompt = defineComponent({
 
 		expose({ open, close });
 
+		// 输入框：桌面端在浮层里，移动端在底部弹出层里（使用移动端的输入框与按钮）
+		const renderEditor = () => {
+			const Field: any = (props.mobile && props.components?.Input) || Input;
+			const Action: any = (props.mobile && props.components?.Button) || Button;
+			return (
+				<div class={['vc-editor-prompt', { 'is-mobile': props.mobile }]} onKeydown={handleKeydown}>
+					<span class="vc-editor-prompt__label">{t(`vc.Editor.${mode.value}`)}</span>
+					<Field
+						ref={input}
+						modelValue={value.value}
+						class="vc-editor-prompt__input"
+						allowDispatch={false}
+						// placeholder 透传给输入框
+						{...{ placeholder: mode.value === 'video' ? t('vc.Editor.videoPlaceholder') : mode.value === 'link' ? 'https://' : '' }}
+						onInput={(next: string) => (value.value = next)}
+						onEnter={handleSave}
+					/>
+					<Action size="small" type="primary" onClick={handleSave}>{t('vc.Editor.save')}</Action>
+				</div>
+			);
+		};
+
 		const renderContent = () => {
 			if (mode.value === 'preview') {
 				return (
@@ -164,22 +205,7 @@ export const EditorPrompt = defineComponent({
 					</div>
 				);
 			}
-			return (
-				<div class="vc-editor-prompt" onKeydown={handleKeydown}>
-					<span class="vc-editor-prompt__label">{t(`vc.Editor.${mode.value}`)}</span>
-					<Input
-						ref={input}
-						modelValue={value.value}
-						class="vc-editor-prompt__input"
-						allowDispatch={false}
-						// placeholder 透传给输入框
-						{...{ placeholder: mode.value === 'video' ? t('vc.Editor.videoPlaceholder') : mode.value === 'link' ? 'https://' : '' }}
-						onInput={(next: string) => (value.value = next)}
-						onEnter={handleSave}
-					/>
-					<Button size="small" type="primary" onClick={handleSave}>{t('vc.Editor.save')}</Button>
-				</div>
-			);
+			return renderEditor();
 		};
 
 		return () => (
@@ -190,7 +216,7 @@ export const EditorPrompt = defineComponent({
 					// 预览随光标出现：点击编辑区移动光标时不当作外部点击关闭，由选区变化决定是否显示
 					outsideClickable={mode.value !== 'preview'}
 					placement="bottom-left"
-					portalClass="vc-editor-prompt-wrapper"
+					portalClass={['vc-editor-prompt-wrapper', { 'vcm-editor-prompt-wrapper': props.mobile }]}
 					class="vc-editor__anchor-target"
 				>
 					{{ content: renderContent }}

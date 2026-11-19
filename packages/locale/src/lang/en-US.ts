@@ -118,7 +118,10 @@ export const enUS: Language = {
 			large: 'Large',
 			huge: 'Huge',
 			formula: 'Enter formula:',
-			video: 'Enter video:'
+			video: 'Enter video:',
+			cancel: 'Cancel',
+			color: 'Text color',
+			background: 'Background color'
 		},
 		DatePicker: {
 			clearText: 'Clear',

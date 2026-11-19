@@ -108,6 +108,7 @@ editorRef.value.add([
 
 | 参数 | 使用位置 | 默认值 |
 | --- | --- | --- |
+| font-size | 正文字号（Editor 与 EditorView） | `13px` |
 | toolbar-padding | 工具栏内边距 | `6px 8px` |
 | toolbar-font-size | 工具栏文字字号 | `14px` |
 | group-gap | 工具分组的间距，分割线位于正中；折行后行首不显示分割线 | `13px` |
@@ -135,6 +136,7 @@ editorRef.value.add([
 | poster | 插入视频时的封面地址；未提供或返回空值时不设置封面 | `({ value, type }) => string \| undefined` | - | `undefined` |
 | enhancer | 工具栏上传增强函数；`true` 使用全局配置，`false` 跳过增强 | `boolean \| Function` | - | `true` |
 | previewable | 点击编辑区域内图片时是否打开预览 | `boolean` | - | `true` |
+| toolbarPlacement | 工具栏位置：`keyboard` 聚焦时停在虚拟键盘上方，仅 MEditor 生效，桌面端同 `top` | `string` | `top` / `keyboard` | Editor：`'top'`；MEditor：`'keyboard'` |
 
 `options` 按 `Editor.defaults` → `VcInstance.options.Editor.options` → 组件 `options` 的顺序合并；`modules` 单独浅合并。默认启用 `EventExtend`；工具栏由组件渲染，`options.theme` 与 `options.modules.toolbar` 不生效。占位文案跟随 locale，可通过 `options.placeholder` 覆盖（包括空字符串）。除占位文案外，应通过重新挂载应用新的初始化配置。
 
@@ -152,7 +154,7 @@ editorRef.value.add([
 
 字号、字间距作用于选中文字，行高作用于整段（写在段落上，可以调小）。旧内容里写在行内元素上的行高，在重新载入编辑器时会提升为所在段落的行高。`{ 'font-size': [...] }` 等自定义取值会并入格式白名单，不在白名单内的值会被忽略。列表项上的对齐、行高等段落格式会保留在输出的 HTML 中。
 
-全局 enhancer 优先使用 `VcInstance.options.Editor.enhancer`，其次使用 `VcInstance.options.UploadPicker.enhancer`。函数收到 `{ instance, type, types }`，分别是 Vue 组件内部实例、上传类型（如 `image`、`video`）和 `[type]`。
+全局 enhancer 优先使用 `VcInstance.options.Editor.enhancer`，其次使用 `VcInstance.options.UploadPicker.enhancer`。函数收到 `{ instance, type, types, mobile }`，分别是 Vue 组件内部实例、上传类型（如 `image`、`video`）、`[type]`，以及是否为 MEditor。
 
 ### Editor 事件
 
@@ -190,8 +192,29 @@ editorRef.value.add([
 
 EditorView 没有公开事件、插槽或方法。`previewable` 开启时，点击内容中的图片会打开预览，预览列表为内容内的全部图片。
 
+## 移动端
+
+`MEditor`、`MEditorView` 与桌面端结构相同，属性、事件、插槽一致；根节点另有标记类 `vcm-editor` / `vcm-editor-view`，尺寸随 `--vc-rem` 缩放（750 稿）。
+
+- 正文字号 32（375 宽下 16px，iOS 聚焦时不放大页面）。
+- 工具栏单行横向滚动：按钮 72 见方、图标 40，工具栏高 88；分组之间为竖线。
+- 选择项（标题、字体、字号、对齐、行高、字间距）用动作面板，当前值高亮；文字颜色、背景色用底部弹出层的色块网格（色块 64）。
+- 链接、视频、公式的输入用底部弹出层；光标停在链接里时仍以浮层显示预览。
+- `toolbarPlacement` 默认 `keyboard`：聚焦时工具栏固定在虚拟键盘上方，按 `visualViewport` 计算位置，原位置保留占位；光标被工具栏挡住时滚动页面。失焦或禁用时回到编辑区顶部。
+- 点击图片用移动端查看器预览；`enhancer` 收到的 `mobile` 为 `true`。
+
+移动端覆盖的局部变量（`.vcm-editor` 上；弹出层在 `body` 下，各自设置）：
+
+| 参数 | 值（750 稿） |
+| --- | --- |
+| font-size | 32（MEditorView 同） |
+| toolbar-padding / toolbar-font-size | `8 16` / 28 |
+| group-gap / divider-height / tool-gap | 24 / 32 / 4 |
+| tool-size / tool-padding / tool-radius | 72 / `0 16` / 8 |
+| icon-size / color-bar-height | 40 / 4 |
+| color-size / color-gap（颜色弹出层） | 64 / 24 |
+
 ### 注意事项
 
 - EditorView 的内容按 HTML 渲染，组件本身不清洗；展示外部内容前应由业务侧完成可信校验，或配置全局的 `sanitize` 统一清洗（钩子里可用 `instance.parent` 识别 EditorView，为富文本放行更多标签），见 [Customer](../customer/README.md)。
-- `MEditor`、`MEditorView` 是对应桌面组件的别名，没有独立移动端实现。
 - 旧的 `imageUploadOptions`、`videoUploadOptions`、`uploadOptions` 不属于当前公开属性。

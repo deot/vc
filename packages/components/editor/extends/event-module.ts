@@ -146,7 +146,7 @@ export const registerEventModule = (QuillClass: typeof Quill) => {
 			const current = QuillClass.find(e.target) as any;
 			// @ts-ignore
 			if (current instanceof ImageBlot) {
-				previewImages(this.editor.root, current.domNode);
+				previewImages(this.editor.root, current.domNode, this.parent.ImagePreview);
 			}
 		};
 

@@ -5,7 +5,8 @@ import type { PropType } from 'vue';
 import { Icon } from '../../icon';
 import { Dropdown, DropdownMenu, DropdownItem } from '../../dropdown';
 import { useLocale } from '../../locale';
-import { EditorColor } from './color-panel';
+import { EditorColor, renderColors } from './color-panel';
+import type { EditorComponents } from '../types';
 import { getIcon, UPLOAD_ICONS } from './utils';
 import type { ToolbarItem, FormatValue, PromptMode } from './utils';
 import type { Formats } from './use-formats';
@@ -36,7 +37,10 @@ export const EditorToolbar = defineComponent({
 			type: Function as PropType<(name: string, value?: FormatValue) => boolean>,
 			default: () => false
 		},
-		disabled: Boolean
+		disabled: Boolean,
+		// 移动端：单行横向滚动，选择项用动作面板，颜色用底部弹出层
+		mobile: Boolean,
+		components: Object as PropType<Partial<EditorComponents>>
 	},
 	emits: ['format', 'upload', 'action', 'prompt'],
 	setup(props, { emit, slots }) {
@@ -78,8 +82,83 @@ export const EditorToolbar = defineComponent({
 			</button>
 		);
 
+		// 选项内容：对齐为图标，标题按级别显示字号，字体按字体显示
+		const renderOption = (name: string, option: FormatValue) => (
+			name === 'align'
+				? <Icon type={getIcon(name, option)} class="vc-editor__icon" />
+				: (
+						<span
+							class={[`vc-editor-dropdown__${name}`, `is-${toKey(option) || 'default'}`]}
+							style={name === 'font' && option ? { fontFamily: String(option) } : undefined}
+						>
+							{getLabel(name, option)}
+						</span>
+					)
+		);
+
+		const renderTrigger = (name: string, options: FormatValue[]) => (
+			name === 'align'
+				? <Icon type={getIcon(name, props.formats[name] ?? false)} class="vc-editor__icon" />
+				: <span class="vc-editor__select-label">{getCurrentLabel(name, options)}</span>
+		);
+
+		// 移动端：动作面板列出选项，当前值高亮；不 await，取消时不产生未处理的拒绝
+		const openSheet = (name: string, options: FormatValue[]) => {
+			const current = toKey(props.formats[name] ?? false);
+			props.components?.ActionSheet?.open({
+				data: options.map(option => ({
+					content: () => renderOption(name, option),
+					class: ['vcm-editor-option', { 'is-selected': toKey(option) === current }]
+				})),
+				cancelText: t('vc.Editor.cancel'),
+				onOk: (_: any, index: number) => emit('format', name, options[index])
+			});
+		};
+
+		// 移动端：底部弹出层放色块网格，选中后关闭
+		const openColors = (name: string, options: FormatValue[]) => {
+			const current = typeof props.formats[name] === 'string' ? props.formats[name] : undefined;
+			const leaf = props.components?.Popup?.open({
+				title: t(`vc.Editor.${name}`),
+				closable: true,
+				contentClass: 'vcm-editor-color-popup',
+				content: () => renderColors(options, current, (value) => {
+					leaf?.wrapper?.toggle?.(false);
+					emit('format', name, value);
+				})
+			});
+		};
+
+		const renderMobileSelect = (name: string, options: FormatValue[], isColor = false) => {
+			const current = isColor && typeof props.formats[name] === 'string' ? props.formats[name] : undefined;
+			return (
+				<button
+					type="button"
+					key={name}
+					class={[
+						isColor ? 'vc-editor__tool vc-editor__color' : 'vc-editor__select',
+						`is-${name}`,
+						{ 'is-disabled': props.disabled }
+					]}
+					disabled={props.disabled}
+					onClick={() => (isColor ? openColors(name, options) : openSheet(name, options))}
+				>
+					{
+						isColor
+							? [
+									<Icon type={getIcon(name)} class="vc-editor__icon" />,
+									<span class="vc-editor__color-bar" style={current ? { background: current } : undefined} />
+								]
+							: renderTrigger(name, options)
+					}
+					{ !isColor && name !== 'align' && <Icon type="triangle-down" class="vc-editor__caret" /> }
+				</button>
+			);
+		};
+
 		const renderSelect = (item: Extract<ToolbarItem, { type: 'select' }>) => {
 			const { name, options } = item;
+			if (props.mobile) return renderMobileSelect(name, options);
 			const isIcon = name === 'align';
 			const current = toKey(props.formats[name] ?? false);
 			return (
@@ -97,11 +176,7 @@ export const EditorToolbar = defineComponent({
 					}}
 				>
 					{{
-						default: () => (
-							isIcon
-								? <Icon type={getIcon(name, props.formats[name] ?? false)} class="vc-editor__icon" />
-								: <span class="vc-editor__select-label">{getCurrentLabel(name, options)}</span>
-						),
+						default: () => renderTrigger(name, options),
 						content: () => (
 							<DropdownMenu {...{ onMousedown: handlePrevent }}>
 								{
@@ -111,18 +186,7 @@ export const EditorToolbar = defineComponent({
 											value={toKey(option)}
 											selected={toKey(option) === current}
 										>
-											{
-												isIcon
-													? <Icon type={getIcon(name, option)} class="vc-editor__icon" />
-													: (
-															<span
-																class={[`vc-editor-dropdown__${name}`, `is-${toKey(option) || 'default'}`]}
-																style={name === 'font' && option ? { fontFamily: String(option) } : undefined}
-															>
-																{getLabel(name, option)}
-															</span>
-														)
-											}
+											{renderOption(name, option)}
 										</DropdownItem>
 									))
 								}
@@ -146,6 +210,7 @@ export const EditorToolbar = defineComponent({
 				case 'select':
 					return renderSelect(item);
 				case 'color':
+					if (props.mobile) return renderMobileSelect(item.name, item.options, true);
 					return (
 						<EditorColor
 							key={item.name}
@@ -175,7 +240,7 @@ export const EditorToolbar = defineComponent({
 		};
 
 		return () => (
-			<div class={['vc-editor__toolbar', { 'is-disabled': props.disabled }]} onMousedown={handlePrevent}>
+			<div class={['vc-editor__toolbar', { 'is-disabled': props.disabled, 'is-mobile': props.mobile }]} onMousedown={handlePrevent}>
 				<div class="vc-editor__tools">
 					{
 						props.groups.map((group, index) => (

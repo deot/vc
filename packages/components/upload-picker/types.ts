@@ -8,7 +8,8 @@ export type PickerType = FilePreviewFileType;
  * 上传入口的增强：返回真值表示已自行处理，不再打开原生选择
  * type 为这次要选的类型；桌面端有多种类型时一次选择所有类型，type 为空，types 为可选的类型
  */
-export type PickerEnhancer = (data: { instance: ComponentInternalInstance; type?: PickerType; types: PickerType[] }) => any;
+// mobile：调用点知道是哪一端时传入（MEditor 为 true），UploadPicker 内不传
+export type PickerEnhancer = (data: { instance: ComponentInternalInstance; type?: PickerType; types: PickerType[]; mobile?: boolean }) => any;
 
 type UploadPickerCallbackName
 	= 'onFileBefore'

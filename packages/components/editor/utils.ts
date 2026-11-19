@@ -6,10 +6,12 @@ import { ImagePreview } from '../file-preview/image-preview';
  * 每张图都作为缩略图传入：切到哪一张，关闭时就回到哪一张
  * @param container 图片所在的容器
  * @param target 被点击的图片
+ * @param preview 预览入口；移动端传 MImagePreview
+ * @param preview.open 打开预览
  */
-export const previewImages = (container: Element, target: Element) => {
+export const previewImages = (container: Element, target: Element, preview: { open: (options: any) => any } = ImagePreview) => {
 	const images = Array.from(container.querySelectorAll('img'));
-	ImagePreview.open({
+	preview.open({
 		current: images.indexOf(target as HTMLImageElement),
 		data: images.map(img => ({ source: img.currentSrc || img.src, element: img }))
 	});

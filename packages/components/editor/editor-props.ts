@@ -30,6 +30,11 @@ export const props = {
 	previewable: {
 		type: Boolean,
 		default: true
+	},
+	// 工具栏位置：top 在编辑区上方；keyboard 聚焦时停在虚拟键盘上方（仅移动端，桌面端同 top）
+	toolbarPlacement: {
+		type: String as PropType<'top' | 'keyboard'>,
+		default: 'top'
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

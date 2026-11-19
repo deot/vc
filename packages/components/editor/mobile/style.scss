@@ -1,0 +1,116 @@
+@use '../../style/helper' as *;
+
+$color-primary: varfix(color-primary, editor);
+$background-color-lightest: varfix(background-color-lightest, editor);
+$color-neutral-light: varfix(color-neutral-light, editor);
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放）；结构与颜色沿用 ../style.scss，这里只覆盖局部变量与移动端独有的规则
+// 正文 32（375 宽下 16px，iOS 聚焦时不放大页面）
+@include block((vcm-editor, vcm-editor-view)) {
+	@include localvars(editor, (
+		font-size: remfix(32)
+	));
+}
+
+// 工具栏高 88：按钮 72 见方 + 上下 8；图标 40；分组间距 24，分割线 32
+@include block(vcm-editor) {
+	@include localvars(editor, (
+		toolbar-padding: remfix(8) remfix(16),
+		toolbar-font-size: remfix(28),
+		group-gap: remfix(24),
+		divider-height: remfix(32),
+		tool-gap: remfix(4),
+		tool-size: remfix(72),
+		tool-padding: 0 remfix(16),
+		tool-radius: remfix(8),
+		icon-size: remfix(40),
+		color-bar-height: remfix(4)
+	));
+
+	// 单行横向滚动，不显示滚动条；行首的分割线同样被裁掉
+	.vc-editor__tools {
+		overflow: auto hidden;
+		flex-wrap: nowrap;
+		overscroll-behavior-x: contain;
+		scrollbar-width: none;
+
+		&::-webkit-scrollbar {
+			display: none;
+		}
+	}
+
+	.vc-editor__group,
+	.vc-editor__select {
+		flex: none;
+	}
+
+	.vc-editor__select {
+		font: inherit;
+		font-weight: 500;
+		background: none;
+		border: none;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	.vc-editor__caret {
+		margin-left: remfix(8);
+		font-size: remfix(20);
+	}
+
+	// 聚焦时停在虚拟键盘上方：位置由 visualViewport 计算后写在行内样式上
+	.vc-editor__toolbar-holder.is-docked > .vc-editor__toolbar {
+		position: fixed;
+		z-index: 999;
+		background: $background-color-lightest;
+
+		// 顶边线用阴影画：common-border-1px 会把定位改回 relative
+		box-shadow: 0 -1px 0 $color-neutral-light;
+	}
+}
+
+// 以下在 body 下的弹出层里，读不到 .vcm-editor 上的局部变量，各自设置
+// 颜色：色块 64，间距 24，每行 7 个
+@include block(vcm-editor-color-popup) {
+	@include localvars(editor, (
+		color-size: remfix(64),
+		color-gap: remfix(24)
+	));
+
+	.vc-editor-color {
+		padding: 0;
+		justify-content: center;
+	}
+}
+
+// 链接输入：标题栏已有说明，不再显示标签；输入框占满剩余宽度
+@include block(vcm-editor-prompt-popup) {
+	@include localvars(editor, (
+		prompt-padding: 0,
+		prompt-gap: remfix(24),
+		prompt-input-width: auto
+	));
+
+	.vc-editor-prompt__label {
+		display: none;
+	}
+
+	.vc-editor-prompt__input {
+		flex: 1;
+	}
+}
+
+// 链接预览浮层
+@include block(vcm-editor-prompt-wrapper) {
+	font-size: remfix(28);
+
+	@include localvars(editor, (
+		prompt-padding: remfix(16) remfix(24),
+		prompt-gap: remfix(16),
+		prompt-input-width: remfix(320)
+	));
+}
+
+// 动作面板里的当前选项
+.vcm-editor-option.is-selected {
+	color: $color-primary;
+}

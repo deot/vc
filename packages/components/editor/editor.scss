@@ -222,6 +222,9 @@ $sizes: (
 		border: 1px solid transparent;
 		border-radius: 2px;
 
+		// 浅色（如白色）色块与底色区分
+		box-shadow: inset 0 0 0 1px $color-neutral-light;
+
 		// 默认（清除颜色）：斜线表示
 		@include when(default) {
 			background: linear-gradient(to top right, transparent calc(50% - .5px), #{$color-dark-extralight} 50%, transparent calc(50% + .5px));

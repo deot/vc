@@ -118,7 +118,10 @@ export const zhCN: Language = {
 			large: '大',
 			huge: '特大',
 			formula: '公式',
-			video: '视频'
+			video: '视频',
+			cancel: '取消',
+			color: '文字颜色',
+			background: '背景色'
 		},
 		DatePicker: {
 			clearText: '清空',

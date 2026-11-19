@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
-import { Editor, EditorView } from '@deot/vc-components';
+import { Editor, EditorView, MEditor, MEditorView } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import Quill from 'quill';
-import { nextTick, ref } from 'vue';
+import { defineComponent, nextTick, ref } from 'vue';
 import { enUS, zhCN } from '@deot/vc-locale';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EditorToolbar, parseToolbar } from '../toolbar';
@@ -25,6 +25,8 @@ import { registerVideoBlot } from '../extends/video-blot';
 import { getToolbarValues } from '../extends/style-attributor';
 import { registerExtends } from '../extends';
 import { normalizeHTML } from '../utils';
+import { useEditor, emits as editorEmits } from '../use-editor';
+import { props as mobileEditorProps } from '../mobile/editor-props';
 
 const sleep = (ms = 0) => new Promise<void>(resolve => setTimeout(resolve, ms));
 const flush = async () => {
@@ -376,7 +378,7 @@ describe('Editor component', () => {
 		await flush();
 
 		await wrapper.findAll('.vc-editor__tool.is-upload')[0].trigger('click');
-		expect(propEnhancer).toHaveBeenCalledWith({ instance: expect.anything(), type: 'video', types: ['video'] });
+		expect(propEnhancer).toHaveBeenCalledWith({ instance: expect.anything(), type: 'video', types: ['video'], mobile: false });
 		expect(uploadOpen).not.toHaveBeenCalled();
 		wrapper.unmount();
 
@@ -384,7 +386,12 @@ describe('Editor component', () => {
 		const wrapper2 = mount(() => (<Editor enhancer />), { attachTo: document.body });
 		await flush();
 		await wrapper2.findAll('.vc-editor__tool.is-upload')[1].trigger('click');
-		expect(VcInstance.options.UploadPicker!.enhancer).toHaveBeenCalledWith({ instance: expect.anything(), type: 'image', types: ['image'] });
+		expect(VcInstance.options.UploadPicker!.enhancer).toHaveBeenCalledWith({
+			instance: expect.anything(),
+			type: 'image',
+			types: ['image'],
+			mobile: false
+		});
 
 		wrapper2.unmount();
 	});
@@ -1029,5 +1036,137 @@ describe('Editor extends', () => {
 	it('exposes editor defaults', () => {
 		expect(defaults.theme).toBeUndefined();
 		expect(defaults.toolbar.flat(Infinity)).toContain('upload/image');
+	});
+});
+
+describe('MEditor', () => {
+	beforeEach(() => {
+		(window as any).quill = Quill;
+	});
+
+	afterEach(() => {
+		delete (window as any).quill;
+		document.body.innerHTML = '';
+		vi.restoreAllMocks();
+	});
+
+	// 用假的移动端组件挂载 useEditor，断言调用参数
+	const mountMobile = async (props: Record<string, any> = {}) => {
+		const popupLeaf = { wrapper: { toggle: vi.fn() } };
+		const components = {
+			ActionSheet: { open: vi.fn<(options: Record<string, any>) => void>() },
+			Popup: { open: vi.fn<(options: Record<string, any>) => typeof popupLeaf>(() => popupLeaf) },
+			Input: { name: 'FakeInput', props: ['modelValue'], setup: () => () => <input class="fake-input" /> },
+			Button: { name: 'FakeButton', setup: (_: any, { slots }: any) => () => <button class="fake-button">{slots.default?.()}</button> },
+			ImagePreview: { open: vi.fn() }
+		};
+		const Host = defineComponent({
+			props: mobileEditorProps,
+			emits: [...editorEmits],
+			setup: (p, context) => useEditor(p, context as any, { mobile: true, components })
+		});
+		const wrapper = mount(Host, { attachTo: document.body, props });
+		await flush();
+		const editor = getEditor(wrapper);
+		editor.setContents([{ insert: 'hello world\n' }]);
+		return { wrapper, editor, components, popupLeaf };
+	};
+
+	it('renders the marker classes and defaults toolbarPlacement to keyboard', async () => {
+		const wrapper = mount(MEditor, { attachTo: document.body });
+		await flush();
+		expect(wrapper.classes()).toEqual(expect.arrayContaining(['vc-editor', 'vcm-editor']));
+		expect(wrapper.props('toolbarPlacement')).toBe('keyboard');
+		expect(wrapper.find('.vc-editor__toolbar').classes()).toContain('is-mobile');
+		wrapper.unmount();
+
+		const view = mount(() => <MEditorView value="<p>a</p>" />);
+		expect(view.classes()).toEqual(expect.arrayContaining(['vc-editor-view', 'vcm-editor-view']));
+		view.unmount();
+	});
+
+	it('opens the action sheet for selects and the popup for colors', async () => {
+		const { wrapper, editor, components, popupLeaf } = await mountMobile({
+			options: { toolbar: [[{ header: [1, 2, false] }, { color: ['#ff0000', 'selected'] }]] }
+		});
+		editor.setSelection(0, 5);
+
+		await wrapper.find('.vc-editor__select.is-header').trigger('click');
+		const sheet = components.ActionSheet.open.mock.calls[0][0] as any;
+		expect(sheet.data).toHaveLength(3);
+		expect(sheet.data[2].class).toEqual(['vcm-editor-option', { 'is-selected': true }]);
+		expect(sheet.cancelText).toBe('取消');
+		sheet.onOk(sheet.data[1], 1);
+		await flush();
+		expect(editor.getFormat(0, 1).header).toBe(2);
+
+		editor.setSelection(0, 5);
+		await wrapper.find('.vc-editor__color').trigger('click');
+		const popup = components.Popup.open.mock.calls[0][0] as any;
+		expect(popup.title).toBe('文字颜色');
+		const panel = mount(() => popup.content());
+		await panel.findAll('.vc-editor-color__item')[0].trigger('click');
+		expect(popupLeaf.wrapper.toggle).toHaveBeenCalledWith(false);
+		expect(editor.getFormat(0, 5).color).toBe('#ff0000');
+		panel.unmount();
+
+		wrapper.unmount();
+	});
+
+	it('edits links in the popup and passes mobile to the enhancer', async () => {
+		const enhancer = vi.fn(async () => true);
+		const { wrapper, editor, components } = await mountMobile({
+			enhancer,
+			options: { toolbar: [['link', 'upload/image']] }
+		});
+		editor.setSelection(0, 5);
+		await wrapper.find('.vc-editor__tool.is-link').trigger('click');
+		await flush();
+		const popup = components.Popup.open.mock.calls[0][0] as any;
+		expect(popup.title).toBe('链接');
+		const content = mount(() => popup.content());
+		expect(content.find('.vc-editor-prompt.is-mobile .fake-input').exists()).toBe(true);
+		content.unmount();
+
+		await wrapper.find('.vc-editor__tool.is-upload').trigger('click');
+		expect(enhancer).toHaveBeenCalledWith(expect.objectContaining({ type: 'image', mobile: true }));
+
+		wrapper.unmount();
+	});
+
+	it('docks the toolbar above the keyboard while focused', async () => {
+		const viewport = Object.assign(new EventTarget(), { offsetTop: 0, offsetLeft: 0, width: 375, height: 500 });
+		// jsdom 没有 visualViewport
+		Object.defineProperty(window, 'visualViewport', { configurable: true, value: viewport });
+		vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(800);
+
+		const { wrapper, editor } = await mountMobile();
+		const holder = () => wrapper.find('.vc-editor__toolbar-holder');
+		expect(holder().classes()).not.toContain('is-docked');
+
+		editor.emitter.emit('selection-change', { index: 0, length: 0 });
+		await flush();
+		expect(holder().classes()).toContain('is-docked');
+		expect((wrapper.find('.vc-editor__toolbar').element as HTMLElement).style.bottom).toBe('300px');
+
+		// 键盘收起：可视区变高，底边距跟着变
+		viewport.height = 800;
+		viewport.dispatchEvent(new Event('resize'));
+		await sleep(50);
+		await flush();
+		expect((wrapper.find('.vc-editor__toolbar').element as HTMLElement).style.bottom).toBe('0px');
+
+		editor.emitter.emit('selection-change', null);
+		await flush();
+		expect(holder().classes()).not.toContain('is-docked');
+
+		// top 时不停靠
+		await wrapper.setProps({ toolbarPlacement: 'top' });
+		editor.emitter.emit('selection-change', { index: 0, length: 0 });
+		await flush();
+		expect(holder().classes()).not.toContain('is-docked');
+
+		wrapper.unmount();
+		delete (window as any).visualViewport;
 	});
 });

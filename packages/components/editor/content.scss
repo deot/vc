@@ -11,6 +11,9 @@ $foreground-color: varfix(foreground-color, editor);
 .vc-editor-view .ql-editor {
 	padding: 0;
 
+	// 正文字号：桌面端同 Quill 默认 13px，MEditor / MEditorView 覆盖为 750 稿的 32
+	font-size: localfix(editor, font-size, 13px);
+
 	&.ql-blank::before {
 		color: $color-dark-extralight;
 	}

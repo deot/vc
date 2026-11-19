@@ -1,4 +1,9 @@
-import { Editor, EditorView } from '.';
+import { MEditor } from './mobile/editor.tsx';
+import { MEditorView } from './mobile/editor-view.tsx';
+import './style.scss';
+import './mobile/style.scss';
 
-export const MEditor = Editor;
-export const MEditorView = EditorView;
+export {
+	MEditor,
+	MEditorView
+};
