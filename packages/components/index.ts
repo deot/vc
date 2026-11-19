@@ -131,6 +131,8 @@ export * from './sort-list';
 export * from './sort-list/index.m';
 export * from './spin';
 export * from './spin/index.m';
+export * from './splitter';
+export * from './splitter/index.m';
 export * from './steps';
 export * from './steps/index.m';
 export * from './style';

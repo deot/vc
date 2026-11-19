@@ -1,0 +1,215 @@
+@use '../style/helper' as *;
+
+$component-name: vc-splitter;
+
+// 局部变量 --vc-splitter-<键>（默认值见下）
+// - bar-size：分隔条占位的厚度
+// - hit-size：分隔条可按住的厚度，不改布局（触屏上为 24px）
+// - handle-size：默认把手的长度
+// - collapse-size：折叠按钮的边长
+$hit-size: localfix(splitter, hit-size, 8px);
+$handle-size: localfix(splitter, handle-size, 24px);
+$collapse-size: localfix(splitter, collapse-size, 16px);
+$color-line: varfix(color-neutral-light, splitter);
+$color-background: varfix(background-color-lightest, splitter);
+$color-icon: varfix(foreground-color-light, splitter);
+$color-handle: varfix(foreground-color-inactive, splitter);
+$color-active: varfix(color-primary, splitter);
+
+// 根节点上解析出的分隔条厚度：面板的 % 尺寸（utils.ts 的 toLength）也用它扣除分隔条
+$bar-size: var(--vc-splitter-bar);
+
+@function hit-offset($size) {
+	@return calc((#{$bar-size} - #{$size}) / 2);
+}
+
+@include block($component-name) {
+	--vc-splitter-bar: #{localfix(splitter, bar-size, 1px)};
+
+	display: flex;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+
+	// 把手与折叠按钮沿分隔条居中排列：previous、把手（或 #handle 插槽）、next
+	@include element(bar) {
+		position: relative;
+		z-index: 1;
+		display: flex;
+
+		// 把手、折叠按钮比分隔条宽，溢出显示，不撑开分隔条
+		min-width: 0;
+		min-height: 0;
+		cursor: col-resize;
+		background-color: $color-line;
+		transition: background-color .2s;
+		user-select: none;
+		flex: 0 0 $bar-size;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 4px;
+		touch-action: none;
+
+		&::before {
+			position: absolute;
+			inset: 0 hit-offset($hit-size);
+			content: '';
+		}
+
+		&:focus-visible {
+			outline: none;
+		}
+
+		&:hover,
+		&:focus-visible,
+		&.is-dragging {
+			background-color: $color-active;
+
+			.vc-splitter__handle {
+				background-color: $color-active;
+			}
+		}
+
+		@include when(disabled) {
+			cursor: default;
+
+			&::before {
+				display: none;
+			}
+
+			&:hover {
+				background-color: $color-line;
+			}
+
+			.vc-splitter__handle {
+				display: none;
+			}
+		}
+	}
+
+	@include element(handle) {
+		width: 4px;
+		height: $handle-size;
+		background-color: $color-handle;
+		border-radius: 2px;
+		transition: background-color .2s;
+		flex: none;
+	}
+
+	// 折叠按钮贴在线的一侧（previous 在左 / 上，next 在右 / 下）：面板折叠到容器边缘时，展开按钮落在另一侧的面板上，不伸出容器
+	@include element(collapse) {
+		display: flex;
+		width: $collapse-size;
+		height: $collapse-size;
+		font-size: 10px;
+		color: $color-icon;
+		cursor: pointer;
+		background-color: $color-background;
+		border: 1px solid $color-line;
+		border-radius: 2px 0 0 2px;
+		transform: translateX(-50%);
+		box-sizing: border-box;
+		transition: color .2s, border-color .2s;
+		flex: none;
+		align-items: center;
+		justify-content: center;
+
+		&:hover {
+			color: $color-active;
+			border-color: $color-active;
+		}
+
+		@include when(next) {
+			border-radius: 0 2px 2px 0;
+			transform: translateX(50%);
+		}
+	}
+
+	// lazy：拖动中预览松开后的位置，由脚本写 transform
+	@include element(preview) {
+		position: absolute;
+		display: none;
+		pointer-events: none;
+		background-color: $color-active;
+		opacity: .6;
+		inset: 0 calc(50% - 1px);
+	}
+
+	.vc-splitter__bar.is-dragging .vc-splitter__preview {
+		display: block;
+	}
+
+	@include when(vertical) {
+		flex-direction: column;
+
+		.vc-splitter__bar {
+			cursor: row-resize;
+			flex-direction: row;
+
+			&::before {
+				inset: hit-offset($hit-size) 0;
+			}
+
+			&.is-disabled {
+				cursor: default;
+			}
+		}
+
+		.vc-splitter__handle {
+			width: $handle-size;
+			height: 4px;
+		}
+
+		.vc-splitter__collapse {
+			border-radius: 2px 2px 0 0;
+			transform: translateY(-50%);
+
+			&.is-next {
+				border-radius: 0 0 2px 2px;
+				transform: translateY(50%);
+			}
+		}
+
+		.vc-splitter__preview {
+			inset: calc(50% - 1px) 0;
+		}
+	}
+
+	// 拖动中：面板内不选中文字，iframe 等不吞掉指针事件
+	@include when(dragging) {
+		user-select: none;
+
+		> .vc-splitter-panel {
+			pointer-events: none;
+		}
+	}
+}
+
+@include block(vc-splitter-panel) {
+	position: relative;
+	min-width: 0;
+	min-height: 0;
+	overflow: hidden;
+	box-sizing: border-box;
+
+	// 内置 Scroller 占满面板，溢出由它滚动
+	> .vc-scroller {
+		height: 100%;
+	}
+
+	@include when(collapsed) {
+		padding: 0;
+	}
+}
+
+// 触屏：分隔条更容易按住
+@media (pointer: coarse) {
+	.vc-splitter__bar::before {
+		inset: 0 hit-offset(24px);
+	}
+
+	.vc-splitter.is-vertical .vc-splitter__bar::before {
+		inset: hit-offset(24px) 0;
+	}
+}

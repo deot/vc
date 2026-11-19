@@ -62,6 +62,7 @@ import Slider from './modules/slider.vue';
 import Snapshot from './modules/snapshot.vue';
 import SortList from './modules/sort-list.vue';
 import Spin from './modules/spin.vue';
+import Splitter from './modules/splitter.vue';
 import Steps from './modules/steps.vue';
 import SwipeAction from './modules/swipe-action.vue';
 import Switch from './modules/switch.vue';
@@ -144,6 +145,7 @@ export const MODULES = {
 	Snapshot,
 	SortList,
 	Spin,
+	Splitter,
 	Steps,
 	SwipeAction,
 	Switch,
