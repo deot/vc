@@ -5,7 +5,7 @@ const basicReg = /.*id="icon-([^"]+).*viewBox="([^"]+)(.*)/g;
 const symbolReg = /<symbol.*?<\/symbol>/gi;
 const pathReg = /<path.*?<\/path>/gi;
 const fillReg = /fill="[^"]/;
-const basicUrl = '//at.alicdn.com/t/font_1119857_u0f4525o6sd.js';
+const basicUrl = '//at.alicdn.com/t/c/font_1119857_408wzj742ey.js';
 const prefix = '@deot/vc-icon:';
 const IS_DEV = process.env.NODE_ENV === 'development';
 
