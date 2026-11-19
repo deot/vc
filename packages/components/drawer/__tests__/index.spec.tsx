@@ -302,6 +302,88 @@ describe('DrawerView 关闭逻辑', () => {
 		wrapper.unmount();
 	});
 
+	it('关闭按钮是 button（键盘可聚焦）', async () => {
+		const wrapper = mount(DrawerView, {
+			attachTo: document.body,
+			props: { modelValue: true }
+		});
+		await flush();
+
+		const close = wrapper.find('.vc-drawer__close');
+		expect(close.element.tagName).toBe('BUTTON');
+		expect(close.attributes('type')).toBe('button');
+		expect(close.attributes('aria-label')).toBe('close');
+
+		wrapper.unmount();
+	});
+
+	it('closable=false: 不渲染关闭按钮；也没有标题时不渲染标题栏', async () => {
+		const wrapper = mount(DrawerView, {
+			attachTo: document.body,
+			props: { modelValue: true, closable: false, title: 'title' }
+		});
+		await flush();
+
+		expect(wrapper.find('.vc-drawer__close').exists()).toBe(false);
+		expect(wrapper.find('.vc-drawer__header').exists()).toBe(true);
+
+		await wrapper.setProps({ title: undefined });
+		expect(wrapper.find('.vc-drawer__header').exists()).toBe(false);
+
+		await wrapper.setProps({ title: false, closable: true });
+		expect(wrapper.find('.vc-drawer__header').exists()).toBe(true);
+		expect(wrapper.find('.vc-drawer__close').exists()).toBe(true);
+
+		wrapper.unmount();
+	});
+
+	it('escClosable=true (默认): Esc 关闭并经过 closeWithCancel；escClosable=false 时不关闭', async () => {
+		const onCancel = vi.fn();
+		const wrapper = mount(DrawerView, {
+			attachTo: document.body,
+			props: { modelValue: true, onCancel }
+		});
+		await flush();
+
+		await wrapper.setProps({ escClosable: false });
+		document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+		await flush();
+		expect((wrapper.vm as any).isActive).toBe(true);
+
+		await wrapper.setProps({ escClosable: true });
+		document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+		await flush();
+		expect(onCancel).toHaveBeenCalledTimes(1);
+		expect((wrapper.vm as any).isActive).toBe(false);
+
+		wrapper.unmount();
+	});
+
+	it('closeWithCancel: onCancel 返回的 Promise 拒绝时保持打开，兑现后关闭', async () => {
+		let settle: { resolve: () => void; reject: () => void };
+		const onCancel = vi.fn(() => new Promise<void>((resolve, reject) => {
+			settle = { resolve, reject };
+		}));
+		const wrapper = mount(DrawerView, {
+			attachTo: document.body,
+			props: { modelValue: true, onCancel }
+		});
+		await flush();
+
+		await wrapper.find('.vc-drawer__close').trigger('click');
+		settle!.reject();
+		await flush();
+		expect((wrapper.vm as any).isActive).toBe(true);
+
+		await wrapper.find('.vc-drawer__mask').trigger('click');
+		settle!.resolve();
+		await flush();
+		expect(onCancel).toHaveBeenCalledTimes(2);
+		expect((wrapper.vm as any).isActive).toBe(false);
+
+		wrapper.unmount();
+	});
+
 	it('maskClosable=true (默认): 点击 mask 关闭', async () => {
 		const wrapper = mount(DrawerView, {
 			attachTo: document.body,
@@ -536,15 +618,15 @@ describe('DrawerView locale', () => {
 		VcInstance.configure({ locale: zhCN });
 		const wrapper = mount(DrawerView);
 		try {
-			expect(wrapper.findAll('button').map(button => button.text())).toEqual(['取消', '确定']);
+			expect(wrapper.findAll('.vc-drawer__footer button').map(button => button.text())).toEqual(['取消', '确定']);
 			VcInstance.configure({ locale: enUS });
 			await nextTick();
-			expect(wrapper.findAll('button').map(button => button.text())).toEqual(['Cancel', 'OK']);
+			expect(wrapper.findAll('.vc-drawer__footer button').map(button => button.text())).toEqual(['Cancel', 'OK']);
 			await wrapper.setProps({ okText: '保存', cancelText: '' });
-			expect(wrapper.findAll('button').map(button => button.text())).toEqual(['保存']);
+			expect(wrapper.findAll('.vc-drawer__footer button').map(button => button.text())).toEqual(['保存']);
 			VcInstance.configure({ locale: zhCN });
 			await nextTick();
-			expect(wrapper.findAll('button').map(button => button.text())).toEqual(['保存']);
+			expect(wrapper.findAll('.vc-drawer__footer button').map(button => button.text())).toEqual(['保存']);
 			await wrapper.setProps({ okText: false });
 			expect(wrapper.find('.vc-drawer__footer').exists()).toBe(false);
 			await wrapper.setProps({ okText: '', cancelText: false });
@@ -571,7 +653,7 @@ describe('DrawerView footer / okText / cancelText', () => {
 		document.body.style.removeProperty('overflow');
 	});
 
-	it('默认 footer=true 同时存在 okText / cancelText 时渲染 footer, container 不带 is-no-footer', async () => {
+	it('默认 footer=true 同时存在 okText / cancelText 时渲染 footer', async () => {
 		const wrapper = mount(DrawerView, {
 			attachTo: document.body,
 			props: { modelValue: true }
@@ -579,13 +661,12 @@ describe('DrawerView footer / okText / cancelText', () => {
 		await flush();
 
 		expect(wrapper.find('.vc-drawer__footer').exists()).toBe(true);
-		expect(wrapper.find('.vc-drawer__container').classes()).not.toContain('is-no-footer');
 		expect(wrapper.findAll('.vc-drawer__footer button')).toHaveLength(2);
 
 		wrapper.unmount();
 	});
 
-	it('footer=false: 不渲染 footer, container 带 is-no-footer', async () => {
+	it('footer=false: 不渲染 footer', async () => {
 		const wrapper = mount(DrawerView, {
 			attachTo: document.body,
 			props: { modelValue: true, footer: false }
@@ -593,7 +674,6 @@ describe('DrawerView footer / okText / cancelText', () => {
 		await flush();
 
 		expect(wrapper.find('.vc-drawer__footer').exists()).toBe(false);
-		expect(wrapper.find('.vc-drawer__container').classes()).toContain('is-no-footer');
 
 		wrapper.unmount();
 	});
@@ -626,7 +706,7 @@ describe('DrawerView footer / okText / cancelText', () => {
 		wrapper.unmount();
 	});
 
-	it('okText/cancelText 都为 false: 不渲染 footer, container 带 is-no-footer', async () => {
+	it('okText/cancelText 都为 false: 不渲染 footer', async () => {
 		const wrapper = mount(DrawerView, {
 			attachTo: document.body,
 			props: { modelValue: true, okText: false, cancelText: false }
@@ -634,7 +714,6 @@ describe('DrawerView footer / okText / cancelText', () => {
 		await flush();
 
 		expect(wrapper.find('.vc-drawer__footer').exists()).toBe(false);
-		expect(wrapper.find('.vc-drawer__container').classes()).toContain('is-no-footer');
 
 		wrapper.unmount();
 	});

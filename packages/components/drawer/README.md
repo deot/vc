@@ -168,7 +168,7 @@ const handleDrawer = playground.run(500, { visible: isActive }, (res) => {
 :::
 
 ### 关闭抽屉
-通过`maskClosable`控制是否能够点击遮罩关闭抽屉。
+通过`maskClosable`控制是否能够点击遮罩关闭抽屉；`closable` 控制右上角的关闭按钮，`escClosable` 控制按 Esc 关闭（多个弹层时由最后打开的处理）。没有标题、`header` 插槽且 `closable` 为 `false` 时不渲染标题栏。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
@@ -362,7 +362,9 @@ onUnmounted(() => {
 | width | 左右抽屉宽度：数字单位为 px，字符串为 CSS 长度（如 `'50%'`） | `number \| string` | - | `600` |
 | height | 上下抽屉高度：数字单位为 px，字符串为 CSS 长度 | `number \| string` | - | `300` |
 | mask | 显示遮罩 | `boolean` | - | `true` |
+| closable | 显示右上角的关闭按钮 | `boolean` | - | `true` |
 | maskClosable | 点击遮罩可关闭 | `boolean` | - | `true` |
+| escClosable | 按 Esc 可关闭 | `boolean` | - | `true` |
 | scrollable | 内容区是否由内置的 Scroller 滚动；`false` 时由内容自行收缩并滚动（内容的根节点需设置 `min-height: 0`） | `boolean` | - | `true` |
 | scrollerOptions | 内置 Scroller 的属性（如 `always`、`native`）；内容区的类名与样式仍用 `contentClass`、`contentStyle` | `object` | - | - |
 | maskStyle | 遮罩样式 | `object \| string` | - | - |
@@ -370,14 +372,14 @@ onUnmounted(() => {
 | wrapperStyle | 面板容器样式，可覆盖宽高 | `object \| string` | - | - |
 | contentClass | 滚动内容区类名 | `object \| string` | - | - |
 | contentStyle | 滚动内容区样式 | `object \| string` | - | - |
-| closeWithCancel | 关闭图标、遮罩关闭时执行 onCancel；设为 false 时直接关闭 | `boolean` | - | `true` |
+| closeWithCancel | 关闭按钮、遮罩、Esc 关闭时执行 onCancel，返回值规则同取消按钮；设为 false 时直接关闭 | `boolean` | - | `true` |
 | okText | 确认按钮内容；false 或空字符串隐藏按钮 | `string \| boolean` | - | 当前语言的“确定” |
 | cancelText | 取消按钮内容；false 或空字符串隐藏按钮 | `string \| boolean` | - | 当前语言的“取消” |
 | okDisabled | 禁用确认按钮 | `boolean` | - | `false` |
 | cancelDisabled | 禁用取消按钮，不影响关闭图标和遮罩 | `boolean` | - | `false` |
 | footer | 显示底部区域；两个按钮内容均为假值时也会隐藏 | `boolean` | - | `true` |
 | onOk | 点击确认的回调，返回值参与关闭判断 | `(event: MouseEvent) => any` | - | - |
-| onCancel | 点击取消的回调；closeWithCancel 为 true 时也处理图标和遮罩关闭 | `(event: MouseEvent) => any` | - | - |
+| onCancel | 点击取消的回调；closeWithCancel 为 true 时也处理关闭按钮、遮罩、Esc 关闭 | `(event?: Event) => any` | - | - |
 
 默认按钮文案跟随 `VcInstance.configure({ locale })` 更新，显式传入的文案优先。渲染函数接收 Customer 的 `(props, context)` 参数，可返回 Vue 渲染内容。
 

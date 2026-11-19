@@ -25,7 +25,16 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
+	// 右上角的关闭按钮
+	closable: {
+		type: Boolean,
+		default: true
+	},
 	maskClosable: {
+		type: Boolean,
+		default: true
+	},
+	escClosable: {
 		type: Boolean,
 		default: true
 	},

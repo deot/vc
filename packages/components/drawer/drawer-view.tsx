@@ -1,15 +1,16 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, computed, watch, getCurrentInstance, Fragment } from 'vue';
+import { defineComponent, computed, Fragment } from 'vue';
 import { useScrollbar } from '@deot/vc-hooks';
 import { toPx } from '@deot/vc-shared';
 import { Button } from '../button';
 import { Icon } from '../icon';
 import { Customer } from '../customer';
+import { hasCustomerValue } from '../customer/utils';
 import { Scroller } from '../scroller';
-import { useLocale } from '../locale';
 import { TransitionFade, TransitionSlide } from '../transition';
 import { props as drawerProps } from './drawer-view-props';
+import { useDrawer } from './use-drawer';
 
 const COMPONENT_NAME = 'vc-drawer';
 
@@ -17,12 +18,19 @@ export const DrawerView = defineComponent({
 	name: COMPONENT_NAME,
 	props: drawerProps,
 	emits: ['close', 'update:modelValue', 'visible-change', 'portal-fulfilled'],
-	setup(props, { emit, slots, expose }) {
-		const instance = getCurrentInstance()!;
-		const isActive = ref(false);
-		const { t } = useLocale();
-		const okText = computed(() => props.okText ?? t('vc.Drawer.okButtonText'));
-		const cancelText = computed(() => props.cancelText ?? t('vc.Drawer.cancelButtonText'));
+	setup(props, context) {
+		const { slots } = context;
+		const {
+			isActive,
+			okText,
+			cancelText,
+			hasFooter,
+			handleOk,
+			handleCancel,
+			handleBefore,
+			handleClose,
+			handleRemove
+		} = useDrawer(props, context);
 
 		const classes = computed(() => {
 			return {
@@ -35,77 +43,6 @@ export const DrawerView = defineComponent({
 				: { width: toPx(props.width) };
 		});
 
-		watch(
-			() => props.modelValue,
-			(v) => {
-				isActive.value = v;
-			},
-			{ immediate: true }
-		);
-
-		// 打开时通知；关闭在离场动画结束后（handleRemove）
-		watch(isActive, v => v && emit('visible-change', true));
-
-		const handleBefore = (e: any, hook: any) => {
-			if (!isActive.value) return;
-
-			const fn = hook && hook(e);
-			if (fn && fn.then) {
-				return fn
-					.then((res: any) => {
-						isActive.value = false;
-						return res;
-					});
-			} else if (!fn || fn === true) {
-				isActive.value = false;
-			}
-		};
-
-		// 关闭事件
-		const handleClose = (e: any, closable: boolean) => {
-			if (closable
-				|| (
-					props.maskClosable
-					&& e.target.classList.contains('vc-drawer__wrapper')
-				)
-			) {
-				// 用户主要取消与关闭事件关联
-				if (props.closeWithCancel) {
-					handleBefore(e, handleCancel);
-				} else {
-					isActive.value = false;
-				}
-			}
-		};
-
-		/**
-		 * 动画执行后关闭, 关闭事件都会被执行
-		 * visible-change 由移除之后触发
-		 * 同时portal-fulfilled兼容portal设计
-		 */
-		const handleRemove = () => {
-			!instance.isUnmounted && (
-				emit('close'),
-				emit('portal-fulfilled'),
-				emit('update:modelValue', false),
-				emit('visible-change', false)
-			);
-		};
-
-		// 用户点击确定的回调 兼容portal设计
-		const handleOk = (...rest: any[]) => {
-			const ok = instance.vnode.props?.onOk || props.onOk || (() => {});
-
-			return ok(...rest);
-		};
-
-		// 用户点击取消按钮时为取消 兼容portal设计
-		const handleCancel = (...rest: any[]) => {
-			const cancel = instance.vnode.props?.onCancel || props.onCancel || (() => {});
-
-			return cancel(...rest);
-		};
-
 		useScrollbar(isActive);
 
 		const renderContent = () => {
@@ -117,13 +54,67 @@ export const DrawerView = defineComponent({
 			);
 		};
 
-		expose({
-			isActive, // for portal
-			toggle(v?: boolean) {
-				v = typeof v === 'boolean' ? v : !isActive.value;
-				isActive.value = v;
-			}
-		});
+		const renderHeader = () => {
+			const hasTitle = !!slots.header || (props.title !== false && hasCustomerValue(props.title));
+			if (!hasTitle && !props.closable) return;
+			return (
+				<div class="vc-drawer__header">
+					<Customer class="vc-drawer__title" render={slots.header || props.title} />
+					{
+						props.closable && (
+							<button
+								type="button"
+								aria-label="close"
+								class="vc-drawer__close"
+								onClick={e => handleClose(e, true)}
+							>
+								<Icon type="close" />
+							</button>
+						)
+					}
+				</div>
+			);
+		};
+
+		const renderFooter = () => {
+			if (!hasFooter.value) return;
+			return (
+				<div class="vc-drawer__footer">
+					{ slots['footer-extra']?.() }
+					{
+						!slots.footer
+							? (
+									<Fragment>
+										{
+											cancelText.value && (
+												<Button
+													class="vc-drawer__cancel"
+													disabled={props.cancelDisabled}
+													onClick={e => handleBefore(e, handleCancel)}
+												>
+													{ cancelText.value }
+												</Button>
+											)
+										}
+										{
+											okText.value && (
+												<Button
+													type="primary"
+													disabled={props.okDisabled}
+													onClick={e => handleBefore(e, handleOk)}
+												>
+													{ okText.value }
+												</Button>
+											)
+										}
+									</Fragment>
+								)
+							: slots.footer?.()
+					}
+				</div>
+			);
+		};
+
 		return () => {
 			return (
 				<div class={[classes.value, 'vc-drawer']}>
@@ -146,23 +137,9 @@ export const DrawerView = defineComponent({
 							class={[props.wrapperClass, 'vc-drawer__wrapper']}
 							style={[style.value, props.wrapperStyle]}
 						>
-							<div
-								class={[
-									{
-										'is-no-footer': !props.footer || (!cancelText.value && !okText.value)
-									},
-									'vc-drawer__container'
-								]}
-							>
-								<div class="vc-drawer__header">
-									<Customer class="vc-drawer__title" render={slots.header || props.title} />
-									<a class="vc-drawer__close" onClick={e => handleClose(e, true)}>
-										<Icon type="close" />
-									</a>
-								</div>
-								<div
-									class="vc-drawer__content-container"
-								>
+							<div class="vc-drawer__container">
+								{ renderHeader() }
+								<div class="vc-drawer__content-container">
 									{
 										props.scrollable
 											? (
@@ -185,43 +162,7 @@ export const DrawerView = defineComponent({
 												)
 									}
 								</div>
-								{
-									(props.footer && (cancelText.value || okText.value)) && (
-										<div class={['vc-drawer__footer']}>
-											{ slots['footer-extra']?.() }
-											{
-												!slots.footer
-													? (
-															<Fragment>
-																{
-																	cancelText.value && (
-																		<Button
-																			class="vc-drawer__cancel"
-																			disabled={props.cancelDisabled}
-																			onClick={e => handleBefore(e, handleCancel)}
-																		>
-																			{ cancelText.value }
-																		</Button>
-																	)
-																}
-																{
-																	okText.value && (
-																		<Button
-																			type="primary"
-																			disabled={props.okDisabled}
-																			onClick={e => handleBefore(e, handleOk)}
-																		>
-																			{ okText.value }
-																		</Button>
-																	)
-																}
-															</Fragment>
-														)
-													: slots.footer?.()
-											}
-										</div>
-									)
-								}
+								{ renderFooter() }
 							</div>
 						</div>
 					</TransitionSlide>

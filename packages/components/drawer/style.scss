@@ -28,8 +28,7 @@ $box-shadow: varfix(box-shadow, drawer);
 			right: 0;
 			bottom: 0;
 			left: 0;
-
-			// padding-bottom: env(safe-area-inset-bottom);
+			max-height: 100%;
 		}
 	}
 
@@ -38,8 +37,7 @@ $box-shadow: varfix(box-shadow, drawer);
 			top: 0;
 			right: 0;
 			left: 0;
-
-			// padding-top: env(safe-area-inset-bottom);
+			max-height: 100%;
 		}
 	}
 
@@ -48,6 +46,7 @@ $box-shadow: varfix(box-shadow, drawer);
 			top: 0;
 			bottom: 0;
 			left: 0;
+			max-width: 100%;
 		}
 	}
 
@@ -56,6 +55,7 @@ $box-shadow: varfix(box-shadow, drawer);
 			top: 0;
 			right: 0;
 			bottom: 0;
+			max-width: 100%;
 		}
 	}
 
@@ -63,18 +63,14 @@ $box-shadow: varfix(box-shadow, drawer);
 		position: relative;
 		display: flex;
 		height: 100%;
-		padding-bottom: unitfix(57);
 		background: $background-color-lightest;
 		box-sizing: border-box;
 		flex-direction: column;
-
-		@include when(no-footer) {
-			padding-bottom: 0;
-		}
 	}
 
 	@include element(header) {
 		position: relative;
+		flex-shrink: 0;
 		padding: unitfix(16) unitfix(28);
 		font-size: unitfix(16);
 		font-weight: 600;
@@ -104,23 +100,26 @@ $box-shadow: varfix(box-shadow, drawer);
 	}
 
 	@include element(footer) {
-		position: absolute;
-		bottom: 0;
-		width: 100%;
 		padding: unitfix(12) unitfix(24);
 		font-size: unitfix(12);
 		text-align: right;
 		border-top: unitfix(1) solid $color-neutral-light;
 		box-sizing: border-box;
+		flex-shrink: 0;
 	}
 
 	@include element(close) {
 		position: absolute;
 		top: unitfix(16);
 		right: unitfix(28);
+		padding: 0;
+		font: inherit;
 		font-size: unitfix(13);
 		color: $color-dark-lightest;
 		cursor: pointer;
+		background: none;
+		border: 0;
+		appearance: none;
 	}
 
 	@include element(cancel) {
