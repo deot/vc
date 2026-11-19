@@ -1,12 +1,8 @@
 /** @jsxImportSource vue */
 
 import { computed, defineComponent, onMounted, ref, shallowRef, watch } from 'vue';
-import {
-	isBlob,
-	normalizeOutputSize
-} from '../image-crop/utils';
 import { props as imageProcessorProps } from './image-processor-props';
-import { loadImage } from './utils';
+import { isBlob, loadImage, normalizeOutputSize, readBlobAsDataUrl } from './utils';
 import type { CrossOrigin } from './utils';
 
 const COMPONENT_NAME = 'vc-image-processor';
@@ -49,21 +45,6 @@ const isImageData = (value: unknown): value is ImageData => {
 		&& isUint8ClampedArray((value as ImageData).data)
 		&& typeof (value as ImageData).width === 'number'
 		&& typeof (value as ImageData).height === 'number';
-};
-
-const readBlobAsDataUrl = (blob: Blob) => {
-	return new Promise<string>((resolve, reject) => {
-		if (typeof FileReader === 'undefined') {
-			reject(new Error('FileReader is not available.'));
-			return;
-		}
-
-		const reader = new FileReader();
-
-		reader.onload = () => resolve(String(reader.result || ''));
-		reader.onerror = () => reject(reader.error || new Error('Failed to read image blob.'));
-		reader.readAsDataURL(blob);
-	});
 };
 
 const getContext = (canvas: HTMLCanvasElement) => {
