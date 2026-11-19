@@ -1,0 +1,88 @@
+@use '../style/helper' as *;
+
+$color-dark-extralight: varfix(color-dark-extralight, editor);
+$color-neutral-light: varfix(color-neutral-light, editor);
+$color-primary: varfix(color-primary, editor);
+$background-color: varfix(background-color, editor);
+$foreground-color: varfix(foreground-color, editor);
+
+// 正文排版：Editor 编辑区与 EditorView 一致
+.vc-editor .ql-editor,
+.vc-editor-view .ql-editor {
+	padding: 0;
+
+	&.ql-blank::before {
+		color: $color-dark-extralight;
+	}
+
+	h1 {
+		font-size: 2em;
+	}
+
+	h2 {
+		font-size: 1.5em;
+	}
+
+	h3 {
+		font-size: 1.17em;
+	}
+
+	h4 {
+		font-size: 1em;
+	}
+
+	h5 {
+		font-size: .83em;
+	}
+
+	h6 {
+		font-size: .67em;
+	}
+
+	a {
+		color: $color-primary;
+		text-decoration: underline;
+	}
+
+	blockquote {
+		padding-left: 16px;
+		margin-top: 5px;
+		margin-bottom: 5px;
+		border-left: 4px solid $color-neutral-light;
+	}
+
+	td {
+		border-color: $color-neutral-light;
+	}
+
+	li[data-list="checked"] > .ql-ui,
+	li[data-list="unchecked"] > .ql-ui {
+		color: $color-dark-extralight;
+	}
+
+	code,
+	pre,
+	.ql-code-block-container {
+		color: $foreground-color;
+		background: $background-color;
+		border-radius: 3px;
+	}
+
+	code {
+		padding: 2px 4px;
+		font-size: 85%;
+	}
+
+	// 编辑区的代码块为 .ql-code-block-container，输出的 HTML 为 pre
+	pre,
+	.ql-code-block-container {
+		padding: 5px 10px;
+		margin-top: 5px;
+		margin-bottom: 5px;
+		overflow: visible;
+	}
+
+	img {
+		max-width: 100%;
+	}
+}

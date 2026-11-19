@@ -6,7 +6,7 @@ import Quill from 'quill';
 import { nextTick, ref } from 'vue';
 import { enUS, zhCN } from '@deot/vc-locale';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { EditorToolbar } from '../toolbar';
+import { EditorToolbar, parseToolbar } from '../toolbar';
 import { VcInstance } from '../../vc';
 import { ImagePreview } from '../../file-preview';
 import { Upload } from '../../upload';
@@ -24,18 +24,7 @@ import { registerLineHeight } from '../extends/line-height';
 import { registerVideoBlot } from '../extends/video-blot';
 import { getToolbarValues } from '../extends/style-attributor';
 import { registerExtends } from '../extends';
-import {
-	insertFontSizeStyle,
-	insertLetterSpacingStyle,
-	insertLineHeightStyle,
-	normalizeHTML
-} from '../utils';
-import * as Load from '@deot/helper-load';
-
-vi.mock('@deot/helper-load', () => ({
-	style: vi.fn(),
-	removeStyle: vi.fn()
-}));
+import { normalizeHTML } from '../utils';
 
 const sleep = (ms = 0) => new Promise<void>(resolve => setTimeout(resolve, ms));
 const flush = async () => {
@@ -122,15 +111,14 @@ describe('Editor component', () => {
 		const wrapper = mount(Editor, { attachTo: document.body });
 		await flush();
 		const editor = getEditor(wrapper);
+		const headerLabel = () => wrapper.find('.vc-editor__select.is-header .vc-editor__select-label').text();
 		expect(editor.root.dataset.placeholder).toBe('请输入内容');
-		expect(editor.container.querySelector('input[data-video]')?.getAttribute('data-video')).toBe('嵌入视频地址');
-		expect(wrapper.element.style.getPropertyValue('--vc-editor-label-heading-2')).toBe('"标题2"');
+		expect(headerLabel()).toBe('文本');
 		VcInstance.configure({ locale: enUS });
 		await flush();
 		expect(editor.root.dataset.placeholder).toBe('Please enter content');
-		expect(editor.container.querySelector('input[data-video]')?.getAttribute('data-video')).toBe('Embed URL');
-		expect(wrapper.element.style.getPropertyValue('--vc-editor-label-heading-2')).toBe('"Heading 2"');
-		expect(wrapper.element.style.getPropertyValue('--vc-editor-label-save')).toBe('"Save"');
+		// 工具栏文案直接跟随 locale
+		expect(headerLabel()).toBe('Normal');
 		await wrapper.setProps({ options: { placeholder: '' } });
 		expect(editor.root.dataset.placeholder).toBe('');
 		VcInstance.configure({ locale: zhCN });
@@ -160,9 +148,13 @@ describe('Editor component', () => {
 		expect(register).toHaveBeenCalledWith(Quill);
 		expect(onReady).toHaveBeenCalledWith({ dependencies: { quill: Quill } });
 		expect(editor.root.innerHTML).toContain('initial');
-		expect((editor.getModule('toolbar') as any).container.id).toMatch(/^editor-toolbar/);
+		// 工具栏由组件渲染，不使用 Quill 的 toolbar 模块与 snow 主题
+		expect(editor.getModule('toolbar')).toBeUndefined();
+		expect(editor.container.classList.contains('ql-snow')).toBe(false);
 		expect(editor.options[EXTENDS_CONTEXT_KEY].previewable).toBe(true);
 		expect(wrapper.findComponent(EditorToolbar).exists()).toBe(true);
+		// 数值取值的按钮（{ header: 1 }）也会渲染
+		expect(wrapper.findAll('.vc-editor__tool.is-header')).toHaveLength(2);
 
 		wrapper.unmount();
 	});
@@ -175,18 +167,19 @@ describe('Editor component', () => {
 			modules: { custom: true },
 			toolbar: ['bold']
 		};
-		let toolbarId = '';
 		const wrapper = mount(Editor, {
 			attachTo: document.body,
 			props: {
-				options: { placeholder: 'local', modules: { history: true } }
+				options: { placeholder: 'local', modules: { history: true, toolbar: '#ignored' } }
 			},
 			slots: {
-				toolbar: () => <div id={toolbarId} class="custom-toolbar">toolbar</div>
+				toolbar: ({ formats, format }: any) => (
+					<div class="custom-toolbar">
+						<button class={['custom-bold', { 'is-active': formats.bold }]} onClick={() => format('bold', undefined, true)} />
+					</div>
+				)
 			}
 		});
-		toolbarId = (wrapper.vm as any).toolbarId;
-		await wrapper.vm.$forceUpdate();
 		await flush();
 
 		const editor = getEditor(wrapper);
@@ -194,8 +187,16 @@ describe('Editor component', () => {
 		expect(CustomModule).toHaveBeenCalled();
 		expect(editor.options.modules.custom).toEqual({});
 		expect(editor.options.modules.history).toBeDefined();
-		expect((editor.getModule('toolbar') as any).container.className).toContain('custom-toolbar');
+		expect(editor.getModule('toolbar')).toBeUndefined();
 		expect(wrapper.find('.custom-toolbar').exists()).toBe(true);
+		expect(wrapper.findComponent(EditorToolbar).exists()).toBe(false);
+
+		// 插槽拿到 formats / format，不需要对齐 id
+		editor.setContents([{ insert: 'abc\n' }]);
+		editor.setSelection(0, 3);
+		await wrapper.find('.custom-bold').trigger('click');
+		expect(editor.getFormat(0, 3).bold).toBe(true);
+		expect(wrapper.find('.custom-bold').classes()).toContain('is-active');
 
 		wrapper.unmount();
 	});
@@ -306,12 +307,12 @@ describe('Editor component', () => {
 		const redo = vi.spyOn(editor.history, 'redo');
 		const insertText = vi.spyOn(editor, 'insertText');
 		const format = vi.spyOn(editor, 'format');
-		const icons = wrapper.findAll('.vc-editor__icon .vc-icon');
+		const icons = wrapper.findAll('.vc-editor__tool.is-upload');
 		await icons[0].trigger('click');
 		expect(uploadOpen).toHaveBeenCalledWith(expect.objectContaining({ accept: 'video/*' }));
 
-		await wrapper.findAll('.vc-editor__icon')[2].trigger('click');
-		await wrapper.findAll('.vc-editor__icon')[3].trigger('click');
+		await wrapper.find('.vc-editor__tool.is-undo').trigger('click');
+		await wrapper.find('.vc-editor__tool.is-redo').trigger('click');
 		expect(undo).toHaveBeenCalledTimes(1);
 		expect(redo).toHaveBeenCalledTimes(1);
 
@@ -319,8 +320,8 @@ describe('Editor component', () => {
 		await wrapper.setProps({ disabled: true });
 		uploadOpen.mockClear();
 		await icons[0].trigger('click');
-		await wrapper.findAll('.vc-editor__icon')[2].trigger('click');
-		await wrapper.findAll('.vc-editor__icon')[3].trigger('click');
+		await wrapper.find('.vc-editor__tool.is-undo').trigger('click');
+		await wrapper.find('.vc-editor__tool.is-redo').trigger('click');
 		expect(uploadOpen).not.toHaveBeenCalled();
 		expect(undo).toHaveBeenCalledTimes(1);
 		expect(redo).toHaveBeenCalledTimes(1);
@@ -349,7 +350,7 @@ describe('Editor component', () => {
 		await flush();
 
 		const spin = () => (wrapper.find('.vc-editor__spin').element as HTMLElement).style.display;
-		const icons = wrapper.findAll('.vc-editor__icon .vc-icon');
+		const icons = wrapper.findAll('.vc-editor__tool.is-upload');
 		await icons[0].trigger('click');
 		await icons[1].trigger('click');
 		await flush();
@@ -374,7 +375,7 @@ describe('Editor component', () => {
 		), { attachTo: document.body });
 		await flush();
 
-		await wrapper.findAll('.vc-editor__icon .vc-icon')[0].trigger('click');
+		await wrapper.findAll('.vc-editor__tool.is-upload')[0].trigger('click');
 		expect(propEnhancer).toHaveBeenCalledWith({ instance: expect.anything(), type: 'video', types: ['video'] });
 		expect(uploadOpen).not.toHaveBeenCalled();
 		wrapper.unmount();
@@ -382,7 +383,7 @@ describe('Editor component', () => {
 		VcInstance.options.UploadPicker!.enhancer = vi.fn(async () => true);
 		const wrapper2 = mount(() => (<Editor enhancer />), { attachTo: document.body });
 		await flush();
-		await wrapper2.findAll('.vc-editor__icon .vc-icon')[1].trigger('click');
+		await wrapper2.findAll('.vc-editor__tool.is-upload')[1].trigger('click');
 		expect(VcInstance.options.UploadPicker!.enhancer).toHaveBeenCalledWith({ instance: expect.anything(), type: 'image', types: ['image'] });
 
 		wrapper2.unmount();
@@ -390,65 +391,206 @@ describe('Editor component', () => {
 });
 
 describe('EditorToolbar', () => {
+	beforeEach(() => {
+		(window as any).quill = Quill;
+	});
+
 	afterEach(() => {
+		delete (window as any).quill;
 		document.body.innerHTML = '';
-		vi.clearAllMocks();
+		vi.restoreAllMocks();
 	});
 
-	it('renders button groups, uploads, selects, undo/redo and extend slot', async () => {
-		vi.clearAllMocks();
-		const onUpload = vi.fn(({ type }) => <button class={`upload-${type}`} />);
-		const wrapper = mount(() => (
-			<EditorToolbar
-				elementId="toolbar"
-				options={[
-					['bold', 'upload/image', 'undo', 'redo'],
-					{ header: [1, 2, 'selected'] },
-					{ script: 'sub' },
-					'font-size',
-					'line-height',
-					'letter-spacing'
-				]}
-			>
-				{{
-					upload: onUpload,
-					undo: () => <button class="undo" />,
-					redo: () => <button class="redo" />,
-					extend: () => <button class="extend" />
-				}}
-			</EditorToolbar>
-		));
+	const mountEditor = async (toolbar?: any[]) => {
+		const wrapper = mount(Editor, {
+			attachTo: document.body,
+			props: toolbar ? { options: { toolbar } } : {}
+		});
 		await flush();
+		const editor = getEditor(wrapper);
+		editor.setContents([{ insert: 'hello world\n' }]);
+		return { wrapper, editor };
+	};
 
-		expect(wrapper.attributes('id')).toBe('toolbar');
-		expect(wrapper.find('.ql-bold').exists()).toBe(true);
-		expect(wrapper.find('.upload-image').exists()).toBe(true);
-		expect(wrapper.find('.undo').exists()).toBe(true);
-		expect(wrapper.find('.redo').exists()).toBe(true);
-		expect(wrapper.find('.extend').exists()).toBe(true);
-		expect(wrapper.find('select.ql-header').exists()).toBe(true);
-		expect(wrapper.find('button.ql-script').attributes('value')).toBe('sub');
-		expect(Load.style).toHaveBeenCalled();
-
-		const click = new MouseEvent('click', { bubbles: true, cancelable: true });
-		const preventDefault = vi.spyOn(click, 'preventDefault');
-		wrapper.element.dispatchEvent(click);
-		expect(preventDefault).toHaveBeenCalledTimes(1);
-
-		wrapper.unmount();
-		expect(Load.removeStyle).toHaveBeenCalledTimes(3);
+	it('parses toolbar config into groups', () => {
+		const groups = parseToolbar([
+			['bold', 'upload/image', 'undo', 'link', 'image'],
+			{ header: [1, 2, 'selected'] },
+			{ script: 'sub' },
+			'color',
+			[[{ header: 1 }]]
+		]);
+		expect(groups).toEqual([
+			[
+				{ type: 'button', name: 'bold' },
+				{ type: 'upload', value: 'image' },
+				{ type: 'action', name: 'undo' },
+				{ type: 'prompt', name: 'link' },
+				{ type: 'upload', value: 'image' }
+			],
+			// 相邻的散项合成一组
+			[
+				{ type: 'select', name: 'header', options: [1, 2, false] },
+				{ type: 'button', name: 'script', value: 'sub' },
+				{ type: 'color', name: 'color', options: expect.arrayContaining([false, '#e60000']) }
+			],
+			[{ type: 'button', name: 'header', value: 1 }]
+		]);
+		expect(parseToolbar({ container: ['italic'] })).toEqual([[{ type: 'button', name: 'italic' }]]);
+		expect(parseToolbar(undefined).flat().length).toBeGreaterThan(20);
 	});
 
-	it('accepts options.container and falls back to default toolbar', async () => {
-		const wrapper = mount(() => (
-			<EditorToolbar options={{ container: ['italic'] }} />
-		));
-		expect(wrapper.find('.ql-italic').exists()).toBe(true);
-		wrapper.unmount();
+	it('toggles buttons and reflects the active formats', async () => {
+		const { wrapper, editor } = await mountEditor([
+			['bold', { list: 'check' }, { indent: '+1' }, { indent: '-1' }, { direction: 'rtl' }, 'clean']
+		]);
+		const tool = (name: string, index = 0) => wrapper.findAll(`.vc-editor__tool.is-${name}`)[index];
 
-		const defaultWrapper = mount(() => (<EditorToolbar />));
-		expect(defaultWrapper.find('.ql-bold').exists()).toBe(true);
-		defaultWrapper.unmount();
+		editor.setSelection(0, 5);
+		await tool('bold').trigger('click');
+		expect(editor.getFormat(0, 5).bold).toBe(true);
+		expect(tool('bold').classes()).toContain('is-active');
+		expect(tool('bold').attributes('aria-pressed')).toBe('true');
+		await tool('bold').trigger('click');
+		expect(editor.getFormat(0, 5).bold).toBeUndefined();
+
+		// 待办列表在 checked / unchecked 间都算激活，再点取消
+		await tool('list').trigger('click');
+		expect(editor.getFormat(0, 1).list).toBe('unchecked');
+		expect(tool('list').classes()).toContain('is-active');
+		await tool('list').trigger('click');
+		expect(editor.getFormat(0, 1).list).toBeUndefined();
+
+		await tool('indent', 0).trigger('click');
+		await tool('indent', 0).trigger('click');
+		expect(editor.getFormat(0, 1).indent).toBe(2);
+		await tool('indent', 1).trigger('click');
+		expect(editor.getFormat(0, 1).indent).toBe(1);
+
+		// 切到从右到左时一并右对齐
+		await tool('direction').trigger('click');
+		expect(editor.getFormat(0, 1)).toEqual(expect.objectContaining({ direction: 'rtl', align: 'right' }));
+		await tool('direction').trigger('click');
+		expect(editor.getFormat(0, 1).align).toBeUndefined();
+
+		editor.formatText(0, 5, 'italic', true);
+		editor.setSelection(0, 5);
+		await tool('clean').trigger('click');
+		expect(editor.getFormat(0, 5).italic).toBeUndefined();
+
+		wrapper.unmount();
+	});
+
+	it('applies selects and colors from the popups', async () => {
+		const { wrapper, editor } = await mountEditor([
+			[{ header: [1, 2, false] }, { color: ['#ff0000', 'selected'] }, 'line-height']
+		]);
+
+		editor.setSelection(0, 5);
+		await wrapper.find('.vc-editor__select.is-header').trigger('click');
+		await flush();
+		const items = document.querySelectorAll<HTMLElement>('.vc-editor-dropdown .vc-dropdown-item');
+		expect(Array.from(items).map(item => item.textContent)).toEqual(['标题1', '标题2', '文本']);
+		items[1].click();
+		await flush();
+		expect(editor.getFormat(0, 1).header).toBe(2);
+		expect(wrapper.find('.vc-editor__select.is-header .vc-editor__select-label').text()).toBe('标题2');
+
+		editor.setSelection(0, 5);
+		await wrapper.find('.vc-editor__color').trigger('click');
+		await flush();
+		const swatches = document.querySelectorAll<HTMLElement>('.vc-editor-color__item');
+		expect(swatches).toHaveLength(2);
+		expect(swatches[1].classList.contains('is-default')).toBe(true);
+		swatches[0].click();
+		await flush();
+		expect(editor.getFormat(0, 5).color).toBe('#ff0000');
+		expect((wrapper.find('.vc-editor__color-bar').element as HTMLElement).style.background).toBe('rgb(255, 0, 0)');
+
+		expect(wrapper.find('.vc-editor__select.is-line-height .vc-editor__select-label').text()).toBe('行高：1');
+
+		wrapper.unmount();
+	});
+
+	it('keeps the editor focused when pressing the toolbar and disables it with the editor', async () => {
+		const { wrapper } = await mountEditor([['bold']]);
+		const toolbar = wrapper.find('.vc-editor__toolbar').element;
+
+		const press = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+		wrapper.find('.vc-editor__tool.is-bold').element.dispatchEvent(press);
+		expect(press.defaultPrevented).toBe(true);
+
+		// extend 插槽里的输入框可以正常聚焦
+		const input = document.createElement('input');
+		toolbar.appendChild(input);
+		const pressInput = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+		input.dispatchEvent(pressInput);
+		expect(pressInput.defaultPrevented).toBe(false);
+		input.remove();
+
+		await wrapper.setProps({ disabled: true });
+		expect(wrapper.classes()).toContain('is-disabled');
+		expect(wrapper.find('.vc-editor__tool.is-bold').attributes('disabled')).toBeDefined();
+
+		wrapper.unmount();
+	});
+
+	it('edits, previews and removes links through the prompt', async () => {
+		const { wrapper, editor } = await mountEditor([['link', 'video']]);
+		const getInput = () => document.querySelector<HTMLInputElement>('.vc-editor-prompt input');
+		const save = async (value: string) => {
+			const input = getInput()!;
+			input.value = value;
+			input.dispatchEvent(new Event('input'));
+			await flush();
+			input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', keyCode: 13 }));
+			input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13 }));
+			await flush();
+		};
+
+		// 选中文字后加链接
+		editor.setSelection(0, 5);
+		await wrapper.find('.vc-editor__tool.is-link').trigger('click');
+		await flush();
+		expect(getInput()).not.toBeNull();
+		await save('https://site/a');
+		expect(editor.getFormat(0, 5).link).toBe('https://site/a');
+
+		// 光标停在链接里显示预览
+		editor.setSelection(2, 0, 'user');
+		await flush();
+		expect(document.querySelector('.vc-editor-prompt.is-preview a')?.getAttribute('href')).toBe('https://site/a');
+
+		// 编辑作用于整个链接
+		(document.querySelectorAll<HTMLElement>('.vc-editor-prompt__action')[0]).click();
+		await flush();
+		expect(getInput()!.value).toBe('https://site/a');
+		await save('https://site/b');
+		expect(editor.getFormat(0, 5).link).toBe('https://site/b');
+
+		editor.setSelection(2, 0, 'user');
+		await flush();
+		(document.querySelectorAll<HTMLElement>('.vc-editor-prompt__action')[1]).click();
+		await flush();
+		expect(editor.getFormat(0, 5).link).toBeUndefined();
+
+		// 没有选中文字时插入地址本身
+		editor.setSelection(11, 0, 'user');
+		await wrapper.find('.vc-editor__tool.is-link').trigger('click');
+		await flush();
+		await save('https://site/c');
+		expect(editor.getText()).toBe('hello worldhttps://site/c\n');
+		expect(editor.getFormat(11, 14).link).toBe('https://site/c');
+
+		// Ctrl / Cmd + K 打开链接输入
+		// 打开时按当前选区重置输入：上一次输入的地址被清空
+		expect(getInput()!.value).toBe('https://site/c');
+		editor.setSelection(0, 5, 'user');
+		editor.root.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }));
+		await flush();
+		expect(getInput()!.value).toBe('');
+
+		wrapper.unmount();
 	});
 });
 
@@ -488,18 +630,7 @@ describe('EditorView and utils', () => {
 		vi.clearAllMocks();
 	});
 
-	it('inserts and removes custom style rules', () => {
-		insertFontSizeStyle(['12px'], 'font-style');
-		insertLineHeightStyle(['1.5'], 'line-style');
-		insertLetterSpacingStyle(['2px'], 'letter-style');
-
-		expect(Load.style).toHaveBeenCalledWith(expect.stringContaining('12px'), { id: 'font-style' });
-		expect(Load.style).toHaveBeenCalledWith(expect.stringContaining('1.5'), { id: 'line-style' });
-		expect(Load.style).toHaveBeenCalledWith(expect.stringContaining('2px'), { id: 'letter-style' });
-	});
-
-	it('renders html without injecting styles', async () => {
-		vi.mocked(Load.style).mockClear();
+	it('renders html', async () => {
 		const wrapper = mount(() => (
 			<EditorView value="<p>hello</p>" />
 		), { attachTo: document.body });
@@ -507,7 +638,6 @@ describe('EditorView and utils', () => {
 
 		expect(wrapper.find('.vc-editor-view').exists()).toBe(true);
 		expect(wrapper.find('.ql-editor').html()).toContain('hello');
-		expect(Load.style).not.toHaveBeenCalled();
 
 		wrapper.unmount();
 	});
@@ -897,7 +1027,7 @@ describe('Editor extends', () => {
 	});
 
 	it('exposes editor defaults', () => {
-		expect(defaults.theme).toBe('snow');
+		expect(defaults.theme).toBeUndefined();
 		expect(defaults.toolbar.flat(Infinity)).toContain('upload/image');
 	});
 });

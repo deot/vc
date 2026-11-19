@@ -1,9 +1,37 @@
+@use 'sass:map';
 @use '../style/helper' as *;
 
+$color-dark-extralight: varfix(color-dark-extralight, editor);
 $color-neutral-light: varfix(color-neutral-light, editor);
+$color-primary: varfix(color-primary, editor);
+$background-color-primary-light: varfix(background-color-primary-light, editor);
 $background-color-lightest: varfix(background-color-lightest, editor);
 $border-color: varfix(border-color, editor);
+$foreground-color: varfix(foreground-color, editor);
 $component-name: vc-editor;
+
+// 桌面端尺寸；写成局部变量 --vc-editor-<键>（默认值为下表），MEditor 在 .vcm-editor 上覆盖（mobile/style.scss）
+$sizes: (
+	toolbar-padding: 6px 8px,
+	toolbar-font-size: 14px,
+	group-gap: 13px,
+	divider-height: 16px,
+	tool-gap: 2px,
+	tool-size: 28px,
+	tool-padding: 0 6px,
+	tool-radius: 4px,
+	icon-size: 16px,
+	color-bar-height: 2px,
+	color-size: 16px,
+	color-gap: 4px,
+	prompt-padding: 8px 12px,
+	prompt-gap: 8px,
+	prompt-input-width: 200px
+);
+
+@function v($key) {
+	@return localfix(editor, $key, map.get($sizes, $key));
+}
 
 @include block($component-name) {
 	position: relative;
@@ -12,9 +40,116 @@ $component-name: vc-editor;
 
 	@include common-border-1px('', $border-color, 8); // 不占边距
 
-	@include element(icon) { 
+	.ql-container {
+		flex: 1;
+		overflow: auto;
+		border: none;
+	}
+
+	@include element(toolbar) {
+		position: relative;
+		z-index: 1;
+		padding: v(toolbar-padding);
+		font-size: v(toolbar-font-size);
 		line-height: 1;
+
+		@include common-border-1px('bottom', $color-neutral-light);
+	}
+
+	// 分组之间是竖线；折行后行首的竖线落在容器左侧之外，被裁掉
+	@include element(tools) {
+		display: flex;
+		overflow: hidden;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: v(tool-gap) v(group-gap);
+	}
+
+	@include element(group) {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		gap: v(tool-gap);
+
+		&::before {
+			position: absolute;
+			top: 50%;
+			left: calc(v(group-gap) / -2);
+			width: 1px;
+			height: v(divider-height);
+			background: $border-color;
+			content: '';
+			transform: translate(-50%, -50%);
+		}
+	}
+
+	// 按钮与选择项共用的外观：方形点击区，悬停与激活时铺底色
+	@include element(tool) {
+		position: relative;
+		display: inline-flex;
+		height: v(tool-size);
+		min-width: v(tool-size);
+		padding: 0;
+		font: inherit;
+		color: $foreground-color;
+		cursor: pointer;
+		background: none;
+		border: none;
+		border-radius: v(tool-radius);
 		outline: none;
+		transition: background-color .2s, color .2s;
+		align-items: center;
+		justify-content: center;
+		-webkit-tap-highlight-color: transparent;
+
+		&.is-active {
+			color: $color-primary;
+			background-color: $background-color-primary-light;
+		}
+
+		&:focus-visible {
+			box-shadow: inset 0 0 0 1px $color-primary;
+		}
+	}
+
+	@include element(select) {
+		display: inline-flex;
+		height: v(tool-size);
+		padding: v(tool-padding);
+		font-weight: 500;
+		color: $foreground-color;
+		white-space: nowrap;
+		cursor: pointer;
+		border-radius: v(tool-radius);
+		transition: background-color .2s, color .2s;
+		align-items: center;
+
+		&.is-disabled {
+			cursor: not-allowed;
+			opacity: .5;
+		}
+
+		// 只有图标的选择项（对齐）与按钮同宽
+		&.is-align {
+			min-width: v(tool-size);
+			padding: 0;
+			justify-content: center;
+		}
+	}
+
+	@include element(icon) {
+		font-size: v(icon-size);
+		line-height: 1;
+	}
+
+	@include element(color) {
+		flex-direction: column;
+	}
+
+	@include element(color-bar) {
+		width: v(icon-size);
+		height: v(color-bar-height);
+		background: currentcolor;
 	}
 
 	@include element(spin) {
@@ -34,20 +169,103 @@ $component-name: vc-editor;
 		}
 	}
 
-	.ql-container {
-		flex: 1;
-		overflow: auto;
-		border: none;
+	// 输入浮层的定位锚点：覆盖在对应文字上，不拦截指针
+	@include element(anchor) {
+		position: absolute;
+		pointer-events: none;
 	}
 
-	.ql-toolbar.ql-snow {
-		z-index: 1;
-		border: none;
-
-		@include common-border-1px('bottom', $color-neutral-light);
+	@include element(anchor-target) {
+		display: block;
+		width: 100%;
+		height: 100%;
 	}
 
-	.ql-picker-options {
-		z-index: 2!important;
+	@include when(disabled) {
+		.vc-editor__tool {
+			cursor: not-allowed;
+			opacity: .5;
+		}
+	}
+}
+
+// 只在可悬停的设备上显示悬停效果；触屏点按后不残留
+@media (hover: hover) {
+	.vc-editor__tool:not(:disabled):hover,
+	.vc-editor__select:not(.is-disabled):hover {
+		background-color: $background-color-primary-light;
+	}
+}
+
+// 下拉选项：标题按级别显示字号
+.vc-editor-dropdown {
+	@for $level from 1 through 6 {
+		$sizes: (1: 2em, 2: 1.5em, 3: 1.17em, 4: 1em, 5: .83em, 6: .67em);
+
+		.vc-editor-dropdown__header.is-#{$level} {
+			font-size: map.get($sizes, $level);
+		}
+	}
+}
+
+@include block(vc-editor-color) {
+	display: grid;
+	padding: v(color-gap);
+	grid-template-columns: repeat(7, v(color-size));
+	gap: v(color-gap);
+
+	@include element(item) {
+		width: v(color-size);
+		height: v(color-size);
+		padding: 0;
+		cursor: pointer;
+		border: 1px solid transparent;
+		border-radius: 2px;
+
+		// 默认（清除颜色）：斜线表示
+		@include when(default) {
+			background: linear-gradient(to top right, transparent calc(50% - .5px), #{$color-dark-extralight} 50%, transparent calc(50% + .5px));
+			border-color: $border-color;
+		}
+
+		@include when(selected) {
+			border-color: $foreground-color;
+		}
+	}
+}
+
+@media (hover: hover) {
+	.vc-editor-color__item:hover {
+		border-color: $foreground-color;
+	}
+}
+
+@include block(vc-editor-prompt) {
+	display: flex;
+	padding: v(prompt-padding);
+	white-space: nowrap;
+	align-items: center;
+	gap: v(prompt-gap);
+
+	@include element(input) {
+		width: v(prompt-input-width);
+	}
+
+	@include element(link) {
+		max-width: v(prompt-input-width);
+		overflow: hidden;
+		color: $color-primary;
+		text-overflow: ellipsis;
+	}
+
+	@include element(action) {
+		color: $color-primary;
+		cursor: pointer;
+
+		& + & {
+			padding-left: v(prompt-gap);
+
+			@include common-border-1px('left', $color-neutral-light);
+		}
 	}
 }

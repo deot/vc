@@ -30,7 +30,7 @@ export const EditorView = defineComponent({
 				<div class="vc-editor-view" onClick={handleClick}>
 					<Customer
 						wrap
-						class="ql-editor ql-snow ql-container"
+						class="ql-editor ql-container"
 						// 富文本内容本身就是 HTML
 						render={{ type: 'html', value: props.value }}
 					/>

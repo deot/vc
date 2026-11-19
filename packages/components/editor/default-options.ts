@@ -1,4 +1,3 @@
-import { IS_SERVER } from '@deot/vc-shared';
 import { zhCN } from '@deot/vc-locale';
 import type { QuillOptions } from 'quill';
 import { translate } from '../locale';
@@ -33,8 +32,6 @@ export const toolbarDefaultsMap = {
 };
 
 export const defaults: Options = {
-	theme: 'snow',
-	bounds: IS_SERVER ? null : document.body,
 	modules: {
 		EventExtend: {} // 必须要配置，否则该扩展不生效
 	},

@@ -1,3 +1,2 @@
+// 只引入 Quill 的基础样式（编辑区、列表、缩进、对齐等格式）；工具栏和主题样式由组件提供
 @import '../../../node_modules/quill/dist/quill.core.css';
-@import '../../../node_modules/quill/dist/quill.snow.css';
-@import '../../../node_modules/quill/dist/quill.bubble.css';

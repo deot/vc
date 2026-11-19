@@ -1,10 +1,7 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, nextTick, ref, shallowRef, inject, computed, watch, watchEffect, onMounted, onUnmounted, getCurrentInstance } from 'vue';
+import { defineComponent, nextTick, ref, shallowRef, inject, computed, watch, onMounted, onUnmounted, getCurrentInstance } from 'vue';
 import type Quill from 'quill';
-import { getUid } from '@deot/helper-utils';
-import { EditorToolbar } from './toolbar';
-import { Icon } from '../icon/index';
 import { defaults } from './default-options';
 import { VcInstance } from '../vc/index';
 import { uploadFile, insertFile, registerExtends, EXTENDS_CONTEXT_KEY } from './extends';
@@ -14,6 +11,8 @@ import { resolveEnhancer } from '../upload-picker/utils';
 import type { PickerType } from '../upload-picker/types';
 import { useLocale } from '../locale';
 import { getEditorHTML } from './utils';
+import { EditorToolbar, EditorPrompt, useFormats, parseToolbar } from './toolbar';
+import type { FormatValue, PromptMode } from './toolbar';
 
 const COMPONENT_NAME = 'vc-editor';
 
@@ -31,57 +30,39 @@ export const Editor = defineComponent({
 	],
 	setup(props, { slots, emit, expose }) {
 		const { t } = useLocale();
-		const localeStyle = computed(() => {
-			const labels = [
-				'open', 'edit', 'remove', 'link', 'save', 'text', 'lineHeight', 'letterSpacing',
-				'font', 'serif', 'monospace', 'small', 'large', 'huge', 'formula', 'video'
-			];
-			return Object.fromEntries([
-				...labels.map(key => [
-					`--vc-editor-label-${key.replace(/[A-Z]/g, value => `-${value.toLowerCase()}`)}`,
-					JSON.stringify(t(`vc.Editor.${key}`))
-				]),
-				...[1, 2, 3, 4, 5, 6].map(level => [`--vc-editor-label-heading-${level}`, JSON.stringify(t('vc.Editor.heading', { level }))])
-			]);
-		});
 		const instance = getCurrentInstance();
 		const formItem = inject<any>('vc-form-item', {});
 		const hasLoad = ref(false);
 		const editorEl = ref(null);
-		const toolbar = ref<any>(null);
+		const prompt = ref<any>();
 		const currentValue = ref('');
-		const toolbarId = ref(getUid('editor-toolbar'));
 		// 并发上传各自开始、结束，计数归零才隐藏加载
 		const loadingCount = ref(0);
 		const isFocused = ref(false);
 
 		const quillInstance = shallowRef<typeof Quill>();
 		const editor = shallowRef<Quill>();
-		watchEffect(() => {
-			const label = t('vc.Editor.videoPlaceholder');
-			const tooltip = editor.value?.container.querySelector('.ql-tooltip');
-			const input = tooltip?.querySelector<HTMLInputElement>('input[data-video]');
-			if (input) {
-				input.dataset.video = label;
-				if (tooltip?.getAttribute('data-mode') === 'video') input.placeholder = label;
-			}
-		});
 		const currentOptions = computed<typeof defaults>(() => {
 			const baseOptions = VcInstance.options?.Editor?.options || {};
+			const modules = {
+				...defaults.modules,
+				...baseOptions.modules,
+				...props.options?.modules
+			};
+			// 工具栏由组件渲染，不使用 Quill 的 toolbar 模块和主题
+			delete modules.toolbar;
 			return {
 				...defaults,
 				placeholder: t('vc.Editor.placeholder'),
 				...(baseOptions || {}),
 				...props.options,
-				modules: {
-					...defaults.modules,
-					...baseOptions.modules,
-					...props.options?.modules,
-					// 自定义toolbar工具栏，options.modules.toolbar -> options.toolbar
-					toolbar: `#${toolbarId.value}`
-				}
+				theme: undefined,
+				modules
 			};
 		});
+		const groups = computed(() => parseToolbar(currentOptions.value.toolbar));
+
+		const { formats, format, isActive } = useFormats(editor, () => props.disabled);
 
 		watch(
 			() => currentOptions.value.placeholder,
@@ -136,6 +117,10 @@ export const Editor = defineComponent({
 
 		const getInfo = () => ({ value: currentValue.value, editor: editor.value! });
 
+		const handlePrompt = (mode: PromptMode) => {
+			!props.disabled && prompt.value?.open(mode);
+		};
+
 		const init = () => {
 			const QuillClass = quillInstance.value!;
 			registerExtends(QuillClass, currentOptions.value.toolbar);
@@ -152,6 +137,12 @@ export const Editor = defineComponent({
 				const length = editor.value.getLength();
 				editor.value.setSelection(length + 1); // 光标位置
 			}
+
+			// Ctrl / Cmd + K 编辑链接
+			editor.value.keyboard.addBinding({ key: 'k', shortKey: true }, () => {
+				handlePrompt('link');
+				return false;
+			});
 
 			// 选区每次移动都会触发，只在聚焦状态切换时发出事件
 			editor.value.on('selection-change', (range) => {
@@ -173,7 +164,7 @@ export const Editor = defineComponent({
 			});
 		};
 
-		const handleUpload = async (e: any, type: PickerType) => {
+		const handleUpload = async (type: PickerType) => {
 			if (props.disabled) return;
 			const enhancer = resolveEnhancer(props.enhancer, VcInstance.options.Editor?.enhancer, VcInstance.options.UploadPicker?.enhancer);
 			// 与 UploadPicker 的 enhancer 同一签名：每次只选一种类型
@@ -182,12 +173,13 @@ export const Editor = defineComponent({
 			uploadFile(type, getFakeEventExtend());
 		};
 
-		const handleUndo = () => {
-			!props.disabled && editor.value!.history.undo();
+		const handleAction = (name: 'undo' | 'redo' | 'clean') => {
+			if (props.disabled || !editor.value) return;
+			name === 'clean' ? format('clean') : editor.value.history[name]();
 		};
 
-		const handleRedo = () => {
-			!props.disabled && editor.value!.history.redo();
+		const handleFormat = (name: string, value?: FormatValue, toggle?: boolean) => {
+			format(name, value, toggle);
 		};
 
 		onMounted(async () => {
@@ -205,7 +197,6 @@ export const Editor = defineComponent({
 		onUnmounted(() => effects.forEach(fn => fn()));
 		expose({
 			editor,
-			toolbarId,
 			// 跟update-picker 对外暴露的增加方法保持同名（给enhancer）
 			add: (source = []) => {
 				// item = { value: '上传后的地址', target: '原始文件', type?: '文件类型' }
@@ -215,45 +206,28 @@ export const Editor = defineComponent({
 
 		return () => {
 			return (
-				<div class="vc-editor" style={localeStyle.value}>
+				<div class={['vc-editor', { 'is-disabled': props.disabled }]}>
 					{
 						slots.toolbar
-							? slots.toolbar()
-							: (
-									<EditorToolbar
-										// @ts-ignore
-										vShow={hasLoad.value}
-										ref={toolbar}
-										options={currentOptions.value.toolbar}
-										elementId={toolbarId.value}
-									>
-										{{
-											upload: ({ type }) => (
-												<button class="vc-editor__icon">
-													<Icon
-														type={type}
-														style="font-size: 15px"
-														// @ts-ignore
-														onClick={(e: any) => handleUpload(e, type)}
-													/>
-												</button>
-											),
-											undo: () => (
-												<button class="vc-editor__icon" onClick={handleUndo}>
-													<Icon type="undo" style="font-size: 15px" />
-												</button>
-											),
-											redo: () => (
-												<button class="vc-editor__icon" onClick={handleRedo}>
-													<Icon type="redo" style="font-size: 15px" />
-												</button>
-											),
-											extend: slots.extend
-										}}
-									</EditorToolbar>
-								)
+							? slots.toolbar({ formats: formats.value, format: handleFormat, editor: editor.value })
+							: hasLoad.value && (
+								<EditorToolbar
+									groups={groups.value}
+									formats={formats.value}
+									isActive={isActive}
+									disabled={props.disabled}
+									// @ts-ignore
+									onFormat={handleFormat}
+									onUpload={handleUpload}
+									onAction={handleAction}
+									onPrompt={handlePrompt}
+								>
+									{{ extend: slots.extend }}
+								</EditorToolbar>
+							)
 					}
 					<div ref={editorEl} />
+					{ editor.value && <EditorPrompt ref={prompt} editor={editor.value} disabled={props.disabled} /> }
 					<div
 						// @ts-ignore
 						vShow={loadingCount.value > 0}

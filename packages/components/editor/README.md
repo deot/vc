@@ -88,24 +88,39 @@ editorRef.value.add([
 
 全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-editor-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
 
-`label-*` 变量由 locale 写入，用于工具栏文案；文案调整使用语言配置。文件预览和加载图标分别复用 FilePreview、Spin 的主题入口。
+工具栏文案跟随 locale。下拉、颜色和链接浮层复用 Popover / Dropdown 的主题入口，文件预览和加载图标分别复用 FilePreview、Spin 的主题入口。
 
 ### 全局
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
-| color-dark-extralight | 占位文字及列表标记 | 亮色：`#909399`；暗色：`#B9B9B9` |
-| color-neutral-light | 工具栏、内容表格、引用块及操作分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
-| color-primary | 链接、激活工具及选中选项 | `#456CF6` |
+| color-dark-extralight | 占位文字、待办列表标记及默认色块的斜线 | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-neutral-light | 工具栏下边线、内容表格、引用块及链接预览的分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 链接、激活与悬停的工具 | `#456CF6` |
 | background-color | 代码及代码块背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
-| background-color-lightest | 编辑区、工具栏选项及提示浮层背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
-| border-color | 编辑区外框、工具选项及浮层输入框边框 | `#D5D9E1` |
-| foreground-color | 正文、工具栏文字及 SVG 图标 | 亮色：`#080F20`；暗色：`#F8F8F8` |
-| box-shadow | 工具栏选项及提示浮层阴影 | 亮色：`0 0 8px 0 rgb(0 0 0 / 10%)`；暗色：`0 0 8px 0 rgb(255 255 255 / 5%)` |
+| background-color-lightest | 编辑区背景及上传时的遮罩 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| border-color | 编辑区外框及默认色块边框 | `#D5D9E1` |
+| foreground-color | 正文、代码、工具栏图标与文字、选中色块的边框 | 亮色：`#080F20`；暗色：`#F8F8F8` |
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+尺寸为局部变量 `--vc-editor-<参数>`，默认值为下表。
+
+| 参数 | 使用位置 | 默认值 |
+| --- | --- | --- |
+| toolbar-padding | 工具栏内边距 | `6px 8px` |
+| toolbar-font-size | 工具栏文字字号 | `14px` |
+| group-gap | 工具分组的间距，分割线位于正中；折行后行首不显示分割线 | `13px` |
+| divider-height | 分组分割线的高度 | `16px` |
+| tool-gap | 组内工具的间距，也是折行后的行距 | `2px` |
+| tool-size | 工具按钮的边长（方形），也是选择项的高度 | `28px` |
+| tool-padding | 选择项的左右内边距 | `0 6px` |
+| tool-radius | 按钮与选择项悬停、激活底色的圆角 | `4px` |
+| icon-size | 工具图标大小，也是颜色条的宽度 | `16px` |
+| color-bar-height | 颜色按钮下方色条的高度 | `2px` |
+| color-size / color-gap | 色块大小与间距 | `16px` / `4px` |
+| prompt-padding / prompt-gap | 链接浮层的内边距与间距 | `8px 12px` / `8px` |
+| prompt-input-width | 链接浮层输入框宽度，也是预览中链接的最大宽度 | `200px` |
 
 ## API
 
@@ -121,9 +136,19 @@ editorRef.value.add([
 | enhancer | 工具栏上传增强函数；`true` 使用全局配置，`false` 跳过增强 | `boolean \| Function` | - | `true` |
 | previewable | 点击编辑区域内图片时是否打开预览 | `boolean` | - | `true` |
 
-`options` 按 `Editor.defaults` → `VcInstance.options.Editor.options` → 组件 `options` 的顺序合并；`modules` 单独浅合并。默认主题为 `snow`，默认启用 `EventExtend`。占位文案跟随 locale，可通过 `options.placeholder` 覆盖（包括空字符串）。除占位文案外，应通过重新挂载应用新的初始化配置。
+`options` 按 `Editor.defaults` → `VcInstance.options.Editor.options` → 组件 `options` 的顺序合并；`modules` 单独浅合并。默认启用 `EventExtend`；工具栏由组件渲染，`options.theme` 与 `options.modules.toolbar` 不生效。占位文案跟随 locale，可通过 `options.placeholder` 覆盖（包括空字符串）。除占位文案外，应通过重新挂载应用新的初始化配置。
 
-工具栏从 `options.toolbar` 读取数组或 `{ container: [...] }`，`options.modules.toolbar` 会被内部生成的工具栏选择器覆盖。默认工具包括常用格式、标题、列表、字体、颜色、对齐、字号、行高、字间距、链接、图片/视频上传及撤销/重做。
+工具栏从 `options.toolbar` 读取数组或 `{ container: [...] }`：顶层的数组为一组，相邻的散项合成一组。每项可以是：
+
+- 格式名，如 `'bold'`、`'blockquote'`、`'code-block'`、`'clean'`；`'color'`、`'header'`、`'font-size'` 等有默认取值的格式显示为选择项。
+- `{ 格式: 取值 }`，按钮点击在设置与清除之间切换，如 `{ header: 1 }`、`{ list: 'check' }`、`{ indent: '+1' }`。
+- `{ 格式: [取值…] }`，显示为下拉选择；空数组使用默认取值，`'selected'` 或空值表示默认（清除该格式）。`color`、`background` 显示为色块。
+- `'link'`、`'video'`、`'formula'` 弹出输入框；`'image'` 与 `'upload/image'` 相同，走上传。
+- `'upload/<类型>'`、`'undo'`、`'redo'`。
+
+默认工具包括常用格式、标题、列表、字体、颜色、对齐、字号、行高、字间距、链接、图片/视频上传及撤销/重做。
+
+选中文字后按 `Ctrl / Cmd + K` 或点击链接工具可添加链接；未选中文字时插入地址本身作为链接。光标停在链接里时显示链接预览，可打开、编辑或删除。
 
 字号、字间距作用于选中文字，行高作用于整段（写在段落上，可以调小）。旧内容里写在行内元素上的行高，在重新载入编辑器时会提升为所在段落的行高。`{ 'font-size': [...] }` 等自定义取值会并入格式白名单，不在白名单内的值会被忽略。列表项上的对齐、行高等段落格式会保留在输出的 HTML 中。
 
@@ -146,7 +171,7 @@ editorRef.value.add([
 
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
-| toolbar | 替换默认工具栏。根元素的 id 必须与组件 ref 暴露的 `toolbarId` 一致，并在 Quill 初始化前存在 | - |
+| toolbar | 替换默认工具栏 | `{ formats, format, editor }`：`formats` 为当前选区的格式；`format(name, value?, toggle?)` 应用格式，`toggle` 为 `true` 时与当前取值相同则清除；`editor` 为 Quill 实例 |
 | extend | 默认工具栏末尾的扩展内容；使用 toolbar 插槽时不渲染 | - |
 
 ### Editor 方法与实例成员
@@ -155,7 +180,6 @@ editorRef.value.add([
 | --- | --- | --- | --- |
 | add | 插入已上传资源 | `Array<{ value: string; target?: { name: string } }>`，默认为 `[]` | `void` |
 | editor | 组件 ref 暴露的 Quill 实例；ready 前可能为空 | - | `Quill \| undefined` |
-| toolbarId | 组件 ref 暴露的自动生成的工具栏 id | - | `string` |
 
 ### EditorView 属性
 
