@@ -112,11 +112,19 @@ import { Image } from '@deot/vc';
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
 | color-dark-extralight | 加载失败图标 | 亮色：`#909399`；暗色：`#B9B9B9` |
-| background-color | 图片占位背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| color-neutral-light | 加载占位底色 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| background-color-light | 加载占位的闪光亮带 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+加载占位与 [Skeleton](../skeleton/README.md#主题与局部覆盖) 共用同一套闪光，读取 Skeleton 的局部变量；设在祖先上时两者一并生效：
+
+| 参数 | 使用位置 | 默认值 |
+| --- | --- | --- |
+| --vc-skeleton-color / --vc-skeleton-highlight-color | 占位底色 / 闪光亮带 | `color-neutral-light` / `background-color-light` |
+| --vc-skeleton-duration | 闪光一次扫过的时长 | `1.4s` |
+
+系统开启“减弱动态效果”时不闪光。
 
 ## API
 

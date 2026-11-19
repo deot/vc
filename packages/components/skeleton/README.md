@@ -169,7 +169,7 @@ import { MSkeleton } from '@deot/vc';
 
 ### 局部
 
-尺寸与颜色写成局部变量 `--vc-skeleton-<键>`，桌面端的默认值见下表，`MSkeleton` 在 `.vcm-skeleton` 上覆盖。设在 `Skeleton` 根节点上时，其中的 `SkeletonItem` 一并生效。
+尺寸与颜色写成局部变量 `--vc-skeleton-<键>`，桌面端的默认值见下表，`MSkeleton` 在 `.vcm-skeleton` 上覆盖。设在 `Skeleton` 根节点上时，其中的 `SkeletonItem` 一并生效；`Image` 的加载占位也读取 color / highlight-color / duration。
 
 | 参数 | 使用位置 | 默认值 |
 | --- | --- | --- |

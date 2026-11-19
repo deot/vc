@@ -4,6 +4,8 @@ import { Image, ImagePreview } from '@deot/vc-components';
 import { enUS, zhCN } from '@deot/vc-locale';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
+import * as path from 'node:path';
+import * as sass from 'sass';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { VcInstance } from '../../vc';
 import { Measuring } from '../../measuring';
@@ -246,5 +248,14 @@ describe('index.ts', () => {
 			expect(IMGStore.has('1.png')).toBe(false);
 			expect(IMGStore.has('new.png')).toBe(true);
 		});
+	});
+
+	it('样式：加载占位与 Skeleton 共用闪光（动画已定义，减弱动态效果时停止）', () => {
+		const css = sass.compile(path.resolve(process.cwd(), 'packages/components/image/style.scss')).css;
+
+		expect(css).toContain('background-color: var(--vc-skeleton-color, var(--vc-color-neutral-light))');
+		expect(css).toContain('animation: vc-skeleton var(--vc-skeleton-duration, 1.4s) ease infinite');
+		expect(css).toContain('@keyframes vc-skeleton');
+		expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{\s*\.vc-image__placeholder::after\s*\{\s*animation: none/);
 	});
 });

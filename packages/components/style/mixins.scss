@@ -71,3 +71,42 @@
 		}
 	}
 }
+
+/**
+ * 骨架闪光：Skeleton 的占位块与 Image 的加载占位共用，观感一致
+ * - 底色 / 亮带取 --vc-skeleton-color / --vc-skeleton-highlight-color，设在祖先上时两者一并生效
+ * - ::after 上的渐变用 transform 平移，由合成层完成，不逐帧重绘；$animation 为 none 时静止
+ * - 减弱动态效果时不闪光
+ */
+@mixin skeleton-shimmer($animation: vc-skeleton #{localfix(skeleton, duration, 1.4s)} ease infinite) {
+	position: relative;
+	overflow: hidden;
+	background-color: localfix(skeleton, color, varfix(color-neutral-light));
+
+	&::after {
+		position: absolute;
+		background-image: linear-gradient(90deg, transparent, localfix(skeleton, highlight-color, varfix(background-color-light)), transparent);
+		content: '';
+		transform: translateX(-100%);
+		animation: $animation;
+		inset: 0;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&::after {
+			animation: none;
+		}
+	}
+
+	@at-root {
+		@keyframes vc-skeleton {
+			from {
+				transform: translateX(-100%);
+			}
+
+			to {
+				transform: translateX(100%);
+			}
+		}
+	}
+}

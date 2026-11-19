@@ -19,9 +19,7 @@
 				:load-data="loadData"
 			>
 				<template #placeholder>
-					<div class="recycle-skeleton__loading">
-						<h4 />
-					</div>
+					<Skeleton :rows="2" class="recycle-skeleton__loading" />
 				</template>
 				<template #default="{ row }">
 					<div
@@ -46,6 +44,7 @@
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { RecycleList } from '..';
 import { Select } from '../../select';
+import { Skeleton } from '../../skeleton';
 
 // 对照项：每项一个 Select
 const CONTROLS = [
@@ -159,22 +158,6 @@ onBeforeUnmount(() => window.$perf?.disconnect());
 
 	&__loading {
 		padding: 20px;
-
-		h4 {
-			min-height: 20px;
-			background: linear-gradient(100deg, rgb(255 255 255 / 0%) 40%, rgb(255 255 255 / 50%) 50%, rgb(255 255 255 / 0%) 60%) #ededed;
-			background-position-x: 180%;
-			background-size: 200% 100%;
-			border-radius: 4px;
-			animation: 1s recycle-skeleton-loading ease-in-out infinite;
-			animation-delay: 0.05s;
-		}
-	}
-}
-
-@keyframes recycle-skeleton-loading {
-	to {
-		background-position-x: -20%;
 	}
 }
 </style>

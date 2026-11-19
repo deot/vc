@@ -4,7 +4,7 @@
 // 尺寸与颜色写成局部变量 --vc-skeleton-<键>（默认值为下表），MSkeleton 在 .vcm-skeleton 上覆盖（mobile/style.scss）
 // - row-height / row-gap：段落行高与行距；last-row-width：行数为数字时末行宽度
 // - title-*：标题条；image-*：左侧图片边长与右侧间距；group-gap：repeat 时每份的间距
-// - color / highlight-color：底色与闪光亮带；duration：闪光一次扫过的时长
+// - color / highlight-color：底色与闪光亮带；duration：闪光一次扫过的时长（三者的默认值在 skeleton-shimmer mixin 内，Image 占位共用）
 $sizes: (
 	row-height: unitfix(16),
 	row-gap: unitfix(16),
@@ -16,8 +16,6 @@ $sizes: (
 	image-gap: unitfix(16),
 	group-gap: unitfix(24),
 	radius: unitfix(4),
-	color: varfix(color-neutral-light),
-	highlight-color: varfix(background-color-light),
 	duration: 1.4s
 );
 
@@ -25,36 +23,15 @@ $sizes: (
 	@return localfix(skeleton, $key, map.get($sizes, $key));
 }
 
-// 闪光：::after 上的渐变用 transform 平移（合成层完成，不逐帧重绘）；动画写在继承的变量里，
-// 块自身的 is-animated / is-static 优先，否则跟随最近的 Skeleton
-@keyframes vc-skeleton {
-	from {
-		transform: translateX(-100%);
-	}
-
-	to {
-		transform: translateX(100%);
-	}
-}
-
+// 闪光见 skeleton-shimmer：动画写在继承的变量里，块自身的 is-animated / is-static 优先，否则跟随最近的 Skeleton
 @include block(vc-skeleton-item) {
-	position: relative;
 	display: block;
 	width: 100%;
 	height: v(row-height);
-	overflow: hidden;
-	background-color: v(color);
 	border-radius: v(radius);
 	flex: none;
 
-	&::after {
-		position: absolute;
-		background-image: linear-gradient(90deg, transparent, v(highlight-color), transparent);
-		content: '';
-		transform: translateX(-100%);
-		animation: var(--vc-skeleton-shimmer, none);
-		inset: 0;
-	}
+	@include skeleton-shimmer(var(--vc-skeleton-shimmer, none));
 
 	// 两端全圆：方块为圆形，长条为胶囊
 	@include when(circle) {
@@ -115,15 +92,6 @@ $sizes: (
 	@include element(row) {
 		&:last-child {
 			width: v(last-row-width);
-		}
-	}
-}
-
-// 减少动态效果：不闪光
-@media (prefers-reduced-motion: reduce) {
-	@include block(vc-skeleton-item) {
-		&::after {
-			animation: none;
 		}
 	}
 }
