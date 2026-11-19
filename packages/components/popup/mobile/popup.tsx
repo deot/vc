@@ -74,8 +74,13 @@ export const MPopup = defineComponent({
 		 * @param allow ~
 		 */
 		const handleClose = (allow = true) => {
-			if (allow) {
+			// 离场中不再处理（beforeClose 不会被重复调用）
+			if (!allow || !isActive.value) return;
+			const result = props.beforeClose ? props.beforeClose() : true;
+			if (result === true) {
 				isActive.value = false;
+			} else if (result) {
+				result.then(v => v && (isActive.value = false));
 			}
 		};
 
@@ -240,6 +245,7 @@ export const MPopup = defineComponent({
 							// @ts-ignore
 							vShow={props.mask && isActive.value}
 							class="vcm-popup__mask"
+							style={props.maskStyle as any}
 							onClick={() => handleClose(props.maskClosable)}
 							onTouchmovePrevent={() => {}}
 						/>

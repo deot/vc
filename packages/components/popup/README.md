@@ -446,6 +446,7 @@ const handleModalClose = () => { isModalVisible.value = false; };
 | theme | 面板外观 | `string` | `light`、`dark`、`none` | `light` |
 | mask | 是否显示遮罩，适用于所有位置 | `boolean` | - | `true` |
 | maskClosable | 是否允许点击遮罩关闭 | `boolean` | - | `true` |
+| maskStyle | 遮罩的 style | `string \| object \| unknown[]` | - | - |
 | title | 标题，使用 Customer 渲染；`false` 不显示 | `CustomerValue \| boolean` | - | - |
 | content | 内容，在默认插槽之前，使用 Customer 渲染 | `CustomerValue` | - | - |
 | closable | 标题栏右侧显示关闭按钮 | `boolean` | - | `false` |

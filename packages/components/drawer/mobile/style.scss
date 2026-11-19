@@ -1,0 +1,16 @@
+@use '../../style/helper' as *;
+
+// MDrawer 的面板、标题栏、内容区与底部留白都沿用 MPopup（vcm-popup__*），这里只排列底部按钮
+// 按钮等分剩余宽度，间距 24（12）；footer-extra 保持自身宽度
+@include block(vcm-drawer) {
+	@include element(footer) {
+		display: flex;
+		gap: remfix(24);
+		align-items: center;
+	}
+
+	@include element(button) {
+		flex: 1;
+		min-width: 0;
+	}
+}

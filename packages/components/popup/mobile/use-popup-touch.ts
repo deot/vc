@@ -161,6 +161,17 @@ export const usePopupTouch = (
 		notify('dragstart', () => ({ snap: snaps.index.value, height: mode === 'pan' ? snaps.heightAt(position) : size }));
 	};
 
+	/**
+	 * 满足滑动关闭条件时询问 beforeClose：同步允许时滑出；否则回弹，Promise 兑现为 true 后再以离场动画关闭
+	 * @returns ~
+	 */
+	const confirm = () => {
+		const result = props.beforeClose ? props.beforeClose() : true;
+		if (result === true) return true;
+		result && result.then(v => v && (isActive.value = false));
+		return false;
+	};
+
 	// 从当前位置继续滑出，结束后关闭（离场动画跳过）
 	const slideOut = (transform: string) => {
 		closing = true;
@@ -237,17 +248,22 @@ export const usePopupTouch = (
 
 			if (current === 'pan') {
 				const result = snaps.release(position, speed, canSwipeClose() ? swipe.value : null);
-				isClose = result === 'close';
-				// 从当前位置继续滑出（可见高度）后关闭
-				isClose
-					? slideOut(`translateY(${(props.placement === 'top' ? -1 : 1) * (snaps.heights.value[target] + base)}px)`)
-					: (target = result as number);
+				isClose = result === 'close' && confirm();
+				if (isClose) {
+					// 从当前位置继续滑出（可见高度）后关闭
+					slideOut(`translateY(${(props.placement === 'top' ? -1 : 1) * (snaps.heights.value[target] + base)}px)`);
+				} else if (result === 'close') {
+					// 关闭被拦截：回到最低档
+					snaps.snapTo(target = 0);
+				} else {
+					target = result as number;
+				}
 			} else {
 				const config = swipe.value!;
 				const percent = size ? position / size : 0;
 				// 关闭判定用整段手势的平均速度：很短的快划可能来不及采样
 				const average = position / Math.max(1, Date.now() - startTime) * 1000;
-				isClose = position > MIN_DISTANCE && (percent >= config.threshold || average > config.speed);
+				isClose = position > MIN_DISTANCE && (percent >= config.threshold || average > config.speed) && confirm();
 				if (isClose) {
 					slideOut(translate(size));
 				} else {

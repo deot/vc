@@ -112,11 +112,14 @@ export const props = {
 		type: Boolean,
 		default: undefined
 	},
+	maskStyle: [Object, Array, String],
 	wrapperClass: [Object, Array, String],
 	wrapperStyle: [Object, Array, String],
 	// 内容区（content 与默认插槽所在的元素）的 class / style；有标题栏、content 或 footer 插槽时有效
 	contentClass: [Object, Array, String],
 	contentStyle: [Object, Array, String],
+	// 内部（MDrawer 的 closeWithCancel）：关闭按钮、遮罩、滑动、插槽 close 关闭前调用；返回 false 时保持打开，Promise 兑现为 true 后关闭
+	beforeClose: Function as PropType<() => boolean | Promise<boolean>>,
 	// 额外视为滚动容器的元素；计算样式 overflow 为 auto / scroll 的元素已自动识别，一般不需要
 	scrollRegExp: {
 		type: Object,

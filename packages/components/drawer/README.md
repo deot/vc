@@ -2,6 +2,8 @@
 
 抽屉从视口边缘滑入，覆盖住部分父窗体内容。用户在抽屉内操作时不必离开当前任务，操作完成后，可以平滑地回到原任务。
 
+移动端入口导出的 `MDrawer`、`MDrawerView` 与 `Drawer`、`DrawerView` 的属性、事件、插槽和静态方法相同，面板基于 [MPopup](../popup/README.md)，见 [移动端](#移动端)。
+
 ### 何时使用
 
 - 当需要一个附加的面板来控制父窗体内容，这个面板在需要时呼出。比如，控制界面展示样式，往界面中添加内容。
@@ -325,6 +327,42 @@ onUnmounted(() => {
 ```
 :::
 
+## 移动端
+
+`MDrawer` 由 [MPopup](../popup/README.md) 承载面板：标题栏、关闭按钮、内容区滚动（`MScroller` 原生滚动）、圆角、安全区、进出动画与手势滑动关闭都与 `MPopup` 相同，尺寸按 750 稿随 `--vc-rem` 缩放。在此之上提供与 `Drawer` 相同的确定、取消与异步确认：
+
+- 底部默认是两个 `size="large"` 的 `MButton`（取消、确定），等分宽度，间距 24（375 宽下 12px）；`footer-extra` 插槽保持自身宽度，`footer` 插槽替换两个按钮。
+- `width`、`height` 的数字为 750 稿长度，字符串为 CSS 长度。左右抽屉默认宽 600，即屏宽的 80%；上下抽屉不设置 `height` 时高度由内容决定，内容过长时内容区滚动，面板与对边至少留出 `MPopup` 的间距。
+- `swipeClosable`：同 `MPopup`，沿弹出方向滑动关闭，不设置时跟随 `maskClosable`。`closeWithCancel` 为 `true` 时滑动关闭也先经过 `onCancel`：同步允许时从当前位置滑出；返回 Promise 时面板先回弹，兑现后再关闭，拒绝时保持打开。
+- 没有 `scrollerOptions`（内容区为原生滚动）。
+- 类名：根节点为 `.vcm-popup.vcm-drawer`，标题栏、内容区沿用 `.vcm-popup__*`；底部为 `.vcm-drawer__footer`，按钮为 `.vcm-drawer__cancel`、`.vcm-drawer__ok`（都带 `.vcm-drawer__button`）。主题参数与局部变量见 [Popup](../popup/README.md#主题与局部覆盖)、[Button](../button/README.md#移动端)。
+
+```vue
+<template>
+	<MListItem label="填写信息" @click="isActive = true" />
+	<MDrawer
+		v-model="isActive"
+		title="填写信息"
+		placement="bottom"
+		:on-ok="handleSubmit"
+	>
+		<MInput v-model="name" placeholder="名称" />
+	</MDrawer>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MDrawer, MInput, MListItem } from '@deot/vc';
+
+const isActive = ref(false);
+const name = ref('');
+// 返回 Promise：兑现后关闭，拒绝时保持打开
+const handleSubmit = () => new Promise(resolve => setTimeout(resolve, 800));
+</script>
+```
+
+`MDrawer.open(options)` 与 `Drawer.open` 相同，参数为上述属性及 `onClose`。
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-drawer-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
@@ -349,7 +387,7 @@ onUnmounted(() => {
 
 ## API
 
-`DrawerView` 与 `Drawer` 使用相同的属性、事件、插槽和实例方法。`Drawer` 额外提供静态方法 `open`、`destroy`。`MDrawer`、`MDrawerView` 是相应桌面组件的别名，共用实现和样式；小屏幕使用时应设置合适的宽度。
+`DrawerView` 与 `Drawer` 使用相同的属性、事件、插槽和实例方法。`Drawer` 额外提供静态方法 `open`、`destroy`。`MDrawer`、`MDrawerView` 的差异见 [移动端](#移动端)。
 
 ### 属性
 
@@ -372,7 +410,7 @@ onUnmounted(() => {
 | wrapperStyle | 面板容器样式，可覆盖宽高 | `object \| string` | - | - |
 | contentClass | 滚动内容区类名 | `object \| string` | - | - |
 | contentStyle | 滚动内容区样式 | `object \| string` | - | - |
-| closeWithCancel | 关闭按钮、遮罩、Esc 关闭时执行 onCancel，返回值规则同取消按钮；设为 false 时直接关闭 | `boolean` | - | `true` |
+| closeWithCancel | 关闭按钮、遮罩、Esc（移动端还有滑动）关闭时执行 onCancel，返回值规则同取消按钮；设为 false 时直接关闭 | `boolean` | - | `true` |
 | okText | 确认按钮内容；false 或空字符串隐藏按钮 | `string \| boolean` | - | 当前语言的“确定” |
 | cancelText | 取消按钮内容；false 或空字符串隐藏按钮 | `string \| boolean` | - | 当前语言的“取消” |
 | okDisabled | 禁用确认按钮 | `boolean` | - | `false` |

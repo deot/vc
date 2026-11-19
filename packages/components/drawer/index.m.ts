@@ -1,4 +1,8 @@
-import { Drawer, DrawerView } from '.';
+import { MDrawer } from './mobile/drawer';
+import { MDrawerView } from './mobile/drawer-view.tsx';
+import './mobile/style.scss';
 
-export const MDrawer = Drawer;
-export const MDrawerView = DrawerView;
+export {
+	MDrawer,
+	MDrawerView
+};
