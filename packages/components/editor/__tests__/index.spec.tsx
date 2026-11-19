@@ -22,10 +22,13 @@ import { registerFontSize } from '../extends/font-size';
 import { registerLetterSpacing } from '../extends/letter-spacing';
 import { registerLineHeight } from '../extends/line-height';
 import { registerVideoBlot } from '../extends/video-blot';
+import { getToolbarValues } from '../extends/style-attributor';
+import { registerExtends } from '../extends';
 import {
 	insertFontSizeStyle,
 	insertLetterSpacingStyle,
-	insertLineHeightStyle
+	insertLineHeightStyle,
+	normalizeHTML
 } from '../utils';
 import * as Load from '@deot/helper-load';
 
@@ -88,7 +91,7 @@ const makeEditorContext = () => {
 	return {
 		editor,
 		parent: {
-			poster: vi.fn((value: string, type: string) => `${type}:${value}`),
+			poster: vi.fn(({ value, type }: { value: string; type: string }) => `${type}:${value}`),
 			onLoading: vi.fn(),
 			onLoaded: vi.fn(),
 			previewable: true
@@ -199,6 +202,7 @@ describe('Editor component', () => {
 
 	it('emits focus, blur and text-change events and notifies form item', async () => {
 		const formChange = vi.fn();
+		const formBlur = vi.fn();
 		const value = { current: '' };
 		const wrapper = mount(Editor, {
 			attachTo: document.body,
@@ -208,7 +212,7 @@ describe('Editor component', () => {
 			},
 			global: {
 				provide: {
-					'vc-form-item': { change: formChange }
+					'vc-form-item': { change: formChange, blur: formBlur }
 				}
 			}
 		});
@@ -216,18 +220,28 @@ describe('Editor component', () => {
 
 		const editor = getEditor(wrapper);
 		const getSemanticHTML = vi.spyOn(editor, 'getSemanticHTML');
+		// 光标在编辑区内移动不重复触发 focus
 		emitEditorEvent(editor, 'selection-change', { index: 1 });
+		emitEditorEvent(editor, 'selection-change', { index: 2 });
+		emitEditorEvent(editor, 'selection-change', null);
 		emitEditorEvent(editor, 'selection-change', null);
 		getSemanticHTML.mockReturnValue('<p>Hello</p>');
 		emitEditorEvent(editor, 'text-change');
 		await flush();
 
-		expect(wrapper.emitted('focus')?.[0][0]).toBe('');
-		expect(wrapper.emitted('blur')?.[0][0]).toBe('');
+		expect(wrapper.emitted('focus')).toEqual([[{ value: '', editor }]]);
+		expect(wrapper.emitted('blur')).toEqual([[{ value: '', editor }]]);
+		expect(formBlur).toHaveBeenCalledTimes(1);
 		expect(value.current).toBe('<p>Hello</p>');
-		expect(wrapper.emitted('input')?.[0][0]).toBe('<p>Hello</p>');
-		expect(wrapper.emitted('change')?.[0][0]).toBe('<p>Hello</p>');
+		expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['<p>Hello</p>']);
+		expect(wrapper.emitted('input')?.[0]).toEqual([{ value: '<p>Hello</p>', editor }]);
+		expect(wrapper.emitted('change')?.[0]).toEqual([{ value: '<p>Hello</p>', editor }]);
 		expect(formChange).toHaveBeenCalledWith('<p>Hello</p>');
+
+		// 空格还原为普通空格，英文可以换行
+		getSemanticHTML.mockReturnValue('<p>a&nbsp;b</p>');
+		emitEditorEvent(editor, 'text-change');
+		expect(value.current).toBe('<p>a b</p>');
 
 		getSemanticHTML.mockReturnValue('<p><br></p>');
 		emitEditorEvent(editor, 'text-change');
@@ -283,7 +297,8 @@ describe('Editor component', () => {
 			options.onComplete?.({ result });
 			return { wrapper: { uploadFiles } } as any;
 		});
-		const wrapper = mount(Editor, { attachTo: document.body });
+		const poster = vi.fn(() => 'https://site/cover.png');
+		const wrapper = mount(Editor, { attachTo: document.body, props: { poster } });
 		await flush();
 
 		const editor = getEditor(wrapper);
@@ -300,9 +315,53 @@ describe('Editor component', () => {
 		expect(undo).toHaveBeenCalledTimes(1);
 		expect(redo).toHaveBeenCalledTimes(1);
 
+		// 禁用时上传、撤销、重做都不响应
+		await wrapper.setProps({ disabled: true });
+		uploadOpen.mockClear();
+		await icons[0].trigger('click');
+		await wrapper.findAll('.vc-editor__icon')[2].trigger('click');
+		await wrapper.findAll('.vc-editor__icon')[3].trigger('click');
+		expect(uploadOpen).not.toHaveBeenCalled();
+		expect(undo).toHaveBeenCalledTimes(1);
+		expect(redo).toHaveBeenCalledTimes(1);
+		await wrapper.setProps({ disabled: false });
+
 		(wrapper.vm as any).add([{ value: 'https://site/file.txt', target: { name: 'file.txt' } }]);
 		expect(insertText).toHaveBeenCalledWith(expect.any(Number), 'file.txt');
 		expect(format).toHaveBeenCalledWith('link', 'https://site/file.txt');
+
+		// poster 传到视频插入流程
+		(wrapper.vm as any).add([{ value: 'https://site/a.mp4', target: { name: 'a.mp4' } }]);
+		expect(poster).toHaveBeenCalledWith({ value: 'https://site/a.mp4', type: 'video' });
+		expect(editor.root.querySelector('video')?.getAttribute('poster')).toBe('https://site/cover.png');
+
+		wrapper.unmount();
+	});
+
+	it('keeps the spin until every concurrent upload completes', async () => {
+		const completes: Array<() => void> = [];
+		vi.spyOn(Upload, 'open').mockImplementation((options: any) => {
+			options.onBegin?.({ rawFiles: [], files: [] });
+			completes.push(() => options.onComplete?.({ result: {} }));
+			return {} as any;
+		});
+		const wrapper = mount(Editor, { attachTo: document.body });
+		await flush();
+
+		const spin = () => (wrapper.find('.vc-editor__spin').element as HTMLElement).style.display;
+		const icons = wrapper.findAll('.vc-editor__icon .vc-icon');
+		await icons[0].trigger('click');
+		await icons[1].trigger('click');
+		await flush();
+		expect(spin()).toBe('');
+
+		completes[0]();
+		await nextTick();
+		expect(spin()).toBe('');
+
+		completes[1]();
+		await nextTick();
+		expect(spin()).toBe('none');
 
 		wrapper.unmount();
 	});
@@ -439,22 +498,32 @@ describe('EditorView and utils', () => {
 		expect(Load.style).toHaveBeenCalledWith(expect.stringContaining('2px'), { id: 'letter-style' });
 	});
 
-	it('renders html and cleans styles', async () => {
+	it('renders html without injecting styles', async () => {
+		vi.mocked(Load.style).mockClear();
 		const wrapper = mount(() => (
-			<EditorView
-				value="<p>hello</p>"
-				fontSize={['13px']}
-				lineHeight={['1.2']}
-				letterSpacing={['1px']}
-			/>
+			<EditorView value="<p>hello</p>" />
 		), { attachTo: document.body });
 		await flush();
 
 		expect(wrapper.find('.vc-editor-view').exists()).toBe(true);
 		expect(wrapper.find('.ql-editor').html()).toContain('hello');
+		expect(Load.style).not.toHaveBeenCalled();
 
 		wrapper.unmount();
-		expect(Load.removeStyle).toHaveBeenCalledTimes(3);
+	});
+
+	it('restores spaces turned into &nbsp; by getSemanticHTML', () => {
+		expect(normalizeHTML('<p>a&nbsp;b</p>')).toBe('<p>a b</p>');
+		// 连续空格交替保留 &nbsp;，段首段尾保留 &nbsp;
+		expect(normalizeHTML('<p>a&nbsp;&nbsp;&nbsp;b</p>')).toBe('<p>a &nbsp; b</p>');
+		expect(normalizeHTML('<p>&nbsp;a&nbsp;</p>')).toBe('<p>&nbsp;a&nbsp;</p>');
+		// 跨行内元素按整段判断
+		expect(normalizeHTML('<p><strong>a</strong>&nbsp;b&nbsp;<em>c</em></p>')).toBe('<p><strong>a</strong> b <em>c</em></p>');
+		expect(normalizeHTML('<ol><li>a&nbsp;b</li></ol><h1>c&nbsp;d</h1>')).toBe('<ol><li>a b</li></ol><h1>c d</h1>');
+		// pre / code 原样保留
+		expect(normalizeHTML('<pre>a&nbsp;&nbsp;b</pre>')).toBe('<pre>a&nbsp;&nbsp;b</pre>');
+		expect(normalizeHTML('<p>x&nbsp;<code>a&nbsp;b</code></p>')).toBe('<p>x <code>a&nbsp;b</code></p>');
+		expect(normalizeHTML('<p>plain</p>')).toBe('<p>plain</p>');
 	});
 
 	it('opens the preview when an image inside the view is clicked', async () => {
@@ -568,8 +637,7 @@ describe('Editor extends', () => {
 
 		insertFile({ value: 'https://site/a.mp3', target: { name: 'a.mp3' } }, context);
 		expect(context.editor.insertEmbed).toHaveBeenCalledWith(2, 'vc/audio', {
-			src: 'https://site/a.mp3',
-			poster: 'audio:https://site/a.mp3'
+			src: 'https://site/a.mp3'
 		});
 
 		insertFile({ value: 'https://site/a.mp4', target: { name: 'a.mp4' } }, context);
@@ -661,8 +729,11 @@ describe('Editor extends', () => {
 			contains: vi.fn(() => true),
 			querySelectorAll: vi.fn(() => [image1, image2])
 		};
+		let enabled = true;
 		const editor = {
 			root,
+			isEnabled: () => enabled,
+			clipboard: { addMatcher: vi.fn() },
 			options: {
 				[EXTENDS_CONTEXT_KEY]: {
 					previewable: true,
@@ -710,6 +781,16 @@ describe('Editor extends', () => {
 		expect(dropEvent.preventDefault).toHaveBeenCalledTimes(1);
 		expect(selection.setBaseAndExtent).toHaveBeenCalled();
 
+		// 禁用时粘贴、拖入的文件都不上传
+		enabled = false;
+		uploadOpen.mockClear();
+		pasteEvent.clipboardData.getData = vi.fn(() => '');
+		module.handlePaste(pasteEvent);
+		module.handleDrop(dropEvent);
+		expect(uploadOpen).not.toHaveBeenCalled();
+		enabled = true;
+		pasteEvent.clipboardData.getData = vi.fn(() => 'text');
+
 		module.handlePreview({ target });
 		expect(previewOpen).toHaveBeenCalledWith({
 			current: 1,
@@ -723,10 +804,12 @@ describe('Editor extends', () => {
 		module.handlePreview({ target });
 		expect(previewOpen).toHaveBeenCalledTimes(1);
 
+		// 事件不在编辑区内时不处理
 		root.contains.mockReturnValue(false);
+		pasteEvent.clipboardData.getData = vi.fn(() => '');
 		module.handlePaste(pasteEvent);
 		module.handleDrop(dropEvent);
-		expect(uploadOpen).toHaveBeenCalled();
+		expect(uploadOpen).not.toHaveBeenCalled();
 
 		unmounted[0]();
 		expect(root.removeEventListener).toHaveBeenCalledTimes(3);
@@ -757,13 +840,60 @@ describe('Editor extends', () => {
 		expect(AudioBlot.value(audioNode)).toEqual({ url: 'audio.mp3' });
 
 		expect(getWhitelist(Quill.import('formats/font-size'))).toEqual(toolbarDefaultsMap['font-size']);
-		expect(getWhitelist(Quill.import('formats/line-height'))).toEqual(toolbarDefaultsMap['line-height']);
+		expect(getWhitelist(Quill.import('formats/line-height'))).toEqual(expect.arrayContaining(toolbarDefaultsMap['line-height']));
+		// 浏览器读回时 2.0 → 2，两种写法都放行
+		expect(getWhitelist(Quill.import('formats/line-height'))).toEqual(expect.arrayContaining(['2', '3']));
 		expect(getWhitelist(Quill.import('formats/letter-spacing'))).toEqual(toolbarDefaultsMap['letter-spacing']);
+		expect((Quill.import('formats/line-height') as any).scope).toBe((Quill.import('parchment') as any).Scope.BLOCK_ATTRIBUTE);
 
 		registerVideoBlot(Quill);
 		registerAudioBlot(Quill);
 		expect(Quill.import('formats/vc/video')).toBe(VideoBlot);
 		expect(Quill.import('formats/vc/audio')).toBe(AudioBlot);
+	});
+
+	it('merges configured toolbar values into the whitelists', () => {
+		expect(getToolbarValues([['bold'], [{ 'font-size': ['13px', '14px'] }]], 'font-size')).toEqual([
+			...toolbarDefaultsMap['font-size'],
+			'13px'
+		]);
+		expect(getToolbarValues({ container: [{ 'line-height': ['1.5'] }] }, 'line-height')).toContain('1.5');
+		expect(getToolbarValues(undefined, 'letter-spacing')).toEqual(toolbarDefaultsMap['letter-spacing']);
+
+		registerExtends(Quill, [{ 'font-size': ['13px'] }]);
+		const FontSize = Quill.import('formats/font-size');
+		expect(getWhitelist(FontSize)).toContain('13px');
+		// 再次注册只并入新值，不替换已注册的格式
+		registerExtends(Quill, [{ 'font-size': ['15px'] }]);
+		expect(Quill.import('formats/font-size')).toBe(FontSize);
+		expect(getWhitelist(FontSize)).toEqual(expect.arrayContaining(['13px', '15px']));
+	});
+
+	it('applies line-height to whole lines and lifts it from old inline content', async () => {
+		(window as any).quill = Quill;
+		const wrapper = mount(Editor, { attachTo: document.body });
+		await flush();
+		const editor = getEditor(wrapper);
+
+		editor.setContents([{ insert: 'abc\n' }]);
+		editor.setSelection(1, 1);
+		editor.format('line-height', '1', 'user');
+		expect(editor.getContents().ops).toEqual([
+			{ insert: 'abc' },
+			{ insert: '\n', attributes: { 'line-height': '1' } }
+		]);
+
+		editor.clipboard.dangerouslyPasteHTML([
+			'<p><span style="line-height: 2;">old</span> text</p>',
+			'<ol><li><span style="line-height: 1.4;">x</span></li><li class="ql-align-center">y</li></ol>'
+		].join(''));
+		await flush();
+		expect(wrapper.emitted('update:modelValue')!.at(-1)![0]).toBe(
+			'<p style="line-height: 2;">old text</p><ol><li style="line-height: 1.4;">x</li><li class="ql-align-center">y</li></ol>'
+		);
+
+		wrapper.unmount();
+		delete (window as any).quill;
 	});
 
 	it('exposes editor defaults', () => {

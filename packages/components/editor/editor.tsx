@@ -13,6 +13,7 @@ import { props as editorProps } from './editor-props';
 import { resolveEnhancer } from '../upload-picker/utils';
 import type { PickerType } from '../upload-picker/types';
 import { useLocale } from '../locale';
+import { getEditorHTML } from './utils';
 
 const COMPONENT_NAME = 'vc-editor';
 
@@ -50,7 +51,9 @@ export const Editor = defineComponent({
 		const toolbar = ref<any>(null);
 		const currentValue = ref('');
 		const toolbarId = ref(getUid('editor-toolbar'));
-		const isLoading = ref(false);
+		// 并发上传各自开始、结束，计数归零才隐藏加载
+		const loadingCount = ref(0);
+		const isFocused = ref(false);
 
 		const quillInstance = shallowRef<typeof Quill>();
 		const editor = shallowRef<Quill>();
@@ -118,8 +121,9 @@ export const Editor = defineComponent({
 			root: editorEl.value,
 			options: currentOptions.value,
 			previewable: props.previewable,
-			onLoading: () => (isLoading.value = true),
-			onLoaded: () => (isLoading.value = false),
+			poster: props.poster,
+			onLoading: () => loadingCount.value++,
+			onLoaded: () => (loadingCount.value = Math.max(0, loadingCount.value - 1)),
 			onUnmounted: (fn: any) => {
 				effects.push(fn);
 			}
@@ -130,13 +134,11 @@ export const Editor = defineComponent({
 			editor: editor.value,
 		});
 
-		const mergeCurrentInfo = () => {
-			return { value: currentValue.value, editor: editor.value };
-		};
+		const getInfo = () => ({ value: currentValue.value, editor: editor.value! });
 
 		const init = () => {
 			const QuillClass = quillInstance.value!;
-			registerExtends(QuillClass);
+			registerExtends(QuillClass, currentOptions.value.toolbar);
 			props.register?.(QuillClass);
 			editor.value = new QuillClass(editorEl.value!, {
 				...currentOptions.value,
@@ -151,30 +153,28 @@ export const Editor = defineComponent({
 				editor.value.setSelection(length + 1); // 光标位置
 			}
 
+			// 选区每次移动都会触发，只在聚焦状态切换时发出事件
 			editor.value.on('selection-change', (range) => {
-				const current = mergeCurrentInfo();
-				if (!range) {
-					emit('blur', currentValue.value, current);
-				} else {
-					emit('focus', currentValue.value, current);
-				}
+				const focused = !!range;
+				if (focused === isFocused.value) return;
+				isFocused.value = focused;
+				emit(focused ? 'focus' : 'blur', getInfo());
+				!focused && formItem.blur?.(currentValue.value);
 			});
 
 			// 监听文本内容变化
 			editor.value.on('text-change', () => {
-				let html = editor.value?.getSemanticHTML() || '';
-				if (html === '<p><br></p>') html = '';
-				currentValue.value = html;
+				currentValue.value = getEditorHTML(editor.value!);
 
-				const current = mergeCurrentInfo();
-				emit('update:modelValue', currentValue.value, current);
-				emit('input', currentValue.value, current);
-				emit('change', currentValue.value, current);
+				emit('update:modelValue', currentValue.value);
+				emit('input', getInfo());
+				emit('change', getInfo());
 				formItem.change?.(currentValue.value);
 			});
 		};
 
 		const handleUpload = async (e: any, type: PickerType) => {
+			if (props.disabled) return;
 			const enhancer = resolveEnhancer(props.enhancer, VcInstance.options.Editor?.enhancer, VcInstance.options.UploadPicker?.enhancer);
 			// 与 UploadPicker 的 enhancer 同一签名：每次只选一种类型
 			if (await enhancer?.({ instance: instance!, type, types: [type] })) return;
@@ -183,11 +183,11 @@ export const Editor = defineComponent({
 		};
 
 		const handleUndo = () => {
-			editor.value!.history.undo();
+			!props.disabled && editor.value!.history.undo();
 		};
 
 		const handleRedo = () => {
-			editor.value!.history.redo();
+			!props.disabled && editor.value!.history.redo();
 		};
 
 		onMounted(async () => {
@@ -256,7 +256,7 @@ export const Editor = defineComponent({
 					<div ref={editorEl} />
 					<div
 						// @ts-ignore
-						vShow={isLoading.value}
+						vShow={loadingCount.value > 0}
 						class="vc-editor__spin"
 					>
 						<Spin />

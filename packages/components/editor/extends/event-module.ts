@@ -6,6 +6,7 @@ import { ACCEPTS } from '../../upload-picker/utils';
 import { resolveFileName, resolveFileType } from '../../file-preview/utils';
 
 const MODULE_NAME = 'modules/EventExtend';
+const LINE_SELECTOR = 'p, li, h1, h2, h3, h4, h5, h6, blockquote';
 
 const accepts = {
 	image: ACCEPTS.image,
@@ -42,14 +43,13 @@ export const insertFile = (body: any, context: any) => {
 			break;
 		case 'audio':
 			context.editor.insertEmbed(index, 'vc/audio', {
-				src: body.value,
-				poster: context.parent?.poster?.(body.value, fileType) || body.value
+				src: body.value
 			});
 			break;
 		case 'video':
 			context.editor.insertEmbed(index, 'vc/video', {
 				src: body.value,
-				poster: context.parent?.poster?.(body.value, fileType) || body.value
+				poster: context.parent?.poster?.({ value: body.value, type: fileType })
 			});
 			break;
 		default :
@@ -100,6 +100,7 @@ export const registerEventModule = (QuillClass: typeof Quill) => {
 			// @ts-ignore
 			this.parent = editor.options[EXTENDS_CONTEXT_KEY];
 			this.operateDOMEvents('add');
+			editor.clipboard.addMatcher(Node.ELEMENT_NODE, this.matchLineHeight);
 			this.parent.onUnmounted(() => this.operateDOMEvents('remove'));
 		}
 
@@ -111,7 +112,7 @@ export const registerEventModule = (QuillClass: typeof Quill) => {
 		};
 
 		handlePaste = (e: ClipboardEvent) => {
-			if (!this.editor.root.contains(e.target as Node)) return;
+			if (!this.editor.root.contains(e.target as Node) || !this.editor.isEnabled()) return;
 			if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length) {
 				// word复制过来files存在，这里用text做个区分
 				const text = e.clipboardData.getData('text');
@@ -125,6 +126,8 @@ export const registerEventModule = (QuillClass: typeof Quill) => {
 		handleDrop = (e: any) => {
 			if (!this.editor.root.contains(e.target)) return;
 			e.preventDefault();
+			// 禁用时不接收拖入的文件
+			if (!this.editor.isEnabled()) return;
 			if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
 				if (document.caretRangeFromPoint) {
 					const selection = document.getSelection();
@@ -145,6 +148,27 @@ export const registerEventModule = (QuillClass: typeof Quill) => {
 			if (current instanceof ImageBlot) {
 				previewImages(this.editor.root, current.domNode);
 			}
+		};
+
+		/**
+		 * 旧内容的行高写在行内元素上（<span style="line-height">），行高改为整段格式后读不到；
+		 * 段落自身没有行高时，取段内第一个行内行高作为整段行高
+		 * @param node 当前元素
+		 * @param delta 元素对应的内容
+		 * @returns ~
+		 */
+		matchLineHeight = (node: Node, delta: any) => {
+			const element = node as HTMLElement;
+			if (!element.matches?.(LINE_SELECTOR) || element.style.lineHeight) return delta;
+			const inline = Array.from(element.querySelectorAll<HTMLElement>('[style*="line-height"]'))
+				.find(it => it.closest(LINE_SELECTOR) === element);
+			const ops = delta.ops;
+			const last = ops[ops.length - 1];
+			if (!inline || typeof last?.insert !== 'string' || !last.insert.endsWith('\n') || last.attributes?.['line-height']) {
+				return delta;
+			}
+			const Delta = QuillClass.import('delta') as any;
+			return delta.compose(new Delta().retain(delta.length() - 1).retain(1, { 'line-height': inline.style.lineHeight }));
 		};
 
 		readFiles = (files: any[]) => {

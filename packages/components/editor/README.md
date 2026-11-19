@@ -115,10 +115,9 @@ editorRef.value.add([
 | --- | --- | --- | --- | --- |
 | modelValue | HTML 内容，支持 `v-model` | `string` | - | `''` |
 | options | Quill 初始化配置和 `toolbar` 配置，见下文 | `object` | - | `undefined` |
-| disabled | 是否禁用编辑区域；优先于 `options.readOnly` | `boolean` | - | `false` |
-| uploadOptions | 已声明的上传配置；当前默认上传流程未读取此属性 | `object` | - | `{ file: {}, image: {}, video: {} }` |
+| disabled | 是否禁用编辑；禁用时工具栏上传、撤销、重做以及粘贴、拖入文件都不响应。优先于 `options.readOnly` | `boolean` | - | `false` |
 | register | 创建编辑器前注册 Quill 扩展 | `(QuillClass: typeof Quill) => void` | - | `undefined` |
-| poster | 已声明的封面回调；当前组件上下文未将它传给媒体插入流程 | `Function` | - | `undefined` |
+| poster | 插入视频时的封面地址；未提供或返回空值时不设置封面 | `({ value, type }) => string \| undefined` | - | `undefined` |
 | enhancer | 工具栏上传增强函数；`true` 使用全局配置，`false` 跳过增强 | `boolean \| Function` | - | `true` |
 | previewable | 点击编辑区域内图片时是否打开预览 | `boolean` | - | `true` |
 
@@ -126,20 +125,22 @@ editorRef.value.add([
 
 工具栏从 `options.toolbar` 读取数组或 `{ container: [...] }`，`options.modules.toolbar` 会被内部生成的工具栏选择器覆盖。默认工具包括常用格式、标题、列表、字体、颜色、对齐、字号、行高、字间距、链接、图片/视频上传及撤销/重做。
 
+字号、字间距作用于选中文字，行高作用于整段（写在段落上，可以调小）。旧内容里写在行内元素上的行高，在重新载入编辑器时会提升为所在段落的行高。`{ 'font-size': [...] }` 等自定义取值会并入格式白名单，不在白名单内的值会被忽略。列表项上的对齐、行高等段落格式会保留在输出的 HTML 中。
+
 全局 enhancer 优先使用 `VcInstance.options.Editor.enhancer`，其次使用 `VcInstance.options.UploadPicker.enhancer`。函数收到 `{ instance, type, types }`，分别是 Vue 组件内部实例、上传类型（如 `image`、`video`）和 `[type]`。
 
 ### Editor 事件
 
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
-| update:modelValue | HTML 内容更新 | `(value, info)` | `value: string`；`info: { value: string, editor: Quill }` |
-| input | Quill 内容变化 | `(value, info)` | 同上 |
-| change | Quill 内容变化，同时通知 FormItem | `(value, info)` | 同上 |
-| focus | Quill 选区变为非空 | `(value, info)` | 同上；选区变化也可能触发 |
-| blur | Quill 选区变为空 | `(value, info)` | 同上 |
+| update:modelValue | HTML 内容更新 | `(value)` | `value: string` |
+| input | 内容变化 | `({ value, editor })` | `value: string`；`editor: Quill` |
+| change | 内容变化，同时通知 FormItem | `({ value, editor })` | 同上 |
+| focus | 编辑区获得焦点；光标在编辑区内移动不会重复触发 | `({ value, editor })` | 同上 |
+| blur | 编辑区失去焦点，同时通知 FormItem | `({ value, editor })` | 同上 |
 | ready | Quill 初始化完成 | `({ dependencies: { quill } })` | `quill` 为 Quill 构造器；实例通过组件 ref 的 `editor` 获取 |
 
-内容由 `getSemanticHTML()` 生成，空段落 `<p><br></p>` 转换为 `''`。程序修改内容也可能触发内容事件。
+内容由 `getSemanticHTML()` 生成，空段落 `<p><br></p>` 转换为 `''`。`getSemanticHTML()` 会把所有空格转为 `&nbsp;`，组件会将其还原为普通空格，保证英文可以换行：连续空格交替保留 `&nbsp;`，段首段尾的空格保留 `&nbsp;`，`pre`、`code` 内的内容保持原样。程序修改内容也可能触发内容事件。
 
 ### Editor 插槽
 
@@ -161,15 +162,12 @@ editorRef.value.add([
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | value | 直接渲染的 HTML 内容 | `string` | - | `undefined` |
-| fontSize | 注入字号工具标签样式的值 | `string[]` | - | `['12px', '14px', '16px', '18px', '20px', '22px', '24px', '50px']` |
-| lineHeight | 注入行高工具标签样式的值 | `string[]` | - | `['1', '1.2', '1.4', '1.6', '1.8', '2.0', '2.2', '2.4', '2.6', '2.8', '3.0']` |
-| letterSpacing | 注入字间距工具标签样式的值 | `string[]` | - | `['0px', '1px', '2px', '3px', '4px', '5px', '6px', '7px', '8px', '9px', '10px']` |
 | previewable | 点击内容中的图片时是否打开预览 | `boolean` | - | `true` |
 
-这些数组在挂载时生成标签样式，不修改 HTML 或 Quill 格式白名单。EditorView 没有公开事件、插槽或方法。`previewable` 开启时，点击内容中的图片会打开预览，预览列表为内容内的全部图片。
+EditorView 没有公开事件、插槽或方法。`previewable` 开启时，点击内容中的图片会打开预览，预览列表为内容内的全部图片。
 
 ### 注意事项
 
 - EditorView 的内容按 HTML 渲染，组件本身不清洗；展示外部内容前应由业务侧完成可信校验，或配置全局的 `sanitize` 统一清洗（钩子里可用 `instance.parent` 识别 EditorView，为富文本放行更多标签），见 [Customer](../customer/README.md)。
 - `MEditor`、`MEditorView` 是对应桌面组件的别名，没有独立移动端实现。
-- 旧的 `imageUploadOptions`、`videoUploadOptions` 不属于当前公开属性。
+- 旧的 `imageUploadOptions`、`videoUploadOptions`、`uploadOptions` 不属于当前公开属性。

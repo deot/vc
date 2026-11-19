@@ -21,7 +21,7 @@ export const registerVideoBlot = (quillInstance: typeof Quill) => {
 			node.setAttribute('webkit-playsinline', true);
 			node.setAttribute('playsinline', true);
 			node.setAttribute('x5-playsinline', true);
-			node.setAttribute('poster', value.poster);
+			value.poster && node.setAttribute('poster', value.poster);
 			return node;
 		}
 

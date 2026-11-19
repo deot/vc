@@ -1,15 +1,7 @@
 import type Quill from 'quill';
-import { toolbarDefaultsMap } from '../default-options';
+import { registerStyleAttributor } from './style-attributor';
 
-export const registerLetterSpacing = (quillInstance: typeof Quill) => {
-	const Parchment = quillInstance.import('parchment');
-	const letterSpacingStyle = new Parchment.StyleAttributor(
-		'letter-spacing',
-		'letter-spacing',
-		{
-			scope: Parchment.Scope.INLINE,
-			whitelist: toolbarDefaultsMap['letter-spacing']
-		}
-	);
-	quillInstance.register({ 'formats/letter-spacing': letterSpacingStyle }, true);
+// 字间距作用于选中文字
+export const registerLetterSpacing = (QuillClass: typeof Quill, values?: string[]) => {
+	registerStyleAttributor(QuillClass, 'letter-spacing', 'INLINE', values);
 };

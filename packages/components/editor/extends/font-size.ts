@@ -1,14 +1,7 @@
 import type Quill from 'quill';
-import { toolbarDefaultsMap } from '../default-options';
+import { registerStyleAttributor } from './style-attributor';
 
-export const registerFontSize = (editor: typeof Quill) => {
-	const Parchment = editor.import('parchment');
-	const fontSize = toolbarDefaultsMap['font-size'];
-	const SizeStyle = new Parchment.StyleAttributor('font-size', 'font-size', {
-		scope: Parchment.Scope.INLINE,
-		whitelist: fontSize
-	});
-	editor.register({
-		'formats/font-size': SizeStyle
-	}, true);
+// 字号作用于选中文字
+export const registerFontSize = (QuillClass: typeof Quill, values?: string[]) => {
+	registerStyleAttributor(QuillClass, 'font-size', 'INLINE', values);
 };

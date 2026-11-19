@@ -1,14 +1,7 @@
 import type Quill from 'quill';
-import { toolbarDefaultsMap } from '../default-options';
+import { registerStyleAttributor } from './style-attributor';
 
-export const registerLineHeight = (quillInstance: typeof Quill) => {
-	const lineHeight = toolbarDefaultsMap['line-height'];
-	const Parchment = quillInstance.import('parchment');
-	const lineHeightStyle = new Parchment.StyleAttributor(
-		'line-height',
-		'line-height',
-		{ scope: Parchment.Scope.INLINE, whitelist: lineHeight }
-	);
-
-	quillInstance.register({ 'formats/line-height': lineHeightStyle }, true);
+// 行高作用于整段：加在行内元素上只能撑高、不能压低
+export const registerLineHeight = (QuillClass: typeof Quill, values?: string[]) => {
+	registerStyleAttributor(QuillClass, 'line-height', 'BLOCK', values);
 };

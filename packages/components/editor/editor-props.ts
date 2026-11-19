@@ -18,17 +18,10 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
-	uploadOptions: {
-		type: Object,
-		default: () => ({
-			file: {},
-			image: {},
-			video: {}
-		})
-	},
 	// 注册扩展
 	register: Function,
-	poster: Function,
+	// 插入视频时的封面地址；未提供或返回空值时不设置封面
+	poster: Function as PropType<(data: { value: string; type: 'video' }) => string | undefined>,
 	enhancer: {
 		type: [Function, Boolean] as PropType<PickerEnhancer | boolean>,
 		default: true

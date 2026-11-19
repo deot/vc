@@ -15,9 +15,7 @@
 				v-model="formData.value"
 				:disabled="disabled"
 				:options="formData.isDefaultOptions ? {} : customEditorOption"
-				:preview="false"
 				style="width: 100%;height: 500px"
-				@change="handleInput"
 			/>
 		</FormItem>
 		<EditorView :value="formData.value" />
@@ -86,9 +84,5 @@ const formData = reactive({
 const handleSubmit = async () => {
 	await form.value.validate();
 	console.log('Success!');
-};
-
-const handleInput = () => {
-
 };
 </script>
