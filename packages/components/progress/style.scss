@@ -3,15 +3,40 @@
 $color-contrast-light: varfix(color-contrast-light, progress);
 $color-dark-lightest: varfix(color-dark-lightest, progress);
 $color-error: varfix(color-error, progress);
+$color-neutral-light: varfix(color-neutral-light, progress);
 $color-primary: varfix(color-primary, progress);
 $color-success: varfix(color-success, progress);
+$foreground-color-inactive: varfix(foreground-color-inactive, progress);
 
+// 进度色：显式 color 以内联 --vc-progress-bar-color 覆盖，否则取状态色（根节点 is-<status> / is-disabled）
+$bar-color: var(--vc-progress-bar-color, var(--vc-progress-status-color));
+$track-color: localfix(progress, track-color, $color-neutral-light);
+$transition: .5s cubic-bezier(.075, .82, .165, 1);
+
+// 桌面端尺寸写成局部变量 --vc-progress-<键>，MProgress 在 .vcm-progress 上覆盖（mobile/style.scss）
+// 线高、圆形尺寸由属性内联；圆形中心字号为 size 的 20%
 @include block(vc-progress) {
-	font-size: unitfix(12);
-	color: $color-dark-lightest;
+	--vc-progress-status-color: #{$color-primary};
+
+	font-size: localfix(progress, font-size, 12px);
+	color: localfix(progress, text-color, $color-dark-lightest);
+
+	@include when(success) {
+		--vc-progress-status-color: #{$color-success};
+	}
+
+	@include when(error) {
+		--vc-progress-status-color: #{$color-error};
+	}
+
+	@include when(disabled) {
+		--vc-progress-status-color: #{$foreground-color-inactive};
+
+		color: $foreground-color-inactive;
+	}
 }
 
-// 进度条与百分比横向排列并垂直居中；百分比占 30px，与进度条间隔 3px
+// 进度条与百分比横向排列并垂直居中；百分比最小宽度 2.5em，整数进度变化时进度条长度不变
 @include block(vc-progress-line) {
 	display: flex;
 	align-items: center;
@@ -19,81 +44,90 @@ $color-success: varfix(color-success, progress);
 	@include element(wrapper) {
 		min-width: 0;
 		flex: 1;
+	}
 
-		@include element(box) {
-			width: 100%;
-			overflow: hidden;
-			border-radius: unitfix(8);
+	@include element(box) {
+		width: 100%;
+		overflow: hidden;
+		background-color: $track-color;
+		border-radius: 9999px;
+	}
 
-			@include when(error) {
-				border: 1px solid $color-error;
+	@include element(inner) {
+		position: relative;
+		display: flex;
+		width: calc(var(--vc-progress-percent) * 1%);
+		height: 100%;
+		background-color: $bar-color;
+		border-radius: 9999px;
+		transition: width $transition, background-color $transition;
+		justify-content: flex-end;
+		align-items: center;
+
+		// 挂载（及重新插入）时从 0 过渡到当前进度
+		@starting-style {
+			& {
+				width: 0;
 			}
+		}
 
-			@include element(inner) {
-				position: relative;
-				background-color: $color-primary;
-				border-radius: unitfix(8);
-				transition: width .5s cubic-bezier(.075,.82,.165,1);
-
-				@include when(success) {
-					background-color: $color-success;
-				}
-
-				@include when(error) {
-					background-color: $color-error;
-				}
-
-				@include when(active) {
-					&::before{
-						position: absolute;
-						top: 0;
-						left: 0;
-						height: 100%;
-						background-color: $color-contrast-light;
-						border-radius: unitfix(8);
-						content: '';
-						animation: vc-progress-line-width 2s infinite;
-					}
-				}
+		@include when(active) {
+			&::before {
+				position: absolute;
+				top: 0;
+				left: 0;
+				height: 100%;
+				background-color: $color-contrast-light;
+				border-radius: 9999px;
+				content: '';
+				animation: vc-progress-line-width 2s infinite;
 			}
 		}
 	}
 
 	@include element(percent) {
-		width: unitfix(30);
-		margin-left: unitfix(3);
+		min-width: localfix(progress, text-min-width, 2.5em);
+		margin-left: localfix(progress, text-gap, 8px);
 		line-height: 1;
+		white-space: nowrap;
 		flex: none;
+	}
 
-		@include element(icon) {
-			@include when(success) {
-				font-size: unitfix(12);
-				color: $color-success;
-			}
+	@include element(icon) {
+		font-size: 1em;
+		color: $bar-color;
+	}
 
-			@include when(error) {
-				font-size: unitfix(12);
-				color: $color-error;
+	// 文字在进度条内：白字靠进度末端
+	@include when(inside) {
+		.vc-progress-line__inner {
+			line-height: 1;
+			color: localfix(progress, inner-color, $color-contrast-light);
+			white-space: nowrap;
+
+			// 间距放在子元素上：进度为 0 时进度条不被内边距撑开
+			> * {
+				margin: 0 localfix(progress, inner-padding, 6px);
 			}
 		}
 	}
 
 	@keyframes vc-progress-line-width {
-		0%{
+		0% {
 			width: 0;
 			opacity: 0;
 		}
 
-		40%{
+		40% {
 			opacity: .2;
 		}
 
-		80%{
+		80% {
 			width: 100%;
 			opacity: 0;
 		}
 
-		100%{
+		100% {
 			width: 100%;
 			opacity: 0;
 		}
@@ -102,14 +136,29 @@ $color-success: varfix(color-success, progress);
 
 @include block(vc-progress-circle) {
 	@include element(box) {
-		width: unitfix(120);
-		height: unitfix(120);
+		position: relative;
+	}
 
-		@include element(inner){
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			transform: translate(-50%, -50%);
+	@include element(track) {
+		stroke: $track-color;
+	}
+
+	@include element(path) {
+		stroke: $bar-color;
+		stroke-dashoffset: calc(var(--vc-progress-length) * (100 - var(--vc-progress-percent)) / 100);
+		transition: stroke-dashoffset $transition, stroke $transition;
+
+		@starting-style {
+			& {
+				stroke-dashoffset: var(--vc-progress-length);
+			}
 		}
+	}
+
+	@include element(inner) {
+		position: absolute;
+		text-align: center;
+
+		@include position-center;
 	}
 }

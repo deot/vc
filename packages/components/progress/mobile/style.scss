@@ -1,0 +1,14 @@
+@use '../../style/helper' as *;
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放），375 宽下：
+// - 线形：线高 4（textInside 18，由属性默认值给出），文字 14、与进度条间距 8，文字颜色同进度色
+// - 圆形：默认 68（属性默认值），中心文字为尺寸的 20%
+// 结构与颜色沿用 ../style.scss，这里只覆盖局部变量（与两端样式的加载顺序无关）
+@include block(vcm-progress) {
+	@include localvars(progress, (
+		font-size: remfix(28),
+		text-gap: remfix(16),
+		text-color: var(--vc-progress-bar-color, var(--vc-progress-status-color)),
+		inner-padding: remfix(12)
+	));
+}
