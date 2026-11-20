@@ -1,12 +1,13 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, computed, withModifiers } from 'vue';
-import { getInstance } from '@deot/vc-hooks';
+import { defineComponent, computed, inject, withModifiers } from 'vue';
 import { Customer } from '../../customer';
 import { Icon } from '../../icon';
 import { renderHighlight } from '../select-search/highlight';
 import { props as optionProps } from './option-props';
 import { getOptionText } from '../utils';
+import { OPTION_OWNER_KEY } from './owner';
+import type { OptionOwner } from './owner';
 
 const COMPONENT_NAME = 'vc-select-option';
 
@@ -14,29 +15,30 @@ export const Option = defineComponent({
 	name: COMPONENT_NAME,
 	props: optionProps,
 	setup(props, { slots }) {
-		const owner = getInstance('select', 'selectId') as any;
+		const owner = inject<OptionOwner>(OPTION_OWNER_KEY)!;
 
-		const isChecked = computed(() => {
-			return owner.exposed.current.value.includes(props.value);
-		});
+		// computed：选中值变化时，选中状态没变的选项不重渲染；没有选中态的列表（联想组件）恒为 false
+		const checkedState = computed(() => !!owner.current?.value.includes(props.value));
+		const isChecked = () => checkedState.value;
 
 		// 单选时恒为 true；多选时为最后选中的一项：只在已选中时读取选中值，未选中的选项不随选中值变化而重渲染
-		const isLast = () => {
-			const { multiple, current } = owner.exposed;
-			return !multiple.value || (isChecked.value && current.value[current.value.length - 1] === props.value);
+		const isLast = (checked: boolean) => {
+			const { multiple, current } = owner;
+			return !multiple?.value || (checked && current!.value[current!.value.length - 1] === props.value);
 		};
 
-		// 单选时已选中则关闭，多选时切换，见 Select 的 pick；禁用时不处理
+		// 选中：Select 单选时已选中则关闭、多选时切换（见 Select 的 pick）；联想组件为填入；禁用时不处理
 		const handleClick = () => {
-			!props.disabled && owner.exposed.pick(props.value);
+			!props.disabled && owner.pick(props.value, props.row);
 		};
 
 		// 自定义渲染函数的参数
 		const getCustomOptions = () => {
+			const checked = isChecked();
 			return {
 				store: {
-					last: isLast(),
-					checked: isChecked.value,
+					last: isLast(checked),
+					checked,
 					click: handleClick
 				},
 				row: props.row
@@ -55,11 +57,12 @@ export const Option = defineComponent({
 			if (render) return (<Customer render={render} {...getCustomOptions()} />);
 
 			const renderLabel = slots.label || props.renderLabel;
+			const checked = isChecked();
 			return (
 				<div
 					// @ts-ignore
 					disabled={props.disabled ? 'disabled' : void 0}
-					class={[{ 'is-select': isChecked.value, 'is-last': isLast() }, 'vc-select-option']}
+					class={[{ 'is-select': checked, 'is-last': isLast(checked) }, 'vc-select-option']}
 					onClick={withModifiers(handleClick, ['stop'])}
 				>
 					{
@@ -67,7 +70,7 @@ export const Option = defineComponent({
 							? (<Customer render={renderLabel} {...getCustomOptions()} />)
 							: renderText()
 					}
-					{ isChecked.value && (<Icon type="correct" />) }
+					{ checked && (<Icon type="correct" />) }
 				</div>
 			);
 		};

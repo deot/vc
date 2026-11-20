@@ -2,11 +2,11 @@
 
 import { defineComponent, withModifiers } from 'vue';
 import { useAttrs } from '@deot/vc-hooks';
-import { props as inputProps } from '../input-props';
+import { props as inputProps, rightProps } from '../input-props';
 
 import { MIcon } from '../../icon/index.m';
 import { MTransitionFade } from '../../transition/index.m';
-import { useInput } from '../use-input';
+import { useInput, emits } from '../use-input';
 
 const COMPONENT_NAME = 'vcm-input';
 
@@ -15,25 +15,9 @@ export const MInput = defineComponent({
 	inheritAttrs: false,
 	props: {
 		...inputProps,
-		right: {
-			type: Boolean,
-			default: false
-		}
+		...rightProps
 	},
-	emits: [
-		'update:modelValue',
-		'input',
-		'change',
-		'focus',
-		'blur',
-		'clear',
-		'paste',
-		'keydown',
-		'keypress',
-		'keyup',
-		'enter',
-		'tip'
-	],
+	emits: [...emits],
 	setup(props, context) {
 		const { slots } = context;
 		const it = useAttrs({ merge: false });

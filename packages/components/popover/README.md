@@ -78,7 +78,7 @@ const handleVisibleChange = (key, visible) => {
 
 ### 定位
 
-支持 12 种位置；空间不足时自动调整方向。边界为浏览器视口（不含滚动条，四周留 8px），触发器位于滚动容器（含 Scroller）内时为视口与容器可视区的交集，因此靠近容器底部的浮层会向上打开；挂在 body 上的 hover 浮层只按视口判断，可以超出容器（如 Table 表体中的提示），避免朝下打开后挡住向下移动的鼠标。
+支持 12 种位置；空间不足时自动调整方向。边界为浏览器的可见视口（不含滚动条，四周留 8px；移动端软键盘弹出、双指缩放后按 `visualViewport` 的可见区域计算，可见区域变化时重新定位），触发器位于滚动容器（含 Scroller）内时为视口与容器可视区的交集，因此靠近容器底部的浮层会向上打开；挂在 body 上的 hover 浮层只按视口判断，可以超出容器（如 Table 表体中的提示），避免朝下打开后挡住向下移动的鼠标。
 
 浮层内容的最大宽高为所在一侧的可用空间，超出时在浮层内滚动，不可断行的长串在宽度内换行；交叉轴方向超出视口时位置会被修正回视口内，箭头仍指向触发器中心。浮层内容尺寸变化（如图片加载）后会重新判断方向并定位；`top`、`left` 系列以靠近触发器的一边对齐，内容变大时朝远离触发器的方向伸展。可展开预览以观察完整浮层。
 
@@ -626,6 +626,7 @@ onUnmounted(() => leaf?.destroy());
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
 | Popover.open | 创建独立浮层 | `options`：浮层属性与 Portal 配置 | `PortalLeaf` |
+| update | 组件 ref 的方法：触发节点移动而尺寸不变时（滚动、Resize 之外，如锚点随文本域内的光标移动），重新定位浮层；未打开时不处理 | - | `void` |
 
 `open` 使用独立浮层，支持上述外观属性（`animation`、`placement`、`theme`、`content`、`arrow`、`autoWidth`、`portalClass`、`portalStyle`）与 `keepFocus`、`keepEdge`，以及以下选项。声明式组件的 `trigger`、`disabled`、`outsideClickable`、`to`、`portal` 不控制静态浮层。静态浮层是独立的应用实例，不继承调用处的上下文；需要路由、状态或全局组件时，通过 Portal 的 `uses`、`components`、`install` 等配置注入，见 Portal 文档。
 

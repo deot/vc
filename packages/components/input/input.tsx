@@ -1,14 +1,13 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, computed, withModifiers } from 'vue';
-import type { PropType } from 'vue';
 import { useAttrs } from '@deot/vc-hooks';
 
-import { props as inputProps } from './input-props';
+import { props as inputProps, indicatorProps } from './input-props';
 
 import { Icon } from '../icon/index';
 import { TransitionFade } from '../transition/index';
-import { useInput } from './use-input';
+import { useInput, emits } from './use-input';
 import { getBytesLength } from './utils';
 
 const COMPONENT_NAME = 'vc-input';
@@ -18,26 +17,9 @@ export const Input = defineComponent({
 	inheritAttrs: false,
 	props: {
 		...inputProps,
-		indicator: {
-			type: [Boolean, Object] as PropType<boolean | ({ inline: boolean; inverted: boolean })>,
-			default: false
-		},
-		indicateClass: String
+		...indicatorProps
 	},
-	emits: [
-		'update:modelValue',
-		'input',
-		'change',
-		'focus',
-		'blur',
-		'clear',
-		'paste',
-		'keydown',
-		'keypress',
-		'keyup',
-		'enter',
-		'tip'
-	],
+	emits: [...emits],
 	setup(props, context) {
 		const { slots } = context;
 		const it = useAttrs({ merge: false });

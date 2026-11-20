@@ -48,6 +48,8 @@ interface NavigateOptions<T> {
 	select: (item: T, index: number) => void;
 	// 列表内容的来源（搜索词、数据）：变化后默认高亮第一项，回车即可选中
 	source?: WatchSource;
+	// 列表挂载、内容变化后是否默认高亮（prefer 或第一项）；为 false 时不高亮，直到键盘移动或鼠标移入（如移动端联想：没有回车选中的需要）
+	initial?: boolean;
 }
 
 /**
@@ -59,7 +61,7 @@ interface NavigateOptions<T> {
  * getActive / activate：读取、设置（并滚动到）高亮的下标；sync：列表变化后按项对上下标
  */
 export const useNavigate = <T>(options: NavigateOptions<T>) => {
-	const { getList, isEnabled, prefer, select, source } = options;
+	const { getList, isEnabled, prefer, select, source, initial = true } = options;
 	let list: SelectListExposed | null = null;
 	let active = -1;
 	let activeItem: T | undefined;
@@ -72,7 +74,7 @@ export const useNavigate = <T>(options: NavigateOptions<T>) => {
 	};
 
 	const reset = (preferred?: NavigateOptions<T>['prefer'], scroll?: boolean) => {
-		set(findPreferred(getList(), isEnabled, preferred), scroll);
+		initial ? set(findPreferred(getList(), isEnabled, preferred), scroll) : set(-1);
 	};
 
 	const setList = (vm: any) => {

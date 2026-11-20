@@ -12,29 +12,39 @@ type Boundary = { top: number; right: number; bottom: number; left: number };
 type ArrowSide = keyof Boundary;
 
 /**
- * 视口，不含滚动条
+ * 可见的视口，不含滚动条：布局视口与可视区（visualViewport）的交集
+ * 	- 移动端软键盘弹出、双指缩放时布局视口不变，只有可视区变小或移动；按它计算，弹层的翻转与限高才对得上看得见的区域
+ * 	- 没有 visualViewport 或两者一致（桌面端）时即布局视口
  * @param inset 四周内缩的距离
  * @returns 视口坐标的四边
  */
 export const getViewport = (inset = 0): Boundary => {
 	const { clientWidth, clientHeight } = document.documentElement;
-	return {
-		top: inset,
-		left: inset,
-		right: (clientWidth || window.innerWidth) - inset,
-		bottom: (clientHeight || window.innerHeight) - inset
-	};
+	const viewport = typeof window !== 'undefined' ? window.visualViewport : null;
+	let top = 0;
+	let left = 0;
+	let right = clientWidth || window.innerWidth;
+	let bottom = clientHeight || window.innerHeight;
+	if (viewport && viewport.width && viewport.height) {
+		top = Math.max(top, viewport.offsetTop);
+		left = Math.max(left, viewport.offsetLeft);
+		right = Math.min(right, viewport.offsetLeft + viewport.width);
+		bottom = Math.min(bottom, viewport.offsetTop + viewport.height);
+	}
+	return { top: top + inset, left: left + inset, right: right - inset, bottom: bottom - inset };
 };
 
 // 内容区的最大宽高：实际方向所在一侧的可用空间（四周留白），扣除弹层自身的 padding（有箭头时朝向触发节点一侧留出的空间）
 const getMaxSize = (placement: string, triggerRect: DOMRect, padding: { x: number; y: number }) => {
-	const { right: width, bottom: height } = getViewport();
+	const viewport = getViewport();
+	const width = viewport.right - viewport.left;
+	const height = viewport.bottom - viewport.top;
 	const distance = EXTRA_DISTANCE + VIEWPORT_GAP;
 	const sizes: Record<string, [number, number]> = {
-		top: [width - VIEWPORT_GAP * 2, triggerRect.top - distance],
-		bottom: [width - VIEWPORT_GAP * 2, height - triggerRect.bottom - distance],
-		left: [triggerRect.left - distance, height - VIEWPORT_GAP * 2],
-		right: [width - triggerRect.right - distance, height - VIEWPORT_GAP * 2]
+		top: [width - VIEWPORT_GAP * 2, triggerRect.top - viewport.top - distance],
+		bottom: [width - VIEWPORT_GAP * 2, viewport.bottom - triggerRect.bottom - distance],
+		left: [triggerRect.left - viewport.left - distance, height - VIEWPORT_GAP * 2],
+		right: [viewport.right - triggerRect.right - distance, height - VIEWPORT_GAP * 2]
 	};
 	const [w, h] = sizes[placement.split('-')[0]] || sizes.bottom;
 	return { maxWidth: Math.max(w - padding.x, 0), maxHeight: Math.max(h - padding.y, 0) };
@@ -432,9 +442,11 @@ export default () => {
 		const origin = !container || container === document.body
 			? -((vertical ? document.scrollingElement?.scrollLeft : document.scrollingElement?.scrollTop) || 0)
 			: container.getBoundingClientRect()[key];
-		const viewport = getViewport()[vertical ? 'right' : 'bottom'];
+		const viewport = getViewport(VIEWPORT_GAP);
 		const value = parseFloat(wrapperStyle[key]);
-		const clamp = (v: number) => Math.max(VIEWPORT_GAP - origin, Math.min(v, viewport - VIEWPORT_GAP - size - origin));
+		const min = viewport[key] - origin;
+		const max = viewport[vertical ? 'right' : 'bottom'] - size - origin;
+		const clamp = (v: number) => Math.max(min, Math.min(v, max));
 		// 按方向算出的位置；保持时的位置（起始边）
 		const fixed = clamp(value);
 		const kept = keep === undefined ? fixed : clamp(isEnd ? start + keep - size : start + keep);

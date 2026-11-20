@@ -1,11 +1,12 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, ref, computed, nextTick } from 'vue';
+import { defineComponent, ref, computed, nextTick, provide } from 'vue';
 import { getUid } from '@deot/helper-utils';
 import { getLabel, flattenData, getSelectRows } from './utils';
 import type { TreeData, SelectRow } from './utils';
 import { Popover } from '../popover/index';
-import { Option, OptionGroup } from './select-option';
+import { createRowRenderer, OPTION_OWNER_KEY } from './select-option';
+import type { OptionOwner } from './select-option';
 import { props as selectProps } from './select-props';
 import { SelectAll, SelectSearch } from './select-search';
 import { SelectTrigger } from './select-trigger';
@@ -133,6 +134,8 @@ export const Select = defineComponent({
 			nextTick(navigate.scrollIntoActive);
 		};
 
+		provide<OptionOwner>(OPTION_OWNER_KEY, { current: currentValue, multiple, pick });
+
 		expose({
 			selectId,
 			add,
@@ -172,40 +175,13 @@ export const Select = defineComponent({
 			);
 		};
 
-		const renderOption = (item: any) => {
-			return (
-				<Option
-					key={item.value}
-					row={item}
-					value={item.value}
-					label={item.label}
-					disabled={isDisabled(item)}
-					regex={searchRegex.value}
-					render={props.renderOption}
-					renderLabel={props.renderLabel}
-				>
-					{{ default: slots?.option, label: slots?.label }}
-				</Option>
-			);
-		};
-
-		const renderGroup = (item: any) => {
-			return (
-				<OptionGroup
-					row={item}
-					value={item.value}
-					label={item.label}
-					key={`group:${item.value}`}
-					render={props.renderOptionGroup}
-				>
-					{{ optionGroup: slots?.optionGroup, label: slots?.label }}
-				</OptionGroup>
-			);
-		};
-
-		const renderRow = ({ row }: { row: SelectRow }) => {
-			return row.group ? renderGroup(row.item) : renderOption(row.item);
-		};
+		// 分组标题与选项，见 select-option 的 createRowRenderer
+		const renderRow = createRowRenderer({
+			slots,
+			getRegex: () => searchRegex.value,
+			isDisabled,
+			getRender: () => props
+		});
 
 		const renderContent = () => {
 			if (!props.data) return slots?.default?.();

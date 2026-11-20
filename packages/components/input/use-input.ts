@@ -4,8 +4,8 @@ import type { Props } from './input-props';
 import { getFitValue, getFitMaxLength } from './utils';
 import { useNativeEmitter } from './use-native-emitter';
 
-// 与组件声明的 emits 一致
-type Emits = [
+// Input / MInput 声明的 emits（AutoComplete 按它转发）
+export const emits = [
 	'update:modelValue',
 	'input',
 	'change',
@@ -18,7 +18,9 @@ type Emits = [
 	'keyup',
 	'enter',
 	'tip'
-];
+] as const;
+
+type Emits = typeof emits[number][];
 
 export const useInput = (props: Props, context: SetupContext<Emits>) => {
 	const { emit, expose } = context;

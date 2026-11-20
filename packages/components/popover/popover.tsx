@@ -16,7 +16,7 @@ export const Popover = defineComponent({
 	name: COMPONENT_NAME,
 	props: popoverProps,
 	emits,
-	setup(props, { emit, slots }) {
+	setup(props, { emit, slots, expose }) {
 		const instance = getCurrentInstance() as ComponentInternalInstance;
 
 		const isActive = ref(false);
@@ -157,6 +157,9 @@ export const Popover = defineComponent({
 			isActive.value = true;
 			sync();
 		});
+
+		// 触发节点移动而尺寸不变时（滚动与 Resize 之外，如锚点随文本域内的光标移动），由调用方触发重新定位
+		expose({ update: () => viewRef.value?.update() });
 
 		// 只传弹层的属性：trigger、tag 等属于触发器；插槽只传浮层用的，触发器的 default 不传
 		const renderPopup = () => isRendered.value && (

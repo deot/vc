@@ -6,8 +6,8 @@ import { getFitMaxLength, getFitValue, getBytesLength } from '../input/utils';
 import { useNativeEmitter } from '../input/use-native-emitter';
 import type { Props } from './textarea-props';
 
-// 与组件声明的 emits 一致
-type Emits = [
+// Textarea / MTextarea 声明的 emits（Mention 按它转发）
+export const emits = [
 	'update:modelValue',
 	'input',
 	'change',
@@ -19,7 +19,9 @@ type Emits = [
 	'keyup',
 	'enter',
 	'resize'
-];
+] as const;
+
+type Emits = typeof emits[number][];
 
 export const useTextarea = (props: Props, context: SetupContext<Emits>) => {
 	const { emit, attrs, expose } = context;

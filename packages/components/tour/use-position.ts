@@ -2,7 +2,6 @@ import { ref, shallowRef, watch, nextTick, onBeforeUnmount } from 'vue';
 import type { Ref, ComputedRef } from 'vue';
 import { Resize } from '@deot/helper-resize';
 import { ScrollerManager } from '../scroller/core/manager';
-import { getViewport } from '../popover/use-pos';
 
 const RECT_KEYS = ['x', 'y', 'width', 'height'] as const;
 const isSameRect = (a: DOMRect | null, b: DOMRect | null) => {
@@ -87,10 +86,11 @@ export const usePosition = (
 
 	const update = (animate = false) => {
 		if (!isActive.value || !root.value) return;
-		const viewport = getViewport();
+		// 遮罩铺满布局视口（fixed）：量不到根节点时按布局视口的尺寸，不按可见区域（软键盘弹出时更小）
+		const { clientWidth, clientHeight } = document.documentElement;
 		const bounds = root.value.getBoundingClientRect();
-		const width = bounds.width || viewport.right;
-		const height = bounds.height || viewport.bottom;
+		const width = bounds.width || clientWidth || window.innerWidth;
+		const height = bounds.height || clientHeight || window.innerHeight;
 		if (size.value.width !== width || size.value.height !== height) {
 			size.value = {
 				width,

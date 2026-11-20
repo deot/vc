@@ -1,33 +1,20 @@
 /** @jsxImportSource vue */
 
 import { defineComponent } from 'vue';
-import { useTextarea } from '../use-textarea';
+import { useTextarea, emits } from '../use-textarea';
 import { props as textareaProps } from '../textarea-props';
+import { rightProps } from '../../input/input-props';
 
 const COMPONENT_NAME = 'vcm-textarea';
 
 export const MTextarea = defineComponent({
 	name: COMPONENT_NAME,
-	props: Object.assign({}, textareaProps, {
+	props: {
+		...textareaProps,
 		// 文字右对齐，与 MInput 的 right 一致
-		right: {
-			type: Boolean,
-			default: false
-		}
-	}),
-	emits: [
-		'update:modelValue',
-		'input',
-		'change',
-		'focus',
-		'blur',
-		'paste',
-		'keydown',
-		'keypress',
-		'keyup',
-		'enter',
-		'resize'
-	],
+		...rightProps
+	},
+	emits: [...emits],
 	setup(props, context) {
 		const {
 			textarea,

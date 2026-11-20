@@ -8,11 +8,13 @@ $background-color-primary-light: varfix(background-color-primary-light, select-o
 
 @include block($component-name) {
 	display: flex;
-	padding: unitfix(7) unitfix(16);
-	font-size: unitfix(12)!important;
+
+	// 尺寸为局部变量 --vc-select-option-*（移动端联想在弹层上覆盖为 750 稿）
+	padding: localfix(select-option, padding, unitfix(7) unitfix(16));
+	font-size: localfix(select-option, font-size, unitfix(12))!important;
 
 	// 整数行高：行高不随字体变化，虚拟化时按预估高度排布不会累积误差
-	line-height: unitfix(16);
+	line-height: localfix(select-option, line-height, unitfix(16));
 	color: $color-dark-lighter;
 	white-space: nowrap;
 	cursor: pointer;

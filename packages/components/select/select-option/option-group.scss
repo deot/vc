@@ -5,10 +5,11 @@ $color-dark-extralight: varfix(color-dark-extralight, select-option-group);
 
 @include block($component-name) {
 	@include element(title) {
-		height: unitfix(30);
-		padding-left: unitfix(8);
-		font-size: unitfix(12);
-		line-height: unitfix(30);
+		// 尺寸为局部变量 --vc-select-option-group-*（移动端联想在弹层上覆盖为 750 稿）
+		height: localfix(select-option-group, height, unitfix(30));
+		padding-left: localfix(select-option-group, padding-left, unitfix(8));
+		font-size: localfix(select-option-group, font-size, unitfix(12));
+		line-height: localfix(select-option-group, height, unitfix(30));
 		color: $color-dark-extralight;
 	}
 }

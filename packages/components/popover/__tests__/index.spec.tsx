@@ -7,6 +7,7 @@ import { defineComponent, nextTick, ref, provide, inject, getCurrentInstance, Ke
 import { vi, onTestFinished } from 'vitest';
 import { useHoverPopover } from '../use-hover-popover';
 import { getAreaNode, isEditable, keepFocus } from '../utils';
+import { getViewport } from '../use-pos';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -986,6 +987,57 @@ describe('Popover.open (静态方法)', () => {
 describe('Popover 位置自适应 (use-pos)', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';
+	});
+
+	describe('getViewport：布局视口与可视区（visualViewport）的交集', () => {
+		afterEach(() => {
+			delete (window as any).visualViewport;
+		});
+
+		const mockViewport = (value: Record<string, number>) => {
+			const viewport = Object.assign(new EventTarget(), { offsetTop: 0, offsetLeft: 0, ...value });
+			Object.defineProperty(window, 'visualViewport', { configurable: true, value: viewport });
+			return viewport;
+		};
+
+		it('没有 visualViewport 时为布局视口', () => {
+			const { right, bottom } = getViewport();
+			expect(getViewport(8)).toEqual({ top: 8, left: 8, right: right - 8, bottom: bottom - 8 });
+		});
+
+		it('软键盘弹出（可视区变矮、可能上移）时取可视区', () => {
+			const full = getViewport();
+			mockViewport({ width: full.right, height: 300, offsetTop: 120 });
+			expect(getViewport()).toEqual({ top: 120, left: 0, right: full.right, bottom: 420 });
+			expect(getViewport(8)).toEqual({ top: 128, left: 8, right: full.right - 8, bottom: 412 });
+		});
+
+		it('可视区比布局视口大（如含滚动条）时不超出布局视口；宽高为 0 时忽略', () => {
+			const full = getViewport();
+			mockViewport({ width: full.right + 20, height: full.bottom + 20 });
+			expect(getViewport()).toEqual(full);
+			mockViewport({ width: 0, height: 0, offsetTop: 50 });
+			expect(getViewport()).toEqual(full);
+		});
+
+		it('打开期间监听可视区的变化，关闭后解除', async () => {
+			const viewport = mockViewport({ width: 1024, height: 768 });
+			const add = vi.spyOn(viewport, 'addEventListener');
+			const remove = vi.spyOn(viewport, 'removeEventListener');
+			const wrapper = mount(() => (
+				<Popover trigger="click" content="x" placement="bottom">
+					<button>btn</button>
+				</Popover>
+			), { attachTo: document.body });
+			await nextTick();
+			setRect(wrapper.element, { x: 200, y: 300, width: 80, height: 30, left: 200, top: 300, right: 280, bottom: 330 });
+			await wrapper.trigger('click');
+			await flush();
+			expect(add.mock.calls.map(([type]) => type)).toEqual(expect.arrayContaining(['resize', 'scroll']));
+			const handler = add.mock.calls.find(([type]) => type === 'resize')![1];
+			wrapper.unmount();
+			expect(remove).toHaveBeenCalledWith('resize', handler);
+		});
 	});
 
 	const setupRectAndOpen = async (placement: string, triggerRect: Partial<DOMRect>) => {

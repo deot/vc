@@ -337,6 +337,9 @@ export const PopoverView = defineComponent({
 			!props.hover && document.addEventListener('click', handleClick, true);
 			// 监听body的滚动
 			document.addEventListener('scroll', setPopupStyle);
+			// 可视区变化（移动端软键盘弹出、收起，双指缩放）：布局视口不变、不一定触发 scroll / resize，按可视区重新定位，见 use-pos 的 getViewport
+			window.visualViewport?.addEventListener('resize', setPopupStyle);
+			window.visualViewport?.addEventListener('scroll', setPopupStyle);
 			// 监听触发节点所在滚动容器的滚动（逐层向上，不含 window，window 由 document 的 scroll 处理），滚动时的处理见 handleScrollerScroll
 			// 如 Modal、Table、Scroller；Scroller 订阅其滚动通知，其余监听原生 scroll，见 ScrollerManager.subscribe
 			({ scrollers, off: unbindScrollers } = ScrollerManager.subscribe(props.triggerElement?.parentNode, handleScrollerScroll));
@@ -352,6 +355,8 @@ export const PopoverView = defineComponent({
 			clearTimeout(timer);
 			!props.hover && document.removeEventListener('click', handleClick, true);
 			document.removeEventListener('scroll', setPopupStyle);
+			window.visualViewport?.removeEventListener('resize', setPopupStyle);
+			window.visualViewport?.removeEventListener('scroll', setPopupStyle);
 			unbindScrollers();
 			Resize.off(props.triggerElement as any, setPopupStyle);
 			Resize.off(vnode.el, handlePopupResize);

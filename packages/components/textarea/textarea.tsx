@@ -1,7 +1,7 @@
 /** @jsxImportSource vue */
 
 import { defineComponent } from 'vue';
-import { useTextarea } from './use-textarea';
+import { useTextarea, emits } from './use-textarea';
 import { props as textareaProps } from './textarea-props';
 
 const COMPONENT_NAME = 'vc-textarea';
@@ -9,19 +9,7 @@ const COMPONENT_NAME = 'vc-textarea';
 export const Textarea = defineComponent({
 	name: COMPONENT_NAME,
 	props: textareaProps,
-	emits: [
-		'update:modelValue',
-		'input',
-		'change',
-		'focus',
-		'blur',
-		'paste',
-		'keydown',
-		'keypress',
-		'keyup',
-		'enter',
-		'resize'
-	],
+	emits: [...emits],
 	setup(props, context) {
 		const {
 			textarea,

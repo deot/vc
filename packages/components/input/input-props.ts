@@ -61,3 +61,20 @@ export const props = {
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;
+
+// Input 独有（MInput 没有）：计数
+export const indicatorProps = {
+	indicator: {
+		type: [Boolean, Object] as PropType<boolean | ({ inline: boolean; inverted: boolean })>,
+		default: false
+	},
+	indicateClass: String
+};
+
+// MInput / MTextarea 独有：文字右对齐
+export const rightProps = {
+	right: {
+		type: Boolean,
+		default: false
+	}
+};
