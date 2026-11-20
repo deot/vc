@@ -24,6 +24,11 @@
 		/>
 
 		<div class="m-editor-demo__title">
+			提及（mentionOptions）：输入 @ 后出现跟随光标的下拉；点按插入提及
+		</div>
+		<MEditor v-model="mentionValue" :mention-options="mentionOptions" class="m-editor-demo__input" />
+
+		<div class="m-editor-demo__title">
 			MEditorView：点击图片用移动端查看器预览
 		</div>
 		<MEditorView :value="value" class="m-editor-demo__view" />
@@ -51,6 +56,9 @@ const value = ref([
 	`<p><img src="${createImage('#5b8ff9', '图片 A')}"></p>`
 ].join(''));
 const disabled = ref(false);
+const USERS = Array.from({ length: 20 }, (_, index) => ({ value: `u${index + 1}`, label: `成员${index + 1}` }));
+const mentionValue = ref('');
+const mentionOptions = { data: USERS };
 </script>
 <style>
 .m-editor-demo {

@@ -1,0 +1,6 @@
+@use '../style/helper' as *;
+
+@include block(vc-auto-complete) {
+	display: block;
+	width: 100%;
+}

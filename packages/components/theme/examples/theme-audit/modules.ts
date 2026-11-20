@@ -4,6 +4,7 @@ import ActionSheet from './modules/action-sheet.vue';
 import Affix from './modules/affix.vue';
 import Alert from './modules/alert.vue';
 import Artboard from './modules/artboard.vue';
+import AutoComplete from './modules/auto-complete.vue';
 import Badge from './modules/badge.vue';
 import Button from './modules/button.vue';
 import Calendar from './modules/calendar.vue';
@@ -40,6 +41,7 @@ import IndexBar from './modules/index-bar.vue';
 import Input from './modules/input.vue';
 import List from './modules/list.vue';
 import Marquee from './modules/marquee.vue';
+import Mention from './modules/mention.vue';
 import Message from './modules/message.vue';
 import Modal from './modules/modal.vue';
 import Notice from './modules/notice.vue';
@@ -87,6 +89,7 @@ export const MODULES = {
 	Affix,
 	Alert,
 	Artboard,
+	AutoComplete,
 	Badge,
 	Button,
 	Calendar,
@@ -123,6 +126,7 @@ export const MODULES = {
 	Input,
 	List,
 	Marquee,
+	Mention,
 	Message,
 	Modal,
 	Notice,

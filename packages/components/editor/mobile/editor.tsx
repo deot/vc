@@ -7,6 +7,8 @@ import { MPopup } from '../../popup/index.m';
 import { MInput } from '../../input/index.m';
 import { MButton } from '../../button/index.m';
 import { MImagePreview } from '../../file-preview/index.m';
+import { MRecycleList } from '../../recycle-list/index.m';
+import { MSpin } from '../../spin/index.m';
 import type { EditorComponents } from '../types';
 
 const COMPONENT_NAME = 'vcm-editor';
@@ -16,7 +18,9 @@ export const components: EditorComponents = {
 	Popup: MPopup,
 	Input: MInput,
 	Button: MButton,
-	ImagePreview: MImagePreview
+	ImagePreview: MImagePreview,
+	RecycleList: MRecycleList,
+	Spin: MSpin
 };
 
 /**
@@ -24,6 +28,7 @@ export const components: EditorComponents = {
  * 1. 工具栏单行横向滚动；选择项用动作面板，颜色、链接输入用底部弹出层
  * 2. toolbarPlacement 默认 keyboard：聚焦时工具栏停在虚拟键盘上方
  * 3. 点击图片打开移动端查看器；enhancer 入参 mobile 为 true
+ * 4. 提及（mentionOptions）的列表停靠在虚拟键盘上方
  */
 export const MEditor = defineComponent({
 	name: COMPONENT_NAME,

@@ -84,6 +84,43 @@ editorRef.value.add([
 
 资源类型根据 `target.name` 识别；省略 `target` 时从地址推导文件名。两者分别读取全局 `VcInstance.options.FilePreview.getFileType`、`getFileName`，未配置或返回空值时使用内置规则（按扩展名识别；取地址最后一段，去掉 `?`、`#` 之后的部分并解码）。普通文件插入链接，图片、音频和视频插入对应媒体元素。应在 `ready` 后调用。
 
+### 提及
+
+`mentionOptions` 开启提及：输入前缀（默认 `@`）后按前缀之后的文字联想，选中后在原处插入一个**原子的提及节点**和一个空格。提及节点整体选中、整体删除，保存选中项的 `value`（如成员 id），显示 `前缀 + label`；撤销、重做照常。
+
+- 找词规则与 [Mention](../mention/README.md#基础用法) 相同（只看光标所在段落、光标之前的文字）；嵌入的节点（图片、提及）按一个非空白字符计，紧跟在它后面的前缀不触发。
+- 键盘：↑ ↓ 移动、Enter 选中（不换行）、Esc 关闭；弹层跟随光标，编辑区滚动时重新定位。
+- 输出的 HTML 为 `<span class="vc-editor-mention" data-value="…" data-prefix="@">@文字</span>`；回填、粘贴同样的 HTML 时还原为提及节点。EditorView 按同样的样式显示。配置了全局 `sanitize` 时，需要保留这个 class 与 `data-value`、`data-prefix`（DOMPurify 默认保留）。
+- `Editor.getMentions(html)` 按出现顺序取出 `[{ value, prefix, label }]`，如提交时得到要通知的成员。
+- `mentionOptions` 的字段同 Mention 的同名属性：`data`、`prefix`、`loadData(keyword, instance, { prefix })`、`virtualized`、`renderOption`、`renderLabel`、`renderOptionGroup`、`placement`、`portal`、`portalClass`。传入固定的对象（不要在模板里每次渲染新建），列表才不会随父组件重渲染而重新过滤。
+
+```vue
+<template>
+	<Editor v-model="value" :mention-options="mentionOptions" @mention-select="handleSelect" />
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Editor } from '@deot/vc';
+
+const USERS = [{ value: 'u1', label: '成员甲' }, { value: 'u2', label: '成员乙' }];
+const TOPICS = [{ value: 't1', label: '话题一' }];
+
+const value = ref('');
+const mentionOptions = {
+	prefix: ['@', '#'],
+	// 按前缀返回不同的数据；Promise 解析为数组时直接作为结果
+	loadData: (keyword, instance, { prefix }) => Promise.resolve(
+		(prefix === '#' ? TOPICS : USERS).filter(item => item.label.includes(keyword))
+	)
+};
+// 当前内容里的提及：[{ value, prefix, label }]，如提交时取出要通知的成员
+const mentions = ref([]);
+const handleSelect = () => {
+	mentions.value = Editor.getMentions(value.value);
+};
+</script>
+```
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-editor-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
@@ -137,6 +174,7 @@ editorRef.value.add([
 | enhancer | 工具栏上传增强函数；`true` 使用全局配置，`false` 跳过增强 | `boolean \| Function` | - | `true` |
 | previewable | 点击编辑区域内图片时是否打开预览 | `boolean` | - | `true` |
 | toolbarPlacement | 工具栏位置：`keyboard` 聚焦时停在虚拟键盘上方，仅 MEditor 生效，桌面端同 `top` | `string` | `top` / `keyboard` | Editor：`'top'`；MEditor：`'keyboard'` |
+| mentionOptions | 提及，见[提及](#提及)；不传时不开启 | `EditorMentionOptions` | - | `undefined` |
 
 `options` 按 `Editor.defaults` → `VcInstance.options.Editor.options` → 组件 `options` 的顺序合并；`modules` 单独浅合并。默认启用 `EventExtend`；工具栏由组件渲染，`options.theme` 与 `options.modules.toolbar` 不生效。占位文案跟随 locale，可通过 `options.placeholder` 覆盖（包括空字符串）。除占位文案外，应通过重新挂载应用新的初始化配置。
 
@@ -166,6 +204,7 @@ editorRef.value.add([
 | focus | 编辑区获得焦点；光标在编辑区内移动不会重复触发 | `({ value, editor })` | 同上 |
 | blur | 编辑区失去焦点，同时通知 FormItem | `({ value, editor })` | 同上 |
 | ready | Quill 初始化完成 | `({ dependencies: { quill } })` | `quill` 为 Quill 构造器；实例通过组件 ref 的 `editor` 获取 |
+| mention-select | 插入提及 | `({ value, item, prefix, editor })` | `value: string`：选中项的 value；`item`：选中项；`prefix`：前缀；`editor: Quill` |
 
 内容由 `getSemanticHTML()` 生成，空段落 `<p><br></p>` 转换为 `''`。`getSemanticHTML()` 会把所有空格转为 `&nbsp;`，组件会将其还原为普通空格，保证英文可以换行：连续空格交替保留 `&nbsp;`，段首段尾的空格保留 `&nbsp;`，`pre`、`code` 内的内容保持原样。程序修改内容也可能触发内容事件。
 
@@ -182,6 +221,7 @@ editorRef.value.add([
 | --- | --- | --- | --- |
 | add | 插入已上传资源 | `Array<{ value: string; target?: { name: string } }>`，默认为 `[]` | `void` |
 | editor | 组件 ref 暴露的 Quill 实例；ready 前可能为空 | - | `Quill \| undefined` |
+| Editor.getMentions | 静态方法：HTML 中的提及，按出现顺序（MEditor.getMentions 相同） | `html: string` | `Array<{ value: string; prefix: string; label: string }>` |
 
 ### EditorView 属性
 
@@ -201,6 +241,8 @@ EditorView 没有公开事件、插槽或方法。`previewable` 开启时，点�
 - 选择项（标题、字体、字号、对齐、行高、字间距）用动作面板，当前值高亮；文字颜色、背景色用底部弹出层的色块网格（色块 64）。
 - 链接、视频、公式的输入用底部弹出层；光标停在链接里时仍以浮层显示预览。
 - `toolbarPlacement` 默认 `keyboard`：聚焦时工具栏固定在虚拟键盘上方，按 `visualViewport` 计算位置，原位置保留占位；光标被工具栏挡住时滚动页面。失焦或禁用时回到编辑区顶部。
+- 停靠时工具栏移到 `body` 下（脱离编辑器的层叠上下文，不会被页面上后面的内容盖住）；移动端工具栏的尺寸变量写在工具栏的标记类 `vcm-editor-toolbar` 上，覆盖时设置在它上面。
+- 提及（`mentionOptions`）同样是跟随光标的下拉，750 稿尺寸，按可视区翻转、限高；点按选中，不默认高亮。
 - 点击图片用移动端查看器预览；`enhancer` 收到的 `mobile` 为 `true`。
 
 移动端覆盖的局部变量（`.vcm-editor` 上；弹出层在 `body` 下，各自设置）：

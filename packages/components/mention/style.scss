@@ -1,0 +1,24 @@
+@use '../style/helper' as *;
+
+@include block(vc-mention) {
+	position: relative;
+	display: block;
+	width: 100%;
+
+	// 与文本域排版一致的镜像层（不可见）：前缀所在的节点即弹层的锚点，见 use-mention 的 measure
+	@include element(mirror) {
+		position: absolute;
+		margin: 0;
+		overflow: hidden;
+		white-space: pre-wrap;
+		pointer-events: none;
+		border: 0;
+		visibility: hidden;
+		box-sizing: border-box;
+	}
+
+	// Popover 的根节点默认 position: relative，作为行内文字的一部分不影响排版
+	@include element(anchor) {
+		display: inline;
+	}
+}

@@ -88,4 +88,10 @@ $foreground-color: varfix(foreground-color, editor);
 	img {
 		max-width: 100%;
 	}
+
+	// 提及（mentionOptions）：原子的内联节点，主色文字；编辑区内整体选中、整体删除
+	.vc-editor-mention {
+		color: $color-primary;
+		white-space: nowrap;
+	}
 }

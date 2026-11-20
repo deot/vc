@@ -1,0 +1,13 @@
+@use '../style/helper' as *;
+
+// 联想弹层（AutoComplete、Mention、Editor 的提及）：行与分组标题沿用 Select 的选项样式（select-option）
+@include block(vc-suggest) {
+	min-width: unitfix(160);
+
+	// 还没有结果、正在远程加载时
+	@include element(loading) {
+		display: flex;
+		padding: unitfix(8) 0;
+		justify-content: center;
+	}
+}

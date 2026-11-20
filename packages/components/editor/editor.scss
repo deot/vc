@@ -10,7 +10,7 @@ $border-color: varfix(border-color, editor);
 $foreground-color: varfix(foreground-color, editor);
 $component-name: vc-editor;
 
-// 桌面端尺寸；写成局部变量 --vc-editor-<键>（默认值为下表），MEditor 在 .vcm-editor 上覆盖（mobile/style.scss）
+// 桌面端尺寸；写成局部变量 --vc-editor-<键>（默认值为下表），MEditor 的工具栏在自身的标记类 .vcm-editor-toolbar 上覆盖（mobile/style.scss）
 $sizes: (
 	toolbar-padding: 6px 8px,
 	toolbar-font-size: 14px,
@@ -150,6 +150,11 @@ $sizes: (
 		width: v(icon-size);
 		height: v(color-bar-height);
 		background: currentcolor;
+	}
+
+	// 提及联想的锚点：前缀所在位置（位置与尺寸写在行内样式上），不响应指针
+	@include element(mention-anchor) {
+		pointer-events: none;
 	}
 
 	@include element(spin) {

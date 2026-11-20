@@ -240,7 +240,7 @@ export const EditorToolbar = defineComponent({
 		};
 
 		return () => (
-			<div class={['vc-editor__toolbar', { 'is-disabled': props.disabled, 'is-mobile': props.mobile }]} onMousedown={handlePrevent}>
+			<div class={['vc-editor__toolbar', { 'is-disabled': props.disabled, 'vcm-editor-toolbar': props.mobile }]} onMousedown={handlePrevent}>
 				<div class="vc-editor__tools">
 					{
 						props.groups.map((group, index) => (

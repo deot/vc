@@ -18,8 +18,8 @@ export const GROUPS = [
 		id: 'entry',
 		label: '数据录入',
 		names: [
-			'Artboard', 'Cascader', 'Checkbox', 'ColorPicker', 'DatePicker', 'Editor', 'Form', 'ImageCrop', 'Input', 'Picker',
-			'Radio', 'Rate', 'Select', 'Slider', 'SortList', 'Switch', 'Textarea', 'TimePicker', 'Upload', 'UploadPicker'
+			'Artboard', 'AutoComplete', 'Cascader', 'Checkbox', 'ColorPicker', 'DatePicker', 'Editor', 'Form', 'ImageCrop', 'Input',
+			'Mention', 'Picker', 'Radio', 'Rate', 'Select', 'Slider', 'SortList', 'Switch', 'Textarea', 'TimePicker', 'Upload', 'UploadPicker'
 		]
 	},
 	{
@@ -50,7 +50,7 @@ export const COMPONENT_COUNT = GROUPS.reduce((total, group) => total + group.nam
 export const MOBILE_COMPONENTS = new Set<AuditComponentName>([
 	'Input', 'Textarea', 'Checkbox', 'Radio', 'Switch',
 	'Picker', 'DatePicker', 'Form', 'List', 'Tabs', 'Carousel', 'UploadPicker',
-	'SortList', 'Modal', 'ActionSheet', 'Toast', 'SwipeAction'
+	'SortList', 'Modal', 'ActionSheet', 'Toast', 'SwipeAction', 'AutoComplete', 'Mention'
 ]);
 
 export const MOBILE_ONLY = new Set<AuditComponentName>(['Picker', 'List', 'ActionSheet', 'Toast', 'SwipeAction']);

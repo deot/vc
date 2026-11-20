@@ -13,7 +13,8 @@ $color-neutral-light: varfix(color-neutral-light, editor);
 }
 
 // 工具栏高 88：按钮 72 见方 + 上下 8；图标 40；分组间距 24，分割线 32
-@include block(vcm-editor) {
+// 写在工具栏自身（标记类 vcm-editor-toolbar）：停靠在键盘上方时工具栏移到 body 下，读不到 .vcm-editor 上的变量
+@include block(vcm-editor-toolbar) {
 	@include localvars(editor, (
 		toolbar-padding: remfix(8) remfix(16),
 		toolbar-font-size: remfix(28),
@@ -57,8 +58,8 @@ $color-neutral-light: varfix(color-neutral-light, editor);
 		font-size: remfix(20);
 	}
 
-	// 聚焦时停在虚拟键盘上方：位置由 visualViewport 计算后写在行内样式上
-	.vc-editor__toolbar-holder.is-docked > .vc-editor__toolbar {
+	// 聚焦时停在虚拟键盘上方：移到 body 下（脱离编辑器的层叠上下文），位置由 visualViewport 计算后写在行内样式上
+	@include when(docked) {
 		position: fixed;
 		z-index: 999;
 		background: $background-color-lightest;

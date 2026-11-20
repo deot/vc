@@ -1077,7 +1077,7 @@ describe('MEditor', () => {
 		await flush();
 		expect(wrapper.classes()).toEqual(expect.arrayContaining(['vc-editor', 'vcm-editor']));
 		expect(wrapper.props('toolbarPlacement')).toBe('keyboard');
-		expect(wrapper.find('.vc-editor__toolbar').classes()).toContain('is-mobile');
+		expect(wrapper.find('.vc-editor__toolbar').classes()).toContain('vcm-editor-toolbar');
 		wrapper.unmount();
 
 		const view = mount(() => <MEditorView value="<p>a</p>" />);
@@ -1091,7 +1091,7 @@ describe('MEditor', () => {
 		});
 		editor.setSelection(0, 5);
 
-		await wrapper.find('.vc-editor__select.is-header').trigger('click');
+		await wrapper.findComponent(EditorToolbar).find('.vc-editor__select.is-header').trigger('click');
 		const sheet = components.ActionSheet.open.mock.calls[0][0] as any;
 		expect(sheet.data).toHaveLength(3);
 		expect(sheet.data[2].class).toEqual(['vcm-editor-option', { 'is-selected': true }]);
@@ -1101,7 +1101,7 @@ describe('MEditor', () => {
 		expect(editor.getFormat(0, 1).header).toBe(2);
 
 		editor.setSelection(0, 5);
-		await wrapper.find('.vc-editor__color').trigger('click');
+		await wrapper.findComponent(EditorToolbar).find('.vc-editor__color').trigger('click');
 		const popup = components.Popup.open.mock.calls[0][0] as any;
 		expect(popup.title).toBe('文字颜色');
 		const panel = mount(() => popup.content());
@@ -1120,7 +1120,7 @@ describe('MEditor', () => {
 			options: { toolbar: [['link', 'upload/image']] }
 		});
 		editor.setSelection(0, 5);
-		await wrapper.find('.vc-editor__tool.is-link').trigger('click');
+		await wrapper.findComponent(EditorToolbar).find('.vc-editor__tool.is-link').trigger('click');
 		await flush();
 		const popup = components.Popup.open.mock.calls[0][0] as any;
 		expect(popup.title).toBe('链接');
@@ -1128,7 +1128,7 @@ describe('MEditor', () => {
 		expect(content.find('.vc-editor-prompt.is-mobile .fake-input').exists()).toBe(true);
 		content.unmount();
 
-		await wrapper.find('.vc-editor__tool.is-upload').trigger('click');
+		await wrapper.findComponent(EditorToolbar).find('.vc-editor__tool.is-upload').trigger('click');
 		expect(enhancer).toHaveBeenCalledWith(expect.objectContaining({ type: 'image', mobile: true }));
 
 		wrapper.unmount();
@@ -1144,21 +1144,28 @@ describe('MEditor', () => {
 		const holder = () => wrapper.find('.vc-editor__toolbar-holder');
 		expect(holder().classes()).not.toContain('is-docked');
 
+		const toolbar = () => document.querySelector('.vc-editor__toolbar') as HTMLElement;
 		editor.emitter.emit('selection-change', { index: 0, length: 0 });
 		await flush();
 		expect(holder().classes()).toContain('is-docked');
-		expect((wrapper.find('.vc-editor__toolbar').element as HTMLElement).style.bottom).toBe('300px');
+		// 停靠时移到 body 下：脱离编辑器根节点的层叠上下文，不会被后面的内容盖住
+		expect(toolbar().parentElement).toBe(document.body);
+		expect(toolbar().classList.contains('is-docked')).toBe(true);
+		expect(toolbar().style.bottom).toBe('300px');
 
 		// 键盘收起：可视区变高，底边距跟着变
 		viewport.height = 800;
 		viewport.dispatchEvent(new Event('resize'));
 		await sleep(50);
 		await flush();
-		expect((wrapper.find('.vc-editor__toolbar').element as HTMLElement).style.bottom).toBe('0px');
+		expect(toolbar().style.bottom).toBe('0px');
 
 		editor.emitter.emit('selection-change', null);
 		await flush();
 		expect(holder().classes()).not.toContain('is-docked');
+		// 取消停靠：回到原位
+		expect(holder().element.contains(toolbar())).toBe(true);
+		expect(toolbar().classList.contains('is-docked')).toBe(false);
 
 		// top 时不停靠
 		await wrapper.setProps({ toolbarPlacement: 'top' });

@@ -1,6 +1,6 @@
 /** @jsxImportSource vue */
 
-import { nextTick, ref, shallowRef, inject, computed, watch, onMounted, onUnmounted, getCurrentInstance } from 'vue';
+import { nextTick, ref, shallowRef, inject, computed, watch, onMounted, onUnmounted, getCurrentInstance, Teleport } from 'vue';
 import type { SetupContext } from 'vue';
 import type Quill from 'quill';
 import { defaults } from './default-options';
@@ -15,9 +15,10 @@ import { useLocale } from '../locale';
 import { getEditorHTML } from './utils';
 import { EditorToolbar, EditorPrompt, useFormats, parseToolbar } from './toolbar';
 import { useKeyboardDock } from './toolbar/use-keyboard-dock';
+import { EditorMention } from './editor-mention';
 import type { FormatValue, PromptMode } from './toolbar';
 
-export const emits = ['ready', 'blur', 'focus', 'input', 'update:modelValue', 'change'] as const;
+export const emits = ['ready', 'blur', 'focus', 'input', 'update:modelValue', 'change', 'mention-select'] as const;
 
 /**
  * Editor 与 MEditor 共用的状态与渲染
@@ -48,6 +49,7 @@ export const useEditor = (
 	const loadingCount = ref(0);
 	const isFocused = ref(false);
 	const holder = ref<HTMLElement>();
+	const root = ref<HTMLElement>();
 
 	const quillInstance = shallowRef<typeof Quill>();
 	const editor = shallowRef<Quill>();
@@ -75,7 +77,10 @@ export const useEditor = (
 
 	// 聚焦时停在虚拟键盘上方：只在移动端生效
 	const isDocked = computed(() => mobile && props.toolbarPlacement === 'keyboard' && isFocused.value && !props.disabled);
-	const dock = useKeyboardDock({ active: isDocked, holder, editor });
+	const toolbar = ref<{ $el: HTMLElement }>();
+	const dock = useKeyboardDock({ active: isDocked, holder, editor, getToolbar: () => toolbar.value?.$el });
+
+	const handleMentionSelect = (payload: Record<string, any>) => emit('mention-select', payload);
 
 	watch(
 		() => currentOptions.value.placeholder,
@@ -218,9 +223,37 @@ export const useEditor = (
 		}
 	});
 
+	const renderToolbar = () => {
+		const vnode = (
+			<EditorToolbar
+				ref={toolbar}
+				class={{ 'is-docked': isDocked.value }}
+				groups={groups.value}
+				formats={formats.value}
+				isActive={isActive}
+				disabled={props.disabled}
+				mobile={mobile}
+				components={options.components}
+				style={dock.style.value}
+				// @ts-ignore
+				onFormat={handleFormat}
+				onUpload={handleUpload}
+				onAction={handleAction}
+				onPrompt={handlePrompt}
+			>
+				{{ extend: slots.extend }}
+			</EditorToolbar>
+		);
+		// 可能停靠（移动端 keyboard）时才包 Teleport：停靠时移到 body。fixed 的工具栏留在编辑器里会受祖先限制——
+		// 根节点（isolation）或弹出层等祖先形成的层叠上下文让它被后面的内容盖住，有 transform 的祖先还会让 fixed 改以它为参照
+		return mobile && props.toolbarPlacement === 'keyboard'
+			? (<Teleport to="body" disabled={!isDocked.value}>{ vnode }</Teleport>)
+			: vnode;
+	};
+
 	return () => {
 		return (
-			<div class={[mobile ? 'vc-editor vcm-editor' : 'vc-editor', { 'is-disabled': props.disabled }]}>
+			<div ref={root} class={[mobile ? 'vc-editor vcm-editor' : 'vc-editor', { 'is-disabled': props.disabled }]}>
 				<div
 					ref={holder}
 					class={['vc-editor__toolbar-holder', { 'is-docked': isDocked.value }]}
@@ -229,24 +262,7 @@ export const useEditor = (
 					{
 						slots.toolbar
 							? slots.toolbar({ formats: formats.value, format: handleFormat, editor: editor.value })
-							: hasLoad.value && (
-								<EditorToolbar
-									groups={groups.value}
-									formats={formats.value}
-									isActive={isActive}
-									disabled={props.disabled}
-									mobile={mobile}
-									components={options.components}
-									style={dock.style.value}
-									// @ts-ignore
-									onFormat={handleFormat}
-									onUpload={handleUpload}
-									onAction={handleAction}
-									onPrompt={handlePrompt}
-								>
-									{{ extend: slots.extend }}
-								</EditorToolbar>
-							)
+							: hasLoad.value && renderToolbar()
 					}
 				</div>
 				<div ref={editorEl} />
@@ -268,6 +284,20 @@ export const useEditor = (
 				>
 					<Spin />
 				</div>
+				{
+					// 提及：只在开启时挂载（监听编辑器的变化、键盘与弹层）
+					props.mentionOptions && editor.value && (
+						<EditorMention
+							editor={editor.value}
+							root={root.value}
+							options={props.mentionOptions}
+							disabled={props.disabled}
+							mobile={mobile}
+							components={options.components}
+							onSelect={handleMentionSelect}
+						/>
+					)
+				}
 			</div>
 		);
 	};

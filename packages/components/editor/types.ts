@@ -12,4 +12,7 @@ export type EditorComponents = {
 	Button: Component;
 	// 图片预览
 	ImagePreview: { open: (options: Record<string, any>) => any };
+	// 提及列表：虚拟列表与加载图标
+	RecycleList?: Component;
+	Spin?: Component;
 };
