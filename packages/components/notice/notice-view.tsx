@@ -5,6 +5,7 @@ import { props as noticeViewProps } from './notice-view-props';
 import type { Props as NoticeProps } from './notice-view-props';
 
 import { Icon } from '../icon';
+import { Spin } from '../spin';
 import { TransitionSlide } from '../transition';
 import { Customer } from '../customer';
 
@@ -19,13 +20,33 @@ export const NoticeView = defineComponent({
 		const isActive = ref(false);
 		const currentTitle = ref<NoticeProps['title']>();
 		const currentContent = ref<NoticeProps['content']>();
+		const currentMode = ref<NoticeProps['mode']>(props.mode);
 
 		let timer: any;
-		const setDuration = (v: number) => {
+		let duration = 0;
+		const startTimer = () => {
 			timer && clearTimeout(timer);
+			if (duration === 0) return;
+			timer = setTimeout(() => (isActive.value = false), duration);
+		};
 
-			if (v === 0) return;
-			timer = setTimeout(() => (isActive.value = false), v);
+		const setDuration = (v: number) => {
+			duration = v;
+			startTimer();
+		};
+
+		// 鼠标悬停时暂停自动关闭，移出后重新计时
+		const handleMouseenter = () => {
+			timer && clearTimeout(timer);
+			timer = null;
+		};
+
+		const handleMouseleave = () => {
+			isActive.value && startTimer();
+		};
+
+		const setMode = (v: NoticeProps['mode']) => {
+			currentMode.value = v;
 		};
 
 		const setTitle = (v: NoticeProps['title']) => {
@@ -61,6 +82,7 @@ export const NoticeView = defineComponent({
 
 		watch(() => props.title, setTitle, { immediate: true });
 		watch(() => props.content, setContent, { immediate: true });
+		watch(() => props.mode, setMode);
 
 		onMounted(() => {
 			isActive.value = true;
@@ -76,8 +98,10 @@ export const NoticeView = defineComponent({
 				pre[key] = handleRemove;
 				return pre;
 			}, {
+				setTitle,
 				setContent,
-				setDuration
+				setDuration,
+				setMode
 			});
 
 		expose(exposes);
@@ -94,10 +118,25 @@ export const NoticeView = defineComponent({
 						onAfterLeave={handleRemove}
 					>
 						<div v-show={isActive.value} class="vc-notice__wrapper">
-							<div class="vc-notice__container">
-								{ props.mode && (<Icon type={`o-${props.mode}`} class={[`is-${props.mode}`, 'vc-notice__icon']} />) }
+							<div
+								class={['vc-notice__container', { 'is-closable': props.closable }]}
+								role={currentMode.value === 'error' ? 'alert' : 'status'}
+								aria-live={currentMode.value === 'error' ? 'assertive' : 'polite'}
+								onMouseenter={handleMouseenter}
+								onMouseleave={handleMouseleave}
+							>
+								{
+									currentMode.value === 'loading'
+										? (<Spin size={22} class="vc-notice__loading" />)
+										: currentMode.value && (
+											<Icon
+												type={`o-${currentMode.value}`}
+												class={[`is-${currentMode.value}`, 'vc-notice__icon']}
+											/>
+										)
+								}
 
-								<div>
+								<div class="vc-notice__body">
 									{
 										currentTitle.value && (
 											<div class={['vc-notice__title', { 'has-content': !!currentContent.value }]}>

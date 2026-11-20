@@ -28,6 +28,12 @@
 			<Button :wait="0" @click="handleRender">
 				根据render函数渲染
 			</Button>
+			<Button :wait="0" @click="handleLoading">
+				加载后切换为成功
+			</Button>
+			<Button :wait="0" @click="handleLongContent">
+				只有正文（长文字）
+			</Button>
 		</div>
 	</div>
 </template>
@@ -37,6 +43,20 @@ import { Notice, NoticeView } from '..';
 import { Button } from '../../button';
 
 window.Notice = Notice;
+
+const handleLoading = () => {
+	const notice = Notice.loading({ title: '正在上传', content: '共 3 个文件' });
+	setTimeout(() => {
+		notice.wrapper.setMode('success');
+		notice.wrapper.setTitle('上传完成');
+		notice.wrapper.setContent('3 个文件已上传，悬停时不会关闭');
+		notice.wrapper.setDuration(4500);
+	}, 1500);
+};
+
+const handleLongContent = () => {
+	Notice.info({ content: '只有正文的一段比较长的通知内容，文字会在关闭图标左侧换行，不会与它重叠。' });
+};
 
 const handleClick = (type) => {
 	if (type === 'open') {

@@ -40,6 +40,7 @@ describe('index.ts', () => {
 		expect(typeof NoticeView).toBe('object');
 		expect(typeof Notice.open).toBe('function');
 		expect(typeof Notice.info).toBe('function');
+		expect(typeof Notice.loading).toBe('function');
 		expect(typeof Notice.success).toBe('function');
 		expect(typeof Notice.warning).toBe('function');
 		expect(typeof Notice.error).toBe('function');
@@ -480,4 +481,118 @@ describe('Notice 全局方法', () => {
 
 		expect(onBeforeClose).toHaveBeenCalledTimes(1);
 	}, 10000);
+});
+
+describe('Notice 修复与扩展', () => {
+	afterEach(async () => {
+		vi.useRealTimers();
+		Notice.destroy();
+		await flush();
+		document.body.innerHTML = '';
+	});
+
+	it('标题与正文放在 __body 中；可关闭时容器有 is-closable，为关闭图标让出位置', async () => {
+		const wrapper = mount(NoticeView, { props: { content: '正文', duration: 0 } });
+		const container = wrapper.find('.vc-notice__container');
+		expect(container.classes()).toContain('is-closable');
+		expect(wrapper.find('.vc-notice__body .vc-notice__content').exists()).toBe(true);
+
+		await wrapper.setProps({ closable: false });
+		expect(container.classes()).not.toContain('is-closable');
+		wrapper.unmount();
+	});
+
+	it('mode=loading 渲染 Spin，不渲染状态图标', async () => {
+		const wrapper = mount(NoticeView, { props: { mode: 'loading', duration: 0 } });
+		expect(wrapper.find('.vc-notice__loading').exists()).toBe(true);
+		expect(wrapper.find('.vc-notice__icon').exists()).toBe(false);
+		wrapper.unmount();
+	});
+
+	it('exposed setTitle / setMode', async () => {
+		const wrapper = mount(NoticeView, { props: { title: '处理中', mode: 'loading', duration: 0 } });
+		const vm = wrapper.vm as any;
+
+		vm.setTitle('已完成');
+		vm.setMode('success');
+		await nextTick();
+		expect(wrapper.find('.vc-notice__title').text()).toBe('已完成');
+		expect(wrapper.find('.vc-notice__loading').exists()).toBe(false);
+		expect(wrapper.find('.vc-notice__icon').classes()).toContain('is-success');
+		wrapper.unmount();
+	});
+
+	it('Notice.loading：默认不自动关闭，可原地切换为结果通知', async () => {
+		const leaf = Notice.loading({ title: '上传中' });
+		await flush();
+		expect(leaf.propsData!.value).toMatchObject({ mode: 'loading', duration: 0 });
+		expect(document.querySelector('.vc-notice__loading')).not.toBeNull();
+
+		leaf.wrapper!.setMode('success');
+		await nextTick();
+		expect(document.querySelector('.vc-notice__icon.is-success')).not.toBeNull();
+
+		// 传入的 duration 优先
+		expect(Notice.loading({ title: 'a', duration: 100 }).propsData!.value.duration).toBe(100);
+	});
+
+	it('全局通知的 top 设置容器位置，以最新一次调用为准，容器清理后恢复', async () => {
+		Notice.open({ content: 'a', duration: 0, top: 80 });
+		await flush();
+		const el = document.querySelector('.vc-notice-portals') as HTMLElement;
+		expect(el.style.top).toBe('80px');
+
+		Notice.open({ content: 'b', duration: 0 });
+		expect(el.style.top).toBe('');
+
+		Notice.open({ content: 'c', duration: 0, top: 120 });
+		expect(el.style.top).toBe('120px');
+
+		Notice.destroy();
+		await flush();
+		expect(el.style.top).toBe('');
+	});
+
+	it('鼠标悬停时暂停自动关闭，移出后重新计时', async () => {
+		vi.useFakeTimers();
+		const wrapper = mount(NoticeView, { props: { content: 'a', duration: 100 } });
+		await nextTick();
+		const container = wrapper.find('.vc-notice__container');
+
+		await container.trigger('mouseenter');
+		vi.advanceTimersByTime(1000);
+		await nextTick();
+		expect(wrapper.emitted('close')).toBeFalsy();
+
+		await container.trigger('mouseleave');
+		vi.advanceTimersByTime(50);
+		await nextTick();
+		expect(isVisible(wrapper)).toBe(true);
+		expect(wrapper.emitted('close')).toBeFalsy();
+
+		// 计时结束后离场（TransitionSlide 离场 300ms）
+		vi.advanceTimersByTime(60);
+		await nextTick();
+		vi.advanceTimersByTime(500);
+		await nextTick();
+		expect(wrapper.emitted('close')).toBeTruthy();
+		wrapper.unmount();
+	});
+
+	it('role：error 为 alert，其余为 status', async () => {
+		const wrapper = mount(NoticeView, { props: { mode: 'error', duration: 0 } });
+		const container = wrapper.find('.vc-notice__container');
+		expect(container.attributes('role')).toBe('alert');
+		expect(container.attributes('aria-live')).toBe('assertive');
+
+		await wrapper.setProps({ mode: 'info' });
+		expect(container.attributes('role')).toBe('status');
+		wrapper.unmount();
+	});
+
+	it('mode 只接受精确的取值', () => {
+		const validator = (NoticeView as any).props.mode.validator;
+		expect(validator('info')).toBe(true);
+		expect(validator('xinfo')).toBe(false);
+	});
 });

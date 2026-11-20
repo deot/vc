@@ -32,7 +32,7 @@ export const props = {
 	mode: {
 		type: String as PropType<'info' | 'loading' | 'success' | 'warning' | 'error'>,
 		default: 'info',
-		validator: (v: string) => /(info|loading|success|error|warning)/.test(v)
+		validator: (v: string) => ['info', 'loading', 'success', 'warning', 'error'].includes(v)
 	},
 	// 这个相当于Modal中的onCancel，支持Promise
 	onBeforeClose: Function

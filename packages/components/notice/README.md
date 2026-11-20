@@ -9,7 +9,7 @@
 
 ### 基础用法
 
-`Notice.open()` 展示无图标通知，`info()`、`success()`、`warning()`、`error()` 展示对应状态。默认在 `4500ms` 后关闭，正文缺省或为空字符串时只显示标题。全局通知可同时存在，默认把新通知插入顶部。
+`Notice.open()` 展示无图标通知，`info()`、`success()`、`warning()`、`error()` 展示对应状态。默认在 `4500ms` 后关闭，鼠标悬停在通知上时暂停计时，移出后重新计时；正文缺省或为空字符串时只显示标题。全局通知可同时存在，默认把新通知插入顶部。`error` 通知为 `role="alert"`，其余为 `role="status"`。
 
 :::playground
 <!--
@@ -195,7 +195,7 @@ onUnmounted(() => Notice.destroy());
 
 ### 在页面中渲染
 
-声明式 `Notice` 使用 `fixed: false` 可放入普通文档流。它在挂载时显示并开始计时；收到 `close` 后由父组件卸载，再次展示时重新挂载。`mode="loading"` 适用于声明式通知，静态方法没有 `Notice.loading()`。
+声明式 `Notice` 使用 `fixed: false` 可放入普通文档流。它在挂载时显示并开始计时；收到 `close` 后由父组件卸载，再次展示时重新挂载。`mode="loading"` 显示加载图标，声明式与静态方法（`Notice.loading()`）均可使用。
 
 :::playground
 <!--
@@ -282,10 +282,10 @@ const handleClose = () => {
 | --- | --- | --- | --- | --- |
 | title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | content | 正文，取值与 title 相同 | `string \| number \| Function \| { type: string; value: any }` | - | - |
-| duration | 挂载后自动关闭的延时，单位 ms；`0` 不自动关闭 | `number` | - | `4500` |
+| duration | 挂载后自动关闭的延时，单位 ms；`0` 不自动关闭；鼠标悬停时暂停，移出后重新计时 | `number` | - | `4500` |
 | closable | 是否显示关闭图标 | `boolean` | - | `true` |
-| mode | 状态图标类型 | `'info' \| 'loading' \| 'success' \| 'warning' \| 'error'` | 同类型 | - |
-| top | 固定定位时距顶部的距离，单位 px | `number` | - | `24` |
+| mode | 状态图标类型；`loading` 显示加载图标，不传时无图标 | `'info' \| 'loading' \| 'success' \| 'warning' \| 'error'` | 同类型 | - |
+| top | 距顶部的距离，单位 px。声明式 `fixed` 时作用于当前通知；静态方法的通知共用一个容器，`top` 设置容器位置，以最新一次调用为准，不传时为默认值 | `number` | - | `24` |
 | fixed | 是否固定在右上角 | `boolean` | - | `true` |
 | onBeforeClose | 点击关闭图标前的回调，参数为点击事件 | `Function` | - | - |
 
@@ -307,6 +307,7 @@ const handleClose = () => {
 | --- | --- | --- | --- |
 | Notice.open | 展示无图标通知 | `config` | `PortalLeaf` |
 | Notice.info | 展示信息通知 | `config` | `PortalLeaf` |
+| Notice.loading | 展示加载通知，默认 `duration: 0`；完成后可通过 `wrapper.setMode()` 原地切换为结果通知 | `config` | `PortalLeaf` |
 | Notice.success | 展示成功通知 | `config` | `PortalLeaf` |
 | Notice.warning | 展示警告通知 | `config` | `PortalLeaf` |
 | Notice.error | 展示错误通知 | `config` | `PortalLeaf` |
@@ -318,10 +319,12 @@ const handleClose = () => {
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
+| setTitle | 更新标题 | 与 `title` 相同 | `void` |
 | setContent | 更新正文 | 与 `content` 相同 | `void` |
+| setMode | 切换状态图标，例如加载完成后改为 `success` | 与 `mode` 相同 | `void` |
 | setDuration | 清除旧定时器，并从调用时刻重新计时；`0` 取消自动关闭 | `duration: number` | `void` |
 | close / remove / hide / destroy | 立即发送关闭事件；全局调用时移除当前通知，声明式使用时由父组件卸载 | - | `void` |
 
-实例方法不会执行 `onBeforeClose`，也不启动离场动画；标题通过更新 `title` prop 修改，没有公开的 `setTitle()` 方法。
+实例方法不会执行 `onBeforeClose`，也不启动离场动画。
 
 返回的 `PortalLeaf` 支持 `then/catch/finally`，正常关闭后以 `undefined` 兑现；`leaf.wrapper` 只在实例存在时可用。直接 `leaf.destroy()` 会销毁实例，但不兑现关闭 Promise，也不执行 Notice 的容器清理；清空通知请使用 `Notice.destroy()`。

@@ -49,9 +49,20 @@ $box-shadow: varfix(box-shadow, notice);
 		box-shadow: $box-shadow;
 		align-items: center;
 
+		// 关闭图标在右上角，可关闭时标题与正文都为它让出位置
+		@include when(closable) {
+			@include element(body) {
+				padding-right: unitfix(24);
+			}
+		}
+
+		@include element(body) {
+			min-width: 0;
+			flex: 1;
+		}
+
 		@include element(title) {
 			display: inline-block;
-			padding-right: unitfix(24);
 			font-size: unitfix(16);
 			color: $color-dark-light;
 
@@ -63,6 +74,15 @@ $box-shadow: varfix(box-shadow, notice);
 		@include element(content) {
 			line-height: 1.5;
 			color: $color-dark-lighter;
+		}
+
+		// 与状态图标同尺寸、同位置
+		@include element(loading) {
+			display: flex;
+			height: unitfix(24);
+			margin-right: unitfix(8);
+			align-self: flex-start;
+			align-items: center;
 		}
 
 		@include element(icon) {

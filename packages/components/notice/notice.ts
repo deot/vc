@@ -31,15 +31,20 @@ const clean = () => {
 
 	if (!number && document.body.contains(el)) {
 		document.body.removeChild(el);
+		el.style.top = '';
 	}
 };
 
-const create = (mode?: string) => (options: Options) => {
+const create = (mode?: Props['mode'], defaults: Options = {}) => (options: Options) => {
 	if (!document.body.contains(el)) {
 		document.body.appendChild(el);
 	}
 
+	// 全局通知都在同一容器内排列：top 设置容器位置，以最新一次调用为准（不传时为样式中的默认值）
+	el.style.top = typeof options.top === 'number' ? `${options.top}px` : '';
+
 	const options$ = {
+		...defaults,
 		...options,
 		mode,
 		fixed: false
@@ -64,8 +69,9 @@ export const destroy = () => {
 };
 export const open = create();
 export const info = create('info');
+export const loading = create('loading', { duration: 0 });
 export const success = create('success');
 export const warning = create('warning');
 export const error = create('error');
 
-export const Notice = Object.assign(NoticeView, { destroy, open, info, success, warning, error });
+export const Notice = Object.assign(NoticeView, { destroy, open, info, loading, success, warning, error });
