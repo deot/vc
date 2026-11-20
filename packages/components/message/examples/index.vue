@@ -18,6 +18,12 @@
 		<Button :wait="0" @click="handleRender">
 			根据render函数渲染
 		</Button>
+		<Button :wait="0" @click="handleMultiple">
+			多条依次排列（含多行）
+		</Button>
+		<Button :wait="0" @click="handleSwitch">
+			加载后切换为成功
+		</Button>
 	</div>
 </template>
 <script setup>
@@ -58,6 +64,21 @@ const handleClickClose = () => {
 			console.log('onBeforeClose: 1s后关闭回调');
 		}
 	});
+};
+
+const handleMultiple = () => {
+	Message.info({ content: '第一条，1 秒后关闭，后续提示上移', duration: 1000, mask: false });
+	Message.warning({ content: { type: 'html', value: '第二条<br>多行内容<br>不会与下一条重叠' }, mask: false });
+	Message.error({ content: '第三条，悬停时不会关闭', mask: false });
+};
+
+const handleSwitch = () => {
+	const message = Message.loading({ content: '正在保存', mask: false });
+	setTimeout(() => {
+		message.wrapper.setMode('success');
+		message.wrapper.setContent('保存成功');
+		message.wrapper.setDuration(3000);
+	}, 1200);
 };
 
 const handleRender = () => {

@@ -9,7 +9,7 @@
 
 ### 基础用法
 
-`Message` 提供 `info`、`success`、`warning`、`error` 和 `loading` 五种提示方法。除 `loading` 默认不自动关闭外，其余提示默认在 1500ms 后关闭。
+`Message` 提供 `info`、`success`、`warning`、`error` 和 `loading` 五种提示方法。除 `loading` 默认不自动关闭外，其余提示默认在 3000ms 后关闭；鼠标悬停在提示上时暂停计时，移出后重新计时。多条提示从 `top` 开始依次向下排列，前面的提示关闭后，后续提示上移补位。`error` 提示为 `role="alert"`，其余为 `role="status"`。
 
 :::playground
 <!--
@@ -145,6 +145,55 @@ onUnmounted(() => {
 ```
 :::
 
+### 加载后切换状态
+
+`loading` 返回的实例可以通过 `wrapper.setMode`、`setContent`、`setDuration` 原地切换为结果提示，位置不变。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	viewport: 375,
+	viewportOptions: ['auto', 375],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
+```vue
+<template>
+	<Button :wait="0" @click="handleSave">
+		保存
+	</Button>
+</template>
+
+<script setup>
+import { inject, onUnmounted, ref } from 'vue';
+import { Button, Message } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const isVisible = ref(false);
+
+const handleSave = playground.run(220, { visible: isVisible }, () => {
+	isVisible.value = true;
+	const message = Message.loading({
+		content: '正在保存',
+		onClose: () => (isVisible.value = false)
+	});
+	setTimeout(() => {
+		message.wrapper.setMode('success');
+		message.wrapper.setContent('保存成功');
+		message.wrapper.setDuration(3000);
+	}, 1200);
+});
+
+onUnmounted(() => {
+	Message.destroy();
+});
+</script>
+```
+:::
+
 ### 内容渲染
 
 `content` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。`{ type, value }` 始终是内容而不是配置对象，后面可以继续跟位置参数或配置对象，例如 `Message.info({ type: 'html', value }, 3000)`。需要渲染 VNode 时，应在外部导入 Vue 的 `h` 并在函数中调用。
@@ -186,8 +235,8 @@ onUnmounted(() => {
 | mask | `fixed` 为 `true` 时是否渲染透明遮罩 | `boolean` | - | `true` |
 | maskClosable | 是否允许点击遮罩关闭提示 | `boolean` | - | `true` |
 | fixed | 是否使用固定定位；设为 `false` 时不渲染遮罩，也不应用 `top` | `boolean` | - | `true` |
-| duration | 自动关闭延时，单位为 ms；`0` 表示不自动关闭 | `number` | - | `1500` |
-| top | 固定定位时距离页面顶部的距离，单位为 px | `number` | - | `30` |
+| duration | 自动关闭延时，单位为 ms；`0` 表示不自动关闭；鼠标悬停时暂停，移出后重新计时 | `number` | - | `3000` |
+| top | 固定定位时第一条提示距离页面顶部的距离，单位为 px；同一 `top` 的多条提示依次向下排列，间距 7px | `number` | - | `30` |
 | closable | 是否显示关闭入口 | `boolean` | - | `false` |
 | mode | 提示状态；`loading` 使用加载指示器，其余状态使用对应图标 | `'info' \| 'loading' \| 'success' \| 'warning' \| 'error'` | `info`、`loading`、`success`、`warning`、`error` | `info` |
 | onBeforeClose | 点击关闭入口或遮罩前调用；Promise resolve 后关闭 | `(event: Event) => any` | - | `undefined` |
@@ -217,5 +266,6 @@ onUnmounted(() => {
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
 | setContent | 更新当前提示内容 | `content` | `void` |
-| setDuration | 重新设置自动关闭延时；`0` 表示不自动关闭 | `duration: number` | `void` |
+| setDuration | 重新设置自动关闭延时并重新计时；`0` 表示不自动关闭 | `duration: number` | `void` |
+| setMode | 切换提示状态，例如加载完成后改为 `success` | `mode: 'info' \| 'loading' \| 'success' \| 'warning' \| 'error'` | `void` |
 | close / remove / destroy / hide | 触发 `close` 和 `portal-fulfilled`，由 Portal 移除实例 | - | `void` |

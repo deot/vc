@@ -136,3 +136,121 @@ describe('函数式调用的参数', () => {
 		expect(onClose).not.toHaveBeenCalled();
 	});
 });
+
+describe('堆叠', () => {
+	const tops = () => [...document.body.querySelectorAll<HTMLElement>('.vc-message__wrapper')]
+		.map(el => el.style.top);
+	let spy: any;
+
+	beforeEach(() => {
+		// jsdom 没有布局：单行提示按 33px 计
+		spy = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+			return this.classList.contains('vc-message__container') ? 33 : 0;
+		});
+	});
+
+	afterEach(() => {
+		spy.mockRestore();
+		Message.destroy();
+		document.body.innerHTML = '';
+	});
+
+	it('同一 top 的提示依次向下排列，与此前每条下移 40px 一致', async () => {
+		Message.info('a', 0);
+		Message.info('b', 0);
+		Message.info('c', 0);
+		await nextTick();
+		await nextTick();
+
+		expect(tops()).toEqual(['30px', '70px', '110px']);
+	});
+
+	it('前面的提示关闭后，后续提示上移补位；新提示接在末尾而不重叠', async () => {
+		const first = Message.info('a', 0);
+		Message.info('b', 0);
+		Message.info('c', 0);
+		await nextTick();
+		await nextTick();
+
+		first.wrapper!.close();
+		await nextTick();
+		expect(tops()).toEqual(['30px', '70px']);
+
+		Message.info('d', 0);
+		await nextTick();
+		await nextTick();
+		expect(tops()).toEqual(['30px', '70px', '110px']);
+	});
+
+	it('不同 top 各自成组；fixed 为 false 时不参与', async () => {
+		Message.info('a', 0);
+		Message.info({ content: 'b', top: 200, duration: 0 });
+		Message.info({ content: 'c', top: 200, duration: 0 });
+		Message.info('d', 0);
+		await nextTick();
+		await nextTick();
+		expect(tops()).toEqual(['30px', '200px', '240px', '70px']);
+
+		const wrapper = mount(MessageView, { props: { fixed: false, content: 'e' } });
+		await nextTick();
+		expect(wrapper.find('.vc-message__wrapper').attributes('style') || '').not.toContain('top');
+		wrapper.unmount();
+	});
+});
+
+describe('计时 / 状态', () => {
+	afterEach(() => {
+		vi.useRealTimers();
+		Message.destroy();
+		document.body.innerHTML = '';
+	});
+
+	it('默认 3000ms 后关闭', () => {
+		expect((MessageView as any).props.duration.default).toBe(3000);
+	});
+
+	it('鼠标悬停时暂停自动关闭，移出后重新计时', async () => {
+		vi.useFakeTimers();
+		const wrapper = mount(MessageView, { props: { content: 'a', duration: 100, mask: false } });
+		await nextTick();
+		const container = wrapper.find('.vc-message__container');
+		const isShown = () => (wrapper.find('.vc-message__wrapper').element as HTMLElement).style.display !== 'none';
+
+		await container.trigger('mouseenter');
+		vi.advanceTimersByTime(300);
+		await nextTick();
+		expect(isShown()).toBe(true);
+
+		await container.trigger('mouseleave');
+		vi.advanceTimersByTime(50);
+		await nextTick();
+		expect(isShown()).toBe(true);
+		vi.advanceTimersByTime(60);
+		await nextTick();
+		expect(isShown()).toBe(false);
+		wrapper.unmount();
+	});
+
+	it('setMode 切换状态：loading 原地变为 success', async () => {
+		const leaf = Message.loading('加载中', { mask: false });
+		await nextTick();
+		expect(document.body.querySelector('.vc-message__loading')).not.toBe(null);
+
+		leaf.wrapper!.setMode('success');
+		await nextTick();
+		expect(document.body.querySelector('.vc-message__loading')).toBe(null);
+		expect(document.body.querySelector('.vc-message__icon')!.classList).toContain('is-success');
+	});
+
+	it('role：error 为 alert，其余为 status', async () => {
+		const wrapper = mount(MessageView, { props: { mode: 'error', duration: 0 } });
+		const container = wrapper.find('.vc-message__container');
+		expect(container.attributes('role')).toBe('alert');
+		expect(container.attributes('aria-live')).toBe('assertive');
+
+		await wrapper.setProps({ mode: 'info' });
+		expect(container.attributes('role')).toBe('status');
+		expect(container.attributes('aria-live')).toBe('polite');
+		wrapper.unmount();
+	});
+});

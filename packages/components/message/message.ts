@@ -12,16 +12,7 @@ const Message$ = new Portal(MessageView, {
 type Options = Partial<Props & { onClose: (...args: any[]) => any }>;
 
 const create = (options: Options) => (...params: Array<Options[keyof Options] | Options>) => {
-	let number = 0;
-	Portal.leafs.forEach((_, key) => {
-		if (key.includes(Message$.globalOptions.name!)) {
-			number++;
-		}
-	});
-
-	const top = 30 + number * 40;
-	const maxH = window.innerHeight - 100;
-	options.top = top > maxH ? maxH : top;
+	// 多条提示的竖向排列由 MessageView 的堆叠处理（./stack）
 	const options$ = toOptions(params, ['content', 'duration', 'onClose'], options);
 
 	// 执行弹窗

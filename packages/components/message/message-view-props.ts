@@ -15,11 +15,12 @@ export const props = {
 		type: Boolean,
 		default: true
 	},
-	// 单位ms
+	// 单位ms；鼠标悬停时暂停
 	duration: {
 		type: Number,
-		default: 1500
+		default: 3000
 	},
+	// 固定定位时第一条提示距页面顶部的距离（px），同一 top 的多条提示依次向下排列
 	top: {
 		type: Number,
 		default: 30,

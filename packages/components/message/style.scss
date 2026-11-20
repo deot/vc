@@ -34,6 +34,7 @@ $box-shadow: varfix(box-shadow, message);
 		@include when(fixed) {
 			position: fixed;
 			z-index: 4000;
+			transition: top .3s;  // 前面的提示关闭后上移补位
 		}
 	}
 
