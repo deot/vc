@@ -98,8 +98,8 @@ describe('index.ts', () => {
 			slots: { default: () => <p class="content">内容</p> }
 		});
 
-		expect(wrapper.classes()).toContain('vc-spin-wrapper');
-		expect(wrapper.find('.content').exists()).toBe(true);
+		expect(wrapper.classes()).toEqual(expect.arrayContaining(['vc-spin-wrapper', 'is-masked']));
+		expect(wrapper.find('.vc-spin-wrapper__content .content').exists()).toBe(true);
 		expect(wrapper.attributes('aria-busy')).toBe('true');
 		const layer = wrapper.find('.vc-spin-wrapper__layer');
 		expect(layer.classes()).toContain('is-mask');
@@ -107,6 +107,7 @@ describe('index.ts', () => {
 
 		await wrapper.setProps({ mask: false });
 		expect(wrapper.find('.vc-spin-wrapper__layer').classes()).not.toContain('is-mask');
+		expect(wrapper.classes()).not.toContain('is-masked');
 
 		await wrapper.setProps({ loading: false });
 		expect(wrapper.attributes('aria-busy')).toBeUndefined();

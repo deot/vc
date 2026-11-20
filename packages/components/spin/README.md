@@ -62,7 +62,7 @@ onBeforeUnmount(() => clearInterval(timer));
 
 ### 包裹内容
 
-有默认插槽时，`Spin` 包住其中的内容：`loading` 为 `true` 时在内容上居中显示加载图标，默认带一层半透明蒙层，内容变淡且不可操作，外层带 `aria-busy`。`mask` 为 `false` 时只显示图标，内容仍可操作。内容始终保留，切换加载状态不会重新渲染。
+有默认插槽时，`Spin` 包住其中的内容：`loading` 为 `true` 时在内容上居中显示加载图标，默认带蒙层：内容变淡、其上的图标层模糊内容（`backdrop-filter`），内容不可操作，外层带 `aria-busy`。蒙层不铺底色，变淡后透出的是实际背景，亮色、暗色或任意底色下都协调。`mask` 为 `false` 时只显示图标，内容仍可操作。内容始终保留，切换加载状态不会重新渲染。
 
 :::playground
 <!-- <config lang="json5">{ previewInset: 24 }</config> -->
@@ -196,7 +196,6 @@ import { MSpin } from '@deot/vc';
 | --- | --- | --- |
 | color-primary | 转动弧、提示文字 | `#456CF6` |
 | color-light-deepest | 轨道 | 亮色：`#C0C4CC`；暗色：`#E8E8E8` |
-| background-color-lightest | 蒙层底色 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 
 ### 局部
 
@@ -209,7 +208,7 @@ import { MSpin } from '@deot/vc';
 | stroke-width | 线宽（图标按 32 × 32 绘制，随尺寸缩放） | `2` |
 | tip-font-size / tip-line-height | 提示文字 | `14px` / `22px` |
 | tip-gap | 提示与图标的间距 | `8px` |
-| mask-opacity | 蒙层不透明度 | `.67` |
+| mask-opacity / mask-blur | 蒙层下内容的不透明度 / 模糊半径 | `.5` / `2px` |
 
 ## API
 

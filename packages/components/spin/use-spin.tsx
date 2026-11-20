@@ -91,8 +91,13 @@ export const useSpin = (props: Props, context: SetupContext, options: { mobile?:
 			return isVisible.value ? renderSpinner() : null;
 		}
 		return (
-			<div class="vc-spin-wrapper" aria-busy={isVisible.value ? 'true' : undefined}>
-				{ slots.default() }
+			<div
+				class={['vc-spin-wrapper', { 'is-masked': isVisible.value && props.mask }]}
+				aria-busy={isVisible.value ? 'true' : undefined}
+			>
+				<div class="vc-spin-wrapper__content">
+					{ slots.default() }
+				</div>
 				{ renderLayer() }
 			</div>
 		);

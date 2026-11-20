@@ -2,11 +2,10 @@
 
 $color-primary: varfix(color-primary, spin);
 $color-light-deepest: varfix(color-light-deepest, spin);
-$background-color-lightest: varfix(background-color-lightest, spin);
 
 // Spin 与 MSpin 共用（MSpin 的根节点另有标记类 vcm-spin，两端只有数字 size 与提示文字的单位不同）
 // 局部变量：--vc-spin-color（转动弧）、--vc-spin-track-color（轨道）、--vc-spin-stroke-width（线宽，图标按 32 绘制）、
-// --vc-spin-tip-font-size / --vc-spin-tip-line-height / --vc-spin-tip-gap（提示文字）、--vc-spin-mask-opacity（蒙层）
+// --vc-spin-tip-font-size / --vc-spin-tip-line-height / --vc-spin-tip-gap（提示文字）、--vc-spin-mask-opacity / --vc-spin-mask-blur（蒙层）
 @include block(vc-spin) {
 	display: inline-block;
 	line-height: 0;
@@ -58,8 +57,13 @@ $background-color-lightest: varfix(background-color-lightest, spin);
 }
 
 // 包裹内容：加载中在内容上居中显示图标
+// 蒙层不铺底色：内容本身变淡（透出的就是实际背景，任何主题、任何底色下都协调），图标层再模糊其下的内容
 @include block(vc-spin-wrapper) {
 	position: relative;
+
+	@include element(content) {
+		transition: opacity .2s;
+	}
 
 	@include element(layer) {
 		position: absolute;
@@ -70,21 +74,17 @@ $background-color-lightest: varfix(background-color-lightest, spin);
 		align-items: center;
 		justify-content: center;
 
-		> .vc-spin {
-			position: relative;
-		}
-
-		// 蒙层：内容变淡且不可操作
+		// 蒙层：模糊其下的内容，且不可操作
 		@include when(mask) {
 			pointer-events: auto;
+			backdrop-filter: blur(localfix(spin, mask-blur, 2px));
+		}
+	}
 
-			&::before {
-				position: absolute;
-				background: $background-color-lightest;
-				content: '';
-				opacity: localfix(spin, mask-opacity, .67);
-				inset: 0;
-			}
+	@include when(masked) {
+		@include element(content) {
+			opacity: localfix(spin, mask-opacity, .5);
+			user-select: none;
 		}
 	}
 }
