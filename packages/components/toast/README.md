@@ -4,11 +4,11 @@
 
 ### 何时使用
 
-用于操作反馈或等待任务完成。显示期间有透明遮罩，遮挡页面操作并阻止遮罩上的触摸滚动。
+用于操作反馈或等待任务完成。默认显示期间有透明遮罩，遮挡页面操作并阻止遮罩上的触摸滚动；`mask: false` 时不遮挡。
 
 ### 基础用法
 
-通过静态方法显示提示。`info`、`success`、`warning` 和 `error` 当前具有相同外观，不额外显示状态图标。
+通过静态方法显示提示。`success`、`warning` 和 `error` 在文字上方显示对应的状态图标，`info` 只有文字。字符串内容中的换行符会换行。
 
 :::playground
 <!--
@@ -64,6 +64,60 @@ onUnmounted(() => {
 .toast-demo { padding: 16px; }
 .toast-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .toast-demo p { margin: 12px 0 0; line-height: 1.6; }
+</style>
+```
+:::
+
+### 位置与遮罩
+
+`placement` 为 `center`（默认）、`top` 或 `bottom`，后两者距屏幕顶部 / 底部 30%。`mask: false` 时不渲染透明遮罩，提示显示期间页面仍可操作。多次调用各自独立显示、各自关闭。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	viewport: 375,
+	viewportOptions: ['auto', 375],
+	expandable: true
+}
+</config>
+-->
+```vue
+<template>
+	<div class="toast-demo">
+		<div class="toast-actions">
+			<Button @click="handleShow('top')">顶部</Button>
+			<Button @click="handleShow('bottom')">底部</Button>
+			<Button @click="count++">页面仍可点击：{{ count }}</Button>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { inject, onUnmounted, ref } from 'vue';
+import { MToast, Button } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const count = ref(0);
+const isVisible = ref(false);
+const handleShow = playground.run(360, { visible: isVisible }, (placement) => {
+	isVisible.value = true;
+	MToast.success({
+		content: placement === 'top' ? '已复制' : '已加入收藏',
+		placement,
+		mask: false,
+		duration: 2000,
+		onClose: () => (isVisible.value = false)
+	});
+});
+onUnmounted(() => {
+	MToast.destroy();
+});
+</script>
+
+<style scoped>
+.toast-demo { padding: 16px; }
+.toast-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 </style>
 ```
 :::
@@ -174,20 +228,32 @@ onUnmounted(() => {
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-toast-<参数>` 覆盖。
 
-移动端提示文字使用 color-contrast-light。⚠ color-mix：背景由 color-contrast-dark 以 75% 与透明色混合。
+移动端提示文字使用 color-contrast-light。⚠ color-mix：背景由 color-contrast-dark 以 80% 与透明色混合；加载图标的圆弧为 color-contrast-light，轨道由 color-contrast-light 以 30% 与透明色混合（在 `.vcm-toast` 上设置 Spin 的 `--vc-spin-color-primary`、`--vc-spin-color-light-deepest`）。
 
-透明色增强声明仅在 `@supports` 内生效；不支持 color-mix 时使用 Sass 编译的固定黑色 rgba() 降级值，透明度与上述比例一致，降级值不会随 color-contrast-dark 变量变化。
+透明色增强声明仅在 `@supports` 内生效；不支持 color-mix 时使用 Sass 编译的固定 rgba() 降级值，透明度与上述比例一致，降级值不会随主题变量变化。
 
 ### 全局
 
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
 | color-contrast-dark | 移动端提示背景的派生基色 | `#000000`（亮暗主题相同） |
-| color-contrast-light | 移动端提示文字 | `#FFFFFF`（亮暗主题相同） |
+| color-contrast-light | 移动端提示文字、状态图标、加载图标 | `#FFFFFF`（亮暗主题相同） |
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+尺寸写成局部变量 `--vc-toast-<键>`（默认值为 750 稿，随 `--vc-rem` 缩放），可在 `.vcm-toast` 或其祖先上覆盖。静态提示挂载在 `body` 下，请把变量设置在 `body` 或其祖先上。
+
+| 键 | 说明 | 默认值（750 稿） |
+| --- | --- | --- |
+| font-size / line-height | 文字字号 / 行高 | `32` / `48` |
+| radius | 圆角 | `8` |
+| padding | 纯文字的内边距 | `16 32` |
+| vertical-padding | 带图标或加载时的内边距 | `32` |
+| vertical-min-width | 带图标或加载时的最小宽度 | `200` |
+| icon-size | 状态图标、加载图标的尺寸 | `48` |
+| icon-gap | 图标与文字的间距 | `16` |
+| safe-gap | 与屏幕左右边缘的最小距离 | `32` |
+| offset | `top` / `bottom` 时与屏幕边缘的距离 | `30%` |
 
 ## API
 
@@ -203,7 +269,7 @@ onUnmounted(() => {
 
 `options` 接受下表中的属性及 `onClose` 回调（无业务参数）。自动关闭或点击遮罩关闭后会调用 `onClose`，返回实例也会完成，可以使用 `then` / `catch` / `finally`。返回值并非关闭函数：`leaf.destroy()` 立即销毁当前提示，不触发 `onClose`，也不会使等待中的 Promise 完成；`leaf.resolve()` 会销毁并触发完成回调。
 
-每次调用创建独立提示，多次同时调用会在屏幕中央重叠；应按需保存返回实例并销毁。
+每次调用创建独立提示，各自计时、各自关闭；同一 `placement` 的多条提示会重叠，可用不同位置区分，或保存返回实例按需销毁。
 
 ### MToastView 属性
 
@@ -212,9 +278,11 @@ onUnmounted(() => {
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | content | 提示内容。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |
-| maskClosable | 是否允许点击透明遮罩关闭 | `boolean` | - | `true` |
+| mask | 是否显示透明遮罩；为 `false` 时提示显示期间页面仍可操作 | `boolean` | - | `true` |
+| maskClosable | 是否允许点击透明遮罩关闭，仅 `mask` 为 `true` 时生效 | `boolean` | - | `true` |
 | duration | 挂载时开始计时，单位 ms；`0` 表示不自动关闭 | `number` | - | `3000` |
-| mode | 仅 `loading` 显示加载图标，其余模式外观相同 | `string` | `info` / `loading` / `success` / `warning` / `error` | `info` |
+| mode | `loading` 显示加载图标，`success` / `warning` / `error` 显示状态图标（图标在上、文字在下），`info` 只有文字；`error` 的提示为 `role="alert"`，其余为 `role="status"` | `string` | `info` / `loading` / `success` / `warning` / `error` | `info` |
+| placement | 显示位置，`top` / `bottom` 距屏幕边缘 30% | `string` | `top` / `center` / `bottom` | `center` |
 
 直接使用 `<MToastView mode="loading" />` 时仍采用属性默认值；只有静态方法 `MToast.loading()` 会设置持续显示和不可点击遮罩关闭的默认值。`content` 变化会更新内容，修改 `duration` prop 不会重启计时，请使用 `setDuration`。
 
@@ -238,4 +306,4 @@ onUnmounted(() => {
 
 ### 主题
 
-默认在亮色和暗色主题下均保留白字、半透明深色背景，可通过 `--vc-toast-content-color` 和 `--vc-toast-surface-color` 覆盖。加载图标使用 Spin 的主题变量。静态提示挂载在 `body` 下，请把主题变量设置在 `body` 或其祖先上。
+默认在亮色和暗色主题下均保留白字、半透明深色背景，可通过 `--vc-toast-color-contrast-light`（文字与图标）和 `--vc-toast-color-contrast-dark`（背景基色）覆盖，尺寸见上文「局部」。静态提示挂载在 `body` 下，请把主题变量设置在 `body` 或其祖先上。

@@ -1,37 +1,76 @@
 @use 'sass:color';
+@use 'sass:map';
 @use '../../style/helper' as *;
 
 $color-contrast-dark: varfix(color-contrast-dark, toast);
 $color-contrast-dark-frozen: themefrozen(color-contrast-dark);
 $color-contrast-light: varfix(color-contrast-light, toast);
+$color-contrast-light-frozen: themefrozen(color-contrast-light);
 $component-name: vcm-toast;
-$surface-color-fallback: color.change($color-contrast-dark-frozen, $alpha: .75);
-$surface-color: color-mix(in srgb, #{$color-contrast-dark} 75%, transparent);
+$surface-color-fallback: color.change($color-contrast-dark-frozen, $alpha: .8);
+$surface-color: color-mix(in srgb, #{$color-contrast-dark} 80%, transparent);
+$spin-track-color-fallback: color.change($color-contrast-light-frozen, $alpha: .3);
+$spin-track-color: color-mix(in srgb, #{$color-contrast-light} 30%, transparent);
+
+// 尺寸（750 稿，随 --vc-rem 缩放），写成局部变量 --vc-toast-<键>（默认值为下表），可在 .vcm-toast 或其祖先上覆盖
+// 375 宽下：字号 16px、行高 24px、圆角 4px；纯文字内边距 8px 16px；带图标时 16px、图标 24px、间距 8px；左右至少留 16px
+$sizes: (
+	font-size: remfix(32),
+	line-height: remfix(48),
+	radius: remfix(8),
+	padding: remfix(16) remfix(32),
+	vertical-padding: remfix(32),
+	vertical-min-width: remfix(200),
+	icon-size: remfix(48),
+	icon-gap: remfix(16),
+	safe-gap: remfix(32),
+	offset: 30%
+);
+
+@function v($key) {
+	@return localfix(toast, $key, map.get($sizes, $key));
+}
 
 @include block($component-name) {
-	font-size: remfix(24);
+	// 加载图标：白色圆弧 + 半透明轨道（深色底上的对比）
+	--vc-spin-color-primary: #{$color-contrast-light};
+	--vc-spin-color-light-deepest: #{$spin-track-color-fallback};
+
+	@supports (color: color-mix(in srgb, black, white)) {
+		& {
+			--vc-spin-color-light-deepest: #{$spin-track-color};
+		}
+	}
 
 	@include element(bg) {
 		position: fixed;
-		right: 0;
-		bottom: 0;
-		left: 0;
+		inset: 0;
 		z-index: 3999;
-		width: 100%;
-		height: 100%;
-		margin: 0 auto;
 		opacity: 0;
 	}
 
 	@include element(wrapper) {
 		position: fixed;
+		right: 0;
+		left: 0;
 		z-index: 4001;
-		max-width: 50%; // 含内边距，与此前的最大宽度一致
-		padding: remfix(18) remfix(30);
-		line-height: 1.5;
+		display: flex;
+		width: fit-content;
+		height: fit-content;
+		max-width: calc(100% - #{v(safe-gap)} * 2);
+		padding: v(padding);
+		margin: 0 auto;
+		font-size: v(font-size);
+		line-height: v(line-height);
 		color: $color-contrast-light;
 		text-align: center;
+		white-space: pre-line;
 		background: $surface-color-fallback;
+		border-radius: v(radius);
+		box-sizing: border-box;
+		flex-direction: column;
+		align-items: center;
+		gap: v(icon-gap);
 
 		@supports (color: color-mix(in srgb, black, white)) {
 			& {
@@ -39,15 +78,34 @@ $surface-color: color-mix(in srgb, #{$color-contrast-dark} 75%, transparent);
 			}
 		}
 
-		border-radius: remfix(6);
-		box-sizing: border-box;
+		@include when(center) {
+			top: 0;
+			bottom: 0;
+			margin: auto;
+		}
 
-		@include position-center;
+		@include when(top) {
+			top: v(offset);
+		}
+
+		@include when(bottom) {
+			bottom: v(offset);
+		}
+
+		// 带状态图标或加载：图标在上、文字在下
+		@include when(vertical) {
+			min-width: v(vertical-min-width);
+			padding: v(vertical-padding);
+		}
 	}
 
-	// 加载图标与下方文字的间距
+	@include element(icon) {
+		font-size: v(icon-size);
+		line-height: 1;
+	}
+
 	@include element(loading) {
-		margin-bottom: remfix(8);
+		display: flex;
 	}
 
 	@include element(content) {

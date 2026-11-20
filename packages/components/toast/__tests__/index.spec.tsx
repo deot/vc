@@ -169,6 +169,104 @@ describe('ToastView 基础渲染', () => {
 	});
 });
 
+describe('ToastView 遮罩 / 位置 / 状态图标', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('mask=false：不渲染 __bg', async () => {
+		const wrapper = mount(MToastView, {
+			attachTo: document.body,
+			props: { mask: false, duration: 0 }
+		});
+		await flush();
+
+		expect(wrapper.find('.vcm-toast__bg').exists()).toBe(false);
+		expect(isVisible(wrapper)).toBe(true);
+
+		wrapper.unmount();
+	});
+
+	it('placement：默认 center，可选 top / bottom', async () => {
+		const wrapper = mount(MToastView, {
+			attachTo: document.body,
+			props: { duration: 0 }
+		});
+		await flush();
+
+		const el = wrapper.find('.vcm-toast__wrapper');
+		expect(el.classes()).toContain('is-center');
+
+		await wrapper.setProps({ placement: 'top' });
+		expect(el.classes()).toContain('is-top');
+		await wrapper.setProps({ placement: 'bottom' });
+		expect(el.classes()).toContain('is-bottom');
+		expect(el.classes()).not.toContain('is-center');
+
+		wrapper.unmount();
+	});
+
+	it('success / warning / error 显示状态图标并上下排列，info 无图标', async () => {
+		for (const mode of ['success', 'warning', 'error'] as const) {
+			const wrapper = mount(MToastView, {
+				attachTo: document.body,
+				props: { mode, content: '内容', duration: 0 }
+			});
+			await flush();
+
+			const icon = wrapper.find('.vcm-toast__icon');
+			expect(icon.exists()).toBe(true);
+			expect(icon.classes()).toContain('vcm-icon');
+			expect(wrapper.find('.vcm-toast__wrapper').classes()).toContain('is-vertical');
+
+			wrapper.unmount();
+		}
+
+		const info = mount(MToastView, {
+			attachTo: document.body,
+			props: { mode: 'info', content: '内容', duration: 0 }
+		});
+		await flush();
+		expect(info.find('.vcm-toast__icon').exists()).toBe(false);
+		expect(info.find('.vcm-toast__wrapper').classes()).not.toContain('is-vertical');
+		info.unmount();
+	});
+
+	it('loading：上下排列，加载图标尺寸跟随 --vc-toast-icon-size', async () => {
+		const wrapper = mount(MToastView, {
+			attachTo: document.body,
+			props: { mode: 'loading', duration: 0 }
+		});
+		await flush();
+
+		expect(wrapper.find('.vcm-toast__wrapper').classes()).toContain('is-vertical');
+		const svg = wrapper.find('.vcm-toast__loading svg').element as SVGElement;
+		expect(svg.style.width).toContain('--vc-toast-icon-size');
+
+		wrapper.unmount();
+	});
+
+	it('role：error 为 alert，其余为 status', async () => {
+		const error = mount(MToastView, {
+			attachTo: document.body,
+			props: { mode: 'error', duration: 0 }
+		});
+		await flush();
+		expect(error.find('.vcm-toast__wrapper').attributes('role')).toBe('alert');
+		expect(error.find('.vcm-toast__wrapper').attributes('aria-live')).toBe('assertive');
+		error.unmount();
+
+		const info = mount(MToastView, {
+			attachTo: document.body,
+			props: { duration: 0 }
+		});
+		await flush();
+		expect(info.find('.vcm-toast__wrapper').attributes('role')).toBe('status');
+		expect(info.find('.vcm-toast__wrapper').attributes('aria-live')).toBe('polite');
+		info.unmount();
+	});
+});
+
 describe('ToastView 关闭逻辑 (maskClosable / duration)', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';
@@ -416,6 +514,25 @@ describe('MToast 静态方法 (info / success / loading / warning / error / dest
 		await flush();
 
 		expect(document.body.querySelector('.vcm-toast__content')!.innerHTML).toContain('对象写法');
+	});
+
+	it('多条提示同时存在，各自关闭、各自回调', async () => {
+		const first = vi.fn();
+		const second = vi.fn();
+		MToast.info('a', 30, first);
+		MToast.info('b', 0, second);
+		await flush();
+		expect(document.body.querySelectorAll('.vcm-toast').length).toBe(2);
+
+		await Utils.sleep(60);
+		await flushTransition();
+		expect(first).toHaveBeenCalledTimes(1);
+		expect(second).not.toHaveBeenCalled();
+	}, 10000);
+
+	it('静态方法透传 mask / placement', () => {
+		const leaf: any = MToast.success({ content: 'a', mask: false, placement: 'bottom' });
+		expect(leaf.propsData.value).toMatchObject({ mask: false, placement: 'bottom', mode: 'success' });
 	});
 
 	it('MToast.destroy 清理所有 toast portal', async () => {
