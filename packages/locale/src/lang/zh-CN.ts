@@ -235,6 +235,9 @@ export const zhCN: Language = {
 			title: '裁剪图片',
 			resetText: '还原'
 		},
+		Spin: {
+			loading: '加载中'
+		},
 		Modal: {
 			okButtonText: '确定',
 			cancelButtonText: '取消'

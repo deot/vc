@@ -10,7 +10,7 @@
 		</div>
 		<div class="audit-sample" data-state="显式颜色对照">
 			<div class="audit-sample__label">显式颜色对照</div>
-			<Spin foreground="#64758B" background="#E6A23C" />
+			<Spin color="#E6A23C" track-color="#64758B" />
 		</div>
 	</div>
 </template>

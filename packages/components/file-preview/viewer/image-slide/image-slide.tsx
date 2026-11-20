@@ -44,7 +44,6 @@ export const ImageSlide = defineComponent({
 		const measured = ref<Size | null>(null);
 		const isReady = ref(false);
 		const isError = ref(false);
-		const isLoading = ref(false);
 		// 只取打开那一刻的缩略图：切走后 prop 会清空，摆放不能跟着丢
 		const thumbnail = props.placeholder;
 
@@ -127,12 +126,7 @@ export const ImageSlide = defineComponent({
 			reveal?.ready();
 		};
 
-		const timer = setTimeout(() => {
-			isLoading.value = true;
-		}, LOADING_DELAY);
-
 		onBeforeUnmount(() => {
-			clearTimeout(timer);
 			clearTimeout(waitTimer);
 			frame && caf(frame);
 		});
@@ -187,7 +181,7 @@ export const ImageSlide = defineComponent({
 					onLoad={handleLoad}
 					onError={handleError}
 				/>
-				{ isLoading.value && !isReady.value && !isError.value && <Spin class="vc-image-slide__loading" size={32} /> }
+				<Spin class="vc-image-slide__loading" size={32} delay={LOADING_DELAY} loading={!isReady.value && !isError.value} />
 				{ isError.value && <p class="vc-image-slide__error">{t('vc.FilePreview.loadError')}</p> }
 			</div>
 		);

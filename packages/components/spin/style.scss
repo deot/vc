@@ -1,12 +1,26 @@
 @use '../style/helper' as *;
 
-// Spin 与 MSpin 共用（MSpin 的根节点另有标记类 vcm-spin，两端只有数字 size 的单位不同）
+$color-primary: varfix(color-primary, spin);
+$color-light-deepest: varfix(color-light-deepest, spin);
+$background-color-lightest: varfix(background-color-lightest, spin);
+
+// Spin 与 MSpin 共用（MSpin 的根节点另有标记类 vcm-spin，两端只有数字 size 与提示文字的单位不同）
+// 局部变量：--vc-spin-color（转动弧）、--vc-spin-track-color（轨道）、--vc-spin-stroke-width（线宽，图标按 32 绘制）、
+// --vc-spin-tip-font-size / --vc-spin-tip-line-height / --vc-spin-tip-gap（提示文字）、--vc-spin-mask-opacity（蒙层）
 @include block(vc-spin) {
 	display: inline-block;
 	line-height: 0;
 
+	// 有提示时：图标在上、文字在下
+	&.has-tip {
+		display: inline-flex;
+		flex-direction: column;
+		align-items: center;
+		gap: localfix(spin, tip-gap, 8px);
+	}
+
 	// 图标所在的字符框：与 Icon 相同，像文字一样跟随父级字体排版，不需要 vertical-align
-	> span {
+	@include element(indicator) {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -21,6 +35,57 @@
 		overflow: hidden;
 		animation: vc-spin-circle 1s linear infinite;
 		fill: currentcolor;
+	}
+
+	@include element(track) {
+		fill: none;
+		stroke: localfix(spin, track-color, $color-light-deepest);
+		stroke-width: localfix(spin, stroke-width, 2);
+	}
+
+	@include element(arc) {
+		fill: none;
+		stroke: localfix(spin, color, $color-primary);
+		stroke-width: localfix(spin, stroke-width, 2);
+		stroke-linecap: round;
+	}
+
+	@include element(tip) {
+		font-size: localfix(spin, tip-font-size, 14px);
+		line-height: localfix(spin, tip-line-height, 22px);
+		color: localfix(spin, color, $color-primary);
+	}
+}
+
+// 包裹内容：加载中在内容上居中显示图标
+@include block(vc-spin-wrapper) {
+	position: relative;
+
+	@include element(layer) {
+		position: absolute;
+		z-index: 20;
+		display: flex;
+		pointer-events: none;
+		inset: 0;
+		align-items: center;
+		justify-content: center;
+
+		> .vc-spin {
+			position: relative;
+		}
+
+		// 蒙层：内容变淡且不可操作
+		@include when(mask) {
+			pointer-events: auto;
+
+			&::before {
+				position: absolute;
+				background: $background-color-lightest;
+				content: '';
+				opacity: localfix(spin, mask-opacity, .67);
+				inset: 0;
+			}
+		}
 	}
 }
 

@@ -235,6 +235,9 @@ export const enUS: Language = {
 			title: 'Crop image',
 			resetText: 'Reset'
 		},
+		Spin: {
+			loading: 'Loading'
+		},
 		Modal: {
 			okButtonText: 'OK',
 			cancelButtonText: 'Cancel'

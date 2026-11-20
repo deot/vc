@@ -33,12 +33,12 @@ $sizes: (
 
 @include block($component-name) {
 	// 加载图标：白色圆弧 + 半透明轨道（深色底上的对比）
-	--vc-spin-color-primary: #{$color-contrast-light};
-	--vc-spin-color-light-deepest: #{$spin-track-color-fallback};
+	--vc-spin-color: #{$color-contrast-light};
+	--vc-spin-track-color: #{$spin-track-color-fallback};
 
 	@supports (color: color-mix(in srgb, black, white)) {
 		& {
-			--vc-spin-color-light-deepest: #{$spin-track-color};
+			--vc-spin-track-color: #{$spin-track-color};
 		}
 	}
 

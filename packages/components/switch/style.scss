@@ -72,15 +72,9 @@ $component-name: vc-switch;
 
 	// 加载标记放在滑块内并居中：浅色底环 + 主色转动弧，线宽加粗，在白色滑块上清楚可见
 	@include element(loading) {
-		path {
-			stroke: $color-primary-lighter;
-			stroke-width: 4;
-		}
-
-		// Spin 的第二段为转动的弧
-		path + path {
-			stroke: $color-primary;
-		}
+		--vc-spin-color: #{$color-primary};
+		--vc-spin-track-color: #{$color-primary-lighter};
+		--vc-spin-stroke-width: 4;
 	}
 
 	@include when(loading) {

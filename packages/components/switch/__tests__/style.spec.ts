@@ -54,13 +54,11 @@ describe.each([
 	it('keeps the thumb and loading colors independent of the track', () => {
 		const contrast = 'var(--vc-switch-color-contrast-light, var(--vc-color-contrast-light))';
 		expect(valuesFor(css, `.${component}__inner`)['background-color']).toBe(contrast);
-		// 浅色底环 + 主色转动弧，线宽加粗
-		expect(valuesFor(css, `.${component}__loading path`)).toEqual({
-			'stroke': 'var(--vc-switch-color-primary-lighter, var(--vc-color-primary-lighter))',
-			'stroke-width': '4'
-		});
-		expect(valuesFor(css, `.${component}__loading path + path`)).toEqual({
-			stroke: 'var(--vc-switch-color-primary, var(--vc-color-primary))'
+		// 浅色底环 + 主色转动弧，线宽加粗（通过 Spin 的局部变量）
+		expect(valuesFor(css, `.${component}__loading`)).toEqual({
+			'--vc-spin-color': 'var(--vc-switch-color-primary, var(--vc-color-primary))',
+			'--vc-spin-track-color': 'var(--vc-switch-color-primary-lighter, var(--vc-color-primary-lighter))',
+			'--vc-spin-stroke-width': '4'
 		});
 	});
 

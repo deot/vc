@@ -130,8 +130,8 @@ describe('index.ts', () => {
 			const spin = wrapper.findComponent(Spin);
 
 			expect(spin.exists()).toBeTruthy();
-			expect(spin.props('foreground')).toBe('var(--vc-button-color-light-deepest, var(--vc-color-light-deepest))');
-			expect(spin.props('background')).toBe('var(--vc-button-color-primary, var(--vc-color-primary))');
+			expect(spin.props('trackColor')).toBe('var(--vc-button-color-light-deepest, var(--vc-color-light-deepest))');
+			expect(spin.props('color')).toBe('var(--vc-button-color-primary, var(--vc-color-primary))');
 		};
 
 		const wrapper = mount(() => <Button onClick={handler} />);
@@ -176,11 +176,11 @@ describe('index.ts', () => {
 		expect(wrapper.findComponent(Icon).exists()).toBeTruthy();
 	});
 
-	it('click, loading, foreground', async () => {
+	it('click, loading, trackColor', async () => {
 		expect.assertions(1);
 		const handler = async () => {
 			await Utils.sleep(10);
-			expect(wrapper.findComponent(Spin).props('foreground')).toBe('currentColor');
+			expect(wrapper.findComponent(Spin).props('trackColor')).toBe('currentColor');
 		};
 
 		const wrapper = mount(() => <Button type="primary" onClick={handler} />);

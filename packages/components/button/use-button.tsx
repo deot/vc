@@ -86,12 +86,12 @@ export const useButton = (
 					isLoading.value && (
 						<Spin
 							size={spinSize}
-							foreground={
+							trackColor={
 								props.type === 'default'
 									? 'var(--vc-button-color-light-deepest, var(--vc-color-light-deepest))'
 									: 'currentColor'
 							}
-							background="var(--vc-button-color-primary, var(--vc-color-primary))"
+							color="var(--vc-button-color-primary, var(--vc-color-primary))"
 							class="vc-button__loading"
 						/>
 					)

@@ -1,0 +1,11 @@
+@use '../../style/helper' as *;
+
+// 移动端提示文字（750 稿，随 --vc-rem 缩放），375 宽下：字号 14px、行高 22px、与图标间距 8px
+// 结构与颜色沿用 ../style.scss，这里只覆盖局部变量（与两端样式的加载顺序无关）
+@include block(vcm-spin) {
+	@include localvars(spin, (
+		tip-font-size: remfix(28),
+		tip-line-height: remfix(44),
+		tip-gap: remfix(16)
+	));
+}

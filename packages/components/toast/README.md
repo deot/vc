@@ -228,7 +228,7 @@ onUnmounted(() => {
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-toast-<参数>` 覆盖。
 
-移动端提示文字使用 color-contrast-light。⚠ color-mix：背景由 color-contrast-dark 以 80% 与透明色混合；加载图标的圆弧为 color-contrast-light，轨道由 color-contrast-light 以 30% 与透明色混合（在 `.vcm-toast` 上设置 Spin 的 `--vc-spin-color-primary`、`--vc-spin-color-light-deepest`）。
+移动端提示文字使用 color-contrast-light。⚠ color-mix：背景由 color-contrast-dark 以 80% 与透明色混合；加载图标的圆弧为 color-contrast-light，轨道由 color-contrast-light 以 30% 与透明色混合（在 `.vcm-toast` 上设置 Spin 的局部变量 `--vc-spin-color`、`--vc-spin-track-color`）。
 
 透明色增强声明仅在 `@supports` 内生效；不支持 color-mix 时使用 Sass 编译的固定 rgba() 降级值，透明度与上述比例一致，降级值不会随主题变量变化。
 
