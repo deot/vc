@@ -1,0 +1,112 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-tab-bar;
+$color-dark-extralight: varfix(color-dark-extralight, tab-bar);
+$color-primary: varfix(color-primary, tab-bar);
+$color-neutral-light: varfix(color-neutral-light, tab-bar);
+$background-color-lightest: varfix(background-color-lightest, tab-bar);
+
+// 尺寸按 750 稿（括号内为 375 宽）：栏高 100（50）；图标 40（20），上下间距 14 / 8；文字 20 / 28（10 / 14），下间距 10；只有文字时 32 / 44
+// 颜色可用局部变量覆盖：--vc-tab-bar-color / --vc-tab-bar-active-color / --vc-tab-bar-background
+$height: remfix(100);
+$safe-area: env(safe-area-inset-bottom);
+
+@include block($component-name) {
+	// fixed 时根节点留在原位作占位，标签栏本身贴底
+	@include when(placeholder) {
+		height: $height;
+
+		&.is-safe-area {
+			height: calc(#{$height} + #{$safe-area});
+		}
+	}
+
+	@include element(wrapper) {
+		@include common-border-1px(top, $color-neutral-light);
+
+		& {
+			display: flex;
+			min-height: $height;
+			background: localfix(tab-bar, background, $background-color-lightest);
+			box-sizing: content-box;
+		}
+	}
+
+	@include when(safe-area) {
+		> .#{$component-name}__wrapper {
+			padding-bottom: $safe-area;
+		}
+	}
+
+	@include when(fixed) {
+		> .#{$component-name}__wrapper {
+			position: fixed;
+			right: 0;
+			bottom: 0;
+			left: 0;
+			z-index: 10;
+		}
+	}
+
+	@include element(item) {
+		// 高于顶部分隔线（伪元素 z-index: 1）：凸出栏外的自定义内容不被线压住
+		position: relative;
+		z-index: 2;
+		display: flex;
+		min-width: 0;
+		color: localfix(tab-bar, color, $color-dark-extralight);
+		cursor: pointer;
+		flex: 1 1 0;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		-webkit-tap-highlight-color: transparent;
+
+		@include when(active) {
+			color: localfix(tab-bar, active-color, $color-primary);
+		}
+
+		@include when(disabled) {
+			cursor: not-allowed;
+			opacity: 0.4;
+		}
+
+		@include when(label-only) {
+			> .#{$component-name}__label {
+				// 文字本身是 MBadge 的根节点，不裁切角标
+				margin: 0;
+				overflow: visible;
+				font-size: remfix(32);
+				line-height: remfix(44);
+
+				// 徽标挂在文字右上角：角标中心再向外移，不压住最后一个字
+				@include localvars(badge, (inset: remfix(-8)));
+			}
+		}
+	}
+
+	@include element(icon) {
+		display: flex;
+		margin: remfix(14) 0 remfix(8);
+		font-size: remfix(40);
+		line-height: 1;
+
+		// 函数返回的图片与图标同大
+		> img {
+			display: block;
+			width: 1em;
+			height: 1em;
+			object-fit: contain;
+		}
+	}
+
+	@include element(label) {
+		max-width: 100%;
+		margin-bottom: remfix(10);
+		overflow: hidden;
+		font-size: remfix(20);
+		line-height: remfix(28);
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}

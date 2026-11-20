@@ -145,6 +145,8 @@ export * from './swipe-action';
 export * from './swipe-action/index.m';
 export * from './switch';
 export * from './switch/index.m';
+export * from './tab-bar';
+export * from './tab-bar/index.m';
 export * from './table';
 export * from './table/index.m';
 export * from './tabs';

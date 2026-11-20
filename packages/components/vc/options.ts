@@ -24,6 +24,10 @@ export type Options = Partial<{
 	MListItem: {
 		to: (data: { value: any; instance: ComponentInternalInstance }) => any;
 	};
+	// 返回值不为 undefined 时视为已接管跳转；instance 是被点击的 MTabBarItem
+	MTabBar: {
+		to: (data: { value: any; instance: ComponentInternalInstance }) => any;
+	};
 	Image: {
 		formatter?: ImageFormatter;
 	};

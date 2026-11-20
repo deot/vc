@@ -68,6 +68,7 @@ import Splitter from './modules/splitter.vue';
 import Steps from './modules/steps.vue';
 import SwipeAction from './modules/swipe-action.vue';
 import Switch from './modules/switch.vue';
+import TabBar from './modules/tab-bar.vue';
 import Table from './modules/table.vue';
 import Tabs from './modules/tabs.vue';
 import Tag from './modules/tag.vue';
@@ -153,6 +154,7 @@ export const MODULES = {
 	Steps,
 	SwipeAction,
 	Switch,
+	TabBar,
 	Table,
 	Tabs,
 	Tag,
