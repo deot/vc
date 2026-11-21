@@ -12,6 +12,11 @@ $color-warning: varfix(color-warning, notice);
 $background-color-lightest: varfix(background-color-lightest, notice);
 $box-shadow: varfix(box-shadow, notice);
 
+// 尺寸与配色写成局部变量 --vc-notice-<键>（默认值为桌面端），MNotice 在 .vcm-notice / .vcm-notice-portals 上覆盖（mobile/style.scss）
+@function v($key, $default) {
+	@return localfix(notice, $key, $default);
+}
+
 
 // 消息加入理应是倒置的
 @include block($component-portals-name) {
@@ -32,27 +37,27 @@ $box-shadow: varfix(box-shadow, notice);
 	}
 
 	@include element(wrapper) {
-		width: unitfix(384);
-		margin-right: unitfix(24);
+		width: v(width, unitfix(384));
+		margin-right: v(offset, unitfix(24));
 		box-sizing: border-box; 
 	}
 
 	@include element(container) {
 		position: relative;
 		display: flex;
-		padding: unitfix(16);
-		margin-bottom: unitfix(16);
+		padding: v(padding, unitfix(16));
+		margin-bottom: v(gap, unitfix(16));
 		overflow: hidden;
-		font-size: unitfix(14);
-		background: $background-color-lightest;
-		border-radius: unitfix(4);
-		box-shadow: $box-shadow;
+		font-size: v(content-font-size, unitfix(14));
+		background: v(background, $background-color-lightest);
+		border-radius: v(radius, unitfix(4));
+		box-shadow: v(shadow, $box-shadow);
 		align-items: center;
 
 		// 关闭图标在右上角，可关闭时标题与正文都为它让出位置
 		@include when(closable) {
 			@include element(body) {
-				padding-right: unitfix(24);
+				padding-right: v(close-space, unitfix(24));
 			}
 		}
 
@@ -63,69 +68,69 @@ $box-shadow: varfix(box-shadow, notice);
 
 		@include element(title) {
 			display: inline-block;
-			font-size: unitfix(16);
-			color: $color-dark-light;
+			font-size: v(title-font-size, unitfix(16));
+			color: v(title-color, $color-dark-light);
 
 			&.has-content {
-				margin-bottom: unitfix(8);
+				margin-bottom: v(title-gap, unitfix(8));
 			}
 		}
 
 		@include element(content) {
-			line-height: 1.5;
-			color: $color-dark-lighter;
+			line-height: v(content-line-height, 1.5);
+			color: v(content-color, $color-dark-lighter);
 		}
 
 		// 与状态图标同尺寸、同位置
 		@include element(loading) {
 			display: flex;
-			height: unitfix(24);
-			margin-right: unitfix(8);
+			height: v(icon-line-height, unitfix(24));
+			margin-right: v(icon-gap, unitfix(8));
 			align-self: flex-start;
 			align-items: center;
 		}
 
 		@include element(icon) {
-			padding-right: unitfix(8);
-			font-size: unitfix(22);
-			line-height: unitfix(24);
+			padding-right: v(icon-gap, unitfix(8));
+			font-size: v(icon-size, unitfix(22));
+			line-height: v(icon-line-height, unitfix(24));
 			align-self: flex-start;
 
 			@include when(success) {
-				color: $color-success;
+				color: v(icon-color, $color-success);
 			}
 
 			@include when(error) {
-				color: $color-error;
+				color: v(icon-color, $color-error);
 			}
 
 			@include when(warning) {
-				color: $color-warning;
+				color: v(icon-color, $color-warning);
 			}
 
 			@include when(info) {
-				color: $color-primary;
+				color: v(icon-color, $color-primary);
 			}
 
 			@include when(loading) {
-				color: $color-primary;
+				color: v(icon-color, $color-primary);
 			}
 		}
 	}
 
 	@include element(close) {
 		position: absolute;
-		top: unitfix(16);
-		right: unitfix(22);
+		top: v(close-top, unitfix(16));
+		right: v(close-right, unitfix(22));
 		display: inline-flex;
-		height: unitfix(24);
-		font-size: unitfix(12);
-		color: $color-dark-lightest;
+		height: v(close-height, unitfix(24));
+		font-size: v(close-size, unitfix(12));
+		color: v(close-color, $color-dark-lightest);
 		cursor: pointer;
 		align-items: center;
 
 		&:hover {
-			color: $color-dark-light;
+			color: v(close-hover-color, $color-dark-light);
 		}
 	}
 }
