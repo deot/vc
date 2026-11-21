@@ -1,8 +1,11 @@
 import { preZero } from '@deot/helper-utils';
-import type { CalendarCell, CalendarCellType, CalendarFirstDayOfWeek, CalendarMonthData } from './types';
+import type { CalendarFirstDayOfWeek } from './types';
 
 // 未传 firstDayOfWeek 且全局未配置时从周日开始
 export const DEFAULT_FIRST_DAY_OF_WEEK = 7;
+
+// 与 MDatePicker 相同的默认年份范围，也是农历数据覆盖的范围
+export const DEFAULT_YEAR_RANGE = [1900, 2100];
 
 export const normalizeFirstDayOfWeek = (firstDayOfWeek: CalendarFirstDayOfWeek = DEFAULT_FIRST_DAY_OF_WEEK): number => {
 	const day = ((Math.trunc(firstDayOfWeek) - 1) % 7 + 7) % 7 + 1;
@@ -22,77 +25,48 @@ export const sortWeekdays = <T>(
 	];
 };
 
-export const createDaysArray = (
-	year: number,
-	month: number,
-	days: number,
-	type: CalendarCellType
-): CalendarCell[] => {
-	return Array.from({ length: days }, (_, index) => {
-		return {
-			date: index + 1,
-			value: `${year}-${preZero(month)}-${preZero(index + 1)}`,
-			type
-		};
-	});
+/**
+ * 当月 1 日之前要补的天数：往前补到每周第一天（1 日正好是第一天时不补）
+ * @param year ~
+ * @param month 0 - 11
+ * @param firstDayOfWeek 1 - 7
+ * @returns 0 - 6
+ */
+export const getLeadingDays = (year: number, month: number, firstDayOfWeek: CalendarFirstDayOfWeek) => {
+	return (new Date(year, month, 1).getDay() - normalizeFirstDayOfWeek(firstDayOfWeek) + 7) % 7;
+};
+
+/**
+ * 月历的 42 天（6 周），从补齐的上月日期开始
+ * @param year ~
+ * @param month 0 - 11
+ * @param firstDayOfWeek 1 - 7
+ * @returns Date[]
+ */
+export const getCalendarDates = (year: number, month: number, firstDayOfWeek: CalendarFirstDayOfWeek = DEFAULT_FIRST_DAY_OF_WEEK) => {
+	const leading = getLeadingDays(year, month, firstDayOfWeek);
+
+	return Array.from({ length: 42 }, (_, index) => new Date(year, month, index - leading + 1));
 };
 
 export const getMonthDays = (year: number, month: number) => {
-	return new Date(year, month, 0).getDate();
+	return new Date(year, month + 1, 0).getDate();
 };
 
-export const getWeek = (dateString?: string | null): number => {
-	if (!dateString) {
-		return new Date().getDay();
-	}
-
-	const [year, month, day] = dateString.split('-').map(i => parseInt(i, 10));
-	return new Date(year, month - 1, day).getDay();
+/**
+ * 日期在当天 0 点的时间戳
+ * @param date ~
+ * @returns number
+ */
+export const getDayTime = (date: Date) => {
+	return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 };
 
-export const getMonthData = (
-	year: number,
-	month: number,
-	firstDayOfWeek: CalendarFirstDayOfWeek = DEFAULT_FIRST_DAY_OF_WEEK
-): CalendarMonthData => {
-	if (month === 0) {
-		year -= 1;
-		month = 12;
-	} else if (month === 13) {
-		year += 1;
-		month = 1;
-	}
-
-	let prevYear = year;
-	let nextYear = year;
-	let prevMonth = month - 1;
-	let nextMonth = month + 1;
-
-	if (month === 1) {
-		prevYear = year - 1;
-		prevMonth = 12;
-	} else if (month === 12) {
-		nextYear = year + 1;
-		nextMonth = 1;
-	}
-
-	const prevData = createDaysArray(prevYear, prevMonth, getMonthDays(prevYear, prevMonth), 'previous');
-	const currentData = createDaysArray(year, month, getMonthDays(year, month), 'current');
-	const nextData = createDaysArray(nextYear, nextMonth, getMonthDays(nextYear, nextMonth), 'next');
-	const firstWeek = getWeek(`${year}-${preZero(month)}-1`);
-	const prevDays = (firstWeek - normalizeFirstDayOfWeek(firstDayOfWeek) + 7) % 7;
-
-	return {
-		year,
-		month,
-		data: [
-			...prevData.slice(prevData.length - prevDays, prevData.length),
-			...currentData,
-			...nextData.slice(0, 42 - prevDays - currentData.length)
-		]
-	};
-};
-
-export const formatDate = (date: Date) => {
+/**
+ * YYYY-MM-DD，用于 key 与农历查询
+ * @param date ~
+ * @returns string
+ */
+export const toDateKey = (date: Date) => {
 	return `${date.getFullYear()}-${preZero(date.getMonth() + 1)}-${preZero(date.getDate())}`;
 };

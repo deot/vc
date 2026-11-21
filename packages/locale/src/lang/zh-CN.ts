@@ -191,6 +191,11 @@ export const zhCN: Language = {
 			format: 'DD天HH小时mm分ss秒SSS'
 		},
 		Calendar: {
+			today: '今天',
+			start: '开始',
+			end: '结束',
+			startAndEnd: '开始/结束',
+			yearMonth: '{year}年{number}月',
 			months: {
 				january: '一月',
 				february: '二月',

@@ -1,54 +1,82 @@
 <template>
 	<div class="v-calendar-example">
 		<div class="v-calendar-example__tools">
-			<Button @click="basic?.previous()">
-				上个月
-			</Button>
-			<Button @click="basic?.next()">
-				下个月
-			</Button>
+			<Select v-model="kind" :data="kinds" style="width: 160px;" />
+			<Checkbox v-model="lunar">
+				农历
+			</Checkbox>
+			<Checkbox v-model="readonly">
+				只读
+			</Checkbox>
 			<Button @click="handleToggleLocale">
 				{{ locale.name === 'zh-CN' ? 'English' : '中文' }}
 			</Button>
+			<span>值：{{ value }}</span>
 		</div>
-		<Calendar ref="basic">
-			<template #month="{ data }">
-				<div class="v-calendar-example__month">
-					{{ data.month }} {{ data.year }}
-				</div>
-			</template>
-			<template #week="{ data }">
-				<div class="v-calendar-example__week">
-					<span
-						v-for="item in data"
-						:key="item"
-					>
-						{{ item }}
-					</span>
-				</div>
-			</template>
-			<template #default="{ cell, today, holiday }">
-				<span
-					:class="{ 'is-selected': cell.value === today }"
-					class="v-calendar-example__date"
+		<Calendar
+			:key="kind"
+			v-model="value"
+			v-model:mode="mode"
+			:type="kind === 'daterange' ? 'daterange' : 'date'"
+			:multiple="kind === 'multiple'"
+			:lunar="lunar"
+			:readonly="readonly"
+			:disabled-date="disabledDate"
+			@date-click="handleDateClick"
+		>
+			<template #content="{ value: day }">
+				<div
+					v-for="item in events[day]"
+					:key="item"
+					class="v-calendar-example__event"
 				>
-					{{ cell.date }}
-					<small v-if="holiday.holiday">{{ holiday.holiday }}</small>
-				</span>
+					{{ item }}
+				</div>
 			</template>
 		</Calendar>
+		<p>最近点击：{{ clicked }}；视图：{{ mode }}</p>
 	</div>
 </template>
 
 <script setup>
 import { onBeforeUnmount, ref } from 'vue';
+import { enUS, zhCN } from '@deot/vc-locale';
 import { Calendar } from '..';
 import { Button } from '../../button';
+import { Checkbox } from '../../checkbox';
+import { Select } from '../../select';
 import { VcInstance } from '../../vc';
-import { enUS, zhCN } from '@deot/vc-locale';
 
-const basic = ref();
+const kinds = [
+	{ label: '单选', value: 'date' },
+	{ label: '区间', value: 'daterange' },
+	{ label: '多选', value: 'multiple' }
+];
+const kind = ref('date');
+const value = ref('');
+const mode = ref('month');
+const lunar = ref(true);
+const readonly = ref(false);
+const clicked = ref('');
 const locale = ref(zhCN);
+
+const today = new Date();
+const toKey = (offset) => {
+	const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
+	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+const events = {
+	[toKey(0)]: ['事项 A', '事项 B'],
+	[toKey(2)]: ['事项 C'],
+	[toKey(5)]: ['事项 D', '事项 E', '事项 F']
+};
+
+// 周末不可选
+const disabledDate = date => date.getDay() === 0 || date.getDay() === 6;
+
+const handleDateClick = ({ value: v }) => {
+	clicked.value = v;
+};
 
 const handleToggleLocale = () => {
 	locale.value = locale.value.name === 'zh-CN' ? enUS : zhCN;
@@ -64,50 +92,17 @@ onBeforeUnmount(() => VcInstance.configure({ locale: zhCN }));
 
 	&__tools {
 		display: flex;
-		gap: 8px;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 12px;
 		margin-bottom: 12px;
 	}
 
-	&__month {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		height: 56px;
-		color: var(--vc-calendar-color-dark-light, var(--vc-color-dark-light));
-		font-size: 22px;
-		background: var(--vc-calendar-background-color, var(--vc-background-color));
-	}
-
-	&__week {
-		display: grid;
-		grid-template-columns: repeat(7, 1fr);
-		padding: 12px 0;
-		color: var(--vc-calendar-color-dark-extralight, var(--vc-color-dark-extralight));
-		text-align: center;
-	}
-
-	&__date {
-		display: inline-flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		width: 44px;
-		height: 44px;
-		border-radius: 22px;
-
-		&.is-selected {
-			color: var(--vc-calendar-color-contrast-light, var(--vc-color-contrast-light));
-			background: var(--vc-calendar-color-primary, var(--vc-color-primary));
-		}
-
-		small {
-			max-width: 40px;
-			overflow: hidden;
-			font-size: 10px;
-			line-height: 1.2;
-			text-overflow: ellipsis;
-			white-space: nowrap;
-		}
+	&__event {
+		overflow: hidden;
+		line-height: 20px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 }
 </style>

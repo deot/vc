@@ -1,89 +1,333 @@
+@use 'sass:map';
 @use '../style/helper' as *;
 
 $component-name: vc-calendar;
 $color-contrast-light: varfix(color-contrast-light, calendar);
-$color-dark-light: varfix(color-dark-light, calendar);
 $color-dark-extralight: varfix(color-dark-extralight, calendar);
+$color-neutral-light: varfix(color-neutral-light, calendar);
 $color-primary: varfix(color-primary, calendar);
-$color-primary-light: varfix(color-primary-light, calendar);
-$background-color: varfix(background-color, calendar);
+$background-color-light: varfix(background-color-light, calendar);
+$background-color-lighter: varfix(background-color-lighter, calendar);
+$background-color-lightest: varfix(background-color-lightest, calendar);
+$background-color-primary-light: varfix(background-color-primary-light, calendar);
+$foreground-color: varfix(foreground-color, calendar);
+$foreground-color-light: varfix(foreground-color-light, calendar);
+$foreground-color-inactive: varfix(foreground-color-inactive, calendar);
+
+// 桌面端尺寸（全屏日历：带格线、日期在左上、下方为内容区）
+// 写成局部变量 --vc-calendar-<键>（默认值为下表），MCalendar 在 .vcm-calendar 上覆盖（mobile/style.scss）
+$sizes: (
+	border-width: 1px,
+	header-padding: 24px,
+	header-gap: 12px,
+	title-font-size: 20px,
+	title-line-height: 28px,
+	arrow-size: 28px,
+	arrow-font-size: 12px,
+	week-padding: 20px 16px,
+	week-font-size: 14px,
+	week-align: left,
+	row-height: 100px,
+	cell-padding: 10px,
+	cell-align: flex-start,
+	cell-divider: 1px,
+	date-direction: row,
+	date-gap: 8px,
+	day-size: 28px,
+	day-font-size: 16px,
+	lunar-font-size: 12px,
+	lunar-line-height: normal,
+	mark-height: 14px,
+	mark-font-size: 10px,
+	content-gap: 4px,
+	content-font-size: 12px,
+	year-columns: 4,
+	year-padding: 12px,
+	year-gap: 0,
+	year-item-padding: 20px 8px,
+	month-title-padding: 10px 6px,
+	month-title-font-size: 16px,
+	mini-week-padding: 6px 0,
+	mini-week-font-size: 12px,
+	mini-row-height: 26px,
+	mini-day-size: 22px,
+	mini-day-font-size: 14px,
+	slide-offset: 24px
+);
+
+@function v($key) {
+	$value: map.get($sizes, $key);
+
+	@if not $value {
+		@return null;
+	}
+
+	@return localfix(calendar, $key, $value);
+}
+
+$line: v(border-width) solid $color-neutral-light;
+$divider: v(cell-divider) solid $color-neutral-light;
 
 @include block($component-name) {
 	position: relative;
 	width: 100%;
-	overflow: hidden;
+	color: $foreground-color;
+	background-color: $background-color-lightest;
+	border: $line;
+	box-sizing: border-box;
 
-	@include element(month) {
-		@include common-flex-cc;
-
-		font-size: unitfix(24);
-		line-height: unitfix(60);
-		color: $color-dark-light;
-		background-color: $background-color;
+	@include element(header) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: v(header-gap);
+		padding: v(header-padding);
 	}
 
-	@include element(week) {
-		@include common-flex;
-
-		width: 100%;
-		padding: unitfix(15) 0;
-		font-size: unitfix(16);
-		color: $color-dark-extralight;
+	@include element(nav) {
+		display: flex;
 		align-items: center;
+		gap: v(header-gap);
+		min-width: 0;
+	}
 
-		> span {
-			width: 14.28%;
-			text-align: center;
+	@include element(arrow) {
+		@include common-flex-cc;
+
+		flex-shrink: 0;
+		width: v(arrow-size);
+		height: v(arrow-size);
+		font-size: v(arrow-font-size);
+		color: $foreground-color-light;
+		cursor: pointer;
+		background-color: $background-color-light;
+		border-radius: 50%;
+		transition: background-color 0.1s linear;
+		user-select: none;
+
+		@include when(disabled) {
+			cursor: not-allowed;
+			opacity: 0.4;
 		}
 	}
 
-	@include element(content) {
-		position: relative;
-		z-index: 0;
-		width: 100%;
+	@include element(title) {
+		font-size: v(title-font-size);
+		font-weight: 500;
+		line-height: v(title-line-height);
+		white-space: nowrap;
+		cursor: pointer;
+		user-select: none;
+	}
+
+	@include element(week) {
+		display: grid;
+		grid-template-columns: repeat(7, minmax(0, 1fr));
+		border-bottom: $line;
+	}
+
+	@include element(weekday) {
+		padding: v(week-padding);
+		font-size: v(week-font-size);
+		color: $color-dark-extralight;
+		text-align: v(week-align);
 	}
 
 	@include element(body) {
 		position: relative;
-		width: 100%;
 		overflow: hidden;
 	}
 
-	@include element(dates) {
+	@include element(row) {
+		display: grid;
+		grid-template-columns: repeat(7, minmax(0, 1fr));
+		height: v(row-height);
+		border-bottom: $line;
+
+		&:last-child {
+			border-bottom: 0;
+		}
+	}
+
+	@include element(cell) {
+		display: flex;
+		min-width: 0;
+		padding: v(cell-padding);
+		overflow: hidden;
+		color: $foreground-color-inactive;
+		cursor: pointer;
+		box-sizing: border-box;
+		flex-direction: column;
+		align-items: v(cell-align);
+
+		&:not(:last-child) {
+			border-right: $divider;
+		}
+
+		@include when(current) {
+			color: $foreground-color;
+		}
+
+		@include when(range) {
+			background-color: $background-color-primary-light;
+		}
+
+		@include when(disabled) {
+			color: $foreground-color-inactive;
+			cursor: not-allowed;
+			background-color: $background-color-light;
+		}
+
+		@include when(placeholder) {
+			cursor: default;
+		}
+	}
+
+	@include element(date) {
+		display: flex;
+		flex-direction: v(date-direction);
+		gap: v(date-gap);
+		align-items: center;
+		max-width: 100%;
+	}
+
+	@include element(day) {
+		@include common-flex-cc;
+
+		height: v(day-size);
+		min-width: v(day-size);
+		font-size: v(day-font-size);
+		font-weight: 500;
+		border: 1px solid transparent;
+		border-radius: 50%;
+		box-sizing: border-box;
+		flex-shrink: 0;
+	}
+
+	@include element(lunar) {
+		max-width: 100%;
+		overflow: hidden;
+		font-size: v(lunar-font-size);
+		line-height: v(lunar-line-height);
+		color: $foreground-color-light;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+
+		@include when(highlight) {
+			color: $color-primary;
+		}
+	}
+
+	@include element(mark) {
+		height: v(mark-height);
+		font-size: v(mark-font-size);
+		line-height: v(mark-height);
+		white-space: nowrap;
+	}
+
+	@include element(content) {
 		width: 100%;
+		min-height: 0;
+		margin-top: v(content-gap);
+		font-size: v(content-font-size);
+		color: $foreground-color;
+		box-sizing: border-box;
+		flex: 1;
+	}
+
+	@include element(year) {
+		display: grid;
+		grid-template-columns: repeat(v(year-columns), minmax(0, 1fr));
+		gap: v(year-gap);
+		padding: v(year-padding);
+	}
+
+	@include element(year-item) {
+		min-width: 0;
+		padding: v(year-item-padding);
+		cursor: pointer;
+	}
+
+	@include element(month-title) {
+		padding: v(month-title-padding);
+		font-size: v(month-title-font-size);
+		font-weight: 500;
+		color: $foreground-color;
+	}
+
+	// 年视图的迷你月：只有日期数字
+	@include element(month) {
+		@include when(mini) {
+			.vc-calendar__week {
+				border-bottom: 0;
+			}
+
+			.vc-calendar__weekday {
+				padding: v(mini-week-padding);
+				font-size: v(mini-week-font-size);
+				text-align: center;
+			}
+
+			.vc-calendar__row {
+				height: v(mini-row-height);
+				border-bottom: 0;
+			}
+
+			.vc-calendar__cell {
+				align-items: center;
+				justify-content: center;
+				padding: 0;
+				cursor: inherit;
+				background-color: transparent;
+				border-right: 0;
+			}
+
+			.vc-calendar__day {
+				height: v(mini-day-size);
+				min-width: v(mini-day-size);
+				font-size: v(mini-day-font-size);
+				font-weight: 400;
+			}
+		}
+	}
+
+	// 今天：描边；选中：填充（选中优先）
+	.vc-calendar__cell.is-today .vc-calendar__day {
+		border-color: $color-primary;
+	}
+
+	.vc-calendar__cell.is-selected .vc-calendar__day {
+		color: $color-contrast-light;
+		background-color: $color-primary;
+		border-color: $color-primary;
+	}
+
+	// 纯展示：没有选中态的手势反馈
+	@include when(readonly) {
+		.vc-calendar__cell {
+			cursor: default;
+		}
 	}
 }
 
-@include block(vc-calendar-row) {
-	@include common-flex;
-
-	@include element(item) {
-		@include common-flex-cc;
-
-		flex: 1;
-		font-size: unitfix(16);
-
-		span {
-			@include when(selected) {
-				@include common-flex-cc;
-
-				width: unitfix(40);
-				height: unitfix(40);
-				color: $color-contrast-light;
-				background-color: $color-primary;
-				border-radius: unitfix(20);
-				box-shadow: unitfix(1) unitfix(2) unitfix(10) $color-primary-light;
-			}
-		}
-
-		@include when(previous) {
-			color: $color-dark-extralight;
-		}
-
-		@include when(next) {
-			color: $color-dark-extralight;
-		}
+@media (hover: hover) {
+	.vc-calendar__arrow:not(.is-disabled):hover {
+		background-color: $color-neutral-light;
 	}
+
+	.vc-calendar:not(.is-readonly) .vc-calendar__month:not(.is-mini) .vc-calendar__cell:not(.is-disabled, .is-placeholder, .is-range):hover {
+		background-color: $background-color-lighter;
+	}
+}
+
+.vc-calendar__fade-enter-active,
+.vc-calendar__fade-leave-active {
+	transition: opacity 0.2s ease;
+}
+
+.vc-calendar__fade-enter-from,
+.vc-calendar__fade-leave-to {
+	opacity: 0;
 }
 
 .vc-calendar__right-enter-active,
@@ -96,6 +340,7 @@ $background-color: varfix(background-color, calendar);
 	will-change: transform, opacity;
 }
 
+.vc-calendar__fade-leave-active,
 .vc-calendar__right-leave-active,
 .vc-calendar__left-leave-active {
 	inset: 0;
@@ -106,11 +351,11 @@ $background-color: varfix(background-color, calendar);
 .vc-calendar__left-enter-from,
 .vc-calendar__right-leave-to {
 	opacity: 0;
-	transform: translate3d(unitfix(24), 0, 0);
+	transform: translate3d(v(slide-offset), 0, 0);
 }
 
 .vc-calendar__right-enter-from,
 .vc-calendar__left-leave-to {
 	opacity: 0;
-	transform: translate3d(unitfix(-24), 0, 0);
+	transform: translate3d(calc(-1 * #{v(slide-offset)}), 0, 0);
 }

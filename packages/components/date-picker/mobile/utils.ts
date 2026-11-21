@@ -11,6 +11,7 @@ import {
 } from '../helper/utils';
 import { findEnabledIndex } from '../../picker/mobile/utils';
 import type { PickerColumn, PickerData, PickerValue } from '../../picker/types';
+import { DEFAULT_YEAR_RANGE } from '../../calendar/utils';
 
 /**
  * 移动端日期选择的纯函数：列的生成与禁用、值的解析与格式化；MDatePickerView 与弹层共用
@@ -68,7 +69,7 @@ export const SUPPORTED_TYPES: MDatePickerType[] = [
 	'timerange'
 ];
 
-export const DEFAULT_YEAR_RANGE = [1900, 2100];
+export { DEFAULT_YEAR_RANGE };
 
 const FORMAT_MAP: Record<string, string> = {
 	...DEFAULT_FORMATS,

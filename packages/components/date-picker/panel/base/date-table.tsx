@@ -5,7 +5,7 @@ import { getDateTimestamp, nextDate, prevDate, clearTime } from '../../helper/da
 import { value2Array } from '../../helper/utils';
 import { useLocale } from '../../../locale';
 import { VcInstance } from '../../../vc';
-import { DEFAULT_FIRST_DAY_OF_WEEK, normalizeFirstDayOfWeek, sortWeekdays } from '../../../calendar/utils';
+import { DEFAULT_FIRST_DAY_OF_WEEK, getLeadingDays, sortWeekdays } from '../../../calendar/utils';
 
 const COMPONENT_NAME = 'vc-date-table';
 
@@ -61,9 +61,7 @@ export const DateTable = defineComponent({
 		});
 		// 第一格的日期：当月 1 日往前补到每周第一天（1 日正好是第一天时不补）
 		const startDate = computed(() => {
-			const first = new Date(year.value, month.value, 1);
-			const prevDays = (first.getDay() - normalizeFirstDayOfWeek(firstDayOfWeek.value) + 7) % 7;
-			return prevDate(first, prevDays);
+			return prevDate(new Date(year.value, month.value, 1), getLeadingDays(year.value, month.value, firstDayOfWeek.value));
 		});
 		// 生成日期数据
 		const rows = computed(() => {

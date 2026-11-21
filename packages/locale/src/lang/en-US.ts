@@ -191,6 +191,11 @@ export const enUS: Language = {
 			format: 'DDd HHh mmm sss SSS'
 		},
 		Calendar: {
+			today: 'Today',
+			start: 'Start',
+			end: 'End',
+			startAndEnd: 'Start/End',
+			yearMonth: '{month} {year}',
 			months: {
 				january: 'January',
 				february: 'February',

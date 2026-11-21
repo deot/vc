@@ -50,7 +50,7 @@ export const COMPONENT_COUNT = GROUPS.reduce((total, group) => total + group.nam
 export const MOBILE_COMPONENTS = new Set<AuditComponentName>([
 	'Input', 'Textarea', 'Checkbox', 'Radio', 'Switch',
 	'Picker', 'DatePicker', 'Form', 'List', 'Tabs', 'Carousel', 'UploadPicker',
-	'SortList', 'Modal', 'ActionSheet', 'Toast', 'SwipeAction', 'NavBar', 'TabBar', 'AutoComplete', 'Mention'
+	'SortList', 'Modal', 'ActionSheet', 'Toast', 'SwipeAction', 'NavBar', 'TabBar', 'AutoComplete', 'Mention', 'Calendar'
 ]);
 
 export const MOBILE_ONLY = new Set<AuditComponentName>(['Picker', 'List', 'ActionSheet', 'Toast', 'SwipeAction', 'NavBar', 'TabBar']);

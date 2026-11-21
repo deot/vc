@@ -1,0 +1,120 @@
+@use '../../style/helper' as *;
+
+$background-color-lightest: varfix(background-color-lightest, calendar);
+$color-neutral-light: varfix(color-neutral-light, calendar);
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放）：不画格线，日期居中，农历在数字下方；年视图一行 3 个月
+// 结构与颜色沿用 ../style.scss，这里只覆盖尺寸的局部变量（与两端样式的加载顺序无关）
+@include block(vcm-calendar) {
+	@include localvars(calendar, (
+		border-width: 0,
+		header-padding: remfix(24) remfix(32),
+		header-gap: remfix(16),
+		title-font-size: remfix(32),
+		title-line-height: remfix(44),
+		arrow-size: remfix(56),
+		arrow-font-size: remfix(24),
+		week-padding: remfix(16) 0,
+		week-font-size: remfix(24),
+		week-align: center,
+		row-height: remfix(120),
+		cell-padding: remfix(8) 0,
+		cell-align: center,
+		cell-divider: 0,
+		date-direction: column,
+		date-gap: 0,
+		day-size: remfix(64),
+		day-font-size: remfix(32),
+		lunar-font-size: remfix(20),
+		lunar-line-height: remfix(28),
+		mark-height: remfix(28),
+		mark-font-size: remfix(20),
+		content-gap: remfix(4),
+		content-font-size: remfix(20),
+		year-columns: 3,
+		year-padding: remfix(16),
+		year-gap: remfix(24) remfix(8),
+		year-item-padding: remfix(8),
+		month-title-padding: remfix(8),
+		month-title-font-size: remfix(28),
+		mini-week-padding: remfix(4) 0,
+		mini-week-font-size: remfix(16),
+		mini-row-height: remfix(36),
+		mini-day-size: remfix(32),
+		mini-day-font-size: remfix(18),
+		slide-offset: remfix(48)
+	));
+
+	// 横向滑动翻页，纵向交给页面滚动
+	.vc-calendar__body {
+		touch-action: pan-y;
+	}
+
+	.vc-calendar__cell,
+	.vc-calendar__arrow,
+	.vc-calendar__title {
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	// 内容区居中，与数字对齐
+	.vc-calendar__content {
+		line-height: 1;
+	}
+
+	.vc-calendar__inner {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+	}
+}
+
+// MCalendarPicker
+// 弹层里的纵向月份列表（750 稿）：标题高 88、日期行高 120（与 calendar-picker-view.tsx 的预估尺寸一致）
+// 顶部的浮动标题显示视口顶部所在的月份（虚拟列表的项用 transform 定位，不能用 sticky）
+// 日期格沿用 MCalendar 的结构与局部变量，这里只调小日期圆、留出上方「开始 / 结束 / 今天」一行
+@include block(vcm-calendar-picker-view) {
+	@include localvars(calendar, (
+		row-height: remfix(120),
+		cell-padding: remfix(4) 0,
+		day-size: remfix(56),
+		day-font-size: remfix(30)
+	));
+
+	display: flex;
+	flex-direction: column;
+	height: var(--vc-calendar-picker-height, 70vh);
+
+	.vc-calendar__week {
+		flex-shrink: 0;
+		border-bottom: 1px solid $color-neutral-light;
+	}
+
+	@include element(stage) {
+		position: relative;
+		flex: 1;
+		min-height: 0;
+	}
+
+	@include element(list) {
+		height: 100%;
+	}
+
+	.vc-calendar__month-title {
+		height: remfix(88);
+		padding: 0 remfix(32);
+		line-height: remfix(88);
+		background-color: $background-color-lightest;
+		box-sizing: border-box;
+	}
+
+	// 浮动标题：盖在列表顶部，与列表里的月份标题同样式
+	@include element(title) {
+		position: absolute;
+		top: 0;
+		right: 0;
+		left: 0;
+		z-index: 1;
+		pointer-events: none;
+	}
+}

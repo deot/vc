@@ -1,181 +1,18 @@
 /** @jsxImportSource vue */
 
-import { computed, defineComponent, ref, Transition } from 'vue';
+import { defineComponent } from 'vue';
 import { props as calendarProps } from './calendar-props';
-import { monthLocaleKeys, weekLocaleKeys } from './constants';
-import { Date2Holiday } from './date2holiday';
-import { useLocale } from '../locale';
-import { VcInstance } from '../vc';
-import { DEFAULT_FIRST_DAY_OF_WEEK, formatDate, getMonthData, sortWeekdays } from './utils';
-import type { CalendarAdjacentWeeks, CalendarCell } from './types';
+import { Button } from '../button';
+import { Scroller } from '../scroller';
+import { useCalendar } from './use-calendar';
 
 const COMPONENT_NAME = 'vc-calendar';
-
-const normalizeShowAdjacentWeeks = (value: CalendarAdjacentWeeks): [boolean, boolean] => {
-	return Array.isArray(value)
-		? value
-		: [value, value];
-};
 
 export const Calendar = defineComponent({
 	name: COMPONENT_NAME,
 	props: calendarProps,
-	setup(props, { expose, slots }) {
-		const { lang, t } = useLocale();
-		const now = new Date();
-		const currentTarget = ref(now);
-		const currentMonth = ref(now.getMonth());
-		const currentYear = ref(now.getFullYear());
-		const slideMode = ref('left');
-
-		const firstDayOfWeek = computed(() => {
-			return props.firstDayOfWeek ?? VcInstance.options.Calendar?.firstDayOfWeek ?? DEFAULT_FIRST_DAY_OF_WEEK;
-		});
-
-		const monthData = computed(() => {
-			return getMonthData(currentYear.value, currentMonth.value + 1, firstDayOfWeek.value);
-		});
-
-		const calendarRows = computed(() => {
-			const rows = Array.from({ length: 6 }, (_, rowIndex) => {
-				return monthData.value.data.slice(rowIndex * 7, rowIndex * 7 + 7);
-			});
-			const [showPrev, showNext] = normalizeShowAdjacentWeeks(props.showAdjacentWeeks);
-
-			return rows.filter((row) => {
-				if (row.every(cell => cell.type === 'previous')) {
-					return showPrev;
-				}
-
-				if (row.every(cell => cell.type === 'next')) {
-					return showNext;
-				}
-
-				return true;
-			});
-		});
-
-		const today = computed(() => {
-			return formatDate(currentTarget.value);
-		});
-
-		const monthSlotData = computed(() => {
-			return {
-				month: t(monthLocaleKeys[currentMonth.value]),
-				year: currentYear.value
-			};
-		});
-
-		const weekSlotData = computed(() => {
-			return sortWeekdays(
-				weekLocaleKeys.map(key => t(key)),
-				firstDayOfWeek.value
-			);
-		});
-
-		const next = () => {
-			slideMode.value = 'left';
-
-			if (currentMonth.value === 11) {
-				currentMonth.value = 0;
-				currentYear.value++;
-			} else {
-				currentMonth.value++;
-			}
-		};
-
-		const previous = () => {
-			slideMode.value = 'right';
-
-			if (currentMonth.value === 0) {
-				currentMonth.value = 11;
-				currentYear.value--;
-			} else {
-				currentMonth.value--;
-			}
-		};
-
-		expose({
-			previous,
-			next
-		});
-
-		const renderMonth = () => {
-			const slotProps = {
-				data: monthSlotData.value,
-				month: currentMonth.value,
-				year: currentYear.value,
-				lang: lang.value
-			};
-
-			return slots.month
-				? slots.month(slotProps)
-				: props.renderMonth(slotProps);
-		};
-
-		const renderWeek = () => {
-			const slotProps = {
-				data: weekSlotData.value,
-				date: weekSlotData.value,
-				lang: lang.value,
-				firstDayOfWeek: firstDayOfWeek.value
-			};
-
-			return slots.week
-				? slots.week(slotProps)
-				: props.renderWeek(slotProps);
-		};
-
-		const renderDate = (cell: CalendarCell, index: number) => {
-			const holiday = Date2Holiday.get(cell.value, lang.value);
-			const slotProps = {
-				cell,
-				today: today.value,
-				holiday
-			};
-
-			return (
-				<span
-					key={`${cell.value}-${index}`}
-					class={['vc-calendar-row__item', `is-${cell.type}`]}
-				>
-					{
-						slots.default
-							? slots.default(slotProps)
-							: props.renderDate(slotProps)
-					}
-				</span>
-			);
-		};
-
-		return () => {
-			return (
-				<div class="vc-calendar">
-					{ renderMonth() }
-					<div class="vc-calendar__content">
-						{ renderWeek() }
-						<div class="vc-calendar__body">
-							<Transition name={`vc-calendar__${slideMode.value}`}>
-								<div key={`${currentYear.value}-${currentMonth.value}`} class="vc-calendar__dates">
-									{
-										calendarRows.value.map((row, rowIndex) => {
-											return (
-												<div key={row.map(cell => cell.value).join('-')} class="vc-calendar-row">
-													{
-														row.map((cell, columnIndex) => {
-															return renderDate(cell, rowIndex * 7 + columnIndex);
-														})
-													}
-												</div>
-											);
-										})
-									}
-								</div>
-							</Transition>
-						</div>
-					</div>
-				</div>
-			);
-		};
+	emits: ['update:modelValue', 'update:panelDate', 'update:mode', 'change', 'date-click'],
+	setup(props, context) {
+		return useCalendar(props, context, { Button, Scroller });
 	}
 });
