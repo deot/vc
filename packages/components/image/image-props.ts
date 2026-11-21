@@ -7,7 +7,6 @@ export const props = {
 	thumbnail: String,
 	fit: String,
 	lazy: Boolean,
-	wrapper: [Object, String],
 	previewable: {
 		type: Boolean,
 		default: true

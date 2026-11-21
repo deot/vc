@@ -112,6 +112,87 @@ describe('index.ts', () => {
 		});
 	});
 
+	describe('lazy', () => {
+		class MockObserver {
+			static instances: MockObserver[] = [];
+			callback: IntersectionObserverCallback;
+			options: IntersectionObserverInit;
+			targets = new Set<Element>();
+
+			constructor(callback: IntersectionObserverCallback, options: IntersectionObserverInit) {
+				this.callback = callback;
+				this.options = options;
+				MockObserver.instances.push(this);
+			}
+
+			observe(el: Element) {
+				this.targets.add(el);
+			}
+
+			unobserve(el: Element) {
+				this.targets.delete(el);
+			}
+
+			disconnect() {
+				this.targets.clear();
+			}
+		}
+
+		const observerOf = (el: Element) => MockObserver.instances.find(i => i.targets.has(el));
+		const loaders: string[] = [];
+
+		beforeEach(() => {
+			MockObserver.instances = [];
+			loaders.length = 0;
+			vi.stubGlobal('IntersectionObserver', MockObserver);
+			vi.stubGlobal('Image', class {
+				onload = null;
+				onerror = null;
+				setAttribute() {}
+				set src(value: string) {
+					loaders.push(value);
+				}
+			});
+		});
+
+		it('loads once it enters the nearest scroller, including a wheel-driven Scroller', async () => {
+			const wrapper = mount(() => (
+				<div class="vc-scroller is-wheel" style="overflow: hidden;">
+					<Image src="a.png" lazy />
+				</div>
+			), { attachTo: document.body });
+			const el = wrapper.find('.vc-image').element;
+			const observer = observerOf(el)!;
+
+			expect(observer.options.root).toBe(wrapper.element);
+			expect(loaders).toEqual([]);
+
+			observer.callback([{ target: el, isIntersecting: false, intersectionRatio: 0 } as any], observer as any);
+			expect(loaders).toEqual([]);
+
+			observer.callback([{ target: el, isIntersecting: true, intersectionRatio: 0.2 } as any], observer as any);
+			await nextTick();
+			expect(loaders).toEqual(['a.png']);
+			// 加载后停止监听
+			expect(observerOf(el)).toBeUndefined();
+			wrapper.unmount();
+		});
+
+		it('stops observing on unmount and loads directly without IntersectionObserver', async () => {
+			const wrapper = mount(() => (<Image src="a.png" lazy />), { attachTo: document.body });
+			const el = wrapper.element;
+			expect(observerOf(el)!.options.root).toBe(null);
+			wrapper.unmount();
+			expect(observerOf(el)).toBeUndefined();
+
+			vi.stubGlobal('IntersectionObserver', undefined);
+			const wrapper$ = mount(() => (<Image src="b.png" lazy />), { attachTo: document.body });
+			await nextTick();
+			expect(loaders).toEqual(['b.png']);
+			wrapper$.unmount();
+		});
+	});
+
 	describe('pending preload', () => {
 		// 请求一直不返回的图片：记录每次创建的实例，检查回调与 src 是否被取消
 		class PendingImage {

@@ -3,12 +3,12 @@
 import { getCurrentInstance, defineComponent, ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { IS_SERVER } from '@deot/vc-shared';
 import { useAttrs } from '@deot/vc-hooks';
-import * as $ from '@deot/helper-dom';
-import { throttle } from 'lodash-es';
 // 叶子模块：只打开查看器，避免与 FilePreview（依赖 Image）形成循环引用
 import { ImagePreview } from '../file-preview/image-preview';
 import { useLocale } from '../locale';
 import { useMeasuring } from '../measuring';
+import { IntersectionManager } from '../intersection/core/manager';
+import { getScroller } from '../scroller/utils';
 import { VcInstance } from '../vc';
 import { props as imageProps } from './image-props';
 import IMGStore from './store';
@@ -44,7 +44,8 @@ export const Image = defineComponent({
 		const originW = ref(0);
 		const originH = ref(0);
 		const pStyle = ref({});
-		const scroller = ref<any>(null);
+		// 所在的滚动容器（含 vc Scroller），没有时为 window
+		let scroller: HTMLElement | Window | null = null;
 
 		const resolvePath = (path: string, type: string) => {
 			const fn = props.formatter || VcInstance.options.Image?.formatter;
@@ -64,16 +65,8 @@ export const Image = defineComponent({
 		});
 
 		const setScroller = () => {
-			if (scroller.value) return;
-			const { wrapper } = props;
-
-			if (typeof wrapper === 'object') {
-				scroller.value = wrapper;
-			} else if (typeof wrapper === 'string') {
-				scroller.value = document.querySelector(wrapper);
-			} else {
-				scroller.value = $.getScroller(instance.vnode.el as any);
-			}
+			if (scroller) return;
+			scroller = getScroller((instance.vnode.el as HTMLElement).parentElement) || window;
 		};
 
 		const initPlaceholder = () => {
@@ -96,9 +89,9 @@ export const Image = defineComponent({
 					width,
 					height
 				},
-				wrapperW: scroller.value && scroller.value.clientWidth,
+				wrapperW: scroller instanceof HTMLElement ? scroller.clientWidth : 0,
 				// TODO
-				wrapperH: scroller.value && scroller.value.clientHeight,
+				wrapperH: scroller instanceof HTMLElement ? scroller.clientHeight : 0,
 			});
 
 			if (w && h) {
@@ -109,26 +102,30 @@ export const Image = defineComponent({
 			}
 		};
 
-		let handleLazyLoad;
+		/**
+		 * 懒加载：进入所在滚动容器的可视区时加载，与 Intersection 共用 IntersectionObserver
+		 * 不支持 IntersectionObserver 时直接加载
+		 */
+		let offLazyLoad: (() => void) | undefined;
 		const removeLazyLoadListener = () => {
-			if (!scroller.value || !handleLazyLoad) return;
-			scroller.value.removeEventListener('scroll', handleLazyLoad);
-
-			scroller.value = null;
-			handleLazyLoad = null;
+			offLazyLoad?.();
+			offLazyLoad = void 0;
 		};
 
 		const addLazyLoadListener = () => {
-			if (scroller.value) {
-				handleLazyLoad = throttle(() => {
-					if ($.contains(scroller.value, instance.vnode.el as any)) {
-						isActive.value = true;
-						removeLazyLoadListener();
-					}
-				}, 200);
-				scroller.value.addEventListener('scroll', handleLazyLoad);
-				handleLazyLoad();
+			if (!IntersectionManager.supported) {
+				isActive.value = true;
+				return;
 			}
+			offLazyLoad = IntersectionManager.observe(instance.vnode.el as Element, {
+				root: scroller instanceof HTMLElement ? scroller : null,
+				rootMargin: '0px',
+				threshold: 0
+			}, ({ visible }) => {
+				if (!visible) return;
+				isActive.value = true;
+				removeLazyLoadListener();
+			});
 		};
 
 		/**
@@ -258,13 +255,12 @@ export const Image = defineComponent({
 			initPlaceholder();
 			if (measuring) return;
 			if (!props.lazy) return loadImage();
-			// 只有懒加载要监听滚动容器
 			setScroller();
 			addLazyLoadListener();
 		});
 
 		onBeforeUnmount(() => {
-			props.lazy && removeLazyLoadListener();
+			removeLazyLoadListener();
 			cancelLoad();
 		});
 		return () => {

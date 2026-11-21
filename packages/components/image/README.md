@@ -49,7 +49,7 @@ const url = ref('https://dummyimage.com/100x100/555/fff.png?text=Image');
 :::
 
 ### 懒加载
-通过设置`lazy`属性设置懒加载，当页面滚动到图片区域时才会加载该图片。
+通过设置`lazy`属性设置懒加载，图片进入所在滚动容器的可视区时才会加载。滚动容器自动查找：从图片向上最近的滚动容器（包括 vc Scroller），都没有时为浏览器视口。
 
 :::playground
 ```vue
@@ -136,8 +136,7 @@ import { Image } from '@deot/vc';
 | thumbnail | 加载和显示用的缩略图地址；提供 `src` 时预览仍使用 `src` | `string` | - | - |
 | formatter | 转换图片地址，优先于全局 `VcInstance.configure({ Image: { formatter } })` 配置 | `(data: { value: string; type: 'src' \| 'thumbnail'; instance: object }) => string` | - | - |
 | fit | 图片如何适应容器，同原生 `object-fit` | `string` | `fill`、`contain`、`cover`、`none`、`scale-down` | - |
-| lazy | 是否在滚动容器中延迟加载 | `boolean` | - | `false` |
-| wrapper | 懒加载时使用的滚动容器元素或选择器；未提供时自动查找 | `HTMLElement \| string` | - | - |
+| lazy | 是否在进入所在滚动容器的可视区时才加载 | `boolean` | - | `false` |
 | previewable | 点击已加载图片时是否打开预览；预览从这张图放大、关闭时缩回这张图 | `boolean` | - | `true` |
 
 
