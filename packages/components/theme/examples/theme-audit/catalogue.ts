@@ -39,8 +39,8 @@ export const GROUPS = [
 		id: 'utilities',
 		label: '辅助',
 		names: [
-			'Clipboard', 'Customer', 'Debounce', 'Defer', 'Expand', 'Fragment', 'Gesture', 'Popup', 'Portal', 'Print',
-			'Resizer', 'Snapshot', 'Transition'
+			'Clipboard', 'Customer', 'Debounce', 'Defer', 'Expand', 'Fragment', 'Gesture', 'Intersection', 'Popup', 'Portal',
+			'Print', 'Resizer', 'Snapshot', 'Transition'
 		]
 	}
 ] as const;

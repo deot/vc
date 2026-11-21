@@ -83,6 +83,8 @@ export * from './index-bar';
 export * from './index-bar/index.m';
 export * from './input';
 export * from './input/index.m';
+export * from './intersection';
+export * from './intersection/index.m';
 export * from './list';
 export * from './list/index.m';
 export * from './marquee';
