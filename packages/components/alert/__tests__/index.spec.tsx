@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Alert, Icon } from '@deot/vc-components';
+import { Alert, Icon, MAlert, Marquee, MMarquee } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
 import { nextTick } from 'vue';
@@ -196,5 +196,75 @@ describe('index.ts', () => {
 
 		await waitTransition();
 		expect(wrapper.find('.vc-alert__close .custom-close').exists()).toBe(true);
+	});
+
+	it('prefix slot replaces the status icon', async () => {
+		const wrapper = mount(Alert, {
+			props: { title: TITLE },
+			slots: { prefix: () => (<i class="custom-prefix" />) }
+		});
+
+		await waitTransition();
+		expect(wrapper.find('.vc-alert__prefix .custom-prefix').exists()).toBe(true);
+		expect(wrapper.find('.vc-alert__icon').exists()).toBe(false);
+		expect(wrapper.find('.vc-alert').classes()).not.toContain('has-icon');
+	});
+
+	it('suffix slot renders before close', async () => {
+		const wrapper = mount(Alert, {
+			props: { title: TITLE, closable: true },
+			slots: { suffix: () => (<span class="custom-suffix">更多</span>) }
+		});
+
+		await waitTransition();
+		const children = wrapper.find('.vc-alert').element.children;
+		expect(children[children.length - 2].className).toBe('vc-alert__suffix');
+		expect(children[children.length - 1].className).toBe('vc-alert__close');
+		expect(wrapper.find('.vc-alert__suffix .custom-suffix').exists()).toBe(true);
+	});
+
+	it('marquee: title wrapped in Marquee, options passed through (delay defaults to 1000)', async () => {
+		const wrapper = mount(() => (<Alert title={TITLE} />));
+		await waitTransition();
+		expect(wrapper.findComponent(Marquee).exists()).toBe(false);
+
+		const marquee = mount(() => (<Alert title={TITLE} marquee marqueeOptions={{ speed: 20, always: true }} />));
+		await waitTransition();
+		const comp = marquee.findComponent(Marquee);
+		expect(comp.exists()).toBe(true);
+		expect(comp.props('speed')).toBe(20);
+		expect(comp.props('always')).toBe(true);
+		expect(comp.props('delay')).toBe(1000);
+		expect(marquee.find('.vc-alert__title > .vc-marquee').text()).toContain(TITLE);
+	});
+
+	it('marquee: default slot as content', async () => {
+		const wrapper = mount(Alert, {
+			props: { marquee: true },
+			slots: { default: () => '插槽标题' }
+		});
+
+		await waitTransition();
+		expect(wrapper.find('.vc-alert__title .vc-marquee').text()).toContain('插槽标题');
+	});
+
+	it('MAlert: desktop structure + vcm-alert marker, uses MMarquee', async () => {
+		const wrapper = mount(() => (<MAlert title={TITLE} type="warning" marquee closable />));
+
+		await waitTransition();
+		const root = wrapper.find('.vc-alert');
+		expect(root.classes()).toEqual(expect.arrayContaining(['vc-alert', 'vcm-alert', 'is-warning', 'has-icon']));
+		expect(root.find('.vc-alert__close').exists()).toBe(true);
+		expect(wrapper.findComponent(MMarquee).exists()).toBe(true);
+		expect(wrapper.find('.vcm-marquee').exists()).toBe(true);
+	});
+
+	it('MAlert: close emits', async () => {
+		const wrapper = mount(MAlert, { props: { title: TITLE, closable: true } });
+
+		await waitTransition();
+		await wrapper.find('.vc-alert__close').trigger('click');
+		expect(wrapper.emitted('close')).toBeDefined();
+		expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([false]);
 	});
 });

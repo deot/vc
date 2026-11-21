@@ -49,6 +49,22 @@
 			closable
 			:description="longText"
 		/>
+
+		<h3>跑马灯</h3>
+		<Alert type="warning" marquee closable :title="longText" />
+		<Alert marquee title="内容较短也滚动" :marquee-options="{ always: true, speed: 40 }" />
+
+		<h3>prefix / suffix</h3>
+		<Alert type="warning" title="系统将于今晚进行维护。">
+			<template #suffix>
+				<a class="alert-demo__more">查看详情</a>
+			</template>
+		</Alert>
+		<Alert type="success" title="自定义前缀内容。">
+			<template #prefix>
+				<span class="alert-demo__badge">新</span>
+			</template>
+		</Alert>
 	</div>
 </template>
 
@@ -81,5 +97,20 @@ const longText = '这是一段较长的提示文字，用于检查换行后图�
 	color: var(--vc-color-primary);
 	cursor: pointer;
 	justify-self: start;
+}
+
+.alert-demo__more {
+	font-size: 13px;
+	color: var(--vc-color-primary);
+	cursor: pointer;
+}
+
+.alert-demo__badge {
+	padding: 0 4px;
+	font-size: 12px;
+	line-height: 16px;
+	color: #fff;
+	background: var(--vc-color-success);
+	border-radius: 2px;
 }
 </style>

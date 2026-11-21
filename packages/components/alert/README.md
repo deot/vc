@@ -1,11 +1,12 @@
 ## 提示框（Alert）
 
-展示需要用户关注的状态反馈或说明信息。`Alert` 与 `MAlert` 指向同一个组件。
+展示需要用户关注的状态反馈或说明信息。移动端入口导出的 `MAlert` 与 `Alert` 的属性、事件和插槽相同，样式为通栏，尺寸按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
 
 ### 何时使用
 
 - 展示与当前操作相关的信息、成功、错误或警告状态。
 - 需要补充说明内容，或允许用户主动关闭提示时。
+- 在页面顶部展示公告，内容较长时以跑马灯滚动。
 
 ### 基础用法
 
@@ -59,6 +60,103 @@ const isClosed = ref(false);
 
 `title` 和 `description` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。同时提供默认插槽或 `description` 插槽时，插槽优先。
 
+### 跑马灯
+
+`marquee` 为 `true` 时，标题行超出宽度才滚动，标题不再换行；滚动时两端渐隐。`marqueeOptions` 原样传给 [Marquee](../marquee/README.md)（如 `always`、`speed`、`delay`、`gap`、`pauseOnHover`），`delay` 默认 `1000`，即先停留 1 秒再滚动。带说明时只滚动标题行。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="alert-demo">
+		<Alert type="warning" marquee closable :title="text" />
+		<Alert marquee title="内容较短也滚动" :marquee-options="{ always: true, speed: 40 }" />
+	</div>
+</template>
+
+<script setup>
+import { Alert } from '@deot/vc';
+
+const text = '这是一条较长的公告内容，长度超过容器宽度，超出时会从右向左循环滚动显示。'.repeat(2);
+</script>
+
+<style scoped>
+.alert-demo {
+	display: grid;
+	gap: 12px;
+}
+</style>
+```
+:::
+
+### 前后内容
+
+`prefix` 插槽替换左侧状态图标（传入后不再渲染 `icon`），`suffix` 插槽位于关闭入口之前，可放“查看详情”等操作；两者与首行文字居中对齐。整条提示可直接监听 `click`。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<Alert type="warning" title="系统将于今晚进行维护。" closable>
+		<template #suffix>
+			<a class="alert-demo__more">查看详情</a>
+		</template>
+	</Alert>
+</template>
+
+<script setup>
+import { Alert } from '@deot/vc';
+</script>
+
+<style scoped>
+.alert-demo__more {
+	font-size: 13px;
+	color: var(--vc-color-primary);
+	cursor: pointer;
+}
+</style>
+```
+:::
+
+## 移动端
+
+`MAlert` 的属性、事件、插槽、结构与 `Alert` 相同，根节点另有标记类 `.vcm-alert`，跑马灯使用 `MMarquee`。样式为通栏：无边框、无圆角，标题与关闭入口使用状态色，背景与桌面端相同。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 内边距 | 16（8） 32（16） |
+| 字号、行高 | 28（14） / 40（20），单行高 72（36） |
+| 带说明 | 标题 28（14） / 500，说明 26（13），间距 4（2） |
+| 图标 | 32（16），与文字间距 16（8） |
+| 关闭入口 | 24（12），与文字间距 16（8） |
+| 跑马灯渐隐宽度 | 16（8） |
+
+两端的尺寸都写成局部变量 `--vc-alert-<键>`，桌面端的默认值为 px，移动端在 `.vcm-alert` 上覆盖，与样式的加载顺序无关。键为 `padding`、`desc-padding`、`border-width`、`radius`、`color`、`icon-size`、`desc-icon-size`、`icon-gap`、`suffix-gap`、`close-size`、`close-gap`、`close-color`、`close-hover-color`、`title-gap`、`desc-font-size`、`fade-width`；字号与行高沿用主题参数的组件级入口 `--vc-alert-font-size-small`、`--vc-alert-font-size`、`--vc-alert-line-height-large`。
+
+竖向轮播可在默认插槽中放入 `MCarousel`（`vertical`，高度 40）。
+
+```vue
+<template>
+	<MAlert type="warning" marquee closable title="这是一条较长的公告内容，超出宽度时滚动显示。" />
+</template>
+
+<script setup>
+import { MAlert } from '@deot/vc';
+</script>
+```
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-alert-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
@@ -84,7 +182,23 @@ const isClosed = ref(false);
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+| 参数 | 使用位置 | 值 |
+| --- | --- | --- |
+| alert-padding | 单行内边距 | 桌面端 `5px 11px`；移动端 16 32 |
+| alert-desc-padding | 带说明时的内边距 | 桌面端 `9px 11px`；移动端 16 32 |
+| alert-border-width | 边框宽度 | 桌面端 `1px`；移动端 `0` |
+| alert-radius | 圆角 | 桌面端 `4px`；移动端 `0` |
+| alert-color | 标题文字 | 桌面端 color-dark-light；移动端为对应状态色 |
+| alert-icon-size / alert-desc-icon-size | 状态图标（单行 / 带说明） | 桌面端 `12px` / `14px`；移动端 32 |
+| alert-icon-gap | 图标、prefix 与文字间距 | 桌面端 `8px`；移动端 16 |
+| alert-suffix-gap | suffix 与文字间距 | 桌面端 `12px`；移动端 16 |
+| alert-close-size / alert-close-gap | 关闭图标尺寸 / 与文字间距 | 桌面端 `12px` / `12px`；移动端 24 / 16 |
+| alert-close-color / alert-close-hover-color | 关闭入口 / 悬停 | 桌面端 color-dark-lightest / color-dark-light；移动端为对应状态色 |
+| alert-title-gap | 带说明时标题与说明的间距 | 桌面端 `2px`；移动端 4 |
+| alert-desc-font-size | 说明文字字号 | 桌面端 font-size-small；移动端 26 |
+| alert-fade-width | 跑马灯两端渐隐宽度 | 桌面端 `12px`；移动端 16 |
+
+移动端的值为 750 稿长度。
 
 ## API
 
@@ -98,6 +212,8 @@ const isClosed = ref(false);
 | description | 说明文字，取值与 title 相同；`description` 插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | icon | 图标配置；`true` 或空字符串使用当前 `type`，字符串使用对应图标，`false` 隐藏图标 | `string \| boolean` | - | `true` |
 | closable | 是否显示关闭入口 | `boolean` | - | `false` |
+| marquee | 标题行超出宽度时滚动（跑马灯），标题不再换行 | `boolean` | - | `false` |
+| marqueeOptions | 透传给 Marquee 的属性，如 `always`、`speed`、`delay`、`gap`、`pauseOnHover`；`delay` 默认 `1000` | `object` | - | `{}` |
 
 ### 事件
 
@@ -113,4 +229,6 @@ const isClosed = ref(false);
 | --- | --- | --- |
 | default | 标题内容，优先于 `title` | - |
 | description | 说明内容，优先于 `description` 属性 | - |
+| prefix | 替换左侧状态图标；传入后不渲染 `icon` | - |
+| suffix | 关闭入口之前的内容，如操作链接 | - |
 | close | 自定义关闭入口内容；仅在 `closable` 为 `true` 时渲染 | - |

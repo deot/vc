@@ -1,0 +1,45 @@
+@use '../../style/helper' as *;
+
+$color-error: varfix(color-error, alert);
+$color-primary: varfix(color-primary, alert);
+$color-success: varfix(color-success, alert);
+$color-warning: varfix(color-warning, alert);
+$types: (info: $color-primary, success: $color-success, error: $color-error, warning: $color-warning);
+
+// 移动端（750 稿，随 --vc-rem 缩放）：通栏，无边框、无圆角；内边距 16 32、字号 28 / 行高 40（单行高 72，375 宽下 36px）
+// 图标 32、关闭 24，间距 16；带说明时标题 28 / 500、说明 26；标题与关闭入口使用状态色，背景与桌面端相同
+// 结构与颜色沿用 ../style.scss，这里只覆盖局部变量（与两端样式的加载顺序无关）
+@include block(vcm-alert) {
+	@include localvars(alert, (
+		padding: remfix(16) remfix(32),
+		desc-padding: remfix(16) remfix(32),
+		border-width: 0,
+		radius: 0,
+		font-size-small: remfix(28),
+		font-size: remfix(28),
+		line-height-large: remfix(40),
+		desc-font-size: remfix(26),
+		icon-size: remfix(32),
+		desc-icon-size: remfix(32),
+		icon-gap: remfix(16),
+		suffix-gap: remfix(16),
+		close-size: remfix(24),
+		close-gap: remfix(16),
+		title-gap: remfix(4),
+		fade-width: remfix(16)
+	));
+
+	@each $type, $color in $types {
+		@include when($type) {
+			@include localvars(alert, (
+				color: $color,
+				close-color: $color,
+				close-hover-color: $color
+			));
+		}
+	}
+
+	.vc-alert__close {
+		-webkit-tap-highlight-color: transparent;
+	}
+}

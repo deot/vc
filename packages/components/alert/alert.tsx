@@ -1,75 +1,15 @@
-/** @jsxImportSource vue */
-
-import { defineComponent, ref, computed, watch } from 'vue';
+import { defineComponent } from 'vue';
 import { props as alertProps } from './alert-props';
-import { Customer } from '../customer';
-import { Icon } from '../icon';
-import { TransitionFade } from '../transition';
+import { useAlert } from './use-alert';
+import { Marquee } from '../marquee';
 
 const COMPONENT_NAME = 'vc-alert';
 
 export const Alert = defineComponent({
 	name: COMPONENT_NAME,
 	props: alertProps,
-	setup(props, { slots, emit }) {
-		const isActive = ref(false);
-
-		const showIcon = computed(() => props.icon !== false);
-		const iconType = computed(() => {
-			return typeof props.icon === 'string' && props.icon ? props.icon : props.type;
-		});
-
-		const handleClose = () => {
-			isActive.value = false;
-
-			emit('close');
-			emit('update:modelValue', false);
-			emit('visible-change', false);
-		};
-
-		watch(
-			() => props.modelValue,
-			(v) => {
-				isActive.value = v;
-			},
-			{ immediate: true }
-		);
-		return () => {
-			const description = slots.description || props.description;
-			return (
-				<TransitionFade>
-					{
-						isActive.value && (
-							<div
-								class={[
-									`is-${props.type}`,
-									{ 'has-icon': showIcon.value, 'has-desc': description },
-									'vc-alert'
-								]}
-							>
-								{
-									showIcon.value && (
-										<div class="vc-alert__icon">
-											<Icon type={iconType.value} />
-										</div>
-									)
-								}
-								<div class="vc-alert__content">
-									<Customer wrap class="vc-alert__title" render={slots.default || props.title} />
-									{ !!description && (<Customer wrap class="vc-alert__desc" render={description} />) }
-								</div>
-								{
-									props.closable && (
-										<div class="vc-alert__close" onClick={handleClose}>
-											{ slots.close ? slots.close() : (<Icon type="close" />) }
-										</div>
-									)
-								}
-							</div>
-						)
-					}
-				</TransitionFade>
-			);
-		};
+	emits: ['close', 'update:modelValue', 'visible-change'],
+	setup(props, context) {
+		return useAlert(props, context, { Marquee });
 	}
 });
