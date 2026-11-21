@@ -1,0 +1,198 @@
+@use '../../style/helper' as *;
+
+$color-dark: varfix(color-dark, notice);
+$color-error: varfix(color-error, notice);
+$color-primary: varfix(color-primary, notice);
+$color-success: varfix(color-success, notice);
+$color-warning: varfix(color-warning, notice);
+$color-contrast-light: varfix(color-contrast-light, notice);
+$background-color-light: varfix(background-color-light, notice);
+$background-color-lightest: varfix(background-color-lightest, notice);
+$safe-area: env(safe-area-inset-top);
+$padding-y: remfix(16);
+
+// 实底白字：图标跟随文字色
+@mixin solid($color) {
+	color: $color-contrast-light;
+
+	@include localvars(notice, (
+		background: $color,
+		shadow: none,
+		title-color: $color-contrast-light,
+		content-color: $color-contrast-light,
+		icon-color: currentColor,
+		close-color: rgb(255 255 255 / 80%),
+		close-hover-color: $color-contrast-light
+	));
+}
+
+// 主色浅底主色字（不透明，浮在页面上仍可读）
+@mixin light {
+	color: $color-primary;
+
+	@include localvars(notice, (
+		background: $background-color-light,
+		shadow: none,
+		title-color: $color-primary,
+		content-color: $color-primary,
+		icon-color: currentColor,
+		close-color: $color-primary,
+		close-hover-color: $color-primary
+	));
+
+	@supports (color: color-mix(in srgb, black, white)) {
+		& {
+			--vc-notice-background: color-mix(in srgb, #{$color-primary} 10%, #{$background-color-lightest});
+		}
+	}
+}
+
+// 移动端（750 稿，随 --vc-rem 缩放）：顶部全宽通栏，fixed 浮层，只用 transform 滑入滑出，不推动页面
+// 最小高 72（375 宽下 36px）、内边距 16 32、字号 28 / 行高 40；带正文时标题 500、正文 26；图标 28，间距 12；关闭图标 24，点击区 64
+// 状态通知为实底白字（success / warning / error），info / loading 为主色浅底主色字，无状态（open）为白底深字加阴影
+// 结构沿用 ../style.scss，这里覆盖局部变量；桌面端未声明的属性直接写在标记类下（与两端样式的加载顺序无关）
+@include block((vcm-notice-portals, vcm-notice)) {
+	@include localvars(notice, (
+		width: 100%,
+		offset: 0,
+		padding: $padding-y remfix(32),
+		gap: 0,
+		content-font-size: remfix(28),
+		radius: 0,
+		close-space: 0,
+		title-font-size: remfix(28),
+		title-color: $color-dark,
+		title-gap: 0,
+		content-line-height: remfix(40),
+		icon-size: remfix(28),
+		icon-line-height: remfix(40),
+		icon-gap: remfix(12),
+		close-top: 0,
+		close-right: 0,
+		close-height: 100%,
+		close-size: remfix(24),
+		close-color: $color-dark,
+		close-hover-color: $color-dark
+	));
+}
+
+// 容器贴顶占满宽度；top 由组件写入（750 稿）
+@include block(vcm-notice-portals) {
+	&.vc-notice-portals {
+		top: 0;
+		left: 0;
+	}
+}
+
+@include block(vcm-notice) {
+	@include when(fixed) {
+		&.vc-notice {
+			top: 0;
+			left: 0;
+		}
+	}
+
+	.vc-notice__container {
+		min-height: remfix(72);
+		text-align: center;
+		box-sizing: border-box;
+		transition: transform 0.2s;
+		user-select: none;
+		justify-content: center;
+		touch-action: none;
+		-webkit-tap-highlight-color: transparent;
+
+		// 可关闭时两侧对称留出关闭点击区，内容保持居中
+		@include when(closable) {
+			@include localvars(notice, (
+				padding: $padding-y remfix(80)
+			));
+		}
+
+		// 标题 + 正文：左对齐、占满宽度，避免短标题与多行正文各自居中；可关闭时只在右侧让出关闭点击区
+		@include when(content, true) {
+			text-align: left;
+			justify-content: flex-start;
+
+			.vc-notice__body {
+				flex: 1;
+			}
+
+			@include when(closable) {
+				@include localvars(notice, (
+					padding: $padding-y remfix(80) $padding-y remfix(32)
+				));
+			}
+		}
+
+		@include when(success) {
+			@include solid($color-success);
+		}
+
+		@include when(warning) {
+			@include solid($color-warning);
+		}
+
+		@include when(error) {
+			@include solid($color-error);
+		}
+
+		@include when(info) {
+			@include light;
+		}
+
+		@include when(loading) {
+			@include light;
+		}
+	}
+
+	.vc-notice__body {
+		flex: 0 1 auto;
+	}
+
+	.vc-notice__title {
+		line-height: remfix(40);
+
+		&.has-content {
+			font-weight: 500;
+		}
+	}
+
+	.vc-notice__title + .vc-notice__content {
+		font-size: remfix(26);
+		opacity: 0.9;
+	}
+
+	.vc-notice__close {
+		width: remfix(64);
+		margin-right: remfix(16);
+		justify-content: center;
+	}
+}
+
+// 贴顶时最上面一条延伸进安全区（与 MNavBar 相同）
+@include block(vcm-notice-portals) {
+	&:not(.is-offset) > :first-child .vc-notice__container {
+		padding-top: calc(#{$padding-y} + #{$safe-area});
+	}
+
+	&:not(.is-offset) > :first-child .vc-notice__close {
+		top: $safe-area;
+		bottom: 0;
+		height: auto;
+	}
+}
+
+@include block(vcm-notice) {
+	@include when(fixed) {
+		&:not(.is-offset) .vc-notice__container {
+			padding-top: calc(#{$padding-y} + #{$safe-area});
+		}
+
+		&:not(.is-offset) .vc-notice__close {
+			top: $safe-area;
+			bottom: 0;
+			height: auto;
+		}
+	}
+}

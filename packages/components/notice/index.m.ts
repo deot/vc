@@ -1,3 +1,9 @@
-import { Notice } from '.';
+import { MNoticeView } from './mobile/notice-view.tsx';
+import { MNotice } from './mobile/notice';
+import './style.scss';
+import './mobile/style.scss';
 
-export const MNotice = Notice;
+export {
+	MNotice,
+	MNoticeView
+};

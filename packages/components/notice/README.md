@@ -1,6 +1,6 @@
 ## 通知提醒（Notice）
 
-在页面右上角展示带标题、正文和状态图标的通知。`Notice` 同时支持组件渲染和静态方法调用；`MNotice` 是同一组件的别名，使用相同的布局。
+在页面右上角展示带标题、正文和状态图标的通知。`Notice` 同时支持组件渲染和静态方法调用。移动端入口导出的 `MNotice` 属性与方法相同，显示为顶部全宽通栏，见 [移动端](#移动端)。
 
 ### 何时使用
 
@@ -248,6 +248,40 @@ const handleClose = () => {
 ```
 :::
 
+## 移动端
+
+`MNotice` 的属性、事件、静态方法与 `Notice` 相同，结构沿用桌面端，根节点另有标记类 `.vcm-notice`：
+
+- 顶部全宽通栏，`fixed` 浮层，从上方滑入、向上滑出，只改变 `transform`，不推动页面，页面不会抖动。
+- 多条通知时新通知在最上方；计时先到的旧通知排在下方，离场时上方的通知不移动。
+- 配色：`success`、`warning`、`error` 为状态色实底白字；`info`、`loading` 为主色浅底（主色 10% 与 background-color-lightest 混合，不支持时用 background-color-light）主色字；`open()` 为白底深字加阴影。
+- 上滑关闭：手指按住时暂停计时，通知只跟随向上的位移；松手时上移超过自身高度的 30%，或快速上滑，即关闭（先执行 `onBeforeClose`，阻止时回弹）；否则回弹并重新计时。不可关闭（`closable: false`）的通知同样可以上滑关闭。
+- `top` 为 750 稿长度，默认 `0`；为 `0` 时最上面一条的上内边距加上 `env(safe-area-inset-top)`，背景延伸进安全区；放在导航栏下方时传 `88`。静态方法的 `top` 同样设置全局容器的位置，换算为 `calc(var(--vc-rem) * n)`。
+
+尺寸按 750 稿设计，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 最小高度 | 72（36） |
+| 内边距 | 16（8） 32（16）；可关闭时左右 80（40），内容保持居中；标题与正文同时存在时左对齐，可关闭时只在右侧留 80（40） |
+| 字号、行高 | 28（14） / 40（20）；带正文时标题 500，正文 26（13）、透明度 0.9 |
+| 状态图标、加载图标 | 28（14），与文字间距 12（6） |
+| 关闭图标 | 24（12），点击区 64（32），距右边 16（8） |
+
+```vue
+<template>
+	<MButton @click="handleClick">保存</MButton>
+</template>
+
+<script setup>
+import { MButton, MNotice } from '@deot/vc';
+
+const handleClick = () => {
+	MNotice.success({ content: '文件已保存' });
+};
+</script>
+```
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，组件级覆盖使用 `--vc-notice-<参数>`。局部参数仅提供组件级入口；可在组件根节点或其祖先上设置。
@@ -270,7 +304,20 @@ const handleClose = () => {
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+两端的尺寸与配色写成局部变量 `--vc-notice-<键>`，桌面端的默认值见下表，移动端在 `.vcm-notice`、`.vcm-notice-portals` 及各状态的 `.vc-notice__container.is-<mode>` 上覆盖（750 稿），与样式的加载顺序无关。
+
+| 参数 | 使用位置 | 桌面端默认值 |
+| --- | --- | --- |
+| notice-width / notice-offset | 通知宽度 / 距右边距离 | `384px` / `24px` |
+| notice-padding / notice-gap | 内边距 / 多条通知的间距 | `16px` / `16px` |
+| notice-radius / notice-shadow | 圆角 / 阴影 | `4px` / box-shadow |
+| notice-background | 面板背景 | background-color-lightest |
+| notice-content-font-size / notice-content-line-height / notice-content-color | 正文 | `14px` / `1.5` / color-dark-lighter |
+| notice-title-font-size / notice-title-color / notice-title-gap | 标题 | `16px` / color-dark-light / `8px` |
+| notice-icon-size / notice-icon-line-height / notice-icon-gap / notice-icon-color | 状态图标与加载图标 | `22px` / `24px` / `8px` / 对应状态色 |
+| notice-close-top / notice-close-right / notice-close-height / notice-close-size | 关闭图标位置与尺寸 | `16px` / `22px` / `24px` / `12px` |
+| notice-close-color / notice-close-hover-color | 关闭图标 / 悬停 | color-dark-lightest / color-dark-light |
+| notice-close-space | 可关闭时正文为关闭图标让出的宽度 | `24px` |
 
 ## API
 
@@ -285,7 +332,7 @@ const handleClose = () => {
 | duration | 挂载后自动关闭的延时，单位 ms；`0` 不自动关闭；鼠标悬停时暂停，移出后重新计时 | `number` | - | `4500` |
 | closable | 是否显示关闭图标 | `boolean` | - | `true` |
 | mode | 状态图标类型；`loading` 显示加载图标，不传时无图标 | `'info' \| 'loading' \| 'success' \| 'warning' \| 'error'` | 同类型 | - |
-| top | 距顶部的距离，单位 px。声明式 `fixed` 时作用于当前通知；静态方法的通知共用一个容器，`top` 设置容器位置，以最新一次调用为准，不传时为默认值 | `number` | - | `24` |
+| top | 距顶部的距离，单位 px（`MNotice` 为 750 稿长度，默认 `0`）。声明式 `fixed` 时作用于当前通知；静态方法的通知共用一个容器，`top` 设置容器位置，以最新一次调用为准，不传时为默认值 | `number` | - | `24` |
 | fixed | 是否固定在右上角 | `boolean` | - | `true` |
 | onBeforeClose | 点击关闭图标前的回调，参数为点击事件 | `Function` | - | - |
 
@@ -313,7 +360,7 @@ const handleClose = () => {
 | Notice.error | 展示错误通知 | `config` | `PortalLeaf` |
 | Notice.destroy | 立即销毁全部全局通知并清理全局容器 | - | `void` |
 
-`config` 除组件属性外，还支持 `insertion: 'first' | 'last'`（默认 `'first'`）和 `onClose`。`MNotice` 提供同样的方法。
+`config` 除组件属性外，还支持 `insertion: 'first' | 'last'`（默认 `'first'`）和 `onClose`。`MNotice` 提供同样的方法，使用独立的全局容器，与 `Notice` 互不影响。
 
 组件 ref 和返回对象的 `wrapper` 暴露以下实例方法：
 

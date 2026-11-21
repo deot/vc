@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Notice, NoticeView } from '@deot/vc-components';
+import { Notice, NoticeView, MNotice } from '@deot/vc-components';
 import { mount, config } from '@vue/test-utils';
 import { Utils } from '@deot/dev-test';
 import { nextTick, h } from 'vue';
@@ -594,5 +594,187 @@ describe('Notice 修复与扩展', () => {
 		const validator = (NoticeView as any).props.mode.validator;
 		expect(validator('info')).toBe(true);
 		expect(validator('xinfo')).toBe(false);
+	});
+});
+
+// jsdom 没有 Touch：用带 touches / changedTouches 的事件模拟一根手指
+const touch = (el: Element, type: string, y: number) => {
+	const point = { identifier: 1, clientX: 100, clientY: y, screenX: 100, screenY: y, pageX: 100, pageY: y };
+	const event = new Event(type, { bubbles: true, cancelable: true });
+	Object.assign(event, {
+		touches: type === 'touchend' ? [] : [point],
+		changedTouches: [point]
+	});
+	el.dispatchEvent(event);
+	return event;
+};
+
+describe('MNotice', () => {
+	afterEach(async () => {
+		vi.useRealTimers();
+		vi.restoreAllMocks();
+		MNotice.destroy();
+		Notice.destroy();
+		await flush();
+		document.body.innerHTML = '';
+	});
+
+	it('同结构：桌面端类名 + 标记类 vcm-notice，容器带 is-<mode>', async () => {
+		const wrapper = mount(MNotice, { props: { mode: 'success', title: 'a', duration: 0 } });
+		await flush();
+
+		expect(wrapper.classes()).toEqual(expect.arrayContaining(['vc-notice', 'vcm-notice', 'is-fixed']));
+		expect(wrapper.find('.vc-notice__container').classes()).toContain('is-success');
+		expect(wrapper.find('.vc-notice__icon.is-success').exists()).toBe(true);
+		wrapper.unmount();
+	});
+
+	it('标题与正文同时存在时容器带 has-content', async () => {
+		const wrapper = mount(MNotice, { props: { title: 't', content: 'c', duration: 0 } });
+		await flush();
+		const container = wrapper.find('.vc-notice__container');
+		expect(container.classes()).toContain('has-content');
+
+		await wrapper.setProps({ content: '' });
+		expect(container.classes()).not.toContain('has-content');
+		wrapper.unmount();
+	});
+
+	it('top 为 750 稿长度，默认 0；非 0 时带 is-offset', async () => {
+		const wrapper = mount(MNotice, { props: { duration: 0 } });
+		await flush();
+		expect((wrapper.element as HTMLElement).style.top).toBe('calc(var(--vc-rem) * 0)');
+		expect(wrapper.classes()).not.toContain('is-offset');
+
+		await wrapper.setProps({ top: 88 });
+		expect((wrapper.element as HTMLElement).style.top).toBe('calc(var(--vc-rem) * 88)');
+		expect(wrapper.classes()).toContain('is-offset');
+		wrapper.unmount();
+	});
+
+	it('静态方法：移动端独立容器 vcm-notice-portals，top 换算为 rem', async () => {
+		MNotice.success({ content: 'm', duration: 0, top: 88 });
+		Notice.info({ content: 'd', duration: 0 });
+		await flush();
+
+		const el = document.querySelector('.vcm-notice-portals') as HTMLElement;
+		expect(el.classList.contains('vc-notice-portals')).toBe(true);
+		expect(el.style.top).toBe('calc(var(--vc-rem) * 88)');
+		expect(el.classList.contains('is-offset')).toBe(true);
+		expect(el.querySelector('.vcm-notice .vc-notice__container.is-success')).not.toBeNull();
+		expect(document.querySelectorAll('.vc-notice-portals').length).toBe(2);
+
+		MNotice.destroy();
+		await flush();
+		expect(document.querySelector('.vcm-notice-portals')).toBeNull();
+		// 桌面端通知不受影响
+		expect(document.querySelectorAll('.vc-notice').length).toBe(1);
+	});
+
+	it('上滑超过阈值关闭（先走 onBeforeClose），向下拖动不跟随', async () => {
+		const onBeforeClose = vi.fn(() => true);
+		const wrapper = mount(MNotice, { props: { content: 'a', duration: 0, onBeforeClose } });
+		await flush();
+		const el = wrapper.find('.vc-notice__container').element as HTMLElement;
+		Object.defineProperty(el, 'offsetHeight', { value: 100 });
+
+		let now = 1000;
+		vi.spyOn(Date, 'now').mockImplementation(() => now);
+
+		// 向下：不跟随，不关闭
+		touch(el, 'touchstart', 100);
+		now += 100;
+		touch(el, 'touchmove', 160);
+		await nextTick();
+		expect(el.style.transform).toBe('translateY(0px)');
+		touch(el, 'touchend', 160);
+		await flush();
+		expect(onBeforeClose).not.toHaveBeenCalled();
+		expect(isVisible(wrapper)).toBe(true);
+
+		// 慢速上移未过阈值：回弹
+		touch(el, 'touchstart', 100);
+		now += 100;
+		touch(el, 'touchmove', 90);
+		await nextTick();
+		expect(el.style.transform).toBe('translateY(-10px)');
+		touch(el, 'touchend', 90);
+		await flush();
+		expect(onBeforeClose).not.toHaveBeenCalled();
+		expect(el.style.transform).toBe('');
+
+		// 上移超过 30%：关闭
+		touch(el, 'touchstart', 100);
+		now += 100;
+		touch(el, 'touchmove', 60);
+		touch(el, 'touchend', 60);
+		await flushTransition();
+		expect(onBeforeClose).toHaveBeenCalledTimes(1);
+		// 保持上移的位置继续离场
+		expect(el.style.transform).toBe('translateY(-40px)');
+		expect(wrapper.emitted('close')).toBeTruthy();
+		wrapper.unmount();
+	});
+
+	it('快速上滑即使距离短也关闭；onBeforeClose 阻止时回弹', async () => {
+		const onBeforeClose = vi.fn(() => ({ prevent: true }));
+		const wrapper = mount(MNotice, { props: { content: 'a', duration: 0, onBeforeClose } });
+		await flush();
+		const el = wrapper.find('.vc-notice__container').element as HTMLElement;
+		Object.defineProperty(el, 'offsetHeight', { value: 100 });
+
+		let now = 1000;
+		vi.spyOn(Date, 'now').mockImplementation(() => now);
+
+		touch(el, 'touchstart', 100);
+		now += 10;
+		touch(el, 'touchmove', 90);
+		touch(el, 'touchend', 90);
+		await flush();
+		expect(onBeforeClose).toHaveBeenCalledTimes(1);
+		expect(isVisible(wrapper)).toBe(true);
+		expect(el.style.transform).toBe('');
+		wrapper.unmount();
+	});
+
+	it('按住时暂停自动关闭，松手回弹后重新计时', async () => {
+		vi.useFakeTimers();
+		const wrapper = mount(MNotice, { props: { content: 'a', duration: 100 } });
+		await nextTick();
+		const el = wrapper.find('.vc-notice__container').element as HTMLElement;
+
+		touch(el, 'touchstart', 100);
+		vi.advanceTimersByTime(1000);
+		await nextTick();
+		expect(isVisible(wrapper)).toBe(true);
+
+		touch(el, 'touchend', 100);
+		await nextTick();
+		await nextTick();
+		vi.advanceTimersByTime(50);
+		await nextTick();
+		expect(isVisible(wrapper)).toBe(true);
+		expect(wrapper.emitted('close')).toBeFalsy();
+		// 计时结束后离场（TransitionSlide 离场 300ms）
+		vi.advanceTimersByTime(60);
+		await nextTick();
+		vi.advanceTimersByTime(500);
+		await nextTick();
+		expect(wrapper.emitted('close')).toBeTruthy();
+		wrapper.unmount();
+	});
+
+	it('桌面端没有拖动', async () => {
+		const wrapper = mount(NoticeView, { props: { content: 'a', duration: 0, fixed: false } });
+		await flush();
+		const el = wrapper.find('.vc-notice__container').element as HTMLElement;
+		touch(el, 'touchstart', 100);
+		touch(el, 'touchmove', 0);
+		await nextTick();
+		expect(el.style.transform).toBe('');
+		touch(el, 'touchend', 0);
+		await flush();
+		expect(isVisible(wrapper)).toBe(true);
+		wrapper.unmount();
 	});
 });
