@@ -35,6 +35,13 @@ export type Options = Partial<{
 	Image: {
 		formatter?: ImageFormatter;
 	};
+	// 每周第一天，1 至 7 表示周一至周日；组件未传 firstDayOfWeek 时使用，仍缺省为 7
+	Calendar: {
+		firstDayOfWeek?: number;
+	};
+	DatePicker: {
+		firstDayOfWeek?: number;
+	};
 	FilePreview: FilePreviewOptions;
 	Descriptions: DescriptionsOptions;
 	Tour: TourConfig;
@@ -81,8 +88,14 @@ export type ResolvedOptions = Options & {
 export const defaults: ResolvedOptions = {
 	locale: zhCN,
 	sanitize: nil,
+	Calendar: {
+		firstDayOfWeek: nil
+	},
 	Customer: {
 		formatter: nil
+	},
+	DatePicker: {
+		firstDayOfWeek: nil
 	},
 	Descriptions: {
 		renderValue: nil

@@ -1,7 +1,10 @@
 import { preZero } from '@deot/helper-utils';
 import type { CalendarCell, CalendarCellType, CalendarFirstDayOfWeek, CalendarMonthData } from './types';
 
-export const normalizeFirstDayOfWeek = (firstDayOfWeek: CalendarFirstDayOfWeek = 1): number => {
+// 未传 firstDayOfWeek 且全局未配置时从周日开始
+export const DEFAULT_FIRST_DAY_OF_WEEK = 7;
+
+export const normalizeFirstDayOfWeek = (firstDayOfWeek: CalendarFirstDayOfWeek = DEFAULT_FIRST_DAY_OF_WEEK): number => {
 	const day = ((Math.trunc(firstDayOfWeek) - 1) % 7 + 7) % 7 + 1;
 
 	return day === 7 ? 0 : day;
@@ -9,7 +12,7 @@ export const normalizeFirstDayOfWeek = (firstDayOfWeek: CalendarFirstDayOfWeek =
 
 export const sortWeekdays = <T>(
 	weekdays: T[],
-	firstDayOfWeek: CalendarFirstDayOfWeek = 1
+	firstDayOfWeek: CalendarFirstDayOfWeek = DEFAULT_FIRST_DAY_OF_WEEK
 ): T[] => {
 	const start = normalizeFirstDayOfWeek(firstDayOfWeek);
 
@@ -50,7 +53,7 @@ export const getWeek = (dateString?: string | null): number => {
 export const getMonthData = (
 	year: number,
 	month: number,
-	firstDayOfWeek: CalendarFirstDayOfWeek = 1
+	firstDayOfWeek: CalendarFirstDayOfWeek = DEFAULT_FIRST_DAY_OF_WEEK
 ): CalendarMonthData => {
 	if (month === 0) {
 		year -= 1;

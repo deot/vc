@@ -173,6 +173,29 @@ const timeOptions = ref({
 ```
 :::
 
+### 周起始日
+
+`firstDayOfWeek` 使用 `1` 至 `7` 表示周一至周日，默认 `7`（周日），单日期与范围面板都生效。未传时读取全局 `VcInstance.options.DatePicker.firstDayOfWeek`，见[全局配置](../vc/README.md)。1 日正好是每周第一天时不补上月日期，面板固定 6 行。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+```vue
+<template>
+	<div style="display: grid; gap: 12px; max-width: 420px">
+		<DatePicker v-model="date" :first-day-of-week="1" placeholder="周一开始" />
+		<DatePicker v-model="range" :first-day-of-week="1" type="daterange" placeholder="周一开始" />
+	</div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { DatePicker } from '@deot/vc';
+
+const date = ref('');
+const range = ref([]);
+</script>
+```
+:::
+
 ### 手动输入
 
 默认可以直接在输入框里键入：值合法时面板跳到该值，按 Enter、焦点离开或点击外部时提交，输入框随后按 `format` 显示。数字可以不补零、分隔符可以不同，例如 `2024-3-5`、`2024/03/05` 都按 `YYYY-MM-DD` 解析为 3 月 5 日；超出范围（2 月 30 日、25 点）或被禁用的值不会生效，关闭后恢复原值。
@@ -384,6 +407,7 @@ const value = ref(['2024-03-10', '2024-03-20']);
 | startDate | 无选中值时的初始面板日期 | `Date` | - | 当前日期 |
 | splitPanels | 范围面板独立翻页，同时维持左右顺序 | `boolean` | - | `true` |
 | separator | 范围显示与字符串解析分隔符 | `string` | - | `' - '` |
+| firstDayOfWeek | 每周第一天；`1` 至 `7` 分别表示周一至周日。未传时读取全局 `DatePicker.firstDayOfWeek`，仍缺省为 `7`；仅桌面端 | `number` | `1`-`7` | `7` |
 | disabledDate | 判断日期是否禁用；季度表格传入 0–3 的季度索引，快捷项可能传入日期数组 | `(value: Date \| Date[] \| number) => boolean` | - | - |
 | shortcuts | 快捷项，见下文 | `object[]` | - | - |
 | timePickerOptions | 日期时间模式的时间配置，见下文 | `object` | - | `{}` |

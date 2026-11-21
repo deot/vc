@@ -184,7 +184,7 @@ import { Calendar } from '@deot/vc';
 
 ### 周起始日与相邻整周
 
-`firstDayOfWeek` 使用 `1` 至 `7` 表示周一至周日。`showAdjacentWeeks` 控制首尾整周都不属于当前月份时是否保留。
+`firstDayOfWeek` 使用 `1` 至 `7` 表示周一至周日，默认 `7`（周日）；未传时读取全局 `VcInstance.options.Calendar.firstDayOfWeek`，见[全局配置](../vc/README.md)。`showAdjacentWeeks` 控制首尾整周都不属于当前月份时是否保留。
 
 :::playground
 <!--
@@ -197,7 +197,7 @@ import { Calendar } from '@deot/vc';
 ```vue
 <template>
 	<Calendar
-		:first-day-of-week="7"
+		:first-day-of-week="1"
 		:show-adjacent-weeks="[false, false]"
 	/>
 </template>
@@ -236,7 +236,7 @@ import { Calendar } from '@deot/vc';
 | renderDate | 渲染日期单元 | `({ cell, today, holiday }) => VNodeChild` | - | 内置日期渲染 |
 | renderMonth | 渲染月份标题 | `({ data, month, year, lang }) => VNodeChild` | - | 内置月份渲染 |
 | renderWeek | 渲染星期标题 | `({ data, date, lang, firstDayOfWeek }) => VNodeChild` | - | 内置星期渲染 |
-| firstDayOfWeek | 每周第一天；`1` 至 `7` 分别表示周一至周日 | `number` | `1`-`7` | `1` |
+| firstDayOfWeek | 每周第一天；`1` 至 `7` 分别表示周一至周日。未传时读取全局 `Calendar.firstDayOfWeek`，仍缺省为 `7` | `number` | `1`-`7` | `7` |
 | showAdjacentWeeks | 是否展示首尾整周；数组依次控制首部和尾部 | `boolean \| [boolean, boolean]` | - | `[false, true]` |
 
 ### Calendar 插槽

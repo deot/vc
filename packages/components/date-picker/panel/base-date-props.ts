@@ -13,6 +13,7 @@ export const props = {
 		default: () => ([])
 	},
 	startDate: Date,
+	firstDayOfWeek: Number,
 	focusedDate: [Date, Array],
 	showTime: {
 		type: Boolean,

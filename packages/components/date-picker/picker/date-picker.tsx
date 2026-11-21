@@ -27,6 +27,7 @@ export const DatePicker = createPicker(COMPONENT_NAME, datePickerProps, () => {
 	const panelOptions = computed(() => {
 		return {
 			disabledDate: props.disabledDate!,
+			firstDayOfWeek: props.firstDayOfWeek,
 			shortcuts: props.shortcuts,
 			timePickerOptions: props.timePickerOptions,
 		};

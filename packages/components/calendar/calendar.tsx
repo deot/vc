@@ -5,7 +5,8 @@ import { props as calendarProps } from './calendar-props';
 import { monthLocaleKeys, weekLocaleKeys } from './constants';
 import { Date2Holiday } from './date2holiday';
 import { useLocale } from '../locale';
-import { formatDate, getMonthData, sortWeekdays } from './utils';
+import { VcInstance } from '../vc';
+import { DEFAULT_FIRST_DAY_OF_WEEK, formatDate, getMonthData, sortWeekdays } from './utils';
 import type { CalendarAdjacentWeeks, CalendarCell } from './types';
 
 const COMPONENT_NAME = 'vc-calendar';
@@ -27,8 +28,12 @@ export const Calendar = defineComponent({
 		const currentYear = ref(now.getFullYear());
 		const slideMode = ref('left');
 
+		const firstDayOfWeek = computed(() => {
+			return props.firstDayOfWeek ?? VcInstance.options.Calendar?.firstDayOfWeek ?? DEFAULT_FIRST_DAY_OF_WEEK;
+		});
+
 		const monthData = computed(() => {
-			return getMonthData(currentYear.value, currentMonth.value + 1, props.firstDayOfWeek);
+			return getMonthData(currentYear.value, currentMonth.value + 1, firstDayOfWeek.value);
 		});
 
 		const calendarRows = computed(() => {
@@ -64,7 +69,7 @@ export const Calendar = defineComponent({
 		const weekSlotData = computed(() => {
 			return sortWeekdays(
 				weekLocaleKeys.map(key => t(key)),
-				props.firstDayOfWeek
+				firstDayOfWeek.value
 			);
 		});
 
@@ -113,7 +118,7 @@ export const Calendar = defineComponent({
 				data: weekSlotData.value,
 				date: weekSlotData.value,
 				lang: lang.value,
-				firstDayOfWeek: props.firstDayOfWeek
+				firstDayOfWeek: firstDayOfWeek.value
 			};
 
 			return slots.week

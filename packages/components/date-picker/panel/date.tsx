@@ -195,6 +195,7 @@ export const DatePanel = defineComponent({
 								<DateTable
 									value={props.value}
 									panelDate={panelDate.value}
+									firstDayOfWeek={props.firstDayOfWeek}
 									disabledDate={props.disabledDate}
 									focusedDate={props.focusedDate as Date}
 									onPick={handlePick}

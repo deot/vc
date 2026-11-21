@@ -367,6 +367,7 @@ export const DateRangePanel = defineComponent({
 										<DateTable
 											value={dates.value}
 											panelDate={leftPanelDate.value}
+											firstDayOfWeek={props.firstDayOfWeek}
 											disabledDate={props.disabledDate}
 											focusedDate={props.focusedDate as Date}
 											rangeState={rangeState.value}
@@ -424,6 +425,7 @@ export const DateRangePanel = defineComponent({
 										<DateTable
 											value={dates.value}
 											panelDate={rightPanelDate.value}
+											firstDayOfWeek={props.firstDayOfWeek}
 											disabledDate={props.disabledDate}
 											focusedDate={props.focusedDate as Date}
 											rangeState={rangeState.value}

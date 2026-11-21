@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { DatePicker } from '@deot/vc-components';
+import { DatePicker, VcInstance } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi, onTestFinished } from 'vitest';
@@ -45,14 +45,12 @@ import {
 } from '../helper/utils';
 import {
 	modifyDate,
-	getFirstDayOfMonth,
 	clearTime,
 	getDateTimestamp,
 	getDayCountOfMonth,
 	changeYearMonthAndClampDate,
 	prevDate,
 	nextDate,
-	getStartDateOfMonth,
 	prevMonth,
 	nextMonth,
 	prevYear,
@@ -2039,30 +2037,65 @@ describe('Base sub-components direct mount', () => {
 		wrapper.unmount();
 	});
 
-	it('DateTable firstDayOfWeek 边界值（1 / 7）', async () => {
-		const w1 = mount(() => (
-			<DateTable
-				panelDate={new Date(2023, 0, 15)}
-				value={[]}
-				focusedDate={new Date(2023, 0, 15)}
-				firstDayOfWeek={1}
-			/>
-		), { attachTo: document.body });
-		await nextTick();
-		expect(w1.findAll('.vc-date-table__header th').length).toBe(7);
-		w1.unmount();
+	it('DateTable firstDayOfWeek 1–7：表头、首格日期与上下月类型', async () => {
+		const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+		// 2023-01-01 是周日：firstDayOfWeek 为 7 时 1 日在第一格
+		for (let firstDayOfWeek = 1; firstDayOfWeek <= 7; firstDayOfWeek++) {
+			const onPick = vi.fn();
+			const wrapper = mount(() => (
+				<DateTable
+					panelDate={new Date(2023, 0, 15)}
+					value={[]}
+					focusedDate={new Date(2023, 0, 15)}
+					firstDayOfWeek={firstDayOfWeek}
+					onPick={onPick}
+				/>
+			), { attachTo: document.body });
+			await nextTick();
+			const start = firstDayOfWeek % 7;
+			const headers = wrapper.findAll('.vc-date-table__header th').map(i => i.text());
+			expect(headers).toEqual([...weekdays.slice(start), ...weekdays.slice(0, start)]);
 
-		const w7 = mount(() => (
-			<DateTable
-				panelDate={new Date(2023, 1, 15)}
-				value={[]}
-				focusedDate={new Date(2023, 1, 15)}
-				firstDayOfWeek={7}
-			/>
-		), { attachTo: document.body });
+			const cells = wrapper.findAll('.vc-date-table__cell');
+			const prevDays = (0 - start + 7) % 7;
+			expect(cells).toHaveLength(42);
+			expect(cells.filter(i => i.classes('is-prev-month'))).toHaveLength(prevDays);
+			expect(cells.filter(i => i.classes('is-normal'))).toHaveLength(31);
+			expect(cells.filter(i => i.classes('is-next-month'))).toHaveLength(42 - 31 - prevDays);
+			expect(cells[prevDays].text()).toBe('1');
+			expect(cells[prevDays].classes()).toContain('is-normal');
+			if (prevDays) expect(cells[0].text()).toBe(String(32 - prevDays));
+
+			// 点击的格子与 pick 出的日期一致
+			await cells[prevDays + 9].find('span').trigger('click');
+			expect(onPick.mock.calls[0][0].getTime()).toBe(new Date(2023, 0, 10).getTime());
+			wrapper.unmount();
+		}
+	});
+
+	it('DateTable firstDayOfWeek 缺省读取全局 DatePicker.firstDayOfWeek，仍缺省为周日', async () => {
+		onTestFinished(() => {
+			VcInstance.configure({ DatePicker: { firstDayOfWeek: undefined } });
+		});
+		const wrapper = mount(() => (
+			<DateTable panelDate={new Date(2024, 4, 1)} value={[]} focusedDate={new Date(2024, 4, 1)} />
+		));
+		const prop = mount(() => (
+			<DateTable panelDate={new Date(2024, 4, 1)} value={[]} focusedDate={new Date(2024, 4, 1)} firstDayOfWeek={3} />
+		));
+		const first = () => wrapper.find('.vc-date-table__header th').text();
+		expect(first()).toBe('日');
+
+		VcInstance.configure({ DatePicker: { firstDayOfWeek: 1 } });
 		await nextTick();
-		expect(w7.findAll('.vc-date-table__header th').length).toBe(7);
-		w7.unmount();
+		expect(first()).toBe('一');
+		expect(wrapper.find('.vc-date-table__cell').text()).toBe('29');
+		// prop 优先于全局；2024-05-01 是周三，正好是第一天时不补上月
+		expect(prop.find('.vc-date-table__header th').text()).toBe('三');
+		expect(prop.find('.vc-date-table__cell').text()).toBe('1');
+		expect(prop.find('.vc-date-table__cell').classes()).toContain('is-normal');
+		wrapper.unmount();
+		prop.unmount();
 	});
 
 	it('QuarterTable cell click + mousemove + customClass + 禁用', async () => {
@@ -2404,13 +2437,6 @@ describe('helper/date-utils unit', () => {
 		expect(result.getSeconds()).toBe(45);
 	});
 
-	it('getFirstDayOfMonth：周日返回 7', () => {
-		// 2023-01-01 是周日
-		expect(getFirstDayOfMonth(new Date(2023, 0, 1))).toBe(7);
-		// 2023-02-01 是周三
-		expect(getFirstDayOfMonth(new Date(2023, 1, 1))).toBe(3);
-	});
-
 	it('clearTime / getDateTimestamp', () => {
 		const d = new Date(2023, 0, 1, 8, 30, 0);
 		expect(clearTime(d).getHours()).toBe(0);
@@ -2433,14 +2459,6 @@ describe('helper/date-utils unit', () => {
 		expect(nextDate(d, 5).getDate()).toBe(15);
 		expect(prevDate(d).getDate()).toBe(9);
 		expect(nextDate(d).getDate()).toBe(11);
-	});
-
-	it('getStartDateOfMonth 返回的是上一周末/周日', () => {
-		const r = getStartDateOfMonth(2023, 0);
-		expect(r instanceof Date).toBe(true);
-		// 2024-04 1号是周一，触发 day !== 0 分支
-		const r2 = getStartDateOfMonth(2024, 3);
-		expect(r2 instanceof Date).toBe(true);
 	});
 
 	it('prevMonth / nextMonth 处理 0/11 月跨年', () => {
@@ -3635,5 +3653,63 @@ describe('月份的禁用判断、单个 D 的解析', () => {
 			<DatePicker modelValue="2024-3-15" format="YYYY-M-D" />
 		));
 		expect((wrapper.find('input').element as HTMLInputElement).value).toBe('2024-3-15');
+	});
+});
+
+describe('DatePicker firstDayOfWeek', () => {
+	afterEach(() => {
+		VcInstance.configure({ DatePicker: { firstDayOfWeek: undefined } });
+		document.body.innerHTML = '';
+	});
+
+	const getHeaders = () => Array.from(document.querySelectorAll('.vc-date-table'))
+		.map(table => table.querySelector('.vc-date-table__header th')!.textContent);
+
+	it('传到单日期与范围面板', async () => {
+		const wrapper = mount(() => (
+			<div>
+				<DatePicker open firstDayOfWeek={1} modelValue={new Date(2023, 0, 15)} />
+				<DatePicker open type="daterange" firstDayOfWeek={1} modelValue={[new Date(2023, 0, 15), new Date(2023, 1, 15)]} />
+			</div>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(20);
+		await flush();
+		expect(getHeaders()).toEqual(['一', '一', '一']);
+		wrapper.unmount();
+	});
+
+	it('全局配置生效，prop 优先', async () => {
+		VcInstance.configure({ DatePicker: { firstDayOfWeek: 6 } });
+		const wrapper = mount(() => (
+			<div>
+				<DatePicker open modelValue={new Date(2023, 0, 15)} />
+				<DatePicker open firstDayOfWeek={7} modelValue={new Date(2023, 0, 15)} />
+			</div>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(20);
+		await flush();
+		expect(getHeaders()).toEqual(['六', '日']);
+		wrapper.unmount();
+	});
+
+	it('点击日期提交的值不受 firstDayOfWeek 影响', async () => {
+		const onChange = vi.fn();
+		const wrapper = mount(() => (
+			<DatePicker open firstDayOfWeek={4} modelValue={new Date(2023, 0, 15)} onChange={onChange} />
+		), { attachTo: document.body });
+		await flush();
+		await sleep(20);
+		await flush();
+		const cell = Array.from(document.querySelectorAll('.vc-date-table__cell.is-normal'))
+			.find(i => i.textContent === '20') as HTMLElement;
+		(cell.querySelector('span') as HTMLElement).click();
+		await flush();
+		await sleep(120);
+		await flush();
+		expect(onChange).toHaveBeenCalled();
+		expect(onChange.mock.calls[0][0]).toBe('2023-01-20');
+		wrapper.unmount();
 	});
 });

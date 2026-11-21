@@ -16,7 +16,7 @@ describe('index.ts', () => {
 	});
 
 	afterEach(() => {
-		VcInstance.configure({ locale: zhCN });
+		VcInstance.configure({ locale: zhCN, Calendar: { firstDayOfWeek: undefined } });
 		vi.useRealTimers();
 	});
 
@@ -34,10 +34,10 @@ describe('index.ts', () => {
 		expect(wrapper.find('.vc-calendar__month').text()).toContain('五月');
 		expect(wrapper.find('.vc-calendar__month').text()).toContain('2024');
 		expect(wrapper.findAll('.vc-calendar__week span')).toHaveLength(7);
-		expect(wrapper.findAll('.vc-calendar__week span').map(i => i.text())).toEqual(['一', '二', '三', '四', '五', '六', '日']);
+		expect(wrapper.findAll('.vc-calendar__week span').map(i => i.text())).toEqual(['日', '一', '二', '三', '四', '五', '六']);
 		expect(wrapper.findAll('.vc-calendar-row')).toHaveLength(6);
 		expect(wrapper.findAll('.vc-calendar-row__item')).toHaveLength(42);
-		expect(wrapper.findAll('.vc-calendar-row__item').slice(0, 7).map(i => i.text())).toEqual(['29', '30', '1', '2', '3', '4', '5']);
+		expect(wrapper.findAll('.vc-calendar-row__item').slice(0, 7).map(i => i.text())).toEqual(['28', '29', '30', '1', '2', '3', '4']);
 		expect(wrapper.find('.is-selected').text()).toBe('15');
 	});
 
@@ -71,8 +71,8 @@ describe('index.ts', () => {
 		expect(getMonthData(2019, 8).month).toBe(8);
 		expect(getMonthData(2019, 13).month).toBe(1);
 		expect(getMonthData(2024, 5).data).toHaveLength(42);
-		expect(getMonthData(2024, 5).data[0].value).toBe('2024-04-29');
-		expect(getMonthData(2024, 5, 7).data[0].value).toBe('2024-04-28');
+		expect(getMonthData(2024, 5).data[0].value).toBe('2024-04-28');
+		expect(getMonthData(2024, 5, 1).data[0].value).toBe('2024-04-29');
 		expect(getWeek('2024-05-15')).toBe(3);
 		expect(getWeek()).toBe(new Date().getDay());
 	});
@@ -86,20 +86,39 @@ describe('index.ts', () => {
 		await nextTick();
 
 		expect(wrapper.find('.vc-calendar__month').text()).toContain('May');
-		expect(wrapper.findAll('.vc-calendar__week span').map(i => i.text())).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+		expect(wrapper.findAll('.vc-calendar__week span').map(i => i.text())).toEqual(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']);
 	});
 
-	it('firstDayOfWeek: 支持周日作为第一列', () => {
-		const wrapper = mount(() => (<Calendar firstDayOfWeek={7} />));
+	it('firstDayOfWeek: 默认周日，支持周一作为第一列', () => {
+		const wrapper = mount(() => (<Calendar firstDayOfWeek={1} />));
 
-		expect(wrapper.findAll('.vc-calendar__week span').map(i => i.text())).toEqual(['日', '一', '二', '三', '四', '五', '六']);
-		expect(wrapper.findAll('.vc-calendar-row__item').slice(0, 7).map(i => i.text())).toEqual(['28', '29', '30', '1', '2', '3', '4']);
+		expect(wrapper.findAll('.vc-calendar__week span').map(i => i.text())).toEqual(['一', '二', '三', '四', '五', '六', '日']);
+		expect(wrapper.findAll('.vc-calendar-row__item').slice(0, 7).map(i => i.text())).toEqual(['29', '30', '1', '2', '3', '4', '5']);
+	});
+
+	it('firstDayOfWeek: 全局 Calendar.firstDayOfWeek 生效、响应式更新，prop 优先', async () => {
+		const renderWeek = vi.fn(({ data, firstDayOfWeek }) => <div class="custom-week">{`${firstDayOfWeek}:${data.join(',')}`}</div>);
+		VcInstance.configure({ Calendar: { firstDayOfWeek: 1 } });
+		const wrapper = mount(() => (<Calendar renderWeek={renderWeek} />));
+		const wrapper2 = mount(() => (<Calendar firstDayOfWeek={3} />));
+
+		expect(wrapper.find('.custom-week').text()).toBe('1:一,二,三,四,五,六,日');
+		expect(wrapper.findAll('.vc-calendar-row__item').slice(0, 7).map(i => i.text())).toEqual(['29', '30', '1', '2', '3', '4', '5']);
+		expect(wrapper2.findAll('.vc-calendar__week span').map(i => i.text())).toEqual(['三', '四', '五', '六', '日', '一', '二']);
+		// 2024-05-01 是周三，正好是第一天时不补上月
+		expect(wrapper2.findAll('.vc-calendar-row__item').at(0)?.text()).toBe('1');
+
+		VcInstance.configure({ Calendar: { firstDayOfWeek: 6 } });
+		await nextTick();
+		expect(wrapper.find('.custom-week').text()).toBe('6:六,日,一,二,三,四,五');
+		expect(wrapper.findAll('.vc-calendar-row__item').slice(0, 7).map(i => i.text())).toEqual(['27', '28', '29', '30', '1', '2', '3']);
+		expect(wrapper2.findAll('.vc-calendar__week span').at(0)?.text()).toBe('三');
 	});
 
 	it('showAdjacentWeeks: 支持隐藏整周非本月行', () => {
 		vi.setSystemTime(new Date('2021-02-15T12:00:00'));
-		const wrapper = mount(() => (<Calendar showAdjacentWeeks={false} />));
-		const wrapper2 = mount(() => (<Calendar showAdjacentWeeks={[false, true]} />));
+		const wrapper = mount(() => (<Calendar firstDayOfWeek={1} showAdjacentWeeks={false} />));
+		const wrapper2 = mount(() => (<Calendar firstDayOfWeek={1} showAdjacentWeeks={[false, true]} />));
 
 		expect(wrapper.findAll('.vc-calendar-row')).toHaveLength(4);
 		expect(wrapper.findAll('.vc-calendar-row__item')).toHaveLength(28);
@@ -125,7 +144,7 @@ describe('index.ts', () => {
 		));
 
 		expect(wrapper.find('.custom-month').text()).toBe('2024-五月-zh-CN');
-		expect(wrapper.find('.custom-week').text()).toBe('zh-CN:一,二,三,四,五,六,日');
+		expect(wrapper.find('.custom-week').text()).toBe('zh-CN:日,一,二,三,四,五,六');
 		expect(wrapper.findAll('.custom-date')).toHaveLength(42);
 		expect(wrapper.find('.custom-date').exists()).toBe(true);
 		expect(wrapper.text()).toContain('today-15');
@@ -144,7 +163,7 @@ describe('index.ts', () => {
 		});
 
 		expect(wrapper.find('.month-slot').text()).toBe('五月-2024-zh-CN');
-		expect(wrapper.find('.week-slot').text()).toContain('zh-CN:一|二|三');
+		expect(wrapper.find('.week-slot').text()).toContain('zh-CN:日|一|二');
 		expect(wrapper.findAll('.date-slot')).toHaveLength(42);
 		expect(wrapper.find('.date-slot').text()).toContain('2024-');
 	});

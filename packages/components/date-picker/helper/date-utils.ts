@@ -2,14 +2,6 @@ export const modifyDate = (date: Date, y: number, m: number, d: number) => {
 	return new Date(y, m, d, date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds());
 };
 
-export const getFirstDayOfMonth = (date: Date) => {
-	const temp = new Date(date.getTime());
-	temp.setDate(1);
-	let day = temp.getDay();
-	day = (day === 0 ? 7 : day);
-	return day;
-};
-
 /**
  * 获取当天00:00:00的时间戳
  * @param date ~
@@ -55,16 +47,6 @@ export const prevDate = (date: Date, amount = 1) => {
 
 export const nextDate = (date: Date, amount = 1) => {
 	return new Date(date.getFullYear(), date.getMonth(), date.getDate() + amount);
-};
-
-export const getStartDateOfMonth = (year: number, month: number) => {
-	const result = new Date(year, month, 1);
-	const day = result.getDay();
-	if (day === 0) {
-		return prevDate(result, 7);
-	} else {
-		return prevDate(result, day);
-	}
 };
 
 export const prevMonth = (date: Date) => {

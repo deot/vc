@@ -148,6 +148,28 @@ VcInstance.configure({
 });
 ```
 
+### Calendar / DatePicker 全局配置
+
+统一设置每周第一天，组件上的 `firstDayOfWeek` 优先，运行时修改会即时生效。两个组件各用一个键；MCalendar 读取 `Calendar`，MDatePicker 没有星期表头，不受影响。详见 [Calendar](../calendar/README.md)、[DatePicker](../date-picker/README.md)。
+
+| 配置项 | 具体作用 | 默认值 |
+| --- | --- | --- |
+| Calendar.firstDayOfWeek | Calendar / MCalendar 的每周第一天，`1` 至 `7` 表示周一至周日 | `undefined`，组件回退为 `7` |
+| DatePicker.firstDayOfWeek | DatePicker 日期面板（含范围）的每周第一天 | `undefined`，组件回退为 `7` |
+
+```js
+import { VcInstance } from '@deot/vc';
+
+VcInstance.configure({
+	Calendar: {
+		firstDayOfWeek: 1
+	},
+	DatePicker: {
+		firstDayOfWeek: 1
+	}
+});
+```
+
 ### Customer 全局配置
 
 在渲染前转换 `{ type, value }` 的内容，用来支持自定义类型。详见 [Customer](../customer/README.md)。

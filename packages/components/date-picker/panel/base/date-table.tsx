@@ -1,12 +1,11 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, ref, computed } from 'vue';
-import {
-	getFirstDayOfMonth, getStartDateOfMonth, getDayCountOfMonth,
-	getDateTimestamp, nextDate, clearTime
-} from '../../helper/date-utils';
+import { getDateTimestamp, nextDate, prevDate, clearTime } from '../../helper/date-utils';
 import { value2Array } from '../../helper/utils';
 import { useLocale } from '../../../locale';
+import { VcInstance } from '../../../vc';
+import { DEFAULT_FIRST_DAY_OF_WEEK, normalizeFirstDayOfWeek, sortWeekdays } from '../../../calendar/utils';
 
 const COMPONENT_NAME = 'vc-date-table';
 
@@ -14,10 +13,10 @@ export const DateTable = defineComponent({
 	name: COMPONENT_NAME,
 	props: {
 		value: Array,
+		// 缺省读取全局 DatePicker.firstDayOfWeek，仍缺省为 7
 		firstDayOfWeek: {
-			default: 7,
 			type: Number,
-			validator: (val: number) => val >= 1 && val <= 7
+			validator: (value: number) => Number.isInteger(value) && value >= 1 && value <= 7
 		},
 		disabledDate: Function,
 		cellClassName: Function,
@@ -46,16 +45,13 @@ export const DateTable = defineComponent({
 	setup(props, { emit }) {
 		const { t } = useLocale();
 		const tableRows = ref([[], [], [], [], [], []]);
-		const offsetDay = computed(() => {
-			const week = props.firstDayOfWeek;
-			// 周日为界限，左右偏移的天数，3217654 例如周一就是 -1，目的是调整前两行日期的位置
-			return week > 3 ? 7 - week : -week;
+		const firstDayOfWeek = computed(() => {
+			return props.firstDayOfWeek ?? VcInstance.options.DatePicker?.firstDayOfWeek ?? DEFAULT_FIRST_DAY_OF_WEEK;
 		});
 		const weeks = computed(() => {
-			const week = props.firstDayOfWeek;
 			const labels = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 				.map(day => t(`vc.DatePicker.weekdays.${day}`));
-			return labels.concat(labels).slice(week, week + 7);
+			return sortWeekdays(labels, firstDayOfWeek.value);
 		});
 		const year = computed(() => {
 			return props.panelDate.getFullYear();
@@ -63,25 +59,14 @@ export const DateTable = defineComponent({
 		const month = computed(() => {
 			return props.panelDate.getMonth();
 		});
+		// 第一格的日期：当月 1 日往前补到每周第一天（1 日正好是第一天时不补）
 		const startDate = computed(() => {
-			return getStartDateOfMonth(year.value, month.value);
+			const first = new Date(year.value, month.value, 1);
+			const prevDays = (first.getDay() - normalizeFirstDayOfWeek(firstDayOfWeek.value) + 7) % 7;
+			return prevDate(first, prevDays);
 		});
 		// 生成日期数据
 		const rows = computed(() => {
-			const date = new Date(year.value, month.value, 1);
-			const day = getFirstDayOfMonth(date); // 一个月的第一天
-			const dateCountOfMonth = getDayCountOfMonth(year.value, month.value);
-			const dateCountOfLastMonth = getDayCountOfMonth(
-				month.value === 0
-					? year.value - 1
-					: year.value,
-				month.value === 0
-					? 11
-					: month.value - 1
-			);
-
-			let count = 1;
-
 			const $rows: any = tableRows.value;
 			// const selectedDate = this.selectionMode === 'dates' ? value2Array(props.value) : [];
 			const selectedDate = value2Array(props.value);
@@ -96,29 +81,21 @@ export const DateTable = defineComponent({
 						cell = { row: i, column: j, type: 'normal', inRange: false, start: false, end: false };
 					}
 					cell.type = 'normal';
-					const index = i * 7 + j;
-					const time = nextDate(startDate.value, index - offsetDay.value).getTime();
+					const cellDate = nextDate(startDate.value, i * 7 + j);
+					const time = cellDate.getTime();
 					cell.inRange = time > getDateTimestamp(props.rangeState.from) && time < getDateTimestamp(props.rangeState.to);
 					cell.start = props.rangeState.from && time === getDateTimestamp(props.rangeState.from);
 					cell.end = props.rangeState.to && time === getDateTimestamp(props.rangeState.to);
 					cell.today = time === now;
+					cell.text = cellDate.getDate();
 
-					if (i >= 0 && i <= 1) {
-						const prevDay = day + offsetDay.value < 0 ? 7 + day + offsetDay.value : day + offsetDay.value;
-						if (j + i * 7 >= prevDay) {
-							cell.text = count++;
-						} else {
-							cell.text = dateCountOfLastMonth - (prevDay - (j % 7)) + 1 + i * 7;
-							cell.type = 'prev-month';
-						}
-					} else if (count <= dateCountOfMonth) {
-						cell.text = count++;
-					} else {
-						cell.text = count++ - dateCountOfMonth;
+					const offset = (cellDate.getFullYear() - year.value) * 12 + cellDate.getMonth() - month.value;
+					if (offset < 0) {
+						cell.type = 'prev-month';
+					} else if (offset > 0) {
 						cell.type = 'next-month';
 					}
 
-					const cellDate = new Date(time);
 					cell.disabled = typeof props.disabledDate === 'function' && props.disabledDate(cellDate);
 					cell.customClass = typeof props.cellClassName === 'function' && props.cellClassName(cellDate);
 					// 选中的date在进行比较时需要清除 时分秒
@@ -136,8 +113,7 @@ export const DateTable = defineComponent({
 			return $rows;
 		});
 		const getDateOfCell = (row: number, column: number) => {
-			const offsetFromStart = row * 7 + column - offsetDay.value;
-			return nextDate(startDate.value, offsetFromStart);
+			return nextDate(startDate.value, row * 7 + column);
 		};
 
 		const getCell = (event: any) => {

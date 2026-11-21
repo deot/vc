@@ -21,9 +21,9 @@ export const props = {
 		type: Function as PropType<CalendarRender<RenderWeekProps>>,
 		default: defaultRenderWeek
 	},
+	// 缺省读取全局 Calendar.firstDayOfWeek，仍缺省为 7
 	firstDayOfWeek: {
 		type: Number,
-		default: 1,
 		validator: (value: number) => Number.isInteger(value) && value >= 1 && value <= 7
 	},
 	showAdjacentWeeks: {
