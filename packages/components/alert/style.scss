@@ -14,6 +14,12 @@ $font-size-small: varfix(font-size-small, alert);
 $line-height-large: varfix(line-height-large, alert);
 $component-name: vc-alert;
 
+// 尺寸与文字色写成局部变量 --vc-alert-<键>（默认值为桌面端），MAlert 在 .vcm-alert 上覆盖（mobile/style.scss）
+// 字号与行高沿用主题参数的组件级入口（--vc-alert-font-size-small / font-size / line-height-large）
+@function v($key, $default) {
+	@return localfix(alert, $key, $default);
+}
+
 @mixin alert-type($type-color, $border-color, $background-color) {
 	background-color: $background-color;
 	border-color: $border-color;
@@ -38,19 +44,19 @@ $component-name: vc-alert;
 
 @include block($component-name) {
 	display: flex;
-	padding: unitfix(5) unitfix(11);
+	padding: v(padding, unitfix(5) unitfix(11));
 	overflow: hidden;
 	font-size: $font-size-small;
 	line-height: $line-height-large;
-	color: $color-dark-light;
+	color: v(color, $color-dark-light);
 	border-style: solid;
-	border-width: unitfix(1);
-	border-radius: unitfix(4);
+	border-width: v(border-width, unitfix(1));
+	border-radius: v(radius, unitfix(4));
 	box-sizing: border-box;
 	align-items: flex-start;
 
 	// 图标与关闭入口固定为首行高度并居中，与首行文字对齐
-	@include element((icon, close)) {
+	@include element((icon, prefix, suffix, close)) {
 		display: flex;
 		height: $line-height-large;
 		align-items: center;
@@ -58,8 +64,15 @@ $component-name: vc-alert;
 	}
 
 	@include element(icon) {
-		margin-right: unitfix(8);
-		font-size: unitfix(12);
+		font-size: v(icon-size, unitfix(12));
+	}
+
+	@include element((icon, prefix)) {
+		margin-right: v(icon-gap, unitfix(8));
+	}
+
+	@include element(suffix) {
+		margin-left: v(suffix-gap, unitfix(12));
 	}
 
 	@include element(content) {
@@ -79,33 +92,48 @@ $component-name: vc-alert;
 	}
 
 	@include element(close) {
-		margin-left: unitfix(12);
-		font-size: unitfix(12);
-		color: $color-dark-lightest;
+		margin-left: v(close-gap, unitfix(12));
+		font-size: v(close-size, unitfix(12));
+		color: v(close-color, $color-dark-lightest);
 		cursor: pointer;
 		transition: color 0.2s;
 
 		&:hover {
-			color: $color-dark-light;
+			color: v(close-hover-color, $color-dark-light);
+		}
+	}
+
+	// 跑马灯滚动时两端渐隐（遮罩与背景色无关）
+	@include element(title) {
+		> .vc-marquee.is-running {
+			$fade: v(fade-width, unitfix(12));
+
+			&.is-horizontal {
+				mask-image: linear-gradient(to right, transparent, #000 #{$fade}, #000 calc(100% - #{$fade}), transparent);
+			}
+
+			&.is-vertical {
+				mask-image: linear-gradient(to bottom, transparent, #000 #{$fade}, #000 calc(100% - #{$fade}), transparent);
+			}
 		}
 	}
 
 	// 带说明：标题与正文同字号加粗，说明文字小一号，整体紧凑
 	@include when(desc, true) {
-		padding: unitfix(9) unitfix(11);
+		padding: v(desc-padding, unitfix(9) unitfix(11));
 
 		@include element(icon) {
-			font-size: unitfix(14);
+			font-size: v(desc-icon-size, unitfix(14));
 		}
 
 		@include element(title) {
-			margin-bottom: unitfix(2);
+			margin-bottom: v(title-gap, unitfix(2));
 			font-size: $font-size;
 			font-weight: 500;
 		}
 
 		@include element(desc) {
-			font-size: $font-size-small;
+			font-size: v(desc-font-size, $font-size-small);
 		}
 	}
 
