@@ -24,6 +24,10 @@ export type Options = Partial<{
 	MListItem: {
 		to: (data: { value: any; instance: ComponentInternalInstance }) => any;
 	};
+	// 没有监听 back 时调用；返回值不为 undefined 时视为已接管，否则回到上一页（history.back）
+	MNavBar: {
+		back: (data: { instance: ComponentInternalInstance }) => any;
+	};
 	// 返回值不为 undefined 时视为已接管跳转；instance 是被点击的 MTabBarItem
 	MTabBar: {
 		to: (data: { value: any; instance: ComponentInternalInstance }) => any;

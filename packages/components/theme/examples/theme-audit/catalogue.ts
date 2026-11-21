@@ -12,7 +12,7 @@ export const GROUPS = [
 	{
 		id: 'navigation',
 		label: '导航',
-		names: ['Dropdown', 'IndexBar', 'Pagination', 'Steps', 'TabBar', 'Tabs', 'Tour']
+		names: ['Dropdown', 'IndexBar', 'NavBar', 'Pagination', 'Steps', 'TabBar', 'Tabs', 'Tour']
 	},
 	{
 		id: 'entry',
@@ -50,7 +50,7 @@ export const COMPONENT_COUNT = GROUPS.reduce((total, group) => total + group.nam
 export const MOBILE_COMPONENTS = new Set<AuditComponentName>([
 	'Input', 'Textarea', 'Checkbox', 'Radio', 'Switch',
 	'Picker', 'DatePicker', 'Form', 'List', 'Tabs', 'Carousel', 'UploadPicker',
-	'SortList', 'Modal', 'ActionSheet', 'Toast', 'SwipeAction', 'TabBar', 'AutoComplete', 'Mention'
+	'SortList', 'Modal', 'ActionSheet', 'Toast', 'SwipeAction', 'NavBar', 'TabBar', 'AutoComplete', 'Mention'
 ]);
 
-export const MOBILE_ONLY = new Set<AuditComponentName>(['Picker', 'List', 'ActionSheet', 'Toast', 'SwipeAction', 'TabBar']);
+export const MOBILE_ONLY = new Set<AuditComponentName>(['Picker', 'List', 'ActionSheet', 'Toast', 'SwipeAction', 'NavBar', 'TabBar']);

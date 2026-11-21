@@ -44,6 +44,7 @@ import Marquee from './modules/marquee.vue';
 import Mention from './modules/mention.vue';
 import Message from './modules/message.vue';
 import Modal from './modules/modal.vue';
+import NavBar from './modules/nav-bar.vue';
 import Notice from './modules/notice.vue';
 import Pagination from './modules/pagination.vue';
 import Picker from './modules/picker.vue';
@@ -130,6 +131,7 @@ export const MODULES = {
 	Mention,
 	Message,
 	Modal,
+	NavBar,
 	Notice,
 	Pagination,
 	Picker,

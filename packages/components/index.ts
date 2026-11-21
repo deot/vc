@@ -95,6 +95,8 @@ export * from './message';
 export * from './message/index.m';
 export * from './modal';
 export * from './modal/index.m';
+export * from './nav-bar';
+export * from './nav-bar/index.m';
 export * from './notice';
 export * from './notice/index.m';
 export * from './option';

@@ -1,0 +1,196 @@
+@use '../../style/helper' as *;
+
+$component-name: vcm-nav-bar;
+$color-dark: varfix(color-dark, nav-bar);
+$color-dark-lightest: varfix(color-dark-lightest, nav-bar);
+$color-neutral-light: varfix(color-neutral-light, nav-bar);
+$background-color-lightest: varfix(background-color-lightest, nav-bar);
+
+// 尺寸按 750 稿（括号内为 375 宽）：栏高 88（44）；两侧内边距 32（16）、字号 32（16）；返回箭头 40（20），与文字间距 8（4）
+// 标题 34（17）/ 600；副标题 24（12）
+// 可用局部变量覆盖：--vc-nav-bar-height / --vc-nav-bar-background / --vc-nav-bar-color / --vc-nav-bar-title-font-size
+// 背景、分割线与（滚动渐变时）标题的不透明度跟随 --vc-nav-bar-progress（0–1），由组件在滚动时写入
+$height: localfix(nav-bar, height, remfix(88));
+$safe-area: env(safe-area-inset-top);
+$progress: var(--vc-nav-bar-progress, 1);
+
+@include block($component-name) {
+	color: localfix(nav-bar, color, $color-dark);
+
+	// fixed 时根节点留在原位作占位，导航栏本身贴顶
+	@include when(placeholder) {
+		height: $height;
+
+		&.is-safe-area {
+			height: calc(#{$height} + #{$safe-area});
+		}
+	}
+
+	// 三列：两侧各占剩余宽度的一半，标题始终在正中；两侧内容过宽时标题收窄省略
+	@include element(wrapper) {
+		position: relative;
+		display: grid;
+		height: $height;
+		padding: 0 remfix(32);
+		font-size: remfix(32);
+		line-height: remfix(44);
+		box-sizing: content-box;
+		grid-template-columns: 1fr auto 1fr;
+		align-items: center;
+		column-gap: remfix(24);
+		isolation: isolate;
+
+		// 背景单独一层：透明渐变时只改它的不透明度，内容不受影响
+		&::before {
+			position: absolute;
+			z-index: -1;
+			pointer-events: none;
+			background: localfix(nav-bar, background, $background-color-lightest);
+			content: '';
+			opacity: $progress;
+			inset: 0;
+		}
+	}
+
+	@include when(border) {
+		> .#{$component-name}__wrapper::after {
+			position: absolute;
+			right: 0;
+			bottom: 0;
+			left: 0;
+			pointer-events: none;
+			border-bottom: 1px solid $color-neutral-light;
+			content: '';
+			opacity: $progress;
+
+			@media (resolution >= 2dppx) {
+				border-bottom-width: 0.5px;
+			}
+		}
+	}
+
+	@include when(safe-area) {
+		> .#{$component-name}__wrapper {
+			padding-top: $safe-area;
+		}
+	}
+
+	@include when(fixed) {
+		> .#{$component-name}__wrapper {
+			position: fixed;
+			top: 0;
+			right: 0;
+			left: 0;
+			z-index: 10;
+		}
+	}
+
+	@include when(transparent) {
+		--vc-nav-bar-progress: 0;
+	}
+
+	@include when(scroll-linked) {
+		--vc-nav-bar-progress: 0;
+
+		.#{$component-name}__title {
+			opacity: $progress;
+		}
+	}
+
+	// #default 占满两侧之间：两侧按内容收缩
+	@include when(custom) {
+		> .#{$component-name}__wrapper {
+			grid-template-columns: auto minmax(0, 1fr) auto;
+		}
+	}
+
+	// 两侧不设 min-width: 0，按内容保底，标题让位
+	@include element(left) {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		white-space: nowrap;
+	}
+
+	@include element(right) {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		white-space: nowrap;
+	}
+
+	// 直接放在两侧的图标与返回箭头同大
+	@include element(left) {
+		> .vc-icon {
+			font-size: remfix(40);
+		}
+	}
+
+	@include element(right) {
+		> .vc-icon {
+			font-size: remfix(40);
+		}
+	}
+
+	@include element(back) {
+		display: inline-flex;
+		align-items: center;
+		height: $height;
+		cursor: pointer;
+		outline: none;
+		-webkit-tap-highlight-color: transparent;
+
+		&:active {
+			opacity: 0.6;
+		}
+
+		&:focus-visible {
+			opacity: 0.8;
+		}
+
+		&:not(:last-child) {
+			margin-right: remfix(16);
+		}
+	}
+
+	@include element(back-icon) {
+		font-size: remfix(40);
+	}
+
+	@include element(back-text) {
+		margin-left: remfix(8);
+	}
+
+	@include element(title) {
+		display: flex;
+		min-width: 0;
+		text-align: center;
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	@include element(title-text) {
+		overflow: hidden;
+		font-size: localfix(nav-bar, title-font-size, remfix(34));
+		font-weight: 600;
+		line-height: remfix(48);
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	@include element(subtitle) {
+		overflow: hidden;
+		font-size: remfix(24);
+		line-height: remfix(34);
+		color: $color-dark-lightest;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	@include element(content) {
+		display: flex;
+		height: 100%;
+		min-width: 0;
+		align-items: center;
+	}
+}

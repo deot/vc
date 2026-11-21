@@ -21,6 +21,9 @@ export const zhCN: Language = {
 			confirmText: '确定',
 			clearText: '清空'
 		},
+		NavBar: {
+			back: '返回'
+		},
 		Picker: {
 			extra: '请选择',
 			cancelText: '取消',

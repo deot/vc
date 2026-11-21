@@ -21,6 +21,9 @@ export const enUS: Language = {
 			confirmText: 'OK',
 			clearText: 'Clear'
 		},
+		NavBar: {
+			back: 'Back'
+		},
 		Picker: {
 			extra: 'Please select',
 			cancelText: 'Cancel',
