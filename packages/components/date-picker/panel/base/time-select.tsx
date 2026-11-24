@@ -4,7 +4,7 @@ import { defineComponent, ref, watch, computed, reactive, onMounted, onBeforeUnm
 import { preZero } from '@deot/helper-utils';
 import { Resize } from '@deot/helper-resize';
 import { startCase } from 'lodash-es';
-import { clearTime, getDateOfTime } from '../../helper/date-utils';
+import { getDateOfTime } from '../../helper/utils';
 import { Scroller } from '../../../scroller';
 
 const COMPONENT_NAME = 'vc-time-select';
@@ -78,31 +78,28 @@ export const TimeSelect = defineComponent({
 		const getHoursDisabledStatus = (hours: number) => {
 			if (typeof props.disabledTime !== 'function') return;
 			const date = new Date(props.panelDate!);
-			const panelDate = clearTime(date);
 			const startTime = { hours, minutes: 0, seconds: 0 };
 			const endTime = { hours, minutes: 59, seconds: 59 };
-			const startDate = getDateOfTime(panelDate, startTime);
-			const endDate = getDateOfTime(panelDate, endTime);
+			const startDate = getDateOfTime(date, startTime);
+			const endDate = getDateOfTime(date, endTime);
 			return props.disabledTime(startDate) && props.disabledTime(endDate);
 		};
 
 		const getMinutesDisabledStatus = (minutes: number) => {
 			if (typeof props.disabledTime !== 'function') return;
 			const date = new Date(props.panelDate!);
-			const panelDate = clearTime(date);
 			const startTime = { hours: date.getHours(), minutes, seconds: 0 };
 			const endTime = { hours: date.getHours(), minutes, seconds: 59 };
-			const startDate = getDateOfTime(panelDate, startTime);
-			const endDate = getDateOfTime(panelDate, endTime);
+			const startDate = getDateOfTime(date, startTime);
+			const endDate = getDateOfTime(date, endTime);
 			return props.disabledTime(startDate) && props.disabledTime(endDate);
 		};
 
 		const getSecondsDisabledStatus = (seconds: number) => {
 			if (typeof props.disabledTime !== 'function') return;
 			const date = new Date(props.panelDate!);
-			const panelDate = clearTime(date);
 			const startTime = { hours: date.getHours(), minutes: date.getMinutes(), seconds };
-			const startDate = getDateOfTime(panelDate, startTime);
+			const startDate = getDateOfTime(date, startTime);
 			return props.disabledTime(startDate);
 		};
 

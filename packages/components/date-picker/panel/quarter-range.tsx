@@ -1,9 +1,9 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, ref } from 'vue';
-import { nextYear, prevYear } from '../helper/date-utils';
+import { dayjs } from '../helper/dayjs';
 import { props as dateProps } from './base-date-props';
-import { useRangeValue, isSameYear } from './use-range-value';
+import { useRangeValue } from './use-range-value';
 import { Confirm, ShortcutsSelect, QuarterTable, DateHeader } from './base';
 
 const COMPONENT_NAME = 'vc-quarterrange-panel';
@@ -27,7 +27,7 @@ export const QuarterRangePanel = defineComponent({
 		'ok'
 	],
 	setup(props, { emit }) {
-		const { dates, leftPanelDate, rightPanelDate, rangeState } = useRangeValue(props, { next: nextYear, isSamePanel: isSameYear });
+		const { dates, leftPanelDate, rightPanelDate, rangeState } = useRangeValue(props, { unit: 'year' });
 		const currentView = ref('quarterrange');
 
 		const handlePanelChange = (panelDate: Date, type: string, position: string) => {
@@ -43,9 +43,9 @@ export const QuarterRangePanel = defineComponent({
 					case 'prev-year':
 					case 'next-year':
 						if (position === 'left' && panelYear >= rightPanelYear) {
-							rightPanelDate.value = nextYear(rightPanelDate.value);
+							rightPanelDate.value = dayjs(rightPanelDate.value).add(1, 'year').toDate();
 						} else if (position === 'right' && panelYear <= leftPanelYear) {
-							leftPanelDate.value = prevYear(leftPanelDate.value);
+							leftPanelDate.value = dayjs(leftPanelDate.value).subtract(1, 'year').toDate();
 						}
 						break;
 					default:
@@ -54,10 +54,10 @@ export const QuarterRangePanel = defineComponent({
 			} else {
 				switch (type) {
 					case 'prev-year':
-						rightPanelDate.value = prevYear(rightPanelDate.value);
+						rightPanelDate.value = dayjs(rightPanelDate.value).subtract(1, 'year').toDate();
 						break;
 					case 'next-year':
-						leftPanelDate.value = nextYear(leftPanelDate.value);
+						leftPanelDate.value = dayjs(leftPanelDate.value).add(1, 'year').toDate();
 						break;
 					default:
 						break;

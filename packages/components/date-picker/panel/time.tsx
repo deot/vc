@@ -1,7 +1,8 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, computed } from 'vue';
-import { getDateOfTime, clearTime } from '../helper/date-utils';
+import { dayjs } from '../helper/dayjs';
+import { getDateOfTime } from '../helper/utils';
 import { props as timeProps } from './base-time-props';
 import { Confirm, TimeSelect } from './base';
 
@@ -28,7 +29,7 @@ export const TimePanel = defineComponent({
 
 		const handlePick = (value: any) => {
 			// TODO confirm为false 不能实时响应，但不关闭弹层
-			const date = props.value![0] || clearTime(new Date());
+			const date = props.value![0] || dayjs().startOf('day').toDate();
 			emit('pick', [getDateOfTime(date, value)]);
 		};
 

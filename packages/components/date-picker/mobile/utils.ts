@@ -2,8 +2,10 @@ import { preZero } from '@deot/helper-utils';
 import { DEFAULT_FORMATS } from '../constants';
 import type { Translator } from '../../locale';
 import {
+	DEFAULT_YEAR_RANGE,
 	TYPE_VALUE_RESOLVER_MAP,
 	formatDate,
+	getDayCountOfMonth,
 	getQuarter,
 	isEmpty,
 	isValidDate,
@@ -11,7 +13,6 @@ import {
 } from '../helper/utils';
 import { findEnabledIndex } from '../../picker/mobile/utils';
 import type { PickerColumn, PickerData, PickerValue } from '../../picker/types';
-import { DEFAULT_YEAR_RANGE } from '../../calendar/utils';
 
 /**
  * 移动端日期选择的纯函数：列的生成与禁用、值的解析与格式化；MDatePickerView 与弹层共用
@@ -275,7 +276,7 @@ const getRowRange = (ctx: DateContext, unit: PickerUnit, parts: Parts): number[]
 		case 'M':
 			return [1, 12, 1];
 		case 'D':
-			return [1, new Date(parts.Y, parts.M, 0).getDate(), 1];
+			return [1, getDayCountOfMonth(parts.Y, parts.M - 1), 1];
 		case 'H':
 			return [0, 23, ctx.steps[0]];
 		case 'm':

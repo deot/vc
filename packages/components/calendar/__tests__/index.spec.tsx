@@ -8,7 +8,7 @@ import { CalendarMonth } from '../calendar-month';
 import { useCalendarSelection } from '../use-calendar-selection';
 import { selectionProps } from '../calendar-props';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getCalendarDates, getLeadingDays, toDateKey } from '../utils';
+import { getCalendarDates, getLeadingDays } from '../../date-picker/helper/utils';
 import { Date2Holiday } from '../date2holiday';
 
 const texts = (wrapper: any, selector: string) => wrapper.findAll(selector).map((item: any) => item.text());
@@ -375,15 +375,15 @@ describe('index.ts', () => {
 		expect(mark('2024-05-15')).toBe('');
 	});
 
-	it('utils: getCalendarDates / getLeadingDays / toDateKey', () => {
+	it('utils: getCalendarDates / getLeadingDays', () => {
 		const dates = getCalendarDates(2024, 4);
 
 		expect(dates).toHaveLength(42);
-		expect(toDateKey(dates[0])).toBe('2024-04-28');
-		expect(toDateKey(dates[41])).toBe('2024-06-08');
-		expect(toDateKey(getCalendarDates(2024, 4, 1)[0])).toBe('2024-04-29');
+		expect(dates[0]).toEqual(new Date(2024, 3, 28));
+		expect(dates[41]).toEqual(new Date(2024, 5, 8));
+		expect(getCalendarDates(2024, 4, 1)[0]).toEqual(new Date(2024, 3, 29));
 		expect(getLeadingDays(2024, 4, 3)).toBe(0);
-		expect(toDateKey(getCalendarDates(2024, 0)[0])).toBe('2023-12-31');
+		expect(getCalendarDates(2024, 0)[0]).toEqual(new Date(2023, 11, 31));
 	});
 
 	it('Date2Holiday: 返回公历、农历和节气信息', () => {

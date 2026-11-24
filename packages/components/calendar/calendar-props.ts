@@ -1,5 +1,5 @@
 import type { ExtractPropTypes, PropType } from 'vue';
-import { DEFAULT_YEAR_RANGE } from './utils';
+import { DEFAULT_YEAR_RANGE } from '../date-picker/helper/utils';
 import type { CalendarAdjacentWeeks, CalendarMode, CalendarType } from './types';
 
 const isDayOfWeek = (value: number) => Number.isInteger(value) && value >= 1 && value <= 7;

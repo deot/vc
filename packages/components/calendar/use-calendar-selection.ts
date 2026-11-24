@@ -1,10 +1,18 @@
 import { computed, inject, provide, ref, watch } from 'vue';
 import type { ComputedRef, Ref, Slots } from 'vue';
 import type { Scroller as ScrollerComponent } from '../scroller';
-import { formatDate, isValidDate, parseDate, value2Array } from '../date-picker/helper/utils';
+import {
+	DEFAULT_FIRST_DAY_OF_WEEK,
+	DEFAULT_YEAR_RANGE,
+	formatDate,
+	getDateTimestamp,
+	isValidDate,
+	parseDate,
+	sortWeekdays,
+	value2Array
+} from '../date-picker/helper/utils';
 import { useLocale } from '../locale';
 import { VcInstance } from '../vc';
-import { DEFAULT_FIRST_DAY_OF_WEEK, DEFAULT_YEAR_RANGE, getDayTime, sortWeekdays } from './utils';
 import { weekLocaleKeys } from './constants';
 import type { SelectionProps } from './calendar-props';
 
@@ -94,7 +102,7 @@ export const useCalendarSelection = (props: SelectionProps, options: SelectionOp
 		return value2Array(currentValue.value)
 			.map((item: Date | string) => (item instanceof Date ? item : parseDate(item, props.format)))
 			.filter((item: any) => isValidDate(item))
-			.map((item: Date) => new Date(getDayTime(item)));
+			.map((item: Date) => new Date(getDateTimestamp(item)));
 	});
 
 	const selection = computed<CalendarSelection>(() => {
@@ -181,7 +189,7 @@ export const useCalendarSelection = (props: SelectionProps, options: SelectionOp
 		weekdays,
 		firstDayOfWeek,
 		lang,
-		todayTime: getDayTime(new Date()),
+		todayTime: getDateTimestamp(new Date()),
 		slots: options.slots,
 		Scroller: options.Scroller,
 		isDisabled,

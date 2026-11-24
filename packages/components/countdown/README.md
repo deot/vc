@@ -117,7 +117,7 @@ const handleRestart = () => {
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| targetTime | 目标时间，数字为毫秒时间戳 | `string \| number \| Date` | - | `''` |
+| targetTime | 目标时间，数字为毫秒时间戳；字符串按 dayjs 解析（`YYYY-MM-DD HH:mm:ss`、`YYYY/MM/DD`、ISO 8601 等） | `string \| number \| Date` | - | `''` |
 | serverTime | 服务器当前时间，用于计算与本地时钟的偏移；未提供时使用本地时钟 | `string \| number \| Date` | - | `''` |
 | t | 刷新周期，单位毫秒；应传入正数 | `number` | - | `1000` |
 | format | 默认展示格式；省略时跟随 locale，显式空字符串表示空展示 | `string` | - | 中文：`DD天HH小时mm分ss秒SSS`；英文：`DDd HHh mmm sss SSS` |

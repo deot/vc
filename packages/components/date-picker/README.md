@@ -550,7 +550,8 @@ const value = ref(['2024-03-10', '2024-03-20']);
 - `date` / `daterange` 默认 `YYYY-MM-DD`，`datetime` / `datetimerange` 默认 `YYYY-MM-DD HH:mm:ss`，`year` 默认 `YYYY`，`month` / `monthrange` 默认 `YYYY-MM`。季度输出日期默认 `YYYY-MM-DD`。
 - 移动端 `time` / `timerange` 默认 `HH:mm:ss`，`month` 选择年、月。季度输出起止日期数组，`quarterrange` 输出开始季度第一天与结束季度最后一天。
 - 日期字符串应与 `format` 一致。范围和季度推荐使用数组，避免分隔符歧义。
-- locale 控制面板文案和季度摘要；`format` 中的英文月份、星期和 AM/PM 格式标记保持现有解析与输出规则，不随界面语言改变。
+- `format` 使用 [dayjs 的格式标记](https://day.js.org/docs/en/display/format)，原样文字放在 `[]` 里（如 `YYYY[年]MM[月]DD[日]`；不含标记的文字如 `HH点mm分` 可以直接写）。解析时数字可以不补零（`MM`、`DD` 也接受一位数）。
+- locale 控制面板文案和季度摘要；`format` 中的英文月份、星期和 AM/PM 不随界面语言改变。
 - 当前桌面端 `multiple` 提交路径会将数组当作单值处理，可能报错；在修复前不要依赖多日期提交。该限制不影响日期范围模式。
 - 农历、周数显示不是当前公开能力。
 - 可输入时，浮层打开后点击输入框只移动光标，不再关闭浮层，这次点击照常冒泡到祖先节点；点后缀图标仍可切换。输入框聚焦时 Enter 会被处理，放在原生 `<form>` 里不会触发隐式提交。

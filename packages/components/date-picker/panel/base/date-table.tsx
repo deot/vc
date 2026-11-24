@@ -1,11 +1,9 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, ref, computed } from 'vue';
-import { getDateTimestamp, nextDate, prevDate, clearTime } from '../../helper/date-utils';
-import { value2Array } from '../../helper/utils';
+import { DEFAULT_FIRST_DAY_OF_WEEK, getCalendarDates, getDateTimestamp, sortWeekdays, value2Array } from '../../helper/utils';
 import { useLocale } from '../../../locale';
 import { VcInstance } from '../../../vc';
-import { DEFAULT_FIRST_DAY_OF_WEEK, getLeadingDays, sortWeekdays } from '../../../calendar/utils';
 
 const COMPONENT_NAME = 'vc-date-table';
 
@@ -59,16 +57,16 @@ export const DateTable = defineComponent({
 		const month = computed(() => {
 			return props.panelDate.getMonth();
 		});
-		// 第一格的日期：当月 1 日往前补到每周第一天（1 日正好是第一天时不补）
-		const startDate = computed(() => {
-			return prevDate(new Date(year.value, month.value, 1), getLeadingDays(year.value, month.value, firstDayOfWeek.value));
-		});
+		// 6 周 42 天：当月 1 日往前补到每周第一天（1 日正好是第一天时不补）
+		const dates = computed(() => getCalendarDates(year.value, month.value, firstDayOfWeek.value));
 		// 生成日期数据
 		const rows = computed(() => {
 			const $rows: any = tableRows.value;
-			// const selectedDate = this.selectionMode === 'dates' ? value2Array(props.value) : [];
-			const selectedDate = value2Array(props.value);
-			const focusedDate = value2Array(clearTime(props.focusedDate));
+			// 循环里不变的值先算好：选中的日期（去掉时分秒）、范围的起止、聚焦的日期、今天
+			const selectedTimes = new Set(value2Array(props.value).map(getDateTimestamp));
+			const fromTime = getDateTimestamp(props.rangeState.from);
+			const toTime = getDateTimestamp(props.rangeState.to);
+			const focusedTime = getDateTimestamp(props.focusedDate);
 			const now = getDateTimestamp(new Date());
 
 			for (let i = 0; i < 6; i++) {
@@ -79,11 +77,11 @@ export const DateTable = defineComponent({
 						cell = { row: i, column: j, type: 'normal', inRange: false, start: false, end: false };
 					}
 					cell.type = 'normal';
-					const cellDate = nextDate(startDate.value, i * 7 + j);
+					const cellDate = dates.value[i * 7 + j];
 					const time = cellDate.getTime();
-					cell.inRange = time > getDateTimestamp(props.rangeState.from) && time < getDateTimestamp(props.rangeState.to);
-					cell.start = props.rangeState.from && time === getDateTimestamp(props.rangeState.from);
-					cell.end = props.rangeState.to && time === getDateTimestamp(props.rangeState.to);
+					cell.inRange = time > fromTime && time < toTime;
+					cell.start = time === fromTime;
+					cell.end = time === toTime;
 					cell.today = time === now;
 					cell.text = cellDate.getDate();
 
@@ -96,14 +94,8 @@ export const DateTable = defineComponent({
 
 					cell.disabled = typeof props.disabledDate === 'function' && props.disabledDate(cellDate);
 					cell.customClass = typeof props.cellClassName === 'function' && props.cellClassName(cellDate);
-					// 选中的date在进行比较时需要清除 时分秒
-					cell.selected = selectedDate.some(($date) => {
-						if (cell.type === 'normal') {
-							return $date && clearTime($date).getTime() === cellDate.getTime();
-						}
-						return false;
-					});
-					cell.focused = focusedDate.some($date => $date.getTime() === cellDate.getTime());
+					cell.selected = cell.type === 'normal' && selectedTimes.has(time);
+					cell.focused = time === focusedTime;
 
 					$rows[i][j] = cell;
 				}
@@ -111,7 +103,7 @@ export const DateTable = defineComponent({
 			return $rows;
 		});
 		const getDateOfCell = (row: number, column: number) => {
-			return nextDate(startDate.value, row * 7 + column);
+			return new Date(dates.value[row * 7 + column]);
 		};
 
 		const getCell = (event: any) => {

@@ -7,7 +7,7 @@ import { MScroller } from '../../scroller/index.m';
 import { CalendarMonth } from '../calendar-month';
 import { monthLocaleKeys } from '../constants';
 import { useCalendarSelection } from '../use-calendar-selection';
-import { getLeadingDays, getMonthDays } from '../utils';
+import { getDayCountOfMonth, getLeadingDays } from '../../date-picker/helper/utils';
 import { props as viewProps } from './calendar-picker-view-props';
 
 const COMPONENT_NAME = 'vcm-calendar-picker-view';
@@ -47,7 +47,7 @@ export const MCalendarPickerView = defineComponent({
 					result.push({
 						year,
 						month,
-						rows: Math.ceil((getLeadingDays(year, month, firstDayOfWeek.value) + getMonthDays(year, month)) / 7)
+						rows: Math.ceil((getLeadingDays(year, month, firstDayOfWeek.value) + getDayCountOfMonth(year, month)) / 7)
 					});
 				}
 			}

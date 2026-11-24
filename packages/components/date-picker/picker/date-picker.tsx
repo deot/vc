@@ -4,7 +4,7 @@ import { ref, watch, computed, shallowRef, getCurrentInstance } from 'vue';
 import { props as datePickerProps, Props } from './date-picker-props';
 import { createPicker } from './base';
 import { DatePanel, DateRangePanel, QuarterRangePanel, MonthRangePanel } from '../panel';
-import { clearTime } from '../helper/date-utils';
+import { dayjs } from '../helper/dayjs';
 import { isDisabledMonth, isDisabledTime } from '../helper/utils';
 
 const COMPONENT_NAME = 'vc-date-picker';
@@ -39,7 +39,7 @@ export const DatePicker = createPicker(COMPONENT_NAME, datePickerProps, () => {
 		if (props.type.includes('datetime') && isDisabledTime(date, props.timePickerOptions)) return true;
 		if (typeof disabledDate !== 'function' || props.type === 'year') return false;
 		if (props.type.includes('month')) return isDisabledMonth(date.getFullYear(), date.getMonth(), disabledDate);
-		return !!disabledDate(clearTime(date));
+		return !!disabledDate(dayjs(date).startOf('day').toDate());
 	};
 
 	watch(

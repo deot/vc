@@ -1,8 +1,7 @@
 /** @jsxImportSource vue */
 
 import { defineComponent, computed } from 'vue';
-import { getDayCountOfMonth, getDateTimestamp } from '../../helper/date-utils';
-import { value2Array, isEmpty } from '../../helper/utils';
+import { getDateTimestamp, getDayCountOfMonth, value2Array, isEmpty } from '../../helper/utils';
 import { useLocale } from '../../../locale';
 
 const COMPONENT_NAME = 'vc-quarter-table';
@@ -70,18 +69,18 @@ export const QuarterTable = defineComponent({
 			const $rows: any = [[], []];
 			const year = props.panelDate!.getFullYear();
 			const selectedQuarter = value2Array(props.value);
+			const rangeFromTime = getDateTimestamp(props.rangeState.from);
+			const rangeToTime = getDateTimestamp(props.rangeState.to);
 			for (let i = 0; i < 2; i++) {
 				for (let j = 0; j < 2; j++) {
 					const cell: any = {};
 					cell.quarter = i * 2 + j; // 值为：0，1，2，3
 					cell.dates = getMonthRange(props.panelDate!, cell.quarter);
-					const rangeFromTime = getDateTimestamp(props.rangeState.from);
-					const rangeToTime = getDateTimestamp(props.rangeState.to);
-					const time = [getDateTimestamp(cell.dates[0]), getDateTimestamp(cell.dates[1])];
+					const time = [cell.dates[0].getTime(), cell.dates[1].getTime()];
 
 					cell.inRange = time[0] > rangeFromTime && time[1] < rangeToTime;
-					cell.start = props.rangeState.from && time[0] === rangeFromTime;
-					cell.end = props.rangeState.to && time[1] === rangeToTime;
+					cell.start = time[0] === rangeFromTime;
+					cell.end = time[1] === rangeToTime;
 					cell.disabled = typeof props.disabledDate === 'function' && props.disabledDate(cell.quarter);
 					cell.customClass = typeof props.cellClassName === 'function' && props.cellClassName(cell.quarter);
 					cell.selected = !isEmpty(selectedQuarter) && selectedQuarter.some((quarter) => {

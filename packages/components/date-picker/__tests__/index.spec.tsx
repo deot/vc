@@ -38,25 +38,12 @@ import {
 	isDisabledMonth,
 	value2Array,
 	isEmpty,
-	setNewYear,
-	getTimeStamp,
-	isBefore,
-	getQuarter
-} from '../helper/utils';
-import {
-	modifyDate,
-	clearTime,
+	getQuarter,
 	getDateTimestamp,
 	getDayCountOfMonth,
 	changeYearMonthAndClampDate,
-	prevDate,
-	nextDate,
-	prevMonth,
-	nextMonth,
-	prevYear,
-	nextYear,
 	getDateOfTime
-} from '../helper/date-utils';
+} from '../helper/utils';
 
 import { sleep, flush, press, typeInto, mountAttached, mountTyping, clickOutside } from './fixtures/editable';
 
@@ -1766,7 +1753,7 @@ describe('TimePanel / TimeRangePanel direct mount', () => {
 		wrapper.unmount();
 	});
 
-	it('TimePanel value 为空时点击 li 仍然可以 pick（使用 clearTime(new Date())）', async () => {
+	it('TimePanel value 为空时点击 li 仍然可以 pick（取今天 0 点）', async () => {
 		const onPick = vi.fn();
 		const wrapper = mount(() => (
 			<TimePanel
@@ -1822,7 +1809,7 @@ describe('TimePanel / TimeRangePanel direct mount', () => {
 		wrapper.unmount();
 	});
 
-	it('TimeRangePanel value 为空时点击 li 仍可使用（clearTime(new Date()))', async () => {
+	it('TimeRangePanel value 为空时点击 li 仍可使用（取今天 0 点）', async () => {
 		const onPick = vi.fn();
 		const wrapper = mount(() => (
 			<TimeRangePanel
@@ -2356,10 +2343,16 @@ describe('Base sub-components direct mount', () => {
 });
 
 describe('helper/utils unit', () => {
-	it('toDate / formatDate / parseDate 边界', () => {
-		expect(toDate('not a date')).toBe(null);
-		expect(toDate(0) instanceof Date).toBe(true);
-		expect(toDate(new Date()) instanceof Date).toBe(true);
+	it('toDate：空值与非法值为 null（dayjs(undefined) 是现在，不能当成今天）', () => {
+		[undefined, null, '', 'not a date', NaN].forEach(value => expect(toDate(value)).toBe(null));
+		expect(toDate(0)).toEqual(new Date(0));
+		expect(toDate('2024-03-05')).toEqual(new Date(2024, 2, 5));
+	});
+
+	it('formatDate / parseDate 边界', () => {
+		expect(formatDate(new Date(2023, 0, 1).getTime(), 'YYYY-MM-DD')).toBe('2023-01-01');
+		expect(formatDate(null, 'YYYY-MM-DD')).toBe('');
+		expect(formatDate(undefined, 'YYYY-MM-DD')).toBe('');
 		expect(formatDate('not a date', 'YYYY-MM-DD')).toBe('');
 		expect(formatDate(new Date(2023, 0, 1), '')).toBe('2023-01-01');
 		expect(parseDate(new Date(2023, 0, 1), 'YYYY-MM-DD') instanceof Date).toBe(true);
@@ -2474,21 +2467,6 @@ describe('helper/utils unit', () => {
 		expect(isEmpty('a')).toBe(false);
 	});
 
-	it('setNewYear 把目标 date 的年份替换成 currentDate 的年份', () => {
-		const result = setNewYear(new Date(2030, 5, 1), new Date(1990, 0, 1));
-		expect(result.getFullYear()).toBe(2030);
-	});
-
-	it('getTimeStamp 兼容 Date / 字符串', () => {
-		expect(typeof getTimeStamp(new Date())).toBe('number');
-		expect(typeof getTimeStamp('2023-01-01')).toBe('number');
-	});
-
-	it('isBefore 判断', () => {
-		expect(isBefore(new Date(2023, 0, 1), new Date(2024, 0, 1))).toBe(true);
-		expect(isBefore(new Date(2024, 0, 1), new Date(2023, 0, 1))).toBe(false);
-	});
-
 	it('getQuarter 4 个季度', () => {
 		expect(getQuarter(new Date(2023, 0, 1))).toBe('1');
 		expect(getQuarter(new Date(2023, 3, 1))).toBe('2');
@@ -2497,67 +2475,40 @@ describe('helper/utils unit', () => {
 	});
 });
 
-describe('helper/date-utils unit', () => {
-	it('modifyDate 保留时分秒', () => {
-		const src = new Date(2023, 0, 1, 8, 30, 45, 123);
-		const result = modifyDate(src, 2024, 5, 10);
-		expect(result.getFullYear()).toBe(2024);
-		expect(result.getMonth()).toBe(5);
-		expect(result.getDate()).toBe(10);
-		expect(result.getHours()).toBe(8);
-		expect(result.getMinutes()).toBe(30);
-		expect(result.getSeconds()).toBe(45);
-	});
-
-	it('clearTime / getDateTimestamp', () => {
+describe('helper/utils 日期运算', () => {
+	it('getDateTimestamp：当天 0 点；空值为 NaN', () => {
 		const d = new Date(2023, 0, 1, 8, 30, 0);
-		expect(clearTime(d).getHours()).toBe(0);
-		expect(typeof getDateTimestamp(d)).toBe('number');
-		expect(typeof getDateTimestamp(d.getTime())).toBe('number');
-		expect(typeof getDateTimestamp('2023-01-01')).toBe('number');
-		expect(Number.isNaN(getDateTimestamp({} as any))).toBe(true);
+		expect(getDateTimestamp(d)).toBe(new Date(2023, 0, 1).getTime());
+		expect(getDateTimestamp(d.getTime())).toBe(new Date(2023, 0, 1).getTime());
+		expect(getDateTimestamp('2023-01-01')).toBe(new Date(2023, 0, 1).getTime());
+		// 范围还没选的一端（''、null、undefined）不能当成今天
+		expect(Number.isNaN(getDateTimestamp(''))).toBe(true);
+		expect(Number.isNaN(getDateTimestamp(null))).toBe(true);
+		expect(Number.isNaN(getDateTimestamp(undefined))).toBe(true);
 	});
 
-	it('changeYearMonthAndClampDate 处理大日期回退', () => {
-		const src = new Date(2023, 0, 31);
-		const result = changeYearMonthAndClampDate(src, 2023, 1);
-		expect(result.getMonth()).toBe(1);
-		expect(result.getDate()).toBe(28);
+	it('changeYearMonthAndClampDate：日超出当月天数时取月末，时分秒不变', () => {
+		const result = changeYearMonthAndClampDate(new Date(2023, 0, 31, 8, 30), 2023, 1);
+		expect([result.getFullYear(), result.getMonth(), result.getDate(), result.getHours(), result.getMinutes()]).toEqual([2023, 1, 28, 8, 30]);
+		// 先换年再换月时不能被中间的月份截断：2024-02-29 → 2023 年 3 月仍是 29 日
+		expect(changeYearMonthAndClampDate(new Date(2024, 1, 29), 2023, 2).getDate()).toBe(29);
+		// 平年 1 月 31 日 → 闰年 2 月为 29 日
+		expect(changeYearMonthAndClampDate(new Date(2023, 0, 31), 2024, 1).getDate()).toBe(29);
+		// 月份越界时进位到相邻年份（面板上的 leftMonth + 1 / rightMonth - 1）
+		const next = changeYearMonthAndClampDate(new Date(2023, 11, 31), 2023, 12);
+		expect([next.getFullYear(), next.getMonth(), next.getDate()]).toEqual([2024, 0, 31]);
+		const previous = changeYearMonthAndClampDate(new Date(2024, 0, 31), 2024, -1);
+		expect([previous.getFullYear(), previous.getMonth(), previous.getDate()]).toEqual([2023, 11, 31]);
 	});
 
-	it('prevDate / nextDate', () => {
-		const d = new Date(2023, 0, 10);
-		expect(prevDate(d, 5).getDate()).toBe(5);
-		expect(nextDate(d, 5).getDate()).toBe(15);
-		expect(prevDate(d).getDate()).toBe(9);
-		expect(nextDate(d).getDate()).toBe(11);
-	});
-
-	it('prevMonth / nextMonth 处理 0/11 月跨年', () => {
-		expect(prevMonth(new Date(2023, 0, 15)).getMonth()).toBe(11);
-		expect(prevMonth(new Date(2023, 0, 15)).getFullYear()).toBe(2022);
-		expect(nextMonth(new Date(2023, 11, 15)).getMonth()).toBe(0);
-		expect(nextMonth(new Date(2023, 11, 15)).getFullYear()).toBe(2024);
-		expect(prevMonth(new Date(2023, 5, 15)).getMonth()).toBe(4);
-		expect(nextMonth(new Date(2023, 5, 15)).getMonth()).toBe(6);
-	});
-
-	it('prevYear / nextYear', () => {
-		expect(prevYear(new Date(2023, 0, 1)).getFullYear()).toBe(2022);
-		expect(nextYear(new Date(2023, 0, 1)).getFullYear()).toBe(2024);
-		expect(prevYear(new Date(2023, 0, 1), 10).getFullYear()).toBe(2013);
-		expect(nextYear(new Date(2023, 0, 1), 10).getFullYear()).toBe(2033);
-	});
-
-	it('getDateOfTime 缺省字段使用原 date 时间', () => {
-		const src = new Date(2023, 0, 1, 12, 30, 45);
+	it('getDateOfTime 缺省字段使用原 date 时间，毫秒归零', () => {
+		const src = new Date(2023, 0, 1, 12, 30, 45, 500);
 		const out = getDateOfTime(src, { hours: 8 });
-		expect(out.getHours()).toBe(8);
-		expect(out.getMinutes()).toBe(30);
-		expect(out.getSeconds()).toBe(45);
+		expect([out.getHours(), out.getMinutes(), out.getSeconds(), out.getMilliseconds()]).toEqual([8, 30, 45, 0]);
 		// 默认 time={} 时全部使用源时间
 		const out2 = getDateOfTime(src);
 		expect(out2.getHours()).toBe(12);
+		expect(getDateOfTime(src, { hours: 0, minutes: 0, seconds: 0 }).getHours()).toBe(0);
 	});
 });
 
@@ -2568,119 +2519,22 @@ describe('constants', () => {
 	});
 });
 
-describe('helper/date.ts (DateUtil format/parse 全 token)', () => {
-	let DateUtil: any;
-	beforeAll(async () => {
-		DateUtil = (await import('../helper/date')).DateUtil;
+describe('formatDate / parseDate（格式标记的结果见 dayjs.spec.ts 的对照测试）', () => {
+	it('parse：MM、DD 也接受一位数，分隔符可以不同，[] 内是原样文字', () => {
+		const ymd = (date: any) => formatDate(date, 'YYYY-MM-DD HH:mm:ss');
+		expect(ymd(parseDate('2024-3-5', 'YYYY-MM-DD'))).toBe('2024-03-05 00:00:00');
+		expect(ymd(parseDate('2024/03/05', 'YYYY-MM-DD'))).toBe('2024-03-05 00:00:00');
+		expect(ymd(parseDate('2024-3-5 9:5:3', 'YYYY-MM-DD HH:mm:ss'))).toBe('2024-03-05 09:05:03');
+		expect(ymd(parseDate('2024年3月5日', 'YYYY[年]MM[月]DD[日]'))).toBe('2024-03-05 00:00:00');
+		expect(ymd(parseDate('May 9, 2023', 'MMM D, YYYY'))).toBe('2023-05-09 00:00:00');
 	});
 
-	it('format 覆盖各种 token', () => {
-		const d = new Date(2023, 4, 9, 14, 35, 7, 250); // 2023-05-09 14:35:07.250
-		expect(DateUtil.format(d, 'YYYY-MM-DD HH:mm:ss')).toBe('2023-05-09 14:35:07');
-		expect(DateUtil.format(d, 'M-D')).toBe('5-9');
-		expect(DateUtil.format(d, 'MMM')).toBe('May');
-		expect(DateUtil.format(d, 'MMMM')).toBe('May');
-		// 12 小时制（字符串化结果）
-		expect(String(DateUtil.format(d, 'h'))).toBe('2');
-		expect(DateUtil.format(d, 'hh')).toBe('02');
-		// AM/PM
-		expect(DateUtil.format(d, 'a')).toBe('pm');
-		expect(DateUtil.format(d, 'A')).toBe('PM');
-		const am = new Date(2023, 0, 1, 8, 0, 0);
-		expect(DateUtil.format(am, 'a')).toBe('am');
-		expect(DateUtil.format(am, 'A')).toBe('AM');
-		// 12 点临界 hours % 12 || 12
-		const noon = new Date(2023, 0, 1, 12, 0, 0);
-		expect(String(DateUtil.format(noon, 'h'))).toBe('12');
-		const midnight = new Date(2023, 0, 1, 0, 0, 0);
-		expect(String(DateUtil.format(midnight, 'h'))).toBe('12');
-		// 毫秒
-		expect(String(DateUtil.format(d, 'S'))).toBe('3');
-		expect(DateUtil.format(d, 'SS')).toBe('25');
-		expect(DateUtil.format(d, 'SSS')).toBe('250');
-		// 时区
-		expect(typeof DateUtil.format(d, 'ZZ')).toBe('string');
-		// YY
-		expect(DateUtil.format(d, 'YY')).toBe('23');
-		// Do (序数)
-		expect(DateUtil.format(d, 'Do')).toBe('9th');
-		// 数字时间戳
-		expect(DateUtil.format(d.getTime(), 'YYYY-MM-DD')).toBe('2023-05-09');
-		// mask 别名（mediumDate / longDate / fullDate 内含小写 d，formatFlags 没有，会走兜底）
-		expect(DateUtil.format(d, 'shortDate')).toBe('5/9/23');
-		expect(DateUtil.format(d, 'mediumDate')).toContain('May');
-		expect(DateUtil.format(d, 'longDate')).toContain('May');
-		expect(DateUtil.format(d, 'fullDate')).toContain('May');
-		expect(DateUtil.format(d, 'shortTime')).toBe('14:35');
-		expect(DateUtil.format(d, 'mediumTime')).toBe('14:35:07');
-		expect(DateUtil.format(d, 'longTime')).toBe('14:35:07.250');
-		// 默认 mask（含 'ddd' 等小写 token，formatFlags 中无对应项 → 返回 slice 兜底）
-		expect(typeof DateUtil.format(d, '')).toBe('string');
-	});
-
-	it('DoFn 各分支路径覆盖（覆盖即可，不强校验序数后缀）', () => {
-		// 该 DoFn 在 d-vc 的实现存在已知边界 bug，这里仅触发各路径覆盖
-		// 仅断言能拿到字符串，不细究后缀（部分日期会因下标越界返回 NaN）
-		for (const day of [1, 2, 4, 11, 12, 21]) {
-			const d = new Date(2023, 0, day);
-			const out = DateUtil.format(d, 'Do');
-			expect(typeof out).toBe('string');
-		}
-	});
-
-	it('format 非法 Date 抛错', () => {
-		expect(() => DateUtil.format(new Date('invalid'), 'YYYY-MM-DD')).toThrow();
-		expect(() => DateUtil.format('not-a-date', 'YYYY-MM-DD')).toThrow();
-	});
-
-	it('format 自定义 i18n 与未识别 token（保持原文）', () => {
-		const d = new Date(2023, 0, 1);
-		// "中" / 'CN' 等非 token 字符通过 quoted 字符串
-		expect(DateUtil.format(d, 'YYYY"年"MM"月"DD"日"')).toBe('2023年01月01日');
-		expect(DateUtil.format(d, `YYYY'年'MM'月'DD'日'`)).toBe('2023年01月01日');
-	});
-
-	it('parse 各种格式', () => {
-		expect(DateUtil.parse('2023-05-09', 'YYYY-MM-DD').getFullYear()).toBe(2023);
-		expect(DateUtil.parse('2023-05-09 14:35:07', 'YYYY-MM-DD HH:mm:ss').getHours()).toBe(14);
-		// 12 小时制 + AM/PM
-		const r = DateUtil.parse('2023-05-09 02:30:00 PM', 'YYYY-MM-DD hh:mm:ss A');
-		expect(r.getHours()).toBe(14);
-		const r2 = DateUtil.parse('2023-05-09 12:00:00 AM', 'YYYY-MM-DD hh:mm:ss A');
-		expect(r2.getHours()).toBe(0);
-		// YY 形式
-		const r3 = DateUtil.parse('99-05-09', 'YY-MM-DD');
-		expect(r3.getFullYear()).toBe(1999);
-		const r4 = DateUtil.parse('20-05-09', 'YY-MM-DD');
-		expect(r4.getFullYear()).toBe(2020);
-		// MMM / MMMM
-		const r5 = DateUtil.parse('May 9, 2023', 'MMM D, YYYY');
-		expect(r5.getMonth()).toBe(4);
-		const r6 = DateUtil.parse('May 9, 2023', 'MMMM D, YYYY');
-		expect(r6.getMonth()).toBe(4);
-		// 毫秒
-		const r7 = DateUtil.parse('2023-05-09 14:35:07.250', 'YYYY-MM-DD HH:mm:ss.SSS');
-		expect(r7.getMilliseconds()).toBe(250);
-		const r8 = DateUtil.parse('2023-05-09 14:35:07.2', 'YYYY-MM-DD HH:mm:ss.S');
-		expect(r8.getMilliseconds()).toBe(200);
-		const r9 = DateUtil.parse('2023-05-09 14:35:07.25', 'YYYY-MM-DD HH:mm:ss.SS');
-		expect(r9.getMilliseconds()).toBe(250);
-		// 时区
-		const r10 = DateUtil.parse('2023-05-09 14:35:07 +0800', 'YYYY-MM-DD HH:mm:ss ZZ');
-		expect(r10 instanceof Date).toBe(true);
-		// mask 别名
-		const r11 = DateUtil.parse('5/9/23', 'shortDate');
-		expect(r11.getFullYear()).toBe(2023);
-	});
-
-	it('parse 非法返回 false', () => {
-		expect(DateUtil.parse('not-a-date', 'YYYY-MM-DD')).toBe(false);
-		// 超长字符串
-		expect(DateUtil.parse('a'.repeat(2000), 'YYYY-MM-DD')).toBe(false);
-	});
-
-	it('parse 非字符串 format 抛错', () => {
-		expect(() => DateUtil.parse('2023-05-09', 123 as any)).toThrow();
+	it('parse：非法、只输入一部分时为 null；溢出交给 isSameDigits 拦下', () => {
+		expect(parseDate('not-a-date', 'YYYY-MM-DD')).toBe(null);
+		expect(parseDate('', 'YYYY-MM-DD')).toBe(null);
+		expect(parseDate('2024-03-05', 'YYYY-MM-DD HH:mm:ss')).toBe(null);
+		const overflow = parseDate('2024-02-30', 'YYYY-MM-DD')!;
+		expect(isSameDigits('2024-02-30', formatDate(overflow, 'YYYY-MM-DD'))).toBe(false);
 	});
 });
 

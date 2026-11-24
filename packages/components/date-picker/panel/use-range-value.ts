@@ -1,5 +1,6 @@
 import { ref, watch } from 'vue';
 import { isEqual } from 'lodash-es';
+import { dayjs } from '../helper/dayjs';
 
 interface RangeValueProps {
 	value?: Date[];
@@ -8,13 +9,9 @@ interface RangeValueProps {
 }
 
 interface RangeValueOptions {
-	// 右侧面板默认显示的位置：左侧的下一个月（日期）/ 下一年（月份、季度）
-	next: (date: Date) => Date;
-	// 起止是否落在同一个面板里（同月 / 同年）
-	isSamePanel: (start: Date, end: Date) => boolean;
+	// 一个面板的跨度：日期面板为月，月份、季度面板为年；右侧面板默认显示左侧的下一个
+	unit: 'month' | 'year';
 }
-
-export const isSameYear = (start: Date, end: Date) => start.getFullYear() === end.getFullYear();
 
 /**
  * 范围面板的值、左右面板显示的位置与选择状态
@@ -25,7 +22,12 @@ export const isSameYear = (start: Date, end: Date) => start.getFullYear() === en
  * @returns ~
  */
 export const useRangeValue = (props: RangeValueProps, options: RangeValueOptions) => {
-	const { next, isSamePanel } = options;
+	const { unit } = options;
+	const next = (date: Date) => dayjs(date).add(1, unit).toDate();
+	// 起止是否落在同一个面板里（同月 / 同年）
+	const isSamePanel = (start: Date, end: Date) => {
+		return start.getFullYear() === end.getFullYear() && (unit === 'year' || start.getMonth() === end.getMonth());
+	};
 	const dates = ref<Date[]>([]);
 	const leftPanelDate = ref<Date>(props.startDate || new Date());
 	const rightPanelDate = ref<Date>(next(leftPanelDate.value));

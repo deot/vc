@@ -5,7 +5,8 @@ import type { PropType } from 'vue';
 import { useLocale } from '../locale';
 import { Date2Holiday } from './date2holiday';
 import { useCalendarContext } from './use-calendar-selection';
-import { getCalendarDates, getMonthDays, getLeadingDays, toDateKey } from './utils';
+import { dayjs } from '../date-picker/helper/dayjs';
+import { getCalendarDates, getDayCountOfMonth, getLeadingDays } from '../date-picker/helper/utils';
 import type { CalendarCell, CalendarCellType } from './types';
 
 const COMPONENT_NAME = 'vc-calendar-month';
@@ -84,14 +85,16 @@ export const CalendarMonth = defineComponent({
 				return {
 					date,
 					time: date.getTime(),
-					key: toDateKey(date),
+					key: dayjs(date).format('YYYY-MM-DD'),
 					day: date.getDate(),
 					type: offset < 0 ? 'previous' : offset > 0 ? 'next' : 'current'
 				};
 			});
 			const count = props.adjacent
 				? 6
-				: Math.ceil((getLeadingDays(props.year, props.month, calendar.firstDayOfWeek.value) + getMonthDays(props.year, props.month)) / 7);
+				: Math.ceil(
+						(getLeadingDays(props.year, props.month, calendar.firstDayOfWeek.value) + getDayCountOfMonth(props.year, props.month)) / 7
+					);
 			const [keepFirst, keepLast] = props.adjacentWeeks;
 
 			return Array.from({ length: count }, (_, index) => items.slice(index * 7, index * 7 + 7)).filter((row) => {

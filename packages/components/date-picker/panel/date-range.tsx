@@ -2,7 +2,8 @@
 
 import { useLocale } from '../../locale';
 import { defineComponent, ref, computed } from 'vue';
-import { nextMonth, prevMonth, nextYear, prevYear, getDateOfTime, changeYearMonthAndClampDate } from '../helper/date-utils';
+import { dayjs } from '../helper/dayjs';
+import { getDateOfTime, changeYearMonthAndClampDate } from '../helper/utils';
 
 import { props as dateProps } from './base-date-props';
 import { useRangeValue } from './use-range-value';
@@ -66,10 +67,7 @@ export const DateRangePanel = defineComponent({
 	],
 	setup(props, { emit }) {
 		const { t } = useLocale();
-		const { dates, leftPanelDate, rightPanelDate, rangeState } = useRangeValue(props, {
-			next: nextMonth,
-			isSamePanel: (start, end) => start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth()
-		});
+		const { dates, leftPanelDate, rightPanelDate, rangeState } = useRangeValue(props, { unit: 'month' });
 		const rightCurrentView = ref('daterange');
 		const leftCurrentView = ref('daterange');
 
@@ -186,19 +184,19 @@ export const DateRangePanel = defineComponent({
 					case 'next-month':
 						if (position === 'left' && $isOverRightPanel) {
 							// 判断如果右边下个月的日期还是小于左边的日期，则将右边日期改成比左边日期大一个月
-							const $rightPanelDate = nextMonth(rightPanelDate.value);
+							const $rightPanelDate = dayjs(rightPanelDate.value).add(1, 'month').toDate();
 							if ($rightPanelDate < leftPanelDate.value) {
 								rightPanelDate.value = changeYearMonthAndClampDate(leftPanelDate.value, leftYear.value, leftMonth.value + 1);
 							} else {
-								rightPanelDate.value = nextMonth(rightPanelDate.value);
+								rightPanelDate.value = $rightPanelDate;
 							}
 						} else if (position === 'right' && $isOverLeftPanel) {
 							// 判断如果左边上个月的日期还是大于右边的日期，则将左边日期改成比右边日期小一个月
-							const $leftPanelDate = prevMonth(leftPanelDate.value);
+							const $leftPanelDate = dayjs(leftPanelDate.value).subtract(1, 'month').toDate();
 							if ($leftPanelDate < leftPanelDate.value) {
 								leftPanelDate.value = changeYearMonthAndClampDate(rightPanelDate.value, rightYear.value, rightMonth.value - 1);
 							} else {
-								leftPanelDate.value = prevMonth(leftPanelDate.value);
+								leftPanelDate.value = $leftPanelDate;
 							}
 						}
 						break;
@@ -206,19 +204,19 @@ export const DateRangePanel = defineComponent({
 					case 'next-year':
 						if (position === 'left' && $isOverRightPanel && leftCurrentView.value !== 'year') {
 							// 判断如果右边下年的日期还是小于左边的日期，则将右边日期改成比左边日期大一月
-							const $rightPanelDate = nextYear(rightPanelDate.value);
+							const $rightPanelDate = dayjs(rightPanelDate.value).add(1, 'year').toDate();
 							if ($rightPanelDate < leftPanelDate.value) {
 								rightPanelDate.value = changeYearMonthAndClampDate(leftPanelDate.value, leftYear.value, leftMonth.value + 1);
 							} else {
-								rightPanelDate.value = nextYear(rightPanelDate.value);
+								rightPanelDate.value = $rightPanelDate;
 							}
 						} else if (position === 'right' && $isOverRightPanel && rightCurrentView.value !== 'year') {
 							// 判断如果左边上个月的日期还是大于右边的日期，则将左边日期改成比右边日期小一个月
-							const $leftPanelDate = prevYear(leftPanelDate.value);
+							const $leftPanelDate = dayjs(leftPanelDate.value).subtract(1, 'year').toDate();
 							if ($leftPanelDate < leftPanelDate.value) {
 								leftPanelDate.value = changeYearMonthAndClampDate(rightPanelDate.value, rightYear.value, rightMonth.value - 1);
 							} else {
-								leftPanelDate.value = prevYear(leftPanelDate.value);
+								leftPanelDate.value = $leftPanelDate;
 							}
 						}
 						break;
@@ -228,16 +226,16 @@ export const DateRangePanel = defineComponent({
 			} else {
 				switch (type) {
 					case 'prev-month':
-						rightPanelDate.value = prevMonth(rightPanelDate.value);
+						rightPanelDate.value = dayjs(rightPanelDate.value).subtract(1, 'month').toDate();
 						break;
 					case 'prev-year':
-						rightPanelDate.value = prevYear(rightPanelDate.value);
+						rightPanelDate.value = dayjs(rightPanelDate.value).subtract(1, 'year').toDate();
 						break;
 					case 'next-month':
-						leftPanelDate.value = nextMonth(leftPanelDate.value);
+						leftPanelDate.value = dayjs(leftPanelDate.value).add(1, 'month').toDate();
 						break;
 					case 'next-year':
-						leftPanelDate.value = nextYear(leftPanelDate.value);
+						leftPanelDate.value = dayjs(leftPanelDate.value).add(1, 'year').toDate();
 						break;
 					default:
 						break;
@@ -271,7 +269,9 @@ export const DateRangePanel = defineComponent({
 			}
 			if (!isInRange) {
 				const changeType = type === 'left' ? 'prev-month' : 'next-month';
-				const panelDate = type === 'left' ? prevMonth(leftPanelDate.value) : nextMonth(rightPanelDate.value);
+				const panelDate = type === 'left'
+					? dayjs(leftPanelDate.value).subtract(1, 'month').toDate()
+					: dayjs(rightPanelDate.value).add(1, 'month').toDate();
 				handlePanelChange(panelDate, changeType, type);
 			} else if (rangeState.value.from && rangeState.value.to) {
 				// from && to 都已选择，对外发送事件

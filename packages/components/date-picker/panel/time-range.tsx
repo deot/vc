@@ -2,7 +2,8 @@
 
 import { useLocale } from '../../locale';
 import { defineComponent, computed } from 'vue';
-import { getDateOfTime, clearTime } from '../helper/date-utils';
+import { dayjs } from '../helper/dayjs';
+import { getDateOfTime } from '../helper/utils';
 import { props as timeProps } from './base-time-props';
 import { Confirm, TimeSelect, DateHeader } from './base';
 
@@ -58,8 +59,9 @@ export const TimeRangePanel = defineComponent({
 		});
 
 		const handlePick = (type: string, value: any) => {
-			let leftNewDate = props.value![0] || clearTime(new Date());
-			let rightNewDate = props.value![1] || clearTime(new Date());
+			const today = dayjs().startOf('day').toDate();
+			let leftNewDate = props.value![0] || today;
+			let rightNewDate = props.value![1] || today;
 			type === 'left' && (leftNewDate = getDateOfTime(leftNewDate, value));
 			type === 'right' && (rightNewDate = getDateOfTime(rightNewDate, value));
 			if (leftNewDate > rightNewDate) {

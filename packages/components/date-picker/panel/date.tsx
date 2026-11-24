@@ -3,7 +3,7 @@
 import { defineComponent, ref, computed, watch, toRaw } from 'vue';
 import { props as dateProps } from './base-date-props';
 import { YearTable, MonthTable, DateTable, DateHeader, Confirm, TimeSelect, ShortcutsSelect, QuarterTable } from './base';
-import { getDateOfTime, changeYearMonthAndClampDate } from '../helper/date-utils';
+import { getDateOfTime, changeYearMonthAndClampDate } from '../helper/utils';
 
 const COMPONENT_NAME = 'vc-date-panel';
 

@@ -2,7 +2,7 @@
 
 import { defineComponent, computed, Fragment } from 'vue';
 import { preZero } from '@deot/helper-utils';
-import { prevYear, nextYear, prevMonth, nextMonth } from '../../helper/date-utils';
+import { dayjs } from '../../helper/dayjs';
 import { useLocale } from '../../../locale';
 import { Icon } from '../../../icon/index';
 
@@ -48,26 +48,10 @@ export const DateHeader = defineComponent({
 			emit('change-current-view', 'month');
 		};
 
-		const handlePrevMonth = () => {
-			const prevM = prevMonth(props.panelDate!);
-			emit('change', prevM, 'prev-month');
-		};
-
-		const handlePrevYear = () => {
-			const amount = props.currentView === 'year' ? 10 : 1;
-			const prevY = prevYear(props.panelDate!, amount);
-			emit('change', prevY, 'prev-year');
-		};
-
-		const handleNextMonth = () => {
-			const nextM = nextMonth(props.panelDate!);
-			emit('change', nextM, 'next-month');
-		};
-
-		const handleNextYear = () => {
-			const amount = props.currentView === 'year' ? 10 : 1;
-			const nextY = nextYear(props.panelDate!, amount);
-			emit('change', nextY, 'next-year');
+		// 翻页：年视图一次翻 10 年
+		const handleShift = (direction: 'prev' | 'next', unit: 'month' | 'year') => () => {
+			const amount = (unit === 'year' && props.currentView === 'year' ? 10 : 1) * (direction === 'prev' ? -1 : 1);
+			emit('change', dayjs(props.panelDate!).add(amount, unit).toDate(), `${direction}-${unit}`);
 		};
 
 		return () => {
@@ -83,7 +67,7 @@ export const DateHeader = defineComponent({
 													class="vc-date-header__arrow is-prev is-prev-year"
 													type="d-arrow-left"
 													// @ts-ignore
-													onClick={handlePrevYear}
+													onClick={handleShift('prev', 'year')}
 												/>
 											)
 										}
@@ -93,7 +77,7 @@ export const DateHeader = defineComponent({
 													class="vc-date-header__arrow is-prev"
 													type="arrow-left"
 													// @ts-ignore
-													onClick={handlePrevMonth}
+													onClick={handleShift('prev', 'month')}
 												/>
 											)
 										}
@@ -109,7 +93,7 @@ export const DateHeader = defineComponent({
 													class="vc-date-header__arrow is-next is-next-year"
 													type="d-arrow-right"
 													// @ts-ignore
-													onClick={handleNextYear}
+													onClick={handleShift('next', 'year')}
 												/>
 											)
 										}
@@ -119,7 +103,7 @@ export const DateHeader = defineComponent({
 													class="vc-date-header__arrow is-next"
 													type="arrow-right"
 													// @ts-ignore
-													onClick={handleNextMonth}
+													onClick={handleShift('next', 'month')}
 												/>
 											)
 										}

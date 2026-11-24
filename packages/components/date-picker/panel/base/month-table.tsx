@@ -3,8 +3,7 @@
 import { defineComponent, computed } from 'vue';
 import { useLocale } from '../../../locale';
 
-import { getDateTimestamp } from '../../helper/date-utils';
-import { value2Array, isDisabledMonth } from '../../helper/utils';
+import { getDateTimestamp, value2Array, isDisabledMonth } from '../../helper/utils';
 
 const COMPONENT_NAME = 'vc-month-table';
 
@@ -42,15 +41,17 @@ export const MonthTable = defineComponent({
 			const $rows: any = [[], [], [], []];
 			const year = props.panelDate!.getFullYear();
 			const selectedMonth = value2Array(props.value);
+			const fromTime = getDateTimestamp(props.rangeState.from);
+			const toTime = getDateTimestamp(props.rangeState.to);
 			for (let i = 0; i < 4; i++) {
 				for (let j = 0; j < 3; j++) {
 					const cell: any = {};
 					cell.month = i * 3 + j;
 					cell.date = new Date(year, cell.month, 1);
-					const time = getDateTimestamp(cell.date);
-					cell.inRange = time > getDateTimestamp(props.rangeState.from) && time < getDateTimestamp(props.rangeState.to);
-					cell.start = props.rangeState.from && time === getDateTimestamp(props.rangeState.from);
-					cell.end = props.rangeState.to && time === getDateTimestamp(props.rangeState.to);
+					const time = cell.date.getTime();
+					cell.inRange = time > fromTime && time < toTime;
+					cell.start = time === fromTime;
+					cell.end = time === toTime;
 					cell.disabled = disabledMonths.value[cell.month];
 					cell.customClass = typeof props.cellClassName === 'function' && props.cellClassName(cell.month);
 					cell.selected = selectedMonth.some((month) => {

@@ -1,5 +1,4 @@
-import { DateUtil } from './date';
-import { getDayCountOfMonth } from './date-utils';
+import { dayjs, type ConfigType } from './dayjs';
 import { translate } from '../../locale';
 import { VcInstance } from '../../vc';
 
@@ -11,22 +10,139 @@ const formatYearQuarter = (year: number, quarter: string) => {
 	}, locale);
 };
 
+/* -----------------------------  日期工具（DatePicker / Calendar / Countdown 共用） ------------------------------------------- */
+
+// 未传 firstDayOfWeek 且全局未配置时从周日开始
+export const DEFAULT_FIRST_DAY_OF_WEEK = 7;
+
+// 与 MDatePicker 相同的默认年份范围，也是农历数据覆盖的范围
+export const DEFAULT_YEAR_RANGE = [1900, 2100];
+
+/**
+ * 转成 Date；空值（undefined、null、''）与非法值为 null
+ * 	- dayjs(undefined) 是现在，空值不能当成今天，所以先在这里归一
+ * @param value ~
+ * @returns ~
+ */
+export const toDate = (value: unknown): Date | null => {
+	if (value === undefined || value === null || value === '') return null;
+	const date = dayjs(value as ConfigType);
+	return date.isValid() ? date.toDate() : null;
+};
+
+/**
+ * 当天 0 点的时间戳；空值（如范围还没选的一端）与非法值为 NaN，比较结果都是 false
+ * @param value ~
+ * @returns ~
+ */
+export const getDateTimestamp = (value: unknown) => {
+	const date = toDate(value);
+	return date ? date.setHours(0, 0, 0, 0) : NaN;
+};
+
+/**
+ * 某月的天数；dayjs 的 daysInMonth 在公元 0 ~ 99 年会按 1900 ~ 1999 年算，这里用 setFullYear 避开
+ * @param year ~
+ * @param month 0 ~ 11，越界时进位到相邻年份
+ * @returns ~
+ */
+export const getDayCountOfMonth = (year: number, month: number) => {
+	const date = new Date(0);
+	date.setFullYear(year, month + 1, 0);
+	return date.getDate();
+};
+
+/**
+ * 换成指定的年、月，日超出当月天数时取当月最后一天（2010-1-31 → 2010 年 2 月 = 2010-2-28），时分秒不变
+ * @param date ~
+ * @param year ~
+ * @param month 0 ~ 11，越界时进位到相邻年份
+ * @returns ~
+ */
+export const changeYearMonthAndClampDate = (date: Date, year: number, month: number) => {
+	const value = new Date(date);
+	value.setFullYear(year, month, Math.min(date.getDate(), getDayCountOfMonth(year, month)));
+	return value;
+};
+
+interface TimeParts {
+	hours?: number;
+	minutes?: number;
+	seconds?: number;
+}
+
+/**
+ * 日期换成指定的时、分、秒（未给的沿用原值），毫秒归零
+ * @param date ~
+ * @param time ~
+ * @returns ~
+ */
+export const getDateOfTime = (date: Date, time: TimeParts = {}) => {
+	const pick = (value: number | undefined, fallback: number) => (value! >= 0 ? value! : fallback);
+	const value = new Date(date);
+	value.setHours(pick(time.hours, date.getHours()), pick(time.minutes, date.getMinutes()), pick(time.seconds, date.getSeconds()), 0);
+	return value;
+};
+
+const normalizeFirstDayOfWeek = (firstDayOfWeek = DEFAULT_FIRST_DAY_OF_WEEK): number => {
+	const day = ((Math.trunc(firstDayOfWeek) - 1) % 7 + 7) % 7 + 1;
+	return day === 7 ? 0 : day;
+};
+
+/**
+ * 按每周第一天重排星期
+ * @param weekdays 从周日开始
+ * @param firstDayOfWeek 1 - 7
+ * @returns ~
+ */
+export const sortWeekdays = <T>(weekdays: T[], firstDayOfWeek = DEFAULT_FIRST_DAY_OF_WEEK): T[] => {
+	const start = normalizeFirstDayOfWeek(firstDayOfWeek);
+	return [...weekdays.slice(start), ...weekdays.slice(0, start)];
+};
+
+/**
+ * 当月 1 日之前要补的天数：往前补到每周第一天（1 日正好是第一天时不补）
+ * @param year ~
+ * @param month 0 - 11
+ * @param firstDayOfWeek 1 - 7
+ * @returns 0 - 6
+ */
+export const getLeadingDays = (year: number, month: number, firstDayOfWeek: number) => {
+	return (new Date(year, month, 1).getDay() - normalizeFirstDayOfWeek(firstDayOfWeek) + 7) % 7;
+};
+
+/**
+ * 月历的 42 天（6 周），从补齐的上月日期开始
+ * @param year ~
+ * @param month 0 - 11
+ * @param firstDayOfWeek 1 - 7
+ * @returns Date[]
+ */
+export const getCalendarDates = (year: number, month: number, firstDayOfWeek = DEFAULT_FIRST_DAY_OF_WEEK) => {
+	const leading = getLeadingDays(year, month, firstDayOfWeek);
+	return Array.from({ length: 42 }, (_, index) => new Date(year, month, index - leading + 1));
+};
+
 /* -----------------------------  PC ------------------------------------------- */
-export const toDate = (date: Date | number | string) => {
-	date = new Date(date);
-	if (isNaN(date.getTime())) return null;
-	return date;
+export const formatDate = (value: unknown, format: string) => {
+	const date = toDate(value);
+	return date ? dayjs(date).format(format || 'YYYY-MM-DD') : '';
 };
 
-export const formatDate = (date: any, format: string) => {
-	date = toDate(date);
-	if (!date) return '';
-	return DateUtil.format(date, format || 'YYYY-MM-DD');
-};
+// dayjs 的 MM、DD 只认两位（HH、mm 等本来就接受一位），解析时放宽为 M、D：2024-3-5 也按 YYYY-MM-DD 解析；[...] 内的文字与 MMM / MMMM 不动
+const LOOSE_TOKEN_REGEX = /\[[^\]]*\]|M{3,4}|MM|DD/g;
 
+/**
+ * 按格式解析，非法时为 null
+ * @param value ~
+ * @param format ~
+ * @returns ~
+ */
 export const parseDate = (value: any, format: string) => {
 	if (value instanceof Date) return value;
-	return DateUtil.parse(value, format || 'YYYY-MM-DD');
+	const looseFormat = (format || 'YYYY-MM-DD').replace(LOOSE_TOKEN_REGEX, token => (token.length === 2 ? token[0] : token));
+	const date = dayjs(value, looseFormat);
+	return date.isValid() ? date.toDate() : null;
 };
 
 const DATE_FORMATTER = (value: any, format: string) => {
@@ -291,29 +407,6 @@ export const isEmpty = (val: any) => {
 		return true;
 	}
 	return val === 0 || val === '' || val === undefined || val === null || val.length === 0;
-};
-
-export const setNewYear = (currentDate: Date, sourceDate: any) => {
-	const year = currentDate.getFullYear();
-	return new Date(sourceDate.setYear(year));
-};
-
-/**
- * 获取时间戳
- * 兼容Date对象和date字符串
- * @param date Date对象或date字符串（'2020/01/12')
- * @returns number
- */
-export const getTimeStamp = (date: any) => (date.getTime ? date.getTime() : new Date(date).getTime());
-
-/**
- * 判断前者（dateA）是否在后者（dateB）之前
- * @param dateA ~
- * @param dateB ~
- * @returns boolean ~
- */
-export const isBefore = (dateA: any, dateB: any) => {
-	return getTimeStamp(dateA) < getTimeStamp(dateB);
 };
 
 /**
