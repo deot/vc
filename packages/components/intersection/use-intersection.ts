@@ -52,8 +52,8 @@ export const useIntersection = (
 	const rootMargin = computed(() => toRootMargin(props.offset, rem ? rem.value : 1));
 	const threshold = computed(() => Math.min(Math.max(props.threshold || 0, 0), 1));
 
-	// 上一次判断的结果：refresh 时置为不可见，以便可见时重新发出 change
-	let last = false;
+	// refresh 后的第一次判断：仍可见时也重新发出 change
+	let isForced = false;
 	// once：已经可见过
 	let done = false;
 	let off: (() => void) | undefined;
@@ -64,8 +64,9 @@ export const useIntersection = (
 	};
 
 	const update = (e: IntersectionChangeEvent) => {
-		if (e.visible === last) return;
-		last = e.visible;
+		const forced = isForced;
+		isForced = false;
+		if (e.visible === visible.value && !(forced && e.visible)) return;
 		if (e.visible !== visible.value) {
 			visible.value = e.visible;
 			emit('update:modelValue', e.visible);
@@ -102,7 +103,7 @@ export const useIntersection = (
 	 * once 已触发时也会重新开始
 	 */
 	const refresh = () => {
-		last = false;
+		isForced = true;
 		done = false;
 		bind();
 	};
