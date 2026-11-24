@@ -30,15 +30,17 @@ export const useAffix = (
 	const name = options.mobile ? 'vc-affix vcm-affix' : 'vc-affix';
 	const toLength = options.mobile ? toRem : toPx;
 
-	const scroller = shallowRef<any>(); // 当前元素所在的滚动容器（最近一层，可能为 window），吸附位置以它为参照
-	const base = shallowRef<HTMLElement>(); // 当前元素（props.tagret）的参考容器
 	const current = shallowRef<HTMLDivElement>(); // 当前元素（外层）：宽度由布局决定，吸附时只写占位高度
 	const content = shallowRef<HTMLDivElement>(); // 固定层：高度由内容撑开，吸附时只写宽度
 	const measurer = shallowRef<HTMLDivElement>(); // 宽度为 offset 的测量节点：--vc-rem、CSS 变量等变化时尺寸随之变化
 
-	const currentRect = reactive({
-		top: 0,
-		bottom: 0,
+	let scroller: HTMLElement | Window | undefined; // 当前元素所在的滚动容器（最近一层，可能为 window），吸附位置以它为参照；挂载时查找
+	let base: HTMLElement | undefined; // props.target 指向的容器，固钉始终保持在其中；挂载时查找
+
+	// 外层的视口位置只在滚动回调里读，尺寸写进样式（吸附时的占位高度、固定层宽度）
+	let currentTop = 0;
+	let currentBottom = 0;
+	const currentSize = reactive({
 		width: 0,
 		height: 0
 	});
@@ -66,29 +68,27 @@ export const useAffix = (
 		offsetPx = typeof offset === 'number' && offset < 0 ? -width : width;
 	};
 
+	// 吸附线：sticky 时写在外层，fixed 吸附时写在固定层
+	const edgeStyle = computed(() => ({
+		[props.placement]: offsetLength.value,
+		zIndex: props.zIndex
+	}));
+
 	// fixed=false：由 position: sticky 固定在滚动容器内，吸附位置不依赖 JS，滚动时不会抖动
 	const currentStyle = computed(() => {
-		if (!props.fixed) {
-			return {
-				top: props.placement === 'top' ? offsetLength.value : '',
-				bottom: props.placement === 'bottom' ? offsetLength.value : '',
-				zIndex: props.zIndex
-			};
-		}
+		if (!props.fixed) return edgeStyle.value;
 		if (!isActive.value) return {};
 		return {
-			height: `${currentRect.height}px`
+			height: `${currentSize.height}px`
 		};
 	});
 
 	const contentStyle = computed(() => {
 		if (!props.fixed || !isActive.value) return {};
 		return {
-			width: `${currentRect.width}px`,
-			top: props.placement === 'top' ? offsetLength.value : '',
-			bottom: props.placement === 'bottom' ? offsetLength.value : '',
-			zIndex: props.zIndex,
-			transform: transformY.value ? `translateY(${transformY.value}px)` : '',
+			...edgeStyle.value,
+			width: `${currentSize.width}px`,
+			transform: transformY.value ? `translateY(${transformY.value}px)` : ''
 		};
 	});
 
@@ -103,74 +103,66 @@ export const useAffix = (
 		const height = props.fixed
 			? content.value?.getBoundingClientRect?.().height ?? rect.height
 			: rect.height;
-		Object.assign(currentRect, {
-			top: rect.top,
-			bottom: rect.top + height,
-			width: rect.width,
-			height
-		});
+		currentTop = rect.top;
+		currentBottom = rect.top + height;
+		currentSize.width = rect.width;
+		currentSize.height = height;
 	};
 
 	// sticky 以滚动容器去掉边框与 padding 后的可视区为参照；恰好停在吸附线上即为吸附中（被父元素带走后不再算）
 	// offset 为 CSS px，祖先有缩放时按 scale 换算为视口 px
 	const setStickyStatus = () => {
-		if (!scroller.value) return;
-		const { placement } = props;
-		const { top, bottom, scale } = getViewportRect(scroller.value);
+		if (!scroller) return;
+		const { top, bottom, scale } = getViewportRect(scroller);
 
-		isActive.value = placement === 'bottom'
-			? Math.abs(bottom - offsetPx * scale - currentRect.bottom) < 1
-			: Math.abs(currentRect.top - top - offsetPx * scale) < 1;
+		isActive.value = props.placement === 'bottom'
+			? Math.abs(bottom - offsetPx * scale - currentBottom) < 1
+			: Math.abs(currentTop - top - offsetPx * scale) < 1;
 	};
 
+	// fixed：以视口为参照（窗口高度每次实时读取）；有 target 时，target 离开视口后不再吸附，靠近其边缘时把固钉推出
 	const setFixedStatus = () => {
-		const { placement, target } = props;
-		const offset = offsetPx;
-		// 每次实时读取：窗口高度会变化
+		const isTop = props.placement === 'top';
 		const windowHeight = window.innerHeight;
-		const currentHeightOffset = offset + currentRect.height;
-		const containerRect: any = target && base.value!.getBoundingClientRect();
-		if (placement === 'top') {
-			if (target) {
-				isActive.value = offset > currentRect.top && containerRect.bottom > 0;
-				transformY.value = Math.min(containerRect.bottom - currentHeightOffset, 0);
-			} else {
-				isActive.value = offset > currentRect.top;
-			}
-		} else {
-			if (target) {
-				isActive.value = windowHeight - offset < currentRect.bottom && windowHeight > containerRect.top;
-				transformY.value = -Math.min(windowHeight - containerRect.top - currentHeightOffset, 0);
-			} else {
-				isActive.value = windowHeight - offset < currentRect.bottom;
-			}
-		}
+		isActive.value = isTop ? offsetPx > currentTop : windowHeight - offsetPx < currentBottom;
+		if (!props.target) return;
+
+		const container = base!.getBoundingClientRect();
+		const room = offsetPx + currentSize.height;
+		isActive.value &&= isTop ? container.bottom > 0 : windowHeight > container.top;
+		transformY.value = isTop
+			? Math.min(container.bottom - room, 0)
+			: -Math.min(windowHeight - container.top - room, 0);
 	};
 
 	/**
 	 * 滚动回调：自身的 refresh 与子组件（如 Tabs）经 onScroll 登记的回调
 	 * 挂载时统一订阅当前元素所在滚动容器链（逐层向上）及页面的滚动，见 ScrollerManager.subscribe
 	 */
-	const handlers = new Set<(...args: any[]) => void>();
+	const handlers = new Set<() => void>();
 	let unsubscribe = () => {};
 
-	const offScroll = (handler: any) => {
+	const offScroll = (handler: () => void) => {
 		handlers.delete(handler);
 	};
 
-	const onScroll = (handler: any, options$?: any) => {
+	const onScroll = (handler: () => void, options$?: { first?: boolean }) => {
 		handlers.add(handler);
 		// nextTick目的在与onMounted后执行
 		options$?.first && nextTick(handler);
 		return () => offScroll(handler);
 	};
 
+	// 只在吸附状态变化时同步 v-model，滚动中不重复发出
+	let emitted: boolean | undefined;
 	const refresh = () => {
 		if (props.disabled) return;
 		setCurrentRect();
 
 		props.fixed ? setFixedStatus() : setStickyStatus();
 
+		if (emitted === isActive.value) return;
+		emitted = isActive.value;
 		emit('update:modelValue', isActive.value);
 	};
 
@@ -194,14 +186,11 @@ export const useAffix = (
 	watch(() => props.offset, handleResize, { flush: 'post' });
 
 	onMounted(() => {
-		if (typeof props.target === 'string') {
-			base.value = document.querySelector<HTMLElement>(props.target) ?? (void 0);
-		}
+		base = (props.target && document.querySelector<HTMLElement>(props.target)) || document.documentElement;
 
-		!base.value && (base.value = document.documentElement);
 		if (current.value) {
 			const result = ScrollerManager.subscribe(current.value, () => handlers.forEach(fn => fn()), { window: true });
-			scroller.value = result.scrollers[0] || window;
+			scroller = result.scrollers[0] || window;
 			unsubscribe = result.off;
 		}
 
@@ -219,7 +208,7 @@ export const useAffix = (
 	// 吸附偏移（CSS px），供锚点滚动等换算吸附线
 	const getOffset = () => offsetPx;
 	// 固钉所在的滚动容器（最近一层，可能为 window）：挂载时已找到，订阅方直接取用，不必再逐层查找
-	const getScroller = () => scroller.value;
+	const getScroller = () => scroller;
 
 	expose({ refresh, onScroll, offScroll, getOffset, getScroller });
 	provide('vc-affix', {

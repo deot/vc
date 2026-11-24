@@ -11,7 +11,7 @@ export const props = {
 	},
 	// TODO: left/right
 	placement: {
-		type: String,
+		type: String as PropType<'top' | 'bottom'>,
 		default: 'top'
 	},
 	disabled: {

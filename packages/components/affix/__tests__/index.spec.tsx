@@ -203,7 +203,7 @@ describe('index.ts', () => {
 		wrapper.unmount();
 	});
 
-	it('emits update:modelValue on refresh', async () => {
+	it('emits update:modelValue only when the pinned state changes', async () => {
 		const onUpdate = vi.fn();
 		const wrapper = mount(Affix, {
 			props: {
@@ -221,13 +221,17 @@ describe('index.ts', () => {
 		onUpdate.mockClear();
 
 		const root = wrapper.find('.vc-affix').element;
-		const spy = mockRect(root, { top: -100, bottom: -60, width: 200, height: 40 });
-
+		const spy = mockRect(root, { top: 100, bottom: 140, width: 200, height: 40 });
 		await triggerScroll();
+		expect(onUpdate.mock.calls).toEqual([[false]]);
 
-		expect(onUpdate).toHaveBeenCalled();
-		const last = onUpdate.mock.calls.at(-1);
-		expect(last?.[0]).toBe(true);
+		// 状态不变的滚动不再发出
+		await triggerScroll();
+		expect(onUpdate).toHaveBeenCalledTimes(1);
+
+		spy.mockReturnValue({ top: -100, bottom: -60, width: 200, height: 40 } as DOMRect);
+		await triggerScroll();
+		expect(onUpdate.mock.calls).toEqual([[false], [true]]);
 
 		spy.mockRestore();
 		wrapper.unmount();
@@ -503,10 +507,9 @@ describe('index.ts', () => {
 		expect(lastActive(affix)).toBe(true);
 
 		// 外层 Scroller 滚动时同样刷新（订阅整条滚动容器链），与写入滚动位置同步，吸附仍以内层为参照
-		const count = affix.emitted('update:modelValue')!.length;
+		affixSpy.mockReturnValue({ top: 200, bottom: 240, width: 200, height: 40 } as DOMRect);
 		scrollerRef.value.setScrollTop(10);
-		expect(affix.emitted('update:modelValue')!.length).toBe(count + 1);
-		expect(lastActive(affix)).toBe(true);
+		expect(lastActive(affix)).toBe(false);
 
 		innerSpy.mockRestore();
 		affixSpy.mockRestore();
