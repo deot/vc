@@ -1,6 +1,7 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import { pick } from 'lodash-es';
 import { props as popoverProps } from '../popover/popover-props';
+import { plaintextProps } from '../input/input-props';
 import { props as pickerViewProps } from './color-picker-view/color-picker-view-props';
 
 const popoverKeys = [
@@ -47,15 +48,7 @@ export const props = {
 		type: [String, Object] as PropType<string | null>,
 		default: ''
 	},
-	// 只显示色值文字，不渲染色块与浮层：没有样式，不能交互；没有值时显示 extra
-	plaintext: {
-		type: Boolean,
-		default: false
-	},
-	// plaintext 没有值时显示的文字
-	extra: {
-		type: String,
-		default: ''
-	}
+	// 只显示色值文字（v-model 原样），不渲染色块与浮层
+	...plaintextProps
 };
 export type Props = ExtractPropTypes<typeof props>;

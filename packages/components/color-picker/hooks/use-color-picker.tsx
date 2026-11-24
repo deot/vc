@@ -26,9 +26,10 @@ const toDraft = (value: unknown) => (typeof value === 'string' ? value : '');
  * @param context ~
  * @param context.emit ~
  * @param context.slots ~
+ * @param context.attrs ~
  * @returns render
  */
-export const useColorPicker = (props: Props, { emit, slots }: SetupContext<Emits>) => {
+export const useColorPicker = (props: Props, { emit, slots, attrs }: SetupContext<Emits>) => {
 	const { t } = useLocale();
 	const its = useAttrs({ merge: false });
 	const formItem = inject<any>('vc-form-item', {});
@@ -191,16 +192,7 @@ export const useColorPicker = (props: Props, { emit, slots }: SetupContext<Emits
 
 	return () => {
 		if (props.plaintext) {
-			return (
-				<span
-					{...its.value.attrs}
-					{...its.value.listeners}
-					class={['vc-color-picker-plaintext', its.value.class]}
-					style={its.value.style}
-				>
-					{ toDraft(props.modelValue) || props.extra }
-				</span>
-			);
+			return (<span class="vc-color-picker-plaintext" {...attrs}>{ toDraft(props.modelValue) || props.extra }</span>);
 		}
 		return (
 			<Popover

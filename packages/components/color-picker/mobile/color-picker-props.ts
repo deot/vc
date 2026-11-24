@@ -2,6 +2,7 @@ import { omit, pick } from 'lodash-es';
 import type { ExtractPropTypes, PropType } from 'vue';
 import { props as listItemProps } from '../../list/mobile/list-item-props';
 import { props as coreProps } from './color-picker-core-props';
+import { pickerTriggerProps } from '../../picker/mobile/use-picker-portal';
 
 const listItemKeys = [
 	'label',
@@ -19,13 +20,8 @@ export const props = {
 		type: Boolean,
 		default: false
 	},
-	// 只显示 formatter 生成的色值文字，不渲染色块、MListItem 与弹层：没有样式，不能交互，同桌面端
-	plaintext: {
-		type: Boolean,
-		default: false
-	},
-	// 未选择时显示的文字，默认为当前语言的 vc.ColorPicker.placeholder；plaintext 时默认为空
-	extra: String,
+	// 只读文字与没有值时的文字
+	...pickerTriggerProps,
 	// 根据色值生成色块旁的文字
 	formatter: {
 		type: Function as PropType<(value: string) => any>,

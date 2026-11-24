@@ -4,7 +4,7 @@ import { computed, defineComponent, ref, watch } from 'vue';
 import { omit, pick } from 'lodash-es';
 import { MListItem } from '../../list/index.m';
 import { useLocale } from '../../locale';
-import { usePickerTrigger } from '../../picker/mobile/use-picker-portal';
+import { usePickerTrigger, getTriggerExtra } from '../../picker/mobile/use-picker-portal';
 import { Color } from '../color';
 import { props as colorPickerProps, coreOmitKeys } from './color-picker-props';
 import { props as coreProps } from './color-picker-core-props';
@@ -53,6 +53,12 @@ export const MColorPicker = defineComponent({
 			return (value && Color.parse(value, { alpha: props.alpha })?.toCss()) || '';
 		});
 
+		// 色值经 formatter 的文字（色块旁与 plaintext）；没有值时为空
+		const text = computed(() => {
+			const value = toValue(currentValue.value);
+			return value ? props.formatter(value) : '';
+		});
+
 		const handleClick = () => {
 			if (props.disabled) return;
 			trigger.open({
@@ -63,23 +69,21 @@ export const MColorPicker = defineComponent({
 
 		// 色块 + 文字；未选择时为占位文字
 		const renderExtra = () => {
-			const value = toValue(currentValue.value);
-			if (!value) return props.extra ?? t('vc.ColorPicker.placeholder');
+			if (!toValue(currentValue.value)) return getTriggerExtra(props, t('vc.ColorPicker.placeholder'));
 
 			return (
 				<span class="vcm-color-picker__extra">
 					<span class="vc-color-picker__swatch">
 						<span style={css.value ? { backgroundColor: css.value } : undefined} />
 					</span>
-					<span class="vcm-color-picker__text">{ props.formatter(value) }</span>
+					<span class="vcm-color-picker__text">{ text.value }</span>
 				</span>
 			);
 		};
 
 		return () => {
 			if (props.plaintext) {
-				const value = toValue(currentValue.value);
-				return (<span class="vcm-color-picker-plaintext">{ value ? props.formatter(value) : (props.extra ?? '') }</span>);
+				return (<span class="vcm-color-picker-plaintext">{ text.value || getTriggerExtra(props, '') }</span>);
 			}
 			return (
 				<div class={['vcm-color-picker', { 'is-disabled': props.disabled }]} onClick={handleClick}>
