@@ -3,12 +3,12 @@
 import { defineComponent, computed, withModifiers } from 'vue';
 import { useAttrs } from '@deot/vc-hooks';
 
-import { props as inputProps, indicatorProps } from './input-props';
+import { props as inputProps, indicatorProps, plaintextProps } from './input-props';
 
 import { Icon } from '../icon/index';
 import { TransitionFade } from '../transition/index';
 import { useInput, emits } from './use-input';
-import { getBytesLength } from './utils';
+import { getBytesLength, getPlaintextChildren } from './utils';
 
 const COMPONENT_NAME = 'vc-input';
 
@@ -17,11 +17,12 @@ export const Input = defineComponent({
 	inheritAttrs: false,
 	props: {
 		...inputProps,
-		...indicatorProps
+		...indicatorProps,
+		...plaintextProps
 	},
 	emits: [...emits],
 	setup(props, context) {
-		const { slots } = context;
+		const { slots, attrs } = context;
 		const it = useAttrs({ merge: false });
 
 		const {
@@ -81,6 +82,13 @@ export const Input = defineComponent({
 		};
 
 		return () => {
+			if (props.plaintext) {
+				return (
+					<span class="vc-input-plaintext" {...attrs}>
+						{ getPlaintextChildren(currentValue.value, slots, props.extra) }
+					</span>
+				);
+			}
 			if (props.styleless) return renderInput(true);
 			return (
 				<div

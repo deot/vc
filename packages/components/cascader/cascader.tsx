@@ -338,6 +338,18 @@ export const Cascader = defineComponent({
 		};
 
 		return () => {
+			if (props.plaintext) {
+				return (
+					<span
+						{...its.value.attrs}
+						{...its.value.listeners}
+						class={['vc-cascader-plaintext', its.value.class]}
+						style={its.value.style}
+					>
+						{ formatLabel.value }
+					</span>
+				);
+			}
 			return (
 				<Popover
 					{...select.popover.value}

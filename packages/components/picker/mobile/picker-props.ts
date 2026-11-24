@@ -32,6 +32,12 @@ export const props = {
 		default: true
 	},
 	loadData: Function as PropType<() => Promise<any> | any>,
+	// 只显示选中项的文字（按 value 在 data 中查出 label，经 formatter），不渲染 MListItem 与弹层：没有样式，不能交互；不调用 loadData
+	plaintext: {
+		type: Boolean,
+		default: false
+	},
+	// formatter 返回空值时显示的文字，默认为当前语言的 vc.Picker.extra；plaintext 时默认为空
 	extra: String,
 	formatter: {
 		type: Function as PropType<(label: any[]) => string>,

@@ -6,6 +6,7 @@ import { props as inputNumberProps } from './input-number-props';
 import { Icon } from '../icon/index';
 import { Input } from './input';
 import { useInputNumber } from './use-input-number';
+import { getPlaintextChildren } from './utils';
 
 const COMPONENT_NAME = 'vc-input-number';
 
@@ -17,6 +18,10 @@ export const InputNumber = defineComponent({
 		const { slots, attrs } = context;
 		const { input, displayValue, listeners, plusDisabled, minusDisabled, handleStepper } = useInputNumber(props, context);
 		return () => {
+			// 只读文字：直接输出 span（不再套一层输入框组件），内容同 Input，不带步进按钮
+			if (props.plaintext) {
+				return (<span class="vc-input-plaintext" {...attrs}>{ getPlaintextChildren(displayValue.value, slots, props.extra) }</span>);
+			}
 			return (
 				<Input
 					ref={input}

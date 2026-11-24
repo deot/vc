@@ -107,6 +107,81 @@ describe('Select boolean value', () => {
 	});
 });
 
+describe('Select plaintext', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('只渲染已选项的文字（分组内的也能查到），没有触发器与弹层，点击不打开', async () => {
+		const onVisibleChange = vi.fn();
+		const wrapper = mount(() => (
+			<Select plaintext modelValue="5" data={groupedData} onVisibleChange={onVisibleChange} />
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.element.tagName).toBe('SPAN');
+		expect(wrapper.classes()).toEqual(['vc-select-plaintext']);
+		expect(wrapper.text()).toBe('Paris');
+		expect(wrapper.find('input').exists()).toBe(false);
+		expect(wrapper.findComponent(Popover).exists()).toBe(false);
+		await wrapper.trigger('click');
+		await flush();
+		expect(getOptions().length).toBe(0);
+		expect(onVisibleChange).not.toHaveBeenCalled();
+		wrapper.unmount();
+	});
+
+	it('多选按 formatter 拼接（默认 ", "，跳过查不到的值）；字符串值按分隔符解析；优先于 disabled', () => {
+		const wrapper = mount(() => (<Select plaintext disabled max={0} modelValue={['1', '9', '3']} data={cityList} />));
+		expect(wrapper.text()).toBe('New York, Sydney');
+		expect(wrapper.classes()).not.toContain('is-disabled');
+		wrapper.unmount();
+
+		const joined = mount(() => (<Select plaintext max={0} modelValue="2,4" data={cityList} />));
+		expect(joined.text()).toBe('London, Ottawa');
+		joined.unmount();
+	});
+
+	it('formatter 参数为 (labels, value)，可返回 VNode', () => {
+		const formatter = vi.fn((labels: string[]) => (<b>{ labels.join(' / ') }</b>));
+		const wrapper = mount(() => (<Select plaintext max={0} modelValue="1,2" data={cityList} formatter={formatter} />));
+		expect(wrapper.find('b').text()).toBe('New York / London');
+		expect(formatter).toHaveBeenCalledWith(['New York', 'London'], '1,2');
+		wrapper.unmount();
+	});
+
+	it('没有值、查不到时显示 extra，未传 extra 为空（不显示占位文字）', () => {
+		const empty = mount(() => (<Select plaintext data={cityList} />));
+		expect(empty.text()).toBe('');
+		empty.unmount();
+
+		const missing = mount(() => (<Select plaintext modelValue="9" data={cityList} extra="-" />));
+		expect(missing.text()).toBe('-');
+		missing.unmount();
+	});
+
+	it('class、style 与其它 attrs 落在 span 上；切回非 plaintext 恢复触发器', async () => {
+		const plaintext = ref(true);
+		const wrapper = mount(() => (
+			<Select plaintext={plaintext.value} class="custom" style={{ color: 'red' }} modelValue="2" data={cityList} {...{ title: 'city' }} />
+		));
+		expect(wrapper.classes()).toEqual(['vc-select-plaintext', 'custom']);
+		expect(wrapper.attributes('style')).toBe('color: red;');
+		expect(wrapper.attributes('title')).toBe('city');
+		plaintext.value = false;
+		await flush();
+		expect(wrapper.classes()).toContain('vc-select');
+		expect(wrapper.find('input').element.value).toBe('London');
+		wrapper.unmount();
+	});
+
+	it('单选触发器的文字经 formatter；多选仍为标签', async () => {
+		const wrapper = mount(() => (<Select modelValue="2" data={cityList} formatter={(labels: string[]) => `[${labels[0]}]`} />));
+		await flush();
+		expect(wrapper.find('input').element.value).toBe('[London]');
+		wrapper.unmount();
+	});
+});
+
 describe('Select locale', () => {
 	it('updates placeholder and select-all actions when locale changes', async () => {
 		const locale = VcInstance.options.locale;

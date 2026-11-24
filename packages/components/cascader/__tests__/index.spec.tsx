@@ -506,6 +506,64 @@ describe('Cascader interaction', () => {
 	});
 });
 
+describe('Cascader plaintext', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('只渲染路径文字，没有触发器与弹层，点击不打开；attrs 落在 span 上；优先于 disabled', async () => {
+		const onVisibleChange = vi.fn();
+		const wrapper = mount(() => (
+			<Cascader
+				plaintext
+				disabled
+				modelValue={['zhejiang', 'hangzhou', 'xihu']}
+				data={options}
+				class="custom"
+				style={{ color: 'red' }}
+				{...{ title: 'path' }}
+				onVisibleChange={onVisibleChange}
+			/>
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.element.tagName).toBe('SPAN');
+		expect(wrapper.classes()).toEqual(['vc-cascader-plaintext', 'custom']);
+		expect(wrapper.attributes('style')).toBe('color: red;');
+		expect(wrapper.attributes('title')).toBe('path');
+		expect(wrapper.text()).toBe('Zhejiang / Hangzhou / West Lake');
+		expect(wrapper.findComponent(Popover).exists()).toBe(false);
+		await wrapper.trigger('click');
+		await flush();
+		expect(getCols().length).toBe(0);
+		expect(onVisibleChange).not.toHaveBeenCalled();
+		wrapper.unmount();
+	});
+
+	it('checkStrategy child 的单值按完整路径显示；formatter 可返回 VNode', () => {
+		const wrapper = mount(() => (
+			<Cascader
+				plaintext
+				checkStrategy="child"
+				modelValue="jiangdong"
+				data={options}
+				formatter={(labels: string[]) => (<b>{ labels.join(' > ') }</b>)}
+			/>
+		));
+		expect(wrapper.find('b').text()).toBe('Zhejiang > NingBo > Jiang Dong');
+		wrapper.unmount();
+	});
+
+	it('没有值、查不到时显示 extra，未传为空', () => {
+		const empty = mount(() => (<Cascader plaintext data={options} />));
+		expect(empty.text()).toBe('');
+		empty.unmount();
+
+		const missing = mount(() => (<Cascader plaintext modelValue={['none']} data={options} extra="-" />));
+		expect(missing.text()).toBe('-');
+		missing.unmount();
+	});
+});
+
 describe('Cascader value 严格比较', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';

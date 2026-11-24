@@ -6,6 +6,7 @@ import { props as inputNumberProps } from '../input-number-props';
 
 import { MInput } from './input';
 import { useInputNumber } from '../use-input-number';
+import { getPlaintextChildren } from '../utils';
 
 const COMPONENT_NAME = 'vcm-input-number';
 
@@ -35,6 +36,10 @@ export const MInputNumber = defineComponent({
 		const { input, displayValue, listeners, plusDisabled, minusDisabled, handleStepper } = useInputNumber(props, context);
 
 		return () => {
+			// 只读文字：直接输出 span（不再套一层输入框组件），内容同 Input，不带步进按钮
+			if (props.plaintext) {
+				return (<span class="vcm-input-plaintext" {...attrs}>{ getPlaintextChildren(displayValue.value, slots, props.extra) }</span>);
+			}
 			const { theme, shape, ...inputProps } = props;
 			return (
 				<MInput

@@ -33,9 +33,10 @@ export const Picker = defineComponent({
 
 		const source = computed(() => props.data || []);
 
+		// 选中项文字经 formatter 的显示内容，空时为 extra（plaintext 时不回退到占位文字）
 		const formatterValue = computed(() => {
 			const { label = [] } = getSelectedData(currentValue.value, source.value);
-			return props.formatter(label) || (props.extra ?? t('vc.Picker.extra'));
+			return props.formatter(label) || (props.extra ?? (props.plaintext ? '' : t('vc.Picker.extra')));
 		});
 
 		watch(
@@ -104,6 +105,9 @@ export const Picker = defineComponent({
 		};
 
 		return () => {
+			if (props.plaintext) {
+				return (<span class="vcm-picker-plaintext">{ formatterValue.value }</span>);
+			}
 			return (
 				<div class="vcm-picker" onClick={handleClick}>
 					{

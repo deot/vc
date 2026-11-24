@@ -25,7 +25,8 @@ export const MDatePicker = defineComponent({
 	setup(props, setupContext) {
 		const { slots } = setupContext;
 		const { t } = useLocale();
-		const extra = computed(() => props.extra ?? t('vc.DatePicker.placeholder'));
+		// 没有值时显示的文字（plaintext 时不回退到占位文字）
+		const extra = computed(() => props.extra ?? (props.plaintext ? '' : t('vc.DatePicker.placeholder')));
 		const currentValue = ref<any>(props.modelValue);
 
 		const context = computed(() => createContext(props, t));
@@ -75,6 +76,9 @@ export const MDatePicker = defineComponent({
 		};
 
 		return () => {
+			if (props.plaintext) {
+				return (<span class="vcm-date-picker-plaintext">{ formatterValue.value }</span>);
+			}
 			return (
 				<div class="vcm-date-picker" onClick={handleClick}>
 					{

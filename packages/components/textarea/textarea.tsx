@@ -2,6 +2,7 @@
 
 import { defineComponent } from 'vue';
 import { useTextarea, emits } from './use-textarea';
+import { toPlaintext } from './utils';
 import { props as textareaProps } from './textarea-props';
 
 const COMPONENT_NAME = 'vc-textarea';
@@ -24,6 +25,9 @@ export const Textarea = defineComponent({
 		} = useTextarea(props, context);
 
 		return () => {
+			if (props.plaintext) {
+				return (<span class="vc-textarea-plaintext">{ toPlaintext(currentValue.value, props.extra) }</span>);
+			}
 			// 计数在框外（默认）时根节点留出它的高度，在框内（inline）时文本区底部留出它的高度
 			const inline = typeof props.indicator === 'object' && !!props.indicator.inline;
 			return (

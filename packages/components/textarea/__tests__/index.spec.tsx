@@ -486,3 +486,54 @@ describe('index.ts', () => {
 		offSpy.mockRestore();
 	});
 });
+
+describe('Textarea plaintext', () => {
+	it('只渲染值的文字，换行转为 <br>；没有值时显示 extra；attrs 落在 span 上', async () => {
+		const value = ref('第一行\n第二行\r\n第三行');
+		const wrapper = mount(() => (<Textarea v-model={value.value} plaintext class="custom" extra="-" />));
+		expect(wrapper.element.tagName).toBe('SPAN');
+		expect(wrapper.classes()).toEqual(['vc-textarea-plaintext', 'custom']);
+		expect(wrapper.findAll('br').length).toBe(2);
+		expect(wrapper.html()).toContain('第一行<br>第二行<br>第三行');
+		expect(wrapper.find('textarea').exists()).toBe(false);
+
+		value.value = '';
+		await nextTick();
+		expect(wrapper.text()).toBe('-');
+		wrapper.unmount();
+	});
+
+	it('运行时切换 plaintext：文本框消失时解绑尺寸监听，出现时重新绑定', async () => {
+		const onSpy = vi.spyOn(Resize, 'on').mockImplementation(() => (() => {}) as any);
+		const offSpy = vi.spyOn(Resize, 'off').mockImplementation(() => {});
+		const plaintext = ref(false);
+		const wrapper = mount(() => (<Textarea modelValue="文字" plaintext={plaintext.value} />));
+		expect(onSpy).toHaveBeenCalledTimes(1);
+
+		plaintext.value = true;
+		await nextTick();
+		expect(offSpy).toHaveBeenCalledTimes(1);
+		expect(wrapper.text()).toBe('文字');
+
+		plaintext.value = false;
+		await nextTick();
+		expect(onSpy).toHaveBeenCalledTimes(2);
+		expect(wrapper.find('textarea').exists()).toBe(true);
+
+		wrapper.unmount();
+		expect(offSpy).toHaveBeenCalledTimes(2);
+		onSpy.mockRestore();
+		offSpy.mockRestore();
+	});
+
+	it('MTextarea 同样支持', () => {
+		const wrapper = mount(() => (<MTextarea modelValue={'a\nb'} plaintext />));
+		expect(wrapper.classes()).toEqual(['vcm-textarea-plaintext']);
+		expect(wrapper.html()).toContain('a<br>b');
+		wrapper.unmount();
+
+		const empty = mount(() => (<MTextarea plaintext />));
+		expect(empty.text()).toBe('');
+		empty.unmount();
+	});
+});

@@ -190,6 +190,18 @@ export const useColorPicker = (props: Props, { emit, slots }: SetupContext<Emits
 	};
 
 	return () => {
+		if (props.plaintext) {
+			return (
+				<span
+					{...its.value.attrs}
+					{...its.value.listeners}
+					class={['vc-color-picker-plaintext', its.value.class]}
+					style={its.value.style}
+				>
+					{ toDraft(props.modelValue) || props.extra }
+				</span>
+			);
+		}
 		return (
 			<Popover
 				{...its.value.attrs}

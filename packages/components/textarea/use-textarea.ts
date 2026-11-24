@@ -85,6 +85,8 @@ export const useTextarea = (props: Props, context: SetupContext<Emits>) => {
 		const { minRows, maxRows } = props.autosize as any;
 
 		nextTick(() => {
+			// plaintext 时没有文本框
+			if (!textarea.value) return;
 			calcTextareaStyle.value = getComputedHeight({
 				el: textarea.value,
 				minRows,
@@ -222,13 +224,24 @@ export const useTextarea = (props: Props, context: SetupContext<Emits>) => {
 		{ immediate: true }
 	);
 
-	onMounted(() => {
-		Resize.on(textarea.value!, handleResize);
+	// 尺寸监听跟着文本框元素：挂载时绑定；随 plaintext 切换出现或消失时重新绑定或解绑
+	let bound: HTMLTextAreaElement | undefined;
+	const bind = () => {
+		const el = textarea.value;
+		if (el === bound) return;
+		bound && Resize.off(bound, handleResize);
+		bound = el;
+		if (!el) return;
+		Resize.on(el, handleResize);
 		refresh();
-	});
+	};
+
+	onMounted(bind);
+	watch(textarea, bind, { flush: 'post' });
 
 	onBeforeUnmount(() => {
-		Resize.off(textarea.value!, handleResize);
+		bound && Resize.off(bound, handleResize);
+		bound = undefined;
 	});
 
 	const exposed = useNativeEmitter(textarea);

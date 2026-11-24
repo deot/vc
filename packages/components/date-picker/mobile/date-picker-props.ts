@@ -36,6 +36,12 @@ export const props = {
 	...(pick(viewProps, viewKeys) as Pick<typeof viewProps, typeof viewKeys[number]>),
 	cancelText: String,
 	okText: String,
+	// 只显示值格式化后的文字（经 formatter），不渲染 MListItem 与弹层：没有样式，不能交互，同桌面端
+	plaintext: {
+		type: Boolean,
+		default: false
+	},
+	// 没有值时显示的文字，默认为当前语言的 vc.DatePicker.placeholder；plaintext 时默认为空
 	extra: String,
 	formatter: Function as PropType<(value: any, format: string, dates: Date[]) => any>
 };

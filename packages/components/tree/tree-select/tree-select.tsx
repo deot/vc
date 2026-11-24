@@ -41,9 +41,15 @@ export const TreeSelect = defineComponent({
 			getDepth: () => getTreeDepth(props.data as TreeData[])
 		});
 		const { its, isActive, searchValue, searchRegex, searchMode, isRemote, close, toggle } = select;
-		const { currentValue, multiple, sync: syncValue, handleClear } = useSelectValue(props, context, { select });
+		const { currentValue, multiple, getModelValue, sync: syncValue, handleClear } = useSelectValue(props, context, { select });
 
 		const { currentValueGroups, displayTags, labels, remove, apply } = useTreeSelectValue(props, { currentValue, isRemote });
+
+		// 已选项文字经 formatter 的显示内容：单选触发器的文字与 plaintext
+		const formatLabel = computed(() => {
+			if (!currentValue.value.length) return '';
+			return props.formatter(labels.value, getModelValue());
+		});
 
 		const tags = computed(() => {
 			return displayTags.value.map(item => ({
@@ -101,7 +107,7 @@ export const TreeSelect = defineComponent({
 				<SelectTrigger
 					{...select.trigger.value}
 					placeholder={its.value.attrs?.placeholder ?? t('vc.TreeSelect.placeholder')}
-					text={displayTags.value[0]?.label || props.extra}
+					text={(multiple.value ? displayTags.value[0]?.label : formatLabel.value) || props.extra}
 					tags={multiple.value ? tags.value : void 0}
 					clearable={props.clearable && currentValue.value.length > 0}
 					onClear={handleClear}
@@ -151,6 +157,9 @@ export const TreeSelect = defineComponent({
 		};
 
 		return () => {
+			if (props.plaintext) {
+				return (<span class="vc-tree-select-plaintext">{ formatLabel.value || props.extra }</span>);
+			}
 			return (
 				<Popover
 					{...select.popover.value}

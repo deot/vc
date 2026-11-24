@@ -111,6 +111,30 @@ const range = ref(['09:00', '18:00']);
 ```
 :::
 
+### 只读文字
+
+`plaintext` 时只把值按 `format` 格式化后显示，不渲染输入框与浮层：输出一个没有样式的 `<span class="vc-time-picker-plaintext">`，不能交互；没有值时显示 `extra`，未传时为空。规则同 [DatePicker 的只读文字](../date-picker/README.md#只读文字)。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+```vue
+<template>
+	<div class="time-picker-plaintext-demo">
+		<p>时间：<TimePicker model-value="08:30:00" plaintext /></p>
+		<p>范围：<TimePicker :model-value="['09:00', '18:00']" type="timerange" format="HH:mm" plaintext /></p>
+	</div>
+</template>
+
+<script setup>
+import { TimePicker } from '@deot/vc';
+</script>
+
+<style scoped>
+.time-picker-plaintext-demo p { margin: 0 0 12px; }
+</style>
+```
+:::
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-date-picker-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
@@ -155,6 +179,8 @@ TimePicker 共用 DatePicker 时间面板，使用 date-picker 命名空间；In
 | open | 值变化时同步显示状态；面板仍能通过交互关闭 | `boolean` | - | `false` |
 | placeholder | 占位文本，允许空字符串 | `string` | - | 当前语言的“请选择” |
 | disabled | 禁用选择器 | `boolean` | - | `false` |
+| plaintext | 只显示格式化后的文字，不渲染输入框与浮层，没有样式、不能交互；见[只读文字](#只读文字) | `boolean` | - | `false` |
+| extra | `plaintext` 没有值时显示的文字 | `string` | - | `''` |
 | clearable | 有值且悬停时显示清除图标 | `boolean` | - | `true` |
 | editable | 可直接在输入框里键入，见[手动输入](#手动输入) | `boolean` | - | `true` |
 | separator | 范围显示与字符串解析的分隔符 | `string` | - | `' - '` |

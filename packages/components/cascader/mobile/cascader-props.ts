@@ -15,7 +15,12 @@ export const coreOmitKeys = ['visible', 'onOk', 'onCancel'] as const;
 export const props = {
 	...(pick(listItemProps, listItemKeys) as Pick<typeof listItemProps, typeof listItemKeys[number]>),
 	...(omit(coreProps, coreOmitKeys) as Omit<typeof coreProps, typeof coreOmitKeys[number]>),
-	// formatter 返回空值时显示的文字，默认为当前语言的 vc.Cascader.placeholder
+	// 只显示当前值的路径文字（按 value 在 data 中查出 label，经 formatter），不渲染 MListItem 与弹层：没有样式，不能交互，同桌面端
+	plaintext: {
+		type: Boolean,
+		default: false
+	},
+	// formatter 返回空值时显示的文字，默认为当前语言的 vc.Cascader.placeholder；plaintext 时默认为空
 	extra: String,
 	// 根据路径文字生成显示内容，同桌面端
 	formatter: {

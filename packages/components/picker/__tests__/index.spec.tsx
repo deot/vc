@@ -157,6 +157,42 @@ describe('index.ts', () => {
 		wrapper.unmount();
 	});
 
+	it('plaintext：只渲染选中项的文字，没有 MListItem，点击不打开也不调用 loadData；空值不显示占位文字', async () => {
+		const loadData = vi.fn();
+		const onVisibleChange = vi.fn();
+		const wrapper = mount(() => (
+			<Picker
+				plaintext
+				modelValue={['zhejiang', 'hangzhou', 'xihu']}
+				data={regionData}
+				columns={3}
+				label="地区"
+				class="custom"
+				formatter={(labels: string[]) => labels.join(' / ')}
+				loadData={loadData}
+				onVisibleChange={onVisibleChange}
+			/>
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.element.tagName).toBe('SPAN');
+		expect(wrapper.classes()).toEqual(['vcm-picker-plaintext', 'custom']);
+		expect(wrapper.text()).toBe('Zhejiang / Hangzhou / West Lake');
+		await wrapper.trigger('click');
+		await flush();
+		expect(document.querySelector('.vcm-picker-popup')).toBeNull();
+		expect(loadData).not.toHaveBeenCalled();
+		expect(onVisibleChange).not.toHaveBeenCalled();
+		wrapper.unmount();
+
+		const empty = mount(() => (<Picker plaintext data={regionData} columns={3} />));
+		expect(empty.text()).toBe('');
+		empty.unmount();
+
+		const extra = mount(() => (<Picker plaintext modelValue="none" data={regionData} extra="-" />));
+		expect(extra.text()).toBe('-');
+		extra.unmount();
+	});
+
 	it('covers picker defaults and utility branches', () => {
 		expect((pickerProps.modelValue.default as any)()).toEqual([]);
 		expect((pickerProps.data.default as any)()).toEqual([]);

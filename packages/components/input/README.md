@@ -177,6 +177,38 @@ const input4 = ref('');
 ```
 :::
 
+### 只读文字
+
+`plaintext` 时只显示 v-model 的值，不渲染输入框：输出一个没有样式的 `<span class="vc-input-plaintext">`（移动端为 `vcm-input-plaintext`），不能交互，`class`、`style` 等 attribute 落在它上面。与 `styleless`（直接渲染原生 input，仍可输入）不同。
+
+- `prepend` / `append` 插槽的内容放在文字前后（如单位），`prepend` / `append` 属性是图标名，不渲染。
+- 没有值时只显示 `extra`（不带前后缀），未传时为空。
+- `InputNumber` / `MInputNumber` 同样支持：显示值本身（不按 `precision` 补零），不带步进按钮。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="v-input-plaintext">
+		<p>文字：<Input model-value="一段文字" plaintext /></p>
+		<p>
+			金额：
+			<InputNumber :model-value="100" plaintext>
+				<template #append>&nbsp;元</template>
+			</InputNumber>
+		</p>
+		<p>空值：<Input extra="-" plaintext /></p>
+	</div>
+</template>
+<script setup>
+import { Input, InputNumber } from '@deot/vc';
+</script>
+<style scoped>
+.v-input-plaintext p { margin: 0 0 12px; }
+</style>
+```
+:::
+
 ### 搜索框
 使用`input-search`，可以设置为搜索型输入框。
 
@@ -298,6 +330,8 @@ const handleCancel = () => { status.value = '已取消搜索'; };
 | allowDispatch | 向所在 FormItem 通知值变化和失焦 | `boolean` | - | `true` |
 | bytes | 调整 maxlength：可打印 ASCII 按 1 字节，其他 UTF-16 码元按 2 字节，每个长度单位为 2 字节 | `boolean` | - | `false` |
 | styleless | 直接渲染原生 input，不渲染包装、清空图标、计数或插槽 | `boolean` | - | `false` |
+| plaintext | 只显示值的文字（带上 prepend / append 插槽的内容），不渲染输入框，没有样式、不能交互；见[只读文字](#只读文字)。InputSearch 不支持 | `boolean` | - | `false` |
+| extra | `plaintext` 没有值时显示的文字 | `string` | - | `''` |
 | controllable | 完全受控，显示值由 modelValue 决定 | `boolean` | - | `false` |
 | indicator | 桌面端计数；inline 控制框内显示，inverted 显示剩余数量；需 maxlength，数组不计数 | `boolean \| { inline: boolean; inverted: boolean }` | - | `false` |
 | indicateClass | 桌面端计数元素 class | `string` | - | - |

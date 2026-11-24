@@ -52,9 +52,10 @@ export const MTreeSelect = defineComponent({
 		const selectedNodes = new Map<TreeValue, TreeSelectSelectedNode>();
 		const { labels } = useTreeSelectValue(props, { currentValue: values, isRemote, shared: selectedNodes });
 
+		// 已选项文字经 formatter 的显示内容，空时为 extra（plaintext 时不回退到占位文字）
 		const formatterValue = computed(() => {
 			return (labels.value.length && props.formatter(labels.value, currentValue.value))
-				|| (props.extra ?? t('vc.TreeSelect.placeholder'));
+				|| (props.extra ?? (props.plaintext ? '' : t('vc.TreeSelect.placeholder')));
 		});
 
 		watch(
@@ -80,6 +81,9 @@ export const MTreeSelect = defineComponent({
 		};
 
 		return () => {
+			if (props.plaintext) {
+				return (<span class="vcm-tree-select-plaintext">{ formatterValue.value }</span>);
+			}
 			return (
 				<div class={['vcm-tree-select', { 'is-disabled': props.disabled }]} onClick={handleClick}>
 					{

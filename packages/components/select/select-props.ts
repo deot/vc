@@ -105,6 +105,16 @@ export const props = {
 		type: [Number, String, Object],
 		default: void 0
 	},
-	label: valueType
+	label: valueType,
+	// 只显示已选项的文字（按 value 在 data 中查出 label，经 formatter），不渲染触发器与弹层：没有样式，不能交互；没有值时显示 extra
+	plaintext: {
+		type: Boolean,
+		default: false
+	},
+	// 根据已选项的文字生成显示内容，同 MSelect：用于单选触发器的文字（需返回字符串）与 plaintext（可返回 VNode）
+	formatter: {
+		type: Function as PropType<(labels: string[], value: any) => any>,
+		default: (labels: string[]) => labels.filter(Boolean).join(', ')
+	}
 };
 export type Props = ExtractPropTypes<typeof props>;

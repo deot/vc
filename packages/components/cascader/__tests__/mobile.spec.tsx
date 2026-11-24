@@ -286,6 +286,30 @@ describe('MCascader', () => {
 		wrapper.unmount();
 	});
 
+	it('plaintext：只渲染路径文字，没有 MListItem，点击不打开；空值不显示占位文字', async () => {
+		const onVisibleChange = vi.fn();
+		const wrapper = mount(() => (
+			<MCascader plaintext modelValue={[1, 11, 112]} data={createData()} label="分类" class="custom" onVisibleChange={onVisibleChange} />
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.element.tagName).toBe('SPAN');
+		expect(wrapper.classes()).toEqual(['vcm-cascader-plaintext', 'custom']);
+		expect(wrapper.text()).toBe('分组 A / 条目 A-1 / 细项 A-1-2');
+		await wrapper.trigger('click');
+		await flush();
+		expect(document.querySelector('.vcm-cascader-view')).toBeNull();
+		expect(onVisibleChange).not.toHaveBeenCalled();
+		wrapper.unmount();
+
+		const empty = mount(() => (<MCascader plaintext data={createData()} />));
+		expect(empty.text()).toBe('');
+		empty.unmount();
+
+		const extra = mount(() => (<MCascader plaintext modelValue={[9]} data={createData()} extra="-" />));
+		expect(extra.text()).toBe('-');
+		extra.unmount();
+	});
+
 	it('confirm：显示工具栏，路径没到最后一级时确定置灰；取消不提交', async () => {
 		const value = ref<any[]>([]);
 		const onCancel = vi.fn();

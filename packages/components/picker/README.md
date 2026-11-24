@@ -316,6 +316,48 @@ p { margin: 0; overflow-wrap: anywhere; }
 ```
 :::
 
+### 只读文字
+
+`plaintext` 时只按 `value` 在 `data` 中查出选中项的文字并显示，不渲染 MListItem 与弹层：输出一个没有样式的 `<span class="vcm-picker-plaintext">`，不能交互，`class`、`style` 等 attribute 落在它上面。
+
+- 文字经 `formatter(labels)` 生成，默认以 `,` 拼接；查不到的列跳过（联动时查不到的一级之后都不显示）。
+- 没有值或查不到时显示 `extra`，未传时为空，不显示占位文字。
+- 不会调用 `loadData`：需要先准备好 `data`。
+
+:::playground
+<!--
+<config lang="json5">
+{ viewport: 375, previewInset: 16 }
+</config>
+-->
+```vue
+<template>
+	<div class="demo">
+		<p>单列：<MPicker :model-value="['b']" :data="data" :cascader="false" plaintext /></p>
+		<p>联动：<MPicker :model-value="['x', 'x-2']" :data="cascaderData" :columns="2" :formatter="labels => labels.join(' / ')" plaintext /></p>
+		<p>空值：<MPicker :data="data" :cascader="false" extra="-" plaintext /></p>
+	</div>
+</template>
+
+<script setup>
+import { MPicker } from '@deot/vc';
+
+const data = [
+	{ value: 'a', label: '选项 A' },
+	{ value: 'b', label: '选项 B' }
+];
+const cascaderData = [
+	{ value: 'x', label: '分组 X', children: [{ value: 'x-1', label: '条目 X-1' }, { value: 'x-2', label: '条目 X-2' }] }
+];
+</script>
+
+<style scoped>
+.demo { display: grid; gap: 12px; }
+p { margin: 0; }
+</style>
+```
+:::
+
 ## 尺寸与手势
 
 尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
@@ -380,7 +422,8 @@ p { margin: 0; overflow-wrap: anywhere; }
 | loadData | 数据为空时点击执行；需更新 data | `() => Promise<any> \| any` | - | - |
 | label | 默认触发区域的标题 | `string` | - | - |
 | labelWidth | 默认触发区域标题宽度，750 稿长度，传给 MListItem | `string \| number` | - | - |
-| extra | formatter 返回空值时的提示；支持空字符串 | `string` | - | 当前语言的“请选择” |
+| plaintext | 只显示选中项的文字，不渲染 MListItem 与弹层，没有样式、不能交互，不调用 `loadData`；见[只读文字](#只读文字) | `boolean` | - | `false` |
+| extra | formatter 返回空值时的提示；支持空字符串 | `string` | - | 当前语言的“请选择”；`plaintext` 时为 `''` |
 | formatter | 格式化选中项的 label 数组 | `(label: any[]) => string` | - | 以 `,` 拼接 |
 | title | 弹层标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | cancelText | 取消文本，空字符串隐藏按钮 | `string` | - | 当前语言的“取消” |

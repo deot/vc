@@ -32,7 +32,7 @@ export const Select = defineComponent({
 
 		const select = useSelect(props, context, { name: 'select', navigator: () => navigate });
 		const { its, isActive, searchRegex, searchMode, isSearching, isRemote, close, toggle } = select;
-		const { currentValue, multiple, isFull, sync: syncValue, handleClear } = useSelectValue(props, context, { select });
+		const { currentValue, multiple, isFull, getModelValue, sync: syncValue, handleClear } = useSelectValue(props, context, { select });
 
 		const source = computed(() => {
 			return flattenData(props.data, { parent: true, cascader: true });
@@ -47,6 +47,12 @@ export const Select = defineComponent({
 
 			const labels = getSelected(currentValue.value, v => getLabel(source.value, v));
 			return currentValue.value.map(v => labels.get(v) || '');
+		});
+
+		// 已选项文字经 formatter 的显示内容：单选触发器的文字与 plaintext
+		const formatLabel = computed(() => {
+			if (!currentValue.value.length) return '';
+			return props.formatter(currentLabel.value, getModelValue());
 		});
 
 		const tags = computed(() => {
@@ -156,7 +162,7 @@ export const Select = defineComponent({
 					{...select.trigger.value}
 					placeholder={its.value.attrs?.placeholder ?? t('vc.Select.placeholder')}
 					label={props.label}
-					text={currentLabel.value[0] || props.extra}
+					text={(multiple.value ? currentLabel.value[0] : formatLabel.value) || props.extra}
 					tags={multiple.value ? tags.value : void 0}
 					clearable={props.clearable && currentValue.value.length > 0}
 					onClear={handleClear}
@@ -198,6 +204,9 @@ export const Select = defineComponent({
 		};
 
 		return () => {
+			if (props.plaintext) {
+				return (<span class="vc-select-plaintext">{ formatLabel.value || props.extra }</span>);
+			}
 			return (
 				<Popover
 					{...select.popover.value}

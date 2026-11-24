@@ -1,3 +1,5 @@
+import type { Slots } from 'vue';
+
 const getInfo = (value: number | string) => {
 	value = String(value);
 	const length = value.length;
@@ -33,4 +35,15 @@ export const getBytesLength = (value: number | string) => {
 	const it = getInfo(value);
 
 	return Math.ceil(it.asciiLength / 2) + it.unicodeLength;
+};
+
+/**
+ * plaintext 的内容（Input / InputNumber 两端共用）：有值时带上 prepend / append 插槽的内容，没有值时只显示 extra
+ * @param value 当前值
+ * @param slots 组件的插槽
+ * @param extra 没有值时显示的文字
+ * @returns 渲染内容
+ */
+export const getPlaintextChildren = (value: unknown, slots: Slots, extra: string) => {
+	return String(value ?? '') !== '' ? [slots.prepend?.(), value, slots.append?.()] : extra;
 };

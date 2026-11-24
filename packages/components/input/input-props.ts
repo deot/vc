@@ -71,6 +71,20 @@ export const indicatorProps = {
 	indicateClass: String
 };
 
+// 桌面端取值类组件共用（Input / InputNumber / Textarea 两端、DatePicker、ColorPicker；Select 系列只取 plaintext）：只显示值的文字；InputSearch、AutoComplete 不支持
+export const plaintextProps = {
+	// 只显示值的文字，不渲染输入框、浮层等：没有样式，不能交互；没有值时显示 extra
+	plaintext: {
+		type: Boolean,
+		default: false
+	},
+	// plaintext 没有值时显示的文字
+	extra: {
+		type: String,
+		default: ''
+	}
+};
+
 // MInput / MTextarea 独有：文字右对齐
 export const rightProps = {
 	right: {

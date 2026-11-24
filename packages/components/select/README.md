@@ -327,6 +327,47 @@ const selectedValue = ref(5000);
 - 弹层宽度不随选项文字撑开：默认与触发器同宽；`autoWidth` 时只能按当前渲染出的选项计算，滚动时可能变化，建议给定宽度。
 - 浏览器的页内查找只能找到已渲染的选项。
 
+### 只读文字
+
+`plaintext` 时只按 `value` 在 `data` 中查出选项文字并显示，不渲染输入框与下拉：输出一个没有样式的 `<span class="vc-select-plaintext">`，不能交互，`class`、`style` 等 attribute 落在它上面，适合详情页、表格单元格等只展示的场景。优先于 `disabled`。
+
+- 文字经 `formatter(labels, value)` 生成，默认以 `, ` 连接，跳过 `data` 中查不到的值；可返回 VNode。
+- 没有值或都查不到时显示 `extra`，未传时为空，不显示占位文字。
+- 不会调用 `loadData`：远程搜索的场景需要让 `data` 包含已选项。
+- `MSelect` 同样支持，输出 `<span class="vcm-select-plaintext">`。
+
+:::playground
+<!--
+<config lang="json5">
+{ previewInset: 20 }
+</config>
+-->
+```vue
+<template>
+	<div class="select-demo">
+		<p>单选：<Select :model-value="2" :data="options" plaintext /></p>
+		<p>多选：<Select :model-value="[1, 3]" :data="options" :max="0" plaintext /></p>
+		<p>formatter：<Select model-value="1,2" :data="options" :max="0" :formatter="labels => labels.join(' / ')" plaintext /></p>
+		<p>空值：<Select :data="options" extra="-" plaintext /></p>
+	</div>
+</template>
+
+<script setup>
+import { Select } from '@deot/vc';
+
+const options = [
+	{ value: 1, label: '条目一' },
+	{ value: 2, label: '条目二' },
+	{ value: 3, label: '条目三' }
+];
+</script>
+
+<style scoped>
+.select-demo p { margin: 0 0 12px; }
+</style>
+```
+:::
+
 ### 移动端选择
 
 `MSelect` 是独立的移动端组件：默认渲染 MListItem，点击后从底部弹出列表，选中项为主色并打勾。`v-model` 的形状与转换规则与桌面端相同（`max`、`separator`、`numerable`），`data` 中带 `children` 的项显示为分组，分组标题滚动时吸顶，下一个分组的标题到达时把它顶出。
@@ -495,6 +536,8 @@ const handleOpen = () => {
 | loadData | 搜索回调，须返回 Promise，由调用方更新 data；调用时机见[远程搜索](#远程搜索) | `(query: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | label | 输入框前置文字；prepend 插槽优先。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | extra | 单选 label 为空或无法匹配时显示的文字 | `string` | - | `''` |
+| plaintext | 只显示已选项的文字，不渲染输入框与下拉，没有样式、不能交互；见[只读文字](#只读文字) | `boolean` | - | `false` |
+| formatter | 根据已选项的文字生成显示内容：单选输入框的文字（需返回字符串）与 `plaintext` 的文字（可返回 VNode） | `(labels: string[], value) => any` | - | 以 `, ` 连接，跳过空文字 |
 | separator | 字符串模型拆分和多选连接的分隔符 | `string` | - | `','` |
 | numerable | 把模型中的字符串转为数字（字符串模型、数组各项、单值） | `boolean` | - | `false` |
 | nullValue | 清空时返回的值：值不是数组且为空时生效（数组值清空仍为 `[]`）；不设置时单选为 `undefined`，字符串多选为 `''` | `number \| string \| object` | - | `undefined` |
@@ -571,8 +614,9 @@ const handleOpen = () => {
 | labelWidth | 条目标签宽度，750 稿长度，传给 MListItem | `string \| number` | - | `''` |
 | arrow | 条目箭头；禁用时不显示 | `boolean \| string` | - | `right` |
 | disabled | 禁用，点击不打开 | `boolean` | - | `false` |
-| extra | `formatter` 返回空值时显示的文字，允许空字符串 | `string` | - | 当前语言的 `vc.Select.placeholder` |
-| formatter | 根据选中项的文字生成显示内容 | `(labels: string[], value) => any` | - | `labels => labels.join(', ')` |
+| plaintext | 只显示已选项的文字，不渲染 MListItem 与弹层，没有样式、不能交互；见[只读文字](#只读文字) | `boolean` | - | `false` |
+| extra | `formatter` 返回空值时显示的文字，允许空字符串 | `string` | - | 当前语言的 `vc.Select.placeholder`；`plaintext` 时为 `''` |
+| formatter | 根据选中项的文字生成显示内容 | `(labels: string[], value) => any` | - | 以 `, ` 连接，跳过空文字 |
 | title | 弹层标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | confirm | 由「确定」提交：`true` / `'top'` 为顶部的「取消 / 确定」，`'bottom'` 为底部的「清空 / 确定」按钮；多选为 `false` 时按 `'top'` | `boolean \| string` | `true`、`false`、`top`、`bottom` | `false` |
 | cancelText | 顶部工具栏的取消文案，允许空字符串 | `string` | - | 当前语言的 `vc.Picker.cancelText` |

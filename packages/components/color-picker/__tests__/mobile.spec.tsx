@@ -122,6 +122,38 @@ describe('MColorPicker', () => {
 		await flush();
 	});
 
+	it('plaintext：只渲染 formatter 生成的文字，没有色块与 MListItem，点击不打开；空值不显示占位文字', async () => {
+		const onVisibleChange = vi.fn();
+		const wrapper = mount(() => (
+			<MColorPicker
+				plaintext
+				modelValue="#5495F6"
+				label="颜色"
+				class="custom"
+				formatter={(v: string) => v.toLowerCase()}
+				onVisibleChange={onVisibleChange}
+			/>
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.element.tagName).toBe('SPAN');
+		expect(wrapper.classes()).toEqual(['vcm-color-picker-plaintext', 'custom']);
+		expect(wrapper.text()).toBe('#5495f6');
+		expect(wrapper.find('.vc-color-picker__swatch').exists()).toBe(false);
+		await wrapper.trigger('click');
+		await flush();
+		expect(getPopup()).toBeNull();
+		expect(onVisibleChange).not.toHaveBeenCalled();
+		wrapper.unmount();
+
+		const empty = mount(() => (<MColorPicker plaintext />));
+		expect(empty.text()).toBe('');
+		empty.unmount();
+
+		const extra = mount(() => (<MColorPicker plaintext modelValue={null} extra="-" />));
+		expect(extra.text()).toBe('-');
+		extra.unmount();
+	});
+
 	it('触发行：色块 + 色值；未选择时为占位文字；formatter 生成文字', async () => {
 		const value = ref('');
 		const wrapper = mount(() => (

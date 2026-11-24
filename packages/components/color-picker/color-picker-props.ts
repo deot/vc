@@ -46,6 +46,16 @@ export const props = {
 	nullValue: {
 		type: [String, Object] as PropType<string | null>,
 		default: ''
+	},
+	// 只显示色值文字，不渲染色块与浮层：没有样式，不能交互；没有值时显示 extra
+	plaintext: {
+		type: Boolean,
+		default: false
+	},
+	// plaintext 没有值时显示的文字
+	extra: {
+		type: String,
+		default: ''
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

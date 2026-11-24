@@ -49,6 +49,26 @@ import { Textarea } from '@deot/vc';
 ```
 :::
 
+### 只读文字
+
+`plaintext` 时只显示 v-model 的值，不渲染文本框：输出一个没有样式的 `<span class="vc-textarea-plaintext">`（移动端为 `vcm-textarea-plaintext`），不能交互。换行转为 `<br>`，不依赖样式；没有值时显示 `extra`，未传时为空。与原生 `readonly`（保留文本框外观）不同。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div style="display: grid; gap: 12px; max-width: 420px">
+		<Textarea :model-value="'第一行\n第二行'" plaintext />
+		<Textarea extra="-" plaintext />
+	</div>
+</template>
+
+<script setup>
+import { Textarea } from '@deot/vc';
+</script>
+```
+:::
+
 ### 自适应高度
 
 `autosize` 可指定 `minRows` 和 `maxRows`。当前实现中，连续输入时自动重算高度需要同时开启 `controllable` 并绑定 `v-model`；非完全受控模式下，输入同步可能跳过重新测量。容器宽度或可见性变化后，可调用实例的 `refresh()` 重新测量。
@@ -186,6 +206,8 @@ const value = ref('');
 | modelValue | 绑定值，推荐字符串；输入事件产生字符串 | `string \| number \| any[]` | - | - |
 | id | 原生输入元素的 id | `string` | - | - |
 | disabled | 禁用输入 | `boolean` | - | `false` |
+| plaintext | 只显示值的文字（换行转为 `<br>`），不渲染文本框，没有样式、不能交互；见[只读文字](#只读文字) | `boolean` | - | `false` |
+| extra | `plaintext` 没有值时显示的文字 | `string` | - | `''` |
 | maxlength | 最大输入长度；默认按 UTF-16 代码单元限制 | `number` | - | - |
 | bytes | 使用上述加权长度限制 | `boolean` | - | `false` |
 | controllable | 完全受控，输入值由 modelValue 决定，调用方需接收并回传更新 | `boolean` | - | `false` |
@@ -234,5 +256,5 @@ const value = ref('');
 
 ### 当前行为说明
 
-- 两个组件均不渲染插槽，不提供 `clearable` 或清空按钮。
+- 两个组件均不渲染插槽，不提供 `clearable` 或清空按钮；`plaintext` 时也只显示值。
 - `bytes` 时计数与输入限制使用同一套加权长度：可打印 ASCII 算半个（合计向上取整），其他代码单元算一个。例如 `abcd` 与 `中文` 都显示 2。

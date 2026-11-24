@@ -70,6 +70,43 @@ describe('MDatePicker trigger', () => {
 		wrapper.unmount();
 	});
 
+	it('plaintext：只渲染格式化后的文字，没有 MListItem，点击不打开；formatter 生效；空值不显示占位文字', async () => {
+		const onVisibleChange = vi.fn();
+		const wrapper = mount(() => (
+			<MDatePicker
+				plaintext
+				modelValue={new Date(2024, 0, 2, 3, 4, 5)}
+				type="datetime"
+				label="日期时间"
+				class="custom"
+				onVisibleChange={onVisibleChange}
+			/>
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.element.tagName).toBe('SPAN');
+		expect(wrapper.classes()).toEqual(['vcm-date-picker-plaintext', 'custom']);
+		expect(wrapper.text()).toBe('2024-01-02 03:04:05');
+		await wrapper.trigger('click');
+		await flush();
+		expect(document.querySelector('.vcm-date-picker-view')).toBeNull();
+		expect(onVisibleChange).not.toHaveBeenCalled();
+		wrapper.unmount();
+
+		const formatted = mount(() => (
+			<MDatePicker plaintext modelValue={new Date(2024, 0, 2)} type="date" formatter={(value: string) => `日期 ${value}`} />
+		));
+		expect(formatted.text()).toBe('日期 2024-01-02');
+		formatted.unmount();
+
+		const empty = mount(() => (<MDatePicker plaintext type="date" />));
+		expect(empty.text()).toBe('');
+		empty.unmount();
+
+		const extra = mount(() => (<MDatePicker plaintext type="date" extra="-" />));
+		expect(extra.text()).toBe('-');
+		extra.unmount();
+	});
+
 	it('renders default slot with formatted label', async () => {
 		const wrapper = mount(() => (
 			<MDatePicker modelValue={new Date(2024, 0, 2)} type="date">

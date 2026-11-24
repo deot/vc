@@ -2,11 +2,12 @@
 
 import { defineComponent, withModifiers } from 'vue';
 import { useAttrs } from '@deot/vc-hooks';
-import { props as inputProps, rightProps } from '../input-props';
+import { props as inputProps, rightProps, plaintextProps } from '../input-props';
 
 import { MIcon } from '../../icon/index.m';
 import { MTransitionFade } from '../../transition/index.m';
 import { useInput, emits } from '../use-input';
+import { getPlaintextChildren } from '../utils';
 
 const COMPONENT_NAME = 'vcm-input';
 
@@ -15,11 +16,12 @@ export const MInput = defineComponent({
 	inheritAttrs: false,
 	props: {
 		...inputProps,
-		...rightProps
+		...rightProps,
+		...plaintextProps
 	},
 	emits: [...emits],
 	setup(props, context) {
-		const { slots } = context;
+		const { slots, attrs } = context;
 		const it = useAttrs({ merge: false });
 
 		const {
@@ -62,6 +64,13 @@ export const MInput = defineComponent({
 		};
 
 		return () => {
+			if (props.plaintext) {
+				return (
+					<span class="vcm-input-plaintext" {...attrs}>
+						{ getPlaintextChildren(currentValue.value, slots, props.extra) }
+					</span>
+				);
+			}
 			if (props.styleless) return renderInput(true);
 			return (
 				<div

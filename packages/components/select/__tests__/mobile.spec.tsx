@@ -435,6 +435,32 @@ describe('MSelect', () => {
 		wrapper.unmount();
 	});
 
+	it('plaintext：只渲染已选项的文字，没有 MListItem，点击不打开；空值不显示占位文字', async () => {
+		const onVisibleChange = vi.fn();
+		const wrapper = mount(() => (
+			<MSelect plaintext max={0} modelValue={[1, 9, 3]} data={createData()} label="类型" class="custom" onVisibleChange={onVisibleChange} />
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.element.tagName).toBe('SPAN');
+		expect(wrapper.classes()).toEqual(['vcm-select-plaintext', 'custom']);
+		expect(wrapper.text()).toBe('选项一, 选项三');
+		await wrapper.trigger('click');
+		await flush();
+		expect(document.querySelector('.vcm-select-view')).toBeNull();
+		expect(onVisibleChange).not.toHaveBeenCalled();
+		wrapper.unmount();
+
+		const empty = mount(() => (<MSelect plaintext data={createData()} />));
+		expect(empty.text()).toBe('');
+		empty.unmount();
+
+		const extra = mount(() => (
+			<MSelect plaintext modelValue={2} data={createData()} extra="-" formatter={(labels: string[], value: any) => `${labels[0]}#${value}`} />
+		));
+		expect(extra.text()).toBe('选项二#2');
+		extra.unmount();
+	});
+
 	it('label 插槽在弹层中渲染；disabled 不打开', async () => {
 		const disabled = ref(false);
 		const wrapper = mount(() => (

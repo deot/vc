@@ -1,6 +1,6 @@
 import type { ExtractPropTypes, PropType } from 'vue';
 import { pick } from 'lodash-es';
-import { props as inputProps } from '../input/input-props';
+import { props as inputProps, plaintextProps } from '../input/input-props';
 
 const inputKeys = [
 	'id',
@@ -13,6 +13,8 @@ const inputKeys = [
 ] as const;
 export const props = {
 	...(pick(inputProps, inputKeys) as Pick<typeof inputProps, typeof inputKeys[number]>),
+	// 只显示值的文字（换行转为 <br>），不渲染文本框：没有样式，不能交互；没有值时显示 extra
+	...plaintextProps,
 	wrap: {
 		type: String,
 		validator: v => /(soft|hard)/.test(v),

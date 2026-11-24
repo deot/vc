@@ -2356,6 +2356,79 @@ describe('Tree store & node unit', () => {
 	});
 });
 
+describe('TreeSelect plaintext', () => {
+	const tree = [
+		{
+			value: 'a',
+			label: '分组 A',
+			children: [
+				{ value: 'a-1', label: '条目 A-1' },
+				{ value: 'a-2', label: '条目 A-2' }
+			]
+		},
+		{ value: 'b', label: '分组 B', children: [{ value: 'b-1', label: '条目 B-1' }] }
+	];
+
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('只渲染已选项的文字（联动时为完整路径），没有触发器与弹层，点击不打开；attrs 落在 span 上', async () => {
+		const onVisibleChange = vi.fn();
+		const wrapper = mount(() => (
+			<TreeSelect
+				plaintext
+				disabled
+				modelValue="a-2"
+				data={tree}
+				class="custom"
+				style={{ color: 'red' }}
+				onVisibleChange={onVisibleChange}
+			/>
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.element.tagName).toBe('SPAN');
+		expect(wrapper.classes()).toEqual(['vc-tree-select-plaintext', 'custom']);
+		expect(wrapper.attributes('style')).toBe('color: red;');
+		expect(wrapper.text()).toBe('分组 A / 条目 A-2');
+		expect(wrapper.findComponent(Popover).exists()).toBe(false);
+		await wrapper.trigger('click');
+		await flush();
+		expect(document.querySelector('.vc-tree-select__options')).toBeNull();
+		expect(onVisibleChange).not.toHaveBeenCalled();
+		wrapper.unmount();
+	});
+
+	it('多选：联动时同桌面端标签，每个最深的已选节点一条完整路径；strict 显示各节点自身文字；formatter 参数为 (labels, value)', () => {
+		const linked = mount(() => (<TreeSelect plaintext max={0} modelValue={['a', 'a-1', 'a-2', 'b-1']} data={tree} />));
+		expect(linked.text()).toBe('分组 A / 条目 A-1, 分组 A / 条目 A-2, 分组 B / 条目 B-1');
+		linked.unmount();
+
+		const formatter = vi.fn((labels: string[]) => (<b>{ labels.join(' | ') }</b>));
+		const strict = mount(() => (
+			<TreeSelect plaintext max={0} checkStrategy="strict" modelValue="a-1,b-1" data={tree} formatter={formatter} />
+		));
+		expect(strict.find('b').text()).toBe('条目 A-1 | 条目 B-1');
+		expect(formatter).toHaveBeenCalledWith(['条目 A-1', '条目 B-1'], 'a-1,b-1');
+		strict.unmount();
+	});
+
+	it('没有值、查不到时显示 extra，未传为空；单选触发器的文字经 formatter', async () => {
+		const empty = mount(() => (<TreeSelect plaintext data={tree} />));
+		expect(empty.text()).toBe('');
+		empty.unmount();
+
+		const missing = mount(() => (<TreeSelect plaintext modelValue="none" data={tree} extra="-" />));
+		expect(missing.text()).toBe('-');
+		missing.unmount();
+
+		const trigger = mount(() => (<TreeSelect modelValue="b-1" data={tree} formatter={(labels: string[]) => `[${labels[0]}]`} />));
+		await flush();
+		expect((trigger.find('input').element as HTMLInputElement).value).toBe('[分组 B / 条目 B-1]');
+		trigger.unmount();
+	});
+});
+
 describe('TreeSelect searchable', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';

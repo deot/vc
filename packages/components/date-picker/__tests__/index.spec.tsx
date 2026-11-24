@@ -1085,6 +1085,78 @@ describe('DatePicker form 集成', () => {
 	});
 });
 
+describe('DatePicker / TimePicker plaintext', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('只渲染按 format 格式化的文字，没有输入框与面板，点击不打开；attrs 落在 span 上；优先于 disabled', async () => {
+		const onVisibleChange = vi.fn();
+		const wrapper = mount(() => (
+			<DatePicker
+				plaintext
+				disabled
+				type="datetime"
+				modelValue={new Date(2023, 4, 12, 8, 30, 5)}
+				class="custom"
+				style={{ color: 'red' }}
+				{...{ title: 'date' }}
+				onVisibleChange={onVisibleChange}
+			/>
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.element.tagName).toBe('SPAN');
+		expect(wrapper.classes()).toEqual(['vc-date-picker-plaintext', 'custom']);
+		expect(wrapper.attributes('style')).toBe('color: red;');
+		expect(wrapper.attributes('title')).toBe('date');
+		expect(wrapper.text()).toBe('2023-05-12 08:30:05');
+		expect(wrapper.find('input').exists()).toBe(false);
+		await wrapper.trigger('click');
+		await flush();
+		expect(getPortal()).toBeNull();
+		expect(onVisibleChange).not.toHaveBeenCalled();
+		wrapper.unmount();
+	});
+
+	it('范围、多选、自定义 format；值变化时跟着变', async () => {
+		const range = mount(() => (
+			<DatePicker plaintext type="daterange" separator=" ~ " modelValue={[new Date(2023, 0, 1), new Date(2023, 0, 10)]} />
+		));
+		expect(range.text()).toBe('2023-01-01 ~ 2023-01-10');
+		range.unmount();
+
+		const multiple = mount(() => (
+			<DatePicker plaintext multiple modelValue={[new Date(2023, 0, 1), new Date(2023, 0, 3)]} />
+		));
+		expect(multiple.text()).toBe('2023-01-01,2023-01-03');
+		multiple.unmount();
+
+		const value = ref<any>('2023-05-12');
+		const formatted = mount(() => (<DatePicker plaintext format="YYYY/MM/DD" modelValue={value.value} />));
+		expect(formatted.text()).toBe('2023/05/12');
+		value.value = '2024-01-02';
+		await flush();
+		expect(formatted.text()).toBe('2024/01/02');
+		formatted.unmount();
+	});
+
+	it('没有值时显示 extra，未传为空；TimePicker 的标记 class', () => {
+		const empty = mount(() => (<DatePicker plaintext />));
+		expect(empty.text()).toBe('');
+		empty.unmount();
+
+		const extra = mount(() => (<DatePicker plaintext type="daterange" modelValue={[]} extra="-" />));
+		expect(extra.text()).toBe('-');
+		extra.unmount();
+
+		const range = [new Date(2023, 0, 1, 9, 0, 0), new Date(2023, 0, 1, 18, 0, 0)];
+		const time = mount(() => (<TimePicker plaintext type="timerange" modelValue={range} />));
+		expect(time.classes()).toEqual(['vc-time-picker-plaintext']);
+		expect(time.text()).toBe('09:00:00 - 18:00:00');
+		time.unmount();
+	});
+});
+
 describe('TimePicker basic', () => {
 	afterEach(() => {
 		document.body.innerHTML = '';

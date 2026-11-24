@@ -2,6 +2,7 @@
 
 import { defineComponent } from 'vue';
 import { useTextarea, emits } from '../use-textarea';
+import { toPlaintext } from '../utils';
 import { props as textareaProps } from '../textarea-props';
 import { rightProps } from '../../input/input-props';
 
@@ -28,6 +29,9 @@ export const MTextarea = defineComponent({
 			indicator
 		} = useTextarea(props, context);
 		return () => {
+			if (props.plaintext) {
+				return (<span class="vcm-textarea-plaintext">{ toPlaintext(currentValue.value, props.extra) }</span>);
+			}
 			return (
 				<div class={[classes.value, 'vcm-textarea', { 'is-right': props.right }]}>
 					<div class="vcm-textarea__wrapper">

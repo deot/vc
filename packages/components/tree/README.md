@@ -341,6 +341,41 @@ const loadData = async (keyword) => {
 ```
 :::
 
+### 树选择只读文字
+
+TreeSelect 的 `plaintext` 只按 `value` 在 `data` 中查出已选项的文字并显示，不渲染输入框与面板：输出一个没有样式的 `<span class="vc-tree-select-plaintext">`，不能交互，`class`、`style` 等 attribute 落在它上面。优先于 `disabled`。
+
+- 文字与多选标签一致：联动时每个最深的已选节点一条完整路径（各级以 ` / ` 连接），`strict` 时为节点自身的文字；经 `formatter(labels, value)` 生成，默认以 `, ` 连接，可返回 VNode。
+- 没有值或查不到时显示 `extra`，未传时为空，不显示占位文字。
+- 不会调用 `loadData`：远程搜索的场景需要让 `data` 包含已选节点。
+- `MTreeSelect` 同样支持，输出 `<span class="vcm-tree-select-plaintext">`。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+```vue
+<template>
+	<div class="tree-select-demo">
+		<p>单选：<TreeSelect model-value="a-2" :data="data" plaintext /></p>
+		<p>多选：<TreeSelect :model-value="['a-1', 'b-1']" :data="data" :max="0" plaintext /></p>
+		<p>空值：<TreeSelect :data="data" extra="-" plaintext /></p>
+	</div>
+</template>
+
+<script setup>
+import { TreeSelect } from '@deot/vc';
+
+const data = [
+	{ value: 'a', label: '分组 A', children: [{ value: 'a-1', label: '条目 A-1' }, { value: 'a-2', label: '条目 A-2' }] },
+	{ value: 'b', label: '分组 B', children: [{ value: 'b-1', label: '条目 B-1' }] }
+];
+</script>
+
+<style scoped>
+.tree-select-demo p { margin: 0 0 12px; }
+</style>
+```
+:::
+
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-tree-<参数>`、`--vc-tree-select-<参数>` 覆盖；TreeSelect 的级联搜索结果与搜索命中的文字使用 `--vc-select-paths-<参数>`、`--vc-select-highlight-<参数>`。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
@@ -499,7 +534,9 @@ TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字
 | disabled | 禁用交互 | `boolean` | - | `false` |
 | clearable | 悬停时显示清空按钮 | `boolean` | - | `false` |
 | placeholder | 输入框占位文案（通过 attribute 传入），支持空字符串 | `string` | - | 当前语言的“请选择” |
+| plaintext | 只显示已选项的文字，不渲染输入框与面板，没有样式、不能交互；见[树选择只读文字](#树选择只读文字) | `boolean` | - | `false` |
 | extra | 无选中标签时的输入框显示值 | `string` | - | `''` |
+| formatter | 根据已选项的文字生成显示内容：单选输入框的文字（需返回字符串）与 `plaintext` 的文字（可返回 VNode） | `(labels: string[], value) => any` | - | 以 `, ` 连接，跳过空文字 |
 | searchable | 开启搜索：`true` / `'inline'` 在输入框内直接输入，`'popover'` 在面板顶部显示搜索栏 | `boolean \| 'inline' \| 'popover'` | - | `false` |
 | searchPlaceholder | 搜索时的占位文案：内联搜索为面板打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
 | clearSearchOnSelect | 多选时勾选或取消一个节点后清空搜索词；`false` 时保留，可在同一批结果里继续勾选 | `boolean` | - | `true` |
@@ -653,8 +690,9 @@ const data = Array.from({ length: 4 }, (_, i) => ({
 | labelWidth | 条目标签宽度，750 稿长度，传给 MListItem | `string \| number` | - | `''` |
 | arrow | 条目箭头；禁用时不显示 | `boolean \| string` | - | `right` |
 | disabled | 禁用，点击不打开 | `boolean` | - | `false` |
-| extra | `formatter` 返回空值时显示的文字，允许空字符串 | `string` | - | 当前语言的 `vc.TreeSelect.placeholder` |
-| formatter | 根据已选项的文字生成显示内容 | `(labels: string[], value) => any` | - | `labels => labels.join(', ')` |
+| plaintext | 只显示已选项的文字，不渲染 MListItem 与弹层，没有样式、不能交互；见[树选择只读文字](#树选择只读文字) | `boolean` | - | `false` |
+| extra | `formatter` 返回空值时显示的文字，允许空字符串 | `string` | - | 当前语言的 `vc.TreeSelect.placeholder`；`plaintext` 时为 `''` |
+| formatter | 根据已选项的文字生成显示内容 | `(labels: string[], value) => any` | - | 以 `, ` 连接，跳过空文字 |
 | title | 弹层标题，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | confirm | 由「确定」提交：`true` / `'top'` 为顶部的「取消 / 确定」，`'bottom'` 为底部的「清空 / 确定」按钮；多选为 `false` 时按 `'top'` | `boolean \| string` | `true`、`false`、`top`、`bottom` | `false` |
 | cancelText | 顶部工具栏的取消文案 | `string` | - | 当前语言的 `vc.Picker.cancelText` |

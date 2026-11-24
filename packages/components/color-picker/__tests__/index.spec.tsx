@@ -2,6 +2,7 @@
 
 import { ColorPicker, Portal } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
+import { vi } from 'vitest';
 import { defineComponent, nextTick, ref } from 'vue';
 import { ColorPickerView } from '../color-picker-view';
 import { Color } from '../color';
@@ -438,6 +439,49 @@ describe('index.ts', () => {
 		expect(getPicker()).not.toBeNull();
 
 		wrapper.unmount();
+	});
+});
+
+describe('ColorPicker plaintext', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('只渲染色值文字，没有色块与浮层，点击不打开；attrs 落在 span 上；优先于 disabled', async () => {
+		const onVisibleChange = vi.fn();
+		const wrapper = mount(() => (
+			<ColorPicker
+				plaintext
+				disabled
+				modelValue="rgba(84, 149, 246, 0.5)"
+				class="custom"
+				style={{ color: 'red' }}
+				{...{ title: 'color' }}
+				onVisibleChange={onVisibleChange}
+			/>
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.element.tagName).toBe('SPAN');
+		expect(wrapper.classes()).toEqual(['vc-color-picker-plaintext', 'custom']);
+		expect(wrapper.attributes('style')).toBe('color: red;');
+		expect(wrapper.attributes('title')).toBe('color');
+		expect(wrapper.text()).toBe('rgba(84, 149, 246, 0.5)');
+		expect(wrapper.find('.vc-color-picker__swatch').exists()).toBe(false);
+		await wrapper.trigger('click');
+		await flush();
+		expect(getPicker()).toBeNull();
+		expect(onVisibleChange).not.toHaveBeenCalled();
+		wrapper.unmount();
+	});
+
+	it('没有值（含 null）时显示 extra，未传为空', () => {
+		const empty = mount(() => (<ColorPicker plaintext />));
+		expect(empty.text()).toBe('');
+		empty.unmount();
+
+		const extra = mount(() => (<ColorPicker plaintext modelValue={null} extra="-" />));
+		expect(extra.text()).toBe('-');
+		extra.unmount();
 	});
 });
 

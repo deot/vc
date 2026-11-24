@@ -308,18 +308,23 @@ export const useSelectValue = (
 	// 多选且已选满 max 项（max 为 0 时不限）
 	const isFull = computed(() => isMaxReached(props.max, currentValue.value.length));
 
-	/**
-	 * v-model 同步, 外部的数据改变时不会触发
-	 * @param labels 当前选中项的文字，随值一并抛出
-	 */
-	const sync = (labels: string[]) => {
-		const v = toModelValue(currentValue.value, {
+	// 选中值 -> v-model 的形状
+	const getModelValue = () => {
+		return toModelValue(currentValue.value, {
 			modelValue: props.modelValue,
 			max: props.max,
 			numerable: props.numerable,
 			separator: props.separator,
 			nullValue: props.nullValue
 		});
+	};
+
+	/**
+	 * v-model 同步, 外部的数据改变时不会触发
+	 * @param labels 当前选中项的文字，随值一并抛出
+	 */
+	const sync = (labels: string[]) => {
+		const v = getModelValue();
 		emit('update:modelValue', v, labels);
 		emit('change', v, labels);
 
@@ -354,6 +359,7 @@ export const useSelectValue = (
 		currentValue,
 		multiple,
 		isFull,
+		getModelValue,
 		sync,
 		handleClear
 	};

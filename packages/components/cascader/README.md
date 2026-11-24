@@ -605,6 +605,47 @@ const value = ref(['2500', '2500-3']);
 ```
 :::
 
+### 只读文字
+
+`plaintext` 时只按 `value` 在 `data` 中查出路径文字并显示，不渲染输入框与浮层：输出一个没有样式的 `<span class="vc-cascader-plaintext">`，不能交互，`class`、`style` 等 attribute 落在它上面。优先于 `disabled`。
+
+- 文字经 `formatter(labels)` 生成，默认以 ` / ` 连接，可返回 VNode；`checkStrategy: 'child'` 的单值同样显示完整路径。
+- 没有值或查不到时显示 `extra`，未传时为空，不显示占位文字。
+- 不会调用 `loadData`：按需加载的子节点需要已在 `data` 中。
+- `MCascader` 同样支持，输出 `<span class="vcm-cascader-plaintext">`。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+```vue
+<template>
+	<div class="cascader-demo">
+		<p>完整路径：<Cascader :model-value="['a', 'a-1', 'a-1-2']" :data="options" plaintext /></p>
+		<p>最后一级：<Cascader model-value="b-1" :data="options" check-strategy="child" plaintext /></p>
+		<p>空值：<Cascader :data="options" extra="-" plaintext /></p>
+	</div>
+</template>
+
+<script setup>
+import { Cascader } from '@deot/vc';
+
+const options = [
+	{
+		value: 'a',
+		label: '分组 A',
+		children: [
+			{ value: 'a-1', label: '条目 A-1', children: [{ value: 'a-1-2', label: '细项 A-1-2' }] }
+		]
+	},
+	{ value: 'b', label: '分组 B', children: [{ value: 'b-1', label: '条目 B-1' }] }
+];
+</script>
+
+<style scoped>
+.cascader-demo p { margin: 0 0 12px; }
+</style>
+```
+:::
+
 ### 移动端选择
 
 `MCascader` 是独立的移动端组件：默认渲染 MListItem，点击后从底部弹出。弹层上方的标签切换层级，待选的一级显示「请选择」，下方是选项列表，选中项为主色并打勾。`v-model` 的形状与转换规则与桌面端相同（`checkStrategy`、`separator`、`numerable`、`nullValue`）。
@@ -763,12 +804,13 @@ const handleOpen = () => {
 | --- | --- | --- | --- | --- |
 | data | 树形数据；节点包含 `value`、`label`、可选 `children` | `CascaderOption[]` | - | `[]` |
 | modelValue | 选择路径，推荐用数组；也接收标量或由 `separator` 分隔的字符串。`checkStrategy: 'child'` 时为最后一级的值，或只含它的数组 | `string \| number \| (string \| number)[]` | - | `undefined` |
-| formatter | 根据路径文本生成输入框内容 | `(labels: string[]) => string` | - | `labels => labels.join(' / ')` |
+| formatter | 根据路径文本生成输入框内容（需返回字符串）与 `plaintext` 的文字（可返回 VNode） | `(labels: string[]) => any` | - | `labels => labels.join(' / ')` |
 | changeOnSelect | 点击任意一级即提交并关闭；否则只提交叶子节点 | `boolean` | - | `false` |
 | checkStrategy | `v-model` 回填完整路径还是只回填最后一级；见[只提交最后一级](#只提交最后一级) | `string` | `all`、`child` | `'all'` |
 | searchable | 开启搜索：`true` / `'inline'` 在输入框内直接输入，`'popover'` 在浮层顶部显示搜索栏；见[搜索](#搜索) | `boolean \| 'inline' \| 'popover'` | - | `false` |
 | searchPlaceholder | 搜索时的占位文字：内联搜索为浮层打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
 | disabled | 禁止打开和清空 | `boolean` | - | `false` |
+| plaintext | 只显示路径文字，不渲染输入框与浮层，没有样式、不能交互；见[只读文字](#只读文字) | `boolean` | - | `false` |
 | clearable | 移入输入框时显示清除按钮 | `boolean` | - | `false` |
 | placeholder | 透传给默认输入框的占位文本，支持显式空字符串覆盖 | `string` | - | 当前语言的 `vc.Cascader.placeholder`，中文为 `请选择` |
 | extra | `formatter` 返回空值时展示的输入框内容 | `string` | - | `''` |
@@ -829,7 +871,8 @@ interface CascaderOption {
 | label | 条目标签 | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | labelWidth | 条目标签宽度，750 稿长度，传给 MListItem | `string \| number` | - | `''` |
 | arrow | 条目箭头 | `boolean \| string` | - | `right` |
-| extra | `formatter` 返回空值时显示的文字，允许空字符串 | `string` | - | 当前语言的 `vc.Cascader.placeholder` |
+| plaintext | 只显示路径文字，不渲染 MListItem 与弹层，没有样式、不能交互；见[只读文字](#只读文字) | `boolean` | - | `false` |
+| extra | `formatter` 返回空值时显示的文字，允许空字符串 | `string` | - | 当前语言的 `vc.Cascader.placeholder`；`plaintext` 时为 `''` |
 | formatter | 根据路径文字生成显示内容，同桌面端 | `(labels: string[]) => any` | - | `labels => labels.join(' / ')` |
 | title | 弹层标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`，见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | confirm | 选到最后一级（或清空）不自动提交，由「确定」提交：`true` / `'top'` 为顶部的「取消 / 确定」工具栏，`'bottom'` 为底部的「确定」大按钮；为 `false` 且开启 `changeOnSelect` 时按 `'top'` | `boolean \| string` | `true`、`false`、`top`、`bottom` | `false` |

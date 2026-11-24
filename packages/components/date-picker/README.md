@@ -240,6 +240,34 @@ const datetime = ref('');
 ```
 :::
 
+### 只读文字
+
+`plaintext` 时只把值按 `format` 格式化后显示（与关闭时输入框里的文字相同：范围以 `separator` 连接，季度为季度名，多选以 `,` 连接），不渲染输入框与浮层：输出一个没有样式的 `<span class="vc-date-picker-plaintext">`（TimePicker 为 `vc-time-picker-plaintext`），不能交互，`class`、`style` 等 attribute 落在它上面。优先于 `disabled`。
+
+- 没有值时显示 `extra`，未传时为空，不显示占位文字。
+- `MDatePicker` 同样支持，文字与触发区一致（`formatter` 生效），输出 `<span class="vcm-date-picker-plaintext">`。
+
+:::playground
+<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+```vue
+<template>
+	<div class="date-picker-plaintext-demo">
+		<p>日期：<DatePicker model-value="2024-03-15" plaintext /></p>
+		<p>范围：<DatePicker :model-value="['2024-03-01', '2024-03-15']" type="daterange" separator=" ~ " plaintext /></p>
+		<p>空值：<DatePicker extra="-" plaintext /></p>
+	</div>
+</template>
+
+<script setup>
+import { DatePicker } from '@deot/vc';
+</script>
+
+<style scoped>
+.date-picker-plaintext-demo p { margin: 0 0 12px; }
+</style>
+```
+:::
+
 ### 移动端日期时间选择
 
 点击触发内容打开滚轮；确认后提交格式化字符串，取消不提交。`format="HH:mm"` 只显示时、分列。`type` 与桌面端对齐：`year`、`month`、`quarter`、`date`、`datetime`、`time`，以及范围类 `daterange`、`datetimerange`、`monthrange`、`quarterrange`、`timerange`；值的格式与桌面端相同。
@@ -398,6 +426,8 @@ const value = ref(['2024-03-10', '2024-03-20']);
 | format | 解析与输出格式；季度展示仍为季度名称 | `string` | - | 按类型决定 |
 | placeholder | 占位文本，允许空字符串 | `string` | - | 当前语言的“请选择” |
 | disabled | 禁用选择器 | `boolean` | - | `false` |
+| plaintext | 只显示格式化后的文字，不渲染输入框与浮层，没有样式、不能交互；见[只读文字](#只读文字) | `boolean` | - | `false` |
+| extra | `plaintext` 没有值时显示的文字 | `string` | - | `''` |
 | clearable | 有值且悬停时显示清除图标 | `boolean` | - | `true` |
 | editable | 可直接在输入框里键入，见[手动输入](#手动输入)；季度、多选时始终只读 | `boolean` | - | `true` |
 | confirm | 显示确认栏；日期时间和多选自动启用 | `boolean` | - | `false` |
@@ -455,7 +485,8 @@ const value = ref(['2024-03-10', '2024-03-20']);
 | label | 条目标签 | `string` | - | - |
 | labelWidth | 条目标签宽度，750 稿长度，传给 MListItem | `string \| number` | - | `''` |
 | arrow | 条目箭头 | `boolean \| string` | - | `right` |
-| extra | 未选中时的提示，允许空字符串 | `string` | - | 当前语言的“请选择” |
+| plaintext | 只显示格式化后的文字，不渲染 MListItem 与弹层，没有样式、不能交互；见[只读文字](#只读文字) | `boolean` | - | `false` |
+| extra | 未选中时的提示，允许空字符串 | `string` | - | 当前语言的“请选择”；`plaintext` 时为 `''` |
 | formatter | 自定义显示，返回假值时使用默认显示 | `(value, format: string, dates: Date[]) => any` | - | - |
 
 `formatter` 的 `dates` 为选中的点：单值为 `[date]`，范围为 `[start, end]`，季度取季度的第一天。

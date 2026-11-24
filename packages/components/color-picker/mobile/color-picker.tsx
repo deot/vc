@@ -77,6 +77,10 @@ export const MColorPicker = defineComponent({
 		};
 
 		return () => {
+			if (props.plaintext) {
+				const value = toValue(currentValue.value);
+				return (<span class="vcm-color-picker-plaintext">{ value ? props.formatter(value) : (props.extra ?? '') }</span>);
+			}
 			return (
 				<div class={['vcm-color-picker', { 'is-disabled': props.disabled }]} onClick={handleClick}>
 					{

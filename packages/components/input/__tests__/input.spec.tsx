@@ -674,3 +674,51 @@ describe('index.ts', () => {
 		expect(handleUpdateModelValue).toHaveBeenCalledTimes(0);
 	});
 });
+
+describe('Input plaintext', () => {
+	it('只渲染值的文字，前后缀插槽保留，图标属性不渲染；attrs 落在 span 上；没有值时显示 extra', async () => {
+		const value = ref<any>('100');
+		const wrapper = mount(() => (
+			<Input
+				v-model={value.value}
+				plaintext
+				prepend="search"
+				class="custom"
+				style={{ color: 'red' }}
+				{...{ title: 'amount' }}
+				extra="-"
+			>
+				{{ append: () => ' 元' }}
+			</Input>
+		));
+		expect(wrapper.element.tagName).toBe('SPAN');
+		expect(wrapper.classes()).toEqual(['vc-input-plaintext', 'custom']);
+		expect(wrapper.attributes('style')).toBe('color: red;');
+		expect(wrapper.attributes('title')).toBe('amount');
+		expect(wrapper.text()).toBe('100 元');
+		expect(wrapper.find('input').exists()).toBe(false);
+		expect(wrapper.find('.vc-icon').exists()).toBe(false);
+
+		// 没有值时只显示 extra，不带前后缀
+		value.value = '';
+		await nextTick();
+		expect(wrapper.text()).toBe('-');
+		wrapper.unmount();
+
+		const empty = mount(() => (<Input plaintext />));
+		expect(empty.text()).toBe('');
+		empty.unmount();
+	});
+
+	it('MInput 同样支持', () => {
+		const wrapper = mount(() => (
+			<MInput modelValue="文字" plaintext>
+				{{ prepend: () => '¥' }}
+			</MInput>
+		));
+		expect(wrapper.classes()).toEqual(['vcm-input-plaintext']);
+		expect(wrapper.text()).toBe('¥文字');
+		expect(wrapper.find('input').exists()).toBe(false);
+		wrapper.unmount();
+	});
+});

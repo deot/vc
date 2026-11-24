@@ -74,6 +74,16 @@ export const props = {
 	nullValue: {
 		type: [Number, String, Object],
 		default: ''
+	},
+	// 只显示值按 format 格式化后的文字，不渲染输入框与面板：没有样式，不能交互；没有值时显示 extra
+	plaintext: {
+		type: Boolean,
+		default: false
+	},
+	// plaintext 没有值时显示的文字
+	extra: {
+		type: String,
+		default: ''
 	}
 };
 export type Props = ExtractPropTypes<typeof props>;

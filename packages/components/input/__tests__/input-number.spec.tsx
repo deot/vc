@@ -591,3 +591,32 @@ describe('index-number.ts', () => {
 		expect(wrapper.find('input').element.value).toBe('12');
 	});
 });
+
+describe('InputNumber plaintext', () => {
+	it('只渲染值本身（不按 precision 补零），不带步进按钮，min / step 等不落成 span 的属性', () => {
+		const wrapper = mount(() => (
+			<InputNumber modelValue={5} precision={2} min={0} step={1} plaintext class="custom">
+				{{ append: () => ' 件' }}
+			</InputNumber>
+		));
+		expect(wrapper.element.tagName).toBe('SPAN');
+		expect(wrapper.classes()).toEqual(['vc-input-plaintext', 'custom']);
+		expect(wrapper.text()).toBe('5 件');
+		expect(wrapper.find('.vc-input-number__icon').exists()).toBe(false);
+		expect(wrapper.attributes('min')).toBeUndefined();
+		expect(wrapper.attributes('step')).toBeUndefined();
+		wrapper.unmount();
+
+		const empty = mount(() => (<InputNumber plaintext extra="-" />));
+		expect(empty.text()).toBe('-');
+		empty.unmount();
+	});
+
+	it('MInputNumber：不带加减按钮', () => {
+		const wrapper = mount(() => (<MInputNumber modelValue={0} plaintext />));
+		expect(wrapper.classes()).toEqual(['vcm-input-plaintext']);
+		expect(wrapper.text()).toBe('0');
+		expect(wrapper.find('.vcm-input-number__plus').exists()).toBe(false);
+		wrapper.unmount();
+	});
+});

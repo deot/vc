@@ -61,6 +61,38 @@ describe('MTreeSelect', () => {
 		document.body.innerHTML = '';
 	});
 
+	it('plaintext：只渲染已选项的文字，没有 MListItem，点击不打开；空值不显示占位文字', async () => {
+		const onVisibleChange = vi.fn();
+		const wrapper = mount(() => (
+			<MTreeSelect
+				plaintext
+				max={0}
+				modelValue={['1-1', '9', '3']}
+				data={buildData()}
+				label="条目"
+				class="custom"
+				onVisibleChange={onVisibleChange}
+			/>
+		), { attachTo: document.body });
+		await flush();
+		expect(wrapper.element.tagName).toBe('SPAN');
+		expect(wrapper.classes()).toEqual(['vcm-tree-select-plaintext', 'custom']);
+		expect(wrapper.text()).toBe('分组 1 / 条目 1-1, 条目 3');
+		await wrapper.trigger('click');
+		await flush();
+		expect(document.querySelector('.vcm-tree-select-panel')).toBeNull();
+		expect(onVisibleChange).not.toHaveBeenCalled();
+		wrapper.unmount();
+
+		const empty = mount(() => (<MTreeSelect plaintext data={buildData()} />));
+		expect(empty.text()).toBe('');
+		empty.unmount();
+
+		const extra = mount(() => (<MTreeSelect plaintext modelValue="9" data={buildData()} extra="-" />));
+		expect(extra.text()).toBe('-');
+		extra.unmount();
+	});
+
 	it('默认单选：MListItem 显示占位，弹层里是 MTree、没有复选框；点节点即提交并关闭，选中的节点打勾', async () => {
 		const value = ref<any>();
 		const onChange = vi.fn();

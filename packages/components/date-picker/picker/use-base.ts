@@ -83,9 +83,12 @@ export const useBase = (props: Props, context: SetupContext<Emits>, options: Opt
 		};
 	});
 
+	// 已提交的值的文字：关闭时的输入框与 plaintext
+	const committedText = computed(() => formatDateText(committedValue.value));
+
 	// 输入框显示的文字：关闭一开始就显示已提交的值，不等离场动画结束
 	const inputValue = computed(() => {
-		if (!isActive.value) return formatDateText(committedValue.value);
+		if (!isActive.value) return committedText.value;
 		return inputText.value ?? formatDateText(currentValue.value);
 	});
 
@@ -372,6 +375,7 @@ export const useBase = (props: Props, context: SetupContext<Emits>, options: Opt
 		classes,
 		isConfirm,
 		showTime,
+		committedText,
 		inputValue,
 		inputListeners,
 

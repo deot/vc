@@ -372,6 +372,36 @@ const handleVisibleChange = (key, isVisible) => {
 ```
 :::
 
+### 只读文字
+
+`plaintext` 时只显示色值文字（v-model 原样），不渲染色块与浮层：输出一个没有样式的 `<span class="vc-color-picker-plaintext">`，不能交互，`class`、`style` 等 attribute 落在它上面。优先于 `disabled`。没有值时显示 `extra`，未传时为空。
+
+`MColorPicker` 同样支持，文字由 `formatter` 生成（同触发行），不显示色块，输出 `<span class="vcm-color-picker-plaintext">`。
+
+:::playground
+<!--
+<config lang="json5">
+{ previewInset: 20 }
+</config>
+-->
+```vue
+<template>
+	<div class="color-demo">
+		<p>颜色：<ColorPicker model-value="#5495F6" plaintext /></p>
+		<p>空值：<ColorPicker extra="-" plaintext /></p>
+	</div>
+</template>
+
+<script setup>
+import { ColorPicker } from '@deot/vc';
+</script>
+
+<style scoped>
+.color-demo p { margin: 0 0 12px; }
+</style>
+```
+:::
+
 ### 独立面板
 
 `ColorPicker.View` 直接展示选色区域，没有浮层、输入框和按钮。用户操作时触发 `update:modelValue` 和 `change`，第二个参数为当前 `Color` 实例；父组件改值或切换 `alpha` / `format` 时不回抛事件。
@@ -550,6 +580,8 @@ MColorPickerView 的根节点另有三个由组件写入的参数，用于移动
 | format | 输出格式 | `'hex' \| 'rgb' \| 'hsl' \| 'hsv'` | - | 不透明为 `hex`，开启 `alpha` 为 `rgb` |
 | size | 触发器尺寸 | `'mini' \| 'small' \| 'medium' \| 'large'` | - | `'medium'` |
 | disabled | 禁用 | `boolean` | - | `false` |
+| plaintext | 只显示色值文字，不渲染色块与浮层，没有样式、不能交互；见[只读文字](#只读文字) | `boolean` | - | `false` |
+| extra | `plaintext` 没有值时显示的文字 | `string` | - | `''` |
 | trigger | 浮层触发方式，透传给 Popover | `string` | `click`、`hover`、`strictHover`、`focus`、`custom` | `'click'` |
 | arrow | 显示浮层箭头 | `boolean` | - | `false` |
 | portalClass | 浮层附加 class | `string \| object \| any[]` | - | - |
@@ -634,7 +666,8 @@ Color.parse('not a color'); // null
 | label | MListItem 左侧标题 | `string` | - | - |
 | labelWidth | 标题宽度 | `string \| number` | - | - |
 | arrow | 右侧箭头，禁用时不显示 | 同 MListItem | - | 同 MListItem |
-| extra | 未选择时显示的文字 | `string` | - | 当前语言的 `vc.ColorPicker.placeholder` |
+| plaintext | 只显示 `formatter` 生成的文字，不渲染色块、MListItem 与弹层，没有样式、不能交互；见[只读文字](#只读文字) | `boolean` | - | `false` |
+| extra | 未选择时显示的文字 | `string` | - | 当前语言的 `vc.ColorPicker.placeholder`；`plaintext` 时为 `''` |
 | formatter | 生成色块旁的文字 | `(value: string) => any` | - | 原样显示 |
 | disabled | 禁用，不打开弹层 | `boolean` | - | `false` |
 | title | 弹层标题 | `string \| Function` | - | `''` |

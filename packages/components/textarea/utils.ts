@@ -1,3 +1,4 @@
+import { h } from 'vue';
 import { Utils, IS_SERVER } from '@deot/vc-shared';
 
 const HIDDEN_TEXTAREA_STYLE = `
@@ -105,4 +106,16 @@ export const getComputedHeight = (options = {}) => {
 		maxHeight: `${maxHeight}px`,
 		overflowY
 	};
+};
+
+/**
+ * plaintext 的内容：换行转为 <br>（没有样式时 \n 会被折叠成空格）；没有值时为 extra
+ * @param value 当前值
+ * @param extra 没有值时显示的文字
+ * @returns 文字与 <br> 交替的数组，或 extra
+ */
+export const toPlaintext = (value: unknown, extra: string) => {
+	const text = value == null ? '' : String(value);
+	if (!text) return extra;
+	return text.split(/\r?\n/).flatMap((line, index) => (index ? [h('br'), line] : [line]));
 };

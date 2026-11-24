@@ -41,9 +41,10 @@ export const MCascader = defineComponent({
 		// 当前值的路径文字
 		const labels = computed(() => getPathLabels(currentValue.value, props));
 
+		// 路径文字经 formatter 的显示内容，空时为 extra（plaintext 时不回退到占位文字）
 		const formatterValue = computed(() => {
 			return (labels.value.length && props.formatter(labels.value))
-				|| (props.extra ?? t('vc.Cascader.placeholder'));
+				|| (props.extra ?? (props.plaintext ? '' : t('vc.Cascader.placeholder')));
 		});
 
 		watch(
@@ -61,6 +62,9 @@ export const MCascader = defineComponent({
 		};
 
 		return () => {
+			if (props.plaintext) {
+				return (<span class="vcm-cascader-plaintext">{ formatterValue.value }</span>);
+			}
 			return (
 				<div class="vcm-cascader" onClick={handleClick}>
 					{

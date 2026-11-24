@@ -39,6 +39,7 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 			classes,
 			isConfirm,
 			showTime,
+			committedText,
 			inputValue,
 			inputListeners,
 
@@ -101,6 +102,18 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 		};
 
 		return () => {
+			if (props.plaintext) {
+				return (
+					<span
+						{...its.value.attrs}
+						{...its.value.listeners}
+						class={[`${name}-plaintext`, its.value.class]}
+						style={its.value.style}
+					>
+						{ committedText.value || props.extra }
+					</span>
+				);
+			}
 			return (
 				<Popover
 					modelValue={isActive.value}
