@@ -1,0 +1,13 @@
+@use '../../style/helper' as *;
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放），375 宽下：按钮 48px、图标 28px、左右留白 8px（图标 + 留白不超过按钮）、方形圆角 8px
+// 结构与外观沿用 ../style.scss，这里只覆盖局部变量（与两端样式的加载顺序无关）；触屏没有悬停，按下时变暗
+@include block(vcm-float-button) {
+	@include localvars(float-button, (
+		size: remfix(96),
+		padding: remfix(16),
+		radius: remfix(16),
+		icon-size: remfix(56),
+		font-size: remfix(28)
+	));
+}

@@ -1,0 +1,105 @@
+@use 'sass:map';
+@use '../style/helper' as *;
+
+// 桌面端尺寸与外观：写成局部变量 --vc-float-button-<键>（默认值为下表），MFloatButton 在 .vcm-float-button 上覆盖（mobile/style.scss）
+// 位置由 JS 写在 transform 上（相对视口左上角）；与边界的间距是 gap 属性，不在样式里
+$sizes: (
+	z-index: 100,
+	size: unitfix(48),
+	// 内容比按钮宽（文字等）时的左右留白，按钮随之变宽
+	padding: unitfix(12),
+	radius: unitfix(8),
+	icon-size: unitfix(22),
+	font-size: unitfix(14),
+	color: varfix(color-contrast-light, float-button),
+	background: varfix(color-primary, float-button),
+	hover-background: varfix(color-primary-light, float-button),
+	box-shadow: varfix(box-shadow-floating, float-button)
+);
+
+@function v($key) {
+	@return localfix(float-button, $key, map.get($sizes, $key));
+}
+
+@include block(vc-float-button) {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: v(z-index);
+	display: inline-flex;
+	height: v(size);
+	min-width: v(size);
+	padding: 0 v(padding);
+	margin: 0;
+	font: inherit;
+	font-size: v(font-size);
+	color: v(color);
+	cursor: pointer;
+	background: v(background);
+	border: 0;
+	border-radius: v(radius);
+	outline: none;
+	box-shadow: v(box-shadow);
+	box-sizing: border-box;
+	user-select: none;
+	align-items: center;
+	justify-content: center;
+
+	// 安全区：JS 读 scroll-margin 的计算值，避开刘海与底部横条（对 fixed 元素没有其它作用）
+	scroll-margin: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+	-webkit-tap-highlight-color: transparent;
+
+	@include when(circle) {
+		border-radius: calc(#{v(size)} / 2);
+	}
+
+	// 可拖动：浏览器不接管触摸滚动
+	@include when(draggable) {
+		touch-action: none;
+	}
+
+	@include when(dragging) {
+		cursor: grabbing;
+	}
+
+	// 吸边、方向键移动时才有过渡；拖动、尺寸变化时立即跟随
+	@include when(snapping) {
+		transition: transform 0.3s cubic-bezier(0.3, 0, 0.2, 1);
+	}
+
+	@include when(hidden) {
+		visibility: hidden;
+	}
+
+	&:focus-visible {
+		outline: 2px solid varfix(color-primary, float-button);
+		outline-offset: 2px;
+	}
+
+	// 只在可悬停的设备上生效：触屏点按后悬停会一直停留
+	@media (hover: hover) {
+		&:hover {
+			background: v(hover-background);
+		}
+	}
+
+	&:active {
+		opacity: 0.8;
+	}
+
+	@include element(icon) {
+		font-size: v(icon-size);
+	}
+
+	@include element(placeholder) {
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	@include block(vc-float-button) {
+		@include when(snapping) {
+			transition: none;
+		}
+	}
+}

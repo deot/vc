@@ -30,6 +30,7 @@ import Dropdown from './modules/dropdown.vue';
 import Editor from './modules/editor.vue';
 import Expand from './modules/expand.vue';
 import FilePreview from './modules/file-preview.vue';
+import FloatButton from './modules/float-button.vue';
 import Form from './modules/form.vue';
 import Fragment from './modules/fragment.vue';
 import Gesture from './modules/gesture.vue';
@@ -119,6 +120,7 @@ export const MODULES = {
 	Editor,
 	Expand,
 	FilePreview,
+	FloatButton,
 	Form,
 	Fragment,
 	Gesture,

@@ -63,6 +63,8 @@ export * from './expand';
 export * from './expand/index.m';
 export * from './file-preview';
 export * from './file-preview/index.m';
+export * from './float-button';
+export * from './float-button/index.m';
 export * from './form';
 export * from './form/index.m';
 export * from './fragment';

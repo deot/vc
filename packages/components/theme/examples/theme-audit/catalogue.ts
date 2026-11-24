@@ -2,7 +2,7 @@ export const GROUPS = [
 	{
 		id: 'general',
 		label: '通用',
-		names: ['Button', 'Icon', 'Scroller', 'Text']
+		names: ['Button', 'FloatButton', 'Icon', 'Scroller', 'Text']
 	},
 	{
 		id: 'layout',
