@@ -7,7 +7,7 @@ import { useLocale } from '../../locale';
 import { props as selectProps, coreOmitKeys } from './select-props';
 import { props as coreProps } from './select-core-props';
 import { MSelectPortal } from './select-core';
-import { usePickerTrigger } from '../../picker/mobile/use-picker-portal';
+import { usePickerTrigger, getTriggerExtra } from '../../picker/mobile/use-picker-portal';
 import { flattenData, getLabel, toCurrentValue } from '../utils';
 import { useSelectedCache } from '../hooks/use-select';
 
@@ -52,10 +52,9 @@ export const MSelect = defineComponent({
 			return values.map(v => found.get(v) ?? '');
 		});
 
-		// 已选项文字经 formatter 的显示内容，空时为 extra（plaintext 时不回退到占位文字）
 		const formatterValue = computed(() => {
 			return (labels.value.length && props.formatter(labels.value, currentValue.value))
-				|| (props.extra ?? (props.plaintext ? '' : t('vc.Select.placeholder')));
+				|| getTriggerExtra(props, t('vc.Select.placeholder'));
 		});
 
 		watch(

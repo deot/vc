@@ -295,7 +295,7 @@ export const useSelectedCache = <T>(isEnabled: () => boolean, shared?: Map<unkno
  * @returns ~
  */
 export const useSelectValue = (
-	props: Pick<Props, 'max' | 'modelValue' | 'nullValue' | 'numerable' | 'separator'>,
+	props: Pick<Props, 'max' | 'modelValue' | 'nullValue' | 'numerable' | 'separator' | 'formatter'>,
 	context: SetupContext<Emits>,
 	options: { select: ReturnType<typeof useSelect> }
 ) => {
@@ -317,6 +317,15 @@ export const useSelectValue = (
 			separator: props.separator,
 			nullValue: props.nullValue
 		});
+	};
+
+	/**
+	 * 已选项文字经 formatter 的显示内容：单选触发器的文字与 plaintext；没有已选项时为空
+	 * @param labels 已选项的文字
+	 * @returns ~
+	 */
+	const formatLabels = (labels: string[]) => {
+		return currentValue.value.length ? props.formatter(labels, getModelValue()) : '';
 	};
 
 	/**
@@ -359,7 +368,7 @@ export const useSelectValue = (
 		currentValue,
 		multiple,
 		isFull,
-		getModelValue,
+		formatLabels,
 		sync,
 		handleClear
 	};

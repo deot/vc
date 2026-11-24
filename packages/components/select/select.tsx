@@ -32,7 +32,7 @@ export const Select = defineComponent({
 
 		const select = useSelect(props, context, { name: 'select', navigator: () => navigate });
 		const { its, isActive, searchRegex, searchMode, isSearching, isRemote, close, toggle } = select;
-		const { currentValue, multiple, isFull, getModelValue, sync: syncValue, handleClear } = useSelectValue(props, context, { select });
+		const { currentValue, multiple, isFull, formatLabels, sync: syncValue, handleClear } = useSelectValue(props, context, { select });
 
 		const source = computed(() => {
 			return flattenData(props.data, { parent: true, cascader: true });
@@ -49,11 +49,8 @@ export const Select = defineComponent({
 			return currentValue.value.map(v => labels.get(v) || '');
 		});
 
-		// 已选项文字经 formatter 的显示内容：单选触发器的文字与 plaintext
-		const formatLabel = computed(() => {
-			if (!currentValue.value.length) return '';
-			return props.formatter(currentLabel.value, getModelValue());
-		});
+		// 单选触发器的文字与 plaintext，见 formatLabels
+		const formatLabel = computed(() => formatLabels(currentLabel.value));
 
 		const tags = computed(() => {
 			return currentValue.value.map((v, index) => ({
@@ -132,7 +129,8 @@ export const Select = defineComponent({
 			isEnabled: ({ item, group }) => !group && !isDisabled(item) && !slots.option && !props.renderOption,
 			prefer: ({ item }) => selectedValues.value.has(item.value),
 			select: ({ item }) => pick(item.value),
-			source: rows
+			// plaintext 时用不到列表，不在挂载时就过滤一遍选项
+			source: () => !props.plaintext && rows.value
 		});
 
 		// 打开时高亮的即首个已选项；弹层在 ready 之后才显示（此前为 display: none，无法测量）
