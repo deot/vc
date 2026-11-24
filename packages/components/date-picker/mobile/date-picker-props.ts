@@ -3,6 +3,7 @@ import type { ExtractPropTypes, PropType } from 'vue';
 import { props as listItemProps } from '../../list/mobile/list-item-props';
 import { props as pickerPopupProps } from '../../picker/mobile/picker-popup-props';
 import { props as viewProps } from './date-picker-view-props';
+import { pickerTriggerProps } from '../../picker/mobile/use-picker-portal';
 
 const listItemKeys = [
 	'label',
@@ -36,13 +37,8 @@ export const props = {
 	...(pick(viewProps, viewKeys) as Pick<typeof viewProps, typeof viewKeys[number]>),
 	cancelText: String,
 	okText: String,
-	// 只显示值格式化后的文字（经 formatter），不渲染 MListItem 与弹层：没有样式，不能交互，同桌面端
-	plaintext: {
-		type: Boolean,
-		default: false
-	},
-	// 没有值时显示的文字，默认为当前语言的 vc.DatePicker.placeholder；plaintext 时默认为空
-	extra: String,
+	// 只读文字与没有值时的文字
+	...pickerTriggerProps,
 	formatter: Function as PropType<(value: any, format: string, dates: Date[]) => any>
 };
 

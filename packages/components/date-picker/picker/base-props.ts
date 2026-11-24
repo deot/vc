@@ -1,6 +1,6 @@
 import type { ExtractPropTypes } from 'vue';
 import { pick } from 'lodash-es';
-import { props as inputProps } from '../../input/input-props';
+import { props as inputProps, plaintextProps } from '../../input/input-props';
 import { props as popoverProps } from '../../popover/popover-props';
 
 const inputKeys = [
@@ -75,15 +75,7 @@ export const props = {
 		type: [Number, String, Object],
 		default: ''
 	},
-	// 只显示值按 format 格式化后的文字，不渲染输入框与面板：没有样式，不能交互；没有值时显示 extra
-	plaintext: {
-		type: Boolean,
-		default: false
-	},
-	// plaintext 没有值时显示的文字
-	extra: {
-		type: String,
-		default: ''
-	}
+	// 只显示值按 format 格式化后的文字，不渲染输入框与面板
+	...plaintextProps
 };
 export type Props = ExtractPropTypes<typeof props>;

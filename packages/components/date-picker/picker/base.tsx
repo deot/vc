@@ -25,7 +25,7 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 		'ok'
 	],
 	setup(props, context) {
-		const { slots, emit } = context;
+		const { slots, emit, attrs } = context;
 		const { t } = useLocale();
 		const { icon, panel, panelOptions, scrollable = true, isDisabled } = usePicker();
 		const {
@@ -103,16 +103,7 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 
 		return () => {
 			if (props.plaintext) {
-				return (
-					<span
-						{...its.value.attrs}
-						{...its.value.listeners}
-						class={[`${name}-plaintext`, its.value.class]}
-						style={its.value.style}
-					>
-						{ committedText.value || props.extra }
-					</span>
-				);
+				return (<span class={`${name}-plaintext`} {...attrs}>{ committedText.value || props.extra }</span>);
 			}
 			return (
 				<Popover
