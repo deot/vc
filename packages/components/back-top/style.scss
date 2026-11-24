@@ -1,0 +1,106 @@
+@use 'sass:map';
+@use '../style/helper' as *;
+
+// 桌面端尺寸与外观：写成局部变量 --vc-back-top-<键>（默认值为下表），MBackTop 在 .vcm-back-top 上覆盖（mobile/style.scss）
+// - right / bottom：距滚动容器可视区（页面滚动时为视口）右边、下边的距离，right / bottom 属性写在按钮上
+// - 滚动容器是元素时，容器在视口中的位置由 --vc-back-top-inset-right / --vc-back-top-inset-bottom（px，JS 写入）补上；
+//   下边与安全区取较大者，按钮不会落进底部的安全区
+$sizes: (
+	right: unitfix(40),
+	bottom: unitfix(40),
+	z-index: 100,
+	size: unitfix(40),
+	radius: 50%,
+	icon-size: unitfix(16),
+	color: varfix(color-dark-light, back-top),
+	hover-color: varfix(color-primary, back-top),
+	background: varfix(background-color-lightest, back-top),
+	// 暗色主题下底色与页面相同，靠边框分出按钮
+	border-color: varfix(color-neutral-light, back-top),
+	box-shadow: varfix(box-shadow-floating, back-top),
+	// showProgress：进度环宽度与颜色，未滚到的部分露出边框
+	progress-width: unitfix(2),
+	progress-color: varfix(color-primary, back-top)
+);
+
+@function v($key) {
+	@return localfix(back-top, $key, map.get($sizes, $key));
+}
+
+@include block(vc-back-top) {
+	position: fixed;
+	right: calc(var(--vc-back-top-inset-right, 0px) + #{v(right)});
+	bottom: calc(max(var(--vc-back-top-inset-bottom, 0px), env(safe-area-inset-bottom, 0px)) + #{v(bottom)});
+	z-index: v(z-index);
+	display: inline-flex;
+	width: v(size);
+	height: v(size);
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: v(color);
+	cursor: pointer;
+	background: v(background);
+	border: 1px solid v(border-color);
+	border-radius: v(radius);
+	outline: none;
+	opacity: 0;
+	visibility: hidden;
+	transform: scale(0.6);
+	box-shadow: v(box-shadow);
+	box-sizing: border-box;
+	transition: opacity 0.2s, transform 0.2s, visibility 0.2s, color 0.2s;
+	align-items: center;
+	justify-content: center;
+	-webkit-tap-highlight-color: transparent;
+
+	@include when(visible) {
+		opacity: 1;
+		visibility: visible;
+		transform: none;
+	}
+
+	&:focus-visible {
+		outline: 2px solid varfix(color-primary, back-top);
+		outline-offset: 2px;
+	}
+
+	// 只在可悬停的设备上生效：触屏点按后悬停会一直停留
+	@media (hover: hover) {
+		&:hover {
+			color: v(hover-color);
+		}
+	}
+
+	&:active {
+		opacity: 0.8;
+	}
+
+	// 进度环：覆盖边框，从顶部顺时针填充 --vc-back-top-progress（0 ~ 1，JS 写入）；圆角跟随按钮
+	@include when(progress) {
+		&::after {
+			position: absolute;
+			inset: -1px;
+			padding: v(progress-width);
+			pointer-events: none;
+			background: conic-gradient(#{v(progress-color)} calc(var(--vc-back-top-progress, 0) * 1turn), transparent 0);
+			border-radius: inherit;
+			content: '';
+			mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+		}
+	}
+
+	@include element(icon) {
+		font-size: v(icon-size);
+	}
+
+	@include element(placeholder) {
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	@include block(vc-back-top) {
+		transform: none;
+	}
+}

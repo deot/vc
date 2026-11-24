@@ -12,7 +12,7 @@ export const GROUPS = [
 	{
 		id: 'navigation',
 		label: '导航',
-		names: ['Dropdown', 'IndexBar', 'NavBar', 'Pagination', 'Steps', 'TabBar', 'Tabs', 'Tour']
+		names: ['BackTop', 'Dropdown', 'IndexBar', 'NavBar', 'Pagination', 'Steps', 'TabBar', 'Tabs', 'Tour']
 	},
 	{
 		id: 'entry',

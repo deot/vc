@@ -5,6 +5,7 @@ import Affix from './modules/affix.vue';
 import Alert from './modules/alert.vue';
 import Artboard from './modules/artboard.vue';
 import AutoComplete from './modules/auto-complete.vue';
+import BackTop from './modules/back-top.vue';
 import Badge from './modules/badge.vue';
 import Button from './modules/button.vue';
 import Calendar from './modules/calendar.vue';
@@ -93,6 +94,7 @@ export const MODULES = {
 	Alert,
 	Artboard,
 	AutoComplete,
+	BackTop,
 	Badge,
 	Button,
 	Calendar,

@@ -21,6 +21,9 @@ export const zhCN: Language = {
 			confirmText: '确定',
 			clearText: '清空'
 		},
+		BackTop: {
+			label: '回到顶部'
+		},
 		NavBar: {
 			back: '返回'
 		},

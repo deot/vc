@@ -13,6 +13,8 @@ export * from './artboard';
 export * from './artboard/index.m';
 export * from './auto-complete';
 export * from './auto-complete/index.m';
+export * from './back-top';
+export * from './back-top/index.m';
 export * from './badge';
 export * from './badge/index.m';
 export * from './button';

@@ -1,12 +1,13 @@
 import { getScroller } from '../utils';
+import type { ScrollerScrollToOptions } from '../types';
 
 // 滚动回调：原生 scroll 事件，或 Scroller 的滚动通知（{ target, currentTarget }）
 type Listener = (e: any) => void;
 
 // useScroller 暴露的实例中，外部用到的部分
 export interface ScrollerInstance {
-	// 写入滚动位置（同步自绘滚动条）
-	scrollTo: (options: { x?: number; y?: number }) => void;
+	// 写入滚动位置（同步自绘滚动条）；带 duration 时平滑滚动
+	scrollTo: (options: ScrollerScrollToOptions) => void;
 	on: (listener: Listener) => void;
 	off: (listener: Listener) => void;
 }

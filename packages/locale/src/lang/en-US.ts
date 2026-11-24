@@ -21,6 +21,9 @@ export const enUS: Language = {
 			confirmText: 'OK',
 			clearText: 'Clear'
 		},
+		BackTop: {
+			label: 'Back to top'
+		},
 		NavBar: {
 			back: 'Back'
 		},

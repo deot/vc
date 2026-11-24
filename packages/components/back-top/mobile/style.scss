@@ -1,0 +1,13 @@
+@use '../../style/helper' as *;
+
+// 移动端尺寸（750 稿，随 --vc-rem 缩放），375 宽下：按钮 40px、图标 18px，距右边 16px、距下边 40px，进度环 2px
+// 结构与外观沿用 ../style.scss，这里只覆盖局部变量（与两端样式的加载顺序无关）；触屏没有悬停，按下时变暗
+@include block(vcm-back-top) {
+	@include localvars(back-top, (
+		right: remfix(32),
+		bottom: remfix(80),
+		size: remfix(80),
+		icon-size: remfix(36),
+		progress-width: remfix(4)
+	));
+}
