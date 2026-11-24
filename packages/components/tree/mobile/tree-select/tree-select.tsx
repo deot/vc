@@ -4,7 +4,7 @@ import { computed, defineComponent, ref, watch } from 'vue';
 import { omit, pick } from 'lodash-es';
 import { MListItem } from '../../../list/index.m';
 import { useLocale } from '../../../locale';
-import { usePickerTrigger } from '../../../picker/mobile/use-picker-portal';
+import { usePickerTrigger, getTriggerExtra } from '../../../picker/mobile/use-picker-portal';
 import { toCurrentValue } from '../../../select/utils';
 import type { TreeValue } from '../../../select/utils';
 import { useTreeSelectValue } from '../../tree-select/use-tree-select-value';
@@ -52,10 +52,9 @@ export const MTreeSelect = defineComponent({
 		const selectedNodes = new Map<TreeValue, TreeSelectSelectedNode>();
 		const { labels } = useTreeSelectValue(props, { currentValue: values, isRemote, shared: selectedNodes });
 
-		// 已选项文字经 formatter 的显示内容，空时为 extra（plaintext 时不回退到占位文字）
 		const formatterValue = computed(() => {
 			return (labels.value.length && props.formatter(labels.value, currentValue.value))
-				|| (props.extra ?? (props.plaintext ? '' : t('vc.TreeSelect.placeholder')));
+				|| getTriggerExtra(props, t('vc.TreeSelect.placeholder'));
 		});
 
 		watch(

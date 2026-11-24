@@ -41,15 +41,12 @@ export const TreeSelect = defineComponent({
 			getDepth: () => getTreeDepth(props.data as TreeData[])
 		});
 		const { its, isActive, searchValue, searchRegex, searchMode, isRemote, close, toggle } = select;
-		const { currentValue, multiple, getModelValue, sync: syncValue, handleClear } = useSelectValue(props, context, { select });
+		const { currentValue, multiple, formatLabels, sync: syncValue, handleClear } = useSelectValue(props, context, { select });
 
 		const { currentValueGroups, displayTags, labels, remove, apply } = useTreeSelectValue(props, { currentValue, isRemote });
 
-		// 已选项文字经 formatter 的显示内容：单选触发器的文字与 plaintext
-		const formatLabel = computed(() => {
-			if (!currentValue.value.length) return '';
-			return props.formatter(labels.value, getModelValue());
-		});
+		// 单选触发器的文字与 plaintext，见 formatLabels
+		const formatLabel = computed(() => formatLabels(labels.value));
 
 		const tags = computed(() => {
 			return displayTags.value.map(item => ({
