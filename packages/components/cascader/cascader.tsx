@@ -28,7 +28,7 @@ export const Cascader = defineComponent({
 	props: cascaderProps,
 	emits: ['update:modelValue', 'visible-change', 'ready', 'change', 'clear', 'close'],
 	setup(props, context) {
-		const { emit, slots } = context;
+		const { emit, slots, attrs } = context;
 		const { t } = useLocale();
 		const formItem = inject('vc-form-item', {} as FormItemProvide);
 
@@ -270,7 +270,8 @@ export const Cascader = defineComponent({
 			() => {
 				// 只回填最后一级时，路径从 data 中查找：data 晚于值到达时重新查找（浮层打开时不打断当前路径）
 				props.checkStrategy === 'child' && !isActive.value && (currentValue.value = [...toPath(props.modelValue)]);
-				rebuildData.value = makeRebuildData();
+				// plaintext 不会打开浮层，不必重建各列
+				props.plaintext || (rebuildData.value = makeRebuildData());
 			}
 		);
 
@@ -339,16 +340,7 @@ export const Cascader = defineComponent({
 
 		return () => {
 			if (props.plaintext) {
-				return (
-					<span
-						{...its.value.attrs}
-						{...its.value.listeners}
-						class={['vc-cascader-plaintext', its.value.class]}
-						style={its.value.style}
-					>
-						{ formatLabel.value }
-					</span>
-				);
+				return (<span class="vc-cascader-plaintext" {...attrs}>{ formatLabel.value }</span>);
 			}
 			return (
 				<Popover

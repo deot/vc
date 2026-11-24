@@ -8,7 +8,7 @@ import { getPathLabels } from '../utils';
 import { props as cascaderProps, coreOmitKeys } from './cascader-props';
 import { props as coreProps } from './cascader-core-props';
 import { MCascaderPortal } from './cascader-core';
-import { usePickerTrigger } from '../../picker/mobile/use-picker-portal';
+import { usePickerTrigger, getTriggerExtra } from '../../picker/mobile/use-picker-portal';
 
 const COMPONENT_NAME = 'vcm-cascader';
 
@@ -41,10 +41,9 @@ export const MCascader = defineComponent({
 		// 当前值的路径文字
 		const labels = computed(() => getPathLabels(currentValue.value, props));
 
-		// 路径文字经 formatter 的显示内容，空时为 extra（plaintext 时不回退到占位文字）
 		const formatterValue = computed(() => {
 			return (labels.value.length && props.formatter(labels.value))
-				|| (props.extra ?? (props.plaintext ? '' : t('vc.Cascader.placeholder')));
+				|| getTriggerExtra(props, t('vc.Cascader.placeholder'));
 		});
 
 		watch(
