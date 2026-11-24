@@ -80,12 +80,13 @@ export const useTextarea = (props: Props, context: SetupContext<Emits>) => {
 	};
 
 	const refresh = () => {
-		if (!props.autosize) return;
+		// plaintext 时没有文本框
+		if (!props.autosize || props.plaintext) return;
 
 		const { minRows, maxRows } = props.autosize as any;
 
 		nextTick(() => {
-			// plaintext 时没有文本框
+			// 切换 plaintext 的同一轮里，文本框可能已经卸载
 			if (!textarea.value) return;
 			calcTextareaStyle.value = getComputedHeight({
 				el: textarea.value,
