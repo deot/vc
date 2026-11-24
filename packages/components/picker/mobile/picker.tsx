@@ -9,7 +9,7 @@ import { useLocale } from '../../locale';
 import { props as pickerProps } from './picker-props';
 import { PickerPortal } from './picker-core';
 import { getSelectedData } from './utils';
-import { usePickerTrigger } from './use-picker-portal';
+import { usePickerTrigger, getTriggerExtra } from './use-picker-portal';
 import type { PickerModelValue, PickerValue } from '../types';
 
 const COMPONENT_NAME = 'vcm-picker';
@@ -33,10 +33,9 @@ export const Picker = defineComponent({
 
 		const source = computed(() => props.data || []);
 
-		// 选中项文字经 formatter 的显示内容，空时为 extra（plaintext 时不回退到占位文字）
 		const formatterValue = computed(() => {
 			const { label = [] } = getSelectedData(currentValue.value, source.value);
-			return props.formatter(label) || (props.extra ?? (props.plaintext ? '' : t('vc.Picker.extra')));
+			return props.formatter(label) || getTriggerExtra(props, t('vc.Picker.extra'));
 		});
 
 		watch(

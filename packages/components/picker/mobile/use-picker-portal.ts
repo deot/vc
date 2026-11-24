@@ -1,6 +1,7 @@
 import { camelize, capitalize, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { PropType } from 'vue';
 import type { Portal } from '../../portal';
+import { plaintextProps } from '../../input/input-props';
 
 /**
  * await open() 的结果：即 onOk 的参数，组成对象（以后新增字段不影响调用方），如 { value, labels }
@@ -16,6 +17,26 @@ export interface PickerOpenResult {
  * 	- visible：是否显示，打开时为 true
  * 	- onOk / onCancel：传入时代替 ok / cancel 事件（直接调用 open 时使用）
  */
+// MSelect / MCascader / MTreeSelect / MPicker / MDatePicker / MColorPicker 的触发区共用
+export const pickerTriggerProps = {
+	// 只显示值的文字，不渲染 MListItem 与弹层：没有样式，不能交互
+	plaintext: plaintextProps.plaintext,
+	// 没有值时显示的文字，见 getTriggerExtra
+	extra: String
+};
+
+/**
+ * 触发区没有值时显示的文字：extra；未传时为占位文字，plaintext 时为空
+ * @param props ~
+ * @param props.extra ~
+ * @param props.plaintext ~
+ * @param placeholder 占位文字
+ * @returns ~
+ */
+export const getTriggerExtra = (props: { extra?: string; plaintext: boolean }, placeholder: string) => {
+	return props.extra ?? (props.plaintext ? '' : placeholder);
+};
+
 export const pickerCoreProps = {
 	visible: {
 		type: Boolean,
