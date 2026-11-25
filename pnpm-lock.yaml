@@ -18,13 +18,13 @@ importers:
   packages/components:
     dependencies:
       '@deot/vc-hooks':
-        specifier: ^1.2.5
+        specifier: ^1.2.7
         version: link:../hooks
       '@deot/vc-locale':
-        specifier: ^1.2.5
+        specifier: ^1.2.7
         version: link:../locale
       '@deot/vc-shared':
-        specifier: ^1.2.5
+        specifier: ^1.2.7
         version: link:../shared
       vue:
         specifier: '*'
@@ -58,7 +58,7 @@ importers:
   packages/hooks:
     dependencies:
       '@deot/vc-shared':
-        specifier: ^1.2.5
+        specifier: ^1.2.7
         version: link:../shared
       vue:
         specifier: '*'
@@ -71,16 +71,16 @@ importers:
   packages/index:
     dependencies:
       '@deot/vc-components':
-        specifier: ^1.2.6
+        specifier: ^1.2.7
         version: link:../components
       '@deot/vc-hooks':
-        specifier: ^1.2.5
+        specifier: ^1.2.7
         version: link:../hooks
       '@deot/vc-locale':
-        specifier: ^1.2.5
+        specifier: ^1.2.7
         version: link:../locale
       '@deot/vc-shared':
-        specifier: ^1.2.5
+        specifier: ^1.2.7
         version: link:../shared
       vue:
         specifier: '*'

@@ -1,5 +1,18 @@
 # @deot/vc-hooks ChangeLog
 
+## v1.2.7
+
+_2026-11-25_
+
+### Features
+
+- feat: use-gesture, pass the pressed target to moveStart ([f1c961f](https://github.com/deot/vc/commit/f1c961fbcfa18f5d733a4dfefd0b6577f388a5fc))
+- feat: useRem, share the px value of one 750-design unit ([86f4988](https://github.com/deot/vc/commit/86f4988354d2d94b229e4b1b259b1fe3b1cdf06b))
+- feat: use-scroll-contain, export DRAG_IGNORE, isScroller and canScrollToward ([dd5d33a](https://github.com/deot/vc/commit/dd5d33aa78b2ee97afee236f848836ee3e37416f))
+- feat: use-scroll-contain, keep touch scrolling inside overlays and let callers claim the gesture ([b5b0f33](https://github.com/deot/vc/commit/b5b0f33b2ebb453e0aad17172b6da1b92aab9017))
+- feat(shared): length, add toPx and toRem and move remToPx out of Utils ([c4a2617](https://github.com/deot/vc/commit/c4a261701eb1d8d94f27aaa282cc986903484c9d))
+- feat(shared): utils, add remToPx to convert 750-unit lengths to px ([b67512b](https://github.com/deot/vc/commit/b67512b39e552b0724cc51a584b9217c14636f96))
+
 ## v1.2.5
 
 _2026-10-30_
