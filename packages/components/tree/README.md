@@ -394,9 +394,9 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 | color-dark-extralight | 空状态、加载、附加图标及级联禁用文字（tree / tree-select）；级联搜索结果的空状态与禁用文字（select-paths） | 亮色：`#909399`；暗色：`#B9B9B9` |
 | color-neutral-light | 级联列分隔线（tree-select） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
 | color-primary | 拖拽落点及当前浏览的级联选项文字（tree / tree-select）；搜索命中的文字（select-highlight） | `#456CF6` |
-| color-primary-lighter | 普通树节点非悬停时的焦点及当前节点高亮背景（tree） | `rgba(45, 140, 240, 0.2)` |
+| color-primary-lighter | 当前节点高亮背景（tree，`highlightCurrent`） | `rgba(45, 140, 240, 0.2)` |
 | background-color-lightest | 树背景（tree） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
-| background-color-primary-light | 普通树节点悬停背景（tree）；TreeSelect 非禁用树节点悬停、焦点背景，级联选项悬停及当前浏览背景（tree-select）；级联搜索结果的高亮背景（select-paths） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
+| background-color-primary-light | 普通树节点悬停及键盘焦点背景（tree）；TreeSelect 非禁用树节点悬停、焦点背景，级联选项悬停及当前浏览背景（tree-select）；级联搜索结果的高亮背景（select-paths） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
 
 ### 局部
 
@@ -411,7 +411,7 @@ Tree 的尺寸写成局部变量 `--vc-tree-<键>`，可以在树或它的祖先
 | checkbox-gap | 复选框与文字的间距 | `8px` |
 | loading-gap | 加载图标与文字的间距 | `8px` |
 | empty-height | 空状态的最小高度 | `60px` |
-| focus-background | 行聚焦时的底色 | `color-primary-lighter` |
+| focus-background | 键盘聚焦行的底色（鼠标点按后不显示） | `background-color-primary-light` |
 
 TreeSelect 没有额外的局部 CSS 主题参数。
 
@@ -625,7 +625,6 @@ const data = [
 | --- | --- | --- |
 | 节点文字 | 不换行，超出时横向溢出 | 单行显示，超出省略；`renderNodeLabel` 的内容不受影响 |
 | 悬停 / 按下 | 悬停时显示 `background-color-primary-light` | 没有悬停；按下时显示同一底色，替换系统的点击高亮 |
-| 聚焦底色 | 点击或键盘移动到的行显示 `color-primary-lighter` | 只在键盘操作（外接键盘）时显示，手指点按后不残留；`highlightCurrent` 的当前节点照常高亮 |
 | 虚拟化 | 内部为 `RecycleList` | 内部为 `MRecycleList`，使用原生滚动与系统滚动条 |
 | 拖拽 | 按住节点拖动 | 长按节点约 300ms 后拖动，期间不触发页面滚动与系统菜单 |
 | 单选的选中节点 | 主色文字 | 主色加粗，行尾打勾（同 MSelect 的已选项） |
@@ -721,7 +720,7 @@ const data = Array.from({ length: 4 }, (_, i) => ({
 
 ### 主题与语言
 
-Tree 使用 `--vc-tree-*`，TreeSelect 使用 `--vc-tree-select-*` 组件覆盖变量，默认回退到共享亮暗主题。Tree 悬停背景使用 `background-color-primary-light`，非悬停时的焦点及当前节点高亮使用 `color-primary-lighter`；TreeSelect 选项背景使用自身命名空间的 `background-color-primary-light`。拖入高亮文字使用 `color-contrast-light`，默认保持白色，以配合主色背景。
+Tree 使用 `--vc-tree-*`，TreeSelect 使用 `--vc-tree-select-*` 组件覆盖变量，默认回退到共享亮暗主题。Tree 悬停及键盘焦点背景使用 `background-color-primary-light`（鼠标点按后不显示焦点底色），`highlightCurrent` 的当前节点高亮使用 `color-primary-lighter`；TreeSelect 选项背景使用自身命名空间的 `background-color-primary-light`。拖入高亮文字使用 `color-contrast-light`，默认保持白色，以配合主色背景。
 
 滚动期间不显示节点的悬停背景（Tree 与 TreeSelect 的两种模式）：滚动的列表带 `.vc-select-list.is-scrolling`，停止约 150ms 后移除，节点从静止的鼠标下经过时不逐行闪；自定义节点内容的悬停样式也可以用它限定。
 

@@ -32,7 +32,17 @@ describe('Tree styles', () => {
 		expect(decls('.vc-tree-node__expand-icon', 'font-size')).toEqual([local('icon-size', '12px')]);
 		expect(decls('.vc-tree-node__loading-icon', 'margin-right')).toEqual([local('loading-gap', '8px')]);
 		expect(decls('.vc-tree__empty-block', 'min-height')).toEqual([local('empty-height', '60px')]);
-		expect(decls('.vc-tree-node:focus > .vc-tree-node__content', 'background-color')[0]).toContain('--vc-tree-focus-background');
+		expect(decls('.vc-tree-node:focus-visible > .vc-tree-node__content', 'background-color')[0]).toContain('--vc-tree-focus-background');
+	});
+
+	// 鼠标点按后不留底色：聚焦底色只用 :focus-visible（键盘移动），默认同悬停
+	it('聚焦底色只在键盘操作时显示，默认同悬停', () => {
+		let focus = 0;
+		css.walkRules((rule) => {
+			if (rule.selectors.some(s => /\.vc-tree-node:focus(?!-visible)/.test(s))) focus++;
+		});
+		expect(focus).toBe(0);
+		expect(decls('.vc-tree-node:focus-visible > .vc-tree-node__content', 'background-color')[0]).toContain('background-color-primary-light');
 	});
 
 	it('悬停只在可悬停的设备上生效', () => {
@@ -57,12 +67,12 @@ describe('MTree styles', () => {
 		expect(vars('--vc-tree-checkbox-gap')).toEqual([rem(16)]);
 		expect(vars('--vc-tree-loading-gap')).toEqual([rem(16)]);
 		expect(vars('--vc-tree-empty-height')).toEqual([rem(240)]);
-		expect(vars('--vc-tree-focus-background')).toEqual(['transparent']);
+		expect(vars('--vc-tree-focus-background')).toEqual([]);
 	});
 
-	it('文字单行省略；聚焦底色只在键盘操作时显示；按下的反馈优先于当前节点的底色', () => {
+	it('文字单行省略；聚焦底色沿用桌面端；按下的反馈优先于当前节点的底色', () => {
 		expect(declsFor(css, '.vcm-tree .vc-tree-node__label', 'text-overflow')).toEqual(['ellipsis']);
-		expect(declsFor(css, '.vcm-tree .vc-tree-node:focus-visible > .vc-tree-node__content', 'background-color').length).toBe(1);
+		expect(declsFor(css, '.vcm-tree .vc-tree-node:focus-visible > .vc-tree-node__content', 'background-color')).toEqual([]);
 		expect(declsFor(css, '.vcm-tree.vc-tree .vc-tree-node > .vc-tree-node__content:active', 'background-color').length).toBe(1);
 	});
 

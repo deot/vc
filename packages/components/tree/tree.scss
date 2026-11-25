@@ -14,7 +14,7 @@ $component-name: vc-tree;
 
 // 桌面端尺寸：行高 26px、字号 12px，展开图标 12px、四周内边距 6px；复选框、加载图标与文字间距 8px
 // 写成局部变量 --vc-tree-<键>（默认值为下表），MTree 在 .vcm-tree 上覆盖（mobile/style.scss）
-// - focus-background：行聚焦时的底色（点击或键盘移动到该行）
+// - focus-background：键盘移动到该行时的底色（同悬停；鼠标点按后不显示，见 :focus-visible）
 $sizes: (
 	font-size: unitfix(12),
 	row-height: unitfix(26),
@@ -23,7 +23,7 @@ $sizes: (
 	checkbox-gap: unitfix(8),
 	loading-gap: unitfix(8),
 	empty-height: unitfix(60),
-	focus-background: $color-primary-lighter
+	focus-background: $background-color-primary-light
 );
 
 @function v($key) {
@@ -74,7 +74,7 @@ $sizes: (
 	white-space: nowrap;
 	outline: none;
 
-	&:focus { /* focus */
+	&:focus-visible {
 		> .vc-tree-node__content {
 			background-color: v(focus-background);
 		}
@@ -108,7 +108,7 @@ $sizes: (
 		}
 
 		// 滚动期间（列表带 is-scrolling，见 SelectList）不显示悬停：节点从静止的指针下经过时不逐行闪；
-		// 限定后优先级已高于聚焦（:focus > &），悬停时照样覆盖聚焦的背景
+		// 限定后优先级已高于聚焦（:focus-visible > &），悬停时照样覆盖聚焦的背景
 		// 只在可悬停的设备上生效：触屏点按后悬停会一直停留
 		@media (hover: hover) {
 			.vc-select-list:not(.is-scrolling) &:hover {
