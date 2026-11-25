@@ -72,7 +72,7 @@ export const QuarterRangePanel = defineComponent({
 				dates.value = [];
 				rangeState.value = {
 					from: value[0],
-					to: '',
+					to: null,
 					selecting: true,
 					marker: value
 				};

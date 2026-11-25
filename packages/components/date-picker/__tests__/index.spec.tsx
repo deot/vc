@@ -1353,6 +1353,43 @@ describe('DateRangePanel direct mount', () => {
 		wrapper.unmount();
 	});
 
+	it('splitPanels：一侧翻页时另一侧不动，翻到另一侧的月份或越过它时才把它按同一单位推一格', async () => {
+		const wrapper = mount(() => (
+			<DateRangePanel
+				splitPanels
+				value={[new Date(2024, 0, 10), new Date(2024, 5, 10)]}
+				focusedDate={new Date(2024, 0, 10)}
+			/>
+		), { attachTo: document.body });
+		await flush();
+		const panels = document.querySelectorAll('.vc-daterange-panel__content');
+		const headers = () => Array.from(panels).map(panel => panel.querySelector('.vc-date-header')!.textContent!.replace(/\s+/g, ''));
+		const click = async (panel: number, selector: string) => {
+			(panels[panel].querySelector(selector) as HTMLElement).click();
+			await flush();
+		};
+		expect(headers()).toEqual(['2024年01月', '2024年06月']);
+
+		// 右侧下一年：左侧不动
+		await click(1, '.vc-date-header__arrow.is-next-year');
+		expect(headers()).toEqual(['2024年01月', '2025年06月']);
+		// 左侧下一年：没有越过右侧，右侧不动
+		await click(0, '.vc-date-header__arrow.is-next-year');
+		expect(headers()).toEqual(['2025年01月', '2025年06月']);
+		// 右侧上一年：越过左侧，左侧也退一年
+		await click(1, '.vc-date-header__arrow.is-prev-year');
+		expect(headers()).toEqual(['2024年01月', '2024年06月']);
+		// 左侧下一年：越过右侧，右侧也进一年
+		await click(0, '.vc-date-header__arrow.is-next-year');
+		expect(headers()).toEqual(['2025年01月', '2025年06月']);
+		// 右侧上一月：没碰到左侧时左侧不动；与左侧同月时左侧退一个月
+		for (let i = 0; i < 4; i++) await click(1, '.vc-date-header__arrow.is-prev:not(.is-prev-year)');
+		expect(headers()).toEqual(['2025年01月', '2025年02月']);
+		await click(1, '.vc-date-header__arrow.is-prev:not(.is-prev-year)');
+		expect(headers()).toEqual(['2024年12月', '2025年01月']);
+		wrapper.unmount();
+	});
+
 	it('handleLeftYearPick / handleLeftMonthPick 切换视图（联动）', async () => {
 		const wrapper = mount(() => (
 			<DateRangePanel

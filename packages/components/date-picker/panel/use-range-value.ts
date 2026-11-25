@@ -32,7 +32,7 @@ export const useRangeValue = (props: RangeValueProps, options: RangeValueOptions
 	const leftPanelDate = ref<Date>(props.startDate || new Date());
 	const rightPanelDate = ref<Date>(next(leftPanelDate.value));
 	// marker：第一次点下的值
-	const rangeState = ref<any>({ from: '', to: '', selecting: false, marker: null });
+	const rangeState = ref<any>({ from: null, to: null, selecting: false, marker: null });
 
 	const setValue = (value: Date[]) => {
 		const [start, end] = value;
@@ -40,7 +40,7 @@ export const useRangeValue = (props: RangeValueProps, options: RangeValueOptions
 		leftPanelDate.value = start || leftPanelDate.value;
 		// 左右面板不联动、且起止不在同一个面板里时，右侧显示结束值所在的位置
 		rightPanelDate.value = props.splitPanels && start && end && !isSamePanel(start, end) ? end : next(leftPanelDate.value);
-		rangeState.value = { from: start || '', to: end || '', selecting: false, marker: null };
+		rangeState.value = { from: start || null, to: end || null, selecting: false, marker: null };
 	};
 
 	setValue(props.value!);

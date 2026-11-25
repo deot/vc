@@ -175,53 +175,16 @@ export const DateRangePanel = defineComponent({
 				? (leftPanelDate.value = panelDate)
 				: (rightPanelDate.value = panelDate);
 
-			if (props.splitPanels) { // 左右面板不联动
-				const $isOverRightPanel = isOverRightPanel(panelDate, rightPanelDate.value);
-				const $isOverLeftPanel = isOverLeftPanel(panelDate, leftPanelDate.value);
-
-				switch (type) {
-					case 'prev-month':
-					case 'next-month':
-						if (position === 'left' && $isOverRightPanel) {
-							// 判断如果右边下个月的日期还是小于左边的日期，则将右边日期改成比左边日期大一个月
-							const $rightPanelDate = dayjs(rightPanelDate.value).add(1, 'month').toDate();
-							if ($rightPanelDate < leftPanelDate.value) {
-								rightPanelDate.value = changeYearMonthAndClampDate(leftPanelDate.value, leftYear.value, leftMonth.value + 1);
-							} else {
-								rightPanelDate.value = $rightPanelDate;
-							}
-						} else if (position === 'right' && $isOverLeftPanel) {
-							// 判断如果左边上个月的日期还是大于右边的日期，则将左边日期改成比右边日期小一个月
-							const $leftPanelDate = dayjs(leftPanelDate.value).subtract(1, 'month').toDate();
-							if ($leftPanelDate < leftPanelDate.value) {
-								leftPanelDate.value = changeYearMonthAndClampDate(rightPanelDate.value, rightYear.value, rightMonth.value - 1);
-							} else {
-								leftPanelDate.value = $leftPanelDate;
-							}
-						}
-						break;
-					case 'prev-year':
-					case 'next-year':
-						if (position === 'left' && $isOverRightPanel && leftCurrentView.value !== 'year') {
-							// 判断如果右边下年的日期还是小于左边的日期，则将右边日期改成比左边日期大一月
-							const $rightPanelDate = dayjs(rightPanelDate.value).add(1, 'year').toDate();
-							if ($rightPanelDate < leftPanelDate.value) {
-								rightPanelDate.value = changeYearMonthAndClampDate(leftPanelDate.value, leftYear.value, leftMonth.value + 1);
-							} else {
-								rightPanelDate.value = $rightPanelDate;
-							}
-						} else if (position === 'right' && $isOverRightPanel && rightCurrentView.value !== 'year') {
-							// 判断如果左边上个月的日期还是大于右边的日期，则将左边日期改成比右边日期小一个月
-							const $leftPanelDate = dayjs(leftPanelDate.value).subtract(1, 'year').toDate();
-							if ($leftPanelDate < leftPanelDate.value) {
-								leftPanelDate.value = changeYearMonthAndClampDate(rightPanelDate.value, rightYear.value, rightMonth.value - 1);
-							} else {
-								leftPanelDate.value = $leftPanelDate;
-							}
-						}
-						break;
-					default:
-						break;
+			if (props.splitPanels) {
+				// 左右面板各自翻页，另一侧不动；翻到另一侧的月份或越过它时，把另一侧按同一单位推一格，保持左早于右
+				const unit = type.endsWith('year') ? 'year' : 'month';
+				// 年视图按十年翻页，不推另一侧
+				const isDecade = unit === 'year' && (position === 'left' ? leftCurrentView.value : rightCurrentView.value) === 'year';
+				if (isDecade) return;
+				if (position === 'left' && isOverRightPanel(panelDate, rightPanelDate.value)) {
+					rightPanelDate.value = dayjs(rightPanelDate.value).add(1, unit).toDate();
+				} else if (position === 'right' && isOverLeftPanel(panelDate, leftPanelDate.value)) {
+					leftPanelDate.value = dayjs(leftPanelDate.value).subtract(1, unit).toDate();
 				}
 			} else {
 				switch (type) {
@@ -255,7 +218,7 @@ export const DateRangePanel = defineComponent({
 				dates.value = [];
 				rangeState.value = {
 					from: value,
-					to: '',
+					to: null,
 					selecting: true,
 					marker: value
 				};

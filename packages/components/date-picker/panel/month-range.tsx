@@ -71,7 +71,7 @@ export const MonthRangePanel = defineComponent({
 				dates.value = [];
 				rangeState.value = {
 					from: value,
-					to: '',
+					to: null,
 					selecting: true,
 					marker: value
 				};
