@@ -24,6 +24,9 @@ export const RECYCLE_LIST_RESERVED_KEYS = [
 	'class'
 ] as const;
 
+// 具名类型：声明文件内联 props 类型时引用这个名字，避免 `typeof` 被 API Extractor 丢掉
+export type TableRecycleListOptions = Partial<Omit<RecycleListProps, typeof RECYCLE_LIST_RESERVED_KEYS[number]>>;
+
 export const props = {
 	data: {
 		type: Array,
@@ -44,7 +47,7 @@ export const props = {
 	// 行高：固定值，或按行给出的函数（返回 undefined 的行由内容撑开）；虚拟化时每行尺寸按它直接算出，跳过隐藏测量并一次构建全部行
 	rowHeight: [String, Number, Function] as PropType<TableRowHeight>,
 	// 透传给内部 RecycleList 的属性（仅 height 或 virtualized 走虚拟列表时生效），Table 自己要用的键被忽略
-	recycleListOptions: Object as PropType<Partial<Omit<RecycleListProps, typeof RECYCLE_LIST_RESERVED_KEYS[number]>>>,
+	recycleListOptions: Object as PropType<TableRecycleListOptions>,
 	// 列的宽度是否自撑开
 	fit: {
 		type: Boolean,

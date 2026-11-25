@@ -1,6 +1,7 @@
 import { pick } from 'lodash-es';
 import type { ExtractPropTypes, PropType } from 'vue';
 import { props as selectProps } from '../select/select-props';
+import type { TreeKeyValue } from './store/constant';
 import { KEY_VALUE } from './store/constant';
 import type { TreeAllowDragPayload, TreeAllowDropPayload, TreeCheckStrategy } from './types';
 import { renderType, valueType } from '../customer/customer-props';
@@ -96,7 +97,7 @@ export const props = {
 	},
 	iconClass: String,
 	keyValue: {
-		type: Object as PropType<Partial<typeof KEY_VALUE>>,
+		type: Object as PropType<Partial<TreeKeyValue>>,
 		default: () => (KEY_VALUE)
 	}
 };
