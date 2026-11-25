@@ -1,0 +1,49 @@
+<template>
+	<div class="search-match-example">
+		<div class="search-match-example__controls">
+			<Select
+				v-for="item in CONTROLS"
+				:key="item.key"
+				v-model="controls[item.key]"
+				:data="item.data"
+				:label="item.label"
+			/>
+		</div>
+
+		<p>
+			searchMatch 指定关键词的分隔符：and 分开的词都要命中，or 分开的组命中任一即可。
+			取值顺序：组件上的 searchMatch → 全局 VcInstance.options.Select.searchMatch → 默认（空格 and，逗号 or）；整个对象替换，不按键合并。
+			试试输入：A B、A,B、A，C、选项 A#C、条目 1,000。
+		</p>
+
+		<div class="search-match-example__row">
+			<div>
+				<h4>组件属性（覆盖全局）</h4>
+				<Select v-model="ownValue" :data="data" :max="99" :search-match="own" searchable clearable :clear-search-on-select="false" />
+				<div>生效：{{ describe(own ?? global) }}</div>
+			</div>
+			<div>
+				<h4>不传属性（跟随全局）</h4>
+				<Select v-model="globalValue" :data="data" :max="99" searchable clearable :clear-search-on-select="false" />
+				<div>生效：{{ describe(global) }}</div>
+			</div>
+		</div>
+	</div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import { Select } from '..';
+import { useSearchMatchControls } from './basic/search-match';
+
+const { CONTROLS, controls, own, global, describe } = useSearchMatchControls('Select');
+
+const data = [
+	...['A', 'B', 'C', 'D'].map(key => ({ value: key, label: `选项 ${key}` })),
+	{ value: 'hash', label: '选项 A#C' },
+	{ value: 'number', label: '条目 1,000' },
+	{ value: 'other', label: '条目 2,500' }
+];
+const ownValue = ref([]);
+const globalValue = ref([]);
+</script>
+<style lang="scss" src="./basic/search-match.scss"></style>

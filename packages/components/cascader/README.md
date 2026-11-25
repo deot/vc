@@ -329,7 +329,7 @@ p {
 
 `searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入，已选路径以占位文字的形式保留；`searchable="popover"` 改为在浮层顶部显示搜索栏。使用默认插槽替换输入框后没有内联的输入位置，这时两种取值都使用浮层搜索栏。
 
-输入关键词后，浮层从级联列换成扁平的路径列表：路径上任意一级的文字命中即列出，空格分隔的关键词需同时命中（可以分别落在不同层级），英文逗号分隔的各组任一命中即可。默认只列出末级节点，`changeOnSelect` 时任意一级都可选。点击结果会写入整条路径、提交并关闭；没有匹配时显示 `vc.Cascader.noMatch`。关闭浮层会清空搜索词。
+输入关键词后，浮层从级联列换成扁平的路径列表：路径上任意一级的文字命中即列出，关键词可以分别落在不同层级；关键词的分隔规则见 [Select 搜索规则](../select/README.md#搜索规则)，全局键为 `Cascader.searchMatch`（MCascader 读同一个键）。默认只列出末级节点，`changeOnSelect` 时任意一级都可选。点击结果会写入整条路径、提交并关闭；没有匹配时显示 `vc.Cascader.noMatch`。关闭浮层会清空搜索词。
 
 搜索只在已有的 `data` 内进行，不发起请求：`loadData` 仍然只用于加载子节点，尚未加载的节点搜不到，待加载子节点的节点也不会作为结果。
 
@@ -809,6 +809,7 @@ const handleOpen = () => {
 | checkStrategy | `v-model` 回填完整路径还是只回填最后一级；见[只提交最后一级](#只提交最后一级) | `string` | `all`、`child` | `'all'` |
 | searchable | 开启搜索：`true` / `'inline'` 在输入框内直接输入，`'popover'` 在浮层顶部显示搜索栏；见[搜索](#搜索) | `boolean \| 'inline' \| 'popover'` | - | `false` |
 | searchPlaceholder | 搜索时的占位文字：内联搜索为浮层打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
+| searchMatch | 搜索关键词的分隔符：`and` 分开的词都要命中，`or` 分开的组命中任一即可；未传时读全局 `Cascader.searchMatch`，见[搜索](#搜索) | `{ and?: string \| string[]; or?: string \| string[] }` | - | `{ and: ' ', or: [',', '，'] }` |
 | disabled | 禁止打开和清空 | `boolean` | - | `false` |
 | plaintext | 只显示路径文字，不渲染输入框与浮层，没有样式、不能交互；见[只读文字](#只读文字) | `boolean` | - | `false` |
 | clearable | 移入输入框时显示清除按钮 | `boolean` | - | `false` |
@@ -918,6 +919,7 @@ interface CascaderOption {
 | clearable | 有选中路径时在层级标签栏右端显示「清空」，点击后回到第一级并提交空值（`nullValue`，数组值为 `[]`） | `boolean` | - | `false` |
 | searchable | 列表上方显示搜索框 | `boolean` | - | `false` |
 | searchPlaceholder | 搜索框的占位文字 | `string` | - | `''` |
+| searchMatch | 搜索关键词的分隔符，同 Cascader，读全局 `Cascader.searchMatch` | `{ and?: string \| string[]; or?: string \| string[] }` | - | `{ and: ' ', or: [',', '，'] }` |
 | placeholder | 待选那一级的标签文字 | `string` | - | 当前语言的 `vc.Cascader.placeholder` |
 | renderLabel | 自定义选项内容；`label` 插槽优先 | `(options: { label, row, index: number, selected: boolean }) => VNodeChild` | - | - |
 | virtualized | 每一级与搜索结果只渲染可视范围附近的项，用于大量数据 | `boolean` | - | `false` |

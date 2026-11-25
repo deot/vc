@@ -147,6 +147,7 @@ import { MButton } from '../../button/index.m';
 import { MForm, MFormItem } from '../../form/index.m';
 import { MInput } from '../../input/index.m';
 import { MScroller } from '../../scroller/index.m';
+import { createSearchRegex } from '../../select/utils';
 import { MTree, MTreeSelect } from '../index.m';
 
 const TYPES = [
@@ -233,12 +234,13 @@ const selectData = Array.from({ length: 6 }, (_, i) => ({
 }));
 const model = reactive({ single: '', leaf: '', limited: [], remote: [], unlimited: [] });
 
-// 远程搜索：模拟服务端按关键词只返回命中的条目（连同分类），空关键词返回全部；由调用方更新 data
+// 远程搜索：模拟服务端按关键词只返回命中的条目（连同分类，规则同本地搜索），空关键词返回全部；由调用方更新 data
 const remoteData = ref([]);
 const loadRemote = async (keyword) => {
 	await new Promise(resolve => setTimeout(resolve, 600));
+	const regex = createSearchRegex(keyword);
 	remoteData.value = selectData
-		.map(group => ({ ...group, children: group.children.filter(i => !keyword || i.label.includes(keyword)) }))
+		.map(group => ({ ...group, children: group.children.filter(i => regex.test(`${group.label} / ${i.label}`)) }))
 		.filter(group => group.children.length);
 };
 const opened = ref('');

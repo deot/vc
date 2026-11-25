@@ -8,8 +8,8 @@ import { MCustomer } from '../../customer/index.m';
 import { MRecycleList } from '../../recycle-list/index.m';
 import { useLocale } from '../../locale';
 import {
-	createSearchRegex,
 	flattenData,
+	getSearchMatch,
 	getLabel,
 	getSelectRows,
 	isMaxReached,
@@ -18,6 +18,7 @@ import {
 	toModelValue
 } from '../utils';
 import { renderHighlight } from '../select-search/highlight';
+import { useSearchRegex } from '../hooks/use-search-regex';
 import { SelectList } from '../select-list';
 import { findStickyIndex, getStickyTranslate } from '../../scroller/core/sticky';
 import type { SelectListExposed } from '../select-list';
@@ -64,7 +65,7 @@ export const MSelectView = defineComponent({
 		const data = computed(() => remote.getData() as TreeData[]);
 
 		// 本地按文字过滤，远程搜索时同样生效（同桌面端；跳过过滤的选项设 filterable: false）
-		const regex = computed(() => createSearchRegex(props.searchable ? keyword.value : ''));
+		const regex = useSearchRegex(() => (props.searchable ? keyword.value : ''), () => getSearchMatch(props.searchMatch, 'Select'));
 		const rows = computed(() => getSelectRows(data.value, regex.value));
 		// 分组标题所在的行与分组结束的行（其后第一行，没有时为行数），供吸顶标题使用；没有分组时为空
 		const groups = computed(() => {

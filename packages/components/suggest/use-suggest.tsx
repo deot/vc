@@ -5,8 +5,9 @@ import type { Component, Slots } from 'vue';
 import { debounce } from 'lodash-es';
 import { useKeyboard } from '@deot/vc-hooks';
 import { toPx, toRem } from '@deot/vc-shared';
-import { createSearchRegex, getSelectRows } from '../select/utils';
-import type { SelectRow, TreeData } from '../select/utils';
+import { getSelectRows } from '../select/utils';
+import type { SearchMatch, SelectRow, TreeData } from '../select/utils';
+import { useSearchRegex } from '../select/hooks/use-search-regex';
 import { useNavigate } from '../select/hooks/use-navigate';
 import { SelectList } from '../select/select-list';
 import { createRowRenderer, OPTION_OWNER_KEY } from '../select/select-option';
@@ -31,6 +32,8 @@ const normalize = (data: unknown[]): TreeData[] => {
 export interface SuggestOptions {
 	// 当前的搜索词（AutoComplete 为输入框的文字，Mention 为前缀之后的词）
 	keyword: () => string;
+	// 生效的搜索分隔符（AutoComplete 按 getSearchMatch 取值）；不传时为默认规则
+	searchMatch?: () => SearchMatch;
 	// 选中一项（点击或回车）
 	pick: (item: TreeData) => void;
 	// loadData 的第三个参数（如 Mention 的 { prefix }）
@@ -72,7 +75,7 @@ export const useSuggest = (config: () => SuggestConfig, slots: Slots, options: S
 	const keyword = computed(options.keyword);
 	const isRemote = () => !!config().loadData;
 	const source = computed(() => normalize((results.value ?? config().data ?? []) as unknown[]));
-	const regex = computed(() => createSearchRegex(keyword.value));
+	const regex = useSearchRegex(() => keyword.value, options.searchMatch);
 	const rows = computed(() => getSelectRows(source.value, isRemote() ? MATCH_ALL : regex.value));
 	const visible = computed(() => active.value && (rows.value.length > 0 || loading.value));
 

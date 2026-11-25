@@ -23,6 +23,7 @@ const treeSelectKeys = [
 	'nullValue',
 	'clearable',
 	'searchPlaceholder',
+	'searchMatch',
 	'renderNodeLabel',
 	'virtualized',
 	'loadData'
@@ -31,7 +32,7 @@ const treeSelectKeys = [
 export const props = {
 	...(pick(pickerPopupProps, popupKeys) as Pick<typeof pickerPopupProps, typeof popupKeys[number]>),
 	...(pick(treeSelectProps, treeSelectKeys) as Pick<typeof treeSelectProps, typeof treeSelectKeys[number]>),
-	// 树上方显示搜索框，按节点文字匹配，命中节点的祖先自动展开，规则同桌面端
+	// 树上方显示搜索框，按整条路径匹配，命中节点的祖先自动展开，规则同桌面端
 	searchable: {
 		type: Boolean,
 		default: false

@@ -52,7 +52,7 @@ const options = [
 
 悬停 `+N...` 时弹出被折叠的标签列表，可在列表中移除（禁用时只读）；悬停被截断的标签时显示完整内容。
 
-开启 `searchable` 后，按选项文字进行不区分大小写的匹配，命中的部分高亮；空格分隔的关键词需同时命中，英文逗号分隔的各组任一命中即可（如 `a b,c`：同时含 a 和 b，或含 c）。输入非空关键词时，可全选或取消选择当前匹配且未禁用的选项，其他已选项保留。全选按列表顺序补到 `max` 为止，选满后按钮变为「取消全选」；全选逐项触发值更新事件。
+开启 `searchable` 后，按选项文字进行不区分大小写的匹配，命中的部分高亮；默认空格分隔的关键词需同时命中，逗号（`,` 或 `，`）分隔的各组任一命中即可（如 `a b,c`：同时含 a 和 b，或含 c），可用 `searchMatch` 调整，见[搜索规则](#搜索规则)。输入非空关键词时，可全选或取消选择当前匹配且未禁用的选项，其他已选项保留。全选按列表顺序补到 `max` 为止，选满后按钮变为「取消全选」；全选逐项触发值更新事件。
 
 :::playground
 <!--
@@ -141,6 +141,58 @@ const options = [
 	{ value: 'option-b', label: '选项 B' },
 	{ value: 'option-c', label: '选项 C', disabled: true },
 	{ value: 'option-d', label: '条目 D' }
+];
+</script>
+
+<style scoped>
+.select-demo { display: grid; gap: 12px; width: min(100%, 360px); }
+.select-demo p { margin: 0; overflow-wrap: anywhere; }
+</style>
+```
+:::
+
+### 搜索规则
+
+`searchMatch` 指定关键词的分隔符：`and` 分开的词都要命中，`or` 分开的组命中任一即可。默认 `{ and: ' ', or: [',', '，'] }`。
+
+- 先按 `or` 拆组，再在组内按 `and` 拆词；同一个分隔符两边都写时按 `or` 处理。
+- 只由空白组成的分隔符（如 `' '`）匹配任意一段连续空白，含全角空格与 Tab；其它分隔符按字面匹配，可以是多个字符。分隔符两侧的空白不算进关键词。
+- 整个对象替换默认值，不按键合并：`{ or: [' ', ',', '，'] }` 让空格也表示任一命中；`{}` 不拆分，整句作为一个关键词。
+- 未传时读取全局 `VcInstance.options.Select.searchMatch`（MSelect、MSelectView 读同一个键），见[全局配置](../vc/README.md)。
+- 远程搜索（`loadData`）收到的是原始输入，按什么规则匹配由服务端决定，组件只按规则高亮。
+
+| 写法 | `A B` | `A,B` / `A，B` | `A#B` |
+| --- | --- | --- | --- |
+| 默认 `{ and: ' ', or: [',', '，'] }` | 同时含 A 和 B | 含 A 或 B | 含 `A#B` |
+| `{ or: [' ', ',', '，'] }` | 含 A 或 B | 含 A 或 B | 含 `A#B` |
+| `{ and: ' ', or: '#' }` | 同时含 A 和 B | 含 `A,B` 或 `A，B` | 含 A 或 B |
+| `{}` | 含 `A B` | 含 `A,B` 或 `A，B` | 含 `A#B` |
+
+:::playground
+<!--
+<config lang="json5">
+{ previewInset: 20 }
+</config>
+-->
+```vue
+<template>
+	<div class="select-demo">
+		<Select v-model="andValues" :data="options" :max="99" searchable placeholder="默认：输入 A B 无结果，A,B 有" />
+		<Select v-model="orValues" :data="options" :max="99" searchable :search-match="{ or: [' ', ',', '，'] }" placeholder="空格也是任一命中：输入 A B" />
+		<p>默认：{{ andValues.join('、') || '无' }}；空格任一命中：{{ orValues.join('、') || '无' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Select } from '@deot/vc';
+
+const andValues = ref([]);
+const orValues = ref([]);
+const options = [
+	{ value: 'option-a', label: '选项 A' },
+	{ value: 'option-b', label: '选项 B' },
+	{ value: 'option-c', label: '选项 C' }
 ];
 </script>
 
@@ -531,6 +583,7 @@ const handleOpen = () => {
 | searchable | 开启搜索：`true` / `'inline'` 在输入框内直接输入，`'popover'` 在下拉顶部显示搜索栏 | `boolean \| 'inline' \| 'popover'` | - | `false` |
 | virtualized | 只渲染下拉可视范围附近的选项，用于大量数据；见[大量数据](#大量数据) | `boolean` | - | `false` |
 | searchPlaceholder | 搜索时的占位文字：内联搜索为下拉打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
+| searchMatch | 搜索关键词的分隔符：`and` 分开的词都要命中，`or` 分开的组命中任一即可；未传时读全局配置，见[搜索规则](#搜索规则) | `{ and?: string \| string[]; or?: string \| string[] }` | - | `{ and: ' ', or: [',', '，'] }` |
 | clearSearchOnSelect | 多选时选中或取消一项（含全选）后清空搜索词；`false` 时保留，可在同一批结果里继续选 | `boolean` | - | `true` |
 | placeholder | 输入框占位文字，通过 attribute 传入；支持空字符串覆盖 | `string` | - | 当前语言的“请选择” |
 | loadData | 搜索回调，须返回 Promise，由调用方更新 data；调用时机见[远程搜索](#远程搜索) | `(query: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
@@ -660,6 +713,7 @@ const handleOpen = () => {
 | clearable | 有已选项时在列表上方显示「清空」，点击后提交空值（`nullValue`，数组值为 `[]`，字符串多选为 `''`） | `boolean` | - | `false` |
 | searchable | 列表上方显示搜索框 | `boolean` | - | `false` |
 | searchPlaceholder | 搜索框的占位文字 | `string` | - | `''` |
+| searchMatch | 搜索关键词的分隔符，同 Select，读全局 `Select.searchMatch` | `{ and?: string \| string[]; or?: string \| string[] }` | - | `{ and: ' ', or: [',', '，'] }` |
 | loadData | 远程搜索回调，开启 `searchable` 时生效；由调用方更新 `data`，Promise 解析为数组时直接作为结果；时机见[移动端选择](#移动端选择) | `(keyword: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | renderLabel | 自定义选项文字；`label` 插槽优先 | `(options: { label, row, index: number, selected: boolean }) => VNodeChild` | - | - |
 | virtualized | 只渲染列表可视范围附近的选项，用于大量数据；见[移动端选择](#移动端选择) | `boolean` | - | `false` |

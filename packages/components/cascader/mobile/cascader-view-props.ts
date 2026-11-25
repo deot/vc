@@ -11,6 +11,7 @@ const cascaderKeys = [
 	'checkStrategy',
 	'loadData',
 	'searchPlaceholder',
+	'searchMatch',
 	'separator',
 	'numerable',
 	'nullValue',

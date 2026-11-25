@@ -212,7 +212,20 @@ describe('MTreeSelect', () => {
 		wrapper.unmount();
 	});
 
-	it('搜索：按节点文字过滤，命中的祖先展开，无结果时提示', async () => {
+	it('搜索：searchMatch 透传到 open()', async () => {
+		const leaf = MTreeSelect.open({ data: buildData(), max: 0, searchable: true, searchMatch: { or: ' ' } });
+		await flush();
+		const input = document.querySelector<HTMLInputElement>('.vcm-tree-select-panel__search input')!;
+		input.value = '1-1 1-2';
+		input.dispatchEvent(new Event('input'));
+		await flush();
+		await sleep(50);
+		const visible = getRows().filter(row => row.offsetParent !== null || row.style.display !== 'none').map(row => row.textContent);
+		expect(visible).toEqual(['分组 1', '条目 1-1', '条目 1-2']);
+		leaf.destroy();
+	});
+
+	it('搜索：按整条路径过滤，命中的祖先展开，无结果时提示', async () => {
 		const leaf = MTreeSelect.open({ data: buildData(), max: 0, searchable: true, searchPlaceholder: '搜索分类' });
 		await flush();
 		const input = document.querySelector<HTMLInputElement>('.vcm-tree-select-panel__search input')!;

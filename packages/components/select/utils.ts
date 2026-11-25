@@ -1,4 +1,5 @@
 import { escapeRegExp } from 'lodash-es';
+import { VcInstance } from '../vc/index';
 
 /**
  * 树形label
@@ -39,16 +40,72 @@ export interface FlattenDataOptions {
 export type SearchRegex = RegExp & { highlight?: RegExp };
 
 /**
- * 搜索关键词 -> 正则
- * 	- 空格分隔的词需同时命中，逗号分隔的各组任一命中即可（如 `a b,c`：同时含 a 和 b，或含 c）
- * 	- 关键词为空时匹配全部
- * @param keyword ~
+ * 搜索关键词的分隔符：and 分开的词都要命中，or 分开的组命中任一即可
+ * 	- 先按 or 拆组，再在组内按 and 拆词；同一个分隔符两边都写时按 or 处理
+ * 	- 只由空白组成的分隔符匹配任意一段连续空白（含全角空格、Tab），其它分隔符按字面匹配
+ * 	- 两边都没有分隔符（{}）时整句作为一个词
+ */
+export interface SearchMatch {
+	and?: string | string[];
+	or?: string | string[];
+}
+
+/**
+ * 默认：空格分隔的词都要命中，逗号（`,` 或中文输入法的 `，`）分隔的组任一命中
+ */
+export const DEFAULT_SEARCH_MATCH: Readonly<SearchMatch> = Object.freeze({ and: ' ', or: [',', '，'] });
+
+/**
+ * 读取 searchMatch 的全局配置的组件
+ */
+export type SearchMatchKey = 'Select' | 'TreeSelect' | 'Cascader' | 'AutoComplete';
+
+/**
+ * 生效的 searchMatch：组件上的值 → 全局 VcInstance.options[key].searchMatch → 默认；整个对象替换，不按键合并
+ * @param value 组件上的 searchMatch
+ * @param key 读取哪个组件的全局配置（移动端读同名键）；不传时不读全局配置（如 Mention）
  * @returns ~
  */
-export const createSearchRegex = (keyword: string): SearchRegex => {
-	const groups = keyword
-		.split(',')
-		.map(group => group.split(/\s+/).filter(Boolean).map(escapeRegExp))
+export const getSearchMatch = (value: SearchMatch | undefined, key?: SearchMatchKey): SearchMatch => {
+	return value ?? (key && VcInstance.options[key]?.searchMatch) ?? DEFAULT_SEARCH_MATCH;
+};
+
+// 分隔符统一为数组，去掉空的
+const toSeparators = (value?: string | string[]) => {
+	return (Array.isArray(value) ? value : [value]).filter(i => typeof i === 'string' && i.length) as string[];
+};
+
+/**
+ * SearchMatch 的 and / or 统一为数组（去掉空的分隔符），便于比较内容是否变化
+ * @param match ~
+ * @returns ~
+ */
+export const normalizeSearchMatch = (match: SearchMatch) => {
+	return { and: toSeparators(match.and), or: toSeparators(match.or) };
+};
+
+// 分隔符 -> 拆分用的正则；没有分隔符时为 undefined（不拆）
+const toSplitter = (value?: string | string[]) => {
+	const separators = toSeparators(value);
+	if (!separators.length) return;
+	const sources = new Set(separators.map(i => (/^\s+$/.test(i) ? '\\s+' : escapeRegExp(i))));
+	// 较长的在前，避免被它的前缀抢先匹配
+	return new RegExp([...sources].sort((a, b) => b.length - a.length).join('|'));
+};
+
+/**
+ * 搜索关键词 -> 正则
+ * 	- 默认空格分隔的词需同时命中，逗号分隔的各组任一命中即可（如 `a b,c`：同时含 a 和 b，或含 c），见 SearchMatch
+ * 	- 关键词为空时匹配全部
+ * @param keyword ~
+ * @param match 分隔符，默认 DEFAULT_SEARCH_MATCH
+ * @returns ~
+ */
+export const createSearchRegex = (keyword: string, match: SearchMatch = DEFAULT_SEARCH_MATCH): SearchRegex => {
+	const or = toSplitter(match.or);
+	const and = toSplitter(match.and);
+	const groups = (or ? keyword.split(or) : [keyword])
+		.map(group => (and ? group.split(and) : [group]).map(word => word.trim()).filter(Boolean).map(escapeRegExp))
 		.filter(words => words.length);
 
 	if (!groups.length) return new RegExp('', 'i');
@@ -94,32 +151,54 @@ export interface MatchedPathsOptions {
 	regex?: SearchRegex;
 	// 远程搜索时数据已由调用方过滤，本地不再匹配
 	remote?: boolean;
-	// 按整条路径（各级文字用 " / " 连接）匹配；否则只看节点自身的 label
-	path?: boolean;
 	// 可作为结果的节点，默认全部
 	selectable?: (item: TreeData) => boolean;
 }
 
+/**
+ * 树形搜索按整条路径匹配时，各级文字之间的连接符
+ */
+export const SEARCH_PATH_SEPARATOR = ' / ';
+
+/**
+ * 按整条路径（各级文字用 SEARCH_PATH_SEPARATOR 连接）匹配：多个关键词可以分别落在不同的层级上
+ * 	- 须先序调用（父节点先于子节点），每个节点只拼接自己这一级，整体 O(N)
+ * 	- 搜索正则对追加的文字是单调的：祖先命中时子孙一定命中，不再拼接与匹配
+ * @param regex 见 createSearchRegex
+ * @returns (node, parent, label) => 是否命中；parent 为根节点时传 undefined
+ */
+export const createPathMatcher = <T>(regex: RegExp) => {
+	const entries = new Map<T, { text: string; hit: boolean }>();
+	return (node: T, parent: T | undefined, label: string) => {
+		const owner = parent === undefined ? void 0 : entries.get(parent);
+		if (owner?.hit) {
+			entries.set(node, owner);
+			return true;
+		}
+		const text = owner ? `${owner.text}${SEARCH_PATH_SEPARATOR}${label}` : label;
+		const entry = { text, hit: regex.test(text) };
+		entries.set(node, entry);
+		return entry.hit;
+	};
+};
+
 const getPathText = (item: TreeData) => String(item.label ?? '');
 
 /**
- * 树形数据中命中搜索的节点，按深度优先的顺序列出它们的路径
+ * 树形数据中命中搜索的节点（按整条路径匹配，见 createPathMatcher），按深度优先的顺序列出它们的路径
  * @param data 树形数据
  * @param options ~
  * @returns ~
  */
 export const getMatchedPaths = (data: TreeData[], options: MatchedPathsOptions = {}) => {
-	const { regex, path, selectable } = options;
-	const isLocal = !options.remote && !!regex;
+	const { regex, selectable } = options;
+	const match = !options.remote && regex ? createPathMatcher<TreeData>(regex) : void 0;
 	const result: SelectPath[] = [];
 	walkTree(data, (item, ancestors) => {
+		// 不可选的节点也要参与匹配：子孙的路径从它接着拼
+		if (match && !match(item, ancestors[ancestors.length - 2], getPathText(item))) return;
 		if (selectable && !selectable(item)) return;
-		// 只看自身文字时先匹配，未命中的节点不必整理路径
-		if (isLocal && !path && !regex.test(getPathText(item))) return;
-		const labels = ancestors.map(getPathText);
-		// path：各级文字连起来匹配，多个关键词可以分别落在不同的层级上
-		if (isLocal && path && !regex.test(labels.join(' / '))) return;
-		result.push({ item, labels, values: ancestors.map(i => i.value) });
+		result.push({ item, labels: ancestors.map(getPathText), values: ancestors.map(i => i.value) });
 	});
 	return result;
 };

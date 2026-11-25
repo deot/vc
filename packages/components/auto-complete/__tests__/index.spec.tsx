@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
-import { AutoComplete, MAutoComplete } from '@deot/vc-components';
+import { AutoComplete, MAutoComplete, VcInstance } from '@deot/vc-components';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 const sleep = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -77,6 +77,33 @@ describe('AutoComplete', () => {
 		// 命中的文字高亮
 		expect(document.querySelector('.vc-suggest .vc-select-highlight')?.textContent).toBe('Alp');
 		wrapper.unmount();
+	});
+
+	it('searchMatch：组件属性与全局 AutoComplete.searchMatch', async () => {
+		const original = VcInstance.options.AutoComplete;
+		onTestFinished(() => {
+			VcInstance.options.AutoComplete = original;
+		});
+		const { wrapper } = mountComplete();
+		const input = getInput(wrapper);
+		input.focus();
+		await flush();
+		await typeInto(input, 'beta gamma');
+		// 默认空格 and：没有同时含两者的项，不弹出
+		expect(getTexts()).toEqual([]);
+		VcInstance.options.AutoComplete = { searchMatch: { or: ' ' } };
+		await flush();
+		expect(getTexts()).toEqual(['Beta', 'Gamma']);
+		wrapper.unmount();
+
+		// 组件属性优先
+		const { wrapper: own } = mountComplete({ searchMatch: { and: ' ' } });
+		const ownInput = getInput(own);
+		ownInput.focus();
+		await flush();
+		await typeInto(ownInput, 'beta gamma');
+		expect(getTexts()).toEqual([]);
+		own.unmount();
 	});
 
 	it('没有结果时不弹出空面板', async () => {

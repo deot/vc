@@ -38,6 +38,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
 import { Select } from '..';
+import { createSearchRegex } from '../utils';
 
 // 对照项：每项一个 Select
 const CONTROLS = [
@@ -81,7 +82,9 @@ const loadData = (keyword) => {
 	keywords.value.push(JSON.stringify(keyword));
 	return new Promise((resolve) => {
 		setTimeout(() => {
-			data.value = source.filter(item => item.label.includes(keyword.trim()));
+			// 模拟服务端：按与本地搜索相同的规则过滤（空格分隔的词都要命中，逗号分隔的组任一命中）
+			const regex = createSearchRegex(keyword);
+			data.value = source.filter(item => regex.test(item.label));
 			resolve();
 		}, 400);
 	});

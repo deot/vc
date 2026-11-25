@@ -13,6 +13,7 @@ const selectKeys = [
 	'nullValue',
 	'clearable',
 	'searchPlaceholder',
+	'searchMatch',
 	'renderLabel',
 	'loadData',
 	'virtualized'

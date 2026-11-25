@@ -10,6 +10,7 @@ import type { SnapshotDownload } from '../snapshot/snapshot-props';
 import type { TourConfig } from '../tour/types';
 import type { UploadCallback, UploadEnhancer } from '../upload/types';
 import type { PickerEnhancer } from '../upload-picker/types';
+import type { SearchMatch } from '../select/utils';
 
 const nil = void 0;
 
@@ -42,6 +43,11 @@ export type Options = Partial<{
 	DatePicker: {
 		firstDayOfWeek?: number;
 	};
+	// 搜索关键词的分隔符 { and, or }：组件未传 searchMatch 时使用，移动端（MSelect 等）读同名键
+	Select: { searchMatch?: SearchMatch };
+	TreeSelect: { searchMatch?: SearchMatch };
+	Cascader: { searchMatch?: SearchMatch };
+	AutoComplete: { searchMatch?: SearchMatch };
 	FilePreview: FilePreviewOptions;
 	Descriptions: DescriptionsOptions;
 	Tour: TourConfig;
@@ -88,8 +94,14 @@ export type ResolvedOptions = Options & {
 export const defaults: ResolvedOptions = {
 	locale: zhCN,
 	sanitize: nil,
+	AutoComplete: {
+		searchMatch: nil
+	},
 	Calendar: {
 		firstDayOfWeek: nil
+	},
+	Cascader: {
+		searchMatch: nil
 	},
 	Customer: {
 		formatter: nil
@@ -106,6 +118,9 @@ export const defaults: ResolvedOptions = {
 	},
 	Portal: {
 		install: nil
+	},
+	Select: {
+		searchMatch: nil
 	},
 	RecycleList: {
 		renderRefresh: nil,
@@ -125,6 +140,9 @@ export const defaults: ResolvedOptions = {
 	},
 	Theme: {
 		variables: VARIABLES
+	},
+	TreeSelect: {
+		searchMatch: nil
 	},
 	Upload: {
 		onRequest: nil,

@@ -1181,6 +1181,31 @@ describe('Cascader 搜索与键盘', () => {
 		wrapper.unmount();
 	});
 
+	it('searchMatch：组件属性与全局 Cascader.searchMatch', async () => {
+		const original = VcInstance.options.Cascader;
+		onTestFinished(() => {
+			VcInstance.options.Cascader = original;
+		});
+		const match = ref<any>();
+		const wrapper = mount(() => (
+			<Cascader data={options} searchable searchMatch={match.value} />
+		), { attachTo: document.body });
+		await nextTick();
+		const input = wrapper.find('input');
+		await input.trigger('click');
+		await flush();
+		typeInto(input.element as HTMLInputElement, 'west dong');
+		await flush();
+		expect(getTexts()).toEqual([]);
+		VcInstance.options.Cascader = { searchMatch: { or: ' ' } };
+		await flush();
+		expect(getTexts()).toEqual(['Zhejiang / Hangzhou / West Lake', 'Zhejiang / NingBo / Jiang Dong']);
+		match.value = { and: ' ' };
+		await flush();
+		expect(getTexts()).toEqual([]);
+		wrapper.unmount();
+	});
+
 	it('changeOnSelect：任意一级可选', async () => {
 		const value = ref<any[]>([]);
 		const wrapper = mount(() => (

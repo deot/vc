@@ -1,0 +1,26 @@
+// searchMatch 示例共用
+.search-match-example {
+	padding: 40px;
+
+	// 右上角留给主题 / 变量 / 性能按钮
+	&__controls {
+		display: grid;
+		max-width: 720px;
+		margin-right: 220px;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 12px;
+	}
+
+	&__row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 24px 48px;
+
+		> div {
+			display: grid;
+			width: 320px;
+			gap: 8px;
+			align-content: start;
+		}
+	}
+}

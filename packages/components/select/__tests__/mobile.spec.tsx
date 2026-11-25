@@ -176,6 +176,19 @@ describe('MSelectView', () => {
 		wrapper.unmount();
 	});
 
+	it('搜索：searchMatch 透传', async () => {
+		const wrapper = mount(() => (
+			<MSelectView data={groupedData} searchable searchMatch={{ or: ' ' }} />
+		), { attachTo: document.body });
+		await flush();
+		const input = document.querySelector('.vcm-select-view__search input') as HTMLInputElement;
+		input.value = '甲 丙';
+		input.dispatchEvent(new Event('input'));
+		await flush();
+		expect(getOptions().map(i => i.querySelector('.vcm-select-view__label')!.textContent)).toEqual(['条目甲', '条目丙']);
+		wrapper.unmount();
+	});
+
 	it('clearable：汇总栏显示清空，先 clear 再提交空值', async () => {
 		const value = ref<any>(2);
 		const calls: string[] = [];

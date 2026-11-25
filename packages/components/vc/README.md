@@ -170,6 +170,31 @@ VcInstance.configure({
 });
 ```
 
+### Select / TreeSelect / Cascader / AutoComplete 全局配置
+
+统一设置搜索关键词的分隔符：`and` 分开的词都要命中，`or` 分开的组命中任一即可。组件上的 `searchMatch` 优先，未配置时为 `{ and: ' ', or: [',', '，'] }`；整个对象替换默认值，不按键合并。四个组件各用一个键，移动端（MSelect、MTreeSelect、MCascader、MAutoComplete）读同名的键；运行时修改会即时重新过滤。规则详见 [Select 搜索规则](../select/README.md#搜索规则)。
+
+| 配置项 | 具体作用 | 默认值 |
+| --- | --- | --- |
+| Select.searchMatch | Select / MSelect / MSelectView 的搜索分隔符 | `undefined`，组件回退为默认规则 |
+| TreeSelect.searchMatch | TreeSelect / MTreeSelect 的搜索分隔符 | `undefined`，组件回退为默认规则 |
+| Cascader.searchMatch | Cascader / MCascader / MCascaderView 的搜索分隔符 | `undefined`，组件回退为默认规则 |
+| AutoComplete.searchMatch | AutoComplete / MAutoComplete 的联想过滤分隔符 | `undefined`，组件回退为默认规则 |
+
+```js
+import { VcInstance } from '@deot/vc';
+
+// 空格也表示任一命中：输入「A B」同时列出 A 和 B
+const searchMatch = { or: [' ', ',', '，'] };
+
+VcInstance.configure({
+	Select: { searchMatch },
+	TreeSelect: { searchMatch },
+	Cascader: { searchMatch },
+	AutoComplete: { searchMatch }
+});
+```
+
 ### Customer 全局配置
 
 在渲染前转换 `{ type, value }` 的内容，用来支持自定义类型。详见 [Customer](../customer/README.md)。

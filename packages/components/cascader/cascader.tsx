@@ -315,7 +315,6 @@ export const Cascader = defineComponent({
 							class="vc-cascader__paths"
 							data={props.data}
 							regex={searchRegex.value}
-							path
 							selectable={isSelectable}
 							checked={isChecked}
 							width={searchWidth.value}

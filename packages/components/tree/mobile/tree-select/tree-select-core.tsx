@@ -8,7 +8,8 @@ import { pickerCoreEmits, usePickerCore } from '../../../picker/mobile/use-picke
 import { MButton } from '../../../button/index.m';
 import { MInputSearch } from '../../../input/index.m';
 import { useLocale } from '../../../locale';
-import { createSearchRegex, isMultiple, toCurrentValue, toModelValue } from '../../../select/utils';
+import { getSearchMatch, isMultiple, toCurrentValue, toModelValue } from '../../../select/utils';
+import { useSearchRegex } from '../../../select/hooks/use-search-regex';
 import type { TreeValue } from '../../../select/utils';
 import { MSelectSummary } from '../../../select/mobile/select-summary';
 import { useRemoteSearch } from '../../../select/mobile/use-remote-search';
@@ -79,7 +80,7 @@ export const MTreeSelectCore = defineComponent({
 		// 不可清空时，一项都没选不能确定
 		const isOkDisabled = computed(() => !props.clearable && isEmpty.value);
 
-		const regex = computed(() => createSearchRegex(props.searchable ? keyword.value : ''));
+		const regex = useSearchRegex(() => (props.searchable ? keyword.value : ''), () => getSearchMatch(props.searchMatch, 'TreeSelect'));
 
 		const handleOk = () => {
 			if (mode.value && isOkDisabled.value) return;

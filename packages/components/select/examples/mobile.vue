@@ -98,6 +98,7 @@ import { MForm, MFormItem } from '../../form/index.m';
 import { MButton } from '../../button/index.m';
 import { MToast } from '../../toast/index.m';
 import { MSelect } from '../index.m';
+import { createSearchRegex } from '../utils';
 
 // 条目较多，用于看长列表的滚动与选中项居中
 const data = Array.from({ length: 30 }, (_, i) => ({
@@ -146,12 +147,13 @@ const model = reactive({
 	remote: []
 });
 
-// 远程搜索：模拟服务端按关键词返回最多 10 项，空关键词返回前 10 项；由调用方更新 data
+// 远程搜索：模拟服务端按关键词返回最多 10 项（规则同本地搜索），空关键词返回前 10 项；由调用方更新 data
 const remoteSource = Array.from({ length: 200 }, (_, i) => ({ value: i + 1, label: `条目 ${i + 1}` }));
 const remoteData = ref([]);
 const loadRemote = async (keyword) => {
 	await new Promise(resolve => setTimeout(resolve, 600));
-	remoteData.value = remoteSource.filter(i => !keyword || i.label.includes(keyword)).slice(0, 10);
+	const regex = createSearchRegex(keyword);
+	remoteData.value = remoteSource.filter(i => regex.test(i.label)).slice(0, 10);
 };
 const opened = ref([]);
 

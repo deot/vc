@@ -3,7 +3,7 @@
 import { defineComponent, computed } from 'vue';
 import type { PropType } from 'vue';
 import { Scroller } from '../../scroller/index';
-import { getMatchedPaths } from '../utils';
+import { getMatchedPaths, SEARCH_PATH_SEPARATOR } from '../utils';
 import type { TreeData, SearchRegex, SelectPath } from '../utils';
 import { useNavigate } from '../hooks/use-navigate';
 import { SelectList } from '../select-list';
@@ -26,8 +26,6 @@ export const SelectPaths = defineComponent({
 		regex: RegExp as PropType<SearchRegex>,
 		// 远程搜索时数据已由调用方过滤，本地只高亮
 		remote: Boolean,
-		// 按整条路径（各级文字用 " / " 连接）匹配并高亮；否则只看节点自身的 label
-		path: Boolean,
 		// 可作为结果的节点，默认全部
 		selectable: Function as PropType<(item: TreeData) => boolean>,
 		// 是否已选中
@@ -42,7 +40,6 @@ export const SelectPaths = defineComponent({
 		const results = computed(() => getMatchedPaths(props.data, {
 			regex: props.regex,
 			remote: props.remote,
-			path: props.path,
 			selectable: props.selectable
 		}));
 
@@ -77,11 +74,11 @@ export const SelectPaths = defineComponent({
 					onClick={() => handleSelect(data)}
 				>
 					{ slots.prefix?.(data) }
-					<span class="vc-select-paths__label" title={labels.join(' / ')}>
+					<span class="vc-select-paths__label" title={labels.join(SEARCH_PATH_SEPARATOR)}>
 						{
 							labels.map((label, index) => [
-								props.path || index === last ? renderHighlight(label, props.regex) : label,
-								index !== last ? ' / ' : null
+								renderHighlight(label, props.regex),
+								index !== last ? SEARCH_PATH_SEPARATOR : null
 							])
 						}
 					</span>

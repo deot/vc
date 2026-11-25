@@ -10,7 +10,8 @@ import { MInputSearch } from '../../input/index.m';
 import { MCustomer } from '../../customer/index.m';
 import { MRecycleList } from '../../recycle-list/index.m';
 import { useLocale } from '../../locale';
-import { createSearchRegex, findIndexByValue, getMatchedPaths } from '../../select/utils';
+import { findIndexByValue, getMatchedPaths, getSearchMatch } from '../../select/utils';
+import { useSearchRegex } from '../../select/hooks/use-search-regex';
 import { renderHighlight } from '../../select/select-search/highlight';
 import { getPathRows, toCascaderPath, toCascaderValue } from '../utils';
 import { SelectList } from '../../select/select-list';
@@ -82,15 +83,15 @@ export const MCascaderView = defineComponent({
 			return !!last && rows.value.length === path.value.length && !hasChildren(last);
 		});
 
-		const isSearching = computed(() => props.searchable && !!keyword.value.trim());
-		const regex = computed(() => createSearchRegex(keyword.value));
+		const regex = useSearchRegex(() => keyword.value, () => getSearchMatch(props.searchMatch, 'Cascader'));
+		// 有搜索词（只有空白、分隔符时不算），与桌面端一致
+		const isSearching = computed(() => props.searchable && !!regex.value.highlight);
 
 		// 搜索结果：只列最后一级；changeOnSelect 时任意一级（同桌面端）。key 为路径各级的值，渲染时与当前路径比较
 		const results = computed(() => {
 			if (!isSearching.value) return [];
 			return getMatchedPaths(props.data as TreeData[], {
 				regex: regex.value,
-				path: true,
 				selectable: row => props.changeOnSelect || !hasChildren(row)
 			}).map(result => ({ ...result, key: result.values.join(',') }));
 		});

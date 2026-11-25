@@ -1,12 +1,14 @@
 /** @jsxImportSource vue */
 
-import { defineComponent, provide, ref, shallowRef, watch } from 'vue';
+import { defineComponent, provide, ref, shallowRef, toRaw, watch } from 'vue';
 import type { Component, PropType } from 'vue';
 import { renderType } from '../../customer/customer-props';
 import { useLocale } from '../../locale';
 import { renderHighlight } from '../../select/select-search';
+import { createPathMatcher } from '../../select/utils';
 import type { SearchRegex } from '../../select/utils';
 import { Tree } from '../tree';
+import type { TreeNode } from '../store';
 import type { TreeCheckStrategy, TreeHighlightProvide } from '../types';
 
 const COMPONENT_NAME = 'vc-tree-select-content';
@@ -64,9 +66,15 @@ export const TreeSelectContent = defineComponent({
 		const { t } = useLocale();
 		const treeRef = ref<any>(null);
 
-		const filterNode = (keyword: string, data: any, node: any) => {
-			if (!keyword || props.remote || !props.searchRegex) return true;
-			return props.searchRegex.test(String(node?.getter?.label ?? data.label ?? ''));
+		// 有搜索词（只有空白、分隔符时不算），与 Select 一致
+		const isSearching = () => !!props.searchRegex?.highlight;
+
+		// 按整条路径匹配（与 Cascader、级联列一致，见 createPathMatcher）；每次过滤前重建，TreeStore.filter 先序遍历
+		let match: ReturnType<typeof createPathMatcher<TreeNode>> | undefined;
+		const filterNode = (_: string, data: any, node: TreeNode) => {
+			if (!match) return true;
+			const parent = node.parentNode && toRaw(node.parentNode.states).level > 0 ? node.parentNode : void 0;
+			return match(node, parent, String(node.getter.label ?? data.label ?? ''));
 		};
 
 		// 带上行文字的类名：沿用 Tree 对文字的样式（如 MTree 的单行省略）
@@ -76,9 +84,14 @@ export const TreeSelectContent = defineComponent({
 		};
 
 		// 搜索展开命中节点的祖先，清空搜索词时恢复搜索前的展开状态，见 TreeStore.filter
+		// searchRegex 只在匹配内容变化时换新（见 useSearchRegex），搜索规则（searchMatch）变化同样重新过滤
 		watch(
-			() => [props.searchValue.trim(), props.data] as const,
-			([keyword]) => treeRef.value?.filter(keyword),
+			() => [props.searchRegex, props.data] as const,
+			([regex]) => {
+				const searching = isSearching();
+				match = searching && !props.remote && regex ? createPathMatcher<TreeNode>(regex) : void 0;
+				treeRef.value?.filter(searching ? props.searchValue.trim() : '');
+			},
 			{ flush: 'post' }
 		);
 
@@ -102,7 +115,7 @@ export const TreeSelectContent = defineComponent({
 		});
 
 		return () => {
-			const searching = !!props.searchValue.trim();
+			const searching = isSearching();
 			const single = props.max === 1;
 			const TreeComponent = props.tree as typeof Tree;
 			return (

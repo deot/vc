@@ -1,11 +1,13 @@
 import { computed, getCurrentInstance, inject, ref, watch } from 'vue';
 import type { SetupContext } from 'vue';
-import { debounce, isEqualWith } from 'lodash-es';
+import { camelCase, debounce, isEqualWith, upperFirst } from 'lodash-es';
 import { useAttrs, useKeyboard } from '@deot/vc-hooks';
 import { VcError } from '../../vc/index';
-import { createSearchRegex, isMaxReached, isMultiple, toCurrentValue, toModelValue } from '../utils';
+import { getSearchMatch, isMaxReached, isMultiple, toCurrentValue, toModelValue } from '../utils';
+import type { SearchMatchKey } from '../utils';
 import type { Props } from '../select-props';
 import type { Navigator } from './use-navigate';
+import { useSearchRegex } from './use-search-regex';
 
 type SearchMode = '' | 'inline' | 'popover';
 
@@ -16,15 +18,15 @@ type Emits = ['ready', 'close', 'visible-change', 'clear', 'change', 'update:mod
 type SelectProps = Pick<
 	Props,
 	'arrow' | 'clearSearchOnSelect' | 'data' | 'disabled' | 'id' | 'loadData' | 'maxTagLines' | 'maxTags'
-	| 'placement' | 'portal' | 'portalClass' | 'searchPlaceholder' | 'searchable' | 'tag' | 'trigger'
+	| 'placement' | 'portal' | 'portalClass' | 'searchMatch' | 'searchPlaceholder' | 'searchable' | 'tag' | 'trigger'
 > & {
 	// TreeSelect 的默认值为 undefined（按是否级联决定）
 	autoWidth?: boolean;
 };
 
 interface Options {
-	// 组件名（不含 vc- 前缀），用于类名与报错
-	name: string;
+	// 组件名（不含 vc- 前缀），用于类名与报错；也决定读取哪个组件的全局 searchMatch（select → Select）
+	name: 'select' | 'tree-select' | 'cascader';
 	// 搜索词变化时是否调用 loadData（Cascader 的 loadData 用于加载子节点，不参与搜索）
 	remote?: boolean;
 	// 弹层打开时响应方向键与回车的对象；内容在弹层内，随打开才存在，按键时再取
@@ -40,6 +42,7 @@ interface Options {
  */
 export const useSelect = (props: SelectProps, context: SetupContext<Emits>, options: Options) => {
 	const { name, remote = true, navigator } = options;
+	const configKey = upperFirst(camelCase(name)) as SearchMatchKey;
 	const { emit } = context;
 	// loadData 的第二个参数是组件实例
 	const instance = getCurrentInstance()!;
@@ -52,7 +55,7 @@ export const useSelect = (props: SelectProps, context: SetupContext<Emits>, opti
 	const isFocus = ref(false);
 	const isLoading = ref(false);
 	const searchValue = ref('');
-	const searchRegex = computed(() => createSearchRegex(searchValue.value));
+	const searchRegex = useSearchRegex(() => searchValue.value, () => getSearchMatch(props.searchMatch, configKey));
 	// 有搜索词（只有空白、分隔符时不算）
 	const isSearching = computed(() => !!searchRegex.value.highlight);
 

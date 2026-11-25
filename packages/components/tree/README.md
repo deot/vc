@@ -237,7 +237,7 @@ const data = Array.from({ length: 100 }, (_, i) => ({
 
 `max` 与 Select 同义，`TreeSelect` 默认 `1`：单选时没有复选框，点节点（级联模式点项）即选中并关闭面板，再次点已选中的节点只关闭；选中的节点为主色，级联模式打开时展开到已选的节点。`checkStrategy` 为 `child` 时只有叶子可选，其余取值任意节点可选，单选时父子不联动。多选写 `:max="0"`（不限）或具体的上限，选满后未勾选的节点不可勾选。
 
-`cascader` 开启鼠标悬停展开的级联列，`expandDirection` 控制级联列的展开方向，取值与 [Cascader](../cascader/README.md#展开方向) 相同。`searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入（输入框跟在标签之后，输入为空时按 Backspace 移除最后一个标签），`searchable="popover"` 改为在面板顶部显示搜索栏。空格分隔的关键词需同时命中，英文逗号分隔的各组任一命中即可：树形模式保留层级，级联模式显示完整路径列表。关闭面板会清空搜索；多选时勾选或取消一个节点后也会清空，`:clear-search-on-select="false"` 时保留。树形模式打开面板时展开已选节点及其祖先，勾选不会展开节点；搜索展开命中节点的祖先，清空搜索词后恢复搜索前的展开状态。非独立勾选时，搜索结果中的父节点仍会联动所有子孙节点，包括隐藏节点。
+`cascader` 开启鼠标悬停展开的级联列，`expandDirection` 控制级联列的展开方向，取值与 [Cascader](../cascader/README.md#展开方向) 相同。`searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入（输入框跟在标签之后，输入为空时按 Backspace 移除最后一个标签），`searchable="popover"` 改为在面板顶部显示搜索栏。按节点的整条路径（各级文字用 ` / ` 连接）匹配，与 Cascader 一致：关键词可以分别落在不同层级（如 `浙江 杭州`），父节点命中时其子孙节点也一并列出；关键词的分隔规则见 [Select 搜索规则](../select/README.md#搜索规则)，全局键为 `TreeSelect.searchMatch`。树形模式保留层级，级联模式显示完整路径列表。关闭面板会清空搜索；多选时勾选或取消一个节点后也会清空，`:clear-search-on-select="false"` 时保留。树形模式打开面板时展开已选节点及其祖先，勾选不会展开节点；搜索展开命中节点的祖先，清空搜索词后恢复搜索前的展开状态。非独立勾选时，搜索结果中的父节点仍会联动所有子孙节点，包括隐藏节点。
 
 多选标签默认只占一行；超出宽度的标签折叠为 `+N...`，悬停可查看并移除。`maxTags` 限制可见标签数，`maxTagLines` 控制行数，设为 `0` 表示不限制。`checkStrategy` 与 Tree 相同；联动时标签展示完整路径，只显示没有被其他已选节点包含的那一层：`all` / `child` 为最深的勾选节点，`parent` 为子孙全选的父节点。移除标签时连同它的祖先与子孙一起移出值。
 
@@ -539,6 +539,7 @@ TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字
 | formatter | 根据已选项的文字生成显示内容：单选输入框的文字（需返回字符串）与 `plaintext` 的文字（可返回 VNode） | `(labels: string[], value) => any` | - | 以 `, ` 连接，跳过空文字 |
 | searchable | 开启搜索：`true` / `'inline'` 在输入框内直接输入，`'popover'` 在面板顶部显示搜索栏 | `boolean \| 'inline' \| 'popover'` | - | `false` |
 | searchPlaceholder | 搜索时的占位文案：内联搜索为面板打开且未选中时输入框的占位，`popover` 为搜索栏的占位 | `string` | - | `''` |
+| searchMatch | 搜索关键词的分隔符：`and` 分开的词都要命中，`or` 分开的组命中任一即可；未传时读全局 `TreeSelect.searchMatch`，见 [Select 搜索规则](../select/README.md#搜索规则) | `{ and?: string \| string[]; or?: string \| string[] }` | - | `{ and: ' ', or: [',', '，'] }` |
 | clearSearchOnSelect | 多选时勾选或取消一个节点后清空搜索词；`false` 时保留，可在同一批结果里继续勾选 | `boolean` | - | `true` |
 | loadData | 防抖搜索回调，需自行更新 `data`；调用时机见[远程搜索](#远程搜索) | `(keyword: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | cascader | 使用级联列面板 | `boolean` | - | `false` |
@@ -683,8 +684,9 @@ const data = Array.from({ length: 4 }, (_, i) => ({
 | --- | --- | --- | --- | --- |
 | modelValue / data / max / checkStrategy / separator / numerable / nullValue / renderNodeLabel / virtualized | 同 TreeSelect | - | - | 同 TreeSelect（`max` 为 `1`） |
 | clearable | 可清空，见上文 | `boolean` | - | `false` |
-| searchable | 树上方显示搜索框，按节点文字匹配（规则同桌面端），命中节点的祖先自动展开 | `boolean` | - | `false` |
+| searchable | 树上方显示搜索框，按整条路径匹配（规则同桌面端），命中节点的祖先自动展开 | `boolean` | - | `false` |
 | searchPlaceholder | 搜索框的占位文字 | `string` | - | `''` |
+| searchMatch | 搜索关键词的分隔符，同 TreeSelect，读全局 `TreeSelect.searchMatch` | `{ and?: string \| string[]; or?: string \| string[] }` | - | `{ and: ' ', or: [',', '，'] }` |
 | loadData | 远程搜索回调，开启 `searchable` 时生效，见上文 | `(keyword: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | label | 条目标签 | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | labelWidth | 条目标签宽度，750 稿长度，传给 MListItem | `string \| number` | - | `''` |

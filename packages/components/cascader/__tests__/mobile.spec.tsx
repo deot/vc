@@ -172,6 +172,20 @@ describe('MCascaderView', () => {
 		wrapper.unmount();
 	});
 
+	it('搜索：searchMatch 透传', async () => {
+		const wrapper = mount(() => (
+			<MCascaderView data={createData()} searchable searchMatch={{ or: ' ' }} />
+		), { attachTo: document.body });
+		await flush();
+		const input = document.querySelector('.vcm-cascader-view__search input') as HTMLInputElement;
+		input.value = 'A-2 B-1';
+		input.dispatchEvent(new Event('input'));
+		await flush();
+		const results = Array.from(document.querySelectorAll<HTMLElement>('.vcm-cascader-view__options.is-results .vcm-cascader-view__option'));
+		expect(results.map(i => i.textContent)).toEqual(['分组 A / 条目 A-2', '分组 B / 条目 B-1']);
+		wrapper.unmount();
+	});
+
 	it('搜索：按路径匹配并高亮，选中结果写入整条路径，无结果时提示', async () => {
 		const value = ref<any[]>([]);
 		const wrapper = mount(() => (

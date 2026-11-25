@@ -7,6 +7,7 @@ import { Popover } from '../popover/index';
 import { Input } from '../input/index';
 import { props as inputProps, indicatorProps, rightProps } from '../input/input-props';
 import { emits as inputEmits } from '../input/use-input';
+import { getSearchMatch } from '../select/utils';
 import type { TreeData } from '../select/utils';
 import { useSuggest, useSuggestHost } from '../suggest';
 import type { SuggestOptions } from '../suggest';
@@ -62,6 +63,7 @@ export const useAutoComplete = (
 
 	const suggest = useSuggest(() => props, slots, {
 		keyword: () => host.value.value,
+		searchMatch: () => getSearchMatch(props.searchMatch, 'AutoComplete'),
 		pick: pickItem,
 		onVisibleChange: v => emit('visible-change', v),
 		mobile,

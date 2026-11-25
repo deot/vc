@@ -9,12 +9,15 @@ import { useColumnNavigate, getPathsWidth } from '../hooks/use-navigate';
 import { resolveListCarrier, scrollIntoScroller } from '../select-list/scroll';
 import {
 	createSearchRegex,
+	DEFAULT_SEARCH_MATCH,
 	flattenData,
 	getLabel,
+	getSearchMatch,
 	toCurrentValue,
 	toModelValue,
 	walkTree
 } from '../utils';
+import type { SearchMatch } from '../utils';
 import { mount } from '@vue/test-utils';
 import { nextTick, ref } from 'vue';
 import { vi, onTestFinished } from 'vitest';
@@ -295,6 +298,12 @@ describe('utils', () => {
 		expect(regex.test('xyz')).toBe(false);
 		// 不区分大小写，且不依赖先后顺序
 		expect(createSearchRegex('York new').test('New York')).toBe(true);
+		// 中文输入法的全角逗号同样分组
+		const full = createSearchRegex('A，B');
+		expect(full.test('选项 A')).toBe(true);
+		expect(full.test('选项 B')).toBe(true);
+		expect(full.test('选项 C')).toBe(false);
+		expect('选项 A / 选项 B'.match(full.highlight!)).toEqual(['A', 'B']);
 		expect(createSearchRegex('a,').test('xyz')).toBe(false);
 		expect(createSearchRegex('').test('anything')).toBe(true);
 		expect(createSearchRegex(' , ').test('anything')).toBe(true);
@@ -304,6 +313,60 @@ describe('utils', () => {
 		// 正则的特殊字符按字面匹配
 		expect(createSearchRegex('a.b').test('axb')).toBe(false);
 		expect(createSearchRegex('a.b').test('a.b')).toBe(true);
+	});
+
+	it('createSearchRegex: searchMatch 指定 and / or 的分隔符', () => {
+		const labels = ['选项 A', '选项 B', '选项 C'];
+		const hits = (keyword: string, match?: SearchMatch) => {
+			const regex = createSearchRegex(keyword, match);
+			return labels.filter(label => regex.test(label));
+		};
+		// 默认：空格 and，逗号 or
+		expect(hits('A B')).toEqual([]);
+		expect(hits('A,B')).toEqual(['选项 A', '选项 B']);
+		expect(hits('选项 A')).toEqual(['选项 A']);
+		// 空格也作为 or：整个对象替换，没有 and 分隔符
+		const any = { or: [' ', ',', '，'] };
+		expect(hits('A B', any)).toEqual(['选项 A', '选项 B']);
+		expect(hits('A，C', any)).toEqual(['选项 A', '选项 C']);
+		// 都不写：整句作为一个词（去掉首尾空白）
+		expect(hits(' 选项 A ', {})).toEqual(['选项 A']);
+		expect(hits('A B', {})).toEqual([]);
+		expect(createSearchRegex('a,b', {}).test('x a,b y')).toBe(true);
+		// 自定义分隔符，字符串与数组写法一样
+		expect(hits('选项 B#C', { and: ' ', or: '#' })).toEqual(['选项 B', '选项 C']);
+		expect(hits('选项 B#C D', { and: ' ', or: '#' })).toEqual(['选项 B']);
+		expect(hits('A#C', { or: ['#'] })).toEqual(['选项 A', '选项 C']);
+		// 分隔符两侧的空白不算进词里
+		expect(hits('A # C', { or: '#' })).toEqual(['选项 A', '选项 C']);
+		// 空白分隔符匹配任意一段连续空白（全角空格、Tab）
+		expect(hits('选项　A', { and: ' ' })).toEqual(['选项 A']);
+		expect(hits('A\t\tB', { or: ' ' })).toEqual(['选项 A', '选项 B']);
+		// 同一个分隔符两边都写时按 or 处理
+		expect(hits('A B', { and: ' ', or: ' ' })).toEqual(['选项 A', '选项 B']);
+		// 正则的特殊字符、多个字符的分隔符按字面匹配
+		expect(hits('A|B', { or: '|' })).toEqual(['选项 A', '选项 B']);
+		expect(hits('A.B', { or: '.' })).toEqual(['选项 A', '选项 B']);
+		expect(hits('A or B', { or: ' or ' })).toEqual(['选项 A', '选项 B']);
+		// 空的分隔符忽略
+		expect(hits('A B', { and: '', or: [''] })).toEqual([]);
+		// highlight 仍标出每个词
+		expect('选项 A / 选项 B'.match(createSearchRegex('A B', any).highlight!)).toEqual(['A', 'B']);
+	});
+
+	it('getSearchMatch: 组件上的值 → 全局配置 → 默认，整个对象替换', () => {
+		const original = VcInstance.options.Select;
+		onTestFinished(() => {
+			VcInstance.options.Select = original;
+		});
+		expect(getSearchMatch(undefined, 'Select')).toBe(DEFAULT_SEARCH_MATCH);
+		const global = { or: ' ' };
+		VcInstance.options.Select = { searchMatch: global };
+		expect(getSearchMatch(undefined, 'Select')).toEqual(global);
+		// 其它组件读自己的键
+		expect(getSearchMatch(undefined, 'Cascader')).toBe(DEFAULT_SEARCH_MATCH);
+		const own = { and: '#' };
+		expect(getSearchMatch(own, 'Select')).toBe(own);
 	});
 
 	it('createSearchRegex: highlight 标出任一关键词，较长的词优先', () => {
@@ -1307,6 +1370,59 @@ describe('Select grouped & search', () => {
 		// 命中的部分高亮
 		expect(getOptions()[0].querySelector('.vc-select-highlight')!.textContent).toBe('New');
 
+		wrapper.unmount();
+	});
+
+	it('searchMatch: 组件属性 → 全局 Select.searchMatch → 默认，变化后重新过滤', async () => {
+		const original = VcInstance.options.Select;
+		onTestFinished(() => {
+			VcInstance.options.Select = original;
+		});
+		const match = ref<any>();
+		const wrapper = mount(() => (
+			<Select data={cityList} searchable searchMatch={match.value} />
+		), { attachTo: document.body });
+		await nextTick();
+		await wrapper.trigger('click');
+		await flush();
+		typeInto(wrapper.find('input').element, 'york paris');
+		await flush();
+		const visible = () => Array.from(getOptions()).map(o => o.textContent);
+
+		// 默认：空格 and
+		expect(visible()).toEqual([]);
+		// 全局：空格 or
+		VcInstance.options.Select = { searchMatch: { or: ' ' } };
+		await flush();
+		expect(visible()).toEqual(['New York', 'Paris']);
+		// 组件属性覆盖全局：整句
+		match.value = {};
+		await flush();
+		expect(visible()).toEqual([]);
+		wrapper.unmount();
+	});
+
+	it('searchMatch: 内联对象内容不变时不重新过滤', async () => {
+		const count = ref(0);
+		const spy = vi.fn((item: any) => item.label);
+		const data = cityList.map(item => ({ ...item, get label() { return spy(item); } }));
+		const wrapper = mount(() => (
+			<div>
+				<span>{count.value}</span>
+				<Select data={data} searchable searchMatch={{ or: [' '] }} />
+			</div>
+		), { attachTo: document.body });
+		await nextTick();
+		await wrapper.find('.vc-select').trigger('click');
+		await flush();
+		typeInto(wrapper.find('input').element, 'york paris');
+		await flush();
+		expect(Array.from(getOptions()).map(o => o.textContent)).toEqual(['New York', 'Paris']);
+		spy.mockClear();
+		// 父组件重新渲染，传入内容相同的新对象
+		count.value++;
+		await flush();
+		expect(spy).not.toHaveBeenCalled();
 		wrapper.unmount();
 	});
 
@@ -2840,7 +2956,7 @@ describe('SelectPaths', () => {
 		expect(getPathsWidth({ offsetWidth: 600 } as HTMLElement)).toBe(360);
 	});
 
-	it('默认只按节点自身的 label 匹配，列出完整路径并高亮最后一级', async () => {
+	it('按整条路径匹配，列出完整路径并高亮各级命中的文字', async () => {
 		const wrapper = mount(() => (
 			<SelectPaths data={tree} regex={createSearchRegex('A')} width={260} />
 		), { attachTo: document.body });
@@ -2848,16 +2964,16 @@ describe('SelectPaths', () => {
 
 		expect(getTexts()).toEqual(['分组 A', '分组 A / 条目 A1', '分组 A / 条目 A2']);
 		expect((wrapper.element as HTMLElement).style.width).toBe('260px');
-		// 路径上的上级不高亮
-		expect(getItems()[1].querySelectorAll('.vc-select-highlight').length).toBe(1);
+		// 祖先命中时子孙一并列出，路径上各级都高亮
+		expect(getItems()[1].querySelectorAll('.vc-select-highlight').length).toBe(2);
 		expect(getItems()[1].querySelector('.vc-select-paths__label')!.getAttribute('title')).toBe('分组 A / 条目 A1');
 
 		wrapper.unmount();
 	});
 
-	it('path：路径上任一级命中即列出并高亮；selectable 限定可作为结果的节点', async () => {
+	it('关键词可以分别落在不同层级；selectable 限定可作为结果的节点', async () => {
 		const wrapper = mount(() => (
-			<SelectPaths data={tree} regex={createSearchRegex('分组 B1')} path selectable={(item: any) => !item.children} />
+			<SelectPaths data={tree} regex={createSearchRegex('分组 B1')} selectable={(item: any) => !item.children} />
 		), { attachTo: document.body });
 		await flush();
 
@@ -2935,8 +3051,8 @@ describe('SelectPaths', () => {
 		await flush();
 		expect(getActive()).toBe('分组 A');
 
-		// 鼠标移入共用同一个高亮
-		getItems()[1].dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
+		// 鼠标移入共用同一个高亮（祖先命中时子孙一并列出：分组 A、它的两个条目、分组 B…）
+		getItems()[3].dispatchEvent(new MouseEvent('mousemove', { bubbles: true }));
 		expect(getActive()).toBe('分组 B');
 
 		// 没有结果时不处理

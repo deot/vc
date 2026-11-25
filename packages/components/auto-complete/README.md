@@ -11,7 +11,7 @@
 
 ### 基础用法
 
-- 聚焦时打开，有联想项才显示；输入时按文字过滤，命中的部分高亮，规则同 Select 的搜索：空格分隔的词都要命中，逗号分隔的组任一命中。
+- 聚焦时打开，有联想项才显示；输入时按文字过滤，命中的部分高亮，规则见 [Select 搜索规则](../select/README.md#搜索规则)，全局键为 `AutoComplete.searchMatch`（MAutoComplete 读同一个键）。
 - 打开时高亮第一项：↑ ↓ 移动（首尾循环）、Enter 选中、Esc 关闭、Tab 关闭并移走焦点。
 - 选中后整段替换为联想项的 `value`，弹层关闭，焦点留在输入框、光标移到末尾。
 - 没有结果时不弹出空面板。
@@ -153,6 +153,7 @@ const loadData = keyword => new Promise((resolve) => {
 | data | 联想项，格式同 Select 的 data（`{ label, value, disabled, filterable, children }`），也可以是字符串、数字 | `Array<string \| number \| object>` | - | `[]` |
 | loadData | 远程加载，见[远程加载](#远程加载) | `(keyword: string, instance: ComponentInternalInstance) => Promise<unknown>` | - | - |
 | virtualized | 只渲染弹层可视范围附近的联想项 | `boolean` | - | `false` |
+| searchMatch | 搜索关键词的分隔符：`and` 分开的词都要命中，`or` 分开的组命中任一即可；未传时读全局 `AutoComplete.searchMatch` | `{ and?: string \| string[]; or?: string \| string[] }` | - | `{ and: ' ', or: [',', '，'] }` |
 | placement | 弹层方向 | `string` | 同 Popover | `'bottom-left'` |
 | autoWidth | `false` 时弹层与输入框同宽，`true` 时按内容 | `boolean` | - | `false` |
 | portal | 弹层是否挂载到 body | `boolean` | - | `true` |

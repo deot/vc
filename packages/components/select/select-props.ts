@@ -3,6 +3,7 @@ import { pick } from 'lodash-es';
 import { props as inputProps, plaintextProps } from '../input/input-props';
 import { props as popoverProps } from '../popover/popover-props';
 import { renderType, valueType } from '../customer/customer-props';
+import type { SearchMatch } from './utils';
 
 const inputKeys = [
 	'id',
@@ -72,6 +73,8 @@ export const props = {
 		default: false,
 		validator: (v: any) => typeof v === 'boolean' || ['inline', 'popover'].includes(v)
 	},
+	// 搜索关键词的分隔符：{ and, or }，and 分开的词都要命中，or 分开的组命中任一即可；未传时读全局配置，默认 { and: ' ', or: [',', '，'] }，见 SearchMatch
+	searchMatch: Object as PropType<SearchMatch>,
 	// 多选时选中（或取消）一项后清空搜索词，便于接着搜下一项；false 时保留，可在同一批结果里继续选
 	clearSearchOnSelect: {
 		type: Boolean,

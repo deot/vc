@@ -2480,6 +2480,34 @@ describe('TreeSelect searchable', () => {
 		wrapper.unmount();
 	});
 
+	it('searchMatch: 组件属性与全局 TreeSelect.searchMatch', async () => {
+		const original = VcInstance.options.TreeSelect;
+		onTestFinished(() => {
+			VcInstance.options.TreeSelect = original;
+		});
+		const match = ref<any>();
+		const wrapper = mount(() => (
+			<TreeSelect modelValue={[]} data={data} max={99} searchable searchMatch={match.value} />
+		), { attachTo: document.body });
+		await flush();
+		await wrapper.trigger('click');
+		await flush();
+		await typeSearch('1-1-1 3-1-1');
+		const leaves = () => Array.from(document.querySelectorAll('.vc-tree-node__content'))
+			.map(el => el.textContent)
+			.filter(t => t?.includes('三级'));
+		// 默认空格 and：没有同时含两者的路径
+		expect(leaves()).toEqual([]);
+		VcInstance.options.TreeSelect = { searchMatch: { or: ' ' } };
+		await flush();
+		expect(leaves()).toEqual(['三级 1-1-1', '三级 3-1-1']);
+		// 组件属性优先
+		match.value = { and: ' ' };
+		await flush();
+		expect(leaves()).toEqual([]);
+		wrapper.unmount();
+	});
+
 	it('tree mode: filters keeping hierarchy, highlights, resets on close', async () => {
 		const value = ref<any[]>([]);
 		const wrapper = mount(() => (
@@ -2670,6 +2698,38 @@ describe('TreeSelect searchable', () => {
 		});
 		await flush();
 		expect(document.querySelectorAll('.vc-select-paths__item').length).toBeGreaterThan(3);
+		wrapper.unmount();
+	});
+
+	it('tree mode: keywords may fall on different levels of the path', async () => {
+		const mountWith = async (keyword: string) => {
+			const wrapper = mount(TreeSelectContent as any, {
+				attachTo: document.body,
+				props: { value: [], data: freshData(), searchValue: '', searchRegex: createSearchRegex('') }
+			});
+			await flush();
+			await wrapper.setProps({ searchValue: keyword, searchRegex: createSearchRegex(keyword) });
+			await flush();
+			const labels = Array.from(document.querySelectorAll('.vc-tree-node__content')).map(el => el.textContent);
+			wrapper.unmount();
+			return labels;
+		};
+		// 「一级 2」与「1-1」分别落在第一级与第三级
+		const labels = await mountWith('一级 2 1-1');
+		expect(labels.some(t => t?.includes('三级 2-1-1'))).toBe(true);
+		expect(labels.some(t => t?.includes('三级 1-1-1'))).toBe(false);
+		expect(labels.some(t => t?.includes('三级 2-2-1'))).toBe(false);
+		expect(await mountWith('一级 2 zzz')).toEqual([]);
+	});
+
+	it('cascader search: keywords may fall on different levels of the path', async () => {
+		const wrapper = mount(TreeSelectContentCascader as any, {
+			attachTo: document.body,
+			props: { value: [], data: freshData(), searchRegex: createSearchRegex('一级 2 1-1') }
+		});
+		await flush();
+		const items = Array.from(document.querySelectorAll('.vc-select-paths__item')).map(el => el.textContent);
+		expect(items).toEqual(['一级 2 / 二级 2-1 / 三级 2-1-1']);
 		wrapper.unmount();
 	});
 
