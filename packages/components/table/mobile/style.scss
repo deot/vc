@@ -55,7 +55,7 @@ $sizes: (
 			--vc-table-line-height: #{remfix(map.get($config, line-height))};
 			--vc-table-th-padding-y: #{remfix(map.get($config, th))};
 			--vc-table-td-padding-y: #{remfix(map.get($config, td))};
-			--vc-table-footer-min-height: #{if($size == medium, remfix(88), auto)};
+			--vc-table-footer-min-height: #{if(sass($size == medium): remfix(88); else: auto)};
 		}
 	}
 
