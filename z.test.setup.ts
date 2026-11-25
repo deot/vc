@@ -112,6 +112,21 @@ if (typeof Element !== 'undefined' && !Element.prototype.animate) {
 }
 
 /**
+ * jsdom 未实现、调用时只打印 "Not implemented" 的 API：保持原有结果，去掉输出
+ * - HTMLMediaElement.pause()：FilePreview 切走 / 卸载视频、音频时调用，jsdom 下本就什么也不做
+ * - getComputedStyle(el, pseudo)：Form / Descriptions 测标签伪元素宽度，jsdom 忽略 pseudo、返回元素自身样式
+ */
+if (typeof HTMLMediaElement !== 'undefined') {
+	HTMLMediaElement.prototype.pause = function () {};
+}
+if (typeof window !== 'undefined') {
+	const getComputedStyle = window.getComputedStyle;
+	const getComputedStyle$ = (el: Element, pseudo?: string | null) => getComputedStyle.call(window, el, pseudo ? null : pseudo);
+	window.getComputedStyle = getComputedStyle$ as typeof getComputedStyle;
+	if (window !== globalThis) globalThis.getComputedStyle = getComputedStyle$ as typeof getComputedStyle;
+}
+
+/**
  * jsdom + Vue 异步组件 unmount 后，部分 use-scroller / RecycleList 的 await nextTick
  * 微任务才落地，会触发 `wrapper.value.scrollHeight` 之类对 null 的访问。
  * 该 racing 与组件被卸载后状态有关，不影响测试正确性，统一忽略以避免 worker 异常退出导致覆盖率无法落盘。

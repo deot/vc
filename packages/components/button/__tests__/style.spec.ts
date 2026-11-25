@@ -77,9 +77,10 @@ describe('ButtonGroup clipped viewport layout', () => {
 		page = await launch.createPage();
 	}, 30000);
 
+	// 无头 Chrome 退出要 10s 左右，超过默认的 10s hook 超时
 	afterAll(async () => {
 		await launch.browser.close();
-	});
+	}, 30000);
 
 	describe.each([true, false].flatMap(solid => [
 		{ vertical: false, circle: false, count: 3 },

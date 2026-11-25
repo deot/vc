@@ -114,10 +114,12 @@ describe('index.ts', () => {
 			}
 		});
 		const wrapper = mount(() => (
-			<ThemeView backgroundColor="none" color="none" pseudo="''" />
+			<ThemeView backgroundColor="none" color="none" pseudo=".vc-theme-none::before { content: ''; }" />
 		));
 
 		expect(wrapper.element.nodeName).toBe('DIV');
+		// 字符串形式的 pseudo 原样作为样式表内容
+		expect([...document.head.querySelectorAll('style')].some(el => el.textContent === `.vc-theme-none::before { content: ''; }`)).toBe(true);
 
 		// expect(wrapper.html()).toMatch('background-color: var(--none)');
 		// expect(wrapper.html()).toMatch('color: var(--none)');
