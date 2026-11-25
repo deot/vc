@@ -206,6 +206,16 @@ describe('index.ts', () => {
 		wrapper.unmount();
 	});
 
+	it('目标时间已过（剩余为负）时各字段为 0，不出现负数', async () => {
+		useMockedNow();
+		const wrapper = mount(() => (
+			<Countdown targetTime={FIXED - 2} t={10} format="DD:HH:mm:ss:SSS" />
+		));
+		await nextTick();
+		expect(wrapper.text()).toBe('00:00:00:00:0');
+		wrapper.unmount();
+	});
+
 	it('emits `error` for invalid targetTime and renders empty placeholders', async () => {
 		const onError = vi.fn();
 

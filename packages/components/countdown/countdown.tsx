@@ -91,7 +91,8 @@ export const Countdown = defineComponent({
 		let timer: any;
 		const run = () => {
 			const currentTime = new Date((new Date()).getTime() + serverOffset.value).getTime();
-			const timestamp = targetTimestamp.value - currentTime;
+			// 已过目标时间时剩余为 0，各字段不出现负数
+			const timestamp = Math.max(targetTimestamp.value - currentTime, 0);
 
 			const _second = 1000;
 			const _minute = _second * 60;
