@@ -3,8 +3,8 @@
 $size: unitfix(32);
 $color-dark-extralight: varfix(color-dark-extralight, pagination);
 $color-primary-light: varfix(color-primary-light, pagination);
-$color-primary-lighter: varfix(color-primary-lighter, pagination);
 $foreground-color: varfix(foreground-color, pagination);
+$background-color-primary-light: varfix(background-color-primary-light, pagination);
 $component-name: vc-pagination;
 
 @include block($component-name) {
@@ -38,19 +38,19 @@ $component-name: vc-pagination;
 		}
 
 		@include when(active) {
-			background-color: $color-primary-lighter;
+			background-color: $background-color-primary-light;
 
 			span {
 				color: $color-primary-light !important;
 			}
 
 			&::before, &::after {
-				border-color: $color-primary-lighter;
+				border-color: $background-color-primary-light;
 			};
 		}
 
 		&:hover {
-			background-color: $color-primary-lighter;
+			background-color: $background-color-primary-light;
 
 			span {
 				color: $color-primary-light !important;

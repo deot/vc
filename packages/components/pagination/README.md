@@ -181,7 +181,7 @@ const current = ref(1);
 | color-dark-extralight | 禁用页码及翻页图标 | 亮色：`#909399`；暗色：`#B9B9B9` |
 | color-dark-lighter | 移动端页码（`MPagination`） | 亮色：`#515151`；暗色：`#D9D9D9` |
 | color-primary-light | 激活及悬停页码文字、边框 | `#4A96FF` |
-| color-primary-lighter | 激活及悬停页码背景 | `rgb(45 140 240 / 20%)` |
+| background-color-primary-light | 激活及悬停页码背景 | 亮色：`#E6F7FF`；暗色：`#273E5E` |
 | foreground-color | 分页文字；移动端 `type="text"` 的翻页文字 | 亮色：`#080F20`；暗色：`#F8F8F8` |
 
 ### 局部
