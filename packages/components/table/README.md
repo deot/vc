@@ -1018,7 +1018,7 @@ const handleExpandChange = ({ maxLevel }) => {
 					<Input v-model="row.name" :aria-label="`编辑条目 ${row.id}`" />
 				</template>
 			</TableColumn>
-			<TableColumn label="操作" width="90">
+			<TableColumn label="操作" width="100">
 				<template #default="{ row }">
 					<Button type="text" @click="handleDelete(row)">删除</Button>
 				</template>
@@ -1197,7 +1197,7 @@ const handleExpandChange = ({ expandedRows }) => {
 				</template>
 			</TableColumn>
 			<TableColumn prop="name" label="名称" min-width="180" />
-			<TableColumn label="操作" width="90">
+			<TableColumn label="操作" width="100">
 				<template #default="{ row }">
 					<Button type="text" @click="handleDelete(row)">删除</Button>
 				</template>
