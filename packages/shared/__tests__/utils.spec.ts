@@ -42,3 +42,29 @@ describe('utils.ts', () => {
 		expect(Utils.bisectLast(0, () => true)).toBe(-1);
 	});
 });
+
+describe('runGuard', () => {
+	it('同步：假值与 true 放行，其它真值阻止', () => {
+		const onPass = vi.fn();
+		expect(Utils.runGuard(undefined, onPass)).toBe(true);
+		expect(Utils.runGuard(false, onPass)).toBe(true);
+		expect(Utils.runGuard(true, onPass)).toBe(true);
+		expect(Utils.runGuard({}, onPass)).toBe(false);
+		expect(Utils.runGuard(1, onPass)).toBe(false);
+		expect(onPass).toHaveBeenCalledTimes(3);
+	});
+
+	it('Promise：兑现放行，拒绝阻止且不产生未处理的拒绝', async () => {
+		const unhandled = vi.fn();
+		process.on('unhandledRejection', unhandled);
+		const onPass = vi.fn();
+
+		await expect(Utils.runGuard(Promise.resolve(), onPass)).resolves.toBe(true);
+		await expect(Utils.runGuard(Promise.reject(new Error('x')), onPass)).resolves.toBe(false);
+		await new Promise(resolve => setTimeout(resolve, 0));
+
+		expect(onPass).toHaveBeenCalledTimes(1);
+		expect(unhandled).not.toHaveBeenCalled();
+		process.off('unhandledRejection', unhandled);
+	});
+});

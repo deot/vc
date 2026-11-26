@@ -14,6 +14,27 @@ export const autoCatch = async (impl: any, options: Record<string, any> = {}) =>
 	}
 };
 
+/**
+ * 按统一规则判断前置回调（onOk、onCancel、onBeforeClose 等）的返回值是否放行，放行时执行 onPass：
+ * - 同步返回假值或 `true` 放行，其它真值阻止
+ * - 返回 Promise 时兑现放行、拒绝阻止；拒绝在这里接住，不会成为未处理的 Promise 拒绝
+ * @param result 前置回调的返回值
+ * @param onPass 放行时执行
+ * @returns 是否放行；result 为 Promise 时返回 Promise<boolean>
+ */
+export const runGuard = (result: unknown, onPass: () => void): boolean | Promise<boolean> => {
+	const settle = (passed: boolean) => {
+		passed && onPass();
+		return passed;
+	};
+
+	if (result && typeof (result as Promise<unknown>).then === 'function') {
+		return (result as Promise<unknown>).then(() => settle(true), () => settle(false));
+	}
+
+	return settle(!result || result === true);
+};
+
 interface ElementRules {
 	id?: RegExp;
 	className?: RegExp;
