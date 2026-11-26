@@ -42,7 +42,7 @@
   },
   "homepage": "https://github.com/deot/vc#readme",
   "devDependencies": {
-    "@deot/dev": "^2.10.0",
-    "@deot/docs": "^1.2.7"
+    "@deot/dev": "^2.10.2",
+    "@deot/docs": "^1.2.12"
   }
 }
