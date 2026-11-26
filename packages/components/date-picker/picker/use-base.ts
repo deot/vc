@@ -13,7 +13,7 @@ interface Options {
 }
 
 // createPicker 生成的组件声明的 emits
-type Emits = ['update:modelValue', 'change', 'clear', 'error', 'close', 'input', 'ready', 'visible-change', 'ok'];
+type Emits = ['update:modelValue', 'change', 'clear', 'error', 'close', 'ready', 'visible-change', 'ok'];
 // 同步值时一并触发的事件
 type SyncEvent = 'change' | 'ok';
 

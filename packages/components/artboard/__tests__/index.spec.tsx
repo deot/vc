@@ -399,3 +399,9 @@ describe('index.ts', () => {
 		removeSpy.mockRestore();
 	});
 });
+
+describe('emits', () => {
+	it('声明了 change', () => {
+		expect(Artboard.emits).toEqual(expect.arrayContaining(['change']));
+	});
+});

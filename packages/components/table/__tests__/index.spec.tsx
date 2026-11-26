@@ -6712,3 +6712,9 @@ describe('Body-level delegation & row hover', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('emits', () => {
+	it('声明了表头拖拽的 column-* 事件', () => {
+		expect(Table.emits).toEqual(expect.arrayContaining(['column-dragstart', 'column-drop', 'column-dragend']));
+	});
+});

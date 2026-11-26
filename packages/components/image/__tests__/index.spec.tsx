@@ -340,3 +340,9 @@ describe('index.ts', () => {
 		expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{\s*\.vc-image__placeholder::after\s*\{\s*animation: none/);
 	});
 });
+
+describe('emits', () => {
+	it('声明了 load、error', () => {
+		expect(Image.emits).toEqual(expect.arrayContaining(['load', 'error']));
+	});
+});

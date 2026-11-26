@@ -10,6 +10,7 @@ const COMPONENT_NAME = 'vc-clipboard';
 export const Clipboard = defineComponent({
 	name: COMPONENT_NAME,
 	props: clipboardProps,
+	emits: ['before', 'after', 'error'],
 	setup() {
 		return useClipboard((content: string) => Message.success({ content }));
 	}

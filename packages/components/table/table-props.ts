@@ -195,7 +195,10 @@ export const emits = [
 	'update:data',
 	'block-dragstart',
 	'block-drop',
-	'block-dragend'
+	'block-dragend',
+	'column-dragstart',
+	'column-drop',
+	'column-dragend'
 ] as const;
 export type TableEmits = (typeof emits)[number][];
 export type TableProps = Props;

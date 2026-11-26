@@ -382,3 +382,10 @@ describe('mobile', () => {
 		expect(info).toHaveBeenCalledWith({ content: '复制成功' });
 	});
 });
+
+describe('emits', () => {
+	it('声明了 before、after、error，不再透传到根节点', () => {
+		expect(Clipboard.emits).toEqual(expect.arrayContaining(['before', 'after', 'error']));
+		expect(MClipboard.emits).toEqual(expect.arrayContaining(['before', 'after', 'error']));
+	});
+});

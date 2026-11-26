@@ -10,6 +10,7 @@ const COMPONENT_NAME = 'vc-artboard';
 export const Artboard = defineComponent({
 	name: COMPONENT_NAME,
 	props: artboardProps,
+	emits: ['change'],
 	setup(props, { emit, expose }) {
 		const canvas = ref<any>(null);
 		const context = ref<any>(null);

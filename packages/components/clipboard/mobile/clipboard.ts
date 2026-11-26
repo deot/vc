@@ -10,6 +10,7 @@ const COMPONENT_NAME = 'vcm-clipboard';
 export const MClipboard = defineComponent({
 	name: COMPONENT_NAME,
 	props: clipboardProps,
+	emits: ['before', 'after', 'error'],
 	setup() {
 		return useClipboard((content: string) => MToast.info({ content }));
 	}

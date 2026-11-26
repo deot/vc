@@ -19,7 +19,6 @@ export const createPicker = (name: string, pickerProps: object, usePicker: Funct
 		'clear',
 		'error',
 		'close',
-		'input',
 		'ready',
 		'visible-change',
 		'ok'

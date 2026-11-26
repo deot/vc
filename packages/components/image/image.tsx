@@ -33,6 +33,7 @@ export const Image = defineComponent({
 	name: COMPONENT_NAME,
 	inheritAttrs: false,
 	props: imageProps,
+	emits: ['load', 'error'],
 	setup(props, { slots, emit }) {
 		const instance = getCurrentInstance()!;
 		const { t } = useLocale();
