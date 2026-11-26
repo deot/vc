@@ -1,5 +1,16 @@
 # @deot/vc-components ChangeLog
 
+## v1.2.9
+
+_2026-11-26_
+
+### Bugfixes
+
+- fix: table, honor height inside flex containers ([24ad0d2](https://github.com/deot/vc/commit/24ad0d2fc4ed91a8e6b59cbe8811359aacf854e6))
+- fix: table, restore fixed column widths when flex columns come back ([fb9ff93](https://github.com/deot/vc/commit/fb9ff93a0e915924000ae4090674f965b371a1e4))
+- fix: button, keep the label on one line ([2703eb5](https://github.com/deot/vc/commit/2703eb5a4f70a8746247d70c186b4f3efc7175bb))
+- fix: table, allow selecting and copying header text ([b6481f6](https://github.com/deot/vc/commit/b6481f6cf241ffedd2c94a5330db1a1750ac5e9c))
+
 ## v1.2.8
 
 _2026-11-26_
