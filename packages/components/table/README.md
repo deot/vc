@@ -1674,6 +1674,7 @@ Window / Scroller
 <config lang="json5">
 {
 	views: ['runtime', 'files'],
+	local: false,
 	viewport: [800, 360],
 	previewInset: 16
 }
@@ -1740,14 +1741,29 @@ const rows = Array.from({ length: 60 }, (_, index) => ({
 外层为 VC Scroller 时，Affix 按窗口定位，两端的 `offset` 需要按 Scroller 视口计算，并在窗口滚动、尺寸变化后重新计算：
 
 ```js
+import { nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+
+const scrollerRef = ref(); // <Scroller ref="scrollerRef">
+const tableRef = ref(); // <Table ref="tableRef" :affix="[{ offset: offsets.top }, { offset: offsets.bottom }]" />
 const offsets = reactive({ top: 0, bottom: 0 });
+
 const updateOffsets = () => {
 	const rect = scrollerRef.value.wrapper.getBoundingClientRect();
 	offsets.top = Math.max(0, rect.top);
 	offsets.bottom = Math.max(0, window.innerHeight - rect.bottom);
 	nextTick(() => tableRef.value.refreshAffix());
 };
-// <Table :affix="[{ offset: offsets.top }, { offset: offsets.bottom }]" />
+
+onMounted(() => {
+	updateOffsets();
+	window.addEventListener('scroll', updateOffsets);
+	window.addEventListener('resize', updateOffsets);
+});
+
+onBeforeUnmount(() => {
+	window.removeEventListener('scroll', updateOffsets);
+	window.removeEventListener('resize', updateOffsets);
+});
 ```
 
 已知限制：Affix 的活动范围按窗口边缘判断，表格滚出 Scroller 顶部或底部附近时，吸附中的表头 / dock 可能短暂画到 Scroller 之外；另外吸附后为 `position: fixed`，页面自身横向滚动时不会跟随。
