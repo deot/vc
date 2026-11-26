@@ -22,7 +22,6 @@ export const Print = defineComponent({
 
 			// regiser print
 			const div = document.createElement('div');
-			console.log(instance.vnode.el!);
 			div.appendChild(instance.vnode.el!.cloneNode(true));
 
 			document.body.appendChild(div);

@@ -62,7 +62,8 @@ export const Resizer = defineComponent({
 		const refresh = () => {
 			handleResize();
 			locked = true;
-			// 避免连续触发（下一帧执行完成后16.66，下下帧开始前33.33）
+			// 避免连续触发（下一帧执行完成后16.66，下下帧开始前33.33）；连续调用时以最后一次为准
+			timer && clearTimeout(timer);
 			timer = setTimeout(() => (locked = false), 20);
 		};
 		onMounted(() => {

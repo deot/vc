@@ -199,7 +199,8 @@ export const Artboard = defineComponent({
 			if (isTouch) {
 				fn('touchstart', handleStart);
 				fn('touchmove', handleMove);
-				fn('touchend', handleEnd);
+				fn('touchend', handleDrawEnd);
+				fn('touchcancel', handleDrawEnd);
 			} else {
 				fn('mousedown', handleStart);
 				fn('mousemove', handleMove);

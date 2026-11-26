@@ -46,7 +46,7 @@ export const Defer = defineComponent({
 	props: {
 		data: {
 			type: Array,
-			default: []
+			default: () => []
 		},
 		primaryKey: {
 			type: String,

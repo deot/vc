@@ -117,7 +117,7 @@ export const useRadio = (props: Props, context: SetupContext<['update:modelValue
 	};
 
 	const handleChange = (e: any) => {
-		if (props.disabled) {
+		if (isDisabled.value) {
 			return false;
 		}
 		const $checked = e.target.checked;

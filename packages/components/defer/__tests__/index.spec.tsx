@@ -662,3 +662,13 @@ describe('index.ts', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('data 默认值', () => {
+	it('每个实例拿到各自的数组，不共用同一个默认值', () => {
+		const a = mount(Defer);
+		const b = mount(Defer);
+
+		expect(a.props('data')).toEqual([]);
+		expect(a.props('data')).not.toBe(b.props('data'));
+	});
+});

@@ -527,3 +527,27 @@ describe('index.ts', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('options 置空', () => {
+	it('未初始化时置空不报错；已初始化时置空等同于清空', async () => {
+		const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const wrapper = mountChart({ props: { options: null as any } });
+		await flush();
+
+		await wrapper.setProps({ options: undefined });
+		await flush();
+		expect(error).not.toHaveBeenCalled();
+
+		await wrapper.setProps({ options: pieOptions() });
+		await flush();
+		const chart = getExposedChart(wrapper);
+		expect(chart).toBeTruthy();
+		const setOption = vi.spyOn(chart, 'setOption');
+
+		await wrapper.setProps({ options: null as any });
+		await flush();
+		expect(setOption).toHaveBeenLastCalledWith({}, true);
+		expect(error).not.toHaveBeenCalled();
+		wrapper.unmount();
+	});
+});

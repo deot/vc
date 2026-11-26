@@ -108,11 +108,12 @@ export const Chart = defineComponent({
 			watch(
 				() => props.options,
 				(val, oldVal) => {
-					if (!chart.value && val) {
-						init();
-					} else {
-						chart.value.setOption(val, val !== oldVal);
+					// 未初始化（如 echarts 仍在加载）时只在有配置时初始化；清空配置等同于传入空对象
+					if (!chart.value) {
+						val && init();
+						return;
 					}
+					chart.value.setOption(val || {}, val !== oldVal);
 				},
 				{ deep: !props.watchShallow }
 			);

@@ -49,13 +49,17 @@ export const Countdown = defineComponent({
 		});
 		// 目标时间
 		const targetTimestamp = computed(() => {
-			if (props.targetTime && !getTimestamp(props.targetTime)) {
-				emit('error', '请设定时间以及格式');
-				return 0;
-			}
-
-			return getTimestamp(props.targetTime);
+			const timestamp = getTimestamp(props.targetTime);
+			return props.targetTime && !timestamp ? 0 : timestamp;
 		});
+		// 无法解析时触发 error（不在 computed 里产生副作用）
+		watch(
+			() => props.targetTime,
+			(v) => {
+				v && !getTimestamp(v) && emit('error', '请设定时间以及格式');
+			},
+			{ immediate: true }
+		);
 
 		const result = computed(() => {
 			if (!showResult.value) return;
