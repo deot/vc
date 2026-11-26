@@ -5,11 +5,8 @@
  * 可配制的主题色提取, Button可单独配置，默认使用全局值
  */
 $color-contrast-light: varfix(color-contrast-light, button);
-$color-dark: varfix(color-dark, button);
 $color-dark-light: varfix(color-dark-light, button);
 $color-dark-lighter: varfix(color-dark-lighter, button);
-$color-disabled: varfix(color-disabled, button);
-$color-disabled-light: varfix(color-disabled-light, button);
 $color-error: varfix(color-error, button);
 $color-error-light: varfix(color-error-light, button);
 $color-light-deep: varfix(color-light-deep, button);
