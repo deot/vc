@@ -1,4 +1,4 @@
-import { defineComponent, h, camelize, toHandlerKey } from 'vue';
+import { defineComponent, h, ref, camelize, toHandlerKey } from 'vue';
 import type { PortalOptions } from '../../portal/default-options';
 import { props as popoverProps } from '../popover-props';
 import { Popover, emits } from '../popover';
@@ -27,10 +27,14 @@ export const MPopover$ = defineComponent({
 		}
 	},
 	emits,
-	setup(props, { emit, slots }) {
+	setup(props, { emit, slots, expose }) {
 		const listeners = Object.fromEntries(emits.map(name => [toHandlerKey(camelize(name)), (...args: any[]) => emit(name, ...args)]));
+		const popover = ref<{ update: () => void }>();
 
-		return () => h(Popover, { ...props, ...listeners, portalClass: [MOBILE_CLASS, props.portalClass] }, slots);
+		// 与 Popover 一致：ref 上可调用 update() 重新定位
+		expose({ update: () => popover.value?.update() });
+
+		return () => h(Popover, { ref: popover, ...props, ...listeners, portalClass: [MOBILE_CLASS, props.portalClass] }, slots);
 	}
 });
 

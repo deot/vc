@@ -2827,3 +2827,17 @@ describe('MPopover（移动端）', () => {
 		await flush();
 	});
 });
+
+describe('MPopover expose', () => {
+	it('ref 上可以调用 update()，与 Popover 一致', () => {
+		const target = ref<any>();
+		mount(() => (
+			<MPopover ref={target} content="x">
+				<span>trigger</span>
+			</MPopover>
+		));
+
+		expect(typeof target.value.update).toBe('function');
+		expect(() => target.value.update()).not.toThrow();
+	});
+});
