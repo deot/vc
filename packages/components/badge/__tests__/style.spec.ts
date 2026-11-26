@@ -119,7 +119,8 @@ describe('MBadge styles', () => {
 		expect(vars('--vc-badge-dot')).toEqual([rem(16)]);
 		expect(vars('--vc-badge-inset')).toEqual([rem(4)]);
 		expect(vars('--vc-badge-ring')).toEqual([rem(4)]);
-		expect([vars('--vc-badge-label-font-size'), vars('--vc-badge-label-line-height'), vars('--vc-badge-label-gap')].flat()).toEqual([rem(28), rem(44), rem(16)]);
+		const labels = [vars('--vc-badge-label-font-size'), vars('--vc-badge-label-line-height'), vars('--vc-badge-label-gap')];
+		expect(labels.flat()).toEqual([rem(28), rem(44), rem(16)]);
 
 		let rules = 0;
 		css.walkRules(() => {
